@@ -1,0 +1,9 @@
+{{#files}}
+	{{#:iterate}}
+		{{#value}}
+			{{^source}}{{! do not include thumbnails !}}
+				{{{:html}}}
+			{{/source}}
+		{{/value}}
+	{{/:iterate}}
+{{/files}}

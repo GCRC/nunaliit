@@ -1,0 +1,34 @@
+.n2_documentDisplay, .n2_documentForm {
+	font-family: sans-serif;
+}
+
+.n2_documentDisplay .label, .n2_documentForm .label {
+	font-weight: bold;
+}
+
+.n2_documentDisplay .n2_layoutFloat div.label, .n2_documentForm .n2_layoutFloat div.label {
+	float:left;
+	width:30%;
+}
+
+.n2_documentDisplay .n2_layoutFloat div.value, .n2_documentForm .n2_layoutFloat div.value {
+	float:left;
+	width:65%;
+}
+
+.n2_documentDisplay .n2_layoutFloat div.end, .n2_documentForm .n2_layoutFloat div.end {
+	clear:both;
+}
+
+.n2_documentForm .n2_layoutFloat input {
+	width:90%;
+}
+
+.n2_documentForm .n2_layoutFloat input[type="checkbox"] {
+	width:auto;
+}
+
+.n2_documentForm .n2_layoutFloat textarea {
+	width:90%;
+	height:200px;
+}

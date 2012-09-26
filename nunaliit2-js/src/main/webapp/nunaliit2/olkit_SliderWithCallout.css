@@ -1,0 +1,99 @@
+.slider_wrapper {
+	position: relative;
+	margin: 0px;
+	float: left;
+}
+
+.slider_wrapper_width_min {
+	width: 90px;
+}
+
+.slider_wrapper_width_med {
+	width: 150px;
+}
+
+.slider_wrapper_width_max {
+	width: 260px;
+}
+
+.slider_wrapper_small_callout {
+	padding: 22px 0px 5px 5px;
+}
+
+.slider_wrapper_large_callout {
+	padding: 32px 0px 5px 5px;
+}
+
+.slider_wrapper_left {
+	clear:left;
+}
+
+.slider_left_value_label {
+	float: left;
+	clear: both;
+	padding:0px 3px 0px 0px;
+	font-size: 0.9em;
+}
+
+.slider_right_value_label {
+	float: left;
+	padding:0px 0px 0px 3px;
+	font-size: 0.9em;
+}
+
+.slider_bar {
+	float: left;
+	margin: 0px 5px;
+	top: 0.4em;
+}
+
+.slider_bar_width_min {
+	width: 25px;
+}
+
+.slider_bar_width_med {
+	width: 75px;
+}
+
+.slider_bar_width_max {
+	width: 200px;
+}
+
+.slider_callout {
+	overflow: hidden;
+	position: absolute;
+	top: 0px;
+	margin-left:-8px;
+	padding: 3px 0px 0px 1px;
+	color: #000000;
+	font-weight: bold;
+	text-align: center;
+}
+
+.slider_callout_fixed_position {
+}
+
+.slider_callout_small {
+	background: url(css/basic/images/olkit_sliderCallout.png) no-repeat;
+	height: 22px;
+	width: 32px;
+	font-size: 0.8em;
+}
+
+.slider_callout_large {
+	height: 32px;
+}
+
+.ui-slider-horizontal  {
+	height: 0.2em;
+	top: 0.
+}
+
+.ui-slider-horizontal .ui-slider-handle {
+	margin-left: -0.2em;
+	top: -0.6em;
+}
+
+.ui-slider .ui-slider-handle {
+	width: 0.4em;
+}

@@ -1,0 +1,43 @@
+/* Login form */
+.n2Auth_login .n2Auth_login_label {
+	float: left;
+	width: 100px;
+}
+
+.n2Auth_login .n2Auth_login_input {
+	float: left;
+}
+
+.n2Auth_login_end {
+	clear: both;
+}
+
+.n2Auth_login_button_line, .n2Auth_login_create_line {
+	padding-left: 55px;
+}
+
+.n2Auth_login_button_line button {
+	float:left;
+}
+
+/* Create User form */
+.n2Auth_create .n2Auth_create_label {
+	float: left;
+	width: 120px;
+}
+
+.n2Auth_create .n2Auth_create_input {
+	float: left;
+}
+
+.n2Auth_create_end {
+	clear: both;
+}
+
+.n2Auth_create_button_line {
+	padding-left: 55px;
+}
+
+.n2Auth_create_button_line button {
+	float:left;
+}

@@ -1,0 +1,174 @@
+/*
+	This portion of the CSS deals with the tree display
+*/
+
+ul.tree, ul.tree ul {
+	list-style-type: none;
+/*	background: url(tree/vline.png) repeat-y; */
+	margin: 0;
+	padding: 0;
+}
+
+ul.tree ul { 
+	margin-left: 12px;
+	display: block;
+} 
+
+ul.tree li { 
+	margin: 0px 0px 0px 0px; 
+	padding: 0px 0px 0px 8px;
+	line-height: 20px;
+	background: url(tree/node.png) repeat-y;
+}
+
+ul.tree li:last-child { 
+	background: url(tree/lastnode.png) no-repeat;
+}
+
+ul.tree li > * { 
+	vertical-align: top;
+}
+
+ul.tree li > div.treeExpand {
+	display: inline-block;
+	height: 0px;
+	width: 0px;
+	margin: 0; 
+	padding: 20px 0px 0px 7px;
+	border: none;
+}
+
+ul.tree li.treeShowChildren > div.treeExpand {
+	background: url(tree/square_minus.png) no-repeat;
+}
+
+ul.tree li.treeHideChildren > div.treeExpand {
+	background: url(tree/square_plus.png) no-repeat;
+}
+
+ul.tree li.treeNoChildren > div.treeExpand {
+	background: none;
+}
+
+ul.tree li > span.treeKey {
+	padding: 0px 0px 0px 3px;
+	vertical-align: top;
+	color: #369;
+	font-weight: bold;
+}
+
+div.treeChildren {
+	border: solid 1px #dddddd;
+	margin: 0 0 0 12px;
+	padding: 2px;
+}
+
+ul.tree li.treeHideChildren > .treeChildren {
+	display: none;
+}
+
+.treeClickInstalled {
+	cursor: pointer;
+}
+
+/* 
+	OBJECT 
+*/
+
+/* When showing children, suppress short pretty print */
+ul.tree li.treeShowChildren > .treeValue {
+	display: none;
+}
+
+ul.tree li.treeNoChildren > .treeValue {
+	display: inline;
+}
+
+/* 
+	EDITOR 
+*/
+
+/* While editing a value, suppress views of the value */
+ul.tree li.treeEditingValue > .treeValue,
+ul.tree li.treeEditingValue > .treeChildren {
+	display: none;
+}
+
+/* While editing a key, suppress views on the key */
+ul.tree li.treeEditingKey > .treeKey {
+	display: none;
+}
+
+ul.tree .treeValueEditor textarea {
+	width: 100%;
+	height: 50px;
+}
+
+.treeEditorClickInstalled {
+	cursor: pointer;
+}
+
+/* Add, delete, up, down, ok and cancel buttons. */
+.treeEditDelete, .treeEditCancel, .treeEditAdd > div, .treeEditUp, .treeEditDown, .treeEditOk {
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	margin: 0px;	
+	padding: 0px;
+	border: none;
+}
+
+.treeEditDelete {
+	background: url(tree/icons.png) no-repeat;
+	background-position: -160px 0px;
+}
+
+.treeEditDelete:hover {
+	background-position: -176px 0px;
+}
+
+.treeEditCancel {
+	background: url(tree/icons.png) no-repeat;
+	background-position: -32px 0px;
+}
+
+.treeEditCancel:hover {
+	background-position: -48px 0px;
+}
+
+.treeEditAdd > div {
+	background: url(tree/icons.png) no-repeat;
+	background-position: 0px 0px;
+}
+
+.treeEditAdd > div:hover {
+	background-position: -16px 0px;
+}
+
+.treeEditUp {
+	background: url(tree/icons.png) no-repeat;
+	background-position: -64px 0px;
+}
+
+.treeEditUp:hover {
+	background-position: -80px 0px;
+}
+
+.treeEditDown {
+	background: url(tree/icons.png) no-repeat;
+	background-position: -96px 0px;
+}
+
+.treeEditDown:hover {
+	background-position: -112px 0px;
+}
+
+
+.treeEditOk {
+	background: url(tree/icons.png) no-repeat;
+	background-position: -128px 0px;
+}
+
+.treeEditOk:hover {
+	background-position: -144px 0px;
+}

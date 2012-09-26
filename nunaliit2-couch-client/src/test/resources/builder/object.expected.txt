@@ -1,0 +1,1 @@
+{"obj":{"key1":"value1","key2":"value2"},"test":"function(doc) {\n\tif( doc.allo ) {\n\t\tdoc.allo = doc.allo + 1;\n\t}\n}"}

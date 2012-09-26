@@ -1,0 +1,63 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+		<title>Geometry</title>		
+		<link rel="stylesheet" href="../js-external/css/jquery-ui/smoothness/jquery-ui.custom.css" type="text/css" />
+		<link rel="stylesheet" href="../js-external/OpenLayers/theme/default/style.css" type="text/css" />
+		<link rel="stylesheet" href="../js-external/css/jquery.lightbox-0.5.css" type="text/css" />
+		<link rel="stylesheet" href="../nunaliit2/jquery-progress-1.0.css" type="text/css" />
+		<link rel="stylesheet" href="../nunaliit2/jquery-progress-slide-1.0.css" type="text/css" />
+		<link rel="stylesheet" href="../nunaliit2/css/basic/nunaliit2.css" type="text/css" />
+		<link rel="stylesheet" href="../_list/css_merge/css" type="text/css" />
+
+		<style type="text/css">
+			body {
+				overflow: auto;
+			}
+		</style>		
+	</head>
+	<body>
+
+		<h1>Geometry</h1>	
+		<div id="login"></div>
+		<div id="geometryButtons"></div>
+		<div id="logs"></div>
+
+		
+		<script type="text/javascript" src="../js-external/js/jquery.min.js"></script>
+		<script type="text/javascript" src="../js-external/js/jquery-ui.min.js"></script>
+		
+		<script src="http://maps.google.com/maps/api/js?v=3.3&sensor=false"></script>
+		
+		<script type="text/javascript" src="../js-external/OpenLayers/OpenLayers.js"></script>
+		<script type="text/javascript" src="../js-external/js/jquery.lightbox-0.5.js"></script>
+		
+		<script type="text/javascript" src="../js-external/js/jquery.cycle.pack.js"></script>
+		<script type="text/javascript" src="../js-external/js/jquery.form.js"></script>
+		<script type="text/javascript" src="../js-external/js/jquery.cookie-1.0.js"></script>
+
+		<script type="text/javascript" src="../lib/atlas.js"></script>
+		<script type="text/javascript" src="../lib/utils.js"></script>
+		<script type="text/javascript" src="../nunaliit2/nunaliit2-debug.js"></script>
+		<script type="text/javascript" src="../lib/tiles.js"></script>
+		<script type="text/javascript" src="../nunaliit2/nunaliit2-couch-debug.js"></script>
+		<script type="text/javascript" src="../config/configuration.js"></script>
+		<script type="text/javascript" src="../nunaliit_custom.js"></script>
+
+		<script type="text/javascript" src="js/geometry.js"></script>
+
+		<script type="text/javascript">
+			// <!--
+
+			jQuery().ready(function() {
+				runConfiguration({
+					configuredFunction: geometryMainInit
+					,rootPath: '../'
+				});
+			});
+
+			// -->
+		</script>
+	</body>
+</html>

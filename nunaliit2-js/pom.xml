@@ -1,0 +1,42 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>nunaliit2</artifactId>
+    <groupId>ca.carleton.gcrc</groupId>
+    <version>0.2.1</version>
+  </parent>
+  <groupId>ca.carleton.gcrc</groupId>
+  <artifactId>nunaliit2-js</artifactId>
+  <version>0.2.1</version>
+  <packaging>war</packaging>
+  <name>nunaliit2-js</name>
+  <description>Javascript files produced in-house</description>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.6</version>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <configuration>
+              <!--  The following is an ANT target -->
+              <target>
+                <exec executable="python" dir="./compress">
+                  <arg line="build.py" />
+                </exec>
+                <exec executable="python" dir="./compress">
+                  <arg line="build_css.py" />
+                </exec>
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

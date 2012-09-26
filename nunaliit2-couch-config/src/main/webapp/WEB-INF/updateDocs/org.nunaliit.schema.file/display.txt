@@ -1,0 +1,45 @@
+<div>
+	<div class="label n2_localize" style="width: 30%;float: left;">File</div>
+	<div style="width: 35%; float:left;">
+		{{#originalName}}
+			{{#originalAttachment}}
+				<a class="n2s_externalMediaLink" href="{{originalAttachment}}">{{originalName}}</a>
+			{{/originalAttachment}}
+			{{^originalAttachment}}
+				{{#attachmentName}}
+					<a class="n2s_externalMediaLink" href="{{attachmentName}}">{{originalName}}</a>
+				{{/attachmentName}}
+				{{^attachmentName}}
+					{{originalName}}
+				{{/attachmentName}}
+			{{/originalAttachment}}
+			<br/>
+		{{/originalName}}
+		{{#data}}
+			{{{:html}}}
+		{{/data}}
+		{{#status}}
+			{{status}}<br/>
+		{{/status}}
+		{{#mimeType}}
+			{{mimeType}}<br/>
+		{{/mimeType}}
+		{{^mimeType}}
+			{{#original}}
+				{{#mimeType}}
+					{{mimeType}}<br/>
+				{{/mimeType}}
+			{{/original}}
+		{{/mimeType}}
+		{{#fileClass}}
+			{{fileClass}}
+		{{/fileClass}}
+	</div>
+	<div style="width: 35%; float:left;">
+		{{#attachmentName}}
+			<div class="n2s_insertMediaView">{{attachmentName}}</div>
+		{{/attachmentName}}
+	</div>
+	<div style="clear: both;"></div>
+</div>
+

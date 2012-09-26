@@ -1,0 +1,32 @@
+.slider_wrapper {
+	position: relative;
+	margin: 0px;
+	float: left;
+	width: 100%;
+}
+.slider_wrapper_callout {
+	padding: 1em 0 0 0;
+}
+.slider_bar {
+	margin: 0px;
+	width: 100%;
+}
+.slider_callout {
+	position: absolute;
+	top: 0;
+	margin: 0;
+	color: #000000;
+	font-weight: normal;
+	font-size: 1em
+}
+.ui-slider-horizontal  {
+	height: 0.3em;
+	top: 0px;
+}
+.ui-slider-horizontal .ui-slider-handle {
+	margin-left: -0.2em;
+	top: -0.6em;
+}
+.ui-slider .ui-slider-handle {
+	width: 0.4em;
+}

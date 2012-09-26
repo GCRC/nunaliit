@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{{ title }}</title>
+  </head>
+  <body>
+  	<h1>{{ title }}</h1>
+  	<table>
+  		{{#wkt}}
+  		<tr><th>WKT</th><td>{{ wkt }}</td></tr>
+  		{{/wkt}}
+  		{{#bounds}}
+  		<tr><th>Bounds</th><td>{{ bounds }}</td></tr>
+  		{{/bounds}}
+  	</table>
+</body>
+</html>

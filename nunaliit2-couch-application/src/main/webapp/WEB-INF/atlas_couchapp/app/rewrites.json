@@ -1,0 +1,26 @@
+[
+	{
+		"from" : ""
+		,"to" : "redirect.html"
+	}
+	,{
+		"from" : "db/*"
+		,"to" : "../../*"
+	}
+	,{
+		"from" : "db/"
+		,"to" : "../../"
+	}
+	,{
+		"from" : "db"
+		,"to" : "../../"
+	}
+	,{
+		"from" : "config/*"
+		,"to" : "config_redirect/*"
+	}
+	,{
+		"from" : "*"
+		,"to" : "*"
+	}
+]

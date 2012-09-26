@@ -1,0 +1,349 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+		<title>Nunaliit2 Schema Test Page</title>		
+		<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/themes/base/jquery-ui.css" type="text/css" />
+		<link rel="stylesheet" href="../css/basic/n2.sliderWithCallout.css" type="text/css" />
+		<link rel="stylesheet" href="css/slider_tests.css" type="text/css" />
+	</head>
+	<body>
+		<h1>Nunaliit2 Schema Test Page</h1>
+		
+		<h2>Display</h2>
+		<div id="display"></div>
+		<h2>Brief</h2>
+		<div id="brief"></div>
+		<h2>Form</h2>
+		<div id="form"></div>
+		
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/jquery-ui.min.js"></script>
+
+		<script type="text/javascript" src="../nunaliit2-debug.js"></script>
+
+		<script type="text/javascript">
+			// <!--
+			var schemaMap = {
+				reference: {
+					name: 'reference'
+					,isRootSchema: false
+					,display: '{{#doc}}Ref:{{doc}}{{/doc}}{{^doc}}null ref{{/doc}}'
+					,brief: 'Ref({{doc}})'
+					,form: ''
+					,create: {
+						nunaliit_type: 'reference'
+						,doc: ''
+					}
+					,extensions: [
+					]
+				}
+	
+				,contribution: {
+					name: 'contribution'
+					,isRootSchema: false
+					,display: 'Contribution ({{title}},{{ref}}{{#reply}},{{reply}}{{/reply}})'
+					,brief: 'Contribution({{title}})'
+					,form: ''
+					,create: {
+						nunaliit_type: 'contribution'
+						,title: ''
+						,desc: ''
+						,ref: {}
+					}
+					,extensions: [
+						{
+							selector: [ 'reference' ]
+							,create: true
+							,schemaName: 'reference'
+						}
+						,{
+							selector: [ 'reply' ]
+							,create: false
+							,schemaName: 'reference'
+						}
+					]
+				}
+
+				,place: {
+					name: 'place'
+					,isRootSchema: false
+					,display: '<div class="n2s_place">'
+						+'<b>Place:</b>'
+						+'{{#name}}<div>Name: {{name}}</div>{{/name}}'
+						+'{{#roman_name}}<div>Roman Name: {{roman_name}}</div>{{/roman_name}}'
+						+'{{#english}}<div>English Name: {{english}}</div>{{/english}}'
+						+'{{#entity}}<div>Entity: {{entity}}</div>{{/entity}}'
+						+'{{#meaning}}<div>Meaning: {{meaning}}</div>{{/meaning}}'
+						+'{{#sheet}}<div>Sheet: {{sheet}}</div>{{/sheet}}'
+						+'{{#old_id}}<div>Old ID: {{old_id}}</div>{{/old_id}}'
+						+'{{#source}}<div>Source: {{source}}</div>{{/source}}'
+						+'</div>'
+					,brief: 'Place({{name}})'
+					,form: ''
+					,create: {
+						nunaliit_type: 'placename'
+					}
+					,extensions: [
+					]
+				}
+	
+				,geom: {
+					name: 'geom'
+					,isRootSchema: false
+					,display: '<div class="n2s_geom">Geometry: {{wkt}}</div>'
+					,brief: 'Geometry({{#bbox}}[{{0}},{{1}},{{2}},{{3}}]{{/bbox}})'
+					,form: ''
+					,create: {
+						nunaliit_type: 'geometry'
+						,wkt: 'MULTIPOINT((0 0))'
+						,bbox: [0,0,0,0]
+					}
+					,extensions: [
+					]
+				}
+				
+				,file: {
+					name: 'file'
+					,isRootSchema: false
+					,display: ''
+						+'{{#attachmentName}} {{/attachmentName}}'
+						+'{{#originalName}}<div>File: {{originalName}}</div>{{/originalName}}'
+						+''
+					,brief: 'File({{originalName}})'
+					,form: ''
+					,create:{
+					}
+					,extensions: [
+					]
+				}
+				
+				,attachments: {
+					name: 'attachments'
+					,isRootSchema: false
+					,display: '<div class="n2s_attachments">'
+						+'{{#files}}{{^:empty}}'
+						+ '<b>Files:</b>'
+						+'{{/:empty}}{{/files}}'
+						+'{{#files}}{{#:iterate}}{{#value}}'
+						+'{{#:context}}{{dbUrl}}{{/:context}}{{#:parent}}{{#:parent}}{{#:parent}}{{_id}}{{/:parent}}{{/:parent}}{{/:parent}}/{{attachmentName}}'
+						+'{{{:html}}}'
+						+'{{/value}}{{/:iterate}}{{/files}}'
+						+'</div>'
+					,brief: 'Attachments({{#files}}{{#:iterate}}{{{:html}}}{{/:iterate}}{{/files}})'
+					,form: ''
+					,create: {
+						nunaliit_type: 'attachment_descriptions'
+						,files: {}
+					}
+					,extensions: [
+					]
+				}
+	
+				,object: {
+					name: 'object'
+					,isRootSchema: true
+					,display: 
+						'<div class="n2s_object">'
+						+'{{#place}}{{{:html}}}{{/place}}'
+						+'{{#nunaliit_attachments}}{{{:html}}}{{/nunaliit_attachments}}'
+						+'{{#nunaliit_contribution}}{{{:html}}}{{/nunaliit_contribution}}'
+						+'{{#nunaliit_geom}}{{{:html}}}{{/nunaliit_geom}}'
+						+'</div>'
+					,brief: '{{#place}}{{{:html}}}{{/place}}{{^place}}{{#nunaliit_contribution}}{{{:html}}}{{/nunaliit_contribution}}{{^nunaliit_contribution}}Document{{/nunaliit_contribution}}{{/place}}'
+					,form: ''
+					,create: {
+						
+					}
+					,extensions: [
+			  			{
+			  				selector: [ 'place' ]
+							,create: false
+							,schemaName: 'place'
+						}
+			  			,{
+			  				selector: [ 'nunaliit_attachments' ]
+							,create: false
+							,schemaName: 'attachments'
+						}
+			  			,{
+			  				selector: [ 'nunaliit_contribution' ]
+							,create: false
+							,schemaName: 'contribution'
+						}
+			  			,{
+			  				selector: [ 'nunaliit_geom' ]
+							,create: false
+							,schemaName: 'geom'
+						}
+					]
+				}
+	
+				,test: {
+					name: 'test'
+					,isRootSchema: true
+					,display: 'Test {{name}}<br/>{{#inner}}{{{:html}}}{{/inner}}'
+					,brief: 'Test({{#inner}}{{{:html}}}{{/inner}})'
+					,form: '<table><tr><td>Test:</td><td><input type="text" class="{{#:input}}name{{/:input}}"/></td></tr>'
+						+'{{#inner}}{{{:html}}{{/inner}}</table>'
+					,create: {
+						nunaliit_type: 'test'
+						,inner: {}
+					}
+					,extensions: [
+						{
+							selector: [ 'inner' ]
+							,create: true
+							,schemaName: 'test2'
+						}
+					]
+				}
+				
+				,test2: {
+					name: 'test2'
+					,isRootSchema: false
+					,display: 'INNER--{{my_value}}--INNER'
+					,brief: 'Inner({{my_value}})'
+					,form: '<tr><td>Inner:</td><td><textarea class="{{#:input}}my_value{{/:input}}"></textarea></td></tr>'
+					,create: {
+						my_value: 'default value'
+					}
+					,extensions: [
+					]
+				}
+			};
+			
+			function loadSchemaDefinitions(opt_) {
+				var opt = $n2.extend({
+					names: null
+					,rootSchemas: false
+					,onSuccess: function(schemaDef){}
+					,onError: function(err){ $n2.reportError(err); }
+				},opt_);
+				
+				var result = [];
+				if( opt.names ) {
+					for(var i=0, e=opt.names.length; i<e; ++i) {
+						var name = opt.names[i];
+						
+						if( schemaMap[name] ) {
+							var schema = schemaMap[name];
+						
+							if( !opt.rootSchemas ) {
+								result.push(schema);
+							} else if( schema.isRootSchema ) {
+								result.push(schema);
+							};
+						};
+					};
+				} else {
+					for(var name in schemaMap) {
+						var schema = schemaMap[name];
+						
+						if( !opt.rootSchemas ) {
+							result.push(schema);
+						} else if( schema.isRootSchema ) {
+							result.push(schema);
+						};
+					};
+				};
+				
+				opt.onSuccess(result);
+			};
+			
+			function objectChanged(object, selector, value) {
+				$n2.log('objectChanged',object, selector, value);
+			};
+			
+			function testForm(schema) {
+				$n2.log('form schema',schema);
+				var defObj = schema.createObject({name:'test name',inner:{my_value:'inner value'}});
+
+				var schemaForm = schema.form(defObj,$('#form'),null,objectChanged);
+				$n2.log('schemaForm',schemaForm,defObj);
+			};
+			
+			function testDisplay(schema) {
+				$n2.log('display schema',schema);
+				
+				var defObj = schema.createObject({
+					place:{name:'A test place'}
+					,nunaliit_geom:{wkt:'POINT(5 6)'}
+					,nunaliit_attachments: {
+						files: {
+							file1: {
+								attachmentName: 'file1.jpg'
+								,originalName: 'hello.jpg'
+							}
+						}
+					}
+				});
+				defObj._id = '12345678';
+				defObj._rev = '6-abcdefgh';
+				defObj._attachments = {
+					'file1.jpg': {
+						content_type: 'image/jpeg'
+						,stub: true
+						,length: 14614
+						,revpos: 6
+					}
+				};
+				$n2.log('default object',defObj);
+				
+				schema.display(defObj,$('#display'),{
+					dbUrl: 'http://kitikmeot.atlases.org/db/'
+					,mediaUrl: 'http://kitikmeot.atlases.org/media/'
+				});
+			};
+
+			function testBrief(schema) {
+				$n2.log('brief schema',schema);
+				
+				var defObj = schema.createObject();
+				$n2.log('default object',defObj);
+				
+				schema.brief(defObj,$('#brief'));
+			};
+
+			function main() {
+				$n2.log('main');
+				
+				$n2.schema.DefaultRepository.loadSchemasFn = loadSchemaDefinitions;
+				
+				$n2.schema.DefaultRepository.getSchema({
+					name: 'object'
+					,onSuccess: testDisplay
+				});
+				
+				$n2.schema.DefaultRepository.getSchema({
+					name: 'test'
+					,onSuccess: testForm
+				});
+				
+				$n2.schema.DefaultRepository.getSchema({
+					name: 'test'
+					,onSuccess: testBrief
+				});
+				
+				$n2.schema.DefaultRepository.getRootSchemas({
+					onSuccess: function(schemas){
+						$n2.log('root schemas',schemas);
+					}
+				});
+			};
+
+			var loaded = false;
+			jQuery().ready(function() {
+				if( loaded ) return;
+
+				if( nunaliit2 && Mustache ) {
+					$n2 = nunaliit2;
+					
+					main();
+					loaded = true;
+				};
+			});
+			// -->
+		</script>
+	</body>
+</html>

@@ -1,0 +1,11 @@
+; Copy this file over to build.properties and adjust
+; values
+;
+; Destination where mobile app files should be copied
+;mobile.js.dest.dir=../www
+;
+; Set to 0 to avoid compression
+;nunaliit.js.compression=1
+;
+; Set to directory nunaliit project
+;nunaliit2.dir=../../../../../../../..

@@ -1,0 +1,27 @@
+[
+	{
+		"selector": [ "place" ]
+		,"create": false
+		,"schemaName": "place"
+	}
+	,{
+		"selector": [ "nunaliit_attachments" ]
+		,"create": false
+		,"schemaName": "attachments"
+	}
+	,{
+		"selector": [ "nunaliit_contribution" ]
+		,"create": false
+		,"schemaName": "contribution"
+	}
+	,{
+		"selector": [ "nunaliit_geom" ]
+		,"create": false
+		,"schemaName": "geom"
+	}
+	,{
+		"selector": [ "nunaliit_source" ]
+		,"create": false
+		,"schemaName": "source"
+	}
+]

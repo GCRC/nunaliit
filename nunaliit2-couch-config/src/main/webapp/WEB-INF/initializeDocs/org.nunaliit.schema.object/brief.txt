@@ -1,0 +1,1 @@
+{{#place}}{{{:html}}}{{/place}}{{^place}}{{#nunaliit_contribution}}{{{:html}}}{{/nunaliit_contribution}}{{^nunaliit_contribution}}{{#nunaliit_geom}}{{{:html}}}{{/nunaliit_geom}}{{^nunaliit_geom}}Unknown{{/nunaliit_geom}}{{/nunaliit_contribution}}{{/place}}

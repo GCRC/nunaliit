@@ -1,0 +1,1752 @@
+<html>
+<head>
+	<title>Nunaliit2 Documentation</title>
+	
+	<style type="text/css">
+	h1 {
+		text-align:center;
+	}
+	h2 {
+		background-color:#ccccff;
+	}
+	</style>
+	
+</head>
+<body>
+
+<h1>Nunaliit2 SDK - Command Line Tool</h1>
+
+<!-- ****************************************************************************** -->
+<h2><a name="toc">Table of Content</a></h2>
+
+<ol>
+	<li><a href="#obtaining">Obtaining Nunaliit2 SDK</a></li>
+	<li><a href="#building">Building Nunaliit2 SDK</a></li>
+	<li>
+		<a href="#installing">Installing Nunaliit2 SDK</a>
+		<ul>
+			<li><a href="#prerequisites">Prerequisites</a></li>
+			<li><a href="#jdk_ubuntu">Installing Java JDK on Ubuntu 12.04</a></li>
+			<li><a href="#install_couchdb">Installing CouchDb</a></li>
+			<li><a href="#imagemagick_ubuntu">Installing ImageMagick on Ubuntu 12.04</a></li>
+			<li><a href="#ffmpeg_ubuntu">Installing FFMpeg on Ubuntu 12.04</a></li>
+			<li><a href="#avcodec_ubuntu">Installing libavcodec-extra-53 on Ubuntu 12.04</a></li>
+			<li><a href="#magic_ubuntu">Fixing Magic File on Ubuntu 12.04</a></li>
+		</ul>
+	</li>
+	<li>
+		<a href="#using">Using Nunaliit2 SDK</a>
+		<ul>
+			<li><a href="#atlas_creation">Creating an Atlas</a></li>
+			<li><a href="#atlas_update_user">Updating the User Database</a></li>
+			<li><a href="#atlas_update">Updating and Running an Atlas</a></li>
+		</ul>
+	</li>
+	<li>
+		<a href="#daemon">Running the Atlas as a Daemon</a>
+		<ul>
+			<li><a href="#daemon_auto_start">Automatically starting Atlas Daemon</a></li>
+			<li><a href="#daemon_configure">Configuring Daemon</a></li>
+		</ul>
+	</li>
+	<li><a href="#directory_structure">Atlas Directory Structure</a></li>
+	<li>
+		<a href="#commands">Nunaliit SDK Commands</a>
+		<ul>
+			<li><a href="#command_help">help</a></li>
+			<li><a href="#command_create">create</a></li>
+			<li><a href="#command_config">config</a></li>
+			<li><a href="#command_update_user">update-user</a></li>
+			<li><a href="#command_update">update</a></li>
+			<li><a href="#command_run">run</a></li>
+			<li><a href="#command_dump">dump</a></li>
+			<li><a href="#command_restore">restore</a></li>
+			<li><a href="#command_options">&lt;global-options&gt;</a></li>
+		</ul>
+	</li>
+	<li><a href="#upload_process">Upload Process</a></li>
+	<li>
+		<a href="#disk_format">On-Disk Document Format</a>
+		<ul>
+			<li><a href="#disk_format_attachments">Attachments</a></li>
+		</ul>
+	</li>
+	<li>
+		<a href="#upgrading">Upgrading Nunaliit</a>
+		<ul>
+			<li><a href="#upgrading_install">Install new version of Nunaliit</a></li>
+			<li><a href="#upgrading_stop">Stop the Atlas</a></li>
+			<li><a href="#upgrading_reconfigure">Re-Configuring the Atlas</a></li>
+			<li><a href="#upgrading_update">Update Atlas</a></li>
+			<li><a href="#upgrading_restart">Re-Starting Atlas</a></li>
+			<li><a href="#upgrading_revert">Reverting to an older version of Nunaliit</a></li>
+		</ul>
+	</li>
+	<li>
+		<a href="#atlas_content">Atlas Content</a>
+		<ul>
+			<li><a href="#atlas_content_design_documents">Design Documents</a></li>
+			<li><a href="#atlas_content_urls">URLs</a></li>
+			<li><a href="#atlas_content_configuration">Configuration</a></li>
+			<li><a href="#atlas_content_custom_configuration">Custom Configuration</a></li>
+			<li><a href="#atlas_content_custom_display">Custom Display</a></li>
+			<li><a href="#atlas_content_custom_edit">Custom Editing</a></li>
+			<li><a href="#atlas_content_custom_create">Custom Document Creation</a></li>
+			<li><a href="#atlas_content_module">Module Document</a></li>
+			<li><a href="#atlas_content_schema_document">Schema Document</a></li>
+		</ul>
+	</li>
+</ol>
+
+<!-- ****************************************************************************** -->
+<h2><a name="obtaining">Obtaining Nunaliit2 SDK</a></h2>
+
+<p>The Nunaliit2 SDK is a tarball. At this point, there is no single
+distribution point and must be obtained from a developer or built manually.</p>
+
+<!-- ****************************************************************************** -->
+<h2><a name="building">Building Nunaliit2 SDK</a></h2>
+
+<p>The Nunaliit2 SDK can be built from the Nunaliit2 source repository. The tools required
+to build the Nunaliit2 SDK are:
+<ul>
+	<li>Subversion</li>
+	<li>Java JDK</li>
+	<li>maven2</li>
+	<li>ant</li>
+</ul>
+</p>
+
+<p>Here are the steps required to build the Nunaliit2 SDK from source.</p>
+
+<h3>1. Check out the Nunaliit2 project</h3>
+<pre>
+> svn co https://svn.gcrc.carleton.ca/nunaliit2/trunk nunaliit2
+</pre>
+
+<h3>2. Build Nunaliit2</h3>
+<pre>
+> cd nunaliit2
+> mvn install
+</pre>
+
+<h3>3. Locate SDK</h3>
+<p>There are two versions of the SDK that are packaged during the build 
+process: one TAR file (gzipped) and one ZIP file. For Linux/MacOS installation,
+the TAR file is preferred.</p>
+
+<p>Both files are located in the directory: .../nunaliit2/nunaliit2-couch-sdk/target</p>
+
+<!-- ****************************************************************************** -->
+<h2><a name="installing">Installing Nunaliit2 SDK</a></h2>
+
+<p>On a Linux installation, one must obtain the TAR file containing the Nunaliit2 SDK.
+Simply uncompress the installation file in a directory accessible to all that are to
+use the SDK.</p>
+<pre>
+> cd /usr/local
+> tar -zxvf nunaliit2-couch-sdk-X.Y-nunaliit.tar.gz
+> chmod -R o+r,o+x nunaliit2-couch-sdk-X.Y-nunaliit
+> export PATH=$PATH:/usr/local/nunaliit2-couch-sdk-X.Y-nunaliit/bin
+</pre>
+
+<h3><a name="prerequisites">Prerequisites</a></h3>
+
+<p>The nunaliit atlas framework depends on the following other projects:
+<ul>
+	<li><b>Java JDK</b> : The tools in the Nunaliit atlas framework are
+	built using Java. Therefore, a JDK must be install on the platform where
+	the framework is to be used. Java JDK version 6 or better is recommended.</li>
+	
+	<li><b>CouchDb</b> : This version of the Nunaliit atlas framework stores
+	it information in CouchDb, a schema-less database. A version of CouchDb
+	with a revision of 1.2 or better is recommended.</li>
+	
+	<li><b>ImageMagick</b> : The command-line tools from ImageMagick are called
+	to transform images uploaded to the atlas. ImageMagick with a version of 6.6
+	or better is recommended.</li>
+	
+	<li><b>FFMpeg</b> : The command-line tools from the FFMpeg suite are used
+	to transform video and audio files uploaded to the atlas. FFMpeg with a
+	version of 0.8 or better is recommended. Also, the CODECs necessary to FFMpeg
+	to handle X.264 are required </li>
+</ul>
+</p>
+
+<p>Ubuntu 12.04 is recommended to run the Nunaliit atlas framework, since this is the
+platform where it is tested the most. Other platforms can be used to run the framework
+as long as the prerequisites are met.</p>
+
+<p>Besides installed prerequisites, Ubuntu 12.04 requires some configuration fixes
+so that the framework will function properly:
+<ul>
+	<li><b>File Magic Fix</b> : The file command tool is used to determine the type of
+	files uploaded to the atlas. However, some files are not recognized appropriately
+	without applying a fix to the magic file.</li>
+</ul>
+</p> 
+
+<h3><a name="jdk_ubuntu">Installing Java JDK on Ubuntu 12.04</a></h3>
+
+<pre>
+> sudo apt-get install openjdk-6-jdk
+</pre>
+
+<h3><a name="install_couchdb">Installing CouchDb</a></h3>
+
+TBD
+<!-- jpfiset: The latest version of CouchDb that was used was CouchBase Single Server.
+couchbase-single-server-community_x86_2.0.0-dev-preview-4.deb
+This version is no longer supported.
+-->
+
+<h3><a name="imagemagick_ubuntu">Installing ImageMagick on Ubuntu 12.04</a></h3>
+
+<pre>
+> sudo apt-get install imagemagick
+</pre>
+
+<h3><a name="ffmpeg_ubuntu">Installing FFMpeg on Ubuntu 12.04</a></h3>
+
+<pre>
+> sudo apt-get update
+> sudo apt-get install ffmpeg
+</pre>
+
+<h3><a name="avcodec_ubuntu">Installing libavcodec-extra-53 on Ubuntu 12.04</a></h3>
+
+<pre>
+> sudo wget http://www.medibuntu.org/sources.list.d/precise.list
+> sudo wget http://www.medibuntu.org/sources.list.d/precise.list --output-document=/etc/apt/sources.list.d/medibuntu.list
+> sudo apt-get update
+> sudo apt-get install medibuntu-keyring
+> sudo apt-get update
+> sudo apt-get install libavcodec-extra-53
+</pre>
+
+<h3><a name="magic_ubuntu">Fixing Magic File on Ubuntu 12.04</a></h3>
+
+<p>Edit the file /etc/magic and add the following lines to it:</p>
+
+<pre>
+4       string          ftyp            ISO Media
+>8      string          MSNV            \b, MPEG v4 system, version 2
+!:mime  video/mp4
+</pre>
+
+
+<!-- ****************************************************************************** -->
+<h2><a name="using">Using Nunaliit2 SDK</a></h2>
+
+<p>The Nunaliit2 SDK is a command-line tool that allows a user to create, maintain
+and publish an on-line atlas. It manages each atlas in its own directory, keeping
+files relating to an atlas in a confined area of disk, facilitating back-ups and
+other life cycle tasks.</p>
+
+<p>The Nunaliit2 SDK contains Jetty within its code, permitting the publication of 
+the atlas without requiring any other downloads or set-up. The command-line tool
+can publish the atlas directly.</p>
+
+<p>The remaining of this section assumes that the Nunaliit2 SDK is installed and
+that the PATH variable has been updated to include the "bin" directory found within
+the SDK.</p> 
+
+<h3><a name="atlas_creation">Creating an Atlas</a></h3>
+
+<p>In an atlas creation, a new directory is created already populated with a number
+of starting files. The command is: </p>
+<pre>
+> nunaliit create
+</pre>
+<p>The user must answer a number of questions relating to the atlas:</p>
+<pre>
+Enter location where atlas should be created: atlas1
+Created atlas directory at: /home/jpfiset/eclipse/couchdb/nunaliit2/nunaliit2-couch-command/target/atlas1
+Copying templates from: /home/jpfiset/eclipse/couchdb/nunaliit2/nunaliit2-couch-sdk/src/main/templates
+Enter the name of the atlas [atlas1]: 
+Enter the URL to CouchDB [http://127.0.0.1:5984/]: 
+Enter the name of the database where atlas resides [atlas1]: 
+Enter the name of the admin user for CouchDB [admin]: 
+Enter the password for the admin user [admin_password]: password
+Enter the port where the atlas is served [8080]:
+</pre>
+<p>If the initial configuration must be changed, it can be accomplished by running the
+configuration command:</p>
+<pre>
+> cd atlas1
+> nunaliit config
+</pre>
+
+<p>In general, all commands other than the creation command should be run from the
+top directory of an atlas as such:</p>
+<pre>
+> cd &lt;atlas-dir&gt;
+> nunaliit &lt;command&gt;
+</pre>
+
+<p>However, if the command is not run from the top directory of an atlas, the atlas
+can be specified using the "--atlas-dir" option, as shown here:</p>
+<pre>
+> nunaliit --atlas-dir &lt;atlas-dir&gt; &lt;command&gt;
+</pre>
+
+<h3><a name="atlas_update_user">Updating the User Database</a></h3>
+
+<p>In CouchDb, a special database is used to track users called "_users". This database
+must be modified to work well with Nunaliit. Therefore, a command must be run once each time
+CouchDb is installed:</p>
+<pre>
+> cd &lt;atlas-dir&gt;
+> nunaliit &lt;update-user&gt;
+</pre>
+
+<h3><a name="atlas_update">Updating and Running an Atlas</a></h3>
+
+<p>Before running an atlas, the files found in the atlas directory must be propagated
+to their appropriate place. This process is known as "updating" the atlas. This
+is accomplished using the "update" command.</p>
+
+<pre>
+> nunaliit update
+</pre>
+
+<p>Once an atlas is up to date, it can be published using the "run" command.</p> 
+
+<pre>
+> nunaliit run
+</pre>
+
+<p>When the atlas is running, it can be viewed using a web browser. The address for
+the atlas is the local host, localhost or 127.0.0.1. However, the port on which
+the atlas is published is configured during the "config" command.</p>
+
+<!-- ****************************************************************************** -->
+<h2><a name="daemon">Running the Atlas as a Daemon</a></h2>
+
+<p>A script located in the "extra" and called nunaliit.sh can be used to run the
+atlas as a daemon. The syntax for this script is:</p>
+<pre>nunaliit.sh {start|stop|restart|check}</pre>
+
+<p>The <b>start</b> command is used to initiate the nunaliit atlas daemon. The 
+<b>stop</b> command is used to terminate the currently running daemon. The 
+<b>restart</b> command combines both stopping and starting the daemon.</p>
+
+<p>The <b>check</b> command is used verify the configuration and whether the
+daemon is running, or not.</p>
+
+<h3><a name="daemon_auto_start">Automatically starting Atlas Daemon</a></h3>
+
+<p>On an Ubuntu platforms, it is possible to make the atlas daemon start automatically
+when the server boots. This approach is based on the "nunaliit.sh" script found in
+the "extra" directory.</p>
+
+<pre>
+> cd /etc/init.d
+> sudo ln -s &lt;atlas-dir&gt;/extra/nunaliit.sh nunaliit
+> sudo update-rc.d [-n] nunaliit defaults 95
+</pre>
+
+<h3><a name="daemon_configure">Configuring Daemon</a></h3>
+
+<p>The "nunaliit.sh" script is written over every time that the nunaliit <b>config</b>
+command is run. Therefore, the script should not be manually modified. Instead, a
+file can be created which, if it exists, is included by "nunaliit.sh". This file to
+be included must reside in the "extra" directory and named "config.sh".</p>
+
+<p>The most common use of the external configuration file is to set the user that the
+daemon is run as. This is accomplished by creating a file (&lt;atlas-dir&gt;/extra/config.sh)
+with the following content:</p>
+
+<pre>
+NUNALIIT_USER=&lt;user&gt;
+</pre>
+
+<!-- ****************************************************************************** -->
+<h2><a name="directory_structure">Atlas Directory Structure</a></h2>
+
+<p>An atlas directory is created using the "create" command. At first, an atlas
+is populated with a number of default files. Most of these files can be modified
+to change the look and behaviour of the atlas.</p>
+
+<p>This section discusses the directory structure of the atlas and the types of
+files found in it.</p>
+
+<p>The top directory contain a number of sub-directories:<ul>
+<li><b>htdocs</b> : This directory contain files that are served to the clients
+visiting the atlas. This is similar to any web site, where HTML and Javascript files
+are served along with other required resources.</li>
+
+<li><b>docs</b> : This directory contain documents that are loaded to the database.
+Database documents are accessed by the web application during the viewing of an
+atlas.</li>
+
+<li><b>media</b> : This directory is used by the atlas while running and contains
+files uploaded by users of the atlas. Files are stored in this directory until
+they are approved, at which time they are copied in the database.</li>
+
+<li><b>config</b> : This directory contains a number of configuration files that
+influences the functioning of the atlas.</li>
+
+<li><b>logs</b> : This directory contains log files that are generated while the
+atlas is running.</li>
+
+<li><b>extra</b> : This directory contains a script, nunaliit.sh, that can be used
+to run the atlas in a "daemon" mode.</li>
+
+<li><b>dump</b> : This directory is used to save snapshots of the database using
+the "dump" command.</li>
+
+</ul></p>
+ 
+<!-- ****************************************************************************** -->
+<h2><a name="commands">Nunaliit SDK Commands</a></h2>
+
+<h3><a name="command_help">help</a></h3>
+
+<pre>nunaliit help [&lt;command&gt;]</pre>
+
+<p>This command provides general help about syntax and purpose, if a command is not
+specified. If a nunaliit command is specified as argument, help is reported
+about the syntax and purpose of the requested command.</p>
+
+<h3><a name="command_create">create</a></h3>
+
+<pre>nunaliit [&lt;global-options&gt;] create [&lt;create-options&gt;]</pre>
+
+<p>This command creates a new directory structure to hold the content of an atlas
+managed by the nunaliit framework. Then, the configuration command is run to
+set-up the apppropriate configuration properties. </p>
+
+<p>The options that can be specified for the create command (&lt;create-options&gt;)
+are defined as follows:
+<ul>
+<li><b>--no-config</b> : If this option is specified, the directory structure is created,
+without running the implicit "config" command.</li>
+</ul>
+</p>
+
+<h3><a name="command_config">config</a></h3>
+
+<pre>nunaliit [&lt;global-options&gt;] config</pre>
+
+<p>This command configures the atlas by asking the user a number of questions and
+setting the atlas configuration properties accordingly.</p>
+
+<h3><a name="command_update_user">update-user</a></h3>
+
+<pre>nunaliit [&lt;global-options&gt;] update-user</pre>
+
+<p>This command updates the database used to managed users on CouchDb. This updates
+is required for the proper functioning of the atlas framework.</p>
+
+<p>This command needs to be run only once for each CouchDb installation.</p>
+
+<h3><a name="command_update">update</a></h3>
+
+<pre>nunaliit [&lt;global-options&gt;] update</pre>
+
+<p>This command updates the CouchDb database used to support the atlas with the files
+found in the atlas directory. This command should be run every time changes are performed
+on the files found within the atlas directory.</p>
+
+<p>If the CouchDb database associated with the atlas is not yet created, the update
+command creates it.</p>
+
+<p>The update process is complex and encompasses many activities:
+<ul>
+
+<li><b>_design/site</b> : The document _design/site is created by merging together
+a template from the framework and the files found in "htdocs". This design document
+is then uploaded to the CouchDb database associated with the atlas.</li>
+
+<li><b>_design/atlas</b> : The document _design/atlas is special design document that
+contains views, validation functions and common javascript libraries used by the atlas.
+This design document is generated by using a basic template from the framework and
+adjusting settings for the given atlas. It is uploaded to the CouchDb database 
+associated with the atlas.</li>
+
+<li><b>_design/mobile</b> : The document _design/mobile is special design document that
+contains is used to access the atlas using mobile devices. This design document is
+obtained from the framework and uploaded to the CouchDb database associated with the 
+atlas.</li>
+
+<li><b>docs</b> : All documents found in the "docs" directory are uploaded to the 
+CouchDb database associated with the atlas. The documents found in the "docs"
+directory are documents that are under the control of the atlas developper.</li>
+
+<li><b>framework documents</b> : A number of documents are required by the atlas
+and are specified by the framework. These documents are uploaded to the CouchDb
+database associated with the atlas.</li>
+
+</ul>
+</p>
+
+<h3><a name="command_run">run</a></h3>
+
+<pre>nunaliit [&lt;global-options&gt;] run</pre>
+
+<p>This command updates starts an HTTP service which serves the content of
+the atlas. The address used by the service is the localhost. The port used
+by the service is specified during configuration.</p>
+
+<p>During the run command, the console output is used to report log messages.
+The service is ended by using CTRL-C</p>
+
+<p>Log messages are also sent to a file located in the "logs" directory</p>
+
+<h3><a name="command_dump">dump</a></h3>
+
+<pre>nunaliit [&lt;global-options&gt;] dump [&lt;dump-options&gt;]</pre>
+
+<p>This command takes a snapshot of some or all the documents found in the database
+associated with the atlas and store it to disk. This snapshot can be later restored using
+the "restore" command.</p>
+
+<p>The options that can be specified for the dump command (&lt;dump-options&gt;)
+are defined as follows:
+<ul>
+<li><b>--dump-dir &lt;dir&gt;</b> : If this option is specified, it indicates the
+directory where the snapshot is to be stored. If this option is not specified,
+the dump command creates a dated sub-directory under the "dump" directory.</li>
+<li><b>--doc-id &lt;doc-id&gt;</b> : If this option is specified, it indicates 
+a document that is to be dumped. This option can be specified multiple times. If this
+option is not specified, then all documents are dumped.</li>
+</ul>
+</p>
+
+<h3><a name="command_restore">restore</a></h3>
+
+<pre>nunaliit [&lt;global-options&gt;] restore --dump-dir &lt;dir&gt; [&lt;restore-options&gt;]</pre>
+
+<p>This command restores documents previously saved using the "dump" command. It
+can restore a complete snapshot, when the </p>
+
+<p>The options that can be specified for the restore command (&lt;restore-options&gt;)
+are defined as follows:
+<ul>
+<li><b>--dump-dir &lt;dir&gt;</b> : This option must be specified. If the specified
+directory is a fully qualified path, then this directory is used to find the document
+to be restored. If the specified directory is not fully qualified, then it is used
+as a realtive path from the "dump" directory.</li>
+<li><b>--doc-id &lt;doc-id&gt;</b> : If this option is specified, it indicates 
+a document that is to be restored. This option can be specified multiple times. If this
+option is not specified, then all documents are restored.</li>
+</ul>
+</p>
+
+<h3><a name="command_options">&lt;global-options&gt;</a></h3>
+
+<p>Global options are accepted by a number of commands and are defined as follows:<ul>
+
+<li><b>--atlas-dir &lt;dir&gt;</b> : If specified, indicates the location of the atlas
+directory. If this option is omitted, then the current directory is assumed to be the
+atlas directory. The atlas directory contains all the atlas files.</li>
+
+</ul></p>
+
+<!-- ****************************************************************************** -->
+<h2><a name="upload_process">Upload Process</a></h2>
+
+<p>The Nunaliit framework uses an upload process during atlas updating, upgrading
+and restoring. This process modifies documents in the database with the content of
+documents found on disk.</p>
+
+<p>When the upload process installs a document in the database, it creates a
+fingerprint of the document that it stores along with the document. When this document
+is modified, the fingerprint computed by the upload process no longer matches
+the content of the document. By verifying the fingerprint stored with a document, the 
+upload process can determine if the document was modified since it was last installed 
+in the database.</p>
+
+<p>The upload process uses the following appraoch for each document to be uploaded:
+<ol>
+<li>The document to be uploaded is read in memory, a fingerprint is computed against 
+it and the fingerprint is added to the document.</li>
+<li>The database is queried for a document that has the same identifier.</li>
+<li>If a document with the same identifier is not found in the database, the 
+document in memory is uploaded and the process ends.</li>
+<li>If the document found in the database is equivalent to the one in memory, the
+process ends.</li>
+<li>If the document found in the database does not contain a fingerprint, it is deemed
+modified. In this case, the upload process is aborted and an error is reported.</li>
+<li>If the document found in the database contains a fingerprint and that the fingerprint
+does not match its content, the document is deemed modified. In this case, the upload
+process is aborted and an error is reported.</li>
+<li>The document in memory is uploaded to the database.</li>
+</ol>
+</p>
+
+<!-- ****************************************************************************** -->
+<h2><a name="disk_format">On-Disk Document Format</a></h2>
+
+<p>Documents in CouchDb are represented as JSON objects. Therefore, all document transfers
+between CouchDb and applications are performed using JSON objects. In the Nunaliit
+framework, there are a number of instances where documents are stored on disk within the
+atlas directory. This section describes the format used by Nunaliit to load documents
+from disk.</p>
+
+<p>A document stored on disk is represented by a directory. The name of the directory
+is not relevant to the loading process and should be selected to help user locate documents.
+This directory is known as the "document directory".</p>
+
+<p>In the document directory, each entry (file or sub-directory) represents a key of the 
+top-most object that constitutes the document. Each file contains the value associated
+with the key. Each sub-directory contains the object or array value associated with the key.</p>
+
+<p>For each entry (file and sub-directory) in the document directory, a key is derived from
+the name. The extension for the entry name is used to determine the format of the entry
+while the remainder of the name is used as the key.</p>
+
+<p>For a file entry with an extension of "txt", the content of the file is used as
+a string value. For a file entry with an extension of "json", the content of the file
+is interpreted as JSON and used as the value.</p>
+
+<p>For a directory entry without an extension, the content of the directory is used to
+create an object that is used as the value. The process to load this object is identical
+to the one used by the document loader, and thus is recursive.</p>
+
+<p>For a directory entry with an extension of "array", the content of the directory
+represents an array. The names of the entries in directory are sorted and values are
+loaded in this order.</p>
+
+<p>Here is an example illustrates this process. In this example, the directory structure is:</p>
+
+<pre>
+/
+|- _id.txt : 123456
+|- a.txt   : Just a test
+|- b.json  : {"array":[1,2,3]}
+|- inner
+|  |- c.txt  : Another string value
+|  |- d.json : {}
+|- e.array
+   |- 0.txt : one
+   |- 1.json : 2  
+</pre>
+
+<p>From the above directory structure, the loading process would create a JSON object equivalent
+to:</p>
+
+<pre>
+{
+	"_id":"123456"
+	,"a":"Just a test"
+	,"b": {
+		"array":[1,2,3]
+	}
+	,"inner":{
+		"c":"Another string value"
+		,"d": {}
+	}
+	,"e":["one",2]
+}
+</pre>
+
+<h3><a name="disk_format_attachments">Attachments</a></h3>
+
+<p>CouchDb associates files to documents as attachments. Attachments
+are saved in a document under a special key: "_attachments"". On disk, the attachments are saved
+in a directory called "_attachments" in the top document directory.</p>
+
+<p>Each file found in the "_attachments" directory structure is uploaded as an attachment to
+the document, with a name that is the relative path from the "_attachments" directory. 
+Sub-drectories to the "_attachments" directory have no meaning other than to contribute to the
+naming of the files deemed as attachments.</p>
+
+<p>Other information is associated with attachments, such as the content-type. This information
+is stored in a file adjacent to the attachment itself. This information file has the same name
+as the attachment, however it is appended with "._nunaliit". The content of the information file
+is plain text that contains a JSON object that is examplified as:</p>
+
+<pre>
+{
+	"name": &lt;attachment-name&gt;
+	,"content_type": &lt;content-type&gt;
+}
+</pre> 
+
+<p>The &lt;attachment-name&gt; is a string specifying the name of the attachment and is useful 
+in case the name associated with an attachment can not be converted into a directory structure.
+The field &lt;content-type&gt; is a string depicting the content type of the attachment, such as
+"text/plain", "text/html" or "video/mp4".</p> 
+
+<!-- ****************************************************************************** -->
+<h2><a name="upgrading">Upgrading Nunaliit</a></h2>
+
+<p>Over the life of an atlas, new releases of Nunaliit might become available. This section
+discusses the procedure to migrate from one version of Nunaliit to another. In this process,
+new and updated libraries will be installed as well as new and updated documents that are
+specified by the framework.</p>
+
+<p>At a high level, the upgrade process follows these steps:
+<ol>
+<li>Install new version of Nunaliit</li>
+<li>Stop atlas</li>
+<li>Re-configure atlas</li>
+<li>Update atlas</li>
+<li>Restart atlas</li>
+</ol></p>
+
+<h3><a name="upgrading_install">Install new version of Nunaliit</a></h3>
+
+<p>When a new version of Nunaliit is installed on a platform, it should be hosted in a directory
+different than the previous version. The old version of the Nunaliit framework should be
+kept until the new atlas is performing properly. This enables a user of the Nunaliit
+framework to revert to an earlier version.</p>
+
+<p>Installing Nunaliit is as simple as uncompressing the distributed file in its own directory.
+To make this new version active, modify the PATH variable used by the operating system
+to detect executable files. The PATH variable should include the "bin" directory of the
+new installation, not the old one.</p>
+
+<h3><a name="upgrading_stop">Stop the Atlas</a></h3>
+
+<p>Stopping the atlas is dependent on the way the atlas was started. If the atlas
+was started using the "run" command, then pressing CTRL-C in the console window where
+the atlas is run should be sufficient. If the atlas was started as a daemon, the following
+command should be used:</p>
+
+<pre>.../nunaliit.sh stop</pre>
+
+<h3><a name="upgrading_reconfigure">Re-Configuring the Atlas</a></h3>
+
+<p>Some of the files in the atlas directory reference the location of the Nunaliit
+framework. These files must be updated to reference the new framework
+location. This is accomplished by running the configuration command. In the case of
+re-configuring, all default values can be accepted during the "config" command.</p>
+
+<pre>
+> cd &lt;atlas-dir&gt;
+> nunaliit config
+</pre>
+  
+<h3><a name="upgrading_update">Update Atlas</a></h3>
+
+<p>Updating the atlas is required to load new and modified documents and libraries. If an
+updated document was changed manually in the database, then the document is skipped
+during the upload process. This means that a user upgrading Nunaliit should remain
+vigilent of the errors reported during the update process.</p>
+
+<h3><a name="upgrading_restart">Re-Starting Atlas</a></h3>
+
+<p>After the re-configuration, the script used to start Nunaliit as a daemon is modified.
+One should review this file to ensure that all properties are in order. Then:</p>
+
+<pre>
+> &lt;atlas-dir&gt;/nunaliit.sh start
+</pre>
+
+<h3><a name="upgrading_revert">Reverting to an older version of Nunaliit</a></h3>
+
+<p>Reverting to an older version of Nunaliit is similar. Instead of installing a new version
+of the Nunaliit framework, change the PATH variable back to the "bin" directory of the
+desired version. Then, follow the remaining steps of this section.</p>
+
+<!-- ****************************************************************************** -->
+<h2><a name="atlas_content">Atlas Content</a></h2>
+
+<p>There are two main types of documents that are served from a running instance of the atlas
+framework: Web Resources and Database Documents.</p>
+
+<p>Web resources are files that generally comprised a web site and include such things as
+HTML files, CSS files, Javascript libraries, images, etc. A number of web resources are
+provided by the atlas framework, itself. Others are specified by the atlas designer by
+including them in the "htdocs" directory of the atlas.</p>
+
+<p>On the other hand, database documents are JSON object that are stored in CouchDb. These
+documents can be access directly by providing the document identifier to the database,
+or via multiple views that are installed by the atlas framework. As with web resources, a
+number of database documents are provided by the framework. Atlas designers can specify
+documents to be loaded to the database by including them in the "docs" directory of the
+atlas.</p>
+
+<p>Althgough database documents can be specified and uploaded by the framework, the majority
+of documents found in the database are created and updated by using the atlas itself. Geometries,
+comments, and most of the interactions that users have with the atlas ends up recorded as
+a database documents.</p>
+
+<p>The main distinction between web resources and database documents is that web resources
+are static, while database documents can be modified at run-time. Updating an atlas provides
+an opportunity to the atlas designer to change the web resources. However, between updates,
+web resources remain static.</p>
+
+<p>All documents, including those provided by the framework, can be modified by users as long
+as the modifications respect the authorization rules. Therefore, the behaviour controlled by
+the content found in database documents can be modified and customized to fit an atlas. On the
+other hand, if a database document provided by the framework was modified by a user, this
+document is not upgraded while installing a new revision of Nunaliit.</p>
+
+<!-- .................................................................. -->
+<h3><a name="atlas_content_design_documents">Design Documents</a></h3>
+
+<p>In CouchDd, there are a special class of documents called "Design Documents". These documents
+have identifiers that begins with the prefix "_design/" and are used to provide index
+functions, validation functions, list functions and show functions. These document generally
+contains web resources for on-line applications served out of the database.</p>
+
+<p>In the Nunaliit framework, a number of design documents are in use:
+<ul>
+	<li><b>_design/atlas</b> : This design document contains all views (index functions)
+	and web resources necessary for the Nunaliit framework.</li>
+	
+	<li><b>_design/site</b> : This design document contains all views (index functions)
+	and web resources that are specific to the atlas. This documents is built from
+	content found exclusively in the atlas directory. The attachments found in this
+	design documents are loaded from the "htdocs" sub-directory in the atlas
+	directory.</li>
+	
+	<li><b>_design/server</b> : This design document contains views necessary to the
+	proper functioning of the "robot" component of the atlas. This document is maintained
+	by the servlet that implements the "robot".</li>
+	
+	<li><b>_design/mobile</b> : This design document contains views and list functions
+	needed for mobile devices that attach to the atlas. This document is provided by the
+	framework.</li>
+</ul>
+</p>
+
+<!-- .................................................................. -->
+<h3><a name="atlas_content_urls">URLs</a></h3>
+
+<p>The Nunaliit framework serves the web resources and the database documents through
+an HTTP connect, accessible from a web browser. For simplification, the all URL paths
+used by the atlas web application are relative to the root, where the atlas web
+resources are served. URL redirection is used to make CouchDb resources appear adjacent
+to one another.</p>
+
+<p>Here are the paths served by the Nunaliit framework:
+<ul>
+	<li><b>/</b> : The root directory is redirected to the attachments of the
+	"_design/site" design document. The attachments to this document are loaded from
+	the "htdocs" sub-directory of the atlas directory. All sub-directories from
+	the "htdocs" sub-directory are served by following a relative path from the root,
+	unless it is a path that is redirected elsewhere.</li>
+
+	<li><b>/media</b> : This path is re-directed to the sub-directory "media" found
+	in the atlas directory. This directory is used by the framework to store files
+	uploaded by user, via the atlas interface.</li>
+
+	<li><b>/server</b> : This path is re-directed to the root of the CouchDb server.
+	This path is useful to access CouchDb server information, access the user database
+	or perform replication.</li>
+
+	<li><b>/db</b> : This path is re-directed to the top most directory of the
+	CouchDb database that serves the atlas, regardless of the database name. This
+	path is used by the framework to access all documents, views or other sevices
+	from the database. A document is located at /db/&lt;document-id&gt;</li>
+
+	<li><b>/servlet</b> : This path is re-directed to the various Java servlets that
+	form the "robot" component of the framework. Among those paths are: 
+	<b>/servlet/configuration</b>, <b>/servlet/upload</b>, <b>/servlet/progress</b> and 
+	<b>/servlet/export</b>.</li>
+
+	<li><b>/config</b> : This path is not actually re-directed, but reserved to
+	hold a configuration script to specify the location of all resources.</li>
+
+	<li><b>/nunaliit2</b> : This path is re-directed to the path /db/_design/atlas/nunaliit2.
+	It contains all the Javascript libraries written specifically for the atlas framework.</li>
+
+	<li><b>/js-external</b> : This path is re-directed to the path 
+	/db/_design/atlas/js-external. This path contains all the Javascript libraries obtained from
+	projects other than Nunaliit, but required for the proper functioning of the framework.</li>
+
+	<li><b>/lib</b> : This path is re-directed to /db/_design/atlas/lib and contains special 
+	scripts that are shared between the web resources and internal workings of views and lists.
+	These scripts contain some information specific to an atlas.</li>
+
+	<li><b>/tools</b> : This path is re-directed to /db/_design/atlas/tools and contains 
+	web pages and web tools used to managed an atlas. These tools are common to all instances
+	of atlas and are provided by the framework.</li>
+</ul>
+</p>
+
+<!-- .................................................................. -->
+<h3><a name="atlas_content_configuration">Configuration</a></h3>
+
+<p>HTML documents and other web resources provided by an atlas designer should be located
+in the "htdocs" sub-directory of the atlas directory. In particular, HTML documents that
+are expected to perform interactions with the framework should:
+<ul>
+	<li>include all CSS required by the framework</li>
+	<li>include all Javascript librairies required by the framework</li>
+	<li>include a Javascript section to initiate the configuration</li>
+</ul>
+</p>
+
+<p>The CSS resources required by the Nunaliit framework should be defined in the
+header of a HTML file as follows:
+<pre>
+&lt;link rel="stylesheet" href="js-external/css/jquery-ui/smoothness/jquery-ui.custom.css" type="text/css" /&gt;
+&lt;link rel="stylesheet" href="js-external/css/jquery.lightbox-0.5.css" type="text/css" /&gt;
+&lt;link rel="stylesheet" href="nunaliit2/css/basic/nunaliit2.css" type="text/css" /&gt;
+&lt;link rel="stylesheet" href="_list/css_merge/css" type="text/css" /&gt;
+</pre>
+</p>
+
+<p>The Javascript libraries required by the Nunaliit framework should be defined in the
+header or the body of a HTML file as follows:
+<pre>
+&lt;script type="text/javascript" src="js-external/js/jquery.min.js"&gt;&lt;/script&gt;
+&lt;script type="text/javascript" src="js-external/js/jquery-ui.min.js"&gt;&lt;/script&gt;
+&lt;script src="http://maps.google.com/maps/api/js?v=3.3&sensor=false"&gt;&lt;/script&gt;
+&lt;script type="text/javascript" src="js-external/OpenLayers/OpenLayers.js"&gt;&lt;/script&gt;
+&lt;script type="text/javascript" src="js-external/js/jquery.lightbox-0.5.js"&gt;&lt;/script&gt;
+&lt;script type="text/javascript" src="js-external/js/jquery.cycle.pack.js"&gt;&lt;/script&gt;
+&lt;script type="text/javascript" src="js-external/js/jquery.form.js"&gt;&lt;/script&gt;
+&lt;script type="text/javascript" src="js-external/js/jquery.cookie-1.0.js"&gt;&lt;/script&gt;
+&lt;script type="text/javascript" src="js-external/js/sha1.js"&gt;&lt;/script&gt;
+&lt;script type="text/javascript" src="lib/atlas.js"&gt;&lt;/script&gt;
+&lt;script type="text/javascript" src="nunaliit2/nunaliit2.js"&gt;&lt;/script&gt;
+&lt;script type="text/javascript" src="nunaliit2/nunaliit2-couch.js"&gt;&lt;/script&gt;
+&lt;script type="text/javascript" src="lib/utils.js"&gt;&lt;/script&gt;
+&lt;script type="text/javascript" src="config/configuration.js"&gt;&lt;/script&gt;
+&lt;script type="text/javascript" src="nunaliit_custom.js"&gt;&lt;/script&gt;
+</pre>
+</p>
+
+<p>The initialization of the Nunaliit atlas framework is performed in multiple steps:
+<ol>
+	<li>The initialization should be started by the application once the document is loaded</li>
+	<li>The atlas framework creates components that configured in a default manner</li>
+	<li>Custom configuration code is called</li>
+	<li>Control is returned to the application via a callback</li>
+</ol>
+</p>
+
+<p>Initialization is started by the application by calling a function called "runConfiguration".
+This should be done after the document completed to load. Since jQuery is available (jQuery is
+required by the Nunaliit framework), a simple way to perform this is to use the jQuery's
+"ready" function, as demontrated in this example:
+<pre>
+jQuery().ready(function() {
+	runConfiguration({
+		configuredFunction: main_init
+		,rootPath: './'
+	});
+});
+</pre> 
+</p>
+
+<p>The runConfiguration() takes an object as argument to pass options to the configuration
+process. There are two options that can be specified:
+<ul>
+	<li><b>configuredFunction</b> : This is a function (callback) that is executed when
+	the configuration process has completed. This function has one argument, which is an
+	object that contains all configuration information.</li>
+
+	<li><b>rootPath</b> : This is a string that specifies the relative path to the root
+	of the applicaiton. If not specified, the rootPath is assumed to be './'. This relative
+	path should always end with a slash character. For all HTML documents in the root
+	directory, the default value is correct. For all HTML documents in direct sub-directories,
+	this value should be '../'.</li>
+</ul>
+</p>
+
+<p>During the configuration process, custom configuration code is called. This is covered
+in its own section, later.</p>
+
+<p>At the end of the framework configuration, a callback is executed. This callback can be
+thought of as the application's main entry point or main function. As described earlier,
+this callback is specified in the "runConfiguration()" function. The main function receives
+an object, which contains all configuration information. The structure of this object
+is:
+<ul>
+	<li><b>atlasDb</b> : Javascript object configured to access the CouchDb database 
+	associated with the atlas.</li>
+
+	<li><b>atlasDesign</b> : Javascript object configured to access the design document
+	"_design/atlas"	in the CouchDb database.</li>
+
+	<li><b>mediaRelativePath</b> : String that depicts the relative path, from the current
+	application, to the directory where media files are uploaded.</li>
+
+	<li><b>couchEditor</b> : Javascript object that provides the functions to edit a
+	database document based on schemas.</li>
+
+	<li><b>popupHtmlFunction</b> : Javascript function called to generate pop-up
+	boxes on maps.</li>
+
+	<li><b>directory.authService</b> : Javascript object that provides authentication services.</li>
+
+	<li><b>directory.schemaRepository</b> : Javascript object that provides access to
+	all schemas defined in the atlas.</li>
+
+	<li><b>directory.uploadService</b> : Javascript object that provides services to upload
+	files to the atlas.</li>
+
+	<li><b>directory.exportService</b> : Javascript object that provides services to export
+	data from the atlas.</li>
+
+	<li><b>directory.searchService</b> : Javascript object that provides search services for
+	the atlas.</li>
+	
+	<li><b>directory.cacheService</b> : Javascript object that retrieves documents cached from
+	the database.</li>
+	
+	<li><b>directory.requestService</b> : Javascript object that asynchronously retrieves documents
+	cached from	the database. The request service uses the cache service to minimize the
+	communication to the database.</li>
+	
+	<li><b>directory.dispatchSupport</b> : Javascript object used dispatch messages between all
+	services.</li>
+	
+	<li><b>directory.showService</b> : Javascript object that provides the functions needed
+	to display the content of a database document based on schemas.</li>
+	
+	<li><b>directory.schemaEditorService</b> : Javascript object that provides the functions
+	needed edit a schema.</li>
+	
+	<li><b>directory.serverSideNotifier</b> : Javascript object that provides functions
+	needed access notifications sent from the server.</li>
+	
+	<li><b>directory.hoverSoundService</b> : Javascript object which plays ambient sound
+	that is generally associated with hovering over a feature.</li>
+</ul>
+</p>
+
+<p>From the main application function, an application can create a map, a side text panel,
+and many more widgets, based on the configuration. This is covered later. The next script
+fragment shows the "runConfiguration()" and application main function together:
+<pre>
+function main(config){
+	// Here starts the application
+};
+
+jQuery().ready(function() {
+	runConfiguration({
+		configuredFunction: main
+		,rootPath: './'
+	});
+});
+</pre>
+</p>
+
+<!-- .................................................................. -->
+<h3><a name="atlas_content_custom_configuration">Custom Configuration</a></h3>
+
+<p>All tools provided by the framework explicitely include a Javascript file named
+"nunaliit_custom.js" and located in the top most directory of the atlas (root). 
+If an atlas designer is interested in modifying the configuration globally, before any
+tool has an opporunity to begin, it can be accomplished by adding custom code to a file 
+named "nunaliit_custom.js" in the "htdocs" sub-directory of the atlas directory. If this 
+file exists at run-time, it is loaded and all functions exposed by this file are available
+to the web application.</p>
+
+<p>To intercept configuration of the Nunaliit framework, an atlas designer must specify
+a special function. This function should be located at in the
+Javascript name space at window.nunaliit_custom.configuration. The following example shows
+a script to perform custom Javascript operations:
+<pre>
+;(function($n2){
+
+if( typeof(window.nunaliit_custom) === 'undefined' ) window.nunaliit_custom = {};
+
+// This is the a custom function that can be installed and give opportunity
+// for an atlas to configure certain components before modules are displayed
+// @param config Object that contains all configuration
+// @param callback Function to be called when custom code is complete. This
+//                 allows asynchronous calls to be performed in the custom
+//                 code. 
+window.nunaliit_custom.configuration = function(config, callback){
+
+	// --- This is where custom code would be inserted ---
+
+	// Done with configuration, perform the offered callback
+	// to complete configuration and initialize application.
+	callback();
+};
+
+})(nunaliit2);
+</pre>
+</p>
+
+<p>As shown in the example above, the callback function given in argument must be
+called at the end of the customization. This approach is used to enable custom code to
+perform asynchronous calls. If the callback function is not called, then the atlas will
+not load.</p>
+
+<p>The configuration object provided as argument is described in a previous section and
+is fully populated by the time the custom configuration function is called.</p>
+
+<p>All web pages created by an atlas designer should include "nunaliit_custom.js" to
+provide the custom code an opportunity to run.</p>
+
+<!-- .................................................................. -->
+<h3><a name="atlas_content_custom_display">Custom Display</a></h3>
+
+<p>As part of custom configuration, it is possible to influence how a document appears by
+adding custom values to the document before it is displayed by the "ShowService". Schemas
+are used to render the content of a document. However, schemas contain only simple templates and
+do not provide a way to perform complex computations based on the content of the document.</p>
+
+<p>The "ShowService" offers the opportunity to install a function that may modify any document
+before it is presented to the templating process. The following script demonstrates this
+capability:
+<pre>
+window.nunaliit_custom.configuration = function(config, callback){
+
+	/*
+	 * This is the function where documents are modified before being displayed
+	 * by the Show Service
+	 */
+	config.directory.showService.options.preprocessDocument = function(doc) {
+		
+		// At this point, perform any modification required
+		doc.justATest = 'TestValue';
+	
+		return doc;
+	};
+	
+	// Done with configuration
+	callback();
+};
+</pre>
+</p>
+
+<p>The example above shows the ability of installing a "preprocessDocument" function to the
+ShowService during custom configuration. Modifications made to a document during the preprocess
+function are available to the schema templates.</p>
+
+<!-- .................................................................. -->
+<h3><a name="atlas_content_custom_edit">Custom Editing</a></h3>
+
+<p>When a document is being edited, a number of views of the document are presented
+to allow a user to modify the content of the document. One of those views is based
+on the schema associated with the document. Since a schema offers only a template,
+it is not possible to specify complex operations using the template alone. There is
+a facility, using the SchemaEditor, to modify the HTML produced by the template. To do
+so, one must register a "post process" function with the document editor based on schema.
+The following script shows how this can be accomplished:
+<pre>
+if( typeof(window.nunaliit_custom) === 'undefined' ) window.nunaliit_custom = {};
+
+// This is the a custom function that can be installed and give opportunity
+// for an atlas to configure certain components before modules are displayed
+window.nunaliit_custom.configuration = function(config, callback){
+
+	/*
+	 * The following function is called after a schema editor has been
+	 * called to display a document. This is useful to add UI elements
+	 * to the edit window.
+	 * @param doc {Object} Document that is being edited
+	 * @param $div {Object} jQuery element that contains the rendered template
+	 *                      for editing. 
+	 */
+	config.directory.schemaEditorService.addPostProcessFunction(function(doc, $div) {
+	
+		// Find elements with class 'insertRevision' and change content with document
+		// revision
+		$div.find('.insertRevision').text(doc._rev);
+	});
+
+	// Done with configuration
+	callback();
+};
+</pre>
+</p>
+
+<p>The simplistic example above shows how to enable this feature within the custom configuration
+function. The custom configuration function, within "nunaliit_custom.js", is the appropriate
+place to define this function as to make the changes available to all Nunaliit tools.</p>
+
+<!-- .................................................................. -->
+<h3><a name="atlas_content_custom_create">Custom Document Creation</a></h3>
+
+<p>Within the atlas framework, when a new document is created, it is generally done
+spcifying a document schema. The schema provides a basic template for a new and empty
+document. If a more complex process is required when creating a new document, it is
+possible to install a function with the schema repository to intercept all new documents
+created from a schema and modify the content of the document. The following script
+demonstrate how a custom function can be installed:
+<pre>
+if( typeof(window.nunaliit_custom) === 'undefined' ) window.nunaliit_custom = {};
+
+// This is the a custom function that can be installed and give opportunity
+// for an atlas to configure certain components before modules are displayed
+window.nunaliit_custom.configuration = function(config, callback){
+
+	/*
+	 * The following function is called when a document is created from
+	 * a schema.
+	 */
+	var repositoryFunctions = config.directory.schemaRepository.getRepositoryFunctions();
+	repositoryFunctions.addOnDocumentCreateFunction(function(doc, schema){
+	
+		if( schema.name === 'mySchema' ){
+			doc.mySchema = ['something special'];
+		};
+	
+	});
+	
+
+	// Done with configuration
+	callback();
+};
+</pre>
+</p>
+
+<p>The function called at creation is given both the new document and the schema used
+to create it. The schema can be used to discriminate which documents require modifications.
+The document given in argument can be modified, if it is needed.</p>
+
+<p>The example above shows how the custom creation function can be added via the use of the
+custom configuration function. This is the appropriate location for this definition so as
+to have all tools offered in the framework behave the same when a new document is created.</p> 
+
+<!-- .................................................................. -->
+<h3><a name="atlas_content_module">Module Document</a></h3>
+
+<p>One of the way to build an atlas page is to use a module document. A module document
+specifies the characteristics of a module, such as which map layers are used, what the
+introductory text is, which schemas are used, etc. A module document can be stored in the
+database or specified in-line by in Javascript code. With a module document, the ModuleDisplay
+class can be used to display the module to a web page, by specifying where the elements should
+be displayed.</p>
+
+<h4>Module Document</h4>
+
+<p>The example of a module document is shown here to help with explanation:
+<pre>
+{
+	"nunaliit_module": {
+		"title":"Generic Atlas"
+		,"introduction": {
+			"type": "html"
+			,"content": "&lt;div class=\"intro\"&gt;&lt;b&gt;Welcome to a Nunaliit2 Atlas served from CouchDb&lt;/b&gt;&lt;br/&gt;&lt;a href=\"./tools/index.html\"&gt;Nunaliit Tools&lt;/a&gt;&lt;/div&gt;"
+		}
+		,"map":{
+			"coordinates": {
+				"initialBounds": [-75.72,45.41,-75.67,45.43]
+			}
+			,"backgrounds": [
+				{ 
+					"name": "Google Satellite"
+					,"type": "Google Maps"
+					,"options": {
+						"type": "SATELLITE"
+						, "numZoomLevels": 19 
+					}
+				}
+				,{ 
+					"name": "Google Hybrid"
+					,"type": "Google Maps"
+					,"options": {
+						"type": "HYBRID"
+						,"numZoomLevels": 19
+					}
+				}
+				,{ 
+					"name": "Google Physical"
+					,"type": "Google Maps"
+					,"options": {
+						"type": "TERRAIN"
+						,"numZoomLevels": 19 
+					}
+				}
+			]
+			,"overlays": [
+				{
+					"name": "Approved Layer"
+					,"type": "couchdb"
+					,"options": {
+						"layerName": "approved"
+					}
+					,"featurePopupDelayMs": 0
+					,"useHoverSound": true
+				}
+				,{
+					"name": "Public"
+					,"type": "couchdb"
+					,"options": {
+						"layerName": "public"
+					}
+					,"featurePopupDelayMs": 0
+					,"useHoverSound": true
+				}
+			]
+			,"addPointsOnly": false
+			,"toggleClick": true
+		}
+		,"display":{
+			"defaultSchemaName":"genericDoc" 
+		}
+		,"edit":{
+			"defaultSchemaName": "genericDoc"
+			,"newDocumentSchemaNames": "ALL_SCHEMAS" 
+		}
+	}
+}
+</pre>
+</p>
+
+<p>At the top level of a module document, a key "nunaliit_module" must be present. This
+key is associated with an object (module object) that contains all the pertinent information
+relating to a module. The keys that can be specified in a module object are:
+<ul>
+	<li><b>title</b> : String used to populate the title elements of the displayed module.</li>
+
+	<li><b>introduction</b> : Object that specifies the introductory text displayed when
+	a module is first loaded. This object must contain a "type" key which can be: "html",
+	"text" or "attachment". If the specified type is "html" or "text", then another key named
+	"content" must be specified. In the case of "html", the "content" key must be associated with
+	a String that contains the HTML markup to be displayed. In the case of "text", the "content" key
+	must be associated with a String that contains plain text to be displayed. If the "type" specified
+	is "attachment", then a key named "attachmentName" must be specified. The "attachmentName" refers
+	to the attachment, associated with the document, that contains the text to be displayed.
+	The type "attachment" is meaningful only when a module document is stored in the database.</li>
+
+	<li><b>display</b> : If specified, this object is used to provide configuration information
+	to the display process. Only one key can be defined: "defaultSchemaName", which specifies
+	the name of the schema used if the display process attempts to show a document that is not
+	associated with any schema.</li>
+
+	<li><b>edit</b> : If specified, this object is used to provide configuration information
+	to the document editor. The key "defaultSchemaName" can be defined, which specifies
+	the name of the schema used if the editor attempts to show a document that is not
+	associated with any schema. The key "newDocumentSchemaNames", if provided, controls the
+	set of schemas available to create new documents. If the string "ALL_SCHEMAS" is used,
+	then all schemas will be offered when a new document is created. Otherwise, the key
+	"newDocumentSchemaNames" should be associated with an array of strings, each string
+	specifying the name of a schema to be included at the creation process.</li>
+</ul>
+</p>
+
+<p>The module object can also define a key named "map", which is associated with an object
+that describes a map that can be displayed. The map description object is defined with the
+following keys:
+<ul>
+	<li><b>coordinates</b> : Object that describes the coordinate system used by the map.
+	A key named "initialBounds" must be specified, which is an array that describes the
+	bounding box where the map should be initially opened. If the key "autoInitialBounds"
+	contains <b>true</b>, then the map attempts to open over a region that encompasses all
+	geometries.</li>
+
+	<li><b>addPointsOnly</b> : If this key is specified and that this is associated with
+	the Boolean true, then while editing, the map accepts only new geometries that are points.
+	Otherwise, the map offers point, lines and polygons for newly created geometries.</li>
+
+	<li><b>toggleClick</b> : If this key is specified and that this is associated with
+	the Boolean true, then the map unselects a feature when an already selected feature
+	is clicked again. If false, clicking on an already selected feature selects it again.</li>
+
+	<li><b>backgrounds</b> : This key must be associated with an array of objects, each object
+	describing a background layer for the map. A background layer provides imaging on which
+	the map displays features. Multiple background layers can be specified, but only one is
+	shown at an given time.</li>
+
+	<li><b>overlays</b> : This key must be associated with an array of objects, each object
+	describing a foreround layer for the map. Overlays generally draw features on a map.
+	Multiple overlays can be specified and shown simultaneously.</li>
+</ul>
+</p>
+
+<p>When defining a map background, the object must contain a key named "name" for specifying
+the name of the background, a key named "type" for specifying the type of the background and
+a key named "options", which is an object that contains information about the background
+depending on the type of background. The possible background types are: "Bing", "Google Maps"
+and "wms".</p>
+
+<p>A "Bing" background layer must specify the following options:
+<ul>
+	<li><b>key</b> : Bing Maps API key for your application. One can get a new 
+	key at <a href="http://bingmapsportal.com/">http://bingmapsportal.com/</a></li>
+
+	<li><b>type</b> : Bing layer identifier.</li>
+</ul>
+</p>
+
+<p>A "Google Maps" background layer must specify the following options:
+<ul>
+	<li><b>type</b> : This is a required string which specifies the Google map 
+	-layer identifier. Possible values are (but not resricted to): "SATELLITE", 
+	"HYBRID" and "TERRAIN".</li>
+
+	<li><b>numZoomLevels</b> : Specifies how many zoom levels are available to the
+	imagery.</li>
+</ul>
+</p>
+
+<p>A "wms" background layer refers to a layer that is served from a WMS server. The
+object associated with a WMS layer must specify the following options:
+<ul>
+	<li><b>url</b> : The URL of the WMS server</li>
+
+	<li><b>layers</b> : Required. A string containing a list of comma-separated layer names, to
+	be assembled by the WMS server.</li>
+
+	<li><b>styles</b> : Required. A string containing a list of comma-separated style names, to
+	apply style to each named layer.</li>
+</ul>
+</p>
+
+<p>When defining map overlays, any layer definition acceptable for background can be included
+as an overlay. When defining an overlay, the overlay object is specified as follows:
+<ul>
+	<li><b>name</b> : String that specifies the name of the layer</li>
+	<li><b>type</b> : String that specifies the type of overlay. Possible values are: "couchdb" 
+	and "wfs".</li>
+	<li><b>options</b> : Object defining parameters. Based on the type of overlay.</li>
+	<li><b>featurePopupDelayMs</b> : A number that specifies the delay, in milliseconds,
+	between the time a mouse hovers over a feature and that the pop-up window is displayed.</li>
+</ul>
+</p>
+
+<p>A "couchdb" overlay is associated with an options object defined as follows:
+<ul>
+	<li><b>layerName</b> : String that specifies the layer identifier.</li>
+</ul>
+</p>
+
+<p>A "wfs" overlay is associated with an options object defined as follows:
+<ul>
+	<li><b>url</b> : Required. String that contains the URL to the WFS server</li>
+	<li><b>featureType</b> : String that specifies the feature type requested from the
+	WFS server.</li>
+	<li><b>featureNS</b> : String that specifies the full name space associated with the
+	feature type.</li>
+	<li><b>featurePrefix</b> : String that specifies the prefix relating to the name space.</li>
+	<li><b>version</b> : Optional. Version of WFS protocol used to access WFS server.</li>
+	<li><b>geometryName</b> : Optional String. Attribute name of the geometry used to
+	display feature. If not specified, defaults to 'the_geom'.</li>
+	<li><b>sourceSrsName</b> : Optional String. Specifies the projection name of the geometries
+	served by the WFS server. Defaults to 'EPSG:4326'</li>
+	<li><b>visibility</b> : Optional Boolean. Determines if the layer is initially visible (true),
+	or not (false).</li>
+	<li><b>filter</b> : Optional Object. Specifies a filter to select the features returned
+	by the WFS server.</li>
+</ul>
+</p>
+
+<h4>Module Display</h4>
+
+<p>A document module can be rendered by a web application by using the module display function.
+There are two methods: using an in-line module document, or using a module document saved in the
+database.</p>
+
+<p>The following script shows how to call the display function:
+<pre>
+function main_init(config) {
+	
+	// Get module name from URL parameters
+	var moduleName = 'generic.module:default';
+
+	var moduleDisplay = new $n2.couchModule.ModuleDisplay({
+		moduleName: moduleName
+		,config: config
+		,titleName: 'title'
+		,mapName: 'map'
+		,sidePanelName: 'side'
+		,searchPanelName: 'searchInput'
+		,onSuccess: function(){}
+		,onError: function(err){ alert('Unable to display module('+moduleName+'): '+err); }
+	});
+};
+</pre>
+</p>
+
+<p>The instance of ModuleDisplay is initialized using a object that provided all necessary parameters.
+This initialization object is defined as follows:
+<ul>
+	<li><b>moduleName</b> : This is the identifier for the document, saved in the database, that
+	contains the module object to be rendered. This option is mutually exclusive with "moduleDoc".</li>
+
+	<li><b>moduleDoc</b> : This is the module document to be rendered. This option is mutually 
+	exclusive with "moduleName".</li>
+
+	<li><b>config</b> : Configuration object generated by the configuration process.</li>
+
+	<li><b>titleName</b> : HTML identifier of the element where the title of the module
+	is rendered.</li>
+
+	<li><b>mapName</b> : HTML identifier of the element where the map of the module
+	is rendered.</li>
+
+	<li><b>sidePanelName</b> : HTML identifier of the element where the textual information of
+	the module is rendered.</li>
+
+	<li><b>searchPanelName</b> : HTML identifier of the element where the database search input
+	is rendered.</li>
+
+	<li><b>onSuccess</b> : Function called when the rendering initialization is completed.</li>
+
+	<li><b>onError</b> : Function called when an error is encountered in the rendering
+	initialization.</li>
+</ul>
+</p>
+
+<!-- .................................................................. -->
+<h3><a name="atlas_content_schema_document">Schema Document</a></h3>
+
+<p>Schemas are used to define how a database document is displayed to the user within the context of an
+atlas. There are multiple instances when a user can be presented the content of a database document, and
+a schema handles all those cases. Among those cases are the "display" case, when a user is focusing
+on a particular database document. Another case is the "brief" view, which is displayed in a bubble
+when a user mouses over a map feature that relates to the database document. Yet another case is the
+"edit" view, displayed when a user is editting a database document.</p>
+
+<p>In Nunaliit, schemas used a technology called "Mustache templates" 
+(<a href="http://mustache.github.com/">http://mustache.github.com/</a>) to render the HTML fragments
+necessary to display the information contained in a document. The Mustache templating was designed
+specifically for this purpose and documentation for this technology is readily available on the
+Internet.</p>
+
+<p>A database document is associated with a schema by recording the schema name in a special key
+named "nunaliit_schema", at the top level of the database document. The document, offered here as
+an example, is associated with a schema named "placename":
+<pre>
+{
+	"_id": "just a test"
+	,"place": {
+		"name": "test place"
+		,"description": "just a description"
+	}
+	,"nunaliit_schema": "placename"
+}
+</pre>
+</p>
+
+<p>A schema is a document that can be saved in the database. When schemas are saved in the database,
+it offers greater flexibility since the information recorded and display for each document type
+can be tailored at run-time to suit the atlas' needs.</p>
+
+<p>Following is an example of a schema document:
+<pre>
+{
+   "_id": "myschema:placename",
+   "nunaliit_type": "schema",
+   "nunaliit_schema": "schema",
+   "name": "placename",
+   "label": "Place Name",
+   "isRootSchema": true,
+   "create": {
+       "place": {
+           "name": "",
+           "description": ""
+       },
+       "nunaliit_schema": "placename"
+   },
+   "brief": "PlaceName({{#place}}{{name}}{{/place}})",
+   "display": "&lt;div&gt;\n\t{{#place}}\n\t\t{{#name}}\n\t\t\t&lt;div&gt;\n\t\t\t\t&lt;div class=\"label n2_localize\"&gt;Name&lt;/div&gt;\n\t\t\t\t&lt;div class=\"value\"&gt;{{name}}&lt;/div&gt;\n\t\t\t\t&lt;div class=\"end\"&gt;&lt;/div&gt;\n\t\t\t&lt;/div&gt;\n\t\t{{/name}}\n\t\t{{#description}}\n\t\t\t&lt;div&gt;\n\t\t\t\t&lt;div class=\"label n2_localize\"&gt;Description&lt;/div&gt;\n\t\t\t\t&lt;div class=\"value n2s_preserveSpaces\"&gt;{{description}}&lt;/div&gt;\n\t\t\t\t&lt;div class=\"end\"&gt;&lt;/div&gt;\n\t\t\t&lt;/div&gt;\n\t\t{{/description}}\n\t\t{{/place}}\n\n\t&lt;/div&gt;",
+   "form": "&lt;div&gt;\n\t{{#place}}\n\t\t&lt;div&gt;\n\t\t\t&lt;div class=\"label n2_localize\"&gt;Name&lt;/div&gt;\n\t\t\t&lt;div class=\"value\"&gt;&lt;input type=\"text\" class=\"{{#:input}}name{{/:input}}\"/&gt;&lt;/div&gt;\n\t\t\t&lt;div class=\"end\"&gt;&lt;/div&gt;\n\t\t&lt;/div&gt;\n\t\t&lt;div&gt;\n\t\t\t&lt;div class=\"label n2_localize\"&gt;Description&lt;/div&gt;\n\t\t\t&lt;div class=\"value\"&gt;&lt;textarea class=\"{{#:input}}description{{/:input}}\"&gt;&lt;/textarea&gt;&lt;/div&gt;\n\t\t\t&lt;div class=\"end\"&gt;&lt;/div&gt;\n\t\t&lt;/div&gt;\n\t{{/place}}\n&lt;/div&gt;",
+   "export": [
+       {
+           "select": "place.name",
+           "label": "name"
+       },
+       {
+           "select": "place.description",
+           "label": "description"
+       }
+   ],
+   "relatedSchemas": [
+       "genericMedia"
+   ]
+}
+</pre>
+</p>
+
+<p>An explication of each entry of the schema document is offered here:
+<ul>
+	<li><b>nunaliit_type</b> : For a schema document, this key must be associated with a fixed string:
+	"schema". Otherwise, the document is not recognized as a schema.</li>
+
+	<li><b>nunaliit_schema</b> : Optional. This informs the framework that the schema document
+	should be viewed using the schema named "schema".</li>
+
+	<li><b>name</b> : Required string. This string field contains the name that the schema is
+	known as.</li>
+
+	<li><b>label</b> : Optional string. This string field contains the label that should be presented
+	to a user when a schema is to be selected.</li>
+
+	<li><b>isRootSchema</b> : Required boolean. A schema that can be used to display a document should
+	have this field set (true). Extensions, which are schemas used to display a fragment of a document,
+	should have this field reset (false). In general, this field should be set (true).</li>
+
+	<li><b>create</b> : Required object. This object field is the template for a new document when
+	a new document based on the schema is requested.</li>
+
+	<li><b>brief</b> : Required string. This string field contains a Mustache template of a HTML
+	fragment to be used when displaying a document associated with this schema in "brief" mode.</li>
+
+	<li><b>display</b> : Required string. This string field contains a Mustache template of a HTML
+	fragment to be used when displaying a document associated with this schema in "display" mode.</li>
+
+	<li><b>form</b> : Required string. This string field contains a Mustache template of a HTML
+	fragment to be used when editting a document associated with this schema.</li>
+
+	<li><b>export</b> : Optional array. This array is used while exporting documents from the database.
+	This export array specifies which fields from a document (associated with the schema) are sent
+	during an export process. The array contains objects. Each object contains a string field called
+	"label" that represents the name of the field being exported. Each object also contains
+	a string field called "select", which is selector to pick the field from the object to be exported.
+	This selector is using a dotted notation, where inner fields are accessed by naming the parent field,
+	followed by a period and completed using the inner field's name.</li>
+
+	<li><b>relatedSchema</b> : Optional array. This array contains strings, which are names of other
+	schemas. During the operation of the atlas, when a user is adding information relating to
+	a document, this array is used to figure which schemas can be used to relate this new information.</li>
+</ul>
+</p>
+
+<p>Because the "display" field of a schema is a Javascript string containing a Mustache template of a HTML
+fragment, many characters must be escaped which hinders comprehension. However,
+if one was to access this field using an editor that showed the content without escaping characters, this
+is what the "display" field from the example above would look like:
+<pre>
+&lt;div&gt;
+	{{#place}}
+		{{#name}}
+			&lt;div&gt;
+				&lt;div class="label n2_localize"&gt;Name&lt;/div&gt;
+				&lt;div class="value"&gt;{{name}}&lt;/div&gt;
+				&lt;div class="end"&gt;&lt;/div&gt;
+			&lt;/div&gt;
+		{{/name}}
+		{{#description}}
+			&lt;div&gt;
+				&lt;div class="label n2_localize"&gt;Description&lt;/div&gt;
+				&lt;div class="value n2s_preserveSpaces"&gt;{{description}}&lt;/div&gt;
+				&lt;div class="end"&gt;&lt;/div&gt;
+			&lt;/div&gt;
+		{{/description}}
+	{{/place}}
+&lt;/div&gt;
+</pre>
+</p>
+
+<p>In the same manner, the "form" field from the schema example is unescaped here to help with comprehension:
+<pre>
+&lt;div&gt;
+	{{#place}}
+		&lt;div&gt;
+			&lt;div class="label n2_localize"&gt;Name&lt;/div&gt;
+			&lt;div class="value"&gt;&lt;input type="text" class="{{#:input}}name{{/:input}}"/&gt;&lt;/div&gt;
+			&lt;div class="end"&gt;&lt;/div&gt;
+		&lt;/div&gt;
+		&lt;div&gt;
+			&lt;div class="label n2_localize"&gt;Description&lt;/div&gt;
+			&lt;div class="value"&gt;&lt;textarea class="{{#:input}}description{{/:input}}"&gt;&lt;/textarea&gt;&lt;/div&gt;
+			&lt;div class="end"&gt;&lt;/div&gt;
+		&lt;/div&gt;
+	{{/place}}
+&lt;/div&gt;
+</pre>
+</p>
+
+<p>Mustache defines how, given a context JSON object (a database document), a HTML fragment is generated
+based on the values found in the object. However, there are two other key concepts necessary to understand
+how the templating works within Nunaliit:
+<ol>
+	<li>Elements classes understood by Nunaliit</li>
+	<li>Mustache functions provided by Nunaliit</li>
+</ol>
+</p>
+
+<p>Once a HTML fragment is generated using the Mustache templating, the Nunaliit framework analyzes the result
+for certain classes and modifies the HTML tags accordingly. Here is a list of the classes understood by the
+Nunaliit framework:
+<ul>
+	<li><b>n2_localize</b> : HTML elements that have the class n2_localize have the text child element
+	replaced by text found to translate the initial text to the language in which the page is displayed.
+	The Nunaliit framework offers tools to define string replacements from the native English strings, to
+	any other language. If the atlas page is displayed in a language other than English, that the language
+	is supported by a translation page and that the string found as child of the element is associated with
+	a translated replacement, then that replacement is used to populate the text of the element with the
+	"n2_localize" class.</li>
+
+	<li><b>n2s_preserveSpaces</b> : HTML elements that have the class n2s_preserveSpaces are modified
+	so that newline characters are respected. n2s_preserveSpaces is generally used on fields that are
+	accepted using a &lt;textarea&gt; tag in the "form" of the schema. This way, newline characters
+	inserted by users during document editting are displayed in other perspective.</li>
+
+	<li><b>n2_briefDisplay</b> : A HTML element with this class must contain only one child, which is
+	a text node. The content of the text node should be the identifier for a database document. When the
+	Nunaliit framework detects the class "n2_briefDisplay", it replaces the content of the element with
+	a brief description of the referenced document.</li>
+
+	<li><b>n2s_referenceLink</b> : A HTML element with this class must contain only one child, which is
+	a text node. The content of the text node should be the identifier for a database document.  When the
+	Nunaliit framework detects the class "n2s_referenceLink", it replaces the content of the element with
+	a brief description of the referenced document. Furthermore, the content is clickable and when clicked,
+	a selection to this document is dispatched to the framework. In general, this results in the new
+	document becoming the focus of the atlas.</li>
+
+	<li><b>n2s_insertTime</b> : A HTML element with this class must contain only one child, which is
+	a text node. The content of the text node should be a number that represents time, according to the
+	Javascript Date convention. When the Nunaliit framework detects the class "n2s_insertTime", it replaces
+	the content of the element with textual representation of the time based on the user's locale.</li>
+
+	<li><b>n2s_insertUserName</b> : A HTML element with this class must contain only one child, which is
+	a text node. The content of the text node should be the identifier for a database user. When the
+	Nunaliit framework detects the class "n2s_insertUserName", it replaces the content of the element with
+	the display name associated with the user.</li>
+
+	<li><b>n2s_insertMediaView</b> : A HTML element with this class must contain only one child, which is
+	a text node. The content of the text node should be the name to an attachment of the document in context.
+	When the Nunaliit framework detects the class "n2s_insertMediaView", it replaces the content of the
+	element with an icon that represents the attachment. If a thumbnail is available, the thumbnail is
+	used instead of the icon. Furthermore, when the icon or thumbnail is clicked by the user, the media
+	is displayed using a dialog.</li>
+
+	<li><b>n2s_insertHoverSoundIcon</b> : When the Nunaliit framework detects an element with the class
+	"n2s_insertHoverSoundIcon", it verifies if a document is associated with a hover sound. If so,
+	it appends to the element with the class "n2s_insertHoverSoundIcon" an icon looking like a speaker.
+	If the speaker icon is clicked, the hover sound is played. This is useful for environments with a touch
+	interface, where mouse hover is not generally dispatched to the atlas client.</li>
+
+	<li><b>n2s_externalMediaLink</b> : A HTML element with this class must contain an attribute named
+	"href". The "href" attribute must contain the name of an attachment associated with the document.
+	If an attachment with the given name is detected, then the "href" attribute is replaced with a full
+	path to access the attachment, directly. When the element is clicked, the user is warned that the
+	atlas is about to be exited, before following the link. This class is generally used with anchor
+	(&lt;a&gt;) tags.</li>
+	
+	<li><b>n2s_clickFindGeometryOnMap</b> : When the Nunaliit framework detects an element with the class
+	"n2s_clickFindGeometryOnMap", it verifies if the document in context is associated with a geometry.
+	If so, it installs a "click" event handler on the element. When the element is clicked, the map
+	is centred on the geometry. If the document is not associated with any geometry, then the element
+	with the class "n2s_clickFindGeometryOnMap" is removed.</li>
+	
+	<li><b>n2s_clickAddLayerFromDefinition</b> : When the Nunaliit framework detects an element with the class
+	"n2s_clickAddLayerFromDefinition", it verifies if the document in context is associated with a layer
+	definition. If so, it installs a "click" event handler on the element. When the element is clicked,
+	the map is added with a new layer based on the layer definition found in the context document.
+	If the document is not associated with any layer definition, then the element with the class
+	"n2s_clickAddLayerFromDefinition" is removed.</li>
+	
+	<li><b>n2s_handleHover</b> : When the Nunaliit framework detects an element with the class
+	"n2s_handleHover", it installs a "hover" event handler on the element. When the element is moused
+	over, an event is sent to the dispatcher informing that the context document is hovered. This generally
+	results in behaviour specific to an atlas, such as playing "hover sound" or changing the colours
+	of associated geometries on the map.</li>
+</ul>
+</p>
+
+<p>Besides pre-defined HTML classes, the Nunaliit framework adds functions and special accessors
+to context Javascript objects before the are processed by the Mustache templating process. All The
+following functions and accessors are available to a Mustache template when in use with the Nunaliit schemas:
+<ul>
+	<li><b>:parent</b> : Accesses the parent object structure. Example <i>{{#:parent}}{{name}}{{/:parent}}</i>
+	displays the name attribute from the parent's object structure.</li>
+
+	<li><b>:iterate</b> : For an object structure, returns an array an objects. Each object contains
+	two keys: "key" and "value". This is a way to iterate over all key-value pairs defined in an object.</li>
+
+	<li><b>:empty</b> : Returns true for an object that contains no key.</li>
+
+	<li><b>:input</b> : This is a function that prints all classes needed for the proper function of
+	the editor. The classes reported by this function associate HTML input tags (&lt;input&gt; and
+	&lt;textarea&gt;) to the proper field within an object. The syntax for a the ":input" function
+	is: <i>{{#:input}}field-name,field-type{{/:input}}</i>, where <i>field-name</i> is the name of
+	the field being editted; and, <i>field-type</i> is the type of the field. The field-type can be
+	ommitted. Possible values for <i>field-type</i> are: reference, date and numeric. For a reference field,
+	a string is presumed to be a document identifier. For a date field, a numeric value is assumed to
+	be a date that respects the Javascript Date convention. For a numeric field, only numbers are
+	accepted.</li>
+</ul>
+</p>
+
+
+
+</body></html>

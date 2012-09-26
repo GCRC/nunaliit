@@ -1,0 +1,9 @@
+<div>
+	<div>
+		<span class="n2_localize">Attachment</span> {{originalName}}<br/>
+
+		{{#data}}
+			{{{:html}}}
+		{{/data}}
+	</div>
+</div>

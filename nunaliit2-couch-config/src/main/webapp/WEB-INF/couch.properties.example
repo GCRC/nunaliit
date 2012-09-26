@@ -1,0 +1,4 @@
+couchdb.server=http://127.0.0.1:5984
+couchdb.user=admin
+couchdb.password=admin
+couchdb.dbName=atlas

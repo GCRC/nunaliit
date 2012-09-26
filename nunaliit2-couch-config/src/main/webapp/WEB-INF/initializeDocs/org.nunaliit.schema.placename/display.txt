@@ -1,0 +1,24 @@
+<div class="n2display_document">
+	<table>
+	{{#place}}{{{:html}}}{{/place}}
+	{{#nunaliit_attachments}}{{{:html}}}{{/nunaliit_attachments}}
+	{{#nunaliit_layers}}
+		<tr><td class="label n2_localize">Layer</td><td class="value">{{.}}</td></tr>
+	{{/nunaliit_layers}}
+	{{#nunaliit_created}}
+		<tr><td class="label n2_localize">Created by</td><td class="value"><span class="n2s_insertUserName">{{name}}</span> on <span class="n2s_insertTime">{{time}}</span></td></tr>
+	{{/nunaliit_created}}
+	{{#nunaliit_last_updated}}
+		<tr><td class="label n2_localize">Last updated by</td><td class="value"><span class="n2s_insertUserName">{{name}}</span> on <span class="n2s_insertTime">{{time}}</span></td></tr>
+	{{/nunaliit_last_updated}}
+		<tr><td class="label n2_localize">ID</td><td class="value">{{_id}}</td></tr>
+		<tr><td class="label n2_localize">Revision</td><td class="value">{{_rev}}</td></tr>
+	{{#nunaliit_geom}}
+		<tr><td class="label n2_localize"></td><td class="value"><a href="#" class="n2s_clickFindGeometryOnMap">Find on Map</a></td></tr>
+	{{/nunaliit_geom}}
+		<tr><td class="label n2_localize"></td><td class="value"><a href="#" class="n2s_clickAddContribution">Add Contribution</a></td></tr>
+		<tr><td class="label n2_localize"></td><td class="value"><a href="#" class="n2s_clickEdit">Edit</a></td></tr>
+		<tr><td class="label n2_localize"></td><td class="value"><a href="#" class="n2s_clickDelete">Delete</a></td></tr>
+	</table>
+	<div style="clear:both"></div>
+</div>

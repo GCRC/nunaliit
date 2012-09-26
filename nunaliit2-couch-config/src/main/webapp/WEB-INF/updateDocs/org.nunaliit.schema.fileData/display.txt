@@ -1,0 +1,11 @@
+{{#title}}
+	{{title}}<br/>
+{{/title}}
+{{#description}}
+	{{description}}<br/>
+{{/description}}
+{{#hoverSound}}
+	<span class="n2_localize">Hover Sound</span><br/>
+{{/hoverSound}}
+
+

@@ -1,0 +1,277 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+	<head>
+		<title>Conflict Browser</title>
+		
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+		<title>Translation</title>		
+		<link rel="stylesheet" href="../js-external/css/jquery-ui/smoothness/jquery-ui.custom.css" type="text/css" />
+		<link rel="stylesheet" href="../js-external/css/jquery.lightbox-0.5.css" type="text/css" />
+		<link rel="stylesheet" href="../nunaliit2/css/basic/nunaliit2.css" type="text/css" />
+		<link rel="stylesheet" href="../_list/css_merge/css" type="text/css" />
+		
+		<style type="text/css">
+		
+		.docIdSelected, .conflictIdSelected {
+			background-color: #cccccc;
+		}
+		
+		</style>
+	</head>
+	<body style="overflow: auto;">
+
+		<h1>Conflict Browser</h1>
+		<div id="login"></div>
+		<div id="conflictingDocuments">
+		</div>
+		<div id="conflicts">
+		</div>
+
+		
+		<script type="text/javascript" src="../js-external/js/jquery.min.js"></script>
+		<script type="text/javascript" src="../js-external/js/jquery-ui.min.js"></script>
+		
+		<script src="http://maps.google.com/maps/api/js?v=3.3&sensor=false"></script>
+		
+		<script type="text/javascript" src="../js-external/OpenLayers/OpenLayers.js"></script>
+		<script type="text/javascript" src="../js-external/js/jquery.lightbox-0.5.js"></script>
+		
+		<script type="text/javascript" src="../js-external/js/jquery.cycle.pack.js"></script>
+		<script type="text/javascript" src="../js-external/js/jquery.form.js"></script>
+		<script type="text/javascript" src="../js-external/js/jquery.cookie-1.0.js"></script>
+		<script type="text/javascript" src="../js-external/js/sha1.js"></script>
+
+		<script type="text/javascript" src="../lib/atlas.js"></script>
+		<script type="text/javascript" src="../nunaliit2/nunaliit2-debug.js"></script>
+		<script type="text/javascript" src="../nunaliit2/nunaliit2-couch-debug.js"></script>
+		<script type="text/javascript" src="../lib/utils.js"></script>
+		<script type="text/javascript" src="../config/configuration.js"></script>
+
+		<script type="text/javascript" src="../nunaliit_custom.js"></script>
+
+		<script type="text/javascript">
+			// <!--
+
+			var HASH_SEARCH_PREFIX="search_";
+
+			var atlasDb = null;
+			var atlasDesign = null;
+			var atlasNotifier = null;
+			var atlasShow = null;
+			var selectedDocumentId = null;
+			var selectedConflictId = null;
+
+			var loginStateChanged = function(currentUser) {
+				var showLogin = false;
+				if (null == currentUser) {
+					showLogin = true;
+				};
+
+				$('#login').empty();
+				if( showLogin ) {
+					var aElem = $('<a class="loginLink" href="javascript:Login">Login</a>');
+					aElem.click(function(){
+						if( $.NUNALIIT_AUTH ) $.NUNALIIT_AUTH.login();
+						return false;
+					});
+    				var nameElem = $('<span class="loginGreeting">Welcome.&nbsp</span>');
+    				$('#login').append(aElem).append(nameElem);
+
+    			} else {
+		    		var aElem = $('<a class="loginLink" href="javascript:Logout">Logout</a>');
+    				aElem.click(function(){
+    					if( $.NUNALIIT_AUTH ) {
+	    					$.NUNALIIT_AUTH.logout();
+    					};
+		    			return false;
+    				});
+		    		var display = currentUser.display;
+    				if( !display ) display = currentUser.name;
+		    		var nameElem = $('<span class="loginGreeting">' + display + '&nbsp</span>');
+    				$('#login').append(aElem).append(nameElem);
+		    	};
+		    };
+		    
+		    function selectConflict(conflictId){
+
+	    		$('.conflictId').removeClass('conflictIdSelected');
+		    	
+		    	var $td = $('.conflictId_'+conflictId);
+		    	if( $td.length < 1 ) {
+		    		selectedConflictId = null;
+		    		
+		    	} else if( selectedConflictId === conflictId ) {
+		    		$td.addClass('conflictIdSelected');
+		    			
+		    	} else {
+		    		selectedConflictId = conflictId;
+		    		$td.addClass('conflictIdSelected');
+		    	};
+		    };
+
+		    function refreshConflictList(){
+		    	
+		    	if( null === selectedDocumentId ) {
+		    		empty();
+		    	
+		    	} else {
+		    		wait();
+		    		
+		    		atlasDb.getDocument({
+		    			docId: selectedDocumentId
+		    			,conflicts: true
+		    			,revs_info: true
+		    			,onSuccess: function(doc_){
+		    				displayConflicts(doc_);
+		    			}
+		    			,onError: reportError
+		    		});
+		    		
+		    	};
+		    	
+		    	function displayConflicts(doc){
+		    		empty();
+		    		
+		    		if( doc 
+		    		 && doc._conflicts 
+		    		 && doc._conflicts.length 
+		    		 ) {
+		    			var $conflicts = $('#conflicts');
+		    			var $table = $('<table></table>');
+		    			$conflicts.append($table);
+		    			for(var i=0,e=doc._conflicts.length; i<e; ++i){
+		    				var conflictId = doc._conflicts[i];
+		    				
+		    				var $tr = $('<tr class="conflictId conflictId_'+conflictId+'"><td>'
+		    						+'<a href="#" alt="'+conflictId+'">'+conflictId+'</a>'
+		    						+'</td></tr>');
+		    				$table.append($tr);
+		    				
+		    				var $a = $tr.find('a');
+		    				$a.click(clickConflict);		
+		    			};
+		    			
+		    			// Re-select the one that was previously selected 
+		    			selectConflict(selectedConflictId);
+		    		};
+		    	};
+		    	
+		    	function clickConflict(e){
+					var $a = $(this);
+					var conflictId = $a.attr('alt');
+					$n2.log('conflictId',conflictId);
+					selectConflict(conflictId);
+					return false;
+		    	};
+
+		    	function empty(){
+			    	$('#conflicts').empty();
+		    	};
+		    	
+		    	function wait(){
+			    	empty();
+			    	$('#conflicts').html('<div class="olkit_wait"></div>');
+		    	};
+				
+				function reportError(err){
+					$('#conflicts').text('Error: '+err);
+				};
+		    };
+		    
+		    function selectConflictingDocument(docId){
+		    	
+	    		$('.docId').removeClass('docIdSelected');
+		    	
+		    	var $td = $('.docId_'+docId);
+		    	if( $td.length < 1 ) {
+		    		selectedDocumentId = null;
+		    		
+		    	} else if( selectedDocumentId === docId ) {
+		    		$td.addClass('docIdSelected');
+		    			
+		    	} else {
+		    		selectedDocumentId = docId;
+		    		$td.addClass('docIdSelected');
+		    		
+		    		refreshConflictList();
+		    	};
+		    };
+
+		    function refreshConflictingDocuments(){
+		    	$('#conflictingDocuments').empty();
+		    	$('#conflictingDocuments').html('<div class="olkit_wait"></div>');
+		    	
+				atlasDesign.queryView({
+					viewName: 'conflicts'
+					,onSuccess: function(rows) { 
+						var $table = $('<table></table>');
+						for(var i=0,e=rows.length; i<e; ++i) {
+							var docId = rows[i].id;
+							var $tr = $('<tr></tr>');
+
+							$table.append($tr);
+
+							var $td = $('<td class="docId docId_'+docId+'"></td>');
+							$tr.append( $td );
+
+							var $a = $('<a class="n2_briefDisplay" href="#'+docId+'" alt="'+docId+'">'+docId+'</a>');
+							$td.append( $a );
+							$a.click(clickDocument);
+						};
+						$('#conflictingDocuments').empty().append($table);
+						
+						atlasShow.fixElementAndChildren( $('#conflictingDocuments') );
+						selectConflictingDocument(selectedDocumentId);
+					}
+					,onError: reportError
+				});
+				
+				function clickDocument(e){
+					var $a = $(this);
+					var docId = $a.attr('alt');
+					$n2.log('docId',docId);
+					selectConflictingDocument(docId);
+					return false;
+				};
+				
+				function reportError(err){
+					$('#conflictingDocuments').text('Error: '+err);
+				};
+		    };
+			
+			function main() {
+				refreshConflictingDocuments();
+			};
+			
+			function main_init(config) {
+				$n2.log('main_init',config);
+				atlasDb = config.atlasDb;
+				atlasDesign = config.atlasDesign;
+				atlasNotifier = config.atlasNotifier;
+				atlasShow = config.show;
+
+				config.auth.addListener(loginStateChanged);
+
+				$n2.schema.DefaultRepository.getSchema({
+					name: 'object'
+					,onSuccess: function(schema) {
+						defaultSchema = schema;
+						main();
+					}
+					,onError: function(err) {
+						$n2.log('Unable to load schema for editor',err);
+						main();
+					}
+				});
+			};
+
+			jQuery().ready(function() {
+				runConfiguration({
+					configuredFunction: main_init
+					,rootPath: '../'
+				});
+			});
+			// -->
+		</script>
+	</body>
+</html>

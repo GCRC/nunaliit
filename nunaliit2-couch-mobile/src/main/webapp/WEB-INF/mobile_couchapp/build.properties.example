@@ -1,0 +1,14 @@
+couchdb.server.admin=http://admin:secret@127.0.0.1:5984
+atlas.name=default
+;
+; Set to 0 to avoid compression
+;nunaliit.js.compression=1
+;
+; Set to 1 to include nunaliit2 debug javascript libraries
+;nunaliit.js.debug=0
+;
+; Set to directory with compressed library
+;nunaliit2-js.dir=../../nunaliit2
+;
+; Set to directory with external libraries
+;external-js.dir=../../js-external

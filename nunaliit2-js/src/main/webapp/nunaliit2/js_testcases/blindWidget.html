@@ -1,0 +1,193 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+		<meta http-equiv="Access-Control-Allow-Origin" content="*" />
+		<meta http-equiv="Access-Control-Allow-Methods" content="HEAD,OPTIONS,GET,POST,PUT,DELETE" />
+		<meta http-equiv="Access-Control-Allow-Headers" content="Content-Type,Server,Date,Content-Length,Cache-Control,Keep-Alive,Connection" />
+		<meta http-equiv="Access-Control-Max-Age" content="1728000" />
+		<title>Blind Widget Test</title>
+		
+		<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/themes/base/jquery-ui.css" type="text/css" media="all"/>
+	</head>
+	<body>
+		<h1>Blind Widget Test</h1>
+		
+		<div id="TEST">
+			<h3>Section 1</h3>
+			<div></div>
+		</div>
+
+		<h3>Compare with jQuery-UI accordion</h3>
+
+		<div class="n2Sections" id="accordion">
+			<h3 id="section1header"><a href="#">Section 1</a></h3>
+			<div id="section1">
+				allo
+			</div>
+			<h3 id="section2header"><a href="#">Section 2</a></h3>
+			<div id="section2">
+				foobar
+			</div>
+			<h3 id="section2header"><a href="#">Section 3</a></h3>
+			<div id="section3">
+				fiesta
+			</div>
+			<h3 id="section2header"><a href="#">Section 4</a></h3>
+			<div id="section4">
+				dinosaurs
+			</div>
+		</div>
+		
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.min.js"></script>
+		
+		<script type="text/javascript" src="../nunaliit2.js"></script>
+
+		<script type="text/javascript">
+			// <!--
+
+			;(function($,$n2){
+				
+				var noopFn = function(){}
+				
+				var BlindWidget = $n2.Class({
+					options: null
+					
+					,id: null
+					
+					,initialize: function($elem, opts_){
+
+						var _this = this;
+						
+						this.options = $n2.extend({
+							time: 500
+							,data: null
+							,onBeforeOpen: noopFn
+							,onAfterOpen: noopFn
+							,onBeforeClose: noopFn
+							,onAfterClose: noopFn
+						},opts_);
+						
+						var id = $elem.attr('id');
+						if( null === id || typeof(id) === 'undefined' ) {
+							id = $n2.getUniqueId();
+							$elem.attr('id',id);
+						};
+						this.id = id;
+						
+						var $header = $elem.children().first();
+						var $div = $header.next();
+						
+						$elem.addClass('n2Blind ui-accordion ui-widget ui-helper-reset ui-accordion-icons');
+						
+						var headerText = $header.text();
+						$header.empty()
+							.append( $('<span class="ui-icon ui-icon-triangle-1-e"></span>') )
+							.append( $('<a class="n2BlindA" href="#"></a>') );
+						$header.find('a')
+							.text(headerText)
+							.click(function(){
+								_this._headerClicked();
+								return false;
+							});
+						$header.addClass('ui-accordion-header ui-helper-reset ui-state-default ui-corner-top');
+						
+						$div
+							.addClass('ui-accordion-content ui-helper-reset ui-widget-content ui-corner-bottom ui-accordion-content-active')
+							.css('display','none');
+					}
+				
+					,_headerClicked: function(){
+
+						var _this = this;
+
+						var $sections = $('#'+this.id);
+						if( $sections.length < 1 ) {
+							return;
+						};
+						var $header = $sections.children().first();
+						var $a = $header.find('a');
+						var $div = $header.next();
+						
+						var info = {
+							data: this.options.data
+							,link: $a
+							,content: $div
+						};
+
+						if( $div.hasClass('n2uiActive') ) {
+							$header.removeClass('ui-state-active ');
+							$header.find('span')
+								.removeClass('ui-icon-triangle-1-s')
+								.addClass('ui-icon-triangle-1-e');
+							$div.removeClass('n2uiActive');
+							this.options.onBeforeClose(info);
+							$div.hide('blind',{},this.options.time,function(){
+								_this.options.onAfterClose(info);
+							});
+						} else {
+							$header.addClass('ui-state-active ');
+							$header.find('span')
+								.removeClass('ui-icon-triangle-1-e')
+								.addClass('ui-icon-triangle-1-s');
+							$div.addClass('n2uiActive');
+							this.options.onBeforeOpen(info);
+							$div.show('blind',{},this.options.time,function(){
+								_this.options.onAfterOpen(info);
+							});
+						};
+					}
+				});
+				
+				$n2.blindWidget = function($jq,options){
+					return new BlindWidget($jq.first(),options);
+				};
+			})
+			//(jQuery, nunaliit2)
+			;
+			
+			
+			function main() {
+				
+				$('#accordion').accordion();
+				
+				$n2.blindWidget($('#TEST'),{
+					onBeforeOpen: function(info){ 
+						$n2.log('onBeforeOpen',info.data);
+						var $div = info.content;
+						$div.empty();
+						$div.append( $('<div>Item 1</div>') );
+						$div.append( $('<div>Item 2</div>') );
+						$div.append( $('<div>Item 3</div>') );
+						$div.append( $('<div>Item 4</div>') );
+					}
+					,onAfterOpen: function(info){ $n2.log('onAfterOpen',info.data); }
+					,onBeforeClose: function(info){ $n2.log('onBeforeClose',info.data); }
+					,onAfterClose: function(info){ 
+						$n2.log('onAfterClose',info.data); 
+						var $div = info.content;
+						$div.empty();
+					}
+				});
+			};
+
+			function init1() {
+				main();
+			};
+			
+			var loaded = false;
+			jQuery().ready(function() {
+				if( loaded ) return;
+
+				if( nunaliit2 ) {
+					$n2 = nunaliit2;
+					
+					init1();
+					loaded = true;
+				};
+			});
+			// -->
+		</script>
+	</body>
+</html>

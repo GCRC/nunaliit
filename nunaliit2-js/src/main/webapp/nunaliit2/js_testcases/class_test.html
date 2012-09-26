@@ -1,0 +1,306 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+		<title>class test</title>		
+		<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/themes/base/jquery-ui.css" type="text/css" />
+		<link rel="stylesheet" href="../css/basic/n2.tree.css" type="text/css" />
+		<link rel="stylesheet" href="../css/basic/n2.slideEditor.css" type="text/css" />
+		
+		<style type="text/css">
+			#logs {
+				color: #2222ff;
+			}
+
+			.error {
+				color: #ff0000;
+			}
+		</style>
+		
+	</head>
+	<body>
+
+		<h1>class test</h1>
+		<div id="logs">
+		</div>
+		
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/jquery-ui.min.js"></script>
+
+		<script type="text/javascript" src="../nunaliit2-debug.js"></script>
+
+		<script type="text/javascript">
+			// <!--
+			
+			var errorFound = false;
+			
+			function printLog(str){
+				var $div = $('<div></div>');
+				$div.text(str);
+				$('#logs').append($div);
+			};
+			
+			function printErr(str){
+				errorFound = true;
+				var $div = $('<div class="error"></div>');
+				$div.text('Error: '+str);
+				$('#logs').append($div);
+			};
+			
+			function test_class(){
+				var a = $n2.Class({
+					initialized: false
+					,initialize: function(){ 
+						this.initialized = true; 
+					}
+				});
+				
+				printLog('Test that initialize is called');
+
+				var inst = new a();
+				if( !inst.initialized ){
+					printErr('Initialize was not called');
+				};
+			};
+
+			function test_instance_variables(){
+				var a = $n2.Class({
+					one: 1
+					,obj: {
+						two: 2
+					}
+					,arr: [0, 1, 2, 3, 4]
+					,initialize: function(){ 
+						this.initialized = true; 
+					}
+				});
+				
+				printLog('Test that instance variables are segregated between instances');
+
+				var inst1 = new a();
+				inst1.one = 2;
+				
+				var inst2 = new a();
+				
+				inst1.obj.two = 3;
+				
+				if( inst2.one != 1 ) {
+					printErr('Scalar instance variable was modified');
+				};
+				if( inst2.obj.two != 2 ) {
+					printErr('Object instance variable was modified');
+				};
+			};
+
+			function test_null_instance_variable(){
+				var a = $n2.Class({
+					v: null
+				});
+				
+				printLog('Test null instance variable');
+
+				var inst = new a();
+				if( inst.v !== null ){
+					printErr('Null variable was not copied');
+				};
+			};
+
+			function test_delete_instance_variable(){
+				var a = $n2.Class({
+					v: {
+						one: 1
+					}
+				});
+				
+				printLog('Test delete instance variable');
+
+				var inst = new a();
+				delete inst.v;
+				if( typeof(inst.v) !== 'undefined' ){
+					printErr('Variable was not deleted');
+				};
+			};
+
+			function test_subclassing(){
+				var a = $n2.Class({
+					one: 1
+					,three: 4
+					,initialize: function(){ 
+						this.initialized = true; 
+					}
+					,f1: function(){ return 1; }
+					,f3: function(){ return 4; }
+				});
+
+				var b = $n2.Class(a, {
+					two: 2
+					,three: 3
+					,initialize: function(){ 
+						this.initialized = true; 
+					}
+					,f2: function(){ return 2; }
+					,f3: function(){ return 3; }
+				});
+				
+				printLog('Test subclassing');
+
+				var inst = new b();
+
+				if( inst.one != 1 ) {
+					printErr('Error with super class variable');
+				};
+				if( inst.two != 2 ) {
+					printErr('Error with direct class variable');
+				};
+				if( inst.three != 3 ) {
+					printErr('Error with over written variable');
+				};
+				if( inst.f1() != 1 ) {
+					printErr('Error with super class function');
+				};
+				if( inst.f2() != 2 ) {
+					printErr('Error with direct class function');
+				};
+				if( inst.f3() != 3 ) {
+					printErr('Error with over written function');
+				};
+			};
+
+			function test_multiple_inheritance(){
+				var c1 = $n2.Class({
+					f1: function(){ return 1; }
+					,f4: function(){ return 10; }
+				});
+
+				var c2 = $n2.Class({
+					f2: function(){ return 2; }
+					,f4: function(){ return 10; }
+				});
+
+				var c3 = $n2.Class({
+					f3: function(){ return 3; }
+					,f4: function(){ return 4; }
+				});
+
+				var a = $n2.Class(c1, c2, c3);
+				
+				printLog('Test multiple inheritance');
+
+				var inst = new a();
+
+				if( inst.f1() != 1 ) {
+					printErr('Error with including first subclass');
+				};
+				if( inst.f2() != 2 ) {
+					printErr('Error with including second subclass');
+				};
+				if( inst.f3() != 3 ) {
+					printErr('Error with including third subclass');
+				};
+				if( inst.f4() != 4 ) {
+					printErr('Error with over written function');
+				};
+			};
+
+			function test_superclass_pollution(){
+				var a = $n2.Class({
+					f1: function(){ return 1; }
+				});
+
+				var b = $n2.Class(a,{
+					f2: function(){ return 2; }
+				});
+
+				printLog('Test superclass pollution');
+
+				var inst = new a();
+
+				if( typeof(inst.f2) === 'function' ) {
+					printErr('Subclass definitions bleeds into superclass');
+				};
+			};
+
+			function test_classname(){
+				var a = $n2.Class('testClass', {
+					f1: function(){ return 1; }
+				});
+
+				printLog('Test class name');
+
+				var inst = new a();
+				
+				if( inst._classname !== 'testClass' ) {
+					printErr('Class name not assigned to instance');
+				};
+			};
+
+			function test_call_super_init(){
+				var superClass = $n2.Class('superClass', {
+					one: 0
+					,two: null
+					,initialize: function(o){ 
+						this.one = 1;
+						this.two = o; 
+					}
+				});
+
+				var myClass = $n2.Class('myClass', superClass, {
+					initialize: function(o){ 
+						superClass.prototype.initialize.call(this,o); 
+					}
+				});
+
+				printLog('Test call super init');
+
+				var inst = new myClass(2);
+				
+				if( inst.one !== 1 ) {
+					printErr('Initialization function not called on superclass');
+				};
+				if( inst.two !== 2 ) {
+					printErr('Argument not passed to superclass initialization');
+				};
+			};
+
+			function main_init(){
+
+				test_class();
+				test_instance_variables();
+				test_null_instance_variable();
+				test_delete_instance_variable();
+				test_subclassing();
+				test_multiple_inheritance();
+				test_superclass_pollution();
+				test_classname();
+				test_call_super_init();
+				
+				if( errorFound) {
+					printErr('Errors were found in the tests');
+				} else {
+					printLog('Tests ended without error');
+				};
+			};
+			
+			var loaded = false;			
+			function waitForComponentsLoaded() {
+				if( loaded ) return;
+				
+				if( nunaliit2
+				 ) {
+				 	$n2 = window.nunaliit2;
+					
+					loaded = true;
+
+					main_init();
+				} else {
+					setTimeout(waitForComponentsLoaded, 100);
+				};
+			};
+			
+			jQuery().ready(function() {
+				waitForComponentsLoaded();
+			});
+			// -->
+		</script>
+	</body>
+</html>

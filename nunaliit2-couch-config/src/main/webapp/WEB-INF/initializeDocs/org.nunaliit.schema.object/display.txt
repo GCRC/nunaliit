@@ -1,0 +1,36 @@
+<div class="n2display_document">
+	<table>
+	{{#place}}{{{:html}}}{{/place}}
+	{{#nunaliit_contribution}}{{{:html}}}{{/nunaliit_contribution}}
+	{{#nunaliit_attachments}}{{{:html}}}{{/nunaliit_attachments}}
+	{{#nunaliit_layers}}
+		<tr><td class="label n2_localize">Layer</td><td class="value">{{.}}</td></tr>
+	{{/nunaliit_layers}}
+	{{#attributes}}
+		{{#:iterate}}
+			<tr><td class="label n2_localize">{{key}}</td><td class="value">{{value}}</td></tr>
+		{{/:iterate}}
+	{{/attributes}}
+	{{#nunaliit_layer_definition}}
+		<tr><td class="label n2_localize">Layer Definition</td>
+			<td class="value">
+				{{name}}
+				<br/>
+				<a href="#" class="n2s_clickAddLayerFromDefinition">View Layer</a>
+			</td>
+		</tr>
+	{{/nunaliit_layer_definition}}
+	{{#nunaliit_created}}
+		<tr><td class="label n2_localize">Created by</td><td class="value"><span class="n2s_insertUserName">{{name}}</span> on <span class="n2s_insertTime">{{time}}</span></td></tr>
+	{{/nunaliit_created}}
+	{{#nunaliit_last_updated}}
+		<tr><td class="label n2_localize">Last updated by</td><td class="value"><span class="n2s_insertUserName">{{name}}</span> on <span class="n2s_insertTime">{{time}}</span></td></tr>
+	{{/nunaliit_last_updated}}
+		<tr><td class="label n2_localize">ID</td><td class="value">{{_id}}</td></tr>
+		<tr><td class="label n2_localize">Revision</td><td class="value">{{_rev}}</td></tr>
+	{{#nunaliit_source}}
+		<tr><td colspan="2">{{{:html}}}</td></tr>
+	{{/nunaliit_source}}
+	</table>
+	<div style="clear:both"></div>
+</div>

@@ -1,0 +1,50 @@
+<!DOCTYPE html> 
+<html> 
+	<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Settings</title>
+	
+	<link rel="stylesheet" href="js-external/css/jquery.mobile/jquery.mobile.min.css" />
+	<script type="text/javascript" src="js-external/js/jquery.min.js"></script>
+	<script type="text/javascript" src="js-external/js/jquery.mobile.min.js"></script>
+</head> 
+<body>
+
+<div id="mobileSettingsPage" data-role="page" data-add-back-btn="true" data-theme="b">
+
+	<div data-role="header" data-theme="b">
+		<h1>Settings</h1>
+	</div><!-- /header -->
+
+	<div data-role="content" data-theme="b">	
+		<div id="mobileSettingsList">
+		<!-- p>No servers configured.</p>
+		<form action="form.cgi" method="post">
+			<div data-role="fieldcontain">
+				<fieldset data-role="controlgroup">
+					<legend>Database:</legend>
+						<fieldset data-role="controlgroup">
+							<input type="radio" name="radio-1" id="radio-choice-1" value="choice-1" checked="checked" />
+							<label for="radio-choice-1">Demo (dltk.gcrc.carleton.ca:5984)</label>
+							<input type="radio" name="radio-1" id="radio-choice-2" value="choice-2"  />
+							<label for="radio-choice-2">Kitikmeot (dltk.gcrc.carleton.ca:5984)</label>
+						</fieldset>
+				</fieldset>
+			</div>
+		</form -->
+		</div>
+		<a href="add_database.html" data-role="button" data-inline="true" data-rel="dialog" data-transition="pop" data-theme="c" data-icon="plus">Add Database</a><br />
+		<a data-role="button" onclick="synchronizeCurrentDatabase(this)" data-inline="true" data-icon="refresh" data-theme="c">Synchronize Database</a><br />
+		<a id="mobileSettingsRemoveButton" href="remove_database.html" data-role="button" data-inline="true" data-rel="dialog" data-transition="pop" data-theme="e" data-icon="delete">Remove Selected Database from Device</a><br />
+		
+		<div>
+			<a data-role="button" onclick="showDebugPage(this)" data-icon="arrow-r" data-iconpos="right" data-theme="c">Debug Page</a>
+		</div>
+		
+	</div><!-- /content -->
+
+</div><!-- /page -->
+
+</body>
+</html>

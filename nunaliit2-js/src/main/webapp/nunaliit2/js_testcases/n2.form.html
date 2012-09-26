@@ -1,0 +1,145 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+		<title>Nunaliit2 Form Test Page</title>		
+		<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/themes/base/jquery-ui.css" type="text/css" />
+		<link rel="stylesheet" href="../css/basic/n2.sliderWithCallout.css" type="text/css" />
+		<link rel="stylesheet" href="css/slider_tests.css" type="text/css" />
+	</head>
+	<body>
+		<h1>Nunaliit2 Form Test Page</h1>
+		<table style="width:100%;">
+			<tr>
+				<td style="width:50%;">
+					<h2>Form</h2>
+					<div id="formArea"></div>
+				</td>
+				<td style="width:50%;">
+					<h2>Enter Data</h2>
+					<textarea id="enterData" style="width:100%; height: 200px;"></textarea>
+					<br/>
+					<input id="enterDataButton" type="button" value="Update"/>
+				</td>
+			</tr>
+		</table>
+		<h2>Display Data</h2>
+		<div id="dataArea"></div>
+		
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/jquery-ui.min.js"></script>
+		<script type="text/javascript" src="../../js-external/js/jquery.format-1.1.js"></script>
+
+		<script type="text/javascript" src="../nunaliit2-debug.js"></script>
+
+		<script type="text/javascript">
+			// <!--
+			var form;
+			
+			var data = {
+				name: ''
+				,created: {
+					user: 'user1'
+					,role: null
+					,date: null
+				}
+			};
+
+			var schema = new $n2.form.Schema({
+				title: 'First Schema'
+				,attributes: [
+					{
+						name: 'name'
+						,label: 'Name'
+						,type: 'text'
+						,description: 'The name of the entity'
+					}
+					,{
+						name : 'hideMe'
+						,type : 'hidden'
+						,description: 'A hidden input'
+					}
+					,{
+						name: 'creator'
+						,label: 'Creator'
+						,selector: 'created.user'
+						,type: 'text'
+						,description: 'The creator of the entity'
+					}
+					,{
+						name: 'role'
+						,label: 'Role'
+						,selector: 'created.role'
+						,type: 'select'
+						,options: ['option1', 'option2']
+						,description: 'An option selector'
+					}
+					,{
+						name: 'date'
+						,label: 'Created on'
+						,selector: 'created.date'
+						,type: 'date'
+						,'datePicker': {} // options for datePicker
+						,'description': 'A date selector'
+					}
+					,{
+						name: 'roles'
+						,label: 'Roles'
+						,selector: 'roles'
+						,type: 'array'
+						,arraySchema: {
+							title: 'Role'
+							,attributes: [
+								{
+									name: 'role'
+									,label: 'Role'
+									,type: 'text'
+								}
+							]
+						}
+					}
+				]
+			});
+			
+			function displayData() {
+				var text = JSON.stringify(data,null,'\t');
+				$('#dataArea').html('<pre>'+text+'</pre>');
+
+				var text2 = JSON.stringify(data,null,3);
+				$('#enterData').val(text2);
+			};
+			
+			function enterData() {
+				var str = $('#enterData').val();
+				var test;
+				eval('test = '+str+';');
+				
+				for(var key in data) {
+					delete data[key];
+				};
+				$.extend(true,data,test);
+				
+				displayData();
+				
+				form.refreshFromData();
+			};
+			
+			function main() {
+				var $formArea = $('#formArea');
+				
+				form = schema.createForm($formArea, data, {
+					onChanged: displayData
+				});
+				
+				displayData();
+				
+				$('#enterDataButton').click(enterData);
+			};
+
+			jQuery().ready(function() {
+				main();
+			});
+			// -->
+		</script>
+	</body>
+</html>

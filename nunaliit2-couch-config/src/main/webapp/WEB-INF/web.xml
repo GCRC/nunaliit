@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app
+	version="2.5" 
+	xmlns="http://java.sun.com/xml/ns/javaee" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	>
+	
+	<display-name>Atlas based on CouchDb</display-name>
+
+	<servlet>
+	  <servlet-name>configServlet</servlet-name>
+	  <servlet-class>ca.carleton.gcrc.couch.config.ConfigServlet</servlet-class>
+	  <load-on-startup>1</load-on-startup>
+	</servlet>
+
+	<servlet>
+	  <servlet-name>uploadServlet</servlet-name>
+	  <servlet-class>ca.carleton.gcrc.upload.UploadServlet</servlet-class>
+	  <load-on-startup>2</load-on-startup>
+	</servlet>
+	<servlet-mapping>
+	  <servlet-name>uploadServlet</servlet-name>
+	  <url-pattern>/upload/*</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+	  <servlet-name>progressServlet</servlet-name>
+	  <servlet-class>ca.carleton.gcrc.progress.ProgressServlet</servlet-class>
+	  <load-on-startup>2</load-on-startup>
+	</servlet>
+	<servlet-mapping>
+	  <servlet-name>progressServlet</servlet-name>
+	  <url-pattern>/progress/*</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+	  <servlet-name>exportServlet</servlet-name>
+	  <servlet-class>ca.carleton.gcrc.couch.export.ExportServlet</servlet-class>
+	  <load-on-startup>2</load-on-startup>
+	</servlet>
+	<servlet-mapping>
+	  <servlet-name>exportServlet</servlet-name>
+	  <url-pattern>/export/*</url-pattern>
+	</servlet-mapping>
+	
+</web-app>

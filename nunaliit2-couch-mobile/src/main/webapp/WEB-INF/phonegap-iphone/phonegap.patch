@@ -1,0 +1,220 @@
+diff --git a/PhoneGapLib/Classes/Capture.h b/PhoneGapLib/Classes/Capture.h
+index 0d0fb70..08be3a7 100644
+--- a/PhoneGapLib/Classes/Capture.h
++++ b/PhoneGapLib/Classes/Capture.h
+@@ -27,21 +27,17 @@ typedef NSUInteger CaptureError;
+ 	NSString* callbackid;
+ 	NSInteger quality;
+     NSString* mimeType;
+-    UIPopoverController* popoverController;
+ }
+ @property (assign) NSInteger quality;
+ @property (copy)   NSString* callbackId;
+ @property (copy)   NSString* mimeType;
+-@property (assign) UIPopoverController* popoverController;
+ 
+ 
+ - (void) dealloc;
+ 
+ @end
+ 
+-@interface PGCapture : PGPlugin<UIImagePickerControllerDelegate,
+-                                UINavigationControllerDelegate,
+-                                UIPopoverControllerDelegate> 
++@interface PGCapture : PGPlugin<UIImagePickerControllerDelegate, UINavigationControllerDelegate> 
+ {
+     PGImagePicker* pickerController;
+     BOOL inUse;
+diff --git a/PhoneGapLib/Classes/Capture.m b/PhoneGapLib/Classes/Capture.m
+index 089d000..b82e800 100644
+--- a/PhoneGapLib/Classes/Capture.m
++++ b/PhoneGapLib/Classes/Capture.m
+@@ -22,7 +22,7 @@
+ @synthesize quality;
+ @synthesize callbackId;
+ @synthesize mimeType;
+-@synthesize popoverController;
++
+ 
+ - (uint64_t) accessibilityTraits
+ {
+@@ -52,12 +52,6 @@
+ @implementation PGCapture
+ @synthesize inUse;
+ 
+--(BOOL)popoverSupported
+-{
+-	return ( NSClassFromString(@"UIPopoverController") != nil) && 
+-	(UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad);
+-}
+-
+ -(id)initWithWebView:(UIWebView *)theWebView
+ {
+ 	self = (PGCapture*)[super initWithWebView:theWebView];
+@@ -75,14 +69,6 @@
+     if (duration) {
+         duration = [duration doubleValue] == 0 ? nil : duration;
+     }
+-    
+-    NSString* sourceTypeString = [options valueForKey:@"sourceType"];
+-	UIImagePickerControllerSourceType sourceType = UIImagePickerControllerSourceTypeCamera; // default
+-	if (sourceTypeString != nil) 
+-	{
+-		sourceType = (UIImagePickerControllerSourceType)[sourceTypeString intValue];
+-	}
+-    
+     PluginResult* result = nil;
+     
+     if (NSClassFromString(@"AVAudioRecorder") == nil) {
+@@ -111,18 +97,11 @@
+     NSString* callbackId = [arguments objectAtIndex:0];
+     NSString* mode = [options objectForKey:@"mode"];
+     
+-    NSString* sourceTypeString = [options valueForKey:@"sourceType"];
+-	UIImagePickerControllerSourceType sourceType = UIImagePickerControllerSourceTypeCamera; // default
+-	if (sourceTypeString != nil) 
+-	{
+-		sourceType = (UIImagePickerControllerSourceType)[sourceTypeString intValue];
+-	}
+-    
+ 	//options could contain limit and mode neither of which are supported at this time
+     // taking more than one picture (limit) is only supported if provide own controls via cameraOverlayView property
+     // can support mode in OS 
+     
+-	if (![UIImagePickerController isSourceTypeAvailable:sourceType]) {
++	if (![UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera]) {
+ 		NSLog(@"Capture.imageCapture: camera not available.");
+         PluginResult* result = [PluginResult resultWithStatus:PGCommandStatus_OK messageToErrorObject:CAPTURE_NOT_SUPPORTED];
+         [self writeJavascript:[result toErrorCallbackString:callbackId]];
+@@ -134,7 +113,7 @@
+         }
+ 	
+         pickerController.delegate = self;
+-        pickerController.sourceType = sourceType;
++        pickerController.sourceType = UIImagePickerControllerSourceTypeCamera;
+         pickerController.allowsEditing = NO;
+         if ([pickerController respondsToSelector:@selector(mediaTypes)]) {
+             // iOS 3.0
+@@ -149,24 +128,8 @@
+         // PGImagePicker specific property
+         pickerController.callbackId = callbackId;
+         pickerController.mimeType = mode;
+-        
+-        if([self popoverSupported] && sourceType != UIImagePickerControllerSourceTypeCamera)
+-        {
+-            if (pickerController.popoverController == nil) 
+-            { 
+-                pickerController.popoverController = [[NSClassFromString(@"UIPopoverController") alloc] 
+-                                                      initWithContentViewController:pickerController]; 
+-            } 
+-            pickerController.popoverController.delegate = self;
+-            [ pickerController.popoverController presentPopoverFromRect:CGRectMake(0,32,320,480)
+-                                                                 inView:[self.webView superview]
+-                                               permittedArrowDirections:UIPopoverArrowDirectionAny 
+-                                                               animated:YES]; 
+-        }
+-        else 
+-        { 
+-            [[super appViewController] presentModalViewController:pickerController animated:YES]; 
+-        }
++	
++        [[super appViewController] presentModalViewController:pickerController animated:YES];
+     }
+ 
+ }
+@@ -231,24 +194,9 @@
+ 	//options could contain limit, duration and mode, only duration is supported (but is not due to apple bug)
+     // taking more than one video (limit) is only supported if provide own controls via cameraOverlayView property
+     //NSNumber* duration = [options objectForKey:@"duration"];
+-    
+-    NSString* sourceTypeString = [options valueForKey:@"sourceType"];
+-	UIImagePickerControllerSourceType sourceType = UIImagePickerControllerSourceTypeCamera; // default
+-	if (sourceTypeString != nil) 
+-	{
+-		int sourceTypeInt = [sourceTypeString intValue];
+-        if( 0 == sourceTypeInt ) {
+-            sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
+-        } else if( 1 == sourceTypeInt ) {
+-            sourceType = UIImagePickerControllerSourceTypeCamera;
+-        } else {
+-            NSLog(@"Capture video sourceType (%@) invalid. Use default.", sourceTypeString);
+-        }
+-	}
+-    
+     NSString* mediaType = nil;
+     
+-	if ([UIImagePickerController isSourceTypeAvailable:sourceType]) {
++	if ([UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera]) {
+         // there is a camera, it is available, make sure it can do movies
+         if (pickerController != nil) {
+             [pickerController release]; // create a new one for each instance to initialize all variables
+@@ -257,7 +205,7 @@
+ 
+         NSArray* types = nil;
+         if ([UIImagePickerController respondsToSelector: @selector(availableMediaTypesForSourceType:)]){
+-             types = [UIImagePickerController availableMediaTypesForSourceType:sourceType];
++             types = [UIImagePickerController availableMediaTypesForSourceType:UIImagePickerControllerSourceTypeCamera];
+             //NSLog(@"MediaTypes: %@", [types description]); 
+         
+             if ([types containsObject:(NSString*)kUTTypeMovie]){
+@@ -275,7 +223,7 @@
+     } else { 
+         
+         pickerController.delegate = self;
+-        pickerController.sourceType = sourceType;
++        pickerController.sourceType = UIImagePickerControllerSourceTypeCamera;
+         pickerController.allowsEditing = NO;
+         // iOS 3.0
+         pickerController.mediaTypes = [NSArray arrayWithObjects: mediaType, nil];
+@@ -296,24 +244,7 @@
+         // PGImagePicker specific property
+         pickerController.callbackId = callbackId;
+         
+-        
+-        if([self popoverSupported] && sourceType != UIImagePickerControllerSourceTypeCamera)
+-        {
+-            if (pickerController.popoverController == nil) 
+-            { 
+-                pickerController.popoverController = [[NSClassFromString(@"UIPopoverController") alloc] 
+-                                                           initWithContentViewController:pickerController]; 
+-            } 
+-            pickerController.popoverController.delegate = self;
+-            [ pickerController.popoverController presentPopoverFromRect:CGRectMake(0,32,320,480)
+-                                                                      inView:[self.webView superview]
+-                                                    permittedArrowDirections:UIPopoverArrowDirectionAny 
+-                                                                    animated:YES]; 
+-        }
+-        else 
+-        { 
+-            [[super appViewController] presentModalViewController:pickerController animated:YES]; 
+-        }
++        [[super appViewController] presentModalViewController:pickerController animated:YES];
+     }
+     
+ }
+@@ -523,13 +454,7 @@
+     PGImagePicker* cameraPicker = (PGImagePicker*)picker;
+ 	NSString* callbackId = cameraPicker.callbackId;
+ 	
+-    if( nil != cameraPicker.popoverController ) {
+-        //NSLog(@"popover dismiss");
+-        [cameraPicker.popoverController dismissPopoverAnimated:YES];
+-    } else {
+-        //NSLog(@"picker dismiss");
+-        [picker dismissModalViewControllerAnimated:YES];
+-    }
++	[picker dismissModalViewControllerAnimated:YES];
+ 	
+     NSString* jsString = nil;
+     PluginResult* result = nil;
+@@ -561,6 +486,10 @@
+     } 
+     
+     [self writeJavascript :jsString];
++		
++	
++
++    
+ }
+ 
+ - (void)imagePickerControllerDidCancel:(UIImagePickerController*)picker

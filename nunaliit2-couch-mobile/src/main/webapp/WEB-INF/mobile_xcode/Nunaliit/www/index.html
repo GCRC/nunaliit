@@ -1,0 +1,65 @@
+<!DOCTYPE html> 
+<html> 
+	<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Nunaliit Mobile</title>
+	
+	<link rel="stylesheet" href="js-external/css/jquery.mobile/jquery.mobile.min.css"/>
+	<link rel="stylesheet" href="nunaliit2/css/basic/nunaliit2-mobile.css" type="text/css"/ >
+    <style type="text/css">
+        .ui-page {
+            -webkit-backface-visibility: hidden;
+        }
+    </style>
+
+	<script type="text/javascript" src="phonegap-1.0.0.js"></script>
+	<script type="text/javascript" src="js-external/js/jquery.min.js"></script>
+	<script type="text/javascript" src="js-external/js/jquery.mobile.min.js"></script>
+	<script type="text/javascript" src="nunaliit2/nunaliit2-couch-mobile.js"></script>
+	<script type="text/javascript" src="n2.mobile.js"></script>
+	<script type="text/javascript" src="n2.mobileMainPage.js"></script>
+	<script type="text/javascript" src="n2.mobileViewer.js"></script>
+	<script type="text/javascript" src="n2.mobileSelectDialog.js"></script>
+	<script type="text/javascript" src="n2.mobileMediaViewer.js"></script>
+	<script type="text/javascript" src="n2.mobileEditor.js"></script>
+	<script type="text/javascript" src="n2.mobileMediaEditor.js"></script>
+	<script type="text/javascript" src="n2.mobileCaptureMedia.js"></script>
+	<script type="text/javascript" src="n2.mobileSearchReference.js"></script>
+	<script type="text/javascript" src="n2.mobileDebug.js"></script>
+	<script type="text/javascript" src="n2.mobileJqm.js"></script>
+	<script type="text/javascript" src="couchLocation.js"></script>
+	<script type="text/javascript" src="configure.js"></script>
+	<script type="text/javascript" src="n2.mobileApp.js"></script>
+
+
+</head> 
+<body> 
+
+<div id="mobileMainPage" data-role="page" data-theme="b">
+
+	<div data-role="header" data-theme="b">
+		<h1>Nunaliit Mobile<span class="mobileMainDbLabel"></span></h1>
+		<a href="settings.html" data-icon="arrow-r" data-iconpos="right" class="ui-btn-right">Settings</a>
+	</div><!-- /header -->
+
+	<div class="mobileMainContent" data-role="content" data-theme="d">
+		<!-- p>Click the "Settings" button above to add a server to work with.</p>
+		<ul id="mobileMainList" data-role="listview" data-filter="true" data-theme="d">
+			<!--  li><a href="edit_document.html">Aulattivigyuaq</a></li>
+			<li><a href="edit_document.html">Iqquktuuq</a></li>
+			<li><a href="edit_document.html">Ukaliqtuuq</a></li>
+		</ul -->
+	</div><!-- /content -->
+
+	<div data-role="footer" data-position="fixed" data-theme="b">
+		<div data-role="navbar">
+		<ul>
+			<li><a class="mobileMainNewDoc" href="#" data-role="button" data-rel="dialog" data-transition="pop" data-inline="true" data-icon="add">New Document</a></li>
+		</ul>
+	</div><!-- /navbar -->
+	</div><!-- /footer -->
+</div><!-- /page -->
+
+</body>
+</html>

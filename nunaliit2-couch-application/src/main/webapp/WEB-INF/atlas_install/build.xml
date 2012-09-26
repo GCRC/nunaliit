@@ -1,0 +1,936 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ====================================================================== -->
+<project name="atlas-install" default="default">
+	<description>
+		CouchApp Installation Scripts.
+	</description>
+	
+	<property file="build.properties"/>
+	<property file="user.properties"/>
+
+	<!-- Load up properties specified by content -->
+	<property file="../atlas.properties"/>
+
+	<!-- property name="atlas.name" value="default"/ -->
+	<property name="atlas.config.dir" location="/etc/nunaliit2/${atlas.name}"/>
+
+	<!-- Load up current configuration -->
+	<property file="${atlas.config.dir}/config.properties"/>
+	<property file="${atlas.config.dir}/couch.properties"/>
+	<property file="${atlas.config.dir}/mail.properties"/>
+	<property file="${atlas.config.dir}/multimedia.properties"/>
+	<property file="${atlas.config.dir}/upload.properties"/>
+	<property file="${atlas.config.dir}/install.properties"/>
+
+	<!-- Load up defaults for atlas installation -->
+	<property file="install.properties"/>
+
+	<!-- Set up defaults -->
+	<property name="servlet.user.dir" location="/home/jetty"/>
+	<property name="atlas.dir" location="${servlet.user.dir}/atlas.${atlas.name}"/>
+	<property name="apache.url.protocol" value="http"/>
+	<property name="apache.url.domain" value="127.0.0.1"/>
+	<property name="apache.path.answer" value="${atlas.name}"/>
+	<property name="apache.incoming.address" value="*"/>
+	<property name="apache.incoming.port" value="80"/>
+	<property name="config.serverName" value="${atlas.name}"/>
+	<property name="couchdb.url.protocol" value="http"/>
+	<property name="couchdb.url.domain" value="127.0.0.1"/>
+	<property name="couchdb.url.port" value="5984"/>
+	<property name="couchdb.path.answer" value="/"/>
+	<property name="couchdb.admin.user" value="admin"/>
+	<property name="couchdb.admin.password" value=""/>
+	<property name="couchdb.dbName" value="${atlas.name}"/>
+	<property name="couchdb.replication.password" value=""/>
+	<property name="couchdb.executable" value="/etc/init.d/couchbase-server"/>
+	<property name="couchdb.args.start" value="start"/>
+	<property name="couchdb.args.stop" value="stop"/>
+	<property name="repositoryDir" location="${atlas.dir}/media"/>
+	<property name="cron.working.dir" location="${atlas.dir}/atlas"/>
+	<property name="cron.nunaliit.svnUrl" value="https://svn.gcrc.carleton.ca/nunaliit2/branches/live"/>
+	<property name="cron.atlas.svnUrl" value="https://svn.gcrc.carleton.ca/nunaliit2_atlases/${atlas.name}/trunk"/>
+	<property name="java.home" location="/usr/lib/jvm/java-6-sun"/>
+	<property name="jetty.source.dir" location="${servlet.user.dir}/jetty-latest"/>
+	<property name="servlet.home.dir" location="${atlas.dir}/jetty"/>
+	<property name="servlet.args.start" value="start"/>
+	<property name="servlet.args.stop" value="stop"/>
+	<property name="servlet.user" value="jetty"/>
+	<property name="servlet.url.protocol" value="http"/>
+	<property name="servlet.url.domain" value="127.0.0.1"/>
+	<property name="servlet.url.port" value="8080"/>
+	<property name="servlet.path.answer" value="/"/>
+	<property name="servlet.password" value=""/>
+	<property name="subversion.user" value=""/>
+	<property name="subversion.password" value=""/>
+	<property name="google.map.key" value="ABQIAAAAEW-mSGpDHG1yrNbdIIb5sxR797qAzBdonqCCbLfsJ-One-t3MxSReKDbx_FL1_QH4ur5JCBKJJt3Vw"/>
+	
+	<!-- ================================= -->
+	<target
+		name="default"
+		depends="simplified"
+		description="Configure an atlas instance"
+		>
+	</target>
+	
+	<!-- ================================= -->
+	<target
+		name="simplified"
+		depends="config-atlas-name"
+		description="Configure an atlas instance"
+		>
+		<ant
+			target="-simplified-continue"
+			inheritall="false"
+			inheritrefs="false"
+			>
+		</ant>
+	</target>
+
+	<target
+		name="-simplified-continue"
+		depends="config-directory,config-properties-simplified,write-configuration,optional-working-dir-creation"
+		description="Configure an atlas after name is selected"
+		>
+	
+	</target>
+
+	<!-- ================================= -->
+	<target
+		name="advanced"
+		depends="config-atlas-name"
+		description="Configure an atlas instance"
+		>
+		<ant
+			target="-advanced-continue"
+			inheritall="false"
+			inheritrefs="false"
+			>
+		</ant>
+	</target>
+
+	<target
+		name="-advanced-continue"
+		depends="config-directory,config-properties-advanced,write-configuration,optional-working-dir-creation"
+		description="Configure an atlas after name is selected"
+		>
+	
+	</target>
+
+	<!-- ================================= -->
+	<target
+		name="config-atlas-name"
+		description="Ask user for atlas name and remember setting"
+		depends="-config-atlas-name-create,-config-atlas-name-exists"
+		>
+	</target>
+		
+	<target
+		name="-config-atlas-name-create"
+		description="Ask user for atlas name and remember setting"
+		unless="atlas.name"
+		>
+		
+		<echo message="Selecting a name for the atlas will influence the configuration."/>
+		
+		<input
+			message="Enter name for atlas"
+			addproperty="ATLAS_NAME"
+			/>
+
+		<property name="ATLAS_CONFIG_DIR" location="/etc/nunaliit2/${ATLAS_NAME}"/>
+
+		<echo
+			file="user.properties"
+			append="false"
+			>
+atlas.name=${ATLAS_NAME}
+atlas.config.dir=${ATLAS_CONFIG_DIR}
+		</echo>
+
+		<echo message="Value saved in file named: 'user.properties'"/>
+	</target>
+	
+	<target
+		name="-config-atlas-name-exists"
+		description="Inform user that atlas name is already selected"
+		if="atlas.name"
+		>
+		
+		<echo message="Atlas name set to: ${atlas.name}"/>
+
+		<echo message="To change atlas name, delete file 'user.properties'"/>
+		
+	</target>
+
+	<!-- ================================= -->
+	<target
+		name="config-directory"
+		description="Create configuration directory"
+		>
+		
+		<echo message="Configuration directory is: ${atlas.config.dir}"/>
+		
+		<mkdir dir="${atlas.config.dir}"/>
+		
+	</target>
+
+	<!-- ================================= -->
+	<target
+		name="config-properties-simplified"
+		depends="config-directory"
+		description="Create config.properties file"
+		>
+
+		<!-- ++++++++++++++++++++++++++ -->
+		<echo message="Server Configuration"/>
+		
+		<property name="SERVERNAME" value="${atlas.name}"/>
+
+		<input
+			message="Enter jetty user home directory"
+			addproperty="SERVLET_USER_DIR"
+			defaultvalue="${servlet.user.dir}"
+			/>
+
+		<property name="ATLAS_DIR" location="${SERVLET_USER_DIR}/atlas.${atlas.name}"/>
+
+		<property name="UPLOAD_REPOSITORY_DIR" location="${ATLAS_DIR}/media"/>
+
+		<!-- ++++++++++++++++++++++++++ -->
+		<echo message="CouchDb Configuration"/>
+
+		<property name="COUCH_URL_PROT" value="${couchdb.url.protocol}"/>
+		<property name="COUCH_URL_DOMAIN" value="${couchdb.url.domain}"/>
+		<property name="COUCH_URL_PORT" value="${couchdb.url.port}"/>
+		<property name="COUCH_PATH_ANSWER" value="${couchdb.path.answer}"/>
+		<condition property="COUCH_PATH" value="">
+			<equals arg1="${COUCH_PATH_ANSWER}" arg2="/"/>
+		</condition>
+		<condition property="COUCH_PATH_SEPARATORS" value="/">
+			<equals arg1="${COUCH_PATH_ANSWER}" arg2="/"/>
+		</condition>
+		<condition property="COUCH_PATH_OPEN" value="">
+			<equals arg1="${COUCH_PATH_ANSWER}" arg2="/"/>
+		</condition>
+		<property name="COUCH_PATH" value="${COUCH_PATH_ANSWER}"/>
+		<property name="COUCH_PATH_SEPARATORS" value="/${COUCH_PATH_ANSWER}/"/>
+		<property name="COUCH_PATH_OPEN" value="/${COUCH_PATH_ANSWER}"/>
+		
+		<input
+			message="Enter CouchDB admin user"
+			addproperty="COUCH_ADMIN_USER"
+			defaultvalue="${couchdb.admin.user}"
+			/>
+		
+		<input
+			message="Enter CouchDB admin password"
+			addproperty="COUCH_ADMIN_PASSWORD"
+			defaultvalue="${couchdb.admin.password}"
+			/>
+		
+		<property name="COUCH_DB" value="${couchdb.dbName}"/>
+		<property name="COUCH_EXEC" value="${couchdb.executable}"/>
+		<property name="COUCH_ARGS_START" value="${couchdb.args.start}"/>
+		<property name="COUCH_ARGS_STOP" value="${couchdb.args.stop}"/>
+		
+		<property name="couchdb.replication.user" value="${SERVERNAME}"/>
+		<property name="COUCH_REPLICATION_USER" value="${couchdb.replication.user}"/>
+		
+		<input
+			message="Enter password for replication process"
+			addproperty="COUCH_REPLICATION_PASSWORD"
+			defaultvalue="${couchdb.replication.password}"
+			/>
+		
+		<!-- ++++++++++++++++++++++++++ -->
+		<echo message="Web Server Configuration"/>
+
+		<input
+			message="Enter protocol for accessing web server"
+			addproperty="APACHE_URL_PROT"
+			defaultvalue="${apache.url.protocol}"
+			/>
+
+		<input
+			message="Enter public domain name for atlas"
+			addproperty="APACHE_URL_DOMAIN"
+			defaultvalue="${apache.url.domain}"
+			/>
+		
+		<input
+			message="Enter path from public domain to atlas root (e.g. 'atlas/city', '/' for root)"
+			addproperty="APACHE_PATH_ANSWER"
+			defaultvalue="${apache.path.answer}"
+			/>
+		<condition property="APACHE_PATH" value="">
+			<equals arg1="${APACHE_PATH_ANSWER}" arg2="/"/>
+		</condition>
+		<condition property="APACHE_PATH_SEPARATORS" value="/">
+			<equals arg1="${APACHE_PATH_ANSWER}" arg2="/"/>
+		</condition>
+		<property name="APACHE_PATH" value="${APACHE_PATH_ANSWER}"/>
+		<property name="APACHE_PATH_SEPARATORS" value="/${APACHE_PATH_ANSWER}/"/>
+
+		<input
+			message="Enter incoming address for Web Server"
+			addproperty="APACHE_INCOMING_ADDRESS"
+			defaultvalue="${apache.incoming.address}"
+			/>
+
+		<input
+			message="Enter incoming port for Web Server"
+			addproperty="APACHE_INCOMING_PORT"
+			defaultvalue="${apache.incoming.port}"
+			/>
+		
+		<!-- ++++++++++++++++++++++++++ -->
+		<echo message="CRON Script Configuration"/>
+
+		<property name="CRON_WORKING_DIR" location="${ATLAS_DIR}/atlas"/>
+		
+		<property name="CRON_NUNALIIT_SVN_DIR" location="${CRON_WORKING_DIR}/nunaliit2"/>
+		
+		<input
+			message="Enter SVN url for nunaliit2"
+			addproperty="CRON_NUNALIIT_SVN_URL"
+			defaultvalue="${cron.nunaliit.svnUrl}"
+			/>
+		
+		<property name="CRON_ATLAS_SVN_DIR" location="${CRON_WORKING_DIR}/content"/>
+		
+		<input
+			message="Enter SVN url for content"
+			addproperty="CRON_ATLAS_SVN_URL"
+			defaultvalue="${cron.atlas.svnUrl}"
+			/>
+		
+		<input
+			message="Enter SVN user"
+			addproperty="SUBVERSION_USER"
+			defaultvalue="${subversion.user}"
+			/>
+		
+		<input
+			message="Enter SVN password"
+			addproperty="SUBVERSION_PASSWORD"
+			defaultvalue="${subversion.password}"
+			/>
+		
+		<!-- ++++++++++++++++++++++++++ -->
+		<echo message="Servlet Configuration"/>
+		
+		<property name="SERVLET_HOME_DIR" location="${ATLAS_DIR}/jetty"/>
+		
+		<input
+			message="Enter user name for servlet container"
+			addproperty="SERVLET_USER"
+			defaultvalue="${servlet.user}"
+			/>
+
+		<property name="SERVLET_URL_PROT" value="${servlet.url.protocol}"/>
+
+		<property name="SERVLET_URL_DOMAIN" value="${servlet.url.domain}"/>
+
+		<input
+			message="Enter port for servlet container"
+			addproperty="SERVLET_URL_PORT"
+			defaultvalue="${servlet.url.port}"
+			/>
+		
+		<property name="SERVLET_PATH_ANSWER" value="${servlet.path.answer}"/>
+		<condition property="SERVLET_PATH" value="">
+			<equals arg1="${SERVLET_PATH_ANSWER}" arg2="/"/>
+		</condition>
+		<condition property="SERVLET_PATH_SEPARATORS" value="/">
+			<equals arg1="${SERVLET_PATH_ANSWER}" arg2="/"/>
+		</condition>
+		<property name="SERVLET_PATH" value="${SERVLET_PATH_ANSWER}"/>
+		<property name="SERVLET_PATH_SEPARATORS" value="/${SERVLET_PATH_ANSWER}/"/>
+		<property name="SERVLET_URL" value="${SERVLET_URL_PROT}://${SERVLET_URL_DOMAIN}:${SERVLET_URL_PORT}"/>
+
+		<property name="SERVLET_EXEC" location="${SERVLET_HOME_DIR}/bin/jetty.sh"/>
+
+		<property name="SERVLET_ARGS_START" value="${servlet.args.start}"/>
+		<property name="SERVLET_ARGS_STOP" value="${servlet.args.stop}"/>
+
+		<input
+			message="Enter path where latest version of jetty is uncompressed"
+			addproperty="JETTY_SOURCE_DIR"
+			defaultvalue="${jetty.source.dir}"
+			/>
+
+		<!-- ++++++++++++++++++++++++++ -->
+		<!-- echo message="Java"/ -->
+		
+		<property name="JAVA_HOME" value="${java.home}"/>
+
+		<!-- ++++++++++++++++++++++++++ -->
+		<!-- echo message="Google Maps"/ -->
+		
+		<property name="GOOGLE_MAP_KEY" value="${google.map.key}"/>
+		
+		<!-- ++++++++++++++++++++++++++ -->
+		<!-- Compute derived values -->
+		<property name="COUCH_URL" value="${COUCH_URL_PROT}://${COUCH_URL_DOMAIN}:${COUCH_URL_PORT}"/>
+		<property name="COUCH_URL_ADMIN" value="${COUCH_URL_PROT}://${COUCH_ADMIN_USER}:${COUCH_ADMIN_PASSWORD}@${COUCH_URL_DOMAIN}:${COUCH_URL_PORT}"/>
+		<property name="COUCH_SERVER" value="${COUCH_URL}${COUCH_PATH_OPEN}"/>
+		<property name="COUCH_SERVER_ADMIN" value="${COUCH_URL_ADMIN}${COUCH_PATH_OPEN}"/>
+		<property name="APACHE_URL" value="${APACHE_URL_PROT}://${APACHE_URL_DOMAIN}"/>
+		<property name="ATLAS_CONFIG_DIR" location="${atlas.config.dir}"/>
+		<condition property="SUBVERSION_USER_OPTION" value="">
+			<equals arg1="${SUBVERSION_USER}" arg2=""/>
+		</condition>
+		<property name="SUBVERSION_USER_OPTION" value="--username ${SUBVERSION_USER}"/>
+		<condition property="SUBVERSION_PASSWORD_OPTION" value="">
+			<equals arg1="${SUBVERSION_PASSWORD}" arg2=""/>
+		</condition>
+		<property name="SUBVERSION_PASSWORD_OPTION" value="--password ${SUBVERSION_PASSWORD}"/>
+	</target>
+
+	<!-- ================================= -->
+	<target
+		name="config-properties-advanced"
+		depends="config-directory"
+		description="Create config.properties file"
+		>
+
+		<echo message="Server Configuration"/>
+		
+		<input
+			message="Enter unique server name"
+			addproperty="SERVERNAME"
+			defaultvalue="${config.serverName}"
+			/>
+
+		<input
+			message="Enter upload repository directory"
+			addproperty="UPLOAD_REPOSITORY_DIR"
+			defaultvalue="${repositoryDir}"
+			/>
+
+		<echo message="CouchDb Configuration"/>
+
+		<input
+			message="Enter protocol for CouchDB URL"
+			addproperty="COUCH_URL_PROT"
+			defaultvalue="${couchdb.url.protocol}"
+			/>
+
+		<input
+			message="Enter domain for CouchDB URL"
+			addproperty="COUCH_URL_DOMAIN"
+			defaultvalue="${couchdb.url.domain}"
+			/>
+
+		<input
+			message="Enter port for CouchDB URL"
+			addproperty="COUCH_URL_PORT"
+			defaultvalue="${couchdb.url.port}"
+			/>
+
+		<input
+			message="Enter path from domain to CouchDB server root (e.g. 'webs/couchdb', '/' for root)"
+			addproperty="COUCH_PATH_ANSWER"
+			defaultvalue="${couchdb.path.answer}"
+			/>
+		<condition property="COUCH_PATH" value="">
+			<equals arg1="${COUCH_PATH_ANSWER}" arg2="/"/>
+		</condition>
+		<condition property="COUCH_PATH_SEPARATORS" value="/">
+			<equals arg1="${COUCH_PATH_ANSWER}" arg2="/"/>
+		</condition>
+		<condition property="COUCH_PATH_OPEN" value="">
+			<equals arg1="${COUCH_PATH_ANSWER}" arg2="/"/>
+		</condition>
+		<property name="COUCH_PATH" value="${COUCH_PATH_ANSWER}"/>
+		<property name="COUCH_PATH_SEPARATORS" value="/${COUCH_PATH_ANSWER}/"/>
+		<property name="COUCH_PATH_OPEN" value="/${COUCH_PATH_ANSWER}"/>
+		
+		<input
+			message="Enter CouchDB admin user"
+			addproperty="COUCH_ADMIN_USER"
+			defaultvalue="${couchdb.admin.user}"
+			/>
+		
+		<input
+			message="Enter CouchDB admin password"
+			addproperty="COUCH_ADMIN_PASSWORD"
+			defaultvalue="${couchdb.admin.password}"
+			/>
+		
+		<input
+			message="Enter CouchDB database name"
+			addproperty="COUCH_DB"
+			defaultvalue="${couchdb.dbName}"
+			/>
+		
+		<input
+			message="Enter CouchDB executable script"
+			addproperty="COUCH_EXEC"
+			defaultvalue="${couchdb.executable}"
+			/>
+		
+		<input
+			message="Enter 'start' argument to CouchDB executable script"
+			addproperty="COUCH_ARGS_START"
+			defaultvalue="${couchdb.args.start}"
+			/>
+		
+		<input
+			message="Enter 'stop' argument to CouchDB executable script"
+			addproperty="COUCH_ARGS_STOP"
+			defaultvalue="${couchdb.args.stop}"
+			/>
+		
+		<property name="couchdb.replication.user" value="${SERVERNAME}"/>
+		<input
+			message="Enter user name for replication process"
+			addproperty="COUCH_REPLICATION_USER"
+			defaultvalue="${couchdb.replication.user}"
+			/>
+		
+		<input
+			message="Enter password for replication process"
+			addproperty="COUCH_REPLICATION_PASSWORD"
+			defaultvalue="${couchdb.replication.password}"
+			/>
+		
+		<echo message="Web Server Configuration"/>
+
+		<input
+			message="Enter protocol for accessing web server"
+			addproperty="APACHE_URL_PROT"
+			defaultvalue="${apache.url.protocol}"
+			/>
+
+		<input
+			message="Enter public domain name for atlas"
+			addproperty="APACHE_URL_DOMAIN"
+			defaultvalue="${apache.url.domain}"
+			/>
+		
+		<input
+			message="Enter path from public domain to atlas root (e.g. 'atlas/city', '/' for root)"
+			addproperty="APACHE_PATH_ANSWER"
+			defaultvalue="${apache.path.answer}"
+			/>
+		<condition property="APACHE_PATH" value="">
+			<equals arg1="${APACHE_PATH_ANSWER}" arg2="/"/>
+		</condition>
+		<condition property="APACHE_PATH_SEPARATORS" value="/">
+			<equals arg1="${APACHE_PATH_ANSWER}" arg2="/"/>
+		</condition>
+		<property name="APACHE_PATH" value="${APACHE_PATH_ANSWER}"/>
+		<property name="APACHE_PATH_SEPARATORS" value="/${APACHE_PATH_ANSWER}/"/>
+
+		<input
+			message="Enter incoming address for Web Server"
+			addproperty="APACHE_INCOMING_ADDRESS"
+			defaultvalue="${apache.incoming.address}"
+			/>
+
+		<input
+			message="Enter incoming port for Web Server"
+			addproperty="APACHE_INCOMING_PORT"
+			defaultvalue="${apache.incoming.port}"
+			/>
+		
+		<echo message="CRON Script Configuration"/>
+
+		<input
+			message="Enter working directory for CRON job"
+			addproperty="CRON_WORKING_DIR"
+			defaultvalue="${cron.working.dir}"
+			/>
+		
+		<property name="cron.nunaliit.svn" value="${CRON_WORKING_DIR}/nunaliit2"/>
+		<input
+			message="Enter directory where nunaliit2 atlas is checked out"
+			addproperty="CRON_NUNALIIT_SVN_DIR"
+			defaultvalue="${cron.nunaliit.svn}"
+			/>
+		
+		<input
+			message="Enter SVN url for nunaliit2"
+			addproperty="CRON_NUNALIIT_SVN_URL"
+			defaultvalue="${cron.nunaliit.svnUrl}"
+			/>
+		
+		<property name="cron.atlas.svn" value="${CRON_WORKING_DIR}/content"/>
+		<input
+			message="Enter directory where atlas content is checked out"
+			addproperty="CRON_ATLAS_SVN_DIR"
+			defaultvalue="${cron.atlas.svn}"
+			/>
+		
+		<input
+			message="Enter SVN url for content"
+			addproperty="CRON_ATLAS_SVN_URL"
+			defaultvalue="${cron.atlas.svnUrl}"
+			/>
+		
+		<input
+			message="Enter SVN user"
+			addproperty="SUBVERSION_USER"
+			defaultvalue="${subversion.user}"
+			/>
+		
+		<input
+			message="Enter SVN password"
+			addproperty="SUBVERSION_PASSWORD"
+			defaultvalue="${subversion.password}"
+			/>
+		
+		<echo message="Servlet Configuration"/>
+		
+		<input
+			message="Enter local home directory for servlet container"
+			addproperty="SERVLET_HOME_DIR"
+			defaultvalue="${servlet.home.dir}"
+			/>
+		
+		<input
+			message="Enter user name for servlet container"
+			addproperty="SERVLET_USER"
+			defaultvalue="${servlet.user}"
+			/>
+
+		<input
+			message="Enter web protocol for accessing servlet container"
+			addproperty="SERVLET_URL_PROT"
+			defaultvalue="${servlet.url.protocol}"
+			/>
+
+		<input
+			message="Enter public domain name for servlet container"
+			addproperty="SERVLET_URL_DOMAIN"
+			defaultvalue="${servlet.url.domain}"
+			/>
+
+		<input
+			message="Enter port for servlet container"
+			addproperty="SERVLET_URL_PORT"
+			defaultvalue="${servlet.url.port}"
+			/>
+		
+		<input
+			message="Enter path from root to atlas servlet (e.g. 'webs/atlas', '/' for root)"
+			addproperty="SERVLET_PATH_ANSWER"
+			defaultvalue="${servlet.path.answer}"
+			/>
+		<condition property="SERVLET_PATH" value="">
+			<equals arg1="${SERVLET_PATH_ANSWER}" arg2="/"/>
+		</condition>
+		<condition property="SERVLET_PATH_SEPARATORS" value="/">
+			<equals arg1="${SERVLET_PATH_ANSWER}" arg2="/"/>
+		</condition>
+		<property name="SERVLET_PATH" value="${SERVLET_PATH_ANSWER}"/>
+		<property name="SERVLET_PATH_SEPARATORS" value="/${SERVLET_PATH_ANSWER}/"/>
+		<property name="SERVLET_URL" value="${SERVLET_URL_PROT}://${SERVLET_URL_DOMAIN}:${SERVLET_URL_PORT}"/>
+
+		<input
+			message="Enter path where latest version of jetty is uncompressed"
+			addproperty="JETTY_SOURCE_DIR"
+			defaultvalue="${jetty.source.dir}"
+			/>
+		
+		<property name="servlet.executable" location="${SERVLET_HOME_DIR}/bin/jetty.sh"/>
+		<input
+			message="Enter servlet startup script"
+			addproperty="SERVLET_EXEC"
+			defaultvalue="${servlet.executable}"
+			/>
+
+		<input
+			message="Enter start option for startup script"
+			addproperty="SERVLET_ARGS_START"
+			defaultvalue="${servlet.args.start}"
+			/>
+
+		<input
+			message="Enter stop option for startup script"
+			addproperty="SERVLET_ARGS_STOP"
+			defaultvalue="${servlet.args.stop}"
+			/>
+
+		<echo message="Java"/>
+		
+		<input
+			message="Enter path for Java home"
+			addproperty="JAVA_HOME"
+			defaultvalue="${java.home}"
+			/>
+
+		<echo message="Google Maps"/>
+		
+		<input
+			message="Enter API key for Google Maps"
+			addproperty="GOOGLE_MAP_KEY"
+			defaultvalue="${google.map.key}"
+			/>
+		
+		<!-- Compute derived values -->
+		<property name="SERVLET_USER_DIR" value="${servlet.user.dir}"/>
+		<property name="COUCH_URL" value="${COUCH_URL_PROT}://${COUCH_URL_DOMAIN}:${COUCH_URL_PORT}"/>
+		<property name="COUCH_URL_ADMIN" value="${COUCH_URL_PROT}://${COUCH_ADMIN_USER}:${COUCH_ADMIN_PASSWORD}@${COUCH_URL_DOMAIN}:${COUCH_URL_PORT}"/>
+		<property name="COUCH_SERVER" value="${COUCH_URL}${COUCH_PATH_OPEN}"/>
+		<property name="COUCH_SERVER_ADMIN" value="${COUCH_URL_ADMIN}${COUCH_PATH_OPEN}"/>
+		<property name="APACHE_URL" value="${APACHE_URL_PROT}://${APACHE_URL_DOMAIN}"/>
+		<property name="ATLAS_CONFIG_DIR" location="${atlas.config.dir}"/>
+		<condition property="SUBVERSION_USER_OPTION" value="">
+			<equals arg1="${SUBVERSION_USER}" arg2=""/>
+		</condition>
+		<property name="SUBVERSION_USER_OPTION" value="--username ${SUBVERSION_USER}"/>
+		<condition property="SUBVERSION_PASSWORD_OPTION" value="">
+			<equals arg1="${SUBVERSION_PASSWORD}" arg2=""/>
+		</condition>
+		<property name="SUBVERSION_PASSWORD_OPTION" value="--password ${SUBVERSION_PASSWORD}"/>
+	</target>
+
+	<!-- ================================= -->
+	<target name="write-configuration">
+
+		<copy
+			todir="${atlas.config.dir}"
+			overwrite="true"
+			>
+			<fileset dir="./templates">
+				<include name="atlas"/>
+				<include name="couch.properties"/>
+				<include name="config.properties"/>
+				<include name="mail.properties"/>
+				<include name="multimedia.properties"/>
+				<include name="upload.properties"/>
+				<include name="install.properties"/>
+				<include name="cron.sh"/>
+				<include name="readme.txt"/>
+				<include name="apache/atlas.conf"/>
+				<include name="apache/virtual.conf"/>
+				<include name="jetty/atlas.xml"/>
+			</fileset>
+			<filterset>
+				<filter token="ATLAS_NAME" value="${atlas.name}"/>
+				<filter token="ATLAS_DIR" value="${ATLAS_DIR}"/>
+				<filter token="APACHE_INCOMING_ADDRESS" value="${APACHE_INCOMING_ADDRESS}"/>
+				<filter token="APACHE_INCOMING_PORT" value="${APACHE_INCOMING_PORT}"/>
+				<filter token="APACHE_URL" value="${APACHE_URL}"/>
+				<filter token="APACHE_URL_PROT" value="${APACHE_URL_PROT}"/>
+				<filter token="APACHE_URL_DOMAIN" value="${APACHE_URL_DOMAIN}"/>
+				<filter token="APACHE_PATH" value="${APACHE_PATH}"/>
+				<filter token="APACHE_PATH_ANSWER" value="${APACHE_PATH_ANSWER}"/>
+				<filter token="APACHE_PATH_SEPARATORS" value="${APACHE_PATH_SEPARATORS}"/>
+				<filter token="ATLAS_CONFIG_DIR" value="${ATLAS_CONFIG_DIR}"/>
+				<filter token="COUCH_DB" value="${COUCH_DB}"/>
+				<filter token="COUCH_URL" value="${COUCH_URL}"/>
+				<filter token="COUCH_URL_PROT" value="${COUCH_URL_PROT}"/>
+				<filter token="COUCH_URL_DOMAIN" value="${COUCH_URL_DOMAIN}"/>
+				<filter token="COUCH_URL_PORT" value="${COUCH_URL_PORT}"/>
+				<filter token="COUCH_URL_ADMIN" value="${COUCH_URL_ADMIN}"/>
+				<filter token="COUCH_SERVER" value="${COUCH_SERVER}"/>
+				<filter token="COUCH_SERVER_ADMIN" value="${COUCH_SERVER_ADMIN}"/>
+				<filter token="COUCH_PATH" value="${COUCH_PATH}"/>
+				<filter token="COUCH_PATH_ANSWER" value="${COUCH_PATH_ANSWER}"/>
+				<filter token="COUCH_PATH_SEPARATORS" value="${COUCH_PATH_SEPARATORS}"/>
+				<filter token="COUCH_ADMIN_USER" value="${COUCH_ADMIN_USER}"/>
+				<filter token="COUCH_ADMIN_PASSWORD" value="${COUCH_ADMIN_PASSWORD}"/>
+				<filter token="COUCH_REPLICATION_USER" value="${COUCH_REPLICATION_USER}"/>
+				<filter token="COUCH_REPLICATION_PASSWORD" value="${COUCH_REPLICATION_PASSWORD}"/>
+				<filter token="COUCH_EXEC" value="${COUCH_EXEC}"/>
+				<filter token="COUCH_ARGS_START" value="${COUCH_ARGS_START}"/>
+				<filter token="COUCH_ARGS_STOP" value="${COUCH_ARGS_STOP}"/>
+				<filter token="CRON_ATLAS_SVN_DIR" value="${CRON_ATLAS_SVN_DIR}"/>
+				<filter token="CRON_ATLAS_SVN_URL" value="${CRON_ATLAS_SVN_URL}"/>
+				<filter token="CRON_NUNALIIT_SVN_DIR" value="${CRON_NUNALIIT_SVN_DIR}"/>
+				<filter token="CRON_NUNALIIT_SVN_URL" value="${CRON_NUNALIIT_SVN_URL}"/>
+				<filter token="CRON_WORKING_DIR" value="${CRON_WORKING_DIR}"/>
+				<filter token="GOOGLE_MAP_KEY" value="${GOOGLE_MAP_KEY}"/>
+				<filter token="JAVA_HOME" value="${JAVA_HOME}"/>
+				<filter token="JETTY_SOURCE_DIR" value="${JETTY_SOURCE_DIR}"/>
+				<filter token="SERVLET_USER_DIR" value="${SERVLET_USER_DIR}"/>
+				<filter token="SERVERNAME" value="${SERVERNAME}"/>
+				<filter token="SERVLET_EXEC" value="${SERVLET_EXEC}"/>
+				<filter token="SERVLET_ARGS_START" value="${SERVLET_ARGS_START}"/>
+				<filter token="SERVLET_ARGS_STOP" value="${SERVLET_ARGS_STOP}"/>
+				<filter token="SERVLET_URL" value="${SERVLET_URL}"/>
+				<filter token="SERVLET_URL_PROT" value="${SERVLET_URL_PROT}"/>
+				<filter token="SERVLET_URL_DOMAIN" value="${SERVLET_URL_DOMAIN}"/>
+				<filter token="SERVLET_URL_PORT" value="${SERVLET_URL_PORT}"/>
+				<filter token="SERVLET_PATH" value="${SERVLET_PATH}"/>
+				<filter token="SERVLET_PATH_ANSWER" value="${SERVLET_PATH_ANSWER}"/>
+				<filter token="SERVLET_PATH_SEPARATORS" value="${SERVLET_PATH_SEPARATORS}"/>
+				<filter token="SERVLET_USER" value="${SERVLET_USER}"/>
+				<filter token="SERVLET_HOME_DIR" value="${SERVLET_HOME_DIR}"/>
+				<filter token="SUBVERSION_USER" value="${SUBVERSION_USER}"/>
+				<filter token="SUBVERSION_USER_OPTION" value="${SUBVERSION_USER_OPTION}"/>
+				<filter token="SUBVERSION_PASSWORD" value="${SUBVERSION_PASSWORD}"/>
+				<filter token="SUBVERSION_PASSWORD_OPTION" value="${SUBVERSION_PASSWORD_OPTION}"/>
+				<filter token="UPLOAD_REPOSITORY_DIR" value="${UPLOAD_REPOSITORY_DIR}"/>
+			</filterset>
+		</copy>
+		
+		<chmod
+			perm="a+x"
+			>
+			<fileset dir="${atlas.config.dir}">
+				<include name="atlas"/>
+				<include name="cron.sh"/>
+			</fileset>
+		</chmod>
+
+	</target>
+
+	<!-- ================================= -->
+	<target
+		name="optional-working-dir-creation"
+		depends="-ask-user-working-dir-creation"
+		if="CREATE_WORKING_DIR_FLAG"
+		>
+		<ant
+			target="create-working-dir"
+			inheritall="false"
+			inheritrefs="false"
+			>
+		</ant>
+	</target>
+
+	<target
+		name="-ask-user-working-dir-creation"
+		>
+
+		<input
+			message="Do you wish to create working directories?"
+			addproperty="CREATE_WORKING_DIR_ANSWER"
+			defaultvalue="n"
+			/>
+		
+		<condition property="CREATE_WORKING_DIR_FLAG" value="yes">
+			<equals arg1="${CREATE_WORKING_DIR_ANSWER}" arg2="y"/>
+		</condition>
+		<condition property="CREATE_WORKING_DIR_FLAG" value="yes">
+			<equals arg1="${CREATE_WORKING_DIR_ANSWER}" arg2="yes"/>
+		</condition>
+	</target>
+	
+	<target
+		name="create-working-dir"
+		depends="create-working-dir-cron,create-working-dir-media,create-working-dir-jetty"
+		description="Creates working directories"
+		>
+	</target>
+	
+	<target
+		name="create-working-dir-cron"
+		depends=""
+		description="Creates working for CRON job"
+		>
+
+		<mkdir dir="${cron.working.dir}"/>
+		
+		<exec
+			dir="${cron.working.dir}"
+			executable="svn"
+			>
+			<arg line=" co --non-interactive --trust-server-cert --no-auth-cache ${subversion.user.option} ${subversion.password.option} ${cron.nunaliit.svnUrl} ${cron.nunaliit.svn}"/>
+		</exec>
+		
+		<exec
+			dir="${cron.working.dir}"
+			executable="svn"
+			>
+			<arg line=" co --non-interactive --trust-server-cert --no-auth-cache ${subversion.user.option} ${subversion.password.option} ${cron.atlas.svnUrl} ${cron.atlas.svn}"/>
+		</exec>
+
+		<mkdir dir="${cron.working.dir}/cron"/>
+		
+		<copy
+			todir="${cron.working.dir}/cron"
+			overwrite="true"
+			>
+			<fileset dir="../atlas_cron"/>
+			<fileset dir=".">
+				<include name="user.properties"/>
+			</fileset>
+		</copy>
+	</target>
+	
+	<target
+		name="create-working-dir-media"
+		depends=""
+		description="Creates directory where media files are uploaded"
+		>
+
+		<mkdir dir="${repositoryDir}"/>
+		
+		<chown file="${repositoryDir}" owner="${servlet.user}" type="both">
+		</chown>
+		<chown owner="${servlet.user}" type="both">
+			<fileset dir="${repositoryDir}">
+				<include name="**/*"/>
+			</fileset>
+		</chown>
+		
+		<chgrp file="${repositoryDir}" group="${servlet.user}" type="both">
+		</chgrp>
+		<chgrp group="${servlet.user}" type="both">
+			<fileset dir="${repositoryDir}">
+				<include name="**/*"/>
+			</fileset>
+		</chgrp>
+		
+	</target>
+	
+	<target
+		name="create-working-dir-jetty"
+		depends=""
+		description="Creates a servlet container for atlas"
+		>
+
+		<mkdir dir="${servlet.home.dir}"/>
+		<chown file="${servlet.home.dir}" owner="${servlet.user}" type="both"/>
+		<chgrp file="${servlet.home.dir}" group="${servlet.user}" type="both"/>
+		
+		<!-- Copy license files for JETTY and resources -->
+		<copy todir="${servlet.home.dir}">
+			<fileset dir="${jetty.source.dir}">
+				<include name="*.txt"/>
+				<include name="*.html"/>
+			</fileset>
+			<fileset dir="${jetty.source.dir}">
+				<include name="resources/**/*"/>
+			</fileset>
+		</copy>
+
+		<!-- Link directories: bin,etc,lib  Link files: start.ini, start.jar -->
+		<symlink link="${servlet.home.dir}/bin" resource="${jetty.source.dir}/bin" overwrite="true"/>
+		<symlink link="${servlet.home.dir}/etc" resource="${jetty.source.dir}/etc" overwrite="true"/>
+		<symlink link="${servlet.home.dir}/lib" resource="${jetty.source.dir}/lib" overwrite="true"/>
+		<symlink link="${servlet.home.dir}/start.ini" resource="${jetty.source.dir}/start.ini" overwrite="true"/>
+		<symlink link="${servlet.home.dir}/start.jar" resource="${jetty.source.dir}/start.jar" overwrite="true"/>
+		
+		<!-- Create a contexts directory -->
+		<mkdir dir="${servlet.home.dir}/contexts"/>
+		<symlink link="${servlet.home.dir}/contexts/atlas.xml" resource="${atlas.config.dir}/jetty/atlas.xml" overwrite="true"/>
+		
+		<!-- Create a webapps directory -->
+		<mkdir dir="${servlet.home.dir}/webapps"/>
+		
+		<!-- Create a write-able logs directory -->
+		<mkdir dir="${servlet.home.dir}/logs"/>
+		<chown file="${servlet.home.dir}/logs" owner="${servlet.user}" type="both">
+		</chown>
+		<chown owner="${servlet.user}" type="both">
+			<fileset dir="${servlet.home.dir}/logs">
+				<include name="**/*"/>
+			</fileset>
+		</chown>
+		<chgrp file="${servlet.home.dir}/logs" group="${servlet.user}" type="both">
+		</chgrp>
+		<chgrp group="${servlet.user}" type="both">
+			<fileset dir="${servlet.home.dir}/logs">
+				<include name="**/*"/>
+			</fileset>
+		</chgrp>
+		
+	</target>
+	
+</project>

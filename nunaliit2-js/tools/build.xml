@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ====================================================================== 
+	Nov 15, 2010 2:11:42 PM                                                        
+	
+	project    
+	description
+
+	jpfiset                                                                
+	====================================================================== -->
+<project name="project" default="default">
+	<description>
+		description
+	</description>
+	
+	<property name="src.dir" value="../src/main/webapp/nunaliit2"/>
+	<property name="js.jar" location="./js.jar"/>
+	<property name="jsdoctoolkit.jar" location="./jsdoctoolkit-ant-task-1.0.2.jar"/>
+	<property name="jsdoctoolkit.dir" location="./jsdoc_toolkit-2.3.2/jsdoc-toolkit"/>
+	<taskdef 
+		name="jsdoctoolkit"
+		classname="uk.co.darrenhurley.ant.tasks.JsDocToolkit"
+		classpath="${jsdoctoolkit.jar};${js.jar}"
+		/>
+
+
+	<!-- ================================= 
+	      target: default              
+	     ================================= -->
+	<target 
+		name="default"
+		description="description"
+		>
+	
+		<!--			inputdir="../src/main/webapp/nunaliit2/" -->
+		<jsdoctoolkit
+			jsdochome="${jsdoctoolkit.dir}/"
+			template="jsdoc"
+			outputdir="../jsdoc/"
+			>
+			<source file="${src.dir}/n2.core.js"/>
+			<source file="${src.dir}/n2.utils.js"/>
+			<source file="${src.dir}/n2.dbSearchEngine.js"/>
+			<source file="${src.dir}/n2.contributionDb.js"/>
+			<source file="${src.dir}/n2.olFilter.js"/>
+			<source file="${src.dir}/n2.mapAndControls.js"/>
+			<source file="${src.dir}/olkit_PlaceInfo.js"/>
+		</jsdoctoolkit>
+	</target>
+
+</project>

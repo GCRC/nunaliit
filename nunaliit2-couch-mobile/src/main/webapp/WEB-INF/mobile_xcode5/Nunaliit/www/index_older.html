@@ -1,0 +1,675 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+	<head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no;" />
+        
+        <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+
+        <title>Nunaliit2 Mobile App</title>
+        
+        <style type="text/css">
+        	.topBar {
+        		position:absolute;
+        		top:0px;
+        		left:0px;
+        		width:100%;
+        		height:30px;
+        	}
+        	.mainDisplay {
+        		position:absolute;
+        		top:30px;
+        		left:0px;
+        		width:100%;
+        		bottom:0px;
+        	}
+        	.mainDisplayTitle {
+        		position:absolute;
+        		top:0px;
+        		left:0px;
+        		width:100%;
+        		height:30px;
+        		font-weight: bold;
+        	}
+        	.mainDisplayIFrame {
+        		position:absolute;
+        		top:30px;
+        		left:0px;
+        		width:100%;
+        		bottom:0px;
+        	}
+        </style>
+	</head>
+	<body>
+		<div class="topBar">
+			<input class="btnHome" type="button" value="Home"/>
+		</div>
+		<div class="mainDisplay">
+			Starting application...
+		</div>
+
+		<script type="text/javascript" charset="utf-8" src="cordova-1.6.0.js"></script>
+		<script type="text/javascript" charset="utf-8" src="js-external/js/jquery.min.js"></script>
+		<script type="text/javascript" charset="utf-8" src="nunaliit2/nunaliit2-couch-mobile.js"></script>
+		<script type="text/javascript" charset="utf-8" src="couchLocation.js"></script>
+
+		<script type="text/javascript" charset="utf-8">
+
+			// <!--
+			
+			//var couchLocation = 'http://127.0.0.1:5984/';
+			//var couchLocation = 'http://generic.atlases.org/server/';
+			//var couchLocation = null;
+			
+			var localUser = 'admin';
+			var localPassword = 'admin';
+            
+			function createDatabase(){
+				$('.mainDisplay').remove();
+				
+				var $display = $('<div class="mainDisplay"></div>');
+				$('.topBar').after($display);
+				
+				createDatabase1({
+					dbName: ''
+					,localUser: localUser
+					,localPassword: localPassword
+					,serverAddress: ''
+					,remoteDbName: ''
+					,remoteUser: ''
+					,remotePassword: ''
+				});
+			};
+			
+			function createDatabase1(createOptions){
+
+				var $table = $('<table>'
+						+ '<tr><th>Local Database</th><td><input class="dbName" type="text" autocapitalize="off"/></td></tr>'
+						+ '<tr><th>Remote Server Address</th><td><input class="serverAddress" type="text" autocapitalize="off"/></td></tr>'
+						+ '<tr><th>Remote Database</th><td><input class="remoteDbName" type="text" autocapitalize="off"/></td></tr>'
+						+ '<tr><th>Remote User</th><td><input class="remoteUser" type="text" autocapitalize="off"/></td></tr>'
+						+ '<tr><th>Remote Password</th><td><input class="remotePassword" type="password" autocapitalize="off"/></td></tr>'
+						+ '<tr><th></th><td><input class="serverOK" type="button" value="Continue"/><input class="serverCancel" type="button" value="Cancel"/></td></tr>'
+						+'</table>');
+				$('.mainDisplay').append($table);
+				$('.mainDisplay').find('.dbName').val(createOptions.dbName);
+				$('.mainDisplay').find('.serverAddress').val(createOptions.serverAddress);
+				$('.mainDisplay').find('.remoteDbName').val(createOptions.remoteDbName);
+				$('.mainDisplay').find('.remoteUser').val(createOptions.remoteUser);
+				$('.mainDisplay').find('.remotePassword').val(createOptions.remotePassword);
+
+				$('.mainDisplay').find('.serverOK').click(function(){
+					createOptions.dbName = $('.mainDisplay').find('.dbName').val();
+					createOptions.serverAddress = $('.mainDisplay').find('.serverAddress').val();
+					createOptions.remoteDbName = $('.mainDisplay').find('.remoteDbName').val();
+					createOptions.remoteUser = $('.mainDisplay').find('.remoteUser').val();
+					createOptions.remotePassword = $('.mainDisplay').find('.remotePassword').val();
+
+					$('.mainDisplay').empty();
+					
+					createDatabase2(createOptions);
+					return false;
+				});
+				$('.mainDisplay').find('.serverCancel').click(function(){
+					main();
+					return false;
+				});
+			};
+			
+			function createDatabase2(createOptions){
+				deriveUrls();
+				
+				function deriveUrls() {
+					$('.mainDisplay').append('<div>Analyze user input...</div>');
+
+					if( '' === createOptions.remoteUser
+					 && '' === createOptions.remotePassword ) {
+						// OK
+					} else if( '' != createOptions.remoteUser
+							 && '' != createOptions.remotePassword ) {
+						// OK
+					} else {
+						reportError('If supplied, both user name and password must be specified.');
+						return;
+					};
+					
+					if( '' === createOptions.serverAddress ) {
+						if( '' != createOptions.remoteUser ) {
+							reportError('User should not be specified if server is not.');
+							return;
+						};
+						
+						// Special case, use local server
+						createOptions.serverAddress = $n2.couch.DefaultServer.getPathToServer();
+						createOptions.serverAddressAuth = $n2.couch.DefaultServer.getPathToServer();
+						createOptions.remoteDbUrl = createOptions.remoteDbName;
+					} else {
+
+						// Add '/' to end of path
+						if( createOptions.serverAddress[createOptions.serverAddress.length-1] != '/' ) {
+							createOptions.serverAddress = createOptions.serverAddress + '/';
+						};
+						
+						if( '' === createOptions.remoteUser ) {
+							createOptions.serverAddressAuth = createOptions.serverAddress;
+						} else {
+							var match = createOptions.serverAddress.match(/(http(s)?:\/\/)(.*)/);
+							if( match ) {
+								createOptions.serverAddressAuth = match[1] 
+									+ createOptions.remoteUser + ':' + createOptions.remotePassword 
+									+ '@' + match[3];
+							} else {
+								reportError('Unable to derive remote server address for authenticating');
+								return;
+							};
+						};
+
+						createOptions.remoteDbUrl = createOptions.serverAddressAuth 
+							+ createOptions.remoteDbName;
+					};
+					
+					verifyLocalDatabase();
+				};
+				
+				function verifyLocalDatabase() {
+					// Verify if local database exists
+					$('.mainDisplay').append('<div>Verifying local databases...</div>');
+					$n2.couch.DefaultServer.listDatabases({
+						onSuccess: function(dbNames) {
+							for(var i=0,e=dbNames.length; i<e; ++i) {
+								var localName = dbNames[i];
+								if( localName === createOptions.dbName ) {
+									reportError('Local database named "'+localName+'" already exist"');
+									return;
+								};
+							};
+							createDatabase3(createOptions);
+						}
+						,onError: function() {
+							reportError('Unable to obtain local databases');
+						}
+					});
+				};
+				
+				function reportError(msg) {
+					$('.mainDisplay').append('<div>Error: '+msg+'</div>');
+					createDatabase1(createOptions);
+				};
+			};
+			
+			function createDatabase3(createOptions){
+				$('.mainDisplay').append('<div>Contacting server '+createOptions.serverAddress+'...</div>');
+				
+				var remoteServer = $n2.couch.getServer({
+					pathToServer: createOptions.serverAddress
+					,onSuccess: function(){
+						var version = remoteServer.getVersion();
+						$('.mainDisplay').append('<div>Remote Server contacted. Version: '+version+'</div>');
+						checkRemoteDatabaseName();
+					}
+					,onError: remoteServerError
+				});
+				
+				function checkRemoteDatabaseName() {
+					$('.mainDisplay').append('<div>Obtaining list of remote databases...</div>');
+					remoteServer.listDatabases({
+						onSuccess: function(dbNames) {
+							for(var i=0,e=dbNames.length; i<e; ++i) {
+								var remoteName = dbNames[i];
+								if( remoteName === createOptions.remoteDbName ) {
+									$('.mainDisplay').append('Remote database named "'+createOptions.remoteDbName+'" detected');
+									checkRemoteDatabaseDesignDocument();
+									return;
+								};
+							};
+							remoteServerError('Database named "'+createOptions.remoteDbName+'" not reported on remote server');
+						}
+						,onError: function() {
+							remoteServerError('Unable to obtain list of remote databases');
+						}
+					});
+				};
+				
+				function checkRemoteDatabaseDesignDocument() {
+					$('.mainDisplay').append('<div>Verifying remote database...</div>');
+					var remoteDb = remoteServer.getDb({
+						dbName: createOptions.remoteDbName
+					});
+					remoteDb.getDocumentRevision({
+						docId: '_design/mobile'
+						,onSuccess: function(){
+							createDatabase4(createOptions);
+						}
+						,onError: function(){
+							remoteServerError('Unable to detect proper design in remote database');
+						}
+					});
+				};
+				
+				function remoteServerError(err) {
+					$('.mainDisplay').append('<div>Error: '+err+'</div>');
+					createDatabase1(createOptions);
+				};
+			};
+			
+			function createDatabase4(createOptions){
+				logIn();
+				
+				function logIn() {
+					$('.mainDisplay').append('<div>Authenticate to local database...</div>');
+					var session = $n2.couch.DefaultServer.getSession();
+					session.login({
+						name: createOptions.localUser
+						,password: createOptions.localPassword
+						,onSuccess: function(context) {
+							createLocalDb();
+						}
+						,onError: reportError
+					});
+				};
+				
+				function createLocalDb() {
+					$('.mainDisplay').append('<div>Creating local database...</div>');
+					$n2.couch.DefaultServer.createDb({
+						dbName: createOptions.dbName
+						,onSuccess: function() {
+							$('.mainDisplay').append('<div>Local database created</div>');
+							saveConfig();
+						}
+						,onError: function(err){
+							reportError('Error while creating local database: '+err)
+						}
+					});
+				};
+				
+				function saveConfig() {
+					$('.mainDisplay').append('<div>Saving configuration...</div>');
+					var db = $n2.couch.DefaultServer.getDb({
+						dbName: createOptions.dbName
+					});
+					db.createDocument({
+						data: {
+							_id: 'org.nunaliit.mobile.config'
+							,remoteServer: createOptions.serverAddress
+							,remoteServerAuth: createOptions.serverAddressAuth
+							,remoteDbName: createOptions.remoteDbName
+							,remoteUser: createOptions.remoteUser
+							,remotePassword: createOptions.remotePassword
+							,remoteDbUrl: createOptions.remoteDbUrl
+						}
+						,onSuccess: function() {
+							$('.mainDisplay').append('<div>Configuration saved</div>');
+							replicate();
+						}
+						,onError: function(err){
+							reportError('Error while saving configuration: '+err)
+						}
+					});
+				};
+				
+				function replicate() {
+					$('.mainDisplay').append('<div>Replicating...</div>');
+					$n2.couch.DefaultServer.replicate({
+						source: createOptions.remoteDbUrl
+						,target: createOptions.dbName
+						,filter: 'mobile/onlyMobileApplication'
+						,onSuccess: function() {
+							$('.mainDisplay').append('<div>Replication completed.</div>');
+						}
+						,onError: function(err){
+							reportError('Error while initiating replication: '+err)
+						}
+					});
+				};
+				
+				function reportError(msg) {
+					$('.mainDisplay').append('<div>Error: '+msg+'</div>');
+					createDatabase1(createOptions);
+				};
+			};
+
+			function deleteDatabase(){
+				$('.mainDisplay').remove();
+				
+				var $display = $('<div class="mainDisplay"></div>');
+				$('.topBar').after($display);
+				
+				fetchDeleteList();
+				
+				function fetchDeleteList() {
+					$('.mainDisplay').append('<div>Retrieving datasets...</div>');
+					listDataSets({
+						onSuccess: function(dbNames) {
+							showDatabases(dbNames);
+						}
+						,onError: reportError
+					});
+				};
+				
+				function showDatabases(dbNames) {
+					$('.mainDisplay').html('<select></select><input type="button" value="Delete"/>');
+					var $select = $('.mainDisplay').find('select');
+					for(var i=0,e=dbNames.length; i<e; ++i){
+						var dbName = dbNames[i];
+						$select.append( $('<option>'+dbName+'</option>') );
+					};
+					$('.mainDisplay').find('input').click(function(){
+						var dbNameToDelete = $('.mainDisplay').find('select').val();
+						if( confirm('Are you sure you want to delete dataset '+dbNameToDelete) ) {
+							logIn(dbNameToDelete);
+						};
+					});
+				};
+
+				function logIn(dbNameToDelete) {
+					$('.mainDisplay').html('<div>Authenticate to local database...</div>');
+					var session = $n2.couch.DefaultServer.getSession();
+					session.login({
+						name: localUser
+						,password: localPassword
+						,onSuccess: function(context) {
+							performDeletion(dbNameToDelete);
+						}
+						,onError: reportError
+					});
+				};
+				
+				function performDeletion(dbNameToDelete) {
+					$('.mainDisplay').append('<div>Deleting '+dbNameToDelete+'...</div>');
+					$n2.couch.DefaultServer.deleteDb({
+						dbName: dbNameToDelete
+						,onSuccess: function(){
+							$('.mainDisplay').append('<div>Deleted.</div>');
+						}
+						,onError: reportError
+					});
+				};
+				
+				function reportError(msg) {
+					$('.mainDisplay').append('<div>Error: '+msg+'</div>');
+				};
+			};
+			
+
+			function synchronizeDatabase(){
+				$('.mainDisplay').remove();
+				
+				var $display = $('<div class="mainDisplay"></div>');
+				$('.topBar').after($display);
+				
+				fetchDbList();
+				
+				function fetchDbList() {
+					$('.mainDisplay').append('<div>Retrieving datasets...</div>');
+					listDataSets({
+						onSuccess: function(dbNames) {
+							showDatabases(dbNames);
+						}
+						,onError: reportError
+					});
+				};
+				
+				function showDatabases(dbNames) {
+					$('.mainDisplay').html('<select></select><input type="button" value="Synchronize"/>');
+					var $select = $('.mainDisplay').find('select');
+					for(var i=0,e=dbNames.length; i<e; ++i){
+						var dbName = dbNames[i];
+						$select.append( $('<option>'+dbName+'</option>') );
+					};
+					$('.mainDisplay').find('input').click(function(){
+						var dbName = $('.mainDisplay').find('select').val();
+						logIn(dbName);
+					});
+				};
+
+				function logIn(dbName) {
+					$('.mainDisplay').html('<div>Authenticate to local database...</div>');
+					var session = $n2.couch.DefaultServer.getSession();
+					session.login({
+						name: localUser
+						,password: localPassword
+						,onSuccess: function(context) {
+							getConfig(dbName);
+						}
+						,onError: reportError
+					});
+				};
+
+				function getConfig(dbName) {
+					$('.mainDisplay').html('<div>Recalling configuration...</div>');
+					var db = $n2.couch.DefaultServer.getDb({dbName:dbName});
+					db.getDocument({
+						docId: 'org.nunaliit.mobile.config'
+						,onSuccess: function(config) {
+							download(dbName, config);
+						}
+						,onError: reportError
+					});
+				};
+				
+				function download(dbName, config) {
+					$('.mainDisplay').append('<div>Fetching updates for '+dbName+'...</div>');
+					$n2.couch.DefaultServer.replicate({
+						source: config.remoteDbUrl
+						,target: dbName
+						,filter: 'mobile/onlyMobileApplication'
+						,onSuccess: function() {
+							upload(dbName, config);
+						}
+						,onError: reportError
+					});
+				};
+				
+				function upload(dbName, config) {
+					$('.mainDisplay').append('<div>Uploading from '+dbName+'...</div>');
+					$n2.couch.DefaultServer.replicate({
+						source: dbName
+						,target: config.remoteDbUrl
+						// uploa everything because local js is not working
+						//,filter: 'mobile/upload'
+						,onSuccess: function() {
+							$('.mainDisplay').append('<div>Synchronization completed.</div>');
+						}
+						,onError: reportError
+					});
+				};
+				
+				function reportError(msg) {
+					$('.mainDisplay').append('<div>Error: '+msg+'</div>');
+				};
+			};
+			
+			function displayDatabase(href, dbName) {
+				$('.mainDisplay').remove();
+				
+				var $display = $('<div class="mainDisplay"><div class="mainDisplayTitle">Dataset: '+dbName
+					+'</div><div class="mainDisplayIFrame"><iframe id="iframe" width="100%" height="100%" frameborder="0" src="'+href+'"></iframe></div></div>');
+				$('.topBar').after($display);
+			
+				$display.find('iframe').each(function(i,elem){
+					if( typeof(elem.contentWindow) != 'undefined' ) {
+						elem.contentWindow.imports = {
+							navigator: navigator
+							,window: window
+							,takePhoto: takePhoto
+							,takeCurrentPosition: takeCurrentPosition
+						};
+						if( typeof(FileTransfer) != 'undefined' ) elem.contentWindow.imports.FileTransfer = FileTransfer;
+						if( typeof(FileUploadOptions) != 'undefined' ) elem.contentWindow.imports.FileUploadOptions = FileUploadOptions;
+					};
+				});
+
+			};
+
+            function takePhoto(onSuccess, onError){
+                navigator.camera.getPicture(
+                	onCameraSuccess
+                	,onCameraFail
+                	,{
+                		quality: 50
+                	}
+                );
+
+	            function onCameraSuccess(imageData) {
+	                    var message = {
+	                    	mimeType: 'image/jpeg'
+	                    	,data: imageData
+	                    };
+	                    onSuccess(message);
+	            };
+                                   
+	            function onCameraFail(message) {
+	                    onError(message);
+	            };
+            };
+
+            function takeCurrentPosition(onSuccess, onError){
+                navigator.geolocation.getCurrentPosition(
+                	onGpsSuccess
+                	,onGpsError
+                	,{
+						enableHighAccuracy: true
+					}
+				);
+
+	            function onGpsSuccess(pos) {
+					onSuccess(pos);
+	            };
+                                   
+	            function onGpsError(message) {
+	            	onError(message);
+	            };
+            };
+
+			function listDataSets(opts_) {
+				var opts = $n2.extend({
+					onSuccess: function(dbNames){}
+					,onError: function(err){}
+				},opts_);
+
+				$n2.couch.DefaultServer.listDatabases({
+					onSuccess: function(dbNames) {
+						filterDatasets(dbNames);
+					}
+					,onError: opts.onError
+				});
+				
+				function filterDatasets(dbNames){
+					var dataSets = [];
+					for(var i=0,e=dbNames.length; i<e; ++i) {
+						var dbName = dbNames[i];
+						if( dbName[0] === '_' ) {
+							// skip internal
+						} else {
+							dataSets.push(dbName); 
+						};
+					};
+					
+					opts.onSuccess(dataSets);
+				};
+			};
+                
+			function main() {
+				$('.mainDisplay').remove();
+				
+				var $display = $('<div class="mainDisplay"></div>');
+				$('.topBar').after($display);
+				
+				// Obtain list of data sets
+				listDataSets({
+					onSuccess: function(dbNames) {
+						listDatabases(dbNames);
+					}
+					,onError: reportError
+				});
+				
+				function listDatabases(dbNames) {
+					var $table = $('<table></table>');
+					$('.mainDisplay').append($table);
+					
+					for(var i=0,e=dbNames.length; i<e; ++i) {
+						var dbName = dbNames[i];
+						var $tr = $('<tr><td><a href="'+couchLocation+dbName+'/_design/mobile/browse.html">'+dbName+'</a></td></tr>');
+						$table.append($tr);
+						
+						makeClick(dbName, $tr);
+					};
+				};
+				
+				function makeClick(dbName, $tr){
+					var $a = $tr.find('a');
+					var href = $a.attr('href');
+					$tr.find('a').click(function(){
+						displayDatabase(href, dbName);
+						return false;
+					});
+				};
+				
+				function reportError(msg) {
+					$('.mainDisplay').append('<div>Error: '+msg+'</div>');
+				};
+			};
+            
+			function init0() {
+				if( typeof(nunaliit2) !== 'undefined' 
+                   && typeof(Mustache) !== 'undefined'
+                   && nunaliit2.couch ) {
+					$n2 = nunaliit2;
+
+					loaded = true;
+					
+					init1();
+				} else {
+				 	window.setTimeout(init0,200);
+				};
+			};
+
+			function init1() {
+				if( typeof(couchLocation) === 'undefined'
+				 || !couchLocation ) {
+					window.setTimeout(init1, 200);
+				} else {
+				 	$n2.couch.initialize({
+				    	pathToServer: couchLocation
+				    	,onSuccess: init2
+				 	});
+				};
+			};
+
+			function init2() {
+				$('.topBar')
+					.empty()
+					.append( $('<input class="btnHome" type="button" value="Home"/>') )
+					.append( $('<input class="btnCreate" type="button" value="New Connection..."/>') )
+					.append( $('<input class="btnSync" type="button" value="Synchronize..."/>') )
+					.append( $('<input class="btnDelete" type="button" value="Delete Dataset..."/>') )
+					;
+				$('.btnHome').click(function(){
+					main();
+					return false;
+				});
+				$('.btnCreate').click(function(){
+					createDatabase();
+					return false;
+				});
+				$('.btnSync').click(function(){
+					synchronizeDatabase();
+					return false;
+				});
+				$('.btnDelete').click(function(){
+					deleteDatabase();
+					return false;
+				});
+			 	main();
+			};
+			
+			var loaded = false;
+			jQuery().ready(function() {
+				if( loaded ) return;
+
+				init0();
+			});
+			// -->
+		</script>
+	</body>
+</html>
+

@@ -1,0 +1,32 @@
+<div class="n2_documentForm"><div class="n2_layoutFloat">
+	{{#generic}}
+		<div>
+			<div class="label n2s_localize">Title</div>
+			<div class="value"><input type="text" class="{{#:input}}title{{/:input}}"/></div>
+			<div class="end"></div>
+		</div>
+		<div>
+			<div class="label n2s_localize">Description</div>
+			<div class="value"><textarea class="{{#:input}}description{{/:input}}"></textarea></div>
+			<div class="end"></div>
+		</div>
+		<div>
+			<div class="label n2s_localize">Date</div>
+			<div class="value"><input type="text" class="{{#:input}}date,date{{/:input}}"/></div>
+			<div class="end"></div>
+		</div>
+		<div>
+			<div class="label n2s_localize">Reference</div>
+			<div class="value"><input type="text" class="{{#:input}}reference,reference{{/:input}}"/></div>
+			<div class="end"></div>
+		</div>
+	{{/generic}}
+	{{#nunaliit_geom}}{{{:html}}}{{/nunaliit_geom}}
+
+	<div>
+		<div class="label n2s_localize">Hover Sound</div>
+		<div class="value"><input type="text" class="{{#:input}}nunaliit_hoverSound,reference{{/:input}}" /></div>
+		<div class="end"></div>
+	</div>
+	
+</div></div>

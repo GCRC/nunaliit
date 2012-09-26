@@ -1,0 +1,18 @@
+[
+	{
+		"label":"title"
+		,"select":"generic.title"
+	}
+	,{
+		"label":"description"
+		,"select":"generic.description"
+	}
+	,{
+		"label":"date"
+		,"select":"generic.date"
+	}
+	,{
+		"label":"reference"
+		,"select":"generic.reference.doc"
+	}
+]

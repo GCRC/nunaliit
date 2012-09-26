@@ -1,0 +1,46 @@
+<!DOCTYPE html> 
+<html> 
+	<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Add Database</title>
+	
+	<link rel="stylesheet" href="js-external/css/jquery.mobile/jquery.mobile.min.css" />
+	<script type="text/javascript" src="js-external/js/jquery.min.js"></script>
+	<script type="text/javascript" src="js-external/js/jquery.mobile.min.js"></script>
+</head> 
+<body>
+
+<div id="mobileAddDatabase" data-role="page" data-theme="b">
+
+	<div data-role="header" data-theme="b">
+		<h1>Add Database</h1>
+	</div><!-- /header -->
+
+	<div data-role="content" data-theme="b">	
+		<form method="post">
+			<div data-role="fieldcontain">
+    			<label for="database_name">Database Name:</label>
+    			<input type="text" name="database_name" id="database_name" value="" autocapitalize="off" autocorrect="off" />
+			</div>
+			<div data-role="fieldcontain">
+    			<label for="server_url">Server URL:</label>
+    			<input type="url" name="server_url" id="server_url" value="" autocapitalize="off" autocorrect="off"  />
+			</div>
+			<div data-role="fieldcontain">
+    			<label for="user_name">User Name:</label>
+    			<input type="text" name="user_name" id="user_name" value="" autocapitalize="off" autocorrect="off"  />
+			</div>
+			<div data-role="fieldcontain">
+    			<label for="password">Password:</label>
+    			<input type="password" name="password" id="password" value=""  />
+			</div>
+			<input type="submit" onclick="addDatabase(this); return false;" value="Done"/>
+		</form>
+	</div><!-- /content -->
+	
+</div><!-- /page -->
+
+
+</body>
+</html>

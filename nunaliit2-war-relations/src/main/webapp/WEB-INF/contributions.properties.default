@@ -1,0 +1,20 @@
+contributions.tableName=contributions
+contributions.idColumnName=id
+contributions.idSequenceName=contributions_id_seq
+
+# serverSupportedColumns defines the columns that are referenced in the server-side software
+# that deals with the contributions table.
+#
+# Generally, changing this list involves changing the server code and therefore does not
+# really make sense here in a property file.  It is here more to help explain the clientSide
+# list that follows.
+#
+# OBVIOUSLY, both serverSupported and clientSide fields need to be specified in the database
+# schema so the term serverSupported is not the best because in the sense that the database
+# is on the (or a) server, even the client side are supported by the server.
+contributions.serverSupportedColumns=id,create_ts,filename,original_filename,mimetype,creator_id,dataset_id,event_id
+
+# clientSideColumns defines the columns that are handled by the client side code.  If passed to
+# the server side, they will be written into the database but the server has no special code to
+# deal with them and these can be changed more easily to tweak the application.
+contributions.clientSideColumns=notes,likes,dislikes,related_to,caption,story,translated_story,orig_media_uri,clip_start,clip_end

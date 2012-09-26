@@ -1,0 +1,37 @@
+<div class="n2_documentDisplay"><div class="n2_layoutFloat">
+	<div>
+		<div style="font-size:1.5em;color:#006600;" class="label n2s_localize">Schema</div>
+		<div class="value"></div>
+		<div class="end"></div>
+	</div>
+	<div>
+		<div class="label n2s_localize">Name</div>
+		<div class="value">{{name}}</div>
+		<div class="end"></div>
+	</div>
+	<div>
+		<div class="label n2s_localize">Label</div>
+		<div class="value">{{label}}</div>
+		<div class="end"></div>
+	</div>
+	<div>
+		<div class="label n2s_localize">Root Schema</div>
+		<div class="value">{{isRootSchema}}</div>
+		<div class="end"></div>
+	</div>
+	<div>
+		<div class="label n2s_localize">Brief</div>
+		<div class="value n2s_preserveSpaces">{{brief}}</div>
+		<div class="end"></div>
+	</div>
+	<div>
+		<div class="label n2s_localize">Display</div>
+		<div class="value n2s_preserveSpaces">{{display}}</div>
+		<div class="end"></div>
+	</div>
+	<div>
+		<div class="label n2s_localize">Form</div>
+		<div class="value n2s_preserveSpaces">{{form}}</div>
+		<div class="end"></div>
+	</div>
+</div></div>

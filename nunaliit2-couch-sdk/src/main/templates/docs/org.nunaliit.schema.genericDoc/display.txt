@@ -1,0 +1,63 @@
+<div class="n2_documentDisplay"><div class="n2_layoutFloat">
+
+	{{#nunaliit_hoverSound}}
+		<div style="float:right;" class="n2s_insertHoverSoundIcon"></div>
+	{{/nunaliit_hoverSound}}
+
+	<div>
+		<div class="label n2s_localize">Generic Object</div>
+		<div class="value"></div>
+		<div class="end"></div>
+	</div>
+
+	{{#generic}}
+		{{#title}}
+			<div>
+				<div class="label n2s_localize">Title</div>
+				<div class="value">{{title}}</div>
+				<div class="end"></div>
+			</div>
+		{{/title}}
+		{{#description}}
+			<div>
+				<div class="label n2s_localize">Description</div>
+				<div class="value n2s_preserveSpaces">{{description}}</div>
+				<div class="end"></div>
+			</div>
+		{{/description}}
+		{{#date}}
+			<div>
+				<div class="label n2s_localize">Date</div>
+				<div class="value">{{date}}</div>
+				<div class="end"></div>
+			</div>
+		{{/date}}
+		{{#reference}}
+			{{#doc}}
+				<div>
+					<div class="label n2s_localize">Reference</div>
+					<div class="value"><a class="n2s_referenceLink" href="#">{{doc}}</a></div>
+					<div class="end"></div>
+				</div>
+			{{/doc}}
+		{{/reference}}
+	{{/generic}}
+
+	{{#nunaliit_hoverSound}}
+		{{#doc}}
+			<div>
+				<div class="label n2s_localize">Hover Sound</div>
+				<div class="value"><a class="n2s_referenceLink" href="#">{{doc}}</a></div>
+				<div class="end"></div>
+			</div>
+		{{/doc}}
+	{{/nunaliit_hoverSound}}
+
+	{{#nunaliit_geom}}
+		<div>
+			<div class="label n2s_localize">&nbsp;</div>
+			<div class="value"><a href="#" class="n2s_localize n2s_clickFindGeometryOnMap">Find on Map</a></div>
+			<div class="end"></div>
+		</div>
+	{{/nunaliit_geom}}
+</div></div>

@@ -1,0 +1,309 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+	<head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no;" />
+        
+        <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+
+        <title>Simple Couchbase</title>
+        
+	</head>
+	<body>
+		<div id="mainDisplay">
+			Starting application...
+		</div>
+
+		<script type="text/javascript" charset="utf-8" src="js-external/js/jquery.min.js"></script>
+		<script type="text/javascript" charset="utf-8" src="couchLocation.js"></script>
+
+		<script type="text/javascript" charset="utf-8">
+
+			// <!--
+			
+			//var couchLocation = 'http://127.0.0.1:5984/';
+			var localDb = 'testdb'
+			var userName = 'admin';
+			var userPasswd = 'admin';
+			var designName = 'test';
+			
+			function log(str) {
+				$('#mainDisplay').append( $('<div>'+str+'</div>') );			
+			};
+			
+			function authenticate(opts_) {
+				$.ajax({
+			    	url: couchLocation + '_session'
+			    	,type: 'POST'
+			    	,async: true
+			    	,dataType: 'json'
+			    	,contentType: 'application/x-www-form-urlencoded'
+			    	,data: {
+			    		name: opts_.userName
+			    		,password: opts_.userPasswd
+			    	}
+			    	,success: function() {
+			    		log('Authenticated as '+opts_.userName);
+			    		opts_.success();
+			    	}
+			    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+			    		log('Error authenticating');
+			    		opts_.error();
+			    	}
+				});
+			};
+			
+			function deleteDatabase(opts_) {
+				$.ajax({
+			    	url: couchLocation + opts_.db
+			    	,type: 'DELETE'
+			    	,async: true
+			    	,dataType: 'json'
+			    	,success: function() {
+			    		log('Database deleted: '+ opts_.db);
+			    		opts_.success();
+			    	}
+			    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+			    		log('Error deleting database '+ opts_.db);
+			    		opts_.error();
+			    	}
+				});
+			};
+			
+			function createDatabase(opts_) {
+				$.ajax({
+			    	url: couchLocation + opts_.db
+			    	,type: 'PUT'
+			    	,async: true
+			    	,dataType: 'json'
+			    	,success: function() {
+			    		log('Database created: '+opts_.db);
+			    		opts_.success();
+			    	}
+			    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+			    		log('Error creating database '+opts_.db);
+			    		opts_.error();
+			    	}
+				});
+			};
+			
+			function uploadDesignDoc(opts_) {
+
+				$.ajax({
+			    	url: couchLocation + opts_.db + '/_design/' + opts_.designName
+			    	,type: 'PUT'
+			    	,async: true
+			    	,dataType: 'json'
+			    	,contentType: 'application/json'
+			    	,data: opts_.design
+			    	,success: function() {
+			    		log('Design document uploaded: ' + opts_.designName);
+			    		opts_.success();
+			    	}
+			    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+			    		log('Error uploading design document ' + opts_.designName);
+			    		opts_.error();
+			    	}
+				});
+			};
+			
+			function replicate(opts_){
+
+				var request = [];
+				request.push('{"source":"');
+				request.push(opts_.source);
+				request.push('","target":"');
+				request.push(opts_.target);
+				request.push('"}');
+				
+				$.ajax({
+			    	url: couchLocation + '_replicate'
+			    	,type: 'POST'
+			    	,async: true
+			    	,dataType: 'json'
+			    	,contentType: 'application/json'
+			    	,data: request.join('')
+			    	,success: function() {
+			    		log('Replication started.');
+			    		opts_.success();
+			    	}
+			    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+			    		log('Error during replication');
+			    		opts_.error();
+			    	}
+				});
+			};
+			
+			function createDoc(opts_){
+				
+				var docId = opts_.id; 
+				$.ajax({
+			    	url: couchLocation + opts_.db + '/' + docId
+			    	,type: 'PUT'
+			    	,async: true
+			    	,dataType: 'json'
+			    	,contentType: 'application/json'
+			    	,data: opts_.doc
+			    	,success: function() {
+			    		log('Document '+docId+' created.');
+			    		opts_.success();
+			    	}
+			    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+			    		log('Error creating document '+docId);
+			    		opts_.error();
+			    	}
+				});
+			};
+			
+			function getIdentities(opts_){
+				
+				$.ajax({
+			    	url: couchLocation + opts_.db + '/_design/' + opts_.designName + '/_view/identity'
+			    	,type: 'GET'
+			    	,async: true
+			    	,dataType: 'json'
+			    	,cache: false
+			    	,success: function(results) {
+			    		log('Received identities.');
+			    		if( results.rows ) {
+			    			for(var i=0,e=results.rows.length; i<e; ++i){
+			    				var row = results.rows[i];
+			    				log('ID: '+row.id);
+			    				opts_.results[row.id] = true;
+			    			};
+			    		};
+			    		opts_.success();
+			    	}
+			    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+			    		log('Error obtaining identities');
+			    		opts_.error();
+			    	}
+				});
+			};
+			
+			function fail() {
+				log('Testing failure');
+			};
+			
+			function performTesting(){
+				deleteDb();
+				
+				function deleteDb() {
+					deleteDatabase({
+						db: localDb
+						,success: createDb
+						,error: createDb // Ignore error
+					});
+				};
+				
+				function createDb() {
+					createDatabase({
+						db: localDb
+						,success: uploadDD
+						,error: fail
+					});
+				};
+				
+				function uploadDD() {
+					uploadDesignDoc({
+						db: localDb
+						,designName: designName
+						,design: '{"language":"javascript","views":{"identity":{"map":"function(doc){emit(doc._id,null);}"}}}'
+						,success: createDoc1
+						,error: fail
+					});
+				};
+				
+				function createDoc1() {
+					createDoc({
+						id: 'doc1'
+						,doc: '{"name":"doc1","time": 1313684610751}'
+						,db: localDb
+						,success: getIds1
+						,error: fail
+					});
+				};
+				
+				function getIds1() {
+					var results = {};
+					getIdentities({
+						db: localDb
+						,designName: designName
+						,success: function(){
+							if( results.doc2 ) {
+								log('Error: ID doc2 is reported');
+								fail();
+							} else if( !results.doc1 ) {
+								log('Error: ID doc1 is not reported');
+								fail();
+							} else {
+								createDoc2();
+							};
+						}
+						,error: fail
+						,results: results
+					});
+				};
+				
+				function createDoc2() {
+					createDoc({
+						id: 'doc2'
+						,doc: '{"name":"doc2"}'
+						,db: localDb
+						,success: getIds2
+						,error: fail
+					});
+				};
+				
+				function getIds2() {
+					var results = {};
+					getIdentities({
+						db: localDb
+						,designName: designName
+						,success: function(){
+							if( !results.doc2 ) {
+								log('Error: ID doc2 is not reported');
+								fail();
+							} else if( !results.doc1 ) {
+								log('Error: ID doc1 is not reported');
+								fail();
+							} else {
+								log('Tests completed successfully');
+							};
+						}
+						,error: fail
+						,results: results
+					});
+				};
+			};
+			
+			function init0() {
+				if( typeof(couchLocation) !== 'undefined' 
+                   && couchLocation !== null ) {
+
+					$('#mainDisplay').empty();
+					log( 'Server address: '+couchLocation );
+
+					authenticate({
+						userName: userName
+						,userPasswd: userPasswd
+						,success: performTesting
+						,error: fail
+					});
+					
+				} else {
+				 	window.setTimeout(init0,200);
+				};
+			};
+
+			
+			var loaded = false;
+			jQuery().ready(function() {
+				if( loaded ) return;
+
+				init0();
+			});
+			// -->
+		</script>
+	</body>
+</html>
+

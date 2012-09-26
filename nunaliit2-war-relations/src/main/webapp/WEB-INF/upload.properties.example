@@ -1,0 +1,2 @@
+upload.repository.dir=RELATIVE_PATH_FROM_WEBAPP_ROOT
+upload.maxSize=10485760

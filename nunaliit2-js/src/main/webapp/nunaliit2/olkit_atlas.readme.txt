@@ -1,0 +1,301 @@
+OLKIT Atlas
+===========
+
+Usage
+-----
+
+Create a web page with the following <div> elements
+- <div id="map"></div>
+  Position where map will be rendered
+- <div id="filters"></div>
+  Position where map local filters are displayed. If not specified,
+  filters are turned off
+- <div id="notes"></div>
+  Position where map notes are rendered.
+- <div id="dhtmlsound"></div>
+  Div element used to install sound files.
+- <div id="login"></div>
+  Position where user login interaction takes place
+- <div id="searchInput"></div>
+  Position where search box is rendered
+- <div id="map_interaction_div"></div>
+  Position where map editing controls are rendered
+
+Include 'nunaliit2/nunaliit2.js'
+Include 'nunaliit2/isiuop.js'
+
+Create OLKIT object:
+
+	var olkit = olkitMapAndControls(options);
+	
+Start OLKIT:
+
+	olkit.init();
+
+Options for OLKIT creation:
+
+- mapCoordinateSpecifications
+  Object.
+  
+- mapDisplay
+  Object. Specifies the options about the way the map is displayed.
+  See "Options for mapDisplay"
+  
+- addPointsOnly
+  Boolean. If true, editing the map can only add points. Defaults to false.
+
+- placeDisplay
+  Object. Options for the display handler.
+
+- searchPanel
+  Object. Defines how the search function works. This is used only
+  if $.olkitSearchHandler is not defined. Legacy.
+
+- saveFeature
+  Object. Defines how features are saved via the editing interface.
+  
+- sidePanelName
+  String. Identifier of the <div> element where the textual display should be
+  rendered. Defaults to  'side'
+  
+- filterPanelName
+  String. Identifier of the <div> element where local map filters should be displayed.
+  If not specified (null), then local map filtering is disabled.
+
+- toggleClick
+  Boolean. If set, then clicking on a feature in a clicked 'state' turns off
+  the clicking state. When turning off this way, the function defined in
+  options.toggleClickFn is called. Defaults to true.
+  If reset, clicking on a feature multiple times is ignored. 
+
+- toggleClickFn
+  Function. Function that is called when 'toggleClick' is set and that a feature
+  is clicked a second time. By default, this function empties the side panel
+  (identified in options.sidePanelName)
+
+- uniqueIdentifier
+  String. Name of the feature attribute which uniquely identifies the feature.
+  This is important to coordinate all the map extensions. It defaults to 'place_id'
+  for legacy reasons.
+
+- dbSearchEngine
+  Object. Options to configure the database search engine. 
+	
+- contributionDb
+  Object. Options to configure the contribution database.
+  
+- layerInfo
+  Object or Array of Objects. Each object represents the options for one displayed
+  layer. See "Options for Layer"
+
+
+Options for mapDisplay:
+
+- srsName
+  TBD
+  
+- backgroundMapLayersFn
+  Deprecated
+  
+- background
+  Object. Optional. Represents the layer(s) displayed as background imagery in the map.
+  See "Options for Background". If this option is omitted, then default layers are
+  installed.
+
+- maxResolution
+  TBD
+  
+- units
+  TBD
+  
+- markFeatureAsClicked_setupHandler
+  TBD
+  
+  
+Options for Layer:
+
+- sourceSrsName
+  String. Projection name used in WFS requests. Defaults to 'EPSG:4326'
+
+- featurePrefix
+  String. Short name used in WFS request as 'namespace' or 'workspace'.
+  
+- featureType
+  String. Name used in WFS request to identify a particular layer. 
+
+- featureNS
+  String. Full namespace for layer used in WFS requests.
+  
+- name
+  String. Label by which layer should be referred to.
+		
+- filter
+  Object. Null if not used. Null by default. If specified,
+  represents a filter sent during WFS requests. Syntax for
+  filters is defined by olkitFilter().
+  	
+- useHoverSound
+  Boolean. Default to true. This setting is used only if
+  $n2.hoverSoundService is not installed. If set, then the 
+  dbSearchEngine is used to find the hover sound associated 
+  with the feature. If found, it is played.
+
+- featurePopupHtmlFn
+  Function. Function called when a feature pop up is displayed. This function
+  should return a string which is HTML to be displayed in the pop up.
+  If null, pop up is not shown.
+  There is a function used as default.
+  TODO: This should defaults to null.
+
+- visibility
+  Boolean. If set, the layer is initially visible. If false, the layer is
+  initially turned off. Defaults to true.
+
+- styleMapFn
+  Function. Returns an OpenLayer style map used for the layer.
+  If not specified, a style map based on defaults and extended using
+  the property 'styleMap' is built.
+
+- styleMap
+  Object. Options to override default styles for a layer. If property
+  'styleMapFn' is specified, then this property is probably ignored.
+
+- selectListener
+  Function. This function is called when the visibility of a layer
+  is changed. Protoype is: function(isSelected, layerInfo)
+
+
+Options for Background:
+
+- type
+  String. Determines the type of background desired. Possible values: 'Google Maps'
+  and 'Bing'.
+  If 'Bing' is selected, then the background is provided by the BingMaps service and
+  a key is required (option background.key). This key can be obtained at:
+  https://www.bingmapsportal.com/
+  If 'Google Maps' is selected, then the background imagery is provided by Google Maps.
+  One must include the following script in the HTML page:
+  <script src="http://maps.google.com/maps/api/js?v=3.3&sensor=false"></script>
+  
+- key
+  'String'. Required for background of type 'Bing'. Key used to identify the application.
+  
+- layers
+  'Array'. Array of object where each object represents one of the possible layers in the 
+  background imagery. If this option is omitted, then default layers are provided.
+  Each of these objects need attributes depending on the type of background.
+  For 'Bing' background, options are: name and type. For 'Google Maps' background, options
+  are: name, type and numZoomLevels.
+  
+- callback
+  Function. This is a function that is called during map initialization. It should
+  return an array of base layers that derive OpenLayers.Layer. If this option is used,
+  no other option is required.
+  
+  Examples:
+
+  // Bing  
+  options = {
+     ...
+     background: {
+        type: 'Bing'
+        ,key: '<get your own key>'
+        ,layers:[
+           { type:'Aerial', name: 'Satellite' }
+           ,{ type:'Road', name: 'Road' }
+           ,{ type:'AerialWithLabels', name: 'Satellite with Labels' }
+        ]
+     }
+  };
+
+  // Google Map
+  <script src="http://maps.google.com/maps/api/js?v=3.3&sensor=false"></script>
+  ...
+  options = {
+     ...
+     background: {
+        type: 'Google Maps'
+     }
+  };
+
+Feature extensions
+------------------
+
+The type Feature.Vector is extended with the following properties:
+- isClicked     : true if the feature is currently clicked on
+- isHovered     : true if the feature is currently moused over
+- isFilteredIn  : true if local filters are applied and the feature matches
+                  all of them
+- isFilteredOut : true if local filters are applied and the feature fails
+                  any one of them
+
+	
+Search Handler
+--------------
+
+If an object is found at $.olkitSearchHandler, then this is what is used for search
+handling.
+
+$.olkitSearchHandler is initialized with hard coded values
+  - "searchInput" is used to render the input box
+
+TODO: $.olkitSearchHandler should be given the olkitFunctionMap at initialization
+TODO: $.olkitSearchHandler should be configurable from the client side as far as where things should be displayed
+
+If $.olkitSearchHandler is not installed, then olkit_SearchPanel() is called.
+
+TODO: olkit_SearchPanel() should be migrated to a search handler
+
+
+Database Search Engine
+----------------------
+
+This component is used to talk to the database. This is currently fixed
+to OlkitDatabaseSearchEngine.
+
+TODO: Migrate to plug-in architecture
+TODO: Pass olkitFunctionMap to plug-in
+
+
+Contribution Database
+---------------------
+
+This component is used to talk to the database and is specialized
+in retrieving information about contributions. Currently, this is
+fixed to OlkitContributionDb().
+
+TODO: Migrate to plug-in architecture
+TODO: Plug-in should use adhocQueries or dbWeb
+TODO: Get rid of contributions servlet
+
+
+Editing Handler
+---------------
+
+Currently, the editing functions are hard coded to use a fixed form management handler
+implemented in OlkitAttributeFormManagerSidePanel(). It uses the options given
+in options.saveFeature to configure it.
+
+TODO: Migrate to a plug-in architecture.
+
+
+Sound Handler
+-------------
+
+When a feature is hovered over, the sound handler is called. If
+$n2.hoverSoundService is installed, then it is called. Otherwise, 
+the behaviour is controlled by layerInfo.useHoverSound. If 
+layerInfo.useHoverSound is set, then the hover sound is obtained 
+from dbSearchEngine.getHoverSound().
+
+
+Display Handler
+---------------
+
+When a feature is clicked, the display handler is invoked. If 
+$.olkitDisplay is installed, then it is used. Otherwise, 
+olkit_PlaceInfo is called.
+
+If $.olkitDisplay is in use, then it is first configured using Configure().
+After that, ClickedFeatureHandler() is called whenever a feature is clicked.
+

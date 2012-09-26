@@ -1,0 +1,143 @@
+/*
+ * Relations
+ */
+
+.relation2mod0 {
+	background-color: #ddd;
+}
+
+.relation2mod1 {
+	background-color: #acf;
+}
+
+
+/*
+ * Contributions
+ */
+
+.contribution_title {
+	display: block;
+}
+
+.contribution_title > span:first-child {
+	font-weight: bold;
+}
+
+.contribution_title > span:first-child + span {
+	font-style: italic;
+}
+
+.contribution_notes {
+	display: block;
+}
+
+.contribution_notes > span:first-child {
+	font-weight: bold;
+}
+
+.contribution_notes > span:first-child + span {
+	font-style: italic;
+}
+
+.contribution_time {
+	display: block;
+}
+
+.contribution_time > span:first-child {
+	font-weight: bold;
+}
+
+.contribution_time > span:first-child + span {
+	font-style: italic;
+}
+
+
+/*
+ * Events
+ */
+
+.event_description {
+	display: block;
+}
+
+.event_description > span:first-child {
+	font-weight: bold;
+}
+
+.event_description > span:first-child + span {
+	font-style: italic;
+}
+
+.event_date {
+	display: block;
+}
+
+.event_date > span:first-child {
+	font-weight: bold;
+}
+
+.event_date > span:first-child + span {
+	font-style: italic;
+}
+
+.event_type_name {
+	display: block;
+}
+
+.event_type_name > span:first-child {
+	font-weight: bold;
+}
+
+.event_type_name > span:first-child + span {
+	font-style: italic;
+}
+
+/*
+ * Clicked Header
+ */
+table.clicked_header {
+	border-width: 0px;
+	width: 100%;
+}
+
+table.clicked_header tr {
+	vertical-align: top;
+	font-weight: bold;
+	font-family: Georgia, serif;
+}
+ 
+ 
+/*
+ * Media
+ */
+div.contribution_media_icon_wrapper {
+	font-family: Geneva, Helvetica, Arial, sans-serif; 
+	font-size:   70%;
+	float: right;
+	text-align: center;
+}
+div.contribution_media_icon {
+	display: block;
+	width: 26px;
+	height: 26px;
+	margin: 0 auto;
+}
+div.contribution_audio_icon {
+	background: transparent url(css/basic/images/audio_icon.png) no-repeat; 
+}
+div.contribution_audio_icon:hover {
+	background-position: -26px 0;
+}
+div.contribution_video_icon {
+	background: transparent url(css/basic/images/video_icon.png) no-repeat; 
+}
+div.contribution_video_icon:hover {
+	background-position: -26px 0;
+}
+div.contribution_image_icon {
+	background: transparent url(css/basic/images/image_icon.png) no-repeat; 
+}
+div.contribution_image_icon:hover {
+	background-position: -26px 0;
+}
+ 

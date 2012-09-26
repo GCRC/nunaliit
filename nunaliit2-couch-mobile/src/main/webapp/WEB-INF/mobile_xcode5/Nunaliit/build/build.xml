@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="nunaliit2-couch-mobile" default="application-copy">
+    <description>
+		Scripts to help Couch mobile application
+    </description>
+	
+	<property file="build.properties"/>
+	<property file="live.properties"/>
+	
+	<property name="mobile.js.dest.dir" location="../www"/>
+	
+	<property name="nunaliit2.dir" location="../../../../../../../.."/>
+	<property name="nunaliit.js.project.dir" location="${nunaliit2.dir}/nunaliit2-js"/>
+	<property name="nunaliit.js-external.project.dir" location="${nunaliit2.dir}//nunaliit2-js-external"/>
+
+	<property name="nunaliit.js.compression" value="1"/>
+	<property name="nunaliit2-js.dir" location="${nunaliit.js.project.dir}/src/main/webapp/nunaliit2"/>
+	<property name="external-js.dir" location="${nunaliit.js-external.project.dir}/src/main/webapp/js-external"/>
+	<property name="external-js.debug" value="0"/>
+	
+    <!-- ================================= 
+          target: application-copy      
+          
+          Copies the application files to destination directory
+         ================================= -->
+    <target 
+    	name="application-copy" 
+    	description="Copy mobile application"
+    	depends="javascript-compress,application-copy-debug"
+    	>
+    	<!-- Copy JS libraries -->
+    	<mkdir dir="${mobile.js.dest.dir}/nunaliit2"/>
+		<copy todir="${mobile.js.dest.dir}/nunaliit2">
+			<fileset dir="${nunaliit2-js.dir}">
+				<include name="nunaliit2-couch-mobile.js"/>
+				<include name="css/basic/**/*"/>
+			</fileset>
+		</copy>
+
+    	<mkdir dir="${mobile.js.dest.dir}/js-external"/>
+		<copy todir="${mobile.js.dest.dir}/js-external">
+			<fileset dir="${external-js.dir}">
+				<include name="js/jquery.min.js"/>
+				<include name="js/jquery.mobile.min.js"/>
+				<include name="css/jquery.mobile/**/*"/>
+			</fileset>
+		</copy>
+    	
+    	
+    </target>
+	
+    <!-- ================================= 
+          target: application-copy-debug      
+          
+          Copies the application files for debugging
+         ================================= -->
+    <target 
+    	name="application-copy-debug" 
+    	description="Copy mobile application debug files"
+    	depends="-application-copy-debug-conditions"
+    	if="js.debug.required"
+    	>
+    	<mkdir dir="${mobile.js.dest.dir}/js-external"/>
+		<copy todir="${mobile.js.dest.dir}/js-external">
+			<fileset dir="${external-js.dir}">
+				<include name="js/jquery.js"/>
+				<include name="js/jquery.mobile.js"/>
+			</fileset>
+		</copy>
+    </target>
+
+	<target name="-application-copy-debug-conditions">
+		<condition property="js.debug.required">
+			<not>
+				<equals arg1="external-js.debug" arg2="0"/>
+			</not>
+		</condition>
+	</target>
+	
+    <!-- ================================= 
+          target: javascript-compress      
+          
+          Compresses nunaliit2 javascript files
+         ================================= -->
+    <target 
+    	name="javascript-compress" 
+    	description="Copy mobile application"
+    	depends="-javascript-compress-conditions,-javascript-compress-not"
+    	if="compression.required"
+    	>
+
+    	<!-- Call nunaliit2 compression -->
+    	<echo message="nunaliit2 project dir: ${nunaliit.js.project.dir}"/>
+    	<ant dir="${nunaliit.js.project.dir}" target="library-compress">
+    	</ant>
+    </target>
+
+	<target 
+    	name="-javascript-compress-not" 
+    	description="Copy mobile application"
+    	depends="-javascript-compress-conditions"
+    	unless="compression.required"
+    	>
+
+    	<!-- Call nunaliit2 compression -->
+    	<echo message="No compression required: ${nunaliit.js.compression} -> ${compression.required}"/>
+    </target>
+
+	<target name="-javascript-compress-conditions">
+		<condition property="compression.required">
+			<not>
+				<equals arg1="${nunaliit.js.compression}" arg2="0"/>
+			</not>
+		</condition>
+	</target>
+
+</project>

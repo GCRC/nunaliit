@@ -1,0 +1,10 @@
+;ffmpegInfoCommand=ffmpeg -i %1$s
+;ffmpegConvertVideoCommand=ffmpeg -i %1$s -y -acodec libfaac -ab 48000 -ac 2 -vcodec libx264 -b 128000 -s 320x240 -threads 0 -f mp4 %2$s
+;ffmpegConvertAudioCommand=ffmpeg -i %1$s -y -acodec libfaac -ab 48000 -ac 2 -threads 0 -f mp4 %2$s
+;ffmpegCreateThumbnailCommand=ffmpeg -i %1$s -y -ss 00:00:05 -s 80x60 -r 1 -vframes 1 -f image2 %2$s
+;imageInfoCommand=identify -verbose %1$s
+;imageConvertCommand=convert -monitor %1$s -compress JPEG -quality 70 %2$s
+;imageResizeCommand=convert -monitor %1$s -resize %3$dx%4$d -compress JPEG -quality 70 %2$s
+;imageMimeTypes=image/png:image/jpeg
+;audioMimeTypes=application/ogg
+;videoMimeTypes=

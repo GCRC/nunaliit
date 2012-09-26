@@ -1,0 +1,3 @@
+This project uses code from project proj4js written
+by Mike Adair and Richard Greenwood, and licensed
+under LGPL (http://www.gnu.org/copyleft/lesser.html) 

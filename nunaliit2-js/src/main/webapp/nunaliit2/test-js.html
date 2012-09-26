@@ -1,0 +1,42 @@
+<html>
+	<head>
+		<title>Test</title>
+	</head>
+	<body>
+		<table>
+			<tr><td>navigator.userAgent</td><td>-&gt;</td><td><span class="userAgent"></span></td></tr>
+			<tr><td>reportError</td><td>-&gt;</td><td><span class="reportError"></span></td></tr>
+		</table>
+		
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/jquery-ui.min.js"></script>
+
+		<script type="text/javascript" src="nunaliit2-debug.js"></script>
+
+		<script type="text/javascript">
+			log('Allo');
+			
+			var $ = jQuery;
+			var $n2 = nunaliit2;
+			
+			
+			A = $n2.Class({
+				initialize: function(msg) { $n2.log('Initialized: '+msg); this.msg = msg; }
+			});
+
+			B = $n2.Class(A,{
+				logMsg: function() { $n2.log('Log: '+this.msg); }
+			});
+			
+			var a = new A('test');
+			var b = new B('test 2');
+			b.logMsg();
+			
+			$n2.log('a',a);
+			$n2.log('b',b);
+			
+		</script>
+		
+		<p>Bottom of page</p>
+	</body>
+</html>

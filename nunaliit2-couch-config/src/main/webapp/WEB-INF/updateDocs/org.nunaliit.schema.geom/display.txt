@@ -1,0 +1,5 @@
+<div>
+	<div class="label n2s_localize">Geometry</div>
+	<div class="value"><a href="#" class="n2s_clickFindGeometryOnMap n2_localize">Find on Map</a></div>
+	<div class="end"></div>
+</div>

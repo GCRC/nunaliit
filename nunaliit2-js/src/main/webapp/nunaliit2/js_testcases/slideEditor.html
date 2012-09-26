@@ -1,0 +1,140 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+		<title>Slide Editor Test</title>		
+		<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/themes/base/jquery-ui.css" type="text/css" />
+		<link rel="stylesheet" href="../css/basic/n2.tree.css" type="text/css" />
+		<link rel="stylesheet" href="../css/basic/n2.slideEditor.css" type="text/css" />
+		
+		<style type="text/css">
+			#resizableDiv {
+				width: 800px;
+				height: 500px;
+			}
+			#editorContainer {
+				width: 100%;
+				height: 100%;
+			}
+			
+		</style>
+		
+	</head>
+	<body>
+
+		<div id="resizableDiv" class="ui-widget-content">
+			<div id="editorContainer">
+			</div>
+		</div>
+
+		<div id="treeEditor">
+		</div>
+		
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/jquery-ui.min.js"></script>
+
+		<script type="text/javascript" src="../nunaliit2-debug.js"></script>
+
+		<script type="text/javascript">
+			// <!--
+			
+			var obj = null;
+			var editors = {};
+			
+			function main_init() {
+				
+				$('#resizableDiv').resizable();
+				
+				var $editorContainer = $('#editorContainer');
+				obj = {
+					_id: '12334455'
+					,name: 'JP'
+					,yob: 1967
+					,roles: [
+						'admin'
+						,'user'
+						,'monkey'
+					]
+					,geom: {
+						type: 'Point'
+						,bbox: [-180,-90,180,90]
+						,wkt: 'POINT(0 0)'
+					}
+					,description: 'This should be a fairly long string that does not fit in the value preview area.'
+					,flagY: true
+					,flagN: false
+				};
+
+				editors.slide = new $n2.slideEditor.Editor($editorContainer, obj, {
+					onObjectChanged: function(o) {
+						if( editors.tree ) {
+							editors.tree.refresh();
+						};
+					}
+					//,objectKeySortAllowed: false
+					,isKeyEditingAllowed: function(obj, selectors, data) {
+						if( selectors[0][0] === '_' ) return false;
+						return true;
+					}
+					,isKeyDeletionAllowed: function(obj, selectors, data) {
+						if( selectors[0][0] === '_' ) return false;
+						return true;
+					}
+					,isValueEditingAllowed: function(obj, selectors, data) {
+						if( selectors[0][0] === '_' ) return false;
+						return true;
+					}
+				});
+				
+				// Create tree editor
+				var $treeContainer = $('#treeEditor');
+				var tree = new $n2.tree.ObjectTree($treeContainer, obj);
+				var editorOptions = $.extend({
+					onObjectChanged: function(o) {
+						if( editors.slide ) {
+							editors.slide.refresh();
+						};
+					}
+					,isKeyEditingAllowed: function(obj, selectors, data) {
+						if( selectors[0][0] === '_' ) return false;
+						return true;
+					}
+					,isKeyDeletionAllowed: function(obj, selectors, data) {
+						if( selectors[0][0] === '_' ) return false;
+						return true;
+					}
+					,isValueEditingAllowed: function(obj, selectors, data) {
+						if( selectors[0][0] === '_' ) return false;
+						return true;
+					}
+				});
+				editors.tree = new $n2.tree.ObjectTreeEditor(tree, obj, editorOptions);
+				
+				$n2.log('editors',editors);
+				
+			};
+			
+
+			var loaded = false;			
+			function waitForComponentsLoaded() {
+				if( loaded ) return;
+				
+				if( nunaliit2
+				 ) {
+				 	$n2 = window.nunaliit2;
+
+					main_init();				 	
+					
+					loaded = true;
+				} else {
+					setTimeout(waitForComponentsLoaded, 100);
+				};
+			};
+			
+			jQuery().ready(function() {
+				waitForComponentsLoaded();
+			});
+			// -->
+		</script>
+	</body>
+</html>

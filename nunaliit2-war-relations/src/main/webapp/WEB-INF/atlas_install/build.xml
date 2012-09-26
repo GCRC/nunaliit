@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ====================================================================== -->
+<project name="atlas-install" default="default">
+	<description>
+		CouchApp Installation Scripts.
+	</description>
+	
+	<property file="build.properties"/>
+	
+	<!-- Load up values set by merged atlas content -->
+	<property file="../atlas.properties"/>
+	<property file="../atlas.properties.default"/>
+	
+	<property name="atlas.config.dir" location="/etc/nunaliit2/atlas/${atlas.name}"/>
+
+	<!-- Load up current configuration -->
+	<property file="${atlas.config.dir}/install.properties"/>
+	<property file="${atlas.config.dir}/jdbc.properties"/>
+	<property file="${atlas.config.dir}/multimedia.properties"/>
+	<property file="${atlas.config.dir}/upload.properties"/>
+
+	<!-- Set up defaults -->
+	<property name="apache.url.protocol" value="http"/>
+	<property name="apache.url.domain" value="127.0.0.1"/>
+	<property name="apache.path.answer" value="atlas"/>
+	<property name="geoserver.url.protocol" value="http"/>
+	<property name="geoserver.url.domain" value="127.0.0.1:8080"/>
+	<property name="geoserver.path.answer" value="geoserver"/>
+	<property name="jdbc.db.name" value=""/>
+	<property name="jdbc.db.user" value=""/>
+	<property name="jdbc.db.password" value=""/>
+	<property name="upload.repository.dir" value=""/>
+	<property name="servlet.url.protocol" value="http"/>
+	<property name="servlet.url.domain" value="127.0.0.1:8080"/>
+	<property name="servlet.path.answer" value="atlas"/>
+	
+	<!-- ================================= -->
+	<target
+		name="default"
+		depends="config-directory,config-properties"
+		description="Configure an atlas instance"
+		>
+	
+	</target>
+
+	<!-- ================================= -->
+	<target
+		name="config-directory"
+		description="Create configuration directory"
+		>
+
+		<echo message="Using configuration directory: ${atlas.config.dir}"/>
+		
+		<mkdir dir="${atlas.config.dir}"/>
+		
+	</target>
+
+	<!-- ================================= -->
+	<target
+		name="config-properties"
+		depends="config-directory"
+		description="Create config.properties file"
+		>
+
+		<echo message="JDBC Configuration"/>
+		
+		<input
+			message="Enter database name"
+			addproperty="JDBC_DB_NAME"
+			defaultvalue="${jdbc.db.name}"
+			/>
+
+		<input
+			message="Enter database user name"
+			addproperty="JDBC_DB_USER"
+			defaultvalue="${jdbc.db.user}"
+			/>
+
+		<input
+			message="Enter database user password"
+			addproperty="JDBC_DB_PASSWORD"
+			defaultvalue="${jdbc.db.password}"
+			/>
+
+		<echo message="Upload Configuration"/>
+
+		<input
+			message="Enter full path to upload directory"
+			addproperty="UPLOAD_REPOSITORY_DIR"
+			defaultvalue="${upload.repository.dir}"
+			/>
+
+		<echo message="Web Server Configuration"/>
+
+		<input
+			message="Enter protocol for accessing web server"
+			addproperty="APACHE_URL_PROT"
+			defaultvalue="${apache.url.protocol}"
+			/>
+
+		<input
+			message="Enter public domain name for atlas"
+			addproperty="APACHE_URL_DOMAIN"
+			defaultvalue="${apache.url.domain}"
+			/>
+		
+		<input
+			message="Enter path from public domain to atlas root (e.g. 'atlas/city', '/' for root)"
+			addproperty="APACHE_PATH_ANSWER"
+			defaultvalue="${apache.path.answer}"
+			/>
+		<condition property="APACHE_PATH" value="">
+			<equals arg1="${APACHE_PATH_ANSWER}" arg2="/"/>
+		</condition>
+		<condition property="APACHE_PATH_SEPARATORS" value="/">
+			<equals arg1="${APACHE_PATH_ANSWER}" arg2="/"/>
+		</condition>
+		<property name="APACHE_PATH" value="${APACHE_PATH_ANSWER}"/>
+		<property name="APACHE_PATH_SEPARATORS" value="/${APACHE_PATH_ANSWER}/"/>
+		<property name="APACHE_URL" value="${APACHE_URL_PROT}://${APACHE_URL_DOMAIN}"/>
+
+		
+		<echo message="Atlas Servlet Location"/>
+
+		<input
+			message="Enter internal protocol for accessing atlas servlet"
+			addproperty="SERVLET_URL_PROT"
+			defaultvalue="${servlet.url.protocol}"
+			/>
+
+		<input
+			message="Enter internal domain name for atlas servlet"
+			addproperty="SERVLET_URL_DOMAIN"
+			defaultvalue="${servlet.url.domain}"
+			/>
+		
+		<input
+			message="Enter path from internal domain name to atlas servlet root (e.g. 'atlas', '/' for root)"
+			addproperty="SERVLET_PATH_ANSWER"
+			defaultvalue="${servlet.path.answer}"
+			/>
+		<condition property="SERVLET_PATH" value="">
+			<equals arg1="${SERVLET_PATH_ANSWER}" arg2="/"/>
+		</condition>
+		<condition property="SERVLET_PATH_SEPARATORS" value="/">
+			<equals arg1="${SERVLET_PATH_ANSWER}" arg2="/"/>
+		</condition>
+		<property name="SERVLET_PATH" value="${SERVLET_PATH_ANSWER}"/>
+		<property name="SERVLET_PATH_SEPARATORS" value="/${SERVLET_PATH_ANSWER}/"/>
+		<property name="SERVLET_URL" value="${SERVLET_URL_PROT}://${SERVLET_URL_DOMAIN}"/>
+
+		<echo message="GeoServer Configuration"/>
+
+		<input
+			message="Enter protocol for accessing GeoServer"
+			addproperty="GEOSERVER_URL_PROT"
+			defaultvalue="${geoserver.url.protocol}"
+			/>
+
+		<input
+			message="Enter domain name for GeoServer"
+			addproperty="GEOSERVER_URL_DOMAIN"
+			defaultvalue="${geoserver.url.domain}"
+			/>
+		
+		<input
+			message="Enter path from domain name to GeoServer root (e.g. 'geoserver', '/' for root)"
+			addproperty="GEOSERVER_PATH_ANSWER"
+			defaultvalue="${geoserver.path.answer}"
+			/>
+		<condition property="GEOSERVER_PATH" value="">
+			<equals arg1="${GEOSERVER_PATH_ANSWER}" arg2="/"/>
+		</condition>
+		<condition property="GEOSERVER_PATH_SEPARATORS" value="/">
+			<equals arg1="${GEOSERVER_PATH_ANSWER}" arg2="/"/>
+		</condition>
+		<property name="GEOSERVER_PATH" value="${GEOSERVER_PATH_ANSWER}"/>
+		<property name="GEOSERVER_PATH_SEPARATORS" value="/${GEOSERVER_PATH_ANSWER}/"/>
+		<property name="GEOSERVER_URL" value="${GEOSERVER_URL_PROT}://${GEOSERVER_URL_DOMAIN}"/>
+
+		<!-- Create configuration -->
+		<copy
+			todir="${atlas.config.dir}"
+			overwrite="true"
+			>
+			<fileset dir="./templates"></fileset>
+			<filterset>
+				<filter token="APACHE_URL" value="${APACHE_URL}"/>
+				<filter token="APACHE_URL_PROT" value="${APACHE_URL_PROT}"/>
+				<filter token="APACHE_URL_DOMAIN" value="${APACHE_URL_DOMAIN}"/>
+				<filter token="APACHE_PATH" value="${APACHE_PATH}"/>
+				<filter token="APACHE_PATH_ANSWER" value="${APACHE_PATH_ANSWER}"/>
+				<filter token="APACHE_PATH_SEPARATORS" value="${APACHE_PATH_SEPARATORS}"/>
+				<filter token="JDBC_DB_NAME" value="${JDBC_DB_NAME}"/>
+				<filter token="JDBC_DB_USER" value="${JDBC_DB_USER}"/>
+				<filter token="JDBC_DB_PASSWORD" value="${JDBC_DB_PASSWORD}"/>
+				<filter token="UPLOAD_REPOSITORY_DIR" value="${UPLOAD_REPOSITORY_DIR}"/>
+				<filter token="GEOSERVER_URL" value="${GEOSERVER_URL}"/>
+				<filter token="GEOSERVER_URL_PROT" value="${GEOSERVER_URL_PROT}"/>
+				<filter token="GEOSERVER_URL_DOMAIN" value="${GEOSERVER_URL_DOMAIN}"/>
+				<filter token="GEOSERVER_PATH" value="${GEOSERVER_PATH}"/>
+				<filter token="GEOSERVER_PATH_ANSWER" value="${GEOSERVER_PATH_ANSWER}"/>
+				<filter token="GEOSERVER_PATH_SEPARATORS" value="${GEOSERVER_PATH_SEPARATORS}"/>
+				<filter token="SERVLET_URL" value="${SERVLET_URL}"/>
+				<filter token="SERVLET_URL_PROT" value="${SERVLET_URL_PROT}"/>
+				<filter token="SERVLET_URL_DOMAIN" value="${SERVLET_URL_DOMAIN}"/>
+				<filter token="SERVLET_PATH" value="${SERVLET_PATH}"/>
+				<filter token="SERVLET_PATH_ANSWER" value="${SERVLET_PATH_ANSWER}"/>
+				<filter token="SERVLET_PATH_SEPARATORS" value="${SERVLET_PATH_SEPARATORS}"/>
+			</filterset>
+		</copy>
+		
+		<chmod
+			perm="a+x"
+			>
+			<fileset dir="${atlas.config.dir}">
+				<include name="atlas"/>
+				<include name="cron.sh"/>
+			</fileset>
+		</chmod>
+
+	</target>
+	
+</project>

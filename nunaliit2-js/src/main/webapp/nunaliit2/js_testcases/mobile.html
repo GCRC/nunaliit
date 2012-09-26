@@ -1,0 +1,149 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+		<meta http-equiv="Access-Control-Allow-Origin" content="*" />
+		<meta http-equiv="Access-Control-Allow-Methods" content="HEAD,OPTIONS,GET,POST,PUT,DELETE" />
+		<meta http-equiv="Access-Control-Allow-Headers" content="Content-Type,Server,Date,Content-Length,Cache-Control,Keep-Alive,Connection" />
+		<meta http-equiv="Access-Control-Max-Age" content="1728000" />
+		<title>Nunaliit2 Mobile App</title>
+	</head>
+	<body>
+		<h1>Nunaliit2 Mobile App</h1>
+		
+		<div id="display"></div>
+		<div id="create"></div>
+		
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+
+		<!-- script type="text/javascript" src="../nunaliit2-debug.js"></script>
+		<script type="text/javascript" src="../nunaliit2-couch-debug.js"></script -->
+		<script type="text/javascript" src="../nunaliit2-couch-mobile-debug.js"></script>
+
+		<script type="text/javascript">
+			// <!--
+			
+			//var couchLocation = 'http://127.0.0.1:5984/';
+			var couchLocation = 'http://generic.atlases.org/server/';
+			
+			function createDatabase(){
+				$('#display').empty();
+				$('#create').empty();
+				
+				var $table = $('<table>'
+						+ '<tr><th>Server Address</th><td><input class="serverAddress" type="text"/></td></tr>'
+						+ '<tr><th></th><td><input class="serverOK" type="button" value="Continue"/><input class="serverCancel" type="button" value="Cancel"/></td></tr>'
+						+'</table>');
+				$('#create').append($table);
+
+				$('#create').find('.serverOK').click(function(){
+					var serverAddress = $('#create').find('.serverAddress').val();
+					createDatabase2(serverAddress);
+					return false;
+				});
+				$('#create').find('.serverCancel').click(function(){
+					main();
+					return false;
+				});
+			};
+			
+			function createDatabase2(serverAddress){
+				$('#display').empty();
+				$('#create').empty().append('<div>Contacting server '+serverAddress+'...</div>');
+				
+				if( serverAddress[serverAddress.length-1] != '/' ) {
+					serverAddress = serverAddress + '/';
+				};
+				
+				var remoteServer = $n2.couch.getServer({
+					pathToServer: serverAddress
+					,onSuccess: function(){
+						var version = remoteServer.getVersion();
+						$('#create').append('<div>Server contacted. Version: '+version+'</div>');
+					}
+					,onError: remoteServerError
+				});
+				
+				function remoteServerError(err) {
+					$('#create').append('<div>Error: '+err+'</div>');
+					var $btn = $('<div><input type="button" value="Cancel"></div>');
+					$('#create').append($btn);
+					$btn.find('input').click(function(){
+						main();
+						return false;
+					});
+				};
+			};
+			
+			function listDatabases(dbNames) {
+				$('#display').empty();
+				$('#create').empty();
+				
+				var $table = $('<table></table>');
+				$('#display').append($table);
+				
+				for(var i=0,e=dbNames.length; i<e; ++i) {
+					var dbName = dbNames[i];
+					var $tr = $('<tr><td><a href="'+couchLocation+dbName+'/_design/mobile/index.html">'+dbName+'</a></td></tr>');
+					$table.append($tr);
+					
+					makeClick(dbName, $tr);
+				};
+				
+				var $tr = $('<tr><td><a href="#">Create New Database</a></td></tr>');
+				$table.append($tr);
+				clickCreate($tr.find('a'));
+				
+				function makeClick(dbName, $tr){
+					$tr.click(function(){
+						
+					});
+				};
+
+				function clickCreate($jq){
+					$jq.click(function(){
+						createDatabase();
+						return false;
+					});
+				};
+			};
+			
+			function main() {
+				// Obtain list of databases
+				$n2.couch.DefaultServer.listDatabases({
+					onSuccess: function(dbNames) {
+						listDatabases(dbNames);
+					}
+				});
+			};
+
+			function init1() {
+				if( !couchLocation ) {
+					window.setTimeout(init1, 200);
+				} else {
+				 	$n2.couch.initialize({
+				    	pathToServer: couchLocation
+				    	,onSuccess: init2
+				 	});
+				};
+			};
+
+			function init2() {
+			 	main();
+			};
+			
+			var loaded = false;
+			jQuery().ready(function() {
+				if( loaded ) return;
+
+				if( nunaliit2 && Mustache && nunaliit2.couch ) {
+					$n2 = nunaliit2;
+					
+					init1();
+					loaded = true;
+				};
+			});
+			// -->
+		</script>
+	</body>
+</html>

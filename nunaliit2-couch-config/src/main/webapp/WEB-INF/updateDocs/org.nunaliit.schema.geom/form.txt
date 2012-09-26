@@ -1,0 +1,5 @@
+<div>
+	<div class="label n2s_localize">Geometry</div>
+	<div class="value"><textarea class="{{#:input}}wkt{{/:input}}"></textarea></div>
+	<div class="end"></div>
+</div>

@@ -1,0 +1,8 @@
+.prog-holder { position:fixed;bottom:0px;left:0px; }
+.prog-background { background:#000000;opacity:0.25; }
+.prog-moveBar { border:1px solid #000000;background:#ffffff;width:200px;height:25px;margin:0px;padding:0px; }
+.prog-moveBar-colour { position:relative;left:0px;top:-1px;border:0px solid #cccccc;background:#ff6666;height:17px;width:0%;margin:5px 0px 5px 0px; }
+
+table.prog-description-table { border:none;width:100%; }
+table.prog-description-table tr th { font-weight:bolder; text-align: right; width:50%; }
+table.prog-description-table tr td { font-weight:normal; text-align: left; width:50%; }

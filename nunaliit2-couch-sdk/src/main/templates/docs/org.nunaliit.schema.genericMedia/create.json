@@ -1,0 +1,13 @@
+{
+	"nunaliit_type": "genericMedia"
+	,"nunaliit_schema": "genericMedia"
+	,"nunaliit_attachments": {
+		"nunaliit_type": "attachment_descriptions"
+		,"files": {
+			"media": {
+				"data": {}
+			}
+		}
+	}
+	,"media": {}
+}

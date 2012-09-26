@@ -1,0 +1,26 @@
+body {
+	font-family: Helvetica, sans-serif;
+	font-size: 12pt;
+}
+#header {
+	padding: 5px 0 0 0;
+}
+#header h1 {
+	font-size: 1.5em;
+}
+.slider {
+	position: relative;    
+	overflow: none;
+	border: 0px; 
+	width: 95%;
+	padding: 0 0 1em 1em;
+}
+.slider_callout {
+	padding: 0.4em;
+}
+#_slider3__calloutTextLeft, #_slider4__calloutTextLeft, #_slider5__calloutTextLeft, #_slider6__calloutTextLeft, #_slider7__calloutTextLeft {
+	min-width: 10em;
+}
+#_slider6__calloutTextRight, #_slider7__calloutTextRight {
+	min-width: 10em;
+}

@@ -1,0 +1,2 @@
+	<tr><td class="label n2_localize">Name</td><td class="value"><input type="text" class="{{#:input}}name{{/:input}}"/></td></tr>
+	<tr><td class="label n2_localize">Meaning</td><td class="value"><input type="text" class="{{#:input}}meaning{{/:input}}"/></td></tr>

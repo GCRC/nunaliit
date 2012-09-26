@@ -1,0 +1,4 @@
+contributions.tableName=contributions
+contributions.idColumnName=id
+features.tableName=locations
+features.searchFields=placename,roman_name,english_local_name,meaning,notes,entity

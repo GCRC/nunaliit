@@ -1,0 +1,1 @@
+	<span class="label n2_localize">Reference</span>: <a class="n2s_referenceLink" href="#">{{doc}}</a>

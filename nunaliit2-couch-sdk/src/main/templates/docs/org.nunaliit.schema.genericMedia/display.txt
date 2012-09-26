@@ -1,0 +1,69 @@
+<div class="n2_documentDisplay"><div class="n2_layoutFloat">
+
+{{#nunaliit_hoverSound}}
+	<div style="float:right;" class="n2s_insertHoverSoundIcon"></div>
+{{/nunaliit_hoverSound}}
+
+{{#nunaliit_attachments}}
+	{{#files}}
+		{{#:iterate}}
+			{{#value}}
+				{{^source}}{{! do not include thumbnails !}}
+
+					{{#attachmentName}}
+	<div style="width: 35%; float:right;">
+		<div class="n2s_insertMediaView">{{attachmentName}}</div>
+	</div>
+					{{/attachmentName}}
+
+					{{#originalName}}
+						{{#originalAttachment}}
+	<div><a class="n2s_externalMediaLink" href="{{originalAttachment}}">{{originalName}}</a></div>
+						{{/originalAttachment}}
+						{{^originalAttachment}}
+							{{#attachmentName}}
+	<div><a class="n2s_externalMediaLink" href="{{attachmentName}}">{{originalName}}</a></div>
+							{{/attachmentName}}
+							{{^attachmentName}}
+	<div>{{originalName}}</div>
+							{{/attachmentName}}
+						{{/originalAttachment}}
+					{{/originalName}}
+
+	<div style="clear:both"></div>
+				{{/source}}
+			{{/value}}
+		{{/:iterate}}
+	{{/files}}
+{{/nunaliit_attachments}}
+
+{{#media}}
+	{{#title}}
+		<div>
+			<div class="label n2s_localize">Title</div>
+			<div class="value">{{title}}</div>
+			<div class="end"></div>
+		</div>
+	{{/title}}
+	{{#description}}
+		<div>
+			<div class="label n2s_localize">Description</div>
+			<div class="value n2s_preserveSpaces">{{description}}</div>
+			<div class="end"></div>
+		</div>
+	{{/description}}
+{{/media}}
+
+{{#nunaliit_source}}
+	{{{:html}}}
+{{/nunaliit_source}}
+
+{{#nunaliit_layer_definition}}
+	<div>
+		<div class="label"></div>
+		<div class="value"><a class="n2s_clickAddLayerFromDefinition n2_localize" href="#">Add Layer</a></div>
+		<div class="end"></div>
+	</div>
+{{/nunaliit_layer_definition}}
+
+</div></div>

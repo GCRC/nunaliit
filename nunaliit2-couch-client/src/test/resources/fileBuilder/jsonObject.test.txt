@@ -1,0 +1,18 @@
+{
+	"_id":"org.nunaliit.test:test"
+	,"obj":{
+		"int":1
+		,"bool":true
+		,"str":"a string"
+		,"n": null
+	}
+	,"arr":[
+		0
+		,1
+		,"a"
+		,{
+			"d":"e"
+		}
+		,[0,1,2,3,4]
+	]
+}

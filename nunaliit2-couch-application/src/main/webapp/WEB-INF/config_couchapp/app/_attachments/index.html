@@ -1,0 +1,294 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+	<head>
+		<title>Configuration</title>
+		
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+		<title>Translation</title>		
+		<link rel="stylesheet" href="js-external/css/jquery-ui/smoothness/jquery-ui.custom.css" type="text/css" />
+		<link rel="stylesheet" href="js-external/css/jquery.lightbox-0.5.css" type="text/css" />
+		<link rel="stylesheet" href="nunaliit2/css/basic/nunaliit2.css" type="text/css" />
+		
+	</head>
+	<body>
+
+		<h1>Configuration</h1>
+		<div id="login"></div>
+		<div>
+			<input id="btnQueryConfig" type="button" value="Query Config"/>
+			<input id="btnAddConfig" type="button" value="Add Config"/>
+		</div>	
+		<div id="requests">
+		</div>
+
+		
+		<script type="text/javascript" src="js-external/js/jquery.min.js"></script>
+		<script type="text/javascript" src="js-external/js/jquery-ui.min.js"></script>
+		
+		<script src="http://maps.google.com/maps/api/js?v=3.3&sensor=false"></script>
+		
+		<script type="text/javascript" src="js-external/OpenLayers/OpenLayers.js"></script>
+		<script type="text/javascript" src="js-external/js/jquery.lightbox-0.5.js"></script>
+		
+		<script type="text/javascript" src="js-external/js/jquery.cycle.pack.js"></script>
+		<script type="text/javascript" src="js-external/js/jquery.form.js"></script>
+		<script type="text/javascript" src="js-external/js/jquery.cookie-1.0.js"></script>
+
+		<script type="text/javascript" src="nunaliit2/nunaliit2-debug.js"></script>
+		<script type="text/javascript" src="nunaliit2/nunaliit2-couch-debug.js"></script>
+		<script type="text/javascript" src="config/configuration.js"></script>
+
+		<script type="text/javascript">
+			// <!--
+
+			var configDb = null;
+			var configDesign = null;
+
+			var loginStateChanged = function(currentUser) {
+				var showLogin = false;
+				if (null == currentUser) {
+					showLogin = true;
+				};
+
+				$('#login').empty();
+				if( showLogin ) {
+					var aElem = $('<a class="loginLink" href="javascript:Login">Login</a>');
+					aElem.click(function(){
+						if( $.NUNALIIT_AUTH ) $.NUNALIIT_AUTH.login();
+						return false;
+					});
+    				var nameElem = $('<span class="loginGreeting">Welcome.&nbsp</span>');
+    				$('#login').append(aElem).append(nameElem);
+
+    			} else {
+		    		var aElem = $('<a class="loginLink" href="javascript:Logout">Logout</a>');
+    				aElem.click(function(){
+    					if( $.NUNALIIT_AUTH ) {
+	    					$.NUNALIIT_AUTH.logout();
+    					};
+		    			return false;
+    				});
+		    		var display = currentUser.display;
+    				if( !display ) display = currentUser.name;
+		    		var nameElem = $('<span class="loginGreeting">' + display + '&nbsp</span>');
+    				$('#login').append(aElem).append(nameElem);
+		    	};
+		    };
+			
+			function reportErrorsOnElem(errors, $elem) {
+				$elem.append( $('<div>Error occurred during the request<div>') );
+				
+				for(var i=0, e=errors.length; i<e; ++i) {
+					var e = errors[i];
+					if( typeof(e) === 'object' ) {
+						e = JSON.stringify(e);
+					};
+					if( typeof(e) === 'string' ) {
+						$elem.append( $('<div>'+e+'<div>') );
+					};
+				};
+			};
+			
+			function reportError() {
+				$('.olkit_wait').remove();
+				
+				$('#requests').empty();
+				reportErrorsOnElem(arguments, $('#requests'));
+			};
+		
+			function startRequestWait() {
+				$('#requests').html('<div class="olkit_wait"></div>');
+			};
+				
+			function initiateEdit(serverName) {
+				// Get document
+				startRequestWait();
+				configDb.getDocument({
+					docId: 'org.nunaliit.serverConfig:'+serverName
+					,onSuccess: function(doc) { 
+						showEdit(doc); 
+					}
+					,onError: reportError
+				});
+				
+				function showEdit(doc) {
+					$('#requests').empty();
+					
+					var $editor = $('<div></div>');
+					$('#requests').append($editor);
+					
+					var objectTree = new $n2.tree.ObjectTree($editor,doc);
+					var treeEditor = new $n2.tree.ObjectTreeEditor(objectTree,doc);
+					
+					var $replication = $('<div>'
+						+'Local DB:<input id="replicationLocalDb" type="text"/>'
+						+'<br/>Remote DB Url:<input id="replicationRemoteUrl" type="text"/>'
+						+'<br/>Remote DB Name:<input id="replicationRemoteName" type="text"/>'
+						+'<br/>Filter:<input id="replicationFilter" type="text"/>'
+						+'<br/>Direction:<select id="replicationDirection"><option>bidirectional</option><option>incoming</option><option>outgoing</option></select>'
+						+'<br/>Continuous:<input id="replicationContinuous" type="checkbox"/>'
+						+'<br/><input id="btnReplication" type="button" value="Add"/></div>');
+					$('#requests').append($replication);
+					$('#btnReplication').click(function(){
+						var localDbName = $('#replicationLocalDb').val();
+						var remoteServerUrl = $('#replicationRemoteUrl').val();
+						var remoteDbName = $('#replicationRemoteName').val();
+						var filterName = $('#replicationFilter').val();
+						var direction = $('#replicationDirection').val();
+						var continuous = $('#replicationContinuous').attr('checked');
+						
+						var replication = {
+							localDbName: localDbName
+							,remoteServerUrl: remoteServerUrl
+							,remoteDbName: remoteDbName
+							,direction: direction
+						};
+						
+						if( '' != filterName && null != filterName ) {
+							replication.filterName = filterName;
+						};
+						
+						if( !doc.replications ) {
+							doc.replications = [];
+						};
+						doc.replications.push( replication );
+						
+						if( continuous ) {
+							replication.continuous = true;
+						};
+						
+						treeEditor.refresh();
+					});
+
+					var $buttons = $('<div></div>');
+					$('#requests').append($buttons);
+
+					var $btnSave = $('<input type="button" value="Save"/>');
+					$buttons.append($btnSave);
+					var $btnDelete = $('<input type="button" value="Delete"/>');
+					$buttons.append($btnDelete);
+					
+					$btnSave.click(function(){
+						$('#configEditErrors').html('<div class="olkit_wait"></div>');
+						configDb.updateDocument({
+							data: doc
+							,onSuccess: function() {
+								initiateEdit(serverName);
+							} 
+							,onError: function() {
+								$('#configEditErrors').empty();
+								reportErrorsOnElem(arguments, $('#configEditErrors'));
+							}
+						});
+					});
+					
+					$btnDelete.click(function(){
+						if( false == confirm('You are about delete a server configuration object. Do you wish to proceed?') ) {
+							return;
+						};
+						startRequestWait();
+						configDb.deleteDocument({
+							data: doc
+							,onSuccess: function() {
+								$('#requests').text('Deleted configuration for: '+serverName);
+							} 
+							,onError: reportError
+						});
+					});
+
+					var $errors = $('<div id="configEditErrors"></div>');
+					$('#requests').append($errors);
+				};
+			};
+			
+			function addConfig() {
+				$('#requests').html('<div>Server Name: <input id="addConfigServerName" type="text"/><input id="btnAddConfig2" type="button" value="Proceed"/></div>');
+				$('#addConfigServerName').focus();
+				
+				$('#btnAddConfig2').click(function(){
+					var serverName = $('#addConfigServerName').val();
+					createInitialConfig(serverName);
+				});
+				
+				function createInitialConfig(serverName) {
+					// Create initial document
+					var doc = {
+						_id: 'org.nunaliit.serverConfig:'+serverName
+						,nunaliit_type: 'serverConfig'
+						,server: serverName
+						,replicationInterval: 3600
+					};
+					
+					startRequestWait();
+					configDb.createDocument({
+						data: doc
+						,onSuccess: function() { initiateEdit(serverName); }
+						,onError: reportError
+					});
+				};
+			};
+			
+			function queryConfig() {
+				startRequestWait();
+				
+				configDesign.queryView({
+					viewName: 'config-by-server-name'
+					,onSuccess: reportConfigs
+					,onError: reportError
+				});
+				
+				function reportConfigs(arr) {
+					var $table = $('<table></table>');
+					$('#requests').empty().append($table);
+				
+					$table.append('<tr><th>Server</th><th>Revision</th></tr>');
+				
+					for(var i=0,e=arr.length; i<e; ++i) {
+						var $tr = $('<tr></tr>');
+						$table.append($tr);
+					
+						var row = arr[i];
+						var doc = row.value;
+					
+						var $td = $('<td class="serverName"></td>');
+						$tr.append( $td );
+
+						var $a = $('<a href="#" alt="'+doc.server+'">'+doc.server+'</a>');
+						$td.append( $a );
+						$a.click(function(){
+							var $a = $(this);
+							var serverName = $a.attr('alt');
+							initiateEdit(serverName);
+							return false;
+						});
+
+						$tr.append( $('<td class="serverRev">'+doc._rev+'</td>') );
+					};
+				};
+			};
+			
+			function main() {
+				$('#btnQueryConfig').click(queryConfig);
+				$('#btnAddConfig').click(addConfig);
+			};
+			
+			function main_init(config) {
+				configDb = config.configDb;
+				configDesign = config.configDesign;
+			 	
+				if( $.NUNALIIT_AUTH ) {
+					$.NUNALIIT_AUTH.addListener(loginStateChanged);
+				};
+
+			 	main();
+			};
+
+			jQuery().ready(function() {
+				runConfiguration({
+					configuredFunction: main_init
+				});
+			});
+			// -->
+		</script>
+	</body>
+</html>

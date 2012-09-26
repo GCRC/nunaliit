@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="nunaliit2-couch-application" default="default">
+    <description>
+		Useful scripts for using Couch Application from
+		external location. Redirects useful calls to the
+		appropriate place.
+    </description>
+	
+	<property name="atlas.couchapp.dir" location="./src/main/webapp/WEB-INF/atlas_couchapp"/>
+	<property name="config.couchapp.dir" location="./src/main/webapp/WEB-INF/config_couchapp"/>
+	<property name="mobile.couchapp.dir" location="../nunaliit2-couch-mobile/src/main/webapp/WEB-INF/mobile_couchapp"/>
+	<property name="atlas.working.dir" location="./target/atlas"/>
+	<property name="config.working.dir" location="./target/config"/>
+	<property name="mobile.working.dir" location="./target/mobile"/>
+
+    <!-- ================================= 
+          target: default           
+          
+          Do nothing   
+         ================================= -->
+    <target name="default" description="description">
+        
+    </target>
+
+    <!-- ================================= -->
+    <target 
+    	name="couchAppPush" 
+    	description="Upload couch application to server"
+    	>
+    	<ant
+    		dir="${atlas.couchapp.dir}"
+    		target="couchAppPush"
+    		inheritall="true"
+    		>
+    	</ant>
+    </target>
+
+    <!-- ================================= -->
+    <target 
+    	name="configAppPush" 
+    	description="Upload config couch application to server"
+    	>
+    	<ant
+    		dir="${config.couchapp.dir}"
+    		target="couchAppPush"
+    		inheritall="true"
+    		>
+    	</ant>
+    </target>
+
+    <!-- ================================= -->
+    <target 
+    	name="mobileAppPush" 
+    	description="Upload mobile couch application to server"
+    	>
+    	<ant
+    		dir="${mobile.couchapp.dir}"
+    		target="mobileAppPush"
+    		inheritall="true"
+    		>
+    	</ant>
+    </target>
+
+    <!-- ================================= -->
+    <target 
+    	name="clean" 
+    	description="Cleans up"
+    	>
+    	<ant
+    		dir="${atlas.couchapp.dir}"
+    		target="clean"
+    		inheritall="true"
+    		>
+    	</ant>
+    </target>
+
+    <!-- ================================= -->
+    <target 
+    	name="javascript-copy" 
+    	description="Copy javascript libraries"
+    	>
+
+    	<ant
+    		dir="${atlas.couchapp.dir}"
+    		target="javascript-copy"
+    		inheritall="true"
+    		>
+    	</ant>
+    </target>
+</project>

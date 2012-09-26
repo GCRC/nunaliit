@@ -1,0 +1,26 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>nunaliit2</artifactId>
+    <groupId>ca.carleton.gcrc</groupId>
+    <version>0.2.1</version>
+  </parent>
+  <groupId>ca.carleton.gcrc</groupId>
+  <artifactId>nunaliit2-couch-replication</artifactId>
+  <name>nunaliit2-couch-replication</name>
+  <version>0.2.1</version>
+  <dependencies>
+  	<dependency>
+  		<groupId>ca.carleton.gcrc</groupId>
+  		<artifactId>nunaliit2-couch-client</artifactId>
+  		<version>${project.version}</version>
+  		<type>jar</type>
+  		<scope>compile</scope>
+  	</dependency>
+  	<dependency>
+  		<groupId>log4j</groupId>
+  		<artifactId>log4j</artifactId>
+  		<version>${log4j.version}</version>
+  	</dependency>
+  </dependencies>
+</project>

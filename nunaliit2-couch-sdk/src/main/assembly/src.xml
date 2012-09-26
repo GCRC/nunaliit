@@ -1,0 +1,68 @@
+<assembly 
+	xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd"
+	>
+	<id>nunaliit</id>
+	<formats>
+		<format>zip</format>
+		<format>tar.gz</format>
+	</formats>
+	<fileSets>
+		<!-- Command line application -->
+		<fileSet>
+			<directory>target/appassembler/bin</directory>
+			<outputDirectory>/bin/</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<directory>target/appassembler/repo</directory>
+			<outputDirectory>/repo/</outputDirectory>
+		</fileSet>
+
+		<!-- Internal directories -->
+		<fileSet>
+			<directory>src/main/install</directory>
+			<outputDirectory>/install/</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<directory>src/main/templates</directory>
+			<outputDirectory>/templates/</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<directory>src/main/internal</directory>
+			<outputDirectory>/internal/</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<directory>target/atlasWar/WEB-INF/atlas_couchapp/app</directory>
+			<outputDirectory>/internal/atlasDesign</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<directory>target/atlasWar/WEB-INF/uploadDesignDoc</directory>
+			<outputDirectory>/internal/serverDesign</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<directory>target/atlasWar/WEB-INF/mobile_couchapp/app</directory>
+			<outputDirectory>/internal/mobileDesign</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<directory>target/atlasWar/WEB-INF/userDesignAuth</directory>
+			<outputDirectory>/internal/userDesign</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<directory>target/atlasWar/nunaliit2</directory>
+			<outputDirectory>/internal/nunaliit2</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<directory>target/atlasWar/js-external</directory>
+			<outputDirectory>/internal/js-external</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<directory>target/atlasWar/WEB-INF/initializeDocs</directory>
+			<outputDirectory>/internal/initializeDocs</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<directory>target/atlasWar/WEB-INF/updateDocs</directory>
+			<outputDirectory>/internal/updateDocs</outputDirectory>
+		</fileSet>
+	</fileSets>
+</assembly>

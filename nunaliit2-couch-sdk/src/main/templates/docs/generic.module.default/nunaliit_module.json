@@ -1,0 +1,65 @@
+{
+	"title":"Generic Atlas"
+	,"introduction": {
+		"type": "html"
+		,"content": "<div class=\"intro\"><b>Welcome to a Nunaliit2 Atlas served from CouchDb</b><br/><a href=\"./tools/index.html\">Nunaliit Tools</a></div>"
+	}
+	,"map":{
+		"coordinates": {
+			"initialBounds": [-75.72,45.41,-75.67,45.43]
+		}
+		,"backgrounds": [
+			{ 
+				"name": "Google Satellite"
+				,"type": "Google Maps"
+				,"options": {
+					"type": "SATELLITE"
+					, "numZoomLevels": 19 
+				}
+			}
+			,{ 
+				"name": "Google Hybrid"
+				,"type": "Google Maps"
+				,"options": {
+					"type": "HYBRID"
+					,"numZoomLevels": 19
+				}
+			}
+			,{ 
+				"name": "Google Physical"
+				,"type": "Google Maps"
+				,"options": {
+					"type": "TERRAIN"
+					,"numZoomLevels": 19 
+				}
+			}
+		]
+		,"overlays": [
+			{
+				"name": "Approved Layer"
+				,"type": "couchdb"
+				,"options": {
+					"layerName": "approved"
+				}
+				,"featurePopupDelayMs": 0
+			}
+			,{
+				"name": "Public"
+				,"type": "couchdb"
+				,"options": {
+					"layerName": "public"
+				}
+				,"featurePopupDelayMs": 0
+			}
+		]
+		,"addPointsOnly": false
+		,"toggleClick": true
+	}
+	,"display":{
+		"defaultSchemaName":"genericDoc" 
+	}
+	,"edit":{
+		"defaultSchemaName": "genericDoc"
+		,"newDocumentSchemaNames": "ALL_SCHEMAS" 
+	}
+}

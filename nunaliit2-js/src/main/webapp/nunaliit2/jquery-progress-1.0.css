@@ -1,0 +1,3 @@
+.progress { font-family: Verdana,Arial,sans-serif; font-size: 1.1em; }
+.progress-x { float:right; background:#ff0000; color:#ffffff; }
+.prog-holder { z-index:20; }

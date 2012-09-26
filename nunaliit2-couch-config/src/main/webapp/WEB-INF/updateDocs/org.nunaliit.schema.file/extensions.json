@@ -1,0 +1,7 @@
+[
+	{
+		"selector": [ "data" ]
+		,"create": false
+		,"schemaName": "fileData"
+	}
+]

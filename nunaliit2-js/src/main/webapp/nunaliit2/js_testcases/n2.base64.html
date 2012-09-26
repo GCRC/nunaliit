@@ -1,0 +1,105 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+		<title>Base64</title>		
+		<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/themes/base/jquery-ui.css" type="text/css" />
+		<link rel="stylesheet" href="../css/basic/n2.tree.css" type="text/css" />
+		<link rel="stylesheet" href="../css/basic/n2.slideEditor.css" type="text/css" />
+		
+	</head>
+	<body>
+
+		<h1>Base64</h1>
+		<div id="logs">
+		</div>
+		
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/jquery-ui.min.js"></script>
+
+		<script type="text/javascript" src="../nunaliit2-debug.js"></script>
+
+		<script type="text/javascript">
+			// <!--
+			
+			function printLog(str){
+				var $div = $('<div></div>');
+				$div.text(str);
+				$('#logs').append($div);
+			};
+			
+			function encodeTest(testName, input, expected){
+				$n2.log('Encode('+testName+')', input);
+				
+				var error = null;
+
+				var output = $n2.Base64.encode(input);
+				if( output !== expected ){
+					error = 'Unexpected output: '+output
+				};
+
+				if( error ) {
+					printLog('Encode('+testName+') failed: '+error);
+				} else {
+					printLog('Encode('+testName+') passed');
+					
+					decodeTest(testName, output, input);
+				};
+			};
+			
+			function decodeTest(testName, input, expected){
+				$n2.log('Decode('+testName+')', input);
+				
+				var error = null;
+
+				var output = $n2.Base64.decode(input);
+				if( output !== expected ){
+					error = 'Unexpected output: '+output
+				};
+
+				if( error ) {
+					printLog('Decode('+testName+') failed: '+error);
+				} else {
+					printLog('Decode('+testName+') passed');
+				};
+			};
+			
+			function main_init(){
+				encodeTest('Empty string','','');
+
+				encodeTest('One character','a','YQ==');
+
+				encodeTest('Null character','\000','AA==');
+
+				encodeTest('Character 0xff','\377','/w==');
+
+				encodeTest('Two characters','ab','YWI=');
+
+				encodeTest('Three characters','abc','YWJj');
+
+				encodeTest('A number of characters','abcabcabcab','YWJjYWJjYWJjYWI=');
+			};
+			
+			var loaded = false;			
+			function waitForComponentsLoaded() {
+				if( loaded ) return;
+				
+				if( nunaliit2
+				 ) {
+				 	$n2 = window.nunaliit2;
+					
+					loaded = true;
+
+					main_init();
+				} else {
+					setTimeout(waitForComponentsLoaded, 100);
+				};
+			};
+			
+			jQuery().ready(function() {
+				waitForComponentsLoaded();
+			});
+			// -->
+		</script>
+	</body>
+</html>

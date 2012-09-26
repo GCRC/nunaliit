@@ -1,0 +1,20 @@
+<div class="n2_form_object">
+{{#nunaliit_attachments}}
+	{{#files}}
+		{{#:iterate}}
+			{{#value}}
+				{{#data}}
+	<div style="width: 35%; float:right;">
+		{{#:parent}}{{#attachmentName}}
+			<div class="n2s_insertMediaView">{{attachmentName}}</div>
+		{{/attachmentName}}{{/:parent}}
+	</div>
+	<span class="label n2_localize">Title</span><input type="text" class="{{#:input}}title{{/:input}}"/><br/>
+	<span class="label n2_localize">Description</span><textarea class="{{#:input}}description{{/:input}}"></textarea><br/>
+	<div style="clear:both"></div>
+				{{/data}}
+			{{/value}}
+		{{/:iterate}}
+	{{/files}}
+{{/nunaliit_attachments}}
+</div>

@@ -1,0 +1,173 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+		<title>extend test</title>		
+		<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/themes/base/jquery-ui.css" type="text/css" />
+		<link rel="stylesheet" href="../css/basic/n2.tree.css" type="text/css" />
+		<link rel="stylesheet" href="../css/basic/n2.slideEditor.css" type="text/css" />
+		
+	</head>
+	<body>
+
+		<h1>extend test</h1>
+		<div id="logs">
+		</div>
+		
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/jquery-ui.min.js"></script>
+
+		<script type="text/javascript" src="../nunaliit2-debug.js"></script>
+
+		<script type="text/javascript">
+			// <!--
+			
+			var errorFound = false;
+			
+			function printLog(str){
+				var $div = $('<div></div>');
+				$div.text(str);
+				$('#logs').append($div);
+			};
+			
+			function printErr(str){
+				errorFound = true;
+				var $div = $('<div class="error"></div>');
+				$div.text('Error: '+str);
+				$('#logs').append($div);
+			};
+			
+			function test_shallow(){
+				var a = {
+					one: 1
+					,obj: {
+						two: 2
+					}
+					,arr: [0, 1, 2, 3, 4]
+					,f: function(){ return 1; }
+				};
+				
+				// Test shallow
+				printLog('Testing shallow extend');
+				
+				var b = $n2.extend({},a,{three:3},{four:4});
+				if( b.one != 1 ) {
+					printErr('Initial object not copied');
+				};
+				if( b.three != 3 ) {
+					printErr('First follow up object not copied');
+				};
+				if( b.four != 4 ) {
+					printErr('Second follow up object not copied');
+				};
+				if( typeof(b.obj) !== 'object' ) {
+					printErr('Object not copied');
+				} else if( b.obj.two != 2 ){
+					printErr('Object internal values not copied');
+				};
+				if( b.arr && b.arr.length === 5 ) {
+					for(var i=0,e=b.arr.length; i<e; ++i){
+						if( i !== b.arr[i] ){
+							printErr('Array value is wrong at index: '+i);
+						};
+					};
+				} else {
+					printErr('Array not copied');
+				};
+				if( typeof(b.f) !== 'function' ) {
+					printErr('Function not copied');
+				} else if( b.f() != 1 ){
+					printErr('Function returned wrong value');
+				};
+				
+				// Changing something in one should change it in the other
+				a.obj.two = 5;
+				if( b.obj.two != 5 ) {
+					printErr('Copy is not shallow');
+				};
+			};
+			
+			function test_deep(){
+				var a = {
+					one: 1
+					,obj: {
+						two: 2
+					}
+					,arr: [0, 1, 2, 3, 4]
+					,f: function(){ return 1; }
+				};
+				
+				printLog('Testing deep extend');
+				
+				var b = $n2.extend(true,{},a,{three:3},{four:4});
+				if( b.one != 1 ) {
+					printErr('Initial object not copied');
+				};
+				if( b.three != 3 ) {
+					printErr('First follow up object not copied');
+				};
+				if( b.four != 4 ) {
+					printErr('Second follow up object not copied');
+				};
+				if( typeof(b.obj) !== 'object' ) {
+					printErr('Object not copied');
+				} else if( b.obj.two != 2 ){
+					printErr('Object internal values not copied');
+				};
+				if( b.arr && b.arr.length === 5 ) {
+					for(var i=0,e=b.arr.length; i<e; ++i){
+						if( i !== b.arr[i] ){
+							printErr('Array value is wrong at index: '+i);
+						};
+					};
+				} else {
+					printErr('Array not copied');
+				};
+				if( typeof(b.f) !== 'function' ) {
+					printErr('Function not copied');
+				} else if( b.f() != 1 ){
+					printErr('Function returned wrong value');
+				};
+				
+				// Changing something in one should not change it in the other
+				a.obj.two = 5;
+				if( b.obj.two != 2 ) {
+					printErr('Copy is not deep');
+				};
+			};
+
+			function main_init(){
+
+				test_shallow();
+				test_deep();
+				
+				if( errorFound) {
+					printLog('Errors were found in the tests');
+				} else {
+					printLog('Tests ended without error');
+				};
+			};
+			
+			var loaded = false;			
+			function waitForComponentsLoaded() {
+				if( loaded ) return;
+				
+				if( nunaliit2
+				 ) {
+				 	$n2 = window.nunaliit2;
+					
+					loaded = true;
+
+					main_init();
+				} else {
+					setTimeout(waitForComponentsLoaded, 100);
+				};
+			};
+			
+			jQuery().ready(function() {
+				waitForComponentsLoaded();
+			});
+			// -->
+		</script>
+	</body>
+</html>

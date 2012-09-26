@@ -1,0 +1,38 @@
+[
+	{
+		"from" : ""
+		,"to" : "redirect.html"
+	}
+	,{
+		"from" : "db/*"
+		,"to" : "../../*"
+	}
+	,{
+		"from" : "db/"
+		,"to" : "../../"
+	}
+	,{
+		"from" : "db"
+		,"to" : "../../"
+	}
+	,{
+		"from" : "nunaliit2/*"
+		,"to" : "../../_design/atlas/nunaliit2/*"
+	}
+	,{
+		"from" : "js-external/*"
+		,"to" : "../../_design/atlas/js-external/*"
+	}
+	,{
+		"from" : "lib/*"
+		,"to" : "../../_design/atlas/lib/*"
+	}
+	,{
+		"from" : "tools/*"
+		,"to" : "../../_design/atlas/tools/*"
+	}
+	,{
+		"from" : "*"
+		,"to" : "*"
+	}
+]

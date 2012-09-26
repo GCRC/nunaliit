@@ -1,0 +1,7 @@
+//
+// Prefix header for all source files of the 'Nunaliit' target in the 'Nunaliit' project
+//
+
+#ifdef __OBJC__
+    #import <UIKit/UIKit.h>
+#endif

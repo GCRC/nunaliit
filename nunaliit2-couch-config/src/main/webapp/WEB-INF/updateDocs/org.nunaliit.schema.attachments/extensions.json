@@ -1,0 +1,7 @@
+[
+	{
+		"selector": [ "files", null ]
+		,"create": false
+		,"schemaName": "file"
+	}
+]

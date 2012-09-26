@@ -1,0 +1,6 @@
+This project uses code from OpenLayers written
+by MetaCarta, Inc., and published under the Clear BSD
+license.
+
+See http://svn.openlayers.org/trunk/openlayers/license.txt for the
+full text of the license.

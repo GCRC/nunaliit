@@ -1,0 +1,12 @@
+[
+	{
+		"selector": [ "reference" ]
+		,"create": true
+		,"schemaName": "reference"
+	}
+	,{
+		"selector": [ "reply" ]
+		,"create": false
+		,"schemaName": "reference"
+	}
+]

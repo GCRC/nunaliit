@@ -1,0 +1,32 @@
+<div class="n2_documentForm"><div class="n2_layoutFloat">
+	<div>
+		<div class="label n2s_localize">Name</div>
+		<div class="value"><input type="text" class="{{#:input}}name{{/:input}}"/></div>
+		<div class="end"></div>
+	</div>
+	<div>
+		<div class="label n2s_localize">Label</div>
+		<div class="value"><input type="text" class="{{#:input}}label{{/:input}}"/></div>
+		<div class="end"></div>
+	</div>
+	<div>
+		<div class="label n2s_localize">Root Schema</div>
+		<div class="value"><input type="checkbox" class="{{#:input}}isRootSchema{{/:input}}"/></div>
+		<div class="end"></div>
+	</div>
+	<div>
+		<div class="label n2s_localize">Display</div>
+		<div class="value"><textarea class="{{#:input}}display{{/:input}}"></textarea></div>
+		<div class="end"></div>
+	</div>
+	<div>
+		<div class="label n2s_localize">Brief</div>
+		<div class="value"><textarea class="{{#:input}}brief{{/:input}}"></textarea></div>
+		<div class="end"></div>
+	</div>
+	<div>
+		<div class="label n2s_localize">Form</div>
+		<div class="value"><textarea class="{{#:input}}form{{/:input}}"></textarea></div>
+		<div class="end"></div>
+	</div>
+</div></div>

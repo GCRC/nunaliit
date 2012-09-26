@@ -1,0 +1,43 @@
+/*
+ * Icons
+ */
+div.n2Show_icon_wrapper {
+	font-family: Geneva, Helvetica, Arial, sans-serif; 
+	font-size:   70%;
+	float: right;
+	text-align: center;
+}
+
+/* 26x26 icons */
+div.n2Show_icon_audio, div.n2Show_icon_image, div.n2Show_icon_video {
+	display: block;
+	width: 26px;
+	height: 26px;
+	margin: 0 auto;
+}
+div.n2Show_icon_audio {
+	background: transparent url(images/audio_icon.png) no-repeat; 
+}
+div.n2Show_icon_video {
+	background: transparent url(images/video_icon.png) no-repeat; 
+}
+div.n2Show_icon_image {
+	background: transparent url(images/image_icon.png) no-repeat; 
+}
+div.n2Show_icon_audio:hover, div.n2Show_icon_image:hover, div.n2Show_icon_video:hover {
+	background-position: -26px 0;
+}
+
+/* 50x50 icons */
+div.n2Show_icon_speaker {
+	display: block;
+	width: 50px;
+	height: 50px;
+	margin: 0 auto;
+}
+div.n2Show_icon_speaker {
+	background: transparent url(images/image_speaker.png) no-repeat; 
+}
+div.n2Show_icon_speaker:hover {
+	background-position: -50px 0;
+}

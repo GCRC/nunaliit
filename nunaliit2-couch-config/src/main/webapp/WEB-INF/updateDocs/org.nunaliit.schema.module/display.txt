@@ -1,0 +1,18 @@
+<div class="n2_documentDisplay"><div class="n2_layoutFloat">
+{{#nunaliit_module}}
+	<div>
+		<div class="label n2s_localize">Module</div>
+		<div class="value">{{title}}</div>
+		<div class="end"></div>
+	</div>
+
+	{{#introduction}}
+	<div>
+		<div class="label n2s_localize">Introduction</div>
+		<div class="value n2s_preserveSpaces">{{content}}</div>
+		<div class="end"></div>
+	</div>
+	{{/introduction}}
+
+{{/nunaliit_module}}
+</div></div>

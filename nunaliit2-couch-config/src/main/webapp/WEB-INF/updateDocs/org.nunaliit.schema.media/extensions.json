@@ -1,0 +1,7 @@
+[
+	{
+		"selector": [ "nunaliit_source" ]
+		,"create": false
+		,"schemaName": "source"
+	}
+]

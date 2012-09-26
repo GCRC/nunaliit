@@ -1,0 +1,100 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+		<title>Mustache Test Page</title>		
+		<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/themes/base/jquery-ui.css" type="text/css" />
+		<link rel="stylesheet" href="../css/basic/n2.sliderWithCallout.css" type="text/css" />
+		<link rel="stylesheet" href="css/slider_tests.css" type="text/css" />
+	</head>
+	<body>
+		<h1>Mustache Test Page</h1>
+		
+		<div id="mus"></div>
+		
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/jquery-ui.min.js"></script>
+		<script type="text/javascript" src="../mustache.js"></script>
+
+		<script type="text/javascript">
+		
+			function test(template, expected, a) {
+				var status = 'OK';
+				var error = null;
+				try {
+					var html = Mustache.to_html(template,a);
+				} catch(e) {
+					status = 'Internal Error';
+					error = e;
+				};
+				if( html !== expected ) {
+					var status = 'Fail';
+console.log('fail','>>'+html+'<<','>>'+expected+'<<',template);					
+				};
+				$('#mus').append( $('<div>'+status+': '+template+' => '+html+' => '+expected+(error==null?'':' error:'+error)+'</div>') );
+			}
+		
+			function main() {
+
+				var a = {
+					one: 'first'
+					,two: {
+						one: 'second'
+						,two: {
+							one: 'third'
+						}
+					}
+				};
+				
+				var b = {
+					':iterate': [
+						1
+						,2
+						,3
+					]
+				};
+				
+				test('{{one}} {{#two}}{{one}}{{/two}} {{#two}}{{#two}}{{one}}{{/two}}{{/two}}','first second third', a);
+				test('{{one}} {{#two}}{{one}}{{/two}} {{#two}}a{{#two}}b{{one}}c{{/two}}d{{/two}}','first second abthirdcd', a);
+				test('{{#two}}{{/two}}','', a);
+//				test('{{#two}}{{/two}} {{#two}} {{one}}',' {{#two}} first', a);
+				test('{{^three}}{{/three}} {{^three}}a{{/three}} {{^two}}b{{/two}}',' a ', a);
+				test('{{#three}}a{{/three}} {{#three}}{{/three}}',' ', a);
+				test('{{^three}}{{one}}{{/three}} {{^three}}{{#two}}{{one}}{{/two}}{{/three}}','first second', a);
+				test('{{#:iterate}}{{.}}{{/:iterate}}','123', b);
+				test('{{#two}}{{#two}}{{two}}{{/two}}{{/two}}','', a);
+				
+				var c = {
+					type: 'resource'
+					,components: [
+						{
+							type: 'email'
+							,address: 'abc@123.com'
+						}
+						,{
+							content: 'abc'
+						}
+					]
+				};
+				var t = '{{#components}}{{#type}}{{type}}{{/type}}{{^type}}[Unknown]{{/type}},{{/components}}'
+				var html = Mustache.to_html(t,c);
+				$('#mus').append( $('<div>'+html+'</div>') );
+				var t2 = '{{#components}}{{#+type}}{{+type}}{{/+type}}{{^+type}}[Unknown]{{/+type}},{{/components}}'
+				var html = Mustache.to_html(t2,c);
+				$('#mus').append( $('<div>'+html+'</div>') );
+			};
+
+			var loaded = false;
+			jQuery().ready(function() {
+				if( loaded ) return;
+
+				if( Mustache ) {
+					
+					main();
+					loaded = true;
+				};
+			});
+			// -->
+		</script>
+	</body>
+</html>

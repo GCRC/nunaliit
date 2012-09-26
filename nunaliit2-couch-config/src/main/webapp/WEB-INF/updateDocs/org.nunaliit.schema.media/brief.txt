@@ -1,0 +1,1 @@
+Media: {{#nunaliit_attachments}}{{#files}}{{#:iterate}}{{#value}}{{#data}}{{title}} {{/data}}{{/value}}{{/:iterate}}{{/files}}{{/nunaliit_attachments}}

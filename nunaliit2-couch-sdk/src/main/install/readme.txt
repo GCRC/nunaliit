@@ -1,0 +1,1 @@
+See nunaliit_adk.html for documentation on using the command-line tool.

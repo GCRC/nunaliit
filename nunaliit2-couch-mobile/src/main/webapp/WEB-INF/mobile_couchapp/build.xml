@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ====================================================================== -->
+<project name="mobile-app" default="default">
+	<description>
+		Mobile Application for Atlas Database.
+	</description>
+	
+	<!--
+		Pick up properties related to when this script is called
+		from a WAR file.
+	-->
+	<property file="../atlas.properties"/>
+	<property file="../atlas.properties.default"/>
+	<property file="../atlas_couchapp/live.properties"/>
+
+	<!-- Local override. -->
+	<property file="build.properties"/>
+	
+	<!-- Configuration -->
+	<property name="atlas.name" value="default"/>
+	<property name="atlas.config.dir" location="/etc/nunaliit2/couchdb/${atlas.name}"/>
+	<property file="${atlas.config.dir}/couch.properties"/>
+	<property file="${atlas.config.dir}/install.properties"/>
+	
+	<property name="couchdb.dbName" value="atlas"/>
+	<property name="mobile.design.name" value="mobile"/>
+	<property name="mobile.working.dir" location="./generated"/>
+	<property name="couchdb.server.admin" value="http://127.0.0.1:5984"/>
+
+	<property name="nunaliit.js.project.dir" location="../../../../../../nunaliit2-js"/>
+	<property name="nunaliit.js-external.project.dir" location="../../../../../../nunaliit2-js-external"/>
+	<property name="nunaliit.js.compression" value="1"/>
+	<property name="nunaliit.js.debug" value="0"/>
+	<property name="nunaliit2-js.dir" location="${nunaliit.js.project.dir}/src/main/webapp/nunaliit2"/>
+	<property name="external-js.dir" location="${nunaliit.js-external.project.dir}/src/main/webapp/js-external"/>
+	
+	
+	<!-- ================================= -->
+	<target
+		name="default"
+		depends="mobileAppPush"
+		description="Generate and deploy application"
+		>
+	
+	</target>
+
+	<target
+		name="clean"
+		description="Clean all generated files"
+		>
+		
+		<delete dir="${mobile.working.dir}" failonerror="false"/>
+	
+	</target>
+	
+	<!-- ================================= -->
+	<target
+		name="mobileAppPush"
+		depends="staging"
+		description="Deploy a couchApp"
+		>
+		
+		<mkdir dir="${mobile.working.dir}"/>
+		
+		<exec
+			executable="couchapp"
+			dir="${mobile.working.dir}"
+			>
+			<arg line="push ${mobile.design.name} ${couchdb.server.admin}/${couchdb.dbName}"/>
+		</exec>
+	
+	</target>
+
+	<!-- ================================= -->
+	<target
+		name="staging"
+		depends="couchAppGenerate,javascript-copy,javascript-copy-debug,appCopy"
+		description="Generate application staging"
+		>
+
+	</target>
+
+	<!-- ================================= -->
+	<target
+		name="couchAppGenerate"
+		depends="couchapp-conditions"
+		unless="project.exists"
+		description="Generate a new couchApp"
+		>
+		
+		<mkdir dir="${mobile.working.dir}"/>
+		
+		<exec
+			executable="couchapp"
+			dir="${mobile.working.dir}"
+			>
+			<arg line="generate ${mobile.design.name}"/>
+		</exec>
+	
+	</target>
+
+	<target name="couchapp-conditions">
+		<available file="${mobile.working.dir}/${mobile.design.name}/_id" property="project.exists"/>
+	</target>
+	
+	<!-- ================================= -->
+	<target
+		name="javascript-copy"
+		description="Copy javascript library files"
+		depends="javascript-compress"
+		>
+
+    	<!-- Copy libraries -->
+		<mkdir dir="${mobile.working.dir}/${mobile.design.name}/_attachments/nunaliit2"/>
+		<copy todir="${mobile.working.dir}/${mobile.design.name}/_attachments/nunaliit2">
+			<fileset dir="${nunaliit2-js.dir}">
+				<include name="nunaliit2-couch-mobile.js"/>
+				<include name="css/basic/**/*"/>
+			</fileset>
+		</copy>
+		<mkdir dir="${mobile.working.dir}/${mobile.design.name}/_attachments/js-external"/>
+		<copy todir="${mobile.working.dir}/${mobile.design.name}/_attachments/js-external">
+			<fileset dir="${external-js.dir}">
+				<include name="js/jquery.min.js"/>
+				<include name="js/jquery-ui.min.js"/>
+				<include name="css/jquery-ui/smoothness/**/*"/>
+			</fileset>
+		</copy>
+		
+		<!-- Support for mobile debug -->
+		<copy todir="${mobile.working.dir}/${mobile.design.name}/_attachments">
+			<fileset dir="${nunaliit2-js.dir}">
+				<include name="nunaliit2-couch-mobile.js"/>
+			</fileset>
+		</copy>
+		<copy todir="${mobile.working.dir}/${mobile.design.name}/_attachments">
+			<fileset dir="${external-js.dir}/js">
+				<include name="jquery.min.js"/>
+			</fileset>
+		</copy>
+		
+	</target>
+	
+	<!-- ================================= -->
+	<target
+		name="javascript-copy-debug"
+		description="Copy debug versions of javascript library files"
+		depends="-javascript-copy-debug-conditions"
+		if="debug.required"
+		>
+
+    	<!-- Copy libraries -->
+		<copy todir="${mobile.working.dir}/${mobile.design.name}/_attachments/nunaliit2">
+			<fileset dir="${nunaliit2-js.dir}"/>
+		</copy>
+	</target>
+
+	<target name="-javascript-copy-debug-conditions">
+		<condition property="debug.required">
+			<not>
+				<equals arg1="${nunaliit.js.debug}" arg2="0"/>
+			</not>
+		</condition>
+	</target>
+	
+	<!-- ================================= -->
+	<target
+		name="appCopy"
+		description="Copy application files"
+		depends="appPrepare"
+		>
+		
+		<copy
+			todir="${mobile.working.dir}/${mobile.design.name}"
+			overwrite="true"
+			>
+			<fileset dir="./app"/>
+		</copy>
+		<copy
+			todir="${mobile.working.dir}/${mobile.design.name}/_attachments"
+			overwrite="true"
+			>
+			<fileset dir="../mobile_xcode5/Nunaliit/www"/>
+		</copy>
+
+		<mkdir dir="${mobile.working.dir}/${mobile.design.name}/_attachments/lib"/>
+		<copy 
+			todir="${mobile.working.dir}/${mobile.design.name}/_attachments/lib"
+			overwrite="true"
+			>
+			<fileset dir="./app/vendor/nunaliit2"/>
+		</copy>
+
+	</target>
+	<!-- ================================= -->
+	<target
+		name="appPrepare"
+		description="Prepare application files"
+		>
+		
+		<ant dir="../mobile_xcode5/Nunaliit/build"/>
+
+	</target>
+
+	<!-- ================================= -->
+    <target 
+    	name="javascript-compress" 
+    	description="Copy mobile application"
+    	depends="-javascript-compress-conditions,-javascript-compress-not"
+    	if="compression.required"
+    	>
+
+    	<!-- Call nunaliit2 compression -->
+    	<echo message="nunaliit2 project dir: ${nunaliit.js.project.dir}"/>
+    	<ant dir="${nunaliit.js.project.dir}" target="library-compress">
+    	</ant>
+    </target>
+
+	<target 
+    	name="-javascript-compress-not" 
+    	description="Copy mobile application"
+    	depends="-javascript-compress-conditions"
+    	unless="compression.required"
+    	>
+
+    	<!-- Call nunaliit2 compression -->
+    	<echo message="No compression required: ${nunaliit.js.compression}"/>
+    </target>
+
+	<target name="-javascript-compress-conditions">
+		<condition property="compression.required">
+			<not>
+				<equals arg1="${nunaliit.js.compression}" arg2="0"/>
+			</not>
+		</condition>
+	</target>
+	
+</project>

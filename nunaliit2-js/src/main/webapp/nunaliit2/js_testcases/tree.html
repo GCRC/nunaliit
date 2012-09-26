@@ -1,0 +1,209 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+		<title>Tree Test</title>		
+		<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/themes/base/jquery-ui.css" type="text/css" />
+		<link rel="stylesheet" href="../css/basic/n2.tree.css" type="text/css" />
+		
+	</head>
+	<body>
+
+			<ul class="tree" style="display:none">
+				<li class="">
+					<div class="treeExpand"></div>
+					<span class="treeKey">name</span>
+					<span class="treeValue"> : Test</span>
+				</li>
+				<li class="treeShowChildren">
+					<div class="treeExpand"></div>
+					<span class="treeKey">roles</span>
+					<span class="treeValue"> : [admin,user,monkey]</span>
+					<ul class="treeChildren">
+						<li>
+							<div class="treeExpand"></div>
+							<span class="treeKey">0</span>
+							<span class="treeValue"> : admin</span>
+						</li>
+						<li>
+							<div class="treeExpand"></div>
+							<span class="treeKey">1</span>
+							<span class="treeValue"> : user</span>
+						</li>
+						<li>
+							<div class="treeExpand"></div>
+							<span class="treeKey">2</span>
+							<span class="treeValue"> : monkey</span>
+						</li>
+					</ul>
+				</li>
+				<li class="treeShowChildren"><div class="treeExpand"></div>
+					<span class="treeKey">geom</span>
+					<span class="treeValue">{type:Point,bbox:[0,0,0,0]...}</span>
+					<ul class="treeChildren">
+						<li><div class="treeExpand"></div><span>type</span></li>
+						<li><div class="treeExpand"></div><span>wkt</span></li>
+					</ul>
+				</li>
+			</ul>
+
+
+		<div id="treeContainer">
+		</div>
+
+		<div id="editorContainer">
+		</div>
+		
+		<div>
+			<!-- left div -->
+			<div id="left" style="position:absolute; width: 50%; left: 0px; top: 0px">
+			</div>
+			<!-- right div -->
+			<div id="right" style="position:absolute; width: 50%; right: 0px; top: 0px">
+			</div>
+		</div>
+		
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/jquery-ui.min.js"></script>
+
+		<script type="text/javascript" src="../nunaliit2-debug.js"></script>
+
+		<script type="text/javascript">
+			// <!--
+			
+			var obj = null;
+			var editors = {};
+			var trees = {};
+			var treeOptions = {
+				//onKeyClick: function(selector, $li){ $n2.log('key clicked',selector,$li); return true; }
+				//,valueDisplayFn: null
+			}; 
+			
+			function buildDiv($div, obj) {
+				$div.empty();
+				
+				var id = $div.attr('id');
+				
+				var $treeContainer = $('<div class="divTree"></div>');
+				$div.append($treeContainer);
+
+				trees[id] = new $n2.tree.ObjectTree($treeContainer, obj, treeOptions);
+
+				var $buttonContainer = $('<div class="divButtons"></div>');
+				$div.append($buttonContainer);
+				
+				var $btn = $('<input id="editButton" type="button" value="Edit"/>');
+				$buttonContainer.append($btn);
+				$btn.click(function(){
+					startEdit(id);
+				});
+			};
+			
+			function main_init() {
+				
+				var $treeContainer = $('#treeContainer');
+				obj = {
+					name: 'JP'
+					,yob: 1967
+					,roles: [
+						'admin'
+						,'user'
+						,'monkey'
+					]
+					,geom: {
+						type: 'Point'
+						,bbox: [-180,-90,180,90]
+						,wkt: 'POINT(0 0)'
+					}
+					,description: 'This should be a fairly long string that does not fit in the value preview area.'
+				};
+
+				$n2.log('obj,trees,editors',obj,trees,editors);
+				$n2.log('locale',$n2.l10n.getLocale());
+
+				buildDiv($('#left'), obj);
+				buildDiv($('#right'), obj);
+			};
+			
+			function startEdit(id) {
+				endEdit(id);
+
+				var editorOptions = $.extend({},treeOptions,{
+					onObjectChanged: function(o) {
+						onObjectChanged(id, o);
+					}
+				});
+			
+				var editor = new $n2.tree.ObjectTreeEditor(trees[id], obj, editorOptions);
+				editors[id] = editor;
+
+				var $buttonContainer = $('#'+id).children('.divButtons');	
+				$buttonContainer.empty();
+				
+				var $btn = $('<input type="button" value="Done"/>');
+				$buttonContainer.append($btn);
+				
+				$btn.click(function(){
+					endEdit(id);
+				});
+			};
+			
+			function endEdit(id) {
+				if( editors && editors[id] ) {
+					editors[id].destroy();
+					delete editors[id];
+				};
+
+				var $buttonContainer = $('#'+id).children('.divButtons');	
+				$buttonContainer.empty();
+				
+				var $btn = $('<input type="button" value="Edit"/>');
+				$buttonContainer.append($btn);
+				
+				$btn.click(function(){
+					startEdit(id);
+				});
+			};
+			
+			function onObjectChanged(id, o) {
+				// Update all other trees
+				for(var key in trees) {
+					var tree = trees[key];
+					var editor = editors[key];
+					
+					// Do not update self
+					if( key != id ) {
+						if( editor ) {
+							// Update editor if one is present
+							editor.refresh();
+						} else {
+							// Refresh tree
+							tree.refresh();
+						};
+					};
+				};
+			};
+
+			var loaded = false;			
+			function waitForComponentsLoaded() {
+				if( loaded ) return;
+				
+				if( nunaliit2
+				 ) {
+				 	$n2 = window.nunaliit2;
+
+					main_init();				 	
+					
+					loaded = true;
+				} else {
+					setTimeout(waitForComponentsLoaded, 100);
+				};
+			};
+			
+			jQuery().ready(function() {
+				waitForComponentsLoaded();
+			});
+			// -->
+		</script>
+	</body>
+</html>

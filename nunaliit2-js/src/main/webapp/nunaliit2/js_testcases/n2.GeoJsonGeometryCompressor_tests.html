@@ -1,0 +1,742 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+		<title>GeoJSON Geometry Compressor Test Page</title>		
+		<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/themes/base/jquery-ui.css" type="text/css" />
+	</head>
+	<body>
+		<h1>GeoJSON Geometry Compressor Test Page</h1>
+		
+		<p>Check the console log for results.</p>
+		
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/jquery-ui.min.js"></script>
+		<script type="text/javascript" src="../nunaliit2-debug.js"></script>
+
+		<script type="text/javascript">
+		
+			/*
+			 * utility functions - test arrays and objects for equivalency
+			 */
+			function areArraysEquivalent(one, two, epsilon) {
+				// assumes all arrays contain numeric values or arrays - see comparisons.
+				if (one.length !== two.length) {
+					return false;
+				} else {
+					if ($n2.isArray(one[0])) {
+						for (var i=0; i < one.length; i++) {
+							if (! areArraysEquivalent(one[i], two[i], epsilon)) {
+								return false;
+							};
+						};
+					} else if ('object' === typeof one[0]) {
+						for (var i=0; i < one.length; i++) {
+							if (!areObjectsEquivalent(one[i], two[i], epsilon, '')) {
+								return false;
+							};
+						};
+					} else {
+						for (var i=0; i < one.length; i++) {
+							var diffZero = Math.abs(one[i] - two[i]);
+							var diffOne = Math.abs(one[i] - two[i]);
+							if (diffZero > epsilon ||
+								diffOne > epsilon) {
+								return false;
+							};
+						};
+					};
+				};
+				return true;
+			};
+			
+			function areObjectPropertiesEquivalent(one, two, epsilon, pNamePrefix) {
+				if ('object' === typeof one) {
+					if ('object' !== typeof two) {
+						return false;
+					};
+					
+					var oneIsArray = $n2.isArray(one);
+					var twoIsArray = $n2.isArray(two);
+					if (oneIsArray && twoIsArray) {
+						if (! areArraysEquivalent(one, two, epsilon)) {
+							return false;
+						};
+					} else if (!oneIsArray && !twoIsArray) {
+						if (! areObjectsEquivalent(one, two, epsilon, pNamePrefix)) {
+							return false;
+						};
+					} else {
+						return false;
+					};
+				} else if ('string' === typeof one) {
+					if (one !== two) {
+						return false;
+					};
+				} else if ('boolean' === typeof one) {
+					if (one !== two) {
+						return false;
+					};
+				} else if ('number' === typeof one) {
+					if (one !== two) {
+						return false;
+					};
+				};
+				return true;
+			};
+			
+			function areObjectsEquivalent(one, two, epsilon, pNamePrefix) {
+				var map = {}; // track checked properties that are equivalent
+				
+				for (var p in one) {
+					if (one.hasOwnProperty(p)) {
+						if (! areObjectPropertiesEquivalent(one[p], two[p], epsilon, pNamePrefix+p)) {
+							return false;
+						};			
+						map[p] = true;
+					};
+				};
+				
+				for (var p in two) {
+					if (two.hasOwnProperty(p)) {
+						if (!map[p]) { // one didn't have it so this is a difference.
+							return false;
+						};			
+					};
+				};
+				return true;
+			};
+		
+			/*
+			 * coordinates compressor test routine
+			 */
+			function test_coordinateCompressor(number, data, options, expected) {
+				function error() {
+					$n2.log('Test '+number+' failed.', result);
+				};
+				function success() {
+					$n2.log('Test '+number+' PASSED.');
+				};
+				
+				var compressor = new $n2.GeoJsonCoordinatesCompressor(options);
+				var result = compressor.compress(data);
+				
+				if ((result === null && expected !== null) ||
+					(result !== null && expected === null)) {
+					error();
+					return;
+				} else if (result === null && expected === null) {
+					success();
+					return;
+				} else if (! areArraysEquivalent(result, expected, 0.00000001)) {
+					error();
+					return;
+				};
+				success();
+			};
+		
+			/*
+			 * test data for feature compressor tests.
+			 */
+			var goodLine = [
+				[ 0.0, 0.0 ],
+				[ 1.0, 1.0 ],
+				[ 2.0, 2.0 ],
+				[ 3.0, 3.0 ],
+				[ 4.0, 4.0 ]
+			];
+			var minimalRing = [
+				[ 0.0, 0.0 ],
+				[ 0.0, 1.0 ],
+				[ 1.0, 0.0 ],
+				[ 0.0, 0.0 ]
+			];
+			var zeroLengthLine = [
+				[ 0.0, 0.0 ],
+				[ 0.0, 0.0 ],
+				[ 0.0, 0.0 ],
+				[ 0.0, 0.0 ],
+				[ 0.0, 0.0 ],
+				[ 0.0, 0.0 ]
+			];
+			var zeroLengthLine_nonLinearRing_result = [
+				[ 0.0, 0.0 ],
+				[ 0.0, 0.0 ]
+			];
+			var coords = [ 
+				[ -135.736026, 67.369632 ], 
+				[ -135.737058, 67.369870 ], 
+				[ -135.739127, 67.370488 ],
+				[ -135.741201, 67.371268 ], 
+				[ -135.742033, 67.371802 ], 
+				[ -135.742756, 67.372598 ], 
+				[ -135.742752, 67.373225 ], 
+				[ -135.742517, 67.373881 ], 
+				[ -135.741898, 67.374979 ], 
+				[ -135.741381, 67.376336 ],
+				[ -135.741806, 67.378756 ]
+			];
+			var coord_results_default = [ 
+				[ -135.73603, 67.36963 ], 
+				[ -135.73706, 67.36987 ], 
+				[ -135.73913, 67.37049 ],
+				[ -135.74120, 67.37127 ], 
+				[ -135.74203, 67.37180 ], 
+				[ -135.74276, 67.37260 ], 
+				[ -135.74275, 67.37323 ], 
+				[ -135.74252, 67.37388 ], 
+				[ -135.74190, 67.37498 ], 
+				[ -135.74138, 67.37634 ],
+				[ -135.74181, 67.37876 ]
+			];
+			var coord_results_0001 = [ 
+				[ -135.7360, 67.3696 ], 
+				[ -135.7371, 67.3699 ], 
+				[ -135.7391, 67.3705 ],
+				[ -135.7412, 67.3713 ], 
+				[ -135.7420, 67.3718 ], 
+				[ -135.7428, 67.3726 ], 
+				[ -135.7428, 67.3732 ], 
+				[ -135.7425, 67.3739 ], 
+				[ -135.7419, 67.3750 ], 
+				[ -135.7414, 67.3763 ],
+				[ -135.7418, 67.3788 ]
+			];
+			var coord_results_001 = [ 
+				[ -135.736, 67.370 ], 
+				[ -135.737, 67.370 ], 
+				[ -135.739, 67.370 ],
+				[ -135.741, 67.371 ], 
+				[ -135.742, 67.372 ], 
+				[ -135.743, 67.373 ], 
+				[ -135.743, 67.374 ], 
+				[ -135.742, 67.375 ], 
+				[ -135.741, 67.376 ],
+				[ -135.742, 67.379 ]
+			];
+			var coord_results_01 = [ 
+				[ -135.74, 67.37 ], 
+				[ -135.74, 67.38 ], 
+				[ -135.74, 67.38 ]
+			];
+			var coord_results_1 = [ 
+				[ -136, 67 ], 
+				[ -136, 67 ]
+			];
+			
+			var pointCoords = [ -135.742752, 67.373225 ];
+			var pointCoords_0001 = [ -135.7428, 67.3732 ];
+			
+			/*
+			 * feature compressor test routine
+			 */
+			function test_featureCompressor(number, feature, options, expected) {
+				function error() {
+					$n2.log('Test '+number+' failed.', result);
+				};
+				function success(status) {
+					function percent(numerator, denominator) {
+						return(100 * (numerator / denominator));
+					};
+					
+					$n2.log('Test '+number+' PASSED (linestrings out: ' +
+						status.processed.linestrings + ' of ' +
+						status.original.linestrings + ' [' +
+						percent(status.processed.linestrings, status.original.linestrings) +
+						'%]; positions out: ' +
+						status.processed.positions + ' of ' +
+						status.original.positions + ' [' +
+						percent(status.processed.positions, status.original.positions) + '%])');
+				};
+				
+				var compressor = new $n2.GeoJsonGeometryCompressor(options);
+				var result = compressor.compressFeature(feature);
+				
+				if ((result.data === null && expected !== null) ||
+					(result.data !== null && expected === null)) {
+					error();
+					return;
+				} else if (result.data === null && expected === null) {
+					success(result.status);
+					return;
+				} else if (! areObjectsEquivalent(result.data, expected, 0.00000001, '')) {
+					error();
+					return;
+				};
+				success(result.status);
+			};
+		
+			/*
+			 * test data for feature compressor tests.
+			 */
+			var pointFeature = {
+				"type": "Feature",
+				"geometry": {
+					"type": "Point",
+					"coordinates": [102.41, 0.51]
+				},
+      			"properties": {
+      				"prop0": "value0"
+      			}
+      		};
+			var pointFeature_01 = {
+				"type": "Feature",
+				"geometry": {
+					"type": "Point",
+					"coordinates": [102.4, 0.5]
+				},
+      			"properties": {
+      				"prop0": "value0"
+      			}
+      		};
+      		
+      		var linestringFeature = {
+      			"type": "Feature",
+				"geometry": {
+					"type": "LineString",
+					"coordinates": [
+						[102.41, 0.41], [103.41, 1.41], [104.41, 0.41], [105.41, 1.41]
+					]
+				},
+				"properties": {
+					"prop0": "value0",
+					"prop1": 0.0
+				}
+			};
+			var linestringFeature_01 = {
+      			"type": "Feature",
+				"geometry": {
+					"type": "LineString",
+					"coordinates": [
+						[102.4, 0.4], [103.4, 1.4], [104.4, 0.4], [105.4, 1.4]
+					]
+				},
+				"properties": {
+					"prop0": "value0",
+					"prop1": 0.0
+				}
+			};
+			var linestringFeature_100 = {
+      			"type": "Feature",
+				"geometry": {
+					"type": "LineString",
+					"coordinates": [
+						[100.0, 0.0], [100.0, 0.0]
+					]
+				},
+				"properties": {
+					"prop0": "value0",
+					"prop1": 0.0
+				}
+			};
+
+			var polygonFeature = {
+      			"type": "Feature",
+				"geometry": {
+					"type": "Polygon",
+					"coordinates": [
+						[ [100.41, 0.41], [101.41, 0.41], [101.41, 1.41], [100.41, 1.41], [100.41, 0.41] ]
+					]
+				},
+				"properties": {
+					"prop0": "value0",
+					"prop1": 0.0
+				}
+			};
+			var polygonFeature_01 = {
+      			"type": "Feature",
+				"geometry": {
+					"type": "Polygon",
+					"coordinates": [
+						[ [100.4, 0.4], [101.4, 0.4], [101.4, 1.4], [100.4, 1.4], [100.4, 0.4] ]
+					]
+				},
+				"properties": {
+					"prop0": "value0",
+					"prop1": 0.0
+				}
+			};
+
+			var polygonFeature_withHole = {
+      			"type": "Feature",
+				"geometry": {
+					"type": "Polygon",
+					"coordinates": [
+						[ [100.41, 0.41], [101.41, 0.41], [101.41, 1.41], [100.41, 1.41], [100.41, 0.41] ],
+						[ [100.21, 0.21], [100.81, 0.21], [100.81, 0.81], [100.21, 0.81], [100.21, 0.21] ]
+					]
+				},
+				"properties": {
+					"prop0": "value0",
+					"prop1": 0.0
+				}
+			};
+			var polygonFeature_withHole_01 = {
+      			"type": "Feature",
+				"geometry": {
+					"type": "Polygon",
+					"coordinates": [
+						[ [100.4, 0.4], [101.4, 0.4], [101.4, 1.4], [100.4, 1.4], [100.4, 0.4] ],
+						[ [100.2, 0.2], [100.8, 0.2], [100.8, 0.8], [100.2, 0.8], [100.2, 0.2] ]
+					]
+				},
+				"properties": {
+					"prop0": "value0",
+					"prop1": 0.0
+				}
+			};
+			var polygonFeature_withHole_innerDropped = {
+      			"type": "Feature",
+				"geometry": {
+					"type": "Polygon",
+					"coordinates": [
+						[ [100.41, 0.41], [101.41, 0.41], [101.41, 1.41], [100.41, 1.41], [100.41, 0.41] ]
+					]
+				},
+				"properties": {
+					"prop0": "value0",
+					"prop1": 0.0
+				}
+			};
+			
+			var multipointFeature = {
+      			"type": "Feature",
+				"geometry": {
+					"type": "MultiPoint",
+					"coordinates": [ [100.11, 0.11], [101.11, 1.11] ]
+				},
+				"properties": {
+					"prop0": "value0",
+					"prop1": 0.0
+				}
+			};
+			var multipointFeature_01 = {
+      			"type": "Feature",
+				"geometry": {
+					"type": "MultiPoint",
+					"coordinates": [ [100.1, 0.1], [101.1, 1.1] ]
+				},
+				"properties": {
+					"prop0": "value0",
+					"prop1": 0.0
+				}
+			};
+			var multipointFeature_100 = {
+      			"type": "Feature",
+				"geometry": {
+					"type": "MultiPoint",
+					"coordinates": [ [100, 0], [100, 0.0] ]
+				},
+				"properties": {
+					"prop0": "value0",
+					"prop1": 0.0
+				}
+			};
+			
+			var multilinestringFeature = {
+      			"type": "Feature",
+				"geometry": {
+					"type": "MultiLineString",
+					"coordinates": [
+						[ [102.41, 0.41], [103.41, 1.41], [104.41, 0.41], [105.41, 1.41] ],
+						[ [202.41, 0.41], [203.41, 1.41], [204.41, 0.41], [205.41, 1.41] ],
+					]
+				},
+				"properties": {
+					"prop0": "value0",
+					"prop1": 0.0
+				}
+			};
+			var multilinestringFeature_01 = {
+      			"type": "Feature",
+				"geometry": {
+					"type": "MultiLineString",
+					"coordinates": [
+						[ [102.4, 0.4], [103.4, 1.4], [104.4, 0.4], [105.4, 1.4] ],
+						[ [202.4, 0.4], [203.4, 1.4], [204.4, 0.4], [205.4, 1.4] ],
+					]
+				},
+				"properties": {
+					"prop0": "value0",
+					"prop1": 0.0
+				}
+			};
+			var multilinestringFeature_100 = {
+      			"type": "Feature",
+				"geometry": {
+					"type": "MultiLineString",
+					"coordinates": [
+						[ [100, 0.0], [100.0, 0.0] ],
+						[ [200, 0.0], [200.0, 0.0] ],
+					]
+				},
+				"properties": {
+					"prop0": "value0",
+					"prop1": 0.0
+				}
+			};
+			
+			var multipolygonFeature = {
+      			"type": "Feature",
+				"geometry": {
+					"type": "MultiPolygon",
+					"coordinates": [
+						[ [ [100.41, 0.41], [101.41, 0.41], [101.41, 1.41], [100.41, 1.41], [100.41, 0.41] ] ],
+						[ [ [100.41, 0.41], [101.41, 0.41], [101.41, 1.41], [100.41, 1.41], [100.41, 0.41] ],
+						  [ [100.21, 0.21], [100.81, 0.21], [100.81, 0.81], [100.21, 0.81], [100.21, 0.21] ] ]
+					]
+				},
+				"properties": {
+					"prop0": "value0",
+					"prop1": 0.0
+				}
+			};
+			var multipolygonFeature_01 = {
+      			"type": "Feature",
+				"geometry": {
+					"type": "MultiPolygon",
+					"coordinates": [
+						[ [ [100.4, 0.4], [101.4, 0.4], [101.4, 1.4], [100.4, 1.4], [100.4, 0.4] ] ],
+						[ [ [100.4, 0.4], [101.4, 0.4], [101.4, 1.4], [100.4, 1.4], [100.4, 0.4] ],
+						  [ [100.2, 0.2], [100.8, 0.2], [100.8, 0.8], [100.2, 0.8], [100.2, 0.2] ] ]
+					]
+				},
+				"properties": {
+					"prop0": "value0",
+					"prop1": 0.0
+				}
+			};
+			var multipolygonFeature_innerDropped = {
+      			"type": "Feature",
+				"geometry": {
+					"type": "MultiPolygon",
+					"coordinates": [
+						[ [ [100.41, 0.41], [101.41, 0.41], [101.41, 1.41], [100.41, 1.41], [100.41, 0.41] ] ],
+						[ [ [100.41, 0.41], [101.41, 0.41], [101.41, 1.41], [100.41, 1.41], [100.41, 0.41] ] ]
+					]
+				},
+				"properties": {
+					"prop0": "value0",
+					"prop1": 0.0
+				}
+			};
+			
+			var geometrycollectionFeature = {
+      			"type": "Feature",
+				"geometry": {
+					"type": "GeometryCollection",
+					"geometries": [
+						{
+							"type": "Polygon",
+							"coordinates": [
+								[ [100.41, 0.41], [101.41, 0.41], [101.41, 1.41], [100.41, 1.41], [100.41, 0.41] ],
+								[ [100.2, 0.2], [100.81, 0.2], [100.8, 0.8], [100.2, 0.8], [100.2, 0.2] ]
+							]
+						},
+						{
+							"type": "MultiPoint",
+							"coordinates": [ [100.11, 0.11], [101.11, 1.11] ]
+						},
+						{
+							"type": "MultiLineString",
+							"coordinates": [
+								[ [102.41, 0.41], [103.41, 1.41], [104.41, 0.41], [105.41, 1.41] ],
+								[ [202.41, 0.41], [203.41, 1.41], [204.41, 0.41], [205.41, 1.41] ]
+							]
+						},
+						{
+							"type": "Polygon",
+							"coordinates": [
+								[ [100.41, 0.41], [101.41, 0.41], [101.41, 1.41], [100.41, 1.41], [100.41, 0.41] ],
+								[ [100.21, 0.21], [100.81, 0.21], [100.81, 0.81], [100.21, 0.81], [100.21, 0.21] ]
+							]
+						},
+						{
+							"type": "MultiPolygon",
+							"coordinates": [
+								[ [ [100.41, 0.41], [101.41, 0.41], [101.41, 1.41], [100.41, 1.41], [100.41, 0.41] ] ],
+								[ [ [100.41, 0.41], [101.41, 0.41], [101.41, 1.41], [100.41, 1.41], [100.41, 0.41] ],
+								  [ [100.21, 0.21], [100.81, 0.21], [100.81, 0.81], [100.21, 0.81], [100.21, 0.21] ] ]
+							]
+						}
+					]
+				},
+				"properties": {
+					"prop0": "value0",
+					"prop1": 0.0
+				}
+			};				
+			var geometrycollectionFeature_01 = {
+      			"type": "Feature",
+				"geometry": {
+					"type": "GeometryCollection",
+					"geometries": [
+						{
+							"type": "Polygon",
+							"coordinates": [
+								[ [100.4, 0.4], [101.4, 0.4], [101.4, 1.4], [100.4, 1.4], [100.4, 0.4] ],
+								[ [100.2, 0.2], [100.8, 0.2], [100.8, 0.8], [100.2, 0.8], [100.2, 0.2] ]
+							]
+						},
+						{
+							"type": "MultiPoint",
+							"coordinates": [ [100.1, 0.1], [101.1, 1.1] ]
+						},
+						{
+							"type": "MultiLineString",
+							"coordinates": [
+								[ [102.4, 0.4], [103.4, 1.4], [104.4, 0.4], [105.4, 1.4] ],
+								[ [202.4, 0.4], [203.4, 1.4], [204.4, 0.4], [205.4, 1.4] ]
+							]
+						},
+						{
+							"type": "Polygon",
+							"coordinates": [
+								[ [100.4, 0.4], [101.4, 0.4], [101.4, 1.4], [100.4, 1.4], [100.4, 0.4] ],
+								[ [100.2, 0.2], [100.8, 0.2], [100.8, 0.8], [100.2, 0.8], [100.2, 0.2] ]
+							]
+						},
+						{
+							"type": "MultiPolygon",
+							"coordinates": [
+								[ [ [100.4, 0.4], [101.4, 0.4], [101.4, 1.4], [100.4, 1.4], [100.4, 0.4] ] ],
+								[ [ [100.4, 0.4], [101.4, 0.4], [101.4, 1.4], [100.4, 1.4], [100.4, 0.4] ],
+								  [ [100.2, 0.2], [100.8, 0.2], [100.8, 0.8], [100.2, 0.8], [100.2, 0.2] ] ]
+							]
+						}
+					]
+				},
+				"properties": {
+					"prop0": "value0",
+					"prop1": 0.0
+				}
+			};				
+			var geometrycollectionFeature_100 = {
+      			"type": "Feature",
+				"geometry": {
+					"type": "GeometryCollection",
+					"geometries": [
+						{
+							"type": "MultiPoint",
+							"coordinates": [ [100, 0], [100, 0] ]
+						},
+						{
+							"type": "MultiLineString",
+							"coordinates": [
+								[ [100, 0], [100, 0] ],
+								[ [200, 0], [200, 0] ]
+							]
+						}
+					]
+				},
+				"properties": {
+					"prop0": "value0",
+					"prop1": 0.0
+				}
+			};				
+			var geometrycollectionFeature_innerDropped = {
+      			"type": "Feature",
+				"geometry": {
+					"type": "GeometryCollection",
+					"geometries": [
+						{
+							"type": "Polygon",
+							"coordinates": [
+								[ [100.41, 0.41], [101.41, 0.41], [101.41, 1.41], [100.41, 1.41], [100.41, 0.41] ]
+							]
+						},
+						{
+							"type": "MultiPoint",
+							"coordinates": [ [100.11, 0.11], [101.11, 1.11] ]
+						},
+						{
+							"type": "MultiLineString",
+							"coordinates": [
+								[ [102.41, 0.41], [103.41, 1.41], [104.41, 0.41], [105.41, 1.41] ],
+								[ [202.41, 0.41], [203.41, 1.41], [204.41, 0.41], [205.41, 1.41] ]
+							]
+						},
+						{
+							"type": "Polygon",
+							"coordinates": [
+								[ [100.41, 0.41], [101.41, 0.41], [101.41, 1.41], [100.41, 1.41], [100.41, 0.41] ]
+							]
+						},
+						{
+							"type": "MultiPolygon",
+							"coordinates": [
+								[ [ [100.41, 0.41], [101.41, 0.41], [101.41, 1.41], [100.41, 1.41], [100.41, 0.41] ] ],
+								[ [ [100.41, 0.41], [101.41, 0.41], [101.41, 1.41], [100.41, 1.41], [100.41, 0.41] ] ]
+							]
+						}
+					]
+				},
+				"properties": {
+					"prop0": "value0",
+					"prop1": 0.0
+				}
+			};				
+
+ 			function main() {
+				var testNumber = 0;
+				function inc() {
+					testNumber++;
+					return testNumber;
+				};
+				
+				$n2.log('Coordinate Compressor Test Cases: ');
+				/* 1 */
+				test_coordinateCompressor(inc(), goodLine, {}, goodLine);
+				test_coordinateCompressor(inc(), goodLine, { isLinearRing: true }, goodLine);
+				test_coordinateCompressor(inc(), minimalRing, {}, minimalRing);
+				test_coordinateCompressor(inc(), minimalRing, { isLinearRing: true }, minimalRing);
+				test_coordinateCompressor(inc(), zeroLengthLine, {}, zeroLengthLine_nonLinearRing_result);
+
+				/* 6 */
+				test_coordinateCompressor(inc(), zeroLengthLine, { isLinearRing: true }, null);
+				test_coordinateCompressor(inc(), pointCoords, {}, pointCoords);
+				test_coordinateCompressor(inc(), pointCoords, { isPoint: true, precision: 0.0001 }, pointCoords_0001);
+				test_coordinateCompressor(inc(), coords, {}, coord_results_default);
+				test_coordinateCompressor(inc(), coords, { precision: 0.0000001 }, coords);
+
+				/* 11 */
+				test_coordinateCompressor(inc(), coords, { precision: 0.0001 }, coord_results_0001);
+				test_coordinateCompressor(inc(), coords, { precision: 0.001 }, coord_results_001);
+				test_coordinateCompressor(inc(), coords, { precision: 0.01 }, coord_results_01);
+				test_coordinateCompressor(inc(), coords, { precision: 1.0 }, coord_results_1);
+
+				testNumber = 0;
+				$n2.log('Feature Compressor Test Cases: ');
+				/* 1 */
+				test_featureCompressor(inc(), pointFeature, { precision: 0.1 }, pointFeature_01);
+				test_featureCompressor(inc(), linestringFeature, { precision: 0.1 }, linestringFeature_01);
+				test_featureCompressor(inc(), linestringFeature, { precision: 100.0 }, linestringFeature_100);
+				test_featureCompressor(inc(), polygonFeature, { precision: 0.1 }, polygonFeature_01);
+				test_featureCompressor(inc(), polygonFeature, { precision: 100.0 }, null);
+				
+				/* 6 */
+				test_featureCompressor(inc(), polygonFeature_withHole, { precision: 0.1 }, polygonFeature_withHole_01);
+				test_featureCompressor(inc(), polygonFeature_withHole, { precision: 100.0 }, null);
+				test_featureCompressor(inc(), multipointFeature, { precision: 0.1 }, multipointFeature_01);
+				test_featureCompressor(inc(), multipointFeature, { precision: 100.0 }, multipointFeature_100);
+				test_featureCompressor(inc(), multilinestringFeature, { precision: 0.1 }, multilinestringFeature_01);
+				
+				/* 11 */
+				test_featureCompressor(inc(), multilinestringFeature, { precision: 100.0 }, multilinestringFeature_100);
+				test_featureCompressor(inc(), multipolygonFeature, { precision: 0.1 }, multipolygonFeature_01);
+				test_featureCompressor(inc(), multipolygonFeature, { precision: 100.0 }, null);
+				test_featureCompressor(inc(), geometrycollectionFeature, { precision: 0.1 }, geometrycollectionFeature_01);
+				test_featureCompressor(inc(), geometrycollectionFeature, { precision: 100.0 }, geometrycollectionFeature_100);
+				
+				/* 16 */
+				test_featureCompressor(inc(), polygonFeature_withHole, { dropInnerRings: true }, polygonFeature_withHole_innerDropped);
+				test_featureCompressor(inc(), multipolygonFeature, { dropInnerRings: true }, multipolygonFeature_innerDropped);
+				test_featureCompressor(inc(), geometrycollectionFeature, { dropInnerRings: true }, geometrycollectionFeature_innerDropped);
+			};
+
+			jQuery().ready(function() {
+				main();
+			});
+		</script>
+	</body>
+</html>

@@ -1,0 +1,308 @@
+/*
+	This portion of the CSS deals with the display of SlideEditor
+*/
+
+.n2se_root, .n2se_history, .n2se_main, .n2se_back, .n2se_display {
+	margin: 0 0 0 0;
+	padding: 0 0 0 0;
+}
+
+/* Top div of editor */
+.n2se_root {
+	position: relative;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: 100%;
+}
+
+/* Div that holds history */
+.n2se_history {
+	position: absolute;
+	top: 0px;
+	left: 1px;
+	right: 1px;
+	height: 25px;
+	
+	background-image: url("slideEditor/ui-bg_glass_75_dadada_1x400.png");
+	background-repeat: repeat-x;
+	background-attachment: scroll;
+	background-position: 50% 50%;
+	background-color: #dadada;
+	border: 1px solid #cacaca;
+	border-radius: 4px 4px 4px 4px;
+	
+	font-family: Helvetica,Arial,sans-serif;
+	font-weight: bold;
+	text-decoration: none;
+}
+
+/* Span that holds back button in history bar */
+.n2se_history_back {
+	display: inline-block;
+	cursor: pointer;
+	border-radius: 4px 4px 4px 4px;
+	border: 1px solid #155678;
+    color: #FFFFFF;
+    background-color: #444444; /* IE */
+}
+.n2se_history_back {
+    background-color: rgba(0, 0, 0, 0.4); /* non-IE */
+}
+.n2se_history_back:hover {
+	background-color: #222222; /* IE */
+}
+.n2se_history_back:hover {
+	background-color: rgba(0, 0, 0, 0.6); /* non-IE */
+}
+.n2se_history_back > .n2se_btn {
+	float: left;
+	background-image: url("slideEditor/icons-18-white.png");
+	background-repeat: no-repeat;
+	background-attachment: scroll;
+	background-position: -144px 50%;
+	background-color: #444444; /* IE */
+    border-radius: 9px 9px 9px 9px;
+    padding: 18px 18px 0px 0px;
+    margin: 1px 3px 0px 3px;
+}
+.n2se_history_back > .n2se_btn {
+	background-color: rgba(0, 0, 0, 0.4); /* non-IE */
+}
+.n2se_history_back > .n2se_label {
+    padding: 0px 5px 0px 5px;
+}
+
+/* Span that holds one level of history */
+.n2se_history_level {
+	display: inline-block;
+	cursor: pointer;
+	border-radius: 4px 4px 4px 4px;
+	border: 1px solid #155678;
+    color: #FFFFFF;
+    background-color: #444444; /* IE */
+    padding: 0px 2px 0px 2px;
+}
+.n2se_history_level {
+    background-color: rgba(0, 0, 0, 0.4); /* non-IE */
+}
+.n2se_history_level:hover {
+    background-color: #222222; /* IE */
+}
+.n2se_history_level:hover {
+    background-color: rgba(0, 0, 0, 0.6); /* non-IE */
+}
+
+/* Span that comes before all levels */
+.n2se_history_head {
+	padding-left: 10px;
+}
+
+/* Span that comes after all levels */
+.n2se_history_tail {
+}
+
+/* Span that comes between levels */
+.n2se_history_inter {
+	padding: 0px 2px 0px 0px;
+}
+
+.n2se_main {
+	position: absolute;
+	top: 25px;
+	left: 0px;
+	right: 0px;
+	bottom: 0px;
+}
+
+/* Disable back button located on the left
+.n2se_back {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 10px;
+	bottom: 0px;
+	
+	background-color: #ffccff;
+}
+
+.n2se_back:hover {
+	background-color: #ffcccc;
+}
+*/
+.n2se_back {
+	display: none;
+}
+
+.n2se_display {
+	position: absolute;
+/* Disable back button located on left	
+	left: 10px;
+*/
+	left: 0px;
+	right: 0px;
+/*	jQueryUi effect() modifies top.
+	top: 0px;
+	bottom: 0px;
+*/
+	height: 100%;
+	overflow: auto;
+}
+
+/* Div that holds all key/value pair (n2se_entry) */
+.n2se_entries {
+}
+
+/* Div that holds a key/value pair */
+.n2se_entry {
+	background-image: url("slideEditor/ui-bg_glass_95_fef1ec_1x400.png");
+	background-repeat: repeat-x;
+	background-attachment: scroll;
+	background-position: 50% 50%;
+	background-color: #fef1ec;
+	border: 1px solid #eee1dc;
+	border-radius: 4px 4px 4px 4px;
+}
+.n2se_entry:hover {
+	background-image: url("slideEditor/ui-bg_glass_65_ffffff_1x400.png");
+	background-repeat: repeat-x;
+	background-attachment: scroll;
+	background-position: 50% 50%;
+	background-color: #ffffff;
+}
+
+/* Span used as a delete button */
+.n2se_entry_delete {
+	float: left;
+	background-image: url("slideEditor/icons-18-white.png");
+	background-repeat: no-repeat;
+	background-attachment: scroll;
+	background-position: -72px 50%;
+	background-color: #444444; /* IE */
+	border-radius: 9px 9px 9px 9px;
+    padding: 18px 18px 0px 0px;
+    margin: 3px 3px 0px 3px;
+}
+.n2se_entry_delete {
+	background-color: rgba(0, 0, 0, 0.4); /* non-IE */
+}
+.n2se_entry_delete:hover {
+	background-color: #222222; /* IE */
+}
+.n2se_entry_delete:hover {
+	background-color: rgba(0, 0, 0, 0.6); /* non-IE */
+}
+
+/* Class added to delete button when it is disabled */
+.n2se_entry_delete_disabled {
+	visibility: hidden;
+}
+
+/* Span that holds a key in case of array. Input that holds key, in case of object */
+.n2se_entry_key {
+}
+input.n2se_entry_key {
+	width: 90px;
+}
+span.n2se_entry_key {
+}
+
+/* Span that holds the 'is' word */
+.n2se_entry_is {
+}
+
+/* Select that holds the type of object held by key */
+.n2se_entry_select {
+}
+
+/* Input that holds text */
+input.n2se_entry_text {
+	width: 250px;
+}
+
+/* Input that holds check box for boolean */
+.n2se_entry_cb {
+}
+
+/* Span used as button to move forward */
+.n2se_entry_forward {
+	float: right;
+	background-image: url("slideEditor/icons-18-white.png");
+	background-repeat: no-repeat;
+	background-attachment: scroll;
+	background-position: -108px 50%;
+	background-color: #444444; /* IE */
+	border-radius: 9px 9px 9px 9px;
+    padding: 18px 18px 0px 0px;
+    margin-top: 3px;
+    margin-right: 3px;
+}
+.n2se_entry_forward {
+	background-color: rgba(0, 0, 0, 0.4); /* non-IE */
+}
+.n2se_entry_forward:hover {
+	background-color: #222222; /* IE */
+}
+.n2se_entry_forward:hover {
+	background-color: rgba(0, 0, 0, 0.6); /* non-IE */
+}
+
+/* Text area used to view large string */
+.n2se_textarea {
+	width: 100%;
+	height: 100%;
+}
+
+/* div used to show add button */
+.n2se_addbar {
+	left: 1px;
+	right: 1px;
+	height: 25px;
+	
+	background-image: url("slideEditor/ui-bg_glass_75_dadada_1x400.png");
+	background-repeat: repeat-x;
+	background-attachment: scroll;
+	background-position: 50% 50%;
+	background-color: #dadada;
+	border: 1px solid #cacaca;
+	border-radius: 4px 4px 4px 4px;
+	
+	font-family: Helvetica,Arial,sans-serif;
+	font-weight: bold;
+	text-decoration: none;
+}
+
+.n2se_addbar_addButton {
+	display: inline-block;
+	cursor: pointer;
+	border-radius: 4px 4px 4px 4px;
+	border: 1px solid #155678;
+    color: #FFFFFF;
+    background-color: #444444; /* IE */
+}
+.n2se_addbar_addButton {
+    background-color: rgba(0, 0, 0, 0.4); /* non-IE */
+}
+.n2se_addbar_addButton:hover {
+	background-color: #222222; /* IE */
+}
+.n2se_addbar_addButton:hover {
+	background-color: rgba(0, 0, 0, 0.6); /* non-IE */
+}
+.n2se_addbar_addButton > .n2se_btn {
+	float: left;
+	background-image: url("slideEditor/icons-18-white.png");
+	background-repeat: no-repeat;
+	background-attachment: scroll;
+	background-position: 0px 50%;
+	background-color: #444444; /* IE */
+	border-radius: 9px 9px 9px 9px;
+    padding: 18px 18px 0px 0px;
+    margin: 1px 3px 0px 3px;
+}
+.n2se_addbar_addButton > .n2se_btn {
+	background-color: rgba(0, 0, 0, 0.4); /* non-IE */
+}
+.n2se_addbar_addButton > .n2se_label {
+    padding: 0px 5px 0px 5px;
+}

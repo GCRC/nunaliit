@@ -1,0 +1,33 @@
+<!DOCTYPE html> 
+<html> 
+	<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Add Server</title>
+	
+	<link rel="stylesheet" href="js-external/css/jquery.mobile/jquery.mobile.min.css" />
+	<script type="text/javascript" src="js-external/js/jquery.min.js"></script>
+	<script type="text/javascript" src="js-external/js/jquery.mobile.min.js"></script>
+</head> 
+<body>
+
+<div id="mobileRemoveDbPage" data-role="page" data-theme="b">
+
+	<div data-role="header" data-theme="b">
+		<h1>Remove Database</h1>
+	</div><!-- /header -->
+
+	<div data-role="content" data-theme="b">
+		Are you sure you want to remove all the content collected for "<span class="mobileRemoveDbName">???</span>" from this device?
+		<fieldset class="ui-grid-a">
+			<div class="ui-block-a"><a href="settings.html" data-rel="back" data-role="button" data-inline="true" data-theme="a">No, Cancel</a></div>
+			<div class="ui-block-b"><a data-role="button" data-inline="true" data-theme="e" onclick="removeCurrentDatabase(this)">Yes, Remove</a></div>	   
+		</fieldset>	
+	</div><!-- /content -->
+		<div data-role="footer" class="ui-bar" data-theme="b">
+		<p>&nbsp;</p>
+	</div><!-- /footer -->
+</div><!-- /page -->
+
+</body>
+</html>

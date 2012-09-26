@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="nunaliit2-js" default="default">
+    <description>
+		Useful scripts for Javascript library
+    </description>
+	
+	<property name="javascript.dest.dir" location="./dummy_place"/>
+
+    <!-- ================================= 
+          target: default           
+          
+          Do nothing   
+         ================================= -->
+    <target name="default" description="description">
+        
+    </target>
+
+    <!-- ================================= 
+          target: javascript-copy      
+          
+          Compresses and copies Javascript Files to destination
+         ================================= -->
+    <target 
+    	name="javascript-copy" 
+    	description="Copy Nunaliit2 javascript library"
+    	depends="-javascript-copy-conditions,-javascript-copy-error"
+    	if="javascript-dest-exists"
+    	>
+    	<!-- Perform compression -->
+		<exec
+			executable="python"
+			dir="./compress"
+			>
+			<arg line="build.py"/>
+		</exec>
+		<exec
+			executable="python"
+			dir="./compress"
+			>
+			<arg line="build_css.py"/>
+		</exec>
+    	
+    	<!-- Copy -->
+    	<mkdir dir="${javascript.dest.dir}/nunaliit2"/>
+		<copy todir="${javascript.dest.dir}/nunaliit2">
+			<fileset dir="./src/main/webapp/nunaliit2"/>
+		</copy>
+    </target>
+
+    <target 
+    	name="-javascript-copy-error" 
+    	description="Report error"
+    	depends="-javascript-copy-conditions"
+    	unless="javascript-dest-exists"
+    	>
+    	<fail message="Destination directory does not exist: ${javascript.dest.dir}"/>
+    </target>
+	
+	<target name="-javascript-copy-conditions">
+		<available file="${javascript.dest.dir}" property="javascript-dest-exists"/>
+	</target>
+
+    <!-- ================================= 
+          target: library-compress      
+          
+          Compresses library files to destination
+         ================================= -->
+    <target 
+    	name="library-compress" 
+    	description="Compresses library files"
+    	>
+    	<!-- Perform compression -->
+		<exec
+			executable="python"
+			dir="./compress"
+			>
+			<arg line="build.py"/>
+		</exec>
+		<exec
+			executable="python"
+			dir="./compress"
+			>
+			<arg line="build_css.py"/>
+		</exec>
+    </target>
+	
+    <!-- ================================= 
+          target: test           
+          
+          Create links for HTML testing 
+         ================================= -->
+    <target name="test" description="Build test links">
+    	<delete dir="./src/main/webapp/js-external" failonerror="false"/>
+        <exec dir="./src/main/webapp" executable="svn">
+        	<arg line="export https://svn.gcrc.carleton.ca/nunaliit2/trunk/sdk/nunaliit2-js-external/src/main/webapp/js-external js-external"/>
+        </exec>
+    </target>
+	
+
+</project>

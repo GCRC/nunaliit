@@ -1,0 +1,2 @@
+.map_interaction { top:30px; }
+.map_interaction input { font-size:0.8em;margin:0;padding:0;background-color:buttonface; }

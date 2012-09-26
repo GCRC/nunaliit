@@ -1,0 +1,28 @@
+/* Following definitions are for n2.couchEdit */
+
+/* DIV that holds editor accordion */
+.n2CouchEditor_container {
+}
+
+/* Remove extra white space in accordion */
+div.n2CouchEditor_container .ui-accordion-content {
+	padding: 0 0 0 0;
+}
+
+/* Hide portion of the 'add file' form that should not
+   appear during the dialog */
+.editorAddFileDialog .editorAddFileFormEditorLine {
+	display: none;
+}
+
+
+/* Hide portion of the 'add file' form that should not
+   appear when form is attached to editor */
+.editorAttachFile .editorAddFileFormDialogLine {
+	display: none;
+}
+
+.editorSelectDocumentDialogResults {
+	overflow: auto;
+	max-height: 400px;
+}

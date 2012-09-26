@@ -1,0 +1,2 @@
+couchdb.server.admin=http://admin:secret@127.0.0.1:5984
+;couchdb.dbName=atlas

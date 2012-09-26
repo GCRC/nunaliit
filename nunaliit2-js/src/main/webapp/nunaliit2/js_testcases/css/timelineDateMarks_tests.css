@@ -1,0 +1,13 @@
+body {
+	font-family: Helvetica, sans-serif;
+	font-size: 12pt;
+}
+#header {
+	padding: 5px 0 0 0;
+}
+#header h1 {
+	font-size: 1.5em;
+}
+.TimelineDateMarks_labelLeft, .TimelineDateMarks_labelRight {
+	min-width: 5em;
+}

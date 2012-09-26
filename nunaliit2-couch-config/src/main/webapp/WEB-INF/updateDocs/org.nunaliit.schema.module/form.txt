@@ -1,0 +1,43 @@
+<div class="n2_documentForm"><div class="n2_layoutFloat">
+	{{#nunaliit_module}}
+		<div>
+			<div class="label n2s_localize">Title</div>
+			<div class="value"><input type="text" class="{{#:input}}title{{/:input}}"/></div>
+			<div class="end"></div>
+		</div>
+		
+		{{#introduction}}
+		<div>
+			<div class="label n2s_localize">Introduction</div>
+			<div class="value"><textarea class="{{#:input}}content{{/:input}}"></textarea></div>
+			<div class="end"></div>
+		</div>
+		{{/introduction}}
+		
+		{{#map}}
+			{{#coordinates}}
+				<div>
+					<div class="label n2s_localize">Extent (Min X)</div>
+					<div class="value"><input type="text" class="{{#:input}}initialBounds.0{{/:input}}"/></div>
+					<div class="end"></div>
+				</div>
+				<div>
+					<div class="label n2s_localize">Extent (Min Y)</div>
+					<div class="value"><input type="text" class="{{#:input}}initialBounds.1{{/:input}}"/></div>
+					<div class="end"></div>
+				</div>
+				<div>
+					<div class="label n2s_localize">Extent (Max X)</div>
+					<div class="value"><input type="text" class="{{#:input}}initialBounds.2{{/:input}}"/></div>
+					<div class="end"></div>
+				</div>
+				<div>
+					<div class="label n2s_localize">Extent (Max Y)</div>
+					<div class="value"><input type="text" class="{{#:input}}initialBounds.3{{/:input}}"/></div>
+					<div class="end"></div>
+				</div>
+			{{/coordinates}}
+		{{/map}}
+	{{/nunaliit_module}}
+	
+</div></div>
