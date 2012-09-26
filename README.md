@@ -17,13 +17,19 @@ Notes on releasing to public repository
 
 - create a gpg key
   - upload gpg key to server:
-    gpg --keyserver hkp://pgp.mit.edu --send-keys 1B2CABB8
+
+> gpg --keyserver hkp://pgp.mit.edu --send-keys 1B2CABB8
+
   - Add repository passwords to .m2/settings.xml
 - To upload a snapshot to the SonaType repository
-  > mvn clean deploy
+
+> mvn clean deploy
+
 - To perform a release:
-  > mvn release:prepare
-  > mvn release:perform
+
+> mvn release:prepare
+> mvn release:perform
+
   - Go to OSS NExus and publish: https://docs.sonatype.org/display/Repository/Sonatype+OSS+Maven+Repository+Usage+Guide
     - Log in at https://oss.sonatype.org/index.html
     - Select "Staging Repositories"
