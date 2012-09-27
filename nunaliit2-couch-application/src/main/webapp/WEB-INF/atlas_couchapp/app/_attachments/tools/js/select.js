@@ -433,6 +433,7 @@
 			autoOpen: true
 			,title: _loc('Select Search Filter')
 			,modal: true
+			,width: 400
 			,close: function(event, ui){
 				var diag = $(event.target);
 				diag.dialog('destroy');
@@ -534,6 +535,7 @@
 			autoOpen: true
 			,title: _loc('Refine List: '+opts.list.name)
 			,modal: true
+			,width: 400
 			,close: function(event, ui){
 				var diag = $(event.target);
 				diag.dialog('destroy');
@@ -1330,7 +1332,7 @@
 			return false;
 		});
 		
-		var $ex = $('<button>Export Geomtries</button>');
+		var $ex = $('<button>Export Geometries</button>');
 		$h.append($ex);
 		$ex.click(function(){
 			exportList(list);
@@ -1432,6 +1434,7 @@
 			autoOpen: true
 			,title: _loc('Select Document Transform')
 			,modal: true
+			,width: 400
 			,close: function(event, ui){
 				var diag = $(event.target);
 				diag.dialog('destroy');
@@ -1470,14 +1473,25 @@
 			$select.append( $('<option value="points">All Point Geometries</options>') );
 			$select.append( $('<option value="linestrings">All LineString Geometries</options>') );
 			$select.append( $('<option value="polygons">All Polygon Geometries</options>') );
+			
+			var inputId = $n2.getUniqueId();
+			$('<div><label for="'+inputId+'">File Name: </label>'
+				+'<input type="text" name="'+inputId+'" class="n2_export_fileNameInput" value="export.geojson"/>'
+				+'</div>').appendTo($dialog);
 
 			$('<div><button>Export</button></div>')
 				.appendTo($dialog);
 			$dialog.find('button').click(function(){
 				var $dialog = $('#'+dialogId);
 				var geomType = $dialog.find('select').val();
+				
+				var fileName = $dialog.find('.n2_export_fileNameInput').val();
+				if( '' === fileName ) {
+					fileName = null;
+				};
+				
 				$dialog.dialog('close');
-				performExport(geomType);
+				performExport(geomType,fileName);
 				return false;
 			});
 			
@@ -1485,6 +1499,7 @@
 				autoOpen: true
 				,title: 'Export'
 				,modal: true
+				,width: 400
 				,close: function(event, ui){
 					var diag = $(event.target);
 					diag.dialog('destroy');
@@ -1494,7 +1509,7 @@
 			$dialog.dialog(dialogOptions);
 		};
 		
-		function performExport(geomType){
+		function performExport(geomType,fileName){
 			
 			var windowId = $n2.getUniqueId();
 			
@@ -1506,6 +1521,8 @@
 				docIds: list.docIds
 				,targetWindow: windowId
 				,geometryType: geomType
+				,contentType: 'application/binary'
+				,fileName: fileName
 				,onError: function(err){
 					alert('Error during export: '+err);
 				}

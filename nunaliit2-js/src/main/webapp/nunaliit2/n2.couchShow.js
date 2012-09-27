@@ -235,6 +235,7 @@ var DomStyler = $n2.Class({
 	}
 
 	,_insertMediaView: function(data, $insertView, opt_) {
+		var _this = this;
 		var attachmentName = $insertView.text();
 
 		$insertView.empty();
@@ -316,36 +317,29 @@ var DomStyler = $n2.Class({
 					mediaOptions.title = doc.nunaliit_contribution.title;
 				};
 
-				// Description
-				if( fileDescriptor 
-				 && fileDescriptor.data
-				 && fileDescriptor.data.description ) {
-					mediaOptions.description = fileDescriptor.data.description;
-					
-				} else if( doc.nunaliit_contribution 
-				 && doc.nunaliit_contribution.description ) {
-					mediaOptions.description = doc.nunaliit_contribution.description;
-				};
-				
-				// Creator
-				if( doc.nunaliit_created
-				 && doc.nunaliit_created.name ) {
-					mediaOptions.author = doc.nunaliit_created.name;
-				};
+				// Generate brief HTML
+				var $temp = $('<div></div>');
+				_this.showService._displayDocumentBrief($temp,doc,{
+					onDisplayed:function(){
+						var html = $temp.html();
+						mediaOptions.metaDataHtml = html;
+							
+						// Display media
+						if( uploadType === 'image' ) {
+							mediaOptions.type = 'image';
+							$n2.mediaDisplay.displayMedia(mediaOptions);
+							
+						} else if( uploadType === 'video' ) {
+							mediaOptions.type = 'video';
+							$n2.mediaDisplay.displayMedia(mediaOptions);
+							
+						} else if( uploadType === 'audio' ) {
+							mediaOptions.type = 'audio';
+							$n2.mediaDisplay.displayMedia(mediaOptions);
+						};
+					}
+				});
 
-				// Display media
-				if( uploadType === 'image' ) {
-					mediaOptions.type = 'image';
-					$n2.mediaDisplay.displayMedia(mediaOptions);
-					
-				} else if( uploadType === 'video' ) {
-					mediaOptions.type = 'video';
-					$n2.mediaDisplay.displayMedia(mediaOptions);
-					
-				} else if( uploadType === 'audio' ) {
-					mediaOptions.type = 'audio';
-					$n2.mediaDisplay.displayMedia(mediaOptions);
-				};
 				
 				return false;
 			};
@@ -799,11 +793,14 @@ var Show = $n2.Class({
 		});
 	}
 	
-	,_displayDocumentBrief: function($elem, doc){
+	,_displayDocumentBrief: function($elem, doc, opt_){
+		
+		var opt = $n2.extend({
+			onDisplayed: function($elem, doc, opt_){}
+		},opt_);
+
 		var _this = this;
 
-		var schema = null;
-		
 		// Peform pre-processing, allowing client to
 		// augment document prior to display
 		doc = this.options.preprocessDocument(doc);
@@ -812,25 +809,29 @@ var Show = $n2.Class({
 			_this.getSchemaRepository().getSchema({
 				name: doc.nunaliit_schema
 				,onSuccess: function(schema_) {
-					schema = schema_;
-					printBrief();
+					printBrief($elem,schema_);
 				}
 				,onError: function(){
-					schema = _this.options.defaultSchema;
-					printBrief();
+					displayError($elem);
 				}
 			});
 			
 		} else if( _this.options.defaultSchema ) {
-			schema = _this.options.defaultSchema;
-			printBrief();
+			printBrief($elem, _this.options.defaultSchema);
+			
+		} else {
+			displayError($elem);
 		};
 		
-		function printBrief(){
-			if( schema ) {
-				schema.brief(doc,$elem);
-				_this.fixElementAndChildren($elem, {}, doc);
-			};
+		function printBrief($elem, schema){
+			schema.brief(doc,$elem);
+			_this.fixElementAndChildren($elem, {}, doc);
+			opt.onDisplayed($elem, doc, schema, opt_);
+		};
+		
+		function displayError($elem){
+			$elem.text( _loc('Unable to display brief description') );
+			opt.onDisplayed($elem, doc, null, opt_);
 		};
 	}
 	

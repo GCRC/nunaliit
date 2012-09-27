@@ -87,6 +87,8 @@ var Export = $n2.Class('Export',{
 			docIds: null
 			,targetWindow: null
 			,geometryType: 'all'
+			,contentType: null
+			,fileName: null
 			,onError: $n2.reportError
 		},opts_);
 		
@@ -101,6 +103,9 @@ var Export = $n2.Class('Export',{
 		};
 		
 		var url = this.serverUrl + 'export';
+		if( opts.fileName ){
+			url = url + '/' + opts.fileName;
+		};
 		var $form = $('<form action="'+url+'" method="POST"'+target+'></form>');
 		
 		$('<input type="hidden" name="format" value="geojson"></input>').appendTo($form);
@@ -108,6 +113,12 @@ var Export = $n2.Class('Export',{
 		$('<input type="hidden" name="filter"></input>')
 			.val(opts.geometryType)
 			.appendTo($form);
+		
+		if( opts.contentType ){
+			$('<input type="hidden" name="contentType"></input>')
+				.val(opts.contentType)
+				.appendTo($form);
+		};
 		
 		for(var i=0,e=opts.docIds.length; i<e; ++i){
 			var docId = opts.docIds[i];

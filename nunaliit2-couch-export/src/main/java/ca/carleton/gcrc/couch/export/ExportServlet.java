@@ -162,6 +162,21 @@ public class ExportServlet extends HttpServlet {
 			logger.debug("Export Name: "+identifier);
 		}
 		
+		// Parse contentType
+		String contentType = null;
+		{
+			String[] contentTypes = request.getParameterValues("contentType");
+			if( null != contentTypes ) {
+				for(String t : contentTypes){
+					contentType = t;
+				}
+			}
+			
+			if( null != contentType ) {
+				logger.debug("Content-Type: "+contentType);
+			}
+		}
+		
 		// Build doc retrieval based on method
 		DocumentRetrieval docRetrieval = null;
 		if( Method.LAYER == method ) {
@@ -211,7 +226,9 @@ public class ExportServlet extends HttpServlet {
 		if( null != charEncoding ) {
 			response.setCharacterEncoding( charEncoding );
 		}
-		String contentType = outputFormat.getMimeType();
+		if( null == contentType ) {
+			contentType = outputFormat.getMimeType();
+		}
 		if( null != contentType ) {
 			response.setContentType(contentType);
 		}

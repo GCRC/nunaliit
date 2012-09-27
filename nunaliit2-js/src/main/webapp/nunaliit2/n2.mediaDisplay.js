@@ -91,14 +91,18 @@ $n2.MediaDisplay = $n2.Class({
 			var lightBoxOptions = {};
 			
 			var title = '';
-			if( opts.title ) {
-				title += opts.title;
-			};
-			if( opts.author ) {
-				title += ' (by ' + opts.author +')';
-			};
-			if( opts.description ) {
-				title += ' <br />' + opts.description;
+			if( opts.metaDataHtml ) {
+				title = opts.metaDataHtml;
+			} else {
+				if( opts.title ) {
+					title += opts.title;
+				};
+				if( opts.author ) {
+					title += ' (by ' + opts.author +')';
+				};
+				if( opts.description ) {
+					title += ' <br />' + opts.description;
+				};
 			};
 			
 			$.lightBox(lightBoxOptions,[{
@@ -115,21 +119,15 @@ $n2.MediaDisplay = $n2.Class({
 
 			var mediaDialogId = $n2.getUniqueId();
 			
-			var mkup = [];
-			mkup.push('<div id="'+mediaDialogId+'"><img src="');
-			mkup.push(opts.url);
-			mkup.push('" alt="');
-			if( opts.title ) {
-				mkup.push(opts.title+'"');
-			} else {
-				mkup.push('image"');
+			var alt = 'image';
+			if( opts.title ){
+				alt = opts.title;
 			};
 
-			mkup.push('</div>');
-
-			var $mediaDialog = $( mkup.join('') );
-
-			this._addMetaData(opts, $mediaDialog);
+			var $mediaDialog = $('<div id="'+mediaDialogId+'"><img alt="'+alt+'"/></div>');
+			var $metaDataDiv = $('<div class="n2_dialogMetaData"></div>');
+			$mediaDialog.append($metaDataDiv);
+			this._addMetaData(opts, $metaDataDiv);
 			
 			var dialogOptions = $n2.extend({},baseDialogOptions,{
 				title: dialogTitle
@@ -141,6 +139,33 @@ $n2.MediaDisplay = $n2.Class({
 				}
 			});
 			$mediaDialog.dialog(dialogOptions);
+
+			// Image preload process
+			var objImagePreloader = new Image();
+			objImagePreloader.onload = function() {
+				var $d = $('#'+mediaDialogId);
+
+				$d.find('img').attr('src',opts.url);
+				// Save original width and height
+				var width = objImagePreloader.width;
+				var height = objImagePreloader.height;
+				//	clear onLoad, IE behaves irratically with animated gifs otherwise
+				objImagePreloader.onload=function(){};
+				
+				var $md = $d.find('.n2_dialogMetaData');
+				var mdWidth = $md.width() || 0;
+				var mdHeight = $md.height() || 0;
+				
+				var dWidth = width;
+				if( dWidth < mdWidth ) {
+					dWidth = mdWidth;
+				};
+				var dHeight = height + mdHeight;
+				
+				$d.dialog('option','width',dWidth+30);
+				$d.dialog('option','height',dHeight+60);
+			};
+			objImagePreloader.src = opts.url;
 		}
 	}
 
@@ -301,16 +326,23 @@ $n2.MediaDisplay = $n2.Class({
 	,_addMetaData: function(opts, $elem) {
 		$elem.append( $('<br/>') );
 		
-		if( opts.author ) {
-			var $author = $('<span></span>');
-			$author.text( '(by ' + opts.author +')' );
-			$elem.append( $author );
-			$elem.append( $('<br/>') );
-		};
-		if( opts.description ) {
-			var $desc = $('<span></span>');
-			$desc.text( opts.description );
-			$elem.append( $desc );
+		if( opts.metaDataHtml ) {
+			var $meta = $('<span></span>');
+			$meta.html(opts.metaDataHtml);
+			$elem.append( $meta );
+			
+		} else {
+			if( opts.author ) {
+				var $author = $('<span></span>');
+				$author.text( '(by ' + opts.author +')' );
+				$elem.append( $author );
+				$elem.append( $('<br/>') );
+			};
+			if( opts.description ) {
+				var $desc = $('<span></span>');
+				$desc.text( opts.description );
+				$elem.append( $desc );
+			};
 		};
 	}
 	
