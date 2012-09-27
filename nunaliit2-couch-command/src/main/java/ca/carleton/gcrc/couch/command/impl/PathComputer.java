@@ -96,17 +96,7 @@ public class PathComputer {
 		// of the nunaliit2 project. In a development environment, this is what
 		// we use to look for other directories.
 		if( null == installDir && null != knownResourceFile ){
-			File tempFile = knownResourceFile;
-			boolean found = false;
-			while( !found && null != tempFile ){
-				if( "nunaliit2".equals( tempFile.getName() ) ){
-					found = true;
-					installDir = tempFile;
-				} else {
-					// Go to parent
-					tempFile = tempFile.getParentFile();
-				}
-			}
+			installDir = computeNunaliitDir(knownResourceFile);
 		}
 		
 		return installDir;
@@ -418,7 +408,13 @@ public class PathComputer {
 	 */
 	static public File computeNunaliitDir(File installDir) {
 		while( null != installDir ){
-			if( "nunaliit2".equals( installDir.getName() ) ){
+			// The root of the nunalii2 project contains "nunaliit2-couch-command",
+			// "nunaliit2-couch-sdk" and "nunaliit2-js"
+			boolean commandExists = (new File(installDir, "nunaliit2-couch-command")).exists();
+			boolean sdkExists = (new File(installDir, "nunaliit2-couch-sdk")).exists();
+			boolean jsExists = (new File(installDir, "nunaliit2-js")).exists();
+			
+			if( commandExists && sdkExists && jsExists ){
 				return installDir;
 			} else {
 				// Go to parent
