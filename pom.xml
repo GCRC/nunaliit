@@ -113,5 +113,6 @@
 		<module>nunaliit2-json</module>
 		<module>nunaliit2-couch-export</module>
 		<module>nunaliit2-geom</module>
+		<module>nunaliit2-javascript</module>
 	</modules>
 </project>
