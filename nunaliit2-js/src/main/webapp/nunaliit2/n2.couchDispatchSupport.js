@@ -44,12 +44,17 @@ var DispatchSupport = $n2.Class('DispatchSupport',{
 
 	,docUpdatedCb: null
 	
+	,docRevisionMap: null
+	
 	,initialize: function(opts_){
 		this.options = $n2.extend({
-			directory: null
+			db: null
+			,directory: null
 		},opts_);
 		
 		var _this = this;
+		
+		this.docRevisionMap = {};
 		
 		this.docCreatedCb = function(doc){
 			_this._docUploaded(doc,true);
@@ -68,6 +73,51 @@ var DispatchSupport = $n2.Class('DispatchSupport',{
 			
 			dispatcher.register(this.dispatcherHandle, 'documentCreated', f);
 			dispatcher.register(this.dispatcherHandle, 'documentUpdated', f);
+		};
+
+		// If a database was provided, register callbacks for creation, update and
+		// deletion. On those events, inform system, through dispatcher, of the changes.
+		if( this.options.db ) {
+			var dbCallbacks = _this.options.db.callbacks;
+			if( dbCallbacks ) {
+				dbCallbacks.addOnCreatedCallback(function(docInfo){
+					var dispatcher = _this._getDispatcher();
+					if( dispatcher ) {
+						dispatcher.send(_this.dispatcherHandle,{
+							type: 'documentVersion'
+							,docId: docInfo.id
+							,rev: docInfo.rev
+						});
+						dispatcher.send(_this.dispatcherHandle,{
+							type: 'documentCreated'
+							,docId: docInfo.id
+						});
+					};
+				});
+				dbCallbacks.addOnUpdatedCallback(function(docInfo){
+					var dispatcher = _this._getDispatcher();
+					if( dispatcher ) {
+						dispatcher.send(_this.dispatcherHandle,{
+							type: 'documentVersion'
+							,docId: docInfo.id
+							,rev: docInfo.rev
+						});
+						dispatcher.send(_this.dispatcherHandle,{
+							type: 'documentUpdated'
+							,docId: docInfo.id
+						});
+					};
+				});
+				dbCallbacks.addOnDeletedCallback(function(docInfo){
+					var dispatcher = _this._getDispatcher();
+					if( dispatcher ) {
+						dispatcher.send(_this.dispatcherHandle,{
+							type: 'documentDeleted'
+							,docId: docInfo.id
+						});
+					};
+				});
+			};
 		};
 	}
 
@@ -97,6 +147,15 @@ var DispatchSupport = $n2.Class('DispatchSupport',{
 				,doc: doc
 			});
 		};
+
+		var type = created ? 'documentContentCreated' : 'documentContentUpdated';
+
+		// This is a feature
+		this._dispatch({
+			type: type
+			,docId: doc._id
+			,doc: doc
+		});
 	}
 
 	,_getDispatcher: function(){

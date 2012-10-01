@@ -35,77 +35,127 @@ $Id: n2.couchSchema.js 8404 2012-07-30 19:34:41Z jpfiset $
 
 ;(function($,$n2){
 
-var defaultOptions = {
-	db: null
-	,designDoc: null
-	,viewNameSchemas: 'schemas'
-	,viewNameRootSchemas: 'schemas-root'
-};
-
-var options = defaultOptions;
-
-$n2.schema.DefaultRepository.loadSchemasFn = function(opt_) {
-	var opt = $n2.extend({
-		names: null
-		,rootSchemas: false
-		,onSuccess: function(schemaDefinitions){}
-		,onError: function(err){ $n2.reportError(err); }
-	},opt_);
+var CouchSchemaRepository = $n2.Class($n2.schema.SchemaRepository,{
 	
-	var viewRequest = {
-		viewName: options.viewNameSchemas
-		,include_docs: true
-		,onSuccess: function(rows){
-			var defs = [];
-			for(var i=0,e=rows.length; i<e; ++i) {
-				defs.push(rows[i].doc);
+	couchOptions: null
+	
+	,initialize: function(opts_){
+		$n2.schema.SchemaRepository.prototype.initialize.apply(this);
+		
+		this.couchOptions = $n2.extend({
+			db: null
+			,designDoc: null
+			,viewNameSchemas: 'schemas'
+			,viewNameRootSchemas: 'schemas-root'
+			,dispatchService: null
+			,preload: false
+			,preloadedCallback: function(){}
+		},opts_);
+		
+		var _this = this;
+		
+		this.loadSchemasFn = function(o){
+			_this._loadSchemas(o);
+		};
+
+		var dispatcher = this._getDispatcher();
+		if( dispatcher ){
+			var dispatcherHandle = dispatcher.getHandle('n2.couchSchema');
+			
+			var f = function(m){
+				_this._handle(m);
 			};
-			opt.onSuccess(defs);
-		}
-		,onError: opt.onError
-	};
+			
+			dispatcher.register(dispatcherHandle, 'documentContentCreated', f);
+			dispatcher.register(dispatcherHandle, 'documentContentUpdated', f);
+		};
+		
+		if( this.couchOptions.preload ){
+			this._preload();
+		};
+	}
 	
-	if( opt.names ) {
-		viewRequest.keys = opt.names;
-	};
+	,_loadSchemas: function(opt_){
+		var opt = $n2.extend({
+			names: null
+			,rootSchemas: false
+			,onSuccess: function(schemaDefinitions){}
+			,onError: function(err){ $n2.reportError(err); }
+		},opt_);
+		
+		var viewRequest = {
+			viewName: this.couchOptions.viewNameSchemas
+			,include_docs: true
+			,onSuccess: function(rows){
+				var defs = [];
+				for(var i=0,e=rows.length; i<e; ++i) {
+					defs.push(rows[i].doc);
+				};
+				opt.onSuccess(defs);
+			}
+			,onError: opt.onError
+		};
+		
+		if( opt.names ) {
+			viewRequest.keys = opt.names;
+		};
+		
+		if( opt.rootSchemas ) {
+			viewRequest.viewName = this.couchOptions.viewNameRootSchemas;
+		};
+		
+		// Query view
+		this.couchOptions.designDoc.queryView(viewRequest);
+	}
 	
-	if( opt.rootSchemas ) {
-		viewRequest.viewName = options.viewNameRootSchemas;
-	};
-	
-	// Query view
-	options.designDoc.queryView(viewRequest);
-};	
-	
-$n2.schema.CouchSchemaConfigure = function(options_){
-	options = $n2.extend({},defaultOptions,options_);
-};
-
-$n2.schema.CouchPreload = function(options_){
-	var opts = $n2.extend({
-		onSuccess: function(){}
-		,onError: function(){}
-	},defaultOptions,options,options_);
-
-	opts.designDoc.queryView({
-		viewName: opts.viewNameSchemas
-		,include_docs: true
-		,onSuccess: function(rows){
-			var defs = [];
-			for(var i=0,e=rows.length; i<e; ++i) {
-				defs.push(rows[i].doc);
+	,_handle: function(m){
+		if( 'documentContentCreated' === m.type
+		 || 'documentContentUpdated' === m.type ) {
+			var doc = m.doc;
+			
+			if( doc.nunaliit_type === 'schema' ) {
+				this.addSchemas({
+					schemas: [doc]
+					,onError: function(err){
+						$n2.log('Error adding created/updated schema ('+doc._id+') to repository: '+err);
+					}
+				});
 			};
-			$n2.schema.DefaultRepository.addSchemas({
-				schemas: defs
-				,onSuccess: function(){
-					opts.onSuccess(defs);
-				}
-				,onError: opts.onError
-			});
-			$n2.schema.DefaultRepository.rootSchemasQueried = true;
-		}
-		,onError: opts.onError
-	});
+		};
+	}
+	
+	,_getDispatcher: function(){
+		return this.couchOptions.dispatchService;
+	}
+
+	,_preload: function(){
+
+		var _this = this;
+		
+		this.couchOptions.designDoc.queryView({
+			viewName: this.couchOptions.viewNameSchemas
+			,include_docs: true
+			,onSuccess: function(rows){
+				var defs = [];
+				for(var i=0,e=rows.length; i<e; ++i) {
+					defs.push(rows[i].doc);
+				};
+				_this.addSchemas({
+					schemas: defs
+				});
+				_this.rootSchemasQueried = true;
+				_this.couchOptions.preloadedCallback();
+			}
+			,onError: function(){}
+		});
+	}
+});
+
+
+//============================================================
+// Exports
+$n2.couchSchema = {
+	CouchSchemaRepository: CouchSchemaRepository
 };
 
 })(jQuery,nunaliit2);

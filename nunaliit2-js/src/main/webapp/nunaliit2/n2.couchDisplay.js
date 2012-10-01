@@ -128,7 +128,7 @@ $n2.couchDisplay = $n2.Class({
 		
 		this.createRelatedDocProcess = new $n2.couchRelatedDoc.CreateRelatedDocProcess({
 			db: this.options.db
-			,schemaRepository: $n2.schema.DefaultRepository
+			,schemaRepository: this._getSchemaRepository()
 			,uploadService: this.options.uploadService
 		});
 	}
@@ -608,19 +608,22 @@ $n2.couchDisplay = $n2.Class({
 		var defaultSchema = this.defaultSchema;
 		
 		if( doc.nunaliit_schema ) {
-			$n2.schema.DefaultRepository.getSchema({
-				name: doc.nunaliit_schema
-				,onSuccess: function(schema) {
-					schema.brief(doc,$elem);
-				}
-				,onError: function(){
-					if( defaultSchema ) {
-						defaultSchema.brief(doc,$elem);
-					} else {
-						// leave as is
-					};
-				}
-			});
+			var schemaRepository = this._getSchemaRepository();
+			if( schemaRepository ) {
+				schemaRepository.getSchema({
+					name: doc.nunaliit_schema
+					,onSuccess: function(schema) {
+						schema.brief(doc,$elem);
+					}
+					,onError: function(){
+						if( defaultSchema ) {
+							defaultSchema.brief(doc,$elem);
+						} else {
+							// leave as is
+						};
+					}
+				});
+			};
 			
 		} else if( defaultSchema ) {
 			defaultSchema.brief(doc,$elem);

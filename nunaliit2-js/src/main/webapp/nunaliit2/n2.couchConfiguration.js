@@ -87,8 +87,6 @@ function Configure(options_){
 		configuration.atlasDb = configuration.couchServer.getDb({dbUrl:options.atlasDbUrl});
 		configuration.atlasDesign = configuration.atlasDb.getDesignDoc({ddName:options.atlasDesignName});
 
-		configuration.directory.schemaRepository = $n2.schema.DefaultRepository;
-		
 		configuration.atlasDb.getChangeNotifier({
 			onSuccess: function(notifier){
 				configuration.atlasNotifier = notifier;
@@ -99,6 +97,16 @@ function Configure(options_){
 	};
 	
 	function notifierInitialized() {
+		configuration.directory.schemaRepository = new $n2.couchSchema.CouchSchemaRepository({
+			db: configuration.atlasDb
+			,designDoc: configuration.atlasDesign
+			,dispatchService: configuration.directory.dispatchService
+			,preload: true
+			,preloadedCallback: schemasPreloaded 
+		});
+	};
+	
+	function schemasPreloaded() {
 		
 	 	$n2.couchL10n.Configure({
 			db: configuration.atlasDb
@@ -141,7 +149,8 @@ function Configure(options_){
 		configuration.directory.requestService = configuration.requests;
 
 		configuration.directory.dispatchSupport = new $n2.couchDispatchSupport.DispatchSupport({
-			directory: configuration.directory
+			db: configuration.atlasDb
+			,directory: configuration.directory
 		});
 		
 	 	configuration.show = new $n2.couchShow.Show({
@@ -195,13 +204,7 @@ function Configure(options_){
 	 	$n2.hoverSoundService = configuration.hoverSoundService;
 		configuration.directory.hoverSoundService = configuration.hoverSoundService;
 		
-		$n2.schema.CouchSchemaConfigure({
-			db: configuration.atlasDb
-			,designDoc: configuration.atlasDesign
-		});
-		$n2.schema.CouchPreload({
-			onSuccess: callCustomConfiguration
-		});
+		callCustomConfiguration();
 	};
 	
 	function callCustomConfiguration(){
@@ -215,6 +218,7 @@ function Configure(options_){
 	};
 	
 	function configurationDone(){
+		$n2.log('nunaliit configuration',configuration);
 		options.onSuccess(configuration);
 	};
 };

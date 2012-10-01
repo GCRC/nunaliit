@@ -14,6 +14,7 @@ var searchInput = null;
 var requests = null;
 var contributions = null;
 var showService = null;
+var schemaRepository = null;
 
 var HashInfo = $n2.Class({
 	
@@ -161,7 +162,7 @@ function initiateEdit(docId) {
 			if( !schemaName ) {
 				showEdit(doc); 
 			} else {
-				$n2.schema.DefaultRepository.getSchema({
+				schemaRepository.getSchema({
 					name: schemaName
 					,onSuccess: function(schema){
 						showEdit(doc,schema);
@@ -318,7 +319,7 @@ function addDocument() {
 		return;
 	};
 	
-	$n2.schema.DefaultRepository.getRootSchemas({
+	schemaRepository.getRootSchemas({
 		onSuccess: function(schemas){
 			selectNewDocumentSchema(schemas);
 		}
@@ -380,7 +381,7 @@ function selectNewDocumentSchema(schemas) {
 function createNewDocumentFromSchemaName(schemaName){
 	if( schemaName ) {
 		$n2.log('schemaName',schemaName);
-		$n2.schema.DefaultRepository.getSchema({
+		schemaRepository.getSchema({
 			name: schemaName
 			,onSuccess: function(schema){
 				createNewDocument(schema);
@@ -536,12 +537,13 @@ function main_init(config) {
 	contributions = config.contributions;
 	couchEditor = config.couchEditor;
 	showService = config.show;
+	schemaRepository = config.directory.schemaRepository;
  	
 	if( $.NUNALIIT_AUTH ) {
 		$.NUNALIIT_AUTH.addListener(loginStateChanged);
 	};
 
-	$n2.schema.DefaultRepository.getSchema({
+	schemaRepository.getSchema({
 		name: 'object'
 		,onSuccess: function(schema) {
 			defaultSchema = schema;

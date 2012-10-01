@@ -992,6 +992,64 @@ var ChangeNotifier = $n2.Class({
 	}
 });
 
+//=============================================
+// Database Callbacks
+//=============================================
+
+var DatabaseCallbacks = $n2.Class({
+	
+	onCreatedCallbacks: null
+	
+	,onUpdatedCallbacks: null
+	
+	,onDeletedCallbacks: null
+	
+	,initialize: function(){
+		this.onCreatedCallbacks = [];
+		this.onUpdatedCallbacks = [];
+		this.onDeletedCallbacks = [];
+	}
+
+	,addOnCreatedCallback: function(f){
+		if( typeof(f) === 'function' ) {
+			this.onCreatedCallbacks.push(f);
+		}
+	}
+
+	,addOnUpdatedCallback: function(f){
+		if( typeof(f) === 'function' ) {
+			this.onUpdatedCallbacks.push(f);
+		}
+	}
+
+	,addOnDeletedCallback: function(f){
+		if( typeof(f) === 'function' ) {
+			this.onDeletedCallbacks.push(f);
+		}
+	}
+	
+	,_reportOnCreated: function(docInfo){
+		for(var i=0,e=this.onCreatedCallbacks.length; i<e; ++i){
+			var f = this.onCreatedCallbacks[i];
+			f(docInfo);
+		};
+	}
+	
+	,_reportOnUpdated: function(docInfo){
+		for(var i=0,e=this.onCreatedCallbacks.length; i<e; ++i){
+			var f = this.onUpdatedCallbacks[i];
+			f(docInfo);
+		};
+	}
+	
+	,_reportOnDeleted: function(docInfo){
+		for(var i=0,e=this.onDeletedCallbacks.length; i<e; ++i){
+			var f = this.onUpdatedCallbacks[i];
+			f(docInfo);
+		};
+	}
+});
+
 // =============================================
 // Database
 // =============================================
@@ -1004,6 +1062,8 @@ var Database = $n2.Class({
 	
 	,server: null
 	
+	,callbacks: null
+	
 	,initialize: function(opts_, server_) {
 		$.extend(this,opts_);
 	
@@ -1013,6 +1073,8 @@ var Database = $n2.Class({
 			var pathToServer = server_.getPathToServer();
 			this.dbUrl = pathToServer + this.dbName + '/';
 		};
+		
+		this.callbacks = new DatabaseCallbacks();
 	}
 	
 	,getDesignDoc: function(opts_) {
@@ -1263,6 +1325,7 @@ var Database = $n2.Class({
 		    	,contentType: 'application/json'
 		    	,dataType: 'json'
 		    	,success: function(docInfo) {
+		    		_s.callbacks._reportOnCreated(docInfo);
 		    		opts.onSuccess(docInfo);
 		    	}
 		    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
@@ -1302,6 +1365,7 @@ var Database = $n2.Class({
 	    	,contentType: 'application/json'
 	    	,dataType: 'json'
 	    	,success: function(docInfo) {
+	    		_s.callbacks._reportOnUpdated(docInfo);
 	    		opts.onSuccess(docInfo);
 	    	}
 	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
@@ -1338,6 +1402,7 @@ var Database = $n2.Class({
 	    	,async: true
 	    	,dataType: 'json'
 	    	,success: function(docInfo) {
+	    		_s.callbacks._reportOnDeleted(docInfo);
 	    		opts.onSuccess(docInfo);
 	    	}
 	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {

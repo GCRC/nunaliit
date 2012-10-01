@@ -261,9 +261,7 @@ var SchemaRepository = $n2.Class({
 			};
 			
 			var name = schemaObj.name;
-			if( !this.schemasByName[name] ) {
-				this.schemasByName[name] = schemaObj;
-			};
+			this.schemasByName[name] = schemaObj;
 		};
 		
 		this._resolveSchemaDependencies(opt);
@@ -1471,7 +1469,7 @@ var Form = $n2.Class({
 $n2.schema = {
 	Schema: Schema
 	,SchemaRepository: SchemaRepository
-	,DefaultRepository: new SchemaRepository()
+//	,DefaultRepository: new SchemaRepository()
 	,Display: Display
 	,Form: Form
 	,GlobalAttributes: {
