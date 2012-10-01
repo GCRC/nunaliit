@@ -341,7 +341,12 @@ function selectNewDocumentSchema(schemas) {
 	var $select = $dialog.find('select');
 	for(var i=0,e=schemas.length; i<e; ++i) {
 		var $option = $('<option></option>');
-		$option.text(''+schemas[i].name);
+		var label = schemas[i].label;
+		if( !label ) {
+			label = schemas[i].name;
+		};
+		$option.text(label);
+		$option.val(''+schemas[i].name);
 		$select.append( $option );
 	};
 	
