@@ -14,6 +14,7 @@ import ca.carleton.gcrc.couch.app.DocumentUpdateProcess;
 import ca.carleton.gcrc.couch.app.impl.DocumentFile;
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.command.impl.CommandSupport;
+import ca.carleton.gcrc.couch.command.impl.GenerateCssLibrariesProcess;
 import ca.carleton.gcrc.couch.command.impl.GenerateJavascriptLibrariesProcess;
 import ca.carleton.gcrc.couch.command.impl.PathComputer;
 import ca.carleton.gcrc.couch.command.impl.UpdateProgress;
@@ -171,13 +172,16 @@ public class CommandUpdate implements Command {
 		,DocumentUpdateProcess updateProcess
 		) throws Exception {
 		
-		// Update javascript libraries if in development mode
+		// Update javascript libraries and CSS libraries, if in development mode
 		{
 			File installDir = gs.getInstallDir();
 			File nunaliitDir = PathComputer.computeNunaliitDir(installDir);
 			if( null != nunaliitDir ) {
-				GenerateJavascriptLibrariesProcess process = new GenerateJavascriptLibrariesProcess();
-				process.generate(nunaliitDir);
+				GenerateJavascriptLibrariesProcess jsProcess = new GenerateJavascriptLibrariesProcess();
+				jsProcess.generate(nunaliitDir);
+				
+				GenerateCssLibrariesProcess cssProcess = new GenerateCssLibrariesProcess();
+				cssProcess.generate(nunaliitDir);
 			}
 		}
 		
