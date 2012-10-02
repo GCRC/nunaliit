@@ -2,6 +2,8 @@ package ca.carleton.gcrc.javascript;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
@@ -103,6 +105,36 @@ public class LibraryConfiguration {
 			
 		} catch(Exception e) {
 			throw new Exception("Error while reading compress configuration",e);
+		}
+	}
+
+	public void parseConfiguration(File configFile) throws Exception {
+		FileInputStream fis = null;
+		InputStreamReader isr = null;
+		try {
+			fis = new FileInputStream(configFile);
+			isr = new InputStreamReader(fis, "UTF-8");
+			
+			parseConfiguration(isr);
+			
+		} catch(Exception e) {
+			throw new Exception("Error while reading library configuration from file: "+configFile,e);
+			
+		} finally {
+			if( null != isr ){
+				try {
+					isr.close();
+				} catch (Exception e) {
+					// Ignore
+				}
+			}
+			if( null != fis ){
+				try {
+					fis.close();
+				} catch (Exception e) {
+					// Ignore
+				}
+			}
 		}
 	}
 }
