@@ -22,9 +22,11 @@ public class GenerateJavascriptLibrariesProcess {
 		}
 		
 		File nunaliitJsDir = new File(jsDir,"src/main/webapp/nunaliit2");
+		File licenseFile = new File(jsDir,"compress/license.txt");
 		
 		generate(
 			new File(jsDir, "compress/nunaliit2.cfg")
+			,licenseFile
 			,nunaliitJsDir
 			,"nunaliit2.js"
 			,"nunaliit2-debug.js"
@@ -32,6 +34,7 @@ public class GenerateJavascriptLibrariesProcess {
 		
 		generate(
 			new File(jsDir, "compress/nunaliit2-couch.cfg")
+			,licenseFile
 			,nunaliitJsDir
 			,"nunaliit2-couch.js"
 			,"nunaliit2-couch-debug.js"
@@ -39,15 +42,24 @@ public class GenerateJavascriptLibrariesProcess {
 		
 		generate(
 			new File(jsDir, "compress/nunaliit2-couch-mobile.cfg")
+			,licenseFile
 			,nunaliitJsDir
 			,"nunaliit2-couch-mobile.js"
 			,"nunaliit2-couch-mobile-debug.js"
 			);
 	}
 	
-	private void generate(File configFile, File sourceDirectory, String libraryName, String debugLibraryName) throws Exception {
+	private void generate(
+		File configFile
+		,File licenseFile
+		,File sourceDirectory
+		,String libraryName
+		,String debugLibraryName
+		) throws Exception {
+		
 		try {
 			LibraryConfiguration config = new LibraryConfiguration();
+			config.setLicenseFile(licenseFile);
 			config.setSourceDirectory(sourceDirectory);
 			config.parseConfiguration(configFile);
 

@@ -26,6 +26,7 @@ public class CompressProcessTest extends TestCase {
 		
 		LibraryConfiguration config = new LibraryConfiguration();
 		config.setSourceDirectory(resourceDir);
+		config.setLicenseFile( new File(resourceDir, "license.txt") );
 		config.addInputFilePath( "a.js" );
 		config.addInputFilePath( "b.js" );
 

@@ -23,7 +23,8 @@ public class LibraryConfiguration {
 	
 	private File sourceDirectory = null;
 	private List<String> inputFilePaths = null;
-	
+	private File licenseFile = null;
+
 	public LibraryConfiguration(){
 		inputFilePaths = new Vector<String>();
 	}
@@ -54,6 +55,14 @@ public class LibraryConfiguration {
 	
 	public void addInputFilePath(String path){
 		inputFilePaths.add( path );
+	}
+	
+	public File getLicenseFile() {
+		return licenseFile;
+	}
+
+	public void setLicenseFile(File licenseFile) {
+		this.licenseFile = licenseFile;
 	}
 
 	public void parseConfiguration(Reader reader) throws Exception {

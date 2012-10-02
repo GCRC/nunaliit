@@ -57,6 +57,41 @@ public class CompressProcess {
 		Vector<InputStream> streams = new Vector<InputStream>(); 
 		SequenceInputStream sis = null;
 		try {
+			// Insert license file
+			File licenseFile = config.getLicenseFile();
+			if( null != licenseFile ) {
+				FileInputStream fis = null;
+				InputStreamReader isr = null;
+				try {
+					fis = new FileInputStream(licenseFile);
+					isr = new InputStreamReader(fis, "UTF-8");
+					
+					int c = isr.read();
+					while( c >= 0 ){
+						writer.write(c);
+						c = isr.read();
+					}
+					
+				} catch(Exception e) {
+					throw new Exception("Error while exporting license file",e);
+				} finally {
+					if( null != isr ) {
+						try{
+							isr.close();
+						} catch(Exception e) {
+							// Ignore
+						}
+					}
+					if( null != fis ) {
+						try{
+							fis.close();
+						} catch(Exception e) {
+							// Ignore
+						}
+					}
+				}
+			}
+
 			// Create end of line byte array
 			byte[] eol = { (byte)'\n' };
 			
