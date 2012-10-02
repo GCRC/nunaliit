@@ -127,7 +127,7 @@ public class LibraryConfiguration {
 			parseConfiguration(isr);
 			
 		} catch(Exception e) {
-			throw new Exception("Error while reading library configuration from file: "+configFile,e);
+			throw new Exception("Error while reading library configuration from file: "+configFile.getAbsolutePath(),e);
 			
 		} finally {
 			if( null != isr ){

@@ -13,22 +13,106 @@
   <description>Javascript files produced in-house</description>
   <build>
     <plugins>
+		<plugin>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-dependency-plugin</artifactId>
+			<version>2.4</version>
+			<executions>
+				<execution>
+					<phase>generate-sources</phase>
+					<goals>
+						<goal>copy</goal>
+					</goals>
+					<configuration>
+						<stripVersion>true</stripVersion>
+						<artifactItems>
+							<artifactItem>
+								<groupId>ca.carleton.gcrc</groupId>
+								<artifactId>nunaliit2-javascript</artifactId>
+								<version>${project.version}</version>
+								<type>jar</type>
+								<overWrite>true</overWrite>
+								<outputDirectory>target/tools</outputDirectory>
+							</artifactItem>
+							<artifactItem>
+								<groupId>ca.carleton.gcrc</groupId>
+								<artifactId>nunaliit2-css</artifactId>
+								<version>${project.version}</version>
+								<type>jar</type>
+								<overWrite>true</overWrite>
+								<outputDirectory>target/tools</outputDirectory>
+							</artifactItem>
+						</artifactItems>
+					</configuration>
+				</execution>
+			</executions>
+		</plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-antrun-plugin</artifactId>
         <version>1.6</version>
         <executions>
           <execution>
-            <phase>generate-sources</phase>
+            <phase>generate-resources</phase>
             <configuration>
               <!--  The following is an ANT target -->
               <target>
-                <exec executable="python" dir="./compress">
-                  <arg line="build.py" />
-                </exec>
-                <exec executable="python" dir="./compress">
-                  <arg line="build_css.py" />
-                </exec>
+                <!--  Generate javascript libraries -->
+                <java 
+                	jar="target/tools/nunaliit2-javascript.jar"
+                	fork="true"
+                	dir="."
+                	>
+                  <arg line="--config-file ./compress/nunaliit2.cfg"/>
+                  <arg line="--license-file ./compress/license.txt"/>
+                  <arg line="--source-dir ./src/main/webapp/nunaliit2"/>
+                  <arg line="--output ./src/main/webapp/nunaliit2/nunaliit2.js"/>
+                  <arg line="--output-debug ./src/main/webapp/nunaliit2/nunaliit2-debug.js"/>
+                </java>
+                <java 
+                	jar="target/tools/nunaliit2-javascript.jar"
+                	fork="true"
+                	dir="."
+                	>
+                  <arg line="--config-file ./compress/nunaliit2-couch.cfg"/>
+                  <arg line="--license-file ./compress/license.txt"/>
+                  <arg line="--source-dir ./src/main/webapp/nunaliit2"/>
+                  <arg line="--output ./src/main/webapp/nunaliit2/nunaliit2-couch.js"/>
+                  <arg line="--output-debug ./src/main/webapp/nunaliit2/nunaliit2-couch-debug.js"/>
+                </java>
+                <java 
+                	jar="target/tools/nunaliit2-javascript.jar"
+                	fork="true"
+                	dir="."
+                	>
+                  <arg line="--config-file ./compress/nunaliit2-couch-mobile.cfg"/>
+                  <arg line="--license-file ./compress/license.txt"/>
+                  <arg line="--source-dir ./src/main/webapp/nunaliit2"/>
+                  <arg line="--output ./src/main/webapp/nunaliit2/nunaliit2-couch-mobile.js"/>
+                  <arg line="--output-debug ./src/main/webapp/nunaliit2/nunaliit2-couch-mobile-debug.js"/>
+                </java>
+                
+                <!--  Generate CSS libraries -->
+                <java 
+                	jar="target/tools/nunaliit2-css.jar"
+                	fork="true"
+                	dir="."
+                	>
+                  <arg line="--config-file ./compress/nunaliit2-css.cfg"/>
+                  <arg line="--license-file ./compress/license.txt"/>
+                  <arg line="--source-dir ./src/main/webapp/nunaliit2/css/basic"/>
+                  <arg line="--output ./src/main/webapp/nunaliit2/css/basic/nunaliit2.css"/>
+                </java>
+                <java 
+                	jar="target/tools/nunaliit2-css.jar"
+                	fork="true"
+                	dir="."
+                	>
+                  <arg line="--config-file ./compress/nunaliit2-css-mobile.cfg"/>
+                  <arg line="--license-file ./compress/license.txt"/>
+                  <arg line="--source-dir ./src/main/webapp/nunaliit2/css/basic"/>
+                  <arg line="--output ./src/main/webapp/nunaliit2/css/basic/nunaliit2-mobile.css"/>
+                </java>
               </target>
             </configuration>
             <goals>
@@ -39,4 +123,20 @@
       </plugin>
     </plugins>
   </build>
+  <dependencies>
+   	<dependency>
+   		<groupId>ca.carleton.gcrc</groupId>
+   		<artifactId>nunaliit2-javascript</artifactId>
+   		<version>${project.version}</version>
+   		<type>jar</type>
+   		<scope>provided</scope>
+   	</dependency>
+   	<dependency>
+   		<groupId>ca.carleton.gcrc</groupId>
+   		<artifactId>nunaliit2-css</artifactId>
+   		<version>${project.version}</version>
+   		<type>jar</type>
+   		<scope>provided</scope>
+   	</dependency>
+  </dependencies>
 </project>
