@@ -5,6 +5,8 @@
     </description>
 	
 	<property name="javascript.dest.dir" location="./dummy_place"/>
+	<property name="compressor.js" location="./target/tools/nunaliit2-javascript.jar"/>
+	<property name="compressor.css" location="./target/tools/nunaliit2-css.jar"/>
 
     <!-- ================================= 
           target: default           
@@ -23,23 +25,9 @@
     <target 
     	name="javascript-copy" 
     	description="Copy Nunaliit2 javascript library"
-    	depends="-javascript-copy-conditions,-javascript-copy-error"
+    	depends="-javascript-copy-conditions,-javascript-copy-error,library-compress"
     	if="javascript-dest-exists"
     	>
-    	<!-- Perform compression -->
-		<exec
-			executable="python"
-			dir="./compress"
-			>
-			<arg line="build.py"/>
-		</exec>
-		<exec
-			executable="python"
-			dir="./compress"
-			>
-			<arg line="build_css.py"/>
-		</exec>
-    	
     	<!-- Copy -->
     	<mkdir dir="${javascript.dest.dir}/nunaliit2"/>
 		<copy todir="${javascript.dest.dir}/nunaliit2">
@@ -68,21 +56,81 @@
     <target 
     	name="library-compress" 
     	description="Compresses library files"
+    	depends="-library-compress-conditions,-library-compress-error"
+    	if="compressor-tools-exists"
     	>
     	<!-- Perform compression -->
-		<exec
-			executable="python"
-			dir="./compress"
-			>
-			<arg line="build.py"/>
-		</exec>
-		<exec
-			executable="python"
-			dir="./compress"
-			>
-			<arg line="build_css.py"/>
-		</exec>
+        <java 
+        	jar="${compressor.js}"
+        	fork="true"
+        	>
+          <arg line="--config-file ./compress/nunaliit2.cfg"/>
+          <arg line="--license-file ./compress/license.txt"/>
+          <arg line="--source-dir ./src/main/webapp/nunaliit2"/>
+          <arg line="--output ./src/main/webapp/nunaliit2/nunaliit2.js"/>
+          <arg line="--output-debug ./src/main/webapp/nunaliit2/nunaliit2-debug.js"/>
+        </java>
+        <java 
+        	jar="${compressor.js}"
+        	fork="true"
+        	>
+          <arg line="--config-file ./compress/nunaliit2-couch.cfg"/>
+          <arg line="--license-file ./compress/license.txt"/>
+          <arg line="--source-dir ./src/main/webapp/nunaliit2"/>
+          <arg line="--output ./src/main/webapp/nunaliit2/nunaliit2-couch.js"/>
+          <arg line="--output-debug ./src/main/webapp/nunaliit2/nunaliit2-couch-debug.js"/>
+        </java>
+        <java 
+        	jar="${compressor.js}"
+        	fork="true"
+        	>
+          <arg line="--config-file ./compress/nunaliit2-couch-mobile.cfg"/>
+          <arg line="--license-file ./compress/license.txt"/>
+          <arg line="--source-dir ./src/main/webapp/nunaliit2"/>
+          <arg line="--output ./src/main/webapp/nunaliit2/nunaliit2-couch-mobile.js"/>
+          <arg line="--output-debug ./src/main/webapp/nunaliit2/nunaliit2-couch-mobile-debug.js"/>
+        </java>
+
+    	<!--  Generate CSS libraries -->
+        <java 
+        	jar="${compressor.css}"
+        	fork="true"
+        	dir="."
+        	>
+          <arg line="--config-file ./compress/nunaliit2-css.cfg"/>
+          <arg line="--license-file ./compress/license.txt"/>
+          <arg line="--source-dir ./src/main/webapp/nunaliit2/css/basic"/>
+          <arg line="--output ./src/main/webapp/nunaliit2/css/basic/nunaliit2.css"/>
+        </java>
+        <java 
+        	jar="${compressor.css}"
+        	fork="true"
+        	dir="."
+        	>
+          <arg line="--config-file ./compress/nunaliit2-css-mobile.cfg"/>
+          <arg line="--license-file ./compress/license.txt"/>
+          <arg line="--source-dir ./src/main/webapp/nunaliit2/css/basic"/>
+          <arg line="--output ./src/main/webapp/nunaliit2/css/basic/nunaliit2-mobile.css"/>
+        </java>
     </target>
+
+	<target 
+    	name="-library-compress-error" 
+    	description="Report error"
+    	depends="-library-compress-conditions"
+    	unless="compressor-tools-exists"
+    	>
+    	<fail message="Compressor tools not found: ${compressor.js} - ${compressor.css}"/>
+    </target>
+	
+	<target name="-library-compress-conditions">
+		<condition property="compressor-tools-exists">
+			<and>
+				<available file="${compressor.js}"/>
+				<available file="${compressor.css}"/>
+			</and>
+		</condition>
+	</target>
 	
     <!-- ================================= 
           target: test           

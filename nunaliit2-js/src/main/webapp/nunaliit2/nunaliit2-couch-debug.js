@@ -1,3 +1,15 @@
+/*
+Copyright (c) 2010, Geomatics and Cartographic Research Centre, 
+Carleton University, Canada
+All rights reserved.
+
+Released under New BSD License.
+Details at:
+   https://svn.gcrc.carleton.ca/nunaliit2/trunk/sdk/license.txt
+   
+$Id: license.txt 8178 2012-06-04 20:46:29Z jpfiset $   
+*/
+
 ;(function(){
 var scriptLocation = null;
 var pattern = new RegExp('(^|(.*?\/))nunaliit2-couch-debug.js$');
