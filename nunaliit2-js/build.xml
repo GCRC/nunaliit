@@ -90,6 +90,16 @@
           <arg line="--output ./src/main/webapp/nunaliit2/nunaliit2-couch-mobile.js"/>
           <arg line="--output-debug ./src/main/webapp/nunaliit2/nunaliit2-couch-mobile-debug.js"/>
         </java>
+        <java 
+        	jar="${compressor.js}"
+        	fork="true"
+        	>
+          <arg line="--config-file ./compress/isiuop.cfg"/>
+          <arg line="--license-file ./compress/license.txt"/>
+          <arg line="--source-dir ./src/main/webapp/nunaliit2"/>
+          <arg line="--output ./src/main/webapp/nunaliit2/isiuop.js"/>
+          <arg line="--output-debug ./src/main/webapp/nunaliit2/isiuop-debug.js"/>
+        </java>
 
     	<!--  Generate CSS libraries -->
         <java 
