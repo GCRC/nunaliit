@@ -335,6 +335,8 @@ $n2.couchDisplay = $n2.Class({
 			,'delete': false
 		},opt_);
 
+		var dispatcher = this._getDispatcher();
+		
 		var $buttons = $('<div class="nunaliit_form_linkset"></div>');
 		$elem.append( $buttons );
 
@@ -421,30 +423,36 @@ $n2.couchDisplay = $n2.Class({
 		};
 		
  		// Show 'find on map' button
-		if( opt.geom
-		 && data 
-		 && data.nunaliit_geom 
-		 && this.mapAndControl
-		 && this.mapAndControl.centerMapOnFeatureId
-		 ) {
- 			if( firstButton ) {
- 				firstButton = false;
- 			} else {
- 				$buttons.append( $('<span>&nbsp;</span>') );
- 			};
-			var $findGeomButton = $('<a href="#"></a>');
-			var findGeomText = _loc('Find on Map');
-			$findGeomButton.text( findGeomText );
-			$buttons.append($findGeomButton);
-
-			var x = (data.nunaliit_geom.bbox[0] + data.nunaliit_geom.bbox[2]) / 2;
-			var y = (data.nunaliit_geom.bbox[1] + data.nunaliit_geom.bbox[3]) / 2;
-			
-			$findGeomButton.click(function(){
-				_this.mapAndControl.centerMapOnFeatureId({fid:data._id}, x, y);
-				return false;
-			});
-			addClasses($findGeomButton, findGeomText);
+		if( dispatcher ) {
+			if( opt.geom
+			 && data 
+			 && data.nunaliit_geom 
+			 && dispatcher.isEventTypeRegistered('findOnMap')
+			 ) {
+	 			if( firstButton ) {
+	 				firstButton = false;
+	 			} else {
+	 				$buttons.append( $('<span>&nbsp;</span>') );
+	 			};
+				var $findGeomButton = $('<a href="#"></a>');
+				var findGeomText = _loc('Find on Map');
+				$findGeomButton.text( findGeomText );
+				$buttons.append($findGeomButton);
+	
+				var x = (data.nunaliit_geom.bbox[0] + data.nunaliit_geom.bbox[2]) / 2;
+				var y = (data.nunaliit_geom.bbox[1] + data.nunaliit_geom.bbox[3]) / 2;
+				
+				$findGeomButton.click(function(){
+					_this._dispatch({
+						type: 'findOnMap'
+						,fid: data._id
+						,x: x
+						,y: y
+					});
+					return false;
+				});
+				addClasses($findGeomButton, findGeomText);
+			};
 		};
 
 		/**
@@ -486,13 +494,23 @@ $n2.couchDisplay = $n2.Class({
 	,_clickFindGeometryOnMap: function(data, $jq, opt_) {
 		var _this = this;
 
+		var dispatcher = this._getDispatcher();
+
 		if( data 
-		 && data.nunaliit_geom ) {
+		 && data.nunaliit_geom 
+		 && dispatcher
+		 && dispatcher.isEventTypeRegistered('findOnMap')
+		 ) {
 			var x = (data.nunaliit_geom.bbox[0] + data.nunaliit_geom.bbox[2]) / 2;
 			var y = (data.nunaliit_geom.bbox[1] + data.nunaliit_geom.bbox[3]) / 2;
 			
 			$jq.click(function(){
-			_this.mapAndControl.centerMapOnFeatureId({fid:data._id}, x, y);
+				_this._dispatch({
+					type: 'findOnMap'
+					,fid: data._id
+					,x: x
+					,y: y
+				});
 				return false;
 			});
 		} else {

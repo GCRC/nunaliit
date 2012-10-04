@@ -79,6 +79,18 @@ var Dispatcher = $n2.Class({
 		handle.receives[type] = true;
 	}
 	
+	/*
+	 * Returns true if any listener is registered for the
+	 * given event type. 
+	 */
+	,isEventTypeRegistered: function(type){
+		var listeners = this.listeners[type];
+		if( listeners && listeners.length > 0 ) {
+			return true;
+		};
+		return false;
+	}
+	
 	,send: function(handle, m){
 		var logging = this.options.logging;
 		

@@ -682,6 +682,7 @@ var MapAndControls = $n2.Class({
 	    this._registerDispatch('addLayerToMap');
 	    this._registerDispatch('focusOn');
 	    this._registerDispatch('focusOff');
+	    this._registerDispatch('findOnMap');
 		
 		// Layers
 		this.defaultLayerInfo = { // feature layer access details.
@@ -1143,6 +1144,7 @@ var MapAndControls = $n2.Class({
 		var pendingInfo = $.extend({
 				uniqueId: null
 				,fid: null
+				,highlightHoverOnly: false
 			}
 			,opts_
 			,{
@@ -1203,7 +1205,11 @@ var MapAndControls = $n2.Class({
 				 */
 				var f = findFeature(pendingInfo);
 				if ($n2.isDefined(f) && $n2.isDefined(f.layer)) {
-					_this.startClicked(f, true);
+					if( pendingInfo.highlightHoverOnly ) {
+						_this._highlightHoveredFeature(f, true)
+					} else {
+						_this.startClicked(f, true);
+					};
 				} else {
 					decrementAndTryAgain(pendingInfo, function(){ tryForcedFeatureClick(pendingInfo); });
 				};
@@ -1429,7 +1435,7 @@ var MapAndControls = $n2.Class({
 		this.map.setCenter(ll, z, false, false);
 	}
 
-	,centerMapOnFeatureId: function(uniqueId, latLongX, latLongY) {
+	,_centerMapOnFeatureId: function(fid, latLongX, latLongY) {
 		var _this = this;
 		
 		var ll = new OpenLayers.LonLat(latLongX, latLongY);
@@ -1441,10 +1447,11 @@ var MapAndControls = $n2.Class({
 		this.map.setCenter(ll, z, false, false);
 		
 		window.setTimeout(function() { 
-				_this.markFeatureAsClicked(uniqueId) 
-			}
-			,0
-		);
+				_this.markFeatureAsClicked({
+					fid: fid
+					,highlightHoverOnly: true
+				}); 
+			},0);
 	}
 
 	// @param bounds Instance of OpenLayers.Bounds
@@ -3645,6 +3652,8 @@ var MapAndControls = $n2.Class({
 				this._highlightHoveredFeature(feature, false);
 			};
 			
+		} else if( 'findOnMap' === type ) {
+			this._centerMapOnFeatureId(m.fid, m.x, m.y);
 		};
 	}
 	
