@@ -356,7 +356,10 @@ $n2.couchDisplay = $n2.Class({
 			$focusButton.text( focusText );
 			$buttons.append($focusButton);
 			$focusButton.click(function(){
-				_this.DisplayClickedDocument(data._id);
+				_this._dispatch({
+					type:'selected'
+					,docId: data._id
+				})
 				return false;
 			});
 			addClasses($focusButton, focusText);
@@ -884,51 +887,6 @@ $n2.couchDisplay = $n2.Class({
 		};
 	}
 	
-	,DisplayClickedDocument: function(docId) {
-		var _this = this;
-		
-		var displayDivName = this.getDisplayDivName();
-
-		if( null != docId 
-		 && null != displayDivName ) {
-			var $displayDiv = $('#'+displayDivName);
-			
-			$displayDiv.empty();
-			$displayDiv.text('Document '+docId);
-			
-			this.currentFeature = null;
-			
-			// Get document
-			this.options.db.getDocument({
-				docId: docId
-				,onSuccess: function(doc) {
-					if( doc.place
-					 && doc.place.nunaliit_type
-					 && doc.place.nunaliit_type === 'placename' ) {
-						_this.DisplayClickedMapFeature(doc, {displayDiv: displayDivName});
-					} else {
-						var $displayDiv = $('#'+displayDivName);
-						$displayDiv.empty();
-						if (null !== _this.options.translateCallback) {
-							var retVal = _this.options.translateCallback(doc,{displayDiv: displayDivName});
-							if (null !== retVal) {
-								return;
-							};
-						};
-						_this._displayObject($displayDiv, doc, {
-							onUpdated: function(){
-								_this.DisplayClickedDocument(docId)
-							}
-							,onDeleted: function() {
-								$displayDiv.empty();
-							}
-						});
-					};
-				}
-			});
-		};
-	}
-	
 	,DisplayClickedMapFeature: function(data, options) {
 		var _this = this;
 		
@@ -1179,6 +1137,8 @@ $n2.couchDisplay = $n2.Class({
 	,DisplayDocument: function($set, doc) {
 
 		var _this = this;
+		
+		$set.empty();
 		
 		this._displayObject($set, doc, {
 			onUpdated: function() {

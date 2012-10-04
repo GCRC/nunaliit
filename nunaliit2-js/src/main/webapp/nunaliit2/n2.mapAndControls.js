@@ -680,6 +680,7 @@ var MapAndControls = $n2.Class({
 	    this._registerDispatch('featureCreated');
 	    this._registerDispatch('featureUpdated');
 	    this._registerDispatch('addLayerToMap');
+	    this._registerDispatch('selected');
 	    this._registerDispatch('focusOn');
 	    this._registerDispatch('focusOff');
 	    this._registerDispatch('findOnMap');
@@ -1127,10 +1128,17 @@ var MapAndControls = $n2.Class({
 	}
 	
 	,initAndDisplayClickedPlaceInfo: function(feature) {
-		if( $.olkitDisplay ) {
-			// Display handler takes precedence
-			$.olkitDisplay.ClickedFeatureHandler(feature, this.olkitDisplayOptions);
+		var dispatchService = this._getDispatchService();
+		if( dispatchService ) {
+			var handle = dispatchService.getHandle('n2.mapAndControls');
 			
+			dispatchService.send(handle, {
+				type: 'selected'
+				,docId: feature.data._id
+				,doc: feature.data
+				,feature: feature
+	 		});
+
 		} else {
 			$n2.placeInfo.setFeatureReinitDisplay(feature);
 			$n2.placeInfo.loadAndRenderContributions();
@@ -1966,6 +1974,19 @@ var MapAndControls = $n2.Class({
 	
 	,registerEndClickFn: function(fn) {
 		this.clickedInfo.endFn.push(fn);
+	}
+	
+	,_selectedFeature: function(feature){
+		this.endClicked();
+		
+		if( feature ) {
+			this.clickedInfo.feature = feature;
+
+			feature.isClicked = true;
+			if( feature.layer ) {
+				feature.layer.drawFeature(feature);
+			};
+		};
 	}
 	
 	,startHover: function(feature) {
@@ -3633,6 +3654,13 @@ var MapAndControls = $n2.Class({
 			
 		} else if( 'addLayerToMap' === type ) {
 			this._handleAddLayerToMap(m);
+			
+		} else if( 'selected' === type ) {
+			var feature = m.feature;
+			if( !feature ) {
+				feature = this.getFeatureFromFid(m.docId);
+			};
+			this._selectedFeature(feature);
 			
 		} else if( 'focusOn' === type ) {
 			var feature = m.feature;
