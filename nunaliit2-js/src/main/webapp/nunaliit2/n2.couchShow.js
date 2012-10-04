@@ -519,10 +519,18 @@ var DomStyler = $n2.Class({
 			var dispatchHandle = this.showService.dispatchHandle;
 			$jq.hover(
 				function(){ // in
-					dispatchService.send(dispatchHandle, {type:'focusOn',docId:contextDoc._id});
+					dispatchService.send(dispatchHandle, {
+						type:'focusOn'
+						,docId:contextDoc._id
+						,doc:contextDoc
+					});
 				}
 				,function(){ // out
-					dispatchService.send(dispatchHandle, {type:'focusOff',docId:contextDoc._id});
+					dispatchService.send(dispatchHandle, {
+						type:'focusOff'
+						,docId:contextDoc._id
+						,doc:contextDoc
+					});
 				}
 			);
 		};

@@ -680,6 +680,8 @@ var MapAndControls = $n2.Class({
 	    this._registerDispatch('featureCreated');
 	    this._registerDispatch('featureUpdated');
 	    this._registerDispatch('addLayerToMap');
+	    this._registerDispatch('focusOn');
+	    this._registerDispatch('focusOff');
 		
 		// Layers
 		this.defaultLayerInfo = { // feature layer access details.
@@ -1225,6 +1227,18 @@ var MapAndControls = $n2.Class({
 			};
 		};
 	}
+
+	,getFeatureFromFid: function(fid){
+		for(var loop=0; loop<this.infoLayers.length; ++loop) {
+			var layerInfo = this.infoLayers[loop];
+			var feature = this.getLayerFeatureFromFid(layerInfo.olLayer,fid);
+			if( feature ) {
+				return feature;
+			};
+		};
+		
+		return null;
+	}
 	
 	,getLayerFeatureFromFid: function(layer,fid) {
 		
@@ -1232,7 +1246,7 @@ var MapAndControls = $n2.Class({
 			var loop;
 			var features = layer.features;
 			for(loop=0;loop<features.length;++loop) {
-				if( features[loop].fid && features[loop].fid == fid ) {
+				if( features[loop].fid && features[loop].fid === fid ) {
 					return features[loop];
 				};
 			};
@@ -1964,8 +1978,6 @@ var MapAndControls = $n2.Class({
 		
 		// Remember this new feature as "hovered"
 		this.hoverInfo.feature = feature;
-		feature.isHovered = true;
-		feature.layer.drawFeature(feature);
 
 		// Perform mode specific hover actions
 		if( this.currentMode.onStartHover ) {
@@ -1977,10 +1989,6 @@ var MapAndControls = $n2.Class({
 		if( this.hoverInfo && this.hoverInfo.feature ) {
 			var feature = this.hoverInfo.feature;
 			if( feature.isHovered ) {
-				feature.isHovered = false;
-				if( feature.layer ) {
-					feature.layer.drawFeature(feature);
-				};
 				if( this.currentMode.onEndHover ) {
 					this.currentMode.onEndHover(feature);
 				};
@@ -1996,6 +2004,13 @@ var MapAndControls = $n2.Class({
 			};
 			this.hoverInfo.endFn = [];
 			this.hoverInfo.feature = null;
+		};
+	}
+	
+	,_highlightHoveredFeature: function(feature, isInFocus){
+		if( feature.isHovered != isInFocus ) {
+			feature.isHovered = isInFocus ? true : false;
+			if( feature.layer ) feature.layer.drawFeature(feature);
 		};
 	}
 	
@@ -2040,13 +2055,25 @@ var MapAndControls = $n2.Class({
 			this.registerEndHoverFn(function(){
 				dispatchService.send(handle, {
 					type: 'focusOff'
+					,docId: feature.data._id
 					,doc: feature.data
+					,feature: feature
 		 		});
 			});
 			dispatchService.send(handle, {
 				type: 'focusOn'
+				,docId: feature.data._id
 				,doc: feature.data
+				,feature: feature
 	 		});
+			
+		} else {
+			// No dispatcher, redraw feature directly
+			this._highlightHoveredFeature(feature, true);
+
+			this.registerEndHoverFn(function(){
+				_this._highlightHoveredFeature(feature, false);
+			});
 		};
 	}
 	
@@ -3599,6 +3626,25 @@ var MapAndControls = $n2.Class({
 			
 		} else if( 'addLayerToMap' === type ) {
 			this._handleAddLayerToMap(m);
+			
+		} else if( 'focusOn' === type ) {
+			var feature = m.feature;
+			if( !feature ) {
+				feature = this.getFeatureFromFid(m.docId);
+			};
+			if( feature ) {
+				this._highlightHoveredFeature(feature, true);
+			};
+			
+		} else if( 'focusOff' === type ) {
+			var feature = m.feature;
+			if( !feature ) {
+				feature = this.getFeatureFromFid(m.docId);
+			};
+			if( feature ) {
+				this._highlightHoveredFeature(feature, false);
+			};
+			
 		};
 	}
 	
