@@ -73,6 +73,7 @@ var DispatchSupport = $n2.Class('DispatchSupport',{
 			
 			dispatcher.register(this.dispatcherHandle, 'documentCreated', f);
 			dispatcher.register(this.dispatcherHandle, 'documentUpdated', f);
+			dispatcher.register(this.dispatcherHandle, 'editClosed', f);
 		};
 
 		// If a database was provided, register callbacks for creation, update and
@@ -133,9 +134,22 @@ var DispatchSupport = $n2.Class('DispatchSupport',{
 			if( requestService ){
 				requestService.requestDocument(m.docId, this.docUpdatedCb);
 			};
+			
+		} else if( 'editClosed' === m.type ) {
+			var deleted = m.deleted;
+			if( !deleted ) {
+				var dispatcher = this._getDispatcher();
+				if( dispatcher ) {
+					dispatcher.send(this.dispatcherHandle,{
+						type: 'selected'
+						,docId: m.doc._id
+						,doc: m.doc
+					});
+				};
+			};
 		};
 	}
-	
+
 	,_docUploaded: function(doc,created){
 		if( doc.nunaliit_geom ){
 			var type = created ? 'featureCreated' : 'featureUpdated';

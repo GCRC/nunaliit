@@ -114,7 +114,6 @@ $n2.couchDisplay = $n2.Class({
 			};
 			dispatcher.register(this.dispatchHandle, 'selected', f);
 			dispatcher.register(this.dispatchHandle, 'searchResults', f);
-			dispatcher.register(this.dispatchHandle, 'editClosed', f);
 			dispatcher.register(this.dispatchHandle, 'documentDeleted', f);
 			dispatcher.register(this.dispatchHandle, 'login', f);
 			dispatcher.register(this.dispatchHandle, 'logout', f);
@@ -1289,14 +1288,6 @@ $n2.couchDisplay = $n2.Class({
 			
 		} else if( msg.type === 'searchResults' ) {
 			this._displaySearchResults(msg.results);
-			
-		} else if( msg.type === 'editClosed' ) {
-			var docId = msg.doc._id;
-			var deleted = msg.deleted;
-			if( !deleted ) {
-				var $div = this.getDisplayDiv();
-				this.DisplayDocumentId($div, docId);
-			};
 			
 		} else if( msg.type === 'documentDeleted' ) {
 			var docId = msg.docId;
