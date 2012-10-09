@@ -469,6 +469,36 @@ $n2.utils = {
 		};
 		return res.join('');
 	}
+	
+	/**
+	 * Unescapes a string previously converted using stringToHtmlId(). 
+	 * @name unescapeHtmlId
+	 * @function
+	 * @memberOf nunaliit2.utils
+	 * @param {String} s String to be unescaped.
+	 * @returns {String} String initially passed to the stringToHtmlId() function.
+	 */
+	,unescapeHtmlId: function(s){
+		var res = [];
+		for(var i=0,e=s.length; i<e; ++i) {
+			var c = s[i];
+			if( c === '_' ) { 
+				++i;
+				var o2 = sel.charCodeAt(i);
+				++i;
+				var o1 = sel.charCodeAt(i);
+				++i;
+				var o0 = sel.charCodeAt(i);
+				
+				var b = ((o2-0x30)<<6)+((o1-0x30)<<3)+(o0-0x30);
+				res.push(String.fromCharCode(b));
+				
+			} else {
+				res.push(c);
+			};
+		};
+		return res.join('');
+	}
 
 	/**
 	 * Returns information about the browser. This is based on code found

@@ -51,6 +51,11 @@ function docCreationTimeSort(lhs, rhs) {
 	return 0;
 };
 
+function startsWith(s, prefix) {
+	var left = s.substr(0,prefix.length);
+	return (left === prefix);
+};
+
 var defaultOptions = {
 	db: null
 	,designDoc: null
@@ -111,6 +116,8 @@ $n2.couchDisplay = $n2.Class({
 			dispatcher.register(this.dispatchHandle, 'searchResults', f);
 			dispatcher.register(this.dispatchHandle, 'editClosed', f);
 			dispatcher.register(this.dispatchHandle, 'documentDeleted', f);
+			dispatcher.register(this.dispatchHandle, 'login', f);
+			dispatcher.register(this.dispatchHandle, 'logout', f);
 		};
 
 		var requestService = this._getRequestService();
@@ -337,10 +344,115 @@ $n2.couchDisplay = $n2.Class({
 
 		var dispatcher = this._getDispatcher();
 		
-		var $buttons = $('<div class="nunaliit_form_linkset"></div>');
+		var $buttons = $('<div></div>');
+		$buttons.addClass('n2Display_buttons');
+		$buttons.addClass('n2Display_buttons_'+$n2.utils.stringToHtmlId(data._id));
 		$elem.append( $buttons );
+		
+		var optionClass = 'options';
+		if( opt.focus ) optionClass += '_focus';
+		if( opt.edit ) optionClass += '_edit';
+		if( opt.related ) optionClass += '_related';
+		if( opt.geom ) optionClass += '_geom';
+		if( opt['delete'] ) optionClass += '_delete';
+		$buttons.addClass(optionClass);
 
+		var opts = {
+			doc: data
+			,schema: opt.schema
+			,focus: opt.focus
+			,edit: opt.edit
+			,related: opt.related
+			,geom: opt.geom
+		};
+		opts['delete'] = opt['delete'];
+		this._displayButtons($buttons, opts);
+	}
+	
+	,_refreshButtons: function($elem){
+		var _this = this;
+		
+		var docId = null;
+		var fFocus = false;
+		var fEdit = false;
+		var fRelated = false;
+		var fGeom = false;
+		var fDelete = false;
+		var classAttr = $elem.attr('class');
+		var classes = classAttr.split(' ');
+		for(var i=0,e=classes.length; i<e; ++i){
+			var className = classes[i];
+			if( startsWith(className,'n2Display_buttons_') ){
+				var escapedDocId = className.substr('n2Display_buttons_'.length);
+				docId = $n2.utils.unescapeHtmlId(escapedDocId);
+				
+			} else if( startsWith(className,'options') ){
+				var options = className.split('_');
+				for(var j=0,k=options.length; j<k; ++j){
+					var o = options[j];
+					if( 'focus' === o ){ fFocus = true; }
+					else if( 'edit' === o ){ fEdit = true; }
+					else if( 'related' === o ){ fRelated = true; }
+					else if( 'geom' === o ){ fGeom = true; }
+					else if( 'delete' === o ){ fDelete = true; };
+				};
+			};
+		};
+		
+		if( docId ){
+			this.options.db.getDocument({
+				docId: docId
+				,onSuccess: getSchema
+				,onError:function(){}
+			});
+		};
+		
+		function getSchema(doc){
+			if( doc.nunaliit_schema ) {
+				var schemaRepository = _this._getSchemaRepository();
+				if( schemaRepository ) {
+					schemaRepository.getSchema({
+						name: doc.nunaliit_schema
+						,onSuccess: function(schema) {
+							drawButtons(doc,schema);
+						}
+						,onError: function(){
+							drawButtons(doc,null);
+						}
+					});
+					
+				} else {
+					drawButtons(doc,null);
+				};
+				
+			} else {
+				drawButtons(doc,null);
+			};
+		};
+		
+		function drawButtons(doc,schema){
+			var opts = {
+				doc: doc
+				,schema: schema
+				,focus: fFocus
+				,edit: fEdit
+				,related: fRelated
+				,geom: fGeom
+			};
+			opts['delete'] = fDelete;
+			$elem.empty();
+			_this._displayButtons($elem, opts);
+		};
+	}
+	
+	,_displayButtons: function($buttons, opt){
+
+		var _this = this;
+		var data = opt.doc;
+		var schema = opt.schema;
+		
 		var firstButton = true;
+		var dispatcher = this._getDispatcher();
 
  		// Show 'focus' button
  		if( opt.focus 
@@ -1168,6 +1280,8 @@ $n2.couchDisplay = $n2.Class({
 	}
 	
 	,_handleDispatch: function(msg){
+		var _this = this;
+		
 		// Selected document
 		if( msg.type === 'selected' ) {
 			if( msg.doc ) {
@@ -1201,6 +1315,13 @@ $n2.couchDisplay = $n2.Class({
 		} else if( msg.type === 'documentDeleted' ) {
 			var docId = msg.docId;
 			this._handleDocumentDeletion(docId);
+			
+		} else if( msg.type === 'login' 
+			|| msg.type === 'logout' ) {
+			$('.n2Display_buttons').each(function(){
+				var $elem = $(this);
+				_this._refreshButtons($elem);
+			});
 		};
 	}
 	
