@@ -219,6 +219,46 @@ $n2.couchDisplay = $n2.Class({
 		this._getShowService().displayDocument($sElem, {
 			onDisplayed: onDisplayed
 		}, data);
+
+		if( data.nunaliit_schema ) {
+			var schemaRepository = _this._getSchemaRepository();
+			if( schemaRepository ) {
+				schemaRepository.getSchema({
+					name: data.nunaliit_schema
+					,onSuccess: function(schema) {
+						continueDisplay(schema);
+					}
+					,onError: function(){
+						continueDisplay(null);
+					}
+				});
+				
+			} else {
+				continueDisplay(null);
+			};
+			
+		} else {
+			continueDisplay(null);
+		};
+		
+		function continueDisplay(schema){
+			_this._addButtons($elem, data, {
+				schema: schema
+				,related: true
+				,geom: true
+				,edit: true
+				,'delete': true
+			});
+			
+			var relatedInfoId = $n2.getUniqueId();
+			var $div = $('<div id="'+relatedInfoId+'"></div>');
+			$elem.append($div);
+			_this.options.displayRelatedInfoFunction({
+				divId: relatedInfoId
+				,doc: data
+				,schema: schema
+			});
+		};
 		
 		function onDisplayed($sElem, data, schema, opt_){
 			$sElem.find('.n2s_referenceLink').each(function(){
@@ -265,23 +305,6 @@ $n2.couchDisplay = $n2.Class({
 				var fn = _this.postProcessDisplayFns[i];
 				fn(data, $sElem);
 			};
-			
-			_this._addButtons($elem, data, {
-				schema: schema
-				,related: true
-				,geom: true
-				,edit: true
-				,'delete': true
-			});
-			
-			var relatedInfoId = $n2.getUniqueId();
-			var $div = $('<div id="'+relatedInfoId+'"></div>');
-			$elem.append($div);
-			_this.options.displayRelatedInfoFunction({
-				divId: relatedInfoId
-				,doc: data
-				,schema: schema
-			});
 		};
 
 		function eachFunctionForClass(className, fn, data, opt){
@@ -291,43 +314,6 @@ $n2.couchDisplay = $n2.Class({
 				$jq.removeClass(className);
 			};
 		};
-		
-
-		// OLD CODE
-//		var _this = this;
-//		
-//		// Specific schema?
-//		if( data.nunaliit_schema ) {
-//			$n2.schema.DefaultRepository.getSchema({
-//				name: data.nunaliit_schema
-//				,onSuccess: function(schema){
-//					_this._displayObjectUsingSchema($elem, data, schema, opt_);
-//				}
-//				,onError: function(){
-//					_this._displayObjectUsingSchema($elem, data, _this.defaultSchema, opt_);
-//				}
-//			});
-//			
-//		} else {
-//			this._displayObjectUsingSchema($elem, data, this.defaultSchema, opt_);
-//		};
-	
-		// Contribution Code
-//		if( opt.showRelatedContributions 
-//		 && this.mapAndControl.contributions
-//		 ) {
-//			$elem.append( $('<div class="placename_header">'+_loc('Contributions:')+'</div>') );
-//			// Div to hold associated contributions
-//			var contId = $n2.getUniqueId();
-//			var $div = $('<div id="'+contId+'"></div>');
-//			$elem.append($div);
-//			this.mapAndControl.contributions.getContributionsForReference({
-//				docId: data._id
-//				,onSuccess: function(contributions){
-//					_this.reportContributions(data, opt, contId, contributions);
-//				}
-//			});
-//		};
 	}
 	
 	,_addButtons: function($elem, data, opt_) {
