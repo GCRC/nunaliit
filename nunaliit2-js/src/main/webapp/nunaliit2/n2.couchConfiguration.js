@@ -55,6 +55,14 @@ function Configure(options_){
 	// Dispatcher
 	configuration.directory.dispatchService = new $n2.dispatch.Dispatcher();
 	
+	// History monitoring
+	configuration.directory.historyMonitor = new $n2.history.Monitor({
+		directory: configuration.directory
+	});
+	configuration.directory.historyTracker = new $n2.history.Tracker({
+		directory: configuration.directory
+	});
+	
  	// Turn off cometd
  	$.cometd = {
  		init: function(){}
