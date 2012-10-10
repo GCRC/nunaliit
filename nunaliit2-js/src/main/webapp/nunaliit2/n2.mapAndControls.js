@@ -613,6 +613,7 @@ var MapAndControls = $n2.Class({
 		this.clickedInfo = {
 			feature: null
 			,endFn: []
+			,fids: {}
 		}
 
 		// MODES
@@ -1286,7 +1287,7 @@ var MapAndControls = $n2.Class({
 		return r;
 	}
 	
-	,reloadFeature: function(filter,options_) {
+	,_reloadFeature: function(filter,options_) {
 		var _this = this;
 		
 		// Figure out options
@@ -1365,7 +1366,7 @@ var MapAndControls = $n2.Class({
         		        };
 		            };
 		        };
-				
+		        
 				// Merge features
 				for(var featureLoop=0; featureLoop<features.length; ++featureLoop) {
 					// Read in feature
@@ -1373,7 +1374,7 @@ var MapAndControls = $n2.Class({
 					var feature = _this.getLayerFeatureFromFid(layerInfo.olLayer,loadedFeature.fid);
 					if( feature ) {
 						layerInfo.olLayer.destroyFeatures([feature]);
-					} 
+					}
 					
 					// Create new feature and add to layer
 					// If in edit mode, first disable editAttribute widget
@@ -1389,17 +1390,17 @@ var MapAndControls = $n2.Class({
 					reloadOptions.onReloaded(loadedFeature);
 					
 					// Let display logic know that a feature was updated
-					if( $.olkitDisplay ) {
-						if( typeof($.olkitDisplay.FeatureUpdated) === 'function' ) {
-							$.olkitDisplay.FeatureUpdated(loadedFeature);
-						};
-					
-					} else if( $n2.placeInfo ) {
-						var lastDisplayedFid = $n2.placeInfo.getFid();
-						if (lastDisplayedFid != -1 && lastDisplayedFid == loadedFeature.fid) {
-							$n2.placeInfo.setFeatureReinitDisplay(loadedFeature);
-						};
-					};
+//					if( $.olkitDisplay ) {
+//						if( typeof($.olkitDisplay.FeatureUpdated) === 'function' ) {
+//							$.olkitDisplay.FeatureUpdated(loadedFeature);
+//						};
+//					
+//					} else if( $n2.placeInfo ) {
+//						var lastDisplayedFid = $n2.placeInfo.getFid();
+//						if (lastDisplayedFid != -1 && lastDisplayedFid == loadedFeature.fid) {
+//							$n2.placeInfo.setFeatureReinitDisplay(loadedFeature);
+//						};
+//					};
 				};
 			};
 			
@@ -1641,6 +1642,19 @@ var MapAndControls = $n2.Class({
 		layerInfo.olLayer.events.register('visibilitychanged', null, function(evt_){
 			var selected = evt_.object.visibility;
 			evt_.object._layerInfo.selectListener(selected,evt_.object._layerInfo);
+		});
+		
+		layerInfo.olLayer.events.register('beforefeaturesadded', null, function(evt_){
+			var features = evt_.features;
+			if( features ){
+				for(var i=0,e=features.length;i<e;++i){
+					var f = features[i];
+					if( _this.clickedInfo.fids[f.fid] ){
+						_this.clickedInfo.feature = f;
+						f.isClicked = true;
+					};
+				};
+			};
 		});
 		
 		layerInfo.olLayer.events.register('featuresadded', null, function(evt_){
@@ -1932,6 +1946,9 @@ var MapAndControls = $n2.Class({
 		} else {
 			this.clickedInfo.feature = feature;
 
+			this.clickedInfo.fids = {};
+			this.clickedInfo.fids[feature.fid] = true;
+			
 			feature.isClicked = true;
 			if( feature.layer ) {
 				feature.layer.drawFeature(feature);
@@ -1969,6 +1986,7 @@ var MapAndControls = $n2.Class({
 			};
 			this.clickedInfo.endFn = [];
 			this.clickedInfo.feature = null;
+			this.clickedInfo.fids = {};
 		};
 	}
 	
@@ -1976,8 +1994,13 @@ var MapAndControls = $n2.Class({
 		this.clickedInfo.endFn.push(fn);
 	}
 	
-	,_selectedFeature: function(feature){
+	,_selectedFeature: function(feature, fid){
 		this.endClicked();
+		
+		this.clickedInfo.fids = {};
+		if( fid ) {
+			this.clickedInfo.fids[fid] = true;
+		};
 		
 		if( feature ) {
 			this.clickedInfo.feature = feature;
@@ -2578,7 +2601,7 @@ var MapAndControls = $n2.Class({
 
 		this.fidAdded(fid);
 		var filter = $n2.olFilter.fromFid(fid);
-		this.reloadFeature(filter,{
+		this._reloadFeature(filter,{
 			onReloaded: function(feature) {
 				if( _this.options.contribInsertedReloadAddContrib ) {
 					if( _this.options.contribInsertedReloadDataFn === null ) {
@@ -2609,7 +2632,7 @@ var MapAndControls = $n2.Class({
 		var fid = feature.fid;
 		this.fidUpdated(fid);
 		var filter = $n2.olFilter.fromFid(fid);
-		this.reloadFeature(filter, {
+		this._reloadFeature(filter, {
 			onReloaded: function(feature) {
 				_this.markFeatureAsClicked({fid:fid}); // back in navigation mode - click the feature
 			}
@@ -2751,11 +2774,11 @@ var MapAndControls = $n2.Class({
 			// Reload feature
 			if( msg.data.type == 'added' ) {
 				var filter = $n2.olFilter.fromFid(msg.data.fid);
-				this.reloadFeature(filter);
+				this._reloadFeature(filter);
 				
 			} else if( msg.data.type == 'updated' ) {
 				var filter = $n2.olFilter.fromFid(msg.data.fid);
-				this.reloadFeature(filter);
+				this._reloadFeature(filter);
 				
 			} else if( msg.data.type == 'deleted' ) {
 				this.removeFeature(msg.data.fid);
@@ -3278,6 +3301,19 @@ var MapAndControls = $n2.Class({
 			evt_.object._layerInfo.selectListener(selected,evt_.object._layerInfo);
 		});
 		
+		layerInfo.olLayer.events.register('beforefeaturesadded', null, function(evt_){
+			var features = evt_.features;
+			if( features ){
+				for(var i=0,e=features.length;i<e;++i){
+					var f = features[i];
+					if( _this.clickedInfo.fids[f.fid] ){
+						_this.clickedInfo.feature = f;
+						f.isClicked = true;
+					};
+				};
+			};
+		});
+		
 		layerInfo.olLayer.events.register('featuresadded', null, function(evt_){
 			_this._resortLayerFeatures(evt_);
 			
@@ -3645,12 +3681,34 @@ var MapAndControls = $n2.Class({
 			this.removeFeature(m.docId);
 			
 		} else if( 'featureCreated' === type ) {
+			var doc = m.doc;
+			if( doc && doc._rev ){
+				var feature = this.getFeatureFromFid(doc._id);
+				if( feature && feature.data ){
+					if( feature.data._rev === doc._rev ){
+						// Nothing to do
+						return;
+					};
+				};
+			};
+			
 			var filter = $n2.olFilter.fromFid(m.docId);
-			this.reloadFeature(filter);
+			this._reloadFeature(filter);
 			
 		} else if( 'featureUpdated' === type ) {
+			var doc = m.doc;
+			if( doc && doc._rev ){
+				var feature = this.getFeatureFromFid(doc._id);
+				if( feature && feature.data ){
+					if( feature.data._rev === doc._rev ){
+						// Nothing to do
+						return;
+					};
+				};
+			};
+			
 			var filter = $n2.olFilter.fromFid(m.docId);
-			this.reloadFeature(filter);
+			this._reloadFeature(filter);
 			
 		} else if( 'addLayerToMap' === type ) {
 			this._handleAddLayerToMap(m);
@@ -3660,7 +3718,7 @@ var MapAndControls = $n2.Class({
 			if( !feature ) {
 				feature = this.getFeatureFromFid(m.docId);
 			};
-			this._selectedFeature(feature);
+			this._selectedFeature(feature, m.docId);
 			
 		} else if( 'focusOn' === type ) {
 			var feature = m.feature;
