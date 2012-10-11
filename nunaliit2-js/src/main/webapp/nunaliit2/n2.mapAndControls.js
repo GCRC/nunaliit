@@ -372,13 +372,9 @@ function OlkitAttributeFormManagerSidePanel(options_) {
 		If not specified (null), then local map filtering is disabled.
     @param {Boolean} options_.toggleClick=true 
     	If set, then clicking on a feature in a clicked 'state' turns off
-		the clicking state. When turning off this way, the function defined in
-		options_.toggleClickFn is called. If reset, clicking on a feature multiple
+		the clicking state. When turning off this way, the event 'unselected' is
+		dispatched. If reset, clicking on a feature multiple
 		times is ignored.
-    @param {Function} options_.toggleClickFn
-		Function that is called when 'toggleClick' is set and that a feature
-		is clicked a second time. By default, this function empties the side panel
-		(identified in options.sidePanelName)
     @param {String} options_.uniqueIdentifier='place_id'
 		Name of the feature attribute which uniquely identifies the feature.
 		This is important to coordinate all the map extensions. It defaults to 'place_id'
@@ -579,7 +575,6 @@ var MapAndControls = $n2.Class({
 			,sidePanelName: 'side'
 			,filterPanelName: null
 			,toggleClick: true
-			,toggleClickFn: function(){ $('#'+options.sidePanelName).empty(); } // what to do with side display when unselected
 			,uniqueIdentifier: 'place_id'
 			,layerSwitcher: {
 				suppress: false
@@ -682,6 +677,7 @@ var MapAndControls = $n2.Class({
 	    this._registerDispatch('featureUpdated');
 	    this._registerDispatch('addLayerToMap');
 	    this._registerDispatch('selected');
+	    this._registerDispatch('unselected');
 	    this._registerDispatch('focusOn');
 	    this._registerDispatch('focusOff');
 	    this._registerDispatch('findOnMap');
@@ -1943,7 +1939,8 @@ var MapAndControls = $n2.Class({
 		this._endClicked();
 		
 		if( !forced && this.options.toggleClick && clickedAgain ) {
-			this.options.toggleClickFn();
+			this._dispatch({type:'unselected',docId:feature.fid});
+			
 		} else {
 			this.clickedInfo.feature = feature;
 
@@ -3720,6 +3717,9 @@ var MapAndControls = $n2.Class({
 				feature = this.getFeatureFromFid(m.docId);
 			};
 			this._selectedFeature(feature, m.docId);
+			
+		} else if( 'unselected' === type ) {
+			this._endClicked();
 			
 		} else if( 'focusOn' === type ) {
 			var feature = m.feature;

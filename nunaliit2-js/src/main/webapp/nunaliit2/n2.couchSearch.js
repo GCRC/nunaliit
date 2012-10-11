@@ -35,6 +35,9 @@ $Id: n2.couchSearch.js 8464 2012-08-30 15:43:23Z jpfiset $
 // Localization
 var _loc = function(str){ return $n2.loc(str,'nunaliit2-couch'); };
 
+// Dispatcher
+var DH = 'n2.couchSearch';
+
 var reWordSplit = /[\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\x7f]+/;
 
 function SplitSearchTerms(line) {
@@ -461,12 +464,19 @@ var SearchInput = $n2.Class({
 			,dispatchService: null // dispatchService should be supplied
 		},opts_);
 		
+		var _this = this;
+		
 		this.searchServer = server_;
 
 		this.keyPressedSinceLastSearch = false;
 		
 		if( this.options.dispatchService ) {
-			this.dispatchHandle = this.options.dispatchService.getHandle('n2.couchSearch');
+			var f = function(m){
+				_this._handle(m);
+			};
+			this.options.dispatchService.register(DH,'searchInitiate',f);
+			this.options.dispatchService.register(DH,'selected',f);
+			this.options.dispatchService.register(DH,'unselected',f);
 		};
 		
 		// Figure out id. We should not hold onto a reference
@@ -523,7 +533,7 @@ var SearchInput = $n2.Class({
 		};
 		
 		if( this.options.dispatchService ) {
-			this.options.dispatchService.send(this.dispatchHandle, {
+			this.options.dispatchService.send(DH, {
 				type: 'searchInitiate'
 				,searchLine: line
 			});
@@ -658,7 +668,7 @@ var SearchInput = $n2.Class({
 			this.options.displayFn(searchResults);
 			
 		} else if( this.options.dispatchService ) {
-			this.options.dispatchService.send(this.dispatchHandle, {
+			this.options.dispatchService.send(DH, {
 				type: 'searchResults'
 				,results: searchResults
 			});
@@ -676,10 +686,9 @@ var SearchInput = $n2.Class({
 					var docId = searchResults.list[i].id;
 					
 					if( docId ) {
-						docIds.push(docId
-								);
+						docIds.push(docId);
 						var div = $('<div class="olkitSearchMod2_'+(i%2)
-							+' n2searchDocId_'+this._escapeForClass(docId)+'"></div>');
+							+' n2searchDocId_'+$n2.utils.stringToHtmlId(docId)+'"></div>');
 						div.text(docId);
 				
 						$display.append(div);
@@ -694,7 +703,7 @@ var SearchInput = $n2.Class({
 							var doc = docs[i];
 							
 							if( doc ) {
-								var $div = $('.n2searchDocId_'+_this._escapeForClass(doc._id));
+								var $div = $('.n2searchDocId_'+$n2.utils.stringToHtmlId(doc._id));
 								if( $div.length > 0 ) {
 									$div.empty();
 									$.olkitDisplay.DisplayDocument($div,doc);
@@ -755,28 +764,20 @@ var SearchInput = $n2.Class({
 		});
 	}
 
-	/*
-	 * Escapes a string into another string acceptable for class name
-	 */
-	,_escapeForClass: function(sel){
-		var res = [];
-		for(var i=0,e=sel.length; i<e; ++i) {
-			var c = sel[i];
-			if( c >= 'a' && c <= 'z' ) { res.push(c); }
-			else if( c >= 'A' && c <= 'Z' ) { res.push(c); }
-			else if( c >= '0' && c <= '9' ) { res.push(c); }
-			else {
-				var code = c.charCodeAt(0);
-				var o0 = (code & 0x07) + 0x30;
-				var o1 = ((code >> 3) & 0x07) + 0x30;
-				var o2 = ((code >> 6) & 0x07) + 0x30;
-				res.push('_');
-				res.push( String.fromCharCode(o2) );
-				res.push( String.fromCharCode(o1) );
-				res.push( String.fromCharCode(o0) );
+	,_handle: function(m){
+		if( 'searchInitiate' === m.type ){
+			var $textInput = this.getTextInput();
+			$textInput.val(m.searchLine);
+			
+		} else if( 'selected' === m.type 
+		 || 'unselected' === m.type ){
+			var $textInput = this.getTextInput();
+			if( this.options.initialSearchText ) {
+				$textInput.val(this.options.initialSearchText);
+			} else {
+				$textInput.val('');
 			};
 		};
-		return res.join('');
 	}
 });
 

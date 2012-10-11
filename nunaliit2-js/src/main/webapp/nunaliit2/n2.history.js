@@ -40,6 +40,9 @@ $Id: n2.form.js 8165 2012-05-31 13:14:37Z jpfiset $
 // Localization
 var _loc = function(str){ return $n2.loc(str,'nunaliit2'); };
 
+var TYPE_SELECTED = 'x';
+var TYPE_SEARCH = 's';
+
 // ======================= MONITOR ====================================
 // Tracks the changes to hash and reports them as dispatcher messages.
 // Accepts 'historyBack', 'historyForward' and 'setHash' messages.
@@ -154,6 +157,7 @@ var Tracker = $n2.Class({
 			d.register(h,'start',f)
 			d.register(h,'hashChanged',f)
 			d.register(h,'selected',f)
+			d.register(h,'unselected',f)
 			d.register(h,'searchInitiate',f)
 		};
 	}
@@ -191,11 +195,23 @@ var Tracker = $n2.Class({
 			};
 
 			if( !m._suppressHashChange ) {
-				var j = JSON.stringify({type:'selected',docId:m.docId});
+				var j = JSON.stringify({t:TYPE_SELECTED,i:m.docId});
 				var u = $n2.Base64.encode(j);
 				this._dispatch({
 					type: 'setHash'
 					,hash: u
+				});
+			};
+
+		} else if( 'unselected' === m.type ){
+			this.last = {
+				unselected: true	
+			};
+
+			if( !m._suppressHashChange ) {
+				this._dispatch({
+					type: 'setHash'
+					,hash: null
 				});
 			};
 
@@ -205,7 +221,7 @@ var Tracker = $n2.Class({
 			};
 
 			if( !m._suppressHashChange ) {
-				var j = JSON.stringify({type:'search',l:m.searchLine});
+				var j = JSON.stringify({t:TYPE_SEARCH,l:m.searchLine});
 				var u = $n2.Base64.encode(j);
 				this._dispatch({
 					type: 'setHash'
@@ -216,29 +232,39 @@ var Tracker = $n2.Class({
 		} else if( 'hashChanged' === m.type ){
 			var o = null;
 
-			try {
-				var d = $n2.Base64.decode(m.hash);
-				o = JSON.parse(d);
-			} catch(s) {};
-
-			if( o ){
-				if( 'selected' === o.type ){
-					var docId = o.docId;
-					if( docId !== this.last.selected ){
-						this._dispatch({
-							type: 'selected'
-							,docId: docId
-							,_suppressHashChange: true
-						});
-					};
-				} else if( 'search' === o.type ){
-					var searchLine = o.l;
-					if( searchLine !== this.last.search ){
-						this._dispatch({
-							type: 'searchInitiate'
-							,searchLine: searchLine
-							,_suppressHashChange: true
-						});
+			if( '' === m.hash || !m.hash ){
+				if( !this.last.unselected ){
+					this._dispatch({
+						type: 'unselected'
+						,_suppressHashChange: true
+					});
+				};
+			} else {
+				// Attempt to interpret hash
+				try {
+					var d = $n2.Base64.decode(m.hash);
+					o = JSON.parse(d);
+				} catch(s) {};
+	
+				if( o ){
+					if( TYPE_SELECTED === o.t ){
+						var docId = o.i;
+						if( docId !== this.last.selected ){
+							this._dispatch({
+								type: 'selected'
+								,docId: docId
+								,_suppressHashChange: true
+							});
+						};
+					} else if( TYPE_SEARCH === o.t ){
+						var searchLine = o.l;
+						if( searchLine !== this.last.search ){
+							this._dispatch({
+								type: 'searchInitiate'
+								,searchLine: searchLine
+								,_suppressHashChange: true
+							});
+						};
 					};
 				};
 			};
