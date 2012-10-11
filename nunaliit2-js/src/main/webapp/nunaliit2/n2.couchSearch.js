@@ -522,17 +522,25 @@ var SearchInput = $n2.Class({
 			$textInput.val(line);
 		};
 		
-		var searchRequest = this.searchServer.submitRequest(
-			line
-			,{
-				onSuccess: function(searchResults){
-					_this._processSearchResults(searchResults);
+		if( this.options.dispatchService ) {
+			this.options.dispatchService.send(this.dispatchHandle, {
+				type: 'searchInitiate'
+				,searchLine: line
+			});
+			
+		} else if( this.searchServer ){
+			this.searchServer.submitRequest(
+				line
+				,{
+					onSuccess: function(searchResults){
+						_this._processSearchResults(searchResults);
+					}
+					,onError: function(err){ 
+						_this._processSearchError(err);
+					}
 				}
-				,onError: function(err){ 
-					_this._processSearchError(err);
-				}
-			}
-		);
+			);
+		};
 
 		this.keyPressedSinceLastSearch = false;
 		this._displayWait();
@@ -784,6 +792,7 @@ var SearchServer = $n2.Class({
 		this.options = $n2.extend({
 			designDoc: null
 			,db: null
+			,directory: null
 			,searchView: 'text-search'
 			,searchLimit: 25
 			,lookAheadView: 'text-lookahead'
@@ -793,7 +802,18 @@ var SearchServer = $n2.Class({
 			,lookAheadCacheSize: 10
 		},opts_);
 		
+		var _this = this;
+		
 		this.lookAheadService = null;
+		
+		var d = this._getDispatcher();
+		if( d ){
+			var f = function(m){
+				_this._handle(m);
+			};
+			var h = d.getHandle('n2.couchSearch');
+			d.register(h,'searchInitiate',f);
+		};
 	}
 
 	,getLookAheadService: function() {
@@ -826,6 +846,37 @@ var SearchServer = $n2.Class({
 	
 	,installSearch: function(opts_) {
 		return new SearchInput(opts_, this);
+	}
+	
+	,_getDispatcher: function(){
+		var d = null;
+		if( this.options.directory ){
+			d = this.options.directory.dispatchService;
+		};
+		return d;
+	}
+	
+	,_handle: function(m){
+		if( 'searchInitiate' === m.type ){
+			var searchTerms = m.searchLine;
+
+			var dispatcher = this._getDispatcher();
+			var h = dispatcher.getHandle('n2.couchSearch');
+			this.submitRequest(searchTerms, {
+				onSuccess: function(searchResults){
+					dispatcher.send(h, {
+						type: 'searchResults'
+						,results: searchResults
+					});
+				}
+				,onError: function(err){
+					dispatcher.send(h, {
+						type: 'searchError'
+						,error: err
+					});
+				}
+			});
+		};
 	}
 });
 

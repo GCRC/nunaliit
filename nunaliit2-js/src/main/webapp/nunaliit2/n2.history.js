@@ -99,14 +99,6 @@ var Monitor = $n2.Class({
 				type: 'hashChanged'
 				,hash: hash
 			};
-			
-			try {
-				var d = $n2.Base64.decode(j);
-				var o = JSON.parse(d);
-				m.data = o;
-			} catch(s) {};
-			
-			$n2.log('hashchanged',m);
 			this._dispatch(m);
 		};
 	}
@@ -142,7 +134,7 @@ var Tracker = $n2.Class({
 	
 	options: null
 	
-	,lastSelected: null
+	,last: null
 	
 	,initialize: function(opts_){
 		this.options = $n2.extend({
@@ -151,14 +143,18 @@ var Tracker = $n2.Class({
 		
 		var _this = this;
 		
+		this.last = {};
+		
 		var d = this._getDispatcher();
 		if( d ){
 			var f = function(m){
 				_this._handle(m);
 			};
 			var h = d.getHandle('n2.history');
-			d.register(h,'selected',f)
+			d.register(h,'start',f)
 			d.register(h,'hashChanged',f)
+			d.register(h,'selected',f)
+			d.register(h,'searchInitiate',f)
 		};
 	}
 
@@ -179,16 +175,44 @@ var Tracker = $n2.Class({
 	}
 	
 	,_handle: function(m){
-		if( 'selected' === m.type ){
-			this.lastSelected = m.docId;
+		if( 'start' === m.type ){
+			var hash = window.location.hash;
+			if( hash && hash !== '') {
+				hash = hash.substr(1);
+				this._dispatch({
+					type: 'hashChanged'
+					,hash: hash
+				});
+			};
 
-			var j = JSON.stringify({type:'selected',docId:m.docId});
-			var u = $n2.Base64.encode(j);
-			this._dispatch({
-				type: 'setHash'
-				,hash: u
-			});
-			
+		} else if( 'selected' === m.type ){
+			this.last = {
+				selected: m.docId	
+			};
+
+			if( !m._suppressHashChange ) {
+				var j = JSON.stringify({type:'selected',docId:m.docId});
+				var u = $n2.Base64.encode(j);
+				this._dispatch({
+					type: 'setHash'
+					,hash: u
+				});
+			};
+
+		} else if( 'searchInitiate' === m.type ){
+			this.last = {
+				search: m.searchLine
+			};
+
+			if( !m._suppressHashChange ) {
+				var j = JSON.stringify({type:'search',l:m.searchLine});
+				var u = $n2.Base64.encode(j);
+				this._dispatch({
+					type: 'setHash'
+					,hash: u
+				});
+			};
+
 		} else if( 'hashChanged' === m.type ){
 			var o = null;
 
@@ -200,10 +224,20 @@ var Tracker = $n2.Class({
 			if( o ){
 				if( 'selected' === o.type ){
 					var docId = o.docId;
-					if( docId !== this.lastSelected ){
+					if( docId !== this.last.selected ){
 						this._dispatch({
 							type: 'selected'
 							,docId: docId
+							,_suppressHashChange: true
+						});
+					};
+				} else if( 'search' === o.type ){
+					var searchLine = o.l;
+					if( searchLine !== this.last.search ){
+						this._dispatch({
+							type: 'searchInitiate'
+							,searchLine: searchLine
+							,_suppressHashChange: true
 						});
 					};
 				};

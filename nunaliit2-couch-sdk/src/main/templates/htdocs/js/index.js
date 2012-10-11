@@ -16,7 +16,9 @@ function main_init(config) {
 		,sidePanelName: 'side'
 		,filterPanelName: 'filters'
 		,searchPanelName: 'searchInput'
-		,onSuccess: function(){}
+		,onSuccess: function(){
+			config.start();
+		}
 		,onError: function(err){ alert('Unable to display module('+moduleName+'): '+err); }
 	});
 	

@@ -685,6 +685,7 @@ var MapAndControls = $n2.Class({
 	    this._registerDispatch('focusOn');
 	    this._registerDispatch('focusOff');
 	    this._registerDispatch('findOnMap');
+	    this._registerDispatch('searchInitiate');
 		
 		// Layers
 		this.defaultLayerInfo = { // feature layer access details.
@@ -1939,7 +1940,7 @@ var MapAndControls = $n2.Class({
 			return;
 		};
 		
-		this.endClicked();
+		this._endClicked();
 		
 		if( !forced && this.options.toggleClick && clickedAgain ) {
 			this.options.toggleClickFn();
@@ -1960,7 +1961,7 @@ var MapAndControls = $n2.Class({
 		};
 	}
 	
-	,endClicked: function() {
+	,_endClicked: function() {
 		if( this.clickedInfo && this.clickedInfo.feature ) {
 			var feature = this.clickedInfo.feature;
 			
@@ -1995,7 +1996,7 @@ var MapAndControls = $n2.Class({
 	}
 	
 	,_selectedFeature: function(feature, fid){
-		this.endClicked();
+		this._endClicked();
 		
 		this.clickedInfo.fids = {};
 		if( fid ) {
@@ -2081,7 +2082,7 @@ var MapAndControls = $n2.Class({
 			this.selectFeatureControl.deactivate();
 		};
 		this.endHover();
-		this.endClicked();
+		this._endClicked();
 	}
 
 	,hoverFeature: function(feature) {
@@ -3413,7 +3414,7 @@ var MapAndControls = $n2.Class({
 				_this.startClicked(feature, forced);
 			}
 			,onClickOut: function(){
-				_this.endClicked();
+				_this._endClicked();
 			}
 		});
 		this.selectFeatureControl.handlers.feature = new OpenLayers.Handler.Feature(
@@ -3494,7 +3495,7 @@ var MapAndControls = $n2.Class({
 		if (null == layerInfo) {
 			alert('redefineFeatureLayerStylesAndRules: unknown layer name: ' + layerName)
 		} else {
-    		this.endClicked();
+    		this._endClicked();
     		layerInfo.olLayer.redraw();    			
 		};
 	}
@@ -3740,6 +3741,9 @@ var MapAndControls = $n2.Class({
 			
 		} else if( 'findOnMap' === type ) {
 			this._centerMapOnFeatureId(m.fid, m.x, m.y);
+			
+		} else if( 'searchInitiate' === type ) {
+			this._endClicked();
 		};
 	}
 	

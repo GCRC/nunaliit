@@ -68,6 +68,9 @@ var Dispatcher = $n2.Class({
 	}
 
 	,register: function(handle, type, l){
+		if( typeof(handle) === 'string' ){
+			handle = this.getHandle(handle);
+		};
 		if( !this.listeners[type] ){
 			this.listeners[type] = [];
 		};
@@ -95,6 +98,10 @@ var Dispatcher = $n2.Class({
 		var logging = this.options.logging;
 		
 		var type = m.type;
+		
+		if( typeof(handle) === 'string' ){
+			handle = this.getHandle(handle);
+		};
 		
 		handle.sends[type] = true;
 		
