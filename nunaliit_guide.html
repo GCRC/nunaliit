@@ -1,6 +1,6 @@
 <html>
 <head>
-	<title>Nunaliit2 Documentation</title>
+	<title>Nunaliit Atlas Framework Documentation</title>
 	
 	<style type="text/css">
 	h1 {
@@ -14,16 +14,16 @@
 </head>
 <body>
 
-<h1>Nunaliit2 SDK - Command Line Tool</h1>
+<h1>Nunaliit Atlas Framework Documentation</h1>
 
 <!-- ****************************************************************************** -->
 <h2><a name="toc">Table of Content</a></h2>
 
 <ol>
-	<li><a href="#obtaining">Obtaining Nunaliit2 SDK</a></li>
-	<li><a href="#building">Building Nunaliit2 SDK</a></li>
+	<li><a href="#obtaining">Obtaining Nunaliit</a></li>
+	<li><a href="#building">Building Nunaliit</a></li>
 	<li>
-		<a href="#installing">Installing Nunaliit2 SDK</a>
+		<a href="#installing">Installing Nunaliit</a>
 		<ul>
 			<li><a href="#prerequisites">Prerequisites</a></li>
 			<li><a href="#jdk_ubuntu">Installing Java JDK on Ubuntu 12.04</a></li>
@@ -35,7 +35,7 @@
 		</ul>
 	</li>
 	<li>
-		<a href="#using">Using Nunaliit2 SDK</a>
+		<a href="#using">Using Nunaliit</a>
 		<ul>
 			<li><a href="#atlas_creation">Creating an Atlas</a></li>
 			<li><a href="#atlas_update_user">Updating the User Database</a></li>
@@ -51,7 +51,7 @@
 	</li>
 	<li><a href="#directory_structure">Atlas Directory Structure</a></li>
 	<li>
-		<a href="#commands">Nunaliit SDK Commands</a>
+		<a href="#commands">Nunaliit Commands</a>
 		<ul>
 			<li><a href="#command_help">help</a></li>
 			<li><a href="#command_create">create</a></li>
@@ -99,50 +99,50 @@
 </ol>
 
 <!-- ****************************************************************************** -->
-<h2><a name="obtaining">Obtaining Nunaliit2 SDK</a></h2>
+<h2><a name="obtaining">Obtaining Nunaliit</a></h2>
 
-<p>The Nunaliit2 SDK is a tarball. At this point, there is no single
+<p>Nunaliit is packaged as a tarball. At this point, there is no single
 distribution point and must be obtained from a developer or built manually.</p>
 
 <!-- ****************************************************************************** -->
-<h2><a name="building">Building Nunaliit2 SDK</a></h2>
+<h2><a name="building">Building Nunaliit</a></h2>
 
-<p>The Nunaliit2 SDK can be built from the Nunaliit2 source repository. The tools required
-to build the Nunaliit2 SDK are:
+<p>Nunaliit can be built from the Nunaliit source repository. The tools required
+to build Nunaliit are:
 <ul>
-	<li>Subversion</li>
+	<li>Git</li>
 	<li>Java JDK</li>
 	<li>maven2</li>
 	<li>ant</li>
 </ul>
 </p>
 
-<p>Here are the steps required to build the Nunaliit2 SDK from source.</p>
+<p>Here are the steps required to build Nunaliit from source.</p>
 
-<h3>1. Check out the Nunaliit2 project</h3>
+<h3>1. Check out the Nunaliit project</h3>
 <pre>
-> svn co https://svn.gcrc.carleton.ca/nunaliit2/trunk nunaliit2
+> git clone https://github.com/GCRC/nunaliit.git
 </pre>
 
-<h3>2. Build Nunaliit2</h3>
+<h3>2. Build Nunaliit</h3>
 <pre>
-> cd nunaliit2
+> cd nunaliit
 > mvn install
 </pre>
 
-<h3>3. Locate SDK</h3>
-<p>There are two versions of the SDK that are packaged during the build 
+<h3>3. Locate packaged files</h3>
+<p>Nunaliit is packaged in two versions during the build 
 process: one TAR file (gzipped) and one ZIP file. For Linux/MacOS installation,
 the TAR file is preferred.</p>
 
-<p>Both files are located in the directory: .../nunaliit2/nunaliit2-couch-sdk/target</p>
+<p>Both files are located in the directory: .../nunaliit/nunaliit2-couch-sdk/target</p>
 
 <!-- ****************************************************************************** -->
-<h2><a name="installing">Installing Nunaliit2 SDK</a></h2>
+<h2><a name="installing">Installing Nunaliit</a></h2>
 
-<p>On a Linux installation, one must obtain the TAR file containing the Nunaliit2 SDK.
+<p>On a Linux installation, one must obtain the TAR file containing Nunaliit.
 Simply uncompress the installation file in a directory accessible to all that are to
-use the SDK.</p>
+use it.</p>
 <pre>
 > cd /usr/local
 > tar -zxvf nunaliit2-couch-sdk-X.Y-nunaliit.tar.gz
@@ -152,13 +152,13 @@ use the SDK.</p>
 
 <h3><a name="prerequisites">Prerequisites</a></h3>
 
-<p>The nunaliit atlas framework depends on the following other projects:
+<p>Nunaliit depends on the following other projects:
 <ul>
-	<li><b>Java JDK</b> : The tools in the Nunaliit atlas framework are
+	<li><b>Java JDK</b> : The tools in Nunaliit are
 	built using Java. Therefore, a JDK must be install on the platform where
 	the framework is to be used. Java JDK version 6 or better is recommended.</li>
 	
-	<li><b>CouchDb</b> : This version of the Nunaliit atlas framework stores
+	<li><b>CouchDb</b> : This version of Nunaliit stores
 	it information in CouchDb, a schema-less database. A version of CouchDb
 	with a revision of 1.2 or better is recommended.</li>
 	
@@ -173,7 +173,7 @@ use the SDK.</p>
 </ul>
 </p>
 
-<p>Ubuntu 12.04 is recommended to run the Nunaliit atlas framework, since this is the
+<p>Ubuntu 12.04 is recommended to run Nunaliit, since this is the
 platform where it is tested the most. Other platforms can be used to run the framework
 as long as the prerequisites are met.</p>
 
@@ -236,20 +236,20 @@ This version is no longer supported.
 
 
 <!-- ****************************************************************************** -->
-<h2><a name="using">Using Nunaliit2 SDK</a></h2>
+<h2><a name="using">Using Nunaliit</a></h2>
 
-<p>The Nunaliit2 SDK is a command-line tool that allows a user to create, maintain
+<p>Nunaliit comes with a command-line tool ("nunaliit") that allows a user to create, maintain
 and publish an on-line atlas. It manages each atlas in its own directory, keeping
 files relating to an atlas in a confined area of disk, facilitating back-ups and
 other life cycle tasks.</p>
 
-<p>The Nunaliit2 SDK contains Jetty within its code, permitting the publication of 
+<p>Nunaliit packages Jetty within its distribution, permitting the publication of 
 the atlas without requiring any other downloads or set-up. The command-line tool
 can publish the atlas directly.</p>
 
-<p>The remaining of this section assumes that the Nunaliit2 SDK is installed and
+<p>The remaining of this section assumes that Nunaliit is installed and
 that the PATH variable has been updated to include the "bin" directory found within
-the SDK.</p> 
+the nunaliit folder.</p> 
 
 <h3><a name="atlas_creation">Creating an Atlas</a></h3>
 
@@ -261,8 +261,8 @@ of starting files. The command is: </p>
 <p>The user must answer a number of questions relating to the atlas:</p>
 <pre>
 Enter location where atlas should be created: atlas1
-Created atlas directory at: /home/jpfiset/eclipse/couchdb/nunaliit2/nunaliit2-couch-command/target/atlas1
-Copying templates from: /home/jpfiset/eclipse/couchdb/nunaliit2/nunaliit2-couch-sdk/src/main/templates
+Created atlas directory at: /home/jpfiset/eclipse/couchdb/nunaliit/nunaliit2-couch-command/target/atlas1
+Copying templates from: /home/jpfiset/eclipse/couchdb/nunaliit/nunaliit2-couch-sdk/src/main/templates
 Enter the name of the atlas [atlas1]: 
 Enter the URL to CouchDB [http://127.0.0.1:5984/]: 
 Enter the name of the database where atlas resides [atlas1]: 
@@ -327,7 +327,7 @@ the atlas is published is configured during the "config" command.</p>
 atlas as a daemon. The syntax for this script is:</p>
 <pre>nunaliit.sh {start|stop|restart|check}</pre>
 
-<p>The <b>start</b> command is used to initiate the nunaliit atlas daemon. The 
+<p>The <b>start</b> command is used to initiate the Nunaliit atlas daemon. The 
 <b>stop</b> command is used to terminate the currently running daemon. The 
 <b>restart</b> command combines both stopping and starting the daemon.</p>
 
@@ -399,7 +399,7 @@ the "dump" command.</li>
 </ul></p>
  
 <!-- ****************************************************************************** -->
-<h2><a name="commands">Nunaliit SDK Commands</a></h2>
+<h2><a name="commands">Nunaliit Commands</a></h2>
 
 <h3><a name="command_help">help</a></h3>
 
@@ -414,8 +414,8 @@ about the syntax and purpose of the requested command.</p>
 <pre>nunaliit [&lt;global-options&gt;] create [&lt;create-options&gt;]</pre>
 
 <p>This command creates a new directory structure to hold the content of an atlas
-managed by the nunaliit framework. Then, the configuration command is run to
-set-up the apppropriate configuration properties. </p>
+managed by Nunaliit. Then, the configuration command is run to
+set-up the appropriate configuration properties. </p>
 
 <p>The options that can be specified for the create command (&lt;create-options&gt;)
 are defined as follows:
@@ -547,7 +547,7 @@ atlas directory. The atlas directory contains all the atlas files.</li>
 <!-- ****************************************************************************** -->
 <h2><a name="upload_process">Upload Process</a></h2>
 
-<p>The Nunaliit framework uses an upload process during atlas updating, upgrading
+<p>Nunaliit uses an upload process during atlas updating, upgrading
 and restoring. This process modifies documents in the database with the content of
 documents found on disk.</p>
 
@@ -690,7 +690,7 @@ specified by the framework.</p>
 <h3><a name="upgrading_install">Install new version of Nunaliit</a></h3>
 
 <p>When a new version of Nunaliit is installed on a platform, it should be hosted in a directory
-different than the previous version. The old version of the Nunaliit framework should be
+different than the previous version. The old version of Nunaliit should be
 kept until the new atlas is performing properly. This enables a user of the Nunaliit
 framework to revert to an earlier version.</p>
 
@@ -739,7 +739,7 @@ One should review this file to ensure that all properties are in order. Then:</p
 <h3><a name="upgrading_revert">Reverting to an older version of Nunaliit</a></h3>
 
 <p>Reverting to an older version of Nunaliit is similar. Instead of installing a new version
-of the Nunaliit framework, change the PATH variable back to the "bin" directory of the
+of Nunaliit, change the PATH variable back to the "bin" directory of the
 desired version. Then, follow the remaining steps of this section.</p>
 
 <!-- ****************************************************************************** -->
@@ -784,10 +784,10 @@ have identifiers that begins with the prefix "_design/" and are used to provide 
 functions, validation functions, list functions and show functions. These document generally
 contains web resources for on-line applications served out of the database.</p>
 
-<p>In the Nunaliit framework, a number of design documents are in use:
+<p>In Nunaliit, a number of design documents are in use:
 <ul>
 	<li><b>_design/atlas</b> : This design document contains all views (index functions)
-	and web resources necessary for the Nunaliit framework.</li>
+	and web resources necessary for Nunaliit.</li>
 	
 	<li><b>_design/site</b> : This design document contains all views (index functions)
 	and web resources that are specific to the atlas. This documents is built from
@@ -808,13 +808,13 @@ contains web resources for on-line applications served out of the database.</p>
 <!-- .................................................................. -->
 <h3><a name="atlas_content_urls">URLs</a></h3>
 
-<p>The Nunaliit framework serves the web resources and the database documents through
+<p>Nunaliit serves the web resources and the database documents through
 an HTTP connect, accessible from a web browser. For simplification, the all URL paths
 used by the atlas web application are relative to the root, where the atlas web
 resources are served. URL redirection is used to make CouchDb resources appear adjacent
 to one another.</p>
 
-<p>Here are the paths served by the Nunaliit framework:
+<p>Here are the paths served by Nunaliit:
 <ul>
 	<li><b>/</b> : The root directory is redirected to the attachments of the
 	"_design/site" design document. The attachments to this document are loaded from
@@ -873,7 +873,7 @@ are expected to perform interactions with the framework should:
 </ul>
 </p>
 
-<p>The CSS resources required by the Nunaliit framework should be defined in the
+<p>The CSS resources required by Nunaliit should be defined in the
 header of a HTML file as follows:
 <pre>
 &lt;link rel="stylesheet" href="js-external/css/jquery-ui/smoothness/jquery-ui.custom.css" type="text/css" /&gt;
@@ -883,7 +883,7 @@ header of a HTML file as follows:
 </pre>
 </p>
 
-<p>The Javascript libraries required by the Nunaliit framework should be defined in the
+<p>The Javascript libraries required by Nunaliit should be defined in the
 header or the body of a HTML file as follows:
 <pre>
 &lt;script type="text/javascript" src="js-external/js/jquery.min.js"&gt;&lt;/script&gt;
@@ -904,7 +904,7 @@ header or the body of a HTML file as follows:
 </pre>
 </p>
 
-<p>The initialization of the Nunaliit atlas framework is performed in multiple steps:
+<p>The initialization of Nunaliit is performed in multiple steps:
 <ol>
 	<li>The initialization should be started by the application once the document is loaded</li>
 	<li>The atlas framework creates components that configured in a default manner</li>
@@ -915,7 +915,7 @@ header or the body of a HTML file as follows:
 
 <p>Initialization is started by the application by calling a function called "runConfiguration".
 This should be done after the document completed to load. Since jQuery is available (jQuery is
-required by the Nunaliit framework), a simple way to perform this is to use the jQuery's
+required by Nunaliit), a simple way to perform this is to use the jQuery's
 "ready" function, as demontrated in this example:
 <pre>
 jQuery().ready(function() {
@@ -1032,7 +1032,7 @@ named "nunaliit_custom.js" in the "htdocs" sub-directory of the atlas directory.
 file exists at run-time, it is loaded and all functions exposed by this file are available
 to the web application.</p>
 
-<p>To intercept configuration of the Nunaliit framework, an atlas designer must specify
+<p>To intercept configuration of Nunaliit, an atlas designer must specify
 a special function. This function should be located at in the
 Javascript name space at window.nunaliit_custom.configuration. The following example shows
 a script to perform custom Javascript operations:
@@ -1212,7 +1212,7 @@ be displayed.</p>
 		"title":"Generic Atlas"
 		,"introduction": {
 			"type": "html"
-			,"content": "&lt;div class=\"intro\"&gt;&lt;b&gt;Welcome to a Nunaliit2 Atlas served from CouchDb&lt;/b&gt;&lt;br/&gt;&lt;a href=\"./tools/index.html\"&gt;Nunaliit Tools&lt;/a&gt;&lt;/div&gt;"
+			,"content": "&lt;div class=\"intro\"&gt;&lt;b&gt;Welcome to a Nunaliit atlas served from CouchDB&lt;/b&gt;&lt;br/&gt;&lt;a href=\"./tools/index.html\"&gt;Nunaliit Tools&lt;/a&gt;&lt;/div&gt;"
 		}
 		,"map":{
 			"coordinates": {
@@ -1643,13 +1643,13 @@ how the templating works within Nunaliit:
 </ol>
 </p>
 
-<p>Once a HTML fragment is generated using the Mustache templating, the Nunaliit framework analyzes the result
+<p>Once a HTML fragment is generated using the Mustache templating, Nunaliit analyzes the result
 for certain classes and modifies the HTML tags accordingly. Here is a list of the classes understood by the
 Nunaliit framework:
 <ul>
 	<li><b>n2_localize</b> : HTML elements that have the class n2_localize have the text child element
 	replaced by text found to translate the initial text to the language in which the page is displayed.
-	The Nunaliit framework offers tools to define string replacements from the native English strings, to
+	Nunaliit offers tools to define string replacements from the native English strings, to
 	any other language. If the atlas page is displayed in a language other than English, that the language
 	is supported by a translation page and that the string found as child of the element is associated with
 	a translated replacement, then that replacement is used to populate the text of the element with the
@@ -1674,7 +1674,7 @@ Nunaliit framework:
 
 	<li><b>n2s_insertTime</b> : A HTML element with this class must contain only one child, which is
 	a text node. The content of the text node should be a number that represents time, according to the
-	Javascript Date convention. When the Nunaliit framework detects the class "n2s_insertTime", it replaces
+	Javascript Date convention. When Nunaliit detects the class "n2s_insertTime", it replaces
 	the content of the element with textual representation of the time based on the user's locale.</li>
 
 	<li><b>n2s_insertUserName</b> : A HTML element with this class must contain only one child, which is
@@ -1684,12 +1684,12 @@ Nunaliit framework:
 
 	<li><b>n2s_insertMediaView</b> : A HTML element with this class must contain only one child, which is
 	a text node. The content of the text node should be the name to an attachment of the document in context.
-	When the Nunaliit framework detects the class "n2s_insertMediaView", it replaces the content of the
+	When Nunaliit detects the class "n2s_insertMediaView", it replaces the content of the
 	element with an icon that represents the attachment. If a thumbnail is available, the thumbnail is
 	used instead of the icon. Furthermore, when the icon or thumbnail is clicked by the user, the media
 	is displayed using a dialog.</li>
 
-	<li><b>n2s_insertHoverSoundIcon</b> : When the Nunaliit framework detects an element with the class
+	<li><b>n2s_insertHoverSoundIcon</b> : When Nunaliit detects an element with the class
 	"n2s_insertHoverSoundIcon", it verifies if a document is associated with a hover sound. If so,
 	it appends to the element with the class "n2s_insertHoverSoundIcon" an icon looking like a speaker.
 	If the speaker icon is clicked, the hover sound is played. This is useful for environments with a touch
@@ -1702,20 +1702,20 @@ Nunaliit framework:
 	atlas is about to be exited, before following the link. This class is generally used with anchor
 	(&lt;a&gt;) tags.</li>
 	
-	<li><b>n2s_clickFindGeometryOnMap</b> : When the Nunaliit framework detects an element with the class
+	<li><b>n2s_clickFindGeometryOnMap</b> : When Nunaliit detects an element with the class
 	"n2s_clickFindGeometryOnMap", it verifies if the document in context is associated with a geometry.
 	If so, it installs a "click" event handler on the element. When the element is clicked, the map
 	is centred on the geometry. If the document is not associated with any geometry, then the element
 	with the class "n2s_clickFindGeometryOnMap" is removed.</li>
 	
-	<li><b>n2s_clickAddLayerFromDefinition</b> : When the Nunaliit framework detects an element with the class
+	<li><b>n2s_clickAddLayerFromDefinition</b> : When Nunaliit detects an element with the class
 	"n2s_clickAddLayerFromDefinition", it verifies if the document in context is associated with a layer
 	definition. If so, it installs a "click" event handler on the element. When the element is clicked,
 	the map is added with a new layer based on the layer definition found in the context document.
 	If the document is not associated with any layer definition, then the element with the class
 	"n2s_clickAddLayerFromDefinition" is removed.</li>
 	
-	<li><b>n2s_handleHover</b> : When the Nunaliit framework detects an element with the class
+	<li><b>n2s_handleHover</b> : When Nunaliit detects an element with the class
 	"n2s_handleHover", it installs a "hover" event handler on the element. When the element is moused
 	over, an event is sent to the dispatcher informing that the context document is hovered. This generally
 	results in behaviour specific to an atlas, such as playing "hover sound" or changing the colours
@@ -1723,7 +1723,7 @@ Nunaliit framework:
 </ul>
 </p>
 
-<p>Besides pre-defined HTML classes, the Nunaliit framework adds functions and special accessors
+<p>Besides pre-defined HTML classes, Nunaliit adds functions and special accessors
 to context Javascript objects before the are processed by the Mustache templating process. All The
 following functions and accessors are available to a Mustache template when in use with the Nunaliit schemas:
 <ul>
