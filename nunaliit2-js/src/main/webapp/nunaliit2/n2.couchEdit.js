@@ -671,7 +671,10 @@ var CouchDocumentEditor = $n2.Class({
 	}
 
 	// Restores feature geometry before discarding the form
-	,cancelEditing: function() {
+	,cancelEditing: function(opts_) {
+		var opts = $n2.extend({
+			suppressEvents:false
+		},opts_);
 		if( null == this.editedDocument ) {
 			return;
 		};
@@ -692,12 +695,17 @@ var CouchDocumentEditor = $n2.Class({
 			this.editedFeature.data = this.originalData;
 		};
 		
-		this._dispatch({
-			type: 'editCancel'
-			,doc: this.editedDocument
-		});
+		if( !opts.suppressEvents ) {
+			this._dispatch({
+				type: 'editCancel'
+				,doc: this.editedDocument
+			});
+		};
 		
-		this._discardAttributeForm({cancelled:true});
+		this._discardAttributeForm({
+			cancelled:true
+			,suppressEvents: opts.suppressEvents
+		});
 	}
 
 	,_discardAttributeForm: function(opts_) {
@@ -707,6 +715,7 @@ var CouchDocumentEditor = $n2.Class({
 			,updated: false
 			,deleted: false
 			,cancelled: false
+			,suppressEvents: false
 		},opts_);
 		
 		if( null == this.editedDocument ) {
@@ -729,15 +738,17 @@ var CouchDocumentEditor = $n2.Class({
 
 		this.options.onCloseFn(this.editedDocument, this);
 		
-		this._dispatch({
-			type: 'editClosed'
-			,doc: this.editedDocument
-			,saved: opts.saved
-			,inserted: opts.inserted
-			,updated: opts.updated
-			,deleted: opts.deleted
-			,cancelled: opts.cancelled
-		});
+		if( !opts.suppressEvents ) {
+			this._dispatch({
+				type: 'editClosed'
+				,doc: this.editedDocument
+				,saved: opts.saved
+				,inserted: opts.inserted
+				,updated: opts.updated
+				,deleted: opts.deleted
+				,cancelled: opts.cancelled
+			});
+		};
 		
 		this.editedDocument = null;
 		this.editedFeature = null;
@@ -1025,13 +1036,13 @@ var CouchEditor = $n2.Class({
 	}
 
 	// Restores feature geometry before discarding the form
-	,cancelAttributeForm: function() {
-    	this.cancelDocumentForm();
+	,cancelAttributeForm: function(opts) {
+    	this.cancelDocumentForm(opts);
 	}
 
-	,cancelDocumentForm: function() {
+	,cancelDocumentForm: function(opts) {
     	if( null != this.currentEditor ) {
-    		this.currentEditor.cancelEditing();
+    		this.currentEditor.cancelEditing(opts);
     		this.currentEditor = null;
     	};
 	}

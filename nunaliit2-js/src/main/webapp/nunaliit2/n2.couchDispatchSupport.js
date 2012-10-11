@@ -136,10 +136,28 @@ var DispatchSupport = $n2.Class('DispatchSupport',{
 			};
 			
 		} else if( 'editClosed' === m.type ) {
-			var deleted = m.deleted;
-			if( !deleted ) {
-				var dispatcher = this._getDispatcher();
-				if( dispatcher ) {
+//			var deleted = m.deleted;
+//			if( !deleted ) {
+//				var dispatcher = this._getDispatcher();
+//				if( dispatcher ) {
+//					dispatcher.send(this.dispatcherHandle,{
+//						type: 'selected'
+//						,docId: m.doc._id
+//						,doc: m.doc
+//					});
+//				};
+//			};
+			var dispatcher = this._getDispatcher();
+			if( dispatcher ) {
+				if( m.deleted ) {
+					dispatcher.send(this.dispatcherHandle,{
+						type: 'unselected'
+					});
+				} else if( m.cancelled ) {
+					dispatcher.send(this.dispatcherHandle,{
+						type: 'historyBack'
+					});
+				} else {
 					dispatcher.send(this.dispatcherHandle,{
 						type: 'selected'
 						,docId: m.doc._id

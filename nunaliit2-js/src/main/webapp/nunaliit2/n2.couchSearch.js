@@ -726,6 +726,12 @@ var SearchInput = $n2.Class({
 
 			this.options.displayFn(display);
 			
+		} else if( this.options.dispatchService ) {
+			this.options.dispatchService.send(DH, {
+				type: 'searchResults'
+				,error: err
+			});
+			
 		} else {
 			var $display = $('#'+this.options.displayDiv).empty();
 			$display.append( $('<div>'+_loc('Search error:')+err+'</div>') );

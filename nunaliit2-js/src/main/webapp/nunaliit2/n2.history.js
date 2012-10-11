@@ -97,13 +97,11 @@ var Monitor = $n2.Class({
 		var hash = window.location.hash;
 		if( hash ) { hash = hash.substr(1); };
 		
-		if( hash ){
-			var m = {
-				type: 'hashChanged'
-				,hash: hash
-			};
-			this._dispatch(m);
+		var m = {
+			type: 'hashChanged'
+			,hash: hash
 		};
+		this._dispatch(m);
 	}
 	
 	,_handle: function(m){
