@@ -9,5 +9,5 @@ interact with on the GCRC [Atlases page](https://gcrc.carleton.ca/confluence/x/7
 Pre-compiled and packaged Nunaliit .tar.gz and .zip files can be [downloaded from the Maven central repository]
 (http://central.maven.org/maven2/ca/carleton/gcrc/nunaliit2-couch-sdk/).
 
-The [User Documentation](http://htmlpreview.github.com/?https://github.com/GCRC/nunaliit/master/nunaliit_guide.html)
+The [Documentation](https://github.com/GCRC/nunaliit/wiki/Nunaliit-Atlas-Framework-Documentation)
 describes the setup and use of Nunaliit, as well as build instructions for developers.
