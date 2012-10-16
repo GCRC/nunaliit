@@ -122,16 +122,15 @@ $n2.couchRequests = $n2.Class({
 		
 		// Users
 		if( requests.users && this.options.userDb ) {
-			var userNames = [];
 			for(var userName in requests.users) {
-				userNames.push(userName);
+				this.options.userDb.getUser({
+					name: userName
+					,onSuccess: function(user) {
+						_this._callUserListeners(user);
+					}
+					,onError: function(err){}
+				});
 			};
-			this.options.userDb.getUsers({
-				names: userNames
-				,onSuccess: function(users) {
-					_this._callUserListeners(users);
-				}
-			});
 		};
 		
 		// Documents
@@ -173,20 +172,17 @@ $n2.couchRequests = $n2.Class({
 		};
 	}
 	
-	,_callUserListeners: function(userDocs){
-		//$n2.log('Requested user docs: ',userDocs);		
-		for(var i=0,e=userDocs.length; i<e; ++i){
-			var userDoc = userDocs[i];
+	,_callUserListeners: function(userDoc){
+		//$n2.log('Requested user doc: ',userDoc);		
 
-			for(var j=0,f=this.userListeners.length; j<f; ++j){
-				var listener = this.userListeners[j];
-				
-				//try {
-					listener(userDoc);
-				//} catch(e){
-				//	$n2.log('Error during user document listener: '+e);
-				//}
-			};
+		for(var j=0,f=this.userListeners.length; j<f; ++j){
+			var listener = this.userListeners[j];
+			
+			//try {
+				listener(userDoc);
+			//} catch(e){
+			//	$n2.log('Error during user document listener: '+e);
+			//}
 		};
 	}
 	
