@@ -1,0 +1,42 @@
+
+.olControlLayerSwitcher {
+	left: 28px !important;
+	top:66px !important;
+}
+
+.olControlLayerSwitcher .maximizeDiv, .olControlLayerSwitcher .minimizeDiv {
+	width: 22px !important;
+	height: 22px !important;
+	background-image: url('openlayers/settings_icon.png') !important;
+}
+ 
+#OpenLayers_Control_MaximizeDiv img {
+	display:none !important;
+}
+
+.olControlLayerSwitcher .maximizeDiv, .olControlLayerSwitcher .minimizeDiv {
+	left: -20px !important;
+}
+
+#OpenLayers_Control_MinimizeDiv_innerImage {
+	display:none;
+}
+
+.olControlLayerSwitcher .layersDiv {
+	background-color: rgba(0, 0, 0, 0.8) !important;
+	margin-top: 5px !important;
+	background-color: rgba(0, 0, 0, 0.8);
+	-moz-border-radius: 0 5px 5px 5px;
+	border-radius: 0 5px 5px 5px;
+	padding:10px !important;
+}
+
+div.olControlZoom {
+	top: 25px !important;
+	left: 20px !important;
+}
+
+div.olControlZoom a { 
+	background: rgba(0, 0, 0, 0.7) !important;
+}	
+
