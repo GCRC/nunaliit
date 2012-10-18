@@ -157,6 +157,7 @@ var Tracker = $n2.Class({
 			d.register(h,'selected',f)
 			d.register(h,'unselected',f)
 			d.register(h,'searchInitiate',f)
+			d.register(h,'editInitiate',f)
 		};
 	}
 
@@ -227,6 +228,16 @@ var Tracker = $n2.Class({
 				});
 			};
 
+		} else if( 'editInitiate' === m.type ){
+			this.last = {
+				edit: true
+			};
+
+			this._dispatch({
+				type: 'setHash'
+				,hash: 'nostate'
+			});
+
 		} else if( 'hashChanged' === m.type ){
 			var o = null;
 
@@ -237,6 +248,10 @@ var Tracker = $n2.Class({
 						,_suppressHashChange: true
 					});
 				};
+				
+			} else if( 'nostate' === m.hash ){
+				// Do not do anything
+				
 			} else {
 				// Attempt to interpret hash
 				try {

@@ -43,6 +43,10 @@ var Dispatcher = $n2.Class({
 	,listeners: null
 	
 	,handles: null
+	
+	,dispatching: null
+	
+	,queue: null
 
 	,initialize: function(options_){
 		this.options = $n2.extend({
@@ -51,6 +55,8 @@ var Dispatcher = $n2.Class({
 		
 		this.listeners = {};
 		this.handles = {};
+		this.dispatching = false;
+		this.queue = [];
 	}
 
 	,getHandle: function(name){
@@ -95,7 +101,6 @@ var Dispatcher = $n2.Class({
 	}
 	
 	,send: function(handle, m){
-		var logging = this.options.logging;
 		
 		var type = m.type;
 		
@@ -105,13 +110,35 @@ var Dispatcher = $n2.Class({
 		
 		handle.sends[type] = true;
 		
-		var listeners = this.listeners[type];
+		if( this.dispatching ) {
+			// Already dispatching a message, put this one in queue
+			this.queue.push({
+				h: handle
+				,m: m
+			});
+		} else {
+			// Send now
+			this._sendImmediate(handle, type, m);
+			
+			// Deal with items in queue
+			while(this.queue.length > 0){
+				var i = this.queue.splice(0,1)[0];
+				this._sendImmediate(i.h, i.m.type, i.m);
+			};
+		};
+	}
+	
+	,_sendImmediate: function(h, t, m) {
+		var logging = this.options.logging;
+
+		this.dispatching = true;
+		var listeners = this.listeners[t];
 		if( listeners ) {
 			for(var i=0,e=listeners.length; i<e; ++i){
 				var l = listeners[i];
 				
 				if( logging ){
-					$n2.log(''+handle.name+' >'+type+'> '+l.handle.name);
+					$n2.log(''+h.name+' >'+t+'> '+l.handle.name);
 				};
 				
 //				try {
@@ -121,6 +148,7 @@ var Dispatcher = $n2.Class({
 //				};
 			};
 		};
+		this.dispatching = false;
 	}
 });
 

@@ -479,6 +479,7 @@ var MapAndControls = $n2.Class({
 	,editModeAddFeatureEnabled: null
 	,editModeAddFeatureCallback: null
     ,convertToMultiGeometry: null
+    ,featureModifiedCallback: null
 
     // COMETD
     ,cometEnabled: null
@@ -649,6 +650,12 @@ var MapAndControls = $n2.Class({
 					
 					if( editAllowed ) {
 						_this.switchToEditFeatureMode(feature);
+			    		_this._dispatch({
+			    			type: 'editInitiate'
+			    			,docId: null
+			    			,feature: feature
+			    			,create: true
+			    		});
 					};
 				}
 				,onEndClick: function(feature) {
@@ -682,6 +689,10 @@ var MapAndControls = $n2.Class({
 	    this._registerDispatch('focusOff');
 	    this._registerDispatch('findOnMap');
 	    this._registerDispatch('searchInitiate');
+	    this._registerDispatch('editInitiate');
+	    this._registerDispatch('editCancel');
+	    this._registerDispatch('editClosed');
+	    this._registerDispatch('geometryModified');
 		
 		// Layers
 		this.defaultLayerInfo = { // feature layer access details.
@@ -919,6 +930,12 @@ var MapAndControls = $n2.Class({
 		    		feature._n2MapNewFeature = true;
 		    	};
 	    		_this.switchToEditFeatureMode(feature);
+	    		_this._dispatch({
+	    			type: 'editInitiate'
+	    			,docId: null
+	    			,feature: feature
+	    			,create: true
+	    		});
 	    	};
 		};
 	    this.convertToMultiGeometry = function(evt) {
@@ -933,6 +950,9 @@ var MapAndControls = $n2.Class({
 					evt.features[i].geometry = new OpenLayers.Geometry.MultiPolygon([evt.features[i].geometry]);
 				};
 			};
+	    };
+	    this.featureModifiedCallback = function(evt){
+	    	_this._featureModified(evt);
 	    };
 
 		var mapProjection = new OpenLayers.Projection(this.options.mapDisplay.srsName);
@@ -1417,15 +1437,11 @@ var MapAndControls = $n2.Class({
 		};
 	}
 	
-	,initiateFeatureEdit: function(fid) {
-		for(var loop=0; loop<this.vectorLayers.length; ++loop) {
-			var mapLayer = this.vectorLayers[loop];
-			var feature = this.getLayerFeatureFromFid(mapLayer,fid);
-			if( feature ) {
-				this.centerMapOnFeature(feature);
-				this.switchToEditFeatureMode(feature);
-				return true;
-			};
+	,_initiateFeatureEdit: function(feature) {
+		if( feature ) {
+			this.centerMapOnFeature(feature);
+			this.switchToEditFeatureMode(feature);
+			return true;
 		};
 		
 		return false;
@@ -1993,6 +2009,10 @@ var MapAndControls = $n2.Class({
 	}
 	
 	,_selectedFeature: function(feature, fid){
+		if( this.currentMode !== this.modes.NAVIGATE ){
+			this.switchMapMode(this.modes.NAVIGATE);
+		};
+		
 		this._endClicked();
 		
 		this.clickedInfo.fids = {};
@@ -2404,7 +2424,7 @@ var MapAndControls = $n2.Class({
 			this.switchMapMode(this.modes.NAVIGATE);
 			
 		} else if( this.currentMode === this.modes.EDIT_FEATURE ) {
-			this.cancelEditFeatureMode();
+			this._cancelEditFeatureMode();
 		};
 		return false;
 	}
@@ -2429,7 +2449,7 @@ var MapAndControls = $n2.Class({
 		if( control ) control.deactivate();
 	}
 			
-    ,switchMapMode: function(mode) {
+    ,switchMapMode: function(mode, opts) {
     	if( this.currentMode === mode ) {
     		// nothing to do
     		return;
@@ -2451,6 +2471,7 @@ var MapAndControls = $n2.Class({
 	    		if( null != editFeature ) {
 	    			this.editFeatureControls.modifyFeatureGeometry.unselectFeature(editFeature);
 	    		};
+	    		editFeature.layer.events.unregister('featuremodified', editFeature, this.featureModifiedCallback);
 	    		this.editFeatureControls.modifyFeatureGeometry.deactivate();
 	    		this.map.removeControl( this.editFeatureControls.modifyFeatureGeometry );
 	    		this.editFeatureControls.modifyFeatureGeometry.destroy();
@@ -2459,9 +2480,20 @@ var MapAndControls = $n2.Class({
 	    		// If this is the cancellation of a new feature creation, remove feature
 	    		// from map
 	    		if( editFeature 
-	    		 && editFeature._n2MapNewFeature 
 	    		 && editFeature.layer ) {
-	    			editFeature.layer.destroyFeatures([editFeature]);
+		    		if( editFeature._n2MapNewFeature ) {
+	   	    			editFeature.layer.destroyFeatures([editFeature]);
+	   	    			
+	   	    		} else if( editFeature._n2MapOriginal ) {
+	   	    			editFeature.layer.eraseFeatures([editFeature]);
+	   	    			if( editFeature._n2MapOriginal.restoreGeom ){
+	   	    				editFeature.geometry = editFeature._n2MapOriginal.geometry;
+	   	    			};
+	   	    			editFeature.data = editFeature._n2MapOriginal.data;
+	   	    			editFeature.style = editFeature._n2MapOriginal.style;
+	   	    			editFeature.layer.drawFeature(editFeature);
+	   	    			delete editFeature._n2MapOriginal;
+	   	    		};
 	    		};
     		};
             
@@ -2482,6 +2514,17 @@ var MapAndControls = $n2.Class({
     		this.activateSelectFeatureControl();
             
     	} else if( this.currentMode === this.modes.EDIT_FEATURE ) {
+    		opts.feature.layer.events.register('featuremodified', opts.feature, this.featureModifiedCallback);
+
+    		var editFeature = opts.feature;
+    		if( editFeature ) {
+	    		editFeature._n2MapOriginal = {
+	    			restoreGeom: false
+	    		};
+	    		editFeature._n2MapOriginal.geometry = editFeature.geometry.clone();
+	    		editFeature._n2MapOriginal.style = editFeature.style;
+	    		editFeature._n2MapOriginal.data = $n2.extend(true, {}, editFeature.data);
+    		};
             
     	} else if( this.currentMode === this.modes.NAVIGATE ) {
     		this.activateSelectFeatureControl();
@@ -2518,7 +2561,9 @@ var MapAndControls = $n2.Class({
     }
     
     ,switchToEditFeatureMode: function(feature) {
-    	this.switchMapMode(this.modes.EDIT_FEATURE);
+    	this.switchMapMode(this.modes.EDIT_FEATURE,{
+    		feature: feature
+    	});
 
     	if( null != this.editFeatureControls.modifyFeatureGeometry ) {
     		if( null != this.editFeatureControls.modifyFeatureGeometry.feature ) {
@@ -2545,12 +2590,12 @@ var MapAndControls = $n2.Class({
     	this.editFeatureControls.modifyFeatureGeometry = modifyFeatureGeometry;
 
    		modifyFeatureGeometry.selectFeature(feature);
-
-   		this.attributeFormManager.showAttributeForm(feature, modifyFeatureGeometry, this, this.attributeFormManagerOptions);
     }
     
-    ,cancelEditFeatureMode: function() {
-   		this.attributeFormManager.cancelAttributeForm(this.attributeFormManagerOptions);
+    ,_cancelEditFeatureMode: function() {
+   		this._dispatch({
+   			type: 'editCancel'
+   		});
     }
     
     // === NAVIGATION MODE ========================================================
@@ -2569,6 +2614,45 @@ var MapAndControls = $n2.Class({
     
     // ======= EDIT_FEATURE MODE =======================================================
 
+    ,_geometryModified: function(fid, olGeom, proj){
+    	if( this.currentMode !== this.modes.EDIT_FEATURE ) return;
+    	
+		var editFeature = this.editFeatureControls.modifyFeatureGeometry.feature;
+		
+		// Check that this relates to the right feature
+		if( fid && fid !== editFeature.fid ) return;
+		if( !fid && editFeature.fid ) return;
+    	
+		if( editFeature ) {
+			var mapProj = editFeature.layer.map.projection;
+			if( mapProj.getCode() != proj.getCode() ) {
+				olGeom.transform(proj, mapProj);
+			};
+		};
+		
+		// Redraw
+		var modifyFeatureControl = this.editFeatureControls.modifyFeatureGeometry;
+		if( modifyFeatureControl ) {
+			modifyFeatureControl.unselectFeature(editFeature);
+			editFeature.layer.eraseFeatures([editFeature]);
+			editFeature.geometry = olGeom;
+			editFeature.layer.drawFeature(editFeature);
+			modifyFeatureControl.selectFeature(editFeature);
+		};
+    }
+    
+    // Called when the feature on the map is modified
+    ,_featureModified: function(evt){
+    	var feature = evt.feature;
+    	this._dispatch({
+    		type: 'geometryModified'
+    		,docId: feature.fid
+    		,geom: feature.geometry
+    		,proj: feature.layer.map.projection
+    		,_origin: this
+    	});
+    }
+    
     ,onAttributeFormClosed: function(editedFeature) {
     	// When closing the dialog with the user, the feature
     	// must be removed from the map if it is a new one, since it does
@@ -3744,6 +3828,34 @@ var MapAndControls = $n2.Class({
 			
 		} else if( 'searchInitiate' === type ) {
 			this._endClicked();
+			
+		} else if( 'editInitiate' === type ) {
+			var fid = m.docId;
+			if( fid ){
+				var feature = this.getFeatureFromFid(fid);
+				this._initiateFeatureEdit(feature);
+			};
+			
+		} else if( 'editCancel' === type ) {
+			if( this.currentMode === this.modes.EDIT_FEATURE ){
+    			var editFeature = this.editFeatureControls.modifyFeatureGeometry.feature;
+	    		if( editFeature 
+	    		 && editFeature._n2MapOriginal ) {
+	    			editFeature._n2MapOriginal.restoreGeom = true;
+	    		};
+
+	    		this.switchMapMode(this.modes.NAVIGATE);
+			};
+			
+		} else if( 'editClosed' === type ) {
+			if( this.currentMode !== this.modes.NAVIGATE ){
+				this.switchMapMode(this.modes.NAVIGATE);
+			};
+			
+		} else if( 'geometryModified' === type ) {
+			if( m._origin !== this ){
+				this._geometryModified(m.docId, m.geom, m.proj);
+			};
 		};
 	}
 	

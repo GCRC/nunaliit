@@ -1244,12 +1244,14 @@ var Form = $n2.Class({
 				,callback
 				);
 			$input.change(handler);
+			//$input.blur(handler);
 			if( $n2.schema.GlobalAttributes.disableKeyUpEvents ){
 				// skip
 			} else {
 				$input.keyup(handler);
 			};
 			
+			// Set value
 			var value = getDataFromObjectSelector(obj, selector);
 			var type = $input.attr('type');
 			if( 'checkbox' === type ) {
