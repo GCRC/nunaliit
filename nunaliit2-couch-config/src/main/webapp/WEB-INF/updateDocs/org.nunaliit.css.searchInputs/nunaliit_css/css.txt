@@ -1,3 +1,1 @@
-.searchInputs { float:left; }
-input.search_panel_input { margin: 5px 0px;padding:0px;font-family: Georgia, serif;font-size: 0.9em;height:12px; }
-#searchInput { right:174px;top:25px;height:20px;width:271px;overflow:visible; }
+
