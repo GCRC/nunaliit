@@ -68,7 +68,9 @@ div.olControlZoom a {
 .map_interaction {
 	position: absolute;
 	top:30px;
-	right: 450px;
+	right: 25px;
+	width: 440px;
+	padding: 0;
 	margin: 0;
 	border: 0;
 }
