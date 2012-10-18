@@ -1,13 +1,15 @@
 
 body {
 	font-size: 80%;
-	font-family: Georgia, serif; 
+	font-family: helvetica, arial, Georgia, serif;
 	overflow: hidden;
 	width: 100%;
 	height: 100%;
-	margin: 0;
+	margin: 0 5px;
 	border: 0;
+	background-color: #EEE;
 }
+
 
 /*, a:link img, a:visited img, a:hover img, a:active img */
 /*	a img, a:link img, a:vlink img, a:alink*/
@@ -19,37 +21,70 @@ img {
 
 #header {
 	position: absolute;
-	top: 0px;    
-	left: 20px;
+	top: 0;
+	left: 0;
 	width: 100%;
 	height: 30px;
 	overflow: hidden;
 	margin: 0;
-	border: 0;
+	border: 0;	
+	padding: 10px 20px;
+	color: white;
+	border-bottom: 2px solid #88C425;
+	
+	background-color: #272727;
+	background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#272727), to(#4b4b4b));
+	background: -webkit-linear-gradient(top, #4b4b4b, #272727);
+	background: -moz-linear-gradient(top, #4b4b4b, #272727);
+	background: -ms-linear-gradient(top, #4b4b4b, #272727);
+	background: -o-linear-gradient(top, #4b4b4b, #272727);
+
 }
 
 #title {
 	margin: 0;
 	border: 0;
+	padding: 0;
+	text-shadow: black 1px 1px 1px;
 }
 
 #map, .nunaliit_map {    
-	position: absolute;    
-	top: 50px;
-	left: 20px;
+	position: absolute;
+	top: 52px;
+	left: 0;
 	right: 450px;
 	bottom: 20px;
-	border: 1px solid #777777;
+	border: 1px solid #777;
 	margin: 0;
 	border: 0;
+	width:100%;
+	height:100%;
+}
+
+div.olControlZoom a { 
+	
 }
 
 .map_interaction {
 	position: absolute;
-	top: 25px;
+	top:30px;
 	right: 450px;
 	margin: 0;
 	border: 0;
+}
+
+.map_interaction input { 
+	font-size:0.8em;margin:0;padding:0;background-color:buttonface; 
+}
+
+
+.results { 
+	clear:both; padding: 10px 0px 0px 0px; 
+}
+
+
+.newDocumentInputs { 
+	float:right; padding: 0px 10px 0px 0px; 
 }
 
 .interaction_control_label {
@@ -61,19 +96,29 @@ img {
 	float:right;
 }
 
+.searchInputs { 
+	float:left; 
+}
+
 #searchInput, .nunaliit_searchInput {
-	position: absolute;
-	top: 20px;
-	right: 120px;
+	position: absolute;	
+	right: 39px;
+	top: 96px;
+	height: 27px;
+	width: 412px;
 	bottom: 20px;
-	overflow: hidden;
-	width: 322px;
-	height: 30px;
+	overflow: visible;
+	z-index:100;
 }
 
 #searchInput input.search_panel_input, .nunaliit_searchInput input.search_panel_input {
-	margin: 5px 0px;
-	width: 250px;
+	margin: 5px 0;
+	width: 386px;
+	padding: 10px;
+	border: 1px solid #BBB;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	color: #666;
 }
 
 #searchLookAhead {
@@ -116,8 +161,9 @@ img {
 
 #login {
 	position: absolute;
-	top: 20px;
-	right: 20px;
+	top: 13px;
+	right: 25px;
+	color: white;
 	bottom: 20px;
 	overflow: hidden;
 	width: 190px;
@@ -126,22 +172,36 @@ img {
 
 .loginLink {
 	float: right;
-	padding-top: 7px;
+	padding: 5px 8px;
+	color: #2D1606;
+	display: block;
+	background-color: #F4EFEB;
+	text-decoration: none;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
 }
+
+.loginLink:hover {
+	background-color: #88C425;
+	color:#fff;
+}
+
 .loginGreeting {
 	float: right;
-	padding-top: 7px;
+	padding-top: 5px;
 }
 
 #side {
 	position: absolute;
-	top: 50px;
-	right: 20px;
-	bottom: 20px;
+	top: 85px;
+	right: 25px;
+	bottom: 25px;
 	overflow: auto;
-	width: 420px;
-	border: 1px solid #777777;
-	padding: 0px 2px 0px 2px;
+	width: 410px;
+	padding: 70px 15px 15px 15px;
+	background-color:rgba(255, 255, 255, 0.8);
+	-moz-border-radius: 5px;
+	border-radius: 5px;
 }
 
 #side_attrib table, .n2MediaDisplayDialog table {
