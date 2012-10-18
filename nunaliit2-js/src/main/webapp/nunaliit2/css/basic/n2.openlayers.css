@@ -45,6 +45,9 @@ div.olControlZoom a {
 div.olControlEditingToolbar {
 	right: 25px !important;
 	width: 440px !important;
+}
+
+.olControlEditingToolbar div {
 	float: left !important;
 }
 
