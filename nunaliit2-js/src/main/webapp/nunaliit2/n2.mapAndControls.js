@@ -1405,19 +1405,6 @@ var MapAndControls = $n2.Class({
 						layerInfo.olLayer.addFeatures(loadedFeature);
 					}
 					reloadOptions.onReloaded(loadedFeature);
-					
-					// Let display logic know that a feature was updated
-//					if( $.olkitDisplay ) {
-//						if( typeof($.olkitDisplay.FeatureUpdated) === 'function' ) {
-//							$.olkitDisplay.FeatureUpdated(loadedFeature);
-//						};
-//					
-//					} else if( $n2.placeInfo ) {
-//						var lastDisplayedFid = $n2.placeInfo.getFid();
-//						if (lastDisplayedFid != -1 && lastDisplayedFid == loadedFeature.fid) {
-//							$n2.placeInfo.setFeatureReinitDisplay(loadedFeature);
-//						};
-//					};
 				};
 			};
 			
@@ -2903,11 +2890,7 @@ var MapAndControls = $n2.Class({
 		if( msg.data ) {
 			var data = msg.data;
 			
-			if( $.olkitDisplay 
-			 && $.olkitDisplay.RefreshClickedFeature ){
-				$.olkitDisplay.RefreshClickedFeature();
-				
-			} else if( data.place_id 
+			if( data.place_id 
 			 && $n2.placeInfo 
 			 && $n2.placeInfo.getPlaceId() == data.place_id ) {
 				$n2.placeInfo.loadAndRenderContributions();

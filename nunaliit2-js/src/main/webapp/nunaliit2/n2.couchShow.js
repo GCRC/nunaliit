@@ -35,6 +35,8 @@ $Id: n2.couchShow.js 8496 2012-09-24 19:54:26Z jpfiset $
 // Localization
 var _loc = function(str){ return $n2.loc(str,'nunaliit2-couch'); };
 
+var DH = 'n2.couchShow';
+	
 var couchUserPrefix = 'org.couchdb.user:';
 
 function noop(){};
@@ -202,8 +204,7 @@ var DomStyler = $n2.Class({
 		$jq.click(function(){
 			var dispatchService = _this.showService.getDispatchService();
 			if( dispatchService ) {
-				var dispatchHandle = _this.showService.dispatchHandle;
-				dispatchService.send(dispatchHandle, {type:'selected',docId:docId});
+				dispatchService.send(DH, {type:'selected',docId:docId});
 			};
 
 			if( _this.options.displayFunction ) {
@@ -364,12 +365,11 @@ var DomStyler = $n2.Class({
 		function toggleHoverSound(){
 			var dispatchService = _this.showService.getDispatchService();
 			if( dispatchService ) {
-				var dispatchHandle = _this.showService.dispatchHandle;
 				if( !playSound ) {
-					dispatchService.send(dispatchHandle, {type:'playHoverSoundOn',doc:data});
+					dispatchService.send(DH, {type:'playHoverSoundOn',doc:data});
 					playSound = true;
 				} else {
-					dispatchService.send(dispatchHandle, {type:'playHoverSoundOff',doc:data});
+					dispatchService.send(DH, {type:'playHoverSoundOff',doc:data});
 					playSound = false;
 				};
 			};
@@ -410,22 +410,31 @@ var DomStyler = $n2.Class({
 		};
 	}
 	
-	,_clickFindGeometryOnMap: function(contextDoc, $jq, opt){
+	,_clickFindGeometryOnMap: function(data, $jq, opt){
 		var _this = this;
 
-		if( this.options.findGeometryFunction ) {
-			if( contextDoc
-			 && contextDoc.nunaliit_geom ) {
-				var x = (contextDoc.nunaliit_geom.bbox[0] + contextDoc.nunaliit_geom.bbox[2]) / 2;
-				var y = (contextDoc.nunaliit_geom.bbox[1] + contextDoc.nunaliit_geom.bbox[3]) / 2;
-				
-				$jq.click(function(){
-					_this.options.findGeometryFunction(contextDoc,x,y,opt);
-					return false;
-				});
-			} else {
-				$jq.remove();
-			};
+		var dispatcher = this.showService.getDispatchService();
+
+		if( data 
+		 && data.nunaliit_geom 
+		 && dispatcher
+		 && dispatcher.isEventTypeRegistered('findOnMap')
+		 ) {
+			var x = (data.nunaliit_geom.bbox[0] + data.nunaliit_geom.bbox[2]) / 2;
+			var y = (data.nunaliit_geom.bbox[1] + data.nunaliit_geom.bbox[3]) / 2;
+			
+			$jq.click(function(){
+				dispatcher.send(
+					DH
+					,{
+						type: 'findOnMap'
+						,fid: data._id
+						,x: x
+						,y: y
+					}
+				);
+				return false;
+			});
 		} else {
 			$jq.remove();
 		};
@@ -459,9 +468,8 @@ var DomStyler = $n2.Class({
 							}
 						};
 						
-						var dispatchHandle = _this.showService.dispatchHandle;
 						dispatchService.send(
-							dispatchHandle
+							DH
 							,{
 								type: 'addLayerToMap'
 								,layer: layer
@@ -516,17 +524,16 @@ var DomStyler = $n2.Class({
 		var dispatchService = this.showService.getDispatchService();
 
 		if( dispatchService ) {
-			var dispatchHandle = this.showService.dispatchHandle;
 			$jq.hover(
 				function(){ // in
-					dispatchService.send(dispatchHandle, {
+					dispatchService.send(DH, {
 						type:'focusOn'
 						,docId:contextDoc._id
 						,doc:contextDoc
 					});
 				}
 				,function(){ // out
-					dispatchService.send(dispatchHandle, {
+					dispatchService.send(DH, {
 						type:'focusOff'
 						,docId:contextDoc._id
 						,doc:contextDoc
@@ -544,8 +551,6 @@ var Show = $n2.Class({
 	
 	,domStyler: null
 	
-	,dispatchHandle: null
-	
 	,initialize: function(opts_){
 		this.options = $n2.extend({
 			db: null
@@ -555,7 +560,6 @@ var Show = $n2.Class({
 			,displayFunction: null
 			,editFunction: null
 			,deleteFunction: null
-			,findGeometryFunction: null
 			,viewLayerFunction: null
 			,preprocessDocument: function(doc){ return doc; }
 			,eliminateDeniedMedia: false
@@ -581,11 +585,6 @@ var Show = $n2.Class({
 			notifierService.addListener(function(change){
 				_this._notifierUpdate(change);
 			});
-		};
-		
-		var dispatchService = this.getDispatchService();
-		if( dispatchService ) {
-			this.dispatchHandle = dispatchService.getHandle('n2.couchShow');
 		};
 	}
 
