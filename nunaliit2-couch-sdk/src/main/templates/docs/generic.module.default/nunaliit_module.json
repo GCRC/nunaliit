@@ -60,6 +60,6 @@
 	}
 	,"edit":{
 		"defaultSchemaName": "genericDoc"
-		,"newDocumentSchemaNames": "ALL_SCHEMAS" 
+		,"newDocumentSchemaNames": ["genericDoc"]
 	}
 }
