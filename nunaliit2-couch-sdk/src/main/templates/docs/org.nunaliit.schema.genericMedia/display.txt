@@ -1,7 +1,7 @@
 <div class="n2_documentDisplay"><div class="n2_layoutFloat">
 
 {{#nunaliit_hoverSound}}
-	<div style="float:right;" class="n2s_insertHoverSoundIcon"></div>
+	<div class="n2s_insertHoverSoundIcon"></div>
 {{/nunaliit_hoverSound}}
 
 {{#nunaliit_attachments}}
@@ -11,25 +11,31 @@
 				{{^source}}{{! do not include thumbnails !}}
 
 					{{#attachmentName}}
-	<div style="width: 35%; float:right;">
+	<div class="n2s_insertMedia">
 		<div class="n2s_insertMediaView">{{attachmentName}}</div>
 	</div>
 					{{/attachmentName}}
 
 					{{#originalName}}
 						{{#originalAttachment}}
-	<div><a class="n2s_externalMediaLink" href="{{originalAttachment}}">{{originalName}}</a></div>
+
+<div><a href="" class="n2s_externalMediaLinkInfo">Info</a>
+
+<a class="n2s_externalMediaLink" href="{{originalAttachment}}"><span class="n2s_externalMediaLinkName">({{originalName}})</span></a></div>
 						{{/originalAttachment}}
 						{{^originalAttachment}}
 							{{#attachmentName}}
-	<div><a class="n2s_externalMediaLink" href="{{attachmentName}}">{{originalName}}</a></div>
+
+	<div>
+<a href="" class="n2s_externalMediaLinkInfo">Info</a>
+
+<a class="n2s_externalMediaLink" href="{{attachmentName}}"><span class="n2s_externalMediaLinkName">({{originalName}})</span></a></div>
 							{{/attachmentName}}
 							{{^attachmentName}}
 	<div>{{originalName}}</div>
 							{{/attachmentName}}
 						{{/originalAttachment}}
 					{{/originalName}}
-
 	<div style="clear:both"></div>
 				{{/source}}
 			{{/value}}
