@@ -689,13 +689,16 @@ var CouchDocumentEditor = $n2.Class({
 		if( !opts.suppressEvents ) {
 			// Send document only if it was saved or already
 			// existed.
+			var docId = null;
 			var doc = null;
 			if( this.editedDocument._id ){
 				doc = this.editedDocument;
+				docId = doc._id;
 			};
 			
 			this._dispatch({
 				type: 'editClosed'
+				,docId: docId
 				,doc: doc
 				,saved: opts.saved
 				,inserted: opts.inserted

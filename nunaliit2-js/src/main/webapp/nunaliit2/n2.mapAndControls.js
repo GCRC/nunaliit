@@ -3834,6 +3834,14 @@ var MapAndControls = $n2.Class({
 			if( this.currentMode !== this.modes.NAVIGATE ){
 				this.switchMapMode(this.modes.NAVIGATE);
 			};
+			var deleted = m.deleted;
+			if( !deleted ) {
+				var docId = m.docId;
+				if( docId ) {
+					var feature = this.getFeatureFromFid(docId);
+					this._selectedFeature(feature, docId);
+				};
+			};
 			
 		} else if( 'geometryModified' === type ) {
 			if( m._origin !== this ){
