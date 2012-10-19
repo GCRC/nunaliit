@@ -74,6 +74,7 @@ var Monitor = $n2.Class({
 			d.register(h,'historyBack',f)
 			d.register(h,'historyForward',f)
 			d.register(h,'setHash',f)
+			d.register(h,'replaceHash',f)
 		};
 	}
 
@@ -111,17 +112,45 @@ var Monitor = $n2.Class({
 			window.location = '#'+u;
 			
 		} else if( 'historyBack' === m.type ){
-			window.history.back();
+			if( window.history.back ) {
+				window.history.back();
+			};
 			
 		} else if( 'historyForward' === m.type ){
-			window.history.forward();
+			if( window.history.forward ) {
+				window.history.forward();
+			};
 			
 		} else if( 'setHash' === m.type ){
 			var hash = m.hash;
-			if( hash ) {
-				window.location = '#'+hash;
+			if( window.history.pushState ){
+				if( hash ) {
+					window.history.pushState({},'','#'+hash);
+				} else {
+					window.history.pushState({},'','#');
+				};
 			} else {
-				window.location = '#';
+				if( hash ) {
+					window.location = '#'+hash;
+				} else {
+					window.location = '#';
+				};
+			};
+			
+		} else if( 'replaceHash' === m.type ){
+			var hash = m.hash;
+			if( window.history.replaceState ){
+				if( hash ) {
+					window.history.replaceState({},'','#'+hash);
+				} else {
+					window.history.replaceState({},'','#');
+				};
+			} else {
+				if( hash ) {
+					window.location = '#'+hash;
+				} else {
+					window.location = '#';
+				};
 			};
 		};
 	}
@@ -151,13 +180,15 @@ var Tracker = $n2.Class({
 			var f = function(m){
 				_this._handle(m);
 			};
-			var h = d.getHandle('n2.history');
-			d.register(h,'start',f)
-			d.register(h,'hashChanged',f)
-			d.register(h,'selected',f)
-			d.register(h,'unselected',f)
-			d.register(h,'searchInitiate',f)
-			d.register(h,'editInitiate',f)
+			var h = d.getHandle('n2.history.Tracker');
+			d.register(h,'start',f);
+			d.register(h,'hashChanged',f);
+			d.register(h,'selected',f);
+			d.register(h,'unselected',f);
+			d.register(h,'documentDeleted',f);
+			d.register(h,'searchInitiate',f);
+			d.register(h,'editInitiate',f);
+			d.register(h,'editClosed',f);
 		};
 	}
 
@@ -172,7 +203,7 @@ var Tracker = $n2.Class({
 	,_dispatch: function(m){
 		var d = this._getDispatcher();
 		if( d ){
-			var h = d.getHandle('n2.history');
+			var h = d.getHandle('n2.history.Tracker');
 			d.send(h,m);
 		};
 	}
@@ -194,10 +225,13 @@ var Tracker = $n2.Class({
 			};
 
 			if( !m._suppressHashChange ) {
+				var type = 'setHash';
+				if( m._replaceHash ) type = 'replaceHash';
+				
 				var j = JSON.stringify({t:TYPE_SELECTED,i:m.docId});
 				var u = $n2.Base64.encode(j);
 				this._dispatch({
-					type: 'setHash'
+					type: type
 					,hash: u
 				});
 			};
@@ -211,6 +245,18 @@ var Tracker = $n2.Class({
 				this._dispatch({
 					type: 'setHash'
 					,hash: null
+				});
+			};
+
+		} else if( 'documentDeleted' === m.type ){
+			var deletedDocId = m.docId;
+			if( this.last.selected === deletedDocId ){
+				this.last = {
+					deleted: deletedDocId
+				};
+				
+				this._dispatch({
+					type: 'historyBack'
 				});
 			};
 
@@ -237,6 +283,26 @@ var Tracker = $n2.Class({
 				type: 'setHash'
 				,hash: 'nostate'
 			});
+
+		} else if( 'editClosed' === m.type ) {
+			this.last = {
+				editClosed: true
+			};
+
+			if( m.inserted ) {
+				// A document was created. Select it so it is reflected in the
+				// history hash
+				this._dispatch({
+					type: 'selected'
+					,docId: m.doc._id
+					,_replaceHash: true
+				});
+
+			} else {
+				this._dispatch({
+					type: 'historyBack'
+				});
+			};
 
 		} else if( 'hashChanged' === m.type ){
 			var o = null;

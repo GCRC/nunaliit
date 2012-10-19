@@ -804,6 +804,7 @@ var ChangeNotifier = $n2.Class({
 			,pollInterval: 5000
 			,longPoll: false
 			,timeout: 20000
+			,style: 'all_docs'
 			,listeners: null
 			,onSuccess: function(notifier){}
 		},opts_);
@@ -912,6 +913,7 @@ var ChangeNotifier = $n2.Class({
 	
 		var req = {
 			feed: 'normal'
+			,style: this.options.style
 		};
 	
 		if( typeof(this.lastSequence) === 'number' ) {

@@ -485,12 +485,12 @@ var CouchDocumentEditor = $n2.Class({
 			});
 		};
 
-		if( null != this._getUploadService() ){
-			var attachBtn = $('<button class="file">'+_loc('Add File')+'</button>');
-			formButtons.append(attachBtn);
-			attachBtn.button({icons:{primary:'ui-icon-plusthick'}});
-			attachBtn.click(function(){ _this._addFile(); return false; });
-		};
+//		if( null != this._getUploadService() ){
+//			var attachBtn = $('<button class="file">'+_loc('Add File')+'</button>');
+//			formButtons.append(attachBtn);
+//			attachBtn.button({icons:{primary:'ui-icon-plusthick'}});
+//			attachBtn.click(function(){ _this._addFile(); return false; });
+//		};
 
 		var cancelBtn = $('<button class="cancel">'+_loc('Cancel')+'</button>');
 		formButtons.append(cancelBtn);
@@ -687,9 +687,19 @@ var CouchDocumentEditor = $n2.Class({
 		this.options.onCloseFn(this.editedDocument, this);
 		
 		if( !opts.suppressEvents ) {
+			// Send document only if it was saved or already
+			// existed.
+			var docId = null;
+			var doc = null;
+			if( this.editedDocument._id ){
+				doc = this.editedDocument;
+				docId = doc._id;
+			};
+			
 			this._dispatch({
 				type: 'editClosed'
-				,doc: this.editedDocument
+				,docId: docId
+				,doc: doc
 				,saved: opts.saved
 				,inserted: opts.inserted
 				,updated: opts.updated

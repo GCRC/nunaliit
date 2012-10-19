@@ -117,6 +117,8 @@ $n2.couchDisplay = $n2.Class({
 			dispatcher.register(this.dispatchHandle, 'documentDeleted', f);
 			dispatcher.register(this.dispatchHandle, 'login', f);
 			dispatcher.register(this.dispatchHandle, 'logout', f);
+			dispatcher.register(this.dispatchHandle, 'editClosed', f);
+			dispatcher.register(this.dispatchHandle, 'documentContentCreated', f);
 		};
 
 		var requestService = this._getRequestService();
@@ -250,7 +252,7 @@ $n2.couchDisplay = $n2.Class({
 			});
 			
 			var relatedInfoId = $n2.getUniqueId();
-			var $div = $('<div id="'+relatedInfoId+'"></div>');
+			var $div = $('<div id="'+relatedInfoId+'" class="couchDisplayRelated_'+$n2.utils.stringToHtmlId(data._id)+'"></div>');
 			$elem.append($div);
 			_this.options.displayRelatedInfoFunction({
 				divId: relatedInfoId
@@ -260,16 +262,6 @@ $n2.couchDisplay = $n2.Class({
 		};
 		
 		function onDisplayed($sElem, data, schema, opt_){
-			$sElem.find('.n2s_referenceLink').each(function(){
-				var $jq = $(this);
-				_this._insertReferenceLink(data, $jq, opt);
-				$jq.removeClass('n2s_referenceLink').addClass('n2s_insertedReferenceLink');
-			});
-			$sElem.find('.n2s_clickFindGeometryOnMap').each(function(){
-				var $jq = $(this);
-				_this._clickFindGeometryOnMap(data, $jq, opt);
-				$jq.removeClass('n2s_clickFindGeometryOnMap');
-			});
 			$sElem.find('.n2s_clickAddContribution').each(function(){
 				var $jq = $(this);
 				_this._clickAddContribution(data, $jq, opt);
@@ -475,7 +467,7 @@ $n2.couchDisplay = $n2.Class({
 			$editButton.text( editText );
 			$buttons.append($editButton);
 			$editButton.click(function(){
-				_this.performDocumentEdit(data, opt);
+				_this._performDocumentEdit(data, opt);
 				return false;
 			});
 			addClasses($editButton, editText);
@@ -494,7 +486,7 @@ $n2.couchDisplay = $n2.Class({
 			$deleteButton.text( deleteText );
 			$buttons.append($deleteButton);
 			$deleteButton.click(function(){
-				_this.performDocumentDelete(data, opt);
+				_this._performDocumentDelete(data, opt);
 				return false;
 			});
 			addClasses($deleteButton, deleteText);
@@ -516,7 +508,7 @@ $n2.couchDisplay = $n2.Class({
 			$addRelatedButton.text( addRelatedText );
 			$buttons.append($addRelatedButton);
 			$addRelatedButton.click(function(){
-				_this.addRelatedDocument(data._id, opt.schema.relatedSchemaNames);
+				_this._addRelatedDocument(data._id, opt.schema.relatedSchemaNames);
 				return false;
 			});
 			addClasses($addRelatedButton, addRelatedText);
@@ -575,49 +567,6 @@ $n2.couchDisplay = $n2.Class({
 		
 	}
 	
-	,_insertReferenceLink: function(data, $referenceLink, opt_) {
-		var _this = this;
-		
-		var refDocId = $referenceLink.text();
-		
-		$referenceLink.click(function(){
-			var $div = _this.getDisplayDiv();
-			_this.DisplayDocumentId($div, refDocId);
-			return false;
-		});
-		
-		if( _this._getShowService() ) {
-			_this._getShowService().printBriefDescription($referenceLink, refDocId);
-		};
-	}
-	
-	,_clickFindGeometryOnMap: function(data, $jq, opt_) {
-		var _this = this;
-
-		var dispatcher = this._getDispatcher();
-
-		if( data 
-		 && data.nunaliit_geom 
-		 && dispatcher
-		 && dispatcher.isEventTypeRegistered('findOnMap')
-		 ) {
-			var x = (data.nunaliit_geom.bbox[0] + data.nunaliit_geom.bbox[2]) / 2;
-			var y = (data.nunaliit_geom.bbox[1] + data.nunaliit_geom.bbox[3]) / 2;
-			
-			$jq.click(function(){
-				_this._dispatch({
-					type: 'findOnMap'
-					,fid: data._id
-					,x: x
-					,y: y
-				});
-				return false;
-			});
-		} else {
-			$jq.remove();
-		};
-	}
-	
 	,_clickAddContribution: function(data, $jq, opt_) {
 		var _this = this;
 
@@ -644,7 +593,7 @@ $n2.couchDisplay = $n2.Class({
  		// Show 'edit' button
  		if( $n2.couchMap.canEditDoc(data) ) {
 			$jq.click(function(){
-				_this.performDocumentEdit(data, opt_);
+				_this._performDocumentEdit(data, opt_);
 				return false;
 			});
  		} else {
@@ -660,7 +609,7 @@ $n2.couchDisplay = $n2.Class({
  		// Show 'delete' button
  		if( $n2.couchMap.canDeleteDoc(data) ) {
 			$jq.click(function(){
-				_this.performDocumentDelete(data, opt_);
+				_this._performDocumentDelete(data, opt_);
 				return false;
 			});
  		} else {
@@ -680,16 +629,6 @@ $n2.couchDisplay = $n2.Class({
 			});
 		} else {
 			$jq.remove();
-		};
-	}
-	
-	,_localize: function(data, $jq, opt_) {
-		var _this = this;
-
-		var text = $jq.text();
-		var locText = $n2.loc(text,'display');
-		if( locText ) {
-			$jq.text(locText);
 		};
 	}
 
@@ -722,47 +661,26 @@ $n2.couchDisplay = $n2.Class({
 		};
 	}
 	
-	,_displayBrief: function($elem,doc) {
-		var defaultSchema = this.defaultSchema;
-		
-		if( doc.nunaliit_schema ) {
-			var schemaRepository = this._getSchemaRepository();
-			if( schemaRepository ) {
-				schemaRepository.getSchema({
-					name: doc.nunaliit_schema
-					,onSuccess: function(schema) {
-						schema.brief(doc,$elem);
-					}
-					,onError: function(){
-						if( defaultSchema ) {
-							defaultSchema.brief(doc,$elem);
-						} else {
-							// leave as is
-						};
-					}
-				});
-			};
-			
-		} else if( defaultSchema ) {
-			defaultSchema.brief(doc,$elem);
-			
-		} else {
-			// leave as is
-		};
-	}
-	
 	,_displayRelatedInfo: function(opts_){
 		var opts = $n2.extend({
 			divId: null
+			,div: null
 			,doc: null
 			,schema: null
 		},opts_);
 		
 		var _this = this;
-		var $elem = $('#'+opts.divId);
 		var doc = opts.doc;
 		var docId = doc._id;
 		var schema = opts.schema;
+		
+		var $elem = opts.div;
+		if( ! $elem ) {
+			$elem = $('#'+opts.divId);
+		};
+		if( ! $elem.length) {
+			return;
+		};
 		
 		if( !schema ){
 			return;
@@ -889,40 +807,16 @@ $n2.couchDisplay = $n2.Class({
 				};
 			};
 		};
-		
-//		function legacyDisplay() {
-//			var $title = $('<h3></h3>');
-//			$title.text(relatedSchemaName);
-//			$container.append( $title );
-//			
-//			for(var i=0,e=relatedDocIds.length; i<e; ++i){
-//				var relatedDocId = relatedDocIds[i];
-//				
-//				var dClass = 'olkitSearchMod2_'+(i%2);
-//				var $div = $('<div class="'+dClass+'"></div>');
-//				$container.append($div);
-//	
-//				var $contentDiv = $('<div class="n2s_handleHover"></div>');
-//				$div.append($contentDiv);
-//				this._getShowService().printDocument($contentDiv, relatedDocId);
-//	
-//				if( this._getRequestService() ) {
-//					var $buttonDiv = $('<div class="displayRelatedButton displayRelatedButton_'+$n2.utils.stringToHtmlId(relatedDocId)+'"></div>');
-//					$div.append($buttonDiv);
-//					this._getRequestService().requestDocument(relatedDocId);
-//				};
-//			};
-//		};
 	}
 
-	,addRelatedDocument: function(docId, relatedSchemaNames){
+	,_addRelatedDocument: function(docId, relatedSchemaNames){
 		var _this = this;
 		
 		this.createRelatedDocProcess.addRelatedDocumentFromSchemaNames({
 			docId: docId
 			,relatedSchemaNames: relatedSchemaNames
 			,onSuccess: function(docId){
-				_this.RefreshClickedFeature();
+//				_this._RefreshClickedFeature();
 			}
 		});
 	}
@@ -984,171 +878,10 @@ $n2.couchDisplay = $n2.Class({
 		};
 	}
 	
-	,DisplayClickedMapFeature: function(data, options) {
-		var _this = this;
-		
-		var $displayDiv = $('#'+options.displayDiv);
-		
-		$displayDiv.empty();
-		
-		/*
-		 * If translateCallback defined, invoke it here and exit.  It may
-		 * make some decisions and then reinvoke display functions (such as
-		 * DisplayDocument, defined below).
-		 */
-		if (null !== this.options.translateCallback) {
-			var retVal = this.options.translateCallback(data, options);
-			if (null !== retVal) {
-				return;
-			};
-		};
-		
-		var displayObjectOptions = {
-			showAddContributionButton: true
-			,showRelatedContributions: true
-			,onUpdated: function() {
-				_this.DisplayClickedMapFeature(data, options);
-			}
-			,onDeleted: function() {
-				$displayDiv.empty();
-			}
-		};
-		this._displayObject($displayDiv, data, displayObjectOptions);
-	}
-	
-	,FeatureUpdated: function(feature) {
-
-		if( this.currentFeature
-		 && feature
-		 && this.currentFeature.fid
-		 && feature.fid == this.currentFeature.fid
-		 && this.currentFeature.feature
-		 && this.currentFeature.options
-		 ) {
-			this.currentFeature.feature = feature;
-			this.RefreshClickedFeature();
-		};
-	}
-
 	,Configure: function(mapAndControl_) {
 		this.mapAndControl = mapAndControl_;
 	}
 
-	,ClickedFeatureHandler: function(feature, options_) {
-		var _this = this;
-		
-		var options = $.extend({
-			displayDiv: null // must be supplied
-		},options_);
-
-		if( null != feature ) {
-			this.currentFeature = {
-				fid: feature.fid
-				,feature: feature
-				,options: options
-			};
-
-			this.DisplayClickedMapFeature(feature.data, options);
-		};
-	}
-	
-	,RefreshClickedFeature: function(){
-		// Verify if our display is still in place
-		var fid = this.currentFeature ? this.currentFeature.fid : null;
-		var $elems = $('.couchDisplay_'+$n2.utils.stringToHtmlId(fid));
-		if( $elems.length > 0
-		 && this.currentFeature
-		 && this.currentFeature.feature
-		 && this.currentFeature.feature.data
-		 ) {
-			// If still displayed, then refresh
-			this.DisplayClickedMapFeature(
-					this.currentFeature.feature.data
-					,this.currentFeature.options
-				);
-		};
-	}
-	
-	,reportContributions: function(data, options_, contId, contributions) {
-		var $div = $('#'+contId);
-		if( $div.length > 0 
-		 && this.mapAndControl.contributions ) {
-			$div.empty();
-
-			// Sort contributions
-			var map = {};
-			for(var i=0,e=contributions.length; i<e; ++i) {
-				var c = contributions[i];
-				var docId = c._id;
-				var replyTo = null;
-				if( c.nunaliit_contribution
-				 && c.nunaliit_contribution.reply 
-				 && c.nunaliit_contribution.reply.nunaliit_type 
-				 && c.nunaliit_contribution.reply.nunaliit_type === 'reference' 
-			     && c.nunaliit_contribution.reply.doc ) {
-					replyTo = c.nunaliit_contribution.reply.doc;
-				};
-				map[docId] = {
-					doc: c
-					,replies: []
-					,replyTo: replyTo
-				};
-			};
-			
-			for(var docId in map) {
-				var c = map[docId];
-				if( c.replyTo ) {
-					if( map[c.replyTo] ) {
-						map[c.replyTo].replies.push(c);
-					} else {
-						// Turn off replyTo, can not find reference
-						c.replyTo = null;
-					};
-				}
-			};
-			
-			// Get top replies
-			var topContributions = [];
-			for(var docId in map) {
-				var c = map[docId];
-				if( null == c.replyTo ) {
-					topContributions.push(c);
-				};
-			};
-			topContributions.sort(docCreationTimeSort);
-			
-			for(var i=0,e=topContributions.length; i<e; ++i) {
-				this.reportContribution(data, options_, $div, topContributions[i]);
-			};
-		};
-	}
-	
-	,reportContribution: function(data, options_, $elem, contributionObj) {
-		var _this = this;
-		var $c = $('<div class="contributionReply"></div>');
-		$elem.append($c);
-
-		var contributionOptions = $n2.extend(
-			{}
-			,options_
-			,{
-				suppressContributionReferences:true
-				,showContributionReplyButton: true
-				,showRelatedContributions: false
-				,onDeleted: options_.onUpdated // Deleting a contribution should update parent
-			}
-		);
-		this._displayObject($c,contributionObj.doc,contributionOptions);
-
-		if( contributionObj.replies.length > 0 ) {
-			contributionObj.replies.sort(docCreationTimeSort);
-			for(var i=0,e=contributionObj.replies.length; i<e; ++i) {
-				var c = contributionObj.replies[i];
-				this.reportContribution(data, options_, $c, c);
-			};
-		};
-	}
-	
 	,performContributionReply: function(referenceId, options_, contId) {
 		var _this = this;
 		
@@ -1193,7 +926,7 @@ $n2.couchDisplay = $n2.Class({
 		$contributionDialog.dialog(dialogOptions);
 	}
 	
-	,performDocumentEdit: function(data, options_) {
+	,_performDocumentEdit: function(data, options_) {
 		this._dispatch({
 			type: 'editInitiate'
 			,docId: data._id
@@ -1201,7 +934,7 @@ $n2.couchDisplay = $n2.Class({
 		});
 	}
 	
-	,performDocumentDelete: function(data, options_) {
+	,_performDocumentDelete: function(data, options_) {
 		var _this = this;
 
 		if( confirm( _loc('You are about to delete this document. Do you want to proceed?') ) ) {
@@ -1288,6 +1021,19 @@ $n2.couchDisplay = $n2.Class({
 				var $elem = $(this);
 				_this._refreshButtons($elem);
 			});
+			
+		} else if( msg.type === 'editClosed' ) {
+			var deleted = msg.deleted;
+			if( !deleted ) {
+				var doc = msg.doc;
+				if( doc ) {
+					var $div = this.getDisplayDiv();
+					this.DisplayDocument($div, doc);
+				};
+			};
+			
+		} else if( msg.type === 'documentContentCreated' ) {
+			this._handleDocumentCreation(msg.doc);
 		};
 	}
 	
@@ -1401,14 +1147,73 @@ $n2.couchDisplay = $n2.Class({
 		});
 		
 	}
+	
+	,_handleDocumentCreation: function(doc){
+		var _this = this;
+		
+		// Find all documents referenced by this one
+		var links = $n2.couchGeom.extractLinks(doc);
+		for(var i=0,e=links.length;i<e;++i){
+			var refDocId = links[i].doc;
+			if( refDocId ){
+				// Check if we have a related document section displayed for
+				// this referenced document
+				var $elems = $('.couchDisplayRelated_'+$n2.utils.stringToHtmlId(refDocId));
+				if( $elems.length > 0 ){
+					// We must redisplay this related info section
+					refreshRelatedInfo(refDocId, $elems);
+				};
+			};
+		};
+
+		function refreshRelatedInfo(docId, $elems) {
+			// Get document
+			var request = _this._getRequestService();
+			if( request ){
+				request.requestDocument(docId,function(d){
+					loadedData(d, $elems);
+				});
+			};
+		};
+		
+		function loadedData(data, $elems) {
+			// Get schema
+			var schemaName = data.nunaliit_schema ? data.nunaliit_schema : null;
+			var schemaRepository = _this._getSchemaRepository();
+			if( schemaName && schemaRepository ) {
+				schemaRepository.getSchema({
+					name: schemaName
+					,onSuccess: function(schema) {
+						loadedSchema(data, schema, $elems);
+					}
+					,onError: function(){
+						loadedSchema(data, null, $elems);
+					}
+				});
+			} else {
+				loadedSchema(data, null, $elems);
+			};
+		};
+		
+		function loadedSchema(data, schema, $elems){
+			$elems.each(function(){
+				var $e = $(this);
+				// Refresh
+				$e.empty();
+				_this.options.displayRelatedInfoFunction({
+					div: $e
+					,doc: data
+					,schema: schema
+				});
+			});
+		};
+	}
 });
 
 // Exports
 $.olkitDisplay = null; 
 //{
 //	Configure: Configure
-//	,ClickedFeatureHandler: ClickedFeatureHandler
-//	,FeatureUpdated: FeatureUpdated
 //	
 //	// Specific to couchDb
 //	,DisplayDocument: DisplayDocument

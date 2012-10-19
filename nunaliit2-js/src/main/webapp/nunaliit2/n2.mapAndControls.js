@@ -1405,19 +1405,6 @@ var MapAndControls = $n2.Class({
 						layerInfo.olLayer.addFeatures(loadedFeature);
 					}
 					reloadOptions.onReloaded(loadedFeature);
-					
-					// Let display logic know that a feature was updated
-//					if( $.olkitDisplay ) {
-//						if( typeof($.olkitDisplay.FeatureUpdated) === 'function' ) {
-//							$.olkitDisplay.FeatureUpdated(loadedFeature);
-//						};
-//					
-//					} else if( $n2.placeInfo ) {
-//						var lastDisplayedFid = $n2.placeInfo.getFid();
-//						if (lastDisplayedFid != -1 && lastDisplayedFid == loadedFeature.fid) {
-//							$n2.placeInfo.setFeatureReinitDisplay(loadedFeature);
-//						};
-//					};
 				};
 			};
 			
@@ -1501,8 +1488,7 @@ var MapAndControls = $n2.Class({
 	,_createOverlayFromDefinition: function(layerDefinition, isBaseLayer) {
 		var _this = this;
 		
-		var layerInfo = $.extend({}, this.defaultLayerInfo, layerDefinition.options);
-		layerInfo.name = layerDefinition.name;
+		var layerInfo = $.extend({}, this.defaultLayerInfo, layerDefinition);
 
 		// If a SRS has not been defined for the database, pick the first one defined
 		// for a layer
@@ -1522,7 +1508,7 @@ var MapAndControls = $n2.Class({
 
 		if( 'couchdb' === layerDefinition.type ) {
 			// This is a couch layer
-			var couchProtocolOpt = $n2.extend({},layerInfo,{
+			var couchProtocolOpt = $n2.extend({},layerInfo.options,{
 				notifications: {
 					readStart: function(){
 						_this._mapBusyStatus(1);
@@ -2903,11 +2889,7 @@ var MapAndControls = $n2.Class({
 		if( msg.data ) {
 			var data = msg.data;
 			
-			if( $.olkitDisplay 
-			 && $.olkitDisplay.RefreshClickedFeature ){
-				$.olkitDisplay.RefreshClickedFeature();
-				
-			} else if( data.place_id 
+			if( data.place_id 
 			 && $n2.placeInfo 
 			 && $n2.placeInfo.getPlaceId() == data.place_id ) {
 				$n2.placeInfo.loadAndRenderContributions();
@@ -3850,6 +3832,14 @@ var MapAndControls = $n2.Class({
 		} else if( 'editClosed' === type ) {
 			if( this.currentMode !== this.modes.NAVIGATE ){
 				this.switchMapMode(this.modes.NAVIGATE);
+			};
+			var deleted = m.deleted;
+			if( !deleted ) {
+				var docId = m.docId;
+				if( docId ) {
+					var feature = this.getFeatureFromFid(docId);
+					this._selectedFeature(feature, docId);
+				};
 			};
 			
 		} else if( 'geometryModified' === type ) {

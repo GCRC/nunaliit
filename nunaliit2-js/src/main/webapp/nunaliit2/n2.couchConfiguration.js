@@ -196,7 +196,7 @@ function Configure(options_){
 	 		var doc = opt_.feature.data;
 	 		
 	 		var $div = $('<span></span>');
-	 		configuration.show.displayBriefDescription($div,{},doc);
+	 		configuration.directory.showService.displayBriefDescription($div,{},doc);
 	 		
 	 		var $wrapper = $('<div></div>');
 	 		$wrapper.append($div);
