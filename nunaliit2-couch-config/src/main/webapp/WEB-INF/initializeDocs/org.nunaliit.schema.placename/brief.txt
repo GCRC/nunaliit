@@ -1,1 +1,0 @@
-Placename({{#place}}{{name}}{{/place}})
