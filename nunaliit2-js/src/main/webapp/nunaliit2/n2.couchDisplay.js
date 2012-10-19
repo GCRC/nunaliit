@@ -1194,19 +1194,11 @@ $n2.couchDisplay = $n2.Class({
 	}
 	
 	,performDocumentEdit: function(data, options_) {
-		var editing = false;
-		if( this.mapAndControl ) {
-			editing = this.mapAndControl.initiateFeatureEdit(data._id);
-		};
-		if( !editing 
-		 && this.options.editor 
-		 && this.options.editor.showDocumentForm
-		 ) {
-			var panelName = this.getDisplayDivName();
-			this.options.editor.showDocumentForm(data,{
-				panelName: panelName
-			});
-		};
+		this._dispatch({
+			type: 'editInitiate'
+			,docId: data._id
+			,doc: data
+		});
 	}
 	
 	,performDocumentDelete: function(data, options_) {
@@ -1216,9 +1208,6 @@ $n2.couchDisplay = $n2.Class({
 			this.options.db.deleteDocument({
 				data: data
 				,onSuccess: function() {
-					if( _this.mapAndControl ) {
-						_this.mapAndControl.removeFeature(data._id);
-					};
 					_this._dispatch({
 						type: 'documentDeleted'
 						,docId: data._id

@@ -1,5 +1,7 @@
 ;(function($,$n2){
 
+var DH = 'browse.js';	
+	
 var HASH_SEARCH_PREFIX="search_";
 var HASH_EDIT_PREFIX="edit_";
 var HASH_NEW_PREFIX="new_";
@@ -15,86 +17,7 @@ var requests = null;
 var contributions = null;
 var showService = null;
 var schemaRepository = null;
-
-var HashInfo = $n2.Class({
-	
-	hash: null
-	
-	,initialize: function(hash_){
-		if( hash_ ) {
-			this.hash = hash_;
-		} else {
-			this.hash = window.location.hash.substr(1);
-		};
-	}
-
-	,isSearchHash: function(){
-		return (this.hash.substr(0,HASH_SEARCH_PREFIX.length) === HASH_SEARCH_PREFIX);
-	}
-
-	,getSearchTerms: function(){
-		if( this.isSearchHash() ) {
-			var searchString = decodeURIComponent( this.hash.substr(HASH_SEARCH_PREFIX.length) );
-			return searchString;
-		} else {
-			return null;
-		};
-	}
-	
-	,setSearchHash: function(searchTerms){
-		this.hash = HASH_SEARCH_PREFIX + searchTerms;
-		window.location.hash = '#' + encodeURIComponent(this.hash);
-	}
-
-	,isEditHash: function(){
-		return (this.hash.substr(0,HASH_EDIT_PREFIX.length) === HASH_EDIT_PREFIX);
-	}
-
-	,getEditId: function(){
-		if( this.isEditHash() ) {
-			var id = decodeURIComponent( this.hash.substr(HASH_EDIT_PREFIX.length) );
-			return id;
-		} else {
-			return null;
-		};
-	}
-	
-	,setEditId: function(docId){
-		this.hash = HASH_EDIT_PREFIX + docId;
-		window.location.hash = '#' + encodeURIComponent(this.hash);
-	}
-
-	,isNewDocumentHash: function(){
-		return (this.hash.substr(0,HASH_NEW_PREFIX.length) === HASH_NEW_PREFIX);
-	}
-
-	,getNewDocumentSchema: function(){
-		if( this.isNewDocumentHash() ) {
-			if( this.hash === HASH_NEW_PREFIX ) {
-				return null;
-			} else {
-				var schemaName = decodeURIComponent( this.hash.substr(HASH_NEW_PREFIX.length) );
-				return schemaName;
-			};
-		} else {
-			return null;
-		};
-	}
-	
-	,setNewDocumentHash: function(schemaName){
-		if( schemaName ) {
-			this.hash = HASH_NEW_PREFIX + schemaName;
-		} else {
-			this.hash = HASH_NEW_PREFIX;
-		};
-		window.location.hash = '#' + encodeURIComponent(this.hash);
-	}
-});
-
-HashInfo.getEditHashFromDocId = function(docId){
-	var hash = HASH_EDIT_PREFIX + docId;
-	return hash;
-};
+var dispatcher = null;
 
 var loginStateChanged = function(currentUser) {
 	var showLogin = false;
@@ -179,7 +102,7 @@ function initiateEdit(docId) {
 	function showEdit(doc,schema) {
 		$('#results').empty();
 		
-		couchEditor.cancelDocumentForm();
+		couchEditor.cancelDocumentForm({suppressEvents:true});
 
 		// Couch Editor
 		var couchEditorId = $n2.getUniqueId();
@@ -195,16 +118,8 @@ function initiateEdit(docId) {
 				initiateEdit(doc._id); 
 			}
 			,onFeatureDeletedFn: function(fid,feature){
-				var hashInfo = new HashInfo();
-				if( doc._id === hashInfo.getEditId() ) {
-					window.history.back();
-				};
 			}
 			,onCancelFn: function(){ 
-				var hashInfo = new HashInfo();
-				if( doc._id === hashInfo.getEditId() ) {
-					window.history.back();
-				};
 			}
 			,onCloseFn: function(){}
 		});
@@ -324,8 +239,6 @@ function addDocument() {
 			selectNewDocumentSchema(schemas);
 		}
 		,onError: function(){
-			var hashInfo = new HashInfo();
-			hashInfo.setNewDocumentHash();
 		}
 	});
 };
@@ -358,8 +271,12 @@ function selectNewDocumentSchema(schemas) {
 			var $select = $dialog.find('select');
 			var schemaName = $select.val();
 
-			var hashInfo = new HashInfo();
-			hashInfo.setNewDocumentHash(schemaName);
+			// start new document
+			var hash = HASH_NEW_PREFIX + $n2.utils.stringToHtmlId(schemaName);
+			dispatcher.send(DH,{
+				type: 'setHash'
+				,hash: hash
+			});
 			
 			$dialog.dialog('close');
 		});
@@ -415,24 +332,14 @@ function createNewDocument(schema) {
 	function showEdit(doc,schema) {
 		$('#results').empty();
 		
-		couchEditor.cancelDocumentForm();
+		couchEditor.cancelDocumentForm({suppressEvents:true});
 		
 		couchEditor.showDocumentForm(doc,{
 			panelName: 'results'
 			,schema: schema
 			,onFeatureInsertedFn: function(fid,feature){
-				// replace state
-				var newUrl = window.location.href;
-				var i = newUrl.indexOf('#');
-				newUrl = newUrl.substr(0,i+1) + HashInfo.getEditHashFromDocId(fid);
-				window.history.replaceState(null,null,newUrl);
-				hashChange();
 			}
 			,onCancelFn: function(){ 
-				var hashInfo = new HashInfo();
-				if( hashInfo.isNewDocumentHash() ) {
-					window.history.back();
-				};
 			}
 		});
 		$n2.log('schema',schema);
@@ -445,36 +352,36 @@ function createNewDocument(schema) {
 
 
 function displaySearchResults(displayData) {
-	var hashInfo = new HashInfo();
-	hashInfo.setSearchHash( $('#searchText').val() );
 
-	if( !displayData ) {
-		reportError('Invalid search results returned');
+	var $table = $('<table></table>');
+	$('#results').empty().append($table);
 
-	} else if( 'wait' === displayData.type ) {
-		startRequestWait();
+	$table.append('<tr><th>Results</th></tr>');
 
-	} else if( 'results' === displayData.type ) {
-		var $table = $('<table></table>');
-		$('#results').empty().append($table);
-	
-		$table.append('<tr><th>Results</th></tr>');
+	for(var i=0,e=displayData.list.length; i<e; ++i) {
+		var docId = displayData.list[i].id;
+		var $tr = $('<tr></tr>');
 
-		for(var i=0,e=displayData.list.length; i<e; ++i) {
-			var docId = displayData.list[i].id;
-			var $tr = $('<tr></tr>');
-
-			$table.append($tr);
-			
-			var hash = HashInfo.getEditHashFromDocId(docId);
-			
-			$td = $('<td><a href="#'+hash+'" alt="'+docId+'">unknown</a></td>');
-			$tr.append($td);
-			showService.printBriefDescription($td.find('a'),docId);
-		};
+		$table.append($tr);
 		
-	} else {
-		reportError('Invalid search results returned');
+//		var hash = HashInfo.getEditHashFromDocId(docId);
+		
+		$td = $('<td><a href="#" alt="'+docId+'">unknown</a></td>');
+		$tr.append($td);
+		
+		var $a = $td.find('a');
+		installClick($a, docId);
+		showService.printBriefDescription($a,docId);
+	};
+	
+	function installClick($a, docId){
+		$a.click(function(){
+			dispatcher.send(DH,{
+				type:'selected'
+				,docId:docId
+			});
+			return false;
+		});
 	};
 };
 
@@ -486,38 +393,49 @@ function setNewHash(newHash) {
 	};
 };
 
-function hashChange() {
-	var hashInfo = new HashInfo();
-	
-	// Cancel editing
-	if( couchEditor ) {
-		couchEditor.cancelDocumentForm();
-	};
+function _handle(m){
+	if( 'searchInitiate' === m.type ) {
+		startRequestWait();
 
-	if( hashInfo.isSearchHash() ) {
-		var searchTerms = hashInfo.getSearchTerms();
-		searchInput.performSearch( searchTerms );
-
-	} else if( hashInfo.isEditHash() ) {
-		initiateEdit( hashInfo.getEditId() );
-
-	} else if( hashInfo.isNewDocumentHash() ) {
-		var schemaName = hashInfo.getNewDocumentSchema();
-		createNewDocumentFromSchemaName(schemaName);
-
-	} else {
+	} else if( 'searchResults' === m.type ) {
+		if( m.results ){
+			displaySearchResults(m.results);
+		} else if( m.error ) {
+			reportError('Invalid search results returned: '+m.error);
+		};
+		
+	} else if( 'selected' === m.type ) {
+		initiateEdit( m.docId );
+		
+	} else if( 'unselected' === m.type ) {
 		$('#results').empty();
+		
+	} else if( 'hashChanged' === m.type ) {
+		var hash = m.hash;
+		if( hash.substr(0,HASH_NEW_PREFIX.length) === HASH_NEW_PREFIX ) {
+			// New document
+			var schemaName = hash.substr(HASH_NEW_PREFIX.length);
+			schemaName = $n2.utils.unescapeHtmlId(schemaName);
+			createNewDocumentFromSchemaName(schemaName);
+		};
 	};
 };
 
 function main() {
+	
+	dispatcher.register(DH,'searchInitiate',_handle);
+	dispatcher.register(DH,'searchResults',_handle);
+	dispatcher.register(DH,'selected',_handle);
+	dispatcher.register(DH,'unselected',_handle);
+	dispatcher.register(DH,'hashChanged',_handle);
 
 	searchInput = searchServer.installSearch({
 		textInput: $('#searchText')
 		,searchButton: $('#searchButton')
 		,initialSearchText: 'search database'
 		,onlyFinalResults: true
-		,displayFn: displaySearchResults
+		//,displayFn: displaySearchResults
+		,dispatchService: dispatcher
 	});
 	
 	// Editor
@@ -527,9 +445,6 @@ function main() {
 	};
 	
 	$('#addDocumentButton').click(addDocument);
-
-	window.addEventListener('hashchange', hashChange, false);
-	hashChange();
 };
 
 function main_init(config) {
@@ -543,6 +458,8 @@ function main_init(config) {
 	couchEditor = config.couchEditor;
 	showService = config.show;
 	schemaRepository = config.directory.schemaRepository;
+	dispatcher = config.directory.dispatchService;
+	
  	
 	if( $.NUNALIIT_AUTH ) {
 		$.NUNALIIT_AUTH.addListener(loginStateChanged);
@@ -553,10 +470,12 @@ function main_init(config) {
 		,onSuccess: function(schema) {
 			defaultSchema = schema;
 			main();
+			config.start();
 		}
 		,onError: function(err) {
 			$n2.log('Unable to load schema for editor',err);
 			main();
+			config.start();
 		}
 	});
 };

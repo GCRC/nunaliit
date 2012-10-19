@@ -1,2 +1,0 @@
-{{#name}}<tr><td class="label n2_localize">Name</td><td class="value">{{name}}</td></tr>{{/name}}
-{{#meaning}}<tr><td class="label n2_localize">Meaning</td><td class="value">{{meaning}}</td></tr>{{/meaning}}

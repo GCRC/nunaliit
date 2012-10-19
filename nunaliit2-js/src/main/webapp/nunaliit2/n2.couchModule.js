@@ -33,6 +33,8 @@ $Id: n2.couchModule.js 8494 2012-09-21 20:06:50Z jpfiset $
 
 ;(function($,$n2){
 
+var DH = 'n2.couchModule'; // dispatcher handle
+
 //=========================================================================
 /*
  
@@ -441,6 +443,14 @@ var ModuleDisplay = $n2.Class({
 		this.filterPanelName = opts.filterPanelName;
 		this.searchPanelName = opts.searchPanelName;
 		
+		// dispatcher
+		var d = this._getDispatcher();
+		if( d ){
+			d.register(DH,'unselected',function(m){
+				_this._initSidePanel();
+			});
+		};
+		
 		// Quick access
 		var config = this.config;
 		var atlasDb = config.atlasDb;
@@ -591,7 +601,6 @@ var ModuleDisplay = $n2.Class({
 				,addPointsOnly: addPointsOnly
 				,overlays: []
 				,toggleClick: toggleClick
-				,toggleClickFn: function(){ _this._initSidePanel(); }
 				,sidePanelName: opts.sidePanelName
 				,filterPanelName: opts.filterPanelName
 				,saveFeature: config.couchEditor
@@ -777,6 +786,14 @@ var ModuleDisplay = $n2.Class({
 	,_initSidePanel: function() {
 		var $elem = $('#'+this.sidePanelName);
 		var intro_html = this.module.displayIntro($elem);
+	}
+	
+	,_getDispatcher: function(){
+		var d = null;
+		if( this.config.directory ){
+			d = this.config.directory.dispatchService;
+		};
+		return d;
 	}
 });
 

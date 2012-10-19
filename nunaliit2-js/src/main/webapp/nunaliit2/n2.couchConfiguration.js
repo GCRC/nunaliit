@@ -51,9 +51,24 @@ function Configure(options_){
 	var configuration = {
 		directory: {}
 	};
+	
+	// Start function
+	configuration.start = function(){
+		if( configuration.directory.dispatchService ){
+			configuration.directory.dispatchService.send('n2.couchConfiguration',{type:'start'});
+		};
+	};
 
 	// Dispatcher
 	configuration.directory.dispatchService = new $n2.dispatch.Dispatcher();
+	
+	// History monitoring
+	configuration.directory.historyMonitor = new $n2.history.Monitor({
+		directory: configuration.directory
+	});
+	configuration.directory.historyTracker = new $n2.history.Tracker({
+		directory: configuration.directory
+	});
 	
  	// Turn off cometd
  	$.cometd = {
@@ -130,6 +145,7 @@ function Configure(options_){
 	 	configuration.searchServer = new $n2.couchSearch.SearchServer({
 			designDoc: configuration.atlasDesign
 			,db: configuration.atlasDb
+			,directory: configuration.directory
 		});
 		configuration.directory.searchService = configuration.searchServer;
 		

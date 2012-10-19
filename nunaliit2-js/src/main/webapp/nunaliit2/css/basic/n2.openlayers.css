@@ -15,7 +15,8 @@
 }
 
 .olControlLayerSwitcher .maximizeDiv, .olControlLayerSwitcher .minimizeDiv {
-	left: -20px !important;
+	left: -10px !important;
+	top: 15px !important;
 }
 
 #OpenLayers_Control_MinimizeDiv_innerImage {
@@ -23,12 +24,13 @@
 }
 
 .olControlLayerSwitcher .layersDiv {
-	background-color: rgba(0, 0, 0, 0.8) !important;
-	margin-top: 5px !important;
-	background-color: rgba(0, 0, 0, 0.8);
+	background-color: rgba(0, 0, 0, 0.7) !important;
+	margin-top: 15px !important;
+	background-color: rgba(0, 0, 0, 0.7);
 	-moz-border-radius: 0 5px 5px 5px;
 	border-radius: 0 5px 5px 5px;
-	padding:10px !important;
+	padding:11px !important;
+	margin-left: 12px !important;
 }
 
 div.olControlZoom {
@@ -38,5 +40,14 @@ div.olControlZoom {
 
 div.olControlZoom a { 
 	background: rgba(0, 0, 0, 0.7) !important;
-}	
+}
+
+div.olControlEditingToolbar {
+	right: 25px !important;
+	width: 440px !important;
+}
+
+.olControlEditingToolbar div {
+	float: left !important;
+}
 

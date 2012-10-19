@@ -35,6 +35,7 @@ $Id: n2.couchEdit.js 8458 2012-08-29 13:12:06Z jpfiset $
 
 // Localization
 var _loc = function(str){ return $n2.loc(str,'nunaliit2-couch'); };
+var DH = 'n2.couchEdit';
 
 function getDefaultCouchProjection(){
 	var defaultCouchProj = null;
@@ -103,25 +104,11 @@ var CouchDocumentEditor = $n2.Class({
 	
 	,editedFeature: null
 	
-	,editedLayer: null
-	
-	,originalData: null
-	
-	,originalGeometry: null
-	
-	,originalStyle: null
-	
 	,currentGeometryWkt: null
 	
 	,editorContainerId: null
 	
 	,isInsert: null
-	
-	,modifyFeatureControl: null
-	
-	,mapControls: null
-	
-	,featureModifiedCallback: null
 	
 	,userButtons: null
 	
@@ -188,33 +175,19 @@ var CouchDocumentEditor = $n2.Class({
 
 	,startFeatureEditing: function(
 		feature_
-		,modifyFeatureControl_
-		,mapControls_
 		) {
 		
 		var _this = this;
-		this.featureModifiedCallback = function(evt){
-			_this.featureModified(evt);
-		}
 	
-		this.modifyFeatureControl = modifyFeatureControl_;
-		this.mapControls = mapControls_;
 		this.editedFeature = feature_;
 		this.editedDocument = feature_.data;
-		this.editedLayer = this.editedFeature.layer;
 	
-		this.originalGeometry = this.editedFeature.geometry.clone();
-		this.originalStyle = this.editedFeature.style;
-		this.originalData = $.extend(true,{},this.editedFeature.data);
-		
 		this.currentGeometryWkt = null;
 		if( this.editedDocument 
 		 && this.editedDocument[this.options.geomName] ) {
 			this.currentGeometryWkt = this.editedDocument[this.options.geomName].wkt;
 		};
 		
-		this.editedLayer.events.register('featuremodified', this.editedFeature, this.featureModifiedCallback);
-	
 		this.isInsert = (typeof(this.editedFeature.fid) === 'undefined' || this.editedFeature.fid === null);
 		
 		if( this.isInsert ) {
@@ -369,7 +342,7 @@ var CouchDocumentEditor = $n2.Class({
 							}
 							,onError: function(err){
 								reportError('Unable to get selected schema: '+err);
-								_this.cancelEditing();
+								_this._cancelEdit();
 							}
 						});
 						
@@ -381,7 +354,7 @@ var CouchDocumentEditor = $n2.Class({
 					.click(function(){
 						var $dialog = $('#'+dialogId);
 						$dialog.dialog('close');
-						_this.cancelEditing();
+						_this._cancelEdit();
 						return false;
 					})
 				;
@@ -523,7 +496,7 @@ var CouchDocumentEditor = $n2.Class({
 		formButtons.append(cancelBtn);
 		cancelBtn.button({icons:{primary:'ui-icon-cancel'}});
 		cancelBtn.click(function(){ 
-			_this.cancelEditing();
+			_this._cancelEdit();
 			return false;
 		});
 		
@@ -639,7 +612,7 @@ var CouchDocumentEditor = $n2.Class({
 				_this.options.onFeatureUpdatedFn(editedDocument._id,_this.editedFeature);
 				discardOpts.updated = true;
 			};
-			_this._discardAttributeForm(discardOpts);
+			_this._discardEditor(discardOpts);
     	};
     	
     	function deletion(editedDocument) {
@@ -647,7 +620,7 @@ var CouchDocumentEditor = $n2.Class({
 				data: _this.editedDocument
 				,onSuccess: function() {
 					_this.options.onFeatureDeletedFn(editedDocument._id,_this.editedFeature);
-					_this._discardAttributeForm({deleted:true});
+					_this._discardEditor({deleted:true});
 					_this._dispatch({
 						type: 'documentDeleted'
 						,docId: editedDocument._id
@@ -669,44 +642,39 @@ var CouchDocumentEditor = $n2.Class({
 			});
 		};
 	}
+    
+    ,_cancelEdit: function(){
+		this._dispatch({
+			type: 'editCancel'
+			,doc: this.editedDocument
+		});
+    }
 
 	// Restores feature geometry before discarding the form
-	,cancelEditing: function() {
+	,performCancellation: function(opts_) {
+		var opts = $n2.extend({
+			suppressEvents:false
+		},opts_);
 		if( null == this.editedDocument ) {
 			return;
 		};
 	
 		this.options.onCancelFn(this.editedFeature);
 
-		// Reinstate the previous geometry		
-		if( this.editedFeature && this.originalGeometry ) {
-			// Erase feature before changing geometry
-			if( this.editedFeature.layer ) {
-				this.editedFeature.layer.eraseFeatures([this.editedFeature]);
-			};
-			this.editedFeature.geometry = this.originalGeometry;
-		};
-
-		// Reinstate previous data
-		if( this.editedFeature && this.originalData ) {
-			this.editedFeature.data = this.originalData;
-		};
-		
-		this._dispatch({
-			type: 'editCancel'
-			,doc: this.editedDocument
+		this._discardEditor({
+			cancelled:true
+			,suppressEvents: opts.suppressEvents
 		});
-		
-		this._discardAttributeForm({cancelled:true});
 	}
 
-	,_discardAttributeForm: function(opts_) {
+	,_discardEditor: function(opts_) {
 		var opts = $n2.extend({
 			saved: false
 			,inserted: false
 			,updated: false
 			,deleted: false
 			,cancelled: false
+			,suppressEvents: false
 		},opts_);
 		
 		if( null == this.editedDocument ) {
@@ -716,37 +684,22 @@ var CouchDocumentEditor = $n2.Class({
 		var $editorContainer = this._getEditorContainer();
 		$editorContainer.remove();
 
-		if( null != this.editedFeature ) {
-			this.editedLayer.events.unregister('featuremodified', this.editedFeature, this.featureModifiedCallback);
-			
-			// Reinstate the original style
-			if( null !== this.editedFeature.layer 
-			 && false == this.isInsert ) { // test for deletion and new feature
-				this.editedFeature.style = this.originalStyle;
-				this.editedFeature.layer.drawFeature(this.editedFeature);
-			};
-		};
-
 		this.options.onCloseFn(this.editedDocument, this);
 		
-		this._dispatch({
-			type: 'editClosed'
-			,doc: this.editedDocument
-			,saved: opts.saved
-			,inserted: opts.inserted
-			,updated: opts.updated
-			,deleted: opts.deleted
-			,cancelled: opts.cancelled
-		});
+		if( !opts.suppressEvents ) {
+			this._dispatch({
+				type: 'editClosed'
+				,doc: this.editedDocument
+				,saved: opts.saved
+				,inserted: opts.inserted
+				,updated: opts.updated
+				,deleted: opts.deleted
+				,cancelled: opts.cancelled
+			});
+		};
 		
 		this.editedDocument = null;
 		this.editedFeature = null;
-		this.editedLayer = null;
-		this.originalGeometry = null;
-		this.originalStyle = null;
-		this.originalData = null;
-		this.modifyFeatureControl = null;
-		this.mapControls = null;
 		this.editorContainerId = null;
 	}
 	
@@ -784,31 +737,19 @@ var CouchDocumentEditor = $n2.Class({
 		if( typeof(OpenLayers) === 'undefined' ) return;
 			
 		// Check if editor has changed the geometry's WKT
-		if( this.currentGeometryWkt != geomData.wkt ) {
+		if( this.currentGeometryWkt !== geomData.wkt ) {
 		
 			this.currentGeometryWkt = geomData.wkt;
 
 			var olGeom = $n2.couchGeom.getOpenLayersGeometry({couchGeom:geomData});
-
-			if( this.editedFeature ) {
-				var mapProj = this.editedFeature.layer.map.projection;
-				if( mapProj.getCode() != this.options.couchProj.getCode() ) {
-					olGeom.transform(this.options.couchProj, mapProj);
-				};
-			};
 			
-			// Redraw
-			if( this.modifyFeatureControl && this.editedFeature ) {
-				this.modifyFeatureControl.unselectFeature(this.editedFeature);
-				this.editedFeature.layer.eraseFeatures([this.editedFeature]);
-				this.editedFeature.geometry = olGeom;
-				this.editedFeature.layer.drawFeature(this.editedFeature);
-				this.modifyFeatureControl.selectFeature(this.editedFeature);
-			} else if( this.editedFeature ) {
-				this.editedFeature.layer.eraseFeatures([this.editedFeature]);
-				this.editedFeature.geometry = olGeom;
-				this.editedFeature.layer.drawFeature(this.editedFeature);
-			};
+			this._dispatch({
+				type: 'geometryModified'
+				,docId: obj._id
+				,geom: olGeom
+				,proj: this.options.couchProj
+				,_origin: this
+			});
 		};
 	}
 	
@@ -823,11 +764,16 @@ var CouchDocumentEditor = $n2.Class({
 		return feature.geometry;
     }
 	
-    ,featureModified: function(evt_) {
-    	var feature = evt_.feature;
-    	var geom = this.convertFeatureGeometryForDb(feature);
+	
+    ,_featureModified: function(docId, geom, proj) {
 
-		var geomData = this.editedFeature.data[this.options.geomName];
+		if( proj.getCode() != this.options.couchProj.getCode() ) {
+			// Need to convert
+			geom = geom.clone();
+			geom.transform(proj,this.options.couchProj);
+		};
+    	
+		var geomData = this.editedDocument[this.options.geomName];
 		geomData.wkt = geom.toString();
 		this.currentGeometryWkt = geomData.wkt;
 		if( this.schemaEditor ) {
@@ -957,8 +903,15 @@ var CouchDocumentEditor = $n2.Class({
 	,_dispatch: function(m){
 		var dispatcher = this._getDispatchService();
 		if( dispatcher ){
-			var h = dispatcher.getHandle('n2.couchEdit');
-			dispatcher.send(h,m);
+			dispatcher.send(DH,m);
+		};
+	}
+	
+	,_handle: function(m){
+		if( m.type === 'geometryModified' ){
+			if( m._origin !== this ){
+				this._featureModified(m.docId, m.geom, m.proj);
+			};
 		};
 	}
 });
@@ -985,16 +938,26 @@ var CouchEditor = $n2.Class({
 	,initialize: function(options_) {
 		this.options = $.extend({},CouchEditorDefaultOptions,options_);
 		
+		var _this = this;
+		
 		this.isFormEditor = true;
 		
 		if( !this.options.couchProj ) {
 			this.options.couchProj = getDefaultCouchProjection();
 		};
+		
+		var dispatcher = this._getDispatchService();
+		if( dispatcher ){
+			var f = function(m){ _this._handle(m); };
+			dispatcher.register(DH, 'geometryModified', f);
+			dispatcher.register(DH, 'editInitiate', f);
+			dispatcher.register(DH, 'editCancel', f);
+		};
 	}
 
-    ,showAttributeForm: function(feature_, modifyFeatureControl_, mapControls_, editorOptions_) {
+    ,showAttributeForm: function(feature_, editorOptions_) {
     	if( null != this.currentEditor ) {
-    		this.currentEditor.cancelEditing();
+    		this.currentEditor.performCancellation();
     		this.currentEditor = null;
     	};
     	
@@ -1004,14 +967,12 @@ var CouchEditor = $n2.Class({
     		);
     	this.currentEditor.startFeatureEditing(
     		feature_
-    		,modifyFeatureControl_
-    		,mapControls_
     		);
 	}
 
     ,showDocumentForm: function(document_, editorOptions_) {
     	if( null != this.currentEditor ) {
-    		this.currentEditor.cancelEditing();
+    		this.currentEditor.performCancellation();
     		this.currentEditor = null;
     	};
     	
@@ -1024,15 +985,34 @@ var CouchEditor = $n2.Class({
     		);
 	}
 
-	// Restores feature geometry before discarding the form
-	,cancelAttributeForm: function() {
-    	this.cancelDocumentForm();
-	}
-
-	,cancelDocumentForm: function() {
+	,cancelDocumentForm: function(opts) {
     	if( null != this.currentEditor ) {
-    		this.currentEditor.cancelEditing();
+    		this.currentEditor.performCancellation(opts);
     		this.currentEditor = null;
+    	};
+	}
+	
+	,_getDispatchService: function(){
+		var d = null;
+		if( this.options && this.options.serviceDirectory ){
+			d = this.options.serviceDirectory.dispatchService;
+		};
+		return d;
+	}
+	
+	,_handle: function(m){
+		if( 'editInitiate' === m.type ){
+			if( m.feature ) {
+				this.showAttributeForm(m.feature);
+			} else {
+				this.showDocumentForm(m.doc);
+			};
+			
+		} else if( 'editCancel' === m.type ) {
+			this.cancelDocumentForm();
+			
+		} else if( null != this.currentEditor ) {
+    		this.currentEditor._handle(m);
     	};
 	}
 });
@@ -1061,7 +1041,7 @@ var SchemaEditor = $n2.Class({
 			doc: null
 			,schema: null
 			,$div: null
-			,onChanged: null
+			,onChanged: function(){}
 			,funcMap: null
 			,postProcessFns: null
 		},options_);
