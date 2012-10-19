@@ -1488,8 +1488,7 @@ var MapAndControls = $n2.Class({
 	,_createOverlayFromDefinition: function(layerDefinition, isBaseLayer) {
 		var _this = this;
 		
-		var layerInfo = $.extend({}, this.defaultLayerInfo, layerDefinition.options);
-		layerInfo.name = layerDefinition.name;
+		var layerInfo = $.extend({}, this.defaultLayerInfo, layerDefinition);
 
 		// If a SRS has not been defined for the database, pick the first one defined
 		// for a layer
@@ -1509,7 +1508,7 @@ var MapAndControls = $n2.Class({
 
 		if( 'couchdb' === layerDefinition.type ) {
 			// This is a couch layer
-			var couchProtocolOpt = $n2.extend({},layerInfo,{
+			var couchProtocolOpt = $n2.extend({},layerInfo.options,{
 				notifications: {
 					readStart: function(){
 						_this._mapBusyStatus(1);
