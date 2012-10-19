@@ -117,6 +117,7 @@ $n2.couchDisplay = $n2.Class({
 			dispatcher.register(this.dispatchHandle, 'documentDeleted', f);
 			dispatcher.register(this.dispatchHandle, 'login', f);
 			dispatcher.register(this.dispatchHandle, 'logout', f);
+			dispatcher.register(this.dispatchHandle, 'editClosed', f);
 		};
 
 		var requestService = this._getRequestService();
@@ -1011,6 +1012,16 @@ $n2.couchDisplay = $n2.Class({
 				var $elem = $(this);
 				_this._refreshButtons($elem);
 			});
+			
+		} else if( msg.type === 'editClosed' ) {
+			var deleted = msg.deleted;
+			if( !deleted ) {
+				var doc = msg.doc;
+				if( doc ) {
+					var $div = this.getDisplayDiv();
+					this.DisplayDocument($div, doc);
+				};
+			};
 		};
 	}
 	

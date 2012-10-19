@@ -151,13 +151,14 @@ var Tracker = $n2.Class({
 			var f = function(m){
 				_this._handle(m);
 			};
-			var h = d.getHandle('n2.history');
-			d.register(h,'start',f)
-			d.register(h,'hashChanged',f)
-			d.register(h,'selected',f)
-			d.register(h,'unselected',f)
-			d.register(h,'searchInitiate',f)
-			d.register(h,'editInitiate',f)
+			var h = d.getHandle('n2.history.Tracker');
+			d.register(h,'start',f);
+			d.register(h,'hashChanged',f);
+			d.register(h,'selected',f);
+			d.register(h,'unselected',f);
+			d.register(h,'searchInitiate',f);
+			d.register(h,'editInitiate',f);
+			d.register(h,'editClosed',f);
 		};
 	}
 
@@ -172,7 +173,7 @@ var Tracker = $n2.Class({
 	,_dispatch: function(m){
 		var d = this._getDispatcher();
 		if( d ){
-			var h = d.getHandle('n2.history');
+			var h = d.getHandle('n2.history.Tracker');
 			d.send(h,m);
 		};
 	}
@@ -237,6 +238,26 @@ var Tracker = $n2.Class({
 				type: 'setHash'
 				,hash: 'nostate'
 			});
+
+		} else if( 'editClosed' === m.type ) {
+			this.last = {
+				editClosed: true
+			};
+
+			if( m.inserted ) {
+				// A document was created. Select it so it is reflected in the
+				// history hash
+				this._dispatch({
+					type: 'selected'
+					,docId: m.doc._id
+					
+				});
+
+			} else {
+				this._dispatch({
+					type: 'historyBack'
+				});
+			};
 
 		} else if( 'hashChanged' === m.type ){
 			var o = null;
