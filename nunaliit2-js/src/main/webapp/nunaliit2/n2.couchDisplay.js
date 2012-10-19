@@ -118,6 +118,7 @@ $n2.couchDisplay = $n2.Class({
 			dispatcher.register(this.dispatchHandle, 'login', f);
 			dispatcher.register(this.dispatchHandle, 'logout', f);
 			dispatcher.register(this.dispatchHandle, 'editClosed', f);
+			dispatcher.register(this.dispatchHandle, 'documentContentCreated', f);
 		};
 
 		var requestService = this._getRequestService();
@@ -251,7 +252,7 @@ $n2.couchDisplay = $n2.Class({
 			});
 			
 			var relatedInfoId = $n2.getUniqueId();
-			var $div = $('<div id="'+relatedInfoId+'"></div>');
+			var $div = $('<div id="'+relatedInfoId+'" class="couchDisplayRelated_'+$n2.utils.stringToHtmlId(data._id)+'"></div>');
 			$elem.append($div);
 			_this.options.displayRelatedInfoFunction({
 				divId: relatedInfoId
@@ -663,15 +664,23 @@ $n2.couchDisplay = $n2.Class({
 	,_displayRelatedInfo: function(opts_){
 		var opts = $n2.extend({
 			divId: null
+			,div: null
 			,doc: null
 			,schema: null
 		},opts_);
 		
 		var _this = this;
-		var $elem = $('#'+opts.divId);
 		var doc = opts.doc;
 		var docId = doc._id;
 		var schema = opts.schema;
+		
+		var $elem = opts.div;
+		if( ! $elem ) {
+			$elem = $('#'+opts.divId);
+		};
+		if( ! $elem.length) {
+			return;
+		};
 		
 		if( !schema ){
 			return;
@@ -1022,6 +1031,9 @@ $n2.couchDisplay = $n2.Class({
 					this.DisplayDocument($div, doc);
 				};
 			};
+			
+		} else if( msg.type === 'documentContentCreated' ) {
+			this._handleDocumentCreation(msg.doc);
 		};
 	}
 	
@@ -1134,6 +1146,67 @@ $n2.couchDisplay = $n2.Class({
 			_this._fixDocumentList($p);
 		});
 		
+	}
+	
+	,_handleDocumentCreation: function(doc){
+		var _this = this;
+		
+		// Find all documents referenced by this one
+		var links = $n2.couchGeom.extractLinks(doc);
+		for(var i=0,e=links.length;i<e;++i){
+			var refDocId = links[i].doc;
+			if( refDocId ){
+				// Check if we have a related document section displayed for
+				// this referenced document
+				var $elems = $('.couchDisplayRelated_'+$n2.utils.stringToHtmlId(refDocId));
+				if( $elems.length > 0 ){
+					// We must redisplay this related info section
+					refreshRelatedInfo(refDocId, $elems);
+				};
+			};
+		};
+
+		function refreshRelatedInfo(docId, $elems) {
+			// Get document
+			var request = _this._getRequestService();
+			if( request ){
+				request.requestDocument(docId,function(d){
+					loadedData(d, $elems);
+				});
+			};
+		};
+		
+		function loadedData(data, $elems) {
+			// Get schema
+			var schemaName = data.nunaliit_schema ? data.nunaliit_schema : null;
+			var schemaRepository = _this._getSchemaRepository();
+			if( schemaName && schemaRepository ) {
+				schemaRepository.getSchema({
+					name: schemaName
+					,onSuccess: function(schema) {
+						loadedSchema(data, schema, $elems);
+					}
+					,onError: function(){
+						loadedSchema(data, null, $elems);
+					}
+				});
+			} else {
+				loadedSchema(data, null, $elems);
+			};
+		};
+		
+		function loadedSchema(data, schema, $elems){
+			$elems.each(function(){
+				var $e = $(this);
+				// Refresh
+				$e.empty();
+				_this.options.displayRelatedInfoFunction({
+					div: $e
+					,doc: data
+					,schema: schema
+				});
+			});
+		};
 	}
 });
 
