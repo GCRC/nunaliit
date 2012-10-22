@@ -129,7 +129,7 @@ public class FFmpegMediaInfoImplTest extends TestCase {
 	 */
 	public void test3() throws Exception {
 		String testString = 
-"FFmpeg version 0.6.1, Copyright (c) 2000-2010 the FFmpeg developers\n"+
+"avconv version 0.8.3-4:0.8.3-0ubuntu0.12.04.1, Copyright (c) 2000-2012 the Libav developers\n"+
 "  built on Oct 27 2010 14:31:33 with gcc 4.2.1 (Apple Inc. build 5664)\n"+
 "  configuration: --prefix=/opt/local --enable-gpl --enable-postproc --enable-swscale --enable-avfilter --enable-avfilter-lavf --enable-libmp3lame --enable-libvorbis --enable-libtheora --enable-libdirac --enable-libschroedinger --enable-libfaac --enable-libfaad --enable-libxvid --enable-libx264 --enable-libvpx --enable-libspeex --enable-nonfree --mandir=/opt/local/share/man --enable-shared --enable-pthreads --disable-indevs --cc=/usr/bin/gcc-4.2 --arch=x86_64\n"+
 "  libavutil     50.15. 1 / 50.15. 1\n"+
