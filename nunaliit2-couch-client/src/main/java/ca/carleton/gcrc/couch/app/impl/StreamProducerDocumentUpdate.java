@@ -108,7 +108,7 @@ public class StreamProducerDocumentUpdate implements StreamProducer {
 			
 			// Send attachments that should be retained
 			if( null != previousDoc ){
-				JSONObject previousAttachments = previousDoc.getJSONObject("_attachments");
+				JSONObject previousAttachments = previousDoc.optJSONObject("_attachments");
 				if( null != previousAttachments ){
 					Iterator<?> it = previousAttachments.keys();
 					while( it.hasNext() ){

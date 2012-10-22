@@ -41,6 +41,7 @@ function Configure(options_){
 		couchServerUrl: null // string
 		,atlasDbUrl: null // string
 		,atlasDesignName: 'atlas'
+		,siteDesignName: 'site'
 		,progressServerUrl: null // string
 		,mediaUrl: null // string
 		,uploadServerUrl: null // string
@@ -101,6 +102,7 @@ function Configure(options_){
 		
 		configuration.atlasDb = configuration.couchServer.getDb({dbUrl:options.atlasDbUrl});
 		configuration.atlasDesign = configuration.atlasDb.getDesignDoc({ddName:options.atlasDesignName});
+		configuration.siteDesign = configuration.atlasDb.getDesignDoc({ddName:options.siteDesignName});
 
 		configuration.atlasDb.getChangeNotifier({
 			onSuccess: function(notifier){
