@@ -52,12 +52,4 @@
 			</div>
 		{{/doc}}
 	{{/nunaliit_hoverSound}}
-
-	{{#nunaliit_geom}}
-		<div>
-			<div class="label n2s_localize">&nbsp;</div>
-			<div class="value"><a href="#" class="n2s_localize n2s_clickFindGeometryOnMap">Find on Map</a></div>
-			<div class="end"></div>
-		</div>
-	{{/nunaliit_geom}}
 </div></div>
