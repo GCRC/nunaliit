@@ -58,21 +58,65 @@ background: rgba(255,255,255,1) url() !important;
 
 .n2Show_icon_wrapper {
 	margin-bottom:2px;
+	text-align:center;
+	background: url('images/magnifying-glass.png') no-repeat center center;
 }
 
 .n2Show_icon_wrapper img {
-	width: 367px;
 	border-radius: 4px;
 	-moz-box-shadow: inset 0 0 85px rgba(0,0,0,0.4);
 	-webkit-box-shadow: inset 0 0 85px rgba(0, 0, 0, 0.4);
 	box-shadow: inset 0 0 85px rgba(0, 0, 0, 0.4);
+	padding:0;
+	margin:0 auto;
+	transition: all 0.25s;
+	-moz-transition: all 0.25s;
+	-webkit-transition: all 0.25s;
+	-o-transition: all 0.25s;
+}
+
+.n2Show_icon_wrapper img:hover {
 	cursor:pointer;
+	opacity:0.75;
+	transition: all 0.25s;
+	-moz-transition: all 0.25s;
+	-webkit-transition: all 0.25s;
+	-o-transition: all 0.25s;
 }
 
 /*END - Overide Styles for Jquery UI styling*/
 
 
+/*START - Overide Superfish styles*/
 
+.sf-menu {
+float: left;
+margin-bottom: 1em;
+}
+
+.sf-navbar {
+background: none !important;
+}
+
+.sf-navbar li {
+background:none !important;
+}
+
+.sf-navbar a, .sf-navbar a:visited {
+border: none;
+padding: .5em .5em .5em .7em;
+text-decoration: none;
+-moz-border-radius: 5px;
+border-radius: 5px;
+margin-right: 5px;
+border: 1px solid lightGrey;
+background: #E6E6E6 url('images/ui-bg_glass_75_e6e6e6_1x400.png') 50% 50% repeat-x;
+font-weight: normal;
+color: #555;
+
+}
+
+/*END - Overide Superfish styles*/
 
 
 body {
@@ -110,6 +154,7 @@ p {
 
 .label {
 	margin:5px 0;
+	padding-right:8px;
 	width:30%;
 	font-size:1em/1.2em;	
 }
@@ -151,6 +196,7 @@ span.label {
 	text-shadow: black 1px 1px 1px;
 	z-index:10;
 	font-size: 1.9em;
+	float:left;
 }
 
 #map, .nunaliit_map {    
@@ -602,6 +648,13 @@ table.mediaSelection td {
 	font-size:26px;
 	font-weight:normal;
 	display:block;
+}
+
+.intro img {
+	border-radius: 4px;
+	-moz-box-shadow: inset 0 0 85px rgba(0,0,0,0.4);
+	-webkit-box-shadow: inset 0 0 85px rgba(0, 0, 0, 0.4);
+	box-shadow: inset 0 0 85px rgba(0, 0, 0, 0.4);
 }
 
 .n2Display_buttons {
