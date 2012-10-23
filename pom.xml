@@ -115,5 +115,6 @@
 		<module>nunaliit2-geom</module>
 		<module>nunaliit2-javascript</module>
 		<module>nunaliit2-css</module>
+		<module>nunaliit2-utils</module>
 	</modules>
 </project>
