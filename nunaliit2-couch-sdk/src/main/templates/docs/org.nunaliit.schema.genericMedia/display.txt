@@ -11,7 +11,7 @@
 				{{^source}}{{! do not include thumbnails !}}
 
 					{{#attachmentName}}
-	<div class="n2s_insertMedia">
+	<div class="n2_mediaView">
 		<div class="n2s_insertMediaView">{{attachmentName}}</div>
 	</div>
 					{{/attachmentName}}
@@ -28,9 +28,9 @@
 							{{#attachmentName}}
 
 	<div>
-<a href="" class="n2s_externalMediaLinkInfo">Info</a>
-
-<a class="n2s_externalMediaLink" href="{{attachmentName}}"><span class="n2s_externalMediaLinkName">({{originalName}})</span></a></div>
+		<!-- <a href="" class="n2s_externalMediaLinkInfo">Info</a> -->
+		<a class="n2s_externalMediaLink" href="{{attachmentName}}"><span class="n2s_externalMediaLinkName">({{originalName}})</span></a>
+	</div>
 							{{/attachmentName}}
 							{{^attachmentName}}
 	<div>{{originalName}}</div>
