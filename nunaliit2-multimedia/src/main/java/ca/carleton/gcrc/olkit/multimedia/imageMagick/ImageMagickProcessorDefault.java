@@ -17,7 +17,7 @@ public class ImageMagickProcessorDefault implements ImageMagickProcessor {
 	
 	static public String imageInfoCommand = "identify -verbose %1$s[0]";
 	static public String imageConvertCommand = "convert -monitor -auto-orient %1$s[0] -compress JPEG -quality 70 %2$s";
-	static public String imageResizeCommand = "convert -monitor -auto-orient %1$s[0] -resize %3$dx%4$d -compress JPEG -quality 70 %2$s";
+	static public String imageResizeCommand = "convert -monitor -auto-orient %1$s[0] -resize %3$dx%4$d> -compress JPEG -quality 70 %2$s";
 	static public String imageReorientCommand = "convert -monitor -auto-orient %1$s[0] %2$s";
 
 	static private Pattern patternInfoGeometry = Pattern.compile("^\\s*Geometry:\\s*(\\d+)x(\\d+)");

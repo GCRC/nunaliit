@@ -98,7 +98,21 @@ public class MultimediaConfiguration {
 			}
 		}
 		
-		// Thumbnail sizes
+		// Image and thumbnail sizes
+		{
+			String sizeString = props.getProperty("imageMaxHeight", null);
+			if( null != sizeString ) {
+				int size = Integer.parseInt(sizeString);
+				MultimediaConverterImpl.IMAGE_MAX_HEIGHT = size;
+			}
+		}
+		{
+			String sizeString = props.getProperty("imageMaxWidth", null);
+			if( null != sizeString ) {
+				int size = Integer.parseInt(sizeString);
+				MultimediaConverterImpl.IMAGE_MAX_WIDTH = size;
+			}
+		}
 		{
 			String sizeString = props.getProperty("thumbnailImageHeight", null);
 			if( null != sizeString ) {

@@ -21,12 +21,12 @@ import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagickProcessor;
 
 public class MultimediaConverterImpl implements MultimediaConverter {
 
-	static public int IMAGE_MAX_WIDTH = 500;
-	static public int IMAGE_MAX_HEIGHT = 500;
-	static public int IMAGE_THUMB_HEIGHT = 60;
-	static public int IMAGE_THUMB_WIDTH = 60;
-	static public int VIDEO_THUMB_HEIGHT = 60;
-	static public int VIDEO_THUMB_WIDTH = 80;
+	static public int IMAGE_MAX_WIDTH = 1000;
+	static public int IMAGE_MAX_HEIGHT = 1000;
+	static public int IMAGE_THUMB_HEIGHT = 350;
+	static public int IMAGE_THUMB_WIDTH = 350;
+	static public int VIDEO_THUMB_HEIGHT = 240;
+	static public int VIDEO_THUMB_WIDTH = 320;
 	
 	static public MultimediaConversionThreshold imageConversionThreshold = new DefaultThresholdImage();
 	static public MultimediaConversionThreshold audioConversionThreshold = new DefaultThresholdAudio();

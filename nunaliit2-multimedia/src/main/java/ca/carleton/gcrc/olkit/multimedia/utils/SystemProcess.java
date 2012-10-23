@@ -30,8 +30,10 @@ public class SystemProcess {
 	}
 
 	public void start() throws Exception {
+//		ProcessBuilder pb = new ProcessBuilder(command);
+//		process = pb.start();
+		
 		Runtime rt = Runtime.getRuntime();
-
 		process = rt.exec(command, null, null);
 	}
 
