@@ -2,36 +2,9 @@ Current version of OpenLayers was taken from
 https://github.com/openlayers/openlayers.git
 
 
-Version: febf048d9dbd234d849f480567b922300e837d53
-Tag: release-2.12-rc1
+Version: 0412410be0ec43dc9a5c258b640a793fad41bd88
+Tag: release-2.12
 
-Patch:
-
-diff --git a/lib/OpenLayers/SingleFile.js b/lib/OpenLayers/SingleFile.js
-index 234c9c0..ae34ef9 100644
---- a/lib/OpenLayers/SingleFile.js
-+++ b/lib/OpenLayers/SingleFile.js
-@@ -25,7 +25,7 @@ var OpenLayers = {
-      * {String} Path to this script
-      */
-     _getScriptLocation: (function() {
--        var r = new RegExp("(^|(.*?\\/))(OpenLayers.*?\\.js)(\\?|$)"),
-+        var r = new RegExp("(^|(.*?\\/))(OpenLayers[^\\/]*?\\.js)(\\?|$)"),
-             s = document.getElementsByTagName('script'),
-             src, m, l = "";
-         for(var i=0, len=s.length; i<len; i++) {
-diff --git a/lib/OpenLayers/Util.js b/lib/OpenLayers/Util.js
-index f106da5..d0818d0 100644
---- a/lib/OpenLayers/Util.js
-+++ b/lib/OpenLayers/Util.js
-@@ -1523,6 +1523,7 @@ OpenLayers.Util.getRenderedDimensions = function(contentHT
-     // create temp container div with restricted size
-     var container = document.createElement("div");
-     container.style.visibility = "hidden";
-+    container.style.position = "absolute";
-         
-     var containerElement = (options && options.containerElement) 
-        ? options.containerElement : document.body;
 
         
 Upgrading OpenLayers

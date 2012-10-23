@@ -1,6 +1,6 @@
 /* Copyright (c) 2006-2012 by OpenLayers Contributors (see authors.txt for 
- * full list of contributors). Published under the Clear BSD license.  
- * See http://svn.openlayers.org/trunk/openlayers/license.txt for the
+ * full list of contributors). Published under the 2-clause BSD license.
+ * See license.txt in the OpenLayers distribution or repository for the
  * full text of the license. */
 
 /**
@@ -446,7 +446,9 @@ OpenLayers.Renderer.SVG = OpenLayers.Class(OpenLayers.Renderer.Elements, {
      * {DOMElement} The specific render engine's root element
      */
     createRenderRoot: function() {
-        return this.nodeFactory(this.container.id + "_svgRoot", "svg");
+        var svg = this.nodeFactory(this.container.id + "_svgRoot", "svg");
+        svg.style.display = "block";
+        return svg;
     },
 
     /**

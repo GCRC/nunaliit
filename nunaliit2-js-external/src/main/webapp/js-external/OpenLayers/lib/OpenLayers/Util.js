@@ -1,6 +1,6 @@
 /* Copyright (c) 2006-2012 by OpenLayers Contributors (see authors.txt for 
- * full list of contributors). Published under the Clear BSD license.  
- * See http://svn.openlayers.org/trunk/openlayers/license.txt for the
+ * full list of contributors). Published under the 2-clause BSD license.
+ * See license.txt in the OpenLayers distribution or repository for the
  * full text of the license. */
 
 /**
@@ -1523,10 +1523,36 @@ OpenLayers.Util.getRenderedDimensions = function(contentHTML, size, options) {
     // create temp container div with restricted size
     var container = document.createElement("div");
     container.style.visibility = "hidden";
-    container.style.position = "absolute";
         
     var containerElement = (options && options.containerElement) 
     	? options.containerElement : document.body;
+    
+    // Opera and IE7 can't handle a node with position:aboslute if it inherits
+    // position:absolute from a parent.
+    var parentHasPositionAbsolute = false;
+    var superContainer = null;
+    var parent = containerElement;
+    while (parent && parent.tagName.toLowerCase()!="body") {
+        var parentPosition = OpenLayers.Element.getStyle(parent, "position");
+        if(parentPosition == "absolute") {
+            parentHasPositionAbsolute = true;
+            break;
+        } else if (parentPosition && parentPosition != "static") {
+            break;
+        }
+        parent = parent.parentNode;
+    }
+    if(parentHasPositionAbsolute && (containerElement.clientHeight === 0 || 
+                                     containerElement.clientWidth === 0) ){
+        superContainer = document.createElement("div");
+        superContainer.style.visibility = "hidden";
+        superContainer.style.position = "absolute";
+        superContainer.style.overflow = "visible";
+        superContainer.style.width = document.body.clientWidth + "px";
+        superContainer.style.height = document.body.clientHeight + "px";
+        superContainer.appendChild(container);
+    }
+    container.style.position = "absolute";
 
     //fix a dimension, if specified.
     if (size) {
@@ -1561,25 +1587,10 @@ OpenLayers.Util.getRenderedDimensions = function(contentHTML, size, options) {
     container.appendChild(content);
     
     // append container to body for rendering
-    containerElement.appendChild(container);
-    
-    // Opera and IE7 can't handle a node with position:aboslute if it inherits
-    // position:absolute from a parent.
-    var parentHasPositionAbsolute = false;
-    var parent = container.parentNode;
-    while (parent && parent.tagName.toLowerCase()!="body") {
-        var parentPosition = OpenLayers.Element.getStyle(parent, "position");
-        if(parentPosition == "absolute") {
-            parentHasPositionAbsolute = true;
-            break;
-        } else if (parentPosition && parentPosition != "static") {
-            break;
-        }
-        parent = parent.parentNode;
-    }
-
-    if(!parentHasPositionAbsolute) {
-        container.style.position = "absolute";
+    if (superContainer) {
+        containerElement.appendChild(superContainer);
+    } else {
+        containerElement.appendChild(container);
     }
     
     // calculate scroll width of content and add corners and shadow width
@@ -1596,7 +1607,12 @@ OpenLayers.Util.getRenderedDimensions = function(contentHTML, size, options) {
 
     // remove elements
     container.removeChild(content);
-    containerElement.removeChild(container);
+    if (superContainer) {
+        superContainer.removeChild(container);
+        containerElement.removeChild(superContainer);
+    } else {
+        containerElement.removeChild(container);
+    }
     
     return new OpenLayers.Size(w, h);
 };

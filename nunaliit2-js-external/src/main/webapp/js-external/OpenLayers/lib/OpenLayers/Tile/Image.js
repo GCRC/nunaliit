@@ -1,6 +1,6 @@
 /* Copyright (c) 2006-2012 by OpenLayers Contributors (see authors.txt for 
- * full list of contributors). Published under the Clear BSD license.  
- * See http://svn.openlayers.org/trunk/openlayers/license.txt for the
+ * full list of contributors). Published under the 2-clause BSD license.
+ * See license.txt in the OpenLayers distribution or repository for the
  * full text of the license. */
 
 
@@ -211,7 +211,8 @@ OpenLayers.Tile.Image = OpenLayers.Class(OpenLayers.Tile, {
      */
     positionTile: function() {
         var style = this.getTile().style,
-            size = this.layer.getImageSize(this.bounds);
+            size = this.frame ? this.size :
+                                this.layer.getImageSize(this.bounds);
         style.left = this.position.x + "%";
         style.top = this.position.y + "%";
         style.width = size.w + "%";
@@ -254,11 +255,16 @@ OpenLayers.Tile.Image = OpenLayers.Class(OpenLayers.Tile, {
             this.imgDiv.galleryImg = "no";
 
             var style = this.imgDiv.style;
-            if (this.layer.gutter) {
-                var left = this.layer.gutter / this.layer.tileSize.w * 100;
-                var top = this.layer.gutter / this.layer.tileSize.h * 100;
+            if (this.frame) {
+                var left = 0, top = 0;
+                if (this.layer.gutter) {
+                    left = this.layer.gutter / this.layer.tileSize.w * 100;
+                    top = this.layer.gutter / this.layer.tileSize.h * 100;
+                }
                 style.left = -left + "%";
                 style.top = -top + "%";
+                style.width = (2 * left + 100) + "%";
+                style.height = (2 * top + 100) + "%";
             }
             style.visibility = "hidden";
             style.opacity = 0;
@@ -275,8 +281,6 @@ OpenLayers.Tile.Image = OpenLayers.Class(OpenLayers.Tile, {
                 style.width = "100%";
             }
             if (this.frame) {
-                style.width = "100%";
-                style.height = "100%";
                 this.frame.appendChild(this.imgDiv);
             }
         }

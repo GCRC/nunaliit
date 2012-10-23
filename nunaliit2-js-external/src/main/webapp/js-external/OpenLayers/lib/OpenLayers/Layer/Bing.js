@@ -1,6 +1,6 @@
 /* Copyright (c) 2006-2012 by OpenLayers Contributors (see authors.txt for 
- * full list of contributors). Published under the Clear BSD license.  
- * See http://svn.openlayers.org/trunk/openlayers/license.txt for the
+ * full list of contributors). Published under the 2-clause BSD license.
+ * See license.txt in the OpenLayers distribution or repository for the
  * full text of the license. */
 
 /**
@@ -223,13 +223,16 @@ OpenLayers.Layer.Bing = OpenLayers.Class(OpenLayers.Layer.XYZ, {
             this.map.getProjectionObject(),
             new OpenLayers.Projection("EPSG:4326")
         );
-        var providers = res.imageryProviders, zoom = this.map.getZoom() + 1,
+        var providers = res.imageryProviders,
+            zoom = OpenLayers.Util.indexOf(this.serverResolutions,
+                                           this.getServerResolution()),
             copyrights = "", provider, i, ii, j, jj, bbox, coverage;
         for (i=0,ii=providers.length; i<ii; ++i) {
             provider = providers[i];
             for (j=0,jj=provider.coverageAreas.length; j<jj; ++j) {
                 coverage = provider.coverageAreas[j];
-                bbox = OpenLayers.Bounds.fromArray(coverage.bbox);
+                // axis order provided is Y,X
+                bbox = OpenLayers.Bounds.fromArray(coverage.bbox, true);
                 if (extent.intersectsBounds(bbox) &&
                         zoom <= coverage.zoomMax && zoom >= coverage.zoomMin) {
                     copyrights += provider.attribution + " ";
