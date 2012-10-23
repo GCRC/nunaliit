@@ -1004,6 +1004,12 @@ var MapAndControls = $n2.Class({
 			,theme: null // Let host page control loading of appropriate CSS style sheet
 		});
 		
+		// Disable zoom on mouse wheel
+		var navControls = this.map.getControlsByClass('OpenLayers.Control.Navigation');
+		for(var i=0,e=navControls.length; i<e; ++i) {
+			navControls[i].disableZoomWheel();
+		};
+		
 		// Fix zoomToMaxExtent to zoom to initial extent
 		this.map.zoomToMaxExtent = function(){
 	        this.zoomToExtent(initialZoomBounds);
