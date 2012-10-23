@@ -142,19 +142,51 @@ public class CommandUpdate implements Command {
 			List<FSEntry> mergedEntries = new Vector<FSEntry>();
 			
 			// htdocs from atlas project
-			File htdocsDir = new File(atlasDir, "htdocs");
-			if( htdocsDir.exists() && htdocsDir.isDirectory() ) {
-				FSEntry positionedHtDocs = FSEntryFile.getPositionedFile("d/_attachments", htdocsDir);
-				mergedEntries.add(positionedHtDocs);
+			{
+				File htdocsDir = new File(atlasDir, "htdocs");
+				if( htdocsDir.exists() && htdocsDir.isDirectory() ) {
+					FSEntry positionedHtDocs = FSEntryFile.getPositionedFile("d/_attachments", htdocsDir);
+					mergedEntries.add(positionedHtDocs);
+				}
 			}
 			
+			// site from atlas project
+			{
+				File siteDir = new File(atlasDir, "site");
+				if( siteDir.exists() && siteDir.isDirectory() ) {
+					FSEntry siteEntry = new FSEntryFile(siteDir);
+					mergedEntries.add(siteEntry);
+				}
+			}
+
+			// Create atlas designator
+			{
+				StringWriter sw = new StringWriter();
+				PrintWriter pw = new PrintWriter(sw);
+				
+				pw.println("var n2atlas = {");
+				pw.println("\tname: \""+atlasProperties.getAtlasName()+"\"");
+				pw.println("};");
+				pw.println("if( typeof(exports) === 'object' ) {");
+				pw.println("\texports.name = n2atlas.name;");
+				pw.println("};");
+				
+				FSEntry f = FSEntryBuffer.getPositionedBuffer("a/vendor/nunaliit2/atlas.js", sw.toString());
+				mergedEntries.add(f);
+				f = FSEntryBuffer.getPositionedBuffer("a/_attachments/lib/atlas.js", sw.toString());
+				mergedEntries.add(f);
+			}
+			
+			
 			// Template for _design/site
-			File siteDesignDocDir = PathComputer.computeSiteDesignDir( gs.getInstallDir() );
-			if( siteDesignDocDir.exists() && siteDesignDocDir.isDirectory() ){
-				FSEntry templateDir = new FSEntryFile(siteDesignDocDir);
-				mergedEntries.add(templateDir);
-			} else {
-				throw new Exception("Unable to find internal template for _design/site");
+			{
+				File siteDesignDocDir = PathComputer.computeSiteDesignDir( gs.getInstallDir() );
+				if( siteDesignDocDir.exists() && siteDesignDocDir.isDirectory() ){
+					FSEntry templateDir = new FSEntryFile(siteDesignDocDir);
+					mergedEntries.add(templateDir);
+				} else {
+					throw new Exception("Unable to find internal template for _design/site");
+				}
 			}
 			
 			FSEntry merged = new FSEntryMerged(mergedEntries);
