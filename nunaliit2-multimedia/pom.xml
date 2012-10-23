@@ -10,7 +10,7 @@
   <version>2.0.0-SNAPSHOT</version>
   <name>nunaliit2-multimedia</name>
   <description>Library that converts multimedia files using command
-  line tools such as FFMpeg and ImageMagick</description>
+  line tools such as avconv and ImageMagick</description>
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
