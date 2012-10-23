@@ -141,6 +141,7 @@ public class CopyMachine {
 	public void copyTextFile(FSEntry sourceFile, File targetFile) throws Exception {
 		InputStream is = null;
 		FileOutputStream fos = null;
+		OutputStreamWriter osw = null;
 		String fromPath = "<unknown>";
 		String toPath = "<unknown>";
 		try {
@@ -152,7 +153,7 @@ public class CopyMachine {
 			
 			InputStreamReader isr = new InputStreamReader(is,"UTF-8");
 			BufferedReader reader = new BufferedReader(isr);
-			OutputStreamWriter osw = new OutputStreamWriter(fos,"UTF-8");
+			osw = new OutputStreamWriter(fos,"UTF-8");
 			
 			boolean first = true;
 			String line = reader.readLine();
@@ -193,6 +194,13 @@ public class CopyMachine {
 			if( null != is ) {
 				try {
 					is.close();
+				} catch(Exception e) {
+					// Ignore
+				}
+			}
+			if( null != osw ) {
+				try {
+					osw.close();
 				} catch(Exception e) {
 					// Ignore
 				}

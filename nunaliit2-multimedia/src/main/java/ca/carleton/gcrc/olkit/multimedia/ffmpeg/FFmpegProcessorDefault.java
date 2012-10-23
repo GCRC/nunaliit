@@ -18,10 +18,10 @@ public class FFmpegProcessorDefault implements FFmpegProcessor {
 
 	static private Pattern patternTime = Pattern.compile("^\\s*frame=.*time=\\s*(\\d+\\.\\d*)");
 
-	static public String ffmpegInfoCommand = "ffmpeg -i %1$s";
-	static public String ffmpegConvertVideoCommand = "ffmpeg -i %1$s -y -acodec libfaac -ab 48000 -ac 2 -vcodec libx264 -vpre hq -b 128000 -s 320x240 -threads 0 -f mp4 %2$s";
-	static public String ffmpegConvertAudioCommand = "ffmpeg -i %1$s -y -acodec libmp3lame -ab 48000 -ac 2 -threads 0 -f mp3 %2$s";
-	static public String ffmpegCreateThumbnailCommand = "ffmpeg -y -ss 00:00:05 -i %1$s -s %3$dx%4$d -r 1 -vframes 1 -f image2 %2$s";
+	static public String ffmpegInfoCommand = "avprobe %1$s";
+	static public String ffmpegConvertVideoCommand = "avconv -i %1$s -y -acodec libfaac -ab 48000 -ac 2 -vcodec libx264 -b 128000 -s 320x240 -threads 0 -f mp4 %2$s";
+	static public String ffmpegConvertAudioCommand = "avconv -i %1$s -y -acodec libmp3lame -ab 48000 -ac 2 -threads 0 -f mp3 %2$s";
+	static public String ffmpegCreateThumbnailCommand = "avconv -y -ss 00:00:05 -i %1$s -s %3$dx%4$d -r 1 -vframes 1 -f image2 %2$s";
 	
 	private MultimediaConversionProgress progressTracker;
 	

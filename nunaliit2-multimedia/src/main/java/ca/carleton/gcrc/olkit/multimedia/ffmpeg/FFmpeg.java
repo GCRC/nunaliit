@@ -32,8 +32,6 @@ $Id$
 */
 package ca.carleton.gcrc.olkit.multimedia.ffmpeg;
 
-import org.apache.log4j.Logger;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,13 +39,15 @@ import java.io.InputStreamReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.log4j.Logger;
+
 import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionProgress;
 
 public class FFmpeg {
 
 	static final protected Logger logger = Logger.getLogger(FFmpeg.class);
 	
-	static private Pattern patternVersionLine = Pattern.compile("FFmpeg\\s+([^,]*)",Pattern.CASE_INSENSITIVE);
+	static private Pattern patternVersionLine = Pattern.compile("(avconv|ffmpeg)( version)?\\s+([^,]*)",Pattern.CASE_INSENSITIVE);
 	static private Pattern patternVersion = Pattern.compile("(\\d+)\\.(\\d+).*");
 	
 	static private FFmpegInfo availability;
@@ -58,7 +58,7 @@ public class FFmpeg {
 			
 			Runtime rt = Runtime.getRuntime();
 			try {
-				Process p = rt.exec("ffmpeg -version", null, null);
+				Process p = rt.exec("avconv -version", null, null);
 				InputStream is = p.getInputStream();
 				InputStreamReader isr = new InputStreamReader(is);
 				BufferedReader bufReader = new BufferedReader(isr);
@@ -68,7 +68,7 @@ public class FFmpeg {
 					Matcher versionLineMatcher = patternVersionLine.matcher(line);
 					if( versionLineMatcher.matches() ) {
 						avail.versionLine = line;
-						avail.fullVersion = versionLineMatcher.group(1);
+						avail.fullVersion = versionLineMatcher.group(3);
 						logger.info("FFmpeg full version: "+avail.fullVersion);
 						if( avail.fullVersion.startsWith("SVN-r0.5.1") ) {
 							// Handle special version of FFmpeg compiled for older atlases
