@@ -5,8 +5,8 @@
 }
 
 .olControlLayerSwitcher .maximizeDiv, .olControlLayerSwitcher .minimizeDiv {
-	width: 22px !important;
-	height: 22px !important;
+	width: 29px !important;
+	height: 29px !important;
 	background-image: url('openlayers/settings_icon.png') !important;
 }
  
@@ -15,7 +15,7 @@
 }
 
 .olControlLayerSwitcher .maximizeDiv, .olControlLayerSwitcher .minimizeDiv {
-	left: -10px !important;
+	left: -12px !important;
 	top: 15px !important;
 }
 
@@ -24,13 +24,12 @@
 }
 
 .olControlLayerSwitcher .layersDiv {
-	background-color: rgba(0, 0, 0, 0.7) !important;
-	margin-top: 15px !important;
-	background-color: rgba(0, 0, 0, 0.7);
-	-moz-border-radius: 0 5px 5px 5px;
-	border-radius: 0 5px 5px 5px;
-	padding:11px !important;
-	margin-left: 12px !important;
+	background: url('openlayers/popup_bg.png') no-repeat top left !important;
+	margin-top: 16px !important;
+	-moz-border-radius: 4px;
+	padding:11px 20px !important;
+	margin-left: 21px !important;
+	
 }
 
 div.olControlZoom {
@@ -40,14 +39,5 @@ div.olControlZoom {
 
 div.olControlZoom a { 
 	background: rgba(0, 0, 0, 0.7) !important;
-}
-
-div.olControlEditingToolbar {
-	right: 25px !important;
-	width: 440px !important;
-}
-
-.olControlEditingToolbar div {
-	float: left !important;
-}
+}	
 

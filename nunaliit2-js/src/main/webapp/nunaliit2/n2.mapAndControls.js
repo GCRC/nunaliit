@@ -2361,7 +2361,7 @@ var MapAndControls = $n2.Class({
     			if( $.NUNALIIT_AUTH ) $.NUNALIIT_AUTH.login();
     			return false;
     		});
-    		var nameElem = $('<span class="loginGreeting">Welcome.&nbsp</span>');
+    		var nameElem = $('<span class="loginGreeting">&nbsp</span>');
     		$('#login').append(aElem).append(nameElem);
     		this.hideMapInteractionSwitch();
 			this.switchMapMode(this.modes.NAVIGATE);
