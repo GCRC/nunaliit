@@ -15,16 +15,16 @@
 	<licenses>
 		<license>
 			<name>New BSD License</name>
-			<url>https://svn.gcrc.carleton.ca/nunaliit2/trunk/sdk/license.txt</url>
+			<url>https://github.com/GCRC/nunaliit/blob/master/license.txt</url>
 			<distribution>repo</distribution>
 			<comments>This project contains code developed by the Geomatics and
 			 Cartographics Research Centre (GCRC) at Carleton University.</comments>
 		</license>
 	</licenses>
   	<scm>
-		<connection>scm:svn:https://svn.gcrc.carleton.ca/nunaliit2/tags/nunaliit2-0.2.1</connection>
-		<developerConnection>scm:svn:https://svn.gcrc.carleton.ca/nunaliit2/tags/nunaliit2-0.2.1</developerConnection>
-	  <url>scm:svn:https://svn.gcrc.carleton.ca/nunaliit2/tags/nunaliit2-0.2.1</url>
+		<connection>scm:git:git@github.com:GCRC/nunaliit.git</connection>
+		<developerConnection>scm:git:git@github.com:GCRC/nunaliit.git</developerConnection>
+		<url>git@github.com:GCRC/nunaliit.git</url>
   </scm>
   <developers>
     <developer>
