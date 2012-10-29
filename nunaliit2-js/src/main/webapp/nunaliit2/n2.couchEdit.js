@@ -1106,11 +1106,17 @@ var SchemaEditorService = $n2.Class({
 	,funcMap: null
 	
 	,postProcessFunctions: null
+	
+	,db: null
+	
+	,designDoc: null
 
 	,initialize: function(options_) {
 		var options = $.extend({
 			funcMap: {}
 			,postProcessFn: null
+			,db: null
+			,designDoc: null
 			,serviceDirectory: null
 		},options_);
 	
@@ -1118,6 +1124,8 @@ var SchemaEditorService = $n2.Class({
 		
 		this.serviceDirectory = options.serviceDirectory;
 		this.postProcessFunctions = [];
+		this.db = options.db;
+		this.designDoc = options.designDoc;
 		
 		this.funcMap = {};
 		for(var key in options.funcMap){
@@ -1132,6 +1140,11 @@ var SchemaEditorService = $n2.Class({
 		if( !this.funcMap['getDocumentId'] ){
 			this.funcMap['getDocumentId'] = function(cb,resetFn){
 				_this._searchForDocumentId(cb,resetFn);
+			};			
+		};
+		if( !this.funcMap['getLayers'] ){
+			this.funcMap['getLayers'] = function(currentLayers,cb,resetFn){
+				_this._selectLayers(currentLayers,cb,resetFn);
 			};			
 		};
 		
@@ -1286,6 +1299,118 @@ var SchemaEditorService = $n2.Class({
 				$dialog.dialog('close');
 				return false;
 			};
+		};
+	}
+	
+	,_selectLayers: function(currentLayers,cb,resetFn){
+		var layers = {};
+		if( typeof(currentLayers) === 'string' ){
+			var layerNames = currentLayers.split(',');
+			for(var i=0,e=layerNames.length;i<e;++i){
+				layers[ $n2.trim(layerNames[i]) ] = true;
+			};
+			
+		} else if( $n2.isArray(currentLayers) ){
+			for(var i=0,e=currentLayers.length;i<e;++i){
+				layers[ $n2.trim(currentLayers[i]) ] = true;
+			};
+		};
+
+		var shouldReset = true;
+		var dialogId = $n2.getUniqueId();
+		var $dialog = $('<div id="'+dialogId+'" class="editorSelectLayerDialog">'
+				+'<div class="editorSelectLayerContent"></div>'
+				+'<div class="editorSelectLayerButtons"><button class="ok">'+_loc('OK')+'</button>'
+				+'<button class="cancel">'+_loc('Cancel')+'</button></div>'
+				+'</div>');
+		
+		$dialog.find('button.cancel')
+			.button({icons:{primary:'ui-icon-cancel'}})
+			.click(function(){
+				var $dialog = $('#'+dialogId);
+				$dialog.dialog('close');
+				return false;
+			});
+		$dialog.find('button.ok')
+			.button({icons:{primary:'ui-icon-check'}})
+			.attr('disabled','disabled');
+		
+		var dialogOptions = {
+			autoOpen: true
+			,title: _loc('Select Layers')
+			,modal: true
+			,width: 370
+			,close: function(event, ui){
+				var diag = $(event.target);
+				diag.dialog('destroy');
+				diag.remove();
+				if( shouldReset ) {
+					if( typeof(resetFn) === 'function' ) {
+						resetFn();
+					};
+				};
+			}
+		};
+		$dialog.dialog(dialogOptions);
+		
+		// Get layers
+		if( this.designDoc ){
+			this.designDoc.queryView({
+				viewName: 'geom-layer'
+				,onlyRows: true
+				,reduce: true
+				,group: true
+				,onSuccess: function(rows){
+					var layerIdentifiers = [];
+					for(var i=0,e=rows.length;i<e;++i){
+						layerIdentifiers.push(rows[i].key);
+					};
+					displayLayers(layerIdentifiers);
+				}
+				,onError: function(errorMsg){ 
+					reportError(errorMsg);
+				}
+			});
+		};
+		
+		function displayLayers(layerIdentifiers){
+			var $diag = $('#'+dialogId);
+			
+			var $c = $diag.find('.editorSelectLayerContent');
+			$c.empty();
+			for(var i=0,e=layerIdentifiers.length;i<e;++i){
+				var layer = layerIdentifiers[i];
+				var inputId = $n2.getUniqueId();
+				var $div = $('<div><input id="'+inputId+'" class="layer" type="checkbox"/><label for="'+inputId+'"></label></div>');
+				$c.append($div);
+				$div.find('input').attr('name',layer);
+				$div.find('label').text(layer);
+				if( layers[layer] ){
+					$div.find('input').attr('checked','checked');
+				};
+			};
+			
+			$diag.find('button.ok')
+				.removeAttr('disabled')
+				.click(function(){
+					var selectedLayers = [];
+					var $diag = $('#'+dialogId);
+					$diag.find('input.layer').each(function(){
+						var $input = $(this);
+						if( $input.is(':checked') ){
+							var layer = $input.attr('name');
+							selectedLayers.push(layer);
+						};
+					});
+					cb(selectedLayers);
+	
+					shouldReset = false;
+					$diag.dialog('close');
+				});
+		};
+		
+		function reportError(err){
+			$('#'+dialogId).find('.editorSelectLayerContent').text('Error: '+err);
 		};
 	}
 });

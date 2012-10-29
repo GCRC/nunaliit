@@ -1400,6 +1400,46 @@ var Form = $n2.Class({
 					return true;
 				});
 				
+			} else if( 'layers' === classInfo.type ) {
+				if( $n2.isArray(value) ) {
+					value = value.join(',');
+				};
+				$input.val(value);
+				
+				var getLayersFn = this.functionMap['getLayers'];
+				if( getLayersFn && $input.is('input') ) {
+					$input.focus(function(e, eventParam){
+						if( eventParam && eventParam.inhibitCallback ) {
+							return true;
+						};
+						
+						var layerValue = getDataFromObjectSelector(obj, selector);
+						
+						getLayersFn(
+							layerValue	
+							,function(layers){ // callback with docId
+								var p = getDataFromObjectSelector(obj, parentSelector);
+								if( p ) {
+									p[key] = layers;
+									if( !layers || layers.length === 0 ){
+										delete p[key];
+									};
+								};
+								if( layers ) {
+									$input.val( layers.join(',') );
+									handler.call($input);
+								};
+								$input.trigger('focus',{inhibitCallback:true});
+							}
+							,function(){ // reset function
+								$input.trigger('focus',{inhibitCallback:true});
+							}
+						);
+						
+						return true;
+					});
+				};
+				
 			} else {
 				$input.val(value);
 			};
@@ -1452,6 +1492,20 @@ var Form = $n2.Class({
 					} else {
 						// Convert to number
 						value = 1 * value;
+					};
+					
+				} else if( 'layers' === keyType ) {
+					value = $input.val();
+					if( null === value || value === '' ) {
+						assignValue = false;
+						if( parentObj[effectiveKey] ) {
+							delete parentObj[effectiveKey];
+						};
+					} else {
+						value = value.split(',');
+						for(var i=0,e=value.length; i<e; ++i){
+							value[i] = $n2.trim(value[i]);
+						};
 					};
 
 				} else {

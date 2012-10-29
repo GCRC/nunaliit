@@ -184,7 +184,9 @@ function Configure(options_){
 		});
 		
 	 	configuration.directory.schemaEditorService = new $n2.CouchEditor.SchemaEditorService({
-			serviceDirectory: configuration.directory
+			db: configuration.atlasDb
+			,designDoc: configuration.atlasDesign
+			,serviceDirectory: configuration.directory
 		});
 
 	 	configuration.contributions = new $n2.couchContributions({
