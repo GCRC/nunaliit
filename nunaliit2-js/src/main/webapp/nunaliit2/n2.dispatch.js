@@ -102,13 +102,9 @@ var Dispatcher = $n2.Class({
 	
 	,send: function(handle, m){
 		
-		var type = m.type;
-		
 		if( typeof(handle) === 'string' ){
 			handle = this.getHandle(handle);
 		};
-		
-		handle.sends[type] = true;
 		
 		if( this.dispatching ) {
 			// Already dispatching a message, put this one in queue
@@ -118,18 +114,23 @@ var Dispatcher = $n2.Class({
 			});
 		} else {
 			// Send now
-			this._sendImmediate(handle, type, m);
+			this._sendImmediate(handle, m);
 			
 			// Deal with items in queue
 			while(this.queue.length > 0){
 				var i = this.queue.splice(0,1)[0];
-				this._sendImmediate(i.h, i.m.type, i.m);
+				this._sendImmediate(i.h, i.m);
 			};
 		};
 	}
 	
-	,_sendImmediate: function(h, t, m) {
+	,_sendImmediate: function(h, m) {
 		var logging = this.options.logging;
+
+		var t = m.type;
+
+		// Remember that this message is sent by this handle
+		h.sends[t] = true;
 
 		this.dispatching = true;
 		var listeners = this.listeners[t];
@@ -149,6 +150,31 @@ var Dispatcher = $n2.Class({
 			};
 		};
 		this.dispatching = false;
+	}
+	
+	/**
+	 * A synchronous call is like a function call without a pre-defined
+	 * receiver defined. Therefore, the recipient of a synchronous call can
+	 * store the answer on the message itself.
+	 */
+	,synchronousCall: function(handle, m){
+		
+		if( typeof(handle) === 'string' ){
+			handle = this.getHandle(handle);
+		};
+		
+		// Send right away
+		var previous = this.dispatching;
+		this._sendImmediate(handle, m);
+		this.dispatching = previous;
+		
+		// Deal with items that were put in queue during synchronous call
+		if( !previous ) {
+			while(this.queue.length > 0){
+				var i = this.queue.splice(0,1)[0];
+				this._sendImmediate(i.h, i.m);
+			};
+		};
 	}
 });
 

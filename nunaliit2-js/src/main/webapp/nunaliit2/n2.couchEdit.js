@@ -1202,6 +1202,16 @@ var SchemaEditorService = $n2.Class({
 		
 		return null;
 	}
+	
+	,_synchronousCall: function(m){
+		var d = null;
+		if( this.serviceDirectory ){
+			d = this.serviceDirectory.dispatchService;
+		};
+		if( d ) {
+			d.synchronousCall(DH,m);
+		};
+	}
 
 	,_searchForDocumentId: function(cb,resetFn){
 
@@ -1303,6 +1313,8 @@ var SchemaEditorService = $n2.Class({
 	}
 	
 	,_selectLayers: function(currentLayers,cb,resetFn){
+		var _this = this;
+		
 		var layers = {};
 		if( typeof(currentLayers) === 'string' ){
 			var layerNames = currentLayers.split(',');
@@ -1332,8 +1344,10 @@ var SchemaEditorService = $n2.Class({
 				return false;
 			});
 		$dialog.find('button.ok')
-			.button({icons:{primary:'ui-icon-check'}})
-			.attr('disabled','disabled');
+			.button({
+				icons:{primary:'ui-icon-check'}
+				,disabled: true
+			});
 		
 		var dialogOptions = {
 			autoOpen: true
@@ -1356,16 +1370,14 @@ var SchemaEditorService = $n2.Class({
 		// Get layers
 		if( this.designDoc ){
 			this.designDoc.queryView({
-				viewName: 'geom-layer'
+				viewName: 'layer-definitions'
 				,onlyRows: true
-				,reduce: true
-				,group: true
 				,onSuccess: function(rows){
-					var layerIdentifiers = [];
+					var layerIdentifiers = {};
 					for(var i=0,e=rows.length;i<e;++i){
-						layerIdentifiers.push(rows[i].key);
+						layerIdentifiers[rows[i].key] = true;
 					};
-					displayLayers(layerIdentifiers);
+					getInnerLayers(layerIdentifiers);
 				}
 				,onError: function(errorMsg){ 
 					reportError(errorMsg);
@@ -1373,13 +1385,20 @@ var SchemaEditorService = $n2.Class({
 			});
 		};
 		
+		function getInnerLayers(layerIdentifiers){
+			_this._synchronousCall({
+				type: 'getLayerIdentifiers'
+				,layerIdentifiers: layerIdentifiers
+			});
+			displayLayers(layerIdentifiers);
+		};
+		
 		function displayLayers(layerIdentifiers){
 			var $diag = $('#'+dialogId);
 			
 			var $c = $diag.find('.editorSelectLayerContent');
 			$c.empty();
-			for(var i=0,e=layerIdentifiers.length;i<e;++i){
-				var layer = layerIdentifiers[i];
+			for(var layer in layerIdentifiers){
 				var inputId = $n2.getUniqueId();
 				var $div = $('<div><input id="'+inputId+'" class="layer" type="checkbox"/><label for="'+inputId+'"></label></div>');
 				$c.append($div);
@@ -1388,10 +1407,15 @@ var SchemaEditorService = $n2.Class({
 				if( layers[layer] ){
 					$div.find('input').attr('checked','checked');
 				};
+				
+				var showService = _this._getShowService();
+				if(showService){
+					showService.printLayerName($div.find('label'), layer);
+				};
 			};
 			
 			$diag.find('button.ok')
-				.removeAttr('disabled')
+				.button('option','disabled',false)
 				.click(function(){
 					var selectedLayers = [];
 					var $diag = $('#'+dialogId);

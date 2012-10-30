@@ -37,7 +37,8 @@
 		]
 		,"overlays": [
 			{
-				"name": "Approved Layer"
+				"id": "approved"
+				,"name": "Approved Layer"
 				,"type": "couchdb"
 				,"options": {
 					"layerName": "approved"
@@ -46,7 +47,8 @@
 				,"useHoverSound": true
 			}
 			,{
-				"name": "Public"
+				"id": "public"
+				,"name": "Public"
 				,"type": "couchdb"
 				,"options": {
 					"layerName": "public"

@@ -693,6 +693,7 @@ var MapAndControls = $n2.Class({
 	    this._registerDispatch('editCancel');
 	    this._registerDispatch('editClosed');
 	    this._registerDispatch('geometryModified');
+	    this._registerDispatch('getLayerIdentifiers');
 		
 		// Layers
 		this.defaultLayerInfo = { // feature layer access details.
@@ -3851,6 +3852,14 @@ var MapAndControls = $n2.Class({
 		} else if( 'geometryModified' === type ) {
 			if( m._origin !== this ){
 				this._geometryModified(m.docId, m.geom, m.proj);
+			};
+			
+		} else if( 'getLayerIdentifiers' === type ) {
+			if( !m.layerIdentifiers ){
+				m.layerIdentifiers = {};
+			};
+			for(var layerId in this.layers){
+				m.layerIdentifiers[layerId] = true;
 			};
 		};
 	}

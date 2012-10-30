@@ -266,7 +266,7 @@ var MapFeatureStyles = $n2.Class({
 	    		};
 	    	};
 	    	
-	    	var layerName = layerInfo.name;
+	    	var layerId = layerInfo.id;
 	    	var schemaName = null;
 			if( feature 
 			 && feature.data 
@@ -278,8 +278,8 @@ var MapFeatureStyles = $n2.Class({
 			if( schemaName && _this.stylesFromSchema[schemaName] ) {
 				style = _this.stylesFromSchema[schemaName][geomType][effectiveIntent];
 			};
-			if( null == style && layerName && _this.stylesFromLayer[layerName] ) {
-				style = _this.stylesFromLayer[layerName][geomType][effectiveIntent];
+			if( null == style && layerId && _this.stylesFromLayer[layerId] ) {
+				style = _this.stylesFromLayer[layerId][geomType][effectiveIntent];
 			};
 			if( null == style ) {
 				style = _this.basicStyles[geomType][effectiveIntent];
@@ -614,7 +614,8 @@ var ModuleDisplay = $n2.Class({
 					var layerInfo = mapInfo.overlays[i];
 					
 					var layerDefiniton = {
-						name: layerInfo.name
+						id: layerInfo.id
+						,name: layerInfo.name
 						,type: layerInfo.type
 						,featurePopupHtmlFn: config.popupHtmlFn
 						,featurePopupDelay: 0 // ms
@@ -629,6 +630,10 @@ var ModuleDisplay = $n2.Class({
 							,db: atlasDb
 							,designDoc: atlasDesign
 						},layerInfo.options);
+						
+						if( !layerDefiniton.options.layerName ){
+							layerDefiniton.options.layerName = layerDefiniton.id;
+						};
 						
 					} else {
 						layerDefiniton.options = layerInfo.options;
