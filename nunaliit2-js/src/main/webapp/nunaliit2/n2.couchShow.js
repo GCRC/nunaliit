@@ -103,6 +103,13 @@ var DomStyler = $n2.Class({
 			$jq.removeClass('n2s_insertUserName').addClass('n2s_insertedUserName');
 		});
 		
+		// Layer name
+		$elem.find('.n2s_insertLayerName').each(function(){
+			var $jq = $(this);
+			_this._insertLayerName($jq, opt);
+			$jq.removeClass('n2s_insertLayerName').addClass('n2s_insertedLayerName');
+		});
+		
 		// Media View
 		$elem.find('.n2s_insertMediaView').each(function(){
 			var $jq = $(this);
@@ -232,6 +239,17 @@ var DomStyler = $n2.Class({
 			$jq
 			,userName
 			,{showHandle:true}
+			);
+	}
+	
+	,_insertLayerName: function($jq, opt_) {
+		var _this = this;
+
+		var layerIdentifier = $jq.text();
+		
+		this.showService.printLayerName(
+			$jq
+			,layerIdentifier
 			);
 	}
 
@@ -707,6 +725,15 @@ var Show = $n2.Class({
 		this._requestDocument(docId); // fetch document
 	}
 	
+	,printLayerName: function($elem, layerIdentifier, opts_){
+		
+		$elem.addClass('n2ShowLayerName_'+$n2.utils.stringToHtmlId(layerIdentifier));
+		
+		$elem.text(layerIdentifier);
+
+		this._requestDocument(layerIdentifier); // fetch document
+	}
+	
 	,_displayUserDocument: function(userDoc){
 		var id = userDoc._id;
 		
@@ -777,6 +804,16 @@ var Show = $n2.Class({
 			// Non-brief behaviour
 			_this._displayDocumentFull($elem, doc);
 		});
+		
+		// Layer definition
+		if( doc.nunaliit_layer_definition
+		 && doc.nunaliit_layer_definition.name ){
+			var layerClass = 'n2ShowLayerName_'+$n2.utils.stringToHtmlId(id);
+			$('.'+layerClass).each(function(i,elem){
+				var $elem = $(elem);
+				$elem.text( doc.nunaliit_layer_definition.name );
+			});
+		};
 	}
 
 	,_updateDocument: function(doc){
