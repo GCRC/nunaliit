@@ -71,6 +71,11 @@ function Configure(options_){
 		directory: configuration.directory
 	});
 	
+	// Event translation
+	configuration.directory.eventService = new $n2.couchEvents.EventSupport({
+		directory: configuration.directory
+	});
+	
  	// Turn off cometd
  	$.cometd = {
  		init: function(){}

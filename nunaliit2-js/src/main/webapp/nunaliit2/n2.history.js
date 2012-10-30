@@ -106,12 +106,7 @@ var Monitor = $n2.Class({
 	}
 	
 	,_handle: function(m){
-		if( 'selected' === m.type ){
-			var j = JSON.stringify({type:'selected',docId:m.docId});
-			var u = $n2.Base64.encode(j);
-			window.location = '#'+u;
-			
-		} else if( 'historyBack' === m.type ){
+		if( 'historyBack' === m.type ){
 			if( window.history.back ) {
 				window.history.back();
 			};
@@ -183,7 +178,7 @@ var Tracker = $n2.Class({
 			var h = d.getHandle('n2.history.Tracker');
 			d.register(h,'start',f);
 			d.register(h,'hashChanged',f);
-			d.register(h,'selected',f);
+			d.register(h,'userSelect',f);
 			d.register(h,'unselected',f);
 			d.register(h,'documentDeleted',f);
 			d.register(h,'searchInitiate',f);
@@ -219,7 +214,7 @@ var Tracker = $n2.Class({
 				});
 			};
 
-		} else if( 'selected' === m.type ){
+		} else if( 'userSelect' === m.type ){
 			this.last = {
 				selected: m.docId	
 			};
@@ -330,7 +325,7 @@ var Tracker = $n2.Class({
 						var docId = o.i;
 						if( docId !== this.last.selected ){
 							this._dispatch({
-								type: 'selected'
+								type: 'userSelect'
 								,docId: docId
 								,_suppressHashChange: true
 							});

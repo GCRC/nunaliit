@@ -211,7 +211,7 @@ var DomStyler = $n2.Class({
 		$jq.click(function(){
 			var dispatchService = _this.showService.getDispatchService();
 			if( dispatchService ) {
-				dispatchService.send(DH, {type:'selected',docId:docId});
+				dispatchService.send(DH, {type:'userSelect',docId:docId});
 			};
 
 			if( _this.options.displayFunction ) {

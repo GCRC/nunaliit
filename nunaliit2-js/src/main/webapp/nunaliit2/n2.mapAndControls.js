@@ -607,7 +607,7 @@ var MapAndControls = $n2.Class({
 			,endFn: []
 		};
 		this.clickedInfo = {
-			feature: null
+			features: []
 			,endFn: []
 			,fids: {}
 		}
@@ -684,6 +684,7 @@ var MapAndControls = $n2.Class({
 	    this._registerDispatch('featureUpdated');
 	    this._registerDispatch('addLayerToMap');
 	    this._registerDispatch('selected');
+	    this._registerDispatch('selectedSupplement');
 	    this._registerDispatch('unselected');
 	    this._registerDispatch('focusOn');
 	    this._registerDispatch('focusOff');
@@ -1158,7 +1159,7 @@ var MapAndControls = $n2.Class({
 			var handle = dispatchService.getHandle('n2.mapAndControls');
 			
 			dispatchService.send(handle, {
-				type: 'selected'
+				type: 'userSelect'
 				,docId: feature.data._id
 				,doc: feature.data
 				,feature: feature
@@ -1656,7 +1657,7 @@ var MapAndControls = $n2.Class({
 				for(var i=0,e=features.length;i<e;++i){
 					var f = features[i];
 					if( _this.clickedInfo.fids[f.fid] ){
-						_this.clickedInfo.feature = f;
+						_this.clickedInfo.features.push(f);
 						f.isClicked = true;
 					};
 				};
@@ -1938,7 +1939,7 @@ var MapAndControls = $n2.Class({
    	,startClicked: function(feature, forced) {
 		var clickedAgain = false;
    		if( !forced ) {
-			clickedAgain = (null != this.clickedInfo && this.clickedInfo.feature == feature);
+			clickedAgain = (null != feature && this.clickedInfo.fids[feature.fid]);
    		};
 		if( !forced && !this.options.toggleClick && clickedAgain ) {
 			// ignore click again
@@ -1951,7 +1952,7 @@ var MapAndControls = $n2.Class({
 			this._dispatch({type:'unselected',docId:feature.fid});
 			
 		} else {
-			this.clickedInfo.feature = feature;
+			this.clickedInfo.features = [feature];
 
 			this.clickedInfo.fids = {};
 			this.clickedInfo.fids[feature.fid] = true;
@@ -1968,33 +1969,34 @@ var MapAndControls = $n2.Class({
 	}
 	
 	,_endClicked: function() {
-		if( this.clickedInfo && this.clickedInfo.feature ) {
-			var feature = this.clickedInfo.feature;
-			
-			if( feature.isClicked ) {
-				feature.isClicked = false;
-				if( feature.layer ) {
-					feature.layer.drawFeature(feature);
-				};
-			
-				if( this.currentMode.onEndClick ) {
-					this.currentMode.onEndClick(feature);
+		if( this.clickedInfo.features ) {
+			for(var i=0,e=this.clickedInfo.features.length;i<e;++i){
+				var feature = this.clickedInfo.features[i];
+				
+				if( feature.isClicked ) {
+					feature.isClicked = false;
+					if( feature.layer ) {
+						feature.layer.drawFeature(feature);
+					};
+				
+					if( this.currentMode.onEndClick ) {
+						this.currentMode.onEndClick(feature);
+					};
 				};
 			};
 		};
 
-		if( this.clickedInfo ) {
-			if( this.clickedInfo.endFn ) {
-				for(var i=0,e=this.clickedInfo.endFn.length; i<e; ++i) {
-					//try{
-					this.clickedInfo.endFn[i](); 
-					//} catch(e){};
-				};
+		if( this.clickedInfo.endFn ) {
+			for(var i=0,e=this.clickedInfo.endFn.length; i<e; ++i) {
+				//try{
+				this.clickedInfo.endFn[i](); 
+				//} catch(e){};
 			};
-			this.clickedInfo.endFn = [];
-			this.clickedInfo.feature = null;
-			this.clickedInfo.fids = {};
 		};
+
+		this.clickedInfo.endFn = [];
+		this.clickedInfo.features = [];
+		this.clickedInfo.fids = {};
 	}
 	
 	,registerEndClickFn: function(fn) {
@@ -2014,7 +2016,29 @@ var MapAndControls = $n2.Class({
 		};
 		
 		if( feature ) {
-			this.clickedInfo.feature = feature;
+			this.clickedInfo.features.push(feature);
+
+			feature.isClicked = true;
+			if( feature.layer ) {
+				feature.layer.drawFeature(feature);
+			};
+		};
+	}
+
+	/**
+	 * Add map selection to current selection.
+	 */
+	,_selectedFeatureSupplement: function(feature, fid){
+		if( this.currentMode !== this.modes.NAVIGATE ){
+			this.switchMapMode(this.modes.NAVIGATE);
+		};
+		
+		if( fid ) {
+			this.clickedInfo.fids[fid] = true;
+		};
+		
+		if( feature ) {
+			this.clickedInfo.features.push(feature);
 
 			feature.isClicked = true;
 			if( feature.layer ) {
@@ -3378,7 +3402,7 @@ var MapAndControls = $n2.Class({
 				for(var i=0,e=features.length;i<e;++i){
 					var f = features[i];
 					if( _this.clickedInfo.fids[f.fid] ){
-						_this.clickedInfo.feature = f;
+						_this.clickedInfo.features.push(f);
 						f.isClicked = true;
 					};
 				};
@@ -3790,6 +3814,17 @@ var MapAndControls = $n2.Class({
 				feature = this.getFeatureFromFid(m.docId);
 			};
 			this._selectedFeature(feature, m.docId);
+			
+		} else if( 'selectedSupplement' === type ) {
+			var fid = null;
+			if( m.supplement ){
+				fid = m.supplement.docId;
+			};
+			var feature = null;
+			if( fid ) {
+				feature = this.getFeatureFromFid(fid);
+			};
+			this._selectedFeatureSupplement(feature, fid);
 			
 		} else if( 'unselected' === type ) {
 			this._endClicked();
