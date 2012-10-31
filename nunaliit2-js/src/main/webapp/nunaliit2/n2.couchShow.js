@@ -545,14 +545,14 @@ var DomStyler = $n2.Class({
 			$jq.hover(
 				function(){ // in
 					dispatchService.send(DH, {
-						type:'focusOn'
+						type:'userFocusOn'
 						,docId:contextDoc._id
 						,doc:contextDoc
 					});
 				}
 				,function(){ // out
 					dispatchService.send(DH, {
-						type:'focusOff'
+						type:'userFocusOff'
 						,docId:contextDoc._id
 						,doc:contextDoc
 					});

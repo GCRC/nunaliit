@@ -43,12 +43,16 @@ var EventSupport = $n2.Class('EventSupport',{
 	
 	,handler: null
 	
+	,registeredEvents: null
+	
 	,initialize: function(opts_){
 		this.options = $n2.extend({
 			directory: null
 		},opts_);
 		
 		var _this = this;
+	
+		this.registeredEvents = {};
 		
 		this.handler = function(m){
 			_this._defaultHandler(m);
@@ -59,12 +63,17 @@ var EventSupport = $n2.Class('EventSupport',{
 		};
 		
 		this.register('userSelect');
+		this.register('userFocusOn');
+		this.register('userFocusOff');
 	}
 
 	,register: function(type){
-		var d = this._getDispatcher();
-		if( d ){
-			d.register(DH,type,this.dispatchCallback);
+		if( !this.registeredEvents[type] ) {
+			var d = this._getDispatcher();
+			if( d ){
+				d.register(DH,type,this.dispatchCallback);
+			};
+			this.registeredEvents[type] = true;
 		};
 	}
 	
@@ -72,6 +81,10 @@ var EventSupport = $n2.Class('EventSupport',{
 		if( typeof(handler) === 'function' ){
 			this.handler = handler;
 		};
+	}
+	
+	,getHandler: function(){
+		return this.handler;
 	}
 	
 	,_getDispatcher: function(){
@@ -93,6 +106,22 @@ var EventSupport = $n2.Class('EventSupport',{
 		if( 'userSelect' === m.type ) {
 			this._dispatch({
 				type:'selected'
+				,docId: m.docId
+				,doc: m.doc
+				,feature: m.feature
+			});
+			
+		} else if( 'userFocusOn' === m.type ) {
+			this._dispatch({
+				type:'focusOn'
+				,docId: m.docId
+				,doc: m.doc
+				,feature: m.feature
+			});
+			
+		} else if( 'userFocusOff' === m.type ) {
+			this._dispatch({
+				type:'focusOff'
 				,docId: m.docId
 				,doc: m.doc
 				,feature: m.feature

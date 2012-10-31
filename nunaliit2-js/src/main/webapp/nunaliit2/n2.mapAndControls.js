@@ -37,6 +37,7 @@ $Id: n2.mapAndControls.js 8494 2012-09-21 20:06:50Z jpfiset $
 
 	// Localization
 	var _loc = function(str){ return $n2.loc(str,'nunaliit2'); };
+	var DH = 'n2.mapAndControls';
 
 //**************************************************
 
@@ -462,6 +463,7 @@ var MapAndControls = $n2.Class({
 	,selectFeatureControl: null
 	,hoverInfo: null
 	,clickedInfo: null
+	,focusInfo: null
 
     // MODES
 	,modes: null
@@ -603,7 +605,7 @@ var MapAndControls = $n2.Class({
 	    // HOVER and CLICK
 		this.selectFeatureControl = null;
 	    this.hoverInfo = {
-			feature: null
+	    	feature: null
 			,endFn: []
 		};
 		this.clickedInfo = {
@@ -611,6 +613,10 @@ var MapAndControls = $n2.Class({
 			,endFn: []
 			,fids: {}
 		}
+		this.focusInfo = {
+			fids: {}
+			,features: []
+		};
 
 		// MODES
 		this.modes = {
@@ -620,8 +626,6 @@ var MapAndControls = $n2.Class({
 				,onStartHover: function(feature) {
 					_this.hoverFeature(feature);
 					_this.hoverFeaturePopup(feature);
-				}
-				,onEndHover: function(feature) {
 				}
 				,onStartClick: function(feature) {
 					_this.initAndDisplayClickedPlaceInfo(feature);
@@ -635,8 +639,6 @@ var MapAndControls = $n2.Class({
 				,onStartHover: function(feature) {
 					_this.hoverFeature(feature);
 					_this.hoverFeaturePopup(feature);
-				}
-				,onEndHover: function(feature) {
 				}
 				,onStartClick: function(feature) {
 
@@ -688,6 +690,7 @@ var MapAndControls = $n2.Class({
 	    this._registerDispatch('unselected');
 	    this._registerDispatch('focusOn');
 	    this._registerDispatch('focusOff');
+	    this._registerDispatch('focusOnSupplement');
 	    this._registerDispatch('findOnMap');
 	    this._registerDispatch('searchInitiate');
 	    this._registerDispatch('editInitiate');
@@ -1156,9 +1159,7 @@ var MapAndControls = $n2.Class({
 	,initAndDisplayClickedPlaceInfo: function(feature) {
 		var dispatchService = this._getDispatchService();
 		if( dispatchService ) {
-			var handle = dispatchService.getHandle('n2.mapAndControls');
-			
-			dispatchService.send(handle, {
+			dispatchService.send(DH, {
 				type: 'userSelect'
 				,docId: feature.data._id
 				,doc: feature.data
@@ -1240,7 +1241,7 @@ var MapAndControls = $n2.Class({
 				var f = findFeature(pendingInfo);
 				if ($n2.isDefined(f) && $n2.isDefined(f.layer)) {
 					if( pendingInfo.highlightHoverOnly ) {
-						_this._highlightHoveredFeature(f, true)
+						_this._startFocus(f, f.fid)
 					} else {
 						_this.startClicked(f, true);
 					};
@@ -1660,6 +1661,10 @@ var MapAndControls = $n2.Class({
 						_this.clickedInfo.features.push(f);
 						f.isClicked = true;
 					};
+					if( _this.focusInfo.fids[f.fid] ){
+						_this.focusInfo.features.push(f);
+						f.isHovered = true;
+					};
 				};
 			};
 		});
@@ -2047,12 +2052,9 @@ var MapAndControls = $n2.Class({
 		};
 	}
 	
-	,startHover: function(feature) {
+	,_startHover: function(feature) {
 		// Check if anything is needed
-		if( this.hoverInfo 
-		 && this.hoverInfo.feature
-		 &&  this.hoverInfo.feature === feature
-		 ) {
+		if( this.hoverInfo.feature === feature ) {
 		 	// Nothing to do. This one is already the hover
 		 	// feature.
 		 	return;
@@ -2060,7 +2062,7 @@ var MapAndControls = $n2.Class({
 	
 		// If a feature is still marked as "hovered", quit
 		// it. This one is taking over.
-		this.endHover();
+		this._endHover();
 		
 		// Remember this new feature as "hovered"
 		this.hoverInfo.feature = feature;
@@ -2071,37 +2073,49 @@ var MapAndControls = $n2.Class({
 		};
 	}
 	
-	,endHover: function() {
-		if( this.hoverInfo && this.hoverInfo.feature ) {
-			var feature = this.hoverInfo.feature;
-			if( feature.isHovered ) {
-				if( this.currentMode.onEndHover ) {
-					this.currentMode.onEndHover(feature);
-				};
-			};
+	,_endHover: function() {
+
+		for(var i=0,e=this.hoverInfo.endFn.length; i<e; ++i) {
+			//try{
+			this.hoverInfo.endFn[i](); 
+			//} catch(e){};
 		};
-		if( this.hoverInfo ) {
-			if( this.hoverInfo.endFn ) {
-				for(var i=0,e=this.hoverInfo.endFn.length; i<e; ++i) {
-					//try{
-					this.hoverInfo.endFn[i](); 
-					//} catch(e){};
-				};
-			};
-			this.hoverInfo.endFn = [];
-			this.hoverInfo.feature = null;
-		};
+		
+		this.hoverInfo.feature = null;
+		this.hoverInfo.endFn = [];
 	}
 	
-	,_highlightHoveredFeature: function(feature, isInFocus){
-		if( feature.isHovered != isInFocus ) {
-			feature.isHovered = isInFocus ? true : false;
-			if( feature.layer ) feature.layer.drawFeature(feature);
-		};
-	}
-	
-	,registerEndHoverFn: function(fn) {
+	,_registerEndHoverFn: function(fn) {
 		this.hoverInfo.endFn.push(fn);
+	}
+
+	,_startFocus: function(feature, fid){
+		this._endFocus();
+		
+		this._addFocus(feature, fid);
+	}
+
+	,_addFocus: function(feature, fid){
+		this.focusInfo.fids[fid] = true;
+		
+		if( feature && !feature.isHovered ) {
+			feature.isHovered = true;
+			if( feature.layer ) feature.layer.drawFeature(feature);
+			this.focusInfo.features.push( feature );
+		};
+	}
+	
+	,_endFocus: function() {
+		for(var i=0,e=this.focusInfo.features.length;i<e;++i) {
+			var feature = this.focusInfo.features[i];
+			if( feature.isHovered ) {
+				feature.isHovered = false;
+				if( feature.layer ) feature.layer.drawFeature(feature);
+			};
+		};
+
+		this.focusInfo.features = [];
+		this.focusInfo.fids = {};
 	}
 
 	,activateSelectFeatureControl: function() {
@@ -2115,7 +2129,7 @@ var MapAndControls = $n2.Class({
 			this.selectFeatureControl.unselectAll();
 			this.selectFeatureControl.deactivate();
 		};
-		this.endHover();
+		this._endHover();
 		this._endClicked();
 	}
 
@@ -2135,32 +2149,22 @@ var MapAndControls = $n2.Class({
 		};
 
 		var dispatchService = this._getDispatchService();
-		if( dispatchService ) {
-			var handle = dispatchService.getHandle('n2.mapAndControls');
-			
-			this.registerEndHoverFn(function(){
-				dispatchService.send(handle, {
-					type: 'focusOff'
-					,docId: feature.data._id
-					,doc: feature.data
-					,feature: feature
-		 		});
-			});
-			dispatchService.send(handle, {
-				type: 'focusOn'
+
+		this._registerEndHoverFn(function(){
+			dispatchService.send(DH, {
+				type: 'userFocusOff'
 				,docId: feature.data._id
 				,doc: feature.data
 				,feature: feature
 	 		});
-			
-		} else {
-			// No dispatcher, redraw feature directly
-			this._highlightHoveredFeature(feature, true);
+		});
 
-			this.registerEndHoverFn(function(){
-				_this._highlightHoveredFeature(feature, false);
-			});
-		};
+		dispatchService.send(DH, {
+			type: 'userFocusOn'
+			,docId: feature.data._id
+			,doc: feature.data
+			,feature: feature
+ 		});
 	}
 	
 	,hoverFeaturePopup: function(feature) {
@@ -2210,7 +2214,7 @@ var MapAndControls = $n2.Class({
 			// to generate is still the one associated with the
 			// feature being hovered.
 			var hoveredFid = null;
-			if( _this.hoverInfo && _this.hoverInfo.feature ) {
+			if( _this.hoverInfo.feature ) {
 				hoveredFid = _this.hoverInfo.feature.fid;
 			};
 			if( hoveredFid !== feature.fid ) {
@@ -2309,7 +2313,7 @@ var MapAndControls = $n2.Class({
 			_this.map.addPopup(popup);
 
 			// Add clean up routine
-			_this.registerEndHoverFn(destroyCurrentPopup);
+			_this._registerEndHoverFn(destroyCurrentPopup);
 			
 			// Add routine to adjust popup position, once
 			_this.addMapMousePositionListener(function(evt){
@@ -3405,6 +3409,10 @@ var MapAndControls = $n2.Class({
 						_this.clickedInfo.features.push(f);
 						f.isClicked = true;
 					};
+					if( _this.focusInfo.fids[f.fid] ){
+						_this.focusInfo.features.push(f);
+						f.isHovered = true;
+					};
 				};
 			};
 		});
@@ -3487,10 +3495,10 @@ var MapAndControls = $n2.Class({
 		var navHighlightOptions = {
 				hover: true
 				,onSelect: function(feature){ 
-					_this.startHover(feature); 
+					_this._startHover(feature); 
 				}
 				,onUnselect: function(){ 
-					_this.endHover(); 
+					_this._endHover(); 
 				}
 			};
 		this.selectFeatureControl = new OpenLayers.Control.SelectFeature(
@@ -3499,10 +3507,10 @@ var MapAndControls = $n2.Class({
 		);
 		var selControl = new FeatureEvents({
 			onOver: function(feature){ 
-				_this.startHover(feature); 
+				_this._startHover(feature); 
 			}
 			,onOut: function(){ 
-				_this.endHover(); 
+				_this._endHover(); 
 			}
 			,onClick: function(feature, forced) {
 				_this.startClicked(feature, forced);
@@ -3744,8 +3752,7 @@ var MapAndControls = $n2.Class({
 	,_dispatch: function(m){
 		var dispatcher = this._getDispatchService();
 		if( dispatcher ) {
-			var h = dispatcher.getHandle('n2.mapAndControls');
-			dispatcher.send(h,m);
+			dispatcher.send(DH,m);
 		};
 	}
 	
@@ -3762,8 +3769,7 @@ var MapAndControls = $n2.Class({
 				};
 			};
 
-			var h = dispatcher.getHandle('n2.mapAndControls');
-			dispatcher.register(h,event,fn);
+			dispatcher.register(DH,event,fn);
 		};
 	}
 	
@@ -3830,22 +3836,21 @@ var MapAndControls = $n2.Class({
 			this._endClicked();
 			
 		} else if( 'focusOn' === type ) {
+			var fid = m.docId;
+
 			var feature = m.feature;
 			if( !feature ) {
-				feature = this.getFeatureFromFid(m.docId);
+				feature = this.getFeatureFromFid(fid);
 			};
-			if( feature ) {
-				this._highlightHoveredFeature(feature, true);
-			};
+			this._startFocus(feature,fid);
 			
 		} else if( 'focusOff' === type ) {
-			var feature = m.feature;
-			if( !feature ) {
-				feature = this.getFeatureFromFid(m.docId);
-			};
-			if( feature ) {
-				this._highlightHoveredFeature(feature, false);
-			};
+			this._endFocus();
+			
+		} else if( 'focusOnSupplement' === type ) {
+			var fid = m.supplement.docId;
+			var feature = this.getFeatureFromFid(fid);
+			this._addFocus(feature,fid);
 			
 		} else if( 'findOnMap' === type ) {
 			this._centerMapOnFeatureId(m.fid, m.x, m.y);
