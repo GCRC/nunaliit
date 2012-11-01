@@ -3708,15 +3708,12 @@ var MapAndControls = $n2.Class({
 			this._selectedFeature(feature, m.docId);
 			
 		} else if( 'selectedSupplement' === type ) {
-			var fid = null;
-			if( m.supplement ){
-				fid = m.supplement.docId;
-			};
+			var fid = m.docId;
 			var feature = null;
 			if( fid ) {
 				feature = this.getFeatureFromFid(fid);
+				this._selectedFeatureSupplement(feature, fid);
 			};
-			this._selectedFeatureSupplement(feature, fid);
 			
 		} else if( 'unselected' === type ) {
 			this._endClicked();
@@ -3734,9 +3731,11 @@ var MapAndControls = $n2.Class({
 			this._endFocus();
 			
 		} else if( 'focusOnSupplement' === type ) {
-			var fid = m.supplement.docId;
-			var feature = this.getFeatureFromFid(fid);
-			this._addFocus(feature,fid);
+			var fid = m.docId;
+			if( fid ) {
+				var feature = this.getFeatureFromFid(fid);
+				this._addFocus(feature,fid);
+			};
 			
 		} else if( 'findOnMap' === type ) {
 			this._centerMapOnFeatureId(m.fid, m.x, m.y);
