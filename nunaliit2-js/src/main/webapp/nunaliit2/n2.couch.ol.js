@@ -71,7 +71,7 @@ OpenLayers.Format.Couch = OpenLayers.Class(OpenLayers.Format, {
 					};
 
 					if( !geom ){
-						$n2.log('Invalid WKT: '+doc.nunaliit_geom.wkt);
+						$n2.log('Invalid WKT('+doc._id+'): '+doc.nunaliit_geom.wkt);
 					};
 				};
 				
