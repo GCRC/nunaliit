@@ -778,6 +778,16 @@ var ModuleDisplay = $n2.Class({
 
 			mapOptions.mapCoordinateSpecifications.initialBounds = initialBounds;
 			
+			// Map max extent
+			var mapInfo = _this.module.getMapInfo();
+			if( mapInfo 
+			 && mapInfo.coordinates
+			 && mapInfo.coordinates.maxExtent
+			 ){
+				mapOptions.mapCoordinateSpecifications.maxExtent = 
+					mapInfo.coordinates.maxExtent;
+			};
+			
 			_this.mapControl = nunaliit2.mapAndControls(mapOptions);
 			$n2.log('map & control',_this.mapControl);
 			

@@ -51,6 +51,7 @@ var Dispatcher = $n2.Class({
 	,initialize: function(options_){
 		this.options = $n2.extend({
 			logging: false
+			,loggingIncludesMessage: false
 		},options_);
 		
 		this.listeners = {};
@@ -126,6 +127,7 @@ var Dispatcher = $n2.Class({
 	
 	,_sendImmediate: function(h, m) {
 		var logging = this.options.logging;
+		var loggingIncludesMessage = this.options.loggingIncludesMessage;
 
 		var t = m.type;
 
@@ -139,7 +141,12 @@ var Dispatcher = $n2.Class({
 				var l = listeners[i];
 				
 				if( logging ){
-					$n2.log(''+h.name+' >'+t+'> '+l.handle.name);
+					if( loggingIncludesMessage ) {
+						$n2.log(''+h.name+' >'+t+'> '+l.handle.name,m);
+						
+					} else {
+						$n2.log(''+h.name+' >'+t+'> '+l.handle.name);
+					}
 				};
 				
 //				try {
