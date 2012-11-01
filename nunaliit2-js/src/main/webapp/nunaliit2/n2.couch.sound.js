@@ -32,6 +32,8 @@ $Id: n2.couch.sound.js 8439 2012-08-14 19:17:25Z jpfiset $
 */
 ;(function($,$n2){
 
+var DH = 'n2.couch.sound';	
+	
 // ===========================================================================
 function defaultInstallSound(info) {};
 function defaultHandleDocumentSound(info_, cb_){cb_(info_);};
@@ -44,8 +46,6 @@ var HoverSoundService = $n2.Class({
 	,requestService: null
 	
 	,currentFocusSoundDocId: null
-	
-	,dispatchHandle: null
 	
 	,initialize: function(options_){
 		var _this = this;
@@ -66,11 +66,10 @@ var HoverSoundService = $n2.Class({
 		if( this.dispatcher ) {
 			var f = function(m){ _this._handleDispatch(m); };
 			
-			this.dispatchHandle = this.dispatcher.getHandle('n2.couch.sound');
-			this.dispatcher.register(this.dispatchHandle, 'focusOn', f);
-			this.dispatcher.register(this.dispatchHandle, 'focusOff', f);
-			this.dispatcher.register(this.dispatchHandle, 'playHoverSoundOn', f);
-			this.dispatcher.register(this.dispatchHandle, 'playHoverSoundOff', f);
+			this.dispatcher.register(DH, 'focusOn', f);
+			this.dispatcher.register(DH, 'focusOff', f);
+			this.dispatcher.register(DH, 'playHoverSoundOn', f);
+			this.dispatcher.register(DH, 'playHoverSoundOff', f);
 		};
 	}
 
