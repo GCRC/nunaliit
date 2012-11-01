@@ -41,3 +41,11 @@ div.olControlZoom a {
 	background: rgba(0, 0, 0, 0.7) !important;
 }	
 
+.olControlEditingToolbar {
+	position: absolute;
+	right: 350px;
+}
+
+.olControlEditingToolbar div {
+	float: left;
+}
