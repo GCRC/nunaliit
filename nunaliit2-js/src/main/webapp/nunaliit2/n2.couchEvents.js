@@ -63,6 +63,7 @@ var EventSupport = $n2.Class('EventSupport',{
 		};
 		
 		this.register('userSelect');
+		this.register('userUnselect');
 		this.register('userFocusOn');
 		this.register('userFocusOff');
 	}
@@ -106,6 +107,14 @@ var EventSupport = $n2.Class('EventSupport',{
 		if( 'userSelect' === m.type ) {
 			this._dispatch({
 				type:'selected'
+				,docId: m.docId
+				,doc: m.doc
+				,feature: m.feature
+			});
+			
+		} else if( 'userUnselect' === m.type ) {
+			this._dispatch({
+				type:'unselected'
 				,docId: m.docId
 				,doc: m.doc
 				,feature: m.feature

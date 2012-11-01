@@ -1243,7 +1243,7 @@ var MapAndControls = $n2.Class({
 					if( pendingInfo.highlightHoverOnly ) {
 						_this._startFocus(f, f.fid)
 					} else {
-						_this.startClicked(f, true);
+						_this._startClicked(f, true);
 					};
 				} else {
 					decrementAndTryAgain(pendingInfo, function(){ tryForcedFeatureClick(pendingInfo); });
@@ -1938,10 +1938,10 @@ var MapAndControls = $n2.Class({
 
    	,startClickEvent: function(evt) {
    		var feature = this.hoverInfo.feature;
-   		this.startClicked(feature, false);
+   		this._startClicked(feature, false);
 	}
 	
-   	,startClicked: function(feature, forced) {
+   	,_startClicked: function(feature, forced) {
 		var clickedAgain = false;
    		if( !forced ) {
 			clickedAgain = (null != feature && this.clickedInfo.fids[feature.fid]);
@@ -1954,7 +1954,7 @@ var MapAndControls = $n2.Class({
 		this._endClicked();
 		
 		if( !forced && this.options.toggleClick && clickedAgain ) {
-			this._dispatch({type:'unselected',docId:feature.fid});
+			this._dispatch({type:'userUnselect',docId:feature.fid});
 			
 		} else {
 			this.clickedInfo.features = [feature];
@@ -3513,7 +3513,7 @@ var MapAndControls = $n2.Class({
 				_this._endHover(); 
 			}
 			,onClick: function(feature, forced) {
-				_this.startClicked(feature, forced);
+				_this._startClicked(feature, forced);
 			}
 			,onClickOut: function(){
 				_this._endClicked();
