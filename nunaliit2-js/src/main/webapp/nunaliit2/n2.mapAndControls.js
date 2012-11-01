@@ -541,11 +541,6 @@ var MapAndControls = $n2.Class({
 				,background: null
 				,maxResolution: 156543.0339 // if not using Google proj, compute as maxExtent / expected map display size (in pixels).
 				,units: 'm' // map units
-
-				// sets up map display if needed BEFORE the point is marked.
-				// @param feature attributes for feature about to be marked.
-				// @return millisecond counter to be used as a delay before trying to continue to highlight searched location.
-				,markFeatureAsClicked_setupHandler: function(attributes){ return 0; }
 			}
 			,addPointsOnly: false
 			,placeDisplay: { // place info panel display options.
@@ -1172,103 +1167,6 @@ var MapAndControls = $n2.Class({
 		};
 	}
 	
-	,markFeatureAsClicked: function(opts_) {
-		
-		var _this = this;
-
-		var pendingInfo = $.extend({
-				uniqueId: null
-				,fid: null
-				,highlightHoverOnly: false
-			}
-			,opts_
-			,{
-				count: 15
-				,cancelled: false
-			}
-		);
-
-		// Cancel previous requests
-		if( this.pendingMarkInfo ) {
-			this.pendingMarkInfo.cancelled = true;
-		};
-		
-		// Remember new options
-		this.pendingMarkInfo = pendingInfo;
-		
-		tryMarkFeatureAsClicked(pendingInfo);
-		
-		function tryMarkFeatureAsClicked(pendingInfo) {
-			
-			function findFeature(pend) {
-				var found = null;
-				for (var loop=0; loop<_this.vectorLayers.length; ++loop) {
-					var mapLayer = _this.vectorLayers[loop];
-					for (var i=0; i<mapLayer.features.length; i++) {
-						var f = mapLayer.features[i];
-						if ($n2.isDefined(pend.fid) && pend.fid == f.fid) {
-							found = f;
-							break;
-						} else if ($n2.isDefined(pend.uniqueId) &&  pend.uniqueId == f.attributes[options.uniqueIdentifier]) {
-							found = f;
-							break;
-						};
-					};
-				};
-				return found;
-			};
-			
-			/*
-			 * note that both users of this share the same sanity count ... it is not restarted because it
-			 * is essentially infinity...!
-			 */
-			function decrementAndTryAgain(pendingInfo, stFn) { // @param st a to be called in setTimeout
-				if( --pendingInfo.count > 0 ) { // Try again in 1 sec
-					setTimeout(stFn, 1000);
-				} else {
-					$n2.log('tryMarkFeatureAsClicked: sanity count expired.');
-				};
-			};
-			
-			function tryForcedFeatureClick(pendingInfo) {
-				if( pendingInfo.cancelled ) return;
-				
-				/*
-				 * redo the feature search - layer activity can regen features it seems leaving the feature
-				 * found earlier as a stranded (destroyed) feature.  Go back to the layers... and don't pass 
-				 * the old feature in as an argument.
-				 */
-				var f = findFeature(pendingInfo);
-				if ($n2.isDefined(f) && $n2.isDefined(f.layer)) {
-					if( pendingInfo.highlightHoverOnly ) {
-						_this._startFocus(f, f.fid)
-					} else {
-						_this._startClicked(f, true);
-					};
-				} else {
-					decrementAndTryAgain(pendingInfo, function(){ tryForcedFeatureClick(pendingInfo); });
-				};
-			};
-			
-			function delayedFeatureClick(pendingInfo, d) {
-				setTimeout(function(){ tryForcedFeatureClick(pendingInfo); }, d);
-			};
-
-			// Check if cancelled
-			if( pendingInfo.cancelled ) return;
-			
-			var foundFeature = findFeature(pendingInfo);
-			
-			if ($n2.isDefined(foundFeature) && $n2.isDefined(foundFeature.attributes)) {
-				var addDelay = _this.options.mapDisplay.markFeatureAsClicked_setupHandler(foundFeature.attributes);
-				delayedFeatureClick(pendingInfo, addDelay);
-			} else {
-				// Not found
-				decrementAndTryAgain(pendingInfo, function(){ tryMarkFeatureAsClicked(pendingInfo); });
-			};
-		};
-	}
-
 	,getFeatureFromFid: function(fid){
 		for(var loop=0; loop<this.infoLayers.length; ++loop) {
 			var layerInfo = this.infoLayers[loop];
@@ -1463,13 +1361,6 @@ var MapAndControls = $n2.Class({
 		ll.transform(dbProj, this.map.projection); // transform in place
 		var z = this.map.getZoom();
 		this.map.setCenter(ll, z, false, false);
-		
-		window.setTimeout(function() { 
-				_this.markFeatureAsClicked({
-					fid: fid
-					,highlightHoverOnly: true
-				}); 
-			},0);
 	}
 
 	// @param bounds Instance of OpenLayers.Bounds
@@ -2723,7 +2614,6 @@ var MapAndControls = $n2.Class({
 							_this.options.contribInsertedReloadDataFn(feature)); // return obj with filled data fields as above
 					};
 				};
-				_this.markFeatureAsClicked({fid:fid}); // back in navigation mode - click the feature
 			}
 		});
 	}
@@ -2735,11 +2625,7 @@ var MapAndControls = $n2.Class({
 		var fid = feature.fid;
 		this.fidUpdated(fid);
 		var filter = $n2.olFilter.fromFid(fid);
-		this._reloadFeature(filter, {
-			onReloaded: function(feature) {
-				_this.markFeatureAsClicked({fid:fid}); // back in navigation mode - click the feature
-			}
-		});
+		this._reloadFeature(filter);
 	}
 	
 	,onAttributeFormDeleted: function(fid, feature) {
@@ -3854,6 +3740,9 @@ var MapAndControls = $n2.Class({
 			
 		} else if( 'findOnMap' === type ) {
 			this._centerMapOnFeatureId(m.fid, m.x, m.y);
+			var fid = m.fid;
+			var feature = this.getFeatureFromFid(fid);
+			this._selectedFeatureSupplement(feature, fid);
 			
 		} else if( 'searchInitiate' === type ) {
 			this._endClicked();
