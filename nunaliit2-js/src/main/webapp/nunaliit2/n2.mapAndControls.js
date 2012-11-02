@@ -495,7 +495,7 @@ var MapAndControls = $n2.Class({
 
 	// map layers
 	,defaultLayerInfo: null
-	,baseLayers: null
+	,mapLayers: null
 	,vectorLayers: null
 	,infoLayers: null
 	,layers: null
@@ -1019,7 +1019,7 @@ var MapAndControls = $n2.Class({
 		this.busyMapControl = new OpenLayers.Control.N2LoadingPanel();
 
 		// Create map layers
-		this.baseLayers = [];
+		this.mapLayers = [];
 		this.vectorLayers = [];
 		this.infoLayers = [];
 		
@@ -1046,15 +1046,21 @@ var MapAndControls = $n2.Class({
 		if( this.options.layerInfo ) {
 			for(var loop=0; loop<this.options.layerInfo.length; ++loop) {
 				var layerOptions = this.options.layerInfo[loop];
-				this.createLayerFromOptions(layerOptions);
+				var lInfo = this.createLayerFromOptions(layerOptions);
+				if( lInfo && lInfo.olLayer ){
+					this.mapLayers.push(lInfo.olLayer);
+				};
 			};
 		};
 		
-		// Create vector layers based on layer definition used in couchModule
+		// Create overlay layers based on layer definition used in couchModule
 		if( this.options.overlays ) {
 			for(var loop=0; loop<this.options.overlays.length; ++loop) {
 				var layerDefinition = this.options.overlays[loop];
-				this._createOLLayerFromDefinition(layerDefinition,false);
+				var l = this._createOLLayerFromDefinition(layerDefinition,false);
+				if( l ){
+					this.mapLayers.push(l);
+				};
 			};
 		};
 		
@@ -1067,7 +1073,7 @@ var MapAndControls = $n2.Class({
 			};
 		};
 		
-		this.map.addLayers(this.baseLayers.concat(this.vectorLayers));
+		this.map.addLayers(this.mapLayers);
 
 		this.map.addControl(new OpenLayers.Control.MousePosition({
 			displayProjection: (this.options.mapCoordinateSpecifications.useForMapControls ? 
@@ -1690,10 +1696,6 @@ var MapAndControls = $n2.Class({
 				};
 				var l = new OpenLayers.Layer.WMS(layerDefinition.name, wmsUrl, wmsOptions, layerOptions);
 				
-				if( !isBaseLayer ){
-					this.vectorLayers.push( l );
-				};
-				
 				return l;
 				
 			} else {
@@ -1794,7 +1796,7 @@ var MapAndControls = $n2.Class({
 		};
 		
 		for(var i=0,e=bg.length;i<e;++i){
-			this.baseLayers.push( bg[i] );
+			this.mapLayers.push( bg[i] );
 		};
 		
 		return(bg);
