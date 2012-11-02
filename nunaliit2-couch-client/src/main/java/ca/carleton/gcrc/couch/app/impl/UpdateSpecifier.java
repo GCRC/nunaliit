@@ -123,10 +123,12 @@ public class UpdateSpecifier {
 				shouldUpload = true;
 			
 			} else {
+				String attachmentContentType = attachment.getContentType();
 				shouldUpload = shouldAttachmentBeUploaded(
 					targetDoc
 					,attachmentName
 					,documentDigest.getAttachmentDigest(attachmentName)
+					,attachmentContentType
 					);
 			}
 			
@@ -144,6 +146,7 @@ public class UpdateSpecifier {
 			JSONObject targetDoc
 			,String attachmentName
 			,String attachmentDigest
+			,String attachmentContentType
 			) {
 		
 		JSONObject targetAttachments = targetDoc.optJSONObject("_attachments");
@@ -155,6 +158,16 @@ public class UpdateSpecifier {
 		JSONObject targetAttachment = targetAttachments.optJSONObject(attachmentName);
 		if( null == targetAttachment ) {
 			// Target document does not have an attachment with this name
+			return true;
+		}
+		
+		String targetAttachmentContentType = targetAttachment.optString("content_type");
+		if( null == targetAttachmentContentType ){
+			// Attachment should have a content-type
+			return true;
+		}
+		if( false == targetAttachmentContentType.equals(attachmentContentType) ){
+			// content-type has changed
 			return true;
 		}
 		
