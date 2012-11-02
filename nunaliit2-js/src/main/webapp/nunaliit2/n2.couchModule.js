@@ -617,6 +617,7 @@ var ModuleDisplay = $n2.Class({
 						id: layerInfo.id
 						,name: layerInfo.name
 						,type: layerInfo.type
+						,visibility: layerInfo.visibility
 						,featurePopupHtmlFn: config.popupHtmlFn
 						,featurePopupDelay: 0 // ms
 						,styleMapFn: function(layerInfo_){ return _this.styles.getStyleMapForLayerInfo(layerInfo_); }

@@ -1680,6 +1680,10 @@ var MapAndControls = $n2.Class({
 				for(var key in options){
 					if( 'url' === key ) {
 						wmsUrl = options[key];
+						
+					} else if( 'opacity' === key ) {
+						layerOptions.opacity = options[key];
+						
 					} else {
 						wmsOptions[key] = options[key];
 					};
