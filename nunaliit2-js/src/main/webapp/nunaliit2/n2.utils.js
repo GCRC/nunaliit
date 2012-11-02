@@ -484,11 +484,11 @@ $n2.utils = {
 			var c = s[i];
 			if( c === '_' ) { 
 				++i;
-				var o2 = sel.charCodeAt(i);
+				var o2 = s.charCodeAt(i);
 				++i;
-				var o1 = sel.charCodeAt(i);
+				var o1 = s.charCodeAt(i);
 				++i;
-				var o0 = sel.charCodeAt(i);
+				var o0 = s.charCodeAt(i);
 				
 				var b = ((o2-0x30)<<6)+((o1-0x30)<<3)+(o0-0x30);
 				res.push(String.fromCharCode(b));

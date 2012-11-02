@@ -143,17 +143,19 @@ var Dispatcher = $n2.Class({
 				if( logging ){
 					if( loggingIncludesMessage ) {
 						$n2.log(''+h.name+' >'+t+'> '+l.handle.name,m);
-						
 					} else {
 						$n2.log(''+h.name+' >'+t+'> '+l.handle.name);
-					}
+					};
 				};
 				
-//				try {
+				try {
 					l.fn(m);
-//				} catch(e) {
-//					$n2.log('Error while dispatching: '+e);
-//				};
+				} catch(e) {
+					$n2.log('Error while dispatching: '+e);
+					if( e.stack ) {
+						$n2.log('Stack',e.stack);
+					};
+				};
 			};
 		};
 		this.dispatching = false;

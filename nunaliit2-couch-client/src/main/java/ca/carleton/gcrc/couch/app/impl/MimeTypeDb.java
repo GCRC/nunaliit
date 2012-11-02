@@ -14,6 +14,7 @@ public class MimeTypeDb {
 			defaultDB.addFileExtension("jpg", "image/jpeg");
 			defaultDB.addFileExtension("jpeg", "image/jpeg");
 			defaultDB.addFileExtension("png", "image/png");
+			defaultDB.addFileExtension("gif", "image/gif");
 
 			defaultDB.addFileExtension("mp3", "audio/mpeg");
 			defaultDB.addFileExtension("ogg", "application/ogg", MimeType.MultimediaClass.AUDIO);
