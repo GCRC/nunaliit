@@ -115,14 +115,14 @@ public class DbRestoreProcess {
 				doc = DocumentFile.createDocument(entry);
 				
 			} catch (Exception e) {
-				throw new Exception("Unable to load document from dump: "+docId);
+				throw new Exception("Unable to load document from dump: "+docId, e);
 			}
 			
 			try {
 				updateProcess.update(doc);
 				
 			} catch (Exception e) {
-				throw new Exception("Unable to update document to database: "+docId);
+				throw new Exception("Unable to update document to database: "+docId, e);
 			}
 		}
 		
