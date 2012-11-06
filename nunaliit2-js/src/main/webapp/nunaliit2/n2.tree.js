@@ -548,6 +548,34 @@ function computeSelectors($li) {
 };
 
 /**
+ * Given a string, converts it so that it is acceptable as an HTML
+ * identifier or class.
+ * @param s {String} String to be converted.
+ * @return {String} Version of the string that is acceptable as a
+ *                   HTML identifier or class.
+ */
+function stringToHtmlId(s){
+	var res = [];
+	for(var i=0,e=s.length; i<e; ++i) {
+		var c = s[i];
+		if( c >= 'a' && c <= 'z' ) { res.push(c); }
+		else if( c >= 'A' && c <= 'Z' ) { res.push(c); }
+		else if( c >= '0' && c <= '9' ) { res.push(c); }
+		else {
+			var code = c.charCodeAt(0);
+			var o0 = (code & 0x07) + 0x30;
+			var o1 = ((code >> 3) & 0x07) + 0x30;
+			var o2 = ((code >> 6) & 0x07) + 0x30;
+			res.push('_');
+			res.push( String.fromCharCode(o2) );
+			res.push( String.fromCharCode(o1) );
+			res.push( String.fromCharCode(o0) );
+		};
+	};
+	return res.join('');
+};
+
+/**
  * Computes a valid id for a given set of selectors.
  * @param uuid {Integer} Unique identifier of the tree where the 
  *                       id is computed.
@@ -556,10 +584,11 @@ function computeSelectors($li) {
  *                  the selected object within a tree.
  */
 function computeId(uuid, selectors) {
-	var id = 'tree'+uuid+'_'+selectors.join('_');
-	id = encodeURI(id);
-	id = id.replace(/[%.]/g,'_');
-	id = id.replace(/!/g,'_33');
+	var escapedSelectors = [];
+	for(var i=0,e=selectors.length;i<e;++i){
+		escapedSelectors.push( stringToHtmlId(selectors[i]) );
+	};
+	var id = 'tree'+uuid+'_'+escapedSelectors.join('_');
 	return id;
 };
 

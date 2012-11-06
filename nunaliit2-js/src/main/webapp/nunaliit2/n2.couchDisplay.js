@@ -446,7 +446,7 @@ $n2.couchDisplay = $n2.Class({
 			$buttons.append($focusButton);
 			$focusButton.click(function(){
 				_this._dispatch({
-					type:'selected'
+					type:'userSelect'
 					,docId: data._id
 				})
 				return false;
