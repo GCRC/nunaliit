@@ -5,7 +5,11 @@ import java.io.File;
 import java.io.PrintStream;
 import java.util.Stack;
 
+import ca.carleton.gcrc.couch.command.impl.FileSetManifest;
 import ca.carleton.gcrc.couch.command.impl.PathComputer;
+import ca.carleton.gcrc.couch.command.impl.UpgradeOperationsBasic;
+import ca.carleton.gcrc.couch.command.impl.UpgradeProcess;
+import ca.carleton.gcrc.couch.command.impl.UpgradeReport;
 import ca.carleton.gcrc.couch.fsentry.FSEntryFile;
 
 public class CommandCreate implements Command {
@@ -106,6 +110,14 @@ public class CommandCreate implements Command {
 			throw new Exception("Unable to find template directory");
 		}
 		
+		// Verify that content directory is available
+		File contentDir = PathComputer.computeContentDir( gs.getInstallDir() );
+		if( null == contentDir 
+		 || false == contentDir.exists() 
+		 || false == contentDir.isDirectory() ){
+			throw new Exception("Unable to find content directory");
+		}
+		
 		// Create directory
 		try {
 			boolean created = atlasDir.mkdir();
@@ -134,6 +146,29 @@ public class CommandCreate implements Command {
 		
 		} catch(Exception e) {
 			throw new Exception("Unable to copy template to new atlas directory",e);
+		}
+		
+		// Copy content by performing upgrade
+		try {
+			UpgradeProcess upgradeProcess = new UpgradeProcess();
+			UpgradeReport upgradeReport = upgradeProcess.computeUpgrade(
+				contentDir
+				,atlasDir
+				,new FileSetManifest() // new installation
+				);
+			
+			UpgradeOperationsBasic operations = new UpgradeOperationsBasic(
+				atlasDir
+				,contentDir
+				,new File(atlasDir, "upgrade/install")
+				);
+			upgradeProcess.performUpgrade(
+				upgradeReport
+				,operations
+				);
+		
+		} catch(Exception e) {
+			throw new Exception("Unable to copy content to new atlas directory",e);
 		}
 		
 		// Create sub-directories

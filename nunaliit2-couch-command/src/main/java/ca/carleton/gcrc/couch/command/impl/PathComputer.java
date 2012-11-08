@@ -131,6 +131,36 @@ public class PathComputer {
 		return null;
 	}
 	
+
+	/**
+	 * Finds the "content" directory from the installation location
+	 * and returns it. If the command-line tool is packaged and
+	 * deployed, then the "content" directory is found at the
+	 * root of the installation. If the command-line tool is run
+	 * from the development environment, then the "content" directory
+	 * is found in the SDK sub-project.
+	 * @param installDir Directory where the command-line tool is run from.
+	 * @return Directory where content is located or null if not found.
+	 */
+	static public File computeContentDir(File installDir) {
+		if( null != installDir ) {
+			// Command-line package
+			File contentDir = new File(installDir, "content");
+			if( contentDir.exists() && contentDir.isDirectory() ) {
+				return contentDir;
+			}
+			
+			// Development environment
+			File nunaliit2Dir = computeNunaliitDir(installDir);
+			contentDir = new File(nunaliit2Dir, "nunaliit2-couch-sdk/src/main/content");
+			if( contentDir.exists() && contentDir.isDirectory() ) {
+				return contentDir;
+			}
+		}
+		
+		return null;
+	}
+
 	/**
 	 * Finds the "bin" directory from the installation location
 	 * and returns it. If the command-line tool is packaged and

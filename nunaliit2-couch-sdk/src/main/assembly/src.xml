@@ -25,6 +25,10 @@
 			<outputDirectory>/install/</outputDirectory>
 		</fileSet>
 		<fileSet>
+			<directory>src/main/content</directory>
+			<outputDirectory>/content/</outputDirectory>
+		</fileSet>
+		<fileSet>
 			<directory>src/main/templates</directory>
 			<outputDirectory>/templates/</outputDirectory>
 		</fileSet>

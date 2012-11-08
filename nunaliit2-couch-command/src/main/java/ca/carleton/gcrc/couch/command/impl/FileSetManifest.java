@@ -66,7 +66,7 @@ public class FileSetManifest {
 							name = name + "/" + n;
 						}
 					}
-					
+
 					FileManifest fileManifest = new FileManifest();
 					fileManifest.setRelativePath(name);
 					if( childFile.isDirectory() ){
@@ -143,6 +143,18 @@ public class FileSetManifest {
 		if( null != manifest ) {
 			manifests.put(manifest.getRelativePath(), manifest);
 		}
+	}
+	
+	public void removeFileManifest(String path){
+		manifests.remove(path);
+	}
+	
+	public FileSetManifest clone(){
+		FileSetManifest c = new FileSetManifest();
+		for(FileManifest f : manifests.values()){
+			c.addFileManifest(f.clone());
+		}
+		return c;
 	}
 	
 	public JSONObject toJson() throws Exception {

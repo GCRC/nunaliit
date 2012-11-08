@@ -7,6 +7,18 @@ public class FileManifest {
 	private String digest;
 	private boolean isDirectory = false;
 	
+	public FileManifest(){
+		
+	}
+	
+	public FileManifest clone(){
+		FileManifest f = new FileManifest();
+		f.relativePath = relativePath;
+		f.digest = digest;
+		f.isDirectory = isDirectory;
+		return f;
+	}
+
 	public String getRelativePath() {
 		return relativePath;
 	}
