@@ -30,6 +30,7 @@ public class Main {
 			allCommands.add( new CommandRun() );
 			allCommands.add( new CommandDump() );
 			allCommands.add( new CommandRestore() );
+			allCommands.add( new CommandUpgrade() );
 		}
 		
 		return allCommands;
