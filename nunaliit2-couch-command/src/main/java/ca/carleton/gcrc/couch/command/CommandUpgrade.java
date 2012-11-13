@@ -102,16 +102,25 @@ public class CommandUpgrade implements Command {
 		// Figure out upgrade operations
 		UpgradeOperations operations = null;
 		if( justTest ) {
-			operations = new UpgradeOperationsReporting(
-				new UpgradeOperationsNull()
-				,gs.getOutStream()
-				);
+			operations = new UpgradeOperationsNull();
 		} else {
 			operations = new UpgradeOperationsBasic(
 				atlasDir
 				,contentDir
 				,upgradeCollisionDir
 				);
+		}
+		
+		// Figure out reporting level
+		UpgradeOperationsReporting reporting = new UpgradeOperationsReporting(
+				atlasDir
+				,upgradeCollisionDir
+				,operations
+				,gs.getOutStream()
+				);
+		if( justTest ) {
+			reporting.setReportOperations(true);
+			reporting.setReportCollisions(false);
 		}
 
 		// Upgrade content
@@ -125,7 +134,7 @@ public class CommandUpgrade implements Command {
 			
 			upgradeProcess.performUpgrade(
 				upgradeReport
-				,operations
+				,reporting
 				);
 		
 		} catch(Exception e) {

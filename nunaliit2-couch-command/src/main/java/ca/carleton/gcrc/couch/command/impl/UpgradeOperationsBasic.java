@@ -33,7 +33,8 @@ public class UpgradeOperationsBasic implements UpgradeOperations {
 			fos = new FileOutputStream(manifestFile,false); // overwrite
 			OutputStreamWriter osw = new OutputStreamWriter(fos,"UTF-8");
 			
-			json.write(osw);
+			osw.write( json.toString(3) );
+
 			osw.flush();
 			
 			fos.close();
