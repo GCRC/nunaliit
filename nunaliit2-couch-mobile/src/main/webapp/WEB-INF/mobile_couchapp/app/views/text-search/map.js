@@ -1,6 +1,6 @@
 function(doc) {
 
-// !code vendor/nunaliit2/utils.js
+// !code vendor/nunaliit2/n2.couchUtils.js
 	
 	if( doc._id[0] === '_' ) {
 		// Do not index special documents

@@ -1,6 +1,6 @@
 function(doc) {
-// !code vendor/nunaliit2/utils.js
-// !code vendor/nunaliit2/tiles.js
+// !code vendor/nunaliit2/n2.couchUtils.js
+// !code vendor/nunaliit2/n2.couchTiles.js
 
 	var layers = n2utils.extractLayers(doc);
 	if( layers && n2utils.isValidGeom(doc.nunaliit_geom) ) {

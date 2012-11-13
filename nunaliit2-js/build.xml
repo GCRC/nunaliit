@@ -62,11 +62,11 @@
     	<!-- Copy -->
 		<copy 
 			file="./src/main/webapp/nunaliit2/n2.couchUtils.js" 
-			tofile="${javascript.dest.dir}/utils.js"
+			tofile="${javascript.dest.dir}/n2.couchUtils.js"
 			/>
 		<copy 
 			file="./src/main/webapp/nunaliit2/n2.couchTiles.js" 
-			tofile="${javascript.dest.dir}/tiles.js"
+			tofile="${javascript.dest.dir}/n2.couchTiles.js"
 			/>
     </target>
 

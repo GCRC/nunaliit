@@ -1,5 +1,5 @@
 function(doc) {
-	// !code vendor/nunaliit2/utils.js
+	// !code vendor/nunaliit2/n2.couchUtils.js
 
 	// Search complete doc for outward links
 	var links = [];

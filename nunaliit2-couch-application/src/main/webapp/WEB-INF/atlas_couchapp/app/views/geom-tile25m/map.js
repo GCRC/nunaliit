@@ -1,7 +1,7 @@
 function(doc) {
 
-// !code vendor/nunaliit2/utils.js
-// !code vendor/nunaliit2/tiles.js
+// !code vendor/nunaliit2/n2.couchUtils.js
+// !code vendor/nunaliit2/n2.couchTiles.js
 
 	if( n2utils.isValidGeom(doc.nunaliit_geom) ) {
 		var geomSize = n2utils.geomSize(doc.nunaliit_geom);

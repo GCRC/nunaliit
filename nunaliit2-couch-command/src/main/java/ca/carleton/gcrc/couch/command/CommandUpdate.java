@@ -271,17 +271,17 @@ public class CommandUpdate implements Command {
 						entries.add(f);
 					}
 					
-					// Vendor file 'utils.js'
+					// Vendor file 'n2.couchUtils.js'
 					{
 						File file = new File(n2Dir,"n2.couchUtils.js");
-						FSEntry f = FSEntryFile.getPositionedFile("a/vendor/nunaliit2/utils.js", file);
+						FSEntry f = FSEntryFile.getPositionedFile("a/vendor/nunaliit2/n2.couchUtils.js", file);
 						entries.add(f);
 					}
 					
-					// Vendor file 'tiles.js'
+					// Vendor file 'n2.couchTiles.js'
 					{
 						File file = new File(n2Dir,"n2.couchTiles.js");
-						FSEntry f = FSEntryFile.getPositionedFile("a/vendor/nunaliit2/tiles.js", file);
+						FSEntry f = FSEntryFile.getPositionedFile("a/vendor/nunaliit2/n2.couchTiles.js", file);
 						entries.add(f);
 					}
 				}
