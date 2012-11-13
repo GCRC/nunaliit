@@ -1039,6 +1039,7 @@ var MapAndControls = $n2.Class({
 				,renderers: ['SVG','VML']
 			}
 		);
+		this.mapLayers.push(this.editLayer);
 		this.vectorLayers.push(this.editLayer);
 		
 		// Create vector layer for user defined layers
