@@ -38,20 +38,17 @@ var _loc = function(str){ return $n2.loc(str,'nunaliit2-couch'); };
 // Dispatcher
 var DH = 'n2.couchSearch';
 
-var reWordSplit = /[\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\x7f]+/;
-
 function SplitSearchTerms(line) {
 	if( !line ) return null;
 	
-	line = line.toLowerCase();
-	var temp = line.split(reWordSplit);
+	var map = {};
+	$n2.couchUtils.extractWords(line,map,'');
+
 	var searchTerms = [];
-	for(var i=0,e=temp.length; i<e; ++i){
-		var term = temp[i];
-		if( null !== term && '' !== term && ' ' !== term ) {
-			searchTerms.push(term);
-		};
+	for(var term in map){
+		searchTerms.push(term);
 	};
+	
 	return searchTerms;
 };
 

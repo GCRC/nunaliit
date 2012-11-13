@@ -239,6 +239,9 @@ if( typeof(exports) === 'object' ) {
 	exports.isValidGeom = n2utils.isValidGeom;
 	exports.extractLayers = n2utils.extractLayers;
 	exports.extractLinks = n2utils.extractLinks;
+	exports.extractSearchTerms = n2utils.extractSearchTerms;
+	exports.extractWords = n2utils.extractWords;
+	exports.extractTypes = n2utils.extractTypes;
 	exports.extractSpecificType = n2utils.extractSpecificType;
 	exports.extractGeometries = n2utils.extractGeometries;
 	exports.getAtlasRole = n2utils.getAtlasRole;
@@ -251,7 +254,11 @@ if( typeof(nunaliit2) === 'function' ) {
 	nunaliit2.couchUtils.isValidGeom = n2utils.isValidGeom;
 	nunaliit2.couchUtils.extractLayers = n2utils.extractLayers;
 	nunaliit2.couchUtils.extractLinks = n2utils.extractLinks;
+	nunaliit2.couchUtils.extractSearchTerms = n2utils.extractSearchTerms;
+	nunaliit2.couchUtils.extractWords = n2utils.extractWords;
+	nunaliit2.couchUtils.extractTypes = n2utils.extractTypes;
 	nunaliit2.couchUtils.extractSpecificType = n2utils.extractSpecificType;
 	nunaliit2.couchUtils.extractGeometries = n2utils.extractGeometries;
 	nunaliit2.couchUtils.getAtlasRole = n2utils.getAtlasRole;
 };
+
