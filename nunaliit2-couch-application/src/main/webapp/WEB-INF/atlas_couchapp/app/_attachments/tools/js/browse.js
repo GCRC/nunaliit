@@ -277,6 +277,7 @@ function selectNewDocumentSchema(schemas) {
 				type: 'setHash'
 				,hash: hash
 			});
+			createNewDocumentFromSchemaName(schemaName);
 			
 			$dialog.dialog('close');
 		});
