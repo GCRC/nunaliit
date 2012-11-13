@@ -257,22 +257,6 @@ public class CommandUpdate implements Command {
 					FSEntryFile f = new FSEntryFile(atlasDesignDir);
 					entries.add(f);
 				}
-				
-				// Vendor files
-				{
-					File utilsFile = new File(atlasDesignDir,"vendor/nunaliit2/utils.js");
-					if( utilsFile.exists() ) {
-						FSEntry f = FSEntryFile.getPositionedFile("a/_attachments/lib/utils.js", utilsFile);
-						entries.add(f);
-					}
-				}
-				{
-					File tilesFile = new File(atlasDesignDir,"vendor/nunaliit2/tiles.js");
-					if( tilesFile.exists() ) {
-						FSEntry f = FSEntryFile.getPositionedFile("a/_attachments/lib/tiles.js", tilesFile);
-						entries.add(f);
-					}
-				}
 			}
 			
 			// Nunaliit2 javascript library
@@ -281,8 +265,25 @@ public class CommandUpdate implements Command {
 				if( null == n2Dir ) {
 					throw new Exception("Can not find nunaliit2 javascript library");
 				} else {
-					FSEntry f = FSEntryFile.getPositionedFile("a/_attachments/nunaliit2", n2Dir);
-					entries.add(f);
+					// Libraries
+					{
+						FSEntry f = FSEntryFile.getPositionedFile("a/_attachments/nunaliit2", n2Dir);
+						entries.add(f);
+					}
+					
+					// Vendor file 'utils.js'
+					{
+						File file = new File(n2Dir,"n2.couchUtils.js");
+						FSEntry f = FSEntryFile.getPositionedFile("a/vendor/nunaliit2/utils.js", file);
+						entries.add(f);
+					}
+					
+					// Vendor file 'tiles.js'
+					{
+						File file = new File(n2Dir,"n2.couchTiles.js");
+						FSEntry f = FSEntryFile.getPositionedFile("a/vendor/nunaliit2/tiles.js", file);
+						entries.add(f);
+					}
 				}
 			}
 			

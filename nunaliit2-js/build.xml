@@ -49,6 +49,41 @@
 	</target>
 
     <!-- ================================= 
+          target: vendor-files-copy      
+          
+          Copies special files in vendor area (CouchDb application)
+         ================================= -->
+    <target 
+    	name="vendor-files-copy" 
+    	description="Copy Nunaliit2 vendor files"
+    	depends="-vendor-files-copy-conditions,-vendor-files-copy-error"
+    	if="vendor-files-dest-exists"
+    	>
+    	<!-- Copy -->
+		<copy 
+			file="./src/main/webapp/nunaliit2/n2.couchUtils.js" 
+			tofile="${javascript.dest.dir}/utils.js"
+			/>
+		<copy 
+			file="./src/main/webapp/nunaliit2/n2.couchTiles.js" 
+			tofile="${javascript.dest.dir}/tiles.js"
+			/>
+    </target>
+
+    <target 
+    	name="-vendor-files-copy-error" 
+    	description="Report error"
+    	depends="-vendor-files-copy-conditions"
+    	unless="vendor-files-dest-exists"
+    	>
+    	<fail message="Destination directory does not exist: ${javascript.dest.dir}"/>
+    </target>
+	
+	<target name="-vendor-files-copy-conditions">
+		<available file="${javascript.dest.dir}" property="vendor-files-dest-exists"/>
+	</target>
+
+    <!-- ================================= 
           target: library-compress      
           
           Compresses library files to destination

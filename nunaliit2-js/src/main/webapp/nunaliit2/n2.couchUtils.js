@@ -243,3 +243,15 @@ if( typeof(exports) === 'object' ) {
 	exports.extractGeometries = n2utils.extractGeometries;
 	exports.getAtlasRole = n2utils.getAtlasRole;
 };
+
+if( typeof(nunaliit2) === 'function' ) {
+	nunaliit2.couchUtils = {};
+	nunaliit2.couchUtils.isArray = n2utils.isArray;
+	nunaliit2.couchUtils.isValidBounds = n2utils.isValidBounds;
+	nunaliit2.couchUtils.isValidGeom = n2utils.isValidGeom;
+	nunaliit2.couchUtils.extractLayers = n2utils.extractLayers;
+	nunaliit2.couchUtils.extractLinks = n2utils.extractLinks;
+	nunaliit2.couchUtils.extractSpecificType = n2utils.extractSpecificType;
+	nunaliit2.couchUtils.extractGeometries = n2utils.extractGeometries;
+	nunaliit2.couchUtils.getAtlasRole = n2utils.getAtlasRole;
+};

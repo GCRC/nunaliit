@@ -133,6 +133,15 @@
 			<property name="javascript.dest.dir" location="${javascript.dest.dir}"/>
 		</ant>
 
+		<!-- Vendor files -->
+		<mkdir dir="${atlas.working.dir}/${atlas.design.name}/vendor/nunaliit2"/>
+		<ant
+			dir="${nunaliit2-js.dir}"
+			target="vendor-files-copy"
+			>
+			<property name="javascript.dest.dir" location="${atlas.working.dir}/${atlas.design.name}/vendor/nunaliit2"/>
+		</ant>
+
 		<!-- External javascript libraries -->
 		<ant
 			dir="${external-js.dir}"
