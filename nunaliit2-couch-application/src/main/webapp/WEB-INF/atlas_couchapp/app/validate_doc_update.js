@@ -1,6 +1,6 @@
 function(newDoc, oldDoc, userCtxt) {
 	
-	var n2utils = require('vendor/nunaliit2/utils');
+	var n2utils = require('vendor/nunaliit2/n2.couchUtils');
 	var n2atlas = require('vendor/nunaliit2/atlas');
 	
 //log('validate doc update '+oldDoc+'->'+newDoc+' userCtxt: '+JSON.stringify(userCtxt));
