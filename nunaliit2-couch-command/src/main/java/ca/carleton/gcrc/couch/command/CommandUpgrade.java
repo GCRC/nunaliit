@@ -50,8 +50,10 @@ public class CommandUpgrade implements Command {
 		CommandHelp.reportGlobalSettingAtlasDir(ps);
 		ps.println();
 		ps.println("Upgrade Options");
-		ps.println("  --test   Does not perform any changes. Simply print");
-		ps.println("           what would happen");
+		ps.println("  --test        Does not perform any changes. Simply print");
+		ps.println("                what would happen. Does not run 'config' command.");
+		ps.println("  --no-config   Supresses the automatic 'config' command after");
+		ps.println("                completing upgrade process.");
 	}
 
 	@Override
@@ -61,12 +63,18 @@ public class CommandUpgrade implements Command {
 		) throws Exception {
 		
 		// Pick up options
+		boolean noConfig = false;
 		boolean justTest = false;
 		while( false == argumentStack.empty() ){
 			String optionName = argumentStack.peek();
 			if( "--test".equals(optionName) ){
 				argumentStack.pop();
 				justTest = true;
+				
+			} else if( "--no-config".equals(optionName) ){
+				argumentStack.pop();
+				noConfig = true;
+				
 			} else {
 				break;
 			}
@@ -139,6 +147,13 @@ public class CommandUpgrade implements Command {
 		
 		} catch(Exception e) {
 			throw new Exception("Unable to upgrade content",e);
+		}
+		
+		// Perform configuration, unless disabled
+		if( false == noConfig && false == justTest ){
+			CommandConfig config = new CommandConfig();
+			Stack<String> configArgs = new Stack<String>();
+			config.runCommand(gs, configArgs);
 		}
 	}
 }

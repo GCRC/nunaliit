@@ -188,7 +188,6 @@ public class CommandCreate implements Command {
 		if( false == noConfig ){
 			CommandConfig config = new CommandConfig();
 			Stack<String> configArgs = new Stack<String>();
-			configArgs.push(atlasDir.getAbsolutePath());
 			config.runCommand(gs, configArgs);
 		}
 	}
