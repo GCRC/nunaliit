@@ -85,7 +85,7 @@ var n2utils = {
 		,'to'
 	]
 
-	,extractSearchTerms: function(doc,folded) {
+	,extractSearchTerms: function(doc) {
 		// Returns a map of words with associated usage.
 		// The keys in the map are words and the associated
 		// values are objects. The value objects contain an
@@ -97,7 +97,7 @@ var n2utils = {
 		var result = [];
 		
 		var map = {};
-		n2utils.extractWords(doc,map,'',folded);
+		n2utils.extractWords(doc,map,'');
 		
 		return map;
 	}
@@ -110,7 +110,7 @@ var n2utils = {
 	
 	,reWordSplit: /[\x00-\x26\x28-\x2f\x3a-\x40\x5b-\x60\x7b-\x7f]+/ 
 
-	,extractWords: function(obj, map, path,folded) {
+	,extractWords: function(obj, map, path) {
 		// Traverses an object to find all string elements.
 		// For each string element, split up in words.
 		// Save each word in a map, with the number of times
@@ -124,9 +124,6 @@ var n2utils = {
 			var words = obj.split( n2utils.reWordSplit );
 			for(var i=0,e=words.length; i<e; ++i) {
 				var word = words[i].toLowerCase();
-				if( folded ) {
-					word = n2utils.foldWord(word);
-				};
 				word = n2utils.removeApostrophe(word);
 				if( word && word !== '' ) {
 					if( map[word] ) {
@@ -135,9 +132,11 @@ var n2utils = {
 							map[word].index = i;
 						};
 					} else {
+						var folded = n2utils.foldWord(word);
 						map[word] = {
 							index: i
 							,count: 1
+							,folded: folded
 						};
 					};
 				};
@@ -145,7 +144,7 @@ var n2utils = {
 			
 		} else if( n2utils.isArray(obj) ) {
 			for(var i=0,e=obj.length; i<e; ++i) {
-				n2utils.extractWords(obj[i],map,path+i+'.',folded);
+				n2utils.extractWords(obj[i],map,path+i+'.');
 			};
 
 		} else if( typeof(obj) === 'object' ) {
@@ -153,7 +152,7 @@ var n2utils = {
 				var s = path+key;
 				
 				if( n2utils.excludedSearchAttributes.indexOf(s) < 0 ) {
-					n2utils.extractWords(obj[key],map,s+'.',folded);
+					n2utils.extractWords(obj[key],map,s+'.');
 				};
 			};
 		};
@@ -467,7 +466,6 @@ if( typeof(exports) === 'object' ) {
 	exports.extractLayers = n2utils.extractLayers;
 	exports.extractLinks = n2utils.extractLinks;
 	exports.extractSearchTerms = n2utils.extractSearchTerms;
-	exports.extractWords = n2utils.extractWords;
 	exports.foldWord = n2utils.foldWord;
 	exports.removeApostrophe = n2utils.removeApostrophe;
 	exports.isApostropheCodeChar = n2utils.isApostropheCodeChar;
@@ -485,7 +483,6 @@ if( typeof(nunaliit2) === 'function' ) {
 	nunaliit2.couchUtils.extractLayers = n2utils.extractLayers;
 	nunaliit2.couchUtils.extractLinks = n2utils.extractLinks;
 	nunaliit2.couchUtils.extractSearchTerms = n2utils.extractSearchTerms;
-	nunaliit2.couchUtils.extractWords = n2utils.extractWords;
 	nunaliit2.foldWord = n2utils.foldWord;
 	nunaliit2.removeApostrophe = n2utils.removeApostrophe;
 	nunaliit2.isApostropheCodeChar = n2utils.isApostropheCodeChar;

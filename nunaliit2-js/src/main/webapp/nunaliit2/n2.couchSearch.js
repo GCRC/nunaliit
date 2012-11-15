@@ -38,15 +38,17 @@ var _loc = function(str){ return $n2.loc(str,'nunaliit2-couch'); };
 // Dispatcher
 var DH = 'n2.couchSearch';
 
-function SplitSearchTerms(line,folded) {
+function SplitSearchTerms(line) {
 	if( !line ) return null;
 	
-	var map = {};
-	$n2.couchUtils.extractWords(line,map,'',folded);
+	var map = $n2.couchUtils.extractSearchTerms(line);
 
 	var searchTerms = [];
 	for(var term in map){
-		searchTerms.push(term);
+		var folded = map[term].folded;
+		if( folded ) {
+			searchTerms.push(folded);
+		};
 	};
 	
 	return searchTerms;
@@ -73,7 +75,7 @@ var SearchRequest = $n2.Class({
 		},opts_);
 		
 		if( typeof(searchTerms) === 'string' ) {
-			searchTerms = SplitSearchTerms(searchTerms,true);
+			searchTerms = SplitSearchTerms(searchTerms);
 		};
 
 		// Initialize results
@@ -279,8 +281,8 @@ var LookAheadService = $n2.Class({
 		this.options.designDoc.queryView({
 			viewName: this.options.lookAheadView
 			,listName: this.options.lookAheadList
-			,startkey: prefix
-			,endkey: prefix + '\u9999'
+			,startkey: [prefix,null]
+			,endkey: [prefix + '\u9999',{}]
 			,top: this.options.lookAheadLimit
 			,group: true
 			,onlyRows: false
@@ -425,7 +427,7 @@ var LookAheadService = $n2.Class({
 	}
 	
 	,_jqAutoComplete: function(request, cb) {
-		var terms = SplitSearchTerms(request.term,true);
+		var terms = SplitSearchTerms(request.term);
 		var callback = cb;
 //		var callback = function(res){
 //			$n2.log('look ahead results',res);

@@ -7,7 +7,7 @@ function(head, req) {
 		var result = [];
 		var row;
 		while(row = getRow()) {
-			var word = row.key;
+			var word = row.key[1];
 			var count = row.value;
 			
 			result.push( [word,count] );
