@@ -38,11 +38,11 @@ var _loc = function(str){ return $n2.loc(str,'nunaliit2-couch'); };
 // Dispatcher
 var DH = 'n2.couchSearch';
 
-function SplitSearchTerms(line) {
+function SplitSearchTerms(line,folded) {
 	if( !line ) return null;
 	
 	var map = {};
-	$n2.couchUtils.extractWords(line,map,'');
+	$n2.couchUtils.extractWords(line,map,'',folded);
 
 	var searchTerms = [];
 	for(var term in map){
@@ -73,7 +73,7 @@ var SearchRequest = $n2.Class({
 		},opts_);
 		
 		if( typeof(searchTerms) === 'string' ) {
-			searchTerms = SplitSearchTerms(searchTerms);
+			searchTerms = SplitSearchTerms(searchTerms,true);
 		};
 
 		// Initialize results
@@ -425,7 +425,7 @@ var LookAheadService = $n2.Class({
 	}
 	
 	,_jqAutoComplete: function(request, cb) {
-		var terms = SplitSearchTerms(request.term);
+		var terms = SplitSearchTerms(request.term,true);
 		var callback = cb;
 //		var callback = function(res){
 //			$n2.log('look ahead results',res);
