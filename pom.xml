@@ -55,7 +55,7 @@
 			<plugin>
 				<groupId>org.codehaus.cargo</groupId>
 				<artifactId>cargo-maven2-plugin</artifactId>
-				<version>1.1.1</version>
+				<version>${cargo.version}</version>
 				<extensions>true</extensions>
 				<configuration>
 					<descriptor>src/assemble/merge.xml</descriptor>
@@ -67,7 +67,7 @@
 		<servlet-api.version>2.5</servlet-api.version>
 		<log4j.version>1.2.14</log4j.version>
 		<junit.version>3.8.1</junit.version>
-		<cargo.version>1.1.1</cargo.version>
+		<cargo.version>1.2.4</cargo.version>
 		<json.version>20090211</json.version>
 	</properties>
 	<modules>
