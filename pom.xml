@@ -69,6 +69,7 @@
 		<junit.version>3.8.1</junit.version>
 		<cargo.version>1.2.4</cargo.version>
 		<json.version>20090211</json.version>
+		<maven-dependency-plugin.version>2.5.1</maven-dependency-plugin.version>
 	</properties>
 	<modules>
 		<module>nunaliit2-jdbc</module>
