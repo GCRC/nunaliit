@@ -19,7 +19,7 @@
 			<version>${maven-dependency-plugin.version}</version>
 			<executions>
 				<execution>
-					<phase>generate-sources</phase>
+					<phase>prepare-package</phase>
 					<goals>
 						<goal>copy</goal>
 					</goals>
@@ -53,7 +53,7 @@
         <version>1.6</version>
         <executions>
           <execution>
-            <phase>generate-resources</phase>
+            <phase>prepare-package</phase>
             <configuration>
               <!--  The following is an ANT target -->
               <target>
