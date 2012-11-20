@@ -3,11 +3,11 @@
   <parent>
     <artifactId>nunaliit2</artifactId>
     <groupId>ca.carleton.gcrc</groupId>
-    <version>2.0.1</version>
+    <version>2.0.2-SNAPSHOT</version>
   </parent>
   <groupId>ca.carleton.gcrc</groupId>
   <artifactId>nunaliit2-multimedia</artifactId>
-  <version>2.0.1</version>
+  <version>2.0.2-SNAPSHOT</version>
   <name>nunaliit2-multimedia</name>
   <description>Library that converts multimedia files using command
   line tools such as avconv and ImageMagick</description>
