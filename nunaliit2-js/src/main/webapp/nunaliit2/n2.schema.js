@@ -1471,6 +1471,8 @@ var Form = $n2.Class({
 					} else {
 						if( !parentObj[effectiveKey] ) {
 							parentObj[effectiveKey] = {nunaliit_type:'reference'};
+						} else {
+							parentObj[effectiveKey].nunaliit_type = 'reference';
 						};
 						parentObj = parentObj[effectiveKey];
 						effectiveKey = 'doc';
