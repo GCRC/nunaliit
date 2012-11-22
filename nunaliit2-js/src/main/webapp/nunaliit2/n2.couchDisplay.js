@@ -66,6 +66,7 @@ var defaultOptions = {
 	,serviceDirectory: null
 	,postProcessDisplayFunction: null
 	,displayRelatedInfoFunction: null
+	,displayOnlyRelatedSchemas: false
 	
 	/*
 	 * if defined, used by the map display logic to invoke a function to initiate 
@@ -129,9 +130,15 @@ $n2.couchDisplay = $n2.Class({
 		};
 		
 		if( !this.options.displayRelatedInfoFunction ) {
-			this.options.displayRelatedInfoFunction = function(opts_){
-				_this._displayRelatedInfo(opts_);
-			}
+			if( this.options.displayOnlyRelatedSchemas ) {
+				this.options.displayRelatedInfoFunction = function(opts_){
+					_this._displayRelatedInfo(opts_);
+				};
+			} else {
+				this.options.displayRelatedInfoFunction = function(opts_){
+					_this._displayLinkedInfo(opts_);
+				};
+			};
 		};
 		
 		this.createRelatedDocProcess = new $n2.couchRelatedDoc.CreateRelatedDocProcess({
@@ -722,6 +729,66 @@ $n2.couchDisplay = $n2.Class({
 		}
 	}
 	
+	,_displayLinkedInfo: function(opts_){
+		var opts = $n2.extend({
+			divId: null
+			,div: null
+			,doc: null
+			,schema: null
+		},opts_);
+		
+		var _this = this;
+		var doc = opts.doc;
+		var docId = doc._id;
+		
+		var $elem = opts.div;
+		if( ! $elem ) {
+			$elem = $('#'+opts.divId);
+		};
+		if( ! $elem.length) {
+			return;
+		};
+		
+		// Get identifiers for all documents referencing to this
+		// document. Also, get the schema associated with the
+		// document referencing this one.
+		_this.options.designDoc.queryView({
+			viewName: 'link-references-schemas'
+			,startkey: [docId,null]
+			,endkey: [docId,{}]
+			,onSuccess: function(rows){
+				// Accumulate document ids under the associated schema
+				var relatedDocsFromSchemas = {};
+				for(var i=0,e=rows.length;i<e;++i){
+					var id = rows[i].id;
+					var key = rows[i].key;
+					var schemaName = key[1];
+					
+					if( !relatedDocsFromSchemas[schemaName] ) {
+						relatedDocsFromSchemas[schemaName] = {
+							divId: $n2.getUniqueId()
+							,docIds: {}
+						};
+					};
+					relatedDocsFromSchemas[schemaName].docIds[id] = true;
+				};
+
+				// Add section with related documents
+				for(var schemaName in relatedDocsFromSchemas){
+					var contId = relatedDocsFromSchemas[schemaName].divId;
+					var $div = $('<div id="'+contId+'"></div>');
+					$elem.append($div);
+					
+					var relatedDocIds = [];
+					for(var relatedDocId in relatedDocsFromSchemas[schemaName].docIds){
+						relatedDocIds.push(relatedDocId);
+					};
+					
+					_this._displayRelatedDocuments(contId, schemaName, relatedDocIds);
+				};
+			}
+		});
+	}
 	
 	,_displayRelatedDocuments: function(contId, relatedSchemaName, relatedDocIds){
 		var _this = this;

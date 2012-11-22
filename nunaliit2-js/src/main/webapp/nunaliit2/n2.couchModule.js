@@ -505,7 +505,7 @@ var ModuleDisplay = $n2.Class({
 			};
 			
 			// Display Logic 
-			$.olkitDisplay = new $n2.couchDisplay({
+			var displayOptions = {
 				db: atlasDb
 				,designDoc: atlasDesign
 				,displayPanelName: opts.sidePanelName
@@ -513,7 +513,12 @@ var ModuleDisplay = $n2.Class({
 				,editor: _this.config.couchEditor
 				,uploadService: _this.config.uploadServer
 				,serviceDirectory: _this.config.directory
-			});
+			};
+			if( displayInfo && displayInfo.displayOnlyRelatedSchemas ){
+				displayOptions.displayOnlyRelatedSchemas 
+					= displayInfo.displayOnlyRelatedSchemas;
+			};
+			$.olkitDisplay = new $n2.couchDisplay(displayOptions);
 			var defaultDisplaySchemaName = 'object';
 			if( displayInfo && displayInfo.defaultSchemaName ){
 				defaultDisplaySchemaName = displayInfo.defaultSchemaName;
