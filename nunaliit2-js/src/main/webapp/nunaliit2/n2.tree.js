@@ -555,24 +555,32 @@ function computeSelectors($li) {
  *                   HTML identifier or class.
  */
 function stringToHtmlId(s){
-	var res = [];
-	for(var i=0,e=s.length; i<e; ++i) {
-		var c = s[i];
-		if( c >= 'a' && c <= 'z' ) { res.push(c); }
-		else if( c >= 'A' && c <= 'Z' ) { res.push(c); }
-		else if( c >= '0' && c <= '9' ) { res.push(c); }
-		else {
-			var code = c.charCodeAt(0);
-			var o0 = (code & 0x07) + 0x30;
-			var o1 = ((code >> 3) & 0x07) + 0x30;
-			var o2 = ((code >> 6) & 0x07) + 0x30;
-			res.push('_');
-			res.push( String.fromCharCode(o2) );
-			res.push( String.fromCharCode(o1) );
-			res.push( String.fromCharCode(o0) );
+	if( typeof(s) === 'string' ) {
+		var res = [];
+		for(var i=0,e=s.length; i<e; ++i) {
+			var c = s[i];
+			if( c >= 'a' && c <= 'z' ) { res.push(c); }
+			else if( c >= 'A' && c <= 'Z' ) { res.push(c); }
+			else if( c >= '0' && c <= '9' ) { res.push(c); }
+			else {
+				var code = c.charCodeAt(0);
+				var o0 = (code & 0x07) + 0x30;
+				var o1 = ((code >> 3) & 0x07) + 0x30;
+				var o2 = ((code >> 6) & 0x07) + 0x30;
+				res.push('_');
+				res.push( String.fromCharCode(o2) );
+				res.push( String.fromCharCode(o1) );
+				res.push( String.fromCharCode(o0) );
+			};
 		};
+		return res.join('');
+		
+	} else if( typeof(s) === 'number' ){
+		return ''+s;
+		
+	} else {
+		return '';
 	};
-	return res.join('');
 };
 
 /**
