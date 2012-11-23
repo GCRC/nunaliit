@@ -145,6 +145,13 @@
    		<type>jar</type>
    		<scope>compile</scope>
    	</dependency>
+   	<dependency>
+   		<groupId>ca.carleton.gcrc</groupId>
+   		<artifactId>nunaliit2-utils</artifactId>
+   		<version>${project.version}</version>
+   		<type>jar</type>
+   		<scope>compile</scope>
+   	</dependency>
 	<dependency>
     	<groupId>junit</groupId>
     	<artifactId>junit</artifactId>

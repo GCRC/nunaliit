@@ -9,6 +9,8 @@ import java.net.URL;
 import java.util.Enumeration;
 import java.util.Properties;
 
+import ca.carleton.gcrc.utils.PropertiesWriter;
+
 public class AtlasProperties {
 
 	static public AtlasProperties fromAtlasDir(File atlasDir) throws Exception {
@@ -141,7 +143,8 @@ public class AtlasProperties {
 			try {
 				fos = new FileOutputStream(installPropFile);
 				OutputStreamWriter osw = new OutputStreamWriter(fos,"UTF-8");
-				publicProps.store(osw, "Atlas properties");
+				PropertiesWriter propWriter = new PropertiesWriter(osw);
+				propWriter.write(publicProps);
 				
 				osw.flush();
 				
@@ -166,7 +169,8 @@ public class AtlasProperties {
 			try {
 				fos = new FileOutputStream(sensitivePropFile);
 				OutputStreamWriter osw = new OutputStreamWriter(fos,"UTF-8");
-				sensitiveProps.store(osw, "Atlas properties");
+				PropertiesWriter propWriter = new PropertiesWriter(osw);
+				propWriter.write(sensitiveProps);
 				
 				osw.flush();
 				
