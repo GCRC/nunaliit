@@ -324,10 +324,65 @@ public class CommandUpdate implements Command {
 		// Create _design/mobile document...
 		Document doc = null;
 		{
-			File mobileDesignDir = PathComputer.computeMobileDesignDir(gs.getInstallDir());
+			File installDir = gs.getInstallDir();
+
+			List<FSEntry> entries = new Vector<FSEntry>();
+			
+			// Force identifier
+			{
+				FSEntry f = FSEntryBuffer.getPositionedBuffer("a/_id.txt", "_design/mobile");
+				entries.add(f);
+			}
+			
+			// Create atlas designator
+			{
+				StringWriter sw = new StringWriter();
+				PrintWriter pw = new PrintWriter(sw);
+				
+				pw.println("var n2atlas = {");
+				pw.println("\tname: \""+atlasProperties.getAtlasName()+"\"");
+				pw.println("};");
+				pw.println("if( typeof(exports) === 'object' ) {");
+				pw.println("\texports.name = n2atlas.name;");
+				pw.println("};");
+				
+				FSEntry f = FSEntryBuffer.getPositionedBuffer("a/vendor/nunaliit2/atlas.js", sw.toString());
+				entries.add(f);
+			}
+			
+			// Nunaliit2 vendor libraries
+			{
+				File n2Dir = PathComputer.computeNunaliit2JavascriptDir(installDir);
+				if( null == n2Dir ) {
+					throw new Exception("Can not find nunaliit2 javascript library");
+				} else {
+					// Vendor file 'n2.couchUtils.js'
+					{
+						File file = new File(n2Dir,"n2.couchUtils.js");
+						FSEntry f = FSEntryFile.getPositionedFile("a/vendor/nunaliit2/n2.couchUtils.js", file);
+						entries.add(f);
+					}
 					
-			FSEntry fileEntry = new FSEntryFile(mobileDesignDir);
-			doc = DocumentFile.createDocument(fileEntry);
+					// Vendor file 'n2.couchTiles.js'
+					{
+						File file = new File(n2Dir,"n2.couchTiles.js");
+						FSEntry f = FSEntryFile.getPositionedFile("a/vendor/nunaliit2/n2.couchTiles.js", file);
+						entries.add(f);
+					}
+				}
+			}
+			
+			// Mobile design content
+			{
+				File mobileDesignDir = PathComputer.computeMobileDesignDir(gs.getInstallDir());
+				FSEntry f = new FSEntryFile(mobileDesignDir);
+				entries.add(f);
+			}
+
+			// Create FSEntry to load document
+			FSEntryMerged mergedEntry = new FSEntryMerged(entries);
+			
+			doc = DocumentFile.createDocument(mergedEntry, mergedEntry);
 		}
 
 		// Update document
