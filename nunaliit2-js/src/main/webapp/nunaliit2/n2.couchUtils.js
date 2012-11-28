@@ -483,9 +483,9 @@ if( typeof(nunaliit2) === 'function' ) {
 	nunaliit2.couchUtils.extractLayers = n2utils.extractLayers;
 	nunaliit2.couchUtils.extractLinks = n2utils.extractLinks;
 	nunaliit2.couchUtils.extractSearchTerms = n2utils.extractSearchTerms;
-	nunaliit2.foldWord = n2utils.foldWord;
-	nunaliit2.removeApostrophe = n2utils.removeApostrophe;
-	nunaliit2.isApostropheCodeChar = n2utils.isApostropheCodeChar;
+	nunaliit2.couchUtils.foldWord = n2utils.foldWord;
+	nunaliit2.couchUtils.removeApostrophe = n2utils.removeApostrophe;
+	nunaliit2.couchUtils.isApostropheCodeChar = n2utils.isApostropheCodeChar;
 	nunaliit2.couchUtils.extractTypes = n2utils.extractTypes;
 	nunaliit2.couchUtils.extractSpecificType = n2utils.extractSpecificType;
 	nunaliit2.couchUtils.extractGeometries = n2utils.extractGeometries;
