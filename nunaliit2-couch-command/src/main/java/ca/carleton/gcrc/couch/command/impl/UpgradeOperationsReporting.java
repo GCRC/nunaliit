@@ -5,7 +5,7 @@ import java.io.PrintStream;
 
 public class UpgradeOperationsReporting implements UpgradeOperations {
 
-	private File atlasDir;
+//	private File atlasDir;
 	private File upgradeDir;
 	private UpgradeOperations wrapped = null;
 	private PrintStream outStream = null;
@@ -18,7 +18,7 @@ public class UpgradeOperationsReporting implements UpgradeOperations {
 			,UpgradeOperations wrapped
 			,PrintStream outStream
 			){
-		this.atlasDir = atlasDir;
+//		this.atlasDir = atlasDir;
 		this.upgradeDir = upgradeDir;
 		this.wrapped = wrapped;
 		this.outStream = outStream;
