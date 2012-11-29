@@ -115,6 +115,9 @@ $Id: n2.couchImportData.js 8456 2012-08-29 01:08:01Z glennbrauen $
 		'$n2.OneToManyDataImporter',
 		{
 			options: {
+				db: null,
+				designDoc: null,
+				atlasDesign: null,
 				dataArray: [], // array of json objects to be converted
 				statusDiv: '', // for output messages
 				eraseStatusDiv: true,
@@ -194,6 +197,7 @@ $Id: n2.couchImportData.js 8456 2012-08-29 01:08:01Z glennbrauen $
 				};
 
 				var entry = this.options.dataArray[aIndex];
+				var designDoc = this.options.designDoc;
 				
 				/*
 				 * make modifiable copies of option arrays.
@@ -237,7 +241,7 @@ $Id: n2.couchImportData.js 8456 2012-08-29 01:08:01Z glennbrauen $
 					};
 
 					// Check if it exists
-					atlasDesign.queryView({
+					designDoc.queryView({
 						viewName: currViewName,
 						startkey: keyVal,
 						endkey: keyVal,
@@ -269,6 +273,8 @@ $Id: n2.couchImportData.js 8456 2012-08-29 01:08:01Z glennbrauen $
 			 */
 			createEntry: function(aIndex, entry) {
 				var uploadDataArray = [];
+				var db = this.options.db;
+				var atlasDesign = this.options.atlasDesign;
 
 				if (this.options.jsonPropertiesVerifyFn(entry)) {
 					
@@ -352,7 +358,7 @@ $Id: n2.couchImportData.js 8456 2012-08-29 01:08:01Z glennbrauen $
 
 					$n2.couchMap.adjustDocument(nextUpload);
 
-					atlasDb.createDocument({
+					db.createDocument({
 						data: nextUpload,
 						onSuccess: function(docInfo) { // @param docInfo JSON object {ok: <bool>, id: <id>, rev: <rev> }
 							caller.updateStatusMsgAsynch(
@@ -367,12 +373,13 @@ $Id: n2.couchImportData.js 8456 2012-08-29 01:08:01Z glennbrauen $
 							 *  this will initiate next record's upload, after delaying to
 							 *  allow the server to perform geometry indexing if required.
 							 */
-							queryViews(caller, currContainsGeometry, next);
+							queryViews(atlasDesign, caller, currContainsGeometry, next);
 						},
-						onError: function() {
+						onError: function(err) {
+							$n2.log('Error creating document: '+err, nextUpload);
 							caller.updateStatusMsgAsynch(
 								_loc('Error creating ') + currDescriptiveLabel + 
-									_loc(' definition (index: ') + aIndex + _loc('). STOPPING.'), 
+									_loc(' definition (index: ') + aIndex + _loc('). STOPPING: ') + err, 
 								entryStatusId);
 						}
 					});
@@ -425,6 +432,9 @@ $Id: n2.couchImportData.js 8456 2012-08-29 01:08:01Z glennbrauen $
 		'$n2.DataImporter',
 		{
 			options: {
+				db: null,
+				designDoc: null,
+				atlasDesign: null,
 				dataArray: [], // array of json objects
 				containsGeometry: false, // need to pause for tiling updates?
 				statusDiv: '', // for output messages
@@ -476,6 +486,9 @@ $Id: n2.couchImportData.js 8456 2012-08-29 01:08:01Z glennbrauen $
 				this.options = $n2.extend({}, this.options, opts_);
 				
 				this.importer = new $n2.OneToManyDataImporter({
+					db: this.options.db,
+					designDoc: this.options.designDoc,
+					atlasDesign: this.options.atlasDesign,
 					dataArray: this.options.dataArray,
 					containsGeometry: [ this.options.containsGeometry ],
 					statusDiv: this.options.statusDiv,
@@ -637,7 +650,7 @@ $Id: n2.couchImportData.js 8456 2012-08-29 01:08:01Z glennbrauen $
 	 * @param doNextEntryFn fn to call when view checking is done and it is 
 	 *                      time to load the next entry
 	 */
-	function queryViews(caller, containsGeometry, doNextEntryFn) {
+	function queryViews(atlasDesign, caller, containsGeometry, doNextEntryFn) {
 		var viewsToQuery;
 
 		function doViewCheck(firstCall) {
