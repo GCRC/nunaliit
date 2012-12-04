@@ -414,12 +414,14 @@ var ModuleDisplay = $n2.Class({
 	,initialize: function(opts_){
 		var opts = $n2.extend({
 			moduleName: null
+			,moduleDoc: null
 			,config: null
 			,titleName: 'title'
 			,mapName: 'map'
 			,sidePanelName: 'side'
 			,filterPanelName: 'filters'
 			,searchPanelName: 'searchInput'
+			,styleMapFn: null
 			,onSuccess: function(){}
 			,onError: function(err){ $n2.reportErrorForced(errorMsg); }
 		},opts_);
@@ -615,6 +617,13 @@ var ModuleDisplay = $n2.Class({
 			
 			// Overlay Layers
 			if( mapInfo && mapInfo.overlays ){
+				var styleMapFn = opts.styleMapFn;
+				if( !styleMapFn ) {
+					styleMapFn = function(layerInfo_){ 
+						return _this.styles.getStyleMapForLayerInfo(layerInfo_); 
+					};
+				};
+				
 				for(var i=0,e=mapInfo.overlays.length; i<e; ++i){
 					var layerInfo = mapInfo.overlays[i];
 					
@@ -625,7 +634,7 @@ var ModuleDisplay = $n2.Class({
 						,visibility: layerInfo.visibility
 						,featurePopupHtmlFn: config.popupHtmlFn
 						,featurePopupDelay: 0 // ms
-						,styleMapFn: function(layerInfo_){ return _this.styles.getStyleMapForLayerInfo(layerInfo_); }
+						,styleMapFn: styleMapFn
 						,useHoverSound: true
 					};
 					

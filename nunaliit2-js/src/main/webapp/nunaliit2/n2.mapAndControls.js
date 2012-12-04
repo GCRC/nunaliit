@@ -693,6 +693,8 @@ var MapAndControls = $n2.Class({
 	    this._registerDispatch('editClosed');
 	    this._registerDispatch('geometryModified');
 	    this._registerDispatch('getLayerIdentifiers');
+	    this._registerDispatch('mapRedrawLayer');
+	    this._registerDispatch('mapSetExtent');
 		
 		// Layers
 		this.defaultLayerInfo = { // feature layer access details.
@@ -3490,7 +3492,7 @@ var MapAndControls = $n2.Class({
 		if (null == layerInfo) {
 			alert('redefineFeatureLayerStylesAndRules: unknown layer name: ' + layerName)
 		} else {
-    		this._endClicked();
+    		//this._endClicked();
     		layerInfo.olLayer.redraw();    			
 		};
 	}
@@ -3796,6 +3798,15 @@ var MapAndControls = $n2.Class({
 			for(var layerId in this.layers){
 				m.layerIdentifiers[layerId] = true;
 			};
+			
+		} else if( 'mapRedrawLayer' === type ) {
+			var layerId = m.layerId;
+			this.redefineFeatureLayerStylesAndRules(layerId);
+			
+		} else if( 'mapSetExtent' === type ) {
+			var extent = m.extent;
+			var srsName = m.srsName;
+			this.setNewExtent(extent, srsName);
 		};
 	}
 	
