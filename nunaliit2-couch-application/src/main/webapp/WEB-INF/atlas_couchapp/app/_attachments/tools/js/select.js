@@ -1320,6 +1320,13 @@
 			return false;
 		});
 		
+		var $tx = $('<button>Delete</button>');
+		$h.append($tx);
+		$tx.click(function(){
+			deleteDocumentsFromList(list);
+			return false;
+		});
+		
 		var $rx = $('<button>Refine List</button>');
 		$h.append($rx);
 		$rx.click(function(){
@@ -1433,6 +1440,126 @@
 		var dialogOptions = {
 			autoOpen: true
 			,title: _loc('Select Document Transform')
+			,modal: true
+			,width: 400
+			,close: function(event, ui){
+				var diag = $(event.target);
+				diag.dialog('destroy');
+				diag.remove();
+			}
+		};
+		$dialog.dialog(dialogOptions);
+	};
+	
+	// -----------------------------------------------------------------
+	function deleteDocumentsFromList(list){
+		var dialogId = $n2.getUniqueId();
+		var $dialog = $('<div id="'+dialogId+'">'
+			+'<span class="deleteDocumentsApproveText"></span>'
+			+'<div><button class="buttonOK">'+_loc('OK')+'</button>'
+			+'<button class="buttonCancel">'+_loc('Cancel')+'</button></div>'
+			+'</div>');
+
+		var $span = $dialog.find('span.deleteDocumentsApproveText');
+		$span.text('Do you really wish to delete the '+list.docIds.length
+				+' document'+(list.docIds.length>1?'s':'')+' referenced by this list?');
+		
+		$dialog.find('button.buttonOK')
+			.button({icons:{primary:'ui-icon-check'}})
+			.click(function(){
+				var $dialog = $('#'+dialogId);
+
+				$dialog.dialog('close');
+
+				var opCancelled = false;
+				var progressDialog = new ProgressDialog({
+					title: _loc('Deletion Progress')
+					,onCancelFn: function(){
+						opCancelled = true;
+					}
+				});
+				
+				var docIdsLeft = [];
+				for(var i=0,e=list.docIds.length; i<e; ++i){
+					docIdsLeft.push( list.docIds[i] );
+				};
+				
+				var totalCount = docIdsLeft.length;
+				var okCount = 0;
+				var failCount = 0;
+				
+				processNext();
+				
+				function processNext(){
+					if( opCancelled ) {
+						cancel();
+						return;
+					};
+
+					if(docIdsLeft.length < 1){
+						progressDialog.updatePercent(100);
+						progressDialog.close();
+
+					} else {
+						if( totalCount ) {
+							progressDialog.updatePercent( (okCount + failCount) * 100 / totalCount );
+						} else {
+							progressDialog.updatePercent(0);
+						};
+						
+						var docId = docIdsLeft.pop();
+						atlasDb.getDocument({
+							docId: docId
+							,onSuccess: retrievedDocument
+							,onError: function(err){
+								reportError('Failure to fetch '+docId);
+								failCount += 1;
+								processNext();
+							}
+						});
+					};
+				};
+				
+				function retrievedDocument(doc){
+					if( opCancelled ) {
+						cancel();
+						return;
+					};
+
+					atlasDb.deleteDocument({
+						data: doc
+						,onSuccess: function(docInfo){
+							log(''+doc._id+' deleted');
+							okCount += 1;
+							processNext();
+						}
+						,onError: function(errorMsg){ 
+							reportError('Failure to delete '+doc._id+': '+errorMsg);
+							failCount += 1;
+							processNext();
+						}
+					});
+				};
+				
+				function cancel(){
+					reportError('Operation cancelled by user');
+					progressDialog.close();
+				};
+				
+				return false;
+			});
+		
+		$dialog.find('button.buttonCancel')
+			.button({icons:{primary:'ui-icon-cancel'}})
+			.click(function(){
+				var $dialog = $('#'+dialogId);
+				$dialog.dialog('close');
+				return false;
+			});
+		
+		var dialogOptions = {
+			autoOpen: true
+			,title: _loc('Confirm')
 			,modal: true
 			,width: 400
 			,close: function(event, ui){
