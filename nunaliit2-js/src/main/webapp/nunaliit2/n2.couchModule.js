@@ -682,6 +682,16 @@ var ModuleDisplay = $n2.Class({
 					mapOptions.mapDisplay.srsName = mapInfo.coordinates.srsName;
 					mapOptions.mapCoordinateSpecifications.srsName = mapInfo.coordinates.srsName;
 				};
+				
+				// If "Google Maps" is specified, then the map must display in
+				// EPSG:900913
+				if( mapInfo.backgrounds ){
+					for(var i=0,e=mapInfo.backgrounds.length; i<e; ++i){
+						if( 'Google Maps' === mapInfo.backgrounds[i].type ) {
+							mapOptions.mapDisplay.srsName = 'EPSG:900913';
+						};
+					};
+				};
 			};
 			if( !initialBounds ) {
 				opts.onError('Initial map extent not specified');
