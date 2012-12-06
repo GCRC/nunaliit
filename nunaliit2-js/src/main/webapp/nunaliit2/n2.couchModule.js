@@ -668,16 +668,20 @@ var ModuleDisplay = $n2.Class({
 			};
 			
 			// Background Layers
+			mapOptions.mapDisplay = {};
 			if( mapInfo && mapInfo.backgrounds ){
-				mapOptions.mapDisplay = { 
-					backgrounds: mapInfo.backgrounds
-				};
+				mapOptions.mapDisplay.backgrounds = mapInfo.backgrounds;
 			};
 
 			// Initial Bounds
 			var initialBounds = null;
 			if( mapInfo && mapInfo.coordinates ){
 				initialBounds = mapInfo.coordinates.initialBounds;
+				
+				if( mapInfo.coordinates.srsName ){
+					mapOptions.mapDisplay.srsName = mapInfo.coordinates.srsName;
+					mapOptions.mapCoordinateSpecifications.srsName = mapInfo.coordinates.srsName;
+				};
 			};
 			if( !initialBounds ) {
 				opts.onError('Initial map extent not specified');
