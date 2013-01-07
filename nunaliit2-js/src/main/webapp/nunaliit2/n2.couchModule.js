@@ -769,6 +769,10 @@ var ModuleDisplay = $n2.Class({
 				if( null == layerBoundingBox ){
 					// Nothing defined by the layers, use initial bounds
 					initialBoundsComputed(mapOptions, initialBounds);
+	
+				} else if( false == _this._isValidBounds(layerBoundingBox) ) {
+					$n2.log('Invalid bounding box reported for layer in database.',layerBoundingBox);
+					initialBoundsComputed(mapOptions, initialBounds);
 					
 				} else if( layerBoundingBox[0] >= initialBounds[0]
 				 && layerBoundingBox[1] >= initialBounds[1]
@@ -840,6 +844,18 @@ var ModuleDisplay = $n2.Class({
 			d = this.config.directory.dispatchService;
 		};
 		return d;
+	}
+	
+	,_isValidBounds: function(bounds){
+		if( !bounds.length ) return false;
+		if( bounds.length < 4 ) return false;
+		
+		if( bounds[0] < -180 || bounds[0] > 180 ) return false;
+		if( bounds[2] < -180 || bounds[2] > 180 ) return false;
+		if( bounds[1] < -90 || bounds[1] > 90 ) return false;
+		if( bounds[3] < -90 || bounds[3] > 90 ) return false;
+		
+		return true;
 	}
 });
 
