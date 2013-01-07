@@ -400,6 +400,8 @@ var ModuleDisplay = $n2.Class({
 	,module: null
 	
 	,mapControl: null
+	
+	,displayControl: null
 
 	,titleName: null
 
@@ -520,7 +522,7 @@ var ModuleDisplay = $n2.Class({
 				displayOptions.displayOnlyRelatedSchemas 
 					= displayInfo.displayOnlyRelatedSchemas;
 			};
-			$.olkitDisplay = new $n2.couchDisplay(displayOptions);
+			$.olkitDisplay = _this.displayControl = new $n2.couchDisplay(displayOptions);
 			var defaultDisplaySchemaName = 'object';
 			if( displayInfo && displayInfo.defaultSchemaName ){
 				defaultDisplaySchemaName = displayInfo.defaultSchemaName;
