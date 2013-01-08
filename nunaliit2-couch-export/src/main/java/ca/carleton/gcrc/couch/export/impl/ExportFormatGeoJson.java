@@ -76,8 +76,10 @@ public class ExportFormatGeoJson implements ExportFormat {
 				
 				String schemaName = jsonDoc.optString("nunaliit_schema");
 				if( null != schemaName ) {
+					boolean containsGeometry = JSONSupport.containsKey(jsonDoc, "nunaliit_geom");
 					SchemaExportInfo exportInfo = schemaCache.getExportInfo(schemaName);
-					if( null != exportInfo ){
+					
+					if( null != exportInfo || containsGeometry ){
 						jsonWriter.object();
 						
 						jsonWriter.key("type");
@@ -89,17 +91,19 @@ public class ExportFormatGeoJson implements ExportFormat {
 						jsonWriter.key("properties");
 						jsonWriter.object();
 						
-						for(SchemaExportProperty exportProperty : exportInfo.getProperties()){
-							Object value = exportProperty.select(jsonDoc);
-							if( null != value ) {
-								jsonWriter.key(exportProperty.getLabel());
-								jsonWriter.value(value);
+						if( null != exportInfo ){
+							for(SchemaExportProperty exportProperty : exportInfo.getProperties()){
+								Object value = exportProperty.select(jsonDoc);
+								if( null != value ) {
+									jsonWriter.key(exportProperty.getLabel());
+									jsonWriter.value(value);
+								}
 							}
 						}
 						
 						jsonWriter.endObject(); // end properties
 						
-						if( JSONSupport.containsKey(jsonDoc, "nunaliit_geom") ) {
+						if( containsGeometry ) {
 							JSONObject jsonGeom = jsonDoc.getJSONObject("nunaliit_geom");
 							String wkt = jsonGeom.optString("wkt", null);
 							if( null != wkt ){
