@@ -18,6 +18,7 @@ import java.util.regex.Pattern;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
+
 import ca.carleton.gcrc.couch.app.Attachment;
 import ca.carleton.gcrc.couch.app.Document;
 import ca.carleton.gcrc.couch.app.DocumentStoreProcess;
@@ -171,6 +172,14 @@ public class DocumentFile implements Document {
 						this.jsonObj.put(key, value);
 					} else {
 						String value = readStringFile(child);
+						
+						// Remove EOL at end of _id attribute. This is to avoid
+						// issues with some editors (vi) that automatically add an EOL
+						// at the end of a text file.
+						if( "_id".equals(key) ) {
+							value = value.trim();
+						}
+						
 						this.jsonObj.put(key, value);
 					}
 				} else {
