@@ -47,13 +47,13 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ProgressServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	private ProgressTracker progressTracker;
 	

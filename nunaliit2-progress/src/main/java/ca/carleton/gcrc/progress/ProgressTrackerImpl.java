@@ -6,7 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class that tracks all progress information. It tracks activities 
@@ -32,7 +33,7 @@ public class ProgressTrackerImpl implements ProgressTracker {
 	 */
 	static final long MAX_CONCURRENT_ACTIVITIES = 1000; // at most a 1000 activities
 
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private long count = 0;
 	private Map<String,ProgressInfo> infoMap = new HashMap<String,ProgressInfo>();

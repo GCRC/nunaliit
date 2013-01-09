@@ -33,13 +33,14 @@ $Id$
 package ca.carleton.gcrc.upload;
 
 import org.apache.commons.fileupload.ProgressListener;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.progress.ProgressTracker;
 
 public class UploadProgressListener implements ProgressListener {
 
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	private ProgressTracker progressTracker;
 	private String progressId;

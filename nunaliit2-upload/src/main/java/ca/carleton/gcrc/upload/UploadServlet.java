@@ -63,9 +63,10 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.fileupload.util.Streams;
 import org.apache.commons.io.FileCleaningTracker;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.progress.ProgressTracker;
 import ca.carleton.gcrc.progress.ProgressTrackerSingleton;
@@ -75,7 +76,7 @@ public class UploadServlet extends HttpServlet {
 
 	public static final String OnUploadedListenerAttributeName = "ON UPLOADED LISTENER";
 	
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	static final int DEFAULT_MAX_MEMORY_SIZE = 10 * 1024; // 10KB
 	static final long DEFAULT_MAX_UPLOAD_SIZE = 10 * 1024 * 1024; // 10MB

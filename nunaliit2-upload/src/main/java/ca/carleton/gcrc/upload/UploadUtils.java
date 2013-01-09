@@ -6,11 +6,12 @@ import java.util.Properties;
 
 import javax.servlet.ServletContext;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class UploadUtils {
 
-	static final protected Logger logger = Logger.getLogger(UploadUtils.class);
+	static final protected Logger logger = LoggerFactory.getLogger(UploadUtils.class);
 	
 	public static final String CONF_DIR_ATTRIBUTE = "UploadConfigurationDirectory";
 	static public final String PROPERTIES_ATTRIBUTE = "UploadProperties";
