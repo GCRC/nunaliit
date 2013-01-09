@@ -5,6 +5,7 @@ import java.io.PrintStream;
 import java.net.URL;
 import java.util.Stack;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.rolling.RollingFileAppender;
@@ -14,6 +15,7 @@ import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlets.ProxyServlet;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import ca.carleton.gcrc.couch.command.impl.CommandSupport;
 import ca.carleton.gcrc.couch.command.servlet.ConfigServlet;
@@ -72,6 +74,8 @@ public class CommandRun implements Command {
 		// Run command log4j configuration
 		{
 			Logger rootLogger = Logger.getRootLogger();
+			
+			rootLogger.setLevel(Level.INFO);
 
 			TimeBasedRollingPolicy rollingPolicy = new TimeBasedRollingPolicy();
 			File logDir = new File(gs.getAtlasDir(), "logs");
@@ -81,10 +85,20 @@ public class CommandRun implements Command {
 			RollingFileAppender fileAppender = new RollingFileAppender();
 			fileAppender.setRollingPolicy(rollingPolicy);
 			fileAppender.setTriggeringPolicy(rollingPolicy);
-			fileAppender.setLayout(new PatternLayout("%-5p [%t]: %m%n"));
+			fileAppender.setLayout(new PatternLayout("%d{ISO8601}[%-5p]: %m%n"));
 			fileAppender.activateOptions();
 			
 			rootLogger.addAppender(fileAppender);
+		}
+
+		// Capture java.util.Logger
+		{
+			 // Optionally remove existing handlers attached to j.u.l root logger
+			 SLF4JBridgeHandler.removeHandlersForRootLogger();  // (since SLF4J 1.6.5)
+
+			 // add SLF4JBridgeHandler to j.u.l's root logger, should be done once during
+			 // the initialization phase of your application
+			 SLF4JBridgeHandler.install();
 		}
 		
 		// Verify that connection to the database is available
