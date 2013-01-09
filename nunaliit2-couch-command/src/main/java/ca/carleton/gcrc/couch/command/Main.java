@@ -96,7 +96,7 @@ public class Main {
 		{
 			Logger rootLogger = Logger.getRootLogger();
 			rootLogger.setLevel(Level.ERROR);
-			rootLogger.addAppender(new WriterAppender(new PatternLayout("%-5p [%t]: %m%n"),globalSettings.getErrStream()));
+			rootLogger.addAppender(new WriterAppender(new PatternLayout("%d{ISO8601}[%-5p]: %m%n"),globalSettings.getErrStream()));
 		}
 		
 		// Compute needed file paths
