@@ -8,7 +8,8 @@ import java.util.Set;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchQuery;
@@ -27,7 +28,7 @@ import ca.carleton.gcrc.olkit.multimedia.file.SystemFile;
 
 public class UploadWorkerThread extends Thread {
 
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	private UploadWorkerSettings settings;
 	private boolean isShuttingDown = false;

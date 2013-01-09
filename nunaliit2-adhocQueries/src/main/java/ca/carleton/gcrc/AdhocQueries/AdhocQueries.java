@@ -32,19 +32,19 @@ $Id$
 */
 package ca.carleton.gcrc.AdhocQueries;
 
-import ca.carleton.gcrc.dbSec.ColumnData;
-import ca.carleton.gcrc.dbSec.impl.ColumnDataUtils;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import org.apache.log4j.Logger;
+import ca.carleton.gcrc.dbSec.ColumnData;
+import ca.carleton.gcrc.dbSec.impl.ColumnDataUtils;
 
 public class AdhocQueries {
-	final private Logger logger = Logger.getLogger(this.getClass());
+	final private Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	private Connection connection;
 	

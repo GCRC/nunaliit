@@ -6,9 +6,11 @@ import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.util.List;
 
-import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.onUpload.conversion.AttachmentDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.FileConversionContext;
@@ -23,7 +25,7 @@ import ca.carleton.gcrc.geom.wkt.WktWriter;
 
 public class GeoJsonFileConverter implements FileConversionPlugin {
 
-	protected Logger logger = Logger.getLogger( this.getClass() );
+	protected Logger logger = LoggerFactory.getLogger( this.getClass() );
 	
 	static private WktWriter wktWriter = new WktWriter();
 

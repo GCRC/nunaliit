@@ -43,12 +43,14 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
-
 import ca.carleton.gcrc.auth.common.AuthHttpServletRequest;
 import ca.carleton.gcrc.auth.common.User;
 import ca.carleton.gcrc.auth.common.UserRepository;
 import ca.carleton.gcrc.auth.common.UserRepositorySingleton;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * This filters is intended to be deployed in the auth filter chain
@@ -86,7 +88,7 @@ import ca.carleton.gcrc.auth.common.UserRepositorySingleton;
  * (e.g., queries) you will need to do a client-side auto-login.
  */
 public class AttachAuthFilter implements Filter {
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	private UserRepository userRepository;
 	String[] attachAuthList = null;

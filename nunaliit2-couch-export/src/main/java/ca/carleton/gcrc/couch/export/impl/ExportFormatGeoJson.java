@@ -4,9 +4,11 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 
-import org.apache.log4j.Logger;
 import org.json.JSONObject;
 import org.json.JSONWriter;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.app.Document;
 import ca.carleton.gcrc.couch.export.DocumentFilter;
@@ -22,7 +24,7 @@ import ca.carleton.gcrc.json.JSONSupport;
 
 public class ExportFormatGeoJson implements ExportFormat {
 
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	private DocumentRetrieval retrieval = null;
 	private SchemaCache schemaCache = null;

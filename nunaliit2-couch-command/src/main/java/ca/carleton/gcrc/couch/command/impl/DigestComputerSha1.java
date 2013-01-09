@@ -9,13 +9,15 @@ import java.io.InputStreamReader;
 import java.security.MessageDigest;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.log4j.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DigestComputerSha1 {
 
 	final static public String DIGEST_COMPUTER_TYPE = "SHA-1";
 	
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	public String computeDocumentDigest(File file) throws Exception {
 		String digest = null;

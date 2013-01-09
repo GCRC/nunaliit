@@ -18,7 +18,9 @@ import org.json.JSONObject;
 import org.json.JSONWriter;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.log4j.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.app.Attachment;
 import ca.carleton.gcrc.couch.app.DigestComputer;
@@ -29,7 +31,7 @@ public class DigestComputerSha1 implements DigestComputer {
 
 	final static public String DIGEST_COMPUTER_TYPE = "SHA-1";
 	
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	@Override
 	public String getType() {

@@ -8,9 +8,10 @@ import java.io.InputStreamReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.log4j.Logger;
-
 import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionProgress;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ImageMagickProcessor_6_5 implements ImageMagickProcessor {
 
@@ -23,7 +24,7 @@ public class ImageMagickProcessor_6_5 implements ImageMagickProcessor {
 	static private Pattern patternProgressRotate = Pattern.compile("^\\s*Rotate\\s+image:\\s*(\\d+)%");
 	static private Pattern patternProgressSave = Pattern.compile("^\\s*Save\\s+image:\\s*(\\d+)%");
 
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	private MultimediaConversionProgress imageMagickProgress;
 	

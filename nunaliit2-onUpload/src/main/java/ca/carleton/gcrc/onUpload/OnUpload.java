@@ -44,7 +44,8 @@ import javax.servlet.http.Cookie;
 
 import org.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.contributions.ContributionComet;
 import ca.carleton.gcrc.contributions.ContributionCometImpl;
@@ -57,7 +58,7 @@ import ca.carleton.gcrc.upload.OnUploadedListener;
 
 public class OnUpload implements OnUploadedListener {
 	
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	private ContributionComet cometChannel = new ContributionCometNull();
 	private Contributions contributions;

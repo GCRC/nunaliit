@@ -34,15 +34,17 @@ package ca.carleton.gcrc.auth;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.log4j.Logger;
-
 import ca.carleton.gcrc.auth.common.AuthenticationUtils;
 import ca.carleton.gcrc.auth.common.User;
 import ca.carleton.gcrc.auth.common.UserRepository;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
 public class Authentication {
 
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	private UserRepository userRepository = null;
 	private boolean allowAnonymous = false;

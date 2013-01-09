@@ -1,12 +1,13 @@
 package ca.carleton.gcrc.couch.config.listener;
 
-import org.apache.log4j.Logger;
-
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ConfigWorkerThread extends Thread {
 	
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	private boolean isShuttingDown = false;
 	private CouchDesignDocument dd;

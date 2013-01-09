@@ -3,8 +3,6 @@ package ca.carleton.gcrc.couch.onUpload.multimedia;
 import java.io.File;
 import java.util.Properties;
 
-import org.apache.log4j.Logger;
-
 import ca.carleton.gcrc.couch.client.CouchUserContext;
 import ca.carleton.gcrc.couch.onUpload.UploadConstants;
 import ca.carleton.gcrc.couch.onUpload.UploadProgressAdaptor;
@@ -26,9 +24,12 @@ import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagickProcessor;
 import ca.carleton.gcrc.olkit.multimedia.utils.MimeUtils;
 import ca.carleton.gcrc.olkit.multimedia.utils.MimeUtils.MultimediaClass;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class MultimediaFileConverter implements FileConversionPlugin {
 
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private MultimediaConverter mmConverter = new MultimediaConverterImpl();
 	private String atlasName = null;

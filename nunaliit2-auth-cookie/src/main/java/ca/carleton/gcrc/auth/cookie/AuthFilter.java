@@ -44,14 +44,16 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
-
 import ca.carleton.gcrc.auth.common.AuthHttpServletRequest;
 import ca.carleton.gcrc.auth.common.AuthenticationUtils;
 import ca.carleton.gcrc.auth.common.User;
 import ca.carleton.gcrc.auth.common.UserRepository;
 import ca.carleton.gcrc.auth.common.UserRepositorySingleton;
 import ca.carleton.gcrc.auth.cookie.impl.CookieAuthentication;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * Filter that performs authentication based on information
@@ -63,7 +65,7 @@ public class AuthFilter implements Filter {
 	private static final String defaultRealm = "olkit";
 	private static final String defaultCookieName = "olkit-auth";
 
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	private UserRepository userRepository;
 	private String realm = defaultRealm;

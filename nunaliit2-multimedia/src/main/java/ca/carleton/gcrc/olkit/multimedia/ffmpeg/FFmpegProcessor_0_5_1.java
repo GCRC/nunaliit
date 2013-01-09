@@ -1,7 +1,5 @@
 package ca.carleton.gcrc.olkit.multimedia.ffmpeg;
 
-import org.apache.log4j.Logger;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -12,11 +10,14 @@ import java.util.regex.Pattern;
 
 import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionProgress;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class FFmpegProcessor_0_5_1 implements FFmpegProcessor {
 
 	static private Pattern patternTime = Pattern.compile("^\\s*frame=.*time=\\s*(\\d+\\.\\d*)");
 
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private MultimediaConversionProgress ffmpegProgress;
 	

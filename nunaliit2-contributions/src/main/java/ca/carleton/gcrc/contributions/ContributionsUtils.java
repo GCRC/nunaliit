@@ -37,10 +37,12 @@ import java.util.Properties;
 
 import javax.servlet.ServletContext;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public class ContributionsUtils {
-	static final protected Logger logger = Logger.getLogger("ca.carleton.gcrc.contributions.ContributionsUtils");
+	static final protected Logger logger = LoggerFactory.getLogger("ca.carleton.gcrc.contributions.ContributionsUtils");
 	
 	static final public String PROPERTIES_SERVLET_ATTRIB_NAME = "ContributionsProperties";
 	

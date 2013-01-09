@@ -36,13 +36,15 @@ import java.sql.PreparedStatement;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
-
 import ca.carleton.gcrc.contributions.ContributionsFieldSubset;
 import ca.carleton.gcrc.dbSec.impl.ColumnDataUtils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
 public class ContributionClientSideFieldsImpl extends ContributionsFieldSubsetImpl implements ContributionsFieldSubset {	
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	public ContributionClientSideFieldsImpl() throws Exception {
 		super();

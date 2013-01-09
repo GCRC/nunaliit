@@ -4,7 +4,8 @@ import java.util.List;
 
 import org.json.JSONArray;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.client.CouchClient;
 import ca.carleton.gcrc.couch.client.ReplicationRequest;
@@ -15,7 +16,7 @@ public class ReplicationWorkerThread extends Thread {
 	
 	final static public int DEFAULT_REPLICATION_INTERVAL = 3600; // by default, one hour
 	
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	private boolean isShuttingDown = false;
 	private CouchClient couchClient;

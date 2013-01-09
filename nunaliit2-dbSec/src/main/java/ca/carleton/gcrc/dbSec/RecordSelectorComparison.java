@@ -39,7 +39,8 @@ import java.util.Vector;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.dbSec.impl.ExpressionConstantImpl;
 import ca.carleton.gcrc.dbSec.impl.ExpressionVariableImpl;
@@ -67,7 +68,7 @@ public class RecordSelectorComparison implements RecordSelector {
 		}
 	}
 
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	static public List<RecordSelector> columnComparisonsFromJson(
 		JSONArray array

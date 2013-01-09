@@ -1,11 +1,12 @@
 package ca.carleton.gcrc.nunaliit2.couch.replication;
 
-import org.apache.log4j.Logger;
-
 import ca.carleton.gcrc.couch.client.CouchClient;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ReplicationWorker {
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private CouchClient couchClient = null;
 	private ReplicationWorkerThread workerThread = null;

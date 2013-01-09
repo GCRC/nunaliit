@@ -8,13 +8,14 @@ import java.io.InputStreamReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.log4j.Logger;
-
 import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionProgress;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FFmpegProcessorDefault implements FFmpegProcessor {
 
-	static final protected Logger logger = Logger.getLogger(FFmpegProcessorDefault.class);
+	static final protected Logger logger = LoggerFactory.getLogger(FFmpegProcessorDefault.class);
 
 	static private Pattern patternTime = Pattern.compile("^\\s*frame=.*time=\\s*(\\d+\\.\\d*)");
 

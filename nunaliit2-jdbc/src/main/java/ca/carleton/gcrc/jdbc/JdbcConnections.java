@@ -44,14 +44,15 @@ import java.util.Properties;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JdbcConnections {
 
 	final static public String JDBC_SERVLET_ATTRIB_NAME = "JdbcConnections";
 	final static public String PROPERTIES_SERVLET_ATTRIB_NAME = "JdbcConfigProperties";
 	
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	static public JdbcConnections connectionsFromServletContext(ServletContext servletContext) throws ServletException {
 		Object jdbcConnectionsObj = servletContext.getAttribute(JDBC_SERVLET_ATTRIB_NAME);

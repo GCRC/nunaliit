@@ -6,10 +6,11 @@ import java.io.Reader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FFmpegMediaInfoImpl implements FFmpegMediaInfo {
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	static private Pattern patternInput0 = Pattern.compile("^Input #0,\\s*([^,]*),");
 	static private Pattern patternDuration = Pattern.compile("^\\s*Duration:\\s*((\\d+):(\\d+):(\\d+\\.\\d+)),.*bitrate:\\s*((\\d+)\\s*(.*))");

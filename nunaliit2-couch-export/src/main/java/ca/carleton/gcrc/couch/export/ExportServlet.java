@@ -14,8 +14,10 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
 import org.json.JSONObject;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.export.ExportUtils.Filter;
 import ca.carleton.gcrc.couch.export.ExportUtils.Format;
@@ -30,7 +32,7 @@ import ca.carleton.gcrc.couch.export.impl.SchemaCacheCouchDb;
 @SuppressWarnings("serial")
 public class ExportServlet extends HttpServlet {
 
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	private ExportConfiguration configuration;
 	

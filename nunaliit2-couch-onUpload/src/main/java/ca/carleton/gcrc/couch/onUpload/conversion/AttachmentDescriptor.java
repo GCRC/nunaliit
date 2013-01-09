@@ -4,7 +4,8 @@ import java.io.File;
 
 import org.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.client.CouchUserContext;
 import ca.carleton.gcrc.couch.client.CouchUserDb;
@@ -12,7 +13,7 @@ import ca.carleton.gcrc.couch.onUpload.UploadConstants;
 
 public class AttachmentDescriptor extends AbstractDescriptor {
 
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private FileConversionContext context;
 	private String attachmentName;

@@ -63,9 +63,11 @@
 	  <version>1.5</version>
 	</dependency>
   	<dependency>
-  		<groupId>log4j</groupId>
-  		<artifactId>log4j</artifactId>
-  		<version>${log4j.version}</version>
+  		<groupId>org.slf4j</groupId>
+  		<artifactId>slf4j-api</artifactId>
+  		<version>${slf4j.version}</version>
+  		<type>jar</type>
+  		<scope>compile</scope>
   	</dependency>
   	<dependency>
   		<groupId>ca.carleton.gcrc</groupId>

@@ -42,10 +42,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
-import org.apache.log4j.Logger;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.dbSec.impl.ColumnDataComparator;
 import ca.carleton.gcrc.dbSec.impl.ColumnDataUtils;
@@ -66,7 +67,7 @@ import ca.carleton.gcrc.dbSec.impl.VariablesImpl;
  */
 public class DbTableAccess {
 
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	static private FieldSelectorComparator fieldSelectorComparator = new FieldSelectorComparator();
 

@@ -3,13 +3,14 @@ package ca.carleton.gcrc.olkit.multimedia.converter.threshold;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import org.apache.log4j.Logger;
-
 import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionThreshold;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ThresholdImage implements MultimediaConversionThreshold {
 
-	static final protected Logger logger = Logger.getLogger(ThresholdImage.class);
+	static final protected Logger logger = LoggerFactory.getLogger(ThresholdImage.class);
 
 	static public ThresholdImage parseString(String s) {
 		String[] components = s.split(",");

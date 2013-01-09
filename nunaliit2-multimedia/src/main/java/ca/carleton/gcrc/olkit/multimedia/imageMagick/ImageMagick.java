@@ -36,13 +36,14 @@ import java.io.BufferedReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.log4j.Logger;
-
 import ca.carleton.gcrc.olkit.multimedia.utils.SystemProcess;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ImageMagick {
 
-	static final protected Logger logger = Logger.getLogger(ImageMagick.class);
+	static final protected Logger logger = LoggerFactory.getLogger(ImageMagick.class);
 
 	static private Pattern patternVersion = Pattern.compile("^Version: ImageMagick (\\d+)\\.(\\d+).*");
 	

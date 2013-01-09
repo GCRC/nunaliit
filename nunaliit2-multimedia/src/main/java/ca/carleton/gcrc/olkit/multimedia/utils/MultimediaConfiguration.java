@@ -2,8 +2,6 @@ package ca.carleton.gcrc.olkit.multimedia.utils;
 
 import java.util.Properties;
 
-import org.apache.log4j.Logger;
-
 import ca.carleton.gcrc.olkit.multimedia.converter.impl.MultimediaConverterImpl;
 import ca.carleton.gcrc.olkit.multimedia.converter.threshold.ThresholdAudio;
 import ca.carleton.gcrc.olkit.multimedia.converter.threshold.ThresholdImage;
@@ -12,9 +10,12 @@ import ca.carleton.gcrc.olkit.multimedia.converter.threshold.ThresholdVideo;
 import ca.carleton.gcrc.olkit.multimedia.ffmpeg.FFmpegProcessorDefault;
 import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagickProcessorDefault;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class MultimediaConfiguration {
 
-	static final Logger logger = Logger.getLogger(MultimediaConfiguration.class);
+	static final Logger logger = LoggerFactory.getLogger(MultimediaConfiguration.class);
 	
 	static public void configureFromProperties(Properties props) {
 		// FFMpeg

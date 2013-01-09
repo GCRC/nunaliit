@@ -1,15 +1,16 @@
 package ca.carleton.gcrc.couch.config.impl;
 
-import org.apache.log4j.Logger;
-
 import ca.carleton.gcrc.couch.app.Document;
 import ca.carleton.gcrc.couch.app.DocumentUpdateListener;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class UpdateListener implements DocumentUpdateListener {
 
 	static public UpdateListener _singleton = new UpdateListener();
 	
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	@Override
 	public void documentSkippedBecauseModified(Document doc) {

@@ -44,8 +44,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.json.JSONObject;
-
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.auth.common.UserRepository;
 import ca.carleton.gcrc.auth.common.UserRepositorySingleton;
@@ -54,7 +54,7 @@ import ca.carleton.gcrc.jdbc.JdbcConnections;
 public class ContributionServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	private JdbcConnections connections = null;
 	private Connection connection = null;

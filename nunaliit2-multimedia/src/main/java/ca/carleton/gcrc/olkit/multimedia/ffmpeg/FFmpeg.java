@@ -39,13 +39,14 @@ import java.io.InputStreamReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.log4j.Logger;
-
 import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionProgress;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FFmpeg {
 
-	static final protected Logger logger = Logger.getLogger(FFmpeg.class);
+	static final protected Logger logger = LoggerFactory.getLogger(FFmpeg.class);
 	
 	static private Pattern patternVersionLine = Pattern.compile("(avconv|ffmpeg)( version)?\\s+([^,]*)",Pattern.CASE_INSENSITIVE);
 	static private Pattern patternVersion = Pattern.compile("(\\d+)\\.(\\d+).*");

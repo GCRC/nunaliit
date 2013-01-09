@@ -1,9 +1,11 @@
 package ca.carleton.gcrc.couch.config.listener;
 
-import org.apache.log4j.Logger;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchQuery;
 import ca.carleton.gcrc.couch.client.CouchQueryResults;
@@ -16,7 +18,7 @@ public class CouchConfigFactory {
 	final static public String REPLICATION_DIRECTION_INCOMING = "incoming";
 	final static public String REPLICATION_DIRECTION_BIDIRECTIONAL = "bidirectional";
 	
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private String serverName = null;
 	private CouchDesignDocument configDesign = null;

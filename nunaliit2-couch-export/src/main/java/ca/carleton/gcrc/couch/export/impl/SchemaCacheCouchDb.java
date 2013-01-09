@@ -4,9 +4,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.app.Document;
 import ca.carleton.gcrc.couch.app.impl.DocumentJSON;
@@ -19,7 +21,7 @@ import ca.carleton.gcrc.couch.export.SchemaExportInfo;
 
 public class SchemaCacheCouchDb implements SchemaCache {
 
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 //	private CouchDb couchDb;
 	private CouchDesignDocument dd;

@@ -46,14 +46,15 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.servlet.ServletException;
 
-import org.apache.log4j.Logger;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class Searches {
 
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	static final public String PROPERTIES_KEY_CONTRIBUTIONS_TABLE_NAME = "contributions.tableName";
 	static final public String PROPERTIES_KEY_CONTRIBUTIONS_ID_COLUMN_NAME = "contributions.idColumnName";

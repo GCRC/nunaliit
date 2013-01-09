@@ -39,13 +39,14 @@ import java.util.Map;
 import java.util.Vector;
 import java.sql.Timestamp;
 
-import org.apache.log4j.Logger;
-
 import ca.carleton.gcrc.contributions.Contributions;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ContributionHandler {
 	
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	private Map<String, List<String>> parameters;
 	private Principal userPrincipal;

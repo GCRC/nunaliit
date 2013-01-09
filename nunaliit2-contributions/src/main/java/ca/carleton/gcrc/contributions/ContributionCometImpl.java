@@ -37,13 +37,14 @@ import java.util.Map;
 
 import javax.servlet.ServletContext;
 
-import org.apache.log4j.Logger;
 import org.cometd.Bayeux;
 import org.cometd.Channel;
 import org.cometd.Client;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ContributionCometImpl implements ContributionComet {
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	private ServletContext servletContext;
 	private Bayeux bayeux;

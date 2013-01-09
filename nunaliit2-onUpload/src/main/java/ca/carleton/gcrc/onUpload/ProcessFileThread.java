@@ -37,8 +37,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
-
 import ca.carleton.gcrc.contributions.Contributions;
 import ca.carleton.gcrc.contributions.ContributionComet;
 import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionRequest;
@@ -48,8 +46,11 @@ import ca.carleton.gcrc.olkit.multimedia.file.SystemFile;
 import ca.carleton.gcrc.progress.ProgressInfo;
 import ca.carleton.gcrc.progress.ProgressTracker;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ProcessFileThread extends Thread {
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	private UploadedFileInfo fileInfo;
 	private String progressId;

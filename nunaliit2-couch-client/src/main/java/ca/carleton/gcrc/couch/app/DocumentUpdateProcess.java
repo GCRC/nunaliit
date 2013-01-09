@@ -4,8 +4,8 @@ import java.net.URL;
 import java.net.URLEncoder;
 
 import org.json.JSONObject;
-
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.app.DocumentUpdateListener.Phase;
 import ca.carleton.gcrc.couch.app.impl.DigestComputerSha1;
@@ -50,7 +50,7 @@ public class DocumentUpdateProcess {
 		UPDATE_FORCED
 	};
 	
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private CouchDb couchDb;
 	private DigestComputerSha1 digestComputer = new DigestComputerSha1();

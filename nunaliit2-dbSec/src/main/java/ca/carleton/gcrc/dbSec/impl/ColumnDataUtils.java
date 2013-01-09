@@ -43,15 +43,16 @@ import java.util.List;
 
 import javax.servlet.ServletException;
 
-import org.apache.log4j.Logger;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.dbSec.ColumnData;
 
 public class ColumnDataUtils {
-	static final protected Logger logger = Logger.getLogger("ca.carleton.gcrc.dbSec.impl.ColumnDataUtils");
+	static final protected Logger logger = LoggerFactory.getLogger("ca.carleton.gcrc.dbSec.impl.ColumnDataUtils");
 
 	static private SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd");
 	static private SimpleDateFormat tsFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");

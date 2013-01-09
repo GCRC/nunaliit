@@ -2,8 +2,6 @@ package ca.carleton.gcrc.olkit.multimedia.converter.impl;
 
 import java.io.File;
 
-import org.apache.log4j.Logger;
-
 import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionProgress;
 import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionRequest;
 import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionThreshold;
@@ -19,6 +17,9 @@ import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagick;
 import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagickInfo;
 import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagickProcessor;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class MultimediaConverterImpl implements MultimediaConverter {
 
 	static public int IMAGE_MAX_WIDTH = 1000;
@@ -32,7 +33,7 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 	static public MultimediaConversionThreshold audioConversionThreshold = new DefaultThresholdAudio();
 	static public MultimediaConversionThreshold videoConversionThreshold = new DefaultThresholdVideo();
 
-	final protected Logger logger = Logger.getLogger(this.getClass());
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	@Override
 	public void convertVideo(MultimediaConversionRequest request) throws Exception {
