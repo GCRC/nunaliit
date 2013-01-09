@@ -43,6 +43,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Vector;
 
@@ -51,9 +52,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
@@ -66,6 +64,8 @@ import org.apache.commons.fileupload.util.Streams;
 import org.apache.commons.io.FileCleaningTracker;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import ca.carleton.gcrc.progress.ProgressTracker;
 import ca.carleton.gcrc.progress.ProgressTrackerSingleton;
@@ -111,6 +111,11 @@ public class UploadServlet extends HttpServlet {
 		
 		// Load up configuration information
 		Properties props = UploadUtils.getProperties(config.getServletContext());
+		for(Entry<Object,Object> entry : props.entrySet()){
+			Object keyObj = entry.getKey();
+			Object valueObj = entry.getValue();
+			logger.info("Upload Property "+keyObj+" = "+valueObj);
+		}
 
 		// Repository directory (this is where files are sent to)
 		repositoryDir = UploadUtils.getMediaDir(config.getServletContext());
