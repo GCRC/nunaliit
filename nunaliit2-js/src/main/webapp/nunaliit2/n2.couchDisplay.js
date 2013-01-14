@@ -67,6 +67,7 @@ var defaultOptions = {
 	,postProcessDisplayFunction: null
 	,displayRelatedInfoFunction: null
 	,displayOnlyRelatedSchemas: false
+	,displayBriefInRelatedInfo: false
 	
 	/*
 	 * if defined, used by the map display logic to invoke a function to initiate 
@@ -914,7 +915,11 @@ $n2.couchDisplay = $n2.Class({
 					$docWrapper.append($doc);
 
 					if( _this._getShowService() ) {
-						_this._getShowService().printDocument($doc,docId);
+						if( _this.options.displayBriefInRelatedInfo ){
+							_this._getShowService().printBriefDescription($doc,docId);
+						} else {
+							_this._getShowService().printDocument($doc,docId);
+						};
 					} else {
 						$doc.text(docId);
 					};

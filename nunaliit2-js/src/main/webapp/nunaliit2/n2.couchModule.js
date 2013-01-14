@@ -522,6 +522,10 @@ var ModuleDisplay = $n2.Class({
 				displayOptions.displayOnlyRelatedSchemas 
 					= displayInfo.displayOnlyRelatedSchemas;
 			};
+			if( displayInfo && displayInfo.displayBriefInRelatedInfo ){
+				displayOptions.displayBriefInRelatedInfo
+					= displayInfo.displayBriefInRelatedInfo;
+			};
 			$.olkitDisplay = _this.displayControl = new $n2.couchDisplay(displayOptions);
 			var defaultDisplaySchemaName = 'object';
 			if( displayInfo && displayInfo.defaultSchemaName ){
