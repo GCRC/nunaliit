@@ -441,6 +441,7 @@ function main() {
 	
 	// Editor
 	couchEditor.options.schema = defaultSchema;
+	couchEditor.options.enableAddFile = true;
 	couchEditor.options.onCloseFn = function(){
 		$('#results').empty();
 	};

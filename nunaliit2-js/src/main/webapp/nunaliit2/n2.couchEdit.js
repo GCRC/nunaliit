@@ -90,6 +90,7 @@ var CouchDocumentEditorDefaultOptions = {
 	,onFeatureDeletedFn: function(fid,feature){}
 	,onCancelFn: function(feature){}
 	,onCloseFn: function(){}
+	,enableAddFile: false
 };
 
 var CouchDocumentEditor = $n2.Class({
@@ -485,12 +486,13 @@ var CouchDocumentEditor = $n2.Class({
 			});
 		};
 
-//		if( null != this._getUploadService() ){
-//			var attachBtn = $('<button class="file">'+_loc('Add File')+'</button>');
-//			formButtons.append(attachBtn);
-//			attachBtn.button({icons:{primary:'ui-icon-plusthick'}});
-//			attachBtn.click(function(){ _this._addFile(); return false; });
-//		};
+		if( this.options.enableAddFile 
+		 && null != this._getUploadService() ){
+			var attachBtn = $('<button class="file">'+_loc('Add File')+'</button>');
+			formButtons.append(attachBtn);
+			attachBtn.button({icons:{primary:'ui-icon-plusthick'}});
+			attachBtn.click(function(){ _this._addFile(); return false; });
+		};
 
 		var cancelBtn = $('<button class="cancel">'+_loc('Cancel')+'</button>');
 		formButtons.append(cancelBtn);
@@ -935,6 +937,7 @@ var CouchEditorDefaultOptions = {
 		,schema: null
 		,defaultEditSchema: null
 		,serviceDirectory: null
+		,enableAddFile: false
 	};
 
 var CouchEditor = $n2.Class({
