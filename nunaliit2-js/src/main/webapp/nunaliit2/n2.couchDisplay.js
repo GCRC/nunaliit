@@ -748,46 +748,98 @@ $n2.couchDisplay = $n2.Class({
 		if( ! $elem.length) {
 			return;
 		};
+
+		// Keep track of docIds and associated schemas
+		var docIdToSchemaMap = {};
 		
 		// Get identifiers for all documents referencing to this
 		// document. Also, get the schema associated with the
 		// document referencing this one.
-		_this.options.designDoc.queryView({
+		this.options.designDoc.queryView({
 			viewName: 'link-references-schemas'
 			,startkey: [docId,null]
 			,endkey: [docId,{}]
 			,onSuccess: function(rows){
-				// Accumulate document ids under the associated schema
-				var relatedDocsFromSchemas = {};
 				for(var i=0,e=rows.length;i<e;++i){
 					var id = rows[i].id;
 					var key = rows[i].key;
 					var schemaName = key[1];
 					
-					if( !relatedDocsFromSchemas[schemaName] ) {
-						relatedDocsFromSchemas[schemaName] = {
-							divId: $n2.getUniqueId()
-							,docIds: {}
-						};
-					};
-					relatedDocsFromSchemas[schemaName].docIds[id] = true;
+					docIdToSchemaMap[id] = schemaName;
 				};
-
-				// Add section with related documents
-				for(var schemaName in relatedDocsFromSchemas){
-					var contId = relatedDocsFromSchemas[schemaName].divId;
-					var $div = $('<div id="'+contId+'"></div>');
-					$elem.append($div);
-					
-					var relatedDocIds = [];
-					for(var relatedDocId in relatedDocsFromSchemas[schemaName].docIds){
-						relatedDocIds.push(relatedDocId);
-					};
-					
-					_this._displayRelatedDocuments(contId, schemaName, relatedDocIds);
-				};
+				
+				computeForwardReferences();
 			}
 		});
+		
+		function computeForwardReferences(){
+			var references = [];
+			$n2.couchUtils.extractLinks(doc, references);
+			for(var i=0, e=references.length; i<e; ++i){
+				var linkDocId = references[i].doc;
+				if( !docIdToSchemaMap[linkDocId] ){
+					docIdToSchemaMap[linkDocId] = null;
+				};
+			};
+			
+			// Obtain schemas for unknown documents
+			var requestDocIds = [];
+			for(var requestDocId in docIdToSchemaMap){
+				var schemaName = docIdToSchemaMap[requestDocId];
+				if( !schemaName ){
+					requestDocIds.push(requestDocId);
+				};
+			};
+			
+			if( requestDocIds.length > 0 ){
+				_this.options.designDoc.queryView({
+					viewName: 'schema-from-docid'
+					,keys: requestDocIds
+					,onSuccess: function(rows){
+						for(var i=0,e=rows.length;i<e;++i){
+							var requestDocId = rows[i].key;
+							var schemaName = rows[i].value;
+							
+							docIdToSchemaMap[requestDocId] = schemaName;
+						};
+						
+						showSections();
+					}
+				});
+			} else {
+				showSections();
+			};
+		};
+		
+		function showSections(){
+			// Accumulate document ids under the associated schema
+			var relatedDocsFromSchemas = {};
+			for(var requestDocId in docIdToSchemaMap){
+				var schemaName = docIdToSchemaMap[requestDocId];
+				
+				if( !relatedDocsFromSchemas[schemaName] ) {
+					relatedDocsFromSchemas[schemaName] = {
+						divId: $n2.getUniqueId()
+						,docIds: {}
+					};
+				};
+				relatedDocsFromSchemas[schemaName].docIds[requestDocId] = true;
+			};
+
+			// Add section with related documents
+			for(var schemaName in relatedDocsFromSchemas){
+				var contId = relatedDocsFromSchemas[schemaName].divId;
+				var $div = $('<div id="'+contId+'"></div>');
+				$elem.append($div);
+				
+				var relatedDocIds = [];
+				for(var relatedDocId in relatedDocsFromSchemas[schemaName].docIds){
+					relatedDocIds.push(relatedDocId);
+				};
+				
+				_this._displayRelatedDocuments(contId, schemaName, relatedDocIds);
+			};
+		};
 	}
 	
 	,_displayRelatedDocuments: function(contId, relatedSchemaName, relatedDocIds){
