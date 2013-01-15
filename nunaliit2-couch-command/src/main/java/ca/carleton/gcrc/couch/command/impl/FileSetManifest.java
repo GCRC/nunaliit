@@ -3,14 +3,35 @@ package ca.carleton.gcrc.couch.command.impl;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Stack;
+import java.util.Vector;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class FileSetManifest {
+
+	static private Comparator<FileManifest> fileManifestComparator = new Comparator<FileManifest>(){
+		@Override
+		public int compare(FileManifest m1, FileManifest m2) {
+			String relative1 = m1.getRelativePath();
+			String relative2 = m2.getRelativePath();
+			if( relative1 == relative2 ) {
+				return 0;
+			} else if( null == relative1 ) {
+				return -1;
+			} else if( null == relative2 ) {
+				return 1;
+			}
+			return relative1.compareTo(relative2);
+		}
+	};
+
 	
 	static private DigestComputerSha1 digestComputer = new DigestComputerSha1();
 	static private FileFilter anyFilter = new FileFilter(){
@@ -160,8 +181,12 @@ public class FileSetManifest {
 	public JSONObject toJson() throws Exception {
 		JSONObject jsonObject = new JSONObject();
 		
+		List<FileManifest> orderedFileManifests = new Vector<FileManifest>();
+		orderedFileManifests.addAll( manifests.values() );
+		Collections.sort(orderedFileManifests, fileManifestComparator);
+		
 		JSONArray filesArray = new JSONArray();
-		for(FileManifest fileManifest : manifests.values()){
+		for(FileManifest fileManifest : orderedFileManifests){
 			JSONObject fileObj = new JSONObject();
 			
 			fileObj.put("path", fileManifest.getRelativePath());

@@ -828,7 +828,7 @@ var ModuleDisplay = $n2.Class({
 			};
 			
 			_this.mapControl = nunaliit2.mapAndControls(mapOptions);
-			$n2.log('map & control',_this.mapControl);
+			$n2.log('module',_this);
 			
 			_this.mapControl.contributions = config.contributions;
 			_this.mapControl.requests = config.requests;
