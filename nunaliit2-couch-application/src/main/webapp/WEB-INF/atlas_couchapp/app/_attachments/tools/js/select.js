@@ -717,18 +717,22 @@
 			$parent.append( $options );
 			
 			atlasDesign.queryView({
-				viewName: 'layer-names'
+				viewName: 'layers'
 				,reduce: true
 				,group: true
 				,onSuccess: function(rows){
 					var names = [];
 					var $sel = $options.find('select.layerNameList');
 					for(var i=0,e=rows.length; i<e; ++i){
-						var layerName = rows[i].key;
-						$('<option></option>')
-							.val(layerName)
-							.text(layerName)
+						var layerId = rows[i].key;
+						var $o = $('<option></option>')
+							.val(layerId)
+							.text(layerId)
 							.appendTo($sel);
+						
+						if( showService ){
+							showService.printLayerName($o, layerId);
+						};
 					};
 				}
 				,onError: function(err){
