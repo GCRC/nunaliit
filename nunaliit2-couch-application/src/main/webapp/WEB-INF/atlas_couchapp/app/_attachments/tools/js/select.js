@@ -711,10 +711,31 @@
 	
 		,printOptions: function($parent){
 			var $options = $('<div>'
-				+'Layer name:<br/><input type="text">'
+				+'Layer name:<br/><select class="layerNameList"></select>'
 				+'</div>');
 			
 			$parent.append( $options );
+			
+			atlasDesign.queryView({
+				viewName: 'layer-names'
+				,reduce: true
+				,group: true
+				,onSuccess: function(rows){
+					var names = [];
+					var $sel = $options.find('select.layerNameList');
+					for(var i=0,e=rows.length; i<e; ++i){
+						var layerName = rows[i].key;
+						$('<option></option>')
+							.val(layerName)
+							.text(layerName)
+							.appendTo($sel);
+					};
+				}
+				,onError: function(err){
+					alert('Unable to obtain list of layers: '+err);
+					reportError('Unable to obtain list of layers: '+err);
+				}
+			});
 		}
 
 		,createList: function(opts_){
@@ -728,7 +749,7 @@
 			
 			var _this = this;
 
-			var $i = opts.options.find('input');
+			var $i = opts.options.find('select.layerNameList');
 			var layerName = $i.val();
 			if( !layerName || '' == layerName ) {
 				alert('Must enter a layer name');
