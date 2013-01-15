@@ -164,6 +164,7 @@ var Tracker = $n2.Class({
 	,initialize: function(opts_){
 		this.options = $n2.extend({
 			directory: null
+			,disabled: false
 		},opts_);
 		
 		var _this = this;
@@ -204,6 +205,10 @@ var Tracker = $n2.Class({
 	}
 	
 	,_handle: function(m){
+		if( this.options.disabled ){
+			return;
+		};
+		
 		if( 'start' === m.type ){
 			var hash = window.location.hash;
 			if( hash && hash !== '') {

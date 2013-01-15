@@ -1947,6 +1947,13 @@
 		if( config.directory ){
 			showService = config.directory.showService;
 			exportService = config.directory.exportService;
+			
+			// This application does not use hash to keep track of currently
+			// selected document.
+			if( config.directory.historyTracker 
+			 && config.directory.historyTracker.options ) {
+				config.directory.historyTracker.options.disabled = true;
+			};
 		};
 		
 		// Install transforms
