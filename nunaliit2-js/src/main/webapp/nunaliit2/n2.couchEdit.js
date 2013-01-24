@@ -460,6 +460,59 @@ var CouchDocumentEditor = $n2.Class({
 		
 		$editorContainer.accordion({ collapsible: true });
 
+		// Remove attachments
+		if( this.options.enableAddFile ){
+			// Compute attachments
+			var hasAttachments = false;
+			var attachments = {};
+			if( data 
+			 && data.nunaliit_attachments 
+			 && data.nunaliit_attachments.files ){
+				for(var attName in data.nunaliit_attachments.files){
+					var att = data.nunaliit_attachments.files[attName];
+					if( !att.source ) { // do not include thumbnails and originals
+						attachments[attName] = true;
+						hasAttachments = true;
+					};
+				};
+			};
+			
+			if( hasAttachments ) {
+				var $removeAttachmentsDiv = $('<div class="editorRemoveAttachments"></div>');
+				$editorContainer.append( $removeAttachmentsDiv );
+				
+				// Function to delete an attachment
+				var removeAttFn = function(e){
+					var $btn = $(this);
+					var $removeAttDiv = $btn.parents('.editorRemoveAttachment');
+					if( $removeAttDiv.length > 0 ){
+						var attName = $removeAttDiv.attr('nunaliitAttName');
+						_this._removeAttachment(attName);
+						$removeAttDiv.remove();
+					};
+					
+					return false;
+				};
+				
+				for(var attName in attachments){
+					var $removeAttDiv = $('<div class="editorRemoveAttachment"></div>');
+					$removeAttachmentsDiv.append($removeAttDiv);
+					$removeAttDiv.attr('nunaliitAttName',attName);
+
+					$('<span></span>')
+						.text( _loc('Attachment: ') + attName )
+						.appendTo($removeAttDiv);
+					
+					$('<button class="editorRemoveAttachmentButton"></button>')
+						.text( _loc('Remove') )
+						.appendTo($removeAttDiv)
+						.button({icons:{primary:'ui-icon-trash'}})
+						.click(removeAttFn)
+						;
+				};
+			};
+		};
+
 		if( null != this._getUploadService() ){
 			$editorContainer.append( $('<div class="editorAttachFile"></div>') );
 		};
@@ -644,6 +697,69 @@ var CouchDocumentEditor = $n2.Class({
 			});
 		};
 	}
+    
+    ,_removeAttachment: function(attNameToRemove){
+    	var data = this.editedDocument;
+    	
+    	// Accumulate all the keys that must be removed
+    	var keys = {};
+    	if( data 
+    	 && data.nunaliit_attachments 
+    	 && data.nunaliit_attachments.files ){
+    		for(var attName in data.nunaliit_attachments.files){
+    			var att = data.nunaliit_attachments.files[attName];
+    			if( attName === attNameToRemove ){
+    				keys[attName] = true;
+    			} else if( att.source === attNameToRemove ){
+    				// Remove associated thumbnail and original
+    				keys[attName] = true;
+    			};
+    		};
+    	};
+    	
+    	// Delete necessary keys
+    	var refreshRequired = false;
+    	for(var attName in keys){
+    		if( data._attachments && data._attachments[attName] ){
+    			delete data._attachments[attName];
+    			refreshRequired = true;
+    		};
+    		if( data.nunaliit_attachments.files[attName] ){
+    			delete data.nunaliit_attachments.files[attName];
+    			refreshRequired = true;
+    		};
+    	};
+    	
+    	// Remove _attachments if empty
+    	if( data._attachments ){
+    		var empty = true;
+    		for(var attName in data._attachments){
+    			empty = false;
+    		};
+    		if( empty ){
+    			delete data._attachments;
+    			refreshRequired = true;
+    		};
+    	};
+    	
+    	// Remove nunaliit_attachments if empty
+    	if( data.nunaliit_attachments ){
+    		var empty = true;
+    		if( data.nunaliit_attachments.files ) {
+	    		for(var attName in data.nunaliit_attachments.files){
+	    			empty = false;
+	    		};
+    		};
+    		if( empty ){
+    			delete data.nunaliit_attachments;
+    			refreshRequired = true;
+    		};
+    	};
+    	
+    	if( refreshRequired ){
+    		this.refresh();
+    	};
+    }
     
     ,_cancelEdit: function(){
 		this._dispatch({
