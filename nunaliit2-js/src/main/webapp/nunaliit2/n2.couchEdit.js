@@ -67,7 +67,7 @@ function isValueEditingAllowed(obj, selectors, data) {
 	if( selectors[0] === '_rev' ) return false;
 	
 	return true;
-}
+};
 
 function isKeyDeletionAllowed(obj, selectors, data) {
 	
@@ -77,7 +77,107 @@ function isKeyDeletionAllowed(obj, selectors, data) {
 	if( selectors[0] === '_rev' ) return false;
 	
 	return true;
-}
+};
+
+function searchForDocumentId(options_){
+
+	var options = $n2.extend({
+		searchServer: null
+		,showService: null
+		,onSelected: function(docId){}
+		,onReset: function(){}
+	},options_);
+	
+	var shouldReset = true;
+	
+	var dialogId = $n2.getUniqueId();
+	var inputId = $n2.getUniqueId();
+	var searchButtonId = $n2.getUniqueId();
+	var displayId = $n2.getUniqueId();
+	var $dialog = $('<div id="'+dialogId+'" class="editorSelectDocumentDialog">'
+			+'<div><label for="'+inputId+'">'+_loc('Search:')+'</label>'
+			+'<input id="'+inputId+'" type="text"/>'
+			+'<button id="'+searchButtonId+'">'+_loc('Search')+'</button></div>'
+			+'<div  class="editorSelectDocumentDialogResults" id="'+displayId+'"></div>'
+			+'<div><button class="cancel">'+_loc('Cancel')+'</button></div>'
+			+'</div>');
+	
+	$dialog.find('button.cancel')
+			.button({icons:{primary:'ui-icon-cancel'}})
+			.click(function(){
+				var $dialog = $('#'+dialogId);
+				$dialog.dialog('close');
+				return false;
+			})
+		;
+	
+	var dialogOptions = {
+		autoOpen: true
+		,title: _loc('Select Document')
+		,modal: true
+		,width: 370
+		,close: function(event, ui){
+			var diag = $(event.target);
+			diag.dialog('destroy');
+			diag.remove();
+			if( shouldReset ) {
+				options.onReset();
+			};
+		}
+	};
+	$dialog.dialog(dialogOptions);
+
+	var searchInput = options.searchServer.installSearch({
+		textInput: $('#'+inputId)
+		,searchButton: $('#'+searchButtonId)
+		,displayFn: displaySearch
+		,onlyFinalResults: true
+	});
+	
+	function displaySearch(displayData) {
+		if( !displayData ) {
+			reportError('Invalid search results returned');
+
+		} else if( 'wait' === displayData.type ) {
+			$('#'+displayId).empty();
+
+		} else if( 'results' === displayData.type ) {
+			var $table = $('<table></table>');
+			$('#'+displayId).empty().append($table);
+		
+			for(var i=0,e=displayData.list.length; i<e; ++i) {
+				var docId = displayData.list[i].id;
+				var $tr = $('<tr></tr>');
+
+				$table.append($tr);
+				
+				$td = $('<td class="olkitSearchMod2_'+(i%2)+'">'
+					+'<a href="#'+docId+'" alt="'+docId+'"></a></td>');
+				$tr.append($td);
+				if( options.showService ) {
+					options.showService.printBriefDescription($td.find('a'),docId);
+				} else {
+					$td.find('a').text(docId);
+				};
+				$td.find('a').click( createClickHandler(docId) );
+			};
+			
+		} else {
+			reportError('Invalid search results returned');
+		};
+	};
+	
+	function createClickHandler(docId) {
+		return function(e){
+			options.onSelected(docId);
+			shouldReset = false;
+			var $dialog = $('#'+dialogId);
+			$dialog.dialog('close');
+			return false;
+		};
+	};
+};
+
 
 //++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -412,6 +512,7 @@ var CouchDocumentEditor = $n2.Class({
 					if( _this.slideEditor ) {
 						_this.slideEditor.refresh();
 					};
+					_this._refreshRelations(data);
 					_this.onEditorObjectChanged(data);
 				}
 			});
@@ -429,6 +530,7 @@ var CouchDocumentEditor = $n2.Class({
 				if( _this.schemaEditor ) {
 					_this.schemaEditor.refresh();
 				};
+				_this._refreshRelations(data);
 				_this.onEditorObjectChanged(data);
 			}
 			,isKeyEditingAllowed: isKeyEditingAllowed
@@ -450,6 +552,7 @@ var CouchDocumentEditor = $n2.Class({
 				if( _this.schemaEditor ) {
 					_this.schemaEditor.refresh();
 				};
+				_this._refreshRelations(data);
 				_this.onEditorObjectChanged(data);
 			}
 			,isKeyEditingAllowed: isKeyEditingAllowed
@@ -459,6 +562,11 @@ var CouchDocumentEditor = $n2.Class({
 		this.slideEditor = new $n2.slideEditor.Editor($slideContainer, data, slideEditorOptions);
 		
 		$editorContainer.accordion({ collapsible: true });
+		
+		// Report relations
+		var $displayRelationsDiv = $('<div class="editorDisplayRelations"></div>');
+		$editorContainer.append( $displayRelationsDiv );
+		this._refreshRelations(data);
 
 		// Remove attachments
 		if( this.options.enableAddFile ){
@@ -546,6 +654,11 @@ var CouchDocumentEditor = $n2.Class({
 			attachBtn.button({icons:{primary:'ui-icon-plusthick'}});
 			attachBtn.click(function(){ _this._addFile(); return false; });
 		};
+
+		var addRelationBtn = $('<button class="relation">'+_loc('Add Relation')+'</button>');
+		formButtons.append(addRelationBtn);
+		addRelationBtn.button({icons:{primary:'ui-icon-plusthick'}});
+		addRelationBtn.click(function(){ _this._addRelationDialog(); return false; });
 
 		var cancelBtn = $('<button class="cancel">'+_loc('Cancel')+'</button>');
 		formButtons.append(cancelBtn);
@@ -697,6 +810,91 @@ var CouchDocumentEditor = $n2.Class({
 			});
 		};
 	}
+	
+	,_addRelationDialog: function() {
+		var _this = this;
+
+		searchForDocumentId({
+			searchServer: this._getSearchService()
+			,showService: this._getShowService()
+			,onSelected: function(docId){
+				_this._addRelation(docId);
+			}
+		});
+	}
+    
+    ,_addRelation: function(relDocId){
+    	var data = this.editedDocument;
+
+    	if( data 
+    	 && data.nunaliit_source 
+    	 && data.nunaliit_source.doc === relDocId ){
+    		return;
+    	};
+
+    	if( data 
+    	 && data.nunaliit_relations 
+    	 && data.nunaliit_relations.length ){
+    		for(var i=0,e=data.nunaliit_relations.length; i<e; ++i){
+    			var rel = data.nunaliit_relations[i];
+    			if( rel.doc === relDocId ){
+    				return;
+    			};
+    		};
+    	};
+    	
+    	if( data ){
+    		if( !data.nunaliit_relations ){
+    			data.nunaliit_relations = [];
+    		};
+    		
+    		data.nunaliit_relations.push({
+    			nunaliit_type: 'reference'
+    			,doc: relDocId
+    		});
+    		
+    		this.refresh();
+    	};
+    }
+    
+    ,_removeRelation: function(relDocId){
+    	var data = this.editedDocument;
+    	var refreshRequired = false;
+    	
+    	if( data 
+    	 && data.nunaliit_source 
+    	 && data.nunaliit_source.doc === relDocId ){
+    		delete data.nunaliit_source;
+    		refreshRequired = true;
+    	};
+
+    	if( data 
+    	 && data.nunaliit_relations 
+    	 && data.nunaliit_relations.length ){
+    		var relRemoved = false;
+    		var newRels = [];
+    		for(var i=0,e=data.nunaliit_relations.length; i<e; ++i){
+    			var rel = data.nunaliit_relations[i];
+    			if( rel.doc === relDocId ){
+    				relRemoved = true;
+    			} else {
+    				newRels.push(rel);
+    			};
+    		};
+    		
+    		if( newRels.length < 1 ){
+        		delete data.nunaliit_relations;
+        		refreshRequired = true;
+    		} else if( relRemoved ){
+    			data.nunaliit_relations = newRels;
+        		refreshRequired = true;
+    		};
+    	};
+    	
+    	if( refreshRequired ){
+    		this.refresh();
+    	};
+    }
     
     ,_removeAttachment: function(attNameToRemove){
     	var data = this.editedDocument;
@@ -842,6 +1040,7 @@ var CouchDocumentEditor = $n2.Class({
 		if( this.schemaEditor ) {
 			this.schemaEditor.refresh();
 		};
+		this._refreshRelations(this.editedDocument);
 		this.onEditorObjectChanged(this.editedDocument);
 	}
 	
@@ -855,6 +1054,84 @@ var CouchDocumentEditor = $n2.Class({
 					$n2.couchGeom.adjustBboxOnCouchGeom(geomData);
 				};
 			};
+		};
+	}
+	
+	,_refreshRelations: function(data){
+		var _this = this;
+		var $editorContainer = this._getEditorContainer();
+		var $displayRelationsDiv = $editorContainer.find('.editorDisplayRelations');
+		if( $displayRelationsDiv.length < 1 ) return;
+
+    	var showService = this._getShowService();
+
+    	// Compute relations
+		var docIdMap = {};
+		if( data 
+		 && data.nunaliit_relations
+		 && data.nunaliit_relations.length ){
+			for(var i=0,e=data.nunaliit_relations.length; i<e; ++i){
+				var ref = data.nunaliit_relations[i];
+				if( ref.doc ) {
+					docIdMap[ref.doc] = true;
+				};
+			};
+		};
+		if( data 
+		 && data.nunaliit_source
+		 && data.nunaliit_source.doc ){
+			docIdMap[data.nunaliit_source.doc] = true;
+		};
+		
+		// Remove displayed relations that are no longer valid
+		$displayRelationsDiv.find('.editorDisplayRelation').each(function(){
+			var $display = $(this);
+			var relDocId = $display.attr('nunaliitRelationDocId');
+			if( !docIdMap[relDocId] ){
+				$display.remove();
+			} else {
+				// This relDocId is already displayed. Remove from map.
+				delete docIdMap[relDocId];
+			};
+		});
+		
+		// Function to delete a relation
+		var removeRelationFn = function(e){
+			var $btn = $(this);
+			var $removeRelationDiv = $btn.parents('.editorDisplayRelation');
+			if( $removeRelationDiv.length > 0 ){
+				var relDocId = $removeRelationDiv.attr('nunaliitRelationDocId');
+				_this._removeRelation(relDocId);
+				$removeRelationDiv.remove();
+			};
+			
+			return false;
+		};
+		
+		// Add missing relations. At this point, docIdMap contains
+		// only missing relations
+		for(var relDocId in docIdMap){
+			var $displayRelationDiv = $('<div class="editorDisplayRelation"></div>');
+			$displayRelationsDiv.append($displayRelationDiv);
+			$displayRelationDiv.attr('nunaliitRelationDocId',relDocId);
+
+			$('<span></span>')
+				.text( _loc('Relation: '))
+				.appendTo($displayRelationDiv);
+			
+			var $brief = $('<span></span>')
+				.text(relDocId)
+				.appendTo($displayRelationDiv);
+			if( showService ){
+				showService.printBriefDescription($brief, relDocId);
+			};
+			
+			$('<button class="editorDisplayRelationButton"></button>')
+				.text( _loc('Remove') )
+				.appendTo($displayRelationDiv)
+				.button({icons:{primary:'ui-icon-trash'}})
+				.click(removeRelationFn)
+				;
 		};
 	}
 	
@@ -1336,99 +1613,15 @@ var SchemaEditorService = $n2.Class({
 
 		var _this = this;
 		
-		var shouldReset = true;
-		
 		var searchServer = this._getSearchService();
 		var showService = this._getShowService();
 		
-		var dialogId = $n2.getUniqueId();
-		var inputId = $n2.getUniqueId();
-		var searchButtonId = $n2.getUniqueId();
-		var displayId = $n2.getUniqueId();
-		var $dialog = $('<div id="'+dialogId+'" class="editorSelectDocumentDialog">'
-				+'<div><label for="'+inputId+'">'+_loc('Search:')+'</label>'
-				+'<input id="'+inputId+'" type="text"/>'
-				+'<button id="'+searchButtonId+'">'+_loc('Search')+'</button></div>'
-				+'<div  class="editorSelectDocumentDialogResults" id="'+displayId+'"></div>'
-				+'<div><button class="cancel">'+_loc('Cancel')+'</button></div>'
-				+'</div>');
-		
-		$dialog.find('button.cancel')
-				.button({icons:{primary:'ui-icon-cancel'}})
-				.click(function(){
-					var $dialog = $('#'+dialogId);
-					$dialog.dialog('close');
-					return false;
-				})
-			;
-		
-		var dialogOptions = {
-			autoOpen: true
-			,title: _loc('Select Document')
-			,modal: true
-			,width: 370
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
-				if( shouldReset ) {
-					if( typeof(resetFn) === 'function' ) {
-						resetFn();
-					};
-				};
-			}
-		};
-		$dialog.dialog(dialogOptions);
-
-		var searchInput = searchServer.installSearch({
-			textInput: $('#'+inputId)
-			,searchButton: $('#'+searchButtonId)
-			,displayFn: displaySearch
-			,onlyFinalResults: true
+		searchForDocumentId({
+			searchServer: searchServer
+			,showService: showService
+			,onSelected: cb
+			,onReset: resetFn
 		});
-		
-		function displaySearch(displayData) {
-			if( !displayData ) {
-				reportError('Invalid search results returned');
-
-			} else if( 'wait' === displayData.type ) {
-				$('#'+displayId).empty();
-
-			} else if( 'results' === displayData.type ) {
-				var $table = $('<table></table>');
-				$('#'+displayId).empty().append($table);
-			
-				for(var i=0,e=displayData.list.length; i<e; ++i) {
-					var docId = displayData.list[i].id;
-					var $tr = $('<tr></tr>');
-
-					$table.append($tr);
-					
-					$td = $('<td class="olkitSearchMod2_'+(i%2)+'">'
-						+'<a href="#'+docId+'" alt="'+docId+'"></a></td>');
-					$tr.append($td);
-					if( showService ) {
-						showService.printBriefDescription($td.find('a'),docId);
-					} else {
-						$td.find('a').text(docId);
-					};
-					$td.find('a').click( createClickHandler(docId) );
-				};
-				
-			} else {
-				reportError('Invalid search results returned');
-			};
-		};
-		
-		function createClickHandler(docId) {
-			return function(e){
-				cb(docId);
-				shouldReset = false;
-				var $dialog = $('#'+dialogId);
-				$dialog.dialog('close');
-				return false;
-			};
-		};
 	}
 	
 	,_selectLayers: function(currentLayers,cb,resetFn){
