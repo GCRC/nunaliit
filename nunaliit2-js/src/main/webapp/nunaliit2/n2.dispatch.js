@@ -158,6 +158,17 @@ var Dispatcher = $n2.Class({
 				};
 			};
 		};
+		
+		if( !listeners || listeners.length < 1 ){
+			if( logging ){
+				if( loggingIncludesMessage ) {
+					$n2.log(''+h.name+' >'+t+' not observed',m);
+				} else {
+					$n2.log(''+h.name+' >'+t+' not observed');
+				};
+			};
+		};
+		
 		this.dispatching = false;
 	}
 	

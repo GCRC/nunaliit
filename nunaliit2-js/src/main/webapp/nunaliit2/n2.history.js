@@ -285,6 +285,11 @@ var Tracker = $n2.Class({
 			});
 
 		} else if( 'editClosed' === m.type ) {
+			var lastIsEditInitiate = false;
+			if( this.last.edit ){
+				lastIsEditInitiate = true;
+			};
+			
 			this.last = {
 				editClosed: true
 			};
@@ -293,12 +298,20 @@ var Tracker = $n2.Class({
 				// A document was created. Select it so it is reflected in the
 				// history hash
 				this._dispatch({
-					type: 'selected'
+					type: 'userSelect'
 					,docId: m.doc._id
 					,_replaceHash: true
 				});
 
+			} else if( m.saved ) {
+				if(lastIsEditInitiate) {
+					this._dispatch({
+						type: 'historyBack'
+					});
+				};	
+				
 			} else {
+				// cancelled or deleted
 				this._dispatch({
 					type: 'historyBack'
 				});
@@ -306,7 +319,7 @@ var Tracker = $n2.Class({
 
 		} else if( 'hashChanged' === m.type ){
 			var o = null;
-
+			
 			if( '' === m.hash || !m.hash ){
 				if( !this.last.unselected ){
 					this._dispatch({
@@ -337,13 +350,11 @@ var Tracker = $n2.Class({
 						};
 					} else if( TYPE_SEARCH === o.t ){
 						var searchLine = o.l;
-						if( searchLine !== this.last.search ){
-							this._dispatch({
-								type: 'searchInitiate'
-								,searchLine: searchLine
-								,_suppressHashChange: true
-							});
-						};
+						this._dispatch({
+							type: 'searchInitiate'
+							,searchLine: searchLine
+							,_suppressHashChange: true
+						});
 					};
 				};
 			};

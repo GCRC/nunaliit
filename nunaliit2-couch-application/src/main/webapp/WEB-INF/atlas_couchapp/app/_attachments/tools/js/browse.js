@@ -277,6 +277,7 @@ function selectNewDocumentSchema(schemas) {
 				type: 'setHash'
 				,hash: hash
 			});
+			
 			createNewDocumentFromSchemaName(schemaName);
 			
 			$dialog.dialog('close');
@@ -378,7 +379,7 @@ function displaySearchResults(displayData) {
 	function installClick($a, docId){
 		$a.click(function(){
 			dispatcher.send(DH,{
-				type:'selected'
+				type:'userSelect'
 				,docId:docId
 			});
 			return false;
