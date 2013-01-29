@@ -503,6 +503,10 @@ var SearchInput = $n2.Class({
 			this.options.searchButton = null; // get rid of reference
 		};
 		
+		if( !this.options.initialSearchText ){
+			this.options.initialSearchText = '';
+		};
+		
 		this._install();
 	}
 
@@ -517,20 +521,24 @@ var SearchInput = $n2.Class({
 		return null;
 	}
 	
-	,performSearch: function(line, $textInput){
+	,getSearchLine: function(){
+		var $textInput = this.getTextInput();
+		var line = $textInput.val();
+		if( line && line.length > 0 ) {
+			if( line === this.options.initialSearchText ){
+				return '';
+			} else {
+				return line;
+			};
+		} else {
+			return '';
+		};
+	}
+	
+	,performSearch: function(line){
 		
 		var _this = this;
 
-		if( !$textInput ) {
-			$textInput = this.getTextInput();
-		};
-		
-		if( !line ) {
-			line = $textInput.val();
-		} else if( $textInput ) {
-			$textInput.val(line);
-		};
-		
 		if( this.options.dispatchService ) {
 			this.options.dispatchService.send(DH, {
 				type: 'searchInitiate'
@@ -553,7 +561,6 @@ var SearchInput = $n2.Class({
 
 		this.keyPressedSinceLastSearch = false;
 		this._displayWait();
-		this._closeLookAhead($textInput);
 	}
 
 	,_install: function(){
@@ -631,21 +638,21 @@ var SearchInput = $n2.Class({
 		if (13 === charCode || null === charCode) {
 			// carriage return or I'm not detecting key codes
 			// and have to submit on each key press - yuck...
-			var $textInput = this.getTextInput();
-			var line = $textInput.val();
-			if( line && line.length > 0 ) {
-				this._closeLookAhead($textInput);
-				this.performSearch(line, $textInput);
+			var line = this.getSearchLine();
+			if( line.length > 0 ) {
+				this._closeLookAhead();
+				this.performSearch(line);
+				this._closeLookAhead();
 			};
 		};
 	}
 	
 	,_clickSearch: function(e){
-		var $textInput = this.getTextInput();
-		var line = $textInput.val();
-		if( line && line.length > 0 ) {
-			this._closeLookAhead($textInput);
-			this.performSearch(line, $textInput);
+		var line = this.getSearchLine();
+		if( line.length > 0 ) {
+			this._closeLookAhead();
+			this.performSearch(line);
+			this._closeLookAhead();
 		};
 	}
 	
