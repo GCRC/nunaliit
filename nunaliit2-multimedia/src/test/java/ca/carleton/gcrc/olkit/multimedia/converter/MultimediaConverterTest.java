@@ -87,6 +87,34 @@ public class MultimediaConverterTest extends TestCase {
 			fail("Unexpected mime type: "+sf.getMimeType());
 		}
 	}
+	
+	public void testConvertVideoWebm() throws Exception {
+		if( false == TestConfiguration.isTestingConfigured() ) return;
+	
+		MultimediaConverterImpl converter = new MultimediaConverterImpl();
+
+		File inFile = TestConfiguration.getTestFile("gizmo.webm");
+		
+		MultimediaConversionRequest request = new MultimediaConversionRequest();
+		request.setInFile(inFile);
+		request.setThumbnailRequested(true);
+		request.setProgress( new MultimediaTestingProgress() );
+		
+		converter.convertVideo(request);
+		
+		// Verify input sizes
+		if( 558 != request.getInWidth() ) {
+			fail("Unexpected width");
+		}
+		if( 314 != request.getInHeight() ) {
+			fail("Unexpected height");
+		}
+		
+		SystemFile sf = SystemFile.getSystemFile(request.getOutFile());
+		if( false == "video/mp4".equals( sf.getMimeType() ) ) {
+			fail("Unexpected mime type: "+sf.getMimeType());
+		}
+	}
 
 	public void testConvertAudio() throws Exception {
 		if( false == TestConfiguration.isTestingConfigured() ) return;
