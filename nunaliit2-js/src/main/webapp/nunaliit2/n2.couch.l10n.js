@@ -56,6 +56,7 @@ function uploadRequest(request) {
 	
 	var data = {
 		nunaliit_type: 'translationRequest'
+		,nunaliit_schema: 'translationRequest'
 		,str: request.str
 		,lang: request.lang
 		,packageName: request.packageName
@@ -143,7 +144,9 @@ function loadTranslatedStrings() {
 		+ '/' + configuration.translatedViewName
 		+ '?startkey="' + lang
 		+ '"&endkey="' + lang
-		+ '"';
+		+ '"'
+		+ '&include_docs=true&reduce=false'
+		;
 	if( $n2.scripts ) {
 		var coreLocation = $n2.scripts.getCoreScriptLocation();
 		$n2.scripts.loadScript(url, coreLocation);

@@ -6,6 +6,6 @@ function(doc) {
 		// This is a document translation
 		var lang = doc.lang;
 		
-		emit(lang, doc);
+		emit(lang, 1);
 	};
 };

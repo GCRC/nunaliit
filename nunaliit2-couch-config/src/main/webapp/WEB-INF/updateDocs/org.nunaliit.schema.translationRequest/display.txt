@@ -1,0 +1,22 @@
+<div class="n2_documentDisplay"><div class="n2_layoutFloat">
+	<div>
+		<div class="label n2s_localize">Language</div>
+		<div class="value">{{lang}}</div>
+		<div class="end"></div>
+	</div>
+
+	<div>
+		<div class="label n2s_localize">Original String</div>
+		<div class="value n2s_preserveSpaces">{{str}}</div>
+		<div class="end"></div>
+	</div>
+	
+	{{#trans}}
+	<div>
+		<div class="label n2s_localize">Translation</div>
+		<div class="value n2s_preserveSpaces">{{trans}}</div>
+		<div class="end"></div>
+	</div>
+	{{/trans}}
+
+</div></div>

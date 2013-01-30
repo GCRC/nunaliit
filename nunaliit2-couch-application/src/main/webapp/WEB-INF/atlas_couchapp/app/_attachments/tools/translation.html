@@ -38,106 +38,19 @@
 		<script type="text/javascript" src="../config/configuration.js"></script>
 		<script type="text/javascript" src="../nunaliit_custom.js"></script>
 
+		<script type="text/javascript" src="js/translation.js"></script>
+
 		<script type="text/javascript">
 			// <!--
-
-			var atlasDb = null;
-			var atlasDesign = null;
-			var currentView = 'l10n-pending';
-			
-			function selectionChanged() {
-				var $select = $(this);
-				currentView = $select.val();
-				refreshView();
-			};
-			
-			function upload() {
-				var $btn = $(this);
-				var $tr = $btn.parents('tr');
-				
-				var json = $tr.find('.json').val();
-				var data = JSON.parse(json);
-				
-				var trans = $tr.find('.trans').val();
-				
-				data.trans = trans;
-
-				atlasDb.updateDocument({
-					data: data
-					,onSuccess: refreshView
-				});
-			};
-			
-			function showRequests(arr) {
-				
-				var $table = $('<table></table>');
-				$('#requests').empty().append($table);
-				
-				$table.append('<tr><th>String</th><th>Lang</th><th>Translation</th><th></th><th>Doc ID</th><th>Package</th></tr>');
-				
-				for(var i=0,e=arr.length; i<e; ++i) {
-					var $tr = $('<tr></tr>');
-					$table.append($tr);
-					
-					var row = arr[i];
-					var req = row.value;
-					
-					$tr.append( $('<td>'+req.str+'</td>') );
-					$tr.append( $('<td>'+req.lang+'</td>') );
-					$tr.append( $('<td><input class="trans" type="text"/></td>') );
-					$tr.append( $('<td><input class="uploadBtn" type="button" value="Upload"/></td>') );
-					$tr.append( $('<td class="docId">'+req._id+'</td>') );
-					$tr.append( $('<td class="packageName">'+req.packageName+'</td>') );
-					$tr.append( $('<td><input class="json" type="hidden"/></td>') );
-					
-					var json = JSON.stringify(req);
-					$tr.find('.json').val(json);
-					
-					if( req.trans ) {
-						$tr.find('.trans').val(req.trans);
-					};
-				};
-				
-				$table.find('.uploadBtn').click(upload);
-			};
-			
-			function refreshView() {
-				// Fetch all pending requests
-				atlasDesign.queryView({
-					viewName: currentView
-					,onSuccess: showRequests
-				});
-			};
-			
-			function main() {
-				var $select = $('<select><option value="l10n-pending" selected="selected">Pending</option><option value="l10n-all">All</option></select>');
-				$('#requests').before($select);
-				$select.change(selectionChanged);
-				
-				refreshView();
-			};
-			
-			function main_init(config) {
-				atlasDb = config.atlasDb;
-				atlasDesign = config.atlasDesign;
-
-			 	$n2.couchL10n.Configure({
-					db: atlasDb
-			 		,designDoc: atlasDesign 
-			 	});
-
-			 	if( config.directory && config.directory.authService ) {
-					config.directory.authService.createAuthWidget({
-						elemId: 'login'
-					});
-				};
-			 	
-			 	main(atlasDb, atlasDesign);
-			};
-
 			jQuery().ready(function() {
 				runConfiguration({
-					configuredFunction: main_init
+					configuredFunction: function(config){
+						$n2.translation.main_init({
+							config: config
+							,requestPanelName: 'requests'
+							,loginPanelName: 'login'
+						});
+					}
 					,rootPath: '../'
 				});
 			});

@@ -15,16 +15,28 @@ function loadStrings(strings) {
 };
 
 loadStrings({
-	'user':'usager'
-	,'user name':'nom d\'usager'
-	,'password':'mot de passe'
-	,'Login':'Ouvrir session'
-	,'Logout':'Fermer session'
-	,'Please login':'Ouverture de session'
-	,'Create a new user':'Créer un nouvel usager'
-	,'OK':'Accepter'
-	,'Cancel':'Annuler'
-	,'Welcome':'Bienvenue'
+	"user":"usager"
+	,"user name":"nom d'usager"
+	,"password":"mot de passe"
+	,"Login":"Ouvrir session"
+	,"Logout":"Fermer session"
+	,"Please login":"Ouverture de session"
+	,"Create a new user":"Créer un nouvel usager"
+	,"OK":"Accepter"
+	,"Cancel":"Annuler"
+	,"Welcome":"Bienvenue"
+	,"Title":"Titre"
+	,"Description":"Description"
+	,"Media":"Média"
+	,"Please login":"Ouverture de session"
+	,"user name":"Nom d'usager"
+	,"Generic Object":"Document Générique"
+	,"Reference":"Référence"
+	,"Edit":"Modifier"
+	,"Delete":"Supprimer"
+	,"Add Related":"Relier"
+	,"Find on Map":"Trouver sur la Carte"
+	,"search the atlas":"recherche de l'atlas"
 	
 	// tree
 	,"Do you wish to delete this element?":"Désirez-vous supprimer cet élément?"

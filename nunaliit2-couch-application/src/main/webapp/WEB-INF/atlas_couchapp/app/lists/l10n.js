@@ -26,9 +26,9 @@ function(head, req) {
 			};
 
 			var data = {
-				l: row.value.lang
-				,s: row.value.str
-				,t: row.value.trans
+				l: row.doc.lang
+				,s: row.doc.str
+				,t: row.doc.trans
 			};
 			
 			send( toJSON(data) );

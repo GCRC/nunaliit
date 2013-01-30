@@ -35,6 +35,9 @@ $Id: n2.couchModule.js 8494 2012-09-21 20:06:50Z jpfiset $
 
 var DH = 'n2.couchModule'; // dispatcher handle
 
+// Localization
+var _loc = function(str){ return $n2.loc(str,'nunaliit2-couch'); };
+
 //=========================================================================
 /*
  
@@ -578,11 +581,12 @@ var ModuleDisplay = $n2.Class({
 			};
 
 			// Search
-			var searchInput = $('<input type="text" class="search_panel_input" value="search the atlas"></input>');
+			var searchInput = $('<input type="text" class="search_panel_input"></input>');
+			searchInput.val( _loc('search the atlas') );
 			$('#'+_this.searchPanelName).empty().append(searchInput);
 			config.directory.searchService.installSearch({
 				textInput: searchInput
-				,initialSearchText: 'search the atlas'
+				,initialSearchText: _loc('search the atlas')
 				,dispatchService: config.directory.dispatchService
 			});
 			

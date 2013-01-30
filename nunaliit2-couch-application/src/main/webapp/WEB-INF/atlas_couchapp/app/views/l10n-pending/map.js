@@ -7,6 +7,6 @@ function(doc) {
 		var englishStr = doc.str;
 		var lang = doc.lang;
 		
-		emit([lang,englishStr], doc);
+		emit([lang,englishStr], 1);
 	};
 };
