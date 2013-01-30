@@ -14,7 +14,8 @@
 	</head>
 	<body>
 
-		<h1>Translations</h1>	
+		<h1>Translations</h1>
+		<div id="login"></div>
 		<div id="requests">
 		</div>
 
@@ -124,6 +125,12 @@
 					db: atlasDb
 			 		,designDoc: atlasDesign 
 			 	});
+
+			 	if( config.directory && config.directory.authService ) {
+					config.directory.authService.createAuthWidget({
+						elemId: 'login'
+					});
+				};
 			 	
 			 	main(atlasDb, atlasDesign);
 			};

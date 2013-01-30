@@ -9,37 +9,6 @@ var mediaDir = '../../../../media/';
 var currentlyViewedMedia = [];
 var currentDocumentsShowing = {};
 
-var loginStateChanged = function(currentUser) {
-	var showLogin = false;
-	if (null == currentUser) {
-		showLogin = true;
-	};
-
-	$('#login').empty();
-	if( showLogin ) {
-		var aElem = $('<a class="loginLink" href="javascript:Login">Login</a>');
-		aElem.click(function(){
-			if( $.NUNALIIT_AUTH ) $.NUNALIIT_AUTH.login();
-			return false;
-		});
-		var nameElem = $('<span class="loginGreeting">Welcome.&nbsp</span>');
-		$('#login').append(aElem).append(nameElem);
-
-	} else {
-		var aElem = $('<a class="loginLink" href="javascript:Logout">Logout</a>');
-		aElem.click(function(){
-			if( $.NUNALIIT_AUTH ) {
-				$.NUNALIIT_AUTH.logout();
-			};
-			return false;
-		});
-		var display = currentUser.display;
-		if( !display ) display = currentUser.name;
-		var nameElem = $('<span class="loginGreeting">' + display + '&nbsp</span>');
-		$('#login').append(aElem).append(nameElem);
-	};
-};
-
 function selectionChanged() {
 	var $select = $(this);
 	currentView = $select.val();
@@ -576,8 +545,10 @@ function uploadMainInit(config) {
 		requestService = config.directory.requestService;
 	};
 
-	if( $.NUNALIIT_AUTH ) {
-		$.NUNALIIT_AUTH.addListener(loginStateChanged);
+	if( config.directory && config.directory.authService ) {
+		config.directory.authService.createAuthWidget({
+			elemId: 'login'
+		});
 	};
 	
 	if( dispatcher ){

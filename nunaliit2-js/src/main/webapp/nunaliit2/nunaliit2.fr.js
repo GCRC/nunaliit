@@ -16,7 +16,15 @@ function loadStrings(strings) {
 
 loadStrings({
 	'user':'usager'
+	,'user name':'nom d\'usager'
 	,'password':'mot de passe'
+	,'Login':'Ouvrir session'
+	,'Logout':'Fermer session'
+	,'Please login':'Ouverture de session'
+	,'Create a new user':'Créer un nouvel usager'
+	,'OK':'Accepter'
+	,'Cancel':'Annuler'
+	,'Welcome':'Bienvenue'
 	
 	// tree
 	,"Do you wish to delete this element?":"Désirez-vous supprimer cet élément?"

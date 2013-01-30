@@ -103,7 +103,7 @@ function Configure(options_){
 	function authInitialized() {
 		
 		configuration.auth = $.NUNALIIT_AUTH;
-		configuration.directory.authService = configuration.auth;
+		configuration.directory.authService = $n2.couchAuth._defaultAuthService;
 		
 		configuration.atlasDb = configuration.couchServer.getDb({dbUrl:options.atlasDbUrl});
 		configuration.atlasDesign = configuration.atlasDb.getDesignDoc({ddName:options.atlasDesignName});

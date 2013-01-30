@@ -411,6 +411,8 @@ var ModuleDisplay = $n2.Class({
 
 	,searchPanelName: null
 	
+	,loginPanelName: null
+	
 	,styles: null
 	
 	,initialize: function(opts_){
@@ -423,6 +425,7 @@ var ModuleDisplay = $n2.Class({
 			,sidePanelName: 'side'
 			,filterPanelName: 'filters'
 			,searchPanelName: 'searchInput'
+			,loginPanelName: 'login'
 			,styleMapFn: null
 			,onSuccess: function(){}
 			,onError: function(err){ $n2.reportErrorForced(errorMsg); }
@@ -446,6 +449,7 @@ var ModuleDisplay = $n2.Class({
 		this.sidePanelName = opts.sidePanelName;
 		this.filterPanelName = opts.filterPanelName;
 		this.searchPanelName = opts.searchPanelName;
+		this.loginPanelName = opts.loginPanelName;
 		
 		// dispatcher
 		var d = this._getDispatcher();
@@ -459,6 +463,11 @@ var ModuleDisplay = $n2.Class({
 		var config = this.config;
 		var atlasDb = config.atlasDb;
 		var atlasDesign = config.atlasDesign;
+		
+		// Set up login widget
+		config.directory.authService.createAuthWidget({
+			elemId: this.loginPanelName
+		});
 		
 		/*
 		 * Get module document, if required.

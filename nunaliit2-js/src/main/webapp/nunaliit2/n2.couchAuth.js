@@ -40,14 +40,155 @@ $Id: n2.couchAuth.js 8445 2012-08-22 19:11:38Z jpfiset $
 	// Localization
 	var _loc = function(str){ return $n2.loc(str,'nunaliit2-couch'); };
 
-// === AUTH ====================================	
+// ===================================================================================
 
-	var index = 0;
-	var loginStateListeners = [];
-	var lastAuthSessionCookie = null;
+var defaultError = function(err, options) {
+	var acc = [];
+	
+	if( err ) {
+		acc.push(''+err.message);
+		var cause = err.cause;
+		while( cause ) {
+			acc.push('\n>'+cause.message);
+			cause = cause.cause;
+		};
+	} else {
+		acc.push('<Unknown error>');
+	};
+	
+	alert(acc.join(''));
+};
 
-	var addListeners = function(listeners) {
-		var cUser = getCurrentUser();
+var defaultOptions = {
+	onSuccess: function(result,options) {}
+	,onError: defaultError
+	,anonymousLoginAllowed: false
+	,anonymousUser: 'anonymous'
+	,anonymousPw: 'anonymous'
+	,autoAnonymousLogin: false
+	,prompt: _loc('Please login')
+	,userString: _loc('user name')
+	,directory: null
+};
+	
+var AuthService = $n2.Class({
+	options: null
+
+	,loginStateListeners: null
+	
+	,lastAuthSessionCookie: null
+	
+	,initialize: function(options_){
+		var _this = this;
+		
+		this.options = $n2.extend(
+			{}
+			,defaultOptions
+			,{
+				autoRefresh: true
+				,refreshIntervalInSec: 120 // 2 minutes
+			}
+			,options_
+		);
+		
+		this.loginStateListeners = [];
+		this.lastAuthSessionCookie = null;
+		
+		// Install login state listeners - don't retain as stored options.
+		if( this.options.listeners ) {
+			this.addListeners(this.options.listeners);
+			delete this.options.listeners;
+		};
+		
+		/*
+		 * carry either default or provided fns for onSuccess or onError
+		 * and remove these from the stored options ... they are usually
+		 * not appropriate for use as login and logout callbacks.
+		 */
+		var initOnSuccess = this.options.onSuccess;
+		delete this.options.onSuccess;
+		var initOnError = this.options.onError;
+		delete this.options.onError;
+		
+		var optWithCallbacks = $n2.extend({}, // use this as init callback
+			this.options,
+			{
+				onSuccess: initOnSuccess
+				,onError: initOnError
+			}
+		);
+
+		$n2.couch.getSession().refreshContext({
+			onSuccess: onSuccess
+			,onError: onError
+		});		
+
+		$n2.couch.getSession().addChangedContextListener(function(){
+			_this.notifyListeners()
+		});
+		
+		if( this.options.autoRefresh
+		 && this.options.refreshIntervalInSec > 0
+		 && typeof(setInterval) === 'function' ) {
+			setInterval(
+				function(){
+					$n2.couch.getSession().refreshContext({
+						onError: function(){} // ignore
+					});
+				}
+				,(1000 * this.options.refreshIntervalInSec) // expressed in ms
+			);
+			
+			
+			setInterval(
+				function(){
+					var cookie = $n2.cookie.getCookie('NunaliitAuth');
+					if( cookie !== _this.lastAuthSessionCookie ) {
+						_this.lastAuthSessionCookie = cookie;
+						$n2.couch.getSession().refreshContext({
+							onError: function(){} // ignore
+						});
+					};
+				}
+				,2000 // 2 seconds
+			);
+		};
+
+		function onSuccess(context) {
+			$n2.log("Login(adjustCookies) successful", context, _this.options);
+			if( !context.name && _this.options.autoAnonymousLogin ) {
+				/*
+				 * auto login will do notifications when appropriate so it is alright
+				 * to skip notifyListeners() in this case.
+				 */
+				_this._userLogin(optWithCallbacks, true);
+			} else {
+				initOnSuccess(context, optWithCallbacks);
+				_this.notifyListeners();
+			};
+		};
+		
+		function onError(error) {
+			$n2.log('Login(adjustCookies) error: '+error);
+			
+			if (_this.options.autoAnonymousLogin) { // auto login will do notifications when appropriate
+				_this._userLogin(optWithCallbacks, true);
+			} else {
+				var err = {
+					message: 'Problem initializing authentication library'
+					,cause: {
+						message: error
+					}
+				};
+				initOnError(err, optWithCallbacks);
+				_this.notifyListeners();
+			};
+		};
+	}
+
+	,addListeners: function(listeners) {
+		var _this = this;
+		var cUser = this.getCurrentUser();
 		
 		if( typeof(listeners) == 'function' ) {
 			addListener(listeners);
@@ -62,17 +203,17 @@ $Id: n2.couchAuth.js 8445 2012-08-22 19:11:38Z jpfiset $
 		};
 		
 		function addListener(listener) {
-			loginStateListeners.push(listener);
+			_this.loginStateListeners.push(listener);
 			try {
 				listener(cUser);
 			} catch(e) {
-				log('$.NUNALIIT_AUTH: EXCEPTION caught in listener (add): '+e);
+				$n2.log('CouchAuthService: EXCEPTION caught in listener (add): '+e);
 			};
 		};
-	};
-
-	var notifyListeners = function() {
-		var user = getCurrentUser();
+	}
+	
+	,notifyListeners: function() {
+		var user = this.getCurrentUser();
 		
 		// Notify other instances of atlas in browser
 		var userName = null;
@@ -87,31 +228,32 @@ $Id: n2.couchAuth.js 8445 2012-08-22 19:11:38Z jpfiset $
 		
 		// Notify via dispatcher
 		if( user ){
-			_dispatch({
+			this._dispatch({
 				type: 'login'
 				,user: user
 			});
 		} else {
-			_dispatch({
+			this._dispatch({
 				type: 'logout'
 			});
 		};
 		
-		for(var loop=0; loop<loginStateListeners.length; ++loop) {
-			var listener = loginStateListeners[loop];
+		for(var loop=0; loop<this.loginStateListeners.length; ++loop) {
+			var listener = this.loginStateListeners[loop];
 			if( listener ) {
 				try {
 					listener(user);
 				} catch(e) {
-					log('$.NUNALIIT_AUTH: EXCEPTION caught in listener (notify): '+e);
+					$n2.log('CouchAuthService: EXCEPTION caught in listener (notify): '+e);
 				};
 			};
 		};
-	};
+	}
 	
-	var _userLogin = function(options, anonymousFlag, username, password) {
+	,_userLogin: function(options, anonymousFlag, username, password) {
 		var loginRetries = 0
-			,loginRetryLimit = 3;
+			,loginRetryLimit = 3
+			,_this = this;
 		
 		function doLogin() {
 			$n2.couch.getSession().login({
@@ -153,27 +295,27 @@ $Id: n2.couchAuth.js 8445 2012-08-22 19:11:38Z jpfiset $
 			};
 				
 			var err = {
-				message: 'Invalid e-mail and/or password'
+				message: _loc('Invalid e-mail and/or password')
 			};
 			if (null != causeObj) {
 				err.cause = causeObj;
 			};
 			clearLoginForm();
 			options.onError(err,options);
-			notifyListeners();
+			_this.notifyListeners();
 		};
 		
 		function onSuccess(result) {
 
 			var context = $n2.couch.getSession().getContext();
 
-			log("Login successful",context,options);
+			$n2.log('Login successful',context,options);
 			
 			if( context && context.name ) {
 			
 				clearLoginForm();
 				options.onSuccess(context,options);
-				notifyListeners();
+				_this.notifyListeners();
 
 			} else {
 				doErrorNotification(null);
@@ -181,7 +323,7 @@ $Id: n2.couchAuth.js 8445 2012-08-22 19:11:38Z jpfiset $
 		};
 		
 		function onError(xmlHttpRequest, textStatus, errorThrown) {
-			log("Login error", xmlHttpRequest, textStatus, errorThrown);
+			$n2.log('Login error', xmlHttpRequest, textStatus, errorThrown);
 			doErrorNotification({ message: textStatus });
 		};
 		
@@ -190,177 +332,15 @@ $Id: n2.couchAuth.js 8445 2012-08-22 19:11:38Z jpfiset $
 			password = options.anonymousPw;
 		};
 		doLogin();
-	};
+	}
 	
-	var defaultError = function(err, options) {
-		var acc = [];
-		
-		if( err ) {
-			acc.push(''+err.message);
-			var cause = err.cause;
-			while( cause ) {
-				acc.push('\n>'+cause.message);
-				cause = cause.cause;
-			};
-		} else {
-			acc.push('<Unknown error>');
-		};
-		
-		alert(acc.join(''));
-	};
+	,autoAnonLogin: function(options_) {
+		var options = $n2.extend({}, defaultOptions, this.options, options_);
+		this._userLogin(options, true);
+	}
 	
-	var initOptions = {};
-	var defaultOptions = {
-		onSuccess: function(result,options) {}
-		,onError: defaultError
-		,anonymousLoginAllowed: false
-		,anonymousUser: 'anonymous'
-		,anonymousPw: 'anonymous'
-		,autoAnonymousLogin: false
-		,prompt: _loc('Please login')
-		,userString: _loc('user name')
-		,directory: null
-	};
-
-	/**
-	 * This function should be called when a page is first loading.
-	 * This allows to adjust the internal settings based on the 
-	 * current authentication cookie.
-	 *
-	 * In the case of autoAnonymousLogin, this function also ensures that the
-	 * identified anonymous user is logged in before returning.  This is used to ensure
-	 * that the application has basic access to the server database before full application
-	 * initialization is launched.  Technically, this could be done in the callback but
-	 * that would mean every application desiring that service would need to write a
-	 * callback to initiate a login and this seems like a useful service to provide
-	 * here.  To make autoAnonymousLogin behave as if the user has not logged in, because
-	 * they are unaware that it has happened, this needs to retain some logic concerning
-	 * the option anyway (e.g., whether or not to show the guest login button which serves
-	 * no purpose if auto anonymous login is being maintained) so it may
-	 * as well live here.
-	 *
-	 * Note that the callbacks (onSuccess, onError) in the initOptions are
-	 * really specific to the init (for example, in many cases triggering application
-	 * initilization once database access is ready) and should NOT be maintained
-	 * as callbacks for use by all auth interactions.  So on a init completion, 
-	 * these callback options are deleted.  The other auth interfaces (login,
-	 * logout) can include context specific callbacks as parameters when needed.
-	 * 
-	 * Similarly, once auth listeners are added, they are deleted from the initOptions.
-	 *
-	 * The interface to the auth package is still flexible enough:
-	 * 1) Other interfaces include options and can include call-specific callbacks as
-	 *    needed.
-	 * 2) Listeners can be added post-initialization using the addListener() interface.
-	 */
-	var init = function(options_) {
-		
-		initOptions = $.extend(
-			{}
-			,defaultOptions
-			,{
-				autoRefresh: true
-				,refreshIntervalInSec: 120 // 2 minutes
-			}
-			,options_
-		);
-		
-		// Install login state listeners - don't retain as stored options.
-		if( initOptions.listeners ) {
-			addListeners(initOptions.listeners);
-			delete initOptions.listeners;
-		};
-		
-		/*
-		 * carry either default or provided fns for onSuccess or onError
-		 * and remove these from the stored options ... they are usually
-		 * not appropriate for use as login and logout callbacks.
-		 */
-		var initOnSuccess = initOptions.onSuccess;
-		delete initOptions.onSuccess;
-		var initOnError = initOptions.onError;
-		delete initOptions.onError;
-		
-		var optWithCallbacks = $.extend({}, // use this as init callback
-			initOptions,
-			{
-				onSuccess: initOnSuccess
-				,onError: initOnError
-			}
-		);
-
-		$n2.couch.getSession().refreshContext({
-			onSuccess: onSuccess
-			,onError: onError
-		});		
-
-		$n2.couch.getSession().addChangedContextListener(notifyListeners);
-		
-		if( initOptions.autoRefresh
-		 && initOptions.refreshIntervalInSec > 0
-		 && typeof(setInterval) === 'function' ) {
-			setInterval(
-				function(){
-					$n2.couch.getSession().refreshContext({
-						onError: function(){} // ignore
-					});
-				}
-				,(1000 * initOptions.refreshIntervalInSec) // expressed in ms
-			);
-			
-			
-			setInterval(
-				function(){
-					var cookie = $n2.cookie.getCookie('NunaliitAuth');
-					if( cookie !== lastAuthSessionCookie ) {
-						lastAuthSessionCookie = cookie;
-						$n2.couch.getSession().refreshContext({
-							onError: function(){} // ignore
-						});
-					};
-				}
-				,2000 // 2 seconds
-			);
-		};
-
-		function onSuccess(context) {
-			$n2.log("Login(adjustCookies) successful", context, initOptions);
-			if( !context.name && initOptions.autoAnonymousLogin ) {
-				/*
-				 * auto login will do notifications when appropriate so it is alright
-				 * to skip notifyListeners() in this case.
-				 */
-				_userLogin(optWithCallbacks, true);
-			} else {
-				initOnSuccess(context, optWithCallbacks);
-				notifyListeners();
-			};
-		};
-		
-		function onError(error) {
-			log('Login(adjustCookies) error: '+error);
-			
-			if (initOptions.autoAnonymousLogin) { // auto login will do notifications when appropriate
-				_userLogin(optWithCallbacks, true);
-			} else {
-				var err = {
-					message: 'Problem initializing authentication library'
-					,cause: {
-						message: error
-					}
-				};
-				initOnError(err, optWithCallbacks);
-				notifyListeners();
-			};
-		};
-	};
-	
-	var autoAnonLogin = function(options_) {
-		var options = $.extend({}, defaultOptions, initOptions, options_);
-		_userLogin(options, true);
-	};
-	
-	function createLoginDialog(dialogId, options){
+	,createLoginDialog: function(dialogId, options){
+		var _this = this;
 		var $dialog = $('#'+dialogId);
 		
 		$dialog.html( ['<div class="n2Auth_login">'
@@ -405,7 +385,7 @@ $Id: n2.couchAuth.js 8445 2012-08-22 19:11:38Z jpfiset $
 		$dialog.find('.n2Auth_button_createUser')
 			.text( _loc('Create a new user') )
 			.click(function(){
-				createUserCreationDialog(dialogId, options);
+				_this.createUserCreationDialog(dialogId, options);
 				return false;
 			});
 		$dialog.find('.n2Auth_input_field').keydown(function(e){
@@ -434,11 +414,12 @@ $Id: n2.couchAuth.js 8445 2012-08-22 19:11:38Z jpfiset $
 			var $dialog = $('#'+dialogId);
 			var user = $dialog.find('.n2Auth_user_input').val();
 			var password = $dialog.find('.n2Auth_pw_input').val();
-			_userLogin(options, false, user, password);
+			_this._userLogin(options, false, user, password);
 		};
-	};
+	}
 	
-	function createUserCreationDialog(dialogId, options){
+	,createUserCreationDialog: function(dialogId, options){
+		var _this = this;
 		var $dialog = $('#'+dialogId);
 		
 		$dialog.html( ['<div class="n2Auth_create">'
@@ -484,7 +465,7 @@ $Id: n2.couchAuth.js 8445 2012-08-22 19:11:38Z jpfiset $
 			.text( _loc('Cancel') )
 			.button({icons:{primary:'ui-icon-cancel'}})
 			.click(function(){
-				createLoginDialog(dialogId, options);
+				_this.createLoginDialog(dialogId, options);
 				return false;
 			});
 		$dialog.find('.n2Auth_input_field').keydown(function(e){
@@ -538,28 +519,24 @@ $Id: n2.couchAuth.js 8445 2012-08-22 19:11:38Z jpfiset $
 				,password: password
 				,display: display
 				,onSuccess: function() { 
-					_userLogin(options, false, user, password);
+					_this._userLogin(options, false, user, password);
 				}
 				,onError: function(err){
 					alert( _loc('Unable to create user: ')+err);
 				}
 			});
 		};
-	};
+	}
 		
-	var showLoginForm = function(options_) {
-		var options = $.extend({}, defaultOptions, initOptions, options_);
+	,showLoginForm: function(options_) {
+		var options = $.extend({}, defaultOptions, this.options, options_);
 
-		var myIndex = index;
-		++index;
-		options.index = myIndex;
-		
 		var dialogId = $n2.getUniqueId();
 		var $dialog = $('<div id="'+dialogId+'"></div>');
 		options.dialog = $dialog;
 		$(document.body).append($dialog);
 		
-		createLoginDialog(dialogId, options);
+		this.createLoginDialog(dialogId, options);
 		
 		var dialogOptions = {
 			autoOpen: true
@@ -575,11 +552,11 @@ $Id: n2.couchAuth.js 8445 2012-08-22 19:11:38Z jpfiset $
 		}
 		$dialog.dialog(dialogOptions);
 		
-	};
+	}
 	
-	var logout = function(options_) {
-		
-		var options = $.extend({}, defaultOptions, initOptions, options_);
+	,logout: function(options_) {
+		var _this = this;
+		var options = $.extend({}, defaultOptions, this.options, options_);
 
 		$n2.couch.getSession().logout({
 			onSuccess: onSuccess
@@ -587,43 +564,42 @@ $Id: n2.couchAuth.js 8445 2012-08-22 19:11:38Z jpfiset $
 		
 		function onSuccess(result) {
 
-			log("Logout successful",result,options);
+			$n2.log("Logout successful",result,options);
 			
 			options.onSuccess(result,options);
 		
-			notifyListeners();
+			_this.notifyListeners();
 		};
-	};
+	}
 	
-	var getCurrentUser = function() {
-		var context = getAuthContext();
+	,getCurrentUser: function() {
+		var context = this.getAuthContext();
 
 		if( null == context.name ) {
 			return null;
-		}
-		if( context.userDoc ) {
+		} else if( context.userDoc ) {
 			return context.userDoc;
-		}
+		};
 
 		return context;
-	};
+	}
 
-	var getAuthContext = function() {
+	,getAuthContext: function() {
 		return $n2.couch.getSession().getContext();
-	};
-	
-	function isDeleteAllowed() {
-		return isAdmin(); 
 	}
 	
-	function isUpdateAllowed(contribCreatorDisplayName) {
+	,isDeleteAllowed: function() {
+		return this.isAdmin(); 
+	}
+	
+	,isUpdateAllowed: function(contribCreatorDisplayName) {
 		var allowed = false;
-		var user = getCurrentUser();
+		var user = this.getCurrentUser();
 		if (null != user) {
 			if (user.admin) {
 				allowed = true;
 			} else if (!user.anonymous &&
-				"" != contribCreatorDisplayName && // specific case for undefined contributor info
+				'' != contribCreatorDisplayName && // specific case for undefined contributor info
 				user.display == contribCreatorDisplayName) {
 				allowed = true;
 			}
@@ -631,28 +607,28 @@ $Id: n2.couchAuth.js 8445 2012-08-22 19:11:38Z jpfiset $
 		return(allowed); 
 	}
 	
-	var isLoggedIn = function() {
-		var authContext = getAuthContext();
+	,isLoggedIn: function() {
+		var authContext = this.getAuthContext();
 		if( authContext && authContext.name ) {
 			return true;
 		};
 
 		return false;
-	};
+	}
 	
-	var isUser = function() {
-		if( !isLoggedIn() ) return false;
+	,isUser: function() {
+		if( !this.isLoggedIn() ) return false;
 		
-		var user = getCurrentUser();
+		var user = this.getCurrentUser();
 		if( user.anonymous ) return false;
 		
 		return true;
-	};
+	}
 	
-	var isAdmin = function() {
-		if( !isLoggedIn() ) return false;
+	,isAdmin: function() {
+		if( !this.isLoggedIn() ) return false;
 
-		var user = getCurrentUser();
+		var user = this.getCurrentUser();
 		if( !user.roles ) return false;
 
 		// Check if _admin role is present
@@ -663,12 +639,12 @@ $Id: n2.couchAuth.js 8445 2012-08-22 19:11:38Z jpfiset $
 		};		
 		
 		return false;
-	};
+	}
 	
-	var isAnonymous = function() {
-		if( !isLoggedIn() ) return false;
+	,isAnonymous: function() {
+		if( !this.isLoggedIn() ) return false;
 		
-		var user = getCurrentUser();
+		var user = this.getCurrentUser();
 
 		// Check if anonymous role is present
 		for(var i=0,e=user.roles.length; i<e; ++i) {
@@ -678,65 +654,197 @@ $Id: n2.couchAuth.js 8445 2012-08-22 19:11:38Z jpfiset $
 		};		
 		
 		return false;
-	};
+	}
     
-	function userLoggedInAndNotAnonymous() {
-		if( !isLoggedIn() ) return false;
-		if( isAnonymous() ) return false;
+	,userLoggedInAndNotAnonymous: function() {
+		if( !this.isLoggedIn() ) return false;
+		if( this.isAnonymous() ) return false;
 
 		return true;
 	}
 	
-	function autoAnonymousBehaviour() {
-		return(isDefined(initOptions.autoAnonymousLogin) && initOptions.autoAnonymousLogin);
+	,autoAnonymousBehaviour: function() {
+		return(isDefined(this.options.autoAnonymousLogin) && this.options.autoAnonymousLogin);
 	}
 	
-	function _getDispatcher(){
+	,createAuthWidget: function(opts_){
+		var showService = null;
+		if( this.options.directory ){
+			showService = this.options.directory.showService;
+		};
+		
+		var opts = $n2.extend({
+			elemId: null
+			,authService: this
+			,showService: showService
+		},opts_);
+		
+		return new AuthWidget(opts);
+	}
+	
+	,_getDispatcher: function(){
 		var d = null;
-		if( initOptions.directory ){
-			d = initOptions.directory.dispatchService;
+		if( this.options.directory ){
+			d = this.options.directory.dispatchService;
 		};
 		return d;
-	};
+	}
 	
-	function _dispatch(m){
-		var dispatcher = _getDispatcher();
+	,_dispatch: function(m){
+		var dispatcher = this._getDispatcher();
 		if( dispatcher ){
 			var h = dispatcher.getHandle('n2.couchAuth');
 			dispatcher.send(h,m);
 		};
-	};
-	
-	$.NUNALIIT_AUTH = {
-		getUser: getCurrentUser
+	}
+});	
 
-		,getAuthContext: getAuthContext
-		
-		,init: init
+//===================================================================================
+
+var AuthWidget = $n2.Class({
+	options: null
 	
-		,login: showLoginForm
+	,initialize: function(options_){
+		this.options = $n2.extend({
+			elemId: null
+			,authService: null
+			,showService: null
+		},options_);
 		
-		,logout: logout
+		var _this = this;
 		
-		,addListener: addListeners
+		var authService = this.getAuthService();
+		if( authService ){
+			authService.addListeners(function(currentUser){
+				_this._loginStateChanged(currentUser);
+			});
+		};
+	}
+
+	,getWidgetElem: function(){
+		if( this.options.elemId ){
+			return $('#'+this.options.elemId);
+		};
 		
-		,isDeleteAllowed: isDeleteAllowed
+		return $('#n2AuthDummy'); // return empty set
+	}
+
+	,getAuthService: function(){
+		return this.options.authService;
+	}
+
+	,getShowService: function(){
+		return this.options.showService;
+	}
+
+	,_loginStateChanged: function(currentUser) {
+
+		var $login = this.getWidgetElem();
+		if( $login.length < 1 ) return;
+		$login.empty();
 		
-		,isUpdateAllowed: isUpdateAllowed
+		var showService = this.getShowService();
 		
-		,isLoggedIn: isLoggedIn
-		
-		,isUser: isUser
-		
-		,isAdmin: isAdmin
-		
-		,isAnonymous: isAnonymous
-		
-		,userLoggedInAndNotAnonymous: userLoggedInAndNotAnonymous
-		
-		,autoAnonymousBehaviour: autoAnonymousBehaviour
-		
-		,autoAnonLogin: autoAnonLogin
-	};
+		var authService = this.getAuthService();
+		if( authService ) {
+			if( null == currentUser ) {
+				var aElem = $('<a class="loginLink" href="javascript:Login"></a>');
+				aElem.text( _loc('Login') );
+				aElem.click(function(){
+					authService.showLoginForm();
+					return false;
+				});
+				var nameElem = $('<span class="loginGreeting"></span>');
+				nameElem.text( _loc('Welcome') );
+				$login.append(aElem).append(nameElem);
+	
+			} else {
+				var aElem = $('<a class="loginLink" href="javascript:Logout"></a>');
+				aElem.text( _loc('Logout') );
+				aElem.click(function(){
+					authService.logout();
+					return false;
+				});
+				var display = currentUser.display;
+				if( !display ) display = currentUser.name;
+				var nameElem = $('<span class="loginGreeting"></span>');
+				nameElem.text( display );
+				$login.append(aElem).append(nameElem);
+			};
+		};
+	}
+});
+
+//===================================================================================
+
+$n2.couchAuth = {
+	AuthService: AuthService
+	,AuthWidget: AuthWidget
+	,_defaultAuthService: null
+};
+
+$.NUNALIIT_AUTH = {
+	getUser: function(){
+		return $n2.couchAuth._defaultAuthService.getCurrentUser();
+	}
+
+	,getAuthContext: function() {
+		return $n2.couchAuth._defaultAuthService.getAuthContext()
+	}
+	
+	,init: function(opts_){
+		$n2.couchAuth._defaultAuthService = new AuthService(opts_);
+		return $n2.couchAuth._defaultAuthService;
+	}
+
+	,login: function(opts_){
+		$n2.couchAuth._defaultAuthService.showLoginForm(opts_);
+	}
+	
+	,logout: function(opts_){
+		$n2.couchAuth._defaultAuthService.logout(opts_);
+	}
+	
+	,addListener: function(opts_){
+		$n2.couchAuth._defaultAuthService.addListeners(opts_);
+	}
+	
+	,isDeleteAllowed: function(){
+		return $n2.couchAuth._defaultAuthService.isDeleteAllowed();
+	}
+	
+	,isUpdateAllowed: function(){
+		return $n2.couchAuth._defaultAuthService.isUpdateAllowed();
+	}
+	
+	,isLoggedIn: function(){
+		return $n2.couchAuth._defaultAuthService.isLoggedIn();
+	}
+	
+	,isUser: function(){
+		return $n2.couchAuth._defaultAuthService.isUser();
+	}
+	
+	,isAdmin: function(){
+		return $n2.couchAuth._defaultAuthService.isAdmin();
+	}
+	
+	,isAnonymous: function(){
+		return $n2.couchAuth._defaultAuthService.isAnonymous();
+	}
+	
+	,userLoggedInAndNotAnonymous: function(){
+		return $n2.couchAuth._defaultAuthService.userLoggedInAndNotAnonymous();
+	}
+	
+	,autoAnonymousBehaviour: function(){
+		return $n2.couchAuth._defaultAuthService.autoAnonymousBehaviour();
+	}
+	
+	,autoAnonLogin: function(opts_){
+		$n2.couchAuth._defaultAuthService.autoAnonLogin(opts_);
+	}
+};
+
 })(jQuery,nunaliit2);
 

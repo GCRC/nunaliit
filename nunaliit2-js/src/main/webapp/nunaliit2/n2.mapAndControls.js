@@ -2289,33 +2289,10 @@ var MapAndControls = $n2.Class({
      		};
     	};
     	
-   		$('#login').empty();
     	if( showLogin ) {
-     		var aElem = $('<a class="loginLink" href="javascript:Login">Login</a>');
-    		aElem.click(function(){
-    			if( $.NUNALIIT_AUTH ) $.NUNALIIT_AUTH.login();
-    			return false;
-    		});
-    		var nameElem = $('<span class="loginGreeting">&nbsp</span>');
-    		$('#login').append(aElem).append(nameElem);
     		this.hideMapInteractionSwitch();
 			this.switchMapMode(this.modes.NAVIGATE);
     	} else {
-    		var aElem = $('<a class="loginLink" href="javascript:Logout">Logout</a>');
-    		aElem.click(function(){
-    			if( $.NUNALIIT_AUTH ) {
-  					if ($.NUNALIIT_AUTH.autoAnonymousBehaviour()) {
-    					$.NUNALIIT_AUTH.autoAnonLogin();
-  					} else {
-    					$.NUNALIIT_AUTH.logout();
-    				};
-    			};
-    			return false;
-    		});
-    		var display = currentUser.display;
-    		if( !display ) display = currentUser.name;
-    		var nameElem = $('<span class="loginGreeting">' + display + '&nbsp</span>');
-    		$('#login').append(aElem).append(nameElem);
     		if( this.isUser() ) {
     			this.showMapInteractionSwitch();
     		};
