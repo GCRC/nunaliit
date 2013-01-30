@@ -617,7 +617,7 @@ var MapAndControls = $n2.Class({
 		this.modes = {
 			NAVIGATE: {
 				name        : "NAVIGATE"
-				,buttonValue : "Add or Edit a Map Feature"
+				,buttonValue : _loc('Add or Edit a Map Feature')
 				,onStartHover: function(feature) {
 					_this.hoverFeature(feature);
 					_this.hoverFeaturePopup(feature);
@@ -630,7 +630,7 @@ var MapAndControls = $n2.Class({
 			}
 			,EDIT: {
 				name        : "EDIT"
-				,buttonValue : "Cancel Feature Editing"
+				,buttonValue : _loc('Cancel Feature Editing')
 				,onStartHover: function(feature) {
 					_this.hoverFeature(feature);
 					_this.hoverFeaturePopup(feature);
@@ -660,7 +660,7 @@ var MapAndControls = $n2.Class({
 			}
 			,EDIT_FEATURE: {
 				name        : "EDIT_FEATURE"
-				,buttonValue : "Cancel Feature Editing"
+				,buttonValue : _loc('Cancel Feature Editing')
 			}
 		};
 		this.currentMode = this.modes.NAVIGATE;

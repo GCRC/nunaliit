@@ -874,7 +874,7 @@ $n2.couchDisplay = $n2.Class({
 					name: relatedSchemaName
 					,onSuccess: function(schema){
 						var $blindWidget = $('#'+blindId);
-						$blindWidget.find('._n2DisplaySchemaName').text(schema.getLabel());
+						$blindWidget.find('._n2DisplaySchemaName').text( _loc(schema.getLabel()) );
 					}
 				});
 			};
