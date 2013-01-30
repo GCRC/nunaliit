@@ -13,7 +13,7 @@ public class FFmpegMediaInfoImpl implements FFmpegMediaInfo {
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	static private Pattern patternInput0 = Pattern.compile("^Input #0,\\s*([^,]*),");
-	static private Pattern patternDuration = Pattern.compile("^\\s*Duration:\\s*((\\d+):(\\d+):(\\d+\\.\\d+)),.*bitrate:\\s*((\\d+)\\s*(.*))");
+	static private Pattern patternDuration = Pattern.compile("^\\s*Duration:\\s*((\\d+):(\\d+):(\\d+\\.\\d+))");
 	static private Pattern patternDurationStart = Pattern.compile("start:\\s*(\\d+\\.\\d+)");
 	static private Pattern patternDurationBitRate = Pattern.compile("bitrate:\\s*((\\d+)\\s*([a-zA-Z/]+))");
 	static private Pattern patternVideo = Pattern.compile("^\\s*Stream.*Video:\\s*([^, ]*)[^,]*,.*,\\s*(\\d+)x(\\d+)");
