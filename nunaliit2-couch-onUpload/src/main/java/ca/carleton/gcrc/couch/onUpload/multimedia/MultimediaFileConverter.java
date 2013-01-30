@@ -3,6 +3,9 @@ package ca.carleton.gcrc.couch.onUpload.multimedia;
 import java.io.File;
 import java.util.Properties;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import ca.carleton.gcrc.couch.client.CouchUserContext;
 import ca.carleton.gcrc.couch.onUpload.UploadConstants;
 import ca.carleton.gcrc.couch.onUpload.UploadProgressAdaptor;
@@ -23,9 +26,6 @@ import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagick;
 import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagickProcessor;
 import ca.carleton.gcrc.olkit.multimedia.utils.MimeUtils;
 import ca.carleton.gcrc.olkit.multimedia.utils.MimeUtils.MultimediaClass;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class MultimediaFileConverter implements FileConversionPlugin {
 
@@ -252,7 +252,7 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 			File thumbFile = request.getThumbnailFile();
 			SystemFile thumbSf = SystemFile.getSystemFile(thumbFile);
 			
-			String thumbnailAttachmentName = computeThumbnailName(attDescription.getAttachmentName());
+			String thumbnailAttachmentName = computeThumbnailName(attDescription.getAttachmentName(),"jpeg");
 			AttachmentDescriptor thumbnailObj = conversionContext.getAttachmentDescription(thumbnailAttachmentName);
 
 			if( CouchNunaliitUtils.hasVetterRole(submitter, atlasName) ) {
@@ -501,7 +501,7 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 
 		// Compute attachment name
 		SystemFile thumbSf = SystemFile.getSystemFile(outFile);
-		String thumbnailAttachmentName = computeThumbnailName(attDescription.getAttachmentName());
+		String thumbnailAttachmentName = computeThumbnailName(attDescription.getAttachmentName(),"jpeg");
 		
 		// Upload thumbnail
 		String thumbMimeType = thumbSf.getMimeType();
@@ -556,20 +556,29 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 		return originalName;
 	}
 
-	private String computeThumbnailName(String attachmentName) {
+	private String computeThumbnailName(String attachmentName, String extension) {
 		if( null == attachmentName ) {
-			return "thumbnail";
+			if( null != extension ) {
+				return "thumbnail."+extension;
+			} else {
+				return "thumbnail";
+			}
 		}
 		
 		// Select a different file name
 		String prefix = "";
 		String suffix = "";
-		int pos = attachmentName.indexOf('.', 1);
-		if( pos < 0 ) {
+		int pos = attachmentName.lastIndexOf('.');
+		if( pos < 1 ) {
 			prefix = attachmentName;
 		} else {
 			prefix = attachmentName.substring(0, pos);
 			suffix = attachmentName.substring(pos);
+		}
+		
+		// Change extension if specified
+		if( null != extension ){
+			suffix = "."+extension;
 		}
 		
 		String thumbnailName = prefix + "_thumb" + suffix;

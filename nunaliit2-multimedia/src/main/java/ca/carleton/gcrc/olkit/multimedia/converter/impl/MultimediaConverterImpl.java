@@ -2,6 +2,9 @@ package ca.carleton.gcrc.olkit.multimedia.converter.impl;
 
 import java.io.File;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionProgress;
 import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionRequest;
 import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionThreshold;
@@ -16,9 +19,6 @@ import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageInfo;
 import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagick;
 import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagickInfo;
 import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagickProcessor;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class MultimediaConverterImpl implements MultimediaConverter {
 
@@ -110,7 +110,7 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 				if( index > 0 ) {
 					name = name.substring(0, index);
 				}
-				name = name+"_thumb.png";
+				name = name+"_thumb.jpeg";
 				
 				thumbnailFile = new File(parentDir, name);
 			}
@@ -282,7 +282,7 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 				if( index > 0 ) {
 					name = name.substring(0, index);
 				}
-				name = name+"_thumb.png";
+				name = name+"_thumb.jpeg";
 				
 				thumbnailFile = new File(parentDir, name);
 			}
