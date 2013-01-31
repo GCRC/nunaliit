@@ -1,9 +1,9 @@
 package ca.carleton.gcrc.couch.onUpload.conversion;
 
 import java.io.File;
+import java.util.Iterator;
 
 import org.json.JSONObject;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,11 +16,27 @@ public class AttachmentDescriptor extends AbstractDescriptor {
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private FileConversionContext context;
-	private String attachmentName;
+	private String specifiedAttName; // null if stored on context
 	
-	public AttachmentDescriptor(FileConversionContext context, String attachmentName){
+	public AttachmentDescriptor(FileConversionContext context, String specifiedAttName){
 		this.context = context;
-		this.attachmentName = attachmentName;
+		this.specifiedAttName = specifiedAttName;
+	}
+	
+	public String getSpecifiedAttachmentName(){
+		if( null != specifiedAttName ){
+			return specifiedAttName;
+		}
+		
+		return context.getAttachmentName();
+	}
+	
+	public void setSpecifiedAttachmentName(String attachmentName){
+		if( null != specifiedAttName ){
+			specifiedAttName = attachmentName;
+		} else {
+			context.setAttachmentName(attachmentName);
+		}
 	}
 	
 	protected JSONObject getJson() throws Exception {
@@ -28,10 +44,9 @@ public class AttachmentDescriptor extends AbstractDescriptor {
 		JSONObject doc = context.getDoc();
 		JSONObject attachments = doc.getJSONObject("nunaliit_attachments");
 		JSONObject files = attachments.getJSONObject("files");
-		JSONObject attachmentDescription = files.getJSONObject(attachmentName);
+		JSONObject attachmentDescription = files.getJSONObject(getSpecifiedAttachmentName());
 		
 		return attachmentDescription;
-		
 	}
 	
 	public String getStatus() throws Exception {
@@ -48,6 +63,87 @@ public class AttachmentDescriptor extends AbstractDescriptor {
 	
 	public void setAttachmentName(String attachmentName) throws Exception {
 		setStringAttribute(UploadConstants.ATTACHMENT_NAME_KEY,attachmentName);
+	}
+	
+	/**
+	 * Renames an attachment. This ensures that there is no collision and that
+	 * all references to this attachment are updated properly, within this document.
+	 * @param newAttachmentName The new attachment name.
+	 * @throws Exception
+	 */
+	public void renameAttachmentTo(String newAttachmentName) throws Exception {
+		JSONObject doc = context.getDoc();
+		JSONObject _attachments = doc.optJSONObject("_attachments");
+		JSONObject nunaliit_attachments = doc.getJSONObject("nunaliit_attachments");
+		JSONObject files = nunaliit_attachments.getJSONObject("files");
+
+		// Verify no collision within nunaliit_attachments.files
+		{
+			Object obj = files.opt(newAttachmentName);
+			if( null != obj ){
+				throw new Exception("Can not rename attachment because of name collision");
+			}
+		}
+		
+		// Verify no collision within _attachments
+		if( null != _attachments ){
+			Object obj = _attachments.opt(newAttachmentName);
+			if( null != obj ){
+				throw new Exception("Can not rename attachment because of name collision");
+			}
+		}
+		
+		// Move descriptor to new name
+		String oldAttachmentName = getSpecifiedAttachmentName();
+		JSONObject descriptor = files.getJSONObject(oldAttachmentName);
+		files.remove(oldAttachmentName);
+		files.put(newAttachmentName, descriptor);
+		setSavingRequired(true);
+		setSpecifiedAttachmentName(newAttachmentName);
+		setAttachmentName(newAttachmentName);
+		
+		// Move attachment, if needed
+		if( null != _attachments ){
+			JSONObject att = _attachments.optJSONObject(oldAttachmentName);
+			if( null != att ){
+				_attachments.remove(oldAttachmentName);
+				_attachments.put(newAttachmentName, att);
+			}
+		}
+		
+		// Loop through all attachment descriptors, updating "source", "thumbnail"
+		// and "original" attributes
+		{
+			Iterator<?> it = files.keys();
+			while( it.hasNext() ){
+				Object objKey = it.next();
+				if( objKey instanceof String ){
+					String key = (String)objKey;
+					JSONObject att = files.getJSONObject(key);
+					
+					{
+						String value = att.optString("source", null);
+						if( oldAttachmentName.equals(value) ){
+							att.put("source", newAttachmentName);
+						}
+					}
+
+					{
+						String value = att.optString("thumbnail", null);
+						if( oldAttachmentName.equals(value) ){
+							att.put("thumbnail", newAttachmentName);
+						}
+					}
+
+					{
+						String value = att.optString("originalAttachment", null);
+						if( oldAttachmentName.equals(value) ){
+							att.put("original", newAttachmentName);
+						}
+					}
+				}
+			}
+		}
 	}
 	
 	public String getFileClass() throws Exception {
@@ -284,15 +380,15 @@ public class AttachmentDescriptor extends AbstractDescriptor {
 	}
 	
 	public boolean isFilePresent() throws Exception {
-		return context.isFilePresent(attachmentName);
+		return context.isFilePresent(getSpecifiedAttachmentName());
 	}
 	
 	public void removeFile() throws Exception {
-		context.removeFile(attachmentName);
+		context.removeFile(getSpecifiedAttachmentName());
 	}
 
 	public JSONObject uploadFile(File uploadedFile, String mimeType) throws Exception {
-		return context.uploadFile(attachmentName, uploadedFile, mimeType);
+		return context.uploadFile(getSpecifiedAttachmentName(), uploadedFile, mimeType);
 	}
 	
 	public File getMediaDir(){

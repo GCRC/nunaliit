@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 
 import org.json.JSONObject;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,6 +59,10 @@ public class FileConversionContext {
 		return attachmentName;
 	}
 
+	public void setAttachmentName(String attachmentName) {
+		this.attachmentName = attachmentName;
+	}
+
 	public File getMediaDir() {
 		return mediaDir;
 	}
@@ -96,7 +99,7 @@ public class FileConversionContext {
 	}
 
 	public AttachmentDescriptor getAttachmentDescription() throws Exception {
-		return getAttachmentDescription(attachmentName);
+		return getAttachmentDescription(null);
 	}
 	
 	public AttachmentDescriptor getAttachmentDescription(String attName) throws Exception {
@@ -113,11 +116,16 @@ public class FileConversionContext {
 			attachments.put("files",files);
 		}
 
-		JSONObject attachmentDescription = files.optJSONObject(attName);
+		String key = attName;
+		if( null == key ){
+			key = attachmentName;
+		}
+		
+		JSONObject attachmentDescription = files.optJSONObject(key);
 		if( null == attachmentDescription ) {
 			attachmentDescription = new JSONObject();
-			attachmentDescription.put("attachmentName", attName);
-			files.put(attName, attachmentDescription);
+			attachmentDescription.put("attachmentName", key);
+			files.put(key, attachmentDescription);
 		}
 		
 		return new AttachmentDescriptor(this, attName);

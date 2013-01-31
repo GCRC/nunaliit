@@ -217,6 +217,42 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 			throw new Exception("Unknown multimedia class: "+mmClass);
 		}
 		
+		// Compute a new name for the attachment, to reflect the conversion
+		{
+			String expectedExtension = "";
+			if( MultimediaClass.VIDEO == mmClass ){
+				expectedExtension = "mp4";
+			} else if( MultimediaClass.AUDIO == mmClass ){
+				expectedExtension = "mp3";
+			} else if( MultimediaClass.IMAGE == mmClass ){
+				expectedExtension = "jpeg";
+			}
+			
+			String currentPrefix = attDescription.getAttachmentName();
+			String currentExtension = "";
+			{
+				int index = currentPrefix.lastIndexOf('.');
+				if( index > 0 ){
+					currentExtension = currentPrefix.substring(index+1);
+					currentPrefix = currentPrefix.substring(0, index);
+				}
+			}
+			
+			if( false == currentExtension.equals(expectedExtension) ){
+				// Must rename
+				String newAttachmentName = currentPrefix + "." + expectedExtension;
+				
+				// Check collision
+				int index = 0;
+				while( conversionContext.isAttachmentDescriptionAvailable(newAttachmentName) ){
+					newAttachmentName = currentPrefix + "_" + index + "." + expectedExtension;
+					++index;
+				}
+				
+				attDescription.renameAttachmentTo(newAttachmentName);
+			}
+		}
+		
 		// Report original size
 		if( request.getInHeight() != 0 && request.getInWidth() != 0 ) {
 			originalObj.setHeight( request.getInHeight() );
@@ -277,13 +313,13 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 			attDescription.setThumbnailReference(thumbnailAttachmentName);
 		}
 		
-		// Upload original file
+		// Report original file
 		if( request.isConversionPerformed() ) {
 			// Original is not needed if no conversion performed
 			
 			String fileClass = attDescription.getFileClass();
 			if( "image".equals(fileClass) && uploadOriginalImages ) {
-				String originalAttachmentName = computeOriginalName(attDescription.getAttachmentName());
+				String originalAttachmentName = computeOriginalName(attDescription.getOriginalName());
 				AttachmentDescriptor origDescription = conversionContext.getAttachmentDescription(originalAttachmentName);
 
 				if( CouchNunaliitUtils.hasVetterRole(submitter, atlasName) ) {
@@ -359,7 +395,7 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 		}
 		
 		// Create attachment description for original file
-		String originalAttachmentName = computeOriginalName(attDescription.getAttachmentName());
+		String originalAttachmentName = computeOriginalName(attDescription.getOriginalName());
 		AttachmentDescriptor origDescription = conversionContext.getAttachmentDescription(originalAttachmentName);
 
 		origDescription.setStatus(attDescription.getStatus());
@@ -543,8 +579,8 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 		// Select a different file name
 		String prefix = "";
 		String suffix = "";
-		int pos = attachmentName.indexOf('.', 1);
-		if( pos < 0 ) {
+		int pos = attachmentName.lastIndexOf('.');
+		if( pos < 1 ) {
 			prefix = attachmentName;
 		} else {
 			prefix = attachmentName.substring(0, pos);
