@@ -56,6 +56,7 @@ loadStrings({
 	,"Save":"Sauvegarder"
 	,"Add Relation":"Relier"
 	,"Generic Media":"Média Générique"
+	,"You are about to leave this page. Do you wish to continue?":"Vous quittez cette page. Voulez-vous continuer?"
 	
 	// tree
 	,"Do you wish to delete this element?":"Désirez-vous supprimer cet élément?"
