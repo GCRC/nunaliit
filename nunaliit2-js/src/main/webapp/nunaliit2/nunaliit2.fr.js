@@ -57,7 +57,9 @@ loadStrings({
 	,"Add Relation":"Relier"
 	,"Generic Media":"Média Générique"
 	,"You are about to leave this page. Do you wish to continue?":"Vous quittez cette page. Voulez-vous continuer?"
-	
+	,"Your file was uploaded and will become available when it has been approved.":"Votre fichier est téléchargé. Il sera disponible lorsqu'un adminitrateur l'aura approuvé"
+	,"Invalid e-mail and/or password":"Problème avec votre nom d'usager ou votre mot de passe"
+		
 	// tree
 	,"Do you wish to delete this element?":"Désirez-vous supprimer cet élément?"
 	,"This object is being modified. Do you wish to continue and revert current changes?":"L'objet en cours d'être modifié. Désirez-vous continuer?"

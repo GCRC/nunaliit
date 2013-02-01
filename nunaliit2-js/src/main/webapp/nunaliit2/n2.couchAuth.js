@@ -53,7 +53,7 @@ var defaultError = function(err, options) {
 			cause = cause.cause;
 		};
 	} else {
-		acc.push('<Unknown error>');
+		acc.push( _loc('<Unknown error>') );
 	};
 	
 	alert(acc.join(''));
@@ -297,9 +297,7 @@ var AuthService = $n2.Class({
 			var err = {
 				message: _loc('Invalid e-mail and/or password')
 			};
-			if (null != causeObj) {
-				err.cause = causeObj;
-			};
+
 			clearLoginForm();
 			options.onError(err,options);
 			_this.notifyListeners();
