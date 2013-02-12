@@ -397,9 +397,9 @@ $n2.extend = function() {
 	                            translation request
 	@returns {String} The string localized for the current locale.
 */
-$n2.loc = function(str, packageName) {
+$n2.loc = function(str, packageName, args) {
 	if( $n2.l10n && $n2.l10n.getLocalizedString ) {
-		return $n2.l10n.getLocalizedString(str, packageName);
+		return $n2.l10n.getLocalizedString(str, packageName, args);
 	};
 	return str;
 };
@@ -746,6 +746,31 @@ $n2.utils = {
        	
    		// Write at end of document
        	document.write(allScriptTags.join(''));
+	}
+	
+	/**
+	 * Accepts a formatting string and arguments. Returns the formatted
+	 * string. For example, $n2.formatString('{a} and {b}',{a:1,b:2}) returns
+	 * '1 and 2'
+	 * @name formatString
+	 * @function
+	 * @memberOf nunaliit2.utils
+	 * @param format {String} Formatting string that contains sequences to be
+	 * replaced by arguments. The sequences are names included within curly
+	 * braces, for example {a}
+	 * @param args {Object} Dictionary of arguments
+	 * @returns {String}
+	 */
+	,formatString: function(format, args){
+		return format.replace(/{[^}]+}/g, function(match, name) {
+			name = $n2.trim(name);
+			if( '' === name ) return match;
+			
+			return typeof args[name] !== 'undefined'
+				? args[name]
+				: match
+			;
+		});
 	}
 };
 

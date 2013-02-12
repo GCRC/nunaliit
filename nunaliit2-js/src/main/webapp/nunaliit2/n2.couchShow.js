@@ -33,7 +33,7 @@ $Id: n2.couchShow.js 8496 2012-09-24 19:54:26Z jpfiset $
 ;(function($,$n2){
 
 // Localization
-var _loc = function(str){ return $n2.loc(str,'nunaliit2-couch'); };
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
 var DH = 'n2.couchShow';
 	

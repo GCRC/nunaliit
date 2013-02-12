@@ -1,4 +1,4 @@
-var _loc = function(str){ return $n2.loc(str,'generic'); };
+var _loc = function(str,args){ return $n2.loc(str,'generic',args); };
 
 function main_init(config) {
 	

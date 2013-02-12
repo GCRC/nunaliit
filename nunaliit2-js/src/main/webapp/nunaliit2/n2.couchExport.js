@@ -38,7 +38,7 @@ $Id: n2.upload.js 8165 2012-05-31 13:14:37Z jpfiset $
 ;(function($,$n2){
 
 // Localization
-var _loc = function(str){ return $n2.loc(str,'nunaliit2'); };
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 
 var Export = $n2.Class('Export',{
 	

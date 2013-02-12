@@ -33,7 +33,7 @@ $Id: n2.couchServerSide.js 8443 2012-08-16 18:04:28Z jpfiset $
 ;(function($,$n2){
 
 // Localization
-var _loc = function(str){ return $n2.loc(str,'nunaliit2-couch'); };
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
 var Notifier = $n2.Class({
 	options: null

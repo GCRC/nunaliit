@@ -37,7 +37,7 @@ $Id: n2.mediaDisplay.js 8265 2012-06-29 20:28:56Z glennbrauen $
 ;(function($,$n2){
 
 // Localization
-var _loc = function(str){ return $n2.loc(str,'nunaliit2'); };
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 	
 var defaultDialogTitle = _loc('View Media');
 

@@ -46,7 +46,7 @@ var PARENT = ':parent';
 var SELECT = ':selector';
 
 // Localization
-var _loc = function(str){ return $n2.loc(str,'nunaliit2'); };
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 
 
 var defaultErrorFn = function(err){ $n2.reportError(err); };

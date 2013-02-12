@@ -33,7 +33,7 @@ $Id: n2.couchImportData.js 8456 2012-08-29 01:08:01Z glennbrauen $
 ;(function($,$n2){
 
 	// Localization
-	var _loc = function(str){ return $n2.loc(str,'nunaliit2-couch-import'); };
+	var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch-import',args); };
 
 	/**
 	 * Base class for data importers.  Instantiate one that includes
@@ -247,20 +247,22 @@ $Id: n2.couchImportData.js 8456 2012-08-29 01:08:01Z glennbrauen $
 						endkey: keyVal,
 						onSuccess: function(rows) {
 							if( rows.length > 0 ) { // already exist
-								caller.updateStatusMsgAsynch(
-									_loc(currDescriptiveLabel) + _loc(' definition (') + keyVal + 
-										_loc(') already exists - not loaded or updated'), 
-									entryStatusId);
+								var locStr = _loc('{label} definition ({key}) already exists - not loaded or updated',{
+									label: _loc(currDescriptiveLabel)
+									,key: keyVal
+								});
+								caller.updateStatusMsgAsynch(locStr,entryStatusId);
 								caller.loadEntry(aIndex+1); // skip to next entry
 							} else {
 								confirmDocumentsDoNotExist(caller, entry, doNotExistFn);
 							};
 						},
 						onError: function(errorMsg){ 
-							caller.updateStatusMsgAsynch(
-								_loc('Error: query error while verifying ') + _loc(currDescriptiveLabel) + 
-									_loc(' definition (') + keyVal + ')', 
-								entryStatusId);
+							var locStr = _loc('Error: query error while verifying {label} definition ({key})',{
+								label: _loc(currDescriptiveLabel)
+								,key: keyVal
+							});
+							caller.updateStatusMsgAsynch(locStr,entryStatusId);
 							caller.loadEntry(aIndex+1); // skip to next entry
 						}
 					});

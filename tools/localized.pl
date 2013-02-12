@@ -72,12 +72,22 @@ sub Capture_loc
 	chomp @output;
 	
 	foreach my $line (@output) {
-		if( $line =~ m/_loc\s*\(\s*'([^)]*)'\s*\)/ ) {
+		if( $line =~ m/_loc\s*\(\s*'([^']*?)'\s*\)/ ) {
 			$dictRef->{$1}->{"found"} = 1;
 			#print qq|$1\n|;
-		} 
+		}
 		
-		if( $line =~ m/_loc\s*\(\s*"([^)]*)"\s*\)/ ) {
+		if( $line =~ m/_loc\s*\(\s*'([^']*?)'\s*,/ ) {
+			$dictRef->{$1}->{"found"} = 1;
+			#print qq|$1\n|;
+		}
+		
+		if( $line =~ m/_loc\s*\(\s*"([^"]*?)"\s*\)/ ) {
+			$dictRef->{$1}->{"found"} = 1;
+			#print qq|$1\n|;
+		}
+		
+		if( $line =~ m/_loc\s*\(\s*"([^"]*?)"\s*,/ ) {
 			$dictRef->{$1}->{"found"} = 1;
 			#print qq|$1\n|;
 		}

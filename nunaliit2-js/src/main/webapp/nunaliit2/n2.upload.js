@@ -38,7 +38,7 @@ $Id: n2.upload.js 8437 2012-08-14 17:59:23Z jpfiset $
 ;(function($,$n2){
 
 // Localization
-var _loc = function(str){ return $n2.loc(str,'nunaliit2'); };
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 
 function onProgressUpdate(tracker) {
 	var progressKey = tracker.getProgressKey();

@@ -37,7 +37,7 @@ $Id: n2.couchContribution.js 8464 2012-08-30 15:43:23Z jpfiset $
 ;(function($,$n2){
 
 // Localization
-var _loc = function(str){ return $n2.loc(str,'nunaliit2-couch'); };
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
 var addContributionSchema = new $n2.form.Schema({
 	title: null

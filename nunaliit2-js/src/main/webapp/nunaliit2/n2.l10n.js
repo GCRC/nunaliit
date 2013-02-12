@@ -104,10 +104,13 @@ function getDictionaryFromLang(lang) {
 	return strings[lang];
 };
 
-function getLocalizedString(str, packageName) {
+function getLocalizedString(str, packageName, args) {
 	var locale = getLocale();
 	
 	if( 'en' === locale.lang ) {
+		if( args ){
+			return $n2.utils.formatString(str,args);
+		};
 		return str;
 	};
 	
@@ -125,6 +128,9 @@ function getLocalizedString(str, packageName) {
 		dic[str] = langStr;
 	};
 	
+	if( args ){
+		return $n2.utils.formatString(langStr,args);
+	};
 	return langStr;
 };
 

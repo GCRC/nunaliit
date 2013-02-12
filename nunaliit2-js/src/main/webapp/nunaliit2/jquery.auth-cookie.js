@@ -37,7 +37,7 @@ $Id: jquery.auth-cookie.js 8165 2012-05-31 13:14:37Z jpfiset $
 ;(function($,$n2){
 
 	// Localization
-	var _loc = function(str){ return $n2.loc(str,'nunaliit2-couch'); };
+	var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
 // === AUTH ====================================	
 

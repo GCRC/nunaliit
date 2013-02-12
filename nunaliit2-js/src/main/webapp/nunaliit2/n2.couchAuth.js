@@ -38,7 +38,7 @@ $Id: n2.couchAuth.js 8445 2012-08-22 19:11:38Z jpfiset $
 ;(function($,$n2){
 
 	// Localization
-	var _loc = function(str){ return $n2.loc(str,'nunaliit2-couch'); };
+	var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
 // ===================================================================================
 

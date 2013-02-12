@@ -33,7 +33,7 @@ $Id$
 ;(function($,$n2){
 
 // Localization
-var _loc = function(str){ return $n2.loc(str,'nunaliit2-couch'); };
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 var DH = 'n2.couchEvents';
 
 var EventSupport = $n2.Class('EventSupport',{

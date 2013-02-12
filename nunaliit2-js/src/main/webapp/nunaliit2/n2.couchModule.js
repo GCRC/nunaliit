@@ -36,7 +36,7 @@ $Id: n2.couchModule.js 8494 2012-09-21 20:06:50Z jpfiset $
 var DH = 'n2.couchModule'; // dispatcher handle
 
 // Localization
-var _loc = function(str){ return $n2.loc(str,'nunaliit2-couch'); };
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
 //=========================================================================
 /*

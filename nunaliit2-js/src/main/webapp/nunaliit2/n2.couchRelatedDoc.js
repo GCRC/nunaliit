@@ -33,7 +33,7 @@ $Id: n2.couchRelatedDoc.js 8484 2012-09-05 19:38:37Z jpfiset $
 ;(function($,$n2){
 
 // Localization
-var _loc = function(str){ return $n2.loc(str,'nunaliit2-couch'); };
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
 var CreateRelatedDocProcess = $n2.Class({
 	

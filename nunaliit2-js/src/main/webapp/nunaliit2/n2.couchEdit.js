@@ -34,7 +34,7 @@ $Id: n2.couchEdit.js 8458 2012-08-29 13:12:06Z jpfiset $
 ;(function($,$n2) {
 
 // Localization
-var _loc = function(str){ return $n2.loc(str,'nunaliit2-couch'); };
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 var DH = 'n2.couchEdit';
 
 function getDefaultCouchProjection(){

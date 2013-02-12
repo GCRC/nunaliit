@@ -33,7 +33,7 @@ $Id: n2.couchDisplay.js 8441 2012-08-15 17:48:33Z jpfiset $
 ;(function($,$n2){
 
 // Localization
-var _loc = function(str){ return $n2.loc(str,'nunaliit2-couch'); };
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
 function docCreationTimeSort(lhs, rhs) {
 	var timeLhs = 0;

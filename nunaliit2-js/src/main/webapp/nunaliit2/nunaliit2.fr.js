@@ -59,6 +59,7 @@ loadStrings({
 	,"Error occurred with progress service":"Erreur avec service de progrès"
 	,"Error while uploading: ":"Erreur de téléchargement"
 	,"Error: query error while verifying ":"Erreur: la vérification a échoué"
+	,"Error: query error while verifying {label} definition ({key})":"Erreur: interrogation échouée lors de la vérification de la définition {label} ({key})"
 	,"Extent (Max X)":"Étendue (max x)"
 	,"Extent (Max Y)":"Étendue (max y)"
 	,"Extent (Min X)":"Étendue (min x)"
@@ -167,6 +168,7 @@ loadStrings({
 	,"top":"en haut"
 	,"user":"usager" // no longer used
 	,"user name":"Nom d'usager"
+	,"{label} definition ({key}) already exists - not loaded or updated":"Définition {label} ({key}) existe déjà - ignorée"
 });
 	
 })(nunaliit2);
