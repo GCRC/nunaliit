@@ -762,7 +762,7 @@ $n2.utils = {
 	 * @returns {String}
 	 */
 	,formatString: function(format, args){
-		return format.replace(/{[^}]+}/g, function(match, name) {
+		return format.replace(/{([^}]+)}/g, function(match, name) {
 			name = $n2.trim(name);
 			if( '' === name ) return match;
 			

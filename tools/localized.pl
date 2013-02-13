@@ -44,12 +44,13 @@ foreach $lang (keys %languages)
 		
 		print qq|"$engString":"$translation"|;
 
+		print qq|\n|;
+
 		if( !defined $dict{$engString}->{"found"} )
 		{
-			print qq| // no longer used|;
+			print qq|//no longer in use: "$engString"\n|;
 		}
 
-		print qq|\n|;
 		
 		$count++;
 	}
@@ -67,7 +68,7 @@ sub Capture_loc
 {
 	my ($dictRef) = @_;
 	
-	my $cmd = qq|grep -R "_loc([^)]*)" *|;    
+	my $cmd = qq|grep -R "_loc\s*(" *|;    
 	my @output = `$cmd`;    
 	chomp @output;
 	

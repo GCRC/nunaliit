@@ -39,8 +39,9 @@
 			this.cancellingLabel = opts.cancellingLabel;
 
 			var $dialog = $('<div id="'+this.dialogId+'">'
-				+'Progress: <span class="selectAppProgress"></span>'
+				+'<span class="selectAppLabel"></span>: <span class="selectAppProgress"></span>'
 				+'</div>');
+			$dialog.find('span.selectAppLabel').text( _loc('Progress') );
 			
 			var dialogOptions = {
 				autoOpen: true
@@ -105,7 +106,7 @@
 		
 		,initialize: function(){
 			this.id = $n2.getUniqueId();
-			this.name = 'Unknown Filter';
+			this.name = _loc('Unknown Filter');
 		}
 	
 		,createList: function(opts_){
@@ -158,7 +159,7 @@
 			var opCancelled = false;
 			
 			if( !opts.filterFn ) {
-				opts.onError('A filter function must be supplied');
+				opts.onError( _loc('A filter function must be supplied') );
 				return;
 			};
 			
@@ -184,7 +185,7 @@
 
 			function receiveAllDocIds(allDocIds_) {
 				if( opCancelled ){
-					reportError('Operation cancelled by user');
+					reportError( _loc('Operation cancelled by user') );
 					progressDialog.close();
 					return;
 				};
@@ -215,11 +216,11 @@
 			
 			
 			if( !opts.filterFn ) {
-				opts.onError('A filter function must be supplied');
+				opts.onError( _loc('A filter function must be supplied') );
 				return;
 			};
 			if( !opts.docIds ) {
-				opts.onError('Doc ids must be supplied when creating a list from document ids');
+				opts.onError( _loc('Doc ids must be supplied when creating a list from document ids') );
 				return;
 			};
 			
@@ -270,7 +271,7 @@
 						,onSuccess: receiveDocs
 						,onError: function(err){
 							progressDialog.close();
-							opts.onError('Unable to retrieve documents: '+err);
+							opts.onError( _loc('Unable to retrieve documents')+': '+err);
 						}
 					});
 				} else {
@@ -302,7 +303,7 @@
 			};
 			
 			function cancel(){
-				reportError('Operation cancelled by user');
+				reportError( _loc('Operation cancelled by user') );
 				progressDialog.close();
 			};
 		}
@@ -320,11 +321,11 @@
 			var _this = this;
 
 			if( !opts.list ){
-				opts.onError('A list must be provided for refining');
+				opts.onError( _loc('A list must be provided for refining') );
 				return;
 			};
 			if( !opts.name ){
-				opts.onError('A name must be provided when refining a list');
+				opts.onError( _loc('A name must be provided when refining a list') );
 				return;
 			};
 			if( typeof(this.getFilterFunction) !== 'function' ) {
@@ -415,7 +416,7 @@
 							,onSuccess: opts.onSuccess
 						});
 					} else {
-						alert('Unable to find search filter');
+						alert( _loc('Unable to find search filter') );
 					};
 					
 					return false;
@@ -465,13 +466,13 @@
 		var opts = $n2.extend({
 			list: null
 			,onSuccess: function(list){}
-			,onError: function(err){ alert('Unable to create a new list: '+err); }
+			,onError: function(err){ alert( _loc('Unable to create a new list')+': '+err); }
 		},opts_);
 		
 		var dialogId = $n2.getUniqueId();
 		var $dialog = $('<div id="'+dialogId+'">'
-			+'<div>Name of new list: <input type="text"/></div>'
-			+'<div>Type of refinement: <select class="searchFilterSelector"></select></div>'
+			+'<div>'+_loc('Name of new list')+': <input type="text"/></div>'
+			+'<div>'+_loc('Type of refinement')+': <select class="searchFilterSelector"></select></div>'
 			+'<div class="searchFilterOptions"></div>'
 			+'<div><button>'+_loc('OK')+'</button><button>'+_loc('Cancel')+'</button></div>'
 			+'</div>');
@@ -501,7 +502,7 @@
 					var filterId = $dialog.find('select.searchFilterSelector').val();
 					
 					if( !listName || '' === listName ){
-						alert('A list name must be supplied');
+						alert( _loc('A list name must be supplied') );
 						$dialog.find('input').focus();
 						return;
 					};
@@ -517,7 +518,7 @@
 							,onSuccess: opts.onSuccess
 						});
 					} else {
-						alert('Unable to find document search filter');
+						alert( _loc('Unable to find document search filter') );
 					};
 					
 					return false;
@@ -533,7 +534,7 @@
 		
 		var dialogOptions = {
 			autoOpen: true
-			,title: _loc('Refine List: '+opts.list.name)
+			,title: _loc('Refine List')+': '+opts.list.name
 			,modal: true
 			,width: 400
 			,close: function(event, ui){
@@ -574,12 +575,12 @@
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
-			this.name = 'Text Search';
+			this.name = _loc('Text Search');
 		}
 	
 		,printOptions: function($parent){
 			var $options = $('<div>'
-				+'Search term: <input type="text"/>'
+				+_loc('Search term')+': <input type="text"/>'
 				+'</div>');
 			$parent.append( $options );
 		}
@@ -609,7 +610,9 @@
 				});
 				return result;
 			};
-			opts.onSuccess(filterFn, 'All documents containing "'+searchTerm+'"');
+			opts.onSuccess(filterFn, _loc('All documents containing {searchTerm}',{
+				searchTerm: searchTerm
+			}));
 			
 			return false;
 		}
@@ -622,12 +625,12 @@
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
-			this.name = 'Select from Javascript';
+			this.name = _loc('Select from Javascript');
 		}
 	
 		,printOptions: function($parent){
 			var $options = $('<div>'
-				+'Javascript:<br/><textarea></textarea>'
+				+_loc('Javascript')+':<br/><textarea></textarea>'
 				+'</div>');
 			
 			$options.find('textarea').val('function(doc){\n\t// return true for selected document\n}')
@@ -650,15 +653,15 @@
 				eval('scriptFn = '+script);
 				scriptFn({_id:'test',_revision:'1-abcde'});
 			} catch(e) {
-				alert('Error: '+e);
+				alert(_loc('Error')+': '+e);
 				return;
 			};
 			if( typeof(scriptFn) !== 'function' ) {
-				alert('You must enter a valid function');
+				alert( _loc('You must enter a valid function') );
 				return;
 			};
 
-			opts.onSuccess(scriptFn, 'All documents filtered by script');
+			opts.onSuccess(scriptFn, _loc('All documents filtered by script') );
 		}
 	});
 
@@ -669,7 +672,7 @@
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
-			this.name = 'All Documents';
+			this.name = _loc('All Documents');
 		}
 	
 		,printOptions: function($parent){
@@ -690,7 +693,7 @@
 				onSuccess: function(docIds){
 					var l = new DocumentList({
 						docIds: docIds
-						,name: 'All Documents'
+						,name: _loc('All Documents')
 					});
 					opts.onSuccess(l);
 				}
@@ -706,12 +709,12 @@
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
-			this.name = 'Select geometries from a layer';
+			this.name = _loc('Select geometries from a layer');
 		}
 	
 		,printOptions: function($parent){
 			var $options = $('<div>'
-				+'Layer name:<br/><select class="layerNameList"></select>'
+				+_loc('Layer name')+':<br/><select class="layerNameList"></select>'
 				+'</div>');
 			
 			$parent.append( $options );
@@ -736,8 +739,8 @@
 					};
 				}
 				,onError: function(err){
-					alert('Unable to obtain list of layers: '+err);
-					reportError('Unable to obtain list of layers: '+err);
+					alert(_loc('Unable to obtain list of layers')+': '+err);
+					reportError(_loc('Unable to obtain list of layers')+': '+err);
 				}
 			});
 		}
@@ -756,7 +759,7 @@
 			var $i = opts.options.find('select.layerNameList');
 			var layerName = $i.val();
 			if( !layerName || '' == layerName ) {
-				alert('Must enter a layer name');
+				alert(_loc('Must enter a layer name'));
 			} else {
 				atlasDesign.queryView({
 					viewName: 'geom-layer'
@@ -768,14 +771,17 @@
 							var row = rows[i];
 							docIds.push(row.id);
 						};
+						var locStr = _loc('Geometries from layer {layerName}',{
+							layerName: layerName
+						});
 						var l = new DocumentList({
 							docIds: docIds
-							,name: 'Geometries from layer '+layerName
+							,name: locStr
 						});
 						opts.onSuccess(l);
 					}
 					,onError: function(err){
-						alert('Problem obtaining documents from layer: '+err);
+						alert(_loc('Problem obtaining documents from layer')+': '+err);
 						opts.onError(err);
 					}
 				});
@@ -790,12 +796,12 @@
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
-			this.name = 'Select documents from a schema type';
+			this.name = _loc('Select documents from a schema type');
 		}
 	
 		,printOptions: function($parent){
 			var $options = $('<div>'
-				+'Schema:<br/><select class="schemaList"></select>'
+				+_loc('Schema')+': <br/><select class="schemaList"></select>'
 				+'</div>');
 			
 			$parent.append( $options );
@@ -814,8 +820,8 @@
 					};
 				}
 				,onError: function(err){
-					alert('Unable to obtain list of schemas: '+err);
-					reportError('Unable to obtain list of schemas: '+err);
+					alert(_loc('Unable to obtain list of schemas')+': '+err);
+					reportError(_loc('Unable to obtain list of schemas')+': '+err);
 				}
 			});
 		}
@@ -834,7 +840,7 @@
 			var $i = opts.options.find('select.schemaList');
 			var schemaName = $i.val();
 			if( !schemaName || '' == schemaName ) {
-				alert('Must enter a schema name');
+				alert(_loc('Must enter a schema name'));
 			} else {
 				atlasDesign.queryView({
 					viewName: 'nunaliit-schema'
@@ -846,14 +852,17 @@
 							var row = rows[i];
 							docIds.push(row.id);
 						};
+						var locStr = _loc('Documents from schema type {schemaName}',{
+							schemaName: schemaName
+						});
 						var l = new DocumentList({
 							docIds: docIds
-							,name: 'Documents from schema type: '+schemaName
+							,name: locStr
 						});
 						opts.onSuccess(l);
 					}
 					,onError: function(err){
-						alert('Problem obtaining documents from schema: '+err);
+						alert(_loc('Problem obtaining documents from schema')+': '+err);
 						opts.onError(err);
 					}
 				});
@@ -872,7 +881,7 @@
 		
 		,initialize: function(){
 			this.id = $n2.getUniqueId();
-			this.name = 'Unknown Transform';
+			this.name = _loc('Unknown Transform');
 		}
 	
 		,transformList: function(opts_){
@@ -913,11 +922,11 @@
 			var _this = this;
 
 			if( !opts.list ) {
-				opts.onError('List is required on transformation');
+				opts.onError(_loc('List is required on transformation'));
 				return;
 			};
 			if( !opts.transformFn ) {
-				opts.onError('Function is required on transformation');
+				opts.onError(_loc('Function is required on transformation'));
 				return;
 			};
 
@@ -963,7 +972,10 @@
 						docId: docId
 						,onSuccess: retrievedDocument
 						,onError: function(err){
-							reportError('Failure to fetch '+docId);
+							var locStr = _loc('Failure to fetch {docId}',{
+								docId: docId
+							});
+							reportError(locStr);
 							failCount += 1;
 							processNext();
 						}
@@ -997,12 +1009,18 @@
 				atlasDb.updateDocument({
 					data: doc
 					,onSuccess: function(docInfo){
-						log(''+doc._id+' transformed and saved');
+						var locStr = _loc('{docId} transformed and saved',{
+							docId: doc._id
+						});
+						log(locStr);
 						okCount += 1;
 						processNext();
 					}
 					,onError: function(errorMsg){ 
-						reportError('Failure to save '+doc._id+': '+errorMsg);
+						var locStr = _loc('Failure to save {docId}',{
+							docId: doc._id
+						});
+						reportError(locStr+': '+errorMsg);
 						failCount += 1;
 						processNext();
 					}
@@ -1010,7 +1028,7 @@
 			};
 			
 			function cancel(){
-				reportError('Operation cancelled by user');
+				reportError(_loc('Operation cancelled by user'));
 				progressDialog.close();
 			};
 		}
@@ -1021,7 +1039,7 @@
 		
 		initialize: function(){
 			DocumentTransform.prototype.initialize.apply(this);
-			this.name = 'Text Replace';
+			this.name = _loc('Text Replace');
 		}
 	
 		,getTransformFunction: function(opts_){
@@ -1033,8 +1051,8 @@
 			
 			var dialogId = $n2.getUniqueId();
 			var $dialog = $('<div id="'+dialogId+'">'
-				+'<div>From: <input class="selectAppFrom" type="text"/></div>'
-				+'<div>To: <input class="selectAppTo" type="text"/></div>'
+				+'<div>'+_loc('From')+': <input class="selectAppFrom" type="text"/></div>'
+				+'<div>'+_loc('To')+': <input class="selectAppTo" type="text"/></div>'
 				+'<div><button>'+_loc('OK')+'</button><button>'+_loc('Cancel')+'</button></div>'
 				+'</div>');
 
@@ -1106,7 +1124,7 @@
 		
 		initialize: function(){
 			DocumentTransform.prototype.initialize.apply(this);
-			this.name = 'Javascript Replace';
+			this.name = _loc('Javascript Replace');
 		}
 	
 		,getTransformFunction: function(opts_){
@@ -1118,7 +1136,7 @@
 			
 			var dialogId = $n2.getUniqueId();
 			var $dialog = $('<div id="'+dialogId+'" class="selectAppDocumentTransformJavascript">'
-				+'<div>Javascript:<br/><textarea></textarea></div>'
+				+'<div>'+_loc('Javascript')+':<br/><textarea></textarea></div>'
 				+'<div><button>'+_loc('OK')+'</button><button>'+_loc('Cancel')+'</button></div>'
 				+'</div>');
 
@@ -1135,11 +1153,11 @@
 							eval('scriptFn = '+script);
 							scriptFn({_id:'test',_revision:'1-abcde'},function(){},function(){});
 						} catch(e) {
-							alert('Error: '+e);
+							alert(_loc('Error')+': '+e);
 							return;
 						};
 						if( typeof(scriptFn) !== 'function' ) {
-							alert('You must enter a valid function');
+							alert(_loc('You must enter a valid function'));
 							return;
 						};
 						
@@ -1182,7 +1200,7 @@
 		,initialize: function(opts_){
 			var opts = $n2.extend({
 				docIds: null
-				,name: 'Unknown List'
+				,name: _loc('Unknown List')
 			},opts_);
 			
 			this.docIds = opts.docIds;
@@ -1194,7 +1212,10 @@
 		}
 	
 		,print: function(){
-			return this.name + ' - ' + this.docIds.length + ' document(s)';
+			var locStr = _loc('{count} document(s)',{
+				count: this.docIds.length
+			});
+			return this.name + ' - ' + locStr;
 		}
 	});
 
@@ -1252,7 +1273,9 @@
 		var $lists = getListsDiv();
 		$lists.empty();
 		
-		var $h = $('<h1>Queries <button>Add</button></h1>');
+		var $h = $('<h1><span></span> <button></button></h1>');
+		$h.find('span').text( _loc('Queries') );
+		$h.find('button').text( _loc('Add') );
 		$lists.append($h);
 		
 		$h.find('button').click(function(){
@@ -1279,7 +1302,8 @@
 			$s.text( list.print() );
 			$d.append($s);
 			
-			var $a = $('<a href="#">View</a>');
+			var $a = $('<a href="#"></a>');
+			$a.text( _loc('View') );
 			$d.append($a);
 			installView(list, $a);
 		};
@@ -1323,7 +1347,8 @@
 		
 		clearDocument();
 		
-		$div.html('<h1>No list Selected</h1><div class="selectAppMinHeight"></div>');
+		$div.html('<h1></h1><div class="selectAppMinHeight"></div>');
+		$div.find('h1').text( _loc('No list Selected') );
 	};
 	
 	// -----------------------------------------------------------------
@@ -1338,21 +1363,24 @@
 		$div.append($h);
 		$h.text(list.name);
 		
-		var $tx = $('<button>Transform</button>');
+		var $tx = $('<button></button>');
+		$tx.text( _loc('Tranform') );
 		$h.append($tx);
 		$tx.click(function(){
 			transformList(list);
 			return false;
 		});
 		
-		var $tx = $('<button>Delete</button>');
-		$h.append($tx);
-		$tx.click(function(){
+		var $dx = $('<button></button>');
+		$dx.text( _loc('Delete') );
+		$h.append($dx);
+		$dx.click(function(){
 			deleteDocumentsFromList(list);
 			return false;
 		});
 		
-		var $rx = $('<button>Refine List</button>');
+		var $rx = $('<button></button>');
+		$rx.text( _loc('Refine List') );
 		$h.append($rx);
 		$rx.click(function(){
 			SearchFilter.refineList({
@@ -1364,14 +1392,16 @@
 			return false;
 		});
 		
-		var $ex = $('<button>Export Geometries</button>');
+		var $ex = $('<button></button>');
+		$ex.text( _loc('Export Geometries') );
 		$h.append($ex);
 		$ex.click(function(){
 			exportList(list);
 			return false;
 		});
 		
-		var $resubmitMedia = $('<button>Re-Submit Media</button>');
+		var $resubmitMedia = $('<button></button>');
+		$resubmitMedia.text( _loc('Re-Submit Media') );
 		$h.append($resubmitMedia);
 		$resubmitMedia.click(function(){
 			resubmitMediaInList(list);
@@ -1441,14 +1471,19 @@
 						useTransform.transformList({
 							list: list
 							,onCompleted: function(totalCount, skippedCount, okCount, failCount){
-								log('Transformations completed. Successful: '+okCount+' Failures: '+failCount+' Skipped: '+skippedCount);
+								var locStr = _loc('Transformations completed. Successful: {ok} Failures: {fail} Skipped: {skipped}',{
+									ok: okCount
+									,fail: failCount
+									,skipped: skippedCount
+								});
+								log(locStr);
 								if( failCount > 0 ) {
-									alert('Transformations completed with some failures');
+									alert(_loc('Transformations completed with some failures'));
 								};
 							}
 						});
 					} else {
-						alert('Unable to find document transform');
+						alert(_loc('Unable to find document transform'));
 					};
 					
 					return false;
@@ -1486,8 +1521,10 @@
 			+'</div>');
 
 		var $span = $dialog.find('span.deleteDocumentsApproveText');
-		$span.text('Do you really wish to delete the '+list.docIds.length
-				+' document'+(list.docIds.length>1?'s':'')+' referenced by this list?');
+		var locStr = _loc('Do you really wish to delete the {count} document(s) referenced by this list?',{
+			count: list.docIds.length
+		});
+		$span.text(locStr);
 		
 		$dialog.find('button.buttonOK')
 			.button({icons:{primary:'ui-icon-check'}})
@@ -1537,7 +1574,10 @@
 							docId: docId
 							,onSuccess: retrievedDocument
 							,onError: function(err){
-								reportError('Failure to fetch '+docId);
+								var locStr = _loc('Failure to fetch {docId}',{
+									docId: docId
+								});
+								reportError(locStr);
 								failCount += 1;
 								processNext();
 							}
@@ -1554,12 +1594,17 @@
 					atlasDb.deleteDocument({
 						data: doc
 						,onSuccess: function(docInfo){
-							log(''+doc._id+' deleted');
+							log( _loc('{docId} deleted',{
+								docId: doc._id
+							}) );
 							okCount += 1;
 							processNext();
 						}
 						,onError: function(errorMsg){ 
-							reportError('Failure to delete '+doc._id+': '+errorMsg);
+							var locStr = _loc('Failure to delete {docId}',{
+								docId: doc._id
+							});
+							reportError(locStr+': '+errorMsg);
 							failCount += 1;
 							processNext();
 						}
@@ -1567,7 +1612,7 @@
 				};
 				
 				function cancel(){
-					reportError('Operation cancelled by user');
+					reportError( _loc('Operation cancelled by user') );
 					progressDialog.close();
 				};
 				
@@ -1601,12 +1646,12 @@
 
 		// Check if service is available
 		if( !exportService ) {
-			alert('Export service is not configured');
+			alert( _loc('Export service is not configured') );
 		} else {
 			exportService.checkAvailable({
 				onAvailable: getExportSettings
 				,onNotAvailable: function(){
-					alert('Export service is not available');
+					alert( _loc('Export service is not available') );
 				}
 			});
 		};
@@ -1615,23 +1660,31 @@
 			var dialogId = $n2.getUniqueId();
 			var $dialog = $('<div id="'+dialogId+'"></div>');
 			
-			$('<div>Exporting <span></span></div>')
+			$('<div>'+_loc('Exporting')+' <span></span></div>')
 				.find('span').text(list.print()).end()
 				.appendTo($dialog);
 
 			var $select = $('<select></select>');
 			$dialog.append($select);
-			$select.append( $('<option value="all">All Documents</options>') );
-			$select.append( $('<option value="points">All Point Geometries</options>') );
-			$select.append( $('<option value="linestrings">All LineString Geometries</options>') );
-			$select.append( $('<option value="polygons">All Polygon Geometries</options>') );
+			$('<option value="all"></options>')
+				.text( _loc('All Documents') )
+				.appendTo($select);
+			$('<option value="points"></options>')
+				.text( _loc('All Point Geometries') )
+				.appendTo($select);
+			$('<option value="linestrings"></options>')
+				.text( _loc('All LineString Geometries') )
+				.appendTo($select);
+			$('<option value="polygons"></options>')
+				.text( _loc('All Polygon Geometries') )
+				.appendTo($select);
 			
 			var inputId = $n2.getUniqueId();
-			$('<div><label for="'+inputId+'">File Name: </label>'
+			$('<div><label for="'+inputId+'">'+_loc('File Name')+': </label>'
 				+'<input type="text" name="'+inputId+'" class="n2_export_fileNameInput" value="export.geojson"/>'
 				+'</div>').appendTo($dialog);
 
-			$('<div><button>Export</button></div>')
+			$('<div><button>'+_loc('Export')+'</button></div>')
 				.appendTo($dialog);
 			$dialog.find('button').click(function(){
 				var $dialog = $('#'+dialogId);
@@ -1649,7 +1702,7 @@
 			
 			var dialogOptions = {
 				autoOpen: true
-				,title: 'Export'
+				,title: _loc('Export')
 				,modal: true
 				,width: 400
 				,close: function(event, ui){
@@ -1676,7 +1729,7 @@
 				,contentType: 'application/binary'
 				,fileName: fileName
 				,onError: function(err){
-					alert('Error during export: '+err);
+					alert(_loc('Error during export')+': '+err);
 				}
 			});
 		};
@@ -1693,17 +1746,20 @@
 		function processDocument(index){
 			if( index >= docIds.length ) {
 				// Finished
-				var docModifiedStr = 'No document modified.'
-				if( documentsModified == 1 ) {
-					docModifiedStr = '1 document modified.'
-				} else if( documentsModified > 1 ){
-					docModifiedStr = ''+documentsModified+' documents modified.'
+				var docModifiedStr = _loc('No document modified.');
+				if( documentsModified > 0 ) {
+					docModifiedStr = _loc('{count} document(s) modified.',{
+						count: documentsModified
+					});
 				};
 				
 				if( errors > 0 ) {
-					reportError('Errors in process: '+errors+'. '+docModifiedStr);
+					var locStr = _loc('Errors in process: {count}.',{
+						count: errors
+					});
+					reportError(locStr+' '+docModifiedStr);
 				} else {
-					log('Process completed. '+docModifiedStr);
+					log(_loc('Process completed.')+' '+docModifiedStr);
 				};
 				return;
 			};
@@ -1716,7 +1772,10 @@
 				}
 				,onError: function(errorMsg){
 					++errors;
-					reportError('Unable to obtain document '+docId+': '+errorMsg);
+					var locStr = _loc('Unable to obtain document {docId}',{
+						docId: docId
+					});
+					reportError(locStr+': '+errorMsg);
 					processDocument(index+1);
 				}
 			});
@@ -1784,7 +1843,9 @@
 					}
 				});
 			} else {
-				log('No media found on '+doc._id);
+				log( _loc('No media found on {docId}',{
+					docId: doc._id
+				}) );
 				processDocument(index+1);
 			};
 		};
@@ -1804,7 +1865,8 @@
 	function clearDocument(){
 		var $div = getDocumentDiv();
 		
-		$div.html('<h1>No Document</h1><div class="selectAppMinHeight"></div>');
+		$div.html('<h1></h1><div class="selectAppMinHeight"></div>');
+		$div.find('h1').text( _loc('No Document') );
 	};
 	
 	// -----------------------------------------------------------------
@@ -1834,7 +1896,8 @@
 				var $buttons = $('<div></div>');
 				$div.append($buttons);
 				
-				var $edit = $('<button>Edit</button>');
+				var $edit = $('<button></button>');
+				$edit.text( _loc('Edit') );
 				$buttons.append($edit);
 				$edit.click(function(){
 					editDocument(doc);
@@ -1887,14 +1950,17 @@
 		return $e;
 		
 		function addHeader($e){
-			var $h = $('<h1>Logs <button>Clear</button></h1>');
+			var $h = $('<h1><span></span> <button></button></h1>');
 			$e.append($h);
-			$h.find('button').click(function(){
-				var $d = getLogsDiv();
-				$d.empty();
-				addHeader($d);
-				return false;
-			});
+			$h.find('span').text( _loc('Logs') );
+			$h.find('button')
+				.text( _loc('Clear') )
+				.click(function(){
+					var $d = getLogsDiv();
+					$d.empty();
+					addHeader($d);
+					return false;
+				});
 		};
 	};
 	
@@ -1918,7 +1984,8 @@
 	
 	// -----------------------------------------------------------------
 	function bs(){
-		var $b = $('<button>Test Temporary View</button>');
+		var $b = $('<button></button>');
+		$b.text( _loc('Test Temporary View') );
 		$selectAppDiv.append($b);
 		
 		$b.click(function(){
@@ -1932,7 +1999,7 @@
 					
 					var l = new DocumentList({
 						docIds: docIds
-						,name: 'Temporary View'
+						,name: _loc('Temporary View')
 					});
 					addList(l);
 				}
@@ -1940,7 +2007,8 @@
 			return false;
 		});
 
-		var $b = $('<button>All Docs</button>');
+		var $b = $('<button></button>');
+		$b.text( _loc('All Documents') );
 		$selectAppDiv.append($b);
 		
 		$b.click(function(){
@@ -1948,7 +2016,7 @@
 				onSuccess: function(docIds){
 					var l = new DocumentList({
 						docIds: docIds
-						,name: 'All Documents'
+						,name: _loc('All Documents')
 					});
 					addList(l);
 				}
@@ -1968,6 +2036,8 @@
 		couchEditor = config.couchEditor;
 
 		$selectAppDiv = opts_.div;
+		
+		$('.selectAppTitle').text( _loc('Data Modification Application') );
 		
 		if( config.directory ){
 			showService = config.directory.showService;
@@ -1999,7 +2069,7 @@
 		
 		bs();
 
-		log('Select application started');
+		log( _log('Select application started') );
 	};
 
 	
