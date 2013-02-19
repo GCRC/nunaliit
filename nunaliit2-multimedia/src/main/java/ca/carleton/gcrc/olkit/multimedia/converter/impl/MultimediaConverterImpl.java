@@ -238,7 +238,10 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 			}
 		}
 		
-		if( false == conversionRequired 
+		if( request.isSkipConversion() ){
+			progress.updateProgress(100);
+			
+		} else if( false == conversionRequired 
 		 && false == resizeRequired 
 		 && false == reorientationRequired 
 		 ) {
@@ -247,6 +250,7 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 			// is not present.
 			request.setOutFile(inFile);
 			progress.updateProgress(100);
+			
 		} else {
 			File outFile = request.getOutFile();
 			if( null == outFile ) {

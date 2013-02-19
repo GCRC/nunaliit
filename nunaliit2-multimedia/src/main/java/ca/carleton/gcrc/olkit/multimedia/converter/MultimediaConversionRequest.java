@@ -8,6 +8,7 @@ public class MultimediaConversionRequest {
 	private boolean thumbnailRequested = false;
 	private boolean conversionPerformed = false;
 	private boolean thumbnailCreated = false;
+	private boolean skipConversion = false;
 	private File inFile;
 	private int inHeight = 0;
 	private int inWidth = 0;
@@ -61,6 +62,13 @@ public class MultimediaConversionRequest {
 	}
 	public void setThumbnailCreated(boolean thumbnailCreated) {
 		this.thumbnailCreated = thumbnailCreated;
+	}
+
+	public boolean isSkipConversion() {
+		return skipConversion;
+	}
+	public void setSkipConversion(boolean skipConversion) {
+		this.skipConversion = skipConversion;
 	}
 	
 	public File getOutFile() {

@@ -294,6 +294,10 @@ var DomStyler = $n2.Class({
 			
 			} else if( file.fileClass === 'video' ) {
 				linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_video"></div></div>');
+			} else if( file.thumbnail
+			 && data._attachments[file.thumbnail]
+			 ) {
+				linkDiv = $('<div class="n2Show_icon_wrapper"><img src="'+docUrl+'/'+file.thumbnail+'"/></div>');
 			};
 			
 			if( null != linkDiv ) {
@@ -311,8 +315,9 @@ var DomStyler = $n2.Class({
 		function createMediaCallback(uploadType, docUrl, doc, attachmentName) {
 			
 			return function(evt) {
+				var attachmentUrl = docUrl +'/'+attachmentName;
 				var mediaOptions = {
-					url: docUrl +'/'+attachmentName
+					url: attachmentUrl
 				};
 				
 				// Mime type
@@ -344,18 +349,8 @@ var DomStyler = $n2.Class({
 						mediaOptions.metaDataHtml = html;
 							
 						// Display media
-						if( uploadType === 'image' ) {
-							mediaOptions.type = 'image';
-							$n2.mediaDisplay.displayMedia(mediaOptions);
-							
-						} else if( uploadType === 'video' ) {
-							mediaOptions.type = 'video';
-							$n2.mediaDisplay.displayMedia(mediaOptions);
-							
-						} else if( uploadType === 'audio' ) {
-							mediaOptions.type = 'audio';
-							$n2.mediaDisplay.displayMedia(mediaOptions);
-						};
+						mediaOptions.type = uploadType;
+						$n2.mediaDisplay.displayMedia(mediaOptions);
 					}
 				});
 

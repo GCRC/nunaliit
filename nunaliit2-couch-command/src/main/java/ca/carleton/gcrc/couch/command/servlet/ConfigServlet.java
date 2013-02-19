@@ -33,6 +33,7 @@ import ca.carleton.gcrc.couch.onUpload.mail.MailNotification;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotificationImpl;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotificationNull;
 import ca.carleton.gcrc.couch.onUpload.multimedia.MultimediaFileConverter;
+import ca.carleton.gcrc.couch.onUpload.pdf.PdfFileConverter;
 import ca.carleton.gcrc.olkit.multimedia.utils.MultimediaConfiguration;
 import ca.carleton.gcrc.upload.OnUploadedListenerSingleton;
 import ca.carleton.gcrc.upload.UploadServlet;
@@ -371,6 +372,11 @@ public class ConfigServlet extends HttpServlet {
 			}
 			uploadWorker.addConversionPlugin( new GpxFileConverter() );
 			uploadWorker.addConversionPlugin( new GeoJsonFileConverter() );
+			{
+				PdfFileConverter pdfPlugin = new PdfFileConverter(props);
+				pdfPlugin.setAtlasName(atlasProperties.getAtlasName());
+				uploadWorker.addConversionPlugin( pdfPlugin );
+			}
 			uploadWorker.start();
 		} catch (Exception e) {
 			logger.error("Error starting upload worker",e);

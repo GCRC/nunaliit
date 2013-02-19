@@ -82,7 +82,7 @@ $n2.MediaDisplay = $n2.Class({
 		} else if( 'video' === opts.type ) {
 			this._displayVideo(opts);
 		} else {
-			opts.onError('Unknown media type: '+opts.type);
+			this._displayUnknown(opts);
 		};
 	}
 
@@ -322,6 +322,44 @@ $n2.MediaDisplay = $n2.Class({
 			});
 		};
 	}
+
+	,_displayUnknown: function(opts) {
+		var dialogTitle = defaultDialogTitle;
+		if( opts.title ) {
+			dialogTitle = opts.title;
+		};
+
+		var mediaDialogId = $n2.getUniqueId();
+
+		// Generate local markup
+		var $mediaDialog = $('<div></div>');
+		$mediaDialog.attr('id',mediaDialogId);
+		
+		var $meta = $('<div></div>')
+			.appendTo($mediaDialog);
+		this._addMetaData(opts, $mediaDialog);
+		
+		var $explain = $('<div class="n2Media_explain"></div>');
+		$explain.text( _loc('You must leave the atlas to view this file.') );
+		$mediaDialog.append($explain);
+		
+		var $buttons = $('<div class="n2Display_buttons"></div>')
+			.appendTo($mediaDialog);
+		$('<a class="nunaliit_form_link"></a>')
+			.attr('href',opts.url)
+			.text( _loc('Proceed') )
+			.appendTo($buttons);
+
+		var dialogOptions = $n2.extend({},baseDialogOptions,{
+			title: dialogTitle
+			,width: 320
+			,close: function(){
+				$('#'+mediaDialogId).remove();
+				opts.onCloseHook();
+			}
+		});
+		$mediaDialog.dialog(dialogOptions);
+	}
 	
 	,_addMetaData: function(opts, $elem) {
 		$elem.append( $('<br/>') );
@@ -334,7 +372,9 @@ $n2.MediaDisplay = $n2.Class({
 		} else {
 			if( opts.author ) {
 				var $author = $('<span></span>');
-				$author.text( '(by ' + opts.author +')' );
+				$author.text( _loc('(by {author})',{
+					author: opts.author
+				}) );
 				$elem.append( $author );
 				$elem.append( $('<br/>') );
 			};

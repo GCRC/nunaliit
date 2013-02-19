@@ -12,6 +12,9 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import ca.carleton.gcrc.couch.app.Document;
 import ca.carleton.gcrc.couch.app.DocumentUpdateProcess;
 import ca.carleton.gcrc.couch.app.impl.DocumentFile;
@@ -37,14 +40,12 @@ import ca.carleton.gcrc.couch.onUpload.mail.MailNotification;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotificationImpl;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotificationNull;
 import ca.carleton.gcrc.couch.onUpload.multimedia.MultimediaFileConverter;
+import ca.carleton.gcrc.couch.onUpload.pdf.PdfFileConverter;
 import ca.carleton.gcrc.nunaliit2.couch.replication.ReplicationWorker;
 import ca.carleton.gcrc.olkit.multimedia.utils.MultimediaConfiguration;
 import ca.carleton.gcrc.upload.OnUploadedListenerSingleton;
 import ca.carleton.gcrc.upload.UploadServlet;
 import ca.carleton.gcrc.upload.UploadUtils;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("serial")
 public class ConfigServlet extends HttpServlet {
@@ -670,6 +671,11 @@ public class ConfigServlet extends HttpServlet {
 			}
 			uploadWorker.addConversionPlugin( new GpxFileConverter() );
 			uploadWorker.addConversionPlugin( new GeoJsonFileConverter() );
+			{
+				PdfFileConverter pdfPlugin = new PdfFileConverter(props);
+				pdfPlugin.setAtlasName(atlasName);
+				uploadWorker.addConversionPlugin( pdfPlugin );
+			}
 			uploadWorker.start();
 		} catch (Exception e) {
 			logger.error("Error starting upload worker",e);
