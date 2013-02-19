@@ -101,15 +101,16 @@ public class AttachmentDescriptor extends AbstractDescriptor {
 		setSavingRequired(true);
 		setSpecifiedAttachmentName(newAttachmentName);
 		setAttachmentName(newAttachmentName);
-		
-		// Move attachment, if needed
-		if( null != _attachments ){
-			JSONObject att = _attachments.optJSONObject(oldAttachmentName);
-			if( null != att ){
-				_attachments.remove(oldAttachmentName);
-				_attachments.put(newAttachmentName, att);
-			}
-		}
+	
+// Not allowed to move a stub		
+//		// Move attachment, if needed
+//		if( null != _attachments ){
+//			JSONObject att = _attachments.optJSONObject(oldAttachmentName);
+//			if( null != att ){
+//				_attachments.remove(oldAttachmentName);
+//				_attachments.put(newAttachmentName, att);
+//			}
+//		}
 		
 		// Loop through all attachment descriptors, updating "source", "thumbnail"
 		// and "original" attributes
