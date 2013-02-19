@@ -1,8 +1,16 @@
 {
-	"title":"Generic Atlas"
+	"title":{
+		"nunaliit_type":"localized"
+		,"en":"Generic Atlas"
+		,"fr":"Atlas Générique"
+	}
 	,"introduction": {
 		"type": "html"
-		,"content": "<div class=\"intro\"><b>Welcome to a Nunaliit2 Atlas served from CouchDb</b><br/><a href=\"./tools/index.html\">Nunaliit Tools</a></div>"
+		,"content": {
+			"nunaliit_type":"localized"
+			,"en":"<div class=\"intro\"><b>Welcome to a Nunaliit Atlas served from CouchDb</b><br/><a href=\"./tools/index.html\">Nunaliit Tools</a></div>"
+			,"fr":"<div class=\"intro\"><b>Bienvenue à un Atlas Nunaliit servi à partir d'une base de données CouchDb</b><br/><a href=\"./tools/index.html\">Outils Nunaliit</a></div>"
+		}
 	}
 	,"map":{
 		"coordinates": {

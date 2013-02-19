@@ -165,11 +165,46 @@ function Configure(opt_) {
 	loadTranslatedStrings();
 	processPendingRequests();
 };
+
+function getLocalizedString(str, packageName, args){
+	if( typeof(str) === 'string' ){
+		return $n2.l10n.getLocalizedString(str, packageName, args);
+	};
+
+	if( str.nunaliit_type === 'localized' ){
+		var locale = $n2.l10n.getLocale();
+		var lang = locale.lang;
+		
+		// Check request language
+		if( typeof(str[lang]) === 'string' ) {
+			var result = str[lang];
+			if( args && args.length > 0 ){
+				result = $n2.utils.formatString(result,args);
+			};
+			result.nunaliit_lang = lang;
+			return result;
+		};
+		
+		// Fallback to 'en'
+		if( typeof(str.en) === 'string' ) {
+			var result = str.en;
+			if( args && args.length > 0 ){
+				result = $n2.utils.formatString(result,args);
+			};
+			result.nunaliit_lang = 'en';
+			result.nunaliit_lang_fallback = true;
+			return result;
+		};
+	};
+	
+	return null;
+};
 	
 $n2.l10n.sendTranslationRequest = sendTranslationRequest;
 
 $n2.couchL10n = {
 	Configure: Configure
+	,getLocalizedString: getLocalizedString
 };
 
 })(nunaliit2);
