@@ -1706,6 +1706,69 @@ var MapAndControls = $n2.Class({
 				return null;
 			};
 			
+		} else if( 'osm' === layerDefinition.type ){
+			var url = null;
+			var layerOptions = {
+				isBaseLayer: isBaseLayer
+			};
+
+			if( typeof(layerDefinition.visibility) === 'boolean' ){
+				layerOptions.visibility = layerDefinition.visibility;
+			};
+
+			var options = layerDefinition.options;
+			if( options ) {
+				for(var optionKey in options){
+					var optionValue = options[optionKey];
+					
+					if( optionKey === 'url' ){
+						url = optionValue;
+					} else {
+						layerOptions[optionKey] = optionValue;
+					};
+				};
+			};
+
+			var l = new OpenLayers.Layer.OSM(layerDefinition.name, url, layerOptions);
+			return l;
+			
+		} else if( 'stamen' === layerDefinition.type ){
+			var layerName = null;
+			var layerOptions = {
+				isBaseLayer: isBaseLayer
+			};
+
+			if( typeof(layerDefinition.visibility) === 'boolean' ){
+				layerOptions.visibility = layerDefinition.visibility;
+			};
+
+			var options = layerDefinition.options;
+			if( options ) {
+				for(var optionKey in options){
+					var optionValue = options[optionKey];
+					
+					if( optionKey === 'layerName' ){
+						layerName = optionValue;
+					} else {
+						layerOptions[optionKey] = optionValue;
+					};
+				};
+			};
+
+			if( OpenLayers.Layer.Stamen ) {
+				if( !layerName ){
+					$n2.reportError('Option layerName must be specified for a Stamen background.');
+				}else{
+					var l = new OpenLayers.Layer.Stamen(layerName, layerOptions);
+					if( layerDefinition.name ) {
+						l.name = layerDefinition.name;
+					};
+					return l;
+				};
+			} else {
+				$n2.log('Stamen layer can not be added since Javascript library is not included');
+			};
+			
 		} else {
 			$n2.reportError('Unknown layer type: '+layerDefinition.type);
 		};
