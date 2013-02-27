@@ -173,13 +173,6 @@ public class DocumentFile implements Document {
 					} else {
 						String value = readStringFile(child);
 						
-						// Remove EOL at end of _id attribute. This is to avoid
-						// issues with some editors (vi) that automatically add an EOL
-						// at the end of a text file.
-						if( "_id".equals(key) ) {
-							value = value.trim();
-						}
-						
 						this.jsonObj.put(key, value);
 					}
 				} else {
@@ -458,6 +451,17 @@ public class DocumentFile implements Document {
 		}
 		
 		String expandedValue = expandInclusion(sw.toString());
+		
+		if( expandedValue.indexOf('\n') == (expandedValue.length()-1) ) {
+			// If there is only one EOL char and it is located at the
+			// end, remove it. This is to fix issues where editors (such as
+			// vi) insert an extraneous EOL. If there is only one EOL, it is
+			// a text field that is probably meant to not have multi-lines
+			expandedValue = expandedValue.substring(0, expandedValue.length()-1);
+			while( '\r' == expandedValue.charAt(expandedValue.length()-1) ){
+				expandedValue = expandedValue.substring(0, expandedValue.length()-1);
+			}
+		}
 		
 		return expandedValue;
 	}
