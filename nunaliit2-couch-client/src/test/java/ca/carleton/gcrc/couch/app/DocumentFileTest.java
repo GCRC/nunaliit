@@ -201,4 +201,24 @@ public class DocumentFileTest extends TestCase {
 			fail("Unexpected attribute value: >"+name+"<  EOL should NOT be removed");
 		}
 	}
+
+	public void testEmptyTxtFiles() throws Exception {
+		DocumentFile doc = null;
+		{
+			List<FSEntry> entries = new Vector<FSEntry>();
+
+			entries.add( FSEntryBuffer.getPositionedBuffer("a/_id.txt", "testEmptyTxtFiles") );
+			entries.add( FSEntryBuffer.getPositionedBuffer("a/name.txt", "") );
+			
+			FSEntry merged = new FSEntryMerged(entries);
+			doc = DocumentFile.createDocument(merged);
+		}
+
+		// That EOL was removed
+		JSONObject obj = doc.getJSONObject();
+		String name = obj.getString("name");
+		if( false == "".equals(name) ) {
+			fail("Unexpected attribute value. It should be empty.");
+		}
+	}
 }

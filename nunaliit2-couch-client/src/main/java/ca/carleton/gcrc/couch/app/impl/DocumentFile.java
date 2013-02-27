@@ -452,13 +452,15 @@ public class DocumentFile implements Document {
 		
 		String expandedValue = expandInclusion(sw.toString());
 		
-		if( expandedValue.indexOf('\n') == (expandedValue.length()-1) ) {
+		if( expandedValue.length() > 0 
+		 && expandedValue.indexOf('\n') == (expandedValue.length()-1) ) {
 			// If there is only one EOL char and it is located at the
 			// end, remove it. This is to fix issues where editors (such as
 			// vi) insert an extraneous EOL. If there is only one EOL, it is
 			// a text field that is probably meant to not have multi-lines
 			expandedValue = expandedValue.substring(0, expandedValue.length()-1);
-			while( '\r' == expandedValue.charAt(expandedValue.length()-1) ){
+			while( expandedValue.length() > 0 
+			  && '\r' == expandedValue.charAt(expandedValue.length()-1) ){
 				expandedValue = expandedValue.substring(0, expandedValue.length()-1);
 			}
 		}
