@@ -203,13 +203,11 @@ span.label {
 	position: absolute;
 	top: 51px;
 	left: 0;
-	right: 450px;
-	bottom: 20px;
+	right: 0px;
+	bottom: 0px;
 	border: 1px solid #777;
 	margin: 0;
 	border: 0;
-	width:100%;
-	height:100%;
 }
 
 div.olControlZoom a { 
@@ -718,6 +716,6 @@ table.mediaSelection td {
 }
 
 /* Fix spurious copyright pop-up */
-.olLayerGooglePoweredBy {
+.olLayerGooglePoweredBy, .gmnoprint {
 	visibility: hidden;
 }

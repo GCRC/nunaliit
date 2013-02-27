@@ -49,3 +49,8 @@ div.olControlZoom a {
 .olControlEditingToolbar div {
 	float: left;
 }
+
+div.olControlMousePosition {
+	right: 25px;
+	background: rgba(255, 255, 255, 0.7) !important;
+}
