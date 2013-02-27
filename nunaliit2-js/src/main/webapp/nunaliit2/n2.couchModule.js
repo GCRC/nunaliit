@@ -296,6 +296,27 @@ var MapFeatureStyles = $n2.Class({
 }); 
 
 //=========================================================================	
+
+function isSrsNameSupported(srsName){
+	if( typeof(OpenLayers) !== 'undefined'
+	 && OpenLayers.Projection
+	 && OpenLayers.Projection.transforms
+	 && OpenLayers.Projection.transforms[srsName] ){
+		return true;
+	};
+	
+	if( typeof(Proj4js) !== 'undefined'
+	 && Proj4js.Proj ){
+		var proj = new Proj4js.Proj(srsName);
+		if( proj.readyToUse ){
+			return true;
+		};
+	};
+	
+	return false;
+};
+
+//=========================================================================	
 var Module = $n2.Class({
 	
 	moduleDoc: null
@@ -701,6 +722,14 @@ var ModuleDisplay = $n2.Class({
 				initialBounds = mapInfo.coordinates.initialBounds;
 				
 				if( mapInfo.coordinates.srsName ){
+					// Verify if SRS name is supported
+					if( false == isSrsNameSupported(mapInfo.coordinates.srsName) ) {
+						var msg = _loc('The projection {srsName} is not supported. Atlas may no function properly.',{
+							srsName: mapInfo.coordinates.srsName
+						});
+						alert(msg);
+					};
+					
 					mapOptions.mapDisplay.srsName = mapInfo.coordinates.srsName;
 					mapOptions.mapCoordinateSpecifications.srsName = mapInfo.coordinates.srsName;
 				};
