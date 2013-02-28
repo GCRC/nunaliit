@@ -2,14 +2,14 @@
 {{#nunaliit_module}}
 	<div>
 		<div class="label n2s_localize">Module</div>
-		<div class="value">{{title}}</div>
+		<div class="value">{{#:localize}}title{{/:localize}}</div>
 		<div class="end"></div>
 	</div>
 
 	{{#introduction}}
 	<div>
 		<div class="label n2s_localize">Introduction</div>
-		<div class="value n2s_preserveSpaces">{{content}}</div>
+		<div class="value n2s_preserveSpaces">{{#:localize}}content{{/:localize}}</div>
 		<div class="end"></div>
 	</div>
 	{{/introduction}}

@@ -1,1 +1,1 @@
-Module: {{#nunaliit_module}}{{title}}{{/nunaliit_module}}
+Module: {{#nunaliit_module}}{{#:localize}}title{{/:localize}}{{/nunaliit_module}}

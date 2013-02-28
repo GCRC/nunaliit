@@ -44,6 +44,7 @@ var EMPTY = ':empty';
 var CONTEXT = ':context';
 var PARENT = ':parent';
 var SELECT = ':selector';
+var LOCALIZE = ':localize';
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
@@ -772,6 +773,7 @@ function computeViewObj(origObj, context, parent) {
 		view[ITERATE] = [];
 		view[CONTEXT] = context;
 		view[PARENT] = parent;
+		view[LOCALIZE] = localizeString;
 
 		for(var key in origObj) {
 			var value = computeViewObj(origObj[key], context, view);
@@ -1024,6 +1026,66 @@ function createInputCallback(selector) {
 	};
 };
 
+function localizeString() {
+	return function(text,render) {
+		var splits = text.split(',');
+		var key = splits[0];
+		var s = this[key];
+		if( typeof(s) === 'object' 
+		 && s.nunaliit_type === 'localized') {
+			var lang = 'en';
+			if( $n2.l10n && $n2.l10n.getLocale ){
+				lang = $n2.l10n.getLocale().lang;
+			};
+			
+			if( s[lang] ) {
+				return s[lang];
+			} else {
+				// Find a language to fall back on
+				var fbLang = 'en';
+				if( !s[fbLang] ) {
+					fbLang = null;
+					for(var l in s){
+						if( l.length > 0 && l[0] === ':' ){
+							// ignore
+						} else if( l === 'nunaliit_type' ) {
+							// ignore
+						} else {
+							fbLang = l;
+							break;
+						};
+					};
+				};
+				
+				if( fbLang ){
+					var result = [];
+					result.push('<span class="n2_localized_string n2_localize_fallback">');
+					result.push('<span class="n2_localize_fallback_lang">(');
+					result.push(fbLang);
+					result.push(')</span>');
+					if( s[fbLang] ){
+						result.push(''+s[fbLang]);
+					};
+					result.push('</span>');
+					return result.join('');
+					
+				} else {
+					return '';
+				};
+			};
+			
+		} else if( typeof(s) === 'undefined' ) {
+			return '';
+
+		} else if( s === null ) {
+			return '';
+			
+		} else {
+			return ''+s;
+		};
+	};
+};
+
 function createSelector(selector) {
 	var sel = ['['];
 	
@@ -1071,6 +1133,7 @@ function computeFormObj(origObj, context, selector, parent) {
 		view[PARENT] = parent;
 		view[INPUT] = createInputCallback(selector);
 		view[SELECT] = createSelector(selector);
+		view[LOCALIZE] = localizeString;
 
 		for(var key in origObj) {
 			selector.push(key);

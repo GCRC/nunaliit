@@ -1,10 +1,18 @@
 {
 	"nunaliit_schema": "module"
 	,"nunaliit_module": {
-		"title": "a Title"
+		"title": {
+			"nunaliit_type":"localized"
+			,"en":"a Title"
+			,"fr":"Un titre"
+		}
 		,"introduction": {
 			"type": "html"
-			,"content":"<div><b>Welcome to a Nunaliit2 Atlas</b></div>"
+			,"content": {
+				"nunaliit_type":"localized"
+				,"en":"<div><b>Welcome</b></div>"
+				,"fr":"<div><b>Bienvenue</b></div>"
+			}
 		}
 		,"map":{
 			"coordinates":{
