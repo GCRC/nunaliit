@@ -133,6 +133,7 @@ loadStrings({
 	,"Logs":"Journal"
 	,"Media":"Média"
 	,"Module":"Module"
+	,"More Info":"Détails"
 	,"Must enter a layer name":"Nom de couche manquant"
 	,"Must enter a schema name":"Nom de schème manquant"
 	,"Name":"Nom"
