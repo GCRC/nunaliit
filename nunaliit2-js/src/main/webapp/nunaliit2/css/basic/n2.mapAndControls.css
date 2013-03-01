@@ -199,6 +199,11 @@ span.label {
 	float:left;
 }
 
+#title-link {
+	color: inherit;
+	text-decoration: inherit;
+}
+
 #map, .nunaliit_map {    
 	position: absolute;
 	top: 51px;
