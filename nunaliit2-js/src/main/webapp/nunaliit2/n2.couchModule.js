@@ -377,12 +377,16 @@ var Module = $n2.Class({
 		} else {
 			if( 'html' === introInfo.type && introInfo.content ) {
 				var content = $n2.couchL10n.getLocalizedString(introInfo.content);
-				$elem.html(content);
+				if( content ) {
+					$elem.html(content);
+				};
 				return true;
 				
 			} else if( 'text' === introInfo.type && introInfo.content ) {
 				var content = $n2.couchL10n.getLocalizedString(introInfo.content);
-				$elem.html(content);
+				if( content ) {
+					$elem.text(content);
+				};
 				return true;
 				
 			} else if( 'attachment' === introInfo.type 
@@ -536,8 +540,10 @@ var ModuleDisplay = $n2.Class({
 			if( moduleInfo && moduleInfo.title ) {
 				var title = $n2.couchL10n.getLocalizedString(moduleInfo.title);
 				//$('head > title').text('' + moduleInfo.title);
-				document.title = title; // needed for IE 6
-				$('#'+opts.titleName).text(title);
+				if( title ) {
+					document.title = title; // needed for IE 6
+					$('#'+opts.titleName).text(title);
+				};
 			} else {
 				//$('head > title').text('Nunaliit Atlas');
 				document.title = 'Nunaliit Atlas'; // needed for IE 6

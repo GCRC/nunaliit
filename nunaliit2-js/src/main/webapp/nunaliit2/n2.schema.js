@@ -39,6 +39,7 @@ $Id: n2.schema.js 8461 2012-08-29 18:54:28Z jpfiset $
 
 var HTML = ':html';
 var INPUT = ':input';
+var FIELD = ':field';
 var ITERATE = ':iterate';
 var EMPTY = ':empty';
 var CONTEXT = ':context';
@@ -1026,11 +1027,66 @@ function createInputCallback(selector) {
 	};
 };
 
+function formField() {
+	return function(text,render) {
+		var splits = text.split(',');
+		var sels = splits[0].split('.');
+		
+		// Options
+		var options = {};
+		for(var i=1,e=splits.length;i<e;++i){
+			var optStr = splits[i];
+			var optSplit = optStr.split('=');
+			if( optSplit.length > 1 ){
+				options[optSplit[0]]=optSplit[1];
+			} else {
+				options[optSplit[0]]=true;
+			};
+		};
+		
+		var r = [];
+		
+		r.push('<div class="n2s_form_wrapper">');
+		
+		// option: textarea
+		if( options.textarea ){
+			r.push('<textarea class="');
+		} else {
+			r.push('<input type="text" class="');
+		};
+		
+		r.push('n2s_input');
+		
+		var selector = this[SELECT];
+		if( selector ) {
+			var completeSelector = selector.slice(0);
+			completeSelector.push.apply(completeSelector,sels);
+			var selClass = createClassStringFromSelector(completeSelector);
+
+			r.push(' '+selClass);
+		};
+		
+		if( options.type ){
+			r.push(' n2s_type_'+options.type);
+		};
+
+		if( options.textarea ){
+			r.push('"></textarea>');
+		} else {
+			r.push('"/>');
+		};
+
+		r.push('</div>');
+		
+		return r.join('');
+	};
+};
+
 function localizeString() {
 	return function(text,render) {
 		var splits = text.split(',');
 		var key = splits[0];
-		var s = this[key];
+		var s = getDataFromObjectSelector(this, key);
 		if( typeof(s) === 'object' 
 		 && s.nunaliit_type === 'localized') {
 			var lang = 'en';
@@ -1086,21 +1142,6 @@ function localizeString() {
 	};
 };
 
-function createSelector(selector) {
-	var sel = ['['];
-	
-	for(var i=0,e=selector.length; i<e; ++i) {
-		if( i != 0 ) sel.push(',');
-		sel.push('\'');
-		sel.push(selector[i]);
-		sel.push('\'');
-	}
-	
-	sel.push(']');
-	
-	return sel.join('');
-};
-
 function computeFormObj(origObj, context, selector, parent) {
 	
 	if( null === origObj ) {
@@ -1114,7 +1155,7 @@ function computeFormObj(origObj, context, selector, parent) {
 		view[CONTEXT] = context;
 		view[PARENT] = parent;
 		view[INPUT] = createInputCallback(selector);
-		view[SELECT] = createSelector(selector);
+		view[SELECT] = selector.slice(0);
 		
 		for(var i=0,e=origObj.length; i<e; ++i) {
 			selector.push(i);
@@ -1132,7 +1173,8 @@ function computeFormObj(origObj, context, selector, parent) {
 		view[CONTEXT] = context;
 		view[PARENT] = parent;
 		view[INPUT] = createInputCallback(selector);
-		view[SELECT] = createSelector(selector);
+		view[FIELD] = formField;
+		view[SELECT] = selector.slice(0);
 		view[LOCALIZE] = localizeString;
 
 		for(var key in origObj) {
