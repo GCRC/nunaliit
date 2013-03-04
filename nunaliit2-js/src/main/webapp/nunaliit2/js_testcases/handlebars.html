@@ -1,0 +1,134 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+		<title>Handlebars Test Page</title>		
+		<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/themes/base/jquery-ui.css" type="text/css" />
+		<link rel="stylesheet" href="../css/basic/n2.sliderWithCallout.css" type="text/css" />
+		<link rel="stylesheet" href="css/slider_tests.css" type="text/css" />
+	</head>
+	<body>
+		<h1>Handlebars Test Page</h1>
+		
+		<div id="display"></div>
+		
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/jquery-ui.min.js"></script>
+		<script type="text/javascript" src="../handlebars.js"></script>
+
+		<script type="text/javascript">
+		
+			function test(template, expected, a, b) {
+				var status = 'OK';
+				var error = null;
+				try {
+					var compiledTemplate = Handlebars.compile(template);
+					if( b ){
+						var html = compiledTemplate(a,b);
+					} else {
+						var html = compiledTemplate(a);
+					};
+				} catch(e) {
+					status = 'Internal Error';
+					error = e;
+				};
+				if( html !== expected ) {
+					var status = 'Fail';
+console.log('fail','>>'+html+'<<','>>'+expected+'<<',template);					
+				};
+				$('#display').append( $('<div>'+status+': '+template+' => '+html+' => '+expected+(error==null?'':' error:'+error)+'</div>') );
+			}
+		
+			function main() {
+				
+				Handlebars.registerHelper('myFunc',function(str,options){
+					console.log('myFunc this',this);
+					console.log('myFunc arguments',arguments);
+					console.log('myFunc fn',options.fn(this));
+					return options.fn(this)+str;
+				});
+
+				Handlebars.registerHelper('loc',function(){
+					var args = [];
+					args.push.apply(args,arguments);
+					var options = args.pop();
+					if( args.length > 0 ) {
+						return args[0];
+					}
+					return 'loc func';
+				});
+
+				Handlebars.registerHelper(':spec',function(){
+					return 'special';
+				});
+				
+				var helpers = {
+					myHelp: function(){
+						return 'myHelp';
+					}	
+				};
+
+				var a = {
+					one: 'first'
+					,two: {
+						one: 'second'
+						,two: {
+							one: 'third'
+						}
+					}
+				};
+				
+				var b = {
+					'ary': [
+						1
+						,2
+						,3
+					]
+				};
+
+				var d = {
+					name: 'John'
+					,loc: 'location'
+					,car:{
+						make: 'Toyota'
+						,colour: 'Blue'
+					}
+				};
+				
+				test('{{one}} {{#two}}{{one}}{{/two}} {{#two}}{{#two}}{{one}}{{/two}}{{/two}}','first second third', a);
+				test('{{one}} {{#two}}{{one}}{{/two}} {{#two}}a{{#two}}b{{one}}c{{/two}}d{{/two}}','first second abthirdcd', a);
+				test('{{#two}}{{/two}}','', a);
+				test('{{^three}}{{/three}} {{^three}}a{{/three}} {{^two}}b{{/two}}',' a ', a);
+				test('{{#three}}a{{/three}} {{#three}}{{/three}}',' ', a);
+				test('{{^three}}{{one}}{{/three}} {{^three}}{{#two}}{{one}}{{/two}}{{/three}}','first second', a);
+				test('{{#each ary}}{{.}}{{/each}}','123', b);
+				test('{{#two}}{{#two}}{{two}}{{/two}}{{/two}}','', a);
+				test('{{#myFunc name}}arg{{/myFunc}}','argJohn', d);
+				test('{{loc}}','loc func', d); // helper functions hides property
+				test('{{#loc}}{{/loc}}','loc func', d); // helper functions hides property
+				test('{{#loc loc}}{{/loc}}','location', d); // loc attribute still accessible 
+				test('{{. /loc}}','location', d); // loc attribute still accessible 
+				test('{{./loc}}','location', d); // loc attribute still accessible 
+				test('{{#car}}{{name}}{{/car}}','', d); // no inheritance
+				test('{{car.make}}','Toyota', d); 
+				test('{{car/make}}','Toyota', d); // path
+				test('{{#car}}{{../name}}{{/car}}','John', d); // path
+				test('\\{{#car}}','{{#car}}', d); // escaped mustache
+				test('{{:spec}}','special', d); // access identifiers with colon
+				test('{{myHelp}}','myHelp', d, {helpers:helpers}); // specified helpers
+			};
+
+			var loaded = false;
+			jQuery().ready(function() {
+				if( loaded ) return;
+
+				if( Handlebars ) {
+					
+					main();
+					loaded = true;
+				};
+			});
+			// -->
+		</script>
+	</body>
+</html>

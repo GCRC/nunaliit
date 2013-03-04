@@ -37,6 +37,125 @@ $Id: n2.schema.js 8461 2012-08-29 18:54:28Z jpfiset $
 
 ;(function($,$n2){
 
+// Localization
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
+
+
+var defaultErrorFn = function(err){ $n2.reportError(err); };
+var defaultSuccessFn = function(){};
+
+//============================================================
+//Object
+
+function getDataFromObjectSelector(o, selectors) {
+	if( typeof(selectors) === 'string' ) {
+		selectors = selectors.split('.');
+	}
+	return findDataFromObject(o, selectors, 0);
+};
+
+function findDataFromObject(o, selectors, selectorIndex) {
+	if( selectorIndex >= selectors.length ) {
+		return o;
+	};
+	
+	// This is an error. There are more
+	// selectors in the array but we have
+	// a scalar. Return an error.
+	if( null == o
+	 || typeof(o) === 'number' 
+	 || typeof(o) === 'string'
+	 || typeof(o) === 'undefined'
+	 || typeof(o) === 'function' ) {
+		return null;
+	};
+	
+	if( $n2.isArray(o) ) {
+		var index = 1 * selectors[selectorIndex];
+		if( index >= o.length ) {
+			return null;
+		};
+		return findDataFromObject(o[index], selectors, (selectorIndex+1));
+	}
+
+	if( typeof(o) === 'object' ) {
+		var key = selectors[selectorIndex];
+		var value = o[key];
+		if( value === undefined ) {
+			return null;
+		};
+		return findDataFromObject(value, selectors, (selectorIndex+1));
+	};
+	
+	// Should not get here. Error. Return null.
+	return null;
+};
+
+//============================================================
+// Context
+
+function _localizeString() {
+	var args = [];
+	args.push.apply(args,arguments);
+	var options = args.pop();
+	
+	var key = options.fn(this);
+	var s = getDataFromObjectSelector(this, key);
+
+	if( typeof(s) === 'object' 
+	 && s.nunaliit_type === 'localized') {
+		var lang = 'en';
+		if( $n2.l10n && $n2.l10n.getLocale ){
+			lang = $n2.l10n.getLocale().lang;
+		};
+		
+		if( s[lang] ) {
+			return s[lang];
+		} else {
+			// Find a language to fall back on
+			var fbLang = 'en';
+			if( !s[fbLang] ) {
+				fbLang = null;
+				for(var l in s){
+					if( l.length > 0 && l[0] === ':' ){
+						// ignore
+					} else if( l === 'nunaliit_type' ) {
+						// ignore
+					} else {
+						fbLang = l;
+						break;
+					};
+				};
+			};
+			
+			if( fbLang ){
+				var result = [];
+				result.push('<span class="n2_localized_string n2_localize_fallback">');
+				result.push('<span class="n2_localize_fallback_lang">(');
+				result.push(fbLang);
+				result.push(')</span>');
+				if( s[fbLang] ){
+					result.push(''+s[fbLang]);
+				};
+				result.push('</span>');
+				return result.join('');
+				
+			} else {
+				return '';
+			};
+		};
+		
+	} else if( typeof(s) === 'undefined' ) {
+		return '';
+
+	} else if( s === null ) {
+		return '';
+		
+	} else {
+		return ''+s;
+	};
+};
+
 var HTML = ':html';
 var INPUT = ':input';
 var FIELD = ':field';
@@ -47,12 +166,7 @@ var PARENT = ':parent';
 var SELECT = ':selector';
 var LOCALIZE = ':localize';
 
-// Localization
-var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
-
-
-var defaultErrorFn = function(err){ $n2.reportError(err); };
-var defaultSuccessFn = function(){};
+Handlebars.registerHelper(LOCALIZE,_localizeString);
 
 //============================================================
 // Object Query
@@ -148,53 +262,6 @@ $n2.ObjectQuery = function(obj, query){
 	return result.query(query);
 }
 
-
-//============================================================
-// Object
-
-function getDataFromObjectSelector(o, selectors) {
-	if( typeof(selectors) === 'string' ) {
-		selectors = selectors.split('.');
-	}
-	return findDataFromObject(o, selectors, 0);
-};
-
-function findDataFromObject(o, selectors, selectorIndex) {
-	if( selectorIndex >= selectors.length ) {
-		return o;
-	};
-	
-	// This is an error. There are more
-	// selectors in the array but we have
-	// a scalar. Return an error.
-	if( null == o
-	 || typeof(o) === 'number' 
-	 || typeof(o) === 'string'
-	 || typeof(o) === 'undefined'
-	 || typeof(o) === 'function' ) {
-		return null;
-	};
-	
-	if( $n2.isArray(o) ) {
-		var index = 1 * selectors[selectorIndex];
-		if( index >= o.length ) {
-			return null;
-		};
-		return findDataFromObject(o[index], selectors, (selectorIndex+1));
-	}
-
-	if( typeof(o) === 'object' ) {
-		var key = selectors[selectorIndex];
-		var value = o[key];
-		if( value === undefined ) {
-			return null;
-		};
-		return findDataFromObject(value, selectors, (selectorIndex+1));
-	};
-	
-	// Should not get here. Error. Return null.
-	return null;
-};
 
 //============================================================
 // Schema Repository Functions
@@ -774,7 +841,6 @@ function computeViewObj(origObj, context, parent) {
 		view[ITERATE] = [];
 		view[CONTEXT] = context;
 		view[PARENT] = parent;
-		view[LOCALIZE] = localizeString;
 
 		for(var key in origObj) {
 			var value = computeViewObj(origObj[key], context, view);
@@ -901,7 +967,9 @@ var Display = $n2.Class({
 		var displayTemplate = this.schema[this.templateName];
 		if( displayTemplate ) {
 			obj._schema = this.schema.name;
-			obj[HTML] = Mustache.to_html(displayTemplate, obj);
+
+			var compiledTemplate = Handlebars.compile(displayTemplate);
+			obj[HTML] = compiledTemplate(obj);
 		};
 	}
 });
@@ -1113,65 +1181,6 @@ function formField() {
 	};
 };
 
-function localizeString() {
-	return function(text,render) {
-		var splits = text.split(',');
-		var key = splits[0];
-		var s = getDataFromObjectSelector(this, key);
-		if( typeof(s) === 'object' 
-		 && s.nunaliit_type === 'localized') {
-			var lang = 'en';
-			if( $n2.l10n && $n2.l10n.getLocale ){
-				lang = $n2.l10n.getLocale().lang;
-			};
-			
-			if( s[lang] ) {
-				return s[lang];
-			} else {
-				// Find a language to fall back on
-				var fbLang = 'en';
-				if( !s[fbLang] ) {
-					fbLang = null;
-					for(var l in s){
-						if( l.length > 0 && l[0] === ':' ){
-							// ignore
-						} else if( l === 'nunaliit_type' ) {
-							// ignore
-						} else {
-							fbLang = l;
-							break;
-						};
-					};
-				};
-				
-				if( fbLang ){
-					var result = [];
-					result.push('<span class="n2_localized_string n2_localize_fallback">');
-					result.push('<span class="n2_localize_fallback_lang">(');
-					result.push(fbLang);
-					result.push(')</span>');
-					if( s[fbLang] ){
-						result.push(''+s[fbLang]);
-					};
-					result.push('</span>');
-					return result.join('');
-					
-				} else {
-					return '';
-				};
-			};
-			
-		} else if( typeof(s) === 'undefined' ) {
-			return '';
-
-		} else if( s === null ) {
-			return '';
-			
-		} else {
-			return ''+s;
-		};
-	};
-};
 
 function computeFormObj(origObj, context, selector, parent) {
 	
@@ -1206,7 +1215,6 @@ function computeFormObj(origObj, context, selector, parent) {
 		view[INPUT] = createInputCallback(selector);
 		view[FIELD] = formField;
 		view[SELECT] = selector.slice(0);
-		view[LOCALIZE] = localizeString;
 
 		for(var key in origObj) {
 			selector.push(key);
@@ -1356,7 +1364,9 @@ var Form = $n2.Class({
 		var formTemplate = this.schema.formTemplate;
 		if( formTemplate ) {
 			obj._schema = this.schema.name;
-			obj[HTML] = Mustache.to_html(formTemplate, obj);
+
+			var compiledTemplate = Handlebars.compile(formTemplate);
+			obj[HTML] = compiledTemplate(obj);
 		};
 	}
 	
