@@ -45,7 +45,7 @@ var defaultErrorFn = function(err){ $n2.reportError(err); };
 var defaultSuccessFn = function(){};
 
 //============================================================
-//Object
+// Object
 
 function getDataFromObjectSelector(o, selectors) {
 	if( typeof(selectors) === 'string' ) {
@@ -156,6 +156,121 @@ function _localizeString() {
 	};
 };
 
+function _formSingleField(r,obj,sels,options){
+	
+	// option: textarea
+	if( options.textarea ){
+		r.push('<textarea class="');
+	} else {
+		r.push('<input type="text" class="');
+	};
+	
+	r.push('n2s_input');
+	
+	var selector = obj[SELECT];
+	if( selector ) {
+		var completeSelector = selector.slice(0);
+		completeSelector.push.apply(completeSelector,sels);
+		var selClass = createClassStringFromSelector(completeSelector);
+
+		r.push(' '+selClass);
+	};
+	
+	if( options.type ){
+		r.push(' n2s_type_'+options.type);
+	};
+
+	if( options.textarea ){
+		r.push('"></textarea>');
+	} else {
+		r.push('"/>');
+	};
+
+};
+
+function _formField() {
+	var args = [];
+	args.push.apply(args,arguments);
+	var options = args.pop();
+	
+	var text = options.fn(this);
+
+	// Syntax is: <selector>(,<option>)*
+	var splits = text.split(',');
+	var sels = splits[0].split('.');
+	var obj = getDataFromObjectSelector(this, sels);
+	
+	// <option> is one of:
+	// - optionName
+	// - optionName=optionValue
+	// - optionsName=value1+value2+...
+	var opts = {};
+	for(var i=1,e=splits.length;i<e;++i){
+		var optStr = splits[i];
+		var optSplit = optStr.split('=');
+		if( optSplit.length > 1 ){
+			var valSplits = optSplit[1].split('+');
+			if( valSplits.length > 1 ) {
+				opts[optSplit[0]]=valSplits;
+			} else {
+				opts[optSplit[0]]=optSplit[1];
+			};
+		} else {
+			opts[optSplit[0]]=true;
+		};
+	};
+	
+	var r = [];
+	
+	r.push('<div class="n2s_field_wrapper">');
+
+	if( obj.nunaliit_type === 'localized' ) {
+		for(var lang in obj){
+			if( lang === 'nunaliit_type' || lang[0] === ':' ){
+				// ignore
+			} else {
+				r.push('<div class="n2s_field_container n2s_field_container_localized">');
+				r.push('<span class="n2_localize_lang">('+lang+')</span>');
+				_formSingleField(r,obj,[lang],opts);
+				r.push('</div>');
+			};
+		};
+	} else {
+		r.push('<div class="n2s_field_container">');
+		_formSingleField(r,this,sels,opts);
+		r.push('</div>');
+	};
+
+	r.push('</div>');
+	
+	return r.join('');
+};
+
+function _inputField() {
+	var args = [];
+	args.push.apply(args,arguments);
+	var options = args.pop();
+	
+	var text = options.fn(this);
+
+	// Syntax is: <selector>(,<type>)?
+	var splits = text.split(',');
+	var sels = splits[0].split('.');
+
+	var completeSelectors = this[SELECT].slice(0);
+	completeSelectors.push.apply(completeSelectors,sels);
+	
+	var cl = 'n2s_input ' + createClassStringFromSelector(completeSelectors);
+
+	var type = '';
+	if( splits[1] ) {
+		type = ' n2s_type_'+splits[1];
+	};
+	
+	return cl + type;
+};
+
+
 var HTML = ':html';
 var INPUT = ':input';
 var FIELD = ':field';
@@ -166,7 +281,14 @@ var PARENT = ':parent';
 var SELECT = ':selector';
 var LOCALIZE = ':localize';
 
-Handlebars.registerHelper(LOCALIZE,_localizeString);
+if( typeof(Handlebars) !== 'undefined' 
+ && Handlebars.registerHelper ) {
+	Handlebars.registerHelper(LOCALIZE ,_localizeString );
+	Handlebars.registerHelper(FIELD    ,_formField      );
+	Handlebars.registerHelper(INPUT    ,_inputField     );
+} else {
+	$n2.log('Unable to register helper functions with Handlebars. Schemas will not work properly.');
+};
 
 //============================================================
 // Object Query
@@ -1072,116 +1194,6 @@ function parseClassNames(classNames) {
 	return parsed;
 };
 
-function createInputCallback(selector) {
-	var cl = 'n2s_input ' + createClassStringFromSelector(selector);
-
-	return function() {
-		return function(text,render) {
-			var components = text.split(',')
-			var type = '';
-			if( components[1] ) {
-				type = ' n2s_type_'+components[1];
-			};
-			
-			var sels = components[0].split('.');
-			var es = [];
-			for(var i=0,e=sels.length;i<e;++i){
-				es[es.length] = '-';
-				es[es.length] = escapeSelector(sels[i]);
-			};
-			
-			return cl + es.join('') + type;
-		};
-	};
-};
-
-function _formSingleField(r,obj,sels,options){
-	
-	// option: textarea
-	if( options.textarea ){
-		r.push('<textarea class="');
-	} else {
-		r.push('<input type="text" class="');
-	};
-	
-	r.push('n2s_input');
-	
-	var selector = obj[SELECT];
-	if( selector ) {
-		var completeSelector = selector.slice(0);
-		completeSelector.push.apply(completeSelector,sels);
-		var selClass = createClassStringFromSelector(completeSelector);
-
-		r.push(' '+selClass);
-	};
-	
-	if( options.type ){
-		r.push(' n2s_type_'+options.type);
-	};
-
-	if( options.textarea ){
-		r.push('"></textarea>');
-	} else {
-		r.push('"/>');
-	};
-
-};
-
-function formField() {
-	return function(text,render) {
-		// Syntax is: <selector>(,<option>)*
-		var splits = text.split(',');
-		var sels = splits[0].split('.');
-		var obj = getDataFromObjectSelector(this, sels);
-		
-		// <option> is one of:
-		// - optionName
-		// - optionName=optionValue
-		// - optionsName=value1+value2+...
-		var options = {};
-		for(var i=1,e=splits.length;i<e;++i){
-			var optStr = splits[i];
-			var optSplit = optStr.split('=');
-			if( optSplit.length > 1 ){
-				var valSplits = optSplit[1].split('+');
-				if( valSplits.length > 1 ) {
-					options[optSplit[0]]=valSplits;
-				} else {
-					options[optSplit[0]]=optSplit[1];
-				};
-			} else {
-				options[optSplit[0]]=true;
-			};
-		};
-		
-		var r = [];
-		
-		r.push('<div class="n2s_field_wrapper">');
-
-		if( obj.nunaliit_type === 'localized' ) {
-			for(var lang in obj){
-				if( lang === 'nunaliit_type' || lang[0] === ':' ){
-					// ignore
-				} else {
-					r.push('<div class="n2s_field_container n2s_field_container_localized">');
-					r.push('<span class="n2_localize_lang">('+lang+')</span>');
-					_formSingleField(r,obj,[lang],options);
-					r.push('</div>');
-				};
-			};
-		} else {
-			r.push('<div class="n2s_field_container">');
-			_formSingleField(r,this,sels,options);
-			r.push('</div>');
-		};
-
-		r.push('</div>');
-		
-		return r.join('');
-	};
-};
-
-
 function computeFormObj(origObj, context, selector, parent) {
 	
 	if( null === origObj ) {
@@ -1194,7 +1206,6 @@ function computeFormObj(origObj, context, selector, parent) {
 		var view = [];
 		view[CONTEXT] = context;
 		view[PARENT] = parent;
-		view[INPUT] = createInputCallback(selector);
 		view[SELECT] = selector.slice(0);
 		
 		for(var i=0,e=origObj.length; i<e; ++i) {
@@ -1212,8 +1223,6 @@ function computeFormObj(origObj, context, selector, parent) {
 		view[ITERATE] = [];
 		view[CONTEXT] = context;
 		view[PARENT] = parent;
-		view[INPUT] = createInputCallback(selector);
-		view[FIELD] = formField;
 		view[SELECT] = selector.slice(0);
 
 		for(var key in origObj) {
