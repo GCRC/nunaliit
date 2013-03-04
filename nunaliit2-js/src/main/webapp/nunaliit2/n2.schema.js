@@ -1086,11 +1086,15 @@ var Display = $n2.Class({
 			attr._setHtml(obj);
 		};
 
-		var displayTemplate = this.schema[this.templateName];
-		if( displayTemplate ) {
-			obj._schema = this.schema.name;
-
-			var compiledTemplate = Handlebars.compile(displayTemplate);
+		var compiledTemplate = this.schema[this.templateName + '__compiled'];
+		if( !compiledTemplate ) {
+			var displayTemplate = this.schema[this.templateName];
+			if( displayTemplate ) {
+				compiledTemplate = Handlebars.compile(displayTemplate);
+				this.schema[this.templateName + '__compiled'] = compiledTemplate;
+			};
+		};
+		if( compiledTemplate ) {
 			obj[HTML] = compiledTemplate(obj);
 		};
 	}
@@ -1370,11 +1374,15 @@ var Form = $n2.Class({
 			attr._setHtml(obj);
 		};
 
-		var formTemplate = this.schema.formTemplate;
-		if( formTemplate ) {
-			obj._schema = this.schema.name;
-
-			var compiledTemplate = Handlebars.compile(formTemplate);
+		var compiledTemplate = this.schema.formTemplate__compiled;
+		if( !compiledTemplate ) {
+			var formTemplate = this.schema.formTemplate;
+			if( formTemplate ) {
+				compiledTemplate = Handlebars.compile(formTemplate);
+				this.schema.formTemplate__compiled = compiledTemplate;
+			};
+		};
+		if( compiledTemplate ) {
 			obj[HTML] = compiledTemplate(obj);
 		};
 	}
