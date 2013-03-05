@@ -14,7 +14,7 @@ img {
 	border-style: none;
 }
 
-#header {
+#header, div.nunaliit_header {
 	position: absolute;
 	top: 0px;    
 	left: 20px;
@@ -48,7 +48,7 @@ img {
 	float:right;
 }
 
-#searchInput {
+#searchInput, .nunaliit_searchInput {
 	position: absolute;
 	top: 20px;
 	right: 120px;
@@ -58,7 +58,7 @@ img {
 	height: 30px;
 }
 
-#searchInput input.search_panel_input {
+#searchInput input.search_panel_input, .nunaliit_searchInput input.search_panel_input {
 	margin: 5px 0px;
 }
 
@@ -84,7 +84,7 @@ img {
 	font-weight: bold;
 }
 
-#login {
+#login, .nunaliit_login {
 	position: absolute;
 	top: 20px;
 	right: 20px;
@@ -103,7 +103,7 @@ img {
 	padding-top: 7px;
 }
 
-#side {
+#side, .nunaliit_side {
 	position: absolute;
 	top: 50px;
 	right: 20px;

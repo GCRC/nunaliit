@@ -197,7 +197,7 @@ span.label {
 	display:inline-block;
 }
 
-#header {
+#header, div.nunaliit_header {
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -216,7 +216,7 @@ span.label {
 	z-index:9;
  	}
 
-#title {
+#title, .nunaliit_title {
 	margin: 11.5px 20px;
 	border: 0;
 	padding: 0;
@@ -227,7 +227,7 @@ span.label {
 	float:left;
 }
 
-#title-link {
+a.nunaliit_title_link {
 	color: inherit;
 	text-decoration: inherit;
 }
@@ -319,45 +319,12 @@ div.olControlZoom a {
 	color: #666;
 }
 
+/* Handle by jquery-ui. Keep for backwards compatibility */
 #searchLookAhead {
-	position: absolute;
-	top: 50px;
-	right: 188px;
-	overflow: hidden;
-	width: 250px;
-	z-index: 10;
-	background-color: #fff;
-	border-width: 1px;
-	border-style: solid;
-	border-color: #000;
 	display: none;
 }
 
-#searchLookAhead span {
-	cursor: pointer;
-}
-
-#searchLookAhead .offered {
-	font-weight: bold;
-}
-
-#searchLookAhead div.kill {
-	display: inline-block;
-	float: right;
-	width: 16px;
-	height: 16px;
-	margin: 0px;	
-	padding: 0px;
-	border: none;
-	background: url(tree/icons.png) no-repeat;
-	background-position: -32px 0px;
-}
-
-#searchLookAhead div.kill:hover {
-	background-position: -48px 0px;
-}
-
-#login {
+#login, .nunaliit_login {
 	position:absolute;
 	top:0;
 	right:20px;
@@ -393,7 +360,7 @@ a.loginLink:hover {
 	padding-right: 10px;
 }
 
-#side {
+#side, .nunaliit_side {
 	position: absolute;
 	top: 47px;
 	right: -1px;

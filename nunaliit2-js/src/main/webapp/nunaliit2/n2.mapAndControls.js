@@ -458,6 +458,7 @@ var MapAndControls = $n2.Class({
 	,attributeFormManagerOptions: null
 	,attributeFormManager: null
 	,currentPopup: null
+	,dhtmlSoundDivId: null
 
     // HOVER and CLICK
 	,selectFeatureControl: null
@@ -596,6 +597,7 @@ var MapAndControls = $n2.Class({
 		this.olkitDisplayOptions = {};
 		this.pendingMarkInfo = null;
 		this.mapBusyCount = 0;
+		this.dhtmlSoundDivId = $n2.getUniqueId();
 
 	    // HOVER and CLICK
 		this.selectFeatureControl = null;
@@ -1152,11 +1154,18 @@ var MapAndControls = $n2.Class({
 	}
 
 	,insertSound: function(surl) {
+		var $dhtmlSoundDiv = $('#'+this.dhtmlSoundDivId);
+		if( $dhtmlSoundDiv.length < 1 ){
+			$dhtmlSoundDiv = $('<div></div>')
+				.attr('id',this.dhtmlSoundDivId)
+				.appendTo( $('body') )
+				;
+		};
 		if (surl) {
 			var effectiveUrl = this.dbSearchEngine.getRelMediaPath(surl);
-			$('#dhtmlsound').html('<embed src="'+effectiveUrl+'" hidden="true" autostart="true" loop="false"/>');
+			$dhtmlSoundDiv.html('<embed src="'+effectiveUrl+'" hidden="true" autostart="true" loop="false"/>');
 		} else {
-			$('#dhtmlsound').empty();
+			$dhtmlSoundDiv.empty();
 		};
 	}
 	
