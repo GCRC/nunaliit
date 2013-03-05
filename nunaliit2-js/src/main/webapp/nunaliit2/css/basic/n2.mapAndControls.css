@@ -163,7 +163,7 @@ span.label {
 	display:inline-block;
 }
 
-#header, div.n2_header {
+#header, div.nunaliit_header {
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -189,7 +189,7 @@ span.label {
 	z-index:9;
  	}
 
-#title, .n2_title {
+#title, .nunaliit_title {
 	margin: 0;
 	border: 0;
 	padding: 0;
@@ -199,7 +199,7 @@ span.label {
 	float:left;
 }
 
-a.n2_title_link {
+a.nunaliit_title_link {
 	color: inherit;
 	text-decoration: inherit;
 }
@@ -289,7 +289,7 @@ div.olControlZoom a {
 	display: none;
 }
 
-#login {
+#login, .nunaliit_login {
 	position: absolute;
 	top: 9px;
 	right: 25px;
@@ -313,7 +313,7 @@ div.olControlZoom a {
 	padding-right: 8px;
 }
 
-#side {
+#side, .nunaliit_side {
 	position: absolute;
 	top: 85px;
 	right: 25px;

@@ -14,7 +14,7 @@ img {
 	border-style: none;
 }
 
-#header, div.n2_header {
+#header, div.nunaliit_header {
 	position: absolute;
 	top: 0px;    
 	left: 20px;
@@ -84,7 +84,7 @@ img {
 	font-weight: bold;
 }
 
-#login {
+#login, .nunaliit_login {
 	position: absolute;
 	top: 20px;
 	right: 20px;
@@ -103,7 +103,7 @@ img {
 	padding-top: 7px;
 }
 
-#side {
+#side, .nunaliit_side {
 	position: absolute;
 	top: 50px;
 	right: 20px;
