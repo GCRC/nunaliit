@@ -284,42 +284,9 @@ div.olControlZoom a {
 	color: #666;
 }
 
+/* Handle by jquery-ui. Keep for backwards compatibility */
 #searchLookAhead {
-	position: absolute;
-	top: 50px;
-	right: 188px;
-	overflow: hidden;
-	width: 250px;
-	z-index: 10;
-	background-color: #fff;
-	border-width: 1px;
-	border-style: solid;
-	border-color: #000;
 	display: none;
-}
-
-#searchLookAhead span {
-	cursor: pointer;
-}
-
-#searchLookAhead .offered {
-	font-weight: bold;
-}
-
-#searchLookAhead div.kill {
-	display: inline-block;
-	float: right;
-	width: 16px;
-	height: 16px;
-	margin: 0px;	
-	padding: 0px;
-	border: none;
-	background: url(tree/icons.png) no-repeat;
-	background-position: -32px 0px;
-}
-
-#searchLookAhead div.kill:hover {
-	background-position: -48px 0px;
 }
 
 #login {
