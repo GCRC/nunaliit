@@ -48,7 +48,7 @@ img {
 	float:right;
 }
 
-#searchInput {
+#searchInput, .nunaliit_searchInput {
 	position: absolute;
 	top: 20px;
 	right: 120px;
@@ -58,7 +58,7 @@ img {
 	height: 30px;
 }
 
-#searchInput input.search_panel_input {
+#searchInput input.search_panel_input, .nunaliit_searchInput input.search_panel_input {
 	margin: 5px 0px;
 }
 
