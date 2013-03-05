@@ -163,7 +163,7 @@ span.label {
 	display:inline-block;
 }
 
-#header {
+#header, div.n2_header {
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -189,7 +189,7 @@ span.label {
 	z-index:9;
  	}
 
-#title {
+#title, .n2_title {
 	margin: 0;
 	border: 0;
 	padding: 0;
@@ -199,7 +199,7 @@ span.label {
 	float:left;
 }
 
-#title-link {
+a.n2_title_link {
 	color: inherit;
 	text-decoration: inherit;
 }

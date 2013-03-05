@@ -14,7 +14,7 @@ img {
 	border-style: none;
 }
 
-#header {
+#header, div.n2_header {
 	position: absolute;
 	top: 0px;    
 	left: 20px;
