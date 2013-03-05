@@ -227,12 +227,17 @@ span.label {
 	float:left;
 }
 
+#title-link {
+	color: inherit;
+	text-decoration: inherit;
+}
+
 #map, .nunaliit_map {    
 	position: absolute;
 	top: 50px;
 	left: 0;
-	right: 450px;
-	bottom: 20px;
+	right: 0px;
+	bottom: 0px;
 	border: 1px solid #777;
 	margin: 0;
 	border: 0;
@@ -774,7 +779,7 @@ table.mediaSelection td {
 }
 
 /* Fix spurious copyright pop-up */
-.olLayerGooglePoweredBy {
+.olLayerGooglePoweredBy, .gmnoprint {
 	visibility: hidden;
 }
 

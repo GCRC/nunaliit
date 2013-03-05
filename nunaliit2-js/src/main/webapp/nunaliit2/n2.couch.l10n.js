@@ -195,6 +195,21 @@ function getLocalizedString(str, packageName, args){
 			result.nunaliit_lang_fallback = true;
 			return result;
 		};
+		
+		// Fallback to any language
+		for(var fbLang in str){
+			if( 'nunaliit_type' === fbLang ){
+				// ignore
+			} else {
+				var result = str[fbLang];
+				if( args && args.length > 0 ){
+					result = $n2.utils.formatString(result,args);
+				};
+				result.nunaliit_lang = fbLang;
+				result.nunaliit_lang_fallback = true;
+				return result;
+			};
+		};
 	};
 	
 	return null;

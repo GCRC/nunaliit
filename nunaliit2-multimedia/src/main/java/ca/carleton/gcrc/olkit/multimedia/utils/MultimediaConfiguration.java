@@ -2,16 +2,17 @@ package ca.carleton.gcrc.olkit.multimedia.utils;
 
 import java.util.Properties;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import ca.carleton.gcrc.olkit.multimedia.converter.impl.MultimediaConverterImpl;
 import ca.carleton.gcrc.olkit.multimedia.converter.threshold.ThresholdAudio;
 import ca.carleton.gcrc.olkit.multimedia.converter.threshold.ThresholdImage;
 import ca.carleton.gcrc.olkit.multimedia.converter.threshold.ThresholdLogicalAnd;
 import ca.carleton.gcrc.olkit.multimedia.converter.threshold.ThresholdVideo;
+import ca.carleton.gcrc.olkit.multimedia.ffmpeg.FFmpeg;
 import ca.carleton.gcrc.olkit.multimedia.ffmpeg.FFmpegProcessorDefault;
 import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagickProcessorDefault;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class MultimediaConfiguration {
 
@@ -19,6 +20,12 @@ public class MultimediaConfiguration {
 	
 	static public void configureFromProperties(Properties props) {
 		// FFMpeg
+		{
+			String command = props.getProperty("ffmpegVersionCommand", null);
+			if( null != command ) {
+				FFmpeg.ffmpegVersionCommand = command;
+			}
+		}
 		{
 			String command = props.getProperty("ffmpegInfoCommand", null);
 			if( null != command ) {

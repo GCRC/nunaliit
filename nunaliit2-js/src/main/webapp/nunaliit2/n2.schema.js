@@ -39,11 +39,13 @@ $Id: n2.schema.js 8461 2012-08-29 18:54:28Z jpfiset $
 
 var HTML = ':html';
 var INPUT = ':input';
+var FIELD = ':field';
 var ITERATE = ':iterate';
 var EMPTY = ':empty';
 var CONTEXT = ':context';
 var PARENT = ':parent';
 var SELECT = ':selector';
+var LOCALIZE = ':localize';
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
@@ -772,6 +774,7 @@ function computeViewObj(origObj, context, parent) {
 		view[ITERATE] = [];
 		view[CONTEXT] = context;
 		view[PARENT] = parent;
+		view[LOCALIZE] = localizeString;
 
 		for(var key in origObj) {
 			var value = computeViewObj(origObj[key], context, view);
@@ -1024,19 +1027,150 @@ function createInputCallback(selector) {
 	};
 };
 
-function createSelector(selector) {
-	var sel = ['['];
+function _formSingleField(r,obj,sels,options){
 	
-	for(var i=0,e=selector.length; i<e; ++i) {
-		if( i != 0 ) sel.push(',');
-		sel.push('\'');
-		sel.push(selector[i]);
-		sel.push('\'');
-	}
+	// option: textarea
+	if( options.textarea ){
+		r.push('<textarea class="');
+	} else {
+		r.push('<input type="text" class="');
+	};
 	
-	sel.push(']');
+	r.push('n2s_input');
 	
-	return sel.join('');
+	var selector = obj[SELECT];
+	if( selector ) {
+		var completeSelector = selector.slice(0);
+		completeSelector.push.apply(completeSelector,sels);
+		var selClass = createClassStringFromSelector(completeSelector);
+
+		r.push(' '+selClass);
+	};
+	
+	if( options.type ){
+		r.push(' n2s_type_'+options.type);
+	};
+
+	if( options.textarea ){
+		r.push('"></textarea>');
+	} else {
+		r.push('"/>');
+	};
+
+};
+
+function formField() {
+	return function(text,render) {
+		// Syntax is: <selector>(,<option>)*
+		var splits = text.split(',');
+		var sels = splits[0].split('.');
+		var obj = getDataFromObjectSelector(this, sels);
+		
+		// <option> is one of:
+		// - optionName
+		// - optionName=optionValue
+		// - optionsName=value1+value2+...
+		var options = {};
+		for(var i=1,e=splits.length;i<e;++i){
+			var optStr = splits[i];
+			var optSplit = optStr.split('=');
+			if( optSplit.length > 1 ){
+				var valSplits = optSplit[1].split('+');
+				if( valSplits.length > 1 ) {
+					options[optSplit[0]]=valSplits;
+				} else {
+					options[optSplit[0]]=optSplit[1];
+				};
+			} else {
+				options[optSplit[0]]=true;
+			};
+		};
+		
+		var r = [];
+		
+		r.push('<div class="n2s_field_wrapper">');
+
+		if( obj.nunaliit_type === 'localized' ) {
+			for(var lang in obj){
+				if( lang === 'nunaliit_type' || lang[0] === ':' ){
+					// ignore
+				} else {
+					r.push('<div class="n2s_field_container n2s_field_container_localized">');
+					r.push('<span class="n2_localize_lang">('+lang+')</span>');
+					_formSingleField(r,obj,[lang],options);
+					r.push('</div>');
+				};
+			};
+		} else {
+			r.push('<div class="n2s_field_container">');
+			_formSingleField(r,this,sels,options);
+			r.push('</div>');
+		};
+
+		r.push('</div>');
+		
+		return r.join('');
+	};
+};
+
+function localizeString() {
+	return function(text,render) {
+		var splits = text.split(',');
+		var key = splits[0];
+		var s = getDataFromObjectSelector(this, key);
+		if( typeof(s) === 'object' 
+		 && s.nunaliit_type === 'localized') {
+			var lang = 'en';
+			if( $n2.l10n && $n2.l10n.getLocale ){
+				lang = $n2.l10n.getLocale().lang;
+			};
+			
+			if( s[lang] ) {
+				return s[lang];
+			} else {
+				// Find a language to fall back on
+				var fbLang = 'en';
+				if( !s[fbLang] ) {
+					fbLang = null;
+					for(var l in s){
+						if( l.length > 0 && l[0] === ':' ){
+							// ignore
+						} else if( l === 'nunaliit_type' ) {
+							// ignore
+						} else {
+							fbLang = l;
+							break;
+						};
+					};
+				};
+				
+				if( fbLang ){
+					var result = [];
+					result.push('<span class="n2_localized_string n2_localize_fallback">');
+					result.push('<span class="n2_localize_fallback_lang">(');
+					result.push(fbLang);
+					result.push(')</span>');
+					if( s[fbLang] ){
+						result.push(''+s[fbLang]);
+					};
+					result.push('</span>');
+					return result.join('');
+					
+				} else {
+					return '';
+				};
+			};
+			
+		} else if( typeof(s) === 'undefined' ) {
+			return '';
+
+		} else if( s === null ) {
+			return '';
+			
+		} else {
+			return ''+s;
+		};
+	};
 };
 
 function computeFormObj(origObj, context, selector, parent) {
@@ -1052,7 +1186,7 @@ function computeFormObj(origObj, context, selector, parent) {
 		view[CONTEXT] = context;
 		view[PARENT] = parent;
 		view[INPUT] = createInputCallback(selector);
-		view[SELECT] = createSelector(selector);
+		view[SELECT] = selector.slice(0);
 		
 		for(var i=0,e=origObj.length; i<e; ++i) {
 			selector.push(i);
@@ -1070,7 +1204,9 @@ function computeFormObj(origObj, context, selector, parent) {
 		view[CONTEXT] = context;
 		view[PARENT] = parent;
 		view[INPUT] = createInputCallback(selector);
-		view[SELECT] = createSelector(selector);
+		view[FIELD] = formField;
+		view[SELECT] = selector.slice(0);
+		view[LOCALIZE] = localizeString;
 
 		for(var key in origObj) {
 			selector.push(key);

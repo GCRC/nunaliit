@@ -39,10 +39,10 @@ import java.io.InputStreamReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionProgress;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionProgress;
 
 public class FFmpeg {
 
@@ -50,6 +50,8 @@ public class FFmpeg {
 	
 	static private Pattern patternVersionLine = Pattern.compile("(avconv|ffmpeg)( version)?\\s+([^,]*)",Pattern.CASE_INSENSITIVE);
 	static private Pattern patternVersion = Pattern.compile("(\\d+)\\.(\\d+).*");
+	
+	static public String ffmpegVersionCommand = "avconv -version";
 	
 	static private FFmpegInfo availability;
 	synchronized static public FFmpegInfo getInfo() {
@@ -59,7 +61,8 @@ public class FFmpeg {
 			
 			Runtime rt = Runtime.getRuntime();
 			try {
-				Process p = rt.exec("avconv -version", null, null);
+				logger.debug(ffmpegVersionCommand);
+				Process p = rt.exec(ffmpegVersionCommand, null, null);
 				InputStream is = p.getInputStream();
 				InputStreamReader isr = new InputStreamReader(is);
 				BufferedReader bufReader = new BufferedReader(isr);

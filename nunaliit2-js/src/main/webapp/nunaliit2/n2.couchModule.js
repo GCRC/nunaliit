@@ -296,6 +296,27 @@ var MapFeatureStyles = $n2.Class({
 }); 
 
 //=========================================================================	
+
+function isSrsNameSupported(srsName){
+	if( typeof(OpenLayers) !== 'undefined'
+	 && OpenLayers.Projection
+	 && OpenLayers.Projection.transforms
+	 && OpenLayers.Projection.transforms[srsName] ){
+		return true;
+	};
+	
+	if( typeof(Proj4js) !== 'undefined'
+	 && Proj4js.Proj ){
+		var proj = new Proj4js.Proj(srsName);
+		if( proj.readyToUse ){
+			return true;
+		};
+	};
+	
+	return false;
+};
+
+//=========================================================================	
 var Module = $n2.Class({
 	
 	moduleDoc: null
@@ -356,12 +377,16 @@ var Module = $n2.Class({
 		} else {
 			if( 'html' === introInfo.type && introInfo.content ) {
 				var content = $n2.couchL10n.getLocalizedString(introInfo.content);
-				$elem.html(content);
+				if( content ) {
+					$elem.html(content);
+				};
 				return true;
 				
 			} else if( 'text' === introInfo.type && introInfo.content ) {
 				var content = $n2.couchL10n.getLocalizedString(introInfo.content);
-				$elem.html(content);
+				if( content ) {
+					$elem.text(content);
+				};
 				return true;
 				
 			} else if( 'attachment' === introInfo.type 
@@ -515,8 +540,10 @@ var ModuleDisplay = $n2.Class({
 			if( moduleInfo && moduleInfo.title ) {
 				var title = $n2.couchL10n.getLocalizedString(moduleInfo.title);
 				//$('head > title').text('' + moduleInfo.title);
-				document.title = title; // needed for IE 6
-				$('#'+opts.titleName).text(title);
+				if( title ) {
+					document.title = title; // needed for IE 6
+					$('#'+opts.titleName).text(title);
+				};
 			} else {
 				//$('head > title').text('Nunaliit Atlas');
 				document.title = 'Nunaliit Atlas'; // needed for IE 6
@@ -701,6 +728,14 @@ var ModuleDisplay = $n2.Class({
 				initialBounds = mapInfo.coordinates.initialBounds;
 				
 				if( mapInfo.coordinates.srsName ){
+					// Verify if SRS name is supported
+					if( false == isSrsNameSupported(mapInfo.coordinates.srsName) ) {
+						var msg = _loc('The projection {srsName} is not supported. Atlas may no function properly.',{
+							srsName: mapInfo.coordinates.srsName
+						});
+						alert(msg);
+					};
+					
 					mapOptions.mapDisplay.srsName = mapInfo.coordinates.srsName;
 					mapOptions.mapCoordinateSpecifications.srsName = mapInfo.coordinates.srsName;
 				};

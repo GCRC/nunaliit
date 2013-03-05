@@ -449,7 +449,7 @@ $n2.couchDisplay = $n2.Class({
  				$buttons.append( $('<span>&nbsp;</span>') );
  			};
 			var $focusButton = $('<a href="#"></a>');
-			var focusText = _loc('Focus');
+			var focusText = _loc('More Info');
 			$focusButton.text( focusText );
 			$buttons.append($focusButton);
 			$focusButton.click(function(){

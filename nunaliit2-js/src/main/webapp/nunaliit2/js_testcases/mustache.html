@@ -54,6 +54,18 @@ console.log('fail','>>'+html+'<<','>>'+expected+'<<',template);
 					]
 				};
 				
+				var f = function() {
+					return function(text,render){
+						console.log('f',this);
+						var res = text + this.name;
+						return res;
+					};
+				};
+				var d = {
+					f: f
+					,name: 'John'
+				};
+				
 				test('{{one}} {{#two}}{{one}}{{/two}} {{#two}}{{#two}}{{one}}{{/two}}{{/two}}','first second third', a);
 				test('{{one}} {{#two}}{{one}}{{/two}} {{#two}}a{{#two}}b{{one}}c{{/two}}d{{/two}}','first second abthirdcd', a);
 				test('{{#two}}{{/two}}','', a);
@@ -63,6 +75,7 @@ console.log('fail','>>'+html+'<<','>>'+expected+'<<',template);
 				test('{{^three}}{{one}}{{/three}} {{^three}}{{#two}}{{one}}{{/two}}{{/three}}','first second', a);
 				test('{{#:iterate}}{{.}}{{/:iterate}}','123', b);
 				test('{{#two}}{{#two}}{{two}}{{/two}}{{/two}}','', a);
+				test('{{#f}}arg{{/f}}','argJohn', d);
 				
 				var c = {
 					type: 'resource'
