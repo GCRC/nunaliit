@@ -161,6 +161,8 @@ function _formSingleField(r,obj,sels,options){
 	// option: textarea
 	if( options.textarea ){
 		r.push('<textarea class="');
+	} else if( options.checkbox ){
+		r.push('<input type="checkbox" class="');
 	} else {
 		r.push('<input type="text" class="');
 	};
@@ -176,12 +178,23 @@ function _formSingleField(r,obj,sels,options){
 		r.push(' '+selClass);
 	};
 	
-	if( options.type ){
-		r.push(' n2s_type_'+options.type);
+	if( options.reference ){
+		r.push(' ' + typeClassStringPrefix + 'reference');
+		
+	} else if( options.date ){
+		r.push(' ' + typeClassStringPrefix + 'date');
+		
+	} else if( options.numeric ){
+		r.push(' ' + typeClassStringPrefix + 'numeric');
+		
+	} else if( options.layers ){
+		r.push(' ' + typeClassStringPrefix + 'layers');
 	};
 
 	if( options.textarea ){
 		r.push('"></textarea>');
+	} else if( options.checkbox ){
+		r.push('"/>');
 	} else {
 		r.push('"/>');
 	};
@@ -224,7 +237,7 @@ function _formField() {
 	
 	r.push('<div class="n2s_field_wrapper">');
 
-	if( obj.nunaliit_type === 'localized' ) {
+	if( obj && obj.nunaliit_type === 'localized' ) {
 		for(var lang in obj){
 			if( lang === 'nunaliit_type' || lang[0] === ':' ){
 				// ignore

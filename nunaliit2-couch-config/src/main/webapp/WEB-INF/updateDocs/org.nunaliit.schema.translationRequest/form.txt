@@ -1,19 +1,19 @@
 <div class="n2_documentForm"><div class="n2_layoutFloat">
 	<div>
 		<div class="label n2s_localize">Language</div>
-		<div class="value"><input type="text" class="{{#:input}}lang{{/:input}}"/></div>
+		<div class="value">{{#:field}}lang{{/:field}}</div>
 		<div class="end"></div>
 	</div>
 	
 	<div>
 		<div class="label n2s_localize">Original String</div>
-		<div class="value"><input type="text" class="{{#:input}}str{{/:input}}"/></div>
+		<div class="value">{{#:field}}str{{/:field}}</div>
 		<div class="end"></div>
 	</div>
 	
 	<div>
 		<div class="label n2s_localize">Translation</div>
-		<div class="value"><input type="text" class="{{#:input}}trans{{/:input}}"/></div>
+		<div class="value">{{#:field}}trans{{/:field}}</div>
 		<div class="end"></div>
 	</div>
 	

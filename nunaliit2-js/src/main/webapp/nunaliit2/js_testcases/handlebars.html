@@ -116,6 +116,7 @@ console.log('fail','>>'+html+'<<','>>'+expected+'<<',template);
 				test('\\{{#car}}','{{#car}}', d); // escaped mustache
 				test('{{:spec}}','special', d); // access identifiers with colon
 				test('{{myHelp}}','myHelp', d, {helpers:helpers}); // specified helpers
+				test('{{loc "allo" a=5}}','loc func', d); // hashes
 			};
 
 			var loaded = false;

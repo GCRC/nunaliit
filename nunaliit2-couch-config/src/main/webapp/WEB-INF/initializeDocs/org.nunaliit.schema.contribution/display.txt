@@ -1,16 +1,16 @@
 {{#title}}
-	<tr><td class="label n2_localize">Title</td><td class="value">{{title}}</td></tr>
+	<tr><td class="label n2_localize">Title</td><td class="value">{{.}}</td></tr>
 {{/title}}
 {{#description}}
-	<tr><td class="label n2_localize">Description</td><td class="value">{{description}}</td></tr>
+	<tr><td class="label n2_localize">Description</td><td class="value">{{.}}</td></tr>
 {{/description}}
 {{#reference}}
 	{{#doc}}
-		<tr><td class="label n2_localize">Reference</td><td class="value"><a href="#" class="n2s_referenceLink">{{doc}}</a></td></tr>
+		<tr><td class="label n2_localize">Reference</td><td class="value"><a href="#" class="n2s_referenceLink">{{.}}</a></td></tr>
 	{{/doc}}
 {{/reference}}
 {{#reply}}
 	{{#doc}}
-		<tr><td class="label n2_localize">In reply to</td><td class="value"><a href="#" class="n2s_referenceLink">{{doc}}</a></td></tr>
+		<tr><td class="label n2_localize">In reply to</td><td class="value"><a href="#" class="n2s_referenceLink">{{.}}</a></td></tr>
 	{{/doc}}
 {{/reply}}

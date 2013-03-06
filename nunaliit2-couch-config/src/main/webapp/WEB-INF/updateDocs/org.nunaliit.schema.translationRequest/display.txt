@@ -14,7 +14,7 @@
 	{{#trans}}
 	<div>
 		<div class="label n2s_localize">Translation</div>
-		<div class="value n2s_preserveSpaces">{{trans}}</div>
+		<div class="value n2s_preserveSpaces">{{.}}</div>
 		<div class="end"></div>
 	</div>
 	{{/trans}}
