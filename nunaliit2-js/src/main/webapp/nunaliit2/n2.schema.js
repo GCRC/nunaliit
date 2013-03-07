@@ -307,6 +307,11 @@ function _arrayField() {
 	
 	var obj = args[0];
 	
+	var newType = null;
+	if( args.length > 1 ){
+		newType = args[1];
+	};
+	
 	var r = [];
 	
 	r.push('<div class="n2s_array">');
@@ -335,7 +340,11 @@ function _arrayField() {
 	if( obj ){
 		var arraySelector = obj[SELECT]
 		var arrayClass = createClassStringFromSelector(arraySelector);
-		r.push('<div class="n2s_array_add '+arrayClass+'"></div>');
+		r.push('<div class="n2s_array_add '+arrayClass+'"');
+		if( newType ) {
+			r.push('n2_array_new_type="'+newType+'"');
+		};
+		r.push('></div>');
 	};
 	
 	r.push('</div>');
@@ -1447,9 +1456,18 @@ var Form = $n2.Class({
 
 					//$n2.log('click',this,e);
 					if( $clicked.hasClass('n2s_array_add') ){
+						var newType = $clicked.attr('n2_array_new_type');
 						var ary = getDataFromObjectSelector(_this.obj, classInfo.selector);
 						if( ary ){
-							ary.push('');
+							var newItem = '';
+							if( newType ){
+								try {
+									eval('newItem = '+newType);
+								} catch(e) {
+									$n2.log('Error creating a new item: '+e);
+								};
+							};
+							ary.push(newItem);
 						};
 						_this.callback(_this.obj,classInfo.selector,ary);
 						_this.refresh($elem);
