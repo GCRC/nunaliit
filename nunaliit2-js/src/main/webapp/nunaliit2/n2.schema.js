@@ -44,6 +44,8 @@ var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 var defaultErrorFn = function(err){ $n2.reportError(err); };
 var defaultSuccessFn = function(){};
 
+var typeClassStringPrefix = 'n2s_type_';
+
 //============================================================
 // Object
 
@@ -210,8 +212,23 @@ function _formField() {
 
 	// Syntax is: <selector>(,<option>)*
 	var splits = text.split(',');
-	var sels = splits[0].split('.');
-	var obj = getDataFromObjectSelector(this, sels);
+	var identifier = splits[0];
+	if( '.' === identifier ){
+		var obj = this;
+		var sels = [];
+	} else {
+		var sels = identifier.split('.');
+		var obj = getDataFromObjectSelector(this, sels);
+	};
+	
+	if( obj
+	 && !obj[SELECT]
+	 && options
+	 && options.data
+	 && options.data.n2_selector
+	 ){
+		obj[SELECT] = options.data.n2_selector;
+	};
 	
 	// <option> is one of:
 	// - optionName
@@ -283,6 +300,49 @@ function _inputField() {
 	return cl + type;
 };
 
+function _arrayField() {
+	var args = [];
+	args.push.apply(args,arguments);
+	var options = args.pop();
+	
+	var obj = args[0];
+	
+	var r = [];
+	
+	r.push('<div class="n2s_array">');
+
+	if( obj && obj.length ) {
+		for(var i=0,e=obj.length; i<e; ++i){
+			var item = obj[i];
+	
+			var completeSelectors = obj[SELECT].slice(0);
+			completeSelectors.push(i);
+			var cl = createClassStringFromSelector(completeSelectors);
+			
+			r.push('<div class="n2s_array_item">');
+	
+			r.push('<div class="n2s_array_item_delete '+cl+'"></div>');
+			r.push('<div class="n2s_array_item_down '+cl+'"></div>');
+	
+			r.push('<div class="n2s_array_item_wrapper">');
+	
+			r.push( options.fn(item,{data:{n2_selector:completeSelectors}}) );
+			
+			r.push('</div></div>');
+		};
+	};
+
+	if( obj ){
+		var arraySelector = obj[SELECT]
+		var arrayClass = createClassStringFromSelector(arraySelector);
+		r.push('<div class="n2s_array_add '+arrayClass+'"></div>');
+	};
+	
+	r.push('</div>');
+	
+	return r.join('');
+};
+
 
 var HTML = ':html';
 var INPUT = ':input';
@@ -293,12 +353,14 @@ var CONTEXT = ':context';
 var PARENT = ':parent';
 var SELECT = ':selector';
 var LOCALIZE = ':localize';
+var ARRAY = ':array';
 
 if( typeof(Handlebars) !== 'undefined' 
  && Handlebars.registerHelper ) {
 	Handlebars.registerHelper(LOCALIZE ,_localizeString );
 	Handlebars.registerHelper(FIELD    ,_formField      );
 	Handlebars.registerHelper(INPUT    ,_inputField     );
+	Handlebars.registerHelper(ARRAY    ,_arrayField     );
 } else {
 	$n2.log('Unable to register helper functions with Handlebars. Schemas will not work properly.');
 };
@@ -1117,7 +1179,6 @@ var Display = $n2.Class({
 // Form
 
 var selectorClassStringPrefix = 'n2s_selector';
-var typeClassStringPrefix = 'n2s_type_';
 
 function escapeSelector(sel) {
 	var res = [];
@@ -1166,7 +1227,7 @@ function createClassStringFromSelector(selector, key) {
 	var cs = [selectorClassStringPrefix];
 	for(var i=0,e=selector.length; i<e; ++i) {
 		cs.push('-');
-		cs.push( escapeSelector(selector[i]) );
+		cs.push( escapeSelector(''+selector[i]) );
 	};
 	if( key ) {
 		cs.push('-');
@@ -1366,14 +1427,52 @@ var Form = $n2.Class({
 			// Create view for displayTemplate
 			var view = computeFormObj(this.obj, this.context, []);
 			this._setHtml(view);
+			
+			var $divEvent = $('<div class="n2s_schemaEditorEvent"></div>');
+			$elem.empty().append($divEvent);
 
 			if( view[HTML] ) {
-				$elem.html(view[HTML]);
+				$divEvent.html(view[HTML]);
 				
 				// Install callbacks
 				var _this = this;
-				$elem.find('.n2s_input').each(function(){
+				$divEvent.find('.n2s_input').each(function(){
 					_this._installHandlers($(this),_this.obj,_this.callback);
+				});
+				
+				$divEvent.click(function(e){
+					var $clicked = $(e.target);
+					var classNames = $clicked.attr('class').split(' ');
+					var classInfo = parseClassNames(classNames);
+
+					//$n2.log('click',this,e);
+					if( $clicked.hasClass('n2s_array_add') ){
+						var ary = getDataFromObjectSelector(_this.obj, classInfo.selector);
+						if( ary ){
+							ary.push('');
+						};
+						_this.callback(_this.obj,classInfo.selector,ary);
+						_this.refresh($elem);
+						
+					} else if( $clicked.hasClass('n2s_array_item_delete') ){
+						var parentSelector = classInfo.selector.slice(0);
+						var itemIndex = 1 * (parentSelector.pop());
+						var ary = getDataFromObjectSelector(_this.obj, parentSelector);
+						ary.splice(itemIndex,1);
+						_this.callback(_this.obj,classInfo.selector,ary);
+						_this.refresh($elem);
+						
+					} else if( $clicked.hasClass('n2s_array_item_down') ){
+						var parentSelector = classInfo.selector.slice(0);
+						var itemIndex = 1 * (parentSelector.pop());
+						if( itemIndex > 0 ) {
+							var ary = getDataFromObjectSelector(_this.obj, parentSelector);
+							var removedItems = ary.splice(itemIndex,1);
+							ary.splice(itemIndex-1,0,removedItems[0]);
+							_this.callback(_this.obj,classInfo.selector,ary);
+							_this.refresh($elem);
+						};
+					};
 				});
 			}
 		};

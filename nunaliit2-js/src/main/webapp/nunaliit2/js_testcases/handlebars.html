@@ -94,6 +94,13 @@ console.log('fail','>>'+html+'<<','>>'+expected+'<<',template);
 						,colour: 'Blue'
 					}
 				};
+
+				var e = {
+					ary: [
+						'a'
+						,'b'
+					]
+				};
 				
 				test('{{one}} {{#two}}{{one}}{{/two}} {{#two}}{{#two}}{{one}}{{/two}}{{/two}}','first second third', a);
 				test('{{one}} {{#two}}{{one}}{{/two}} {{#two}}a{{#two}}b{{one}}c{{/two}}d{{/two}}','first second abthirdcd', a);
@@ -117,6 +124,7 @@ console.log('fail','>>'+html+'<<','>>'+expected+'<<',template);
 				test('{{:spec}}','special', d); // access identifiers with colon
 				test('{{myHelp}}','myHelp', d, {helpers:helpers}); // specified helpers
 				test('{{loc "allo" a=5}}','loc func', d); // hashes
+				test('{{#with ary}}1{{#each .}}x{{.}}y{{/each}}2{{/with}}','1xayxby2', e);
 			};
 
 			var loaded = false;
