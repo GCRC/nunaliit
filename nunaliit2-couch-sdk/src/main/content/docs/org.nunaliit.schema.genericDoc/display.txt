@@ -14,14 +14,14 @@
 		{{#title}}
 			<div>
 				<div class="label n2s_localize">Title</div>
-				<div class="value">{{title}}</div>
+				<div class="value">{{.}}</div>
 				<div class="end"></div>
 			</div>
 		{{/title}}
 		{{#description}}
 			<div>
 				<div class="label n2s_localize">Description</div>
-				<div class="value n2s_preserveSpaces">{{description}}</div>
+				<div class="value n2s_preserveSpaces">{{.}}</div>
 				<div class="end"></div>
 			</div>
 		{{/description}}
@@ -36,7 +36,7 @@
 			{{#doc}}
 				<div>
 					<div class="label n2s_localize">Reference</div>
-					<div class="value"><a class="n2s_referenceLink" href="#">{{doc}}</a></div>
+					<div class="value"><a class="n2s_referenceLink" href="#">{{.}}</a></div>
 					<div class="end"></div>
 				</div>
 			{{/doc}}
@@ -47,7 +47,7 @@
 		{{#doc}}
 			<div>
 				<div class="label n2s_localize">Hover Sound</div>
-				<div class="value"><a class="n2s_referenceLink" href="#">{{doc}}</a></div>
+				<div class="value"><a class="n2s_referenceLink" href="#">{{.}}</a></div>
 				<div class="end"></div>
 			</div>
 		{{/doc}}

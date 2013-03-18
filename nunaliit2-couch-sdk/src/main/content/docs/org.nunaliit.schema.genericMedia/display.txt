@@ -12,31 +12,28 @@
 
 					{{#attachmentName}}
 	<div class="n2_mediaView">
-		<div class="n2s_insertMediaView">{{attachmentName}}</div>
+		<div class="n2s_insertMediaView">{{.}}</div>
 	</div>
 					{{/attachmentName}}
 
-					{{#originalName}}
-						{{#originalAttachment}}
+					{{#originalAttachment}}
 
 	<div>
-		<!-- <a href="" class="n2s_externalMediaLinkInfo">Info</a> -->
-		<a class="n2s_externalMediaLink" href="{{originalAttachment}}"><span class="n2s_externalMediaLinkName">({{originalName}})</span></a>
+		<a class="n2s_externalMediaLink" href="{{.}}"><span class="n2s_externalMediaLinkName">({{../originalName}})</span></a>
 	</div>
-						{{/originalAttachment}}
-						{{^originalAttachment}}
-							{{#attachmentName}}
+					{{/originalAttachment}}
+					{{^originalAttachment}}
+						{{#attachmentName}}
 
 	<div>
-		<!-- <a href="" class="n2s_externalMediaLinkInfo">Info</a> -->
-		<a class="n2s_externalMediaLink" href="{{attachmentName}}"><span class="n2s_externalMediaLinkName">({{originalName}})</span></a>
+		<a class="n2s_externalMediaLink" href="{{.}}"><span class="n2s_externalMediaLinkName">({{../originalName}})</span></a>
 	</div>
-							{{/attachmentName}}
-							{{^attachmentName}}
-	<div>{{originalName}}</div>
-							{{/attachmentName}}
-						{{/originalAttachment}}
-					{{/originalName}}
+						{{/attachmentName}}
+						{{^attachmentName}}
+	<div>{{../originalName}}</div>
+						{{/attachmentName}}
+					{{/originalAttachment}}
+
 	<div style="clear:both"></div>
 				{{/source}}
 			{{/value}}
@@ -48,14 +45,14 @@
 	{{#title}}
 		<div>
 			<div class="label n2s_localize">Title</div>
-			<div class="value">{{title}}</div>
+			<div class="value">{{.}}</div>
 			<div class="end"></div>
 		</div>
 	{{/title}}
 	{{#description}}
 		<div>
 			<div class="label n2s_localize">Description</div>
-			<div class="value n2s_preserveSpaces">{{description}}</div>
+			<div class="value n2s_preserveSpaces">{{.}}</div>
 			<div class="end"></div>
 		</div>
 	{{/description}}

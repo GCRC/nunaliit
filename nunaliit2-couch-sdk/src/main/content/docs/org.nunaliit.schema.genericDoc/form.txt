@@ -2,22 +2,22 @@
 	{{#generic}}
 		<div>
 			<div class="label n2s_localize">Title</div>
-			<div class="value"><input type="text" class="{{#:input}}title{{/:input}}"/></div>
+			<div class="value">{{#:field}}title{{/:field}}</div>
 			<div class="end"></div>
 		</div>
 		<div>
 			<div class="label n2s_localize">Description</div>
-			<div class="value"><textarea class="{{#:input}}description{{/:input}}"></textarea></div>
+			<div class="value">{{#:field}}description,textarea{{/:field}}</div>
 			<div class="end"></div>
 		</div>
 		<div>
 			<div class="label n2s_localize">Date</div>
-			<div class="value"><input type="text" class="{{#:input}}date,date{{/:input}}"/></div>
+			<div class="value">{{#:field}}date,date{{/:field}}</div>
 			<div class="end"></div>
 		</div>
 		<div>
 			<div class="label n2s_localize">Reference</div>
-			<div class="value"><input type="text" class="{{#:input}}reference,reference{{/:input}}"/></div>
+			<div class="value">{{#:field}}reference,reference{{/:field}}</div>
 			<div class="end"></div>
 		</div>
 	{{/generic}}
@@ -25,7 +25,7 @@
 
 	<div>
 		<div class="label n2s_localize">Hover Sound</div>
-		<div class="value"><input type="text" class="{{#:input}}nunaliit_hoverSound,reference{{/:input}}" /></div>
+		<div class="value">{{#:field}}nunaliit_hoverSound,reference{{/:field}}</div>
 		<div class="end"></div>
 	</div>
 	

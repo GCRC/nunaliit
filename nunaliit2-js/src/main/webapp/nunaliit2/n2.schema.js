@@ -37,6 +37,322 @@ $Id: n2.schema.js 8461 2012-08-29 18:54:28Z jpfiset $
 
 ;(function($,$n2){
 
+// Localization
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
+
+
+var defaultErrorFn = function(err){ $n2.reportError(err); };
+var defaultSuccessFn = function(){};
+
+var typeClassStringPrefix = 'n2s_type_';
+
+//============================================================
+// Object
+
+function getDataFromObjectSelector(o, selectors) {
+	if( typeof(selectors) === 'string' ) {
+		selectors = selectors.split('.');
+	}
+	return findDataFromObject(o, selectors, 0);
+};
+
+function findDataFromObject(o, selectors, selectorIndex) {
+	if( selectorIndex >= selectors.length ) {
+		return o;
+	};
+	
+	// This is an error. There are more
+	// selectors in the array but we have
+	// a scalar. Return an error.
+	if( null == o
+	 || typeof(o) === 'number' 
+	 || typeof(o) === 'string'
+	 || typeof(o) === 'undefined'
+	 || typeof(o) === 'function' ) {
+		return null;
+	};
+	
+	if( $n2.isArray(o) ) {
+		var index = 1 * selectors[selectorIndex];
+		if( index >= o.length ) {
+			return null;
+		};
+		return findDataFromObject(o[index], selectors, (selectorIndex+1));
+	}
+
+	if( typeof(o) === 'object' ) {
+		var key = selectors[selectorIndex];
+		var value = o[key];
+		if( value === undefined ) {
+			return null;
+		};
+		return findDataFromObject(value, selectors, (selectorIndex+1));
+	};
+	
+	// Should not get here. Error. Return null.
+	return null;
+};
+
+//============================================================
+// Context
+
+function _localizeString() {
+	var args = [];
+	args.push.apply(args,arguments);
+	var options = args.pop();
+	
+	var key = options.fn(this);
+	var s = getDataFromObjectSelector(this, key);
+
+	if( typeof(s) === 'object' 
+	 && s.nunaliit_type === 'localized') {
+		var lang = 'en';
+		if( $n2.l10n && $n2.l10n.getLocale ){
+			lang = $n2.l10n.getLocale().lang;
+		};
+		
+		if( s[lang] ) {
+			return s[lang];
+		} else {
+			// Find a language to fall back on
+			var fbLang = 'en';
+			if( !s[fbLang] ) {
+				fbLang = null;
+				for(var l in s){
+					if( l.length > 0 && l[0] === ':' ){
+						// ignore
+					} else if( l === 'nunaliit_type' ) {
+						// ignore
+					} else {
+						fbLang = l;
+						break;
+					};
+				};
+			};
+			
+			if( fbLang ){
+				var result = [];
+				result.push('<span class="n2_localized_string n2_localize_fallback">');
+				result.push('<span class="n2_localize_fallback_lang">(');
+				result.push(fbLang);
+				result.push(')</span>');
+				if( s[fbLang] ){
+					result.push(''+s[fbLang]);
+				};
+				result.push('</span>');
+				return result.join('');
+				
+			} else {
+				return '';
+			};
+		};
+		
+	} else if( typeof(s) === 'undefined' ) {
+		return '';
+
+	} else if( s === null ) {
+		return '';
+		
+	} else {
+		return ''+s;
+	};
+};
+
+function _formSingleField(r,obj,sels,options){
+	
+	// option: textarea
+	if( options.textarea ){
+		r.push('<textarea class="');
+	} else if( options.checkbox ){
+		r.push('<input type="checkbox" class="');
+	} else {
+		r.push('<input type="text" class="');
+	};
+	
+	r.push('n2s_input');
+	
+	var selector = obj[SELECT];
+	if( selector ) {
+		var completeSelector = selector.slice(0);
+		completeSelector.push.apply(completeSelector,sels);
+		var selClass = createClassStringFromSelector(completeSelector);
+
+		r.push(' '+selClass);
+	};
+	
+	if( options.reference ){
+		r.push(' ' + typeClassStringPrefix + 'reference');
+		
+	} else if( options.date ){
+		r.push(' ' + typeClassStringPrefix + 'date');
+		
+	} else if( options.numeric ){
+		r.push(' ' + typeClassStringPrefix + 'numeric');
+		
+	} else if( options.layers ){
+		r.push(' ' + typeClassStringPrefix + 'layers');
+	};
+
+	if( options.textarea ){
+		r.push('"></textarea>');
+	} else if( options.checkbox ){
+		r.push('"/>');
+	} else {
+		r.push('"/>');
+	};
+
+};
+
+function _formField() {
+	var args = [];
+	args.push.apply(args,arguments);
+	var options = args.pop();
+	
+	var text = options.fn(this);
+
+	// Syntax is: <selector>(,<option>)*
+	var splits = text.split(',');
+	var identifier = splits[0];
+	if( '.' === identifier ){
+		var obj = this;
+		var sels = [];
+	} else {
+		var sels = identifier.split('.');
+		var obj = getDataFromObjectSelector(this, sels);
+	};
+	
+	if( obj
+	 && !obj[SELECT]
+	 && options
+	 && options.data
+	 && options.data.n2_selector
+	 ){
+		obj[SELECT] = options.data.n2_selector;
+	};
+	
+	// <option> is one of:
+	// - optionName
+	// - optionName=optionValue
+	// - optionsName=value1+value2+...
+	var opts = {};
+	for(var i=1,e=splits.length;i<e;++i){
+		var optStr = splits[i];
+		var optSplit = optStr.split('=');
+		if( optSplit.length > 1 ){
+			var valSplits = optSplit[1].split('+');
+			if( valSplits.length > 1 ) {
+				opts[optSplit[0]]=valSplits;
+			} else {
+				opts[optSplit[0]]=optSplit[1];
+			};
+		} else {
+			opts[optSplit[0]]=true;
+		};
+	};
+	
+	var r = [];
+	
+	r.push('<div class="n2s_field_wrapper">');
+
+	if( obj && obj.nunaliit_type === 'localized' ) {
+		for(var lang in obj){
+			if( lang === 'nunaliit_type' || lang[0] === ':' ){
+				// ignore
+			} else {
+				r.push('<div class="n2s_field_container n2s_field_container_localized">');
+				r.push('<span class="n2_localize_lang">('+lang+')</span>');
+				_formSingleField(r,obj,[lang],opts);
+				r.push('</div>');
+			};
+		};
+	} else {
+		r.push('<div class="n2s_field_container">');
+		_formSingleField(r,this,sels,opts);
+		r.push('</div>');
+	};
+
+	r.push('</div>');
+	
+	return r.join('');
+};
+
+function _inputField() {
+	var args = [];
+	args.push.apply(args,arguments);
+	var options = args.pop();
+	
+	var text = options.fn(this);
+
+	// Syntax is: <selector>(,<type>)?
+	var splits = text.split(',');
+	var sels = splits[0].split('.');
+
+	var completeSelectors = this[SELECT].slice(0);
+	completeSelectors.push.apply(completeSelectors,sels);
+	
+	var cl = 'n2s_input ' + createClassStringFromSelector(completeSelectors);
+
+	var type = '';
+	if( splits[1] ) {
+		type = ' n2s_type_'+splits[1];
+	};
+	
+	return cl + type;
+};
+
+function _arrayField() {
+	var args = [];
+	args.push.apply(args,arguments);
+	var options = args.pop();
+	
+	var obj = args[0];
+	
+	var newType = null;
+	if( args.length > 1 ){
+		newType = args[1];
+	};
+	
+	var r = [];
+	
+	r.push('<div class="n2s_array">');
+
+	if( obj && obj.length ) {
+		for(var i=0,e=obj.length; i<e; ++i){
+			var item = obj[i];
+	
+			var completeSelectors = obj[SELECT].slice(0);
+			completeSelectors.push(i);
+			var cl = createClassStringFromSelector(completeSelectors);
+			
+			r.push('<div class="n2s_array_item">');
+	
+			r.push('<div class="n2s_array_item_delete '+cl+'"></div>');
+			r.push('<div class="n2s_array_item_down '+cl+'"></div>');
+	
+			r.push('<div class="n2s_array_item_wrapper">');
+	
+			r.push( options.fn(item,{data:{n2_selector:completeSelectors}}) );
+			
+			r.push('</div></div>');
+		};
+	};
+
+	if( obj ){
+		var arraySelector = obj[SELECT]
+		var arrayClass = createClassStringFromSelector(arraySelector);
+		r.push('<div class="n2s_array_add '+arrayClass+'"');
+		if( newType ) {
+			r.push('n2_array_new_type="'+newType+'"');
+		};
+		r.push('></div>');
+	};
+	
+	r.push('</div>');
+	
+	return r.join('');
+};
+
+
 var HTML = ':html';
 var INPUT = ':input';
 var FIELD = ':field';
@@ -46,13 +362,17 @@ var CONTEXT = ':context';
 var PARENT = ':parent';
 var SELECT = ':selector';
 var LOCALIZE = ':localize';
+var ARRAY = ':array';
 
-// Localization
-var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
-
-
-var defaultErrorFn = function(err){ $n2.reportError(err); };
-var defaultSuccessFn = function(){};
+if( typeof(Handlebars) !== 'undefined' 
+ && Handlebars.registerHelper ) {
+	Handlebars.registerHelper(LOCALIZE ,_localizeString );
+	Handlebars.registerHelper(FIELD    ,_formField      );
+	Handlebars.registerHelper(INPUT    ,_inputField     );
+	Handlebars.registerHelper(ARRAY    ,_arrayField     );
+} else {
+	$n2.log('Unable to register helper functions with Handlebars. Schemas will not work properly.');
+};
 
 //============================================================
 // Object Query
@@ -148,53 +468,6 @@ $n2.ObjectQuery = function(obj, query){
 	return result.query(query);
 }
 
-
-//============================================================
-// Object
-
-function getDataFromObjectSelector(o, selectors) {
-	if( typeof(selectors) === 'string' ) {
-		selectors = selectors.split('.');
-	}
-	return findDataFromObject(o, selectors, 0);
-};
-
-function findDataFromObject(o, selectors, selectorIndex) {
-	if( selectorIndex >= selectors.length ) {
-		return o;
-	};
-	
-	// This is an error. There are more
-	// selectors in the array but we have
-	// a scalar. Return an error.
-	if( null == o
-	 || typeof(o) === 'number' 
-	 || typeof(o) === 'string'
-	 || typeof(o) === 'undefined'
-	 || typeof(o) === 'function' ) {
-		return null;
-	};
-	
-	if( $n2.isArray(o) ) {
-		var index = 1 * selectors[selectorIndex];
-		if( index >= o.length ) {
-			return null;
-		};
-		return findDataFromObject(o[index], selectors, (selectorIndex+1));
-	}
-
-	if( typeof(o) === 'object' ) {
-		var key = selectors[selectorIndex];
-		var value = o[key];
-		if( value === undefined ) {
-			return null;
-		};
-		return findDataFromObject(value, selectors, (selectorIndex+1));
-	};
-	
-	// Should not get here. Error. Return null.
-	return null;
-};
 
 //============================================================
 // Schema Repository Functions
@@ -774,7 +1047,6 @@ function computeViewObj(origObj, context, parent) {
 		view[ITERATE] = [];
 		view[CONTEXT] = context;
 		view[PARENT] = parent;
-		view[LOCALIZE] = localizeString;
 
 		for(var key in origObj) {
 			var value = computeViewObj(origObj[key], context, view);
@@ -898,10 +1170,16 @@ var Display = $n2.Class({
 			attr._setHtml(obj);
 		};
 
-		var displayTemplate = this.schema[this.templateName];
-		if( displayTemplate ) {
-			obj._schema = this.schema.name;
-			obj[HTML] = Mustache.to_html(displayTemplate, obj);
+		var compiledTemplate = this.schema[this.templateName + '__compiled'];
+		if( !compiledTemplate ) {
+			var displayTemplate = this.schema[this.templateName];
+			if( displayTemplate ) {
+				compiledTemplate = Handlebars.compile(displayTemplate);
+				this.schema[this.templateName + '__compiled'] = compiledTemplate;
+			};
+		};
+		if( compiledTemplate ) {
+			obj[HTML] = compiledTemplate(obj);
 		};
 	}
 });
@@ -910,7 +1188,6 @@ var Display = $n2.Class({
 // Form
 
 var selectorClassStringPrefix = 'n2s_selector';
-var typeClassStringPrefix = 'n2s_type_';
 
 function escapeSelector(sel) {
 	var res = [];
@@ -959,7 +1236,7 @@ function createClassStringFromSelector(selector, key) {
 	var cs = [selectorClassStringPrefix];
 	for(var i=0,e=selector.length; i<e; ++i) {
 		cs.push('-');
-		cs.push( escapeSelector(selector[i]) );
+		cs.push( escapeSelector(''+selector[i]) );
 	};
 	if( key ) {
 		cs.push('-');
@@ -1004,175 +1281,6 @@ function parseClassNames(classNames) {
 	return parsed;
 };
 
-function createInputCallback(selector) {
-	var cl = 'n2s_input ' + createClassStringFromSelector(selector);
-
-	return function() {
-		return function(text,render) {
-			var components = text.split(',')
-			var type = '';
-			if( components[1] ) {
-				type = ' n2s_type_'+components[1];
-			};
-			
-			var sels = components[0].split('.');
-			var es = [];
-			for(var i=0,e=sels.length;i<e;++i){
-				es[es.length] = '-';
-				es[es.length] = escapeSelector(sels[i]);
-			};
-			
-			return cl + es.join('') + type;
-		};
-	};
-};
-
-function _formSingleField(r,obj,sels,options){
-	
-	// option: textarea
-	if( options.textarea ){
-		r.push('<textarea class="');
-	} else {
-		r.push('<input type="text" class="');
-	};
-	
-	r.push('n2s_input');
-	
-	var selector = obj[SELECT];
-	if( selector ) {
-		var completeSelector = selector.slice(0);
-		completeSelector.push.apply(completeSelector,sels);
-		var selClass = createClassStringFromSelector(completeSelector);
-
-		r.push(' '+selClass);
-	};
-	
-	if( options.type ){
-		r.push(' n2s_type_'+options.type);
-	};
-
-	if( options.textarea ){
-		r.push('"></textarea>');
-	} else {
-		r.push('"/>');
-	};
-
-};
-
-function formField() {
-	return function(text,render) {
-		// Syntax is: <selector>(,<option>)*
-		var splits = text.split(',');
-		var sels = splits[0].split('.');
-		var obj = getDataFromObjectSelector(this, sels);
-		
-		// <option> is one of:
-		// - optionName
-		// - optionName=optionValue
-		// - optionsName=value1+value2+...
-		var options = {};
-		for(var i=1,e=splits.length;i<e;++i){
-			var optStr = splits[i];
-			var optSplit = optStr.split('=');
-			if( optSplit.length > 1 ){
-				var valSplits = optSplit[1].split('+');
-				if( valSplits.length > 1 ) {
-					options[optSplit[0]]=valSplits;
-				} else {
-					options[optSplit[0]]=optSplit[1];
-				};
-			} else {
-				options[optSplit[0]]=true;
-			};
-		};
-		
-		var r = [];
-		
-		r.push('<div class="n2s_field_wrapper">');
-
-		if( obj.nunaliit_type === 'localized' ) {
-			for(var lang in obj){
-				if( lang === 'nunaliit_type' || lang[0] === ':' ){
-					// ignore
-				} else {
-					r.push('<div class="n2s_field_container n2s_field_container_localized">');
-					r.push('<span class="n2_localize_lang">('+lang+')</span>');
-					_formSingleField(r,obj,[lang],options);
-					r.push('</div>');
-				};
-			};
-		} else {
-			r.push('<div class="n2s_field_container">');
-			_formSingleField(r,this,sels,options);
-			r.push('</div>');
-		};
-
-		r.push('</div>');
-		
-		return r.join('');
-	};
-};
-
-function localizeString() {
-	return function(text,render) {
-		var splits = text.split(',');
-		var key = splits[0];
-		var s = getDataFromObjectSelector(this, key);
-		if( typeof(s) === 'object' 
-		 && s.nunaliit_type === 'localized') {
-			var lang = 'en';
-			if( $n2.l10n && $n2.l10n.getLocale ){
-				lang = $n2.l10n.getLocale().lang;
-			};
-			
-			if( s[lang] ) {
-				return s[lang];
-			} else {
-				// Find a language to fall back on
-				var fbLang = 'en';
-				if( !s[fbLang] ) {
-					fbLang = null;
-					for(var l in s){
-						if( l.length > 0 && l[0] === ':' ){
-							// ignore
-						} else if( l === 'nunaliit_type' ) {
-							// ignore
-						} else {
-							fbLang = l;
-							break;
-						};
-					};
-				};
-				
-				if( fbLang ){
-					var result = [];
-					result.push('<span class="n2_localized_string n2_localize_fallback">');
-					result.push('<span class="n2_localize_fallback_lang">(');
-					result.push(fbLang);
-					result.push(')</span>');
-					if( s[fbLang] ){
-						result.push(''+s[fbLang]);
-					};
-					result.push('</span>');
-					return result.join('');
-					
-				} else {
-					return '';
-				};
-			};
-			
-		} else if( typeof(s) === 'undefined' ) {
-			return '';
-
-		} else if( s === null ) {
-			return '';
-			
-		} else {
-			return ''+s;
-		};
-	};
-};
-
 function computeFormObj(origObj, context, selector, parent) {
 	
 	if( null === origObj ) {
@@ -1185,7 +1293,6 @@ function computeFormObj(origObj, context, selector, parent) {
 		var view = [];
 		view[CONTEXT] = context;
 		view[PARENT] = parent;
-		view[INPUT] = createInputCallback(selector);
 		view[SELECT] = selector.slice(0);
 		
 		for(var i=0,e=origObj.length; i<e; ++i) {
@@ -1203,10 +1310,7 @@ function computeFormObj(origObj, context, selector, parent) {
 		view[ITERATE] = [];
 		view[CONTEXT] = context;
 		view[PARENT] = parent;
-		view[INPUT] = createInputCallback(selector);
-		view[FIELD] = formField;
 		view[SELECT] = selector.slice(0);
-		view[LOCALIZE] = localizeString;
 
 		for(var key in origObj) {
 			selector.push(key);
@@ -1332,14 +1436,61 @@ var Form = $n2.Class({
 			// Create view for displayTemplate
 			var view = computeFormObj(this.obj, this.context, []);
 			this._setHtml(view);
+			
+			var $divEvent = $('<div class="n2s_schemaEditorEvent"></div>');
+			$elem.empty().append($divEvent);
 
 			if( view[HTML] ) {
-				$elem.html(view[HTML]);
+				$divEvent.html(view[HTML]);
 				
 				// Install callbacks
 				var _this = this;
-				$elem.find('.n2s_input').each(function(){
+				$divEvent.find('.n2s_input').each(function(){
 					_this._installHandlers($(this),_this.obj,_this.callback);
+				});
+				
+				$divEvent.click(function(e){
+					var $clicked = $(e.target);
+					var classNames = $clicked.attr('class').split(' ');
+					var classInfo = parseClassNames(classNames);
+
+					//$n2.log('click',this,e);
+					if( $clicked.hasClass('n2s_array_add') ){
+						var newType = $clicked.attr('n2_array_new_type');
+						var ary = getDataFromObjectSelector(_this.obj, classInfo.selector);
+						if( ary ){
+							var newItem = '';
+							if( newType ){
+								try {
+									eval('newItem = '+newType);
+								} catch(e) {
+									$n2.log('Error creating a new item: '+e);
+								};
+							};
+							ary.push(newItem);
+						};
+						_this.callback(_this.obj,classInfo.selector,ary);
+						_this.refresh($elem);
+						
+					} else if( $clicked.hasClass('n2s_array_item_delete') ){
+						var parentSelector = classInfo.selector.slice(0);
+						var itemIndex = 1 * (parentSelector.pop());
+						var ary = getDataFromObjectSelector(_this.obj, parentSelector);
+						ary.splice(itemIndex,1);
+						_this.callback(_this.obj,classInfo.selector,ary);
+						_this.refresh($elem);
+						
+					} else if( $clicked.hasClass('n2s_array_item_down') ){
+						var parentSelector = classInfo.selector.slice(0);
+						var itemIndex = 1 * (parentSelector.pop());
+						if( itemIndex > 0 ) {
+							var ary = getDataFromObjectSelector(_this.obj, parentSelector);
+							var removedItems = ary.splice(itemIndex,1);
+							ary.splice(itemIndex-1,0,removedItems[0]);
+							_this.callback(_this.obj,classInfo.selector,ary);
+							_this.refresh($elem);
+						};
+					};
 				});
 			}
 		};
@@ -1353,10 +1504,16 @@ var Form = $n2.Class({
 			attr._setHtml(obj);
 		};
 
-		var formTemplate = this.schema.formTemplate;
-		if( formTemplate ) {
-			obj._schema = this.schema.name;
-			obj[HTML] = Mustache.to_html(formTemplate, obj);
+		var compiledTemplate = this.schema.formTemplate__compiled;
+		if( !compiledTemplate ) {
+			var formTemplate = this.schema.formTemplate;
+			if( formTemplate ) {
+				compiledTemplate = Handlebars.compile(formTemplate);
+				this.schema.formTemplate__compiled = compiledTemplate;
+			};
+		};
+		if( compiledTemplate ) {
+			obj[HTML] = compiledTemplate(obj);
 		};
 	}
 	

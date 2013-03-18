@@ -1,6 +1,6 @@
 <div class="n2s_reference">
 	{{#doc}}
-		<div><span class="label n2_localize">Reference:</span> <span class="value">{{doc}}</span></div>
+		<div><span class="label n2_localize">Reference:</span> <span class="value">{{.}}</span></div>
 	{{/doc}}
 	{{^doc}}
 		<div><span class="label n2_localize">Reference:</span> <span class="value">null reference</span></div>

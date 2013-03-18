@@ -5,3 +5,61 @@
 .n2_localize_fallback_lang {
 	color:#ff7777;	
 }
+
+.n2s_array_item {
+	position: relative;
+}
+
+.n2s_array_add, .n2s_array_item_delete, .n2s_array_item_down {
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	margin: 0px;	
+	padding: 0px;
+	border: none;
+}
+
+.n2s_array_add {
+	background: url(tree/icons.png) no-repeat;
+	background-position: 0px 0px;
+	float: right;
+}
+
+.n2s_array_add:hover {
+	background-position: -16px 0px;
+}
+
+.n2s_array_item_delete {
+	position: absolute;
+	right: 0px;
+	top: 0px;
+	background: url(tree/icons.png) no-repeat;
+	background-position: -160px 0px;
+	float: right;
+}
+
+.n2s_array_item_delete:hover {
+	background-position: -176px 0px;
+}
+
+.n2s_array_item_down {
+	position: absolute;
+	right: 0px;
+	top: 16px;
+	background: url(tree/icons.png) no-repeat;
+	background-position: -64px 0px;
+	float: right;
+}
+
+.n2s_array_item_down:hover {
+	background-position: -80px 0px;
+}
+
+.n2s_array_item_wrapper {
+	position: absolute:
+	left: 0px;
+	right: 16px;
+	top: 0px;
+	bottom: 0px;
+	min-height: 40px;
+}

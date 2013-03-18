@@ -1,1 +1,1 @@
-TranslationRequest: {{lang}},{{str}}{{#trans}},{{trans}}{{/trans}}
+TranslationRequest: {{lang}},{{str}}{{#trans}},{{.}}{{/trans}}

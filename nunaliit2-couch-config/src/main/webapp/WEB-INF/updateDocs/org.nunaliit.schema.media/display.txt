@@ -5,51 +5,49 @@ Media<br/>
 		{{#:iterate}}
 			{{#value}}
 				{{^source}}{{! do not include thumbnails !}}
-					{{#originalName}}
-						{{#originalAttachment}}
-	<a class="n2s_externalMediaLink" href="{{originalAttachment}}">{{originalName}}</a>
-						{{/originalAttachment}}
-						{{^originalAttachment}}
-							{{#attachmentName}}
-	<a class="n2s_externalMediaLink" href="{{attachmentName}}">{{originalName}}</a>
-							{{/attachmentName}}
-							{{^attachmentName}}
+					{{#originalAttachment}}
+	<a class="n2s_externalMediaLink" href="{{.}}">{{../originalName}}</a>
+					{{/originalAttachment}}
+					{{^originalAttachment}}
+						{{#attachmentName}}
+	<a class="n2s_externalMediaLink" href="{{.}}">{{../originalName}}</a>
+						{{/attachmentName}}
+						{{^attachmentName}}
 	{{originalName}}
-							{{/attachmentName}}
-						{{/originalAttachment}}
+						{{/attachmentName}}
+					{{/originalAttachment}}
 	<br/>
-					{{/originalName}}
 
 					{{#attachmentName}}
 	<div style="width: 35%; float:right;">
-		<div class="n2s_insertMediaView">{{attachmentName}}</div>
+		<div class="n2s_insertMediaView">{{.}}</div>
 	</div>
 					{{/attachmentName}}
 
 					{{#data}}
 						{{#title}}
-	<span class="label n2_localize">Title</span>: {{title}}<br/>
+	<span class="label n2_localize">Title</span>: {{.}}<br/>
 						{{/title}}
 						{{#description}}
-	<span class="label n2_localize">Description</span>: {{description}}<br/>
+	<span class="label n2_localize">Description</span>: {{.}}<br/>
 						{{/description}}
 					{{/data}}
 
 					{{#status}}
-	{{status}}<br/>
+	{{.}}<br/>
 					{{/status}}
 					{{#mimeType}}
-	{{mimeType}}<br/>
+	{{.}}<br/>
 					{{/mimeType}}
 					{{^mimeType}}
 						{{#original}}
 							{{#mimeType}}
-	{{mimeType}}<br/>
+	{{.}}<br/>
 							{{/mimeType}}
 						{{/original}}
 					{{/mimeType}}
 					{{#fileClass}}
-	{{fileClass}}<br/>
+	{{.}}<br/>
 					{{/fileClass}}
 	<div style="clear:both"></div>
 				{{/source}}
