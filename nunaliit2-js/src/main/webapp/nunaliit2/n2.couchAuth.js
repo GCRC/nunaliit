@@ -66,8 +66,6 @@ var defaultOptions = {
 	,anonymousUser: 'anonymous'
 	,anonymousPw: 'anonymous'
 	,autoAnonymousLogin: false
-	,prompt: _loc('Please login')
-	,userString: _loc('user name')
 	,directory: null
 };
 	
@@ -86,6 +84,7 @@ var AuthService = $n2.Class({
 			,defaultOptions
 			,{
 				autoRefresh: true
+				,prompt: _loc('Please login')
 				,refreshIntervalInSec: 120 // 2 minutes
 			}
 			,options_
