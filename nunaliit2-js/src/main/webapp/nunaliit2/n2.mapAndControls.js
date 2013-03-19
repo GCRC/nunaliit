@@ -1013,6 +1013,11 @@ var MapAndControls = $n2.Class({
 		for(var i=0,e=navControls.length; i<e; ++i) {
 			navControls[i].disableZoomWheel();
 		};
+		if( this.map.div ){
+			var $map = $(this.map.div);
+			$map.find('.olControlZoomIn').attr('title', _loc('Zoom In'));
+			$map.find('.olControlZoomOut').attr('title', _loc('Zoom Out'));
+		};
 		
 		// Fix zoomToMaxExtent to zoom to initial extent
 		this.map.zoomToMaxExtent = function(){
@@ -1094,6 +1099,10 @@ var MapAndControls = $n2.Class({
 		if( showLayerSwitcher ) {
 			var layerSwitcherControl = new OpenLayers.Control.LayerSwitcher();
 			this.map.addControl(layerSwitcherControl);
+			if( layerSwitcherControl 
+			 && layerSwitcherControl.div ) {
+				layerSwitcherControl.div.setAttribute('title', _loc('Layer Selector'));
+			};
 			if( this.options.layerSwitcher
 			 && this.options.layerSwitcher.initiallyOpened ) {
 				layerSwitcherControl.maximizeControl();
@@ -2482,6 +2491,15 @@ var MapAndControls = $n2.Class({
     		this.activateControl( this.editControls.modifyFeature );
     		
     		this.activateSelectFeatureControl();
+    		
+    		if( this.editControls.toolbar 
+    		 && this.editControls.toolbar.div ){
+    			var $toolbar = $(this.editControls.toolbar.div);
+    			$toolbar.find('.olControlNavigationItemActive').attr('title',_loc('Scroll Map'));
+    			$toolbar.find('.olControlDrawFeaturePointItemInactive').attr('title',_loc('Add a point to the map'));
+    			$toolbar.find('.olControlDrawFeaturePathItemInactive').attr('title',_loc('Add a line to the map'));
+    			$toolbar.find('.olControlDrawFeaturePolygonItemInactive').attr('title',_loc('Add a polygon to the map'));
+    		};
             
     	} else if( this.currentMode === this.modes.EDIT_FEATURE ) {
     		opts.feature.layer.events.register('featuremodified', opts.feature, this.featureModifiedCallback);
