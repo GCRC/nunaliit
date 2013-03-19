@@ -2,17 +2,17 @@
 	{{#nunaliit_css}}
 		<div>
 			<div class="label n2_localize">Name</div>
-			<div class="value"><input type="text" class="{{#:input}}name{{/:input}}"/></div>
+			<div class="value">{{#:field}}name{{/:field}}</div>
 			<div class="end"></div>
 		</div>
 		<div>
 			<div class="label n2_localize">Order</div>
-			<div class="value"><input type="text" class="{{#:input}}order{{/:input}}"/></div>
+			<div class="value">{{#:field}}order{{/:field}}</div>
 			<div class="end"></div>
 		</div>
 		<div>
 			<div class="label n2_localize">CSS</div>
-			<div class="value"><textarea class="{{#:input}}css{{/:input}}"></textarea></div>
+			<div class="value">{{#:field}}css,textarea{{/:field}}</div>
 			<div class="end"></div>
 		</div>
 	{{/nunaliit_css}}

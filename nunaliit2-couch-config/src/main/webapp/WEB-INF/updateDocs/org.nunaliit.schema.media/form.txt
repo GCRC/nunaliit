@@ -3,12 +3,12 @@
 	{{#files}}
 		{{#:iterate}}
 			{{#value}}
-				{{#data}}
+				{{#attachmentName}}
 	<div style="width: 35%; float:right;">
-		{{#:parent}}{{#attachmentName}}
-			<div class="n2s_insertMediaView">{{attachmentName}}</div>
-		{{/attachmentName}}{{/:parent}}
+		<div class="n2s_insertMediaView">{{.}}</div>
 	</div>
+				{{/attachmentName}}
+				{{#data}}
 	<span class="label n2_localize">Title</span><input type="text" class="{{#:input}}title{{/:input}}"/><br/>
 	<span class="label n2_localize">Description</span><textarea class="{{#:input}}description{{/:input}}"></textarea><br/>
 	<div style="clear:both"></div>

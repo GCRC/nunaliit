@@ -1,8 +1,8 @@
 {{#title}}
-	{{title}}<br/>
+	{{.}}<br/>
 {{/title}}
 {{#description}}
-	{{description}}<br/>
+	{{.}}<br/>
 {{/description}}
 {{#hoverSound}}
 	<span class="n2_localize">Hover Sound</span><br/>
