@@ -11,6 +11,7 @@ import ca.carleton.gcrc.couch.app.DbDumpProcess;
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.command.impl.CommandSupport;
 import ca.carleton.gcrc.couch.command.impl.DumpListener;
+import ca.carleton.gcrc.couch.command.impl.SkeletonDocumentsDetector;
 
 public class CommandDump implements Command {
 
@@ -53,6 +54,7 @@ public class CommandDump implements Command {
 		ps.println("                     This option can be used multiple times to include");
 		ps.println("                     multiple documents in the dump. If this option");
 		ps.println("                     is not used, all documents are dumped.");
+		ps.println("  --skeleton         Select skeleton documents for the dump process.");
 	}
 
 	@Override
@@ -81,6 +83,7 @@ public class CommandDump implements Command {
 		
 		// Pick up options
 		List<String> docIds = new Vector<String>();
+		boolean selectSkeletonDocuments = false;
 		while( false == argumentStack.empty() ){
 			String optionName = argumentStack.peek();
 			if( "--dump-dir".equals(optionName) ){
@@ -100,6 +103,10 @@ public class CommandDump implements Command {
 				
 				String docId = argumentStack.pop();
 				docIds.add(docId);
+				
+			} else if( "--skeleton".equals(optionName) ){
+				argumentStack.pop();
+				selectSkeletonDocuments = true;
 
 			} else {
 				break;
@@ -112,6 +119,12 @@ public class CommandDump implements Command {
 		AtlasProperties atlasProperties = AtlasProperties.fromAtlasDir(atlasDir);
 		
 		CouchDb couchDb = CommandSupport.createCouchDb(gs, atlasProperties);
+		
+		if( selectSkeletonDocuments ){
+			gs.getOutStream().println("Computing list of documents");
+			SkeletonDocumentsDetector docFinder = new SkeletonDocumentsDetector(couchDb,gs);
+			docIds.addAll( docFinder.getSkeletonDocIds() );
+		}
 		
 		DumpListener listener = new DumpListener( gs.getOutStream() );
 		
