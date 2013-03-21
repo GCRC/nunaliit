@@ -11,7 +11,10 @@ public class MailNotificationTest extends TestCase {
 		
 		Properties props = TestConfiguration.getMailProperties();
 		if( null != props ) {
-			result = new MailNotificationImpl();
+			MailDeliveryImpl mailDelivery = new MailDeliveryImpl();
+			mailDelivery.setMailProperties(props);
+
+			result = new MailNotificationImpl(mailDelivery);
 			result.setMailProperties(props);
 		}
 		

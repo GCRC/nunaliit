@@ -29,6 +29,7 @@ import ca.carleton.gcrc.couch.onUpload.UploadWorker;
 import ca.carleton.gcrc.couch.onUpload.UploadWorkerSettings;
 import ca.carleton.gcrc.couch.onUpload.geojson.GeoJsonFileConverter;
 import ca.carleton.gcrc.couch.onUpload.gpx.GpxFileConverter;
+import ca.carleton.gcrc.couch.onUpload.mail.MailDeliveryImpl;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotification;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotificationImpl;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotificationNull;
@@ -323,7 +324,10 @@ public class ConfigServlet extends HttpServlet {
 			// Create mail notification
 			MailNotificationImpl mail = null;
 			try {
-				mail = new MailNotificationImpl();
+				MailDeliveryImpl mailDelivery = new MailDeliveryImpl();
+				mailDelivery.setMailProperties(props);
+
+				mail = new MailNotificationImpl(mailDelivery);
 				mail.setMailProperties(props);
 				
 			} catch(Exception e) {

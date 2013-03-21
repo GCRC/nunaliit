@@ -7,7 +7,6 @@ import java.util.Set;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -343,16 +342,20 @@ public class UploadWorkerThread extends Thread {
 			}
 			
 			// Update document
+			boolean shouldSendNotification = false;
 			if( CouchNunaliitUtils.hasVetterRole(submitter, settings.getAtlasName()) ) {
 				// If submitter has vetter role, then no need to wait for approval
 				attDescription.setStatus(UploadConstants.UPLOAD_STATUS_APPROVED);
 			} else {
 				attDescription.setStatus(UploadConstants.UPLOAD_STATUS_WAITING_FOR_APPROVAL);
+				shouldSendNotification = true;
 			}
 			conversionContext.saveDocument();
 			
 			// Notify that upload is available
-			sendContributionApprovalRequest(docId, doc, attachmentName);
+			if( shouldSendNotification ) {
+				sendVettingNotification(docId, doc, attachmentName);
+			}
 		}
 	}
 
@@ -569,21 +572,11 @@ public class UploadWorkerThread extends Thread {
 		}
 	}
 	
-	private void sendContributionApprovalRequest(String docId, JSONObject doc, String attachmentName) {
+	private void sendVettingNotification(String docId, JSONObject doc, String attachmentName) {
 		// Notify that upload is available
 		try {
-			String title = "[not set]";
-			String description = "[not set]";
-			
-			JSONObject contributionObj = doc.optJSONObject("nunaliit_contribution");
-			if( null != contributionObj ) {
-				if( contributionObj.has("title") ) {
-					title = contributionObj.getString("title");
-				}
-				if( contributionObj.has("description") ) {
-					description = contributionObj.getString("description");
-				}
-			}
+			String title = "Vetting Request";
+			String description = "A file has been submitted for approval and requires your vetting action.";
 			
 			mailNotification.uploadNotification(docId, title, description, attachmentName);
 			
