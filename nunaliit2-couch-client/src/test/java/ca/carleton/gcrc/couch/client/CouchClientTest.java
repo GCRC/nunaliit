@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Properties;
 
 import junit.framework.TestCase;
+
 import org.json.JSONObject;
 
 public class CouchClientTest extends TestCase {
@@ -221,10 +222,11 @@ public class CouchClientTest extends TestCase {
 			CouchFactory couchFactory = new CouchFactory();
 			
 			// Adjust properties to reflect a bad password
-			props.setProperty("couchdb.password","invalidPassword");
+			Properties propClone = (Properties)props.clone();
+			propClone.setProperty("couchdb.password","invalidPassword");
 			
 			// Create a client
-			CouchClient client = couchFactory.getClient(props);
+			CouchClient client = couchFactory.getClient(propClone);
 			
 			try {
 				client.validateContext();

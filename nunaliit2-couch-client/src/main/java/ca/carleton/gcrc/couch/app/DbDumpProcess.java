@@ -3,8 +3,9 @@ package ca.carleton.gcrc.couch.app;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Vector;
+import java.util.Map;
 
 import ca.carleton.gcrc.couch.app.impl.DbDumpListenerNull;
 import ca.carleton.gcrc.couch.app.impl.DocumentCouchDb;
@@ -16,7 +17,7 @@ public class DbDumpProcess {
 	private File dumpDir = null;
 	private DocumentStoreProcess storeProcess = new DocumentStoreProcess();
 	private boolean allDocs = false;
-	private List<String> docIds = new Vector<String>();
+	private Map<String,File> docIdsToFile = new HashMap<String,File>();
 	private DbDumpListener listener = new DbDumpListenerNull();
 	
 	public DbDumpProcess(CouchDb couchDb, File dumpDir){
@@ -41,11 +42,15 @@ public class DbDumpProcess {
 	}
 
 	public List<String> getDocIds() {
-		return docIds;
+		return new ArrayList<String>( docIdsToFile.keySet() );
 	}
 
 	public void addDocId(String docId) {
-		docIds.add(docId);
+		docIdsToFile.put(docId,null);
+	}
+
+	public void addDocId(String docId, File dumpDocDir) {
+		docIdsToFile.put(docId,dumpDocDir);
 	}
 
 	public DocumentStoreProcess getStoreProcess() {
@@ -71,9 +76,6 @@ public class DbDumpProcess {
 		if( null == dumpDir ) {
 			throw new Exception("On database dump, a target directory must be specified.");
 		}
-		if( dumpDir.exists() ){
-			throw new Exception("On database dump, the target directory must not exist.");
-		}
 		if( null == storeProcess ){
 			throw new Exception("On database dump, a store process is required.");
 		}
@@ -84,15 +86,30 @@ public class DbDumpProcess {
 		
 		if( docIds.size() > 0 ){
 			// Create dump directory
-			createDir(dumpDir);
+			if( false == dumpDir.exists() ) {
+				createDir(dumpDir);
+			}
 			
 			// For each document, dump to disk
 			for(String docId : docIds){
-				// Create directory for this document
+				// Compute directory location
 				File docDir = null;
 				{
-					String name = computeNameFromId(docId);
-					docDir = new File(dumpDir, name);
+					if( docIdsToFile.containsKey(docId) ){
+						docDir = docIdsToFile.get(docId);
+					}
+					
+					if( null == docDir ) {
+						String name = computeNameFromId(docId);
+						docDir = new File(dumpDir, name);
+					}
+				}
+				
+				
+				// Create directory for this document
+				if( docDir.exists() ) {
+					emptyDir(docDir);
+				} else {
 					createDir(docDir);
 				}
 				
@@ -116,7 +133,7 @@ public class DbDumpProcess {
 			return new ArrayList<String>(allDocIds);
 			
 		} else {
-			return docIds;
+			return getDocIds();
 		}
 	}
 	
@@ -131,6 +148,31 @@ public class DbDumpProcess {
 		
 		if( !created ){
 			throw new Exception("Unable to create directory: "+dir.getAbsolutePath());
+		}
+	}
+	
+	private void emptyDir(File dir) throws Exception {
+		String[] fileNames = dir.list();
+		if( null != fileNames ) {
+			for(String fileName : fileNames){
+				if( fileName.charAt(0) == '.' ) {
+					// ignore
+				} else {
+					File file = new File(dir,fileName);
+					if( file.isDirectory() ) {
+						emptyDir(file);
+					}
+					boolean deleted = false;
+					try {
+						deleted = file.delete();
+					} catch(Exception e) {
+						throw new Exception("Unable to delete: "+file.getAbsolutePath(),e);
+					}
+					if( !deleted ){
+						throw new Exception("Unable to delete: "+file.getAbsolutePath());
+					}
+				}
+			}
 		}
 	}
 	

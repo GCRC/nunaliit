@@ -1,11 +1,13 @@
 package ca.carleton.gcrc.couch.app;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
+import junit.framework.TestCase;
 import ca.carleton.gcrc.couch.app.impl.DigestComputerSha1;
 import ca.carleton.gcrc.couch.app.impl.DocumentFile;
 import ca.carleton.gcrc.couch.client.CouchClient;
@@ -15,7 +17,6 @@ import ca.carleton.gcrc.couch.fsentry.FSEntry;
 import ca.carleton.gcrc.couch.fsentry.FSEntryBuffer;
 import ca.carleton.gcrc.couch.fsentry.FSEntryFile;
 import ca.carleton.gcrc.couch.fsentry.FSEntryMerged;
-import junit.framework.TestCase;
 
 public class DbDumpProcessTest extends TestCase {
 	
@@ -181,6 +182,93 @@ public class DbDumpProcessTest extends TestCase {
 				
 				DocumentDigest docDD = dc.computeDocumentDigest(testDoc);
 				DocumentDigest dbDD = dc.computeDocumentDigest(storedDoc);
+				if( false == docDD.equals(dbDD) ){
+					fail("Stored document is different than the one used in test");
+				}
+			}
+		}
+	}
+
+	public void testDumpDocIdToFile() throws Exception {
+		if( TestSupport.isCouchDbTestingAvailable() ) {
+			// Create a database for testing
+			CouchDb couchDb = getTestCouchDb();
+			
+			// Create directory to receive dump
+			File dumpDir = null;
+			{
+				File testDir = TestSupport.getTestRunDir();
+				dumpDir = new File(testDir,"testDumpDocIdToFile");
+			}
+			
+			// Select only first document for dumping
+			Document documentToDump = getTestDocuments().get(0);
+			File location = new File(dumpDir, "test");
+
+			// Perform dump with only first document
+			DbDumpProcess dumpProcess = new DbDumpProcess(couchDb, dumpDir);
+			dumpProcess.addDocId( documentToDump.getId(), location );
+			dumpProcess.dump();
+			
+			// Load document from disk
+			FSEntry dumpedDocEntry = new FSEntryFile(location);
+			Document dumpedDoc = DocumentFile.createDocument(dumpedDocEntry);
+			
+			// Compare both documents
+			{
+				DigestComputer dc = new DigestComputerSha1();
+				
+				DocumentDigest docDD = dc.computeDocumentDigest(documentToDump);
+				DocumentDigest dbDD = dc.computeDocumentDigest(dumpedDoc);
+				if( false == docDD.equals(dbDD) ){
+					fail("Stored document is different than the one used in test");
+				}
+			}
+		}
+	}
+
+	public void testDumpDocIdToNonEmptyDir() throws Exception {
+		if( TestSupport.isCouchDbTestingAvailable() ) {
+			// Create a database for testing
+			CouchDb couchDb = getTestCouchDb();
+			
+			// Create directory to receive dump
+			File dumpDir = null;
+			{
+				File testDir = TestSupport.getTestRunDir();
+				dumpDir = new File(testDir,"testDumpDocIdToNonEmptyDir");
+			}
+			
+			// Select only first document for dumping
+			Document documentToDump = getTestDocuments().get(0);
+			File location = new File(dumpDir, "test");
+			
+			// Create directory and put stuff in it
+			{
+				location.mkdirs();
+				
+				byte[] content = new byte[]{(byte)'a', (byte)'b', (byte)'c'};
+				File attrFile = new File(location,"attribute.txt");
+				FileOutputStream fos = new FileOutputStream(attrFile);
+				fos.write(content);
+				fos.close();
+			}
+
+			// Perform dump with only first document
+			DbDumpProcess dumpProcess = new DbDumpProcess(couchDb, dumpDir);
+			dumpProcess.addDocId( documentToDump.getId(), location );
+			dumpProcess.dump();
+			
+			// Load document from disk
+			FSEntry dumpedDocEntry = new FSEntryFile(location);
+			Document dumpedDoc = DocumentFile.createDocument(dumpedDocEntry);
+			
+			// Compare both documents
+			{
+				DigestComputer dc = new DigestComputerSha1();
+				
+				DocumentDigest docDD = dc.computeDocumentDigest(documentToDump);
+				DocumentDigest dbDD = dc.computeDocumentDigest(dumpedDoc);
 				if( false == docDD.equals(dbDD) ){
 					fail("Stored document is different than the one used in test");
 				}
