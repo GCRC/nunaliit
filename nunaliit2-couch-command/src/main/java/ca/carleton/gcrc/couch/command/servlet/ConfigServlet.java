@@ -35,6 +35,7 @@ import ca.carleton.gcrc.couch.onUpload.mail.MailNotificationImpl;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotificationNull;
 import ca.carleton.gcrc.couch.onUpload.multimedia.MultimediaFileConverter;
 import ca.carleton.gcrc.couch.onUpload.pdf.PdfFileConverter;
+import ca.carleton.gcrc.couch.user.UserDesignDocument;
 import ca.carleton.gcrc.olkit.multimedia.utils.MultimediaConfiguration;
 import ca.carleton.gcrc.upload.OnUploadedListenerSingleton;
 import ca.carleton.gcrc.upload.UploadServlet;
@@ -91,6 +92,14 @@ public class ConfigServlet extends HttpServlet {
 			initServerDesignDocument(servletContext);
 		} catch(ServletException e) {
 			logger.error("Error while updating server design document",e);
+			throw e;
+		}
+		
+		// Upload design documents for _users database
+		try {
+			initUserDesignDocument(servletContext);
+		} catch(ServletException e) {
+			logger.error("Error while updating user design document",e);
 			throw e;
 		}
 		
@@ -298,6 +307,16 @@ public class ConfigServlet extends HttpServlet {
 			couchDd = serverDesign.getDesignDocument("server");
 		} catch (Exception e) {
 			throw new ServletException("Unable to get design document", e);
+		}
+	}
+
+	private void initUserDesignDocument(ServletContext servletContext) throws ServletException {
+		// Update document
+		try {
+			CouchDb userDb = couchClient.getDatabase("_users");
+			UserDesignDocument.updateDesignDocument(userDb);
+		} catch(Exception e) {
+			throw new ServletException("Error while updating user design document",e);
 		}
 	}
 

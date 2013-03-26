@@ -136,6 +136,13 @@
    	</dependency>
    	<dependency>
    		<groupId>ca.carleton.gcrc</groupId>
+   		<artifactId>nunaliit2-couch-user</artifactId>
+   		<version>${project.version}</version>
+   		<type>jar</type>
+   		<scope>compile</scope>
+   	</dependency>
+   	<dependency>
+   		<groupId>ca.carleton.gcrc</groupId>
    		<artifactId>nunaliit2-javascript</artifactId>
    		<version>${project.version}</version>
    		<type>jar</type>
