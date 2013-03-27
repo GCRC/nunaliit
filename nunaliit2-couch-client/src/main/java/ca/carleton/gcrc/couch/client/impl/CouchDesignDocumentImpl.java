@@ -85,6 +85,11 @@ public class CouchDesignDocumentImpl implements CouchDesignDocument {
 		if( null != query.getIncludeDocs() ) {
 			parameters.add( new UrlParameter("include_docs", query.getIncludeDocs()) );
 		}
+		if( query.isReduce() ){
+			parameters.add( new UrlParameter("reduce", "true") );
+		} else {
+			parameters.add( new UrlParameter("reduce", "false") );
+		}
 		
 		// Effective URL
 		URL effectiveUrl = ConnectionUtils.computeUrlWithParameters(selectUrl, parameters);

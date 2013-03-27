@@ -578,7 +578,7 @@ public class UploadWorkerThread extends Thread {
 			String title = "Vetting Request";
 			String description = "A file has been submitted for approval and requires your vetting action.";
 			
-			mailNotification.uploadNotification(docId, title, description, attachmentName);
+			mailNotification.uploadNotification(docId, attachmentName);
 			
 		} catch(Exception e) {
 			logger.error("Failed mail notification",e);

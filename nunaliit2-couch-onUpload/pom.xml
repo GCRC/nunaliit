@@ -83,5 +83,10 @@
    		<type>jar</type>
    		<scope>compile</scope>
    	</dependency>
+   	<dependency>
+   		<groupId>ca.carleton.gcrc</groupId>
+   		<artifactId>nunaliit2-couch-user</artifactId>
+   		<version>${project.version}</version>
+   	</dependency>
   </dependencies>
 </project>

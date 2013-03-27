@@ -16,6 +16,7 @@ public class CouchQuery {
 	private String keys = null;
 	private String limit = null;
 	private String includeDocs = null;
+	private boolean reduce = false;
 	
 	public String getViewName() {
 		return viewName;
@@ -77,5 +78,12 @@ public class CouchQuery {
 	}
 	public void setIncludeDocs(boolean includeDocs) throws Exception {
 		this.includeDocs = JSONSupport.valueToString(includeDocs);
+	}
+
+	public boolean isReduce() {
+		return reduce;
+	}
+	public void setReduce(boolean reduce) {
+		this.reduce = reduce;
 	}
 }

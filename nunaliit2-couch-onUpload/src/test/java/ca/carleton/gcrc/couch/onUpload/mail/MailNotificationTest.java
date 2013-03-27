@@ -10,11 +10,15 @@ public class MailNotificationTest extends TestCase {
 		MailNotificationImpl result = null;
 		
 		Properties props = TestConfiguration.getMailProperties();
-		if( null != props ) {
+		if( null != props ) {			
 			MailDeliveryImpl mailDelivery = new MailDeliveryImpl();
 			mailDelivery.setMailProperties(props);
+			
+			MockUserDesignDocument mockUserDesign = new MockUserDesignDocument();
+			mockUserDesign.setDisplayName( props.getProperty("test.displayName") );
+			mockUserDesign.setEmailAddress( props.getProperty("test.email") );
 
-			result = new MailNotificationImpl(mailDelivery);
+			result = new MailNotificationImpl("test",mailDelivery,mockUserDesign);
 			result.setMailProperties(props);
 		}
 		
@@ -24,7 +28,7 @@ public class MailNotificationTest extends TestCase {
 	public void testSimpleSend() throws Exception {
 		MailNotificationImpl notification = getMailNotification();
 		if( null != notification ) {
-			notification.uploadNotification("Test ID", "Test Title", "Test Desc", "test.jpg");
+			notification.uploadNotification("Test ID", "test.jpg");
 		}
 	}
 }

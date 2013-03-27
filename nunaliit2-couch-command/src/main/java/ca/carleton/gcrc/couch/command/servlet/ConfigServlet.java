@@ -35,7 +35,7 @@ import ca.carleton.gcrc.couch.onUpload.mail.MailNotificationImpl;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotificationNull;
 import ca.carleton.gcrc.couch.onUpload.multimedia.MultimediaFileConverter;
 import ca.carleton.gcrc.couch.onUpload.pdf.PdfFileConverter;
-import ca.carleton.gcrc.couch.user.UserDesignDocument;
+import ca.carleton.gcrc.couch.user.UserDesignDocumentImpl;
 import ca.carleton.gcrc.olkit.multimedia.utils.MultimediaConfiguration;
 import ca.carleton.gcrc.upload.OnUploadedListenerSingleton;
 import ca.carleton.gcrc.upload.UploadServlet;
@@ -314,7 +314,7 @@ public class ConfigServlet extends HttpServlet {
 		// Update document
 		try {
 			CouchDb userDb = couchClient.getDatabase("_users");
-			UserDesignDocument.updateDesignDocument(userDb);
+			UserDesignDocumentImpl.updateDesignDocument(userDb);
 		} catch(Exception e) {
 			throw new ServletException("Error while updating user design document",e);
 		}
@@ -346,7 +346,11 @@ public class ConfigServlet extends HttpServlet {
 				MailDeliveryImpl mailDelivery = new MailDeliveryImpl();
 				mailDelivery.setMailProperties(props);
 
-				mail = new MailNotificationImpl(mailDelivery);
+				mail = new MailNotificationImpl(
+					atlasProperties.getAtlasName()
+					,mailDelivery
+					,couchDd.getDatabase()
+					);
 				mail.setMailProperties(props);
 				
 			} catch(Exception e) {

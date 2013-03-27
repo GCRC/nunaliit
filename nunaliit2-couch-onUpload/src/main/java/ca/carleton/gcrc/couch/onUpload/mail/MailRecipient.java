@@ -21,4 +21,14 @@ public class MailRecipient {
 	public String getDisplayName() {
 		return displayName;
 	}
+	
+	public String toString(){
+		if( null != displayName ){
+			return displayName+"<"+address+">";
+		} else if( null != address ) {
+			return address;
+		} else {
+			return "null recipient";
+		}
+	}
 }
