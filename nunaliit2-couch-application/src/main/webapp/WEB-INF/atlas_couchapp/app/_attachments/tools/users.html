@@ -16,6 +16,7 @@
 		<h1>User Management</h1>
 		<div id="login" class="nunaliit_login"></div>
 		<div>
+			<input id="userSearchBox" type="text"/>
 			<input id="btnQueryUsers" type="button" value="Query Users"/>
 			<input id="btnAddUser" type="button" value="Add User"/>
 		</div>	
@@ -46,6 +47,7 @@
 			// <!--
 
 			var userDb = null;
+			var userSearchService = null;
 
 			function reportErrorsOnElem(errors, $elem) {
 				$elem.append( $('<div>Error occurred during the request<div>') );
@@ -258,7 +260,24 @@
 						elemId: 'login'
 					});
 				};
+				
+				$n2.log('config',config);
 
+				var userDesign = userDb.getDesignDoc({ddName:'nunaliit_user'});
+				
+				userSearchService = new $n2.couchSearch.SearchServer({
+					designDoc: userDesign
+					,db: userDb
+					// ,directory: null // do not set
+				});
+
+				var $textInput = $('#userSearchBox');
+				if( $textInput.autocomplete ) {
+					$textInput.autocomplete({
+						source: userSearchService.getJqAutoCompleteSource()
+					});
+				};
+				
 			 	main();
 			};
 
