@@ -93,7 +93,7 @@ var n2utils = {
 		// a word is encountered. It also contains an attribute 
 		// 'index' which is the earlier reference of a word in
 		// a found string.
-	
+		
 		var strings = [];
 		n2utils.extractStrings(doc,strings,null,n2utils.excludedSearchAttributes);
 		
