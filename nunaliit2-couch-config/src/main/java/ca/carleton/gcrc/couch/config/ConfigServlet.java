@@ -40,6 +40,7 @@ import ca.carleton.gcrc.couch.onUpload.mail.MailDeliveryImpl;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotification;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotificationImpl;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotificationNull;
+import ca.carleton.gcrc.couch.onUpload.mail.MailVetterDailyNotificationTask;
 import ca.carleton.gcrc.couch.onUpload.multimedia.MultimediaFileConverter;
 import ca.carleton.gcrc.couch.onUpload.pdf.PdfFileConverter;
 import ca.carleton.gcrc.couch.user.UserDesignDocumentImpl;
@@ -74,6 +75,7 @@ public class ConfigServlet extends HttpServlet {
 	private ReplicationWorker replicationWorker = null;
 	private ConfigWorker configWorker = null;
 	private MailNotification mailNotification = null;
+	private MailVetterDailyNotificationTask vetterDailyTask = null;
 	
 	public ConfigServlet() {
 		
@@ -171,6 +173,14 @@ public class ConfigServlet extends HttpServlet {
 			initUpload(servletContext);
 		} catch(ServletException e) {
 			logger.error("Error while initializing upload",e);
+			throw e;
+		}
+		
+		// Configure vetter daily notifications
+		try {
+			initVetterDailyNotifications(servletContext);
+		} catch(ServletException e) {
+			logger.error("Error while initializing daily vetter notifications",e);
 			throw e;
 		}
 		
@@ -706,6 +716,19 @@ public class ConfigServlet extends HttpServlet {
 		}
 	}
 
+	private void initVetterDailyNotifications(ServletContext servletContext) throws ServletException {
+		
+		try {
+			vetterDailyTask = MailVetterDailyNotificationTask.scheduleTask(
+				couchDd
+				,mailNotification
+				);
+		} catch (Exception e) {
+			logger.error("Error starting daily vetter notifications",e);
+			throw new ServletException("Error starting daily vetter notifications",e);
+		}
+	}
+
 	private void initExport(ServletContext servletContext) throws ServletException {
 		
 		try {
@@ -782,6 +805,14 @@ public class ConfigServlet extends HttpServlet {
 			replicationWorker.stopTimeoutMillis(5*1000); // 5 seconds
 		} catch (Exception e) {
 			logger.error("Unable to shutdown replication worker", e);
+		}
+
+		try {
+			if(null != vetterDailyTask){
+				vetterDailyTask.stop();
+			}
+		} catch (Exception e) {
+			logger.error("Unable to shutdown daily vetter notifications", e);
 		}
 	}
 }

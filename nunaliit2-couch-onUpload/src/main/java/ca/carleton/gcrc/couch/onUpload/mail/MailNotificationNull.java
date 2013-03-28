@@ -10,4 +10,9 @@ public class MailNotificationNull implements MailNotification {
 		// Do nothing
 	}
 
+	@Override
+	public void sendVetterDailyNotification(int count) throws Exception {
+		// Do nothing
+	}
+
 }

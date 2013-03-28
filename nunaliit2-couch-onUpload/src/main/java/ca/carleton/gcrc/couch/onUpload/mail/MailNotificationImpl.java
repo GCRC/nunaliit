@@ -166,4 +166,87 @@ public class MailNotificationImpl implements MailNotification {
 		}
 	}
 
+	@Override
+	public void sendVetterDailyNotification(int count) throws Exception {
+
+		if( false == sendUploadMailNotification ) {
+			logger.debug("Daily vetter notification disabled");
+			return;
+		}
+
+		if( count < 1 ) {
+			logger.info("No daily vetter notifications sent, since there are no pending files");
+			return;
+		}
+		
+		// Get list of users to receive notification
+		List<UserDocument> users = new Vector<UserDocument>();
+		{
+			List<String> roles = new ArrayList<String>(2);
+			roles.add("vetter"); // global vetters
+			roles.add(atlasName+"_vetter"); // atlas vetters
+			
+			Collection<UserDocument> usersWithRoles = userDesignDocument.getUsersWithRoles(roles);
+			for(UserDocument user : usersWithRoles){
+				logger.debug("User: "+user);
+				if( user.isReceivingVetterDailyNotifications() ){
+					users.add(user);
+				}
+			}
+		}
+
+		// Get list of recipients
+		List<MailRecipient> recipients = new ArrayList<MailRecipient>(users.size());
+		for(UserDocument user : users){
+			String display = user.getDisplayName();
+			Collection<String> emails = user.getEmails();
+			for(String email : emails){
+				if( null == display ) {
+					recipients.add( new MailRecipient(email) );
+				} else {
+					recipients.add( new MailRecipient(email,display) );
+				}
+			}
+		}
+		
+		// Check if anything to do
+		if( recipients.size() < 1 ) {
+			logger.info("Daily vetter notification not sent because there are no recipients");
+			return;
+		}
+
+		logger.info("Sending daily vetter notification for "+count+" files to "+recipients);
+		
+		try {
+			MailMessage message = new MailMessage();
+			
+			// To
+			for(MailRecipient recipient : recipients){
+				message.addToRecipient( recipient );
+			}
+			
+			// Subject
+			message.setSubject("Uploaded Media - "+count+" file"+(count>1?"s":"")+" pending for approval");
+			
+			// Create HTML body part
+			StringWriter sw = new StringWriter();
+			PrintWriter pw = new PrintWriter(sw);
+			pw.println("<html><head><title>Upload Notification</title></head><body><h1>Upload Notification</h1>");
+			pw.println("<p>A number of files ("+count+") were uploaded to the atlas. Your approval is required.</p>");
+			if( null != approvalPageLink ) {
+				pw.println("<p>The page where uploaded files can be approved is located at: <a href=\""+approvalPageLink+"\">"+approvalPageLink+"</a></p>");
+			}
+			pw.println("</body></html>");
+			pw.flush();
+			message.setHtmlContent(sw.toString());
+			
+			// Send message
+			mailDelivery.sendMessage(message);
+			
+		} catch (Exception e) {
+			logger.error("Unable to send daily vetter notification",e);
+			throw new Exception("Unable to send daily vetter notification",e);
+		}
+	}
+
 }
