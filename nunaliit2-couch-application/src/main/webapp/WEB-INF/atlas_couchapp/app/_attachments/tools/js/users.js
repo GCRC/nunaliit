@@ -155,11 +155,22 @@ function addUser() {
 
 function queryUsers() {
 	startRequestWait();
+
+	var searchString = $('#userSearchBox').val();
+	if( typeof(searchString) === 'string' ){
+		searchString = $n2.trim(searchString);
+	} else {
+		searchString = '';
+	};
 	
-	userDb.getAllUsers({
-		onSuccess: reportUsers
-		,onError: reportError
-	});
+	if( '' === searchString ) {
+		userDb.getAllUsers({
+			onSuccess: reportUsers
+			,onError: reportError
+		});
+	} else {
+		// TBD
+	};
 	
 	function reportUsers(arr) {
 		var $table = $('<table></table>');
