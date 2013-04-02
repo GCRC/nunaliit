@@ -9,8 +9,8 @@ import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.app.DocumentUpdateListener.Phase;
 import ca.carleton.gcrc.couch.app.impl.DigestComputerSha1;
-import ca.carleton.gcrc.couch.app.impl.DocumentUpdateListenerDefault;
 import ca.carleton.gcrc.couch.app.impl.DocumentManifest;
+import ca.carleton.gcrc.couch.app.impl.DocumentUpdateListenerDefault;
 import ca.carleton.gcrc.couch.app.impl.StreamProducerDocumentUpdate;
 import ca.carleton.gcrc.couch.app.impl.UpdateSpecifier;
 import ca.carleton.gcrc.couch.client.CouchDb;
@@ -132,26 +132,36 @@ public class DocumentUpdateProcess {
 		
 		// Upload, if required
 		if( creationRequired ) {
+			logger.debug(sourceDoc.getId()+" creation required");
+			
 			listener.updatingDocument(Phase.BEFORE, sourceDoc);
 			updateDocument(sourceDoc, dd, null, updateSpecifier);
 			listener.updatingDocument(Phase.AFTER, sourceDoc);
 
 		} else if( schedule == Schedule.UPDATE_FORCED ) {
+			logger.debug(sourceDoc.getId()+" forced update");
+
 			// Forced update always take place
 			listener.updatingDocument(Phase.BEFORE, sourceDoc);
 			updateDocument(sourceDoc, dd, currentTargetDoc, updateSpecifier);
 			listener.updatingDocument(Phase.AFTER, sourceDoc);
 
 		} else if( false == updateSpecifier.isUpdateRequired() ) {
+			logger.debug(sourceDoc.getId()+" update not required");
+
 			// Document on database is same as the one requested. No
 			// update required
 			listener.documentSkippedBecauseUnchanged(sourceDoc);
 			
 		} else if( modified && schedule == Schedule.UPDATE_UNLESS_MODIFIED ) {
+			logger.debug(sourceDoc.getId()+" not modified");
+
 			// Can not change modified database document under this schedule
 			listener.documentSkippedBecauseModified(sourceDoc);
 			
 		} else {
+			logger.debug(sourceDoc.getId()+" updating");
+
 			// At this point, this is a regular update
 			listener.updatingDocument(Phase.BEFORE, sourceDoc);
 			updateDocument(sourceDoc, dd, currentTargetDoc, updateSpecifier);
