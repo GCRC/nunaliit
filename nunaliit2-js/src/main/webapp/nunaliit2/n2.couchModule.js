@@ -876,6 +876,11 @@ var ModuleDisplay = $n2.Class({
 			 ){
 				mapOptions.mapCoordinateSpecifications.maxExtent = 
 					mapInfo.coordinates.maxExtent;
+				
+			} else if( mapOptions.mapDisplay.srsName !== null 
+			 && mapOptions.mapDisplay.srsName !== 'EPSG:4326' ) {
+				mapOptions.mapCoordinateSpecifications.maxExtent =
+					mapOptions.mapCoordinateSpecifications.initialBounds;
 			};
 			
 			_this.mapControl = nunaliit2.mapAndControls(mapOptions);
