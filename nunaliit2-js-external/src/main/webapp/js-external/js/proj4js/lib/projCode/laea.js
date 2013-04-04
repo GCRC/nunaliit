@@ -98,6 +98,7 @@ Proj4js.Proj.laea = {
         cosphi = Math.cos(phi);
         coslam = Math.cos(lam);
         switch (this.mode) {
+          case this.OBLIQ:
           case this.EQUIT:
             y = (this.mode == this.EQUIT) ? 1. + cosphi * coslam : 1. + this.sinph0 * sinphi + this.cosph0 * cosphi * coslam;
             if (y <= Proj4js.common.EPSLN) {
@@ -204,12 +205,13 @@ Proj4js.Proj.laea = {
     p.y -= this.y0;
     var x = p.x/this.a;
     var y = p.y/this.a;
-    
+    var lam, phi;
+
     if (this.sphere) {
         var  cosz=0.0, rh, sinz=0.0;
       
         rh = Math.sqrt(x*x + y*y);
-        var phi = rh * .5;
+        phi = rh * .5;
         if (phi > 1.) {
           Proj4js.reportError("laea:Inv:DataError");
           return null;
@@ -226,9 +228,9 @@ Proj4js.Proj.laea = {
           y = cosz * rh;
           break;
         case this.OBLIQ:
-          phi = (Math.abs(rh) <= Proj4js.common.EPSLN) ? this.phi0 : Math.asin(cosz * sinph0 + y * sinz * cosph0 / rh);
-          x *= sinz * cosph0;
-          y = (cosz - Math.sin(phi) * sinph0) * rh;
+          phi = (Math.abs(rh) <= Proj4js.common.EPSLN) ? this.phi0 : Math.asin(cosz * this.sinph0 + y * sinz * this.cosph0 / rh);
+          x *= sinz * this.cosph0;
+          y = (cosz - Math.sin(phi) * this.sinph0) * rh;
           break;
         case this.N_POLE:
           y = -y;
@@ -238,7 +240,7 @@ Proj4js.Proj.laea = {
           phi -= Proj4js.common.HALF_PI;
           break;
         }
-        lam = (y == 0. && (this.mode == this.EQUIT || this.mode == this.OBLIQ)) ? 0. : atan2(x, y);
+        lam = (y == 0. && (this.mode == this.EQUIT || this.mode == this.OBLIQ)) ? 0. : Math.atan2(x, y);
     } else {
         var cCe, sCe, q, rho, ab=0.0;
       

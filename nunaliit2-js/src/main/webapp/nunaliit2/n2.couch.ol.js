@@ -213,6 +213,19 @@ OpenLayers.Protocol.Couch = OpenLayers.Class(OpenLayers.Protocol, {
      *     defaults to false.
      */
     wildcarded: false,
+    
+    /**
+     * Property: sourceProjection.
+     * {Projection} Projection of the map. This the projection in which bounds
+     * are specified.
+     */
+    sourceProjection: null,
+    
+    /**
+     * Property: dbProjection.
+     * {Projection} Projection used to store information in the database.
+     */
+    dbProjection: null,
 
     /**
      * Constructor: OpenLayers.Protocol.Couch
@@ -234,6 +247,10 @@ OpenLayers.Protocol.Couch = OpenLayers.Class(OpenLayers.Protocol, {
         // Install default format
         if( !options.format ) {
         	options.format = new OpenLayers.Format.Couch();
+        };
+        
+        if( !options.dbProjection ){
+        	options.dbProjection = new OpenLayers.Projection('EPSG:4326');
         };
         
         OpenLayers.Protocol.prototype.initialize.apply(this, arguments);
@@ -295,6 +312,29 @@ OpenLayers.Protocol.Couch = OpenLayers.Class(OpenLayers.Protocol, {
 		var bounds = this.getBboxFromFilter(options.filter);
 		var fids = this.getFidsFromFilter(options.filter);
 		var layerName = ('string' === typeof(options.layerName) ? options.layerName : null);
+		
+		if( bounds 
+		 && this.sourceProjection 
+		 && this.sourceProjection.getCode() != 'EPSG:4326' ){
+			var mapBounds = new OpenLayers.Bounds(bounds[0],bounds[1],bounds[2],bounds[3]);
+			var dbBounds = mapBounds.clone().transform(this.sourceProjection, this.dbProjection);
+			
+			var np = this._getPole(true);
+			if( np 
+			 && mapBounds.contains(np.x,np.y) ){
+				var northBoundary = new OpenLayers.Bounds(-180, 90, 180, 90);
+				dbBounds.extend(northBoundary);
+			};
+			
+			var sp = this._getPole(false);
+			if( sp 
+			 && mapBounds.contains(sp.x,sp.y) ){
+				var southBoundary = new OpenLayers.Bounds(-180, -90, 180, -90);
+				dbBounds.extend(southBoundary);
+			};
+			
+			bounds = [dbBounds.left,dbBounds.bottom,dbBounds.right,dbBounds.top];
+		};
 
 		// Switch view name and add keys for bounds, layer name and feature ids
 		$n2.couchGeom.selectTileViewFomBounds(viewQuery, bounds, layerName, fids);
@@ -374,6 +414,14 @@ OpenLayers.Protocol.Couch = OpenLayers.Class(OpenLayers.Protocol, {
         if(options.callback) {
 	    	tt.read = (new Date()).getTime();
             resp.features = this.format.read(docs);
+
+            if( this.sourceProjection 
+             && this.dbProjection 
+    		 && this.sourceProjection.getCode() !== this.dbProjection.getCode() ){
+            	for(var i=0,e=resp.features.length; i<e; ++i){
+            		resp.features[i].geometry.transform(this.dbProjection, this.sourceProjection);
+            	};
+            };
 
             // Sorting now saves on rendering a re-sorting later
 	    	tt.sort = (new Date()).getTime();
@@ -832,6 +880,45 @@ OpenLayers.Protocol.Couch = OpenLayers.Class(OpenLayers.Protocol, {
     	return null;
     },
 
+    _getPole: function(isNorth){
+    	var label = isNorth ? 'n' : 's';
+    	if( !this.poles ){
+    		this.poles = {};
+    	};
+    	if( this.poles[label] ) return this.poles[label];
+    	
+    	if( isNorth ){
+    		var p = new OpenLayers.Geometry.Point(0,90);
+    	} else {
+    		var p = new OpenLayers.Geometry.Point(0,-90);
+    	};
+    	
+    	// Catch transform errors
+    	var error = false;
+    	var previousFn = null;
+    	if( typeof(Proj4js) !== 'undefined' ){
+    		previousFn = Proj4js.reportError;
+    		Proj4js.reportError = function(m){
+    			error = true;
+    		};
+    	};
+    	
+    	p.transform(this.dbProjection,this.sourceProjection);
+    	
+    	if( error ){
+    		p = null;
+    	};
+    	
+    	// Re-instate normal error reporting
+    	if( previousFn ){
+    		Proj4js.reportError = previousFn;
+    	};
+    	
+    	this.poles[label] = p;
+    	
+    	return p;
+    },
+    
     CLASS_NAME: "OpenLayers.Protocol.Couch" 
 });
 

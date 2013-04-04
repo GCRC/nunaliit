@@ -100,8 +100,8 @@ Proj4js.Proj.eqdc = {
     p.y  = this.rh - p.y + this.y0;
     var con, rh1;
     if (this.ns >= 0) {
-       var rh1 = Math.sqrt(p.x *p.x + p.y * p.y); 
-       var con = 1.0;
+       rh1 = Math.sqrt(p.x *p.x + p.y * p.y); 
+       con = 1.0;
     } else {
        rh1 = -Math.sqrt(p.x *p. x +p. y * p.y); 
        con = -1.0;
@@ -109,7 +109,7 @@ Proj4js.Proj.eqdc = {
     var theta = 0.0;
     if (rh1 != 0.0) theta = Math.atan2(con *p.x, con *p.y);
     var ml = this.g - rh1 /this.a;
-    var lat = this.phi3z(this.ml,this.e0,this.e1,this.e2,this.e3);
+    var lat = this.phi3z(ml,this.e0,this.e1,this.e2,this.e3);
     var lon = Proj4js.common.adjust_lon(this.long0 + theta / this.ns);
 
      p.x=lon;

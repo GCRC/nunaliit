@@ -1444,6 +1444,7 @@ var MapAndControls = $n2.Class({
 						_this._mapBusyStatus(-1);
 					}
 				}
+				,sourceProjection: layerInfo.sourceProjection
 			});
 			layerInfo.protocol = new OpenLayers.Protocol.Couch(couchProtocolOpt);
 		    if( $n2.cache && $n2.cache.defaultCacheService ) {
