@@ -1,0 +1,26 @@
+<div class="n2_documentDisplay"><div class="n2_layoutFloat">
+	<div>
+		<div class="label n2s_localize">User</div>
+		<div class="value"></div>
+		<div class="end"></div>
+	</div>
+	<div>
+		<div class="label n2s_localize">Name</div>
+		<div class="value">{{name}}</div>
+		<div class="end"></div>
+	</div>
+	<div>
+		<div class="label n2s_localize">Display</div>
+		<div class="value">{{displayName}}</div>
+		<div class="end"></div>
+	</div>
+	<div>
+		<div class="label n2s_localize">Roles</div>
+		<div class="value">
+			{{#each roles}}
+				<div>{{.}}</div>
+			{{/each}}
+		</div>
+		<div class="end"></div>
+	</div>
+</div></div>

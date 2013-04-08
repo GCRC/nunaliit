@@ -4,6 +4,8 @@ var DH = 'user.js';
 
 var userDb = null;
 var userSearchService = null;
+var userSchema = null;
+var showService = null;
 
 function reportErrorsOnElem(errors, $elem) {
 	$elem.append( $('<div>Error occurred during the request<div>') );
@@ -194,43 +196,73 @@ function queryUsers() {
 	};
 	
 	function reportUsers(arr) {
-		var $table = $('<table></table>');
-		$('#requests').empty().append($table);
-	
-		$table.append('<tr><th>ID</th><th>Revision</th><th>User</th><th>Display</th><th>Roles</th></tr>');
-	
-		for(var i=0,e=arr.length; i<e; ++i) {
-			var $tr = $('<tr></tr>');
-			$table.append($tr);
-		
-			var doc = arr[i];
-		
-			$tr.append( $('<td class="userId">'+doc._id+'</td>') );
-			$tr.append( $('<td class="userRev">'+doc._rev+'</td>') );
-
-			var $td = $('<td class="userName"></td>');
-			$tr.append( $td );
-
-			var $a = $('<a href="#" alt="'+doc.name+'">'+doc.name+'</a>');
-			$td.append( $a );
-			$a.click(function(){
-				var $a = $(this);
-				var userName = $a.attr('alt');
-				initiateEdit(userName);
-				return false;
-			});
-
-			var display = '';
-			if( doc.display ) {
-				display = doc.display;
-			};
-			$tr.append( $('<td class="userDisplay">'+display+'</td>') );
+		if( userSchema && showService ){
+			var $outterDiv = $('<div></div>');
+			$('#requests').empty().append($outterDiv);
 			
-			var roles = '';
-			if( doc.roles ) {
-				roles = doc.roles.join(', ');
-			}
-			$tr.append( $('<td class="userRoles">'+roles+'</td>') );
+			for(var i=0,e=arr.length; i<e; ++i) {
+				var doc = arr[i];
+
+				var $div = $('<div></div>');
+				$outterDiv.append($div);
+
+				var $a = $('<a href="#" alt="'+doc.name+'">'+doc._id+'</a>');
+				$div.append( $a );
+				$a.click(function(){
+					var $a = $(this);
+					var userName = $a.attr('alt');
+					initiateEdit(userName);
+					return false;
+				});
+				
+				showService.displayBriefDescription(
+					$a
+					,{
+						schemaName: 'user'
+					}
+					,doc
+				);
+			};
+			
+		} else {
+			var $table = $('<table></table>');
+			$('#requests').empty().append($table);
+		
+			$table.append('<tr><th>ID</th><th>Revision</th><th>User</th><th>Display</th><th>Roles</th></tr>');
+		
+			for(var i=0,e=arr.length; i<e; ++i) {
+				var $tr = $('<tr></tr>');
+				$table.append($tr);
+			
+				var doc = arr[i];
+			
+				$tr.append( $('<td class="userId">'+doc._id+'</td>') );
+				$tr.append( $('<td class="userRev">'+doc._rev+'</td>') );
+	
+				var $td = $('<td class="userName"></td>');
+				$tr.append( $td );
+	
+				var $a = $('<a href="#" alt="'+doc.name+'">'+doc.name+'</a>');
+				$td.append( $a );
+				$a.click(function(){
+					var $a = $(this);
+					var userName = $a.attr('alt');
+					initiateEdit(userName);
+					return false;
+				});
+	
+				var display = '';
+				if( doc.display ) {
+					display = doc.display;
+				};
+				$tr.append( $('<td class="userDisplay">'+display+'</td>') );
+				
+				var roles = '';
+				if( doc.roles ) {
+					roles = doc.roles.join(', ');
+				}
+				$tr.append( $('<td class="userRoles">'+roles+'</td>') );
+			};
 		};
 	};
 };
@@ -281,6 +313,15 @@ function main_init(config) {
 			queryUsers();
 		};
 	});
+	
+	config.directory.schemaRepository.getSchema({
+		name: 'user'
+		,onSuccess: function(s){
+			userSchema = s;
+		}
+	});
+	
+	showService = config.directory.showService;
 	
  	main();
 };

@@ -664,13 +664,11 @@ var Show = $n2.Class({
 			$elem.addClass('n2ShowDocBrief');
 		};
 		
-		this._displayDocumentBrief($elem, doc);
+		this._displayDocumentBrief($elem, doc, opt);
 	}
 	
 	,displayDocument: function($elem, opt, doc){
 		var _this = this;
-
-		var schema = null;
 
 		// Remember to update
 		if( doc && doc._id ) {
@@ -836,6 +834,7 @@ var Show = $n2.Class({
 		
 		var opt = $n2.extend({
 			onDisplayed: function($elem, doc, opt_){}
+			,schemaName: null
 		},opt_);
 
 		var _this = this;
@@ -844,7 +843,18 @@ var Show = $n2.Class({
 		// augment document prior to display
 		doc = this.options.preprocessDocument(doc);
 
-		if( doc.nunaliit_schema ) {
+		if( opt.schemaName ) {
+			_this.getSchemaRepository().getSchema({
+				name: opt.schemaName
+				,onSuccess: function(schema_) {
+					printBrief($elem,schema_);
+				}
+				,onError: function(){
+					displayError($elem);
+				}
+			});
+			
+		} else if( doc.nunaliit_schema ) {
 			_this.getSchemaRepository().getSchema({
 				name: doc.nunaliit_schema
 				,onSuccess: function(schema_) {
@@ -878,6 +888,7 @@ var Show = $n2.Class({
 		
 		var opt = $n2.extend({
 			onDisplayed: function($elem, doc, opt_){}
+			,schemaName: null
 		},opt_);
 		
 		var _this = this;
@@ -886,7 +897,18 @@ var Show = $n2.Class({
 		// augment document prior to display
 		doc = this.options.preprocessDocument(doc);
 		
-		if( doc.nunaliit_schema ) {
+		if( opt.schemaName ) {
+			_this.getSchemaRepository().getSchema({
+				name: opt.schemaName
+				,onSuccess: function(schema){
+					displaySchema($elem, schema);
+				}
+				,onError: function(){
+					displayError($elem);
+				}
+			});
+			
+		} else if( doc.nunaliit_schema ) {
 			_this.getSchemaRepository().getSchema({
 				name: doc.nunaliit_schema
 				,onSuccess: function(schema){

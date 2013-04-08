@@ -44,6 +44,7 @@ import ca.carleton.gcrc.couch.onUpload.mail.MailVetterDailyNotificationTask;
 import ca.carleton.gcrc.couch.onUpload.multimedia.MultimediaFileConverter;
 import ca.carleton.gcrc.couch.onUpload.pdf.PdfFileConverter;
 import ca.carleton.gcrc.couch.user.UserDesignDocumentImpl;
+import ca.carleton.gcrc.couch.user.UserServlet;
 import ca.carleton.gcrc.nunaliit2.couch.replication.ReplicationWorker;
 import ca.carleton.gcrc.olkit.multimedia.utils.MultimediaConfiguration;
 import ca.carleton.gcrc.upload.OnUploadedListenerSingleton;
@@ -189,6 +190,14 @@ public class ConfigServlet extends HttpServlet {
 			initExport(servletContext);
 		} catch(ServletException e) {
 			logger.error("Error while initializing export service",e);
+			throw e;
+		}
+		
+		// Configure user
+		try {
+			initUser(servletContext);
+		} catch(ServletException e) {
+			logger.error("Error while initializing user service",e);
 			throw e;
 		}
 		
@@ -741,6 +750,17 @@ public class ConfigServlet extends HttpServlet {
 		} catch(Exception e) {
 			logger.error("Error configuring export service",e);
 			throw new ServletException("Error configuring export service",e);
+		}
+	}
+
+	private void initUser(ServletContext servletContext) throws ServletException {
+		
+		try {
+			CouchDb userDb = couchClient.getDatabase("_users");
+			servletContext.setAttribute(UserServlet.ConfigAttributeName_UserDb, userDb);
+		} catch(Exception e) {
+			logger.error("Error configuring user service",e);
+			throw new ServletException("Error configuring user service",e);
 		}
 	}
 
