@@ -169,7 +169,28 @@ function queryUsers() {
 			,onError: reportError
 		});
 	} else {
-		// TBD
+		// Perform a search
+		var searchRequest = userSearchService.submitRequest(searchString, {
+			onlyFinalResults: true
+			,onError: reportError
+			,onSuccess: function(searchResults){
+				$n2.log('searchResults',searchResults);
+				
+				if( searchResults.sorted ){
+					var docIds = [];
+					for(var i=0,e=searchResults.sorted.length;i<e;++i){
+						docIds.push(searchResults.sorted[i].id);
+					};
+					userDb.getDocuments({
+						docIds: docIds
+						,onError: reportError
+						,onSuccess: reportUsers
+					});
+				} else {
+					reportError('Search result does not contain any sorted entries');
+				};
+			}
+		});
 	};
 	
 	function reportUsers(arr) {
@@ -244,6 +265,22 @@ function main_init(config) {
 			source: userSearchService.getJqAutoCompleteSource()
 		});
 	};
+
+	$textInput.keydown(function(e){
+		var charCode = null;
+		if( null === e ) {
+			e = window.event; // IE
+		};
+		if( null !== e ) {
+			if( e.keyCode ) {
+				charCode = e.keyCode;
+			};
+		};
+
+		if( 13 === charCode ) {
+			queryUsers();
+		};
+	});
 	
  	main();
 };
