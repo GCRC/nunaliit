@@ -131,8 +131,10 @@ $n2.couchRequests = $n2.Class({
 				});
 			};
 			
+			var url = this.options.userServerUrl + 'getUsers';
+			
 			$.ajax({
-		    	url: viewUrl
+		    	url: url
 		    	,type: 'GET'
 		    	,async: true
 		    	,traditional: true
