@@ -795,7 +795,7 @@ var ModuleDisplay = $n2.Class({
 					var layerName = layerDef.options.layerName;
 					var designDoc = layerDef.options.designDoc;
 					designDoc.queryView({
-						viewName: 'geom-layer'
+						viewName: 'geom-layer-bbox'
 						,startkey: layerName
 						,endkey: layerName
 						,onlyRows: true

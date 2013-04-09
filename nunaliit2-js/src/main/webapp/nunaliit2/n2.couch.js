@@ -317,6 +317,9 @@ var designDoc = $n2.Class({
 			};
 		};
 		
+		var mustBePost = false;
+		var queryCount = 0;
+		var query = {};
 		var data = {};
 		for(var k in opts) {
 			if( k === 'viewName' 
@@ -330,14 +333,13 @@ var designDoc = $n2.Class({
 			 || opts[k] === null
 			 ) { 
 			 // Nothing to do
-			} else {
+			} else if ( k === 'keys' ) {
+				mustBePost = true;
 				data[k] = opts[k];
+			} else {
+				++queryCount;
+				query[k] = JSON.stringify( opts[k] );
 			};
-		};
-		
-		var mustBePost = false;
-		if( data.keys ) {
-			mustBePost = true;
 		};
 		
 		var dataType = 'json';
@@ -348,9 +350,16 @@ var designDoc = $n2.Class({
 		if( mustBePost ) {
 			var jsonData = JSON.stringify( data );
 			
+			if( queryCount > 0 ){
+				var params = $.param(query);
+				var effectiveUrl = viewUrl + '?' + params;
+			} else {
+				var effectiveUrl = viewUrl;
+			};
+			
 			$.ajax({
-		    	url: viewUrl
-		    	,type: 'post'
+		    	url: effectiveUrl
+		    	,type: 'POST'
 		    	,async: true
 		    	,data: jsonData
 		    	,contentType: 'application/json'
@@ -363,16 +372,12 @@ var designDoc = $n2.Class({
 			});
 			
 		} else {
-			for(var key in data) {
-				data[key] = JSON.stringify( data[key] );
-			};
-			
 			$.ajax({
 		    	url: viewUrl
 		    	,type: 'GET'
 		    	,async: true
 		    	,cache: false
-		    	,data: data
+		    	,data: query
 		    	,dataType: dataType
 		    	,success: processResponse
 		    	,error: function(XMLHttpRequest, textStatus, errorThrown) {

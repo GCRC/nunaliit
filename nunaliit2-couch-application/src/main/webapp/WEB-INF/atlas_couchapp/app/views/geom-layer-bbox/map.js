@@ -3,10 +3,10 @@ function(doc) {
 
 	var layers = n2utils.extractLayers(doc);
 	if( layers && n2utils.isValidGeom(doc.nunaliit_geom) ) {
-		var geomSize = n2utils.geomSize(doc.nunaliit_geom);
+		var bbox = doc.nunaliit_geom.bbox;
 		
 		for(var i=0,e=layers.length; i<e; ++i) {
-			emit(layers[i], geomSize);
+			emit(layers[i], bbox);
 		}
 	}
 };
