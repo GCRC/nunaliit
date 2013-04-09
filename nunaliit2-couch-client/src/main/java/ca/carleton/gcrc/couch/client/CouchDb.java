@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.util.Collection;
+import java.util.List;
 
 import org.json.JSONObject;
 
@@ -25,6 +26,8 @@ public interface CouchDb {
 	boolean documentExists(JSONObject doc) throws Exception;
 	
 	JSONObject getDocument(String docId) throws Exception;
+	
+	Collection<JSONObject> getDocuments(List<String> docIds) throws Exception;
 	
 	String getDocumentRevision(String docId) throws Exception;
 	

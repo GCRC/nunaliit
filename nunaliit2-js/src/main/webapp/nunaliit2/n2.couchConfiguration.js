@@ -46,6 +46,7 @@ function Configure(options_){
 		,mediaUrl: null // string
 		,uploadServerUrl: null // string
 		,exportServerUrl: null // string
+		,userServerUrl: null // string
 		,onSuccess: function(config){}
 	},options_);
 
@@ -168,6 +169,7 @@ function Configure(options_){
 			,designDoc: configuration.atlasDesign
 			,cacheService: configuration.cacheService
 			,directory: configuration.directory
+			,userServerUrl: options.userServerUrl
 		});
 		configuration.directory.requestService = configuration.requests;
 

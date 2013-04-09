@@ -2,7 +2,7 @@ package ca.carleton.gcrc.couch.user;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
@@ -69,12 +69,36 @@ public class UserServlet extends HttpServlet {
 		try {
 			List<String> path = computeRequestPath(req);
 			
-			StringWriter sw = new StringWriter();
-			sw.write("Path");
-			for(String f : path){
-				sw.write("-"+f);
-			}
-			logger.error(sw.toString());
+//			{
+//				StringWriter sw = new StringWriter();
+//				sw.write("Path");
+//				for(String f : path){
+//					sw.write("-"+f);
+//				}
+//				logger.error(sw.toString());
+//			}
+
+//			{
+//				Map<?,?> parameterMap = req.getParameterMap();
+//				for(Object keyObj : parameterMap.keySet()){
+//					if( keyObj instanceof String ){
+//						String key = (String)keyObj;
+//						
+//						StringWriter sw = new StringWriter();
+//						sw.write("Param "+key);
+//	
+//						Object valueObj = parameterMap.get(key);
+//						if( valueObj instanceof String[] ){
+//							String[] l = (String[])valueObj;
+//							for(String param : l){
+//								sw.write("-"+param);
+//							}
+//						}
+//						
+//						logger.error(sw.toString());
+//					}
+//				}
+//			}
 			
 			if( path.size() < 1 ) {
 				JSONObject result = actions.getWelcome();
@@ -83,6 +107,17 @@ public class UserServlet extends HttpServlet {
 			} else if( path.size() == 2 && path.get(0).equals("getUser") ) {
 					JSONObject result = actions.getUser(path.get(1));
 					sendJsonResponse(resp, result);
+
+			} else if( path.size() == 1 && path.get(0).equals("getUsers") ) {
+				String[] userStrings = req.getParameterValues("user");
+				
+				List<String> users = new ArrayList<String>(userStrings.length);
+				for(String userString : userStrings){
+					users.add(userString);
+				}
+				
+				JSONObject result = actions.getUsers(users);
+				sendJsonResponse(resp, result);
 
 			} else {
 				throw new Exception("Invalid action requested");

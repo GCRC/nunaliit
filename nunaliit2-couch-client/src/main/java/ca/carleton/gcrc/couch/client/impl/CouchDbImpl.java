@@ -13,6 +13,7 @@ import java.util.Vector;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+
 import ca.carleton.gcrc.couch.client.CouchClient;
 import ca.carleton.gcrc.couch.client.CouchContext;
 import ca.carleton.gcrc.couch.client.CouchDb;
@@ -196,6 +197,54 @@ public class CouchDbImpl implements CouchDb {
 		}
 		
 		return getDocumentRevision(docId);
+	}
+
+	@Override
+	public Collection<JSONObject> getDocuments(List<String> docIds) throws Exception {
+		URL requestUrl = new URL(url, "_all_docs");
+		List<UrlParameter> parameters = new ArrayList<UrlParameter>(docIds.size()+1);
+
+		{
+			UrlParameter parameter = new UrlParameter("include_docs","true");
+			parameters.add(parameter);
+		}
+		
+		if( null != docIds && docIds.size() > 0 ){
+			JSONArray docIdsArray = new JSONArray(); 
+			for(String docId : docIds){
+				docIdsArray.put(docId);
+			}
+			
+			UrlParameter parameter = new UrlParameter("keys",docIdsArray.toString());
+			parameters.add(parameter);
+		}
+		
+		URL effectiveUrl = ConnectionUtils.computeUrlWithParameters(
+				requestUrl
+				,parameters
+				);
+
+		JSONObject response = ConnectionUtils.getJsonResource(getContext(), effectiveUrl);
+		
+		ConnectionUtils.captureReponseErrors(response, "Error while fetching all doc ids: ");
+		
+		List<JSONObject> result = new Vector<JSONObject>();
+		
+		try {
+			JSONArray rows = response.getJSONArray("rows");
+			for(int loop=0,e=rows.length(); loop<e; ++loop){
+				JSONObject row = rows.getJSONObject(loop);
+				JSONObject doc = row.optJSONObject("doc");
+				if( null != doc ) {
+					result.add(doc);
+				}
+			}
+			
+		} catch(Exception e) {
+			throw new Exception("Error while interpreting the _all_docs response",e);
+		}
+
+		return result;
 	}
 
 	@Override

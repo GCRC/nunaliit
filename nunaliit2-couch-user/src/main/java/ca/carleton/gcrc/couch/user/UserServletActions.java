@@ -3,7 +3,10 @@ package ca.carleton.gcrc.couch.user;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
 import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Formatter;
+import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -34,9 +37,38 @@ public class UserServletActions {
 		String id = "org.couchdb.user:"+name;
 		JSONObject userDoc = userDb.getDocument(id);
 		
+		JSONObject result = getPublicUserFromUser(userDoc);
+		
+		return result;
+	}
+
+	public JSONObject getUsers(List<String> names) throws Exception {
+		List<String> docIds = new ArrayList<String>(names.size());
+		for(String n : names){
+			String id = "org.couchdb.user:"+n;
+			docIds.add(id);
+		}
+		
+		Collection<JSONObject> userDocs = userDb.getDocuments(docIds);
+		
+		JSONObject result = new JSONObject();
+		
+		JSONArray userArray = new JSONArray();
+		result.put("users", userArray);
+		
+		for(JSONObject userDoc : userDocs) {
+			JSONObject pubUser = getPublicUserFromUser(userDoc);
+			userArray.put(pubUser);
+		}
+		
+		return result;
+	}
+
+	private JSONObject getPublicUserFromUser(JSONObject userDoc) throws Exception {
 		JSONObject result = new JSONObject();
 		
 		result.put("_id", userDoc.opt("_id"));
+		result.put("_rev", userDoc.opt("_rev"));
 		result.put("name", userDoc.opt("name"));
 		result.put("display", userDoc.opt("display"));
 		
