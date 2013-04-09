@@ -1,0 +1,317 @@
+/*! n2.widget.css */
+
+/* ==========================================================================
+   - Theme styles for Nunaliit generic (Fonts, colors, images, textures etc)
+   ========================================================================== */
+
+
+
+/* Desktop screens */
+
+/* ============================== */
+/* ! HEADER SECTION   */
+/* ============================== */
+
+/* Header Title */
+
+.nunaliit_title_link {
+	display:-moz-inline-stack;
+	display:inline-block;
+	zoom:1;
+	*display:inline;
+	margin: 0;
+	padding: 0;
+}
+.nunaliit_title {
+	margin: 11.5px 20px;
+	border: 0;
+	padding: 0;
+	z-index:10;	
+}
+
+/* Sub-Header Title */
+
+.nunaliit_map_title {
+	display: block;
+	width: 100%;
+	margin: 0;
+	padding: 0;
+	z-index: 10;
+}
+.nunaliit_map_title p {
+	padding:8px 20px;
+	margin:0;
+	display:-moz-inline-stack;
+	display:inline-block;
+	zoom:1;
+	*display:inline;
+}
+
+/* Header Menu */
+.nunaliit_header-nav {
+	display:-moz-inline-stack;
+	display:inline-block;
+	zoom:1;
+	*display:inline;
+	margin: 0 0 0 25px;
+	padding: 0;
+	list-style:	none;
+	line-height:1.0;
+	height:100%;
+	vertical-align: top;
+}
+.nunaliit_header-nav ul {
+	position: absolute;
+	top: 0;
+	left:100%;
+	margin: 0;
+	padding: 0;
+	display: none;
+	width: 100%;
+}
+.nunaliit_header-nav li {
+	float: left;
+	position: relative;
+	margin:0;
+	padding:0;
+}
+.nunaliit_header-nav a {
+	display: block;
+	position: relative;
+	padding:15px;
+	padding-right: 25px;
+}
+.nunaliit_header-nav img {
+	display:none;
+}
+.nunaliit_header-nav>ul {
+	top: 0;
+	left:auto;
+	height: 100%;
+	display:block;
+	width: inherit;
+}
+.nunaliit_header-nav>ul>li>ul {
+	left: -1px;
+	width: 150%;
+	top: 100%;
+}
+.nunaliit_header-nav ul li {
+	width: 100%;
+}
+.nunaliit_header-nav>ul>li {
+	width:auto;
+	display:-moz-inline-stack;
+	display:inline-block;
+	zoom:1;
+	*display:inline;
+	height:100%;
+}
+.nunaliit_header-nav li:hover {
+	visibility: inherit; /* fixes IE7 'sticky bug' */
+	text-decoration:underline;
+}
+.nunaliit_header-nav li:hover>ul {
+	display:block;
+	z-index: 99;
+}
+.nunaliit_header-nav li>a:after { 
+	margin-left: 10px; 
+	content: '\25B8'; 
+	position:absolute;
+	top:35%;
+	right:15px;
+}
+.nunaliit_header-nav>ul>li>a:after { 
+	margin-left: 10px; 
+	content: '\25BE'; 
+	float:right;
+	position:relative;
+	top:auto;
+	right:auto;
+}
+.nunaliit_header-nav li > a:only-child:after { 
+	margin-left: 0; content: ''; 
+}
+
+
+
+/* Login */
+.nunaliit_login_container {
+	position:absolute;
+	top:0;
+	right:20px;
+	overflow: hidden;
+	z-index:10;
+	height:100%;
+}
+.nunaliit_login {
+	float: right;
+	display:block;
+}
+.loginLink {
+	float: right;
+	display:block;
+}
+.loginGreeting {
+	float: right;
+	padding-right: 10px;
+}
+
+
+/* ============================== */
+/* ! CONTENT SECTION   */
+/* ============================== */
+
+/* Main Map */
+.nunaliit_map {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 450px;
+	bottom: 0;
+	border: 0;
+	margin: 0;
+	border: 0;
+}
+
+/* Search */
+.nunaliit_searchInput {
+	position: absolute;
+	right: 0;
+	top: 0;
+	overflow: visible;
+	z-index: 8;
+}
+
+/* Side Bar */
+.nunaliit_side {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	overflow: auto;
+}
+
+/* Map Interactions */
+.map_interaction {
+	position: absolute;
+	top: 33px;
+	right: 468px;
+	width: 200px;
+	text-align: right;
+	padding: 0;
+	margin: 0;
+	border: 0;
+	z-index:8;
+}
+.map_interaction input { 
+	cursor: pointer;
+}
+.olControlEditingToolbar {
+	position: absolute;
+	right: 185px;
+	top: 33px;
+}
+
+/* Table of Contents */
+.nunaliit_table_of_contents {
+	position: absolute;	
+	top: 0;
+	left: 0;
+	right:451px;
+	bottom:0;
+	padding-top:34px;
+	overflow:auto;
+}
+.nunaliit_table_of_contents ul {
+	padding:0;
+	margin:0;
+}
+.nunaliit_table_of_contents ul li {
+	list-style:none;
+	margin:0;
+	padding:0;
+}
+.nunaliit_table_of_contents ul li a {
+	padding-bottom:2.5%;
+	display:block;
+}
+.nunaliit_table_of_contents ul img {
+	width:100%;
+	margin-bottom:10px;
+}
+.nunaliit_table_of_contents ul>li>ul>li {
+	float:left;
+	width:28%;
+	padding:2.5%;
+}
+.nunaliit_table_of_contents ul>li>ul>li:last-child {
+	margin-right:0;
+}
+.nunaliit_table_of_contents ul>li>ul>li>ul>li {
+	float:left;
+	width:100%;
+	padding:2.5% 0;
+}
+.nunaliit_table_of_contents>ul>li>a {
+	display:none;
+}
+
+/* ============================== */
+/* ! FOOTER SECTION   */
+/* ============================== */
+
+
+.nunaliit_footer_nav {
+	margin:2px 10px;
+	list-style:none;
+	display:-moz-inline-stack;
+	display:inline-block;
+	zoom:1;
+	*display:inline;
+	vertical-align:top;
+}
+.nunaliit_footer_content {
+	margin:2px 10px;
+	display:-moz-inline-stack;
+	display:inline-block;
+	zoom:1;
+	*display:inline;
+	vertical-align:top;
+}
+.nunaliit_footer_nav ul {
+	margin:0;
+	padding:0;
+}
+
+.nunaliit_footer_nav ul li {
+	float:right;
+	padding:0 10px;
+	margin:0;
+}
+.nunaliit_footer_nav ul li:first-child {
+	margin-right:19px;
+}
+.nunaliit_footer_nav ul li:last-child {
+	margin-left:0;
+	padding-left:0;
+	border-left:0;	
+}
+
+
+/* Smaller screens */
+
+@media only screen and (max-width: 1023px) {
+
+	
+	
+	}
+
+
+/* Mobile */
+
+@media handheld, only screen and (max-width: 767px) {
+
+
+}

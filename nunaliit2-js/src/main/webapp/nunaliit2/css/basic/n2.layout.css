@@ -1,0 +1,87 @@
+/*! n2.layout.css */
+
+/* ==========================================================================
+   - Base layout styles for Nunaliit generic
+   - Styles for major layout sections
+   ========================================================================== */
+
+
+
+/* ============================== */
+/* ! Layout for desktop version   */
+/* ============================== */
+
+/* General layout styles for Nunaliit */
+
+.nunaliit_header {
+	position:relative;
+	width: 100%;
+	height:auto;
+	overflow:visible;
+	margin: 0;
+	border: 0;	
+	padding:0;
+	z-index:9;
+}
+.nunaliit_header_container {
+	position:relative;
+}
+.nunaliit_content {
+	position:relative;
+	height:100%;
+}
+.nunaliit_footer {
+	height:auto;
+	width:100%;
+	overflow:visible;
+	margin: 0;
+	border: 0;	
+	padding:0;
+	z-index:9;
+}
+
+/* Specific layout styles for Nunaliit Atlas */
+
+.nunaliit_atlas .nunaliit_header {
+	
+}
+.nunaliit_atlas .nunaliit_content {
+	
+}
+.nunaliit_atlas .nunaliit_footer {
+	
+}
+
+/* Specific layout styles for Nunaliit Atlas */
+
+.nunaliit_application .nunaliit_header {
+	
+}
+.nunaliit_application .nunaliit_content {
+	
+}
+.nunaliit_application .nunaliit_footer {
+	
+}
+
+
+
+/* Smaller screens */
+
+@media only screen and (max-width: 1023px) {
+
+	
+	
+}
+
+
+/* Mobile */
+
+@media handheld, only screen and (max-width: 767px) {
+
+
+}
+
+
+
+

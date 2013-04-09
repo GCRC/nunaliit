@@ -88,7 +88,7 @@ background: rgba(255,255,255,1) url() !important;
 
 /*START - Overide Superfish styles*/
 
-.sf-menu {
+/*.sf-menu {
 	float: left;
 	padding:0;
 	margin:0;
@@ -102,7 +102,7 @@ background: none !important;
 
 .sf-navbar li {
 background:none !important;
-}
+}*/
 
 /*.sf-navbar a, .sf-navbar a:visited {
 border: none;
@@ -117,7 +117,7 @@ font-weight: normal;
 color: #555;
 
 }*/
-.sf-menu a, .sf-menu a:visited {
+/*.sf-menu a, .sf-menu a:visited {
 color: #fff;
 }
 .sf-menu a:hover {
@@ -148,12 +148,12 @@ ul.sf-menu>li>ul>li>a:hover {
 }
 ul.sf-menu>li>a {
 	margin-right:-1px;
-}
+}*/
 
 /*END - Overide Superfish styles*/
 
 
-body {
+/*body {
 	font-family: helvetica, arial, Georgia, serif;
 	overflow: hidden;
 	font-size:80%;
@@ -162,12 +162,12 @@ body {
 	margin: 0;
 	border: 0;
 	background-color: #EEE;
-}
+}*/
 
 
 /*, a:link img, a:visited img, a:hover img, a:active img */
 /*	a img, a:link img, a:vlink img, a:alink*/
-img {
+/*img {
 	border-style: none;
 	margin: 0;
 	border: 0;
@@ -175,7 +175,7 @@ img {
 
 p {
 	margin:0 0 10px 0;
-}
+}*/
 
 .value {
 	margin:5px 0;
@@ -197,7 +197,7 @@ span.label {
 	display:inline-block;
 }
 
-#header, div.nunaliit_header {
+/*#header, .nunaliit_header {
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -214,9 +214,12 @@ span.label {
 	-webkit-box-shadow: 0 2px rgba(0,0,0,0.7);
 	box-shadow: 0 2px 30px rgba(0,0,0,0.7);
 	z-index:9;
- 	}
+ 	}*/
 
-#title, .nunaliit_title {
+/*.nunaliit_title_link {
+	color:#fff;
+}*/
+/*#title, .nunaliit_title {
 	margin: 11.5px 20px;
 	border: 0;
 	padding: 0;
@@ -225,31 +228,20 @@ span.label {
 	font-size: 1.8em;
 	font-weight:500;
 	float:left;
-}
+}*/
 
-a.nunaliit_title_link {
-	color: inherit;
-	text-decoration: inherit;
-}
-
-#map, .nunaliit_map {    
+/*#map, .nunaliit_map {    
 	position: absolute;
 	top: 50px;
 	left: 0;
-	right: 0px;
-	bottom: 0px;
+	right: 450px;
+	bottom: 20px;
 	border: 1px solid #777;
 	margin: 0;
 	border: 0;
-	width:auto;
-	height:100%;
-}
+}*/
 
-div.olControlZoom a { 
-
-}
-
-.map_interaction {
+/*.map_interaction {
 	position: absolute;
 	top: 102px;
 	right: 468px;
@@ -270,7 +262,7 @@ div.olControlZoom a {
 	border:1px solid rgba(255,255,255,0.8);
 	moz-border-radius:4px;
 	border-radius:4px;
-}
+}*/
 
 
 .results { 
@@ -291,7 +283,7 @@ div.olControlZoom a {
 	float:right;
 }
 
-.searchInputs { 
+/*.searchInputs { 
 	float:left; 
 }
 
@@ -307,9 +299,9 @@ div.olControlZoom a {
 	padding:20px;
 	background-color: rgba(255, 255, 255, 0.7);
 	border-bottom: 1px solid white;
-}
+}*/
 
-#searchInput input.search_panel_input, .nunaliit_searchInput input.search_panel_input {
+/*#searchInput input.search_panel_input, .nunaliit_searchInput input.search_panel_input {
 	margin:0;
 	width: 93%;
 	padding:3.5%;
@@ -317,14 +309,47 @@ div.olControlZoom a {
 	-moz-border-radius: 5px;
 	border-radius: 5px;
 	color: #666;
-}
+}*/
 
-/* Handle by jquery-ui. Keep for backwards compatibility */
 #searchLookAhead {
+	position: absolute;
+	top: 50px;
+	right: 188px;
+	overflow: hidden;
+	width: 250px;
+	z-index: 10;
+	background-color: #fff;
+	border-width: 1px;
+	border-style: solid;
+	border-color: #000;
 	display: none;
 }
 
-#login, .nunaliit_login {
+#searchLookAhead span {
+	cursor: pointer;
+}
+
+#searchLookAhead .offered {
+	font-weight: bold;
+}
+
+#searchLookAhead div.kill {
+	display: inline-block;
+	float: right;
+	width: 16px;
+	height: 16px;
+	margin: 0px;	
+	padding: 0px;
+	border: none;
+	background: url(tree/icons.png) no-repeat;
+	background-position: -32px 0px;
+}
+
+#searchLookAhead div.kill:hover {
+	background-position: -48px 0px;
+}
+
+/*#login {
 	position:absolute;
 	top:0;
 	right:20px;
@@ -358,9 +383,9 @@ a.loginLink:hover {
 	float: right;
 	padding-top: 15px;
 	padding-right: 10px;
-}
+}*/
 
-#side, .nunaliit_side {
+/*#side {
 	position: absolute;
 	top: 47px;
 	right: -1px;
@@ -370,7 +395,7 @@ a.loginLink:hover {
 	padding: 120px 20px 15px 20px;
 	background-color:rgba(255, 255, 255, 1);
 	border-left:1px solid rgba(0,0,0,0.4);
-}
+}*/
 
 #side_attrib table, .n2MediaDisplayDialog table {
 	border: 0px;
@@ -661,26 +686,13 @@ table.mediaSelection td {
 	border: solid #000000 1px;
 }
 
-.intro b {
-	font-size:26px;
-	font-weight:normal;
-	display:block;
-}
 
-.intro img {
-	border-radius: 4px;
-	-moz-box-shadow: inset 0 0 85px rgba(0,0,0,0.4);
-	-webkit-box-shadow: inset 0 0 85px rgba(0, 0, 0, 0.4);
-	box-shadow: inset 0 0 85px rgba(0, 0, 0, 0.4);
-}
-
-.n2Display_buttons {
+/*.n2Display_buttons {
 	margin-top: 20px;
 	display: block;
 	height: 35px;
 	margin-bottom: 5px;
 }
-
 .nunaliit_form_link, .intro a, .map_interaction input {
 	padding: .5em .5em .5em .7em;
 	text-decoration: none;
@@ -688,7 +700,6 @@ table.mediaSelection td {
 	border-radius: 5px;
 	margin-right: 3px;
 	border: 1px solid lightGrey;
-
 	font-weight: normal;
 	color: #555;
 }
@@ -701,17 +712,17 @@ table.mediaSelection td {
 }
 
 .nunaliit_form_link:hover, .intro a:hover { 
-	background-color: #619b00;
-}
+	background-color: #aaa;
+}*/
 
 /*
 	Workaround problem in OpenLayers CSS (http://trac.openlayers.org/ticket/2183)
 */
-.olControlEditingToolbar {
+/*.olControlEditingToolbar {
 	position: absolute;
 	right: 465px;
 	top: 90px;
-}
+}*/
 .olControlEditingToolbar .olControlMoveFeatureItemInactive { 
   background-position: 0px 0px; 
 }
