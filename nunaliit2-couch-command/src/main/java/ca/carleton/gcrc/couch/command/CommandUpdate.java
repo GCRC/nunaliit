@@ -166,9 +166,11 @@ public class CommandUpdate implements Command {
 				
 				pw.println("var n2atlas = {");
 				pw.println("\tname: \""+atlasProperties.getAtlasName()+"\"");
+				pw.println("\t,restricted: "+atlasProperties.isRestricted());
 				pw.println("};");
 				pw.println("if( typeof(exports) === 'object' ) {");
 				pw.println("\texports.name = n2atlas.name;");
+				pw.println("\texports.restricted = n2atlas.restricted;");
 				pw.println("};");
 				
 				FSEntry f = FSEntryBuffer.getPositionedBuffer("a/vendor/nunaliit2/atlas.js", sw.toString());
@@ -237,9 +239,11 @@ public class CommandUpdate implements Command {
 				
 				pw.println("var n2atlas = {");
 				pw.println("\tname: \""+atlasProperties.getAtlasName()+"\"");
+				pw.println("\t,restricted: "+atlasProperties.isRestricted());
 				pw.println("};");
 				pw.println("if( typeof(exports) === 'object' ) {");
 				pw.println("\texports.name = n2atlas.name;");
+				pw.println("\texports.restricted = n2atlas.restricted;");
 				pw.println("};");
 				
 				FSEntry f = FSEntryBuffer.getPositionedBuffer("a/vendor/nunaliit2/atlas.js", sw.toString());
