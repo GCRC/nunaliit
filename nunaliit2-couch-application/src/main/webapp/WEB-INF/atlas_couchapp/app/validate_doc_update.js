@@ -3,26 +3,34 @@ function(newDoc, oldDoc, userCtxt) {
 	var n2utils = require('vendor/nunaliit2/n2.couchUtils');
 	var n2atlas = require('vendor/nunaliit2/atlas');
 	
+	var reAtlasAdmin = /(.*)_administrator/;
+	var reAtlasVetter = /(.*)_vetter/;
+	var reAtlasReplicator = /(.*)_replicator/;
+	var reAtlasUser = /(.*)_user/;
+	var reAtlasLayer = /(.*)_layer_(.*)/;
+	var reGlobalLayer = /layer_(.*)/;
+	
 //log('validate doc update '+oldDoc+'->'+newDoc+' userCtxt: '+JSON.stringify(userCtxt));
 //log('validate doc update '+JSON.stringify(oldDoc)+'->'+JSON.stringify(newDoc));	
 //log('Atlas name: '+n2atlas.name);
 
-	var roleAdministrator = n2utils.getAtlasRole(n2atlas,'administrator');
-	var roleVetter = n2utils.getAtlasRole(n2atlas,'vetter');
-	var roleReplicator = n2utils.getAtlasRole(n2atlas,'replicator');
+	var userInfo = getRoles(userCtxt.roles);
 
 	// Validate new documents and updates submitted to database...
 	if( !userCtxt ) {
 		throw( {forbidden: 'Database submissions required a user context'} );
 	}
-	if( userCtxt.roles && arrayContains(userCtxt.roles, '_admin') ) {
+	if( userInfo.admin ) {
 		// system admin is allowed anything
-	} else if( userCtxt.roles && arrayContains(userCtxt.roles, 'administrator') ) {
-		// system admin is allowed anything
-	} else if( userCtxt.roles && arrayContains(userCtxt.roles, roleAdministrator) ) {
+	} else if( userInfo.atlas[n2atlas.name] 
+	 && userInfo.atlas[n2atlas.name].admin ) {
 		// atlas admin is allowed anything
-	} else if( userCtxt.roles && arrayContains(userCtxt.roles, roleReplicator) ) {
+	} else if( userInfo.atlas[n2atlas.name] 
+	 && userInfo.atlas[n2atlas.name].replicator ) {
 		// atlas replicator is allowed any changes
+	} else if( n2atlas.restricted 
+	 && null == userInfo.atlas[n2atlas.name] ) {
+		throw( {forbidden: 'Database submissions are restricted to users associated with database'} );
 	} else {
 		var userName = userCtxt.name;
 		
@@ -52,7 +60,8 @@ function(newDoc, oldDoc, userCtxt) {
 			
 			if( approveAction ) {
 				// Requires a special role to approve file uploads
-				if( userCtxt.roles && (userCtxt.roles.indexOf(roleVetter) !== -1) ) {
+				if( userInfo.atlas[n2atlas.name] 
+				 && userInfo.atlas[n2atlas.name].vetter ) {
 					// vetter is allowed any approvals
 				} else {
 					throw( {forbidden: 'Upload approval reserved to special role: vetter'} );
@@ -61,7 +70,8 @@ function(newDoc, oldDoc, userCtxt) {
 			
 			if( denyAction ) {
 				// Requires a special role to approve uploads
-				if( userCtxt.roles && (userCtxt.roles.indexOf(roleVetter) !== -1) ) {
+				if( userInfo.atlas[n2atlas.name] 
+				 && userInfo.atlas[n2atlas.name].vetter ) {
 					// vetter is allowed any denials
 				} else {
 					throw( {forbidden: 'Upload denial reserved to special role: vetter'} );
@@ -198,10 +208,11 @@ function(newDoc, oldDoc, userCtxt) {
 				var layerName = addedLayers[i];
 				if( layerName !== 'public' ) {
 					// Exception for public layer
-					var expectedRole = n2utils.getAtlasRole(n2atlas,'layer_'+layerName);
-					if( userCtxt.roles && arrayContains(userCtxt.roles, expectedRole) ) {
+					if( userInfo.atlas[n2atlas.name] 
+					 && userInfo.atlas[n2atlas.name].layers.indexOf(layerName) >= 0 ) {
 						// OK
 					} else {
+						var expectedRole = '' + n2atlas.name + '_layer_' + layerName;
 						throw( {forbidden: 'Adding feature to layer "'+layerName+'" requires role: '+expectedRole} );
 					};
 				};
@@ -210,10 +221,11 @@ function(newDoc, oldDoc, userCtxt) {
 				var layerName = deletedLayers[i];
 				if( layerName !== 'public' ) {
 					// Exception for public layer
-					var expectedRole = n2utils.getAtlasRole(n2atlas,'layer_'+layerName);
-					if( userCtxt.roles && arrayContains(userCtxt.roles, expectedRole) ) {
+					if( userInfo.atlas[n2atlas.name] 
+					 && userInfo.atlas[n2atlas.name].layers.indexOf(layerName) >= 0 ) {
 						// OK
 					} else {
+						var expectedRole = '' + n2atlas.name + '_layer_' + layerName;
 						throw( {forbidden: 'Deleting feature from layer "'+layerName+'" requires role: '+expectedRole} );
 					};
 				};
@@ -331,5 +343,122 @@ function(newDoc, oldDoc, userCtxt) {
 			};
 		};
 		
+	};
+	
+	// Take an array of roles and accumulate information about them
+	function getRoles(roles){
+		var info = {
+			admin: false
+			,vetter: false
+			,replicator: false
+			,layers: []
+			,atlasAdmin: false
+			,atlas:{
+				
+			}
+			,roles:[]
+		};
+		
+		for(var i=0,e=roles.length; i<e; ++i){
+			var r = roles[i];
+
+			var i = getRoleInfo(r);
+			
+			info.roles.push(i);
+			
+			if( i.atlas ){
+				var atlas = info.atlas[i.atlas];
+				if( !atlas ){
+					atlas = {
+						admin: false
+						,vetter: false
+						,replicator: false
+						,user: false
+						,layers: []
+					};
+					info.atlas[i.atlas] = atlas;
+				};
+				
+				if( i.admin ){
+					atlas.admin = true;
+					info.atlasAdmin = true;
+				};
+				if( i.vetter ){
+					atlas.vetter = true;
+				};
+				if( i.replicator ){
+					atlas.replicator = true;
+				};
+				if( i.user ){
+					atlas.user = true;
+				};
+				if( i.layer ){
+					atlas.layers.push(i.layer);
+				};
+				
+			} else {
+				// Global role
+				if( i.admin ){
+					info.admin = true;
+				};
+				if( i.vetter ){
+					info.vetter = true;
+				};
+				if( i.layer ){
+					info.layers.push(i.layer);
+				};
+			};
+		};
+		
+		return info;
+	};
+	
+	// Parse role string and return information about it
+	function getRoleInfo(r){
+		var role = {
+			name: r
+		};
+		
+		if( '_admin' === r 
+		 || 'administrator' === r ){
+			role.admin = true;
+			
+		} else if( 'vetter' == r ){
+			role.vetter = true;
+			
+		} else {
+			var mAtlasAdmin = reAtlasAdmin.exec(r);
+			var mAtlasVetter = reAtlasVetter.exec(r);
+			var mAtlasReplicator = reAtlasReplicator.exec(r);
+			var mAtlasUser = reAtlasUser.exec(r);
+			var mAtlasLayer = reAtlasLayer.exec(r);
+			var mGlobalLayer = reGlobalLayer.exec(r);
+
+			if( mAtlasAdmin ){
+				role.atlas = mAtlasAdmin[1];
+				role.admin = true;
+				
+			} else if( mAtlasVetter ){
+				role.atlas = mAtlasVetter[1];
+				role.vetter = true;
+				
+			} else if( mAtlasReplicator ){
+				role.atlas = mAtlasReplicator[1];
+				role.replicator = true;
+				
+			} else if( mAtlasUser ){
+				role.atlas = mAtlasUser[1];
+				role.user = true;
+				
+			} else if( mAtlasLayer ){
+				role.atlas = mAtlasLayer[1];
+				role.layer = mAtlasLayer[2];
+
+			} else if( mGlobalLayer ){
+				role.layer = mGlobalLayer[1];
+			};
+		};
+		
+		return role;
 	};
 }

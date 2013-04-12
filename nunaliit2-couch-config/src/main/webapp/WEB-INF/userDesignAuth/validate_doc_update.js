@@ -2,6 +2,8 @@ function(newDoc, oldDoc, userCtx) {
 	
 	var reAtlasAdmin = /(.*)_administrator/;
 	var reAtlasVetter = /(.*)_vetter/;
+	var reAtlasReplicator = /(.*)_replicator/;
+	var reAtlasUser = /(.*)_user/;
 	var reAtlasLayer = /(.*)_layer_(.*)/;
 	var reGlobalLayer = /layer_(.*)/;
 	
@@ -159,6 +161,7 @@ function(newDoc, oldDoc, userCtx) {
 		var info = {
 			admin: false
 			,vetter: false
+			,replicator: false
 			,layers: []
 			,atlasAdmin: false
 			,atlas:{
@@ -180,6 +183,8 @@ function(newDoc, oldDoc, userCtx) {
 					atlas = {
 						admin: false
 						,vetter: false
+						,replicator: false
+						,user: false
 						,layers: []
 					};
 					info.atlas[i.atlas] = atlas;
@@ -191,6 +196,12 @@ function(newDoc, oldDoc, userCtx) {
 				};
 				if( i.vetter ){
 					atlas.vetter = true;
+				};
+				if( i.replicator ){
+					atlas.replicator = true;
+				};
+				if( i.user ){
+					atlas.user = true;
 				};
 				if( i.layer ){
 					atlas.layers.push(i.layer);
@@ -229,6 +240,8 @@ function(newDoc, oldDoc, userCtx) {
 		} else {
 			var mAtlasAdmin = reAtlasAdmin.exec(r);
 			var mAtlasVetter = reAtlasVetter.exec(r);
+			var mAtlasReplicator = reAtlasReplicator.exec(r);
+			var mAtlasUser = reAtlasUser.exec(r);
 			var mAtlasLayer = reAtlasLayer.exec(r);
 			var mGlobalLayer = reGlobalLayer.exec(r);
 
@@ -240,6 +253,14 @@ function(newDoc, oldDoc, userCtx) {
 				role.atlas = mAtlasVetter[1];
 				role.vetter = true;
 				
+			} else if( mAtlasReplicator ){
+				role.atlas = mAtlasReplicator[1];
+				role.replicator = true;
+				
+			} else if( mAtlasUser ){
+				role.atlas = mAtlasUser[1];
+				role.user = true;
+				
 			} else if( mAtlasLayer ){
 				role.atlas = mAtlasLayer[1];
 				role.layer = mAtlasLayer[2];
@@ -250,5 +271,5 @@ function(newDoc, oldDoc, userCtx) {
 		};
 		
 		return role;
-	}
+	};
 }
