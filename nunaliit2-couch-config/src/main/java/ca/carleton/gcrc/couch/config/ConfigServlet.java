@@ -758,6 +758,7 @@ public class ConfigServlet extends HttpServlet {
 		try {
 			CouchDb userDb = couchClient.getDatabase("_users");
 			servletContext.setAttribute(UserServlet.ConfigAttributeName_UserDb, userDb);
+			servletContext.setAttribute(UserServlet.ConfigAttributeName_AtlasName, atlasName);
 		} catch(Exception e) {
 			logger.error("Error configuring user service",e);
 			throw new ServletException("Error configuring user service",e);

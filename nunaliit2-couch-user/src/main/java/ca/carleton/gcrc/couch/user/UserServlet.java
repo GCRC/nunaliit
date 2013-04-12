@@ -3,6 +3,7 @@ package ca.carleton.gcrc.couch.user;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
 
@@ -18,14 +19,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.client.CouchDb;
+import ca.carleton.gcrc.couch.client.CouchDbSecurityDocument;
 
 @SuppressWarnings("serial")
 public class UserServlet extends HttpServlet {
 
+	public static final String ConfigAttributeName_AtlasName = "UserServlet_AtlasName";
 	public static final String ConfigAttributeName_UserDb = "UserServlet_UserDb";
 	
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
+	private String atlasName = null;
 	private CouchDb userDb = null;
 	private UserServletActions actions = null;
 	
@@ -37,6 +41,19 @@ public class UserServlet extends HttpServlet {
 		ServletContext context = config.getServletContext();
 		
 		logger.info(this.getClass().getSimpleName()+" servlet initialization - start");
+		
+		// AtlasName
+		{
+			Object obj = context.getAttribute(ConfigAttributeName_AtlasName);
+			if( null == obj ){
+				throw new ServletException("Atlas name is not specified ("+ConfigAttributeName_AtlasName+")");
+			}
+			if( obj instanceof String ){
+				atlasName = (String)obj;
+			} else {
+				throw new ServletException("Unexpected object for atlas name: "+obj.getClass().getName());
+			}
+		}
 		
 		// UserDb
 		{
@@ -52,6 +69,38 @@ public class UserServlet extends HttpServlet {
 		}
 		
 		actions = new UserServletActions(userDb);
+		
+		// Add atlas role to access user database
+		try {
+			CouchDbSecurityDocument securityDoc = userDb.getSecurityDocument();
+			Collection<String> adminRoles = securityDoc.getAdminRoles();
+			
+			boolean updateRequired = false;
+
+			// <atlas>_administrator
+			{
+				String targetRole = atlasName + "_administrator";
+				if( false == adminRoles.contains(targetRole) ) {
+					securityDoc.addAdminRole(targetRole);
+					updateRequired = true;
+				}
+			}
+
+			// administrator
+			{
+				String targetRole = "administrator";
+				if( false == adminRoles.contains(targetRole) ) {
+					securityDoc.addAdminRole(targetRole);
+					updateRequired = true;
+				}
+			}
+
+			if( updateRequired ) {
+				userDb.setSecurityDocument(securityDoc);
+			}
+		} catch(Exception e) {
+			throw new ServletException("Error while updating security document on _users database",e);
+		}
 
 		logger.info(this.getClass().getSimpleName()+" servlet initialization - completed");
 	}

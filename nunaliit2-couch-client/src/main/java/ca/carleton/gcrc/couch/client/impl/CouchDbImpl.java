@@ -17,6 +17,7 @@ import org.json.JSONObject;
 import ca.carleton.gcrc.couch.client.CouchClient;
 import ca.carleton.gcrc.couch.client.CouchContext;
 import ca.carleton.gcrc.couch.client.CouchDb;
+import ca.carleton.gcrc.couch.client.CouchDbSecurityDocument;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 
 public class CouchDbImpl implements CouchDb {
@@ -410,6 +411,34 @@ public class CouchDbImpl implements CouchDb {
 		ConnectionUtils.captureReponseErrors(response, "Error while deleting attachment "+name+" from "+docId+": ");
 
 		return response;
+	}
+
+	@Override
+	public CouchDbSecurityDocument getSecurityDocument() throws Exception {
+		URL securityUrl = new URL(url, "_security");
+
+		JSONObject response = ConnectionUtils.getJsonResource(getContext(), securityUrl);
+		
+		ConnectionUtils.captureReponseErrors(response, "Error while fetching security document: ");
+
+		CouchDbSecurityDocumentImpl security = new CouchDbSecurityDocumentImpl(response);
+		
+		return security;
+	}
+
+	@Override
+	public void setSecurityDocument(CouchDbSecurityDocument security) throws Exception {
+		URL securityUrl = new URL(url, "_security");
+
+		JSONObject jsonSecurity = security.getJSON();
+		if( null == jsonSecurity ){
+			jsonSecurity = new JSONObject();
+		}
+		
+		// Put document
+		JSONObject response = ConnectionUtils.putJsonResource(getContext(), securityUrl, jsonSecurity);
+		
+		ConnectionUtils.captureReponseErrors(response, "Error while updating security document: ");
 	}
 
 }

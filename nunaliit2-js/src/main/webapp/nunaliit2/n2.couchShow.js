@@ -294,10 +294,14 @@ var DomStyler = $n2.Class({
 			
 			} else if( file.fileClass === 'video' ) {
 				linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_video"></div></div>');
+
 			} else if( file.thumbnail
 			 && data._attachments[file.thumbnail]
 			 ) {
 				linkDiv = $('<div class="n2Show_icon_wrapper"><img src="'+docUrl+'/'+file.thumbnail+'"/></div>');
+				
+			} else {
+				// TBD
 			};
 			
 			if( null != linkDiv ) {

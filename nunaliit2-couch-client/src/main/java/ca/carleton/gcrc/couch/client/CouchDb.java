@@ -46,4 +46,8 @@ public interface CouchDb {
 	JSONObject deleteAttachment(JSONObject doc, String name) throws Exception;
 	
 	CouchDesignDocument getDesignDocument(String ddName) throws Exception;
+	
+	CouchDbSecurityDocument getSecurityDocument() throws Exception;
+	
+	void setSecurityDocument(CouchDbSecurityDocument security) throws Exception;
 }
