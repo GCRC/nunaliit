@@ -804,8 +804,43 @@ $n2.couchDisplay = $n2.Class({
 							docIdToSchemaMap[requestDocId] = schemaName;
 						};
 						
+						verifyExistence();
+					}
+				});
+			} else {
+				verifyExistence();
+			};
+		};
+		
+		function verifyExistence(){
+			var docIds = [];
+			
+			// Check only null schema names
+			for(var id in docIdToSchemaMap){
+				if( null == docIdToSchemaMap[id] ){
+					docIds.push(id);
+				};
+			};
+			
+			if( docIds.length > 0 ) {
+				_this.options.db.getDocumentRevisions({
+					docIds: docIds
+					,onSuccess: function(info){
+						var idsToDelete = [];
+						for(var id in docIdToSchemaMap){
+							if( !info[id] ){
+								// This document no longer exists
+								idsToDelete.push(id);
+							};
+						};
+						
+						for(var i=0,e=idsToDelete.length;i<e;++i){
+							delete docIdToSchemaMap[idsToDelete[i]];
+						};
+						
 						showSections();
 					}
+					,onError: showSections
 				});
 			} else {
 				showSections();
@@ -815,16 +850,21 @@ $n2.couchDisplay = $n2.Class({
 		function showSections(){
 			// Accumulate document ids under the associated schema
 			var relatedDocsFromSchemas = {};
+			var uncategorizedDocIds = {};
 			for(var requestDocId in docIdToSchemaMap){
 				var schemaName = docIdToSchemaMap[requestDocId];
 				
-				if( !relatedDocsFromSchemas[schemaName] ) {
-					relatedDocsFromSchemas[schemaName] = {
-						divId: $n2.getUniqueId()
-						,docIds: {}
+				if( schemaName ) {
+					if( !relatedDocsFromSchemas[schemaName] ) {
+						relatedDocsFromSchemas[schemaName] = {
+							divId: $n2.getUniqueId()
+							,docIds: {}
+						};
 					};
+					relatedDocsFromSchemas[schemaName].docIds[requestDocId] = true;
+				} else {
+					uncategorizedDocIds[requestDocId] = true;
 				};
-				relatedDocsFromSchemas[schemaName].docIds[requestDocId] = true;
 			};
 
 			// Add section with related documents
@@ -832,13 +872,26 @@ $n2.couchDisplay = $n2.Class({
 				var contId = relatedDocsFromSchemas[schemaName].divId;
 				var $div = $('<div id="'+contId+'"></div>');
 				$elem.append($div);
-				
+
 				var relatedDocIds = [];
 				for(var relatedDocId in relatedDocsFromSchemas[schemaName].docIds){
 					relatedDocIds.push(relatedDocId);
 				};
 				
 				_this._displayRelatedDocuments(contId, schemaName, relatedDocIds);
+			};
+			
+			// Add uncategorized
+			var relatedDocIds = [];
+			for(var relatedDocId in uncategorizedDocIds){
+				relatedDocIds.push(relatedDocId);
+			};
+			if( relatedDocIds.length > 0 ) {
+				var contId = $n2.getUniqueId();
+				var $div = $('<div id="'+contId+'"></div>');
+				$elem.append($div);
+
+				_this._displayRelatedDocuments(contId, null, relatedDocIds);
 			};
 		};
 	}
@@ -865,11 +918,15 @@ $n2.couchDisplay = $n2.Class({
 				,onBeforeOpen: beforeOpen
 			});
 			bw.setHtml('<span class="_n2DisplaySchemaName"></span> (<span class="_n2DisplayDocCount"></span>)');
-			$blindWidget.find('._n2DisplaySchemaName').text(relatedSchemaName);
+			if( null == relatedSchemaName ) {
+				$blindWidget.find('._n2DisplaySchemaName').text( _loc('Uncategorized') );
+			} else {
+				$blindWidget.find('._n2DisplaySchemaName').text(relatedSchemaName);
+			};
 			$blindWidget.find('._n2DisplayDocCount').text(''+relatedDocIds.length);
 			
 			var schemaRepository = _this._getSchemaRepository();
-			if( schemaRepository ){
+			if( schemaRepository && relatedSchemaName ){
 				schemaRepository.getSchema({
 					name: relatedSchemaName
 					,onSuccess: function(schema){

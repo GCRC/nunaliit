@@ -810,6 +810,7 @@ var Database = $n2.Class({
 		
 		if( !opts.docId ) {
 			opts.onError('No docId set. Can not retrieve document information');
+			return;
 		};
 
 	    $.ajax({
@@ -827,6 +828,58 @@ var Database = $n2.Class({
 	    			opts.onSuccess(res.rows[0].value.rev);
 	    		} else {
 					opts.onError('Malformed document revision for: '+opts.docId);
+	    		};
+	    	}
+	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+				var errStr = httpJsonError(XMLHttpRequest, textStatus);
+				opts.onError('Error obtaining document revision for '+opts.docId+': '+errStr);
+	    	}
+	    });
+	}
+	
+	,getDocumentRevisions: function(opts_) {
+		var opts = $.extend({
+				docIds: null
+				,onSuccess: function(info){}
+				,onError: function(msg){ $n2.reportErrorForced(msg); }
+			}
+			,opts_
+		);
+		
+		if( !opts.docIds ) {
+			opts.onError('No docIds set. Can not retrieve document revisions');
+			return;
+		};
+		if( !$n2.isArray(opts.docIds) ) {
+			opts.onError('docIds must ba an array. Can not retrieve document revisions');
+			return;
+		};
+
+		var data = {
+			keys: opts.docIds
+		};
+		
+	    $.ajax({
+	    	url: this.dbUrl + '_all_docs?include_docs=false'
+	    	,type: 'POST'
+	    	,async: true
+	    	,data: JSON.stringify(data)
+	    	,contentType: 'application/json'
+	    	,dataType: 'json'
+	    	,success: function(res) {
+	    		if( res.rows ) {
+	    			var info = {};
+    				for(var i=0,e=res.rows.length; i<e; ++i){
+    					var row = res.rows[i];
+    					if( row.id && row.value && row.value.rev ){
+    						if( !row.value.deleted ) {
+    							info[row.id] = row.value.rev;
+    						};
+    					};
+    				};
+	    			opts.onSuccess(info);
+	    		} else {
+					opts.onError('Malformed document revisions');
 	    		};
 	    	}
 	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
