@@ -56,13 +56,13 @@ background: rgba(255,255,255,1) url() !important;
 	box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.2);
 }
 
-.n2Show_icon_wrapper {
+.n2Show_thumb_wrapper {
 	margin-bottom:2px;
 	text-align:center;
 	background: url('images/magnifying-glass.png') no-repeat center center;
 }
 
-.n2Show_icon_wrapper img {
+.n2Show_thumb_wrapper img {
 	border-radius: 4px;
 	-moz-box-shadow: inset 0 0 85px rgba(0,0,0,0.4);
 	-webkit-box-shadow: inset 0 0 85px rgba(0, 0, 0, 0.4);
@@ -75,7 +75,7 @@ background: rgba(255,255,255,1) url() !important;
 	-o-transition: all 0.25s;
 }
 
-.n2Show_icon_wrapper img:hover {
+.n2Show_thumb_wrapper img:hover {
 	cursor:pointer;
 	opacity:0.75;
 	transition: all 0.25s;
@@ -84,7 +84,7 @@ background: rgba(255,255,255,1) url() !important;
 	-o-transition: all 0.25s;
 }
 
-/*END - Overide Styles for Jquery UI styling*/
+/*END - Override Styles for Jquery UI styling*/
 
 
 /*START - Overide Superfish styles*/

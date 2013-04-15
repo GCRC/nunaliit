@@ -278,7 +278,7 @@ var DomStyler = $n2.Class({
 			 && file.thumbnail
 			 && data._attachments[file.thumbnail]
 			 ) {
-				linkDiv = $('<div class="n2Show_icon_wrapper"><img src="'+docUrl+'/'+file.thumbnail+'"/></div>');
+				linkDiv = $('<div class="n2Show_thumb_wrapper"><img src="'+docUrl+'/'+file.thumbnail+'"/></div>');
 
 			} else if( file.fileClass === 'image' ) {
 				linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_image"></div></div>');
@@ -290,7 +290,7 @@ var DomStyler = $n2.Class({
 			 && file.thumbnail
 			 && data._attachments[file.thumbnail]
 			 ) {
-				linkDiv = $('<div class="n2Show_icon_wrapper"><img src="'+docUrl+'/'+file.thumbnail+'"/></div>');
+				linkDiv = $('<div class="n2Show_thumb_wrapper"><img src="'+docUrl+'/'+file.thumbnail+'"/></div>');
 			
 			} else if( file.fileClass === 'video' ) {
 				linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_video"></div></div>');
@@ -298,10 +298,10 @@ var DomStyler = $n2.Class({
 			} else if( file.thumbnail
 			 && data._attachments[file.thumbnail]
 			 ) {
-				linkDiv = $('<div class="n2Show_icon_wrapper"><img src="'+docUrl+'/'+file.thumbnail+'"/></div>');
+				linkDiv = $('<div class="n2Show_thumb_wrapper"><img src="'+docUrl+'/'+file.thumbnail+'"/></div>');
 				
 			} else {
-				// TBD
+				linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_file"></div></div>');
 			};
 			
 			if( null != linkDiv ) {
