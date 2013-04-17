@@ -446,6 +446,7 @@ var DomStyler = $n2.Class({
 					,{
 						type: 'findOnMap'
 						,fid: data._id
+						,srsName: 'EPSG:4326'
 						,x: x
 						,y: y
 					}

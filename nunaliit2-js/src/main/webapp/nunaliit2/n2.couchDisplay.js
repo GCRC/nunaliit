@@ -546,6 +546,7 @@ $n2.couchDisplay = $n2.Class({
 					_this._dispatch({
 						type: 'findOnMap'
 						,fid: data._id
+						,srsName: 'EPSG:4326'
 						,x: x
 						,y: y
 					});

@@ -450,7 +450,6 @@ var MapAndControls = $n2.Class({
 	,map: null
 	,editLayer: null
 	,html: null
-	,dbSrsName: null
  	,lastMapXy: null
  	,mapMouseMoveListeners: null
 	,olkitDisplayOptions: null
@@ -482,7 +481,9 @@ var MapAndControls = $n2.Class({
 	,editModeAddFeatureEnabled: null
 	,editModeAddFeatureCallback: null
     ,convertToMultiGeometry: null
-    ,featureModifiedCallback: null
+    
+    // EDIT_FEATURE mode
+    ,editFeatureFid: null
 
     // COMETD
     ,cometEnabled: null
@@ -591,13 +592,13 @@ var MapAndControls = $n2.Class({
 		this.map = null;
 		this.editLayer = null;
 		this.html = "";
-		this.dbSrsName = null; // Need to get SRS name from database, but for now that's OK
 		this.lastMapXy = null;
 		this.mapMouseMoveListeners = [];
 		this.olkitDisplayOptions = {};
 		this.pendingMarkInfo = null;
 		this.mapBusyCount = 0;
 		this.dhtmlSoundDivId = $n2.getUniqueId();
+		this.editFeatureFid = null;
 
 	    // HOVER and CLICK
 		this.selectFeatureControl = null;
@@ -648,7 +649,7 @@ var MapAndControls = $n2.Class({
 					};
 					
 					if( editAllowed ) {
-						_this.switchToEditFeatureMode(feature);
+						_this.switchToEditFeatureMode(feature.fid, feature);
 			    		_this._dispatch({
 			    			type: 'editInitiate'
 			    			,docId: null
@@ -933,7 +934,7 @@ var MapAndControls = $n2.Class({
 		    		// Remember that this is a newly added feature
 		    		feature._n2MapNewFeature = true;
 		    	};
-	    		_this.switchToEditFeatureMode(feature);
+	    		_this.switchToEditFeatureMode(feature.fid, feature);
 	    		_this._dispatch({
 	    			type: 'editInitiate'
 	    			,docId: null
@@ -954,9 +955,6 @@ var MapAndControls = $n2.Class({
 					evt.features[i].geometry = new OpenLayers.Geometry.MultiPolygon([evt.features[i].geometry]);
 				};
 			};
-	    };
-	    this.featureModifiedCallback = function(evt){
-	    	_this._featureModified(evt);
 	    };
 
 		var mapProjection = new OpenLayers.Projection(this.options.mapDisplay.srsName);
@@ -1059,6 +1057,12 @@ var MapAndControls = $n2.Class({
 				var lInfo = this.createLayerFromOptions(layerOptions);
 				if( lInfo && lInfo.olLayer ){
 					this.mapLayers.push(lInfo.olLayer);
+					lInfo.olLayer.events.register('featuresadded', null, function(evt_){
+						_this._olHandlerFeaturesAdded(evt_);
+					});
+					lInfo.olLayer.events.register('featuremodified', null, function(evt_){
+						_this._olHandlerFeatureModified(evt_);
+					});
 				};
 			};
 		};
@@ -1070,6 +1074,12 @@ var MapAndControls = $n2.Class({
 				var l = this._createOLLayerFromDefinition(layerDefinition,false);
 				if( l ){
 					this.mapLayers.push(l);
+					l.events.register('featuresadded', null, function(evt_){
+						_this._olHandlerFeaturesAdded(evt_);
+					});
+					l.events.register('featuremodified', null, function(evt_){
+						_this._olHandlerFeatureModified(evt_);
+					});
 				};
 			};
 		};
@@ -1358,36 +1368,103 @@ var MapAndControls = $n2.Class({
 		};
 	}
 	
-	,_initiateFeatureEdit: function(feature) {
-		if( feature ) {
-			this.centerMapOnFeature(feature);
-			this.switchToEditFeatureMode(feature);
-			return true;
-		};
-		
-		return false;
-	}
-	
-	,centerMapOnFeature: function(feature) {
+	,_centerMapOnFeature: function(feature) {
     	var geom = feature.geometry;
     	var bbox = geom.getBounds();
 		var x = (bbox.left + bbox.right) / 2;
 		var y = (bbox.bottom + bbox.top) / 2;
+		
+		this._centerMapOnXY(x,y,null); // same projection as map
+	}
+
+	,_centerMapOnXY: function(x, y, projCode) {
+		var _this = this;
+		
 		var ll = new OpenLayers.LonLat(x, y);
+		
+		if( projCode 
+		 && projCode != this.map.projection.getCode() ) {
+			var proj = new OpenLayers.Projection(projCode);
+			ll.transform(proj, this.map.projection); // transform in place
+		};
+		
 		var z = this.map.getZoom();
 		this.map.setCenter(ll, z, false, false);
 	}
+	
+	,_olHandlerFeaturesAdded: function(evt){
+		$n2.log('evt',evt);
+		
+		if( this.currentMode === this.modes.EDIT_FEATURE
+		 && this.editFeatureFid
+		 && evt
+		 && evt.features 
+		 && evt.features.length ){
+			for(var i=0,e=evt.features.length; i<e; ++i){
+				var f = evt.features[i];
+				if( f.fid === this.editFeatureFid ){
+					this._installGeometryEditor(f);
+				};
+			};
+		};
+	}
+	
+	,_installGeometryEditor: function(feature){
+		this._removeGeometryEditor();
+		
+   		var modifyFeatureGeometry = new OpenLayers.Control.ModifyFeature(
+   			feature.layer
+   			,{
+   				'displayClass': 'olControlMoveFeature'
+   				,standalone: true
+   			}
+   		);
+   		modifyFeatureGeometry.mode = OpenLayers.Control.ModifyFeature.RESHAPE;
+		this.map.addControl(modifyFeatureGeometry);
+		modifyFeatureGeometry.activate();
+    	this.editFeatureControls.modifyFeatureGeometry = modifyFeatureGeometry;
 
-	,_centerMapOnFeatureId: function(fid, latLongX, latLongY) {
-		var _this = this;
-		
-		var ll = new OpenLayers.LonLat(latLongX, latLongY);
-		
-		var dbProj = new OpenLayers.Projection(this.dbSrsName);
-		
-		ll.transform(dbProj, this.map.projection); // transform in place
-		var z = this.map.getZoom();
-		this.map.setCenter(ll, z, false, false);
+   		modifyFeatureGeometry.selectFeature(feature);
+
+   		// Remember original values
+   		feature._n2MapOriginal = {
+			restoreGeom: false
+		};
+   		feature._n2MapOriginal.geometry = feature.geometry.clone();
+   		feature._n2MapOriginal.style = feature.style;
+   		feature._n2MapOriginal.data = $n2.extend(true, {}, feature.data);
+	}
+	
+	,_removeGeometryEditor: function(){
+		if( null != this.editFeatureControls.modifyFeatureGeometry ) {
+			var editFeature = this.editFeatureControls.modifyFeatureGeometry.feature;
+    		if( null != editFeature ) {
+    			this.editFeatureControls.modifyFeatureGeometry.unselectFeature(editFeature);
+    		};
+    		this.editFeatureControls.modifyFeatureGeometry.deactivate();
+    		this.map.removeControl( this.editFeatureControls.modifyFeatureGeometry );
+    		this.editFeatureControls.modifyFeatureGeometry.destroy();
+    		this.editFeatureControls.modifyFeatureGeometry = null;
+    		
+    		// If this is the cancellation of a new feature creation, remove feature
+    		// from map
+    		if( editFeature 
+    		 && editFeature.layer ) {
+	    		if( editFeature._n2MapNewFeature ) {
+   	    			editFeature.layer.destroyFeatures([editFeature]);
+   	    			
+   	    		} else if( editFeature._n2MapOriginal ) {
+   	    			editFeature.layer.eraseFeatures([editFeature]);
+   	    			if( editFeature._n2MapOriginal.restoreGeom ){
+   	    				editFeature.geometry = editFeature._n2MapOriginal.geometry;
+   	    			};
+   	    			editFeature.data = editFeature._n2MapOriginal.data;
+   	    			editFeature.style = editFeature._n2MapOriginal.style;
+   	    			editFeature.layer.drawFeature(editFeature);
+   	    			delete editFeature._n2MapOriginal;
+   	    		};
+    		};
+		};
 	}
 
 	// @param bounds Instance of OpenLayers.Bounds
@@ -1416,12 +1493,6 @@ var MapAndControls = $n2.Class({
 		var _this = this;
 		
 		var layerInfo = $.extend({}, this.defaultLayerInfo, layerDefinition);
-
-		// If a SRS has not been defined for the database, pick the first one defined
-		// for a layer
-		if( null == this.dbSrsName ) {
-			this.dbSrsName = layerInfo.sourceSrsName;
-		};
 		
 		// Derive database projection from name
 		layerInfo.sourceProjection = new OpenLayers.Projection(layerInfo.sourceSrsName);
@@ -2446,36 +2517,9 @@ var MapAndControls = $n2.Class({
             this.deactivateSelectFeatureControl();
             
     	} else if( this.currentMode === this.modes.EDIT_FEATURE ) {
-    		if( null != this.editFeatureControls.modifyFeatureGeometry ) {
-    			var editFeature = this.editFeatureControls.modifyFeatureGeometry.feature;
-	    		if( null != editFeature ) {
-	    			this.editFeatureControls.modifyFeatureGeometry.unselectFeature(editFeature);
-	    		};
-	    		editFeature.layer.events.unregister('featuremodified', editFeature, this.featureModifiedCallback);
-	    		this.editFeatureControls.modifyFeatureGeometry.deactivate();
-	    		this.map.removeControl( this.editFeatureControls.modifyFeatureGeometry );
-	    		this.editFeatureControls.modifyFeatureGeometry.destroy();
-	    		this.editFeatureControls.modifyFeatureGeometry = null;
-	    		
-	    		// If this is the cancellation of a new feature creation, remove feature
-	    		// from map
-	    		if( editFeature 
-	    		 && editFeature.layer ) {
-		    		if( editFeature._n2MapNewFeature ) {
-	   	    			editFeature.layer.destroyFeatures([editFeature]);
-	   	    			
-	   	    		} else if( editFeature._n2MapOriginal ) {
-	   	    			editFeature.layer.eraseFeatures([editFeature]);
-	   	    			if( editFeature._n2MapOriginal.restoreGeom ){
-	   	    				editFeature.geometry = editFeature._n2MapOriginal.geometry;
-	   	    			};
-	   	    			editFeature.data = editFeature._n2MapOriginal.data;
-	   	    			editFeature.style = editFeature._n2MapOriginal.style;
-	   	    			editFeature.layer.drawFeature(editFeature);
-	   	    			delete editFeature._n2MapOriginal;
-	   	    		};
-	    		};
-    		};
+    		this._removeGeometryEditor();
+    		
+    		this.editFeatureFid = null;
             
     	} else if( this.currentMode === this.modes.NAVIGATE ) {
     		this.deactivateSelectFeatureControl();
@@ -2503,16 +2547,11 @@ var MapAndControls = $n2.Class({
     		};
             
     	} else if( this.currentMode === this.modes.EDIT_FEATURE ) {
-    		opts.feature.layer.events.register('featuremodified', opts.feature, this.featureModifiedCallback);
+    		this.editFeatureFid = opts.fid;
 
     		var editFeature = opts.feature;
     		if( editFeature ) {
-	    		editFeature._n2MapOriginal = {
-	    			restoreGeom: false
-	    		};
-	    		editFeature._n2MapOriginal.geometry = editFeature.geometry.clone();
-	    		editFeature._n2MapOriginal.style = editFeature.style;
-	    		editFeature._n2MapOriginal.data = $n2.extend(true, {}, editFeature.data);
+    			this._installGeometryEditor(editFeature);
     		};
             
     	} else if( this.currentMode === this.modes.NAVIGATE ) {
@@ -2549,36 +2588,11 @@ var MapAndControls = $n2.Class({
     	};
     }
     
-    ,switchToEditFeatureMode: function(feature) {
+    ,switchToEditFeatureMode: function(fid, feature) {
     	this.switchMapMode(this.modes.EDIT_FEATURE,{
-    		feature: feature
+    		fid: fid
+    		,feature: feature
     	});
-
-    	if( null != this.editFeatureControls.modifyFeatureGeometry ) {
-    		if( null != this.editFeatureControls.modifyFeatureGeometry.feature ) {
-    			this.editFeatureControls.modifyFeatureGeometry.unselectFeature(
-    				this.editFeatureControls.modifyFeatureGeometry.feature
-    			);
-    		};
-   			this.editFeatureControls.modifyFeatureGeometry.deactivate();
-   			this.map.removeControl( this.editFeatureControls.modifyFeatureGeometry );
-   			this.editFeatureControls.modifyFeatureGeometry.destroy();
-   			this.editFeatureControls.modifyFeatureGeometry = null;
-    	};
-
-   		var modifyFeatureGeometry = new OpenLayers.Control.ModifyFeature(
-   			feature.layer
-   			,{
-   				'displayClass': 'olControlMoveFeature'
-   				,standalone: true
-   			}
-   		);
-   		modifyFeatureGeometry.mode = OpenLayers.Control.ModifyFeature.RESHAPE;
-		this.map.addControl(modifyFeatureGeometry);
-		modifyFeatureGeometry.activate();
-    	this.editFeatureControls.modifyFeatureGeometry = modifyFeatureGeometry;
-
-   		modifyFeatureGeometry.selectFeature(feature);
     }
     
     ,_cancelEditFeatureMode: function() {
@@ -2631,7 +2645,7 @@ var MapAndControls = $n2.Class({
     }
     
     // Called when the feature on the map is modified
-    ,_featureModified: function(evt){
+    ,_olHandlerFeatureModified: function(evt){
     	var feature = evt.feature;
     	this._dispatch({
     		type: 'geometryModified'
@@ -3244,10 +3258,6 @@ var MapAndControls = $n2.Class({
 			+ '?service=WFS&version=' + layerInfo.wfsVersion 
 			+ '&request=DescribeFeatureType&typeName=' + layerInfo.typename;
 		
-		if( null == this.dbSrsName ) {
-			this.dbSrsName = layerInfo.sourceSrsName;
-		}
-		
 		layerInfo.sourceProjection = new OpenLayers.Projection(layerInfo.sourceSrsName);
 
 		var layerOptions = {
@@ -3815,7 +3825,7 @@ var MapAndControls = $n2.Class({
 			};
 			
 		} else if( 'findOnMap' === type ) {
-			this._centerMapOnFeatureId(m.fid, m.x, m.y);
+			this._centerMapOnXY(m.x, m.y, m.srsName);
 			var fid = m.fid;
 			var feature = this.getFeatureFromFid(fid);
 			this._selectedFeatureSupplement(feature, fid);
@@ -3827,16 +3837,35 @@ var MapAndControls = $n2.Class({
 			var fid = m.docId;
 			if( fid ){
 				var feature = this.getFeatureFromFid(fid);
-				this._initiateFeatureEdit(feature);
+				if( feature ) {
+					this._centerMapOnFeature(feature);
+				} else {
+					// must center map on feature, if feature contains
+					// a geometry
+					if( m.doc 
+					 && m.doc.nunaliit_geom 
+					 && m.doc.nunaliit_geom.bbox 
+					 && m.doc.nunaliit_geom.bbox.length >= 4 ) {
+						var bbox = m.doc.nunaliit_geom.bbox;
+						var x = (bbox[0] + bbox[2]) / 2;
+						var y = (bbox[1] + bbox[3]) / 2;
+						this._centerMapOnXY(x, y, 'EPSG:4326');
+					};
+				};
+				
+				this.switchToEditFeatureMode(fid, feature);
 			};
 			
 		} else if( 'editCancel' === type ) {
 			if( this.currentMode === this.modes.EDIT_FEATURE ){
-    			var editFeature = this.editFeatureControls.modifyFeatureGeometry.feature;
-	    		if( editFeature 
-	    		 && editFeature._n2MapOriginal ) {
-	    			editFeature._n2MapOriginal.restoreGeom = true;
-	    		};
+				// Indicate that this modification is cancelled 
+				if( this.editFeatureControls.modifyFeatureGeometry ) {
+	    			var editFeature = this.editFeatureControls.modifyFeatureGeometry.feature;
+		    		if( editFeature 
+		    		 && editFeature._n2MapOriginal ) {
+		    			editFeature._n2MapOriginal.restoreGeom = true;
+		    		};
+				};
 
 	    		this.switchMapMode(this.modes.NAVIGATE);
 			};
