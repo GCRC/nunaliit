@@ -16,6 +16,8 @@ function main_init(config) {
 		,sidePanelName: 'side'
 		,filterPanelName: 'filters'
 		,searchPanelName: 'searchInput'
+		,navigationName: 'navigation'
+		,navigationDoc: 'navigation.default'
 		,onSuccess: function(){
 			config.start();
 		}

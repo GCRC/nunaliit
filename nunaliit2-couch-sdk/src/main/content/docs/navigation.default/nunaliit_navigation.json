@@ -1,0 +1,23 @@
+{
+	"nunaliit_type":"navigation"
+	,"items":[
+		{
+			"title": {
+				"nunaliit_type":"localized"
+				,"en":"Default Module"
+				,"fr":"Module de Base"
+			}
+			,"href": "./index.html?module=generic.module:default"
+			,"items":[
+				{
+					"title": {
+						"nunaliit_type":"localized"
+						,"en":"Default Module"
+						,"fr":"Module de Base"
+					}
+					,"href": "./index.html?module=generic.module:default"
+				}
+			]
+		}
+	]
+}
