@@ -1,0 +1,22 @@
+.nunaliit_application .nunaliit_login_link {
+	padding: .5em .5em .5em .7em;
+	text-decoration: none;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	margin-right: 3px;
+	border: 1px solid lightGrey;
+	background: #E6E6E6 url('images/ui-bg_glass_75_e6e6e6_1x400.png') 50% 50% repeat-x;
+	font-weight: normal;
+	color: #555;
+}
+
+.nunaliit_application a.nunaliit_login_link:hover {
+	background-color: #619b00;
+}
+
+.nunaliit_application .nunaliit_login_greeting {
+	float: right;
+	padding-top: 10px;
+	padding-right: 10px;
+}*/
+

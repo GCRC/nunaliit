@@ -361,7 +361,7 @@ span.label {
 	z-index:10;
 }
 
-.loginLink {
+.nunaliit_login_link {
 	text-decoration: none;
 	font-weight: normal;
 	color: #fff;
@@ -376,10 +376,10 @@ span.label {
 	display: block;
 	text-decoration: none;
 }
-a.loginLink:hover {
+a.nunaliit_login_link:hover {
 	background-color:rgba(0,0,0,0.9);
 }
-.loginGreeting {
+.nunaliit_login_greeting {
 	float: right;
 	padding-top: 15px;
 	padding-right: 10px;

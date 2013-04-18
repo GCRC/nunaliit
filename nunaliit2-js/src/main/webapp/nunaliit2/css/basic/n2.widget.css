@@ -137,7 +137,7 @@
 
 
 /* Login */
-.nunaliit_login_container {
+.nunaliit_login {
 	position:absolute;
 	top:0;
 	right:20px;
@@ -145,15 +145,15 @@
 	z-index:10;
 	height:100%;
 }
-.nunaliit_login {
+.nunaliit_login_link_container {
 	float: right;
 	display:block;
 }
-.loginLink {
+.nunaliit_login_link {
 	float: right;
 	display:block;
 }
-.loginGreeting {
+.nunaliit_login_greeting {
 	float: right;
 	padding-right: 10px;
 }

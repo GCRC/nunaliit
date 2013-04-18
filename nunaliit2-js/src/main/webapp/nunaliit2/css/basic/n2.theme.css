@@ -111,7 +111,7 @@ color: #fff;
 
 
 /* Login */
-.nunaliit_atlas .nunaliit_login {
+.nunaliit_atlas .nunaliit_login_link_container {
 	position:relative;
 	border-left: 1px solid #838383;
 	border-right: 1px solid #838383;
@@ -122,7 +122,7 @@ color: #fff;
 	height:100%;
 	width: 36px;
 }
-.nunaliit_atlas .loginLink {
+.nunaliit_atlas .nunaliit_login_link {
 	text-decoration: none;
 	color: #fff;
 	line-height:0;
@@ -133,7 +133,7 @@ color: #fff;
 .nunaliit_atlas .nunaliit_login:hover {
 	background-color:rgba(0,0,0,0.9);
 }
-.nunaliit_atlas .loginGreeting {
+.nunaliit_atlas .nunaliit_login_greeting {
 	color: #fff;
 	position: relative;
 	top: 50%;

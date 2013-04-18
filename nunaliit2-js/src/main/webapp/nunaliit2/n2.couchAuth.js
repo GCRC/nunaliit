@@ -745,28 +745,34 @@ var AuthWidget = $n2.Class({
 		var authService = this.getAuthService();
 		if( authService ) {
 			if( null == currentUser ) {
-				var aElem = $('<a class="loginLink" href="javascript:Login"></a>');
+				var aElem = $('<a class="nunaliit_login_link" href="javascript:Login"></a>');
 				aElem.text( _loc('Login') );
-				aElem.click(function(){
+				var divElem = $('<div class="nunaliit_login_link_container"></div>');
+				divElem.append(aElem);
+				divElem.click(function(){
 					authService.showLoginForm();
 					return false;
 				});
-				var nameElem = $('<span class="loginGreeting"></span>');
+
+				var nameElem = $('<span class="nunaliit_login_greeting"></span>');
 				nameElem.text( _loc('Welcome') );
-				$login.append(aElem).append(nameElem);
+				$login.append(divElem).append(nameElem);
 	
 			} else {
-				var aElem = $('<a class="loginLink" href="javascript:Logout"></a>');
+				var aElem = $('<a class="nunaliit_login_link" href="javascript:Logout"></a>');
 				aElem.text( _loc('Logout') );
-				aElem.click(function(){
+				var divElem = $('<div class="nunaliit_login_link_container"></div>');
+				divElem.append(aElem);
+				divElem.click(function(){
 					authService.logout();
 					return false;
 				});
+
 				var display = currentUser.display;
 				if( !display ) display = currentUser.name;
-				var nameElem = $('<span class="loginGreeting"></span>');
+				var nameElem = $('<span class="nunaliit_login_greeting"></span>');
 				nameElem.text( display );
-				$login.append(aElem).append(nameElem);
+				$login.append(divElem).append(nameElem);
 			};
 		};
 	}
