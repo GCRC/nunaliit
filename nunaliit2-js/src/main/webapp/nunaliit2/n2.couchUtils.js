@@ -94,10 +94,13 @@ var n2utils = {
 		// 'index' which is the earlier reference of a word in
 		// a found string.
 	
-		var result = [];
+		var strings = [];
+		n2utils.extractStrings(doc,strings,null,n2utils.excludedSearchAttributes);
 		
 		var map = {};
-		n2utils.extractWords(doc,map,'');
+		for(var i=0,e=strings.length;i<e;++i){
+			n2utils.extractWordsFromString(strings[i],map);
+		};
 		
 		return map;
 	}
@@ -110,50 +113,68 @@ var n2utils = {
 	
 	,reWordSplit: /[\x00-\x26\x28-\x2f\x3a-\x40\x5b-\x60\x7b-\x7f]+/ 
 
-	,extractWords: function(obj, map, path) {
-		// Traverses an object to find all string elements.
-		// For each string element, split up in words.
+	,addWordToMap: function(word, index, map) {
 		// Save each word in a map, with the number of times
 		// the word is encountered (count) and the index of the word in 
 		// the string it is found, favouring earlier indices.
+		
+		var word = word.toLowerCase();
+		word = n2utils.removeApostrophe(word);
+		if( word && word !== '' ) {
+			if( map[word] ) {
+				map[word].count++;
+				if( index < map[word].index ) {
+					map[word].index = index;
+				};
+			} else {
+				var folded = n2utils.foldWord(word);
+				map[word] = {
+					index: index
+					,count: 1
+					,folded: folded
+				};
+			};
+		};
+	}
+
+	,extractWordsFromString: function(str, map) {
+		// For the string element, split up in words.
+		// Save each word in a map of words, that keeps track
+		// of number of times a word is encountered and the earliest
+		// index it is found
+		
+		var words = str.split( n2utils.reWordSplit );
+		for(var i=0,e=words.length; i<e; ++i) {
+			n2utils.addWordToMap(words[i],i,map);
+		};
+	}
+
+	,extractStrings: function(obj, strings, currentPath, excludedPaths) {
+		// Traverses an object to find all string elements.
+		// Accumulate strings in the given array
+		// Skip excluded paths
+
+		if( excludedPaths.indexOf(currentPath) >= 0 ) {
+			// this path is excluded
+			return;
+		};
 		
 		if( null === obj ) {
 			// Nothing to do
 			
 		} else if( typeof(obj) === 'string' ) {
-			var words = obj.split( n2utils.reWordSplit );
-			for(var i=0,e=words.length; i<e; ++i) {
-				var word = words[i].toLowerCase();
-				word = n2utils.removeApostrophe(word);
-				if( word && word !== '' ) {
-					if( map[word] ) {
-						map[word].count++;
-						if( i < map[word].index ) {
-							map[word].index = i;
-						};
-					} else {
-						var folded = n2utils.foldWord(word);
-						map[word] = {
-							index: i
-							,count: 1
-							,folded: folded
-						};
-					};
-				};
-			};
+			strings.push(obj);
 			
 		} else if( n2utils.isArray(obj) ) {
 			for(var i=0,e=obj.length; i<e; ++i) {
-				n2utils.extractWords(obj[i],map,path+i+'.');
+				var p = currentPath ? currentPath+'.'+i : ''+i;
+				n2utils.extractStrings(obj[i],strings,p,excludedPaths);
 			};
 
 		} else if( typeof(obj) === 'object' ) {
 			for(var key in obj) {
-				var s = path+key;
-				
-				if( n2utils.excludedSearchAttributes.indexOf(s) < 0 ) {
-					n2utils.extractWords(obj[key],map,s+'.');
-				};
+				var p = currentPath ? currentPath+'.'+key : ''+key;
+				n2utils.extractStrings(obj[key],strings,p,excludedPaths);
 			};
 		};
 	}
@@ -466,6 +487,8 @@ if( typeof(exports) === 'object' ) {
 	exports.extractLayers = n2utils.extractLayers;
 	exports.extractLinks = n2utils.extractLinks;
 	exports.extractSearchTerms = n2utils.extractSearchTerms;
+	exports.addWordToMap = n2utils.addWordToMap;
+	exports.extractStrings = n2utils.extractStrings;
 	exports.foldWord = n2utils.foldWord;
 	exports.removeApostrophe = n2utils.removeApostrophe;
 	exports.isApostropheCodeChar = n2utils.isApostropheCodeChar;
@@ -483,6 +506,8 @@ if( typeof(nunaliit2) === 'function' ) {
 	nunaliit2.couchUtils.extractLayers = n2utils.extractLayers;
 	nunaliit2.couchUtils.extractLinks = n2utils.extractLinks;
 	nunaliit2.couchUtils.extractSearchTerms = n2utils.extractSearchTerms;
+	nunaliit2.couchUtils.addWordToMap = n2utils.addWordToMap;
+	nunaliit2.couchUtils.extractStrings = n2utils.extractStrings;
 	nunaliit2.couchUtils.foldWord = n2utils.foldWord;
 	nunaliit2.couchUtils.removeApostrophe = n2utils.removeApostrophe;
 	nunaliit2.couchUtils.isApostropheCodeChar = n2utils.isApostropheCodeChar;

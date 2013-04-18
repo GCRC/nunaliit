@@ -1,9 +1,15 @@
-; Copy this file over to mail.properties for tests to run.
-; modify values below for proper tests
+# Copy this file over to mail.properties for tests to run.
+# modify values below for proper tests
 
 mail.transport.protocol=smtp
 mail.smtp.host=gcrc.carleton.ca
 mail.smtp.port=25
 
 upload.sender=atlas@gcrc.carleton.ca|Atlas Server
-upload.recipient.1=tester@gcrc.carleton.ca|Tester
+upload.approval.url=http://127.0.0.1:8090/tools/upload.html
+upload.sendNotification=true
+
+test.displayName=Test Display Name
+test.email=me@company.com
+~                                                                               
+~                             

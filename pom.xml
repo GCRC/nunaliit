@@ -111,5 +111,6 @@
 		<module>nunaliit2-javascript</module>
 		<module>nunaliit2-css</module>
 		<module>nunaliit2-utils</module>
+		<module>nunaliit2-couch-user</module>
 	</modules>
 </project>

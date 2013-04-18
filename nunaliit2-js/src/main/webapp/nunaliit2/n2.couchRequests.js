@@ -53,6 +53,7 @@ $n2.couchRequests = $n2.Class({
 			,designDoc: null
 			,cacheService: null
 			,directory: null
+			,userServerUrl: null
 		},options_);
 		
 		this.currentRequests = {};
@@ -121,7 +122,36 @@ $n2.couchRequests = $n2.Class({
 		this.currentRequests = {};
 		
 		// Users
-		if( requests.users && this.options.userDb ) {
+		if( requests.users && this.options.userServerUrl ) {
+			var params = [];
+			for(var userName in requests.users) {
+				params.push({
+					name: 'user'
+					,value: userName
+				});
+			};
+			
+			var url = this.options.userServerUrl + 'getUsers';
+			
+			$.ajax({
+		    	url: url
+		    	,type: 'GET'
+		    	,async: true
+		    	,traditional: true
+		    	,data: params
+		    	,dataType: 'json'
+		    	,success: function(result) {
+		    		if( result.users ) {
+		    			for(var i=0,e=result.users.length;i<e;++i){
+		    				var user = result.users[i];
+		    				_this._callUserListeners(user);
+		    			};
+		    		};
+		    	}
+		    	,error: function(XMLHttpRequest, textStatus, errorThrown) {}
+			});
+			
+		} else if( requests.users && this.options.userDb ) {
 			for(var userName in requests.users) {
 				this.options.userDb.getUser({
 					name: userName

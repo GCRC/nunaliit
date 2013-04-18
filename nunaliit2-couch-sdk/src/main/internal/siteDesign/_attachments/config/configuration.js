@@ -56,6 +56,7 @@ function runConfiguration(opts_) {
 			,mediaUrl: opts.rootPath + 'media/'
 			,uploadServerUrl: opts.rootPath + 'servlet/upload/'
 			,exportServerUrl: opts.rootPath + 'servlet/export/'
+			,userServerUrl: opts.rootPath + 'servlet/user/'
 	 		,onSuccess: opts.configuredFunction
 	 	});
 	 

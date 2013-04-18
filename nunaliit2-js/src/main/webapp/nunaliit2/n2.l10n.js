@@ -38,9 +38,14 @@ $Id: n2.l10n.js 8165 2012-05-31 13:14:37Z jpfiset $
 // @namespace nunaliit2
 ;(function($n2){
 
-var cachedLocale = null;
+if( !$n2.l10n ) $n2.l10n = {};
+if( !$n2.l10n.strings ) $n2.l10n.strings = {};
+if( !$n2.l10n.strings['en'] ) $n2.l10n.strings['en'] = {};
 
-var strings = null;
+// Short-cut
+var strings = $n2.l10n.strings;
+
+var cachedLocale = null;
 
 var translationRequests = {};
 
@@ -93,9 +98,6 @@ function getLocale() {
 };
 
 function getDictionaryFromLang(lang) {
-	if( null == strings ) {
-		strings = $n2.l10n.strings;
-	}
 	
 	if( null == strings[lang] ) {
 		strings[lang] = {};
@@ -108,6 +110,11 @@ function getLocalizedString(str, packageName, args) {
 	var locale = getLocale();
 	
 	if( 'en' === locale.lang ) {
+		// Fetch replacement text
+		if( strings['en'][str] ){
+			str = strings['en'][str];
+		};
+		
 		if( args ){
 			return $n2.utils.formatString(str,args);
 		};
@@ -132,6 +139,11 @@ function getLocalizedString(str, packageName, args) {
 		return $n2.utils.formatString(langStr,args);
 	};
 	return langStr;
+};
+
+function addLocalizedString(enStr, lang, langStr) {
+	var dict = getDictionaryFromLang(lang);
+	dict[enStr] = langStr;
 };
 
 function getTranslationRequestsFromLang(lang) {
@@ -165,13 +177,11 @@ function requestTranslation(str, lang, packageName) {
 	};
 };
 
-if( !$n2.l10n ) $n2.l10n = {};
-if( !$n2.l10n.strings ) $n2.l10n.strings = {};
-
 $n2.l10n.getLocale = getLocale;
 $n2.l10n.getLocalizedString = getLocalizedString;
 $n2.l10n.requestTranslation = requestTranslation;
 $n2.l10n.translationRequests = translationRequests;
+$n2.l10n.addLocalizedString = addLocalizedString;
 
 // Load core translations
 if( $n2.scripts ) {

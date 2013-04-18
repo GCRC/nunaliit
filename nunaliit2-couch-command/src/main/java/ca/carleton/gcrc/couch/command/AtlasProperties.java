@@ -48,7 +48,15 @@ public class AtlasProperties {
 		} catch(Exception e) {
 			throw new Exception("Unable to interpret servlet port",e);
 		}
-		
+
+		// Restricted
+		{
+			String restrictedString = props.getProperty("atlas.restricted","false");
+			boolean r = Boolean.parseBoolean(restrictedString);
+			if( r ){
+				atlasProps.setRestricted(r);
+			}
+		}
 		
 		return atlasProps;
 	}
@@ -195,7 +203,8 @@ public class AtlasProperties {
 	private String couchDbAdminUser;
 	private String couchDbAdminPassword;
 	private int serverPort = 8080;
-	
+	private boolean restricted = false;
+
 	public String getAtlasName() {
 		return atlasName;
 	}
@@ -236,5 +245,12 @@ public class AtlasProperties {
 	}
 	public void setServerPort(int serverPort) {
 		this.serverPort = serverPort;
+	}
+	
+	public boolean isRestricted() {
+		return restricted;
+	}
+	public void setRestricted(boolean restricted) {
+		this.restricted = restricted;
 	}
 }

@@ -2,9 +2,16 @@ package ca.carleton.gcrc.couch.client;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Vector;
 
 import junit.framework.TestCase;
+
 import org.json.JSONObject;
+
 import ca.carleton.gcrc.json.JSONSupport;
 
 public class CouchDbTest extends TestCase {
@@ -128,6 +135,64 @@ public class CouchDbTest extends TestCase {
 			check = db.getDocumentRevision(docId);
 			if( false == updatedRevision.equals(check) ) {
 				fail("Unmatched revision on updated");
+			}
+		}
+	}
+	
+	public void testGetDocuments() throws Exception {
+		CouchDb db = TestSupport.getTestCouchDb();
+		if( null != db ) {
+			String docId1 = "testGetDocuments1";
+			String docId2 = "testGetDocuments2";
+			
+			// Create documents
+			{
+				JSONObject doc = new JSONObject();
+				doc.put("_id",docId1);
+				doc.put("test", docId1);
+				
+				db.createDocument(doc);
+			}
+			{
+				JSONObject doc = new JSONObject();
+				doc.put("_id",docId2);
+				doc.put("test", docId2);
+				
+				db.createDocument(doc);
+			}
+			
+			List<String> docIds = new Vector<String>();
+			docIds.add(docId1);
+			docIds.add(docId2);
+			Collection<JSONObject> docs = db.getDocuments(docIds);
+			
+			if( 2 != docs.size() ){
+				fail("Inconsistent number of documents returned: "+docs.size());
+			} else {
+				Map<String,JSONObject> map = new HashMap<String,JSONObject>();
+				for(JSONObject doc : docs){
+					map.put(doc.getString("_id"), doc);
+				}
+				
+				// Check first document
+				if( false == map.containsKey(docId1) ){
+					fail("Unable to find document: "+docId1);
+				} else {
+					String value = map.get(docId1).getString("test");
+					if( false == docId1.equals(value) ){
+						fail("Invalid value in document: "+docId1);
+					}
+				}
+				
+				// Check second document
+				if( false == map.containsKey(docId2) ){
+					fail("Unable to find document: "+docId2);
+				} else {
+					String value = map.get(docId2).getString("test");
+					if( false == docId2.equals(value) ){
+						fail("Invalid value in document: "+docId2);
+					}
+				}
 			}
 		}
 	}

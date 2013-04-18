@@ -664,6 +664,12 @@ var ModuleDisplay = $n2.Class({
 				,directory: config.directory
 			};
 			
+			// Background Layers
+			mapOptions.mapDisplay = {};
+			if( mapInfo && mapInfo.backgrounds ){
+				mapOptions.mapDisplay.backgrounds = mapInfo.backgrounds;
+			};
+
 			// Overlay Layers
 			if( mapInfo && mapInfo.overlays ){
 				var styleMapFn = opts.styleMapFn;
@@ -715,14 +721,8 @@ var ModuleDisplay = $n2.Class({
 					mapOptions.overlays.push( layerDefiniton );
 				};
 			};
-			
-			// Background Layers
-			mapOptions.mapDisplay = {};
-			if( mapInfo && mapInfo.backgrounds ){
-				mapOptions.mapDisplay.backgrounds = mapInfo.backgrounds;
-			};
 
-			// Initial Bounds
+			// Initial Bounds, Map coordinates
 			var initialBounds = null;
 			if( mapInfo && mapInfo.coordinates ){
 				initialBounds = mapInfo.coordinates.initialBounds;
@@ -738,6 +738,10 @@ var ModuleDisplay = $n2.Class({
 					
 					mapOptions.mapDisplay.srsName = mapInfo.coordinates.srsName;
 					mapOptions.mapCoordinateSpecifications.srsName = mapInfo.coordinates.srsName;
+				} else {
+					// Defaults to EPSG:4326
+					mapOptions.mapDisplay.srsName = 'EPSG:4326';
+					mapOptions.mapCoordinateSpecifications.srsName = 'EPSG:4326';
 				};
 				
 				// If "Google Maps" is specified, then the map must display in
@@ -750,6 +754,16 @@ var ModuleDisplay = $n2.Class({
 					};
 				};
 			};
+			
+			// Adjust projection on couchDb overlays
+			for(var i=0,e=mapOptions.overlays.length; i<e; ++i){
+				var layerDefiniton = mapOptions.overlays[i];
+				
+				if( layerDefiniton.type === 'couchdb' ){
+					layerDefiniton.sourceSrsName = mapOptions.mapDisplay.srsName;
+				};
+			};
+			
 			if( !initialBounds ) {
 				opts.onError('Initial map extent not specified');
 				return;
@@ -781,7 +795,7 @@ var ModuleDisplay = $n2.Class({
 					var layerName = layerDef.options.layerName;
 					var designDoc = layerDef.options.designDoc;
 					designDoc.queryView({
-						viewName: 'geom-layer'
+						viewName: 'geom-layer-bbox'
 						,startkey: layerName
 						,endkey: layerName
 						,onlyRows: true
@@ -804,7 +818,11 @@ var ModuleDisplay = $n2.Class({
 			
 			function reportLayer(bounds){
 				--layersPending;
-				if( null != bounds ) {
+				if( null == bounds ) {
+					// ignore
+				} else if( false == _this._isValidBounds(bounds) ) {
+					// ignore
+				} else {
 					if( null == layerBoundingBox ) {
 						layerBoundingBox = bounds;
 					} else {
@@ -821,45 +839,80 @@ var ModuleDisplay = $n2.Class({
 				if( layersPending > 0 ){
 					return;
 				};
+				
+				// If nothing specified by layers, just use what the user specified
 				if( null == layerBoundingBox ){
 					// Nothing defined by the layers, use initial bounds
 					initialBoundsComputed(mapOptions, initialBounds);
-	
-				} else if( false == _this._isValidBounds(layerBoundingBox) ) {
+					return;
+				};
+
+				// If computations from layers is invalid, use the initial bounds specified
+				// by user
+				if( false == _this._isValidBounds(layerBoundingBox) ) {
 					$n2.log('Invalid bounding box reported for layer in database.',layerBoundingBox);
 					initialBoundsComputed(mapOptions, initialBounds);
-					
-				} else if( layerBoundingBox[0] >= initialBounds[0]
-				 && layerBoundingBox[1] >= initialBounds[1]
-				 && layerBoundingBox[2] <= initialBounds[2]
-				 && layerBoundingBox[3] <= initialBounds[3]
-				 ){
-					// Bounds defined by layers fit within the initial one.
+					return;
+				};
+				
+				// layerBoundingBox is in EPSG:4326
+				// initialBounds is in the user coordinate projection
+				var userInitialBounds = new OpenLayers.Bounds(
+						initialBounds[0]
+						,initialBounds[1]
+						,initialBounds[2]
+						,initialBounds[3]
+						);
+				var layerInitialBounds = new OpenLayers.Bounds(
+						layerBoundingBox[0]
+						,layerBoundingBox[1]
+						,layerBoundingBox[2]
+						,layerBoundingBox[3]
+						);
+				if( mapOptions.mapCoordinateSpecifications.srsName !== 'EPSG:4326' ){
+					var userProj = new OpenLayers.Projection(mapOptions.mapCoordinateSpecifications.srsName);
+					var dbProj = new OpenLayers.Projection('EPSG:4326');
+					layerInitialBounds.transform(dbProj,userProj);
+				};
+				
+				if( userInitialBounds.containsBounds(layerInitialBounds) ){
+					// Bounds defined by layers fit within the one specified by user.
 					// Just use initial bounds (prevent too much zooming in)
 					initialBoundsComputed(mapOptions, initialBounds);
 					
-				} else if( (layerBoundingBox[2]-layerBoundingBox[0]) < (initialBounds[2]-initialBounds[0]) 
-				 || (layerBoundingBox[3]-layerBoundingBox[1]) < (initialBounds[3]-initialBounds[1]) ){
-					// The bounds defined by the layer are smaller than that defined by initial
-					// bounds. Adjust size of bounds so that zoom is not too high
+				} else if( layerInitialBounds.getWidth() < userInitialBounds.getWidth() 
+				 || layerInitialBounds.getHeight() < userInitialBounds.getHeight() ){
+					// The bounds defined by the layers are smaller than that of the bounds
+					// specified by user. Adjust size of bounds so that zoom is not too high
 					
-					if( (layerBoundingBox[2]-layerBoundingBox[0]) < (initialBounds[2]-initialBounds[0]) ){
-						var l = (initialBounds[2]-initialBounds[0])/2;
-						var m = (layerBoundingBox[2]+layerBoundingBox[0])/2;
-						layerBoundingBox[0] = m - l;
-						layerBoundingBox[2] = m + l;
+					if( layerInitialBounds.getWidth() < userInitialBounds.getWidth() ){
+						var l = userInitialBounds.getWidth()/2;
+						var m = (layerInitialBounds.left+layerInitialBounds.right)/2;
+						layerInitialBounds.left = m - l;
+						layerInitialBounds.right = m + l;
 					};
 					
-					if( (layerBoundingBox[3]-layerBoundingBox[1]) < (initialBounds[3]-initialBounds[1]) ){
-						var l = (initialBounds[3]-initialBounds[1])/2;
-						var m = (layerBoundingBox[3]+layerBoundingBox[1])/2;
-						layerBoundingBox[1] = m - l;
-						layerBoundingBox[3] = m + l;
+					if( layerInitialBounds.getHeight() < userInitialBounds.getHeight() ){
+						var l = userInitialBounds.getHeight()/2;
+						var m = (layerInitialBounds.bottom+layerInitialBounds.top)/2;
+						layerInitialBounds.bottom = m - l;
+						layerInitialBounds.top = m + l;
 					};
-					initialBoundsComputed(mapOptions, layerBoundingBox);
+					initialBoundsComputed(mapOptions, [
+						layerInitialBounds.left
+						,layerInitialBounds.bottom
+						,layerInitialBounds.right
+						,layerInitialBounds.top
+					]);
 					
 				} else {
-					initialBoundsComputed(mapOptions, layerBoundingBox);
+					// Use bounds computed by layers
+					initialBoundsComputed(mapOptions, [
+   						layerInitialBounds.left
+   						,layerInitialBounds.bottom
+   						,layerInitialBounds.right
+   						,layerInitialBounds.top
+   					]);
 				};
 			};
 		};
@@ -876,8 +929,14 @@ var ModuleDisplay = $n2.Class({
 			 ){
 				mapOptions.mapCoordinateSpecifications.maxExtent = 
 					mapInfo.coordinates.maxExtent;
+				
+			} else if( mapOptions.mapDisplay.srsName !== null 
+			 && mapOptions.mapDisplay.srsName !== 'EPSG:4326' ) {
+				mapOptions.mapCoordinateSpecifications.maxExtent =
+					mapOptions.mapCoordinateSpecifications.initialBounds;
 			};
 			
+			// Create map control
 			_this.mapControl = nunaliit2.mapAndControls(mapOptions);
 			$n2.log('module',_this);
 			

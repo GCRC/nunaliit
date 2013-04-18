@@ -8,7 +8,7 @@ div.n2Show_icon_wrapper {
 }
 
 /* 26x26 icons */
-div.n2Show_icon_audio, div.n2Show_icon_image, div.n2Show_icon_video {
+div.n2Show_icon_audio, div.n2Show_icon_image, div.n2Show_icon_video, div.n2Show_icon_file {
 	display: block;
 	width: 26px;
 	height: 26px;
@@ -29,7 +29,10 @@ div.n2Show_icon_video {
 div.n2Show_icon_image {
 	background: transparent url(images/image_icon.png) no-repeat; 
 }
-div.n2Show_icon_image:hover, div.n2Show_icon_video:hover {
+div.n2Show_icon_file {
+	background: transparent url(images/file_icon.png) no-repeat; 
+}
+div.n2Show_icon_image:hover, div.n2Show_icon_video:hover, div.n2Show_icon_file:hover {
 	background-position: -26px 0;
 }
 

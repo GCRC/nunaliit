@@ -1,0 +1,375 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+		<title>_design/atlas validate_doc_update Test</title>		
+		<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/themes/base/jquery-ui.css" type="text/css" />
+		
+		<style type="text/css">
+			.error {
+				font-weight: bold;
+				color: #ff0000;
+			}
+		</style>
+	</head>
+	<body>
+
+		<h1>_design/atlas validate_doc_update Test</h1>
+		<div id="logs">
+		</div>
+
+		<script type="text/javascript">
+			// <!--
+			var n2AtlasObj = {
+				name: 'atlas'
+				,restricted: false
+			};
+			
+			window.require = function(n){
+				if( n.indexOf('atlas') >= 0 ){
+					return n2AtlasObj;
+					
+				} else if( n.indexOf('n2.couchUtils') >= 0 ) {
+					return {
+						extractGeometries: function(){}
+						,isValidGeom: function(){ return true; }
+						,isArray: function(a){ return a && 'number' === typeof(a.length); }
+					};
+					
+				} else {
+					return {};
+				};
+			};
+			// -->
+		</script>
+		
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/jquery-ui.min.js"></script>
+		<script type="text/javascript" src="../../../main/webapp/WEB-INF/atlas_couchapp/app/validate_doc_update.js"></script>
+
+		<script type="text/javascript">
+			// <!--
+			
+			function printLog(str){
+				var $div = $('<div></div>');
+				$div.text(str);
+				$('#logs').append($div);
+			};
+			
+			function printError(str){
+				var $div = $('<div class="error"></div>');
+				$div.text('Error: '+str);
+				$('#logs').append($div);
+			};
+			
+			var users = {
+				john: {
+					_id: 'org.couchdb.user:john'
+					,_rev: '7-abcedf'
+					,name: 'john'
+					,roles: []
+					,type: 'user'
+				}
+			};
+			
+			function getContext(opts_){
+				var opts = $.extend({
+					name: null
+					,user: null
+					,roles: null
+				},opts_);
+
+				if( opts.user ) {
+					var u = opts.user;
+				} else if( opts.name ) {
+					u = users[opts.name];
+				} else {
+					u = {
+						name: null
+						,roles: []
+					};
+				};
+
+				var context = {
+					name: u.name
+					,roles: []
+				};
+				
+				for(var i=0,e=u.roles.length; i<e; ++i){
+					context.roles.push(u.roles[i]);
+				};
+				
+				if( opts.roles ){
+					for(var i=0,e=opts.roles.length; i<e; ++i){
+						context.roles.push(opts.roles[i]);
+					};
+				};
+				
+				return context;
+			};
+			
+			var testFunctions = [];
+			function defineTest(name, fn){
+				testFunctions.push({
+					name: name
+					,fn: fn
+				});
+			};
+			
+			var currentTest = null;
+			function startTest(t){
+				currentTest = {
+					error: null
+					,name: t.name
+				};
+			};
+			function fail(e){
+				if( currentTest ) {
+					currentTest.error = e;
+				} else {
+					printError('*** Failure without a declared test ***');
+				};
+			};
+			function endTest(){
+				currentTest = null;
+			};
+			
+			// *********
+			defineTest('_admin can change a document',function(){
+				var ctxt = getContext({
+					name: 'john'
+					,roles: ['_admin']
+				});
+
+				var prev = {
+					_id: 'doc-1'
+					,_rev: '1-abcdef'
+				};
+
+				var current = $.extend(true,{},prev);
+				current.test = 'a string';
+				
+				validate_doc_update(current, prev, ctxt);
+			});
+			
+			// *********
+			defineTest('atlas administrator can change a document',function(){
+				var ctxt = getContext({
+					name: 'john'
+					,roles: ['atlas_administrator']
+				});
+
+				var prev = {
+					_id: 'doc-1'
+					,_rev: '1-abcdef'
+				};
+
+				var current = $.extend(true,{},prev);
+				current.test = 'a string';
+				
+				validate_doc_update(current, prev, ctxt);
+			});
+			
+			// *********
+			defineTest('atlas replicator can change a document',function(){
+				var ctxt = getContext({
+					name: 'john'
+					,roles: ['atlas_replicator']
+				});
+
+				var prev = {
+					_id: 'doc-1'
+					,_rev: '1-abcdef'
+				};
+
+				var current = $.extend(true,{},prev);
+				current.test = 'a string';
+				
+				validate_doc_update(current, prev, ctxt);
+			});
+			
+			// *********
+			defineTest('administrators from a different atlas can not change a document',function(){
+				var ctxt = getContext({
+					name: 'john'
+					,roles: ['other_administrator']
+				});
+
+				var prev = {
+					_id: 'doc-1'
+					,_rev: '1-abcdef'
+				};
+
+				var current = $.extend(true,{},prev);
+				current.test = 'a string';
+				
+				try {
+					validate_doc_update(current, prev, ctxt);
+					fail('administrators from a different database are not allowed to change docuemnts');
+				} catch(e) {
+					// OK
+				};
+			});
+			
+			// *********
+			defineTest('atlas vetter can not change a document',function(){
+				var ctxt = getContext({
+					name: 'john'
+					,roles: ['atlas_vetter']
+				});
+
+				var prev = {
+					_id: 'doc-1'
+					,_rev: '1-abcdef'
+				};
+
+				var current = $.extend(true,{},prev);
+				current.test = 'a string';
+				
+				try {
+					validate_doc_update(current, prev, ctxt);
+					fail('administrators from a different database are not allowed to change docuemnts');
+				} catch(e) {
+					// OK
+				};
+			});
+
+			// *********
+			defineTest('in non-restricted mode, a regular user can create a document',function(){
+				n2AtlasObj.restricted = false;
+				var ctxt = getContext({
+					name: 'john'
+					,roles: []
+				});
+
+				var prev = null;
+				
+				var current = {
+					_id: 'doc-1'
+					,nunaliit_created:{
+						nunaliit_type: 'actionstamp'
+						,name: ctxt.name
+					}
+					,nunaliit_last_updated:{
+						nunaliit_type: 'actionstamp'
+						,name: ctxt.name
+					}
+				};
+				
+				validate_doc_update(current, prev, ctxt);
+			});
+
+			// *********
+			defineTest('in restricted mode, an atlas user can create a document',function(){
+				n2AtlasObj.restricted = true;
+				var ctxt = getContext({
+					name: 'john'
+					,roles: ['atlas_user']
+				});
+
+				var prev = null;
+				
+				var current = {
+					_id: 'doc-1'
+					,nunaliit_created:{
+						nunaliit_type: 'actionstamp'
+						,name: ctxt.name
+					}
+					,nunaliit_last_updated:{
+						nunaliit_type: 'actionstamp'
+						,name: ctxt.name
+					}
+				};
+				
+				validate_doc_update(current, prev, ctxt);
+			});
+
+			// *********
+			defineTest('in restricted mode, an regular user can not create a document',function(){
+				n2AtlasObj.restricted = true;
+				var ctxt = getContext({
+					name: 'john'
+					,roles: []
+				});
+
+				var prev = null;
+				
+				var current = {
+					_id: 'doc-1'
+					,nunaliit_created:{
+						nunaliit_type: 'actionstamp'
+						,name: ctxt.name
+					}
+					,nunaliit_last_updated:{
+						nunaliit_type: 'actionstamp'
+						,name: ctxt.name
+					}
+				};
+				
+				try {
+					validate_doc_update(current, prev, ctxt);
+					fail('only atlas users should be able to create a document');
+				} catch(e) {
+					// OK
+				};
+			});
+
+			// *** MAIN ***
+			var testsToRun = []; // names of tests to run
+			function main_init(){
+				printLog('Loaded');
+				
+				var testCount = 0;
+				var testFailure = 0;
+				for(var i=0,e=testFunctions.length;i<e;++i){
+					var testName = testFunctions[i].name;
+					var testFn = testFunctions[i].fn;
+
+					if( testsToRun && testsToRun.length > 0 ){
+						if( testsToRun.indexOf(testName) < 0 ){
+							continue;
+						};
+					};
+					
+					++testCount;
+					
+					startTest(testFunctions[i]);
+					
+					try {
+						testFn();
+					} catch(e) {
+						if( e.forbidden ){
+							fail(e.forbidden);
+						} else {
+							fail(e);
+						};
+					};
+					
+					if( currentTest.error ){
+						++testFailure;
+						printError('Failure '+testName+' : '+currentTest.error);
+					} else {
+						printLog('Successful '+testName);
+					};
+
+					endTest(testFunctions[i]);
+				};
+				
+				if( testFailure > 0 ){
+					printError('Test count='+testCount+' Failures='+testFailure);
+				} else {
+					printLog('Test count='+testCount);
+				};
+			};
+			
+			jQuery().ready(function() {
+				if( typeof(validate_doc_update) === 'function' ) {
+					main_init();
+				} else {
+					alert('In userDesignDoc document, you must rename the validate doc update function to "validate_doc_update" to perform this test.');
+				};
+			});
+			// -->
+		</script>
+	</body>
+</html>

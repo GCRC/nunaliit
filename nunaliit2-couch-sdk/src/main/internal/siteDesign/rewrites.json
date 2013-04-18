@@ -32,6 +32,10 @@
 		,"to" : "../../_design/atlas/tools/*"
 	}
 	,{
+		"from" : "_list/*"
+		,"to" : "../../_design/atlas/_list/*"
+	}
+	,{
 		"from" : "*"
 		,"to" : "*"
 	}

@@ -278,7 +278,7 @@ var DomStyler = $n2.Class({
 			 && file.thumbnail
 			 && data._attachments[file.thumbnail]
 			 ) {
-				linkDiv = $('<div class="n2Show_icon_wrapper"><img src="'+docUrl+'/'+file.thumbnail+'"/></div>');
+				linkDiv = $('<div class="n2Show_thumb_wrapper"><img src="'+docUrl+'/'+file.thumbnail+'"/></div>');
 
 			} else if( file.fileClass === 'image' ) {
 				linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_image"></div></div>');
@@ -290,14 +290,18 @@ var DomStyler = $n2.Class({
 			 && file.thumbnail
 			 && data._attachments[file.thumbnail]
 			 ) {
-				linkDiv = $('<div class="n2Show_icon_wrapper"><img src="'+docUrl+'/'+file.thumbnail+'"/></div>');
+				linkDiv = $('<div class="n2Show_thumb_wrapper"><img src="'+docUrl+'/'+file.thumbnail+'"/></div>');
 			
 			} else if( file.fileClass === 'video' ) {
 				linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_video"></div></div>');
+
 			} else if( file.thumbnail
 			 && data._attachments[file.thumbnail]
 			 ) {
-				linkDiv = $('<div class="n2Show_icon_wrapper"><img src="'+docUrl+'/'+file.thumbnail+'"/></div>');
+				linkDiv = $('<div class="n2Show_thumb_wrapper"><img src="'+docUrl+'/'+file.thumbnail+'"/></div>');
+				
+			} else {
+				linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_file"></div></div>');
 			};
 			
 			if( null != linkDiv ) {
@@ -442,6 +446,7 @@ var DomStyler = $n2.Class({
 					,{
 						type: 'findOnMap'
 						,fid: data._id
+						,srsName: 'EPSG:4326'
 						,x: x
 						,y: y
 					}
@@ -664,13 +669,11 @@ var Show = $n2.Class({
 			$elem.addClass('n2ShowDocBrief');
 		};
 		
-		this._displayDocumentBrief($elem, doc);
+		this._displayDocumentBrief($elem, doc, opt);
 	}
 	
 	,displayDocument: function($elem, opt, doc){
 		var _this = this;
-
-		var schema = null;
 
 		// Remember to update
 		if( doc && doc._id ) {
@@ -836,6 +839,7 @@ var Show = $n2.Class({
 		
 		var opt = $n2.extend({
 			onDisplayed: function($elem, doc, opt_){}
+			,schemaName: null
 		},opt_);
 
 		var _this = this;
@@ -844,7 +848,18 @@ var Show = $n2.Class({
 		// augment document prior to display
 		doc = this.options.preprocessDocument(doc);
 
-		if( doc.nunaliit_schema ) {
+		if( opt.schemaName ) {
+			_this.getSchemaRepository().getSchema({
+				name: opt.schemaName
+				,onSuccess: function(schema_) {
+					printBrief($elem,schema_);
+				}
+				,onError: function(){
+					displayError($elem);
+				}
+			});
+			
+		} else if( doc.nunaliit_schema ) {
 			_this.getSchemaRepository().getSchema({
 				name: doc.nunaliit_schema
 				,onSuccess: function(schema_) {
@@ -878,6 +893,7 @@ var Show = $n2.Class({
 		
 		var opt = $n2.extend({
 			onDisplayed: function($elem, doc, opt_){}
+			,schemaName: null
 		},opt_);
 		
 		var _this = this;
@@ -886,7 +902,18 @@ var Show = $n2.Class({
 		// augment document prior to display
 		doc = this.options.preprocessDocument(doc);
 		
-		if( doc.nunaliit_schema ) {
+		if( opt.schemaName ) {
+			_this.getSchemaRepository().getSchema({
+				name: opt.schemaName
+				,onSuccess: function(schema){
+					displaySchema($elem, schema);
+				}
+				,onError: function(){
+					displayError($elem);
+				}
+			});
+			
+		} else if( doc.nunaliit_schema ) {
 			_this.getSchemaRepository().getSchema({
 				name: doc.nunaliit_schema
 				,onSuccess: function(schema){

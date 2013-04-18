@@ -5,10 +5,13 @@ public class MailNotificationNull implements MailNotification {
 	@Override
 	public void uploadNotification(
 			String docId
-			,String title
-			,String description
 			,String attachmentName
 			) throws Exception {
+		// Do nothing
+	}
+
+	@Override
+	public void sendVetterDailyNotification(int count) throws Exception {
 		// Do nothing
 	}
 

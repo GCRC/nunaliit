@@ -43,5 +43,15 @@
 	  <servlet-name>exportServlet</servlet-name>
 	  <url-pattern>/export/*</url-pattern>
 	</servlet-mapping>
+
+	<servlet>
+	  <servlet-name>userServlet</servlet-name>
+	  <servlet-class>ca.carleton.gcrc.couch.user.UserServlet</servlet-class>
+	  <load-on-startup>2</load-on-startup>
+	</servlet>
+	<servlet-mapping>
+	  <servlet-name>userServlet</servlet-name>
+	  <url-pattern>/user/*</url-pattern>
+	</servlet-mapping>
 	
 </web-app>

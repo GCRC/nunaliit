@@ -36,11 +36,15 @@ import ca.carleton.gcrc.couch.onUpload.UploadWorker;
 import ca.carleton.gcrc.couch.onUpload.UploadWorkerSettings;
 import ca.carleton.gcrc.couch.onUpload.geojson.GeoJsonFileConverter;
 import ca.carleton.gcrc.couch.onUpload.gpx.GpxFileConverter;
+import ca.carleton.gcrc.couch.onUpload.mail.MailDeliveryImpl;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotification;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotificationImpl;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotificationNull;
+import ca.carleton.gcrc.couch.onUpload.mail.MailVetterDailyNotificationTask;
 import ca.carleton.gcrc.couch.onUpload.multimedia.MultimediaFileConverter;
 import ca.carleton.gcrc.couch.onUpload.pdf.PdfFileConverter;
+import ca.carleton.gcrc.couch.user.UserDesignDocumentImpl;
+import ca.carleton.gcrc.couch.user.UserServlet;
 import ca.carleton.gcrc.nunaliit2.couch.replication.ReplicationWorker;
 import ca.carleton.gcrc.olkit.multimedia.utils.MultimediaConfiguration;
 import ca.carleton.gcrc.upload.OnUploadedListenerSingleton;
@@ -72,6 +76,7 @@ public class ConfigServlet extends HttpServlet {
 	private ReplicationWorker replicationWorker = null;
 	private ConfigWorker configWorker = null;
 	private MailNotification mailNotification = null;
+	private MailVetterDailyNotificationTask vetterDailyTask = null;
 	
 	public ConfigServlet() {
 		
@@ -105,6 +110,14 @@ public class ConfigServlet extends HttpServlet {
 			initAtlasServerDesignDocument(servletContext);
 		} catch(ServletException e) {
 			logger.error("Error while initializing design document for atlas server",e);
+			throw e;
+		}
+		
+		// Upload design documents for _users database
+		try {
+			initUserDesignDocument(servletContext);
+		} catch(ServletException e) {
+			logger.error("Error while updating user design document",e);
 			throw e;
 		}
 		
@@ -164,11 +177,27 @@ public class ConfigServlet extends HttpServlet {
 			throw e;
 		}
 		
+		// Configure vetter daily notifications
+		try {
+			initVetterDailyNotifications(servletContext);
+		} catch(ServletException e) {
+			logger.error("Error while initializing daily vetter notifications",e);
+			throw e;
+		}
+		
 		// Configure export
 		try {
 			initExport(servletContext);
 		} catch(ServletException e) {
 			logger.error("Error while initializing export service",e);
+			throw e;
+		}
+		
+		// Configure user
+		try {
+			initUser(servletContext);
+		} catch(ServletException e) {
+			logger.error("Error while initializing user service",e);
 			throw e;
 		}
 		
@@ -452,6 +481,16 @@ public class ConfigServlet extends HttpServlet {
 		}
 	}
 
+	private void initUserDesignDocument(ServletContext servletContext) throws ServletException {
+		// Update document
+		try {
+			CouchDb userDb = couchClient.getDatabase("_users");
+			UserDesignDocumentImpl.updateDesignDocument(userDb);
+		} catch(Exception e) {
+			throw new ServletException("Error while updating user design document",e);
+		}
+	}
+
 	private void initAuthDesignDocument(ServletContext servletContext) throws ServletException {
 		// Find root directory for design document
 		File ddDir = null;
@@ -634,7 +673,10 @@ public class ConfigServlet extends HttpServlet {
 		// Create mail notification
 		MailNotificationImpl mail = null;
 		try {
-			mail = new MailNotificationImpl();
+			MailDeliveryImpl mailDelivery = new MailDeliveryImpl();
+			mailDelivery.setMailProperties(props);
+
+			mail = new MailNotificationImpl(atlasName, mailDelivery, couchDb);
 			mail.setMailProperties(props);
 			
 		} catch(Exception e) {
@@ -683,6 +725,19 @@ public class ConfigServlet extends HttpServlet {
 		}
 	}
 
+	private void initVetterDailyNotifications(ServletContext servletContext) throws ServletException {
+		
+		try {
+			vetterDailyTask = MailVetterDailyNotificationTask.scheduleTask(
+				couchDd
+				,mailNotification
+				);
+		} catch (Exception e) {
+			logger.error("Error starting daily vetter notifications",e);
+			throw new ServletException("Error starting daily vetter notifications",e);
+		}
+	}
+
 	private void initExport(ServletContext servletContext) throws ServletException {
 		
 		try {
@@ -695,6 +750,18 @@ public class ConfigServlet extends HttpServlet {
 		} catch(Exception e) {
 			logger.error("Error configuring export service",e);
 			throw new ServletException("Error configuring export service",e);
+		}
+	}
+
+	private void initUser(ServletContext servletContext) throws ServletException {
+		
+		try {
+			CouchDb userDb = couchClient.getDatabase("_users");
+			servletContext.setAttribute(UserServlet.ConfigAttributeName_UserDb, userDb);
+			servletContext.setAttribute(UserServlet.ConfigAttributeName_AtlasName, atlasName);
+		} catch(Exception e) {
+			logger.error("Error configuring user service",e);
+			throw new ServletException("Error configuring user service",e);
 		}
 	}
 
@@ -759,6 +826,14 @@ public class ConfigServlet extends HttpServlet {
 			replicationWorker.stopTimeoutMillis(5*1000); // 5 seconds
 		} catch (Exception e) {
 			logger.error("Unable to shutdown replication worker", e);
+		}
+
+		try {
+			if(null != vetterDailyTask){
+				vetterDailyTask.stop();
+			}
+		} catch (Exception e) {
+			logger.error("Unable to shutdown daily vetter notifications", e);
 		}
 	}
 }

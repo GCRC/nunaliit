@@ -77,13 +77,20 @@ var Session = $n2.Class({
 	
 	,lastSessionContext: null
 	
-	,initialize: function(server_, userDb_){
+	,initialize: function(server_, userDb_, sessionInfo_){
 	
 		this.server = server_;
 		this.userDb = userDb_;
 		
 		this.changedContextListeners = [];
 		this.lastSessionContext = null;
+		
+		if( sessionInfo_ ){
+    		if( sessionInfo_.ok ) {
+    			var context = sessionInfo_.userCtx;
+    			this.changeContext(context);
+    		};
+		};
 	}
 
 	,getUrl: function() {
@@ -125,7 +132,7 @@ var Session = $n2.Class({
 						if( _this.lastSessionContext
 						 && _this.lastSessionContext.name === userDoc.name ) {
 							_this.lastSessionContext.userDoc = userDoc;
-							_this.changeContext(_this.lastSessionContext);
+							_this.changeContext(_this.lastSessionContext); // call listeners
 						}
 					}
 				});
@@ -151,11 +158,6 @@ var Session = $n2.Class({
 	    	,dataType: 'json'
 	    	,success: function(res) {
 	    		if( res.ok ) {
-	    			// Retrieve user db, if available
-	    			if( res && res.info && res.info.authentication_db ) {
-	    				_this.userDb.setUserDbName(res.info.authentication_db);
-	    			};
-	    		
 	    			var context = res.userCtx;
 	    			_this.changeContext(context);
 	    			opts.onSuccess(context);
@@ -253,387 +255,6 @@ var Session = $n2.Class({
 });
 
 // =============================================
-// User DB
-// =============================================
-
-var UserDb = $n2.Class({
-	
-	server: null
-
-	,userDbName: null
-	
-	,initialize: function(server_){
-		this.server = server_;
-		this.userDbName = '_users';
-	}
-	
-	,getUrl: function() {
-		return this.server.getUserDbUrl();
-	}
-	
-	,getUserDbName: function(){
-		return this.userDbName;
-	}
-	
-	,setUserDbName: function(userDbName_){
-		this.userDbName = userDbName_;
-	}
-	
-	,createUser: function(opts_) {
-		var opts = $.extend({
-				name: null
-				,password: null
-				,onSuccess: function(docInfo) {}
-				,onError: $n2.reportErrorForced
-			}
-			,opts_
-		);
-
-		var userDbUrl = this.getUrl();
-
-		// Check that sha1 is installed
-		if( typeof(hex_sha1) !== 'function' ) {
-			opts.onError('SHA-1 must be installed');
-			return;
-		};
-
-		// Check that JSON is installed
-		if( !JSON || typeof(JSON.stringify) !== 'function' ) {
-			opts.onError('json.js is required to create database documents');
-			return;
-		};
-	
-	    this.server.getUniqueId({
-			onSuccess: onUuid
-	    });
-	    
-	    function onUuid(uuid) {
-			var id = 'org.couchdb.user:'+fixUserName(opts.name);
-			var salt = uuid;
-			var password_sha = hex_sha1(opts.password + salt);
-		
-			// Create user document
-			var doc = {};
-			for(var key in opts) {
-				if( key !== 'name' 
-				 && key !== 'password' 
-				 && key !== 'onSuccess' 
-				 && key !== 'onError' 
-				 ) {
-					doc[key] = opts[key];
-				};
-			};
-			doc.type = "user";
-			doc.name = fixUserName(opts.name);
-			doc.password_sha = password_sha;
-			doc.salt = salt;
-			if( !$n2.isArray(doc.roles) ) {
-				doc.roles = [];
-			};
-			
-			$.ajax({
-		    	url: userDbUrl + id
-	    		,type: 'put'
-	    		,async: true
-		    	,data: JSON.stringify(doc)
-		    	,contentType: 'application/json'
-	    		,dataType: 'json'
-	    		,success: opts.onSuccess
-	    		,error: function(XMLHttpRequest, textStatus, errorThrown) {
-					var errStr = httpJsonError(XMLHttpRequest, textStatus);
-		    		opts.onError('Error during user creation: '+errStr);
-		    	}
-			});
-		};
-	}
-	
-	,updateUser: function(options_) {
-		var opts = $.extend(true, {
-				user: null
-				,onSuccess: function(docInfo){}
-				,onError: function(errorMsg){ $n2.reportErrorForced(errorMsg); }
-			}
-			,options_
-		);
-
-		var userDbUrl = this.getUrl();
-		
-		if( !JSON || typeof(JSON.stringify) !== 'function' ) {
-			opts.onError('json.js is required to update user documents');
-			return;
-		};
-		
-		if( !opts.user || !opts.user._id || !opts.user._rev ) {
-			opts.onError('On update, a valid document with _id and _rev attributes must be supplied');
-			return;
-		};
-		
-		$.ajax({
-	    	url: userDbUrl + opts.user._id
-	    	,type: 'PUT'
-	    	,async: true
-	    	,data: JSON.stringify(opts.user)
-	    	,contentType: 'application/json'
-	    	,dataType: 'json'
-	    	,success: function(docInfo) {
-	    		opts.onSuccess(docInfo);
-	    	}
-	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
-				var errStr = httpJsonError(XMLHttpRequest, textStatus);
-	    		opts.onError('Error updating user: '+errStr);
-	    	}
-		});
-	}
-
-	,setUserPassword: function(options_) {
-		var opts = $.extend(true, {
-				user: null
-				,password: null
-				,onSuccess: function(docInfo){}
-				,onError: function(errorMsg){ $n2.reportErrorForced(errorMsg); }
-			}
-			,options_
-		);
-
-		var userDbUrl = this.getUrl();
-
-		// Check that sha1 is installed
-		if( typeof(hex_sha1) !== 'function' ) {
-			opts.onError('SHA-1 must be installed');
-			return;
-		};
-
-		if( !JSON || typeof(JSON.stringify) !== 'function' ) {
-			opts.onError('json.js is required to set user password');
-			return;
-		};
-		
-		if( !opts.user || !opts.user._id || !opts.user._rev ) {
-			opts.onError('On password change, a valid user document with _id and _rev attributes must be supplied');
-			return;
-		};
-		
-		if( !opts.password ) {
-			opts.onError('On password change, a valid password must be supplied');
-			return;
-		};
-		
-	    this.server.getUniqueId({
-			onSuccess: onUuid
-	    });
-	    
-	    function onUuid(uuid) {
-			var salt = uuid;
-			var password_sha = hex_sha1(opts.password + salt);
-		
-			// Update user document
-			opts.user.password_sha = password_sha;
-			opts.user.salt = salt;
-			
-			$.ajax({
-		    	url: userDbUrl + opts.user._id
-		    	,type: 'PUT'
-		    	,async: true
-		    	,data: JSON.stringify(opts.user)
-		    	,contentType: 'application/json'
-		    	,dataType: 'json'
-		    	,success: function(docInfo) {
-		    		opts.onSuccess(docInfo);
-		    	}
-		    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
-					var errStr = httpJsonError(XMLHttpRequest, textStatus);
-		    		opts.onError('Error changing user password: '+errStr);
-		    	}
-			});
-		};
-	}
-	
-	,deleteUser: function(opts_) {
-		var opts = $.extend({
-				user: null // a user document (do not need to specify id, rev)
-				,id: null
-				,rev: null
-				,name: null
-				,onSuccess: function(docInfo) {}
-				,onError: $n2.reportErrorForced
-			}
-			,opts_
-		);
-		var userDbUrl = this.getUrl();
-
-		var id = null;
-		var rev = null;
-		if( opts.user ) {
-			id = opts.user._id;
-			rev = opts.user._rev;
-		}
-		
-		if( !id && opts.id ) {
-			id = opts.id;
-		}
-		
-		if( !id && opts.name ) {
-			id = 'org.couchdb.user:'+fixUserName(opts.name);
-		}
-		if( !rev && opts.rev ) {
-			rev = opts.rev;
-		}
-		
-		$.ajax({
-	    	url: userDbUrl + id + '?rev=' + rev 
-    		,type: 'DELETE'
-    		,async: true
-    		,dataType: 'json'
-    		,success: opts.onSuccess
-    		,error: function(XMLHttpRequest, textStatus, errorThrown) {
-				var errStr = httpJsonError(XMLHttpRequest, textStatus);
-	    		opts.onError('Error during user deletion: '+errStr);
-	    	}
-		});
-	}
-	
-	,getUser: function(options_) {
-		var opts = $.extend(true, {
-				name: null
-				,onSuccess: function(user){}
-				,onError: function(errorMsg){ $n2.reportErrorForced(errorMsg); }
-			}
-			,options_
-		);
-		
-		var userDbUrl = this.getUrl();
-		
-		var id = opts._id;
-		if( !id ) {
-			var id = 'org.couchdb.user:'+fixUserName(opts.name);
-		}
-		
-	    $.ajax({
-	    	url: userDbUrl + id 
-	    	,type: 'get'
-	    	,async: true
-	    	,dataType: 'json'
-	    	,success: function(res) {
-	    		opts.onSuccess(res);
-	    	}
-	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
-				var errStr = httpJsonError(XMLHttpRequest, textStatus);
-	    		opts.onError('Error obtaining user for '+id+': '+errStr);
-	    	}
-	    });
-	}
-	
-	,getUsers: function(options_) {
-		var opts = $.extend(true, {
-				names: null
-				,onSuccess: function(users){}
-				,onError: function(errorMsg){ $n2.reportErrorForced(errorMsg); }
-			}
-			,options_
-		);
-		
-		var effectiveUrl = this.getUrl() + '_all_docs?include_docs=true';
-		
-		var userNames = [];
-		if( !opts.names ) {
-			opts.onError('Unable to query multiple users without the "names" parameter');
-			return;
-		}
-		for(var i=0,e=opts.names.length; i<e; ++i) {
-			userNames.push('org.couchdb.user:'+fixUserName(opts.names[i]));
-		};
-		
-		if( JSON && JSON.stringify ) {
-			// OK
-		} else {
-			opts.onError('json.js is required to query multiple users');
-			return;
-		};
-		
-		var data = {
-			keys: userNames // requires POST
-		};
-		
-	    $.ajax({
-	    	url: effectiveUrl
-	    	,type: 'POST'
-	    	,async: true
-	    	,data: JSON.stringify(data)
-	    	,contentType: 'application/json'
-	    	,dataType: 'json'
-	    	,success: function(res) {
-	    		if( res.rows ) {
-	    			var users = [];
-	    			for(var i=0,e=res.rows.length; i<e; ++i) {
-	    				var row = res.rows[i];
-	    				if( row && row.doc ) {
-	    					users.push(row.doc);
-	    				}
-	    			};
-	    			opts.onSuccess(users);
-	    		} else {
-		    		opts.onError('Unexpected response during query of multiple users');
-	    		};
-	    	}
-	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
-				var errStr = httpJsonError(XMLHttpRequest, textStatus);
-	    		opts.onError('Error during query of multiple users: '+errStr);
-	    	}
-	    });
-	}
-
-	,getAllUsers: function(opts_) {
-		var opts = $.extend({
-				onSuccess: function(users) {}
-				,onError: $n2.reportErrorForced
-			}
-			,opts_
-		);
-		
-		if( JSON && JSON.stringify ) {
-			// OK
-		} else {
-			opts.onError('json.js is required to query a view');
-			return;
-		};
-		
-		var viewUrl = this.getUrl() + '_all_docs';
-		
-		var data = {
-			startkey: JSON.stringify('org.couchdb.user:')
-			,endkey: JSON.stringify('org.couchdb.user=')
-			,include_docs: true
-		};
-		
-		$.ajax({
-	    	url: viewUrl
-	    	,type: 'get'
-	    	,async: true
-	    	,data: data
-	    	,dataType: 'json'
-	    	,success: function(queryResult) {
-	    		if( queryResult.rows ) {
-	    			var users = [];
-	    			for(var i=0,e=queryResult.rows.length; i<e; ++i) {
-	    				var row = queryResult.rows[i];
-	    				if( row && row.doc ) {
-	    					users.push(row.doc);
-	    				}
-	    			};
-	    			opts.onSuccess(users);
-	    		} else {
-		    		opts.onError('Unexpected response during query of all users');
-	    		};
-	    	}
-	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
-				var errStr = httpJsonError(XMLHttpRequest, textStatus);
-	    		opts.onError('Error during query of all users: '+errStr);
-	    	}
-		});
-	}
-});
-
-// =============================================
 // Design Document
 // =============================================
 
@@ -696,6 +317,9 @@ var designDoc = $n2.Class({
 			};
 		};
 		
+		var mustBePost = false;
+		var queryCount = 0;
+		var query = {};
 		var data = {};
 		for(var k in opts) {
 			if( k === 'viewName' 
@@ -709,14 +333,13 @@ var designDoc = $n2.Class({
 			 || opts[k] === null
 			 ) { 
 			 // Nothing to do
-			} else {
+			} else if ( k === 'keys' ) {
+				mustBePost = true;
 				data[k] = opts[k];
+			} else {
+				++queryCount;
+				query[k] = JSON.stringify( opts[k] );
 			};
-		};
-		
-		var mustBePost = false;
-		if( data.keys ) {
-			mustBePost = true;
 		};
 		
 		var dataType = 'json';
@@ -727,9 +350,16 @@ var designDoc = $n2.Class({
 		if( mustBePost ) {
 			var jsonData = JSON.stringify( data );
 			
+			if( queryCount > 0 ){
+				var params = $.param(query);
+				var effectiveUrl = viewUrl + '?' + params;
+			} else {
+				var effectiveUrl = viewUrl;
+			};
+			
 			$.ajax({
-		    	url: viewUrl
-		    	,type: 'post'
+		    	url: effectiveUrl
+		    	,type: 'POST'
 		    	,async: true
 		    	,data: jsonData
 		    	,contentType: 'application/json'
@@ -742,16 +372,12 @@ var designDoc = $n2.Class({
 			});
 			
 		} else {
-			for(var key in data) {
-				data[key] = JSON.stringify( data[key] );
-			};
-			
 			$.ajax({
 		    	url: viewUrl
 		    	,type: 'GET'
 		    	,async: true
 		    	,cache: false
-		    	,data: data
+		    	,data: query
 		    	,dataType: dataType
 		    	,success: processResponse
 		    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
@@ -1078,6 +704,10 @@ var Database = $n2.Class({
 		
 		this.callbacks = new DatabaseCallbacks();
 	}
+
+	,getUrl: function(){
+		return this.dbUrl;
+	}
 	
 	,getDesignDoc: function(opts_) {
 		var ddOpts = $.extend({
@@ -1180,6 +810,7 @@ var Database = $n2.Class({
 		
 		if( !opts.docId ) {
 			opts.onError('No docId set. Can not retrieve document information');
+			return;
 		};
 
 	    $.ajax({
@@ -1197,6 +828,58 @@ var Database = $n2.Class({
 	    			opts.onSuccess(res.rows[0].value.rev);
 	    		} else {
 					opts.onError('Malformed document revision for: '+opts.docId);
+	    		};
+	    	}
+	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+				var errStr = httpJsonError(XMLHttpRequest, textStatus);
+				opts.onError('Error obtaining document revision for '+opts.docId+': '+errStr);
+	    	}
+	    });
+	}
+	
+	,getDocumentRevisions: function(opts_) {
+		var opts = $.extend({
+				docIds: null
+				,onSuccess: function(info){}
+				,onError: function(msg){ $n2.reportErrorForced(msg); }
+			}
+			,opts_
+		);
+		
+		if( !opts.docIds ) {
+			opts.onError('No docIds set. Can not retrieve document revisions');
+			return;
+		};
+		if( !$n2.isArray(opts.docIds) ) {
+			opts.onError('docIds must ba an array. Can not retrieve document revisions');
+			return;
+		};
+
+		var data = {
+			keys: opts.docIds
+		};
+		
+	    $.ajax({
+	    	url: this.dbUrl + '_all_docs?include_docs=false'
+	    	,type: 'POST'
+	    	,async: true
+	    	,data: JSON.stringify(data)
+	    	,contentType: 'application/json'
+	    	,dataType: 'json'
+	    	,success: function(res) {
+	    		if( res.rows ) {
+	    			var info = {};
+    				for(var i=0,e=res.rows.length; i<e; ++i){
+    					var row = res.rows[i];
+    					if( row.id && row.value && row.value.rev ){
+    						if( !row.value.deleted ) {
+    							info[row.id] = row.value.rev;
+    						};
+    					};
+    				};
+	    			opts.onSuccess(info);
+	    		} else {
+					opts.onError('Malformed document revisions');
 	    		};
 	    	}
 	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
@@ -1708,6 +1391,373 @@ var Database = $n2.Class({
 	}
 });
 
+//=============================================
+// User DB
+//=============================================
+
+var UserDb = $n2.Class(Database,{
+	
+	initialize: function(server_,dbName_){
+		if( !dbName_ ){
+			dbName = '_users';
+		};
+		Database.prototype.initialize.call(this,{dbName:dbName_},server_);
+	}
+	
+	,createUser: function(opts_) {
+		var opts = $.extend({
+				name: null
+				,password: null
+				,onSuccess: function(docInfo) {}
+				,onError: $n2.reportErrorForced
+			}
+			,opts_
+		);
+
+		var userDbUrl = this.getUrl();
+
+		// Check that sha1 is installed
+		if( typeof(hex_sha1) !== 'function' ) {
+			opts.onError('SHA-1 must be installed');
+			return;
+		};
+
+		// Check that JSON is installed
+		if( !JSON || typeof(JSON.stringify) !== 'function' ) {
+			opts.onError('json.js is required to create database documents');
+			return;
+		};
+	
+	    this.server.getUniqueId({
+			onSuccess: onUuid
+	    });
+	    
+	    function onUuid(uuid) {
+			var id = 'org.couchdb.user:'+fixUserName(opts.name);
+			var salt = uuid;
+			var password_sha = hex_sha1(opts.password + salt);
+		
+			// Create user document
+			var doc = {};
+			for(var key in opts) {
+				if( key !== 'name' 
+				 && key !== 'password' 
+				 && key !== 'onSuccess' 
+				 && key !== 'onError' 
+				 ) {
+					doc[key] = opts[key];
+				};
+			};
+			doc.type = "user";
+			doc.name = fixUserName(opts.name);
+			doc.password_sha = password_sha;
+			doc.salt = salt;
+			if( !$n2.isArray(doc.roles) ) {
+				doc.roles = [];
+			};
+			
+			$.ajax({
+		    	url: userDbUrl + id
+	    		,type: 'put'
+	    		,async: true
+		    	,data: JSON.stringify(doc)
+		    	,contentType: 'application/json'
+	    		,dataType: 'json'
+	    		,success: opts.onSuccess
+	    		,error: function(XMLHttpRequest, textStatus, errorThrown) {
+					var errStr = httpJsonError(XMLHttpRequest, textStatus);
+		    		opts.onError('Error during user creation: '+errStr);
+		    	}
+			});
+		};
+	}
+	
+	,updateUser: function(options_) {
+		var opts = $.extend(true, {
+				user: null
+				,onSuccess: function(docInfo){}
+				,onError: function(errorMsg){ $n2.reportErrorForced(errorMsg); }
+			}
+			,options_
+		);
+
+		var userDbUrl = this.getUrl();
+		
+		if( !JSON || typeof(JSON.stringify) !== 'function' ) {
+			opts.onError('json.js is required to update user documents');
+			return;
+		};
+		
+		if( !opts.user || !opts.user._id || !opts.user._rev ) {
+			opts.onError('On update, a valid document with _id and _rev attributes must be supplied');
+			return;
+		};
+		
+		$.ajax({
+	    	url: userDbUrl + opts.user._id
+	    	,type: 'PUT'
+	    	,async: true
+	    	,data: JSON.stringify(opts.user)
+	    	,contentType: 'application/json'
+	    	,dataType: 'json'
+	    	,success: function(docInfo) {
+	    		opts.onSuccess(docInfo);
+	    	}
+	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+				var errStr = httpJsonError(XMLHttpRequest, textStatus);
+	    		opts.onError('Error updating user: '+errStr);
+	    	}
+		});
+	}
+
+	,setUserPassword: function(options_) {
+		var opts = $.extend(true, {
+				user: null
+				,password: null
+				,onSuccess: function(docInfo){}
+				,onError: function(errorMsg){ $n2.reportErrorForced(errorMsg); }
+			}
+			,options_
+		);
+
+		var userDbUrl = this.getUrl();
+
+		// Check that sha1 is installed
+		if( typeof(hex_sha1) !== 'function' ) {
+			opts.onError('SHA-1 must be installed');
+			return;
+		};
+
+		if( !JSON || typeof(JSON.stringify) !== 'function' ) {
+			opts.onError('json.js is required to set user password');
+			return;
+		};
+		
+		if( !opts.user || !opts.user._id || !opts.user._rev ) {
+			opts.onError('On password change, a valid user document with _id and _rev attributes must be supplied');
+			return;
+		};
+		
+		if( !opts.password ) {
+			opts.onError('On password change, a valid password must be supplied');
+			return;
+		};
+		
+	    this.server.getUniqueId({
+			onSuccess: onUuid
+	    });
+	    
+	    function onUuid(uuid) {
+			var salt = uuid;
+			var password_sha = hex_sha1(opts.password + salt);
+		
+			// Update user document
+			opts.user.password_sha = password_sha;
+			opts.user.salt = salt;
+			
+			$.ajax({
+		    	url: userDbUrl + opts.user._id
+		    	,type: 'PUT'
+		    	,async: true
+		    	,data: JSON.stringify(opts.user)
+		    	,contentType: 'application/json'
+		    	,dataType: 'json'
+		    	,success: function(docInfo) {
+		    		opts.onSuccess(docInfo);
+		    	}
+		    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+					var errStr = httpJsonError(XMLHttpRequest, textStatus);
+		    		opts.onError('Error changing user password: '+errStr);
+		    	}
+			});
+		};
+	}
+	
+	,deleteUser: function(opts_) {
+		var opts = $.extend({
+				user: null // a user document (do not need to specify id, rev)
+				,id: null
+				,rev: null
+				,name: null
+				,onSuccess: function(docInfo) {}
+				,onError: $n2.reportErrorForced
+			}
+			,opts_
+		);
+		var userDbUrl = this.getUrl();
+
+		var id = null;
+		var rev = null;
+		if( opts.user ) {
+			id = opts.user._id;
+			rev = opts.user._rev;
+		}
+		
+		if( !id && opts.id ) {
+			id = opts.id;
+		}
+		
+		if( !id && opts.name ) {
+			id = 'org.couchdb.user:'+fixUserName(opts.name);
+		}
+		if( !rev && opts.rev ) {
+			rev = opts.rev;
+		}
+		
+		$.ajax({
+	    	url: userDbUrl + id + '?rev=' + rev 
+ 		,type: 'DELETE'
+ 		,async: true
+ 		,dataType: 'json'
+ 		,success: opts.onSuccess
+ 		,error: function(XMLHttpRequest, textStatus, errorThrown) {
+				var errStr = httpJsonError(XMLHttpRequest, textStatus);
+	    		opts.onError('Error during user deletion: '+errStr);
+	    	}
+		});
+	}
+	
+	,getUser: function(options_) {
+		var opts = $.extend(true, {
+				name: null
+				,onSuccess: function(user){}
+				,onError: function(errorMsg){ $n2.reportErrorForced(errorMsg); }
+			}
+			,options_
+		);
+		
+		var userDbUrl = this.getUrl();
+		
+		var id = opts._id;
+		if( !id ) {
+			var id = 'org.couchdb.user:'+fixUserName(opts.name);
+		}
+		
+	    $.ajax({
+	    	url: userDbUrl + id 
+	    	,type: 'get'
+	    	,async: true
+	    	,dataType: 'json'
+	    	,success: function(res) {
+	    		opts.onSuccess(res);
+	    	}
+	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+				var errStr = httpJsonError(XMLHttpRequest, textStatus);
+	    		opts.onError('Error obtaining user for '+id+': '+errStr);
+	    	}
+	    });
+	}
+	
+	,getUsers: function(options_) {
+		var opts = $.extend(true, {
+				names: null
+				,onSuccess: function(users){}
+				,onError: function(errorMsg){ $n2.reportErrorForced(errorMsg); }
+			}
+			,options_
+		);
+		
+		var effectiveUrl = this.getUrl() + '_all_docs?include_docs=true';
+		
+		var userNames = [];
+		if( !opts.names ) {
+			opts.onError('Unable to query multiple users without the "names" parameter');
+			return;
+		}
+		for(var i=0,e=opts.names.length; i<e; ++i) {
+			userNames.push('org.couchdb.user:'+fixUserName(opts.names[i]));
+		};
+		
+		if( JSON && JSON.stringify ) {
+			// OK
+		} else {
+			opts.onError('json.js is required to query multiple users');
+			return;
+		};
+		
+		var data = {
+			keys: userNames // requires POST
+		};
+		
+	    $.ajax({
+	    	url: effectiveUrl
+	    	,type: 'POST'
+	    	,async: true
+	    	,data: JSON.stringify(data)
+	    	,contentType: 'application/json'
+	    	,dataType: 'json'
+	    	,success: function(res) {
+	    		if( res.rows ) {
+	    			var users = [];
+	    			for(var i=0,e=res.rows.length; i<e; ++i) {
+	    				var row = res.rows[i];
+	    				if( row && row.doc ) {
+	    					users.push(row.doc);
+	    				}
+	    			};
+	    			opts.onSuccess(users);
+	    		} else {
+		    		opts.onError('Unexpected response during query of multiple users');
+	    		};
+	    	}
+	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+				var errStr = httpJsonError(XMLHttpRequest, textStatus);
+	    		opts.onError('Error during query of multiple users: '+errStr);
+	    	}
+	    });
+	}
+
+	,getAllUsers: function(opts_) {
+		var opts = $.extend({
+				onSuccess: function(users) {}
+				,onError: $n2.reportErrorForced
+			}
+			,opts_
+		);
+		
+		if( JSON && JSON.stringify ) {
+			// OK
+		} else {
+			opts.onError('json.js is required to query a view');
+			return;
+		};
+		
+		var viewUrl = this.getUrl() + '_all_docs';
+		
+		var data = {
+			startkey: JSON.stringify('org.couchdb.user:')
+			,endkey: JSON.stringify('org.couchdb.user=')
+			,include_docs: true
+		};
+		
+		$.ajax({
+	    	url: viewUrl
+	    	,type: 'get'
+	    	,async: true
+	    	,data: data
+	    	,dataType: 'json'
+	    	,success: function(queryResult) {
+	    		if( queryResult.rows ) {
+	    			var users = [];
+	    			for(var i=0,e=queryResult.rows.length; i<e; ++i) {
+	    				var row = queryResult.rows[i];
+	    				if( row && row.doc ) {
+	    					users.push(row.doc);
+	    				}
+	    			};
+	    			opts.onSuccess(users);
+	    		} else {
+		    		opts.onError('Unexpected response during query of all users');
+	    		};
+	    	}
+	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+				var errStr = httpJsonError(XMLHttpRequest, textStatus);
+	    		opts.onError('Error during query of all users: '+errStr);
+	    	}
+		});
+	}
+});
+
 // =============================================
 // Server
 // =============================================
@@ -1719,6 +1769,8 @@ var Server = $n2.Class({
 	,isInitialized: false
 	
 	,uuids: null
+	
+	,userDbName: null
 	
 	,userDb: null
 	
@@ -1737,6 +1789,7 @@ var Server = $n2.Class({
 				,pathToAllDbs: null
 				,version: null
 				,skipSessionInitialization: false
+				,userDbName: null
 				,onSuccess: function(){}
 				,onError: function(err){}
 			}
@@ -1745,6 +1798,7 @@ var Server = $n2.Class({
 	
 		this.isInitialized = false;
 		this.uuids = [];
+		this.userDbName = null;
 		this.userDb = null;
 		this.session = null;
 		this.initListeners = initListeners_;
@@ -1772,7 +1826,8 @@ var Server = $n2.Class({
 			    			_this.options.version = res.version;
 			    			
 			    			// Now, refresh context
-			    			refreshContext();
+			    			getUserDbName();
+			    			
 			    		} else {
 			    			errorInitialize('Malformed database welcome message.');
 			    		};
@@ -1785,7 +1840,41 @@ var Server = $n2.Class({
 			};
 		};
 		
-		function refreshContext() {
+		function getUserDbName(){
+			if( null != _this.userDbName ){
+				// User Db Name provided, no need to look for it
+				refreshContext(null);
+				
+			} else {
+				var sessionUrl = _this.getSessionUrl();
+				
+				$.ajax({
+			    	url: sessionUrl
+			    	,type: 'get'
+			    	,async: true
+			    	,dataType: 'json'
+			    	,success: function(res) {
+			    		if( res.ok ) {
+			    			// Retrieve user db, if available
+			    			if( res && res.info && res.info.authentication_db ) {
+			    				_this.userDbName = res.info.authentication_db;
+			    			};
+
+			    			refreshContext(res);
+			    			
+			    		} else {
+			    			errorInitialize('Malformed session information message.');
+			    		};
+			    	}
+			    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+						var errStr = httpJsonError(XMLHttpRequest, textStatus);
+						errorInitialize('Error obtaining session information: '+errStr);
+			    	}
+				});
+			};
+		}
+		
+		function refreshContext(sessionInfo) {
 			if( _this.options.skipSessionInitialization ) {
 				finishInitialize();
 				
@@ -1843,15 +1932,6 @@ var Server = $n2.Class({
 		}
 		
 		return this.options.pathToActiveTasks; 
-	}
-	
-	,getUserDbUrl: function() {
-		var result = this.options.pathToUserDb;
-		if( !result ) {
-			var userDbName = this.getUserDb().getUserDbName();
-			result = this.options.pathToServer + userDbName + '/';
-		};
-		return result;
 	}
 	
 	,getSessionUrl: function() {
@@ -1933,15 +2013,15 @@ var Server = $n2.Class({
 
 	,getUserDb: function() {
 		if( !this.userDb ) {
-			this.userDb = new UserDb(this);
+			this.userDb = new UserDb(this,this.userDbName);
 		};
 		return this.userDb; 
 	}
 
-	,getSession: function() {
+	,getSession: function(sessionInfo) {
 		if( !this.session ) {
 			var userDb = this.getUserDb();
-			this.session = new Session(this,userDb);
+			this.session = new Session(this,userDb,sessionInfo);
 		};
 		
 		return this.session;

@@ -13,9 +13,11 @@ import java.util.Vector;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+
 import ca.carleton.gcrc.couch.client.CouchClient;
 import ca.carleton.gcrc.couch.client.CouchContext;
 import ca.carleton.gcrc.couch.client.CouchDb;
+import ca.carleton.gcrc.couch.client.CouchDbSecurityDocument;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 
 public class CouchDbImpl implements CouchDb {
@@ -199,6 +201,54 @@ public class CouchDbImpl implements CouchDb {
 	}
 
 	@Override
+	public Collection<JSONObject> getDocuments(List<String> docIds) throws Exception {
+		URL requestUrl = new URL(url, "_all_docs");
+		List<UrlParameter> parameters = new ArrayList<UrlParameter>(docIds.size()+1);
+
+		{
+			UrlParameter parameter = new UrlParameter("include_docs","true");
+			parameters.add(parameter);
+		}
+		
+		if( null != docIds && docIds.size() > 0 ){
+			JSONArray docIdsArray = new JSONArray(); 
+			for(String docId : docIds){
+				docIdsArray.put(docId);
+			}
+			
+			UrlParameter parameter = new UrlParameter("keys",docIdsArray.toString());
+			parameters.add(parameter);
+		}
+		
+		URL effectiveUrl = ConnectionUtils.computeUrlWithParameters(
+				requestUrl
+				,parameters
+				);
+
+		JSONObject response = ConnectionUtils.getJsonResource(getContext(), effectiveUrl);
+		
+		ConnectionUtils.captureReponseErrors(response, "Error while fetching all doc ids: ");
+		
+		List<JSONObject> result = new Vector<JSONObject>();
+		
+		try {
+			JSONArray rows = response.getJSONArray("rows");
+			for(int loop=0,e=rows.length(); loop<e; ++loop){
+				JSONObject row = rows.getJSONObject(loop);
+				JSONObject doc = row.optJSONObject("doc");
+				if( null != doc ) {
+					result.add(doc);
+				}
+			}
+			
+		} catch(Exception e) {
+			throw new Exception("Error while interpreting the _all_docs response",e);
+		}
+
+		return result;
+	}
+
+	@Override
 	public void updateDocument(JSONObject doc) throws Exception {
 		// Fetch document id
 		String docId = null;
@@ -361,6 +411,34 @@ public class CouchDbImpl implements CouchDb {
 		ConnectionUtils.captureReponseErrors(response, "Error while deleting attachment "+name+" from "+docId+": ");
 
 		return response;
+	}
+
+	@Override
+	public CouchDbSecurityDocument getSecurityDocument() throws Exception {
+		URL securityUrl = new URL(url, "_security");
+
+		JSONObject response = ConnectionUtils.getJsonResource(getContext(), securityUrl);
+		
+		ConnectionUtils.captureReponseErrors(response, "Error while fetching security document: ");
+
+		CouchDbSecurityDocumentImpl security = new CouchDbSecurityDocumentImpl(response);
+		
+		return security;
+	}
+
+	@Override
+	public void setSecurityDocument(CouchDbSecurityDocument security) throws Exception {
+		URL securityUrl = new URL(url, "_security");
+
+		JSONObject jsonSecurity = security.getJSON();
+		if( null == jsonSecurity ){
+			jsonSecurity = new JSONObject();
+		}
+		
+		// Put document
+		JSONObject response = ConnectionUtils.putJsonResource(getContext(), securityUrl, jsonSecurity);
+		
+		ConnectionUtils.captureReponseErrors(response, "Error while updating security document: ");
 	}
 
 }
