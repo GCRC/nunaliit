@@ -42,6 +42,9 @@ if( !$n2.l10n ) $n2.l10n = {};
 if( !$n2.l10n.strings ) $n2.l10n.strings = {};
 if( !$n2.l10n.strings['en'] ) $n2.l10n.strings['en'] = {};
 
+var reLangCountry = /^([a-z][a-z])-([a-zA-Z][a-zA-Z])$/;
+var reLang = /^([a-z][a-z])$/;
+
 // Short-cut
 var strings = $n2.l10n.strings;
 
@@ -84,16 +87,27 @@ function getLocale() {
 	
 	function createLocaleFromLanguage(lang) {
 		if( null == lang ) return null;
-	    var splits = lang.toLowerCase().split('-');
-	    if( 2 != splits.length ) {
-	    	$n2.log('Locale specified, but not in xx-YY format. Ignored.',lang);
-	    	return null;
-	    };
-	    return {
-			locale: lang
-			,lang: splits[0]
-			,country: splits[1]
+		
+		var mLangCountry = lang.match(reLangCountry);
+	    if( mLangCountry ) {
+	    	return {
+				locale: lang
+				,lang: mLangCountry[1]
+				,country: mLangCountry[2]
+			};
 		};
+
+		var mLang = lang.match(reLang);
+	    if( mLang ) {
+	    	return {
+				locale: lang
+				,lang: mLang[1]
+				,country: null
+			};
+		};
+
+		$n2.log('Locale specified, but not in xx-YY format. Ignored.',lang);
+    	return null;
 	};
 };
 
