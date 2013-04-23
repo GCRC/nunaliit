@@ -22,7 +22,7 @@
 	top: 0px;
 	left: 1px;
 	right: 1px;
-	height: 25px;
+/*	height: 25px;
 	
 	background-image: url("slideEditor/ui-bg_glass_75_dadada_1x400.png");
 	background-repeat: repeat-x;
@@ -34,26 +34,30 @@
 	
 	font-family: Helvetica,Arial,sans-serif;
 	font-weight: bold;
-	text-decoration: none;
+	text-decoration: none;*/
 }
 
 /* Span that holds back button in history bar */
 .n2se_history_back {
 	display: inline-block;
 	cursor: pointer;
+	padding: 10px 10px 10px 15px;
+	text-decoration: none;
+	margin-right: 3px;
+	border: 1px solid #c3c1c1;
+	background-color:#eee;
+	/*
 	border-radius: 4px 4px 4px 4px;
 	border: 1px solid #155678;
     color: #FFFFFF;
-    background-color: #444444; /* IE */
-}
-.n2se_history_back {
-    background-color: rgba(0, 0, 0, 0.4); /* non-IE */
+    background-color: #444444;*/ /* IE */
 }
 .n2se_history_back:hover {
-	background-color: #222222; /* IE */
-}
-.n2se_history_back:hover {
-	background-color: rgba(0, 0, 0, 0.6); /* non-IE */
+	background-color: #e9e6e6;
+	-moz-box-shadow: 1px 1px 2px #b8b8b8;
+	-webkit-box-shadow: 1px 1px 2px #b8b8b8;
+	box-shadow: 1px 1px 2px #b8b8b8;
+	border: 1px solid #9e9e9e;
 }
 .n2se_history_back > .n2se_btn {
 	float: left;
@@ -77,20 +81,20 @@
 .n2se_history_level {
 	display: inline-block;
 	cursor: pointer;
-	border-radius: 4px 4px 4px 4px;
-	border: 1px solid #155678;
-    color: #FFFFFF;
-    background-color: #444444; /* IE */
-    padding: 0px 2px 0px 2px;
-}
-.n2se_history_level {
-    background-color: rgba(0, 0, 0, 0.4); /* non-IE */
-}
-.n2se_history_level:hover {
-    background-color: #222222; /* IE */
+	display: inline-block;
+	cursor: pointer;
+	padding: 10px 10px 10px 15px;
+	text-decoration: none;
+	margin-right: 3px;
+	border: 1px solid #c3c1c1;
+	background-color:#eee;
 }
 .n2se_history_level:hover {
-    background-color: rgba(0, 0, 0, 0.6); /* non-IE */
+	background-color: #e9e6e6;
+	-moz-box-shadow: 1px 1px 2px #b8b8b8;
+	-webkit-box-shadow: 1px 1px 2px #b8b8b8;
+	box-shadow: 1px 1px 2px #b8b8b8;
+	border: 1px solid #9e9e9e; 
 }
 
 /* Span that comes before all levels */
@@ -109,7 +113,7 @@
 
 .n2se_main {
 	position: absolute;
-	top: 25px;
+	top: 50px;
 	left: 0px;
 	right: 0px;
 	bottom: 0px;
@@ -155,20 +159,26 @@
 
 /* Div that holds a key/value pair */
 .n2se_entry {
-	background-image: url("slideEditor/ui-bg_glass_95_fef1ec_1x400.png");
+/*	background-image: url("slideEditor/ui-bg_glass_95_fef1ec_1x400.png");
 	background-repeat: repeat-x;
 	background-attachment: scroll;
-	background-position: 50% 50%;
-	background-color: #fef1ec;
-	border: 1px solid #eee1dc;
-	border-radius: 4px 4px 4px 4px;
+	background-position: 50% 50%;*/
+	background-color: #eee;
+	border: 1px solid #ddd;
+	/*border-radius: 4px 4px 4px 4px;*/
+	padding:5px;
+	margin-bottom:5px;
 }
 .n2se_entry:hover {
-	background-image: url("slideEditor/ui-bg_glass_65_ffffff_1x400.png");
+/*	background-image: url("slideEditor/ui-bg_glass_65_ffffff_1x400.png");
 	background-repeat: repeat-x;
 	background-attachment: scroll;
-	background-position: 50% 50%;
+	background-position: 50% 50%;*/
 	background-color: #ffffff;
+	-moz-box-shadow: 1px 1px 2px #b8b8b8;
+	-webkit-box-shadow: 1px 1px 2px #b8b8b8;
+	box-shadow: 1px 1px 2px #b8b8b8;
+	border: 1px solid #9e9e9e;
 }
 
 /* Span used as a delete button */
@@ -181,7 +191,7 @@
 	background-color: #444444; /* IE */
 	border-radius: 9px 9px 9px 9px;
     padding: 18px 18px 0px 0px;
-    margin: 3px 3px 0px 3px;
+	margin: 8px 10px 0px 4px;
 }
 .n2se_entry_delete {
 	background-color: rgba(0, 0, 0, 0.4); /* non-IE */
@@ -234,8 +244,8 @@ input.n2se_entry_text {
 	background-color: #444444; /* IE */
 	border-radius: 9px 9px 9px 9px;
     padding: 18px 18px 0px 0px;
-    margin-top: 3px;
-    margin-right: 3px;
+	margin-top: 8px;
+	margin-right: 10px;
 }
 .n2se_entry_forward {
 	background-color: rgba(0, 0, 0, 0.4); /* non-IE */
@@ -249,15 +259,15 @@ input.n2se_entry_text {
 
 /* Text area used to view large string */
 .n2se_textarea {
-	width: 100%;
-	height: 100%;
+	width: 50%;
+	height: 50%;
 }
 
 /* div used to show add button */
 .n2se_addbar {
 	left: 1px;
 	right: 1px;
-	height: 25px;
+/*	height: 25px;
 	
 	background-image: url("slideEditor/ui-bg_glass_75_dadada_1x400.png");
 	background-repeat: repeat-x;
@@ -269,25 +279,26 @@ input.n2se_entry_text {
 	
 	font-family: Helvetica,Arial,sans-serif;
 	font-weight: bold;
-	text-decoration: none;
+	text-decoration: none;*/
 }
-
 .n2se_addbar_addButton {
 	display: inline-block;
 	cursor: pointer;
-	border-radius: 4px 4px 4px 4px;
-	border: 1px solid #155678;
-    color: #FFFFFF;
-    background-color: #444444; /* IE */
-}
-.n2se_addbar_addButton {
-    background-color: rgba(0, 0, 0, 0.4); /* non-IE */
-}
-.n2se_addbar_addButton:hover {
-	background-color: #222222; /* IE */
+	display: inline-block;
+	cursor: pointer;
+	padding: 10px 10px 10px 15px;
+	text-decoration: none;
+	margin-right: 3px;
+	border: 1px solid #c3c1c1;
+	background-color:#eee;
 }
 .n2se_addbar_addButton:hover {
-	background-color: rgba(0, 0, 0, 0.6); /* non-IE */
+	background-color: #e9e6e6;
+	-moz-box-shadow: 1px 1px 2px #b8b8b8;
+	-webkit-box-shadow: 1px 1px 2px #b8b8b8;
+	box-shadow: 1px 1px 2px #b8b8b8;
+	border: 1px solid #9e9e9e; 
+	
 }
 .n2se_addbar_addButton > .n2se_btn {
 	float: left;

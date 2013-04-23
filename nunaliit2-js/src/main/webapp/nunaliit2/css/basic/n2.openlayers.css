@@ -1,7 +1,7 @@
-
+/*
 .olControlLayerSwitcher {
 	left: 28px !important;
-	top:66px !important;
+	top: 90px !important;
 }
 
 .olControlLayerSwitcher .maximizeDiv, .olControlLayerSwitcher .minimizeDiv {
@@ -33,24 +33,24 @@
 }
 
 div.olControlZoom {
-	top: 25px !important;
+	top: 50px !important;
 	left: 20px !important;
 }
 
 div.olControlZoom a { 
 	background: rgba(0, 0, 0, 0.7) !important;
 }	
-
-.olControlEditingToolbar {
+*/
+/*.olControlEditingToolbar {
 	position: absolute;
 	right: 350px;
-}
+}*/
 
-.olControlEditingToolbar div {
+/*.olControlEditingToolbar div {
 	float: left;
 }
 
 div.olControlMousePosition {
 	right: 25px;
 	background: rgba(255, 255, 255, 0.7) !important;
-}
+}*/

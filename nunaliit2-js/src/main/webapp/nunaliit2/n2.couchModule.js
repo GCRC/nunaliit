@@ -443,6 +443,10 @@ var ModuleDisplay = $n2.Class({
 	
 	,loginPanelName: null
 	
+	,navigationName: null
+	
+	,navigationDoc: null
+	
 	,styles: null
 	
 	,initialize: function(opts_){
@@ -456,6 +460,8 @@ var ModuleDisplay = $n2.Class({
 			,filterPanelName: 'filters'
 			,searchPanelName: 'searchInput'
 			,loginPanelName: 'login'
+			,navigationName: 'navigation'
+			,navigationDoc: null
 			,styleMapFn: null
 			,onSuccess: function(){}
 			,onError: function(err){ $n2.reportErrorForced(errorMsg); }
@@ -480,6 +486,8 @@ var ModuleDisplay = $n2.Class({
 		this.filterPanelName = opts.filterPanelName;
 		this.searchPanelName = opts.searchPanelName;
 		this.loginPanelName = opts.loginPanelName;
+		this.navigationName = opts.navigationName;
+		this.navigationDoc = opts.navigationDoc;
 		
 		// dispatcher
 		var d = this._getDispatcher();
@@ -515,6 +523,22 @@ var ModuleDisplay = $n2.Class({
 			});
 		} else {
 			moduleDocumentLoaded(this.moduleDoc);
+		};
+		
+		/*
+		 * Get navigation document, if required.
+		 */
+		if( this.navigationDoc && $('#'+this.navigationName).length > 0 ){
+			$('#'+this.navigationName).empty();
+			atlasDb.getDocument({
+				docId: this.navigationDoc
+				,onSuccess: function(doc){
+					_this._navigationDocumentLoaded(doc);
+				}
+				,onError: function(err){ 
+					$n2.log('Error obtaining navigation document '+_this.navigationDoc,err); 
+				}
+			});
 		};
 		
 		function moduleDocumentLoaded(moduleDoc){
@@ -944,6 +968,44 @@ var ModuleDisplay = $n2.Class({
 			_this.mapControl.requests = config.requests;
 			
 			opts.onSuccess(_this);
+		};
+	}
+
+	,_navigationDocumentLoaded: function(doc){
+		if( doc && doc.nunaliit_navigation ){
+			var $nav = $('#'+this.navigationName);
+			$nav.empty();
+			
+			if( doc.nunaliit_navigation.items 
+			 && doc.nunaliit_navigation.items.length > 0 ) {
+				var $ul = $('<ul></ul>');
+				$nav.append($ul);
+				
+				insertItems($ul, doc.nunaliit_navigation.items);
+			};
+		};
+		
+		function insertItems($ul, items){
+			for(var i=0,e=items.length; i<e; ++i){
+				var item = items[i];
+				
+				var $li = $('<li></li>');
+				$ul.append($li);
+
+				if( item.title && item.href ) {
+					var $a = $('<a></a>');
+					$a.attr('href',item.href);
+					var title = $n2.couchL10n.getLocalizedString(item.title);
+					$a.text(title);
+					$li.append($a);
+				};
+				
+				if( item.items && item.items.length > 0 ){
+					var $innerUl = $('<ul></ul>');
+					$li.append($innerUl);
+					insertItems($innerUl, item.items);
+				};
+			};
 		};
 	}
 
