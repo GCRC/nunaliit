@@ -14,7 +14,9 @@
 /* General layout styles for Nunaliit */
 
 .nunaliit_header {
-	position:relative;
+	position:absolute;
+	top:0;
+	left:0;
 	width: 100%;
 	height:auto;
 	overflow:visible;
@@ -27,10 +29,13 @@
 	position:relative;
 }
 .nunaliit_content {
-	position:relative;
-	height:100%;
+	position:absolute;
+	width:100%;
 }
 .nunaliit_footer {
+	position:absolute;
+	bottom:0;
+	left:0;
 	height:auto;
 	width:100%;
 	overflow:visible;

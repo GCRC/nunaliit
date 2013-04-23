@@ -2,12 +2,11 @@
 
 /*START - Overide Styles for Jquery UI styling*/
 
-.ui-widget-content {
-/*	border:1px solid #AAA !important;
-*/	background-color: rgba(255,255,255,1) !important;
-}
+/*.ui-widget-content {
+	background-color: rgba(255,255,255,1) !important;
+}*/
 
-.ui-state-active, .ui-widget-content .ui-state-active, .ui-widget-header .ui-state-active {
+/*.ui-state-active, .ui-widget-content .ui-state-active, .ui-widget-header .ui-state-active {
 border: 1px solid #AAA;
 background: rgba(255,255,255,1) url() !important;
 }
@@ -81,7 +80,7 @@ background: rgba(255,255,255,1) url() !important;
 	-moz-transition: all 0.25s;
 	-webkit-transition: all 0.25s;
 	-o-transition: all 0.25s;
-}
+}*/
 
 /*END - Override Styles for Jquery UI styling*/
 
@@ -177,7 +176,7 @@ p {
 	margin:0 0 10px 0;
 }*/
 
-.value {
+/*.value {
 	margin:5px 0;
 }
 
@@ -195,7 +194,7 @@ p {
 
 span.label {
 	display:inline-block;
-}
+}*/
 
 /*#header, .nunaliit_header {
 	position: absolute;
@@ -761,8 +760,3 @@ table.mediaSelection td {
 	visibility: hidden;
 }
 
-.ui-accordion .ui-accordion-header .ui-icon.ui-icon-triangle-1-e { 
-	background-image: url('images/bullet_add.png');
-	background-position:-8px -7px; 
-	background-repeat:no-repeat;
-}

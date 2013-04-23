@@ -1,4 +1,4 @@
-
+/*
 .olControlLayerSwitcher {
 	left: 28px !important;
 	top: 90px !important;
@@ -40,17 +40,17 @@ div.olControlZoom {
 div.olControlZoom a { 
 	background: rgba(0, 0, 0, 0.7) !important;
 }	
-
+*/
 /*.olControlEditingToolbar {
 	position: absolute;
 	right: 350px;
 }*/
 
-.olControlEditingToolbar div {
+/*.olControlEditingToolbar div {
 	float: left;
 }
 
 div.olControlMousePosition {
 	right: 25px;
 	background: rgba(255, 255, 255, 0.7) !important;
-}
+}*/

@@ -414,7 +414,7 @@ h5 { font-size: 16px; }
 h6 { font-size: 15px; }
 a { text-decoration:none; }
 a:hover { text-decoration:underline; }
-p { padding-bottom:15px; line-height:1.4em}
+p { margin:0 0 10px 0; line-height:1.4em}
 i {font-style:italic}
 ul { list-style:none; margin-bottom:10px; }
 ul li { margin-bottom:5px; }
@@ -423,21 +423,4 @@ ul.bullets li { margin-bottom:0; }
 html.ie7 h1, html.ie8 h1 { font-weight: bold; }
 /*END - Font Styles*/
 
-/*START - Form Styles*/
-input[type="text"], textarea { 
-	border: 1px solid #cccccc; 
-	-webkit-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1); 
-	-moz-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1); 
-	box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1); 
-	color: rgba(0, 0, 0, 0.75); 
-	padding: 2.5%;
-	width:96%;
-}
 
-img, object, embed {
-max-width: 100%;
-}
-
-img {
-	height: auto;
-}

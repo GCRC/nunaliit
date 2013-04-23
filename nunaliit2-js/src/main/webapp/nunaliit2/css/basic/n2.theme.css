@@ -5,6 +5,16 @@
    ========================================================================== */
 
 
+/*START - Form Styles*/
+input[type="text"], input[type="password"], textarea { 
+	border: 1px solid #cccccc; 
+	-webkit-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1); 
+	-moz-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1); 
+	box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1); 
+	color: rgba(0, 0, 0, 0.75); 
+	padding: 8px;
+}
+
 
 /* Desktop screens */
 
@@ -13,13 +23,12 @@
 /* ============================== */
 
 /* Header Title */
-
 .nunaliit_atlas .nunaliit_header {
 	border-bottom: 1px solid  rgba(255,255,255,1);
 	background-color: #3a3a3a;
-	-moz-box-shadow: 0 2px 30px rgba(0,0,0,0.7);
-	-webkit-box-shadow: 0 2px rgba(0,0,0,0.7);
-	box-shadow: 0 2px 30px rgba(0,0,0,0.7);
+	-moz-box-shadow: 0 3px 8px rgba(0,0,0,0.5);
+	-webkit-box-shadow: 0 3px 8px rgba(0,0,0,0.5);
+	box-shadow: 0 3px 8px rgba(0,0,0,0.5);
 }
 .nunaliit_atlas .nunaliit_title {
 	font-size: 2.2em;
@@ -37,7 +46,10 @@
 	border-top: 1px solid #575757;
 	color:#fff;
 }
-.nunaliit_atlas .nunaliit_map_title p:nth-child(2) {
+.nunaliit_title_link {
+	color:#fff;
+}
+.nunaliit_atlas .nunaliit_title_link span:nth-child(2) {
 	font-style:italic;
 	padding:8px 0;
 	color:#eee;
@@ -111,6 +123,9 @@ color: #fff;
 
 
 /* Login */
+.nunaliit_atlas .nunaliit_login {
+	height:100%;
+}	
 .nunaliit_atlas .nunaliit_login_link_container {
 	position:relative;
 	border-left: 1px solid #838383;
@@ -130,7 +145,7 @@ color: #fff;
 	top: 50%;
 	line-height: 0;
 }
-.nunaliit_atlas .nunaliit_login:hover {
+.nunaliit_atlas .nunaliit_login_link_container:hover {
 	background-color:rgba(0,0,0,0.9);
 }
 .nunaliit_atlas .nunaliit_login_greeting {
@@ -139,9 +154,17 @@ color: #fff;
 	top: 50%;
 	line-height:0;
 }
+
+
 /* ============================== */
 /* ! CONTENT SECTION   */
 /* ============================== */
+/* Main Content Section */
+.nunaliit_atlas .nunaliit_content {
+	top:89px;
+	bottom:17px;
+}
+
 /* Search */
 .nunaliit_atlas .nunaliit_searchInput {
 	height: 43px;
@@ -155,6 +178,7 @@ color: #fff;
 	background-image: url('images/search.png');
 	background-position:center right;
 	background-repeat:no-repeat;
+	padding:13px 10px;
 }
 
 /* Side Bar */
@@ -164,12 +188,18 @@ color: #fff;
 	background-color:#fff;
 	border-left:1px solid #656565;
 }
+
 /* Map Interactions */
 .nunaliit_atlas .map_interaction input { 
-	background: rgba(0, 0, 0, 0.7);
+	background: #000;
 	color:#fff;
-	border:1px solid #656565;
+	padding:8px;
+	border:0;
+	opacity:0.7;
 }
+.nunaliit_atlas .map_interaction input:hover {
+	opacity:1;
+} 
 /* Table of Contents */
 .nunaliit_atlas .nunaliit_table_of_contents ul li a {
 	border-bottom: 1px solid rgba(0,0,0,0.3);
@@ -183,20 +213,26 @@ color: #fff;
 	font-size:1.1em;
 	font-weight:bold;
 }
+
 /* Buttons */
 .nunaliit_atlas .n2Display_buttons {
-	margin: 5px 0;
+	margin: 10px 0;
 	display: block;
 	height: 35px;
 }
-.nunaliit_atlas .nunaliit_form_link, .nunaliit_atlas .intro a, .nunaliit_atlas .map_interaction input {
-	padding: .5em .5em .5em .7em;
+.nunaliit_atlas .nunaliit_form_link, .nunaliit_atlas .intro a, .n2s_insertedExternalMediaLink {
+	padding: 10px 10px 10px 15px;
 	text-decoration: none;
 	margin-right: 3px;
 	border: 1px solid #c3c1c1;
 	background-color:#eee;
 	font-weight: normal;
 	color: #000;
+	display:-moz-inline-stack;
+	display:inline-block;
+	zoom:1;
+	*display:inline;
+	vertical-align:top;
 }
 .intro, .intro a {
 	text-align: left;
@@ -204,7 +240,7 @@ color: #fff;
 	margin: 0 0 10px 0;
 	display: inline-block;
 }
-.nunaliit_form_link:hover, .intro a:hover { 
+.nunaliit_form_link:hover, .intro a:hover, .n2s_insertedExternalMediaLink:hover { 
 	background-color: #e9e6e6;
 	-moz-box-shadow: 1px 1px 2px #b8b8b8;
 	-webkit-box-shadow: 1px 1px 2px #b8b8b8;
@@ -216,6 +252,162 @@ color: #fff;
 	font-weight: normal;
 	display: block;
 }
+
+
+/* Accordian Interaction - Overide Styles for Jquery UI styling*/
+.ui-widget-overlay {
+	background-image: none;
+	background-color:#000;
+	opacity: .45;
+	filter: Alpha(Opacity=45);
+}
+.ui-corner-all {
+	moz-border-radius:0;
+	border-radius:0;
+}
+.ui-state-default, .ui-widget-content .ui-state-default, .ui-widget-header .ui-state-default {
+	border: none;
+	background: none;
+	font-weight: normal;
+	color: #555555;
+}
+.ui-accordion .ui-accordion-content {
+	padding:0;
+	border-top: 0;
+	margin-top: 0;
+	position: relative;
+	top: 0;
+	margin-bottom: 0;
+	overflow:visible;
+	zoom: 1;
+}
+.ui-effects-wrapper {
+	padding:0;
+}
+.ui-accordion .ui-accordion-header a {
+	display: block;
+	padding: 18px 18px 18px 38px;
+	border:1px solid #cccccc;
+	margin: 10px 0;
+	font-weight: bold;
+	color: #000;
+}
+.ui-accordion .ui-accordion-header .ui-icon {
+	left: 12px;
+}
+.olkitSearchMod2_0, .olkitSearchMod2_1 {
+	background-color:#fff;
+	margin:10px 0;
+	padding:10px;
+	border: 1px solid #cccccc;
+	-moz-box-shadow: 1px 1px 3px #e1dfdf;
+	-webkit-box-shadow: 1px 1px 3px #e1dfdf;
+	box-shadow: 1px 1px 3px #e1dfdf;
+}
+.n2Show_thumb_wrapper {
+	margin-bottom:2px;
+	text-align:center;
+}
+.n2Show_thumb_wrapper img {
+	width:100%;
+	padding:0;
+	margin:0 auto 10px auto;
+	border:1px solid #ddd;
+}
+.n2Show_thumb_wrapper img:hover {
+	opacity:0.85;
+	cursor:pointer;
+}
+.ui-corner-bottom {
+	-moz-border-radius: 0;
+	border-radius: 0;
+	-webkit-border-bottom: 0;
+	border-bottom: 0;
+}
+.ui-widget {
+	font-family: inherit;
+	font-size: inherit;
+}
+.ui-widget-content {
+	background-color: rgba(255,255,255,1);
+	border: none;
+	background: #fff;
+}
+.ui-widget-content {
+	color:#000;
+}
+.ui-accordion .ui-accordion-header .ui-icon.ui-icon-triangle-1-e { 
+	background-image: url('images/bullet_add.png');
+	background-position:-8px -7px; 
+	background-repeat:no-repeat;
+}
+.n2s_insertedExternalMediaLink {
+	padding-right:25px;
+	background-image: url('images/download_file_bg.png');
+	background-repeat:no-repeat;
+	background-position:center right;
+	margin-bottom:10px;
+	margin-right:0;
+	display:block;
+}
+.n2s_insertedExternalMediaLink:hover {
+	text-decoration:none;
+}
+.n2s_externalMediaLinkName {
+	font-weight:normal;
+	font-style:italic;
+	font-size:0.8em;
+	color:#848484;
+	width:100px;
+	overflow:hidden;
+}
+.ui-widget-header {
+	border: none;
+	background: none;
+	color: #000;
+	font-weight: bold;
+}
+.ui-button-text {
+	border: 1px solid #c3c1c1;
+	background-color:#eee;
+	color: #000;
+	margin-right:3px;
+}
+.ui-button-text:hover {
+	background-color: #e9e6e6;
+	-moz-box-shadow: 1px 1px 2px #b8b8b8;
+	-webkit-box-shadow: 1px 1px 2px #b8b8b8;
+	box-shadow: 1px 1px 2px #b8b8b8;
+	border: 1px solid #9e9e9e;
+}
+.n2Auth_login_input, .n2Auth_input_field {
+	margin-bottom:5px;
+}
+.ui-state-active {
+	border:0;
+	background:transparent;
+}
+.editorButtons {
+	margin:10px 0;
+}
+/*END - Override Styles for Jquery UI styling*/
+
+
+/* Side Bar Labels */
+.value {
+	margin:5px 0;
+}
+.label {
+	margin:5px 0;
+	padding-right:8px;
+	width:30%;
+	font-size:1em/1.2em;	
+}
+span.label {
+	display:inline-block;
+}
+
+
 /* ============================== */
 /* ! FOOTER SECTION   */
 /* ============================== */
@@ -225,10 +417,9 @@ color: #fff;
 	color: white;
 	border-top: 1px solid rgba(255,255,255,1);
 	background-color: #3a3a3a;
-	-moz-box-shadow: 0 2px 30px rgba(0,0,0,0.7);
-	-webkit-box-shadow: 0 2px rgba(0,0,0,0.7);
-	box-shadow: 0 2px 30px rgba(0,0,0,0.7);
-	position: relative;
+	-moz-box-shadow: 0 3px 8px rgba(0,0,0,0.5);
+	-webkit-box-shadow: 0 3px 8px rgba(0,0,0,0.5);
+	box-shadow: 0 3px 8px rgba(0,0,0,0.5);
 	text-align:right;
 }
 .nunaliit_atlas .nunaliit_footer_content {
