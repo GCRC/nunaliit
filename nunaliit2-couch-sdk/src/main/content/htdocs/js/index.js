@@ -5,7 +5,7 @@ function main_init(config) {
 	// Get module name from URL parameters
 	var moduleName = $n2.url.getParamValue('module',null);
 	if( !moduleName ){
-		moduleName = 'generic.module:default';
+		moduleName = 'module.generic';
 	};
 	$n2.log('module: '+moduleName);
 
@@ -17,7 +17,7 @@ function main_init(config) {
 		,filterPanelName: 'filters'
 		,searchPanelName: 'searchInput'
 		,navigationName: 'navigation'
-		,navigationDoc: 'navigation.default'
+		,navigationDoc: 'navigation.generic'
 		,onSuccess: function(){
 			config.start();
 		}
