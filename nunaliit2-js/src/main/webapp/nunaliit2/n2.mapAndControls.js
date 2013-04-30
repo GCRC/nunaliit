@@ -1249,13 +1249,6 @@ var MapAndControls = $n2.Class({
 	}
 	
 	,_reloadFeature: function(filter,options_) {
-		var _this = this;
-		
-		// Figure out options
-		var reloadOptions = $.extend({
-			onReloaded: function(feature){}
-		},options_);
-
 		// Figure out which layers to reload
 		var reloadInfoLayers = [];
 		for(var loop=0; loop<this.infoLayers.length; ++loop) {
@@ -1278,17 +1271,32 @@ var MapAndControls = $n2.Class({
 		// Reload selected layers		
 		for(var loop=0; loop<reloadInfoLayers.length; ++loop) {
 			var layerInfo = reloadInfoLayers[loop];
-			var protocol = layerInfo.protocol;
 			
-			// Create filter
-			var olFilter = filter.getOpenLayerFilter();
-			
-	        protocol.read({
-    	        filter: olFilter
-    	        ,callback: createCallback(layerInfo, reloadOptions)
-    	        //,scope: this
-	        });
+			this._loadFeatureOnLayer(layerInfo, filter, options_);
 		};
+	}
+	
+	/*
+	 * Attempts to reload features given a specified layer and filter
+	 */
+	,_loadFeatureOnLayer: function(layerInfo,filter,options_){
+		var _this = this;
+		
+		// Figure out options
+		var reloadOptions = $n2.extend({
+			onReloaded: function(feature){}
+		},options_);
+
+		var protocol = layerInfo.protocol;
+		
+		// Create filter
+		var olFilter = filter.getOpenLayerFilter();
+		
+        protocol.read({
+	        filter: olFilter
+	        ,callback: createCallback(layerInfo, reloadOptions)
+	        //,scope: this
+        });
 		
 		function createCallback(layerInfo, reloadOptions) {
 			var cb = function(resp) {
@@ -3766,8 +3774,24 @@ var MapAndControls = $n2.Class({
 				};
 			};
 			
-			var filter = $n2.olFilter.fromFid(m.docId);
-			this._reloadFeature(filter);
+			// Compute map of layer ids
+			var layerIdMap = {};
+			if( doc && doc.nunaliit_layers ){
+				for(var i=0,e=doc.nunaliit_layers.length; i<e; ++i){
+					layerIdMap[ doc.nunaliit_layers[i] ] = true;
+				};
+			};
+			
+			// Check added to layer
+			for(var i=0,e=this.infoLayers.length; i<e; ++i) {
+				var infoLayer = this.infoLayers[i];
+				var layerId = infoLayer.id;
+				if( layerIdMap[layerId] ){
+					// This feature belongs on this layer. Load it.
+					var filter = $n2.olFilter.fromFid(m.docId);
+					this._loadFeatureOnLayer(infoLayer, filter);
+				};
+			};
 			
 		} else if( 'featureUpdated' === type ) {
 			var doc = m.doc;
@@ -3781,8 +3805,41 @@ var MapAndControls = $n2.Class({
 				};
 			};
 			
-			var filter = $n2.olFilter.fromFid(m.docId);
-			this._reloadFeature(filter);
+			// Compute map of layer ids
+			var layerIdMap = {};
+			if( doc && doc.nunaliit_layers ){
+				for(var i=0,e=doc.nunaliit_layers.length; i<e; ++i){
+					layerIdMap[ doc.nunaliit_layers[i] ] = true;
+				};
+			};
+			
+			// Check removed from layer
+			for(var i=0,e=this.infoLayers.length; i<e; ++i) {
+				var infoLayer = this.infoLayers[i];
+				var layerId = infoLayer.id;
+				if( !layerIdMap[layerId] ){
+					// This feature does not belong on this layer. If
+					// this feature id is found on the layer, then remove
+					// it (it was removed from layer)
+					var feature = this.getLayerFeatureFromFid(infoLayer.olLayer,doc._id);
+					if( feature ) {
+						infoLayer.olLayer.destroyFeatures(feature);
+					};
+				};
+			};
+			
+			// Check updated on layer
+			for(var i=0,e=this.infoLayers.length; i<e; ++i) {
+				var infoLayer = this.infoLayers[i];
+				var layerId = infoLayer.id;
+				if( layerIdMap[layerId] ){
+					// This feature belongs on this layer. Update it.
+					// This takes care if geometry was modified or if feature
+					// was recently added to the layer.
+					var filter = $n2.olFilter.fromFid(m.docId);
+					this._loadFeatureOnLayer(infoLayer, filter);
+				};
+			};
 			
 		} else if( 'addLayerToMap' === type ) {
 			this._handleAddLayerToMap(m);

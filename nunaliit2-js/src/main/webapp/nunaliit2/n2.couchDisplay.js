@@ -257,6 +257,7 @@ $n2.couchDisplay = $n2.Class({
 				,geom: true
 				,edit: true
 				,'delete': true
+				,addLayer: true
 			});
 			
 			var relatedInfoId = $n2.getUniqueId();
@@ -325,6 +326,7 @@ $n2.couchDisplay = $n2.Class({
 			,geom: false
 			,edit: false
 			,'delete': false
+			,addLayer: false
 		},opt_);
 
 		var dispatcher = this._getDispatcher();
@@ -340,6 +342,7 @@ $n2.couchDisplay = $n2.Class({
 		if( opt.related ) optionClass += '_related';
 		if( opt.geom ) optionClass += '_geom';
 		if( opt['delete'] ) optionClass += '_delete';
+		if( opt.addLayer ) optionClass += '_addLayer';
 		$buttons.addClass(optionClass);
 
 		var opts = {
@@ -349,6 +352,7 @@ $n2.couchDisplay = $n2.Class({
 			,edit: opt.edit
 			,related: opt.related
 			,geom: opt.geom
+			,addLayer: opt.addLayer
 		};
 		opts['delete'] = opt['delete'];
 		this._displayButtons($buttons, opts);
@@ -363,6 +367,7 @@ $n2.couchDisplay = $n2.Class({
 		var fRelated = false;
 		var fGeom = false;
 		var fDelete = false;
+		var fAddLayer = false;
 		var classAttr = $elem.attr('class');
 		var classes = classAttr.split(' ');
 		for(var i=0,e=classes.length; i<e; ++i){
@@ -379,6 +384,7 @@ $n2.couchDisplay = $n2.Class({
 					else if( 'edit' === o ){ fEdit = true; }
 					else if( 'related' === o ){ fRelated = true; }
 					else if( 'geom' === o ){ fGeom = true; }
+					else if( 'addLayer' === o ){ fAddLayer = true; }
 					else if( 'delete' === o ){ fDelete = true; };
 				};
 			};
@@ -423,6 +429,7 @@ $n2.couchDisplay = $n2.Class({
 				,edit: fEdit
 				,related: fRelated
 				,geom: fGeom
+				,addLayer: fAddLayer
 			};
 			opts['delete'] = fDelete;
 			$elem.empty();
@@ -554,6 +561,51 @@ $n2.couchDisplay = $n2.Class({
 				});
 				addClasses($findGeomButton, findGeomText);
 			};
+		};
+
+		// Show 'Add Layer' button
+		if( opt.addLayer
+		 && data
+		 && data.nunaliit_layer_definition
+		 && dispatcher
+		 && dispatcher.isEventTypeRegistered('addLayerToMap')
+		 ) {
+ 			if( firstButton ) {
+ 				firstButton = false;
+ 			} else {
+ 				$buttons.append( $('<span>&nbsp;</span>') );
+ 			};
+			var $addLayerButton = $('<a href="#"></a>');
+			var btnText = _loc('Add Layer');
+			$addLayerButton.text( btnText );
+			$buttons.append($addLayerButton);
+
+			var layerDefinition = data.nunaliit_layer_definition;
+			var layer = {
+				id: layerDefinition.id
+				,name: layerDefinition.name
+				,couchDb: {
+					viewName: 'geom'
+					,layerName: layerDefinition.id
+					,db: this.options.db
+					,designDoc: this.options.designDoc
+				}
+			};
+			
+			$addLayerButton.click(function(){
+				_this._dispatch({
+					type: 'addLayerToMap'
+					,layer: layer
+					,options: {
+						setExtent: {
+							bounds: layerDefinition.bbox
+							,crs: 'EPSG:4326'
+						}
+					}
+				});
+				return false;
+			});
+			addClasses($addLayerButton, btnText);
 		};
 
 		/**

@@ -62,12 +62,4 @@
 	{{{:html}}}
 {{/nunaliit_source}}
 
-{{#nunaliit_layer_definition}}
-	<div>
-		<div class="label"></div>
-		<div class="value"><a class="n2s_clickAddLayerFromDefinition n2_localize" href="#">Add Layer</a></div>
-		<div class="end"></div>
-	</div>
-{{/nunaliit_layer_definition}}
-
 </div></div>
