@@ -18,11 +18,11 @@
 
 /* Div that holds history */
 .n2se_history {
-	position: absolute;
+/*	position: absolute;
 	top: 0px;
 	left: 1px;
 	right: 1px;
-/*	height: 25px;
+	height: 25px;
 	
 	background-image: url("slideEditor/ui-bg_glass_75_dadada_1x400.png");
 	background-repeat: repeat-x;
@@ -35,6 +35,7 @@
 	font-family: Helvetica,Arial,sans-serif;
 	font-weight: bold;
 	text-decoration: none;*/
+	margin-bottom:10px;
 }
 
 /* Span that holds back button in history bar */
@@ -112,11 +113,11 @@
 }
 
 .n2se_main {
-	position: absolute;
+/*	position: absolute;
 	top: 50px;
 	left: 0px;
 	right: 0px;
-	bottom: 0px;
+	bottom: 0px;*/
 }
 
 /* Disable back button located on the left
@@ -139,18 +140,20 @@
 }
 
 .n2se_display {
-	position: absolute;
-/* Disable back button located on left	
+/* 	position: absolute;*/
+/* 	Disable back button located on left	
 	left: 10px;
-*/
+
 	left: 0px;
 	right: 0px;
+*/	
 /*	jQueryUi effect() modifies top.
 	top: 0px;
 	bottom: 0px;
-*/
+
 	height: 100%;
 	overflow: auto;
+	*/
 }
 
 /* Div that holds all key/value pair (n2se_entry) */
@@ -259,8 +262,8 @@ input.n2se_entry_text {
 
 /* Text area used to view large string */
 .n2se_textarea {
-	width: 50%;
-	height: 50%;
+	width: 95%;
+	height: 250px;
 }
 
 /* div used to show add button */

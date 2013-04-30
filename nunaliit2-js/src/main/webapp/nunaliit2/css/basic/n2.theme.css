@@ -348,6 +348,15 @@ color: #fff;
 	background-position:-8px -7px; 
 	background-repeat:no-repeat;
 }
+.ui-accordion .ui-accordion-header.ui-state-active .ui-icon.ui-icon-triangle-1-s { 
+	background-image: url('images/bullet_minus.png');
+	background-position:-8px -7px; 
+	background-repeat:no-repeat;
+}
+.n2CouchEditor_container .ui-accordion-content {
+padding: 0 0 0 0;
+height: auto !important;
+}
 .n2s_insertedExternalMediaLink {
 	padding-right:25px;
 	background-image: url('images/download_file_bg.png');
