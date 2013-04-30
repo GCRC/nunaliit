@@ -458,6 +458,7 @@ var MapAndControls = $n2.Class({
 	,attributeFormManager: null
 	,currentPopup: null
 	,dhtmlSoundDivId: null
+	,initialZoomBounds: null
 
     // HOVER and CLICK
 	,selectFeatureControl: null
@@ -698,6 +699,7 @@ var MapAndControls = $n2.Class({
 	    this._registerDispatch('getLayerIdentifiers');
 	    this._registerDispatch('mapRedrawLayer');
 	    this._registerDispatch('mapSetExtent');
+	    this._registerDispatch('mapResetExtent');
 		
 		// Layers
 		this.defaultLayerInfo = { // feature layer access details.
@@ -961,14 +963,14 @@ var MapAndControls = $n2.Class({
 		var userCoordProjection = new OpenLayers.Projection(this.options.mapCoordinateSpecifications.srsName);
 
 		// Convert initial bounds to the map's projection
-		var initialZoomBounds = new OpenLayers.Bounds(
+		this.initialZoomBounds = new OpenLayers.Bounds(
 			this.options.mapCoordinateSpecifications.initialBounds[0]
 			,this.options.mapCoordinateSpecifications.initialBounds[1]
 			,this.options.mapCoordinateSpecifications.initialBounds[2]
 			,this.options.mapCoordinateSpecifications.initialBounds[3]
 		);
 		if( userCoordProjection.getCode() != mapProjection.getCode() ) {
-			initialZoomBounds.transform(userCoordProjection, mapProjection);
+			this.initialZoomBounds.transform(userCoordProjection, mapProjection);
 		};
 		
 		// Convert max extent from map coord specification space to map display projection
@@ -1019,7 +1021,7 @@ var MapAndControls = $n2.Class({
 		
 		// Fix zoomToMaxExtent to zoom to initial extent
 		this.map.zoomToMaxExtent = function(){
-	        this.zoomToExtent(initialZoomBounds);
+	        this.zoomToExtent(this.initialZoomBounds);
 		};
 
 		// Create control before layers start loading
@@ -1122,7 +1124,7 @@ var MapAndControls = $n2.Class({
 		};
 
 		// Zoom to initial bounds
-		this.map.zoomToExtent(initialZoomBounds);
+		this.map.zoomToExtent(this.initialZoomBounds);
 
 		// Draw controls
 		this.navigationControls = {
@@ -3588,6 +3590,15 @@ var MapAndControls = $n2.Class({
 		this.map.setCenter(ll, z, false, false);
 	}
 	
+	/*
+	 * Returns map to initial bounds/extent
+	 */
+	,resetExtent: function(){
+		if( this.initialZoomBounds ){
+			this.map.zoomToExtent(this.initialZoomBounds);
+		};
+	}
+	
 	,setNewExtent: function(bounds, srsName) { // @param bounds OpenLayers Bounds values in array (in map projection coordinates)
 
 		var maxExt = new OpenLayers.Bounds(bounds[0], bounds[1], bounds[2], bounds[3]);
@@ -3961,6 +3972,9 @@ var MapAndControls = $n2.Class({
 			var extent = m.extent;
 			var srsName = m.srsName;
 			this.setNewExtent(extent, srsName);
+			
+		} else if( 'mapResetExtent' === type ) {
+			this.resetExtent();
 		};
 	}
 	

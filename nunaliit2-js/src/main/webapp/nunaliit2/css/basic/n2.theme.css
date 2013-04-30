@@ -36,23 +36,31 @@ input[type="text"], input[type="password"], textarea {
 	text-shadow: black 1px 1px 1px;
 	color:#fff;
 }
+.nunaliit_atlas .nunaliit_title_link {
+	color:#fff;
+}
 .nunaliit_atlas .nunaliit_title_link:hover {
 	text-decoration:none;
 }
-/* Sub-Header Title */
 
+/* Sub-Header Title */
 .nunaliit_atlas .nunaliit_map_title {
 	background-color: #444444;
 	border-top: 1px solid #575757;
 	color:#fff;
 }
-.nunaliit_title_link {
+
+.nunaliit_atlas .nunaliit_map_title_item {
+	display: inline-block;
+	padding: 8px 20px;
+}
+
+.nunaliit_atlas .nunaliit_map_title_link {
 	color:#fff;
 }
-.nunaliit_atlas .nunaliit_title_link span:nth-child(2) {
-	font-style:italic;
-	padding:8px 0;
-	color:#eee;
+
+.nunaliit_atlas .nunaliit_map_title_link:hover {
+	text-decoration:none;
 }
 
 /* Header Menu */

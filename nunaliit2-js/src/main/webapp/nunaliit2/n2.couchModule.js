@@ -566,12 +566,13 @@ var ModuleDisplay = $n2.Class({
 				//$('head > title').text('' + moduleInfo.title);
 				if( title ) {
 					document.title = title; // needed for IE 6
-					$('#'+opts.titleName).text(title);
+					_this._installTitle($('#'+opts.titleName), title);
 				};
 			} else {
-				//$('head > title').text('Nunaliit Atlas');
-				document.title = 'Nunaliit Atlas'; // needed for IE 6
-				$('#'+opts.titleName).text('Nunaliit Atlas');
+				var title = _loc('Nunaliit Atlas');
+				//$('head > title').text(title);
+				document.title = title; // needed for IE 6
+				_this._installTitle($('#'+opts.titleName), title);
 			};
 			
 			// Display Logic 
@@ -1032,6 +1033,27 @@ var ModuleDisplay = $n2.Class({
 		if( bounds[3] < -90 || bounds[3] > 90 ) return false;
 		
 		return true;
+	}
+	
+	,_installTitle: function($elem, text){
+		var _this = this;
+		
+		var $a = $('<a class="nunaliit_map_title_link" href="#"></a>');
+		$a.text(text);
+		
+		$elem.empty().append($a);
+		
+		$a.click(function(e){
+			var d = _this._getDispatcher();
+			if( d ){
+				d.send(DH,{
+					type: 'mapResetExtent'
+				});
+			};
+			
+			// Follow link
+			return true;
+		});
 	}
 });
 
