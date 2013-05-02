@@ -45,6 +45,7 @@ var CreateRelatedDocProcess = $n2.Class({
 				db: null
 				,schemaRepository: null
 				,uploadService: null
+				,showService: null
 			}
 			,options_
 		);
@@ -152,6 +153,7 @@ var CreateRelatedDocProcess = $n2.Class({
 			new Editor({
 				db: _this.options.db
 				,uploadService: _this.options.uploadService
+				,showService: _this.options.showService
 				,obj: obj
 				,schema: opt.schema 
 				,onSuccess: opt.onSuccess
@@ -249,6 +251,7 @@ var Editor = $n2.Class({
 			{
 				db: null
 				,uploadService: null
+				,showService: null
 				,obj: null
 				,schema: null
 				,onSuccess: function(docId){}
@@ -270,6 +273,10 @@ var Editor = $n2.Class({
 		var $form = $('<div></div>');
 		$dialog.append($form);
 		schema.form(obj, $form);
+		
+		if( this.options.showService ){
+			this.options.showService.fixElementAndChildren($form, {}, obj);
+		};
 
 		var $fileElement = $('<div></div>');
 		$dialog.append($fileElement);

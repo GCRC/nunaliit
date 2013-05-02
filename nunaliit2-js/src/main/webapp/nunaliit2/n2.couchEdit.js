@@ -1442,6 +1442,8 @@ var SchemaEditor = $n2.Class({
 	
 	,postProcessFns: null
 
+	,serviceDirectory: null
+
 	,initialize: function(options_) {
 		var options = $.extend({
 			doc: null
@@ -1450,6 +1452,7 @@ var SchemaEditor = $n2.Class({
 			,onChanged: function(){}
 			,funcMap: null
 			,postProcessFns: null
+			,serviceDirectory: null
 		},options_);
 		
 		var _this = this;
@@ -1459,6 +1462,7 @@ var SchemaEditor = $n2.Class({
 		this.$div = options.$div;
 		this.onChanged = options.onChanged;
 		this.postProcessFns = options.postProcessFns;
+		this.serviceDirectory = options.serviceDirectory;
 		
 		this.formEditor = this.schema.form(
 			this.doc
@@ -1470,11 +1474,22 @@ var SchemaEditor = $n2.Class({
 			,options.funcMap
 		);
 		
+		var showService = this._getShowService();
+		if( showService ){
+			showService.fixElementAndChildren(this.$div, {}, this.doc);
+		};
+		
 		this._performPostProcess();
 	}
 
 	,refresh: function(){
 		this.formEditor.refresh();
+		
+		var showService = this._getShowService();
+		if( showService ){
+			showService.fixElementAndChildren(this.$div, {}, this.doc);
+		};
+		
 		this._performPostProcess();
 	}
 
@@ -1486,6 +1501,15 @@ var SchemaEditor = $n2.Class({
 				fn(this.doc, this.$div);
 			};
 		};
+	}
+
+	,_getShowService: function(){
+		if( this.serviceDirectory 
+		 && this.serviceDirectory.showService ) {
+			return this.serviceDirectory.showService;
+		};
+		
+		return null;
 	}
 });
 
@@ -1564,6 +1588,7 @@ var SchemaEditorService = $n2.Class({
 			,onChanged: opts.onChanged
 			,funcMap: this.funcMap
 			,postProcessFns: this.postProcessFunctions
+			,serviceDirectory: this.serviceDirectory
 		});
 		
 		return editor;

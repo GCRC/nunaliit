@@ -146,6 +146,7 @@ $n2.couchDisplay = $n2.Class({
 			db: this.options.db
 			,schemaRepository: this._getSchemaRepository()
 			,uploadService: this.options.uploadService
+			,showService: this._getShowService()
 		});
 	}
 
@@ -519,7 +520,7 @@ $n2.couchDisplay = $n2.Class({
  				$buttons.append( $('<span>&nbsp;</span>') );
  			};
 			var $addRelatedButton = $('<a href="#"></a>');
-			var addRelatedText = _loc('Add Related');
+			var addRelatedText = _loc('Add Related Item');
 			$addRelatedButton.text( addRelatedText );
 			$buttons.append($addRelatedButton);
 			$addRelatedButton.click(function(){
