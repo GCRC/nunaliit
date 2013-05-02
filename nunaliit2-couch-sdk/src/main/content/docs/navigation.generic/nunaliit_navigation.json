@@ -1,5 +1,10 @@
 {
 	"nunaliit_type":"navigation"
+	,"title":{
+		"nunaliit_type":"localized"
+		,"en":"Atlas"
+		,"fr":"L'Atlas"
+	}
 	,"items":[
 		{
 			"title": {

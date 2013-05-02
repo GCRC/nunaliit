@@ -44,22 +44,22 @@ input[type="text"], input[type="password"], textarea {
 }
 
 /* Sub-Header Title */
-.nunaliit_atlas .nunaliit_map_title {
+.nunaliit_atlas .nunaliit_module_title {
 	background-color: #444444;
 	border-top: 1px solid #575757;
 	color:#fff;
 }
 
-.nunaliit_atlas .nunaliit_map_title_item {
+.nunaliit_atlas .nunaliit_module_title_item {
 	display: inline-block;
 	padding: 8px 20px;
 }
 
-.nunaliit_atlas .nunaliit_map_title_link {
+.nunaliit_atlas .nunaliit_module_title_link {
 	color:#fff;
 }
 
-.nunaliit_atlas .nunaliit_map_title_link:hover {
+.nunaliit_atlas .nunaliit_module_title_link:hover {
 	text-decoration:none;
 }
 

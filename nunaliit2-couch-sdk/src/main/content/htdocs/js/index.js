@@ -13,6 +13,7 @@ function main_init(config) {
 		moduleName: moduleName
 		,config: config
 		,titleName: 'title'
+		,moduleTitleName: 'module_title'
 		,sidePanelName: 'side'
 		,filterPanelName: 'filters'
 		,searchPanelName: 'searchInput'

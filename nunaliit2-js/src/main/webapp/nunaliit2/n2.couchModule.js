@@ -435,6 +435,8 @@ var ModuleDisplay = $n2.Class({
 
 	,titleName: null
 
+	,moduleTitleName: null
+
 	,sidePanelName: null
 	
 	,filterPanelName: null
@@ -455,6 +457,7 @@ var ModuleDisplay = $n2.Class({
 			,moduleDoc: null
 			,config: null
 			,titleName: 'title'
+			,moduleTitleName: 'module_title'
 			,mapName: 'map'
 			,sidePanelName: 'side'
 			,filterPanelName: 'filters'
@@ -488,6 +491,8 @@ var ModuleDisplay = $n2.Class({
 		this.loginPanelName = opts.loginPanelName;
 		this.navigationName = opts.navigationName;
 		this.navigationDoc = opts.navigationDoc;
+		this.titleName = opts.titleName;
+		this.moduleTitleName = opts.moduleTitleName;
 		
 		// dispatcher
 		var d = this._getDispatcher();
@@ -528,17 +533,31 @@ var ModuleDisplay = $n2.Class({
 		/*
 		 * Get navigation document, if required.
 		 */
-		if( this.navigationDoc && $('#'+this.navigationName).length > 0 ){
-			$('#'+this.navigationName).empty();
-			atlasDb.getDocument({
-				docId: this.navigationDoc
-				,onSuccess: function(doc){
-					_this._navigationDocumentLoaded(doc);
-				}
-				,onError: function(err){ 
-					$n2.log('Error obtaining navigation document '+_this.navigationDoc,err); 
-				}
-			});
+		if( this.navigationDoc ){
+			
+			var navDocNeeded = false;
+			
+			if( $('#'+this.navigationName).length > 0 ){
+				$('#'+this.navigationName).empty();
+				navDocNeeded = true;
+			};
+			
+			if( $('#'+this.titleName).length > 0 ){
+				$('#'+this.titleName).empty();
+				navDocNeeded = true;
+			};
+			
+			if( navDocNeeded ) {
+				atlasDb.getDocument({
+					docId: this.navigationDoc
+					,onSuccess: function(doc){
+						_this._navigationDocumentLoaded(doc);
+					}
+					,onError: function(err){ 
+						$n2.log('Error obtaining navigation document '+_this.navigationDoc,err); 
+					}
+				});
+			};
 		};
 		
 		function moduleDocumentLoaded(moduleDoc){
@@ -566,13 +585,13 @@ var ModuleDisplay = $n2.Class({
 				//$('head > title').text('' + moduleInfo.title);
 				if( title ) {
 					document.title = title; // needed for IE 6
-					_this._installTitle($('#'+opts.titleName), title);
+					_this._installModuleTitle($('#'+opts.moduleTitleName), title);
 				};
 			} else {
 				var title = _loc('Nunaliit Atlas');
 				//$('head > title').text(title);
 				document.title = title; // needed for IE 6
-				_this._installTitle($('#'+opts.titleName), title);
+				_this._installModuleTitle($('#'+opts.moduleTitleName), title);
 			};
 			
 			// Display Logic 
@@ -974,15 +993,29 @@ var ModuleDisplay = $n2.Class({
 
 	,_navigationDocumentLoaded: function(doc){
 		if( doc && doc.nunaliit_navigation ){
-			var $nav = $('#'+this.navigationName);
-			$nav.empty();
+			// Atlas title
+			var $title = $('#'+this.titleName);
+			if( $title.length > 0 ){
+				if( doc.nunaliit_navigation.title ){
+					var title = $n2.couchL10n.getLocalizedString(doc.nunaliit_navigation.title);
+					$title.text(title);
+				} else {
+					$title.empty();
+				};
+			};
 			
-			if( doc.nunaliit_navigation.items 
-			 && doc.nunaliit_navigation.items.length > 0 ) {
-				var $ul = $('<ul></ul>');
-				$nav.append($ul);
+			// Navigation menu
+			var $nav = $('#'+this.navigationName);
+			if( $nav.length > 0 ) {
+				$nav.empty();
 				
-				insertItems($ul, doc.nunaliit_navigation.items);
+				if( doc.nunaliit_navigation.items 
+				 && doc.nunaliit_navigation.items.length > 0 ) {
+					var $ul = $('<ul></ul>');
+					$nav.append($ul);
+					
+					insertItems($ul, doc.nunaliit_navigation.items);
+				};
 			};
 		};
 		
@@ -1035,10 +1068,10 @@ var ModuleDisplay = $n2.Class({
 		return true;
 	}
 	
-	,_installTitle: function($elem, text){
+	,_installModuleTitle: function($elem, text){
 		var _this = this;
 		
-		var $a = $('<a class="nunaliit_map_title_link" href="#"></a>');
+		var $a = $('<a class="nunaliit_module_title_link" href="#"></a>');
 		$a.text(text);
 		
 		$elem.empty().append($a);
