@@ -296,7 +296,6 @@ color: #fff;
 	display: block;
 	padding: 18px 18px 18px 38px;
 	border:1px solid #cccccc;
-	margin: 10px 0;
 	font-weight: bold;
 	color: #000;
 }
@@ -305,13 +304,23 @@ color: #fff;
 }
 .olkitSearchMod2_0, .olkitSearchMod2_1 {
 	background-color:#fff;
-	margin:10px 0;
 	padding:10px;
-	border: 1px solid #cccccc;
 	-moz-box-shadow: 1px 1px 3px #e1dfdf;
 	-webkit-box-shadow: 1px 1px 3px #e1dfdf;
 	box-shadow: 1px 1px 3px #e1dfdf;
 }
+
+._n2DocumentListEntry {
+	border-bottom: 1px solid #cccccc;
+	border-top: none;
+	border-left: none;
+	border-right: none;
+}
+
+._n2DocumentListEnd {
+	border: none;
+}
+
 .n2Show_thumb_wrapper {
 	margin-bottom:2px;
 	text-align:center;

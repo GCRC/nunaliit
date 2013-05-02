@@ -1009,10 +1009,10 @@ $n2.couchDisplay = $n2.Class({
 					var $docWrapper = $('<div></div>');
 					$div.append($docWrapper);
 					if ( 0 === i ) { // mark first and last one
-						$docWrapper.addClass('n2_search_startResults');
+						$docWrapper.addClass('_n2DocumentListStart');
 					};
 					if ( (e-1) === i ) {
-						$docWrapper.addClass('n2_search_endResults');
+						$docWrapper.addClass('_n2DocumentListEnd');
 					};
 					$docWrapper
 						.addClass('_n2DocumentListEntry')
