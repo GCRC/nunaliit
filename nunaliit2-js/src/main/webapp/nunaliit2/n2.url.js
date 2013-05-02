@@ -46,19 +46,31 @@ var Url = $n2.Class({
 		return this.options.url;
 	}
 
-	,getUrlWithoutParams: function() {
+	,getUrlWithoutHash: function() {
 		var href = this.getUrl();
-		var index = href.indexOf('?');
-		if( index < 0 ) {
-			return href;
+
+		var index = href.indexOf('#');
+		if( index >= 0 ) {
+			href = href.substr(0,index);
 		};
 		
-		return href.substr(0,index);
+		return href;
+	}
+
+	,getUrlWithoutParams: function() {
+		var href = this.getUrlWithoutHash();
+		
+		var index = href.indexOf('?');
+		if( index >= 0 ) {
+			href = href.substr(0,index);
+		};
+		
+		return href;
 	}
 
 	,getParams: function() {
 		var result = {};
-		var href = this.getUrl();
+		var href = this.getUrlWithoutHash();
 		var paramsString = href.slice(href.indexOf('?') + 1);
 		var params = paramsString.split('&');
 		for(var loop=0; loop<params.length; ++loop) {
@@ -97,6 +109,10 @@ $n2.url = {
 		return new Url({
 			url: window.location.href
 		});
+	}
+
+	,getUrlWithoutHash: function() {
+		return $n2.url.getCurrentLocation().getUrlWithoutHash();
 	}
 	
 	,getUrlWithoutParams: function() {
