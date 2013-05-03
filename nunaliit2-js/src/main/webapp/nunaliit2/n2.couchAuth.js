@@ -740,40 +740,50 @@ var AuthWidget = $n2.Class({
 		if( $login.length < 1 ) return;
 		$login.empty();
 		
-		var showService = this.getShowService();
-		
 		var authService = this.getAuthService();
 		if( authService ) {
-			if( null == currentUser ) {
-				var aElem = $('<a class="nunaliit_login_link" href="javascript:Login"></a>');
-				aElem.text( _loc('Login') );
-				var divElem = $('<div class="nunaliit_login_link_container"></div>');
-				divElem.append(aElem);
-				divElem.click(function(){
-					authService.showLoginForm();
-					return false;
-				});
-
-				var nameElem = $('<span class="nunaliit_login_greeting"></span>');
-				nameElem.text( _loc('Welcome') );
-				$login.append(divElem).append(nameElem);
-	
-			} else {
-				var aElem = $('<a class="nunaliit_login_link" href="javascript:Logout"></a>');
-				aElem.text( _loc('Logout') );
-				var divElem = $('<div class="nunaliit_login_link_container"></div>');
-				divElem.append(aElem);
-				divElem.click(function(){
+			var href = null;
+			var displayName = null;
+			var buttonText = null;
+			var clickFn = null;
+			if( currentUser ){
+				href = 'javascript:Logout';
+				displayName = currentUser.display;
+				if( !displayName ) displayName = currentUser.name;
+				buttonText = _loc('Logout');
+				clickFn = function(){
 					authService.logout();
 					return false;
-				});
-
-				var display = currentUser.display;
-				if( !display ) display = currentUser.name;
-				var nameElem = $('<span class="nunaliit_login_greeting"></span>');
-				nameElem.text( display );
-				$login.append(divElem).append(nameElem);
+				};
+			} else {
+				href = 'javascript:Login';
+				displayName = _loc('Welcome');
+				buttonText = _loc('Login');
+				clickFn = function(){
+					authService.showLoginForm();
+					return false;
+				};
 			};
+			
+			var aElem = $('<a class="nunaliit_login_link"></a>');
+			aElem.attr("href",href);
+			aElem.text(buttonText);
+			
+			var linkInnerContainer = $('<div class="nunaliit_login_link_inner_container"></div>');
+			linkInnerContainer.append(aElem);
+			
+			var linkOuterContainer = $('<div class="nunaliit_login_link_outer_container"></div>');
+			linkOuterContainer.append(linkInnerContainer);
+			linkOuterContainer.click(clickFn);
+
+			var nameElem = $('<span></span>');
+			nameElem.text(displayName);
+			var greetingInner = $('<div class="nunaliit_login_greeting_inner_container"></div>');
+			greetingInner.append(nameElem);
+			var greetingOuter = $('<div class="nunaliit_login_greeting_outer_container"></div>');
+			greetingOuter.append(greetingInner);
+			
+			$login.empty().append(greetingOuter).append(linkOuterContainer);
 		};
 	}
 });

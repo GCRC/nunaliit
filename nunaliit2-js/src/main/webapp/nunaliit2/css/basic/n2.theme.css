@@ -132,35 +132,45 @@ color: #fff;
 
 /* Login */
 .nunaliit_atlas .nunaliit_login {
-	height:100%;
+	position:absolute;
+	display: table-row;
+	top:0;
+	right:20px;
+	height:70px;
+	overflow: hidden;
+	z-index:10;
 }	
-.nunaliit_atlas .nunaliit_login_link_container {
-	position:relative;
+.nunaliit_atlas .nunaliit_login_link_outer_container {
+	display: table-cell;
+	vertical-align: middle;
+	height:70px;
+	width: 36px;
 	border-left: 1px solid #838383;
 	border-right: 1px solid #838383;
 	padding:0 20px;
 	background-color:#2f2f2f;
 	-webkit-box-shadow: inset 0 2px 3px rgba(0,0,0,0.2);
 	box-shadow: inset 0 2px 3px rgba(0,0,0,0.2);
-	height:100%;
-	width: 36px;
+}
+.nunaliit_atlas .nunaliit_login_link_outer_container:hover {
+	background-color:rgba(0,0,0,0.9);
+}
+.nunaliit_atlas .nunaliit_login_link_inner_container {
+	display: inline;
 }
 .nunaliit_atlas .nunaliit_login_link {
 	text-decoration: none;
 	color: #fff;
-	line-height:0;
-	position: relative;
-	top: 50%;
-	line-height: 0;
 }
-.nunaliit_atlas .nunaliit_login_link_container:hover {
-	background-color:rgba(0,0,0,0.9);
+.nunaliit_atlas .nunaliit_login_greeting_outer_container {
+	display: table-cell;
+	vertical-align: middle;
+	height:70px;
+	padding:0 20px;
 }
-.nunaliit_atlas .nunaliit_login_greeting {
+.nunaliit_atlas .nunaliit_login_greeting_inner_container {
+	display: inline;
 	color: #fff;
-	position: relative;
-	top: 50%;
-	line-height:0;
 }
 
 
