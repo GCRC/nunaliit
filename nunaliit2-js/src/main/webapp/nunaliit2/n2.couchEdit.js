@@ -178,6 +178,137 @@ function searchForDocumentId(options_){
 	};
 };
 
+function selectLayersDialog(opts_){
+	
+	var opts = $n2.extend({
+		currentLayers: []
+		,cb: function(selectedLayerIds){}
+		,resetFn: function(){}
+		,designDoc: null
+		,showService: null
+		,dispatchService: null
+	},opts_);
+	
+	var layers = {};
+	if( typeof(opts.currentLayers) === 'string' ){
+		var layerNames = currentLayers.split(',');
+		for(var i=0,e=layerNames.length;i<e;++i){
+			layers[ $n2.trim(layerNames[i]) ] = true;
+		};
+		
+	} else if( $n2.isArray(opts.currentLayers) ){
+		for(var i=0,e=opts.currentLayers.length;i<e;++i){
+			layers[ $n2.trim(opts.currentLayers[i]) ] = true;
+		};
+	};
+
+	var shouldReset = true;
+	var dialogId = $n2.getUniqueId();
+	var $dialog = $('<div id="'+dialogId+'" class="editorSelectLayerDialog">'
+			+'<div class="editorSelectLayerContent"></div>'
+			+'<div class="editorSelectLayerButtons"><button class="ok">'+_loc('OK')+'</button>'
+			+'<button class="cancel">'+_loc('Cancel')+'</button></div>'
+			+'</div>');
+	
+	$dialog.find('button.cancel')
+		.button({icons:{primary:'ui-icon-cancel'}})
+		.click(function(){
+			var $dialog = $('#'+dialogId);
+			$dialog.dialog('close');
+			return false;
+		});
+	$dialog.find('button.ok')
+		.button({
+			icons:{primary:'ui-icon-check'}
+			,disabled: true
+		});
+	
+	var dialogOptions = {
+		autoOpen: true
+		,title: _loc('Select Layers')
+		,modal: true
+		,width: 370
+		,close: function(event, ui){
+			var diag = $(event.target);
+			diag.dialog('destroy');
+			diag.remove();
+			if( shouldReset ) {
+				opts.resetFn();
+			};
+		}
+	};
+	$dialog.dialog(dialogOptions);
+	
+	// Get layers
+	if( opts.designDoc ){
+		opts.designDoc.queryView({
+			viewName: 'layer-definitions'
+			,onlyRows: true
+			,onSuccess: function(rows){
+				var layerIdentifiers = {};
+				for(var i=0,e=rows.length;i<e;++i){
+					layerIdentifiers[rows[i].key] = true;
+				};
+				getInnerLayers(layerIdentifiers);
+			}
+			,onError: function(errorMsg){ 
+				reportError(errorMsg);
+			}
+		});
+	};
+	
+	function getInnerLayers(layerIdentifiers){
+		opts.dispatchService.synchronousCall(DH,{
+			type: 'getLayerIdentifiers'
+			,layerIdentifiers: layerIdentifiers
+		});
+		displayLayers(layerIdentifiers);
+	};
+	
+	function displayLayers(layerIdentifiers){
+		var $diag = $('#'+dialogId);
+		
+		var $c = $diag.find('.editorSelectLayerContent');
+		$c.empty();
+		for(var layer in layerIdentifiers){
+			var inputId = $n2.getUniqueId();
+			var $div = $('<div><input id="'+inputId+'" class="layer" type="checkbox"/><label for="'+inputId+'"></label></div>');
+			$c.append($div);
+			$div.find('input').attr('name',layer);
+			$div.find('label').text(layer);
+			if( layers[layer] ){
+				$div.find('input').attr('checked','checked');
+			};
+			
+			if(opts.showService){
+				opts.showService.printLayerName($div.find('label'), layer);
+			};
+		};
+		
+		$diag.find('button.ok')
+			.button('option','disabled',false)
+			.click(function(){
+				var selectedLayers = [];
+				var $diag = $('#'+dialogId);
+				$diag.find('input.layer').each(function(){
+					var $input = $(this);
+					if( $input.is(':checked') ){
+						var layer = $input.attr('name');
+						selectedLayers.push(layer);
+					};
+				});
+				opts.cb(selectedLayers);
+
+				shouldReset = false;
+				$diag.dialog('close');
+			});
+	};
+	
+	function reportError(err){
+		$('#'+dialogId).find('.editorSelectLayerContent').text('Error: '+err);
+	};
+};
+
 
 //++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -660,6 +791,11 @@ var CouchDocumentEditor = $n2.Class({
 		addRelationBtn.button({icons:{primary:'ui-icon-plusthick'}});
 		addRelationBtn.click(function(){ _this._addRelationDialog(); return false; });
 
+		var layersBtn = $('<button class="layers">'+_loc('Layers')+'</button>');
+		formButtons.append(layersBtn);
+		layersBtn.button({icons:{primary:'ui-icon-link'}});
+		layersBtn.click(function(){ _this._manageLayersDialog(); return false; });
+
 		var cancelBtn = $('<button class="cancel">'+_loc('Cancel')+'</button>');
 		formButtons.append(cancelBtn);
 		cancelBtn.button({icons:{primary:'ui-icon-cancel'}});
@@ -894,6 +1030,31 @@ var CouchDocumentEditor = $n2.Class({
     	if( refreshRequired ){
     		this.refresh();
     	};
+    }
+    
+    ,_manageLayersDialog: function(){
+    	var _this = this;
+    	var data = this.editedDocument;
+    	var layers = data.nunaliit_layers;
+    	if( !layers ){
+    		layers = [];
+    	};
+    	selectLayersDialog({
+    		currentLayers: layers
+			,cb: function(selectedLayers){
+	    		if( selectedLayers.length < 1 ){
+	    			if( data.nunaliit_layers ){
+	    				delete data.nunaliit_layers;
+	    			};
+	    		} else {
+	    			data.nunaliit_layers = selectedLayers;
+	    		};
+	    		_this.refresh();
+			}
+			,designDoc: this.options.designDoc
+			,showService: this._getShowService()
+			,dispatchService: this._getDispatchService()
+    	});
     }
     
     ,_removeAttachment: function(attNameToRemove){
@@ -1325,6 +1486,7 @@ var CouchDocumentEditor = $n2.Class({
 
 var CouchEditorDefaultOptions = {
 		db: null // database must be provided
+		,designDoc: null // deisgnDoc must be provided
 		,geomName: 'nunaliit_geom'
 		,couchProj: null
 		,schema: null
@@ -1564,7 +1726,14 @@ var SchemaEditorService = $n2.Class({
 		};
 		if( !this.funcMap['getLayers'] ){
 			this.funcMap['getLayers'] = function(currentLayers,cb,resetFn){
-				_this._selectLayers(currentLayers,cb,resetFn);
+				selectLayersDialog({
+					currentLayers: currentLayers
+					,cb: cb
+					,resetFn: resetFn
+					,designDoc: _this.designDoc
+					,showService: _this._getShowService()
+					,dispatchService: _this._getDispatchService()
+				});
 			};			
 		};
 		
@@ -1624,14 +1793,12 @@ var SchemaEditorService = $n2.Class({
 		return null;
 	}
 	
-	,_synchronousCall: function(m){
+	,_getDispatchService: function(){
 		var d = null;
 		if( this.serviceDirectory ){
 			d = this.serviceDirectory.dispatchService;
 		};
-		if( d ) {
-			d.synchronousCall(DH,m);
-		};
+		return d;
 	}
 
 	,_searchForDocumentId: function(cb,resetFn){
@@ -1647,132 +1814,6 @@ var SchemaEditorService = $n2.Class({
 			,onSelected: cb
 			,onReset: resetFn
 		});
-	}
-	
-	,_selectLayers: function(currentLayers,cb,resetFn){
-		var _this = this;
-		
-		var layers = {};
-		if( typeof(currentLayers) === 'string' ){
-			var layerNames = currentLayers.split(',');
-			for(var i=0,e=layerNames.length;i<e;++i){
-				layers[ $n2.trim(layerNames[i]) ] = true;
-			};
-			
-		} else if( $n2.isArray(currentLayers) ){
-			for(var i=0,e=currentLayers.length;i<e;++i){
-				layers[ $n2.trim(currentLayers[i]) ] = true;
-			};
-		};
-
-		var shouldReset = true;
-		var dialogId = $n2.getUniqueId();
-		var $dialog = $('<div id="'+dialogId+'" class="editorSelectLayerDialog">'
-				+'<div class="editorSelectLayerContent"></div>'
-				+'<div class="editorSelectLayerButtons"><button class="ok">'+_loc('OK')+'</button>'
-				+'<button class="cancel">'+_loc('Cancel')+'</button></div>'
-				+'</div>');
-		
-		$dialog.find('button.cancel')
-			.button({icons:{primary:'ui-icon-cancel'}})
-			.click(function(){
-				var $dialog = $('#'+dialogId);
-				$dialog.dialog('close');
-				return false;
-			});
-		$dialog.find('button.ok')
-			.button({
-				icons:{primary:'ui-icon-check'}
-				,disabled: true
-			});
-		
-		var dialogOptions = {
-			autoOpen: true
-			,title: _loc('Select Layers')
-			,modal: true
-			,width: 370
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
-				if( shouldReset ) {
-					if( typeof(resetFn) === 'function' ) {
-						resetFn();
-					};
-				};
-			}
-		};
-		$dialog.dialog(dialogOptions);
-		
-		// Get layers
-		if( this.designDoc ){
-			this.designDoc.queryView({
-				viewName: 'layer-definitions'
-				,onlyRows: true
-				,onSuccess: function(rows){
-					var layerIdentifiers = {};
-					for(var i=0,e=rows.length;i<e;++i){
-						layerIdentifiers[rows[i].key] = true;
-					};
-					getInnerLayers(layerIdentifiers);
-				}
-				,onError: function(errorMsg){ 
-					reportError(errorMsg);
-				}
-			});
-		};
-		
-		function getInnerLayers(layerIdentifiers){
-			_this._synchronousCall({
-				type: 'getLayerIdentifiers'
-				,layerIdentifiers: layerIdentifiers
-			});
-			displayLayers(layerIdentifiers);
-		};
-		
-		function displayLayers(layerIdentifiers){
-			var $diag = $('#'+dialogId);
-			
-			var $c = $diag.find('.editorSelectLayerContent');
-			$c.empty();
-			for(var layer in layerIdentifiers){
-				var inputId = $n2.getUniqueId();
-				var $div = $('<div><input id="'+inputId+'" class="layer" type="checkbox"/><label for="'+inputId+'"></label></div>');
-				$c.append($div);
-				$div.find('input').attr('name',layer);
-				$div.find('label').text(layer);
-				if( layers[layer] ){
-					$div.find('input').attr('checked','checked');
-				};
-				
-				var showService = _this._getShowService();
-				if(showService){
-					showService.printLayerName($div.find('label'), layer);
-				};
-			};
-			
-			$diag.find('button.ok')
-				.button('option','disabled',false)
-				.click(function(){
-					var selectedLayers = [];
-					var $diag = $('#'+dialogId);
-					$diag.find('input.layer').each(function(){
-						var $input = $(this);
-						if( $input.is(':checked') ){
-							var layer = $input.attr('name');
-							selectedLayers.push(layer);
-						};
-					});
-					cb(selectedLayers);
-	
-					shouldReset = false;
-					$diag.dialog('close');
-				});
-		};
-		
-		function reportError(err){
-			$('#'+dialogId).find('.editorSelectLayerContent').text('Error: '+err);
-		};
 	}
 });
 

@@ -187,6 +187,7 @@ function Configure(options_){
 		
 	 	configuration.couchEditor = new $n2.CouchEditor.Editor({
 			db: configuration.atlasDb
+			,designDoc: configuration.atlasDesign
 			,serviceDirectory: configuration.directory
 		});
 		
