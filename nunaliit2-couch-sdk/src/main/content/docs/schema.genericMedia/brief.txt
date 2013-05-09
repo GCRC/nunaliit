@@ -1,2 +1,0 @@
-GenericMedia: {{#media}}{{title}}{{/media}}
-

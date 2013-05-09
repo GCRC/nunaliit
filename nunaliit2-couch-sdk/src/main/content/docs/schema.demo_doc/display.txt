@@ -5,7 +5,7 @@
 	{{/nunaliit_hoverSound}}
 
 	<div>
-		<div class="label n2s_localize">Generic Object</div>
+		<div class="label n2s_localize">Demo Document</div>
 		<div class="value"></div>
 		<div class="end"></div>
 	</div>

@@ -69,10 +69,10 @@
 		,"toggleClick": true
 	}
 	,"display":{
-		"defaultSchemaName":"genericDoc" 
+		"defaultSchemaName":"demo_doc" 
 	}
 	,"edit":{
-		"defaultSchemaName": "genericDoc"
-		,"newDocumentSchemaNames": ["genericDoc"]
+		"defaultSchemaName": "demo_doc"
+		,"newDocumentSchemaNames": ["demo_doc"]
 	}
 }
