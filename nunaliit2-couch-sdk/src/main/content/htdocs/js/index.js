@@ -9,6 +9,18 @@ function main_init(config) {
 	};
 	$n2.log('module: '+moduleName);
 
+	// Get module bounding box
+	var bounds = null;
+	var bboxParam = $n2.url.getParamValue('bbox',null);
+	if( bboxParam ){
+		var bbox = bboxParam.split(',');
+		bounds = [];
+		for(var i=0,e=bbox.length;i<e;++i){
+			bounds.push( 1 * bbox[i] );
+		};
+		$n2.log('bbox: '+bboxParam);
+	};
+
 	var moduleDisplay = new $n2.couchModule.ModuleDisplay({
 		moduleName: moduleName
 		,config: config
@@ -21,6 +33,14 @@ function main_init(config) {
 		,navigationDoc: 'navigation.generic'
 		,onSuccess: function(){
 			config.start();
+			
+			if( bounds ) {
+				config.directory.dispatchService.send('index.js',{
+					type:'mapSetExtent'
+					,extent: bounds
+					,srsName: 'EPSG:4326'
+				});
+			};
 		}
 		,onError: function(err){ alert('Unable to display module('+moduleName+'): '+err); }
 	});

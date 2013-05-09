@@ -65,7 +65,7 @@ var DomStyler = $n2.Class({
 		$elem.find('.n2s_localize').each(function(){
 			var $jq = $(this);
 			_this._localize($jq, opt);
-			$jq.removeClass('n2s_localize').addClass('n2_localized');
+			$jq.removeClass('n2s_localize').addClass('n2s_localized');
 		});
 		
 		// Preserve Space
