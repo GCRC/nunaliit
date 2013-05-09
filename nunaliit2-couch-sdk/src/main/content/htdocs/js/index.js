@@ -36,9 +36,10 @@ function main_init(config) {
 			
 			if( bounds ) {
 				config.directory.dispatchService.send('index.js',{
-					type:'mapSetExtent'
+					type:'mapSetInitialExtent'
 					,extent: bounds
 					,srsName: 'EPSG:4326'
+					,reset: true
 				});
 			};
 		}

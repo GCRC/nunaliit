@@ -698,6 +698,7 @@ var MapAndControls = $n2.Class({
 	    this._registerDispatch('geometryModified');
 	    this._registerDispatch('getLayerIdentifiers');
 	    this._registerDispatch('mapRedrawLayer');
+	    this._registerDispatch('mapSetInitialExtent');
 	    this._registerDispatch('mapSetExtent');
 	    this._registerDispatch('mapResetExtent');
 		
@@ -3612,6 +3613,21 @@ var MapAndControls = $n2.Class({
 		};
 	}
 	
+	,setInitialExtent: function(bounds, srsName, reset) {
+
+		var initialExt = new OpenLayers.Bounds(bounds[0], bounds[1], bounds[2], bounds[3]);
+	
+		if( null != srsName ) {
+			this.convertBoundsToMapProjection(initialExt, srsName);
+		};
+	
+		this.initialZoomBounds = initialExt;
+		
+		if( reset ){
+			this.resetExtent();
+		};
+	}
+	
 	,setNewExtent: function(bounds, srsName) { // @param bounds OpenLayers Bounds values in array (in map projection coordinates)
 
 		var maxExt = new OpenLayers.Bounds(bounds[0], bounds[1], bounds[2], bounds[3]);
@@ -3986,6 +4002,12 @@ var MapAndControls = $n2.Class({
 		} else if( 'mapRedrawLayer' === type ) {
 			var layerId = m.layerId;
 			this.redefineFeatureLayerStylesAndRules(layerId);
+			
+		} else if( 'mapSetInitialExtent' === type ) {
+			var extent = m.extent;
+			var srsName = m.srsName;
+			var reset = m.reset;
+			this.setInitialExtent(extent, srsName, reset);
 			
 		} else if( 'mapSetExtent' === type ) {
 			var extent = m.extent;
