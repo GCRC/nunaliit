@@ -39,7 +39,7 @@
 				,"type": "Google Maps"
 				,"options": {
 					"type": "TERRAIN"
-					,"numZoomLevels": 19 
+					,"numZoomLevels": 16
 				}
 			}
 		]
