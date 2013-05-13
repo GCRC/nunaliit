@@ -12,7 +12,7 @@
 				,"en":"Default Module"
 				,"fr":"Module de Base"
 			}
-			,"href": "./index.html?module=generic.module:default"
+			,"href": "./index.html?module=module.demo"
 			,"items":[
 				{
 					"title": {
@@ -20,7 +20,7 @@
 						,"en":"Default Module"
 						,"fr":"Module de Base"
 					}
-					,"href": "./index.html?module=generic.module:default"
+					,"href": "./index.html?module=module.demo"
 				}
 			]
 		}

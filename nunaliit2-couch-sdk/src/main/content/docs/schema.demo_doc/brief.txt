@@ -1,1 +1,1 @@
-<span class="n2s_localize">Demo Document</span>({{#generic}}{{title}}{{/generic}})
+<span class="n2s_localize">Demo Document</span>({{#demo_doc}}{{title}}{{/demo_doc}})

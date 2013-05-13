@@ -1,11 +1,11 @@
-var _loc = function(str,args){ return $n2.loc(str,'generic',args); };
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit_demo',args); };
 
 function main_init(config) {
 	
 	// Get module name from URL parameters
 	var moduleName = $n2.url.getParamValue('module',null);
 	if( !moduleName ){
-		moduleName = 'module.generic';
+		moduleName = 'module.demo';
 	};
 	$n2.log('module: '+moduleName);
 
@@ -30,7 +30,7 @@ function main_init(config) {
 		,filterPanelName: 'filters'
 		,searchPanelName: 'searchInput'
 		,navigationName: 'navigation'
-		,navigationDoc: 'navigation.generic'
+		,navigationDoc: 'navigation.demo'
 		,onSuccess: function(){
 			config.start();
 			

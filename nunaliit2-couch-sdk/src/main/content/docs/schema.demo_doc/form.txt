@@ -1,5 +1,5 @@
 <div class="n2_documentForm"><div class="n2_layoutFloat">
-	{{#generic}}
+	{{#demo_doc}}
 		<div>
 			<div class="label n2s_localize">Title</div>
 			<div class="value">{{#:field}}title{{/:field}}</div>
@@ -20,7 +20,7 @@
 			<div class="value">{{#:field}}reference,reference{{/:field}}</div>
 			<div class="end"></div>
 		</div>
-	{{/generic}}
+	{{/demo_doc}}
 	{{#nunaliit_geom}}{{{:html}}}{{/nunaliit_geom}}
 
 	<div>

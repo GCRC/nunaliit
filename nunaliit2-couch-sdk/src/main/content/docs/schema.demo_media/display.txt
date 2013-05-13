@@ -41,7 +41,7 @@
 	{{/files}}
 {{/nunaliit_attachments}}
 
-{{#media}}
+{{#demo_media}}
 	{{#title}}
 		<div>
 			<div class="label n2s_localize">Title</div>
@@ -56,7 +56,7 @@
 			<div class="end"></div>
 		</div>
 	{{/description}}
-{{/media}}
+{{/demo_media}}
 
 {{#nunaliit_source}}
 	{{{:html}}}

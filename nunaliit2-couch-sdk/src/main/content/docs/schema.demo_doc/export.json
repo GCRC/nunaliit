@@ -1,18 +1,18 @@
 [
 	{
 		"label":"title"
-		,"select":"generic.title"
+		,"select":"demo_doc.title"
 	}
 	,{
 		"label":"description"
-		,"select":"generic.description"
+		,"select":"demo_doc.description"
 	}
 	,{
 		"label":"date"
-		,"select":"generic.date"
+		,"select":"demo_doc.date"
 	}
 	,{
 		"label":"reference"
-		,"select":"generic.reference.doc"
+		,"select":"demo_doc.reference.doc"
 	}
 ]

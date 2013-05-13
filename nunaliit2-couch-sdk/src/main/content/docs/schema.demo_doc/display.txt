@@ -10,7 +10,7 @@
 		<div class="end"></div>
 	</div>
 
-	{{#generic}}
+	{{#demo_doc}}
 		{{#title}}
 			<div>
 				<div class="label n2s_localize">Title</div>
@@ -41,7 +41,7 @@
 				</div>
 			{{/doc}}
 		{{/reference}}
-	{{/generic}}
+	{{/demo_doc}}
 
 	{{#nunaliit_hoverSound}}
 		{{#doc}}

@@ -20,7 +20,7 @@ function debugUpdateTest(opts_){
 		debugLog('Creating document 1');
 		opts.db.createDocument({
 			data: {
-				generic:{
+				demo:{
 					description: ''
 					,reference: {
 						doc: ''
@@ -40,8 +40,8 @@ function debugUpdateTest(opts_){
 					,nunaliit_type: 'actionstamp'
 					,time: 1313684610751
 				}
-				,nunaliit_schema: 'genericDoc'
-				,nunaliit_type: 'genericDoc'
+				,nunaliit_schema: 'demo_doc'
+				,nunaliit_type: 'demo_doc'
 			}
 			,onSuccess: function(docInfo) {
 				docId1 = docInfo.id;

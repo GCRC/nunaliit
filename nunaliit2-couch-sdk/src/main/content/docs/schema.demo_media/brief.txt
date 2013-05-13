@@ -1,1 +1,1 @@
-<span class="n2s_localize">Demo Media</span>({{#media}}{{title}}{{/media}})
+<span class="n2s_localize">Demo Media</span>({{#demo_media}}{{title}}{{/demo_media}})

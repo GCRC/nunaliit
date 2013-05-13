@@ -1,8 +1,8 @@
 {
 	"title":{
 		"nunaliit_type":"localized"
-		,"en":"Generic Atlas"
-		,"fr":"Atlas Générique"
+		,"en":"Demo Atlas"
+		,"fr":"Atlas Demo"
 	}
 	,"introduction": {
 		"type": "html"

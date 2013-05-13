@@ -1,5 +1,5 @@
 <div class="n2_documentForm"><div class="n2_layoutFloat">
-	{{#media}}
+	{{#demo_media}}
 		<div>
 			<div class="label n2s_localize">Title</div>
 			<div class="value">{{#:field}}title{{/:field}}</div>
@@ -10,5 +10,5 @@
 			<div class="value">{{#:field}}description,textarea{{/:field}}</div>
 			<div class="end"></div>
 		</div>
-	{{/media}}
+	{{/demo_media}}
 </div></div>
