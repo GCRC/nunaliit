@@ -1177,8 +1177,10 @@ var Database = $n2.Class({
 			data.conflicts = 'true';
 		};
 		
+		var url = this.dbUrl + opts.docId + '/';
+		
 	    $.ajax({
-	    	url: this.dbUrl + opts.docId +'/'
+	    	url: url
 	    	,type: 'get'
 	    	,async: true
 	    	,data: data

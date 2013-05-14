@@ -32,6 +32,9 @@ $Id: n2.couchMap.js 8437 2012-08-14 17:59:23Z jpfiset $
 */
 ;(function($,$n2){
 
+// Localization
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
+	
 function adjustDocument(doc) {
 
 	// Get user name
@@ -195,6 +198,117 @@ function documentContainsDeniedMedia(doc){
 	return containsDeniedMedia;
 };
 
+function getNunaliitAtlases(opts_){
+	var opts = $n2.extend({
+		couchServer: null
+		,onSuccess: function(array){}
+		,onError: function(msg){}
+	},opts_);
+	
+	var databasesToQuery = {};
+	
+	if( !opts.couchServer 
+	 || !opts.couchServer.listDatabases ){
+		opts.onError( 'Couch Server is required' );
+	};
+	
+	opts.couchServer.listDatabases({
+		onSuccess: databaseList
+		,onError: opts.onError
+	});
+	
+	function databaseList(dbNames){
+		var found = false;
+		for(var i=0,e=dbNames.length; i<e; ++i){
+			var n = dbNames[i];
+			if( n.length > 0 && n[0] != '_' ){
+				getDesignDocAtlas(n);
+				found = true;
+			};
+		};
+		if( !found ) {
+			testResults();
+		};
+	};
+	
+	function getDesignDocAtlas(dbName){
+		var db = opts.couchServer.getDb({dbName: dbName});
+		
+		databasesToQuery[dbName] = false;
+		
+		db.getDocument({
+			docId: '_design/atlas'
+			,onSuccess: function(dd){
+				if( dd 
+				 && dd.nunaliit ){
+					databasesToQuery[dbName] = {
+						dbName: dbName
+						,atlasName: dd.nunaliit.name
+						,restricted: dd.nunaliit.restricted
+					};
+				} else {
+					delete databasesToQuery[dbName];
+				};
+				testResults();
+			}
+			,onError: function(){
+				// On error, can not retrieve document. Assume
+				// it is not a Nunaliit Atlas
+				delete databasesToQuery[dbName];
+				testResults();
+			}
+		});
+	};
+	
+	function testResults(){
+		for(var dbName in databasesToQuery){
+			if( !databasesToQuery[dbName] ){
+				// Not all have returned, yet
+				return;
+			};
+		};
+		
+		// Return results
+		var results = [];
+		for(var dbName in databasesToQuery){
+			results.push(databasesToQuery[dbName]);
+		};
+		
+		opts.onSuccess(results);
+	};
+};
+
+function getAllServerRoles(opts_){
+	var opts = $n2.extend({
+		couchServer: null
+		,onSucess: function(roles){}
+		,onError: function(msg){}
+	},opts_);
+	
+	$n2.couchMap.getNunaliitAtlases({
+		couchServer: opts.couchServer
+		,onSuccess: function(dbs){
+			var roles = ["administrator"];
+			
+			for(var i=0,e=dbs.length; i<e; ++i){
+				var db = dbs[i];
+				if( db.atlasName ){
+					roles.push( db.atlasName + '_administrator' );
+					roles.push( db.atlasName + '_vetter' );
+					
+					if( db.restricted ){
+						roles.push( db.atlasName + '_user' );
+					};
+				};
+			};
+			
+			opts.onSuccess(roles);
+		}
+		,onError: opts.onError
+	});
+};
+
+
 // Exports
 $.olkitMap = {
 	OnFeatureEdit: OnFeatureEdit
@@ -208,6 +322,8 @@ $n2.couchMap = {
 	,documentContainsMedia: documentContainsMedia
 	,documentContainsApprovedMedia: documentContainsApprovedMedia
 	,documentContainsDeniedMedia: documentContainsDeniedMedia
+	,getNunaliitAtlases: getNunaliitAtlases
+	,getAllServerRoles: getAllServerRoles
 };
 
 })(jQuery,nunaliit2);

@@ -1,7 +1,11 @@
 ;(function($,$n2){
 
+// Localization
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
+
 var DH = 'user.js';	
 
+var couchServer = null;
 var userDb = null;
 var userSearchService = null;
 var userSchema = null;
@@ -55,39 +59,61 @@ function initiateEdit(userName) {
 		var $buttons = $('<div></div>');
 		$('#requests').append($buttons);
 
-		var $btnSave = $('<input type="button" value="Save"/>');
-		$buttons.append($btnSave);
-		var $btnDelete = $('<input type="button" value="Delete"/>');
-		$buttons.append($btnDelete);
-		
-		$btnSave.click(function(){
-			$('#editErrors').html('<div class="olkit_wait"></div>');
-			userDb.updateUser({
-				user: doc
-				,onSuccess: function() {
-					initiateEdit(userName);
-				} 
-				,onError: function() {
-					$('#editErrors').empty();
-					reportErrorsOnElem(arguments, $('#editErrors'));
-				}
-			});
-		});
-		
-		$btnDelete.click(function(){
-			if( false == confirm('You are about delete a user configuration object. Do you wish to proceed?') ) {
-				return;
-			};
-			startRequestWait();
-			userDb.deleteUser({
-				user: doc
-				,onSuccess: function() {
-					$('#requests').text('Deleted user for: '+userName);
-				} 
-				,onError: reportError
-			});
-		});
+		// Save button
+		$('<input type="button"/>')
+			.val( _loc('Save') )
+			.appendTo($buttons)
+			.click(function(){
+				$('#editErrors').html('<div class="olkit_wait"></div>');
+				userDb.updateUser({
+					user: doc
+					,onSuccess: function() {
+						initiateEdit(userName);
+					} 
+					,onError: function() {
+						$('#editErrors').empty();
+						reportErrorsOnElem(arguments, $('#editErrors'));
+					}
+				});
+			})
+			;
 
+		// Delete button
+		$('<input type="button"/>')
+			.val( _loc('Delete') )
+			.appendTo($buttons)
+			.click(function(){
+				if( false == confirm('You are about delete a user configuration object. Do you wish to proceed?') ) {
+					return;
+				};
+				startRequestWait();
+				userDb.deleteUser({
+					user: doc
+					,onSuccess: function() {
+						$('#requests').text('Deleted user for: '+userName);
+					} 
+					,onError: reportError
+				});
+			})
+			;
+
+		// Roles button
+		$('<input type="button"/>')
+			.val( _loc('Roles') )
+			.appendTo($buttons)
+			.click(function(e){
+				rolesDialog(doc,function(roles){
+					if( roles.length > 0 ){
+						doc.roles = roles;
+					} else if( doc.roles ) {
+						delete doc.roles;
+					};
+					treeEditor.refresh();
+				});
+				return false;
+			})
+			;
+		
 		var $password = $('<div></div>');
 		$('#requests').append($password);
 		$password.append( $('<div>'
@@ -118,6 +144,116 @@ function initiateEdit(userName) {
 
 		var $errors = $('<div id="editErrors"></div>');
 		$('#requests').append($errors);
+	};
+	
+	function rolesDialog(userDoc, selectedRolesFn){
+		var diagId = $n2.getUniqueId();
+		var $rolesDialog = $('<div id="'+diagId+'" class="n2_roles_dialog"></div>');
+
+		var $rolesList = $('<div class="n2_roles_list"></div>')
+			.appendTo($rolesDialog)
+			.append( $('<div class="olkit_wait"></div>') )
+			;
+
+		var $buttons = $('<div class="n2_roles_buttons"></div>')
+			.appendTo($rolesDialog)
+			;
+
+		// OK button
+		$('<input type="button"/>')
+			.val( _loc('OK') )
+			.appendTo($buttons)
+			.click(function(){
+				var $dialog = $('#'+diagId);
+				
+				var roles = [];
+				$dialog.find('input[type=checkbox]:checked').each(function(){
+					var $input = $(this);
+					roles.push( $input.attr('name') );
+				});
+				
+				selectedRolesFn(roles);
+				
+				$dialog.dialog('close');
+			})
+			;
+
+		// Cancel button
+		$('<input type="button"/>')
+			.val( _loc('Cancel') )
+			.appendTo($buttons)
+			.click(function(){
+				$('#'+diagId).dialog('close');
+			})
+			;
+		
+		var dialogOptions = {
+			autoOpen: true
+			,title: _loc('Select Roles')
+			,modal: true
+			,width: 740
+			,close: function(event, ui){
+				var diag = $(event.target);
+				diag.dialog('destroy');
+				diag.remove();
+			}
+		};
+		$rolesDialog.dialog(dialogOptions);
+		
+		$n2.couchMap.getAllServerRoles({
+			couchServer: couchServer
+			,onSuccess: loadedRoles
+			,onError: function(msg){
+				loadedRoles([]);
+			}
+		});
+		
+		function loadedRoles(roles){
+			var roleMap = {};
+			for(var i=0,e=roles.length;i<e;++i){
+				roleMap[roles[i]] = false;
+			};
+			
+			if( userDoc.roles ){
+				for(var i=0,e=userDoc.roles.length;i<e;++i){
+					roleMap[userDoc.roles[i]] = true;
+				};
+			};
+			
+			roles = [];
+			for(var role in roleMap){
+				roles.push(role);
+			};
+			roles.sort();
+			
+			var $list = $('#'+diagId).find('.n2_roles_list');
+			$list.empty();
+			
+			for(var i=0,e=roles.length;i<e;++i){
+				var role = roles[i];
+				
+				var $div = $('<div></div>');
+				
+				var id = $n2.getUniqueId();
+				
+				var $input = $('<input type="checkbox"/>')
+					.attr('name',role)
+					.attr('id',id)
+					.appendTo($div)
+					;
+				if( roleMap[role] ){
+					$input.attr('checked',"checked");
+				};
+				
+				$('<label/>')
+					.attr('for',id)
+					.text(role)
+					.appendTo($div)
+					;
+				
+				$list.append($div);
+			};
+		};
 	};
 };
 
@@ -273,6 +409,7 @@ function main() {
 };
 
 function main_init(config) {
+	couchServer = $n2.couch.DefaultServer;
 	userDb = $n2.couch.getUserDb();
  	
 	if( config.directory && config.directory.authService ) {

@@ -237,6 +237,20 @@ public class CommandUpdate implements Command {
 				StringWriter sw = new StringWriter();
 				PrintWriter pw = new PrintWriter(sw);
 				
+				pw.println("{");
+				pw.println("\t\"name\":\""+atlasProperties.getAtlasName()+"\"");
+				pw.println("\t,\"restricted\":"+atlasProperties.isRestricted());
+				pw.println("}");
+				
+				FSEntry f = FSEntryBuffer.getPositionedBuffer("a/nunaliit.json", sw.toString());
+				entries.add(f);
+			}
+			
+			// Create atlas designator
+			{
+				StringWriter sw = new StringWriter();
+				PrintWriter pw = new PrintWriter(sw);
+				
 				pw.println("var n2atlas = {");
 				pw.println("\tname: \""+atlasProperties.getAtlasName()+"\"");
 				pw.println("\t,restricted: "+atlasProperties.isRestricted());
