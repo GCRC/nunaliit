@@ -71,7 +71,7 @@ var CreateRelatedDocProcess = $n2.Class({
 			docId: null
 			,relatedSchemaNames: []
 			,onSuccess: function(docId){}
-			,onError: $n2.reportError
+			,onError: $n2.reportErrorForced
 			,onCancel: function(){}
 		},opt_);
 		
@@ -123,7 +123,7 @@ var CreateRelatedDocProcess = $n2.Class({
 			docId: null
 			,schema: null
 			,onSuccess: function(docId){}
-			,onError: $n2.reportError
+			,onError: $n2.reportErrorForced
 			,onCancel: function(){}
 		},opt_);
 		
@@ -167,7 +167,7 @@ var CreateRelatedDocProcess = $n2.Class({
 		var opt = $n2.extend({
 			schemaNames: []
 			,onSuccess: function(schemaName){}
-			,onError: $n2.reportError
+			,onError: $n2.reportErrorForced
 			,onCancel: function(){}
 		},opt_);
 		
@@ -255,7 +255,7 @@ var Editor = $n2.Class({
 				,obj: null
 				,schema: null
 				,onSuccess: function(docId){}
-				,onError: $n2.reportError
+				,onError: $n2.reportErrorForced
 				,onCancel: function(){}
 			}
 			,options_
@@ -444,7 +444,7 @@ var Editor = $n2.Class({
 						form: $form
 						,onSuccess: done
 						,onError: function(err) {
-							_this.options.onError('Error uploading file: '+err);
+							_this.options.onError( _loc('Unable to upload file. Related document was kept. Error: ') + err );
 						}
 					});
 					
