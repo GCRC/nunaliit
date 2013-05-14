@@ -339,7 +339,7 @@ div.olControlMousePosition {
 
 @media handheld, only screen and (max-width: 767px) {
 }
-	
+
 /* 
 ==============================
 LAYER DIALOG SECTION 
@@ -364,4 +364,15 @@ LAYER DIALOG SECTION
 	position: absolute;
 	bottom: 0;
 	padding: 10px 0;
+}
+
+/* 
+==============================
+ROLE LIST 
+==============================
+*/
+.n2_roles_list {
+	max-height: 400px;
+	overflow: auto;
+	margin-bottom: 5px;
 }

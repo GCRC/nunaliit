@@ -202,6 +202,7 @@ function initiateEdit(userName) {
 		
 		$n2.couchMap.getAllServerRoles({
 			couchServer: couchServer
+			,include_layer_roles: true
 			,onSuccess: loadedRoles
 			,onError: function(msg){
 				loadedRoles([]);

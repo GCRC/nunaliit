@@ -245,6 +245,7 @@ function getNunaliitAtlases(opts_){
 						dbName: dbName
 						,atlasName: dd.nunaliit.name
 						,restricted: dd.nunaliit.restricted
+						,db: db
 					};
 				} else {
 					delete databasesToQuery[dbName];
@@ -278,34 +279,146 @@ function getNunaliitAtlases(opts_){
 	};
 };
 
+function getAllAtlasRoles(opts_){
+	var opts = $n2.extend({
+		db: null
+		,atlasName: null
+		,restricted: false
+		,include_layer_roles: false
+		,onSuccess: function(roles){}
+		,onError: function(msg){}
+	},opts_);
+
+	var roles = [];
+	var atlasName = opts.atlasName;
+	var restricted = opts.restricted;
+	
+	if( atlasName ){
+		computeDatabaseRoles();
+	} else {
+		opts.db.getDocument({
+			docId: '_design/atlas'
+			,onSuccess: function(dd){
+				if( dd 
+				 && dd.nunaliit ){
+					atlasName = dd.nunaliit.name;
+					restricted = dd.nunaliit.restricted;
+				};
+				computeDatabaseRoles();
+			}
+			,onError: function(){
+				// On error, can not retrieve document. Assume
+				// it is not a Nunaliit Atlas
+				done();
+			}
+		});
+	};
+	
+	function computeDatabaseRoles(){
+		if( atlasName ){
+			roles.push( atlasName + '_administrator' );
+			roles.push( atlasName + '_vetter' );
+			
+			if( restricted ){
+				roles.push( atlasName + '_user' );
+			};
+			
+			if( opts.include_layer_roles ){
+				var dd = opts.db.getDesignDoc({ddName:'atlas'});
+				dd.queryView({
+					viewName: 'layer-definitions'
+					,onSuccess: function(rows){
+						for(var i=0,e=rows.length;i<e;++i){
+							var r = rows[i];
+							var layerId = r.id;
+							if( layerId !== 'public' ) {
+								roles.push(atlasName + '_layer_' + layerId);
+							};
+							done();
+						};
+					}
+					,onError: function(){
+						$n2.log('Unable to obtain layers from database: '+atlasName);
+						done();
+					}
+				});
+				
+				return;
+			};
+		};
+		
+		done();
+	};
+	
+	function done(){
+		opts.onSuccess(roles);
+	};
+};
+
 function getAllServerRoles(opts_){
 	var opts = $n2.extend({
 		couchServer: null
-		,onSucess: function(roles){}
+		,include_layer_roles: false
+		,onSuccess: function(roles){}
 		,onError: function(msg){}
 	},opts_);
+	
+	var roles = {
+		administrator: true
+	};
+	var dbsToQuery = {};
 	
 	$n2.couchMap.getNunaliitAtlases({
 		couchServer: opts.couchServer
 		,onSuccess: function(dbs){
-			var roles = ["administrator"];
-			
 			for(var i=0,e=dbs.length; i<e; ++i){
 				var db = dbs[i];
-				if( db.atlasName ){
-					roles.push( db.atlasName + '_administrator' );
-					roles.push( db.atlasName + '_vetter' );
-					
-					if( db.restricted ){
-						roles.push( db.atlasName + '_user' );
-					};
-				};
+				
+				dbsToQuery[db.dbName] = true;
+				
+				getDatabaseRoles(db);
 			};
 			
-			opts.onSuccess(roles);
+			testResults();
 		}
 		,onError: opts.onError
 	});
+	
+	function getDatabaseRoles(db){
+		getAllAtlasRoles({
+			db: db.db
+			,atlasName: db.atlasName
+			,restricted: db.restricted
+			,include_layer_roles: opts.include_layer_roles
+			,onSuccess: function(atlasRoles){
+				for(var i=0,e=atlasRoles.length; i<e; ++i){
+					var role = atlasRoles[i];
+					roles[role] = true;
+				};
+				delete dbsToQuery[db.dbName];
+				testResults();
+			}
+			,onError: function(msg){
+				delete dbsToQuery[db.dbName];
+				testResults();
+			}
+		});
+	};
+	
+	function testResults(){
+		for(var dbName in dbsToQuery){
+			// Not all have returned, yet
+			return;
+		};
+		
+		// Return results
+		var results = [];
+		for(var r in roles){
+			results.push(r);
+		};
+		
+		opts.onSuccess(results);
+	};
 };
 
 
@@ -323,6 +436,7 @@ $n2.couchMap = {
 	,documentContainsApprovedMedia: documentContainsApprovedMedia
 	,documentContainsDeniedMedia: documentContainsDeniedMedia
 	,getNunaliitAtlases: getNunaliitAtlases
+	,getAllAtlasRoles: getAllAtlasRoles
 	,getAllServerRoles: getAllServerRoles
 };
 
