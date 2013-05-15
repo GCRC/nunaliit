@@ -339,10 +339,21 @@ var DomStyler = $n2.Class({
 				 && fileDescriptor.data
 				 && fileDescriptor.data.title ) {
 					mediaOptions.title = fileDescriptor.data.title;
-					
+
 				} else if( doc.nunaliit_contribution 
 				 && doc.nunaliit_contribution.title ) {
 					mediaOptions.title = doc.nunaliit_contribution.title;
+				};
+				
+				// Height and width
+				if( fileDescriptor ){
+					if(fileDescriptor.width){
+						mediaOptions.width = fileDescriptor.width;
+					};
+
+					if(fileDescriptor.height){
+						mediaOptions.height = fileDescriptor.height;
+					};
 				};
 
 				// Generate brief HTML

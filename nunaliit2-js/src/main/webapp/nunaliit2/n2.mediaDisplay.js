@@ -39,6 +39,12 @@ $Id: n2.mediaDisplay.js 8265 2012-06-29 20:28:56Z glennbrauen $
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 	
+var DEFAULT_VIDEO_HEIGHT = 240;
+var DEFAULT_VIDEO_WIDTH = 320;
+var DEFAULT_VIDEO_CONTROLLER_HEIGHT = 16;
+var DEFAULT_VIDEO_DIALOG_EXTRA_WIDTH = 40;
+var DEFAULT_VIDEO_DIALOG_EXTRA_HEIGHT = 56;
+
 var defaultDialogTitle = _loc('View Media');
 
 var baseDialogOptions = {
@@ -60,8 +66,8 @@ $n2.MediaDisplay = $n2.Class({
 			,title: null
 			,author: null
 			,description: null
-			,videoWidth: 320 // not used for inline embed generation
-			,videoHeight: 240 // not used for inline embed generation
+			,width: null // hint of media width (optional)
+			,height: null // hint of media height (optional)
 			,onClose: function(opts) {}
 			,onError: function(err){ $n2.reportError(err); }
 		},opts_);
@@ -187,29 +193,32 @@ $n2.MediaDisplay = $n2.Class({
 				url: opts.url
 				,sourceType: 'video'
 				,mimeType: opts.mimeType
-//				,width: 200
-//				,height: 16
 				,autoplay: true
 				,loop: false
 				,controller: true
 			});
 		} else {
-			var embedOptions = $n2.extend({},
-					{
+			var embedOptions = $n2.extend({},{
 				url: opts.url
 				,sourceType: 'video'
-					,mimeType: opts.mimeType
-					,width: 320
-					,height: 256
-					,controller: true
-					}
-			);
+				,mimeType: opts.mimeType
+				,controller: true
+			});
 
 			if( opts.mediaDisplayVideoWidth ) {
 				embedOptions.width = opts.mediaDisplayVideoWidth;
+			} else if( opts.width ) {
+				embedOptions.width = opts.width;
+			} else {
+				embedOptions.width = DEFAULT_VIDEO_WIDTH;
 			};
+			
 			if( opts.mediaDisplayVideoHeight ) {
-				embedOptions.height = opts.mediaDisplayVideoHeight + 16;
+				embedOptions.height = opts.mediaDisplayVideoHeight + DEFAULT_VIDEO_CONTROLLER_HEIGHT;
+			} else if( opts.height ) {
+				embedOptions.height = opts.height + DEFAULT_VIDEO_CONTROLLER_HEIGHT;
+			} else {
+				embedOptions.height = DEFAULT_VIDEO_HEIGHT + DEFAULT_VIDEO_CONTROLLER_HEIGHT;
 			};
 
 			var embedHtml = this.generateEmbedMarkup(embedOptions);
@@ -223,24 +232,31 @@ $n2.MediaDisplay = $n2.Class({
 		
 		this._addMetaData(opts, $mediaDialog);
 
-		var dialogOptions = $n2.extend(
-			{},
-			baseDialogOptions,
-			{
+		var dialogOptions = $n2.extend({}
+			,baseDialogOptions
+			,{
 				title: dialogTitle
-				,width: 360
 				,close: function(){
 					$('#'+mediaDialogId).remove();
 					opts.onCloseHook();
 				}
 			}
 		);
+
+		// Dialog width
 		if( opts.mediaDisplayVideoWidth ) {
-			dialogOptions.width = opts.mediaDisplayVideoWidth + 40;
+			dialogOptions.width = opts.mediaDisplayVideoWidth + DEFAULT_VIDEO_DIALOG_EXTRA_WIDTH;
+		} else if( opts.width ) {
+			dialogOptions.width = opts.width + DEFAULT_VIDEO_DIALOG_EXTRA_WIDTH;
+		} else {
+			dialogOptions.width = DEFAULT_VIDEO_WIDTH + DEFAULT_VIDEO_DIALOG_EXTRA_WIDTH;
 		};
+		
+		// Dialog height
 		if( opts.mediaDisplayVideoHeight ) {
-			dialogOptions.height = opts.mediaDisplayVideoHeight + 56;
+			dialogOptions.height = opts.mediaDisplayVideoHeight + DEFAULT_VIDEO_DIALOG_EXTRA_HEIGHT;
 		};
+		
 		$mediaDialog.dialog(dialogOptions);
 	}
 
