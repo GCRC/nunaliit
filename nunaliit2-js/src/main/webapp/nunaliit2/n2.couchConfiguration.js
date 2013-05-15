@@ -254,6 +254,11 @@ function Configure(options_){
 	};
 	
 	function configurationDone(){
+		// Fix HTML from page
+		if( configuration.directory.showService ){
+			configuration.directory.showService.fixElementAndChildren( $('body') );
+		};
+		
 		$n2.log('nunaliit configuration',configuration);
 		options.onSuccess(configuration);
 	};

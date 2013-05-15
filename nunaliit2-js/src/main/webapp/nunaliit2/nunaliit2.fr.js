@@ -142,6 +142,7 @@ loadStrings({
 	,"Login":"Ouvrir session"
 	,"Logout":"Fermer session"
 	,"Logs":"Journal"
+	,"Made with Nunaliit":"Construit avec Nunaliit"
 	,"Media":"Média"
 	,"Module":"Module"
 	,"More Info":"Détails"
