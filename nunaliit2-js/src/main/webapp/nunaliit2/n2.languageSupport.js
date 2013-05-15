@@ -225,7 +225,7 @@ var LanguageService = $n2.Class({
 			name: 'nunaliit-l10n'
 			,value: lang
 			,path: '/'
-			,end: (60 * 60 * 24 * 90) // 90 days in seconds
+			// session cookie ,end: (60 * 60 * 24 * 90) // 90 days in seconds
 		});
 		
 		// Reload page
