@@ -196,6 +196,10 @@ function Configure(options_){
 			,designDoc: configuration.atlasDesign
 			,serviceDirectory: configuration.directory
 		});
+		
+	 	configuration.directory.userService = new $n2.couchUser.UserService({
+			userDb: $n2.couch.getUserDb()
+		});
 
 	 	configuration.contributions = new $n2.couchContributions({
 			db: configuration.atlasDb

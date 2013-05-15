@@ -1545,6 +1545,61 @@ var UserDb = $n2.Class(Database,{
 			return;
 		};
 		
+		this.computeUserPassword({
+			userDoc: opts.user
+			,password: opts.password
+			,onSuccess: function(userDoc){
+				$.ajax({
+			    	url: userDbUrl + opts.user._id
+			    	,type: 'PUT'
+			    	,async: true
+			    	,data: JSON.stringify(userDoc)
+			    	,contentType: 'application/json'
+			    	,dataType: 'json'
+			    	,success: function(docInfo) {
+			    		opts.onSuccess(docInfo);
+			    	}
+			    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+						var errStr = httpJsonError(XMLHttpRequest, textStatus);
+			    		opts.onError('Error changing user password: '+errStr);
+			    	}
+				});
+			}
+			,onError: opts.onError
+		});
+	}
+
+	,computeUserPassword: function(options_) {
+		var opts = $.extend({
+				userDoc: null
+				,password: null
+				,onSuccess: function(userDoc){}
+				,onError: function(errorMsg){ $n2.reportErrorForced(errorMsg); }
+			}
+			,options_
+		);
+
+		// Check that sha1 is installed
+		if( typeof(hex_sha1) !== 'function' ) {
+			opts.onError('SHA-1 must be installed');
+			return;
+		};
+
+		if( !JSON || typeof(JSON.stringify) !== 'function' ) {
+			opts.onError('json.js is required to set user password');
+			return;
+		};
+		
+		if( !opts.userDoc ) {
+			opts.onError('On setting password, a user document must be provided');
+			return;
+		};
+		
+		if( !opts.password ) {
+			opts.onError('On setting change, a valid password must be supplied');
+			return;
+		};
+		
 	    this.server.getUniqueId({
 			onSuccess: onUuid
 	    });
@@ -1554,24 +1609,10 @@ var UserDb = $n2.Class(Database,{
 			var password_sha = hex_sha1(opts.password + salt);
 		
 			// Update user document
-			opts.user.password_sha = password_sha;
-			opts.user.salt = salt;
-			
-			$.ajax({
-		    	url: userDbUrl + opts.user._id
-		    	,type: 'PUT'
-		    	,async: true
-		    	,data: JSON.stringify(opts.user)
-		    	,contentType: 'application/json'
-		    	,dataType: 'json'
-		    	,success: function(docInfo) {
-		    		opts.onSuccess(docInfo);
-		    	}
-		    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
-					var errStr = httpJsonError(XMLHttpRequest, textStatus);
-		    		opts.onError('Error changing user password: '+errStr);
-		    	}
-			});
+			opts.userDoc.password_sha = password_sha;
+			opts.userDoc.salt = salt;
+
+			opts.onSuccess(opts.userDoc);
 		};
 	}
 	
