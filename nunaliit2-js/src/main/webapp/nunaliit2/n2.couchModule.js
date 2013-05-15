@@ -449,6 +449,8 @@ var ModuleDisplay = $n2.Class({
 	
 	,navigationDoc: null
 	
+	,languageSwitcherName: null
+	
 	,styles: null
 	
 	,initialize: function(opts_){
@@ -465,6 +467,7 @@ var ModuleDisplay = $n2.Class({
 			,loginPanelName: 'login'
 			,navigationName: 'navigation'
 			,navigationDoc: null
+			,languageSwitcherName: null
 			,styleMapFn: null
 			,onSuccess: function(){}
 			,onError: function(err){ $n2.reportErrorForced(errorMsg); }
@@ -493,6 +496,7 @@ var ModuleDisplay = $n2.Class({
 		this.navigationDoc = opts.navigationDoc;
 		this.titleName = opts.titleName;
 		this.moduleTitleName = opts.moduleTitleName;
+		this.languageSwitcherName = opts.languageSwitcherName;
 		
 		// dispatcher
 		var d = this._getDispatcher();
@@ -592,6 +596,14 @@ var ModuleDisplay = $n2.Class({
 				//$('head > title').text(title);
 				document.title = title; // needed for IE 6
 				_this._installModuleTitle($('#'+opts.moduleTitleName), title);
+			};
+			
+			// Language switcher
+			if( _this.languageSwitcherName ){
+				new $n2.languageSupport.LanguageSwitcher({
+					elemId: _this.languageSwitcherName
+					,dispatcher: _this._getDispatcher()
+				});
 			};
 			
 			// Display Logic 

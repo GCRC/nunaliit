@@ -177,6 +177,10 @@ function Configure(options_){
 			db: configuration.atlasDb
 			,directory: configuration.directory
 		});
+
+		configuration.directory.languageService = new $n2.languageSupport.LanguageService({
+			directory: configuration.directory
+		});
 		
 	 	configuration.show = new $n2.couchShow.Show({
 			db: configuration.atlasDb

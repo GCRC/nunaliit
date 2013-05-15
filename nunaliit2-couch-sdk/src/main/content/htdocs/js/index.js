@@ -31,6 +31,7 @@ function main_init(config) {
 		,searchPanelName: 'searchInput'
 		,navigationName: 'navigation'
 		,navigationDoc: 'navigation.demo'
+		,languageSwitcherName: 'language_switcher'
 		,onSuccess: function(){
 			config.start();
 			

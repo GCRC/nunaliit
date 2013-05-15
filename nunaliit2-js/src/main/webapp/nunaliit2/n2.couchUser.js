@@ -437,7 +437,7 @@ var UserEditor = $n2.Class({
 		var patch = patcher.computePatch(this.originalDoc,this.userDoc);
 		if( patch ){
 			// Document was changed
-			if( false == confirm( _loc('Document was modified and changes will be last. Do you wish to continue?') ) ){
+			if( false == confirm( _loc('Document was modified and changes will be lost. Do you wish to continue?') ) ){
 				return;
 			};
 		};

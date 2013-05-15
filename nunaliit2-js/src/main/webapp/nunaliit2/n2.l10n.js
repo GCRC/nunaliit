@@ -55,6 +55,13 @@ var translationRequests = {};
 function getLocale() {
 	if( cachedLocale ) return cachedLocale;
 	
+	if( null == cachedLocale && $n2.cookie ) {
+		var lang = $n2.cookie.getCookie('nunaliit-l10n');
+		if( lang ) {
+			cachedLocale = createLocaleFromLanguage(lang);
+		};
+	};
+	
 	if( null == cachedLocale && $n2.url ) {
 		var lang = $n2.url.getParamValue('lang',null);
 		if( lang ) {

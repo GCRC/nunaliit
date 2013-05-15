@@ -173,6 +173,18 @@ color: #fff;
 	color: #fff;
 }
 
+/*
+Language Switcher
+*/
+.nunaliit_atlas .nunaliit_header_language {
+	float: right;
+	padding: 8px 20px;
+}
+.nunaliit_atlas .nunaliit_header_language a
+,.nunaliit_atlas .nunaliit_header_language a:visited {
+	color: #fff;
+	text-decoration: none;
+}
 
 /* ============================== */
 /* ! CONTENT SECTION   */
