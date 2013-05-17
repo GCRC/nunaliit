@@ -21,6 +21,13 @@
 			<div class="end"></div>
 		</div>
 	{{/demo_doc}}
+
+	<div>
+		<div class="label n2s_localize">Layers</div>
+		<div class="value">{{#:field}}nunaliit_layers,layers{{/:field}}</div>
+		<div class="end"></div>
+	</div>
+
 	{{#nunaliit_geom}}{{{:html}}}{{/nunaliit_geom}}
 
 	<div>

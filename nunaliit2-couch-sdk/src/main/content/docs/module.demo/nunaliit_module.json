@@ -46,7 +46,11 @@
 		,"overlays": [
 			{
 				"id": "approved"
-				,"name": "Approved Layer"
+				,"name": {
+					"nunaliit_type":"localized"
+					,"en":"Approved Layer"
+					,"fr":"Couche Approuvée"
+				}
 				,"type": "couchdb"
 				,"options": {
 					"layerName": "approved"
@@ -56,7 +60,11 @@
 			}
 			,{
 				"id": "public"
-				,"name": "Public"
+				,"name": {
+					"nunaliit_type":"localized"
+					,"en":"Public"
+					,"fr":"Couche Publique"
+				}
 				,"type": "couchdb"
 				,"options": {
 					"layerName": "public"

@@ -1,3 +1,7 @@
 {
-	"name": "Public"
+	"name": {
+		"nunaliit_type":"localized"
+		,"en":"Public"
+		,"fr":"Couche Publique"
+	}
 }

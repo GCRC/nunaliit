@@ -817,10 +817,12 @@ var Show = $n2.Class({
 		// Layer definition
 		if( doc.nunaliit_layer_definition
 		 && doc.nunaliit_layer_definition.name ){
+			var name = _loc(doc.nunaliit_layer_definition.name);
+			
 			var layerClass = 'n2ShowLayerName_'+$n2.utils.stringToHtmlId(id);
 			$('.'+layerClass).each(function(i,elem){
 				var $elem = $(elem);
-				$elem.text( doc.nunaliit_layer_definition.name );
+				$elem.text( name );
 			});
 		};
 	}

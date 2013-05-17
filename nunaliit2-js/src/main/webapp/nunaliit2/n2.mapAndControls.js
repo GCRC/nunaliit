@@ -1110,7 +1110,11 @@ var MapAndControls = $n2.Class({
 			showLayerSwitcher = false;
 		};
 		if( showLayerSwitcher ) {
-			var layerSwitcherControl = new OpenLayers.Control.LayerSwitcher();
+			if( OpenLayers.Control.NunaliitLayerSwitcher ){
+				var layerSwitcherControl = new OpenLayers.Control.NunaliitLayerSwitcher();
+			} else {
+				var layerSwitcherControl = new OpenLayers.Control.LayerSwitcher();
+			};
 			this.map.addControl(layerSwitcherControl);
 			if( layerSwitcherControl 
 			 && layerSwitcherControl.div ) {
@@ -1510,8 +1514,10 @@ var MapAndControls = $n2.Class({
 		// Derive database projection from name
 		layerInfo.sourceProjection = new OpenLayers.Projection(layerInfo.sourceSrsName);
 
+		layerInfo.name = _loc(layerInfo.name);
+		
 		var layerOptions = {
-			name: layerDefinition.name
+			name: layerInfo.name
 			,projection: layerInfo.sourceProjection
 			,visibility: layerInfo.visibility
 			,_layerInfo: layerInfo
@@ -1579,7 +1585,7 @@ var MapAndControls = $n2.Class({
 			
 		} else {
 			// Unrecognized layer
-			$n2.reportError('Unrecognized type ('+layerDefinition.type+') for layer: '+layerDefinition.name);
+			$n2.reportError('Unrecognized type ('+layerInfo.type+') for layer: '+layerInfo.name);
 		};
 
 		// Create style map
@@ -1728,18 +1734,20 @@ var MapAndControls = $n2.Class({
 	 * Creates a Layer from OpenLayers given the layer definition.
 	 */
 	,_createOLLayerFromDefinition: function(layerDefinition, isBaseLayer){
+		var name = _loc(layerDefinition.name);
+		
 		if( 'Bing' == layerDefinition.type ){
 			var options = layerDefinition.options;
 			if( options
 			 && options.key ) {
 				var opts = $n2.extend({
-					name: layerDefinition.name
+					name: name
 				},options);
 				var l = new OpenLayers.Layer.Bing(options);
 				return l;
 				
 			} else {
-				$n2.reportError('Bad configuration for layer: '+layerDefinition.name);
+				$n2.reportError('Bad configuration for layer: '+name);
 				return null;
 			};
 			
@@ -1761,11 +1769,11 @@ var MapAndControls = $n2.Class({
 			
 			if( options
 			 && options.type ) {
-				var l = new OpenLayers.Layer.Google(layerDefinition.name, options);
+				var l = new OpenLayers.Layer.Google(name, options);
 				return l;
 				
 			} else {
-				$n2.reportError('Bad configuration for layer: '+layerDefinition.name);
+				$n2.reportError('Bad configuration for layer: '+name);
 				return null;
 			};
 			
@@ -1800,12 +1808,12 @@ var MapAndControls = $n2.Class({
 						wmsOptions[key] = options[key];
 					};
 				};
-				var l = new OpenLayers.Layer.WMS(layerDefinition.name, wmsUrl, wmsOptions, layerOptions);
+				var l = new OpenLayers.Layer.WMS(name, wmsUrl, wmsOptions, layerOptions);
 				
 				return l;
 				
 			} else {
-				$n2.reportError('Bad configuration for layer: '+layerDefinition.name);
+				$n2.reportError('Bad configuration for layer: '+name);
 				return null;
 			};
 			
@@ -1832,7 +1840,7 @@ var MapAndControls = $n2.Class({
 				};
 			};
 
-			var l = new OpenLayers.Layer.OSM(layerDefinition.name, url, layerOptions);
+			var l = new OpenLayers.Layer.OSM(name, url, layerOptions);
 			return l;
 			
 		} else if( 'stamen' === layerDefinition.type ){
@@ -1863,8 +1871,8 @@ var MapAndControls = $n2.Class({
 					$n2.reportError('Option layerName must be specified for a Stamen background.');
 				}else{
 					var l = new OpenLayers.Layer.Stamen(layerName, layerOptions);
-					if( layerDefinition.name ) {
-						l.name = layerDefinition.name;
+					if( name ) {
+						l.name = name;
 					};
 					return l;
 				};

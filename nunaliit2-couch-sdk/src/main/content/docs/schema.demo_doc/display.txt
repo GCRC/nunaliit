@@ -42,6 +42,18 @@
 			{{/doc}}
 		{{/reference}}
 	{{/demo_doc}}
+	
+	{{#if nunaliit_layers}}
+		<div>
+			<div class="label n2s_localize">Layers</div>
+			<div class="value">
+				{{#each nunaliit_layers}}
+					<div class="n2s_insertLayerName">{{.}}</div>
+				{{/each}}
+			</div>
+			<div class="end"></div>
+		</div>
+	{{/if}}
 
 	{{#nunaliit_hoverSound}}
 		{{#doc}}

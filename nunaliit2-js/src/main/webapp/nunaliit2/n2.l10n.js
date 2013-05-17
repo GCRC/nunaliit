@@ -129,33 +129,60 @@ function getDictionaryFromLang(lang) {
 
 function getLocalizedString(str, packageName, args) {
 	var locale = getLocale();
-	
-	if( 'en' === locale.lang ) {
-		// Fetch replacement text
-		if( strings['en'][str] ){
-			str = strings['en'][str];
-		};
+	var lang = locale.lang;
+
+	// Assume that input str is english
+	var lookupStr = str;
+	var lookupLang = 'en';
+	var fallback = false;
+
+	// Handle content that contains translation
+	if( str.nunaliit_type === 'localized' ){
+		lookupStr = null;
 		
-		if( args ){
-			return $n2.utils.formatString(str,args);
+		// Check request language
+		if( typeof(str[lang]) === 'string' ) {
+			lookupStr = str[lang];
+			lookupLang = lang;
+
+		} else if( typeof(str.en) === 'string' ) {
+			// Fallback to 'en'
+			lookupStr = str.en;
+			lookupLang = lang;
+			fallback = true;
+			
+		} else {
+			// Fallback to any language
+			for(var fbLang in str){
+				if( 'nunaliit_type' === fbLang ){
+					// ignore
+				} else {
+					lookupStr = str[fbLang];
+					lookupLang = fbLang;
+					fallback = true;
+					break;
+				};
+			};
 		};
-		return str;
 	};
-	
-	var dic = getDictionaryFromLang(locale.lang);
-	var langStr = dic[str];
+
+	// Get translation from dictionary
+	var dic = getDictionaryFromLang(lang);
+	var langStr = dic[lookupStr];
 	
 	if( null == langStr ) {
-		// Not found in translation table. Request
-		// translation if a translation service is
-		// available.
-		requestTranslation(str, locale.lang, packageName);
-		
-		// Store english version for now
-		langStr = str;
-		dic[str] = langStr;
+		// Not in dictionary. Use lookup string
+		langStr = lookupStr;
+
+		if( lookupLang !== lang ) {
+			// Request tranlation for this language
+			requestTranslation(lookupStr, lang, packageName);
+			
+			// Store english version for now
+			dic[lookupStr] = langStr;
+		};
 	};
-	
+
 	if( args ){
 		return $n2.utils.formatString(langStr,args);
 	};
