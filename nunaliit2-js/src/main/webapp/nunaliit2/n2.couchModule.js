@@ -599,10 +599,10 @@ var ModuleDisplay = $n2.Class({
 			};
 			
 			// Language switcher
-			if( _this.languageSwitcherName ){
-				new $n2.languageSupport.LanguageSwitcher({
+			if( _this.languageSwitcherName
+			 && _this.config.directory.languageService ){
+				_this.config.directory.languageService.drawWidget({
 					elemId: _this.languageSwitcherName
-					,dispatcher: _this._getDispatcher()
 				});
 			};
 			
