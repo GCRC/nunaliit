@@ -376,3 +376,16 @@ ROLE LIST
 	overflow: auto;
 	margin-bottom: 5px;
 }
+
+
+/* 
+==============================
+Layer Switcher 
+==============================
+*/
+.n2layerSwitcher_layer label {
+	padding-left: 3px;
+}
+.n2layerSwitcher_layer svg {
+	padding-left: 3px;
+}

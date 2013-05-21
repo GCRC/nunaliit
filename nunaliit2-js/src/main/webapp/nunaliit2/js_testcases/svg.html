@@ -1,0 +1,58 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+		<title>SVG Test</title>		
+		<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/themes/base/jquery-ui.css" type="text/css" />
+		<link rel="stylesheet" href="../css/basic/n2.tree.css" type="text/css" />
+		<link rel="stylesheet" href="../css/basic/n2.slideEditor.css" type="text/css" />
+		
+	</head>
+	<body>
+
+		<h1>SVG Test</h1>
+		<div>
+			<svg width="20" height="20" viewBox="-10 -10 20 20">
+				<circle r="5" cx="0" cy="0" fill="#ff0000"></circle>
+			</svg>
+		</div>
+		<div id="dynamic">
+		</div>
+		
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/jquery-ui.min.js"></script>
+
+		<script type="text/javascript" src="../nunaliit2-debug.js"></script>
+
+		<script type="text/javascript">
+			// <!--
+			function createNode(type, id) {
+		        var node = document.createElementNS('http://www.w3.org/2000/svg', type);
+		        if (id) {
+		            node.setAttributeNS(null, 'id', id);
+		        }
+		        return node;    
+		    };
+
+		    function setAttr(node, name, value) {
+	            node.setAttributeNS(null, name, value);
+		    };
+			
+			jQuery().ready(function() {
+				var $dynamic = $('#dynamic');
+			
+				var svg = createNode('svg');
+				setAttr(svg,'width','20');
+				setAttr(svg,'height','20');
+				setAttr(svg,'viewBox','-10 -10 20 20');
+				$dynamic.append( $(svg) );
+				
+				var circle = createNode('circle');
+				setAttr(circle,'r',5);
+				setAttr(circle,'fill','#0000ff');
+				svg.appendChild(circle);
+			});
+			// -->
+		</script>
+	</body>
+</html>

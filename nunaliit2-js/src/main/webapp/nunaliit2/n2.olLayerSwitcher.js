@@ -359,10 +359,62 @@ OpenLayers.Control.NunaliitLayerSwitcher =
                 } else {
                 	$label.addClass('n2layerSwitcher_alignBaseline');
                 };
-
-                // create line break
-                var br = document.createElement("br");
-    
+                
+                if( !baseLayer && layer.styleMap ) {
+	                var g = new OpenLayers.Geometry.Point(0,0);
+	                var f = new OpenLayers.Feature.Vector(g);
+	                var style = layer.styleMap.createSymbolizer(f);
+	                
+	                // SVG
+	                var svg = this._createSVGNode('svg');
+	                this._setAttr(svg, 'version', '1.1');
+	                this._setAttr(svg, 'style', 'display:inline-block');
+	                this._setAttr(svg, 'width', 14);
+	                this._setAttr(svg, 'height', 14);
+	                this._setAttr(svg, 'viewBox', '-7 -7 14 14');
+	                this._setAttr(svg, '_layer', layer.id);
+	                this._setAttr(svg, '_layerSwitcher', this.id);
+	                this._addClass(svg, 'n2layerSwitcher_svg');
+	                var $svg = $(svg);
+	                
+	                // Geometry
+	                var geom = null;
+	                if( 'square' === style.graphicName ) {
+	                	geom = this._createSVGNode('path');
+		                this._setAttr(geom, 'd', 'M -4.4 -4.4 L -4.4 4.4 L 4.4 4.4 L 4.4 -4.4 Z');
+	                } else {
+		                geom = this._createSVGNode('circle');
+		                this._setAttr(geom, 'r', 5);
+	                };
+	                if( geom ) {
+		                for(var name in style){
+		                	var styleValue = style[name];
+		                	
+		                	if( 'fillColor' === name ){
+			                	this._setAttr(geom, 'fill', styleValue);
+			                	
+		                	} else if( 'fillOpacity' === name ){
+			                	this._setAttr(geom, 'fill-opacity', styleValue);
+			                	
+		                	} else if( 'strokeColor' === name ){
+			                	this._setAttr(geom, 'stroke', styleValue);
+			                	
+		                	} else if( 'strokeOpacity' === name ){
+			                	this._setAttr(geom, 'stroke-opacity', styleValue);
+			                	
+		                	} else if( 'strokeWidth' === name ){
+			                	this._setAttr(geom, 'stroke-width', styleValue);
+			                	
+		                	} else if( 'strokeLinecap' === name ){
+			                	this._setAttr(geom, 'stroke-linecap', styleValue);
+	
+		                	} else {
+		                		this._setAttr(geom, name, styleValue);
+		                	};
+		                };
+		                svg.appendChild(geom);
+	                };
+                };
                 
                 var groupArray = (baseLayer) ? this.baseLayers
                                              : this.dataLayers;
@@ -375,12 +427,16 @@ OpenLayers.Control.NunaliitLayerSwitcher =
     
                 var groupDiv = (baseLayer) ? this.baseLayersDiv
                                            : this.dataLayersDiv;
-                $('<div/>')
+                var $div = $('<div class="n2layerSwitcher_layer"/>')
                 	.append($input)
                 	.append($label)
                 	.appendTo( $(groupDiv) );
-            }
-        }
+                
+                if( !baseLayer ){
+                	$div.append($svg);
+                };
+            };
+        };
 
         // if no overlays, dont display the overlay label
         this.dataLbl.style.display = (containsOverlays) ? "" : "none";        
@@ -389,6 +445,31 @@ OpenLayers.Control.NunaliitLayerSwitcher =
         this.baseLbl.style.display = (containsBaseLayers) ? "" : "none";        
 
         return this.div;
+    },
+    
+    _createSVGNode: function(type, id) {
+        var node = document.createElementNS('http://www.w3.org/2000/svg', type);
+        if (id) {
+            node.setAttributeNS(null, 'id', id);
+        }
+        return node;    
+    },
+    
+    _setAttr: function(node, name, value) {
+    	node.setAttributeNS(null, name, value);
+    },
+    
+    _addClass: function(elem, className) {
+    	var classNames = [];
+    	
+    	if( elem.className ){
+    		var currentClasses = '' + elem.className;
+    		classNames = currentClasses.split(' ');
+    	};
+    	
+    	classNames.push(className);
+    	
+		elem.className = classNames.join(' ');
     },
 
     /** 
