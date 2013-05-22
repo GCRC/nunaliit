@@ -169,6 +169,13 @@ var DomStyler = $n2.Class({
 			_this._handleHover(contextDoc, $elem, opt);
 			$elem.removeClass('n2s_handleHover').addClass('n2s_handledHover');
 		};
+
+		// Install maximum height
+		$elem.find('.n2s_installMaxHeight').each(function(){
+			var $jq = $(this);
+			_this._installMaxHeight(contextDoc, $jq, opt);
+			$jq.removeClass('n2s_installMaxHeight').addClass('n2s_installedMaxHeight');
+		});
 	}
 
 	,_localize: function($jq, opt_) {
@@ -545,6 +552,53 @@ var DomStyler = $n2.Class({
 			});
 		} else {
 			$jq.empty();
+		};
+	}
+	
+	,_installMaxHeight: function(contextDoc, $jq, opt){
+		var maxHeight = $jq.attr('_maxheight');
+		
+		if( !maxHeight ) {
+			$jq.attr('n2s_error','Attribute _maxheight not found');
+			$n2.log('n2Show installMaxHeight: Attribute _maxHeight not found');
+		} else if( $jq.height() > maxHeight ) {
+			var showText = _loc('More');
+			var hideText = _loc('Less');
+			
+			var id = $n2.getUniqueId();
+			var inner = $jq.html();
+			var $content = $('<div class="n2show_maxHeightContent"></div>')
+				.attr('id',id)
+				.html(inner);
+			
+			$jq.empty().append($content);
+			
+			$content.css({
+				overflow: 'hidden'
+				,height: maxHeight + 'px'
+			});
+			
+			var $link = $('<a href="#" class="n2show_maxHeightLink"></a>')
+				.text(showText)
+				.click(function(e) {
+					e.preventDefault();
+
+					var $link = $(this);
+					var $content = $('#'+id);
+					if ($content.height() > maxHeight) {
+						$link.text(showText);
+						$content.css('height', maxHeight + 'px');
+					} else {
+						$link.text(hideText);
+						$content.css('height', 'auto');
+					};
+					
+					return false;
+				});
+
+			$('<div class="n2show_maxHeightLinkContainer"></div>')
+				.append($link)
+				.appendTo($jq);
 		};
 	}
 	
