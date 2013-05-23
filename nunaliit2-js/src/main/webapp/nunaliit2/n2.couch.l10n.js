@@ -112,7 +112,7 @@ function verifyRequests() {
 			}
 		}
 		,onError: function(errorMsg) {
-			$n2.reportError(errorMsg);
+			$n2.log(errorMsg);
 			verifyRequests();
 		}
 	});
