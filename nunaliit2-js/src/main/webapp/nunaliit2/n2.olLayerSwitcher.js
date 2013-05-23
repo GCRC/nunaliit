@@ -375,6 +375,9 @@ OpenLayers.Control.NunaliitLayerSwitcher =
                 	$input.attr('disabled','disabled');
                 }
                 
+                var $inputDiv = $('<div class="n2layerSwitcher_input_container"></div>')
+                	.append($input);
+                
                 // create span
                 var $label = $('<label/>')
                 	.attr('for',inputId)
@@ -394,6 +397,11 @@ OpenLayers.Control.NunaliitLayerSwitcher =
                 	$label.addClass('n2layerSwitcher_alignBaseline');
                 };
                 
+                var $labelDiv = $('<div class="n2layerSwitcher_label_container"></div>')
+                	.append($label);
+                
+                // SVG Preview
+                var $previewDiv = null;
                 if( !baseLayer && layer.styleMap ) {
 	                var g = new OpenLayers.Geometry.Point(0,0);
 	                var f = new OpenLayers.Feature.Vector(g);
@@ -448,6 +456,9 @@ OpenLayers.Control.NunaliitLayerSwitcher =
 		                
 		                geom.onclick = createSvgClickHandler(inputId);
 	                };
+	                
+	                $previewDiv = $('<div class="n2layerSwitcher_preview_container"></div>')
+	                	.append($svg);
                 };
                 
                 var groupArray = (baseLayer) ? this.baseLayers
@@ -462,15 +473,17 @@ OpenLayers.Control.NunaliitLayerSwitcher =
                 var groupDiv = (baseLayer) ? this.baseLayersDiv
                                            : this.dataLayersDiv;
                 var $div = $('<div class="n2layerSwitcher_layer"/>')
-                	.append($input)
-                	.append($label)
+                	.append($inputDiv)
+                	.append($labelDiv)
                 	.appendTo( $(groupDiv) );
+                if( $previewDiv ){
+                	$div.append($previewDiv);
+                };
                 
                 if( baseLayer ){
                 	$input.change(this.__baseFn);
                 } else {
                 	$input.change(this.__overlayFn);
-                	$div.append($svg);
                 };
             };
         };

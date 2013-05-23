@@ -383,9 +383,19 @@ ROLE LIST
 Layer Switcher 
 ==============================
 */
-.n2layerSwitcher_layer label {
-	padding-left: 3px;
+.olControlLayerSwitcher {
+	width: 215px;
 }
-.n2layerSwitcher_layer svg {
+.n2layerSwitcher_input_container
+,.n2layerSwitcher_label_container
+,.n2layerSwitcher_preview_container {
+	display: inline-block;
+	vertical-align: top;
+}
+.n2layerSwitcher_label_container {
+	padding-left: 3px;
+	width: 125px;
+}
+.n2layerSwitcher_preview_container {
 	padding-left: 3px;
 }
