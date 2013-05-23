@@ -220,12 +220,13 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 		// Compute a new name for the attachment, to reflect the conversion
 		{
 			String expectedExtension = "";
-			if( MultimediaClass.VIDEO == mmClass ){
-				expectedExtension = "mp4";
-			} else if( MultimediaClass.AUDIO == mmClass ){
-				expectedExtension = "mp3";
-			} else if( MultimediaClass.IMAGE == mmClass ){
-				expectedExtension = "jpeg";
+			if( null != request.getOutFile() ){
+				File convertedFile = request.getOutFile();
+				String name = convertedFile.getName();
+				int index = name.lastIndexOf('.');
+				if( index > 0 ){
+					expectedExtension = name.substring(index+1);
+				}
 			}
 			
 			String currentPrefix = attDescription.getAttachmentName();
@@ -288,7 +289,16 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 			File thumbFile = request.getThumbnailFile();
 			SystemFile thumbSf = SystemFile.getSystemFile(thumbFile);
 			
-			String thumbnailAttachmentName = computeThumbnailName(attDescription.getAttachmentName(),"jpeg");
+			String thumbExtension = "";
+			{
+				String name = thumbFile.getName();
+				int index = name.lastIndexOf('.');
+				if( index > 0 ){
+					thumbExtension = name.substring(index+1);
+				}
+			}
+			
+			String thumbnailAttachmentName = computeThumbnailName(attDescription.getAttachmentName(),thumbExtension);
 			AttachmentDescriptor thumbnailObj = conversionContext.getAttachmentDescription(thumbnailAttachmentName);
 
 			if( CouchNunaliitUtils.hasVetterRole(submitter, atlasName) ) {
@@ -537,7 +547,17 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 
 		// Compute attachment name
 		SystemFile thumbSf = SystemFile.getSystemFile(outFile);
-		String thumbnailAttachmentName = computeThumbnailName(attDescription.getAttachmentName(),"jpeg");
+		
+		String thumbExtension = "";
+		{
+			String name = outFile.getName();
+			int index = name.lastIndexOf('.');
+			if( index > 0 ){
+				thumbExtension = name.substring(index+1);
+			}
+		}
+		
+		String thumbnailAttachmentName = computeThumbnailName(attDescription.getAttachmentName(),thumbExtension);
 		
 		// Upload thumbnail
 		String thumbMimeType = thumbSf.getMimeType();

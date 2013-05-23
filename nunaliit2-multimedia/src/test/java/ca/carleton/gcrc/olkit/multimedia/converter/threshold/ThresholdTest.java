@@ -31,7 +31,7 @@ public class ThresholdTest extends TestCase {
 			fail("Unexpected JPEG/501");
 		}
 
-		if( false == imageThreshold.isConversionRequired("PNG", null, null, null, new Long(500), new Long(500)) ) {
+		if( true == imageThreshold.isConversionRequired("PNG", null, null, null, new Long(500), new Long(500)) ) {
 			fail("Unexpected PNG/500");
 		}
 	}

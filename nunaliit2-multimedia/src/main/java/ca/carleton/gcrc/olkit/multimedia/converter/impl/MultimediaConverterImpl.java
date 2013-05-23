@@ -110,7 +110,7 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 				if( index > 0 ) {
 					name = name.substring(0, index);
 				}
-				name = name+"_thumb.jpeg";
+				name = name+"_thumb.jpg";
 				
 				thumbnailFile = new File(parentDir, name);
 			}
@@ -237,6 +237,11 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 				reorientationRequired = true;
 			}
 		}
+
+		String outputExtension = getExtensionFromImageFormat(imageInfo.format);
+		if( null == outputExtension ){
+			outputExtension = "jpg";
+		}
 		
 		if( request.isSkipConversion() ){
 			progress.updateProgress(100);
@@ -255,7 +260,7 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 			File outFile = request.getOutFile();
 			if( null == outFile ) {
 				File parentDir = inFile.getParentFile();
-				outFile = File.createTempFile("conv", ".jpg", parentDir);
+				outFile = File.createTempFile("conv", "."+outputExtension, parentDir);
 			}
 			
 			ImageMagickProcessor im = imInfo.getProcessor(progress);
@@ -286,7 +291,7 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 				if( index > 0 ) {
 					name = name.substring(0, index);
 				}
-				name = name+"_thumb.jpeg";
+				name = name+"_thumb."+outputExtension;
 				
 				thumbnailFile = new File(parentDir, name);
 			}
@@ -334,6 +339,11 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 		
 		// Create thumbnail
 		if( null != imageInfo && request.isThumbnailRequested() ){
+			String outputExtension = getExtensionFromImageFormat(imageInfo.format);
+			if( null == outputExtension ){
+				outputExtension = "jpg";
+			}
+
 			File thumbnailFile = request.getThumbnailFile();
 			if( null == thumbnailFile ) {
 				File parentDir = inFile.getParentFile();
@@ -343,7 +353,7 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 				if( index > 0 ) {
 					name = name.substring(0, index);
 				}
-				name = name+"_thumb.png";
+				name = name+"_thumb."+outputExtension;
 				
 				thumbnailFile = new File(parentDir, name);
 			}
@@ -358,5 +368,16 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 			request.setThumbnailHeight( thumbImageInfo.height );
 			request.setThumbnailWidth( thumbImageInfo.width );
 		}
+	}
+	
+	private String getExtensionFromImageFormat(String imageFormat){
+		if( "JPEG".equals(imageFormat) ){
+			return "jpg";
+		} else if( "GIF".equals(imageFormat) ){
+			return "gif";
+		} else if( "PNG".equals(imageFormat) ){
+			return "png";
+		}
+		return null;
 	}
 }

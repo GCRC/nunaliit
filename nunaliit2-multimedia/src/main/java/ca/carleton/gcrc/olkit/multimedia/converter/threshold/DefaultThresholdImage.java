@@ -18,7 +18,9 @@ public class DefaultThresholdImage implements MultimediaConversionThreshold {
 			return true;
 		}
 		
-		if( false == "JPEG".equals( videoFormat ) ) {
+		if( false == "JPEG".equals( videoFormat )
+		 && false == "GIF".equals( videoFormat )
+		 && false == "PNG".equals( videoFormat ) ) {
 			return true;
 		}
 
