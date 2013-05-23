@@ -101,8 +101,22 @@ OpenLayers.Control.NunaliitLayerSwitcher =
      * options - {Object}
      */
     initialize: function(options) {
+    	var _this = this;
+    	
         OpenLayers.Control.prototype.initialize.apply(this, arguments);
         this.layerStates = [];
+
+        // Callback for base layer radio buttons
+        this.__baseFn = function(e){
+        	var $elem = $(this);
+        	return _this._onBaseLayerChanged($elem, e);
+        };
+
+        // Callback for vector layer checkbox buttons
+        this.__overlayFn = function(e){
+        	var $elem = $(this);
+        	return _this._onOverlayChanged($elem, e);
+        };
     },
 
     /**
@@ -151,7 +165,9 @@ OpenLayers.Control.NunaliitLayerSwitcher =
      *     switcher tabs.
      */  
     draw: function() {
-        OpenLayers.Control.prototype.draw.apply(this);
+		var _this = this;
+
+		OpenLayers.Control.prototype.draw.apply(this);
 
         // create layout divs
         this.loadContents();
@@ -163,52 +179,68 @@ OpenLayers.Control.NunaliitLayerSwitcher =
 
         // populate div with current info
         this.redraw();    
-        
-        var _this = this;
-        $(this.div).click(function(e){
-        	var b = $(this);
-        	_this.onButtonClick(e,b);
-        });
+
+        // Do not let click events leave the control and reach the map
+        // This allows the html elements to function properly
+		$(this.div).click(function(e){
+			var $elem = $(this);
+        	_this._onButtonClick($elem,e);
+
+        	if (e.stopPropagation) {
+				e.stopPropagation();
+			} else {
+				e.cancelBubble = true;
+			};
+			return true;
+		});
+
+		// Suppress double click
+		$(this.div).dblclick(function(e){
+        	if (e.stopPropagation) {
+				e.stopPropagation();
+			} else {
+				e.cancelBubble = true;
+			};
+			return false;
+		});
 
         return this.div;
     },
 
-    /**
-     * Method: onButtonClick
-     *
-     * Parameters:
-     * evt - {Event}
-     */
-    onButtonClick: function(evt) {
-    	var $button = $(evt.target);
-    	var layerSwitcherAttr = $button.attr('_layerSwitcher');
+    _onButtonClick: function($elem,evt) {
+    	var $elem = $(evt.target);
+    	var layerSwitcherAttr = $elem.attr('_layer_switcher');
     	
-        if( $button.hasClass('minimizeDiv') ) {
+        if( $elem.hasClass('minimizeDiv') ) {
             this.minimizeControl();
             
-        } else if( $button.hasClass('maximizeDiv') ) {
+        } else if( $elem.hasClass('maximizeDiv') ) {
             this.maximizeControl();
-            
-        } else if( layerSwitcherAttr === this.id ) {
-        	var forAttr = $button.attr('for')
-            if( forAttr ) {
-                $button = $('#'+forAttr);
-            }
-            if( false == $button.is(':disabled') ) {
-            	var type = $button.attr('type');
-                if( type === 'radio' ) {
-                	var _layer = $button.attr('_layer');
-                    $button.attr('checked','checked');
-                    this.map.setBaseLayer(this.map.getLayer(_layer));
-                } else {
-                	if( $button.is(':checked') ){
-                		$button.removeAttr('checked');
-                	} else {
-                        $button.attr('checked','checked');
-                	};
-                    this.updateMap();
-                }
-            }
+        };
+    },
+    
+    _onBaseLayerChanged: function($elem, e){
+    	if( $elem.is(':checked') ) {
+	    	var _layer = $elem.attr('_layer');
+	        this.map.setBaseLayer( this.map.getLayer(_layer) );
+    	};
+    	return true;
+    },
+    
+    _onOverlayChanged: function($elem, e){
+        this.updateMap();
+    },
+    
+    _onSvgClick: function(elemId, e){
+        var $input = $('#'+elemId);
+
+        if( false == $input.is(':disabled') ) {
+            if( $input.is(':checked') ){
+            	$input.removeAttr('checked');
+        	} else {
+        		$input.attr('checked','checked');
+        	};
+            this.updateMap();
         };
     },
 
@@ -264,6 +296,8 @@ OpenLayers.Control.NunaliitLayerSwitcher =
      * {DOMElement} A reference to the DIV DOMElement containing the control
      */  
     redraw: function() {
+    	var _this = this;
+    	
         //if the state hasn't changed since last redraw, no need 
         // to do anything. Just return the existing div.
         if (!this.checkRedraw()) { 
@@ -317,7 +351,7 @@ OpenLayers.Control.NunaliitLayerSwitcher =
                 var $input = $('<input/>')
                 	.attr('id',inputId)
                 	.attr('_layer',layer.id)
-                	.attr('_layerSwitcher',this.id)
+                	.attr('_layer_switcher',this.id)
                 	.attr('defaultChecked',checked)
                 	.val(layer.name)
                 	.addClass('olButton')
@@ -346,7 +380,7 @@ OpenLayers.Control.NunaliitLayerSwitcher =
                 	.attr('for',inputId)
                 	.addClass('labelSpan')
                 	.addClass('olButton')
-                	.attr('_layerSwitcher',this.id)
+                	.attr('_layer_switcher',this.id)
                 	.text(layer.name)
                 	;
 
@@ -372,8 +406,6 @@ OpenLayers.Control.NunaliitLayerSwitcher =
 	                this._setAttr(svg, 'width', 14);
 	                this._setAttr(svg, 'height', 14);
 	                this._setAttr(svg, 'viewBox', '-7 -7 14 14');
-	                this._setAttr(svg, '_layer', layer.id);
-	                this._setAttr(svg, '_layerSwitcher', this.id);
 	                this._addClass(svg, 'n2layerSwitcher_svg');
 	                var $svg = $(svg);
 	                
@@ -413,6 +445,8 @@ OpenLayers.Control.NunaliitLayerSwitcher =
 		                	};
 		                };
 		                svg.appendChild(geom);
+		                
+		                geom.onclick = createSvgClickHandler(inputId);
 	                };
                 };
                 
@@ -432,7 +466,10 @@ OpenLayers.Control.NunaliitLayerSwitcher =
                 	.append($label)
                 	.appendTo( $(groupDiv) );
                 
-                if( !baseLayer ){
+                if( baseLayer ){
+                	$input.change(this.__baseFn);
+                } else {
+                	$input.change(this.__overlayFn);
                 	$div.append($svg);
                 };
             };
@@ -445,6 +482,12 @@ OpenLayers.Control.NunaliitLayerSwitcher =
         this.baseLbl.style.display = (containsBaseLayers) ? "" : "none";        
 
         return this.div;
+        
+        function createSvgClickHandler(elemId){
+        	return function(e){
+        		return _this._onSvgClick(elemId,e);
+        	};
+        };
     },
     
     _createSVGNode: function(type, id) {
