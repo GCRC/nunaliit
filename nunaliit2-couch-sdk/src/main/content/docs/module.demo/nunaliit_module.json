@@ -83,4 +83,8 @@
 		"defaultSchemaName": "demo_doc"
 		,"newDocumentSchemaNames": ["demo_doc"]
 	}
+	,"help":{
+		"nunaliit_type":"reference"
+		,"doc":"help.demo"
+	}
 }

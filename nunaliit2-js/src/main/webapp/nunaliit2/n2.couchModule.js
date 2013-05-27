@@ -451,6 +451,10 @@ var ModuleDisplay = $n2.Class({
 	
 	,languageSwitcherName: null
 	
+	,helpButtonName: null
+	
+	,helpDialogId: null
+	
 	,styles: null
 	
 	,initialize: function(opts_){
@@ -468,6 +472,7 @@ var ModuleDisplay = $n2.Class({
 			,navigationName: 'navigation'
 			,navigationDoc: null
 			,languageSwitcherName: null
+			,helpButtonName: null
 			,styleMapFn: null
 			,onSuccess: function(){}
 			,onError: function(err){ $n2.reportErrorForced(errorMsg); }
@@ -497,6 +502,7 @@ var ModuleDisplay = $n2.Class({
 		this.titleName = opts.titleName;
 		this.moduleTitleName = opts.moduleTitleName;
 		this.languageSwitcherName = opts.languageSwitcherName;
+		this.helpButtonName = opts.helpButtonName;
 		
 		// dispatcher
 		var d = this._getDispatcher();
@@ -604,6 +610,11 @@ var ModuleDisplay = $n2.Class({
 				_this.config.directory.languageService.drawWidget({
 					elemId: _this.languageSwitcherName
 				});
+			};
+			
+			// Help button
+			if( moduleInfo.help && _this.helpButtonName ){
+				_this._installHelpButton();
 			};
 			
 			// Display Logic 
@@ -1099,6 +1110,84 @@ var ModuleDisplay = $n2.Class({
 			// Follow link
 			return true;
 		});
+	}
+	
+	,_installHelpButton: function(){
+		var _this = this;
+		
+		var $elem = $('#'+this.helpButtonName);
+		if( $elem.length < 1 ) return; // nothing to do
+		
+		$elem.empty();
+		
+		// Load help text
+		var moduleInfo = this.module.getModuleInfo();
+		if( moduleInfo.help 
+		 && moduleInfo.help.nunaliit_type === 'reference'
+		 && moduleInfo.help.doc ){
+			// load up help document
+			this.config.atlasDb.getDocument({
+				docId: moduleInfo.help.doc
+				,onSuccess: function(doc){
+					if( doc 
+					 && doc.nunaliit_help
+					 && doc.nunaliit_help.type === 'html'
+					 && doc.nunaliit_help.content ){
+						helpContentHtml(doc.nunaliit_help.content);
+					} else {
+						$n2.log('Do not know how to interpret help document');
+						$elem.attr('n2_error','Do not know how to interpret help document');
+					};
+				}
+				,onError: function(err){
+					$n2.log('Unable to load help document',err);
+					$elem.attr('n2_error','Unable to load help document'+err);
+				}
+			});
+			
+		} else {
+			$n2.log('Do not know how to handle help information');
+			$elem.attr('n2_error','Do not know how to handle help information');
+		};
+
+		function helpContentHtml(baseContent){
+			// localize content
+			var content = _loc(baseContent);
+			
+			var $a = $('<a class="nunaliit_module_help_button" href="#"></a>');
+			$a.text( _loc('Help') );
+			
+			$('#'+_this.helpButtonName)
+				.empty()
+				.append($a);
+			
+			$a.click(function(){
+				if( !_this.helpDialogId ){
+					_this.helpDialogId = $n2.getUniqueId();
+				};
+				
+				// If open, then close it
+				var $dialog = $('#'+_this.helpDialogId);
+				if( $dialog.length > 0 ){
+					$dialog.dialog('close');
+				} else {
+					$dialog = $('<div id="'+_this.helpDialogId+'"></div>');
+					$dialog.html(content);
+					var dialogOptions = {
+						autoOpen: true
+						,title: _loc('Help')
+						,modal: false
+						,width: 740
+						,close: function(event, ui){
+							var diag = $(event.target);
+							diag.dialog('destroy');
+							diag.remove();
+						}
+					};
+					$dialog.dialog(dialogOptions);
+				};
+			});
+		};
 	}
 });
 

@@ -32,6 +32,7 @@ function main_init(config) {
 		,navigationName: 'navigation'
 		,navigationDoc: 'navigation.demo'
 		,languageSwitcherName: 'language_switcher'
+		,helpButtonName: 'help_button'
 		,onSuccess: function(){
 			config.start();
 			

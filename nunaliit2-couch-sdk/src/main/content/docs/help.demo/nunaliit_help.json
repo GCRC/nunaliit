@@ -1,0 +1,9 @@
+{
+	"nunaliit_type":"help"
+	,"type":"html"
+	,"content":{
+		"nunaliit_type":"localized"
+		,"en":"<b>This is the help section.</b>"
+		,"fr":"<b>Ceci est la section d'aide.</b>"
+	}
+}

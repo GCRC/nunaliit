@@ -186,6 +186,20 @@ Language Switcher
 	text-decoration: none;
 }
 
+/*
+Help Button
+*/
+.nunaliit_atlas .nunaliit_help_button {
+	float: right;
+	padding: 8px 20px;
+}
+.nunaliit_atlas .nunaliit_help_button a
+,.nunaliit_atlas .nunaliit_help_button a:visited {
+	color: #fff;
+	text-decoration: none;
+}
+
+
 /* ============================== */
 /* ! CONTENT SECTION   */
 /* ============================== */
