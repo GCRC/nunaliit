@@ -35,7 +35,7 @@ public class MultimediaConverterTest extends TestCase {
 		}
 		
 		SystemFile sf = SystemFile.getSystemFile(request.getOutFile());
-		if( false == "image/jpeg".equals( sf.getMimeType() ) ) {
+		if( false == "image/gif".equals( sf.getMimeType() ) ) {
 			fail("Unexpected mime type: "+sf.getMimeType());
 		}
 	}

@@ -14,8 +14,8 @@ public interface FFmpegProcessor {
 	
 	void convertAudio(FFmpegMediaInfo inputVideo, File outputFile) throws Exception;
 	
-	void createThumbnail(File inputFile, File outputFile, int width, int height) throws Exception;
+	void createThumbnail(File inputFile, File outputFile, int maxWidth, int maxHeight) throws Exception;
 	
-	void createThumbnail(FFmpegMediaInfo inputVideo, File outputFile, int width, int height) throws Exception;
+	void createThumbnail(FFmpegMediaInfo inputVideo, File outputFile, int maxWidth, int maxHeight) throws Exception;
 
 }

@@ -141,13 +141,28 @@ public class FFmpegProcessorDefault implements FFmpegProcessor {
 	}
 	
 	@Override
-	public void createThumbnail(File inputFile, File outputFile, int width, int height) throws Exception {
+	public void createThumbnail(File inputFile, File outputFile, int maxWidth, int maxHeight) throws Exception {
 		FFmpegMediaInfo inputVideo = getMediaInfo(inputFile);
-		createThumbnail(inputVideo, outputFile, width, height);
+		createThumbnail(inputVideo, outputFile, maxWidth, maxHeight);
 	}
 	
 	@Override
-	public void createThumbnail(FFmpegMediaInfo inputVideo, File outputFile, int width, int height) throws Exception {
+	public void createThumbnail(FFmpegMediaInfo inputVideo, File outputFile, int maxWidth, int maxHeight) throws Exception {
+		
+		// Compute width and height, preserving aspect ratio
+		int width = maxWidth;
+		int height = maxHeight;
+		if( null != inputVideo.getWidth() 
+		 && null != inputVideo.getHeight() ){
+			long inputHeight = inputVideo.getHeight();
+			long inputWidth = inputVideo.getWidth();
+			float ratio = (float)inputHeight / (float)inputWidth;
+			height = Math.round(width * ratio);
+			if( height > maxHeight ){
+				height = maxHeight;
+				width = (int)(height / ratio);
+			}
+		}
 		
 		Runtime rt = Runtime.getRuntime();
 		String command = null;

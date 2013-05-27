@@ -34,10 +34,9 @@ package ca.carleton.gcrc.olkit.multimedia.ffmpeg;
 
 import java.io.File;
 
+import junit.framework.TestCase;
 import ca.carleton.gcrc.olkit.multimedia.utils.MultimediaTestingProgress;
 import ca.carleton.gcrc.olkit.multimedia.utils.TestConfiguration;
-
-import junit.framework.TestCase;
 
 public class FFmpegTest extends TestCase {
 
@@ -268,7 +267,7 @@ public class FFmpegTest extends TestCase {
 			File parent = file.getParentFile();
 			File output = new File(parent,"whale_thumb.png");
 			
-			ffmpeg.createThumbnail(file, output, 80, 60);
+			ffmpeg.createThumbnail(file, output, 80, 80);
 			
 			if( false == output.exists() ) {
 				fail("Output file not created");
