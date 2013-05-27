@@ -399,3 +399,10 @@ Layer Switcher
 .n2layerSwitcher_preview_container {
 	padding-left: 3px;
 }
+
+/*
+Max Height Widget
+*/
+.n2show_maxHeight_truncated {
+	-webkit-mask-image: -webkit-gradient(linear, left 85%, left bottom, from(rgba(0,0,0,1)), to(rgba(0,0,0,0)));
+}

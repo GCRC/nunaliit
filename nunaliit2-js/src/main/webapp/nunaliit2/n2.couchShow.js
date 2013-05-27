@@ -567,7 +567,7 @@ var DomStyler = $n2.Class({
 			
 			var id = $n2.getUniqueId();
 			var inner = $jq.html();
-			var $content = $('<div class="n2show_maxHeightContent"></div>')
+			var $content = $('<div class="n2show_maxHeightContent n2show_maxHeight_truncated"></div>')
 				.attr('id',id)
 				.html(inner);
 			
@@ -587,10 +587,16 @@ var DomStyler = $n2.Class({
 					var $content = $('#'+id);
 					if ($content.height() > maxHeight) {
 						$link.text(showText);
-						$content.css('height', maxHeight + 'px');
+						$content
+							.css('height', maxHeight + 'px')
+							.addClass('n2show_maxHeight_truncated')
+							.removeClass('n2show_maxHeight_full');
 					} else {
 						$link.text(hideText);
-						$content.css('height', 'auto');
+						$content
+							.css('height', 'auto')
+							.addClass('n2show_maxHeight_full')
+							.removeClass('n2show_maxHeight_truncated');
 					};
 					
 					return false;

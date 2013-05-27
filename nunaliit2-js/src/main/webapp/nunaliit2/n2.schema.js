@@ -204,10 +204,18 @@ function _formSingleField(r,obj,sels,options){
 };
 
 function _formField() {
+	// The arguments to handlebars block expression functions are:
+	// ([obj,]options)
+	// obj is not provided in this case, since we do not expect any arguments
+	// to {{:field}}
+	// The options hash contains a "fn" attribute, which is a function to
+	// render inner content.
+	// this points to the current object
 	var args = [];
 	args.push.apply(args,arguments);
 	var options = args.pop();
 	
+	// Gets the text between start and end tags
 	var text = options.fn(this);
 
 	// Syntax is: <selector>(,<option>)*
