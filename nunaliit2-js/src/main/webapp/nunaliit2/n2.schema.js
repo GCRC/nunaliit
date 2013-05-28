@@ -102,7 +102,11 @@ function _localizeString() {
 	var options = args.pop();
 	
 	var key = options.fn(this);
-	var s = getDataFromObjectSelector(this, key);
+	if( '.' === key ) {
+		var s = this;
+	} else {
+		s = getDataFromObjectSelector(this, key);
+	};
 
 	if( typeof(s) === 'object' 
 	 && s.nunaliit_type === 'localized') {
