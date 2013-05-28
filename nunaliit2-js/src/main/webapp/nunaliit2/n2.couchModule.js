@@ -1182,7 +1182,12 @@ var ModuleDisplay = $n2.Class({
 						autoOpen: true
 						,title: _loc('Help')
 						,modal: false
-						,width: 740
+						,width: 400
+						,position:{
+							my: 'right top'
+							,at: 'right bottom'
+							,of: $('#'+_this.helpButtonName+' .nunaliit_module_help_button')
+						}
 					};
 					$dialog.dialog(dialogOptions);
 					$dialog.parents('div.ui-dialog').addClass('n2module_help_dialog');
