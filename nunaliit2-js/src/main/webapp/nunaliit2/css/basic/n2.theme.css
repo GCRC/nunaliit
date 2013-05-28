@@ -136,14 +136,14 @@ color: #fff;
 	display: table-row;
 	top:0;
 	right:20px;
-	height:70px;
+	height:71px;
 	overflow: hidden;
 	z-index:10;
 }	
 .nunaliit_atlas .nunaliit_login_link_outer_container {
 	display: table-cell;
 	vertical-align: middle;
-	height:70px;
+	height:71px;
 	width: 36px;
 	border-left: 1px solid #838383;
 	border-right: 1px solid #838383;
