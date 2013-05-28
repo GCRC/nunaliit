@@ -401,8 +401,22 @@ Layer Switcher
 }
 
 /*
+==============================
 Max Height Widget
+==============================
 */
 .n2show_maxHeight_truncated {
 	-webkit-mask-image: -webkit-gradient(linear, left 85%, left bottom, from(rgba(0,0,0,1)), to(rgba(0,0,0,0)));
+}
+
+/* 
+==============================
+Help Dialog 
+==============================
+*/
+.n2module_help_dialog .ui-dialog-titlebar {
+	background: rgba(58, 58, 58, 1);
+	color: rgba(255, 255, 255, 1);
+	font-family: helvetica, sans-serif;
+	font-weight: 500;
 }

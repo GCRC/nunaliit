@@ -1169,7 +1169,12 @@ var ModuleDisplay = $n2.Class({
 				// If open, then close it
 				var $dialog = $('#'+_this.helpDialogId);
 				if( $dialog.length > 0 ){
-					$dialog.dialog('close');
+					var isOpen = $dialog.dialog('isOpen');
+					if( isOpen  ) {
+						$dialog.dialog('close');
+					} else {
+						$dialog.dialog('open');
+					};
 				} else {
 					$dialog = $('<div id="'+_this.helpDialogId+'"></div>');
 					$dialog.html(content);
@@ -1178,13 +1183,9 @@ var ModuleDisplay = $n2.Class({
 						,title: _loc('Help')
 						,modal: false
 						,width: 740
-						,close: function(event, ui){
-							var diag = $(event.target);
-							diag.dialog('destroy');
-							diag.remove();
-						}
 					};
 					$dialog.dialog(dialogOptions);
+					$dialog.parents('div.ui-dialog').addClass('n2module_help_dialog');
 				};
 			});
 		};
