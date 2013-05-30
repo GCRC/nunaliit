@@ -4,6 +4,17 @@
 # THIS SCRIPT IS GENERATED AUTOMATICALLY. DO NOT EDIT BY HAND.
 # ************************************************************
 
+### BEGIN INIT INFO
+# Provides:          nunaliit
+# Required-Start:    $remote_fs $syslog $network
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start nunaliit at boot time
+# Description:       Enable nunaliit atlas framework for an atlas.
+### END INIT INFO
+
+
 # NUNALIIT_CMD
 #   The Nunaliit command line application
 #   
