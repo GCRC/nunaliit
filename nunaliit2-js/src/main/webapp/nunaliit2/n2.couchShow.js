@@ -189,16 +189,39 @@ var DomStyler = $n2.Class({
 	}
 	
 	,_preserveSpaces: function($jq, opt_) {
-		var _this = this;
-
-		var text = $jq.text();
-		var lines = text.split('\n');
-		if( lines.length > 0 ) {
-			$jq.empty();
-			for(var i=0,e=lines.length; i<e; ++i){
-				var $p = $('<p></p>');
-				$p.text(lines[i]);
-				$jq.append($p);
+		$jq.each(function(){
+			performPreserveSpace(this);
+		});
+		
+		function performPreserveSpace(parent){
+			var node = parent.firstChild;
+			while(node){
+				if( node.nodeType === 3 ){ // text node
+					var text = node.textContent;
+					var splits = text.split('\n');
+					if( splits.length < 2 ){
+						// nothing to do
+						node = node.nextSibling;
+					} else {
+						// Split text
+						for(var i=0,e=splits.length; i<e; ++i){
+							if( i !== 0 ){
+								var brElem = parent.ownerDocument.createElement('br');
+								parent.insertBefore(brElem,node);
+							};
+							var splitNode = parent.ownerDocument.createTextNode(splits[i]);
+							parent.insertBefore(splitNode,node);
+						};
+						
+						// Remove current text node
+						var textNode = node;
+						node = node.nextSibling;
+						parent.removeChild(textNode);
+					};
+				} else {
+					performPreserveSpace(node);
+					node = node.nextSibling;
+				};
 			};
 		};
 	}
