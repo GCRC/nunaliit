@@ -2069,7 +2069,7 @@
 		
 		bs();
 
-		log( _log('Select application started') );
+		log( _loc('Select application started') );
 	};
 
 	
