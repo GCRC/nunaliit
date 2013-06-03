@@ -195,6 +195,9 @@ function _formSingleField(r,obj,sels,options){
 		
 	} else if( options.layers ){
 		r.push(' ' + typeClassStringPrefix + 'layers');
+		
+	} else if( options.localized ){
+		r.push(' ' + typeClassStringPrefix + 'localized');
 	};
 
 	if( options.textarea ){
@@ -255,10 +258,10 @@ function _formField() {
 			if( valSplits.length > 1 ) {
 				opts[optSplit[0]]=valSplits;
 			} else {
-				opts[optSplit[0]]=optSplit[1];
+				opts[optSplit[0]]=[optSplit[1]];
 			};
 		} else {
-			opts[optSplit[0]]=true;
+			opts[optSplit[0]]=[];
 		};
 	};
 	
@@ -267,16 +270,55 @@ function _formField() {
 	r.push('<div class="n2s_field_wrapper">');
 
 	if( obj && obj.nunaliit_type === 'localized' ) {
+		var langs = [];
 		for(var lang in obj){
 			if( lang === 'nunaliit_type' || lang[0] === ':' ){
 				// ignore
-			} else {
-				r.push('<div class="n2s_field_container n2s_field_container_localized">');
-				r.push('<span class="n2_localize_lang">('+lang+')</span>');
-				_formSingleField(r,obj,[lang],opts);
-				r.push('</div>');
+			} else if( langs.indexOf(lang) < 0 ) {
+				langs.push(lang);
 			};
 		};
+		if( opts.localized && opts.localized.length ){
+			for(var i=0,e=opts.localized.length;i<e;++i){
+				var lang = opts.localized[i];
+				if( langs.indexOf(lang) < 0 ) {
+					langs.push(lang);
+				};
+			};
+		};
+		langs.sort();
+		
+		// Turn on "localized" option, if not already on
+		if( !opts.localized ){
+			opts.localized = [];
+		};
+		
+		for(var i=0,e=langs.length;i<e;++i){
+			var lang = langs[i];
+			r.push('<div class="n2s_field_container n2s_field_container_localized">');
+			r.push('<span class="n2_localize_lang">('+lang+')</span>');
+			_formSingleField(r,obj,[lang],opts);
+			r.push('</div>');
+		};
+		
+	} else if( !obj && opts.localized ) {
+		// This is a localized string that does not yet exist
+
+		var langs = opts.localized.slice();//copy
+		langs.sort();
+		
+		for(var i=0,e=langs.length;i<e;++i){
+			var lang = langs[i];
+			
+			var langSel = sels.slice();//copy
+			langSel.push(lang);
+			
+			r.push('<div class="n2s_field_container n2s_field_container_localized">');
+			r.push('<span class="n2_localize_lang">('+lang+')</span>');
+			_formSingleField(r,this,langSel,opts);
+			r.push('</div>');
+		};
+
 	} else {
 		r.push('<div class="n2s_field_container">');
 		_formSingleField(r,this,sels,opts);
@@ -1257,6 +1299,8 @@ function createClassStringFromSelector(selector, key) {
 	return cs.join('');
 };
 
+// Given a class name, returns an array that represents the encoded selector.
+// Returns null if the class name is not encoding a selector
 function createSelectorFromClassString(classString) {
 	if( selectorClassStringPrefix === classString.substr(0,selectorClassStringPrefix.length) ) {
 		var selectorString = classString.substr(selectorClassStringPrefix.length+1);
@@ -1756,6 +1800,21 @@ var Form = $n2.Class({
 			var $input = $(this);
 			var parentObj = getDataFromObjectSelector(obj, parentSelector);
 			var effectiveKey = key;
+			
+			if( !parentObj ){
+				if( 'localized' === keyType ) {
+					// Materialize the parent of a localized string
+					var gpSel = parentSelector.slice();
+					var parentKey = gpSel.pop();
+					
+					var gpObj = getDataFromObjectSelector(obj, gpSel);
+					if( gpObj ){
+						parentObj = {'nunaliit_type':'localized'};
+						gpObj[parentKey] = parentObj;
+					};
+				};
+			};
+			
 			if( null != parentObj ) {
 				var assignValue = true;
 				var type = $input.attr('type');
