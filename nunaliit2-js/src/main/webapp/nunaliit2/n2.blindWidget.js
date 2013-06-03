@@ -77,13 +77,13 @@ $Id: n2.blindWidget.js 8437 2012-08-14 17:59:23Z jpfiset $
 			var headerText = $header.text();
 			$header.empty()
 				.append( $('<span class="ui-icon ui-icon-triangle-1-e"></span>') )
-				.append( $('<a class="n2BlindA" href="#"></a>') );
-			$header.find('a')
-				.text(headerText)
+				.append( $('<a class="n2BlindA" href="#"></a>') )
 				.click(function(){
 					_this._headerClicked();
 					return false;
 				});
+			$header.find('a')
+				.text(headerText);
 			$header.addClass('ui-accordion-header ui-helper-reset ui-state-default ui-corner-top');
 			
 			$div
