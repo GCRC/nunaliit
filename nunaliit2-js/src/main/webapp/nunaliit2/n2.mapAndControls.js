@@ -2174,16 +2174,30 @@ var MapAndControls = $n2.Class({
 	,_startFocus: function(features, fid){
 		this._endFocus();
 		
-		this._addFocus(features, fid);
+		this.focusInfo.origin = fid;
+		
+		this._addFocus({
+			features: features
+			,fid: fid
+			,origin: fid
+		});
 	}
 
-	,_addFocus: function(features, fid){
-		this.focusInfo.fids[fid] = true;
+	,_addFocus: function(opts){
+		if( opts.origin && opts.origin !== this.focusInfo.origin ){
+			// Ignore. Arrived too late.
+			return;
+		};
 		
-		for(var i=0,e=features.length; i<e; ++i){
-			var f = features[i];
+		this.focusInfo.fids[opts.fid] = true;
+		
+		for(var i=0,e=opts.features.length; i<e; ++i){
+			var f = opts.features[i];
 			if( f && !f.isHovered ) {
 				f.isHovered = true;
+				if( opts.intent ){
+					f.n2Intent = opts.intent;
+				};
 				if( f.layer ) f.layer.drawFeature(f);
 				this.focusInfo.features.push( f );
 			};
@@ -2195,12 +2209,14 @@ var MapAndControls = $n2.Class({
 			var feature = this.focusInfo.features[i];
 			if( feature.isHovered ) {
 				feature.isHovered = false;
+				feature.n2Intent = null;
 				if( feature.layer ) feature.layer.drawFeature(feature);
 			};
 		};
 
 		this.focusInfo.features = [];
 		this.focusInfo.fids = {};
+		this.focusInfo.origin = null;
 	}
 
 	,activateSelectFeatureControl: function() {
@@ -3926,7 +3942,12 @@ var MapAndControls = $n2.Class({
 			var fid = m.docId;
 			if( fid ) {
 				var features = this._getFeaturesFromFid(fid);
-				this._addFocus(features,fid);
+				this._addFocus({
+					fid: fid
+					,features: features
+					,intent: m.intent
+					,origin: m.origin
+				});
 			};
 			
 		} else if( 'findOnMap' === type ) {

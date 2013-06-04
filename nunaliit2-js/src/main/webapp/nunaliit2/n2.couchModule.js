@@ -124,6 +124,8 @@ var MapFeatureStyles = $n2.Class({
 	
 	,stylesFromSchema: null
 	
+	,stylesFromIntents: null
+	
 	,initialize: function(userStyles){
 		
 		if( userStyles ) {
@@ -153,6 +155,16 @@ var MapFeatureStyles = $n2.Class({
 				var schemaDef = userStyles.schemas[schemaName];
 				var schemaSet = this._computeStyleSet(schemaDef);
 				this.stylesFromSchema[schemaName] = schemaSet;
+			};
+		};
+		
+		// Create styles for intents
+		this.stylesFromIntents = {};
+		if( userStyles && userStyles.intents ){
+			for(var intent in userStyles.intents){
+				var intentDef = userStyles.intents[intent];
+				var intentSet = this._computeStyleSet(intentDef);
+				this.stylesFromIntents[intent] = intentSet;
 			};
 		};
 	}
@@ -269,6 +281,7 @@ var MapFeatureStyles = $n2.Class({
 	    		};
 	    	};
 	    	
+	    	var n2Intent = feature.n2Intent;
 	    	var layerId = layerInfo.id;
 	    	var schemaName = null;
 			if( feature 
@@ -278,7 +291,10 @@ var MapFeatureStyles = $n2.Class({
 			};
 
 			var style = null;
-			if( schemaName && _this.stylesFromSchema[schemaName] ) {
+			if( null == style && n2Intent && _this.stylesFromIntents[n2Intent] ) {
+				style = _this.stylesFromIntents[n2Intent][geomType][effectiveIntent];
+			};
+			if( null == style && schemaName && _this.stylesFromSchema[schemaName] ) {
 				style = _this.stylesFromSchema[schemaName][geomType][effectiveIntent];
 			};
 			if( null == style && layerId && _this.stylesFromLayer[layerId] ) {
