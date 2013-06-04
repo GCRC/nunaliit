@@ -396,7 +396,7 @@ var AuthService = $n2.Class({
 			.appendTo($buttonLine);
 
 		// Create user line
-		if( !this.options.disableCreateUserButton ) {
+		if( ! this._shouldDisableCreateUserButton() ) {
 			var $createLine = $('<div class="n2Auth_login_create_line"></div>')
 				.appendTo($authDiag);
 	
@@ -726,6 +726,28 @@ var AuthService = $n2.Class({
 			var h = dispatcher.getHandle('n2.couchAuth');
 			dispatcher.send(h,m);
 		};
+	}
+	
+	,_getCustomService: function(){
+		var cs = null;
+		if( this.options.directory ){
+			cs = this.options.directory.customService;
+		};
+		return cs;
+	}
+	
+	,_shouldDisableCreateUserButton: function(){
+		var flag = this.options.disableCreateUserButton;
+		
+		var customService = this._getCustomService();
+		if( customService && !flag ){
+			var o = customService.getOption('disableCreateUserButton');
+			if( typeof(o) !== 'undefined' ){
+				flag = o;
+			};
+		};
+
+		return flag;
 	}
 });	
 

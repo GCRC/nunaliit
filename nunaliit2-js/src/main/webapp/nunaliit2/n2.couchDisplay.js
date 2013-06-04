@@ -78,6 +78,7 @@ var defaultOptions = {
 	 */
 	,translateCallback: null
 	,classDisplayFunctions: {}
+	,restrictAddRelatedButtonToLoggedIn: false
 };	
 
 $n2.couchDisplay = $n2.Class({
@@ -131,7 +132,8 @@ $n2.couchDisplay = $n2.Class({
 		};
 		
 		if( !this.options.displayRelatedInfoFunction ) {
-			if( this.options.displayOnlyRelatedSchemas ) {
+			var flag = this._getBooleanOption('displayOnlyRelatedSchemas')
+			if( flag ) {
 				this.options.displayRelatedInfoFunction = function(opts_){
 					_this._displayRelatedInfo(opts_);
 				};
@@ -514,20 +516,31 @@ $n2.couchDisplay = $n2.Class({
 		 && opt.schema.relatedSchemaNames 
 		 && opt.schema.relatedSchemaNames.length
 		 ) {
- 			if( firstButton ) {
- 				firstButton = false;
- 			} else {
- 				$buttons.append( $('<span>&nbsp;</span>') );
- 			};
-			var $addRelatedButton = $('<a href="#"></a>');
-			var addRelatedText = _loc('Add Related Item');
-			$addRelatedButton.text( addRelatedText );
-			$buttons.append($addRelatedButton);
-			$addRelatedButton.click(function(){
-				_this._addRelatedDocument(data._id, opt.schema.relatedSchemaNames);
-				return false;
-			});
-			addClasses($addRelatedButton, addRelatedText);
+			var showRelatedButton = true;
+			var flag = this._getBooleanOption('restrictAddRelatedButtonToLoggedIn');
+			if( flag ){
+				var sessionContext = $n2.couch.getSession().getContext();
+				if( !sessionContext || !sessionContext.name ) {
+					showRelatedButton = false;
+				};
+			};
+			
+			if( showRelatedButton ) {
+	 			if( firstButton ) {
+	 				firstButton = false;
+	 			} else {
+	 				$buttons.append( $('<span>&nbsp;</span>') );
+	 			};
+				var $addRelatedButton = $('<a href="#"></a>');
+				var addRelatedText = _loc('Add Related Item');
+				$addRelatedButton.text( addRelatedText );
+				$buttons.append($addRelatedButton);
+				$addRelatedButton.click(function(){
+					_this._addRelatedDocument(data._id, opt.schema.relatedSchemaNames);
+					return false;
+				});
+				addClasses($addRelatedButton, addRelatedText);
+			};
 		};
 		
  		// Show 'find on map' button
@@ -1026,7 +1039,8 @@ $n2.couchDisplay = $n2.Class({
 					$docWrapper.append($doc);
 
 					if( _this._getShowService() ) {
-						if( _this.options.displayBriefInRelatedInfo ){
+						var flag = _this._getBooleanOption('displayBriefInRelatedInfo');
+						if( flag ){
 							_this._getShowService().printBriefDescription($doc,docId);
 						} else {
 							_this._getShowService().printDocument($doc,docId);
@@ -1348,6 +1362,15 @@ $n2.couchDisplay = $n2.Class({
 		};
 	}
 	
+	,_getCustomService: function(){
+		var cs = null;
+		if( this.options.serviceDirectory 
+		 && this.options.serviceDirectory.customService ) {
+			cs = this.options.serviceDirectory.customService;
+		};
+		return cs;
+	}
+	
 	,_getDispatcher: function(){
 		var d = null;
 		if( this.options.serviceDirectory 
@@ -1442,6 +1465,29 @@ $n2.couchDisplay = $n2.Class({
 				});
 			});
 		};
+	}
+	
+	/*
+	 * Get a boolean option based on a name and return it. Defaults
+	 * to false. If the option is found set in either the options map
+	 * or the custom service, then the result is true.
+	 */
+	,_getBooleanOption: function(optionName){
+		var flag = false;
+		
+		if( this.options[optionName] ){
+			flag = true;
+		};
+		
+		var cs = this._getCustomService();
+		if( cs && !flag ){
+			var o = cs.getOption(optionName);
+			if( o ){
+				flag = true;
+			};
+		};
+		
+		return flag;
 	}
 });
 

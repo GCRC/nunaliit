@@ -77,6 +77,11 @@ function Configure(options_){
 		directory: configuration.directory
 	});
 	
+	// Custom Service
+	configuration.directory.customService = new $n2.custom.CustomService({
+		directory: configuration.directory
+	});
+	
  	// Turn off cometd
  	$.cometd = {
  		init: function(){}
