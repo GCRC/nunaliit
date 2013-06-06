@@ -842,7 +842,7 @@ var CouchDocumentEditor = $n2.Class({
 					onSuccess: function(){ save2(uploadForms); }
 					,onError: function(err) {
 			    		_this._enableControls();
-						$n2.reportError('Server is not available: '+err);
+						$n2.reportErrorForced('Server is not available: '+err);
 					}
 				});
 			} else {
@@ -864,7 +864,7 @@ var CouchDocumentEditor = $n2.Class({
 					}
 					,onError: function(err){
 			    		_this._enableControls();
-						$n2.reportError('Unable to submit document: '+err);
+						$n2.reportErrorForced('Unable to submit document: '+err);
 					}
 				});
 			} else {
@@ -877,7 +877,7 @@ var CouchDocumentEditor = $n2.Class({
 					}
 					,onError: function(err){
 			    		_this._enableControls();
-						$n2.reportError('Unable to submit document: '+err);
+						$n2.reportErrorForced('Unable to submit document: '+err);
 					}
 				});
 			};
@@ -898,7 +898,7 @@ var CouchDocumentEditor = $n2.Class({
 					}
 					,onError: function(err) {
 			    		_this._enableControls();
-						$n2.reportError('Error uploading file: '+err);
+						$n2.reportErrorForced('Error uploading file: '+err);
 					}
 				});
 			};
@@ -932,7 +932,7 @@ var CouchDocumentEditor = $n2.Class({
 				}
 				,onError: function(err){
 		    		_this._enableControls();
-					$n2.reportError('Unable to delete document: '+err);
+					$n2.reportErrorForced('Unable to delete document: '+err);
 				}
 			});
     	};
