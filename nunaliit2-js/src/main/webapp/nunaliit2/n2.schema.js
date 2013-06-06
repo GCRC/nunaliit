@@ -127,7 +127,7 @@ function _localizeString() {
 						// ignore
 					} else if( l === 'nunaliit_type' ) {
 						// ignore
-					} else {
+					} else if( s[l] ) { // ignore empty string
 						fbLang = l;
 						break;
 					};
