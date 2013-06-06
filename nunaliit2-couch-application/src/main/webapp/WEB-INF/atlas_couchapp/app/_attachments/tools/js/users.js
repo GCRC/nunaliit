@@ -5,6 +5,7 @@ var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
 var DH = 'user.js';	
 
+var authService = null;
 var couchServer = null;
 var userDb = null;
 var userSearchService = null;
@@ -49,6 +50,23 @@ function initiateEdit(userName) {
 		}
 		,onError: reportError
 	});
+};
+
+function queryMyUser() {
+	if( authService ) {
+		if( false == authService.isLoggedIn() ) {
+			authService.login({
+				onSuccess: queryMyUser
+			});
+			return;
+		};
+		
+		var user = authService.getCurrentUser();
+		initiateEdit(user.name);
+		
+	} else {
+		alert( _loc('Authentication service must be configured') );
+	};
 };
 
 function addUser() {
@@ -200,6 +218,7 @@ function queryUsers() {
 function main() {
 	$('#btnQueryUsers').click(queryUsers);
 	$('#btnAddUser').click(addUser);
+	$('#btnMyUser').click(queryMyUser);
 };
 
 function main_init(config) {
@@ -207,7 +226,8 @@ function main_init(config) {
 	userDb = $n2.couch.getUserDb();
  	
 	if( config.directory && config.directory.authService ) {
-		config.directory.authService.createAuthWidget({
+		authService = config.directory.authService;
+		authService.createAuthWidget({
 			elemId: 'login'
 		});
 	};

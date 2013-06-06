@@ -14,7 +14,7 @@ function(newDoc, oldDoc, userCtxt) {
 //log('validate doc update '+JSON.stringify(oldDoc)+'->'+JSON.stringify(newDoc));	
 //log('Atlas name: '+n2atlas.name);
 
-	var userInfo = getRoles(userCtxt.roles);
+	var userInfo = getRolesInfo(userCtxt.roles);
 
 	// Validate new documents and updates submitted to database...
 	if( !userCtxt ) {
@@ -346,11 +346,10 @@ function(newDoc, oldDoc, userCtxt) {
 	};
 	
 	// Take an array of roles and accumulate information about them
-	function getRoles(roles){
+	function getRolesInfo(roles){
 		var info = {
 			admin: false
 			,vetter: false
-			,replicator: false
 			,layers: []
 			,atlasAdmin: false
 			,atlas:{
@@ -362,12 +361,12 @@ function(newDoc, oldDoc, userCtxt) {
 		for(var i=0,e=roles.length; i<e; ++i){
 			var r = roles[i];
 
-			var i = getRoleInfo(r);
+			var ri = getRoleInfo(r);
 			
-			info.roles.push(i);
+			info.roles.push(ri);
 			
-			if( i.atlas ){
-				var atlas = info.atlas[i.atlas];
+			if( ri.atlas ){
+				var atlas = info.atlas[ri.atlas];
 				if( !atlas ){
 					atlas = {
 						admin: false
@@ -376,36 +375,36 @@ function(newDoc, oldDoc, userCtxt) {
 						,user: false
 						,layers: []
 					};
-					info.atlas[i.atlas] = atlas;
+					info.atlas[ri.atlas] = atlas;
 				};
 				
-				if( i.admin ){
+				if( ri.admin ){
 					atlas.admin = true;
 					info.atlasAdmin = true;
 				};
-				if( i.vetter ){
+				if( ri.vetter ){
 					atlas.vetter = true;
 				};
-				if( i.replicator ){
+				if( ri.replicator ){
 					atlas.replicator = true;
 				};
-				if( i.user ){
+				if( ri.user ){
 					atlas.user = true;
 				};
-				if( i.layer ){
-					atlas.layers.push(i.layer);
+				if( ri.layer ){
+					atlas.layers.push(ri.layer);
 				};
 				
 			} else {
 				// Global role
-				if( i.admin ){
+				if( ri.admin ){
 					info.admin = true;
 				};
-				if( i.vetter ){
+				if( ri.vetter ){
 					info.vetter = true;
 				};
-				if( i.layer ){
-					info.layers.push(i.layer);
+				if( ri.layer ){
+					info.layers.push(ri.layer);
 				};
 			};
 		};
