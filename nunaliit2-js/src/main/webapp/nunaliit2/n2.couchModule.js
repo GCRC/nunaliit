@@ -410,21 +410,36 @@ var Module = $n2.Class({
 			 && this.atlasDb
 			 ) {
 				var displayId = $n2.getUniqueId();
-				$elem.empty().append( $('<div id="'+displayId+'"></div>') );
+				$elem.empty().append( $('<div id="'+displayId+'" class="n2module_introduction"></div>') );
 				var docUrl = this.atlasDb.getDocumentUrl(this.moduleDoc);
-				var attUrl = docUrl + '/' + introInfo.attachmentName;
 				
-				$.ajax({
-			    	url: attUrl
-			    	,type: 'get'
-			    	,async: true
-			    	,success: function(intro) {
-			    		$('#'+displayId).html(intro);
-			    	}
-			    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
-						$n2.log('Unable to obtain module intro: '+textStatus);
-			    	}
-				});
+				var localeStr = $n2.l10n.getStringForLocale(introInfo.attachmentName);
+				if( localeStr.str && localeStr !== '' ) {
+					var attUrl = docUrl + '/' + localeStr.str;
+					
+					$.ajax({
+				    	url: attUrl
+				    	,type: 'get'
+				    	,async: true
+				    	,success: function(intro) {
+				    		if( localeStr.fallback ){
+				    			var $outer = $('<span class="n2_localized_string n2_localize_fallback"></span>');
+				    			$('<span class="n2_localize_fallback_lang"></span>')
+				    				.text('('+localeStr.lang+')')
+				    				.appendTo($outer);
+				    			$('<span></span>')
+				    				.html(intro)
+				    				.appendTo($outer);
+			    				$('#'+displayId).empty().append($outer);
+				    		} else {
+					    		$('#'+displayId).html(intro);
+				    		};
+				    	}
+				    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+							$n2.log('Unable to obtain module intro: '+textStatus);
+				    	}
+					});
+				};
 				
 				return true;
 				

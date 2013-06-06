@@ -127,6 +127,51 @@ function getDictionaryFromLang(lang) {
 	return strings[lang];
 };
 
+function getStringForLocale(str){
+	var result = {
+		str: null
+		,lang: null
+		,fallback: false
+	};
+
+	var locale = getLocale();
+	var lang = locale.lang;
+	
+	// Handle content that contains translation
+	if( typeof(str) === 'string' ) {
+		result.str = str;
+		
+	} else if( typeof(str) === 'object' 
+	 && str.nunaliit_type === 'localized' ){
+		// Check request language
+		if( typeof(str[lang]) === 'string' ) {
+			result.str = str[lang];
+			result.lang = lang;
+
+		} else if( typeof(str.en) === 'string' ) {
+			// Fallback to 'en'
+			result.str = str.en;
+			result.lang = lang;
+			result.fallback = true;
+			
+		} else {
+			// Fallback to any language
+			for(var fbLang in str){
+				if( 'nunaliit_type' === fbLang ){
+					// ignore
+				} else {
+					result.str = str[fbLang];
+					result.lang = fbLang;
+					result.fallback = true;
+					break;
+				};
+			};
+		};
+	};
+	
+	return result;
+};
+
 function getLocalizedString(str, packageName, args) {
 	var locale = getLocale();
 	var lang = locale.lang;
@@ -227,6 +272,7 @@ function requestTranslation(str, lang, packageName) {
 
 $n2.l10n.getLocale = getLocale;
 $n2.l10n.getLocalizedString = getLocalizedString;
+$n2.l10n.getStringForLocale = getStringForLocale;
 $n2.l10n.requestTranslation = requestTranslation;
 $n2.l10n.translationRequests = translationRequests;
 $n2.l10n.addLocalizedString = addLocalizedString;
