@@ -774,4 +774,45 @@ $n2.utils = {
 	}
 };
 
+// HTML Escape
+var htmlEscapeCharMap = {
+	'&': '&amp;'
+	,'<': '&lt;'
+	,'>': '&gt;'
+	,'"': '&quot;'
+	,"'": '&#x27;'
+	,'`': '&#x60;'
+};
+
+var reHtmlCharSelect = /[&<>"'`]/g;
+var reHtmlCharTest = /[&<>"'`]/;
+
+var htmlEscapeCharFn = function(match) {
+ 	return htmlEscapeCharMap[match] || "";
+};
+
+/**
+ * Accepts a string and returns an escaped version of the string, which
+ * can be used in HTML. This function converts all the characters that are
+ * reserved in HTML for the escaped version of the same character.
+ * @name escapeHtml
+ * @function
+ * @memberOf nunaliit2.utils
+ * @param str {String} String to be escaped for HTML
+ * @returns {String} String escaped for use in HTML
+ */
+$n2.utils.escapeHtml = function(str) {
+	if( typeof(str) !== 'string' ) {
+		return "";
+	};
+	
+	// Need to escape?
+	if( !reHtmlCharTest.test(str) ) {
+		return str;
+	};
+	
+	// Perform escape
+	return str.replace(reHtmlCharSelect, htmlEscapeCharFn);
+};
+
 })(nunaliit2);

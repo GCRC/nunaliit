@@ -100,8 +100,35 @@ function _localizeString() {
 	var args = [];
 	args.push.apply(args,arguments);
 	var options = args.pop();
+
+	// Gets the text between start and end tags
+	var text = options.fn(this);
+
+	// Syntax is: <selector>(,<option>)*
+	var splits = text.split(',');
+	var key = splits[0];
+
+	// <option> is one of:
+	// - optionName
+	// - optionName=optionValue
+	// - optionsName=value1+value2+...
+	var opts = {};
+	for(var i=1,e=splits.length;i<e;++i){
+		var optStr = splits[i];
+		var optSplit = optStr.split('=');
+		if( optSplit.length > 1 ){
+			var valSplits = optSplit[1].split('+');
+			if( valSplits.length > 1 ) {
+				opts[optSplit[0]]=valSplits;
+			} else {
+				opts[optSplit[0]]=[optSplit[1]];
+			};
+		} else {
+			opts[optSplit[0]]=[];
+		};
+	};
 	
-	var key = options.fn(this);
+	// Get data from key
 	if( '.' === key ) {
 		var s = this;
 	} else {
@@ -116,7 +143,13 @@ function _localizeString() {
 		};
 		
 		if( s[lang] ) {
-			return s[lang];
+			if( opts.html ) {
+				return s[lang];
+			};
+			
+			var escaped = $n2.utils.escapeHtml(s[lang]);
+			return escaped;
+			
 		} else {
 			// Find a language to fall back on
 			var fbLang = 'en';
@@ -141,7 +174,12 @@ function _localizeString() {
 				result.push(fbLang);
 				result.push(')</span>');
 				if( s[fbLang] ){
-					result.push(''+s[fbLang]);
+					if( opts.html ) {
+						result.push(''+s[fbLang]);
+					} else {
+						var escaped = $n2.utils.escapeHtml(s[fbLang]);
+						result.push(escaped);
+					};
 				};
 				result.push('</span>');
 				return result.join('');
@@ -158,7 +196,17 @@ function _localizeString() {
 		return '';
 		
 	} else {
-		return ''+s;
+		// Must be string, number, boolean, float, ...
+		// From Handlebars, we do not get a real "string". Instead,
+		// "this" is an object that reacts like string. ''+s becomes
+		// a real javascript string.
+		if( opts.html ) {
+			return ''+s;
+		};
+		
+		var escaped = $n2.utils.escapeHtml(''+s);
+		return escaped;
+		
 	};
 };
 
