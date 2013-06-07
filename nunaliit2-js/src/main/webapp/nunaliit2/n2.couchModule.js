@@ -1219,12 +1219,23 @@ var ModuleDisplay = $n2.Class({
 							,at: 'right bottom'
 							,of: $('#'+_this.helpButtonName+' .nunaliit_module_help_button')
 						}
+						,close: function(event, ui){
+							var diag = $(event.target);
+							diag.dialog('destroy');
+							diag.remove();
+						}
 					};
 					$dialog.dialog(dialogOptions);
 					$dialog.parents('div.ui-dialog').addClass('n2module_help_dialog');
 					
 					var windowHeight = $(window).height();
-					$dialog.css('maxHeight',Math.floor(windowHeight * 0.9));
+					$dialog.css('maxHeight',Math.floor(windowHeight * 0.8));
+					
+					$dialog.parents('div.ui-dialog').position({
+						my: 'right top'
+						,at: 'right bottom'
+						,of: $('#'+_this.helpButtonName+' .nunaliit_module_help_button')
+					});
 				};
 			});
 		};
