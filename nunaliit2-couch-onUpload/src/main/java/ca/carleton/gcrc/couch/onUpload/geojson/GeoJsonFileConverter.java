@@ -8,7 +8,6 @@ import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -249,10 +248,10 @@ public class GeoJsonFileConverter implements FileConversionPlugin {
 		}
 		
 		// Created
-		obj.put("nunaliit_created", approvedContext.getCreatedObject());
+		obj.put("nunaliit_created", approvedContext.getCreatedObject().toJson());
 		
 		// Last Updated
-		obj.put("nunaliit_last_updated", approvedContext.getLastUpdatedObject());
+		obj.put("nunaliit_last_updated", approvedContext.getLastUpdatedObject().toJson());
 		
 		// Geometry
 		{

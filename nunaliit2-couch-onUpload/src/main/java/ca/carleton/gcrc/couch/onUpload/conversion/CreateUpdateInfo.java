@@ -1,6 +1,7 @@
 package ca.carleton.gcrc.couch.onUpload.conversion;
 
 import org.json.JSONObject;
+
 import ca.carleton.gcrc.couch.utils.CouchNunaliitConstants;
 
 public class CreateUpdateInfo extends AbstractDescriptor {
@@ -19,6 +20,21 @@ public class CreateUpdateInfo extends AbstractDescriptor {
 	
 	public String getUserName() throws Exception {
 		return getStringAttribute(CouchNunaliitConstants.CREATE_UPDATE_KEY_NAME);
+	}
+	
+	public JSONObject toJson() throws Exception {
+		JSONObject obj = new JSONObject();
+		
+		obj.put("nunaliit_type", "actionstamp");
+		if( key.equals("nunaliit_last_updated") ) {
+			obj.put("action", "updated");
+		} else if( key.equals("nunaliit_created") ) {
+			obj.put("action", "created");
+		}
+		obj.put("name", getUserName());
+		obj.put("time", getTime());
+		
+		return obj;
 	}
 	
 	@Override
