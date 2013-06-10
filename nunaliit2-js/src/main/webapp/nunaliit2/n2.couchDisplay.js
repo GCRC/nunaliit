@@ -544,12 +544,29 @@ $n2.couchDisplay = $n2.Class({
 		};
 		
  		// Show 'find on map' button
-		if( dispatcher ) {
-			if( opt.geom
-			 && data 
-			 && data.nunaliit_geom 
-			 && dispatcher.isEventTypeRegistered('findOnMap')
-			 ) {
+		if( dispatcher 
+		 && opt.geom
+		 && data 
+		 && data.nunaliit_geom 
+		 && dispatcher.isEventTypeRegistered('findOnMap')
+		 ) {
+			// Check iff document can be displayed on a map
+			var showFindOnMapButton = false;
+			if( data.nunaliit_layers && data.nunaliit_layers.length > 0 ) {
+				var m = {
+					type:'getMapLayers'
+					,layers:{}
+				};
+				dispatcher.synchronousCall(this.dispatchHandle,m);
+				for(var i=0,e=data.nunaliit_layers.length; i<e; ++i){
+					var layerId = data.nunaliit_layers[i];
+					if( m.layers[layerId] ){
+						showFindOnMapButton = true;
+					};
+				};
+			};
+
+			if( showFindOnMapButton ) {
 	 			if( firstButton ) {
 	 				firstButton = false;
 	 			} else {
@@ -564,6 +581,35 @@ $n2.couchDisplay = $n2.Class({
 				var y = (data.nunaliit_geom.bbox[1] + data.nunaliit_geom.bbox[3]) / 2;
 				
 				$findGeomButton.click(function(){
+					// Check if we need to turn a layer on
+					var visible = false;
+					var layerIdToTurnOn = null;
+					var m = {
+							type:'getMapLayers'
+							,layers:{}
+						};
+					dispatcher.synchronousCall(_this.dispatchHandle,m);
+					for(var i=0,e=data.nunaliit_layers.length; i<e; ++i){
+						var layerId = data.nunaliit_layers[i];
+						if( m.layers[layerId] ){
+							if( m.layers[layerId].visible ){
+								visible = true;
+							} else {
+								layerIdToTurnOn = layerId;
+							};
+						};
+					};
+
+					// Turn on layer
+					if( !visible ){
+						_this._dispatch({
+							type: 'setMapLayerVisibility'
+							,layerId: layerIdToTurnOn
+							,visible: true
+						});
+					};
+					
+					// Move map and display feature 
 					_this._dispatch({
 						type: 'findOnMap'
 						,fid: data._id
@@ -571,6 +617,7 @@ $n2.couchDisplay = $n2.Class({
 						,x: x
 						,y: y
 					});
+					
 					return false;
 				});
 				addClasses($findGeomButton, findGeomText);

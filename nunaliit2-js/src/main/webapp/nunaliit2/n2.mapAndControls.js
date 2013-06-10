@@ -701,6 +701,8 @@ var MapAndControls = $n2.Class({
 	    this._registerDispatch('mapSetInitialExtent');
 	    this._registerDispatch('mapSetExtent');
 	    this._registerDispatch('mapResetExtent');
+	    this._registerDispatch('getMapLayers');
+	    this._registerDispatch('setMapLayerVisibility');
 		
 		// Layers
 		this.defaultLayerInfo = { // feature layer access details.
@@ -4045,6 +4047,36 @@ var MapAndControls = $n2.Class({
 			
 		} else if( 'mapResetExtent' === type ) {
 			this.resetExtent();
+			
+		} else if( 'getMapLayers' === type ) {
+			// Synchronous call. Response sent on message.
+			if( !m.layers ){
+				m.layers = {};
+			};
+			for(var i=0,e=this.infoLayers.length; i<e; ++i) {
+				var infoLayer = this.infoLayers[i];
+				var layerId = infoLayer.id;
+				var olLayer = infoLayer.olLayer;
+
+				var report = m.layers[layerId];
+				if( !report ){
+					report = {
+						id: layerId
+					};
+					m.layers[layerId] = report;
+				};
+				
+				if( olLayer && olLayer.visibility ) {
+					report.visible = true;
+				};
+			};
+		} else if( 'setMapLayerVisibility' === type ) {
+			var layerId = m.layerId;
+			var visible = m.visible;
+			
+			if( this.layers[layerId] ){
+				this.layers[layerId].setVisibility(visible);
+			};
 		};
 	}
 	
