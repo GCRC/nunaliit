@@ -72,16 +72,16 @@ function isAdmin() {
 	var sessionContext = $n2.couch.getSession().getContext();
 	if( sessionContext
 	 && sessionContext.roles ) {
-		if( sessionContext.roles.indexOf('_admin') !== -1 ) {
+		if( $.inArray('_admin',sessionContext.roles) !== -1 ) {
 			admin = true;
 		};
-		if( sessionContext.roles.indexOf('administrator') !== -1 ) {
+		if( $.inArray('administrator',sessionContext.roles) !== -1 ) {
 			admin = true;
 		};
 		if( typeof(n2atlas) === 'object' 
 		 && typeof(n2atlas.name) === 'string' ) {
 			var dbAdmin = n2atlas.name + '_administrator';
-			if( sessionContext.roles.indexOf(dbAdmin) !== -1 ) {
+			if( $.inArray(dbAdmin,sessionContext.roles) !== -1 ) {
 				admin = true;
 			};
 		};

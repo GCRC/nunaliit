@@ -322,14 +322,14 @@ function _formField() {
 		for(var lang in obj){
 			if( lang === 'nunaliit_type' || lang[0] === ':' ){
 				// ignore
-			} else if( langs.indexOf(lang) < 0 ) {
+			} else if( $.inArray(lang,langs) < 0 ) {
 				langs.push(lang);
 			};
 		};
 		if( opts.localized && opts.localized.length ){
 			for(var i=0,e=opts.localized.length;i<e;++i){
 				var lang = opts.localized[i];
-				if( langs.indexOf(lang) < 0 ) {
+				if( $.inArray(lang,langs) < 0 ) {
 					langs.push(lang);
 				};
 			};

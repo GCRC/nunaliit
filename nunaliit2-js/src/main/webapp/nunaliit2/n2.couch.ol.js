@@ -485,7 +485,7 @@ OpenLayers.Protocol.Couch = OpenLayers.Class(OpenLayers.Protocol, {
         		if( !doc.nunaliit_layers ) {
         			doc.nunaliit_layers = [];
         		};
-        		if( doc.nunaliit_layers.indexOf(options.layerName) < 0 ) {
+        		if( jQuery.inArray(options.layerName, doc.nunaliit_layers) < 0 ) {
         			doc.nunaliit_layers.push(options.layerName);
         		};
         	};

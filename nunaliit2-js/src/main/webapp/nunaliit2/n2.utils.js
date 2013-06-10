@@ -772,6 +772,18 @@ $n2.utils = {
 			;
 		});
 	}
+	
+	/**
+	 * Returns the number of milliseconds elapsed since 1 January 1970 00:00:00 UTC. This
+	 * is equivalent to Date.now(). However, Date.now() is not supported in IE8.
+	 * @name getCurrentTime
+	 * @function
+	 * @memberOf nunaliit2.utils
+	 * @returns {Number}
+	 */
+	,getCurrentTime: Date.now || function () {
+		return +new Date();
+	}
 };
 
 // HTML Escape

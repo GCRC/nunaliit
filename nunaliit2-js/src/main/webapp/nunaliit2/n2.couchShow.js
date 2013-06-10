@@ -197,7 +197,7 @@ var DomStyler = $n2.Class({
 			var node = parent.firstChild;
 			while(node){
 				if( node.nodeType === 3 ){ // text node
-					var text = node.textContent;
+					var text = node.nodeValue;
 					var splits = text.split('\n');
 					if( splits.length < 2 ){
 						// nothing to do

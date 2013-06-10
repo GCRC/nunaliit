@@ -60,9 +60,9 @@ var Monitor = $n2.Class({
 		
 		if( window && 'onhashchange' in window ) {
 			// Supported
-			window.addEventListener('hashchange', function(e){
+			$(window).bind('hashchange',function(e){
 				_this._hashChange(e);
-			}, false);
+			});
 		};
 		
 		var d = this._getDispatcher();

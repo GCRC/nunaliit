@@ -585,7 +585,7 @@ var ChangeNotifier = $n2.Class({
 	 */
 	,reschedule: function() {
 
-		var now = Date.now();
+		var now = $n2.utils.getCurrentTime();
 		var expected = now + this.options.pollInterval;
 		
 		if( this.currentWait ) {

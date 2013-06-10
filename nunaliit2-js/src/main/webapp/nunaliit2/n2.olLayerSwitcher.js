@@ -409,56 +409,58 @@ OpenLayers.Control.NunaliitLayerSwitcher =
 	                
 	                // SVG
 	                var svg = this._createSVGNode('svg');
-	                this._setAttr(svg, 'version', '1.1');
-	                this._setAttr(svg, 'style', 'display:inline-block');
-	                this._setAttr(svg, 'width', 14);
-	                this._setAttr(svg, 'height', 14);
-	                this._setAttr(svg, 'viewBox', '-7 -7 14 14');
-	                this._addClass(svg, 'n2layerSwitcher_svg');
-	                var $svg = $(svg);
-	                
-	                // Geometry
-	                var geom = null;
-	                if( 'square' === style.graphicName ) {
-	                	geom = this._createSVGNode('path');
-		                this._setAttr(geom, 'd', 'M -4.4 -4.4 L -4.4 4.4 L 4.4 4.4 L 4.4 -4.4 Z');
-	                } else {
-		                geom = this._createSVGNode('circle');
-		                this._setAttr(geom, 'r', 5);
-	                };
-	                if( geom ) {
-		                for(var name in style){
-		                	var styleValue = style[name];
-		                	
-		                	if( 'fillColor' === name ){
-			                	this._setAttr(geom, 'fill', styleValue);
-			                	
-		                	} else if( 'fillOpacity' === name ){
-			                	this._setAttr(geom, 'fill-opacity', styleValue);
-			                	
-		                	} else if( 'strokeColor' === name ){
-			                	this._setAttr(geom, 'stroke', styleValue);
-			                	
-		                	} else if( 'strokeOpacity' === name ){
-			                	this._setAttr(geom, 'stroke-opacity', styleValue);
-			                	
-		                	} else if( 'strokeWidth' === name ){
-			                	this._setAttr(geom, 'stroke-width', styleValue);
-			                	
-		                	} else if( 'strokeLinecap' === name ){
-			                	this._setAttr(geom, 'stroke-linecap', styleValue);
-	
-		                	} else {
-		                		this._setAttr(geom, name, styleValue);
-		                	};
-		                };
-		                svg.appendChild(geom);
+	                if( svg ) {
+		                this._setAttr(svg, 'version', '1.1');
+		                this._setAttr(svg, 'style', 'display:inline-block');
+		                this._setAttr(svg, 'width', 14);
+		                this._setAttr(svg, 'height', 14);
+		                this._setAttr(svg, 'viewBox', '-7 -7 14 14');
+		                this._addClass(svg, 'n2layerSwitcher_svg');
+		                var $svg = $(svg);
 		                
-		                geom.onclick = createSvgClickHandler(inputId);
+		                // Geometry
+		                var geom = null;
+		                if( 'square' === style.graphicName ) {
+		                	geom = this._createSVGNode('path');
+			                this._setAttr(geom, 'd', 'M -4.4 -4.4 L -4.4 4.4 L 4.4 4.4 L 4.4 -4.4 Z');
+		                } else {
+			                geom = this._createSVGNode('circle');
+			                this._setAttr(geom, 'r', 5);
+		                };
+		                if( geom ) {
+			                for(var name in style){
+			                	var styleValue = style[name];
+			                	
+			                	if( 'fillColor' === name ){
+				                	this._setAttr(geom, 'fill', styleValue);
+				                	
+			                	} else if( 'fillOpacity' === name ){
+				                	this._setAttr(geom, 'fill-opacity', styleValue);
+				                	
+			                	} else if( 'strokeColor' === name ){
+				                	this._setAttr(geom, 'stroke', styleValue);
+				                	
+			                	} else if( 'strokeOpacity' === name ){
+				                	this._setAttr(geom, 'stroke-opacity', styleValue);
+				                	
+			                	} else if( 'strokeWidth' === name ){
+				                	this._setAttr(geom, 'stroke-width', styleValue);
+				                	
+			                	} else if( 'strokeLinecap' === name ){
+				                	this._setAttr(geom, 'stroke-linecap', styleValue);
+		
+			                	} else {
+			                		this._setAttr(geom, name, styleValue);
+			                	};
+			                };
+			                svg.appendChild(geom);
+			                
+			                geom.onclick = createSvgClickHandler(inputId);
+		                };
+		                
+		                $previewDiv = $('<div class="n2layerSwitcher_preview_container"></div>')
+		                	.append($svg);
 	                };
-	                
-	                $previewDiv = $('<div class="n2layerSwitcher_preview_container"></div>')
-	                	.append($svg);
                 };
                 
                 var groupArray = (baseLayer) ? this.baseLayers
@@ -504,10 +506,13 @@ OpenLayers.Control.NunaliitLayerSwitcher =
     },
     
     _createSVGNode: function(type, id) {
-        var node = document.createElementNS('http://www.w3.org/2000/svg', type);
-        if (id) {
-            node.setAttributeNS(null, 'id', id);
-        }
+        var node = null;
+        if( document.createElementNS ) {
+	        node = document.createElementNS('http://www.w3.org/2000/svg', type);
+	        if (id) {
+	            node.setAttributeNS(null, 'id', id);
+	        };
+        };
         return node;    
     },
     
