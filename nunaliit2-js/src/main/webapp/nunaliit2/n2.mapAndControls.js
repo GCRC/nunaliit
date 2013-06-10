@@ -2395,7 +2395,7 @@ var MapAndControls = $n2.Class({
 	    	var popup_lonlat = computePopupPosition();
 	    	
 	    	// Create pop-up
-	    	var popup = new OpenLayers.Popup.AnchoredBubble(
+	    	var popup = new OpenLayers.Popup.Anchored(
 	    		null // Let OpenLayers assign id
 	    		,popup_lonlat
 	    		,null

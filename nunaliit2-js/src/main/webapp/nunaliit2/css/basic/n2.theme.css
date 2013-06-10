@@ -69,13 +69,13 @@ input[type="text"], input[type="password"], textarea {
 color: #fff;
 }
 .nunaliit_atlas .nunaliit_header-nav li {
-	background-color: rgba(0,0,0,0.85);
+	background-color: #2f2f2f;
 	border-left: 1px solid rgba(255,255,255,0.6);
 	border-right: 1px solid rgba(255,255,255,0.6);
 	border-bottom:1px solid rgba(255,255,255,0.4);
 }
 .nunaliit_atlas .nunaliit_header-nav li:hover {
-	background-color:rgba(0,0,0,0.9);
+	background-color:#1f1f1f;
 }
 .nunaliit_atlas .nunaliit_header-nav li:hover ul li:first-child {
 	border-left: 1px solid rgba(0,0,0,0.9);
@@ -113,7 +113,7 @@ color: #fff;
 	color: #fff;
 	line-height: 0;
 	position: relative;
-	top: 50%;	
+	top: 35px;	
 	padding:0;
 }
 .nunaliit_atlas .nunaliit_header-nav>ul>li>ul>li, .nunaliit_atlas .nunaliit_header-nav>ul>li>ul>li:hover {

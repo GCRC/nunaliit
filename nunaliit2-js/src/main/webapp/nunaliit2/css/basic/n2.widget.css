@@ -103,30 +103,12 @@
 	height:100%;
 }
 .nunaliit_header-nav li:hover {
-	visibility: inherit; /* fixes IE7 'sticky bug' */
+	/*visibility: inherit;  fixes IE7 'sticky bug' */
 	text-decoration:underline;
 }
 .nunaliit_header-nav li:hover>ul {
 	display:block;
 	z-index: 99;
-}
-.nunaliit_header-nav li>a:after { 
-	margin-left: 10px; 
-	content: '\25B8'; 
-	position:absolute;
-	top:35%;
-	right:15px;
-}
-.nunaliit_header-nav>ul>li>a:after { 
-	margin-left: 10px; 
-	content: '\25BE'; 
-	float:right;
-	position:relative;
-	top:auto;
-	right:auto;
-}
-.nunaliit_header-nav li > a:only-child:after { 
-	margin-left: 0; content: ''; 
 }
 
 
@@ -415,8 +397,8 @@ Help Dialog
 ==============================
 */
 .n2module_help_dialog .ui-dialog-titlebar {
-	background: rgba(58, 58, 58, 1);
-	color: rgba(255, 255, 255, 1);
+	background: #3a3a3a;
+	color: #ffffff;
 	font-family: helvetica, sans-serif;
 	font-weight: 500;
 }

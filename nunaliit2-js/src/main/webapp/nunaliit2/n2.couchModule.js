@@ -1211,6 +1211,7 @@ var ModuleDisplay = $n2.Class({
 					$dialog.html(content);
 					var dialogOptions = {
 						autoOpen: true
+						,dialogClass:'n2module_help_dialog'
 						,title: _loc('Help')
 						,modal: false
 						,width: 400
@@ -1226,7 +1227,6 @@ var ModuleDisplay = $n2.Class({
 						}
 					};
 					$dialog.dialog(dialogOptions);
-					$dialog.parents('div.ui-dialog').addClass('n2module_help_dialog');
 					
 					var windowHeight = $(window).height();
 					$dialog.css('maxHeight',Math.floor(windowHeight * 0.8));
