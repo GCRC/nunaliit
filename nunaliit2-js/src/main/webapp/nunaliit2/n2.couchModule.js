@@ -1206,8 +1206,16 @@ var ModuleDisplay = $n2.Class({
 						$dialog.dialog('open');
 					};
 				} else {
-					$dialog = $('<div id="'+_this.helpDialogId+'"></div>');
-					$dialog.html(content);
+					$dialog = $('<div id="'+_this.helpDialogId+'" class="n2module_help_content"></div>');
+					$dialog
+						.html(content)
+						.appendTo( $('body') );
+					
+					var initialHeight = $dialog.height();
+					
+					var windowHeight = $(window).height();
+					var diagMaxHeight = Math.floor(windowHeight * 0.8);
+
 					var dialogOptions = {
 						autoOpen: true
 						,dialogClass:'n2module_help_dialog'
@@ -1225,16 +1233,13 @@ var ModuleDisplay = $n2.Class({
 							diag.remove();
 						}
 					};
+					
+					// Ensure height does not exceed maximum
+					if( initialHeight > diagMaxHeight ){
+						dialogOptions.height = diagMaxHeight;
+					};
+					
 					$dialog.dialog(dialogOptions);
-					
-					var windowHeight = $(window).height();
-					$dialog.css('maxHeight',Math.floor(windowHeight * 0.8));
-					
-					$dialog.parents('div.ui-dialog').position({
-						my: 'right top'
-						,at: 'right bottom'
-						,of: $('#'+_this.helpButtonName+' .nunaliit_module_help_button')
-					});
 				};
 			});
 		};
