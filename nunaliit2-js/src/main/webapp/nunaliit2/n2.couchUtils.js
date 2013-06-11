@@ -154,9 +154,9 @@ var n2utils = {
 		// Accumulate strings in the given array
 		// Skip excluded paths
 
-		if( excludedPaths.indexOf(currentPath) >= 0 ) {
+		for(var i=0,e=excludedPaths.length; i<e; ++i){
 			// this path is excluded
-			return;
+			if( excludedPaths[i] === currentPath ) return;
 		};
 		
 		if( null === obj ) {
