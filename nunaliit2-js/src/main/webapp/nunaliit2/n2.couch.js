@@ -156,7 +156,6 @@ var Session = $n2.Class({
 			,type: 'get'
 			,async: true
 			,dataType: 'json'
-			,cache: false // IE8 grief
 			,success: function(res) {
 				if( res.ok ) {
 					var context = res.userCtx;
