@@ -300,7 +300,7 @@ var DomStyler = $n2.Class({
 		 && data._attachments 
 		 && data._attachments[attachmentName] ) {
 			
-			var docUrl = this.options.db.getDocumentUrl(data);
+			var attUrl = this.options.db.getAttachmentUrl(data,attachmentName);
 
 			// An attachment was uploaded for this file
 			var linkDiv = null;
@@ -308,7 +308,8 @@ var DomStyler = $n2.Class({
 			 && file.thumbnail
 			 && data._attachments[file.thumbnail]
 			 ) {
-				linkDiv = $('<div class="n2Show_thumb_wrapper"><img src="'+docUrl+'/'+file.thumbnail+'"/></div>');
+				var thumbUrl = this.options.db.getAttachmentUrl(data,file.thumbnail);
+				linkDiv = $('<div class="n2Show_thumb_wrapper"><img src="'+thumbUrl+'"/></div>');
 
 			} else if( file.fileClass === 'image' ) {
 				linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_image"></div></div>');
@@ -320,7 +321,8 @@ var DomStyler = $n2.Class({
 			 && file.thumbnail
 			 && data._attachments[file.thumbnail]
 			 ) {
-				linkDiv = $('<div class="n2Show_thumb_wrapper"><img src="'+docUrl+'/'+file.thumbnail+'"/></div>');
+				var thumbUrl = this.options.db.getAttachmentUrl(data,file.thumbnail);
+				linkDiv = $('<div class="n2Show_thumb_wrapper"><img src="'+thumbUrl+'"/></div>');
 			
 			} else if( file.fileClass === 'video' ) {
 				linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_video"></div></div>');
@@ -328,7 +330,8 @@ var DomStyler = $n2.Class({
 			} else if( file.thumbnail
 			 && data._attachments[file.thumbnail]
 			 ) {
-				linkDiv = $('<div class="n2Show_thumb_wrapper"><img src="'+docUrl+'/'+file.thumbnail+'"/></div>');
+				var thumbUrl = this.options.db.getAttachmentUrl(data,file.thumbnail);
+				linkDiv = $('<div class="n2Show_thumb_wrapper"><img src="'+thumbUrl+'"/></div>');
 				
 			} else {
 				linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_file"></div></div>');
@@ -338,7 +341,7 @@ var DomStyler = $n2.Class({
 				$insertView.append(linkDiv);
 				var cb = createMediaCallback(
 						file.fileClass
-						,docUrl
+						,attUrl
 						,data
 						,attachmentName
 					);
@@ -346,10 +349,9 @@ var DomStyler = $n2.Class({
 			};
 		};
 		
-		function createMediaCallback(uploadType, docUrl, doc, attachmentName) {
+		function createMediaCallback(uploadType, attachmentUrl, doc, attachmentName) {
 			
 			return function(evt) {
-				var attachmentUrl = docUrl +'/'+attachmentName;
 				var mediaOptions = {
 					url: attachmentUrl
 				};
@@ -448,10 +450,9 @@ var DomStyler = $n2.Class({
 		 && data._attachments 
 		 && data._attachments[attachmentName] ) {
 			
-			var docUrl = this.options.db.getDocumentUrl(data);
+			var attUrl = this.options.db.getAttachmentUrl(data,attachmentName);
 
-			var linkUrl = docUrl +'/'+attachmentName;
-			$externalLink.attr('href',linkUrl);
+			$externalLink.attr('href',attUrl);
 			$externalLink.click(function(e){
 				if( confirm( _loc('You are about to leave this page. Do you wish to continue?') ) ) {
 					return true;

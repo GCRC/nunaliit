@@ -799,6 +799,14 @@ var Database = $n2.Class({
 		
 		return this.dbUrl + docId;
 	}
+
+	,getAttachmentUrl: function(doc,attName) {
+		
+		var docUrl = this.getDocumentUrl(doc);
+		var url = docUrl + '/' + encodeURIComponent(attName);
+		
+		return url;
+	}
 	
 	,getDocumentRevision: function(opts_) {
 		var opts = $.extend({

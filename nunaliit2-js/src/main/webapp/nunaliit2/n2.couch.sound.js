@@ -298,8 +298,7 @@ var GetHoverSoundUrlFromDocument = function(opts_){
 		// There is a sound associated
 		
 		// Compute sound URL
-		var docUrl = opts.db.getDocumentUrl(data.sound.doc);
-		var soundUrl = docUrl+'/converted';
+		var soundUrl = opts.db.getAttachmentUrl(data.sound.doc,'converted');
 		opts.onSuccess(soundUrl);
 		return;
 	};
@@ -320,8 +319,7 @@ var GetHoverSoundUrlFromDocument = function(opts_){
 		
 		if( hoverSoundAttName ) {
 			// Compute sound URL
-			var docUrl = opts.db.getDocumentUrl(data._id);
-			var soundUrl = docUrl+'/'+attName;
+			var soundUrl = opts.db.getAttachmentUrl(data,attName);
 			opts.onSuccess(soundUrl);
 			return;
 		};
@@ -346,8 +344,7 @@ var GetHoverSoundUrlFromDocument = function(opts_){
 					 && doc._attachments[attName]
 					 && attDesc.fileClass == 'audio'
 					 ){
-						var docUrl = opts.db.getDocumentUrl(doc._id);
-						var soundUrl = docUrl+'/'+attName;
+						var soundUrl = opts.db.getAttachmentUrl(doc._id,attName);
 						opts.onSuccess(soundUrl);
 						return;
 					};

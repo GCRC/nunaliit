@@ -411,11 +411,10 @@ var Module = $n2.Class({
 			 ) {
 				var displayId = $n2.getUniqueId();
 				$elem.empty().append( $('<div id="'+displayId+'" class="n2module_introduction"></div>') );
-				var docUrl = this.atlasDb.getDocumentUrl(this.moduleDoc);
 				
 				var localeStr = $n2.l10n.getStringForLocale(introInfo.attachmentName);
-				if( localeStr.str && localeStr !== '' ) {
-					var attUrl = docUrl + '/' + localeStr.str;
+				if( localeStr.str ) {
+					var attUrl = this.atlasDb.getAttachmentUrl(this.moduleDoc,localeStr.str);
 					
 					$.ajax({
 				    	url: attUrl
