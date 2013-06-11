@@ -388,7 +388,12 @@ Max Height Widget
 ==============================
 */
 .n2show_maxHeight_truncated {
-	-webkit-mask-image: -webkit-gradient(linear, left 85%, left bottom, from(rgba(0,0,0,1)), to(rgba(0,0,0,0)));
+/*
+	background: -linear-gradient(top, #000, #000 80%, #FFF);
+	background: -webkit-linear-gradient(top, #000, #000 80%, #FFF);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+*/
 }
 
 /* 
