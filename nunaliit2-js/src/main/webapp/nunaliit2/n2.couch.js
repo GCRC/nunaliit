@@ -152,23 +152,24 @@ var Session = $n2.Class({
 		var sessionUrl = this.getUrl();
 		
 		$.ajax({
-	    	url: sessionUrl
-	    	,type: 'get'
-	    	,async: true
-	    	,dataType: 'json'
-	    	,success: function(res) {
-	    		if( res.ok ) {
-	    			var context = res.userCtx;
-	    			_this.changeContext(context);
-	    			opts.onSuccess(context);
-	    		} else {
+			url: sessionUrl
+			,type: 'get'
+			,async: true
+			,dataType: 'json'
+			,cache: false // IE8 grief
+			,success: function(res) {
+				if( res.ok ) {
+					var context = res.userCtx;
+					_this.changeContext(context);
+					opts.onSuccess(context);
+				} else {
 					opts.onError('Malformed context reported');
-	    		};
-	    	}
-	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+				};
+			}
+			,error: function(XMLHttpRequest, textStatus, errorThrown) {
 				var errStr = httpJsonError(XMLHttpRequest, textStatus);
 				opts.onError('Error obtaining context: '+errStr);
-	    	}
+			}
 		});
 	}
 	
