@@ -20,6 +20,14 @@ function main_init(config) {
 		};
 		$n2.log('bbox: '+bboxParam);
 	};
+	
+	// Get srs (applies to bounding box)
+	var srsName = 'EPSG:4326';
+	var srsParam = $n2.url.getParamValue('srs',null);
+	if( srsParam ){
+		srsName = '' + srsParam;
+		$n2.log('srs: '+srsName);
+	};
 
 	var moduleDisplay = new $n2.couchModule.ModuleDisplay({
 		moduleName: moduleName
@@ -40,7 +48,7 @@ function main_init(config) {
 				config.directory.dispatchService.send('index.js',{
 					type:'mapSetInitialExtent'
 					,extent: bounds
-					,srsName: 'EPSG:4326'
+					,srsName: srsName
 					,reset: true
 				});
 			};
