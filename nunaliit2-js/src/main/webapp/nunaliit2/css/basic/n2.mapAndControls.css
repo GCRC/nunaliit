@@ -686,34 +686,6 @@ table.mediaSelection td {
 }
 
 
-/*.n2Display_buttons {
-	margin-top: 20px;
-	display: block;
-	height: 35px;
-	margin-bottom: 5px;
-}
-.nunaliit_form_link, .intro a, .map_interaction input {
-	padding: .5em .5em .5em .7em;
-	text-decoration: none;
-	-moz-border-radius: 5px;
-	border-radius: 5px;
-	margin-right: 3px;
-	border: 1px solid lightGrey;
-	font-weight: normal;
-	color: #555;
-}
-
-.intro, .intro a {
-	text-align: left;
-	vertical-align: text-top;
-	margin: 0 0 10px 0;
-	display: inline-block;
-}
-
-.nunaliit_form_link:hover, .intro a:hover { 
-	background-color: #aaa;
-}*/
-
 /*
 	Workaround problem in OpenLayers CSS (http://trac.openlayers.org/ticket/2183)
 */

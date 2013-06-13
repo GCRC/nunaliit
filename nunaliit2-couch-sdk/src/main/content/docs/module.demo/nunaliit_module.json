@@ -8,8 +8,8 @@
 		"type": "html"
 		,"content": {
 			"nunaliit_type":"localized"
-			,"en":"<div class=\"intro\"><b>Welcome to a Nunaliit Atlas served from CouchDb</b><br/><a href=\"./tools/index.html\">Nunaliit Tools</a></div>"
-			,"fr":"<div class=\"intro\"><b>Bienvenue à un Atlas Nunaliit servi à partir d'une base de données CouchDb</b><br/><a href=\"./tools/index.html\">Outils Nunaliit</a></div>"
+			,"en":"<div class=\"intro\"><b>Welcome to a Nunaliit Atlas served from CouchDb</b><br/><a class=\"nunaliit_form_link\" href=\"./tools/index.html\">Nunaliit Tools</a></div>"
+			,"fr":"<div class=\"intro\"><b>Bienvenue à un Atlas Nunaliit servi à partir d'une base de données CouchDb</b><br/><a class=\"nunaliit_form_link\" href=\"./tools/index.html\">Outils Nunaliit</a></div>"
 		}
 	}
 	,"map":{
