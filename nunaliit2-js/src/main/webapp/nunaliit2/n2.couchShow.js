@@ -68,13 +68,6 @@ var DomStyler = $n2.Class({
 			$jq.removeClass('n2s_localize').addClass('n2s_localized');
 		});
 		
-		// Preserve Space
-		$elem.find('.n2s_preserveSpaces').each(function(){
-			var $jq = $(this);
-			_this._preserveSpaces($jq, opt);
-			$jq.removeClass('n2s_preserveSpaces').addClass('n2s_preservedSpaces');
-		});
-		
 		// Brief display
 		$elem.find('.n2_briefDisplay').each(function(){
 			var $jq = $(this);
@@ -176,6 +169,13 @@ var DomStyler = $n2.Class({
 			_this._installMaxHeight(contextDoc, $jq, opt);
 			$jq.removeClass('n2s_installMaxHeight').addClass('n2s_installedMaxHeight');
 		});
+		
+		// Preserve Space
+		$elem.find('.n2s_preserveSpaces').each(function(){
+			var $jq = $(this);
+			_this._preserveSpaces($jq, opt);
+			$jq.removeClass('n2s_preserveSpaces').addClass('n2s_preservedSpaces');
+		});
 	}
 
 	,_localize: function($jq, opt_) {
@@ -197,27 +197,8 @@ var DomStyler = $n2.Class({
 			var node = parent.firstChild;
 			while(node){
 				if( node.nodeType === 3 ){ // text node
-					var text = node.nodeValue;
-					var splits = text.split('\n');
-					if( splits.length < 2 ){
-						// nothing to do
-						node = node.nextSibling;
-					} else {
-						// Split text
-						for(var i=0,e=splits.length; i<e; ++i){
-							if( i !== 0 ){
-								var brElem = parent.ownerDocument.createElement('br');
-								parent.insertBefore(brElem,node);
-							};
-							var splitNode = parent.ownerDocument.createTextNode(splits[i]);
-							parent.insertBefore(splitNode,node);
-						};
-						
-						// Remove current text node
-						var textNode = node;
-						node = node.nextSibling;
-						parent.removeChild(textNode);
-					};
+					$(node.parentNode).css('white-space','pre-wrap');
+					node = node.nextSibling;
 				} else {
 					performPreserveSpace(node);
 					node = node.nextSibling;
@@ -590,12 +571,15 @@ var DomStyler = $n2.Class({
 			var hideText = _loc('Less');
 			
 			var id = $n2.getUniqueId();
-			var inner = $jq.html();
+			var $children = $jq.contents();
 			var $content = $('<div class="n2show_maxHeightContent n2show_maxHeight_truncated"></div>')
-				.attr('id',id)
-				.html(inner);
+				.attr('id',id);
 			
-			$jq.empty().append($content);
+			$jq.append($content);
+			
+			$children.each(function(){
+				$(this).appendTo($content);
+			});
 			
 			$content.css({
 				overflow: 'hidden'
