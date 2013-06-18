@@ -18,6 +18,7 @@ import org.eclipse.jetty.servlets.ProxyServlet;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import ca.carleton.gcrc.couch.command.impl.CommandSupport;
+import ca.carleton.gcrc.couch.command.impl.TransparentWithRedirectServlet;
 import ca.carleton.gcrc.couch.command.servlet.ConfigServlet;
 import ca.carleton.gcrc.couch.export.ExportServlet;
 import ca.carleton.gcrc.couch.user.UserServlet;
@@ -125,7 +126,7 @@ public class CommandRun implements Command {
 		
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
         context.setContextPath("/");
-        server.setHandler(context);
+		server.setHandler(context);
 
         // Proxy to server
         {
@@ -192,7 +193,7 @@ public class CommandRun implements Command {
 
         // Proxy to site
         {
-        	ServletHolder servletHolder = new ServletHolder(new ProxyServlet.Transparent());
+        	ServletHolder servletHolder = new ServletHolder(new TransparentWithRedirectServlet());
         	servletHolder.setInitParameter("ProxyTo", siteRedirect.toExternalForm());
         	servletHolder.setInitParameter("Prefix", "/");
         	context.addServlet(servletHolder,"/*");
