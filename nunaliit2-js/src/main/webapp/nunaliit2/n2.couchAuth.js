@@ -124,7 +124,8 @@ var AuthService = $n2.Class({
 		});		
 
 		$n2.couch.getSession().addChangedContextListener(function(){
-			_this.notifyListeners()
+			_this.notifyListeners();
+			_this._updateUserWithLoggedIn();
 		});
 		
 		if( this.options.autoRefresh
@@ -748,6 +749,45 @@ var AuthService = $n2.Class({
 		};
 
 		return flag;
+	}
+	
+	,_updateUserWithLoggedIn: function(){
+		// This function verifies if a user is logged in and if so,
+		// updates the user's document to reflect that the user
+		// is accessing the current atlas
+		var authContext = this.getAuthContext();
+		if( authContext
+		 && authContext.userDoc // logged in and userDoc available 
+		 && n2atlas
+		 && n2atlas.name ){
+			var userDoc = authContext.userDoc;
+			if( userDoc.nunaliit_atlases
+			 && userDoc.nunaliit_atlases[n2atlas.name] 
+			 && userDoc.nunaliit_atlases[n2atlas.name].auth ) {
+				// OK
+			} else {
+				// Needs updating
+				if( !userDoc.nunaliit_atlases ){
+					userDoc.nunaliit_atlases = {};
+				};
+				if( !userDoc.nunaliit_atlases[n2atlas.name] ){
+					userDoc.nunaliit_atlases[n2atlas.name] = {
+						name: n2atlas.name
+					};
+				};
+				userDoc.nunaliit_atlases[n2atlas.name].auth = true;
+				
+				$n2.couch.getUserDb().updateDocument({
+					data: userDoc
+					,onSuccess: function() { 
+						// Just fine
+					}
+					,onError: function(err){
+						$n2.log('Unable to save user\'s authentication flag to user db',err);
+					}
+				});
+			};
+		};
 	}
 });	
 
