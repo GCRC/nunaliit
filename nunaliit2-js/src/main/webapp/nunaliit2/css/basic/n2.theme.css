@@ -205,8 +205,12 @@ Help Button
 /* ============================== */
 /* Main Content Section */
 .nunaliit_atlas .nunaliit_content {
-	top:89px;
+	top:102px;
 	bottom:17px;
+}
+.nunaliit_atlas .nunaliit_content noscript {
+	font:normal;
+	font-size:x-large;
 }
 
 /* Search */

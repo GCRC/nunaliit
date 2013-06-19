@@ -98,6 +98,18 @@ function Configure(options_){
 		
 		configuration.couchServer = $n2.couch.DefaultServer;
 		configuration.directory.couchServer = configuration.couchServer;
+		
+		configuration.atlasDb = configuration.couchServer.getDb({dbUrl:options.atlasDbUrl});
+		configuration.atlasDesign = configuration.atlasDb.getDesignDoc({ddName:options.atlasDesignName});
+		configuration.siteDesign = configuration.atlasDb.getDesignDoc({ddName:options.siteDesignName});
+
+		// Check browser compliance
+		if( $n2.couchHelp 
+		 && $n2.couchHelp.CheckBrowserCompliance ){
+			$n2.couchHelp.CheckBrowserCompliance({
+				db: configuration.atlasDb
+			});
+		};
 
 		$.NUNALIIT_AUTH.init({
 			onSuccess: authInitialized
@@ -111,10 +123,6 @@ function Configure(options_){
 		configuration.auth = $.NUNALIIT_AUTH;
 		configuration.directory.authService = $n2.couchAuth._defaultAuthService;
 		
-		configuration.atlasDb = configuration.couchServer.getDb({dbUrl:options.atlasDbUrl});
-		configuration.atlasDesign = configuration.atlasDb.getDesignDoc({ddName:options.atlasDesignName});
-		configuration.siteDesign = configuration.atlasDb.getDesignDoc({ddName:options.siteDesignName});
-
 		configuration.atlasDb.getChangeNotifier({
 			onSuccess: function(notifier){
 				configuration.atlasNotifier = notifier;
