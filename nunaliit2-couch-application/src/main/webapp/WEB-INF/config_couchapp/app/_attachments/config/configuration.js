@@ -31,10 +31,10 @@ POSSIBILITY OF SUCH DAMAGE.
 $Id$
 */
 
-var runConfigurationCompleted = false;
+var nunaliitConfigCompleted = false;
 
-function runConfiguration(opts_) {
-	if( runConfigurationCompleted ) return;
+function nunaliitConfigure(opts_) {
+	if( nunaliitConfigCompleted ) return;
 
 	if( window.OpenLayers
 	 && typeof(nunaliit2) === 'function'
@@ -65,10 +65,10 @@ function runConfiguration(opts_) {
 	    	}
 	 	});
 	 
-	 	runConfigurationCompleted = true;
+	 	nunaliitConfigCompleted = true;
 	} else {
 		setTimeout(function(){
-			runConfiguration(opts_);
+			nunaliitConfigure(opts_);
 		}, 100);
 	};
 	

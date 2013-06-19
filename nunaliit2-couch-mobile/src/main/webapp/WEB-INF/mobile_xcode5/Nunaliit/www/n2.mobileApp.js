@@ -250,7 +250,7 @@
 		
 		// +*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*
 		jQuery(document).ready(function() {
-			runConfiguration(main);
+			nunaliitConfigure(main);
 		});
 
 //		$('#mobileSettingsPage').live('pagebeforeshow',settingsPageRefresh);

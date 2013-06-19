@@ -1,6 +1,6 @@
 var configurationAlreadyCalled = false;
 
-function runConfiguration(mainFunction) {
+function nunaliitConfigure(mainFunction) {
 	if( configurationAlreadyCalled ) return;
 	
 	configurationAlreadyCalled = true;

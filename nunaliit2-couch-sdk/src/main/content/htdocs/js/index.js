@@ -59,7 +59,7 @@ function main_init(config) {
 };
 
 jQuery().ready(function() {
-	runConfiguration({
+	nunaliitConfigure({
 		configuredFunction: main_init
 	});
 });
