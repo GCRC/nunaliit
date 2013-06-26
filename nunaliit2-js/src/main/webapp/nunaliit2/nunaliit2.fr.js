@@ -1,7 +1,7 @@
 /*
   Nunaliit2 French Language Pack
 */
-;(function($n2){
+;(function($,$n2){
 
 if( !$n2.l10n ) $n2.l10n = {};
 if( !$n2.l10n.strings ) $n2.l10n.strings = {};	
@@ -286,5 +286,93 @@ loadStrings({
 	,"{docId} transformed and saved":"{docId} transformé et sauvegardé"
 	,"{label} definition ({key}) already exists - not loaded or updated":"Définition {label} ({key}) existe déjà - ignorée"
 });
+
+if( $ && $.datepicker ) {
+	var regional = {
+		renderer: $.ui.datepicker.defaultRenderer
+		,monthNames: [
+			'Janvier'
+			,'Février'
+			,'Mars'
+			,'Avril'
+			,'Mai'
+			,'Juin'
+			,'Juillet'
+			,'Août'
+			,'Septembre'
+			,'Octobre'
+			,'Novembre'
+			,'Décembre'
+		]
+		,monthNamesShort: [
+			'Jan'
+			,'Fév'
+			,'Mar'
+			,'Avr'
+			,'Mai'
+			,'Jun'
+			,'Jul'
+			,'Aoû'
+			,'Sep'
+			,'Oct'
+			,'Nov'
+			,'Déc'
+		]
+		,dayNames: [
+			'Dimanche'
+			,'Lundi'
+			,'Mardi'
+			,'Mercredi'
+			,'Jeudi'
+			,'Vendredi'
+			,'Samedi'
+		]
+		,dayNamesShort: [
+			'Dim'
+			,'Lun'
+			,'Mar'
+			,'Mer'
+			,'Jeu'
+			,'Ven'
+			,'Sam'
+		]
+		,dayNamesMin: [
+			'Di'
+			,'Lu'
+			,'Ma'
+			,'Me'
+			,'Je'
+			,'Ve'
+			,'Sa'
+		]
+		,dateFormat: 'dd/mm/yyyy'
+		,firstDay: 1
+		,prevText: '&#x3c;Préc'
+		,prevStatus: 'Voir le mois précédent'
+		,prevJumpText: '&#x3c;&#x3c;'
+		,prevJumpStatus: 'Voir l\'année précédent'
+		,nextText: 'Suiv&#x3e;'
+		,nextStatus: 'Voir le mois suivant'
+		,nextJumpText: '&#x3e;&#x3e;'
+		,nextJumpStatus: 'Voir l\'année suivante'
+		,currentText: 'Courant'
+		,currentStatus: 'Voir le mois courant'
+		,todayText: 'Aujourd\'hui'
+		,todayStatus: 'Voir aujourd\'hui'
+		,clearText: 'Effacer'
+		,clearStatus: 'Effacer la date sélectionnée'
+		,closeText: 'Fermer'
+		,closeStatus: 'Fermer sans modifier'
+		,yearStatus: 'Voir une autre année'
+		,monthStatus: 'Voir un autre mois'
+		,weekText: 'Sm'
+		,weekStatus: 'Semaine de l\'année'
+		,dayStatus: '\'Choisir\' le DD d MM'
+		,defaultStatus: 'Choisir la date'
+		,isRTL: false
+	};
+
+	$.datepicker.setDefaults( regional );
+};
 	
-})(nunaliit2);
+})(jQuery,nunaliit2);
