@@ -35,17 +35,170 @@ $Id: n2.googleDocs.js 8165 2012-05-31 13:14:37Z jpfiset $
 
 ;(function($,$n2){
 
-function getSpreadSheet(options_) {
+// =============================================
+// SpreadSheet
+// =============================================
+
+var SpreadSheet = $n2.Class({
+	
+	descriptor: null
+	
+	,entries: null
+	
+	,initialize: function(opts_){
+		var opts = $n2.extend({
+			descriptor: null
+			,entries: null
+		},opts_);
+
+		this.descriptor = opts.descriptor;
+		this.entries = opts.entries;
+	}
+
+	,getDescriptor: function(){
+		return this.descriptor;
+	}
+	
+	,getTitle: function(){
+		return this.descriptor.title;
+	}
+	
+	,getPosition: function(){
+		return this.descriptor.position;
+	}
+
+	,getEntries: function(){
+		return this.entries;
+	}
+});	
+
+// =============================================
+// SpreadSheetDescriptor
+// =============================================
+
+var SpreadSheetDescriptor = $n2.Class({
+	
+	key: null
+	
+	,id: null
+	
+	,position: null
+	
+	,title: null
+	
+	,initialize: function(opts_){
+		var opts = $n2.extend({
+			key: null
+			,id: null
+			,position: null
+			,title: null
+		},opts_);
+
+		this.key = opts.key;
+		this.id = opts.id;
+		this.position = opts.position;
+		this.title = opts.title;
+	}
+
+	,getSpreadSheet: function(opts_) {
+		var opts = $.extend({
+				onSuccess: function(spreadsheet){}
+				,onError: function(errMsg){}
+			},opts_);
+		
+		var _this = this;
+			
+		getSpreadSheetData({
+			key: this.key
+			,page: this.position
+			,format: 'parsed'
+			,onSuccess: function(entries){
+				var s = new SpreadSheet({
+					descriptor: _this
+					,entries: entries
+				});
+				opts.onSuccess(s);
+			}
+			,onError: function(errorMsg){
+				opts.onError('Error loading spreadsheet at position '+this.position+': '+errorMsg);
+			}
+		});		
+	}
+});	
+
+// =============================================
+// WorkBook
+// =============================================
+
+var WorkBook = $n2.Class({
+	
+	key: null
+	
+	,title: null
+	
+	,author: null
+	
+	,spreadsheets: null
+	
+	,initialize: function(opts_){
+		var opts = $n2.extend({
+			key: null
+			,title: null
+		},opts_);
+
+		this.spreadsheets = [];
+		
+		this.key = opts.key;
+		this.title = opts.title;
+	}
+
+	,getSpreadSheetDescriptors: function(){
+		return this.spreadsheets;
+	}
+	
+	,getSpreadSheet: function(opts_){
+		var opts = $n2.extend({
+			id: null
+			,position: null
+			,title: null
+			,onSuccess: function(speadsheet){}
+			,onError: function(errMsg){}
+		},opts_);
+		
+		for(var i=0,e=this.spreadsheets.length; i<e; ++i){
+			var sd = this.spreadsheets[i];
+			
+			var load = false;
+			if( opts.id && opts.id === sd.id ) {
+				load = true;
+			} else if( typeof(opts.position) === 'number' && opts.position === sd.position ) {
+				load = true;
+			} else if( opts.title && opts.title === sd.title ) {
+				load = true;
+			};
+			
+			if( load ){
+				sd.getSpreadSheet({
+					onSuccess: opts.onSuccess
+					,onError: opts.onError
+				});
+				return;
+			};
+		};
+		
+		opts.onError('SpreadSheet descriptor not found: '+opts.title+'/'+opts.id+'/'+opts.position);
+	}
+});	
+	
+function getWorkBook(options_) {
 	var options = $.extend({
 			key: null
-			,page: '1'
-			,format: 'raw'
-			,success: function(data){}
-			,error: function(XMLHttpRequest, textStatus, errorThrown){}
+			,onSuccess: function(workbook){}
+			,onError: function(errMsg){}
 		},options_);
 		
 	if( !options.key ) {
-		$n2.reportError('Google Spreadsheet key required.');
+		options.onError('Google Spreadsheet key required.');
 	};
 	
 	$.ajax({
@@ -56,23 +209,111 @@ function getSpreadSheet(options_) {
 		}
 		,cache: false
 		,traditional: true
-		,url: 'https://spreadsheets.google.com/feeds/list/'+options.key+'/'+options.page+'/public/values'
+		,url: 'https://spreadsheets.google.com/feeds/worksheets/'+options.key+'/public/basic'
 		,success: handleData
-		,error: options.error
+		,error: function(XMLHttpRequest, textStatus, errorThrown){
+			options.onError('Unable to load workbook: '+textStatus);
+		}
+	});
+	
+	function handleData(data) {
+		var workbook = new WorkBook({
+			key: options.key
+		});
+		
+		if( data && data.feed ){
+			var feed = data.feed;
+			
+			if( feed.title && feed.title.$t ){
+				workbook.title = feed.title.$t;
+			};
+			
+			if( feed.author ){
+				workbook.author = {};
+				
+				if( feed.author.name && feed.author.name.$t ){
+					workbook.author.name = feed.author.name.$t;
+				};
+				
+				if( feed.author.email && feed.author.email.$t ){
+					workbook.author.email = feed.author.email.$t;
+				};
+			};
+			
+			if( feed.entry ){
+				for(var i=0,e=feed.entry.length; i<e; ++i){
+					var entry = feed.entry[i];
+					var sheet = {
+						key: options.key
+						,position: i+1
+					};
+					
+					if( entry.title ){
+						sheet.title = entry.title.$t;
+					};
+					
+					if( entry.id && entry.id.$t ){
+						var index = entry.id.$t.lastIndexOf('/');
+						if( index >= 0 ){
+							sheet.id = entry.id.$t.substr(index+1);
+						};
+					};
+					
+					var sd = new SpreadSheetDescriptor(sheet);
+
+					workbook.spreadsheets.push(sd);
+				};
+			};
+		};
+		
+		options.onSuccess(workbook);
+	};
+};
+	
+//=============================================
+// Functions
+//=============================================
+	
+function getSpreadSheetData(opts_) {
+	var opts = $.extend({
+			key: null
+			,page: '1'
+			,format: 'raw'
+			,onSuccess: function(data){}
+			,onError: function(errorMsg){}
+		},opts_);
+		
+	if( !opts.key ) {
+		opts.onError('Google Spreadsheet key required.');
+	};
+	
+	$.ajax({
+		async: true
+		,dataType: 'json'
+		,data: {
+			alt: 'json'
+		}
+		,cache: false
+		,traditional: true
+		,url: 'https://spreadsheets.google.com/feeds/list/'+opts.key+'/'+opts.page+'/public/values'
+		,success: handleData
+		,error: function(XMLHttpRequest, textStatus, errorThrown){
+			opts.onError('Unable to load spreadsheet: '+textStatus);
+		}
 	});
 	
 	function handleData(data) {		
-		if( options.format === 'parsed' ) {
-			var entries = parseSpreadSheet(data);
-			options.success(entries);
+		if( opts.format === 'parsed' ) {
+			var entries = parseSpreadSheetData(data);
+			opts.onSuccess(entries);
 		} else {
-			options.success(data);
+			opts.onSuccess(data);
 		};
 	};
 };
 
 var gsxRe = /^gsx\$(.*)$/;
-function parseSpreadSheet(data) {
+function parseSpreadSheetData(data) {
 	var res = [];
 	
 	if( data && data.feed && data.feed.entry ) {
@@ -95,8 +336,9 @@ function parseSpreadSheet(data) {
 };
 
 $n2.googleDocs = {
-	getSpreadSheet: getSpreadSheet
-	,parseSpreadSheet: parseSpreadSheet
+	getWorkBook: getWorkBook
+	,getSpreadSheetData: getSpreadSheetData
+	,parseSpreadSheetData: parseSpreadSheetData
 };
 
 })(jQuery,nunaliit2);
