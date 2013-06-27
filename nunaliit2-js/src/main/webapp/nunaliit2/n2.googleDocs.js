@@ -110,7 +110,7 @@ var SpreadSheetDescriptor = $n2.Class({
 			
 		getSpreadSheetData({
 			key: this.key
-			,page: this.position
+			,position: this.position
 			,format: 'parsed'
 			,onSuccess: function(entries){
 				var s = new SpreadSheet({
@@ -277,7 +277,7 @@ function getWorkBook(options_) {
 function getSpreadSheetData(opts_) {
 	var opts = $.extend({
 			key: null
-			,page: '1'
+			,position: '1'
 			,format: 'raw'
 			,onSuccess: function(data){}
 			,onError: function(errorMsg){}
@@ -295,7 +295,7 @@ function getSpreadSheetData(opts_) {
 		}
 		,cache: false
 		,traditional: true
-		,url: 'https://spreadsheets.google.com/feeds/list/'+opts.key+'/'+opts.page+'/public/values'
+		,url: 'https://spreadsheets.google.com/feeds/list/'+opts.key+'/'+opts.position+'/public/values'
 		,success: handleData
 		,error: function(XMLHttpRequest, textStatus, errorThrown){
 			opts.onError('Unable to load spreadsheet: '+textStatus);
