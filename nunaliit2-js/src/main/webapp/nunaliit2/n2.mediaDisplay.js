@@ -45,6 +45,8 @@ var DEFAULT_VIDEO_CONTROLLER_HEIGHT = 16;
 var DEFAULT_VIDEO_DIALOG_EXTRA_WIDTH = 40;
 var DEFAULT_VIDEO_DIALOG_EXTRA_HEIGHT = 56;
 
+var MEDIAELEMENT_DIALOG_EXTRA_WIDTH = 25;
+
 var defaultDialogTitle = _loc('View Media');
 
 var baseDialogOptions = {
@@ -84,9 +86,17 @@ $n2.MediaDisplay = $n2.Class({
 		if( 'image' === opts.type ) {
 			this._displayImage(opts);
 		} else if( 'audio' === opts.type ) {
-			this._displayAudio(opts);
+			if( $.fn && $.fn.mediaelementplayer ) {
+				this._displayAudioMediaElement(opts);
+			} else {
+				this._displayAudio(opts);
+			};
 		} else if( 'video' === opts.type ) {
-			this._displayVideo(opts);
+			if( $.fn && $.fn.mediaelementplayer ) {
+				this._displayVideoMediaElement(opts);
+			} else {
+				this._displayVideo(opts);
+			};
 		} else {
 			this._displayUnknown(opts);
 		};
@@ -259,6 +269,65 @@ $n2.MediaDisplay = $n2.Class({
 		
 		$mediaDialog.dialog(dialogOptions);
 	}
+	
+	,_displayVideoMediaElement: function(opts) {
+		var dialogTitle = defaultDialogTitle;
+		if( opts.title ) {
+			dialogTitle = opts.title;
+		};
+
+		var mediaDialogId = $n2.getUniqueId();
+		var videoId = $n2.getUniqueId();
+
+		var width = DEFAULT_VIDEO_WIDTH;
+		if( opts.mediaDisplayVideoWidth ) {
+			width = opts.mediaDisplayVideoWidth;
+		} else if( opts.width ) {
+			width = opts.width;
+		};
+
+		var height = DEFAULT_VIDEO_HEIGHT;
+		if( opts.mediaDisplayVideoHeight ) {
+			height = opts.mediaDisplayVideoHeight + DEFAULT_VIDEO_CONTROLLER_HEIGHT;
+		} else if( opts.height ) {
+			height = opts.height + DEFAULT_VIDEO_CONTROLLER_HEIGHT;
+		};
+		
+		var mkup = [];
+		mkup.push('<div id="'+mediaDialogId+'">');
+
+		mkup.push('<video id="'+videoId+'" controls="controls"  width="'+width+'" height="'+height+'">');
+		
+		mkup.push('<source src="'+opts.url+'"');
+		if( opts.mimeType ){
+			mkup.push(' type="'+opts.mimeType+'"');
+		};
+		mkup.push('>');
+		
+		mkup.push('</video>');
+		
+		var $mediaDialog = $( mkup.join('') );
+		
+		this._addMetaData(opts, $mediaDialog);
+
+		var dialogOptions = $n2.extend({}
+			,baseDialogOptions
+			,{
+				title: dialogTitle
+				,width: width + MEDIAELEMENT_DIALOG_EXTRA_WIDTH
+				,close: function(){
+					$('#'+mediaDialogId).remove();
+					opts.onCloseHook();
+				}
+			}
+		);
+		
+		$mediaDialog.dialog(dialogOptions);
+		
+		$('#'+videoId).mediaelementplayer({
+			features: ['playpause','progress','volume','sourcechooser','fullscreen']
+		});
+	}
 
 	,_displayAudio: function(opts) {
 		var dialogTitle = defaultDialogTitle;
@@ -337,6 +406,55 @@ $n2.MediaDisplay = $n2.Class({
 				}
 			});
 		};
+	}
+
+	,_displayAudioMediaElement: function(opts) {
+		var dialogTitle = defaultDialogTitle;
+		if( opts.title ) {
+			dialogTitle = opts.title;
+		};
+
+		var mediaDialogId = $n2.getUniqueId();
+		var audioId = $n2.getUniqueId();
+
+		var browserInfo = $n2.utils.getBrowserInfo();
+
+		var width = 300;
+		
+		// Generate local markup
+		var mkup = [];
+		mkup.push('<div id="'+mediaDialogId+'">');
+
+		//mkup.push('<audio id="'+audioId+'" controls="controls"  width="'+width+'" height="'+height+'">');
+		mkup.push('<audio id="'+audioId+'" controls="controls" width="'+width+'">');
+		
+		mkup.push('<source src="'+opts.url+'"');
+		if( opts.mimeType ){
+			mkup.push(' type="'+opts.mimeType+'"');
+		};
+		mkup.push('>');
+		
+		mkup.push('</audio>');
+
+		mkup.push('</div>');
+
+		var $mediaDialog = $( mkup.join('') );
+		
+		this._addMetaData(opts, $mediaDialog);
+
+		var dialogOptions = $n2.extend({},baseDialogOptions,{
+			title: dialogTitle
+			,width: width + MEDIAELEMENT_DIALOG_EXTRA_WIDTH
+			,close: function(){
+				$('#'+mediaDialogId).remove();
+				opts.onCloseHook();
+			}
+		});
+		$mediaDialog.dialog(dialogOptions);
+		
+		$('#'+audioId).mediaelementplayer({
+			features: ['playpause','progress','volume','sourcechooser']
+		});
 	}
 
 	,_displayUnknown: function(opts) {
