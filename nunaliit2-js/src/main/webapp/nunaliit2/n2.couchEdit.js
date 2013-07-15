@@ -258,10 +258,14 @@ function selectLayersDialog(opts_){
 	};
 	
 	function getInnerLayers(layerIdentifiers){
-		opts.dispatchService.synchronousCall(DH,{
-			type: 'getLayerIdentifiers'
-			,layerIdentifiers: layerIdentifiers
-		});
+		var m = {
+			type: 'mapGetLayers'
+			,layers: {}
+		};
+		opts.dispatchService.synchronousCall(DH, m);
+		for(var layerId in m.layers){
+			layerIdentifiers[layerId] = true;
+		};
 		displayLayers(layerIdentifiers);
 	};
 	
@@ -1310,7 +1314,7 @@ var CouchDocumentEditor = $n2.Class({
 			var olGeom = $n2.couchGeom.getOpenLayersGeometry({couchGeom:geomData});
 			
 			this._dispatch({
-				type: 'geometryModified'
+				type: 'editGeometryModified'
 				,docId: obj._id
 				,geom: olGeom
 				,proj: this.options.couchProj
@@ -1474,7 +1478,7 @@ var CouchDocumentEditor = $n2.Class({
 	}
 	
 	,_handle: function(m){
-		if( m.type === 'geometryModified' ){
+		if( m.type === 'editGeometryModified' ){
 			if( m._origin !== this ){
 				this._featureModified(m.docId, m.geom, m.proj);
 			};
@@ -1517,7 +1521,7 @@ var CouchEditor = $n2.Class({
 		var dispatcher = this._getDispatchService();
 		if( dispatcher ){
 			var f = function(m){ _this._handle(m); };
-			dispatcher.register(DH, 'geometryModified', f);
+			dispatcher.register(DH, 'editGeometryModified', f);
 			dispatcher.register(DH, 'editInitiate', f);
 			dispatcher.register(DH, 'editCancel', f);
 		};

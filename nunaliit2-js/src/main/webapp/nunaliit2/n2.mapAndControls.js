@@ -695,13 +695,12 @@ var MapAndControls = $n2.Class({
 	    this._registerDispatch('editInitiate');
 	    this._registerDispatch('editCancel');
 	    this._registerDispatch('editClosed');
-	    this._registerDispatch('geometryModified');
-	    this._registerDispatch('getLayerIdentifiers');
+	    this._registerDispatch('editGeometryModified');
 	    this._registerDispatch('mapRedrawLayer');
 	    this._registerDispatch('mapSetInitialExtent');
 	    this._registerDispatch('mapSetExtent');
 	    this._registerDispatch('mapResetExtent');
-	    this._registerDispatch('getMapLayers');
+	    this._registerDispatch('mapGetLayers');
 	    this._registerDispatch('setMapLayerVisibility');
 		
 		// Layers
@@ -2698,7 +2697,7 @@ var MapAndControls = $n2.Class({
     ,_olHandlerFeatureModified: function(evt){
     	var feature = evt.feature;
     	this._dispatch({
-    		type: 'geometryModified'
+    		type: 'editGeometryModified'
     		,docId: feature.fid
     		,geom: feature.geometry
     		,proj: feature.layer.map.projection
@@ -4017,17 +4016,9 @@ var MapAndControls = $n2.Class({
 				};
 			};
 			
-		} else if( 'geometryModified' === type ) {
+		} else if( 'editGeometryModified' === type ) {
 			if( m._origin !== this ){
 				this._geometryModified(m.docId, m.geom, m.proj);
-			};
-			
-		} else if( 'getLayerIdentifiers' === type ) {
-			if( !m.layerIdentifiers ){
-				m.layerIdentifiers = {};
-			};
-			for(var layerId in this.layers){
-				m.layerIdentifiers[layerId] = true;
 			};
 			
 		} else if( 'mapRedrawLayer' === type ) {
@@ -4048,7 +4039,7 @@ var MapAndControls = $n2.Class({
 		} else if( 'mapResetExtent' === type ) {
 			this.resetExtent();
 			
-		} else if( 'getMapLayers' === type ) {
+		} else if( 'mapGetLayers' === type ) {
 			// Synchronous call. Response sent on message.
 			if( !m.layers ){
 				m.layers = {};

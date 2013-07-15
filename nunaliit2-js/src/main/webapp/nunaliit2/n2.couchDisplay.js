@@ -118,8 +118,8 @@ $n2.couchDisplay = $n2.Class({
 			dispatcher.register(this.dispatchHandle, 'selected', f);
 			dispatcher.register(this.dispatchHandle, 'searchResults', f);
 			dispatcher.register(this.dispatchHandle, 'documentDeleted', f);
-			dispatcher.register(this.dispatchHandle, 'login', f);
-			dispatcher.register(this.dispatchHandle, 'logout', f);
+			dispatcher.register(this.dispatchHandle, 'authLoggedIn', f);
+			dispatcher.register(this.dispatchHandle, 'authLoggedOut', f);
 			dispatcher.register(this.dispatchHandle, 'editClosed', f);
 			dispatcher.register(this.dispatchHandle, 'documentContentCreated', f);
 		};
@@ -554,7 +554,7 @@ $n2.couchDisplay = $n2.Class({
 			var showFindOnMapButton = false;
 			if( data.nunaliit_layers && data.nunaliit_layers.length > 0 ) {
 				var m = {
-					type:'getMapLayers'
+					type:'mapGetLayers'
 					,layers:{}
 				};
 				dispatcher.synchronousCall(this.dispatchHandle,m);
@@ -585,7 +585,7 @@ $n2.couchDisplay = $n2.Class({
 					var visible = false;
 					var layerIdToTurnOn = null;
 					var m = {
-							type:'getMapLayers'
+							type:'mapGetLayers'
 							,layers:{}
 						};
 					dispatcher.synchronousCall(_this.dispatchHandle,m);
@@ -1311,8 +1311,8 @@ $n2.couchDisplay = $n2.Class({
 			var docId = msg.docId;
 			this._handleDocumentDeletion(docId);
 			
-		} else if( msg.type === 'login' 
-			|| msg.type === 'logout' ) {
+		} else if( msg.type === 'authLoggedIn' 
+			|| msg.type === 'authLoggedOut' ) {
 			$('.n2Display_buttons').each(function(){
 				var $elem = $(this);
 				_this._refreshButtons($elem);

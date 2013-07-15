@@ -229,12 +229,12 @@ var AuthService = $n2.Class({
 		// Notify via dispatcher
 		if( user ){
 			this._dispatch({
-				type: 'login'
+				type: 'authLoggedIn'
 				,user: user
 			});
 		} else {
 			this._dispatch({
-				type: 'logout'
+				type: 'authLoggedOut'
 			});
 		};
 		
