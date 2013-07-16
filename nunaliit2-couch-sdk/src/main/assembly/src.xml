@@ -49,10 +49,6 @@
 			<outputDirectory>/internal/mobileDesign</outputDirectory>
 		</fileSet>
 		<fileSet>
-			<directory>target/atlasWar/WEB-INF/userDesignAuth</directory>
-			<outputDirectory>/internal/userDesign</outputDirectory>
-		</fileSet>
-		<fileSet>
 			<directory>target/atlasWar/nunaliit2</directory>
 			<outputDirectory>/internal/nunaliit2</outputDirectory>
 		</fileSet>

@@ -121,14 +121,6 @@ public class ConfigServlet extends HttpServlet {
 			throw e;
 		}
 		
-		// Upload design documents for user auth
-		try {
-			initAuthDesignDocument(servletContext);
-		} catch(ServletException e) {
-			logger.error("Error while initializing design document for user auth",e);
-			throw e;
-		}
-		
 		// Upload documents to database
 		try {
 			initDatabaseDocuments(servletContext);
@@ -488,37 +480,6 @@ public class ConfigServlet extends HttpServlet {
 			UserDesignDocumentImpl.updateDesignDocument(userDb);
 		} catch(Exception e) {
 			throw new ServletException("Error while updating user design document",e);
-		}
-	}
-
-	private void initAuthDesignDocument(ServletContext servletContext) throws ServletException {
-		// Find root directory for design document
-		File ddDir = null;
-		{
-			ddDir = new File(webInfDirectory, "userDesignAuth");
-			if( false == ddDir.exists() || false == ddDir.isDirectory() ) {
-				ddDir = null;
-			}
-			if( null == ddDir ) {
-				throw new ServletException("Unable to find design document source for user auth");
-			}
-		}
-		
-		try {
-			CouchDb userDb = couchClient.getDatabase("_users");
-			DocumentUpdateProcess updateProcess = new DocumentUpdateProcess(userDb);
-			updateProcess.setListener(UpdateListener._singleton);
-			
-			FSEntry fileEntry = new FSEntryFile(ddDir);
-			Document doc = DocumentFile.createDocument(fileEntry);
-
-			updateProcess.update(
-					doc
-					,DocumentUpdateProcess.Schedule.UPDATE_EVEN_IF_MODIFIED
-					);
-
-		} catch(Exception e) {
-			throw new ServletException("Problem pushing design document: "+USER_DESIGN_AUTH, e);
 		}
 	}
 

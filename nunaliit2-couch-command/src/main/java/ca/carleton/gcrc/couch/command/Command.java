@@ -11,6 +11,8 @@ public interface Command {
 	
 	boolean matchesKeyword(String keyword);
 	
+	boolean isDeprecated();
+	
 	void reportHelp(PrintStream ps);
 	
 	void runCommand(

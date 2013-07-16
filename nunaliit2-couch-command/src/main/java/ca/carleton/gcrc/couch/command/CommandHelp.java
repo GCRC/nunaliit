@@ -25,6 +25,11 @@ public class CommandHelp implements Command {
 	}
 
 	@Override
+	public boolean isDeprecated() {
+		return false;
+	}
+
+	@Override
 	public boolean requiresAtlasDir() {
 		return false;
 	}
@@ -84,7 +89,9 @@ public class CommandHelp implements Command {
 		gs.getOutStream().println();
 		gs.getOutStream().println("Possible commands:");
 		for(Command command : Main.getCommands()){
-			gs.getOutStream().println("\t"+command.getCommandString());
+			if( false == command.isDeprecated() ) {
+				gs.getOutStream().println("\t"+command.getCommandString());
+			}
 		}
 	}
 

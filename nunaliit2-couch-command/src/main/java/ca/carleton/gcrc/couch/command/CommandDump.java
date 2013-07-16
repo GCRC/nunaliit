@@ -32,6 +32,11 @@ public class CommandDump implements Command {
 	}
 
 	@Override
+	public boolean isDeprecated() {
+		return false;
+	}
+
+	@Override
 	public boolean requiresAtlasDir() {
 		return true;
 	}

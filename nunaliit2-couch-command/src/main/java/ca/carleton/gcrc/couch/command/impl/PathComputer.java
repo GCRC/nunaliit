@@ -296,32 +296,6 @@ public class PathComputer {
 		
 		return null;
 	}
-	
-	/**
-	 * Finds the directory where the user design document is located 
-	 * from the installation location and returns it.
-	 * @param installDir Directory where the command-line tool is run from.
-	 * @return Directory where "user" design document library is located 
-	 * or null if not found.
-	 * */
-	static public File computeUserDesignDir(File installDir) {
-		if( null != installDir ) {
-			// Command-line package
-			File templatesDir = new File(installDir, "internal/userDesign");
-			if( templatesDir.exists() && templatesDir.isDirectory() ) {
-				return templatesDir;
-			}
-			
-			// Development environment
-			File nunaliit2Dir = computeNunaliitDir(installDir);
-			templatesDir = new File(nunaliit2Dir, "nunaliit2-couch-config/src/main/webapp/WEB-INF/userDesignAuth");
-			if( templatesDir.exists() && templatesDir.isDirectory() ) {
-				return templatesDir;
-			}
-		}
-		
-		return null;
-	}
 
 	/**
 	 * Finds the "nunaliit2" javascript library from the installation location

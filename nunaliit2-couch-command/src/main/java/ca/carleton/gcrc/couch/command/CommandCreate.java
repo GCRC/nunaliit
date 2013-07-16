@@ -28,6 +28,11 @@ public class CommandCreate implements Command {
 	}
 
 	@Override
+	public boolean isDeprecated() {
+		return false;
+	}
+
+	@Override
 	public boolean requiresAtlasDir() {
 		return false;
 	}
