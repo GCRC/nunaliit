@@ -841,10 +841,12 @@ var AuthWidget = $n2.Class({
 			var displayName = null;
 			var buttonText = null;
 			var clickFn = null;
+			var greetingClass = null;
 			if( currentUser ){
 				href = 'javascript:Logout';
 				displayName = currentUser.display;
 				if( !displayName ) displayName = currentUser.name;
+				greetingClass = 'nunaliit_login_greeting_name';
 				buttonText = _loc('Logout');
 				clickFn = function(){
 					authService.logout();
@@ -853,6 +855,7 @@ var AuthWidget = $n2.Class({
 			} else {
 				href = 'javascript:Login';
 				displayName = _loc('Welcome');
+				greetingClass = 'nunaliit_login_greeting_welcome';
 				buttonText = _loc('Login');
 				clickFn = function(){
 					authService.showLoginForm();
@@ -860,23 +863,22 @@ var AuthWidget = $n2.Class({
 				};
 			};
 			
-			var aElem = $('<a class="nunaliit_login_link"></a>');
-			aElem.attr("href",href);
-			aElem.text(buttonText);
-			
-			var linkInnerContainer = $('<div class="nunaliit_login_link_inner_container"></div>');
-			linkInnerContainer.append(aElem);
-			
-			var linkOuterContainer = $('<div class="nunaliit_login_link_outer_container"></div>');
-			linkOuterContainer.append(linkInnerContainer);
-			linkOuterContainer.click(clickFn);
+			var aElem = $('<a class="nunaliit_login_link"></a>')
+				.attr("href",href)
+				.text(buttonText);
+			var linkInnerContainer = $('<div class="nunaliit_login_link_inner_container"></div>')
+				.append(aElem);
+			var linkOuterContainer = $('<div class="nunaliit_login_link_outer_container"></div>')
+				.append(linkInnerContainer)
+				.click(clickFn);
 
-			var nameElem = $('<span></span>');
-			nameElem.text(displayName);
-			var greetingInner = $('<div class="nunaliit_login_greeting_inner_container"></div>');
-			greetingInner.append(nameElem);
-			var greetingOuter = $('<div class="nunaliit_login_greeting_outer_container"></div>');
-			greetingOuter.append(greetingInner);
+			var nameElem = $('<span></span>')
+				.text(displayName);
+			var greetingInner = $('<div class="nunaliit_login_greeting_inner_container"></div>')
+				.append(nameElem);
+			var greetingOuter = $('<div class="nunaliit_login_greeting_outer_container"></div>')
+				.addClass(greetingClass)
+				.append(greetingInner);
 			
 			$login.empty().append(greetingOuter).append(linkOuterContainer);
 		};
