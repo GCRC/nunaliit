@@ -138,7 +138,7 @@ var WorkBook = $n2.Class({
 	
 	,author: null
 	
-	,spreadsheets: null
+	,spreadSheetDescriptors: null
 	
 	,initialize: function(opts_){
 		var opts = $n2.extend({
@@ -146,14 +146,36 @@ var WorkBook = $n2.Class({
 			,title: null
 		},opts_);
 
-		this.spreadsheets = [];
+		this.spreadSheetDescriptors = [];
 		
 		this.key = opts.key;
 		this.title = opts.title;
 	}
 
 	,getSpreadSheetDescriptors: function(){
-		return this.spreadsheets;
+		return this.spreadSheetDescriptors;
+	}
+	
+	,getSpreadSheetDescriptor: function(opts_){
+		var opts = $n2.extend({
+			id: null
+			,position: null
+			,title: null
+		},opts_);
+		
+		for(var i=0,e=this.spreadSheetDescriptors.length; i<e; ++i){
+			var sd = this.spreadSheetDescriptors[i];
+			
+			if( opts.id && opts.id === sd.id ) {
+				return sd;
+			} else if( typeof(opts.position) === 'number' && opts.position === sd.position ) {
+				return sd;
+			} else if( opts.title && opts.title === sd.title ) {
+				return sd;
+			};
+		};
+		
+		return null;
 	}
 	
 	,getSpreadSheet: function(opts_){
@@ -165,25 +187,13 @@ var WorkBook = $n2.Class({
 			,onError: function(errMsg){}
 		},opts_);
 		
-		for(var i=0,e=this.spreadsheets.length; i<e; ++i){
-			var sd = this.spreadsheets[i];
-			
-			var load = false;
-			if( opts.id && opts.id === sd.id ) {
-				load = true;
-			} else if( typeof(opts.position) === 'number' && opts.position === sd.position ) {
-				load = true;
-			} else if( opts.title && opts.title === sd.title ) {
-				load = true;
-			};
-			
-			if( load ){
-				sd.getSpreadSheet({
-					onSuccess: opts.onSuccess
-					,onError: opts.onError
-				});
-				return;
-			};
+		var sd = this.getSpreadSheetDescriptor(opts);
+		if( sd ){
+			sd.getSpreadSheet({
+				onSuccess: opts.onSuccess
+				,onError: opts.onError
+			});
+			return;
 		};
 		
 		opts.onError('SpreadSheet descriptor not found: '+opts.title+'/'+opts.id+'/'+opts.position);
@@ -261,7 +271,7 @@ function getWorkBook(options_) {
 					
 					var sd = new SpreadSheetDescriptor(sheet);
 
-					workbook.spreadsheets.push(sd);
+					workbook.spreadSheetDescriptors.push(sd);
 				};
 			};
 		};
