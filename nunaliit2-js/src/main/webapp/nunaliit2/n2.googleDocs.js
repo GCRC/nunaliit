@@ -198,6 +198,43 @@ var WorkBook = $n2.Class({
 		
 		opts.onError('SpreadSheet descriptor not found: '+opts.title+'/'+opts.id+'/'+opts.position);
 	}
+	
+	,getAllSpreadSheets: function(opts_){
+		var opts = $n2.extend({
+			onSuccess: function(arr){}
+			,onError: function(errMsg){}
+		},opts_);
+
+		var descriptors = this.getSpreadSheetDescriptors();
+		
+		var waiting = {};
+		for(var i=0,e=descriptors.length; i<e; ++i){
+			var id = descriptors[i].id;
+			waiting[id] = true;
+		};
+		
+		for(var i=0,e=descriptors.length; i<e; ++i){
+			var sd = descriptors[i];
+			sd.getSpreadSheet({
+				onSuccess: loaded
+				,onError: opts.onError
+			});
+		};
+		
+		var result = [];
+		function loaded(spreadSheet){
+			var id = spreadSheet.getDescriptor().id;
+			delete waiting[id];
+			result.push(spreadSheet);
+			
+			for(id in waiting){
+				if( waiting[id] ) return; // still waiting
+			};
+			
+			// All arrived
+			opts.onSuccess(result);
+		};
+	}
 });	
 	
 function getWorkBook(options_) {
