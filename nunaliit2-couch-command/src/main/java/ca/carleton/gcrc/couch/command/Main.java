@@ -34,6 +34,7 @@ public class Main {
 			allCommands.add( new CommandDump() );
 			allCommands.add( new CommandRestore() );
 			allCommands.add( new CommandUpgrade() );
+			allCommands.add( new CommandVersion() );
 		}
 		
 		return allCommands;
