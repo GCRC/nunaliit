@@ -43,16 +43,27 @@ var SpreadSheet = $n2.Class({
 	
 	descriptor: null
 	
+	,data: null
+	
 	,entries: null
+
+	,isCellsData: null
+	
+	,isListData: null
 	
 	,initialize: function(opts_){
 		var opts = $n2.extend({
 			descriptor: null
-			,entries: null
+			,data: null
+			,isCellsData: false
+			,isListData: false
 		},opts_);
 
 		this.descriptor = opts.descriptor;
-		this.entries = opts.entries;
+		this.data = opts.data;
+		this.isCellsData = opts.isCellsData;
+		this.isListData = opts.isListData;
+		this.entries = null;
 	}
 
 	,getDescriptor: function(){
@@ -60,14 +71,24 @@ var SpreadSheet = $n2.Class({
 	}
 	
 	,getTitle: function(){
-		return this.descriptor.title;
+		if( this.descriptor ){
+			return this.descriptor.title;
+		};
+		return null;
 	}
 	
-	,getPosition: function(){
-		return this.descriptor.position;
+	,getData: function(){
+		return this.data;
 	}
 
 	,getEntries: function(){
+		if( null === this.entries ){
+			if( this.isCellsData ){
+				this.entries = parseSpreadSheetCellFeed(this.data);
+			} else if( this.isListData ) {
+				this.entries = parseSpreadSheetListFeed(this.data);
+			};
+		};
 		return this.entries;
 	}
 });	
@@ -84,6 +105,10 @@ var SpreadSheetDescriptor = $n2.Class({
 	
 	,position: null
 	
+	,cellsFeedUrl: null
+	
+	,listFeedUrl: null
+	
 	,title: null
 	
 	,initialize: function(opts_){
@@ -92,12 +117,16 @@ var SpreadSheetDescriptor = $n2.Class({
 			,id: null
 			,position: null
 			,title: null
+			,cellsFeedUrl: null
+			,listFeedUrl: null
 		},opts_);
 
 		this.key = opts.key;
 		this.id = opts.id;
 		this.position = opts.position;
 		this.title = opts.title;
+		this.cellsFeedUrl = opts.cellsFeedUrl;
+		this.listFeedUrl = opts.listFeedUrl;
 	}
 
 	,getSpreadSheet: function(opts_) {
@@ -106,23 +135,24 @@ var SpreadSheetDescriptor = $n2.Class({
 				,onError: function(errMsg){}
 			},opts_);
 		
-		var _this = this;
-			
-		getSpreadSheetData({
+		var options = {
 			key: this.key
-			,position: this.position
-			,format: 'parsed'
-			,onSuccess: function(entries){
-				var s = new SpreadSheet({
-					descriptor: _this
-					,entries: entries
-				});
-				opts.onSuccess(s);
-			}
+			,descriptor: this
+			,onSuccess: opts.onSuccess
 			,onError: function(errorMsg){
 				opts.onError('Error loading spreadsheet at position '+this.position+': '+errorMsg);
 			}
-		});		
+		};
+		
+		if( this.cellsFeedUrl ){
+			options.cellsFeedUrl = this.cellsFeedUrl;
+		} if( this.position ){
+			options.position = this.position;
+		} if( this.listFeedUrl ){
+			options.listFeedUrl = this.listFeedUrl;
+		};
+		
+		loadSpreadSheet(options);		
 	}
 });	
 
@@ -207,28 +237,37 @@ var WorkBook = $n2.Class({
 
 		var descriptors = this.getSpreadSheetDescriptors();
 		
-		var waiting = {};
-		for(var i=0,e=descriptors.length; i<e; ++i){
-			var id = descriptors[i].id;
-			waiting[id] = true;
-		};
-		
-		for(var i=0,e=descriptors.length; i<e; ++i){
-			var sd = descriptors[i];
-			sd.getSpreadSheet({
-				onSuccess: loaded
-				,onError: opts.onError
-			});
-		};
-		
 		var result = [];
+		if( descriptors.length <= 0 ){
+			opts.onSuccess(result);
+			
+		} else {
+			var waiting = [];
+
+			for(var i=0,e=descriptors.length; i<e; ++i){
+				waiting.push(descriptors[i]);
+			};
+			
+			for(var i=0,e=descriptors.length; i<e; ++i){
+				var sd = descriptors[i];
+				sd.getSpreadSheet({
+					onSuccess: loaded
+					,onError: opts.onError
+				});
+			};
+		};
+		
 		function loaded(spreadSheet){
-			var id = spreadSheet.getDescriptor().id;
-			delete waiting[id];
+			var desc = spreadSheet.getDescriptor();
+			var descIndex = waiting.indexOf(desc);
+			if( descIndex >= 0 ){
+				waiting.splice(descIndex, 1);
+			};
+
 			result.push(spreadSheet);
 			
-			for(id in waiting){
-				if( waiting[id] ) return; // still waiting
+			if( waiting.length > 0 ){
+				return; // still waiting
 			};
 			
 			// All arrived
@@ -254,7 +293,6 @@ function getWorkBook(options_) {
 		,data: {
 			alt: 'json'
 		}
-		,cache: false
 		,traditional: true
 		,url: 'https://spreadsheets.google.com/feeds/worksheets/'+options.key+'/public/basic'
 		,success: handleData
@@ -306,6 +344,17 @@ function getWorkBook(options_) {
 						};
 					};
 					
+					if( entry.link ){
+						for(var j=0,k=entry.link.length;j<k;++j){
+							var link = entry.link[j];
+							if( link.rel === 'http://schemas.google.com/spreadsheets/2006#cellsfeed' ) {
+								sheet.cellsFeedUrl = link.href;
+							} else if( link.rel === 'http://schemas.google.com/spreadsheets/2006#listfeed' ) {
+								sheet.listFeedUrl = link.href;
+							};
+						};
+					};
+					
 					var sd = new SpreadSheetDescriptor(sheet);
 
 					workbook.spreadSheetDescriptors.push(sd);
@@ -321,17 +370,36 @@ function getWorkBook(options_) {
 // Functions
 //=============================================
 	
-function getSpreadSheetData(opts_) {
+function loadSpreadSheet(opts_) {
 	var opts = $.extend({
 			key: null
-			,position: '1'
-			,format: 'raw'
+			,position: null
+			,cellsFeedUrl: null
+			,listFeedUrl: null
+			,descriptor: null
 			,onSuccess: function(data){}
 			,onError: function(errorMsg){}
 		},opts_);
+	
+	var url = null;
+	var isCellsData = false;
+	var isListData = false;
 		
-	if( !opts.key ) {
-		opts.onError('Google Spreadsheet key required.');
+	if( opts.cellsFeedUrl ) {
+		url = opts.cellsFeedUrl;
+		isCellsData = true;
+		
+	} else if( opts.key && opts.position ) {
+		url = 'https://spreadsheets.google.com/feeds/cells/'+opts.key+'/'+opts.position+'/public/values';
+		isCellsData = true;
+
+	} else if( opts.listFeedUrl ) {
+		url = opts.listFeedUrl;
+		isListData = true;
+		
+	} else {
+		opts.onError('Requested spreadsheet not identified.');
+		return;
 	};
 	
 	$.ajax({
@@ -340,27 +408,25 @@ function getSpreadSheetData(opts_) {
 		,data: {
 			alt: 'json'
 		}
-		,cache: false
 		,traditional: true
-		,url: 'https://spreadsheets.google.com/feeds/list/'+opts.key+'/'+opts.position+'/public/values'
-		,success: handleData
+		,url: url
+		,success: function(data){
+			var ss = new SpreadSheet({
+				descriptor: opts.descriptor
+				,data: data
+				,isCellsData: isCellsData
+				,isListData: isListData
+			});
+			opts.onSuccess(ss);
+		}
 		,error: function(XMLHttpRequest, textStatus, errorThrown){
 			opts.onError('Unable to load spreadsheet: '+textStatus);
 		}
 	});
-	
-	function handleData(data) {		
-		if( opts.format === 'parsed' ) {
-			var entries = parseSpreadSheetData(data);
-			opts.onSuccess(entries);
-		} else {
-			opts.onSuccess(data);
-		};
-	};
 };
 
 var gsxRe = /^gsx\$(.*)$/;
-function parseSpreadSheetData(data) {
+function parseSpreadSheetListFeed(data) {
 	var res = [];
 	
 	if( data && data.feed && data.feed.entry ) {
@@ -382,10 +448,128 @@ function parseSpreadSheetData(data) {
 	return res;
 };
 
+var reIdRowCol = /\/R([0-9]+)C([0-9]+)$/;
+function parseSpreadSheetCellFeed(data) {
+	var res = [];
+	
+	if( data && data.feed && data.feed.entry ) {
+		var cells = data.feed.entry;
+		
+		// First pass, assign row/col to each entry.
+		// Accumulate columns
+		var entries = [];
+		var columnByPosition = [];
+		var columnByName = {};
+		for(var loop=0,loopEnd=cells.length; loop<loopEnd; ++loop) {
+			var cell = cells[loop];
+			if( cell.id && cell.id['$t'] ){
+				var test = reIdRowCol.exec(cell.id['$t']);
+				if( test ){
+					cell._row = 1 * test[1];
+					cell._col = 1 * test[2];
+					
+					if( cell._row === 1 ){
+						// header
+						var name = '_'+cell._col;
+						if( cell.content && cell.content['$t'] ){
+							name = cell.content['$t'];
+						};
+						
+						var column = null;
+						if( columnByName[name] ){
+							columnByName[name].isArray = true;
+						} else {
+							column = {
+								name: name
+								,isArray: false
+							};
+							columnByName[name] = column;
+						};
+						
+						columnByPosition[cell._col] = column;
+						
+					} else {
+						entries.push(cell);
+					};
+				};
+			};
+		};
+		
+		// Sort
+		entries.sort(function(a,b){
+			if( a._row < b._row ) return -1;
+			if( a._row > b._row ) return 1;
+			if( a._col < b._col ) return -1;
+			if( a._col > b._col ) return 1;
+			return 0;
+		});
+
+		// Second pass, create entries
+		var currentEntry = null;
+		var currentRow = -1;
+		for(var loop=0,loopEnd=entries.length; loop<loopEnd; ++loop) {
+			var cell = entries[loop];
+			
+			if( currentRow != cell._row ){
+				if( currentEntry ){
+					completeEntry(currentEntry);
+				};
+				currentRow = cell._row;
+				currentEntry = {};
+				res.push(currentEntry);
+			};
+			
+			var isArray = true;
+			var colName = '_';
+			var column = columnByPosition[cell._col];
+			if( column ){
+				isArray = column.isArray;
+				colName = column.name;
+			};
+			
+			var value = '';
+			if( cell.content && cell.content['$t'] ){
+				value = cell.content['$t'];
+			};
+			
+			if( isArray ){
+				if( !currentEntry[colName] ) {
+					currentEntry[colName] = [];
+				};
+				currentEntry[colName].push(value);
+				
+			} else {
+				currentEntry[colName] = value;
+			};
+		};
+		
+		// Complete last entry
+		if( currentEntry ){
+			completeEntry(currentEntry);
+		};
+	};
+
+	return res;
+	
+	function completeEntry(entry){
+		if( entry ){
+			for(var colName in columnByName){
+				var column = columnByName[colName];
+				if( typeof(entry[colName]) === 'undefined' ){
+					if( column.isArray ){
+						entry[colName] = [];
+					} else {
+						entry[colName] = '';
+					};
+				};
+			};
+		};
+	};
+};
+
 $n2.googleDocs = {
 	getWorkBook: getWorkBook
-	,getSpreadSheetData: getSpreadSheetData
-	,parseSpreadSheetData: parseSpreadSheetData
+	,loadSpreadSheet: loadSpreadSheet
 };
 
 })(jQuery,nunaliit2);
