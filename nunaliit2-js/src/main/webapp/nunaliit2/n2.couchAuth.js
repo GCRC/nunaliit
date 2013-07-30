@@ -37,8 +37,10 @@ $Id: n2.couchAuth.js 8445 2012-08-22 19:11:38Z jpfiset $
 
 ;(function($,$n2){
 
-	// Localization
-	var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
+// Localization
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
+
+var DH = 'n2.couchAuth';
 
 // ===================================================================================
 
@@ -79,6 +81,7 @@ var AuthService = $n2.Class({
 				,autoAnonymousLogin: false
 				,disableCreateUserButton: false
 				,directory: null
+				,listeners: null
 				,autoRefresh: true
 				,prompt: _loc('Please login')
 				,refreshIntervalInSec: 120 // 2 minutes
@@ -147,6 +150,17 @@ var AuthService = $n2.Class({
 				}
 				,2000 // 2 seconds
 			);
+		};
+		
+		// Listen to events
+		var dispatcher = this._getDispatcher();
+		if( dispatcher ){
+			var fn = function(m){
+				_this._handleEvent(m);
+			};
+			dispatcher.register(DH,'login',fn);
+			dispatcher.register(DH,'loginShowForm',fn);
+			dispatcher.register(DH,'logout',fn);
 		};
 
 		function onSuccess(context) {
@@ -247,14 +261,14 @@ var AuthService = $n2.Class({
 	
 	,login: function(opts_) {
 		var opts = $n2.extend({
-			name: null
+			username: null
 			,password: null
 			,onSuccess: function(context){}
 			,onError: function(errMsg){}
 		},opts_);
 
 		var _this = this;
-		var username = opts.name;
+		var username = opts.username;
 		var password = opts.password;
 		
 		if( typeof(username) === 'string' && typeof(password) === 'string' ){
@@ -500,7 +514,7 @@ var AuthService = $n2.Class({
 			var user = $dialog.find('.n2Auth_user_input').val();
 			var password = $dialog.find('.n2Auth_pw_input').val();
 			_this.login({
-				name: user
+				username: user
 				,password: password
 				,onSuccess: opts.onSuccess
 				,onError: opts.onError
@@ -615,7 +629,7 @@ var AuthService = $n2.Class({
 				,display: display
 				,onSuccess: function() { 
 					_this.login({
-						name: user
+						username: user
 						,password: password
 						,onSuccess: opts.onSuccess
 						,onError: function(err){
@@ -814,6 +828,21 @@ var AuthService = $n2.Class({
 		if( dispatcher ){
 			var h = dispatcher.getHandle('n2.couchAuth');
 			dispatcher.send(h,m);
+		};
+	}
+	
+	,_handleEvent: function(m){
+		if( m && m.type === 'login' ){
+			this.login({
+				username: m.username
+				,password: m.password
+			});
+			
+		} else if( m && m.type === 'loginShowForm' ){
+			this.showLoginForm();
+			
+		} else if( m && m.type === 'logout' ){
+			this.logout();
 		};
 	}
 	
