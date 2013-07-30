@@ -59,17 +59,6 @@ var defaultError = function(err, options) {
 	alert(acc.join(''));
 };
 
-var defaultOptions = {
-	onSuccess: function(result,options) {}
-	,onError: defaultError
-	,anonymousLoginAllowed: false
-	,anonymousUser: 'anonymous'
-	,anonymousPw: 'anonymous'
-	,autoAnonymousLogin: false
-	,disableCreateUserButton: false
-	,directory: null
-};
-	
 var AuthService = $n2.Class({
 	options: null
 
@@ -81,10 +70,16 @@ var AuthService = $n2.Class({
 		var _this = this;
 		
 		this.options = $n2.extend(
-			{}
-			,defaultOptions
-			,{
-				autoRefresh: true
+			{
+				onSuccess: function(result,options) {}
+				,onError: defaultError
+				,anonymousLoginAllowed: false
+				,anonymousUser: 'anonymous'
+				,anonymousPw: 'anonymous'
+				,autoAnonymousLogin: false
+				,disableCreateUserButton: false
+				,directory: null
+				,autoRefresh: true
 				,prompt: _loc('Please login')
 				,refreshIntervalInSec: 120 // 2 minutes
 			}
@@ -250,6 +245,59 @@ var AuthService = $n2.Class({
 		};
 	}
 	
+	,login: function(opts_) {
+		var opts = $n2.extend({
+			name: null
+			,password: null
+			,onSuccess: function(context){}
+			,onError: function(errMsg){}
+		},opts_);
+
+		var _this = this;
+		var username = opts.name;
+		var password = opts.password;
+		
+		if( typeof(username) === 'string' && typeof(password) === 'string' ){
+			doLogin();
+		} else {
+			opts.onError('Name and password must be provided when logging in');
+		};
+		
+		function doLogin() {
+			$n2.couch.getSession().login({
+				name: username
+				,password: password
+				,onSuccess: onSuccess
+				,onError: onError
+			});
+		};
+		
+		function doErrorNotification(causeObj) {
+			opts.onError( _loc('Invalid e-mail and/or password') );
+			_this.notifyListeners();
+		};
+		
+		function onSuccess(result) {
+
+			var context = $n2.couch.getSession().getContext();
+
+			$n2.log('Login successful',context,opts);
+			
+			if( context && context.name ) {
+				opts.onSuccess(context);
+				_this.notifyListeners();
+
+			} else {
+				doErrorNotification();
+			};
+		};
+		
+		function onError(xmlHttpRequest, textStatus, errorThrown) {
+			$n2.log('Login error', xmlHttpRequest, textStatus, errorThrown);
+			doErrorNotification();
+		};
+	}
+	
 	,_userLogin: function(options, anonymousFlag, username, password) {
 		var loginRetries = 0
 			,loginRetryLimit = 3
@@ -333,11 +381,17 @@ var AuthService = $n2.Class({
 	}
 	
 	,autoAnonLogin: function(options_) {
-		var options = $n2.extend({}, defaultOptions, this.options, options_);
+		var options = $n2.extend({}, this.options, options_);
 		this._userLogin(options, true);
 	}
 	
-	,createLoginDialog: function(dialogId, options){
+	,_createLoginDialog: function(dialogId, opts_){
+		var opts = $n2.extend({
+			prompt: null
+			,onSuccess: function(context){}
+			,onError: function(err){}
+		},opts_);
+		
 		var _this = this;
 		var $dialog = $('#'+dialogId);
 		
@@ -405,7 +459,7 @@ var AuthService = $n2.Class({
 				.appendTo($createLine)
 				.text( _loc('Create a new user') )
 				.click(function(){
-					_this.createUserCreationDialog(dialogId, options);
+					_this._createUserCreationDialog(dialogId, opts_);
 					return false;
 				});
 			
@@ -435,8 +489,8 @@ var AuthService = $n2.Class({
 		});
 		
 		// Adjust dialog title
-		if( options.prompt ) {
-			$dialog.dialog('option','title',options.prompt);
+		if( opts.prompt ) {
+			$dialog.dialog('option','title',opts.prompt);
 		} else {
 			$dialog.dialog('option','title',_loc('Please login'));
 		};
@@ -445,11 +499,21 @@ var AuthService = $n2.Class({
 			var $dialog = $('#'+dialogId);
 			var user = $dialog.find('.n2Auth_user_input').val();
 			var password = $dialog.find('.n2Auth_pw_input').val();
-			_this._userLogin(options, false, user, password);
+			_this.login({
+				name: user
+				,password: password
+				,onSuccess: opts.onSuccess
+				,onError: opts.onError
+			});
 		};
 	}
 	
-	,createUserCreationDialog: function(dialogId, options){
+	,_createUserCreationDialog: function(dialogId, opts_){
+		var opts = $n2.extend({
+			prompt: null
+			,onSuccess: function(context){}
+			,onError: function(err){}
+		},opts_);
 		var _this = this;
 		var $dialog = $('#'+dialogId);
 		
@@ -496,7 +560,7 @@ var AuthService = $n2.Class({
 			.text( _loc('Cancel') )
 			.button({icons:{primary:'ui-icon-cancel'}})
 			.click(function(){
-				_this.createLoginDialog(dialogId, options);
+				_this._createLoginDialog(dialogId, opts);
 				return false;
 			});
 		$dialog.find('.n2Auth_input_field').keydown(function(e){
@@ -550,7 +614,14 @@ var AuthService = $n2.Class({
 				,password: password
 				,display: display
 				,onSuccess: function() { 
-					_this._userLogin(options, false, user, password);
+					_this.login({
+						name: user
+						,password: password
+						,onSuccess: opts.onSuccess
+						,onError: function(err){
+							alert( _loc('User created but unable to log in: ')+err);
+						}
+					});
 				}
 				,onError: function(err){
 					alert( _loc('Unable to create user: ')+err);
@@ -559,15 +630,28 @@ var AuthService = $n2.Class({
 		};
 	}
 		
-	,showLoginForm: function(options_) {
-		var options = $.extend({}, defaultOptions, this.options, options_);
+	,showLoginForm: function(opts_) {
+		var opts = $.extend({
+			prompt: this.options.prompt
+			,onSuccess: function(context){}
+			,onError: function(err){}
+		}, opts_);
 
 		var dialogId = $n2.getUniqueId();
 		var $dialog = $('<div id="'+dialogId+'"></div>');
-		options.dialog = $dialog;
 		$(document.body).append($dialog);
 		
-		this.createLoginDialog(dialogId, options);
+		this._createLoginDialog(dialogId, {
+			prompt: opts.prompt
+			,onSuccess: function(context){
+				$('#'+dialogId).dialog('close');
+				opts.onSuccess(context);
+			}
+			,onError: function(err){
+				$('#'+dialogId).dialog('close');
+				opts.onError(err);
+			}
+		});
 		
 		var dialogOptions = {
 			autoOpen: true
@@ -578,26 +662,30 @@ var AuthService = $n2.Class({
 				diag.remove();
 			}
 		};
-		if( options.prompt ) {
-			dialogOptions.title = options.prompt;
+		if( opts.prompt ) {
+			dialogOptions.title = opts.prompt;
 		}
 		$dialog.dialog(dialogOptions);
-		
 	}
 	
-	,logout: function(options_) {
+	,logout: function(opts_) {
+		var opts = $n2.extend({
+			onSuccess: function(context){}
+			,onError: function(err){}
+		},opts_);
+		
 		var _this = this;
-		var options = $.extend({}, defaultOptions, this.options, options_);
 
 		$n2.couch.getSession().logout({
 			onSuccess: onSuccess
+			,onError: opts.onError
 		});
 		
 		function onSuccess(result) {
 
-			$n2.log("Logout successful",result,options);
+			$n2.log("Logout successful",result);
 			
-			options.onSuccess(result,options);
+			opts.onSuccess(result);
 		
 			_this.notifyListeners();
 		};
