@@ -324,30 +324,63 @@ function getAllAtlasRoles(opts_){
 			};
 			
 			if( opts.include_layer_roles ){
-				var dd = opts.db.getDesignDoc({ddName:'atlas'});
-				dd.queryView({
-					viewName: 'layer-definitions'
-					,onSuccess: function(rows){
-						for(var i=0,e=rows.length;i<e;++i){
-							var r = rows[i];
-							var layerId = r.id;
-							if( layerId !== 'public' ) {
-								roles.push(atlasName + '_layer_' + layerId);
-							};
-							done();
-						};
-					}
-					,onError: function(){
-						$n2.log('Unable to obtain layers from database: '+atlasName);
-						done();
-					}
-				});
+				computeRolesFromLayerDefinitions();
 				
 				return;
 			};
 		};
 		
 		done();
+	};
+	
+	function computeRolesFromLayerDefinitions(){
+		var dd = opts.db.getDesignDoc({ddName:'atlas'});
+		dd.queryView({
+			viewName: 'layer-definitions'
+			,onSuccess: function(rows){
+				for(var i=0,e=rows.length;i<e;++i){
+					var r = rows[i];
+					var layerId = r.key;
+					if( typeof(layerId) === 'string' && layerId !== 'public' ) {
+						var role = atlasName + '_layer_' + layerId;
+						if( roles.indexOf(role) < 0 ) {
+							roles.push(role);
+						};
+					};
+				};
+				computeRolesFromLayersInUse();
+			}
+			,onError: function(){
+				$n2.log('Unable to obtain layer definitions from database: '+atlasName);
+				computeRolesFromLayersInUse();
+			}
+		});
+	};
+	
+	function computeRolesFromLayersInUse(){
+		var dd = opts.db.getDesignDoc({ddName:'atlas'});
+		dd.queryView({
+			viewName: 'layers'
+			,reduce: true
+			,group: true
+			,onSuccess: function(rows){
+				for(var i=0,e=rows.length;i<e;++i){
+					var r = rows[i];
+					var layerId = r.key;
+					if( typeof(layerId) === 'string' && layerId !== 'public' ) {
+						var role = atlasName + '_layer_' + layerId;
+						if( roles.indexOf(role) < 0 ) {
+							roles.push(role);
+						};
+					};
+				};
+				done();
+			}
+			,onError: function(){
+				$n2.log('Unable to obtain layers from database: '+atlasName);
+				done();
+			}
+		});
 	};
 	
 	function done(){
