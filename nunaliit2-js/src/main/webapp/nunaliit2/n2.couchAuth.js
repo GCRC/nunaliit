@@ -89,6 +89,10 @@ var AuthService = $n2.Class({
 			,options_
 		);
 		
+		if( ! $n2.couchAuth._defaultAuthService ){
+			$n2.couchAuth._defaultAuthService = this;
+		};
+		
 		this.loginStateListeners = [];
 		this.lastAuthSessionCookie = null;
 		

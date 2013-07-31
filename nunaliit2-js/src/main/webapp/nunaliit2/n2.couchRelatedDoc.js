@@ -46,6 +46,7 @@ var CreateRelatedDocProcess = $n2.Class({
 				,schemaRepository: null
 				,uploadService: null
 				,showService: null
+				,authService: null
 			}
 			,options_
 		);
@@ -56,15 +57,14 @@ var CreateRelatedDocProcess = $n2.Class({
 		var _this = this;
 		
 		// Check that we are logged in
-		if( $.NUNALIIT_AUTH ) {
-			if( false == $.NUNALIIT_AUTH.isLoggedIn() ) {
-				$.NUNALIIT_AUTH.login({
-					onSuccess: function(result,options) {
-						_this.addRelatedDocumentFromSchemaNames(opt_);
-					}
-				});
-				return;
-			};
+		var authService = this.options.authService;
+		if( authService && false == authService.isLoggedIn() ) {
+			authService.showLoginForm({
+				onSuccess: function(result,options) {
+					_this.addRelatedDocumentFromSchemaNames(opt_);
+				}
+			});
+			return;
 		};
 		
 		var opt = $n2.extend({
@@ -108,15 +108,14 @@ var CreateRelatedDocProcess = $n2.Class({
 		var _this = this;
 
 		// Check that we are logged in
-		if( $.NUNALIIT_AUTH ) {
-			if( false == $.NUNALIIT_AUTH.isLoggedIn() ) {
-				$.NUNALIIT_AUTH.login({
-					onSuccess: function(result,options) {
-						_this.addRelatedDocumentFromSchema(opt_);
-					}
-				});
-				return;
-			};
+		var authService = this.options.authService;
+		if( authService && false == authService.isLoggedIn() ) {
+			authService.showLoginForm({
+				onSuccess: function(result,options) {
+					_this.addRelatedDocumentFromSchema(opt_);
+				}
+			});
+			return;
 		};
 
 		var opt = $n2.extend({

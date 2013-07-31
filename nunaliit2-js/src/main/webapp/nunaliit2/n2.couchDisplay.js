@@ -149,6 +149,7 @@ $n2.couchDisplay = $n2.Class({
 			,schemaRepository: this._getSchemaRepository()
 			,uploadService: this.options.uploadService
 			,showService: this._getShowService()
+			,authService: this._getAuthService()
 		});
 	}
 
@@ -177,6 +178,14 @@ $n2.couchDisplay = $n2.Class({
 	,getDisplayDiv: function(){
 		var divId = this.getDisplayDivName();
 		return $('#'+divId);
+	}
+	
+	,_getAuthService: function(){
+		if( this.options.serviceDirectory ){
+			return this.options.serviceDirectory.authService;
+		};
+		
+		return null;
 	}
 	
 	,_getShowService: function(){
@@ -1182,15 +1191,14 @@ $n2.couchDisplay = $n2.Class({
 		var _this = this;
 		
 		// Check that we are logged in
-		if( $.NUNALIIT_AUTH ) {
-			if( false == $.NUNALIIT_AUTH.isLoggedIn() ) {
-				$.NUNALIIT_AUTH.login({
-					onSuccess: function(result,options) {
-						_this.performContributionReply(referenceId, options_, contId);
-					}
-				});
-				return;
-			};
+		var authService = this._getAuthService();
+		if( authService && false == authService.isLoggedIn() ) {
+			authService.showLoginForm({
+				onSuccess: function() {
+					_this.performContributionReply(referenceId, options_, contId);
+				}
+			});
+			return;
 		};
 
 		var $contributionDialog = $('<div></div>');

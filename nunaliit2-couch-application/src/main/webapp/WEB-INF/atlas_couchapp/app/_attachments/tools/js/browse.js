@@ -18,6 +18,7 @@ var contributions = null;
 var showService = null;
 var schemaRepository = null;
 var dispatcher = null;
+var authService = null;
 
 function reportErrorsOnElem(errors, $elem) {
 	$elem.append( $('<div>Error occurred during the request<div>') );
@@ -196,8 +197,8 @@ function initiateEdit(docId) {
 };
 
 function addDocument() {
-	if( $.NUNALIIT_AUTH && !$.NUNALIIT_AUTH.isLoggedIn() ) {
-		$.NUNALIIT_AUTH.login({
+	if( authService && !authService.isLoggedIn() ) {
+		authService.showLoginForm({
 			onSuccess: addDocument
 		});
 		return;
@@ -433,7 +434,8 @@ function main_init(config) {
 	dispatcher = config.directory.dispatchService;
 	
 	if( config.directory && config.directory.authService ) {
-		config.directory.authService.createAuthWidget({
+		authService = config.directory.authService;
+		authService.createAuthWidget({
 			elemId: 'login'
 		});
 	};

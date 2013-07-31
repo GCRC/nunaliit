@@ -910,8 +910,9 @@ var MapAndControls = $n2.Class({
 	     * Install login listener - it is run when first added
 	     * Note that initialization of auth happens in app specific code.
 	     */
-	    if( $.NUNALIIT_AUTH ) {
-			$.NUNALIIT_AUTH.addListener(function(currentUser){
+		var authService = this._getAuthService();
+	    if( authService ) {
+	    	authService.addListeners(function(currentUser){
 				_this.loginStateChanged(currentUser);
 			});
 	    };
@@ -2447,9 +2448,10 @@ var MapAndControls = $n2.Class({
     // === LOGIN STUFF START ========================================================
 
 	,isLoggedIn: function() {
-    	if( $.NUNALIIT_AUTH ) {
+		var authService = this._getAuthService();
+	    if( authService ) {
     		// The auth module is present, check if user logged in
-			return $.NUNALIIT_AUTH.isLoggedIn();
+			return authService.isLoggedIn();
     	} else {
     		// Authentication module is not loaded
     		return false;
@@ -2459,19 +2461,34 @@ var MapAndControls = $n2.Class({
 	,isUser: function() {
 		if( !this.isLoggedIn() ) return false;
 		
-		return $.NUNALIIT_AUTH.isUser();
+		var authService = this._getAuthService();
+	    if( authService ) {
+			return authService.isUser();
+    	} else {
+    		return false;
+    	};
 	}
 	
 	,isAdminUser: function() {
 		if( !this.isLoggedIn() ) return false;
 		
-		return $.NUNALIIT_AUTH.isAdmin();
+		var authService = this._getAuthService();
+	    if( authService ) {
+			return authService.isAdmin();
+    	} else {
+    		return false;
+    	};
 	}
 	
 	,isAnonymousUser: function() {
 		if( !this.isLoggedIn() ) return false;
 		
-		return $.NUNALIIT_AUTH.isAnonymous();
+		var authService = this._getAuthService();
+	    if( authService ) {
+			return authService.isAnonymous();
+    	} else {
+    		return false;
+    	};
 	}
     
     /*
@@ -2483,10 +2500,14 @@ var MapAndControls = $n2.Class({
      */
     ,loginStateChanged: function(currentUser) {
     	var showLogin = false;
-    	if( null == currentUser ) {
+
+		if( null == currentUser ) {
     		showLogin = true;
     	} else {
-     		if( this.isAnonymousUser() && $.NUNALIIT_AUTH.autoAnonymousBehaviour() ) {
+    		var authService = this._getAuthService();
+     		if( this.isAnonymousUser() 
+     		 && authService
+     		 && authService.autoAnonymousBehaviour() ) {
 		    	showLogin = true;
      		};
     	};
@@ -2611,19 +2632,20 @@ var MapAndControls = $n2.Class({
     ,switchToEditMode: function() {
     	var _this = this;
     	
-    	if( $.NUNALIIT_AUTH ) {
+    	var authService = this._getAuthService();
+    	if( authService ) {
     		var logInRequired = true;
     		
     		// The auth module is present, check if user logged in
     		// and is not anonymous
-    		var userNotAnonymous = $.NUNALIIT_AUTH.userLoggedInAndNotAnonymous();
+    		var userNotAnonymous = authService.userLoggedInAndNotAnonymous();
     		if( userNotAnonymous ) {
     			logInRequired = false;
     		};
     		
     		if( logInRequired ) {
     			// User is not logged in
-    			$.NUNALIIT_AUTH.login({
+    			authService.showLoginForm({
     				prompt: '<p>You must log in as a registered user to add a point to the map.</p>'
     				,anonymousLoginAllowed: false
     				,onSuccess: function(){ _this.switchToEditMode(); }
@@ -3784,6 +3806,16 @@ var MapAndControls = $n2.Class({
 			};
 		};
 		this.mapMouseMoveListeners = newListeners;
+	}
+	
+	,_getAuthService: function(){
+		var auth = null;
+		
+		if( this.options.directory ) {
+			auth = this.options.directory.authService;
+		};
+		
+		return auth;
 	}
 	
 	,_getDispatchService: function(){

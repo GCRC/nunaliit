@@ -111,7 +111,7 @@ function Configure(options_){
 			});
 		};
 
-		$.NUNALIIT_AUTH.init({
+		configuration.directory.authService = new $n2.couchAuth.AuthService({
 			onSuccess: authInitialized
 			,autoAnonymousLogin: false
 			,directory: configuration.directory
@@ -121,7 +121,6 @@ function Configure(options_){
 	function authInitialized() {
 		
 		configuration.auth = $.NUNALIIT_AUTH;
-		configuration.directory.authService = $n2.couchAuth._defaultAuthService;
 		
 		configuration.atlasDb.getChangeNotifier({
 			onSuccess: function(notifier){
