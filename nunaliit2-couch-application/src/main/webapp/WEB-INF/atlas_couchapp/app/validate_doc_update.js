@@ -10,6 +10,9 @@ function(newDoc, oldDoc, userCtxt) {
 	var reAtlasLayer = /(.*)_layer_(.*)/;
 	var reGlobalLayer = /layer_(.*)/;
 	
+	var publicLayerName = 'public';
+	var publicLayerPrefix = 'public_';
+	
 //log('validate doc update '+oldDoc+'->'+newDoc+' userCtxt: '+JSON.stringify(userCtxt));
 //log('validate doc update '+JSON.stringify(oldDoc)+'->'+JSON.stringify(newDoc));	
 //log('Atlas name: '+n2atlas.name);
@@ -206,7 +209,8 @@ function(newDoc, oldDoc, userCtxt) {
 			// Must have appropriate role to delete/add to layer
 			for(var i=0,e=addedLayers.length; i<e; ++i) {
 				var layerName = addedLayers[i];
-				if( layerName !== 'public' ) {
+				var isPublic = isLayerNamePublic(layerName);
+				if( !isPublic ) {
 					// Exception for public layer
 					if( userInfo.atlas[n2atlas.name] 
 					 && userInfo.atlas[n2atlas.name].layers.indexOf(layerName) >= 0 ) {
@@ -219,7 +223,8 @@ function(newDoc, oldDoc, userCtxt) {
 			};
 			for(var i=0,e=deletedLayers.length; i<e; ++i) {
 				var layerName = deletedLayers[i];
-				if( layerName !== 'public' ) {
+				var isPublic = isLayerNamePublic(layerName);
+				if( !isPublic ) {
 					// Exception for public layer
 					if( userInfo.atlas[n2atlas.name] 
 					 && userInfo.atlas[n2atlas.name].layers.indexOf(layerName) >= 0 ) {
@@ -459,5 +464,11 @@ function(newDoc, oldDoc, userCtxt) {
 		};
 		
 		return role;
+	};
+	
+	function isLayerNamePublic(layerId){
+		if( layerId === publicLayerName ) return true;
+		if( layerId.substr(0,publicLayerPrefix.length) === publicLayerPrefix ) return true;
+		return false;
 	};
 }

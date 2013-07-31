@@ -1,5 +1,9 @@
 function(doc){
 	if( doc.nunaliit_layer_definition ){
-		emit(doc._id, null);
+		var layerId = doc.nunaliit_layer_definition.id;
+		if( !layerId ){
+			layerId = doc._id;
+		};
+		emit(layerId, null);
 	};
 };

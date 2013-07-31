@@ -1054,7 +1054,7 @@ var MapAndControls = $n2.Class({
 		this.mapLayers.push(this.editLayer);
 		this.vectorLayers.push(this.editLayer);
 		
-		// Create vector layer for user defined layers
+		// Create vector layer for user defined layers (legacy)
 		this.layers = {};
 		if( this.options.layerInfo ) {
 			for(var loop=0; loop<this.options.layerInfo.length; ++loop) {
@@ -3319,6 +3319,7 @@ var MapAndControls = $n2.Class({
 
 	// === START -- LAYER MANAGEMENT ========================================================
 
+	// Legacy method
 	,createLayerFromOptions: function(opt_) {
 		var _this = this;
 		
@@ -3517,9 +3518,9 @@ var MapAndControls = $n2.Class({
 		return this.layers[id];
 	}
 	
-	,addLayer: function(opt_) {
-		var layerInfo = this.createLayerFromOptions(opt_);
-		this.map.addLayer( layerInfo.olLayer );
+	,addLayer: function(layerDefinition, isBaseLayer) {
+		var olLayer = this._createOLLayerFromDefinition(layerDefinition, isBaseLayer);
+		this.map.addLayer( olLayer );
 		this._installFeatureSelector();
 	}
 	
@@ -4105,10 +4106,14 @@ var MapAndControls = $n2.Class({
 	
 	,_handleAddLayerToMap: function(m){
 		var layerDef = m.layer;
+		var isBaseLayer = false;
+		if( typeof(m.isBaseLayer) !== 'undefined' ){
+			isBaseLayer = m.isBaseLayer;
+		};
 		
 		var olLayer = this.findLayerFromId(layerDef.id);
 		if( !olLayer ) {
-			this.addLayer(layerDef);
+			this.addLayer(layerDef,isBaseLayer);
 			olLayer = this.findLayerFromId(layerDef.id);
 		};
 		

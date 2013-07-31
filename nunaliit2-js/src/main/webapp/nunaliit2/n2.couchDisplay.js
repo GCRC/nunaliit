@@ -651,12 +651,16 @@ $n2.couchDisplay = $n2.Class({
 			$buttons.append($addLayerButton);
 
 			var layerDefinition = data.nunaliit_layer_definition;
-			var layer = {
-				id: layerDefinition.id
-				,name: layerDefinition.name
-				,couchDb: {
+			var layerId = layerDefinition.id;
+			if( !layerId ){
+				layerId = data._id;
+			};
+			var layerDef = {
+				name: layerDefinition.name
+				,type: 'couchdb'
+				,options: {
 					viewName: 'geom'
-					,layerName: layerDefinition.id
+					,layerName: layerId
 					,db: this.options.db
 					,designDoc: this.options.designDoc
 				}
@@ -665,7 +669,7 @@ $n2.couchDisplay = $n2.Class({
 			$addLayerButton.click(function(){
 				_this._dispatch({
 					type: 'addLayerToMap'
-					,layer: layer
+					,layer: layerDef
 					,options: {
 						setExtent: {
 							bounds: layerDefinition.bbox

@@ -498,12 +498,16 @@ var DomStyler = $n2.Class({
 					};
 					
 					if( dispatchService ) {
-						var layer = {
-							id: layerDefinition.id
-							,name: layerDefinition.name
+						var layerId = layerDefinition.id;
+						if( !layerId ){
+							layerId = contextDoc._id;
+						};
+						var layerDef = {
+							name: layerDefinition.name
+							,type: 'couchdb'
 							,couchDb: {
 								viewName: 'geom'
-								,layerName: layerDefinition.id
+								,layerName: layerId
 								,db: _this.options.db
 								,designDoc: _this.options.designDoc
 							}
@@ -513,7 +517,7 @@ var DomStyler = $n2.Class({
 							DH
 							,{
 								type: 'addLayerToMap'
-								,layer: layer
+								,layer: layerDef
 								,options: {
 									setExtent: {
 										bounds: layerDefinition.bbox
