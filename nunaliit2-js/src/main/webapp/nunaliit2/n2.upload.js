@@ -298,6 +298,12 @@ var Upload = $n2.Class({
 	}
 	
 	,_uploadSucessfulDialog: function(){
+		if( ! $.fn.button 
+		 || ! $.fn.dialog ) {
+			// No jquery-ui. Ignore
+			return;
+		};
+		
 		// Inform user of approval process
 		var infoDialogId = $n2.getUniqueId();
 		var $dialog = $('<div id="'+infoDialogId+'"></div>');
