@@ -1,19 +1,18 @@
 
+
 /**
  * @ requires OpenLayers/Protocol.js
  * @ requires OpenLayers/Feature/Vector.js
  * @ requires OpenLayers/Filter/Spatial.js
  * @ requires OpenLayers/Filter/Comparison.js
  * @ requires OpenLayers/Filter/Logical.js
- */
-
-/**
  * @ requires OpenLayers/Format.js
  */
 
-if( !window.$n2 ) {
-	window.$n2 = window.nunaliit2;
-};
+;(function($,$n2){
+
+// If OpenLayers is not included, do not process further
+if( typeof(OpenLayers) === 'undefined' ) return;
 
 /**
  * Class: OpenLayers.Format.Couch
@@ -939,3 +938,4 @@ OpenLayers.Protocol.Couch = OpenLayers.Class(OpenLayers.Protocol, {
     o[OpenLayers.Filter.Comparison.LIKE]                     = "ilike";
 })();
 
+})(jQuery,nunaliit2);
