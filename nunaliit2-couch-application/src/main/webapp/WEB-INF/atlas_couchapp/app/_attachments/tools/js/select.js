@@ -1364,7 +1364,7 @@
 		$h.text(list.name);
 		
 		var $tx = $('<button></button>');
-		$tx.text( _loc('Tranform') );
+		$tx.text( _loc('Transform') );
 		$h.append($tx);
 		$tx.click(function(){
 			transformList(list);
