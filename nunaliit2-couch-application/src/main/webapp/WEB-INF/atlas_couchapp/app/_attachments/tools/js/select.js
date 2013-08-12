@@ -39,8 +39,9 @@
 			this.cancellingLabel = opts.cancellingLabel;
 
 			var $dialog = $('<div id="'+this.dialogId+'">'
+				+'<div class="selectAppProgressDialogMessage">'
 				+'<span class="selectAppLabel"></span>: <span class="selectAppProgress"></span>'
-				+'</div>');
+				+'</div></div>');
 			$dialog.find('span.selectAppLabel').text( _loc('Progress') );
 			
 			var dialogOptions = {
@@ -95,6 +96,12 @@
 			var $dialog = $('#'+this.dialogId);
 			var $p = $dialog.find('.selectAppProgress');
 			$p.text( ''+Math.floor(percent)+'%' );
+		}
+		
+		,updateHtmlMessage: function(html){
+			var $dialog = $('#'+this.dialogId);
+			var $div = $dialog.find('.selectAppProgressDialogMessage');
+			$div.html( html );
 		}
 	});
 
@@ -957,14 +964,21 @@
 				};
 
 				if(docIdsLeft.length < 1){
-					progressDialog.updatePercent(100);
+					progressDialog.updateHtmlMessage('<span>100%</span>');
 					opts.onCompleted(totalCount, skippedCount, okCount, failCount);
 					progressDialog.close();
 				} else {
 					if( totalCount ) {
-						progressDialog.updatePercent( (skippedCount + okCount + failCount) * 100 / totalCount );
+						var percent = Math.floor((skippedCount + okCount + failCount) * 100 / totalCount);
+						var html = ['<div>'];
+						html.push('<span>Percent: '+percent+'%</span><br/>');
+						html.push('<span>Transformed: '+okCount+'</span><br/>');
+						html.push('<span>Skipped: '+skippedCount+'</span><br/>');
+						html.push('<span>Failed: '+failCount+'</span><br/>');
+						html.push('</div>');
+						progressDialog.updateHtmlMessage( html.join('') );
 					} else {
-						progressDialog.updatePercent(0);
+						progressDialog.updateHtmlMessage('<span>0%</span>');
 					};
 					
 					var docId = docIdsLeft.pop();
