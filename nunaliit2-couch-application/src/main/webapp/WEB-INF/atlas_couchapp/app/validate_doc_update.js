@@ -3,12 +3,12 @@ function(newDoc, oldDoc, userCtxt) {
 	var n2utils = require('vendor/nunaliit2/n2.couchUtils');
 	var n2atlas = require('vendor/nunaliit2/atlas');
 	
-	var reAtlasAdmin = /(.*)_administrator/;
-	var reAtlasVetter = /(.*)_vetter/;
-	var reAtlasReplicator = /(.*)_replicator/;
-	var reAtlasUser = /(.*)_user/;
-	var reAtlasLayer = /(.*)_layer_(.*)/;
-	var reGlobalLayer = /layer_(.*)/;
+    var reAtlasAdmin = new RegExp("(.*)_administrator");
+    var reAtlasVetter = new RegExp("(.*)_vetter");
+    var reAtlasReplicator = new RegExp("(.*)_replicator");
+    var reAtlasUser = new RegExp("(.*)_user");
+    var reAtlasLayer = new RegExp("(.*)_layer_(.*)");
+    var reGlobalLayer = new RegExp("layer_(.*)");
 	
 	var publicLayerName = 'public';
 	var publicLayerPrefix = 'public_';
