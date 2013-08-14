@@ -732,3 +732,7 @@ table.mediaSelection td {
 	visibility: hidden;
 }
 
+/* Allow hidden embed tags. This was broken by insertion of n2.base.css */
+embed[hidden] {
+	display: block;
+}
