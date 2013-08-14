@@ -8,10 +8,10 @@ import java.io.InputStreamReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionProgress;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionProgress;
 
 public class ImageMagickProcessor_6_5 implements ImageMagickProcessor {
 
@@ -42,7 +42,10 @@ public class ImageMagickProcessor_6_5 implements ImageMagickProcessor {
 		
 		Runtime rt = Runtime.getRuntime();
 		try {
-			String command = "identify -verbose "+imageFile.getAbsolutePath();
+			String command = String.format(
+					ImageMagickProcessorDefault.imageInfoCommand
+					,imageFile.getAbsolutePath()
+					);
 			logger.debug(command);
 			Process p = rt.exec(command, null, null);
 			InputStream is = p.getInputStream();
@@ -100,11 +103,11 @@ public class ImageMagickProcessor_6_5 implements ImageMagickProcessor {
 		
 		Runtime rt = Runtime.getRuntime();
 		try {
-			String monitorString = "";
-			if( null != imageMagickProgress ) {
-				monitorString = "-monitor ";
-			}
-			String command = "convert "+monitorString+imageInfo.file.getAbsolutePath()+" -auto-orient -compress JPEG -quality 70 "+outputFile.getAbsolutePath();
+			String command = String.format(
+					ImageMagickProcessorDefault.imageConvertCommand
+					,imageInfo.file.getAbsolutePath()
+					,outputFile.getAbsolutePath()
+					);
 			logger.debug(command);
 			Process p = rt.exec(command, null, null);
 			InputStream is = p.getErrorStream();
@@ -157,11 +160,12 @@ public class ImageMagickProcessor_6_5 implements ImageMagickProcessor {
 		
 		Runtime rt = Runtime.getRuntime();
 		try {
-			String monitorString = "";
-			if( null != imageMagickProgress ) {
-				monitorString = "-monitor ";
-			}
-			String command = "convert "+monitorString+imageInfo.file.getAbsolutePath()+" -auto-orient -resize "+maxWidth+"x"+maxHeight+" -compress JPEG -quality 70 "+outputFile.getAbsolutePath();
+			String command = String.format(
+					ImageMagickProcessorDefault.imageResizeCommand
+					,imageInfo.file.getAbsolutePath()
+					,outputFile.getAbsolutePath()
+					,maxWidth,maxHeight
+					);
 			logger.debug(command);
 			Process p = rt.exec(command, null, null);
 			InputStream is = p.getErrorStream();
@@ -218,11 +222,11 @@ public class ImageMagickProcessor_6_5 implements ImageMagickProcessor {
 		
 		Runtime rt = Runtime.getRuntime();
 		try {
-			String monitorString = "";
-			if( null != imageMagickProgress ) {
-				monitorString = "-monitor ";
-			}
-			String command = "convert "+monitorString+"-auto-orient "+imageInfo.file.getAbsolutePath()+" "+outputFile.getAbsolutePath();
+			String command = String.format(
+					ImageMagickProcessorDefault.imageReorientCommand
+					,imageInfo.file.getAbsolutePath()
+					,outputFile.getAbsolutePath()
+					);
 			logger.debug(command);
 			Process p = rt.exec(command, null, null);
 			InputStream is = p.getErrorStream();
