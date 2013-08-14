@@ -474,9 +474,6 @@ var MapAndControls = $n2.Class({
 	,navigationControls: null
 	,editControls: null
 	,editFeatureControls: null
-	,mapInteractionName: null
-	,mapInteractionDivName: null
- 	,mapInteractionButton: null
 
  	// EDIT mode callbacks
 	,editModeAddFeatureEnabled: null
@@ -583,6 +580,7 @@ var MapAndControls = $n2.Class({
 			}
 			,directory: null // service directory
 			,mapIdentifier: 'map'
+			,mapInteractionDivName: 'map_interaction_div' 
 		};
 		this.options = $.extend(true, {}, defaultOptions, options_);
 
@@ -668,11 +666,6 @@ var MapAndControls = $n2.Class({
 			}
 		};
 		this.currentMode = this.modes.NAVIGATE;
-
-	    // MAP MODES
-		this.mapInteractionName = "map_interaction";
-		this.mapInteractionDivName = this.mapInteractionName + "_div";
-	 	this.mapInteractionButton = null;
 
 	 	// COMETD
 	    this.cometEnabled = true;
@@ -2528,14 +2521,21 @@ var MapAndControls = $n2.Class({
     
  	,createMapInteractionSwitch: function() {
  		var _this = this;
- 		this.mapInteractionButton = $('<input type="button" value="'+this.modes.NAVIGATE.buttonValue+'"/>'); 
- 		this.mapInteractionButton.click( function(evt) { 
-			_this._clickedMapInteractionSwitch(evt);
-		});
-		$("#"+this.mapInteractionDivName)
+ 		var mapInteractionButton = $('<input type="button" class="n2map_map_interaction_switch"/>')
+ 			.val(this.modes.NAVIGATE.buttonValue)
+ 			.click( function(evt) { 
+ 				_this._clickedMapInteractionSwitch(evt);
+ 			})
+ 			;
+		$("#"+this.options.mapInteractionDivName)
 			.empty()
-			.append(this.mapInteractionButton);
+			.append(mapInteractionButton);
 	}
+ 	
+ 	,_getMapInteractionSwitch: function(){
+ 		return $("#"+this.options.mapInteractionDivName)
+ 			.find('.n2map_map_interaction_switch');
+ 	}
 	
 	,_clickedMapInteractionSwitch: function(e){
 		if( this.currentMode === this.modes.NAVIGATE ) {
@@ -2551,15 +2551,11 @@ var MapAndControls = $n2.Class({
 	}
 	
  	,hideMapInteractionSwitch: function() {
- 		if( null != this.mapInteractionButton ) {
-	 		this.mapInteractionButton.hide();
-	 	};
+ 		this._getMapInteractionSwitch().hide();
 	}
 	
 	,showMapInteractionSwitch: function() {
-  		if( null != this.mapInteractionButton ) {
- 			this.mapInteractionButton.show();
- 		};
+ 		this._getMapInteractionSwitch().show();
 	}
 	
 	,activateControl: function(control) {
@@ -2597,7 +2593,7 @@ var MapAndControls = $n2.Class({
 
     	// Apply new mode
     	this.currentMode = mode;
-    	this.mapInteractionButton.val(mode.buttonValue);
+    	this._getMapInteractionSwitch().val(mode.buttonValue);
     	if( this.currentMode === this.modes.EDIT ) {
     		this.editLayer.events.register('featureadded', null, this.editModeAddFeatureCallback);
     		this.editLayer.events.register('beforefeaturesadded', null, this.convertToMultiGeometry);

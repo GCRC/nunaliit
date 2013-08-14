@@ -494,7 +494,9 @@ var ModuleDisplay = $n2.Class({
 			,config: null
 			,titleName: 'title'
 			,moduleTitleName: 'module_title'
+			,contentName: null // specify contentName, or mapName+sidePanelName+
 			,mapName: 'map'
+			,mapInteractionName: 'map_interaction_div'
 			,sidePanelName: 'side'
 			,filterPanelName: 'filters'
 			,searchPanelName: 'searchInput'
@@ -747,6 +749,7 @@ var ModuleDisplay = $n2.Class({
 			var mapOptions = {
 				dbSearchEngine: dbSearchEngine
 				,mapIdentifier: opts.mapName
+				,mapInteractionDivName: opts.mapInteractionName
 				,mapCoordinateSpecifications: {
 					initialBounds: null
 				}
