@@ -80,6 +80,136 @@
 	
 }
 
+/* ==============================
+   LEGACY CONTENT SECTION
+   This is important to keep for HTML
+   implementation that defines the content
+   explicitely. This has to do with atlas
+   created prior to 2.1.2
+   ============================== */
+
+/* Main Map */
+.nunaliit_map {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 450px;
+	bottom: 0;
+	border: 0;
+	margin: 0;
+	border: 0;
+}
+
+/* Search */
+.nunaliit_searchInput {
+	position: absolute;
+	right: 0;
+	top: 0;
+	height: 43px;
+	width: 410px;
+	bottom: 20px;
+	overflow: visible;
+	z-index: 8;
+}
+.nunaliit_searchInput input {
+	padding:2.5%;
+	width:95%;
+}
+
+/* Side Bar */
+.nunaliit_side {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	width: 410px;
+	overflow: auto;
+}
+
+/* Map Interactions */
+.map_interaction {
+	position: absolute;
+	top: 33px;
+	right: 468px;
+	text-align: right;
+	padding: 0;
+	margin: 0;
+	border: 0;
+	z-index:8;
+}
+.map_interaction input { 
+	cursor: pointer;
+}
+
+/* ==============================
+   CONTENT SECTION
+   This section has to do with content
+   defined at run-time 
+   ============================== */
+
+/* Main Map */
+.n2_content_map {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 450px;
+	bottom: 0;
+	border: 0;
+	margin: 0;
+	border: 0;
+}
+
+/* Search */
+.n2_content_searchInput {
+	position: absolute;
+	right: 0;
+	top: 0;
+	height: 43px;
+	width: 410px;
+	bottom: 20px;
+	overflow: visible;
+	z-index: 8;
+}
+.n2_content_searchInput input {
+	padding:2.5%;
+	width:95%;
+}
+
+/* Side Bar */
+.n2_content_side {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	width: 410px;
+	overflow: auto;
+}
+
+/* Map Interactions */
+.n2_content_map_interaction {
+	position: absolute;
+	top: 33px;
+	right: 468px;
+	text-align: right;
+	padding: 0;
+	margin: 0;
+	border: 0;
+	z-index:8;
+}
+.n2_content_map_interaction input { 
+	cursor: pointer;
+}
+
+/*
+	Common layout
+*/
+.olControlEditingToolbar {
+	position: absolute;
+	right: 185px;
+	top: 33px;
+}
+
+
 
 
 /* Smaller screens */

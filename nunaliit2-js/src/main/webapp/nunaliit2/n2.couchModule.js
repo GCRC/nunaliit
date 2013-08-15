@@ -466,6 +466,12 @@ var ModuleDisplay = $n2.Class({
 	,titleName: null
 
 	,moduleTitleName: null
+	
+	,contentName: null
+
+	,mapName: null
+	
+	,mapInteractionName: null
 
 	,sidePanelName: null
 	
@@ -494,7 +500,7 @@ var ModuleDisplay = $n2.Class({
 			,config: null
 			,titleName: 'title'
 			,moduleTitleName: 'module_title'
-			,contentName: null // specify contentName, or mapName+sidePanelName+
+			,contentName: null // specify contentName, or mapName+sidePanelName+mapInteractionName+searchPanelName
 			,mapName: 'map'
 			,mapInteractionName: 'map_interaction_div'
 			,sidePanelName: 'side'
@@ -525,6 +531,9 @@ var ModuleDisplay = $n2.Class({
 			return;
 		};
 		
+		this.contentName = opts.contentName;
+		this.mapName = opts.mapName;
+		this.mapInteractionName = opts.mapInteractionName;
 		this.sidePanelName = opts.sidePanelName;
 		this.filterPanelName = opts.filterPanelName;
 		this.searchPanelName = opts.searchPanelName;
@@ -548,6 +557,38 @@ var ModuleDisplay = $n2.Class({
 		var config = this.config;
 		var atlasDb = config.atlasDb;
 		var atlasDesign = config.atlasDesign;
+		
+		// Handle content name
+		if( this.contentName ){
+			var $contentDiv = $('#'+this.contentName)
+				.empty()
+				;
+			this.mapName = $n2.getUniqueId();
+			this.mapInteractionName = $n2.getUniqueId();
+			this.sidePanelName = $n2.getUniqueId();
+			this.searchPanelName = $n2.getUniqueId();
+			this.sidePanelName = $n2.getUniqueId();
+			
+			$('<div></div>')
+				.attr('id',this.mapName)
+				.addClass('n2_content_map')
+				.appendTo($contentDiv);
+			
+			$('<div></div>')
+				.attr('id',this.mapInteractionName)
+				.addClass('n2_content_map_interaction')
+				.appendTo($contentDiv);
+			
+			$('<div></div>')
+				.attr('id',this.searchPanelName)
+				.addClass('n2_content_searchInput')
+				.appendTo($contentDiv);
+			
+			$('<div></div>')
+				.attr('id',this.sidePanelName)
+				.addClass('n2_content_side')
+				.appendTo($contentDiv);
+		};
 		
 		// Set up login widget
 		config.directory.authService.createAuthWidget({
@@ -653,7 +694,7 @@ var ModuleDisplay = $n2.Class({
 			var displayOptions = {
 				db: atlasDb
 				,designDoc: atlasDesign
-				,displayPanelName: opts.sidePanelName
+				,displayPanelName: _this.sidePanelName
 				,showService: _this.config.show
 				,editor: _this.config.couchEditor
 				,uploadService: _this.config.uploadServer
@@ -748,8 +789,8 @@ var ModuleDisplay = $n2.Class({
 			
 			var mapOptions = {
 				dbSearchEngine: dbSearchEngine
-				,mapIdentifier: opts.mapName
-				,mapInteractionDivName: opts.mapInteractionName
+				,mapIdentifier: _this.mapName
+				,mapInteractionDivName: _this.mapInteractionName
 				,mapCoordinateSpecifications: {
 					initialBounds: null
 				}
@@ -758,7 +799,7 @@ var ModuleDisplay = $n2.Class({
 				,overlays: []
 				,toggleClick: toggleClick
 				,sidePanelName: opts.sidePanelName
-				,filterPanelName: opts.filterPanelName
+				,filterPanelName: _this.filterPanelName
 				,saveFeature: config.couchEditor
 				,mapDisplay: null
 				,directory: config.directory

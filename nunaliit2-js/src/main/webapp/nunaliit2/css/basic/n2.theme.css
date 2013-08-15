@@ -214,15 +214,14 @@ Help Button
 }
 
 /* Search */
-.nunaliit_atlas .nunaliit_searchInput {
-	height: 43px;
-	width: 410px;
-	bottom: 20px;
+.nunaliit_atlas .nunaliit_searchInput
+,.nunaliit_atlas .n2_content_searchInput {
 	padding: 28px 20px 23px 20px;
 	background-color: #fff;
 	border-bottom:1px solid #e5e5e5;
 }
-.nunaliit_atlas .nunaliit_searchInput input {
+.nunaliit_atlas .nunaliit_searchInput input
+,.nunaliit_atlas .n2_content_searchInput input {
 	background-image: url('images/search.png');
 	background-position:center right;
 	background-repeat:no-repeat;
@@ -230,22 +229,24 @@ Help Button
 }
 
 /* Side Bar */
-.nunaliit_atlas .nunaliit_side {
-	width: 410px;
+.nunaliit_atlas .nunaliit_side
+,.nunaliit_atlas .n2_content_side {
 	padding: 115px 20px 15px 20px;
 	background-color:#fff;
 	border-left:1px solid #656565;
 }
 
 /* Map Interactions */
-.nunaliit_atlas .map_interaction input { 
+.nunaliit_atlas .map_interaction input
+,.nunaliit_atlas .n2_content_map_interaction input { 
 	background: #000;
 	color:#fff;
 	padding:8px;
 	border:0;
 	opacity:0.7;
 }
-.nunaliit_atlas .map_interaction input:hover {
+.nunaliit_atlas .map_interaction input:hover
+,.nunaliit_atlas .n2_content_map_interaction input:hover {
 	opacity:1;
 } 
 /* Table of Contents */

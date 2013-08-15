@@ -112,64 +112,6 @@
 }
 
 
-/* ============================== */
-/* ! CONTENT SECTION   */
-/* ============================== */
-
-/* Main Map */
-.nunaliit_map {
-	position: absolute;
-	top: 0;
-	left: 0;
-	right: 450px;
-	bottom: 0;
-	border: 0;
-	margin: 0;
-	border: 0;
-}
-
-/* Search */
-.nunaliit_searchInput {
-	position: absolute;
-	right: 0;
-	top: 0;
-	overflow: visible;
-	z-index: 8;
-}
-.nunaliit_searchInput input {
-	padding:2.5%;
-	width:95%;
-}
-
-/* Side Bar */
-.nunaliit_side {
-	position: absolute;
-	top: 0;
-	right: 0;
-	bottom: 0;
-	overflow: auto;
-}
-
-/* Map Interactions */
-.map_interaction {
-	position: absolute;
-	top: 33px;
-	right: 468px;
-	text-align: right;
-	padding: 0;
-	margin: 0;
-	border: 0;
-	z-index:8;
-}
-.map_interaction input { 
-	cursor: pointer;
-}
-.olControlEditingToolbar {
-	position: absolute;
-	right: 185px;
-	top: 33px;
-}
-
 /* Table of Contents */
 .nunaliit_table_of_contents {
 	position: absolute;	
