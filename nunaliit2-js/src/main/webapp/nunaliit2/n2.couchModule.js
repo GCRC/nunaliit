@@ -378,6 +378,15 @@ var Module = $n2.Class({
 		};
 		return editInfo;
 	}
+
+	,getSearchInfo: function(){
+		var searchInfo = null;
+		var moduleInfo = this.getModuleInfo();
+		if( moduleInfo ){
+			searchInfo = moduleInfo.search;
+		};
+		return searchInfo;
+	}
 	
 	,displayIntro: function($elem){
 		var introInfo = null;
@@ -491,6 +500,8 @@ var ModuleDisplay = $n2.Class({
 	
 	,helpDialogId: null
 	
+	,styleMapFn: null
+	
 	,styles: null
 	
 	,initialize: function(opts_){
@@ -512,7 +523,7 @@ var ModuleDisplay = $n2.Class({
 			,languageSwitcherName: null
 			,helpButtonName: null
 			,styleMapFn: null
-			,onSuccess: function(){}
+			,onSuccess: function(moduleDisplay){}
 			,onError: function(err){ $n2.reportErrorForced(errorMsg); }
 		},opts_);
 		
@@ -544,6 +555,7 @@ var ModuleDisplay = $n2.Class({
 		this.moduleTitleName = opts.moduleTitleName;
 		this.languageSwitcherName = opts.languageSwitcherName;
 		this.helpButtonName = opts.helpButtonName;
+		this.styleMapFn = opts.styleMapFn;
 		
 		// dispatcher
 		var d = this._getDispatcher();
@@ -557,38 +569,6 @@ var ModuleDisplay = $n2.Class({
 		var config = this.config;
 		var atlasDb = config.atlasDb;
 		var atlasDesign = config.atlasDesign;
-		
-		// Handle content name
-		if( this.contentName ){
-			var $contentDiv = $('#'+this.contentName)
-				.empty()
-				;
-			this.mapName = $n2.getUniqueId();
-			this.mapInteractionName = $n2.getUniqueId();
-			this.sidePanelName = $n2.getUniqueId();
-			this.searchPanelName = $n2.getUniqueId();
-			this.sidePanelName = $n2.getUniqueId();
-			
-			$('<div></div>')
-				.attr('id',this.mapName)
-				.addClass('n2_content_map')
-				.appendTo($contentDiv);
-			
-			$('<div></div>')
-				.attr('id',this.mapInteractionName)
-				.addClass('n2_content_map_interaction')
-				.appendTo($contentDiv);
-			
-			$('<div></div>')
-				.attr('id',this.searchPanelName)
-				.addClass('n2_content_searchInput')
-				.appendTo($contentDiv);
-			
-			$('<div></div>')
-				.attr('id',this.sidePanelName)
-				.addClass('n2_content_side')
-				.appendTo($contentDiv);
-		};
 		
 		// Set up login widget
 		config.directory.authService.createAuthWidget({
@@ -655,6 +635,53 @@ var ModuleDisplay = $n2.Class({
 			var mapInfo = _this.module.getMapInfo();
 			var displayInfo = _this.module.getDisplayInfo();
 			var editInfo = _this.module.getEditInfo();
+			var searchInfo = _this.module.getSearchInfo();
+			
+			// Handle content div
+			if( _this.contentName ){
+				var $contentDiv = $('#'+_this.contentName)
+					.empty()
+					;
+				
+				if( mapInfo ) {
+					_this.mapName = $n2.getUniqueId();
+					$('<div></div>')
+						.attr('id',_this.mapName)
+						.addClass('n2_content_map')
+						.appendTo($contentDiv);
+					$contentDiv.addClass('n2_content_contains_map');
+
+					_this.mapInteractionName = $n2.getUniqueId();
+					$('<div></div>')
+						.attr('id',_this.mapInteractionName)
+						.addClass('n2_content_map_interaction')
+						.appendTo($contentDiv);
+
+				} else {
+					_this.mapName = null;
+					_this.mapInteractionName = null;
+					$contentDiv.addClass('n2_content_contains_no_map');
+				};
+				
+				if( searchInfo && searchInfo.disabled ) {
+					_this.searchPanelName = null;
+					$contentDiv.addClass('n2_content_contains_no_search');
+				} else {
+					_this.searchPanelName = $n2.getUniqueId();
+					$('<div></div>')
+						.attr('id',_this.searchPanelName)
+						.addClass('n2_content_searchInput')
+						.appendTo($contentDiv);
+					$contentDiv.addClass('n2_content_contains_search');
+				};
+				
+				_this.sidePanelName = $n2.getUniqueId();
+				$('<div></div>')
+					.attr('id',_this.sidePanelName)
+					.addClass('n2_content_text')
+					.appendTo($contentDiv);
+				$contentDiv.addClass('n2_content_contains_text');
+			};
 
 			// Styles
 			_this.styles = new MapFeatureStyles( (mapInfo ? mapInfo.styles : null) );
@@ -723,6 +750,7 @@ var ModuleDisplay = $n2.Class({
 			});
 			
 			// Edit logic
+			config.couchEditor.setPanelName(_this.sidePanelName);
 			var defaultEditSchemaName = 'object';
 			if( editInfo && editInfo.defaultSchemaName ){
 				defaultEditSchemaName = editInfo.defaultSchemaName;
@@ -751,178 +779,197 @@ var ModuleDisplay = $n2.Class({
 			};
 
 			// Search
-			var searchInput = $('<input type="text" class="search_panel_input"></input>');
-			searchInput.val( _loc('search the atlas') );
-			$('#'+_this.searchPanelName).empty().append(searchInput);
-			config.directory.searchService.installSearch({
-				textInput: searchInput
-				,initialSearchText: _loc('search the atlas')
-				,dispatchService: config.directory.dispatchService
-			});
+			if( _this.searchPanelName ) {
+				var searchInput = $('<input type="text" class="search_panel_input"></input>');
+				searchInput.val( _loc('search the atlas') );
+				$('#'+_this.searchPanelName).empty().append(searchInput);
+				config.directory.searchService.installSearch({
+					textInput: searchInput
+					,initialSearchText: _loc('search the atlas')
+					,dispatchService: config.directory.dispatchService
+				});
+			};
 			
 			// Display map
-			defineMap();
+			if( mapInfo ) {
+				_this._initializeMap({
+					config: config
+					,onSuccess: opts.onSuccess
+					,onError: opts.onError
+				});
+			} else {
+				opts.onSuccess(_this);
+			};
 		};
 		
-		function defineMap(){
-			var mapInfo = _this.module.getMapInfo();
-			
-			// Add points only
-			var addPointsOnly = false;
-			if( mapInfo && mapInfo.addPointsOnly ){
-				addPointsOnly = mapInfo.addPointsOnly;
-			};
-			
-			// Toggle click
-			var toggleClick = false;
-			if( mapInfo && mapInfo.toggleClick ){
-				toggleClick = mapInfo.toggleClick;
-			};
-			
-			// dbSearchEngine
-			var dbSearchEngine = { 
-				relMediaPath: './'
-			};
-			if( mapInfo && mapInfo.dbSearchEngine ){
-				dbSearchEngine = mapInfo.dbSearchEngine;
-			};
-			
-			var mapOptions = {
-				dbSearchEngine: dbSearchEngine
-				,mapIdentifier: _this.mapName
-				,mapInteractionDivName: _this.mapInteractionName
-				,mapCoordinateSpecifications: {
-					initialBounds: null
-				}
-				,uniqueIdentifier: '_id'
-				,addPointsOnly: addPointsOnly
-				,overlays: []
-				,toggleClick: toggleClick
-				,sidePanelName: opts.sidePanelName
-				,filterPanelName: _this.filterPanelName
-				,saveFeature: config.couchEditor
-				,mapDisplay: null
-				,directory: config.directory
-			};
-			
-			// Background Layers
-			mapOptions.mapDisplay = {};
-			if( mapInfo && mapInfo.backgrounds ){
-				mapOptions.mapDisplay.backgrounds = mapInfo.backgrounds;
-			};
+	}
 
-			// Overlay Layers
-			if( mapInfo && mapInfo.overlays ){
-				var styleMapFn = opts.styleMapFn;
-				if( !styleMapFn ) {
-					styleMapFn = function(layerInfo_){ 
-						return _this.styles.getStyleMapForLayerInfo(layerInfo_); 
-					};
-				};
-				
-				for(var i=0,e=mapInfo.overlays.length; i<e; ++i){
-					var layerInfo = mapInfo.overlays[i];
-					
-					var layerDefiniton = {
-						id: layerInfo.id
-						,name: layerInfo.name
-						,type: layerInfo.type
-						,visibility: layerInfo.visibility
-						,featurePopupHtmlFn: config.popupHtmlFn
-						,featurePopupDelay: 0 // ms
-						,styleMapFn: styleMapFn
-						,useHoverSound: true
-					};
-					
-					if( 'couchdb' === layerInfo.type ){
-						layerDefiniton.options = $n2.extend({
-							viewName: 'geom'
-							,layerName: null
-							,db: atlasDb
-							,designDoc: atlasDesign
-						},layerInfo.options);
-						
-						if( !layerDefiniton.options.layerName ){
-							layerDefiniton.options.layerName = layerDefiniton.id;
-						};
-						
-					} else {
-						layerDefiniton.options = layerInfo.options;
-					};
-
-					if( layerInfo.featurePopupDelayMs ){
-						layerDefiniton.featurePopupDelay = layerInfo.featurePopupDelayMs;
-					};
-
-					if( typeof(layerInfo.useHoverSound) === 'boolean' ){
-						layerDefiniton.useHoverSound = layerInfo.useHoverSound;
-					};
-					
-					// Add layer to map
-					mapOptions.overlays.push( layerDefiniton );
+	,_initializeMap: function(opts_){
+		var opts = $n2.extend({
+			config: null
+			,onSuccess: function(moduleDisplay){}
+			,onError: function(err){}
+		},opts_);
+		
+		var _this = this;
+		
+		var mapInfo = _this.module.getMapInfo();
+		
+		// Add points only
+		var addPointsOnly = false;
+		if( mapInfo && mapInfo.addPointsOnly ){
+			addPointsOnly = mapInfo.addPointsOnly;
+		};
+		
+		// Toggle click
+		var toggleClick = false;
+		if( mapInfo && mapInfo.toggleClick ){
+			toggleClick = mapInfo.toggleClick;
+		};
+		
+		// dbSearchEngine
+		var dbSearchEngine = { 
+			relMediaPath: './'
+		};
+		if( mapInfo && mapInfo.dbSearchEngine ){
+			dbSearchEngine = mapInfo.dbSearchEngine;
+		};
+		
+		var mapOptions = {
+			dbSearchEngine: dbSearchEngine
+			,mapIdentifier: _this.mapName
+			,mapInteractionDivName: _this.mapInteractionName
+			,mapCoordinateSpecifications: {
+				initialBounds: null
+			}
+			,uniqueIdentifier: '_id'
+			,addPointsOnly: addPointsOnly
+			,overlays: []
+			,toggleClick: toggleClick
+			,sidePanelName: _this.sidePanelName
+			,filterPanelName: _this.filterPanelName
+			,saveFeature: _this.config.couchEditor
+			,mapDisplay: null
+			,directory: _this.config.directory
+		};
+		
+		// Background Layers
+		mapOptions.mapDisplay = {};
+		if( mapInfo && mapInfo.backgrounds ){
+			mapOptions.mapDisplay.backgrounds = mapInfo.backgrounds;
+		};
+	
+		// Overlay Layers
+		if( mapInfo && mapInfo.overlays ){
+			var styleMapFn = _this.styleMapFn;
+			if( !styleMapFn ) {
+				styleMapFn = function(layerInfo_){ 
+					return _this.styles.getStyleMapForLayerInfo(layerInfo_); 
 				};
 			};
-
-			// Initial Bounds, Map coordinates
-			var initialBounds = null;
-			if( mapInfo && mapInfo.coordinates ){
-				initialBounds = mapInfo.coordinates.initialBounds;
+			
+			for(var i=0,e=mapInfo.overlays.length; i<e; ++i){
+				var layerInfo = mapInfo.overlays[i];
 				
-				if( mapInfo.coordinates.srsName ){
-					// Verify if SRS name is supported
-					if( false == isSrsNameSupported(mapInfo.coordinates.srsName) ) {
-						var msg = _loc('The projection {srsName} is not supported. Atlas may no function properly.',{
-							srsName: mapInfo.coordinates.srsName
-						});
-						alert(msg);
+				var layerDefiniton = {
+					id: layerInfo.id
+					,name: layerInfo.name
+					,type: layerInfo.type
+					,visibility: layerInfo.visibility
+					,featurePopupHtmlFn: _this.config.popupHtmlFn
+					,featurePopupDelay: 0 // ms
+					,styleMapFn: styleMapFn
+					,useHoverSound: true
+				};
+				
+				if( 'couchdb' === layerInfo.type ){
+					layerDefiniton.options = $n2.extend({
+						viewName: 'geom'
+						,layerName: null
+						,db: _this.config.atlasDb
+						,designDoc: _this.config.atlasDesign
+					},layerInfo.options);
+					
+					if( !layerDefiniton.options.layerName ){
+						layerDefiniton.options.layerName = layerDefiniton.id;
 					};
 					
-					mapOptions.mapDisplay.srsName = mapInfo.coordinates.srsName;
-					mapOptions.mapCoordinateSpecifications.srsName = mapInfo.coordinates.srsName;
 				} else {
-					// Defaults to EPSG:4326
-					mapOptions.mapDisplay.srsName = 'EPSG:4326';
-					mapOptions.mapCoordinateSpecifications.srsName = 'EPSG:4326';
+					layerDefiniton.options = layerInfo.options;
+				};
+	
+				if( layerInfo.featurePopupDelayMs ){
+					layerDefiniton.featurePopupDelay = layerInfo.featurePopupDelayMs;
+				};
+	
+				if( typeof(layerInfo.useHoverSound) === 'boolean' ){
+					layerDefiniton.useHoverSound = layerInfo.useHoverSound;
 				};
 				
-				// If "Google Maps" is specified, then the map must display in
-				// EPSG:900913
-				if( mapInfo.backgrounds ){
-					for(var i=0,e=mapInfo.backgrounds.length; i<e; ++i){
-						if( 'Google Maps' === mapInfo.backgrounds[i].type ) {
-							mapOptions.mapDisplay.srsName = 'EPSG:900913';
-						};
-					};
-				};
-			};
-			
-			// Adjust projection on couchDb overlays
-			for(var i=0,e=mapOptions.overlays.length; i<e; ++i){
-				var layerDefiniton = mapOptions.overlays[i];
-				
-				if( layerDefiniton.type === 'couchdb' ){
-					layerDefiniton.sourceSrsName = mapOptions.mapDisplay.srsName;
-				};
-			};
-			
-			if( !initialBounds ) {
-				opts.onError('Initial map extent not specified');
-				return;
-			};
-			if( mapInfo 
-			 && mapInfo.coordinates
-			 && mapInfo.coordinates.autoInitialBounds
-			 ){
-				computeAutoInitialBounds(
-					mapOptions
-					,initialBounds
-					,mapInfo.coordinates.autoInitialBounds
-					);
-			} else {
-				initialBoundsComputed(mapOptions, initialBounds);
+				// Add layer to map
+				mapOptions.overlays.push( layerDefiniton );
 			};
 		};
-
+	
+		// Initial Bounds, Map coordinates
+		var initialBounds = null;
+		if( mapInfo && mapInfo.coordinates ){
+			initialBounds = mapInfo.coordinates.initialBounds;
+			
+			if( mapInfo.coordinates.srsName ){
+				// Verify if SRS name is supported
+				if( false == isSrsNameSupported(mapInfo.coordinates.srsName) ) {
+					var msg = _loc('The projection {srsName} is not supported. Atlas may no function properly.',{
+						srsName: mapInfo.coordinates.srsName
+					});
+					alert(msg);
+				};
+				
+				mapOptions.mapDisplay.srsName = mapInfo.coordinates.srsName;
+				mapOptions.mapCoordinateSpecifications.srsName = mapInfo.coordinates.srsName;
+			} else {
+				// Defaults to EPSG:4326
+				mapOptions.mapDisplay.srsName = 'EPSG:4326';
+				mapOptions.mapCoordinateSpecifications.srsName = 'EPSG:4326';
+			};
+			
+			// If "Google Maps" is specified, then the map must display in
+			// EPSG:900913
+			if( mapInfo.backgrounds ){
+				for(var i=0,e=mapInfo.backgrounds.length; i<e; ++i){
+					if( 'Google Maps' === mapInfo.backgrounds[i].type ) {
+						mapOptions.mapDisplay.srsName = 'EPSG:900913';
+					};
+				};
+			};
+		};
+		
+		// Adjust projection on couchDb overlays
+		for(var i=0,e=mapOptions.overlays.length; i<e; ++i){
+			var layerDefiniton = mapOptions.overlays[i];
+			
+			if( layerDefiniton.type === 'couchdb' ){
+				layerDefiniton.sourceSrsName = mapOptions.mapDisplay.srsName;
+			};
+		};
+		
+		if( !initialBounds ) {
+			opts.onError('Initial map extent not specified');
+			return;
+		};
+		if( mapInfo 
+		 && mapInfo.coordinates
+		 && mapInfo.coordinates.autoInitialBounds
+		 ){
+			computeAutoInitialBounds(
+				mapOptions
+				,initialBounds
+				,mapInfo.coordinates.autoInitialBounds
+				);
+		} else {
+			initialBoundsComputed(mapOptions, initialBounds);
+		};
+		
 		function computeAutoInitialBounds(mapOptions, initialBounds, autoInitialBounds){
 			
 			// Loop over all layers, computing initial bounding box for
@@ -987,7 +1034,7 @@ var ModuleDisplay = $n2.Class({
 					initialBoundsComputed(mapOptions, initialBounds);
 					return;
 				};
-
+		
 				// If computations from layers is invalid, use the initial bounds specified
 				// by user
 				if( false == _this._isValidBounds(layerBoundingBox) ) {
@@ -1049,17 +1096,17 @@ var ModuleDisplay = $n2.Class({
 				} else {
 					// Use bounds computed by layers
 					initialBoundsComputed(mapOptions, [
-   						layerInitialBounds.left
-   						,layerInitialBounds.bottom
-   						,layerInitialBounds.right
-   						,layerInitialBounds.top
-   					]);
+							layerInitialBounds.left
+							,layerInitialBounds.bottom
+							,layerInitialBounds.right
+							,layerInitialBounds.top
+						]);
 				};
 			};
 		};
 		
 		function initialBoundsComputed(mapOptions, initialBounds){
-
+		
 			mapOptions.mapCoordinateSpecifications.initialBounds = initialBounds;
 			
 			// Map max extent
@@ -1081,8 +1128,8 @@ var ModuleDisplay = $n2.Class({
 			_this.mapControl = nunaliit2.mapAndControls(mapOptions);
 			$n2.log('module',_this);
 			
-			_this.mapControl.contributions = config.contributions;
-			_this.mapControl.requests = config.requests;
+			_this.mapControl.contributions = _this.config.contributions;
+			_this.mapControl.requests = _this.config.requests;
 			
 			opts.onSuccess(_this);
 		};

@@ -176,7 +176,15 @@
 }
 
 /* Side Bar */
-.n2_content_side {
+.n2_content_contains_no_map .n2_content_text {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	overflow: auto;
+}
+.n2_content_contains_map .n2_content_text {
 	position: absolute;
 	top: 0;
 	right: 0;

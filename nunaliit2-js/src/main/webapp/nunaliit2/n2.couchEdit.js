@@ -316,18 +316,6 @@ function selectLayersDialog(opts_){
 
 //++++++++++++++++++++++++++++++++++++++++++++++
 
-var CouchDocumentEditorDefaultOptions = {
-	panelName: 'side'
-	,initialLayers: ['public']
-	,selectAudioFn: function(feature_,cbFn){ alert('Feature not supported'); }
-	,onFeatureInsertedFn: function(fid,feature){}
-	,onFeatureUpdatedFn: function(fid,feature){}
-	,onFeatureDeletedFn: function(fid,feature){}
-	,onCancelFn: function(feature){}
-	,onCloseFn: function(){}
-	,enableAddFile: false
-};
-
 var CouchDocumentEditor = $n2.Class({
 	
 	options: null
@@ -353,7 +341,17 @@ var CouchDocumentEditor = $n2.Class({
 		,ownOptions_
 		) {
 		
-		this.options = $n2.extend({}, CouchDocumentEditorDefaultOptions, parentOptions_, ownOptions_);
+		this.options = $n2.extend({
+			panelName: null
+			,initialLayers: ['public']
+			,selectAudioFn: function(feature_,cbFn){ alert('Feature not supported'); }
+			,onFeatureInsertedFn: function(fid,feature){}
+			,onFeatureUpdatedFn: function(fid,feature){}
+			,onFeatureDeletedFn: function(fid,feature){}
+			,onCancelFn: function(feature){}
+			,onCloseFn: function(){}
+			,enableAddFile: false
+		}, parentOptions_, ownOptions_);
 		
 		this.userButtons = [];
 		var label = 'button';
@@ -1488,17 +1486,6 @@ var CouchDocumentEditor = $n2.Class({
 
 //++++++++++++++++++++++++++++++++++++++++++++++
 
-var CouchEditorDefaultOptions = {
-		db: null // database must be provided
-		,designDoc: null // deisgnDoc must be provided
-		,geomName: 'nunaliit_geom'
-		,couchProj: null
-		,schema: null
-		,defaultEditSchema: null
-		,serviceDirectory: null
-		,enableAddFile: false
-	};
-
 var CouchEditor = $n2.Class({
 
 	options: null
@@ -1508,7 +1495,17 @@ var CouchEditor = $n2.Class({
 	,currentEditor: null
 
 	,initialize: function(options_) {
-		this.options = $.extend({},CouchEditorDefaultOptions,options_);
+		this.options = $.extend({
+			db: null // database must be provided
+			,designDoc: null // designDoc must be provided
+			,panelName: null // location where editor is opened
+			,geomName: 'nunaliit_geom'
+			,couchProj: null
+			,schema: null
+			,defaultEditSchema: null
+			,serviceDirectory: null
+			,enableAddFile: false
+		},options_);
 		
 		var _this = this;
 		
@@ -1562,6 +1559,10 @@ var CouchEditor = $n2.Class({
     		this.currentEditor.performCancellation(opts);
     		this.currentEditor = null;
     	};
+	}
+
+	,setPanelName: function(panelName) {
+		this.options.panelName = panelName;
 	}
 	
 	,_getDispatchService: function(){
