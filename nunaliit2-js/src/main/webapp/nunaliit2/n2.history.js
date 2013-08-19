@@ -208,7 +208,7 @@ var Tracker = $n2.Class({
 		if( this.options.disabled ){
 			return;
 		};
-		
+
 		if( 'start' === m.type ){
 			var hash = window.location.hash;
 			if( hash && hash !== '') {
@@ -312,15 +312,38 @@ var Tracker = $n2.Class({
 				
 			} else {
 				// cancelled or deleted
-				this._dispatch({
-					type: 'historyBack'
-				});
+				if(lastIsEditInitiate) {
+					this._dispatch({
+						type: 'historyBack'
+					});
+				};
 			};
 
 		} else if( 'hashChanged' === m.type ){
 			var o = null;
 			
-			if( '' === m.hash || !m.hash ){
+			if( 'nostate' === m.hash ){
+				// Do not do anything
+				
+			} else if( this.last.edit ) {
+				if( confirm( _loc('Do you wish to leave document editor?') ) ) {
+					// OK, continue
+					this.last = {
+						editClosed: true
+					};
+					this._dispatch({
+						type: 'editCancel'
+					});
+					this._reloadHash(m.hash);
+					
+				} else {
+					// Go back to edit state
+					this._dispatch({
+						type: 'historyForward'
+					});
+				};
+				
+			} else if( '' === m.hash || !m.hash ){
 				if( !this.last.unselected ){
 					this._dispatch({
 						type: 'unselected'
@@ -328,35 +351,36 @@ var Tracker = $n2.Class({
 					});
 				};
 				
-			} else if( 'nostate' === m.hash ){
-				// Do not do anything
-				
-			} else {
+			} else  {
 				// Attempt to interpret hash
-				try {
-					var d = $n2.Base64.decode(m.hash);
-					o = JSON.parse(d);
-				} catch(s) {};
+				this._reloadHash(m.hash);
+			};
+		};
+	}
 	
-				if( o ){
-					if( TYPE_SELECTED === o.t ){
-						var docId = o.i;
-						if( docId !== this.last.selected ){
-							this._dispatch({
-								type: 'userSelect'
-								,docId: docId
-								,_suppressHashChange: true
-							});
-						};
-					} else if( TYPE_SEARCH === o.t ){
-						var searchLine = o.l;
-						this._dispatch({
-							type: 'searchInitiate'
-							,searchLine: searchLine
-							,_suppressHashChange: true
-						});
-					};
+	,_reloadHash: function(hash){
+		try {
+			var d = $n2.Base64.decode(hash);
+			o = JSON.parse(d);
+		} catch(s) {};
+
+		if( o ){
+			if( TYPE_SELECTED === o.t ){
+				var docId = o.i;
+				if( docId !== this.last.selected ){
+					this._dispatch({
+						type: 'userSelect'
+						,docId: docId
+						,_suppressHashChange: true
+					});
 				};
+			} else if( TYPE_SEARCH === o.t ){
+				var searchLine = o.l;
+				this._dispatch({
+					type: 'searchInitiate'
+					,searchLine: searchLine
+					,_suppressHashChange: true
+				});
 			};
 		};
 	}

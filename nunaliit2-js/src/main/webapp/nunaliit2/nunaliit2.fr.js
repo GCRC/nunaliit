@@ -16,7 +16,7 @@ function loadStrings(strings) {
 
 loadStrings({
 	// Language: fr
-	," definition (":" définition ("
+	" definition (":" définition ("
 	," definition (index: ":" définition (indice: "
 	," definition null and skipped.":" définition nulle et ignorée"
 	," definition: ":" définition"
@@ -78,6 +78,7 @@ loadStrings({
 	,"Do you really want to delete this feature?":"Voulez-vous vraiment supprimer cette géométrie?"
 	,"Do you really wish to delete the {count} document(s) referenced by this list?":"Désirez-vous supprimer les {count} document(s) contenu dans cette liste?"
 	,"Do you wish to delete this element?":"Désirez-vous supprimer cet élément?"
+	,"Do you wish to leave document editor?":"Désirez-vous quitter l'éditeur de document?"
 	,"Doc ids must be supplied when creating a list from document ids":"Les identificateurs de documents doit être donnés durant la création de cette liste"
 	,"Document was modified and changes will be lost. Do you wish to continue?":"Le document est modifié et les changements seront perdus. Voulez-vous continuer?"
 	,"Documents from schema type {schemaName}":"Documents de type de schème {schemaName}"
@@ -228,7 +229,7 @@ loadStrings({
 	,"This object is being modified. Do you wish to continue and revert current changes?":"L'objet en cours d'être modifié. Désirez-vous continuer?"
 	,"Title":"Titre"
 	,"To":"À"
-	,"Tranform":"Transformer"
+	,"Transform":"Transformer"
 	,"Transform Progress":"Progrès de la transformation"
 	,"Transformations completed with some failures":"Transformations complétées. Erreurs détectées."
 	,"Transformations completed. Successful: {ok} Failures: {fail} Skipped: {skipped}":"Transformations complétées. Accomplies: {ok} Erreurs: {fail} Ignorées: {skipped}"
@@ -264,6 +265,7 @@ loadStrings({
 	,"Upload service can not be reached. Unable to submit a related document.":"Le service de téléchargement n'est pas disponible."
 	,"User":"Usager"
 	,"User Creation":"Creation d'un Usager"
+	,"User created but unable to log in: ":"Le nouvel usager fut créé, mais il est impossible d'ouvrir la session."
 	,"User name should have at least 3 characters":"Le nom d'usager devrait avoir au moins 3 caractères"
 	,"View":"Afficher"
 	,"View Media":"Visualiser le Média"
