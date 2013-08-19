@@ -123,6 +123,7 @@
 	right: 0;
 	bottom: 0;
 	width: 410px;
+	padding: 115px 20px 15px 20px;
 	overflow: auto;
 }
 
@@ -192,6 +193,15 @@
 	width: 410px;
 	overflow: auto;
 }
+
+.n2_content_contains_search .n2_content_text {
+	padding: 115px 20px 15px 20px;
+}
+
+.n2_content_contains_no_search .n2_content_text {
+	padding: 15px 20px 15px 20px;
+}
+
 
 /* Map Interactions */
 .n2_content_map_interaction {

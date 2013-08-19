@@ -18,13 +18,18 @@ function slideSwitch() {
     // var $next  = $( $sibs[ rndNum ] );
 
 
-    $active.addClass('last-active');
-
-    $next.css({opacity: 0.0})
-        .addClass('active')
-        .animate({opacity: 1.0}, 1000, function() {
-            $active.removeClass('active last-active');
+    $active
+    	.addClass('last-active')
+    	.removeClass('active')
+    	.css({opacity: 1.0})
+        .animate({opacity: 0.0}, 1000, function() {
+            $active.removeClass('last-active');
         });
+
+    $next
+    	.css({opacity: 0.0})
+        .addClass('active')
+        .animate({opacity: 1.0}, 1000);
 }
 
 /*$(function() {
