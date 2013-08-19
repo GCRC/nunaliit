@@ -34,9 +34,7 @@ function main_init(config) {
 		,config: config
 		,titleName: 'title'
 		,moduleTitleName: 'module_title'
-		,sidePanelName: 'side'
-		,filterPanelName: 'filters'
-		,searchPanelName: 'searchInput'
+		,contentName: 'content'
 		,navigationName: 'navigation'
 		,navigationDoc: 'navigation.demo'
 		,languageSwitcherName: 'language_switcher'
