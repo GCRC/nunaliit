@@ -285,8 +285,7 @@ var DomStyler = $n2.Class({
 
 			// An attachment was uploaded for this file
 			var linkDiv = null;
-			if( file.fileClass === 'image' 
-			 && file.thumbnail
+			if( file.thumbnail
 			 && data._attachments[file.thumbnail]
 			 ) {
 				var thumbUrl = this.options.db.getAttachmentUrl(data,file.thumbnail);
@@ -297,22 +296,9 @@ var DomStyler = $n2.Class({
 			
 			} else if( file.fileClass === 'audio' ) {
 				linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_audio"></div></div>');
-				
-			} else if( file.fileClass === 'video' 
-			 && file.thumbnail
-			 && data._attachments[file.thumbnail]
-			 ) {
-				var thumbUrl = this.options.db.getAttachmentUrl(data,file.thumbnail);
-				linkDiv = $('<div class="n2Show_thumb_wrapper"><img src="'+thumbUrl+'"/></div>');
 			
 			} else if( file.fileClass === 'video' ) {
 				linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_video"></div></div>');
-
-			} else if( file.thumbnail
-			 && data._attachments[file.thumbnail]
-			 ) {
-				var thumbUrl = this.options.db.getAttachmentUrl(data,file.thumbnail);
-				linkDiv = $('<div class="n2Show_thumb_wrapper"><img src="'+thumbUrl+'"/></div>');
 				
 			} else {
 				linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_file"></div></div>');
