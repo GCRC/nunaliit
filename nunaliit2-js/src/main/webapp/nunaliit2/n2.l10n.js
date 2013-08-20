@@ -281,15 +281,16 @@ $n2.l10n.addLocalizedString = addLocalizedString;
 if( $n2.scripts ) {
 	var locale = getLocale();
 	
-	// Do not load default language
-	if( 'en' === locale.lang ) {
-		return;
-	};
-	
 	var coreLocation = $n2.scripts.getCoreScriptLocation();
 	if( coreLocation ) {
-		var url = coreLocation.location + 'nunaliit2.'+locale.lang+'.js';
-		$n2.scripts.loadScript(url, coreLocation);
+		// Do not load default language
+		if( 'en' !== locale.lang ) {
+			var url = coreLocation.location + 'nunaliit2.'+locale.lang+'.js';
+			$n2.scripts.loadScript(url, coreLocation);
+		};		
+
+		var langUrl = coreLocation.location + '../nunaliit_lang.'+locale.lang+'.js';
+		$n2.scripts.loadScript(langUrl, coreLocation);
 	};
 };
 
