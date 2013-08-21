@@ -1,9 +1,15 @@
 package ca.carleton.gcrc.couch.command;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.io.StringWriter;
 import java.util.Calendar;
 import java.util.Stack;
+
+import org.json.JSONObject;
+import org.json.JSONTokener;
 
 import ca.carleton.gcrc.couch.command.impl.FileSetManifest;
 import ca.carleton.gcrc.couch.command.impl.PathComputer;
@@ -95,6 +101,14 @@ public class CommandUpgrade implements Command {
 		 || false == contentDir.isDirectory() ){
 			throw new Exception("Unable to find content directory");
 		}
+
+		// Verify that the installation directory is available
+		File installationFilesDir = PathComputer.computeTemplatesDir( gs.getInstallDir() );
+		if( null == installationFilesDir 
+		 || false == installationFilesDir.exists() 
+		 || false == installationFilesDir.isDirectory() ){
+			throw new Exception("Unable to find installation files directory");
+		}
 		
 		// Compute upgrade directory
 		File upgradeCollisionDir = null;
@@ -135,17 +149,74 @@ public class CommandUpgrade implements Command {
 			reporting.setReportOperations(true);
 			reporting.setReportCollisions(false);
 		}
+		
+		// Compute installed file manifest
+		FileSetManifest installedFileSetManifest = new FileSetManifest();
+		try {
+			File configDir = new File(atlasDir,"config");
+			File manifestFile = new File(configDir,"nunaliit_manifest.json");
+			
+			if( manifestFile.exists() ){
+				StringWriter sw = new StringWriter();
+				FileInputStream is = null;
+				InputStreamReader isr = null;
+				char[] buffer = new char[100];
+				try {
+					is = new FileInputStream(manifestFile);
+					isr = new InputStreamReader(is, "UTF-8");
+					
+					int size = isr.read(buffer);
+					while( size >= 0 ) {
+						sw.write(buffer, 0, size);
+						size = isr.read(buffer);
+					}
+					
+					sw.flush();
+					
+					JSONTokener tokener = new JSONTokener(sw.toString());
+					Object result = tokener.nextValue();
+					
+					if( result instanceof JSONObject ){
+						JSONObject jsonManifest = (JSONObject)result;
+						installedFileSetManifest = FileSetManifest.fromJSON(jsonManifest);
+					} else {
+						throw new Exception("Unexpected JSON found in manifext file: "+result.getClass().getName());
+					}
+					
+				} catch (Exception e) {
+					throw new Exception("Error while reading file: "+manifestFile.getName(), e);
+					
+				} finally {
+					if( null != isr ) {
+						try {
+							isr.close();
+						} catch (Exception e) {
+							// Ignore
+						}
+					}
+					if( null != is ) {
+						try {
+							is.close();
+						} catch (Exception e) {
+							// Ignore
+						}
+					}
+				}
+			}
+		} catch(Exception e) {
+			throw new Exception("Unable to load installed file manifest",e);
+		}
 
 		// Upgrade content
 		try {
 			UpgradeProcess upgradeProcess = new UpgradeProcess();
-			UpgradeReport upgradeReport = upgradeProcess.computeUpgrade(
-				contentDir
-				,atlasDir
-				,new FileSetManifest() // new installation
-				);
+			upgradeProcess.setUpgradedFilesDir(contentDir);
+			upgradeProcess.setInstallationFilesDir(installationFilesDir);
+			upgradeProcess.setTargetDir(atlasDir);
+			upgradeProcess.setInstalledManifest(installedFileSetManifest);
+			UpgradeReport upgradeReport = upgradeProcess.computeUpgrade();
 			
-			upgradeProcess.performUpgrade(
+			UpgradeProcess.performUpgrade(
 				upgradeReport
 				,reporting
 				);

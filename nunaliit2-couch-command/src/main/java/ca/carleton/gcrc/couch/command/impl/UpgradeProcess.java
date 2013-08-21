@@ -9,13 +9,205 @@ import java.util.Set;
 import java.util.Vector;
 
 public class UpgradeProcess {
+	
+	static public void performUpgrade(
+		UpgradeReport report
+		,UpgradeOperations operations
+		) throws Exception {
+		
+		try {
+			FileSetManifest resultingInstalledManifest = 
+					report.getInstalledFileSetManifest().clone();
+			
+			// Assumed upgrades
+			{
+				for(String path : report.getPathsToAssumeUpgraded()){
+					FileManifest upgrade = report.getUpgradeFileSetManifest().getFileManifest(path);
+					if( null == upgrade ) {
+						resultingInstalledManifest.removeFileManifest(path);
+					} else {
+						resultingInstalledManifest.addFileManifest(upgrade);
+					}
+				}
+			}
+			
+			// Assumed deleted
+			{
+				for(String path : report.getPathsToAssumeDeleted()){
+					resultingInstalledManifest.removeFileManifest(path);
+				}
+			}
 
-	public UpgradeReport computeUpgrade(File newFiles, File targetDir, FileSetManifest installedManifest) throws Exception {
+			// Save manifest
+			operations.saveInstalledManifest(resultingInstalledManifest);
+			
+			// Delete files
+			for(String path : report.getFilesToBeDeleted()){
+				operations.deleteFile(path);
+				
+				// After each file removal, update installed manifest to reflect
+				// current state in case process is aborted
+				resultingInstalledManifest.removeFileManifest(path);
+				operations.saveInstalledManifest(resultingInstalledManifest);
+			}
+			
+			// Delete directories
+			{
+				// Delete longest paths first. This ensures that sub-dirs
+				// are removed before a parent
+				List<String> orderedPaths = new Vector<String>(report.getDirectoriesToBeDeleted());
+				Collections.sort(orderedPaths, new Comparator<String>(){
+					@Override
+					public int compare(String s0, String s1) {
+						return s1.length() - s0.length();
+					}
+				});
+
+				for(String path : orderedPaths){
+					operations.deleteDirectory(path);
+					
+					// After each directory removal, update installed manifest to reflect
+					// current state in case process is aborted
+					resultingInstalledManifest.removeFileManifest(path);
+					operations.saveInstalledManifest(resultingInstalledManifest);
+				}
+			}
+			
+			// Add directories
+			{
+				// Add shortest paths first. This ensures that sub-dirs
+				// are added after a parent
+				List<String> orderedPaths = new Vector<String>(report.getDirectoriesToBeAdded());
+				Collections.sort(orderedPaths, new Comparator<String>(){
+					@Override
+					public int compare(String s0, String s1) {
+						return s0.length() - s1.length();
+					}
+				});
+				for(String path : orderedPaths){
+					operations.addDirectory(path);
+					
+					// After each directory creation, update installed manifest to reflect
+					// current state in case process is aborted
+					FileManifest upgrade = report.getUpgradeFileSetManifest().getFileManifest(path);
+					resultingInstalledManifest.addFileManifest(upgrade);
+					operations.saveInstalledManifest(resultingInstalledManifest);
+				}
+			}
+
+			// Add files
+			for(String path : report.getFilesToBeAdded()){
+				operations.copyFile(path);
+				
+				// After each file copy, update installed manifest to reflect
+				// current state in case process is aborted
+				FileManifest upgrade = report.getUpgradeFileSetManifest().getFileManifest(path);
+				resultingInstalledManifest.addFileManifest(upgrade);
+				operations.saveInstalledManifest(resultingInstalledManifest);
+			}
+			
+			// Upgrade files
+			for(String path : report.getFilesToBeUpgraded()){
+				operations.copyFile(path);
+				
+				// After each file copy, update installed manifest to reflect
+				// current state in case process is aborted
+				FileManifest upgrade = report.getUpgradeFileSetManifest().getFileManifest(path);
+				resultingInstalledManifest.addFileManifest(upgrade);
+				operations.saveInstalledManifest(resultingInstalledManifest);
+			}
+			
+			// Save collisions
+			for(UpgradeCollision collision : report.getCollisions()){
+				operations.handleCollision(collision);
+			}
+			
+		} catch(Exception e) {
+			throw new Exception("Error while performing upgrade",e);
+		}
+	}
+
+	/**
+	 * Directory with all the current files.
+	 */
+	private File upgradedFilesDir;
+	/**
+	 * Directory with all the files installed when
+	 * an atlas is first created.
+	 */
+	private File installationFilesDir;
+	/**
+	 * Directory where files are already installed.
+	 */
+	private File targetDir;
+	/**
+	 * Manifest of the files that were last installed.
+	 */
+	private FileSetManifest installedManifest;
+	
+	public UpgradeProcess(){
+		
+	}
+	
+	public File getUpgradedFilesDir() {
+		return upgradedFilesDir;
+	}
+	public void setUpgradedFilesDir(File upgradedFilesDir) {
+		this.upgradedFilesDir = upgradedFilesDir;
+	}
+
+	public File getInstallationFilesDir() {
+		return installationFilesDir;
+	}
+	public void setInstallationFilesDir(File installationFilesDir) {
+		this.installationFilesDir = installationFilesDir;
+	}
+
+	public File getTargetDir() {
+		return targetDir;
+	}
+	public void setTargetDir(File targetDir) {
+		this.targetDir = targetDir;
+	}
+
+	public FileSetManifest getInstalledManifest() {
+		return installedManifest;
+	}
+	public void setInstalledManifest(FileSetManifest installedManifest) {
+		this.installedManifest = installedManifest;
+	}
+	
+	/**
+	 * Analyzes the difference between a set of files and a set
+	 * of installed files. Computes which files should be added,
+	 * upgraded, deleted and left alone because of collisions. 
+	 * @return A report describing the result of the analysis.
+	 * @throws Exception
+	 */
+	public UpgradeReport computeUpgrade() throws Exception {
+
+		if( null == upgradedFilesDir ){
+			throw new Exception("Upgraded files directory must be specified");
+		}
+		if( null == targetDir ){
+			throw new Exception("Target directory must be specified");
+		}
+		if( null == installedManifest ){
+			installedManifest = new FileSetManifest();
+		}
+		
 		UpgradeReport report =  new UpgradeReport();
 		report.setInstalledFileSetManifest(installedManifest);
-		
-		FileSetManifest upgradedManifest = FileSetManifest.fromDirectory(newFiles);
+
+		FileSetManifest upgradedManifest = FileSetManifest.fromDirectory(upgradedFilesDir);
 		report.setUpgradeFileSetManifest(upgradedManifest);
+
+		FileSetManifest installationFilesManifest = null;
+		if( null == installationFilesDir ) {
+			installationFilesManifest = new FileSetManifest();
+		} else {
+			installationFilesManifest = FileSetManifest.fromDirectory(installationFilesDir);
+		}
 
 		DigestComputerSha1 digestComputer = new DigestComputerSha1();
 		
@@ -40,7 +232,13 @@ public class UpgradeProcess {
 			String path = installed.getRelativePath();
 
 			FileManifest upgraded = upgradedManifest.getFileManifest(path);
-			if( null == upgraded ) {
+			FileManifest installationManifest = installationFilesManifest.getFileManifest(path);
+			if( null == upgraded && null != installationManifest ) {
+				// File has moved from upgrade-able path to installation directory.
+				// Remove from the installation manifest
+				report.addPathToAssumeDeleted(path);
+
+			} else if( null == upgraded ) {
 				// Deleted file
 				relevantPaths.add(path);
 				report.addDeletedPath(path);
@@ -202,113 +400,5 @@ public class UpgradeProcess {
 		}
 		
 		return report;
-	}
-	
-	public void performUpgrade(
-		UpgradeReport report
-		,UpgradeOperations operations
-		) throws Exception {
-		
-		try {
-			FileSetManifest resultingInstalledManifest = 
-					report.getInstalledFileSetManifest().clone();
-			
-			// Assumed upgrades
-			{
-				for(String path : report.getPathsToAssumeUpgraded()){
-					FileManifest upgrade = report.getUpgradeFileSetManifest().getFileManifest(path);
-					if( null == upgrade ) {
-						resultingInstalledManifest.removeFileManifest(path);
-					} else {
-						resultingInstalledManifest.addFileManifest(upgrade);
-					}
-				}
-				operations.saveInstalledManifest(resultingInstalledManifest);
-			}
-			
-			// Delete files
-			for(String path : report.getFilesToBeDeleted()){
-				operations.deleteFile(path);
-				
-				// After each file removal, update installed manifest to reflect
-				// current state in case process is aborted
-				resultingInstalledManifest.removeFileManifest(path);
-				operations.saveInstalledManifest(resultingInstalledManifest);
-			}
-			
-			// Delete directories
-			{
-				// Delete longest paths first. This ensures that sub-dirs
-				// are removed before a parent
-				List<String> orderedPaths = new Vector<String>(report.getDirectoriesToBeDeleted());
-				Collections.sort(orderedPaths, new Comparator<String>(){
-					@Override
-					public int compare(String s0, String s1) {
-						return s1.length() - s0.length();
-					}
-				});
-
-				for(String path : orderedPaths){
-					operations.deleteDirectory(path);
-					
-					// After each directory removal, update installed manifest to reflect
-					// current state in case process is aborted
-					resultingInstalledManifest.removeFileManifest(path);
-					operations.saveInstalledManifest(resultingInstalledManifest);
-				}
-			}
-			
-			// Add directories
-			{
-				// Add shortest paths first. This ensures that sub-dirs
-				// are added after a parent
-				List<String> orderedPaths = new Vector<String>(report.getDirectoriesToBeAdded());
-				Collections.sort(orderedPaths, new Comparator<String>(){
-					@Override
-					public int compare(String s0, String s1) {
-						return s0.length() - s1.length();
-					}
-				});
-				for(String path : orderedPaths){
-					operations.addDirectory(path);
-					
-					// After each directory creation, update installed manifest to reflect
-					// current state in case process is aborted
-					FileManifest upgrade = report.getUpgradeFileSetManifest().getFileManifest(path);
-					resultingInstalledManifest.addFileManifest(upgrade);
-					operations.saveInstalledManifest(resultingInstalledManifest);
-				}
-			}
-
-			// Add files
-			for(String path : report.getFilesToBeAdded()){
-				operations.copyFile(path);
-				
-				// After each file copy, update installed manifest to reflect
-				// current state in case process is aborted
-				FileManifest upgrade = report.getUpgradeFileSetManifest().getFileManifest(path);
-				resultingInstalledManifest.addFileManifest(upgrade);
-				operations.saveInstalledManifest(resultingInstalledManifest);
-			}
-			
-			// Upgrade files
-			for(String path : report.getFilesToBeUpgraded()){
-				operations.copyFile(path);
-				
-				// After each file copy, update installed manifest to reflect
-				// current state in case process is aborted
-				FileManifest upgrade = report.getUpgradeFileSetManifest().getFileManifest(path);
-				resultingInstalledManifest.addFileManifest(upgrade);
-				operations.saveInstalledManifest(resultingInstalledManifest);
-			}
-			
-			// Save collisions
-			for(UpgradeCollision collision : report.getCollisions()){
-				operations.handleCollision(collision);
-			}
-			
-		} catch(Exception e) {
-			throw new Exception("Error while performing upgrade",e);
-		}
 	}
 }

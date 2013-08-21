@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.PrintStream;
 import java.util.Stack;
 
-import ca.carleton.gcrc.couch.command.impl.FileSetManifest;
 import ca.carleton.gcrc.couch.command.impl.PathComputer;
 import ca.carleton.gcrc.couch.command.impl.UpgradeOperationsBasic;
 import ca.carleton.gcrc.couch.command.impl.UpgradeProcess;
@@ -156,18 +155,16 @@ public class CommandCreate implements Command {
 		// Copy content by performing upgrade
 		try {
 			UpgradeProcess upgradeProcess = new UpgradeProcess();
-			UpgradeReport upgradeReport = upgradeProcess.computeUpgrade(
-				contentDir
-				,atlasDir
-				,new FileSetManifest() // new installation
-				);
+			upgradeProcess.setUpgradedFilesDir(contentDir);
+			upgradeProcess.setTargetDir(atlasDir);
+			UpgradeReport upgradeReport = upgradeProcess.computeUpgrade();
 			
 			UpgradeOperationsBasic operations = new UpgradeOperationsBasic(
 				atlasDir
 				,contentDir
 				,new File(atlasDir, "upgrade/install")
 				);
-			upgradeProcess.performUpgrade(
+			UpgradeProcess.performUpgrade(
 				upgradeReport
 				,operations
 				);

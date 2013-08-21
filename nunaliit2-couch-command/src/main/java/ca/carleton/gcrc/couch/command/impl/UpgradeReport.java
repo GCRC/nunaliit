@@ -68,9 +68,16 @@ public class UpgradeReport {
 	private Set<String> filesToBeUpgraded = new HashSet<String>();
 	
 	/**
-	 * Paths of files that should be assumed as installed (update installed manifest)
+	 * Paths of files that should be assumed as installed (simply update manifest
+	 * of installed files)
 	 */
 	private Set<String> pathsToAssumeUpgraded = new HashSet<String>();
+	
+	/**
+	 * Paths of files that should be assumed as deleted (simply remove from manifest
+	 * of installed files)
+	 */
+	private Set<String> pathsToAssumeDeleted = new HashSet<String>();
 
 	public Set<String> getDeletedPaths() {
 		return deletedPaths;
@@ -174,5 +181,13 @@ public class UpgradeReport {
 	
 	public void addPathToAssumeUpgraded(String path){
 		pathsToAssumeUpgraded.add(path);
+	}
+
+	public Set<String> getPathsToAssumeDeleted() {
+		return pathsToAssumeDeleted;
+	}
+	
+	public void addPathToAssumeDeleted(String path){
+		pathsToAssumeDeleted.add(path);
 	}
 }
