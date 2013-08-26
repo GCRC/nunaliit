@@ -20,6 +20,7 @@ public class MultimediaConversionRequest {
 	private File thumbnailFile;
 	private int thumbnailHeight = 0;
 	private int thumbnailWidth = 0;
+	private ExifData exifData = null;
 	private MultimediaConversionProgress progress;
 	
 	public File getInFile() {
@@ -132,5 +133,12 @@ public class MultimediaConversionRequest {
 	}
 	public void setProgress(MultimediaConversionProgress progress) {
 		this.progress = progress;
+	}
+	
+	public ExifData getExifData() {
+		return exifData;
+	}
+	public void setExifData(ExifData exifData) {
+		this.exifData = exifData;
 	}
 }

@@ -126,6 +126,7 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 			ImageInfo thumbImageInfo = im.getImageInfo( thumbnailFile );
 			request.setThumbnailHeight( thumbImageInfo.height );
 			request.setThumbnailWidth( thumbImageInfo.width );
+			request.setExifData( thumbImageInfo.exif );
 		}
 	}
 	
@@ -218,6 +219,7 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 		if( null != imageInfo ) {
 			request.setInHeight( imageInfo.height );
 			request.setInWidth( imageInfo.width );
+			request.setExifData( imageInfo.exif );
 
 			// Check if conversion is required
 			conversionRequired = imageConversionThreshold.isConversionRequired(
@@ -335,6 +337,7 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 		if( null != imageInfo ) {
 			request.setInHeight( imageInfo.height );
 			request.setInWidth( imageInfo.width );
+			request.setExifData( imageInfo.exif );
 		}
 		
 		// Create thumbnail

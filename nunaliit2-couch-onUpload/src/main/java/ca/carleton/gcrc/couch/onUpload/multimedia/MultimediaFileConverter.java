@@ -10,6 +10,7 @@ import ca.carleton.gcrc.couch.client.CouchUserContext;
 import ca.carleton.gcrc.couch.onUpload.UploadConstants;
 import ca.carleton.gcrc.couch.onUpload.UploadProgressAdaptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.AttachmentDescriptor;
+import ca.carleton.gcrc.couch.onUpload.conversion.ExifDataDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.FileConversionContext;
 import ca.carleton.gcrc.couch.onUpload.conversion.OriginalFileDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.ServerWorkDescriptor;
@@ -17,6 +18,7 @@ import ca.carleton.gcrc.couch.onUpload.conversion.WorkDescriptor;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionMetaData;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionPlugin;
 import ca.carleton.gcrc.couch.utils.CouchNunaliitUtils;
+import ca.carleton.gcrc.olkit.multimedia.converter.ExifData;
 import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionRequest;
 import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConverter;
 import ca.carleton.gcrc.olkit.multimedia.converter.impl.MultimediaConverterImpl;
@@ -258,6 +260,22 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 		if( request.getInHeight() != 0 && request.getInWidth() != 0 ) {
 			originalObj.setHeight( request.getInHeight() );
 			originalObj.setWidth( request.getInWidth() );
+		}
+		
+		// Report EXIF data
+		ExifData exifData = request.getExifData();
+		if( null != exifData 
+		 && exifData.getSize() > 0 ) {
+			ExifDataDescriptor exifDescriptor = attDescription.getExifDataDescription();
+			for(String key : exifData.getKeys()){
+				String value = exifData.getRawData(key);
+				if( null != value ){
+					value = value.trim();
+					if( false == "".equals(value) ){
+						exifDescriptor.addData(key, value);
+					}
+				}
+			}
 		}
 
 		// Report converted object

@@ -379,6 +379,29 @@ public class AttachmentDescriptor extends AbstractDescriptor {
 		
 		return new WorkDescriptor(this);
 	}
+
+	public boolean isExifDataDescriptionAvailable() throws Exception {
+		JSONObject attachmentDescription = getJson();
+
+		JSONObject json = attachmentDescription.optJSONObject(UploadConstants.EXIF_DATA_KEY);
+		if( null == json ) {
+			return false;
+		}
+		
+		return true;
+	}
+
+	public ExifDataDescriptor getExifDataDescription() throws Exception {
+		
+		if( false == isExifDataDescriptionAvailable() ){
+			JSONObject attachmentDescription = getJson();
+			
+			JSONObject json = new JSONObject();
+			attachmentDescription.put(UploadConstants.EXIF_DATA_KEY, json);
+		}
+		
+		return new ExifDataDescriptor(this);
+	}
 	
 	public boolean isFilePresent() throws Exception {
 		return context.isFilePresent(getSpecifiedAttachmentName());

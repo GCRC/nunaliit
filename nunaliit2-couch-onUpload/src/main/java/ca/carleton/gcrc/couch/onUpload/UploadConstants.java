@@ -33,6 +33,7 @@ public class UploadConstants {
 	static public final String CONVERSION_PERFORMED_KEY = "conversionPerformed";
 	static public final String SOURCE_KEY = "source";
 	static public final String WORK_KEY = "work";
+	static public final String EXIF_DATA_KEY = "exif";
 	
 	// Keys on server work performed
 	static public final String SERVER_ORIENTATION_KEY = "orientation";

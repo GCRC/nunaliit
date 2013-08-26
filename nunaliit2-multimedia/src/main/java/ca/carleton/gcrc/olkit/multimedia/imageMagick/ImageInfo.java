@@ -34,6 +34,8 @@ package ca.carleton.gcrc.olkit.multimedia.imageMagick;
 
 import java.io.File;
 
+import ca.carleton.gcrc.olkit.multimedia.converter.ExifData;
+
 public class ImageInfo {
 	public enum Orientation {
 		UNKNOWN
@@ -46,4 +48,5 @@ public class ImageInfo {
 	public int width;
 	public int height;
 	public Orientation orientation = Orientation.UNKNOWN;
+	public ExifData exif = new ExifData();
 }

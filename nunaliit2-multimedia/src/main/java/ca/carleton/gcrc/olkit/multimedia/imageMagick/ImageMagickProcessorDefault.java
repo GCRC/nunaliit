@@ -25,6 +25,7 @@ public class ImageMagickProcessorDefault implements ImageMagickProcessor {
 	static private Pattern patternInfoFormat = Pattern.compile("^\\s*Format:\\s*([^\\s]+)");
 	static private Pattern patternInfoExifOrientation = Pattern.compile("^\\s*exif:Orientation:\\s*([\\d]+)");
 	static private Pattern patternInfoOrientation = Pattern.compile("^\\s*Orientation:\\s*([^\\s]+)");
+	static private Pattern patternExif = Pattern.compile("^\\s*exif:([^:]*):\\s*(.*)");
 	static private Pattern patternProgressLoad = Pattern.compile("^\\s*load image.* (\\d+)%");
 	static private Pattern patternProgressResize = Pattern.compile("^\\s*resize image.* (\\d+)%");
 	static private Pattern patternProgressRotate = Pattern.compile("^\\s*rotate image.* (\\d+)%");
@@ -63,6 +64,7 @@ public class ImageMagickProcessorDefault implements ImageMagickProcessor {
 				Matcher matcherFormat = patternInfoFormat.matcher(line);
 				Matcher matcherExifOrientation = patternInfoExifOrientation.matcher(line);
 				Matcher matcherOrientation = patternInfoOrientation.matcher(line);
+				Matcher matcherExif = patternExif.matcher(line);
 				
 				if( matcherGeometry.find() ) {
 					info.width = Integer.parseInt( matcherGeometry.group(1) );
@@ -86,6 +88,10 @@ public class ImageMagickProcessorDefault implements ImageMagickProcessor {
 					} else {
 						info.orientation = ImageInfo.Orientation.REQUIRES_CONVERSION;
 					};
+				}
+				
+				if( matcherExif.find() ) {
+					info.exif.addRawData(matcherExif.group(1).trim(), matcherExif.group(2).trim());
 				}
 				
 				line = bufReader.readLine();

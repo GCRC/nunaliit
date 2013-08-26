@@ -35,6 +35,7 @@ package ca.carleton.gcrc.olkit.multimedia.imageMagick;
 import java.io.File;
 
 import junit.framework.TestCase;
+import ca.carleton.gcrc.olkit.multimedia.converter.ExifData;
 import ca.carleton.gcrc.olkit.multimedia.utils.MultimediaTestingProgress;
 import ca.carleton.gcrc.olkit.multimedia.utils.TestConfiguration;
 
@@ -170,6 +171,33 @@ public class ImageMagickTest extends TestCase {
 
 		if( info.orientation != ImageInfo.Orientation.CORRECT ) {
 			fail("Unexpected orientation");
+		}
+	}
+
+	public void testGetImageInfoExif() throws Exception {
+		if( false == TestConfiguration.isTestingConfigured() ) return;
+		
+		ImageMagickInfo imInfo = ImageMagick.getInfo();
+		if( false == imInfo.isAvailable ) {
+			// Skip test
+			System.out.println("Skipping test because ImageMagick is not present");
+			return;
+		}
+		
+		ImageMagickProcessor im = imInfo.getProcessor(new MultimediaTestingProgress());
+		
+		File file = TestConfiguration.getTestFile("portrait.jpeg");
+		ImageInfo info = im.getImageInfo(file);
+		ExifData exifData = info.exif;
+		
+		if( null == exifData ) {
+			fail("Expected EXIF data");
+			
+		} else if( false == exifData.containsKey("ColorSpace") ){
+			fail("Expected 'ColorSpace' in EXIF data");
+			
+		} else if( false == "1".equals(exifData.getRawData("ColorSpace")) ) {
+			fail("Unexpected value for 'ColorSpace' in EXIF data: "+exifData.getRawData("ColorSpace"));
 		}
 	}
 
