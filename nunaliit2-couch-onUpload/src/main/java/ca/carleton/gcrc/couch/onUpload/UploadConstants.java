@@ -48,4 +48,9 @@ public class UploadConstants {
 	static public final String UPLOAD_WORK_ROTATE_CW = "rotateClockwise";
 	static public final String UPLOAD_WORK_ROTATE_CCW = "rotateCounterClockwise";
 	static public final String UPLOAD_WORK_ROTATE_180 = "rotate180";
+
+	// Geometries
+	static public final String GEOMETRY_KEY = "nunaliit_geom";
+	static public final String GEOMETRY_TYPE = "geometry";
+	
 }

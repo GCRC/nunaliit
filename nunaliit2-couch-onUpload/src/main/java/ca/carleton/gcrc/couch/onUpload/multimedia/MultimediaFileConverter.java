@@ -12,12 +12,15 @@ import ca.carleton.gcrc.couch.onUpload.UploadProgressAdaptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.AttachmentDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.ExifDataDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.FileConversionContext;
+import ca.carleton.gcrc.couch.onUpload.conversion.GeometryDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.OriginalFileDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.ServerWorkDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.WorkDescriptor;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionMetaData;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionPlugin;
 import ca.carleton.gcrc.couch.utils.CouchNunaliitUtils;
+import ca.carleton.gcrc.geom.MultiPoint;
+import ca.carleton.gcrc.geom.Point;
 import ca.carleton.gcrc.olkit.multimedia.converter.ExifData;
 import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionRequest;
 import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConverter;
@@ -275,6 +278,19 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 						exifDescriptor.addData(key, value);
 					}
 				}
+			}
+			
+			// Create geometry if one is present in the EXIF
+			// data and none is defined in the document
+			if( exifData.containsLongLat() 
+			 && false == conversionContext.isGeometryDescriptionAvailable() ) {
+				
+				Point point = new Point(exifData.computeLong(),exifData.computeLat());
+				MultiPoint mp = new MultiPoint();
+				mp.addPoint(point);
+				
+				GeometryDescriptor geomDesc = conversionContext.getGeometryDescription();
+				geomDesc.setGeometry(mp);
 			}
 		}
 

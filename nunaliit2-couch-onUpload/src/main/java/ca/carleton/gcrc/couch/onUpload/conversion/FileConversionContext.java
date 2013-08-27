@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import ca.carleton.gcrc.couch.client.CouchClient;
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
+import ca.carleton.gcrc.couch.onUpload.UploadConstants;
 import ca.carleton.gcrc.couch.utils.CouchNunaliitConstants;
 import ca.carleton.gcrc.json.JSONSupport;
 
@@ -129,6 +130,23 @@ public class FileConversionContext {
 		}
 		
 		return new AttachmentDescriptor(this, attName);
+	}
+
+	public boolean isGeometryDescriptionAvailable() {
+		JSONObject geometry = doc.optJSONObject(UploadConstants.GEOMETRY_KEY);
+		return ( null != geometry );
+	}
+	
+	public GeometryDescriptor getGeometryDescription() throws Exception {
+
+		JSONObject geometry = doc.optJSONObject(UploadConstants.GEOMETRY_KEY);
+		if( null == geometry ){
+			geometry = new JSONObject();
+			geometry.put("nunaliit_type", UploadConstants.GEOMETRY_TYPE);
+			doc.put(UploadConstants.GEOMETRY_KEY, geometry);
+		}
+		
+		return new GeometryDescriptor(this);
 	}
 	
 	public CreateUpdateInfo getCreatedObject() throws Exception {
