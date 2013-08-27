@@ -22,6 +22,14 @@
 	              <mainClass>ca.carleton.gcrc.couch.command.Main</mainClass>
 	              <name>nunaliit</name>
 	            </program>
+	            <program>
+	              <mainClass>ca.carleton.gcrc.couch.command.dump.DumpMain</mainClass>
+	              <name>couch-dump</name>
+	            </program>
+	            <program>
+	              <mainClass>ca.carleton.gcrc.couch.command.dump.RestoreMain</mainClass>
+	              <name>couch-restore</name>
+	            </program>
 	          </programs>
 	        </configuration>
 	        <executions>
