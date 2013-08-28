@@ -441,6 +441,7 @@ var Editor = $n2.Class({
 					
 					this.options.uploadService.submitForm({
 						form: $form
+						,suppressInformationDialog: true
 						,onSuccess: done
 						,onError: function(err) {
 							_this.options.onError( _loc('Unable to upload file. Related document was kept. Error: ') + err );

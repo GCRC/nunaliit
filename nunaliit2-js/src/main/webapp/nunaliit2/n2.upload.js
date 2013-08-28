@@ -170,6 +170,7 @@ var Upload = $n2.Class({
 		
 		var opts = $.extend({
 				form: null
+				,suppressInformationDialog: false
 				,onSuccess: function(res){}
 				,onError: function(errorMsg){ $n2.reportError(errorMsg); }
 			}
@@ -219,7 +220,9 @@ var Upload = $n2.Class({
 					if( res.error ) {
 						opts.onError(_loc('Error while uploading: ')+res.error,options_);
 					} else {
-						_this._uploadSucessfulDialog();
+						if( !opts.suppressInformationDialog ) {
+							_this._uploadSucessfulDialog();
+						};
 						opts.onSuccess(res,options_);
 					}
 				}
