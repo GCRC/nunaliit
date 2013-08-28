@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<!-- Created with Sodipodi ("http://www.sodipodi.com/") -->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svg="http://www.w3.org/2000/svg" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://web.resource.org/cc/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" id="svg548" sodipodi:version="0.32" width="400pt" height="400pt" sodipodi:docbase="/home/nicu/svg_gal/misc" sodipodi:docname="/home/nicu/svg_gal/misc/no.svg">
+  <defs id="defs550"/>
+  <sodipodi:namedview id="base" showgrid="true"/>
+  <path sodipodi:type="arc" style="font-size:12;fill:none;fill-rule:evenodd;stroke:#bf0000;stroke-width:37.1167;" id="path566" d="M 652.532959 241.644196 A 213.328094 219.971527 0 1 0 225.876770,241.644196 A 213.328 219.972 0 1 0 652.533 241.644 L 439.204865 241.644196 z" sodipodi:cx="439.204865" sodipodi:cy="241.644196" sodipodi:rx="213.328094" sodipodi:ry="219.971527" transform="matrix(1.069204,0.000000,0.000000,1.030201,-219.3637,2.298203)"/>
+  <path sodipodi:type="arc" style="fill-rule:evenodd;stroke:none;fill:#ffffff;fill-opacity:1;stroke-opacity:1;stroke-width:1pt;stroke-linejoin:miter;stroke-linecap:butt;" id="path575" d="M 472.422058 280.766663 A 181.587234 183.801697 0 1 0 109.247604,280.766663 A 181.587 183.802 0 1 0 472.422 280.767 L 290.834839 280.766663 z" sodipodi:cx="290.834839" sodipodi:cy="280.766663" sodipodi:rx="181.587234" sodipodi:ry="183.801697" transform="matrix(1.154471,0.000000,0.000000,1.136546,-84.78633,-67.86404)"/>
+  <path style="fill:#ffffff;fill-rule:evenodd;stroke:none;stroke-opacity:1;stroke-width:1pt;stroke-linejoin:miter;stroke-linecap:butt;fill-opacity:0.577778;" d="M 114.506 300.977 C 114.506 299.159 102.693 234.636 114.506 209.19 C 136.317 170.112 146.313 134.671 148.131 104.68 C 149.04 105.589 149.949 152.845 146.313 158.298 C 135.408 179.2 124.503 202.829 117.233 225.548 C 117.233 270.078 115.415 304.612 114.506 300.977 z " id="path564" sodipodi:nodetypes="cccccc" transform="translate(3.063965,38.16154)"/>
+  <path style="font-size:12;fill:none;fill-rule:evenodd;stroke:#bf0000;stroke-width:37.5;" d="M 109.248 76.2965 L 401.559 383.371 " id="path567" sodipodi:nodetypes="cc" transform="translate(2.952785,14.76315)"/>
+  <rdf:RDF xmlns="http://web.resource.org/cc/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <Work rdf:about="">
+      <dc:title>Clipart by Nicu Buculei - nosmoke</dc:title>
+      <dc:rights>
+        <Agent>
+          <dc:title>Nicu Buculei</dc:title>
+        </Agent>
+      </dc:rights>
+      <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+      <license rdf:resource="http://web.resource.org/cc/PublicDomain"/>
+    </Work>
+    <License rdf:about="http://web.resource.org/cc/PublicDomain">
+      <permits rdf:resource="http://web.resource.org/cc/Reproduction"/>
+      <permits rdf:resource="http://web.resource.org/cc/Distribution"/>
+      <permits rdf:resource="http://web.resource.org/cc/DerivativeWorks"/>
+    </License>
+  </rdf:RDF>
+  <metadata>
+    <rdf:RDF>
+      <cc:Work>
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+        <cc:license rdf:resource="http://creativecommons.org/licenses/publicdomain/"/>
+        <dc:publisher>
+          <cc:Agent rdf:about="http://openclipart.org/">
+            <dc:title>Open Clip Art Library</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:title>Denied Sign</dc:title>
+        <dc:date>2009-03-12T15:03:02</dc:date>
+        <dc:description/>
+        <dc:source>http://openclipart.org/detail/22251/denied-sign-by-nicubunu</dc:source>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>nicubunu</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>circle</rdf:li>
+            <rdf:li>circle</rdf:li>
+            <rdf:li>clip art</rdf:li>
+            <rdf:li>clipart</rdf:li>
+            <rdf:li>denied</rdf:li>
+            <rdf:li>denied</rdf:li>
+            <rdf:li>forbidden</rdf:li>
+            <rdf:li>forbidden</rdf:li>
+            <rdf:li>icon</rdf:li>
+            <rdf:li>icon</rdf:li>
+            <rdf:li>image</rdf:li>
+            <rdf:li>media</rdf:li>
+            <rdf:li>png</rdf:li>
+            <rdf:li>public domain</rdf:li>
+            <rdf:li>roadsign</rdf:li>
+            <rdf:li>roadsign</rdf:li>
+            <rdf:li>sign</rdf:li>
+            <rdf:li>sign</rdf:li>
+            <rdf:li>svg</rdf:li>
+            <rdf:li>symbol</rdf:li>
+            <rdf:li>symbol</rdf:li>
+          </rdf:Bag>
+        </dc:subject>
+      </cc:Work>
+      <cc:License rdf:about="http://creativecommons.org/licenses/publicdomain/">
+        <cc:permits rdf:resource="http://creativecommons.org/ns#Reproduction"/>
+        <cc:permits rdf:resource="http://creativecommons.org/ns#Distribution"/>
+        <cc:permits rdf:resource="http://creativecommons.org/ns#DerivativeWorks"/>
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+</svg>

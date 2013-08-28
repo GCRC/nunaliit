@@ -269,35 +269,41 @@ var DomStyler = $n2.Class({
 		var attachmentName = $insertView.text();
 
 		$insertView.empty();
+		
+		var attachment = null;
+		if( data._attachments 
+		 && data._attachments[attachmentName] ){
+			attachment = data._attachments[attachmentName];
+		};
 
-		var file = null;
+		var attDesc = null;
 		if( data 
 		 && data.nunaliit_attachments 
 		 && data.nunaliit_attachments.files ) {
-			file = data.nunaliit_attachments.files[attachmentName];
+			attDesc = data.nunaliit_attachments.files[attachmentName];
 		};
 		
-		if( file
-		 && data._attachments 
-		 && data._attachments[attachmentName] ) {
+		if( attDesc
+		 && attDesc.status === 'attached'
+		 && attachment ) {
 			
 			var attUrl = this.options.db.getAttachmentUrl(data,attachmentName);
 
 			// An attachment was uploaded for this file
 			var linkDiv = null;
-			if( file.thumbnail
-			 && data._attachments[file.thumbnail]
+			if( attDesc.thumbnail
+			 && data._attachments[attDesc.thumbnail]
 			 ) {
-				var thumbUrl = this.options.db.getAttachmentUrl(data,file.thumbnail);
+				var thumbUrl = this.options.db.getAttachmentUrl(data,attDesc.thumbnail);
 				linkDiv = $('<div class="n2Show_thumb_wrapper"><img src="'+thumbUrl+'"/></div>');
 
-			} else if( file.fileClass === 'image' ) {
+			} else if( attDesc.fileClass === 'image' ) {
 				linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_image"></div></div>');
 			
-			} else if( file.fileClass === 'audio' ) {
+			} else if( attDesc.fileClass === 'audio' ) {
 				linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_audio"></div></div>');
 			
-			} else if( file.fileClass === 'video' ) {
+			} else if( attDesc.fileClass === 'video' ) {
 				linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_video"></div></div>');
 				
 			} else {
@@ -307,7 +313,7 @@ var DomStyler = $n2.Class({
 			if( null != linkDiv ) {
 				$insertView.append(linkDiv);
 				var cb = createMediaCallback(
-						file.fileClass
+						attDesc.fileClass
 						,attUrl
 						,data
 						,attachmentName
@@ -332,12 +338,12 @@ var DomStyler = $n2.Class({
 					mediaOptions.mimeType = attachment.content_type;
 				};
 				
-				var fileDescriptor = doc.nunaliit_attachments.files[attachmentName];
+				var attDesc = doc.nunaliit_attachments.files[attachmentName];
 				// Title
-				if( fileDescriptor
-				 && fileDescriptor.data
-				 && fileDescriptor.data.title ) {
-					mediaOptions.title = fileDescriptor.data.title;
+				if( attDesc
+				 && attDesc.data
+				 && attDesc.data.title ) {
+					mediaOptions.title = attDesc.data.title;
 
 				} else if( doc.nunaliit_contribution 
 				 && doc.nunaliit_contribution.title ) {
@@ -345,13 +351,13 @@ var DomStyler = $n2.Class({
 				};
 				
 				// Height and width
-				if( fileDescriptor ){
-					if(fileDescriptor.width){
-						mediaOptions.width = fileDescriptor.width;
+				if( attDesc ){
+					if(attDesc.width){
+						mediaOptions.width = attDesc.width;
 					};
 
-					if(fileDescriptor.height){
-						mediaOptions.height = fileDescriptor.height;
+					if(attDesc.height){
+						mediaOptions.height = attDesc.height;
 					};
 				};
 
@@ -406,16 +412,22 @@ var DomStyler = $n2.Class({
 	,_insertExternalMediaLink: function(data, $externalLink, opt_) {
 		var attachmentName = $externalLink.attr('href');
 		
-		var file = null;
+		var attachment = null;
+		if( data._attachments 
+		 && data._attachments[attachmentName] ) {
+			attachment = data._attachments[attachmentName];
+		};
+		
+		var attDesc = null;
 		if( data 
 		 && data.nunaliit_attachments 
 		 && data.nunaliit_attachments.files ) {
-			file = data.nunaliit_attachments.files[attachmentName];
+			attDesc = data.nunaliit_attachments.files[attachmentName];
 		};
 		
-		if( file
-		 && data._attachments 
-		 && data._attachments[attachmentName] ) {
+		if( attDesc
+		 && attDesc.status === 'attached' 
+		 && attachment ) {
 			
 			var attUrl = this.options.db.getAttachmentUrl(data,attachmentName);
 
@@ -426,6 +438,7 @@ var DomStyler = $n2.Class({
 				};
 				return false;
 			});
+			
 		} else {
 			// At this point, we have a link that leads nowhere. Simply report
 			// error to user.

@@ -122,12 +122,13 @@ $n2.couchDisplay = $n2.Class({
 			dispatcher.register(this.dispatchHandle, 'authLoggedOut', f);
 			dispatcher.register(this.dispatchHandle, 'editClosed', f);
 			dispatcher.register(this.dispatchHandle, 'documentContentCreated', f);
+			dispatcher.register(this.dispatchHandle, 'documentContentUpdated', f);
 		};
 
 		var requestService = this._getRequestService();
 		if( requestService ){
 			requestService.addDocumentListener(function(doc){
-				_this._receiveRequestedDocument(doc);
+				_this._refreshDocument(doc);
 			});
 		};
 		
@@ -263,6 +264,8 @@ $n2.couchDisplay = $n2.Class({
 		};
 		
 		function continueDisplay(schema){
+			_this._addAttachmentProgress($elem, data);
+			
 			_this._addButtons($elem, data, {
 				schema: schema
 				,related: true
@@ -341,8 +344,6 @@ $n2.couchDisplay = $n2.Class({
 			,addLayer: false
 		},opt_);
 
-		var dispatcher = this._getDispatcher();
-		
 		var $buttons = $('<div></div>');
 		$buttons.addClass('n2Display_buttons');
 		$buttons.addClass('n2Display_buttons_'+$n2.utils.stringToHtmlId(data._id));
@@ -700,6 +701,85 @@ $n2.couchDisplay = $n2.Class({
 			elem.addClass('nunaliit_form_link_' + compactTag.toLowerCase());
 		};
 		
+	}
+	
+	,_addAttachmentProgress: function($elem, data){
+		var $progress = $('<div></div>')
+			.addClass('n2Display_attProgress')
+			.addClass('n2Display_attProgress_'+$n2.utils.stringToHtmlId(data._id) )
+			.appendTo( $elem );
+		
+		this._refreshAttachmentProgress($progress, data);
+	}
+	
+	,_refreshAttachmentProgress: function($progress, data){
+
+		var status = null;
+		
+		$progress.empty();
+		
+		// Find an attachment which is in progress
+		if( data.nunaliit_attachments 
+		 && data.nunaliit_attachments.files ){
+			for(var attName in data.nunaliit_attachments.files){
+				var att = data.nunaliit_attachments.files[attName];
+				
+				// Skip non-original attachments
+				if( !att.source ){
+					if( att.status 
+					 && 'attached' !== att.status ){
+						// OK, progress must be reported. Accumulate
+						// various status since there could be more than
+						// one attachment.
+						if( !status ){
+							status = {};
+						};
+						status[att.status] = true;
+					};
+				};
+			};
+		};
+
+		// Report status
+		if( status ){
+			var $outer = $('<div></div>')
+				.addClass('n2Display_attProgress_outer')
+				.appendTo($progress);
+
+			$('<div></div>')
+				.addClass('n2Display_attProgress_icon')
+				.appendTo($outer);
+		
+			if( status['waiting for approval'] ){
+				$outer.addClass('n2Display_attProgress_waiting');
+				
+				$('<div></div>')
+					.addClass('n2Display_attProgress_message')
+					.text( _loc('Attachment is waiting for approval') )
+					.appendTo($outer);
+				
+			} else if( status['denied'] ){
+				$outer.addClass('n2Display_attProgress_denied');
+				
+				$('<div></div>')
+					.addClass('n2Display_attProgress_message')
+					.text( _loc('Attachment has been denied') )
+					.appendTo($outer);
+				
+			} else {
+				// Robot is working
+				$outer.addClass('n2Display_attProgress_busy');
+				
+				$('<div></div>')
+					.addClass('n2Display_attProgress_message')
+					.text( _loc('Attachment is being processed') )
+					.appendTo($outer);
+			};
+
+			$('<div></div>')
+				.addClass('n2Display_attProgress_outer_end')
+				.appendTo($outer);
+		};
 	}
 	
 	,_clickAddContribution: function(data, $jq, opt_) {
@@ -1109,8 +1189,12 @@ $n2.couchDisplay = $n2.Class({
 						$doc.text(docId);
 					};
 					if( _this._getRequestService() ) {
+						var $progressDiv = $('<div class="n2Display_attProgress n2Display_attProgress_'+$n2.utils.stringToHtmlId(docId)+'"></div>');
+						$docWrapper.append($progressDiv);
+
 						var $buttonDiv = $('<div class="displayRelatedButton displayRelatedButton_'+$n2.utils.stringToHtmlId(docId)+'"></div>');
 						$docWrapper.append($buttonDiv);
+						
 						_this._getRequestService().requestDocument(docId);
 					};
 				};
@@ -1130,7 +1214,7 @@ $n2.couchDisplay = $n2.Class({
 		});
 	}
 	
-	,_receiveRequestedDocument: function(doc){
+	,_refreshDocument: function(doc){
 
 		var _this = this;
 		var docId = doc._id;
@@ -1142,6 +1226,11 @@ $n2.couchDisplay = $n2.Class({
 				focus: true
 				,geom: true
 			});
+		});
+		
+		$('.n2Display_attProgress_'+$n2.utils.stringToHtmlId(docId)).each(function(){
+			var $progress = $(this);
+			_this._refreshAttachmentProgress($progress,doc);
 		});
 		
 		if( this.shouldSuppressNonApprovedMedia() ){
@@ -1342,6 +1431,9 @@ $n2.couchDisplay = $n2.Class({
 			
 		} else if( msg.type === 'documentContentCreated' ) {
 			this._handleDocumentCreation(msg.doc);
+			
+		} else if( msg.type === 'documentContentUpdated' ) {
+			this._refreshDocument(msg.doc);
 		};
 	}
 	
@@ -1398,8 +1490,12 @@ $n2.couchDisplay = $n2.Class({
 			this._getShowService().printBriefDescription($contentDiv, docId);
 			
 			if( this._getRequestService() ) {
+				var $progressDiv = $('<div class="n2Display_attProgress n2Display_attProgress_'+$n2.utils.stringToHtmlId(docId)+'"></div>');
+				$div.append($progressDiv);
+
 				var $buttonDiv = $('<div class="displayRelatedButton displayRelatedButton_'+$n2.utils.stringToHtmlId(docId)+'"></div>');
 				$div.append($buttonDiv);
+				
 				this._getRequestService().requestDocument(docId);
 			};
 		};
