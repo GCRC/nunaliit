@@ -12,29 +12,11 @@
 
 					{{#attachmentName}}
 	<div class="n2_mediaView">
-		<div class="n2s_insertMediaView">{{.}}</div>
+		<div class="n2s_insertMediaView" nunaliit-attachment="{{.}}"> </div>
 	</div>
+	<div class="n2s_insertExternalMediaLink" nunaliit-attachment="{{.}}"> </div>
 					{{/attachmentName}}
 
-					{{#originalAttachment}}
-
-	<div>
-		<a class="n2s_externalMediaLink" href="{{.}}"><span class="n2s_externalMediaLinkName">({{../originalName}})</span></a>
-	</div>
-					{{/originalAttachment}}
-					{{^originalAttachment}}
-						{{#attachmentName}}
-
-	<div>
-		<a class="n2s_externalMediaLink" href="{{.}}"><span class="n2s_externalMediaLinkName">({{../originalName}})</span></a>
-	</div>
-						{{/attachmentName}}
-						{{^attachmentName}}
-	<div>{{../originalName}}</div>
-						{{/attachmentName}}
-					{{/originalAttachment}}
-
-	<div style="clear:both"></div>
 				{{/source}}
 			{{/value}}
 		{{/:iterate}}

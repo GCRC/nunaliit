@@ -120,8 +120,15 @@ var DomStyler = $n2.Class({
 		// External links to media file
 		$elem.find('.n2s_externalMediaLink').each(function(){
 			var $jq = $(this);
+			_this._adjustExternalMediaLink(contextDoc, $jq, opt);
+			$jq.removeClass('n2s_externalMediaLink').addClass('n2s_adjustedExternalMediaLink');
+		});
+		
+		// External links to media file
+		$elem.find('.n2s_insertExternalMediaLink').each(function(){
+			var $jq = $(this);
 			_this._insertExternalMediaLink(contextDoc, $jq, opt);
-			$jq.removeClass('n2s_externalMediaLink').addClass('n2s_insertedExternalMediaLink');
+			$jq.removeClass('n2s_insertExternalMediaLink').addClass('n2s_insertedExternalMediaLink');
 		});
 
 		// Follow geometry
@@ -266,7 +273,10 @@ var DomStyler = $n2.Class({
 
 	,_insertMediaView: function(data, $insertView, opt_) {
 		var _this = this;
-		var attachmentName = $insertView.text();
+		var attachmentName = $insertView.attr('nunaliit-attachment');
+		if( !attachmentName ) {
+			attachmentName = $insertView.text();
+		};
 
 		$insertView.empty();
 		
@@ -409,7 +419,7 @@ var DomStyler = $n2.Class({
 		};
 	}
 	
-	,_insertExternalMediaLink: function(data, $externalLink, opt_) {
+	,_adjustExternalMediaLink: function(data, $externalLink, opt_) {
 		var attachmentName = $externalLink.attr('href');
 		
 		var attachment = null;
@@ -446,6 +456,63 @@ var DomStyler = $n2.Class({
 				alert( _loc('File is not currently available') );
 				return false;
 			});
+		};
+	}
+	
+	,_insertExternalMediaLink: function(data, $div, opt_) {
+		var attachmentName = $div.attr('nunaliit-attachment');
+		
+		$div.empty();
+		
+		var attachment = null;
+		if( data._attachments 
+		 && data._attachments[attachmentName] ) {
+			attachment = data._attachments[attachmentName];
+		};
+		
+		var attDesc = null;
+		if( data 
+		 && data.nunaliit_attachments 
+		 && data.nunaliit_attachments.files ) {
+			attDesc = data.nunaliit_attachments.files[attachmentName];
+		};
+		
+		if( attDesc
+		 && attDesc.status === 'attached' 
+		 && attachment ) {
+			var attUrl = this.options.db.getAttachmentUrl(data,attachmentName);
+			
+			// Check if original is available
+			if( attDesc.originalAttachment
+			 && data._attachments[attDesc.originalAttachment] ) {
+				// Use original attachment, instead
+				attUrl = this.options.db.getAttachmentUrl(data,attDesc.originalAttachment);
+			};
+
+			// <a class="n2s_externalMediaLink" href="{{.}}">
+			//   <span class="n2s_externalMediaLinkName">({{../originalName}})</span>
+			// </a>
+
+			var $a = $('<a></a>')
+				.addClass('n2s_adjustedExternalMediaLink')
+				.attr('href',attUrl)
+				.click(function(e){
+					if( confirm( _loc('You are about to leave this page. Do you wish to continue?') ) ) {
+						return true;
+					};
+					return false;
+				})
+				.appendTo($div);
+
+			var name = attDesc.originalName;
+			if( !name ){
+				name = attachmentName;
+			};
+			
+			$('<span></span>')
+				.addClass('n2s_externalMediaLinkName')
+				.text(name)
+				.appendTo($a);
 		};
 	}
 	
