@@ -41,6 +41,8 @@ var couchUserPrefix = 'org.couchdb.user:';
 
 function noop(){};
 
+var reUrl = /(^|\s)(https?:\/\/[^\s]*)(\s|$)/g;
+
 // *******************************************************
 var DomStyler = $n2.Class({
 	
@@ -129,6 +131,13 @@ var DomStyler = $n2.Class({
 			var $jq = $(this);
 			_this._insertExternalMediaLink(contextDoc, $jq, opt);
 			$jq.removeClass('n2s_insertExternalMediaLink').addClass('n2s_insertedExternalMediaLink');
+		});
+		
+		// Convert text URLs to Links
+		$elem.find('.n2s_convertTextUrlToLink').each(function(){
+			var $jq = $(this);
+			_this._convertTextUrlToLink(contextDoc, $jq, opt);
+			$jq.removeClass('n2s_convertTextUrlToLink').addClass('n2s_convertedTextUrlToLink');
 		});
 
 		// Follow geometry
@@ -513,6 +522,43 @@ var DomStyler = $n2.Class({
 				.addClass('n2s_externalMediaLinkName')
 				.text(name)
 				.appendTo($a);
+		};
+	}
+	
+	,_convertTextUrlToLink: function(data, $jq, opt_) {
+		$jq.each(function(){
+			performTextUrlToLink(this);
+		});
+		
+		function performTextUrlToLink(parent){
+			var node = parent.firstChild;
+			while(node){
+				if( node.nodeType === 3 ){ // text node
+					nextSibling = node.nextSibling;
+					convertTextElement(parent, node);
+					node = nextSibling;
+				} else {
+					performTextUrlToLink(node);
+					node = node.nextSibling;
+				};
+			};
+		};
+		
+		function convertTextElement(parent, textNode){
+			var text = textNode.nodeValue;
+			var urlFound = false;
+			
+			text = text.replace(reUrl,function(match,pre,url,post){
+				var r = pre + '<a class="n2s_convertedUrl" href="'+url+'">'+url+'</a>';
+				urlFound = true;
+				return r;
+			});
+			
+			if( urlFound ){
+				var t2 = parent.ownerDocument.createTextNode(text);
+				parent.insertBefore(t2,textNode);
+				parent.removeChild(textNode);
+			};
 		};
 	}
 	
