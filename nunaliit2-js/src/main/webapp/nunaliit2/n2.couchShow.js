@@ -41,7 +41,7 @@ var couchUserPrefix = 'org.couchdb.user:';
 
 function noop(){};
 
-var reUrl = /(^|\s)(https?:\/\/[^\s]*)(\s|$)/g;
+var reUrl = /(^|\s)(https?:\/\/[^\s]*)(\s|$)/;
 
 // *******************************************************
 var DomStyler = $n2.Class({
@@ -548,15 +548,34 @@ var DomStyler = $n2.Class({
 			var text = textNode.nodeValue;
 			var urlFound = false;
 			
-			text = text.replace(reUrl,function(match,pre,url,post){
-				var r = pre + '<a class="n2s_convertedUrl" href="'+url+'">'+url+'</a>';
+			var m = reUrl.exec(text);
+			while(m){
 				urlFound = true;
-				return r;
-			});
+
+				var after = m[3] + text.substr(m.index + m[0].length);
+				var before = text.substr(0, m.index) + m[1];
+				
+				if( before.length > 0 ){
+					var t2 = parent.ownerDocument.createTextNode(before);
+					parent.insertBefore(t2,textNode);
+				};
+				
+				// Create link
+				var aNode = parent.ownerDocument.createElement('a');
+				aNode.setAttribute('href',m[2]);
+				aNode.setAttribute('class','n2s_convertedUrl');
+				var t1 = parent.ownerDocument.createTextNode(m[2]);
+				aNode.appendChild(t1);
+				parent.insertBefore(aNode,textNode);
+				
+				// Continue search
+				text = after;
+				m = reUrl.exec(text);
+			};
 			
 			if( urlFound ){
-				var t2 = parent.ownerDocument.createTextNode(text);
-				parent.insertBefore(t2,textNode);
+				var t3 = parent.ownerDocument.createTextNode(after);
+				parent.insertBefore(t3,textNode);
 				parent.removeChild(textNode);
 			};
 		};
