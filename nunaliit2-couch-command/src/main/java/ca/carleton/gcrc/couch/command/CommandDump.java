@@ -140,7 +140,13 @@ public class CommandDump implements Command {
 		
 		if( selectSkeletonDocuments ){
 			SkeletonDocumentsDetector docFinder = new SkeletonDocumentsDetector(couchDb,gs);
-			docIds.addAll( docFinder.getSkeletonDocIds() );
+			for(String docId : docFinder.getSkeletonDocIds()){
+				if( couchDb.documentExists(docId) ){
+					docIds.add(docId);
+				} else {
+					gs.getOutStream().println("Skeleton document "+docId+" has been removed from the database");
+				}
+			}
 		}
 		
 		Map<String,File> docIdToFile = new HashMap<String,File>();
@@ -154,7 +160,7 @@ public class CommandDump implements Command {
 		DumpListener listener = new DumpListener( gs.getOutStream() );
 		
 		DbDumpProcess dumpProcess = new DbDumpProcess(couchDb, dumpDir);
-		if( docIds.size() < 1 ) {
+		if( docIds.size() < 1 && false == selectSkeletonDocuments ) {
 			dumpProcess.setAllDocs(true);
 		} else {
 			for(String docId : docIds) {

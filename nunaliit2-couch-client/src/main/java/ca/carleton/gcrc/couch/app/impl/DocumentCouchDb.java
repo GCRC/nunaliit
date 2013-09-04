@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Vector;
 
 import org.json.JSONObject;
+
 import ca.carleton.gcrc.couch.app.Attachment;
 import ca.carleton.gcrc.couch.app.Document;
 import ca.carleton.gcrc.couch.client.CouchDb;
@@ -18,7 +19,7 @@ public class DocumentCouchDb implements Document {
 			DocumentCouchDb doc = new DocumentCouchDb(couchDb, docId);
 			return doc;
 		} catch(Exception e) {
-			throw new Exception("Unable to create document from database");
+			throw new Exception("Unable to create document from database",e);
 		}
 	}
 	
