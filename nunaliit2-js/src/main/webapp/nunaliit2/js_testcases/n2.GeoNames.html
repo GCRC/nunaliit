@@ -1,0 +1,118 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+		<title>Nunaliit2 GeoNames Test Page</title>		
+		<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/themes/base/jquery-ui.css" type="text/css" />
+		<link rel="stylesheet" href="../css/basic/n2.sliderWithCallout.css" type="text/css" />
+		<link rel="stylesheet" href="css/slider_tests.css" type="text/css" />
+	</head>
+	<body>
+		<h1>Nunaliit2 GeoNames Test Page</h1>
+		
+		<h2>Get Name</h2>
+		<div>
+			<input id="inputGetName" type="text"/>
+			<button id="buttonGetName">Get Name</button>
+			<button id="clearGetName">Clear</button>
+		</div>
+		<div id="resultsGetName">
+		</div>
+		
+		<h2>Get Name Starts With</h2>
+		<div>
+			<input id="inputGetNameStartsWith" type="text"/>
+			<button id="buttonGetNameStartsWith">Get Name Starts With</button>
+			<button id="clearGetNameStartsWith">Clear</button>
+		</div>
+		<div id="resultsGetNameStartsWith">
+		</div>
+		
+		<h2>Auto Complete</h2>
+		<div>
+			<input id="inputAutoComplete" type="text"/>
+		</div>
+		
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/jquery-ui.min.js"></script>
+
+		<script type="text/javascript" src="../nunaliit2-debug.js"></script>
+
+		<script type="text/javascript">
+			// <!--
+			var $n2 = null;
+			var geoNamesService = null;
+			
+			function main(){
+				geoNamesService = new $n2.GeoNames.Service();
+				
+				$('#buttonGetName').click(function(){
+					var name = $('#inputGetName').val();
+					geoNamesService.getName({
+						name: name
+						,featureClass: [$n2.GeoNames.FeatureClass.PLACES,$n2.GeoNames.FeatureClass.ADMIN]
+						,limit: 5
+						,onSuccess: function(results){
+							var text = JSON.stringify(results,null,'\t');
+							var $res = $('#resultsGetName').empty();
+							$('<pre></pre>')
+								.text(text)
+								.appendTo($res);
+						}
+						,onError: function(err){
+							var $res = $('#resultsGetName').empty();
+							$('<div class="error"></div>')
+								.text(err)
+								.appendTo($res);
+						}
+					});
+				});
+				$('#clearGetName').click(function(){
+					$('#resultsGetName').empty();
+				});
+				
+				$('#buttonGetNameStartsWith').click(function(){
+					var name = $('#inputGetNameStartsWith').val();
+					geoNamesService.getNameStartsWith({
+						name: name
+						,featureClass: $n2.GeoNames.FeatureClass.PLACES
+						,limit: 5
+						,onSuccess: function(results){
+							var text = JSON.stringify(results,null,'\t');
+							var $res = $('#resultsGetNameStartsWith').empty();
+							$('<pre></pre>')
+								.text(text)
+								.appendTo($res);
+						}
+						,onError: function(err){
+							var $res = $('#resultsGetNameStartsWith').empty();
+							$('<div class="error"></div>')
+								.text(err)
+								.appendTo($res);
+						}
+					});
+				});
+				$('#clearGetNameStartsWith').click(function(){
+					$('#resultsGetNameStartsWith').empty();
+				});
+
+				geoNamesService.installAutoComplete({
+					input: $('#inputAutoComplete')
+				});
+			};
+			
+			var loaded = false;
+			jQuery().ready(function() {
+				if( loaded ) return;
+
+				if( nunaliit2  ) {
+					$n2 = nunaliit2;
+					
+					main();
+					loaded = true;
+				};
+			});
+			// -->
+		</script>
+	</body>
+</html>
