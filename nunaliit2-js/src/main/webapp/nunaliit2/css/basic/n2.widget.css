@@ -349,3 +349,33 @@ Help Dialog
 	font-family: helvetica, sans-serif;
 	font-weight: 500;
 }
+
+/* 
+==============================
+Gazetteer Dialog 
+==============================
+*/
+.n2MapAndControls_gazette_results {
+	position: relative;
+	margin-top: 5px;
+	width: 360px;
+	height: 440px;
+	overflow: auto;
+}
+
+.n2MapAndControls_gazette_result {
+	width: 358px;
+	border: 1px #cccccc solid;
+}
+
+.n2MapAndControls_gazette_result:hover {
+	background-color: #cccccc;
+}
+
+.n2MapAndControls_gazette_result_name {
+	font-size: 120%;
+}
+
+.n2MapAndControls_gazette_result_location {
+	font-size: 80%;
+}

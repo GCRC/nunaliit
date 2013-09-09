@@ -131,8 +131,6 @@ function OlkitAttributeFormManagerSidePanel(options_) {
 
 		editedLayer.events.register('featuremodified', editedFeature, featureModified);
 
-    	var attributeForm = null;
-    	
 		attributeDialog = $('#'+options.panelName);
 		attributeDialog.empty();
 
@@ -151,8 +149,8 @@ function OlkitAttributeFormManagerSidePanel(options_) {
         	tableName: options.tableName
         	,installButtons: function(buttons) {
         		formButtons.empty();
-        		if( buttons.Save ) { installSaveButton( buttons.Save ) };
-        		if( buttons['Delete'] ) { installDeleteButton( buttons['Delete'] ) };
+        		if( buttons.Save ) { installSaveButton( buttons.Save ); };
+        		if( buttons['Delete'] ) { installDeleteButton( buttons['Delete'] ); };
         		installCancelButton();
         	}
         	,fieldOpts: fOpts
@@ -334,6 +332,154 @@ function OlkitAttributeFormManagerSidePanel(options_) {
 		,cancelAttributeForm:  cancelAttributeForm
 	};
 };
+
+//**************************************************
+var GazetteerProcess = $n2.Class({
+	
+	geoNamesService: null
+	
+	,initialize: function(geoNamesService_){
+		this.geoNamesService = geoNamesService_;
+	}
+
+	,initiateCapture: function(mapControl){
+		var _this = this;
+		
+		var dialogId = $n2.getUniqueId();
+		var $dialog = $('<div></div>')
+			.attr('id',dialogId)
+			.addClass('n2MapAndControls_gazette_dialog');
+		
+		var inputId = $n2.getUniqueId();
+		$('<div><input id="'+inputId+'" type="text"/></div>')
+			.appendTo($dialog);
+
+		$('<div class="n2MapAndControls_gazette_results"></div>')
+			.appendTo($dialog);
+
+		var dialogOptions = {
+			autoOpen: true
+			,modal: true
+			,title: _loc('Create feature from name')
+			,width: 'auto'
+			,close: function(event, ui){
+				var diag = $(event.target);
+				diag.dialog('destroy');
+				diag.remove();
+			}
+		};
+		$dialog.dialog(dialogOptions);
+		
+		var $input = $('#'+inputId);
+		
+		this.geoNamesService.installAutoComplete({
+			input: $input
+		});
+		
+		$input.keydown(function(e){
+			var key = e.which;
+			
+			// $n2.log('key',key);
+			
+			if( key === 13 ) {
+				var $input = $('#'+inputId);
+				var val = $input.val();
+				
+				if( $input.autocomplete ){
+					$input.autocomplete('close');
+				};
+				
+				_this._searchForName(mapControl, dialogId, val);
+			};
+			
+			return true;
+		});
+		
+		// Get centre of map to find biased country
+		
+	}
+	
+	,_searchForName: function(mapControl, dialogId, name){
+		var _this = this;
+		
+		$('#'+dialogId).find('.n2MapAndControls_gazette_results').empty();
+		
+		this.geoNamesService.getName({
+			name: name
+			,featureClass: $n2.GeoNames.FeatureClass.PLACES
+			,limit: 10
+			,onSuccess: function(results){
+				var $div = $('#'+dialogId).find('.n2MapAndControls_gazette_results')
+					.empty();
+				
+				for(var i=0,e=results.length; i<e; ++i){
+					var entry = results[i];
+					
+					if( entry.geonameId ) {
+						var $entry = $('<div></div>')
+							.addClass('n2MapAndControls_gazette_result')
+							.appendTo($div);
+						
+						var name = entry.name;
+						if( entry.adminName1 ){
+							name += ', ' + entry.adminName1;
+						};
+						if( entry.countryName ){
+							name += ', ' + entry.countryName;
+						};
+						$('<div></div>')
+							.addClass('n2MapAndControls_gazette_result_name')
+							.text(name)
+							.appendTo($entry);
+						
+						_this._installOnClick(mapControl, dialogId, $entry, entry);
+
+						if( entry.lng && entry.lat ) {
+							var longLat = entry.lng + ',' + entry.lat;
+							$('<div></div>')
+								.addClass('n2MapAndControls_gazette_result_location')
+								.text(longLat)
+								.appendTo($entry);
+						};
+					};
+				};
+			}
+		});
+	}
+	
+	,_installOnClick: function(mapControl, dialogId, $entry, entry){
+		var _this = this;
+		
+		$entry.click(function(){
+			_this._selectEntry(mapControl, dialogId, entry);
+		});
+	}
+	
+	,_selectEntry: function(mapControl, dialogId, entry){
+		var $dialog = $('#'+dialogId);
+		$dialog.dialog('close');
+		
+		var editLayer = mapControl.editLayer;
+		var map = mapControl.map;
+		
+		var geom = new OpenLayers.Geometry.Point(1 * entry.lng, 1 * entry.lat);
+
+		// Reproject geomertry
+		var mapProjection = new OpenLayers.Projection(map.projection);
+		var gazetteProjection = new OpenLayers.Projection('EPSG:4326');
+		if( gazetteProjection.getCode() != mapProjection.getCode() ) {
+			geom.transform(gazetteProjection, mapProjection);
+		};
+		
+		// Center map on geometry
+		var ll = new OpenLayers.LonLat(geom.x, geom.y);
+		map.setCenter(ll);
+
+		// Create and add feature
+		var feature = new OpenLayers.Feature.Vector(geom);
+		editLayer.addFeatures([feature]);
+	}
+});
 
 //**************************************************
 //**************************************************
@@ -609,7 +755,7 @@ var MapAndControls = $n2.Class({
 			features: []
 			,endFn: []
 			,fids: {}
-		}
+		};
 		this.focusInfo = {
 			fids: {}
 			,features: []
@@ -1105,10 +1251,11 @@ var MapAndControls = $n2.Class({
 			showLayerSwitcher = false;
 		};
 		if( showLayerSwitcher ) {
+			var layerSwitcherControl = null;
 			if( OpenLayers.Control.NunaliitLayerSwitcher ){
-				var layerSwitcherControl = new OpenLayers.Control.NunaliitLayerSwitcher();
+				layerSwitcherControl = new OpenLayers.Control.NunaliitLayerSwitcher();
 			} else {
-				var layerSwitcherControl = new OpenLayers.Control.LayerSwitcher();
+				layerSwitcherControl = new OpenLayers.Control.LayerSwitcher();
 			};
 			this.map.addControl(layerSwitcherControl);
 			if( layerSwitcherControl 
@@ -1145,6 +1292,16 @@ var MapAndControls = $n2.Class({
     	} else {
     		// Maps with all geometry types
     		this.editControls.toolbar = new OpenLayers.Control.EditingToolbar(this.editLayer, {autoActivate: false});
+    		if( OpenLayers.Control.NunaliitGazetteer ) {
+    			var geoNamesService = new $n2.GeoNames.Service();
+    			var gazetteerProcess = new GazetteerProcess(geoNamesService);
+    			var control = new OpenLayers.Control.NunaliitGazetteer({
+    				activateListener: function(){
+    					gazetteerProcess.initiateCapture(_this);
+    				}
+    			});
+    			this.editControls.toolbar.addControls([ control ]);
+    		};
     		this.map.addControl(this.editControls.toolbar);
     		this.editControls.toolbar.deactivate();
         	
@@ -1239,7 +1396,6 @@ var MapAndControls = $n2.Class({
 		var r = [];
 		
 		if( layer && layer.features ) {
-			var loop;
 			var features = layer.features;
 			for(var i=0,e=features.length; i<e; ++i) {
 				var f = features[i];
@@ -1390,8 +1546,6 @@ var MapAndControls = $n2.Class({
 	}
 
 	,_centerMapOnXY: function(x, y, projCode) {
-		var _this = this;
-		
 		var ll = new OpenLayers.LonLat(x, y);
 		
 		if( projCode 
@@ -1677,15 +1831,16 @@ var MapAndControls = $n2.Class({
 			_this._resortLayerFeatures(evt_);
 			
 			var layer = null;
+			var infoLayer = null;
 			if( evt_ 
 			 && evt_.features 
 			 && evt_.features.length 
 			 && evt_.features[0] 
 			 && evt_.features[0].layer ) {
-				var layer = evt_.features[0].layer;
+				layer = evt_.features[0].layer;
 			};
 			if( layer ) {
-				var infoLayer = layer._layerInfo;
+				infoLayer = layer._layerInfo;
 			};
 			
 			if( infoLayer ) {
@@ -1695,15 +1850,16 @@ var MapAndControls = $n2.Class({
 		
 		layerInfo.olLayer.events.register('featuresremoved', null, function(evt_){
 			var layer = null;
+			var infoLayer = null;
 			if( evt_ 
 			 && evt_.features 
 			 && evt_.features.length 
 			 && evt_.features[0] 
 			 && evt_.features[0].layer ) {
-				var layer = evt_.features[0].layer;
+				layer = evt_.features[0].layer;
 			};
 			if( layer ) {
-				var infoLayer = layer._layerInfo;
+				infoLayer = layer._layerInfo;
 			};
 			
 			if( infoLayer ) {
@@ -1738,7 +1894,7 @@ var MapAndControls = $n2.Class({
 				var opts = $n2.extend({
 					name: name
 				},options);
-				var l = new OpenLayers.Layer.Bing(options);
+				var l = new OpenLayers.Layer.Bing(opts);
 				return l;
 				
 			} else {
@@ -2230,8 +2386,6 @@ var MapAndControls = $n2.Class({
 	}
 
 	,hoverFeature: function(feature) {
-		var _this = this;
-		
 		if( null == feature ) {
 			return;
 		};
@@ -2610,6 +2764,7 @@ var MapAndControls = $n2.Class({
     			$toolbar.find('.olControlDrawFeaturePointItemInactive').attr('title',_loc('Add a point to the map'));
     			$toolbar.find('.olControlDrawFeaturePathItemInactive').attr('title',_loc('Add a line to the map'));
     			$toolbar.find('.olControlDrawFeaturePolygonItemInactive').attr('title',_loc('Add a polygon to the map'));
+    			$toolbar.find('.olControlNunaliitGazetteerItemInactive').attr('title',_loc('Add a feature to the map based on a gazetteer service'));
     		};
             
     	} else if( this.currentMode === this.modes.EDIT_FEATURE ) {
@@ -2777,8 +2932,6 @@ var MapAndControls = $n2.Class({
 	}
     
 	,onAttributeFormUpdated: function(fid, feature) {
-		var _this = this;
-		
 		// This is an update
 		var fid = feature.fid;
 		this.fidUpdated(fid);
@@ -2802,10 +2955,11 @@ var MapAndControls = $n2.Class({
 			placeId = feature.attributes.place_id;
 		};
 		
+		var selectWindow = null;
 		if( placeId ) {
 			this.insertSound();
 			
-			var selectWindow = $('<div class="selectMedia" style="z-index:3005"></div>');
+			selectWindow = $('<div class="selectMedia" style="z-index:3005"></div>');
 			
 			var head = $('<h1>Select a hover audio file</h2>');
 			selectWindow.append(head);
@@ -3305,7 +3459,7 @@ var MapAndControls = $n2.Class({
 					;
 			};
 			
-			jQuerySet.children().each(function(i,elem){ disableAll($(elem), flag) });
+			jQuerySet.children().each(function(i,elem){ disableAll($(elem), flag); });
 		};
 		
 		return false; 
@@ -3462,15 +3616,16 @@ var MapAndControls = $n2.Class({
 			_this._resortLayerFeatures(evt_);
 			
 			var layer = null;
+			var infoLayer = null;
 			if( evt_ 
 			 && evt_.features 
 			 && evt_.features.length 
 			 && evt_.features[0] 
 			 && evt_.features[0].layer ) {
-				var layer = evt_.features[0].layer;
+				layer = evt_.features[0].layer;
 			};
 			if( layer ) {
-				var infoLayer = layer._layerInfo;
+				infoLayer = layer._layerInfo;
 			};
 			
 			if( infoLayer ) {
@@ -3480,15 +3635,16 @@ var MapAndControls = $n2.Class({
 		
 		layerInfo.olLayer.events.register('featuresremoved', null, function(evt_){
 			var layer = null;
+			var infoLayer = null;
 			if( evt_ 
 			 && evt_.features 
 			 && evt_.features.length 
 			 && evt_.features[0] 
 			 && evt_.features[0].layer ) {
-				var layer = evt_.features[0].layer;
+				layer = evt_.features[0].layer;
 			};
 			if( layer ) {
-				var infoLayer = layer._layerInfo;
+				infoLayer = layer._layerInfo;
 			};
 			
 			if( infoLayer ) {
@@ -3589,7 +3745,7 @@ var MapAndControls = $n2.Class({
 		 && evt_.features.length 
 		 && evt_.features[0] 
 		 && evt_.features[0].layer ) {
-			var layer = evt_.features[0].layer;
+			layer = evt_.features[0].layer;
 		};
 
 		if( layer ) {
@@ -3636,7 +3792,7 @@ var MapAndControls = $n2.Class({
 	,redefineFeatureLayerStylesAndRules : function(layerName) {
 		var layerInfo = this.getNamedLayerInfo(layerName);
 		if (null == layerInfo) {
-			alert('redefineFeatureLayerStylesAndRules: unknown layer name: ' + layerName)
+			alert('redefineFeatureLayerStylesAndRules: unknown layer name: ' + layerName);
 		} else {
     		//this._endClicked();
     		layerInfo.olLayer.redraw();    			
@@ -3996,7 +4152,7 @@ var MapAndControls = $n2.Class({
 				
 				var feature = null;
 				if( features.length > 0 ){
-					var feature = features[0];
+					feature = features[0];
 				};
 				
 				if( feature ) {

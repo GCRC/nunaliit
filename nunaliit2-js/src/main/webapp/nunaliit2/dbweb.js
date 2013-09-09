@@ -855,7 +855,7 @@ $Id: dbweb.js 8165 2012-05-31 13:14:37Z jpfiset $
 			var input = $('<input class="dbWebFormInput" type="text" name="'+columnName+'"'+valueAttr+'/>');
 			li.append(input);
 			
-			saveInput(columnName, input, value)
+			saveInput(columnName, input, value);
 
 			ulElem.append(li);
 		};
@@ -882,7 +882,7 @@ $Id: dbweb.js 8165 2012-05-31 13:14:37Z jpfiset $
 				,changeYear: true
 			});
 			li.append(input);
-			saveInput(columnName, input, value)
+			saveInput(columnName, input, value);
 
 			ulElem.append(li);
 		};
@@ -919,7 +919,7 @@ $Id: dbweb.js 8165 2012-05-31 13:14:37Z jpfiset $
 			};
 			li.append(input);
 			
-			saveInput(columnName, input, value)
+			saveInput(columnName, input, value);
 
 			ulElem.append(li);
 		};
@@ -949,7 +949,7 @@ $Id: dbweb.js 8165 2012-05-31 13:14:37Z jpfiset $
 			});
 			li.append(button);
 
-			saveInput(columnName, input, value)
+			saveInput(columnName, input, value);
 
 			ulElem.append(li);
 

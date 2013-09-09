@@ -444,7 +444,7 @@ function showUploads(arr) {
 				$tr.append($td);
 				
 				// Display document
-				displayRowFromDocId(trId, docId, attachmentName)
+				displayRowFromDocId(trId, docId, attachmentName);
 				
 				++count;
 			};

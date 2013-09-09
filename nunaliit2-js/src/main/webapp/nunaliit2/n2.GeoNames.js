@@ -66,11 +66,12 @@ var AutoComplete = $n2.Class({
 		
 		this.service = opts.service;
 		
+		var $input = null;
 		if( typeof(opts.input) === 'string' ) {
-			var $input = $('#'+opts.input);
+			$input = $('#'+opts.input);
 			this.inputId = opts.input;
 		} else {
-			var $input = $(opts.input);
+			$input = $(opts.input);
 			var inputId = $input.attr('id');
 			if( !inputId ){
 				inputId = $n2.getUniqueId();
@@ -108,7 +109,7 @@ var AutoComplete = $n2.Class({
 			_this._autocompleteSource(request, response);
 		};
 		
-		var $input = this.getInput();
+		$input = this.getInput();
 		$input.autocomplete(autocompleteOptions);
 	}
 
@@ -217,6 +218,46 @@ var GeoNameService = $n2.Class({
 		);
 	}
 	
+	,findNearby: function(opts_){
+		var opts = $n2.extend({
+			lng: null // must be provided
+			,lat: null // must be provided
+			,featureClass: null
+			,featureCode: null
+			,lang: null
+			,radius: null
+			,maxRows: null
+			,style: null
+			,localCountry: null
+			,cities: null
+			,onSuccess: function(results){}
+			,onError: function(err){}
+		},opts_);
+		
+		var data = {
+			lng: opts.lng
+			,lat: opts.lat
+		};
+		
+		if( opts.limit ){
+			data.maxRows = opts.limit;
+		};
+		
+		this._getGeoNames(
+			'findNearbyJSON'
+			,data
+			,function(r){
+				$n2.log('r',r);
+				if( r.geonames ) {
+					opts.onSuccess(r.geonames);
+				} else {
+					opts.onError( _loc('Invalid result returned by GeoNames') );
+				};
+			}
+			,opts.onError
+		);
+	}
+	
 	,installAutoComplete: function(opts_){
 		var opts = $n2.extend({
 			input: null // jquery element of input
@@ -257,6 +298,8 @@ var GeoNameService = $n2.Class({
 		});
 	}
 });
+
+//===================================
 
 $n2.GeoNames = {
 	Service: GeoNameService

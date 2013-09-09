@@ -28,6 +28,16 @@
 		<div id="resultsGetNameStartsWith">
 		</div>
 		
+		<h2>Get Country from long/lat</h2>
+		<div>
+			Long: <input id="inputGetCountryLong" type="text"/>
+			Lat: <input id="inputGetCountryLat" type="text"/>
+			<button id="buttonGetCountry">Get Country</button>
+			<button id="clearGetCountry">Clear</button>
+		</div>
+		<div id="resultsGetCountry">
+		</div>
+		
 		<h2>Auto Complete</h2>
 		<div>
 			<input id="inputAutoComplete" type="text"/>
@@ -94,6 +104,35 @@
 				});
 				$('#clearGetNameStartsWith').click(function(){
 					$('#resultsGetNameStartsWith').empty();
+				});
+				
+				$('#buttonGetCountry').click(function(){
+					var lng = 1 * $('#inputGetCountryLong').val();
+					var lat = 1 * $('#inputGetCountryLat').val();
+					$n2.log('long:'+lng+' lat:'+lat);
+					
+					geoNamesService.findNearby({
+						lng: lng
+						,lat: lat
+						,featureClass: $n2.GeoNames.FeatureClass.PLACES
+						,limit: 5
+						,onSuccess: function(results){
+							var text = JSON.stringify(results,null,'\t');
+							var $res = $('#resultsGetCountry').empty();
+							$('<pre></pre>')
+								.text(text)
+								.appendTo($res);
+						}
+						,onError: function(err){
+							var $res = $('#resultsGetCountry').empty();
+							$('<div class="error"></div>')
+								.text(err)
+								.appendTo($res);
+						}
+					});
+				});
+				$('#clearGetCountry').click(function(){
+					$('#resultsGetCountry').empty();
 				});
 
 				geoNamesService.installAutoComplete({

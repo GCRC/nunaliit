@@ -26,3 +26,17 @@
 	color:#000000;
 	font-weight: bold;
 }
+
+
+/* 
+	ControlNunaliitGazetteerItemActive
+ */
+.olControlEditingToolbar div.olControlNunaliitGazetteerItemActive,
+.olControlEditingToolbar div.olControlNunaliitGazetteerItemInactive {
+	background-image: url("openlayers/editing_tool_bar.png");
+	background-position: 0px 0px;
+}
+
+.olControlEditingToolbar div.olControlNunaliitGazetteerItemActive {
+	background-position: 0px -24px;
+}
