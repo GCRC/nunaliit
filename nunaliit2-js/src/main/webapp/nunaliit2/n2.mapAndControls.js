@@ -422,7 +422,7 @@ var GazetteerProcess = $n2.Class({
 		this.geoNamesService.getName({
 			name: request.name
 			,featureClass: $n2.GeoNames.FeatureClass.PLACES
-			,maxRows: 10
+			,maxRows: 25
 			,countryBias: countryBias
 			,onSuccess: function(results){
 				var $div = $('#'+request.dialogId).find('.n2MapAndControls_gazette_results')
@@ -1336,8 +1336,10 @@ var MapAndControls = $n2.Class({
     	} else {
     		// Maps with all geometry types
     		this.editControls.toolbar = new OpenLayers.Control.EditingToolbar(this.editLayer, {autoActivate: false});
-    		if( OpenLayers.Control.NunaliitGazetteer ) {
-    			var geoNamesService = new $n2.GeoNames.Service();
+    		if( OpenLayers.Control.NunaliitGazetteer
+    		 && this.options.directory
+    		 && this.options.directory.geoNamesService ) {
+    			var geoNamesService = this.options.directory.geoNamesService;
     			var gazetteerProcess = new GazetteerProcess(geoNamesService);
     			var control = new OpenLayers.Control.NunaliitGazetteer({
     				activateListener: function(){

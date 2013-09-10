@@ -252,6 +252,16 @@ function Configure(options_){
 	 	$n2.hoverSoundService = configuration.hoverSoundService;
 		configuration.directory.hoverSoundService = configuration.hoverSoundService;
 		
+		// Set up GeoNames service
+		var geoNamesOptions = {};
+		if( window.nunaliit_custom
+		 && window.nunaliit_custom.geoNames ){
+			if( window.nunaliit_custom.geoNames.username ){
+				geoNamesOptions.username = window.nunaliit_custom.geoNames.username;
+			};
+		};
+		configuration.directory.geoNamesService = new $n2.GeoNames.Service(geoNamesOptions);
+		
 		callCustomConfiguration();
 	};
 	

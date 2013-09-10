@@ -127,7 +127,7 @@ function searchForDocumentId(options_){
 	};
 	$dialog.dialog(dialogOptions);
 
-	var searchInput = options.searchServer.installSearch({
+	options.searchServer.installSearch({
 		textInput: $('#'+inputId)
 		,searchButton: $('#'+searchButtonId)
 		,displayFn: displaySearch
@@ -560,6 +560,8 @@ var CouchDocumentEditor = $n2.Class({
 				$select.append( $('<option>'+schemas[i].name+'</option>') );
 			}
 			
+			var cancelOnClose = true;
+			
 			$dialog.find('button')
 				.first()
 					.button({icons:{primary:'ui-icon-check'}})
@@ -579,7 +581,8 @@ var CouchDocumentEditor = $n2.Class({
 								_this._cancelEdit();
 							}
 						});
-						
+				
+						cancelOnClose = false;
 						$dialog.dialog('close');
 						return false;
 					})
@@ -588,7 +591,6 @@ var CouchDocumentEditor = $n2.Class({
 					.click(function(){
 						var $dialog = $('#'+dialogId);
 						$dialog.dialog('close');
-						_this._cancelEdit();
 						return false;
 					})
 				;
@@ -601,6 +603,10 @@ var CouchDocumentEditor = $n2.Class({
 					var diag = $(event.target);
 					diag.dialog('destroy');
 					diag.remove();
+					
+					if( cancelOnClose ){
+						_this._cancelEdit();
+					};
 				}
 			};
 			$dialog.dialog(dialogOptions);
@@ -609,7 +615,6 @@ var CouchDocumentEditor = $n2.Class({
     
     ,_displayEditor: function(selectedSchema) {
     	var _this = this;
-    	var attributeForm = null;
     	
     	var data = this.editedDocument;
 		
@@ -1080,7 +1085,8 @@ var CouchDocumentEditor = $n2.Class({
     	
     	// Delete necessary keys
     	var refreshRequired = false;
-    	for(var attName in keys){
+    	var attName = null;
+    	for(attName in keys){
     		if( data._attachments && data._attachments[attName] ){
     			delete data._attachments[attName];
     			refreshRequired = true;
@@ -1094,7 +1100,7 @@ var CouchDocumentEditor = $n2.Class({
     	// Remove _attachments if empty
     	if( data._attachments ){
     		var empty = true;
-    		for(var attName in data._attachments){
+    		for(attName in data._attachments){
     			empty = false;
     		};
     		if( empty ){
@@ -1107,7 +1113,7 @@ var CouchDocumentEditor = $n2.Class({
     	if( data.nunaliit_attachments ){
     		var empty = true;
     		if( data.nunaliit_attachments.files ) {
-	    		for(var attName in data.nunaliit_attachments.files){
+	    		for(attName in data.nunaliit_attachments.files){
 	    			empty = false;
 	    		};
     		};
@@ -1807,8 +1813,6 @@ var SchemaEditorService = $n2.Class({
 	}
 
 	,_searchForDocumentId: function(cb,resetFn){
-
-		var _this = this;
 		
 		var searchServer = this._getSearchService();
 		var showService = this._getShowService();

@@ -69,6 +69,7 @@ loadStrings({
 	,"Contribution":"Contribution"
 	,"Create User":"Création d'usager"
 	,"Create a new user":"Créer un nouvel usager"
+	,"Create feature from name":"Créer une géométrie à partir d'un nom"
 	,"Created by":"Créer par"
 	,"Data Modification Application":"Application de modification des données"
 	,"Date":"Date"
