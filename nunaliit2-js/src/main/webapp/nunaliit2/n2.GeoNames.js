@@ -83,7 +83,7 @@ var AutoComplete = $n2.Class({
 		// Request options
 		this.options = {
 			featureClass: $n2.GeoNames.FeatureClass.PLACES
-			,limit: 12
+			,maxRows: 12
 		};
 		for(var key in opts){
 			if( 'service' === key ){
@@ -162,7 +162,10 @@ var GeoNameService = $n2.Class({
 		var opts = $n2.extend({
 			name: null // must be provided
 			,featureClass: null
-			,limit: null
+			,maxRows: null
+			,country: null
+			,countryBias: null
+			,style: null
 			,onSuccess: function(results){}
 			,onError: function(err){}
 		},opts_);
@@ -192,7 +195,10 @@ var GeoNameService = $n2.Class({
 		var opts = $n2.extend({
 			name: null // must be provided
 			,featureClass: null
-			,limit: null
+			,maxRows: null
+			,country: null
+			,countryBias: null
+			,style: null
 			,onSuccess: function(results){}
 			,onError: function(err){}
 		},opts_);
@@ -239,8 +245,8 @@ var GeoNameService = $n2.Class({
 			,lat: opts.lat
 		};
 		
-		if( opts.limit ){
-			data.maxRows = opts.limit;
+		if( opts.maxRows ){
+			data.maxRows = opts.maxRows;
 		};
 		
 		this._getGeoNames(
@@ -273,8 +279,20 @@ var GeoNameService = $n2.Class({
 			data.featureClass = opts.featureClass;
 		};
 		
-		if( typeof(opts.limit) === 'number' ){
-			data.maxRows = opts.limit;
+		if( typeof(opts.maxRows) === 'number' ){
+			data.maxRows = opts.maxRows;
+		};
+
+		if( opts.country ){
+			data.country = opts.country;
+		};
+
+		if( opts.countryBias ){
+			data.countryBias = opts.countryBias;
+		};
+
+		if( opts.style ){
+			data.style = opts.style;
 		};
 	}
 	

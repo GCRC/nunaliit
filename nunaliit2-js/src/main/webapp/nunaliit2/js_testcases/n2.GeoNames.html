@@ -28,14 +28,14 @@
 		<div id="resultsGetNameStartsWith">
 		</div>
 		
-		<h2>Get Country from long/lat</h2>
+		<h2>Find Nearby</h2>
 		<div>
-			Long: <input id="inputGetCountryLong" type="text"/>
-			Lat: <input id="inputGetCountryLat" type="text"/>
-			<button id="buttonGetCountry">Get Country</button>
-			<button id="clearGetCountry">Clear</button>
+			Long: <input id="inputFindNearbyLong" type="text"/>
+			Lat: <input id="inputFindNearbyLat" type="text"/>
+			<button id="buttonFindNearby">Find Nearby</button>
+			<button id="clearFindNearby">Clear</button>
 		</div>
-		<div id="resultsGetCountry">
+		<div id="resultsFindNearby">
 		</div>
 		
 		<h2>Auto Complete</h2>
@@ -61,7 +61,7 @@
 					geoNamesService.getName({
 						name: name
 						,featureClass: [$n2.GeoNames.FeatureClass.PLACES,$n2.GeoNames.FeatureClass.ADMIN]
-						,limit: 5
+						,maxRows: 5
 						,onSuccess: function(results){
 							var text = JSON.stringify(results,null,'\t');
 							var $res = $('#resultsGetName').empty();
@@ -86,7 +86,7 @@
 					geoNamesService.getNameStartsWith({
 						name: name
 						,featureClass: $n2.GeoNames.FeatureClass.PLACES
-						,limit: 5
+						,maxRows: 5
 						,onSuccess: function(results){
 							var text = JSON.stringify(results,null,'\t');
 							var $res = $('#resultsGetNameStartsWith').empty();
@@ -106,33 +106,33 @@
 					$('#resultsGetNameStartsWith').empty();
 				});
 				
-				$('#buttonGetCountry').click(function(){
-					var lng = 1 * $('#inputGetCountryLong').val();
-					var lat = 1 * $('#inputGetCountryLat').val();
+				$('#buttonFindNearby').click(function(){
+					var lng = 1 * $('#inputFindNearbyLong').val();
+					var lat = 1 * $('#inputFindNearbyLat').val();
 					$n2.log('long:'+lng+' lat:'+lat);
 					
 					geoNamesService.findNearby({
 						lng: lng
 						,lat: lat
 						,featureClass: $n2.GeoNames.FeatureClass.PLACES
-						,limit: 5
+						,maxRows: 5
 						,onSuccess: function(results){
 							var text = JSON.stringify(results,null,'\t');
-							var $res = $('#resultsGetCountry').empty();
+							var $res = $('#resultsFindNearby').empty();
 							$('<pre></pre>')
 								.text(text)
 								.appendTo($res);
 						}
 						,onError: function(err){
-							var $res = $('#resultsGetCountry').empty();
+							var $res = $('#resultsFindNearby').empty();
 							$('<div class="error"></div>')
 								.text(err)
 								.appendTo($res);
 						}
 					});
 				});
-				$('#clearGetCountry').click(function(){
-					$('#resultsGetCountry').empty();
+				$('#clearFindNearby').click(function(){
+					$('#resultsFindNearby').empty();
 				});
 
 				geoNamesService.installAutoComplete({

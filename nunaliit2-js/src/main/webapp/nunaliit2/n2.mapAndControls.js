@@ -375,6 +375,13 @@ var GazetteerProcess = $n2.Class({
 		this.geoNamesService.installAutoComplete({
 			input: $input
 		});
+
+		var request = {
+			mapControl: mapControl
+			,dialogId: dialogId
+			,val: null
+			,location: null
+		};
 		
 		$input.keydown(function(e){
 			var key = e.which;
@@ -388,28 +395,37 @@ var GazetteerProcess = $n2.Class({
 				if( $input.autocomplete ){
 					$input.autocomplete('close');
 				};
+
+				request.name = val;
 				
-				_this._searchForName(mapControl, dialogId, val);
+				_this._searchForName(request);
 			};
 			
 			return true;
 		});
 		
 		// Get centre of map to find biased country
-		
+		this._findCurrentLocation(request);
 	}
 	
-	,_searchForName: function(mapControl, dialogId, name){
+	,_searchForName: function(request){
 		var _this = this;
 		
-		$('#'+dialogId).find('.n2MapAndControls_gazette_results').empty();
+		var countryBias = null;
+		if( request.location
+		 && request.location.countryCode ){
+			countryBias = request.location.countryCode;
+		};
+		
+		$('#'+request.dialogId).find('.n2MapAndControls_gazette_results').empty();
 		
 		this.geoNamesService.getName({
-			name: name
+			name: request.name
 			,featureClass: $n2.GeoNames.FeatureClass.PLACES
-			,limit: 10
+			,maxRows: 10
+			,countryBias: countryBias
 			,onSuccess: function(results){
-				var $div = $('#'+dialogId).find('.n2MapAndControls_gazette_results')
+				var $div = $('#'+request.dialogId).find('.n2MapAndControls_gazette_results')
 					.empty();
 				
 				for(var i=0,e=results.length; i<e; ++i){
@@ -432,7 +448,7 @@ var GazetteerProcess = $n2.Class({
 							.text(name)
 							.appendTo($entry);
 						
-						_this._installOnClick(mapControl, dialogId, $entry, entry);
+						_this._installOnClick(request, $entry, entry);
 
 						if( entry.lng && entry.lat ) {
 							var longLat = entry.lng + ',' + entry.lat;
@@ -447,24 +463,24 @@ var GazetteerProcess = $n2.Class({
 		});
 	}
 	
-	,_installOnClick: function(mapControl, dialogId, $entry, entry){
+	,_installOnClick: function(request, $entry, entry){
 		var _this = this;
 		
 		$entry.click(function(){
-			_this._selectEntry(mapControl, dialogId, entry);
+			_this._selectEntry(request, entry);
 		});
 	}
 	
-	,_selectEntry: function(mapControl, dialogId, entry){
-		var $dialog = $('#'+dialogId);
+	,_selectEntry: function(request, entry){
+		var $dialog = $('#'+request.dialogId);
 		$dialog.dialog('close');
 		
-		var editLayer = mapControl.editLayer;
-		var map = mapControl.map;
+		var editLayer = request.mapControl.editLayer;
+		var map = request.mapControl.map;
 		
 		var geom = new OpenLayers.Geometry.Point(1 * entry.lng, 1 * entry.lat);
 
-		// Reproject geomertry
+		// Reproject geometry
 		var mapProjection = new OpenLayers.Projection(map.projection);
 		var gazetteProjection = new OpenLayers.Projection('EPSG:4326');
 		if( gazetteProjection.getCode() != mapProjection.getCode() ) {
@@ -478,6 +494,34 @@ var GazetteerProcess = $n2.Class({
 		// Create and add feature
 		var feature = new OpenLayers.Feature.Vector(geom);
 		editLayer.addFeatures([feature]);
+	}
+	
+	,_findCurrentLocation: function(request){
+		var map = request.mapControl.map;
+		var ll = map.getCenter();
+		if( ll ) {
+			// Reproject geometry
+			var mapProjection = new OpenLayers.Projection(map.projection);
+			var gazetteProjection = new OpenLayers.Projection('EPSG:4326');
+			if( gazetteProjection.getCode() != mapProjection.getCode() ) {
+				ll.transform(mapProjection, gazetteProjection);
+			};
+
+			this.geoNamesService.findNearby({
+				lng: ll.lon
+				,lat: ll.lat
+				,maxRows: 1
+				,onSuccess: function(results){
+					if(results && results.length){
+						var entry = results[0];
+						request.location = entry;
+					};
+				}
+				,onError: function(err){
+					// Ignore
+				}
+			});
+		};
 	}
 });
 
