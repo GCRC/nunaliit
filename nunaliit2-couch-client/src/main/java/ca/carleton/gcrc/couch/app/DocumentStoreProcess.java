@@ -5,12 +5,15 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import ca.carleton.gcrc.json.JSONSupport;
+import ca.carleton.gcrc.utils.Files;
 
 public class DocumentStoreProcess {
 
@@ -33,6 +36,8 @@ public class DocumentStoreProcess {
 		}
 		
 		try {
+			Set<String> previousPaths = new HashSet<String>();
+			
 			// Make dir
 			if( dir.exists() && false == dir.isDirectory() ){
 				throw new Exception("Can not store object in non-directory");
@@ -47,6 +52,9 @@ public class DocumentStoreProcess {
 				if( !created ) {
 					throw new Exception("Unable to create directory: "+dir.getAbsolutePath());
 				}
+			} else {
+				previousPaths = Files.getDescendantPathNames(dir, true);
+				Files.emptyDirectory(dir);
 			}
 			
 			// Create _id.txt
@@ -94,9 +102,10 @@ public class DocumentStoreProcess {
 						// Skip manifest
 						
 					} else {
+						Object value = jsonObj.get(key);
 						// Store
 						try {
-							storeKeyValue(jsonObj, dir, key);
+							storeKeyValue(dir, key, value, previousPaths, null);
 						} catch(Exception e) {
 							throw new Exception("Error while saving key: "+key, e);
 						}
@@ -125,15 +134,99 @@ public class DocumentStoreProcess {
 		}
 	}
 
-	private void storeKeyValue(JSONObject jsonObj, File dir, String key) throws Exception {
-		Object value = jsonObj.get(key);
+	private void storeKeyValue(
+			File dir
+			,String key
+			,Object value
+			,Set<String> previousPaths
+			,String pathPrefix
+			) throws Exception {
 
-		File valueFile = null;
-		if( value instanceof String ) {
-			valueFile = new File(dir, key+".txt");
-		} else {
-			valueFile = new File(dir, key+".json");
+		String objectPath = key;
+		if( null != pathPrefix ) {
+			objectPath = pathPrefix + File.pathSeparator + key;
 		}
+		String jsonPath = objectPath + ".json";
+
+		if( value instanceof JSONObject ){
+			if( previousPaths.contains(objectPath) ){
+				File objectDir = new File(dir,key);
+				Files.createDirectory(objectDir);
+				storeObjectValue((JSONObject)value, objectDir, previousPaths, objectPath);
+			} else {
+				storeJsonValue(value, dir, key);
+			}
+			
+		} else if( value instanceof JSONArray ){
+			String arrayPath = objectPath + ".array";
+			if( previousPaths.contains(arrayPath) ){
+				File objectDir = new File(dir,key+".array");
+				Files.createDirectory(objectDir);
+				storeArrayValue((JSONArray)value, objectDir, previousPaths, arrayPath);
+			} else {
+				storeJsonValue(value, dir, key);
+			}
+			
+		} else if( value instanceof String ) {
+			if( previousPaths.contains(jsonPath) ){
+				storeJsonValue(value, dir, key);
+			} else {
+				storeStringValue((String)value, dir, key);
+			}
+		} else {
+			// integers, double, etc.
+			storeJsonValue(value, dir, key);
+		}
+	}
+
+	private void storeObjectValue(
+			JSONObject jsonObj
+			,File dir
+			,Set<String> previousPaths
+			,String pathPrefix
+			) throws Exception {
+		Iterator<?> it = jsonObj.keys();
+		while( it.hasNext() ){
+			Object keyObj = it.next();
+			if( keyObj instanceof String ){
+				String key = (String)keyObj;
+				Object value = jsonObj.get(key);
+				
+				try {
+					storeKeyValue(dir, key, value, previousPaths, pathPrefix);
+				} catch(Exception e) {
+					throw new Exception("Error while saving key: "+pathPrefix+"/"+key, e);
+				}
+			}
+		}
+	}
+
+	private void storeArrayValue(
+			JSONArray jsonArray
+			,File dir
+			,Set<String> previousPaths
+			,String pathPrefix
+			) throws Exception {
+		int length = jsonArray.length();
+		for(int i=0; i<length; ++i){
+			String key = ""+i;
+			Object value = jsonArray.get(i);
+
+			try {
+				storeKeyValue(dir, key, value, previousPaths, pathPrefix);
+			} catch(Exception e) {
+				throw new Exception("Error while saving key: "+pathPrefix+"/"+key, e);
+			}
+		}
+	}
+
+	private void storeJsonValue(
+			Object value
+			,File dir
+			,String key
+			) throws Exception {
+
+		File valueFile =  new File(dir, key+".json");
 
 		FileOutputStream fos = null;
 		try {
@@ -148,10 +241,6 @@ public class DocumentStoreProcess {
 				JSONArray valueArr = (JSONArray)value;
 				osw.write(valueArr.toString(3));
 				
-			} else if( value instanceof String ){
-				String valueStr = (String)value;
-				osw.write(valueStr);
-				
 			} else {
 				String valueStr = JSONSupport.valueToString(value);
 				osw.write(valueStr);
@@ -162,7 +251,41 @@ public class DocumentStoreProcess {
 			fos = null;
 			
 		} catch(Exception e) {
-			throw new Exception("Unable to write value for: "+key);
+			throw new Exception("Unable to write JSON value for: "+key);
+			
+		} finally {
+			if( null != fos ){
+				try {
+					fos.close();
+				} catch(Exception e){
+					// Ignore
+				}
+			}
+		}
+	}
+
+	private void storeStringValue(
+			String value
+			,File dir
+			,String key
+			) throws Exception {
+
+		File valueFile = new File(dir, key+".txt");
+
+		FileOutputStream fos = null;
+		try {
+			fos = new FileOutputStream(valueFile);
+			OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
+
+			osw.write(value);
+
+			osw.flush();
+			
+			fos.close();
+			fos = null;
+			
+		} catch(Exception e) {
+			throw new Exception("Unable to write string value for: "+key);
 			
 		} finally {
 			if( null != fos ){

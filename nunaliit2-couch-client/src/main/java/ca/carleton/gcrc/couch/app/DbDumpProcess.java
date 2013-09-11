@@ -10,6 +10,7 @@ import java.util.Map;
 import ca.carleton.gcrc.couch.app.impl.DbDumpListenerNull;
 import ca.carleton.gcrc.couch.app.impl.DocumentCouchDb;
 import ca.carleton.gcrc.couch.client.CouchDb;
+import ca.carleton.gcrc.utils.Files;
 
 public class DbDumpProcess {
 
@@ -87,7 +88,7 @@ public class DbDumpProcess {
 		if( docIds.size() > 0 ){
 			// Create dump directory
 			if( false == dumpDir.exists() ) {
-				createDir(dumpDir);
+				Files.createDirectory(dumpDir);
 			}
 			
 			// For each document, dump to disk
@@ -103,14 +104,6 @@ public class DbDumpProcess {
 						String name = computeNameFromId(docId);
 						docDir = new File(dumpDir, name);
 					}
-				}
-				
-				
-				// Create directory for this document
-				if( docDir.exists() ) {
-					emptyDir(docDir);
-				} else {
-					createDir(docDir);
 				}
 				
 				// Fetch document from database
@@ -134,45 +127,6 @@ public class DbDumpProcess {
 			
 		} else {
 			return getDocIds();
-		}
-	}
-	
-	private void createDir(File dir) throws Exception {
-		boolean created = false;
-		try {
-			created = dir.mkdirs();
-			
-		} catch(Exception e) {
-			throw new Exception("Unable to create directory: "+dir.getAbsolutePath(), e);
-		}
-		
-		if( !created ){
-			throw new Exception("Unable to create directory: "+dir.getAbsolutePath());
-		}
-	}
-	
-	private void emptyDir(File dir) throws Exception {
-		String[] fileNames = dir.list();
-		if( null != fileNames ) {
-			for(String fileName : fileNames){
-				if( fileName.charAt(0) == '.' ) {
-					// ignore
-				} else {
-					File file = new File(dir,fileName);
-					if( file.isDirectory() ) {
-						emptyDir(file);
-					}
-					boolean deleted = false;
-					try {
-						deleted = file.delete();
-					} catch(Exception e) {
-						throw new Exception("Unable to delete: "+file.getAbsolutePath(),e);
-					}
-					if( !deleted ){
-						throw new Exception("Unable to delete: "+file.getAbsolutePath());
-					}
-				}
-			}
 		}
 	}
 	

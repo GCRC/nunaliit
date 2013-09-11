@@ -1,9 +1,15 @@
 package ca.carleton.gcrc.couch.app;
 
 import java.io.File;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.Vector;
+
+import junit.framework.TestCase;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -18,9 +24,15 @@ import ca.carleton.gcrc.couch.fsentry.FSEntryBuffer;
 import ca.carleton.gcrc.couch.fsentry.FSEntryFile;
 import ca.carleton.gcrc.couch.fsentry.FSEntryMerged;
 import ca.carleton.gcrc.json.JSONObjectComparator;
-import junit.framework.TestCase;
+import ca.carleton.gcrc.utils.Files;
 
 public class DocumentStoreProcessTest extends TestCase {
+
+	static public File findResourceDirectory(String name) {
+		URL url = JSONFileLoaderTest.class.getClassLoader().getResource(name);
+		File file = new File(url.getPath());
+		return file;
+	}
 
 	public void testObjectStoring() throws Exception {
 		CouchDb couchDb = TestSupport.getTestCouchDb();
@@ -156,6 +168,50 @@ public class DocumentStoreProcessTest extends TestCase {
 					Attachment att = attachments.iterator().next();
 					if( false == "abc/def".equals(att.getContentType()) ){
 						fail("Unexpected content-type: "+att.getContentType());
+					}
+				}
+			}
+		}
+	}
+	
+	public void testDumpOverwrite() throws Exception {
+		CouchDb couchDb = TestSupport.getTestCouchDb();
+		if( null != couchDb ) {
+			File original = findResourceDirectory("storeOverwrite");
+			File testDir = TestSupport.getTestRunDir();
+			File dir = new File(testDir, "storeOverwrite");
+			
+			Files.copy(original, dir);
+			
+			// Load from disk
+			Document doc = null;
+			{
+				FSEntry fileEntry = new FSEntryFile(dir);
+				doc = DocumentFile.createDocument(fileEntry);
+			}
+
+			// Store back to disk
+			DocumentStoreProcess storeProcess = new DocumentStoreProcess();
+			storeProcess.store(doc, dir);
+			
+			Set<String> originalPaths = Files.getDescendantPathNames(original, true);
+			Set<String> targetPaths = Files.getDescendantPathNames(dir, true);
+			
+			// Both sets of paths should be identical
+			if( originalPaths.size() != targetPaths.size() ){
+				fail("The path sets are of different sizes.");
+			} else {
+				ArrayList<String> originalPathsSorted = new ArrayList<String>(originalPaths);
+				Collections.sort(originalPathsSorted);
+				ArrayList<String> targetPathsSorted = new ArrayList<String>(targetPaths);
+				Collections.sort(targetPathsSorted);
+				
+				for(int i=0,e=originalPathsSorted.size(); i<e; ++i){
+					String originalName = originalPathsSorted.get(i);
+					String targetName = targetPathsSorted.get(i);
+					if( false == originalName.equals(targetName) ){
+						fail("The path sets are not equivalent");
+						break;
 					}
 				}
 			}
