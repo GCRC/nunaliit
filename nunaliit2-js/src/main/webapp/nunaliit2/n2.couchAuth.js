@@ -423,7 +423,7 @@ var AuthService = $n2.Class({
 			.text(_loc('user name'))
 			.appendTo($userLine);
 		
-		$('<div class="n2Auth_login_input"><input class="n2Auth_user_input n2Auth_input_field" type="text"/></div>')
+		$('<div class="n2Auth_login_input"><input class="n2Auth_user_input n2Auth_input_field" type="text" name="username"/></div>')
 			.appendTo($userLine);
 			
 		$('<div class="n2Auth_login_end"></div>')
@@ -437,7 +437,7 @@ var AuthService = $n2.Class({
 			.text(_loc('password'))
 			.appendTo($pwLine);
 
-		$('<div class="n2Auth_login_input"><input class="n2Auth_pw_input n2Auth_input_field" type="password"/></div>')
+		$('<div class="n2Auth_login_input"><input class="n2Auth_pw_input n2Auth_input_field" type="password" name="password"/></div>')
 			.appendTo($pwLine);
 
 		$('<div class="n2Auth_login_end"></div>')
@@ -1020,7 +1020,7 @@ $.NUNALIIT_AUTH = {
 	}
 
 	,getAuthContext: function() {
-		return $n2.couchAuth._defaultAuthService.getAuthContext()
+		return $n2.couchAuth._defaultAuthService.getAuthContext();
 	}
 	
 	,init: function(opts_){
