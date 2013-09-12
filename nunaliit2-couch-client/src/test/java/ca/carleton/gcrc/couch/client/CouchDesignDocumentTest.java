@@ -1,16 +1,16 @@
 package ca.carleton.gcrc.couch.client;
 
 import java.io.File;
-import java.io.StringWriter;
 import java.net.URL;
 
-import org.json.JSONObject;
-import org.json.JSONTokener;
-
-import ca.carleton.gcrc.couch.app.JSONFileLoader;
-import ca.carleton.gcrc.couch.app.JSONFileLoaderTest;
-
 import junit.framework.TestCase;
+
+import org.json.JSONObject;
+
+import ca.carleton.gcrc.couch.app.Document;
+import ca.carleton.gcrc.couch.app.impl.DocumentFile;
+import ca.carleton.gcrc.couch.fsentry.FSEntry;
+import ca.carleton.gcrc.couch.fsentry.FSEntryFile;
 
 public class CouchDesignDocumentTest extends TestCase {
 
@@ -24,25 +24,14 @@ public class CouchDesignDocumentTest extends TestCase {
 			CouchDb db = TestSupport.getTestCouchDb();
 			if( null != db ) {
 				if( false == db.documentExists("_design/"+TEST_DD_NAME) ) {
-					URL url = JSONFileLoaderTest.class.getClassLoader().getResource("testDesignDoc");
+					URL url = CouchDesignDocumentTest.class.getClassLoader().getResource("testDesignDoc");
 					File dir = new File(url.getPath());
 
-					// Load JSON string from directory structure
-					JSONFileLoader builder = new JSONFileLoader(dir);
-					StringWriter sw = new StringWriter();
-					builder.write(sw);
+					FSEntry designDocLocation = new FSEntryFile(dir);
+					Document designDoc = DocumentFile.createDocument(designDocLocation);
 					
 					// Get JSON from it
-					JSONObject jsonObj = null;
-					{
-						JSONTokener jsonTokener = new JSONTokener(sw.toString());
-						Object obj = jsonTokener.nextValue();
-						if( obj instanceof JSONObject ) {
-							jsonObj = (JSONObject)obj;
-						} else {
-							throw new Exception("Unexpected returned object type: "+obj.getClass().getSimpleName());
-						}
-					}
+					JSONObject jsonObj = designDoc.getJSONObject();
 					
 					// Assign id
 					jsonObj.put("_id", "_design/"+TEST_DD_NAME);

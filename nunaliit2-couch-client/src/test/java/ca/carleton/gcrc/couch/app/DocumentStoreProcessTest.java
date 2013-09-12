@@ -29,7 +29,7 @@ import ca.carleton.gcrc.utils.Files;
 public class DocumentStoreProcessTest extends TestCase {
 
 	static public File findResourceDirectory(String name) {
-		URL url = JSONFileLoaderTest.class.getClassLoader().getResource(name);
+		URL url = DocumentStoreProcessTest.class.getClassLoader().getResource(name);
 		File file = new File(url.getPath());
 		return file;
 	}

@@ -1,1 +1,0 @@
-{"_id":"org.nunaliit.test:test","arr":[0,1,"a",{"d":"e"},[0,1,2,3,4]],"obj":{"bool":true,"int":1,"n":null,"str":"a string"}}
