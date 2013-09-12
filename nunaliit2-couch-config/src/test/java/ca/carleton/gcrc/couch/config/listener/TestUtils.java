@@ -2,19 +2,20 @@ package ca.carleton.gcrc.couch.config.listener;
 
 import java.io.File;
 import java.io.InputStream;
-import java.io.StringWriter;
 import java.net.URL;
 import java.util.List;
 import java.util.Properties;
 import java.util.Vector;
 
 import org.json.JSONObject;
-import org.json.JSONTokener;
 
-import ca.carleton.gcrc.couch.app.JSONFileLoader;
+import ca.carleton.gcrc.couch.app.Document;
+import ca.carleton.gcrc.couch.app.impl.DocumentFile;
 import ca.carleton.gcrc.couch.client.CouchClient;
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchFactory;
+import ca.carleton.gcrc.couch.fsentry.FSEntry;
+import ca.carleton.gcrc.couch.fsentry.FSEntryFile;
 
 public class TestUtils {
 	final static String DB_PREFIX = "delete";
@@ -102,25 +103,14 @@ public class TestUtils {
 				// Upload config design document...
 				File configDdFile = new File(getTestResourceDir(), "configDesignDocument");
 
-				// Load JSON string from directory structure
-				JSONFileLoader builder = new JSONFileLoader(configDdFile);
-				StringWriter sw = new StringWriter();
-				builder.write(sw);
+				FSEntry designDocLocation = new FSEntryFile(configDdFile);
+				Document designDoc = DocumentFile.createDocument(designDocLocation);
 				
 				// Get JSON from it
-				JSONObject jsonObj = null;
-				{
-					JSONTokener jsonTokener = new JSONTokener(sw.toString());
-					Object obj = jsonTokener.nextValue();
-					if( obj instanceof JSONObject ) {
-						jsonObj = (JSONObject)obj;
-
-						// Assign id
-						jsonObj.put("_id", "_design/config");
-					} else {
-						throw new Exception("Unexpected returned object type: "+obj.getClass().getSimpleName());
-					}
-				}
+				JSONObject jsonObj = designDoc.getJSONObject();
+				
+				// Assign id
+				jsonObj.put("_id", "_design/config");
 				
 				// Create
 				db.createDocument(jsonObj);
