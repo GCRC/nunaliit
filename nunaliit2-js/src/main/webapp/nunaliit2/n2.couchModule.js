@@ -530,7 +530,7 @@ var ModuleDisplay = $n2.Class({
 		var _this = this;
 	
 		this.moduleName = opts.moduleName;
-		this.moduleDoc = opts.moduleDoc
+		this.moduleDoc = opts.moduleDoc;
 		if( !this.moduleName  && !this.moduleDoc ) {
 			opts.onError('"moduleName" or "moduleDoc" must be specified');
 			return;
@@ -871,7 +871,7 @@ var ModuleDisplay = $n2.Class({
 			for(var i=0,e=mapInfo.overlays.length; i<e; ++i){
 				var layerInfo = mapInfo.overlays[i];
 				
-				var layerDefiniton = {
+				var layerDefinition = {
 					id: layerInfo.id
 					,name: layerInfo.name
 					,type: layerInfo.type
@@ -880,34 +880,39 @@ var ModuleDisplay = $n2.Class({
 					,featurePopupDelay: 0 // ms
 					,styleMapFn: styleMapFn
 					,useHoverSound: true
+					,useClustering: false
 				};
 				
 				if( 'couchdb' === layerInfo.type ){
-					layerDefiniton.options = $n2.extend({
+					layerDefinition.options = $n2.extend({
 						viewName: 'geom'
 						,layerName: null
 						,db: _this.config.atlasDb
 						,designDoc: _this.config.atlasDesign
 					},layerInfo.options);
 					
-					if( !layerDefiniton.options.layerName ){
-						layerDefiniton.options.layerName = layerDefiniton.id;
+					if( !layerDefinition.options.layerName ){
+						layerDefinition.options.layerName = layerDefinition.id;
 					};
 					
 				} else {
-					layerDefiniton.options = layerInfo.options;
+					layerDefinition.options = layerInfo.options;
 				};
 	
 				if( layerInfo.featurePopupDelayMs ){
-					layerDefiniton.featurePopupDelay = layerInfo.featurePopupDelayMs;
+					layerDefinition.featurePopupDelay = layerInfo.featurePopupDelayMs;
 				};
 	
 				if( typeof(layerInfo.useHoverSound) === 'boolean' ){
-					layerDefiniton.useHoverSound = layerInfo.useHoverSound;
+					layerDefinition.useHoverSound = layerInfo.useHoverSound;
+				};
+				
+				if( typeof(layerInfo.useClustering) === 'boolean' ){
+					layerDefinition.useClustering = layerInfo.useClustering;
 				};
 				
 				// Add layer to map
-				mapOptions.overlays.push( layerDefiniton );
+				mapOptions.overlays.push( layerDefinition );
 			};
 		};
 	
@@ -946,10 +951,10 @@ var ModuleDisplay = $n2.Class({
 		
 		// Adjust projection on couchDb overlays
 		for(var i=0,e=mapOptions.overlays.length; i<e; ++i){
-			var layerDefiniton = mapOptions.overlays[i];
+			var layerDefinition = mapOptions.overlays[i];
 			
-			if( layerDefiniton.type === 'couchdb' ){
-				layerDefiniton.sourceSrsName = mapOptions.mapDisplay.srsName;
+			if( layerDefinition.type === 'couchdb' ){
+				layerDefinition.sourceSrsName = mapOptions.mapDisplay.srsName;
 			};
 		};
 		

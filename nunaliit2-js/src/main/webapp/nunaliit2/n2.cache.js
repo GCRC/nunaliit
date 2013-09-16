@@ -36,7 +36,7 @@ $Id: n2.cache.js 8165 2012-05-31 13:14:37Z jpfiset $
 ;(function($,$n2){
 
 // Localization
-var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
+// var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 
 var CacheService = $n2.Class({
 	options: null

@@ -810,9 +810,9 @@ var MapAndControls = $n2.Class({
 			NAVIGATE: {
 				name        : "NAVIGATE"
 				,buttonValue : _loc('Add or Edit a Map Feature')
-				,onStartHover: function(feature) {
-					_this.hoverFeature(feature);
-					_this.hoverFeaturePopup(feature);
+				,onStartHover: function(feature, layer) {
+					_this._hoverFeature(feature, layer);
+					_this._hoverFeaturePopup(feature, layer);
 				}
 				,onStartClick: function(feature) {
 					_this.initAndDisplayClickedPlaceInfo(feature);
@@ -823,9 +823,9 @@ var MapAndControls = $n2.Class({
 			,EDIT: {
 				name        : "EDIT"
 				,buttonValue : _loc('Cancel Feature Editing')
-				,onStartHover: function(feature) {
-					_this.hoverFeature(feature);
-					_this.hoverFeaturePopup(feature);
+				,onStartHover: function(feature, layer) {
+					_this._hoverFeature(feature, layer);
+					_this._hoverFeaturePopup(feature, layer);
 				}
 				,onStartClick: function(feature) {
 
@@ -1429,8 +1429,16 @@ var MapAndControls = $n2.Class({
 			var loop;
 			var features = layer.features;
 			for(loop=0;loop<features.length;++loop) {
-				if( features[loop].fid && features[loop].fid === fid ) {
-					return features[loop];
+				var feature = features[loop];
+				if( feature.fid && feature.fid === fid ) {
+					return feature;
+				} else if( feature.cluster ) {
+					for(var j=0,k=feature.cluster.length; j<k; ++j){
+						var f = feature.cluster[j];
+						if( f.fid && f.fid === fid ){
+							return feature;
+						};
+					};
 				};
 			};
 		};
@@ -1846,6 +1854,11 @@ var MapAndControls = $n2.Class({
 				layerOptions.strategies = [ new OpenLayers.Strategy.BBOX() ];
 			};
 		};
+		
+		if( layerInfo.useClustering ) {
+			layerOptions.strategies.push( new OpenLayers.Strategy.Cluster() );
+		};
+		
 		//layerOptions.renderers = ['Canvas','SVG','VML'];
 		layerOptions.renderers = ['SVG','VML'];
 
@@ -1868,6 +1881,19 @@ var MapAndControls = $n2.Class({
 					if( _this.focusInfo.fids[f.fid] ){
 						_this.focusInfo.features.push(f);
 						f.isHovered = true;
+					};
+					if( f.cluster ){
+						for(var j=0,k=f.cluster.length; j<k; ++j){
+							var clusterFeature = f.cluster[j];
+							if( _this.clickedInfo.fids[clusterFeature.fid] ){
+								_this.clickedInfo.features.push(f);
+								f.isClicked = true;
+							};
+							if( _this.focusInfo.fids[clusterFeature.fid] ){
+								_this.focusInfo.features.push(f);
+								f.isHovered = true;
+							};
+						};
 					};
 				};
 			};
@@ -2207,12 +2233,11 @@ var MapAndControls = $n2.Class({
 	
     // === HOVER AND CLICK START ========================================================
 
-   	,startClickEvent: function(evt) {
-   		var feature = this.hoverInfo.feature;
-   		this._startClicked(feature, false);
-	}
-	
    	,_startClicked: function(feature, forced) {
+   		if( feature && feature.cluster && feature.cluster.length == 1 ){
+   			feature = feature.cluster[0];
+   		};
+   		
 		var clickedAgain = false;
    		if( !forced ) {
 			clickedAgain = (null != feature && this.clickedInfo.fids[feature.fid]);
@@ -2275,10 +2300,6 @@ var MapAndControls = $n2.Class({
 		this.clickedInfo.fids = {};
 	}
 	
-	,registerEndClickFn: function(fn) {
-		this.clickedInfo.endFn.push(fn);
-	}
-	
 	,_selectedFeatures: function(features, fid){
 		if( this.currentMode !== this.modes.NAVIGATE ){
 			this.switchMapMode(this.modes.NAVIGATE);
@@ -2332,6 +2353,11 @@ var MapAndControls = $n2.Class({
 	}
 	
 	,_startHover: function(feature) {
+		var layer = feature.layer;
+   		if( feature && feature.cluster && feature.cluster.length == 1 ){
+   			feature = feature.cluster[0];
+   		};
+   		
 		// Check if anything is needed
 		if( this.hoverInfo.feature === feature ) {
 		 	// Nothing to do. This one is already the hover
@@ -2348,7 +2374,7 @@ var MapAndControls = $n2.Class({
 
 		// Perform mode specific hover actions
 		if( this.currentMode.onStartHover ) {
-			this.currentMode.onStartHover(feature);
+			this.currentMode.onStartHover(feature, layer);
 		};
 	}
 	
@@ -2431,15 +2457,15 @@ var MapAndControls = $n2.Class({
 		this._endClicked();
 	}
 
-	,hoverFeature: function(feature) {
+	,_hoverFeature: function(feature, layer) {
 		if( null == feature ) {
 			return;
 		};
-		if( null == feature.layer ) {
+		if( null == layer ) {
 			return;
 		};
 		
-		var layerInfo = feature.layer._layerInfo;
+		var layerInfo = layer._layerInfo;
 		if( null == layerInfo ) {
 			return;
 		};
@@ -2463,17 +2489,17 @@ var MapAndControls = $n2.Class({
  		});
 	}
 	
-	,hoverFeaturePopup: function(feature) {
+	,_hoverFeaturePopup: function(feature, layer) {
 		var _this = this;
 		
 		if( null == feature ) {
 			return;
 		};
-		if( null == feature.layer ) {
+		if( null == layer ) {
 			return;
 		};
 	
-		var layerInfo = feature.layer._layerInfo;
+		var layerInfo = layer._layerInfo;
 		if( null == layerInfo ) {
 			return;
 		};
@@ -3654,6 +3680,19 @@ var MapAndControls = $n2.Class({
 						_this.focusInfo.features.push(f);
 						f.isHovered = true;
 					};
+					if( f.cluster ){
+						for(var j=0,k=f.cluster.length; j<k; ++j){
+							var clusterFeature = f.cluster[j];
+							if( _this.clickedInfo.fids[clusterFeature.fid] ){
+								_this.clickedInfo.features.push(f);
+								f.isClicked = true;
+							};
+							if( _this.focusInfo.fids[clusterFeature.fid] ){
+								_this.focusInfo.features.push(f);
+								f.isHovered = true;
+							};
+						};
+					};
 				};
 			};
 		});
@@ -3947,7 +3986,17 @@ var MapAndControls = $n2.Class({
 			var features = olLayer.features;
 			for(var i=0,e=features.length; i<e; ++i){
 				var feature = features[i];
-				valueMap[feature.fid] = feature.data;
+				if( feature.fid ) {
+					valueMap[feature.fid] = feature.data;
+				};
+				if( feature.cluster ){
+					for(var j=0,k=feature.cluster.length;j<k;++j){
+						var cf = feature.cluster[j];
+						if( cf.fid ){
+							valueMap[cf.fid] = cf.data;
+						};
+					};
+				};
 			};
 		};
 		
