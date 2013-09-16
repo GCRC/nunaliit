@@ -921,7 +921,7 @@ var MapAndControls = $n2.Class({
 			// If not specified, a style map based on a defaults and extended
 			// using the property 'styleMap' is created.
 			,styleMapFn: function(layerInfo){ 
-				return _this.CreateStyleMapFromLayerInfo(layerInfo); 
+				return _this._createStyleMapFromLayerInfo(layerInfo); 
 			}
 
 			// To update the default style associated with a layer, insert an object containing the
@@ -1222,7 +1222,7 @@ var MapAndControls = $n2.Class({
 		this.genBackgroundMapLayers(this.options);
 		
 		// Create edit layer
-		var editLayerStyleMap = this.CreateEffectiveStyleMap(null);
+		var editLayerStyleMap = this._createEffectiveStyleMap(null);
 		this.editLayer = new OpenLayers.Layer.Vector(
 			'Edit'
 			,{
@@ -1792,7 +1792,7 @@ var MapAndControls = $n2.Class({
 		};
 
 		// Create style map
-		var layerStyleMap = this.CreateEffectiveStyleMap(layerInfo);
+		var layerStyleMap = this._createEffectiveStyleMap(layerInfo);
 		layerOptions.styleMap = layerStyleMap;
 
 		// Filter
@@ -2569,18 +2569,27 @@ var MapAndControls = $n2.Class({
 			var needWaitingPopup = true;
 			
 			// Call client function to generate HTML for popup
-			popupHtmlFn({
-				feature: feature
-				,layerInfo: layerInfo
-				,onSuccess: function(html){
-					// We do not need to show a waiting pop-up
-					// if it is not already up.
-					needWaitingPopup = false;
-					
-					displayPopup(html);
-				}
-				,onError: function(){}//ignore
-			});
+			if( feature.cluster ){
+				var $tmp = $('<div></div>');
+				$tmp.text( _loc('This cluster contains {count} feature(s)',{
+					count: feature.cluster.length
+				}) );
+				needWaitingPopup = false;
+				displayPopup( $tmp.html() );
+			} else {
+				popupHtmlFn({
+					feature: feature
+					,layerInfo: layerInfo
+					,onSuccess: function(html){
+						// We do not need to show a waiting pop-up
+						// if it is not already up.
+						needWaitingPopup = false;
+						
+						displayPopup(html);
+					}
+					,onError: function(){}//ignore
+				});
+			};
 			
 			// If the popupHtmlFn() calls onSuccess before we
 			// get here, then the variable needWaitingPopup is
@@ -3224,7 +3233,7 @@ var MapAndControls = $n2.Class({
 		return false;
 	}
 	
-	,CreateStyleMap: function(styleOptions) {
+	,_createStyleMap: function(styleOptions) {
 	
 		var providedMap = styleOptions 
 			? $.extend(true,{},this.defaultStyleMap,styleOptions)
@@ -3275,22 +3284,22 @@ var MapAndControls = $n2.Class({
 		return styleMap;
 	}
 	
-	,CreateStyleMapFromLayerInfo: function(layerInfo) {
+	,_createStyleMapFromLayerInfo: function(layerInfo) {
 	
 		var styleOptions = null;
 		if( layerInfo && layerInfo.styleMap ) {
 			styleOptions = layerInfo.styleMap;
 		};
-		return this.CreateStyleMap(styleOptions);
+		return this._createStyleMap(styleOptions);
 	}
 	
-	,CreateEffectiveStyleMap: function(layerInfo) {
+	,_createEffectiveStyleMap: function(layerInfo) {
 	
 		var _this = this;
 		
 		// The caller can specify a style map in multiple ways:
 		// 1. provide a style map function (layerInfo.styleMapFn)
-		// 2. provide a style extension (layerInfo.styleMapFn === CreateStyleMapFromLayerInfo)
+		// 2. provide a style extension (layerInfo.styleMapFn === _createStyleMapFromLayerInfo)
 		//    and styleMap object is used.
 		// Either way, a style map wrapping the caller's is needed to perform
 		// some work prior to calling the caller's style map. This function creates
@@ -3303,7 +3312,7 @@ var MapAndControls = $n2.Class({
 		} else {
 			// Editing layer currently has no options for styling. Use
 			// defaults.
-			innerStyleMap = this.CreateStyleMap();
+			innerStyleMap = this._createStyleMap();
 		};
 	
 		// Create wrapping style map based on StyleMapCallback. Perform
@@ -3595,7 +3604,7 @@ var MapAndControls = $n2.Class({
 		};
 
 		// Create style map
-		var layerStyleMap = this.CreateEffectiveStyleMap(layerInfo);
+		var layerStyleMap = this._createEffectiveStyleMap(layerInfo);
 		layerOptions.styleMap = layerStyleMap;
 
 		// Filter

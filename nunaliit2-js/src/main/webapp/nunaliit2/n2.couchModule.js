@@ -118,6 +118,18 @@ var MapFeatureStyles = $n2.Class({
 		,polygon: null
 	}
 	
+	,intentDeltas: {
+		cluster: {
+			base: {
+					normal: {
+					fillColor: '#ffff33'
+					,pointRadius: 8
+					,graphicName: 'square'
+				}
+			}
+		}
+	}
+	
 	,basicStyles: null
 	
 	,stylesFromLayer: null
@@ -160,10 +172,20 @@ var MapFeatureStyles = $n2.Class({
 		
 		// Create styles for intents
 		this.stylesFromIntents = {};
+		for(var intent in this.intentDeltas){
+			var intentDef = this.intentDeltas[intent];
+			var intentSet = this._computeStyleSet(intentDef);
+			this.stylesFromIntents[intent] = intentSet;
+		};
 		if( userStyles && userStyles.intents ){
 			for(var intent in userStyles.intents){
 				var intentDef = userStyles.intents[intent];
-				var intentSet = this._computeStyleSet(intentDef);
+				var intentSet = null;
+				if( this.intentDeltas[intent] ) {
+					intentSet = this._computeStyleSet(this.intentDeltas[intent], intentDef);
+				} else {
+					intentSet = this._computeStyleSet(intentDef);
+				};
 				this.stylesFromIntents[intent] = intentSet;
 			};
 		};
@@ -172,36 +194,49 @@ var MapFeatureStyles = $n2.Class({
 	/*
 	 * Computes the three variants of a style: point, line, polygon
 	 */
-	,_computeStyleSet: function(setDelta){
+	,_computeStyleSet: function(){
 		
 		var computedSet = {};
 		
-		computedSet.point = this._computeStyle(
-				this.defaultStyle
-				,this.initialDeltas.base
-				,setDelta.base
-				,this.initialDeltas.point
-				,setDelta.point
-				);
-		computedSet.line = this._computeStyle(
-				this.defaultStyle
-				,this.initialDeltas.base
-				,setDelta.base
-				,this.initialDeltas.line
-				,setDelta.line
-				);
-		computedSet.polygon = this._computeStyle(
-				this.defaultStyle
-				,this.initialDeltas.base
-				,setDelta.base
-				,this.initialDeltas.polygon
-				,setDelta.polygon
-				);
+		var pointArgs = [this.defaultStyle, this.initialDeltas.base];
+		var lineArgs = [this.defaultStyle, this.initialDeltas.base];
+		var polygonArgs = [this.defaultStyle, this.initialDeltas.base];
+		
+		// Add all base symbolizer
+		for(var i=0,e=arguments.length;i<e;++i){
+			var setDelta = arguments[i];
+			
+			pointArgs.push(setDelta.base);
+			lineArgs.push(setDelta.base);
+			polygonArgs.push(setDelta.base);
+		};
+		
+		pointArgs.push(this.initialDeltas.point);
+		lineArgs.push(this.initialDeltas.line);
+		polygonArgs.push(this.initialDeltas.polygon);
+		
+		// Add all geometry symbolizers
+		for(var i=0,e=arguments.length;i<e;++i){
+			var setDelta = arguments[i];
+			
+			pointArgs.push(setDelta.point);
+			lineArgs.push(setDelta.line);
+			polygonArgs.push(setDelta.polygon);
+		};
+		
+		computedSet.point = this._computeStyle.apply(this, pointArgs);
+		computedSet.line = this._computeStyle.apply(this, lineArgs);
+		computedSet.polygon = this._computeStyle.apply(this, polygonArgs);
 
 		return computedSet;
 	}
 
-	,_computeStyle: function(baseStyle, delta1_, delta2_){
+	/*
+	 * This function can be called with many arguments. The first style
+	 * is clone and then the clone is extended by all subsequent styles in
+	 * arguments.
+	 */
+	,_computeStyle: function(baseStyle){
 		
 		var computedStyle = {};
 
@@ -288,6 +323,11 @@ var MapFeatureStyles = $n2.Class({
 			 && feature.data 
 			 && feature.data.nunaliit_schema ) {
 				schemaName = feature.data.nunaliit_schema;
+			};
+			if( feature 
+			 && feature.cluster
+			 && feature.cluster.length > 1 ){
+				n2Intent = 'cluster';
 			};
 
 			var style = null;
