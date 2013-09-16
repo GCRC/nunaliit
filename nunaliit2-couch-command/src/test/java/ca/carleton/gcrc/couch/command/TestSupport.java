@@ -18,15 +18,52 @@ public class TestSupport {
 		File file = new File(url.getPath());
 		return file.getParentFile();
 	}
+	
+	static File g_runTestDir = null;
+	static public File getRunTestDir() throws Exception {
+		if( null == g_runTestDir ) {
+			File testDir = findTopTestingDir();
+			File generatedDir = new File(testDir, "generated");
+			
+			// find name
+			int count = 0;
+			while(count < 10000){
+				File file = new File(generatedDir,String.format("r%1$05d", count));
+				if( false == file.exists() ) {
+					g_runTestDir = file;
+					g_runTestDir.mkdir();
+					break;
+				}
+				++count;
+			}
+			
+			if( null == g_runTestDir ) {
+				throw new Exception("Testing directory is full");
+			}
+		}
+		
+		return g_runTestDir;
+	}
+
+	static public File getTestDir(String name) throws Exception {
+		File namedTestDir = null;
+		
+		File testDir = getRunTestDir();
+		if( null != testDir ){
+			namedTestDir = new File(testDir, name);
+			namedTestDir.mkdir();
+		}
+		
+		return namedTestDir;
+	}
 
 	static public File generateTestDirName() throws Exception {
-		File testDir = findTopTestingDir();
-		File generatedDir = new File(testDir, "generated");
+		File testDir = getRunTestDir();
 		
 		// find name
 		int count = 0;
 		while(count < 10000){
-			File file = new File(generatedDir,String.format("a%1$05d", count));
+			File file = new File(testDir, String.format("a%1$05d", count));
 			if( false == file.exists() ) {
 				return file;
 			}
