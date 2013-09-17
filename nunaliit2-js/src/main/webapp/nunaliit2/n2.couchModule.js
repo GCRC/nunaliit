@@ -283,8 +283,8 @@ var MapFeatureStyles = $n2.Class({
 		
 		var _this = this;
 		
-		var styleMap = new OpenLayers.StyleMapCallback(function(feature,intent){ 
-	        
+		var styleMap = new OpenLayers.StyleMapCallback(function(feature,intent){
+			
 			// Figure out intent
 	        var effectiveIntent = null;
 	        
@@ -315,14 +315,21 @@ var MapFeatureStyles = $n2.Class({
 	    			geomType = feature.geometry._n2Type = 'point';
 	    		};
 	    	};
-	    	
+
+			// Retrieve data. Handle clusters
+	    	var data = feature.data;
+			if( feature 
+			 && feature.cluster 
+			 && 1 === feature.cluster.length ){
+				data = feature.cluster[0].data;
+			};
+
 	    	var n2Intent = feature.n2Intent;
 	    	var layerId = layerInfo.id;
 	    	var schemaName = null;
-			if( feature 
-			 && feature.data 
-			 && feature.data.nunaliit_schema ) {
-				schemaName = feature.data.nunaliit_schema;
+			if( data 
+			 && data.nunaliit_schema ) {
+				schemaName = data.nunaliit_schema;
 			};
 			if( feature 
 			 && feature.cluster
