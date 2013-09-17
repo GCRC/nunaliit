@@ -927,7 +927,7 @@ var ModuleDisplay = $n2.Class({
 					,featurePopupDelay: 0 // ms
 					,styleMapFn: styleMapFn
 					,useHoverSound: true
-					,useClustering: false
+					,clustering: false
 				};
 				
 				if( 'couchdb' === layerInfo.type ){
@@ -954,8 +954,8 @@ var ModuleDisplay = $n2.Class({
 					layerDefinition.useHoverSound = layerInfo.useHoverSound;
 				};
 				
-				if( typeof(layerInfo.useClustering) === 'boolean' ){
-					layerDefinition.useClustering = layerInfo.useClustering;
+				if( layerInfo.clustering ){
+					layerDefinition.clustering = layerInfo.clustering;
 				};
 				
 				// Add layer to map

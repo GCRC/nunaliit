@@ -1852,8 +1852,11 @@ var MapAndControls = $n2.Class({
 			};
 		};
 		
-		if( layerInfo.useClustering ) {
-			layerOptions.strategies.push( new OpenLayers.Strategy.Cluster() );
+		if( layerInfo.clustering ) {
+			var clusterOptions = {
+				distance: layerInfo.clustering.distance
+			};
+			layerOptions.strategies.push( new OpenLayers.Strategy.Cluster(clusterOptions) );
 		};
 		
 		//layerOptions.renderers = ['Canvas','SVG','VML'];
