@@ -814,7 +814,7 @@ var MapAndControls = $n2.Class({
 					_this._hoverFeature(feature, layer);
 					_this._hoverFeaturePopup(feature, layer);
 				}
-				,onStartClick: function(feature) {
+				,onStartClick: function(feature, mapFeature) {
 					_this.initAndDisplayClickedPlaceInfo(feature);
 				}
 				,onEndClick: function(feature) {
@@ -827,18 +827,17 @@ var MapAndControls = $n2.Class({
 					_this._hoverFeature(feature, layer);
 					_this._hoverFeaturePopup(feature, layer);
 				}
-				,onStartClick: function(feature) {
+				,onStartClick: function(feature, mapFeature) {
 
 					var editAllowed = true;
-					if( typeof feature.attributes.layer != 'undefined' ) {
-						if( '0' == feature.attributes.layer && !this.isAdminUser() ) {
-							editAllowed = false;
-							alert('This feature can be edited only by an administrator');
-						};
+					if( mapFeature.cluster && mapFeature.cluster.length > 1 ) {
+						alert( _loc('This feature is a cluster and can not be edited directly. Please, zoom in to see features within cluster.') );
+						editAllowed = false;
 					};
 					
 					if( editAllowed ) {
-						_this.switchToEditFeatureMode(feature.fid, feature);
+						_this.switchToEditFeatureMode(feature.fid, mapFeature);
+						
 			    		_this._dispatch({
 			    			type: 'editInitiate'
 			    			,docId: null
@@ -1248,9 +1247,8 @@ var MapAndControls = $n2.Class({
 					lInfo.olLayer.events.register('featuresadded', null, function(evt_){
 						_this._olHandlerFeaturesAdded(evt_);
 					});
-					lInfo.olLayer.events.register('featuremodified', null, function(evt_){
-						_this._olHandlerFeatureModified(evt_);
-					});
+					var modifiedHandler = this._createFeatureModifiedHandler(l);
+					lInfo.olLayer.events.register('featuremodified', null, modifiedHandler);
 				};
 			};
 		};
@@ -1265,9 +1263,8 @@ var MapAndControls = $n2.Class({
 					l.events.register('featuresadded', null, function(evt_){
 						_this._olHandlerFeaturesAdded(evt_);
 					});
-					l.events.register('featuremodified', null, function(evt_){
-						_this._olHandlerFeatureModified(evt_);
-					});
+					var modifiedHandler = this._createFeatureModifiedHandler(l);
+					l.events.register('featuremodified', null, modifiedHandler);
 				};
 			};
 		};
@@ -2233,7 +2230,8 @@ var MapAndControls = $n2.Class({
 	
     // === HOVER AND CLICK START ========================================================
 
-   	,_startClicked: function(feature, forced) {
+   	,_startClicked: function(mapFeature, forced) {
+   		var feature = mapFeature;
    		if( feature && feature.cluster && feature.cluster.length == 1 ){
    			feature = feature.cluster[0];
    		};
@@ -2264,7 +2262,7 @@ var MapAndControls = $n2.Class({
 			}
 			
 			if( this.currentMode.onStartClick ) {
-				this.currentMode.onStartClick(feature);
+				this.currentMode.onStartClick(feature, mapFeature);
 			};
 		};
 	}
@@ -2947,16 +2945,20 @@ var MapAndControls = $n2.Class({
 		};
     }
     
-    // Called when the feature on the map is modified
-    ,_olHandlerFeatureModified: function(evt){
-    	var feature = evt.feature;
-    	this._dispatch({
-    		type: 'editGeometryModified'
-    		,docId: feature.fid
-    		,geom: feature.geometry
-    		,proj: feature.layer.map.projection
-    		,_origin: this
-    	});
+    ,_createFeatureModifiedHandler: function(olLayer){
+    	var _this = this;
+    	
+        // Called when the feature on the map is modified
+    	return function(evt){
+        	var feature = evt.feature;
+        	_this._dispatch({
+        		type: 'editGeometryModified'
+        		,docId: feature.fid
+        		,geom: feature.geometry
+        		,proj: olLayer.map.projection
+        		,_origin: _this
+        	});
+    	};
     }
     
     ,onAttributeFormClosed: function(editedFeature) {
