@@ -1113,8 +1113,6 @@ var MapAndControls = $n2.Class({
 			// to the edit layer. This happens when a toolbar adds
 			// a new feature i.e. when the user selects to add a new
 			// point, line or polygon.
-			// This function could also called when a feature is added
-			// by another user and detected via cometd.
 	    	if( _this.editModeAddFeatureEnabled ) {
 		    	var feature = evt.feature;
 		    	if( feature ) {
@@ -1235,6 +1233,8 @@ var MapAndControls = $n2.Class({
 		);
 		this.mapLayers.push(this.editLayer);
 		this.vectorLayers.push(this.editLayer);
+		var modifiedHandler = this._createFeatureModifiedHandler(this.editLayer);
+		this.editLayer.events.register('featuremodified', null, modifiedHandler);
 		
 		// Create vector layer for user defined layers (legacy)
 		this.layers = {};
@@ -1244,11 +1244,6 @@ var MapAndControls = $n2.Class({
 				var lInfo = this.createLayerFromOptions(layerOptions);
 				if( lInfo && lInfo.olLayer ){
 					this.mapLayers.push(lInfo.olLayer);
-					lInfo.olLayer.events.register('featuresadded', null, function(evt_){
-						_this._olHandlerFeaturesAdded(evt_);
-					});
-					var modifiedHandler = this._createFeatureModifiedHandler(l);
-					lInfo.olLayer.events.register('featuremodified', null, modifiedHandler);
 				};
 			};
 		};
@@ -1260,11 +1255,6 @@ var MapAndControls = $n2.Class({
 				var l = this._createOLLayerFromDefinition(layerDefinition,false);
 				if( l ){
 					this.mapLayers.push(l);
-					l.events.register('featuresadded', null, function(evt_){
-						_this._olHandlerFeaturesAdded(evt_);
-					});
-					var modifiedHandler = this._createFeatureModifiedHandler(l);
-					l.events.register('featuremodified', null, modifiedHandler);
 				};
 			};
 		};
@@ -1406,12 +1396,12 @@ var MapAndControls = $n2.Class({
 		};
 	}
 	
-	,_getFeaturesFromFid: function(fid){
+	,_getMapFeaturesIncludingFid: function(fid){
 		var features = [];
 		
 		for(var loop=0; loop<this.infoLayers.length; ++loop) {
 			var layerInfo = this.infoLayers[loop];
-			var feature = this._getLayerFeatureFromFid(layerInfo.olLayer,fid);
+			var feature = this._getLayerFeatureIncludingFid(layerInfo.olLayer,fid);
 			if( feature ) {
 				features.push(feature);
 			};
@@ -1420,7 +1410,7 @@ var MapAndControls = $n2.Class({
 		return features;
 	}
 	
-	,_getLayerFeatureFromFid: function(layer,fid) {
+	,_getLayerFeatureIncludingFid: function(layer,fid) {
 		
 		if( layer && layer.features ) {
 			var loop;
@@ -1547,26 +1537,50 @@ var MapAndControls = $n2.Class({
 		            };
 		        };
 		        
-				// Merge features
+				// Analyze features
+		        var featuresToAdd = [];
+		        var featuresToDestroy = [];
 				for(var featureLoop=0; featureLoop<features.length; ++featureLoop) {
 					// Read in feature
 					var loadedFeature = features[featureLoop];
-					var feature = _this._getLayerFeatureFromFid(layerInfo.olLayer,loadedFeature.fid);
-					if( feature ) {
-						layerInfo.olLayer.destroyFeatures([feature]);
-					}
+					featuresToAdd.push(loadedFeature);
 					
-					// Create new feature and add to layer
-					// If in edit mode, first disable editAttribute widget
-					if( _this.currentMode === _this.modes.EDIT ) {
-						_this.editModeAddFeatureEnabled = false;
+					var feature = _this._getLayerFeatureIncludingFid(layerInfo.olLayer,loadedFeature.fid);
+					if( feature ) {
+						if( feature.cluster ){
+							for(var j=0,k=feature.cluster.length; j<k; ++j){
+								var cf = feature.cluster[j];
+								if( cf.fid !== loadedFeature.fid ){
+									featuresToAdd.push(cf);
+								};
+							};
+						};
 						
-						layerInfo.olLayer.addFeatures(loadedFeature);
-						
-						_this.editModeAddFeatureEnabled = true;
-					} else {
-						layerInfo.olLayer.addFeatures(loadedFeature);
+						featuresToDestroy.push(feature);
 					}
+				};
+				
+				// Remove features
+				if( featuresToDestroy.length > 0 ){
+					layerInfo.olLayer.destroyFeatures(featuresToDestroy);
+				};
+					
+				// Add feature to layer
+				// If in edit mode, first disable editAttribute widget
+				if( _this.currentMode === _this.modes.EDIT ) {
+					_this.editModeAddFeatureEnabled = false;
+					
+					layerInfo.olLayer.addFeatures(featuresToAdd);
+					
+					_this.editModeAddFeatureEnabled = true;
+				} else {
+					layerInfo.olLayer.addFeatures(featuresToAdd);
+				};
+
+				// Report feature reloaded
+				for(var featureLoop=0; featureLoop<features.length; ++featureLoop) {
+					// Read in feature
+					var loadedFeature = features[featureLoop];
 					reloadOptions.onReloaded(loadedFeature);
 				};
 			};
@@ -1578,11 +1592,30 @@ var MapAndControls = $n2.Class({
 	,_removeFeature: function(fid) {
 		for(var loop=0; loop<this.vectorLayers.length; ++loop) {
 			var mapLayer = this.vectorLayers[loop];
-			var feature = this._getLayerFeatureFromFid(mapLayer,fid);
+			var feature = this._getLayerFeatureIncludingFid(mapLayer,fid);
 			if( feature ) {
-				mapLayer.destroyFeatures(feature);
-			} else {
-				// Nothing to do
+				if( feature.fid === fid ){
+					mapLayer.destroyFeatures(feature);
+					
+				} else if( feature.cluster ){
+					// Accumulate left over features from cluster
+					var remainingFeatures = null;
+					for(var j=0,k=feature.cluster.length; j<k; ++j){
+						var cf = feature.cluster[j];
+						if( cf.fid !== fid ){
+							if( !remainingFeatures ) remainingFeatures = [];
+							remainingFeatures.push(cf);
+						};
+					};
+					
+					// Destroy cluster feature
+					mapLayer.destroyFeatures(feature);
+					
+					// Add remaining features, if needed
+					if( remainingFeatures ){
+						mapLayer.addFeatures(remainingFeatures);
+					};
+				};
 			};
 		};
 	}
@@ -1609,28 +1642,11 @@ var MapAndControls = $n2.Class({
 		this.map.setCenter(ll, z, false, false);
 	}
 	
-	,_olHandlerFeaturesAdded: function(evt){
-		$n2.log('evt',evt);
-		
-		if( this.currentMode === this.modes.EDIT_FEATURE
-		 && this.editFeatureFid
-		 && evt
-		 && evt.features 
-		 && evt.features.length ){
-			for(var i=0,e=evt.features.length; i<e; ++i){
-				var f = evt.features[i];
-				if( f.fid === this.editFeatureFid ){
-					this._installGeometryEditor(f);
-				};
-			};
-		};
-	}
-	
 	,_installGeometryEditor: function(feature){
 		this._removeGeometryEditor();
 		
    		var modifyFeatureGeometry = new OpenLayers.Control.ModifyFeature(
-   			feature.layer
+   			this.editLayer
    			,{
    				'displayClass': 'olControlMoveFeature'
    				,standalone: true
@@ -1640,16 +1656,65 @@ var MapAndControls = $n2.Class({
 		this.map.addControl(modifyFeatureGeometry);
 		modifyFeatureGeometry.activate();
     	this.editFeatureControls.modifyFeatureGeometry = modifyFeatureGeometry;
+    	
+    	if( feature._n2MapNewFeature ){
+    		// This is a new feature that is on the EDIT layer
+    		modifyFeatureGeometry.selectFeature(feature);
+    		
+    	} else {
+    		// This is editing an already existing feature from a layer
+    		// other than the EDIT layer
+    		
+	    	// Remove feature from current layer
+	    	var featureLayer = feature.layer;
+	    	featureLayer.removeFeatures([feature]);
+	    	
+	    	// Compute the actual underlying feature
+	    	var effectiveFeature = null;
+	    	var geom = null;
+	    	if( this.editFeatureFid === feature.fid ){
+	        	effectiveFeature = feature;
+	        	geom = feature.geometry;
+	        	
+	    	} else if( feature.cluster ){
+	    		for(var i=0,e=feature.cluster.length; i<e; ++i){
+	    			if( this.editFeatureFid === feature.cluster[i].fid ){
+	    	    		effectiveFeature = feature.cluster[i];
+	    	    		geom = feature.cluster[i].geometry;
+	    	    		break;
+	    			};
+	    		};
+	    	};
+	    	
+	    	// Clone feature for edit layer
+	    	if( geom ) {
+		    	var editFeature = new OpenLayers.Feature.Vector(geom.clone());
+		    	editFeature.fid = effectiveFeature.fid;
+//		    	editFeature._n2OriginalLayer = featureLayer;
+//		    	editFeature._n2OriginalFeature = feature;
+//		    	editFeature._n2RestoreGeom = false;
+		    	editFeature._n2Original = {
+		    		restoreGeom: false
+		    		,layer: featureLayer
+		    		,feature: feature
+		    		,data: $n2.extend(true, {}, feature.data)
+		    		,style: feature.style
+		    	};
+		    	
+		    	this.editModeAddFeatureEnabled = false;
+		    	this.editLayer.addFeatures([editFeature]);
+		    	this.editModeAddFeatureEnabled = true;
+	
+		    	modifyFeatureGeometry.selectFeature(editFeature);
+	    	};
+    	};
 
-   		modifyFeatureGeometry.selectFeature(feature);
 
    		// Remember original values
-   		feature._n2MapOriginal = {
-			restoreGeom: false
-		};
-   		feature._n2MapOriginal.geometry = feature.geometry.clone();
-   		feature._n2MapOriginal.style = feature.style;
-   		feature._n2MapOriginal.data = $n2.extend(true, {}, feature.data);
+//   		feature._n2MapOriginal = {};
+//   		feature._n2MapOriginal.geometry = feature.geometry.clone();
+//   		feature._n2MapOriginal.style = feature.style;
+//   		feature._n2MapOriginal.data = $n2.extend(true, {}, feature.data);
 	}
 	
 	,_removeGeometryEditor: function(){
@@ -1663,24 +1728,76 @@ var MapAndControls = $n2.Class({
     		this.editFeatureControls.modifyFeatureGeometry.destroy();
     		this.editFeatureControls.modifyFeatureGeometry = null;
     		
+			if( editFeature ){
+				var originalLayer = null;
+				var originalFeature = null;
+				var originalData = null;
+				var originalStyle = null;
+				var restoreGeom = false;
+				if( editFeature._n2Original ) {
+					originalLayer = editFeature._n2Original.layer;
+					originalFeature = editFeature._n2Original.feature;
+					originalData = editFeature._n2Original.data;
+					originalStyle = editFeature._n2Original.style;
+					restoreGeom = editFeature._n2Original.restoreGeom;
+				};
+				
+				// Compute effective feature
+				var effectiveFeature = null;
+				var featuresToAdd = [];
+				if( originalFeature && editFeature.fid === originalFeature.fid ){
+					effectiveFeature = originalFeature;
+					featuresToAdd.push(originalFeature);
+					
+				} else if( originalFeature && originalFeature.cluster ){
+					for(var i=0,e=originalFeature.cluster.length; i<e; ++i){
+						var cf = originalFeature.cluster[i];
+						if( editFeature.fid === cf.fid ){
+							effectiveFeature = cf;
+						};
+						featuresToAdd.push(cf);
+					};
+				};
+
+				// Clone geometry if feature was sucessfully updated
+				if( effectiveFeature ){
+					if( restoreGeom ){
+						effectiveFeature.data = originalData;
+					} else {
+						effectiveFeature.geometry = editFeature.geometry.clone();
+					};
+					effectiveFeature.style = originalStyle;
+				};
+
+	    		// Remove feature from edit layer
+				if( editFeature.layer ) {
+					editFeature.layer.destroyFeatures([editFeature]);
+				};
+
+				// Add features back to original layer
+				if( originalLayer && featuresToAdd.length > 0 ){
+					originalLayer.addFeatures(featuresToAdd);
+				};
+			};
+    		
     		// If this is the cancellation of a new feature creation, remove feature
     		// from map
-    		if( editFeature 
-    		 && editFeature.layer ) {
-	    		if( editFeature._n2MapNewFeature ) {
-   	    			editFeature.layer.destroyFeatures([editFeature]);
-   	    			
-   	    		} else if( editFeature._n2MapOriginal ) {
-   	    			editFeature.layer.eraseFeatures([editFeature]);
-   	    			if( editFeature._n2MapOriginal.restoreGeom ){
-   	    				editFeature.geometry = editFeature._n2MapOriginal.geometry;
-   	    			};
-   	    			editFeature.data = editFeature._n2MapOriginal.data;
-   	    			editFeature.style = editFeature._n2MapOriginal.style;
-   	    			editFeature.layer.drawFeature(editFeature);
-   	    			delete editFeature._n2MapOriginal;
-   	    		};
-    		};
+//    		if( editFeature 
+//    		 && editFeature.layer ) {
+//	    		if( editFeature._n2MapNewFeature ) {
+//   	    			editFeature.layer.destroyFeatures([editFeature]);
+//   	    			
+//   	    		} else if( editFeature._n2MapOriginal ) {
+//   	    			editFeature.layer.eraseFeatures([editFeature]);
+//   	    			if( editFeature._n2MapOriginal.restoreGeom ){
+//   	    				editFeature.geometry = editFeature._n2MapOriginal.geometry;
+//   	    			};
+//   	    			editFeature.data = editFeature._n2MapOriginal.data;
+//   	    			editFeature.style = editFeature._n2MapOriginal.style;
+//   	    			editFeature.layer.drawFeature(editFeature);
+//   	    			delete editFeature._n2MapOriginal;
+//   	    		};
+//    		};
 		};
 	}
 
@@ -1856,88 +1973,16 @@ var MapAndControls = $n2.Class({
 			var clusterOptions = {
 				distance: layerInfo.clustering.distance
 			};
-			layerOptions.strategies.push( new OpenLayers.Strategy.Cluster(clusterOptions) );
+			layerOptions.strategies.push( new OpenLayers.Strategy.NunaliitCluster(clusterOptions) );
 		};
 		
 		//layerOptions.renderers = ['Canvas','SVG','VML'];
 		layerOptions.renderers = ['SVG','VML'];
 
 		layerInfo.olLayer = new OpenLayers.Layer.Vector(layerInfo.name, layerOptions);
-		
-		layerInfo.olLayer.events.register('visibilitychanged', null, function(evt_){
-			var selected = evt_.object.visibility;
-			evt_.object._layerInfo.selectListener(selected,evt_.object._layerInfo);
-		});
-		
-		layerInfo.olLayer.events.register('beforefeaturesadded', null, function(evt_){
-			var features = evt_.features;
-			if( features ){
-				for(var i=0,e=features.length;i<e;++i){
-					var f = features[i];
-					if( _this.clickedInfo.fids[f.fid] ){
-						_this.clickedInfo.features.push(f);
-						f.isClicked = true;
-					};
-					if( _this.focusInfo.fids[f.fid] ){
-						_this.focusInfo.features.push(f);
-						f.isHovered = true;
-					};
-					if( f.cluster ){
-						for(var j=0,k=f.cluster.length; j<k; ++j){
-							var clusterFeature = f.cluster[j];
-							if( _this.clickedInfo.fids[clusterFeature.fid] ){
-								_this.clickedInfo.features.push(f);
-								f.isClicked = true;
-							};
-							if( _this.focusInfo.fids[clusterFeature.fid] ){
-								_this.focusInfo.features.push(f);
-								f.isHovered = true;
-							};
-						};
-					};
-				};
-			};
-		});
-		
-		layerInfo.olLayer.events.register('featuresadded', null, function(evt_){
-			_this._resortLayerFeatures(evt_);
-			
-			var layer = null;
-			var infoLayer = null;
-			if( evt_ 
-			 && evt_.features 
-			 && evt_.features.length 
-			 && evt_.features[0] 
-			 && evt_.features[0].layer ) {
-				layer = evt_.features[0].layer;
-			};
-			if( layer ) {
-				infoLayer = layer._layerInfo;
-			};
-			
-			if( infoLayer ) {
-				_this._clearValueCache(infoLayer);
-			};
-		});
-		
-		layerInfo.olLayer.events.register('featuresremoved', null, function(evt_){
-			var layer = null;
-			var infoLayer = null;
-			if( evt_ 
-			 && evt_.features 
-			 && evt_.features.length 
-			 && evt_.features[0] 
-			 && evt_.features[0].layer ) {
-				layer = evt_.features[0].layer;
-			};
-			if( layer ) {
-				infoLayer = layer._layerInfo;
-			};
-			
-			if( infoLayer ) {
-				_this._clearValueCache(infoLayer);
-			};
-		});
+
+		// Add events to layer
+		this._registerLayerForEvents(layerInfo);
 
 		// Remember
 		this.infoLayers.push( layerInfo );
@@ -2109,6 +2154,136 @@ var MapAndControls = $n2.Class({
 		
 		return null;
 	}
+	
+	,_registerLayerForEvents: function(layerInfo){
+		var _this = this;
+		
+		// Report change in visibility for the layer
+		layerInfo.olLayer.events.register('visibilitychanged', null, function(evt_){
+			var selected = evt_.object.visibility;
+			layerInfo.selectListener(selected,layerInfo);
+		});
+		
+		// Adjust isClicked and isHovered attributes before the feature is added to the layer
+		layerInfo.olLayer.events.register('beforefeaturesadded', null, function(evt_){
+			var features = evt_.features;
+			if( features ){
+				for(var i=0,e=features.length;i<e;++i){
+					var f = features[i];
+					if( _this.clickedInfo.fids[f.fid] ){
+						_this.clickedInfo.features.push(f);
+						f.isClicked = true;
+					};
+					if( _this.focusInfo.fids[f.fid] ){
+						_this.focusInfo.features.push(f);
+						f.isHovered = true;
+					};
+					if( f.cluster ){
+						for(var j=0,k=f.cluster.length; j<k; ++j){
+							var clusterFeature = f.cluster[j];
+							if( _this.clickedInfo.fids[clusterFeature.fid] ){
+								_this.clickedInfo.features.push(f);
+								f.isClicked = true;
+							};
+							if( _this.focusInfo.fids[clusterFeature.fid] ){
+								_this.focusInfo.features.push(f);
+								f.isHovered = true;
+							};
+						};
+					};
+				};
+			};
+		});
+		
+		layerInfo.olLayer.events.register('featuresadded', null, function(evt_){
+			// When features are added, resort the features on the layer. This is to let
+			// smaller features be displayed on top.
+			_this._resortLayerFeatures(evt_);
+			
+			// Also, clear the cache associated with the layer.
+			var layer = null;
+			var infoLayer = null;
+			if( evt_ 
+			 && evt_.features 
+			 && evt_.features.length 
+			 && evt_.features[0] 
+			 && evt_.features[0].layer ) {
+				layer = evt_.features[0].layer;
+			};
+			if( layer ) {
+				infoLayer = layer._layerInfo;
+			};
+			if( infoLayer ) {
+				_this._clearValueCache(infoLayer);
+			};
+
+			// In case a feature is loaded after the EDIT_FEATURE mode is entered,
+			// install geometry editor on the feature.
+			// This happens when edit is initiated from outside the map. The map
+			// is then moved over to the location of the geometry. In that case,
+			// the geometry might load up after the mode was switched.
+			if( _this.currentMode === _this.modes.EDIT_FEATURE
+			 && _this.editFeatureFid
+			 && evt_
+			 && evt_.features 
+			 && evt_.features.length ){
+				var editFeatureFid = _this.editFeatureFid;
+				
+				for(var i=0,e=evt_.features.length; i<e; ++i){
+					var f = evt_.features[i];
+					if( f.fid === editFeatureFid ){
+						_this._installGeometryEditor(f);
+						
+					} else if( f.cluster ){
+						for(var j=0,k=f.cluster.length; j<k; ++k){
+							var cf = f.cluster[j];
+							if( cf.fid === editFeatureFid ){
+								_this._installGeometryEditor(f);
+							};
+						};
+					};
+				};
+			};
+		});
+		
+		// When features are removed, clear the cache associated with the layer.
+		layerInfo.olLayer.events.register('featuresremoved', null, function(evt_){
+			var layer = null;
+			var infoLayer = null;
+			if( evt_ 
+			 && evt_.features 
+			 && evt_.features.length 
+			 && evt_.features[0] 
+			 && evt_.features[0].layer ) {
+				layer = evt_.features[0].layer;
+			};
+			if( layer ) {
+				infoLayer = layer._layerInfo;
+			};
+			
+			if( infoLayer ) {
+				_this._clearValueCache(infoLayer);
+			};
+		});
+		
+		this._createFeatureModifiedHandler(layerInfo.olLayer);
+	}
+    
+    ,_createFeatureModifiedHandler: function(olLayer){
+    	var _this = this;
+    	
+        // Called when the feature on the map is modified
+    	return function(evt){
+        	var feature = evt.feature;
+        	_this._dispatch({
+        		type: 'editGeometryModified'
+        		,docId: feature.fid
+        		,geom: feature.geometry
+        		,proj: olLayer.map.projection
+        		,_origin: _this
+        	});
+    	};
+    }
 
 	,genBackgroundMapLayers: function(options) {
 		var bg = null;
@@ -2819,9 +2994,8 @@ var MapAndControls = $n2.Class({
             this.deactivateSelectFeatureControl();
             
     	} else if( this.currentMode === this.modes.EDIT_FEATURE ) {
-    		this._removeGeometryEditor();
-    		
     		this.editFeatureFid = null;
+    		this._removeGeometryEditor();
             
     	} else if( this.currentMode === this.modes.NAVIGATE ) {
     		this.deactivateSelectFeatureControl();
@@ -2946,22 +3120,6 @@ var MapAndControls = $n2.Class({
 			editFeature.layer.drawFeature(editFeature);
 			modifyFeatureControl.selectFeature(editFeature);
 		};
-    }
-    
-    ,_createFeatureModifiedHandler: function(olLayer){
-    	var _this = this;
-    	
-        // Called when the feature on the map is modified
-    	return function(evt){
-        	var feature = evt.feature;
-        	_this._dispatch({
-        		type: 'editGeometryModified'
-        		,docId: feature.fid
-        		,geom: feature.geometry
-        		,proj: olLayer.map.projection
-        		,_origin: _this
-        	});
-    	};
     }
     
     ,onAttributeFormClosed: function(editedFeature) {
@@ -3675,81 +3833,9 @@ var MapAndControls = $n2.Class({
 		layerOptions.renderers = ['SVG','VML'];
 
 		layerInfo.olLayer = new OpenLayers.Layer.Vector(layerInfo.name, layerOptions);
-		
-		layerInfo.olLayer.events.register('visibilitychanged', null, function(evt_){
-			var selected = evt_.object.visibility;
-			evt_.object._layerInfo.selectListener(selected,evt_.object._layerInfo);
-		});
-		
-		layerInfo.olLayer.events.register('beforefeaturesadded', null, function(evt_){
-			var features = evt_.features;
-			if( features ){
-				for(var i=0,e=features.length;i<e;++i){
-					var f = features[i];
-					if( _this.clickedInfo.fids[f.fid] ){
-						_this.clickedInfo.features.push(f);
-						f.isClicked = true;
-					};
-					if( _this.focusInfo.fids[f.fid] ){
-						_this.focusInfo.features.push(f);
-						f.isHovered = true;
-					};
-					if( f.cluster ){
-						for(var j=0,k=f.cluster.length; j<k; ++j){
-							var clusterFeature = f.cluster[j];
-							if( _this.clickedInfo.fids[clusterFeature.fid] ){
-								_this.clickedInfo.features.push(f);
-								f.isClicked = true;
-							};
-							if( _this.focusInfo.fids[clusterFeature.fid] ){
-								_this.focusInfo.features.push(f);
-								f.isHovered = true;
-							};
-						};
-					};
-				};
-			};
-		});
-		
-		layerInfo.olLayer.events.register('featuresadded', null, function(evt_){
-			_this._resortLayerFeatures(evt_);
-			
-			var layer = null;
-			var infoLayer = null;
-			if( evt_ 
-			 && evt_.features 
-			 && evt_.features.length 
-			 && evt_.features[0] 
-			 && evt_.features[0].layer ) {
-				layer = evt_.features[0].layer;
-			};
-			if( layer ) {
-				infoLayer = layer._layerInfo;
-			};
-			
-			if( infoLayer ) {
-				_this._clearValueCache(infoLayer);
-			};
-		});
-		
-		layerInfo.olLayer.events.register('featuresremoved', null, function(evt_){
-			var layer = null;
-			var infoLayer = null;
-			if( evt_ 
-			 && evt_.features 
-			 && evt_.features.length 
-			 && evt_.features[0] 
-			 && evt_.features[0].layer ) {
-				layer = evt_.features[0].layer;
-			};
-			if( layer ) {
-				infoLayer = layer._layerInfo;
-			};
-			
-			if( infoLayer ) {
-				_this._clearValueCache(infoLayer);
-			};
-		});
+
+		// Add events to layer
+		this._registerLayerForEvents(layerInfo);
 
 		// Remember
 		this.infoLayers.push( layerInfo );
@@ -4137,7 +4223,7 @@ var MapAndControls = $n2.Class({
 				var infoLayer = this.infoLayers[i];
 				var layerId = infoLayer.id;
 				if( layerIdMap[layerId] ){
-					var feature = this._getLayerFeatureFromFid(infoLayer.olLayer,doc._id);
+					var feature = this._getLayerFeatureIncludingFid(infoLayer.olLayer,doc._id);
 					var mustLoad = true;
 					if( feature && feature.data ){
 						if( feature.data._rev === doc._rev ){
@@ -4173,7 +4259,7 @@ var MapAndControls = $n2.Class({
 					// This feature does not belong on this layer. If
 					// this feature id is found on the layer, then remove
 					// it (it was removed from layer)
-					var feature = this._getLayerFeatureFromFid(infoLayer.olLayer,doc._id);
+					var feature = this._getLayerFeatureIncludingFid(infoLayer.olLayer,doc._id);
 					if( feature ) {
 						infoLayer.olLayer.destroyFeatures(feature);
 					};
@@ -4187,7 +4273,7 @@ var MapAndControls = $n2.Class({
 				if( layerIdMap[layerId] ){
 					var mustUpdate = true;
 					if( doc && doc._rev ){
-						var feature = this._getLayerFeatureFromFid(infoLayer.olLayer,doc._id);
+						var feature = this._getLayerFeatureIncludingFid(infoLayer.olLayer,doc._id);
 						if( feature && feature.data ){
 							if( feature.data._rev === doc._rev ){
 								// Feature is present and revision is already
@@ -4211,13 +4297,13 @@ var MapAndControls = $n2.Class({
 			this._handleAddLayerToMap(m);
 			
 		} else if( 'selected' === type ) {
-			var features = this._getFeaturesFromFid(m.docId);
+			var features = this._getMapFeaturesIncludingFid(m.docId);
 			this._selectedFeatures(features, m.docId);
 			
 		} else if( 'selectedSupplement' === type ) {
 			var fid = m.docId;
 			if( fid ) {
-				var features = this._getFeaturesFromFid(fid);
+				var features = this._getMapFeaturesIncludingFid(fid);
 				this._selectedFeaturesSupplement(features, fid);
 			};
 			
@@ -4227,7 +4313,7 @@ var MapAndControls = $n2.Class({
 		} else if( 'focusOn' === type ) {
 			var fid = m.docId;
 
-			var features = this._getFeaturesFromFid(fid);
+			var features = this._getMapFeaturesIncludingFid(fid);
 			this._startFocus(features,fid);
 			
 		} else if( 'focusOff' === type ) {
@@ -4236,7 +4322,7 @@ var MapAndControls = $n2.Class({
 		} else if( 'focusOnSupplement' === type ) {
 			var fid = m.docId;
 			if( fid ) {
-				var features = this._getFeaturesFromFid(fid);
+				var features = this._getMapFeaturesIncludingFid(fid);
 				this._addFocus({
 					fid: fid
 					,features: features
@@ -4248,7 +4334,7 @@ var MapAndControls = $n2.Class({
 		} else if( 'findOnMap' === type ) {
 			this._centerMapOnXY(m.x, m.y, m.srsName);
 			var fid = m.fid;
-			var features = this._getFeaturesFromFid(fid);
+			var features = this._getMapFeaturesIncludingFid(fid);
 			this._selectedFeaturesSupplement(features, fid);
 			
 		} else if( 'searchInitiate' === type ) {
@@ -4257,7 +4343,7 @@ var MapAndControls = $n2.Class({
 		} else if( 'editInitiate' === type ) {
 			var fid = m.docId;
 			if( fid ){
-				var features = this._getFeaturesFromFid(fid);
+				var features = this._getMapFeaturesIncludingFid(fid);
 				
 				var feature = null;
 				if( features.length > 0 ){
@@ -4288,9 +4374,8 @@ var MapAndControls = $n2.Class({
 				// Indicate that this modification is cancelled 
 				if( this.editFeatureControls.modifyFeatureGeometry ) {
 	    			var editFeature = this.editFeatureControls.modifyFeatureGeometry.feature;
-		    		if( editFeature 
-		    		 && editFeature._n2MapOriginal ) {
-		    			editFeature._n2MapOriginal.restoreGeom = true;
+		    		if( editFeature && editFeature._n2Original ) {
+		    			editFeature._n2Original.restoreGeom = true;
 		    		};
 				};
 
@@ -4305,7 +4390,7 @@ var MapAndControls = $n2.Class({
 			if( !deleted ) {
 				var docId = m.docId;
 				if( docId ) {
-					var features = this._getFeaturesFromFid(docId);
+					var features = this._getMapFeaturesIncludingFid(docId);
 					this._selectedFeatures(features, docId);
 				};
 			};
