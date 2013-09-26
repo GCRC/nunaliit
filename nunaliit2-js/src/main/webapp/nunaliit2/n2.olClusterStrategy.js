@@ -45,6 +45,12 @@ OpenLayers.Strategy.NunaliitCluster = OpenLayers.Class(OpenLayers.Strategy, {
      *     single cluster.  Default is 20 pixels.
      */
     distance: 20,
+
+    /**
+     * APIProperty: clusterPointsOnly
+     * {Boolean} If true, skip lines and polygons during clustering
+     */
+    clusterPointsOnly: false,
     
     /**
      * APIProperty: threshold
@@ -128,7 +134,8 @@ OpenLayers.Strategy.NunaliitCluster = OpenLayers.Class(OpenLayers.Strategy, {
         // The computation of "needToCluster" is to prevent
         // never ending loop. Strategies following this one might
         // perform modifications on the features and then call
-        // "addFeatures" again, triggering this function.
+        // "addFeatures" again, triggering this function to re-enter 
+        // itself.
         var needToCluster = false;
         if( event 
          && event.features 
@@ -137,7 +144,7 @@ OpenLayers.Strategy.NunaliitCluster = OpenLayers.Class(OpenLayers.Strategy, {
         		var f = event.features[i];
         		if( f.cluster ){
         			// No need to cluster, already clustered
-        		} else {
+        		} else if( this._isEligibleFeature(f) ) {
         			needToCluster = true;
         		};
         	};
@@ -182,10 +189,14 @@ OpenLayers.Strategy.NunaliitCluster = OpenLayers.Class(OpenLayers.Strategy, {
             var resolution = this.layer.map.getResolution();
             this.resolution = resolution;
             var clusters = [];
+            var featuresToAdd = [];
             var feature, clustered, cluster;
             for(var i=0; i<features.length; ++i) {
                 feature = features[i];
-                if(feature.geometry) {
+                if( !this._isEligibleFeature(feature) ){
+                	featuresToAdd.push(feature);
+                	
+                } else if(feature.geometry) {
                     clustered = false;
                     for(var j=clusters.length-1; j>=0; --j) {
                         cluster = clusters[j];
@@ -193,35 +204,39 @@ OpenLayers.Strategy.NunaliitCluster = OpenLayers.Class(OpenLayers.Strategy, {
                             this.addToCluster(cluster, feature);
                             clustered = true;
                             break;
-                        }
-                    }
+                        };
+                    };
                     if(!clustered) {
-                        clusters.push(this.createCluster(feature));
-                    }
-                }
-            }
+                    	var c = this.createCluster(feature);
+                        clusters.push(c);
+                        featuresToAdd.push(c);
+                    };
+                };
+            };
             this.layer.removeAllFeatures();
-            if(clusters.length > 0) {
+            
+            if(featuresToAdd.length > 0) {
                 if(this.threshold > 1) {
-                    var clone = clusters.slice();
-                    clusters = [];
+                    var clone = featuresToAdd.slice();
+                    featuresToAdd = [];
                     var candidate;
                     for(var i=0, len=clone.length; i<len; ++i) {
                         candidate = clone[i];
-                        if(candidate.attributes.count < this.threshold) {
-                            Array.prototype.push.apply(clusters, candidate.cluster);
+                        if( candidate.cluster 
+                         && candidate.cluster.length < this.threshold ) {
+                            Array.prototype.push.apply(featuresToAdd, candidate.cluster);
                         } else {
-                            clusters.push(candidate);
-                        }
-                    }
-                }
+                        	featuresToAdd.push(candidate);
+                        };
+                    };
+                };
 
                 // A legitimate feature addition could occur during this
                 // addFeatures call.  For clustering to behave well, features
                 // should be removed from a layer before requesting a new batch.
-                this.layer.addFeatures(clusters);
-            }
-        }
+                this.layer.addFeatures(featuresToAdd);
+            };
+        };
     },
     
     /**
@@ -277,6 +292,26 @@ OpenLayers.Strategy.NunaliitCluster = OpenLayers.Class(OpenLayers.Strategy, {
         );
         cluster.cluster = [feature];
         return cluster;
+    },
+    
+    /**
+     * Method: _isEligibleFeature
+     * Returns true if a feature should be clustered
+     *
+     * Returns:
+     * {Boolean} True if the feature should be considered for clusters
+     */
+    _isEligibleFeature: function(feature) {
+        var eligible = true;
+        
+        if( this.clusterPointsOnly ){
+        	eligible = false;
+        	if( feature.geometry.CLASS_NAME.indexOf('Point') >= 0 ){
+        		eligible = true;
+        	};
+        };
+        
+        return eligible;
     },
 
     CLASS_NAME: "OpenLayers.Strategy.NunaliitCluster" 

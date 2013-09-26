@@ -1975,8 +1975,14 @@ var MapAndControls = $n2.Class({
 			layerOptions.strategies = [];
 		}
 		if( layerInfo.clustering ) {
-			var clusterOptions = {
-				distance: layerInfo.clustering.distance
+			var clusterOptions = {};
+			for(var cProp in layerInfo.clustering){
+				var cValue = layerInfo.clustering[cProp];
+				if( 'distance' === cProp 
+				 || 'threshold' === cProp
+				 || 'clusterPointsOnly' === cProp ){
+					clusterOptions[cProp] = cValue;
+				};
 			};
 			layerOptions.strategies.push( new OpenLayers.Strategy.NunaliitCluster(clusterOptions) );
 		};
