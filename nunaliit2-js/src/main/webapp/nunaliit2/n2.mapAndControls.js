@@ -1643,6 +1643,10 @@ var MapAndControls = $n2.Class({
 	}
 	
 	,_installGeometryEditor: function(feature){
+		// Can not install geometry editor if the feature is not on the map.
+		if( !feature ) return;
+		if( !feature.layer ) return;
+		
 		this._removeGeometryEditor();
 		
    		var modifyFeatureGeometry = new OpenLayers.Control.ModifyFeature(
@@ -1672,6 +1676,7 @@ var MapAndControls = $n2.Class({
 	    	// Compute the actual underlying feature
 	    	var effectiveFeature = null;
 	    	var geom = null;
+	    	var featuresToAddBack = [];
 	    	if( this.editFeatureFid === feature.fid ){
 	        	effectiveFeature = feature;
 	        	geom = feature.geometry;
@@ -1681,22 +1686,26 @@ var MapAndControls = $n2.Class({
 	    			if( this.editFeatureFid === feature.cluster[i].fid ){
 	    	    		effectiveFeature = feature.cluster[i];
 	    	    		geom = feature.cluster[i].geometry;
-	    	    		break;
+	    			} else {
+	    				featuresToAddBack.push(feature.cluster[i]);
 	    			};
 	    		};
+	    	};
+	    	
+	    	// In cluster, add back the features that are not the one currently
+	    	// in edit mode
+	    	if( featuresToAddBack.length > 0 ){
+	    		featureLayer.addFeatures(featuresToAddBack);
 	    	};
 	    	
 	    	// Clone feature for edit layer
 	    	if( geom ) {
 		    	var editFeature = new OpenLayers.Feature.Vector(geom.clone());
 		    	editFeature.fid = effectiveFeature.fid;
-//		    	editFeature._n2OriginalLayer = featureLayer;
-//		    	editFeature._n2OriginalFeature = feature;
-//		    	editFeature._n2RestoreGeom = false;
 		    	editFeature._n2Original = {
 		    		restoreGeom: false
 		    		,layer: featureLayer
-		    		,feature: feature
+		    		,feature: effectiveFeature
 		    		,data: $n2.extend(true, {}, feature.data)
 		    		,style: feature.style
 		    	};
@@ -1708,13 +1717,6 @@ var MapAndControls = $n2.Class({
 		    	modifyFeatureGeometry.selectFeature(editFeature);
 	    	};
     	};
-
-
-   		// Remember original values
-//   		feature._n2MapOriginal = {};
-//   		feature._n2MapOriginal.geometry = feature.geometry.clone();
-//   		feature._n2MapOriginal.style = feature.style;
-//   		feature._n2MapOriginal.data = $n2.extend(true, {}, feature.data);
 	}
 	
 	,_removeGeometryEditor: function(){
@@ -1969,12 +1971,18 @@ var MapAndControls = $n2.Class({
 			};
 		};
 		
+		if( !layerOptions.strategies ){
+			layerOptions.strategies = [];
+		}
 		if( layerInfo.clustering ) {
 			var clusterOptions = {
 				distance: layerInfo.clustering.distance
 			};
 			layerOptions.strategies.push( new OpenLayers.Strategy.NunaliitCluster(clusterOptions) );
 		};
+		
+		// Sort features on a layer so that polygons do not hide points  
+		layerOptions.strategies.push( new OpenLayers.Strategy.NunaliitLayerSorting() );
 		
 		//layerOptions.renderers = ['Canvas','SVG','VML'];
 		layerOptions.renderers = ['SVG','VML'];
@@ -2196,11 +2204,8 @@ var MapAndControls = $n2.Class({
 		});
 		
 		layerInfo.olLayer.events.register('featuresadded', null, function(evt_){
-			// When features are added, resort the features on the layer. This is to let
-			// smaller features be displayed on top.
-			_this._resortLayerFeatures(evt_);
-			
-			// Also, clear the cache associated with the layer.
+
+			// Clear the cache associated with the layer.
 			var layer = null;
 			var infoLayer = null;
 			if( evt_ 
@@ -2235,7 +2240,7 @@ var MapAndControls = $n2.Class({
 						_this._installGeometryEditor(f);
 						
 					} else if( f.cluster ){
-						for(var j=0,k=f.cluster.length; j<k; ++k){
+						for(var j=0,k=f.cluster.length; j<k; ++j){
 							var cf = f.cluster[j];
 							if( cf.fid === editFeatureFid ){
 								_this._installGeometryEditor(f);
@@ -3829,6 +3834,12 @@ var MapAndControls = $n2.Class({
 				layerOptions.strategies = [ new OpenLayers.Strategy.BBOX() ];
 			};
 		};
+		
+		if( !layerOptions.strategies ){
+			layerOptions.strategies = [];
+		}
+		layerOptions.strategies.push( new OpenLayers.Strategy.NunaliitLayerSorting() );
+		
 		//layerOptions.renderers = ['Canvas','SVG','VML'];
 		layerOptions.renderers = ['SVG','VML'];
 
@@ -3916,44 +3927,6 @@ var MapAndControls = $n2.Class({
             );
 		this.map.addControl(this.selectFeatureControl);
 		this.selectFeatureControl.activate();
-	}
-	
-	,_resortLayerFeatures: function(evt_){
-
-		if( this.resortFeatureLock ) return; // do not re-enter
-
-		this.resortFeatureLock = true;
-
-		var layer = null;
-		if( evt_ 
-		 && evt_.features 
-		 && evt_.features.length 
-		 && evt_.features[0] 
-		 && evt_.features[0].layer ) {
-			layer = evt_.features[0].layer;
-		};
-
-		if( layer ) {
-			var features = layer.features;
-			var resortingRequired = false;
-			for(var i=0,e=features.length-2; i<=e; ++i){
-				var c = $n2.olUtils.featureSorting(features[i],features[i+1]);
-				if( c > 0 ) {
-					resortingRequired = true;
-					break;
-				};
-			};
-
-			if( resortingRequired ) {
-				// At this point, resorting is required. Remove all features
-				// from layer, re-sort them and add them back.
-				layer.removeAllFeatures();
-				$n2.olUtils.sortFeatures(features);
-				layer.addFeatures(features);
-			}; // if(resortingRequired)
-		}; // if(layer)
-
-		this.resortFeatureLock = false;
 	}
 	
 	,_mapBusyStatus: function(delta){
@@ -4261,7 +4234,24 @@ var MapAndControls = $n2.Class({
 					// it (it was removed from layer)
 					var feature = this._getLayerFeatureIncludingFid(infoLayer.olLayer,doc._id);
 					if( feature ) {
+						var featuresToAdd = null;
+						if( feature.cluster ){
+							for(var j=0,k=feature.cluster.length; j<k; ++j){
+								var cf = feature.cluster[j];
+								if( cf.fid !== doc._id ){
+									if( !featuresToAdd ) featuresToAdd= [];
+									featuresToAdd.push(cf);
+								};
+							};
+						};
+						
+						// Remove features
 						infoLayer.olLayer.destroyFeatures(feature);
+						
+						// If cluster, add back 
+						if( featuresToAdd ){
+							infoLayer.olLayer.addFeatures(featuresToAdd);
+						};
 					};
 				};
 			};
@@ -4274,11 +4264,23 @@ var MapAndControls = $n2.Class({
 					var mustUpdate = true;
 					if( doc && doc._rev ){
 						var feature = this._getLayerFeatureIncludingFid(infoLayer.olLayer,doc._id);
-						if( feature && feature.data ){
-							if( feature.data._rev === doc._rev ){
-								// Feature is present and revision is already
-								// up to date. No need to update
-								mustUpdate = false;
+						if( feature 
+						 && feature.fid === doc._id 
+						 && feature.data 
+						 && feature.data._rev === doc._rev ){
+							// Feature is present and revision is already
+							// up to date. No need to update
+							mustUpdate = false;
+							
+						} else if( feature && feature.cluster ){
+							for(var j=0,k=feature.cluster.length; j<k; ++j){
+								var cf = feature.cluster[j];
+								if( cf 
+								 && cf.fid === doc._id 
+								 && cf.data 
+								 && cf.data._rev === doc._rev ){
+									mustUpdate = false;
+								};
 							};
 						};
 					};

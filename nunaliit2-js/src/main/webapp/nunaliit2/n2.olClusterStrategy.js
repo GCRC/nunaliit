@@ -58,12 +58,6 @@ OpenLayers.Strategy.NunaliitCluster = OpenLayers.Class(OpenLayers.Strategy, {
     threshold: null,
     
     /**
-     * Property: clustering
-     * {Boolean} The strategy is currently clustering features.
-     */
-    clustering: false,
-    
-    /**
      * Property: resolution
      * {Float} The resolution (map units per pixel) of the current cluster set.
      */
@@ -130,7 +124,26 @@ OpenLayers.Strategy.NunaliitCluster = OpenLayers.Class(OpenLayers.Strategy, {
      */
     beforeFeaturesAdded: function(event) {
         var propagate = true;
-        if(!this.clustering) {
+        
+        // The computation of "needToCluster" is to prevent
+        // never ending loop. Strategies following this one might
+        // perform modifications on the features and then call
+        // "addFeatures" again, triggering this function.
+        var needToCluster = false;
+        if( event 
+         && event.features 
+         && event.features.length ){
+        	for(var i=0,e=event.features.length; i<e; ++i){
+        		var f = event.features[i];
+        		if( f.cluster ){
+        			// No need to cluster, already clustered
+        		} else {
+        			needToCluster = true;
+        		};
+        	};
+        };
+        
+        if( needToCluster ) {
             this.cluster(null,event.features);
             propagate = false;
         }
@@ -202,12 +215,11 @@ OpenLayers.Strategy.NunaliitCluster = OpenLayers.Class(OpenLayers.Strategy, {
                         }
                     }
                 }
-                this.clustering = true;
+
                 // A legitimate feature addition could occur during this
                 // addFeatures call.  For clustering to behave well, features
                 // should be removed from a layer before requesting a new batch.
                 this.layer.addFeatures(clusters);
-                this.clustering = false;
             }
         }
     },
@@ -267,7 +279,7 @@ OpenLayers.Strategy.NunaliitCluster = OpenLayers.Class(OpenLayers.Strategy, {
         return cluster;
     },
 
-    CLASS_NAME: "OpenLayers.Strategy.Cluster" 
+    CLASS_NAME: "OpenLayers.Strategy.NunaliitCluster" 
 });
 	
 	
