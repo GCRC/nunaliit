@@ -1216,7 +1216,7 @@ var MapAndControls = $n2.Class({
 		this.infoLayers = [];
 		
 		// Generate background layers
-		this.genBackgroundMapLayers(this.options);
+		this._genBackgroundMapLayers(this.options);
 		
 		// Create edit layer
 		var editLayerStyleMap = this._createEffectiveStyleMap(null);
@@ -1781,25 +1781,6 @@ var MapAndControls = $n2.Class({
 					originalLayer.addFeatures(featuresToAdd);
 				};
 			};
-    		
-    		// If this is the cancellation of a new feature creation, remove feature
-    		// from map
-//    		if( editFeature 
-//    		 && editFeature.layer ) {
-//	    		if( editFeature._n2MapNewFeature ) {
-//   	    			editFeature.layer.destroyFeatures([editFeature]);
-//   	    			
-//   	    		} else if( editFeature._n2MapOriginal ) {
-//   	    			editFeature.layer.eraseFeatures([editFeature]);
-//   	    			if( editFeature._n2MapOriginal.restoreGeom ){
-//   	    				editFeature.geometry = editFeature._n2MapOriginal.geometry;
-//   	    			};
-//   	    			editFeature.data = editFeature._n2MapOriginal.data;
-//   	    			editFeature.style = editFeature._n2MapOriginal.style;
-//   	    			editFeature.layer.drawFeature(editFeature);
-//   	    			delete editFeature._n2MapOriginal;
-//   	    		};
-//    		};
 		};
 	}
 
@@ -2296,7 +2277,7 @@ var MapAndControls = $n2.Class({
     	};
     }
 
-	,genBackgroundMapLayers: function(options) {
+	,_genBackgroundMapLayers: function(options) {
 		var bg = null;
 		
 		if( options
@@ -2382,7 +2363,9 @@ var MapAndControls = $n2.Class({
 		};
 		
 		for(var i=0,e=bg.length;i<e;++i){
-			this.mapLayers.push( bg[i] );
+			var bgLayer = bg[i];
+			
+			this.mapLayers.push( bgLayer );
 		};
 		
 		return(bg);
@@ -2439,7 +2422,7 @@ var MapAndControls = $n2.Class({
 		if( !forced && this.options.toggleClick && clickedAgain ) {
 			this._dispatch({type:'userUnselect',docId:feature.fid});
 			
-		} else {
+		} else if( feature.fid ) {
 			this.clickedInfo.features = [feature];
 
 			this.clickedInfo.fids = {};
@@ -2452,6 +2435,19 @@ var MapAndControls = $n2.Class({
 			
 			if( this.currentMode.onStartClick ) {
 				this.currentMode.onStartClick(feature, mapFeature);
+			};
+			
+		} else if( feature.cluster ){
+			var clusterGeom = feature.geometry;
+			
+			var newCenter = null;
+			if( clusterGeom ){
+				newCenter = clusterGeom.getBounds().getCenterLonLat();
+			};
+	        
+			if( newCenter ){
+		        this.map.setCenter(newCenter, this.map.zoom + 1);
+		        this._endHover();
 			};
 		};
 	}
@@ -4024,7 +4020,7 @@ var MapAndControls = $n2.Class({
 	 * 
 	 * @param listener Function that is called on every event that updates
 	 *                 the mouse position. This function should accept two arguments:
-	 *                 the first is the browser event; the second is the intance of
+	 *                 the first is the browser event; the second is the instance of
 	 *                 map and control. For example: f(event, mapAndControl). To obtain
 	 *                 the current position, retrieve it from the mapAndControl instance
 	 *                 (mapAndControl.lastMapXy).

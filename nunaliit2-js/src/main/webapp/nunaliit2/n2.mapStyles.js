@@ -114,7 +114,11 @@ var MapFeatureStyles = $n2.Class({
 	,initialDeltas: {
 		base: null
 		,point: null
-		,line: null
+		,line: {
+			hovered:{
+				strokeColor: "#0000ff"
+			}
+		}
 		,polygon: null
 	}
 	
