@@ -47,8 +47,16 @@ OpenLayers.Strategy.NunaliitCluster = OpenLayers.Class(OpenLayers.Strategy, {
     distance: 20,
 
     /**
+     * APIProperty: disableDynamicClustering
+     * {Boolean} If true, disable default behaviour which is to turn small
+     * polygons and lines into cluster, but leaving larger ones from clustering.
+     */
+    disableDynamicClustering: false,
+
+    /**
      * APIProperty: clusterPointsOnly
-     * {Boolean} If true, skip lines and polygons during clustering
+     * {Boolean} If true, skip lines and polygons during clustering. The option
+     * "disableDynamicClustering" must be set for this option to take effect.
      */
     clusterPointsOnly: false,
     
@@ -302,9 +310,28 @@ OpenLayers.Strategy.NunaliitCluster = OpenLayers.Class(OpenLayers.Strategy, {
      * {Boolean} True if the feature should be considered for clusters
      */
     _isEligibleFeature: function(feature) {
+    	// By default, cluster everything
         var eligible = true;
         
-        if( this.clusterPointsOnly ){
+        if( !this.disableDynamicClustering ) {
+        	// Dynamic Clustering
+        	// Small polygons and lines are turned into a cluster
+        	eligible = false;
+        	if( feature.geometry.CLASS_NAME.indexOf('Point') >= 0 ){
+        		eligible = true;
+        	} else {
+        		var bounds = feature.geometry.getBounds();
+        		var xLen = (bounds.right - bounds.left) / this.resolution;
+        		var yLen = (bounds.top - bounds.bottom) / this.resolution;
+        		if( (xLen/2) <= this.distance
+            	 && (yLen/2) <= this.distance ) {
+        			eligible = true;
+        		};
+        	};
+        	
+        } else if( this.clusterPointsOnly ){
+        	// Cluster Point Only
+        	// Do not cluster polygons and lines
         	eligible = false;
         	if( feature.geometry.CLASS_NAME.indexOf('Point') >= 0 ){
         		eligible = true;

@@ -1960,8 +1960,9 @@ var MapAndControls = $n2.Class({
 			var clusterOptions = {};
 			for(var cProp in layerInfo.clustering){
 				var cValue = layerInfo.clustering[cProp];
-				if( 'distance' === cProp 
+				if( 'distance' === cProp
 				 || 'threshold' === cProp
+				 || 'disableDynamicClustering' === cProp
 				 || 'clusterPointsOnly' === cProp ){
 					clusterOptions[cProp] = cValue;
 				};
