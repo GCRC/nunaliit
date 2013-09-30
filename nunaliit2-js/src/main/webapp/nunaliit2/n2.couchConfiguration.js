@@ -225,16 +225,36 @@ function Configure(options_){
 		});
 	 	
 	 	configuration.popupHtmlFn = function(opt_){
-	 		var doc = opt_.feature.data;
+	 		var feature = opt_.feature;
 	 		
-	 		var $div = $('<span></span>');
-	 		configuration.directory.showService.displayBriefDescription($div,{},doc);
+	 		if( feature.cluster && feature.cluster.length === 1 ){
+	 			feature = feature.cluster[0];
+	 		};
 	 		
-	 		var $wrapper = $('<div></div>');
-	 		$wrapper.append($div);
-	 		var html = $wrapper.html();
-	 		
-	 		opt_.onSuccess(html);
+	 		if( feature.cluster ){
+				var $tmp = $('<span></span>');
+				$tmp.text( _loc('This cluster contains {count} feature(s)',{
+					count: feature.cluster.length
+				}) );
+
+		 		var $wrapper = $('<div></div>');
+		 		$wrapper.append($tmp);
+		 		var html = $wrapper.html();
+		 		
+		 		opt_.onSuccess(html);
+
+	 		} else {
+		 		var doc = opt_.feature.data;
+		 		
+		 		var $tmp = $('<span></span>');
+		 		configuration.directory.showService.displayBriefDescription($tmp,{},doc);
+		 		
+		 		var $wrapper = $('<div></div>');
+		 		$wrapper.append($tmp);
+		 		var html = $wrapper.html();
+		 		
+		 		opt_.onSuccess(html);
+	 		};
 	 	};
 	 	
 	 	// Cometd replacement

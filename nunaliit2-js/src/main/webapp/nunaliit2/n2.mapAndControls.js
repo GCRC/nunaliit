@@ -2753,27 +2753,18 @@ var MapAndControls = $n2.Class({
 			var needWaitingPopup = true;
 			
 			// Call client function to generate HTML for popup
-			if( feature.cluster ){
-				var $tmp = $('<div></div>');
-				$tmp.text( _loc('This cluster contains {count} feature(s)',{
-					count: feature.cluster.length
-				}) );
-				needWaitingPopup = false;
-				displayPopup( $tmp.html() );
-			} else {
-				popupHtmlFn({
-					feature: feature
-					,layerInfo: layerInfo
-					,onSuccess: function(html){
-						// We do not need to show a waiting pop-up
-						// if it is not already up.
-						needWaitingPopup = false;
-						
-						displayPopup(html);
-					}
-					,onError: function(){}//ignore
-				});
-			};
+			popupHtmlFn({
+				feature: feature
+				,layerInfo: layerInfo
+				,onSuccess: function(html){
+					// We do not need to show a waiting pop-up
+					// if it is not already up.
+					needWaitingPopup = false;
+					
+					displayPopup(html);
+				}
+				,onError: function(){}//ignore
+			});
 			
 			// If the popupHtmlFn() calls onSuccess before we
 			// get here, then the variable needWaitingPopup is
