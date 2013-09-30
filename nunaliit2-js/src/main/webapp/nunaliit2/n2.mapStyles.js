@@ -118,6 +118,9 @@ var MapFeatureStyles = $n2.Class({
 			hovered:{
 				strokeColor: "#0000ff"
 			}
+			,hoveredClicked:{
+				strokeColor: "#0000ff"
+			}
 		}
 		,polygon: null
 	}
@@ -143,12 +146,12 @@ var MapFeatureStyles = $n2.Class({
 	,stylesFromIntents: null
 	
 	,initialize: function(userStyles){
-		
+
 		if( userStyles ) {
-			this.initialDeltas.base = (userStyles.base ? userStyles.base : null);
-			this.initialDeltas.point = (userStyles.point ? userStyles.point : null);
-			this.initialDeltas.line = (userStyles.line ? userStyles.line : null);
-			this.initialDeltas.polygon = (userStyles.polygon ? userStyles.polygon : null);
+			this.initialDeltas.base = this._mergeStyle(this.initialDeltas.base, userStyles.base);
+			this.initialDeltas.point = this._mergeStyle(this.initialDeltas.point, userStyles.point);
+			this.initialDeltas.line = this._mergeStyle(this.initialDeltas.line, userStyles.line);
+			this.initialDeltas.polygon = this._mergeStyle(this.initialDeltas.polygon, userStyles.polygon);
 		};
 
 		// Create style for default behaviour
@@ -237,45 +240,63 @@ var MapFeatureStyles = $n2.Class({
 
 	/*
 	 * This function can be called with many arguments. The first style
-	 * is clone and then the clone is extended by all subsequent styles in
+	 * is clone and then the clone is merged with all subsequent styles in
 	 * arguments.
 	 */
-	,_computeStyle: function(baseStyle){
+	,_mergeStyle: function(baseStyle){
 		
-		var computedStyle = {};
+		var mergedStyle = {};
+		
+		if( !baseStyle ){
+			baseStyle = {};
+		};
 
 		// Compute normal state by applying all deltas
-		computedStyle.normal = $n2.extend({},baseStyle.normal);
+		mergedStyle.normal = $n2.extend({},baseStyle.normal);
 		for(var i=1,e=arguments.length; i<e; ++i){
 			var delta = arguments[i];
 			if( delta && delta.normal ) {
-				$n2.extend(computedStyle.normal, delta.normal);
+				$n2.extend(mergedStyle.normal, delta.normal);
 			};
 		};
 		
 		// Derive the other states from the normal one
-		computedStyle.hovered = $n2.extend({},computedStyle.normal,baseStyle.hovered);
-		computedStyle.clicked = $n2.extend({},computedStyle.normal,baseStyle.clicked);
-		computedStyle.hoveredClicked = $n2.extend({},computedStyle.normal,baseStyle.hoveredClicked);
+		mergedStyle.hovered = $n2.extend({},mergedStyle.normal,baseStyle.hovered);
+		mergedStyle.clicked = $n2.extend({},mergedStyle.normal,baseStyle.clicked);
+		mergedStyle.hoveredClicked = $n2.extend({},mergedStyle.normal,baseStyle.hoveredClicked);
 		
 		// Apply deltas to other states
 		for(var i=1,e=arguments.length; i<e; ++i){
 			var delta = arguments[i];
 			if( delta && delta.hovered ) {
-				$n2.extend(computedStyle.hovered, delta.hovered);
+				$n2.extend(mergedStyle.hovered, delta.hovered);
 			};
 			if( delta && delta.clicked ) {
-				$n2.extend(computedStyle.clicked, delta.clicked);
+				$n2.extend(mergedStyle.clicked, delta.clicked);
 			};
 			if( delta && delta.hoveredClicked ) {
-				$n2.extend(computedStyle.hoveredClicked, delta.hoveredClicked);
+				$n2.extend(mergedStyle.hoveredClicked, delta.hoveredClicked);
 			};
 		};
 		
-		computedStyle.normal = new OpenLayers.Style(computedStyle.normal);
-		computedStyle.hovered = new OpenLayers.Style(computedStyle.hovered);
-		computedStyle.clicked = new OpenLayers.Style(computedStyle.clicked);
-		computedStyle.hoveredClicked = new OpenLayers.Style(computedStyle.hoveredClicked);
+		return mergedStyle;
+	}
+
+	/*
+	 * This function can be called with many arguments. The first style
+	 * is clone and then the clone is extended by all subsequent styles in
+	 * arguments.
+	 */
+	,_computeStyle: function(baseStyle){
+		
+		var mergedStyle = this._mergeStyle.apply(this,arguments);
+		
+		var computedStyle = {
+			normal: new OpenLayers.Style(mergedStyle.normal)
+			,hovered: new OpenLayers.Style(mergedStyle.hovered)
+			,clicked: new OpenLayers.Style(mergedStyle.clicked)
+			,hoveredClicked: new OpenLayers.Style(mergedStyle.hoveredClicked)
+		};
 		
 		return computedStyle;
 	}
