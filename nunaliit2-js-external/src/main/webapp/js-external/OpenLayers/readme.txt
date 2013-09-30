@@ -2,8 +2,8 @@ Current version of OpenLayers was taken from
 https://github.com/openlayers/openlayers.git
 
 
-Version: 0412410be0ec43dc9a5c258b640a793fad41bd88
-Tag: release-2.12
+Version: f4a4090814f240414548e8eda55070d16f3d3901
+Tag: release-2.13.1
 
 
         

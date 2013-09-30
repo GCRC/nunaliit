@@ -1189,6 +1189,7 @@ var MapAndControls = $n2.Class({
 			,maxExtent: maxExt
 			,restrictedExtent: restrictedExtent
 			,theme: null // Let host page control loading of appropriate CSS style sheet
+			,zoomMethod: null  // Zoom with features does not look good
 		});
 		
 		// Disable zoom on mouse wheel
