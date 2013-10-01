@@ -799,6 +799,7 @@ var MapAndControls = $n2.Class({
 			features: []
 			,endFn: []
 			,fids: {}
+			,selectedId: null
 		};
 		this.focusInfo = {
 			fids: {}
@@ -2412,7 +2413,7 @@ var MapAndControls = $n2.Class({
    		
 		var clickedAgain = false;
    		if( !forced ) {
-			clickedAgain = (null != feature && this.clickedInfo.fids[feature.fid]);
+			clickedAgain = (null != feature && this.clickedInfo.selectedId === feature.fid);
    		};
 		if( !forced && !this.options.toggleClick && clickedAgain ) {
 			// ignore click again
@@ -2429,6 +2430,7 @@ var MapAndControls = $n2.Class({
 
 			this.clickedInfo.fids = {};
 			this.clickedInfo.fids[feature.fid] = true;
+			this.clickedInfo.selectedId = feature.fid;
 			
 			feature.isClicked = true;
 			if( feature.layer ) {
@@ -2483,6 +2485,7 @@ var MapAndControls = $n2.Class({
 		this.clickedInfo.endFn = [];
 		this.clickedInfo.features = [];
 		this.clickedInfo.fids = {};
+		this.clickedInfo.selectedId = null;
 	}
 	
 	,_selectedFeatures: function(features, fid){
@@ -2496,6 +2499,8 @@ var MapAndControls = $n2.Class({
 		if( fid ) {
 			this.clickedInfo.fids[fid] = true;
 		};
+		
+		this.clickedInfo.selectedId = fid;
 		
 		if( features ) {
 			for(var i=0,e=features.length; i<e; ++i){
@@ -2536,6 +2541,20 @@ var MapAndControls = $n2.Class({
 			};
 		};
 	}
+
+	/**
+	 * Unselect the currently selected feature
+	 */
+   	,_unselectFeature: function(){
+   		if( this.clickedInfo.selectedId ) {
+   			this._dispatch({
+   				type:'userUnselect'
+   				,docId:this.clickedInfo.selectedId
+   			});
+   		};
+   		
+		this._endClicked();
+   	}
 	
 	,_startHover: function(feature) {
 		var layer = feature.layer;
@@ -3904,7 +3923,7 @@ var MapAndControls = $n2.Class({
 				_this._startClicked(feature, forced);
 			}
 			,onClickOut: function(){
-				_this._endClicked();
+				_this._unselectFeature();
 			}
 		});
 		this.selectFeatureControl.handlers.feature = new OpenLayers.Handler.Feature(
