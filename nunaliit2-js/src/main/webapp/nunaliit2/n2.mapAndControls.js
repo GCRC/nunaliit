@@ -40,47 +40,6 @@ $Id: n2.mapAndControls.js 8494 2012-09-21 20:06:50Z jpfiset $
 	var DH = 'n2.mapAndControls';
 
 //**************************************************
-
-var FeatureEvents = $n2.Class({
-	
-	options: null
-	
-	,initialize: function(options_) {
-		this.options = $n2.extend({
-				context: null
-				,onOver: function() {}
-				,onOut: function() {}
-				,onClick: function() {}
-				,onClickOut: function() {}
-			},options_);
-	}
-
-	,over: function(feature){
-		this._callback('onOver',[feature]);
-	}
-	
-	,out: function(feature){
-		this._callback('onOut',[feature]);
-	}
-	
-	,click: function(feature){
-		this._callback('onClick',[feature]);
-	}
-	
-	,clickout: function(feature){
-		this._callback('onClickOut',[feature]);
-	}
-	
-	,_callback: function(type, args) {
-		var fn = this.options[type];
-		if( fn ) {
-			fn.apply(this.options.context, args);
-		};
-	}
-	
-});	
-	
-//**************************************************
 function OlkitAttributeFormManagerSidePanel(options_) {
 	var defaultOptions = {
 		tableName: 'names'
@@ -2413,10 +2372,26 @@ var MapAndControls = $n2.Class({
    		
 		var clickedAgain = false;
    		if( !forced ) {
-			clickedAgain = (null != feature && this.clickedInfo.selectedId === feature.fid);
+			clickedAgain = (feature && feature.fid && this.clickedInfo.selectedId === feature.fid);
    		};
 		if( !forced && !this.options.toggleClick && clickedAgain ) {
 			// ignore click again
+			return;
+		};
+		
+		if( feature.cluster ){
+			var clusterGeom = feature.geometry;
+			
+			var newCenter = null;
+			if( clusterGeom ){
+				newCenter = clusterGeom.getBounds().getCenterLonLat();
+			};
+	        
+			if( newCenter ){
+		        this.map.setCenter(newCenter, this.map.zoom + 1);
+		        this._endHover();
+			};
+			
 			return;
 		};
 		
@@ -2439,19 +2414,6 @@ var MapAndControls = $n2.Class({
 			
 			if( this.currentMode.onStartClick ) {
 				this.currentMode.onStartClick(feature, mapFeature);
-			};
-			
-		} else if( feature.cluster ){
-			var clusterGeom = feature.geometry;
-			
-			var newCenter = null;
-			if( clusterGeom ){
-				newCenter = clusterGeom.getBounds().getCenterLonLat();
-			};
-	        
-			if( newCenter ){
-		        this.map.setCenter(newCenter, this.map.zoom + 1);
-		        this._endHover();
 			};
 		};
 	}
@@ -3899,46 +3861,54 @@ var MapAndControls = $n2.Class({
 		
 		if( this.selectFeatureControl ) this._uninstallFeatureSelector();
 		
+		// The callbacks defined below are passed to an internal instance
+		// of Feature handler
 		var navHighlightOptions = {
-				hover: true
-				,onSelect: function(feature){ 
-					_this._startHover(feature); 
-				}
-				,onUnselect: function(){ 
-					_this._endHover(); 
-				}
-			};
+			hover: true
+			,callbacks: {
+//	            click: function(feature) {
+//					_this._startClicked(feature, false);
+//				}
+//	            ,clickout: function(){
+//					_this._unselectFeature();
+//				}
+//	            ,over: function(feature){ 
+//					_this._startHover(feature); 
+//				}
+//	            ,out: function(){ 
+//					_this._endHover(); 
+//				}
+			}
+		};
 		this.selectFeatureControl = new OpenLayers.Control.SelectFeature(
 			this.vectorLayers
 			,navHighlightOptions
 		);
-		var selControl = new FeatureEvents({
-			onOver: function(feature){ 
-				_this._startHover(feature); 
-			}
-			,onOut: function(){ 
-				_this._endHover(); 
-			}
-			,onClick: function(feature, forced) {
-				_this._startClicked(feature, forced);
-			}
-			,onClickOut: function(){
-				_this._unselectFeature();
-			}
-		});
-		this.selectFeatureControl.handlers.feature = new OpenLayers.Handler.Feature(
-				selControl
-				,this.selectFeatureControl.layer
-				,{
-					over: selControl.over
-					,out: selControl.out
-					,click: selControl.click
-					,clickout: selControl.clickout
+
+		// Overwrite the feature handler used by SelectFeature control
+		// This is necessary until fixes are ported to OpenLayers.Handler.Feature
+		this.selectFeatureControl.handlers.feature = new OpenLayers.Handler.NunaliitFeature(
+			{} // null generates an error
+			,this.selectFeatureControl.layer
+			,{
+	            click: function(feature) {
+					_this._startClicked(feature, false);
 				}
-				,{
-					geometryTypes: this.selectFeatureControl.geometryTypes
+	            ,clickout: function(feature){
+					_this._unselectFeature();
 				}
-            );
+	            ,over: function(feature){ 
+					_this._startHover(feature); 
+				}
+	            ,out: function(feature){ 
+					_this._endHover(); 
+				}
+			}
+			,{
+				geometryTypes: this.selectFeatureControl.geometryTypes
+			}
+	    );
+
 		this.map.addControl(this.selectFeatureControl);
 		this.selectFeatureControl.activate();
 	}
