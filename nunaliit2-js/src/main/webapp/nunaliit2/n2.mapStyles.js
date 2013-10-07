@@ -128,7 +128,7 @@ var MapFeatureStyles = $n2.Class({
 	,intentDeltas: {
 		cluster: {
 			base: {
-					normal: {
+				normal: {
 					fillColor: '#ffff33'
 					,pointRadius: 8
 					,graphicName: 'square'
@@ -240,7 +240,7 @@ var MapFeatureStyles = $n2.Class({
 
 	/*
 	 * This function can be called with many arguments. The first style
-	 * is clone and then the clone is merged with all subsequent styles in
+	 * is cloned and then the clone is merged with all subsequent styles in
 	 * arguments.
 	 */
 	,_mergeStyle: function(baseStyle){
@@ -284,7 +284,7 @@ var MapFeatureStyles = $n2.Class({
 
 	/*
 	 * This function can be called with many arguments. The first style
-	 * is clone and then the clone is extended by all subsequent styles in
+	 * is cloned and then the clone is extended by all subsequent styles in
 	 * arguments.
 	 */
 	,_computeStyle: function(baseStyle){
@@ -296,6 +296,7 @@ var MapFeatureStyles = $n2.Class({
 			,hovered: new OpenLayers.Style(mergedStyle.hovered)
 			,clicked: new OpenLayers.Style(mergedStyle.clicked)
 			,hoveredClicked: new OpenLayers.Style(mergedStyle.hoveredClicked)
+			,_merged: mergedStyle
 		};
 		
 		return computedStyle;
