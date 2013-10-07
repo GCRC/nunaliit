@@ -85,9 +85,9 @@ $Id: n2.mapAndControls.js 8494 2012-09-21 20:06:50Z jpfiset $
      - the default style is selected
           
 */
-var MapFeatureStyles = $n2.Class({
 	
-	defaultStyle: {
+var defaultStyle = { 
+	base: {
 		normal:{
 			fillColor: '#ffffff'
 			,strokeColor: '#ee9999'
@@ -110,18 +110,24 @@ var MapFeatureStyles = $n2.Class({
 			,strokeColor: "#ff2200"
 		}
 	}
+	,point: null
+	,line: {
+		hovered:{
+			strokeColor: "#0000ff"
+		}
+		,hoveredClicked:{
+			strokeColor: "#0000ff"
+		}
+	}
+	,polygon: null
+};
+	
+var MapFeatureStyles = $n2.Class({
 
-	,initialDeltas: {
+	userDefaultStyles: {
 		base: null
 		,point: null
-		,line: {
-			hovered:{
-				strokeColor: "#0000ff"
-			}
-			,hoveredClicked:{
-				strokeColor: "#0000ff"
-			}
-		}
+		,line: null
 		,polygon: null
 	}
 	
@@ -148,10 +154,10 @@ var MapFeatureStyles = $n2.Class({
 	,initialize: function(userStyles){
 
 		if( userStyles ) {
-			this.initialDeltas.base = this._mergeStyle(this.initialDeltas.base, userStyles.base);
-			this.initialDeltas.point = this._mergeStyle(this.initialDeltas.point, userStyles.point);
-			this.initialDeltas.line = this._mergeStyle(this.initialDeltas.line, userStyles.line);
-			this.initialDeltas.polygon = this._mergeStyle(this.initialDeltas.polygon, userStyles.polygon);
+			this.userDefaultStyles.base = userStyles.base;
+			this.userDefaultStyles.point = userStyles.point;
+			this.userDefaultStyles.line = userStyles.line;
+			this.userDefaultStyles.polygon = userStyles.polygon;
 		};
 
 		// Create style for default behaviour
@@ -199,17 +205,25 @@ var MapFeatureStyles = $n2.Class({
 	}
 
 	/*
-	 * Computes the three variants of a style: point, line, polygon
+	 * Computes the three variants of a style: point, line, polygon. This is
+	 * accomplished by computing a base style. Then, styles for points, lines
+	 * and polygons are derived by adding deltas to the effective base style.
+	 * 
+	 * base = defaultStyle(base) + userStyle(base) + a0(base) + ... + an(base)
+	 * point = base + defaultStyle(point) + userStyle(point) + a0(point) + ... + an(point)
+	 * line = base + defaultStyle(line) + userStyle(line) + a0(line) + ... + an(line)
+	 * polygon = base + defaultStyle(polygon) + userStyle(polygon) + a0(polygon) + ... + an(polygon)
 	 */
 	,_computeStyleSet: function(){
 		
 		var computedSet = {};
 		
-		var pointArgs = [this.defaultStyle, this.initialDeltas.base];
-		var lineArgs = [this.defaultStyle, this.initialDeltas.base];
-		var polygonArgs = [this.defaultStyle, this.initialDeltas.base];
+		// Start from default base and user base
+		var pointArgs = [defaultStyle.base, this.userDefaultStyles.base];
+		var lineArgs = [defaultStyle.base, this.userDefaultStyles.base];
+		var polygonArgs = [defaultStyle.base, this.userDefaultStyles.base];
 		
-		// Add all base symbolizer
+		// Add all base styles found in arguments
 		for(var i=0,e=arguments.length;i<e;++i){
 			var setDelta = arguments[i];
 			
@@ -218,11 +232,17 @@ var MapFeatureStyles = $n2.Class({
 			polygonArgs.push(setDelta.base);
 		};
 		
-		pointArgs.push(this.initialDeltas.point);
-		lineArgs.push(this.initialDeltas.line);
-		polygonArgs.push(this.initialDeltas.polygon);
+		// Add default style for geometry
+		pointArgs.push(defaultStyle.point);
+		lineArgs.push(defaultStyle.line);
+		polygonArgs.push(defaultStyle.polygon);
 		
-		// Add all geometry symbolizers
+		// Add user style for geometry
+		pointArgs.push(this.userDefaultStyles.point);
+		lineArgs.push(this.userDefaultStyles.line);
+		polygonArgs.push(this.userDefaultStyles.polygon);
+		
+		// Add all geometry styles found in argument
 		for(var i=0,e=arguments.length;i<e;++i){
 			var setDelta = arguments[i];
 			
@@ -231,9 +251,10 @@ var MapFeatureStyles = $n2.Class({
 			polygonArgs.push(setDelta.polygon);
 		};
 		
-		computedSet.point = this._computeStyle.apply(this, pointArgs);
-		computedSet.line = this._computeStyle.apply(this, lineArgs);
-		computedSet.polygon = this._computeStyle.apply(this, polygonArgs);
+		// Merge all the styles and save the geometries
+		computedSet.point = this._computeStateStyles.apply(this, pointArgs);
+		computedSet.line = this._computeStateStyles.apply(this, lineArgs);
+		computedSet.polygon = this._computeStateStyles.apply(this, polygonArgs);
 
 		return computedSet;
 	}
@@ -242,8 +263,25 @@ var MapFeatureStyles = $n2.Class({
 	 * This function can be called with many arguments. The first style
 	 * is cloned and then the clone is merged with all subsequent styles in
 	 * arguments.
+	 * 
+	 * As arguments, this method expect a number of object containing a definition
+	 * for each of the four states: normal, clicked, hovered, hoveredClicked.
+	 * 
+	 * The merging is accomplished by extending the first definiton for the normal 
+	 * state with all of the subsequent definitions for the normal state. This results 
+	 * into the effective definition for the normal state.
+	 * 
+	 * The merging process continues with the other three states: clicked, hovered and
+	 * hoveredClicked. For each of those states, the process starts with the effective
+	 * definition for the normal state and extending it with all the definitions for the 
+	 * currently merged state.
+	 * 
+	 * normal = {} + normal(1) + normal(2) + ... + normal(n)
+	 * clicked = normal + clicked(1) + clicked(2) + ... + clicked(n)
+	 * hovered = normal + hovered(1) + hovered(2) + ... + hovered(n)
+	 * hoveredClicked = normal + hoveredClicked(1) + hoveredClicked(2) + ... + hoveredClicked(n)
 	 */
-	,_mergeStyle: function(baseStyle){
+	,_mergeStateStyles: function(baseStyle){
 		
 		var mergedStyle = {};
 		
@@ -287,16 +325,18 @@ var MapFeatureStyles = $n2.Class({
 	 * is cloned and then the clone is extended by all subsequent styles in
 	 * arguments.
 	 */
-	,_computeStyle: function(baseStyle){
+	,_computeStateStyles: function(baseStyle){
 		
-		var mergedStyle = this._mergeStyle.apply(this,arguments);
+		// Merge the styles
+		var mergedStyle = this._mergeStateStyles.apply(this,arguments);
 		
+		// Wrap the styles into an OpenLayers Style instance
 		var computedStyle = {
 			normal: new OpenLayers.Style(mergedStyle.normal)
 			,hovered: new OpenLayers.Style(mergedStyle.hovered)
 			,clicked: new OpenLayers.Style(mergedStyle.clicked)
 			,hoveredClicked: new OpenLayers.Style(mergedStyle.hoveredClicked)
-			,_merged: mergedStyle
+			,_merged: mergedStyle // keep around for debugging
 		};
 		
 		return computedStyle;
