@@ -195,8 +195,6 @@ var DomStyler = $n2.Class({
 	}
 
 	,_localize: function($jq, opt_) {
-		var _this = this;
-
 		var text = $jq.text();
 		var locText = _loc(text);
 		if( locText ) {
@@ -224,8 +222,6 @@ var DomStyler = $n2.Class({
 	}
 	
 	,_briefDisplay: function($jq, opt_) {
-		var _this = this;
-
 		var docId = $jq.text();
 		this.showService.printBriefDescription($jq, docId);
 	}
@@ -250,16 +246,12 @@ var DomStyler = $n2.Class({
 	}
 	
 	,_insertTime: function($jq, opt_) {
-		var _this = this;
-
 		var time = 1 * $jq.text();
 		var timeStr = (new Date(time)).toString();
 		$jq.text(timeStr);
 	}
 	
 	,_insertUserName: function($jq, opt_) {
-		var _this = this;
-
 		var userName = $jq.text();
 		
 		this.showService.printUserName(
@@ -270,8 +262,6 @@ var DomStyler = $n2.Class({
 	}
 	
 	,_insertLayerName: function($jq, opt_) {
-		var _this = this;
-
 		var layerIdentifier = $jq.text();
 		
 		this.showService.printLayerName(
@@ -546,13 +536,11 @@ var DomStyler = $n2.Class({
 		
 		function convertTextElement(parent, textNode){
 			var text = textNode.nodeValue;
-			var urlFound = false;
 			
 			var m = reUrl.exec(text);
+			var after = null;
 			while(m){
-				urlFound = true;
-
-				var after = m[3] + text.substr(m.index + m[0].length);
+				after = m[3] + text.substr(m.index + m[0].length);
 				var before = text.substr(0, m.index) + m[1];
 				
 				if( before.length > 0 ){
@@ -573,7 +561,7 @@ var DomStyler = $n2.Class({
 				m = reUrl.exec(text);
 			};
 			
-			if( urlFound ){
+			if( after ){
 				var t3 = parent.ownerDocument.createTextNode(after);
 				parent.insertBefore(t3,textNode);
 				parent.removeChild(textNode);
@@ -582,8 +570,6 @@ var DomStyler = $n2.Class({
 	}
 	
 	,_clickFindGeometryOnMap: function(data, $jq, opt){
-		var _this = this;
-
 		var dispatcher = this.showService.getDispatchService();
 
 		if( data 
@@ -873,10 +859,6 @@ var Show = $n2.Class({
 	}
 	
 	,displayBriefDescription: function($elem, opt, doc){
-		var _this = this;
-
-		var schema = null;
-
 		// Remember to update
 		if( doc && doc._id ) {
 			$elem.addClass('n2ShowUpdateDoc_'+$n2.utils.stringToHtmlId(doc._id));
@@ -887,8 +869,6 @@ var Show = $n2.Class({
 	}
 	
 	,displayDocument: function($elem, opt, doc){
-		var _this = this;
-
 		// Remember to update
 		if( doc && doc._id ) {
 			$elem.addClass('n2ShowUpdateDoc_'+$n2.utils.stringToHtmlId(doc._id));

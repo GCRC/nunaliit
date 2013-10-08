@@ -127,16 +127,13 @@ function getDictionaryFromLang(lang) {
 	return strings[lang];
 };
 
-function getStringForLocale(str){
+function getStringForLang(str,lang){
 	var result = {
 		str: null
 		,lang: null
 		,fallback: false
 	};
 
-	var locale = getLocale();
-	var lang = locale.lang;
-	
 	// Handle content that contains translation
 	if( typeof(str) === 'string' ) {
 		result.str = str;
@@ -172,6 +169,13 @@ function getStringForLocale(str){
 	return result;
 };
 
+function getStringForLocale(str){
+	var locale = getLocale();
+	var lang = locale.lang;
+	
+	return getStringForLang(str,lang);
+};
+
 function getLocalizedString(str, packageName, args) {
 	var locale = getLocale();
 	var lang = locale.lang;
@@ -179,7 +183,6 @@ function getLocalizedString(str, packageName, args) {
 	// Assume that input str is english
 	var lookupStr = str;
 	var lookupLang = 'en';
-	var fallback = false;
 
 	// Handle content that contains translation
 	if( str.nunaliit_type === 'localized' ){
@@ -194,7 +197,6 @@ function getLocalizedString(str, packageName, args) {
 			// Fallback to 'en'
 			lookupStr = str.en;
 			lookupLang = lang;
-			fallback = true;
 			
 		} else {
 			// Fallback to any language
@@ -204,7 +206,6 @@ function getLocalizedString(str, packageName, args) {
 				} else {
 					lookupStr = str[fbLang];
 					lookupLang = fbLang;
-					fallback = true;
 					break;
 				};
 			};
@@ -272,6 +273,7 @@ function requestTranslation(str, lang, packageName) {
 
 $n2.l10n.getLocale = getLocale;
 $n2.l10n.getLocalizedString = getLocalizedString;
+$n2.l10n.getStringForLang = getStringForLang;
 $n2.l10n.getStringForLocale = getStringForLocale;
 $n2.l10n.requestTranslation = requestTranslation;
 $n2.l10n.translationRequests = translationRequests;

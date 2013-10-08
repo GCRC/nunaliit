@@ -64,13 +64,15 @@ function uploadRequest(request) {
 
 	if( userName ) {
 		data.nunaliit_created = {
-			name: userName
+			nunaliit_type: 'actionstamp'
+			,name: userName
 			,time: nowTime
 			,action: 'created'
 		};
 		
 		data.nunaliit_last_updated = {
-			name: userName
+			nunaliit_type: 'actionstamp'
+			,name: userName
 			,time: nowTime
 			,action: 'lastUpdated'
 		};

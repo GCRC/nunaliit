@@ -32,10 +32,20 @@ function upload() {
 
 function showRequests(arr) {
 	
-	var $table = $('<table></table>');
+	var $table = $('<table class="translations"></table>');
 	$('#'+requestPanelName).empty().append($table);
 	
-	$table.append('<tr><th>String</th><th>Lang</th><th>Translation</th><th></th><th>Doc ID</th><th>Package</th></tr>');
+	$('<tr></tr>')
+		.append('<th>String</th>')
+		.append('<th>Lang</th>')
+		.append('<th>Translation</th>')
+		.append('<th></th>')
+		.append('<th>Doc ID</th>')
+		.append('<th>Package</th>')
+		.append('<th>User</th>')
+		.append('<th>Time</th>')
+		//.append('<th></th>')
+		.appendTo($table);
 	
 	for(var i=0,e=arr.length; i<e; ++i) {
 		var $tr = $('<tr></tr>');
@@ -50,7 +60,41 @@ function showRequests(arr) {
 		$tr.append( $('<td><input class="uploadBtn" type="button" value="Upload"/></td>') );
 		$tr.append( $('<td class="docId">'+req._id+'</td>') );
 		$tr.append( $('<td class="packageName">'+req.packageName+'</td>') );
+		
+		if( req.nunaliit_created && req.nunaliit_created.name ){
+			// Insert name
+			$('<td></td>')
+				.text(req.nunaliit_created.name)
+				.appendTo($tr);
+		} else {
+			$tr.append('<td></td>');
+		};
+		
+		if( req.nunaliit_created && req.nunaliit_created.time ){
+			// Insert time
+			var time = new Date(1 * req.nunaliit_created.time);
+			//var timeStr = time.toString();
+			var timeStr = $n2.utils.formatDate(time,'%Y-%m-%d %H:%M:%S');
+			$('<td></td>')
+				.text(timeStr)
+				.appendTo($tr);
+		} else {
+			$tr.append('<td></td>');
+		};
+		
+//		var langStrInfo = $n2.l10n.getStringForLang(req.str,req.lang);
+//		if( langStrInfo.str ){
+//			$('<td></td>')
+//				.text(langStrInfo.str)
+//				.appendTo($tr);
+//		} else {
+//			$tr.append('<td></td>');
+//		};
+		
+		
 		$tr.append( $('<td><input class="json" type="hidden"/></td>') );
+		
+		
 		
 		var json = JSON.stringify(req);
 		$tr.find('.json').val(json);

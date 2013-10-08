@@ -784,6 +784,39 @@ $n2.utils = {
 	,getCurrentTime: Date.now || function () {
 		return +new Date();
 	}
+	
+	/**
+	 * Returns a string which represents the date formatted as specified.
+	 * @name formatDate
+	 * @function
+	 * @memberOf nunaliit2.utils
+	 * @returns {String}
+	 */
+	,formatDate: function(date, format){
+		var str = format.replace('%Y',''+date.getFullYear());
+		
+		var monthNumStr = ''+(date.getMonth()+1);
+		if( monthNumStr.length < 2 ) monthNumStr = '0'+monthNumStr;
+		str = str.replace('%m',monthNumStr);
+		
+		var dateNumStr = ''+date.getDate();
+		if( dateNumStr.length < 2 ) dateNumStr = '0'+dateNumStr;
+		str = str.replace('%d',dateNumStr);
+		
+		var hoursNumStr = ''+date.getHours();
+		if( hoursNumStr.length < 2 ) hoursNumStr = '0'+hoursNumStr;
+		str = str.replace('%H',hoursNumStr);
+		
+		var minutesNumStr = ''+date.getMinutes();
+		if( minutesNumStr.length < 2 ) minutesNumStr = '0'+minutesNumStr;
+		str = str.replace('%M',minutesNumStr);
+		
+		var secondsNumStr = ''+date.getSeconds();
+		if( secondsNumStr.length < 2 ) secondsNumStr = '0'+secondsNumStr;
+		str = str.replace('%S',secondsNumStr);
+		
+		return str;
+	}
 };
 
 // HTML Escape
