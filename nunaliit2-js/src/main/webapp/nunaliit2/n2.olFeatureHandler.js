@@ -326,9 +326,6 @@ OpenLayers.Handler.NunaliitFeature = OpenLayers.Class(OpenLayers.Handler, {
                     // out of last feature and in to another
                     if(this.lastClickedFeature.layer) {
                         this.triggerCallback(type, 'out', [this.lastClickedFeature]);
-                    } else {
-                    	// last clicked feature was destroyed
-                        this.triggerCallback(type, 'out', []);
                     }
                 }
                 this.triggerCallback(type, 'in', [this.feature]);
