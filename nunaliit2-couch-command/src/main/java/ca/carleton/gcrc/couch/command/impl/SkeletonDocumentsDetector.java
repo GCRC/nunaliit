@@ -45,26 +45,12 @@ public class SkeletonDocumentsDetector {
 			docIds.addAll(skeletonDocIds);
 		}
 		
-		// Add all schemas
+		// Add documents marked as skeleton
 		{
-			logger.debug("Obtain list of all schemas");
+			logger.debug("Obtain list of documents from skeleton-docs view");
 			CouchDesignDocument designDoc = couchDb.getDesignDocument("atlas");
 			CouchQuery query = new CouchQuery();
-			query.setViewName("schemas");
-			CouchQueryResults results = designDoc.performQuery(query);
-			List<JSONObject> rows = results.getRows();
-			for(JSONObject row : rows){
-				String docId = row.getString("id");
-				docIds.add(docId);
-			}
-		}
-		
-		// Add all modules
-		{
-			logger.debug("Obtain list of all modules");
-			CouchDesignDocument designDoc = couchDb.getDesignDocument("atlas");
-			CouchQuery query = new CouchQuery();
-			query.setViewName("modules");
+			query.setViewName("skeleton-docs");
 			CouchQueryResults results = designDoc.performQuery(query);
 			List<JSONObject> rows = results.getRows();
 			for(JSONObject row : rows){

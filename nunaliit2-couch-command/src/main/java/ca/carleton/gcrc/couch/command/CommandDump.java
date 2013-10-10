@@ -49,6 +49,11 @@ public class CommandDump implements Command {
 		ps.println("CouchDb database support the atlas and storing the snapshot");
 		ps.println("to disk.");
 		ps.println();
+		ps.println("Specific documents can be selected by using a combination of");
+		ps.println("options including --doc-id and --skeleton. If the dump command");
+		ps.println("is invoked without specifying any document, then all documents");
+		ps.println("found in the database are dumped.");
+		ps.println();
 		ps.println("Command Syntax:");
 		ps.println("  nunaliit [<global-options>] dump [<dump-options>]");
 		ps.println();
@@ -61,8 +66,7 @@ public class CommandDump implements Command {
 		ps.println("  --doc-id   <docId> Specifies which document(s) should be");
 		ps.println("                     dumped by selecting the document identifier.");
 		ps.println("                     This option can be used multiple times to include");
-		ps.println("                     multiple documents in the dump. If this option");
-		ps.println("                     is not used, all documents are dumped.");
+		ps.println("                     multiple documents in the dump.");
 		ps.println();
 		ps.println("  --skeleton         Select skeleton documents for the dump process.");
 		ps.println();
