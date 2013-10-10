@@ -398,7 +398,8 @@ var MapFeatureStyles = $n2.Class({
 				schemaName = data.nunaliit_schema;
 			};
 			if( feature 
-			 && feature.cluster ){
+			 && feature.cluster
+			 && feature.cluster.length > 1 ){
 				n2Intent = 'cluster';
 			};
 
