@@ -323,8 +323,8 @@ OpenLayers.Strategy.NunaliitCluster = OpenLayers.Class(OpenLayers.Strategy, {
         		var bounds = feature.geometry.getBounds();
         		var xLen = (bounds.right - bounds.left) / this.resolution;
         		var yLen = (bounds.top - bounds.bottom) / this.resolution;
-        		if( (xLen/2) <= this.distance
-            	 && (yLen/2) <= this.distance ) {
+        		if( (xLen) <= this.distance
+            	 && (yLen) <= this.distance ) {
         			eligible = true;
         		};
         	};
