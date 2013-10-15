@@ -47,6 +47,20 @@ OpenLayers.Strategy.NunaliitCluster = OpenLayers.Class(OpenLayers.Strategy, {
     distance: 20,
 
     /**
+     * APIProperty: minimumPolygonPixelSize
+     * {Integer} Minimum pixel size that a polygon has to be so that it is
+     * not converted to a point.  Default is 20 pixels.
+     */
+    minimumPolygonPixelSize: 20,
+
+    /**
+     * APIProperty: minimumLinePixelSize
+     * {Integer} Minimum pixel size that a line has to be so that it is
+     * not converted to a point.  Default is 20 pixels.
+     */
+    minimumLinePixelSize: 20,
+
+    /**
      * APIProperty: disableDynamicClustering
      * {Boolean} If true, disable default behaviour which is to turn small
      * polygons and lines into cluster, but leaving larger ones from clustering.
@@ -96,6 +110,14 @@ OpenLayers.Strategy.NunaliitCluster = OpenLayers.Class(OpenLayers.Strategy, {
     	OpenLayers.Strategy.prototype.initialize.apply(this, arguments);
 
     	this.clusterId = 1;
+    	
+    	if( typeof options.minimumPolygonPixelSize === 'undefined' ){
+    		this.minimumPolygonPixelSize = this.distance;
+    	};
+    	
+    	if( typeof options.minimumLinePixelSize === 'undefined' ){
+    		this.minimumLinePixelSize = this.distance;
+    	};
     },
     
     /**
@@ -333,12 +355,20 @@ OpenLayers.Strategy.NunaliitCluster = OpenLayers.Class(OpenLayers.Strategy, {
         	eligible = false;
         	if( feature.geometry.CLASS_NAME.indexOf('Point') >= 0 ){
         		eligible = true;
-        	} else {
+        	} else if( feature.geometry.CLASS_NAME.indexOf('Line') >= 0 ){
         		var bounds = feature.geometry.getBounds();
         		var xLen = (bounds.right - bounds.left) / this.resolution;
         		var yLen = (bounds.top - bounds.bottom) / this.resolution;
-        		if( (xLen) <= this.distance
-            	 && (yLen) <= this.distance ) {
+        		if( (xLen) < this.minimumLinePixelSize
+            	 && (yLen) < this.minimumLinePixelSize ) {
+        			eligible = true;
+        		};
+        	} else if( feature.geometry.CLASS_NAME.indexOf('Polygon') >= 0 ){
+        		var bounds = feature.geometry.getBounds();
+        		var xLen = (bounds.right - bounds.left) / this.resolution;
+        		var yLen = (bounds.top - bounds.bottom) / this.resolution;
+        		if( (xLen) < this.minimumPolygonPixelSize
+            	 && (yLen) < this.minimumPolygonPixelSize ) {
         			eligible = true;
         		};
         	};

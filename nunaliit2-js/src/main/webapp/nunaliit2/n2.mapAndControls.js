@@ -1923,6 +1923,8 @@ var MapAndControls = $n2.Class({
 				if( 'distance' === cProp
 				 || 'threshold' === cProp
 				 || 'disableDynamicClustering' === cProp
+				 || 'minimumPolygonPixelSize' === cProp
+				 || 'minimumLinePixelSize' === cProp
 				 || 'clusterPointsOnly' === cProp ){
 					clusterOptions[cProp] = cValue;
 				};
