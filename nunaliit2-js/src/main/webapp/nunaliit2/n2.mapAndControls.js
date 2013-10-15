@@ -2641,7 +2641,7 @@ var MapAndControls = $n2.Class({
 		this._registerEndHoverFn(function(){
 			dispatchService.send(DH, {
 				type: 'userFocusOff'
-				,docId: feature.data._id
+				,docId: feature.fid
 				,doc: feature.data
 				,feature: feature
 	 		});
@@ -2649,7 +2649,7 @@ var MapAndControls = $n2.Class({
 
 		dispatchService.send(DH, {
 			type: 'userFocusOn'
-			,docId: feature.data._id
+			,docId: feature.fid
 			,doc: feature.data
 			,feature: feature
  		});

@@ -76,15 +76,27 @@ OpenLayers.Strategy.NunaliitCluster = OpenLayers.Class(OpenLayers.Strategy, {
      * {Float} The resolution (map units per pixel) of the current cluster set.
      */
     resolution: null,
+    
+    /**
+     * Property: clusterId
+     * {Integer} The interger portion of the next identifier to be given to clusters.
+     */
+    clusterId: null,
 
     /**
-     * Constructor: OpenLayers.Strategy.Cluster
+     * Constructor: OpenLayers.Strategy.NunaliitCluster
      * Create a new clustering strategy.
      *
      * Parameters:
      * options - {Object} Optional object whose properties will be set on the
      *     instance.
      */
+    initialize: function (options) {
+        
+    	OpenLayers.Strategy.prototype.initialize.apply(this, arguments);
+
+    	this.clusterId = 1;
+    },
     
     /**
      * APIMethod: activate
@@ -299,6 +311,8 @@ OpenLayers.Strategy.NunaliitCluster = OpenLayers.Class(OpenLayers.Strategy, {
             {count: 1}
         );
         cluster.cluster = [feature];
+        cluster.fid = 'cluster_'+this.clusterId;
+        ++this.clusterId;
         return cluster;
     },
     
