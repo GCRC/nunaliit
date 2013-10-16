@@ -232,7 +232,7 @@ loadStrings({
 	,"Text Search":"Rechercher un texte"
 	,"The projection {srsName} is not supported. Atlas may no function properly.":"La projection {srsName} n'est pas disponible, L'atlas pourrait tomber en panne."
 	,"The two passwords should match":"Les deux mots de passe devrait être pareils"
-	,"This cluster contains {count} feature(s)":"Ce groupe contient {count} géométrie(s)"
+	,"This cluster contains {count} features":"Ce groupe contient {count} géométries"
 	,"This feature is a cluster and can not be edited directly. Please, zoom in to see features within cluster.":"Vous essayez d'éditer un groupe. SVP, rapprocher la carte pour voir les géométries individuelles."
 	,"This object is being modified. Do you wish to continue and revert current changes?":"L'objet en cours d'être modifié. Désirez-vous continuer?"
 	,"Title":"Titre"

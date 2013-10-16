@@ -233,7 +233,7 @@ function Configure(options_){
 	 		
 	 		if( feature.cluster ){
 				var $tmp = $('<span></span>');
-				$tmp.text( _loc('This cluster contains {count} feature(s)',{
+				$tmp.text( _loc('This cluster contains {count} features',{
 					count: feature.cluster.length
 				}) );
 

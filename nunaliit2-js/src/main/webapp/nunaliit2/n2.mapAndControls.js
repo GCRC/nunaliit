@@ -1608,7 +1608,7 @@ var MapAndControls = $n2.Class({
 		if( !feature ) return;
 		if( !feature.layer ) return;
 		
-		this._removeGeometryEditor();
+		this._removeGeometryEditor(false);
 		
    		var modifyFeatureGeometry = new OpenLayers.Control.ModifyFeature(
    			this.editLayer
@@ -1632,7 +1632,9 @@ var MapAndControls = $n2.Class({
     		
 	    	// Remove feature from current layer
 	    	var featureLayer = feature.layer;
-	    	featureLayer.removeFeatures([feature]);
+	    	if( featureLayer ) {
+	    		featureLayer.removeFeatures([feature]);
+	    	};
 	    	
 	    	// Compute the actual underlying feature
 	    	var effectiveFeature = null;
@@ -1655,7 +1657,7 @@ var MapAndControls = $n2.Class({
 	    	
 	    	// In cluster, add back the features that are not the one currently
 	    	// in edit mode
-	    	if( featuresToAddBack.length > 0 ){
+	    	if( featureLayer && featuresToAddBack.length > 0 ){
 	    		featureLayer.addFeatures(featuresToAddBack);
 	    	};
 	    	
@@ -1680,7 +1682,7 @@ var MapAndControls = $n2.Class({
     	};
 	}
 	
-	,_removeGeometryEditor: function(){
+	,_removeGeometryEditor: function(reinstateOrginalGeometry){
 		if( null != this.editFeatureControls.modifyFeatureGeometry ) {
 			var editFeature = this.editFeatureControls.modifyFeatureGeometry.feature;
     		if( null != editFeature ) {
@@ -1691,7 +1693,7 @@ var MapAndControls = $n2.Class({
     		this.editFeatureControls.modifyFeatureGeometry.destroy();
     		this.editFeatureControls.modifyFeatureGeometry = null;
     		
-			if( editFeature ){
+			if( reinstateOrginalGeometry && editFeature ){
 				var originalLayer = null;
 				var originalFeature = null;
 				var originalData = null;
@@ -2391,6 +2393,8 @@ var MapAndControls = $n2.Class({
 	        
 			if( newCenter ){
 		        this.map.setCenter(newCenter, this.map.zoom + 1);
+				//var xy = this.map.getPixelFromLonLat(newCenter);
+				//this.map.zoomTo(this.map.zoom + 1, xy);
 		        this._endHover();
 			};
 			
@@ -2978,7 +2982,7 @@ var MapAndControls = $n2.Class({
             
     	} else if( this.currentMode === this.modes.EDIT_FEATURE ) {
     		this.editFeatureFid = null;
-    		this._removeGeometryEditor();
+    		this._removeGeometryEditor(true);
             
     	} else if( this.currentMode === this.modes.NAVIGATE ) {
     		this.deactivateSelectFeatureControl();

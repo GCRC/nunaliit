@@ -193,7 +193,7 @@ var UserEditor = $n2.Class({
 		var diagId = $n2.getUniqueId();
 		var $rolesDialog = $('<div id="'+diagId+'" class="n2_roles_dialog"></div>');
 
-		var $rolesList = $('<div class="n2_roles_list"></div>')
+		$('<div class="n2_roles_list"></div>')
 			.appendTo($rolesDialog)
 			.append( $('<div class="olkit_wait"></div>') )
 			;
