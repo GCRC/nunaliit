@@ -321,48 +321,30 @@ OpenLayers.Handler.NunaliitFeature = OpenLayers.Class(OpenLayers.Handler, {
             }
             if(this.geometryTypeMatches(this.feature)) {
                 // in to a feature
-                if(this.lastClickedFeature 
-                 && this.feature != this.lastClickedFeature) {
-                    // out of last feature and in to another
-                    if(this.lastClickedFeature.layer) {
-                        this.triggerCallback(type, 'out', [this.lastClickedFeature]);
-                    }
-                }
                 this.triggerCallback(type, 'in', [this.feature]);
                 this.lastClickedFeature = this.feature;
                 handled = true;
             } else {
                 // not in to a feature
-                if(this.lastClickedFeature) {
-                    // out of last feature for the first time
-                    if(this.lastClickedFeature.layer) {
-                        this.triggerCallback(type, 'out', [this.lastClickedFeature]);
-                    } else {
-                    	// last clicked feature was destroyed
-                        this.triggerCallback(type, 'out', []);
-                    }
-                    
-                    // Do not clickout again
-                    this.lastClickedFeature = null;
-                }
-            }
-        	
-        } else if( click ) {
-            if(this.lastClickedFeature) {
-                // out of last feature for the first time
-            	var triggered = false;
-                if(this.lastClickedFeature.layer) {
-                	triggered = this.triggerCallback(type, 'out', [this.lastClickedFeature]);
+                if(this.lastClickedFeature && this.lastClickedFeature.layer) {
+                    this.triggerCallback(type, 'out', [this.lastClickedFeature]);
                 } else {
                 	// last clicked feature was destroyed
-                	triggered = this.triggerCallback(type, 'out', []);
+                    this.triggerCallback(type, 'out', []);
                 }
                 
                 // Do not clickout again
-                if( triggered ) {
-                	this.lastClickedFeature = null;
-                }
+                this.lastClickedFeature = null;
             }
+        	
+        } else if( click ) {
+            if(this.lastClickedFeature && this.lastClickedFeature.layer) {
+            	this.triggerCallback(type, 'out', [this.lastClickedFeature]);
+            } else {
+            	// last clicked feature was destroyed
+            	this.triggerCallback(type, 'out', []);
+            }
+            this.lastClickedFeature = null;
         	
         } else if(this.feature) {
         	// Mouse in
