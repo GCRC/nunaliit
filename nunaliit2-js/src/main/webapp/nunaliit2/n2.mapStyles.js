@@ -86,7 +86,7 @@ $Id: n2.mapAndControls.js 8494 2012-09-21 20:06:50Z jpfiset $
           
 */
 	
-var defaultStyle = { 
+var defaultDefinition = { 
 	base: {
 		normal:{
 			fillColor: '#ffffff'
@@ -120,18 +120,9 @@ var defaultStyle = {
 		}
 	}
 	,polygon: null
-};
-	
-var MapFeatureStyles = $n2.Class({
-
-	userDefaultStyles: {
-		base: null
-		,point: null
-		,line: null
-		,polygon: null
-	}
-	
-	,intentDeltas: {
+	,layers: null
+	,schemas: null
+	,intents: {
 		cluster: {
 			base: {
 				normal: {
@@ -142,66 +133,210 @@ var MapFeatureStyles = $n2.Class({
 			}
 		}
 	}
+};
 	
-	,basicStyles: null
-	
-	,stylesFromLayer: null
-	
-	,stylesFromSchema: null
-	
-	,stylesFromIntents: null
+var MapFeatureStyles = $n2.Class({
+
+	activeStyles: null
 	
 	,initialize: function(userStyles){
 
-		if( userStyles ) {
-			this.userDefaultStyles.base = userStyles.base;
-			this.userDefaultStyles.point = userStyles.point;
-			this.userDefaultStyles.line = userStyles.line;
-			this.userDefaultStyles.polygon = userStyles.polygon;
+		var descriptors = [];
+		var initialDescriptor = {
+			layer: null
+			,schema: null
+			,intent: null
+			,priority: -1
+			,styleSet: this._computeStyleSet({})
 		};
-
-		// Create style for default behaviour
-		this.basicStyles = this._computeStyleSet({});
-
+		descriptors.push(initialDescriptor);
+		this._parseDefinition(initialDescriptor, [], defaultDefinition, descriptors);
+		initialDescriptor = $n2.extend({},initialDescriptor,{priority:0});
+		this._parseDefinition(initialDescriptor, [], userStyles, descriptors);
+		
+		this.activeStyles = {};
+		for(var i=0,e=descriptors.length;i<e;++i){
+			var descriptor = descriptors[i];
+			var args = [];
+			args.push(descriptor,this.activeStyles);
+			if( descriptor.layer ){
+				args.push({
+					category: 'layers'
+					,name: descriptor.layer
+				});
+			};
+			if( descriptor.schema ){
+				args.push({
+					category: 'schemas'
+					,name: descriptor.schema
+				});
+			};
+			if( descriptor.intent ){
+				args.push({
+					category: 'intents'
+					,name: descriptor.intent
+				});
+			};
+			this._installDefinition.apply(this,args);
+		};
+	}
+	
+	/**
+	 * @param descriptor {Object} Carries accumulated description for the definitions
+	 *                   processed so far.
+	 * @param accumulatedDefinitions {Array} Array of definitions to be merged into the next
+	 *                               levels of styles.
+	 * @param userDefinition {Object} Style definition currently processed
+	 * @param descriptorArray {Array} Array of all generated style descriptor
+	 */
+	,_parseDefinition: function(descriptor, accumulatedDefinitions, userDefinition, descriptorArray){
 		// Creates styles for layers
-		this.stylesFromLayer = {};
-		if( userStyles && userStyles.layers ){
-			for(var layerName in userStyles.layers){
-				var layerDef = userStyles.layers[layerName];
-				var layerSet = this._computeStyleSet(layerDef);
-				this.stylesFromLayer[layerName] = layerSet;
+		if( userDefinition && userDefinition.layers ){
+			for(var layerName in userDefinition.layers){
+				var layerDescriptor = $.extend({},descriptor,{
+					layer: layerName
+					,priority: (descriptor.priority + 1)
+				});
+				
+				var layerDef = userDefinition.layers[layerName];
+				var defs = accumulatedDefinitions.slice(0);
+				
+				if( defaultDefinition.layers && defaultDefinition.layers[layerName] ){
+					defs.push(defaultDefinition.layers[layerName]);
+				};
+				
+				defs.push(layerDef);
+				
+				layerDescriptor.styleSet = this._computeStyleSet.apply(this, defs);
+				
+				descriptorArray.push(layerDescriptor);
+				
+				// Recurse
+				this._parseDefinition(layerDescriptor, defs, layerDef, descriptorArray);
 			};
 		};
 		
 		// Create styles for schemas
-		this.stylesFromSchema = {};
-		if( userStyles && userStyles.schemas ){
-			for(var schemaName in userStyles.schemas){
-				var schemaDef = userStyles.schemas[schemaName];
-				var schemaSet = this._computeStyleSet(schemaDef);
-				this.stylesFromSchema[schemaName] = schemaSet;
+		if( userDefinition && userDefinition.schemas ){
+			for(var schemaName in userDefinition.schemas){
+				var schemaDescriptor = $.extend({},descriptor,{
+					schema: schemaName
+					,priority: (descriptor.priority + 1)
+				});
+				
+				var schemaDef = userDefinition.schemas[schemaName];
+				var defs = accumulatedDefinitions.slice(0);
+				
+				if( defaultDefinition.schemas && defaultDefinition.schemas[schemaName] ){
+					defs.push(defaultDefinition.schemas[schemaName]);
+				};
+
+				defs.push(schemaDef);
+				
+				schemaDescriptor.styleSet = this._computeStyleSet.apply(this, defs);
+				
+				descriptorArray.push(schemaDescriptor);
+				
+				// Recurse
+				this._parseDefinition(schemaDescriptor, defs, schemaDef, descriptorArray);
 			};
 		};
 		
 		// Create styles for intents
-		this.stylesFromIntents = {};
-		for(var intent in this.intentDeltas){
-			var intentDef = this.intentDeltas[intent];
-			var intentSet = this._computeStyleSet(intentDef);
-			this.stylesFromIntents[intent] = intentSet;
-		};
-		if( userStyles && userStyles.intents ){
-			for(var intent in userStyles.intents){
-				var intentDef = userStyles.intents[intent];
-				var intentSet = null;
-				if( this.intentDeltas[intent] ) {
-					intentSet = this._computeStyleSet(this.intentDeltas[intent], intentDef);
-				} else {
-					intentSet = this._computeStyleSet(intentDef);
+		if( userDefinition && userDefinition.intents ){
+			for(var intentName in userDefinition.intents){
+				var intentDescriptor = $.extend({},descriptor,{
+					intent: intentName
+					,priority: (descriptor.priority + 1)
+				});
+				
+				var intentDef = userDefinition.intents[intentName];
+				var defs = accumulatedDefinitions.slice(0);
+				
+				if( defaultDefinition.intents && defaultDefinition.intents[intentName] ){
+					defs.push(defaultDefinition.intents[intentName]);
 				};
-				this.stylesFromIntents[intent] = intentSet;
+
+				defs.push(intentDef);
+				
+				intentDescriptor.styleSet = this._computeStyleSet.apply(this, defs);
+				
+				descriptorArray.push(intentDescriptor);
+				
+				// Recurse
+				this._parseDefinition(intentDescriptor, defs, intentDef, descriptorArray);
 			};
 		};
+	}
+	
+	/**
+	 * Accepts a styleDescriptor and install within a tree for easy look up.
+	 */
+	,_installDefinition: function(styleDescriptor, currentNode, routingInfo){
+		if( !routingInfo ){
+			if( currentNode.descriptor 
+			 && currentNode.descriptor.priority <= styleDescriptor.priority ){
+				currentNode.descriptor = styleDescriptor;
+				
+			} else if( !currentNode.descriptor ){
+				currentNode.descriptor = styleDescriptor;
+			};
+			
+		} else {
+			var nextRoute = arguments[arguments.length-1];
+			var category = nextRoute.category;
+			var name = nextRoute.name;
+			if( !currentNode[category] ){
+				currentNode[category] = {};
+			};
+			if( !currentNode[category][name] ){
+				currentNode[category][name] = {};
+			};
+			
+			// Next call, drop last route
+			var nextLevelArgs = [styleDescriptor, currentNode[category][name]];
+			for(var i=2,e=arguments.length-1;i<e;++i){
+				nextLevelArgs.push(arguments[i]);
+			};
+			this._installDefinition.apply(this, nextLevelArgs);
+		};
+	}
+	
+	,_retrieveStyleSet: function(intent, schema, layer){
+		var currentNode = this.activeStyles;
+		var currentDescriptor = this.activeStyles.descriptor;
+
+		if( intent 
+		 && currentNode.intents 
+		 && currentNode.intents[intent] ){
+			currentNode = currentNode.intents[intent];
+			if( currentNode.descriptor 
+			 && currentDescriptor.priority < currentNode.descriptor.priority ) {
+				currentDescriptor = currentNode.descriptor;
+			};
+		};
+
+		if( schema 
+		 && currentNode.schemas 
+		 && currentNode.schemas[schema] ){
+			currentNode = currentNode.schemas[schema];
+			if( currentNode.descriptor 
+			 && currentDescriptor.priority < currentNode.descriptor.priority ) {
+				currentDescriptor = currentNode.descriptor;
+			};
+		};
+
+		if( layer 
+		 && currentNode.layers 
+		 && currentNode.layers[layer] ){
+			currentNode = currentNode.layers[layer];
+			if( currentNode.descriptor 
+			 && currentDescriptor.priority < currentNode.descriptor.priority ) {
+				currentDescriptor = currentNode.descriptor;
+			};
+		};
+		
+		return currentDescriptor.styleSet;
 	}
 
 	/*
@@ -209,19 +344,19 @@ var MapFeatureStyles = $n2.Class({
 	 * accomplished by computing a base style. Then, styles for points, lines
 	 * and polygons are derived by adding deltas to the effective base style.
 	 * 
-	 * base = defaultStyle(base) + userStyle(base) + a0(base) + ... + an(base)
-	 * point = base + defaultStyle(point) + userStyle(point) + a0(point) + ... + an(point)
-	 * line = base + defaultStyle(line) + userStyle(line) + a0(line) + ... + an(line)
-	 * polygon = base + defaultStyle(polygon) + userStyle(polygon) + a0(polygon) + ... + an(polygon)
+	 * base = defaultDefinition(base) + userDefinition(base) + a0(base) + ... + an(base)
+	 * point = base + defaultDefinition(point) + userDefinition(point) + a0(point) + ... + an(point)
+	 * line = base + defaultDefinition(line) + userDefinition(line) + a0(line) + ... + an(line)
+	 * polygon = base + defaultDefinition(polygon) + userDefinition(polygon) + a0(polygon) + ... + an(polygon)
 	 */
 	,_computeStyleSet: function(){
 		
 		var computedSet = {};
 		
 		// Start from default base and user base
-		var pointArgs = [defaultStyle.base, this.userDefaultStyles.base];
-		var lineArgs = [defaultStyle.base, this.userDefaultStyles.base];
-		var polygonArgs = [defaultStyle.base, this.userDefaultStyles.base];
+		var pointArgs = [defaultDefinition.base];
+		var lineArgs = [defaultDefinition.base];
+		var polygonArgs = [defaultDefinition.base];
 		
 		// Add all base styles found in arguments
 		for(var i=0,e=arguments.length;i<e;++i){
@@ -233,14 +368,9 @@ var MapFeatureStyles = $n2.Class({
 		};
 		
 		// Add default style for geometry
-		pointArgs.push(defaultStyle.point);
-		lineArgs.push(defaultStyle.line);
-		polygonArgs.push(defaultStyle.polygon);
-		
-		// Add user style for geometry
-		pointArgs.push(this.userDefaultStyles.point);
-		lineArgs.push(this.userDefaultStyles.line);
-		polygonArgs.push(this.userDefaultStyles.polygon);
+		pointArgs.push(defaultDefinition.point);
+		lineArgs.push(defaultDefinition.line);
+		polygonArgs.push(defaultDefinition.polygon);
 		
 		// Add all geometry styles found in argument
 		for(var i=0,e=arguments.length;i<e;++i){
@@ -403,19 +533,8 @@ var MapFeatureStyles = $n2.Class({
 				n2Intent = 'cluster';
 			};
 
-			var style = null;
-			if( null == style && n2Intent && _this.stylesFromIntents[n2Intent] ) {
-				style = _this.stylesFromIntents[n2Intent][geomType][effectiveIntent];
-			};
-			if( null == style && schemaName && _this.stylesFromSchema[schemaName] ) {
-				style = _this.stylesFromSchema[schemaName][geomType][effectiveIntent];
-			};
-			if( null == style && layerId && _this.stylesFromLayer[layerId] ) {
-				style = _this.stylesFromLayer[layerId][geomType][effectiveIntent];
-			};
-			if( null == style ) {
-				style = _this.basicStyles[geomType][effectiveIntent];
-			};
+			var styleSet = _this._retrieveStyleSet(n2Intent, schemaName, layerId);
+			var style = styleSet[geomType][effectiveIntent];
 	        
 	        return style.createSymbolizer(feature);
 		});
