@@ -3,11 +3,11 @@
   <parent>
     <artifactId>nunaliit2</artifactId>
     <groupId>ca.carleton.gcrc</groupId>
-    <version>2.1.2-SNAPSHOT</version>
+    <version>2.1.2</version>
   </parent>
   <groupId>ca.carleton.gcrc</groupId>
   <artifactId>nunaliit2-auth-common</artifactId>
-  <version>2.1.2-SNAPSHOT</version>
+  <version>2.1.2</version>
   <name>nunaliit2-auth-common</name>
   <description>Code common to all authentication methods.</description>
   <dependencies>  

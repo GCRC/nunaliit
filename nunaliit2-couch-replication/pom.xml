@@ -3,12 +3,12 @@
   <parent>
     <artifactId>nunaliit2</artifactId>
     <groupId>ca.carleton.gcrc</groupId>
-    <version>2.1.2-SNAPSHOT</version>
+    <version>2.1.2</version>
   </parent>
   <groupId>ca.carleton.gcrc</groupId>
   <artifactId>nunaliit2-couch-replication</artifactId>
   <name>nunaliit2-couch-replication</name>
-  <version>2.1.2-SNAPSHOT</version>
+  <version>2.1.2</version>
   <dependencies>
   	<dependency>
   		<groupId>ca.carleton.gcrc</groupId>
