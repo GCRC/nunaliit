@@ -665,11 +665,16 @@ var ModuleDisplay = $n2.Class({
 				mapOptions.mapCoordinateSpecifications.srsName = 'EPSG:4326';
 			};
 			
-			// If "Google Maps" is specified, then the map must display in
-			// EPSG:900913
+			// Detect forced display projections based on background layer
 			if( mapInfo.backgrounds ){
 				for(var i=0,e=mapInfo.backgrounds.length; i<e; ++i){
 					if( 'Google Maps' === mapInfo.backgrounds[i].type ) {
+						mapOptions.mapDisplay.srsName = 'EPSG:900913';
+						
+					} else if( 'osm' === mapInfo.backgrounds[i].type ) {
+						mapOptions.mapDisplay.srsName = 'EPSG:900913';
+						
+					} else if( 'stamen' === mapInfo.backgrounds[i].type ) {
 						mapOptions.mapDisplay.srsName = 'EPSG:900913';
 					};
 				};
