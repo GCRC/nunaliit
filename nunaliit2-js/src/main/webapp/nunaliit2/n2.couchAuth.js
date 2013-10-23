@@ -414,10 +414,13 @@ var AuthService = $n2.Class({
 		var $dialog = $('#'+dialogId);
 		
 		var $authDiag = $('<div class="n2Auth_login"></div>');
+		
+		var $authForm = $('<form></form>')
+			.appendTo($authDiag);
 
 		// User Line
 		var $userLine = $('<div class="n2Auth_login_user_line"></div>')
-			.appendTo($authDiag);
+			.appendTo($authForm);
 		
 		$('<div class="n2Auth_login_label"></div>')
 			.text(_loc('user name'))
@@ -431,7 +434,7 @@ var AuthService = $n2.Class({
 		
 		// Password line
 		var $pwLine = $('<div class="n2Auth_login_pw_line"></div>')
-			.appendTo($authDiag);
+			.appendTo($authForm);
 		
 		$('<div class="n2Auth_login_label"></div>')
 			.text(_loc('password'))
@@ -445,21 +448,19 @@ var AuthService = $n2.Class({
 
 		// Button line
 		var $buttonLine = $('<div class="n2Auth_login_button_line"></div>')
-			.appendTo($authDiag);
+			.appendTo($authForm);
 
-		$('<button class="n2Auth_button_login"></button>')
+		$('<input type="submit" class="n2Auth_button_login"></input>')
 			.appendTo($buttonLine)
-			.text( _loc('Login') )
-			.button({icons:{primary:'ui-icon-check'}})
+			.val( _loc('Login') )
 			.click(function(){
 				performLogin();
 				return false;
 			});
 		
-		$('<button class="n2Auth_button_cancel"></button>')
+		$('<input type="button" class="n2Auth_button_cancel"></input>')
 			.appendTo($buttonLine)
-			.text( _loc('Cancel') )
-			.button({icons:{primary:'ui-icon-cancel'}})
+			.val( _loc('Cancel') )
 			.click(function(){
 				var $dialog = $('#'+dialogId);
 				$dialog.dialog('close');
