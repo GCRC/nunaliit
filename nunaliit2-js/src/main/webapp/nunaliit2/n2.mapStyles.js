@@ -141,23 +141,7 @@ var MapFeatureStyles = $n2.Class({
 	
 	,initialize: function(userStyles){
 
-		if( !userStyles ){
-			userStyles = {};
-		};
-		
-		var descriptors = [];
-		var initialDescriptor = {
-			layer: null
-			,schema: null
-			,intent: null
-			,priority: -1
-			,styleSet: this._computeStyleSet(userStyles)
-		};
-		descriptors.push(initialDescriptor);
-		// Default layers, intents
-		this._parseDefinition(initialDescriptor, [userStyles], defaultDefinition, descriptors);
-		initialDescriptor = $n2.extend({},initialDescriptor,{priority:0});
-		this._parseDefinition(initialDescriptor, [userStyles], userStyles, descriptors);
+		var descriptors = this._parseDefinition(userStyles);
 		
 		this.activeStyles = {};
 		for(var i=0,e=descriptors.length;i<e;++i){
@@ -186,6 +170,30 @@ var MapFeatureStyles = $n2.Class({
 		};
 	}
 	
+	,_parseDefinition: function(userDefinition){
+		// Make a list of descriptors to return
+		var descriptors = [];
+		
+		// Initial descriptor
+		var initialDescriptor = {
+			layer: null
+			,schema: null
+			,intent: null
+			,priority: -1
+			,styleSet: this._computeStyleSet(userDefinition)
+		};
+		descriptors.push(initialDescriptor);
+		
+		// Default layers, schemas, intents
+		this._parseDefinition2(initialDescriptor, [], defaultDefinition, descriptors);
+		
+		// User layers, schemas, intents
+		initialDescriptor = $n2.extend({},initialDescriptor,{priority:0});
+		this._parseDefinition2(initialDescriptor, [userDefinition], userDefinition, descriptors);
+		
+		return descriptors;
+	}
+	
 	/**
 	 * @param descriptor {Object} Carries accumulated description for the definitions
 	 *                   processed so far.
@@ -194,7 +202,7 @@ var MapFeatureStyles = $n2.Class({
 	 * @param userDefinition {Object} Style definition currently processed
 	 * @param descriptorArray {Array} Array of all generated style descriptor
 	 */
-	,_parseDefinition: function(descriptor, accumulatedDefinitions, userDefinition, descriptorArray){
+	,_parseDefinition2: function(descriptor, accumulatedDefinitions, userDefinition, descriptorArray){
 		// Creates styles for layers
 		if( userDefinition && userDefinition.layers ){
 			for(var layerName in userDefinition.layers){
@@ -221,7 +229,7 @@ var MapFeatureStyles = $n2.Class({
 				descriptorArray.push(layerDescriptor);
 				
 				// Recurse
-				this._parseDefinition(layerDescriptor, defs, layerDef, descriptorArray);
+				this._parseDefinition2(layerDescriptor, defs, layerDef, descriptorArray);
 			};
 		};
 		
@@ -247,7 +255,7 @@ var MapFeatureStyles = $n2.Class({
 				descriptorArray.push(schemaDescriptor);
 				
 				// Recurse
-				this._parseDefinition(schemaDescriptor, defs, schemaDef, descriptorArray);
+				this._parseDefinition2(schemaDescriptor, defs, schemaDef, descriptorArray);
 			};
 		};
 		
@@ -273,7 +281,7 @@ var MapFeatureStyles = $n2.Class({
 				descriptorArray.push(intentDescriptor);
 				
 				// Recurse
-				this._parseDefinition(intentDescriptor, defs, intentDef, descriptorArray);
+				this._parseDefinition2(intentDescriptor, defs, intentDef, descriptorArray);
 			};
 		};
 	}
@@ -371,9 +379,11 @@ var MapFeatureStyles = $n2.Class({
 		for(var i=0,e=arguments.length;i<e;++i){
 			var setDelta = arguments[i];
 			
-			pointArgs.push(setDelta.base);
-			lineArgs.push(setDelta.base);
-			polygonArgs.push(setDelta.base);
+			if( setDelta ) {
+				pointArgs.push(setDelta.base);
+				lineArgs.push(setDelta.base);
+				polygonArgs.push(setDelta.base);
+			};
 		};
 		
 		// Add default style for geometry
@@ -385,9 +395,11 @@ var MapFeatureStyles = $n2.Class({
 		for(var i=0,e=arguments.length;i<e;++i){
 			var setDelta = arguments[i];
 			
-			pointArgs.push(setDelta.point);
-			lineArgs.push(setDelta.line);
-			polygonArgs.push(setDelta.polygon);
+			if( setDelta ) {
+				pointArgs.push(setDelta.point);
+				lineArgs.push(setDelta.line);
+				polygonArgs.push(setDelta.polygon);
+			};
 		};
 		
 		// Merge all the styles and save the geometries
