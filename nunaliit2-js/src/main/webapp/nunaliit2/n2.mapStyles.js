@@ -141,18 +141,23 @@ var MapFeatureStyles = $n2.Class({
 	
 	,initialize: function(userStyles){
 
+		if( !userStyles ){
+			userStyles = {};
+		};
+		
 		var descriptors = [];
 		var initialDescriptor = {
 			layer: null
 			,schema: null
 			,intent: null
 			,priority: -1
-			,styleSet: this._computeStyleSet({})
+			,styleSet: this._computeStyleSet(userStyles)
 		};
 		descriptors.push(initialDescriptor);
-		this._parseDefinition(initialDescriptor, [], defaultDefinition, descriptors);
+		// Default layers, intents
+		this._parseDefinition(initialDescriptor, [userStyles], defaultDefinition, descriptors);
 		initialDescriptor = $n2.extend({},initialDescriptor,{priority:0});
-		this._parseDefinition(initialDescriptor, [], userStyles, descriptors);
+		this._parseDefinition(initialDescriptor, [userStyles], userStyles, descriptors);
 		
 		this.activeStyles = {};
 		for(var i=0,e=descriptors.length;i<e;++i){
@@ -193,11 +198,13 @@ var MapFeatureStyles = $n2.Class({
 		// Creates styles for layers
 		if( userDefinition && userDefinition.layers ){
 			for(var layerName in userDefinition.layers){
+				// Create a new descriptor. Set layer name and increase priority
 				var layerDescriptor = $.extend({},descriptor,{
 					layer: layerName
 					,priority: (descriptor.priority + 1)
 				});
 				
+				// Add definition for layer, after default for layer
 				var layerDef = userDefinition.layers[layerName];
 				var defs = accumulatedDefinitions.slice(0);
 				
@@ -207,8 +214,10 @@ var MapFeatureStyles = $n2.Class({
 				
 				defs.push(layerDef);
 				
+				// Compute style set based on all definitions
 				layerDescriptor.styleSet = this._computeStyleSet.apply(this, defs);
 				
+				// Add descriptor to array of descriptors
 				descriptorArray.push(layerDescriptor);
 				
 				// Recurse
