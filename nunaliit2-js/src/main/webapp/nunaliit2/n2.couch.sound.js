@@ -70,6 +70,8 @@ var HoverSoundService = $n2.Class({
 			this.dispatcher.register(DH, 'focusOff', f);
 			this.dispatcher.register(DH, 'playHoverSoundOn', f);
 			this.dispatcher.register(DH, 'playHoverSoundOff', f);
+			this.dispatcher.register(DH, 'playSoundOn', f);
+			this.dispatcher.register(DH, 'playSoundOff', f);
 		};
 	}
 
@@ -188,6 +190,21 @@ var HoverSoundService = $n2.Class({
 		} else if(m.type==='playHoverSoundOff'){
 			if(m.doc) {
 				this._removePlaySound(m.doc._id);
+			};
+			
+		} else if(m.type==='playSoundOn'){
+			if( m.id && m.url ) {
+				this._initiatePlaySound(m.id);
+				var info = {
+					docId: m.id
+					,soundUrl: m.url
+				};
+				this._installPlaySound(info);
+			};
+			
+		} else if(m.type==='playSoundOff'){
+			if(m.id) {
+				this._removePlaySound(m.id);
 			};
 		};
 	}
