@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ;(function($,$n2){
 
 // Localization
-var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
+//var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 
 // *******************************************************
 // Service used to keep track of customizations
@@ -40,9 +40,9 @@ var CustomService = $n2.Class({
 	custom: null
 	
 	,initialize: function(options_){
-		var options = $n2.extend({
-			directory: null
-		},options_);
+//		var options = $n2.extend({
+//			directory: null
+//		},options_);
 		
 		if( typeof(window.nunaliit_custom) === 'undefined' ) {
 			window.nunaliit_custom = {};

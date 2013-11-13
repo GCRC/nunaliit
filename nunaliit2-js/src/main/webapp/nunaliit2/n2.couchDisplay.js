@@ -104,9 +104,21 @@ $n2.couchDisplay = $n2.Class({
 		
 		this.options = $n2.extend({}, defaultOptions, options_);
 		
+		// Post-process display functions
+		var customService = this._getCustomService();
 		this.postProcessDisplayFns = [];
 		if( typeof(this.options.postProcessDisplayFunction) === 'function' ){
 			this.postProcessDisplayFns.push(this.options.postProcessDisplayFunction);
+		};
+		if( customService ){
+			var postProcessFns = customService.getOption('displayPostProcessFunctions');
+			if( postProcessFns ){
+				for(var i=0,e=postProcessFns.length;i<e;++i){
+					if( typeof postProcessFns[i] === 'function' ){
+						this.postProcessDisplayFns.push(postProcessFns[i]);
+					};
+				};
+			};
 		};
 
 		var dispatcher = this._getDispatcher();
