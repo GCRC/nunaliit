@@ -880,6 +880,68 @@
 	SearchFilter.availableCreateFilters.push(new CreateFilterBySchemaType());
 
 	// **********************************************************************
+	var CreateFilterByDocumentReference = $n2.Class(SearchFilter, {
+
+		initialize: function(){
+			SearchFilter.prototype.initialize.apply(this);
+			this.name = _loc('Select documents that reference another one');
+		}
+	
+		,printOptions: function($parent){
+			var $options = $('<div>'
+				+_loc('Document Id')+': <br/><input class="filterDocumentId" type="text"/>'
+				+'</div>');
+			
+			$parent.append( $options );
+		}
+
+		,createList: function(opts_){
+			var opts = $n2.extend({
+				name: null
+				,options: null
+				,progressTitle: _loc('List Creation Progress')
+				,onSuccess: function(list){}
+				,onError: reportError
+			},opts_);
+			
+			var _this = this;
+
+			var $i = opts.options.find('input.filterDocumentId');
+			var docId = $i.val();
+			if( !docId || '' == docId ) {
+				alert(_loc('Must enter a document identifier'));
+			} else {
+				atlasDesign.queryView({
+					viewName: 'link-references'
+					,startkey: docId
+					,endkey: docId
+					,onSuccess: function(rows){
+						var docIds = [];
+						for(var i=0,e=rows.length; i<e; ++i){
+							var row = rows[i];
+							docIds.push(row.id);
+						};
+						var locStr = _loc('Documents referencing {docId}',{
+							docId: docId
+						});
+						var l = new DocumentList({
+							docIds: docIds
+							,name: locStr
+						});
+						opts.onSuccess(l);
+					}
+					,onError: function(err){
+						alert(_loc('Problem obtaining documents from schema')+': '+err);
+						opts.onError(err);
+					}
+				});
+			};
+		}
+	});
+
+	SearchFilter.availableCreateFilters.push(new CreateFilterByDocumentReference());
+
+	// **********************************************************************
 	var DocumentTransform = $n2.Class({
 		
 		name: null

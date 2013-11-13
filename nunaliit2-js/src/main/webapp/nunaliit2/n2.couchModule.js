@@ -913,6 +913,11 @@ var ModuleDisplay = $n2.Class({
 					var title = $n2.couchL10n.getLocalizedString(item.title);
 					$a.text(title);
 					$li.append($a);
+				} else if( item.title ) {
+					var $span = $('<span></span>');
+					var title = $n2.couchL10n.getLocalizedString(item.title);
+					$span.text(title);
+					$li.append($span);
 				};
 				
 				if( item.items && item.items.length > 0 ){

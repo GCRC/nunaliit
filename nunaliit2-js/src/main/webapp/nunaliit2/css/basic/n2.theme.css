@@ -65,8 +65,10 @@ input[type="text"], input[type="password"], textarea {
 
 /* Header Menu */
 
-.nunaliit_atlas .nunaliit_header-nav a, .nunaliit_atlas .nunaliit_header-nav a:visited {
-color: #fff;
+.nunaliit_atlas .nunaliit_header-nav a,
+.nunaliit_atlas .nunaliit_header-nav a:visited,
+.nunaliit_atlas .nunaliit_header-nav span {
+	color: #fff;
 }
 .nunaliit_atlas .nunaliit_header-nav li {
 	background-color: #2f2f2f;
@@ -106,7 +108,8 @@ color: #fff;
 .nunaliit_atlas .nunaliit_header-nav>ul>li:hover>ul>li:first-child {
 	border-left: 1px solid rgba(255,255,255,0.6);
 }
-.nunaliit_atlas .nunaliit_header-nav>ul>li>a {
+.nunaliit_atlas .nunaliit_header-nav>ul>li>a,
+.nunaliit_atlas .nunaliit_header-nav>ul>li>span {
 	font-weight: normal;
 	display:block;
 	text-decoration: none;
