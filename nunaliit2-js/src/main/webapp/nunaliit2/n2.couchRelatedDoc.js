@@ -103,6 +103,53 @@ var CreateRelatedDocProcess = $n2.Class({
 		};
 	}
 
+	,replyToDocument: function(opt_){
+		
+		var _this = this;
+		
+		// Check that we are logged in
+		var authService = this.options.authService;
+		if( authService && false == authService.isLoggedIn() ) {
+			authService.showLoginForm({
+				onSuccess: function(result,options) {
+					_this.replyToDocument(opt_);
+				}
+			});
+			return;
+		};
+		
+		var opt = $n2.extend({
+			doc: null
+			,schema: null
+			,onSuccess: function(docId){}
+			,onError: $n2.reportErrorForced
+			,onCancel: function(){}
+		},opt_);
+
+		if( opt.schema && opt.schema.isSchema ) {
+			// OK
+		} else {
+			opt.onError( _loc('A valid schema must be provided') );
+			return;
+		};
+		
+		var origin = null;
+		if( opt.doc.nunaliit_origin && opt.doc.nunaliit_origin.doc ) {
+			origin = opt.doc.nunaliit_origin.doc;
+		} else if( opt.doc.nunaliit_source && opt.doc.nunaliit_source.doc ) {
+			origin = opt.doc.nunaliit_source.doc;
+		};
+		
+		this.addRelatedDocumentFromSchema({
+			docId: opt.doc._id
+			,schema: opt.schema
+			,origin: origin
+			,onSuccess: opt.onSuccess
+			,onError: opt.onError
+			,onCancel: opt.onCancel
+		});
+	}
+
 	,addRelatedDocumentFromSchema: function(opt_){
 
 		var _this = this;
@@ -121,6 +168,7 @@ var CreateRelatedDocProcess = $n2.Class({
 		var opt = $n2.extend({
 			docId: null
 			,schema: null
+			,origin: null
 			,onSuccess: function(docId){}
 			,onError: $n2.reportErrorForced
 			,onCancel: function(){}
@@ -147,6 +195,13 @@ var CreateRelatedDocProcess = $n2.Class({
 				nunaliit_type: 'reference'
 				,doc: opt.docId
 				,category: 'attachment'
+			};
+			
+			if( opt.origin ){
+				obj.nunaliit_origin = {
+					nunaliit_type: 'reference'
+					,doc: opt.origin
+				};
 			};
 			
 			new Editor({

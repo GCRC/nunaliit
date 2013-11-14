@@ -281,6 +281,7 @@ $n2.couchDisplay = $n2.Class({
 			_this._addButtons($elem, data, {
 				schema: schema
 				,related: true
+				,reply: true
 				,geom: true
 				,edit: true
 				,'delete': true
@@ -350,6 +351,7 @@ $n2.couchDisplay = $n2.Class({
 			schema: null
 			,focus: false
 			,related: false
+			,reply: false
 			,geom: false
 			,edit: false
 			,'delete': false
@@ -365,6 +367,7 @@ $n2.couchDisplay = $n2.Class({
 		if( opt.focus ) optionClass += '_focus';
 		if( opt.edit ) optionClass += '_edit';
 		if( opt.related ) optionClass += '_related';
+		if( opt.reply ) optionClass += '_reply';
 		if( opt.geom ) optionClass += '_geom';
 		if( opt['delete'] ) optionClass += '_delete';
 		if( opt.addLayer ) optionClass += '_addLayer';
@@ -376,6 +379,7 @@ $n2.couchDisplay = $n2.Class({
 			,focus: opt.focus
 			,edit: opt.edit
 			,related: opt.related
+			,reply: opt.reply
 			,geom: opt.geom
 			,addLayer: opt.addLayer
 		};
@@ -390,6 +394,7 @@ $n2.couchDisplay = $n2.Class({
 		var fFocus = false;
 		var fEdit = false;
 		var fRelated = false;
+		var fReply = false;
 		var fGeom = false;
 		var fDelete = false;
 		var fAddLayer = false;
@@ -408,6 +413,7 @@ $n2.couchDisplay = $n2.Class({
 					if( 'focus' === o ){ fFocus = true; }
 					else if( 'edit' === o ){ fEdit = true; }
 					else if( 'related' === o ){ fRelated = true; }
+					else if( 'reply' === o ){ fReply = true; }
 					else if( 'geom' === o ){ fGeom = true; }
 					else if( 'addLayer' === o ){ fAddLayer = true; }
 					else if( 'delete' === o ){ fDelete = true; };
@@ -453,6 +459,7 @@ $n2.couchDisplay = $n2.Class({
 				,focus: fFocus
 				,edit: fEdit
 				,related: fRelated
+				,reply: fReply
 				,geom: fGeom
 				,addLayer: fAddLayer
 			};
@@ -561,7 +568,40 @@ $n2.couchDisplay = $n2.Class({
 					_this._addRelatedDocument(data._id, opt.schema.relatedSchemaNames);
 					return false;
 				});
-				addClasses($addRelatedButton, addRelatedText);
+				addClasses($addRelatedButton, 'add_related_item');
+			};
+		};
+		
+ 		// Show 'reply' button
+		if( opt.reply
+		 && opt.schema
+		 && opt.schema.options 
+		 && opt.schema.options.enableReplies
+		 ) {
+			var showReplyButton = true;
+			var flag = this._getBooleanOption('restrictReplyButtonToLoggedIn');
+			if( flag ){
+				var sessionContext = $n2.couch.getSession().getContext();
+				if( !sessionContext || !sessionContext.name ) {
+					showReplyButton = false;
+				};
+			};
+			
+			if( showReplyButton ) {
+	 			if( firstButton ) {
+	 				firstButton = false;
+	 			} else {
+	 				$buttons.append( $('<span>&nbsp;</span>') );
+	 			};
+				var $replyButton = $('<a href="#"></a>');
+				var replyText = _loc('Reply');
+				$replyButton.text( replyText );
+				$buttons.append($replyButton);
+				$replyButton.click(function(){
+					_this._replyToDocument(data, opt.schema);
+					return false;
+				});
+				addClasses($replyButton, 'reply');
 			};
 		};
 		
@@ -1225,45 +1265,77 @@ $n2.couchDisplay = $n2.Class({
 			}
 		});
 	}
+
+	,_replyToDocument: function(doc, schema){
+		var _this = this;
+		
+		this.createRelatedDocProcess.replyToDocument({
+			doc: doc
+			,schema: schema
+			,onSuccess: function(docId){
+			}
+		});
+	}
 	
 	,_refreshDocument: function(doc){
 
 		var _this = this;
-		var docId = doc._id;
 		
-		$('.displayRelatedButton_'+$n2.utils.stringToHtmlId(docId)).each(function(){
-			var $buttonDiv = $(this);
-			$buttonDiv.empty();
-			_this._addButtons($buttonDiv, doc, {
-				focus: true
-				,geom: true
+		// Retrieve schema document
+		var schemaRepository = this._getSchemaRepository();
+		if( doc.nunaliit_schema && schemaRepository ) {
+			schemaRepository.getSchema({
+				name: doc.nunaliit_schema
+				,onSuccess: function(schema) {
+					refreshDocWithSchema(doc, schema);
+				}
+				,onError: function(){
+					refreshDocWithSchema(doc, null);
+				}
 			});
-		});
-		
-		$('.n2Display_attProgress_'+$n2.utils.stringToHtmlId(docId)).each(function(){
-			var $progress = $(this);
-			_this._refreshAttachmentProgress($progress,doc);
-		});
-		
-		if( this.shouldSuppressNonApprovedMedia() ){
-			if( $n2.couchMap.documentContainsMedia(doc) 
-			 && false == $n2.couchMap.documentContainsApprovedMedia(doc) ) {
-				$('.n2SupressNonApprovedMedia_'+$n2.utils.stringToHtmlId(docId)).each(function(){
-					var $div = $(this);
-					var $parent = $div.parent();
-					$div.remove();
-					_this._fixDocumentList($parent);
+		} else {
+			refreshDocWithSchema(doc, null);
+		};
+	
+		function refreshDocWithSchema(doc, schema){
+			var docId = doc._id;
+			
+			$('.displayRelatedButton_'+$n2.utils.stringToHtmlId(docId)).each(function(){
+				var $buttonDiv = $(this);
+				$buttonDiv.empty();
+				_this._addButtons($buttonDiv, doc, {
+					schema: schema
+					,focus: true
+					,geom: true
+					,reply: true
 				});
-			};
-		} else if( this.shouldSuppressDeniedMedia() ){
-			if( $n2.couchMap.documentContainsMedia(doc) 
-			 && $n2.couchMap.documentContainsDeniedMedia(doc) ) {
-				$('.n2SupressDeniedMedia_'+$n2.utils.stringToHtmlId(docId)).each(function(){
-					var $div = $(this);
-					var $parent = $div.parent();
-					$div.remove();
-					_this._fixDocumentList($parent);
-				});
+			});
+			
+			$('.n2Display_attProgress_'+$n2.utils.stringToHtmlId(docId)).each(function(){
+				var $progress = $(this);
+				_this._refreshAttachmentProgress($progress,doc);
+			});
+			
+			if( _this.shouldSuppressNonApprovedMedia() ){
+				if( $n2.couchMap.documentContainsMedia(doc) 
+				 && false == $n2.couchMap.documentContainsApprovedMedia(doc) ) {
+					$('.n2SupressNonApprovedMedia_'+$n2.utils.stringToHtmlId(docId)).each(function(){
+						var $div = $(this);
+						var $parent = $div.parent();
+						$div.remove();
+						_this._fixDocumentList($parent);
+					});
+				};
+			} else if( _this.shouldSuppressDeniedMedia() ){
+				if( $n2.couchMap.documentContainsMedia(doc) 
+				 && $n2.couchMap.documentContainsDeniedMedia(doc) ) {
+					$('.n2SupressDeniedMedia_'+$n2.utils.stringToHtmlId(docId)).each(function(){
+						var $div = $(this);
+						var $parent = $div.parent();
+						$div.remove();
+						_this._fixDocumentList($parent);
+					});
+				};
 			};
 		};
 	}

@@ -990,6 +990,8 @@ var Schema = $n2.Class({
 	,csvExport: null
 	
 	,label: null
+
+	,options: null
 	
 	,_error: null
 	
@@ -1005,6 +1007,7 @@ var Schema = $n2.Class({
 		this.create = jsonDefinition.create;
 		this.csvExport = jsonDefinition.csvExport;
 		this.label = jsonDefinition.label;
+		this.options = jsonDefinition.options;
 		
 		if( jsonDefinition.isRootSchema ) {
 			this.isRootSchema = true;
