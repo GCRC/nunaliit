@@ -58,136 +58,134 @@ var DomStyler = $n2.Class({
 	,fixElementAndChildren: function($elem, opt, contextDoc){
 		var _this = this;
 		
+		var $set = $elem.find('*').addBack();
+		
 		// Localization
-		$elem.find('.n2_localize').each(function(){
+		$set.filter('.n2_localize').each(function(){
 			var $jq = $(this);
 			_this._localize($jq, opt);
 			$jq.removeClass('n2_localize').addClass('n2_localized');
 		});
-		$elem.find('.n2s_localize').each(function(){
+		$set.filter('.n2s_localize').each(function(){
 			var $jq = $(this);
 			_this._localize($jq, opt);
 			$jq.removeClass('n2s_localize').addClass('n2s_localized');
 		});
 		
 		// Brief display
-		$elem.find('.n2_briefDisplay').each(function(){
+		$set.filter('.n2_briefDisplay').each(function(){
 			var $jq = $(this);
 			_this._briefDisplay($jq, opt);
 			$jq.removeClass('n2_briefDisplay').addClass('n2_briefDisplayed');
 		});
 
 		// Reference Link
-		$elem.find('.n2s_referenceLink').each(function(){
+		$set.filter('.n2s_referenceLink').each(function(){
 			var $jq = $(this);
 			_this._insertReferenceLink($jq, opt);
 			$jq.removeClass('n2s_referenceLink').addClass('n2s_insertedReferenceLink');
 		});
 		
 		// Time
-		$elem.find('.n2s_insertTime').each(function(){
+		$set.filter('.n2s_insertTime').each(function(){
 			var $jq = $(this);
 			_this._insertTime($jq, opt);
 			$jq.removeClass('n2s_insertTime').addClass('n2s_insertedTime');
 		});
 		
 		// User
-		$elem.find('.n2s_insertUserName').each(function(){
+		$set.filter('.n2s_insertUserName').each(function(){
 			var $jq = $(this);
 			_this._insertUserName($jq, opt);
 			$jq.removeClass('n2s_insertUserName').addClass('n2s_insertedUserName');
 		});
 		
 		// Layer name
-		$elem.find('.n2s_insertLayerName').each(function(){
+		$set.filter('.n2s_insertLayerName').each(function(){
 			var $jq = $(this);
 			_this._insertLayerName($jq, opt);
 			$jq.removeClass('n2s_insertLayerName').addClass('n2s_insertedLayerName');
 		});
 		
 		// Media View
-		$elem.find('.n2s_insertMediaView').each(function(){
+		$set.filter('.n2s_insertMediaView').each(function(){
 			var $jq = $(this);
 			_this._insertMediaView(contextDoc, $jq, opt);
 			$jq.removeClass('n2s_insertMediaView').addClass('n2s_insertedMediaView');
 		});
 		
 		// Insert Hover Sound
-		$elem.find('.n2s_insertHoverSoundIcon').each(function(){
+		$set.filter('.n2s_insertHoverSoundIcon').each(function(){
 			var $jq = $(this);
 			_this._insertHoverSoundIcon(contextDoc, $jq, opt);
 			$jq.removeClass('n2s_insertHoverSoundIcon').addClass('n2s_insertedHoverSoundIcon');
 		});
 		
 		// External links to media file
-		$elem.find('.n2s_externalMediaLink').each(function(){
+		$set.filter('.n2s_externalMediaLink').each(function(){
 			var $jq = $(this);
 			_this._adjustExternalMediaLink(contextDoc, $jq, opt);
 			$jq.removeClass('n2s_externalMediaLink').addClass('n2s_adjustedExternalMediaLink');
 		});
 		
 		// External links to media file
-		$elem.find('.n2s_insertExternalMediaLink').each(function(){
+		$set.filter('.n2s_insertExternalMediaLink').each(function(){
 			var $jq = $(this);
 			_this._insertExternalMediaLink(contextDoc, $jq, opt);
 			$jq.removeClass('n2s_insertExternalMediaLink').addClass('n2s_insertedExternalMediaLink');
 		});
 		
 		// Convert text URLs to Links
-		$elem.find('.n2s_convertTextUrlToLink').each(function(){
+		$set.filter('.n2s_convertTextUrlToLink').each(function(){
 			var $jq = $(this);
 			_this._convertTextUrlToLink(contextDoc, $jq, opt);
 			$jq.removeClass('n2s_convertTextUrlToLink').addClass('n2s_convertedTextUrlToLink');
 		});
 
 		// Follow geometry
-		$elem.find('.n2s_clickFindGeometryOnMap').each(function(){
+		$set.filter('.n2s_clickFindGeometryOnMap').each(function(){
 			var $jq = $(this);
 			_this._clickFindGeometryOnMap(contextDoc, $jq, opt);
 			$jq.removeClass('n2s_clickFindGeometryOnMap').addClass('n2s_findGeometryOnMap');
 		});
 
 		// Turn on layer
-		$elem.find('.n2s_clickAddLayerFromDefinition').each(function(){
+		$set.filter('.n2s_clickAddLayerFromDefinition').each(function(){
 			var $jq = $(this);
 			_this._clickAddLayerFromDefinition(contextDoc, $jq, opt);
 			$jq.removeClass('n2s_clickAddLayerFromDefinition').addClass('n2s_addLayerFromDefinition');
 		});
 
 		// Document editing
-		$elem.find('.n2s_clickEdit').each(function(){
+		$set.filter('.n2s_clickEdit').each(function(){
 			var $jq = $(this);
 			_this._clickEdit(contextDoc, $jq, opt);
 			$jq.removeClass('n2s_clickEdit').addClass('n2s_edit');
 		});
 
 		// Document deleting
-		$elem.find('.n2s_clickDelete').each(function(){
+		$set.filter('.n2s_clickDelete').each(function(){
 			var $jq = $(this);
 			_this._clickDelete(contextDoc, $jq, opt);
 			$jq.removeClass('n2s_clickDelete').addClass('n2s_delete');
 		});
 		
 		// Mouse Hover
-		$elem.find('.n2s_handleHover').each(function(){
+		$set.filter('.n2s_handleHover').each(function(){
 			var $jq = $(this);
 			_this._handleHover(contextDoc, $jq, opt);
 			$jq.removeClass('n2s_handleHover').addClass('n2s_handledHover');
 		});
-		if( $elem.hasClass('n2s_handleHover') ){
-			_this._handleHover(contextDoc, $elem, opt);
-			$elem.removeClass('n2s_handleHover').addClass('n2s_handledHover');
-		};
 
 		// Install maximum height
-		$elem.find('.n2s_installMaxHeight').each(function(){
+		$set.filter('.n2s_installMaxHeight').each(function(){
 			var $jq = $(this);
 			_this._installMaxHeight(contextDoc, $jq, opt);
 			$jq.removeClass('n2s_installMaxHeight').addClass('n2s_installedMaxHeight');
 		});
 		
 		// Preserve Space
-		$elem.find('.n2s_preserveSpaces').each(function(){
+		$set.filter('.n2s_preserveSpaces').each(function(){
 			var $jq = $(this);
 			_this._preserveSpaces($jq, opt);
 			$jq.removeClass('n2s_preserveSpaces').addClass('n2s_preservedSpaces');
