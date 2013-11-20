@@ -20,6 +20,8 @@
 
 		,textFn: null
 		
+		,colourFn: null
+		
 		,onSelect: null
 		
 		,initialize: function(opts_){
@@ -27,6 +29,12 @@
 				container: null
 				,idFn: function(d){ return d._id; }
 				,textFn: null
+				,colourFn: function(d,node){
+					if( node.selected ){
+						return '#ff6666';
+					};
+					return '#6666ff';
+				}
 				,onSelect: function(d){}
 			},opts_);
 
@@ -36,6 +44,7 @@
 			++nextRelationId;
 			
 			this.idFn = opts.idFn;
+			this.colourFn = opts.colourFn;
 			this.onSelect = opts.onSelect;
 			
 			this.textFn = opts.textFn;
@@ -43,15 +52,18 @@
 				this.textFn = this.idFn;
 			};
 			
+			var width = 600;
+			var height = 600;
+			
 			var d3svg = d3.select(opts.container)
 				.append('svg')
 				.attr('id',this.svgId)
-				.attr('width',300)
-				.attr('height',300);
+				.attr('width',width)
+				.attr('height',height);
 			
 			var translator = d3svg.append('g')
 				.attr('class','translator')
-				.attr('transform','translate(150,150)');
+				.attr('transform','translate('+Math.floor(width/2)+','+Math.floor(height/2)+')');
 
 			translator.append('g')
 				.attr('class','lines');
@@ -88,7 +100,7 @@
 					var linkedDoc = linkedDocs[i];
 
 					// Document entries
-					var r = 100;
+					var r = 250;
 					var a = 2 * Math.PI * i / linkedDocs.length;
 					var x = r * Math.sin(a);
 					var y = r * Math.cos(a);
@@ -125,18 +137,14 @@
 			
 			var enter = updateCircles.enter()
 				.append('circle')
-				.attr('class',function(d){ return 'node_'+d.id; })
+				.attr('class',function(d){ return 'node_'+$n2.utils.stringToHtmlId(d.id); })
 				.attr('cx',0)
 				.attr('cy',0)
 				.attr('r',25)
 				.attr('stroke','#000000')
 				.attr('stroke-width',1)
 				.attr('fill',function(d){
-					if( d.x===0 && d.y===0 ) {
-						return '#ff0000';
-					} else {
-						return '#0000ff';
-					}; 
+					return _this.colourFn(d.doc,d);
 				})
 				.on('click',function(){
 					var d3Circle = d3.select(this);
@@ -152,11 +160,7 @@
 				.attr('cx',function(d){return d.x;})
 				.attr('cy',function(d){return d.y;})
 				.attr('fill',function(d){
-					if( d.selected ) {
-						return '#ff0000';
-					} else {
-						return '#0000ff';
-					}; 
+					return _this.colourFn(d.doc,d);
 				})
 				;
 		
@@ -200,7 +204,7 @@
 				.append('line')
 				.attr('x1',function(d){
 					var id = d.doc1.id;
-					var c = translator.select('circle.node_'+id);
+					var c = translator.select('circle.node_'+$n2.utils.stringToHtmlId(id));
 					var res = 0;
 					if( c && c.length ){
 						res = c.attr('cx');
@@ -209,7 +213,7 @@
 				})
 				.attr('y1',function(d){
 					var id = d.doc1.id;
-					var c = translator.select('circle.node_'+id);
+					var c = translator.select('circle.node_'+$n2.utils.stringToHtmlId(id));
 					var res = 0;
 					if( c && c.length ){
 						res = c.attr('cy');
@@ -218,7 +222,7 @@
 				})
 				.attr('x2',function(d){
 					var id = d.doc2.id;
-					var c = translator.select('circle.node_'+id);
+					var c = translator.select('circle.node_'+$n2.utils.stringToHtmlId(id));
 					var res = 0;
 					if( c && c.length ){
 						res = c.attr('cx');
@@ -227,7 +231,7 @@
 				})
 				.attr('y2',function(d){
 					var id = d.doc2.id;
-					var c = translator.select('circle.node_'+id);
+					var c = translator.select('circle.node_'+$n2.utils.stringToHtmlId(id));
 					var res = 0;
 					if( c && c.length ){
 						res = c.attr('cy');
@@ -253,21 +257,39 @@
 
 	// -----------------------------------------------------------------
 	var currentDocId = null;
+	var fakeLayerPrefix = '__layer__';
 	function selectDocId(docId){
+		$n2.log('Select: '+docId);
 		currentDocId = docId;
 		
 		var selectedDoc = null;
 		var linkedDocsById = {};
-		
-		atlasDb.getDocument({
-			docId: docId
-			,onSuccess: loadedDoc
-			,onError: function(errorMsg){ 
-				alert('Unable to retrieve document'); 
-			}
-		});
+		var requestedDocsById = {};
+
+		// If a document is a fake layer document, handle it
+		// specially
+		if( docId.substr(0,fakeLayerPrefix.length) === fakeLayerPrefix ){
+			var layerName = docId.substr(fakeLayerPrefix.length);
+			var doc = {
+				_id: fakeLayerPrefix+layerName
+				,name: layerName
+				,nunaliit_type: '__fakeLayer__'
+			};
+			loadedDoc(doc);
+			
+		} else {
+			// Fetch document
+			atlasDb.getDocument({
+				docId: docId
+				,onSuccess: loadedDoc
+				,onError: function(errorMsg){ 
+					alert('Unable to retrieve document'); 
+				}
+			});
+		};
 		
 		function loadedDoc(doc){
+			$n2.log('Selected',doc);
 			selectedDoc = doc;
 			updateCanvas();
 			
@@ -286,25 +308,105 @@
 				}
 				,onError: findForwardLinks
 			});
+			
+			// Get schema document
+			if( doc.nunaliit_schema ){
+				atlasDesign.queryView({
+					viewName: 'schemas'
+					,startkey: doc.nunaliit_schema
+					,endkey: doc.nunaliit_schema
+					,include_docs: true
+					,onSuccess: function(rows){
+						for(var i=0,e=rows.length;i<e;++i){
+							var linkedDoc = rows[i].doc;
+							linkedDocsById[linkedDoc._id] = linkedDoc;
+						};
+						updateCanvas();
+					}
+					,onError: function(){}
+				});
+			};
+			
+			// If a schema document, find all documents associated with schema
+			if( doc.nunaliit_type === 'schema' && doc.name ){
+				atlasDesign.queryView({
+					viewName: 'nunaliit-schema'
+					,startkey: doc.name
+					,endkey: doc.name
+					,include_docs: true
+					,onSuccess: function(rows){
+						for(var i=0,e=rows.length;i<e;++i){
+							var linkedDoc = rows[i].doc;
+							linkedDocsById[linkedDoc._id] = linkedDoc;
+						};
+						updateCanvas();
+					}
+					,onError: function(){}
+				});
+			};
+			
+			// If a document contains layers, report them
+			if( doc.nunaliit_layers ){
+				for(var i=0,e=doc.nunaliit_layers.length;i<e;++i){
+					// Create a fake document to report layer
+					var layerName = doc.nunaliit_layers[i];
+					var doc = {
+						_id: fakeLayerPrefix+layerName
+						,name: layerName
+						,nunaliit_type: '__fakeLayer__'
+					};
+					linkedDocsById[doc._id] = doc;
+				};
+				updateCanvas();
+			};
+			
+			// If a document is representing a layer, then fetch all
+			// documents associated with layer
+			if( doc.nunaliit_type === '__fakeLayer__' ){
+				atlasDesign.queryView({
+					viewName: 'layers'
+					,startkey: doc.name
+					,endkey: doc.name
+					,include_docs: true
+					,onSuccess: function(rows){
+						for(var i=0,e=rows.length;i<e;++i){
+							var linkedDoc = rows[i].doc;
+							linkedDocsById[linkedDoc._id] = linkedDoc;
+						};
+						updateCanvas();
+					}
+					,onError: function(){}
+				});
+			};
 		};
 		
 		function findForwardLinks(){
 			var links = [];
 			$n2.couchUtils.extractLinks(selectedDoc,links);
-			var missingIdMap = {};
+			var docIds = [];
 			for(var i=0,e=links.length;i<e;++i){
 				var refId = links[i].doc;
-				if( !linkedDocsById[refId] ){
-					missingIdMap[refId] = true;
+				docIds.push(refId);
+			};
+			requestDocumentsById(docIds);
+		};
+		
+		function requestDocumentsById(docIds){
+			var idsToRequest = [];
+			if( docIds ) {
+				for(var i=0,e=docIds.length;i<e;++i){
+					var docId = docIds[i];
+					if( !requestedDocsById[docId] 
+					 && !linkedDocsById[docId] ){
+						idsToRequest.push(docId);
+						requestedDocsById[docId] = true;
+					};
 				};
 			};
-			var missingRefIds = [];
-			for(var refId in missingIdMap){
-				missingRefIds.push(refId);
-			};
-			if( missingRefIds.length ){
+			
+			if( idsToRequest.length ){
 				atlasDb.getDocuments({
-					docIds: missingRefIds
+					docIds: idsToRequest
 					,onSuccess: function(docs){
 						for(var i=0,e=docs.length;i<e;++i){
 							var linkedDoc = docs[i];
@@ -359,6 +461,14 @@
 			container: $graphAppDiv[0]
 			,idFn: function(d){ return d._id; }
 			,textFn: function(d){ return d._id; }
+			,colourFn: function(d){
+				if( d.nunaliit_type === 'schema' ){
+					return '#44ff44';
+				} else if( d.nunaliit_type === '__fakeLayer__' ){
+					return '#ffff44';
+				};
+				return '#6666ff';
+			}
 			,onSelect: function(d){ selectDocId(d._id); }
 		});
 		
@@ -373,28 +483,6 @@
 				alert('Unable to retrieve a referenced document');
 			}
 		});
-		
-//		atlasDb.listAllDocuments({
-//			onSuccess: function(docIds){
-//				if( docIds && docIds.length ){
-//					var index = Math.floor(Math.random() * docIds.length);
-//					var docId = docIds[index];
-//					selectDocId(docId);
-//				};
-//			}
-//			,onError: function(errorMsg){
-//				alert('Can not get list of documents');
-//			}
-//		});
-		
-//		$graphAppDiv
-//			.empty()
-//			.append( $('<div class="graphAppButtons"><div>') )
-//			.append( $('<div class="graphAppCanvas"><div>') )
-//			.append( $('<div class="graphAppViewer"><div>') )
-//			;
-//
-//		$graphAppDiv.find('#graphAppCanvas').append( $('<svg xmlns="http://www.w3.org/2000/svg"></svg>') );
 		
 		log( _loc('Graph application started') );
 	};
