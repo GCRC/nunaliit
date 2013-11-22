@@ -1,0 +1,82 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+		<meta http-equiv="Access-Control-Allow-Origin" content="*" />
+		<meta http-equiv="Access-Control-Allow-Methods" content="HEAD,OPTIONS,GET,POST,PUT,DELETE" />
+		<meta http-equiv="Access-Control-Allow-Headers" content="Content-Type,Server,Date,Content-Length,Cache-Control,Keep-Alive,Connection" />
+		<meta http-equiv="Access-Control-Max-Age" content="1728000" />
+
+		<title>Combo Box</title>
+		
+		<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/themes/base/jquery-ui.css" type="text/css" media="all"/>
+	</head>
+	<body>
+		<h1>Combo Box</h1>
+		
+		<select id="dropbutton">
+			<option value="">Add...</option>
+			<option value="org.nunaliit.schema:doc">Document</option>
+			<option value="org.nunaliit.schema:media">Media</option>
+			<option value="org.nunaliit.schema:long">Super long option with a lot of text to see how the button reacts</option>
+		 </select>
+
+		<select id="menuselector">
+			<option value="">Add...</option>
+			<option value="org.nunaliit.schema:doc">Document</option>
+			<option value="org.nunaliit.schema:media">Media</option>
+			<option value="org.nunaliit.schema:long">Super long option with a lot of text to see how the button reacts</option>
+		 </select>
+
+		<select id="regular">
+			<option value="">Add...</option>
+			<option value="org.nunaliit.schema:doc">Document</option>
+			<option value="org.nunaliit.schema:media">Media</option>
+			<option value="org.nunaliit.schema:long">Super long option with a lot of text to see how the button reacts</option>
+		 </select>
+
+		<script type="text/javascript" src="http://codeorigin.jquery.com/jquery-1.10.2.js"></script>
+		<script type="text/javascript" src="http://codeorigin.jquery.com/ui/1.9.2/jquery-ui.js"></script>
+		
+		<script type="text/javascript" src="../nunaliit2-debug.js"></script>
+
+		<script type="text/javascript">
+			// <!--
+
+			function main() {
+				
+				$( '#dropbutton' ).dropselector();
+				$( '#menuselector' ).menuselector();
+				
+				$('#regular').change(function(){
+					var val = $(this).val();
+					$(this).val('');
+					alert('Selected Regular: '+val);
+				});
+				$('#dropbutton').change(function(){
+					var val = $(this).val();
+					$(this).val('');
+					alert('Selected Drop Button: '+val);
+				});
+				$('#menuselector').change(function(){
+					var val = $(this).val();
+					$(this).val('');
+					alert('Selected via Menu: '+val);
+				});
+			};
+
+			var loaded = false;
+			jQuery().ready(function() {
+				if( loaded ) return;
+
+				if( nunaliit2 ) {
+					$n2 = nunaliit2;
+					
+					main();
+					loaded = true;
+				};
+			});
+			// -->
+		</script>
+	</body>
+</html>

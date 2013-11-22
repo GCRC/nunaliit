@@ -477,6 +477,7 @@ $n2.couchDisplay = $n2.Class({
 		
 		var firstButton = true;
 		var dispatcher = this._getDispatcher();
+		var schemaRepository = _this._getSchemaRepository();
 
  		// Show 'focus' button
  		if( opt.focus 
@@ -560,15 +561,56 @@ $n2.couchDisplay = $n2.Class({
 	 			} else {
 	 				$buttons.append( $('<span>&nbsp;</span>') );
 	 			};
-				var $addRelatedButton = $('<a href="#"></a>');
-				var addRelatedText = _loc('Add Related Item');
-				$addRelatedButton.text( addRelatedText );
-				$buttons.append($addRelatedButton);
-				$addRelatedButton.click(function(){
-					_this._addRelatedDocument(data._id, opt.schema.relatedSchemaNames);
+//				var $addRelatedButton = $('<a href="#"></a>');
+//				var addRelatedText = _loc('Add Related Item');
+//				$addRelatedButton.text( addRelatedText );
+//				$buttons.append($addRelatedButton);
+//				$addRelatedButton.click(function(){
+//					_this._addRelatedDocument(data._id, opt.schema.relatedSchemaNames);
+//					return false;
+//				});
+//				addClasses($addRelatedButton, 'add_related_item');
+
+	 			var selectId = $n2.getUniqueId();
+				var $addRelatedButton = $('<select>')
+					.attr('id',selectId)
+					.appendTo($buttons);
+				$('<option>')
+					.text( _loc('Add Related Item') )
+					.val('')
+					.appendTo($addRelatedButton);
+				for(var i=0,e=opt.schema.relatedSchemaNames.length; i<e; ++i){
+					var schemaName = opt.schema.relatedSchemaNames[i];
+					$('<option>')
+						.text(schemaName)
+						.val(schemaName)
+						.appendTo($addRelatedButton);
+					
+					if( schemaRepository ){
+						schemaRepository.getSchema({
+							name: schemaName
+							,onSuccess: function(schema){
+								$('#'+selectId).find('option').each(function(){
+									var $option = $(this);
+									if( $option.val() === schema.name
+									 && schema.label ){
+										$option.text(schema.label);
+									};
+								});
+							}
+						});
+					};
+				};
+				
+				$addRelatedButton.change(function(){
+					var val = $(this).val();
+					$(this).val('');
+					_this._addRelatedDocument(data._id, [val]);
 					return false;
 				});
 				addClasses($addRelatedButton, 'add_related_item');
+				
+				$addRelatedButton.menuselector();
 			};
 		};
 		

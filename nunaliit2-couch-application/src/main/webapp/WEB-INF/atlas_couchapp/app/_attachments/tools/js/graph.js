@@ -8,7 +8,6 @@
 	var serverDesign = null;
 	var schemaRepository = null;
 	var showService = null;
-	var $graphAppDiv = null;
 	var graphApp = null;
 	
 	// -----------------------------------------------------------------
@@ -451,14 +450,27 @@
 			showService = config.directory.showService;
 		};
 		
-		$graphAppDiv = $(opts.div);
+		var $graphAppDiv = $(opts.div);
 		
 		if( opts.title ) {
 			$(opts.title).text( _loc('Nunaliit Graph') );
 		};
 		
+		var $buttons = $('<div class="graphApp_buttons"></div>')
+			.appendTo($graphAppDiv);
+		
+		$('<button></button>')
+			.text('Schema')
+			.click(function(){
+				selectDocId('org.nunaliit.schema:schema');
+			})
+			.appendTo($buttons);
+		
+		var $canvas = $('<div class="graphApp_canvas"></div>')
+			.appendTo($graphAppDiv);
+		
 		graphApp = new RelationGraph({
-			container: $graphAppDiv[0]
+			container: $canvas[0]
 			,idFn: function(d){ return d._id; }
 			,textFn: function(d){ return d._id; }
 			,colourFn: function(d){

@@ -403,7 +403,7 @@ var AuthService = $n2.Class({
 		this._userLogin(options, true);
 	}
 	
-	,_createLoginDialog: function(dialogId, opts_){
+	,_fillDialogWithLogin: function(dialogId, opts_){
 		var opts = $n2.extend({
 			prompt: null
 			,onSuccess: function(context){}
@@ -478,7 +478,7 @@ var AuthService = $n2.Class({
 				.appendTo($createLine)
 				.text( _loc('Create a new user') )
 				.click(function(){
-					_this._createUserCreationDialog(dialogId, opts_);
+					_this._fillDialogWithUserCreation(dialogId, opts_);
 					return false;
 				});
 			
@@ -490,22 +490,23 @@ var AuthService = $n2.Class({
 		// Populate current dialog div
 		$dialog.empty().append($authDiag);
 		
-		// Capture enter key
-		$dialog.find('.n2Auth_input_field').keydown(function(e){
-			var charCode = null;
-			if( null === e ) {
-				e = window.event; // IE
-			};
-			if( null !== e ) {
-				if( e.keyCode ) {
-					charCode = e.keyCode;
-				};
-			};
-			
-			if( 13 === charCode ) {
-				performLogin();
-			};
-		});
+		// Capture enter key (not needed since enter key triggers submit in a
+		// form)
+//		$dialog.find('.n2Auth_input_field').keydown(function(e){
+//			var charCode = null;
+//			if( null === e ) {
+//				e = window.event; // IE
+//			};
+//			if( null !== e ) {
+//				if( e.keyCode ) {
+//					charCode = e.keyCode;
+//				};
+//			};
+//			
+//			if( 13 === charCode ) {
+//				performLogin();
+//			};
+//		});
 		
 		// Adjust dialog title
 		if( opts.prompt ) {
@@ -527,7 +528,7 @@ var AuthService = $n2.Class({
 		};
 	}
 	
-	,_createUserCreationDialog: function(dialogId, opts_){
+	,_fillDialogWithUserCreation: function(dialogId, opts_){
 		var opts = $n2.extend({
 			prompt: null
 			,onSuccess: function(context){}
@@ -579,7 +580,7 @@ var AuthService = $n2.Class({
 			.text( _loc('Cancel') )
 			.button({icons:{primary:'ui-icon-cancel'}})
 			.click(function(){
-				_this._createLoginDialog(dialogId, opts);
+				_this._fillDialogWithLogin(dialogId, opts);
 				return false;
 			});
 		$dialog.find('.n2Auth_input_field').keydown(function(e){
@@ -660,7 +661,7 @@ var AuthService = $n2.Class({
 		var $dialog = $('<div id="'+dialogId+'"></div>');
 		$(document.body).append($dialog);
 		
-		this._createLoginDialog(dialogId, {
+		this._fillDialogWithLogin(dialogId, {
 			prompt: opts.prompt
 			,onSuccess: function(context){
 				$('#'+dialogId).dialog('close');

@@ -50,140 +50,207 @@ if( browserInfo && browserInfo.browser === 'Explorer' ){
 };
 
 // Custom Drop-Down widget
-$.widget( 'nunaliit.combobox', {
+$.widget( 'nunaliit.dropselector', {
 	_create: function() {
-		this.wrapper = $('<span>').addClass('nunaliit-combobox')
+		this.wrapper = $('<span>').addClass('nunaliit-dropselector')
 			.insertAfter(this.element);
 
 		this.element.hide();
-		this._createAutocomplete();
-		this._createShowAllButton();
-	}
-
-	,_createAutocomplete: function() {
-		var selected = this.element.children(':selected')
-			,value = selected.val() ? selected.text() : '';
-
-		this.input = $('<input>')
-			.appendTo(this.wrapper)
-			.val(value)
-			.attr('title', '')
-			.addClass('custom-combobox-input ui-widget ui-widget-content ui-state-default ui-corner-left')
-			.autocomplete({
-				delay : 0,
-				minLength : 0,
-				source : $.proxy(this, '_source')
-			})
-			.tooltip({
-				tooltipClass : 'ui-state-highlight'
-			});
-
-		this._on(
-			this.input
-			,{
-				autocompleteselect: function(event, ui) {
-					ui.item.option.selected = true;
-					this._trigger('select', event, {
-						item : ui.item.option
-					});
-				}
-				,autocompletechange: '_removeIfInvalid'
-			}
-		);
+		this._createButton();
+		this._createMenu();
 	}
 	
-	,_createShowAllButton: function() {
-		var input = this.input, wasOpen = false;
+	,_createButton: function() {
 
-		$('<a>')
-			.attr('tabIndex', -1)
-			.attr('title','Show All Items')
-			.tooltip()
+		var wrapper = this.wrapper
+			,buttonText = this.element.find('option').first().text()
+			,clickFn = $.proxy(this._toggleMenu,this);
+		
+		this.button = $('<button>')
 			.appendTo(this.wrapper)
+			.text(buttonText)
 			.button({
 				icons: {
-					primary : 'ui-icon-triangle-1-s'
+					primary: 'ui-icon-triangle-1-s'
 				}
-				,text: false
+				,text: true
 			})
-			.removeClass('ui-corner-all')
-			.addClass('custom-combobox-toggle ui-corner-right')
-			.mousedown(function() {
-				wasOpen = input.autocomplete('widget').is(':visible');
-			})
-			.click(function() {
-				input.focus();
-
-				// Close if already visible
-				if( wasOpen ) {
-					return;
-				}
-
-				// Pass empty string as value to search
-				// for, displaying all results
-				input.autocomplete('search', '');
-			});
+			.addClass('nunaliit-dropselector-button')
+			.click(clickFn);
 	}
 
-	,_source: function(request, response) {
-		var matcher = new RegExp($.ui.autocomplete.escapeRegex(request.term), 'i');
-		response(
-			this.element.children('option').map(
-				function() {
-					var text = $(this).text();
-					if (this.value
-					 && (!request.term || matcher.test(text)) ) {
-						return {
-							label : text,
-							value : text,
-							option : this
-						};
-					};
-				}
-			)
-		);
+	,_createMenu: function() {
+
+		var _this = this;
+		
+		this.menuParent = $('<div>')
+			.addClass('nunaliit-dropselector-menu-wrapper')
+			.css('position','absolute')
+			.appendTo(this.wrapper)
+			.hide();
+			
+		var $menu = $('<ul>')
+			.appendTo(this.menuParent)
+			.addClass('nunaliit-dropselector-menu');
+		
+		this.element.find('option').each(function(){
+			var $opt = $(this);
+			
+			var value = $opt.val();
+			if( value ) {
+				var $li = $('<li>').appendTo($menu);
+				$('<a>')
+					.appendTo($li)
+					.attr('href','#')
+					.text($opt.text())
+					.click(createClickHandler(value))
+					;
+			};
+		});
+		
+		$menu.menu();
+		
+		function createClickHandler(value){
+			return function(){
+				_this._click(value);
+			};
+		};
 	}
 	
-	,_removeIfInvalid: function(event, ui) {
-
-		// Selected an item, nothing to do
-		if (ui.item) {
-			return;
+	,_toggleMenu: function(){
+		var wrapper = this.wrapper
+			,menu = wrapper.find('.nunaliit-dropselector-menu-wrapper');
+		
+		// Close if already visible
+		if( menu.is(':visible') ) {
+			$(wrapper).find('.ui-button-icon-primary')
+				.removeClass('ui-icon-triangle-1-n')
+				.addClass('ui-icon-triangle-1-s');
+			menu.hide();
+		} else {
+			$(wrapper).find('.ui-button-icon-primary')
+				.removeClass('ui-icon-triangle-1-s')
+				.addClass('ui-icon-triangle-1-n');
+			menu
+				.show()
+				.position({
+					my:'left top'
+					,at: 'left bottom'
+					,collision: 'none'
+					,of: this.button
+				})
+				;
 		};
+	}
 
-		// Search for a match (case-insensitive)
-		var value = this.input.val()
-			,valueLowerCase = value.toLowerCase()
-			,valid = false;
+	,_click: function(value) {
+		this._toggleMenu();
+		this.element.val(value);
+		this.element.trigger('change');
+	}
+	
+	,_destroy : function() {
+		this.wrapper.remove();
+		this.element.show();
+	}
+});
 
-		this.element
-			.children('option')
-			.each(function() {
-				if( $(this).text().toLowerCase() === valueLowerCase ) {
-					this.selected = valid = true;
-					return false;
-				}
+// Custom Menu for <select> elements
+$.widget( 'nunaliit.menuselector', {
+	_create: function() {
+		var _this = this;
+
+		this.wrapper = $('<span>')
+			.addClass('nunaliit-menuselector')
+			.insertAfter(this.element);
+		
+		var classes = this.element.attr('class');
+		
+		var text = this.element.find('option').first().text();
+		this.button = $('<select>')
+			.appendTo(this.wrapper)
+			.mousedown(function(e){
+				_this._toggleMenu();
+				return false;
 			});
-
-		// Found a match, nothing to do
-		if (valid) {
-			return;
+		if( classes ){
+			this.button.attr('class',classes);
 		};
+		$('<option>')
+			.text(text)
+			.appendTo(this.button);
 
-		// Remove invalid value
-		this.input
-			.val('')
-			.attr('title',value + ' didn\'t match any item')
-			.tooltip('open');
-		this.element.val('');
-		this._delay(function() {
-			this.input
-				.tooltip('close')
-				.attr('title', '');
-			}
-			,2500
-		);
-		this.input.data('ui-autocomplete').term = '';
+		this.menu = $('<div>')
+			.addClass('nunaliit-menuselector')
+			.css('position','absolute')
+			.css('left','0px')
+			.css('top','0px')
+			.css('display','block')
+			.css('z-index',1000)
+			.hide()
+			.appendTo(this.wrapper);
+
+		this.element.hide();
+	}
+	
+	,_createMenu: function(wrapper) {
+
+		var _this = this;
+		
+		var $menu = $('<ul>')
+			.appendTo(wrapper)
+			.addClass('nunaliit-menuselector-menu');
+		
+		this.element.find('option').each(function(){
+			var $opt = $(this);
+			
+			var value = $opt.val();
+			if( value ) {
+				var $li = $('<li>').appendTo($menu);
+				$('<a>')
+					.appendTo($li)
+					.attr('href','#')
+					.text($opt.text())
+					.click(createClickHandler(value))
+					;
+			};
+		});
+		
+		$menu.menu();
+		
+		function createClickHandler(value){
+			return function(){
+				_this._click(value);
+				return false;
+			};
+		};
+	}
+	
+	,_toggleMenu: function(){
+		var wrapper = this.wrapper
+			,menu = wrapper.children('div');
+		
+		// Close if already visible
+		if( menu.is(':visible') ) {
+			menu.empty();
+			menu.hide();
+		} else {
+			this._createMenu(menu);
+			menu.show();
+			menu.position({
+					my:'left top'
+					,at: 'left bottom'
+					//,collision: 'none'
+					,of: this.button
+				})
+				;
+		};
+	}
+	
+	,_click: function(value) {
+		this._toggleMenu();
+		this.element.val(value);
+		this.element.trigger('change');
 	}
 	
 	,_destroy : function() {
