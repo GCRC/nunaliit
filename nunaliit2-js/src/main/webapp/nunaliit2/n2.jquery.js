@@ -49,115 +49,31 @@ if( browserInfo && browserInfo.browser === 'Explorer' ){
 	};
 };
 
-// Custom Drop-Down widget
-$.widget( 'nunaliit.dropselector', {
-	_create: function() {
-		this.wrapper = $('<span>').addClass('nunaliit-dropselector')
-			.insertAfter(this.element);
-
-		this.element.hide();
-		this._createButton();
-		this._createMenu();
-	}
-	
-	,_createButton: function() {
-
-		var wrapper = this.wrapper
-			,buttonText = this.element.find('option').first().text()
-			,clickFn = $.proxy(this._toggleMenu,this);
-		
-		this.button = $('<button>')
-			.appendTo(this.wrapper)
-			.text(buttonText)
-			.button({
-				icons: {
-					primary: 'ui-icon-triangle-1-s'
-				}
-				,text: true
-			})
-			.addClass('nunaliit-dropselector-button')
-			.click(clickFn);
-	}
-
-	,_createMenu: function() {
-
-		var _this = this;
-		
-		this.menuParent = $('<div>')
-			.addClass('nunaliit-dropselector-menu-wrapper')
-			.css('position','absolute')
-			.appendTo(this.wrapper)
-			.hide();
-			
-		var $menu = $('<ul>')
-			.appendTo(this.menuParent)
-			.addClass('nunaliit-dropselector-menu');
-		
-		this.element.find('option').each(function(){
-			var $opt = $(this);
-			
-			var value = $opt.val();
-			if( value ) {
-				var $li = $('<li>').appendTo($menu);
-				$('<a>')
-					.appendTo($li)
-					.attr('href','#')
-					.text($opt.text())
-					.click(createClickHandler(value))
-					;
-			};
-		});
-		
-		$menu.menu();
-		
-		function createClickHandler(value){
-			return function(){
-				_this._click(value);
-			};
-		};
-	}
-	
-	,_toggleMenu: function(){
-		var wrapper = this.wrapper
-			,menu = wrapper.find('.nunaliit-dropselector-menu-wrapper');
-		
-		// Close if already visible
-		if( menu.is(':visible') ) {
-			$(wrapper).find('.ui-button-icon-primary')
-				.removeClass('ui-icon-triangle-1-n')
-				.addClass('ui-icon-triangle-1-s');
-			menu.hide();
-		} else {
-			$(wrapper).find('.ui-button-icon-primary')
-				.removeClass('ui-icon-triangle-1-s')
-				.addClass('ui-icon-triangle-1-n');
-			menu
-				.show()
-				.position({
-					my:'left top'
-					,at: 'left bottom'
-					,collision: 'none'
-					,of: this.button
-				})
-				;
-		};
-	}
-
-	,_click: function(value) {
-		this._toggleMenu();
-		this.element.val(value);
-		this.element.trigger('change');
-	}
-	
-	,_destroy : function() {
-		this.wrapper.remove();
-		this.element.show();
-	}
-});
-
-// Custom Menu for <select> elements
+/*
+ *  jQuery-UI Widget: menuselector
+ * 
+ *  This is a widget that should be installed on a <select> element for
+ *  making it easier to style the drop-down list.
+ *  
+ *  Usage:
+ *  	$elem.menuselector(options);
+ *  
+ *  Example:
+ *  	<select id="sel">
+ *  		<option>Select one...</option>
+ *  		<option value="first">ABC</option>
+ *  		<option value="second">DEF</option>
+ *  	</select>
+ *  
+ *  	$('#sel').menuselector();
+ */
 $.widget( 'nunaliit.menuselector', {
-	_create: function() {
+	
+	options: {
+		menuClass: null
+	}
+
+	,_create: function() {
 		var _this = this;
 
 		this.wrapper = $('<span>')
@@ -200,6 +116,10 @@ $.widget( 'nunaliit.menuselector', {
 		var $menu = $('<ul>')
 			.appendTo(wrapper)
 			.addClass('nunaliit-menuselector-menu');
+		
+		if( this.options.menuClass ){
+			$menu.addClass(this.options.menuClass);
+		};
 		
 		this.element.find('option').each(function(){
 			var $opt = $(this);
