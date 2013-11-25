@@ -34,6 +34,7 @@ function main_init(config) {
 		,config: config
 		,titleName: 'title'
 		,moduleTitleName: 'module_title'
+		,loginPanels: $('#login1,#login2')
 		,contentName: 'content'
 		,navigationName: 'navigation'
 		,navigationDoc: 'navigation.demo'

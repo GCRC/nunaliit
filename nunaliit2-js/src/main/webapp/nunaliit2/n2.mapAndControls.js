@@ -2329,10 +2329,12 @@ var MapAndControls = $n2.Class({
 			bg = getDefaultGoogleLayers();
 		};
 		
-		for(var i=0,e=bg.length;i<e;++i){
-			var bgLayer = bg[i];
-			
-			this.mapLayers.push( bgLayer );
+		if( bg ) {
+			for(var i=0,e=bg.length;i<e;++i){
+				var bgLayer = bg[i];
+				
+				this.mapLayers.push( bgLayer );
+			};
 		};
 		
 		return(bg);

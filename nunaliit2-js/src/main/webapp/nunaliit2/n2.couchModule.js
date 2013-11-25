@@ -215,7 +215,7 @@ var ModuleDisplay = $n2.Class({
 
 	,searchPanelName: null
 	
-	,loginPanelName: null
+	,loginPanelNames: null
 	
 	,navigationName: null
 	
@@ -245,6 +245,7 @@ var ModuleDisplay = $n2.Class({
 			,filterPanelName: 'filters'
 			,searchPanelName: 'searchInput'
 			,loginPanelName: 'login'
+			,loginPanels: null
 			,navigationName: 'navigation'
 			,navigationDoc: null
 			,languageSwitcherName: null
@@ -275,7 +276,6 @@ var ModuleDisplay = $n2.Class({
 		this.sidePanelName = opts.sidePanelName;
 		this.filterPanelName = opts.filterPanelName;
 		this.searchPanelName = opts.searchPanelName;
-		this.loginPanelName = opts.loginPanelName;
 		this.navigationName = opts.navigationName;
 		this.navigationDoc = opts.navigationDoc;
 		this.titleName = opts.titleName;
@@ -283,6 +283,22 @@ var ModuleDisplay = $n2.Class({
 		this.languageSwitcherName = opts.languageSwitcherName;
 		this.helpButtonName = opts.helpButtonName;
 		this.styleMapFn = opts.styleMapFn;
+
+		// Login panels
+		this.loginPanelNames = [];
+		if( opts.loginPanels ){
+			$(opts.loginPanels).each(function(){
+				var $loginPanel = $(this);
+				var id = $loginPanel.attr('id');
+				if( !id ){
+					id = $n2.getUniqueId();
+					$loginPanel.attr('id',id);
+				};
+				_this.loginPanelNames.push(id);
+			});
+		} else if( opts.loginPanelName ) {
+			this.loginPanelNames.push(opts.loginPanelName);
+		};
 		
 		// dispatcher
 		var d = this._getDispatcher();
@@ -298,9 +314,12 @@ var ModuleDisplay = $n2.Class({
 		var atlasDesign = config.atlasDesign;
 		
 		// Set up login widget
-		config.directory.authService.createAuthWidget({
-			elemId: this.loginPanelName
-		});
+		for(var i=0,e=this.loginPanelNames.length;i<e;++i){
+			var loginPanelName = this.loginPanelNames[i];
+			config.directory.authService.createAuthWidget({
+				elemId: loginPanelName
+			});
+		};
 		
 		/*
 		 * Get module document, if required.
