@@ -161,13 +161,22 @@
 }
 
 /* Search */
-.n2_content_searchInput {
+.n2_content_contains_map .n2_content_searchInput {
 	position: absolute;
-	right: 0;
 	top: 0;
+	right: 0;
 	height: 43px;
 	width: 410px;
-	bottom: 20px;
+	overflow: visible;
+	z-index: 8;
+}
+.n2_content_contains_no_map .n2_content_searchInput {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 43px;
+	width: auto;
 	overflow: visible;
 	z-index: 8;
 }
