@@ -314,22 +314,35 @@ $Id: n2.sliderWithCallout.js 8165 2012-05-31 13:14:37Z jpfiset $
 		 *   as a rough means of centering.
 		 */
 		,_createHtml: function() {
-			var slider = $('<div class="slider_wrapper slider_wrapper_callout"></div>');
-			$('#' + this.options.containerId).empty().append(slider);
-			slider.append(
-				'<div id="' + this.options.idBase + '_callout" class="slider_callout" style="width:0px;height:0px;padding:0px;margin:0px;border:none"></div>' +
-				'<div id="' + this.options.idBase +'" class="slider_bar"></div>'
-			);
+			var container = $('#' + this.options.containerId).empty();
+			var slider = $('<div>')
+				.addClass('slider_wrapper slider_wrapper_callout')
+				.appendTo(container);
+			var sliderCallout = $('<div>')
+				.attr('id',this.options.idBase + '_callout')
+				.addClass('slider_callout')
+				.attr('style','width:0px;height:0px;padding:0px;margin:0px;border:none')
+				.appendTo(slider);
+			$('<div>')
+				.attr('id',this.options.idBase)
+				.addClass('slider_bar')
+				.appendTo(slider);
 			/*
 			 * Some browsers (e.g., Safari) may break a text element at a dash/minus sign unless a large enough
 			 * width is specified.  If needed, add a width element to the CSS tied to the slider IDs assigned below.
 			 * The elements below properly left or right align things so specifying the width is hopefully all that
 			 * is required.
 			 */
-			$('#' + this.options.idBase + '_callout').append(
-					'<div id="' + this.options.idBase + '_calloutTextLeft" style="position:absolute;right:0px;bottom:0px;text-align:right;"></div>' +
-					'<div id="' + this.options.idBase + '_calloutTextRight" style="position:absolute;left:0px;bottom:0px;text-align:left;"></div>'
-			);
+			$('<div>')
+				.attr('id',this.options.idBase + '_calloutTextLeft')
+				.addClass('slider_callout_text_left')
+				.attr('style','position:absolute;right:0px;bottom:0px;text-align:right;')
+				.appendTo(sliderCallout);
+			$('<div>')
+				.attr('id',this.options.idBase + '_calloutTextRight')
+				.addClass('slider_callout_text_right')
+				.attr('style','position:absolute;left:0px;bottom:0px;text-align:left;')
+				.appendTo(sliderCallout);
 			return slider;
 		}
 		
