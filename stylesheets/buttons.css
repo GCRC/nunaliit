@@ -5,12 +5,12 @@
     text-align: center;
     vertical-align: middle;
     padding: 12px 15px;
-    border: 1px solid #3e7bad;
+    border: 1px solid #3090c0;
     border-radius: 8px;
     background: #992828;
-    background: -webkit-gradient(linear, left top, left bottom, from(#3090c0), to(#3091ff));
-    background: -moz-linear-gradient(top, #3090c0, #3091ff);
-    background: linear-gradient(to bottom, #3090c0, #3091ff);
+    background: -webkit-gradient(linear, left top, left bottom, from(#3090c0), to(#3090c0));
+    background: -moz-linear-gradient(top, #3090c0, #3090c0);
+    background: linear-gradient(to bottom, #3090c0, #3090c0);
     -webkit-box-shadow: #b3b3b3 0px 0px 6px 0px;
     -moz-box-shadow: #b3b3b3 0px 0px 6px 0px;
     box-shadow: #b3b3b3 0px 0px 6px 0px;
@@ -21,19 +21,19 @@
 }
 .documentation_button:hover,
 .documentation_button:focus {
-    border: 1px solid ##58aff7;
+    border: 1px solid #3ebbfa;
     background: #992828;
-    background: -webkit-gradient(linear, left top, left bottom, from(#3aade6), to(#3aaeff));
-    background: -moz-linear-gradient(top, #3aade6, #3aaeff);
-    background: linear-gradient(to bottom, #3aade6, #3aaeff);
+    background: -webkit-gradient(linear, left top, left bottom, from(#3aade6), to(#3aade6));
+    background: -moz-linear-gradient(top, #3aade6, #3aade6);
+    background: linear-gradient(to bottom, #3aade6, #3aade6);
     color: #ffffff;
     text-decoration: none;
 }
 .documentation_button:active {
     background: #982727;
-    background: -webkit-gradient(linear, left top, left bottom, from(#1d5673), to(#3091ff));
-    background: -moz-linear-gradient(top, #1d5673, #3091ff);
-    background: linear-gradient(to bottom, #1d5673, #3091ff);
+    background: -webkit-gradient(linear, left top, left bottom, from(#1d5673), to(#3090c0));
+    background: -moz-linear-gradient(top, #1d5673, #3090c0);
+    background: linear-gradient(to bottom, #1d5673, #3090c0);
 }
 .documentation_button:before{
     content:  "\0000a0";
@@ -54,12 +54,12 @@
     text-align: center;
     vertical-align: middle;
     padding: 12px 15px;
-    border: 1px solid #3e7bad;
+    border: 1px solid #3090c0;
     border-radius: 8px;
     background: #992828;
-    background: -webkit-gradient(linear, left top, left bottom, from(#3090c0), to(#3091ff));
-    background: -moz-linear-gradient(top, #3090c0, #3091ff);
-    background: linear-gradient(to bottom, #3090c0, #3091ff);
+    background: -webkit-gradient(linear, left top, left bottom, from(#3090c0), to(#3090c0));
+    background: -moz-linear-gradient(top, #3090c0, #3090c0);
+    background: linear-gradient(to bottom, #3090c0, #3090c0);
     -webkit-box-shadow: #b3b3b3 0px 0px 6px 0px;
     -moz-box-shadow: #b3b3b3 0px 0px 6px 0px;
     box-shadow: #b3b3b3 0px 0px 6px 0px;
@@ -70,19 +70,19 @@
 }
 .download_button:hover,
 .download_button:focus {
-    border: 1px solid ##58aff7;
+    border: 1px solid #3ebbfa;
     background: #992828;
-    background: -webkit-gradient(linear, left top, left bottom, from(#3aade6), to(#3aaeff));
-    background: -moz-linear-gradient(top, #3aade6, #3aaeff);
-    background: linear-gradient(to bottom, #3aade6, #3aaeff);
+    background: -webkit-gradient(linear, left top, left bottom, from(#3aade6), to(#3aade6));
+    background: -moz-linear-gradient(top, #3aade6, #3aade6);
+    background: linear-gradient(to bottom, #3aade6, #3aade6);
     color: #ffffff;
     text-decoration: none;
 }
 .download_button:active {
     background: #982727;
-    background: -webkit-gradient(linear, left top, left bottom, from(#1d5673), to(#3091ff));
-    background: -moz-linear-gradient(top, #1d5673, #3091ff);
-    background: linear-gradient(to bottom, #1d5673, #3091ff);
+    background: -webkit-gradient(linear, left top, left bottom, from(#1d5673), to(#3090c0));
+    background: -moz-linear-gradient(top, #1d5673, #3090c0);
+    background: linear-gradient(to bottom, #1d5673, #3090c0);
 }
 .download_button:before{
     content:  "\0000a0";
@@ -97,3 +97,4 @@
     background: url("data:image/png;base64,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") no-repeat left center transparent;
     background-size: 100% 100%;
 }
+
