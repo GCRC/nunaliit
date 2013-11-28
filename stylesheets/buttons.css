@@ -18,6 +18,7 @@
     font: normal normal bold 20px arial;
     color: #ffffff;
     text-decoration: none;
+    width: 200px;
 }
 .documentation_button:hover,
 .documentation_button:focus {
@@ -67,6 +68,7 @@
     font: normal normal bold 20px arial;
     color: #ffffff;
     text-decoration: none;
+    width: 200px;
 }
 .download_button:hover,
 .download_button:focus {
