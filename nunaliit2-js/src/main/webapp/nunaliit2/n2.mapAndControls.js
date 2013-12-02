@@ -614,6 +614,7 @@ var MapAndControls = $n2.Class({
 	,hoverInfo: null
 	,clickedInfo: null
 	,focusInfo: null
+	,findFeatureInfo: null
 
     // MODES
 	,modes: null
@@ -762,6 +763,10 @@ var MapAndControls = $n2.Class({
 		};
 		this.focusInfo = {
 			fids: {}
+			,features: []
+		};
+		this.findFeatureInfo = {
+			fid: null
 			,features: []
 		};
 
@@ -2140,6 +2145,10 @@ var MapAndControls = $n2.Class({
 						_this.focusInfo.features.push(f);
 						f.isHovered = true;
 					};
+					if( _this.findFeatureInfo.fid === f.fid ){
+						_this.findFeatureInfo.features.push(f);
+						f.n2Intent = 'find';
+					};
 					if( f.cluster ){
 						for(var j=0,k=f.cluster.length; j<k; ++j){
 							var clusterFeature = f.cluster[j];
@@ -2150,6 +2159,10 @@ var MapAndControls = $n2.Class({
 							if( _this.focusInfo.fids[clusterFeature.fid] ){
 								_this.focusInfo.features.push(f);
 								f.isHovered = true;
+							};
+							if( _this.findFeatureInfo.fid === clusterFeature.fid ){
+								_this.findFeatureInfo.features.push(f);
+								f.n2Intent = 'find';
 							};
 						};
 					};
@@ -2428,6 +2441,8 @@ var MapAndControls = $n2.Class({
 	}
 	
 	,_endClicked: function() {
+		this._endFindFeature();
+		
 		if( this.clickedInfo.features ) {
 			for(var i=0,e=this.clickedInfo.features.length;i<e;++i){
 				var feature = this.clickedInfo.features[i];
@@ -2615,6 +2630,37 @@ var MapAndControls = $n2.Class({
 		this.focusInfo.features = [];
 		this.focusInfo.fids = {};
 		this.focusInfo.origin = null;
+	}
+	
+	,_startFindFeature: function(fid, features){
+		this._endFindFeature();
+
+		this.findFeatureInfo.fid = fid;
+		this.findFeatureInfo.features = features;
+
+		if( features ){
+			for(var i=0,e=features.length; i<e; ++i){
+				var f = features[i];
+				if( f ){
+					f.n2Intent = 'find';
+					if( f.layer ) f.layer.drawFeature(f);
+				};
+			};
+		};
+	}
+	
+	,_endFindFeature: function(){
+		
+		for(var i=0,e=this.findFeatureInfo.features.length; i<e; ++i){
+			var f = this.findFeatureInfo.features[i];
+			if( f ) {
+				f.n2Intent = null;
+				if( f.layer ) f.layer.drawFeature(f);
+			};
+		};
+		
+		this.findFeatureInfo.fid = null;
+		this.findFeatureInfo.features = [];
 	}
 
 	,activateSelectFeatureControl: function() {
@@ -4330,7 +4376,7 @@ var MapAndControls = $n2.Class({
 			this._centerMapOnXY(m.x, m.y, m.srsName);
 			var fid = m.fid;
 			var features = this._getMapFeaturesIncludingFid(fid);
-			this._selectedFeaturesSupplement(features, fid);
+			this._startFindFeature(fid, features);
 			
 		} else if( 'searchInitiate' === type ) {
 			this._endClicked();

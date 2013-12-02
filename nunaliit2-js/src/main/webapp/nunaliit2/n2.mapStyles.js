@@ -132,6 +132,13 @@ var defaultDefinition = {
 				}
 			}
 		}
+		,find: {
+			base: {
+				normal: {
+					strokeColor: "#ffff00"
+				}
+			}
+		}
 	}
 };
 	
