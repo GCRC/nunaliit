@@ -1,0 +1,9 @@
+<div class="n2_documentDisplay"><div class="n2_layoutFloat">
+{{#nunaliit_help}}
+	<div>
+		<div class="label n2s_localize">Help</div>
+		<div class="value">{{#:localize}}content{{/:localize}}</div>
+		<div class="end"></div>
+	</div>
+{{/nunaliit_help}}
+</div></div>

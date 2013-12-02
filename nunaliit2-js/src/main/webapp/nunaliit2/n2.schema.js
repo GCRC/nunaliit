@@ -135,7 +135,8 @@ function _localizeString() {
 		s = getDataFromObjectSelector(this, key);
 	};
 
-	if( typeof(s) === 'object' 
+	if( s
+	 && typeof(s) === 'object' 
 	 && s.nunaliit_type === 'localized') {
 		var lang = 'en';
 		if( $n2.l10n && $n2.l10n.getLocale ){
