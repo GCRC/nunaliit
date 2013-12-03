@@ -35,6 +35,55 @@ $Id: n2.couchImportData.js 8456 2012-08-29 01:08:01Z glennbrauen $
 	// Localization
 	var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch-import',args); };
 
+	var StatusLogger = $n2.Class({
+		divId: null
+		
+		,initialize: function(opts_){
+			var opts = $n2.extend({
+				div: null
+			},opts_);
+			
+			if( opts.div ){
+				var $div = $(opts.div);
+				var id = $div.attr('id');
+				if( !id ){
+					id = $n2.getUniqueId();
+					$div.attr('id',id);
+				};
+				this.divId = id;
+			};
+		}
+	
+		,log: function(text){
+			var $log = this._getLog();
+			var id = $n2.getUniqueId();
+			$('<div class="data_import_status"></div>')
+				.attr('id',id)
+				.text(text)
+				.appendTo( $log );
+			return id;
+		}
+		
+		,error: function(text){
+			var $log = this._getLog();
+			var id = $n2.getUniqueId();
+			$('<div class="data_import_status data_import_error"></div>')
+				.attr('id',id)
+				.text('Error: '+text)
+				.appendTo( $log );
+			return id;
+		}
+		
+		,empty: function(){
+			var $log = this._getLog();
+			$log.empty();
+		}
+		
+		,_getLog: function(){
+			return $('#'+this.divId);
+		}
+	});
+
 	/**
 	 * Base class for data importers.  Instantiate one that includes
 	 * a data loading method (e.g. $.getJSON) below or instantiate 
@@ -119,7 +168,8 @@ $Id: n2.couchImportData.js 8456 2012-08-29 01:08:01Z glennbrauen $
 				designDoc: null,
 				atlasDesign: null,
 				dataArray: [], // array of json objects to be converted
-				statusDiv: '', // for output messages
+				statusDiv: null, // for output messages (legacy)
+				logger: null,
 				eraseStatusDiv: true,
 				
 				/*
@@ -182,8 +232,16 @@ $Id: n2.couchImportData.js 8456 2012-08-29 01:08:01Z glennbrauen $
 		
 			initialize: function(opts_) {
 				this.options = $n2.extend({}, this.options, opts_);
-				if (this.options.eraseStatusDiv) {
-					$(this.options.statusDiv).empty();
+				
+				if( this.options.logger ){
+					this.logger = this.options.logger;
+					
+				} else if( this.options.statusDiv ){
+					this.logger = new StatusLogger({div:this.options.statusDiv});
+				};
+				
+				if( this.options.eraseStatusDiv && this.logger ) {
+					this.logger.empty();
 				};
 			},
 			
@@ -401,7 +459,10 @@ $Id: n2.couchImportData.js 8456 2012-08-29 01:08:01Z glennbrauen $
 			 * post a synchronous status message
 			 */
 			postStatusMsgImmediate: function(msg) {
-				$(this.options.statusDiv).append('<div class="data_import_status">' + msg + '</div>');
+				if( this.logger ){
+					return this.logger.log(msg);
+				};
+				return null;
 			},
 			
 			/**
@@ -409,16 +470,17 @@ $Id: n2.couchImportData.js 8456 2012-08-29 01:08:01Z glennbrauen $
 			 * allocated div ID for use later updating
 			 */
 			allocateStatusMsgSpace: function() {
-				var divId = this.statusId++;
-				$(this.options.statusDiv).append('<div id="__otmdi_' + divId + '"class="data_import_status"></div>');
-				return divId;
+				if( this.logger ){
+					return this.logger.log('');
+				};
+				return null;
 			},
 			
 			/**
 			 * Update an asynchronously allocated status space
 			 */
 			updateStatusMsgAsynch: function(msg, id) {
-				$('#__otmdi_'+id).empty().append(msg);
+				if( id ) $('#'+id).text(msg);
 			}
 		});
 		
@@ -439,7 +501,8 @@ $Id: n2.couchImportData.js 8456 2012-08-29 01:08:01Z glennbrauen $
 				atlasDesign: null,
 				dataArray: [], // array of json objects
 				containsGeometry: false, // need to pause for tiling updates?
-				statusDiv: '', // for output messages
+				statusDiv: null, // for output messages (legacy)
+				logger: null,
 				descriptiveLabel: '', // for output messages
 
 				/*
@@ -494,6 +557,7 @@ $Id: n2.couchImportData.js 8456 2012-08-29 01:08:01Z glennbrauen $
 					dataArray: this.options.dataArray,
 					containsGeometry: [ this.options.containsGeometry ],
 					statusDiv: this.options.statusDiv,
+					logger: this.options.logger,
 					descriptiveLabels: [ this.options.descriptiveLabel ],
 					viewNames: [ this.options.viewName ],
 					keyValueFns: [ this.options.keyValueFn ],
@@ -531,7 +595,10 @@ $Id: n2.couchImportData.js 8456 2012-08-29 01:08:01Z glennbrauen $
 		{
 			options: {
 				jsonFile: '',
-				importer: null
+				importer: null,
+				entriesFromData: function(data){
+					return data;
+				}
 			},
 			
 			initialize: function(opts_) {
@@ -543,8 +610,12 @@ $Id: n2.couchImportData.js 8456 2012-08-29 01:08:01Z glennbrauen $
 				$.getJSON(
 					this.options.jsonFile, 
 					function(data, textStatus) {
-						if ($n2.isDefined(data) && $n2.isArray(data)) {
-							this_.options.importer.setDataArray(data);
+						var entries = null;
+						if( data ){
+							entries = this_.options.entriesFromData(data);
+						};
+						if( entries && $n2.isArray(entries) ) {
+							this_.options.importer.setDataArray(entries);
 							this_.options.importer.loadEntry(0);
 						};
 					});
