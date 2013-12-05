@@ -157,4 +157,44 @@ public class MultimediaConverterTest extends TestCase {
 			fail("Unexpected orientation");
 		}
 	}
+
+	public void testMovieWithEscapedFilename() throws Exception {
+		if( false == TestConfiguration.isTestingConfigured() ) return;
+		
+		MultimediaConverterImpl converter = new MultimediaConverterImpl();
+
+		File inFile = TestConfiguration.getTestFile("movie name with spaces.wmv");
+		
+		MultimediaConversionRequest request = new MultimediaConversionRequest();
+		request.setInFile(inFile);
+		request.setThumbnailRequested(true);
+		request.setProgress( new MultimediaTestingProgress() );
+
+		converter.convertVideo(request);
+		
+		// Verify that conversion was performed
+		if( false == request.getOutFile().exists() ){
+			fail("Conversion not performed");
+		}
+	}
+
+	public void testImageWithEscapedFilename() throws Exception {
+		if( false == TestConfiguration.isTestingConfigured() ) return;
+		
+		MultimediaConverterImpl converter = new MultimediaConverterImpl();
+
+		File inFile = TestConfiguration.getTestFile("image name with spaces.gif");
+		
+		MultimediaConversionRequest request = new MultimediaConversionRequest();
+		request.setInFile(inFile);
+		request.setThumbnailRequested(true);
+		request.setProgress( new MultimediaTestingProgress() );
+
+		converter.convertImage(request);
+		
+		// Verify that conversion was performed
+		if( false == request.getOutFile().exists() ){
+			fail("Conversion not performed");
+		}
+	}
 }

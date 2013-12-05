@@ -3,13 +3,16 @@ package ca.carleton.gcrc.olkit.multimedia.utils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.util.Properties;
 
 public class TestConfiguration {
 
-	static public File getTestFile(String resourceName) {
+	static public File getTestFile(String resourceName) throws Exception {
 		URL url = TestConfiguration.class.getClassLoader().getResource(resourceName);
-		return new File(url.getFile());
+		String fileName = url.getFile();
+		String decodedFilename = URLDecoder.decode(fileName,"UTF-8");
+		return new File(decodedFilename);
 	}
 
 	

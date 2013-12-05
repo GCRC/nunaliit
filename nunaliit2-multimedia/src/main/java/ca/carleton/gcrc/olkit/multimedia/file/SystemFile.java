@@ -34,6 +34,7 @@ package ca.carleton.gcrc.olkit.multimedia.file;
 
 import java.io.File;
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,12 +43,19 @@ public class SystemFile {
 	static private Pattern endWithSemiPattern = Pattern.compile("^(.*);$");
 	static private Pattern mp3IdentifierPattern = Pattern.compile("MPEG ADTS");
 
-	static private String runSystemCommand(String command) throws Exception {
+	static private String runSystemCommand(String[] commandArgs) throws Exception {
+		StringWriter sw = new StringWriter();
+		sw.write("|");
+		for(String arg : commandArgs){
+			sw.write(arg);
+			sw.write("|");
+		}
+		
 		String line = null;
 		String error = null;
 		try {
 			Runtime rt = Runtime.getRuntime();
-			Process p = rt.exec( command );
+			Process p = rt.exec( commandArgs );
 			StringBuffer sb = new StringBuffer();
 			InputStream is = p.getInputStream();
 			int b = is.read();
@@ -66,11 +74,11 @@ public class SystemFile {
 				line = null;
 			}
 		} catch (Exception e) {
-			throw new Exception("Error while executing 'file' command: "+command, e);
+			throw new Exception("Error while executing 'file' command: "+sw.toString(), e);
 		}
 		
 		if( null != error ) {
-			throw new Exception("'file' process returned error: "+error+" (command: "+command+")");
+			throw new Exception("'file' process returned error: "+error+" (command: "+sw.toString()+")");
 		}
 		
 		return line;
@@ -82,7 +90,7 @@ public class SystemFile {
 
 		String line = null;
 		try {
-			line = runSystemCommand("file -bnr --mime "+file.getAbsolutePath());
+			line = runSystemCommand(new String[]{"file","-bnr","--mime",file.getAbsolutePath()});
 		} catch (Exception e) {
 			throw new Exception("Error while executing 'file' process", e);
 		}
@@ -99,7 +107,7 @@ public class SystemFile {
 		
 		// Fixes for unknown types
 		if( "application/octet-stream".equals(result.mimeType) ) {
-			String fullReport = runSystemCommand("file "+file.getAbsolutePath());
+			String fullReport = runSystemCommand(new String[]{"file",file.getAbsolutePath()});
 			
 			Matcher mp3IdentifierMatcher = mp3IdentifierPattern.matcher(fullReport);
 			

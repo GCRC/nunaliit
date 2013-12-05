@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.StringWriter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,6 +25,25 @@ public class FFmpegProcessorDefault implements FFmpegProcessor {
 	static public String ffmpegConvertAudioCommand = "avconv -i %1$s -y -acodec libmp3lame -ab 48000 -ac 2 -threads 0 -f mp3 %2$s";
 	static public String ffmpegCreateThumbnailCommand = "avconv -y -ss 00:00:05 -i %1$s -s %3$dx%4$d -r 1 -vframes 1 -f image2 %2$s";
 	
+	static String[] breakUpCommand(String command){
+		String[] commandTokens = command.split(" ");
+		int count = 0;
+		for(String token : commandTokens){
+			if( token.length() > 0 ) ++count;
+		}
+		
+		String[] tokens = new String[count];
+		int index = 0;
+		for(String token : commandTokens){
+			if( token.length() > 0 ) {
+				tokens[index] = token;
+				++index;
+			}
+		}
+		
+		return tokens;
+	}
+	
 	private MultimediaConversionProgress progressTracker;
 	
 	public FFmpegProcessorDefault() {
@@ -39,17 +59,21 @@ public class FFmpegProcessorDefault implements FFmpegProcessor {
 		FFmpegMediaInfoImpl info = new FFmpegMediaInfoImpl(mediafile);
 		
 		Runtime rt = Runtime.getRuntime();
-		String command = null;
+		StringWriter sw = new StringWriter();
 		try {
-			//command = "ffmpeg -i "+mediafile.getAbsolutePath();
-			command = String.format(ffmpegInfoCommand, mediafile.getAbsolutePath());
-			logger.debug(command);
-			Process p = rt.exec(command, null, null);
+			String[] tokens = breakUpCommand(ffmpegInfoCommand);
+			for(int i=0; i<tokens.length; ++i){
+				tokens[i] = String.format(tokens[i], mediafile.getAbsolutePath());
+				if( 0 != i ) sw.write(" ");
+				sw.write(tokens[i]);
+			}
+			logger.debug(sw.toString());
+			Process p = rt.exec(tokens, null, null);
 			InputStream is = p.getErrorStream();
 			InputStreamReader isr = new InputStreamReader(is);
 			info.parseFromFFmpegReader(isr);
 		} catch (IOException e) {
-			throw new Exception("Error while parsing info on command: "+command,e);
+			throw new Exception("Error while parsing info on command: "+sw.toString(),e);
 		}
 		
 		return info;
@@ -65,13 +89,17 @@ public class FFmpegProcessorDefault implements FFmpegProcessor {
 	public void convertVideo(FFmpegMediaInfo inputVideo, File outputFile) throws Exception {
 		
 		Runtime rt = Runtime.getRuntime();
-		String command = null;
+		StringWriter sw = new StringWriter();
 		try {
-			//command = "ffmpeg -i "+inputVideo.file.getAbsolutePath()+" -y -acodec libfaac -ab 48000 -ac 2 -vcodec libx264 -b 128000 -s 320x240 -threads 0 -f mp4 "+outputFile.getAbsolutePath();
-			command = String.format(ffmpegConvertVideoCommand, inputVideo.getFile().getAbsolutePath(), outputFile.getAbsolutePath());
-			
-			logger.debug(command);
-			Process p = rt.exec(command, null, null);
+			String[] tokens = breakUpCommand(ffmpegConvertVideoCommand);
+			for(int i=0; i<tokens.length; ++i){
+				tokens[i] = String.format(tokens[i], inputVideo.getFile().getAbsolutePath(), outputFile.getAbsolutePath());
+				if( 0 != i ) sw.write(" ");
+				sw.write(tokens[i]);
+			}
+			logger.debug(sw.toString());
+
+			Process p = rt.exec(tokens, null, null);
 			InputStream is = p.getErrorStream();
 			InputStreamReader isr = new InputStreamReader(is);
 			BufferedReader bufReader = new BufferedReader(isr);
@@ -94,7 +122,7 @@ public class FFmpegProcessorDefault implements FFmpegProcessor {
 				line = bufReader.readLine();
 			}
 		} catch (IOException e) {
-			throw new Exception("Error while converting video: "+command,e);
+			throw new Exception("Error while converting video: "+sw.toString(),e);
 		}
 	}
 
@@ -108,12 +136,17 @@ public class FFmpegProcessorDefault implements FFmpegProcessor {
 	public void convertAudio(FFmpegMediaInfo inputVideo, File outputFile) throws Exception {
 		
 		Runtime rt = Runtime.getRuntime();
-		String command = null;
+		StringWriter sw = new StringWriter();
 		try {
-			//command = "ffmpeg -i "+inputVideo.file.getAbsolutePath()+" -y -acodec libfaac -ab 48000 -ac 2 -threads 0 -f mp4 "+outputFile.getAbsolutePath();
-			command = String.format(ffmpegConvertAudioCommand, inputVideo.getFile().getAbsolutePath(), outputFile.getAbsolutePath());
-			logger.debug(command);
-			Process p = rt.exec(command, null, null);
+			String[] tokens = breakUpCommand(ffmpegConvertAudioCommand);
+			for(int i=0; i<tokens.length; ++i){
+				tokens[i] = String.format(tokens[i], inputVideo.getFile().getAbsolutePath(), outputFile.getAbsolutePath());
+				if( 0 != i ) sw.write(" ");
+				sw.write(tokens[i]);
+			}
+			logger.debug(sw.toString());
+
+			Process p = rt.exec(tokens, null, null);
 			InputStream is = p.getErrorStream();
 			InputStreamReader isr = new InputStreamReader(is);
 			BufferedReader bufReader = new BufferedReader(isr);
@@ -136,7 +169,7 @@ public class FFmpegProcessorDefault implements FFmpegProcessor {
 				line = bufReader.readLine();
 			}
 		} catch (IOException e) {
-			throw new Exception("Error while converting audio :"+command,e);
+			throw new Exception("Error while converting audio :"+sw.toString(),e);
 		}
 	}
 	
@@ -165,21 +198,26 @@ public class FFmpegProcessorDefault implements FFmpegProcessor {
 		}
 		
 		Runtime rt = Runtime.getRuntime();
-		String command = null;
+		StringWriter sw = new StringWriter();
 		try {
-			//command = "ffmpeg -i "+inputVideo.file.getAbsolutePath()+" -y -ss 00:00:05 -s 80x60 -r 1 -vframes 1 -f image2 "+outputFile.getAbsolutePath();
-			command = String.format(
-				ffmpegCreateThumbnailCommand
-				,inputVideo.getFile().getAbsolutePath()
-				,outputFile.getAbsolutePath()
-				,width
-				,height
-				);
-			logger.debug(command);
-			Process p = rt.exec(command, null, null);
+			String[] tokens = breakUpCommand(ffmpegCreateThumbnailCommand);
+			for(int i=0; i<tokens.length; ++i){
+				tokens[i] = String.format(
+					tokens[i]
+					,inputVideo.getFile().getAbsolutePath()
+					,outputFile.getAbsolutePath()
+					,width
+					,height
+					);
+				if( 0 != i ) sw.write(" ");
+				sw.write(tokens[i]);
+			}
+			logger.debug(sw.toString());
+
+			Process p = rt.exec(tokens, null, null);
 			p.waitFor();
 		} catch (IOException e) {
-			throw new Exception("Error while creating thumbnail: "+command,e);
+			throw new Exception("Error while creating thumbnail: "+sw.toString(),e);
 		}
 	}
 }
