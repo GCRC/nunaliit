@@ -115,7 +115,19 @@ var Module = $n2.Class({
 		return searchInfo;
 	}
 	
-	,displayIntro: function($elem){
+	/*
+	 * Finds the introduction text associated with the module and inserts it
+	 * in the element provided. Once the content of the introduction is loaded
+	 * in the DOM, the "onLoaded" function is called.
+	 */
+	,displayIntro: function(opts_){
+		var opts = $n2.extend({
+			elem: null
+			,onLoaded: function(){}
+		},opts_);
+		
+		var $elem = opts.elem;
+		
 		var introInfo = null;
 		var moduleInfo = this.getModuleInfo();
 		if( moduleInfo ){
@@ -132,6 +144,7 @@ var Module = $n2.Class({
 				if( content ) {
 					$elem.html(content);
 				};
+				opts.onLoaded();
 				return true;
 				
 			} else if( 'text' === introInfo.type && introInfo.content ) {
@@ -139,6 +152,7 @@ var Module = $n2.Class({
 				if( content ) {
 					$elem.text(content);
 				};
+				opts.onLoaded();
 				return true;
 				
 			} else if( 'attachment' === introInfo.type 
@@ -169,6 +183,7 @@ var Module = $n2.Class({
 				    		} else {
 					    		$('#'+displayId).html(intro);
 				    		};
+							opts.onLoaded();
 				    	}
 				    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
 							$n2.log('Unable to obtain module intro: '+textStatus);
@@ -949,8 +964,14 @@ var ModuleDisplay = $n2.Class({
 	}
 
 	,_initSidePanel: function() {
+		var _this = this;
 		var $elem = $('#'+this.sidePanelName);
-		this.module.displayIntro($elem);
+		this.module.displayIntro({
+			elem: $elem
+			,onLoaded: function(){
+				_this._sendDispatchMessage({type:'loadedModuleContent'});
+			}
+		});
 	}
 	
 	,_getDispatcher: function(){
@@ -959,6 +980,13 @@ var ModuleDisplay = $n2.Class({
 			d = this.config.directory.dispatchService;
 		};
 		return d;
+	}
+	
+	,_sendDispatchMessage: function(m){
+		var d = this._getDispatcher();
+		if( d ){
+			d.send(DH,m);
+		};
 	}
 	
 	,_isValidBounds: function(bounds){

@@ -5,6 +5,11 @@ function main_init(config) {
 	// Get module name from URL parameters
 	var moduleName = $n2.url.getParamValue('module',null);
 	if( !moduleName ){
+		if( config.directory && config.directory.customService ){
+			moduleName = config.directory.customService.getOption('defaultModuleIdentifier');
+		};
+	};
+	if( !moduleName ){
 		moduleName = 'module.demo';
 	};
 	$n2.log('module: '+moduleName);
@@ -28,6 +33,17 @@ function main_init(config) {
 		srsName = '' + srsParam;
 		$n2.log('srs: '+srsName);
 	};
+	
+	// Get navigation document
+	var navigationName = $n2.url.getParamValue('navigation',null);
+	if( !navigationName ){
+		if( config.directory && config.directory.customService ){
+			navigationName = config.directory.customService.getOption('defaultNavigationIdentifier');
+		};
+	};
+	if( !navigationName ){
+		navigationName = 'navigation.demo';
+	};
 
 	var moduleDisplay = new $n2.couchModule.ModuleDisplay({
 		moduleName: moduleName
@@ -37,7 +53,7 @@ function main_init(config) {
 		,loginPanels: $('#login1,#login2')
 		,contentName: 'content'
 		,navigationName: 'navigation'
-		,navigationDoc: 'navigation.demo'
+		,navigationDoc: navigationName
 		,languageSwitcherName: 'language_switcher'
 		,helpButtonName: 'help_button'
 		,onSuccess: function(){
