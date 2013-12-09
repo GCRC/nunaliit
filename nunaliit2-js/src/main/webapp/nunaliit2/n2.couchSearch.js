@@ -41,7 +41,7 @@ var DH = 'n2.couchSearch';
 function SplitSearchTerms(line) {
 	if( !line ) return null;
 	
-	var map = $n2.couchUtils.extractSearchTerms(line);
+	var map = $n2.couchUtils.extractSearchTerms(line, false);
 
 	var searchTerms = [];
 	for(var term in map){

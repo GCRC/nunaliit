@@ -85,7 +85,7 @@ var n2utils = {
 		,'to'
 	]
 
-	,extractSearchTerms: function(doc) {
+	,extractSearchTerms: function(doc, indexing) {
 		// Returns a map of words with associated usage.
 		// The keys in the map are words and the associated
 		// values are objects. The value objects contain an
@@ -99,7 +99,7 @@ var n2utils = {
 		
 		var map = {};
 		for(var i=0,e=strings.length;i<e;++i){
-			n2utils.extractWordsFromString(strings[i],map);
+			n2utils.extractWordsFromString(strings[i],map,indexing);
 		};
 		
 		return map;
@@ -111,7 +111,7 @@ var n2utils = {
 		,'nunaliit_geom'
 	]
 	
-	,reWordSplit: /[\x00-\x26\x28-\x2f\x3a-\x40\x5b-\x60\x7b-\x7f]+/ 
+	,reWordSplit: /[\x00-\x26\x28-\x2f\x3a-\x40\x5b-\x5e\x60\x7b-\x7f]+/ 
 
 	,addWordToMap: function(word, index, map) {
 		// Save each word in a map, with the number of times
@@ -137,7 +137,7 @@ var n2utils = {
 		};
 	}
 
-	,extractWordsFromString: function(str, map) {
+	,extractWordsFromString: function(str, map, indexing) {
 		// For the string element, split up in words.
 		// Save each word in a map of words, that keeps track
 		// of number of times a word is encountered and the earliest
@@ -146,6 +146,17 @@ var n2utils = {
 		var words = str.split( n2utils.reWordSplit );
 		for(var i=0,e=words.length; i<e; ++i) {
 			n2utils.addWordToMap(words[i],i,map);
+			
+			if( indexing ) {
+				var fragments = words[i].split('_');
+				if( fragments.length > 1 ){
+					for(var j=0,k=fragments.length; j<k; ++j){
+						if( fragments[j].length > 0 ) {
+							n2utils.addWordToMap(fragments[j],i,map);
+						};
+					};
+				};
+			};
 		};
 	}
 

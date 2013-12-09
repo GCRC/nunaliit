@@ -1559,7 +1559,13 @@ var Form = $n2.Class({
 				
 				$divEvent.click(function(e){
 					var $clicked = $(e.target);
-					var classNames = $clicked.attr('class').split(' ');
+					var classString = $clicked.attr('class');
+					var classNames = null;
+					if( classString ){
+						classNames = classString.split(' ');
+					} else {
+						classNames = [];
+					};
 					var classInfo = parseClassNames(classNames);
 
 					//$n2.log('click',this,e);
