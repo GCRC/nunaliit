@@ -440,7 +440,7 @@ var GazetteerProcess = $n2.Class({
 		var geom = new OpenLayers.Geometry.Point(1 * entry.lng, 1 * entry.lat);
 
 		// Reproject geometry
-		var mapProjection = new OpenLayers.Projection(map.projection);
+		var mapProjection = map.projection;
 		var gazetteProjection = new OpenLayers.Projection('EPSG:4326');
 		if( gazetteProjection.getCode() != mapProjection.getCode() ) {
 			geom.transform(gazetteProjection, mapProjection);
@@ -460,7 +460,7 @@ var GazetteerProcess = $n2.Class({
 		var ll = map.getCenter();
 		if( ll ) {
 			// Reproject geometry
-			var mapProjection = new OpenLayers.Projection(map.projection);
+			var mapProjection = map.projection;
 			var gazetteProjection = new OpenLayers.Projection('EPSG:4326');
 			if( gazetteProjection.getCode() != mapProjection.getCode() ) {
 				ll.transform(mapProjection, gazetteProjection);
