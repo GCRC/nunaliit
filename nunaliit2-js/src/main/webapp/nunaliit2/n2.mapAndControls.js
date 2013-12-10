@@ -2115,6 +2115,65 @@ var MapAndControls = $n2.Class({
 				$n2.log('Stamen layer can not be added since Javascript library is not included');
 			};
 			
+		} else if( 'image' === layerDefinition.type ){
+			var url = null;
+			var height = null;
+			var width = null;
+			var extent = null;
+			var layerOptions = {
+				isBaseLayer: isBaseLayer
+			};
+
+			if( typeof(layerDefinition.visibility) === 'boolean' ){
+				layerOptions.visibility = layerDefinition.visibility;
+			};
+
+			var options = layerDefinition.options;
+			if( options ) {
+				for(var optionKey in options){
+					var optionValue = options[optionKey];
+					
+					if( optionKey === 'url' ){
+						url = optionValue;
+					} else if( optionKey === 'height' ){
+							height = 1 * optionValue;
+					} else if( optionKey === 'width' ){
+						width = 1 * optionValue;
+					} else if( optionKey === 'extent' ){
+						extent = optionValue;
+					} else {
+						layerOptions[optionKey] = optionValue;
+					};
+				};
+			};
+
+			if( OpenLayers.Layer.Image ) {
+				var effectiveExtent = null;
+				if( extent
+				 && $n2.isArray(extent)
+				 && extent.length == 4 ) {
+					effectiveExtent = new OpenLayers.Bounds(extent[0], extent[1], extent[2], extent[3]);
+				};
+				
+				if( !url ){
+					$n2.reportError('Option url must be specified for an Image background.');
+				} else if( !height ) {
+					$n2.reportError('Option height must be specified for an Image background.');
+				} else if( !width ) {
+					$n2.reportError('Option width must be specified for an Image background.');
+				} else if( !effectiveExtent ) {
+					$n2.reportError('Option extent must be specified as an array of four numbers for an Image background.');
+				} else {
+					var size = new OpenLayers.Size(width,height);
+					
+					var l = new OpenLayers.Layer.Image(name, url, effectiveExtent, size, layerOptions);
+					return l;
+				};
+				
+			} else {
+				$n2.log('Image layer can not be added since OpenLayers does not support this type of background');
+			};
+			
 		} else {
 			$n2.reportError('Unknown layer type: '+layerDefinition.type);
 		};
