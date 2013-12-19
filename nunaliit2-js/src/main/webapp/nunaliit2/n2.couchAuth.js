@@ -310,8 +310,8 @@ var AuthService = $n2.Class({
 			};
 		};
 		
-		function onError(xmlHttpRequest, textStatus, errorThrown) {
-			$n2.log('Login error', xmlHttpRequest, textStatus, errorThrown);
+		function onError(err) {
+			$n2.log('Login error', err);
 			doErrorNotification();
 		};
 	}
@@ -386,9 +386,9 @@ var AuthService = $n2.Class({
 			};
 		};
 		
-		function onError(xmlHttpRequest, textStatus, errorThrown) {
-			$n2.log('Login error', xmlHttpRequest, textStatus, errorThrown);
-			doErrorNotification({ message: textStatus });
+		function onError(err) {
+			$n2.log('User login error', err);
+			doErrorNotification({ message: err });
 		};
 		
 		if( anonymousFlag ) {
@@ -654,7 +654,7 @@ var AuthService = $n2.Class({
 		var opts = $.extend({
 			prompt: this.options.prompt
 			,onSuccess: function(context){}
-			,onError: function(err){}
+			,onError: $n2.reportErrorForced
 		}, opts_);
 
 		var dialogId = $n2.getUniqueId();
