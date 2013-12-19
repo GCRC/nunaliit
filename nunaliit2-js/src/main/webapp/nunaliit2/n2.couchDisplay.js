@@ -145,7 +145,7 @@ $n2.couchDisplay = $n2.Class({
 		};
 		
 		if( !this.options.displayRelatedInfoFunction ) {
-			var flag = this._getBooleanOption('displayOnlyRelatedSchemas')
+			var flag = this._getBooleanOption('displayOnlyRelatedSchemas');
 			if( flag ) {
 				this.options.displayRelatedInfoFunction = function(opts_){
 					_this._displayRelatedInfo(opts_);
