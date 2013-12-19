@@ -610,14 +610,81 @@ var ModuleDisplay = $n2.Class({
 			,sidePanelName: _this.sidePanelName
 			,filterPanelName: _this.filterPanelName
 			,saveFeature: _this.config.couchEditor
-			,mapDisplay: null
+			,mapDisplay: {}
 			,directory: _this.config.directory
+		};
+	
+		// Initial Bounds, Map coordinates
+		var initialBounds = null;
+		if( mapInfo && mapInfo.coordinates ){
+			initialBounds = mapInfo.coordinates.initialBounds;
+			
+			if( mapInfo.coordinates.srsName ){
+				// Verify if SRS name is supported
+				if( false == isSrsNameSupported(mapInfo.coordinates.srsName) ) {
+					var msg = _loc('The projection {srsName} is not supported. Atlas may no function properly.',{
+						srsName: mapInfo.coordinates.srsName
+					});
+					alert(msg);
+				};
+				
+				mapOptions.mapDisplay.srsName = mapInfo.coordinates.srsName;
+				mapOptions.mapCoordinateSpecifications.srsName = mapInfo.coordinates.srsName;
+			} else {
+				// Defaults to EPSG:4326
+				mapOptions.mapDisplay.srsName = 'EPSG:4326';
+				mapOptions.mapCoordinateSpecifications.srsName = 'EPSG:4326';
+			};
+			
+			// Detect forced display projections based on background layer
+			if( mapInfo.backgrounds ){
+				for(var i=0,e=mapInfo.backgrounds.length; i<e; ++i){
+					if( 'Google Maps' === mapInfo.backgrounds[i].type ) {
+						mapOptions.mapDisplay.srsName = 'EPSG:900913';
+						
+					} else if( 'osm' === mapInfo.backgrounds[i].type ) {
+						mapOptions.mapDisplay.srsName = 'EPSG:900913';
+						
+					} else if( 'stamen' === mapInfo.backgrounds[i].type ) {
+						mapOptions.mapDisplay.srsName = 'EPSG:900913';
+					};
+				};
+			};
 		};
 		
 		// Background Layers
-		mapOptions.mapDisplay = {};
 		if( mapInfo && mapInfo.backgrounds ){
-			mapOptions.mapDisplay.backgrounds = mapInfo.backgrounds;
+			mapOptions.mapDisplay.backgrounds = [];
+			for(var i=0,e=mapInfo.backgrounds.length; i<e; ++i){
+				var l = $n2.extend({},mapInfo.backgrounds[i]);
+
+				if( l.type === 'image' ){
+					if( l.options && l.options.attachmentName ){
+						var url = _this.config.atlasDb.getAttachmentUrl(
+							this.module.moduleDoc
+							,l.options.attachmentName
+						);
+						l.options.url = url;
+					};
+
+					if( l.options 
+					 && l.options.extent 
+					 && mapOptions.mapDisplay.srsName != mapOptions.mapCoordinateSpecifications.srsName ){
+						var defProj = new OpenLayers.Projection(mapOptions.mapCoordinateSpecifications.srsName);
+						var mapProj = new OpenLayers.Projection(mapOptions.mapDisplay.srsName);
+						var bl = new OpenLayers.Geometry.Point(l.options.extent[0], l.options.extent[1]);
+						var tr = new OpenLayers.Geometry.Point(l.options.extent[2], l.options.extent[3]);
+						bl.transform(defProj,mapProj);
+						tr.transform(defProj,mapProj);
+						l.options.extent[0] = bl.x;
+						l.options.extent[1] = bl.y;
+						l.options.extent[2] = tr.x;
+						l.options.extent[3] = tr.y;
+					};
+				};
+				
+				mapOptions.mapDisplay.backgrounds.push(l);
+			};
 		};
 	
 		// Overlay Layers
@@ -674,44 +741,6 @@ var ModuleDisplay = $n2.Class({
 				
 				// Add layer to map
 				mapOptions.overlays.push( layerDefinition );
-			};
-		};
-	
-		// Initial Bounds, Map coordinates
-		var initialBounds = null;
-		if( mapInfo && mapInfo.coordinates ){
-			initialBounds = mapInfo.coordinates.initialBounds;
-			
-			if( mapInfo.coordinates.srsName ){
-				// Verify if SRS name is supported
-				if( false == isSrsNameSupported(mapInfo.coordinates.srsName) ) {
-					var msg = _loc('The projection {srsName} is not supported. Atlas may no function properly.',{
-						srsName: mapInfo.coordinates.srsName
-					});
-					alert(msg);
-				};
-				
-				mapOptions.mapDisplay.srsName = mapInfo.coordinates.srsName;
-				mapOptions.mapCoordinateSpecifications.srsName = mapInfo.coordinates.srsName;
-			} else {
-				// Defaults to EPSG:4326
-				mapOptions.mapDisplay.srsName = 'EPSG:4326';
-				mapOptions.mapCoordinateSpecifications.srsName = 'EPSG:4326';
-			};
-			
-			// Detect forced display projections based on background layer
-			if( mapInfo.backgrounds ){
-				for(var i=0,e=mapInfo.backgrounds.length; i<e; ++i){
-					if( 'Google Maps' === mapInfo.backgrounds[i].type ) {
-						mapOptions.mapDisplay.srsName = 'EPSG:900913';
-						
-					} else if( 'osm' === mapInfo.backgrounds[i].type ) {
-						mapOptions.mapDisplay.srsName = 'EPSG:900913';
-						
-					} else if( 'stamen' === mapInfo.backgrounds[i].type ) {
-						mapOptions.mapDisplay.srsName = 'EPSG:900913';
-					};
-				};
 			};
 		};
 		

@@ -426,7 +426,11 @@ $Id: n2.couchImportData.js 8456 2012-08-29 01:08:01Z glennbrauen $
 								entryStatusId);
 							
 							if ($n2.isDefined(currIncrementalUpdateFn)) {
-								currIncrementalUpdateFn(docInfo.id, uploadDataArray);
+								var uploadedDoc = $n2.extend({},nextUpload,{
+									_id: docInfo.id
+									,_rev: docInfo.rev
+								});
+								currIncrementalUpdateFn(docInfo.id, uploadDataArray,uploadedDoc);
 							};
 							
 							/*
