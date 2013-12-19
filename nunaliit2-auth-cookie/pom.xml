@@ -3,11 +3,11 @@
   <parent>
     <artifactId>nunaliit2</artifactId>
     <groupId>ca.carleton.gcrc</groupId>
-    <version>2.1.4-SNAPSHOT</version>
+    <version>2.1.4</version>
   </parent>
   <groupId>ca.carleton.gcrc</groupId>
   <artifactId>nunaliit2-auth-cookie</artifactId>
-  <version>2.1.4-SNAPSHOT</version>
+  <version>2.1.4</version>
   <name>nunaliit2-auth-cookie</name>
   <description>Provides servlet filters for authentication using
   a HTTP cookie.</description>
