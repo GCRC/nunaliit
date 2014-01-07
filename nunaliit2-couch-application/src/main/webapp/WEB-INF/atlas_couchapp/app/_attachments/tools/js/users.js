@@ -55,7 +55,7 @@ function initiateEdit(userName) {
 function queryMyUser() {
 	if( authService ) {
 		if( false == authService.isLoggedIn() ) {
-			authService.login({
+			authService.showLoginForm({
 				onSuccess: queryMyUser
 			});
 			return;
@@ -131,8 +131,8 @@ function queryUsers() {
 					for(var i=0,e=searchResults.sorted.length;i<e;++i){
 						docIds.push(searchResults.sorted[i].id);
 					};
-					userDb.getDocuments({
-						docIds: docIds
+					userDb.getUsers({
+						ids: docIds
 						,onError: reportError
 						,onSuccess: reportUsers
 					});
@@ -142,75 +142,101 @@ function queryUsers() {
 			}
 		});
 	};
-	
+
 	function reportUsers(arr) {
-		if( userSchema && showService ){
-			var $outterDiv = $('<div></div>');
-			$('#requests').empty().append($outterDiv);
+		var $outterDiv = $('<div class="n2UserList"></div>');
+		$('#requests').empty().append($outterDiv);
+
+		for(var i=0,e=arr.length; i<e; ++i) {
+			var doc = arr[i];
+
+			var $div = $('<div></div>');
+			$outterDiv.append($div);
+
+			var $a = $('<a href="#" alt="'+doc.name+'">'+doc._id+'</a>');
+			$div.append( $a );
+			$a.click(function(){
+				var $a = $(this);
+				var userName = $a.attr('alt');
+				initiateEdit(userName);
+				return false;
+			});
 			
-			for(var i=0,e=arr.length; i<e; ++i) {
-				var doc = arr[i];
+			showService.displayBriefDescription(
+				$a
+				,{
+					schemaName: 'user'
+				}
+				,doc
+			);
+		};
+	};
 
-				var $div = $('<div></div>');
-				$outterDiv.append($div);
+	function reportUserDoc(userDoc) {
+		var $outterDiv = $('.n2UserList');
+		if( userSchema && showService ){
+			var $div = $('<div></div>');
+			$outterDiv.append($div);
 
-				var $a = $('<a href="#" alt="'+doc.name+'">'+doc._id+'</a>');
-				$div.append( $a );
-				$a.click(function(){
-					var $a = $(this);
-					var userName = $a.attr('alt');
-					initiateEdit(userName);
-					return false;
-				});
-				
-				showService.displayBriefDescription(
-					$a
-					,{
-						schemaName: 'user'
-					}
-					,doc
-				);
-			};
+			var $a = $('<a href="#" alt="'+userDoc.name+'">'+userDoc._id+'</a>');
+			$div.append( $a );
+			$a.click(function(){
+				var $a = $(this);
+				var userName = $a.attr('alt');
+				initiateEdit(userName);
+				return false;
+			});
+			
+			showService.displayBriefDescription(
+				$a
+				,{
+					schemaName: 'user'
+				}
+				,userDoc
+			);
 			
 		} else {
-			var $table = $('<table></table>');
-			$('#requests').empty().append($table);
-		
-			$table.append('<tr><th>ID</th><th>Revision</th><th>User</th><th>Display</th><th>Roles</th></tr>');
-		
-			for(var i=0,e=arr.length; i<e; ++i) {
-				var $tr = $('<tr></tr>');
-				$table.append($tr);
+			var $userDiv = $('<div class="n2UserListEntry"></div>')
+				.appendTo($outterDiv);
 			
-				var doc = arr[i];
+			$('<span class="userId"></span>')
+				.text(userDoc._id)
+				.appendTo($userDiv);
 			
-				$tr.append( $('<td class="userId">'+doc._id+'</td>') );
-				$tr.append( $('<td class="userRev">'+doc._rev+'</td>') );
+			$('<span class="userRev"></span>')
+				.text(userDoc._rev)
+				.appendTo($userDiv);
+		
+			var $name = $('<span class="userName"></span>')
+				.text(userDoc._rev)
+				.appendTo($userDiv);
 	
-				var $td = $('<td class="userName"></td>');
-				$tr.append( $td );
-	
-				var $a = $('<a href="#" alt="'+doc.name+'">'+doc.name+'</a>');
-				$td.append( $a );
-				$a.click(function(){
+			$('<a href="#"></a>')
+				.attr('alt',userDoc.name)
+				.text(userDoc.name)
+				.appendTo($name)
+				.click(function(){
 					var $a = $(this);
 					var userName = $a.attr('alt');
 					initiateEdit(userName);
 					return false;
 				});
-	
-				var display = '';
-				if( doc.display ) {
-					display = doc.display;
-				};
-				$tr.append( $('<td class="userDisplay">'+display+'</td>') );
-				
-				var roles = '';
-				if( doc.roles ) {
-					roles = doc.roles.join(', ');
-				}
-				$tr.append( $('<td class="userRoles">'+roles+'</td>') );
+
+			var display = '';
+			if( userDoc.display ) {
+				display = userDoc.display;
 			};
+			$('<span class="userDisplay"></span>')
+				.text(display)
+				.appendTo($userDiv);
+			
+			var roles = '';
+			if( userDoc.roles ) {
+				roles = userDoc.roles.join(', ');
+			}
+			$('<span class="userRoles"></span>')
+				.text(roles)
+				.appendTo($userDiv);
 		};
 	};
 };

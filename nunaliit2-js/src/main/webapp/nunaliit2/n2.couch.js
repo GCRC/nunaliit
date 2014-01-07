@@ -1671,6 +1671,7 @@ var UserDb = $n2.Class(Database,{
 	,getUser: function(options_) {
 		var opts = $.extend(true, {
 				name: null
+				,id: null
 				,onSuccess: function(user){}
 				,onError: function(errorMsg){ $n2.reportErrorForced(errorMsg); }
 			}
@@ -1679,10 +1680,10 @@ var UserDb = $n2.Class(Database,{
 		
 		var userDbUrl = this.getUrl();
 		
-		var id = opts._id;
+		var id = opts.id;
 		if( !id ) {
-			var id = 'org.couchdb.user:'+fixUserName(opts.name);
-		}
+			id = 'org.couchdb.user:'+fixUserName(opts.name);
+		};
 		
 	    $.ajax({
 	    	url: userDbUrl + id 
@@ -1702,21 +1703,27 @@ var UserDb = $n2.Class(Database,{
 	,getUsers: function(options_) {
 		var opts = $.extend(true, {
 				names: null
+				,ids: null
 				,onSuccess: function(users){}
 				,onError: function(errorMsg){ $n2.reportErrorForced(errorMsg); }
 			}
 			,options_
 		);
 		
+		var _this = this;
+		
 		var effectiveUrl = this.getUrl() + '_all_docs?include_docs=true';
 		
-		var userNames = [];
-		if( !opts.names ) {
-			opts.onError('Unable to query multiple users without the "names" parameter');
-			return;
-		}
-		for(var i=0,e=opts.names.length; i<e; ++i) {
-			userNames.push('org.couchdb.user:'+fixUserName(opts.names[i]));
+		var ids = null;
+		if( opts.ids && opts.ids.length ){
+			ids = opts.ids.slice(0); // clone
+		} else {
+			ids = [];
+		};
+		if( opts.names && opts.names.length ) {
+			for(var i=0,e=opts.names.length; i<e; ++i) {
+				ids.push('org.couchdb.user:'+fixUserName(opts.names[i]));
+			};
 		};
 		
 		if( JSON && JSON.stringify ) {
@@ -1727,9 +1734,11 @@ var UserDb = $n2.Class(Database,{
 		};
 		
 		var data = {
-			keys: userNames // requires POST
+			keys: ids // requires POST
 		};
 		
+		var users = [];
+		var missingIds = {};
 	    $.ajax({
 	    	url: effectiveUrl
 	    	,type: 'POST'
@@ -1739,14 +1748,27 @@ var UserDb = $n2.Class(Database,{
 	    	,dataType: 'json'
 	    	,success: function(res) {
 	    		if( res.rows ) {
-	    			var users = [];
+	    			var isMissing = false;
 	    			for(var i=0,e=res.rows.length; i<e; ++i) {
 	    				var row = res.rows[i];
 	    				if( row && row.doc ) {
-	    					users.push(row.doc);
+	    					if( row.doc._id ){
+		    					users.push(row.doc);
+	    					} else {
+	    						// Work around for bug in CouchDB 1.4.0
+	    						// https://issues.apache.org/jira/browse/COUCHDB-1888
+	    						// Keep a list of dacuments returned without preperties and
+	    						// try to retrieve them one at a time
+	    						isMissing = true;
+	    						missingIds[row.id] = true;
+	    						retrieveUser(row.id);
+	    					};
 	    				}
 	    			};
-	    			opts.onSuccess(users);
+	    			if( !isMissing ){
+	    				// All documents available. Simply return to caller
+		    			opts.onSuccess(users);
+	    			};
 	    		} else {
 		    		opts.onError('Unexpected response during query of multiple users');
 	    		};
@@ -1756,6 +1778,31 @@ var UserDb = $n2.Class(Database,{
 	    		opts.onError('Error during query of multiple users: '+errStr);
 	    	}
 	    });
+		
+		function retrieveUser(userId){
+			_this.getUser({
+				id: userId
+				,onSuccess: function(user){
+					if( user._id ){
+						users.push(user);
+					};
+					delete missingIds[userId];
+					returnUsers();
+				}
+				,onError: function(errorMsg){
+					delete missingIds[userId];
+					returnUsers();
+				}
+			});
+		};
+		
+		function returnUsers(){
+			for(var id in missingIds){
+				// still waiting for some documents to be returned
+				return id; // return id to remove warning
+			};
+			opts.onSuccess(users);
+		};
 	}
 
 	,getAllUsers: function(opts_) {
@@ -1765,6 +1812,8 @@ var UserDb = $n2.Class(Database,{
 			}
 			,opts_
 		);
+		
+		var _this = this;
 		
 		if( JSON && JSON.stringify ) {
 			// OK
@@ -1781,6 +1830,8 @@ var UserDb = $n2.Class(Database,{
 			,include_docs: true
 		};
 		
+		var users = [];
+		var missingIds = {};
 		$.ajax({
 	    	url: viewUrl
 	    	,type: 'get'
@@ -1789,14 +1840,27 @@ var UserDb = $n2.Class(Database,{
 	    	,dataType: 'json'
 	    	,success: function(queryResult) {
 	    		if( queryResult.rows ) {
-	    			var users = [];
+	    			var isMissing = false;
 	    			for(var i=0,e=queryResult.rows.length; i<e; ++i) {
 	    				var row = queryResult.rows[i];
 	    				if( row && row.doc ) {
-	    					users.push(row.doc);
+	    					if( row.doc._id ){
+		    					users.push(row.doc);
+	    					} else {
+	    						// Work around for bug in CouchDB 1.4.0
+	    						// https://issues.apache.org/jira/browse/COUCHDB-1888
+	    						// Keep a list of dacuments returned without preperties and
+	    						// try to retrieve them one at a time
+	    						isMissing = true;
+	    						missingIds[row.id] = true;
+	    						retrieveUser(row.id);
+	    					};
 	    				}
 	    			};
-	    			opts.onSuccess(users);
+	    			if( !isMissing ){
+	    				// All documents available. Simply return to caller
+		    			opts.onSuccess(users);
+	    			};
 	    		} else {
 		    		opts.onError('Unexpected response during query of all users');
 	    		};
@@ -1806,6 +1870,31 @@ var UserDb = $n2.Class(Database,{
 	    		opts.onError('Error during query of all users: '+errStr);
 	    	}
 		});
+		
+		function retrieveUser(userId){
+			_this.getUser({
+				id: userId
+				,onSuccess: function(user){
+					if( user._id ){
+						users.push(user);
+					};
+					delete missingIds[userId];
+					returnUsers();
+				}
+				,onError: function(errorMsg){
+					delete missingIds[userId];
+					returnUsers();
+				}
+			});
+		};
+		
+		function returnUsers(){
+			for(var id in missingIds){
+				// still waiting for some documents to be returned
+				return id; // return id to remove warning
+			};
+			opts.onSuccess(users);
+		};
 	}
 });
 
