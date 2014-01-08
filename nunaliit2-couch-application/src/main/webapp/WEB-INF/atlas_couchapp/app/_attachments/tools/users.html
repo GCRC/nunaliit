@@ -17,15 +17,7 @@
 
 		<h1>User Management</h1>
 		<div id="login" class="nunaliit_login"></div>
-		<div>
-			<input id="userSearchBox" type="text"/>
-			<input id="btnQueryUsers" type="button" value="Query Users"/>
-			<input id="btnAddUser" type="button" value="Add User"/>
-			<input id="btnMyUser" type="button" value="My User"/>
-		</div>	
-		<div id="requests">
-		</div>
-
+		<div id="userApp"></div>
 		
 		<script type="text/javascript" src="../js-external/js/jquery.min.js"></script>
 		<script type="text/javascript" src="../js-external/js/jquery-ui.min.js"></script>
@@ -50,10 +42,23 @@
 		<script type="text/javascript">
 			// <!--
 
+			function main_init(config) {
 
+				if( config.directory && config.directory.authService ) {
+					config.directory.authService.createAuthWidget({
+						elemId: 'login'
+					});
+				};
+				
+			 	new $n2.userApp.UserManagementApplication({
+			 		config: config
+			 		,div: $('#userApp')
+			 	});
+			};
+			
 			jQuery().ready(function() {
 				nunaliitConfigure({
-					configuredFunction: nunaliit2.app.users.main_init
+					configuredFunction: main_init
 					,rootPath: '../'
 				});
 			});

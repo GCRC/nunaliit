@@ -93,9 +93,6 @@
 			// <!--
 
 			function main_init(config) {
-				var atlasDb = config.atlasDb;
-				var atlasDesign = config.atlasDesign;
-				var serverDesign = atlasDb.getDesignDoc({ddName:'server'});
 
 				if( config.directory && config.directory.authService ) {
 					config.directory.authService.createAuthWidget({
