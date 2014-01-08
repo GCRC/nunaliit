@@ -153,11 +153,16 @@
 	position: absolute;
 	top: 0;
 	left: 0;
-	right: 450px;
 	bottom: 0;
 	border: 0;
 	margin: 0;
 	border: 0;
+}
+.n2_content_contains_text .n2_content_map {
+	right: 450px;
+}
+.n2_content_contains_no_text .n2_content_map {
+	right: 0;
 }
 
 /* Search */
