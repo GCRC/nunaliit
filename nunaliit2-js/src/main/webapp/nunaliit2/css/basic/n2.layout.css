@@ -191,29 +191,24 @@
 }
 
 /* Side Bar */
-.n2_content_contains_no_map .n2_content_text {
+.n2_content_text {
 	position: absolute;
 	top: 0;
 	right: 0;
 	bottom: 0;
 	left: 0;
 	overflow: auto;
+	padding: 15px 20px 15px 20px;
 }
 .n2_content_contains_map .n2_content_text {
-	position: absolute;
-	top: 0;
+	left: auto;
 	right: 0;
-	bottom: 0;
 	width: 410px;
 	overflow: auto;
 }
 
 .n2_content_contains_search .n2_content_text {
 	padding: 115px 20px 15px 20px;
-}
-
-.n2_content_contains_no_search .n2_content_text {
-	padding: 15px 20px 15px 20px;
 }
 
 
