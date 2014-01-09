@@ -3,7 +3,8 @@ function(doc){
 	 && doc.nunaliit_attachments.files 
 	 ) {
 		for(var attName in doc.nunaliit_attachments.files){
-			emit(attName, null);
+			var att = doc.nunaliit_attachments.files[attName];
+			emit(att.status,attName);
 		};
 	};
 }

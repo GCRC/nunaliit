@@ -942,6 +942,251 @@
 	SearchFilter.availableCreateFilters.push(new CreateFilterByDocumentReference());
 
 	// **********************************************************************
+	var CreateFilterMediaSubmitted = $n2.Class(SearchFilter, {
+
+		initialize: function(){
+			SearchFilter.prototype.initialize.apply(this);
+			this.name = _loc('Select documents with submitted media files');
+		}
+	
+		,printOptions: function($parent){
+		}
+
+		,createList: function(opts_){
+			var opts = $n2.extend({
+				name: null
+				,options: null
+				,progressTitle: _loc('List Creation Progress')
+				,onSuccess: function(list){}
+				,onError: reportError
+			},opts_);
+			
+			var _this = this;
+
+			atlasDesign.queryView({
+				viewName: 'attachments'
+				,startkey: 'submitted'
+				,endkey: 'submitted'
+				,onSuccess: function(rows){
+					var docIds = [];
+					for(var i=0,e=rows.length; i<e; ++i){
+						var row = rows[i];
+						docIds.push(row.id);
+					};
+					var locStr = _loc('Documents with media files in submitted state');
+					var l = new DocumentList({
+						docIds: docIds
+						,name: locStr
+					});
+					opts.onSuccess(l);
+				}
+				,onError: function(err){
+					alert(_loc('Problem obtaining documents with media files in submitted state')+': '+err);
+					opts.onError(err);
+				}
+			});
+		}
+	});
+
+	SearchFilter.availableCreateFilters.push(new CreateFilterMediaSubmitted());
+
+	// **********************************************************************
+	var CreateFilterMediaAnalyzed = $n2.Class(SearchFilter, {
+
+		initialize: function(){
+			SearchFilter.prototype.initialize.apply(this);
+			this.name = _loc('Select documents with analyzed media files');
+		}
+	
+		,printOptions: function($parent){
+		}
+
+		,createList: function(opts_){
+			var opts = $n2.extend({
+				name: null
+				,options: null
+				,progressTitle: _loc('List Creation Progress')
+				,onSuccess: function(list){}
+				,onError: reportError
+			},opts_);
+			
+			var _this = this;
+
+			atlasDesign.queryView({
+				viewName: 'attachments'
+				,startkey: 'analyzed'
+				,endkey: 'analyzed'
+				,onSuccess: function(rows){
+					var docIds = [];
+					for(var i=0,e=rows.length; i<e; ++i){
+						var row = rows[i];
+						docIds.push(row.id);
+					};
+					var locStr = _loc('Documents with media files in analyzed state');
+					var l = new DocumentList({
+						docIds: docIds
+						,name: locStr
+					});
+					opts.onSuccess(l);
+				}
+				,onError: function(err){
+					alert(_loc('Problem obtaining documents with media files in analyzed state')+': '+err);
+					opts.onError(err);
+				}
+			});
+		}
+	});
+
+	SearchFilter.availableCreateFilters.push(new CreateFilterMediaAnalyzed());
+
+	// **********************************************************************
+	var CreateFilterMediaWaiting = $n2.Class(SearchFilter, {
+
+		initialize: function(){
+			SearchFilter.prototype.initialize.apply(this);
+			this.name = _loc('Select documents with waiting media files');
+		}
+	
+		,printOptions: function($parent){
+		}
+
+		,createList: function(opts_){
+			var opts = $n2.extend({
+				name: null
+				,options: null
+				,progressTitle: _loc('List Creation Progress')
+				,onSuccess: function(list){}
+				,onError: reportError
+			},opts_);
+			
+			var _this = this;
+
+			atlasDesign.queryView({
+				viewName: 'attachments'
+				,startkey: 'waiting for approval'
+				,endkey: 'waiting for approval'
+				,onSuccess: function(rows){
+					var docIds = [];
+					for(var i=0,e=rows.length; i<e; ++i){
+						var row = rows[i];
+						docIds.push(row.id);
+					};
+					var locStr = _loc('Documents with media files in waiting state');
+					var l = new DocumentList({
+						docIds: docIds
+						,name: locStr
+					});
+					opts.onSuccess(l);
+				}
+				,onError: function(err){
+					alert(_loc('Problem obtaining documents with media files in waiting state')+': '+err);
+					opts.onError(err);
+				}
+			});
+		}
+	});
+
+	SearchFilter.availableCreateFilters.push(new CreateFilterMediaWaiting());
+
+	// **********************************************************************
+	var CreateFilterMediaApproved = $n2.Class(SearchFilter, {
+
+		initialize: function(){
+			SearchFilter.prototype.initialize.apply(this);
+			this.name = _loc('Select documents with approved media files');
+		}
+	
+		,printOptions: function($parent){
+		}
+
+		,createList: function(opts_){
+			var opts = $n2.extend({
+				name: null
+				,options: null
+				,progressTitle: _loc('List Creation Progress')
+				,onSuccess: function(list){}
+				,onError: reportError
+			},opts_);
+			
+			var _this = this;
+
+			atlasDesign.queryView({
+				viewName: 'attachments'
+				,startkey: 'approved'
+				,endkey: 'approved'
+				,onSuccess: function(rows){
+					var docIds = [];
+					for(var i=0,e=rows.length; i<e; ++i){
+						var row = rows[i];
+						docIds.push(row.id);
+					};
+					var locStr = _loc('Documents with media files in approved state');
+					var l = new DocumentList({
+						docIds: docIds
+						,name: locStr
+					});
+					opts.onSuccess(l);
+				}
+				,onError: function(err){
+					alert(_loc('Problem obtaining documents with media files in approved state')+': '+err);
+					opts.onError(err);
+				}
+			});
+		}
+	});
+
+	SearchFilter.availableCreateFilters.push(new CreateFilterMediaApproved());
+
+	// **********************************************************************
+	var CreateFilterMediaAttached = $n2.Class(SearchFilter, {
+
+		initialize: function(){
+			SearchFilter.prototype.initialize.apply(this);
+			this.name = _loc('Select documents with attached media files');
+		}
+	
+		,printOptions: function($parent){
+		}
+
+		,createList: function(opts_){
+			var opts = $n2.extend({
+				name: null
+				,options: null
+				,progressTitle: _loc('List Creation Progress')
+				,onSuccess: function(list){}
+				,onError: reportError
+			},opts_);
+			
+			var _this = this;
+
+			atlasDesign.queryView({
+				viewName: 'attachments'
+				,startkey: 'attached'
+				,endkey: 'attached'
+				,onSuccess: function(rows){
+					var docIds = [];
+					for(var i=0,e=rows.length; i<e; ++i){
+						var row = rows[i];
+						docIds.push(row.id);
+					};
+					var locStr = _loc('Documents with media files in attached state');
+					var l = new DocumentList({
+						docIds: docIds
+						,name: locStr
+					});
+					opts.onSuccess(l);
+				}
+				,onError: function(err){
+					alert(_loc('Problem obtaining documents with media files in attached state')+': '+err);
+					opts.onError(err);
+				}
+			});
+		}
+	});
+
+	SearchFilter.availableCreateFilters.push(new CreateFilterMediaAttached());
+
+	// **********************************************************************
 	var DocumentTransform = $n2.Class({
 		
 		name: null
