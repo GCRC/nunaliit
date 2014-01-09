@@ -4139,7 +4139,8 @@ var MapAndControls = $n2.Class({
 			 && valueMap[id]
 			 && !valueMap[id].__n2_cache_invalid
 			 ) {
-				return valueMap[id];
+				// Make a copy for the caller
+				return $n2.extend(true,{},valueMap[id]);
 			};
 		};
 		
