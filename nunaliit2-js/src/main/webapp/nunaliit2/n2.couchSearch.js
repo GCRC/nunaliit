@@ -693,7 +693,7 @@ var SearchInput = $n2.Class({
 					
 					if( docId ) {
 						docIds.push(docId);
-						var div = $('<div class="olkitSearchMod2_'+(i%2)
+						var div = $('<div class="n2_search_result olkitSearchMod2_'+(i%2)
 							+' n2searchDocId_'+$n2.utils.stringToHtmlId(docId)+'"></div>');
 						div.text(docId);
 				

@@ -151,7 +151,7 @@ function searchForDocumentId(options_){
 
 				$table.append($tr);
 				
-				$td = $('<td class="olkitSearchMod2_'+(i%2)+'">'
+				$td = $('<td class="n2_search_result olkitSearchMod2_'+(i%2)+'">'
 					+'<a href="#'+docId+'" alt="'+docId+'"></a></td>');
 				$tr.append($td);
 				if( options.showService ) {

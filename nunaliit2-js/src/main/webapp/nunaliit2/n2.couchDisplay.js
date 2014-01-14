@@ -1639,7 +1639,9 @@ $n2.couchDisplay = $n2.Class({
 		if( ids.length < 1 ) {
 			$div.append( $('<div>'+_loc('Search results empty')+'</div>') );
 		} else {
-			this.DisplayMultipleDocumentIds($div, ids)
+			var $results = $('<div class="n2_search_result"></div>')
+				.appendTo($div);
+			this.DisplayMultipleDocumentIds($results, ids);
 		};
 	}
 	
