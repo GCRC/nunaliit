@@ -1,32 +1,21 @@
-<div class="n2_documentForm"><div class="n2_layoutFloat">
-	<div>
+<div class="n2_documentForm"><div class="n2_layoutFloat"><div class="user_form">
+	<div class="user_name">
 		<div class="label n2s_localize">Name</div>
 		<div class="value">{{#:field}}name{{/:field}}</div>
 		<div class="end"></div>
 	</div>
-	<div>
-		<div class="label n2s_localize">Label</div>
-		<div class="value">{{#:field}}label{{/:field}}</div>
-		<div class="end"></div>
-	</div>
-	<div>
-		<div class="label n2s_localize">Root Schema</div>
-		<div class="value">{{#:field}}isRootSchema,checkbox{{/:field}}</div>
-		<div class="end"></div>
-	</div>
-	<div>
+	<div class="user_display">
 		<div class="label n2s_localize">Display</div>
-		<div class="value">{{#:field}}display,textarea{{/:field}}</div>
+		<div class="value">{{#:field}}displayName{{/:field}}</div>
 		<div class="end"></div>
 	</div>
-	<div>
-		<div class="label n2s_localize">Brief</div>
-		<div class="value">{{#:field}}brief,textarea{{/:field}}</div>
+	<div class="user_emails">
+		<div class="label n2s_localize">E-mails</div>
+		<div class="value">
+			{{#:array nunaliit_emails}}
+				<div>{{#:field}}.{{/:field}}</div>
+			{{/:array}}
+		</div>
 		<div class="end"></div>
 	</div>
-	<div>
-		<div class="label n2s_localize">Form</div>
-		<div class="value">{{#:field}}form,textarea{{/:field}}</div>
-		<div class="end"></div>
-	</div>
-</div></div>
+</div></div></div>

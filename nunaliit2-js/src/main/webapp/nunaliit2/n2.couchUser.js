@@ -34,6 +34,37 @@ POSSIBILITY OF SUCH DAMAGE.
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
+function isKeyEditingAllowed(obj, selectors, data) {
+	
+	if( !selectors ) return false;
+	
+	if( selectors[0] === '_id' ) return false;
+	if( selectors[0] === '_rev' ) return false;
+	
+	return true;
+}
+
+function isValueEditingAllowed(obj, selectors, data) {
+	
+	if( !selectors ) return false;
+
+	if( selectors[0] === '_id' ) return false;
+	if( selectors[0] === '_rev' ) return false;
+	
+	return true;
+};
+
+function isKeyDeletionAllowed(obj, selectors, data) {
+	
+	if( !selectors ) return false;
+
+	if( selectors[0] === '_id' ) return false;
+	if( selectors[0] === '_rev' ) return false;
+	
+	return true;
+};
+
+
 /*
  * ==============================================================================
  * User Editor
@@ -42,11 +73,17 @@ var UserEditor = $n2.Class({
 	
 	userDoc: null
 	
+	,userSchema: null
+	
+	,schemaEditorService: null
+	
 	,originalDoc: null
 	
 	,userDb: null
 	
 	,elemId: null
+	
+	,schemaEditor: null
 	
 	,treeEditor: null
 	
@@ -68,6 +105,9 @@ var UserEditor = $n2.Class({
 			,userDb: null
 			,elem: null
 			,elemId: null
+			,userSchema: null
+			,schemaRepository: null
+			,schemaEditorService: null
 			,onPreSaveFn: function(userDoc){ return true; }
 			,onSavedFn: function(userDoc){}
 			,onPreDeleteFn: function(userDoc){ return true; }
@@ -75,6 +115,8 @@ var UserEditor = $n2.Class({
 			,onCancelledFn: function(userDoc){}
 			,onFinishedFn: function(userDoc){}
 		},opts_);
+		
+		var _this = this;
 		
 		this.userDoc = opts.userDoc;
 		this.userDb = opts.userDb;
@@ -84,9 +126,15 @@ var UserEditor = $n2.Class({
 		this.onDeletedFn = opts.onDeletedFn;
 		this.onCancelledFn = opts.onCancelledFn;
 		this.onFinishedFn = opts.onFinishedFn;
+		this.schemaEditorService = opts.schemaEditorService;
 		
 		// Keep version of original document
 		this.originalDoc = $n2.extend(true,{},this.userDoc);
+		
+		// Fix user document
+		if( !this.userDoc.nunaliit_emails ){
+			this.userDoc.nunaliit_emails = [];
+		};
 		
 		// id
 		this.elemId = opts.elemId;
@@ -100,7 +148,30 @@ var UserEditor = $n2.Class({
 			this.elemId = id;
 		};
 		
-		this._display();
+		// User schema
+		if( opts.userSchema ){
+			userSchemaLoaded(opts.userSchema);
+			
+		} else if( opts.schemaRepository ){
+			opts.schemaRepository.getSchema({
+				name: 'user'
+				,onSuccess: function(schema){
+					userSchemaLoaded(schema);
+				}
+				,onError: function(){
+					userSchemaLoaded(null);
+				}
+			});
+
+		} else {
+			userSchemaLoaded(null);
+		};
+		
+		function userSchemaLoaded(userSchema){
+			_this.userSchema = userSchema;
+			
+			_this._display();
+		};
 	}
 
 	,documentUpdated: function(){
@@ -126,11 +197,58 @@ var UserEditor = $n2.Class({
 		var $editor = $('<div class="n2UserEdit_editor"></div>')
 			.appendTo($elem);
 		
-		var objectTree = new $n2.tree.ObjectTree($editor,doc);
-		this.treeEditor = new $n2.tree.ObjectTreeEditor(objectTree,doc);
+		var $editorsContainer = $('<div class="n2UserEdit_editorContainer"></div>')
+			.appendTo($editor);
+		
+		var usingAccordion = false;
+		
+		if( this.userSchema && this.schemaEditorService ){
+			usingAccordion = true;
+			$n2.schema.GlobalAttributes.disableKeyUpEvents = true;
+
+			$('<h3><a href="#">'+_loc('Form View')+'</a></h3>').appendTo($editorsContainer);
+			var $schemaContainer = $('<div class="n2UserEdit_schemaEditor"></div>')
+				.appendTo($editorsContainer);
+
+			this.schemaEditor = this.schemaEditorService.editDocument({
+				doc: doc
+				,schema: this.userSchema
+				,$div: $schemaContainer
+				,onChanged: function(){
+					if( _this.treeEditor ) {
+						_this.treeEditor.refresh();
+					};
+				}
+			});
+		};
+		
+		// Tree editor
+		if( usingAccordion ){
+			$('<h3><a href="#">'+_loc('Tree View')+'</a></h3>').appendTo($editorsContainer);
+		};
+		var $treeContainer = $('<div class="n2UserEdit_treeEditor"></div>')
+			.appendTo($editorsContainer);
+		var objectTree = new $n2.tree.ObjectTree($treeContainer,doc);
+		this.treeEditor = new $n2.tree.ObjectTreeEditor(objectTree,doc,{
+			onObjectChanged: function() {
+				if( _this.schemaEditor ) {
+					_this.schemaEditor.refresh();
+				};
+			}
+			,isKeyEditingAllowed: isKeyEditingAllowed
+			,isValueEditingAllowed: isValueEditingAllowed
+			,isKeyDeletionAllowed: isKeyDeletionAllowed
+		});
+
+		if( usingAccordion ){
+			$editorsContainer.accordion({
+				collapsible: true
+				,heightStyleType: 'content'
+			});
+		};
 
 		var $buttons = $('<div class="n2UserEdit_buttons"></div>')
-			.appendTo($elem);
+			.appendTo($editor);
 
 		// Save button
 		$('<input type="button"/>')
@@ -457,19 +575,39 @@ var UserEditor = $n2.Class({
 var UserService = $n2.Class({
 	
 	userDb: null
+
+	,userSchema: null
+	
+	,schemaRepository: null
+	
+	,schemaEditorService: null
 	
 	,initialize: function(opts_){
 		var opts = $n2.extend({
 			userDb: null
+			,userSchema: null // optional
+			,schemaRepository: null // optional
+			,schemaEditorService: null // optional
 		},opts_);
 		
 		this.userDb = opts.userDb;
+		this.userSchema = opts.userSchema;
+		this.schemaRepository = opts.schemaRepository;
+		this.schemaEditorService = opts.schemaEditorService;
 	}
 
 	,startEdit: function(opts_){
-		var opts = $n2.extend({},opts_,{
-			userDb: this.userDb
-		});
+		var opts = $n2.extend(
+			{
+				userSchema: this.userSchema
+				,schemaRepository: this.schemaRepository
+				,schemaEditorService: this.schemaEditorService
+			}
+			,opts_
+			,{
+				userDb: this.userDb
+			}
+		);
 		
 		return new UserEditor(opts);
 	}

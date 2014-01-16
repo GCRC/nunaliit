@@ -177,6 +177,7 @@ var UserManagementApplication = $n2.Class({
 				_this.userService.startEdit({
 					userDoc: doc
 					,elem: $request
+					,userSchema: _this.userSchema
 				});
 			}
 			,onError: function(){

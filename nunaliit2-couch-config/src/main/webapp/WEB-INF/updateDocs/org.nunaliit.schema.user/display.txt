@@ -23,4 +23,13 @@
 		</div>
 		<div class="end"></div>
 	</div>
+	<div>
+		<div class="label n2s_localize">E-mail addresses</div>
+		<div class="value">
+			{{#each nunaliit_emails}}
+				<div>{{.}}</div>
+			{{/each}}
+		</div>
+		<div class="end"></div>
+	</div>
 </div></div>

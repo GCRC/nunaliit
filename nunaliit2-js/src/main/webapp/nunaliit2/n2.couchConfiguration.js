@@ -215,6 +215,8 @@ function Configure(options_){
 		
 	 	configuration.directory.userService = new $n2.couchUser.UserService({
 			userDb: $n2.couch.getUserDb()
+			,schemaRepository: configuration.directory.schemaRepository
+			,schemaEditorService: configuration.directory.schemaEditorService
 		});
 
 	 	configuration.contributions = new $n2.couchContributions({
