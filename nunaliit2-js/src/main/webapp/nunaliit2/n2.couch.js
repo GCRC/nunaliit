@@ -1690,12 +1690,15 @@ var UserDb = $n2.Class(Database,{
 	    	,type: 'get'
 	    	,async: true
 	    	,dataType: 'json'
-	    	,success: function(res) {
-	    		opts.onSuccess(res);
+	    	,success: function(userDoc) {
+	    		opts.onSuccess(userDoc);
 	    	}
 	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
 				var errStr = httpJsonError(XMLHttpRequest, textStatus);
-	    		opts.onError('Error obtaining user for '+id+': '+errStr);
+	    		opts.onError( _loc('Error obtaining user document for {id}: {err}',{
+	    			id: id
+	    			,err: errStr
+	    		}) );
 	    	}
 	    });
 	}

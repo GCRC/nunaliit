@@ -711,6 +711,62 @@ var AuthService = $n2.Class({
 		};
 	}
 	
+	,editUser: function(opts_){
+		var opts = $n2.extend({
+			userName: null // null means current user
+			,onSuccess: function(context){}
+			,onError: function(err){}
+		},opts_);
+		
+		var _this = this;
+		
+		var userName = opts.userName;
+		if( !userName ){
+			var userDoc = this.getCurrentUser();
+			userDocLoaded(userDoc);
+			return;
+		};
+		
+		// Get document
+		$n2.couch.getUserDb().getUser({
+			name: userName
+			,onSuccess: userDocLoaded
+			,onError: function(err){
+				opts.onError(err);
+			}
+		});
+		
+		function userDocLoaded(userDoc){
+			var userService = _this._getUserService();
+			if( userService ){
+				var dialogId = $n2.getUniqueId();
+				var $dialog = $('<div id="'+dialogId+'"></div>');
+				$(document.body).append($dialog);
+				
+				userService.startEdit({
+					userDoc: userDoc
+					,elem: $dialog
+					,onFinishedFn: function(){
+						var diag = $('#'+dialogId);
+						diag.dialog('close');
+					}
+				});
+	
+				var dialogOptions = {
+					autoOpen: true
+					,modal: true
+					,width: 'auto'
+					,title: _loc('Edit User')
+					,close: function(event, ui){
+						var diag = $('#'+dialogId);
+						diag.remove();
+					}
+				};
+				$dialog.dialog(dialogOptions);
+			};
+		};
+	}
+	
 	,getCurrentUser: function() {
 		var context = this.getAuthContext();
 
@@ -827,6 +883,14 @@ var AuthService = $n2.Class({
 			d = this.options.directory.dispatchService;
 		};
 		return d;
+	}
+	
+	,_getUserService: function(){
+		var us = null;
+		if( this.options.directory ){
+			us = this.options.directory.userService;
+		};
+		return us;
 	}
 	
 	,_dispatch: function(m){
@@ -964,6 +1028,7 @@ var AuthWidget = $n2.Class({
 			var displayName = null;
 			var buttonText = null;
 			var clickFn = null;
+			var greetingFn = null;
 			var greetingClass = null;
 			if( currentUser ){
 				href = 'javascript:Logout';
@@ -973,6 +1038,12 @@ var AuthWidget = $n2.Class({
 				buttonText = _loc('Logout');
 				clickFn = function(){
 					authService.logout();
+					return false;
+				};
+				greetingFn = function(){
+					authService.editUser({
+						userName: null // current user
+					});
 					return false;
 				};
 			} else {
@@ -1002,6 +1073,9 @@ var AuthWidget = $n2.Class({
 			var greetingOuter = $('<div class="nunaliit_login_greeting_outer_container"></div>')
 				.addClass(greetingClass)
 				.append(greetingInner);
+			if( greetingFn ){
+				greetingOuter.click(greetingFn);
+			};
 			
 			$login.empty().append(greetingOuter).append(linkOuterContainer);
 		};
