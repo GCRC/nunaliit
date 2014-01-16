@@ -1917,7 +1917,7 @@ var MapAndControls = $n2.Class({
 		} else {
 			// Installing strategies make sense only if a protocol is provided
 			if( layerOptions.protocol ) {
-				layerOptions.strategies = [ new OpenLayers.Strategy.BBOX({ratio:1.2}) ];
+				layerOptions.strategies = [ new OpenLayers.Strategy.BBOX({ratio:1}) ];
 			};
 		};
 		
