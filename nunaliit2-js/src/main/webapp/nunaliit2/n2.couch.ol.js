@@ -225,6 +225,16 @@ OpenLayers.Protocol.Couch = OpenLayers.Class(OpenLayers.Protocol, {
      * {Projection} Projection used to store information in the database.
      */
     dbProjection: null,
+    
+    /*
+     * Cache for north and south poles for the map projection
+     */
+    poles: null,
+    
+    /*
+     * Cache for maximum extent in map projection
+     */
+    sourceProjectionMaxWidth: null,
 
     /**
      * Constructor: OpenLayers.Protocol.Couch
@@ -318,6 +328,7 @@ OpenLayers.Protocol.Couch = OpenLayers.Class(OpenLayers.Protocol, {
 			var mapBounds = new OpenLayers.Bounds(bounds[0],bounds[1],bounds[2],bounds[3]);
 			var dbBounds = mapBounds.clone().transform(this.sourceProjection, this.dbProjection);
 			
+			// Verify if north pole is included
 			var np = this._getPole(true);
 			if( np 
 			 && mapBounds.contains(np.x,np.y) ){
@@ -325,6 +336,7 @@ OpenLayers.Protocol.Couch = OpenLayers.Class(OpenLayers.Protocol, {
 				dbBounds.extend(northBoundary);
 			};
 			
+			// Verify if south pole is included
 			var sp = this._getPole(false);
 			if( sp 
 			 && mapBounds.contains(sp.x,sp.y) ){
@@ -333,6 +345,14 @@ OpenLayers.Protocol.Couch = OpenLayers.Class(OpenLayers.Protocol, {
 			};
 			
 			bounds = [dbBounds.left,dbBounds.bottom,dbBounds.right,dbBounds.top];
+			
+			var maxWidth = this._getMapMaxWidth();
+			if( maxWidth 
+			 && maxWidth <= (mapBounds.right - mapBounds.left) ){
+				// Assume maximum database bounds (do not wrap around)
+				bounds[0] = -180;
+				bounds[2] = 180;
+			};
 		};
 
 		// Switch view name and add keys for bounds, layer name and feature ids
@@ -916,6 +936,50 @@ OpenLayers.Protocol.Couch = OpenLayers.Class(OpenLayers.Protocol, {
     	this.poles[label] = p;
     	
     	return p;
+    },
+
+    _getMapMaxWidth: function(){
+    	
+    	if( this.sourceProjectionMaxWidth ){
+    		return this.sourceProjectionMaxWidth;
+    	};
+    	
+    	var proj = this.sourceProjection;
+    	if( proj
+    	 && proj.proj 
+    	 && proj.proj.projName === 'merc' ){
+        	var w = new OpenLayers.Geometry.Point(-180,0);
+       		var e = new OpenLayers.Geometry.Point(180,0);
+
+       		// Catch transform errors
+        	var error = false;
+        	var previousFn = null;
+        	if( typeof(Proj4js) !== 'undefined' ){
+        		previousFn = Proj4js.reportError;
+        		Proj4js.reportError = function(m){
+        			error = true;
+        		};
+        	};
+        	
+        	w.transform(this.dbProjection,this.sourceProjection);
+        	e.transform(this.dbProjection,this.sourceProjection);
+        	
+        	if( error ){
+        		w = null;
+        		e = null;
+        	};
+
+        	// Re-instate normal error reporting
+        	if( previousFn ){
+        		Proj4js.reportError = previousFn;
+        	};
+        	
+        	if( e && w ){
+        		this.sourceProjectionMaxWidth = w.x - e.x;
+        	};
+    	};
+    	
+    	return this.sourceProjectionMaxWidth;
     },
     
     CLASS_NAME: "OpenLayers.Protocol.Couch" 
