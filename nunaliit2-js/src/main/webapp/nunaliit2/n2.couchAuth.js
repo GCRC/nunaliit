@@ -1036,6 +1036,7 @@ var AuthWidget = $n2.Class({
 	
 		this.authService = opts.authService;
 		this.showService = opts.showService;
+		this.dispatchService = opts.dispatchService;
 		this.elemId = opts.elemId;
 		if( !this.elemId && opts.elem ){
 			this.elemId = opts.elem.attr('id');
@@ -1084,7 +1085,7 @@ var AuthWidget = $n2.Class({
 	}
 
 	,getDispatchService: function(){
-		return this.options.dispatchService;
+		return this.dispatchService;
 	}
 
 	,_loginStateChanged: function(currentUser) {
