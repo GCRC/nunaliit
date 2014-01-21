@@ -7,13 +7,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Formatter;
 import java.util.List;
+import java.util.Vector;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.client.CouchDb;
 
 public class UserServletActions {
+
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private CouchDb userDb;
 	private JSONObject cached_welcome = null;
@@ -51,6 +56,29 @@ public class UserServletActions {
 		
 		Collection<JSONObject> userDocs = userDb.getDocuments(docIds);
 		
+		// Work around for bug in CouchDb 1.4.0
+		if( userDocs.size() > 0 ) {
+			JSONObject firstUser = userDocs.iterator().next();
+			Object returnedId = firstUser.opt("_id");
+			if( null == returnedId ){
+				// Perform request, one at a time
+				List<JSONObject> tempUserDocs = new Vector<JSONObject>();
+				for(String id : docIds){
+					try {
+						JSONObject userDoc = userDb.getDocument(id);
+						if( null != userDoc ){
+							tempUserDocs.add(userDoc);
+						}
+					} catch(Exception e) {
+						// Ignore error. User is not in database
+					}
+				}
+				
+				// Continue with this list, instead
+				userDocs = tempUserDocs;
+			}
+		}
+		
 		JSONObject result = new JSONObject();
 		
 		JSONArray userArray = new JSONArray();
@@ -66,7 +94,7 @@ public class UserServletActions {
 
 	private JSONObject getPublicUserFromUser(JSONObject userDoc) throws Exception {
 		JSONObject result = new JSONObject();
-		
+
 		result.put("_id", userDoc.opt("_id"));
 		result.put("_rev", userDoc.opt("_rev"));
 		result.put("name", userDoc.opt("name"));
