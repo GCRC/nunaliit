@@ -893,6 +893,7 @@ var AuthService = $n2.Class({
 		
 		var opts = $n2.extend({
 			elemId: null
+			,elem: null
 			,authService: this
 			,showService: showService
 			,dispatchService: dispatchService
@@ -1013,19 +1014,36 @@ var AuthService = $n2.Class({
 //===================================================================================
 
 var AuthWidget = $n2.Class({
-	options: null
+	
+	authService: null
+	
+	,showService: null
+
+	,elemId: null
 	
 	,lastCurrentUser: null
 	
 	,initialize: function(options_){
-		this.options = $n2.extend({
+		var opts = $n2.extend({
 			elemId: null
+			,elem: null
 			,authService: null
 			,showService: null
 			,dispatchService: null
 		},options_);
 		
 		var _this = this;
+	
+		this.authService = opts.authService;
+		this.showService = opts.showService;
+		this.elemId = opts.elemId;
+		if( !this.elemId && opts.elem ){
+			this.elemId = opts.elem.attr('id');
+			if( !this.elemId ){
+				this.elemId = $n2.getUniqueId();
+				opts.elem.attr('id',this.elemId);
+			};
+		};
 		
 		var authService = this.getAuthService();
 		if( authService ){
@@ -1050,19 +1068,19 @@ var AuthWidget = $n2.Class({
 	}
 
 	,getWidgetElem: function(){
-		if( this.options.elemId ){
-			return $('#'+this.options.elemId);
+		if( this.elemId ){
+			return $('#'+this.elemId);
 		};
 		
 		return $('#n2AuthDummy'); // return empty set
 	}
 
 	,getAuthService: function(){
-		return this.options.authService;
+		return this.authService;
 	}
 
 	,getShowService: function(){
-		return this.options.showService;
+		return this.showService;
 	}
 
 	,getDispatchService: function(){
