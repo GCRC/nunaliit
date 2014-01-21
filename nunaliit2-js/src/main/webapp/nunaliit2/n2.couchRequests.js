@@ -207,6 +207,11 @@ $n2.couchRequests = $n2.Class({
 
 		for(var j=0,f=this.userListeners.length; j<f; ++j){
 			var listener = this.userListeners[j];
+
+			this._dispatch({
+				type: 'userDocument'
+				,userDoc: userDoc
+			});
 			
 			//try {
 				listener(userDoc);

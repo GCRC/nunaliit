@@ -722,9 +722,15 @@ var AuthService = $n2.Class({
 		
 		var userName = opts.userName;
 		if( !userName ){
-			var userDoc = this.getCurrentUser();
-			userDocLoaded(userDoc);
-			return;
+			var currentUser = this.getCurrentUser();
+			if( currentUser._id ) {
+				// This is the user document
+				userDocLoaded(currentUser);
+				return;
+			} else {
+				// All we have is a name
+				userName = currentUser.name;
+			};
 		};
 		
 		// Get document
@@ -732,7 +738,16 @@ var AuthService = $n2.Class({
 			name: userName
 			,onSuccess: userDocLoaded
 			,onError: function(err){
-				opts.onError(err);
+				// Create a document.. Should really be done by editor
+				var userDoc = {
+					_id: 'org.couchdb.user:'+userName
+					,name: userName
+					,display: ''
+					,nunaliit_emails: []
+					,roles: []
+					,type: 'user'
+				};
+				userDocLoaded(userDoc);
 			}
 		});
 		
@@ -746,6 +761,12 @@ var AuthService = $n2.Class({
 				userService.startEdit({
 					userDoc: userDoc
 					,elem: $dialog
+					,onSavedFn: function(userDoc){
+						var requestService = _this._getRequestService();
+						if( requestService && userDoc && userDoc.name ){
+							requestService.requestUser(userDoc.name);
+						};
+					}
 					,onFinishedFn: function(){
 						var diag = $('#'+dialogId);
 						diag.dialog('close');
@@ -864,14 +885,17 @@ var AuthService = $n2.Class({
 	
 	,createAuthWidget: function(opts_){
 		var showService = null;
+		var dispatchService = null;
 		if( this.options.directory ){
 			showService = this.options.directory.showService;
+			dispatchService = this.options.directory.dispatchService;
 		};
 		
 		var opts = $n2.extend({
 			elemId: null
 			,authService: this
 			,showService: showService
+			,dispatchService: dispatchService
 		},opts_);
 		
 		return new AuthWidget(opts);
@@ -884,13 +908,21 @@ var AuthService = $n2.Class({
 		};
 		return d;
 	}
-	
+
 	,_getUserService: function(){
 		var us = null;
 		if( this.options.directory ){
 			us = this.options.directory.userService;
 		};
 		return us;
+	}
+	
+	,_getRequestService: function(){
+		var rs = null;
+		if( this.options.directory ){
+			rs = this.options.directory.requestService;
+		};
+		return rs;
 	}
 	
 	,_dispatch: function(m){
@@ -983,11 +1015,14 @@ var AuthService = $n2.Class({
 var AuthWidget = $n2.Class({
 	options: null
 	
+	,lastCurrentUser: null
+	
 	,initialize: function(options_){
 		this.options = $n2.extend({
 			elemId: null
 			,authService: null
 			,showService: null
+			,dispatchService: null
 		},options_);
 		
 		var _this = this;
@@ -995,7 +1030,21 @@ var AuthWidget = $n2.Class({
 		var authService = this.getAuthService();
 		if( authService ){
 			authService.addListeners(function(currentUser){
+				_this.lastCurrentUser = currentUser;
 				_this._loginStateChanged(currentUser);
+			});
+		};
+		
+		var dispatchService = this.getDispatchService();
+		if( dispatchService ){
+			dispatchService.register(DH,'userDocument',function(m){
+				if( m 
+				 && m.userDoc 
+				 && _this.lastCurrentUser 
+				 && _this.lastCurrentUser._id === m.userDoc._id ){
+					_this.lastCurrentUser = m.userDoc;
+					_this._loginStateChanged(m.userDoc);
+				};
 			});
 		};
 	}
@@ -1014,6 +1063,10 @@ var AuthWidget = $n2.Class({
 
 	,getShowService: function(){
 		return this.options.showService;
+	}
+
+	,getDispatchService: function(){
+		return this.options.dispatchService;
 	}
 
 	,_loginStateChanged: function(currentUser) {

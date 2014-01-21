@@ -1498,8 +1498,8 @@ var UserDb = $n2.Class(Database,{
 			return;
 		};
 		
-		if( !opts.user || !opts.user._id || !opts.user._rev ) {
-			opts.onError('On update, a valid document with _id and _rev attributes must be supplied');
+		if( !opts.user || !opts.user._id ) {
+			opts.onError('On update, a valid document with _id attribute must be supplied');
 			return;
 		};
 		
