@@ -2197,8 +2197,17 @@ var MapAndControls = $n2.Class({
 				for(var i=0,e=features.length;i<e;++i){
 					var f = features[i];
 					if( _this.clickedInfo.fids[f.fid] ){
+						var featureInfo = _this.clickedInfo.fids[f.fid];
+						
 						_this.clickedInfo.features.push(f);
-						f.isClicked = true;
+						
+						if( featureInfo.clicked ) {
+							f.isClicked = true;
+						};
+						
+						if( featureInfo.intent ) {
+							f.n2SelectIntent = featureInfo.intent;
+						};
 					};
 					if( _this.focusInfo.fids[f.fid] ){
 						_this.focusInfo.features.push(f);
@@ -2212,8 +2221,14 @@ var MapAndControls = $n2.Class({
 						for(var j=0,k=f.cluster.length; j<k; ++j){
 							var clusterFeature = f.cluster[j];
 							if( _this.clickedInfo.fids[clusterFeature.fid] ){
+								var featureInfo = _this.clickedInfo.fids[clusterFeature.fid];
 								_this.clickedInfo.features.push(f);
-								f.isClicked = true;
+								if( featureInfo.clicked ) {
+									f.isClicked = true;
+								};
+								if( featureInfo.intent ) {
+									f.n2SelectIntent = featureInfo.intent;
+								};
 							};
 							if( _this.focusInfo.fids[clusterFeature.fid] ){
 								_this.focusInfo.features.push(f);
@@ -2485,7 +2500,7 @@ var MapAndControls = $n2.Class({
 			this.clickedInfo.features = [feature];
 
 			this.clickedInfo.fids = {};
-			this.clickedInfo.fids[feature.fid] = true;
+			this.clickedInfo.fids[feature.fid] = { clicked: true };
 			this.clickedInfo.selectedId = feature.fid;
 			
 			feature.isClicked = true;
@@ -2543,7 +2558,7 @@ var MapAndControls = $n2.Class({
 		
 		this.clickedInfo.fids = {};
 		if( fid ) {
-			this.clickedInfo.fids[fid] = true;
+			this.clickedInfo.fids[fid] = { clicked: true };
 		};
 		
 		this.clickedInfo.selectedId = fid;
@@ -2572,7 +2587,12 @@ var MapAndControls = $n2.Class({
 		};
 		
 		if( opts.fid ) {
-			this.clickedInfo.fids[opts.fid] = true;
+			this.clickedInfo.fids[opts.fid] = {
+				clicked: true
+			};
+			if( opts.intent ){
+				this.clickedInfo.fids[opts.fid].intent = opts.intent;
+			};
 		};
 		
 		if( opts.features ) {
