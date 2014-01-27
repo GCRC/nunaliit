@@ -2508,6 +2508,7 @@ var MapAndControls = $n2.Class({
 				
 				if( feature.isClicked ) {
 					feature.isClicked = false;
+					feature.n2SelectIntent = null;
 					if( feature.layer ) {
 						feature.layer.drawFeature(feature);
 					};
@@ -2564,22 +2565,28 @@ var MapAndControls = $n2.Class({
 	/**
 	 * Add map selection to current selection.
 	 */
-	,_selectedFeaturesSupplement: function(features, fid){
+	,_selectedFeaturesSupplement: function(opts){
+		
 		if( this.currentMode !== this.modes.NAVIGATE ){
 			this.switchMapMode(this.modes.NAVIGATE);
 		};
 		
-		if( fid ) {
-			this.clickedInfo.fids[fid] = true;
+		if( opts.fid ) {
+			this.clickedInfo.fids[opts.fid] = true;
 		};
 		
-		if( features ) {
-			for(var i=0,e=features.length; i<e; ++i){
-				var f = features[i];
+		if( opts.features ) {
+			for(var i=0,e=opts.features.length; i<e; ++i){
+				var f = opts.features[i];
 
 				this.clickedInfo.features.push(f);
 
 				f.isClicked = true;
+
+				if( opts.intent ){
+					f.n2SelectIntent = opts.intent;
+				};
+				
 				if( f.layer ) {
 					f.layer.drawFeature(f);
 				};
@@ -2668,7 +2675,7 @@ var MapAndControls = $n2.Class({
 			if( f && !f.isHovered ) {
 				f.isHovered = true;
 				if( opts.intent ){
-					f.n2Intent = opts.intent;
+					f.n2HoverIntent = opts.intent;
 				};
 				if( f.layer ) f.layer.drawFeature(f);
 				this.focusInfo.features.push( f );
@@ -2681,7 +2688,7 @@ var MapAndControls = $n2.Class({
 			var feature = this.focusInfo.features[i];
 			if( feature.isHovered ) {
 				feature.isHovered = false;
-				feature.n2Intent = null;
+				feature.n2HoverIntent = null;
 				if( feature.layer ) feature.layer.drawFeature(feature);
 			};
 		};
@@ -4405,7 +4412,11 @@ var MapAndControls = $n2.Class({
 			var fid = m.docId;
 			if( fid ) {
 				var features = this._getMapFeaturesIncludingFid(fid);
-				this._selectedFeaturesSupplement(features, fid);
+				this._selectedFeaturesSupplement({
+					fid: fid
+					,features: features
+					,intent: m.intent
+				});
 			};
 			
 		} else if( 'unselected' === type ) {

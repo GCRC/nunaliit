@@ -548,7 +548,15 @@ var MapFeatureStyles = $n2.Class({
 				data = feature.cluster[0].data;
 			};
 
-	    	var n2Intent = feature.n2Intent;
+			// Compute intent
+	    	var n2Intent = feature.n2HoverIntent;
+	    	if( !n2Intent ){
+	    		n2Intent = feature.n2SelectIntent;
+	    	};
+	    	if( !n2Intent ){
+	    		n2Intent = feature.n2Intent;
+	    	};
+	    	
 	    	var layerId = layerInfo.id;
 	    	var schemaName = null;
 			if( data 
