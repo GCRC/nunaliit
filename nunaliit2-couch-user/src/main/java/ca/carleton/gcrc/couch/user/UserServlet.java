@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDbSecurityDocument;
+import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 
 @SuppressWarnings("serial")
 public class UserServlet extends HttpServlet {
@@ -68,7 +69,17 @@ public class UserServlet extends HttpServlet {
 			}
 		}
 		
-		actions = new UserServletActions(userDb);
+		// Nunaliit user design document
+		CouchDesignDocument userDesignDocument = null;
+		if( null != userDb ){
+			try {
+				userDesignDocument = userDb.getDesignDocument("nunaliit_user");
+			} catch (Exception e) {
+				throw new ServletException("Unable to create user deisgn document.",e);
+			}
+		}
+		
+		actions = new UserServletActions(userDb,userDesignDocument);
 		
 		// Add atlas role to access user database
 		try {
@@ -156,6 +167,23 @@ public class UserServlet extends HttpServlet {
 			} else if( path.size() == 2 && path.get(0).equals("getUser") ) {
 					JSONObject result = actions.getUser(path.get(1));
 					sendJsonResponse(resp, result);
+
+			} else if( path.size() == 1 && path.get(0).equals("getUser") ) {
+				String[] userStrings = req.getParameterValues("user");
+				String[] emailStrings = req.getParameterValues("email");
+				
+				// Request by user name
+				if( null != userStrings && userStrings.length > 0 ){
+					String userName = userStrings[0];
+					JSONObject result = actions.getUser(userName);
+					sendJsonResponse(resp, result);
+					
+				} else if( null != emailStrings && emailStrings.length > 0 ){
+					// Request by e-mail
+					String emailAddress = emailStrings[0];
+					JSONObject result = actions.getUserFromEmailAddress(emailAddress);
+					sendJsonResponse(resp, result);
+				}
 
 			} else if( path.size() == 1 && path.get(0).equals("getUsers") ) {
 				String[] userStrings = req.getParameterValues("user");

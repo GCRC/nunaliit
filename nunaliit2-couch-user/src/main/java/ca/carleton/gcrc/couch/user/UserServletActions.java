@@ -15,18 +15,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.client.CouchDb;
+import ca.carleton.gcrc.couch.client.CouchDesignDocument;
+import ca.carleton.gcrc.couch.client.CouchQuery;
+import ca.carleton.gcrc.couch.client.CouchQueryResults;
 
 public class UserServletActions {
 
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private CouchDb userDb;
+	private CouchDesignDocument nunaliitUserDesignDocument;
 	private JSONObject cached_welcome = null;
 
 	public UserServletActions(
 			CouchDb userDb
+			,CouchDesignDocument nunaliitUserDesignDocument
 		){
 		this.userDb = userDb;
+		this.nunaliitUserDesignDocument = nunaliitUserDesignDocument;
 	}
 	
 	synchronized public JSONObject getWelcome() throws Exception{
@@ -90,6 +96,31 @@ public class UserServletActions {
 		}
 		
 		return result;
+	}
+
+	public JSONObject getUserFromEmailAddress(String emailAddress) throws Exception {
+		try {
+			CouchQuery query = new CouchQuery();
+			query.setViewName("emails");
+			query.setStartKey(emailAddress);
+			query.setEndKey(emailAddress);
+			query.setIncludeDocs(true);
+
+			CouchQueryResults results = nunaliitUserDesignDocument.performQuery(query);
+			List<JSONObject> rows = results.getRows();
+			for(JSONObject row : rows){
+				JSONObject doc = row.optJSONObject("doc");
+				if( null != doc ){
+					JSONObject result = getPublicUserFromUser(doc);
+					return result;
+				}
+			}
+
+			throw new Exception("Unable to find user with e-mail address: "+emailAddress);
+			
+		} catch (Exception e) {
+			throw new Exception("Error while searching user with e-mail address: "+emailAddress,e);
+		}
 	}
 
 	private JSONObject getPublicUserFromUser(JSONObject userDoc) throws Exception {
