@@ -114,5 +114,6 @@
 		<module>nunaliit2-utils</module>
 		<module>nunaliit2-couch-user</module>
 		<module>nunaliit2-mail</module>
+		<module>nunaliit2-security</module>
 	</modules>
 </project>
