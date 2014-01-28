@@ -21,6 +21,10 @@ import org.slf4j.LoggerFactory;
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDbSecurityDocument;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
+import ca.carleton.gcrc.couch.user.mail.UserMailNotification;
+import ca.carleton.gcrc.couch.user.mail.UserMailNotificationImpl;
+import ca.carleton.gcrc.couch.user.mail.UserMailNotificationNull;
+import ca.carleton.gcrc.mail.MailDelivery;
 
 @SuppressWarnings("serial")
 public class UserServlet extends HttpServlet {
@@ -56,6 +60,21 @@ public class UserServlet extends HttpServlet {
 			}
 		}
 		
+		// Mail Delivery
+		UserMailNotification userMailNotification = new UserMailNotificationNull();
+		{
+			Object obj = context.getAttribute(MailDelivery.ConfigAttributeName_MailDelivery);
+			if( null == obj ){
+				throw new ServletException("Mail delivery is not specified ("+MailDelivery.ConfigAttributeName_MailDelivery+")");
+			}
+			if( obj instanceof MailDelivery ){
+				MailDelivery mailDelivery = (MailDelivery)obj;
+				userMailNotification = new UserMailNotificationImpl(mailDelivery);
+			} else {
+				throw new ServletException("Unexpected object for mail delivery: "+obj.getClass().getName());
+			}
+		}
+		
 		// UserDb
 		{
 			Object obj = context.getAttribute(ConfigAttributeName_UserDb);
@@ -79,7 +98,7 @@ public class UserServlet extends HttpServlet {
 			}
 		}
 		
-		actions = new UserServletActions(userDb,userDesignDocument);
+		actions = new UserServletActions(userDb, userDesignDocument, userMailNotification);
 		
 		// Add atlas role to access user database
 		try {
@@ -194,6 +213,19 @@ public class UserServlet extends HttpServlet {
 				}
 				
 				JSONObject result = actions.getUsers(users);
+				sendJsonResponse(resp, result);
+
+			} else if( path.size() == 1 && path.get(0).equals("initUserCreation") ) {
+				String[] emailStrings = req.getParameterValues("email");
+
+				if( null == emailStrings || emailStrings.length < 1 ){
+					throw new Exception("'email' parameter must be specified");
+				}
+				if( emailStrings.length > 1 ){
+					throw new Exception("'email' parameter must be specified exactly once");
+				}
+				
+				JSONObject result = actions.initUserCreation(emailStrings[0]);
 				sendJsonResponse(resp, result);
 
 			} else {

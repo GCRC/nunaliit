@@ -201,5 +201,10 @@
     	<type>jar</type>
     	<scope>compile</scope>
     </dependency>
-	</dependencies>
+   	<dependency>
+   		<groupId>ca.carleton.gcrc</groupId>
+   		<artifactId>nunaliit2-mail</artifactId>
+   		<version>${project.version}</version>
+   	</dependency>
+  </dependencies>
 </project>

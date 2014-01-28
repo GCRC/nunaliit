@@ -2,6 +2,7 @@ package ca.carleton.gcrc.couch.onUpload.mail;
 
 import java.util.Properties;
 
+import ca.carleton.gcrc.mail.MailDeliveryImpl;
 import junit.framework.TestCase;
 
 public class MailNotificationTest extends TestCase {

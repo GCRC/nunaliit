@@ -68,6 +68,7 @@
 		<log4j.version>1.2.14</log4j.version>
 		<junit.version>3.8.1</junit.version>
 		<cargo.version>1.2.4</cargo.version>
+		<mail.version>1.5.1</mail.version>
 		<json.version>20090211</json.version>
 		<maven-dependency-plugin.version>2.5.1</maven-dependency-plugin.version>
 		<appassembler-maven-plugin.version>1.3</appassembler-maven-plugin.version>
@@ -112,5 +113,6 @@
 		<module>nunaliit2-css</module>
 		<module>nunaliit2-utils</module>
 		<module>nunaliit2-couch-user</module>
+		<module>nunaliit2-mail</module>
 	</modules>
 </project>

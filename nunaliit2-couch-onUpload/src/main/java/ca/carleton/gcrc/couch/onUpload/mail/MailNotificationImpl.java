@@ -17,6 +17,9 @@ import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.user.UserDesignDocument;
 import ca.carleton.gcrc.couch.user.UserDesignDocumentImpl;
 import ca.carleton.gcrc.couch.user.UserDocument;
+import ca.carleton.gcrc.mail.MailDelivery;
+import ca.carleton.gcrc.mail.MailMessage;
+import ca.carleton.gcrc.mail.MailRecipient;
 
 public class MailNotificationImpl implements MailNotification {
 

@@ -29,7 +29,6 @@ import ca.carleton.gcrc.couch.onUpload.UploadWorker;
 import ca.carleton.gcrc.couch.onUpload.UploadWorkerSettings;
 import ca.carleton.gcrc.couch.onUpload.geojson.GeoJsonFileConverter;
 import ca.carleton.gcrc.couch.onUpload.gpx.GpxFileConverter;
-import ca.carleton.gcrc.couch.onUpload.mail.MailDeliveryImpl;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotification;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotificationImpl;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotificationNull;
@@ -38,6 +37,8 @@ import ca.carleton.gcrc.couch.onUpload.multimedia.MultimediaFileConverter;
 import ca.carleton.gcrc.couch.onUpload.pdf.PdfFileConverter;
 import ca.carleton.gcrc.couch.user.UserDesignDocumentImpl;
 import ca.carleton.gcrc.couch.user.UserServlet;
+import ca.carleton.gcrc.mail.MailDelivery;
+import ca.carleton.gcrc.mail.MailDeliveryImpl;
 import ca.carleton.gcrc.olkit.multimedia.utils.MultimediaConfiguration;
 import ca.carleton.gcrc.upload.OnUploadedListenerSingleton;
 import ca.carleton.gcrc.upload.UploadServlet;
@@ -364,6 +365,7 @@ public class ConfigServlet extends HttpServlet {
 			try {
 				MailDeliveryImpl mailDelivery = new MailDeliveryImpl();
 				mailDelivery.setMailProperties(props);
+				servletContext.setAttribute(MailDelivery.ConfigAttributeName_MailDelivery, mailDelivery);
 
 				mail = new MailNotificationImpl(
 					atlasProperties.getAtlasName()

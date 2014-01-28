@@ -1,12 +1,15 @@
-package ca.carleton.gcrc.couch.onUpload.mail;
+package ca.carleton.gcrc.mail;
 
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
+import javax.mail.Authenticator;
 import javax.mail.Message;
 import javax.mail.Multipart;
+import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
@@ -28,6 +31,7 @@ public class MailDeliveryImpl implements MailDelivery {
 		
 	}
 
+	@Override
 	public Properties getMailProperties() {
 		return mailProperties;
 	}
@@ -64,16 +68,47 @@ public class MailDeliveryImpl implements MailDelivery {
 	@Override
 	public void sendMessage(MailMessage message) throws Exception {
 
-//		mailProps.put("mail.transport.protocol", "smtp");
-//		mailProps.put("mail.smtp.host", "smtp.istop.com");
-//		mailProps.put("mail.smtp.port", "25");
-		
 		if( null == fromAddress ) return;
 
 		logger.info("Sending mail message");
 		
 		try {
-			Session mailSession = Session.getInstance(mailProperties);
+			// Send to log the properties
+//			Enumeration<?> e = mailProperties.propertyNames();
+//			while( e.hasMoreElements() ){
+//				Object keyObj = e.nextElement();
+//				if( keyObj instanceof String ){
+//					String key = (String)keyObj;
+//					String value = mailProperties.getProperty(key);
+//					logger.info("Mail Property "+key+"="+value);
+//				}
+//			}
+			
+			// Check for user name and password
+			String userName = null;
+			String userPassword = null;
+			String prot = mailProperties.getProperty("mail.transport.protocol",null);
+			if( null != prot ){
+				userName = mailProperties.getProperty("mail."+prot+".user",null);
+				userPassword = mailProperties.getProperty("mail."+prot+".password",null);
+			}
+			
+			// Create session
+			Session mailSession = null;
+			if( null != userName && null != userPassword ) {
+				final String name = userName;
+				final String pw = userPassword;
+				
+				Authenticator auth = new Authenticator(){
+					protected PasswordAuthentication getPasswordAuthentication() {
+						return new PasswordAuthentication(name,pw);
+					}
+				};
+				mailSession = Session.getInstance(mailProperties, auth);
+			} else {
+				mailSession = Session.getInstance(mailProperties);
+			}
+			
 			MimeMessage msg = new MimeMessage(mailSession);
 			
 			// From

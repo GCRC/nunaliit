@@ -1,4 +1,4 @@
-package ca.carleton.gcrc.couch.onUpload.mail;
+package ca.carleton.gcrc.mail;
 
 import java.util.List;
 import java.util.Vector;

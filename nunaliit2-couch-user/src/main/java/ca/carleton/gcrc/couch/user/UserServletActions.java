@@ -18,6 +18,7 @@ import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchQuery;
 import ca.carleton.gcrc.couch.client.CouchQueryResults;
+import ca.carleton.gcrc.couch.user.mail.UserMailNotification;
 
 public class UserServletActions {
 
@@ -25,14 +26,17 @@ public class UserServletActions {
 
 	private CouchDb userDb;
 	private CouchDesignDocument nunaliitUserDesignDocument;
+	private UserMailNotification userMailNotification;
 	private JSONObject cached_welcome = null;
 
 	public UserServletActions(
 			CouchDb userDb
 			,CouchDesignDocument nunaliitUserDesignDocument
+			,UserMailNotification userMailNotification
 		){
 		this.userDb = userDb;
 		this.nunaliitUserDesignDocument = nunaliitUserDesignDocument;
+		this.userMailNotification = userMailNotification;
 	}
 	
 	synchronized public JSONObject getWelcome() throws Exception{
@@ -121,6 +125,15 @@ public class UserServletActions {
 		} catch (Exception e) {
 			throw new Exception("Error while searching user with e-mail address: "+emailAddress,e);
 		}
+	}
+	
+	public JSONObject initUserCreation(String emailAddr) throws Exception {
+		JSONObject result = new JSONObject();
+		result.put("message", "User creation email was sent to the given address");
+		
+		userMailNotification.sendUserCreationNotice(emailAddr,"test");
+		
+		return result;
 	}
 
 	private JSONObject getPublicUserFromUser(JSONObject userDoc) throws Exception {
