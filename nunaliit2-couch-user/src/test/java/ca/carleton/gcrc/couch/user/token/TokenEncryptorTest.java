@@ -22,26 +22,26 @@ public class TokenEncryptorTest extends TestCase {
 		TokenEncryptor.encryptToken(DUMMY_PRODUCTION_KEY, DUMMY_CONTEXT, token);
 	}
 
-//	public void testDecryptTokenCreation() throws Exception {
-//		CreationToken token = new CreationToken();
-//		token.setEmailAddress("abc@company.com");
-//		token.setExpiry( new Date() );
-//		
-//		byte[] encrypted = TokenEncryptor.encryptToken(DUMMY_PRODUCTION_KEY, DUMMY_CONTEXT, token);
-//		Token tokenCopy = TokenEncryptor.decryptToken(DUMMY_PRODUCTION_KEY, encrypted);
-//		
-//		if( tokenCopy instanceof CreationToken ) {
-//			CreationToken token2 = (CreationToken)tokenCopy;
-//			
-//			if( false == token2.getEmailAddress().equals(token.getEmailAddress()) ){
-//				fail("Unexpected e-mail address");
-//			}
-//			if( token2.getExpiry().getTime() != token.getExpiry().getTime() ){
-//				fail("Unexpected expiry date");
-//			}
-//			
-//		} else {
-//			fail("Unexpected class: "+tokenCopy.getClass().getName());
-//		}
-//	}
+	public void testDecryptTokenCreation() throws Exception {
+		CreationToken token = new CreationToken();
+		token.setEmailAddress("abc@company.com");
+		token.setExpiry( new Date() );
+		
+		byte[] encrypted = TokenEncryptor.encryptToken(DUMMY_PRODUCTION_KEY, DUMMY_CONTEXT, token);
+		Token tokenCopy = TokenEncryptor.decryptToken(DUMMY_PRODUCTION_KEY, encrypted);
+		
+		if( tokenCopy instanceof CreationToken ) {
+			CreationToken token2 = (CreationToken)tokenCopy;
+			
+			if( false == token2.getEmailAddress().equals(token.getEmailAddress()) ){
+				fail("Unexpected e-mail address");
+			}
+			if( token2.getExpiry().getTime() != token.getExpiry().getTime() ){
+				fail("Unexpected expiry date");
+			}
+			
+		} else {
+			fail("Unexpected class: "+tokenCopy.getClass().getName());
+		}
+	}
 }

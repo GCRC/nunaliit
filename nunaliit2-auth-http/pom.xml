@@ -28,7 +28,7 @@
 	<dependency>
 	  <groupId>commons-codec</groupId>
 	  <artifactId>commons-codec</artifactId>
-	  <version>1.5</version>
+	  <version>${commons-codec.version}</version>
 	</dependency>
   	<dependency>
   		<groupId>ca.carleton.gcrc</groupId>

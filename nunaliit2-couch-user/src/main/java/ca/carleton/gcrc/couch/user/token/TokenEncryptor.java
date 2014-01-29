@@ -1,6 +1,7 @@
 package ca.carleton.gcrc.couch.user.token;
 
 import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import ca.carleton.gcrc.security.ber.BerBytes;
@@ -28,7 +29,11 @@ public class TokenEncryptor {
 		try {
 			byte[] payload = token.encode();
 			Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-			cipher.init(Cipher.ENCRYPT_MODE, encryptionKey);
+
+			byte[] iv = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+		    IvParameterSpec ivspec = new IvParameterSpec(iv);
+		    
+			cipher.init(Cipher.ENCRYPT_MODE, encryptionKey, ivspec);
 			encrypted = cipher.doFinal(payload);
 		} catch(Exception e) {
 			throw new Exception("Error during encryption of token", e);
@@ -95,7 +100,11 @@ public class TokenEncryptor {
 			byte[] payload = null;
 			try {
 				Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-				cipher.init(Cipher.DECRYPT_MODE, encryptionKey);
+
+				byte[] iv = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+			    IvParameterSpec ivspec = new IvParameterSpec(iv);
+			    
+				cipher.init(Cipher.DECRYPT_MODE, encryptionKey, ivspec);
 				payload = cipher.doFinal(encryptedPayload);
 			} catch(Exception e) {
 				throw new Exception("Decryption error", e);

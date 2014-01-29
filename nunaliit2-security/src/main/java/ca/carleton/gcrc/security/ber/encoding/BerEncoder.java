@@ -108,13 +108,13 @@ public class BerEncoder {
 	private static byte[] computeIntegerValue(BerInteger integerObj) throws Exception {
 		Long valueObj = integerObj.getValue();
 		
-		int value = 0;
+		long value = 0;
 		if( null != valueObj ) {
-			value = valueObj.intValue();
+			value = valueObj.longValue();
 		}
 		
 		int size = 1;
-		int work = value >> 8;
+		long work = value >> 8;
 		while(work > 0) {
 			++size;
 			work = work >> 8;

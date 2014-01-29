@@ -3,12 +3,15 @@ package ca.carleton.gcrc.couch.user;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
 import java.security.MessageDigest;
+import java.security.SecureRandom;
+import java.util.Date;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Formatter;
 import java.util.List;
 import java.util.Vector;
 
+import org.apache.commons.codec.binary.Base64;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -19,15 +22,24 @@ import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchQuery;
 import ca.carleton.gcrc.couch.client.CouchQueryResults;
 import ca.carleton.gcrc.couch.user.mail.UserMailNotification;
+import ca.carleton.gcrc.couch.user.token.CreationToken;
+import ca.carleton.gcrc.couch.user.token.TokenEncryptor;
+import ca.carleton.gcrc.security.rng.RngFactory;
 
 public class UserServletActions {
 
+	static final private byte[] SECRET_KEY = {
+		(byte)0x01, (byte)0x02, (byte)0x03, (byte)0x04, (byte)0x05, (byte)0x06, (byte)0x07, (byte)0x08
+		,(byte)0x11, (byte)0x12, (byte)0x13, (byte)0x14, (byte)0x15, (byte)0x16, (byte)0x17, (byte)0x18
+	};
+	
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private CouchDb userDb;
 	private CouchDesignDocument nunaliitUserDesignDocument;
 	private UserMailNotification userMailNotification;
 	private JSONObject cached_welcome = null;
+	private SecureRandom rng = null;
 
 	public UserServletActions(
 			CouchDb userDb
@@ -37,6 +49,11 @@ public class UserServletActions {
 		this.userDb = userDb;
 		this.nunaliitUserDesignDocument = nunaliitUserDesignDocument;
 		this.userMailNotification = userMailNotification;
+		
+		rng = (new RngFactory()).createRng();
+		
+		// Hard coded key
+		
 	}
 	
 	synchronized public JSONObject getWelcome() throws Exception{
@@ -130,8 +147,30 @@ public class UserServletActions {
 	public JSONObject initUserCreation(String emailAddr) throws Exception {
 		JSONObject result = new JSONObject();
 		result.put("message", "User creation email was sent to the given address");
+
+		// Create token
+		CreationToken creationToken = new CreationToken();
+		{
+			creationToken.setEmailAddress(emailAddr);
+			Date now = new Date();
+			long thirtyDaysMs = now.getTime() + (30 * 24 * 60 * 60 * 1000);
+			creationToken.setExpiry( new Date(thirtyDaysMs) );
+		}
 		
-		userMailNotification.sendUserCreationNotice(emailAddr,"test");
+		// Encrypt token
+		byte[] context = new byte[8];
+		rng.nextBytes(context);
+		byte[] encryptedToken = TokenEncryptor.encryptToken(SECRET_KEY, context, creationToken);
+		
+		// Base 64 encode token
+		String b64Token = null;
+		try {
+			b64Token = Base64.encodeBase64String(encryptedToken);
+		} catch( Exception e ) {
+			throw new Exception("Error while encoding token (b64)", e);
+		}		
+		
+		userMailNotification.sendUserCreationNotice(emailAddr,b64Token);
 		
 		return result;
 	}
