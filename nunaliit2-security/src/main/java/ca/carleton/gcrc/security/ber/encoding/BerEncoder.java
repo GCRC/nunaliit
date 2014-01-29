@@ -106,7 +106,7 @@ public class BerEncoder {
 	}
 
 	private static byte[] computeIntegerValue(BerInteger integerObj) throws Exception {
-		Integer valueObj = integerObj.getValue();
+		Long valueObj = integerObj.getValue();
 		
 		int value = 0;
 		if( null != valueObj ) {

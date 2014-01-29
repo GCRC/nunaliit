@@ -20,7 +20,7 @@ public class KDFCounterModeImpl implements KDFCounterMode {
 	public KDFCounterModeImpl(){
 		r = 4;
 		s = 4;
-		hmacGenerator = new HMACGeneratorImpl(HMACGeneratorImpl.Type.SHA384);
+		hmacGenerator = new HMACGeneratorImpl(HMACGeneratorImpl.Type.SHA256);
 	}
 
 	public KDFCounterModeImpl(int r, HMACGenerator hmacGenerator){

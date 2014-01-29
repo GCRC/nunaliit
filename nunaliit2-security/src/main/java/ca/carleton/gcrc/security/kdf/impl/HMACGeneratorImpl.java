@@ -7,7 +7,7 @@ import ca.carleton.gcrc.security.kdf.HMACGenerator;
 public class HMACGeneratorImpl implements HMACGenerator {
 	
 	public enum Type {
-		SHA384("SHA-384",128, 48)
+		SHA256("SHA-256",64,32)
 		;
 		
 		private String id;

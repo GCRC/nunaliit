@@ -242,8 +242,9 @@ var UserEditor = $n2.Class({
 
 		if( usingAccordion ){
 			$editorsContainer.accordion({
-				collapsible: true
-				,heightStyleType: 'content'
+				heightStyle: 'content',
+	            autoHeight: false,
+		        clearStyle: true	
 			});
 		};
 

@@ -5,7 +5,7 @@ import ca.carleton.gcrc.security.ber.BerObject;
 
 public class BerIntegerImpl extends BerObjectImpl implements BerInteger {
 
-	private Integer value;
+	private Long value;
 	
 	public BerIntegerImpl() {
 		
@@ -16,12 +16,12 @@ public class BerIntegerImpl extends BerObjectImpl implements BerInteger {
 	}
 	
 	@Override
-	public Integer getValue() {
+	public Long getValue() {
 		return value;
 	}
 
 	@Override
-	public void setValue(Integer value) {
+	public void setValue(Long value) {
 		this.value = value;
 	}
 

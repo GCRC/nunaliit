@@ -93,7 +93,7 @@ public class BerDecoder {
 	private static BerInteger decodeInteger(BerTag tag, byte[] bytes, BerImplementation impl) {
 		BerInteger berInt = impl.createInteger(tag.getTypeClass(), tag.getType());
 		
-		int value = 0;
+		long value = 0;
 		for(int loop=0; loop<bytes.length; ++loop) {
 			int byteValue = bytes[loop];
 			if( byteValue < 0 ) {
@@ -102,7 +102,7 @@ public class BerDecoder {
 			value = (value << 8) + byteValue;
 		}
 		
-		Integer intValue = new Integer(value);
+		Long intValue = new Long(value);
 		berInt.setValue(intValue);
 		
 		return berInt;
