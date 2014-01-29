@@ -123,6 +123,7 @@ var Module = $n2.Class({
 	,displayIntro: function(opts_){
 		var opts = $n2.extend({
 			elem: null
+			,showService: null
 			,onLoaded: function(){}
 		},opts_);
 		
@@ -150,7 +151,16 @@ var Module = $n2.Class({
 			} else if( 'text' === introInfo.type && introInfo.content ) {
 				var content = $n2.couchL10n.getLocalizedString(introInfo.content);
 				if( content ) {
-					$elem.text(content);
+					var $wrapper = $('<div>')
+						.text(content);
+					$elem
+						.empty()
+						.append($wrapper);
+					
+					if( opts.showService ) {
+						$wrapper.addClass('n2s_preserveSpaces');
+						opts.showService.fixElementAndChildren($wrapper);
+					};
 				};
 				opts.onLoaded();
 				return true;
@@ -997,6 +1007,7 @@ var ModuleDisplay = $n2.Class({
 		var $elem = $('#'+this.sidePanelName);
 		this.module.displayIntro({
 			elem: $elem
+			,showService: this._getShowService()
 			,onLoaded: function(){
 				_this._sendDispatchMessage({type:'loadedModuleContent'});
 			}
@@ -1009,6 +1020,14 @@ var ModuleDisplay = $n2.Class({
 			d = this.config.directory.dispatchService;
 		};
 		return d;
+	}
+	
+	,_getShowService: function(){
+		var ss = null;
+		if( this.config.directory ){
+			ss = this.config.directory.showService;
+		};
+		return ss;
 	}
 	
 	,_sendDispatchMessage: function(m){
