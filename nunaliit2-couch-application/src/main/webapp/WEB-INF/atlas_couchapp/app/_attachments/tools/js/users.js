@@ -5,6 +5,8 @@ var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
 var DH = 'user.js';	
 
+// *******************************************
+
 var UserManagementApplication = $n2.Class({
 	
 	authService: null
@@ -396,6 +398,75 @@ var UserManagementApplication = $n2.Class({
 					.appendTo($userDiv);
 			};
 		};
+	}
+});
+
+//*******************************************
+
+var UserCreationApplication = $n2.Class({
+
+	authService: null
+
+	,userDb: null
+	
+	,userSchema: null
+	
+	,showService: null
+	
+	,userService: null
+	
+	,divId: null
+	
+	,token: null
+	
+	,initialize: function(opts_){
+		var opts = $n2.extend({
+			config: null
+			,div: null
+			,token: null
+		},opts_);
+		
+		var _this = this;
+		
+		this.token = opts.token;
+		
+		var config = opts.config;
+		
+		this.userDb = $n2.couch.getUserDb();
+	 	
+		this.authService = config.directory.authService;
+		
+		$n2.log('config',config);
+
+		this.userService = config.directory.userService;
+		
+		var userDesign = this.userDb.getDesignDoc({ddName:'nunaliit_user'});
+		
+		config.directory.schemaRepository.getSchema({
+			name: 'user'
+			,onSuccess: function(s){
+				_this.userSchema = s;
+			}
+		});
+		
+		this.showService = config.directory.showService;
+		
+		// Assign id to div
+		this.divId = $( opts.div ).attr('id');
+		if( !this.divId ){
+			this.divId = $n2.getUniqueId();
+			$( opts.div ).attr('id',this.divId);
+		};
+		
+		this._display();
+	}
+
+	,_getDiv: function(){
+		return $('#'+this.divId);
+	}
+	
+	,_display: function(){
+		
 	}
 });
 

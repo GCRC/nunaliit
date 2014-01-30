@@ -22,6 +22,8 @@ import org.slf4j.LoggerFactory;
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDbSecurityDocument;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
+import ca.carleton.gcrc.couch.user.db.UserRepository;
+import ca.carleton.gcrc.couch.user.db.UserRepositoryCouchDb;
 import ca.carleton.gcrc.couch.user.mail.UserMailNotification;
 import ca.carleton.gcrc.couch.user.mail.UserMailNotificationImpl;
 import ca.carleton.gcrc.couch.user.mail.UserMailNotificationNull;
@@ -114,7 +116,9 @@ public class UserServlet extends HttpServlet {
 			}
 		}
 		
-		actions = new UserServletActions(userDb, userDesignDocument, userMailNotification);
+		UserRepository userRepository = new UserRepositoryCouchDb(userDb, userDesignDocument);
+		
+		actions = new UserServletActions(userRepository, userMailNotification);
 		if( null != serverKey ){
 			actions.setServerKey(serverKey);
 		}
@@ -245,6 +249,19 @@ public class UserServlet extends HttpServlet {
 				}
 				
 				JSONObject result = actions.initUserCreation(emailStrings[0]);
+				sendJsonResponse(resp, result);
+
+			} else if( path.size() == 1 && path.get(0).equals("validateUserCreation") ) {
+				String[] tokenStrings = req.getParameterValues("token");
+
+				if( null == tokenStrings || tokenStrings.length < 1 ){
+					throw new Exception("'token' parameter must be specified");
+				}
+				if( tokenStrings.length > 1 ){
+					throw new Exception("'token' parameter must be specified exactly once");
+				}
+				
+				JSONObject result = actions.validateUserCreation(tokenStrings[0]);
 				sendJsonResponse(resp, result);
 
 			} else {

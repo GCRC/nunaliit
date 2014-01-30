@@ -2,6 +2,7 @@ package ca.carleton.gcrc.couch.user.mail;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.Properties;
 import java.util.Vector;
@@ -72,7 +73,8 @@ public class UserMailNotificationImpl implements UserMailNotification {
 		logger.info("Sending user creation notification to "+recipients);
 		
 		// Compute link
-		String link = createUserUrl + "?token=" + token;
+		String urlEncodedToken = URLEncoder.encode(token, "UTF-8");
+		String link = createUserUrl + "?token=" + urlEncodedToken;
 		
 		try {
 			MailMessage message = new MailMessage();

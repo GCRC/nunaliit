@@ -5,11 +5,9 @@ import java.io.OutputStreamWriter;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Date;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Formatter;
 import java.util.List;
-import java.util.Vector;
 
 import org.apache.commons.codec.binary.Base64;
 import org.json.JSONArray;
@@ -17,38 +15,28 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ca.carleton.gcrc.couch.client.CouchDb;
-import ca.carleton.gcrc.couch.client.CouchDesignDocument;
-import ca.carleton.gcrc.couch.client.CouchQuery;
-import ca.carleton.gcrc.couch.client.CouchQueryResults;
+import ca.carleton.gcrc.couch.user.db.UserRepository;
 import ca.carleton.gcrc.couch.user.mail.UserMailNotification;
 import ca.carleton.gcrc.couch.user.token.CreationToken;
+import ca.carleton.gcrc.couch.user.token.Token;
 import ca.carleton.gcrc.couch.user.token.TokenEncryptor;
 import ca.carleton.gcrc.security.rng.RngFactory;
 
 public class UserServletActions {
 
-	static final private byte[] SECRET_KEY = {
-		(byte)0x01, (byte)0x02, (byte)0x03, (byte)0x04, (byte)0x05, (byte)0x06, (byte)0x07, (byte)0x08
-		,(byte)0x11, (byte)0x12, (byte)0x13, (byte)0x14, (byte)0x15, (byte)0x16, (byte)0x17, (byte)0x18
-	};
-	
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
-	private CouchDb userDb;
-	private CouchDesignDocument nunaliitUserDesignDocument;
+	private UserRepository userRepository;
 	private UserMailNotification userMailNotification;
 	private byte[] serverKey = null;
 	private JSONObject cached_welcome = null;
 	private SecureRandom rng = null;
 
 	public UserServletActions(
-			CouchDb userDb
-			,CouchDesignDocument nunaliitUserDesignDocument
+			UserRepository userRepository
 			,UserMailNotification userMailNotification
 		){
-		this.userDb = userDb;
-		this.nunaliitUserDesignDocument = nunaliitUserDesignDocument;
+		this.userRepository = userRepository;
 		this.userMailNotification = userMailNotification;
 		
 		rng = (new RngFactory()).createRng();
@@ -71,8 +59,7 @@ public class UserServletActions {
 	}
 
 	public JSONObject getUser(String name) throws Exception {
-		String id = "org.couchdb.user:"+name;
-		JSONObject userDoc = userDb.getDocument(id);
+		JSONObject userDoc = userRepository.getUserFromName(name);
 		
 		JSONObject result = getPublicUserFromUser(userDoc);
 		
@@ -80,36 +67,7 @@ public class UserServletActions {
 	}
 
 	public JSONObject getUsers(List<String> names) throws Exception {
-		List<String> docIds = new ArrayList<String>(names.size());
-		for(String n : names){
-			String id = "org.couchdb.user:"+n;
-			docIds.add(id);
-		}
-		
-		Collection<JSONObject> userDocs = userDb.getDocuments(docIds);
-		
-		// Work around for bug in CouchDb 1.4.0
-		if( userDocs.size() > 0 ) {
-			JSONObject firstUser = userDocs.iterator().next();
-			Object returnedId = firstUser.opt("_id");
-			if( null == returnedId ){
-				// Perform request, one at a time
-				List<JSONObject> tempUserDocs = new Vector<JSONObject>();
-				for(String id : docIds){
-					try {
-						JSONObject userDoc = userDb.getDocument(id);
-						if( null != userDoc ){
-							tempUserDocs.add(userDoc);
-						}
-					} catch(Exception e) {
-						// Ignore error. User is not in database
-					}
-				}
-				
-				// Continue with this list, instead
-				userDocs = tempUserDocs;
-			}
-		}
+		Collection<JSONObject> userDocs = userRepository.getUsersFromNames(names);
 		
 		JSONObject result = new JSONObject();
 		
@@ -125,28 +83,9 @@ public class UserServletActions {
 	}
 
 	public JSONObject getUserFromEmailAddress(String emailAddress) throws Exception {
-		try {
-			CouchQuery query = new CouchQuery();
-			query.setViewName("emails");
-			query.setStartKey(emailAddress);
-			query.setEndKey(emailAddress);
-			query.setIncludeDocs(true);
-
-			CouchQueryResults results = nunaliitUserDesignDocument.performQuery(query);
-			List<JSONObject> rows = results.getRows();
-			for(JSONObject row : rows){
-				JSONObject doc = row.optJSONObject("doc");
-				if( null != doc ){
-					JSONObject result = getPublicUserFromUser(doc);
-					return result;
-				}
-			}
-
-			throw new Exception("Unable to find user with e-mail address: "+emailAddress);
-			
-		} catch (Exception e) {
-			throw new Exception("Error while searching user with e-mail address: "+emailAddress,e);
-		}
+		JSONObject doc = userRepository.getUserFromEmailAddress(emailAddress);
+		JSONObject result = getPublicUserFromUser(doc);
+		return result;
 	}
 	
 	public JSONObject initUserCreation(String emailAddr) throws Exception {
@@ -157,9 +96,10 @@ public class UserServletActions {
 		CreationToken creationToken = new CreationToken();
 		{
 			creationToken.setEmailAddress(emailAddr);
-			Date now = new Date();
-			long thirtyDaysMs = now.getTime() + (30 * 24 * 60 * 60 * 1000);
-			creationToken.setExpiry( new Date(thirtyDaysMs) );
+			long now = (new Date()).getTime();
+			long thirtyDaysMs = 30L * 24L * 60L * 60L * 1000L;
+			long thirtyDaysFromNowMs = now + thirtyDaysMs;
+			creationToken.setExpiry( new Date(thirtyDaysFromNowMs) );
 		}
 		
 		// Encrypt token
@@ -168,7 +108,7 @@ public class UserServletActions {
 		}
 		byte[] context = new byte[8];
 		rng.nextBytes(context);
-		byte[] encryptedToken = TokenEncryptor.encryptToken(SECRET_KEY, context, creationToken);
+		byte[] encryptedToken = TokenEncryptor.encryptToken(serverKey, context, creationToken);
 		
 		// Base 64 encode token
 		String b64Token = null;
@@ -181,6 +121,45 @@ public class UserServletActions {
 		userMailNotification.sendUserCreationNotice(emailAddr,b64Token);
 		
 		return result;
+	}
+
+	public JSONObject validateUserCreation(String b64Token) throws Exception {
+		byte[] encryptedToken = Base64.decodeBase64(b64Token);
+		Token token = TokenEncryptor.decryptToken(serverKey, encryptedToken);
+		if( token instanceof CreationToken ){
+			CreationToken creationToken = (CreationToken)token;
+			
+			Date expiry = creationToken.getExpiry();
+			if( null != expiry ){
+				Date now = new Date();
+				if( now.getTime() > expiry.getTime() ){
+					throw new Exception("Token is expired");
+				}
+			}
+			
+			// Check if user already exists
+			String emailAddress = creationToken.getEmailAddress();
+			if( null == emailAddress ) {
+				throw new Exception("Token does not specify e-mail address");
+			}
+			JSONObject user = null;
+			try {
+				user = userRepository.getUserFromEmailAddress(emailAddress);
+			} catch(Exception e) {
+				// OK
+			}
+			if( null != user ) {
+				throw new Exception("User with e-mail "+emailAddress+
+						" already exists. Attempt password recovery.");
+			}
+			
+			JSONObject result = new JSONObject();
+			result.put("valid", true);
+			result.put("emailAddress", creationToken.getEmailAddress());
+			return result;
+		} else {
+			throw new Exception("Unexpected token class: "+token.getClass().getName());
+		}
 	}
 
 	private JSONObject getPublicUserFromUser(JSONObject userDoc) throws Exception {
