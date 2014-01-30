@@ -14,4 +14,11 @@ public interface UserRepository {
 	JSONObject getUserFromId(String id) throws Exception;
 
 	JSONObject getUserFromEmailAddress(String emailAddress) throws Exception;
+
+	void createUser(
+			String name,
+			String displayName,
+			String password,
+			String emailAddress
+		) throws Exception;
 }

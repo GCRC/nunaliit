@@ -162,6 +162,44 @@ public class UserServletActions {
 		}
 	}
 
+	public JSONObject completeUserCreation(String b64Token, String displayName, String password) throws Exception {
+		JSONObject validationResult = validateUserCreation(b64Token);
+		String emailAddress = validationResult.getString("emailAddress");
+		
+		JSONObject result = new JSONObject();
+		result.put("emailAddress", emailAddress);
+
+		// Create a random user id
+		int tries = 10;
+		String name = "user" + rng.nextInt();
+		while( isUserNameInUse(name) ){
+			--tries;
+			if( tries < 1 ) throw new Exception("Can not compute a unique user identifier. Try again.");
+			name = "user" + rng.nextInt();
+		}
+		result.put("name", name);
+		
+		// Create user
+		userRepository.createUser(name, displayName, password, emailAddress);
+		
+		// Get user
+		JSONObject userDoc = userRepository.getUserFromName(name);
+		JSONObject publicUserDoc = getPublicUserFromUser(userDoc);
+		result.put("doc", publicUserDoc);
+		
+		return result;
+	}
+
+	private boolean isUserNameInUse(String name) {
+		JSONObject user = null;
+		try {
+			user = userRepository.getUserFromName(name);
+		} catch(Exception e) {
+			return false;
+		}
+		return (user != null);
+	}
+
 	private JSONObject getPublicUserFromUser(JSONObject userDoc) throws Exception {
 		JSONObject result = new JSONObject();
 

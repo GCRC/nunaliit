@@ -19,29 +19,11 @@ public class MockUserRepository implements UserRepository {
 	}
 	
 	public JSONObject addUser(String name, String displayName, String emailAddress) throws Exception {
-		JSONObject user = new JSONObject();
-		
+		createUser(name, displayName, "", emailAddress);
+
 		String id = "org.couchdb.user:"+name;
-		usersById.put(id, user);
-		
-		user.put("_id", id);
-		user.put("name", name);
-		user.put("type", "user");
-		user.put("roles", new JSONArray());
+		JSONObject user = usersById.get(id);
 
-		if( null != displayName ){
-			user.put("display", displayName);
-		}
-
-		user.put("nunaliit_emails", new JSONArray());
-		user.put("nunaliit_validated_emails", new JSONArray());
-		if( null != emailAddress ){
-			JSONArray validatedEmails = user.getJSONArray("nunaliit_validated_emails");
-			validatedEmails.put(emailAddress);
-			
-			usersByEmail.put(emailAddress, user);
-		}
-		
 		return user;
 	}
 	
@@ -80,6 +62,38 @@ public class MockUserRepository implements UserRepository {
 			throw new Exception("User not found. Email: "+emailAddress);
 		}
 		return user;
+	}
+
+	@Override
+	public void createUser(
+			String name, 
+			String displayName, 
+			String password,
+			String emailAddress) throws Exception {
+		JSONObject user = new JSONObject();
+		
+		String id = "org.couchdb.user:"+name;
+		usersById.put(id, user);
+		
+		user.put("_id", id);
+		user.put("name", name);
+		user.put("name", password);
+		user.put("type", "user");
+		user.put("roles", new JSONArray());
+		user.put("nunaliit_options", new JSONObject());
+		user.put("nunaliit_emails", new JSONArray());
+		user.put("nunaliit_validated_emails", new JSONArray());
+
+		if( null != displayName ){
+			user.put("display", displayName);
+		}
+
+		if( null != emailAddress ){
+			JSONArray validatedEmails = user.getJSONArray("nunaliit_validated_emails");
+			validatedEmails.put(emailAddress);
+			
+			usersByEmail.put(emailAddress, user);
+		}
 	}
 
 }

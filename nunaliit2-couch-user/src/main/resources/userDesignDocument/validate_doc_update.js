@@ -51,6 +51,26 @@ function(newDoc, oldDoc, userCtx) {
 				throw({forbidden: 'You may only update your own user document.'});
 			}
 		};
+		
+		// Can not change validated e-mail addresses
+		if( oldDoc ){
+			var oldValidatedEmails = oldDoc.nunaliit_validated_emails ? oldDoc.nunaliit_validated_emails : [];
+			var newValidatedEmails = newDoc.nunaliit_validated_emails ? newDoc.nunaliit_validated_emails : [];
+			
+			if( oldValidatedEmails.length != newValidatedEmails.length ){
+				throw({forbidden: 'Can not modifiy nunaliit_validated_emails.'});
+			};
+			for(var i=0,e=oldValidatedEmails.length; i<e; ++i){
+				if( newValidatedEmails.indexOf(oldValidatedEmails[i]) < 0 ){
+					throw({forbidden: 'Can not modifiy nunaliit_validated_emails.'});
+				};
+			};
+			for(var i=0,e=newValidatedEmails.length; i<e; ++i){
+				if( oldValidatedEmails.indexOf(newValidatedEmails[i]) < 0 ){
+					throw({forbidden: 'Can not modifiy nunaliit_validated_emails.'});
+				};
+			};
+		}
 	};
 	
 	// Given two arrays of roles, figure out which ones are added and deleted. Return

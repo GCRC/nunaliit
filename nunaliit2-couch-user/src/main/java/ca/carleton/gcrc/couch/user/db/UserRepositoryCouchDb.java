@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,7 +81,7 @@ public class UserRepositoryCouchDb implements UserRepository {
 	public JSONObject getUserFromEmailAddress(String emailAddress) throws Exception {
 		try {
 			CouchQuery query = new CouchQuery();
-			query.setViewName("emails");
+			query.setViewName("validated-emails");
 			query.setStartKey(emailAddress);
 			query.setEndKey(emailAddress);
 			query.setIncludeDocs(true);
@@ -99,5 +100,42 @@ public class UserRepositoryCouchDb implements UserRepository {
 		} catch (Exception e) {
 			throw new Exception("Error while searching user with e-mail address: "+emailAddress,e);
 		}
+	}
+
+	@Override
+	public void createUser(
+			String name, 
+			String displayName, 
+			String password,
+			String emailAddress
+		) throws Exception {
+		try {
+			String id = "org.couchdb.user:"+name;
+			
+			JSONObject userDoc = new JSONObject();
+			userDoc.put("_id", id);
+			userDoc.put("name", name);
+			userDoc.put("password", password);
+			userDoc.put("type", "user");
+			userDoc.put("roles", new JSONArray());
+			userDoc.put("nunaliit_emails", new JSONArray());
+			userDoc.put("nunaliit_validated_emails", new JSONArray());
+			userDoc.put("nunaliit_options", new JSONObject());
+			
+			if( null != displayName ){
+				userDoc.put("display", displayName);
+			}
+			
+			if( null != emailAddress ){
+				JSONArray validatedEmails = userDoc.getJSONArray("nunaliit_validated_emails");
+				validatedEmails.put(emailAddress);
+			}
+			
+			userDb.createDocument(userDoc);
+			
+		} catch(Exception e) {
+			throw new Exception("Unable to create user: "+name);
+		}
+		
 	}
 }

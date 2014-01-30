@@ -264,6 +264,50 @@ public class UserServlet extends HttpServlet {
 				JSONObject result = actions.validateUserCreation(tokenStrings[0]);
 				sendJsonResponse(resp, result);
 
+			} else if( path.size() == 1 && path.get(0).equals("completeUserCreation") ) {
+
+				// Token
+				String token = null;
+				{
+					String[] tokenStrings = req.getParameterValues("token");
+					if( null == tokenStrings || tokenStrings.length < 1 ){
+						throw new Exception("'token' parameter must be specified");
+					}
+					if( tokenStrings.length > 1 ){
+						throw new Exception("'token' parameter must be specified exactly once");
+					}
+					token = tokenStrings[0];
+				}
+
+				// Display Name
+				String displayName = null;
+				{
+					String[] displayStrings = req.getParameterValues("display");
+					if( null == displayStrings || displayStrings.length < 1 ){
+						throw new Exception("'display' parameter must be specified");
+					}
+					if( displayStrings.length > 1 ){
+						throw new Exception("'display' parameter must be specified exactly once");
+					}
+					displayName = displayStrings[0];
+				}
+
+				// Password
+				String password = null;
+				{
+					String[] passwordStrings = req.getParameterValues("password");
+					if( null == passwordStrings || passwordStrings.length < 1 ){
+						throw new Exception("'password' parameter must be specified");
+					}
+					if( passwordStrings.length > 1 ){
+						throw new Exception("'password' parameter must be specified exactly once");
+					}
+					password = passwordStrings[0];
+				}
+				
+				JSONObject result = actions.completeUserCreation(token,displayName,password);
+				sendJsonResponse(resp, result);
+
 			} else {
 				throw new Exception("Invalid action requested");
 			}
