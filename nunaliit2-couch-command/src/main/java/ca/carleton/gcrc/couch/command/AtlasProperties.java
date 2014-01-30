@@ -9,6 +9,8 @@ import java.net.URL;
 import java.util.Enumeration;
 import java.util.Properties;
 
+import org.restlet.engine.util.Base64;
+
 import ca.carleton.gcrc.utils.PropertiesWriter;
 
 public class AtlasProperties {
@@ -56,6 +58,17 @@ public class AtlasProperties {
 			if( r ){
 				atlasProps.setRestricted(r);
 			}
+		}
+
+		// Server Key
+		try {
+			String serverKeyString = props.getProperty("server.key",null);
+			if( null != serverKeyString ){
+				byte[] serverKey = Base64.decode(serverKeyString);
+				atlasProps.setServerKey(serverKey);
+			}
+		} catch(Exception e) {
+			throw new Exception("Unable to interpret server key",e);
 		}
 		
 		return atlasProps;
@@ -138,6 +151,8 @@ public class AtlasProperties {
 				String value = props.getProperty(key);
 				if( "couchdb.admin.password".equals(key) ){
 					sensitiveProps.put(key, value);
+				} else if( "server.key".equals(key) ){
+					sensitiveProps.put(key, value);
 				} else {
 					publicProps.put(key, value);
 				}
@@ -204,6 +219,7 @@ public class AtlasProperties {
 	private String couchDbAdminPassword;
 	private int serverPort = 8080;
 	private boolean restricted = false;
+	private byte[] serverKey = null;
 
 	public String getAtlasName() {
 		return atlasName;
@@ -252,5 +268,12 @@ public class AtlasProperties {
 	}
 	public void setRestricted(boolean restricted) {
 		this.restricted = restricted;
+	}
+
+	public byte[] getServerKey() {
+		return serverKey;
+	}
+	public void setServerKey(byte[] serverKey) {
+		this.serverKey = serverKey;
 	}
 }

@@ -5,6 +5,7 @@ import java.io.PrintStream;
 import java.net.URL;
 import java.util.Stack;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;

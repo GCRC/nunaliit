@@ -2,6 +2,7 @@ package ca.carleton.gcrc.couch.user;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -31,11 +32,13 @@ public class UserServlet extends HttpServlet {
 
 	public static final String ConfigAttributeName_AtlasName = "UserServlet_AtlasName";
 	public static final String ConfigAttributeName_UserDb = "UserServlet_UserDb";
+	public static final String ConfigAttributeName_ServerKey = "UserServlet_ServerKey";
 	
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private String atlasName = null;
 	private CouchDb userDb = null;
+	private byte[] serverKey = null;
 	private UserServletActions actions = null;
 	
 	public UserServlet(){
@@ -88,6 +91,19 @@ public class UserServlet extends HttpServlet {
 			}
 		}
 		
+		// Server Key
+		{
+			Object obj = context.getAttribute(ConfigAttributeName_ServerKey);
+			if( null != obj ){
+				if( obj instanceof ByteBuffer ){
+					ByteBuffer serverKeyBuffer = (ByteBuffer)obj;
+					serverKey = serverKeyBuffer.array();
+				} else {
+					throw new ServletException("Unexpected object for server key: "+obj.getClass().getName());
+				}
+			}
+		}
+		
 		// Nunaliit user design document
 		CouchDesignDocument userDesignDocument = null;
 		if( null != userDb ){
@@ -99,6 +115,9 @@ public class UserServlet extends HttpServlet {
 		}
 		
 		actions = new UserServletActions(userDb, userDesignDocument, userMailNotification);
+		if( null != serverKey ){
+			actions.setServerKey(serverKey);
+		}
 		
 		// Add atlas role to access user database
 		try {

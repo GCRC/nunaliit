@@ -38,6 +38,7 @@ public class UserServletActions {
 	private CouchDb userDb;
 	private CouchDesignDocument nunaliitUserDesignDocument;
 	private UserMailNotification userMailNotification;
+	private byte[] serverKey = null;
 	private JSONObject cached_welcome = null;
 	private SecureRandom rng = null;
 
@@ -54,6 +55,10 @@ public class UserServletActions {
 		
 		// Hard coded key
 		
+	}
+	
+	public void setServerKey(byte[] serverKey){
+		this.serverKey = serverKey;
 	}
 	
 	synchronized public JSONObject getWelcome() throws Exception{
@@ -158,6 +163,9 @@ public class UserServletActions {
 		}
 		
 		// Encrypt token
+		if( null == serverKey ){
+			throw new Exception("Server key was not installed. Configuration must be adjusted.");
+		}
 		byte[] context = new byte[8];
 		rng.nextBytes(context);
 		byte[] encryptedToken = TokenEncryptor.encryptToken(SECRET_KEY, context, creationToken);

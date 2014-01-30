@@ -4,13 +4,17 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.PrintStream;
 import java.net.URL;
+import java.security.SecureRandom;
 import java.util.Properties;
 import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.codec.binary.Base64;
+
 import ca.carleton.gcrc.couch.command.impl.PathComputer;
 import ca.carleton.gcrc.couch.fsentry.FSEntryFile;
+import ca.carleton.gcrc.security.rng.RngFactory;
 
 public class CommandConfig implements Command {
 	
@@ -66,6 +70,17 @@ public class CommandConfig implements Command {
 		// Load up properties
 		Properties props = getDefaultProperties();
 		AtlasProperties.readProperties(atlasDir, props);
+		
+		// Create a server key, if one does not exist
+		String serverKey = props.getProperty("server.key",null);
+		if( null == serverKey ){
+			SecureRandom rng = (new RngFactory()).createRng();
+			byte[] key = new byte[16];
+			rng.nextBytes(key);
+			
+			serverKey = Base64.encodeBase64String(key);
+			props.setProperty("server.key", serverKey);
+		}
 		
 		// Get user to enter properties
 		userInputProperties(gs, props);

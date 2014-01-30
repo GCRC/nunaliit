@@ -2,6 +2,7 @@ package ca.carleton.gcrc.couch.command.servlet;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.nio.ByteBuffer;
 import java.util.Properties;
 
 import javax.servlet.ServletConfig;
@@ -470,6 +471,15 @@ public class ConfigServlet extends HttpServlet {
 				UserServlet.ConfigAttributeName_AtlasName
 				,atlasProperties.getAtlasName()
 				);
+			
+			byte[] serverKey = atlasProperties.getServerKey();
+			if( null != serverKey ) {
+				ByteBuffer serverKeyBuffer = ByteBuffer.wrap( serverKey );
+				servletContext.setAttribute(
+					UserServlet.ConfigAttributeName_ServerKey
+					,serverKeyBuffer
+					);
+			}
 		} catch(Exception e) {
 			logger.error("Error configuring user service",e);
 			throw new ServletException("Error configuring user service",e);
