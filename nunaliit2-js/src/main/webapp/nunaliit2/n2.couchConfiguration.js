@@ -115,6 +115,7 @@ function Configure(options_){
 			onSuccess: authInitialized
 			,autoAnonymousLogin: false
 			,directory: configuration.directory
+			,userServerUrl: options.userServerUrl
 		});
 	};
 	
@@ -217,6 +218,7 @@ function Configure(options_){
 			userDb: $n2.couch.getUserDb()
 			,schemaRepository: configuration.directory.schemaRepository
 			,schemaEditorService: configuration.directory.schemaEditorService
+			,userServerUrl: options.userServerUrl
 		});
 
 	 	configuration.contributions = new $n2.couchContributions({

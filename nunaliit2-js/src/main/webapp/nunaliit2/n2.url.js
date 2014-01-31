@@ -75,8 +75,8 @@ var Url = $n2.Class({
 		var params = paramsString.split('&');
 		for(var loop=0; loop<params.length; ++loop) {
 			var s = params[loop].split('=');
-			var key = decodeURI(s[0]);
-			var value = decodeURI(s[1]);
+			var key = decodeURIComponent(s[0]);
+			var value = decodeURIComponent(s[1]);
 			if( null == result[key] ) {
 				result[key] = [];
 			}

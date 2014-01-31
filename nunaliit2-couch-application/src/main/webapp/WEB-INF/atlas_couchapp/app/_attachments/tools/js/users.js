@@ -458,20 +458,190 @@ var UserCreationApplication = $n2.Class({
 			$( opts.div ).attr('id',this.divId);
 		};
 		
-		this._display();
+		var $display = this._getDiv();
+		$display.empty();
+		
+		$('<div>')
+			.addClass('tokenVerification')
+			.text( _loc('Verifying token') )
+			.appendTo($display);
+		
+		this.userService.validateUserCreation({
+			token: this.token
+			,onSuccess: function(result){
+				_this._displayForm(result);
+			}
+			,onError: function(err){
+				var $display = _this._getDiv();
+				$display.empty();
+
+				$('<div>')
+					.addClass('tokenVerificationError')
+					.text( _loc('Unable to verify token') )
+					.appendTo($display);
+				
+				$('<div>')
+					.addClass('tokenVerificationCause')
+					.text( err )
+					.appendTo($display);
+			}
+		});
 	}
 
 	,_getDiv: function(){
 		return $('#'+this.divId);
 	}
 	
-	,_display: function(){
+	,_displayForm: function(info){
+		var _this = this;
 		
+		$n2.log('info',info);
+		var emailAddress = info.emailAddress;
+
+		var $display = _this._getDiv();
+		$display.empty();
+
+		if( emailAddress ){
+			$('<div>')
+				.addClass('tokenVerifiedEmail')
+				.text( _loc('Creating a user associated with the e-mail address: {address}',{
+					address: emailAddress
+				}) )
+				.appendTo($display);
+		
+		};
+		
+		var $form = $('<div>')
+			.addClass('tokenCreationForm')
+			.appendTo($display);
+
+		// Display name
+		var $line = $('<div>')
+			.addClass('line')
+			.appendTo($form);
+		$('<div>')
+			.addClass('label')
+			.text( _loc('Display Name') )
+			.appendTo($line);
+		$('<div class="value"><input class="displayName" type="text"/></div>')
+			.appendTo($line);
+
+		// Password
+		var $line = $('<div>')
+			.addClass('line')
+			.appendTo($form);
+		$('<div>')
+			.addClass('label')
+			.text( _loc('Password') )
+			.appendTo($line);
+		$('<div class="value"><input class="password1" type="password"/></div>')
+			.appendTo($line);
+
+		// Verify Password
+		var $line = $('<div>')
+			.addClass('line')
+			.appendTo($form);
+		$('<div>')
+			.addClass('label')
+			.text( _loc('Verify Password') )
+			.appendTo($line);
+		$('<div class="value"><input class="password2" type="password"/></div>')
+			.appendTo($line);
+		
+		$('<button>')
+			.addClass('createUser')
+			.appendTo($form)
+			.text( _loc('Create User') )
+			.click(function(){
+				var $display = _this._getDiv();
+				var displayName = $display.find('.displayName').val();
+				var password1 = $display.find('.password1').val();
+				var password2 = $display.find('.password2').val();
+				
+				if( displayName ){
+					displayName = displayName.trim();
+				};
+				if( password1 ){
+					password1 = password1.trim();
+				};
+				if( password2 ){
+					password2 = password2.trim();
+				};
+				
+				if( !password1 ) {
+					alert( _loc('You must provide a password') );
+					return;
+				} else if( password1.length < 6 ) {
+					alert( _loc('Your password is too short') );
+					return;
+				} else if( password1 !== password2 ) {
+					alert( _loc('The provided passwords must match') );
+					return;
+				};
+				
+				if( !displayName ){
+					alert( _loc('You must provide a display name') );
+					return;
+				};
+				
+				_this._createUser(displayName, password1);
+			});
+	}
+	
+	,_createUser: function(displayName, password){
+
+		var _this = this;
+		
+		this.userService.completeUserCreation({
+			token: this.token
+			,displayName: displayName
+			,password: password
+			,onSuccess: function(result){
+				$n2.log('user created',result);
+				var userName = result.name;
+				_this._userCreated(userName,password);
+			}
+			,onError: function(err){
+				var $display = _this._getDiv();
+				$display.empty();
+
+				$('<div>')
+					.addClass('userCreationError')
+					.text( _loc('Unable to create user') )
+					.appendTo($display);
+				
+				$('<div>')
+					.addClass('userCreationCause')
+					.text( err )
+					.appendTo($display);
+			}
+		});
+	}
+	
+	,_userCreated: function(userName,password){
+		var $display = this._getDiv();
+		$display.empty();
+
+		$('<div>')
+			.addClass('userCreationSuccess')
+			.text( _loc('User created successfully.') )
+			.appendTo($display);
+		
+		// Log in user
+		if( this.authService ){
+			this.authService.login({
+				username: userName
+				,password: password
+				,onSuccess: function(context){}
+				,onError: function(errMsg){}
+			});
+		};
 	}
 });
 
 $n2.userApp = {
 	UserManagementApplication: UserManagementApplication
+	,UserCreationApplication: UserCreationApplication
 };
 	
 })(jQuery,nunaliit2);

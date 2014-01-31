@@ -48,12 +48,12 @@
 				} else {
 					$n2.log('token: '+token);
 					
+				 	new $n2.userApp.UserCreationApplication({
+				 		config: config
+				 		,div: $('#userCreation')
+				 		,token: token
+				 	});
 				};
-				
-//			 	new $n2.userApp.UserManagementApplication({
-//			 		config: config
-//			 		,div: $('#userApp')
-//			 	});
 			};
 			
 			jQuery().ready(function() {

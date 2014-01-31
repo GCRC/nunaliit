@@ -57,6 +57,19 @@ public class UserMailNotificationImpl implements UserMailNotification {
 	}
 
 	@Override
+	public boolean isAutoRegistrationAvailable() {
+		if( false == sendNotice ) {
+			return false;
+		}
+		
+		if( null == createUserUrl ) {
+			return false;
+		}
+		
+		return true;
+	}
+
+	@Override
 	public void sendUserCreationNotice(String emailAddress, String token) throws Exception {
 
 		if( false == sendNotice ) {

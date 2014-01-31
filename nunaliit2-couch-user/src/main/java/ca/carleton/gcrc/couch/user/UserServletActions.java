@@ -53,6 +53,14 @@ public class UserServletActions {
 		if( null == cached_welcome ){
 			cached_welcome = new JSONObject();
 			cached_welcome.put("UserServlet", true);
+			
+			if( null != serverKey
+			 && null != userMailNotification
+			 && userMailNotification.isAutoRegistrationAvailable() ){
+				cached_welcome.put("autoRegistration", true);
+			} else {
+				cached_welcome.put("autoRegistration", false);
+			}
 		}
 		
 		return cached_welcome;

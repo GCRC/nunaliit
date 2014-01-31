@@ -68,6 +68,8 @@ var AuthService = $n2.Class({
 	
 	,lastAuthSessionCookie: null
 	
+	,autoRegistrationAvailable: null
+	
 	,initialize: function(options_){
 		var _this = this;
 		
@@ -85,6 +87,7 @@ var AuthService = $n2.Class({
 				,autoRefresh: true
 				,prompt: _loc('Please login')
 				,refreshIntervalInSec: 120 // 2 minutes
+				,userServerUrl: null
 			}
 			,options_
 		);
@@ -95,6 +98,7 @@ var AuthService = $n2.Class({
 		
 		this.loginStateListeners = [];
 		this.lastAuthSessionCookie = null;
+		this.autoRegistrationAvailable = false;
 		
 		// Install login state listeners - don't retain as stored options.
 		if( this.options.listeners ) {
@@ -165,6 +169,28 @@ var AuthService = $n2.Class({
 			dispatcher.register(DH,'login',fn);
 			dispatcher.register(DH,'loginShowForm',fn);
 			dispatcher.register(DH,'logout',fn);
+		};
+		
+		// Detect if auto registration is available
+		if( this.options.userServerUrl ){
+			var url = this.options.userServerUrl;
+			
+			$.ajax({
+		    	url: url
+		    	,type: 'GET'
+		    	,async: true
+		    	,traditional: true
+		    	,data: null
+		    	,dataType: 'json'
+		    	,success: function(result) {
+		    		if( result.autoRegistration ) {
+		    			_this.autoRegistrationAvailable = true;
+		    		};
+		    	}
+		    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+		    		// Ignore
+		    	}
+			});
 		};
 
 		function onSuccess(context) {
@@ -275,10 +301,34 @@ var AuthService = $n2.Class({
 		var username = opts.username;
 		var password = opts.password;
 		
-		if( typeof(username) === 'string' && typeof(password) === 'string' ){
-			doLogin();
-		} else {
+		if( typeof(username) !== 'string'
+		 || typeof(password) !== 'string' ){
 			opts.onError('Name and password must be provided when logging in');
+			return;
+		};
+
+		if( this.autoRegistrationAvailable ){
+			var url = this.options.userServerUrl + 'getUser';
+			
+			$.ajax({
+		    	url: url
+		    	,type: 'GET'
+		    	,async: true
+		    	,traditional: true
+		    	,data: {
+		    		email: username
+		    	}
+		    	,dataType: 'json'
+		    	,success: function(userDoc) {
+		    		if( userDoc.name ) {
+		    			username = userDoc.name;
+		    		};
+					doLogin();
+		    	}
+		    	,error: doLogin
+			});
+		} else {
+			doLogin();
 		};
 		
 		function doLogin() {
@@ -422,8 +472,12 @@ var AuthService = $n2.Class({
 		var $userLine = $('<div class="n2Auth_login_user_line"></div>')
 			.appendTo($authForm);
 		
+		var nameLabel = _loc('user name');
+		if( this.autoRegistrationAvailable ){
+			nameLabel = _loc('e-mail address');
+		};
 		$('<div class="n2Auth_login_label"></div>')
-			.text(_loc('user name'))
+			.text(nameLabel)
 			.appendTo($userLine);
 		
 		$('<div class="n2Auth_login_input"><input class="n2Auth_user_input n2Auth_input_field" type="text" name="username"/></div>')
@@ -529,11 +583,17 @@ var AuthService = $n2.Class({
 	}
 	
 	,_fillDialogWithUserCreation: function(dialogId, opts_){
+		if( this.autoRegistrationAvailable ){
+			this._fillDialogWithUserAutoRegistration(dialogId, opts_);
+			return;
+		};
+		
 		var opts = $n2.extend({
 			prompt: null
 			,onSuccess: function(context){}
 			,onError: function(err){}
 		},opts_);
+		
 		var _this = this;
 		var $dialog = $('#'+dialogId);
 		
@@ -647,6 +707,150 @@ var AuthService = $n2.Class({
 					alert( _loc('Unable to create user: ')+err);
 				}
 			});
+		};
+	}
+	
+	,_fillDialogWithUserAutoRegistration: function(dialogId, opts_){
+		var opts = $n2.extend({
+			prompt: null
+			,onSuccess: function(context){}
+			,onError: function(err){}
+		},opts_);
+
+		var _this = this;
+		var $dialog = $('#'+dialogId);
+		
+		$dialog.empty();
+		
+		var $form = $('<div>')
+			.addClass('n2Auth_create')
+			.appendTo($dialog);
+		
+		// E-mail address
+		var $line = $('<div>')
+			.addClass('n2Auth_create_email_line')
+			.appendTo($form);
+		$('<div>')
+			.addClass('n2Auth_create_label')
+			.text( _loc('e-mail address') )
+			.appendTo($line);
+		var $input = $('<div>')
+			.addClass('n2Auth_create_input')
+			.appendTo($line);
+		$('<input type="text">')
+			.addClass('n2Auth_email_input n2Auth_input_field')
+			.appendTo($input)
+			.keydown(function(e){
+				var charCode = null;
+				if( null === e ) {
+					e = window.event; // IE
+				};
+				if( null !== e ) {
+					if( e.keyCode ) {
+						charCode = e.keyCode;
+					};
+				};
+				
+				if( 13 === charCode ) {
+					performUserRegistration();
+				};
+			});
+		$('<div>')
+			.addClass('n2Auth_create_end')
+			.appendTo($line);
+		
+		// Buttons
+		var $line = $('<div>')
+			.addClass('n2Auth_create_button_line')
+			.appendTo($form);
+		$('<button>')
+			.addClass('n2Auth_button_create')
+			.text( _loc('Create User') )
+			.appendTo($line)
+			.button({icons:{primary:'ui-icon-check'}})
+			.click(function(){
+				performUserRegistration();
+				return false;
+			});
+		$('<button>')
+			.addClass('n2Auth_button_cancel')
+			.text( _loc('Cancel') )
+			.appendTo($line)
+			.button({icons:{primary:'ui-icon-cancel'}})
+			.click(function(){
+				_this._fillDialogWithLogin(dialogId, opts);
+				return false;
+			});
+
+		$dialog.dialog('option','title',_loc('User Registration'));
+		
+		function performUserRegistration(){
+			var $dialog = $('#'+dialogId);
+
+			var email = $dialog.find('.n2Auth_email_input').val();
+			
+			if( email ) {
+				email = $n2.trim(email);
+			};
+			if( !email ) {
+				alert( _loc('E-Mail address must be specified') );
+				return false;
+			};
+			
+			var url = _this.options.userServerUrl + 'initUserCreation';
+			
+			$.ajax({
+		    	url: url
+		    	,type: 'GET'
+		    	,async: true
+		    	,traditional: true
+		    	,data: {
+		    		email: email
+		    	}
+		    	,dataType: 'json'
+		    	,success: function(result) {
+		    		if( result.error ) {
+						alert( _loc('Unable to register user: ')+result.error);
+		    		} else {
+		    			reportSuccess();
+		    		};
+		    	}
+		    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+					alert( _loc('Unable to register user: ')+textStatus);
+				}	
+			});
+		};
+		
+		function reportSuccess(){
+			var $dialog = $('#'+dialogId);
+
+			$dialog.empty();
+			
+			var $form = $('<div>')
+				.addClass('n2Auth_registered')
+				.appendTo($dialog);
+			
+			// E-mail address
+			var $line = $('<div>')
+				.addClass('n2Auth_registered_line')
+				.appendTo($form)
+				.text( _loc('User registration initiated. Check for e-mail to complete user creation') );
+			
+			// Buttons
+			var $line = $('<div>')
+				.addClass('n2Auth_registered_button_line')
+				.appendTo($form);
+			$('<button>')
+				.addClass('n2Auth_button_ok')
+				.text( _loc('OK') )
+				.appendTo($line)
+				.button({icons:{primary:'ui-icon-check'}})
+				.click(function(){
+					opts.onSuccess();
+					return false;
+				});
+
+			$dialog.dialog('option','title',_loc('Registration Initiated'));
 		};
 	}
 		

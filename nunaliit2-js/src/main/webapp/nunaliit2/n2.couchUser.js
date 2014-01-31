@@ -576,6 +576,8 @@ var UserEditor = $n2.Class({
 var UserService = $n2.Class({
 	
 	userDb: null
+	
+	,userServerUrl: null
 
 	,userSchema: null
 	
@@ -586,12 +588,14 @@ var UserService = $n2.Class({
 	,initialize: function(opts_){
 		var opts = $n2.extend({
 			userDb: null
+			,userServerUrl: null
 			,userSchema: null // optional
 			,schemaRepository: null // optional
 			,schemaEditorService: null // optional
 		},opts_);
 		
 		this.userDb = opts.userDb;
+		this.userServerUrl = opts.userServerUrl;
 		this.userSchema = opts.userSchema;
 		this.schemaRepository = opts.schemaRepository;
 		this.schemaEditorService = opts.schemaEditorService;
@@ -611,6 +615,103 @@ var UserService = $n2.Class({
 		);
 		
 		return new UserEditor(opts);
+	}
+	
+	,initiateUserCreation: function(opts_){
+		var opts = $n2.extend({
+			emailAddress: null
+			,onSuccess: function(){}
+			,onError: function(err){}
+		},opts_);
+
+		var url = this.userServerUrl + 'initUserCreation';
+		
+		$.ajax({
+	    	url: url
+	    	,type: 'GET'
+	    	,async: true
+	    	,traditional: true
+	    	,data: {
+	    		email: opts.emailAddress
+	    	}
+	    	,dataType: 'json'
+	    	,success: function(result) {
+	    		if( result.error ) {
+	    			opts.onError(result.error);
+	    		} else {
+	    			opts.onSuccess(result);
+	    		};
+	    	}
+	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+	    		opts.onError(textStatus);
+	    	}
+		});
+	}
+	
+	,validateUserCreation: function(opts_){
+		var opts = $n2.extend({
+			token: null
+			,onSuccess: function(){}
+			,onError: function(err){}
+		},opts_);
+
+		var url = this.userServerUrl + 'validateUserCreation';
+		
+		$.ajax({
+	    	url: url
+	    	,type: 'GET'
+	    	,async: true
+	    	,traditional: true
+	    	,data: {
+	    		token: opts.token
+	    	}
+	    	,dataType: 'json'
+	    	,success: function(result) {
+	    		if( result.error ) {
+	    			opts.onError(result.error);
+	    		} else {
+	    			opts.onSuccess(result);
+	    		};
+	    	}
+	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+	    		opts.onError(textStatus);
+	    	}
+		});
+	}
+	
+	,completeUserCreation: function(opts_){
+		var opts = $n2.extend({
+			token: null
+			,displayName: null
+			,password: null
+			,onSuccess: function(){}
+			,onError: function(err){}
+		},opts_);
+
+		var url = this.userServerUrl + 'completeUserCreation';
+		
+		$.ajax({
+	    	url: url
+	    	,type: 'GET'
+	    	,async: true
+	    	,traditional: true
+	    	,data: {
+	    		token: opts.token
+				,display: opts.displayName
+				,password: opts.password
+	    	}
+	    	,dataType: 'json'
+	    	,success: function(result) {
+	    		if( result.error ) {
+	    			opts.onError(result.error);
+	    		} else {
+	    			opts.onSuccess(result);
+	    		};
+	    	}
+	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+	    		opts.onError(textStatus);
+	    	}
+		});
 	}
 });
 
