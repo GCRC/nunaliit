@@ -698,6 +698,7 @@ var UserService = $n2.Class({
 			token: null
 			,displayName: null
 			,password: null
+			,sendEmailPasswordReminder: false
 			,onSuccess: function(){}
 			,onError: function(err){}
 		},opts_);
@@ -713,6 +714,7 @@ var UserService = $n2.Class({
 	    		token: opts.token
 				,display: opts.displayName
 				,password: opts.password
+				,emailPassword: opts.sendEmailPasswordReminder
 	    	}
 	    	,dataType: 'json'
 	    	,success: function(result) {
@@ -797,6 +799,7 @@ var UserService = $n2.Class({
 		var opts = $n2.extend({
 			token: null
 			,password: null
+			,sendEmailPasswordReminder: false
 			,onSuccess: function(){}
 			,onError: function(err){}
 		},opts_);
@@ -811,6 +814,7 @@ var UserService = $n2.Class({
 	    	,data: {
 	    		token: opts.token
 				,password: opts.password
+				,emailPassword: opts.sendEmailPasswordReminder
 	    	}
 	    	,dataType: 'json'
 	    	,success: function(result) {

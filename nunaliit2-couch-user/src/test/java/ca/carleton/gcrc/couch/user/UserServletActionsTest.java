@@ -53,6 +53,50 @@ public class UserServletActionsTest extends TestCase {
 		}
 	}
 
+	public void testCompleteUserCreation() throws Exception {
+		String emailAddress = "abc@company.com";
+
+		MockUserMailNotification mailNotification = new MockUserMailNotification();
+	
+		MockUserRepository repository = new MockUserRepository();
+		
+		UserServletActions actions = new UserServletActions(repository,mailNotification);
+		actions.setServerKey(SECRET_KEY);
+		
+		actions.initUserCreation(emailAddress);
+		
+		String token = mailNotification.token;
+
+		String password = "a_password";
+		actions.completeUserCreation(token,"Test",password,false);
+		
+		if( null != mailNotification.password ){
+			fail("Password reminder notification was sent without being requested");
+		}
+	}
+
+	public void testCompleteUserCreationSendPassword() throws Exception {
+		String emailAddress = "abc@company.com";
+
+		MockUserMailNotification mailNotification = new MockUserMailNotification();
+	
+		MockUserRepository repository = new MockUserRepository();
+		
+		UserServletActions actions = new UserServletActions(repository,mailNotification);
+		actions.setServerKey(SECRET_KEY);
+		
+		actions.initUserCreation(emailAddress);
+		
+		String token = mailNotification.token;
+
+		String password = "a_password";
+		actions.completeUserCreation(token,"Test",password,true);
+		
+		if( false == password.equals(mailNotification.password) ){
+			fail("Password reminder notification not sent on creation");
+		}
+	}
+
 	public void testValidatePasswordRecovery() throws Exception {
 		String emailAddress = "abc@company.com";
 		String name = "user-111111";
@@ -74,7 +118,7 @@ public class UserServletActionsTest extends TestCase {
 		actions.validatePasswordRecovery(token);
 		
 		// Complete recovery
-		actions.completePasswordRecovery(token, newPassword);
+		actions.completePasswordRecovery(token, newPassword, false);
 		
 		// Check password
 		JSONObject userDoc = repository.getUserFromName(name);
@@ -137,6 +181,68 @@ public class UserServletActionsTest extends TestCase {
 		}
 	}
 
+	public void testCompletePasswordRecovery() throws Exception {
+		String emailAddress = "abc@company.com";
+		String name = "user-111111";
+		String newPassword = "anotherPassword";
+
+		// Set up
+		MockUserRepository repository = new MockUserRepository();
+		MockUserMailNotification mailNotification = new MockUserMailNotification();
+		UserServletActions actions = new UserServletActions(repository,mailNotification);
+		actions.setServerKey(SECRET_KEY);
+
+		// Add user
+		repository.addUser(name, "Test", emailAddress);
+
+		// Create Token
+		String token = null;
+		{
+			actions.initPasswordRecovery(emailAddress);
+			token = mailNotification.token;
+		}
+
+		actions.completePasswordRecovery(token, newPassword, false);
+		
+		// Check that password was changed
+		JSONObject userDoc = repository.getUserFromName(name);
+		if( false == newPassword.equals(userDoc.getString("password")) ){
+			fail("Password was not modified");
+		}
+		
+		if( null != mailNotification.password ){
+			fail("Password reminder notice was sent without being requested");
+		}
+	}
+
+	public void testCompletePasswordRecoverySendReminder() throws Exception {
+		String emailAddress = "abc@company.com";
+		String name = "user-111111";
+		String newPassword = "anotherPassword";
+
+		// Set up
+		MockUserRepository repository = new MockUserRepository();
+		MockUserMailNotification mailNotification = new MockUserMailNotification();
+		UserServletActions actions = new UserServletActions(repository,mailNotification);
+		actions.setServerKey(SECRET_KEY);
+
+		// Add user
+		repository.addUser(name, "Test", emailAddress);
+
+		// Create Token
+		String token = null;
+		{
+			actions.initPasswordRecovery(emailAddress);
+			token = mailNotification.token;
+		}
+
+		actions.completePasswordRecovery(token, newPassword, true);
+		
+		if( false == newPassword.equals(mailNotification.password) ){
+			fail("Password reminder notice was not sent on password recovery");
+		}
+	}
+
 	public void testCompletePasswordRecoveryNoEmail() throws Exception {
 		String emailAddress = "abc@company.com";
 		String name = "user-111111";
@@ -166,7 +272,7 @@ public class UserServletActionsTest extends TestCase {
 			actions.setServerKey(SECRET_KEY);
 
 			try {
-				actions.completePasswordRecovery(token, newPassword);
+				actions.completePasswordRecovery(token, newPassword,false);
 				fail("Error should be raised when e-mail address is not in use");
 			} catch(Exception e) {
 				// Ignore
@@ -234,12 +340,12 @@ public class UserServletActionsTest extends TestCase {
 		
 		// Recover password
 		{
-			actions.completePasswordRecovery(token, "password2");
+			actions.completePasswordRecovery(token, "password2", false);
 		}
 
 		// Validating the token should fail
 		try {
-			actions.completePasswordRecovery(token, "password3");
+			actions.completePasswordRecovery(token, "password3", false);
 			fail("Error should be raised when token is used a second time");
 		} catch(Exception e) {
 			// Ignore

@@ -173,7 +173,12 @@ public class UserServletActions {
 		}
 	}
 
-	public JSONObject completeUserCreation(String b64Token, String displayName, String password) throws Exception {
+	public JSONObject completeUserCreation(
+			String b64Token, 
+			String displayName, 
+			String password, 
+			boolean sendPasswordReminder
+			) throws Exception {
 		JSONObject validationResult = validateUserCreation(b64Token);
 		String emailAddress = validationResult.getString("emailAddress");
 		
@@ -197,6 +202,10 @@ public class UserServletActions {
 		JSONObject userDoc = userRepository.getUserFromName(name);
 		JSONObject publicUserDoc = getPublicUserFromUser(userDoc);
 		result.put("doc", publicUserDoc);
+		
+		if( sendPasswordReminder ){
+			userMailNotification.sendPasswordReminder(emailAddress, password);
+		}
 		
 		return result;
 	}
@@ -305,7 +314,11 @@ public class UserServletActions {
 		}
 	}
 
-	public JSONObject completePasswordRecovery(String b64Token, String newPassword) throws Exception {
+	public JSONObject completePasswordRecovery(
+			String b64Token, 
+			String newPassword, 
+			boolean sendPasswordReminder 
+			) throws Exception {
 		JSONObject validationResult = validatePasswordRecovery(b64Token);
 		String emailAddress = validationResult.getString("emailAddress");
 		
@@ -323,6 +336,10 @@ public class UserServletActions {
 		JSONObject userDoc = userRepository.getUserFromName(name);
 		JSONObject publicUserDoc = getPublicUserFromUser(userDoc);
 		result.put("doc", publicUserDoc);
+		
+		if( sendPasswordReminder ){
+			userMailNotification.sendPasswordReminder(emailAddress, newPassword);
+		}
 		
 		return result;
 	}

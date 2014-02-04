@@ -545,6 +545,17 @@ var UserCreationApplication = $n2.Class({
 			.appendTo($line);
 		$('<div class="value"><input class="password2" type="password"/></div>')
 			.appendTo($line);
+
+		// Verify Password
+		var $line = $('<div>')
+			.addClass('line')
+			.appendTo($form);
+		$('<div>')
+			.addClass('label')
+			.text( _loc('E-mail me my password') )
+			.appendTo($line);
+		$('<div class="value"><input class="emailPassword" type="checkbox"/></div>')
+			.appendTo($line);
 		
 		$('<button>')
 			.addClass('createUser')
@@ -555,6 +566,7 @@ var UserCreationApplication = $n2.Class({
 				var displayName = $display.find('.displayName').val();
 				var password1 = $display.find('.password1').val();
 				var password2 = $display.find('.password2').val();
+				var sendEmailPasswordReminder = $display.find('.emailPassword').is(':checked');
 				
 				if( displayName ){
 					displayName = displayName.trim();
@@ -582,11 +594,11 @@ var UserCreationApplication = $n2.Class({
 					return;
 				};
 				
-				_this._createUser(displayName, password1);
+				_this._createUser(displayName, password1, sendEmailPasswordReminder);
 			});
 	}
 	
-	,_createUser: function(displayName, password){
+	,_createUser: function(displayName, password, sendEmailPasswordReminder){
 
 		var _this = this;
 		
@@ -594,6 +606,7 @@ var UserCreationApplication = $n2.Class({
 			token: this.token
 			,displayName: displayName
 			,password: password
+			,sendEmailPasswordReminder: sendEmailPasswordReminder
 			,onSuccess: function(result){
 				$n2.log('user created',result);
 				var userName = result.name;
@@ -770,6 +783,17 @@ var PasswordRecoveryApplication = $n2.Class({
 			.appendTo($line);
 		$('<div class="value"><input class="password2" type="password"/></div>')
 			.appendTo($line);
+
+		// Verify Password
+		var $line = $('<div>')
+			.addClass('line')
+			.appendTo($form);
+		$('<div>')
+			.addClass('label')
+			.text( _loc('E-mail me my password') )
+			.appendTo($line);
+		$('<div class="value"><input class="emailPassword" type="checkbox"/></div>')
+			.appendTo($line);
 		
 		$('<button>')
 			.addClass('createUser')
@@ -779,6 +803,7 @@ var PasswordRecoveryApplication = $n2.Class({
 				var $display = _this._getDiv();
 				var password1 = $display.find('.password1').val();
 				var password2 = $display.find('.password2').val();
+				var sendEmailPasswordReminder = $display.find('.emailPassword').is(':checked');
 				
 				if( password1 ){
 					password1 = password1.trim();
@@ -798,17 +823,18 @@ var PasswordRecoveryApplication = $n2.Class({
 					return;
 				};
 				
-				_this._recoverPassword(password1);
+				_this._recoverPassword(password1, sendEmailPasswordReminder);
 			});
 	}
 	
-	,_recoverPassword: function(password){
+	,_recoverPassword: function(password, sendEmailPasswordReminder){
 
 		var _this = this;
 		
 		this.userService.completePasswordRecovery({
 			token: this.token
 			,password: password
+			,sendEmailPasswordReminder: sendEmailPasswordReminder
 			,onSuccess: function(result){
 				$n2.log('password recovered',result);
 				var userName = result.name;

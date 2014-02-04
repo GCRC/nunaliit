@@ -307,7 +307,19 @@ public class UserServlet extends HttpServlet {
 					password = passwordStrings[0];
 				}
 				
-				JSONObject result = actions.completeUserCreation(token,displayName,password);
+				// Email Password
+				boolean emailPassword = false;
+				{
+					String[] emailPasswordStrings = req.getParameterValues("emailPassword");
+					if( null != emailPasswordStrings ) {
+						if( emailPasswordStrings.length > 1 ){
+							throw new Exception("'emailPassword' parameter must not be specified more than once");
+						}
+						emailPassword = Boolean.parseBoolean( emailPasswordStrings[0] );
+					}
+				}
+				
+				JSONObject result = actions.completeUserCreation(token,displayName,password,emailPassword);
 				sendJsonResponse(resp, result);
 
 			} else if( path.size() == 1 && path.get(0).equals("initPasswordRecovery") ) {
@@ -364,7 +376,19 @@ public class UserServlet extends HttpServlet {
 					password = passwordStrings[0];
 				}
 				
-				JSONObject result = actions.completePasswordRecovery(token,password);
+				// Email Password
+				boolean emailPassword = false;
+				{
+					String[] emailPasswordStrings = req.getParameterValues("emailPassword");
+					if( null != emailPasswordStrings ) {
+						if( emailPasswordStrings.length > 1 ){
+							throw new Exception("'emailPassword' parameter must not be specified more than once");
+						}
+						emailPassword = Boolean.parseBoolean( emailPasswordStrings[0] );
+					}
+				}
+				
+				JSONObject result = actions.completePasswordRecovery(token,password,emailPassword);
 				sendJsonResponse(resp, result);
 
 			} else {

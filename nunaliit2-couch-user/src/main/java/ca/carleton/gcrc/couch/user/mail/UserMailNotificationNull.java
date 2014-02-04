@@ -14,4 +14,8 @@ public class UserMailNotificationNull implements UserMailNotification {
 	@Override
 	public void sendPasswordRecoveryNotice(String emailAddress, String token) throws Exception {
 	}
+
+	@Override
+	public void sendPasswordReminder(String emailAddress, String password) throws Exception {
+	}
 }

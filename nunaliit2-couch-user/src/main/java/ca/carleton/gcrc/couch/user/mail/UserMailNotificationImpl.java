@@ -176,4 +176,47 @@ public class UserMailNotificationImpl implements UserMailNotification {
 			throw new Exception("Unable to send password recovery notification",e);
 		}
 	}
+
+	@Override
+	public void sendPasswordReminder(String emailAddress, String password) throws Exception {
+
+		if( false == sendNotice ) {
+			throw new Exception("Password reminder notices are not enabled");
+		}
+		
+		// Get list of recipients
+		List<MailRecipient> recipients = new Vector<MailRecipient>();
+		recipients.add( new MailRecipient(emailAddress) );
+		
+		logger.info("Sending password reminder notification to "+recipients);
+		
+		try {
+			MailMessage message = new MailMessage();
+			
+			// To
+			for(MailRecipient recipient : recipients){
+				message.addToRecipient( recipient );
+			}
+			
+			// Subject
+			message.setSubject("Nunaliit Password Reminder");
+			
+			// Create HTML body part
+			StringWriter sw = new StringWriter();
+			PrintWriter pw = new PrintWriter(sw);
+			pw.println("<html><head><title>Nunaliit Password Reminder</title></head><body><h1>Nunaliit Password Reminder</h1>");
+			pw.println("<p>You requested an e-mail with a reminder of your password to access a Nunaliit atlas.</p>");
+			pw.println("<p>Your password is: "+password+"</p>");
+			pw.println("</body></html>");
+			pw.flush();
+			message.setHtmlContent(sw.toString());
+			
+			// Send message
+			mailDelivery.sendMessage(message);
+			
+		} catch (Exception e) {
+			logger.error("Unable to send password reminder notification",e);
+			throw new Exception("Unable to send password reminder notification",e);
+		}
+	}
 }

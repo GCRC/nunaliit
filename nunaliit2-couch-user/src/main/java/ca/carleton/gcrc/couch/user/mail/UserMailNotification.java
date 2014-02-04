@@ -7,4 +7,6 @@ public interface UserMailNotification {
 	void sendUserCreationNotice(String emailAddress, String token) throws Exception;
 	
 	void sendPasswordRecoveryNotice(String emailAddress, String token) throws Exception;
+	
+	void sendPasswordReminder(String emailAddress, String password) throws Exception;
 }
