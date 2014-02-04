@@ -816,6 +816,41 @@ $n2.utils = {
 		str = str.replace('%S',secondsNumStr);
 		
 		return str;
+	},
+	
+	/**
+	 * Returns an Javascript object returned in an XMLHttpRequest
+	 * with an error. 
+	 * @name parseHttpJsonError
+	 * @function
+	 * @memberOf nunaliit2.utils
+	 * @param {Object} Instance of XMLHttpRequest used to retrieve information
+	 * @param {String} Error string that should be returned if an object can not
+	 *                 be parsed.
+	 * @returns {Object} JSON object returned by the instance of XMLHttpRequest
+	 */
+	parseHttpJsonError: function(xmlHttpRequest,defaultText){
+		// Need JSON
+		if( !JSON || typeof(JSON.parse) !== 'function' ) {
+			return createDefault();
+		};
+		
+		// Need a response text
+		var text = xmlHttpRequest.responseText;
+		if( !text ) return createDefault();
+		
+		// Parse
+		var error = JSON.parse(text);
+		if( !error ) return createDefault();
+		
+		return error;
+		
+		function createDefault(){
+			return {
+				error: defaultText
+				,reason: defaultText
+			};
+		};
 	}
 };
 

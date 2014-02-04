@@ -64,6 +64,18 @@ function isKeyDeletionAllowed(obj, selectors, data) {
 	return true;
 };
 
+function _parseError(XMLHttpRequest, textStatus){
+	var err = $n2.utils.parseHttpJsonError(XMLHttpRequest, textStatus);
+	if( err.tokenExpired ){
+		return _loc('The information is expired.');
+	};
+	if( err.userUpdated ){
+		return _loc('Unable to complete operation because the user information has been updated.');
+	};
+	return _loc('Unable to complete operation : {err}',{
+		err: err.error
+	});
+};
 
 /*
  * ==============================================================================
@@ -643,7 +655,8 @@ var UserService = $n2.Class({
 	    		};
 	    	}
 	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
-	    		opts.onError(textStatus);
+	    		var err = _parseError(XMLHttpRequest, textStatus);
+	    		opts.onError(err);
 	    	}
 		});
 	}
@@ -674,7 +687,8 @@ var UserService = $n2.Class({
 	    		};
 	    	}
 	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
-	    		opts.onError(textStatus);
+	    		var err = _parseError(XMLHttpRequest, textStatus);
+	    		opts.onError(err);
 	    	}
 		});
 	}
@@ -709,7 +723,8 @@ var UserService = $n2.Class({
 	    		};
 	    	}
 	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
-	    		opts.onError(textStatus);
+	    		var err = _parseError(XMLHttpRequest, textStatus);
+	    		opts.onError(err);
 	    	}
 		});
 	}
@@ -740,7 +755,8 @@ var UserService = $n2.Class({
 	    		};
 	    	}
 	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
-	    		opts.onError(textStatus);
+	    		var err = _parseError(XMLHttpRequest, textStatus);
+	    		opts.onError(err);
 	    	}
 		});
 	}
@@ -771,7 +787,8 @@ var UserService = $n2.Class({
 	    		};
 	    	}
 	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
-	    		opts.onError(textStatus);
+	    		var err = _parseError(XMLHttpRequest, textStatus);
+	    		opts.onError(err);
 	    	}
 		});
 	}
@@ -804,7 +821,8 @@ var UserService = $n2.Class({
 	    		};
 	    	}
 	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
-	    		opts.onError(textStatus);
+	    		var err = _parseError(XMLHttpRequest, textStatus);
+	    		opts.onError(err);
 	    	}
 		});
 	}
