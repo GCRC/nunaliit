@@ -440,8 +440,6 @@ var UserCreationApplication = $n2.Class({
 
 		this.userService = config.directory.userService;
 		
-		var userDesign = this.userDb.getDesignDoc({ddName:'nunaliit_user'});
-		
 		config.directory.schemaRepository.getSchema({
 			name: 'user'
 			,onSuccess: function(s){
@@ -639,9 +637,225 @@ var UserCreationApplication = $n2.Class({
 	}
 });
 
+//*******************************************
+
+var PasswordRecoveryApplication = $n2.Class({
+
+	authService: null
+
+	,userDb: null
+	
+	,userSchema: null
+	
+	,showService: null
+	
+	,userService: null
+	
+	,divId: null
+	
+	,token: null
+	
+	,initialize: function(opts_){
+		var opts = $n2.extend({
+			config: null
+			,div: null
+			,token: null
+		},opts_);
+		
+		var _this = this;
+		
+		this.token = opts.token;
+		
+		var config = opts.config;
+		
+		this.userDb = $n2.couch.getUserDb();
+	 	
+		this.authService = config.directory.authService;
+		
+		$n2.log('config',config);
+
+		this.userService = config.directory.userService;
+		
+		config.directory.schemaRepository.getSchema({
+			name: 'user'
+			,onSuccess: function(s){
+				_this.userSchema = s;
+			}
+		});
+		
+		this.showService = config.directory.showService;
+		
+		// Assign id to div
+		this.divId = $( opts.div ).attr('id');
+		if( !this.divId ){
+			this.divId = $n2.getUniqueId();
+			$( opts.div ).attr('id',this.divId);
+		};
+		
+		var $display = this._getDiv();
+		$display.empty();
+		
+		$('<div>')
+			.addClass('tokenVerification')
+			.text( _loc('Verifying token') )
+			.appendTo($display);
+		
+		this.userService.validatePasswordRecovery({
+			token: this.token
+			,onSuccess: function(result){
+				_this._displayForm(result);
+			}
+			,onError: function(err){
+				var $display = _this._getDiv();
+				$display.empty();
+
+				$('<div>')
+					.addClass('tokenVerificationError')
+					.text( _loc('Unable to verify password recovery token') )
+					.appendTo($display);
+				
+				$('<div>')
+					.addClass('tokenVerificationCause')
+					.text( err )
+					.appendTo($display);
+			}
+		});
+	}
+
+	,_getDiv: function(){
+		return $('#'+this.divId);
+	}
+	
+	,_displayForm: function(info){
+		var _this = this;
+		
+		$n2.log('info',info);
+		var emailAddress = info.emailAddress;
+
+		var $display = _this._getDiv();
+		$display.empty();
+
+		if( emailAddress ){
+			$('<div>')
+				.addClass('tokenVerifiedEmail')
+				.text( _loc('Recovering password for a user associated with the e-mail address: {address}',{
+					address: emailAddress
+				}) )
+				.appendTo($display);
+		
+		};
+		
+		var $form = $('<div>')
+			.addClass('tokenPasswordRecoveryForm')
+			.appendTo($display);
+
+		// Password
+		var $line = $('<div>')
+			.addClass('line')
+			.appendTo($form);
+		$('<div>')
+			.addClass('label')
+			.text( _loc('Password') )
+			.appendTo($line);
+		$('<div class="value"><input class="password1" type="password"/></div>')
+			.appendTo($line);
+
+		// Verify Password
+		var $line = $('<div>')
+			.addClass('line')
+			.appendTo($form);
+		$('<div>')
+			.addClass('label')
+			.text( _loc('Verify Password') )
+			.appendTo($line);
+		$('<div class="value"><input class="password2" type="password"/></div>')
+			.appendTo($line);
+		
+		$('<button>')
+			.addClass('createUser')
+			.appendTo($form)
+			.text( _loc('Set Password') )
+			.click(function(){
+				var $display = _this._getDiv();
+				var password1 = $display.find('.password1').val();
+				var password2 = $display.find('.password2').val();
+				
+				if( password1 ){
+					password1 = password1.trim();
+				};
+				if( password2 ){
+					password2 = password2.trim();
+				};
+				
+				if( !password1 ) {
+					alert( _loc('You must provide a password') );
+					return;
+				} else if( password1.length < 6 ) {
+					alert( _loc('Your password is too short') );
+					return;
+				} else if( password1 !== password2 ) {
+					alert( _loc('The provided passwords must match') );
+					return;
+				};
+				
+				_this._recoverPassword(password1);
+			});
+	}
+	
+	,_recoverPassword: function(password){
+
+		var _this = this;
+		
+		this.userService.completePasswordRecovery({
+			token: this.token
+			,password: password
+			,onSuccess: function(result){
+				$n2.log('password recovered',result);
+				var userName = result.name;
+				_this._passwordRecovered(userName,password);
+			}
+			,onError: function(err){
+				var $display = _this._getDiv();
+				$display.empty();
+
+				$('<div>')
+					.addClass('passwordRecoveryError')
+					.text( _loc('Unable to recover password') )
+					.appendTo($display);
+				
+				$('<div>')
+					.addClass('passwordRecoveryCause')
+					.text( err )
+					.appendTo($display);
+			}
+		});
+	}
+	
+	,_passwordRecovered: function(userName,password){
+		var $display = this._getDiv();
+		$display.empty();
+
+		$('<div>')
+			.addClass('passwordRecoverySuccess')
+			.text( _loc('Password was recovered successfully.') )
+			.appendTo($display);
+		
+		// Log in user
+		if( this.authService ){
+			this.authService.login({
+				username: userName
+				,password: password
+				,onSuccess: function(context){}
+				,onError: function(errMsg){}
+			});
+		};
+	}
+});
+
 $n2.userApp = {
 	UserManagementApplication: UserManagementApplication
 	,UserCreationApplication: UserCreationApplication
+	,PasswordRecoveryApplication: PasswordRecoveryApplication
 };
 	
 })(jQuery,nunaliit2);

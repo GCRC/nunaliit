@@ -456,6 +456,7 @@ var AuthService = $n2.Class({
 	,_fillDialogWithLogin: function(dialogId, opts_){
 		var opts = $n2.extend({
 			prompt: null
+			,userName: null
 			,onSuccess: function(context){}
 			,onError: function(err){}
 		},opts_);
@@ -476,13 +477,21 @@ var AuthService = $n2.Class({
 		if( this.autoRegistrationAvailable ){
 			nameLabel = _loc('e-mail address');
 		};
+		var nameValue = '';
+		if( opts.userName ){
+			nameValue = opts.userName;
+		};
 		$('<div class="n2Auth_login_label"></div>')
 			.text(nameLabel)
 			.appendTo($userLine);
 		
-		$('<div class="n2Auth_login_input"><input class="n2Auth_user_input n2Auth_input_field" type="text" name="username"/></div>')
+		var $labelDiv = $('<div class="n2Auth_login_input"></div>')
 			.appendTo($userLine);
-			
+
+		$('<input class="n2Auth_user_input n2Auth_input_field" type="text" name="username"/>')
+			.val(nameValue)
+			.appendTo($labelDiv);
+		
 		$('<div class="n2Auth_login_end"></div>')
 			.appendTo($userLine);
 		
@@ -532,12 +541,35 @@ var AuthService = $n2.Class({
 				.appendTo($createLine)
 				.text( _loc('Create a new user') )
 				.click(function(){
-					_this._fillDialogWithUserCreation(dialogId, opts_);
+					var $dialog = $('#'+dialogId);
+					var userName = $dialog.find('.n2Auth_user_input').val();
+					opts.userName = userName;
+					_this._fillDialogWithUserCreation(dialogId, opts);
 					return false;
 				});
 			
 			$('<div class="n2Auth_login_end"></div>')
 				.appendTo($createLine);
+		};
+
+		// Recover password line
+		if( this.autoRegistrationAvailable ){
+			var $recoverLine = $('<div class="n2Auth_login_recover_line"></div>')
+				.appendTo($authDiag);
+	
+			$('<a class="n2Auth_button_recoverPassword" href="#"></a>')
+				.appendTo($recoverLine)
+				.text( _loc('I have forgotten my password') )
+				.click(function(){
+					var $dialog = $('#'+dialogId);
+					var userName = $dialog.find('.n2Auth_user_input').val();
+					opts.userName = userName;
+					_this._fillDialogWithPasswordRecovery(dialogId, opts);
+					return false;
+				});
+			
+			$('<div class="n2Auth_login_end"></div>')
+				.appendTo($recoverLine);
 		};
 
 		
@@ -590,6 +622,7 @@ var AuthService = $n2.Class({
 		
 		var opts = $n2.extend({
 			prompt: null
+			,userName: null
 			,onSuccess: function(context){}
 			,onError: function(err){}
 		},opts_);
@@ -629,6 +662,10 @@ var AuthService = $n2.Class({
 		$dialog.find('.n2Auth_create_pw_line .n2Auth_create_label').text( _loc('password') );
 		$dialog.find('.n2Auth_create_pw2_line .n2Auth_create_label').text( _loc('confirm password') );
 		
+		if( opts.userName ){
+			$dialog.find('.n2Auth_user_input').val( opts.userName );
+		};
+		
 		$dialog.find('.n2Auth_button_create')
 			.text( _loc('Create User') )
 			.button({icons:{primary:'ui-icon-check'}})
@@ -640,6 +677,9 @@ var AuthService = $n2.Class({
 			.text( _loc('Cancel') )
 			.button({icons:{primary:'ui-icon-cancel'}})
 			.click(function(){
+				var $dialog = $('#'+dialogId);
+				var userName = $dialog.find('.n2Auth_user_input').val();
+				opts.userName = userName;
 				_this._fillDialogWithLogin(dialogId, opts);
 				return false;
 			});
@@ -713,6 +753,7 @@ var AuthService = $n2.Class({
 	,_fillDialogWithUserAutoRegistration: function(dialogId, opts_){
 		var opts = $n2.extend({
 			prompt: null
+			,userName: null
 			,onSuccess: function(context){}
 			,onError: function(err){}
 		},opts_);
@@ -725,6 +766,12 @@ var AuthService = $n2.Class({
 		var $form = $('<div>')
 			.addClass('n2Auth_create')
 			.appendTo($dialog);
+		
+		// User name
+		var emailValue = '';
+		if( opts.userName ){
+			emailValue = opts.userName;
+		};
 		
 		// E-mail address
 		var $line = $('<div>')
@@ -740,6 +787,7 @@ var AuthService = $n2.Class({
 		$('<input type="text">')
 			.addClass('n2Auth_email_input n2Auth_input_field')
 			.appendTo($input)
+			.val(emailValue)
 			.keydown(function(e){
 				var charCode = null;
 				if( null === e ) {
@@ -778,6 +826,9 @@ var AuthService = $n2.Class({
 			.appendTo($line)
 			.button({icons:{primary:'ui-icon-cancel'}})
 			.click(function(){
+				var $dialog = $('#'+dialogId);
+				var email = $dialog.find('.n2Auth_email_input').val();
+				opts.userName = email;
 				_this._fillDialogWithLogin(dialogId, opts);
 				return false;
 			});
@@ -853,7 +904,161 @@ var AuthService = $n2.Class({
 			$dialog.dialog('option','title',_loc('Registration Initiated'));
 		};
 	}
+	
+	,_fillDialogWithPasswordRecovery: function(dialogId, opts_){
+		var opts = $n2.extend({
+			prompt: null
+			,userName: null
+			,onSuccess: function(context){}
+			,onError: function(err){}
+		},opts_);
+
+		var _this = this;
+		var $dialog = $('#'+dialogId);
 		
+		$dialog.empty();
+		
+		var $form = $('<div>')
+			.addClass('n2Auth_recoverPassword')
+			.appendTo($dialog);
+		
+		var userName = '';
+		if( opts.userName ){
+			userName = opts.userName;
+		};
+		
+		// E-mail address
+		var $line = $('<div>')
+			.addClass('n2Auth_recoverPassword_email_line')
+			.appendTo($form);
+		$('<div>')
+			.addClass('n2Auth_recoverPassword_label')
+			.text( _loc('e-mail address') )
+			.appendTo($line);
+		var $input = $('<div>')
+			.addClass('n2Auth_recoverPassword_input')
+			.appendTo($line);
+		$('<input type="text">')
+			.addClass('n2Auth_email_input n2Auth_input_field')
+			.appendTo($input)
+			.val(userName)
+			.keydown(function(e){
+				var charCode = null;
+				if( null === e ) {
+					e = window.event; // IE
+				};
+				if( null !== e ) {
+					if( e.keyCode ) {
+						charCode = e.keyCode;
+					};
+				};
+				
+				if( 13 === charCode ) {
+					performPasswordRecovery();
+				};
+			});
+		$('<div>')
+			.addClass('n2Auth_recoverPassword_end')
+			.appendTo($line);
+		
+		// Buttons
+		var $line = $('<div>')
+			.addClass('n2Auth_recoverPassword_button_line')
+			.appendTo($form);
+		$('<button>')
+			.addClass('n2Auth_button_recover')
+			.text( _loc('Reset Password') )
+			.appendTo($line)
+			.button({icons:{primary:'ui-icon-check'}})
+			.click(function(){
+				performPasswordRecovery();
+				return false;
+			});
+		$('<button>')
+			.addClass('n2Auth_button_cancel')
+			.text( _loc('Cancel') )
+			.appendTo($line)
+			.button({icons:{primary:'ui-icon-cancel'}})
+			.click(function(){
+				var $dialog = $('#'+dialogId);
+				var email = $dialog.find('.n2Auth_email_input').val();
+				opts.userName = email;
+				_this._fillDialogWithLogin(dialogId, opts);
+				return false;
+			});
+
+		$dialog.dialog('option','title',_loc('Recover Password'));
+		
+		function performPasswordRecovery(){
+			var $dialog = $('#'+dialogId);
+
+			var email = $dialog.find('.n2Auth_email_input').val();
+			
+			if( email ) {
+				email = $n2.trim(email);
+			};
+			if( !email ) {
+				alert( _loc('E-Mail address must be specified') );
+				return false;
+			};
+			
+			var url = _this.options.userServerUrl + 'initPasswordRecovery';
+			
+			$.ajax({
+		    	url: url
+		    	,type: 'GET'
+		    	,async: true
+		    	,traditional: true
+		    	,data: {
+		    		email: email
+		    	}
+		    	,dataType: 'json'
+		    	,success: function(result) {
+		    		if( result.error ) {
+						alert( _loc('Unable to recover password: ')+result.error);
+		    		} else {
+		    			reportSuccess();
+		    		};
+		    	}
+		    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+					alert( _loc('Unable to recover password: ')+textStatus);
+				}	
+			});
+		};
+		
+		function reportSuccess(){
+			var $dialog = $('#'+dialogId);
+
+			$dialog.empty();
+			
+			var $form = $('<div>')
+				.addClass('n2Auth_registered')
+				.appendTo($dialog);
+			
+			// E-mail address
+			var $line = $('<div>')
+				.addClass('n2Auth_registered_line')
+				.appendTo($form)
+				.text( _loc('Password recovery initiated. Check for an e-mail to complete password recovery') );
+			
+			// Buttons
+			var $line = $('<div>')
+				.addClass('n2Auth_registered_button_line')
+				.appendTo($form);
+			$('<button>')
+				.addClass('n2Auth_button_ok')
+				.text( _loc('OK') )
+				.appendTo($line)
+				.button({icons:{primary:'ui-icon-check'}})
+				.click(function(){
+					opts.onSuccess();
+					return false;
+				});
+
+			$dialog.dialog('option','title',_loc('Password Recovery Initiated'));
+		};
+	}
+
 	,showLoginForm: function(opts_) {
 		var opts = $.extend({
 			prompt: this.options.prompt

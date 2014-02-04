@@ -16,8 +16,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.user.db.UserRepository;
+import ca.carleton.gcrc.couch.user.error.TokenExpiredException;
+import ca.carleton.gcrc.couch.user.error.UserUpdatedException;
 import ca.carleton.gcrc.couch.user.mail.UserMailNotification;
 import ca.carleton.gcrc.couch.user.token.CreationToken;
+import ca.carleton.gcrc.couch.user.token.PasswordRecoveryToken;
 import ca.carleton.gcrc.couch.user.token.Token;
 import ca.carleton.gcrc.couch.user.token.TokenEncryptor;
 import ca.carleton.gcrc.security.rng.RngFactory;
@@ -141,7 +144,7 @@ public class UserServletActions {
 			if( null != expiry ){
 				Date now = new Date();
 				if( now.getTime() > expiry.getTime() ){
-					throw new Exception("Token is expired");
+					throw new TokenExpiredException("Token is expired");
 				}
 			}
 			
@@ -189,6 +192,132 @@ public class UserServletActions {
 		
 		// Create user
 		userRepository.createUser(name, displayName, password, emailAddress);
+		
+		// Get user
+		JSONObject userDoc = userRepository.getUserFromName(name);
+		JSONObject publicUserDoc = getPublicUserFromUser(userDoc);
+		result.put("doc", publicUserDoc);
+		
+		return result;
+	}
+	
+	public JSONObject initPasswordRecovery(String emailAddr) throws Exception {
+		JSONObject result = new JSONObject();
+		result.put("message", "Password recovery e-mail was sent to the given address");
+		
+		// User exists?
+		JSONObject user = null;
+		try {
+			user = userRepository.getUserFromEmailAddress(emailAddr);
+		} catch(Exception e) {
+			// Ignore
+		}
+		if( null == user ){
+			throw new Exception("No user assciated with e-mail address: "+emailAddr);
+		}
+
+		// Create token
+		PasswordRecoveryToken passwordRecoveryToken = new PasswordRecoveryToken();
+		{
+			passwordRecoveryToken.setEmailAddress(emailAddr);
+			
+			long now = (new Date()).getTime();
+			long expiryPeriodInMs = 1L * 24L * 60L * 60L * 1000L; // 1 day
+			long expiryTime = now + expiryPeriodInMs;
+			passwordRecoveryToken.setExpiry( new Date(expiryTime) );
+			
+			passwordRecoveryToken.setVersion( user.getString("_rev").substring(0,5) );
+		}
+		
+		// Encrypt token
+		if( null == serverKey ){
+			throw new Exception("Server key was not installed. Configuration must be adjusted.");
+		}
+		byte[] context = new byte[8];
+		rng.nextBytes(context);
+		byte[] encryptedToken = TokenEncryptor.encryptToken(serverKey, context, passwordRecoveryToken);
+		
+		// Base 64 encode token
+		String b64Token = null;
+		try {
+			b64Token = Base64.encodeBase64String(encryptedToken);
+		} catch( Exception e ) {
+			throw new Exception("Error while encoding token (b64)", e);
+		}		
+		
+		userMailNotification.sendPasswordRecoveryNotice(emailAddr,b64Token);
+		
+		return result;
+	}
+
+	public JSONObject validatePasswordRecovery(String b64Token) throws Exception {
+		byte[] encryptedToken = Base64.decodeBase64(b64Token);
+		Token token = TokenEncryptor.decryptToken(serverKey, encryptedToken);
+		if( token instanceof PasswordRecoveryToken ){
+			PasswordRecoveryToken passwordRecoveryToken = (PasswordRecoveryToken)token;
+			
+			// Check expiry time
+			Date expiry = passwordRecoveryToken.getExpiry();
+			if( null != expiry ){
+				Date now = new Date();
+				if( now.getTime() > expiry.getTime() ){
+					throw new TokenExpiredException("Token is expired");
+				}
+			}
+			
+			// Check if user already exists
+			String emailAddress = passwordRecoveryToken.getEmailAddress();
+			if( null == emailAddress ) {
+				throw new Exception("Token does not specify an e-mail address");
+			}
+			JSONObject userDoc = null;
+			try {
+				logger.error("userRepository: "+userRepository);
+				userDoc = userRepository.getUserFromEmailAddress(emailAddress);
+			} catch(Exception e) {
+				logger.error("Error",e);
+				throw new Exception("There is no user associated with the e-mail address: "+emailAddress+
+						". You must first create a user account.",e);
+			}
+			
+			// Verify that user document was not modified since the token was generated
+			{
+				String rev = userDoc.optString("_rev");
+				if( null == rev ){
+					throw new Exception("Revision not available from user document");
+				}
+				String tokenRev = passwordRecoveryToken.getVersion();
+				if( null == tokenRev ){
+					throw new Exception("Revision not provided in password recovery token");
+				}
+				if( false == tokenRev.equals( rev.substring(0, tokenRev.length()) ) ){
+					throw new UserUpdatedException("Password recovery token refers to an older version of the user document");
+				}
+			}
+			
+			JSONObject result = new JSONObject();
+			result.put("valid", true);
+			result.put("emailAddress", passwordRecoveryToken.getEmailAddress());
+			result.put("name", userDoc.getString("name"));
+			return result;
+		} else {
+			throw new Exception("Unexpected token class: "+token.getClass().getName());
+		}
+	}
+
+	public JSONObject completePasswordRecovery(String b64Token, String newPassword) throws Exception {
+		JSONObject validationResult = validatePasswordRecovery(b64Token);
+		String emailAddress = validationResult.getString("emailAddress");
+		
+		JSONObject result = new JSONObject();
+		result.put("emailAddress", emailAddress);
+
+		// Get user
+		String name = validationResult.getString("name");
+		result.put("name", name);
+		
+		// Create user
+		userRepository.recoverPassword(name, newPassword);
 		
 		// Get user
 		JSONObject userDoc = userRepository.getUserFromName(name);

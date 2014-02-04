@@ -18,6 +18,10 @@ public class TokenDecoder {
 
 			if( Token.APPLICATION_TYPE_CREATION == outer.getType() ){
 				return CreationToken.decode(outer);
+				
+			} else if( Token.APPLICATION_TYPE_PASSWORD_RECOVERY == outer.getType() ){
+					return PasswordRecoveryToken.decode(outer);
+					
 			} else {
 				throw new Exception("Unrecognized type: "+outer.getType());
 			}

@@ -88,7 +88,9 @@ public class UserRepositoryCouchDb implements UserRepository {
 
 			CouchQueryResults results = nunaliitUserDesignDocument.performQuery(query);
 			List<JSONObject> rows = results.getRows();
+			logger.error("rows:"+rows.size());
 			for(JSONObject row : rows){
+				logger.error("row:"+row);
 				JSONObject doc = row.optJSONObject("doc");
 				if( null != doc ){
 					return doc;
@@ -136,6 +138,37 @@ public class UserRepositoryCouchDb implements UserRepository {
 		} catch(Exception e) {
 			throw new Exception("Unable to create user: "+name);
 		}
-		
+	}
+
+	@Override
+	public void recoverPassword(String name, String newPassword) throws Exception {
+		try {
+			String id = "org.couchdb.user:"+name;
+			
+			JSONObject userDoc = userDb.getDocument(id);
+			
+			userDoc.put("password", newPassword);
+			
+			if( userDoc.opt("password_scheme") != null ) {
+				userDoc.remove("password_scheme");
+			}
+			if( userDoc.opt("iterations") != null ) {
+				userDoc.remove("iterations");
+			}
+			if( userDoc.opt("derived_key") != null ) {
+				userDoc.remove("derived_key");
+			}
+			if( userDoc.opt("salt") != null ) {
+				userDoc.remove("salt");
+			}
+			if( userDoc.opt("password_sha") != null ) {
+				userDoc.remove("password_sha");
+			}
+			
+			userDb.updateDocument(userDoc);
+			
+		} catch(Exception e) {
+			throw new Exception("Unable to update password: "+name);
+		}
 	}
 }

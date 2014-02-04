@@ -12,7 +12,9 @@
 	clear: both;
 }
 
-.n2Auth_login_button_line, .n2Auth_login_create_line {
+.n2Auth_login_button_line,
+.n2Auth_login_create_line,
+.n2Auth_login_recover_line {
 	padding-left: 100px;
 }
 
@@ -39,5 +41,28 @@
 }
 
 .n2Auth_create_button_line button {
+	float:left;
+}
+
+
+/* Recover password form */
+.n2Auth_recoverPassword .n2Auth_recoverPassword_label {
+	float: left;
+	width: 120px;
+}
+
+.n2Auth_recoverPassword .n2Auth_recoverPassword_input {
+	float: left;
+}
+
+.n2Auth_recoverPassword_end {
+	clear: both;
+}
+
+.n2Auth_recoverPassword_button_line {
+	padding-left: 55px;
+}
+
+.n2Auth_recoverPassword_button_line button {
 	float:left;
 }

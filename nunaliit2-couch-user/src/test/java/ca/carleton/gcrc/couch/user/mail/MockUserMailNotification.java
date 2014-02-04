@@ -2,7 +2,8 @@ package ca.carleton.gcrc.couch.user.mail;
 
 public class MockUserMailNotification implements UserMailNotification {
 
-	public String emailAddress;
+	public String creationEmailAddress;
+	public String recoveryEmailAddress;
 	public String token;
 
 	@Override
@@ -12,7 +13,13 @@ public class MockUserMailNotification implements UserMailNotification {
 
 	@Override
 	public void sendUserCreationNotice(String emailAddress, String token) throws Exception {
-		this.emailAddress = emailAddress;
+		this.creationEmailAddress = emailAddress;
+		this.token = token;
+	}
+
+	@Override
+	public void sendPasswordRecoveryNotice(String emailAddress, String token) throws Exception {
+		this.recoveryEmailAddress = emailAddress;
 		this.token = token;
 	}
 }

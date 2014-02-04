@@ -24,6 +24,8 @@ import ca.carleton.gcrc.couch.client.CouchDbSecurityDocument;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.user.db.UserRepository;
 import ca.carleton.gcrc.couch.user.db.UserRepositoryCouchDb;
+import ca.carleton.gcrc.couch.user.error.TokenExpiredException;
+import ca.carleton.gcrc.couch.user.error.UserUpdatedException;
 import ca.carleton.gcrc.couch.user.mail.UserMailNotification;
 import ca.carleton.gcrc.couch.user.mail.UserMailNotificationImpl;
 import ca.carleton.gcrc.couch.user.mail.UserMailNotificationNull;
@@ -308,6 +310,63 @@ public class UserServlet extends HttpServlet {
 				JSONObject result = actions.completeUserCreation(token,displayName,password);
 				sendJsonResponse(resp, result);
 
+			} else if( path.size() == 1 && path.get(0).equals("initPasswordRecovery") ) {
+				String[] emailStrings = req.getParameterValues("email");
+
+				if( null == emailStrings || emailStrings.length < 1 ){
+					throw new Exception("'email' parameter must be specified");
+				}
+				if( emailStrings.length > 1 ){
+					throw new Exception("'email' parameter must be specified exactly once");
+				}
+				
+				JSONObject result = actions.initPasswordRecovery(emailStrings[0]);
+				sendJsonResponse(resp, result);
+
+			} else if( path.size() == 1 && path.get(0).equals("validatePasswordRecovery") ) {
+				String[] tokenStrings = req.getParameterValues("token");
+
+				if( null == tokenStrings || tokenStrings.length < 1 ){
+					throw new Exception("'token' parameter must be specified");
+				}
+				if( tokenStrings.length > 1 ){
+					throw new Exception("'token' parameter must be specified exactly once");
+				}
+				
+				JSONObject result = actions.validatePasswordRecovery(tokenStrings[0]);
+				sendJsonResponse(resp, result);
+
+			} else if( path.size() == 1 && path.get(0).equals("completePasswordRecovery") ) {
+
+				// Token
+				String token = null;
+				{
+					String[] tokenStrings = req.getParameterValues("token");
+					if( null == tokenStrings || tokenStrings.length < 1 ){
+						throw new Exception("'token' parameter must be specified");
+					}
+					if( tokenStrings.length > 1 ){
+						throw new Exception("'token' parameter must be specified exactly once");
+					}
+					token = tokenStrings[0];
+				}
+
+				// Password
+				String password = null;
+				{
+					String[] passwordStrings = req.getParameterValues("password");
+					if( null == passwordStrings || passwordStrings.length < 1 ){
+						throw new Exception("'password' parameter must be specified");
+					}
+					if( passwordStrings.length > 1 ){
+						throw new Exception("'password' parameter must be specified exactly once");
+					}
+					password = passwordStrings[0];
+				}
+				
+				JSONObject result = actions.completePasswordRecovery(token,password);
+				sendJsonResponse(resp, result);
+
 			} else {
 				throw new Exception("Invalid action requested");
 			}
@@ -360,6 +419,20 @@ public class UserServlet extends HttpServlet {
 			
 			JSONObject errorObj = new JSONObject();
 			errorObj.put("error", t.getMessage());
+			
+			int limit = 15;
+			Throwable cause = t;
+			while( null != cause && limit > 0 ){
+				if( cause instanceof TokenExpiredException ){
+					errorObj.put("tokenExpired", true);
+				}
+				if( cause instanceof UserUpdatedException ){
+					errorObj.put("userUpdated", true);
+				}
+				
+				--limit;
+				cause = cause.getCause();
+			}
 			
 			OutputStreamWriter osw = new OutputStreamWriter(resp.getOutputStream(), "UTF-8");
 			errorObj.write(osw);

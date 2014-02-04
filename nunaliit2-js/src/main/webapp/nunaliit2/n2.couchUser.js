@@ -616,7 +616,7 @@ var UserService = $n2.Class({
 		
 		return new UserEditor(opts);
 	}
-	
+
 	,initiateUserCreation: function(opts_){
 		var opts = $n2.extend({
 			emailAddress: null
@@ -698,6 +698,101 @@ var UserService = $n2.Class({
 	    	,data: {
 	    		token: opts.token
 				,display: opts.displayName
+				,password: opts.password
+	    	}
+	    	,dataType: 'json'
+	    	,success: function(result) {
+	    		if( result.error ) {
+	    			opts.onError(result.error);
+	    		} else {
+	    			opts.onSuccess(result);
+	    		};
+	    	}
+	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+	    		opts.onError(textStatus);
+	    	}
+		});
+	}
+
+	,initiatePasswordRecovery: function(opts_){
+		var opts = $n2.extend({
+			emailAddress: null
+			,onSuccess: function(){}
+			,onError: function(err){}
+		},opts_);
+
+		var url = this.userServerUrl + 'initPasswordRecovery';
+		
+		$.ajax({
+	    	url: url
+	    	,type: 'GET'
+	    	,async: true
+	    	,traditional: true
+	    	,data: {
+	    		email: opts.emailAddress
+	    	}
+	    	,dataType: 'json'
+	    	,success: function(result) {
+	    		if( result.error ) {
+	    			opts.onError(result.error);
+	    		} else {
+	    			opts.onSuccess(result);
+	    		};
+	    	}
+	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+	    		opts.onError(textStatus);
+	    	}
+		});
+	}
+	
+	,validatePasswordRecovery: function(opts_){
+		var opts = $n2.extend({
+			token: null
+			,onSuccess: function(){}
+			,onError: function(err){}
+		},opts_);
+
+		var url = this.userServerUrl + 'validatePasswordRecovery';
+		
+		$.ajax({
+	    	url: url
+	    	,type: 'GET'
+	    	,async: true
+	    	,traditional: true
+	    	,data: {
+	    		token: opts.token
+	    	}
+	    	,dataType: 'json'
+	    	,success: function(result) {
+	    		if( result.error ) {
+	    			opts.onError(result.error);
+	    		} else {
+	    			opts.onSuccess(result);
+	    		};
+	    	}
+	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+	    		opts.onError(textStatus);
+	    	}
+		});
+	}
+	
+	,completePasswordRecovery: function(opts_){
+		var opts = $n2.extend({
+			token: null
+			,password: null
+			,onSuccess: function(){}
+			,onError: function(err){}
+		},opts_);
+
+		var url = this.userServerUrl + 'completePasswordRecovery';
+		
+		$.ajax({
+	    	url: url
+	    	,type: 'GET'
+	    	,async: true
+	    	,traditional: true
+	    	,data: {
+	    		token: opts.token
 				,password: opts.password
 	    	}
 	    	,dataType: 'json'

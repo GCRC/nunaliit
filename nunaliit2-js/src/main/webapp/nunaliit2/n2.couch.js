@@ -1615,6 +1615,14 @@ var UserDb = $n2.Class(Database,{
 	    function onUuid(uuid) {
 			var salt = uuid;
 			var password_sha = hex_sha1(opts.password + salt);
+			
+			// Remove unwanted fields
+			if( opts.userDoc.password ) delete opts.userDoc.password;
+			if( opts.userDoc.password_scheme ) delete opts.userDoc.password_scheme;
+			if( opts.userDoc.iterations ) delete opts.userDoc.iterations;
+			if( opts.userDoc.derived_key ) delete opts.userDoc.derived_key;
+			if( opts.userDoc.salt ) delete opts.userDoc.salt;
+			if( opts.userDoc.password_sha ) delete opts.userDoc.password_sha;
 		
 			// Update user document
 			opts.userDoc.password_sha = password_sha;

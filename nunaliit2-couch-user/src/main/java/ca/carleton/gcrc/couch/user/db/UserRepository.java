@@ -21,4 +21,6 @@ public interface UserRepository {
 			String password,
 			String emailAddress
 		) throws Exception;
+
+	void recoverPassword(String name, String newPassword) throws Exception;
 }
