@@ -359,6 +359,7 @@ var Tracker = $n2.Class({
 	}
 	
 	,_reloadHash: function(hash){
+		var o = null;
 		try {
 			var d = $n2.Base64.decode(hash);
 			o = JSON.parse(d);

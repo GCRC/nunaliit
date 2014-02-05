@@ -61,12 +61,18 @@ var n2utils = {
 		
 		if( doc.nunaliit_layers
 		 && n2utils.isArray(doc.nunaliit_layers) ) {
+			var layerMap = {};
+			
 			for(var i=0,e=doc.nunaliit_layers.length; i<e; ++i) {
 				var l = doc.nunaliit_layers[i];
 				if( typeof(l) === 'string' ) {
-					if( !result ) result = [];
-					result.push(l);
+					layerMap[l] = true;
 				};
+			};
+			
+			for(var layerId in layerMap) {
+				if( !result ) result = [];
+				result.push(layerId);
 			};
 		};
 		
