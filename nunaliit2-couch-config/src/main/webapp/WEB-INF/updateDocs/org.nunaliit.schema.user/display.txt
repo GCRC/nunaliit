@@ -4,11 +4,23 @@
 		<div class="value"></div>
 		<div class="end"></div>
 	</div>
+	{{#if nunaliit_validated_emails}}
+	<div>
+		<div class="label n2s_localize">Validated E-mail</div>
+		<div class="value">
+			{{#nunaliit_validated_emails}}
+				<div class="validatedEmail">{{.}}</div>
+			{{/nunaliit_validated_emails}}
+		</div>
+		<div class="end"></div>
+	</div>
+	{{else}}
 	<div>
 		<div class="label n2s_localize">Name</div>
 		<div class="value">{{name}}</div>
 		<div class="end"></div>
 	</div>
+	{{/if}}
 	<div>
 		<div class="label n2s_localize">Display</div>
 		<div class="value">{{display}}</div>

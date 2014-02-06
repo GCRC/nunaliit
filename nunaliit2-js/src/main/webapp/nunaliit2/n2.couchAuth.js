@@ -1164,7 +1164,7 @@ var AuthService = $n2.Class({
 			var userService = _this._getUserService();
 			if( userService ){
 				var dialogId = $n2.getUniqueId();
-				var $dialog = $('<div id="'+dialogId+'"></div>');
+				var $dialog = $('<div id="'+dialogId+'" class="n2Auth_userEdit"></div>');
 				$(document.body).append($dialog);
 				
 				userService.startEdit({

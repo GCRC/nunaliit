@@ -66,3 +66,11 @@
 .n2Auth_recoverPassword_button_line button {
 	float:left;
 }
+
+.n2Auth_userEdit .n2UserEdit_deleteButton {
+	display: none;
+}
+
+.n2Auth_userEdit .n2UserEdit_editor {
+	width: 400px;
+}

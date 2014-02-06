@@ -1,1 +1,1 @@
-User: {{#displayName}}{{displayName}}{{/displayName}}{{^displayName}}{{name}}{{/displayName}}
+User: {{#displayName}}{{displayName}}{{/displayName}}{{^displayName}}{{#if nunaliit_validated_emails}}{{nunaliit_validated_emails}}{{else}}{{name}}{{/if}}{{/displayName}}

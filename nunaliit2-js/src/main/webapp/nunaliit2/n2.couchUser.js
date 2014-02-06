@@ -265,6 +265,7 @@ var UserEditor = $n2.Class({
 
 		// Save button
 		$('<input type="button"/>')
+			.addClass('n2UserEdit_saveButton')
 			.val( _loc('Save') )
 			.appendTo($buttons)
 			.click(function(){
@@ -274,6 +275,7 @@ var UserEditor = $n2.Class({
 
 		// Delete button
 		$('<input type="button"/>')
+			.addClass('n2UserEdit_deleteButton')
 			.val( _loc('Delete') )
 			.appendTo($buttons)
 			.click(function(){
@@ -283,6 +285,7 @@ var UserEditor = $n2.Class({
 
 		// Roles button
 		$('<input type="button"/>')
+			.addClass('n2UserEdit_rolesButton')
 			.val( _loc('Roles') )
 			.appendTo($buttons)
 			.click(function(e){
@@ -299,6 +302,7 @@ var UserEditor = $n2.Class({
 
 		// Password button
 		$('<input type="button"/>')
+			.addClass('n2UserEdit_passwordButton')
 			.val( _loc('Set Password') )
 			.appendTo($buttons)
 			.click(function(e){
@@ -308,6 +312,7 @@ var UserEditor = $n2.Class({
 
 		// Cancel button
 		$('<input type="button"/>')
+			.addClass('n2UserEdit_cancelButton')
 			.val( _loc('Cancel') )
 			.appendTo($buttons)
 			.click(function(e){
