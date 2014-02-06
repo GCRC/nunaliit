@@ -1,0 +1,37 @@
+.tokenCreationForm .label,
+.tokenPasswordRecoveryForm .label {
+	float: left;
+}
+
+.tokenCreationForm .value,
+.tokenPasswordRecoveryForm .value {
+	float: left;
+}
+
+.tokenCreationForm .line::after,
+.tokenPasswordRecoveryForm .line::after {
+	display: block;
+	clear: both;
+	content: "";
+}
+
+.tokenCreationForm .displayName .label,
+.tokenCreationForm .passwordEntry .label,
+.tokenPasswordRecoveryForm .passwordEntry .label {
+	width: 100px;
+}
+
+.tokenCreationForm .changePassword .label,
+.tokenPasswordRecoveryForm .changePassword .label {
+	display: none;
+}
+
+.tokenCreationForm .changePassword .value,
+.tokenPasswordRecoveryForm .changePassword .value {
+	margin: 0 0 0 100px;
+}
+
+.tokenCreationForm input[type="checkbox"],
+.tokenPasswordRecoveryForm input[type="checkbox"] {
+	margin: 2px 0 0 5px;
+}

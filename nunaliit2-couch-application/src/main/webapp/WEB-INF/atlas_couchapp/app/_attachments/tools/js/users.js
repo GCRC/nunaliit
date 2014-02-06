@@ -516,39 +516,46 @@ var UserCreationApplication = $n2.Class({
 		// Display name
 		var $line = $('<div>')
 			.addClass('line')
+			.addClass('displayName')
 			.appendTo($form);
 		$('<div>')
 			.addClass('label')
 			.text( _loc('Display Name') )
 			.appendTo($line);
-		$('<div class="value"><input class="displayName" type="text"/></div>')
+		$('<div class="value"><input class="displayNameInput" type="text"/></div>')
 			.appendTo($line);
 
-		// Password
+		// Password section
+		var $passwordSection = $('<div>')
+			.addClass('passwordSection')
+			.appendTo($form);
+
+		// Choose my own password
 		var $line = $('<div>')
 			.addClass('line')
+			.addClass('chooseOwnPassword')
 			.appendTo($form);
 		$('<div>')
 			.addClass('label')
-			.text( _loc('Password') )
+			.text( _loc('I want to choose my own password') )
 			.appendTo($line);
-		$('<div class="value"><input class="password1" type="password"/></div>')
-			.appendTo($line);
+		$('<div class="value"><input class="choosePassword" type="checkbox"/></div>')
+			.appendTo($line)
+			.change(function(){
+				var $display = _this._getDiv();
+				var $choose = $display.find('.choosePassword');
+				var chooseMyOwn = $choose.is(':checked');
+				if( chooseMyOwn ) {
+					displayChoosePassword();
+				} else {
+					displayGeneratedPassword();
+				};
+			});
 
-		// Verify Password
+		// E-mail Password
 		var $line = $('<div>')
 			.addClass('line')
-			.appendTo($form);
-		$('<div>')
-			.addClass('label')
-			.text( _loc('Verify Password') )
-			.appendTo($line);
-		$('<div class="value"><input class="password2" type="password"/></div>')
-			.appendTo($line);
-
-		// Verify Password
-		var $line = $('<div>')
-			.addClass('line')
+			.addClass('emailPassword')
 			.appendTo($form);
 		$('<div>')
 			.addClass('label')
@@ -563,30 +570,44 @@ var UserCreationApplication = $n2.Class({
 			.text( _loc('Create User') )
 			.click(function(){
 				var $display = _this._getDiv();
-				var displayName = $display.find('.displayName').val();
+				var displayName = $display.find('.displayNameInput').val();
 				var password1 = $display.find('.password1').val();
 				var password2 = $display.find('.password2').val();
+				var password3 = $display.find('.password3').val();
 				var sendEmailPasswordReminder = $display.find('.emailPassword').is(':checked');
 				
 				if( displayName ){
 					displayName = displayName.trim();
 				};
-				if( password1 ){
-					password1 = password1.trim();
-				};
-				if( password2 ){
-					password2 = password2.trim();
-				};
-				
-				if( !password1 ) {
-					alert( _loc('You must provide a password') );
-					return;
-				} else if( password1.length < 6 ) {
-					alert( _loc('Your password is too short') );
-					return;
-				} else if( password1 !== password2 ) {
-					alert( _loc('The provided passwords must match') );
-					return;
+
+				var password = null;
+				var chooseMyOwn = $display.find('.choosePassword').is(':checked');
+				if( chooseMyOwn ) {
+					if( password1 ){
+						password1 = password1.trim();
+					};
+					if( password2 ){
+						password2 = password2.trim();
+					};
+					
+					if( !password1 ) {
+						alert( _loc('You must provide a password') );
+						return;
+					} else if( password1.length < 6 ) {
+						alert( _loc('Your password is too short') );
+						return;
+					} else if( password1 !== password2 ) {
+						alert( _loc('The provided passwords must match') );
+						return;
+					};
+					
+					password = password1;
+					
+				} else {
+					if( password3 ){
+						password3 = password3.trim();
+					};
+					password = password3;
 				};
 				
 				if( !displayName ){
@@ -594,8 +615,88 @@ var UserCreationApplication = $n2.Class({
 					return;
 				};
 				
-				_this._createUser(displayName, password1, sendEmailPasswordReminder);
+				_this._createUser(displayName, password, sendEmailPasswordReminder);
 			});
+
+		displayGeneratedPassword();
+
+		function displayGeneratedPassword(){
+			var $display = _this._getDiv();
+			var $passwordSection = $display.find('.passwordSection');
+			$passwordSection.empty();
+
+			_this.userService.generatePassword({
+				onSuccess: function(password){
+					$passwordSection.empty();
+
+					// Password
+					var $line = $('<div>')
+						.addClass('line')
+						.addClass('passwordEntry')
+						.appendTo($passwordSection);
+					$('<div>')
+						.addClass('label')
+						.text( _loc('Password') )
+						.appendTo($line);
+					var $value = $('<div>')
+						.addClass('value')
+						.appendTo($line);
+					$('<input class="password3" type="text"/>')
+						.val(password)
+						.attr('readonly',true)
+						.appendTo($value);
+
+					// Change Password
+					var $line = $('<div>')
+						.addClass('line')
+						.addClass('changePassword')
+						.appendTo($passwordSection);
+					$('<div>')
+						.addClass('label')
+						.appendTo($line);
+					var $value = $('<div>')
+						.addClass('value')
+						.appendTo($line);
+					$('<button>')
+						.text( _loc('Get a different password') )
+						.appendTo($value)
+						.click(function(){
+							displayGeneratedPassword();
+							return false;
+						});
+				}
+			});
+		};
+
+		function displayChoosePassword(){
+			var $display = _this._getDiv();
+			var $passwordSection = $display.find('.passwordSection');
+			$passwordSection.empty();
+
+			// Password
+			var $line = $('<div>')
+				.addClass('line')
+				.addClass('passwordEntry')
+				.appendTo($passwordSection);
+			$('<div>')
+				.addClass('label')
+				.text( _loc('Password') )
+				.appendTo($line);
+			$('<div class="value"><input class="password1" type="password"/></div>')
+				.appendTo($line);
+
+			// Verify Password
+			var $line = $('<div>')
+				.addClass('line')
+				.addClass('passwordEntry')
+				.appendTo($passwordSection);
+			$('<div>')
+				.addClass('label')
+				.text( _loc('Verify Password') )
+				.appendTo($line);
+			$('<div class="value"><input class="password2" type="password"/></div>')
+				.appendTo($line);
+		};
 	}
 	
 	,_createUser: function(displayName, password, sendEmailPasswordReminder){
@@ -762,31 +863,37 @@ var PasswordRecoveryApplication = $n2.Class({
 			.addClass('tokenPasswordRecoveryForm')
 			.appendTo($display);
 
-		// Password
+		// Password section
+		var $passwordSection = $('<div>')
+			.addClass('passwordSection')
+			.appendTo($form);
+
+		// Choose my own password
 		var $line = $('<div>')
 			.addClass('line')
+			.addClass('chooseOwnPassword')
 			.appendTo($form);
 		$('<div>')
 			.addClass('label')
-			.text( _loc('Password') )
+			.text( _loc('I want to choose my own password') )
 			.appendTo($line);
-		$('<div class="value"><input class="password1" type="password"/></div>')
-			.appendTo($line);
+		$('<div class="value"><input class="choosePassword" type="checkbox"/></div>')
+			.appendTo($line)
+			.change(function(){
+				var $display = _this._getDiv();
+				var $choose = $display.find('.choosePassword');
+				var chooseMyOwn = $choose.is(':checked');
+				if( chooseMyOwn ) {
+					displayChoosePassword();
+				} else {
+					displayGeneratedPassword();
+				};
+			});
 
-		// Verify Password
+		// E-mail Password
 		var $line = $('<div>')
 			.addClass('line')
-			.appendTo($form);
-		$('<div>')
-			.addClass('label')
-			.text( _loc('Verify Password') )
-			.appendTo($line);
-		$('<div class="value"><input class="password2" type="password"/></div>')
-			.appendTo($line);
-
-		// Verify Password
-		var $line = $('<div>')
-			.addClass('line')
+			.addClass('emailPassword')
 			.appendTo($form);
 		$('<div>')
 			.addClass('label')
@@ -803,28 +910,121 @@ var PasswordRecoveryApplication = $n2.Class({
 				var $display = _this._getDiv();
 				var password1 = $display.find('.password1').val();
 				var password2 = $display.find('.password2').val();
+				var password3 = $display.find('.password3').val();
 				var sendEmailPasswordReminder = $display.find('.emailPassword').is(':checked');
-				
-				if( password1 ){
-					password1 = password1.trim();
+
+				var password = null;
+				var chooseMyOwn = $display.find('.choosePassword').is(':checked');
+				if( chooseMyOwn ) {
+					if( password1 ){
+						password1 = password1.trim();
+					};
+					if( password2 ){
+						password2 = password2.trim();
+					};
+					
+					if( !password1 ) {
+						alert( _loc('You must provide a password') );
+						return;
+					} else if( password1.length < 6 ) {
+						alert( _loc('Your password is too short') );
+						return;
+					} else if( password1 !== password2 ) {
+						alert( _loc('The provided passwords must match') );
+						return;
+					};
+					
+					password = password1;
+					
+				} else {
+					if( password3 ){
+						password3 = password3.trim();
+					};
+					password = password3;
 				};
-				if( password2 ){
-					password2 = password2.trim();
-				};
-				
-				if( !password1 ) {
-					alert( _loc('You must provide a password') );
-					return;
-				} else if( password1.length < 6 ) {
-					alert( _loc('Your password is too short') );
-					return;
-				} else if( password1 !== password2 ) {
-					alert( _loc('The provided passwords must match') );
-					return;
-				};
-				
-				_this._recoverPassword(password1, sendEmailPasswordReminder);
+
+				_this._recoverPassword(password, sendEmailPasswordReminder);
 			});
+
+		displayGeneratedPassword();
+
+		function displayGeneratedPassword(){
+			var $display = _this._getDiv();
+			var $passwordSection = $display.find('.passwordSection');
+			$passwordSection.empty();
+
+			_this.userService.generatePassword({
+				onSuccess: function(password){
+					$passwordSection.empty();
+
+					// Password
+					var $line = $('<div>')
+						.addClass('line')
+						.addClass('passwordEntry')
+						.appendTo($passwordSection);
+					$('<div>')
+						.addClass('label')
+						.text( _loc('Password') )
+						.appendTo($line);
+					var $value = $('<div>')
+						.addClass('value')
+						.appendTo($line);
+					$('<input class="password3" type="text"/>')
+						.val(password)
+						.attr('readonly',true)
+						.appendTo($value);
+
+					// Change Password
+					var $line = $('<div>')
+						.addClass('line')
+						.addClass('changePassword')
+						.appendTo($passwordSection);
+					$('<div>')
+						.addClass('label')
+						.appendTo($line);
+					var $value = $('<div>')
+						.addClass('value')
+						.appendTo($line);
+					$('<button>')
+						.text( _loc('Get a different password') )
+						.appendTo($value)
+						.click(function(){
+							displayGeneratedPassword();
+							return false;
+						});
+				}
+			});
+		};
+
+		function displayChoosePassword(){
+			var $display = _this._getDiv();
+			var $passwordSection = $display.find('.passwordSection');
+			$passwordSection.empty();
+
+			// Password
+			var $line = $('<div>')
+				.addClass('line')
+				.addClass('passwordEntry')
+				.appendTo($passwordSection);
+			$('<div>')
+				.addClass('label')
+				.text( _loc('Password') )
+				.appendTo($line);
+			$('<div class="value"><input class="password1" type="password"/></div>')
+				.appendTo($line);
+
+			// Verify Password
+			var $line = $('<div>')
+				.addClass('line')
+				.addClass('passwordEntry')
+				.appendTo($passwordSection);
+			$('<div>')
+				.addClass('label')
+				.text( _loc('Verify Password') )
+				.appendTo($line);
+			$('<div class="value"><input class="password2" type="password"/></div>')
+				.appendTo($line);
+		};
 	}
 	
 	,_recoverPassword: function(password, sendEmailPasswordReminder){

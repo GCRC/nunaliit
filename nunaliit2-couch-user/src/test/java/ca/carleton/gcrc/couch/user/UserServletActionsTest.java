@@ -351,4 +351,20 @@ public class UserServletActionsTest extends TestCase {
 			// Ignore
 		}
 	}
+
+	public void testGeneratePassword() throws Exception {
+
+		// Action Handler
+		MockUserRepository repository = new MockUserRepository();
+		MockUserMailNotification mailNotification = new MockUserMailNotification();
+		UserServletActions actions = new UserServletActions(repository,mailNotification);
+		actions.setServerKey(SECRET_KEY);
+
+		JSONObject result = actions.generatePassword();
+		
+		String password = result.getString("password");
+		if( null == password ){
+			fail("password not sent back");
+		}
+	}
 }

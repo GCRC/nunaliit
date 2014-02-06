@@ -519,16 +519,16 @@ height: auto !important;
 
 
 /* Side Bar Labels */
-.value {
+.nunaliit_atlas .value {
 	margin:5px 0;
 }
-.label {
+.nunaliit_atlas .label {
 	margin:5px 0;
 	padding-right:8px;
 	width:30%;
 	font-size:1em/1.2em;	
 }
-span.label {
+.nunaliit_atlas span.label {
 	display:inline-block;
 }
 

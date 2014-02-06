@@ -794,7 +794,7 @@ var UserService = $n2.Class({
 	    	}
 		});
 	}
-	
+
 	,completePasswordRecovery: function(opts_){
 		var opts = $n2.extend({
 			token: null
@@ -822,6 +822,35 @@ var UserService = $n2.Class({
 	    			opts.onError(result.error);
 	    		} else {
 	    			opts.onSuccess(result);
+	    		};
+	    	}
+	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+	    		var err = _parseError(XMLHttpRequest, textStatus);
+	    		opts.onError(err);
+	    	}
+		});
+	}
+
+	,generatePassword: function(opts_){
+		var opts = $n2.extend({
+			onSuccess: function(password){}
+			,onError: function(err){}
+		},opts_);
+
+		var url = this.userServerUrl + 'generatePassword';
+		
+		$.ajax({
+	    	url: url
+	    	,type: 'GET'
+	    	,async: true
+	    	,traditional: true
+	    	,data: {}
+	    	,dataType: 'json'
+	    	,success: function(result) {
+	    		if( result.error ) {
+	    			opts.onError(result.error);
+	    		} else {
+	    			opts.onSuccess(result.password);
 	    		};
 	    	}
 	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {

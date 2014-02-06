@@ -391,6 +391,10 @@ public class UserServlet extends HttpServlet {
 				JSONObject result = actions.completePasswordRecovery(token,password,emailPassword);
 				sendJsonResponse(resp, result);
 
+			} else if( path.size() == 1 && path.get(0).equals("generatePassword") ) {
+				JSONObject result = actions.generatePassword();
+				sendJsonResponse(resp, result);
+
 			} else {
 				throw new Exception("Invalid action requested");
 			}

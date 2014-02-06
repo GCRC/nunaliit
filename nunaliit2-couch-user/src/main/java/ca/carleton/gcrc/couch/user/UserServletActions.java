@@ -19,6 +19,7 @@ import ca.carleton.gcrc.couch.user.db.UserRepository;
 import ca.carleton.gcrc.couch.user.error.TokenExpiredException;
 import ca.carleton.gcrc.couch.user.error.UserUpdatedException;
 import ca.carleton.gcrc.couch.user.mail.UserMailNotification;
+import ca.carleton.gcrc.couch.user.password.PasswordGenerator;
 import ca.carleton.gcrc.couch.user.token.CreationToken;
 import ca.carleton.gcrc.couch.user.token.PasswordRecoveryToken;
 import ca.carleton.gcrc.couch.user.token.Token;
@@ -392,6 +393,15 @@ public class UserServletActions {
 			
 			result.put("emailDigests", emailDigest);
 		}
+		
+		return result;
+	}
+
+	public JSONObject generatePassword() throws Exception {
+		JSONObject result = new JSONObject();
+
+		String password = PasswordGenerator.generatePassword(8);
+		result.put("password", password);
 		
 		return result;
 	}
