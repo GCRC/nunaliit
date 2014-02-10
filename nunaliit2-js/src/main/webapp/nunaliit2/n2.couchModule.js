@@ -728,9 +728,14 @@ var ModuleDisplay = $n2.Class({
 						,db: _this.config.atlasDb
 						,designDoc: _this.config.atlasDesign
 					},layerInfo.options);
-					
+
 					if( !layerDefinition.options.layerName ){
 						layerDefinition.options.layerName = layerDefinition.id;
+					};
+					if( !layerDefinition.id 
+					 && layerDefinition.options
+					 && layerDefinition.options.layerName ){
+						layerDefinition.id = layerDefinition.options.layerName;
 					};
 					
 				} else {

@@ -618,6 +618,12 @@ var CouchDocumentEditor = $n2.Class({
     	
     	var data = this.editedDocument;
 		
+    	// Give an opportunity to adjust document before edit
+    	this._synchronousCall({
+    		type: 'editorStartDocumentEdit'
+    		,doc: data
+    	});
+    	
 		// Update feature data with user info
 		if( $n2.couchMap && $n2.couchMap.adjustDocument ) {
 			$n2.couchMap.adjustDocument(data);
@@ -1481,6 +1487,13 @@ var CouchDocumentEditor = $n2.Class({
 		};
 	}
 	
+	,_synchronousCall: function(m){
+		var dispatcher = this._getDispatchService();
+		if( dispatcher ){
+			dispatcher.send(DH,m);
+		};
+	}
+	
 	,_handle: function(m){
 		if( m.type === 'editGeometryModified' ){
 			if( m._origin !== this ){
@@ -1511,6 +1524,7 @@ var CouchEditor = $n2.Class({
 			,defaultEditSchema: null
 			,serviceDirectory: null
 			,enableAddFile: false
+			,initialLayers: ['public']
 		},options_);
 		
 		var _this = this;
@@ -1569,6 +1583,14 @@ var CouchEditor = $n2.Class({
 
 	,setPanelName: function(panelName) {
 		this.options.panelName = panelName;
+	}
+
+	,getInitialLayerIds: function() {
+		return this.options.initialLayers;
+	}
+
+	,setInitialLayerIds: function(layerIds) {
+		this.options.initialLayers = layerIds;
 	}
 	
 	,_getDispatchService: function(){
