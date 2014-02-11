@@ -7,7 +7,7 @@
 		</div>
 		<div>
 			<div class="label n2s_localize">Name</div>
-			<div class="value">{{#:field}}name{{/:field}}</div>
+			<div class="value">{{#:field}}name,localized{{/:field}}</div>
 			<div class="end"></div>
 		</div>
 	{{/nunaliit_layer_definition}}

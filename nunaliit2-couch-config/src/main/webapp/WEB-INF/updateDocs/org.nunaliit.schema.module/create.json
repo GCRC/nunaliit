@@ -18,6 +18,10 @@
 			"coordinates":{
 				"initialBounds": [-73.57,45.493,-73.55,45.506]
 			}
+			,"layerSelector":{
+				"suppress": false
+				,"initiallyOpened": false
+			}
 			,"addPointsOnly": false
 			,"toggleClick": true
 		}
