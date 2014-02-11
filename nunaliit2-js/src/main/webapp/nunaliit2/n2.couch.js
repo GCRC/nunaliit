@@ -1157,6 +1157,7 @@ var Database = $n2.Class({
 				,revs_info: false
 				,revisions: false
 				,conflicts: false
+				,deleted_conflicts: false
 				,onSuccess: function(doc){}
 				,onError: function(errorMsg){ $n2.reportErrorForced(errorMsg); }
 			}
@@ -1180,9 +1181,13 @@ var Database = $n2.Class({
 		if( opts.revisions ) {
 			data.revs = 'true';
 		};
-		
+
 		if( opts.conflicts ) {
 			data.conflicts = 'true';
+		};
+
+		if( opts.deleted_conflicts ) {
+			data.deleted_conflicts = 'true';
 		};
 		
 		var url = this.dbUrl + opts.docId + '/';

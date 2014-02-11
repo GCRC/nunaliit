@@ -102,6 +102,13 @@ function Configure(options_){
 		configuration.atlasDb = configuration.couchServer.getDb({dbUrl:options.atlasDbUrl});
 		configuration.atlasDesign = configuration.atlasDb.getDesignDoc({ddName:options.atlasDesignName});
 		configuration.siteDesign = configuration.atlasDb.getDesignDoc({ddName:options.siteDesignName});
+		
+		configuration.dataSources = [];
+		var couchDbDs = new $n2.couchDocument.CouchDataSource({
+			id: 'main'
+			,db: configuration.atlasDb
+		});
+		configuration.dataSources.push(couchDbDs);
 
 		// Check browser compliance
 		if( $n2.couchHelp 

@@ -1,0 +1,61 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+		<title>CouchDocument</title>		
+		<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/themes/base/jquery-ui.css" type="text/css" />
+		<link rel="stylesheet" href="../css/basic/n2.tree.css" type="text/css" />
+		<link rel="stylesheet" href="../css/basic/n2.slideEditor.css" type="text/css" />
+		
+	</head>
+	<body>
+
+		<h1>CouchDocument</h1>
+		<div id="logs">
+		</div>
+		
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/jquery-ui.min.js"></script>
+
+		<script type="text/javascript" src="../nunaliit2-debug.js"></script>
+		<script type="text/javascript" src="../nunaliit2-couch-debug.js"></script>
+
+		<script type="text/javascript">
+			// <!--
+
+			function main_init(){
+				var couchDataSource = new $n2.couchDocument.CouchDataSource({id:'a'});
+				$n2.log('couchDataSource',couchDataSource);
+				
+				var copy = $n2.document.getDataSourceFromId( couchDataSource.getId() );
+				if( copy !== couchDataSource ){
+					alert('Data source can not be obtained from identifier');
+					return;
+				};
+				
+				alert('Test completed');
+			};
+			
+			var loaded = false;			
+			function waitForComponentsLoaded() {
+				if( loaded ) return;
+				
+				if( typeof nunaliit2 !== 'undefined'
+				 ) {
+				 	$n2 = window.nunaliit2;
+					
+					loaded = true;
+
+					main_init();
+				} else {
+					setTimeout(waitForComponentsLoaded, 100);
+				};
+			};
+			
+			jQuery().ready(function() {
+				waitForComponentsLoaded();
+			});
+			// -->
+		</script>
+	</body>
+</html>
