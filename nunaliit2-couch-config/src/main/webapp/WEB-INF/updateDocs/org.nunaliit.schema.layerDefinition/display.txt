@@ -1,0 +1,18 @@
+<div class="n2_documentDisplay"><div class="n2_layoutFloat">
+{{#nunaliit_layer_definition}}
+	<div>
+		<div class="label n2s_localize">Layer Definition</div>
+		<div class="end"></div>
+	</div>
+	<div>
+		<div class="label n2s_localize">Identifier</div>
+		<div class="value">{{id}}</div>
+		<div class="end"></div>
+	</div>
+	<div>
+		<div class="label n2s_localize">Name</div>
+		<div class="value">{{#:localize}}name{{/:localize}}</div>
+		<div class="end"></div>
+	</div>
+{{/nunaliit_layer_definition}}
+</div></div>

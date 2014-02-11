@@ -1,0 +1,15 @@
+<div class="n2_documentForm"><div class="n2_layoutFloat">
+	{{#nunaliit_layer_definition}}
+		<div>
+			<div class="label n2s_localize">Identifier</div>
+			<div class="value">{{#:field}}id{{/:field}}</div>
+			<div class="end"></div>
+		</div>
+		<div>
+			<div class="label n2s_localize">Name</div>
+			<div class="value">{{#:field}}name{{/:field}}</div>
+			<div class="end"></div>
+		</div>
+	{{/nunaliit_layer_definition}}
+	
+</div></div>
