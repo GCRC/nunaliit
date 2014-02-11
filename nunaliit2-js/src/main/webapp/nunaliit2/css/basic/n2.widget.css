@@ -272,11 +272,6 @@ LAYER DIALOG SECTION
 
 .editorSelectLayerContent {
 	overflow: auto;
-	position:  absolute;
-	top: 0;
-	bottom: 50px;
-	left: 0;
-	right: 0;
 }
 .editorSelectLayerContent div {
 	padding: 3px 5px;
@@ -285,8 +280,6 @@ LAYER DIALOG SECTION
 	padding: 0 5px;
 }
 .editorSelectLayerButtons {
-	position: absolute;
-	bottom: 0;
 	padding: 10px 0;
 }
 
