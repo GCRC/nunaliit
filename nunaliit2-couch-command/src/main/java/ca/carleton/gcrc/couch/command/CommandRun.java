@@ -115,13 +115,17 @@ public class CommandRun implements Command {
 		// Figure out URLs to CouchDb
 		URL serverUrl = null;
 		URL dbUrl = null;
+		URL submissionDbUrl = null;
 		URL siteRedirect = null;
 		{
 			serverUrl = atlasProperties.getCouchDbUrl();
 			String dbName = atlasProperties.getCouchDbName();
-			
+
 			dbUrl = new URL(serverUrl,dbName);
 			siteRedirect = new URL(serverUrl,dbName+"/_design/site/_rewrite/");
+
+			String submissionDbName = atlasProperties.getCouchDbSubmissionDbName();
+			submissionDbUrl = new URL(serverUrl,submissionDbName);
 		}
 		
 		// Figure out media directory
@@ -142,12 +146,20 @@ public class CommandRun implements Command {
         	context.addServlet(servletHolder,"/server/*");
         }
 
-        // Proxy to database
+        // Proxy to main database
         {
         	ServletHolder servletHolder = new ServletHolder(new ProxyServlet.Transparent());
         	servletHolder.setInitParameter("ProxyTo", dbUrl.toExternalForm());
         	servletHolder.setInitParameter("Prefix", "/db");
         	context.addServlet(servletHolder,"/db/*");
+        }
+
+        // Proxy to submission database
+        {
+        	ServletHolder servletHolder = new ServletHolder(new ProxyServlet.Transparent());
+        	servletHolder.setInitParameter("ProxyTo", submissionDbUrl.toExternalForm());
+        	servletHolder.setInitParameter("Prefix", "/submitDb");
+        	context.addServlet(servletHolder,"/submitDb/*");
         }
 
         // Proxy to media

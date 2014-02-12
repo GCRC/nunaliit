@@ -27,6 +27,7 @@ public class AtlasProperties {
 		
 		atlasProps.setAtlasName( props.getProperty("atlas.name") );
 		atlasProps.setCouchDbName( props.getProperty("couchdb.dbName") );
+		atlasProps.setCouchDbSubmissionDbName( props.getProperty("couchdb.submission.dbName") );
 		atlasProps.setCouchDbAdminUser( props.getProperty("couchdb.admin.user") );
 		atlasProps.setCouchDbAdminPassword( props.getProperty("couchdb.admin.password") );
 		
@@ -215,6 +216,7 @@ public class AtlasProperties {
 	private String atlasName;
 	private URL couchDbUrl;
 	private String couchDbName;
+	private String couchDbSubmissionDbName;
 	private String couchDbAdminUser;
 	private String couchDbAdminPassword;
 	private int serverPort = 8080;
@@ -234,12 +236,19 @@ public class AtlasProperties {
 	public void setCouchDbUrl(URL couchDbUrl) {
 		this.couchDbUrl = couchDbUrl;
 	}
-	
+
 	public String getCouchDbName() {
 		return couchDbName;
 	}
 	public void setCouchDbName(String couchDbName) {
 		this.couchDbName = couchDbName;
+	}
+
+	public String getCouchDbSubmissionDbName() {
+		return couchDbSubmissionDbName;
+	}
+	public void setCouchDbSubmissionDbName(String couchDbSubmissionDbName) {
+		this.couchDbSubmissionDbName = couchDbSubmissionDbName;
 	}
 
 	public String getCouchDbAdminUser() {

@@ -137,7 +137,7 @@ public class CommandConfig implements Command {
 			props.put("couchdb.url.path", url.getPath());
 		}
 		
-		// CouchDB database name
+		// CouchDB main database name
 		{
 			String dbName = null;
 			String defaultValue = props.getProperty("couchdb.dbName");
@@ -145,7 +145,7 @@ public class CommandConfig implements Command {
 				defaultValue = gs.getAtlasDir().getName();
 			}
 			while( null == dbName ) {
-				dbName = getUserInput(gs, "Enter the name of the database where atlas resides", defaultValue);
+				dbName = getUserInput(gs, "Enter the name of the main database where atlas resides", defaultValue);
 				if( null == dbName ){
 					gs.getErrStream().println("A name for the database must be provided");
 				} else {
@@ -157,6 +157,28 @@ public class CommandConfig implements Command {
 				}
 			}
 			props.put("couchdb.dbName", dbName);
+		}
+		
+		// CouchDB submission database name
+		{
+			String dbName = null;
+			String defaultValue = props.getProperty("couchdb.submission.dbName");
+			if( null == defaultValue || "".equals(defaultValue) ){
+				defaultValue = gs.getAtlasDir().getName();
+			}
+			while( null == dbName ) {
+				dbName = getUserInput(gs, "Enter the name of the database where submissions will be uploaded", defaultValue);
+				if( null == dbName ){
+					gs.getErrStream().println("A name for the database must be provided");
+				} else {
+					Matcher matcher = patternDbName.matcher(dbName);
+					if( false == matcher.matches() ) {
+						gs.getErrStream().println("An database name must start with a lowercase letter and be composed lowercase alpha-numerical characters");
+						dbName = null;
+					}
+				}
+			}
+			props.put("couchdb.submission.dbName", dbName);
 		}
 		
 		// CouchDB admin name
