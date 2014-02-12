@@ -236,7 +236,7 @@ public class PathComputer {
 			
 			// Development environment
 			File nunaliit2Dir = computeNunaliitDir(installDir);
-			templatesDir = new File(nunaliit2Dir, "nunaliit2-couch-application/src/main/webapp/WEB-INF/atlas_couchapp/app");
+			templatesDir = new File(nunaliit2Dir, "nunaliit2-couch-application/src/main/atlas_couchapp");
 			if( templatesDir.exists() && templatesDir.isDirectory() ) {
 				return templatesDir;
 			}

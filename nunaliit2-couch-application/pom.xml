@@ -8,7 +8,30 @@
   <groupId>ca.carleton.gcrc</groupId>
   <artifactId>nunaliit2-couch-application</artifactId>
   <version>2.1.6-SNAPSHOT</version>
-  <packaging>war</packaging>
+  <packaging>pom</packaging>
   <name>nunaliit2-couch-application</name>
   <description>CouchApp deployment code</description>
+  <build>
+  	<plugins>
+  		<plugin>
+  			<groupId>org.apache.maven.plugins</groupId>
+  			<artifactId>maven-assembly-plugin</artifactId>
+  			<version>2.2.1</version>
+			<configuration>
+				<descriptors>
+					<descriptor>src/main/assembly/src.xml</descriptor>
+				</descriptors>
+			</configuration>
+			<executions>
+				<execution>
+					<id>make-assembly</id>
+					<phase>package</phase>
+					<goals>
+						<goal>single</goal>
+					</goals>
+				</execution>
+			</executions>
+        </plugin>
+  	</plugins>
+  </build>
 </project>

@@ -37,7 +37,7 @@
 			<outputDirectory>/internal/</outputDirectory>
 		</fileSet>
 		<fileSet>
-			<directory>target/atlasWar/WEB-INF/atlas_couchapp/app</directory>
+			<directory>target/couchApps/couch-apps/atlas_couchapp</directory>
 			<outputDirectory>/internal/atlasDesign</outputDirectory>
 		</fileSet>
 		<fileSet>

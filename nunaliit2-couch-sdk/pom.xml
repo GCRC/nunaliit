@@ -47,6 +47,7 @@
 			<version>${maven-dependency-plugin.version}</version>
 			<executions>
 				<execution>
+					<id>atlas-couch</id>
 					<phase>prepare-package</phase>
 					<goals>
 						<goal>unpack</goal>
@@ -64,6 +65,28 @@
 						</artifactItems>
 					</configuration>
 				</execution>
+				 
+				<execution>
+					<id>couch-app</id>
+					<phase>prepare-package</phase>
+					<goals>
+						<goal>unpack</goal>
+					</goals>
+					<configuration>
+						<artifactItems>
+							<artifactItem>
+								<groupId>ca.carleton.gcrc</groupId>
+								<artifactId>nunaliit2-couch-application</artifactId>
+								<version>${project.version}</version>
+								<type>zip</type>
+								<classifier>couch-apps</classifier>
+								<overWrite>true</overWrite>
+								<outputDirectory>target/couchApps</outputDirectory>
+							</artifactItem>
+						</artifactItems>
+					</configuration>
+				</execution>
+				
 			</executions>
 		</plugin>
       	<plugin>
@@ -107,6 +130,13 @@
   	</plugins>
   </build>
   <dependencies>
+  	<dependency>
+  		<groupId>ca.carleton.gcrc</groupId>
+  		<artifactId>nunaliit2-couch-application</artifactId>
+  		<version>${project.version}</version>
+  		<type>pom</type>
+  		<scope>compile</scope>
+  	</dependency>
   	<dependency>
   		<groupId>ca.carleton.gcrc</groupId>
   		<artifactId>nunaliit2-couch-command</artifactId>
