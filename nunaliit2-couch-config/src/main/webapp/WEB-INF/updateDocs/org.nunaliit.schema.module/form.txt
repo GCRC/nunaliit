@@ -37,6 +37,19 @@
 					<div class="end"></div>
 				</div>
 			{{/coordinates}}
+			
+			{{#layerSelector}}
+				<div>
+					<div class="label n2s_localize">Layer Selector Suppressed</div>
+					<div class="value">{{#:field}}suppress,checkbox{{/:field}}</div>
+					<div class="end"></div>
+				</div>
+				<div>
+					<div class="label n2s_localize">Layer Selector Initially Opened</div>
+					<div class="value">{{#:field}}initiallyOpened,checkbox{{/:field}}</div>
+					<div class="end"></div>
+				</div>
+			{{/layerSelector}}
 		{{/map}}
 	{{/nunaliit_module}}
 	

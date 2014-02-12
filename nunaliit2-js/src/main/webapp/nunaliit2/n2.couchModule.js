@@ -622,6 +622,21 @@ var ModuleDisplay = $n2.Class({
 			,saveFeature: _this.config.couchEditor
 			,mapDisplay: {}
 			,directory: _this.config.directory
+			,layerSwitcher: {
+				suppress: false
+				,initiallyOpened: false
+			}
+		};
+		
+		// Layer selector
+		if( mapInfo && mapInfo.layerSelector ){
+			if( mapInfo.layerSelector.suppress ){
+				mapOptions.layerSwitcher.suppress = true;
+			};
+			
+			if( mapInfo.layerSelector.initiallyOpened ){
+				mapOptions.layerSwitcher.initiallyOpened = true;
+			};
 		};
 	
 		// Initial Bounds, Map coordinates

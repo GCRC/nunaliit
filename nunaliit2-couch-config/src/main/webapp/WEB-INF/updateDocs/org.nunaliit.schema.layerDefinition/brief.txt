@@ -1,0 +1,1 @@
+Layer Definition: {{#nunaliit_layer_definition}}{{#:localize}}name{{/:localize}}{{/nunaliit_layer_definition}}
