@@ -100,7 +100,7 @@ public class CommandConfig implements Command {
 				defaultValue = gs.getAtlasDir().getName();
 			}
 			while( null == atlasName ) {
-				atlasName = getUserInput(gs, "Enter the name of the atlas", defaultValue);
+				atlasName = getUserStringInput(gs, "Enter the name of the atlas", defaultValue);
 				if( null == atlasName ){
 					gs.getErrStream().println("An atlas name must be provided");
 				} else {
@@ -119,7 +119,7 @@ public class CommandConfig implements Command {
 			URL url = null;
 			String urlString = null;
 			while( null == url ) {
-				urlString = getUserInput(gs, "Enter the URL to CouchDB", props, "couchdb.url");
+				urlString = getUserStringInput(gs, "Enter the URL to CouchDB", props, "couchdb.url");
 				if( null == urlString ){
 					gs.getErrStream().println("A URL must be provided for CouchDB");
 				} else {
@@ -136,7 +136,7 @@ public class CommandConfig implements Command {
 			props.put("couchdb.url.domain", url.getHost());
 			props.put("couchdb.url.path", url.getPath());
 		}
-		
+
 		// CouchDB main database name
 		{
 			String dbName = null;
@@ -145,35 +145,52 @@ public class CommandConfig implements Command {
 				defaultValue = gs.getAtlasDir().getName();
 			}
 			while( null == dbName ) {
-				dbName = getUserInput(gs, "Enter the name of the main database where atlas resides", defaultValue);
+				dbName = getUserStringInput(gs, "Enter the name of the main database where atlas resides", defaultValue);
 				if( null == dbName ){
 					gs.getErrStream().println("A name for the database must be provided");
 				} else {
 					Matcher matcher = patternDbName.matcher(dbName);
 					if( false == matcher.matches() ) {
-						gs.getErrStream().println("An database name must start with a lowercase letter and be composed lowercase alpha-numerical characters");
+						gs.getErrStream().println("A database name must start with a lowercase letter and be composed lowercase alpha-numerical characters");
 						dbName = null;
 					}
 				}
 			}
 			props.put("couchdb.dbName", dbName);
 		}
+
+		// Submission database enabled?
+		boolean submissionDbEnabled = false;
+		{
+			String defaultStringValue = props.getProperty("couchdb.submission.enabled");
+			if( null == defaultStringValue || "".equals(defaultStringValue) ){
+				defaultStringValue = "false";
+			}
+			boolean defaultValue = Boolean.parseBoolean(defaultStringValue);
+			submissionDbEnabled = getUserBooleanInput(gs, "Do you wish to manually verify each document submission?", defaultValue);
+			props.put("couchdb.submission.enabled", ""+submissionDbEnabled);
+		}
 		
 		// CouchDB submission database name
-		{
+		if( submissionDbEnabled ){
 			String dbName = null;
 			String defaultValue = props.getProperty("couchdb.submission.dbName");
 			if( null == defaultValue || "".equals(defaultValue) ){
-				defaultValue = gs.getAtlasDir().getName();
+				String mainDbName = props.getProperty("couchdb.dbName");
+				if( mainDbName != null && false == "".equals(mainDbName) ) {
+					defaultValue = mainDbName + "submissions";
+				} else {
+					defaultValue = "submissions";
+				}
 			}
 			while( null == dbName ) {
-				dbName = getUserInput(gs, "Enter the name of the database where submissions will be uploaded", defaultValue);
+				dbName = getUserStringInput(gs, "Enter the name of the database where submissions will be uploaded", defaultValue);
 				if( null == dbName ){
 					gs.getErrStream().println("A name for the database must be provided");
 				} else {
 					Matcher matcher = patternDbName.matcher(dbName);
 					if( false == matcher.matches() ) {
-						gs.getErrStream().println("An database name must start with a lowercase letter and be composed lowercase alpha-numerical characters");
+						gs.getErrStream().println("A database name must start with a lowercase letter and be composed lowercase alpha-numerical characters");
 						dbName = null;
 					}
 				}
@@ -185,7 +202,7 @@ public class CommandConfig implements Command {
 		{
 			String adminName = null;
 			while( null == adminName ) {
-				adminName = getUserInput(gs, "Enter the name of the admin user for CouchDB", props, "couchdb.admin.user");
+				adminName = getUserStringInput(gs, "Enter the name of the admin user for CouchDB", props, "couchdb.admin.user");
 				if( null == adminName ){
 					gs.getErrStream().println("A name for the admin user must be provided");
 				}
@@ -197,7 +214,7 @@ public class CommandConfig implements Command {
 		{
 			String adminPassword = null;
 			while( null == adminPassword ) {
-				adminPassword = getUserInput(gs, "Enter the password for the admin user", props, "couchdb.admin.password");
+				adminPassword = getUserStringInput(gs, "Enter the password for the admin user", props, "couchdb.admin.password");
 				if( null == adminPassword ){
 					gs.getErrStream().println("A password for the admin user must be provided");
 				}
@@ -209,7 +226,7 @@ public class CommandConfig implements Command {
 		{
 			String portString = null;
 			while( null == portString ) {
-				portString = getUserInput(gs, "Enter the port where the atlas is served", props, "servlet.url.port");
+				portString = getUserStringInput(gs, "Enter the port where the atlas is served", props, "servlet.url.port");
 				if( null == portString ){
 					gs.getErrStream().println("A service port must be provided");
 				} else {
@@ -231,12 +248,12 @@ public class CommandConfig implements Command {
 		}
 	}
 	
-	private String getUserInput(GlobalSettings gs, String prompt, Properties props, String propName) throws Exception {
+	private String getUserStringInput(GlobalSettings gs, String prompt, Properties props, String propName) throws Exception {
 		String defaultValue = props.getProperty(propName);
-		return getUserInput(gs, prompt, defaultValue);
+		return getUserStringInput(gs, prompt, defaultValue);
 	}
-	
-	private String getUserInput(GlobalSettings gs, String prompt, String defaultValue) throws Exception {
+
+	private String getUserStringInput(GlobalSettings gs, String prompt, String defaultValue) throws Exception {
 		BufferedReader reader = gs.getInReader();
 
 		// Prompt user
@@ -269,6 +286,63 @@ public class CommandConfig implements Command {
 		}
 		
 		return atlasName;
+	}
+
+	private boolean getUserBooleanInput(GlobalSettings gs, String prompt, boolean defaultValue) throws Exception {
+		BufferedReader reader = gs.getInReader();
+
+		// Read answer
+		boolean response = false;
+		boolean validResponse = false;
+		while( false == validResponse ) {
+			// Prompt user
+			gs.getOutStream().print(prompt);
+			gs.getOutStream().print("(Y/N)");
+			if( defaultValue ) {
+				gs.getOutStream().print(" [Y]");
+			} else {
+				gs.getOutStream().print(" [N]");
+			}
+			gs.getOutStream().print(": ");
+			
+			String line = null;
+			try {
+				line = reader.readLine();
+			} catch(Exception e) {
+				throw new Exception("Error while reading configuration information from user",e);
+			}
+			if( null == line ) {
+				// End of stream reached
+				throw new Exception("End of input stream reached");
+			} else {
+				line = line.trim();
+				if( "".equals(line) ){
+					response = defaultValue;
+					validResponse = true;
+				} else {
+					// Analyze response
+					if( "y".equalsIgnoreCase(line) ) {
+						response = true;
+						validResponse = true;
+					} else if( "yes".equalsIgnoreCase(line) ) {
+						response = true;
+						validResponse = true;
+					} else if( "n".equalsIgnoreCase(line) ) {
+						response = false;
+						validResponse = true;
+					} else if( "no".equalsIgnoreCase(line) ) {
+						response = false;
+						validResponse = true;
+					}
+				}
+			}
+			
+			if( !validResponse ){
+				gs.getErrStream().println("A valid response must be provided: Y, N or blank to accept previous value.");
+			}
+		}
+		
+		return response;
 	}
 
 	private Properties getDefaultProperties() {

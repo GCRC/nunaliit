@@ -72,6 +72,15 @@ public class AtlasProperties {
 			throw new Exception("Unable to interpret server key",e);
 		}
 		
+		// Submission DB enabled
+		{
+			String enabledString = props.getProperty("couchdb.submission.enabled","false");
+			boolean enabled = Boolean.parseBoolean(enabledString);
+			if( enabled ){
+				atlasProps.setCouchDbSubmissionDbEnabled(enabled);
+			}
+		}
+		
 		return atlasProps;
 	}
 
@@ -216,6 +225,7 @@ public class AtlasProperties {
 	private String atlasName;
 	private URL couchDbUrl;
 	private String couchDbName;
+	private boolean couchDbSubmissionDbEnabled;
 	private String couchDbSubmissionDbName;
 	private String couchDbAdminUser;
 	private String couchDbAdminPassword;
@@ -242,6 +252,13 @@ public class AtlasProperties {
 	}
 	public void setCouchDbName(String couchDbName) {
 		this.couchDbName = couchDbName;
+	}
+
+	public boolean isCouchDbSubmissionDbEnabled() {
+		return couchDbSubmissionDbEnabled;
+	}
+	public void setCouchDbSubmissionDbEnabled(boolean couchDbSubmissionDbEnabled) {
+		this.couchDbSubmissionDbEnabled = couchDbSubmissionDbEnabled;
 	}
 
 	public String getCouchDbSubmissionDbName() {

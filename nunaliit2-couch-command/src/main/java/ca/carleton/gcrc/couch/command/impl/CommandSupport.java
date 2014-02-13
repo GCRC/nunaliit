@@ -54,4 +54,23 @@ public class CommandSupport {
 		}
 		return couchDb;
 	}
+
+	static public CouchDb createCouchDbSubmission(
+		GlobalSettings gs
+		,AtlasProperties atlasProperties
+		) throws Exception {
+		
+		CouchClient couchClient = createCouchClient(gs, atlasProperties);
+		
+		// Get database from Couch Client
+		CouchDb couchDb = null;
+		{
+			String dbName = atlasProperties.getCouchDbSubmissionDbName();
+			if( false == couchClient.databaseExists(dbName) ) {
+				couchClient.createDatabase(dbName);
+			}
+			couchDb = couchClient.getDatabase(dbName);
+		}
+		return couchDb;
+	}
 }

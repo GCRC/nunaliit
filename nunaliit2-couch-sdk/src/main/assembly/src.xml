@@ -41,6 +41,10 @@
 			<outputDirectory>/internal/atlasDesign</outputDirectory>
 		</fileSet>
 		<fileSet>
+			<directory>target/couchApps/couch-apps/submission_couchapp</directory>
+			<outputDirectory>/internal/submissionDesign</outputDirectory>
+		</fileSet>
+		<fileSet>
 			<directory>target/atlasWar/WEB-INF/uploadDesignDoc</directory>
 			<outputDirectory>/internal/serverDesign</outputDirectory>
 		</fileSet>

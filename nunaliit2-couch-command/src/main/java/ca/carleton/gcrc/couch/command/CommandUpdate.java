@@ -27,10 +27,8 @@ public class CommandUpdate implements Command {
 
 	static public DocumentUpdateProcess createDocumentUpdateProcess(
 		GlobalSettings gs
-		,AtlasProperties atlasProperties
+		,CouchDb couchDb
 		) throws Exception {
-		
-		CouchDb couchDb = CommandSupport.createCouchDb(gs, atlasProperties);
 		
 		DocumentUpdateProcess updateProcess = new DocumentUpdateProcess(couchDb);
 		DocumentUpdateListener l = new UpdateProgress(gs);
@@ -88,9 +86,12 @@ public class CommandUpdate implements Command {
 		// Load properties for atlas
 		AtlasProperties atlasProperties = AtlasProperties.fromAtlasDir(atlasDir);
 
+		CouchDb couchDb = CommandSupport.createCouchDb(gs, atlasProperties);
+		
+		
 		// Prepare update process
 		DocumentUpdateProcess updateProcess = 
-				CommandUpdate.createDocumentUpdateProcess(gs, atlasProperties);
+				CommandUpdate.createDocumentUpdateProcess(gs, couchDb);
 		
 		// Update site design document
 		try {
@@ -111,6 +112,20 @@ public class CommandUpdate implements Command {
 			pushMobileDesign(gs, atlasDir, atlasProperties, updateProcess);
 		} catch(Exception e) {
 			throw new Exception("Unable to upload mobile design document", e);
+		}
+		
+		// Update submission database with design document
+		if( atlasProperties.isCouchDbSubmissionDbEnabled() ) {
+			try {
+				CouchDb submissionCouchDb = CommandSupport.createCouchDbSubmission(gs, atlasProperties);
+	
+				DocumentUpdateProcess updateProcessForSubmissionDb = 
+						CommandUpdate.createDocumentUpdateProcess(gs, submissionCouchDb);
+				
+				pushSubmissionDesign(gs, atlasDir, atlasProperties, updateProcessForSubmissionDb);
+			} catch(Exception e) {
+				throw new Exception("Unable to upload mobile design document", e);
+			}
 		}
 		
 		// Update documents from atlas directory
@@ -399,6 +414,59 @@ public class CommandUpdate implements Command {
 			{
 				File mobileDesignDir = PathComputer.computeMobileDesignDir(gs.getInstallDir());
 				FSEntry f = new FSEntryFile(mobileDesignDir);
+				entries.add(f);
+			}
+
+			// Create FSEntry to load document
+			FSEntryMerged mergedEntry = new FSEntryMerged(entries);
+			
+			doc = DocumentFile.createDocument(mergedEntry, mergedEntry);
+		}
+
+		// Update document
+		updateProcess.update(doc);
+	}
+	
+	private void pushSubmissionDesign(
+		GlobalSettings gs
+		,File atlasDir
+		,AtlasProperties atlasProperties
+		,DocumentUpdateProcess updateProcess
+		) throws Exception {
+		
+		// Create _design/submission document...
+		Document doc = null;
+		{
+			File installDir = gs.getInstallDir();
+
+			List<FSEntry> entries = new Vector<FSEntry>();
+			
+			// Force identifier
+			{
+				FSEntry f = FSEntryBuffer.getPositionedBuffer("a/_id.txt", "_design/submission");
+				entries.add(f);
+			}
+			
+			// Create atlas designator
+			{
+				StringWriter sw = new StringWriter();
+				PrintWriter pw = new PrintWriter(sw);
+				
+				pw.println("var n2atlas = {");
+				pw.println("\tname: \""+atlasProperties.getAtlasName()+"\"");
+				pw.println("};");
+				pw.println("if( typeof(exports) === 'object' ) {");
+				pw.println("\texports.name = n2atlas.name;");
+				pw.println("};");
+				
+				FSEntry f = FSEntryBuffer.getPositionedBuffer("a/vendor/nunaliit2/atlas.js", sw.toString());
+				entries.add(f);
+			}
+			
+			// Submission design content
+			{
+				File submissionDesignDir = PathComputer.computeSubmissionDesignDir(installDir);
+				FSEntry f = new FSEntryFile(submissionDesignDir);
 				entries.add(f);
 			}
 

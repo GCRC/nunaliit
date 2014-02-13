@@ -296,6 +296,32 @@ public class PathComputer {
 		
 		return null;
 	}
+	
+	/**
+	 * Finds the directory supporting the submission design document from the 
+	 * installation location and returns it.
+	 * @param installDir Directory where the command-line tool is run from.
+	 * @return Directory where "atlas" design document library is located 
+	 * or null if not found.
+	 * */
+	static public File computeSubmissionDesignDir(File installDir) {
+		if( null != installDir ) {
+			// Command-line package
+			File templatesDir = new File(installDir, "internal/submissionDesign");
+			if( templatesDir.exists() && templatesDir.isDirectory() ) {
+				return templatesDir;
+			}
+			
+			// Development environment
+			File nunaliit2Dir = computeNunaliitDir(installDir);
+			templatesDir = new File(nunaliit2Dir, "nunaliit2-couch-application/src/main/submission_couchapp");
+			if( templatesDir.exists() && templatesDir.isDirectory() ) {
+				return templatesDir;
+			}
+		}
+		
+		return null;
+	}
 
 	/**
 	 * Finds the "nunaliit2" javascript library from the installation location
