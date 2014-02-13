@@ -260,6 +260,8 @@ public class CommandUpdate implements Command {
 				pw.println("{");
 				pw.println("\t\"name\":\""+atlasProperties.getAtlasName()+"\"");
 				pw.println("\t,\"restricted\":"+atlasProperties.isRestricted());
+				pw.println("\t,\"submissionDbEnabled\":"+atlasProperties.isCouchDbSubmissionDbEnabled());
+				pw.println("\t,\"submissionDbName\":\""+atlasProperties.getCouchDbSubmissionDbName()+"\"");
 				pw.println("}");
 				
 				FSEntry f = FSEntryBuffer.getPositionedBuffer("a/nunaliit.json", sw.toString());
@@ -274,10 +276,14 @@ public class CommandUpdate implements Command {
 				pw.println("var n2atlas = {");
 				pw.println("\tname: \""+atlasProperties.getAtlasName()+"\"");
 				pw.println("\t,restricted: "+atlasProperties.isRestricted());
+				pw.println("\t,\"submissionDbEnabled\":"+atlasProperties.isCouchDbSubmissionDbEnabled());
+				pw.println("\t,\"submissionDbName\":\""+atlasProperties.getCouchDbSubmissionDbName()+"\"");
 				pw.println("};");
 				pw.println("if( typeof(exports) === 'object' ) {");
 				pw.println("\texports.name = n2atlas.name;");
 				pw.println("\texports.restricted = n2atlas.restricted;");
+				pw.println("\texports.submissionDbEnabled = n2atlas.submissionDbEnabled;");
+				pw.println("\texports.submissionDbName = n2atlas.submissionDbName;");
 				pw.println("};");
 				
 				FSEntry f = FSEntryBuffer.getPositionedBuffer("a/vendor/nunaliit2/atlas.js", sw.toString());

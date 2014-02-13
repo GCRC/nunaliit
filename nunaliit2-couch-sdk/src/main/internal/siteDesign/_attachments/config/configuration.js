@@ -48,7 +48,7 @@ function nunaliitConfigure(opts_) {
 	 		,rootPath: './'
 	 	},opts_);
 
-	 	$n2.couchConfiguration.Configure({
+	 	var confOptions = {
 			couchServerUrl: opts.rootPath + 'server/'
 			,atlasDbUrl: opts.rootPath + 'db/'
 			,atlasDesignName: 'atlas'
@@ -58,7 +58,14 @@ function nunaliitConfigure(opts_) {
 			,exportServerUrl: opts.rootPath + 'servlet/export/'
 			,userServerUrl: opts.rootPath + 'servlet/user/'
 	 		,onSuccess: opts.configuredFunction
-	 	});
+	 	};
+	 	
+	 	if( n2atlas
+	 	 && n2atlas.submissionDbEnabled ){
+	 		confOptions.submissionDbUrl = opts.rootPath + 'submitDb';
+	 	};
+
+	 	$n2.couchConfiguration.Configure(confOptions);
 	 
 	 	nunaliitConfigCompleted = true;
 	} else {

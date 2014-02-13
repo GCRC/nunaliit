@@ -48,17 +48,26 @@ function nunaliitConfigure(opts_) {
 	 		,rootPath: './'
 	 	},opts_);
 	 	
-	 	$n2.couchConfiguration.Configure({
+	 	var confOptions = {
 			couchServerUrl: opts.rootPath + '../../../'
 			,atlasDbUrl: opts.rootPath + '../../'
 			,atlasDesignName: 'atlas'
+			,submissionDbUrl: opts.rootPath + '../../../'
 			,progressServerUrl: opts.rootPath + '../../../servlet/progress/'
 			,mediaUrl: opts.rootPath + '../../../media/'
 			,uploadServerUrl: opts.rootPath + '../../../servlet/upload/'
 			,exportServerUrl: opts.rootPath + '../../../servlet/export/'
 			,userServerUrl: opts.rootPath + '../../../servlet/user/'
 	 		,onSuccess: opts.configuredFunction
-	 	});
+	 	};
+	 	
+	 	if( n2atlas
+	 	 && n2atlas.submissionDbEnabled 
+	 	 && n2atlas.submissionDbName ){
+	 		confOptions.submissionDbUrl = opts.rootPath + '../../../' + n2atlas.submissionDbName;
+	 	};
+	 	
+	 	$n2.couchConfiguration.Configure(confOptions);
 	 
 	 	nunaliitConfigCompleted = true;
 	} else {
