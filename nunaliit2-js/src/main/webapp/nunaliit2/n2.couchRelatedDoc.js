@@ -42,7 +42,7 @@ var CreateRelatedDocProcess = $n2.Class({
 	,initialize: function(options_) {
 		this.options = $n2.extend(
 			{
-				db: null
+				documentSource: null
 				,schemaRepository: null
 				,uploadService: null
 				,showService: null
@@ -205,7 +205,7 @@ var CreateRelatedDocProcess = $n2.Class({
 			};
 			
 			new Editor({
-				db: _this.options.db
+				documentSource: _this.options.documentSource
 				,uploadService: _this.options.uploadService
 				,showService: _this.options.showService
 				,obj: obj
@@ -303,7 +303,7 @@ var Editor = $n2.Class({
 	,initialize: function(options_) {
 		this.options = $n2.extend(
 			{
-				db: null
+				documentSource: null
 				,uploadService: null
 				,showService: null
 				,obj: null
@@ -448,18 +448,18 @@ var Editor = $n2.Class({
 			};
 		};
 
-		this.options.db.createDocument({
-			data: obj
-			,onSuccess: function(docInfo) {
-				_this._uploadFile(docInfo);
+		this.options.documentSource.createDocument({
+			doc: obj
+			,onSuccess: function(updatedDoc) {
+				_this._uploadFile(updatedDoc);
 			}
 			,onError: function(err){
-				_this.options.onError('Unable to reach database to submit document: '+err);
+				_this.options.onError( _loc('Unable to reach database to submit document: {err}',{err:err}) );
 			}
 		});
 	}
 	
-	,_uploadFile: function(docInfo){
+	,_uploadFile: function(doc){
 		var _this = this;
 
 		var formId = this.uploadFileFormId;
@@ -475,8 +475,8 @@ var Editor = $n2.Class({
 				if( filename !== null && '' !== filename ) {
 					// Third, upload file to contribution. This is done via the
 					// upload service. Add id and rev of document.
-					$form.prepend( $('<input type="hidden" name="id" value="'+docInfo.id+'"/>') );
-					$form.prepend( $('<input type="hidden" name="rev" value="'+docInfo.rev+'"/>') );
+					$form.prepend( $('<input type="hidden" name="id" value="'+doc._id+'"/>') );
+					$form.prepend( $('<input type="hidden" name="rev" value="'+doc._rev+'"/>') );
 					
 					// Add user data
 					if( this.uploadData && this.uploadData.files ) {
@@ -510,7 +510,7 @@ var Editor = $n2.Class({
 		};
 		
 		function done(){
-			_this._success(docInfo.id);
+			_this._success(doc._id);
 		};
 	}
 	

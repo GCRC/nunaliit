@@ -111,8 +111,10 @@ function Configure(options_){
 		var couchDbDs = new $n2.couchDocument.CouchDataSource({
 			id: 'main'
 			,db: configuration.atlasDb
+			,dispatchService: configuration.directory.dispatchService
 		});
 		configuration.dataSources.push(couchDbDs);
+		configuration.documentSource = couchDbDs;
 
 		// Check browser compliance
 		if( $n2.couchHelp 
@@ -214,14 +216,12 @@ function Configure(options_){
 		configuration.directory.showService = configuration.show;
 		
 	 	configuration.couchEditor = new $n2.CouchEditor.Editor({
-			db: configuration.atlasDb
-			,designDoc: configuration.atlasDesign
+			documentSource: configuration.documentSource
 			,serviceDirectory: configuration.directory
 		});
 		
 	 	configuration.directory.schemaEditorService = new $n2.CouchEditor.SchemaEditorService({
-			db: configuration.atlasDb
-			,designDoc: configuration.atlasDesign
+			documentSource: configuration.documentSource
 			,serviceDirectory: configuration.directory
 		});
 		

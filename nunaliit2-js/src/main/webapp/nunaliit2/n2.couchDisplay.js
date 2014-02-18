@@ -59,6 +59,7 @@ function startsWith(s, prefix) {
 var defaultOptions = {
 	db: null
 	,designDoc: null
+	,documentSource: null
 	,displayPanelName: null
 	,showService: null // asynchronous resolver
 	,editor: null
@@ -158,7 +159,7 @@ $n2.couchDisplay = $n2.Class({
 		};
 		
 		this.createRelatedDocProcess = new $n2.couchRelatedDoc.CreateRelatedDocProcess({
-			db: this.options.db
+			documentSource: this.options.documentSource
 			,schemaRepository: this._getSchemaRepository()
 			,uploadService: this.options.uploadService
 			,showService: this._getShowService()
@@ -422,7 +423,12 @@ $n2.couchDisplay = $n2.Class({
 		};
 		
 		if( docId ){
-			this.options.db.getDocument({
+//			this.options.db.getDocument({
+//				docId: docId
+//				,onSuccess: getSchema
+//				,onError:function(){}
+//			});
+			this.options.documentSource.getDocument({
 				docId: docId
 				,onSuccess: getSchema
 				,onError:function(){}
@@ -991,44 +997,53 @@ $n2.couchDisplay = $n2.Class({
 			return;
 		};
 		
-		if( !schema ){
+		if( !schema 
+		 || !schema.relatedSchemaNames
+		 || !schema.relatedSchemaNames.length ){
 			return;
 		};
 		
- 		// Add section with related documents
-		if( schema.relatedSchemaNames 
-		 && schema.relatedSchemaNames.length
-		 ) {
-			for(var i=0,e=schema.relatedSchemaNames.length; i<e; ++i){
-				var relatedSchemaName = schema.relatedSchemaNames[i];
-				
-				// Div to hold documents with this schema
-				var contId = $n2.getUniqueId();
-				var $div = $('<div id="'+contId+'"></div>');
-				$elem.append($div);
-				
-				fetchRelatedDocuments(contId, relatedSchemaName, docId);
-			};
+		// Make a map of related schemas
+		var schemaInfoByName = {};
+		for(var i=0,e=schema.relatedSchemaNames.length; i<e; ++i){
+			var relatedSchemaName = schema.relatedSchemaNames[i];
+			schemaInfoByName[relatedSchemaName] = { docIds:[] };
 		};
 
-		function fetchRelatedDocuments(contId, relatedSchemaName, docId){
-			_this.options.designDoc.queryView({
-				viewName: 'link-references-schemas'
-				,keys: [[docId,relatedSchemaName]]
-				,onSuccess: function(rows){
-					var relatedDocIds = [];
-					var seenDocIds = {};
-					for(var i=0,e=rows.length;i<e;++i){
-						var id = rows[i].id;
-						if( !seenDocIds[id] ) {
-							seenDocIds[id] = true;
-							relatedDocIds.push(id);
-						};
+		// Get references
+		this._getAllReferences({
+			doc: doc
+			,onSuccess: showSections
+		});
+
+		function showSections(refInfo){
+			// Accumulate document ids under the associated schema
+			for(var requestDocId in refInfo){
+				if( refInfo[requestDocId].exists 
+				 && refInfo[requestDocId].reverse
+				 && refInfo[requestDocId].schema ) {
+					var schemaName = refInfo[requestDocId].schema;
+					var schemaInfo = schemaInfoByName[schemaName];
+					if( schemaInfo ){
+						schemaInfo.docIds.push(requestDocId);
 					};
-					_this._displayRelatedDocuments(contId, relatedSchemaName, relatedDocIds);
-				}
-			});
-		}
+				};
+			};
+
+			// Add section with related documents
+			for(var schemaName in schemaInfoByName){
+				var schemaInfo = schemaInfoByName[schemaName];
+				if( schemaInfo.docIds.length > 0 ) {
+					var contId = $n2.getUniqueId();
+					var $div = $('<div id="'+contId+'"></div>');
+					$elem.append($div);
+	
+					var relatedDocIds = schemaInfo.docIds;
+					
+					_this._displayRelatedDocuments(contId, schemaName, relatedDocIds);
+				};
+			};
+		};
 	}
 	
 	,_displayLinkedInfo: function(opts_){
@@ -1051,148 +1066,51 @@ $n2.couchDisplay = $n2.Class({
 			return;
 		};
 
-		// Keep track of docIds and associated schemas
-		var docIdToSchemaMap = {};
-		
-		// Get identifiers for all documents referencing to this
-		// document. Also, get the schema associated with the
-		// document referencing this one.
-		this.options.designDoc.queryView({
-			viewName: 'link-references-schemas'
-			,startkey: [docId,null]
-			,endkey: [docId,{}]
-			,onSuccess: function(rows){
-				for(var i=0,e=rows.length;i<e;++i){
-					var id = rows[i].id;
-					var key = rows[i].key;
-					var schemaName = key[1];
-					
-					docIdToSchemaMap[id] = schemaName;
-				};
-				
-				computeForwardReferences();
-			}
+		// Get references
+		this._getAllReferences({
+			doc: doc
+			,onSuccess: showSections
 		});
-		
-		function computeForwardReferences(){
-			var references = [];
-			$n2.couchUtils.extractLinks(doc, references);
-			for(var i=0, e=references.length; i<e; ++i){
-				var linkDocId = references[i].doc;
-				if( !docIdToSchemaMap[linkDocId] ){
-					docIdToSchemaMap[linkDocId] = null;
-				};
-			};
-			
-			// Obtain schemas for unknown documents
-			var requestDocIds = [];
-			for(var requestDocId in docIdToSchemaMap){
-				var schemaName = docIdToSchemaMap[requestDocId];
-				if( !schemaName ){
-					requestDocIds.push(requestDocId);
-				};
-			};
-			
-			if( requestDocIds.length > 0 ){
-				_this.options.designDoc.queryView({
-					viewName: 'schema-from-docid'
-					,keys: requestDocIds
-					,onSuccess: function(rows){
-						for(var i=0,e=rows.length;i<e;++i){
-							var requestDocId = rows[i].key;
-							var schemaName = rows[i].value;
-							
-							docIdToSchemaMap[requestDocId] = schemaName;
-						};
-						
-						verifyExistence();
-					}
-				});
-			} else {
-				verifyExistence();
-			};
-		};
-		
-		function verifyExistence(){
-			var docIds = [];
-			
-			// Check only null schema names
-			for(var id in docIdToSchemaMap){
-				if( null == docIdToSchemaMap[id] ){
-					docIds.push(id);
-				};
-			};
-			
-			if( docIds.length > 0 ) {
-				_this.options.db.getDocumentRevisions({
-					docIds: docIds
-					,onSuccess: function(info){
-						var idsToDelete = [];
-						for(var id in docIdToSchemaMap){
-							if( !info[id] ){
-								// This document no longer exists
-								idsToDelete.push(id);
-							};
-						};
-						
-						for(var i=0,e=idsToDelete.length;i<e;++i){
-							delete docIdToSchemaMap[idsToDelete[i]];
-						};
-						
-						showSections();
-					}
-					,onError: showSections
-				});
-			} else {
-				showSections();
-			};
-		};
-		
-		function showSections(){
+
+		function showSections(refInfo){
 			// Accumulate document ids under the associated schema
 			var relatedDocsFromSchemas = {};
-			var uncategorizedDocIds = {};
-			for(var requestDocId in docIdToSchemaMap){
-				var schemaName = docIdToSchemaMap[requestDocId];
-				
-				if( schemaName ) {
-					if( !relatedDocsFromSchemas[schemaName] ) {
-						relatedDocsFromSchemas[schemaName] = {
-							divId: $n2.getUniqueId()
-							,docIds: {}
+			var uncategorizedDocIds = [];
+			for(var requestDocId in refInfo){
+				if( refInfo[requestDocId].exists ) {
+					var schemaName = refInfo[requestDocId].schema;
+					
+					if( schemaName ) {
+						if( !relatedDocsFromSchemas[schemaName] ) {
+							relatedDocsFromSchemas[schemaName] = {
+								docIds: []
+							};
 						};
+						relatedDocsFromSchemas[schemaName].docIds.push(requestDocId);
+					} else {
+						uncategorizedDocIds.push(requestDocId);
 					};
-					relatedDocsFromSchemas[schemaName].docIds[requestDocId] = true;
-				} else {
-					uncategorizedDocIds[requestDocId] = true;
 				};
 			};
 
 			// Add section with related documents
 			for(var schemaName in relatedDocsFromSchemas){
-				var contId = relatedDocsFromSchemas[schemaName].divId;
+				var contId = $n2.getUniqueId();
 				var $div = $('<div id="'+contId+'"></div>');
 				$elem.append($div);
 
-				var relatedDocIds = [];
-				for(var relatedDocId in relatedDocsFromSchemas[schemaName].docIds){
-					relatedDocIds.push(relatedDocId);
-				};
+				var relatedDocIds = relatedDocsFromSchemas[schemaName].docIds;
 				
 				_this._displayRelatedDocuments(contId, schemaName, relatedDocIds);
 			};
 			
 			// Add uncategorized
-			var relatedDocIds = [];
-			for(var relatedDocId in uncategorizedDocIds){
-				relatedDocIds.push(relatedDocId);
-			};
-			if( relatedDocIds.length > 0 ) {
+			if( uncategorizedDocIds.length > 0 ) {
 				var contId = $n2.getUniqueId();
 				var $div = $('<div id="'+contId+'"></div>');
 				$elem.append($div);
 
-				_this._displayRelatedDocuments(contId, null, relatedDocIds);
+				_this._displayRelatedDocuments(contId, null, uncategorizedDocIds);
 			};
 		};
 	}
@@ -1306,6 +1224,73 @@ $n2.couchDisplay = $n2.Class({
 //				_this._RefreshClickedFeature();
 			}
 		});
+	}
+	
+	,_getAllReferences: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,onSuccess: function(refInfo){}
+			,onError: function(err){}
+		},opts_);
+		
+		var _this = this;
+		
+		var doc = opts.doc;
+		
+		// Keep track of docIds and associated schemas
+		var refInfo = {};
+		
+		// Compute forward references
+		var references = [];
+		$n2.couchUtils.extractLinks(doc, references);
+		for(var i=0, e=references.length; i<e; ++i){
+			var linkDocId = references[i].doc;
+			if( !refInfo[linkDocId] ){
+				refInfo[linkDocId] = {};
+			};
+			refInfo[linkDocId].forward = true;
+		};
+		
+		// Get identifiers of all documents that reference this one
+		this.options.documentSource.getReferencesFromId({
+			docId: doc._id
+			,onSuccess: function(refIds){
+				for(var i=0,e=refIds.length;i<e;++i){
+					var id = refIds[i];
+					if( !refInfo[id] ){
+						refInfo[id] = {};
+					};
+					refInfo[id].reverse = true;
+				};
+				
+				getRefSchemas();
+			}
+			,onError: getRefSchemas
+		});
+
+		function getRefSchemas(){
+			var requestDocIds = [];
+			for(var requestDocId in refInfo){
+				requestDocIds.push(requestDocId);
+			};
+
+			_this.options.documentSource.getDocumentInfoFromIds({
+				docIds: requestDocIds
+				,onSuccess: function(infos){
+					for(var i=0,e=infos.length;i<e;++i){
+						var requestDocId = infos[i].id;
+						
+						refInfo[requestDocId].exists = true;
+						if( infos[i].schema ) {
+							refInfo[requestDocId].schema = infos[i].schema;
+						};
+					};
+					
+					opts.onSuccess(refInfo);
+				}
+				,onError: opts.onError
+			});
+		};
 	}
 
 	,_replyToDocument: function(doc, schema){
@@ -1461,13 +1446,21 @@ $n2.couchDisplay = $n2.Class({
 		var _this = this;
 
 		if( confirm( _loc('You are about to delete this document. Do you want to proceed?') ) ) {
-			this.options.db.deleteDocument({
-				data: data
+//			this.options.db.deleteDocument({
+//				data: data
+//				,onSuccess: function() {
+//					_this._dispatch({
+//						type: 'documentDeleted'
+//						,docId: data._id
+//					});
+//					if( options_.onDeleted ) {
+//						options_.onDeleted();
+//					};
+//				}
+//			});
+			this.options.documentSource.deleteDocument({
+				doc: data
 				,onSuccess: function() {
-					_this._dispatch({
-						type: 'documentDeleted'
-						,docId: data._id
-					});
 					if( options_.onDeleted ) {
 						options_.onDeleted();
 					};
@@ -1498,7 +1491,16 @@ $n2.couchDisplay = $n2.Class({
 		
 		$set.empty();
 
-		this.options.db.getDocument({
+//		this.options.db.getDocument({
+//			docId: docId
+//			,onSuccess: function(doc) {
+//				_this.DisplayDocument($set, doc);
+//			}
+//			,onError: function(err) {
+//				$set.text( _loc('Unable to retrieve document') );
+//			}
+//		});
+		this.options.documentSource.getDocument({
 			docId: docId
 			,onSuccess: function(doc) {
 				_this.DisplayDocument($set, doc);

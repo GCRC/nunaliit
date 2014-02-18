@@ -184,7 +184,7 @@ function selectLayersDialog(opts_){
 		currentLayers: []
 		,cb: function(selectedLayerIds){}
 		,resetFn: function(){}
-		,designDoc: null
+		,documentSource: null
 		,showService: null
 		,dispatchService: null
 	},opts_);
@@ -240,14 +240,12 @@ function selectLayersDialog(opts_){
 	$dialog.dialog(dialogOptions);
 	
 	// Get layers
-	if( opts.designDoc ){
-		opts.designDoc.queryView({
-			viewName: 'layer-definitions'
-			,onlyRows: true
-			,onSuccess: function(rows){
+	if( opts.documentSource ){
+		opts.documentSource.getLayerDefinitions({
+			onSuccess: function(layerDefs){
 				var layerIdentifiers = {};
-				for(var i=0,e=rows.length;i<e;++i){
-					layerIdentifiers[rows[i].key] = true;
+				for(var i=0,e=layerDefs.length;i<e;++i){
+					layerIdentifiers[layerDefs[i].id] = true;
 				};
 				getInnerLayers(layerIdentifiers);
 			}
@@ -255,6 +253,8 @@ function selectLayersDialog(opts_){
 				reportError(errorMsg);
 			}
 		});
+	} else {
+		getInnerLayers([]);
 	};
 	
 	function getInnerLayers(layerIdentifiers){
@@ -868,12 +868,10 @@ var CouchDocumentEditor = $n2.Class({
 			// Create or update document
 			if( _this.isInsert ) {
 				// This is an insert
-				_this.options.db.createDocument({
-					data: _this.editedDocument
-					,onSuccess: function(docInfo) {
-						_this.editedDocument._id = docInfo.id;
-						_this.editedDocument._rev = docInfo.rev;
-						save3(uploadForms, _this.editedDocument, true);
+				_this.options.documentSource.createDocument({
+					doc: _this.editedDocument
+					,onSuccess: function(updatedDoc) {
+						save3(uploadForms, updatedDoc, true);
 					}
 					,onError: function(err){
 			    		_this._enableControls();
@@ -882,11 +880,10 @@ var CouchDocumentEditor = $n2.Class({
 				});
 			} else {
 				// This is an update
-				_this.options.db.updateDocument({
-					data: _this.editedDocument
-					,onSuccess: function(docInfo) {
-						_this.editedDocument._rev = docInfo.rev;
-						save3(uploadForms, _this.editedDocument, false);
+				_this.options.documentSource.saveDocument({
+					doc: _this.editedDocument
+					,onSuccess: function(updatedDoc) {
+						save3(uploadForms, updatedDoc, false);
 					}
 					,onError: function(err){
 			    		_this._enableControls();
@@ -933,15 +930,11 @@ var CouchDocumentEditor = $n2.Class({
     	};
     	
     	function deletion(editedDocument) {
-			_this.options.db.deleteDocument({
-				data: _this.editedDocument
+			_this.options.documentSource.deleteDocument({
+				doc: _this.editedDocument
 				,onSuccess: function() {
 					_this.options.onFeatureDeletedFn(editedDocument._id,_this.editedFeature);
 					_this._discardEditor({deleted:true});
-					_this._dispatch({
-						type: 'documentDeleted'
-						,docId: editedDocument._id
-					});
 				}
 				,onError: function(err){
 		    		_this._enableControls();
@@ -1064,7 +1057,7 @@ var CouchDocumentEditor = $n2.Class({
 	    		};
 	    		_this.refresh();
 			}
-			,designDoc: this.options.designDoc
+			,documentSource: this.options.documentSource
 			,showService: this._getShowService()
 			,dispatchService: this._getDispatchService()
     	});
@@ -1515,8 +1508,7 @@ var CouchEditor = $n2.Class({
 
 	,initialize: function(options_) {
 		this.options = $.extend({
-			db: null // database must be provided
-			,designDoc: null // designDoc must be provided
+			documentSource: null // must be provided
 			,panelName: null // location where editor is opened
 			,geomName: 'nunaliit_geom'
 			,couchProj: null
@@ -1722,16 +1714,13 @@ var SchemaEditorService = $n2.Class({
 	
 	,postProcessFunctions: null
 	
-	,db: null
-	
-	,designDoc: null
+	,documentSource: null
 
 	,initialize: function(options_) {
 		var options = $.extend({
 			funcMap: {}
 			,postProcessFn: null
-			,db: null
-			,designDoc: null
+			,documentSource: null
 			,serviceDirectory: null
 		},options_);
 	
@@ -1739,8 +1728,7 @@ var SchemaEditorService = $n2.Class({
 		
 		this.serviceDirectory = options.serviceDirectory;
 		this.postProcessFunctions = [];
-		this.db = options.db;
-		this.designDoc = options.designDoc;
+		this.documentSource = options.documentSource;
 		
 		this.funcMap = {};
 		for(var key in options.funcMap){
@@ -1763,7 +1751,6 @@ var SchemaEditorService = $n2.Class({
 					currentLayers: currentLayers
 					,cb: cb
 					,resetFn: resetFn
-					,designDoc: _this.designDoc
 					,showService: _this._getShowService()
 					,dispatchService: _this._getDispatchService()
 				});

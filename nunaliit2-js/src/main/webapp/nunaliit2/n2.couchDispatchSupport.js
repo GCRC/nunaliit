@@ -76,50 +76,51 @@ var DispatchSupport = $n2.Class('DispatchSupport',{
 			dispatcher.register(this.dispatcherHandle, 'editClosed', f);
 		};
 
-		// If a database was provided, register callbacks for creation, update and
-		// deletion. On those events, inform system, through dispatcher, of the changes.
-		if( this.options.db ) {
-			var dbCallbacks = _this.options.db.callbacks;
-			if( dbCallbacks ) {
-				dbCallbacks.addOnCreatedCallback(function(docInfo){
-					var dispatcher = _this._getDispatcher();
-					if( dispatcher ) {
-						dispatcher.send(_this.dispatcherHandle,{
-							type: 'documentVersion'
-							,docId: docInfo.id
-							,rev: docInfo.rev
-						});
-						dispatcher.send(_this.dispatcherHandle,{
-							type: 'documentCreated'
-							,docId: docInfo.id
-						});
-					};
-				});
-				dbCallbacks.addOnUpdatedCallback(function(docInfo){
-					var dispatcher = _this._getDispatcher();
-					if( dispatcher ) {
-						dispatcher.send(_this.dispatcherHandle,{
-							type: 'documentVersion'
-							,docId: docInfo.id
-							,rev: docInfo.rev
-						});
-						dispatcher.send(_this.dispatcherHandle,{
-							type: 'documentUpdated'
-							,docId: docInfo.id
-						});
-					};
-				});
-				dbCallbacks.addOnDeletedCallback(function(docInfo){
-					var dispatcher = _this._getDispatcher();
-					if( dispatcher ) {
-						dispatcher.send(_this.dispatcherHandle,{
-							type: 'documentDeleted'
-							,docId: docInfo.id
-						});
-					};
-				});
-			};
-		};
+// This is now handled by the data source
+//		// If a database was provided, register callbacks for creation, update and
+//		// deletion. On those events, inform system, through dispatcher, of the changes.
+//		if( this.options.db ) {
+//			var dbCallbacks = _this.options.db.callbacks;
+//			if( dbCallbacks ) {
+//				dbCallbacks.addOnCreatedCallback(function(docInfo){
+//					var dispatcher = _this._getDispatcher();
+//					if( dispatcher ) {
+//						dispatcher.send(_this.dispatcherHandle,{
+//							type: 'documentVersion'
+//							,docId: docInfo.id
+//							,rev: docInfo.rev
+//						});
+//						dispatcher.send(_this.dispatcherHandle,{
+//							type: 'documentCreated'
+//							,docId: docInfo.id
+//						});
+//					};
+//				});
+//				dbCallbacks.addOnUpdatedCallback(function(docInfo){
+//					var dispatcher = _this._getDispatcher();
+//					if( dispatcher ) {
+//						dispatcher.send(_this.dispatcherHandle,{
+//							type: 'documentVersion'
+//							,docId: docInfo.id
+//							,rev: docInfo.rev
+//						});
+//						dispatcher.send(_this.dispatcherHandle,{
+//							type: 'documentUpdated'
+//							,docId: docInfo.id
+//						});
+//					};
+//				});
+//				dbCallbacks.addOnDeletedCallback(function(docInfo){
+//					var dispatcher = _this._getDispatcher();
+//					if( dispatcher ) {
+//						dispatcher.send(_this.dispatcherHandle,{
+//							type: 'documentDeleted'
+//							,docId: docInfo.id
+//						});
+//					};
+//				});
+//			};
+//		};
 	}
 
 	,_handleDispatch: function(m){

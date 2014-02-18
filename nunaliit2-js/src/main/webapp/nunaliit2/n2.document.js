@@ -64,19 +64,19 @@ var DataSource = $n2.Class({
 
 
 	,createDocument: function(opts_){
-		var opts = $.extend(true, {
+		var opts = $n2.extend({
 				doc: {}
 				,onSuccess: function(doc){}
 				,onError: function(errorMsg){}
 			}
-			,options_
+			,opts_
 		);
 
 		opts.onError('Data source does not support the "createDocument" call.');
 	}
 
 	,getDocument: function(opts_){
-		var opts = $.extend(true, {
+		var opts = $n2.extend({
 				docId: null
 				,rev: null
 				,revs_info: false
@@ -92,28 +92,75 @@ var DataSource = $n2.Class({
 		opts.onError('Data source does not support the "getDocument" call.');
 	}
 
+	,verifyDocumentExistence: function(opts_){
+		var opts = $n2.extend({
+				docIds: null
+				,onSuccess: function(info){}
+				,onError: function(errorMsg){}
+			}
+			,opts_
+		);
+		
+		opts.onError('Data source does not support the "verifyDocumentExistence" call.');
+	}
+
 	,saveDocument: function(opts_){
-		var opts = $.extend(true, {
+		var opts = $n2.extend({
 				doc: null
 				,onSuccess: function(doc){}
 				,onError: function(errorMsg){}
 			}
-			,options_
+			,opts_
 		);
 		
 		opts.onError('Data source does not support the "saveDocument" call.');
 	}
 
 	,deleteDocument: function(opts_){
-		var opts = $.extend(true, {
+		var opts = $n2.extend({
 				doc: null
 				,onSuccess: function(){}
-				,onError: function(errorMsg){ $n2.reportErrorForced(errorMsg); }
+				,onError: function(errorMsg){}
 			}
-			,options_
+			,opts_
 		);
 		
 		opts.onError('Data source does not support the "deleteDocument" call.');
+	}
+
+	,getLayerDefinitions: function(opts_){
+		var opts = $n2.extend({
+				onSuccess: function(layerDefinitions){}
+				,onError: function(errorMsg){}
+			}
+			,opts_
+		);
+		
+		opts.onError('Data source does not support the "getLayerDefinitions" call.');
+	}
+
+	,getDocumentInfoFromIds: function(opts_){
+		var opts = $n2.extend({
+				docIds: null
+				,onSuccess: function(docInfos){}
+				,onError: function(errorMsg){}
+			}
+			,opts_
+		);
+		
+		opts.onError('Data source does not support the "getDocumentInfoFromIds" call.');
+	}
+
+	,getReferencesFromId: function(opts_){
+		var opts = $n2.extend({
+				docId: null
+				,onSuccess: function(referenceIds){}
+				,onError: function(errorMsg){}
+			}
+			,opts_
+		);
+		
+		opts.onError('Data source does not support the "getReferencesFromId" call.');
 	}
 });
 

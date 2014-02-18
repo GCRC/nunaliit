@@ -337,6 +337,7 @@ var ModuleDisplay = $n2.Class({
 		var config = this.config;
 		var atlasDb = config.atlasDb;
 		var atlasDesign = config.atlasDesign;
+		var documentSource = config.documentSource;
 		
 		// Set up login widget
 		for(var i=0,e=this.loginPanelNames.length;i<e;++i){
@@ -492,6 +493,7 @@ var ModuleDisplay = $n2.Class({
 			var displayOptions = {
 				db: atlasDb
 				,designDoc: atlasDesign
+				,documentSource: documentSource
 				,displayPanelName: _this.sidePanelName
 				,showService: _this.config.show
 				,editor: _this.config.couchEditor
