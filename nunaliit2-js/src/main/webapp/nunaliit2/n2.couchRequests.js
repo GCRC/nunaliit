@@ -35,6 +35,8 @@ $Id: n2.couchRequests.js 8443 2012-08-16 18:04:28Z jpfiset $
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
+var DH = 'n2.couchRequests';
+
 $n2.couchRequests = $n2.Class({
 	options: null
 	
@@ -51,8 +53,7 @@ $n2.couchRequests = $n2.Class({
 			db: null
 			,userDb: null
 			,designDoc: null
-			,cacheService: null
-			,directory: null
+			,dispatchService: null
 			,userServerUrl: null
 		},options_);
 		
@@ -169,10 +170,7 @@ $n2.couchRequests = $n2.Class({
 			var docIds = [];
 			for(var docId in requests.docs) {
 				// Check cache
-				var cachedDoc = null;
-				if( this.options.cacheService ) {
-					cachedDoc = this.options.cacheService.retrieve(docId);
-				};
+				var cachedDoc = this._getCachedDoc(docId);
 				
 				if( cachedDoc ) {
 					if( !cachedDocs ) {
@@ -256,8 +254,8 @@ $n2.couchRequests = $n2.Class({
 	
 	,_getDispatcher: function(){
 		var d = null;
-		if( this.options.directory ){
-			d = this.options.directory.dispatchService;
+		if( this.options.dispatchService ){
+			d = this.options.dispatchService;
 		};
 		return d;
 	}
@@ -265,9 +263,27 @@ $n2.couchRequests = $n2.Class({
 	,_dispatch: function(m){
 		var dispatcher = this._getDispatcher();
 		if( dispatcher ){
-			var h = dispatcher.getHandle('n2.couchRequests');
-			dispatcher.send(h,m);
+			dispatcher.send(DH,m);
 		};
+	}
+	
+	,_getCachedDoc: function(docId){
+		var dispatcher = this._getDispatcher();
+		if( dispatcher ){
+			var m = {
+				type: 'cacheRetrieveDocument'
+				,docId: docId
+				,doc: null
+			};
+			
+			dispatcher.synchronousCall(DH,m);
+			
+			if( m.doc ){
+				return m.doc;
+			};
+		};
+		
+		return null;
 	}
 });
 

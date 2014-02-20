@@ -46,6 +46,8 @@ var CouchDataSource = $n2.Class($n2.document.DataSource, {
 	
 	,dispatchService: null
 	
+	,geometryRepository: null
+	
 	,initialize: function(opts_){
 		var opts = $n2.extend({
 				id: null
@@ -61,6 +63,12 @@ var CouchDataSource = $n2.Class($n2.document.DataSource, {
 		this.dispatchService = opts.dispatchService;
 		
 		this.designDoc = this.db.getDesignDoc({ddName:'atlas'});
+		
+		this.geometryRepository = new GeometryRepository({
+			db: this.db
+			,designDoc: this.designDoc
+			,dispatchService: this.dispatchService
+		});
 	}
 
 	,createDocument: function(opts_){
@@ -158,7 +166,7 @@ var CouchDataSource = $n2.Class($n2.document.DataSource, {
 		});
 	}
 
-	,saveDocument: function(opts_){
+	,updateDocument: function(opts_){
 		var opts = $n2.extend({
 				doc: null
 				,onSuccess: function(doc){}
@@ -316,6 +324,32 @@ var CouchDataSource = $n2.Class($n2.document.DataSource, {
 		});
 	}
 
+	,getDocumentsFromGeographicFilter: function(opts_){
+		var opts = $n2.extend({
+			docIds: null
+			,layerId: null
+			,bbox: null
+			,projectionCode: null
+			,onSuccess: function(docs){}
+			,onError: function(errorMsg){}
+		},opts_);
+		
+		// Intercept onSuccess to apply __n2Source attribute
+		var callerSuccess = opts.onSuccess;
+		opts.onSuccess = function(docs){
+			for(var i=0,e=docs.length; i<e; ++i){
+				docs[i].__n2Source = this;
+			};
+			callerSuccess(docs);
+		};
+		
+		this.geometryRepository.getDocumentsFromGeographicFilter(opts);
+	}
+
+	,getGeographicBoundingBox: function(opts_){
+		this.geometryRepository.getGeographicBoundingBox(opts_);
+	}
+
 	,_adjustDocument: function(doc) {
 
 		// Get user name
@@ -352,6 +386,265 @@ var CouchDataSource = $n2.Class($n2.document.DataSource, {
 			this.dispatchService.send(DH,m);
 		};
 	}
+});
+
+//*******************************************************
+
+var GeometryRepository = $n2.Class({
+	
+	db: null
+	
+	,designDoc: null
+	
+	,dispatchService: null
+	
+	,dbProjection: null
+	
+	,poles: null // cache the poles in various projections
+	
+	,mapProjectionMaxWidth: null // cache max width computation
+	
+	,initialize: function(opts_){
+		var opts = $n2.extend({
+			db: null
+			,designDoc: null
+			,dispatchService: null
+		},opts_);
+		
+		this.db = opts.db;
+		this.designDoc = opts.designDoc;
+		this.dispatchService = opts.dispatchService;
+		
+		this.dbProjection = new OpenLayers.Projection('EPSG:4326');
+		
+		// Set-up caches
+		this.poles = {
+			n:{}
+			,s:{}
+		};
+		this.mapProjectionMaxWidth = {};
+	}
+	
+	,getDocumentsFromGeographicFilter: function(opts_){
+		var opts = $n2.extend({
+				docIds: null
+				,layerId: null
+				,bbox: null
+				,projectionCode: null
+				,onSuccess: function(docs){}
+				,onError: function(errorMsg){}
+			}
+			,opts_
+		);
+	
+		var _this = this;
+		
+		var viewQuery = {
+			viewName: 'geom'
+			,onSuccess: handleDocs
+			,onError: opts.onError
+		};
+		
+		// Add BBOX tiling
+		var bounds = opts.bbox;
+		var fids = opts.docIds;
+		var layerName = ('string' === typeof(opts.layerId) ? opts.layerId : null);
+		
+		if( bounds 
+		 && opts.projectionCode 
+		 && opts.projectionCode != this.dbProjection.getCode() ){
+			var mapProjection = new OpenLayers.Projection(opts.projectionCode);
+			
+			var mapBounds = new OpenLayers.Bounds(bounds[0],bounds[1],bounds[2],bounds[3]);
+			var dbBounds = mapBounds.clone().transform(mapProjection, this.dbProjection);
+			
+			// Verify if north pole is included
+			var np = this._getPole(true, mapProjection);
+			if( np 
+			 && mapBounds.contains(np.x,np.y) ){
+				var northBoundary = new OpenLayers.Bounds(-180, 90, 180, 90);
+				dbBounds.extend(northBoundary);
+			};
+			
+			// Verify if south pole is included
+			var sp = this._getPole(false, mapProjection);
+			if( sp 
+			 && mapBounds.contains(sp.x,sp.y) ){
+				var southBoundary = new OpenLayers.Bounds(-180, -90, 180, -90);
+				dbBounds.extend(southBoundary);
+			};
+			
+			bounds = [dbBounds.left,dbBounds.bottom,dbBounds.right,dbBounds.top];
+			
+			var maxWidth = this._getMapMaxWidth(mapProjection);
+			if( maxWidth 
+			 && maxWidth <= (mapBounds.right - mapBounds.left) ){
+				// Assume maximum database bounds (do not wrap around)
+				bounds[0] = -180;
+				bounds[2] = 180;
+			};
+		};
+	
+		// Switch view name and add keys for bounds, layer name and feature ids
+		$n2.couchGeom.selectTileViewFromBounds(viewQuery, bounds, layerName, fids);
+		
+		this.designDoc.queryView(viewQuery);
+		
+		function handleDocs(rows){
+
+	    	var docIds = [];
+	    	var docs = [];
+	    	while( rows.length > 0 ){
+	    		var row = rows.pop();
+	    		var docId = row.id;
+	    		
+	    		if( _this.dispatchService ) {
+	    			var m = {
+	    				type: 'cacheRetrieveDocument'
+	    				,docId: docId
+	    				,doc: null
+	    			};
+	    			_this.dispatchService.synchronousCall(DH, m);
+	    			if( m.doc ){
+	    				docs.push(m.doc);
+	    			} else {
+	    				// must request
+	    				docIds.push(docId);
+	    			};
+	    		} else {
+	        		docIds.push(docId);
+	    		};
+	    	};
+	    	
+	    	if( docIds.length > 0 ) {
+
+	        	_this.db.getDocuments({
+	    			docIds: docIds
+	    			,onSuccess: function(docs_){
+	    				for(var i=0,e=docs_.length; i<e; ++i){
+	    					docs.push(docs_[i]);
+	    				};
+	    				opts.onSuccess(docs);
+	    			}
+	        		,onError: opts.onError
+	        	});
+	    	} else {
+	    		// nothing to request
+	    		opts.onSuccess(docs);
+	    	};
+		};
+	}
+
+	,getGeographicBoundingBox: function(opts_){
+		var opts = $n2.extend({
+				layerId: null
+				,bbox: null
+				,onSuccess: function(bbox){}
+				,onError: function(errorMsg){}
+			}
+			,opts_
+		);
+		
+		this.designDoc.queryView({
+			viewName: 'geom-layer-bbox'
+			,startkey: opts.layerId
+			,endkey: opts.layerId
+			,onlyRows: true
+			,reduce: true
+			,onSuccess: function(rows){
+				if( rows.length > 0 ) {
+					opts.onSuccess(rows[0].value);
+				} else {
+					opts.onSuccess(null);
+				};
+			}
+			,onError: opts.onError
+		});
+	}
+
+	,_getPole: function(isNorth, mapProjection){
+		
+		var projCode = mapProjection.getCode();
+		
+		var label = isNorth ? 'n' : 's';
+		if( this.poles[label][projCode] ) return this.poles[label][projCode];
+		
+		if( isNorth ){
+			var p = new OpenLayers.Geometry.Point(0,90);
+		} else {
+			var p = new OpenLayers.Geometry.Point(0,-90);
+		};
+		
+		// Catch transform errors
+		var error = false;
+		var previousFn = null;
+		if( typeof(Proj4js) !== 'undefined' ){
+			previousFn = Proj4js.reportError;
+			Proj4js.reportError = function(m){
+				error = true;
+			};
+		};
+		
+		p.transform(this.dbProjection,mapProjection);
+		
+		if( error ){
+			p = null;
+		};
+		
+		// Re-instate normal error reporting
+		if( previousFn ){
+			Proj4js.reportError = previousFn;
+		};
+		
+		this.poles[label][projCode] = p;
+		
+		return p;
+	}
+	
+    ,_getMapMaxWidth: function(proj){
+		
+		var projCode = proj.getCode();
+    	
+    	if( this.mapProjectionMaxWidth[projCode] ){
+    		return this.mapProjectionMaxWidth[projCode];
+    	};
+    	
+    	if( proj
+    	 && proj.proj 
+    	 && proj.proj.projName === 'merc' ){
+        	var w = new OpenLayers.Geometry.Point(-180,0);
+       		var e = new OpenLayers.Geometry.Point(180,0);
+
+       		// Catch transform errors
+        	var error = false;
+        	var previousFn = null;
+        	if( typeof(Proj4js) !== 'undefined' ){
+        		previousFn = Proj4js.reportError;
+        		Proj4js.reportError = function(m){
+        			error = true;
+        		};
+        	};
+        	
+        	w.transform(this.dbProjection,proj);
+        	e.transform(this.dbProjection,proj);
+        	
+        	if( error ){
+        		w = null;
+        		e = null;
+        	};
+
+        	// Re-instate normal error reporting
+        	if( previousFn ){
+        		Proj4js.reportError = previousFn;
+        	};
+        	
+        	if( e && w ){
+        		this.mapProjectionMaxWidth[projCode] = w.x - e.x;
+        	};
+    	};
+    	
+    	return this.mapProjectionMaxWidth[projCode];
+    }
 });
 
 //*******************************************************
@@ -431,7 +724,7 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 	/*
 	 * When updating a document, make a submission request
 	 */
-	saveDocument: function(opts_){
+	updateDocument: function(opts_){
 		var opts = $n2.extend({
 				doc: null
 				,onSuccess: function(doc){}

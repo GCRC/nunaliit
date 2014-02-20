@@ -185,16 +185,11 @@ function Configure(options_){
 		
 	 	configuration.mediaRelativePath = options.mediaUrl;
 
-	 	configuration.cacheService = new $n2.cache.CacheService();
-	 	$n2.cache.defaultCacheService = configuration.cacheService;
-		configuration.directory.cacheService = configuration.cacheService;
-
 	 	configuration.requests = new $n2.couchRequests({
 			db: configuration.atlasDb
 			,userDb: $n2.couch.getUserDb()
 			,designDoc: configuration.atlasDesign
-			,cacheService: configuration.cacheService
-			,directory: configuration.directory
+			,dispatchService: configuration.directory.dispatchService
 			,userServerUrl: options.userServerUrl
 		});
 		configuration.directory.requestService = configuration.requests;
@@ -211,6 +206,7 @@ function Configure(options_){
 	 	configuration.show = new $n2.couchShow.Show({
 			db: configuration.atlasDb
 			,designDoc: configuration.atlasDesign
+			,documentSource: configuration.documentSource
 			,serviceDirectory: configuration.directory
 		});
 		configuration.directory.showService = configuration.show;

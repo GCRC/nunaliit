@@ -57,9 +57,7 @@ function startsWith(s, prefix) {
 };
 
 var defaultOptions = {
-	db: null
-	,designDoc: null
-	,documentSource: null
+	documentSource: null
 	,displayPanelName: null
 	,showService: null // asynchronous resolver
 	,editor: null
@@ -423,11 +421,6 @@ $n2.couchDisplay = $n2.Class({
 		};
 		
 		if( docId ){
-//			this.options.db.getDocument({
-//				docId: docId
-//				,onSuccess: getSchema
-//				,onError:function(){}
-//			});
 			this.options.documentSource.getDocument({
 				docId: docId
 				,onSuccess: getSchema
@@ -760,10 +753,8 @@ $n2.couchDisplay = $n2.Class({
 				name: layerDefinition.name
 				,type: 'couchdb'
 				,options: {
-					viewName: 'geom'
-					,layerName: layerId
-					,db: this.options.db
-					,designDoc: this.options.designDoc
+					layerName: layerId
+					,documentSource: this.options.documentSource
 				}
 			};
 			
@@ -955,10 +946,8 @@ $n2.couchDisplay = $n2.Class({
 				id: layerDefinition.id
 				,name: layerDefinition.name
 				,couchDb: {
-					viewName: 'geom'
-					,layerName: layerDefinition.id
-					,db: this.options.db
-					,designDoc: this.options.designDoc
+					layerName: layerDefinition.id
+					,documentSource: this.options.documentSource
 				}
 			});
 			olLayer = this.mapAndControl.findLayerFromId(layerDefinition.id);
@@ -1446,18 +1435,6 @@ $n2.couchDisplay = $n2.Class({
 		var _this = this;
 
 		if( confirm( _loc('You are about to delete this document. Do you want to proceed?') ) ) {
-//			this.options.db.deleteDocument({
-//				data: data
-//				,onSuccess: function() {
-//					_this._dispatch({
-//						type: 'documentDeleted'
-//						,docId: data._id
-//					});
-//					if( options_.onDeleted ) {
-//						options_.onDeleted();
-//					};
-//				}
-//			});
 			this.options.documentSource.deleteDocument({
 				doc: data
 				,onSuccess: function() {
@@ -1491,15 +1468,6 @@ $n2.couchDisplay = $n2.Class({
 		
 		$set.empty();
 
-//		this.options.db.getDocument({
-//			docId: docId
-//			,onSuccess: function(doc) {
-//				_this.DisplayDocument($set, doc);
-//			}
-//			,onError: function(err) {
-//				$set.text( _loc('Unable to retrieve document') );
-//			}
-//		});
 		this.options.documentSource.getDocument({
 			docId: docId
 			,onSuccess: function(doc) {

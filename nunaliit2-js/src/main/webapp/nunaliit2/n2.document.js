@@ -104,7 +104,7 @@ var DataSource = $n2.Class({
 		opts.onError('Data source does not support the "verifyDocumentExistence" call.');
 	}
 
-	,saveDocument: function(opts_){
+	,updateDocument: function(opts_){
 		var opts = $n2.extend({
 				doc: null
 				,onSuccess: function(doc){}
@@ -113,7 +113,7 @@ var DataSource = $n2.Class({
 			,opts_
 		);
 		
-		opts.onError('Data source does not support the "saveDocument" call.');
+		opts.onError('Data source does not support the "updateDocument" call.');
 	}
 
 	,deleteDocument: function(opts_){
@@ -161,6 +161,34 @@ var DataSource = $n2.Class({
 		);
 		
 		opts.onError('Data source does not support the "getReferencesFromId" call.');
+	}
+
+	,getDocumentsFromGeographicFilter: function(opts_){
+		var opts = $n2.extend({
+				docIds: null
+				,layerId: null
+				,bbox: null
+				,projectionCode: null
+				,onSuccess: function(docs){}
+				,onError: function(errorMsg){}
+			}
+			,opts_
+		);
+		
+		opts.onError('Data source does not support the "getDocumentsFromGeographicFilter" call.');
+	}
+
+	,getGeographicBoundingBox: function(opts_){
+		var opts = $n2.extend({
+				layerId: null
+				,bbox: null
+				,onSuccess: function(bbox){}
+				,onError: function(errorMsg){}
+			}
+			,opts_
+		);
+		
+		opts.onError('Data source does not support the "getGeographicBoundingBox" call.');
 	}
 });
 

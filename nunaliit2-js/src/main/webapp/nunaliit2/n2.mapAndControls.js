@@ -828,6 +828,7 @@ var MapAndControls = $n2.Class({
 	    
 	    this._registerDispatch('documentVersion');
 	    this._registerDispatch('documentDeleted');
+	    this._registerDispatch('cacheRetrieveDocument');
 	    this._registerDispatch('featureCreated');
 	    this._registerDispatch('featureUpdated');
 	    this._registerDispatch('addLayerToMap');
@@ -1062,13 +1063,6 @@ var MapAndControls = $n2.Class({
 	    	authService.addListeners(function(currentUser){
 				_this.loginStateChanged(currentUser);
 			});
-	    };
-	    
-	    // Install feature caching
-	    if( $n2.cache && $n2.cache.defaultCacheService ) {
-	    	$n2.cache.defaultCacheService.addCacheFunction(function(id){
-	    		return _this._retrieveCachedValue(id);
-	    	});
 	    };
 	    
 	    // EDIT mode callbacks
@@ -1639,7 +1633,7 @@ var MapAndControls = $n2.Class({
 	    	// Remove feature from current layer
 	    	var featureLayer = feature.layer;
 	    	if( featureLayer ) {
-	    		featureLayer.removeFeatures([feature]);
+	    		featureLayer.removeFeatures([feature],{silent:true});
 	    	};
 	    	
 	    	// Compute the actual underlying feature
@@ -1806,9 +1800,6 @@ var MapAndControls = $n2.Class({
 				,sourceProjection: layerInfo.sourceProjection
 			});
 			layerInfo.protocol = new OpenLayers.Protocol.Couch(couchProtocolOpt);
-		    if( $n2.cache && $n2.cache.defaultCacheService ) {
-				layerInfo.protocol.cache = $n2.cache.defaultCacheService;
-		    };
 			layerOptions.protocol = layerInfo.protocol;
 			
 		} else if( 'wfs' === layerDefinition.type ) {
@@ -3867,9 +3858,6 @@ var MapAndControls = $n2.Class({
 				}
 			});
 			layerInfo.protocol = new OpenLayers.Protocol.Couch(couchProtocolOpt);
-		    if( $n2.cache && $n2.cache.defaultCacheService ) {
-				layerInfo.protocol.cache = $n2.cache.defaultCacheService;
-		    };
 			layerOptions.protocol = layerInfo.protocol;
 		} else if( layerInfo.wfsUrl ) {
 			// This is a WFS layer
@@ -4305,6 +4293,12 @@ var MapAndControls = $n2.Class({
 			
 		} else if( 'documentDeleted' === type ) {
 			this._removeFeature(m.docId);
+
+		} else if( 'cacheRetrieveDocument' === type ) {
+			var doc = this._retrieveCachedValue(m.docId);
+			if( doc ){
+				m.doc = doc;
+			};
 			
 		} else if( 'featureCreated' === type ) {
 			var doc = m.doc;

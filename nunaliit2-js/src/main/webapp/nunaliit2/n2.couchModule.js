@@ -491,9 +491,7 @@ var ModuleDisplay = $n2.Class({
 			
 			// Display Logic 
 			var displayOptions = {
-				db: atlasDb
-				,designDoc: atlasDesign
-				,documentSource: documentSource
+				documentSource: documentSource
 				,displayPanelName: _this.sidePanelName
 				,showService: _this.config.show
 				,editor: _this.config.couchEditor
@@ -742,8 +740,7 @@ var ModuleDisplay = $n2.Class({
 					layerDefinition.options = $n2.extend({
 						viewName: 'geom'
 						,layerName: null
-						,db: _this.config.atlasDb
-						,designDoc: _this.config.atlasDesign
+						,documentSource: _this.config.documentSource
 					},layerInfo.options);
 
 					if( !layerDefinition.options.layerName ){
@@ -812,20 +809,12 @@ var ModuleDisplay = $n2.Class({
 				var layerDef = mapOptions.overlays[i];
 				if( layerDef.type === 'couchdb' ){
 					++layersPending;
+					var documentSource = layerDef.options.documentSource;
 					var layerName = layerDef.options.layerName;
-					var designDoc = layerDef.options.designDoc;
-					designDoc.queryView({
-						viewName: 'geom-layer-bbox'
-						,startkey: layerName
-						,endkey: layerName
-						,onlyRows: true
-						,reduce: true
-						,onSuccess: function(rows){
-							if( rows.length > 0 ) {
-								reportLayer(rows[0].value);
-							} else {
-								reportLayer(null);
-							};
+					documentSource.getGeographicBoundingBox({
+						layerId: layerName
+						,onSuccess: function(bbox){
+							reportLayer(bbox);
 						}
 						,onError: function(errorMsg){ 
 							$n2.log('Error computing bounds for layer '+layerName+': '+errorMsg); 

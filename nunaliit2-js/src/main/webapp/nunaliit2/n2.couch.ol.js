@@ -151,22 +151,10 @@ OpenLayers.Format.Couch = OpenLayers.Class(OpenLayers.Format, {
 OpenLayers.Protocol.Couch = OpenLayers.Class(OpenLayers.Protocol, {
 
     /**
-     * Property: db
-     * {Object} Instance of database to access feature documents
+     * Property: documentSource
+     * {Object} Instance of DocumentSource to access map geometries.
      */
-    db: null,
-
-    /**
-     * Property: designDoc
-     * {Object} Instance of design doc to access named view.
-     */
-    designDoc: null,
-
-    /**
-     * Property: viewName
-     * {String} Name of couchDb view, including design url.
-     */
-    viewName: null,
+    documentSource: null,
 
     /**
      * Property: layerName
@@ -189,12 +177,6 @@ OpenLayers.Protocol.Couch = OpenLayers.Class(OpenLayers.Protocol, {
      *     options passed to the constructor.
      */
     scope: null,
-
-    /**
-     * Property: cache
-     * {Object} Cache to retrieve documents.
-     */
-    cache: null,
 
     /**
      * Property: notifications
@@ -225,16 +207,6 @@ OpenLayers.Protocol.Couch = OpenLayers.Class(OpenLayers.Protocol, {
      * {Projection} Projection used to store information in the database.
      */
     dbProjection: null,
-    
-    /*
-     * Cache for north and south poles for the map projection
-     */
-    poles: null,
-    
-    /*
-     * Cache for maximum extent in map projection
-     */
-    sourceProjectionMaxWidth: null,
 
     /**
      * Constructor: OpenLayers.Protocol.Couch
@@ -293,9 +265,9 @@ OpenLayers.Protocol.Couch = OpenLayers.Class(OpenLayers.Protocol, {
      *     is then populated with the the features received from the server.
      */
     read: function(options) {
-    	var tt = { // Time Tracker
-    		init: (new Date()).getTime()
-    	};
+
+    	var _this = this;
+
     	if( this.notifications && this.notifications.readStart ){
     		this.notifications.readStart();
     	};
@@ -303,117 +275,34 @@ OpenLayers.Protocol.Couch = OpenLayers.Class(OpenLayers.Protocol, {
         OpenLayers.Protocol.prototype.read.apply(this, arguments);
         options = OpenLayers.Util.applyDefaults(options, this.options);
         var resp = new OpenLayers.Protocol.Response({requestType: 'read'});
-		var _this = this;
-		var viewQuery = {
-			viewName: options.viewName
-			,onSuccess: function(rows){
-				_this.handleReadGeomFids(resp, options, rows, tt);
-			}
-			,onError: function(errorMsg){ 
-				$n2.log(errorMsg); 
-            	if( _this.notifications && _this.notifications.readEnd ){
-            		_this.notifications.readEnd();
-            	};
-			}
-		};
 		
 		// Add BBOX tiling
 		var bounds = this.getBboxFromFilter(options.filter);
 		var fids = this.getFidsFromFilter(options.filter);
 		var layerName = ('string' === typeof(options.layerName) ? options.layerName : null);
 		
-		if( bounds 
-		 && this.sourceProjection 
-		 && this.sourceProjection.getCode() != 'EPSG:4326' ){
-			var mapBounds = new OpenLayers.Bounds(bounds[0],bounds[1],bounds[2],bounds[3]);
-			var dbBounds = mapBounds.clone().transform(this.sourceProjection, this.dbProjection);
-			
-			// Verify if north pole is included
-			var np = this._getPole(true);
-			if( np 
-			 && mapBounds.contains(np.x,np.y) ){
-				var northBoundary = new OpenLayers.Bounds(-180, 90, 180, 90);
-				dbBounds.extend(northBoundary);
-			};
-			
-			// Verify if south pole is included
-			var sp = this._getPole(false);
-			if( sp 
-			 && mapBounds.contains(sp.x,sp.y) ){
-				var southBoundary = new OpenLayers.Bounds(-180, -90, 180, -90);
-				dbBounds.extend(southBoundary);
-			};
-			
-			bounds = [dbBounds.left,dbBounds.bottom,dbBounds.right,dbBounds.top];
-			
-			var maxWidth = this._getMapMaxWidth();
-			if( maxWidth 
-			 && maxWidth <= (mapBounds.right - mapBounds.left) ){
-				// Assume maximum database bounds (do not wrap around)
-				bounds[0] = -180;
-				bounds[2] = 180;
-			};
+		var projectionCode = null;
+		if( this.sourceProjection ) {
+			projectionCode = this.sourceProjection.getCode();
 		};
-
-		// Switch view name and add keys for bounds, layer name and feature ids
-		$n2.couchGeom.selectTileViewFomBounds(viewQuery, bounds, layerName, fids);
 		
-    	tt.queryFidsStart = (new Date()).getTime();
-		options.designDoc.queryView(viewQuery);
+		this.documentSource.getDocumentsFromGeographicFilter({
+			docIds: fids
+			,layerId: layerName
+			,bbox: bounds
+			,projectionCode: projectionCode
+			,onSuccess: function(docs){
+				_this.handleRead(resp, options, docs);
+			}
+			,onError: function(errorMsg){
+				$n2.log(errorMsg); 
+            	if( _this.notifications && _this.notifications.readEnd ){
+            		_this.notifications.readEnd();
+            	};
+			}
+		});
 
         return resp;
-    },
-    
-    handleReadGeomFids: function(resp, options, rows, tt) {
-    	var _this = this;
-    	
-    	tt.queryFidsEnd = (new Date()).getTime();
-    	tt.queryFidsCount = rows.length;
-
-    	var docIds = [];
-    	var docs = [];
-    	while( rows.length > 0 ){
-    		var row = rows.pop();
-    		var docId = row.id;
-    		
-    		if( this.cache ) {
-    			var doc = this.cache.retrieve(docId);
-    			if( doc ) {
-    				docs.push(doc);
-    			} else {
-    				// must request
-    				docIds.push(docId);
-    			};
-    		} else {
-        		docIds.push(docId);
-    		};
-    	};
-    	
-    	tt.queryDocsCount = 0;
-    	if( docIds.length > 0 ) {
-	    	tt.queryDocsStart = (new Date()).getTime();
-
-        	this.db.getDocuments({
-    			docIds: docIds
-    			,onSuccess: function(docs_){
-    		    	tt.queryDocsEnd = (new Date()).getTime();
-    		    	tt.queryDocsCount = docs_.length;
-    				for(var i=0,e=docs_.length; i<e; ++i){
-    					docs.push(docs_[i]);
-    				};
-    				_this.handleRead(resp, options, docs, tt);
-    			}
-        		,onError: function(errorMsg){ 
-        			$n2.log(errorMsg); 
-                	if( _this.notifications && _this.notifications.readEnd ){
-                		_this.notifications.readEnd();
-                	};
-        		}
-        	});
-    	} else {
-    		// nothing to request
-    		this.handleRead(resp, options, docs, tt);
-    	};
     },
 
     /**
@@ -426,12 +315,11 @@ OpenLayers.Protocol.Couch = OpenLayers.Class(OpenLayers.Protocol, {
      *     the user callback.
      * options - {Object} The user options passed to the read call.
      */
-    handleRead: function(resp, options, docs, tt) {
+    handleRead: function(resp, options, docs) {
     	
     	var _this = this;
 
         if(options.callback) {
-	    	tt.read = (new Date()).getTime();
             resp.features = this.format.read(docs);
 
             if( this.sourceProjection 
@@ -443,34 +331,15 @@ OpenLayers.Protocol.Couch = OpenLayers.Class(OpenLayers.Protocol, {
             };
 
             // Sorting now saves on rendering a re-sorting later
-	    	tt.sort = (new Date()).getTime();
 	    	$n2.olUtils.sortFeatures(resp.features);
 
-	    	tt.cb = (new Date()).getTime();
             resp.code = OpenLayers.Protocol.Response.SUCCESS;
             options.callback.call(options.scope, resp);
             
             window.setTimeout(function(){
-            	tt.end = (new Date()).getTime();
-            	var renderMs = tt.end - tt.cb;
-            	var sortMs = tt.cb - tt.sort;
-            	var readMs = tt.sort-tt.read;
-            	var docsMs = 0;
-            	if( tt.queryDocsEnd && tt.queryDocsStart ) {
-            		docsMs = tt.queryDocsEnd - tt.queryDocsStart;
-            	};
-            	var fidsMs = tt.queryFidsEnd - tt.queryFidsStart;
-            	var initMs = tt.queryFidsStart - tt.init;
-            	var totalMs = tt.end - tt.init;
-            	$n2.log('init:'+initMs+'ms fids('+tt.queryFidsCount+'):'+fidsMs
-            		+'ms docs('+tt.queryDocsCount+'):'+docsMs+'ms format:'+readMs
-            		+'ms sort:'+sortMs+'ms render('+resp.features.length+'):'+renderMs
-            		+'ms total:'+totalMs+'ms');
-            	
             	if( _this.notifications && _this.notifications.readEnd ){
             		_this.notifications.readEnd();
             	};
-
             },0);
         };
     },
@@ -897,89 +766,6 @@ OpenLayers.Protocol.Couch = OpenLayers.Class(OpenLayers.Protocol, {
     	}
 
     	return null;
-    },
-
-    _getPole: function(isNorth){
-    	var label = isNorth ? 'n' : 's';
-    	if( !this.poles ){
-    		this.poles = {};
-    	};
-    	if( this.poles[label] ) return this.poles[label];
-    	
-    	if( isNorth ){
-    		var p = new OpenLayers.Geometry.Point(0,90);
-    	} else {
-    		var p = new OpenLayers.Geometry.Point(0,-90);
-    	};
-    	
-    	// Catch transform errors
-    	var error = false;
-    	var previousFn = null;
-    	if( typeof(Proj4js) !== 'undefined' ){
-    		previousFn = Proj4js.reportError;
-    		Proj4js.reportError = function(m){
-    			error = true;
-    		};
-    	};
-    	
-    	p.transform(this.dbProjection,this.sourceProjection);
-    	
-    	if( error ){
-    		p = null;
-    	};
-    	
-    	// Re-instate normal error reporting
-    	if( previousFn ){
-    		Proj4js.reportError = previousFn;
-    	};
-    	
-    	this.poles[label] = p;
-    	
-    	return p;
-    },
-
-    _getMapMaxWidth: function(){
-    	
-    	if( this.sourceProjectionMaxWidth ){
-    		return this.sourceProjectionMaxWidth;
-    	};
-    	
-    	var proj = this.sourceProjection;
-    	if( proj
-    	 && proj.proj 
-    	 && proj.proj.projName === 'merc' ){
-        	var w = new OpenLayers.Geometry.Point(-180,0);
-       		var e = new OpenLayers.Geometry.Point(180,0);
-
-       		// Catch transform errors
-        	var error = false;
-        	var previousFn = null;
-        	if( typeof(Proj4js) !== 'undefined' ){
-        		previousFn = Proj4js.reportError;
-        		Proj4js.reportError = function(m){
-        			error = true;
-        		};
-        	};
-        	
-        	w.transform(this.dbProjection,this.sourceProjection);
-        	e.transform(this.dbProjection,this.sourceProjection);
-        	
-        	if( error ){
-        		w = null;
-        		e = null;
-        	};
-
-        	// Re-instate normal error reporting
-        	if( previousFn ){
-        		Proj4js.reportError = previousFn;
-        	};
-        	
-        	if( e && w ){
-        		this.sourceProjectionMaxWidth = w.x - e.x;
-        	};
-    	};
-    	
-    	return this.sourceProjectionMaxWidth;
     },
     
     CLASS_NAME: "OpenLayers.Protocol.Couch" 

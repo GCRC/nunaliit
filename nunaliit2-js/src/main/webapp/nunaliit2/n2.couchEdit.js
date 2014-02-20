@@ -880,7 +880,7 @@ var CouchDocumentEditor = $n2.Class({
 				});
 			} else {
 				// This is an update
-				_this.options.documentSource.saveDocument({
+				_this.options.documentSource.updateDocument({
 					doc: _this.editedDocument
 					,onSuccess: function(updatedDoc) {
 						save3(uploadForms, updatedDoc, false);

@@ -621,10 +621,8 @@ var DomStyler = $n2.Class({
 							name: layerDefinition.name
 							,type: 'couchdb'
 							,couchDb: {
-								viewName: 'geom'
-								,layerName: layerId
-								,db: _this.options.db
-								,designDoc: _this.options.designDoc
+								layerName: layerId
+								,documentSource: _this.options.documentSource
 							}
 						};
 						
@@ -771,6 +769,7 @@ var Show = $n2.Class({
 		this.options = $n2.extend({
 			db: null
 			,designDoc: null
+			,documentSource: null
 			,serviceDirectory: null
 			,defaultSchema: null
 			,displayFunction: null

@@ -132,7 +132,7 @@ $n2.couchGeom = $.extend({},{
 	 * If an appropriate tile layer is found, true is returned.
 	 * Otherwise, false is returned.
 	 */	
-	,selectTileViewFomBounds: function(viewOptions, bb, layer, fids) {
+	,selectTileViewFromBounds: function(viewOptions, bb, layer, fids) {
 		
 		var views = [
 			{
@@ -317,7 +317,7 @@ $n2.couchGeom = $.extend({},{
 		// Select proper tile layer
 		if( bounds ) {
 			// Switch view name and add keys for bounds
-			$n2.couchGeom.selectTileViewFomBounds(data, bounds);
+			$n2.couchGeom.selectTileViewFromBounds(data, bounds);
 		};
 		
 		// Make request
