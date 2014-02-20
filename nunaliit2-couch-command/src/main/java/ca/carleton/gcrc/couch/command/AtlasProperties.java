@@ -7,7 +7,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.URL;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 
 import org.restlet.engine.util.Base64;
 
@@ -139,6 +141,46 @@ public class AtlasProperties {
 			throw new Exception("Unable to create config directory",e);
 		}
 		
+		// Figure out which properties are saved in the sensitive file
+		Set<String> sensitivePropertyNames = new HashSet<String>();
+		{
+			sensitivePropertyNames.add("couchdb.admin.password");
+			sensitivePropertyNames.add("server.key");
+			
+			File sensitivePropFile = new File(atlasDir,"config/sensitive.properties");
+			if( sensitivePropFile.exists() && sensitivePropFile.isFile() ){
+				FileInputStream fis = null;
+				try {
+					Properties sensitivePropsCopy = new Properties();
+
+					fis = new FileInputStream(sensitivePropFile);
+					InputStreamReader reader = new InputStreamReader(fis,"UTF-8");
+					sensitivePropsCopy.load(reader);
+					
+					Enumeration<?> keyEnum = sensitivePropsCopy.propertyNames();
+					while( keyEnum.hasMoreElements() ){
+						Object keyObj = keyEnum.nextElement();
+						if( keyObj instanceof String ){
+							String key = (String)keyObj;
+							sensitivePropertyNames.add(key);
+						}
+					}
+					
+				} catch(Exception e) {
+					// Just ignore
+					
+				} finally {
+					if( null != fis ){
+						try{
+							fis.close();
+						} catch(Exception e) {
+							// Ignore
+						}
+					}
+				}
+			}
+		}
+		
 		// Divide public and sensitive properties
 		Properties publicProps = new Properties();
 		Properties sensitiveProps = new Properties();
@@ -149,9 +191,7 @@ public class AtlasProperties {
 			if( keyObj instanceof String ) {
 				String key = (String)keyObj;
 				String value = props.getProperty(key);
-				if( "couchdb.admin.password".equals(key) ){
-					sensitiveProps.put(key, value);
-				} else if( "server.key".equals(key) ){
+				if( sensitivePropertyNames.contains(key) ) {
 					sensitiveProps.put(key, value);
 				} else {
 					publicProps.put(key, value);
