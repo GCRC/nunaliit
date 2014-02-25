@@ -33,6 +33,7 @@ public class MailNotificationImpl implements MailNotification {
 	private Properties mailProperties = null;
 	private boolean sendUploadMailNotification = false;
 	private String approvalPageLink = null;
+	private MailRecipient fromAddress = null;
 	
 	public MailNotificationImpl(
 		String atlasName
@@ -77,6 +78,11 @@ public class MailNotificationImpl implements MailNotification {
 				} else if( "upload.sendNotification".equals(propName) ) {
 					sendUploadMailNotification = Boolean.parseBoolean( mailProperties.getProperty(propName) );
 					logger.info("sendUploadMailNotification: "+sendUploadMailNotification);
+					
+				} else if( "upload.sender".equals(propName) ) {
+					String value = mailProperties.getProperty(propName);
+					MailRecipient r = MailRecipient.parseString(value);
+					fromAddress = r;
 				}
 			} catch(Exception e) {
 				throw new Exception("Problem while parsing key: "+propName, e);
@@ -135,6 +141,9 @@ public class MailNotificationImpl implements MailNotification {
 		
 		try {
 			MailMessage message = new MailMessage();
+			
+			// From
+			message.setFromAddress(fromAddress);
 			
 			// To
 			for(MailRecipient recipient : recipients){
@@ -222,6 +231,9 @@ public class MailNotificationImpl implements MailNotification {
 		
 		try {
 			MailMessage message = new MailMessage();
+			
+			// From
+			message.setFromAddress(fromAddress);
 			
 			// To
 			for(MailRecipient recipient : recipients){

@@ -22,6 +22,7 @@ public class UserMailNotificationImpl implements UserMailNotification {
 	private boolean sendNotice = false;
 	private String createUserUrl = null;
 	private String passwordRecoveryUrl = null;
+	private MailRecipient fromAddress = null;
 	
 	public UserMailNotificationImpl(MailDelivery mailDelivery){
 		this.mailDelivery = mailDelivery;
@@ -39,6 +40,14 @@ public class UserMailNotificationImpl implements UserMailNotification {
 			}
 		}
 		
+		// Sender Address
+		{
+			String value = props.getProperty("user.sender",null);
+			if( value != null ){
+				fromAddress = MailRecipient.parseString(value);
+			}
+		}
+		
 		// Creation URL
 		{
 			String value = props.getProperty("user.url.creation",null);
@@ -47,7 +56,7 @@ public class UserMailNotificationImpl implements UserMailNotification {
 			}
 		}
 		
-		// Creation URL
+		// Recovery URL
 		{
 			String value = props.getProperty("user.url.passwordRecovery",null);
 			if( value != null ){
@@ -91,6 +100,9 @@ public class UserMailNotificationImpl implements UserMailNotification {
 		
 		try {
 			MailMessage message = new MailMessage();
+			
+			// From
+			message.setFromAddress(fromAddress);
 			
 			// To
 			for(MailRecipient recipient : recipients){
@@ -146,6 +158,9 @@ public class UserMailNotificationImpl implements UserMailNotification {
 		try {
 			MailMessage message = new MailMessage();
 			
+			// From
+			message.setFromAddress(fromAddress);
+			
 			// To
 			for(MailRecipient recipient : recipients){
 				message.addToRecipient( recipient );
@@ -192,6 +207,9 @@ public class UserMailNotificationImpl implements UserMailNotification {
 		
 		try {
 			MailMessage message = new MailMessage();
+			
+			// From
+			message.setFromAddress(fromAddress);
 			
 			// To
 			for(MailRecipient recipient : recipients){

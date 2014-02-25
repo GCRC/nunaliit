@@ -3,6 +3,8 @@ package ca.carleton.gcrc.couch.command.servlet;
 import java.io.File;
 import java.io.FileInputStream;
 import java.nio.ByteBuffer;
+import java.util.Enumeration;
+import java.util.Map.Entry;
 import java.util.Properties;
 
 import javax.servlet.ServletConfig;
@@ -160,12 +162,31 @@ public class ConfigServlet extends HttpServlet {
 	}
 
 	private Properties loadProperties(String baseName, boolean loadDefault) throws ServletException {
+		return loadProperties(baseName, loadDefault, null);
+	}
+
+	private Properties loadProperties(String baseName, boolean loadDefault, Properties defaultValues) throws ServletException {
 
 		File configurationDirectory = new File(atlasDir,"config");
 		File fallbackConfigurationDirectory = new File("/etc/nunaliit2");
 		
 		Properties props = new Properties();
 		boolean atLeastOneFileFound = false;
+
+		if( null != defaultValues ) {
+			atLeastOneFileFound = true;
+			
+			Enumeration<?> propNameEnum = defaultValues.propertyNames();
+			while(propNameEnum.hasMoreElements()){
+				Object keyObj = propNameEnum.nextElement();
+				if( keyObj instanceof String ){
+					String key = (String)keyObj;
+					String value = defaultValues.getProperty(key);
+					props.put(key, value);
+				}
+			}
+		}
+		
 		
 		// Attempt to load default properties
 		if( loadDefault ){
@@ -355,8 +376,9 @@ public class ConfigServlet extends HttpServlet {
 	private void initMail(ServletContext servletContext) throws ServletException {
 		
 		// Load up configuration information
-		Properties props = loadProperties("mail.properties", true);
-		if( null == props ){
+		Properties sensitiveProps = loadProperties("sensitive.properties", true);
+		Properties props = loadProperties("mail.properties", true, sensitiveProps);
+		if( null == props  ){
 			logger.error("Unable to load mail.properties");
 			mailNotification = new MailNotificationNull();
 			

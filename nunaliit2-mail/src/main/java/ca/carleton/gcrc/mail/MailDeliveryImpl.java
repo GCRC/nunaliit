@@ -44,12 +44,13 @@ public class MailDeliveryImpl implements MailDelivery {
 			try {
 				if( "upload.sender".equals(propName) ) {
 					String value = mailProperties.getProperty(propName);
-					String[] components = value.split("\\|");
-					if( components.length < 2 ) {
-						fromAddress = new InternetAddress(components[0]);
-					} else {
-						fromAddress = new InternetAddress(components[0],components[1]);
-					}
+					MailRecipient r = MailRecipient.parseString(value);
+					fromAddress = r.getInternetAddress();
+					
+				} else if( "user.sender".equals(propName) ) {
+					String value = mailProperties.getProperty(propName);
+					MailRecipient r = MailRecipient.parseString(value);
+					fromAddress = r.getInternetAddress();
 				}
 			} catch(Exception e) {
 				throw new Exception("Problem while parsing key: "+propName, e);
@@ -112,7 +113,12 @@ public class MailDeliveryImpl implements MailDelivery {
 			MimeMessage msg = new MimeMessage(mailSession);
 			
 			// From
-			msg.setFrom( fromAddress );
+			MailRecipient fromRecipient = message.getFromAddress();
+			if( null == fromRecipient ){
+				msg.setFrom( fromAddress );
+			} else {
+				msg.setFrom( fromRecipient.getInternetAddress() );
+			}
 			
 			// To
 			{
