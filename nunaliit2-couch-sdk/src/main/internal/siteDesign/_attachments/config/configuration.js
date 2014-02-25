@@ -61,8 +61,9 @@ function nunaliitConfigure(opts_) {
 	 	};
 	 	
 	 	if( n2atlas
-	 	 && n2atlas.submissionDbEnabled ){
-	 		confOptions.submissionDbUrl = opts.rootPath + 'submitDb';
+	 	 && n2atlas.submissionDbEnabled
+	 	 && n2atlas.submissionDbName ){
+	 		confOptions.submissionDbUrl = opts.rootPath + 'submitDb/';
 	 	};
 
 	 	$n2.couchConfiguration.Configure(confOptions);

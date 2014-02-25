@@ -47,6 +47,7 @@ function Configure(options_){
 		,uploadServerUrl: null // string
 		,exportServerUrl: null // string
 		,userServerUrl: null // string
+		,submissionDbUrl: null // string
 		,onSuccess: function(config){}
 	},options_);
 
@@ -108,11 +109,22 @@ function Configure(options_){
 		};
 		
 		configuration.dataSources = [];
-		var couchDbDs = new $n2.couchDocument.CouchDataSource({
-			id: 'main'
-			,db: configuration.atlasDb
-			,dispatchService: configuration.directory.dispatchService
-		});
+		
+		var couchDbDs = null;
+		if( configuration.submissionDb ){
+			couchDbDs = new $n2.couchDocument.CouchDataSourceWithSubmissionDb({
+				id: 'main'
+				,db: configuration.atlasDb
+				,submissionDb: configuration.submissionDb
+				,dispatchService: configuration.directory.dispatchService
+			});
+		} else {
+			couchDbDs = new $n2.couchDocument.CouchDataSource({
+				id: 'main'
+				,db: configuration.atlasDb
+				,dispatchService: configuration.directory.dispatchService
+			});
+		};
 		configuration.dataSources.push(couchDbDs);
 		configuration.documentSource = couchDbDs;
 

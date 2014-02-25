@@ -2,16 +2,19 @@ package ca.carleton.gcrc.couch.command.servlet;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Enumeration;
-import java.util.Map.Entry;
+import java.util.List;
 import java.util.Properties;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +43,7 @@ import ca.carleton.gcrc.couch.onUpload.multimedia.MultimediaFileConverter;
 import ca.carleton.gcrc.couch.onUpload.pdf.PdfFileConverter;
 import ca.carleton.gcrc.couch.user.UserDesignDocumentImpl;
 import ca.carleton.gcrc.couch.user.UserServlet;
+import ca.carleton.gcrc.json.servlet.JsonServlet;
 import ca.carleton.gcrc.mail.MailDelivery;
 import ca.carleton.gcrc.mail.MailDeliveryImpl;
 import ca.carleton.gcrc.olkit.multimedia.utils.MultimediaConfiguration;
@@ -53,7 +57,7 @@ import ca.carleton.gcrc.upload.UploadUtils;
  *
  */
 @SuppressWarnings("serial")
-public class ConfigServlet extends HttpServlet {
+public class ConfigServlet extends JsonServlet {
 
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -66,6 +70,7 @@ public class ConfigServlet extends HttpServlet {
 	private UploadWorker uploadWorker = null;
 	private MailNotification mailNotification = null;
 	private MailVetterDailyNotificationTask vetterDailyTask = null;
+	private ConfigServletActions actions = null;
 	
 	public ConfigServlet() {
 		
@@ -155,6 +160,14 @@ public class ConfigServlet extends HttpServlet {
 			initUser(servletContext);
 		} catch(ServletException e) {
 			logger.error("Error while initializing user service",e);
+			throw e;
+		}
+		
+		// Configure actions
+		try {
+			initActions(servletContext);
+		} catch(ServletException e) {
+			logger.error("Error while creating actions",e);
 			throw e;
 		}
 		
@@ -508,6 +521,17 @@ public class ConfigServlet extends HttpServlet {
 		}
 	}
 
+	private void initActions(ServletContext servletContext) throws ServletException {
+		
+		try {
+			this.actions = new ConfigServletActions();
+			this.actions.setSubmissionDbEnabled( atlasProperties.isCouchDbSubmissionDbEnabled() );
+		} catch(Exception e) {
+			logger.error("Error configuring actions",e);
+			throw new ServletException("Error configuring actions",e);
+		}
+	}
+
 	public void destroy() {
 		try {
 			uploadWorker.stopTimeoutMillis(5*1000); // 5 seconds
@@ -522,5 +546,39 @@ public class ConfigServlet extends HttpServlet {
 		} catch (Exception e) {
 			logger.error("Unable to shutdown daily vetter notifications", e);
 		}
+	}
+
+	@Override
+	protected void doGet(
+		HttpServletRequest req
+		,HttpServletResponse resp
+		) throws ServletException, IOException {
+		
+		try {
+			List<String> path = computeRequestPath(req);
+			
+			
+			if( path.size() < 1 ) {
+				JSONObject result = actions.getWelcome();
+				sendJsonResponse(resp, result);
+
+			} else {
+				throw new Exception("Invalid action requested");
+			}
+			
+		} catch(Exception e) {
+			reportError(e, resp);
+		}
+		
+//		resp.setStatus(200);
+//		resp.setContentType("application/json");
+//		resp.setCharacterEncoding("utf-8");
+//		resp.addHeader("Cache-Control", "no-cache");
+//		resp.addHeader("Pragma", "no-cache");
+//		resp.addHeader("Expires", "-1");
+//		
+//		OutputStreamWriter osw = new OutputStreamWriter(resp.getOutputStream(), "UTF-8");
+//		osw.write("Test");
+//		osw.flush();
 	}
 }
