@@ -25,6 +25,7 @@ import ca.carleton.gcrc.couch.client.CouchClient;
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchFactory;
+import ca.carleton.gcrc.couch.client.CouchUserDb;
 import ca.carleton.gcrc.couch.command.AtlasProperties;
 import ca.carleton.gcrc.couch.command.impl.PathComputer;
 import ca.carleton.gcrc.couch.export.ExportConfiguration;
@@ -41,6 +42,7 @@ import ca.carleton.gcrc.couch.onUpload.mail.MailNotificationNull;
 import ca.carleton.gcrc.couch.onUpload.mail.MailVetterDailyNotificationTask;
 import ca.carleton.gcrc.couch.onUpload.multimedia.MultimediaFileConverter;
 import ca.carleton.gcrc.couch.onUpload.pdf.PdfFileConverter;
+import ca.carleton.gcrc.couch.submission.SubmissionRobot;
 import ca.carleton.gcrc.couch.user.UserDesignDocumentImpl;
 import ca.carleton.gcrc.couch.user.UserServlet;
 import ca.carleton.gcrc.json.servlet.JsonServlet;
@@ -65,9 +67,10 @@ public class ConfigServlet extends JsonServlet {
 	private File installDir = null;
 	private AtlasProperties atlasProperties = null;
 	private CouchClient couchClient = null;
-	private CouchDb serverDesign = null;
+	private CouchDb documentDatabase = null;
 	private CouchDesignDocument couchDd = null;
 	private UploadWorker uploadWorker = null;
+	private SubmissionRobot submissionRobot = null;
 	private MailNotification mailNotification = null;
 	private MailVetterDailyNotificationTask vetterDailyTask = null;
 	private ConfigServletActions actions = null;
@@ -130,12 +133,20 @@ public class ConfigServlet extends JsonServlet {
 			logger.error("Error while initializing mail notification",e);
 			mailNotification = new MailNotificationNull();
 		}
-		
+
 		// Configure upload
 		try {
 			initUpload(servletContext);
 		} catch(ServletException e) {
 			logger.error("Error while initializing upload",e);
+			throw e;
+		}
+
+		// Configure submission robot
+		try {
+			initSubmissionRobot(servletContext);
+		} catch(ServletException e) {
+			logger.error("Error while initializing submission robot",e);
 			throw e;
 		}
 		
@@ -323,12 +334,12 @@ public class ConfigServlet extends JsonServlet {
 		// Create database
 		String dbName = atlasProperties.getCouchDbName();
 		try {
-			serverDesign = couchClient.getDatabase(dbName);
+			documentDatabase = couchClient.getDatabase(dbName);
 		} catch(Exception e) {
 			logger.error("Unable to connect to database: "+dbName,e);
 			throw new ServletException("Unable to connect to database: "+dbName,e);
 		}
-		logger.info("CouchDb configured: "+serverDesign.getUrl());
+		logger.info("CouchDb configured: "+documentDatabase.getUrl());
 	}
 
 	private void initServerDesignDocument(ServletContext servletContext) throws ServletException {
@@ -352,14 +363,14 @@ public class ConfigServlet extends JsonServlet {
 		
 		// Update document
 		try {
-			DocumentUpdateProcess updateProcess = new DocumentUpdateProcess(serverDesign);
+			DocumentUpdateProcess updateProcess = new DocumentUpdateProcess(documentDatabase);
 			updateProcess.update(doc);
 		} catch(Exception e) {
 			throw new ServletException("Unable to update server design document",e);
 		}
 		
 		try {
-			couchDd = serverDesign.getDesignDocument("server");
+			couchDd = documentDatabase.getDesignDocument("server");
 		} catch (Exception e) {
 			throw new ServletException("Unable to get design document", e);
 		}
@@ -468,6 +479,37 @@ public class ConfigServlet extends JsonServlet {
 		}
 	}
 
+	private void initSubmissionRobot(ServletContext servletContext) throws ServletException {
+		
+		try {
+			// Is submission DB enabled
+			if( atlasProperties.isCouchDbSubmissionDbEnabled() ){
+
+				// Submission DB name
+				String submissionDbName = atlasProperties.getCouchDbSubmissionDbName();
+
+				CouchDb submissionDb = couchClient.getDatabase(submissionDbName);
+				CouchDesignDocument submissionDesign = submissionDb.getDesignDocument("submission");
+
+				CouchUserDb userDb = couchClient.getUserDatabase();
+				
+				submissionRobot = new SubmissionRobot();
+				submissionRobot.setDocumentDesignDocument(couchDd);
+				submissionRobot.setSubmissionDesignDocument(submissionDesign);
+				submissionRobot.setUserDb(userDb);
+				
+				submissionRobot.start();
+				
+			} else {
+				logger.info("Submission database is not enabled");
+			}
+
+		} catch (Exception e) {
+			logger.error("Error starting submission worker",e);
+			throw new ServletException("Error starting submission worker",e);
+		}
+	}
+
 	private void initVetterDailyNotifications(ServletContext servletContext) throws ServletException {
 		
 		try {
@@ -537,6 +579,14 @@ public class ConfigServlet extends JsonServlet {
 			uploadWorker.stopTimeoutMillis(5*1000); // 5 seconds
 		} catch (Exception e) {
 			logger.error("Unable to shutdown upload worker", e);
+		}
+
+		try {
+			if( submissionRobot != null ) {
+				submissionRobot.stopTimeoutMillis(5*1000); // 5 seconds
+			}
+		} catch (Exception e) {
+			logger.error("Unable to shutdown submission worker", e);
 		}
 
 		try {
