@@ -5,6 +5,7 @@ import java.util.Vector;
 
 public class MailMessage {
 
+	private MailRecipient fromAddress = null;
 	private List<MailRecipient> toRecipients = new Vector<MailRecipient>();
 	private String subject = null;
 	private String htmlContent;
@@ -12,6 +13,14 @@ public class MailMessage {
 	public MailMessage(){
 	}
 	
+	public MailRecipient getFromAddress() {
+		return fromAddress;
+	}
+
+	public void setFromAddress(MailRecipient fromAddress) {
+		this.fromAddress = fromAddress;
+	}
+
 	public List<MailRecipient> getToRecipients() {
 		return toRecipients;
 	}
