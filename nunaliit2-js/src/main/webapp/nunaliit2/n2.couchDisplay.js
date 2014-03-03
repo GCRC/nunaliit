@@ -1128,7 +1128,8 @@ $n2.couchDisplay = $n2.Class({
 					docIds: docIds
 					,onSuccess: function(info){
 						var idsToDelete = [];
-						for(var id in docIdToSchemaMap){
+						for(var i=0,e=docIds.length; i<e; ++i){
+							var id = docIds[i];
 							if( !info[id] ){
 								// This document no longer exists
 								idsToDelete.push(id);
