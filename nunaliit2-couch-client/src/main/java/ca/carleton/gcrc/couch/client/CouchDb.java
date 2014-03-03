@@ -27,7 +27,11 @@ public interface CouchDb {
 	
 	JSONObject getDocument(String docId) throws Exception;
 	
+	JSONObject getDocument(String docId, CouchDocumentOptions options) throws Exception;
+
 	Collection<JSONObject> getDocuments(List<String> docIds) throws Exception;
+
+	Collection<JSONObject> getDocuments(List<String> docIds, CouchDocumentOptions options) throws Exception;
 	
 	String getDocumentRevision(String docId) throws Exception;
 	

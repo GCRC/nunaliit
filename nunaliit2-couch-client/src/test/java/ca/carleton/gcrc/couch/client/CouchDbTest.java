@@ -100,6 +100,76 @@ public class CouchDbTest extends TestCase {
 		}
 	}
 	
+	public void testGetDocumentOptions() throws Exception {
+		CouchDb db = TestSupport.getTestCouchDb();
+		if( null != db ) {
+			String docId = "testGetDocumentOptions";
+			
+			// Create document
+			{
+				JSONObject doc = new JSONObject();
+				doc.put("_id",docId);
+				doc.put("test", "value");
+				
+				db.createDocument(doc);
+			}
+			
+			// Update document
+			{
+				JSONObject doc = db.getDocument(docId);
+				doc.put("another", "value");
+				db.updateDocument(doc);
+			}
+			
+			// Update document again
+			{
+				JSONObject doc = db.getDocument(docId);
+				doc.put("yet_another", "value");
+				db.updateDocument(doc);
+			}
+			
+			// Get document with all versions
+			String rev = null;
+			{
+				CouchDocumentOptions options = new CouchDocumentOptions();
+				options.setConflicts(true);
+				options.setDeletedConflicts(true);
+				options.setRevisions(true);
+				options.setRevsInfo(true);
+				JSONObject doc = db.getDocument(docId,options);
+				
+				// Check that revisions were sent back
+				if( null == doc.opt("_revisions") ){
+					fail("Field _revisions not returned");
+				}
+				
+				// Check that revs_info were sent back
+				if( null == doc.opt("_revs_info") ){
+					fail("Field _revs_info not returned");
+				}
+				
+				// Parse revision info
+				List<RevisionInfo> revsInfo = RevisionInfo.parseDoc(doc);
+				if( revsInfo.size() != 3 ){
+					fail("Expecting 3 revisions");
+				} else {
+					rev = revsInfo.get(1).getRev();
+				}
+			}
+			
+			// Retrieve a specific version
+			{
+				CouchDocumentOptions options = new CouchDocumentOptions();
+				options.setRevision(rev);
+				JSONObject doc = db.getDocument(docId,options);
+				
+				if( false == rev.equals(doc.getString("_rev")) ){
+					fail("Unable to retrieve specific revision");
+				}
+			}
+		}
+	}
+	
 	public void testGetDocumentRevision() throws Exception {
 		CouchDb db = TestSupport.getTestCouchDb();
 		if( null != db ) {

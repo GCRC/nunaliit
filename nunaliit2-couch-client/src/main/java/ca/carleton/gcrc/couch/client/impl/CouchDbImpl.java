@@ -19,6 +19,7 @@ import ca.carleton.gcrc.couch.client.CouchContext;
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDbSecurityDocument;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
+import ca.carleton.gcrc.couch.client.CouchDocumentOptions;
 
 public class CouchDbImpl implements CouchDb {
 
@@ -160,6 +161,44 @@ public class CouchDbImpl implements CouchDb {
 	}
 
 	@Override
+	public JSONObject getDocument(String docId, CouchDocumentOptions options) throws Exception {
+		// Compute URL
+		URL effectiveUrl = null;
+		{
+			URL docUrl = new URL(url, URLEncoder.encode(docId,"UTF-8"));
+	
+			List<UrlParameter> parameters = new ArrayList<UrlParameter>(8);
+	
+			if( null != options ) {
+				if( null != options.getRevision() ){
+					parameters.add( new UrlParameter("rev",options.getRevision()) );
+				}
+				if( options.isRevsInfo() ){
+					parameters.add( new UrlParameter("revs_info","true") );
+				}
+				if( options.isRevisions() ){
+					parameters.add( new UrlParameter("revs","true") );
+				}
+				if( options.isConflicts() ){
+					parameters.add( new UrlParameter("conflicts","true") );
+				}
+				if( options.isDeletedConflicts() ){
+					parameters.add( new UrlParameter("deleted_conflicts","true") );
+				}
+			}
+			
+			effectiveUrl = ConnectionUtils.computeUrlWithParameters(docUrl, parameters);
+		}
+		
+		JSONObject doc = ConnectionUtils.getJsonResource(getContext(), effectiveUrl);
+		
+		ConnectionUtils.captureReponseErrors(doc, "Error while fetching document "+docId+": ");
+
+		return doc;
+	}
+
+
+	@Override
 	public String getDocumentRevision(String docId) throws Exception {
 		// Compute URL
 		List<UrlParameter> parameters = new ArrayList<UrlParameter>(3);
@@ -202,28 +241,51 @@ public class CouchDbImpl implements CouchDb {
 
 	@Override
 	public Collection<JSONObject> getDocuments(List<String> docIds) throws Exception {
-		URL requestUrl = new URL(url, "_all_docs");
-		List<UrlParameter> parameters = new ArrayList<UrlParameter>(docIds.size()+1);
+		return getDocuments(docIds, null);
+	}
 
+	@Override
+	public Collection<JSONObject> getDocuments(List<String> docIds, CouchDocumentOptions options) throws Exception {
+		URL effectiveUrl = null;
 		{
-			UrlParameter parameter = new UrlParameter("include_docs","true");
-			parameters.add(parameter);
-		}
-		
-		if( null != docIds && docIds.size() > 0 ){
-			JSONArray docIdsArray = new JSONArray(); 
-			for(String docId : docIds){
-				docIdsArray.put(docId);
+			URL requestUrl = new URL(url, "_all_docs");
+			List<UrlParameter> parameters = new ArrayList<UrlParameter>(10);
+	
+			{
+				UrlParameter parameter = new UrlParameter("include_docs","true");
+				parameters.add(parameter);
 			}
 			
-			UrlParameter parameter = new UrlParameter("keys",docIdsArray.toString());
-			parameters.add(parameter);
+			if( null != docIds && docIds.size() > 0 ){
+				JSONArray docIdsArray = new JSONArray(); 
+				for(String docId : docIds){
+					docIdsArray.put(docId);
+				}
+				
+				UrlParameter parameter = new UrlParameter("keys",docIdsArray.toString());
+				parameters.add(parameter);
+			}
+			
+			if( null != options ) {
+				if( options.isRevsInfo() ){
+					parameters.add( new UrlParameter("revs_info","true") );
+				}
+				if( options.isRevisions() ){
+					parameters.add( new UrlParameter("revs","true") );
+				}
+				if( options.isConflicts() ){
+					parameters.add( new UrlParameter("conflicts","true") );
+				}
+				if( options.isDeletedConflicts() ){
+					parameters.add( new UrlParameter("deleted_conflicts","true") );
+				}
+			}
+			
+			effectiveUrl = ConnectionUtils.computeUrlWithParameters(
+					requestUrl
+					,parameters
+					);
 		}
-		
-		URL effectiveUrl = ConnectionUtils.computeUrlWithParameters(
-				requestUrl
-				,parameters
-				);
 
 		JSONObject response = ConnectionUtils.getJsonResource(getContext(), effectiveUrl);
 		
@@ -440,5 +502,4 @@ public class CouchDbImpl implements CouchDb {
 		
 		ConnectionUtils.captureReponseErrors(response, "Error while updating security document: ");
 	}
-
 }
