@@ -118,6 +118,14 @@ public class UpgradeOperationsBasic implements UpgradeOperations {
 		File sourceFile = new File(upgradeDir, path);
 
 		try {
+			// Add parent directories
+			File targetParent = targetFile.getParentFile();
+			if( null != targetParent ){
+				if( false == targetParent.exists() ){
+					targetParent.mkdirs();
+				}
+			}
+			
 			copyFile(sourceFile, targetFile);
 		} catch(Exception e) {
 			throw new Exception("Error while copying file: "+path,e);
