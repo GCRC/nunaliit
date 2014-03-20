@@ -130,4 +130,63 @@ public class JSONSupport {
 		}
 		return 0;
 	}
+	
+	static public JSONObject copyObject(JSONObject obj){
+		if( null == obj ) {
+			return null;
+		}
+		
+		JSONObject c = new JSONObject();
+		
+		Iterator<?> keyIt = obj.keys();
+		while( keyIt.hasNext() ){
+			Object keyObj = keyIt.next();
+			if( keyObj instanceof String ){
+				String key = (String)keyObj;
+				Object value = obj.get(key);
+				
+				if( null == value ){
+					c.put(key, value);
+					
+				} else if( value instanceof JSONObject ) {
+					c.put(key, copyObject((JSONObject)value));
+					
+				} else if( value instanceof JSONArray ) {
+					c.put(key, copyArray((JSONArray)value));
+					
+				} else {
+					c.put(key, value);
+				}
+			}
+		}
+		
+		return c;
+	}
+	
+	static public JSONArray copyArray(JSONArray arr){
+		if( null == arr ) {
+			return null;
+		}
+		
+		JSONArray c = new JSONArray();
+		
+		for(int i=0,e=arr.length(); i<e; ++i){
+			Object value = arr.get(i);
+			
+			if( null == value ){
+				c.put(value);
+				
+			} else if( value instanceof JSONObject ) {
+				c.put(copyObject((JSONObject)value));
+				
+			} else if( value instanceof JSONArray ) {
+				c.put(copyArray((JSONArray)value));
+				
+			} else {
+				c.put(value);
+			}
+		}
+		
+		return c;
+	}
 }
