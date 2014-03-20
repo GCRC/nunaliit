@@ -697,6 +697,21 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 			doc._id = docId;
 			
 			this._adjustDocument(doc);
+
+			var copy = {};
+			var reserved = {};
+			for(var key in doc){
+				if( key === '__n2Source' ){
+					// Do not copy
+					
+				} else if ( key.length > 0 && key[0] === '_' ) {
+					var reservedKey = key.substr(1);
+					reserved[reservedKey] = doc[key];
+					
+				} else {
+					copy[key] = doc[key];
+				};
+			};
 			
 			var request = {
 				nunaliit_type: 'document_submission'
@@ -704,7 +719,8 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 					original_info: {
 						id: docId
 					}
-					,doc: doc
+					,doc: copy
+					,reserved: reserved
 				}
 			};
 

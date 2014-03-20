@@ -3,9 +3,10 @@ package ca.carleton.gcrc.couch.client.impl;
 import java.net.URL;
 
 import org.json.JSONObject;
+
 import ca.carleton.gcrc.couch.client.CouchClient;
-import ca.carleton.gcrc.couch.client.CouchUserContext;
 import ca.carleton.gcrc.couch.client.CouchUserDb;
+import ca.carleton.gcrc.couch.client.CouchUserDocContext;
 
 public class CouchUserDbImpl extends CouchDbImpl implements CouchUserDb {
 
@@ -14,11 +15,11 @@ public class CouchUserDbImpl extends CouchDbImpl implements CouchUserDb {
 	}
 	
 	@Override
-	public CouchUserContext getUserFromName(String userName) throws Exception {
+	public CouchUserDocContext getUserFromName(String userName) throws Exception {
 		try{
 			JSONObject userDoc = getDocument("org.couchdb.user:"+userName);
 			
-			CouchUserContext userCtx = CouchUtils.userContextFromDocument(userDoc);
+			CouchUserDocContextImpl userCtx = new CouchUserDocContextImpl(userDoc);
 			
 			return userCtx;
 			

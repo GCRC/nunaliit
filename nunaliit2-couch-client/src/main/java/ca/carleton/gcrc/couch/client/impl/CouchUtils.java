@@ -98,7 +98,7 @@ public class CouchUtils {
 			throw new Exception("Error parsing user document",e);
 		}
 		
-		CouchUserContext userCtx = new CouchUserContext();
+		CouchUserContextImpl userCtx = new CouchUserContextImpl();
 		userCtx.setName(name);
 		userCtx.setRoles(roles);
 		

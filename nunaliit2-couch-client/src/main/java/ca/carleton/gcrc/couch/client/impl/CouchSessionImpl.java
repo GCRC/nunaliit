@@ -69,7 +69,7 @@ public class CouchSessionImpl implements CouchSession {
 			throw new Exception("Error parsing session context response",e);
 		}
 		
-		CouchUserContext userCtx = new CouchUserContext();
+		CouchUserContextImpl userCtx = new CouchUserContextImpl();
 		userCtx.setName(name);
 		userCtx.setRoles(roles);
 		

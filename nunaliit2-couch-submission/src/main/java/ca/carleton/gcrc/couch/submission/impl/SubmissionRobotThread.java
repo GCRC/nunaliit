@@ -1,6 +1,7 @@
 package ca.carleton.gcrc.couch.submission.impl;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.json.JSONObject;
@@ -9,10 +10,13 @@ import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
+import ca.carleton.gcrc.couch.client.CouchDocumentOptions;
 import ca.carleton.gcrc.couch.client.CouchQuery;
 import ca.carleton.gcrc.couch.client.CouchQueryResults;
-import ca.carleton.gcrc.couch.client.CouchUserContext;
 import ca.carleton.gcrc.couch.client.CouchUserDb;
+import ca.carleton.gcrc.couch.client.CouchUserDocContext;
+import ca.carleton.gcrc.json.JSONSupport;
+import ca.carleton.gcrc.json.patcher.JSONPatcher;
 
 public class SubmissionRobotThread extends Thread {
 
@@ -64,7 +68,7 @@ public class SubmissionRobotThread extends Thread {
 	
 	private void activity() {
 		CouchQuery query = new CouchQuery();
-		query.setViewName("submission-submitted");
+		query.setViewName("submission-work");
 
 		CouchQueryResults results;
 		try {
@@ -102,6 +106,35 @@ public class SubmissionRobotThread extends Thread {
 		}
 	}
 	
+	/*
+	 * submitted (robot)
+	 * -> complete (if target document is deleted)
+	 * -> approved (if submitted by someone who is automatically approved)
+	 * -> waiting_for_approval (otherwise)
+	 * 
+	 * approved (robot)
+	 * -> complete (if target document is deleted)
+	 * -> complete (if target document can be updated automatically)
+	 * -> collision (if merging to target document performs a collision)
+	 * 
+	 * waiting_for_approval (user)
+	 * -> approved (when an administrator agrees with changes)
+	 * -> denied (when an administrator disagrees with changes)
+	 * 
+	 * collision (user)
+	 * -> resolved (when an administrator fixes the changes to avoid collision)
+	 * -> denied (when administrator decides changes are no longer wanted)
+	 * 
+	 * resolved (robot)
+	 * -> complete (if target document is deleted)
+	 * -> complete (if changes are merged on target document)
+	 * -> collision (if changes can not be merged on target document)
+	 * 
+	 * denied (user)
+	 * -> approved (when administrator decides that changes are needed)
+	 * 
+	 * complete
+	 */
 	public void performWork(String submissionDocId) throws Exception {
 		// Get submission document
 		CouchDb submissionDb = submissionDbDesignDocument.getDatabase();
@@ -112,22 +145,152 @@ public class SubmissionRobotThread extends Thread {
 			.getJSONObject("nunaliit_submission")
 			.getJSONObject("original_info")
 			.getString("id");
+		String revision = submissionDoc
+			.getJSONObject("nunaliit_submission")
+			.getJSONObject("original_info")
+			.optString("rev",null);
 		
 		// Get document in document database
 		CouchDb documentDb = documentDbDesignDocument.getDatabase();
 		JSONObject doc = documentDb.getDocument(docId);
-		if( null == doc ){
+		if( null == doc 
+		 && null != revision ) {
 			// Referenced document no longer exists
 			submissionDoc.getJSONObject("nunaliit_submission")
 				.put("state", "complete");
 			submissionDb.updateDocument(submissionDoc);
 		} else {
-			// Find roles associated with the user who submitted the change
-			String userId = submissionDoc
-				.getJSONObject("nunaliit_last_updated")
-				.getString("name");
-			CouchUserContext userDoc = userDb.getUserFromName(userId);
-			throw new Exception("TBD");
+			String stateStr = null;
+			JSONObject jsonSubmission = submissionDoc.getJSONObject("nunaliit_submission");
+			stateStr = jsonSubmission.optString("state",null);
+			
+			if( null == stateStr ) {
+				performSubmittedWork(submissionDoc, doc);
+				
+			} else if( "submitted".equals(stateStr) ) {
+				performSubmittedWork(submissionDoc, doc);
+				
+			} else if( "approved".equals(stateStr) ) {
+				performApprovedWork(submissionDoc, doc);
+
+			} else {
+				throw new Exception("Unexpected state for submission document: "+stateStr);
+			}
+		}
+	}
+
+	public void performSubmittedWork(JSONObject submissionDoc, JSONObject targetDoc) throws Exception {
+		// Find roles associated with the user who submitted the change
+		String userId = submissionDoc
+			.getJSONObject("nunaliit_last_updated")
+			.getString("name");
+		CouchUserDocContext userDoc = null;
+		try {
+			userDoc = userDb.getUserFromName(userId);
+		} catch(Exception e) {
+			// Ignore if we can not find user
+		}
+
+		// Check if submission should be automatically approved
+		boolean approved = false;
+		if( null != userDoc ) {
+			List<String> roles = userDoc.getRoles();
+			for(String role : roles){
+				if( "_admin".equals(role) ){
+					approved = true;
+					break;
+				} else if( "administrator".equals(role) ){
+					approved = true;
+					break;
+				}
+			}
+		}
+
+		if( approved ) {
+			CouchDb submissionDb = submissionDbDesignDocument.getDatabase();
+			submissionDoc.getJSONObject("nunaliit_submission")
+				.put("state", "approved");
+			submissionDb.updateDocument(submissionDoc);
+		} else {
+			CouchDb submissionDb = submissionDbDesignDocument.getDatabase();
+			submissionDoc.getJSONObject("nunaliit_submission")
+				.put("state", "waiting_for_approval");
+			submissionDb.updateDocument(submissionDoc);
+		}
+	}
+
+	public void performApprovedWork(JSONObject submissionDoc, JSONObject targetDoc) throws Exception {
+		String docId = submissionDoc
+			.getJSONObject("nunaliit_submission")
+			.getJSONObject("original_info")
+			.getString("id");
+		String submitVersion = submissionDoc
+			.getJSONObject("nunaliit_submission")
+			.getJSONObject("original_info")
+			.optString("rev",null);
+		
+		if( null == targetDoc ) {
+			// New document. Create.
+			JSONObject originalDoc = SubmissionUtils.getOriginalSubmission(submissionDoc);
+			
+			CouchDb targetDb = documentDbDesignDocument.getDatabase();
+			targetDb.createDocument(originalDoc);
+			
+			CouchDb submissionDb = submissionDbDesignDocument.getDatabase();
+			submissionDoc.getJSONObject("nunaliit_submission")
+				.put("state", "complete");
+			submissionDb.updateDocument(submissionDoc);
+			
+		} else {
+			String targetVersion = targetDoc.getString("_rev");
+			JSONObject originalDoc = SubmissionUtils.getOriginalSubmission(submissionDoc);
+			
+			if( targetVersion.equals(submitVersion) ) {
+				// No changes since submission. Simply update the document
+				// database.
+				CouchDb targetDb = documentDbDesignDocument.getDatabase();
+				targetDb.updateDocument(originalDoc);
+				
+				CouchDb submissionDb = submissionDbDesignDocument.getDatabase();
+				submissionDoc.getJSONObject("nunaliit_submission")
+					.put("state", "complete");
+				submissionDb.updateDocument(submissionDoc);
+			} else {
+				// Get document that the changes were made against
+				CouchDb couchDb = documentDbDesignDocument.getDatabase();
+				CouchDocumentOptions options = new CouchDocumentOptions();
+				options.setRevision(submitVersion);
+				JSONObject rootDoc = couchDb.getDocument(docId, options);
+				
+				// Compute patch from submission
+				JSONObject submissionPatch = JSONPatcher.computePatch(rootDoc, originalDoc);
+				JSONObject databasePatch = JSONPatcher.computePatch(rootDoc, targetDoc);
+				
+				// Detect collision. Apply patches in different order, if result
+				// is same, then no collision
+				JSONObject doc1 = JSONSupport.copyObject(rootDoc);
+				JSONPatcher.applyPatch(doc1, submissionPatch);
+				JSONPatcher.applyPatch(doc1, databasePatch);
+				JSONObject doc2 = JSONSupport.copyObject(rootDoc);
+				JSONPatcher.applyPatch(doc2, databasePatch);
+				JSONPatcher.applyPatch(doc2, submissionPatch);
+				if( 0 == JSONSupport.compare(doc1, doc2) ) {
+					// No collision
+					CouchDb targetDb = documentDbDesignDocument.getDatabase();
+					targetDb.updateDocument(doc1);
+					
+					CouchDb submissionDb = submissionDbDesignDocument.getDatabase();
+					submissionDoc.getJSONObject("nunaliit_submission")
+						.put("state", "complete");
+					submissionDb.updateDocument(submissionDoc);
+				} else {
+					// Collision case
+					CouchDb submissionDb = submissionDbDesignDocument.getDatabase();
+					submissionDoc.getJSONObject("nunaliit_submission")
+						.put("state", "collision");
+					submissionDb.updateDocument(submissionDoc);
+				}
+			}
 		}
 	}
 
