@@ -674,6 +674,8 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 			,opts_
 		);
 		
+		var _this = this;
+		
 		if( !opts.doc ){
 			opts.onError('Document must be provided');
 		};
@@ -696,7 +698,7 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 			var doc = opts.doc;
 			doc._id = docId;
 			
-			this._adjustDocument(doc);
+			_this._adjustDocument(doc);
 
 			var copy = {};
 			var reserved = {};
@@ -724,9 +726,9 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 				}
 			};
 
-			this._adjustDocument(request);
+			_this._adjustDocument(request);
 			
-			this.submissionDb.createDocument({
+			_this.submissionDb.createDocument({
 				data: request
 				,onSuccess: function(docInfo){
 					doc.__n2Source = this;
@@ -807,9 +809,15 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 		var doc = opts.doc;
 		
 		var copy = {};
+		var reserved = {};
 		for(var key in doc){
 			if( key === '__n2Source' ){
 				// Do not copy
+				
+			} else if ( key.length > 0 && key[0] === '_' ) {
+				var reservedKey = key.substr(1);
+				reserved[reservedKey] = doc[key];
+				
 			} else {
 				copy[key] = doc[key];
 			};
@@ -820,11 +828,12 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 			nunaliit_type: 'document_submission'
 			,nunaliit_submission: {
 				original_info: {
-					id: docId
+					id: doc._id
 					,rev: doc._rev
 				}
 				,deletion: true
-				,doc: doc
+				,doc: copy
+				,reserved: reserved
 			}
 		};
 

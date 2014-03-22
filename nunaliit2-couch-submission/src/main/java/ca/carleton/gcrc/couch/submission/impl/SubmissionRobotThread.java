@@ -152,7 +152,12 @@ public class SubmissionRobotThread extends Thread {
 		
 		// Get document in document database
 		CouchDb documentDb = documentDbDesignDocument.getDatabase();
-		JSONObject doc = documentDb.getDocument(docId);
+		JSONObject doc = null;
+		try {
+			doc = documentDb.getDocument(docId);
+		} catch(Exception e) {
+			// ignore
+		}
 		if( null == doc 
 		 && null != revision ) {
 			// Referenced document no longer exists
@@ -228,6 +233,9 @@ public class SubmissionRobotThread extends Thread {
 			.getJSONObject("nunaliit_submission")
 			.getJSONObject("original_info")
 			.optString("rev",null);
+		boolean isDeletion = submissionDoc
+			.getJSONObject("nunaliit_submission")
+			.optBoolean("deletion",false);
 		
 		if( null == targetDoc ) {
 			// New document. Create.
@@ -235,6 +243,16 @@ public class SubmissionRobotThread extends Thread {
 			
 			CouchDb targetDb = documentDbDesignDocument.getDatabase();
 			targetDb.createDocument(originalDoc);
+			
+			CouchDb submissionDb = submissionDbDesignDocument.getDatabase();
+			submissionDoc.getJSONObject("nunaliit_submission")
+				.put("state", "complete");
+			submissionDb.updateDocument(submissionDoc);
+			
+		} else if( isDeletion ) {
+			CouchDb targetDb = documentDbDesignDocument.getDatabase();
+			JSONObject toDeleteDoc = targetDb.getDocument(docId);
+			targetDb.deleteDocument(toDeleteDoc);
 			
 			CouchDb submissionDb = submissionDbDesignDocument.getDatabase();
 			submissionDoc.getJSONObject("nunaliit_submission")
