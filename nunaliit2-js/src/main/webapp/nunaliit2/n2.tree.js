@@ -601,6 +601,21 @@ function computeId(uuid, selectors) {
 };
 
 /**
+ * Computes a valid class for a given set of selectors.
+ * @param selectors {Array} Object selector
+ * @return {String} Class name that should be used to uniquely identify
+ *                  the selected object within a tree.
+ */
+function computeClass(selectors) {
+	var escapedSelectors = [];
+	for(var i=0,e=selectors.length;i<e;++i){
+		escapedSelectors.push( stringToHtmlId(selectors[i]) );
+	};
+	var cName = 'tree_sel_'+escapedSelectors.join('_');
+	return cName;
+};
+
+/**
  * Generates ids for each li elements given in argument, and sets them
  * accordingly. This functions assumes that all li elements are from the
  * same tree structure.
@@ -937,11 +952,18 @@ function refreshUlFromObject(o, selectors, $ul, opt) {
 		selectors.push(key);
 		
 		var id = computeId(uuid, selectors);
+		var cName = computeClass(selectors);
 		
 		// Find li corresponding to key
 		var $li = $ul.children('#'+id);
 		if( $li.length < 1 ) {
-			$li = $('<li id="'+id+'"><span class="treeKey">'+key+'</span></li>');
+			$li = $('<li>')
+				.attr('id',id)
+				.addClass('tree_sel '+cName);
+			$('<span>')
+				.addClass('treeKey')
+				.text(key)
+				.appendTo($li);
 			$li[0]['treeObjectKey'] = key;
 			$ul.append($li);
 		};
@@ -983,13 +1005,20 @@ function refreshUlFromArray(arr, selectors, $ul, opt) {
 		
 		selectors.push(key);
 		
-		var id = computeId(uuid, selectors);;
+		var id = computeId(uuid, selectors);
+		var cName = computeClass(selectors);
 		
 		// Find li based on id
 		var $li = $ul.children('#'+id);
 		if( $li.length < 1 ) {
 			// Must create
-			$li = $('<li id="'+id+'"><span class="treeKey">'+key+'</span></li>');
+			$li = $('<li>')
+				.attr('id',id)
+				.addClass('tree_sel '+cName);
+			$('<span>')
+				.addClass('treeKey')
+				.text(key)
+				.appendTo($li);
 			$li[0]['treeArrayIndex'] = key;
 			$ul.append($li);
 		};
@@ -1180,10 +1209,16 @@ var ObjectTree = $n2.Class({
 			);
 		this.obj = obj;
 
-		var $tree = createTreeFromObject($treeContainer, this.obj, this.options);
-
-		// Do not hold on to the tree directly
-		this.treeId = getTreeId($tree);
+		if( this.obj ) {
+			var $tree = createTreeFromObject($treeContainer, this.obj, this.options);
+	
+			// Do not hold on to the tree directly
+			this.treeId = getTreeId($tree);
+		} else {
+			// This is the case when an instance of ObjectTree is built based
+			// on an existing DOM strucure, not from an object.
+			this.treeId = $treeContainer.find('ul.tree').attr('id');
+		};
 	}
 
 	,getRoot: function() {
@@ -1209,6 +1244,15 @@ var ObjectTree = $n2.Class({
 		var $tree = this.getRoot();
 		if( $tree ) {
 			refreshTreeFromObject($tree, this.obj, this.options);
+		};
+	}
+	
+	,findLiFromSelectors: function(selectors){
+		var $tree = this.getRoot();
+		if( $tree ) {
+			return findLiFromSelectors($tree, selectors);
+		} else {
+			return null;
 		};
 	}
 });
