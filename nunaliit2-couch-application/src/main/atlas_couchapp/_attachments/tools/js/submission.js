@@ -610,6 +610,11 @@
 					currentPatch = patcher.computePatch(originalDoc, currentDoc);
 				};
 				
+				var collisionPatch = null;
+				if( originalDoc && submittedPatch && currentPatch ) {
+					collisionPatch = computeCollisionPatch(originalDoc, currentPatch, submittedPatch);
+				};
+				
 				var diagId = $n2.getUniqueId();
 				var $diag = $('<div>')
 					.attr('id',diagId)
@@ -633,7 +638,7 @@
 						.appendTo($currentOuter);
 					_this._addDocumentAccordion($currentDiv, currentDoc, true);
 					
-					// Open to selections
+					// Open to selections and highlight changes
 					var objectTree = new $n2.tree.ObjectTree($currentDiv, null);
 					highlightPatch(objectTree, submittedPatch, [], 0);
 				};
@@ -654,9 +659,10 @@
 					_this._addDocumentAccordion($submittedDiv, submittedDoc, true);
 				};
 				
-				// Highlight the changes
+				// Highlight the changes: removal and updates
 				var objectTree = new $n2.tree.ObjectTree($submittedDiv, null);
 				highlightPatch(objectTree, submittedPatch, [], 1);
+				highlightPatch(objectTree, collisionPatch, [], 2);
 				
 				if( submittedPatch ) {
 					var $deltaOuter = $('<div>')
@@ -782,6 +788,9 @@
 				});
 			};
 			
+			// level 0 is on current document (submitted patch)
+			// level 1 is on proposed document (submitted patch)
+			// level 2 is on proposed document (collision patch)
 			function highlightPatch(objectTree, patch, selectors, level){
 				if( $n2.isArray(patch) ) {
 					for(var key=0,e=patch.length; key<e; ++key){
@@ -803,6 +812,8 @@
 								$li.find('.treeValue').addClass('patchDeleted');
 							} else if( $li && level === 1 ){
 								$li.find('.treeValue').addClass('patchModified');
+							} else if( $li && level === 2 ){
+								$li.find('.treeValue').addClass('patchCollision');
 							};
 						};
 						
@@ -857,6 +868,8 @@
 									$li.find('.treeValue').addClass('patchDeleted');
 								} else if( $li && level === 1 ){
 									$li.find('.treeValue').addClass('patchModified');
+								} else if( $li && level === 2 ){
+									$li.find('.treeValue').addClass('patchCollision');
 								};
 							};
 							
@@ -864,6 +877,35 @@
 						};
 					};
 				};
+			};
+			
+			function computeCollisionPatch(originalDoc, currentPatch, submittedPatch){
+				var doc1 = $n2.extend(true,{},originalDoc);
+				patcher.applyPatch(doc1, currentPatch);
+				patcher.applyPatch(doc1, submittedPatch);
+				
+				var doc2 = $n2.extend(true,{},originalDoc);
+				patcher.applyPatch(doc2, submittedPatch);
+				patcher.applyPatch(doc2, currentPatch);
+
+				var collisionPatch = patcher.computePatch(doc1, doc2);
+				var effectivePatch = null;
+				if( collisionPatch ){
+					for(var key in collisionPatch){
+						if( key === '_rev' ) {
+							// ignore
+						} else if (  key === 'nunaliit_last_updated' ) {
+							// ignore
+						} else {
+							if( null === effectivePatch ){
+								effectivePatch = {};
+							};
+							effectivePatch[key] = collisionPatch[key];
+						};
+					};
+				};
+				
+				return effectivePatch;
 			};
 		}
 		
