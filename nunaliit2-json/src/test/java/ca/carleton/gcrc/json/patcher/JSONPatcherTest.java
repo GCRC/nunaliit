@@ -142,6 +142,12 @@ public class JSONPatcherTest extends TestCase {
 		performTest("{\"a\":true}","{\"a\":[0,1]}");
 	}
 	
+	public void testReservedKeys() throws Exception {
+		performTest("{\"_rev\":\"1-1234\"}","{\"_rev\":\"2-2345\"}");
+		performTest("{\"_r\":\"abc\"}","{\"_r\":\"def\"}");
+		performTest("{\"_s\":1}","{\"_s\":2}");
+	}
+	
 	private void performTest(String prevStr, String nextStr) throws Exception {
 		JSONObject prev = new JSONObject(prevStr);
 		JSONObject next = new JSONObject(nextStr);

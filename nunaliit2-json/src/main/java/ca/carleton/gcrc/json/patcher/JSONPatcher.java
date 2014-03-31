@@ -212,19 +212,28 @@ public class JSONPatcher {
 				}
 				
 				if( null != subPatch ) {
-					patch.put(key, subPatch);
+					String effectiveKey = key;
+					if( key.length() > 0 && key.charAt(0) == '_' ){
+						effectiveKey = "_" + key;
+					}
+					patch.put(effectiveKey, subPatch);
 					
 				} else if( shouldBeReplaced ) {
+					String effectiveKey = key;
+					if( key.length() > 0 && key.charAt(0) == '_' ){
+						effectiveKey = "_" + key;
+					}
+
 					if( nextElem instanceof JSONObject ){
 						JSONObject c = JSONSupport.copyObject((JSONObject)nextElem);
-						patch.put(key, c);
+						patch.put(effectiveKey, c);
 						
 					} else if( nextElem instanceof JSONArray ){
 						JSONArray c = JSONSupport.copyArray((JSONArray)nextElem);
-						patch.put(key, c);
+						patch.put(effectiveKey, c);
 
 					} else {
-						patch.put(key, nextElem);
+						patch.put(effectiveKey, nextElem);
 					}
 				}
 			}
