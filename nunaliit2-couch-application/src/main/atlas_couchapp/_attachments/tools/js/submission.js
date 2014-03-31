@@ -242,24 +242,29 @@
 				var $entry = $(this)
 					.empty();
 				
-				var original_info = null;
+				var original_reserved = null;
 				if( subDoc.nunaliit_submission ){
-					original_info = subDoc.nunaliit_submission.original_info;
+					original_reserved = subDoc.nunaliit_submission.original_reserved;
 				};
 				
 				var $info = $('<div class="submission_info">')
 					.appendTo($entry);
 				addKeyValue($info, _loc('Submission Id'), subDocId);
-				if( original_info ){
-					addKeyValue($info, _loc('Original Id'), original_info.id);
+				if( original_reserved ){
+					addKeyValue($info, _loc('Original Id'), original_reserved.id);
 					
 					var type = _loc('update');
 					if( subDoc.nunaliit_submission.deletion ) {
 						type = _loc('deletion');
-					} else if( !original_info.rev ) {
+					} else if( !original_reserved.rev ) {
 						type = _loc('creation');
 					};
 					addKeyValue($info, _loc('Submission Type'), type);
+				};
+				
+				if( subDoc.nunaliit_submission 
+				 && subDoc.nunaliit_submission.state ){
+					addKeyValue($info, _loc('Submission State'), subDoc.nunaliit_submission.state);
 				};
 
 				var $views = $('<div class="submission_views">')
@@ -302,8 +307,48 @@
 			};
 		}
 
-		,_approve: function(subDocId){
-			this._updateSubmissionState(subDocId, 'approved');
+		,_approve: function(subDocId, approvedDoc){
+			if( !approvedDoc ) {
+				this._updateSubmissionState(subDocId, 'approved');
+			} else {
+				var _this = this;
+				
+				this._getSubmissionDocument({
+					subDocId: subDocId
+					,onSuccess: function(subDoc){
+						subDoc.nunaliit_submission.state = 'approved';
+						
+						if( approvedDoc ){
+							subDoc.nunaliit_submission.approved_doc = {};
+							subDoc.nunaliit_submission.approved_reserved = {};
+							for(var key in approvedDoc){
+								if( key.length > 0 && key[0] === '_' ) {
+									var effectiveKey = key.substr(1);
+									subDoc.nunaliit_submission.approved_reserved[effectiveKey] =
+										approvedDoc[key];
+								} else {
+									subDoc.nunaliit_submission.approved_doc[key] =
+										approvedDoc[key];
+								};
+							};
+						};
+						
+						_this.submissionDb.updateDocument({
+							data: subDoc
+							,onSuccess: function(docInfo){
+								_this.logger.log( _loc('Submision approved') );
+								_this._refreshSubmissions();
+							}
+							,onError: function(err){ 
+								_this.logger.error( _loc('Unable to update submision document: {err}',{err:err}) ); 
+							}
+						});
+					}
+					,onError: function(err){
+						_this.logger.error( _loc('Unable to obtain submision document: {err}',{err:err}) ); 
+					}
+				});
+			};
 		}
 
 		,_deny: function(subDocId){
@@ -320,7 +365,7 @@
 					_this.submissionDb.updateDocument({
 						data: subDoc
 						,onSuccess: function(docInfo){
-							_this.logger.log( _loc('Submision approved') );
+							_this.logger.log( _loc('Submision changed state to: '+newState) );
 							_this._refreshSubmissions();
 						}
 						,onError: function(err){ 
@@ -377,15 +422,15 @@
 			function subDocLoaded(subDoc){
 				var doc = {};
 				if( subDoc.nunaliit_submission ){
-					if( subDoc.nunaliit_submission.reserved ){
-						for(var key in subDoc.nunaliit_submission.reserved){
-							var value = subDoc.nunaliit_submission.reserved[key];
+					if( subDoc.nunaliit_submission.submitted_reserved ){
+						for(var key in subDoc.nunaliit_submission.submitted_reserved){
+							var value = subDoc.nunaliit_submission.submitted_reserved[key];
 							doc['_'+key] = value;
 						};
 					};
-					if( subDoc.nunaliit_submission.doc ){
-						for(var key in subDoc.nunaliit_submission.doc){
-							var value = subDoc.nunaliit_submission.doc[key];
+					if( subDoc.nunaliit_submission.submitted_doc ){
+						for(var key in subDoc.nunaliit_submission.submitted_doc){
+							var value = subDoc.nunaliit_submission.submitted_doc[key];
 							doc[key] = value;
 						};
 					};
@@ -416,11 +461,11 @@
 			
 			function subDocLoaded(subDoc){
 				if( subDoc.nunaliit_submission
-				 && subDoc.nunaliit_submission.original_info
-				 && subDoc.nunaliit_submission.original_info.id ){
-					if( subDoc.nunaliit_submission.original_info.rev ) {
-						var docId = subDoc.nunaliit_submission.original_info.id;
-						var rev = subDoc.nunaliit_submission.original_info.rev;
+				 && subDoc.nunaliit_submission.original_reserved
+				 && subDoc.nunaliit_submission.original_reserved.id ){
+					if( subDoc.nunaliit_submission.original_reserved.rev ) {
+						var docId = subDoc.nunaliit_submission.original_reserved.id;
+						var rev = subDoc.nunaliit_submission.original_reserved.rev;
 						_this.atlasDb.getDocument({
 							docId: docId
 							,rev: rev
@@ -460,10 +505,10 @@
 			
 			function subDocLoaded(subDoc){
 				if( subDoc.nunaliit_submission
-				 && subDoc.nunaliit_submission.original_info
-				 && subDoc.nunaliit_submission.original_info.id ){
-					if( subDoc.nunaliit_submission.original_info.rev ) {
-						var docId = subDoc.nunaliit_submission.original_info.id;
+				 && subDoc.nunaliit_submission.original_reserved
+				 && subDoc.nunaliit_submission.original_reserved.id ){
+					if( subDoc.nunaliit_submission.original_reserved.rev ) {
+						var docId = subDoc.nunaliit_submission.original_reserved.id;
 						_this.atlasDb.getDocument({
 							docId: docId
 							,onSuccess: function(doc){
@@ -615,6 +660,12 @@
 					collisionPatch = computeCollisionPatch(originalDoc, currentPatch, submittedPatch);
 				};
 				
+				var proposedDoc = submittedDoc;
+				if( submittedPatch && currentDoc ) {
+					var proposedDoc = $n2.extend(true,{},currentDoc);
+					patcher.applyPatch(proposedDoc, submittedPatch);
+				};
+				
 				var diagId = $n2.getUniqueId();
 				var $diag = $('<div>')
 					.attr('id',diagId)
@@ -656,7 +707,7 @@
 				if( subDoc.nunaliit_submission.deletion ) {
 					$submittedDiv.text( _loc('Delete document') );
 				} else {
-					_this._addDocumentAccordion($submittedDiv, submittedDoc, true);
+					_this._addDocumentAccordion($submittedDiv, proposedDoc, true);
 				};
 				
 				// Highlight the changes: removal and updates
@@ -686,7 +737,7 @@
 					.text( _loc('Approve') )
 					.appendTo($buttons)
 					.click(function(){
-						_this._approve(subDocId);
+						_this._approve(subDocId, proposedDoc);
 						var $diag = $('#'+diagId);
 						$diag.dialog('close');
 						return false;

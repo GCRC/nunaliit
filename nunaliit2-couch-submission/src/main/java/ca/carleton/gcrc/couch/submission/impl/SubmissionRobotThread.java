@@ -143,11 +143,11 @@ public class SubmissionRobotThread extends Thread {
 		// Get document id
 		String docId = submissionDoc
 			.getJSONObject("nunaliit_submission")
-			.getJSONObject("original_info")
+			.getJSONObject("original_reserved")
 			.getString("id");
 		String revision = submissionDoc
 			.getJSONObject("nunaliit_submission")
-			.getJSONObject("original_info")
+			.getJSONObject("original_reserved")
 			.optString("rev",null);
 		
 		// Get document in document database
@@ -224,22 +224,18 @@ public class SubmissionRobotThread extends Thread {
 		}
 	}
 
-	public void performApprovedWork(JSONObject submissionDoc, JSONObject targetDoc) throws Exception {
+	public void performApprovedWork(JSONObject submissionDoc, JSONObject currentDoc) throws Exception {
 		String docId = submissionDoc
 			.getJSONObject("nunaliit_submission")
-			.getJSONObject("original_info")
+			.getJSONObject("original_reserved")
 			.getString("id");
-		String submitVersion = submissionDoc
-			.getJSONObject("nunaliit_submission")
-			.getJSONObject("original_info")
-			.optString("rev",null);
 		boolean isDeletion = submissionDoc
 			.getJSONObject("nunaliit_submission")
 			.optBoolean("deletion",false);
 		
-		if( null == targetDoc ) {
+		if( null == currentDoc ) {
 			// New document. Create.
-			JSONObject originalDoc = SubmissionUtils.getOriginalSubmission(submissionDoc);
+			JSONObject originalDoc = SubmissionUtils.getApprovedDocumentFromSubmission(submissionDoc);
 			
 			CouchDb targetDb = documentDbDesignDocument.getDatabase();
 			targetDb.createDocument(originalDoc);
@@ -260,14 +256,16 @@ public class SubmissionRobotThread extends Thread {
 			submissionDb.updateDocument(submissionDoc);
 			
 		} else {
-			String targetVersion = targetDoc.getString("_rev");
-			JSONObject originalDoc = SubmissionUtils.getOriginalSubmission(submissionDoc);
+			String currentVersion = currentDoc.getString("_rev");
 			
-			if( targetVersion.equals(submitVersion) ) {
-				// No changes since submission. Simply update the document
+			JSONObject approvedDoc = SubmissionUtils.getApprovedDocumentFromSubmission(submissionDoc);
+			String approvedVersion = approvedDoc.optString("_rev",null);
+			
+			if( currentVersion.equals(approvedVersion) ) {
+				// No changes since approval. Simply update the document
 				// database.
 				CouchDb targetDb = documentDbDesignDocument.getDatabase();
-				targetDb.updateDocument(originalDoc);
+				targetDb.updateDocument(approvedDoc);
 				
 				CouchDb submissionDb = submissionDbDesignDocument.getDatabase();
 				submissionDoc.getJSONObject("nunaliit_submission")
@@ -277,12 +275,12 @@ public class SubmissionRobotThread extends Thread {
 				// Get document that the changes were made against
 				CouchDb couchDb = documentDbDesignDocument.getDatabase();
 				CouchDocumentOptions options = new CouchDocumentOptions();
-				options.setRevision(submitVersion);
+				options.setRevision(approvedVersion);
 				JSONObject rootDoc = couchDb.getDocument(docId, options);
 				
 				// Compute patch from submission
-				JSONObject submissionPatch = JSONPatcher.computePatch(rootDoc, originalDoc);
-				JSONObject databasePatch = JSONPatcher.computePatch(rootDoc, targetDoc);
+				JSONObject submissionPatch = JSONPatcher.computePatch(rootDoc, approvedDoc);
+				JSONObject databasePatch = JSONPatcher.computePatch(rootDoc, currentDoc);
 				
 				// Detect collision. Apply patches in different order, if result
 				// is same, then no collision
@@ -294,6 +292,10 @@ public class SubmissionRobotThread extends Thread {
 				JSONPatcher.applyPatch(doc2, submissionPatch);
 				if( 0 == JSONSupport.compare(doc1, doc2) ) {
 					// No collision
+					logger.error("rootDoc: "+rootDoc);
+					logger.error("submissionPatch: "+submissionPatch);
+					logger.error("databasePatch: "+databasePatch);
+					logger.error("no collision: "+doc1);
 					CouchDb targetDb = documentDbDesignDocument.getDatabase();
 					targetDb.updateDocument(doc1);
 					

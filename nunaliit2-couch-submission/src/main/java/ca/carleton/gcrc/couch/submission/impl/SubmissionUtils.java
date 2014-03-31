@@ -15,25 +15,61 @@ public class SubmissionUtils {
 	 * @param submissionDoc Submission document from the submission database
 	 * @return Document submitted by user for update
 	 */
-	static public JSONObject getOriginalSubmission(JSONObject submissionDoc) throws Exception {
+	static public JSONObject getSubmittedDocumentFromSubmission(JSONObject submissionDoc) throws Exception {
 		JSONObject submissionInfo = submissionDoc.getJSONObject("nunaliit_submission");
 		
-		JSONObject originalDoc = JSONSupport.copyObject( submissionInfo.getJSONObject("doc") );
+		JSONObject doc = submissionInfo.getJSONObject("submitted_doc");
+		JSONObject reserved = submissionInfo.optJSONObject("submitted_reserved");
+		
+		return recreateDocumentFromDocAndReserved(doc, reserved);
+	}
+
+	/**
+	 * Re-creates the approved document submitted by the client from
+	 * the submission document.
+	 * @param submissionDoc Submission document from the submission database
+	 * @return Document submitted by user for update
+	 */
+	static public JSONObject getApprovedDocumentFromSubmission(JSONObject submissionDoc) throws Exception {
+		JSONObject submissionInfo = submissionDoc.getJSONObject("nunaliit_submission");
+
+		// Check if an approved version of the document is available
+		JSONObject doc = submissionInfo.optJSONObject("approved_doc");
+		if( null != doc ) {
+			JSONObject reserved = submissionInfo.optJSONObject("approved_reserved");
+			return recreateDocumentFromDocAndReserved(doc, reserved);
+		} else {
+			// Use submission
+			doc = submissionInfo.getJSONObject("submitted_doc");
+			JSONObject reserved = submissionInfo.optJSONObject("submitted_reserved");
+			return recreateDocumentFromDocAndReserved(doc, reserved);
+		}
+	}
+	
+	/**
+	 * Re-creates a document given the document and the reserved keys.
+	 * @param doc Main document
+	 * @param reserved Document that contains reserved keys. A reserve key starts with an underscore. In this document,
+	 * the reserved keys do not have the starting underscore.
+	 * @return
+	 * @throws Exception
+	 */
+	static public JSONObject recreateDocumentFromDocAndReserved(JSONObject doc, JSONObject reserved) throws Exception {
+		JSONObject result = JSONSupport.copyObject( doc );
 		
 		// Re-insert attributes that start with '_'
-		JSONObject info = submissionInfo.optJSONObject("reserved");
-		if( null != info ) {
-			Iterator<?> it = info.keys();
+		if( null != reserved ) {
+			Iterator<?> it = reserved.keys();
 			while( it.hasNext() ){
 				Object keyObj = it.next();
 				if( keyObj instanceof String ){
 					String key = (String)keyObj;
-					Object value = info.opt(key);
-					originalDoc.put("_"+key, value);
+					Object value = reserved.opt(key);
+					result.put("_"+key, value);
 				}
 			}
 		}
 		
-		return originalDoc;
+		return result;
 	}
 }

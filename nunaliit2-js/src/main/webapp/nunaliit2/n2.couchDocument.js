@@ -718,11 +718,11 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 			var request = {
 				nunaliit_type: 'document_submission'
 				,nunaliit_submission: {
-					original_info: {
+					original_reserved: {
 						id: docId
 					}
-					,doc: copy
-					,reserved: reserved
+					,submitted_doc: copy
+					,submitted_reserved: reserved
 				}
 			};
 
@@ -774,12 +774,12 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 		var request = {
 			nunaliit_type: 'document_submission'
 			,nunaliit_submission: {
-				original_info: {
+				original_reserved: {
 					id: doc._id
 					,rev: doc._rev
 				}
-				,doc: copy
-				,reserved: reserved
+				,submitted_doc: copy
+				,submitted_reserved: reserved
 			}
 		};
 
@@ -827,13 +827,13 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 		var request = {
 			nunaliit_type: 'document_submission'
 			,nunaliit_submission: {
-				original_info: {
+				original_reserved: {
 					id: doc._id
 					,rev: doc._rev
 				}
 				,deletion: true
-				,doc: copy
-				,reserved: reserved
+				,submitted_doc: copy
+				,submitted_reserved: reserved
 			}
 		};
 
