@@ -153,6 +153,30 @@ function(newDoc, oldDoc, userCtxt) {
 				throw( {forbidden: 'Submission document can be modified only by vetters'} );
 			};
 			
+			// Verify structure of submitted document
+			if( newDoc.nunaliit_submission.submitted_doc
+			 || newDoc.nunaliit_submission.submitted_reserved ) {
+				var checkDoc = getDocumentFromSplits(
+					newDoc.nunaliit_submission.submitted_doc
+					,newDoc.nunaliit_submission.submitted_reserved
+					);
+				n2utils.validateDocumentStructure(checkDoc,function(msg){
+					throw( {forbidden: 'Submitted Document: '+msg} );
+				});
+			};
+
+			// Verify structure of approved document
+			if( newDoc.nunaliit_submission.approved_doc
+			 || newDoc.nunaliit_submission.approved_reserved ) {
+				var checkDoc = getDocumentFromSplits(
+					newDoc.nunaliit_submission.approved_doc
+					,newDoc.nunaliit_submission.approved_reserved
+					);
+				n2utils.validateDocumentStructure(checkDoc,function(msg){
+					throw( {forbidden: 'Approved Document: '+msg} );
+				});
+			};
+			
 		} else {
 			throw( {forbidden: 'This document is not allowed in the submission database'} );
 		};
@@ -284,5 +308,25 @@ function(newDoc, oldDoc, userCtxt) {
 		};
 		
 		return role;
+	};
+	
+	function getDocumentFromSplits(doc, reserved){
+		var result = {};
+		
+		if( doc ){
+			for(var key in doc){
+				var value = doc[key];
+				result[key] = value;
+			};
+		};
+		
+		if( reserved ){
+			for(var key in reserved){
+				var value = reserved[key];
+				result['_'+key] = value;
+			};
+		};
+		
+		return result;
 	};
 }
