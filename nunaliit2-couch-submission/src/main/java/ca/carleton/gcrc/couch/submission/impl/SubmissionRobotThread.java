@@ -15,6 +15,7 @@ import ca.carleton.gcrc.couch.client.CouchQuery;
 import ca.carleton.gcrc.couch.client.CouchQueryResults;
 import ca.carleton.gcrc.couch.client.CouchUserDb;
 import ca.carleton.gcrc.couch.client.CouchUserDocContext;
+import ca.carleton.gcrc.couch.submission.SubmissionRobotSettings;
 import ca.carleton.gcrc.json.JSONSupport;
 import ca.carleton.gcrc.json.patcher.JSONPatcher;
 
@@ -27,15 +28,18 @@ public class SubmissionRobotThread extends Thread {
 	private CouchDesignDocument documentDbDesignDocument;
 	private CouchUserDb userDb;
 	private Set<String> docIdsToSkip = new HashSet<String>();
+	private String adminRole = "administrator";
+	private String vetterRole = "vetter";
 	
-	public SubmissionRobotThread(
-			CouchDesignDocument submissionDbDesignDocument
-			,CouchDesignDocument documentDbDesignDocument
-			,CouchUserDb userDb
-		) {
-		this.submissionDbDesignDocument = submissionDbDesignDocument;
-		this.documentDbDesignDocument = documentDbDesignDocument;
-		this.userDb = userDb;
+	public SubmissionRobotThread(SubmissionRobotSettings settings) {
+		this.submissionDbDesignDocument = settings.getSubmissionDesignDocument();
+		this.documentDbDesignDocument = settings.getDocumentDesignDocument();
+		this.userDb = settings.getUserDb();
+		
+		if( null != settings.getAtlasName() ){
+			adminRole = settings.getAtlasName() + "_administrator";
+			vetterRole = settings.getAtlasName() + "_vetter";
+		}
 	}
 	
 	public void shutdown() {
@@ -205,6 +209,15 @@ public class SubmissionRobotThread extends Thread {
 					approved = true;
 					break;
 				} else if( "administrator".equals(role) ){
+					approved = true;
+					break;
+				} else if( "vetter".equals(role) ){
+					approved = true;
+					break;
+				} else if( adminRole.equals(role) ){
+					approved = true;
+					break;
+				} else if( vetterRole.equals(role) ){
 					approved = true;
 					break;
 				}

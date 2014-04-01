@@ -718,7 +718,8 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 			var request = {
 				nunaliit_type: 'document_submission'
 				,nunaliit_submission: {
-					original_reserved: {
+					state: 'submitted'
+					,original_reserved: {
 						id: docId
 					}
 					,submitted_doc: copy
@@ -774,7 +775,8 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 		var request = {
 			nunaliit_type: 'document_submission'
 			,nunaliit_submission: {
-				original_reserved: {
+				state: 'submitted'
+				,original_reserved: {
 					id: doc._id
 					,rev: doc._rev
 				}
@@ -827,7 +829,8 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 		var request = {
 			nunaliit_type: 'document_submission'
 			,nunaliit_submission: {
-				original_reserved: {
+				state: 'submitted'
+				,original_reserved: {
 					id: doc._id
 					,rev: doc._rev
 				}

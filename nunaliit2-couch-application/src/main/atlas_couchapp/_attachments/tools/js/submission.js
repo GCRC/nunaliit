@@ -317,6 +317,7 @@
 					subDocId: subDocId
 					,onSuccess: function(subDoc){
 						subDoc.nunaliit_submission.state = 'approved';
+						$n2.couchMap.adjustDocument(subDoc);
 						
 						if( approvedDoc ){
 							subDoc.nunaliit_submission.approved_doc = {};
@@ -362,6 +363,8 @@
 				subDocId: subDocId
 				,onSuccess: function(subDoc){
 					subDoc.nunaliit_submission.state = newState;
+					$n2.couchMap.adjustDocument(subDoc);
+
 					_this.submissionDb.updateDocument({
 						data: subDoc
 						,onSuccess: function(docInfo){

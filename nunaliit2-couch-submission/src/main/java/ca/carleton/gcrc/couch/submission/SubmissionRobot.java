@@ -7,57 +7,27 @@ import ca.carleton.gcrc.couch.submission.impl.SubmissionRobotThread;
 public class SubmissionRobot {
 	
 	private SubmissionRobotThread workerThread = null;
-	private CouchDesignDocument submissionDesignDocument = null;
-	private CouchDesignDocument documentDesignDocument = null;
-	private CouchUserDb userDb = null;
+	private SubmissionRobotSettings settings = null;
 
-	public SubmissionRobot(){
-	}
-
-	public CouchDesignDocument getSubmissionDesignDocument() {
-		return submissionDesignDocument;
-	}
-
-	public void setSubmissionDesignDocument(
-			CouchDesignDocument submissionDesignDocument) {
-		this.submissionDesignDocument = submissionDesignDocument;
-	}
-
-	public CouchDesignDocument getDocumentDesignDocument() {
-		return documentDesignDocument;
-	}
-
-	public void setDocumentDesignDocument(CouchDesignDocument documentDesignDocument) {
-		this.documentDesignDocument = documentDesignDocument;
-	}
-
-	public CouchUserDb getUserDb() {
-		return userDb;
-	}
-
-	public void setUserDb(CouchUserDb userDb) {
-		this.userDb = userDb;
+	public SubmissionRobot(SubmissionRobotSettings settings){
+		this.settings = settings;
 	}
 	
 	synchronized public void start() throws Exception {
-		if( null == submissionDesignDocument ) {
+		if( null == settings.getSubmissionDesignDocument() ) {
 			throw new Exception("Submission DB design document must be specified for submission worker");
 		}
-		if( null == documentDesignDocument ) {
+		if( null == settings.getDocumentDesignDocument() ) {
 			throw new Exception("Document DB design document must be specified for submission worker");
 		}
-		if( null == userDb ) {
+		if( null == settings.getUserDb() ) {
 			throw new Exception("User DB must be specified for submission worker");
 		}
 		if( null != workerThread ) {
 			// Already started
 			return;
 		}
-		workerThread = new SubmissionRobotThread(
-				submissionDesignDocument
-				,documentDesignDocument
-				,userDb
-				);
+		workerThread = new SubmissionRobotThread(settings);
 		workerThread.start();
 	}
 	

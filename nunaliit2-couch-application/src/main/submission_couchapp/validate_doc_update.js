@@ -22,7 +22,8 @@ function(newDoc, oldDoc, userCtxt) {
 	// Validate new documents and updates submitted to database...
 	if( !userCtxt ) {
 		throw( {forbidden: 'Database submissions required a user context'} );
-	}
+	};
+	
 	if( userInfo.admin ) {
 		// system admin is allowed anything
 	} else if( userInfo.atlas[n2atlas.name] 
@@ -34,13 +35,13 @@ function(newDoc, oldDoc, userCtxt) {
 	} else if( n2atlas.restricted 
 	 && null == userInfo.atlas[n2atlas.name] ) {
 		throw( {forbidden: 'Database submissions are restricted to users associated with database'} );
-	} else if( n2atlas.submissionDbEnabled ) {
-		throw( {forbidden: 'Database submissions must be performed via the submission database'} );
 	} else {
+		// Regular access validation
+		
 		var userName = userCtxt.name;
-
-		// Validate the document structure
-		n2utils.validateDocumentStructure(newDoc, function(msg){
+		
+		// Verify document structure
+		n2utils.validateDocumentStructure(newDoc,function(msg){
 			throw( {forbidden: msg} );
 		});
 		
@@ -49,32 +50,27 @@ function(newDoc, oldDoc, userCtxt) {
 		var denyAction = false;
 		var vettingAction = false;
 		if( newDoc
-		 && newDoc.nunaliit_attachments
-		 && newDoc.nunaliit_attachments.files ) {
-			var newFiles = newDoc.nunaliit_attachments.files;
-			for(var attachmentName in newFiles) {
-				var newFile = newFiles[attachmentName];
-				var newStatus = newFile.status;
+		 && newDoc.nunaliit_submission ) {
+			var newStatus = newDoc.nunaliit_submission.state;
+			
+			var oldStatus = getSubmissionState(oldDoc);
+			
+			if( newStatus === 'approved' && newStatus !== oldStatus ) {
+				approveAction = true;
+				vettingAction = true;
 				
-				var oldStatus = getFileStatus(oldDoc, attachmentName);
-				
-				if( newStatus === 'approved' && newStatus !== oldStatus ) {
-					approveAction = true;
-					vettingAction = true;
-					
-				} else if( newStatus === 'denied' && newStatus !== oldStatus ) {
-					denyAction = true;
-					vettingAction = true;
-				};
+			} else if( newStatus === 'denied' && newStatus !== oldStatus ) {
+				denyAction = true;
+				vettingAction = true;
 			};
 			
 			if( approveAction ) {
-				// Requires a special role to approve file uploads
+				// Requires a special role to approve submission
 				if( userInfo.atlas[n2atlas.name] 
 				 && userInfo.atlas[n2atlas.name].vetter ) {
 					// vetter is allowed any approvals
 				} else {
-					throw( {forbidden: 'Upload approval reserved to special role: vetter'} );
+					throw( {forbidden: 'Submission approval reserved to special role: vetter'} );
 				};
 			};
 			
@@ -84,7 +80,7 @@ function(newDoc, oldDoc, userCtxt) {
 				 && userInfo.atlas[n2atlas.name].vetter ) {
 					// vetter is allowed any denials
 				} else {
-					throw( {forbidden: 'Upload denial reserved to special role: vetter'} );
+					throw( {forbidden: 'Submission denial reserved to special role: vetter'} );
 				};
 			};
 		};
@@ -94,10 +90,10 @@ function(newDoc, oldDoc, userCtxt) {
 			// New document must have a creator name
 			if( typeof(newDoc.nunaliit_created) !== 'object' ) {
 				throw( {forbidden: 'New documents require a "nunaliit_created" object'} );
-			}
+			};
 			if( newDoc.nunaliit_created.name != userName ) {
 				throw( {forbidden: '"nunaliit_created.name" string must match user submitting document'} );
-			}
+			};
 			
 		// Process document deletion	
 		} else if( newDoc._deleted ) {
@@ -114,16 +110,14 @@ function(newDoc, oldDoc, userCtxt) {
 			if( typeof(oldDoc.nunaliit_created) === 'object' 
 			 && typeof(oldDoc.nunaliit_created.name) === 'string' ) {
 				// Perform verification only when old object has required information
-				if( ! newDoc.nunaliit_created ) {
+				if( typeof(newDoc.nunaliit_created) !== 'object' ) {
 					throw( {forbidden: 'Updated documents require a "nunaliit_created" object'} );
-				}
+				};
 				if( newDoc.nunaliit_created.name != oldDoc.nunaliit_created.name ) {
 					throw( {forbidden: '"nunaliit_created.name" can not change on an update'} );
-				}
-			}
+				};
+			};
 
-			// Updates are allowed to the original user or if a vetter
-			// performs a vetting action
 			if( typeof(oldDoc.nunaliit_created) === 'object' 
 			 && typeof(oldDoc.nunaliit_created.name) === 'string' 
 			 && oldDoc.nunaliit_created.name === userName ) {
@@ -146,140 +140,34 @@ function(newDoc, oldDoc, userCtxt) {
 			};
 		};
 		
-		// Verify layers addition and removals
-		{
-			var oldDocLayers = {};
-			var newDocLayers = {};
-			if( oldDoc && oldDoc.nunaliit_layers ) {
-				for(var i=0,e=oldDoc.nunaliit_layers.length; i<e; ++i) {
-					oldDocLayers[ oldDoc.nunaliit_layers[i] ] = 1;
-				};
+		// Verify type of documents
+		if( newDoc.nunaliit_submission ) {
+			// Submission documents
+			if( newDoc._deleted ){
+				throw( {forbidden: 'Not allowed to delete submission documents'} );
+			} else if ( !oldDoc ) {
+				// New document: OK
+			} else if( vettingAction ){
+				// OK
+			} else {
+				throw( {forbidden: 'Submission document can be modified only by vetters'} );
 			};
-			if( newDoc._deleted ) {
-				// deleting an object is like removing all layers
-				// Do not put any layers in the new set
-			} else if( newDoc.nunaliit_layers ) {
-				for(var i=0,e=newDoc.nunaliit_layers.length; i<e; ++i) {
-					newDocLayers[ newDoc.nunaliit_layers[i] ] = 1;
-				};
-			};
-			// Figure out added
-			var addedLayers = [];
-			for(var layerName in newDocLayers) {
-				if( !oldDocLayers[layerName] ) {
-					addedLayers.push(layerName);
-				};
-			};
-			// Figure out deleted
-			var deletedLayers = [];
-			for(var layerName in oldDocLayers) {
-				if( !newDocLayers[layerName] ) {
-					deletedLayers.push(layerName);
-				};
-			};
-			// Must have appropriate role to delete/add to layer
-			for(var i=0,e=addedLayers.length; i<e; ++i) {
-				var layerName = addedLayers[i];
-				var isPublic = isLayerNamePublic(layerName);
-				if( !isPublic ) {
-					// Exception for public layer
-					if( userInfo.atlas[n2atlas.name] 
-					 && userInfo.atlas[n2atlas.name].layers.indexOf(layerName) >= 0 ) {
-						// OK
-					} else {
-						var expectedRole = '' + n2atlas.name + '_layer_' + layerName;
-						throw( {forbidden: 'Adding feature to layer "'+layerName+'" requires role: '+expectedRole} );
-					};
-				};
-			};
-			for(var i=0,e=deletedLayers.length; i<e; ++i) {
-				var layerName = deletedLayers[i];
-				var isPublic = isLayerNamePublic(layerName);
-				if( !isPublic ) {
-					// Exception for public layer
-					if( userInfo.atlas[n2atlas.name] 
-					 && userInfo.atlas[n2atlas.name].layers.indexOf(layerName) >= 0 ) {
-						// OK
-					} else {
-						var expectedRole = '' + n2atlas.name + '_layer_' + layerName;
-						throw( {forbidden: 'Deleting feature from layer "'+layerName+'" requires role: '+expectedRole} );
-					};
-				};
-			};
+			
+		} else {
+			throw( {forbidden: 'This document is not allowed in the submission database'} );
 		};
-		
-		// Verify attachment submitters
-		verifyAttachmentSubmitters();
 	};
 	
-	function arrayContains(arr, obj) {
-		return( arr.indexOf(obj) !== -1 );
-	};
-
-	function getFileStatus(doc, fileName) {
+	function getSubmissionState(doc) {
 		var status = null;
 		
 		if( doc
-		 && doc.nunaliit_attachments
-		 && doc.nunaliit_attachments.files
-		 && doc.nunaliit_attachments.files[fileName]
-		 && doc.nunaliit_attachments.files[fileName].status ) {
-			status = doc.nunaliit_attachments.files[fileName].status;
+		 && doc.nunaliit_submission
+		 && doc.nunaliit_submission.state ) {
+			status = doc.nunaliit_submission.state;
 		}
 		
 		return status;
-	};
-	
-	function verifyAttachmentSubmitters(){
-		var oldSubmitters = {};
-		var newSubmitters = {};
-		
-		// Accumulate users for attachment in old document
-		if( oldDoc
-		 && oldDoc.nunaliit_attachments
-		 && oldDoc.nunaliit_attachments.files
-		 ) {
-			for(var fileName in oldDoc.nunaliit_attachments.files){
-				var file = oldDoc.nunaliit_attachments.files[fileName];
-				if( file.submitter ) {
-					oldSubmitters[fileName] = file.submitter;
-				};
-			};
-		};
-		
-		// Accumulate users for attachment in old document
-		if( newDoc
-		 && newDoc.nunaliit_attachments
-		 && newDoc.nunaliit_attachments.files
-		 ) {
-			for(var fileName in newDoc.nunaliit_attachments.files){
-				var file = newDoc.nunaliit_attachments.files[fileName];
-				if( file.submitter ) {
-					newSubmitters[fileName] = file.submitter;
-				};
-			};
-		};
-
-		// A user can be added to an attachment only once and then it must remain
-		// unchanged. User can be set only to be equal to the current user.
-		for(var fileName in newSubmitters){
-			if( typeof(oldSubmitters[fileName]) === 'undefined' ) {
-				// Adding a new attachment. The submitter must be set to
-				// the current user context
-				if( newSubmitters[fileName] === userCtxt.name ) {
-					// OK
-				} else {
-					throw( {forbidden: 'Submitter property associated with an attachment must be set to current user'} );
-				};
-			} else if( oldSubmitters[fileName] === newSubmitters[fileName] ) {
-				// OK, submitter not changed
-			} else {
-				// Attempting to change the submitter after file was attached.
-				// Forbidden
-				throw( {forbidden: 'Submitter property can not be changed after an attachment is created.'} );
-			};
-		};
-		
 	};
 	
 	// Take an array of roles and accumulate information about them
@@ -396,11 +284,5 @@ function(newDoc, oldDoc, userCtxt) {
 		};
 		
 		return role;
-	};
-	
-	function isLayerNamePublic(layerId){
-		if( layerId === publicLayerName ) return true;
-		if( layerId.substr(0,publicLayerPrefix.length) === publicLayerPrefix ) return true;
-		return false;
 	};
 }

@@ -184,14 +184,7 @@ public class CommandUpdate implements Command {
 				StringWriter sw = new StringWriter();
 				PrintWriter pw = new PrintWriter(sw);
 				
-				pw.println("var n2atlas = {");
-				pw.println("\tname: \""+atlasProperties.getAtlasName()+"\"");
-				pw.println("\t,restricted: "+atlasProperties.isRestricted());
-				pw.println("};");
-				pw.println("if( typeof(exports) === 'object' ) {");
-				pw.println("\texports.name = n2atlas.name;");
-				pw.println("\texports.restricted = n2atlas.restricted;");
-				pw.println("};");
+				printAtlasVendorFile(pw, atlasProperties);
 				
 				FSEntry f = FSEntryBuffer.getPositionedBuffer("a/vendor/nunaliit2/atlas.js", sw.toString());
 				mergedEntries.add(f);
@@ -273,18 +266,7 @@ public class CommandUpdate implements Command {
 				StringWriter sw = new StringWriter();
 				PrintWriter pw = new PrintWriter(sw);
 				
-				pw.println("var n2atlas = {");
-				pw.println("\tname: \""+atlasProperties.getAtlasName()+"\"");
-				pw.println("\t,restricted: "+atlasProperties.isRestricted());
-				pw.println("\t,\"submissionDbEnabled\":"+atlasProperties.isCouchDbSubmissionDbEnabled());
-				pw.println("\t,\"submissionDbName\":\""+atlasProperties.getCouchDbSubmissionDbName()+"\"");
-				pw.println("};");
-				pw.println("if( typeof(exports) === 'object' ) {");
-				pw.println("\texports.name = n2atlas.name;");
-				pw.println("\texports.restricted = n2atlas.restricted;");
-				pw.println("\texports.submissionDbEnabled = n2atlas.submissionDbEnabled;");
-				pw.println("\texports.submissionDbName = n2atlas.submissionDbName;");
-				pw.println("};");
+				printAtlasVendorFile(pw, atlasProperties);
 				
 				FSEntry f = FSEntryBuffer.getPositionedBuffer("a/vendor/nunaliit2/atlas.js", sw.toString());
 				entries.add(f);
@@ -383,12 +365,7 @@ public class CommandUpdate implements Command {
 				StringWriter sw = new StringWriter();
 				PrintWriter pw = new PrintWriter(sw);
 				
-				pw.println("var n2atlas = {");
-				pw.println("\tname: \""+atlasProperties.getAtlasName()+"\"");
-				pw.println("};");
-				pw.println("if( typeof(exports) === 'object' ) {");
-				pw.println("\texports.name = n2atlas.name;");
-				pw.println("};");
+				printAtlasVendorFile(pw, atlasProperties);
 				
 				FSEntry f = FSEntryBuffer.getPositionedBuffer("a/vendor/nunaliit2/atlas.js", sw.toString());
 				entries.add(f);
@@ -458,15 +435,32 @@ public class CommandUpdate implements Command {
 				StringWriter sw = new StringWriter();
 				PrintWriter pw = new PrintWriter(sw);
 				
-				pw.println("var n2atlas = {");
-				pw.println("\tname: \""+atlasProperties.getAtlasName()+"\"");
-				pw.println("};");
-				pw.println("if( typeof(exports) === 'object' ) {");
-				pw.println("\texports.name = n2atlas.name;");
-				pw.println("};");
+				printAtlasVendorFile(pw, atlasProperties);
 				
 				FSEntry f = FSEntryBuffer.getPositionedBuffer("a/vendor/nunaliit2/atlas.js", sw.toString());
 				entries.add(f);
+			}
+			
+			// Nunaliit2 vendor libraries
+			{
+				File n2Dir = PathComputer.computeNunaliit2JavascriptDir(installDir);
+				if( null == n2Dir ) {
+					throw new Exception("Can not find nunaliit2 javascript library");
+				} else {
+					// Vendor file 'n2.couchUtils.js'
+					{
+						File file = new File(n2Dir,"n2.couchUtils.js");
+						FSEntry f = FSEntryFile.getPositionedFile("a/vendor/nunaliit2/n2.couchUtils.js", file);
+						entries.add(f);
+					}
+					
+					// Vendor file 'n2.couchTiles.js'
+					{
+						File file = new File(n2Dir,"n2.couchTiles.js");
+						FSEntry f = FSEntryFile.getPositionedFile("a/vendor/nunaliit2/n2.couchTiles.js", file);
+						entries.add(f);
+					}
+				}
 			}
 			
 			// Submission design content
@@ -519,5 +513,22 @@ public class CommandUpdate implements Command {
 				}
 			}
 		}
+	}
+	
+	private void printAtlasVendorFile(PrintWriter pw, AtlasProperties atlasProperties){
+		pw.println("var n2atlas = {");
+		pw.println("\tname: \""+atlasProperties.getAtlasName()+"\"");
+		pw.println("\t,restricted: "+atlasProperties.isRestricted());
+		pw.println("\t,\"submissionDbEnabled\":"+atlasProperties.isCouchDbSubmissionDbEnabled());
+		pw.println("\t,\"submissionDbName\":\""+atlasProperties.getCouchDbSubmissionDbName()+"\"");
+		pw.println("};");
+		pw.println("if( typeof(exports) === 'object' ) {");
+		pw.println("\texports.name = n2atlas.name;");
+		pw.println("\texports.restricted = n2atlas.restricted;");
+		pw.println("\texports.submissionDbEnabled = n2atlas.submissionDbEnabled;");
+		pw.println("\texports.submissionDbName = n2atlas.submissionDbName;");
+		pw.println("};");
+		
+		pw.flush();
 	}
 }

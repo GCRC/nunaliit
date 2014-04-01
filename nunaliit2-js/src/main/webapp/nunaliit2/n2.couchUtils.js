@@ -495,6 +495,187 @@ var n2utils = {
 		};
 		return role;
 	}
+	
+	,validateDocumentStructure: function(doc, errorFn){
+		
+		// Ensure all nunaliit_type entries are strings
+		n2utils.validateTypes(doc,errorFn);
+		
+		// Verify schema
+		if( doc.nunaliit_schema 
+		 && typeof doc.nunaliit_schema !== 'string' ){
+			errorFn('If nunaliit_schema is specified, it must be a string');
+		};
+		
+		// Verify geometries
+		var geometries = [];
+		n2utils.extractGeometries(doc, geometries);
+		for(var i=0,e=geometries.length; i<e; ++i) {
+			var geometry = geometries[i];
+			
+			if( !n2utils.isValidGeom(geometry) ) {
+				errorFn('Invalid geometry');
+			}
+		};
+
+		// Verify nunaliit_created
+		if( doc.nunaliit_created ){
+			if( typeof doc.nunaliit_created !== 'object' ) {
+				errorFn('Field "nunaliit_created" must be an object');
+			};
+			if( doc.nunaliit_created.nunaliit_type !== 'actionstamp' ) {
+				errorFn('"nunaliit_created" must be of type "actionstamp"');
+			};
+		};
+
+		// Verify nunaliit_last_updated
+		if( doc.nunaliit_last_updated ){
+			if( typeof doc.nunaliit_last_updated !== 'object' ) {
+				errorFn('Field "nunaliit_last_updated" must be an object');
+			};
+			if( doc.nunaliit_last_updated.nunaliit_type !== 'actionstamp' ) {
+				errorFn('"nunaliit_last_updated" must be of type "actionstamp"');
+			};
+		};
+		
+		// Verify action stamps
+		var actionStamps = [];
+		n2utils.extractSpecificType(doc, 'actionstamp', actionStamps);
+		for(var i=0,e=actionStamps.length; i<e; ++i) {
+			var as = actionStamps[i];
+			
+			if( typeof as.name !== 'string' ){
+				errorFn('Action stamps must have a string field named: "name"');
+			};
+		};
+
+		// Verify layers
+		if( doc.nunaliit_layers ) {
+			if( !n2utils.isArray(doc.nunaliit_layers) ) {
+				errorFn('nunaliit_layers must be an array');
+			};
+			for(var i=0,e=doc.nunaliit_layers.length; i<e; ++i) {
+				if( typeof(doc.nunaliit_layers[i]) !== 'string' ) {
+					errorFn('nunaliit_layers must be an array of strings');
+				};
+			};
+		};
+
+		// Verify l10n request
+		if( 'translationRequest' === doc.nunaliit_type ) {
+			if( typeof doc.str !== 'string' ) {
+				errorFn('Translation requests must have a string "str"');
+			}
+			if( typeof doc.lang !== 'string' ) {
+				errorFn('Translation requests must have a string "lang"');
+			}
+			if( doc.trans ) {
+				if( typeof doc.trans !== 'string' ) {
+					errorFn('Translation requests providing "trans" field must be string');
+				}
+			}
+		};
+	
+		// Verify CSS
+		if( doc.nunaliit_css ) {
+			if( typeof doc.nunaliit_css !== 'object' ){
+				errorFn('CSS fragments must have an object structure');
+			};
+			if( doc.nunaliit_css.nunaliit_type !== 'css' ){
+				errorFn('CSS fragments must have a type of "css"');
+			};
+			if( typeof(doc.nunaliit_css.name) !== 'string' ) {
+				errorFn('CSS fragments must have a string "name" property.');
+			};
+			if( typeof(doc.nunaliit_css.css) !== 'undefined'
+			 && typeof(doc.nunaliit_css.css) !== 'string' ) {
+				errorFn('CSS fragments must have a string "css" property.');
+			};
+		};
+
+		// Verify submission
+		if( doc.nunaliit_submission ) {
+			if( typeof doc.nunaliit_submission !== 'object' ){
+				errorFn('Submission documents must have an object structure');
+			};
+			if( typeof doc.nunaliit_submission.state !== 'string' ){
+				errorFn('Submission documents must include a state');
+			};
+			if( typeof doc.nunaliit_submission.original_reserved !== 'object' ){
+				errorFn('Submission documents must include a field named: "original_reserved"');
+			};
+			if( typeof doc.nunaliit_submission.original_reserved.id !== 'string' ){
+				errorFn('Submission documents must include the original identifier');
+			};
+			if( typeof doc.nunaliit_submission.submitted_reserved !== 'object' ){
+				errorFn('Submission documents must include a field named: "submitted_reserved"');
+			};
+			if( typeof doc.nunaliit_submission.submitted_doc !== 'object' ){
+				errorFn('Submission documents must include a field named: "submitted_doc"');
+			};
+		};
+		
+		// Verify attachment descriptors
+		if( doc.nunaliit_attachments ){
+			if( typeof doc.nunaliit_attachments !== 'object' ){
+				errorFn('"nunaliit_attachments" must be an object structure');
+			};
+			if( doc.nunaliit_attachments.nunaliit_type !== 'attachment_descriptions' ){
+				errorFn('"nunaliit_attachments" must be of type "attachment_descriptions"');
+			};
+			if( typeof doc.nunaliit_attachments.files !== 'object' ){
+				errorFn('"nunaliit_attachments" must have an object structure named "files"');
+			};
+			for(var attName in doc.nunaliit_attachments.files) {
+				var att = doc.nunaliit_attachments.files[attName];
+				
+				if( typeof att !== 'object' ){
+					errorFn('Attachment descriptors must be of type "object"');
+				};
+				if( att.attachmentName !== attName ){
+					errorFn('Attachment descriptors must have a duplicate name in "attachmentName"');
+				};
+				if( typeof att.status !== 'string' ){
+					errorFn('Attachment descriptors must have a "status" string');
+				};
+			};
+		};
+	}
+
+	,validateTypes: function(obj, errorFn) {
+		// Traverses an object to validate all fields
+		// named: "nunaliit_type"
+		
+		if( null === obj ) {
+			// Nothing to do
+			
+		} else if( n2utils.isArray(obj) ) {
+			for(var i=0,e=obj.length; i<e; ++i) {
+				if( n2utils.validateTypes(obj[i],errorFn) ){
+					return true;
+				};
+			};
+
+		} else if( typeof(obj) === 'object' ) {
+			if( obj.nunaliit_type ) {
+				if( typeof obj.nunaliit_type !== 'string' ){
+					errorFn('Fields named "nunaliit_type" must be strings');
+					return true;
+				};
+			};
+			
+			// Continue traversing
+			for(var key in obj) {
+				var value = obj[key];
+				
+				if( n2utils.validateTypes(value,errorFn) ){
+					return true;
+				};
+			};
+		};
+		
+		return false;
+	}
 };
 
 if( typeof(exports) === 'object' ) {
@@ -513,6 +694,8 @@ if( typeof(exports) === 'object' ) {
 	exports.extractSpecificType = n2utils.extractSpecificType;
 	exports.extractGeometries = n2utils.extractGeometries;
 	exports.getAtlasRole = n2utils.getAtlasRole;
+	exports.validateDocumentStructure = n2utils.validateDocumentStructure;
+	exports.validateTypes = n2utils.validateTypes;
 };
 
 if( typeof(nunaliit2) === 'function' ) {
@@ -532,5 +715,7 @@ if( typeof(nunaliit2) === 'function' ) {
 	nunaliit2.couchUtils.extractSpecificType = n2utils.extractSpecificType;
 	nunaliit2.couchUtils.extractGeometries = n2utils.extractGeometries;
 	nunaliit2.couchUtils.getAtlasRole = n2utils.getAtlasRole;
+	nunaliit2.couchUtils.validateDocumentStructure = n2utils.validateDocumentStructure;
+	nunaliit2.couchUtils.validateTypes = n2utils.validateTypes;
 };
 

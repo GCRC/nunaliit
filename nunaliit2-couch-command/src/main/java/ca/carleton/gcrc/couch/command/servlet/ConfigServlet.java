@@ -43,6 +43,7 @@ import ca.carleton.gcrc.couch.onUpload.mail.MailVetterDailyNotificationTask;
 import ca.carleton.gcrc.couch.onUpload.multimedia.MultimediaFileConverter;
 import ca.carleton.gcrc.couch.onUpload.pdf.PdfFileConverter;
 import ca.carleton.gcrc.couch.submission.SubmissionRobot;
+import ca.carleton.gcrc.couch.submission.SubmissionRobotSettings;
 import ca.carleton.gcrc.couch.user.UserDesignDocumentImpl;
 import ca.carleton.gcrc.couch.user.UserServlet;
 import ca.carleton.gcrc.json.servlet.JsonServlet;
@@ -493,10 +494,13 @@ public class ConfigServlet extends JsonServlet {
 
 				CouchUserDb userDb = couchClient.getUserDatabase();
 				
-				submissionRobot = new SubmissionRobot();
-				submissionRobot.setDocumentDesignDocument(couchDd);
-				submissionRobot.setSubmissionDesignDocument(submissionDesign);
-				submissionRobot.setUserDb(userDb);
+				SubmissionRobotSettings settings = new SubmissionRobotSettings();
+				settings.setAtlasName(atlasProperties.getAtlasName());
+				settings.setDocumentDesignDocument(couchDd);
+				settings.setSubmissionDesignDocument(submissionDesign);
+				settings.setUserDb(userDb);
+				
+				submissionRobot = new SubmissionRobot(settings);
 				
 				submissionRobot.start();
 				
