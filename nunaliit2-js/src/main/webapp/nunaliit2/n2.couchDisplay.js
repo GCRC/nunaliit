@@ -84,8 +84,6 @@ $n2.couchDisplay = $n2.Class({
 	
 	options: null
 	
-	,mapAndControl: null
-	
 	,currentFeature: null
 	
 	,createRelatedDocProcess: null
@@ -140,6 +138,7 @@ $n2.couchDisplay = $n2.Class({
 		if( requestService ){
 			requestService.addDocumentListener(function(doc){
 				_this._refreshDocument(doc);
+				_this._populateWaitingDocument(doc);
 			});
 		};
 		
@@ -165,30 +164,45 @@ $n2.couchDisplay = $n2.Class({
 		});
 	}
 
-	,shouldSuppressNonApprovedMedia: function(){
-		return this._getShowService().options.eliminateNonApprovedMedia;
-	}
-
-	,shouldSuppressDeniedMedia: function(){
-		return this._getShowService().options.eliminateDeniedMedia;
-	}
-
+	// external
 	,setSchema: function(schema) {
 		this.defaultSchema = schema;
 	}
 	
-	,getDisplayDivName: function(){
-		var divId = null;
-		if( this.options.displayPanelName ){
-			divId = this.options.displayPanelName;
-		} else if( this.mapAndControl ) {
-			divId = this.mapAndControl.getSidePanelName();
+	// external
+	,addPostProcessDisplayFunction: function(fn){
+		if( typeof(fn) === 'function' ){
+			this.postProcessDisplayFns.push(fn);
 		};
-		return divId;
 	}
 	
-	,getDisplayDiv: function(){
-		var divId = this.getDisplayDivName();
+	// exported
+	,DisplayDocument: function($set, doc) {
+
+		var _this = this;
+		
+		$set.empty();
+		
+		this._displayObject($set, doc, {
+			onUpdated: function() {
+				_this.DisplayDocument($set, doc);
+			}
+			,onDeleted: function() {
+				$set.empty();
+			}
+		});
+	}
+
+	,_shouldSuppressNonApprovedMedia: function(){
+		return this._getShowService().options.eliminateNonApprovedMedia;
+	}
+
+	,_shouldSuppressDeniedMedia: function(){
+		return this._getShowService().options.eliminateDeniedMedia;
+	}
+	
+	,_getDisplayDiv: function(){
+		var divId = this.options.displayPanelName;
 		return $('#'+divId);
 	}
 	
@@ -210,12 +224,6 @@ $n2.couchDisplay = $n2.Class({
 	
 	,_getRequestService: function(){
 		return this.options.serviceDirectory.requestService;
-	}
-	
-	,addPostProcessDisplayFunction: function(fn){
-		if( typeof(fn) === 'function' ){
-			this.postProcessDisplayFns.push(fn);
-		};
 	}
 	
 	,_getSchemaRepository: function(){
@@ -298,27 +306,6 @@ $n2.couchDisplay = $n2.Class({
 		};
 		
 		function onDisplayed($sElem, data, schema, opt_){
-			$sElem.find('.n2s_clickAddContribution').each(function(){
-				var $jq = $(this);
-				_this._clickAddContribution(data, $jq, opt);
-				$jq.removeClass('n2s_clickAddContribution');
-			});
-			$sElem.find('.n2s_clickEdit').each(function(){
-				var $jq = $(this);
-				_this._clickEdit(data, $jq, opt);
-				$jq.removeClass('n2s_clickEdit');
-			});
-			$sElem.find('.n2s_clickDelete').each(function(){
-				var $jq = $(this);
-				_this._clickDelete(data, $jq, opt);
-				$jq.removeClass('n2s_clickDelete');
-			});
-			$sElem.find('.n2s_clickAddLayerFromDefinition').each(function(){
-				var $jq = $(this);
-				_this._clickAddLayerFromDefinition(data, $jq, opt);
-				$jq.removeClass('n2s_clickAddLayerFromDefinition');
-			});
-			
 			if( _this.options.classDisplayFunctions ) {
 				for(var className in _this.options.classDisplayFunctions){
 					var fn = _this.options.classDisplayFunctions[className];
@@ -873,98 +860,6 @@ $n2.couchDisplay = $n2.Class({
 		};
 	}
 	
-	,_clickAddContribution: function(data, $jq, opt_) {
-		var _this = this;
-
-		var referenceId = data._id;
-		var contId = null;
-		if( data.nunaliit_contribution
-		 && data.nunaliit_contribution.nunaliit_type === 'contribution'
-		 && data.nunaliit_contribution.reference
-		 && data.nunaliit_contribution.reference.doc
-		 ) {
-			referenceId = data.nunaliit_contribution.reference.doc;
-			contId = data._id;
-		};
- 			
-		$jq.click(function(){
-			_this.performContributionReply(referenceId, opt_, contId);
-			return false;
-		});
-	}
-	
-	,_clickEdit: function(data, $jq, opt_) {
-		var _this = this;
-
- 		// Show 'edit' button
- 		if( $n2.couchMap.canEditDoc(data) ) {
-			$jq.click(function(){
-				_this._performDocumentEdit(data, opt_);
-				return false;
-			});
- 		} else {
- 			$jq.remove();
- 		};
-	}
-	
-	,_clickDelete: function(data, $jq, opt_) {
-		var _this = this;
-
-		var referenceId = data._id;
- 			
- 		// Show 'delete' button
- 		if( $n2.couchMap.canDeleteDoc(data) ) {
-			$jq.click(function(){
-				_this._performDocumentDelete(data, opt_);
-				return false;
-			});
- 		} else {
- 			$jq.remove();
- 		};
-	}
-	
-	,_clickAddLayerFromDefinition: function(data, $jq, opt_) {
-		var _this = this;
-
-		var layerDefinition = data.nunaliit_layer_definition;
-
-		if( layerDefinition ) {
-			$jq.click(function(){
-				_this._addAndDisplayLayerFromDefinition(layerDefinition, opt_);
-				return false;
-			});
-		} else {
-			$jq.remove();
-		};
-	}
-
-	,_addAndDisplayLayerFromDefinition: function(layerDefinition, opt_) {
-		// Look if layer was already inserted
-		var olLayer = this.mapAndControl.findLayerFromId(layerDefinition.id);
-		if( !olLayer ) {
-			this.mapAndControl.addLayer({
-				id: layerDefinition.id
-				,name: layerDefinition.name
-				,couchDb: {
-					layerName: layerDefinition.id
-					,documentSource: this.options.documentSource
-				}
-			});
-			olLayer = this.mapAndControl.findLayerFromId(layerDefinition.id);
-		};
-		
-		// Turn on
-		if( olLayer ) {
-			olLayer.setVisibility(true);
-		};
-
-		// Zoom
-		if( layerDefinition.bbox ) {
-			var bounds = layerDefinition.bbox;
-			this.mapAndControl.setNewExtent(bounds, 'EPSG:4326');
-		};
-	}
-	
 	,_displayRelatedInfo: function(opts_){
 		var opts = $n2.extend({
 			divId: null
@@ -1332,7 +1227,7 @@ $n2.couchDisplay = $n2.Class({
 				_this._refreshAttachmentProgress($progress,doc);
 			});
 			
-			if( _this.shouldSuppressNonApprovedMedia() ){
+			if( _this._shouldSuppressNonApprovedMedia() ){
 				if( $n2.couchMap.documentContainsMedia(doc) 
 				 && false == $n2.couchMap.documentContainsApprovedMedia(doc) ) {
 					$('.n2SupressNonApprovedMedia_'+$n2.utils.stringToHtmlId(docId)).each(function(){
@@ -1342,7 +1237,7 @@ $n2.couchDisplay = $n2.Class({
 						_this._fixDocumentList($parent);
 					});
 				};
-			} else if( _this.shouldSuppressDeniedMedia() ){
+			} else if( _this._shouldSuppressDeniedMedia() ){
 				if( $n2.couchMap.documentContainsMedia(doc) 
 				 && $n2.couchMap.documentContainsDeniedMedia(doc) ) {
 					$('.n2SupressDeniedMedia_'+$n2.utils.stringToHtmlId(docId)).each(function(){
@@ -1353,6 +1248,23 @@ $n2.couchDisplay = $n2.Class({
 					});
 				};
 			};
+		};
+	}
+	
+	,_populateWaitingDocument: function(doc){
+		var _this = this;
+		
+		if( doc ) {
+			var docId = doc._id;
+			var escaped = $n2.utils.stringToHtmlId(docId);
+			var cName = 'couchDisplayWait_'+escaped;
+			$('.'+cName).each(function(){
+				var $set = $(this);
+				$set
+					.removeClass(cName)
+					.addClass('couchDisplayAdded_'+escaped);
+				_this.DisplayDocument($set, doc);
+			});
 		};
 	}
 	
@@ -1374,53 +1286,6 @@ $n2.couchDisplay = $n2.Class({
 				$doc.addClass('olkitSearchMod2_'+(i%2));
 			});
 		};
-	}
-	
-	,Configure: function(mapAndControl_) {
-		this.mapAndControl = mapAndControl_;
-	}
-
-	,performContributionReply: function(referenceId, options_, contId) {
-		var _this = this;
-		
-		// Check that we are logged in
-		var authService = this._getAuthService();
-		if( authService && false == authService.isLoggedIn() ) {
-			authService.showLoginForm({
-				onSuccess: function() {
-					_this.performContributionReply(referenceId, options_, contId);
-				}
-			});
-			return;
-		};
-
-		var $contributionDialog = $('<div></div>');
-
-		this.mapAndControl.contributions.buildAddContributionForm({
-			elem: $contributionDialog
-			,referenceDocId: referenceId
-			,replyContributionId: contId
-			,onSuccess: function(){
-				$contributionDialog.dialog('close');
-				options_.onUpdated();
-			}
-			,onCancel: function(){
-				$contributionDialog.dialog('close');
-			}
-		});
-		
-		var dialogOptions = {
-			autoOpen: true
-			,title: _loc('Add Contribution')
-			,modal: true
-			,width: 740
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
-			}
-		};
-		$contributionDialog.dialog(dialogOptions);
 	}
 	
 	,_performDocumentEdit: function(data, options_) {
@@ -1446,23 +1311,7 @@ $n2.couchDisplay = $n2.Class({
 		};
 	}
 	
-	,DisplayDocument: function($set, doc) {
-
-		var _this = this;
-		
-		$set.empty();
-		
-		this._displayObject($set, doc, {
-			onUpdated: function() {
-				_this.DisplayDocument($set, doc);
-			}
-			,onDeleted: function() {
-				$set.empty();
-			}
-		});
-	}
-	
-	,DisplayDocumentId: function($set, docId) {
+	,_displayDocumentId: function($set, docId) {
 
 		var _this = this;
 		
@@ -1474,7 +1323,11 @@ $n2.couchDisplay = $n2.Class({
 				_this.DisplayDocument($set, doc);
 			}
 			,onError: function(err) {
-				$set.text( _loc('Unable to retrieve document') );
+				$set.empty();
+				$('<div>')
+					.addClass('couchDisplayWait_'+$n2.utils.stringToHtmlId(docId))
+					.text( _loc('Unable to retrieve document') )
+					.appendTo($set);
 			}
 		});
 	}
@@ -1485,20 +1338,20 @@ $n2.couchDisplay = $n2.Class({
 		// Selected document
 		if( msg.type === 'selected' ) {
 			if( msg.doc ) {
-				var $div = this.getDisplayDiv();
+				var $div = this._getDisplayDiv();
 				this.DisplayDocument($div, msg.doc);
 				
 			} else if( msg.docId ) {
-				var $div = this.getDisplayDiv();
-				this.DisplayDocumentId($div, msg.docId);
+				var $div = this._getDisplayDiv();
+				this._displayDocumentId($div, msg.docId);
 				
 			} else if( msg.docs ) {
-				var $div = this.getDisplayDiv();
-				this.DisplayMultipleDocuments($div, msg.docs);
+				var $div = this._getDisplayDiv();
+				this._displayMultipleDocuments($div, msg.docs);
 				
 			} else if( msg.docIds ) {
-				var $div = this.getDisplayDiv();
-				this.DisplayMultipleDocumentIds($div, msg.docIds)
+				var $div = this._getDisplayDiv();
+				this._displayMultipleDocumentIds($div, msg.docIds)
 			};
 			
 		} else if( msg.type === 'searchResults' ) {
@@ -1520,20 +1373,22 @@ $n2.couchDisplay = $n2.Class({
 			if( !deleted ) {
 				var doc = msg.doc;
 				if( doc ) {
-					var $div = this.getDisplayDiv();
+					var $div = this._getDisplayDiv();
 					this.DisplayDocument($div, doc);
 				};
 			};
 			
 		} else if( msg.type === 'documentContentCreated' ) {
 			this._handleDocumentCreation(msg.doc);
+			this._populateWaitingDocument(msg.doc);
 			
 		} else if( msg.type === 'documentContentUpdated' ) {
 			this._refreshDocument(msg.doc);
+			this._populateWaitingDocument(msg.doc);
 		};
 	}
 	
-	,DisplayMultipleDocuments: function($container, docs) {
+	,_displayMultipleDocuments: function($container, docs) {
 
 		var _this = this;
 		
@@ -1561,8 +1416,8 @@ $n2.couchDisplay = $n2.Class({
 			this._addButtons($buttonDiv, doc, {focus:true,geom:true});
 		};
 	}
-	
-	,DisplayMultipleDocumentIds: function($container, docIds) {
+
+	,_displayMultipleDocumentIds: function($container, docIds) {
 
 		var _this = this;
 		
@@ -1604,14 +1459,14 @@ $n2.couchDisplay = $n2.Class({
 				ids.push(results.sorted[i].id);
 			};
 		};
-		var $div = this.getDisplayDiv();
+		var $div = this._getDisplayDiv();
 		$div.empty();
 		if( ids.length < 1 ) {
 			$div.append( $('<div>'+_loc('Search results empty')+'</div>') );
 		} else {
 			var $results = $('<div class="n2_search_result"></div>')
 				.appendTo($div);
-			this.DisplayMultipleDocumentIds($results, ids);
+			this._displayMultipleDocumentIds($results, ids);
 		};
 	}
 	
@@ -1646,6 +1501,10 @@ $n2.couchDisplay = $n2.Class({
 		
 		// Main document displayed
 		var $elems = $('.couchDisplay_'+$n2.utils.stringToHtmlId(docId));
+		$elems.remove();
+		
+		// Document waiting to be displayed
+		var $elems = $('.couchDisplayWait_'+$n2.utils.stringToHtmlId(docId));
 		$elems.remove();
 		
 		// Documents in list

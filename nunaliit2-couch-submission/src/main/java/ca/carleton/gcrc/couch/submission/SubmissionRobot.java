@@ -1,7 +1,5 @@
 package ca.carleton.gcrc.couch.submission;
 
-import ca.carleton.gcrc.couch.client.CouchDesignDocument;
-import ca.carleton.gcrc.couch.client.CouchUserDb;
 import ca.carleton.gcrc.couch.submission.impl.SubmissionRobotThread;
 
 public class SubmissionRobot {

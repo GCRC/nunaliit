@@ -969,16 +969,7 @@ var MapAndControls = $n2.Class({
 		};
 		
 		// Configure display
-		if( $.olkitDisplay ) {
-			$.olkitDisplay.Configure(this);
-			this.olkitDisplayOptions = $.extend(
-					{}
-					,this.options.placeDisplay
-					,{ 
-						displayDiv: this.options.sidePanelName
-					}
-				);
-		} else if( $n2.placeInfo ) {
+		if( $n2.placeInfo ) {
 			this.olkitDisplayOptions = $.extend(
 				{}
 				,this.options.placeDisplay
