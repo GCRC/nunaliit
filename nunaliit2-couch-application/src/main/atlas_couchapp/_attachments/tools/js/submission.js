@@ -233,20 +233,32 @@
 		
 		,_loadedSubmissionDoc: function(subDoc){
 			var _this = this;
+
+			this._getSubmittedDocument({
+				subDoc: subDoc
+				,onSuccess: function(submittedDoc, subDoc){
+					// Refresh submission entry
+					var subDocId = subDoc._id;
+					var cName = 'submission_' + $n2.utils.stringToHtmlId(subDocId);
+					var $entries = $('.'+cName);
+					$entries.each(function(){
+						var $entry = $(this);
+						displaySubmission($entry, subDoc, submittedDoc);
+					});
+				}
+			});
 			
-			// Refresh submission entry
-			var subDocId = subDoc._id;
-			var cName = 'submission_' + $n2.utils.stringToHtmlId(subDocId);
-			var $entries = $('.'+cName);
-			$entries.each(function(){
-				var $entry = $(this)
-					.empty();
+			function displaySubmission($entry, subDoc, submittedDoc){
+				$entry.empty();
+				
+				var subDocId = subDoc._id;
 				
 				var original_reserved = null;
 				if( subDoc.nunaliit_submission ){
 					original_reserved = subDoc.nunaliit_submission.original_reserved;
 				};
-				
+	
+				// Information
 				var $info = $('<div class="submission_info">')
 					.appendTo($entry);
 				addKeyValue($info, _loc('Submission Id'), subDocId);
@@ -266,7 +278,26 @@
 				 && subDoc.nunaliit_submission.state ){
 					addKeyValue($info, _loc('Submission State'), subDoc.nunaliit_submission.state);
 				};
-
+				
+				if( submittedDoc
+				 && submittedDoc.nunaliit_last_updated
+				 && submittedDoc.nunaliit_last_updated.name ){
+					var userId = submittedDoc.nunaliit_last_updated.name;
+					var $div = $('<div class="key_value">')
+						.appendTo($info);
+					$('<span class="key">')
+						.text(_loc('Submitter')+': ')
+						.appendTo($div);
+					var $val = $('<span class="value">')
+						.text(userId)
+						.appendTo($div);
+					if( _this.showService ){
+						_this.showService.printUserName($val, userId);
+					};
+					
+				};
+	
+				// View buttons
 				var $views = $('<div class="submission_views">')
 					.appendTo($entry);
 				$('<button>')
@@ -276,24 +307,36 @@
 						_this._viewMerging(subDocId);
 						return false;
 					});
-
-				var $buttons = $('<div class="submission_buttons">')
+	
+//				// Action buttons
+//				var $buttons = $('<div class="submission_buttons">')
+//					.appendTo($entry);
+//				var $approveBtn = $('<button>')
+//					.text( _loc('Approve') )
+//					.appendTo($buttons)
+//					.click(function(){
+//						_this._approve(subDocId);
+//						return false;
+//					});
+//				if( subDoc.nunaliit_submission
+//				 && 'collision' === subDoc.nunaliit_submission.state ){
+//					$approveBtn.attr('disabled','disabled');
+//				};
+//				$('<button>')
+//					.text( _loc('Deny') )
+//					.appendTo($buttons)
+//					.click(function(){
+//						_this._deny(subDocId);
+//						return false;
+//					});
+	
+				// Brief display
+				var $brief = $('<div class="submission_brief">')
 					.appendTo($entry);
-				$('<button>')
-					.text( _loc('Approve') )
-					.appendTo($buttons)
-					.click(function(){
-						_this._approve(subDocId);
-						return false;
-					});
-				$('<button>')
-					.text( _loc('Deny') )
-					.appendTo($buttons)
-					.click(function(){
-						_this._deny(subDocId);
-						return false;
-					});
-			});
+				if( _this.showService && submittedDoc ){
+					_this.showService.displayBriefDescription($brief, {}, submittedDoc);
+				};
+			};
 			
 			function addKeyValue($e, key, value){
 				var $div = $('<div class="key_value">')

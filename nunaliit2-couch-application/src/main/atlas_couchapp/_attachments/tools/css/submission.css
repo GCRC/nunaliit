@@ -24,6 +24,15 @@
 	margin-left: 10px;
 }
 
+.submission_brief {
+	float: left;
+	margin-left: 10px;
+}
+
+.submission_info .key {
+	font-weight: bold;
+}
+
 .submission_view_dialog_merging_current_outer,
 .submission_view_dialog_merging_submitted_outer {
 	float: left;

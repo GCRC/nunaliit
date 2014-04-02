@@ -876,7 +876,7 @@ var Show = $n2.Class({
 	
 	,printUserName: function($elem, userName, opts){
 		$elem.addClass('n2ShowUser_'+$n2.utils.stringToHtmlId(userName));
-		if( opts.showHandle ) {
+		if( opts && opts.showHandle ) {
 			$elem.addClass('n2ShowUserDisplayAndHandle');
 		} else {
 			$elem.addClass('n2ShowUserDisplay');
