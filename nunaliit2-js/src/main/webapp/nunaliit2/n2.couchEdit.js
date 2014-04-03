@@ -316,6 +316,577 @@ function selectLayersDialog(opts_){
 
 //++++++++++++++++++++++++++++++++++++++++++++++
 
+var CouchSimpleDocumentEditor = $n2.Class({
+
+	elemId: null
+
+	,editedDocument: null
+	
+	,schema: null
+	
+	,defaultEditSchema: null
+
+	,schemaRepository: null
+	
+	,schemaEditorService: null
+	
+	,dispatchService: null
+	
+	,editors: null
+	
+	,geomName: null
+	
+	,couchProj: null
+	
+	,treeEditor: null
+	
+	,slideEditor: null
+	
+	,isInsert: null
+	
+	,editorsContainerId: null
+	
+	,initialize: function(opts_){
+		var opts = $n2.extend({
+			elem: null
+			,elemId: null
+			,doc: null
+			,schema: null // schema name, array of schema name or special option
+			,defaultEditSchema: null
+			,schemaRepository: null
+			,schemaEditorService: null
+			,dispatchService: null
+			,editors: null
+			,geomName: 'nunaliit_geom'
+			,couchProj: null
+		},opts_);
+		
+		this.elemId = opts.elemId;
+		if( opts.elem ){
+			var $elem = $(opts.elem);
+			this.elemId = $elem.attr('id');
+			if( !this.elemId ){
+				this.elemId = $n2.getUniqueId();
+				$elem.attr('id',this.elemId);
+			};
+		};
+		
+		this.editedDocument = opts.doc;
+		this.schema = opts.schema;
+		this.defaultEditSchema = opts.defaultEditSchema;
+		this.schemaRepository = opts.schemaRepository;
+		this.schemaEditorService = opts.schemaEditorService;
+		this.dispatchService = opts.dispatchService;
+		this.editors = opts.editors;
+		this.geomName = opts.geomName;
+		this.couchProj = opts.couchProj;
+		
+		this.isInsert = false;
+		
+		if( !this.couchProj ){
+			this.couchProj = getDefaultCouchProjection();
+		};
+		
+		if( this.dispatchService ){
+			var f = function(m){ _this._handle(m); };
+			this.dispatchService.register(DH, 'editGeometryModified', f);
+		};
+		
+		if( !this.editors ){
+			// Default
+			this.editors = [
+				$n2.CouchEditor.Constants.FORM_EDITOR
+				,$n2.CouchEditor.Constants.TREE_EDITOR
+				,$n2.CouchEditor.Constants.SLIDE_EDITOR
+				,$n2.CouchEditor.Constants.RELATION_EDITOR
+			];
+		};
+		
+		this._edit();
+	}
+
+	,_getDiv: function(){
+		return $('#'+this.elemId);
+	}
+
+	,_edit: function(){
+		var _this = this;
+		
+		this.isInsert = (typeof this.editedDocument._id === 'undefined' 
+			|| this.editedDocument._id === null);
+	
+		this._selectSchema(schemaSelected);
+		
+		function schemaSelected(schema) {
+			if( _this.isInsert ) {
+				// Create original object by augmenting current one with template
+				if( schema ) {
+					var template = schema.createObject({});
+					$n2.extend(true, _this.editedDocument, template);
+				};
+			};
+			
+			_this._displayEditor(schema);
+		};
+	}
+	
+    ,_displayEditor: function(selectedSchema) {
+    	var _this = this;
+    	
+    	var data = this.editedDocument;
+		
+    	// Give an opportunity to adjust document before edit
+    	this._synchronousCall({
+    		type: 'editorStartDocumentEdit'
+    		,doc: data
+    	});
+    	
+		// Update feature data with user info
+		if( $n2.couchMap && $n2.couchMap.adjustDocument ) {
+			$n2.couchMap.adjustDocument(data);
+		};
+		
+		// Figure out if accordion is needed
+		var accordionNeeded = false;
+		var relationEditorNeeded = false;
+		var editorCount = 0;
+		for(var i=0,e=this.editors.length;i<e;++i){
+			var editorDesc = this.editors[i];
+			if( $n2.CouchEditor.Constants.FORM_EDITOR === editorDesc ){
+				if( selectedSchema && this.schemaEditorService ){
+					++editorCount;
+				};
+			} else if( $n2.CouchEditor.Constants.TREE_EDITOR === editorDesc ){
+				++editorCount;
+			} else if( $n2.CouchEditor.Constants.SLIDE_EDITOR === editorDesc ){
+				++editorCount;
+			} else if( $n2.CouchEditor.Constants.RELATION_EDITOR === editorDesc ){
+				relationEditorNeeded = true;
+			};
+		};
+		if( editorCount > 1 ){
+			accordionNeeded = true;
+		};
+    	
+		var $div = this._getDiv();
+		$div.empty();
+		
+		this.editorsContainerId = $n2.getUniqueId();
+		var $editorsContainer = $('<div id="'+this.editorsContainerId+'" class="n2CouchEditor_container"></div>');
+		$div.append($editorsContainer);
+
+		for(var i=0,e=this.editors.length;i<e;++i){
+			var editorDesc = this.editors[i];
+			
+			if( $n2.CouchEditor.Constants.FORM_EDITOR === editorDesc
+			 && selectedSchema 
+			 && this.schemaEditorService ) {
+				$n2.schema.GlobalAttributes.disableKeyUpEvents = true;
+	
+				// Accordion Header
+				if( accordionNeeded ) {
+					var $schemaHeader = $('<h3>')
+						.appendTo($editorsContainer);
+					$('<a>')
+						.attr('href','#')
+						.text( _loc('Form View') )
+						.appendTo($schemaHeader);
+				};
+				
+				var $schemaContainer = $('<div class="n2CouchEditor_schema"></div>')
+					.addClass('n2CouchEditor_schema')
+					.appendTo($editorsContainer);
+				
+				this.schemaEditor = this.schemaEditorService.editDocument({
+					doc: data
+					,schema: selectedSchema
+					,$div: $schemaContainer
+					,onChanged: function(){
+						_this._adjustInternalValues(_this.editedDocument);
+						if( _this.treeEditor ) {
+							_this.treeEditor.refresh();
+						};
+						if( _this.slideEditor ) {
+							_this.slideEditor.refresh();
+						};
+						_this._refreshRelations(data);
+						_this._onEditorObjectChanged(data);
+					}
+				});
+				
+			} else if( $n2.CouchEditor.Constants.TREE_EDITOR === editorDesc ) {
+				// Accordion Header for Tree
+				if( accordionNeeded ) {
+					var $treeHeader = $('<h3>')
+						.appendTo($editorsContainer);
+					$('<a>')
+						.attr('href','#')
+						.text( _loc('Tree View') )
+						.appendTo($treeHeader);
+				};
+		
+				// Tree container
+				var $treeContainer = $('<div>')
+					.addClass('n2CouchEditor_tree')
+					.appendTo($editorsContainer);
+				var editorOptions = {
+					onObjectChanged: function() {
+						_this._adjustInternalValues(_this.editedDocument);
+						if( _this.slideEditor ) {
+							_this.slideEditor.refresh();
+						};
+						if( _this.schemaEditor ) {
+							_this.schemaEditor.refresh();
+						};
+						_this._refreshRelations(data);
+						_this._onEditorObjectChanged(data);
+					}
+					,isKeyEditingAllowed: isKeyEditingAllowed
+					,isValueEditingAllowed: isValueEditingAllowed
+					,isKeyDeletionAllowed: isKeyDeletionAllowed
+				};
+				var objectTree = new $n2.tree.ObjectTree($treeContainer, data, editorOptions);
+				this.treeEditor = new $n2.tree.ObjectTreeEditor(objectTree, data, editorOptions);
+			
+			} else if( $n2.CouchEditor.Constants.SLIDE_EDITOR === editorDesc ) {
+				// Accordion Header for slide editor
+				if( accordionNeeded ) {
+					var $slideHeader = $('<h3>')
+						.appendTo($editorsContainer);
+					$('<a>')
+						.attr('href','#')
+						.text( _loc('Editor View') )
+						.appendTo($slideHeader);
+				};
+	
+				// Content for slide editor
+				var $slideContainer = $('<div>')
+					.addClass('n2CouchEditor_slide')
+					.appendTo($editorsContainer);
+				var slideEditorOptions = {
+					onObjectChanged: function() {
+						_this._adjustInternalValues(_this.editedDocument);
+						if( _this.treeEditor ) {
+							_this.treeEditor.refresh();
+						};
+						if( _this.schemaEditor ) {
+							_this.schemaEditor.refresh();
+						};
+						_this._refreshRelations(data);
+						_this._onEditorObjectChanged(data);
+					}
+					,isKeyEditingAllowed: isKeyEditingAllowed
+					,isValueEditingAllowed: isValueEditingAllowed
+					,isKeyDeletionAllowed: isKeyDeletionAllowed
+				};
+				this.slideEditor = new $n2.slideEditor.Editor($slideContainer, data, slideEditorOptions);
+			};
+		};
+		
+		if( accordionNeeded ) {
+			$editorsContainer.accordion({ collapsible: true });
+		};
+		
+		// Report relations
+		if( relationEditorNeeded ) {
+			var $displayRelationsDiv = $('<div class="editorDisplayRelations"></div>');
+			$editorsContainer.append( $displayRelationsDiv );
+			this._refreshRelations(data);
+		};
+	}
+
+	,_selectSchema: function(callbackFn) {
+		var _this = this;
+
+		// Check hint from document
+		if( this.editedDocument.nunaliit_schema ) {
+			this.schemaRepository.getSchema({
+				name: this.editedDocument.nunaliit_schema
+				,onSuccess: function(schema){
+					callbackFn(schema);
+				}
+				,onError: function(err){
+					$n2.log('Error fetching schema: '+_this.editedDocument.nunaliit_schema,err);
+					callbackFn(null);
+				}
+			});
+			
+		} else if( this.schema && this.isInsert ) {
+			if( $n2.CouchEditor.Constants.ALL_SCHEMAS === this.schema ) {
+				// Must select a schema from all root schemas
+				this.schemaRepository.getRootSchemas({
+					onSuccess: function(schemas){
+						selectFromSchemas(schemas);
+					}
+					,onError: function(err){
+						$n2.log('Error fetching root schemas',err);
+						callbackFn(null);
+					}
+				});
+				
+			} else if( $n2.isArray(this.schema) ) {
+				// Must select a schema
+				selectFromSchemas(this.schema);
+				
+			} else {
+				// Only one schema to select from
+				callbackFn(this.schema);
+			};
+			
+		} else if( this.defaultEditSchema && !this.isInsert ) {
+			// If the object does not specify a schema, use default schema
+			// if specified
+			callbackFn(this.defaultEditSchema);
+			
+		} else {
+			// No schema specified, go directly to displaying editor
+			callbackFn(null);
+		};
+		
+		function selectFromSchemas(schemas) {
+			// shortcuts
+			if( schemas.length < 1 ) {
+				callbackFn(null);
+				return;
+				
+			} else if( schemas.length == 1 ) {
+				callbackFn(schemas[0]);
+				return;
+			};
+			
+			var dialogId = $n2.getUniqueId();
+			var selectId = $n2.getUniqueId();
+			var $dialog = $('<div id="'+dialogId+'" class="editorSelectSchemaDialog">'
+					+'<label for="'+selectId+'">'+_loc('Select a schema:')+'</label>'
+					+'<select id="'+selectId+'"></select>'
+					+'<div><button>'+_loc('OK')+'</button><button>'+_loc('Cancel')+'</button></div>'
+					+'</div>');
+			
+			var $select = $dialog.find('select');
+			for(var i=0,e=schemas.length; i<e; ++i) {
+				$select.append( $('<option>'+schemas[i].name+'</option>') );
+			}
+			
+			var cancelOnClose = true;
+			
+			$dialog.find('button')
+				.first()
+					.button({icons:{primary:'ui-icon-check'}})
+					.click(function(){
+						var $dialog = $('#'+dialogId);
+						var $select = $dialog.find('select');
+						var schemaName = $select.val();
+
+						$n2.log('schemaName',schemaName);
+						_this.schemaRepository.getSchema({
+							name: schemaName
+							,onSuccess: function(schema){
+								callbackFn(schema);
+							}
+							,onError: function(err){
+								reportError('Unable to get selected schema: '+err);
+								_this._cancelEdit();
+							}
+						});
+				
+						cancelOnClose = false;
+						$dialog.dialog('close');
+						return false;
+					})
+				.next()
+					.button({icons:{primary:'ui-icon-cancel'}})
+					.click(function(){
+						var $dialog = $('#'+dialogId);
+						$dialog.dialog('close');
+						return false;
+					})
+				;
+			
+			var dialogOptions = {
+				autoOpen: true
+				,title: _loc('Select Document Schema')
+				,modal: true
+				,close: function(event, ui){
+					var diag = $(event.target);
+					diag.dialog('destroy');
+					diag.remove();
+					
+					if( cancelOnClose ){
+						_this._cancelEdit();
+					};
+				}
+			};
+			$dialog.dialog(dialogOptions);
+		};
+	}
+
+	,_dispatch: function(m){
+		if( this.dispatchService ){
+			this.dispatchService.send(DH,m);
+		};
+	}
+
+	,_synchronousCall: function(m){
+		if( this.dispatchService ){
+			this.dispatchService.send(DH,m);
+		};
+	}
+
+	,_handle: function(m, address, dispatcher){
+		// Check that we are still alive
+		var $div = this._getDiv();
+		if( $div.length < 1 ){
+			// No longer in use, de-register from dispatcher
+			dispatcher.deregister(address);
+		};
+		
+		if( m.type === 'editGeometryModified' ){
+			if( m._origin !== this ){
+				this._featureModified(m.docId, m.geom, m.proj);
+			};
+		};
+	}
+
+	,_adjustInternalValues: function(obj) {
+		// BBOX
+		if( typeof(OpenLayers) !== 'undefined' ) {
+			var geomData = obj[this.geomName];
+			if( geomData ) {
+				// Check if editor has changed the geometry's WKT
+				if( this.currentGeometryWkt != geomData.wkt ) {
+					$n2.couchGeom.adjustBboxOnCouchGeom(geomData);
+				};
+			};
+		};
+	}
+
+	,_refreshRelations: function(data){
+		var _this = this;
+		var $div = this._getDiv();
+		var $displayRelationsDiv = $div.find('.editorDisplayRelations');
+		if( $displayRelationsDiv.length < 1 ) return;
+
+    	var showService = this.showService;
+    	if( !showService ) return;
+
+    	// Compute relations
+		var docIdMap = {};
+		if( data 
+		 && data.nunaliit_relations
+		 && data.nunaliit_relations.length ){
+			for(var i=0,e=data.nunaliit_relations.length; i<e; ++i){
+				var ref = data.nunaliit_relations[i];
+				if( ref.doc ) {
+					docIdMap[ref.doc] = true;
+				};
+			};
+		};
+		if( data 
+		 && data.nunaliit_source
+		 && data.nunaliit_source.doc ){
+			docIdMap[data.nunaliit_source.doc] = true;
+		};
+		
+		// Remove displayed relations that are no longer valid
+		$displayRelationsDiv.find('.editorDisplayRelation').each(function(){
+			var $display = $(this);
+			var relDocId = $display.attr('nunaliitRelationDocId');
+			if( !docIdMap[relDocId] ){
+				$display.remove();
+			} else {
+				// This relDocId is already displayed. Remove from map.
+				delete docIdMap[relDocId];
+			};
+		});
+		
+		// Function to delete a relation
+		var removeRelationFn = function(e){
+			var $btn = $(this);
+			var $removeRelationDiv = $btn.parents('.editorDisplayRelation');
+			if( $removeRelationDiv.length > 0 ){
+				var relDocId = $removeRelationDiv.attr('nunaliitRelationDocId');
+				_this._removeRelation(relDocId);
+				$removeRelationDiv.remove();
+			};
+			
+			return false;
+		};
+		
+		// Add missing relations. At this point, docIdMap contains
+		// only missing relations
+		for(var relDocId in docIdMap){
+			var $displayRelationDiv = $('<div class="editorDisplayRelation"></div>');
+			$displayRelationsDiv.append($displayRelationDiv);
+			$displayRelationDiv.attr('nunaliitRelationDocId',relDocId);
+
+			$('<span></span>')
+				.text( _loc('Relation: '))
+				.appendTo($displayRelationDiv);
+			
+			var $brief = $('<span></span>')
+				.text(relDocId)
+				.appendTo($displayRelationDiv);
+			if( showService ){
+				showService.printBriefDescription($brief, relDocId);
+			};
+			
+			$('<button class="editorDisplayRelationButton"></button>')
+				.text( _loc('Remove') )
+				.appendTo($displayRelationDiv)
+				.button({icons:{primary:'ui-icon-trash'}})
+				.click(removeRelationFn)
+				;
+		};
+	}
+	
+	,_onEditorObjectChanged: function(obj) {
+		var geomData = obj[this.geomName];
+		
+		if( !geomData ) return; // avoid errors
+		if( typeof(OpenLayers) === 'undefined' ) return;
+			
+		// Check if editor has changed the geometry's WKT
+		if( this.currentGeometryWkt !== geomData.wkt ) {
+		
+			this.currentGeometryWkt = geomData.wkt;
+
+			var olGeom = $n2.couchGeom.getOpenLayersGeometry({couchGeom:geomData});
+			
+			this._dispatch({
+				type: 'editGeometryModified'
+				,docId: obj._id
+				,geom: olGeom
+				,proj: this.couchProj
+				,_origin: this
+			});
+		};
+	}
+
+	,_featureModified: function(docId, geom, proj) {
+
+		if( proj.getCode() != this.couchProj.getCode() ) {
+			// Need to convert
+			geom = geom.clone();
+			geom.transform(proj,this.options.couchProj);
+		};
+    	
+		var geomData = this.editedDocument[this.geomName];
+		geomData.wkt = geom.toString();
+		this.currentGeometryWkt = geomData.wkt;
+		if( this.schemaEditor ) {
+			this.schemaEditor.refresh();
+		};
+		if( this.treeEditor ) {
+			this.treeEditor.refresh();
+		};
+		if( this.slideEditor ) {
+			this.slideEditor.refresh();
+		};
+    }
+});
+
+//++++++++++++++++++++++++++++++++++++++++++++++
+
 var CouchDocumentEditor = $n2.Class({
 	
 	options: null
@@ -1838,8 +2409,13 @@ var SchemaEditorService = $n2.Class({
 $n2.CouchEditor = {
 	Editor: CouchEditor
 	,SchemaEditorService: SchemaEditorService
+	,CouchSimpleDocumentEditor: CouchSimpleDocumentEditor
 	,Constants: {
 		ALL_SCHEMAS: {}
+		,FORM_EDITOR: {}
+		,TREE_EDITOR: {}
+		,SLIDE_EDITOR: {}
+		,RELATION_EDITOR: {}
 	}
 };
 

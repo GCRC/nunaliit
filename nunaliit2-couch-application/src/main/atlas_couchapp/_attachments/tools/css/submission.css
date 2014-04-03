@@ -68,26 +68,30 @@
 	margin-left: 10px;
 }
 
+.submission_view_dialog_merging_buttons button.n2_button_manual {
+	margin-left: 10px;
+}
+
 .submission_view_dialog_merging_buttons button.n2_button_deny {
 	margin-right: 10px;
 }
 
-span.patchSelected {
+span.patchSelected, div.patchSelected {
 	font-weight: bold;
 	color: #00ff00;
 }
 
-span.patchModified {
+span.patchModified, div.patchModified {
 	font-weight: bold;
 	color: #00ff00;
 }
 
-span.patchDeleted {
+span.patchDeleted, div.patchDeleted {
 	font-weight: bold;
 	color: #ff0000;
 }
 
-span.patchCollision {
+span.patchCollision, div.patchCollision {
 	font-weight: bold;
 	color: #ff0000;
 }

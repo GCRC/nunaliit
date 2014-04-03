@@ -81,12 +81,43 @@ var Dispatcher = $n2.Class({
 		if( !this.listeners[type] ){
 			this.listeners[type] = [];
 		};
+		var address = {
+			type: type
+			,id: $n2.getUniqueId()
+		};
 		this.listeners[type].push({
 			handle: handle
 			,fn: l
+			,address: address
 		});
 
 		handle.receives[type] = true;
+		
+		return address;
+	}
+	
+	,deregister: function(address){
+		if( address ){
+			var type = address.type;
+			var id = address.id;
+			if( type && id ){
+				var list = this.listeners[type];
+				if( list ){
+					var index = -1;
+					for(var i=0,e=list.length; i<e; ++i){
+						var l = list[i];
+						if( l.address && l.address.id === id ){
+							index = i;
+							break;
+						};
+					};
+					
+					if( index >= 0 ){
+						this.listeners[type].splice(index,1);
+					};
+				};
+			};
+		};
 	}
 	
 	/*
@@ -149,7 +180,7 @@ var Dispatcher = $n2.Class({
 				};
 				
 				try {
-					l.fn(m);
+					l.fn(m, l.address, this);
 				} catch(e) {
 					$n2.log('Error while dispatching: '+e);
 					if( e.stack ) {

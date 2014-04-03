@@ -76,6 +76,7 @@
 		,schemaRepository: null
 		,couchEditor: null
 		,showService: null
+		,schemaEditorService: null
 		,divId: null
 		,logger: null
 		
@@ -97,6 +98,7 @@
 			if( config.directory ) {
 				this.schemaRepository = config.directory.schemaRepository;
 				this.showService = config.directory.showService;
+				this.schemaEditorService = config.directory.schemaEditorService;
 			};
 
 			var $div = $( opts.div );
@@ -529,7 +531,7 @@
 			};
 		}
 
-		,_getLatestDocument: function(opts_){
+		,_getCurrentDocument: function(opts_){
 			var opts = $n2.extend({
 				subDocId: null
 				,subDoc: null
@@ -638,7 +640,7 @@
 		,_viewLatest: function(subDocId){
 			var _this = this;
 			
-			this._getLatestDocument({
+			this._getCurrentDocument({
 				subDocId: subDocId
 				,onSuccess: function(doc, subDoc){
 					var diagId = $n2.getUniqueId();
@@ -671,7 +673,7 @@
 			var _this = this;
 			
 			// Get current document
-			this._getLatestDocument({
+			this._getCurrentDocument({
 				subDocId: subDocId
 				,onSuccess: function(currentDoc, subDoc){
 					// Get submitted document
@@ -682,15 +684,64 @@
 							_this._getOriginalDocument({
 								subDoc: subDoc
 								,onSuccess: function(originalDoc, subDoc){
-									displayMerging(originalDoc, submittedDoc, currentDoc, subDoc);
+									openDialog(originalDoc, submittedDoc, currentDoc, subDoc);
 								}
 							});
 						}
 					});
 				}
 			});
-			
-			function displayMerging(originalDoc, submittedDoc, currentDoc, subDoc) {
+
+			function openDialog(originalDoc, submittedDoc, currentDoc, subDoc){
+				var diagId = $n2.getUniqueId();
+				var $diag = $('<div>')
+					.attr('id',diagId)
+					.addClass('submission_view_dialog_merging')
+					.appendTo( $('body') );
+				
+				initiateMergingView($diag, diagId, originalDoc, submittedDoc, currentDoc, subDoc);
+				
+				$diag.dialog({
+					autoOpen: true
+					,title: _loc('View Submission')
+					,modal: true
+					,width: '90%'
+					,close: function(event, ui){
+						var diag = $(event.target);
+						diag.dialog('destroy');
+						diag.remove();
+					}
+				});
+			};
+
+			function initiateMergingView($diag, diagId, originalDoc, submittedDoc, currentDoc, subDoc){
+				var submittedPatch = null;
+				if( originalDoc ) {
+					submittedPatch = patcher.computePatch(originalDoc, submittedDoc);
+				};
+				
+				var proposedDoc = submittedDoc;
+				if( submittedPatch && currentDoc ) {
+					var proposedDoc = $n2.extend(true,{},currentDoc);
+					patcher.applyPatch(proposedDoc, submittedPatch);
+				};
+				
+				var $innerDiag = $('<div>')
+					.addClass('submission_view_dialog_inner')
+					.appendTo($diag);
+				displayDocuments(
+					diagId
+					,originalDoc
+					,submittedDoc
+					,currentDoc
+					,proposedDoc
+					,subDoc);
+			};
+
+			function displayDocuments(diagId, originalDoc, submittedDoc, currentDoc, proposedDoc, subDoc){
+				var $innerDiag = $('#'+diagId).find('.submission_view_dialog_inner')
+					.empty();
+
 				var submittedPatch = null;
 				if( originalDoc ) {
 					submittedPatch = patcher.computePatch(originalDoc, submittedDoc);
@@ -705,23 +756,11 @@
 				if( originalDoc && submittedPatch && currentPatch ) {
 					collisionPatch = computeCollisionPatch(originalDoc, currentPatch, submittedPatch);
 				};
-				
-				var proposedDoc = submittedDoc;
-				if( submittedPatch && currentDoc ) {
-					var proposedDoc = $n2.extend(true,{},currentDoc);
-					patcher.applyPatch(proposedDoc, submittedPatch);
-				};
-				
-				var diagId = $n2.getUniqueId();
-				var $diag = $('<div>')
-					.attr('id',diagId)
-					.addClass('submission_view_dialog_merging')
-					.appendTo( $('body') );
-				
+
 				var $content = $('<div>')
 					.addClass('submission_view_dialog_merging_content')
-					.appendTo($diag);
-
+					.appendTo($innerDiag);
+	
 				if( currentDoc ) {
 					var $currentOuter = $('<div>')
 						.addClass('submission_view_dialog_merging_current_outer')
@@ -739,7 +778,7 @@
 					var objectTree = new $n2.tree.ObjectTree($currentDiv, null);
 					highlightPatch(objectTree, submittedPatch, [], 0);
 				};
-
+	
 				var $submittedOuter = $('<div>')
 					.addClass('submission_view_dialog_merging_submitted_outer')
 					.appendTo($content);
@@ -764,10 +803,10 @@
 				if( submittedPatch ) {
 					var $deltaOuter = $('<div>')
 						.addClass('submission_view_dialog_merging_delta_outer')
-						.appendTo($diag);
+						.appendTo($innerDiag);
 					$('<div>')
 						.addClass('submission_view_dialog_merging_label')
-						.text('Proposed Changes')
+						.text('Submitted Changes')
 						.appendTo($deltaOuter);
 					var $delta = $('<div>')
 						.addClass('submission_view_dialog_merging_delta')
@@ -777,7 +816,7 @@
 				
 				var $buttons = $('<div>')
 					.addClass('submission_view_dialog_merging_buttons')
-					.appendTo($diag);
+					.appendTo($innerDiag);
 				$('<button>')
 					.addClass('n2_button_approve')
 					.text( _loc('Approve') )
@@ -817,6 +856,14 @@
 						return false;
 					});
 				$('<button>')
+					.addClass('n2_button_manual')
+					.text( _loc('Edit Proposed Document') )
+					.appendTo($buttons)
+					.click(function(){
+						editProposedDocument(diagId, originalDoc, submittedDoc, currentDoc, proposedDoc, subDoc);
+						return false;
+					});
+				$('<button>')
 					.addClass('n2_button_cancel')
 					.text( _loc('Cancel') )
 					.appendTo($buttons)
@@ -829,7 +876,7 @@
 				// Install mouse over: On mouse over, change style of all
 				// similar keys, in the other trees. Include the parent
 				// keys as well.
-				$diag.on('mouseover','.tree_sel',function(event){
+				$innerDiag.on('mouseover','.tree_sel',function(event){
 					var $elem = $(event.target);
 					if( $elem.hasClass('tree_sel') ) {
 						var $diag = $('#'+diagId);
@@ -849,7 +896,7 @@
 				// Install mouse click: when a key is clicked, open
 				// all trees in the other threes so that the key becomes
 				// visible.
-				$diag.on('click','.tree_sel',function(event){
+				$innerDiag.on('click','.tree_sel',function(event){
 					var $elem = $(event.target);
 					if( $elem.hasClass('treeKey') ) {
 						var $diag = $('#'+diagId);
@@ -871,18 +918,53 @@
 						};
 					};
 				});
+			};
+			
+			function editProposedDocument(diagId, originalDoc, submittedDoc, currentDoc, proposedDoc, subDoc){
+				var $diag = $('#'+diagId);
+				var $inner = $diag.find('.submission_view_dialog_inner');
+				var $proposed = $inner.find('.submission_view_dialog_merging_submitted_outer');
+				var $buttons = $inner.find('.submission_view_dialog_merging_buttons');
 				
-				$diag.dialog({
-					autoOpen: true
-					,title: _loc('View Submission')
-					,modal: true
-					,width: '90%'
-					,close: function(event, ui){
-						var diag = $(event.target);
-						diag.dialog('destroy');
-						diag.remove();
-					}
+				var editedDoc = $n2.extend({},proposedDoc);
+				
+				$proposed.empty();
+
+				$('<div>')
+					.addClass('submission_view_dialog_merging_label')
+					.text('Edit Proposed Document')
+					.appendTo($proposed);
+				
+				var $edit = $('<div>').appendTo($proposed);
+				new $n2.CouchEditor.CouchSimpleDocumentEditor({
+					elem: $edit
+					,doc: editedDoc
+					,schemaRepository: _this.schemaRepository
+					,schemaEditorService: _this.schemaEditorService
+					,editors: [
+						$n2.CouchEditor.Constants.FORM_EDITOR
+						,$n2.CouchEditor.Constants.TREE_EDITOR
+						,$n2.CouchEditor.Constants.RELATION_EDITOR
+					]
 				});
+				
+				$buttons.empty();
+				$('<button>')
+					.addClass('n2_button_save')
+					.text( _loc('Save') )
+					.appendTo($buttons)
+					.click(function(){
+						displayDocuments(diagId, originalDoc, submittedDoc, currentDoc, editedDoc, subDoc);
+						return false;
+					});
+				$('<button>')
+					.addClass('n2_button_cancel')
+					.text( _loc('Cancel') )
+					.appendTo($buttons)
+					.click(function(){
+						displayDocuments(diagId, originalDoc, submittedDoc, currentDoc, proposedDoc, subDoc);
+						return false;
+					});
 			};
 			
 			// level 0 is on current document (submitted patch)
@@ -905,12 +987,18 @@
 							// Recurse
 							highlightPatch(objectTree, value, selectors, level);
 						} else {
+							var $treeValue = $li.find('.treeValue');
+							var $treeChildren = $li.find('div.treeChildren');
+							
 							if( $li && level === 0 ){
-								$li.find('.treeValue').addClass('patchDeleted');
+								$treeValue.addClass('patchDeleted');
+								$treeChildren.addClass('patchDeleted');
 							} else if( $li && level === 1 ){
-								$li.find('.treeValue').addClass('patchModified');
+								$treeValue.addClass('patchModified');
+								$treeChildren.addClass('patchModified');
 							} else if( $li && level === 2 ){
-								$li.find('.treeValue').addClass('patchCollision');
+								$treeValue.addClass('patchCollision');
+								$treeChildren.addClass('patchCollision');
 							};
 						};
 						
@@ -961,12 +1049,18 @@
 								// Recurse
 								highlightPatch(objectTree, value, selectors, level);
 							} else {
+								var $treeValue = $li.find('.treeValue');
+								var $treeChildren = $li.find('div.treeChildren');
+								
 								if( $li && level === 0 ){
-									$li.find('.treeValue').addClass('patchDeleted');
+									$treeValue.addClass('patchDeleted');
+									$treeChildren.addClass('patchDeleted');
 								} else if( $li && level === 1 ){
-									$li.find('.treeValue').addClass('patchModified');
+									$treeValue.addClass('patchModified');
+									$treeChildren.addClass('patchModified');
 								} else if( $li && level === 2 ){
-									$li.find('.treeValue').addClass('patchCollision');
+									$treeValue.addClass('patchCollision');
+									$treeChildren.addClass('patchCollision');
 								};
 							};
 							
