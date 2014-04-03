@@ -2,6 +2,7 @@ package ca.carleton.gcrc.couch.submission;
 
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchUserDb;
+import ca.carleton.gcrc.couch.submission.mail.SubmissionMailNotifier;
 
 public class SubmissionRobotSettings {
 
@@ -9,7 +10,8 @@ public class SubmissionRobotSettings {
 	private CouchDesignDocument submissionDesignDocument = null;
 	private CouchDesignDocument documentDesignDocument = null;
 	private CouchUserDb userDb = null;
-	
+	private SubmissionMailNotifier mailNotifier = null;
+
 	public String getAtlasName() {
 		return atlasName;
 	}
@@ -41,5 +43,13 @@ public class SubmissionRobotSettings {
 
 	public void setUserDb(CouchUserDb userDb) {
 		this.userDb = userDb;
+	}
+	
+	public SubmissionMailNotifier getMailNotifier() {
+		return mailNotifier;
+	}
+
+	public void setMailNotifier(SubmissionMailNotifier mailNotifier) {
+		this.mailNotifier = mailNotifier;
 	}
 }

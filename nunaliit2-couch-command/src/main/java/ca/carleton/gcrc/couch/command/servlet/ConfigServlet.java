@@ -44,6 +44,9 @@ import ca.carleton.gcrc.couch.onUpload.multimedia.MultimediaFileConverter;
 import ca.carleton.gcrc.couch.onUpload.pdf.PdfFileConverter;
 import ca.carleton.gcrc.couch.submission.SubmissionRobot;
 import ca.carleton.gcrc.couch.submission.SubmissionRobotSettings;
+import ca.carleton.gcrc.couch.submission.mail.SubmissionMailNotifier;
+import ca.carleton.gcrc.couch.submission.mail.SubmissionMailNotifierImpl;
+import ca.carleton.gcrc.couch.submission.mail.SubmissionMailNotifierNull;
 import ca.carleton.gcrc.couch.user.UserDesignDocumentImpl;
 import ca.carleton.gcrc.couch.user.UserServlet;
 import ca.carleton.gcrc.json.servlet.JsonServlet;
@@ -73,6 +76,7 @@ public class ConfigServlet extends JsonServlet {
 	private UploadWorker uploadWorker = null;
 	private SubmissionRobot submissionRobot = null;
 	private MailNotification mailNotification = null;
+	private SubmissionMailNotifier submissionNotifier = null;
 	private MailVetterDailyNotificationTask vetterDailyTask = null;
 	private ConfigServletActions actions = null;
 	
@@ -132,7 +136,6 @@ public class ConfigServlet extends JsonServlet {
 			initMail(servletContext);
 		} catch(ServletException e) {
 			logger.error("Error while initializing mail notification",e);
-			mailNotification = new MailNotificationNull();
 		}
 
 		// Configure upload
@@ -406,10 +409,12 @@ public class ConfigServlet extends JsonServlet {
 		if( null == props  ){
 			logger.error("Unable to load mail.properties");
 			mailNotification = new MailNotificationNull();
+			this.submissionNotifier = new SubmissionMailNotifierNull();
 			
 		} else {
 			// Create mail notification
 			MailNotificationImpl mail = null;
+			SubmissionMailNotifierImpl submissionNotifier = null;
 			try {
 				MailDeliveryImpl mailDelivery = new MailDeliveryImpl();
 				mailDelivery.setMailProperties(props);
@@ -421,12 +426,24 @@ public class ConfigServlet extends JsonServlet {
 					,couchDd.getDatabase()
 					);
 				mail.setMailProperties(props);
-				
-			} catch(Exception e) {
-				logger.error("Unable to configure mail notification",e);
-			}
 
-			mailNotification = mail;
+				submissionNotifier = new SubmissionMailNotifierImpl(
+					atlasProperties.getAtlasName()
+					,mailDelivery
+					,couchDd.getDatabase()
+					);
+				submissionNotifier.parseMailProperties(props);
+				
+				mailNotification = mail;
+				this.submissionNotifier = submissionNotifier;
+
+			} catch(Exception e) {
+				mailNotification = new MailNotificationNull();
+				this.submissionNotifier = new SubmissionMailNotifierNull();
+
+				logger.error("Unable to configure mail notification",e);
+				throw new ServletException("Unable to configure mail notification",e);
+			}
 		}
 	}
 
@@ -499,6 +516,7 @@ public class ConfigServlet extends JsonServlet {
 				settings.setDocumentDesignDocument(couchDd);
 				settings.setSubmissionDesignDocument(submissionDesign);
 				settings.setUserDb(userDb);
+				settings.setMailNotifier(submissionNotifier);
 				
 				submissionRobot = new SubmissionRobot(settings);
 				

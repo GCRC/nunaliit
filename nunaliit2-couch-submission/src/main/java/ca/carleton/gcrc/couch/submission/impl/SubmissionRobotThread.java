@@ -16,6 +16,7 @@ import ca.carleton.gcrc.couch.client.CouchQueryResults;
 import ca.carleton.gcrc.couch.client.CouchUserDb;
 import ca.carleton.gcrc.couch.client.CouchUserDocContext;
 import ca.carleton.gcrc.couch.submission.SubmissionRobotSettings;
+import ca.carleton.gcrc.couch.submission.mail.SubmissionMailNotifier;
 import ca.carleton.gcrc.json.JSONSupport;
 import ca.carleton.gcrc.json.patcher.JSONPatcher;
 
@@ -27,6 +28,7 @@ public class SubmissionRobotThread extends Thread {
 	private CouchDesignDocument submissionDbDesignDocument;
 	private CouchDesignDocument documentDbDesignDocument;
 	private CouchUserDb userDb;
+	private SubmissionMailNotifier mailNotifier = null;
 	private Set<String> docIdsToSkip = new HashSet<String>();
 	private String adminRole = "administrator";
 	private String vetterRole = "vetter";
@@ -35,6 +37,7 @@ public class SubmissionRobotThread extends Thread {
 		this.submissionDbDesignDocument = settings.getSubmissionDesignDocument();
 		this.documentDbDesignDocument = settings.getDocumentDesignDocument();
 		this.userDb = settings.getUserDb();
+		this.mailNotifier = settings.getMailNotifier();
 		
 		if( null != settings.getAtlasName() ){
 			adminRole = settings.getAtlasName() + "_administrator";
@@ -234,6 +237,9 @@ public class SubmissionRobotThread extends Thread {
 			submissionDoc.getJSONObject("nunaliit_submission")
 				.put("state", "waiting_for_approval");
 			submissionDb.updateDocument(submissionDoc);
+			
+logger.error("Sending waiting for approval notification for submission");			
+			this.mailNotifier.sendSubmissionWaitingForApprovalNotification(submissionDoc);
 		}
 	}
 
