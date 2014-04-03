@@ -353,67 +353,33 @@
 		}
 
 		,_approve: function(subDocId, approvedDoc){
-			if( !approvedDoc ) {
-				this._updateSubmissionState(subDocId, 'approved');
-			} else {
-				var _this = this;
-				
-				this._getSubmissionDocument({
-					subDocId: subDocId
-					,onSuccess: function(subDoc){
-						subDoc.nunaliit_submission.state = 'approved';
-						$n2.couchMap.adjustDocument(subDoc);
-						
-						if( approvedDoc ){
-							subDoc.nunaliit_submission.approved_doc = {};
-							subDoc.nunaliit_submission.approved_reserved = {};
-							for(var key in approvedDoc){
-								if( key.length > 0 && key[0] === '_' ) {
-									var effectiveKey = key.substr(1);
-									subDoc.nunaliit_submission.approved_reserved[effectiveKey] =
-										approvedDoc[key];
-								} else {
-									subDoc.nunaliit_submission.approved_doc[key] =
-										approvedDoc[key];
-								};
-							};
-						};
-						
-						_this.submissionDb.updateDocument({
-							data: subDoc
-							,onSuccess: function(docInfo){
-								_this.logger.log( _loc('Submision approved') );
-								_this._refreshSubmissions();
-							}
-							,onError: function(err){ 
-								_this.logger.error( _loc('Unable to update submision document: {err}',{err:err}) ); 
-							}
-						});
-					}
-					,onError: function(err){
-						_this.logger.error( _loc('Unable to obtain submision document: {err}',{err:err}) ); 
-					}
-				});
-			};
-		}
-
-		,_deny: function(subDocId){
-			this._updateSubmissionState(subDocId, 'denied');
-		}
-
-		,_updateSubmissionState: function(subDocId, newState){
 			var _this = this;
 			
 			this._getSubmissionDocument({
 				subDocId: subDocId
 				,onSuccess: function(subDoc){
-					subDoc.nunaliit_submission.state = newState;
+					subDoc.nunaliit_submission.state = 'approved';
 					$n2.couchMap.adjustDocument(subDoc);
-
+					
+					if( approvedDoc ){
+						subDoc.nunaliit_submission.approved_doc = {};
+						subDoc.nunaliit_submission.approved_reserved = {};
+						for(var key in approvedDoc){
+							if( key.length > 0 && key[0] === '_' ) {
+								var effectiveKey = key.substr(1);
+								subDoc.nunaliit_submission.approved_reserved[effectiveKey] =
+									approvedDoc[key];
+							} else {
+								subDoc.nunaliit_submission.approved_doc[key] =
+									approvedDoc[key];
+							};
+						};
+					};
+					
 					_this.submissionDb.updateDocument({
 						data: subDoc
 						,onSuccess: function(docInfo){
-							_this.logger.log( _loc('Submision changed state to: '+newState) );
+							_this.logger.log( _loc('Submision approved') );
 							_this._refreshSubmissions();
 						}
 						,onError: function(err){ 
@@ -425,6 +391,95 @@
 					_this.logger.error( _loc('Unable to obtain submision document: {err}',{err:err}) ); 
 				}
 			});
+		}
+
+		,_deny: function(subDocId, onDeniedFn){
+			var _this = this;
+			
+			gatherDenyReason(function(reason){
+				_this._getSubmissionDocument({
+					subDocId: subDocId
+					,onSuccess: function(subDoc){
+						subDoc.nunaliit_submission.state = 'denied';
+						
+						if( reason && reason !== '' ){
+							subDoc.nunaliit_submission.denied_reason = reason;
+						};
+
+						$n2.couchMap.adjustDocument(subDoc);
+						
+						_this.submissionDb.updateDocument({
+							data: subDoc
+							,onSuccess: function(docInfo){
+								_this.logger.log( _loc('Submision denied') );
+								
+								if( typeof onDeniedFn === 'function' ){
+									onDeniedFn();
+								};
+								
+								_this._refreshSubmissions();
+							}
+							,onError: function(err){ 
+								_this.logger.error( _loc('Unable to update submision document: {err}',{err:err}) ); 
+							}
+						});
+					}
+					,onError: function(err){
+						_this.logger.error( _loc('Unable to obtain submision document: {err}',{err:err}) ); 
+					}
+				});
+			});
+			
+			function gatherDenyReason(callback){
+				var diagId = $n2.getUniqueId();
+				var $diag = $('<div>')
+					.attr('id',diagId)
+					.addClass('submission_deny_dialog')
+					.appendTo( $('body') );
+				
+				$('<textarea>')
+					.addClass('submission_deny_dialog_reason')
+					.appendTo($diag);
+				
+				var $buttons = $('<div>')
+					.addClass('submission_deny_dialog_buttons')
+					.appendTo($diag);
+
+				$('<button>')
+					.addClass('n2_button_ok')
+					.text( _loc('OK') )
+					.appendTo($buttons)
+					.click(function(){
+						var $diag = $('#'+diagId);
+						var comment = $diag.find('textarea.submission_deny_dialog_reason').val();
+						$diag.dialog('close');
+						if( typeof callback === 'function' ){
+							callback(comment);
+						};
+					});
+
+				$('<button>')
+					.addClass('n2_button_cancel')
+					.text( _loc('Cancel') )
+					.appendTo($buttons)
+					.click(function(){
+						var $diag = $('#'+diagId);
+						$diag.dialog('close');
+					});
+				
+				$diag.dialog({
+					autoOpen: true
+					,title: _loc('Enter reason for rejecting submission')
+					,modal: true
+					//,width: '90%'
+					,width: 'auto'
+					,close: function(event, ui){
+						var diag = $(event.target);
+						diag.dialog('destroy');
+						diag.remove();
+					}
+				});
+			};
 		}
 
 		,_getSubmissionDocument: function(opts_){
@@ -832,9 +887,10 @@
 					.text( _loc('Reject') )
 					.appendTo($buttons)
 					.click(function(){
-						_this._deny(subDocId);
-						var $diag = $('#'+diagId);
-						$diag.dialog('close');
+						_this._deny(subDocId,function(){
+							var $diag = $('#'+diagId);
+							$diag.dialog('close');
+						});
 						return false;
 					});
 				if( originalDoc ) {
