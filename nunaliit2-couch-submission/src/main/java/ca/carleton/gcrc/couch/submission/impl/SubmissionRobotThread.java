@@ -1,9 +1,12 @@
 package ca.carleton.gcrc.couch.submission.impl;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Vector;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +22,7 @@ import ca.carleton.gcrc.couch.submission.SubmissionRobotSettings;
 import ca.carleton.gcrc.couch.submission.mail.SubmissionMailNotifier;
 import ca.carleton.gcrc.json.JSONSupport;
 import ca.carleton.gcrc.json.patcher.JSONPatcher;
+import ca.carleton.gcrc.mail.MailRecipient;
 
 public class SubmissionRobotThread extends Thread {
 
@@ -157,6 +161,20 @@ public class SubmissionRobotThread extends Thread {
 			.getJSONObject("original_reserved")
 			.optString("rev",null);
 		
+		// Check if denial email must be sent
+		boolean sendDenialEmail = false;
+		JSONObject denialEmail = submissionDoc
+			.getJSONObject("nunaliit_submission")
+			.optJSONObject("denial_email");
+		if( null != denialEmail ){
+			boolean requested = denialEmail.optBoolean("requested",false);
+			boolean sent = denialEmail.optBoolean("sent",false);
+			
+			if( requested && !sent ){
+				sendDenialEmail = true;
+			}
+		}
+		
 		// Get document in document database
 		CouchDb documentDb = documentDbDesignDocument.getDatabase();
 		JSONObject doc = null;
@@ -181,9 +199,12 @@ public class SubmissionRobotThread extends Thread {
 				
 			} else if( "submitted".equals(stateStr) ) {
 				performSubmittedWork(submissionDoc, doc);
-				
+
 			} else if( "approved".equals(stateStr) ) {
 				performApprovedWork(submissionDoc, doc);
+
+			} else if( sendDenialEmail ) {
+				performDenialEmail(submissionDoc, doc);
 
 			} else {
 				throw new Exception("Unexpected state for submission document: "+stateStr);
@@ -331,6 +352,89 @@ logger.error("Sending waiting for approval notification for submission");
 				}
 			}
 		}
+	}
+	
+	public void performDenialEmail(JSONObject submissionDoc, JSONObject currentDoc) throws Exception {
+		JSONObject submittedDoc = SubmissionUtils.getSubmittedDocumentFromSubmission(submissionDoc);
+		
+		JSONObject submissionInfo = submissionDoc.getJSONObject("nunaliit_submission");
+		JSONObject denial_email = submissionInfo.getJSONObject("denial_email");
+		
+		// Find user that submitted the update
+		String userId = null;
+		JSONObject created = submissionDoc.optJSONObject("nunaliit_created");
+		if( null != created ){
+			userId = created.optString("name", null);
+		}
+
+		// Get user document
+		CouchUserDocContext userDocContext = null;
+		if( null != userId ){
+			try {
+				userDocContext = userDb.getUserFromName(userId);
+			} catch(Exception e) {
+				// Ignore if we can not find user
+			}
+		}
+		
+		// Get list of e-mails
+		List<String> emails = new Vector<String>();
+		String userName = null;
+		if( null != userDocContext ){
+			JSONObject userDoc = userDocContext.getUserDoc();
+			
+			Set<String> validatedEmails = new HashSet<String>();
+			JSONArray jsonValidated = userDoc.optJSONArray("nunaliit_validated_emails");
+			if( null != jsonValidated ){
+				for(int i=0; i<jsonValidated.length(); ++i){
+					String email = jsonValidated.getString(i);
+					validatedEmails.add(email);
+				}
+			}
+			
+			JSONArray jsonEmails = userDoc.optJSONArray("nunaliit_emails");
+			if( null != jsonEmails ){
+				for(int i=0; i<jsonEmails.length(); ++i){
+					String email = jsonEmails.getString(i);
+					if( validatedEmails.contains(email) ){
+						emails.add(email);
+					}
+				}
+			}
+			
+			userName = userDoc.optString("display",null);
+			if( null == userName ){
+				userName = userDoc.optString("name",null);
+			}
+		}
+		
+		// If no e-mails, just quit
+		if( emails.size() < 1 ){
+			CouchDb submissionDb = submissionDbDesignDocument.getDatabase();
+			denial_email.put("sent", true);
+			submissionDb.updateDocument(submissionDoc);
+			return;
+		}
+		
+		// Convert e-mail addresses into recipient
+		List<MailRecipient> recipients = new ArrayList<MailRecipient>(emails.size());
+		for(String email : emails){
+			MailRecipient recipient = null;
+			if( null != userName ){
+				recipient = new MailRecipient(email, userName);
+			} else {
+				recipient = new MailRecipient(email);
+			}
+			recipients.add(recipient);
+		}
+		
+		// Send notification
+		mailNotifier.sendSubmissionRejectionNotification(submissionDoc, recipients);
+
+		// Remember it was sent
+		CouchDb submissionDb = submissionDbDesignDocument.getDatabase();
+		denial_email.put("sent", true);
+		submissionDb.updateDocument(submissionDoc);
 	}
 
 	private boolean waitMillis(int millis) {

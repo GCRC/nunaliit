@@ -396,7 +396,7 @@
 		,_deny: function(subDocId, onDeniedFn){
 			var _this = this;
 			
-			gatherDenyReason(function(reason){
+			gatherDenyReason(function(reason,sendEmail){
 				_this._getSubmissionDocument({
 					subDocId: subDocId
 					,onSuccess: function(subDoc){
@@ -404,6 +404,12 @@
 						
 						if( reason && reason !== '' ){
 							subDoc.nunaliit_submission.denied_reason = reason;
+						};
+
+						if( sendEmail ){
+							subDoc.nunaliit_submission.denial_email = {
+								requested: true
+							};
 						};
 
 						$n2.couchMap.adjustDocument(subDoc);
@@ -430,7 +436,7 @@
 				});
 			});
 			
-			function gatherDenyReason(callback){
+			function gatherDenyReason(callback,sendEmail){
 				var diagId = $n2.getUniqueId();
 				var $diag = $('<div>')
 					.attr('id',diagId)
@@ -440,6 +446,20 @@
 				$('<textarea>')
 					.addClass('submission_deny_dialog_reason')
 					.appendTo($diag);
+				
+				var $options = $('<div>')
+					.addClass('submission_deny_dialog_options')
+					.appendTo($diag);
+				
+				var cbId = $n2.getUniqueId();
+				$('<input type="checkbox">')
+					.attr('id',cbId)
+					.attr('name','send_email')
+					.appendTo($options);
+				$('<label>')
+					.attr('for',cbId)
+					.text( _loc('Send e-mail to submitter with reason for rejection') )
+					.appendTo($options);
 				
 				var $buttons = $('<div>')
 					.addClass('submission_deny_dialog_buttons')
@@ -451,10 +471,13 @@
 					.appendTo($buttons)
 					.click(function(){
 						var $diag = $('#'+diagId);
+						
 						var comment = $diag.find('textarea.submission_deny_dialog_reason').val();
+						var email = $diag.find('input[name="send_email"]').is(':checked');
+						
 						$diag.dialog('close');
 						if( typeof callback === 'function' ){
-							callback(comment);
+							callback(comment,email);
 						};
 					});
 

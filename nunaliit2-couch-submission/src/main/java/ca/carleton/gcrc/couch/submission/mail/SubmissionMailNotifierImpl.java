@@ -158,4 +158,73 @@ public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 		}
 	}
 
+	@Override
+	public void sendSubmissionRejectionNotification(
+			JSONObject submissionDoc,
+			List<MailRecipient> recipients
+			) throws Exception {
+
+		if( false == sendUploadMailNotification ) {
+			logger.debug("Rejection notification disabled");
+			return;
+		}
+		
+		// Check if anything to do
+		if( recipients.size() < 1 ) {
+			logger.info("Rejection notification not sent because there are no recipients");
+			return;
+		}
+		
+		String rejectionReason = null;
+		JSONObject submissionInfo = submissionDoc.optJSONObject("nunaliit_submission");
+		if( null != submissionInfo ){
+			rejectionReason = submissionInfo.optString("denied_reason",null);
+		}
+
+		logger.info("Sending submission rejection notification for "
+				+submissionDoc.optString("_id", "<unknown>")
+				+" to "
+				+recipients
+				);
+		
+		try {
+			MailMessage message = new MailMessage();
+			
+			// From
+			message.setFromAddress(fromAddress);
+			
+			// To
+			for(MailRecipient recipient : recipients){
+				message.addToRecipient( recipient );
+			}
+			
+			// Subject
+			message.setSubject("Submission Rejected - "+submissionDoc.optString("_id", "<unknown>"));
+			
+			// Create HTML body part
+			StringWriter sw = new StringWriter();
+			PrintWriter pw = new PrintWriter(sw);
+			pw.println("<html><head><title>Submission Rejected</title></head><body><h1>Submission Rejected</h1>");
+			pw.println("<p>Your submission to the database was rejected.</p>");
+			
+			if( null != rejectionReason 
+			 && false == "".equals(rejectionReason) ) {
+				pw.println("<p>A reason for the rejection was provied: "+rejectionReason+"</p>");
+			} else {
+				pw.println("<p>There was not a specified reason for the rejection.</p>");
+			}
+			
+			pw.println("</body></html>");
+			pw.flush();
+			message.setHtmlContent(sw.toString());
+			
+			// Send message
+			mailDelivery.sendMessage(message);
+			
+		} catch (Exception e) {
+			logger.error("Unable to send submission notification",e);
+			throw new Exception("Unable to send submission notification",e);
+		}
+	}
+
 }
