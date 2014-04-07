@@ -57,6 +57,8 @@ $n2.couchRequests = $n2.Class({
 			,userServerUrl: null
 		},options_);
 		
+		var _this = this;
+		
 		this.currentRequests = {};
 		
 		this.scheduled = false;
@@ -64,6 +66,14 @@ $n2.couchRequests = $n2.Class({
 		this.userListeners = [];
 		
 		this.documentListeners = [];
+		
+		if( this.options.dispatchService ){
+			var f = function(m){
+				_this._handleMessage(m);
+			};
+			this.options.dispatchService.register(DH, 'requestUserDocument', f);
+			this.options.dispatchService.register(DH, 'requestDocument', f);
+		};
 	}
 
 	,addUserListener: function(listener){
@@ -203,13 +213,13 @@ $n2.couchRequests = $n2.Class({
 	,_callUserListeners: function(userDoc){
 		//$n2.log('Requested user doc: ',userDoc);		
 
+		this._dispatch({
+			type: 'userDocument'
+			,userDoc: userDoc
+		});
+
 		for(var j=0,f=this.userListeners.length; j<f; ++j){
 			var listener = this.userListeners[j];
-
-			this._dispatch({
-				type: 'userDocument'
-				,userDoc: userDoc
-			});
 			
 			//try {
 				listener(userDoc);
@@ -264,6 +274,17 @@ $n2.couchRequests = $n2.Class({
 		var dispatcher = this._getDispatcher();
 		if( dispatcher ){
 			dispatcher.send(DH,m);
+		};
+	}
+	
+	,_handleMessage: function(m){
+		if( 'requestDocument' === m.type ) {
+			var docId = m.docId;
+			this.requestDocument(docId);
+			
+		} else if( 'requestUserDocument' === m.type ) {
+			var userId = m.userId;
+			this.requestUser(userId);
 		};
 	}
 	
