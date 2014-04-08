@@ -1,0 +1,1 @@
+org.nunaliit.user_agreement

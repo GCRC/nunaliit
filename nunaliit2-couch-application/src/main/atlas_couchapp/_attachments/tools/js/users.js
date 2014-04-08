@@ -411,6 +411,8 @@ var UserCreationApplication = $n2.Class({
 	
 	,userSchema: null
 	
+	,atlasDb: null
+	
 	,showService: null
 	
 	,userService: null
@@ -418,6 +420,8 @@ var UserCreationApplication = $n2.Class({
 	,divId: null
 	
 	,token: null
+	
+	,userAgreement: null
 	
 	,initialize: function(opts_){
 		var opts = $n2.extend({
@@ -433,8 +437,8 @@ var UserCreationApplication = $n2.Class({
 		var config = opts.config;
 		
 		this.userDb = $n2.couch.getUserDb();
-	 	
 		this.authService = config.directory.authService;
+		this.atlasDb = config.atlasDb;
 		
 		$n2.log('config',config);
 
@@ -463,6 +467,21 @@ var UserCreationApplication = $n2.Class({
 			.addClass('tokenVerification')
 			.text( _loc('Verifying token') )
 			.appendTo($display);
+		
+		// Obtain user agreement
+		if( this.atlasDb ){
+			this.atlasDb.getDocument({
+				docId: 'org.nunaliit.user_agreement'
+				,onSuccess: function(doc){
+					if( doc 
+					 && doc.nunaliit_user_agreement 
+					 && doc.nunaliit_user_agreement.content ) {
+						_this.userAgreement = doc.nunaliit_user_agreement.content;
+						_this._refreshUserAgreement();
+					};
+				}
+			});
+		};
 		
 		this.userService.validateUserCreation({
 			token: this.token
@@ -535,11 +554,13 @@ var UserCreationApplication = $n2.Class({
 			.addClass('line')
 			.addClass('chooseOwnPassword')
 			.appendTo($form);
-		$('<div>')
-			.addClass('label')
+		var elemId = $n2.getUniqueId();
+		$('<label>')
+			.attr('for',elemId)
 			.text( _loc('I want to choose my own password') )
 			.appendTo($line);
-		$('<div class="value"><input class="choosePassword" type="checkbox"/></div>')
+		$('<input class="choosePassword" type="checkbox"/>')
+			.attr('id',elemId)
 			.appendTo($line)
 			.change(function(){
 				var $display = _this._getDiv();
@@ -551,18 +572,50 @@ var UserCreationApplication = $n2.Class({
 					displayGeneratedPassword();
 				};
 			});
+		
+		// Show password
+		var $line = $('<div>')
+			.addClass('line')
+			.addClass('showOwnPassword')
+			.appendTo($form);
+		var elemId = $n2.getUniqueId();
+		$('<label>')
+			.attr('for',elemId)
+			.text( _loc('Show my password') )
+			.appendTo($line);
+		$('<input class="showPassword" type="checkbox"/>')
+			.attr('id',elemId)
+			.appendTo($line)
+			.change(function(){
+				var $display = _this._getDiv();
+				var $show = $display.find('.showPassword');
+				var showPw = $show.is(':checked');
+				if( showPw ) {
+					showOwnPassword(true);
+				} else {
+					showOwnPassword(false);
+				};
+			});
+		
 
 		// E-mail Password
 		var $line = $('<div>')
 			.addClass('line')
 			.addClass('emailPassword')
 			.appendTo($form);
-		$('<div>')
-			.addClass('label')
+		var elemId = $n2.getUniqueId();
+		$('<label>')
+			.attr('for',elemId)
 			.text( _loc('E-mail me my password') )
 			.appendTo($line);
-		$('<div class="value"><input class="emailPassword" type="checkbox"/></div>')
+		$('<input class="emailPassword" type="checkbox"/>')
+			.attr('id',elemId)
 			.appendTo($line);
+		
+		// User Agreement
+		var $line = $('<div>')
+			.addClass('user_agreement')
+			.appendTo($form);
 		
 		$('<button>')
 			.addClass('createUser')
@@ -575,6 +628,16 @@ var UserCreationApplication = $n2.Class({
 				var password2 = $display.find('.password2').val();
 				var password3 = $display.find('.password3').val();
 				var sendEmailPasswordReminder = $display.find('.emailPassword').is(':checked');
+				
+				var userAgreement = null;
+				var $userAgreementCheckbox = $display.find('.user_agreement_accept');
+				if( $userAgreementCheckbox.length > 0 ){
+					if( !$userAgreementCheckbox.is(':checked') ){
+						alert( _loc('You must agree to the User Agreement before creating a user.') );
+						return;
+					};
+					userAgreement = $display.find('.user_agreement_content').val();
+				};
 				
 				if( displayName ){
 					displayName = displayName.trim();
@@ -615,15 +678,19 @@ var UserCreationApplication = $n2.Class({
 					return;
 				};
 				
-				_this._createUser(displayName, password, sendEmailPasswordReminder);
+				_this._createUser(displayName, password, sendEmailPasswordReminder, userAgreement);
 			});
 
 		displayGeneratedPassword();
+		this._refreshUserAgreement();
 
 		function displayGeneratedPassword(){
 			var $display = _this._getDiv();
 			var $passwordSection = $display.find('.passwordSection');
 			$passwordSection.empty();
+			$display.find('.tokenCreationForm')
+				.addClass('display_generated_password')
+				.removeClass('display_own_password');
 
 			_this.userService.generatePassword({
 				onSuccess: function(password){
@@ -672,6 +739,9 @@ var UserCreationApplication = $n2.Class({
 			var $display = _this._getDiv();
 			var $passwordSection = $display.find('.passwordSection');
 			$passwordSection.empty();
+			$display.find('.tokenCreationForm')
+				.removeClass('display_generated_password')
+				.addClass('display_own_password');
 
 			// Password
 			var $line = $('<div>')
@@ -697,9 +767,74 @@ var UserCreationApplication = $n2.Class({
 			$('<div class="value"><input class="password2" type="password"/></div>')
 				.appendTo($line);
 		};
+
+		function showOwnPassword(flag){
+			var $display = _this._getDiv();
+			var $passwordSection = $display.find('.passwordSection');
+
+			// Password 1
+			var $input1 = $passwordSection.find('.password1');
+			var val1 = $input1.val();
+			var $replace1 = null;
+			if( flag ){
+				$replace1 = $('<input type="text" class="password1">');
+			} else {
+				$replace1 = $('<input type="password" class="password1">');
+			};
+			$replace1.val(val1);
+			$input1
+				.before($replace1)
+				.remove();
+
+			// Password 2
+			var $input2 = $passwordSection.find('.password2');
+			var val2 = $input2.val();
+			var $replace2 = null;
+			if( flag ){
+				$replace2 = $('<input type="text" class="password2">');
+			} else {
+				$replace2 = $('<input type="password" class="password2">');
+			};
+			$replace2.val(val2);
+			$input2
+				.before($replace2)
+				.remove();
+		};
 	}
 	
-	,_createUser: function(displayName, password, sendEmailPasswordReminder){
+	,_refreshUserAgreement: function(){
+		var $display = this._getDiv();
+		var $agreementSection = $display.find('.user_agreement')
+			.empty();
+		
+		if( this.userAgreement ){
+			$('<div>')
+				.addClass('user_agreement_label')
+				.text( _loc('User Agreement') )
+				.appendTo($agreementSection);
+
+			$('<textarea>')
+				.addClass('user_agreement_content')
+				.val( this.userAgreement )
+				.attr('readonly','readonly')
+				.appendTo($agreementSection);
+
+			var $buttons = $('<div>')
+				.addClass('user_agreement_buttons')
+				.appendTo($agreementSection);
+
+			var elemId = $n2.getUniqueId();
+			$('<label>')
+				.attr('for',elemId)
+				.text( _loc('Accept User Agreement') )
+				.appendTo($buttons);
+			$('<input class="user_agreement_accept" type="checkbox"/>')
+				.attr('id',elemId)
+				.appendTo($buttons);
+		};
+	}
+	
+	,_createUser: function(displayName, password, sendEmailPasswordReminder, userAgreement){
 
 		var _this = this;
 		
@@ -708,6 +843,7 @@ var UserCreationApplication = $n2.Class({
 			,displayName: displayName
 			,password: password
 			,sendEmailPasswordReminder: sendEmailPasswordReminder
+			,userAgreement: userAgreement
 			,onSuccess: function(result){
 				$n2.log('user created',result);
 				var userName = result.name;

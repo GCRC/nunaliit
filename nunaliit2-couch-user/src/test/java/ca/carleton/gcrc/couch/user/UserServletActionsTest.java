@@ -69,7 +69,7 @@ public class UserServletActionsTest extends TestCase {
 		String token = mailNotification.token;
 
 		String password = "a_password";
-		actions.completeUserCreation(token,"Test",password,false);
+		actions.completeUserCreation(token,"Test",password,false,null);
 		
 		if( null != mailNotification.password ){
 			fail("Password reminder notification was sent without being requested");
@@ -91,7 +91,7 @@ public class UserServletActionsTest extends TestCase {
 		String token = mailNotification.token;
 
 		String password = "a_password";
-		actions.completeUserCreation(token,"Test",password,true);
+		actions.completeUserCreation(token,"Test",password,true,null);
 		
 		if( false == password.equals(mailNotification.password) ){
 			fail("Password reminder notification not sent on creation");

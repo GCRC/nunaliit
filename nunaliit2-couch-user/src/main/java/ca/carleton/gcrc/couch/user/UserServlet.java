@@ -175,37 +175,6 @@ public class UserServlet extends HttpServlet {
 		try {
 			List<String> path = computeRequestPath(req);
 			
-//			{
-//				StringWriter sw = new StringWriter();
-//				sw.write("Path");
-//				for(String f : path){
-//					sw.write("-"+f);
-//				}
-//				logger.error(sw.toString());
-//			}
-
-//			{
-//				Map<?,?> parameterMap = req.getParameterMap();
-//				for(Object keyObj : parameterMap.keySet()){
-//					if( keyObj instanceof String ){
-//						String key = (String)keyObj;
-//						
-//						StringWriter sw = new StringWriter();
-//						sw.write("Param "+key);
-//	
-//						Object valueObj = parameterMap.get(key);
-//						if( valueObj instanceof String[] ){
-//							String[] l = (String[])valueObj;
-//							for(String param : l){
-//								sw.write("-"+param);
-//							}
-//						}
-//						
-//						logger.error(sw.toString());
-//					}
-//				}
-//			}
-			
 			if( path.size() < 1 ) {
 				JSONObject result = actions.getWelcome();
 				sendJsonResponse(resp, result);
@@ -315,62 +284,6 @@ public class UserServlet extends HttpServlet {
 				JSONObject result = actions.validateUserCreation(tokenStrings[0]);
 				sendJsonResponse(resp, result);
 
-			} else if( path.size() == 1 && path.get(0).equals("completeUserCreation") ) {
-
-				// Token
-				String token = null;
-				{
-					String[] tokenStrings = req.getParameterValues("token");
-					if( null == tokenStrings || tokenStrings.length < 1 ){
-						throw new Exception("'token' parameter must be specified");
-					}
-					if( tokenStrings.length > 1 ){
-						throw new Exception("'token' parameter must be specified exactly once");
-					}
-					token = tokenStrings[0];
-				}
-
-				// Display Name
-				String displayName = null;
-				{
-					String[] displayStrings = req.getParameterValues("display");
-					if( null == displayStrings || displayStrings.length < 1 ){
-						throw new Exception("'display' parameter must be specified");
-					}
-					if( displayStrings.length > 1 ){
-						throw new Exception("'display' parameter must be specified exactly once");
-					}
-					displayName = displayStrings[0];
-				}
-
-				// Password
-				String password = null;
-				{
-					String[] passwordStrings = req.getParameterValues("password");
-					if( null == passwordStrings || passwordStrings.length < 1 ){
-						throw new Exception("'password' parameter must be specified");
-					}
-					if( passwordStrings.length > 1 ){
-						throw new Exception("'password' parameter must be specified exactly once");
-					}
-					password = passwordStrings[0];
-				}
-				
-				// Email Password
-				boolean emailPassword = false;
-				{
-					String[] emailPasswordStrings = req.getParameterValues("emailPassword");
-					if( null != emailPasswordStrings ) {
-						if( emailPasswordStrings.length > 1 ){
-							throw new Exception("'emailPassword' parameter must not be specified more than once");
-						}
-						emailPassword = Boolean.parseBoolean( emailPasswordStrings[0] );
-					}
-				}
-				
-				JSONObject result = actions.completeUserCreation(token,displayName,password,emailPassword);
-				sendJsonResponse(resp, result);
-
 			} else if( path.size() == 1 && path.get(0).equals("initPasswordRecovery") ) {
 				String[] emailStrings = req.getParameterValues("email");
 
@@ -460,7 +373,90 @@ public class UserServlet extends HttpServlet {
 		) throws ServletException, IOException {
 
 		try {
-			throw new Exception("Invalid operation");
+			List<String> path = computeRequestPath(req);
+			
+			if( path.size() == 1 && path.get(0).equals("completeUserCreation") ) {
+
+				// Token
+				String token = null;
+				{
+					String[] tokenStrings = req.getParameterValues("token");
+					if( null == tokenStrings || tokenStrings.length < 1 ){
+						throw new Exception("'token' parameter must be specified");
+					}
+					if( tokenStrings.length > 1 ){
+						throw new Exception("'token' parameter must be specified exactly once");
+					}
+					token = tokenStrings[0];
+				}
+
+				// Display Name
+				String displayName = null;
+				{
+					String[] displayStrings = req.getParameterValues("display");
+					if( null == displayStrings || displayStrings.length < 1 ){
+						throw new Exception("'display' parameter must be specified");
+					}
+					if( displayStrings.length > 1 ){
+						throw new Exception("'display' parameter must be specified exactly once");
+					}
+					displayName = displayStrings[0];
+				}
+
+				// Password
+				String password = null;
+				{
+					String[] passwordStrings = req.getParameterValues("password");
+					if( null == passwordStrings || passwordStrings.length < 1 ){
+						throw new Exception("'password' parameter must be specified");
+					}
+					if( passwordStrings.length > 1 ){
+						throw new Exception("'password' parameter must be specified exactly once");
+					}
+					password = passwordStrings[0];
+				}
+				
+				// Email Password
+				boolean emailPassword = false;
+				{
+					String[] emailPasswordStrings = req.getParameterValues("emailPassword");
+					if( null != emailPasswordStrings ) {
+						if( emailPasswordStrings.length > 1 ){
+							throw new Exception("'emailPassword' parameter must not be specified more than once");
+						}
+						emailPassword = Boolean.parseBoolean( emailPasswordStrings[0] );
+					}
+				}
+				
+				// User Agreement
+				String userAgreement = null;
+				{
+					String[] userAgreements = req.getParameterValues("userAgreement");
+					if( null != userAgreements ) {
+						if( userAgreements.length > 1 ){
+							throw new Exception("'userAgreement' parameter must not be specified more than once");
+						}
+						if( userAgreements.length == 1 ){
+							userAgreement = userAgreements[0];
+						}
+					}
+				}
+				if( "".equals(userAgreement) ){
+					userAgreement = null;
+				}
+				
+				JSONObject result = actions.completeUserCreation(
+						token
+						,displayName
+						,password
+						,emailPassword
+						,userAgreement
+						);
+				sendJsonResponse(resp, result);
+
+			} else {
+				throw new Exception("Invalid action requested");
+			}
 			
 		} catch(Exception e) {
 			reportError(e, resp);

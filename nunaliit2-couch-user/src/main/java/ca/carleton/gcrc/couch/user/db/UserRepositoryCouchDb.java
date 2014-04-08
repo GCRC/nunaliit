@@ -2,6 +2,7 @@ package ca.carleton.gcrc.couch.user.db;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Vector;
 
@@ -115,7 +116,9 @@ public class UserRepositoryCouchDb implements UserRepository {
 			String name, 
 			String displayName, 
 			String password,
-			String emailAddress
+			String emailAddress,
+			String atlasName,
+			String userAgreement
 		) throws Exception {
 		try {
 			String id = "org.couchdb.user:"+name;
@@ -140,6 +143,33 @@ public class UserRepositoryCouchDb implements UserRepository {
 
 				JSONArray emails = userDoc.getJSONArray("nunaliit_emails");
 				emails.put(emailAddress);
+			}
+			
+			// Remember that user was created on this atlas
+			{
+				JSONObject atlases = new JSONObject();
+				userDoc.put("nunaliit_atlases",atlases);
+				
+				JSONObject atlas = new JSONObject();
+				atlases.put(atlasName, atlas);
+				
+				atlas.put("name", atlasName);
+				atlas.put("created", true);
+			}
+			
+			// User agreement
+			if( null != userAgreement ){
+				Date now = new Date();
+				
+				JSONObject jsonAgreement = new JSONObject();
+				userDoc.put("nunaliit_accepted_user_agreements", jsonAgreement);
+				
+				JSONObject atlasSpecific = new JSONObject();
+				jsonAgreement.put(atlasName, atlasSpecific);
+				
+				atlasSpecific.put("atlas", atlasName);
+				atlasSpecific.put("content", userAgreement);
+				atlasSpecific.put("time", now.getTime());
 			}
 			
 			userDb.createDocument(userDoc);

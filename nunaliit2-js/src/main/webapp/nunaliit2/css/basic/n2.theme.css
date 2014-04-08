@@ -176,6 +176,10 @@ input[type="text"], input[type="password"], textarea {
 	color: #fff;
 }
 
+.nunaliit_login_greeting_with_editor {
+	cursor: pointer;
+}
+
 /* Login (within nunaliit_module_title) */
 .nunaliit_atlas .nunaliit_module_title .nunaliit_login {
 	display: none;

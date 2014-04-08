@@ -35,3 +35,26 @@
 .tokenPasswordRecoveryForm input[type="checkbox"] {
 	margin: 2px 0 0 5px;
 }
+
+.showOwnPassword {
+	display: none;
+}
+
+.display_own_password .showOwnPassword {
+	display: block;
+}
+
+.user_agreement {
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+
+.user_agreement_label {
+	font-size: 110%;
+	font-weight: bold;
+}
+
+textarea.user_agreement_content {
+	width: 520px; 
+	height: 300px;
+}

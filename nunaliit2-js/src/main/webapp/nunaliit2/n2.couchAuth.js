@@ -1555,7 +1555,9 @@ var AuthWidget = $n2.Class({
 				.addClass(greetingClass)
 				.append(greetingInner);
 			if( greetingFn ){
-				greetingOuter.click(greetingFn);
+				greetingOuter
+					.addClass('nunaliit_login_greeting_with_editor')
+					.click(greetingFn);
 			};
 			
 			$login.empty().append(greetingOuter).append(linkOuterContainer);

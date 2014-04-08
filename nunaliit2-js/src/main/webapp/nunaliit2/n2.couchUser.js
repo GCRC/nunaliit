@@ -704,6 +704,7 @@ var UserService = $n2.Class({
 			,displayName: null
 			,password: null
 			,sendEmailPasswordReminder: false
+			,userAgreement: null
 			,onSuccess: function(){}
 			,onError: function(err){}
 		},opts_);
@@ -712,7 +713,7 @@ var UserService = $n2.Class({
 		
 		$.ajax({
 	    	url: url
-	    	,type: 'GET'
+	    	,type: 'POST'
 	    	,async: true
 	    	,traditional: true
 	    	,data: {
@@ -720,6 +721,7 @@ var UserService = $n2.Class({
 				,display: opts.displayName
 				,password: opts.password
 				,emailPassword: opts.sendEmailPasswordReminder
+				,userAgreement: opts.userAgreement
 	    	}
 	    	,dataType: 'json'
 	    	,success: function(result) {

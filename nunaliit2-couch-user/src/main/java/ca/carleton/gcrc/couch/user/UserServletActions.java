@@ -184,6 +184,7 @@ public class UserServletActions {
 			String displayName, 
 			String password, 
 			boolean sendPasswordReminder
+			,String userAgreement
 			) throws Exception {
 		JSONObject validationResult = validateUserCreation(b64Token);
 		String emailAddress = validationResult.getString("emailAddress");
@@ -202,7 +203,7 @@ public class UserServletActions {
 		result.put("name", name);
 		
 		// Create user
-		userRepository.createUser(name, displayName, password, emailAddress);
+		userRepository.createUser(name, displayName, password, emailAddress, atlasName, userAgreement);
 		
 		// Get user
 		JSONObject userDoc = userRepository.getUserFromName(name);

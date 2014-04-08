@@ -6,6 +6,7 @@ import java.io.StringWriter;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +26,7 @@ public class MockUserRepository implements UserRepository {
 	}
 	
 	public JSONObject addUser(String name, String displayName, String emailAddress) throws Exception {
-		createUser(name, displayName, "", emailAddress);
+		createUser(name, displayName, "", emailAddress, "test", null);
 
 		String id = "org.couchdb.user:"+name;
 		JSONObject user = usersById.get(id);
@@ -110,32 +111,63 @@ public class MockUserRepository implements UserRepository {
 			String name, 
 			String displayName, 
 			String password,
-			String emailAddress) throws Exception {
-		JSONObject user = new JSONObject();
+			String emailAddress,
+			String atlasName,
+			String userAgreement) throws Exception {
+		JSONObject userDoc = new JSONObject();
 		
 		String id = "org.couchdb.user:"+name;
-		usersById.put(id, user);
+		usersById.put(id, userDoc);
 		
-		user.put("_id", id);
-		user.put("name", name);
-		user.put("password", password);
-		user.put("type", "user");
-		user.put("roles", new JSONArray());
-		user.put("nunaliit_options", new JSONObject());
-		user.put("nunaliit_emails", new JSONArray());
-		user.put("nunaliit_validated_emails", new JSONArray());
+		userDoc.put("_id", id);
+		userDoc.put("name", name);
+		userDoc.put("password", password);
+		userDoc.put("type", "user");
+		userDoc.put("roles", new JSONArray());
+		userDoc.put("nunaliit_options", new JSONObject());
+		userDoc.put("nunaliit_emails", new JSONArray());
+		userDoc.put("nunaliit_validated_emails", new JSONArray());
 
-		increaseVersion(user);
+		increaseVersion(userDoc);
 
 		if( null != displayName ){
-			user.put("display", displayName);
+			userDoc.put("display", displayName);
 		}
 
 		if( null != emailAddress ){
-			JSONArray validatedEmails = user.getJSONArray("nunaliit_validated_emails");
+			JSONArray validatedEmails = userDoc.getJSONArray("nunaliit_validated_emails");
 			validatedEmails.put(emailAddress);
+
+			JSONArray emails = userDoc.getJSONArray("nunaliit_emails");
+			emails.put(emailAddress);
 			
-			usersByEmail.put(emailAddress, user);
+			usersByEmail.put(emailAddress, userDoc);
+		}
+		
+		// Remember that user was created on this atlas
+		{
+			JSONObject atlases = new JSONObject();
+			userDoc.put("nunaliit_atlases",atlases);
+			
+			JSONObject atlas = new JSONObject();
+			atlases.put(atlasName, atlas);
+			
+			atlas.put("name", atlasName);
+			atlas.put("created", true);
+		}
+		
+		if( null != userAgreement ){
+			Date now = new Date();
+			
+			JSONObject jsonAgreement = new JSONObject();
+			userDoc.put("nunaliit_accepted_user_agreements", jsonAgreement);
+			
+			JSONObject atlasSpecific = new JSONObject();
+			jsonAgreement.put(atlasName, atlasSpecific);
+			
+			atlasSpecific.put("atlas", atlasName);
+			atlasSpecific.put("content", userAgreement);
+			atlasSpecific.put("time", now.getTime());
 		}
 	}
 
