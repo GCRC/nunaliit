@@ -11,10 +11,12 @@ import java.util.Vector;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -120,7 +122,7 @@ public class UserServlet extends HttpServlet {
 		
 		UserRepository userRepository = new UserRepositoryCouchDb(userDb, userDesignDocument);
 		
-		actions = new UserServletActions(userRepository, userMailNotification);
+		actions = new UserServletActions(atlasName, userRepository, userMailNotification);
 		if( null != serverKey ){
 			actions.setServerKey(serverKey);
 		}
@@ -238,6 +240,53 @@ public class UserServlet extends HttpServlet {
 				}
 				
 				JSONObject result = actions.getUsers(users);
+				sendJsonResponse(resp, result);
+
+			} else if( path.size() == 1 && path.get(0).equals("getUserDocument") ) {
+				String[] userStrings = req.getParameterValues("user");
+				if( null == userStrings ||  userStrings.length != 1 ){
+					throw new Exception("Parameter 'user' must be specified exactly once");
+				}
+				
+				String userId = userStrings[0];
+
+				Cookie[] cookies = req.getCookies();
+
+				ArrayList<String> userIds = new ArrayList<String>(1);
+				userIds.add(userId);
+				
+				Collection<JSONObject> result = actions.getUserDocuments(userIds, cookies);
+				
+				if( result.size() < 1 ){
+					throw new Exception("User document not found (name="+userId+")");
+				}
+				
+				sendJsonResponse(resp, result.iterator().next());
+
+			} else if( path.size() == 1 && path.get(0).equals("getUserDocuments") ) {
+				String[] userStrings = req.getParameterValues("user");
+				if( null == userStrings ||  userStrings.length < 1 ){
+					throw new Exception("Parameter 'user' must be specified at least once");
+				}
+				
+				List<String> userIds = new ArrayList<String>(userStrings.length);
+				for(String userString : userStrings){
+					userIds.add(userString);
+				}
+
+				Cookie[] cookies = req.getCookies();
+
+				Collection<JSONObject> userDocs = actions.getUserDocuments(userIds, cookies);
+				
+				JSONObject result = new JSONObject();
+				
+				JSONArray jsonArr = new JSONArray();
+				result.put("users", jsonArr);
+				
+				for(JSONObject userDoc : userDocs){
+					jsonArr.put(userDoc);
+				}
+				
 				sendJsonResponse(resp, result);
 
 			} else if( path.size() == 1 && path.get(0).equals("initUserCreation") ) {

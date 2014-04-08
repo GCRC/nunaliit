@@ -9,6 +9,8 @@ import java.util.Collection;
 import java.util.Formatter;
 import java.util.List;
 
+import javax.servlet.http.Cookie;
+
 import org.apache.commons.codec.binary.Base64;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -30,6 +32,7 @@ public class UserServletActions {
 
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
+	private String atlasName = null;
 	private UserRepository userRepository;
 	private UserMailNotification userMailNotification;
 	private byte[] serverKey = null;
@@ -37,9 +40,11 @@ public class UserServletActions {
 	private SecureRandom rng = null;
 
 	public UserServletActions(
-			UserRepository userRepository
+			String atlasName
+			,UserRepository userRepository
 			,UserMailNotification userMailNotification
 		){
+		this.atlasName = atlasName;
 		this.userRepository = userRepository;
 		this.userMailNotification = userMailNotification;
 		
@@ -404,5 +409,44 @@ public class UserServletActions {
 		result.put("password", password);
 		
 		return result;
+	}
+
+	public Collection<JSONObject> getUserDocuments(List<String> userIds, Cookie[] cookies) throws Exception {
+		List<String> roles = userRepository.getRolesFromAuthentication(cookies);
+		
+		String atlasAdmin = atlasName + "_administrator";
+		String atlasVetter = atlasName + "_vetter";
+		
+		boolean allowed = false;
+		for(String role : roles){
+			if( "_admin".equals(role) ) {
+				allowed = true;
+				break;
+
+			} else if( "administrator".equals(role) ) {
+				allowed = true;
+				break;
+
+			} else if( "vetter".equals(role) ) {
+				allowed = true;
+				break;
+
+			} else if( atlasAdmin.equals(role) ) {
+				allowed = true;
+				break;
+
+			} else if( atlasVetter.equals(role) ) {
+				allowed = true;
+				break;
+			}
+		}
+		
+		if( !allowed ){
+			throw new Exception("Not authorized to obtain user document");
+		}
+
+		Collection<JSONObject> userDocs = userRepository.getUsersFromNames(userIds);
+
+		return userDocs;
 	}
 }

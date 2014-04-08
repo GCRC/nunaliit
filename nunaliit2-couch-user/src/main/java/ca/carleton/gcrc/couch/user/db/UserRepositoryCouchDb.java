@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
 
+import javax.servlet.http.Cookie;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -12,8 +14,12 @@ import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
+import ca.carleton.gcrc.couch.client.CouchFactory;
 import ca.carleton.gcrc.couch.client.CouchQuery;
 import ca.carleton.gcrc.couch.client.CouchQueryResults;
+import ca.carleton.gcrc.couch.client.CouchSession;
+import ca.carleton.gcrc.couch.client.CouchUserContext;
+import ca.carleton.gcrc.couch.client.impl.CouchContextCookie;
 
 public class UserRepositoryCouchDb implements UserRepository {
 
@@ -131,6 +137,9 @@ public class UserRepositoryCouchDb implements UserRepository {
 			if( null != emailAddress ){
 				JSONArray validatedEmails = userDoc.getJSONArray("nunaliit_validated_emails");
 				validatedEmails.put(emailAddress);
+
+				JSONArray emails = userDoc.getJSONArray("nunaliit_emails");
+				emails.put(emailAddress);
 			}
 			
 			userDb.createDocument(userDoc);
@@ -170,5 +179,21 @@ public class UserRepositoryCouchDb implements UserRepository {
 		} catch(Exception e) {
 			throw new Exception("Unable to update password: "+name);
 		}
+	}
+
+	@Override
+	public List<String> getRolesFromAuthentication(Cookie[] cookies) throws Exception {
+		CouchContextCookie contextCookie = new CouchContextCookie();
+		for(Cookie cookie : cookies){
+			contextCookie.setCookie(cookie.getName(), cookie.getValue());
+		}
+		
+		CouchFactory factory = new CouchFactory();
+		CouchDb couchDb = factory.getDb(contextCookie, userDb);
+
+		CouchSession session = couchDb.getClient().getSession();
+		CouchUserContext userContext = session.getCurrentUserContext();
+		
+		return userContext.getRoles();
 	}
 }

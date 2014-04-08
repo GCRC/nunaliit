@@ -3,6 +3,8 @@ package ca.carleton.gcrc.couch.user.db;
 import java.util.Collection;
 import java.util.List;
 
+import javax.servlet.http.Cookie;
+
 import org.json.JSONObject;
 
 public interface UserRepository {
@@ -23,4 +25,6 @@ public interface UserRepository {
 		) throws Exception;
 
 	void recoverPassword(String name, String newPassword) throws Exception;
+	
+	List<String> getRolesFromAuthentication(Cookie[] cookies) throws Exception;
 }

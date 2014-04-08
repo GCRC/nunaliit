@@ -1,6 +1,8 @@
 ;(function($,$n2){
 	// Localization
 	var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
+	
+	var DH = 'submission_application';
 
 	// -----------------------------------------------------------------
 	var Logger = $n2.Class({
@@ -77,6 +79,7 @@
 		,couchEditor: null
 		,showService: null
 		,schemaEditorService: null
+		,dispatchService: null
 		,divId: null
 		,logger: null
 		
@@ -85,6 +88,8 @@
 		 		config: null
 		 		,div: null
 		 	},opts_);
+			
+			var _this = this;
 			
 			$n2.log('Options',opts);
 			
@@ -99,6 +104,7 @@
 				this.schemaRepository = config.directory.schemaRepository;
 				this.showService = config.directory.showService;
 				this.schemaEditorService = config.directory.schemaEditorService;
+				this.dispatchService = config.directory.dispatchService;
 			};
 
 			var $div = $( opts.div );
@@ -108,6 +114,14 @@
 				$div.attr('id',divId);
 			};
 			this.divId = divId;
+			
+			// Handle dispatch event
+			if( this.dispatchService ){
+				var f = function(m, address, dispatcher){
+					_this._handleMessage(m, address, dispatcher);
+				};
+				this.dispatchService.register(DH,'userDocumentComplete',f);
+			};
 			
 			this._clear();
 			
@@ -297,6 +311,17 @@
 						_this.showService.printUserName($val, userId);
 					};
 					
+					// Add mailto link
+					var cName = 'submission_mailto_' + $n2.utils.stringToHtmlId(userId);
+					$('<div>')
+						.addClass(cName)
+						.appendTo($info);
+					if( _this.dispatchService ){
+						_this.dispatchService.send(DH,{
+							type: 'requestUserDocumentComplete'
+							,userId: userId
+						});
+					};
 				};
 	
 				// View buttons
@@ -1238,6 +1263,54 @@
 					.addClass('submission_view_dialog_tree')
 					.appendTo($content);
 				new $n2.tree.ObjectTree($treeDiv, doc);
+			};
+		}
+		
+		,_handleMessage: function(m, address, dispatcher){
+			// Check that we are still running
+			var $div = this._getDiv();
+			if( $div.length < 1 ){
+				dispatcher.deregister(address);
+				
+			} else if( 'userDocumentComplete' === m.type ) {
+				this._loadedUserDoc(m.userDoc);
+			};
+		}
+		
+		,_loadedUserDoc: function(userDoc){
+			var userId = userDoc.name;
+			
+			var userName = userDoc.display;
+			if( !userName ){
+				userName = userDoc.name;
+			};
+			
+			var emails = [];
+			if( userDoc.nunaliit_emails && userDoc.nunaliit_validated_emails ) {
+				for(var i=0,e=userDoc.nunaliit_emails.length; i<e; ++i){
+					var email = userDoc.nunaliit_emails[i];
+					if( userDoc.nunaliit_validated_emails.indexOf(email) >= 0 ){
+						emails.push(email);
+					};
+				};
+			};
+
+			if( emails.length > 0 ) {
+				var cName = 'submission_mailto_' + $n2.utils.stringToHtmlId(userId);
+				$('.'+cName).each(function(){
+					var $div = $(this)
+						.removeClass(cName)
+						.addClass('submission_mail_link_' + $n2.utils.stringToHtmlId(userId));
+					for(var i=0,e=emails.length; i<e; ++i){
+						var email = emails[i];
+						var $line = $('<div>')
+							.appendTo($div);
+						var $a = $('<a>')
+							.attr('href','mailto:'+email)
+							.text( _loc('Send mail to {name}',{name:userName}) )
+							.appendTo($line);
+					};
+				});
 			};
 		}
 	});

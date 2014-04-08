@@ -71,8 +71,9 @@ $n2.couchRequests = $n2.Class({
 			var f = function(m){
 				_this._handleMessage(m);
 			};
-			this.options.dispatchService.register(DH, 'requestUserDocument', f);
 			this.options.dispatchService.register(DH, 'requestDocument', f);
+			this.options.dispatchService.register(DH, 'requestUserDocument', f);
+			this.options.dispatchService.register(DH, 'requestUserDocumentComplete', f);
 		};
 	}
 
@@ -94,6 +95,16 @@ $n2.couchRequests = $n2.Class({
 			this.currentRequests.users = {};
 		};
 		this.currentRequests.users[userName] = 1;
+		
+		this._schedule();
+	}
+	
+	,requestCompleteUserDocument: function(userName){
+		// Remember request
+		if( !this.currentRequests.completeUsers ) {
+			this.currentRequests.completeUsers = {};
+		};
+		this.currentRequests.completeUsers[userName] = 1;
 		
 		this._schedule();
 	}
@@ -163,6 +174,8 @@ $n2.couchRequests = $n2.Class({
 			});
 			
 		} else if( requests.users && this.options.userDb ) {
+			// Attempt directly against user database. However, this is
+			// likely to fail
 			for(var userName in requests.users) {
 				this.options.userDb.getUser({
 					name: userName
@@ -172,6 +185,37 @@ $n2.couchRequests = $n2.Class({
 					,onError: function(err){}
 				});
 			};
+		};
+
+		// Complete user documents
+		if( requests.completeUsers && this.options.userServerUrl ) {
+			var params = [];
+			for(var userName in requests.completeUsers) {
+				params.push({
+					name: 'user'
+					,value: userName
+				});
+			};
+			
+			var url = this.options.userServerUrl + 'getUserDocuments';
+			
+			$.ajax({
+		    	url: url
+		    	,type: 'GET'
+		    	,async: true
+		    	,traditional: true
+		    	,data: params
+		    	,dataType: 'json'
+		    	,success: function(result) {
+		    		if( result.users ) {
+		    			for(var i=0,e=result.users.length;i<e;++i){
+		    				var user = result.users[i];
+		    				_this._callCompleteUserListeners(user);
+		    			};
+		    		};
+		    	}
+		    	,error: function(XMLHttpRequest, textStatus, errorThrown) {}
+			});
 		};
 		
 		// Documents
@@ -227,6 +271,15 @@ $n2.couchRequests = $n2.Class({
 			//	$n2.log('Error during user document listener: '+e);
 			//}
 		};
+	}
+	
+	,_callCompleteUserListeners: function(userDoc){
+		//$n2.log('Requested user doc: ',userDoc);		
+
+		this._dispatch({
+			type: 'userDocumentComplete'
+			,userDoc: userDoc
+		});
 	}
 	
 	,_callDocumentListeners: function(docs, requests){
@@ -285,6 +338,10 @@ $n2.couchRequests = $n2.Class({
 		} else if( 'requestUserDocument' === m.type ) {
 			var userId = m.userId;
 			this.requestUser(userId);
+			
+		} else if( 'requestUserDocumentComplete' === m.type ) {
+			var userId = m.userId;
+			this.requestCompleteUserDocument(userId);
 		};
 	}
 	

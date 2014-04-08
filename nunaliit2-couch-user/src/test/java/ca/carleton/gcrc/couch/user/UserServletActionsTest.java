@@ -8,6 +8,7 @@ import junit.framework.TestCase;
 
 public class UserServletActionsTest extends TestCase {
 
+	static final private String atlasName = "demo";
 	static final private byte[] SECRET_KEY = {
 		(byte)0x01, (byte)0x02, (byte)0x03, (byte)0x04, (byte)0x05, (byte)0x06, (byte)0x07, (byte)0x08
 		,(byte)0x11, (byte)0x12, (byte)0x13, (byte)0x14, (byte)0x15, (byte)0x16, (byte)0x17, (byte)0x18
@@ -20,7 +21,7 @@ public class UserServletActionsTest extends TestCase {
 	
 		MockUserRepository repository = new MockUserRepository();
 		
-		UserServletActions actions = new UserServletActions(repository,mailNotification);
+		UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
 		actions.setServerKey(SECRET_KEY);
 		
 		actions.initUserCreation(emailAddress);
@@ -37,7 +38,7 @@ public class UserServletActionsTest extends TestCase {
 		MockUserRepository repository = new MockUserRepository();
 		repository.addUser("test", "Test User", emailAddress);
 		
-		UserServletActions actions = new UserServletActions(repository,mailNotification);
+		UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
 		actions.setServerKey(SECRET_KEY);
 		
 		actions.initUserCreation(emailAddress);
@@ -60,7 +61,7 @@ public class UserServletActionsTest extends TestCase {
 	
 		MockUserRepository repository = new MockUserRepository();
 		
-		UserServletActions actions = new UserServletActions(repository,mailNotification);
+		UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
 		actions.setServerKey(SECRET_KEY);
 		
 		actions.initUserCreation(emailAddress);
@@ -82,7 +83,7 @@ public class UserServletActionsTest extends TestCase {
 	
 		MockUserRepository repository = new MockUserRepository();
 		
-		UserServletActions actions = new UserServletActions(repository,mailNotification);
+		UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
 		actions.setServerKey(SECRET_KEY);
 		
 		actions.initUserCreation(emailAddress);
@@ -108,7 +109,7 @@ public class UserServletActionsTest extends TestCase {
 		
 		MockUserMailNotification mailNotification = new MockUserMailNotification();
 		
-		UserServletActions actions = new UserServletActions(repository,mailNotification);
+		UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
 		actions.setServerKey(SECRET_KEY);
 		
 		actions.initPasswordRecovery(emailAddress);
@@ -134,7 +135,7 @@ public class UserServletActionsTest extends TestCase {
 		
 		MockUserMailNotification mailNotification = new MockUserMailNotification();
 		
-		UserServletActions actions = new UserServletActions(repository,mailNotification);
+		UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
 		actions.setServerKey(SECRET_KEY);
 
 		try {
@@ -157,7 +158,7 @@ public class UserServletActionsTest extends TestCase {
 			
 			MockUserMailNotification mailNotification = new MockUserMailNotification();
 			
-			UserServletActions actions = new UserServletActions(repository,mailNotification);
+			UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
 			actions.setServerKey(SECRET_KEY);
 			
 			actions.initPasswordRecovery(emailAddress);
@@ -169,7 +170,7 @@ public class UserServletActionsTest extends TestCase {
 			MockUserRepository repository = new MockUserRepository();
 			MockUserMailNotification mailNotification = new MockUserMailNotification();
 			
-			UserServletActions actions = new UserServletActions(repository,mailNotification);
+			UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
 			actions.setServerKey(SECRET_KEY);
 
 			try {
@@ -189,7 +190,7 @@ public class UserServletActionsTest extends TestCase {
 		// Set up
 		MockUserRepository repository = new MockUserRepository();
 		MockUserMailNotification mailNotification = new MockUserMailNotification();
-		UserServletActions actions = new UserServletActions(repository,mailNotification);
+		UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
 		actions.setServerKey(SECRET_KEY);
 
 		// Add user
@@ -223,7 +224,7 @@ public class UserServletActionsTest extends TestCase {
 		// Set up
 		MockUserRepository repository = new MockUserRepository();
 		MockUserMailNotification mailNotification = new MockUserMailNotification();
-		UserServletActions actions = new UserServletActions(repository,mailNotification);
+		UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
 		actions.setServerKey(SECRET_KEY);
 
 		// Add user
@@ -256,7 +257,7 @@ public class UserServletActionsTest extends TestCase {
 			
 			MockUserMailNotification mailNotification = new MockUserMailNotification();
 			
-			UserServletActions actions = new UserServletActions(repository,mailNotification);
+			UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
 			actions.setServerKey(SECRET_KEY);
 			
 			actions.initPasswordRecovery(emailAddress);
@@ -268,7 +269,7 @@ public class UserServletActionsTest extends TestCase {
 			MockUserRepository repository = new MockUserRepository();
 			MockUserMailNotification mailNotification = new MockUserMailNotification();
 			
-			UserServletActions actions = new UserServletActions(repository,mailNotification);
+			UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
 			actions.setServerKey(SECRET_KEY);
 
 			try {
@@ -290,7 +291,7 @@ public class UserServletActionsTest extends TestCase {
 
 		// Action Handler
 		MockUserMailNotification mailNotification = new MockUserMailNotification();
-		UserServletActions actions = new UserServletActions(repository,mailNotification);
+		UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
 		actions.setServerKey(SECRET_KEY);
 		
 		// Create Token
@@ -327,7 +328,7 @@ public class UserServletActionsTest extends TestCase {
 
 		// Action Handler
 		MockUserMailNotification mailNotification = new MockUserMailNotification();
-		UserServletActions actions = new UserServletActions(repository,mailNotification);
+		UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
 		actions.setServerKey(SECRET_KEY);
 		
 		// Create Token
@@ -357,7 +358,7 @@ public class UserServletActionsTest extends TestCase {
 		// Action Handler
 		MockUserRepository repository = new MockUserRepository();
 		MockUserMailNotification mailNotification = new MockUserMailNotification();
-		UserServletActions actions = new UserServletActions(repository,mailNotification);
+		UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
 		actions.setServerKey(SECRET_KEY);
 
 		JSONObject result = actions.generatePassword();

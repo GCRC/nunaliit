@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.Cookie;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -171,5 +173,10 @@ public class MockUserRepository implements UserRepository {
 		sw.flush();
 		
 		doc.put("_rev", sw.toString());
+	}
+
+	@Override
+	public List<String> getRolesFromAuthentication(Cookie[] cookies) throws Exception {
+		return new ArrayList<String>(0);
 	}
 }
