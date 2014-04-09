@@ -38,12 +38,14 @@ public class UserServlet extends HttpServlet {
 
 	public static final String ConfigAttributeName_AtlasName = "UserServlet_AtlasName";
 	public static final String ConfigAttributeName_UserDb = "UserServlet_UserDb";
+	public static final String ConfigAttributeName_DocumentDb = "UserServlet_DocumentDb";
 	public static final String ConfigAttributeName_ServerKey = "UserServlet_ServerKey";
 	
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private String atlasName = null;
 	private CouchDb userDb = null;
+	private CouchDb documentDb = null;
 	private byte[] serverKey = null;
 	private UserServletActions actions = null;
 	
@@ -97,6 +99,19 @@ public class UserServlet extends HttpServlet {
 			}
 		}
 		
+		// DocumentDb
+		{
+			Object obj = context.getAttribute(ConfigAttributeName_DocumentDb);
+			if( null == obj ){
+				throw new ServletException("Document database is not specified ("+ConfigAttributeName_DocumentDb+")");
+			}
+			if( obj instanceof CouchDb ){
+				documentDb = (CouchDb)obj;
+			} else {
+				throw new ServletException("Unexpected object for document database: "+obj.getClass().getName());
+			}
+		}
+		
 		// Server Key
 		{
 			Object obj = context.getAttribute(ConfigAttributeName_ServerKey);
@@ -122,7 +137,7 @@ public class UserServlet extends HttpServlet {
 		
 		UserRepository userRepository = new UserRepositoryCouchDb(userDb, userDesignDocument);
 		
-		actions = new UserServletActions(atlasName, userRepository, userMailNotification);
+		actions = new UserServletActions(atlasName, documentDb, userRepository, userMailNotification);
 		if( null != serverKey ){
 			actions.setServerKey(serverKey);
 		}
@@ -452,6 +467,30 @@ public class UserServlet extends HttpServlet {
 						,emailPassword
 						,userAgreement
 						);
+				sendJsonResponse(resp, result);
+
+			} else if( path.size() == 1 && path.get(0).equals("acceptUserAgreement") ) {
+
+				// User Agreement
+				String userAgreement = null;
+				{
+					String[] userAgreements = req.getParameterValues("userAgreement");
+					if( null != userAgreements ) {
+						if( userAgreements.length > 1 ){
+							throw new Exception("'userAgreement' parameter must not be specified more than once");
+						}
+						if( userAgreements.length == 1 ){
+							userAgreement = userAgreements[0];
+						}
+					}
+				}
+				if( "".equals(userAgreement) ){
+					userAgreement = null;
+				}
+
+				Cookie[] cookies = req.getCookies();
+				
+				JSONObject result = actions.acceptUserAgreement(cookies, userAgreement);
 				sendJsonResponse(resp, result);
 
 			} else {

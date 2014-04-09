@@ -138,6 +138,7 @@ function Configure(options_){
 
 		configuration.directory.authService = new $n2.couchAuth.AuthService({
 			onSuccess: authInitialized
+			,atlasDb: configuration.atlasDb
 			,autoAnonymousLogin: false
 			,directory: configuration.directory
 			,userServerUrl: options.userServerUrl

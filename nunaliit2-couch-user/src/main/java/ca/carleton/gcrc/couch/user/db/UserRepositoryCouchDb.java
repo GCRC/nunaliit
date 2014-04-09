@@ -2,13 +2,11 @@ package ca.carleton.gcrc.couch.user.db;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.Vector;
 
 import javax.servlet.http.Cookie;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -112,71 +110,13 @@ public class UserRepositoryCouchDb implements UserRepository {
 	}
 
 	@Override
-	public void createUser(
-			String name, 
-			String displayName, 
-			String password,
-			String emailAddress,
-			String atlasName,
-			String userAgreement
-		) throws Exception {
-		try {
-			String id = "org.couchdb.user:"+name;
-			
-			JSONObject userDoc = new JSONObject();
-			userDoc.put("_id", id);
-			userDoc.put("name", name);
-			userDoc.put("password", password);
-			userDoc.put("type", "user");
-			userDoc.put("roles", new JSONArray());
-			userDoc.put("nunaliit_emails", new JSONArray());
-			userDoc.put("nunaliit_validated_emails", new JSONArray());
-			userDoc.put("nunaliit_options", new JSONObject());
-			
-			if( null != displayName ){
-				userDoc.put("display", displayName);
-			}
-			
-			if( null != emailAddress ){
-				JSONArray validatedEmails = userDoc.getJSONArray("nunaliit_validated_emails");
-				validatedEmails.put(emailAddress);
+	public void createUser(JSONObject userDoc) throws Exception {
+		userDb.createDocument(userDoc);
+	}
 
-				JSONArray emails = userDoc.getJSONArray("nunaliit_emails");
-				emails.put(emailAddress);
-			}
-			
-			// Remember that user was created on this atlas
-			{
-				JSONObject atlases = new JSONObject();
-				userDoc.put("nunaliit_atlases",atlases);
-				
-				JSONObject atlas = new JSONObject();
-				atlases.put(atlasName, atlas);
-				
-				atlas.put("name", atlasName);
-				atlas.put("created", true);
-			}
-			
-			// User agreement
-			if( null != userAgreement ){
-				Date now = new Date();
-				
-				JSONObject jsonAgreement = new JSONObject();
-				userDoc.put("nunaliit_accepted_user_agreements", jsonAgreement);
-				
-				JSONObject atlasSpecific = new JSONObject();
-				jsonAgreement.put(atlasName, atlasSpecific);
-				
-				atlasSpecific.put("atlas", atlasName);
-				atlasSpecific.put("content", userAgreement);
-				atlasSpecific.put("time", now.getTime());
-			}
-			
-			userDb.createDocument(userDoc);
-			
-		} catch(Exception e) {
-			throw new Exception("Unable to create user: "+name);
-		}
+	@Override
+	public void updateUser(JSONObject userDoc) throws Exception {
+		userDb.updateDocument(userDoc);
 	}
 
 	@Override
@@ -212,7 +152,7 @@ public class UserRepositoryCouchDb implements UserRepository {
 	}
 
 	@Override
-	public List<String> getRolesFromAuthentication(Cookie[] cookies) throws Exception {
+	public CouchUserContext getRolesFromAuthentication(Cookie[] cookies) throws Exception {
 		CouchContextCookie contextCookie = new CouchContextCookie();
 		for(Cookie cookie : cookies){
 			contextCookie.setCookie(cookie.getName(), cookie.getValue());
@@ -224,6 +164,6 @@ public class UserRepositoryCouchDb implements UserRepository {
 		CouchSession session = couchDb.getClient().getSession();
 		CouchUserContext userContext = session.getCurrentUserContext();
 		
-		return userContext.getRoles();
+		return userContext;
 	}
 }

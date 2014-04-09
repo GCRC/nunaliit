@@ -74,3 +74,19 @@
 .n2Auth_userEdit .n2UserEdit_editor {
 	width: 400px;
 }
+
+/* User Agreement */
+.n2Auth_user_agreement_label {
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+
+textarea.n2Auth_user_agreement_content {
+	width: 600px;
+	height: 400px;
+}
+
+.n2Auth_user_agreement_buttons {
+	margin-top: 10px;
+	margin-bottom: 10px;
+}

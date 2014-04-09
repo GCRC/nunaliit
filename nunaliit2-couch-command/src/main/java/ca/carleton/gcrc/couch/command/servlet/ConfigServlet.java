@@ -570,6 +570,7 @@ public class ConfigServlet extends JsonServlet {
 				UserServlet.ConfigAttributeName_AtlasName
 				,atlasProperties.getAtlasName()
 				);
+			servletContext.setAttribute(UserServlet.ConfigAttributeName_DocumentDb, documentDatabase);
 			
 			byte[] serverKey = atlasProperties.getServerKey();
 			if( null != serverKey ) {

@@ -17,6 +17,8 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ca.carleton.gcrc.couch.client.CouchDb;
+import ca.carleton.gcrc.couch.client.CouchUserContext;
 import ca.carleton.gcrc.couch.user.db.UserRepository;
 import ca.carleton.gcrc.couch.user.error.TokenExpiredException;
 import ca.carleton.gcrc.couch.user.error.UserUpdatedException;
@@ -33,6 +35,7 @@ public class UserServletActions {
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private String atlasName = null;
+	private CouchDb couchDb = null;
 	private UserRepository userRepository;
 	private UserMailNotification userMailNotification;
 	private byte[] serverKey = null;
@@ -41,10 +44,12 @@ public class UserServletActions {
 
 	public UserServletActions(
 			String atlasName
+			,CouchDb couchDb
 			,UserRepository userRepository
 			,UserMailNotification userMailNotification
 		){
 		this.atlasName = atlasName;
+		this.couchDb = couchDb;
 		this.userRepository = userRepository;
 		this.userMailNotification = userMailNotification;
 		
@@ -203,7 +208,60 @@ public class UserServletActions {
 		result.put("name", name);
 		
 		// Create user
-		userRepository.createUser(name, displayName, password, emailAddress, atlasName, userAgreement);
+		{
+			String id = "org.couchdb.user:"+name;
+			
+			JSONObject userDoc = new JSONObject();
+			userDoc.put("_id", id);
+			userDoc.put("name", name);
+			userDoc.put("password", password);
+			userDoc.put("type", "user");
+			userDoc.put("roles", new JSONArray());
+			userDoc.put("nunaliit_emails", new JSONArray());
+			userDoc.put("nunaliit_validated_emails", new JSONArray());
+			userDoc.put("nunaliit_options", new JSONObject());
+			
+			if( null != displayName ){
+				userDoc.put("display", displayName);
+			}
+			
+			if( null != emailAddress ){
+				JSONArray validatedEmails = userDoc.getJSONArray("nunaliit_validated_emails");
+				validatedEmails.put(emailAddress);
+	
+				JSONArray emails = userDoc.getJSONArray("nunaliit_emails");
+				emails.put(emailAddress);
+			}
+			
+			// Remember that user was created on this atlas
+			{
+				JSONObject atlases = new JSONObject();
+				userDoc.put("nunaliit_atlases",atlases);
+				
+				JSONObject atlas = new JSONObject();
+				atlases.put(atlasName, atlas);
+				
+				atlas.put("name", atlasName);
+				atlas.put("created", true);
+			}
+			
+			// User agreement
+			if( null != userAgreement ){
+				Date now = new Date();
+				
+				JSONObject jsonAgreement = new JSONObject();
+				userDoc.put("nunaliit_accepted_user_agreements", jsonAgreement);
+				
+				JSONObject atlasSpecific = new JSONObject();
+				jsonAgreement.put(atlasName, atlasSpecific);
+				
+				atlasSpecific.put("atlas", atlasName);
+				atlasSpecific.put("content", userAgreement);
+				atlasSpecific.put("time", now.getTime());
+			}
+			
+			userRepository.createUser(userDoc);
+		}
 		
 		// Get user
 		JSONObject userDoc = userRepository.getUserFromName(name);
@@ -413,7 +471,8 @@ public class UserServletActions {
 	}
 
 	public Collection<JSONObject> getUserDocuments(List<String> userIds, Cookie[] cookies) throws Exception {
-		List<String> roles = userRepository.getRolesFromAuthentication(cookies);
+		CouchUserContext context = userRepository.getRolesFromAuthentication(cookies);
+		List<String> roles = context.getRoles();
 		
 		String atlasAdmin = atlasName + "_administrator";
 		String atlasVetter = atlasName + "_vetter";
@@ -449,5 +508,68 @@ public class UserServletActions {
 		Collection<JSONObject> userDocs = userRepository.getUsersFromNames(userIds);
 
 		return userDocs;
+	}
+
+	public JSONObject acceptUserAgreement(Cookie[] cookies, String userAgreement) throws Exception {
+		CouchUserContext context = userRepository.getRolesFromAuthentication(cookies);
+		
+		JSONObject userDoc = userRepository.getUserFromName(context.getName());
+		
+		String agreementContent = null;
+		JSONObject agreementDoc = couchDb.getDocument("org.nunaliit.user_agreement");
+		if( null != agreementDoc ){
+			JSONObject agreement = agreementDoc.optJSONObject("nunaliit_user_agreement");
+			if( null != agreement ){
+				agreementContent = agreement.optString("content",null);
+			}
+		}
+		if( null == agreementContent ){
+			throw new Exception("Can not find user agreement for atlas");
+		}
+		
+		if( false == agreementContent.equals(userAgreement) ){
+			throw new Exception("Provided agreement does not match the one found in the atlas.");
+		}
+		
+		// Update user document with agreement
+		JSONObject nunaliit_accepted_user_agreements = userDoc.optJSONObject("nunaliit_accepted_user_agreements");
+		if( null == nunaliit_accepted_user_agreements ){
+			nunaliit_accepted_user_agreements = new JSONObject();
+			userDoc.put("nunaliit_accepted_user_agreements", nunaliit_accepted_user_agreements);
+		}
+		JSONObject atlas = nunaliit_accepted_user_agreements.optJSONObject(atlasName);
+		if( null == atlas ){
+			atlas = new JSONObject();
+			atlas.put("atlas", atlasName);
+			nunaliit_accepted_user_agreements.put(atlasName, atlas);
+		}
+		Date now = new Date();
+		atlas.put("content", userAgreement);
+		atlas.put("time",now.getTime());
+		
+		// Update role
+		String agreementRole = "nunaliit_agreement_"+atlasName;
+		boolean roleAlreadyAssigned = false;
+		JSONArray roles = userDoc.optJSONArray("roles");
+		if( null == roles ){
+			roles = new JSONArray();
+			userDoc.put("roles",roles);
+		}
+		for(int i=0; i<roles.length(); ++i){
+			String role = roles.getString(i);
+			if( role.equals(agreementRole) ){
+				roleAlreadyAssigned = true;
+			}
+		}
+		if( false == roleAlreadyAssigned ){
+			roles.put(agreementRole);
+		}
+		
+		// Save the user
+		userRepository.updateUser(userDoc);
+		
+		JSONObject result = new JSONObject();
+		result.put("ok", true);
+		return result;
 	}
 }

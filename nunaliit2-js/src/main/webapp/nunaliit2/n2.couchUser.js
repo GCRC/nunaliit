@@ -866,6 +866,34 @@ var UserService = $n2.Class({
 	    	}
 		});
 	}
+
+	,acceptUserAgreement: function(opts_){
+		var opts = $n2.extend({
+			userAgreement: null
+			,onSuccess: function(){}
+			,onError: function(err){}
+		},opts_);
+
+		var url = this.userServerUrl + 'acceptUserAgreement';
+		
+		$.ajax({
+	    	url: url
+	    	,type: 'POST'
+	    	,async: true
+	    	,traditional: true
+	    	,data: {
+	    		userAgreement: opts.userAgreement
+	    	}
+	    	,dataType: 'json'
+	    	,success: function(result) {
+    			opts.onSuccess();
+	    	}
+	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+	    		var err = _parseError(XMLHttpRequest, textStatus);
+	    		opts.onError(err);
+	    	}
+		});
+	}
 });
 
 $n2.couchUser = {

@@ -77,6 +77,7 @@ var AuthService = $n2.Class({
 			{
 				onSuccess: function(result,options) {}
 				,onError: defaultError
+				,atlasDb: null
 				,anonymousLoginAllowed: false
 				,anonymousUser: 'anonymous'
 				,anonymousPw: 'anonymous'
@@ -335,14 +336,157 @@ var AuthService = $n2.Class({
 			$n2.couch.getSession().login({
 				name: username
 				,password: password
-				,onSuccess: onSuccess
-				,onError: onError
+				,onSuccess: checkUserAgreement
+				,onError: function(err){
+					$n2.log('Unable to log in: '+err);
+					onError( _loc('Invalid e-mail and/or password') );
+				}
 			});
 		};
 		
-		function doErrorNotification(causeObj) {
-			opts.onError( _loc('Invalid e-mail and/or password') );
-			_this.notifyListeners();
+		function checkUserAgreement(sessionResult){
+			$n2.couch.getUserDb().getUser({
+				name: username
+				,onSuccess: function(userDoc){
+					// If the user agreement was acepted, the user
+					// servlet add a role to the user which is
+					// "nunaliit_agreement_" + name-of-atlas
+					var atlasName = 'atlas';
+					if( typeof n2atlas === 'object' 
+					 && n2atlas.name ){
+						atlasName = n2atlas.name;
+					};
+					var agreementRole = 'nunaliit_agreement_'+atlasName;
+					if( userDoc
+					 && userDoc.roles ){
+						for(var i=0,e=userDoc.roles.length; i<e; ++i){
+							var role = userDoc.roles[i];
+							if( role === agreementRole ){
+								onSuccess(sessionResult);
+								return;
+							};
+						};
+					};
+					
+					// At this point, a new user agreement must be accepted
+					proposeNewUserAgreement(sessionResult);
+				}
+				,onError: function(err){
+					var isAdmin = false;
+					if( sessionResult && sessionResult.roles ){
+						for(var i=0,e=sessionResult.roles.length; i<e; ++i){
+							var role = sessionResult.roles[i];
+							if( '_admin' === role ){
+								isAdmin = true;
+								break;
+							};
+						};
+					};
+					
+					if( isAdmin ){
+						onSuccess(sessionResult);
+					} else {
+						$n2.log('Unable to obtain user information: '+err);
+						onError( _loc('Unable to obtain information about user') );
+					};
+				}
+			});
+		};
+		
+		function proposeNewUserAgreement(sessionResult){
+			_this.options.atlasDb.getDocument({
+				docId: 'org.nunaliit.user_agreement'
+				,onSuccess: function(doc){
+					if( doc 
+					 && doc.nunaliit_user_agreement 
+					 && doc.nunaliit_user_agreement.content ){
+						var accepted = false;
+						
+						var diagId = $n2.getUniqueId();
+						var $diag = $('<div>')
+							.attr('id',diagId);
+						
+						var $content = $('<div>')
+							.addClass('n2Auth_user_agreement_dialog')
+							.appendTo($diag);
+						
+						$('<div>')
+							.addClass('n2Auth_user_agreement_label')
+							.text( _loc('User agreement has changed. You must accept before you can authenticate with atlas.') )
+							.appendTo($content);
+						
+						$('<textarea>')
+							.addClass('n2Auth_user_agreement_content')
+							.val( doc.nunaliit_user_agreement.content )
+							.appendTo($content);
+
+						var $buttons = $('<div>')
+							.addClass('n2Auth_user_agreement_buttons')
+							.appendTo($content);
+						
+						$('<button>')
+							.addClass('n2_button_ok')
+							.text( _loc('Accept') )
+							.click(function(){
+								accepted = true;
+								var $diag = $('#'+diagId);
+								$diag.dialog('close');
+								acceptUserAgreement(doc.nunaliit_user_agreement.content, sessionResult);
+							})
+							.appendTo($buttons);
+						
+						$('<button>')
+							.addClass('n2_button_cancel')
+							.text( _loc('Reject') )
+							.click(function(){
+								var $diag = $('#'+diagId);
+								$diag.dialog('close');
+							})
+							.appendTo($buttons);
+					
+						$diag.dialog({
+							autoOpen: true
+							,title: _loc('User Agreement and Terms of Service')
+							,modal: true
+							,width: 'auto'
+							,close: function(event, ui){
+								var $diag = $('#'+diagId);
+								$diag.remove();
+								if( !accepted ){
+									onError( _loc('User refused agreement') );
+								};
+							}
+						});
+					} else {
+						onError( _loc('Unable to obtain user agreement') );
+					};
+				}
+				,onError: function(err){
+					$n2.log('Error getting user agreement: '+err);
+					onError( _loc('Unable to obtain user agreement') );
+				}
+			});
+		};
+		
+		function acceptUserAgreement(userAgreement, sessionResult){
+			var url = _this.options.userServerUrl + 'acceptUserAgreement';
+			
+			$.ajax({
+		    	url: url
+		    	,type: 'POST'
+		    	,async: true
+		    	,traditional: true
+		    	,data: {
+		    		userAgreement: userAgreement
+		    	}
+		    	,dataType: 'json'
+		    	,success: function() {
+		    		onSuccess(sessionResult);
+		    	}
+		    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+					onError( _loc('Error attempting to accept user agreement') );
+				}	
+			});
 		};
 		
 		function onSuccess(result) {
@@ -361,8 +505,20 @@ var AuthService = $n2.Class({
 		};
 		
 		function onError(err) {
+			$n2.couch.getSession().logout({
+				onError: function(){}
+			});			
 			$n2.log('Login error', err);
-			doErrorNotification();
+			doErrorNotification(err);
+		};
+
+		function doErrorNotification(err) {
+			if( err ) {
+				opts.onError( err );
+			} else {
+				opts.onError( _loc('Invalid e-mail and/or password') );
+			};
+			_this.notifyListeners();
 		};
 	}
 	

@@ -8,6 +8,7 @@ function(newDoc, oldDoc, userCtxt) {
     var reAtlasReplicator = new RegExp("(.*)_replicator");
     var reAtlasUser = new RegExp("(.*)_user");
     var reAtlasLayer = new RegExp("(.*)_layer_(.*)");
+    var reAtlasAgreement = new RegExp("nunaliit_agreement_(.*)");
     var reGlobalLayer = new RegExp("layer_(.*)");
 	
 	var publicLayerName = 'public';
@@ -18,6 +19,8 @@ function(newDoc, oldDoc, userCtxt) {
 //log('Atlas name: '+n2atlas.name);
 
 	var userInfo = getRolesInfo(userCtxt.roles);
+log('userCtxt.roles: '+userCtxt.roles);	
+log('userInfo: '+JSON.stringify(userInfo));	
 
 	// Validate new documents and updates submitted to database...
 	if( !userCtxt ) {
@@ -34,6 +37,9 @@ function(newDoc, oldDoc, userCtxt) {
 	} else if( n2atlas.restricted 
 	 && null == userInfo.atlas[n2atlas.name] ) {
 		throw( {forbidden: 'Database submissions are restricted to users associated with database'} );
+	} else if( !userInfo.atlas[n2atlas.name]
+	 || !userInfo.atlas[n2atlas.name].agreement ) {
+		throw( {forbidden: 'Database submissions are restricted to users that have accepted the user agreement'} );
 	} else if( n2atlas.submissionDbEnabled ) {
 		throw( {forbidden: 'Database submissions must be performed via the submission database'} );
 	} else {
@@ -310,6 +316,7 @@ function(newDoc, oldDoc, userCtxt) {
 						,vetter: false
 						,replicator: false
 						,user: false
+						,agreement: false
 						,layers: []
 					};
 					info.atlas[ri.atlas] = atlas;
@@ -327,6 +334,9 @@ function(newDoc, oldDoc, userCtxt) {
 				};
 				if( ri.user ){
 					atlas.user = true;
+				};
+				if( ri.agreement ){
+					atlas.agreement = true;
 				};
 				if( ri.layer ){
 					atlas.layers.push(ri.layer);
@@ -367,6 +377,7 @@ function(newDoc, oldDoc, userCtxt) {
 			var mAtlasVetter = reAtlasVetter.exec(r);
 			var mAtlasReplicator = reAtlasReplicator.exec(r);
 			var mAtlasUser = reAtlasUser.exec(r);
+			var mAtlasAgreement = reAtlasAgreement.exec(r);
 			var mAtlasLayer = reAtlasLayer.exec(r);
 			var mGlobalLayer = reGlobalLayer.exec(r);
 
@@ -385,6 +396,10 @@ function(newDoc, oldDoc, userCtxt) {
 			} else if( mAtlasUser ){
 				role.atlas = mAtlasUser[1];
 				role.user = true;
+				
+			} else if( mAtlasAgreement ){
+				role.atlas = mAtlasAgreement[1];
+				role.agreement = true;
 				
 			} else if( mAtlasLayer ){
 				role.atlas = mAtlasLayer[1];

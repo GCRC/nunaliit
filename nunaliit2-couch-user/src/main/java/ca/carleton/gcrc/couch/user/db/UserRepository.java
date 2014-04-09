@@ -7,6 +7,8 @@ import javax.servlet.http.Cookie;
 
 import org.json.JSONObject;
 
+import ca.carleton.gcrc.couch.client.CouchUserContext;
+
 public interface UserRepository {
 
 	Collection<JSONObject> getUsersFromNames(List<String> names) throws Exception;
@@ -17,16 +19,11 @@ public interface UserRepository {
 
 	JSONObject getUserFromEmailAddress(String emailAddress) throws Exception;
 
-	void createUser(
-			String name,
-			String displayName,
-			String password,
-			String emailAddress,
-			String atlasName,
-			String userAgreement
-		) throws Exception;
+	void createUser(JSONObject userDoc) throws Exception;
+
+	void updateUser(JSONObject userDoc) throws Exception;
 
 	void recoverPassword(String name, String newPassword) throws Exception;
 	
-	List<String> getRolesFromAuthentication(Cookie[] cookies) throws Exception;
+	CouchUserContext getRolesFromAuthentication(Cookie[] cookies) throws Exception;
 }

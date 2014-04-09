@@ -2,6 +2,8 @@ package ca.carleton.gcrc.couch.user;
 
 import org.json.JSONObject;
 
+import ca.carleton.gcrc.couch.client.CouchDb;
+import ca.carleton.gcrc.couch.user.db.MockDocumentDatabase;
 import ca.carleton.gcrc.couch.user.db.MockUserRepository;
 import ca.carleton.gcrc.couch.user.mail.MockUserMailNotification;
 import junit.framework.TestCase;
@@ -21,7 +23,7 @@ public class UserServletActionsTest extends TestCase {
 	
 		MockUserRepository repository = new MockUserRepository();
 		
-		UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
+		UserServletActions actions = new UserServletActions(atlasName,createDocumentDb(),repository,mailNotification);
 		actions.setServerKey(SECRET_KEY);
 		
 		actions.initUserCreation(emailAddress);
@@ -38,7 +40,7 @@ public class UserServletActionsTest extends TestCase {
 		MockUserRepository repository = new MockUserRepository();
 		repository.addUser("test", "Test User", emailAddress);
 		
-		UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
+		UserServletActions actions = new UserServletActions(atlasName,createDocumentDb(),repository,mailNotification);
 		actions.setServerKey(SECRET_KEY);
 		
 		actions.initUserCreation(emailAddress);
@@ -61,7 +63,7 @@ public class UserServletActionsTest extends TestCase {
 	
 		MockUserRepository repository = new MockUserRepository();
 		
-		UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
+		UserServletActions actions = new UserServletActions(atlasName,createDocumentDb(),repository,mailNotification);
 		actions.setServerKey(SECRET_KEY);
 		
 		actions.initUserCreation(emailAddress);
@@ -83,7 +85,7 @@ public class UserServletActionsTest extends TestCase {
 	
 		MockUserRepository repository = new MockUserRepository();
 		
-		UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
+		UserServletActions actions = new UserServletActions(atlasName,createDocumentDb(),repository,mailNotification);
 		actions.setServerKey(SECRET_KEY);
 		
 		actions.initUserCreation(emailAddress);
@@ -109,7 +111,7 @@ public class UserServletActionsTest extends TestCase {
 		
 		MockUserMailNotification mailNotification = new MockUserMailNotification();
 		
-		UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
+		UserServletActions actions = new UserServletActions(atlasName,createDocumentDb(),repository,mailNotification);
 		actions.setServerKey(SECRET_KEY);
 		
 		actions.initPasswordRecovery(emailAddress);
@@ -135,7 +137,7 @@ public class UserServletActionsTest extends TestCase {
 		
 		MockUserMailNotification mailNotification = new MockUserMailNotification();
 		
-		UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
+		UserServletActions actions = new UserServletActions(atlasName,createDocumentDb(),repository,mailNotification);
 		actions.setServerKey(SECRET_KEY);
 
 		try {
@@ -158,7 +160,7 @@ public class UserServletActionsTest extends TestCase {
 			
 			MockUserMailNotification mailNotification = new MockUserMailNotification();
 			
-			UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
+			UserServletActions actions = new UserServletActions(atlasName,createDocumentDb(),repository,mailNotification);
 			actions.setServerKey(SECRET_KEY);
 			
 			actions.initPasswordRecovery(emailAddress);
@@ -170,7 +172,7 @@ public class UserServletActionsTest extends TestCase {
 			MockUserRepository repository = new MockUserRepository();
 			MockUserMailNotification mailNotification = new MockUserMailNotification();
 			
-			UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
+			UserServletActions actions = new UserServletActions(atlasName,createDocumentDb(),repository,mailNotification);
 			actions.setServerKey(SECRET_KEY);
 
 			try {
@@ -190,7 +192,7 @@ public class UserServletActionsTest extends TestCase {
 		// Set up
 		MockUserRepository repository = new MockUserRepository();
 		MockUserMailNotification mailNotification = new MockUserMailNotification();
-		UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
+		UserServletActions actions = new UserServletActions(atlasName,createDocumentDb(),repository,mailNotification);
 		actions.setServerKey(SECRET_KEY);
 
 		// Add user
@@ -224,7 +226,7 @@ public class UserServletActionsTest extends TestCase {
 		// Set up
 		MockUserRepository repository = new MockUserRepository();
 		MockUserMailNotification mailNotification = new MockUserMailNotification();
-		UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
+		UserServletActions actions = new UserServletActions(atlasName,createDocumentDb(),repository,mailNotification);
 		actions.setServerKey(SECRET_KEY);
 
 		// Add user
@@ -257,7 +259,7 @@ public class UserServletActionsTest extends TestCase {
 			
 			MockUserMailNotification mailNotification = new MockUserMailNotification();
 			
-			UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
+			UserServletActions actions = new UserServletActions(atlasName,createDocumentDb(),repository,mailNotification);
 			actions.setServerKey(SECRET_KEY);
 			
 			actions.initPasswordRecovery(emailAddress);
@@ -269,7 +271,7 @@ public class UserServletActionsTest extends TestCase {
 			MockUserRepository repository = new MockUserRepository();
 			MockUserMailNotification mailNotification = new MockUserMailNotification();
 			
-			UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
+			UserServletActions actions = new UserServletActions(atlasName,createDocumentDb(),repository,mailNotification);
 			actions.setServerKey(SECRET_KEY);
 
 			try {
@@ -291,7 +293,7 @@ public class UserServletActionsTest extends TestCase {
 
 		// Action Handler
 		MockUserMailNotification mailNotification = new MockUserMailNotification();
-		UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
+		UserServletActions actions = new UserServletActions(atlasName,createDocumentDb(),repository,mailNotification);
 		actions.setServerKey(SECRET_KEY);
 		
 		// Create Token
@@ -328,7 +330,7 @@ public class UserServletActionsTest extends TestCase {
 
 		// Action Handler
 		MockUserMailNotification mailNotification = new MockUserMailNotification();
-		UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
+		UserServletActions actions = new UserServletActions(atlasName,createDocumentDb(),repository,mailNotification);
 		actions.setServerKey(SECRET_KEY);
 		
 		// Create Token
@@ -358,7 +360,7 @@ public class UserServletActionsTest extends TestCase {
 		// Action Handler
 		MockUserRepository repository = new MockUserRepository();
 		MockUserMailNotification mailNotification = new MockUserMailNotification();
-		UserServletActions actions = new UserServletActions(atlasName, repository,mailNotification);
+		UserServletActions actions = new UserServletActions(atlasName,createDocumentDb(),repository,mailNotification);
 		actions.setServerKey(SECRET_KEY);
 
 		JSONObject result = actions.generatePassword();
@@ -367,5 +369,9 @@ public class UserServletActionsTest extends TestCase {
 		if( null == password ){
 			fail("password not sent back");
 		}
+	}
+	
+	private CouchDb createDocumentDb(){
+		return new MockDocumentDatabase();
 	}
 }
