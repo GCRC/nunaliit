@@ -1,0 +1,16 @@
+<div class="n2_documentDisplay"><div class="n2_layoutFloat">
+	<div>
+		<div class="label n2s_localize">User Agreement</div>
+		<div class="value"></div>
+		<div class="end"></div>
+	</div>
+	{{nunaliit_user_agreement}}
+	<div>
+		<div class="label n2s_localize">Content</div>
+		<div class="value">
+			{{#:localize}}content{{/:localize}}
+		</div>
+		<div class="end"></div>
+	</div>
+	{{/nunaliit_user_agreement}}
+</div></div>

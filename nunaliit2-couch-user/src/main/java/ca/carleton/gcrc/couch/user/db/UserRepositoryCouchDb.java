@@ -93,9 +93,7 @@ public class UserRepositoryCouchDb implements UserRepository {
 
 			CouchQueryResults results = nunaliitUserDesignDocument.performQuery(query);
 			List<JSONObject> rows = results.getRows();
-			logger.error("rows:"+rows.size());
 			for(JSONObject row : rows){
-				logger.error("row:"+row);
 				JSONObject doc = row.optJSONObject("doc");
 				if( null != doc ){
 					return doc;

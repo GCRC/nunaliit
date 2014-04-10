@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.Collection;
 import java.util.Formatter;
 import java.util.List;
+import java.util.Set;
 
 import javax.servlet.http.Cookie;
 
@@ -19,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchUserContext;
+import ca.carleton.gcrc.couch.user.agreement.AgreementUtils;
 import ca.carleton.gcrc.couch.user.db.UserRepository;
 import ca.carleton.gcrc.couch.user.error.TokenExpiredException;
 import ca.carleton.gcrc.couch.user.error.UserUpdatedException;
@@ -199,11 +201,11 @@ public class UserServletActions {
 
 		// Create a random user id
 		int tries = 10;
-		String name = "user" + rng.nextInt();
+		String name = generateRandomUserName();
 		while( isUserNameInUse(name) ){
 			--tries;
 			if( tries < 1 ) throw new Exception("Can not compute a unique user identifier. Try again.");
-			name = "user" + rng.nextInt();
+			name = generateRandomUserName();
 		}
 		result.put("name", name);
 		
@@ -258,6 +260,18 @@ public class UserServletActions {
 				atlasSpecific.put("atlas", atlasName);
 				atlasSpecific.put("content", userAgreement);
 				atlasSpecific.put("time", now.getTime());
+				
+				// Update role
+				JSONObject agreementDoc = couchDb.getDocument("org.nunaliit.user_agreement");
+				Set<String> agreementContents = 
+						AgreementUtils.getContentsFromAgreementDocument(agreementDoc);
+				
+				if( false == agreementContents.contains(userAgreement) ){
+					throw new Exception("Provided user agreement does not match the one found in the atlas.");
+				}
+				
+				String agreementRole = "nunaliit_agreement_"+atlasName;
+				userDoc.getJSONArray("roles").put(agreementRole);
 			}
 			
 			userRepository.createUser(userDoc);
@@ -515,19 +529,11 @@ public class UserServletActions {
 		
 		JSONObject userDoc = userRepository.getUserFromName(context.getName());
 		
-		String agreementContent = null;
 		JSONObject agreementDoc = couchDb.getDocument("org.nunaliit.user_agreement");
-		if( null != agreementDoc ){
-			JSONObject agreement = agreementDoc.optJSONObject("nunaliit_user_agreement");
-			if( null != agreement ){
-				agreementContent = agreement.optString("content",null);
-			}
-		}
-		if( null == agreementContent ){
-			throw new Exception("Can not find user agreement for atlas");
-		}
+		Set<String> agreementContents = 
+				AgreementUtils.getContentsFromAgreementDocument(agreementDoc);
 		
-		if( false == agreementContent.equals(userAgreement) ){
+		if( false == agreementContents.contains(userAgreement) ){
 			throw new Exception("Provided agreement does not match the one found in the atlas.");
 		}
 		
@@ -571,5 +577,14 @@ public class UserServletActions {
 		JSONObject result = new JSONObject();
 		result.put("ok", true);
 		return result;
+	}
+	
+	private String generateRandomUserName(){
+		int i = rng.nextInt();
+		if( i < 0 ){
+			i = 0-i;
+		}
+		String name = "user-" + i;
+		return name;
 	}
 }

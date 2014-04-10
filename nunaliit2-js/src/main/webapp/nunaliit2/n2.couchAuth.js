@@ -400,6 +400,13 @@ var AuthService = $n2.Class({
 					if( doc 
 					 && doc.nunaliit_user_agreement 
 					 && doc.nunaliit_user_agreement.content ){
+						
+						var agreementContent = doc.nunaliit_user_agreement.content;
+						if( typeof doc.nunaliit_user_agreement.content === 'object'
+						 && doc.nunaliit_user_agreement.content.nunaliit_type === 'localized' ){
+							agreementContent = _loc(doc.nunaliit_user_agreement.content);
+						};
+						
 						var accepted = false;
 						
 						var diagId = $n2.getUniqueId();
@@ -417,7 +424,7 @@ var AuthService = $n2.Class({
 						
 						$('<textarea>')
 							.addClass('n2Auth_user_agreement_content')
-							.val( doc.nunaliit_user_agreement.content )
+							.val( agreementContent )
 							.appendTo($content);
 
 						var $buttons = $('<div>')
@@ -431,7 +438,7 @@ var AuthService = $n2.Class({
 								accepted = true;
 								var $diag = $('#'+diagId);
 								$diag.dialog('close');
-								acceptUserAgreement(doc.nunaliit_user_agreement.content, sessionResult);
+								acceptUserAgreement(agreementContent, sessionResult);
 							})
 							.appendTo($buttons);
 						

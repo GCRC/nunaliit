@@ -564,7 +564,7 @@ public class ConfigServlet extends JsonServlet {
 	private void initUser(ServletContext servletContext) throws ServletException {
 		
 		try {
-			CouchDb userDb = couchClient.getDatabase("_users");
+			CouchUserDb userDb = couchClient.getUserDatabase();
 			servletContext.setAttribute(UserServlet.ConfigAttributeName_UserDb, userDb);
 			servletContext.setAttribute(
 				UserServlet.ConfigAttributeName_AtlasName

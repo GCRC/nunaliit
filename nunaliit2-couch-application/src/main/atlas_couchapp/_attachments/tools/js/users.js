@@ -636,7 +636,7 @@ var UserCreationApplication = $n2.Class({
 						alert( _loc('You must agree to the User Agreement before creating a user.') );
 						return;
 					};
-					userAgreement = $display.find('.user_agreement_content').val();
+					userAgreement = _this._getUserAgreementContent();
 				};
 				
 				if( displayName ){
@@ -802,12 +802,25 @@ var UserCreationApplication = $n2.Class({
 		};
 	}
 	
+	,_getUserAgreementContent: function(){
+		var agreementContent = this.userAgreement;
+		
+		if( null !== agreementContent 
+		 && typeof agreementContent === 'object' 
+		 && agreementContent.nunaliit_type === 'localized' ){
+			agreementContent = _loc(this.userAgreement);
+		};
+		
+		return agreementContent;
+	}
+	
 	,_refreshUserAgreement: function(){
 		var $display = this._getDiv();
 		var $agreementSection = $display.find('.user_agreement')
 			.empty();
 		
-		if( this.userAgreement ){
+		var agreementContent = this._getUserAgreementContent();
+		if( agreementContent ){
 			$('<div>')
 				.addClass('user_agreement_label')
 				.text( _loc('User Agreement') )
@@ -815,7 +828,7 @@ var UserCreationApplication = $n2.Class({
 
 			$('<textarea>')
 				.addClass('user_agreement_content')
-				.val( this.userAgreement )
+				.val( agreementContent )
 				.attr('readonly','readonly')
 				.appendTo($agreementSection);
 

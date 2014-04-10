@@ -1,0 +1,9 @@
+<div class="n2_documentForm"><div class="n2_layoutFloat"><div class="user_form">
+	{{#nunaliit_user_agreement}}
+	<div>
+		<div class="label n2s_localize">Content</div>
+		<div class="value">{{#:field}}content,textarea,localized{{/:field}}</div>
+		<div class="end"></div>
+	</div>
+	{{/nunaliit_user_agreement}}
+</div></div></div>

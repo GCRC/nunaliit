@@ -24,6 +24,9 @@ import org.slf4j.LoggerFactory;
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDbSecurityDocument;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
+import ca.carleton.gcrc.couch.client.CouchUserDb;
+import ca.carleton.gcrc.couch.user.agreement.AgreementRobot;
+import ca.carleton.gcrc.couch.user.agreement.AgreementRobotSettings;
 import ca.carleton.gcrc.couch.user.db.UserRepository;
 import ca.carleton.gcrc.couch.user.db.UserRepositoryCouchDb;
 import ca.carleton.gcrc.couch.user.error.TokenExpiredException;
@@ -44,10 +47,11 @@ public class UserServlet extends HttpServlet {
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private String atlasName = null;
-	private CouchDb userDb = null;
+	private CouchUserDb userDb = null;
 	private CouchDb documentDb = null;
 	private byte[] serverKey = null;
 	private UserServletActions actions = null;
+	private AgreementRobot agreementRobot = null;
 	
 	public UserServlet(){
 		
@@ -92,8 +96,8 @@ public class UserServlet extends HttpServlet {
 			if( null == obj ){
 				throw new ServletException("User database is not specified ("+ConfigAttributeName_UserDb+")");
 			}
-			if( obj instanceof CouchDb ){
-				userDb = (CouchDb)obj;
+			if( obj instanceof CouchUserDb ){
+				userDb = (CouchUserDb)obj;
 			} else {
 				throw new ServletException("Unexpected object for user database: "+obj.getClass().getName());
 			}
@@ -173,11 +177,35 @@ public class UserServlet extends HttpServlet {
 		} catch(Exception e) {
 			throw new ServletException("Error while updating security document on _users database",e);
 		}
+		
+		// Start agreement robot
+		try {
+			AgreementRobotSettings settings = new AgreementRobotSettings();
+			settings.setAtlasName(atlasName);
+			settings.setDocumentDesignDocument(documentDb.getDesignDocument("atlas"));
+			settings.setUserDb(userDb);
+			
+			agreementRobot = new AgreementRobot(settings);
+			
+			agreementRobot.start();
+				
+		} catch (Exception e) {
+			logger.error("Error starting agreement worker",e);
+			throw new ServletException("Error starting agreement worker",e);
+		}
+		
 
 		logger.info(this.getClass().getSimpleName()+" servlet initialization - completed");
 	}
 
 	public void destroy() {
+		try {
+			if( agreementRobot != null ) {
+				agreementRobot.stopTimeoutMillis(5*1000); // 5 seconds
+			}
+		} catch (Exception e) {
+			logger.error("Unable to shutdown agreement worker", e);
+		}
 		
 	}
 
