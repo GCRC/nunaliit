@@ -273,4 +273,61 @@ public class UpgradeProcessTest extends TestCase {
 			fail("Final file set manifest is not as expected");
 		}
 	}
+
+	public void testNewFileInDeletedDirectory() throws Exception {
+		// Initial installation (v2)
+		// - a.txt
+		// - sub/
+		// - sub/b.txt
+		//
+		// The user deletes a directory (v1)
+		// - a.txt
+		//
+		// On upgrade, a new file was added to the sub directory (v6)
+		// - a.txt
+		// - sub/
+		// - sub/b.txt
+		// - sub/d.txt
+		//
+		// The resulting should be that the new file is available
+		// - a.txt
+		// - sub/
+		// - sub/d.txt
+		File testDir = TestSupport.findTopTestingDir();
+		File upgradeProcessTestDir = new File(testDir, "upgradeProcess");
+		File v1Dir = new File(upgradeProcessTestDir, "v1");
+		File v2Dir = new File(upgradeProcessTestDir, "v2");
+		File v6Dir = new File(upgradeProcessTestDir, "v6");
+		
+		FileSetManifest expectedManifest = FileSetManifest.fromDirectory(v6Dir);
+		
+		UpgradeProcess upgradeProcess = new UpgradeProcess();
+		upgradeProcess.setUpgradedFilesDir(v6Dir);
+		upgradeProcess.setTargetDir(v1Dir);
+		upgradeProcess.setInstalledManifest( FileSetManifest.fromDirectory(v2Dir) );
+		upgradeProcess.setInstallationFilesDir(v2Dir);
+		UpgradeReport upgradeReport = upgradeProcess.computeUpgrade();
+		
+		MockUpgradeOperations operations = new MockUpgradeOperations();
+		UpgradeProcess.performUpgrade(upgradeReport, operations);
+		
+		// Verify that nothing was done
+		if( operations.getAddedDirectories().size() > 0 ) {
+			fail("Should report no added directory");
+		}
+		if( operations.getDeletedDirectories().size() > 0 ) {
+			fail("Should report no deleted directory");
+		}
+		if( operations.getCopiedFiles().size() != 1 ) {
+			fail("Should report exactly one file copied");
+		}
+		if( operations.getDeletedFiles().size() > 0 ) {
+			fail("Should report no deleted file");
+		}
+		
+		FileSetManifest finalManifest = operations.getSavedManifest();
+		if( false == finalManifest.equals(expectedManifest) ){
+			fail("Final file set manifest is not as expected");
+		}
+	}
 }
