@@ -193,12 +193,16 @@ function selectLayersDialog(opts_){
 	if( typeof(opts.currentLayers) === 'string' ){
 		var layerNames = currentLayers.split(',');
 		for(var i=0,e=layerNames.length;i<e;++i){
-			layers[ $n2.trim(layerNames[i]) ] = true;
+			layers[ $n2.trim(layerNames[i]) ] = {
+				currentlySelected: true
+			};
 		};
 		
 	} else if( $n2.isArray(opts.currentLayers) ){
 		for(var i=0,e=opts.currentLayers.length;i<e;++i){
-			layers[ $n2.trim(opts.currentLayers[i]) ] = true;
+			layers[ $n2.trim(opts.currentLayers[i]) ] = {
+				currentlySelected: true
+			};
 		};
 	};
 
@@ -245,47 +249,57 @@ function selectLayersDialog(opts_){
 			viewName: 'layer-definitions'
 			,onlyRows: true
 			,onSuccess: function(rows){
-				var layerIdentifiers = {};
 				for(var i=0,e=rows.length;i<e;++i){
-					layerIdentifiers[rows[i].key] = true;
+					var layerId = rows[i].key;
+					if( !layers[layerId] ){
+						layers[layerId] = {
+							currentlySelected: false
+						};
+					};
 				};
-				getInnerLayers(layerIdentifiers);
+				getInnerLayers();
 			}
 			,onError: function(errorMsg){ 
 				reportError(errorMsg);
 			}
 		});
+	} else {
+		getInnerLayers();
 	};
 	
-	function getInnerLayers(layerIdentifiers){
+	function getInnerLayers(){
 		var m = {
 			type: 'mapGetLayers'
 			,layers: {}
 		};
 		opts.dispatchService.synchronousCall(DH, m);
 		for(var layerId in m.layers){
-			layerIdentifiers[layerId] = true;
+			if( !layers[layerId] ){
+				layerIdentifiers[layerId] = {
+					currentlySelected: false	
+				};
+			};
 		};
-		displayLayers(layerIdentifiers);
+		displayLayers();
 	};
 	
-	function displayLayers(layerIdentifiers){
+	function displayLayers(){
 		var $diag = $('#'+dialogId);
 		
 		var $c = $diag.find('.editorSelectLayerContent');
 		$c.empty();
-		for(var layer in layerIdentifiers){
+		for(var layerId in layers){
 			var inputId = $n2.getUniqueId();
 			var $div = $('<div><input id="'+inputId+'" class="layer" type="checkbox"/><label for="'+inputId+'"></label></div>');
 			$c.append($div);
-			$div.find('input').attr('name',layer);
-			$div.find('label').text(layer);
-			if( layers[layer] ){
+			$div.find('input').attr('name',layerId);
+			$div.find('label').text(layerId);
+			if( layers[layerId].currentlySelected ){
 				$div.find('input').attr('checked','checked');
 			};
 			
 			if(opts.showService){
-				opts.showService.printLayerName($div.find('label'), layer);
+				opts.showService.printLayerName($div.find('label'), layerId);
 			};
 		};
 		
@@ -297,8 +311,8 @@ function selectLayersDialog(opts_){
 				$diag.find('input.layer').each(function(){
 					var $input = $(this);
 					if( $input.is(':checked') ){
-						var layer = $input.attr('name');
-						selectedLayers.push(layer);
+						var layerId = $input.attr('name');
+						selectedLayers.push(layerId);
 					};
 				});
 				opts.cb(selectedLayers);
