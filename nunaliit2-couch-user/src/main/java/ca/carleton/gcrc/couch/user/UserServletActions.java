@@ -530,10 +530,13 @@ public class UserServletActions {
 		JSONObject userDoc = userRepository.getUserFromName(context.getName());
 		
 		JSONObject agreementDoc = couchDb.getDocument("org.nunaliit.user_agreement");
+		boolean agreementEnabled = AgreementUtils.getEnabledFromAgreementDocument(agreementDoc);
 		Set<String> agreementContents = 
 				AgreementUtils.getContentsFromAgreementDocument(agreementDoc);
 		
-		if( false == agreementContents.contains(userAgreement) ){
+		// If agreement is not enabled, accept anything silently
+		if( agreementEnabled
+		 && false == agreementContents.contains(userAgreement) ){
 			throw new Exception("Provided agreement does not match the one found in the atlas.");
 		}
 		

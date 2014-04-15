@@ -8,6 +8,20 @@ import org.json.JSONObject;
 
 public class AgreementUtils {
 
+	static public boolean getEnabledFromAgreementDocument(
+			JSONObject agreementDoc
+			) throws Exception {
+		
+		boolean enabled = false;
+		
+		JSONObject agreementInfo = agreementDoc.optJSONObject("nunaliit_user_agreement");
+		if( null != agreementInfo ){
+			enabled = agreementInfo.optBoolean("enabled",false);
+		}
+		
+		return enabled;
+	}
+
 	static public Set<String> getContentsFromAgreementDocument(
 			JSONObject agreementDoc
 			) throws Exception {

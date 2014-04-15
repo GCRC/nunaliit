@@ -1,7 +1,5 @@
 package ca.carleton.gcrc.couch.user.agreement;
 
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import org.json.JSONArray;
@@ -100,6 +98,12 @@ public class AgreementRobotThread extends Thread {
 	}
 	
 	public void performWork(JSONObject agreementDoc) throws Exception {
+		// Perform work only if the agreement is in force
+		boolean agreementEnabled = AgreementUtils.getEnabledFromAgreementDocument(agreementDoc);
+		if( false == agreementEnabled ){
+			logger.info("User agreement is not enabled. Skip.");
+		}
+		
 		// Check users that have agreed to the previous agreement and revoke
 		// privilege
 		CouchQuery query = new CouchQuery();
@@ -121,7 +125,7 @@ public class AgreementRobotThread extends Thread {
 				try {
 					verifyUser(docId, agreementContents);
 				} catch(Exception e) {
-					logger.error("Unable to process user: "+docId);
+					logger.error("Unable to process user: "+docId, e);
 				}
 			}
 		}
@@ -142,7 +146,7 @@ public class AgreementRobotThread extends Thread {
 		}
 		String userAcceptedAgreement = null;
 		if( null != atlasInfo ){
-			userAcceptedAgreement = atlasInfo.getString("content");
+			userAcceptedAgreement = atlasInfo.optString("content","");
 		}
 		if( agreementContents.contains(userAcceptedAgreement) ){
 			agreementMatches = true;

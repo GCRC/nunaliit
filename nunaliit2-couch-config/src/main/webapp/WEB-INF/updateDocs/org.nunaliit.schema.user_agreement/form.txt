@@ -5,5 +5,11 @@
 		<div class="value">{{#:field}}content,textarea,localized{{/:field}}</div>
 		<div class="end"></div>
 	</div>
+
+	<div>
+		<div class="label n2s_localize">Enabled</div>
+		<div class="value">{{#:field}}enabled,checkbox{{/:field}}</div>
+		<div class="end"></div>
+	</div>
 	{{/nunaliit_user_agreement}}
 </div></div></div>

@@ -399,7 +399,8 @@ var AuthService = $n2.Class({
 				,onSuccess: function(doc){
 					if( doc 
 					 && doc.nunaliit_user_agreement 
-					 && doc.nunaliit_user_agreement.content ){
+					 && doc.nunaliit_user_agreement.content
+					 && doc.nunaliit_user_agreement.enabled ){
 						
 						var agreementContent = doc.nunaliit_user_agreement.content;
 						if( typeof doc.nunaliit_user_agreement.content === 'object'
@@ -465,7 +466,9 @@ var AuthService = $n2.Class({
 							}
 						});
 					} else {
-						onError( _loc('Unable to obtain user agreement') );
+						// If the user agreement is not enabled, accept anything and
+						// the service will enable the role
+						acceptUserAgreement('', sessionResult);
 					};
 				}
 				,onError: function(err){
