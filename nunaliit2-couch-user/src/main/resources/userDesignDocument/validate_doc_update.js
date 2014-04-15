@@ -36,9 +36,9 @@ function(newDoc, oldDoc, userCtx) {
 					throw({forbidden: 'Only atlas administrators may set atlas roles: '+r.atlas});
 				};
 				
-			} else if( r.admin || r.vetter || r.layers.length > 0 ) {
+			} else {
 				// Not an atlas role. Only system admins can change those
-				throw({forbidden: 'Only administrators may set global roles'});
+				throw({forbidden: 'Only administrators may modify user roles'});
 			};
 		};
 		
@@ -70,7 +70,7 @@ function(newDoc, oldDoc, userCtx) {
 					throw({forbidden: 'Can not modifiy nunaliit_validated_emails.'});
 				};
 			};
-		}
+		};
 	};
 	
 	// Given two arrays of roles, figure out which ones are added and deleted. Return

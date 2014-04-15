@@ -135,7 +135,7 @@ public class UserServlet extends HttpServlet {
 			try {
 				userDesignDocument = userDb.getDesignDocument("nunaliit_user");
 			} catch (Exception e) {
-				throw new ServletException("Unable to create user deisgn document.",e);
+				throw new ServletException("Unable to create user design document.",e);
 			}
 		}
 		

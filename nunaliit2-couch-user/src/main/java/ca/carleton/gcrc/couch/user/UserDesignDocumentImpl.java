@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.app.Document;
 import ca.carleton.gcrc.couch.app.DocumentUpdateProcess;
@@ -19,6 +21,8 @@ import ca.carleton.gcrc.couch.client.CouchQueryResults;
 import ca.carleton.gcrc.couch.fsentry.FSEntryResource;
 
 public class UserDesignDocumentImpl implements UserDesignDocument {
+
+	final static protected Logger logger = LoggerFactory.getLogger(UserDesignDocumentImpl.class);
 	
 	final static public String DD_NAME = "nunaliit_user";
 	final static public String DD_ID = "_design/" + DD_NAME;
@@ -41,18 +45,24 @@ public class UserDesignDocumentImpl implements UserDesignDocument {
 			// Get document from the database, if it exists, and figure out if
 			// the disk version is newer than that found in the database
 			boolean updateRequired = true;
+			int uploadedVersion = 0;
 			{
 				boolean exists = couchDb.documentExists(DD_ID);
 				if( exists ) {
 					JSONObject uploaded = couchDb.getDocument(DD_ID);
 					if( null != uploaded ){
-						int uploadedVersion = uploaded.optInt(PROP_NAME_VERSION, 0);
+						uploadedVersion = uploaded.optInt(PROP_NAME_VERSION, 0);
 						if( uploadedVersion > diskVersion ){
 							updateRequired = false;
 						}
 					}
 				}
 			}
+			
+			logger.info("User design document. Disk: "+diskVersion
+					+" Db: "+uploadedVersion
+					+" Update Required: "+updateRequired
+					);
 			
 			if( updateRequired ) {
 				DocumentUpdateProcess updateProcess = new DocumentUpdateProcess(couchDb);
