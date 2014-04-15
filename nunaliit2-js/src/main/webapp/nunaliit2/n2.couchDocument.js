@@ -732,6 +732,7 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 			_this.submissionDb.createDocument({
 				data: request
 				,onSuccess: function(docInfo){
+					_this._warnUser();
 					doc.__n2Source = this;
 					opts.onSuccess(doc);
 				}
@@ -751,6 +752,8 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 			}
 			,opts_
 		);
+		
+		var _this = this;
 		
 		var doc = opts.doc;
 		
@@ -790,6 +793,7 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 		this.submissionDb.createDocument({
 			data: request
 			,onSuccess: function(docInfo){
+				_this._warnUser();
 				opts.onSuccess(doc);
 			}
 			,onError: opts.onError
@@ -807,6 +811,8 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 			}
 			,opts_
 		);
+		
+		var _this = this;
 		
 		var doc = opts.doc;
 		
@@ -845,10 +851,89 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 		this.submissionDb.createDocument({
 			data: request
 			,onSuccess: function(docInfo){
+				_this._warnUser();
 				opts.onSuccess(doc);
 			}
 			,onError: opts.onError
 		});
+	}
+	
+	,_warnUser: function(){
+		var shouldWarnUser = true;
+		var c = $n2.cookie.getCookie('nunaliit_submissions');
+		if( c ){
+			shouldWarnUser = false;
+		};
+		
+		if( shouldWarnUser ){
+			var diagId = $n2.getUniqueId();
+			var $diag = $('<div>')
+				.attr('id',diagId)
+				.addClass('n2_submission_warning_dialog');
+
+			var $text = $('<div>')
+				.addClass('n2_submission_warning_text')
+				.appendTo($diag);
+			
+			$('<span>')
+				.text( _loc('Submissions to the database will not appear until they are approved') )
+				.appendTo($diag);
+			
+			var $mem = $('<div>')
+				.addClass('n2_submission_warning_memory')
+				.appendTo($diag);
+			
+			
+			var cbId = $n2.getUniqueId();
+			$('<input type="checkbox">')
+				.attr('id', cbId)
+				.appendTo($mem);
+
+			$('<label>')
+				.attr('for', cbId)
+				.text( _loc('Do not show this warning again') )
+				.appendTo($mem);
+			
+			var $buttons = $('<div>')
+				.addClass('n2_submission_warning_buttons')
+				.appendTo($diag);
+			
+			$('<button>')
+				.addClass('n2_button_ok')
+				.appendTo($buttons)
+				.text( _loc('OK') )
+				.click(function(){
+					var $diag = $('#'+diagId);
+					$diag.dialog('close');
+				});
+			
+			$diag.dialog({
+				autoOpen: true
+				,title: _loc('Warning on Database Submissions')
+				,modal: true
+				,width: 'auto'
+				,close: function(event, ui){
+					var $diag = $('#'+diagId);
+					
+					var $cb = $diag.find('input[type=checkbox]');
+					var disable = false;
+					if( $cb.length > 0 ){
+						disable = $cb.is(':checked')
+					};
+					
+					$diag.remove();
+					
+					if( disable ){
+						$n2.cookie.setCookie({
+							name: 'nunaliit_submissions'
+							,value: 'do not warn'
+							,end: (60 * 60 * 24 * 365) // max-age in seconds
+							,path: '/'
+						});
+					};
+				}
+			});
+		};
 	}
 });
 
