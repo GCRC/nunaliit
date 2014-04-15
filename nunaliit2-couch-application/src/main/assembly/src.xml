@@ -19,5 +19,9 @@
 			<directory>src/main/config_couchapp</directory>
 			<outputDirectory>/config_couchapp/</outputDirectory>
 		</fileSet>
+		<fileSet>
+			<directory>src/main/submission_couchapp</directory>
+			<outputDirectory>/submission_couchapp/</outputDirectory>
+		</fileSet>
 	</fileSets>
 </assembly>

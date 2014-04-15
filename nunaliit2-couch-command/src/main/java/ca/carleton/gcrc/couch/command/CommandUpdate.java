@@ -124,7 +124,7 @@ public class CommandUpdate implements Command {
 				
 				pushSubmissionDesign(gs, atlasDir, atlasProperties, updateProcessForSubmissionDb);
 			} catch(Exception e) {
-				throw new Exception("Unable to upload mobile design document", e);
+				throw new Exception("Unable to upload submission design document", e);
 			}
 		}
 		
