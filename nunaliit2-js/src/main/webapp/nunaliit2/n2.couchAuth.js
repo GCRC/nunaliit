@@ -68,6 +68,8 @@ var AuthService = $n2.Class({
 	
 	,lastAuthSessionCookie: null
 	
+	,userServiceAvailable: null
+	
 	,autoRegistrationAvailable: null
 	
 	,initialize: function(options_){
@@ -99,6 +101,7 @@ var AuthService = $n2.Class({
 		
 		this.loginStateListeners = [];
 		this.lastAuthSessionCookie = null;
+		this.userServiceAvailable = false;
 		this.autoRegistrationAvailable = false;
 		
 		// Install login state listeners - don't retain as stored options.
@@ -184,6 +187,7 @@ var AuthService = $n2.Class({
 		    	,data: null
 		    	,dataType: 'json'
 		    	,success: function(result) {
+		    		_this.userServiceAvailable = true;
 		    		if( result.autoRegistration ) {
 		    			_this.autoRegistrationAvailable = true;
 		    		};
@@ -308,7 +312,7 @@ var AuthService = $n2.Class({
 			return;
 		};
 
-		if( this.autoRegistrationAvailable ){
+		if( this.userServiceAvailable ){
 			var url = this.options.userServerUrl + 'getUser';
 			
 			$.ajax({
