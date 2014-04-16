@@ -4,7 +4,7 @@
 		<div class="value"></div>
 		<div class="end"></div>
 	</div>
-	{{nunaliit_user_agreement}}
+	{{#nunaliit_user_agreement}}
 	<div>
 		<div class="label n2s_localize">Content</div>
 		<div class="value">

@@ -421,7 +421,7 @@ var UserCreationApplication = $n2.Class({
 	
 	,token: null
 	
-	,userAgreement: null
+	,userAgreementDoc: null
 	
 	,initialize: function(opts_){
 		var opts = $n2.extend({
@@ -476,7 +476,7 @@ var UserCreationApplication = $n2.Class({
 					if( doc 
 					 && doc.nunaliit_user_agreement 
 					 && doc.nunaliit_user_agreement.content ) {
-						_this.userAgreement = doc.nunaliit_user_agreement.content;
+						_this.userAgreementDoc = doc;
 						_this._refreshUserAgreement();
 					};
 				}
@@ -802,13 +802,31 @@ var UserCreationApplication = $n2.Class({
 		};
 	}
 	
+	,_isUserAgreementEnabled: function(){
+		var enabled = false;
+
+		if( this.userAgreementDoc
+		 && this.userAgreementDoc.nunaliit_user_agreement
+	     && this.userAgreementDoc.nunaliit_user_agreement.enabled ){
+			enabled = true;
+		};
+		
+		return enabled;
+	}
+	
 	,_getUserAgreementContent: function(){
-		var agreementContent = this.userAgreement;
+		var agreementContent = null;
+		if( this.userAgreementDoc
+		 && this.userAgreementDoc.nunaliit_user_agreement
+	     && this.userAgreementDoc.nunaliit_user_agreement.content
+	     && this.userAgreementDoc.nunaliit_user_agreement.enabled ){
+			agreementContent = this.userAgreementDoc.nunaliit_user_agreement.content;
+		};
 		
 		if( null !== agreementContent 
 		 && typeof agreementContent === 'object' 
 		 && agreementContent.nunaliit_type === 'localized' ){
-			agreementContent = _loc(this.userAgreement);
+			agreementContent = _loc(agreementContent);
 		};
 		
 		return agreementContent;
@@ -851,6 +869,8 @@ var UserCreationApplication = $n2.Class({
 
 		var _this = this;
 		
+		userAgreement = userAgreement ? userAgreement : '';
+		
 		this.userService.completeUserCreation({
 			token: this.token
 			,displayName: displayName
@@ -859,8 +879,8 @@ var UserCreationApplication = $n2.Class({
 			,userAgreement: userAgreement
 			,onSuccess: function(result){
 				$n2.log('user created',result);
-				var userName = result.name;
-				_this._userCreated(userName,password);
+				var emailAdress = result.emailAddress;
+				_this._userCreated(emailAdress,password);
 			}
 			,onError: function(err){
 				var $display = _this._getDiv();
@@ -879,7 +899,7 @@ var UserCreationApplication = $n2.Class({
 		});
 	}
 	
-	,_userCreated: function(userName,password){
+	,_userCreated: function(emailAdress,password){
 		var $display = this._getDiv();
 		$display.empty();
 
@@ -891,7 +911,7 @@ var UserCreationApplication = $n2.Class({
 		// Log in user
 		if( this.authService ){
 			this.authService.login({
-				username: userName
+				username: emailAdress
 				,password: password
 				,onSuccess: function(context){}
 				,onError: function(errMsg){}

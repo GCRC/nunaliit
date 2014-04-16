@@ -608,24 +608,34 @@ var AuthService = $n2.Class({
 		};
 		
 		function saveUserAnswers(sessionResult, userDoc, answers){
-			var atlasName = _this._getAtlasName();
+    		// Must reload the user document since it might have changed
+			$n2.couch.getUserDb().getUser({
+				name: userDoc.name
+				,onSuccess: function(userDoc){
+					var atlasName = _this._getAtlasName();
 
-			if( !userDoc.nunaliit_answers ){
-				userDoc.nunaliit_answers = {};
-			};
+					if( !userDoc.nunaliit_answers ){
+						userDoc.nunaliit_answers = {};
+					};
 
-			userDoc.nunaliit_answers[atlasName] = answers;
-			
-			$n2.couch.getUserDb().updateDocument({
-				data: userDoc
-				,onSuccess: function(docInfo){
-					onLoginCompleted(sessionResult);
+					userDoc.nunaliit_answers[atlasName] = answers;
+					
+					$n2.couch.getUserDb().updateDocument({
+						data: userDoc
+						,onSuccess: function(docInfo){
+							onLoginCompleted(sessionResult);
+						}
+						,onError: errorSavingAnswers
+					});
 				}
-				,onError: function(err){
-					alert( _loc('There was a problem saving your answers. You will be prompted again next time you log in.') );
-					onLoginCompleted(sessionResult);
-				}
+				,onError: errorSavingAnswers
 			});
+			
+			function errorSavingAnswers(err){
+				$n2.log('Error saving user answers',err);
+				alert( _loc('There was a problem saving your answers. You will be prompted again next time you log in.') );
+				onLoginCompleted(sessionResult);
+			};
 		};
 		
 		function onLoginCompleted(result) {

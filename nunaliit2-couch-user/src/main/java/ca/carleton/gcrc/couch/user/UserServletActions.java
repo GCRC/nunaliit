@@ -525,9 +525,6 @@ public class UserServletActions {
 	}
 
 	public JSONObject acceptUserAgreement(Cookie[] cookies, String userAgreement) throws Exception {
-		CouchUserContext context = userRepository.getRolesFromAuthentication(cookies);
-		
-		JSONObject userDoc = userRepository.getUserFromName(context.getName());
 		
 		JSONObject agreementDoc = couchDb.getDocument("org.nunaliit.user_agreement");
 		boolean agreementEnabled = AgreementUtils.getEnabledFromAgreementDocument(agreementDoc);
@@ -539,6 +536,10 @@ public class UserServletActions {
 		 && false == agreementContents.contains(userAgreement) ){
 			throw new Exception("Provided agreement does not match the one found in the atlas.");
 		}
+
+		CouchUserContext context = userRepository.getRolesFromAuthentication(cookies);
+		
+		JSONObject userDoc = userRepository.getUserFromName(context.getName());
 		
 		// Update user document with agreement
 		JSONObject nunaliit_accepted_user_agreements = userDoc.optJSONObject("nunaliit_accepted_user_agreements");
