@@ -135,10 +135,20 @@ function Configure(options_){
 				db: configuration.atlasDb
 			});
 		};
-
+		configuration.directory.schemaRepository = new $n2.couchSchema.CouchSchemaRepository({
+			db: configuration.atlasDb
+			,designDoc: configuration.atlasDesign
+			,dispatchService: configuration.directory.dispatchService
+			,preload: true
+			,preloadedCallback: schemasPreloaded 
+		});
+	};
+	
+	function schemasPreloaded() {
 		configuration.directory.authService = new $n2.couchAuth.AuthService({
 			onSuccess: authInitialized
 			,atlasDb: configuration.atlasDb
+			,schemaRepository: configuration.directory.schemaRepository
 			,autoAnonymousLogin: false
 			,directory: configuration.directory
 			,userServerUrl: options.userServerUrl
@@ -146,7 +156,6 @@ function Configure(options_){
 	};
 	
 	function authInitialized() {
-		
 		configuration.auth = $.NUNALIIT_AUTH;
 		
 		configuration.atlasDb.getChangeNotifier({
@@ -159,17 +168,6 @@ function Configure(options_){
 	};
 	
 	function notifierInitialized() {
-		configuration.directory.schemaRepository = new $n2.couchSchema.CouchSchemaRepository({
-			db: configuration.atlasDb
-			,designDoc: configuration.atlasDesign
-			,dispatchService: configuration.directory.dispatchService
-			,preload: true
-			,preloadedCallback: schemasPreloaded 
-		});
-	};
-	
-	function schemasPreloaded() {
-		
 	 	$n2.couchL10n.Configure({
 			db: configuration.atlasDb
 	 		,designDoc: configuration.atlasDesign 

@@ -80,6 +80,7 @@ var AuthService = $n2.Class({
 				onSuccess: function(result,options) {}
 				,onError: defaultError
 				,atlasDb: null
+				,schemaRepository: null
 				,anonymousLoginAllowed: false
 				,anonymousUser: 'anonymous'
 				,anonymousPw: 'anonymous'
@@ -352,28 +353,24 @@ var AuthService = $n2.Class({
 			$n2.couch.getUserDb().getUser({
 				name: username
 				,onSuccess: function(userDoc){
-					// If the user agreement was acepted, the user
+					// If the user agreement was accepted, the user
 					// servlet add a role to the user which is
 					// "nunaliit_agreement_" + name-of-atlas
-					var atlasName = 'atlas';
-					if( typeof n2atlas === 'object' 
-					 && n2atlas.name ){
-						atlasName = n2atlas.name;
-					};
+					var atlasName = _this._getAtlasName();
 					var agreementRole = 'nunaliit_agreement_'+atlasName;
 					if( userDoc
 					 && userDoc.roles ){
 						for(var i=0,e=userDoc.roles.length; i<e; ++i){
 							var role = userDoc.roles[i];
 							if( role === agreementRole ){
-								onSuccess(sessionResult);
+								checkUserQuestionnaire(sessionResult, userDoc);
 								return;
 							};
 						};
 					};
 					
 					// At this point, a new user agreement must be accepted
-					proposeNewUserAgreement(sessionResult);
+					proposeNewUserAgreement(sessionResult, userDoc);
 				}
 				,onError: function(err){
 					var isAdmin = false;
@@ -388,7 +385,7 @@ var AuthService = $n2.Class({
 					};
 					
 					if( isAdmin ){
-						onSuccess(sessionResult);
+						checkUserQuestionnaire(sessionResult, null);
 					} else {
 						$n2.log('Unable to obtain user information: '+err);
 						onError( _loc('Unable to obtain information about user') );
@@ -397,7 +394,7 @@ var AuthService = $n2.Class({
 			});
 		};
 		
-		function proposeNewUserAgreement(sessionResult){
+		function proposeNewUserAgreement(sessionResult, userDoc){
 			_this.options.atlasDb.getDocument({
 				docId: 'org.nunaliit.user_agreement'
 				,onSuccess: function(doc){
@@ -443,7 +440,7 @@ var AuthService = $n2.Class({
 								accepted = true;
 								var $diag = $('#'+diagId);
 								$diag.dialog('close');
-								acceptUserAgreement(agreementContent, sessionResult);
+								acceptUserAgreement(agreementContent, sessionResult, userDoc);
 							})
 							.appendTo($buttons);
 						
@@ -472,7 +469,7 @@ var AuthService = $n2.Class({
 					} else {
 						// If the user agreement is not enabled, accept anything and
 						// the service will enable the role
-						acceptUserAgreement('', sessionResult);
+						acceptUserAgreement('', sessionResult, userDoc);
 					};
 				}
 				,onError: function(err){
@@ -482,7 +479,7 @@ var AuthService = $n2.Class({
 			});
 		};
 		
-		function acceptUserAgreement(userAgreement, sessionResult){
+		function acceptUserAgreement(userAgreement, sessionResult, userDoc){
 			var url = _this.options.userServerUrl + 'acceptUserAgreement';
 			
 			$.ajax({
@@ -495,7 +492,7 @@ var AuthService = $n2.Class({
 		    	}
 		    	,dataType: 'json'
 		    	,success: function() {
-		    		onSuccess(sessionResult);
+		    		checkUserQuestionnaire(sessionResult, userDoc);
 		    	}
 		    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
 					onError( _loc('Error attempting to accept user agreement') );
@@ -503,7 +500,135 @@ var AuthService = $n2.Class({
 			});
 		};
 		
-		function onSuccess(result) {
+		function checkUserQuestionnaire(sessionResult, userDoc){
+			// No user document. Probably an admin.
+			// Anyway, nothing we can do. Skip questions.
+			if( !userDoc ){
+				onLoginCompleted(sessionResult);
+				return;
+			};
+			
+			// Load user questionnaire
+			if( _this.options.schemaRepository ){
+				_this.options.schemaRepository.getSchema({
+					name: 'nunaliit_user_questions'
+					,onSuccess: function(schema){
+						var defaultAnswers = schema.createObject();
+						if( !defaultAnswers.version ){
+							$n2.log('User questions found without a version number. Ignored.');
+							onLoginCompleted(sessionResult);
+							return;
+						};
+						
+						var atlasName = _this._getAtlasName();
+
+						var answers = null;
+						if( userDoc 
+						 && userDoc.nunaliit_answers ){
+							answers = userDoc.nunaliit_answers[atlasName];
+						};
+						
+						var interventionRequired = false;
+						if( !answers ){
+							interventionRequired = true;
+							answers = defaultAnswers;
+						} else if( answers.version != defaultAnswers.version ){
+							interventionRequired = true;
+						};
+						
+						if( interventionRequired ){
+							gatherUserAnswers(sessionResult, userDoc, schema, answers);
+						} else {
+							onLoginCompleted(sessionResult);
+						};
+					}
+					,onError: function(err){
+						// Schema not found. No questions. Just continue
+						// with login process
+						onLoginCompleted(sessionResult);
+					}
+				});
+				
+			} else {
+				// No schema repository. No questions. Just continue
+				// with login process
+				onLoginCompleted(sessionResult);
+			};
+		};
+		
+		function gatherUserAnswers(sessionResult, userDoc, schema, answers){
+			var diagId = $n2.getUniqueId();
+			var $diag = $('<div>')
+				.attr('id',diagId);
+			
+			var $content = $('<div>')
+				.addClass('n2Auth_user_questions_dialog')
+				.appendTo($diag);
+			
+			var $elem = $('<div>')
+				.addClass('n2Auth_user_questions_form')
+				.appendTo($content);
+			
+			schema.form(answers, $elem);
+			
+			var $buttons = $('<div>')
+				.addClass('n2Auth_user_questions_buttons')
+				.appendTo($content);
+			
+			$('<button>')
+				.addClass('n2_button_ok')
+				.text( _loc('OK') )
+				.click(function(){
+					var $diag = $('#'+diagId);
+					$diag.dialog('close');
+					saveUserAnswers(sessionResult, userDoc, answers);
+				})
+				.appendTo($buttons);
+			
+			$('<button>')
+				.addClass('n2_button_cancel')
+				.text( _loc('Remind me later') )
+				.click(function(){
+					var $diag = $('#'+diagId);
+					$diag.dialog('close');
+					onLoginCompleted(sessionResult);
+				})
+				.appendTo($buttons);
+		
+			$diag.dialog({
+				autoOpen: true
+				,title: _loc('User Questionnaire')
+				,modal: true
+				,width: 'auto'
+				,close: function(event, ui){
+					var $diag = $('#'+diagId);
+					$diag.remove();
+				}
+			});
+		};
+		
+		function saveUserAnswers(sessionResult, userDoc, answers){
+			var atlasName = _this._getAtlasName();
+
+			if( !userDoc.nunaliit_answers ){
+				userDoc.nunaliit_answers = {};
+			};
+
+			userDoc.nunaliit_answers[atlasName] = answers;
+			
+			$n2.couch.getUserDb().updateDocument({
+				data: userDoc
+				,onSuccess: function(docInfo){
+					onLoginCompleted(sessionResult);
+				}
+				,onError: function(err){
+					alert( _loc('There was a problem saving your answers. You will be prompted again next time you log in.') );
+					onLoginCompleted(sessionResult);
+				}
+			});
+		};
+		
+		function onLoginCompleted(result) {
 
 			var context = $n2.couch.getSession().getContext();
 
@@ -1587,6 +1712,17 @@ var AuthService = $n2.Class({
 				});
 			};
 		};
+	}
+	
+	,_getAtlasName: function(){
+		var atlasName = 'atlas';
+		
+		if( typeof n2atlas === 'object' 
+		 && n2atlas.name ){
+			atlasName = n2atlas.name;
+		};
+		
+		return atlasName;
 	}
 });	
 
