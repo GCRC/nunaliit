@@ -24,6 +24,7 @@ function(head, req) {
 			send(line);
 			send('\n');
 
+			var row = null;
 			while(row = getRow()) {
 				if( row.doc ) {
 					values = extractValues(row.doc,csvExport);
