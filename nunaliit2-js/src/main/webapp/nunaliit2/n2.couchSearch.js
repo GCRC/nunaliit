@@ -458,8 +458,7 @@ var SearchInput = $n2.Class({
 			textInput: null
 			,searchButton: null
 			,initialSearchText: null
-			,displayDiv: null // one of displayDiv,
-			,displayFn: null // displayFn or
+			,displayFn: null // on of displayFn or
 			,dispatchService: null // dispatchService should be supplied
 		},opts_);
 		
@@ -679,47 +678,8 @@ var SearchInput = $n2.Class({
 				,results: searchResults
 			});
 			
-		} else if( this.options.displayDiv ) {
-			var $display = $('#'+this.options.displayDiv).empty();
-			
-			if( !searchResults ) return;
-			
-			if( searchResults.sorted.length < 1 ) {
-				$display.append( $('<div>'+_loc('Search results empty')+'</div>') );
-			} else {
-				var docIds = [];
-				for(var i=0,e=searchResults.sorted.length; i<e; ++i) {
-					var docId = searchResults.list[i].id;
-					
-					if( docId ) {
-						docIds.push(docId);
-						var div = $('<div class="n2_search_result olkitSearchMod2_'+(i%2)
-							+' n2searchDocId_'+$n2.utils.stringToHtmlId(docId)+'"></div>');
-						div.text(docId);
-				
-						$display.append(div);
-					};
-				};
-				
-				// Request data (THIS SHOULD ALL BE DONE IN N2.SHOW)
-				this.searchServer.options.db.getDocuments({
-					docIds: docIds
-					,onSuccess: function(docs){
-						for(var i=0,e=docs.length; i<e; ++i) {
-							var doc = docs[i];
-							
-							if( doc ) {
-								var $div = $('.n2searchDocId_'+$n2.utils.stringToHtmlId(doc._id));
-								if( $div.length > 0 ) {
-									$div.empty();
-									$.olkitDisplay.DisplayDocument($div,doc);
-								};
-							};
-						};
-					}
-				});
-				
-			};
+		} else {
+			$n2.log('Unable to return search results');
 		};
 	}
 
@@ -737,19 +697,12 @@ var SearchInput = $n2.Class({
 				type: 'searchResults'
 				,error: err
 			});
-			
-		} else {
-			var $display = $('#'+this.options.displayDiv).empty();
-			$display.append( $('<div>'+_loc('Search error:')+err+'</div>') );
 		};
 	}
 
 	,_displayWait: function(){
 		if( this.options.displayFn ) {
 			this.options.displayFn({type:'wait'});
-		} else {
-			var $displayDiv = $('#'+this.options.displayDiv).empty();
-			$displayDiv.append( $('<div class="olkit_wait"></div>') );
 		};
 	}
 
@@ -892,60 +845,6 @@ var SearchServer = $n2.Class({
 		};
 	}
 });
-
-// ==================== Legacy =============================
-
-//Install on jQuery the OLKIT callback
-$.olkitSearchHandler = function(options_) {
-
-	var options = $.extend({
-		displayDiv: null // must be supplied
-		,displayFn: null // must be supplied if displayDiv is not
-		,textInputDivName: null // must be supplied
-		,lookAheadDivName: null // must be supplied
-		,designDoc: null // must be supplied
-		,db: null // must be supplied
-		
-		,initialSearchText: null
-		,inputName: '_olkit_searchInput'
-		,searchView: 'text-search'
-		,searchLimit: 25
-		,lookAheadView: 'text-lookahead'
-		,lookAheadList: 'text-lookahead'
-		,lookAheadLimit: 5
-		,lookAheadPrefixMin: 3
-		,lookAheadCacheSize: 10
-	},options_);
-
-	
-	var searchServer = new $n2.couchSearch.SearchServer({
-		designDoc: options.designDoc
-		,db: options.db
-		,searchView: options.searchView
-		,searchLimit: options.searchLimit
-		,lookAheadView: options.lookAheadView
-		,lookAheadList: options.lookAheadList
-		,lookAheadLimit: options.lookAheadLimit
-		,lookAheadPrefixMin: options.lookAheadPrefixMin
-		,lookAheadCacheSize: options.lookAheadCacheSize
-	});
-	
-	/*
-	 * install search text input
-	 */
-	var input = $('<input id="'+options.inputName+'" type="text" class="search_panel_input"'+
-		' value="'+options.initialSearchText+'"></input>');
-	$("#"+options.textInputDivName).empty().append(input);
-
-	searchServer.installSearch({
-		textInput: input
-		,searchButton: null
-		,initialSearchText: options.initialSearchText
-		,displayDiv: options.displayDiv
-		,displayFn: options.displayFn
-	});
-
-};
 
 // ================ API ===============================
 

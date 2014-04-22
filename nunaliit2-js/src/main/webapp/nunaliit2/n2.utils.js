@@ -851,6 +851,32 @@ $n2.utils = {
 				,reason: defaultText
 			};
 		};
+	},
+	
+	/**
+	 * Creates a version of the function where the rate of calls is limited to
+	 * one call per defined time out.
+	 * @name debounce
+	 * @function
+	 * @memberOf nunaliit2.utils
+	 * @param {Function} The function that should be limited in the rate at which
+	 *                   it is fired.
+	 * @param {Number} Number of milliseconds between the calls to the function
+	 * @returns {Boolean} If true, the function is called immediately, and again in the
+	 *                    future after a period defined by the timeout.
+	 */
+	debounce: function(func, wait, immediate) {
+		var timeout = null;
+		return function() {
+			var context = this, args = arguments;
+			var later = function() {
+				timeout = null;
+				if (!immediate) func.apply(context, args);
+			};
+			if (immediate && !timeout) func.apply(context, args);
+			clearTimeout(timeout);
+			timeout = setTimeout(later, wait);
+		};
 	}
 };
 

@@ -292,6 +292,12 @@ $n2.couchRequests = $n2.Class({
 				,docId: doc._id
 				,rev: doc._rev
 			});
+			
+			this._dispatch({
+				type: 'documentContent'
+				,docId: doc._id
+				,doc: doc
+			});
 
 			// Call document listeners
 			for(var j=0,f=this.documentListeners.length; j<f; ++j){

@@ -338,6 +338,7 @@ var ModuleDisplay = $n2.Class({
 		var atlasDb = config.atlasDb;
 		var atlasDesign = config.atlasDesign;
 		var documentSource = config.documentSource;
+		var customService = this._getCustomService();
 		
 		// Set up login widget
 		for(var i=0,e=this.loginPanelNames.length;i<e;++i){
@@ -489,36 +490,63 @@ var ModuleDisplay = $n2.Class({
 				_this._installHelpButton();
 			};
 			
-			// Display Logic 
-			var displayOptions = {
-				documentSource: documentSource
-				,displayPanelName: _this.sidePanelName
-				,showService: _this.config.show
-				,editor: _this.config.couchEditor
-				,uploadService: _this.config.uploadServer
-				,serviceDirectory: _this.config.directory
+			var displayFormat = 'classic';
+			if( customService ){
+				displayFormat = customService.getOption('displayFormat',displayFormat);
 			};
-			if( displayInfo && displayInfo.displayOnlyRelatedSchemas ){
-				displayOptions.displayOnlyRelatedSchemas 
-					= displayInfo.displayOnlyRelatedSchemas;
+			
+			if( displayFormat === 'tiled' ) {
+				_this.displayControl = new $n2.couchDisplayTiles.TiledDisplay({
+					documentSource: documentSource
+					,displayPanelName: _this.sidePanelName
+					,showService: config.directory.showService
+					,editor: config.couchEditor
+					,uploadService: config.directory.uploadService
+					,authService: config.directory.authService
+					,requestService: config.directory.requestService
+					,schemaRepository: config.directory.schemaRepository
+					,customService: config.directory.customService
+					,dispatchService: config.directory.dispatchService
+				});
+				$.olkitDisplay = _this.displayControl;
+				
+			} else {
+				if( 'classic' !== displayFormat ){
+					$n2.log('Unknown display format: '+displayFormat+' Reverting to classic display.');
+				};
+				
+				// Classic Display Logic 
+				var displayOptions = {
+					documentSource: documentSource
+					,displayPanelName: _this.sidePanelName
+					,showService: _this.config.show
+					,editor: _this.config.couchEditor
+					,uploadService: _this.config.uploadServer
+					,serviceDirectory: _this.config.directory
+				};
+				if( displayInfo && displayInfo.displayOnlyRelatedSchemas ){
+					displayOptions.displayOnlyRelatedSchemas 
+						= displayInfo.displayOnlyRelatedSchemas;
+				};
+				if( displayInfo && displayInfo.displayBriefInRelatedInfo ){
+					displayOptions.displayBriefInRelatedInfo
+						= displayInfo.displayBriefInRelatedInfo;
+				};
+				$.olkitDisplay = _this.displayControl = new $n2.couchDisplay(displayOptions);
+				var defaultDisplaySchemaName = 'object';
+				if( displayInfo && displayInfo.defaultSchemaName ){
+					defaultDisplaySchemaName = displayInfo.defaultSchemaName;
+				};
+				config.directory.schemaRepository.getSchema({
+					name: defaultDisplaySchemaName
+					,onSuccess: function(schema){
+						if( $.olkitDisplay.setSchema ) {
+							$.olkitDisplay.setSchema(schema);
+						};
+					}
+				});
 			};
-			if( displayInfo && displayInfo.displayBriefInRelatedInfo ){
-				displayOptions.displayBriefInRelatedInfo
-					= displayInfo.displayBriefInRelatedInfo;
-			};
-			$.olkitDisplay = _this.displayControl = new $n2.couchDisplay(displayOptions);
-			var defaultDisplaySchemaName = 'object';
-			if( displayInfo && displayInfo.defaultSchemaName ){
-				defaultDisplaySchemaName = displayInfo.defaultSchemaName;
-			};
-			config.directory.schemaRepository.getSchema({
-				name: defaultDisplaySchemaName
-				,onSuccess: function(schema){
-					if( $.olkitDisplay.setSchema ) {
-						$.olkitDisplay.setSchema(schema);
-					};
-				}
-			});
+			
 			
 			// Edit logic
 			config.couchEditor.setPanelName(_this.sidePanelName);
@@ -1039,6 +1067,14 @@ var ModuleDisplay = $n2.Class({
 			ss = this.config.directory.showService;
 		};
 		return ss;
+	}
+	
+	,_getCustomService: function(){
+		var cs = null;
+		if( this.config.directory ){
+			cs = this.config.directory.customService;
+		};
+		return cs;
 	}
 	
 	,_sendDispatchMessage: function(m){

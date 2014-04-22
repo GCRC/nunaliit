@@ -176,8 +176,7 @@ $n2.couchDisplay = $n2.Class({
 		};
 	}
 	
-	// exported
-	,DisplayDocument: function($set, doc) {
+	,_displayDocument: function($set, doc) {
 
 		var _this = this;
 		
@@ -185,7 +184,7 @@ $n2.couchDisplay = $n2.Class({
 		
 		this._displayObject($set, doc, {
 			onUpdated: function() {
-				_this.DisplayDocument($set, doc);
+				_this._displayDocument($set, doc);
 			}
 			,onDeleted: function() {
 				$set.empty();
@@ -1263,7 +1262,7 @@ $n2.couchDisplay = $n2.Class({
 				$set
 					.removeClass(cName)
 					.addClass('couchDisplayAdded_'+escaped);
-				_this.DisplayDocument($set, doc);
+				_this._displayDocument($set, doc);
 			});
 		};
 	}
@@ -1320,7 +1319,7 @@ $n2.couchDisplay = $n2.Class({
 		this.options.documentSource.getDocument({
 			docId: docId
 			,onSuccess: function(doc) {
-				_this.DisplayDocument($set, doc);
+				_this._displayDocument($set, doc);
 			}
 			,onError: function(err) {
 				$set.empty();
@@ -1335,22 +1334,25 @@ $n2.couchDisplay = $n2.Class({
 	,_handleDispatch: function(msg){
 		var _this = this;
 		
+		var $div = this._getDisplayDiv();
+		if( $div.length < 1 ){
+			// No longer displaying. Un-register this event.
+			dispatcher.deregister(addr);
+			return;
+		};
+		
 		// Selected document
 		if( msg.type === 'selected' ) {
 			if( msg.doc ) {
-				var $div = this._getDisplayDiv();
-				this.DisplayDocument($div, msg.doc);
+				this._displayDocument($div, msg.doc);
 				
 			} else if( msg.docId ) {
-				var $div = this._getDisplayDiv();
 				this._displayDocumentId($div, msg.docId);
 				
 			} else if( msg.docs ) {
-				var $div = this._getDisplayDiv();
 				this._displayMultipleDocuments($div, msg.docs);
 				
 			} else if( msg.docIds ) {
-				var $div = this._getDisplayDiv();
 				this._displayMultipleDocumentIds($div, msg.docIds)
 			};
 			
@@ -1373,8 +1375,7 @@ $n2.couchDisplay = $n2.Class({
 			if( !deleted ) {
 				var doc = msg.doc;
 				if( doc ) {
-					var $div = this._getDisplayDiv();
-					this.DisplayDocument($div, doc);
+					this._displayDocument($div, doc);
 				};
 			};
 			
@@ -1605,11 +1606,5 @@ $n2.couchDisplay = $n2.Class({
 
 // Exports
 $.olkitDisplay = null; 
-//{
-//	Configure: Configure
-//	
-//	// Specific to couchDb
-//	,DisplayDocument: DisplayDocument
-//};
 
 })(jQuery,nunaliit2);
