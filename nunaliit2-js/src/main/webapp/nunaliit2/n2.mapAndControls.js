@@ -1660,7 +1660,7 @@ var MapAndControls = $n2.Class({
 		    		restoreGeom: false
 		    		,layer: featureLayer
 		    		,feature: effectiveFeature
-		    		,data: $n2.extend(true, {}, feature.data)
+		    		,data: $n2.extend(true, {}, effectiveFeature.data)
 		    		,style: feature.style
 		    	};
 		    	
