@@ -60,43 +60,45 @@ function startsWith(s, prefix) {
 
 var TiledDisplay = $n2.Class({
 	
-	documentSource: null
+	documentSource: null,
 	
-	,displayPanelName: null
+	displayPanelName: null,
 	
-	,showService: null
+	showService: null,
 	
-	,editor: null
+	editor: null,
 	
-	,uploadService: null
+	uploadService: null,
 	
-	,authService: null
+	authService: null,
 	
-	,requestService: null
+	requestService: null,
 	
-	,schemaRepository: null
+	schemaRepository: null,
 	
-	,customService: null
+	customService: null,
 	
-	,dispatchService: null
+	dispatchService: null,
 	
-	,boolOptions: null
+	boolOptions: null,
 	
-	,currentDocDetails: null
+	currentDetails: null,
 	
-	,displayedDocuments: null
+	displayedDocumentsOrder: null,
 	
-	,createRelatedDocProcess: null
+	displayedDocuments: null,
 	
-	,requestService: null
+	createRelatedDocProcess: null,
 	
-	,defaultSchema: null
+	requestService: null,
 	
-	,postProcessDisplayFns: null
+	defaultSchema: null,
 	
-	,dispatchHandle: null
+	postProcessDisplayFns: null,
 	
-	,initialize: function(opts_) {
+	dispatchHandle: null,
+	
+	initialize: function(opts_) {
 		var opts = $n2.extend({
 			documentSource: null
 			,displayPanelName: null
@@ -120,8 +122,9 @@ var TiledDisplay = $n2.Class({
 		
 		var _this = this;
 		
-		this.currentDocDetails = {};
+		this.currentDetails = {};
 		this.displayedDocuments = {};
+		this.displayedDocumentsOrder = null;
 		
 		this.documentSource = opts.documentSource;
 		this.displayPanelName = opts.displayPanelName;
@@ -166,7 +169,6 @@ var TiledDisplay = $n2.Class({
 				_this._handleDispatch(msg, addr, d);
 			};
 			dispatcher.register(DH, 'selected', f);
-			dispatcher.register(DH, 'unselected', f);
 			dispatcher.register(DH, 'searchResults', f);
 			dispatcher.register(DH, 'documentDeleted', f);
 			dispatcher.register(DH, 'authLoggedIn', f);
@@ -197,21 +199,21 @@ var TiledDisplay = $n2.Class({
 			,showService: this.showService
 			,authService: this.authService
 		});
-	}
+	},
 
 	// external
-	,setSchema: function(schema) {
+	setSchema: function(schema) {
 		this.defaultSchema = schema;
-	}
+	},
 	
 	// external
-	,addPostProcessDisplayFunction: function(fn){
+	addPostProcessDisplayFunction: function(fn){
 		if( typeof(fn) === 'function' ){
 			this.postProcessDisplayFns.push(fn);
 		};
-	}
+	},
 	
-	,_handleDispatch: function(msg, addr, dispatcher){
+	_handleDispatch: function(msg, addr, dispatcher){
 		var _this = this;
 		
 		var $div = this._getDisplayDiv();
@@ -230,17 +232,18 @@ var TiledDisplay = $n2.Class({
 				this._displayDocument(msg.docId, null);
 				
 			} else if( msg.docs ) {
-//				this._displayMultipleDocuments($div, msg.docs);
+				var ids = [];
+				for(var i=0, e=msg.docs.length; i<e; ++i){
+					ids.push( msg.docs[i]._id );
+				};
+				this._displayMultipleDocuments(ids, msg.docs);
 				
 			} else if( msg.docIds ) {
-//				this._displayMultipleDocumentIds($div, msg.docIds)
+				this._displayMultipleDocuments(msg.docIds, null)
 			};
 			
-		} else if( msg.type === 'unselected' ) {
-			this.currentDocDetails = {};
-			
 		} else if( msg.type === 'searchResults' ) {
-//			this._displaySearchResults(msg.results);
+			this._displaySearchResults(msg.results);
 			
 		} else if( msg.type === 'documentDeleted' ) {
 //			var docId = msg.docId;
@@ -271,38 +274,32 @@ var TiledDisplay = $n2.Class({
 		} else if( msg.type === 'documentContentUpdated' ) {
 			this._receiveDocumentContent(msg.doc);
 		};
-	}
+	},
 	
-	,_displayDocument: function(docId, doc) {
+	_displayDocument: function(docId, doc) {
 
 		var _this = this;
 		
-		if( this.currentDocDetails
-		 && this.currentDocDetails.docId === docId ){
+		this._reclaimDisplayDiv();
+		
+		if( this.currentDetails
+		 && this.currentDetails.docId === docId ){
 			// Already in process of displaying this document
 			return;
 		};
 		
-		this.currentDocDetails = {
+		this.currentDetails = {
 			docId: docId
-			,doc: doc
-		};
-		
-		var $set = this._getDisplayDiv();
-		
-		var $filters = $set.find('.n2DisplayTiled_filters');
-		var $docs = $set.find('.n2DisplayTiled_documents');
-		if( $filters.length < 1 || $docs.length < 1 ){
-			$set.empty();
-			$filters = $('<div>')
-				.addClass('n2DisplayTiled_filters')
-				.appendTo($set);
-			$docs = $('<div>')
-				.addClass('n2DisplayTiled_documents')
-				.appendTo($set);
 		};
 
 		this._addDisplayedDocument(docId, doc);
+
+		var $set = this._getDisplayDiv();
+
+		var $current = $set.find('.n2DisplayTiled_info');
+		$current.hide();
+		
+		var $docs = $set.find('.n2DisplayTiled_documents');
 		
 		var $outer = $('<div>')
 			.addClass('n2DisplayTiled_current')
@@ -312,7 +309,7 @@ var TiledDisplay = $n2.Class({
 		// Content
 		var $docDiv = $('<div>')
 			.addClass('n2DisplayTiled_document')
-			.addClass('n2DisplayTiled_wait_for_content')
+			.addClass('n2DisplayTiled_wait_for_current')
 			.appendTo($outer);
 
 		// Buttons
@@ -324,9 +321,9 @@ var TiledDisplay = $n2.Class({
 		this.documentSource.getReferencesFromId({
 			docId: docId
 			,onSuccess: function(referenceIds){
-				if( _this.currentDocDetails.docId === docId ){
-					_this.currentDocDetails.referenceDocIds = referenceIds;
-					_this._referencesUpdated();
+				if( _this.currentDetails.docId === docId ){
+					_this.currentDetails.referenceDocIds = referenceIds;
+					_this._currentDocReferencesUpdated();
 				};
 			}
 			,onError: function(errorMsg){
@@ -337,18 +334,18 @@ var TiledDisplay = $n2.Class({
 		// Request document
 		if( doc ){
 			this._receiveDocumentContent(doc);
-		} else if( this.requestService ){
-			this.requestService.requestDocument(docId);
+		} else {
+			this._requestDocumentWithId(docId);
 		};
-	}
+	},
 	
-	,_displayDocumentContent: function(doc){
+	_displayDocumentContent: function(doc){
 		
 		if( doc 
 		 && doc._id 
-		 && this.currentDocDetails.docId === doc._id ){
+		 && this.currentDetails.docId === doc._id ){
 			var $set = this._getDisplayDiv();
-			var $docDiv = $set.find('.n2DisplayTiled_wait_for_content');
+			var $docDiv = $set.find('.n2DisplayTiled_wait_for_current');
 			
 			if( $docDiv.length > 0 ){
 				if( this.showService ){
@@ -356,18 +353,18 @@ var TiledDisplay = $n2.Class({
 				} else {
 					$docDiv.text(doc._id);
 				};
-				$docDiv.removeClass('n2DisplayTiled_wait_for_content');
+				$docDiv.removeClass('n2DisplayTiled_wait_for_current');
 			};
 		};
-	}
+	},
 	
-	,_displayDocumentButtons: function(doc, schema){
+	_displayDocumentButtons: function(doc, schema){
 		
 		var _this = this;
 		
 		if( doc 
 		 && doc._id 
-		 && this.currentDocDetails.docId === doc._id ){
+		 && this.currentDetails.docId === doc._id ){
 			var $set = this._getDisplayDiv();
 			var $btnDiv = $set.find('.n2DisplayTiled_buttons');
 
@@ -428,33 +425,33 @@ var TiledDisplay = $n2.Class({
 				});
 			};
 		};
-	}
+	},
 	
-	,_referencesUpdated: function(){
-		if( this.currentDocDetails 
-		 && this.currentDocDetails.doc 
-		 && this.currentDocDetails.referenceDocIds ){
+	_currentDocReferencesUpdated: function(){
+		if( this.currentDetails 
+		 && this.currentDetails.doc 
+		 && this.currentDetails.referenceDocIds ){
 			// Accumulate all references
 			var refDocIds = {};
 			
 			// Forward references
 			var references = [];
-			$n2.couchUtils.extractLinks(this.currentDocDetails.doc, references);
+			$n2.couchUtils.extractLinks(this.currentDetails.doc, references);
 			for(var i=0, e=references.length; i<e; ++i){
 				var linkDocId = references[i].doc;
 				refDocIds[linkDocId] = true;
 			};
 			
 			// Reverse links
-			for(var i=0, e=this.currentDocDetails.referenceDocIds.length; i<e; ++i){
-				var linkDocId = this.currentDocDetails.referenceDocIds[i];
+			for(var i=0, e=this.currentDetails.referenceDocIds.length; i<e; ++i){
+				var linkDocId = this.currentDetails.referenceDocIds[i];
 				refDocIds[linkDocId] = true;
 			};
 			
 			// Figure out information that must be removed
 			var idsToRemove = [];
 			for(var docId in this.displayedDocuments){
-				if( docId === this.currentDocDetails.docId ) {
+				if( docId === this.currentDetails.docId ) {
 					// OK
 				} else if( !refDocIds[docId] ){
 					idsToRemove.push(docId);
@@ -468,6 +465,9 @@ var TiledDisplay = $n2.Class({
 			for(var docId in refDocIds){
 				this._addDisplayedDocument(docId);
 			};
+			
+			// Use dynamic sorting
+			this.displayedDocumentsOrder = null;
 
 			// Perform updates
 			this._updateDisplayedDocuments();
@@ -480,9 +480,6 @@ var TiledDisplay = $n2.Class({
 	 */
 	_updateDisplayedDocuments: function(){
 		var _this = this;
-		
-		var $set = this._getDisplayDiv();
-		var $docs = $set.find('.n2DisplayTiled_documents');
 		
 		// Get all the required info
 		var neededInfoIds = [];
@@ -513,26 +510,94 @@ var TiledDisplay = $n2.Class({
 		};
 
 		function performUpdate() {
+			var $set = _this._getDisplayDiv();
+			var $docs = $set.find('.n2DisplayTiled_documents');
+
 			// Sort (TBD)
 			var sortedDocIds = [];
-			for(var docId in _this.displayedDocuments){
-				sortedDocIds.push(docId);
+			if( _this.displayedDocumentsOrder ){
+				sortedDocIds = _this.displayedDocumentsOrder;
+			} else {
+				if( _this.currentDetails
+				 && _this.currentDetails.docId ){
+					sortedDocIds.push(_this.currentDetails.docId);
+				};
+				for(var docId in _this.displayedDocuments){
+					// Remove duplicates
+					if( sortedDocIds.indexOf(docId) < 0 ){
+						sortedDocIds.push(docId);
+					};
+				};
 			};
+			
+			var elementsById = {};
+			for(var i=0,e=sortedDocIds.length; i<e; ++i){
+				var docId = sortedDocIds[i];
+				var cName = 'n2DisplayTiled_tile_' + $n2.utils.stringToHtmlId(docId);
+				var $tile = $docs.find('.'+cName);
+				if( $tile.length > 0 ){
+					elementsById[docId] = $tile;
+					$tile.remove();
+					
+					if( $tile.hasClass('n2DisplayTiled_current')
+					 && docId !== _this.currentDetails.docId ){
+						elementsById[docId] = null;					};
+				};
+			};
+			
+			// Remove what is left
+			$docs.empty();
 			
 			// Append new ones
 			for(var i=0,e=sortedDocIds.length; i<e; ++i){
 				var docId = sortedDocIds[i];
-				var cName = 'n2DisplayTiled_tile_' + $n2.utils.stringToHtmlId(docId);
-				var $tile = $set.find('.'+cName);
-				if( $tile.length < 1 ){
-					// Add at end of set
-					$('<div>')
+				var $elem = elementsById[docId];
+				
+				if( $elem ) {
+					$docs.append($elem);
+				} else {
+					var cName = 'n2DisplayTiled_tile_' + $n2.utils.stringToHtmlId(docId);
+					var waitClassName = 'n2DisplayTiled_wait_brief_' + $n2.utils.stringToHtmlId(docId);
+					$elem = $('<div>')
 						.addClass(cName)
-						.text(docId)
-						.appendTo($set);
+						.addClass(waitClassName)
+						.text(docId);
+					$docs.append($elem);
+					_this._requestDocumentWithId(docId);
 				};
 			};
 		};
+	},
+	
+	/*
+	 * Changes the list of displayed documents
+	 */
+	_changeDisplayedDocuments: function(docIds, docsById){
+		var displayDocsByIds = {};
+		for(var i=0,e=docIds.length; i<e; ++i){
+			var docId = docIds[i];
+			displayDocsByIds[docId] = true;
+		};
+		
+		for(var docId in this.displayedDocuments){
+			if( !displayDocsByIds[docId] ){
+				this._removeDisplayedDocument(docId);
+			};
+		};
+		
+		for(var i=0,e=docIds.length; i<e; ++i){
+			var docId = docIds[i];
+			var doc = null;
+			if( docsById && docsById[docId] ){
+				doc = docsById[docId];
+			};
+			
+			this._addDisplayedDocument(docId, doc);
+		};
+		
+		this.displayedDocumentsOrder = docIds;
+		
+		this._updateDisplayedDocuments();
 	},
 	
 	/*
@@ -567,62 +632,100 @@ var TiledDisplay = $n2.Class({
 		if( this.displayedDocuments[docId] ){
 			delete this.displayedDocuments[docId];
 		};
-	}
+	},
 	
-	,_receiveDocumentContent: function(doc){
+	_receiveDocumentContent: function(doc){
 		var _this = this;
 		
-		// Currently displayed
-		if( doc._id === this.currentDocDetails.docId ){
-
-			this.currentDocDetails.doc = doc;
-			_this._referencesUpdated();
-
-			if( doc.nunaliit_schema 
-			 && this.schemaRepository ){
-				this.schemaRepository.getSchema({
-					name: doc.nunaliit_schema
-					,onSuccess: function(schema){
-						schemaLoaded(doc, schema);
-					}
-					,onError: function(err){
-						schemaLoaded(doc, null);
-					}
-				});
-			} else {
-				schemaLoaded(doc, null);
+		var docId = doc._id;
+		if( this.displayedDocuments[docId] ){
+			this.displayedDocuments[docId].doc = doc;
+		};
+		
+		var $set = this._getDisplayDiv();
+		var waitClassName = 'n2DisplayTiled_wait_brief_' + $n2.utils.stringToHtmlId(docId);
+		$set.find('.'+waitClassName).each(function(){
+			var $div = $(this);
+			if( _this.showService ) {
+				_this.showService.displayBriefDescription($div, {}, doc);
 			};
+			$div.removeClass(waitClassName);
+		});
+		
+		// Currently displayed
+		if( doc._id === this.currentDetails.docId ){
 			
-		} else {
-			// Not currently displayed. Does it contain a link to the
-			// currently displayed document?
-			if( this.currentDocDetails.docId ){
-				var forwardLinkAvailable = false;
-				var references = [];
-				$n2.couchUtils.extractLinks(doc, references);
-				if( references.indexOf(this.currentDocDetails.docId) >= 0 ){
-					forwardLinkAvailable = true;
+			var update = false;
+			
+			if( !this.currentDetails.doc 
+			 && !this.currentDetails.version ){
+				this.currentDetails.version = doc._rev;
+				this.currentDetails.doc = doc;
+				update = true;
+				
+			} else if( !this.currentDetails.doc ) {
+				if( this.currentDetails.version === doc._rev ) {
+					this.currentDetails.doc = doc;
+					update = true;
 				};
 				
-				if( forwardLinkAvailable && !this.displayedDocuments[doc._id] ){
-					// Add new linked item
-					this._addDisplayedDocument(doc._id, doc);
-					this._updateDisplayedDocuments();
-				} else if( !forwardLinkAvailable && this.displayedDocuments[doc._id] ) {
-					// Remove item no longer linked
-					this._removeDisplayedDocument(doc._id);
-					this._updateDisplayedDocuments();
+			} else {
+				if( this.currentDetails.version === doc._rev
+				 && this.currentDetails.version !== this.currentDetails.doc._rev ) {
+					this.currentDetails.doc = doc;
+					update = true;
 				};
 			};
-		}
+			
+			if( update ){
+				_this._currentDocReferencesUpdated();
+
+				if( doc.nunaliit_schema 
+				 && this.schemaRepository ){
+					this.schemaRepository.getSchema({
+						name: doc.nunaliit_schema
+						,onSuccess: function(schema){
+							schemaLoaded(doc, schema);
+						}
+						,onError: function(err){
+							schemaLoaded(doc, null);
+						}
+					});
+				} else {
+					schemaLoaded(doc, null);
+				};
+			};
+			
+//		} else {
+//			// Not currently displayed. Does it contain a link to the
+//			// currently displayed document?
+//			if( this.currentDetails.docId ){
+//				var forwardLinkAvailable = false;
+//				var references = [];
+//				$n2.couchUtils.extractLinks(doc, references);
+//				if( references.indexOf(this.currentDetails.docId) >= 0 ){
+//					forwardLinkAvailable = true;
+//				};
+//				
+//				if( forwardLinkAvailable && !this.displayedDocuments[doc._id] ){
+//					// Add new linked item
+//					this._addDisplayedDocument(doc._id, doc);
+//					this._updateDisplayedDocuments();
+//				} else if( !forwardLinkAvailable && this.displayedDocuments[doc._id] ) {
+//					// Remove item no longer linked
+//					this._removeDisplayedDocument(doc._id);
+//					this._updateDisplayedDocuments();
+//				};
+//			};
+		};
 		
 		function schemaLoaded(doc, schema){
 			_this._displayDocumentContent(doc);
 			_this._displayDocumentButtons(doc, schema);
 		};
-	}
+	},
 	
-	,_addRelatedDocument: function(docId, schemaName){
+	_addRelatedDocument: function(docId, schemaName){
 		this.createRelatedDocProcess.addRelatedDocumentFromSchemaNames({
 			docId: docId
 			,relatedSchemaNames: [schemaName]
@@ -640,26 +743,116 @@ var TiledDisplay = $n2.Class({
 			,docId: doc._id
 			,doc: doc
 		});
-	}
+	},
 	
-	,_getDisplayDiv: function(){
+	/*
+	 * Accepts search results and display them in tiled mode
+	 */
+	_displaySearchResults: function(results){
+
+		var _this = this;
+		
+		this._reclaimDisplayDiv();
+		
+		var ids = [];
+		if( results && results.sorted && results.sorted.length ) {
+			for(var i=0,e=results.sorted.length; i<e; ++i){
+				ids.push(results.sorted[i].id);
+			};
+		};
+		
+		this._displayMultipleDocuments(ids, null);
+		
+		if( ids.length < 1 ){
+			var $set = this._getDisplayDiv();
+			var $current = $set.find('.n2DisplayTiled_info');
+			$current
+				.text( _loc('Empty search results') )
+				.show();
+		};
+	},
+	
+	/*
+	 * Displays multiple documents
+	 */
+	_displayMultipleDocuments: function(ids, docs){
+
+		var _this = this;
+		
+		this._reclaimDisplayDiv();
+
+		var $set = this._getDisplayDiv();
+		var $current = $set.find('.n2DisplayTiled_info');
+		$current.hide();
+		
+		this.currentDetails = {
+			docIds: ids
+			,docs: {}
+		};
+		
+		var docsById = {};
+		if( docs ){
+			for(var i=0,e=docs.length; i<e; ++i){
+				var doc = docs[i];
+				this.currentDetails.docs[doc._id] = doc;
+				docsById[doc._id] = doc;
+			};
+		};
+
+		this._changeDisplayedDocuments(ids, docsById);
+	},
+	
+	/*
+	 * This function should be called before any displaying is performed.
+	 * This ensures that the div element in use still contains the required
+	 * elements for performing display.
+	 */
+	_reclaimDisplayDiv: function() {
+		var $set = this._getDisplayDiv();
+		
+		var $filters = $set.find('.n2DisplayTiled_filters');
+		var $current = $set.find('.n2DisplayTiled_info');
+		var $docs = $set.find('.n2DisplayTiled_documents');
+		if( $filters.length < 1 
+		 || $current.length < 1
+		 || $docs.length < 1 ){
+			$set.empty();
+			$filters = $('<div>')
+				.addClass('n2DisplayTiled_filters')
+				.appendTo($set);
+			$current = $('<div>')
+				.addClass('n2DisplayTiled_info')
+				.appendTo($set);
+			$docs = $('<div>')
+				.addClass('n2DisplayTiled_documents')
+				.appendTo($set);
+			
+			// When the side panel must be re-claimed, then we must
+			// forget what is currently displayed since it has to be
+			// re-computed
+			this.currentDetails = {};
+		};
+		
+	},
+	
+	_getDisplayDiv: function(){
 		var divId = this.displayPanelName;
 		return $('#'+divId);
-	}
+	},
 	
-	,_dispatch: function(m){
+	_dispatch: function(m){
 		var dispatcher = this.dispatchService;
 		if( dispatcher ) {
 			dispatcher.send(DH,m);
 		};
-	}
+	},
 
 	/*
 	 * Get a boolean option based on a name and return it. Defaults
 	 * to false. If the option is found set in either the options map
 	 * or the custom service, then the result is true.
 	 */
-	,_getBooleanOption: function(optionName){
+	_getBooleanOption: function(optionName){
 		var flag = false;
 		
 		if( this.boolOptions[optionName] ){
@@ -675,6 +868,42 @@ var TiledDisplay = $n2.Class({
 		};
 		
 		return flag;
+	},
+	
+	/*
+	 * Look at documents stored in display code and return if one
+	 * found with the correct identifier.
+	 */
+	_getCachedDocumentFromId: function(docId){
+		if( this.displayedDocuments 
+		 && this.displayedDocuments[docId]
+		 && this.displayedDocuments[docId].doc ){
+			return this.displayedDocuments[docId].doc;
+		};
+		
+		if( this.currentDetails 
+		 && this.currentDetails.docId === docId 
+		 && this.currentDetails.doc ){
+			return this.currentDetails.doc;
+		};
+		
+		return null;
+	},
+	
+	/*
+	 * Given a document identifier, request the document content.
+	 */
+	_requestDocumentWithId: function(docId){
+		// Look internally, first
+		var doc = this._getCachedDocumentFromId(docId);
+		if( doc ){
+			this._receiveDocumentContent(doc);
+			return;
+		};
+		
+		if( this.requestService ){
+			this.requestService.requestDocument(docId);
+		};
 	}
 });
 
