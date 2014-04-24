@@ -1,0 +1,20 @@
+.n2DisplayTiled_documents {
+	position: absolute;
+	top: 94px;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: #cccccc;
+	overflow-x: hidden;
+	overflow-y: auto;
+}
+
+.n2DisplayTiled_tile {
+	position: absolute;
+	background-color: #ffffff;
+	overflow: hidden;
+}
+
+.n2DisplayTiled_tile:hover {
+	background-color: #eeeeee;
+}

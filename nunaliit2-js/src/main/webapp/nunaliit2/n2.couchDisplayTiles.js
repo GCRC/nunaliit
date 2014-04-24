@@ -88,6 +88,8 @@ var TiledDisplay = $n2.Class({
 	
 	displayedDocuments: null,
 	
+	grid: null,
+	
 	createRelatedDocProcess: null,
 	
 	requestService: null,
@@ -199,6 +201,16 @@ var TiledDisplay = $n2.Class({
 			,showService: this.showService
 			,authService: this.authService
 		});
+		
+		// Detect changes in displayed current content size
+		var intervalID = window.setInterval(function(){
+			var $set = _this._getDisplayDiv();
+			if( $set.length < 0 ) {
+				window.clearInterval(intervalID);
+			} else {
+				_this._performIntervalTask();
+			};
+		}, 500);
 	},
 
 	// external
@@ -298,24 +310,12 @@ var TiledDisplay = $n2.Class({
 
 		var $current = $set.find('.n2DisplayTiled_info');
 		$current.hide();
-		
-		var $docs = $set.find('.n2DisplayTiled_documents');
-		
-		var $outer = $('<div>')
-			.addClass('n2DisplayTiled_current')
-			.addClass('n2DisplayTiled_tile_' + $n2.utils.stringToHtmlId(docId))
-			.appendTo($docs);
-		
-		// Content
-		var $docDiv = $('<div>')
-			.addClass('n2DisplayTiled_document')
-			.addClass('n2DisplayTiled_wait_for_current')
-			.appendTo($outer);
 
-		// Buttons
-		var $btnDiv = $('<div>')
-			.addClass('n2DisplayTiled_buttons')
-			.appendTo($outer);
+		// Use template for document display
+		this.grid.template = null;
+		this.grid.templateFactory = new GridTemplateDocument();
+		
+		this._adjustCurrentTile(docId);
 		
 		// Get doc ids for all linked documents
 		this.documentSource.getReferencesFromId({
@@ -339,23 +339,67 @@ var TiledDisplay = $n2.Class({
 		};
 	},
 	
-	_displayDocumentContent: function(doc){
+	/*
+	 * Accepts search results and display them in tiled mode
+	 */
+	_displaySearchResults: function(results){
+
+		var _this = this;
 		
-		if( doc 
-		 && doc._id 
-		 && this.currentDetails.docId === doc._id ){
-			var $set = this._getDisplayDiv();
-			var $docDiv = $set.find('.n2DisplayTiled_wait_for_current');
-			
-			if( $docDiv.length > 0 ){
-				if( this.showService ){
-					this.showService.displayDocument($docDiv, {}, doc);
-				} else {
-					$docDiv.text(doc._id);
-				};
-				$docDiv.removeClass('n2DisplayTiled_wait_for_current');
+		this._reclaimDisplayDiv();
+		
+		var ids = [];
+		if( results && results.sorted && results.sorted.length ) {
+			for(var i=0,e=results.sorted.length; i<e; ++i){
+				ids.push(results.sorted[i].id);
 			};
 		};
+		
+		this._displayMultipleDocuments(ids, null);
+		
+		if( ids.length < 1 ){
+			var $set = this._getDisplayDiv();
+			var $current = $set.find('.n2DisplayTiled_info');
+			$current
+				.text( _loc('Empty search results') )
+				.show();
+		};
+	},
+	
+	/*
+	 * Displays multiple documents
+	 */
+	_displayMultipleDocuments: function(ids, docs){
+
+		var _this = this;
+		
+		this._reclaimDisplayDiv();
+
+		var $set = this._getDisplayDiv();
+		var $current = $set.find('.n2DisplayTiled_info');
+		$current.hide();
+		
+		this.currentDetails = {
+			docIds: ids
+			,docs: {}
+		};
+		
+		// Use template for multiple documents display
+		this.grid.template = null;
+		this.grid.templateFactory = Tiles.UniformTemplates;
+		
+		this._adjustCurrentTile(null);
+		
+		var docsById = {};
+		if( docs ){
+			for(var i=0,e=docs.length; i<e; ++i){
+				var doc = docs[i];
+				this.currentDetails.docs[doc._id] = doc;
+				docsById[doc._id] = doc;
+			};
+		};
+
+		this._changeDisplayedDocuments(ids, docsById);
 	},
 	
 	_displayDocumentButtons: function(doc, schema){
@@ -366,7 +410,8 @@ var TiledDisplay = $n2.Class({
 		 && doc._id 
 		 && this.currentDetails.docId === doc._id ){
 			var $set = this._getDisplayDiv();
-			var $btnDiv = $set.find('.n2DisplayTiled_buttons');
+			var $btnDiv = $set.find('.n2DisplayTiled_buttons')
+				.empty();
 
 	 		// 'edit' button
 	 		{
@@ -529,74 +574,15 @@ var TiledDisplay = $n2.Class({
 					};
 				};
 			};
+			
+			_this.grid.updateTiles(sortedDocIds);
+			_this.grid.isDirty = true; // force redraw to reflect change in order
+            _this.grid.redraw(true);
 
-			// Save tiles
-			var elementsById = {};
+            // Request content for documents
 			for(var i=0,e=sortedDocIds.length; i<e; ++i){
 				var docId = sortedDocIds[i];
-				var cName = 'n2DisplayTiled_tile_' + $n2.utils.stringToHtmlId(docId);
-				$docs.find('.'+cName).each(function(){
-					var $tile = $(this);
-
-					$tile.remove();
-					
-					var isCurrentTile = $tile.hasClass('n2DisplayTiled_current');
-					
-					if( isCurrentTile
-					 && docId !== _this.currentDetails.docId ){
-						// do not save
-					} else if( !isCurrentTile
-					 && docId === _this.currentDetails.docId ){
-						// do not save
-					} else {
-						elementsById[docId] = $tile;
-					};
-				});
-			};
-			
-			// Remove what is left
-			$docs.empty();
-			
-			// Append new ones
-			for(var i=0,e=sortedDocIds.length; i<e; ++i){
-				var docId = sortedDocIds[i];
-				var $elem = elementsById[docId];
-				
-				if( $elem ) {
-					$docs.append($elem);
-				} else {
-					var cName = 'n2DisplayTiled_tile_' + $n2.utils.stringToHtmlId(docId);
-					$elem = $('<div>')
-						.addClass(cName)
-						.appendTo($docs);
-					
-					var waitClassName = 'n2DisplayTiled_wait_brief_' + $n2.utils.stringToHtmlId(docId);
-					$('<div>')
-						.addClass(waitClassName)
-						.text(docId)
-						.appendTo($elem);
-
-					var $btn = $('<div>')
-						.addClass('n2DisplayTiled_tile_buttons')
-						.appendTo($elem);
-					
-					var clickFn = focusCallback(docId);
-					$('<button>')
-						.text( _loc('More Info') )
-						.click(clickFn)
-						.appendTo($btn);
-					
-					_this._requestDocumentWithId(docId);
-				};
-			};
-		};
-		
-		function focusCallback(docId){
-			return function(){
-				_this._dispatch({
-					type:'userSelect'
-					,docId: docId
-				});
+				_this._requestDocumentWithId(docId);
 			};
 		};
 	},
@@ -654,12 +640,6 @@ var TiledDisplay = $n2.Class({
 	 * should be called, next.
 	 */
 	_removeDisplayedDocument: function(docId){
-		var $set = this._getDisplayDiv();
-
-		// Remove DOM element
-		var cName = 'n2DisplayTiled_tile_' + $n2.utils.stringToHtmlId(docId);
-		$set.find('.'+cName).remove();
-		
 		// Remove information
 		if( this.displayedDocuments[docId] ){
 			delete this.displayedDocuments[docId];
@@ -681,6 +661,26 @@ var TiledDisplay = $n2.Class({
 			if( _this.showService ) {
 				_this.showService.displayBriefDescription($div, {}, doc);
 			};
+			$div.removeClass(waitClassName);
+		});
+		
+		var waitClassName = 'n2DisplayTiled_wait_current_' + $n2.utils.stringToHtmlId(docId);
+		$set.find('.'+waitClassName).each(function(){
+			var $div = $(this)
+				.empty();
+
+			$('<div>')
+				.addClass('n2DisplayTiled_buttons')
+				.appendTo($div);			
+
+			var $content = $('<div>')
+				.appendTo($div);
+			if( _this.showService ) {
+				_this.showService.displayDocument($content, {}, doc);
+			} else {
+				$content.text( doc._id );
+			};
+			
 			$div.removeClass(waitClassName);
 		});
 		
@@ -711,48 +711,25 @@ var TiledDisplay = $n2.Class({
 			
 			if( update ){
 				_this._currentDocReferencesUpdated();
-
-				if( doc.nunaliit_schema 
-				 && this.schemaRepository ){
-					this.schemaRepository.getSchema({
-						name: doc.nunaliit_schema
-						,onSuccess: function(schema){
-							schemaLoaded(doc, schema);
-						}
-						,onError: function(err){
-							schemaLoaded(doc, null);
-						}
-					});
-				} else {
-					schemaLoaded(doc, null);
-				};
 			};
-			
-//		} else {
-//			// Not currently displayed. Does it contain a link to the
-//			// currently displayed document?
-//			if( this.currentDetails.docId ){
-//				var forwardLinkAvailable = false;
-//				var references = [];
-//				$n2.couchUtils.extractLinks(doc, references);
-//				if( references.indexOf(this.currentDetails.docId) >= 0 ){
-//					forwardLinkAvailable = true;
-//				};
-//				
-//				if( forwardLinkAvailable && !this.displayedDocuments[doc._id] ){
-//					// Add new linked item
-//					this._addDisplayedDocument(doc._id, doc);
-//					this._updateDisplayedDocuments();
-//				} else if( !forwardLinkAvailable && this.displayedDocuments[doc._id] ) {
-//					// Remove item no longer linked
-//					this._removeDisplayedDocument(doc._id);
-//					this._updateDisplayedDocuments();
-//				};
-//			};
+		};
+
+		if( doc.nunaliit_schema 
+		 && this.schemaRepository ){
+			this.schemaRepository.getSchema({
+				name: doc.nunaliit_schema
+				,onSuccess: function(schema){
+					schemaLoaded(doc, schema);
+				}
+				,onError: function(err){
+					schemaLoaded(doc, null);
+				}
+			});
+		} else {
+			schemaLoaded(doc, null);
 		};
 		
 		function schemaLoaded(doc, schema){
-			_this._displayDocumentContent(doc);
 			_this._displayDocumentButtons(doc, schema);
 		};
 	},
@@ -778,68 +755,13 @@ var TiledDisplay = $n2.Class({
 	},
 	
 	/*
-	 * Accepts search results and display them in tiled mode
-	 */
-	_displaySearchResults: function(results){
-
-		var _this = this;
-		
-		this._reclaimDisplayDiv();
-		
-		var ids = [];
-		if( results && results.sorted && results.sorted.length ) {
-			for(var i=0,e=results.sorted.length; i<e; ++i){
-				ids.push(results.sorted[i].id);
-			};
-		};
-		
-		this._displayMultipleDocuments(ids, null);
-		
-		if( ids.length < 1 ){
-			var $set = this._getDisplayDiv();
-			var $current = $set.find('.n2DisplayTiled_info');
-			$current
-				.text( _loc('Empty search results') )
-				.show();
-		};
-	},
-	
-	/*
-	 * Displays multiple documents
-	 */
-	_displayMultipleDocuments: function(ids, docs){
-
-		var _this = this;
-		
-		this._reclaimDisplayDiv();
-
-		var $set = this._getDisplayDiv();
-		var $current = $set.find('.n2DisplayTiled_info');
-		$current.hide();
-		
-		this.currentDetails = {
-			docIds: ids
-			,docs: {}
-		};
-		
-		var docsById = {};
-		if( docs ){
-			for(var i=0,e=docs.length; i<e; ++i){
-				var doc = docs[i];
-				this.currentDetails.docs[doc._id] = doc;
-				docsById[doc._id] = doc;
-			};
-		};
-
-		this._changeDisplayedDocuments(ids, docsById);
-	},
-	
-	/*
 	 * This function should be called before any displaying is performed.
 	 * This ensures that the div element in use still contains the required
 	 * elements for performing display.
 	 */
 	_reclaimDisplayDiv: function() {
+		var _this = this;
+		
 		var $set = this._getDisplayDiv();
 		
 		var $filters = $set.find('.n2DisplayTiled_filters');
@@ -863,8 +785,75 @@ var TiledDisplay = $n2.Class({
 			// forget what is currently displayed since it has to be
 			// re-computed
 			this.currentDetails = {};
+			
+			// Create grid
+			this.grid = new Tiles.Grid($docs);
+			this.grid.createTile = function(docId) {
+		        var $elem = $('<div>')
+		        	.addClass('n2DisplayTiled_tile')
+		        	.addClass('n2DisplayTiled_tile_' + $n2.utils.stringToHtmlId(docId))
+		        	.attr('n2DocId',docId);
+
+		        var tile = new Tiles.Tile(docId, $elem);
+		        
+		        if( _this.currentDetails
+		         && _this.currentDetails.docId === docId ){
+		        	// Current document
+		        	$elem.addClass('n2DisplayTiled_tile_current');
+		        	_this._generateCurrentDocumentContent($elem, docId);
+
+		        } else {
+		        	// Not current document
+		        	_this._generateDocumentContent($elem, docId);
+		        };
+		        return tile;
+		    };
+		};
+	},
+	
+	/*
+	 * Goes over all the tiles and remove the class 'n2DisplayTiled_tile_current'
+	 * to from tiles that should not have it. Also, it adds the class to the tile
+	 * that should have it, if it exists.
+	 * 
+	 * When adding and removing the class, adjust the content accordingly.
+	 */
+	_adjustCurrentTile: function(docId){
+		var _this = this;
+		
+		var $set = this._getDisplayDiv();
+		var $docs = $set.find('.n2DisplayTiled_documents');
+		
+		var targetClass = null;
+		if( docId ){
+			targetClass = 'n2DisplayTiled_tile_' + $n2.utils.stringToHtmlId(docId);
 		};
 		
+		// Remove
+		$docs.find('.n2DisplayTiled_tile_current').each(function(){
+			var $elem = $(this);
+			if( targetClass && $elem.hasClass(targetClass) ) {
+				// That's OK. Leave it
+			} else {
+				$elem.removeClass('n2DisplayTiled_tile_current');
+				var id = $elem.attr('n2DocId');
+				_this._generateDocumentContent($elem, id);
+			};
+		});
+		
+		// Add
+		if( targetClass ) {
+			$docs.find('.'+targetClass).each(function(){
+				var $elem = $(this);
+				if( $elem.hasClass('n2DisplayTiled_tile_current') ) {
+					// That's OK. Leave it
+				} else {
+					$elem.addClass('n2DisplayTiled_tile_current');
+					var id = $elem.attr('n2DocId');
+					_this._generateCurrentDocumentContent($elem, id);
+				};
+			});
+		};
 	},
 	
 	_getDisplayDiv: function(){
@@ -936,6 +925,107 @@ var TiledDisplay = $n2.Class({
 		if( this.requestService ){
 			this.requestService.requestDocument(docId);
 		};
+	},
+	
+	_generateCurrentDocumentContent: function($elem, docId){
+		$elem.empty();
+		
+		var waitClassName = 'n2DisplayTiled_wait_current_' + $n2.utils.stringToHtmlId(docId);
+		$('<div>')
+			.addClass(waitClassName)
+			.addClass('n2DisplayTiled_tile_content')
+			.text(docId)
+			.appendTo($elem);
+	},
+	
+	_generateDocumentContent: function($elem, docId){
+		var _this = this;
+		
+		$elem.empty();
+		
+		var waitClassName = 'n2DisplayTiled_wait_brief_' + $n2.utils.stringToHtmlId(docId);
+		$('<div>')
+			.addClass(waitClassName)
+			.addClass('n2DisplayTiled_tile_content')
+			.text(docId)
+			.appendTo($elem);
+
+		var clickInstalled = $elem.attr('n2Click');
+		if( !clickInstalled ) {
+			$elem.click(function(){
+				_this._dispatch({
+					type:'userSelect'
+					,docId: docId
+				});
+			});
+			$elem.attr('n2Click','installed');
+		};
+	},
+	
+	_performIntervalTask: function(){
+		var $set = this._getDisplayDiv();
+		var $docs = $set.find('.n2DisplayTiled_documents');
+
+		if( this.currentDetails
+		 && this.currentDetails.docId ){
+			var $currentTile = $docs.find('.n2DisplayTiled_tile_current')
+				.find('.n2DisplayTiled_tile_content');
+			if( $currentTile.length > 0 ){
+				var height = $currentTile.height();
+				if( height != this.currentDetails.height ){
+					this.currentDetails.height = height;
+					var cellSize = this.grid.cellSize;
+					this.grid.template = null;
+					this.grid.templateFactory = new GridTemplateDocument(height,cellSize);
+					this.grid.redraw(true);
+				};
+			};
+		};
+	}
+});
+
+/*
+ * Template for document display
+ */
+var GridTemplateDocument = $n2.Class({
+	height: null,
+	
+	tileHeight: null,
+	
+	initialize: function(height, tileHeight){
+		this.height = (height ? height : 0);
+		this.tileHeight = (tileHeight ? tileHeight : 150);
+	},
+	
+	get: function(numCols, targetTiles) {
+        var numRows = Math.ceil(targetTiles / numCols),
+	        rects = [],
+	        x, y, i;
+	
+        var firstTileHeight = Math.max(1, Math.ceil(this.height / this.tileHeight));
+        
+        // First tile is 2x1
+        var firstTileWidth = 2;
+        rects.push(new Tiles.Rectangle(0, 0, firstTileWidth, firstTileHeight));
+        
+        x = firstTileWidth - 1;
+        y = 0;
+        
+        for(i = 1; i<targetTiles; ++i){
+        	x = x + 1;
+        	while( x >= numCols ){
+        		y = y + 1;
+        		x = 0;
+        		
+        		if( y < firstTileHeight ){
+        			x = firstTileWidth;
+        		};
+        	};
+        	
+            rects.push(new Tiles.Rectangle(x, y, 1, 1));
+        };
+	
+	    return new Tiles.Template(rects, numCols, numRows);
 	}
 });
 
