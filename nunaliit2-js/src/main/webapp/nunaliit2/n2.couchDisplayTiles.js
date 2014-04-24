@@ -529,20 +529,29 @@ var TiledDisplay = $n2.Class({
 					};
 				};
 			};
-			
+
+			// Save tiles
 			var elementsById = {};
 			for(var i=0,e=sortedDocIds.length; i<e; ++i){
 				var docId = sortedDocIds[i];
 				var cName = 'n2DisplayTiled_tile_' + $n2.utils.stringToHtmlId(docId);
-				var $tile = $docs.find('.'+cName);
-				if( $tile.length > 0 ){
-					elementsById[docId] = $tile;
+				$docs.find('.'+cName).each(function(){
+					var $tile = $(this);
+
 					$tile.remove();
 					
-					if( $tile.hasClass('n2DisplayTiled_current')
+					var isCurrentTile = $tile.hasClass('n2DisplayTiled_current');
+					
+					if( isCurrentTile
 					 && docId !== _this.currentDetails.docId ){
-						elementsById[docId] = null;					};
-				};
+						// do not save
+					} else if( !isCurrentTile
+					 && docId === _this.currentDetails.docId ){
+						// do not save
+					} else {
+						elementsById[docId] = $tile;
+					};
+				});
 			};
 			
 			// Remove what is left
@@ -557,14 +566,37 @@ var TiledDisplay = $n2.Class({
 					$docs.append($elem);
 				} else {
 					var cName = 'n2DisplayTiled_tile_' + $n2.utils.stringToHtmlId(docId);
-					var waitClassName = 'n2DisplayTiled_wait_brief_' + $n2.utils.stringToHtmlId(docId);
 					$elem = $('<div>')
 						.addClass(cName)
+						.appendTo($docs);
+					
+					var waitClassName = 'n2DisplayTiled_wait_brief_' + $n2.utils.stringToHtmlId(docId);
+					$('<div>')
 						.addClass(waitClassName)
-						.text(docId);
-					$docs.append($elem);
+						.text(docId)
+						.appendTo($elem);
+
+					var $btn = $('<div>')
+						.addClass('n2DisplayTiled_tile_buttons')
+						.appendTo($elem);
+					
+					var clickFn = focusCallback(docId);
+					$('<button>')
+						.text( _loc('More Info') )
+						.click(clickFn)
+						.appendTo($btn);
+					
 					_this._requestDocumentWithId(docId);
 				};
+			};
+		};
+		
+		function focusCallback(docId){
+			return function(){
+				_this._dispatch({
+					type:'userSelect'
+					,docId: docId
+				});
 			};
 		};
 	},
