@@ -98,7 +98,7 @@ var TiledDisplay = $n2.Class({
 	
 	postProcessDisplayFns: null,
 	
-	dispatchHandle: null,
+	sortFunction: null,
 	
 	initialize: function(opts_) {
 		var opts = $n2.extend({
@@ -120,6 +120,9 @@ var TiledDisplay = $n2.Class({
 			,displayOnlyRelatedSchemas: false
 			,displayBriefInRelatedInfo: false
 			,restrictAddRelatedButtonToLoggedIn: false
+			
+			// Function to sort documents based on info structures
+			,sortFunction: null
 		}, opts_);
 		
 		var _this = this;
@@ -201,6 +204,39 @@ var TiledDisplay = $n2.Class({
 			,showService: this.showService
 			,authService: this.authService
 		});
+		
+		// Sort function
+		this.sortFunction = opts.sortFunction;
+		if( !this.sortFunction 
+		 && this.customService ){
+			var sortFn = this.customService.getOption('displaySortFunction');
+			if( typeof sortFn === 'function' ){
+				this.sortFunction = sortFn;
+			};
+		};
+		if( !this.sortFunction ){
+			this.sortFunction = function(infos){
+				infos.sort(function(a,b){
+					if( a.updatedTime && b.updatedTime ){
+						if( a.updatedTime > b.updatedTime ){
+							return -1;
+						};
+						if( a.updatedTime < b.updatedTime ){
+							return 1;
+						};
+					};
+
+					if( a.id > b.id ){
+						return -1;
+					};
+					if( a.id < b.id ){
+						return 1;
+					};
+					
+					return 0;
+				});
+			};
+		};
 		
 		// Detect changes in displayed current content size
 		var intervalID = window.setInterval(function(){
@@ -567,7 +603,16 @@ var TiledDisplay = $n2.Class({
 				 && _this.currentDetails.docId ){
 					sortedDocIds.push(_this.currentDetails.docId);
 				};
+				var infos = [];
 				for(var docId in _this.displayedDocuments){
+					if( _this.displayedDocuments[docId].info ){
+						infos.push( _this.displayedDocuments[docId].info );
+					};
+				};
+				_this.sortFunction(infos);
+				for(var i=0,e=infos.length; i<e; ++i){
+					var docId = infos[i].id;
+					
 					// Remove duplicates
 					if( sortedDocIds.indexOf(docId) < 0 ){
 						sortedDocIds.push(docId);
