@@ -13,6 +13,48 @@
 	position: absolute;
 	background-color: #ffffff;
 	overflow: hidden;
+	background-image: url('images/tile_bg_document.png');
+	background-position: center 40px;
+	background-repeat: no-repeat;
+}
+
+div.n2DisplayTiled_tile_video {
+	background-image: url('images/tile_bg_video.png');
+}
+
+div.n2DisplayTiled_tile_audio {
+	background-image: url('images/tile_bg_audio.png');
+}
+
+div.n2DisplayTiled_tile_image {
+	background-image: url('images/tile_bg_image.png');
+}
+
+.n2DisplayTiled_documents div.n2DisplayTiled_tile_current {
+	background-image: none;
+}
+
+.n2DisplayTiled_thumb {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+}
+
+.n2DisplayTiled_thumb img {
+	max-height: 148px;
+	max-width: 148px;
+}
+
+.n2DisplayTiled_tile_brief {
+	font-size: 14px;
+	font-weight: 100;
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	margin: 0;
+	width: 90%;
+	padding: 5%;
+	background-color: rgba(255,255,255,0.8);
 }
 
 .n2DisplayTiled_tile:hover {

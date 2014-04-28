@@ -92,6 +92,10 @@ var DataSource = $n2.Class({
 		opts.onError('Data source does not support the "getDocument" call.');
 	}
 
+	,getDocumentAttachmentUrl: function(doc, attachmentName){
+		return null;
+	}
+
 	,verifyDocumentExistence: function(opts_){
 		var opts = $n2.extend({
 				docIds: null

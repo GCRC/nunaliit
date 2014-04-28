@@ -810,13 +810,15 @@ var TiledDisplay = $n2.Class({
 	
 	_receiveDocumentContent: function(doc){
 		var _this = this;
+
+		var $set = this._getDisplayDiv();
 		
 		var docId = doc._id;
 		if( this.displayedDocuments[docId] ){
 			this.displayedDocuments[docId].doc = doc;
 		};
 		
-		var $set = this._getDisplayDiv();
+		// Display brief associated with the document
 		var waitClassName = 'n2DisplayTiled_wait_brief_' + $n2.utils.stringToHtmlId(docId);
 		$set.find('.'+waitClassName).each(function(){
 			var $div = $(this);
@@ -826,6 +828,7 @@ var TiledDisplay = $n2.Class({
 			$div.removeClass(waitClassName);
 		});
 		
+		// Display full document for currently selected document
 		var waitClassName = 'n2DisplayTiled_wait_current_' + $n2.utils.stringToHtmlId(docId);
 		$set.find('.'+waitClassName).each(function(){
 			var $div = $(this)
@@ -845,6 +848,64 @@ var TiledDisplay = $n2.Class({
 			
 			$div.removeClass(waitClassName);
 		});
+		
+		// Set tile classes based on media associated with document
+		var includesImage = false;
+		var includesAudio = false;
+		var includesVideo = false;
+		var thumbnailName = null;
+		if( doc.nunaliit_attachments 
+		 && doc.nunaliit_attachments.files ){
+			for(var attName in doc.nunaliit_attachments.files){
+				var att = doc.nunaliit_attachments.files[attName];
+				if( att.source ) {
+					// discount thumbnails
+				} else {
+					if( 'image' === att.fileClass ) {
+						includesImage = true;
+					} else if( 'audio' === att.fileClass ) {
+						includesAudio = true;
+					} else if( 'video' === att.fileClass ) {
+						includesVideo = true;
+					};
+					if( att.thumbnail ){
+						thumbnailName = att.thumbnail;
+					};
+				};
+			};
+		};
+		$set.find('.n2DisplayTiled_tile_' + $n2.utils.stringToHtmlId(docId)).each(function(){
+			var $tile = $(this);
+			$tile.removeClass('n2DisplayTiled_tile_image n2DisplayTiled_tile_audio n2DisplayTiled_tile_video');
+			if(includesVideo){
+				$tile.addClass('n2DisplayTiled_tile_video');
+			} else if(includesAudio){
+				$tile.addClass('n2DisplayTiled_tile_audio');
+			} else if(includesImage){
+				$tile.addClass('n2DisplayTiled_tile_image');
+			};
+		});
+		if( thumbnailName ){
+			// Check that thumbnail is attached
+			if( doc.nunaliit_attachments.files[thumbnailName]
+			 && doc.nunaliit_attachments.files[thumbnailName].status === 'attached' ){
+				// OK
+			} else {
+				thumbnailName = null;
+			};
+		};
+		if( thumbnailName ){
+			var url = this.documentSource.getDocumentAttachmentUrl(doc,thumbnailName);
+			if( url ){
+				$set.find('.n2DisplayTiled_wait_thumb_' + $n2.utils.stringToHtmlId(docId)).each(function(){
+					var $div = $(this);
+					$div.empty();
+					$('<img>')
+						.attr('src',url)
+						.appendTo($div);
+				});
+			};
+		};
 		
 		// Currently displayed document. Check for
 		// update
@@ -1251,10 +1312,13 @@ var TiledDisplay = $n2.Class({
 		
 		$elem.empty();
 		
-		var waitClassName = 'n2DisplayTiled_wait_brief_' + $n2.utils.stringToHtmlId(docId);
 		$('<div>')
-			.addClass(waitClassName)
-			.addClass('n2DisplayTiled_tile_content')
+			.addClass('n2DisplayTiled_thumb n2DisplayTiled_wait_thumb_' + $n2.utils.stringToHtmlId(docId))
+			.appendTo($elem);
+		
+		$('<div>')
+			.addClass('n2DisplayTiled_wait_brief_' + $n2.utils.stringToHtmlId(docId))
+			.addClass('n2DisplayTiled_tile_brief')
 			.text(docId)
 			.appendTo($elem);
 

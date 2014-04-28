@@ -139,6 +139,10 @@ var CouchDataSource = $n2.Class($n2.document.DataSource, {
 		});
 	}
 
+	,getDocumentAttachmentUrl: function(doc, attachmentName){
+		return this.db.getAttachmentUrl(doc, attachmentName);
+	}
+
 	,verifyDocumentExistence: function(opts_){
 		var opts = $n2.extend({
 				docIds: null
