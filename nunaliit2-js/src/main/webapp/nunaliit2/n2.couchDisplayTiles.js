@@ -321,10 +321,13 @@ var TiledDisplay = $n2.Class({
 			
 		} else if( msg.type === 'authLoggedIn' 
 			|| msg.type === 'authLoggedOut' ) {
-//			$('.n2Display_buttons').each(function(){
-//				var $elem = $(this);
-//				_this._refreshButtons($elem);
-//			});
+			
+			// Redisplay buttons
+			if( this.currentDetails 
+			 && this.currentDetails.docId 
+			 && this.currentDetails.doc ){
+				this._receiveDocumentContent(this.currentDetails.doc);
+			};
 			
 		} else if( msg.type === 'editClosed' ) {
 			var deleted = msg.deleted;
@@ -468,12 +471,13 @@ var TiledDisplay = $n2.Class({
 		 && doc._id 
 		 && this.currentDetails.docId === doc._id ){
 			var $set = this._getDisplayDiv();
-			var $btnDiv = $set.find('.n2DisplayTiled_buttons')
+			var $btnDiv = $set.find('.n2DisplayTiled_current_buttons')
 				.empty();
 
 	 		// 'edit' button
 	 		{
 	 			$('<a href="#"></a>')
+	 				.addClass('n2DisplayTiled_current_button n2DisplayTiled_current_button_edit')
 	 				.text( _loc('Edit') )
 	 				.appendTo($btnDiv)
 	 				.click(function(){
@@ -485,6 +489,7 @@ var TiledDisplay = $n2.Class({
 	 		// Show 'delete' button
 	 		if( $n2.couchMap.canDeleteDoc(doc) ) {
 	 			$('<a href="#"></a>')
+	 				.addClass('n2DisplayTiled_current_button n2DisplayTiled_current_button_delete')
 	 				.text( _loc('Delete') )
 	 				.appendTo($btnDiv)
 	 				.click(function(){
@@ -500,6 +505,7 @@ var TiledDisplay = $n2.Class({
 			 ) {
 	 			var selectId = $n2.getUniqueId();
 				var $addRelatedButton = $('<select>')
+	 				.addClass('n2DisplayTiled_current_button n2DisplayTiled_current_button_add_related_item')
 					.attr('id',selectId)
 					.appendTo($btnDiv);
 				$('<option>')
@@ -537,6 +543,58 @@ var TiledDisplay = $n2.Class({
 					};
 					return false;
 				});
+			};
+			
+	 		// Show 'find on map' button
+			if( this.dispatchService 
+			 && doc.nunaliit_geom 
+			 && this.dispatchService.isEventTypeRegistered('findOnMap')
+			 ) {
+				// Check if document can be displayed on a map
+				var showFindOnMapButton = false;
+				if( doc.nunaliit_layers && doc.nunaliit_layers.length > 0 ) {
+					var m = {
+						type:'mapGetLayers'
+						,layers:{}
+					};
+					this.dispatchService.synchronousCall(DH,m);
+					for(var i=0,e=doc.nunaliit_layers.length; i<e; ++i){
+						var layerId = doc.nunaliit_layers[i];
+						if( m.layers[layerId] ){
+							showFindOnMapButton = true;
+						};
+					};
+				};
+
+				if( showFindOnMapButton ) {
+					var x = (doc.nunaliit_geom.bbox[0] + doc.nunaliit_geom.bbox[2]) / 2;
+					var y = (doc.nunaliit_geom.bbox[1] + doc.nunaliit_geom.bbox[3]) / 2;
+
+					$('<a href="#"></a>')
+						.addClass('n2DisplayTiled_current_button n2DisplayTiled_current_button_find_on_map')
+		 				.text( _loc('Find on Map') )
+		 				.appendTo($btnDiv)
+		 				.click(function(){
+		 					_this._performFindOnMap(doc);
+							return false;
+						});
+				};
+			};
+
+			// Show 'Add Layer' button
+			if( doc
+			 && doc.nunaliit_layer_definition
+			 && this.dispatchService
+			 && this.dispatchService.isEventTypeRegistered('addLayerToMap')
+			 ) {
+				$('<a href="#"></a>')
+					.addClass('n2DisplayTiled_current_button n2DisplayTiled_current_button_add_layer')
+	 				.text( _loc('Add Layer') )
+	 				.appendTo($btnDiv)
+	 				.click(function(){
+	 					_this._performAddLayerToMap(doc);
+						return false;
+					});
 			};
 		};
 	},
@@ -774,7 +832,7 @@ var TiledDisplay = $n2.Class({
 				.empty();
 
 			$('<div>')
-				.addClass('n2DisplayTiled_buttons')
+				.addClass('n2DisplayTiled_current_buttons')
 				.appendTo($div);			
 
 			var $content = $('<div>')
@@ -917,6 +975,86 @@ var TiledDisplay = $n2.Class({
 				}
 			});
 		};
+	},
+	
+	/*
+	 * Initiates the 'Find on Map' action for the button
+	 */
+	_performFindOnMap: function(doc){
+		if( !doc.nunaliit_geom ){
+			$n2.log('Error: can not find nunaliit_geom for "Find on Map"');
+			return;
+		};
+		
+		var x = (doc.nunaliit_geom.bbox[0] + doc.nunaliit_geom.bbox[2]) / 2;
+		var y = (doc.nunaliit_geom.bbox[1] + doc.nunaliit_geom.bbox[3]) / 2;
+		
+		// Check if we need to turn a layer on
+		var visible = false;
+		var layerIdToTurnOn = null;
+		var m = {
+				type:'mapGetLayers'
+				,layers:{}
+			};
+		this.dispatchService.synchronousCall(DH,m);
+		for(var i=0,e=doc.nunaliit_layers.length; i<e; ++i){
+			var layerId = doc.nunaliit_layers[i];
+			if( m.layers[layerId] ){
+				if( m.layers[layerId].visible ){
+					visible = true;
+				} else {
+					layerIdToTurnOn = layerId;
+				};
+			};
+		};
+
+		// Turn on layer
+		if( !visible ){
+			this._dispatch({
+				type: 'setMapLayerVisibility'
+				,layerId: layerIdToTurnOn
+				,visible: true
+			});
+		};
+		
+		// Move map and display feature 
+		this._dispatch({
+			type: 'findOnMap'
+			,fid: doc._id
+			,srsName: 'EPSG:4326'
+			,x: x
+			,y: y
+		});
+	},
+	
+	/*
+	 * Initiates the 'Add Layer to Map' action for the button
+	 */
+	_performAddLayerToMap: function(doc){
+		var layerDefinition = doc.nunaliit_layer_definition;
+		var layerId = layerDefinition.id;
+		if( !layerId ){
+			layerId = doc._id;
+		};
+		var layerDef = {
+			name: layerDefinition.name
+			,type: 'couchdb'
+			,options: {
+				layerName: layerId
+				,documentSource: this.documentSource
+			}
+		};
+		
+		this._dispatch({
+			type: 'addLayerToMap'
+			,layer: layerDef
+			,options: {
+				setExtent: {
+					bounds: layerDefinition.bbox
+					,crs: 'EPSG:4326'
+				}
+			}
+		});
 	},
 	
 	/*
