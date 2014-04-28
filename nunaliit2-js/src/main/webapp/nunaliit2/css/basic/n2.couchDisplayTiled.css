@@ -1,6 +1,6 @@
 .n2DisplayTiled_documents {
 	position: absolute;
-	top: 130px;
+	top: 25px;
 	left: 0;
 	right: 0;
 	bottom: 0;
@@ -26,6 +26,14 @@
 
 .n2DisplayTiled_schema:hover {
 	background-color: #dddddd;
+}
+
+.n2DisplayTiled_filters {
+	position: absolute;
+	top: 0px;
+	left: 0;
+	right: 0;
+	height: 25px;
 }
 
 .n2DisplayTiled_filter_selected {

@@ -496,6 +496,7 @@ var ModuleDisplay = $n2.Class({
 			};
 			
 			if( displayFormat === 'tiled' ) {
+				$('body').addClass('n2_display_format_tiled');
 				_this.displayControl = new $n2.couchDisplayTiles.TiledDisplay({
 					documentSource: documentSource
 					,displayPanelName: _this.sidePanelName
