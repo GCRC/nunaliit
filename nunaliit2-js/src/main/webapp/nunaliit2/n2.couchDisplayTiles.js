@@ -100,6 +100,10 @@ var TiledDisplay = $n2.Class({
 	
 	sortFunction: null,
 	
+	filterFactory: null,
+	
+	filter: null,
+	
 	initialize: function(opts_) {
 		var opts = $n2.extend({
 			documentSource: null
@@ -123,6 +127,9 @@ var TiledDisplay = $n2.Class({
 			
 			// Function to sort documents based on info structures
 			,sortFunction: null
+			
+			// Factory to create filters
+			,filterFactory: null
 		}, opts_);
 		
 		var _this = this;
@@ -236,6 +243,21 @@ var TiledDisplay = $n2.Class({
 					return 0;
 				});
 			};
+		};
+		
+		// Filter factory
+		this.filterFactory = opts.filterFactory;
+		if( !this.filterFactory 
+		 && this.customService ){
+			var factory = this.customService.getOption('displayFilterFactory');
+			if( factory && typeof factory.get === 'function' ){
+				this.filterFactory = factory;
+			};
+		};
+		if( !this.filterFactory ){
+			this.filterFactory = new SchemaFilterFactory({
+				schemaRepository: this.schemaRepository
+			});
 		};
 		
 		// Detect changes in displayed current content size
@@ -459,6 +481,17 @@ var TiledDisplay = $n2.Class({
 						return false;
 					});
 	 		};
+
+	 		// Show 'delete' button
+	 		if( $n2.couchMap.canDeleteDoc(doc) ) {
+	 			$('<a href="#"></a>')
+	 				.text( _loc('Delete') )
+	 				.appendTo($btnDiv)
+	 				.click(function(){
+						_this._performDocumentDelete(doc);
+						return false;
+					});
+	 		};
 	
 	 		// 'add related' button
 			if( schema
@@ -595,21 +628,47 @@ var TiledDisplay = $n2.Class({
 			var $docs = $set.find('.n2DisplayTiled_documents');
 
 			// Sort (TBD)
-			var sortedDocIds = [];
+			var sortedDocIds = null;
 			if( _this.displayedDocumentsOrder ){
 				sortedDocIds = _this.displayedDocumentsOrder;
-			} else {
-				if( _this.currentDetails
-				 && _this.currentDetails.docId ){
-					sortedDocIds.push(_this.currentDetails.docId);
+
+				var infos = [];
+				for(var i=0,e=sortedDocIds.length; i<e; ++i){
+					var docId = sortedDocIds[i];
+					if( _this.displayedDocuments[docId] 
+					 && _this.displayedDocuments[docId].info ){
+						infos.push( _this.displayedDocuments[docId].info );
+					};
 				};
+				
+				_this.filter.display(infos);
+				infos = _this.filter.filter(infos);
+
+				sortedDocIds = [];
+				for(var i=0,e=infos.length; i<e; ++i){
+					var info = infos[i];
+					sortedDocIds.push(info.id);
+				};
+				
+			} else {
 				var infos = [];
 				for(var docId in _this.displayedDocuments){
 					if( _this.displayedDocuments[docId].info ){
 						infos.push( _this.displayedDocuments[docId].info );
 					};
 				};
+
+				_this.filter.display(infos);
+				infos = _this.filter.filter(infos);
+				
 				_this.sortFunction(infos);
+
+				sortedDocIds = [];
+				if( _this.currentDetails
+				 && _this.currentDetails.docId ){
+					sortedDocIds.push(_this.currentDetails.docId);
+				};
+				
 				for(var i=0,e=infos.length; i<e; ++i){
 					var docId = infos[i].id;
 					
@@ -729,7 +788,8 @@ var TiledDisplay = $n2.Class({
 			$div.removeClass(waitClassName);
 		});
 		
-		// Currently displayed
+		// Currently displayed document. Check for
+		// update
 		if( doc._id === this.currentDetails.docId ){
 			
 			var update = false;
@@ -759,6 +819,7 @@ var TiledDisplay = $n2.Class({
 			};
 		};
 
+		// Obtain the schema associated with the document
 		if( doc.nunaliit_schema 
 		 && this.schemaRepository ){
 			this.schemaRepository.getSchema({
@@ -772,6 +833,50 @@ var TiledDisplay = $n2.Class({
 			});
 		} else {
 			schemaLoaded(doc, null);
+		};
+		
+		// Check if the given document contains links to the currently
+		// displayed document
+		if( this.currentDetails.docId 
+		 && doc._id !== this.currentDetails.docId ){
+			var containsLinkToCurrentDocument = false;
+			
+			var references = [];
+			$n2.couchUtils.extractLinks(doc, references);
+			for(var i=0, e=references.length; i<e; ++i){
+				var linkDocId = references[i].doc;
+				if( linkDocId === this.currentDetails.docId ){
+					containsLinkToCurrentDocument = true;
+				};
+			};
+			
+			// Check if the received document used to reference the currently
+			// displayed document
+			var refIndex = -1;
+			if( this.currentDetails.referenceDocIds ) {
+				refIndex = this.currentDetails.referenceDocIds.indexOf(doc._id);
+			};
+			
+			// Check if we need to change the references
+			if( !containsLinkToCurrentDocument 
+			 && refIndex >= 0 ) {
+				// The previous time we saw this document, it had a reference to the
+				// currently displayed document. Now, this reference is no longer there.
+				// Remove the reference and redisplay
+				this.currentDetails.referenceDocIds.splice(refIndex,1);
+				this._currentDocReferencesUpdated();
+				
+			} else if( containsLinkToCurrentDocument && refIndex < 0 ) {
+				// The previous time we saw this document, there were no reference to the
+				// currently displayed document. Now, this new version of the document
+				// contains a reference to the displayed document. Add reference and
+				// re-display.
+				if( !this.currentDetails.referenceDocIds ){
+					this.currentDetails.referenceDocIds = [];
+				};
+				this.currentDetails.referenceDocIds.push(doc._id);
+				this._currentDocReferencesUpdated();
+			};
 		};
 		
 		function schemaLoaded(doc, schema){
@@ -797,6 +902,21 @@ var TiledDisplay = $n2.Class({
 			,docId: doc._id
 			,doc: doc
 		});
+	},
+	
+	/*
+	 * Initiates the deletion of a document
+	 */
+	_performDocumentDelete: function(doc){
+		var _this = this;
+
+		if( confirm( _loc('You are about to delete this document. Do you want to proceed?') ) ) {
+			this.documentSource.deleteDocument({
+				doc: doc
+				,onSuccess: function() {
+				}
+			});
+		};
 	},
 	
 	/*
@@ -853,6 +973,11 @@ var TiledDisplay = $n2.Class({
 		        };
 		        return tile;
 		    };
+		    
+		    // Create document filter
+		    this.filter = this.filterFactory.get($filters,function(){
+		    	_this._documentFilterChanged();
+		    });
 		};
 	},
 	
@@ -1026,6 +1151,10 @@ var TiledDisplay = $n2.Class({
 				};
 			};
 		};
+	},
+	
+	_documentFilterChanged: function(){
+		this._updateDisplayedDocuments();
 	}
 });
 
@@ -1043,6 +1172,9 @@ var GridTemplateDocument = $n2.Class({
 	},
 	
 	get: function(numCols, targetTiles) {
+		// Have space to grow
+		targetTiles = targetTiles + 12;
+		
         var numRows = Math.ceil(targetTiles / numCols),
 	        rects = [],
 	        x, y, i;
@@ -1074,9 +1206,180 @@ var GridTemplateDocument = $n2.Class({
 	}
 });
 
+var SchemaFilter = $n2.Class({
+	
+	elemId: null,
+	
+	changeCallback: null,
+	
+	schemaRepository: null,
+	
+	selectedSchema: null,
+	
+	initialize: function(elem, changeCallback, schemaRepository){
+		var $elem = $(elem);
+		this.elemId = $elem.attr('id');
+		if( !this.elemId ){
+			this.elemId = $n2.getUniqueId();
+			$elem.attr('id',this.elemId);
+		};
+		
+		this.changeCallback = changeCallback;
+		this.schemaRepository = schemaRepository;
+	},
+	
+	display: function(infos){
+		var _this = this;
+		
+		var schemas = {};
+		if( infos ){
+			for(var i=0,e=infos.length; i<e; ++i){
+				var info = infos[i];
+				if( info.schema ){
+					schemas[info.schema] = true;
+				};
+			};
+		};
+		
+		var schemaNames = [];
+		for(var schemaName in schemas){
+			schemaNames.push(schemaName);
+		};
+		
+		this.schemaRepository.getSchemas({
+			names: schemaNames
+			,onSuccess: function(schemas){
+				_this._displaySchemas(schemas);
+			}
+			,onError: function(err){
+				$n2.log('Error getting schemas for displaying schema filter',err);
+			}
+		});
+	},
+	
+	filter: function(infos){
+		if( this.selectedSchema ){
+			var filteredInfos = [];
+			
+			for(var i=0,e=infos.length; i<e; ++i){
+				var info = infos[i];
+				
+				if( info.schema === this.selectedSchema ){
+					filteredInfos.push(info);
+				};
+			};
+			
+			return filteredInfos;
+			
+		} else {
+			// Return all
+			return infos;
+		};
+	},
+	
+	_getElem: function(){
+		return $('#'+this.elemId);
+	},
+	
+	_displaySchemas: function(schemas){
+		var _this = this;
+		
+		var $elem = this._getElem();
+		
+		$elem.empty();
+		
+		var clickFn = function(){
+			var $a = $(this);
+			
+			var schemaName = $a.attr('n2SchemaName');
+			schemaName = schemaName ? schemaName : null;
+			
+			_this._schemaSelected(schemaName);
+			
+			return false;
+		};
+		
+		$('<a>')
+			.attr('href','#')
+			.text( _loc('All') )
+			.addClass('n2DisplayTiled_schema')
+			.addClass('n2DisplayTiled_filter_all')
+			.appendTo($elem)
+			.click(clickFn);
+
+		var keepCurrentSelection = false;
+		for(var i=0,e=schemas.length; i<e; ++i){
+			var schema = schemas[i];
+			
+			if( schema.name === this.selectedSchema ){
+				keepCurrentSelection = true;
+			};
+			
+			var schemaLabel = schema.name;
+			if( schema.label ){
+				schemaLabel = _loc(schema.label);
+			};
+
+			$('<a>')
+				.attr('href','#')
+				.attr('n2SchemaName',schema.name)
+				.text( schemaLabel )
+				.addClass('n2DisplayTiled_schema')
+				.addClass('n2DisplayTiled_schema_'+$n2.utils.stringToHtmlId(schema.name))
+				.appendTo($elem)
+				.click(clickFn);
+		};
+		
+		if( !keepCurrentSelection ) {
+			this.selectedSchema = null;
+		};
+		
+		this._adjustSelection();
+	},
+	
+	_adjustSelection: function(){
+		var $elem = this._getElem();
+		
+		$elem.find('.n2DisplayTiled_filter_selected')
+			.removeClass('n2DisplayTiled_filter_selected');
+		
+		if( this.selectedSchema ){
+			$elem.find('.n2DisplayTiled_schema_'+$n2.utils.stringToHtmlId(this.selectedSchema))
+				.addClass('n2DisplayTiled_filter_selected');
+			
+		} else {
+			$elem.find('.n2DisplayTiled_filter_all')
+				.addClass('n2DisplayTiled_filter_selected');
+		};
+	},
+	
+	_schemaSelected: function(schemaName){
+		this.selectedSchema = schemaName;
+		this._adjustSelection();
+		this.changeCallback();
+	}
+});
+
+var SchemaFilterFactory = $n2.Class({
+	
+	schemaRepository: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			schemaRepository: null
+		},opts_);
+		
+		this.schemaRepository = opts.schemaRepository;
+	},
+
+	get: function(elem, changeCallback){
+		return new SchemaFilter(elem, changeCallback, this.schemaRepository);
+	}
+});
 
 $n2.couchDisplayTiles = {
 	TiledDisplay: TiledDisplay
+	,SchemaFilterFactory: SchemaFilterFactory
 };
 
 })(jQuery,nunaliit2);

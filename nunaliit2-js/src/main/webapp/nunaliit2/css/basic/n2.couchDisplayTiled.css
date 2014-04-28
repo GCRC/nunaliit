@@ -1,6 +1,6 @@
 .n2DisplayTiled_documents {
 	position: absolute;
-	top: 94px;
+	top: 130px;
 	left: 0;
 	right: 0;
 	bottom: 0;
@@ -17,4 +17,17 @@
 
 .n2DisplayTiled_tile:hover {
 	background-color: #eeeeee;
+}
+
+.n2DisplayTiled_schema {
+	border: 1px solid #000000;
+	background-color: #ffffff;
+}
+
+.n2DisplayTiled_schema:hover {
+	background-color: #dddddd;
+}
+
+.n2DisplayTiled_filter_selected {
+	font-weight: bold;
 }
