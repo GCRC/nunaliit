@@ -2578,7 +2578,7 @@ var MapAndControls = $n2.Class({
 		this.clickedInfo.selectedId = null;
 	}
 	
-	,_selectedFeatures: function(features, fid){
+	,_selectedFeatures: function(features, fids){
 		if( this.currentMode !== this.modes.NAVIGATE ){
 			this.switchMapMode(this.modes.NAVIGATE);
 		};
@@ -2586,11 +2586,17 @@ var MapAndControls = $n2.Class({
 		this._endClicked();
 		
 		this.clickedInfo.fids = {};
-		if( fid ) {
-			this.clickedInfo.fids[fid] = { clicked: true };
+		if( fids ) {
+			for(var i=0,e=fids.length; i<e; ++i){
+				var fid = fids[i];
+				
+				this.clickedInfo.fids[fid] = { clicked: true };
+				
+				if( !this.clickedInfo.selectedId ){
+					this.clickedInfo.selectedId = fid;
+				};
+			};
 		};
-		
-		this.clickedInfo.selectedId = fid;
 		
 		if( features ) {
 			for(var i=0,e=features.length; i<e; ++i){
@@ -4467,8 +4473,23 @@ var MapAndControls = $n2.Class({
 			this._handleAddLayerToMap(m);
 			
 		} else if( 'selected' === type ) {
-			var features = this._getMapFeaturesIncludingFid(m.docId);
-			this._selectedFeatures(features, m.docId);
+			if( m.docId ) {
+				var features = this._getMapFeaturesIncludingFid(m.docId);
+				this._selectedFeatures(features, [m.docId]);
+				
+			} else if( m.docIds ) {
+				var features = [];
+				for(var i=0,e=m.docIds.length; i<e; ++i){
+					var feats = this._getMapFeaturesIncludingFid(m.docIds[i]);
+					for(var j=0,k=feats.length; j<k; ++j){
+						var f = feats[j];
+						if( features.indexOf(f) < 0 ){
+							features.push(f);
+						};
+					};
+				};
+				this._selectedFeatures(features, m.docIds);
+			};
 			
 		} else if( 'selectedSupplement' === type ) {
 			var fid = m.docId;
@@ -4565,7 +4586,7 @@ var MapAndControls = $n2.Class({
 				var docId = m.docId;
 				if( docId ) {
 					var features = this._getMapFeaturesIncludingFid(docId);
-					this._selectedFeatures(features, docId);
+					this._selectedFeatures(features, [docId]);
 				};
 			};
 			
