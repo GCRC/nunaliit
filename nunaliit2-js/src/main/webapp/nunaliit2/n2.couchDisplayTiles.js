@@ -98,6 +98,8 @@ var TiledDisplay = $n2.Class({
 	
 	postProcessDisplayFns: null,
 	
+	documentInfoFunction: null,
+	
 	sortFunction: null,
 	
 	filterFactory: null,
@@ -128,6 +130,10 @@ var TiledDisplay = $n2.Class({
 			,displayOnlyRelatedSchemas: false
 			,displayBriefInRelatedInfo: false
 			,restrictAddRelatedButtonToLoggedIn: false
+			
+			// Function to obtain document information structres based on
+			// document ids
+			,documentInfoFunction: null
 			
 			// Function to sort documents based on info structures
 			,sortFunction: null
@@ -215,6 +221,33 @@ var TiledDisplay = $n2.Class({
 			,showService: this.showService
 			,authService: this.authService
 		});
+		
+		// Document info function
+		this.documentInfoFunction = opts.documentInfoFunction;
+		if( !this.documentInfoFunction 
+		 && this.customService ){
+			var docInfoFn = this.customService.getOption('displayDocumentInfoFunction');
+			if( typeof docInfoFn === 'function' ){
+				this.documentInfoFunction = docInfoFn;
+			};
+		};
+		if( !this.documentInfoFunction ){
+			this.documentInfoFunction = function(opts_){
+				var opts = $n2.extend({
+					docIds: null
+					,display: null
+					,onSuccess: function(docInfos){}
+					,onError: function(err){}
+				},opts_);
+				
+				var ds = opts.display.documentSource;
+				ds.getDocumentInfoFromIds({
+					docIds: opts.docIds
+					,onSuccess: opts.onSuccess
+					,onError: opts.onError
+				});
+			};
+		};
 		
 		// Sort function
 		this.sortFunction = opts.sortFunction;
@@ -687,8 +720,9 @@ var TiledDisplay = $n2.Class({
 			};
 		};
 		if( neededInfoIds.length > 0 ) {
-			this.documentSource.getDocumentInfoFromIds({
+			this.documentInfoFunction({
 				docIds: neededInfoIds
+				,display: this
 				,onSuccess: function(docInfos){
 					for(var i=0, e=docInfos.length; i<e; ++i){
 						var docInfo = docInfos[i];
