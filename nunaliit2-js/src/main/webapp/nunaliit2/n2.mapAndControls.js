@@ -487,6 +487,45 @@ var GazetteerProcess = $n2.Class({
 //**************************************************
 //**************************************************
 
+var zoomInClusterClickCallback = function(feature, mapAndControls){
+	var clusterGeom = feature.geometry;
+	
+	var newCenter = null;
+	if( clusterGeom ){
+		newCenter = clusterGeom.getBounds().getCenterLonLat();
+	};
+    
+	if( newCenter ){
+		mapAndControls.map.setCenter(newCenter, mapAndControls.map.zoom + 1);
+		//var xy = mapAndControls.map.getPixelFromLonLat(newCenter);
+		//mapAndControls.map.zoomTo(mapAndControls.map.zoom + 1, xy);
+		mapAndControls._endHover();
+	};
+};
+
+var multiSelectClusterClickCallback = function(feature, mapAndControls){
+	var docIds = [];
+	
+	if( feature.cluster ) {
+		for(var i=0,e=feature.cluster.length; i<e; ++i){
+			var f = feature.cluster[i];
+			if( f && f.data && f.data._id ){
+				docIds.push(f.data._id);
+			};
+		};
+	};
+	
+	if( docIds.length ) {
+		mapAndControls._dispatch({
+			type: 'selected'
+			,docIds: docIds
+		});
+	};
+};
+
+//**************************************************
+//**************************************************
+
 /**
 	Creates an atlas and all associated controls. An
 	elaborate set of options are provided to configure
@@ -911,6 +950,10 @@ var MapAndControls = $n2.Class({
 			,styleMap: null
 
 			,selectListener: function(isSelected, layerInfo){}
+			
+			// This is the function called back when a cluster with
+			// more than one feature is clicked
+			,clusterClickCallback: null
 		};
 		this.infoLayers = [];
 		
@@ -1770,6 +1813,20 @@ var MapAndControls = $n2.Class({
 
 		layerInfo.name = _loc(layerInfo.name);
 		
+		// Cluster click callback
+		if( !layerInfo.clusterClickCallback ){
+			var cs = this._getCustomService();
+			if( cs ){
+				var cb = cs.getOption('mapClusterClickCallback');
+				if( typeof cb === 'function' ) {
+					layerInfo.clusterClickCallback = cb;
+				};
+			};
+		};
+		if( !layerInfo.clusterClickCallback ){
+			layerInfo.clusterClickCallback = $n2.mapAndControls.ZoomInClusterClickCallback;
+		};
+		
 		var layerOptions = {
 			name: layerInfo.name
 			,projection: layerInfo.sourceProjection
@@ -2456,19 +2513,9 @@ var MapAndControls = $n2.Class({
 		};
 		
 		if( feature.cluster ){
-			var clusterGeom = feature.geometry;
-			
-			var newCenter = null;
-			if( clusterGeom ){
-				newCenter = clusterGeom.getBounds().getCenterLonLat();
-			};
-	        
-			if( newCenter ){
-		        this.map.setCenter(newCenter, this.map.zoom + 1);
-				//var xy = this.map.getPixelFromLonLat(newCenter);
-				//this.map.zoomTo(this.map.zoom + 1, xy);
-		        this._endHover();
-			};
+			var layerInfo = feature.layer._layerInfo;
+
+			layerInfo.clusterClickCallback(feature, this);
 			
 			return;
 		};
@@ -4244,6 +4291,16 @@ var MapAndControls = $n2.Class({
 		return auth;
 	}
 	
+	,_getCustomService: function(){
+		var cs = null;
+		
+		if( this.options.directory ) {
+			cs = this.options.directory.customService;
+		};
+		
+		return cs;
+	}
+	
 	,_getDispatchService: function(){
 		var d = null;
 		if( this.options.directory ) {
@@ -4602,5 +4659,9 @@ $n2.mapAndControls.MapAndControls = MapAndControls;
 // Pop-up management
 $n2.mapAndControls.DefaultPopupHtmlFunction = null;
 $n2.mapAndControls.BasicPopupHtmlFunction = defaultPopupHtml;
+
+// Cluster click callback
+$n2.mapAndControls.ZoomInClusterClickCallback = zoomInClusterClickCallback;
+$n2.mapAndControls.MultiSelectClusterClickCallback = multiSelectClusterClickCallback;
 
 })(jQuery,nunaliit2);
