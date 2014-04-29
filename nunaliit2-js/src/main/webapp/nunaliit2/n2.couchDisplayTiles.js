@@ -104,6 +104,10 @@ var TiledDisplay = $n2.Class({
 	
 	filter: null,
 	
+	hoverInFn: null,
+	
+	hoverOutFn: null,
+	
 	initialize: function(opts_) {
 		var opts = $n2.extend({
 			documentSource: null
@@ -258,6 +262,28 @@ var TiledDisplay = $n2.Class({
 			this.filterFactory = new SchemaFilterFactory({
 				schemaRepository: this.schemaRepository
 			});
+		};
+		
+		// Hover in and out
+		this.hoverInFn = function(){
+			var $tile = $(this);
+			var docId = $tile.attr('n2DocId');
+			if( docId ) {
+				_this._dispatch({
+					type: 'userFocusOn'
+					,docId: docId
+				});
+			};
+		};
+		this.hoverOutFn = function(){
+			var $tile = $(this);
+			var docId = $tile.attr('n2DocId');
+			if( docId ) {
+				_this._dispatch({
+					type: 'userFocusOff'
+					,docId: docId
+				});
+			};
 		};
 		
 		// Detect changes in displayed current content size
@@ -1157,6 +1183,11 @@ var TiledDisplay = $n2.Class({
 		        	.addClass('n2DisplayTiled_tile')
 		        	.addClass('n2DisplayTiled_tile_' + $n2.utils.stringToHtmlId(docId))
 		        	.attr('n2DocId',docId);
+		        
+		        $elem.hover(
+	        		_this.hoverInFn
+	        		,_this.hoverOutFn
+		        );
 
 		        var tile = new Tiles.Tile(docId, $elem);
 		        
