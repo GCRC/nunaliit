@@ -1353,6 +1353,7 @@ $n2.couchDisplay = $n2.Class({
 				this._displayMultipleDocuments($div, msg.docs);
 				
 			} else if( msg.docIds ) {
+				$div.empty();
 				this._displayMultipleDocumentIds($div, msg.docIds)
 			};
 			
