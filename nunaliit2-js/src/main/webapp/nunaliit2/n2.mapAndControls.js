@@ -526,6 +526,33 @@ var multiSelectClusterClickCallback = function(feature, mapAndControls){
 //**************************************************
 //**************************************************
 
+// Legacy. Probably no longer in use.
+function basicPopupHtmlFunction(opt_) {
+	var attrs = opt_.feature.attributes;
+	var resArray = [];
+	resArray.push('Name: '+  (attrs.placename?attrs.placename:'') + '<br/>');
+	resArray.push('Meaning: '+  (attrs.meaning?attrs.meaning:'') + '<br/>');
+	resArray.push('Entity: '+  (attrs.entity?attrs.entity:'') + '<br/>');
+	var html = resArray.join('');
+	opt_.onSuccess(html);
+};
+
+function suppressPopupHtmlFunction(opts_){
+	var opts = $n2.extend({
+		feature: null
+		,layerInfo: null
+		,onSuccess: null
+		,onError: null
+	},opts_);
+	
+	// Do not display anything
+	opts.onSuccess(null);
+};
+
+
+//**************************************************
+//**************************************************
+
 /**
 	Creates an atlas and all associated controls. An
 	elaborate set of options are provided to configure
@@ -619,16 +646,6 @@ var multiSelectClusterClickCallback = function(feature, mapAndControls){
                       to control the behaviour of the 
                       atlas after it is created.
  */
-
-function defaultPopupHtml(opt_) {
-	var attrs = opt_.feature.attributes;
-	var resArray = [];
-	resArray.push('Name: '+  (attrs.placename?attrs.placename:'') + '<br/>');
-	resArray.push('Meaning: '+  (attrs.meaning?attrs.meaning:'') + '<br/>');
-	resArray.push('Entity: '+  (attrs.entity?attrs.entity:'') + '<br/>');
-	var html = resArray.join('');
-	opt_.onSuccess(html);
-};
 
 var MapAndControls = $n2.Class({
 	
@@ -1805,6 +1822,8 @@ var MapAndControls = $n2.Class({
 
 	,_createOverlayFromDefinition: function(layerDefinition, isBaseLayer) {
 		var _this = this;
+
+		var cs = this._getCustomService();
 		
 		var layerInfo = $.extend({}, this.defaultLayerInfo, layerDefinition);
 		
@@ -1813,9 +1832,21 @@ var MapAndControls = $n2.Class({
 
 		layerInfo.name = _loc(layerInfo.name);
 		
+		// Popup function
+		if( !layerInfo.featurePopupHtmlFn ){
+			if( cs ){
+				var cb = cs.getOption('mapFeaturePopupCallback');
+				if( typeof cb === 'function' ) {
+					layerInfo.featurePopupHtmlFn = cb;
+				};
+			};
+		};
+		if( !layerInfo.featurePopupHtmlFn ){
+			layerInfo.featurePopupHtmlFn = $n2.mapAndControls.DefaultPopupHtmlFunction;
+		};
+		
 		// Cluster click callback
 		if( !layerInfo.clusterClickCallback ){
-			var cs = this._getCustomService();
 			if( cs ){
 				var cb = cs.getOption('mapClusterClickCallback');
 				if( typeof cb === 'function' ) {
@@ -2847,9 +2878,6 @@ var MapAndControls = $n2.Class({
 		};
 		
 		var popupHtmlFn = layerInfo.featurePopupHtmlFn;
-		if( !popupHtmlFn ) {
-			popupHtmlFn = $n2.mapAndControls.DefaultPopupHtmlFunction;
-		};
 		if( null == popupHtmlFn ) {
 			return;
 		};
@@ -3874,7 +3902,22 @@ var MapAndControls = $n2.Class({
 	,createLayerFromOptions: function(opt_) {
 		var _this = this;
 		
+		var cs = this._getCustomService();
+		
 		var layerInfo = $.extend({}, this.defaultLayerInfo, opt_);
+		
+		// Popup function
+		if( !layerInfo.featurePopupHtmlFn ){
+			if( cs ){
+				var cb = cs.getOption('mapFeaturePopupCallback');
+				if( typeof cb === 'function' ) {
+					layerInfo.featurePopupHtmlFn = cb;
+				};
+			};
+		};
+		if( !layerInfo.featurePopupHtmlFn ){
+			layerInfo.featurePopupHtmlFn = $n2.mapAndControls.DefaultPopupHtmlFunction;
+		};
 
 		layerInfo.typename = layerInfo.featurePrefix + ':' + layerInfo.featureType;
 		layerInfo.schema = layerInfo.wfsUrl 
@@ -4679,7 +4722,8 @@ $n2.mapAndControls.MapAndControls = MapAndControls;
 
 // Pop-up management
 $n2.mapAndControls.DefaultPopupHtmlFunction = null;
-$n2.mapAndControls.BasicPopupHtmlFunction = defaultPopupHtml;
+$n2.mapAndControls.BasicPopupHtmlFunction = basicPopupHtmlFunction;
+$n2.mapAndControls.SuppressPopupHtmlFunction = suppressPopupHtmlFunction;
 
 // Cluster click callback
 $n2.mapAndControls.ZoomInClusterClickCallback = zoomInClusterClickCallback;

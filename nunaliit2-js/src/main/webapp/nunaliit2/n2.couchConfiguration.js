@@ -246,7 +246,7 @@ function Configure(options_){
 			,uploads: configuration.uploadServer
 		});
 	 	
-	 	configuration.popupHtmlFn = function(opt_){
+	 	$n2.mapAndControls.DefaultPopupHtmlFunction = function(opt_){
 	 		var feature = opt_.feature;
 	 		
 	 		if( feature.cluster && feature.cluster.length === 1 ){

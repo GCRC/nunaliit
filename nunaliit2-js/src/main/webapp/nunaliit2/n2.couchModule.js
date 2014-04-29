@@ -758,7 +758,7 @@ var ModuleDisplay = $n2.Class({
 					,name: layerInfo.name
 					,type: layerInfo.type
 					,visibility: layerInfo.visibility
-					,featurePopupHtmlFn: _this.config.popupHtmlFn
+					,featurePopupHtmlFn: _this.config.popupHtmlFn // legacy
 					,featurePopupDelay: 0 // ms
 					,styleMapFn: styleMapFn
 					,useHoverSound: true
