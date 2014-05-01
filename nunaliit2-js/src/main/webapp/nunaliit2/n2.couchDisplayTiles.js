@@ -1573,7 +1573,7 @@ var SchemaFilter = $n2.Class({
 		$('<a>')
 			.attr('href','#')
 			.text( _loc('All') )
-			.addClass('n2DisplayTiled_schema')
+			.addClass('n2DisplayTiled_filter')
 			.addClass('n2DisplayTiled_filter_all')
 			.appendTo($elem)
 			.click(clickFn);
@@ -1595,8 +1595,8 @@ var SchemaFilter = $n2.Class({
 				.attr('href','#')
 				.attr('n2SchemaName',schema.name)
 				.text( schemaLabel )
-				.addClass('n2DisplayTiled_schema')
-				.addClass('n2DisplayTiled_schema_'+$n2.utils.stringToHtmlId(schema.name))
+				.addClass('n2DisplayTiled_filter_schema')
+				.addClass('n2DisplayTiled_filter_schema_'+$n2.utils.stringToHtmlId(schema.name))
 				.appendTo($elem)
 				.click(clickFn);
 		};
@@ -1615,7 +1615,7 @@ var SchemaFilter = $n2.Class({
 			.removeClass('n2DisplayTiled_filter_selected');
 		
 		if( this.selectedSchema ){
-			$elem.find('.n2DisplayTiled_schema_'+$n2.utils.stringToHtmlId(this.selectedSchema))
+			$elem.find('.n2DisplayTiled_filter_schema_'+$n2.utils.stringToHtmlId(this.selectedSchema))
 				.addClass('n2DisplayTiled_filter_selected');
 			
 		} else {

@@ -327,6 +327,9 @@ Help Button
 	*display:inline;
 	vertical-align:top;
 }
+.nunaliit_atlas .n2ModuleIntro {
+	padding: 20px;
+}
 .intro {
 	text-align: left;
 	vertical-align: text-top;

@@ -141,19 +141,31 @@ var Module = $n2.Class({
 
 		} else {
 			if( 'html' === introInfo.type && introInfo.content ) {
+				
+				$elem.empty();
+				var $outer = $('<div>')
+					.addClass('n2ModuleIntro n2ModuleIntro_html')
+					.appendTo($elem);
+				
 				var content = $n2.couchL10n.getLocalizedString(introInfo.content);
 				if( content ) {
-					$elem.html(content);
+					$outer.html(content);
 				};
 				opts.onLoaded();
 				return true;
 				
 			} else if( 'text' === introInfo.type && introInfo.content ) {
+				
+				$elem.empty();
+				var $outer = $('<div>')
+					.addClass('n2ModuleIntro n2ModuleIntro_text')
+					.appendTo($elem);
+				
 				var content = $n2.couchL10n.getLocalizedString(introInfo.content);
 				if( content ) {
 					var $wrapper = $('<div>')
 						.text(content);
-					$elem
+					$outer
 						.empty()
 						.append($wrapper);
 					
@@ -170,7 +182,11 @@ var Module = $n2.Class({
 			 && this.atlasDb
 			 ) {
 				var displayId = $n2.getUniqueId();
-				$elem.empty().append( $('<div id="'+displayId+'" class="n2module_introduction"></div>') );
+				$elem.empty();
+				$('<div>')
+					.attr('id', displayId)
+					.addClass('n2ModuleIntro n2ModuleIntro_attachment')
+					.appendTo($elem);
 				
 				var localeStr = $n2.l10n.getStringForLocale(introInfo.attachmentName);
 				if( localeStr.str ) {
@@ -182,14 +198,14 @@ var Module = $n2.Class({
 				    	,async: true
 				    	,success: function(intro) {
 				    		if( localeStr.fallback ){
-				    			var $outer = $('<span class="n2_localized_string n2_localize_fallback"></span>');
+				    			var $inner = $('<span class="n2_localized_string n2_localize_fallback"></span>');
 				    			$('<span class="n2_localize_fallback_lang"></span>')
 				    				.text('('+localeStr.lang+')')
-				    				.appendTo($outer);
+				    				.appendTo($inner);
 				    			$('<span></span>')
 				    				.html(intro)
-				    				.appendTo($outer);
-			    				$('#'+displayId).empty().append($outer);
+				    				.appendTo($inner);
+			    				$('#'+displayId).empty().append($inner);
 				    		} else {
 					    		$('#'+displayId).html(intro);
 				    		};
@@ -1049,6 +1065,7 @@ var ModuleDisplay = $n2.Class({
 	,_initSidePanel: function() {
 		var _this = this;
 		var $elem = $('#'+this.sidePanelName);
+		
 		this.module.displayIntro({
 			elem: $elem
 			,showService: this._getShowService()
