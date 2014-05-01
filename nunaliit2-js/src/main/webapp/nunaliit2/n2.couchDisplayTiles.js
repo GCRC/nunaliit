@@ -749,7 +749,7 @@ var TiledDisplay = $n2.Class({
 			var $set = _this._getDisplayDiv();
 			var $docs = $set.find('.n2DisplayTiled_documents');
 
-			// Sort (TBD)
+			// Sort
 			var sortedDocIds = null;
 			if( _this.displayedDocumentsOrder ){
 				sortedDocIds = _this.displayedDocumentsOrder;
@@ -913,11 +913,12 @@ var TiledDisplay = $n2.Class({
 			$div.removeClass(waitClassName);
 		});
 		
-		// Set tile classes based on media associated with document
+		// Set tile classes based on media associated with document, and schema name
 		var includesImage = false;
 		var includesAudio = false;
 		var includesVideo = false;
 		var thumbnailName = null;
+		var schemaName = null;
 		if( doc.nunaliit_attachments 
 		 && doc.nunaliit_attachments.files ){
 			for(var attName in doc.nunaliit_attachments.files){
@@ -938,8 +939,12 @@ var TiledDisplay = $n2.Class({
 				};
 			};
 		};
+		if( doc.nunaliit_schema ){
+			schemaName = doc.nunaliit_schema;
+		};
 		$set.find('.n2DisplayTiled_tile_' + $n2.utils.stringToHtmlId(docId)).each(function(){
 			var $tile = $(this);
+			
 			$tile.removeClass('n2DisplayTiled_tile_image n2DisplayTiled_tile_audio n2DisplayTiled_tile_video');
 			if(includesVideo){
 				$tile.addClass('n2DisplayTiled_tile_video');
@@ -947,6 +952,10 @@ var TiledDisplay = $n2.Class({
 				$tile.addClass('n2DisplayTiled_tile_audio');
 			} else if(includesImage){
 				$tile.addClass('n2DisplayTiled_tile_image');
+			};
+			
+			if( schemaName ){
+				$tile.addClass('n2DisplayTiled_tile_schema_'+$n2.utils.stringToHtmlId(schemaName));
 			};
 		});
 		if( thumbnailName ){
