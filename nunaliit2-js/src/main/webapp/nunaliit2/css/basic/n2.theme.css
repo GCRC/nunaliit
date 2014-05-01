@@ -265,7 +265,7 @@ Help Button
 	background-color: #fff;
 	border-bottom:1px solid #e5e5e5;
 }
-.nunaliit_atlas .nunaliit_searchInput input
+.nunaliit_atlas .nunaliit_search_input input
 ,.nunaliit_atlas .n2_content_searchInput input {
 	background-image: url('images/search.png');
 	background-position:center right;
