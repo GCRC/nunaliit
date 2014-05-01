@@ -188,8 +188,8 @@
 	overflow: visible;
 	z-index: 8;
 }
-.n2_display_format_tiled .n2_content_contains_map .n2_content_searchInput {
-	width: 510px;
+.n2_display_format_tiled .nunaliit_content .n2_content_searchInput {
+	display: none;
 }
 .n2_content_searchInput input {
 	padding:2.5%;
@@ -212,20 +212,15 @@
 	width: 410px;
 	overflow: auto;
 }
-.n2_content_contains_search .n2_content_text {
-	padding: 115px 20px 15px 20px;
-}
 .n2_display_format_tiled .n2_content_contains_map .n2_content_text {
 	left: auto;
 	right: 0;
-	width: 550px;
+	width: 640px;
 	padding: 0;
 	overflow: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
-.n2_display_format_tiled .n2_content_contains_search .n2_content_text {
-	top: 94px;
-}
-
 
 /* Map Interactions */
 .n2_content_map_interaction {

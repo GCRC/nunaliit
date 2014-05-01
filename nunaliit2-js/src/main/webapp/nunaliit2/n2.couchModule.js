@@ -268,7 +268,7 @@ var ModuleDisplay = $n2.Class({
 			,mapInteractionName: 'map_interaction_div'
 			,sidePanelName: 'side'
 			,filterPanelName: 'filters'
-			,searchPanelName: 'searchInput'
+			,searchPanelName: null
 			,loginPanelName: 'login'
 			,loginPanels: null
 			,navigationName: 'navigation'
@@ -439,6 +439,10 @@ var ModuleDisplay = $n2.Class({
 				if( searchInfo && searchInfo.disabled ) {
 					_this.searchPanelName = null;
 					$contentDiv.addClass('n2_content_contains_no_search');
+				} else if( _this.searchPanelName ) {
+					// Search panel is specified. No need to create
+					$contentDiv.addClass('n2_content_contains_search');
+
 				} else {
 					_this.searchPanelName = $n2.getUniqueId();
 					$('<div></div>')

@@ -228,6 +228,22 @@ Help Button
 	text-decoration: none;
 }
 
+/*
+	Search input located in title bar
+*/
+.nunaliit_atlas .nunaliit_search_input {
+	float: right;
+	padding: 1px 20px;
+}
+
+.nunaliit_atlas .nunaliit_search_input input.search_panel_input {
+	font-family: helvetica, sans-serif;
+	font-weight: 400;
+	font-size: 0.9em;
+	height: 26px;
+	padding: 0;
+	margin: 0;
+}
 
 /* ============================== */
 /* ! CONTENT SECTION   */
