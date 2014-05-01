@@ -110,6 +110,8 @@ var TiledDisplay = $n2.Class({
 	
 	hoverOutFn: null,
 	
+	hoverDocId: null,
+	
 	initialize: function(opts_) {
 		var opts = $n2.extend({
 			documentSource: null
@@ -301,7 +303,8 @@ var TiledDisplay = $n2.Class({
 		this.hoverInFn = function(){
 			var $tile = $(this);
 			var docId = $tile.attr('n2DocId');
-			if( docId ) {
+			if( docId && docId !== _this.hoverDocId ) {
+				_this.hoverDocId = docId;
 				_this._dispatch({
 					type: 'userFocusOn'
 					,docId: docId
@@ -311,7 +314,8 @@ var TiledDisplay = $n2.Class({
 		this.hoverOutFn = function(){
 			var $tile = $(this);
 			var docId = $tile.attr('n2DocId');
-			if( docId ) {
+			if( docId && docId === _this.hoverDocId ) {
+				_this.hoverDocId = null;
 				_this._dispatch({
 					type: 'userFocusOff'
 					,docId: docId
