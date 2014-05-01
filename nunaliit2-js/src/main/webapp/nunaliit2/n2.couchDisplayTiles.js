@@ -538,7 +538,7 @@ var TiledDisplay = $n2.Class({
 				.empty();
 
 	 		// 'edit' button
-	 		{
+	 		if( $n2.couchMap.canEditDoc(doc) ) {
 	 			$('<a href="#"></a>')
 	 				.addClass('n2DisplayTiled_current_button n2DisplayTiled_current_button_edit')
 	 				.text( _loc('Edit') )
