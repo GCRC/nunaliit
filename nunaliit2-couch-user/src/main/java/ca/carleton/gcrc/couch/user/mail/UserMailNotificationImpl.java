@@ -3,7 +3,9 @@ package ca.carleton.gcrc.couch.user.mail;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URLEncoder;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Vector;
 
@@ -23,6 +25,9 @@ public class UserMailNotificationImpl implements UserMailNotification {
 	private String createUserUrl = null;
 	private String passwordRecoveryUrl = null;
 	private MailRecipient fromAddress = null;
+	private MailMessageGenerator userCreationGenerator = new UserCreationGenerator();
+	private MailMessageGenerator passwordRecoveryGenerator = new PasswordRecoveryGenerator();
+	private MailMessageGenerator passwordReminderGenerator = new PasswordReminderGenerator();
 	
 	public UserMailNotificationImpl(MailDelivery mailDelivery){
 		this.mailDelivery = mailDelivery;
@@ -94,9 +99,13 @@ public class UserMailNotificationImpl implements UserMailNotification {
 		
 		logger.info("Sending user creation notification to "+recipients);
 		
-		// Compute link
-		String urlEncodedToken = URLEncoder.encode(token, "UTF-8");
-		String link = createUserUrl + "?token=" + urlEncodedToken;
+		Map<String,String> parameters = new HashMap<String,String>();
+		{
+			// Compute link
+			String urlEncodedToken = URLEncoder.encode(token, "UTF-8");
+			String link = createUserUrl + "?token=" + urlEncodedToken;
+			parameters.put("link", link);
+		}
 		
 		try {
 			MailMessage message = new MailMessage();
@@ -109,22 +118,7 @@ public class UserMailNotificationImpl implements UserMailNotification {
 				message.addToRecipient( recipient );
 			}
 			
-			// Subject
-			message.setSubject("Nunaliit User Creation");
-			
-			// Create HTML body part
-			StringWriter sw = new StringWriter();
-			PrintWriter pw = new PrintWriter(sw);
-			pw.println("<html><head><title>Nunaliit User Creation</title></head><body><h1>Nunaliit User Creation</h1>");
-			pw.println("<p>Someone has requested to create a user for a Nunaliit Atlas. If it");
-			pw.println("<p>was you, please follow the link below to complete the registration process.</p>");
-			pw.println("<p>If you did not request a user to be created, simply disregard this e-mail.</p>");
-			pw.println("<p>To complete the registration process, click on the link below, or paste");
-			pw.println("it in your favourite web browser.</p>");
-			pw.println("<p><a href=\""+link+"\">"+link+"</a></p>");
-			pw.println("</body></html>");
-			pw.flush();
-			message.setHtmlContent(sw.toString());
+			userCreationGenerator.generateMessage(message, parameters);
 			
 			// Send message
 			mailDelivery.sendMessage(message);
@@ -151,9 +145,13 @@ public class UserMailNotificationImpl implements UserMailNotification {
 		
 		logger.info("Sending password recovery notification to "+recipients);
 		
-		// Compute link
-		String urlEncodedToken = URLEncoder.encode(token, "UTF-8");
-		String link = passwordRecoveryUrl + "?token=" + urlEncodedToken;
+		Map<String,String> parameters = new HashMap<String,String>();
+		{
+			// Compute link
+			String urlEncodedToken = URLEncoder.encode(token, "UTF-8");
+			String link = passwordRecoveryUrl + "?token=" + urlEncodedToken;
+			parameters.put("link", link);
+		}
 		
 		try {
 			MailMessage message = new MailMessage();
@@ -165,23 +163,8 @@ public class UserMailNotificationImpl implements UserMailNotification {
 			for(MailRecipient recipient : recipients){
 				message.addToRecipient( recipient );
 			}
-			
-			// Subject
-			message.setSubject("Nunaliit Password Recovery");
-			
-			// Create HTML body part
-			StringWriter sw = new StringWriter();
-			PrintWriter pw = new PrintWriter(sw);
-			pw.println("<html><head><title>Nunaliit Password Recovery</title></head><body><h1>Nunaliit Password Recovery</h1>");
-			pw.println("<p>A password recovery was requested for your Nunaliit account. If you");
-			pw.println("<p>wish to complete the password recovery process, follow the link provided below.</p>");
-			pw.println("<p>If you did not request a password recovery, simply ignore this e-mail.</p>");
-			pw.println("<p>To complete password recovery, click on the link below, or paste");
-			pw.println("it in your favourite web browser.</p>");
-			pw.println("<p><a href=\""+link+"\">"+link+"</a></p>");
-			pw.println("</body></html>");
-			pw.flush();
-			message.setHtmlContent(sw.toString());
+
+			passwordRecoveryGenerator.generateMessage(message, parameters);
 			
 			// Send message
 			mailDelivery.sendMessage(message);
@@ -205,6 +188,11 @@ public class UserMailNotificationImpl implements UserMailNotification {
 		
 		logger.info("Sending password reminder notification to "+recipients);
 		
+		Map<String,String> parameters = new HashMap<String,String>();
+		{
+			parameters.put("password", password);
+		}
+		
 		try {
 			MailMessage message = new MailMessage();
 			
@@ -216,18 +204,7 @@ public class UserMailNotificationImpl implements UserMailNotification {
 				message.addToRecipient( recipient );
 			}
 			
-			// Subject
-			message.setSubject("Nunaliit Password Reminder");
-			
-			// Create HTML body part
-			StringWriter sw = new StringWriter();
-			PrintWriter pw = new PrintWriter(sw);
-			pw.println("<html><head><title>Nunaliit Password Reminder</title></head><body><h1>Nunaliit Password Reminder</h1>");
-			pw.println("<p>You requested an e-mail with a reminder of your password to access a Nunaliit atlas.</p>");
-			pw.println("<p>Your password is: "+password+"</p>");
-			pw.println("</body></html>");
-			pw.flush();
-			message.setHtmlContent(sw.toString());
+			passwordReminderGenerator.generateMessage(message, parameters);
 			
 			// Send message
 			mailDelivery.sendMessage(message);
@@ -236,5 +213,29 @@ public class UserMailNotificationImpl implements UserMailNotification {
 			logger.error("Unable to send password reminder notification",e);
 			throw new Exception("Unable to send password reminder notification",e);
 		}
+	}
+
+	public MailMessageGenerator getUserCreationGenerator() {
+		return userCreationGenerator;
+	}
+
+	public void setUserCreationGenerator(MailMessageGenerator userCreationGenerator) {
+		this.userCreationGenerator = userCreationGenerator;
+	}
+
+	public MailMessageGenerator getPasswordRecoveryGenerator() {
+		return passwordRecoveryGenerator;
+	}
+
+	public void setPasswordRecoveryGenerator(MailMessageGenerator passwordRecoveryGenerator) {
+		this.passwordRecoveryGenerator = passwordRecoveryGenerator;
+	}
+
+	public MailMessageGenerator getPasswordReminderGenerator() {
+		return passwordReminderGenerator;
+	}
+
+	public void setPasswordReminderGenerator(MailMessageGenerator passwordReminderGenerator) {
+		this.passwordReminderGenerator = passwordReminderGenerator;
 	}
 }
