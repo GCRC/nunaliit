@@ -228,6 +228,22 @@ Help Button
 	text-decoration: none;
 }
 
+/*
+	Search input located in title bar
+*/
+.nunaliit_atlas .nunaliit_search_input {
+	float: right;
+	padding: 1px 20px;
+}
+
+.nunaliit_atlas .nunaliit_search_input input.search_panel_input {
+	font-family: helvetica, sans-serif;
+	font-weight: 400;
+	font-size: 0.9em;
+	height: 26px;
+	padding: 0;
+	margin: 0;
+}
 
 /* ============================== */
 /* ! CONTENT SECTION   */
@@ -249,7 +265,7 @@ Help Button
 	background-color: #fff;
 	border-bottom:1px solid #e5e5e5;
 }
-.nunaliit_atlas .nunaliit_searchInput input
+.nunaliit_atlas .nunaliit_search_input input
 ,.nunaliit_atlas .n2_content_searchInput input {
 	background-image: url('images/search.png');
 	background-position:center right;
@@ -310,6 +326,9 @@ Help Button
 	zoom:1;
 	*display:inline;
 	vertical-align:top;
+}
+.nunaliit_atlas .n2ModuleIntro {
+	padding: 20px;
 }
 .intro {
 	text-align: left;

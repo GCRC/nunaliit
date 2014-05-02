@@ -1,23 +1,31 @@
 .n2DisplayTiled_documents {
 	position: absolute;
-	top: 25px;
+	top: 50px;
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background-color: #cccccc;
+/*
 	overflow-x: hidden;
 	overflow-y: auto;
+*/
+    margin:20px;
 }
 
 .n2DisplayTiled_tile {
 	position: absolute;
-	background-color: #ffffff;
+	background-color: rgba(0,0,0,0.03);
 	overflow: hidden;
 	background-image: url('images/tile_bg_document.png');
 	background-position: center 40px;
 	background-repeat: no-repeat;
+    -webkit-box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.25);
+    -moz-box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.25);
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.25);
+    
 }
-
+.n2DisplayTiled_tile_content {
+    padding:10px;   
+}
 div.n2DisplayTiled_tile_video {
 	background-image: url('images/tile_bg_video.png');
 }
@@ -32,6 +40,7 @@ div.n2DisplayTiled_tile_image {
 
 .n2DisplayTiled_documents div.n2DisplayTiled_tile_current {
 	background-image: none;
+    background-color:#fff;
 }
 
 .n2DisplayTiled_thumb {
@@ -41,8 +50,8 @@ div.n2DisplayTiled_tile_image {
 }
 
 .n2DisplayTiled_thumb img {
-	max-height: 148px;
-	max-width: 148px;
+	width: 125%;
+	height: 100%;
 }
 
 .n2DisplayTiled_tile_brief {
@@ -55,12 +64,15 @@ div.n2DisplayTiled_tile_image {
 	width: 90%;
 	padding: 5%;
 	background-color: rgba(255,255,255,0.8);
+    word-wrap:break-word;
 }
 
 .n2DisplayTiled_tile:hover {
-	background-color: #eeeeee;
+	background-color: rgba(0,0,0,0.06);
 }
-
+.n2DisplayTiled_tile_current.n2DisplayTiled_tile:hover {
+	background-color: transparent;
+}
 .n2DisplayTiled_schema {
 	border: 1px solid #000000;
 	background-color: #ffffff;
@@ -72,12 +84,24 @@ div.n2DisplayTiled_tile_image {
 
 .n2DisplayTiled_filters {
 	position: absolute;
-	top: 0px;
+	top: 25px;
 	left: 0;
 	right: 0;
 	height: 25px;
+    padding:10px;
+    text-align:right;
 }
-
+.n2DisplayTiled_filters a {
+    padding:3px 8px;
+    margin:0 5px;
+}
 .n2DisplayTiled_filter_selected {
 	font-weight: bold;
+}
+.n2DisplayTiled_current_buttons {
+    padding:10px;
+    text-align:right;
+}
+.n2DisplayTiled_current_buttons a {
+    margin:0 10px;   
 }

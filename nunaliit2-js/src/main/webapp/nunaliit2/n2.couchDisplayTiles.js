@@ -110,6 +110,8 @@ var TiledDisplay = $n2.Class({
 	
 	hoverOutFn: null,
 	
+	hoverDocId: null,
+	
 	initialize: function(opts_) {
 		var opts = $n2.extend({
 			documentSource: null
@@ -301,7 +303,8 @@ var TiledDisplay = $n2.Class({
 		this.hoverInFn = function(){
 			var $tile = $(this);
 			var docId = $tile.attr('n2DocId');
-			if( docId ) {
+			if( docId && docId !== _this.hoverDocId ) {
+				_this.hoverDocId = docId;
 				_this._dispatch({
 					type: 'userFocusOn'
 					,docId: docId
@@ -311,7 +314,8 @@ var TiledDisplay = $n2.Class({
 		this.hoverOutFn = function(){
 			var $tile = $(this);
 			var docId = $tile.attr('n2DocId');
-			if( docId ) {
+			if( docId && docId === _this.hoverDocId ) {
+				_this.hoverDocId = null;
 				_this._dispatch({
 					type: 'userFocusOff'
 					,docId: docId
@@ -534,7 +538,7 @@ var TiledDisplay = $n2.Class({
 				.empty();
 
 	 		// 'edit' button
-	 		{
+	 		if( $n2.couchMap.canEditDoc(doc) ) {
 	 			$('<a href="#"></a>')
 	 				.addClass('n2DisplayTiled_current_button n2DisplayTiled_current_button_edit')
 	 				.text( _loc('Edit') )
@@ -745,7 +749,7 @@ var TiledDisplay = $n2.Class({
 			var $set = _this._getDisplayDiv();
 			var $docs = $set.find('.n2DisplayTiled_documents');
 
-			// Sort (TBD)
+			// Sort
 			var sortedDocIds = null;
 			if( _this.displayedDocumentsOrder ){
 				sortedDocIds = _this.displayedDocumentsOrder;
@@ -909,11 +913,12 @@ var TiledDisplay = $n2.Class({
 			$div.removeClass(waitClassName);
 		});
 		
-		// Set tile classes based on media associated with document
+		// Set tile classes based on media associated with document, and schema name
 		var includesImage = false;
 		var includesAudio = false;
 		var includesVideo = false;
 		var thumbnailName = null;
+		var schemaName = null;
 		if( doc.nunaliit_attachments 
 		 && doc.nunaliit_attachments.files ){
 			for(var attName in doc.nunaliit_attachments.files){
@@ -934,8 +939,12 @@ var TiledDisplay = $n2.Class({
 				};
 			};
 		};
+		if( doc.nunaliit_schema ){
+			schemaName = doc.nunaliit_schema;
+		};
 		$set.find('.n2DisplayTiled_tile_' + $n2.utils.stringToHtmlId(docId)).each(function(){
 			var $tile = $(this);
+			
 			$tile.removeClass('n2DisplayTiled_tile_image n2DisplayTiled_tile_audio n2DisplayTiled_tile_video');
 			if(includesVideo){
 				$tile.addClass('n2DisplayTiled_tile_video');
@@ -943,6 +952,10 @@ var TiledDisplay = $n2.Class({
 				$tile.addClass('n2DisplayTiled_tile_audio');
 			} else if(includesImage){
 				$tile.addClass('n2DisplayTiled_tile_image');
+			};
+			
+			if( schemaName ){
+				$tile.addClass('n2DisplayTiled_tile_schema_'+$n2.utils.stringToHtmlId(schemaName));
 			};
 		});
 		if( thumbnailName ){
@@ -1569,7 +1582,7 @@ var SchemaFilter = $n2.Class({
 		$('<a>')
 			.attr('href','#')
 			.text( _loc('All') )
-			.addClass('n2DisplayTiled_schema')
+			.addClass('n2DisplayTiled_filter')
 			.addClass('n2DisplayTiled_filter_all')
 			.appendTo($elem)
 			.click(clickFn);
@@ -1591,8 +1604,8 @@ var SchemaFilter = $n2.Class({
 				.attr('href','#')
 				.attr('n2SchemaName',schema.name)
 				.text( schemaLabel )
-				.addClass('n2DisplayTiled_schema')
-				.addClass('n2DisplayTiled_schema_'+$n2.utils.stringToHtmlId(schema.name))
+				.addClass('n2DisplayTiled_filter_schema')
+				.addClass('n2DisplayTiled_filter_schema_'+$n2.utils.stringToHtmlId(schema.name))
 				.appendTo($elem)
 				.click(clickFn);
 		};
@@ -1611,7 +1624,7 @@ var SchemaFilter = $n2.Class({
 			.removeClass('n2DisplayTiled_filter_selected');
 		
 		if( this.selectedSchema ){
-			$elem.find('.n2DisplayTiled_schema_'+$n2.utils.stringToHtmlId(this.selectedSchema))
+			$elem.find('.n2DisplayTiled_filter_schema_'+$n2.utils.stringToHtmlId(this.selectedSchema))
 				.addClass('n2DisplayTiled_filter_selected');
 			
 		} else {

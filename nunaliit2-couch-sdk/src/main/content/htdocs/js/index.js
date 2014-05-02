@@ -56,6 +56,7 @@ function main_init(config) {
 		,navigationDoc: navigationName
 		,languageSwitcherName: 'language_switcher'
 		,helpButtonName: 'help_button'
+		,searchPanelName: 'search_panel'
 		,onSuccess: function(){
 			config.start();
 			
