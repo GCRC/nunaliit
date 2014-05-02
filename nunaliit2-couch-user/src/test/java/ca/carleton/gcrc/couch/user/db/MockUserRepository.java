@@ -148,7 +148,8 @@ public class MockUserRepository implements UserRepository {
 	@Override
 	public void recoverPassword(String name, String newPassword) throws Exception {
 		JSONObject user = getUserFromName(name);
-		user.put("password", newPassword);
+		
+		computeUserPassword(user, newPassword);
 		
 		// Increase version
 		increaseVersion(user);
@@ -184,5 +185,10 @@ public class MockUserRepository implements UserRepository {
 	@Override
 	public CouchUserContext getRolesFromAuthentication(Cookie[] cookies) throws Exception {
 		return new MockCouchUserContext("test");
+	}
+
+	@Override
+	public void computeUserPassword(JSONObject userDoc, String password) throws Exception {
+		userDoc.put("password", password);		
 	}
 }

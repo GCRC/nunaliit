@@ -28,7 +28,7 @@ public class CouchFactory {
 	public CouchClient getClient(CouchContext context, URL url, int versionMajor, int versionMinor) throws Exception {
 		CouchClientImpl client = new CouchClientImpl(context, url);
 		
-		CouchServerVersionImpl serverVersion = new CouchServerVersionImpl(versionMajor, versionMinor);
+		CouchServerVersionImpl serverVersion = new CouchServerVersionImpl(""+versionMajor+"."+versionMinor,versionMajor, versionMinor);
 		client.setVersion(serverVersion);
 		
 		return client;
@@ -62,7 +62,7 @@ public class CouchFactory {
 			if( parts.length < 2 ) {
 				throw new Exception("Can not parse server version: "+version);
 			}
-			serverVersion = new CouchServerVersionImpl(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
+			serverVersion = new CouchServerVersionImpl(version, Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
 		}
 		
 		// Compute URL

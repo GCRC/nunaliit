@@ -26,4 +26,6 @@ public interface UserRepository {
 	void recoverPassword(String name, String newPassword) throws Exception;
 	
 	CouchUserContext getRolesFromAuthentication(Cookie[] cookies) throws Exception;
+
+	void computeUserPassword(JSONObject userDoc, String password) throws Exception;
 }

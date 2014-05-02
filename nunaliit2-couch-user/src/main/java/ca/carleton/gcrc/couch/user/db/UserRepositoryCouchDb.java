@@ -18,17 +18,18 @@ import ca.carleton.gcrc.couch.client.CouchQuery;
 import ca.carleton.gcrc.couch.client.CouchQueryResults;
 import ca.carleton.gcrc.couch.client.CouchSession;
 import ca.carleton.gcrc.couch.client.CouchUserContext;
+import ca.carleton.gcrc.couch.client.CouchUserDb;
 import ca.carleton.gcrc.couch.client.impl.CouchContextCookie;
 
 public class UserRepositoryCouchDb implements UserRepository {
 
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
-	private CouchDb userDb;
+	private CouchUserDb userDb;
 	private CouchDesignDocument nunaliitUserDesignDocument;
 
 	public UserRepositoryCouchDb(
-			CouchDb userDb
+			CouchUserDb userDb
 			,CouchDesignDocument nunaliitUserDesignDocument
 		){
 		this.userDb = userDb;
@@ -124,23 +125,7 @@ public class UserRepositoryCouchDb implements UserRepository {
 			
 			JSONObject userDoc = userDb.getDocument(id);
 			
-			userDoc.put("password", newPassword);
-			
-			if( userDoc.opt("password_scheme") != null ) {
-				userDoc.remove("password_scheme");
-			}
-			if( userDoc.opt("iterations") != null ) {
-				userDoc.remove("iterations");
-			}
-			if( userDoc.opt("derived_key") != null ) {
-				userDoc.remove("derived_key");
-			}
-			if( userDoc.opt("salt") != null ) {
-				userDoc.remove("salt");
-			}
-			if( userDoc.opt("password_sha") != null ) {
-				userDoc.remove("password_sha");
-			}
+			userDb.computeUserPassword(userDoc, newPassword);
 			
 			userDb.updateDocument(userDoc);
 			
@@ -163,5 +148,10 @@ public class UserRepositoryCouchDb implements UserRepository {
 		CouchUserContext userContext = session.getCurrentUserContext();
 		
 		return userContext;
+	}
+
+	@Override
+	public void computeUserPassword(JSONObject userDoc, String password) throws Exception {
+		userDb.computeUserPassword(userDoc, password);
 	}
 }

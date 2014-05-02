@@ -55,7 +55,7 @@ public class CouchClientImpl implements CouchClient {
 				if( versions.length >= 2 ) {
 					int major = Integer.parseInt(versions[0]);
 					int minor = Integer.parseInt(versions[1]);
-					version = new CouchServerVersionImpl(major,minor);
+					version = new CouchServerVersionImpl((String)jsonVersion,major,minor);
 					
 					return version;
 				}

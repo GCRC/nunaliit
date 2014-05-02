@@ -216,12 +216,13 @@ public class UserServletActions {
 			JSONObject userDoc = new JSONObject();
 			userDoc.put("_id", id);
 			userDoc.put("name", name);
-			userDoc.put("password", password);
 			userDoc.put("type", "user");
 			userDoc.put("roles", new JSONArray());
 			userDoc.put("nunaliit_emails", new JSONArray());
 			userDoc.put("nunaliit_validated_emails", new JSONArray());
 			userDoc.put("nunaliit_options", new JSONObject());
+			
+			userRepository.computeUserPassword(userDoc, password);
 			
 			if( null != displayName ){
 				userDoc.put("display", displayName);
