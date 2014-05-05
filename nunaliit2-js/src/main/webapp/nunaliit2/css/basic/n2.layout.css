@@ -237,7 +237,7 @@
 	cursor: pointer;
 }
 .n2_display_format_tiled .n2_content_map_interaction {
-	right: 568px;
+	right: 650px;
 }
 
 /*
@@ -248,8 +248,9 @@
 	right: 185px;
 	top: 33px;
 }
-
-
+.n2_display_format_tiled  .olControlEditingToolbar {
+	right: 260px;
+}
 
 
 /* Smaller screens */
