@@ -763,8 +763,8 @@ var TiledDisplay = $n2.Class({
 					};
 				};
 				
-				_this.filter.display(infos,this);
-				infos = _this.filter.filter(infos,this);
+				_this.filter.display(infos,_this);
+				infos = _this.filter.filter(infos,_this);
 
 				sortedDocIds = [];
 				for(var i=0,e=infos.length; i<e; ++i){
@@ -780,8 +780,8 @@ var TiledDisplay = $n2.Class({
 					};
 				};
 
-				_this.filter.display(infos,this);
-				infos = _this.filter.filter(infos,this);
+				_this.filter.display(infos,_this);
+				infos = _this.filter.filter(infos,_this);
 				
 				_this.sortFunction(infos);
 
