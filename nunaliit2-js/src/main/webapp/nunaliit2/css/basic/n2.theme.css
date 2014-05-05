@@ -236,15 +236,6 @@ Help Button
 	padding: 1px 20px;
 }
 
-.nunaliit_atlas .nunaliit_search_input input.search_panel_input {
-	font-family: helvetica, sans-serif;
-	font-weight: 400;
-	font-size: 0.9em;
-	height: 26px;
-	padding: 0;
-	margin: 0;
-}
-
 /* ============================== */
 /* ! CONTENT SECTION   */
 /* ============================== */
@@ -270,7 +261,15 @@ Help Button
 	background-image: url('images/search.png');
 	background-position:center right;
 	background-repeat:no-repeat;
-	padding:13px 10px;
+	background-color: transparent;
+	color: #ffffff;
+	border-radius: 30px;
+	font-family: helvetica, sans-serif;
+	font-weight: 400;
+	font-size: 0.9em;
+	height: 26px;
+	padding: 0px 10px;
+	margin: 0;
 }
 
 /* Side Bar */
