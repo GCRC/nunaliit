@@ -407,8 +407,10 @@ function _inputField() {
 	 && options.data
 	 && options.data.n2_selector ){
 		completeSelectors = options.data.n2_selector.slice(0);
-	} else {
+	} else if( this[SELECT] ) {
 		completeSelectors = this[SELECT].slice(0);
+	} else {
+		return '';
 	};
 	if( '.' === key ) {
 		// Current selector is fine
