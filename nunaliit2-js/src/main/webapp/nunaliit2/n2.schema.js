@@ -46,6 +46,17 @@ var defaultSuccessFn = function(){};
 
 var typeClassStringPrefix = 'n2s_type_';
 
+var HTML = ':html';
+var INPUT = ':input';
+var FIELD = ':field';
+var ITERATE = ':iterate';
+var EMPTY = ':empty';
+var CONTEXT = ':context';
+var PARENT = ':parent';
+var SELECT = ':selector';
+var LOCALIZE = ':localize';
+var ARRAY = ':array';
+
 //============================================================
 // Object
 
@@ -275,14 +286,15 @@ function _formField() {
 	var text = options.fn(this);
 
 	// Syntax is: <selector>(,<option>)*
+	var obj,sels;
 	var splits = text.split(',');
 	var identifier = splits[0];
 	if( '.' === identifier ){
-		var obj = this;
-		var sels = [];
+		obj = this;
+		sels = [];
 	} else {
-		var sels = identifier.split('.');
-		var obj = getDataFromObjectSelector(this, sels);
+		sels = identifier.split('.');
+		obj = getDataFromObjectSelector(this, sels);
 	};
 	
 	if( obj
@@ -388,10 +400,22 @@ function _inputField() {
 
 	// Syntax is: <selector>(,<type>)?
 	var splits = text.split(',');
-	var sels = splits[0].split('.');
-
-	var completeSelectors = this[SELECT].slice(0);
-	completeSelectors.push.apply(completeSelectors,sels);
+	var key = splits[0];
+	
+	var completeSelectors = null;
+	if( options
+	 && options.data
+	 && options.data.n2_selector ){
+		completeSelectors = options.data.n2_selector.slice(0);
+	} else {
+		completeSelectors = this[SELECT].slice(0);
+	};
+	if( '.' === key ) {
+		// Current selector is fine
+	} else {
+		var sels = key.split('.');
+		completeSelectors.push.apply(completeSelectors,sels);
+	};	
 	
 	var cl = 'n2s_input ' + createClassStringFromSelector(completeSelectors);
 
@@ -455,17 +479,6 @@ function _arrayField() {
 	return r.join('');
 };
 
-
-var HTML = ':html';
-var INPUT = ':input';
-var FIELD = ':field';
-var ITERATE = ':iterate';
-var EMPTY = ':empty';
-var CONTEXT = ':context';
-var PARENT = ':parent';
-var SELECT = ':selector';
-var LOCALIZE = ':localize';
-var ARRAY = ':array';
 
 if( typeof(Handlebars) !== 'undefined' 
  && Handlebars.registerHelper ) {
