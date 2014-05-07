@@ -24,8 +24,6 @@ import org.slf4j.LoggerFactory;
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDbSecurityDocument;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
-import ca.carleton.gcrc.couch.client.CouchQuery;
-import ca.carleton.gcrc.couch.client.CouchQueryResults;
 import ca.carleton.gcrc.couch.client.CouchUserDb;
 import ca.carleton.gcrc.couch.user.agreement.AgreementRobot;
 import ca.carleton.gcrc.couch.user.agreement.AgreementRobotSettings;
@@ -33,7 +31,9 @@ import ca.carleton.gcrc.couch.user.db.UserRepository;
 import ca.carleton.gcrc.couch.user.db.UserRepositoryCouchDb;
 import ca.carleton.gcrc.couch.user.error.TokenExpiredException;
 import ca.carleton.gcrc.couch.user.error.UserUpdatedException;
-import ca.carleton.gcrc.couch.user.mail.TemplateGenerator;
+import ca.carleton.gcrc.couch.user.mail.PasswordRecoveryGenerator;
+import ca.carleton.gcrc.couch.user.mail.PasswordReminderGenerator;
+import ca.carleton.gcrc.couch.user.mail.UserCreationGenerator;
 import ca.carleton.gcrc.couch.user.mail.UserMailNotificationImpl;
 import ca.carleton.gcrc.mail.MailDelivery;
 
@@ -116,67 +116,16 @@ public class UserServlet extends HttpServlet {
 				throw new ServletException("Unexpected object for mail delivery: "+obj.getClass().getName());
 			}
 			
-			// Attempt to load the schemas that control e-mails
-			try {
-				CouchDesignDocument atlasDesign = documentDb.getDesignDocument("atlas");
-				
-				{
-					CouchQuery query = new CouchQuery();
-					query.setViewName("schemas");
-					query.setIncludeDocs(true);
-					query.setStartKey("nunaliit_email_user_creation");
-					query.setEndKey("nunaliit_email_user_creation");
-					CouchQueryResults results = atlasDesign.performQuery(query);
-					for(JSONObject row : results.getRows()){
-						JSONObject schema = row.optJSONObject("doc");
-						String title = schema.getString("brief");
-						String body = schema.getString("display");
-						TemplateGenerator tg = new TemplateGenerator(title, body);
-						userMailNotification.setUserCreationGenerator(tg);
-						logger.info("Loaded user creation e-mail template");
-						break;
-					}
-				}
-				
-				{
-					CouchQuery query = new CouchQuery();
-					query.setViewName("schemas");
-					query.setIncludeDocs(true);
-					query.setStartKey("nunaliit_email_password_recovery");
-					query.setEndKey("nunaliit_email_password_recovery");
-					CouchQueryResults results = atlasDesign.performQuery(query);
-					for(JSONObject row : results.getRows()){
-						JSONObject schema = row.optJSONObject("doc");
-						String title = schema.getString("brief");
-						String body = schema.getString("display");
-						TemplateGenerator tg = new TemplateGenerator(title, body);
-						userMailNotification.setPasswordRecoveryGenerator(tg);
-						logger.info("Loaded password recovery e-mail template");
-						break;
-					}
-				}
-				
-				{
-					CouchQuery query = new CouchQuery();
-					query.setViewName("schemas");
-					query.setIncludeDocs(true);
-					query.setStartKey("nunaliit_email_password_reminder");
-					query.setEndKey("nunaliit_email_password_reminder");
-					CouchQueryResults results = atlasDesign.performQuery(query);
-					for(JSONObject row : results.getRows()){
-						JSONObject schema = row.optJSONObject("doc");
-						String title = schema.getString("brief");
-						String body = schema.getString("display");
-						TemplateGenerator tg = new TemplateGenerator(title, body);
-						userMailNotification.setPasswordReminderGenerator(tg);
-						logger.info("Loaded password reminder e-mail template");
-						break;
-					}
-				}
-			} catch(Exception e) {
-				// Not fatal
-				logger.error("Unable to load mail schemas.",e);
-			}
+			// Load e-mail templates
+			userMailNotification.setUserCreationGenerator(
+					new UserCreationGenerator(documentDb,"org.nunaliit.email_template.user_creation")
+				);
+			userMailNotification.setPasswordRecoveryGenerator(
+					new PasswordRecoveryGenerator(documentDb,"org.nunaliit.email_template.password_recovery")
+				);
+			userMailNotification.setPasswordReminderGenerator(
+					new PasswordReminderGenerator(documentDb,"org.nunaliit.email_template.password_reminder")
+				);
 		}
 		
 		// Server Key

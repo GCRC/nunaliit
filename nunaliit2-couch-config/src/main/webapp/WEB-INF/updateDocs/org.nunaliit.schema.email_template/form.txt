@@ -1,0 +1,14 @@
+<div class="n2_documentForm"><div class="n2_layoutFloat">
+	{{#nunaliit_email_template}}
+		<div>
+			<div class="label n2s_localize">Subject</div>
+			<div class="value">{{#:field}}subject{{/:field}}</div>
+			<div class="end"></div>
+		</div>
+		<div>
+			<div class="label n2s_localize">Body</div>
+			<div class="value">{{#:field}}body,textarea{{/:field}}</div>
+			<div class="end"></div>
+		</div>
+	{{/nunaliit_email_template}}
+</div></div>

@@ -1,0 +1,10 @@
+<html>
+	<head>
+		<title>Nunaliit Password Reminder</title>
+	</head>
+	<body>
+		<h1>Nunaliit Password Reminder</h1>
+		<p>You requested an e-mail with a reminder of your password to access a Nunaliit atlas.</p>
+		<p>Your password is: {{password}}</p>
+	</body>
+</html>

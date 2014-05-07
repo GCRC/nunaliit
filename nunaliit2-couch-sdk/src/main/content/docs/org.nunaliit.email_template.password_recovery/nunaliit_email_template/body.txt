@@ -1,0 +1,14 @@
+<html>
+	<head>
+		<title>Nunaliit Password Recovery</title>
+	</head>
+	<body>
+		<h1>Nunaliit Password Recovery</h1>
+		<p>A password recovery was requested for your Nunaliit account. If you
+		wish to complete the password recovery process, follow the link provided below.</p>
+		<p>If you did not request a password recovery, simply ignore this e-mail.</p>
+		<p>To complete password recovery, click on the link below, or paste
+		it in your favourite web browser.</p>
+		<p><a href="{{link}}">{{link}}</a></p>
+	</body>
+</html>

@@ -1,0 +1,19 @@
+<div class="n2_documentDisplay"><div class="n2_layoutFloat">
+	<div>
+		<div class="label n2s_localize">E-mail Template</div>
+		<div class="value"></div>
+		<div class="end"></div>
+	</div>
+	{{#nunaliit_email_template}}
+		<div>
+			<div class="label n2s_localize">Subject</div>
+			<div class="value">{{subject}}</div>
+			<div class="end"></div>
+		</div>
+		<div>
+			<div class="label n2s_localize">Body</div>
+			<div class="value n2s_preserveSpaces">{{body}}</div>
+			<div class="end"></div>
+		</div>
+	{{/nunaliit_email_template}}
+</div></div>
