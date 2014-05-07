@@ -41,6 +41,7 @@ $Id: n2.form.js 8165 2012-05-31 13:14:37Z jpfiset $
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 
 var TYPE_SELECTED = 'x';
+var TYPE_MULTI_SELECTED = 'm';
 var TYPE_SEARCH = 's';
 
 // ======================= MONITOR ====================================
@@ -151,7 +152,7 @@ var Monitor = $n2.Class({
 	}
 });
 	
-//======================= MONITOR ====================================
+//======================= TRACKER ====================================
 // Keeps track of currently selected document and encodes it in the
 // URL. On hashChanged events, re-selects the document.
 
@@ -220,20 +221,45 @@ var Tracker = $n2.Class({
 			};
 
 		} else if( 'userSelect' === m.type ){
-			this.last = {
-				selected: m.docId	
-			};
+			if( m.docId ) {
+				this.last = {
+					selected: m.docId	
+				};
+	
+				if( !m._suppressHashChange ) {
+					var type = 'setHash';
+					if( m._replaceHash ) type = 'replaceHash';
+					
+					var j = JSON.stringify({t:TYPE_SELECTED,i:m.docId});
+					var u = $n2.Base64.encode(j);
+					this._dispatch({
+						type: type
+						,hash: u
+					});
+				};
+			} else if( m.docIds ) {
+				this.last = {
+					multi_selected: m.docIds
+				};
+	
+				if( !m._suppressHashChange ) {
+					var type = 'setHash';
+					if( m._replaceHash ) type = 'replaceHash';
 
-			if( !m._suppressHashChange ) {
-				var type = 'setHash';
-				if( m._replaceHash ) type = 'replaceHash';
-				
-				var j = JSON.stringify({t:TYPE_SELECTED,i:m.docId});
-				var u = $n2.Base64.encode(j);
-				this._dispatch({
-					type: type
-					,hash: u
-				});
+					// Save doc ids with a session object associated
+					// with the timestamp
+					var ts = (new Date()).getTime();
+					saveStorageInfo(ts, {
+						docIds: m.docIds
+					});
+					
+					var j = JSON.stringify({t:TYPE_MULTI_SELECTED,s:ts});
+					var u = $n2.Base64.encode(j);
+					this._dispatch({
+						type: type
+						,hash: u
+					});
+				};
 			};
 
 		} else if( 'unselected' === m.type ){
@@ -375,6 +401,22 @@ var Tracker = $n2.Class({
 						,_suppressHashChange: true
 					});
 				};
+
+			} else if( TYPE_MULTI_SELECTED === o.t ){
+				var timestamp = o.s;
+				
+				var info = getStorageInfo(timestamp);
+				var docIds = info.docIds;
+				if( !docIds ){
+					docIds = [];
+				};
+				
+				this._dispatch({
+					type: 'userSelect'
+					,docIds: docIds
+					,_suppressHashChange: true
+				});
+			
 			} else if( TYPE_SEARCH === o.t ){
 				var searchLine = o.l;
 				this._dispatch({
@@ -387,7 +429,74 @@ var Tracker = $n2.Class({
 	}
 });
 
-// Export
+// ======================= SESSION STORAGE ========================
+// Handle saving information relating to a URL
+
+function getStorageInfo(timestamp){
+	var storage = $n2.storage.getSessionStorage();
+	var value = storage.getItem('n2_history');
+	if( !value ){
+		return {};
+	};
+	
+	var raw = null;
+	try {
+		raw = JSON.parse(value);
+	} catch(e) {
+		raw = {};
+	};
+	if( !raw ){
+		raw = {};
+	};
+	
+	var info = raw[''+timestamp];
+	if( !info ){
+		return {};
+	};
+	return info;
+};
+
+function saveStorageInfo(timestamp, info){
+	var storage = $n2.storage.getSessionStorage();
+	var value = storage.getItem('n2_history');
+	
+	var raw = null;
+	try {
+		raw = JSON.parse(value);
+	} catch(e) {
+		raw = {};
+	};
+	if( !raw ){
+		raw = {};
+	};
+	
+	raw[''+timestamp] = info;
+	var newValue = JSON.stringify(raw);
+	while( newValue.length > 2000000 ){
+		_removeOldestEntry(raw);
+		newValue = JSON.stringify(raw);
+	};
+	
+	storage.setItem('n2_history', newValue);
+
+	return value;
+};
+
+function _removeOldestEntry(raw){
+	var oldestKey = null;
+	for(var key in raw){
+		if( !oldestKey ){
+			oldestKey = key;
+		} else if( key < oldestKey ) {
+			oldestKey = key;
+		};
+	};
+	if( oldestKey ){
+		delete raw[oldestKey];
+	};
+};
+
+//======================= EXPORT ++++++++++========================
 $n2.history = {
 	Monitor: Monitor
 	,Tracker: Tracker

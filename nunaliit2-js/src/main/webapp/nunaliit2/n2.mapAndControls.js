@@ -517,7 +517,7 @@ var multiSelectClusterClickCallback = function(feature, mapAndControls){
 	
 	if( docIds.length ) {
 		mapAndControls._dispatch({
-			type: 'selected'
+			type: 'userSelect'
 			,docIds: docIds
 		});
 	};

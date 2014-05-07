@@ -105,12 +105,17 @@ var EventSupport = $n2.Class('EventSupport',{
 
 	,_defaultHandler: function(m){
 		if( 'userSelect' === m.type ) {
-			this._dispatch({
+			var forward = {
 				type:'selected'
-				,docId: m.docId
-				,doc: m.doc
-				,feature: m.feature
-			});
+			};
+			for(var key in m){
+				if( 'type' === key ){
+					forward.type = 'selected';
+				} else {
+					forward[key] = m[key];
+				};
+			};
+			this._dispatch(forward);
 			
 		} else if( 'userUnselect' === m.type ) {
 			this._dispatch({
