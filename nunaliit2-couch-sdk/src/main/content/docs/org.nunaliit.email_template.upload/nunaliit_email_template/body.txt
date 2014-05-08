@@ -1,0 +1,16 @@
+<html>
+	<head>
+		<title>Upload Notification</title>
+	</head>
+	<body>
+		<h1>Upload Notification</h1>
+		<p>A media was uploaded to the atlas with the following details:</p>
+		<table>
+			<tr><td>ID</td><td>{{docId}}</td></tr>
+			<tr><td>Attachment</td><td>{{attachmentName}}</td></tr>
+		</table>
+		{{#approvalPageLink}}
+			<p>The page where uploaded media can be approved is located at: <a href="{{approvalPageLink}}">{{approvalPageLink}}</a></p>
+		{{/approvalPageLink}}
+	</body>
+</html>

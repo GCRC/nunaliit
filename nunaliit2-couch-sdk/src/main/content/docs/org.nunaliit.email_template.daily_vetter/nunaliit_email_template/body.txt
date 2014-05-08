@@ -1,0 +1,12 @@
+<html>
+	<head>
+		<title>Periodic Vetter Notification</title>
+	</head>
+	<body>
+		<h1>Periodic Vetter Notification</h1>
+		<p>A number of files ({{count}}) were uploaded to the atlas. Your approval is required.</p>
+		{{#approvalPageLink}}
+			<p>The page where uploaded files can be approved is located at: <a href="{{approvalPageLink}}">{{approvalPageLink}}</a></p>
+		{{/approvalPageLink}}
+	</body>
+</html>

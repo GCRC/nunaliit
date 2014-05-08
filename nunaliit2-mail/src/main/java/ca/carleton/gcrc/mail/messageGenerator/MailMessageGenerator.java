@@ -1,4 +1,4 @@
-package ca.carleton.gcrc.couch.user.mail;
+package ca.carleton.gcrc.mail.messageGenerator;
 
 import java.util.Map;
 

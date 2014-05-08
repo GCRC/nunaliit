@@ -35,7 +35,9 @@ import ca.carleton.gcrc.couch.user.mail.PasswordRecoveryGenerator;
 import ca.carleton.gcrc.couch.user.mail.PasswordReminderGenerator;
 import ca.carleton.gcrc.couch.user.mail.UserCreationGenerator;
 import ca.carleton.gcrc.couch.user.mail.UserMailNotificationImpl;
+import ca.carleton.gcrc.couch.utils.CouchDbTemplateMailMessageGenerator;
 import ca.carleton.gcrc.mail.MailDelivery;
+import ca.carleton.gcrc.mail.messageGenerator.MailMessageGenerator;
 
 @SuppressWarnings("serial")
 public class UserServlet extends HttpServlet {
@@ -117,15 +119,33 @@ public class UserServlet extends HttpServlet {
 			}
 			
 			// Load e-mail templates
-			userMailNotification.setUserCreationGenerator(
-					new UserCreationGenerator(documentDb,"org.nunaliit.email_template.user_creation")
-				);
-			userMailNotification.setPasswordRecoveryGenerator(
-					new PasswordRecoveryGenerator(documentDb,"org.nunaliit.email_template.password_recovery")
-				);
-			userMailNotification.setPasswordReminderGenerator(
-					new PasswordReminderGenerator(documentDb,"org.nunaliit.email_template.password_reminder")
-				);
+			{
+				MailMessageGenerator template = new UserCreationGenerator();
+				CouchDbTemplateMailMessageGenerator couchTemplate = new CouchDbTemplateMailMessageGenerator(
+						documentDb,
+						"org.nunaliit.email_template.user_creation",
+						template
+						);
+				userMailNotification.setUserCreationGenerator(couchTemplate);
+			}
+			{
+				MailMessageGenerator template = new PasswordRecoveryGenerator();
+				CouchDbTemplateMailMessageGenerator couchTemplate = new CouchDbTemplateMailMessageGenerator(
+						documentDb,
+						"org.nunaliit.email_template.password_recovery",
+						template
+						);
+				userMailNotification.setPasswordRecoveryGenerator(couchTemplate);
+			}
+			{
+				MailMessageGenerator template = new PasswordReminderGenerator();
+				CouchDbTemplateMailMessageGenerator couchTemplate = new CouchDbTemplateMailMessageGenerator(
+						documentDb,
+						"org.nunaliit.email_template.password_reminder",
+						template
+						);
+				userMailNotification.setPasswordReminderGenerator(couchTemplate);
+			}
 		}
 		
 		// Server Key

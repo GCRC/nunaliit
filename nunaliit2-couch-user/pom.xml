@@ -20,6 +20,11 @@
   	</dependency>
   	<dependency>
   		<groupId>ca.carleton.gcrc</groupId>
+  		<artifactId>nunaliit2-couch-utils</artifactId>
+  		<version>${project.version}</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>ca.carleton.gcrc</groupId>
   		<artifactId>nunaliit2-security</artifactId>
   		<version>${project.version}</version>
   	</dependency>
@@ -48,10 +53,5 @@
     	<type>jar</type>
     	<scope>test</scope>
     </dependency>
-	<dependency>
-		<groupId>com.github.spullara.mustache.java</groupId>
-		<artifactId>compiler</artifactId>
-		<version>0.8.14</version>
-	</dependency>
   </dependencies>
 </project>

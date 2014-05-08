@@ -355,8 +355,6 @@ logger.error("Sending waiting for approval notification for submission");
 	}
 	
 	public void performDenialEmail(JSONObject submissionDoc, JSONObject currentDoc) throws Exception {
-		JSONObject submittedDoc = SubmissionUtils.getSubmittedDocumentFromSubmission(submissionDoc);
-		
 		JSONObject submissionInfo = submissionDoc.getJSONObject("nunaliit_submission");
 		JSONObject denial_email = submissionInfo.getJSONObject("denial_email");
 		

@@ -1,0 +1,12 @@
+<html>
+	<head>
+		<title>Submission Notification</title>
+	</head>
+	<body>
+		<h1>Submission Notification</h1>
+		<p>A new database submission media was uploaded to the atlas, which requires your approval.</p>
+		{{#submissionPageLink}}
+			<p>The page where submissions can be approved is located at: <a href="{{submissionPageLink}}">{{submissionPageLink}}</a></p>
+		{{/submissionPageLink}}
+	</body>
+</html>

@@ -74,6 +74,7 @@
 		<appassembler-maven-plugin.version>1.3</appassembler-maven-plugin.version>
 		<slf4j.version>1.7.2</slf4j.version>
 		<commons-codec.version>1.8</commons-codec.version>
+		<mustache.version>0.8.14</mustache.version>
 	</properties>
 	<modules>
 		<module>nunaliit2-jdbc</module>

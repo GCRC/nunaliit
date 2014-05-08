@@ -1,10 +1,10 @@
 package ca.carleton.gcrc.couch.onUpload.mail;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
@@ -20,6 +20,7 @@ import ca.carleton.gcrc.couch.user.UserDocument;
 import ca.carleton.gcrc.mail.MailDelivery;
 import ca.carleton.gcrc.mail.MailMessage;
 import ca.carleton.gcrc.mail.MailRecipient;
+import ca.carleton.gcrc.mail.messageGenerator.MailMessageGenerator;
 
 public class MailNotificationImpl implements MailNotification {
 
@@ -34,7 +35,9 @@ public class MailNotificationImpl implements MailNotification {
 	private boolean sendUploadMailNotification = false;
 	private String approvalPageLink = null;
 	private MailRecipient fromAddress = null;
-	
+	private MailMessageGenerator uploadNotificationGenerator = new UploadNotificationGenerator();
+	private MailMessageGenerator dailyVetterNotificationGenerator = new DailyVetterNotificationGenerator();
+
 	public MailNotificationImpl(
 		String atlasName
 		,MailDelivery mailDelivery
@@ -88,6 +91,24 @@ public class MailNotificationImpl implements MailNotification {
 				throw new Exception("Problem while parsing key: "+propName, e);
 			}
 		}
+	}
+	
+	public MailMessageGenerator getUploadNotificationGenerator() {
+		return uploadNotificationGenerator;
+	}
+
+	public void setUploadNotificationGenerator(
+			MailMessageGenerator uploadNotificationGenerator) {
+		this.uploadNotificationGenerator = uploadNotificationGenerator;
+	}
+
+	public MailMessageGenerator getDailyVetterNotificationGenerator() {
+		return dailyVetterNotificationGenerator;
+	}
+
+	public void setDailyVetterNotificationGenerator(
+			MailMessageGenerator dailyVetterNotificationGenerator) {
+		this.dailyVetterNotificationGenerator = dailyVetterNotificationGenerator;
 	}
 	
 	@Override
@@ -150,24 +171,12 @@ public class MailNotificationImpl implements MailNotification {
 				message.addToRecipient( recipient );
 			}
 			
-			// Subject
-			message.setSubject("Uploaded Media - "+docId);
-			
-			// Create HTML body part
-			StringWriter sw = new StringWriter();
-			PrintWriter pw = new PrintWriter(sw);
-			pw.println("<html><head><title>Upload Notification</title></head><body><h1>Upload Notification</h1>");
-			pw.println("<p>A media was uploaded to the atlas with the following details:</p>");
-			pw.println("<table>");
-			pw.println("<tr><td>ID</td><td>"+docId+"</td></tr>");
-			pw.println("<tr><td>Attachment</td><td>"+attachmentName+"</td></tr>");
-			pw.println("</table>");
-			if( null != approvalPageLink ) {
-				pw.println("<p>The page where uploaded media can be approved is located at: <a href=\""+approvalPageLink+"\">"+approvalPageLink+"</a></p>");
-			}
-			pw.println("</body></html>");
-			pw.flush();
-			message.setHtmlContent(sw.toString());
+			// Generate message
+			Map<String,String> parameters = new HashMap<String,String>();
+			parameters.put("docId", docId);
+			parameters.put("attachmentName", attachmentName);
+			parameters.put("approvalPageLink", approvalPageLink);
+			uploadNotificationGenerator.generateMessage(message, parameters);
 			
 			// Send message
 			mailDelivery.sendMessage(message);
@@ -240,20 +249,11 @@ public class MailNotificationImpl implements MailNotification {
 				message.addToRecipient( recipient );
 			}
 			
-			// Subject
-			message.setSubject("Uploaded Media - "+count+" file"+(count>1?"s":"")+" pending for approval");
-			
-			// Create HTML body part
-			StringWriter sw = new StringWriter();
-			PrintWriter pw = new PrintWriter(sw);
-			pw.println("<html><head><title>Upload Notification</title></head><body><h1>Upload Notification</h1>");
-			pw.println("<p>A number of files ("+count+") were uploaded to the atlas. Your approval is required.</p>");
-			if( null != approvalPageLink ) {
-				pw.println("<p>The page where uploaded files can be approved is located at: <a href=\""+approvalPageLink+"\">"+approvalPageLink+"</a></p>");
-			}
-			pw.println("</body></html>");
-			pw.flush();
-			message.setHtmlContent(sw.toString());
+			// Generate message
+			Map<String,String> parameters = new HashMap<String,String>();
+			parameters.put("count", ""+count);
+			parameters.put("approvalPageLink", approvalPageLink);
+			dailyVetterNotificationGenerator.generateMessage(message, parameters);
 			
 			// Send message
 			mailDelivery.sendMessage(message);

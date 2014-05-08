@@ -1,7 +1,5 @@
 package ca.carleton.gcrc.couch.user.mail;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
@@ -15,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import ca.carleton.gcrc.mail.MailDelivery;
 import ca.carleton.gcrc.mail.MailMessage;
 import ca.carleton.gcrc.mail.MailRecipient;
+import ca.carleton.gcrc.mail.messageGenerator.MailMessageGenerator;
 
 public class UserMailNotificationImpl implements UserMailNotification {
 

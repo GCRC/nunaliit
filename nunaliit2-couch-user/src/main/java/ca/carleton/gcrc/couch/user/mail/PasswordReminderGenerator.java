@@ -4,21 +4,17 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Map;
 
-import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.mail.MailMessage;
+import ca.carleton.gcrc.mail.messageGenerator.MailMessageGenerator;
 
-public class PasswordReminderGenerator extends CouchDbTemplateMailMessageGenerator {
+public class PasswordReminderGenerator implements MailMessageGenerator {
 
 	public PasswordReminderGenerator(){
 		
 	}
-	
-	public PasswordReminderGenerator(CouchDb documentDb, String docId){
-		super(documentDb, docId);
-	}
 
 	@Override
-	public void generateDefaultMessage(
+	public void generateMessage(
 			MailMessage message, 
 			Map<String,String> parameters
 			) throws Exception {

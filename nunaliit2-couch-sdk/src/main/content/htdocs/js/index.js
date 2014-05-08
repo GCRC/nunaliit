@@ -44,6 +44,17 @@ function main_init(config) {
 	if( !navigationName ){
 		navigationName = 'navigation.demo';
 	};
+	
+	// Compute search panel name
+	var searchPanelName = null;
+	var $searchPanel = $('.nunaliit_search_input');
+	if( $searchPanel.length > 0 ){
+		searchPanelName = $searchPanel.attr('id');
+		if( !searchPanelName ){
+			searchPanelName = $n2.getUniqueId();
+			$searchPanel.attr('id',searchPanelName);
+		};
+	};
 
 	var moduleDisplay = new $n2.couchModule.ModuleDisplay({
 		moduleName: moduleName
@@ -56,7 +67,7 @@ function main_init(config) {
 		,navigationDoc: navigationName
 		,languageSwitcherName: 'language_switcher'
 		,helpButtonName: 'help_button'
-		,searchPanelName: 'search_panel'
+		,searchPanelName: searchPanelName
 		,onSuccess: function(){
 			config.start();
 			

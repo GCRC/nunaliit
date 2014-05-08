@@ -1,10 +1,10 @@
 package ca.carleton.gcrc.couch.submission.mail;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
@@ -21,6 +21,7 @@ import ca.carleton.gcrc.couch.user.UserDocument;
 import ca.carleton.gcrc.mail.MailDelivery;
 import ca.carleton.gcrc.mail.MailMessage;
 import ca.carleton.gcrc.mail.MailRecipient;
+import ca.carleton.gcrc.mail.messageGenerator.MailMessageGenerator;
 
 public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 
@@ -33,6 +34,8 @@ public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 	private boolean sendUploadMailNotification = false;
 	private MailRecipient fromAddress = null;
 	private String submissionPageLink = null;
+	private MailMessageGenerator approvalGenerator = new SubmissionApprovalGenerator();
+	private MailMessageGenerator rejectionGenerator = new SubmissionRejectionGenerator();
 
 	public SubmissionMailNotifierImpl(
 		String atlasName
@@ -70,6 +73,22 @@ public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 				throw new Exception("Problem while parsing key: "+propName, e);
 			}
 		}
+	}
+
+	public MailMessageGenerator getApprovalGenerator() {
+		return approvalGenerator;
+	}
+
+	public void setApprovalGenerator(MailMessageGenerator approvalGenerator) {
+		this.approvalGenerator = approvalGenerator;
+	}
+
+	public MailMessageGenerator getRejectionGenerator() {
+		return rejectionGenerator;
+	}
+
+	public void setRejectionGenerator(MailMessageGenerator rejectionGenerator) {
+		this.rejectionGenerator = rejectionGenerator;
 	}
 	
 	@Override
@@ -134,20 +153,11 @@ public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 				message.addToRecipient( recipient );
 			}
 			
-			// Subject
-			message.setSubject("Uploaded Submission - "+submissionDoc.optString("_id", "<unknown>"));
-			
-			// Create HTML body part
-			StringWriter sw = new StringWriter();
-			PrintWriter pw = new PrintWriter(sw);
-			pw.println("<html><head><title>Submission Notification</title></head><body><h1>Submission Notification</h1>");
-			pw.println("<p>A new dataabse submission media was uploaded to the atlas, which requires your approval.</p>");
-			if( null != submissionPageLink ) {
-				pw.println("<p>The page where submissions can be approved is located at: <a href=\""+submissionPageLink+"\">"+submissionPageLink+"</a></p>");
-			}
-			pw.println("</body></html>");
-			pw.flush();
-			message.setHtmlContent(sw.toString());
+			// Generate message
+			Map<String,String> parameters = new HashMap<String,String>();
+			parameters.put("submissionDocId", submissionDoc.optString("_id",null));
+			parameters.put("submissionPageLink", submissionPageLink);
+			approvalGenerator.generateMessage(message, parameters);
 			
 			// Send message
 			mailDelivery.sendMessage(message);
@@ -198,25 +208,12 @@ public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 				message.addToRecipient( recipient );
 			}
 			
-			// Subject
-			message.setSubject("Submission Rejected - "+submissionDoc.optString("_id", "<unknown>"));
-			
-			// Create HTML body part
-			StringWriter sw = new StringWriter();
-			PrintWriter pw = new PrintWriter(sw);
-			pw.println("<html><head><title>Submission Rejected</title></head><body><h1>Submission Rejected</h1>");
-			pw.println("<p>Your submission to the database was rejected.</p>");
-			
-			if( null != rejectionReason 
-			 && false == "".equals(rejectionReason) ) {
-				pw.println("<p>A reason for the rejection was provied: "+rejectionReason+"</p>");
-			} else {
-				pw.println("<p>There was not a specified reason for the rejection.</p>");
-			}
-			
-			pw.println("</body></html>");
-			pw.flush();
-			message.setHtmlContent(sw.toString());
+			// Generate message
+			Map<String,String> parameters = new HashMap<String,String>();
+			parameters.put("submissionDocId", submissionDoc.optString("_id",null));
+			parameters.put("submissionPageLink", submissionPageLink);
+			parameters.put("rejectionReason", rejectionReason);
+			rejectionGenerator.generateMessage(message, parameters);
 			
 			// Send message
 			mailDelivery.sendMessage(message);

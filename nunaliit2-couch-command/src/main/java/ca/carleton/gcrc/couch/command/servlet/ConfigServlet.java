@@ -36,22 +36,28 @@ import ca.carleton.gcrc.couch.onUpload.UploadWorker;
 import ca.carleton.gcrc.couch.onUpload.UploadWorkerSettings;
 import ca.carleton.gcrc.couch.onUpload.geojson.GeoJsonFileConverter;
 import ca.carleton.gcrc.couch.onUpload.gpx.GpxFileConverter;
+import ca.carleton.gcrc.couch.onUpload.mail.DailyVetterNotificationGenerator;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotification;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotificationImpl;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotificationNull;
 import ca.carleton.gcrc.couch.onUpload.mail.MailVetterDailyNotificationTask;
+import ca.carleton.gcrc.couch.onUpload.mail.UploadNotificationGenerator;
 import ca.carleton.gcrc.couch.onUpload.multimedia.MultimediaFileConverter;
 import ca.carleton.gcrc.couch.onUpload.pdf.PdfFileConverter;
 import ca.carleton.gcrc.couch.submission.SubmissionRobot;
 import ca.carleton.gcrc.couch.submission.SubmissionRobotSettings;
+import ca.carleton.gcrc.couch.submission.mail.SubmissionApprovalGenerator;
 import ca.carleton.gcrc.couch.submission.mail.SubmissionMailNotifier;
 import ca.carleton.gcrc.couch.submission.mail.SubmissionMailNotifierImpl;
 import ca.carleton.gcrc.couch.submission.mail.SubmissionMailNotifierNull;
+import ca.carleton.gcrc.couch.submission.mail.SubmissionRejectionGenerator;
 import ca.carleton.gcrc.couch.user.UserDesignDocumentImpl;
 import ca.carleton.gcrc.couch.user.UserServlet;
+import ca.carleton.gcrc.couch.utils.CouchDbTemplateMailMessageGenerator;
 import ca.carleton.gcrc.json.servlet.JsonServlet;
 import ca.carleton.gcrc.mail.MailDelivery;
 import ca.carleton.gcrc.mail.MailDeliveryImpl;
+import ca.carleton.gcrc.mail.messageGenerator.MailMessageGenerator;
 import ca.carleton.gcrc.olkit.multimedia.utils.MultimediaConfiguration;
 import ca.carleton.gcrc.upload.OnUploadedListenerSingleton;
 import ca.carleton.gcrc.upload.UploadServlet;
@@ -426,6 +432,26 @@ public class ConfigServlet extends JsonServlet {
 					,couchDd.getDatabase()
 					);
 				mail.setMailProperties(props);
+				
+				// Mail templates
+				{
+					MailMessageGenerator template = new UploadNotificationGenerator();
+					CouchDbTemplateMailMessageGenerator couchdbTemplate = new CouchDbTemplateMailMessageGenerator(
+						documentDatabase,
+						"org.nunaliit.email_template.upload",
+						template
+						);
+					mail.setUploadNotificationGenerator(couchdbTemplate);
+				}
+				{
+					MailMessageGenerator template = new DailyVetterNotificationGenerator();
+					CouchDbTemplateMailMessageGenerator couchdbTemplate = new CouchDbTemplateMailMessageGenerator(
+						documentDatabase,
+						"org.nunaliit.email_template.daily_vetter",
+						template
+						);
+					mail.setDailyVetterNotificationGenerator(couchdbTemplate);
+				}
 
 				submissionNotifier = new SubmissionMailNotifierImpl(
 					atlasProperties.getAtlasName()
@@ -433,6 +459,26 @@ public class ConfigServlet extends JsonServlet {
 					,couchDd.getDatabase()
 					);
 				submissionNotifier.parseMailProperties(props);
+				
+				// Mail templates
+				{
+					MailMessageGenerator template = new SubmissionApprovalGenerator();
+					CouchDbTemplateMailMessageGenerator couchdbTemplate = new CouchDbTemplateMailMessageGenerator(
+						documentDatabase,
+						"org.nunaliit.email_template.submission_approval",
+						template
+						);
+					submissionNotifier.setApprovalGenerator(couchdbTemplate);
+				}
+				{
+					MailMessageGenerator template = new SubmissionRejectionGenerator();
+					CouchDbTemplateMailMessageGenerator couchdbTemplate = new CouchDbTemplateMailMessageGenerator(
+						documentDatabase,
+						"org.nunaliit.email_template.submission_rejection",
+						template
+						);
+					submissionNotifier.setRejectionGenerator(couchdbTemplate);
+				}
 				
 				mailNotification = mail;
 				this.submissionNotifier = submissionNotifier;

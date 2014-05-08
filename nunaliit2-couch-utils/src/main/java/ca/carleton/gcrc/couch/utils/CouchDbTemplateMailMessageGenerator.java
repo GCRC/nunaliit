@@ -1,4 +1,4 @@
-package ca.carleton.gcrc.couch.user.mail;
+package ca.carleton.gcrc.couch.utils;
 
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -14,11 +14,13 @@ import com.github.mustachejava.MustacheFactory;
 
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.mail.MailMessage;
+import ca.carleton.gcrc.mail.messageGenerator.MailMessageGenerator;
 
-public abstract class CouchDbTemplateMailMessageGenerator implements MailMessageGenerator {
+public class CouchDbTemplateMailMessageGenerator implements MailMessageGenerator {
 	
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
+	private MailMessageGenerator defaultGenerator = null;
 	private CouchDb documentDb = null;
 	private String docId = null;
 
@@ -26,15 +28,15 @@ public abstract class CouchDbTemplateMailMessageGenerator implements MailMessage
 		
 	}
 
-	public CouchDbTemplateMailMessageGenerator(CouchDb documentDb, String docId){
+	public CouchDbTemplateMailMessageGenerator(
+			CouchDb documentDb, 
+			String docId, 
+			MailMessageGenerator defaultGenerator
+			){
+		this.defaultGenerator = defaultGenerator;
 		this.documentDb = documentDb;
 		this.docId = docId;
 	}
-	
-	abstract void generateDefaultMessage(
-			MailMessage message, 
-			Map<String, String> parameters
-			) throws Exception;
 	
 	public CouchDb getDocumentDb() {
 		return documentDb;
@@ -55,6 +57,14 @@ public abstract class CouchDbTemplateMailMessageGenerator implements MailMessage
 		this.docId = docId;
 	}
 	
+	public MailMessageGenerator getDefaultGenerator() {
+		return defaultGenerator;
+	}
+
+	public void setDefaultGenerator(MailMessageGenerator defaultGenerator) {
+		this.defaultGenerator = defaultGenerator;
+	}
+
 	@Override
 	public void generateMessage(
 			MailMessage message,
@@ -98,4 +108,17 @@ public abstract class CouchDbTemplateMailMessageGenerator implements MailMessage
 			generateDefaultMessage(message,parameters);
 		}
 	}
+
+	private void generateDefaultMessage(
+			MailMessage message, 
+			Map<String, String> parameters
+			) throws Exception {
+		
+		if( null != defaultGenerator ){
+			defaultGenerator.generateMessage(message, parameters);
+		} else {
+			throw new Exception("Default message generator is not set");
+		}
+	}
+	
 }

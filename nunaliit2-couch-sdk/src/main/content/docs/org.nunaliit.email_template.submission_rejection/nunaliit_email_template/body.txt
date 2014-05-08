@@ -1,0 +1,16 @@
+<html>
+	<head>
+		<title>Submission Rejected</title>
+	</head>
+	<body>
+		<h1>Submission Rejected</h1>
+		<p>Your submission to the database was rejected.</p>
+		
+		{{#rejectionReason}}
+			<p>A reason for the rejection was provided: {{rejectionReason}}</p>
+		{{/rejectionReason}}
+		{{^rejectionReason}}
+			<p>There was not a specified reason for the rejection.</p>
+		{{/rejectionReason}}
+	</body>
+</html>
