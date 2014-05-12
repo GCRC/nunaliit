@@ -93,7 +93,7 @@ var Display = $n2.Class({
 	
 	,postProcessDisplayFns: null
 	
-	,displayRelatedInfoFunction: null
+	,displayRelatedInfoProcess: null
 	
 	,displayOnlyRelatedSchemas: null
 	
@@ -129,7 +129,8 @@ var Display = $n2.Class({
 			,uploadService: null
 			,serviceDirectory: null
 			,postProcessDisplayFunction: null
-			,displayRelatedInfoFunction: null
+			,displayRelatedInfoFunction: null // legacy
+			,displayRelatedInfoProcess: null
 			,classDisplayFunctions: {}
 		
 			// Boolean options
@@ -206,23 +207,29 @@ var Display = $n2.Class({
 		};
 		
 		// Function to display related information
-		this.displayRelatedInfoFunction = opts.displayRelatedInfoFunction;
-		if( customService 
-		 && !this.displayRelatedInfoFunction ){
+		if( opts.displayRelatedInfoProcess ){
+			this.displayRelatedInfoProcess = opts.displayRelatedInfoProcess;
+		};
+		if( !this.displayRelatedInfoProcess 
+		 && opts.displayRelatedInfoFunction ){
+			this.displayRelatedInfoProcess 
+				= new LegacyDisplayRelatedFunctionAdapter(opts.displayRelatedInfoFunction);
+		};
+		if( !this.displayRelatedInfoProcess 
+		 && customService ){
 			var displayRelatedFn = customService.getOption('displayRelatedInfoFunction');
 			if( typeof displayRelatedFn === 'function' ){
-				this.displayRelatedInfoFunction = displayRelatedFn;
+				this.displayRelatedInfoProcess 
+					= new LegacyDisplayRelatedFunctionAdapter(displayRelatedFn);
 			};
 		};
-		if( !this.displayRelatedInfoFunction ) {
+		if( !this.displayRelatedInfoProcess ) {
 			if( this.displayOnlyRelatedSchemas ) {
-				this.displayRelatedInfoFunction = function(opts_){
-					DisplayRelatedInfo(opts_);
-				};
+				this.displayRelatedInfoProcess 
+					= new LegacyDisplayRelatedFunctionAdapter(DisplayRelatedInfo);
 			} else {
-				this.displayRelatedInfoFunction = function(opts_){
-					DisplayLinkedInfo(opts_);
-				};
+				this.displayRelatedInfoProcess 
+					= new LegacyDisplayRelatedFunctionAdapter(DisplayLinkedInfo);
 			};
 		};
 		
@@ -339,7 +346,7 @@ var Display = $n2.Class({
 			var relatedInfoId = $n2.getUniqueId();
 			var $div = $('<div id="'+relatedInfoId+'" class="couchDisplayRelated_'+$n2.utils.stringToHtmlId(data._id)+'"></div>');
 			$elem.append($div);
-			_this.displayRelatedInfoFunction({
+			_this.displayRelatedInfoProcess.display({
 				divId: relatedInfoId
 				,display: _this
 				,doc: data
@@ -503,7 +510,6 @@ var Display = $n2.Class({
 		var data = opt.doc;
 		var schema = opt.schema;
 		
-		var firstButton = true;
 		var dispatcher = this.dispatchService;
 		var schemaRepository = _this.schemaRepository;
 
@@ -511,11 +517,6 @@ var Display = $n2.Class({
  		if( opt.focus 
  		 && data
  		 && data._id ) {
- 			if( firstButton ) {
- 				firstButton = false;
- 			} else {
- 				$buttons.append( $('<span>&nbsp;</span>') );
- 			};
 			var $focusButton = $('<a href="#"></a>');
 			var focusText = _loc('More Info');
 			$focusButton.text( focusText );
@@ -533,11 +534,6 @@ var Display = $n2.Class({
  		// Show 'edit' button
  		if( opt.edit 
  		 && $n2.couchMap.canEditDoc(data) ) {
- 			if( firstButton ) {
- 				firstButton = false;
- 			} else {
- 				$buttons.append( $('<span>&nbsp;</span>') );
- 			};
 			var $editButton = $('<a href="#"></a>');
 			var editText = _loc('Edit');
 			$editButton.text( editText );
@@ -552,11 +548,6 @@ var Display = $n2.Class({
  		// Show 'delete' button
  		if( opt['delete'] 
  		 && $n2.couchMap.canDeleteDoc(data) ) {
- 			if( firstButton ) {
- 				firstButton = false;
- 			} else {
- 				$buttons.append( $('<span>&nbsp;</span>') );
- 			};
 			var $deleteButton = $('<a href="#"></a>');
 			var deleteText = _loc('Delete');
 			$deleteButton.text( deleteText );
@@ -570,76 +561,14 @@ var Display = $n2.Class({
 		
  		// Show 'add related' button
 		if( opt.related
-		 && opt.schema
-		 && opt.schema.relatedSchemaNames 
-		 && opt.schema.relatedSchemaNames.length
-		 ) {
-			var showRelatedButton = true;
-			if( this.restrictAddRelatedButtonToLoggedIn ){
-				var sessionContext = $n2.couch.getSession().getContext();
-				if( !sessionContext || !sessionContext.name ) {
-					showRelatedButton = false;
-				};
-			};
-			
-			if( showRelatedButton ) {
-	 			if( firstButton ) {
-	 				firstButton = false;
-	 			} else {
-	 				$buttons.append( $('<span>&nbsp;</span>') );
-	 			};
-//				var $addRelatedButton = $('<a href="#"></a>');
-//				var addRelatedText = _loc('Add Related Item');
-//				$addRelatedButton.text( addRelatedText );
-//				$buttons.append($addRelatedButton);
-//				$addRelatedButton.click(function(){
-//					_this._addRelatedDocument(data._id, opt.schema.relatedSchemaNames);
-//					return false;
-//				});
-//				addClasses($addRelatedButton, 'add_related_item');
-
-	 			var selectId = $n2.getUniqueId();
-				var $addRelatedButton = $('<select>')
-					.attr('id',selectId)
-					.appendTo($buttons);
-				$('<option>')
-					.text( _loc('Add Related Item') )
-					.val('')
-					.appendTo($addRelatedButton);
-				for(var i=0,e=opt.schema.relatedSchemaNames.length; i<e; ++i){
-					var schemaName = opt.schema.relatedSchemaNames[i];
-					$('<option>')
-						.text(schemaName)
-						.val(schemaName)
-						.appendTo($addRelatedButton);
-					
-					if( schemaRepository ){
-						schemaRepository.getSchema({
-							name: schemaName
-							,onSuccess: function(schema){
-								$('#'+selectId).find('option').each(function(){
-									var $option = $(this);
-									if( $option.val() === schema.name
-									 && schema.label ){
-										$option.text(schema.label);
-									};
-								});
-							}
-						});
-					};
-				};
-				
-				$addRelatedButton.change(function(){
-					var val = $(this).val();
-					$(this).val('');
-					_this._addRelatedDocument(data._id, [val]);
-					return false;
-				});
-				addClasses($addRelatedButton, 'add_related_item');
-				
-				$addRelatedButton.menuselector();
-			};
-		};
+		 && this.displayRelatedInfoProcess ) {
+ 			this.displayRelatedInfoProcess.addButton({
+ 				display: this
+ 				,div: $buttons[0]
+ 				,doc: data
+ 				,schema: opt.schema
+ 			});
+ 		};
 		
  		// Show 'reply' button
 		if( opt.reply
@@ -656,11 +585,6 @@ var Display = $n2.Class({
 			};
 			
 			if( showReplyButton ) {
-	 			if( firstButton ) {
-	 				firstButton = false;
-	 			} else {
-	 				$buttons.append( $('<span>&nbsp;</span>') );
-	 			};
 				var $replyButton = $('<a href="#"></a>');
 				var replyText = _loc('Reply');
 				$replyButton.text( replyText );
@@ -697,11 +621,6 @@ var Display = $n2.Class({
 			};
 
 			if( showFindOnMapButton ) {
-	 			if( firstButton ) {
-	 				firstButton = false;
-	 			} else {
-	 				$buttons.append( $('<span>&nbsp;</span>') );
-	 			};
 				var $findGeomButton = $('<a href="#"></a>');
 				var findGeomText = _loc('Find on Map');
 				$findGeomButton.text( findGeomText );
@@ -761,11 +680,6 @@ var Display = $n2.Class({
 		 && dispatcher
 		 && dispatcher.isEventTypeRegistered('addLayerToMap')
 		 ) {
- 			if( firstButton ) {
- 				firstButton = false;
- 			} else {
- 				$buttons.append( $('<span>&nbsp;</span>') );
- 			};
 			var $addLayerButton = $('<a href="#"></a>');
 			var btnText = _loc('Add Layer');
 			$addLayerButton.text( btnText );
@@ -1356,13 +1270,102 @@ var Display = $n2.Class({
 				var $e = $(this);
 				// Refresh
 				$e.empty();
-				_this.displayRelatedInfoFunction({
+				_this.displayRelatedInfoProcess.display({
 					div: $e
 					,display: _this
 					,doc: data
 					,schema: schema
 				});
 			});
+		};
+	}
+});
+
+//===================================================================================
+
+var LegacyDisplayRelatedFunctionAdapter = $n2.Class({
+	legacyFunction: null,
+	
+	initialize: function(legacyFunction){
+		this.legacyFunction = legacyFunction;
+	},
+	
+	display: function(opts_){
+		return this.legacyFunction(opts_);
+	},
+	
+	addButton: function(opts_){
+		var opts = $n2.extend({
+			display: null
+			,div: null
+			,doc: null
+			,schema: null
+		},opts_);
+		
+		var display = opts.display;
+		var data = opts.doc;
+		var schema = opts.schema;
+		var $buttons = $(opts.div);
+		
+		var schemaRepository = display.schemaRepository;
+		
+ 		// Show 'add related' button
+		if( schema
+		 && schema.relatedSchemaNames 
+		 && schema.relatedSchemaNames.length
+		 ) {
+			var showRelatedButton = true;
+			if( display.restrictAddRelatedButtonToLoggedIn ){
+				var sessionContext = $n2.couch.getSession().getContext();
+				if( !sessionContext || !sessionContext.name ) {
+					showRelatedButton = false;
+				};
+			};
+			
+			if( showRelatedButton ) {
+	 			var selectId = $n2.getUniqueId();
+				var $addRelatedButton = $('<select>')
+					.attr('id',selectId)
+					.appendTo($buttons);
+				$('<option>')
+					.text( _loc('Add Related Item') )
+					.val('')
+					.appendTo($addRelatedButton);
+				for(var i=0,e=schema.relatedSchemaNames.length; i<e; ++i){
+					var schemaName = schema.relatedSchemaNames[i];
+					$('<option>')
+						.text(schemaName)
+						.val(schemaName)
+						.appendTo($addRelatedButton);
+					
+					if( schemaRepository ){
+						schemaRepository.getSchema({
+							name: schemaName
+							,onSuccess: function(schema){
+								$('#'+selectId).find('option').each(function(){
+									var $option = $(this);
+									if( $option.val() === schema.name
+									 && schema.label ){
+										$option.text(schema.label);
+									};
+								});
+							}
+						});
+					};
+				};
+				
+				$addRelatedButton.change(function(){
+					var val = $(this).val();
+					$(this).val('');
+					display._addRelatedDocument(data._id, [val]);
+					return false;
+				});
+				
+				$addRelatedButton.addClass('nunaliit_form_link');
+				$addRelatedButton.addClass('nunaliit_form_link_add_related_item');
+				
+				$addRelatedButton.menuselector();
+			};
 		};
 	}
 });
