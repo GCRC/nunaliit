@@ -35,6 +35,8 @@ $Id: n2.couchDisplay.js 8441 2012-08-15 17:48:33Z jpfiset $
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
+var DH = 'n2.couchDisplay';
+
 function docCreationTimeSort(lhs, rhs) {
 	var timeLhs = 0;
 	var timeRhs = 0;
@@ -56,56 +58,119 @@ function startsWith(s, prefix) {
 	return (left === prefix);
 };
 
-var defaultOptions = {
-	documentSource: null
-	,displayPanelName: null
-	,showService: null // asynchronous resolver
-	,editor: null
-	,uploadService: null
-	,serviceDirectory: null
-	,postProcessDisplayFunction: null
-	,displayRelatedInfoFunction: null
-	,displayOnlyRelatedSchemas: false
-	,displayBriefInRelatedInfo: false
+function boolOption(optionName, options, customService){
+	var flag = false;
 	
-	/*
-	 * if defined, used by the map display logic to invoke a function to initiate 
-	 * side panel display processing as a result of clicking a map feature.  
-	 * 
-	 * @return null => nothing done so continue with normal display processing; otherwise
-	 *         display was done and the default clicked feature handling is bypassed.
-	 */
-	,translateCallback: null
-	,classDisplayFunctions: {}
-	,restrictAddRelatedButtonToLoggedIn: false
-};	
+	if( options[optionName] ){
+		flag = true;
+	};
+	
+	if( customService && !flag ){
+		var o = customService.getOption(optionName);
+		if( o ){
+			flag = true;
+		};
+	};
+	
+	return flag;
+};
 
-$n2.couchDisplay = $n2.Class({
+// ===================================================================================
+
+var Display = $n2.Class({
 	
 	options: null
+	
+	,documentSource: null
+	
+	,displayPanelName: null
 	
 	,currentFeature: null
 	
 	,createRelatedDocProcess: null
 	
-	,requestService: null
-	
 	,defaultSchema: null
 	
 	,postProcessDisplayFns: null
 	
-	,dispatchHandle: null
+	,displayRelatedInfoFunction: null
 	
-	,initialize: function(options_) {
+	,displayOnlyRelatedSchemas: null
+	
+	,displayBriefInRelatedInfo: null
+	
+	,restrictAddRelatedButtonToLoggedIn: null
+	
+	,restrictReplyButtonToLoggedIn: null
+	
+	,classDisplayFunctions: null
+	
+	,showService: null
+	
+	,uploadService: null
+	
+	,customService: null
+	
+	,authService: null
+	
+	,requestService: null
+	
+	,dispatchService: null
+	
+	,schemaRepository: null
+	
+	,initialize: function(opts_) {
 		var _this = this;
 		
-		this.options = $n2.extend({}, defaultOptions, options_);
+		var opts = $n2.extend({
+			documentSource: null
+			,displayPanelName: null
+			,showService: null // asynchronous resolver
+			,uploadService: null
+			,serviceDirectory: null
+			,postProcessDisplayFunction: null
+			,displayRelatedInfoFunction: null
+			,classDisplayFunctions: {}
 		
+			// Boolean options
+			,displayOnlyRelatedSchemas: false
+			,displayBriefInRelatedInfo: false
+			,restrictAddRelatedButtonToLoggedIn: false
+			,restrictReplyButtonToLoggedIn: false
+		}, opts_);
+		
+		this.documentSource = opts.documentSource;
+		this.displayPanelName = opts.displayPanelName;
+		this.uploadService = opts.uploadService;
+		this.classDisplayFunctions = opts.classDisplayFunctions;
+		
+		if( opts.serviceDirectory ){
+			this.showService = opts.serviceDirectory.showService;
+			this.customService = opts.serviceDirectory.customService;
+			this.authService = opts.serviceDirectory.authService;			
+			this.requestService = opts.serviceDirectory.requestService;
+			this.schemaRepository = opts.serviceDirectory.schemaRepository;
+			this.dispatchService = opts.serviceDirectory.dispatchService;
+		};
+		
+		if( !this.showService ){
+			this.showService = opts.showService;
+		};
+		
+		this.displayOnlyRelatedSchemas = 
+			boolOption('displayOnlyRelatedSchemas',opts,this.customService);
+		this.displayBriefInRelatedInfo = 
+			boolOption('displayBriefInRelatedInfo',opts,this.customService);
+		this.restrictAddRelatedButtonToLoggedIn = 
+			boolOption('restrictAddRelatedButtonToLoggedIn',opts,this.customService);
+		this.restrictReplyButtonToLoggedIn = 
+			boolOption('restrictReplyButtonToLoggedIn',opts,this.customService);
+			
 		// Post-process display functions
-		var customService = this._getCustomService();
+		var customService = this.customService;
 		this.postProcessDisplayFns = [];
-		if( typeof(this.options.postProcessDisplayFunction) === 'function' ){
-			this.postProcessDisplayFns.push(this.options.postProcessDisplayFunction);
+		if( typeof(opts.postProcessDisplayFunction) === 'function' ){
+			this.postProcessDisplayFns.push(opts.postProcessDisplayFunction);
 		};
 		if( customService ){
 			var postProcessFns = customService.getOption('displayPostProcessFunctions');
@@ -118,49 +183,55 @@ $n2.couchDisplay = $n2.Class({
 			};
 		};
 
-		var dispatcher = this._getDispatcher();
+		var dispatcher = this.dispatchService;
 		if( dispatcher ) {
-			this.dispatchHandle = dispatcher.getHandle('n2.couchDisplay');
 			var f = function(msg){
 				_this._handleDispatch(msg);
 			};
-			dispatcher.register(this.dispatchHandle, 'selected', f);
-			dispatcher.register(this.dispatchHandle, 'searchResults', f);
-			dispatcher.register(this.dispatchHandle, 'documentDeleted', f);
-			dispatcher.register(this.dispatchHandle, 'authLoggedIn', f);
-			dispatcher.register(this.dispatchHandle, 'authLoggedOut', f);
-			dispatcher.register(this.dispatchHandle, 'editClosed', f);
-			dispatcher.register(this.dispatchHandle, 'documentContentCreated', f);
-			dispatcher.register(this.dispatchHandle, 'documentContentUpdated', f);
+			dispatcher.register(DH, 'selected', f);
+			dispatcher.register(DH, 'searchResults', f);
+			dispatcher.register(DH, 'documentDeleted', f);
+			dispatcher.register(DH, 'authLoggedIn', f);
+			dispatcher.register(DH, 'authLoggedOut', f);
+			dispatcher.register(DH, 'editClosed', f);
+			dispatcher.register(DH, 'documentContentCreated', f);
+			dispatcher.register(DH, 'documentContentUpdated', f);
 		};
 
-		var requestService = this._getRequestService();
-		if( requestService ){
-			requestService.addDocumentListener(function(doc){
+		if( this.requestService ){
+			this.requestService.addDocumentListener(function(doc){
 				_this._refreshDocument(doc);
 				_this._populateWaitingDocument(doc);
 			});
 		};
 		
-		if( !this.options.displayRelatedInfoFunction ) {
-			var flag = this._getBooleanOption('displayOnlyRelatedSchemas');
-			if( flag ) {
-				this.options.displayRelatedInfoFunction = function(opts_){
-					_this._displayRelatedInfo(opts_);
+		// Function to display related information
+		this.displayRelatedInfoFunction = opts.displayRelatedInfoFunction;
+		if( customService 
+		 && !this.displayRelatedInfoFunction ){
+			var displayRelatedFn = customService.getOption('displayRelatedInfoFunction');
+			if( typeof displayRelatedFn === 'function' ){
+				this.displayRelatedInfoFunction = displayRelatedFn;
+			};
+		};
+		if( !this.displayRelatedInfoFunction ) {
+			if( this.displayOnlyRelatedSchemas ) {
+				this.displayRelatedInfoFunction = function(opts_){
+					DisplayRelatedInfo(opts_);
 				};
 			} else {
-				this.options.displayRelatedInfoFunction = function(opts_){
-					_this._displayLinkedInfo(opts_);
+				this.displayRelatedInfoFunction = function(opts_){
+					DisplayLinkedInfo(opts_);
 				};
 			};
 		};
 		
 		this.createRelatedDocProcess = new $n2.couchRelatedDoc.CreateRelatedDocProcess({
-			documentSource: this.options.documentSource
-			,schemaRepository: this._getSchemaRepository()
-			,uploadService: this.options.uploadService
-			,showService: this._getShowService()
-			,authService: this._getAuthService()
+			documentSource: this.documentSource
+			,schemaRepository: this.schemaRepository
+			,uploadService: this.uploadService
+			,showService: this.showService
+			,authService: this.authService
 		});
 	}
 
@@ -193,45 +264,16 @@ $n2.couchDisplay = $n2.Class({
 	}
 
 	,_shouldSuppressNonApprovedMedia: function(){
-		return this._getShowService().options.eliminateNonApprovedMedia;
+		return this.showService.options.eliminateNonApprovedMedia;
 	}
 
 	,_shouldSuppressDeniedMedia: function(){
-		return this._getShowService().options.eliminateDeniedMedia;
+		return this.showService.options.eliminateDeniedMedia;
 	}
 	
 	,_getDisplayDiv: function(){
-		var divId = this.options.displayPanelName;
+		var divId = this.displayPanelName;
 		return $('#'+divId);
-	}
-	
-	,_getAuthService: function(){
-		if( this.options.serviceDirectory ){
-			return this.options.serviceDirectory.authService;
-		};
-		
-		return null;
-	}
-	
-	,_getShowService: function(){
-		if( this.options.showService ){
-			return this.options.showService;
-		};
-		
-		return this.options.serviceDirectory.showService;
-	}
-	
-	,_getRequestService: function(){
-		return this.options.serviceDirectory.requestService;
-	}
-	
-	,_getSchemaRepository: function(){
-		var repository = null;
-		if( this.options
-		 && this.options.serviceDirectory ){
-			repository = this.options.serviceDirectory.schemaRepository;
-		};
-		return repository;
 	}
 	
 	,_displayObject: function($side, data, opt_) {
@@ -256,12 +298,12 @@ $n2.couchDisplay = $n2.Class({
 		var $sElem = $('<div class="n2s_handleHover"></div>');
 		$elem.append($sElem);
 		
-		this._getShowService().displayDocument($sElem, {
+		this.showService.displayDocument($sElem, {
 			onDisplayed: onDisplayed
 		}, data);
 
 		if( data.nunaliit_schema ) {
-			var schemaRepository = _this._getSchemaRepository();
+			var schemaRepository = _this.schemaRepository;
 			if( schemaRepository ) {
 				schemaRepository.getSchema({
 					name: data.nunaliit_schema
@@ -297,17 +339,18 @@ $n2.couchDisplay = $n2.Class({
 			var relatedInfoId = $n2.getUniqueId();
 			var $div = $('<div id="'+relatedInfoId+'" class="couchDisplayRelated_'+$n2.utils.stringToHtmlId(data._id)+'"></div>');
 			$elem.append($div);
-			_this.options.displayRelatedInfoFunction({
+			_this.displayRelatedInfoFunction({
 				divId: relatedInfoId
+				,display: _this
 				,doc: data
 				,schema: schema
 			});
 		};
 		
 		function onDisplayed($sElem, data, schema, opt_){
-			if( _this.options.classDisplayFunctions ) {
-				for(var className in _this.options.classDisplayFunctions){
-					var fn = _this.options.classDisplayFunctions[className];
+			if( _this.classDisplayFunctions ) {
+				for(var className in _this.classDisplayFunctions){
+					var fn = _this.classDisplayFunctions[className];
 					var jqCallback = eachFunctionForClass(className, fn, data, opt);
 					$sElem.find('.'+className).each(jqCallback);
 				};
@@ -407,7 +450,7 @@ $n2.couchDisplay = $n2.Class({
 		};
 		
 		if( docId ){
-			this.options.documentSource.getDocument({
+			this.documentSource.getDocument({
 				docId: docId
 				,onSuccess: getSchema
 				,onError:function(){}
@@ -416,7 +459,7 @@ $n2.couchDisplay = $n2.Class({
 		
 		function getSchema(doc){
 			if( doc.nunaliit_schema ) {
-				var schemaRepository = _this._getSchemaRepository();
+				var schemaRepository = _this.schemaRepository;
 				if( schemaRepository ) {
 					schemaRepository.getSchema({
 						name: doc.nunaliit_schema
@@ -461,8 +504,8 @@ $n2.couchDisplay = $n2.Class({
 		var schema = opt.schema;
 		
 		var firstButton = true;
-		var dispatcher = this._getDispatcher();
-		var schemaRepository = _this._getSchemaRepository();
+		var dispatcher = this.dispatchService;
+		var schemaRepository = _this.schemaRepository;
 
  		// Show 'focus' button
  		if( opt.focus 
@@ -532,8 +575,7 @@ $n2.couchDisplay = $n2.Class({
 		 && opt.schema.relatedSchemaNames.length
 		 ) {
 			var showRelatedButton = true;
-			var flag = this._getBooleanOption('restrictAddRelatedButtonToLoggedIn');
-			if( flag ){
+			if( this.restrictAddRelatedButtonToLoggedIn ){
 				var sessionContext = $n2.couch.getSession().getContext();
 				if( !sessionContext || !sessionContext.name ) {
 					showRelatedButton = false;
@@ -606,8 +648,7 @@ $n2.couchDisplay = $n2.Class({
 		 && opt.schema.options.enableReplies
 		 ) {
 			var showReplyButton = true;
-			var flag = this._getBooleanOption('restrictReplyButtonToLoggedIn');
-			if( flag ){
+			if( this.restrictReplyButtonToLoggedIn ){
 				var sessionContext = $n2.couch.getSession().getContext();
 				if( !sessionContext || !sessionContext.name ) {
 					showReplyButton = false;
@@ -646,7 +687,7 @@ $n2.couchDisplay = $n2.Class({
 					type:'mapGetLayers'
 					,layers:{}
 				};
-				dispatcher.synchronousCall(this.dispatchHandle,m);
+				dispatcher.synchronousCall(DH,m);
 				for(var i=0,e=data.nunaliit_layers.length; i<e; ++i){
 					var layerId = data.nunaliit_layers[i];
 					if( m.layers[layerId] ){
@@ -677,7 +718,7 @@ $n2.couchDisplay = $n2.Class({
 							type:'mapGetLayers'
 							,layers:{}
 						};
-					dispatcher.synchronousCall(_this.dispatchHandle,m);
+					dispatcher.synchronousCall(DH,m);
 					for(var i=0,e=data.nunaliit_layers.length; i<e; ++i){
 						var layerId = data.nunaliit_layers[i];
 						if( m.layers[layerId] ){
@@ -740,7 +781,7 @@ $n2.couchDisplay = $n2.Class({
 				,type: 'couchdb'
 				,options: {
 					layerName: layerId
-					,documentSource: this.options.documentSource
+					,documentSource: this.documentSource
 				}
 			};
 			
@@ -859,244 +900,6 @@ $n2.couchDisplay = $n2.Class({
 		};
 	}
 	
-	,_displayRelatedInfo: function(opts_){
-		var opts = $n2.extend({
-			divId: null
-			,div: null
-			,doc: null
-			,schema: null
-		},opts_);
-		
-		var _this = this;
-		var doc = opts.doc;
-		var docId = doc._id;
-		var schema = opts.schema;
-		
-		var $elem = opts.div;
-		if( ! $elem ) {
-			$elem = $('#'+opts.divId);
-		};
-		if( ! $elem.length) {
-			return;
-		};
-		
-		if( !schema 
-		 || !schema.relatedSchemaNames
-		 || !schema.relatedSchemaNames.length ){
-			return;
-		};
-		
-		// Make a map of related schemas
-		var schemaInfoByName = {};
-		for(var i=0,e=schema.relatedSchemaNames.length; i<e; ++i){
-			var relatedSchemaName = schema.relatedSchemaNames[i];
-			schemaInfoByName[relatedSchemaName] = { docIds:[] };
-		};
-
-		// Get references
-		this._getAllReferences({
-			doc: doc
-			,onSuccess: showSections
-		});
-
-		function showSections(refInfo){
-			// Accumulate document ids under the associated schema
-			for(var requestDocId in refInfo){
-				if( refInfo[requestDocId].exists 
-				 && refInfo[requestDocId].reverse
-				 && refInfo[requestDocId].schema ) {
-					var schemaName = refInfo[requestDocId].schema;
-					var schemaInfo = schemaInfoByName[schemaName];
-					if( schemaInfo ){
-						schemaInfo.docIds.push(requestDocId);
-					};
-				};
-			};
-
-			// Add section with related documents
-			for(var schemaName in schemaInfoByName){
-				var schemaInfo = schemaInfoByName[schemaName];
-				if( schemaInfo.docIds.length > 0 ) {
-					var contId = $n2.getUniqueId();
-					var $div = $('<div id="'+contId+'"></div>');
-					$elem.append($div);
-	
-					var relatedDocIds = schemaInfo.docIds;
-					
-					_this._displayRelatedDocuments(contId, schemaName, relatedDocIds);
-				};
-			};
-		};
-	}
-	
-	,_displayLinkedInfo: function(opts_){
-		var opts = $n2.extend({
-			divId: null
-			,div: null
-			,doc: null
-			,schema: null
-		},opts_);
-		
-		var _this = this;
-		var doc = opts.doc;
-		var docId = doc._id;
-		
-		var $elem = opts.div;
-		if( ! $elem ) {
-			$elem = $('#'+opts.divId);
-		};
-		if( ! $elem.length) {
-			return;
-		};
-
-		// Get references
-		this._getAllReferences({
-			doc: doc
-			,onSuccess: showSections
-		});
-
-		function showSections(refInfo){
-			// Accumulate document ids under the associated schema
-			var relatedDocsFromSchemas = {};
-			var uncategorizedDocIds = [];
-			for(var requestDocId in refInfo){
-				if( refInfo[requestDocId].exists ) {
-					var schemaName = refInfo[requestDocId].schema;
-					
-					if( schemaName ) {
-						if( !relatedDocsFromSchemas[schemaName] ) {
-							relatedDocsFromSchemas[schemaName] = {
-								docIds: []
-							};
-						};
-						relatedDocsFromSchemas[schemaName].docIds.push(requestDocId);
-					} else {
-						uncategorizedDocIds.push(requestDocId);
-					};
-				};
-			};
-
-			// Add section with related documents
-			for(var schemaName in relatedDocsFromSchemas){
-				var contId = $n2.getUniqueId();
-				var $div = $('<div id="'+contId+'"></div>');
-				$elem.append($div);
-
-				var relatedDocIds = relatedDocsFromSchemas[schemaName].docIds;
-				
-				_this._displayRelatedDocuments(contId, schemaName, relatedDocIds);
-			};
-			
-			// Add uncategorized
-			if( uncategorizedDocIds.length > 0 ) {
-				var contId = $n2.getUniqueId();
-				var $div = $('<div id="'+contId+'"></div>');
-				$elem.append($div);
-
-				_this._displayRelatedDocuments(contId, null, uncategorizedDocIds);
-			};
-		};
-	}
-	
-	,_displayRelatedDocuments: function(contId, relatedSchemaName, relatedDocIds){
-		var _this = this;
-		var $container = $('#'+contId);
-		
-		if( !relatedDocIds || relatedDocIds.length < 1 ) {
-			$container.remove();
-			return;
-		};
-		
-		//legacyDisplay();
-		blindDisplay();
-		
-		function blindDisplay(){
-
-			var blindId = $n2.getUniqueId();
-			var $blindWidget = $('<div id="'+blindId+'" class="_n2DocumentListParent"><h3></h3><div style="padding-left:0px;padding-right:0px;"></div></div>');
-			$container.append($blindWidget);
-			var bw = $n2.blindWidget($blindWidget,{
-				data: relatedDocIds
-				,onBeforeOpen: beforeOpen
-			});
-			bw.setHtml('<span class="_n2DisplaySchemaName"></span> (<span class="_n2DisplayDocCount"></span>)');
-			if( null == relatedSchemaName ) {
-				$blindWidget.find('._n2DisplaySchemaName').text( _loc('Uncategorized') );
-			} else {
-				$blindWidget.find('._n2DisplaySchemaName').text(relatedSchemaName);
-			};
-			$blindWidget.find('._n2DisplayDocCount').text(''+relatedDocIds.length);
-			
-			var schemaRepository = _this._getSchemaRepository();
-			if( schemaRepository && relatedSchemaName ){
-				schemaRepository.getSchema({
-					name: relatedSchemaName
-					,onSuccess: function(schema){
-						var $blindWidget = $('#'+blindId);
-						$blindWidget.find('._n2DisplaySchemaName').text( _loc(schema.getLabel()) );
-					}
-				});
-			};
-
-			function beforeOpen(info){
-				var $div = info.content;
-				
-				var $dataloaded = $div.find('.___n2DataLoaded');
-				if( $dataloaded.length > 0 ) {
-					// nothing to do
-					return;
-				};
-				
-				// Fetch data
-				var docIds = info.data;
-				$div.empty();
-				$div.append( $('<div class="___n2DataLoaded" style="display:none;"></div>') );
-				for(var i=0,e=docIds.length; i<e; ++i){
-					var docId = docIds[i];
-					
-					var $docWrapper = $('<div></div>');
-					$div.append($docWrapper);
-					if ( 0 === i ) { // mark first and last one
-						$docWrapper.addClass('_n2DocumentListStart');
-					};
-					if ( (e-1) === i ) {
-						$docWrapper.addClass('_n2DocumentListEnd');
-					};
-					$docWrapper
-						.addClass('_n2DocumentListEntry')
-						.addClass('_n2DocumentListEntry_'+$n2.utils.stringToHtmlId(docId))
-						.addClass('olkitSearchMod2_'+(i%2))
-						.addClass('n2SupressNonApprovedMedia_'+$n2.utils.stringToHtmlId(docId))
-						.addClass('n2SupressDeniedMedia_'+$n2.utils.stringToHtmlId(docId))
-						;
-					
-					var $doc = $('<div></div>');
-					$docWrapper.append($doc);
-
-					if( _this._getShowService() ) {
-						var flag = _this._getBooleanOption('displayBriefInRelatedInfo');
-						if( flag ){
-							_this._getShowService().printBriefDescription($doc,docId);
-						} else {
-							_this._getShowService().printDocument($doc,docId);
-						};
-					} else {
-						$doc.text(docId);
-					};
-					if( _this._getRequestService() ) {
-						var $progressDiv = $('<div class="n2Display_attProgress n2Display_attProgress_'+$n2.utils.stringToHtmlId(docId)+'"></div>');
-						$docWrapper.append($progressDiv);
-
-						var $buttonDiv = $('<div class="displayRelatedButton displayRelatedButton_'+$n2.utils.stringToHtmlId(docId)+'"></div>');
-						$docWrapper.append($buttonDiv);
-						
-						_this._getRequestService().requestDocument(docId);
-					};
-				};
-			};
-		};
-	}
-
 	,_addRelatedDocument: function(docId, relatedSchemaNames){
 		var _this = this;
 		
@@ -1135,7 +938,7 @@ $n2.couchDisplay = $n2.Class({
 		};
 		
 		// Get identifiers of all documents that reference this one
-		this.options.documentSource.getReferencesFromId({
+		this.documentSource.getReferencesFromId({
 			docId: doc._id
 			,onSuccess: function(refIds){
 				for(var i=0,e=refIds.length;i<e;++i){
@@ -1157,7 +960,7 @@ $n2.couchDisplay = $n2.Class({
 				requestDocIds.push(requestDocId);
 			};
 
-			_this.options.documentSource.getDocumentInfoFromIds({
+			_this.documentSource.getDocumentInfoFromIds({
 				docIds: requestDocIds
 				,onSuccess: function(infos){
 					for(var i=0,e=infos.length;i<e;++i){
@@ -1192,7 +995,7 @@ $n2.couchDisplay = $n2.Class({
 		var _this = this;
 		
 		// Retrieve schema document
-		var schemaRepository = this._getSchemaRepository();
+		var schemaRepository = this.schemaRepository;
 		if( doc.nunaliit_schema && schemaRepository ) {
 			schemaRepository.getSchema({
 				name: doc.nunaliit_schema
@@ -1299,7 +1102,7 @@ $n2.couchDisplay = $n2.Class({
 		var _this = this;
 
 		if( confirm( _loc('You are about to delete this document. Do you want to proceed?') ) ) {
-			this.options.documentSource.deleteDocument({
+			this.documentSource.deleteDocument({
 				doc: data
 				,onSuccess: function() {
 					if( options_.onDeleted ) {
@@ -1316,7 +1119,7 @@ $n2.couchDisplay = $n2.Class({
 		
 		$set.empty();
 
-		this.options.documentSource.getDocument({
+		this.documentSource.getDocument({
 			docId: docId
 			,onSuccess: function(doc) {
 				_this._displayDocument($set, doc);
@@ -1411,7 +1214,7 @@ $n2.couchDisplay = $n2.Class({
 
 			var $contentDiv = $('<div class="n2s_handleHover"></div>');
 			$div.append($contentDiv);
-			this._getShowService().displayBriefDescription($contentDiv, {}, doc);
+			this.showService.displayBriefDescription($contentDiv, {}, doc);
 
 			var $buttonDiv = $('<div></div>');
 			$div.append($buttonDiv);
@@ -1440,16 +1243,16 @@ $n2.couchDisplay = $n2.Class({
 
 			var $contentDiv = $('<div class="n2s_handleHover"></div>');
 			$div.append($contentDiv);
-			this._getShowService().printBriefDescription($contentDiv, docId);
+			this.showService.printBriefDescription($contentDiv, docId);
 			
-			if( this._getRequestService() ) {
+			if( this.requestService ) {
 				var $progressDiv = $('<div class="n2Display_attProgress n2Display_attProgress_'+$n2.utils.stringToHtmlId(docId)+'"></div>');
 				$div.append($progressDiv);
 
 				var $buttonDiv = $('<div class="displayRelatedButton displayRelatedButton_'+$n2.utils.stringToHtmlId(docId)+'"></div>');
 				$div.append($buttonDiv);
 				
-				this._getRequestService().requestDocument(docId);
+				this.requestService.requestDocument(docId);
 			};
 		};
 	}
@@ -1472,29 +1275,10 @@ $n2.couchDisplay = $n2.Class({
 		};
 	}
 	
-	,_getCustomService: function(){
-		var cs = null;
-		if( this.options.serviceDirectory 
-		 && this.options.serviceDirectory.customService ) {
-			cs = this.options.serviceDirectory.customService;
-		};
-		return cs;
-	}
-	
-	,_getDispatcher: function(){
-		var d = null;
-		if( this.options.serviceDirectory 
-		 && this.options.serviceDirectory.dispatchService ) {
-			d = this.options.serviceDirectory.dispatchService;
-		};
-		return d;
-	}
-	
 	,_dispatch: function(m){
-		var dispatcher = this._getDispatcher();
+		var dispatcher = this.dispatchService;
 		if( dispatcher ) {
-			var h = dispatcher.getHandle('n2.couchDisplay');
-			dispatcher.send(h,m);
+			dispatcher.send(DH,m);
 		};
 	}
 	
@@ -1540,7 +1324,7 @@ $n2.couchDisplay = $n2.Class({
 
 		function refreshRelatedInfo(docId, $elems) {
 			// Get document
-			var request = _this._getRequestService();
+			var request = _this.requestService;
 			if( request ){
 				request.requestDocument(docId,function(d){
 					loadedData(d, $elems);
@@ -1551,7 +1335,7 @@ $n2.couchDisplay = $n2.Class({
 		function loadedData(data, $elems) {
 			// Get schema
 			var schemaName = data.nunaliit_schema ? data.nunaliit_schema : null;
-			var schemaRepository = _this._getSchemaRepository();
+			var schemaRepository = _this.schemaRepository;
 			if( schemaName && schemaRepository ) {
 				schemaRepository.getSchema({
 					name: schemaName
@@ -1572,40 +1356,267 @@ $n2.couchDisplay = $n2.Class({
 				var $e = $(this);
 				// Refresh
 				$e.empty();
-				_this.options.displayRelatedInfoFunction({
+				_this.displayRelatedInfoFunction({
 					div: $e
+					,display: _this
 					,doc: data
 					,schema: schema
 				});
 			});
 		};
 	}
-	
-	/*
-	 * Get a boolean option based on a name and return it. Defaults
-	 * to false. If the option is found set in either the options map
-	 * or the custom service, then the result is true.
-	 */
-	,_getBooleanOption: function(optionName){
-		var flag = false;
-		
-		if( this.options[optionName] ){
-			flag = true;
-		};
-		
-		var cs = this._getCustomService();
-		if( cs && !flag ){
-			var o = cs.getOption(optionName);
-			if( o ){
-				flag = true;
-			};
-		};
-		
-		return flag;
-	}
 });
 
+//===================================================================================
+
+function _displayRelatedDocuments(display_, contId, relatedSchemaName, relatedDocIds){
+	var $container = $('#'+contId);
+	
+	if( !relatedDocIds || relatedDocIds.length < 1 ) {
+		$container.remove();
+		return;
+	};
+	
+	//legacyDisplay();
+	blindDisplay();
+	
+	function blindDisplay(){
+
+		var blindId = $n2.getUniqueId();
+		var $blindWidget = $('<div id="'+blindId+'" class="_n2DocumentListParent"><h3></h3><div style="padding-left:0px;padding-right:0px;"></div></div>');
+		$container.append($blindWidget);
+		var bw = $n2.blindWidget($blindWidget,{
+			data: relatedDocIds
+			,onBeforeOpen: beforeOpen
+		});
+		bw.setHtml('<span class="_n2DisplaySchemaName"></span> (<span class="_n2DisplayDocCount"></span>)');
+		if( null == relatedSchemaName ) {
+			$blindWidget.find('._n2DisplaySchemaName').text( _loc('Uncategorized') );
+		} else {
+			$blindWidget.find('._n2DisplaySchemaName').text(relatedSchemaName);
+		};
+		$blindWidget.find('._n2DisplayDocCount').text(''+relatedDocIds.length);
+		
+		var schemaRepository = display_.schemaRepository;
+		if( schemaRepository && relatedSchemaName ){
+			schemaRepository.getSchema({
+				name: relatedSchemaName
+				,onSuccess: function(schema){
+					var $blindWidget = $('#'+blindId);
+					$blindWidget.find('._n2DisplaySchemaName').text( _loc(schema.getLabel()) );
+				}
+			});
+		};
+
+		function beforeOpen(info){
+			var $div = info.content;
+			
+			var $dataloaded = $div.find('.___n2DataLoaded');
+			if( $dataloaded.length > 0 ) {
+				// nothing to do
+				return;
+			};
+			
+			// Fetch data
+			var docIds = info.data;
+			$div.empty();
+			$div.append( $('<div class="___n2DataLoaded" style="display:none;"></div>') );
+			for(var i=0,e=docIds.length; i<e; ++i){
+				var docId = docIds[i];
+				
+				var $docWrapper = $('<div></div>');
+				$div.append($docWrapper);
+				if ( 0 === i ) { // mark first and last one
+					$docWrapper.addClass('_n2DocumentListStart');
+				};
+				if ( (e-1) === i ) {
+					$docWrapper.addClass('_n2DocumentListEnd');
+				};
+				$docWrapper
+					.addClass('_n2DocumentListEntry')
+					.addClass('_n2DocumentListEntry_'+$n2.utils.stringToHtmlId(docId))
+					.addClass('olkitSearchMod2_'+(i%2))
+					.addClass('n2SupressNonApprovedMedia_'+$n2.utils.stringToHtmlId(docId))
+					.addClass('n2SupressDeniedMedia_'+$n2.utils.stringToHtmlId(docId))
+					;
+				
+				var $doc = $('<div></div>');
+				$docWrapper.append($doc);
+
+				if( display_.showService ) {
+					if( display_.displayBriefInRelatedInfo ){
+						display_.showService.printBriefDescription($doc,docId);
+					} else {
+						display_.showService.printDocument($doc,docId);
+					};
+				} else {
+					$doc.text(docId);
+				};
+				if( display_.requestService ) {
+					var $progressDiv = $('<div class="n2Display_attProgress n2Display_attProgress_'+$n2.utils.stringToHtmlId(docId)+'"></div>');
+					$docWrapper.append($progressDiv);
+
+					var $buttonDiv = $('<div class="displayRelatedButton displayRelatedButton_'+$n2.utils.stringToHtmlId(docId)+'"></div>');
+					$docWrapper.append($buttonDiv);
+					
+					display_.requestService.requestDocument(docId);
+				};
+			};
+		};
+	};
+};
+
+function DisplayRelatedInfo(opts_){
+	var opts = $n2.extend({
+		divId: null
+		,div: null
+		,display: null
+		,doc: null
+		,schema: null
+	},opts_);
+	
+	var doc = opts.doc;
+	var docId = doc._id;
+	var display = opts.display;
+	var schema = opts.schema;
+	
+	var $elem = opts.div;
+	if( ! $elem ) {
+		$elem = $('#'+opts.divId);
+	};
+	if( ! $elem.length) {
+		return;
+	};
+	
+	if( !schema 
+	 || !schema.relatedSchemaNames
+	 || !schema.relatedSchemaNames.length ){
+		return;
+	};
+	
+	// Make a map of related schemas
+	var schemaInfoByName = {};
+	for(var i=0,e=schema.relatedSchemaNames.length; i<e; ++i){
+		var relatedSchemaName = schema.relatedSchemaNames[i];
+		schemaInfoByName[relatedSchemaName] = { docIds:[] };
+	};
+
+	// Get references
+	display._getAllReferences({
+		doc: doc
+		,onSuccess: showSections
+	});
+
+	function showSections(refInfo){
+		// Accumulate document ids under the associated schema
+		for(var requestDocId in refInfo){
+			if( refInfo[requestDocId].exists 
+			 && refInfo[requestDocId].reverse
+			 && refInfo[requestDocId].schema ) {
+				var schemaName = refInfo[requestDocId].schema;
+				var schemaInfo = schemaInfoByName[schemaName];
+				if( schemaInfo ){
+					schemaInfo.docIds.push(requestDocId);
+				};
+			};
+		};
+
+		// Add section with related documents
+		for(var schemaName in schemaInfoByName){
+			var schemaInfo = schemaInfoByName[schemaName];
+			if( schemaInfo.docIds.length > 0 ) {
+				var contId = $n2.getUniqueId();
+				var $div = $('<div id="'+contId+'"></div>');
+				$elem.append($div);
+
+				var relatedDocIds = schemaInfo.docIds;
+				
+				_displayRelatedDocuments(display, contId, schemaName, relatedDocIds);
+			};
+		};
+	};
+};
+
+//===================================================================================
+
+function DisplayLinkedInfo(opts_){
+	var opts = $n2.extend({
+		divId: null
+		,div: null
+		,display: null
+		,doc: null
+		,schema: null
+	},opts_);
+	
+	var display = opts.display;
+	var doc = opts.doc;
+	var docId = doc._id;
+	
+	var $elem = opts.div;
+	if( ! $elem ) {
+		$elem = $('#'+opts.divId);
+	};
+	if( ! $elem.length) {
+		return;
+	};
+
+	// Get references
+	display._getAllReferences({
+		doc: doc
+		,onSuccess: showSections
+	});
+
+	function showSections(refInfo){
+		// Accumulate document ids under the associated schema
+		var relatedDocsFromSchemas = {};
+		var uncategorizedDocIds = [];
+		for(var requestDocId in refInfo){
+			if( refInfo[requestDocId].exists ) {
+				var schemaName = refInfo[requestDocId].schema;
+				
+				if( schemaName ) {
+					if( !relatedDocsFromSchemas[schemaName] ) {
+						relatedDocsFromSchemas[schemaName] = {
+							docIds: []
+						};
+					};
+					relatedDocsFromSchemas[schemaName].docIds.push(requestDocId);
+				} else {
+					uncategorizedDocIds.push(requestDocId);
+				};
+			};
+		};
+
+		// Add section with related documents
+		for(var schemaName in relatedDocsFromSchemas){
+			var contId = $n2.getUniqueId();
+			var $div = $('<div id="'+contId+'"></div>');
+			$elem.append($div);
+
+			var relatedDocIds = relatedDocsFromSchemas[schemaName].docIds;
+			
+			_displayRelatedDocuments(display, contId, schemaName, relatedDocIds);
+		};
+		
+		// Add uncategorized
+		if( uncategorizedDocIds.length > 0 ) {
+			var contId = $n2.getUniqueId();
+			var $div = $('<div id="'+contId+'"></div>');
+			$elem.append($div);
+
+			_displayRelatedDocuments(display, contId, null, uncategorizedDocIds);
+		};
+	};
+};
+
+//===================================================================================
+
 // Exports
-$.olkitDisplay = null; 
+$n2.couchDisplay = {
+	Display: Display,
+	DisplayRelatedInfo: DisplayRelatedInfo,
+	DisplayLinkedInfo: DisplayLinkedInfo
+	
+};
 
 })(jQuery,nunaliit2);

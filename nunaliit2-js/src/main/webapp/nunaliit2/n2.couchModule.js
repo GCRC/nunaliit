@@ -529,7 +529,6 @@ var ModuleDisplay = $n2.Class({
 					,customService: config.directory.customService
 					,dispatchService: config.directory.dispatchService
 				});
-				$.olkitDisplay = _this.displayControl;
 				
 			} else {
 				if( 'classic' !== displayFormat ){
@@ -553,7 +552,7 @@ var ModuleDisplay = $n2.Class({
 					displayOptions.displayBriefInRelatedInfo
 						= displayInfo.displayBriefInRelatedInfo;
 				};
-				$.olkitDisplay = _this.displayControl = new $n2.couchDisplay(displayOptions);
+				_this.displayControl = new $n2.couchDisplay.Display(displayOptions);
 				var defaultDisplaySchemaName = 'object';
 				if( displayInfo && displayInfo.defaultSchemaName ){
 					defaultDisplaySchemaName = displayInfo.defaultSchemaName;
@@ -561,8 +560,8 @@ var ModuleDisplay = $n2.Class({
 				config.directory.schemaRepository.getSchema({
 					name: defaultDisplaySchemaName
 					,onSuccess: function(schema){
-						if( $.olkitDisplay.setSchema ) {
-							$.olkitDisplay.setSchema(schema);
+						if( _this.displayControl.setSchema ) {
+							_this.displayControl.setSchema(schema);
 						};
 					}
 				});
