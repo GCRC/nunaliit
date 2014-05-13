@@ -217,6 +217,13 @@ var Display = $n2.Class({
 		};
 		if( !this.displayRelatedInfoProcess 
 		 && customService ){
+			var displayRelatedProcess = customService.getOption('displayRelatedInfoProcess');
+			if( displayRelatedProcess ){
+				this.displayRelatedInfoProcess = displayRelatedProcess;
+			};
+		};
+		if( !this.displayRelatedInfoProcess 
+		 && customService ){
 			var displayRelatedFn = customService.getOption('displayRelatedInfoFunction');
 			if( typeof displayRelatedFn === 'function' ){
 				this.displayRelatedInfoProcess 
@@ -1611,14 +1618,254 @@ function DisplayLinkedInfo(opts_){
 		};
 	};
 };
+//===================================================================================
+
+var CommentRelatedInfo = $n2.Class({
+	
+	commentSchema: null,
+	
+	dispatchService: null,
+	
+	lastDoc: null,
+	
+	lastDivId: null,
+	
+	lastDisplay: null,
+	
+	initialize: function(opts_){
+		
+		var opts = $n2.extend({
+			schema: null
+			,dispatchService: null
+		},opts_);
+		
+		var _this = this;
+		
+		this.commentSchema = opts.schema;
+		this.dispatchService = opts.dispatchService;
+		
+		if( this.dispatchService ){
+			var f = function(msg, addr, dispatcher){
+				_this._handleDispatch(msg, addr, dispatcher);
+			};
+			this.dispatchService.register(DH, 'documentContent', f);
+		};
+	},
+	
+	display: function(opts_){
+		var opts = $n2.extend({
+			divId: null
+			,div: null
+			,display: null
+			,doc: null
+			,schema: null
+		},opts_);
+		
+		var _this = this;
+		
+		var display = opts.display;
+		var doc = opts.doc;
+		var docId = doc._id;
+		var documentSource = display.documentSource;
+		var showService = display.showService;
+		
+		var $elem = opts.div;
+		if( ! $elem ) {
+			$elem = $('#'+opts.divId);
+		};
+		if( ! $elem.length) {
+			return;
+		};
+		if( !showService ) {
+			$n2.log('Show service not available for comment process');
+			return;
+		};
+		
+		this.lastDoc = doc;
+		this.lastDivId = $n2.utils.getElementIdentifier($elem);
+		this.lastDisplay = display;
+
+		// Get references
+		documentSource.getReferencesFromOrigin({
+			docId: docId
+			,onSuccess: loadedDocIds
+		});
+		
+		function loadedDocIds(refDocIds){
+			// Get documents that include comments
+			documentSource.getDocumentInfoFromIds({
+				docIds: refDocIds
+				,onSuccess: loadedDocInfos
+			});
+		};
+		
+		function loadedDocInfos(docInfos){
+			// Sort comments by last updated time
+			docInfos.sort(function(a,b){
+				var aTime = a.updatedTime;
+				if( !aTime ){
+					aTime = a.createdTime;
+				};
+
+				var bTime = b.updatedTime;
+				if( !bTime ){
+					bTime = b.createdTime;
+				};
+				
+				if( aTime && bTime ){
+					return bTime - aTime;
+				};
+				if( aTime ) return -1;
+				if( bTime ) return 1;
+				
+				if( a.id > b.id ) {
+					return 1;
+				}
+				return -1;
+			});
+
+			// Display comments
+			$elem.empty();
+			for(var i=0,e=docInfos.length; i<e; ++i){
+				var docInfo = docInfos[i];
+				var docId = docInfo.id;
+				var $commentDiv = $('<div>')
+					.addClass('n2DisplayComment_doc n2DisplayComment_doc_'+$n2.utils.stringToHtmlId(docId))
+					.attr('n2DocId',docId)
+					.appendTo($elem);
+				var $content = $('<div>')
+					.addClass('n2DisplayComment_content')
+					.appendTo($commentDiv);
+				showService.printDocument($content, docId);
+
+				var $buttons = $('<div>')
+					.addClass('n2DisplayComment_buttons')
+					.appendTo($commentDiv);
+				
+				$('<a>')
+					.attr('href','#')
+					.text( _loc('Reply') )
+					.addClass('n2DisplayComment_button_reply')
+					.appendTo($buttons)
+					.click(function(){
+						var docId = $(this).parents('.n2DisplayComment_doc').attr('n2DocId');
+						_this._addReply(docId, display);
+						return false;
+					});
+				
+				$('<a>')
+					.attr('href','#')
+					.text( _loc('More Details') )
+					.addClass('n2DisplayComment_button_focus')
+					.appendTo($buttons)
+					.click(function(){
+						var docId = $(this).parents('.n2DisplayComment_doc').attr('n2DocId');
+						_this._changeFocus(docId, display);
+						return false;
+					});
+			};
+		};
+	},
+	
+	addButton: function(opts_){
+		var opts = $n2.extend({
+			display: null
+			,div: null
+			,doc: null
+			,schema: null
+		},opts_);
+		
+		var _this = this;
+		
+		var display = opts.display;
+		var doc = opts.doc;
+		var $buttons = $(opts.div);
+		
+ 		// Show 'add comment' button
+		var $button = $('<a href="#"></a>')
+			.text( _loc('Add Comment') )
+			.appendTo($buttons)
+			.click(function(){
+				_this._addComment(doc, display);
+				return false;
+			});
+
+		$button.addClass('nunaliit_form_link');
+		$button.addClass('nunaliit_form_link_add_related_item');
+	},
+	
+	_addComment: function(doc, display){
+		var createRelatedDocProcess = display.createRelatedDocProcess;
+		createRelatedDocProcess.replyToDocument({
+			doc: doc
+			,schema: this.commentSchema
+			,origin: doc._id
+		});
+	},
+	
+	_addReply: function(docId, display){
+		var _this = this;
+		var documentSource = display.documentSource;
+		var createRelatedDocProcess = display.createRelatedDocProcess;
+		
+		documentSource.getDocument({
+			docId: docId
+			,onSuccess: function(doc){
+				createRelatedDocProcess.replyToDocument({
+					doc: doc
+					,schema: _this.commentSchema
+				});
+			}
+		});
+	},
+	
+	_changeFocus: function(docId, display){
+		var _this = this;
+
+		display._dispatch({
+			type: 'userSelect'
+			,docId: docId
+		});
+	},
+	
+	_handleDispatch: function(m, address, dispatcher){
+		if( 'documentContent' === m.type ){
+			var doc = m.doc;
+			this._handleDocumentContent(doc);
+		};
+	},
+	
+	_handleDocumentContent: function(doc){
+		if( doc.nunaliit_origin ){
+			// Check if we should add an entry for this document
+			if( doc.nunaliit_origin.doc === this.lastDoc._id ){
+				// Related. Check if we are still displaying comments
+				var $section = $('#'+this.lastDivId);
+				if( $section.length > 0 ){
+					var $entry = $section.find('.n2DisplayComment_doc_'+$n2.utils.stringToHtmlId(doc._id));
+					if( $entry.length < 1 ){
+						// OK, need to add a comment entry. Refresh.
+						this.display({
+							divId: this.lastDivId
+							,display: this.lastDisplay
+							,doc: this.lastDoc
+							,schema: null
+						});
+					};
+				};
+			};
+		};
+	}
+});
 
 //===================================================================================
 
 // Exports
 $n2.couchDisplay = {
 	Display: Display,
-	DisplayRelatedInfo: DisplayRelatedInfo,
-	DisplayLinkedInfo: DisplayLinkedInfo
+	CommentRelatedInfo: CommentRelatedInfo
+//	DisplayRelatedInfo: DisplayRelatedInfo,
+//	DisplayLinkedInfo: DisplayLinkedInfo
 	
 };
 

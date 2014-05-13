@@ -877,6 +877,25 @@ $n2.utils = {
 			clearTimeout(timeout);
 			timeout = setTimeout(later, wait);
 		};
+	},
+	
+	/**
+	 * Returns the identifier associated with the given element. If no identifier
+	 * is currently assigned to the element, assign a unique one and then return it.
+	 * @name getElementIdentifier
+	 * @function
+	 * @memberOf nunaliit2.utils
+	 * @param {Object} DOM element where the identifier is desired.
+	 * @returns {String} Element identifier
+	 */
+	getElementIdentifier: function(elem){
+		var $elem = $(elem);
+		var id = $elem.attr('id');
+		if( !id ){
+			id = $n2.getUniqueId();
+			$elem.attr('id',id);
+		};
+		return id;
 	}
 };
 

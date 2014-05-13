@@ -121,6 +121,7 @@ var CreateRelatedDocProcess = $n2.Class({
 		var opt = $n2.extend({
 			doc: null
 			,schema: null
+			,origin: null
 			,onSuccess: function(docId){}
 			,onError: $n2.reportErrorForced
 			,onCancel: function(){}
@@ -134,7 +135,9 @@ var CreateRelatedDocProcess = $n2.Class({
 		};
 		
 		var origin = null;
-		if( opt.doc.nunaliit_origin && opt.doc.nunaliit_origin.doc ) {
+		if( opt.origin ){
+			origin = opt.origin;
+		} else if( opt.doc.nunaliit_origin && opt.doc.nunaliit_origin.doc ) {
 			origin = opt.doc.nunaliit_origin.doc;
 		} else if( opt.doc.nunaliit_source && opt.doc.nunaliit_source.doc ) {
 			origin = opt.doc.nunaliit_source.doc;

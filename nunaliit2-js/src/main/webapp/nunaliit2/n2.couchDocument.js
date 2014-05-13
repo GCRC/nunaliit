@@ -354,6 +354,35 @@ var CouchDataSource = $n2.Class($n2.document.DataSource, {
 		this.geometryRepository.getGeographicBoundingBox(opts_);
 	}
 
+	,getReferencesFromOrigin: function(opts_){
+		var opts = $n2.extend({
+				docId: null
+				,onSuccess: function(originReferenceIds){}
+				,onError: function(errorMsg){}
+			}
+			,opts_
+		);
+		
+		this.designDoc.queryView({
+			viewName: 'nunaliit-origin'
+			,startkey: opts.docId
+			,endkey: opts.docId
+			,onSuccess: function(rows){
+				var refIdMap = {};
+				for(var i=0,e=rows.length;i<e;++i){
+					refIdMap[rows[i].id] = true;
+				};
+				
+				var refIds = [];
+				for(var refId in refIdMap){
+					refIds.push(refId);
+				};
+				opts.onSuccess(refIds);
+			}
+			,onError: opts.onError
+		});
+	}
+
 	,_adjustDocument: function(doc) {
 
 		// Get user name
