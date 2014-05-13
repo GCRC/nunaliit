@@ -920,6 +920,12 @@ var CouchDocumentEditor = $n2.Class({
 	
 	,userButtons: null
 	
+	,editorSuppressSlideView: null
+	
+	,editorSuppressTreeView: null
+	
+	,editorSuppressFormView: null
+	
 	,initialize: function(
 		parentOptions_
 		,ownOptions_
@@ -943,6 +949,16 @@ var CouchDocumentEditor = $n2.Class({
 			if( key.substr(0,label.length) === label ) {
 				this.userButtons.push(this.options[key]);
 			};
+		};
+
+		this.editorSuppressSlideView = false;
+		this.editorSuppressTreeView = false;
+		this.editorSuppressFormView = false;
+		var cs = this._getCustomService();
+		if( cs ){
+			this.editorSuppressSlideView = cs.getOption('editorSuppressSlideView',false);
+			this.editorSuppressTreeView = cs.getOption('editorSuppressTreeView',false);
+			this.editorSuppressFormView = cs.getOption('editorSuppressFormView',false);
 		};
 	}
 
@@ -986,6 +1002,15 @@ var CouchDocumentEditor = $n2.Class({
 		if( this.options.serviceDirectory 
 		 && this.options.serviceDirectory.schemaRepository ) {
 			return this.options.serviceDirectory.schemaRepository;
+		};
+		
+		return null;
+	}
+
+	,_getCustomService: function(){
+		if( this.options.serviceDirectory 
+		 && this.options.serviceDirectory.customService ) {
+			return this.options.serviceDirectory.customService;
 		};
 		
 		return null;
@@ -1212,6 +1237,31 @@ var CouchDocumentEditor = $n2.Class({
 		if( $n2.couchMap && $n2.couchMap.adjustDocument ) {
 			$n2.couchMap.adjustDocument(data);
 		};
+
+		// Compute which views to show
+		var showFormView = false;
+		var showTreeView = false;
+		var showSlideView = false;
+		var viewCount = 0;
+		var showAccordion = false;
+		var schemaEditorService = this._getSchemaEditorService();
+		if( !this.editorSuppressFormView 
+		 && selectedSchema 
+		 && schemaEditorService ){
+			showFormView = true;
+			++viewCount;
+		};
+		if( !this.editorSuppressTreeView ){
+			showTreeView = true;
+			++viewCount;
+		};
+		if( !this.editorSuppressTreeView ){
+			showSlideView = true;
+			++viewCount;
+		};
+		if( viewCount > 1 ){
+			showAccordion = true;
+		};
     	
 		var attributeDialog = $('#'+this.options.panelName);
 		attributeDialog.empty();
@@ -1220,13 +1270,20 @@ var CouchDocumentEditor = $n2.Class({
 		var $editorContainer = $('<div id="'+this.editorContainerId+'" class="n2CouchEditor_container"></div>');
 		attributeDialog.append($editorContainer);
 
-		var schemaEditorService = this._getSchemaEditorService();
-		if( selectedSchema && schemaEditorService ) {
+		if( showFormView ) {
 			$n2.schema.GlobalAttributes.disableKeyUpEvents = true;
 			
-			var $schemaHeader = $('<h3><a href="#">'+_loc('Form View')+'</a></h3>');
-			var $schemaContainer = $('<div class="n2CouchEditor_schema"></div>');
-			$editorContainer.append($schemaHeader).append($schemaContainer);
+			if( showAccordion ) {
+				var $schemaHeader = $('<h3>').appendTo($editorContainer);
+				$('<a>')
+					.attr('href','#')
+					.text( _loc('Form View') )
+					.appendTo($schemaHeader);
+			};
+
+			var $schemaContainer = $('<div>')
+				.addClass('n2CouchEditor_schema')
+				.appendTo($editorContainer);
 			
 			this.schemaEditor = schemaEditorService.editDocument({
 				doc: data
@@ -1246,50 +1303,72 @@ var CouchDocumentEditor = $n2.Class({
 			});
 		};
 
-		var $treeHeader = $('<h3><a href="#">'+_loc('Tree View')+'</a></h3>');
-		var $treeContainer = $('<div class="n2CouchEditor_tree"></div>');
-		$editorContainer.append($treeHeader).append($treeContainer);
-		var editorOptions = {
-			onObjectChanged: function() {
-				_this._adjustInternalValues(_this.editedDocument);
-				if( _this.slideEditor ) {
-					_this.slideEditor.refresh();
-				};
-				if( _this.schemaEditor ) {
-					_this.schemaEditor.refresh();
-				};
-				_this._refreshRelations(data);
-				_this.onEditorObjectChanged(data);
-			}
-			,isKeyEditingAllowed: isKeyEditingAllowed
-			,isValueEditingAllowed: isValueEditingAllowed
-			,isKeyDeletionAllowed: isKeyDeletionAllowed
+		if( showTreeView ) {
+			if( showAccordion ) {
+				var $treeHeader = $('<h3>').appendTo($editorContainer);
+				$('<a>')
+					.attr('href','#')
+					.text( _loc('Tree View') )
+					.appendTo($treeHeader);
+			};
+			
+			var $treeContainer = $('<div>')
+				.addClass('n2CouchEditor_tree')
+				.appendTo($editorContainer);
+			var editorOptions = {
+				onObjectChanged: function() {
+					_this._adjustInternalValues(_this.editedDocument);
+					if( _this.slideEditor ) {
+						_this.slideEditor.refresh();
+					};
+					if( _this.schemaEditor ) {
+						_this.schemaEditor.refresh();
+					};
+					_this._refreshRelations(data);
+					_this.onEditorObjectChanged(data);
+				}
+				,isKeyEditingAllowed: isKeyEditingAllowed
+				,isValueEditingAllowed: isValueEditingAllowed
+				,isKeyDeletionAllowed: isKeyDeletionAllowed
+			};
+			var objectTree = new $n2.tree.ObjectTree($treeContainer, data, editorOptions);
+			this.treeEditor = new $n2.tree.ObjectTreeEditor(objectTree, data, editorOptions);
 		};
-		var objectTree = new $n2.tree.ObjectTree($treeContainer, data, editorOptions);
-		this.treeEditor = new $n2.tree.ObjectTreeEditor(objectTree, data, editorOptions);
 		
-		var $slideHeader = $('<h3><a href="#">'+_loc('Editor View')+'</a></h3>');
-		var $slideContainer = $('<div class="n2CouchEditor_slide"></div>');
-		$editorContainer.append($slideHeader).append($slideContainer);
-		var slideEditorOptions = {
-			onObjectChanged: function() {
-				_this._adjustInternalValues(_this.editedDocument);
-				if( _this.treeEditor ) {
-					_this.treeEditor.refresh();
-				};
-				if( _this.schemaEditor ) {
-					_this.schemaEditor.refresh();
-				};
-				_this._refreshRelations(data);
-				_this.onEditorObjectChanged(data);
-			}
-			,isKeyEditingAllowed: isKeyEditingAllowed
-			,isValueEditingAllowed: isValueEditingAllowed
-			,isKeyDeletionAllowed: isKeyDeletionAllowed
+		if( showSlideView ) {
+			if( showAccordion ) {
+				var $slideHeader = $('<h3>').appendTo($editorContainer);
+				$('<a>')
+					.attr('href','#')
+					.text( _loc('Editor View') )
+					.appendTo($slideHeader);
+			};
+			
+			var $slideContainer = $('<div>')
+				.addClass('n2CouchEditor_slide')
+				.appendTo($editorContainer);
+			var slideEditorOptions = {
+				onObjectChanged: function() {
+					_this._adjustInternalValues(_this.editedDocument);
+					if( _this.treeEditor ) {
+						_this.treeEditor.refresh();
+					};
+					if( _this.schemaEditor ) {
+						_this.schemaEditor.refresh();
+					};
+					_this._refreshRelations(data);
+					_this.onEditorObjectChanged(data);
+				}
+				,isKeyEditingAllowed: isKeyEditingAllowed
+				,isValueEditingAllowed: isValueEditingAllowed
+				,isKeyDeletionAllowed: isKeyDeletionAllowed
+			};
+			this.slideEditor = new $n2.slideEditor.Editor($slideContainer, data, slideEditorOptions);
 		};
-		this.slideEditor = new $n2.slideEditor.Editor($slideContainer, data, slideEditorOptions);
 		
-		$editorContainer.accordion({ collapsible: true });
+		if( showAccordion ) {
+			$editorContainer.accordion({ collapsible: true });
+		};
 		
 		// Report relations
 		var $displayRelationsDiv = $('<div class="editorDisplayRelations"></div>');
