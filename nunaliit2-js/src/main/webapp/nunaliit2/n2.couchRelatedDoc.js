@@ -299,9 +299,7 @@ var Editor = $n2.Class({
 	
 	,diagId: null
 	
-	,uploadFileFormId: null
-	
-	,uploadData: null
+	,attachmentUploadHandler: null
 	
 	,initialize: function(options_) {
 		this.options = $n2.extend(
@@ -327,6 +325,12 @@ var Editor = $n2.Class({
 		var obj = this.options.obj;
 		var schema = this.options.schema;
 		
+		this.attachmentUploadHandler = new $n2.CouchEditor.AttachmentUploadHandler({
+			doc: obj
+			,schema: schema
+			,uploadService: this.options.uploadService
+		});
+		
 		var $form = $('<div></div>');
 		$dialog.append($form);
 		schema.form(obj, $form);
@@ -337,7 +341,10 @@ var Editor = $n2.Class({
 
 		var $fileElement = $('<div></div>');
 		$dialog.append($fileElement);
-		this._addFileElement($fileElement)
+		this.attachmentUploadHandler.printFileForm({
+			elem: $fileElement
+			,doc: obj
+		});
 		
 		var $ok = $('<button></button>');
 		$ok.text( _loc('OK') );
@@ -370,64 +377,22 @@ var Editor = $n2.Class({
 		$dialog.dialog(dialogOptions);
 	}
 
-	,_addFileElement: function($attachment) {
-		var _this = this;
-		
-		var obj = this.options.obj;
-		if( !obj.nunaliit_attachments ) {
-			// No attachment required
-			return;
-		};
-
-		var formId = $n2.getUniqueId();
-		this.uploadFileFormId = formId;
-		var $form = $('<form id="'+formId+'"></form>');
-		$attachment.append($form);
-
-		var $fileInput = $('<input class="relatedDocFileInput" type="file" name="media"/>');
-		$form.append($fileInput);
-		$fileInput.change(function(){
-			var $fileInput = $(this);
-			//var filename = $fileInput.val();
-		});
-		
-	}
-	
-	,_getUploadForm: function(){
-		var formId = this.uploadFileFormId;
-		if( !formId ) {
-			return $('#_not_a_valid_id');
-		} else {
-			return $('#'+formId);
-		}
-	}
-
 	,_clickOK: function(){
 
 		var _this = this;
 		var obj = this.options.obj;
 
 		// Check that a file was provided
-		var $uploadForm = this._getUploadForm();
-		if( $uploadForm.length < 1 ) {
-			this._saveObj();
-		} else {
-			var compulsory = true;
-			if( obj 
-			 && obj.nunaliit_attachments
-			 && typeof(obj.nunaliit_attachments._compulsory) !== 'undefined'
-			 ){
-				compulsory = obj.nunaliit_attachments._compulsory;
-			};
-			
-			var $fileInput = $uploadForm.find('.relatedDocFileInput');
-			var filename = $fileInput.val();
-			if( compulsory && (filename == null || '' === filename) ) {
-				alert('A file must be selected');
-			} else {
-				this._saveObj();
-			};
-		};
+		this.attachmentUploadHandler.performPreSavingActions({
+			doc: obj
+			,onSuccess: function(doc){
+				_this.options.obj = doc;
+				_this._saveObj();
+			}
+			,onError: function(err){
+				alert(err);
+			}
+		});
 	}
 
 	,_clickCancel: function(){
@@ -440,16 +405,6 @@ var Editor = $n2.Class({
 		var obj = this.options.obj;
 
 		$n2.couchMap.adjustDocument(obj);
-		
-		// Save data from when loading file
-		if( obj.nunaliit_attachments ) {
-			this.uploadData = obj.nunaliit_attachments;
-			delete obj.nunaliit_attachments;
-			
-			if( typeof(this.uploadData._compulsory) !== 'undefined' ){
-				delete this.uploadData._compulsory;
-			};
-		};
 
 		this.options.documentSource.createDocument({
 			doc: obj
@@ -465,56 +420,17 @@ var Editor = $n2.Class({
 	,_uploadFile: function(doc){
 		var _this = this;
 
-		var formId = this.uploadFileFormId;
-		if( !formId ) {
-			done();
-		} else {
-			var $form = $('#'+formId);
-			if( $form.length < 1 ) {
-				done();
-			} else {
-				var $fileInput = $form.find('.relatedDocFileInput');
-				var filename = $fileInput.val();
-				if( filename !== null && '' !== filename ) {
-					// Third, upload file to contribution. This is done via the
-					// upload service. Add id and rev of document.
-					$form.prepend( $('<input type="hidden" name="id" value="'+doc._id+'"/>') );
-					$form.prepend( $('<input type="hidden" name="rev" value="'+doc._rev+'"/>') );
-					
-					// Add user data
-					if( this.uploadData && this.uploadData.files ) {
-						for(var fileName in this.uploadData.files){
-							var file = this.uploadData.files[fileName];
-							if( file && file.data ) {
-								for(var key in file.data){
-									var value = file.data[key];
-									var $hidden = $('<input type="hidden"/>')
-									$hidden.attr('name',key);
-									$hidden.attr('value',value);
-									$form.prepend( $hidden );
-								};
-							};
-						};
-					};
-					
-					this.options.uploadService.submitForm({
-						form: $form
-						,suppressInformationDialog: true
-						,onSuccess: done
-						,onError: function(err) {
-							_this.options.onError( _loc('Unable to upload file. Related document was kept. Error: ') + err );
-						}
-					});
-					
-				} else {
-					done();
-				};
-			};
-		};
-		
-		function done(){
-			_this._success(doc._id);
-		};
+		this.attachmentUploadHandler.performPostSavingActions({
+			doc: doc
+			,onSuccess: function(doc){
+				_this._success(doc._id);
+			}
+			,onError: function(err){
+				_this.options.onError( 
+					_loc('Error occurred after related document was created. Error: {err}',{err:err})
+				);
+			}
+		});
 	}
 	
 	,_success: function(docId){

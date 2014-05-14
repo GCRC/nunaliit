@@ -55,6 +55,7 @@ function isKeyEditingAllowed(obj, selectors, data) {
 	
 	if( selectors[0] === '_id' ) return false;
 	if( selectors[0] === '_rev' ) return false;
+	if( selectors[0] === '__n2Source' ) return false;
 	
 	return true;
 }
@@ -65,6 +66,7 @@ function isValueEditingAllowed(obj, selectors, data) {
 
 	if( selectors[0] === '_id' ) return false;
 	if( selectors[0] === '_rev' ) return false;
+	if( selectors[0] === '__n2Source' ) return false;
 	
 	return true;
 };
@@ -75,6 +77,7 @@ function isKeyDeletionAllowed(obj, selectors, data) {
 
 	if( selectors[0] === '_id' ) return false;
 	if( selectors[0] === '_rev' ) return false;
+	if( selectors[0] === '__n2Source' ) return false;
 	
 	return true;
 };
@@ -2498,6 +2501,238 @@ var SchemaEditorService = $n2.Class({
 	}
 });
 
+//++++++++++++++++++++++++++++++++++++++++++++++
+
+var AttachmentUploadHandler = $n2.Class({
+	
+	uploadService: null,
+	
+	requiresUploadForm: null,
+	
+	uploadFormId: null,
+	
+	uploadData: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,schema: null
+			,uploadService: null
+		},opts_);
+		
+		this.uploadService = opts.uploadService;
+		
+		this.requiresUploadForm = false;
+		
+		var doc = opts.doc;
+		//var schema = opts.schema;
+
+		if( !doc.nunaliit_attachments 
+		 || !doc.nunaliit_attachments.files ) {
+			// No attachment required
+			return;
+		};
+		if( doc._rev ) {
+			// Attachment not required when the document
+			// is already created.
+			return;
+		};
+		
+		this.requiresUploadForm = true;
+	},
+	
+	printFileForm: function(opts_){
+		var opts = $n2.extend({
+			elem: null
+			,doc: null
+		},opts_);
+		
+		var $elem = $(opts.elem);
+		var doc = opts.doc;
+		
+		if( this.requiresUploadForm ){
+			this.uploadFormId = $n2.utils.getElementIdentifier($elem);
+
+			for(var attName in doc.nunaliit_attachments.files ){
+				//var att = doc.nunaliit_attachments[attName];
+
+				var $form = $('<form>')
+					.attr('n2AttName',attName)
+					.addClass('n2EditRelated_att n2EditRelated_att_'+$n2.utils.stringToHtmlId(attName))
+					.appendTo($elem);
+
+				$('<input>')
+					.attr('type','file')
+					.attr('name','media')
+					.addClass('relatedDocFileInput')
+					.appendTo($form)
+					.change(function(){
+						var $fileInput = $(this);
+						//var filename = $fileInput.val();
+					});
+			};
+		};
+	},
+	
+	performPreSavingActions: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,onSuccess: function(doc){}
+			,onError: function(err){}
+		},opts_);
+
+		var doc = opts.doc;
+		
+		if( !doc ){
+			opts.onError('Document must be provided (performPreSavingActions)');
+			return;
+		};
+		
+		// If form was not required, skip logic
+		if( !this.requiresUploadForm ){
+			opts.onSuccess(doc);
+			return;
+		};
+
+		// Find form elements
+		var $form = this._getFormElements();
+		if( !$form ){
+			// Simply skip
+			opts.onSuccess(doc);
+			return;
+		};
+		
+		var compulsory = true;
+		if( doc
+		 && doc.nunaliit_attachments
+		 && typeof(doc.nunaliit_attachments._compulsory) !== 'undefined'
+		 ){
+			compulsory = doc.nunaliit_attachments._compulsory;
+		};
+		
+		var $fileInput = $form.find('.relatedDocFileInput');
+		var filename = $fileInput.val();
+		if( compulsory && (filename == null || '' === filename) ) {
+			opts.onError( _loc('A file must be selected') );
+		} else {
+			// Save data from when loading file
+			if( doc.nunaliit_attachments ) {
+				this.uploadData = doc.nunaliit_attachments;
+				delete doc.nunaliit_attachments;
+				
+				if( typeof(this.uploadData._compulsory) !== 'undefined' ){
+					delete this.uploadData._compulsory;
+				};
+			};
+
+			opts.onSuccess(doc);
+		};
+	},
+	
+	performPostSavingActions: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,onSuccess: function(doc){}
+			,onError: function(err){}
+		},opts_);
+
+		var _this = this;
+		
+		var doc = opts.doc;
+		
+		if( !doc ){
+			opts.onError('Document must be provided (performPostSavingActions)');
+			return;
+		};
+		
+		// If form was not required, skip logic
+		if( !this.requiresUploadForm ){
+			opts.onSuccess(doc);
+			return;
+		};
+
+		// Find form elements
+		var $forms = this._getFormElements();
+		if( !$forms ){
+			// Simply skip
+			opts.onSuccess(doc);
+			return;
+		};
+		
+		// From this point on, the logic is to deal with the first form
+		// and when done, continue on to the next one by calling recursively
+		// this function.
+		var $form = $forms.first();
+		var attName = $form.attr('n2AttName');
+		
+		var $fileInput = $form.find('.relatedDocFileInput');
+		var filename = $fileInput.val();
+		if( !filename ){
+			$form.remove();
+			continueUpload();
+			
+		} else {
+			// Upload file to contribution. This is done via the
+			// upload service. Add id and rev of document.
+			$form.prepend( $('<input type="hidden" name="id" value="'+doc._id+'"/>') );
+			$form.prepend( $('<input type="hidden" name="rev" value="'+doc._rev+'"/>') );
+			
+			// Add user data
+			if( this.uploadData 
+			 && this.uploadData.files 
+			 && attName 
+			 && this.uploadData.files[attName] ) {
+				var att = this.uploadData.files[attName];
+				if( att && att.data ) {
+					for(var key in att.data){
+						var value = att.data[key];
+						var $hidden = $('<input type="hidden"/>')
+						$hidden.attr('name',key);
+						$hidden.attr('value',value);
+						$form.prepend( $hidden );
+					};
+				};
+			};
+
+			// Perform actual upload
+			this.uploadService.submitForm({
+				form: $form
+				,suppressInformationDialog: true
+				,onSuccess: function(){
+					$form.remove();
+					continueUpload();
+				}
+				,onError: function(err) {
+					opts.onError( _loc('Unable to upload file. Cause: {err}',{err:err}) );
+				}
+			});
+		};
+		
+		function continueUpload(){
+			_this.performPostSavingActions(opts_);
+		};
+	},
+	
+	_getFormElements: function(){
+		var $elem = null;
+		if( this.uploadFormId ){
+			$elem = $('#'+this.uploadFormId);
+			if( $elem.length < 1 ){
+				return null;
+			};
+		};
+
+		var $form = $elem.find('form.n2EditRelated_att');
+		if( $form.length < 1 ){
+			return null;
+		};
+		
+		return $form;
+	}
+});
+
+//++++++++++++++++++++++++++++++++++++++++++++++
+
 $n2.CouchEditor = {
 	Editor: CouchEditor
 	,SchemaEditorService: SchemaEditorService
@@ -2509,6 +2744,7 @@ $n2.CouchEditor = {
 		,SLIDE_EDITOR: {}
 		,RELATION_EDITOR: {}
 	}
+	,AttachmentUploadHandler: AttachmentUploadHandler
 };
 
 })(jQuery,nunaliit2);
