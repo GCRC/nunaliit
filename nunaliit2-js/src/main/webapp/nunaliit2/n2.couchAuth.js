@@ -1600,18 +1600,33 @@ var AuthService = $n2.Class({
 	,createAuthWidget: function(opts_){
 		var showService = null;
 		var dispatchService = null;
+		var customService = null;
 		if( this.options.directory ){
 			showService = this.options.directory.showService;
 			dispatchService = this.options.directory.dispatchService;
+			customService = this.options.directory.customService;
 		};
 		
-		var opts = $n2.extend({
+		var widgetOptions = {
 			elemId: null
 			,elem: null
 			,authService: this
 			,showService: showService
 			,dispatchService: dispatchService
-		},opts_);
+		};
+		
+		if( customService ){
+			var label = customService.getOption('authWidgetLoginLabel');
+			if( label ) widgetOptions.labelLogin = label;
+
+			label = customService.getOption('authWidgetLogoutLabel');
+			if( label ) widgetOptions.labelLogout = label;
+
+			label = customService.getOption('authWidgetWelcomeLabel');
+			if( label ) widgetOptions.labelWelcome = label;
+		};
+		
+		var opts = $n2.extend(widgetOptions,opts_);
 		
 		return new AuthWidget(opts);
 	}
@@ -1747,6 +1762,12 @@ var AuthWidget = $n2.Class({
 	,elemId: null
 	
 	,lastCurrentUser: null
+
+	,labelLogin: null
+	
+	,labelLogout: null
+	
+	,labelWelcome: null
 	
 	,initialize: function(options_){
 		var opts = $n2.extend({
@@ -1755,6 +1776,9 @@ var AuthWidget = $n2.Class({
 			,authService: null
 			,showService: null
 			,dispatchService: null
+			,labelLogin: null
+			,labelLogout: null
+			,labelWelcome: null
 		},options_);
 		
 		var _this = this;
@@ -1762,13 +1786,13 @@ var AuthWidget = $n2.Class({
 		this.authService = opts.authService;
 		this.showService = opts.showService;
 		this.dispatchService = opts.dispatchService;
+		this.labelLogin = opts.labelLogin;
+		this.labelLogout = opts.labelLogout;
+		this.labelWelcome = opts.labelWelcome;
+		
 		this.elemId = opts.elemId;
 		if( !this.elemId && opts.elem ){
-			this.elemId = opts.elem.attr('id');
-			if( !this.elemId ){
-				this.elemId = $n2.getUniqueId();
-				opts.elem.attr('id',this.elemId);
-			};
+			this.elemId = $n2.utils.getElementIdentifier(opts.elem);
 		};
 		
 		var authService = this.getAuthService();
@@ -1832,7 +1856,7 @@ var AuthWidget = $n2.Class({
 				displayName = currentUser.display;
 				if( !displayName ) displayName = currentUser.name;
 				greetingClass = 'nunaliit_login_greeting_name';
-				buttonText = _loc('Logout');
+				buttonText = this.labelLogout ? this.labelLogout : _loc('Logout');
 				clickFn = function(){
 					authService.logout();
 					return false;
@@ -1845,9 +1869,9 @@ var AuthWidget = $n2.Class({
 				};
 			} else {
 				href = 'javascript:Login';
-				displayName = _loc('Welcome');
+				displayName = this.labelWelcome ? this.labelWelcome : _loc('Welcome');
 				greetingClass = 'nunaliit_login_greeting_welcome';
-				buttonText = _loc('Login');
+				buttonText = this.labelLogin ? this.labelLogin : _loc('Login');
 				clickFn = function(){
 					authService.showLoginForm();
 					return false;
