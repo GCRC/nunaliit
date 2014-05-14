@@ -929,6 +929,8 @@ var CouchDocumentEditor = $n2.Class({
 	
 	,editorSuppressFormView: null
 	
+	,attachmentUploadHandler: null
+	
 	,initialize: function(
 		parentOptions_
 		,ownOptions_
@@ -1374,9 +1376,24 @@ var CouchDocumentEditor = $n2.Class({
 		};
 		
 		// Report relations
-		var $displayRelationsDiv = $('<div class="editorDisplayRelations"></div>');
-		$editorContainer.append( $displayRelationsDiv );
+		$('<div>')
+			.addClass('editorDisplayRelations')
+			.appendTo($editorContainer);
 		this._refreshRelations(data);
+
+		// Upload 
+		this.attachmentUploadHandler = new AttachmentUploadHandler({
+			doc: data
+			,schema: selectedSchema
+			,uploadService: this._getUploadService()
+		});
+		var $attachmentUploadDiv = $('<div>')
+			.addClass('editorAttachmentUpload')
+			.appendTo($editorContainer);
+		this.attachmentUploadHandler.printFileForm({
+			elem: $attachmentUploadDiv
+			,doc: data
+		});
 
 		// Remove attachments
 		if( this.options.enableAddFile ){
@@ -1531,13 +1548,27 @@ var CouchDocumentEditor = $n2.Class({
 		};
 			
 		function save2(uploadForms) {
+			_this.attachmentUploadHandler.performPreSavingActions({
+				doc: _this.editedDocument
+				,onSuccess: function(doc){
+					_this.editedDocument = doc;
+					save3(uploadForms);
+				}
+				,onError: function(err){
+		    		_this._enableControls();
+					$n2.reportErrorForced(err);
+				}
+			});
+		};
+			
+		function save3(uploadForms) {
 			// Create or update document
 			if( _this.isInsert ) {
 				// This is an insert
 				_this.options.documentSource.createDocument({
 					doc: _this.editedDocument
 					,onSuccess: function(updatedDoc) {
-						save3(uploadForms, updatedDoc, true);
+						save4(uploadForms, updatedDoc, true);
 					}
 					,onError: function(err){
 			    		_this._enableControls();
@@ -1549,7 +1580,7 @@ var CouchDocumentEditor = $n2.Class({
 				_this.options.documentSource.updateDocument({
 					doc: _this.editedDocument
 					,onSuccess: function(updatedDoc) {
-						save3(uploadForms, updatedDoc, false);
+						save4(uploadForms, updatedDoc, false);
 					}
 					,onError: function(err){
 			    		_this._enableControls();
@@ -1559,9 +1590,24 @@ var CouchDocumentEditor = $n2.Class({
 			};
 		};
 		
-		function save3(uploadForms, editedDocument, inserted) {
+		function save4(uploadForms, editedDocument, inserted) {
+			_this.attachmentUploadHandler.performPostSavingActions({
+				doc: editedDocument
+				,onSuccess: function(doc){
+					save5(uploadForms, doc, inserted);
+				}
+				,onError: function(err){
+		    		_this._enableControls();
+					$n2.reportErrorForced(
+						_loc('Error occurred after document was saved. Error: {err}',{err:err})
+					);
+				}
+			});
+		};
+		
+		function save5(uploadForms, editedDocument, inserted) {
 			if( null == uploadForms || uploadForms.length < 1 ) {
-				save4(editedDocument, inserted);
+				save6(editedDocument, inserted);
 			} else {
 				var $form = $( uploadForms.pop() );
 				$form.prepend( $('<input type="hidden" name="id" value="'+editedDocument._id+'"/>') );
@@ -1570,7 +1616,7 @@ var CouchDocumentEditor = $n2.Class({
 					form: $form
 					,onSuccess: function(){
 						// Next one
-						save3(uploadForms, editedDocument, inserted);
+						save5(uploadForms, editedDocument, inserted);
 					}
 					,onError: function(err) {
 			    		_this._enableControls();
@@ -1580,7 +1626,7 @@ var CouchDocumentEditor = $n2.Class({
 			};
     	};
 		
-		function save4(editedDocument, inserted) {
+		function save6(editedDocument, inserted) {
 			// Report that save is complete
 			var discardOpts = {
 				saved: true
