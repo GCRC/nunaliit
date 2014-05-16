@@ -102,6 +102,7 @@ public class AgreementRobotThread extends Thread {
 		boolean agreementEnabled = AgreementUtils.getEnabledFromAgreementDocument(agreementDoc);
 		if( false == agreementEnabled ){
 			logger.info("User agreement is not enabled. Skip.");
+			return;
 		}
 		
 		// Check users that have agreed to the previous agreement and revoke
