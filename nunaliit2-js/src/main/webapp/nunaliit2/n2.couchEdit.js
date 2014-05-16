@@ -964,6 +964,11 @@ var CouchDocumentEditor = $n2.Class({
 			this.editorSuppressSlideView = cs.getOption('editorSuppressSlideView',false);
 			this.editorSuppressTreeView = cs.getOption('editorSuppressTreeView',false);
 			this.editorSuppressFormView = cs.getOption('editorSuppressFormView',false);
+			
+			var flag = cs.getOption('editorEnableAddFile',false);
+			if( flag ){
+				this.options.enableAddFile = true;
+			};
 		};
 	}
 
