@@ -6,6 +6,7 @@ public class UploadConstants {
 
 	static public final String UPLOAD_STATUS_KEY = "status";
 	
+	static public final String UPLOAD_STATUS_WAITING_FOR_UPLOAD = "waiting for upload"; // submitted without a file
 	static public final String UPLOAD_STATUS_SUBMITTED = "submitted"; // submitted by robot
 	static public final String UPLOAD_STATUS_SUBMITTED_INLINE = "submitted_inline"; // submitted directly by user
 	static public final String UPLOAD_STATUS_ANALYZED = "analyzed"; // basic information established by robot
@@ -48,6 +49,7 @@ public class UploadConstants {
 	static public final String UPLOAD_WORK_ROTATE_CW = "rotateClockwise";
 	static public final String UPLOAD_WORK_ROTATE_CCW = "rotateCounterClockwise";
 	static public final String UPLOAD_WORK_ROTATE_180 = "rotate180";
+	static public final String UPLOAD_WORK_UPLOADED_FILE = "uploadId";
 
 	// Geometries
 	static public final String GEOMETRY_KEY = "nunaliit_geom";

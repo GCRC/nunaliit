@@ -381,6 +381,22 @@ var CouchDataSource = $n2.Class($n2.document.DataSource, {
 			}
 			,onError: opts.onError
 		});
+	},
+	
+	/*
+	 * This needs to be a global unique identifier. It is not a sufficient
+	 * guarantee if the identifier is unique within a session. Therefore, it
+	 * should be based on the database which can track between sessions.
+	 */
+	getUniqueIdentifier: function(opts_){
+		var opts = $n2.extend({
+			onSuccess: function(uuid){}
+			,onError: function(errorMsg){}
+		},opts_);
+		
+		var server = this.db.server;
+		
+		server.getUniqueId(opts);
 	}
 
 	,_adjustDocument: function(doc) {

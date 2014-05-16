@@ -26,6 +26,12 @@ function(doc) {
 				 && typeof(server.thumbnail) === 'number' ){
 					thumbnail = server.thumbnail;
 				};
+				
+				// Waiting for upload
+				if( file.status === 'waiting for upload'
+				 && file.uploadId ) {
+					emit([file.status, file.uploadId], null);
+				};
 
 				// Work based on file status
 				if( file.status === 'submitted'
@@ -66,5 +72,11 @@ function(doc) {
 				};
 			};
 		};
+	};
+	
+	if( doc 
+	 && doc.nunaliit_upload_request
+	 && doc.nunaliit_upload_request.uploadId ) {
+		emit(['uploadId', doc.nunaliit_upload_request.uploadId], null);
 	};
 };

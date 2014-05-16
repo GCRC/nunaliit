@@ -385,6 +385,7 @@ var Editor = $n2.Class({
 		// Check that a file was provided
 		this.attachmentUploadHandler.performPreSavingActions({
 			doc: obj
+			,documentSource: this.options.documentSource
 			,onSuccess: function(doc){
 				_this.options.obj = doc;
 				_this._saveObj();

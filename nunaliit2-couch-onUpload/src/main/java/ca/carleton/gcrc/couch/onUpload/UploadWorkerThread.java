@@ -1,8 +1,11 @@
 package ca.carleton.gcrc.couch.onUpload;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.json.JSONArray;
@@ -23,6 +26,7 @@ import ca.carleton.gcrc.couch.onUpload.mail.MailNotification;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionMetaData;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionPlugin;
 import ca.carleton.gcrc.couch.utils.CouchNunaliitUtils;
+import ca.carleton.gcrc.json.JSONSupport;
 import ca.carleton.gcrc.olkit.multimedia.file.SystemFile;
 
 public class UploadWorkerThread extends Thread {
@@ -84,87 +88,82 @@ public class UploadWorkerThread extends Thread {
 		query.setViewName("server_work");
 		
 		CouchQueryResults results;
+		Work work = null;
 		try {
 			results = dd.performQuery(query);
+			work = getWork(results);
 		} catch (Exception e) {
 			logger.error("Error accessing server",e);
 			waitMillis(60 * 1000); // wait a minute
 			return;
 		}
 		
-		// Check for work
-		String docId = null;
-		JSONArray state = null;
-		for(JSONObject row : results.getRows()) {
-			String id = row.optString("id");
-			if( false == docIdsToSkip.contains(id) ) {
-				// Found some work
-				docId = id;
-				state = row.optJSONArray("key");
-				break;
-			}
-		}
-		
-		if( null == docId ) {
+		if( null == work ) {
 			// Nothing to do, wait 5 secs
 			waitMillis(5 * 1000);
 			return;
 		} else {
 			try {
 				// Handle this work
-				performWork(docId, state);
+				performWork(work);
 				
 			} catch(Exception e) {
-				logger.error("Error processing document "+docId+" ("+state+")",e);
-				docIdsToSkip.add(docId);
+				logger.error("Error processing document "+work.getDocId()+" ("+work.getState()+")",e);
+				docIdsToSkip.add( work.getDocId() );
 			}
 		}
 	}
 	
-	private void performWork(String docId, JSONArray state) throws Exception {
+	private void performWork(Work work) throws Exception {
 		
-		logger.info("Upload worker thread processing: "+docId+" ("+state+")");
+		logger.info("Upload worker thread processing: "+work.getDocId()+" ("+work.getState()+")");
+
+		String docId = work.getDocId();
+		String state = work.getState();
 		
-		String work = state.getString(0);
+		if( UploadConstants.UPLOAD_STATUS_WAITING_FOR_UPLOAD.equals(state) ) {
+			String uploadId = work.getUploadId();
+			String uploadRequestDocId = work.getUploadRequestDocId();
+			performWaitingForUploadWork(docId, uploadId, uploadRequestDocId);
 		
-		if( UploadConstants.UPLOAD_STATUS_SUBMITTED.equals(work) ) {
-			String attachmentName = state.getString(1);
+		} else if( UploadConstants.UPLOAD_STATUS_SUBMITTED.equals(state) ) {
+			String attachmentName = work.getAttachmentName();
 			performSubmittedWork(docId, attachmentName);
 			
-		} else if( UploadConstants.UPLOAD_STATUS_SUBMITTED_INLINE.equals(work) ) {
-			String attachmentName = state.getString(1);
+		} else if( UploadConstants.UPLOAD_STATUS_SUBMITTED_INLINE.equals(state) ) {
+			String attachmentName = work.getAttachmentName();
 			performSubmittedInlineWork(docId, attachmentName);
 			
-		} else if( UploadConstants.UPLOAD_STATUS_ANALYZED.equals(work) ) {
-			String attachmentName = state.getString(1);
+		} else if( UploadConstants.UPLOAD_STATUS_ANALYZED.equals(state) ) {
+			String attachmentName = work.getAttachmentName();
 			performAnalyzedWork(docId, attachmentName);
 			
-		} else if( UploadConstants.UPLOAD_STATUS_APPROVED.equals(work) ) {
-			String attachmentName = state.getString(1);
+		} else if( UploadConstants.UPLOAD_STATUS_APPROVED.equals(state) ) {
+			String attachmentName = work.getAttachmentName();
 			performApprovedWork(docId, attachmentName);
 				
-		} else if( UploadConstants.UPLOAD_WORK_ORIENTATION.equals(work) ) {
-			String attachmentName = state.getString(1);
+		} else if( UploadConstants.UPLOAD_WORK_ORIENTATION.equals(state) ) {
+			String attachmentName = work.getAttachmentName();
 			performOrientationWork(docId, attachmentName);
 			
-		} else if( UploadConstants.UPLOAD_WORK_THUMBNAIL.equals(work) ) {
-			String attachmentName = state.getString(1);
+		} else if( UploadConstants.UPLOAD_WORK_THUMBNAIL.equals(state) ) {
+			String attachmentName = work.getAttachmentName();
 			performThumbnailWork(docId, attachmentName);
 			
-		} else if( UploadConstants.UPLOAD_WORK_UPLOAD_ORIGINAL_IMAGE.equals(work) ) {
-			String attachmentName = state.getString(1);
+		} else if( UploadConstants.UPLOAD_WORK_UPLOAD_ORIGINAL_IMAGE.equals(state) ) {
+			String attachmentName = work.getAttachmentName();
 			performUploadOriginalImageWork(docId, attachmentName);
 			
-		} else if( UploadConstants.UPLOAD_WORK_ROTATE_CW.equals(work) ) {
-			String attachmentName = state.getString(1);
+		} else if( UploadConstants.UPLOAD_WORK_ROTATE_CW.equals(state) ) {
+			String attachmentName = work.getAttachmentName();
 			performRotateWork(FileConversionPlugin.WORK_ROTATE_CW, docId, attachmentName);
 			
-		} else if( UploadConstants.UPLOAD_WORK_ROTATE_CCW.equals(work) ) {
-			String attachmentName = state.getString(1);
+		} else if( UploadConstants.UPLOAD_WORK_ROTATE_CCW.equals(state) ) {
+			String attachmentName = work.getAttachmentName();
 			performRotateWork(FileConversionPlugin.WORK_ROTATE_CCW, docId, attachmentName);
 			
-		} else if( UploadConstants.UPLOAD_WORK_ROTATE_180.equals(work) ) {
-			String attachmentName = state.getString(1);
+		} else if( UploadConstants.UPLOAD_WORK_ROTATE_180.equals(state) ) {
+			String attachmentName = work.getAttachmentName();
 			performRotateWork(FileConversionPlugin.WORK_ROTATE_180, docId, attachmentName);
 			
 		} else {
@@ -172,6 +171,66 @@ public class UploadWorkerThread extends Thread {
 		}
 
 		logger.info("Upload worker thread completed: "+docId+" ("+state+")");
+	}
+
+	private void performWaitingForUploadWork(String docId, String uploadId, String uploadRequestDocId) throws Exception {
+		JSONObject doc = dd.getDatabase().getDocument(docId);
+		JSONObject uploadRequestDoc = dd.getDatabase().getDocument(uploadRequestDocId);
+		
+		JSONObject attachment = findAttachmentWithUploadId(doc, uploadId);
+		String attName = attachment.getString("attachmentName");
+		JSONObject nunaliitAttachments = doc.getJSONObject("nunaliit_attachments");
+		JSONObject nunaliitAttachmentsFiles = nunaliitAttachments.getJSONObject("files");
+		nunaliitAttachmentsFiles.remove(attName);
+		
+		JSONObject uploadRequest = uploadRequestDoc.getJSONObject("nunaliit_upload_request");
+		JSONArray files = uploadRequest.getJSONArray("files");
+		
+		for(int i=0,e=files.length(); i<e; ++i){
+			JSONObject file = files.getJSONObject(i);
+			
+			String attachmentName = file.getString("attachmentName");
+			String originalName = file.getString("originalName");
+			String submitter = file.getString("submitter");
+			JSONObject original = file.getJSONObject("original");
+			JSONObject data = file.getJSONObject("data");
+			
+			String effectiveAttachmentName = attachmentName;
+			if( JSONSupport.containsKey(nunaliitAttachmentsFiles, effectiveAttachmentName) ) {
+				// Select a different file name
+				String prefix = "";
+				String suffix = "";
+				int pos = attachmentName.indexOf('.', 1);
+				if( pos < 0 ) {
+					prefix = attachmentName;
+				} else {
+					prefix = attachmentName.substring(0, pos-1);
+					suffix = attachmentName.substring(pos);
+				}
+				int counter = 0;
+				while( JSONSupport.containsKey(nunaliitAttachmentsFiles, effectiveAttachmentName) ) {
+					attachmentName = prefix + counter + suffix;
+					++counter;
+				}
+			}
+			
+			JSONObject requestAttachment = new JSONObject();
+			requestAttachment.put("attachmentName", effectiveAttachmentName);
+			requestAttachment.put("status", "submitted");
+			requestAttachment.put("originalName", originalName);
+			requestAttachment.put("submitter", submitter);
+			requestAttachment.put("original", original);
+			requestAttachment.put("data", data);
+			requestAttachment.put("uploadId", uploadId);
+			
+			nunaliitAttachmentsFiles.put(effectiveAttachmentName,requestAttachment);
+		}
+		
+		// Save document
+		dd.getDatabase().updateDocument(doc);
+		
+		// Delete upload request
+		dd.getDatabase().deleteDocument(uploadRequestDoc);
 	}
 
 	private void performSubmittedWork(String docId, String attachmentName) throws Exception {
@@ -575,14 +634,125 @@ public class UploadWorkerThread extends Thread {
 	private void sendVettingNotification(String docId, JSONObject doc, String attachmentName) {
 		// Notify that upload is available
 		try {
-			String title = "Vetting Request";
-			String description = "A file has been submitted for approval and requires your vetting action.";
+//			String title = "Vetting Request";
+//			String description = "A file has been submitted for approval and requires your vetting action.";
 			
 			mailNotification.uploadNotification(docId, attachmentName);
 			
 		} catch(Exception e) {
 			logger.error("Failed mail notification",e);
 		}
+	}
+	
+	private Work getWork(CouchQueryResults results) throws Exception {
+		Map<String,JSONObject> rowsByUploadId = findUploadIds(results);
+				
+		for(JSONObject row : results.getRows()) {
+			String id = row.optString("id");
+			
+			String state = null;
+			String attachmentName = null;
+			JSONArray key = row.optJSONArray("key");
+			if( null != key ){
+				if( key.length() > 0 ){
+					state = key.getString(0);
+				}
+				if( key.length() > 1 ){
+					attachmentName = key.getString(1);
+				}
+			};
+			
+			// Discount documents in error state
+			if( docIdsToSkip.contains(id) ) {
+				continue;
+			}
+			
+			if( UploadConstants.UPLOAD_STATUS_WAITING_FOR_UPLOAD.equals(state) ) {
+				JSONObject uploadIdRow = rowsByUploadId.get(attachmentName);
+				if( null == uploadIdRow ) {
+					// Missing information to continue
+					continue;
+				} else {
+					String uploadRequestDocId = uploadIdRow.getString("id");
+					
+					Work work = new Work();
+					work.setDocId(id);
+					work.setState(state);
+					work.setUploadId(attachmentName);
+					work.setUploadRequestDocId(uploadRequestDocId);
+					return work;
+				}
+				
+			} else if( UploadConstants.UPLOAD_WORK_UPLOADED_FILE.equals(state) ) {
+				// Ignore
+				continue;
+				
+			} else {
+				// Everything else
+				Work work = new Work();
+				work.setDocId(id);
+				work.setState(state);
+				work.setAttachmentName(attachmentName);
+				return work;
+			}
+		}
+		
+		return null;
+	}
+	
+	private Map<String,JSONObject> findUploadIds(CouchQueryResults results) throws Exception {
+		Map<String,JSONObject> rowsByUploadId = new HashMap<String,JSONObject>();
+		
+		for(JSONObject row : results.getRows()) {
+			String state = null;
+			String uploadId = null;
+			JSONArray key = row.optJSONArray("key");
+			if( null != key ){
+				if( key.length() > 0 ){
+					state = key.getString(0);
+				}
+				if( key.length() > 1 ){
+					uploadId = key.getString(1);
+				}
+			};
+			
+			if( UploadConstants.UPLOAD_WORK_UPLOADED_FILE.equals(state) ) {
+				rowsByUploadId.put(uploadId, row);
+				continue;
+			}
+		}
+		
+		return rowsByUploadId;
+	}
+	
+	private JSONObject findAttachmentWithUploadId(JSONObject doc, String uploadId) throws Exception {
+		JSONObject nunaliitAttachments = doc.optJSONObject("nunaliit_attachments");
+
+		JSONObject files = null;
+		if( null != nunaliitAttachments ){
+			files = nunaliitAttachments.optJSONObject("files");
+		}
+		
+		if( null != files ){
+			Iterator<?> keyIt = files.keys();
+			while( keyIt.hasNext() ){
+				Object keyObj = keyIt.next();
+				if( keyObj instanceof String ){
+					String attName = (String)keyObj;
+					JSONObject attachment = files.optJSONObject(attName);
+					if( null != attachment ){
+						String attachmentUploadId = attachment.optString("uploadId");
+						if( null != attachmentUploadId ){
+							if( attachmentUploadId.equals(uploadId) ){
+								return attachment;
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		return null;
 	}
 
 	private boolean waitMillis(int millis) {

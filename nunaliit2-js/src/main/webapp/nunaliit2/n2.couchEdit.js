@@ -1550,6 +1550,7 @@ var CouchDocumentEditor = $n2.Class({
 		function save2(uploadForms) {
 			_this.attachmentUploadHandler.performPreSavingActions({
 				doc: _this.editedDocument
+				,documentSource: _this.options.documentSource
 				,onSuccess: function(doc){
 					_this.editedDocument = doc;
 					save3(uploadForms);
@@ -2623,11 +2624,15 @@ var AttachmentUploadHandler = $n2.Class({
 	performPreSavingActions: function(opts_){
 		var opts = $n2.extend({
 			doc: null
+			,documentSource: documentSource
 			,onSuccess: function(doc){}
 			,onError: function(err){}
 		},opts_);
 
+		var _this = this;
+		
 		var doc = opts.doc;
+		var documentSource = opts.documentSource;
 		
 		if( !doc ){
 			opts.onError('Document must be provided (performPreSavingActions)');
@@ -2641,8 +2646,8 @@ var AttachmentUploadHandler = $n2.Class({
 		};
 
 		// Find form elements
-		var $form = this._getFormElements();
-		if( !$form ){
+		var $forms = this._getFormElements();
+		if( !$forms ){
 			// Simply skip
 			opts.onSuccess(doc);
 			return;
@@ -2656,18 +2661,85 @@ var AttachmentUploadHandler = $n2.Class({
 			compulsory = doc.nunaliit_attachments._compulsory;
 		};
 		
-		var $fileInput = $form.find('.relatedDocFileInput');
-		var filename = $fileInput.val();
-		if( compulsory && (filename == null || '' === filename) ) {
-			opts.onError( _loc('A file must be selected') );
-		} else {
+		var err = null;
+		var attNamesWithFile = [];
+		$forms.each(function(){
+			var $form = $(this);
+			
+			var attName = $form.attr('n2AttName');
+			
+			var $fileInput = $form.find('.relatedDocFileInput');
+			var filename = $fileInput.val();
+			if( filename == null || '' === filename ) {
+				if( compulsory ) {
+					err = _loc('A file must be selected');
+				};
+			} else {
+				attNamesWithFile.push(attName);
+			};
+		});
+		if( err ){
+			opts.onError( err );
+		};
+		
+		// Obtain a uuid for each file
+		var uuids = [];
+		getUuids();
+		
+		function getUuids(){
+			if( uuids.length >= attNamesWithFile.length ){
+				onUuids();
+			} else {
+				documentSource.getUniqueIdentifier({
+					onSuccess: function(uuid){
+						uuids.push(uuid);
+						getUuids();
+					}
+					,onError: function(err){
+						opts.onError( _loc('Unable to reach server: {err}',{err:err}) );
+					}
+				});
+			};
+		};
+		
+		function onUuids(){
 			// Save data from when loading file
 			if( doc.nunaliit_attachments ) {
-				this.uploadData = doc.nunaliit_attachments;
+				_this.uploadData = doc.nunaliit_attachments;
 				delete doc.nunaliit_attachments;
 				
-				if( typeof(this.uploadData._compulsory) !== 'undefined' ){
-					delete this.uploadData._compulsory;
+				if( typeof(_this.uploadData._compulsory) !== 'undefined' ){
+					delete _this.uploadData._compulsory;
+				};
+			};
+			
+			// Create stubs for attachments
+			if( attNamesWithFile.length > 0 ){
+				doc.nunaliit_attachments = {
+					nunaliit_type: 'attachment_descriptions'
+					,files: {}
+				};
+				
+				for(var i=0,e=attNamesWithFile.length; i<e; ++i){
+					var attName = attNamesWithFile[i];
+					
+					doc.nunaliit_attachments.files[attName] = {
+						attachmentName: attName
+						,status: "waiting for upload"
+						,uploadId: uuids[i]
+						,data: {}
+					};
+					
+					if( _this.uploadData 
+					 && _this.uploadData.files 
+					 && _this.uploadData.files[attName] ) {
+						_this.uploadData.files[attName].uploadId = uuids[i];
+						
+						if( _this.uploadData.files[attName].data ){
+							doc.nunaliit_attachments.files[attName].data = 
+								_this.uploadData.files[attName].data;
+						};
+					};
 				};
 			};
 
@@ -2711,9 +2783,19 @@ var AttachmentUploadHandler = $n2.Class({
 		var $form = $forms.first();
 		var attName = $form.attr('n2AttName');
 		
+		var uploadId = null;
+		var att = null;
+		if( this.uploadData 
+		 && this.uploadData.files 
+		 && attName 
+		 && this.uploadData.files[attName] ){
+			att = this.uploadData.files[attName];
+			uploadId = att.uploadId;
+		};
+		
 		var $fileInput = $form.find('.relatedDocFileInput');
 		var filename = $fileInput.val();
-		if( !filename ){
+		if( !filename || !att || !uploadId ){
 			$form.remove();
 			continueUpload();
 			
@@ -2722,21 +2804,16 @@ var AttachmentUploadHandler = $n2.Class({
 			// upload service. Add id and rev of document.
 			$form.prepend( $('<input type="hidden" name="id" value="'+doc._id+'"/>') );
 			$form.prepend( $('<input type="hidden" name="rev" value="'+doc._rev+'"/>') );
+			$form.prepend( $('<input type="hidden" name="uploadId" value="'+uploadId+'"/>') );
 			
 			// Add user data
-			if( this.uploadData 
-			 && this.uploadData.files 
-			 && attName 
-			 && this.uploadData.files[attName] ) {
-				var att = this.uploadData.files[attName];
-				if( att && att.data ) {
-					for(var key in att.data){
-						var value = att.data[key];
-						var $hidden = $('<input type="hidden"/>')
-						$hidden.attr('name',key);
-						$hidden.attr('value',value);
-						$form.prepend( $hidden );
-					};
+			if( att.data ) {
+				for(var key in att.data){
+					var value = att.data[key];
+					var $hidden = $('<input type="hidden"/>')
+					$hidden.attr('name',key);
+					$hidden.attr('value',value);
+					$form.prepend( $hidden );
 				};
 			};
 

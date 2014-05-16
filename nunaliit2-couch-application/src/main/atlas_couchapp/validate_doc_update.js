@@ -40,7 +40,9 @@ log('userInfo: '+JSON.stringify(userInfo));
 	} else if( !userInfo.atlas[n2atlas.name]
 	 || !userInfo.atlas[n2atlas.name].agreement ) {
 		throw( {forbidden: 'Database submissions are restricted to users that have accepted the user agreement'} );
-	} else if( n2atlas.submissionDbEnabled ) {
+	} else if( n2atlas.submissionDbEnabled 
+	 && !newDoc.nunaliit_upload_request ) {
+		// Only upload requests are allowed
 		throw( {forbidden: 'Database submissions must be performed via the submission database'} );
 	} else {
 		var userName = userCtxt.name;

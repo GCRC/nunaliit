@@ -2106,6 +2106,8 @@ var Server = $n2.Class({
 			,options_
 		);
 		
+		var _this = this;
+		
 		if( this.uuids.length > 0 ) {
 			var uuid = this.uuids.pop();
 			opts.onSuccess(uuid);
@@ -2127,8 +2129,11 @@ var Server = $n2.Class({
 	    	,dataType: 'json'
 	    	,success: function(res) {
 	    		if( res.uuids ) {
-	    			this.uuids = res.uuids;
-					var uuid = this.uuids.pop();
+	    			for(var i=0,e=res.uuids.length; i<e; ++i) {
+	    				var uuid = res.uuids[i];
+	    				_this.uuids.push(uuid);
+	    			};
+					var uuid = _this.uuids.pop();
 					opts.onSuccess(uuid);
 					return;
 	    		}
