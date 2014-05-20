@@ -421,7 +421,7 @@ var AuthService = $n2.Class({
 						
 						$('<div>')
 							.addClass('n2Auth_user_agreement_label')
-							.text( _loc('User agreement has changed. You must accept before you can authenticate with atlas.') )
+							.text( _loc('User agreement has changed. You must accept before you can authenticate.') )
 							.appendTo($content);
 						
 						$('<textarea>')
