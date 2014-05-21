@@ -1012,10 +1012,20 @@ var Display = $n2.Class({
 	}
 	
 	,_performDocumentEdit: function(data, options_) {
-		this._dispatch({
-			type: 'editInitiate'
-			,docId: data._id
-			,doc: data
+		var _this = this;
+		
+		this.documentSource.getDocument({
+			docId: data._id
+			,onSuccess: function(doc){
+				_this._dispatch({
+					type: 'editInitiate'
+					,docId: doc._id
+					,doc: doc
+				});
+			}
+			,onError: function(errorMsg){
+				$n2.log('Unable to load document: '+errorMsg);
+			}
 		});
 	}
 	

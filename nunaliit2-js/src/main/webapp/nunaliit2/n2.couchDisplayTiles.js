@@ -1089,10 +1089,20 @@ var TiledDisplay = $n2.Class({
 	 * Initiates the editing of a document
 	 */
 	_performDocumentEdit: function(doc){
-		this._dispatch({
-			type: 'editInitiate'
-			,docId: doc._id
-			,doc: doc
+		var _this = this;
+		
+		this.documentSource.getDocument({
+			docId: doc._id
+			,onSuccess: function(doc){
+				_this._dispatch({
+					type: 'editInitiate'
+					,docId: doc._id
+					,doc: doc
+				});
+			}
+			,onError: function(errorMsg){
+				$n2.log('Unable to load document: '+errorMsg);
+			}
 		});
 	},
 	

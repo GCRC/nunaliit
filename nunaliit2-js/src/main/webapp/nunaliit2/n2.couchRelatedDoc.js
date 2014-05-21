@@ -320,16 +320,13 @@ var Editor = $n2.Class({
 		
 		var diagId = $n2.getUniqueId();
 		this.diagId = diagId;
-		var $dialog = $('<div id="'+diagId+'"></div>');
+		var $dialog = $('<div>')
+			.attr('id',diagId)
+			.addClass('n2RelatedDoc_dialog')
+			.appendTo( $('body') );
 		
 		var obj = this.options.obj;
 		var schema = this.options.schema;
-		
-		this.attachmentUploadHandler = new $n2.CouchEditor.AttachmentUploadHandler({
-			doc: obj
-			,schema: schema
-			,uploadService: this.options.uploadService
-		});
 		
 		var $form = $('<div></div>');
 		$dialog.append($form);
@@ -341,9 +338,13 @@ var Editor = $n2.Class({
 
 		var $fileElement = $('<div></div>');
 		$dialog.append($fileElement);
-		this.attachmentUploadHandler.printFileForm({
-			elem: $fileElement
-			,doc: obj
+		this.attachmentUploadHandler = new $n2.CouchEditor.AttachmentEditor({
+			doc: obj
+			,elem: $fileElement
+			,documentSource: this.options.documentSource
+			,uploadService: this.options.uploadService
+			,disableAddFile: true
+			,disableRemoveFile: true
 		});
 		
 		var $ok = $('<button></button>');
@@ -386,8 +387,7 @@ var Editor = $n2.Class({
 		this.attachmentUploadHandler.performPreSavingActions({
 			doc: obj
 			,documentSource: this.options.documentSource
-			,onSuccess: function(doc){
-				_this.options.obj = doc;
+			,onSuccess: function(){
 				_this._saveObj();
 			}
 			,onError: function(err){
@@ -423,7 +423,7 @@ var Editor = $n2.Class({
 
 		this.attachmentUploadHandler.performPostSavingActions({
 			doc: doc
-			,onSuccess: function(doc){
+			,onSuccess: function(){
 				_this._success(doc._id);
 			}
 			,onError: function(err){

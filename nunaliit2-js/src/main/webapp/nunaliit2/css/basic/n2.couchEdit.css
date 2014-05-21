@@ -26,3 +26,21 @@ div.n2CouchEditor_container .ui-accordion-content {
 	overflow: auto;
 	max-height: 400px;
 }
+
+/* Attachment Editor */
+.attachmentEditor_att form.attachmentEditor_form input {
+	display: none;
+}
+
+.attachmentEditor_label {
+	padding-right: 3px;
+}
+
+.attachmentEditor_delete {
+	padding-left: 3px;
+}
+
+/* Related Doc */
+.n2RelatedDoc_dialog .attachmentEditor_label {
+	display: none;
+}
