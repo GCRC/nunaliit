@@ -103,6 +103,7 @@ public class FFmpeg {
 				}
 			} catch (IOException e) {
 				avail.isAvailable = false;
+				logger.error("Problem while trying to reach FFmpeg",e);
 			}
 
 			availability = avail;
