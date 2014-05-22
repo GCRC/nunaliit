@@ -232,8 +232,6 @@ var ModuleDisplay = $n2.Class({
 
 	config: null
 	
-	,moduleName: null
-	
 	,module: null
 	
 	,mapControl: null
@@ -298,9 +296,7 @@ var ModuleDisplay = $n2.Class({
 		
 		var _this = this;
 	
-		this.moduleName = opts.moduleName;
-		this.moduleDoc = opts.moduleDoc;
-		if( !this.moduleName  && !this.moduleDoc ) {
+		if( !opts.moduleName  && !opts.moduleDoc ) {
 			opts.onError('"moduleName" or "moduleDoc" must be specified');
 			return;
 		};
@@ -341,6 +337,13 @@ var ModuleDisplay = $n2.Class({
 			this.loginPanelNames.push(opts.loginPanelName);
 		};
 		
+		// Quick access
+		var config = this.config;
+		var atlasDb = config.atlasDb;
+		var atlasDesign = config.atlasDesign;
+		var documentSource = config.documentSource;
+		var customService = this._getCustomService();
+		
 		// dispatcher
 		var d = this._getDispatcher();
 		if( d ){
@@ -348,13 +351,6 @@ var ModuleDisplay = $n2.Class({
 				_this._initSidePanel();
 			});
 		};
-		
-		// Quick access
-		var config = this.config;
-		var atlasDb = config.atlasDb;
-		var atlasDesign = config.atlasDesign;
-		var documentSource = config.documentSource;
-		var customService = this._getCustomService();
 		
 		// Set up login widget
 		for(var i=0,e=this.loginPanelNames.length;i<e;++i){
@@ -370,16 +366,16 @@ var ModuleDisplay = $n2.Class({
 		 * Allow for the module document to be passed in along with the moduleName.
 		 * This allows for run-time insertion of layer options (e.g., styling functions).
 		 */
-		if( ! $n2.isDefined(this.moduleDoc) ) {
+		if( ! $n2.isDefined(opts.moduleDoc) ) {
 			atlasDb.getDocument({
-				docId: this.moduleName
+				docId: opts.moduleName
 				,onSuccess: moduleDocumentLoaded
 				,onError: function(err){ 
 					opts.onError('Unable to load module: '+err); 
 				}
 			});
 		} else {
-			moduleDocumentLoaded(this.moduleDoc);
+			moduleDocumentLoaded(opts.moduleDoc);
 		};
 		
 		/*
@@ -1068,15 +1064,26 @@ var ModuleDisplay = $n2.Class({
 
 	,_initSidePanel: function() {
 		var _this = this;
+
+		var customService = this._getCustomService();
+		
 		var $elem = $('#'+this.sidePanelName);
 		
-		this.module.displayIntro({
-			elem: $elem
-			,showService: this._getShowService()
-			,onLoaded: function(){
-				_this._sendDispatchMessage({type:'loadedModuleContent'});
-			}
-		});
+		var displayIntroFn = customService.getOption('moduleDisplayIntroFunction', null);
+		if( displayIntroFn ){
+			displayIntroFn({
+				elem: $elem
+				,moduleDisplay: this
+			});
+		} else {
+			this.module.displayIntro({
+				elem: $elem
+				,showService: this._getShowService()
+				,onLoaded: function(){
+					_this._sendDispatchMessage({type:'loadedModuleContent'});
+				}
+			});
+		};
 	}
 	
 	,_getDispatcher: function(){
