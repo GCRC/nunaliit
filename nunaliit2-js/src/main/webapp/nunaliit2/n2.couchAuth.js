@@ -174,6 +174,7 @@ var AuthService = $n2.Class({
 			dispatcher.register(DH,'login',fn);
 			dispatcher.register(DH,'loginShowForm',fn);
 			dispatcher.register(DH,'logout',fn);
+			dispatcher.register(DH,'authIsLoggedIn',fn);
 		};
 		
 		// Detect if auto registration is available
@@ -1675,6 +1676,12 @@ var AuthService = $n2.Class({
 			
 		} else if( m && m.type === 'logout' ){
 			this.logout();
+
+		} else if( m && m.type === 'authIsLoggedIn' ){
+			// Synchronous call
+			if( this.isLoggedIn() ){
+				m.isLoggedIn = true;
+			};
 		};
 	}
 	
