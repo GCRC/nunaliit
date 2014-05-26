@@ -959,14 +959,16 @@
 						_this._viewSubmission(subDocId);
 						return false;
 					});
-				$('<button>')
-					.addClass('n2_button_manual')
-					.text( _loc('Edit Proposed Document') )
-					.appendTo($buttons)
-					.click(function(){
-						editProposedDocument(diagId, originalDoc, submittedDoc, currentDoc, proposedDoc, subDoc);
-						return false;
-					});
+				if( ! subDoc.nunaliit_submission.deletion ) {
+					$('<button>')
+						.addClass('n2_button_manual')
+						.text( _loc('Edit Proposed Document') )
+						.appendTo($buttons)
+						.click(function(){
+							editProposedDocument(diagId, originalDoc, submittedDoc, currentDoc, proposedDoc, subDoc);
+							return false;
+						});
+				};
 				$('<button>')
 					.addClass('n2_button_cancel')
 					.text( _loc('Cancel') )
