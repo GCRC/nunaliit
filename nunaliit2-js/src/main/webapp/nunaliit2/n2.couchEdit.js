@@ -2157,7 +2157,7 @@ var CouchEditor = $n2.Class({
     		);
 	}
 
-    ,_showDocumentForm: function(document_, editorOptions_) {
+    ,showDocumentForm: function(document_, editorOptions_) {
     	if( null != this.currentEditor ) {
     		this.currentEditor.performCancellation();
     		this.currentEditor = null;
@@ -2204,7 +2204,7 @@ var CouchEditor = $n2.Class({
 			if( m.feature ) {
 				this._showAttributeForm(m.feature);
 			} else {
-				this._showDocumentForm(m.doc);
+				this.showDocumentForm(m.doc);
 			};
 			
 		} else if( 'editCancel' === m.type ) {
