@@ -119,7 +119,7 @@ sub Load_Translations
 {
 	my ($dictRef) = @_;
 
-	# Find translation files
+	# Find translation files in nunaliit2 project
 	my $cmd = qq|find . -name nunaliit2.??.js|;    
 		
 	my @output = `$cmd`;    
@@ -127,6 +127,20 @@ sub Load_Translations
 	
 	foreach my $line (@output) {
 		if( $line =~ m/nunaliit2\.([a-zA-Z][a-zA-Z])\.js\s*$/ ) {
+			my $file = $line;
+			my $lang = $1;
+			Load_TranslationFile($file, $lang, $dictRef);
+		}
+	}
+
+	# Find translation files in atlas directory
+	my $cmd = qq|find . -name nunaliit_lang.??.js|;    
+		
+	my @output = `$cmd`;    
+	chomp @output;
+	
+	foreach my $line (@output) {
+		if( $line =~ m/nunaliit_lang\.([a-zA-Z][a-zA-Z])\.js\s*$/ ) {
 			my $file = $line;
 			my $lang = $1;
 			Load_TranslationFile($file, $lang, $dictRef);
