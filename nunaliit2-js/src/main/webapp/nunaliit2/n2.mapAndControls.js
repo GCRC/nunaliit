@@ -603,6 +603,9 @@ function suppressPopupHtmlFunction(opts_){
 		Object or Array of Objects. Each object represents the options for one displayed layer.
     @param {String} options_.layerInfo.sourceSrsName
 		Projection name used in WFS requests. Defaults to 'EPSG:4326'
+    @param {Number} options_.layerInfo.displayInLayerSwitcher
+		Show layer in Layer Switcher (true, default) or hide layer in switcher (true).
+		Applied in WMS layers only.
     @param {String} options_.layerInfo.featurePrefix
 		Short name used in WFS request as 'namespace' or 'workspace'.
     @param {String} options_.layerInfo.featureType
@@ -628,6 +631,9 @@ function suppressPopupHtmlFunction(opts_){
 		Amount of time, in milliseconds, that should elapse between the
 		time a user hovers a feature and the time the popup is generated for it.
 		Defaults to 0.
+    @param {Number} options_.layerInfo.gutter
+		Extra sapce, specified in pixels, to add around images fetched from WMS.
+		Useful for WMS labelling in use with tiled service.
     @param {Boolean} options_.layerInfo.visibility=true
 		If set, the layer is initially visible. If false, the layer is
  		initially turned off.
@@ -2101,6 +2107,12 @@ var MapAndControls = $n2.Class({
 				};
 				if( typeof(layerDefinition.visibility) === 'boolean' ){
 					layerOptions.visibility = layerDefinition.visibility;
+				};
+				if ($n2.isDefined(layerDefinition.gutter)) {
+					layerOptions.gutter = layerDefinition.gutter;
+				};
+				if ($n2.isDefined(layerDefinition.displayInLayerSwitcher)) {
+					layerOptions.displayInLayerSwitcher = layerDefinition.displayInLayerSwitcher;
 				};
 				for(var key in options){
 					if( 'url' === key ) {
