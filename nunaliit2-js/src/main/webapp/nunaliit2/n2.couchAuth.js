@@ -96,10 +96,6 @@ var AuthService = $n2.Class({
 			,options_
 		);
 		
-		if( ! $n2.couchAuth._defaultAuthService ){
-			$n2.couchAuth._defaultAuthService = this;
-		};
-		
 		this.loginStateListeners = [];
 		this.lastAuthSessionCookie = null;
 		this.userServiceAvailable = false;
@@ -1917,70 +1913,6 @@ var AuthWidget = $n2.Class({
 $n2.couchAuth = {
 	AuthService: AuthService
 	,AuthWidget: AuthWidget
-	,_defaultAuthService: null
-};
-
-$.NUNALIIT_AUTH = {
-	getUser: function(){
-		return $n2.couchAuth._defaultAuthService.getCurrentUser();
-	}
-
-	,getAuthContext: function() {
-		return $n2.couchAuth._defaultAuthService.getAuthContext();
-	}
-	
-	,init: function(opts_){
-		$n2.couchAuth._defaultAuthService = new AuthService(opts_);
-		return $n2.couchAuth._defaultAuthService;
-	}
-
-	,login: function(opts_){
-		$n2.couchAuth._defaultAuthService.showLoginForm(opts_);
-	}
-	
-	,logout: function(opts_){
-		$n2.couchAuth._defaultAuthService.logout(opts_);
-	}
-	
-	,addListener: function(opts_){
-		$n2.couchAuth._defaultAuthService.addListeners(opts_);
-	}
-	
-	,isDeleteAllowed: function(){
-		return $n2.couchAuth._defaultAuthService.isDeleteAllowed();
-	}
-	
-	,isUpdateAllowed: function(){
-		return $n2.couchAuth._defaultAuthService.isUpdateAllowed();
-	}
-	
-	,isLoggedIn: function(){
-		return $n2.couchAuth._defaultAuthService.isLoggedIn();
-	}
-	
-	,isUser: function(){
-		return $n2.couchAuth._defaultAuthService.isUser();
-	}
-	
-	,isAdmin: function(){
-		return $n2.couchAuth._defaultAuthService.isAdmin();
-	}
-	
-	,isAnonymous: function(){
-		return $n2.couchAuth._defaultAuthService.isAnonymous();
-	}
-	
-	,userLoggedInAndNotAnonymous: function(){
-		return $n2.couchAuth._defaultAuthService.userLoggedInAndNotAnonymous();
-	}
-	
-	,autoAnonymousBehaviour: function(){
-		return $n2.couchAuth._defaultAuthService.autoAnonymousBehaviour();
-	}
-	
-	,autoAnonLogin: function(opts_){
-		$n2.couchAuth._defaultAuthService.autoAnonLogin(opts_);
-	}
 };
 
 })(jQuery,nunaliit2);

@@ -424,12 +424,12 @@ function main_init(config) {
 	$n2.log('main_init',config);
 	atlasDb = config.atlasDb;
 	atlasDesign = config.atlasDesign;
-	uploadServer = config.uploadServer;
-	searchServer = config.searchServer;
-	requests = config.requests;
+	uploadServer = config.directory.uploadService;
+	searchServer = config.directory.searchService;
+	requests = config.directory.requestService;
 	contributions = config.contributions;
 	couchEditor = config.couchEditor;
-	showService = config.show;
+	showService = config.directory.showService;
 	schemaRepository = config.directory.schemaRepository;
 	dispatcher = config.directory.dispatchService;
 	

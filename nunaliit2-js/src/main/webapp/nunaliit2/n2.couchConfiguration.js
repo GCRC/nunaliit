@@ -156,11 +156,9 @@ function Configure(options_){
 	};
 	
 	function authInitialized() {
-		configuration.auth = $.NUNALIIT_AUTH;
-		
+
 		configuration.atlasDb.getChangeNotifier({
 			onSuccess: function(notifier){
-				configuration.atlasNotifier = notifier;
 				configuration.directory.notifierService = notifier;
 				notifierInitialized();
 			}
@@ -177,33 +175,30 @@ function Configure(options_){
 			url: options.progressServerUrl
 		});
 
-	 	configuration.uploadServer = new $n2.upload.Upload({
+	 	configuration.directory.uploadService = new $n2.upload.Upload({
 			url: options.uploadServerUrl
 			,progressServer: configuration.progressServer
 		});
-		configuration.directory.uploadService = configuration.uploadServer;
 
 		configuration.directory.exportService = new $n2.couchExport.Export({
 			url: options.exportServerUrl
 		});
 		
-	 	configuration.searchServer = new $n2.couchSearch.SearchServer({
+	 	configuration.directory.searchService = new $n2.couchSearch.SearchServer({
 			designDoc: configuration.atlasDesign
 			,db: configuration.atlasDb
 			,directory: configuration.directory
 		});
-		configuration.directory.searchService = configuration.searchServer;
 		
 	 	configuration.mediaRelativePath = options.mediaUrl;
 
-	 	configuration.requests = new $n2.couchRequests({
+	 	configuration.directory.requestService = new $n2.couchRequests({
 			db: configuration.atlasDb
 			,userDb: $n2.couch.getUserDb()
 			,designDoc: configuration.atlasDesign
 			,dispatchService: configuration.directory.dispatchService
 			,userServerUrl: options.userServerUrl
 		});
-		configuration.directory.requestService = configuration.requests;
 
 		configuration.directory.dispatchSupport = new $n2.couchDispatchSupport.DispatchSupport({
 			db: configuration.atlasDb
@@ -214,13 +209,12 @@ function Configure(options_){
 			directory: configuration.directory
 		});
 		
-	 	configuration.show = new $n2.couchShow.Show({
+		configuration.directory.showService = new $n2.couchShow.Show({
 			db: configuration.atlasDb
 			,designDoc: configuration.atlasDesign
 			,documentSource: configuration.documentSource
 			,serviceDirectory: configuration.directory
 		});
-		configuration.directory.showService = configuration.show;
 		
 	 	configuration.couchEditor = new $n2.CouchEditor.Editor({
 			documentSource: configuration.documentSource
@@ -242,8 +236,8 @@ function Configure(options_){
 	 	configuration.contributions = new $n2.couchContributions({
 			db: configuration.atlasDb
 			,designDoc: configuration.atlasDesign
-			,showService: configuration.show
-			,uploads: configuration.uploadServer
+			,showService: configuration.directory.showService
+			,uploads: configuration.directory.uploadService
 		});
 	 	
 	 	$n2.mapAndControls.DefaultPopupHtmlFunction = function(opt_){
@@ -280,19 +274,16 @@ function Configure(options_){
 	 	};
 	 	
 	 	// Cometd replacement
-	 	configuration.serverSideNotifier = new $n2.couchServerSide.Notifier({
-	 		dbChangeNotifier: configuration.atlasNotifier
+	 	configuration.directory.serverSideNotifier = new $n2.couchServerSide.Notifier({
+	 		dbChangeNotifier: configuration.directory.notifierService
 	 		,directory: configuration.directory
 	 	});
-	 	configuration.directory.serverSideNotifier = configuration.serverSideNotifier;
 
 	 	// Set up hover sound
-	 	configuration.hoverSoundService = new $n2.couchSound.HoverSoundService({
+	 	configuration.directory.hoverSoundService = new $n2.couchSound.HoverSoundService({
 			db: configuration.atlasDb
 			,serviceDirectory: configuration.directory
 	 	});
-	 	$n2.hoverSoundService = configuration.hoverSoundService;
-		configuration.directory.hoverSoundService = configuration.hoverSoundService;
 		
 		// Set up GeoNames service
 		var geoNamesOptions = {};

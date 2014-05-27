@@ -535,9 +535,9 @@ var ModuleDisplay = $n2.Class({
 				var displayOptions = {
 					documentSource: documentSource
 					,displayPanelName: _this.sidePanelName
-					,showService: _this.config.show
+					,showService: _this.config.directory.showService
 					,editor: _this.config.couchEditor
-					,uploadService: _this.config.uploadServer
+					,uploadService: _this.config.directory.uploadService
 					,serviceDirectory: _this.config.directory
 				};
 				if( displayInfo && displayInfo.displayOnlyRelatedSchemas ){
@@ -999,7 +999,7 @@ var ModuleDisplay = $n2.Class({
 			$n2.log('module',_this);
 			
 			_this.mapControl.contributions = _this.config.contributions;
-			_this.mapControl.requests = _this.config.requests;
+			_this.mapControl.requests = _this.config.directory.requestService;
 			
 			opts.onSuccess(_this);
 		};

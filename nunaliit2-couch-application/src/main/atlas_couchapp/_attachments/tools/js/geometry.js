@@ -123,7 +123,7 @@ function geometryMainInit(config) {
 	atlasDesign = config.atlasDesign;
 	serverDesign = atlasDb.getDesignDoc({ddName:'server'});
 	mediaDir = config.mediaRelativePath;
-	atlasNotifier = config.atlasNotifier;
+	atlasNotifier = config.directory.notifierService;
 
 	if( config.directory && config.directory.authService ) {
 		config.directory.authService.createAuthWidget({

@@ -218,8 +218,8 @@
 				$n2.log('main_init',config);
 				atlasDb = config.atlasDb;
 				atlasDesign = config.atlasDesign;
-				atlasNotifier = config.atlasNotifier;
-				atlasShow = config.show;
+				atlasNotifier = config.directory.notifierService;
+				atlasShow = config.directory.showService;
 
 				if( config.directory && config.directory.authService ) {
 					authService = config.directory.authService;
@@ -229,7 +229,7 @@
 				};
 				
 
-				$n2.schema.DefaultRepository.getSchema({
+				config.directory.schemaRepository.getSchema({
 					name: 'object'
 					,onSuccess: function(schema) {
 						defaultSchema = schema;
