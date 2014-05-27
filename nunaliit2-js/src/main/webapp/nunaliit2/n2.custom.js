@@ -49,19 +49,35 @@ var CustomService = $n2.Class({
 		};
 
 		this.custom = window.nunaliit_custom;
+		
+		this._check();
 	}
 
 	,setOption: function(optionName, optionValue){
-		if( !this.custom.options ){
-			this.custom.options = {};
-		};
-		
+		this._check();
+
 		this.custom.options[optionName] = optionValue;
+
+		if( !this.custom.info[optionName] ){
+			this.custom.info[optionName] = {
+				reads: 0
+				,writes: 1
+			};
+		} else {
+			++this.custom.info[optionName].writes;
+		};
 	}
 	
 	,getOption: function(optionName, defaultValue){
-		if( !this.custom.options ){
-			return defaultValue;
+		this._check();
+
+		if( !this.custom.info[optionName] ){
+			this.custom.info[optionName] = {
+				reads: 1
+				,writes: 0
+			};
+		} else {
+			++this.custom.info[optionName].writes;
 		};
 		
 		if( typeof(this.custom.options[optionName]) === 'undefined' ){
@@ -72,9 +88,16 @@ var CustomService = $n2.Class({
 	}
 	
 	,updateOption: function(optionsMap, optionName){
-		if( this.custom.options && typeof(this.custom.options[optionName]) !== 'undefined' ){
+		this._check();
+
+		if( typeof(this.custom.options[optionName]) !== 'undefined' ){
 			optionsMap[optionName] = this.custom.options[optionName];
 		};
+	}
+	
+	,_check: function(){
+		if( !this.custom.options ) this.custom.options = {};
+		if( !this.custom.info ) this.custom.info = {};
 	}
 });
 
