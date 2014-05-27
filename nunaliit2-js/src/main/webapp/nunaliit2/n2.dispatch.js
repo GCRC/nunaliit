@@ -188,6 +188,10 @@ var Dispatcher = $n2.Class({
 					};
 				};
 			};
+		} else if( typeof listeners === 'undefined' ){
+			// Keep track of events sent, even if none is listening
+			listeners = [];
+			this.listeners[t] = listeners;
 		};
 		
 		if( !listeners || listeners.length < 1 ){
