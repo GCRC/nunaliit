@@ -785,6 +785,13 @@ var ModuleDisplay = $n2.Class({
 					,clustering: false
 				};
 				
+				if ($n2.isDefined(layerInfo.gutter)) {
+					layerDefinition.gutter = layerInfo.gutter;
+				};
+				if ($n2.isDefined(layerInfo.displayInLayerSwitcher)) {
+					layerDefinition.displayInLayerSwitcher = layerInfo.displayInLayerSwitcher;
+				};
+				
 				if( 'couchdb' === layerInfo.type ){
 					layerDefinition.options = $n2.extend({
 						viewName: 'geom'
