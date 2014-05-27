@@ -66,9 +66,16 @@ public class AgreementRobotThread extends Thread {
 		JSONObject agreementDoc = null;
 		try {
 			CouchDb db = documentDbDesignDocument.getDatabase();
-			agreementDoc = db.getDocument("org.nunaliit.user_agreement");
+			boolean exist = db.documentExists("org.nunaliit.user_agreement");
+			if( exist ) {
+				agreementDoc = db.getDocument("org.nunaliit.user_agreement");
+			} else {
+				logger.error("User agreement document not found in database");
+				waitMillis(60 * 1000); // wait a minute
+				return;
+			};
 		} catch (Exception e) {
-			logger.error("Error accessing submission database",e);
+			logger.error("Error accessing user agreement document from database",e);
 			waitMillis(60 * 1000); // wait a minute
 			return;
 		}
