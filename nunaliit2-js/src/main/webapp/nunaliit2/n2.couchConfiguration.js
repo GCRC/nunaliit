@@ -171,13 +171,13 @@ function Configure(options_){
 	 		,designDoc: configuration.atlasDesign 
 	 	});
 
-	 	configuration.progressServer = new $n2.progress.ProgressServer({
+	 	configuration.directory.progressService = new $n2.progress.ProgressServer({
 			url: options.progressServerUrl
 		});
 
 	 	configuration.directory.uploadService = new $n2.upload.Upload({
 			url: options.uploadServerUrl
-			,progressServer: configuration.progressServer
+			,progressServer: configuration.directory.progressService
 		});
 
 		configuration.directory.exportService = new $n2.couchExport.Export({
