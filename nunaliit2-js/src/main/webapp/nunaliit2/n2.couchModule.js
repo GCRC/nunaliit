@@ -597,7 +597,10 @@ var ModuleDisplay = $n2.Class({
 			if( _this.searchPanelName ) {
 				var searchWidgetLabel = _loc('search the atlas');
 				if( customService ){
-					searchWidgetLabel = customService.getOption('searchWidgetText',searchWidgetLabel);
+					var customLabel = customService.getOption('searchWidgetText',null);
+					if( customLabel ){
+						searchWidgetLabel = _loc(customLabel);
+					};
 				};
 				
 				var searchInput = $('<input type="text" class="search_panel_input"></input>');
@@ -1080,6 +1083,7 @@ var ModuleDisplay = $n2.Class({
 		if( displayIntroFn ){
 			displayIntroFn({
 				elem: $elem
+				,config: this.config
 				,moduleDisplay: this
 			});
 		} else {
