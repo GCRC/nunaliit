@@ -149,7 +149,6 @@ function Configure(options_){
 			onSuccess: authInitialized
 			,atlasDb: configuration.atlasDb
 			,schemaRepository: configuration.directory.schemaRepository
-			,autoAnonymousLogin: false
 			,directory: configuration.directory
 			,userServerUrl: options.userServerUrl
 		});

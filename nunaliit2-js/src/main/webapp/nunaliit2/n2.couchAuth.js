@@ -72,6 +72,8 @@ var AuthService = $n2.Class({
 	
 	,autoRegistrationAvailable: null
 	
+	,currentUserDoc: null
+	
 	,initialize: function(options_){
 		var _this = this;
 		
@@ -81,16 +83,12 @@ var AuthService = $n2.Class({
 				,onError: defaultError
 				,atlasDb: null
 				,schemaRepository: null
-				,anonymousLoginAllowed: false
-				,anonymousUser: 'anonymous'
-				,anonymousPw: 'anonymous'
-				,autoAnonymousLogin: false
 				,disableCreateUserButton: false
 				,directory: null
 				,listeners: null
 				,autoRefresh: true
 				,prompt: _loc('Please login')
-				,refreshIntervalInSec: 120 // 2 minutes
+				,refreshIntervalInSec: 2 // 120 // 2 minutes
 				,userServerUrl: null
 			}
 			,options_
@@ -131,7 +129,7 @@ var AuthService = $n2.Class({
 		});		
 
 		$n2.couch.getSession().addChangedContextListener(function(){
-			_this.notifyListeners();
+			_this._notifyListeners();
 			_this._updateUserWithLoggedIn();
 		});
 		
@@ -198,39 +196,27 @@ var AuthService = $n2.Class({
 
 		function onSuccess(context) {
 			$n2.log("Login(adjustCookies) successful", context, _this.options);
-			if( !context.name && _this.options.autoAnonymousLogin ) {
-				/*
-				 * auto login will do notifications when appropriate so it is alright
-				 * to skip notifyListeners() in this case.
-				 */
-				_this._userLogin(optWithCallbacks, true);
-			} else {
-				initOnSuccess(context, optWithCallbacks);
-				_this.notifyListeners();
-			};
+			initOnSuccess(context, optWithCallbacks);
+			_this._notifyListeners();
 		};
 		
 		function onError(error) {
 			$n2.log('Login(adjustCookies) error: '+error);
 			
-			if (_this.options.autoAnonymousLogin) { // auto login will do notifications when appropriate
-				_this._userLogin(optWithCallbacks, true);
-			} else {
-				var err = {
-					message: 'Problem initializing authentication library'
-					,cause: {
-						message: error
-					}
-				};
-				initOnError(err, optWithCallbacks);
-				_this.notifyListeners();
+			var err = {
+				message: 'Problem initializing authentication library'
+				,cause: {
+					message: error
+				}
 			};
+			initOnError(err, optWithCallbacks);
+			_this._notifyListeners();
 		};
 	}
 
 	,addListeners: function(listeners) {
 		var _this = this;
-		var cUser = this.getCurrentUser();
+		var cUser = this._getCurrentListenerInfo();
 		
 		if( typeof(listeners) == 'function' ) {
 			addListener(listeners);
@@ -249,30 +235,58 @@ var AuthService = $n2.Class({
 			try {
 				listener(cUser);
 			} catch(e) {
-				$n2.log('CouchAuthService: EXCEPTION caught in listener (add): '+e);
+				$n2.log('CouchAuthService: EXCEPTION caught in listener (add)',e);
 			};
 		};
 	}
 	
-	,notifyListeners: function() {
-		var user = this.getCurrentUser();
+	,_notifyListeners: function() {
+		var context = this._getAuthContext();
+		var userDoc = this._getCurrentUserDoc();
 		
-		// Notify other instances of atlas in browser
 		var userName = null;
-		if( user ) {
-			userName = user.name;
+		if( context ) {
+			userName = context.name;
 		};
+		
+		if( this.currentUserDoc 
+		 && this.currentUserDoc.name != userName ){
+			this.currentUserDoc = null;
+		};
+		if( userDoc ){
+			this.currentUserDoc = userDoc;
+		};
+
+		// Notify other instances of atlas in browser
 		$n2.cookie.setCookie({
 			name: 'NunaliitAuth'
 			,value: userName
 			,path: '/'
 		});
 		
+		// Notify via DOM classes
+		var $body = $('body');
+		if( userName ){
+			$body.removeClass('nunaliit_logged_out');
+			$body.addClass('nunaliit_logged_in');
+		} else {
+			$body.removeClass('nunaliit_logged_in');
+			$body.addClass('nunaliit_logged_out');
+		};
+		if( this.currentUserDoc
+		 && this.currentUserDoc.nunaliit_options
+		 && this.currentUserDoc.nunaliit_options.advanced ){
+			$body.addClass('nunaliit_user_advanced');
+		} else {
+			$body.removeClass('nunaliit_user_advanced');
+		};
+		
 		// Notify via dispatcher
-		if( user ){
+		if( userName ){
 			this._dispatch({
 				type: 'authLoggedIn'
-				,user: user
+				,user: context
+				,userDoc: userDoc
 			});
 		} else {
 			this._dispatch({
@@ -280,16 +294,36 @@ var AuthService = $n2.Class({
 			});
 		};
 		
+		var cUser = this._getCurrentListenerInfo();
 		for(var loop=0; loop<this.loginStateListeners.length; ++loop) {
 			var listener = this.loginStateListeners[loop];
 			if( listener ) {
 				try {
-					listener(user);
+					listener(cUser);
 				} catch(e) {
-					$n2.log('CouchAuthService: EXCEPTION caught in listener (notify): '+e);
+					$n2.log('CouchAuthService: EXCEPTION caught in listener (notify)',e);
 				};
 			};
 		};
+	}
+	
+	,_getCurrentListenerInfo: function(){
+		var context = this._getAuthContext();
+		var userDoc = this._getCurrentUserDoc();
+		
+		var info = null;
+		if( context && context.name ){
+			info = {};
+			for(var key in context){
+				info[key] = context[key];
+			};
+		};
+		
+		if( info && userDoc ){
+			info.userDoc = userDoc;
+		};
+		
+		return info;
 	}
 	
 	,login: function(opts_) {
@@ -501,7 +535,7 @@ var AuthService = $n2.Class({
 			// No user document. Probably an admin.
 			// Anyway, nothing we can do. Skip questions.
 			if( !userDoc ){
-				onLoginCompleted(sessionResult);
+				onLoginCompleted(sessionResult, userDoc);
 				return;
 			};
 			
@@ -513,7 +547,7 @@ var AuthService = $n2.Class({
 						var defaultAnswers = schema.createObject();
 						if( !defaultAnswers.version ){
 							$n2.log('User questions found without a version number. Ignored.');
-							onLoginCompleted(sessionResult);
+							onLoginCompleted(sessionResult, userDoc);
 							return;
 						};
 						
@@ -536,20 +570,20 @@ var AuthService = $n2.Class({
 						if( interventionRequired ){
 							gatherUserAnswers(sessionResult, userDoc, schema, answers);
 						} else {
-							onLoginCompleted(sessionResult);
+							onLoginCompleted(sessionResult, userDoc);
 						};
 					}
 					,onError: function(err){
 						// Schema not found. No questions. Just continue
 						// with login process
-						onLoginCompleted(sessionResult);
+						onLoginCompleted(sessionResult, userDoc);
 					}
 				});
 				
 			} else {
 				// No schema repository. No questions. Just continue
 				// with login process
-				onLoginCompleted(sessionResult);
+				onLoginCompleted(sessionResult, userDoc);
 			};
 		};
 		
@@ -588,7 +622,7 @@ var AuthService = $n2.Class({
 				.click(function(){
 					var $diag = $('#'+diagId);
 					$diag.dialog('close');
-					onLoginCompleted(sessionResult);
+					onLoginCompleted(sessionResult, userDoc);
 				})
 				.appendTo($buttons);
 		
@@ -619,9 +653,7 @@ var AuthService = $n2.Class({
 					
 					$n2.couch.getUserDb().updateDocument({
 						data: userDoc
-						,onSuccess: function(docInfo){
-							onLoginCompleted(sessionResult);
-						}
+						,onSuccess: reloadUserDoc
 						,onError: errorSavingAnswers
 					});
 				}
@@ -633,9 +665,22 @@ var AuthService = $n2.Class({
 				alert( _loc('There was a problem saving your answers. You will be prompted again next time you log in.') );
 				onLoginCompleted(sessionResult);
 			};
+			
+			function reloadUserDoc(){
+				$n2.couch.getUserDb().getUser({
+					id: userDoc._id
+					,onSuccess: function(updatedUserDoc){
+						onLoginCompleted(sessionResult, updatedUserDoc);
+					}
+					,onError: function(err){
+						$n2.log('Error retrieving updated version of user document',err);
+						onLoginCompleted(sessionResult, userDoc);
+					}
+				});
+			};
 		};
 		
-		function onLoginCompleted(result) {
+		function onLoginCompleted(result, userDoc) {
 
 			var context = $n2.couch.getSession().getContext();
 
@@ -643,7 +688,7 @@ var AuthService = $n2.Class({
 			
 			if( context && context.name ) {
 				opts.onSuccess(context);
-				_this.notifyListeners();
+				_this._notifyListeners();
 
 			} else {
 				doErrorNotification();
@@ -664,95 +709,8 @@ var AuthService = $n2.Class({
 			} else {
 				opts.onError( _loc('Invalid e-mail and/or password') );
 			};
-			_this.notifyListeners();
+			_this._notifyListeners();
 		};
-	}
-	
-	,_userLogin: function(options, anonymousFlag, username, password) {
-		var loginRetries = 0
-			,loginRetryLimit = 3
-			,_this = this;
-		
-		function doLogin() {
-			$n2.couch.getSession().login({
-				name: username
-				,password: password
-				,onSuccess: onSuccess
-				,onError: onError
-			});
-		};
-		
-		/*
-		 * @return: true => login retry initiated.
-		 */
-		function retryLogin() {
-			++loginRetries;
-			if (loginRetries <= loginRetryLimit) {
-				doLogin();
-				return(true);
-			};
-			return(false);
-		};
-		
-		function clearLoginForm() {
-			if (!options.autoAnonymousLogin || !anonymousFlag) { // hide user-visible form...
-				options.dialog.dialog('close');
-			};
-		};
-		
-		function doErrorNotification(causeObj) {
-			if (options.autoAnonymousLogin && anonymousFlag) {
-				/*
-				 * if autoAnonymousLogin in process, attempt to suppress error notification
-				 * and retry the login.  If limit reached, notification is sent.
-				 */
-				var retrying = retryLogin();
-				if (retrying) {
-					return;
-				};
-			};
-				
-			var err = {
-				message: _loc('Invalid e-mail and/or password')
-			};
-
-			clearLoginForm();
-			options.onError(err,options);
-			_this.notifyListeners();
-		};
-		
-		function onSuccess(result) {
-
-			var context = $n2.couch.getSession().getContext();
-
-			$n2.log('Login successful',context,options);
-			
-			if( context && context.name ) {
-			
-				clearLoginForm();
-				options.onSuccess(context,options);
-				_this.notifyListeners();
-
-			} else {
-				doErrorNotification(null);
-			};
-		};
-		
-		function onError(err) {
-			$n2.log('User login error', err);
-			doErrorNotification({ message: err });
-		};
-		
-		if( anonymousFlag ) {
-			username = options.anonymousUser;
-			password = options.anonymousPw;
-		};
-		doLogin();
-	}
-	
-	,autoAnonLogin: function(options_) {
-		var options = $n2.extend({}, this.options, options_);
-		this._userLogin(options, true);
 	}
 	
 	,_fillDialogWithLogin: function(dialogId, opts_){
@@ -1418,7 +1376,7 @@ var AuthService = $n2.Class({
 			
 			opts.onSuccess(result);
 		
-			_this.notifyListeners();
+			_this._notifyListeners();
 		};
 	}
 	
@@ -1433,7 +1391,7 @@ var AuthService = $n2.Class({
 		
 		var userName = opts.userName;
 		if( !userName ){
-			var currentUser = this.getCurrentUser();
+			var currentUser = this._getCurrentUserDoc();
 			if( currentUser._id ) {
 				// This is the user document
 				userDocLoaded(currentUser);
@@ -1499,43 +1457,32 @@ var AuthService = $n2.Class({
 		};
 	}
 	
-	,getCurrentUser: function() {
-		var context = this.getAuthContext();
+	,getCurrentUserName: function() {
+		var context = this._getAuthContext();
 
-		if( null == context.name ) {
-			return null;
-		} else if( context.userDoc ) {
+		if( context && context.name ) {
+			return context.name;
+		};
+
+		return null;
+	}
+	
+	,_getCurrentUserDoc: function() {
+		var context = this._getAuthContext();
+
+		if( context && context.userDoc ) {
 			return context.userDoc;
 		};
 
-		return context;
+		return null;
 	}
 
-	,getAuthContext: function() {
+	,_getAuthContext: function() {
 		return $n2.couch.getSession().getContext();
 	}
 	
-	,isDeleteAllowed: function() {
-		return this.isAdmin(); 
-	}
-	
-	,isUpdateAllowed: function(contribCreatorDisplayName) {
-		var allowed = false;
-		var user = this.getCurrentUser();
-		if (null != user) {
-			if (user.admin) {
-				allowed = true;
-			} else if (!user.anonymous &&
-				'' != contribCreatorDisplayName && // specific case for undefined contributor info
-				user.display == contribCreatorDisplayName) {
-				allowed = true;
-			}
-		}
-		return(allowed); 
-	}
-	
 	,isLoggedIn: function() {
-		var authContext = this.getAuthContext();
+		var authContext = this._getAuthContext();
 		if( authContext && authContext.name ) {
 			return true;
 		};
@@ -1543,63 +1490,10 @@ var AuthService = $n2.Class({
 		return false;
 	}
 	
-	,isUser: function() {
-		if( !this.isLoggedIn() ) return false;
-		
-		var user = this.getCurrentUser();
-		if( user.anonymous ) return false;
-		
-		return true;
-	}
-	
-	,isAdmin: function() {
-		if( !this.isLoggedIn() ) return false;
-
-		var user = this.getCurrentUser();
-		if( !user.roles ) return false;
-
-		// Check if _admin role is present
-		for(var i=0,e=user.roles.length; i<e; ++i) {
-			if( user.roles[i] === '_admin' ) {
-				return true;
-			};
-		};		
-		
-		return false;
-	}
-	
-	,isAnonymous: function() {
-		if( !this.isLoggedIn() ) return false;
-		
-		var user = this.getCurrentUser();
-
-		// Check if anonymous role is present
-		for(var i=0,e=user.roles.length; i<e; ++i) {
-			if( user.roles[i] === 'anonymous' ) {
-				return true;
-			};
-		};		
-		
-		return false;
-	}
-    
-	,userLoggedInAndNotAnonymous: function() {
-		if( !this.isLoggedIn() ) return false;
-		if( this.isAnonymous() ) return false;
-
-		return true;
-	}
-	
-	,autoAnonymousBehaviour: function() {
-		return(isDefined(this.options.autoAnonymousLogin) && this.options.autoAnonymousLogin);
-	}
-	
 	,createAuthWidget: function(opts_){
-		var showService = null;
 		var dispatchService = null;
 		var customService = null;
 		if( this.options.directory ){
-			showService = this.options.directory.showService;
 			dispatchService = this.options.directory.dispatchService;
 			customService = this.options.directory.customService;
 		};
@@ -1608,7 +1502,6 @@ var AuthService = $n2.Class({
 			elemId: null
 			,elem: null
 			,authService: this
-			,showService: showService
 			,dispatchService: dispatchService
 		};
 		
@@ -1707,7 +1600,7 @@ var AuthService = $n2.Class({
 		// This function verifies if a user is logged in and if so,
 		// updates the user's document to reflect that the user
 		// is accessing the current atlas
-		var authContext = this.getAuthContext();
+		var authContext = this._getAuthContext();
 		if( authContext
 		 && authContext.userDoc // logged in and userDoc available 
 		 && n2atlas
@@ -1760,11 +1653,11 @@ var AuthWidget = $n2.Class({
 	
 	authService: null
 	
-	,showService: null
-
 	,elemId: null
 	
-	,lastCurrentUser: null
+	,currentUserName: null
+	
+	,currentUserDisplay: null
 
 	,labelLogin: null
 	
@@ -1777,7 +1670,6 @@ var AuthWidget = $n2.Class({
 			elemId: null
 			,elem: null
 			,authService: null
-			,showService: null
 			,dispatchService: null
 			,labelLogin: null
 			,labelLogout: null
@@ -1787,7 +1679,6 @@ var AuthWidget = $n2.Class({
 		var _this = this;
 	
 		this.authService = opts.authService;
-		this.showService = opts.showService;
 		this.dispatchService = opts.dispatchService;
 		this.labelLogin = opts.labelLogin;
 		this.labelLogout = opts.labelLogout;
@@ -1798,55 +1689,71 @@ var AuthWidget = $n2.Class({
 			this.elemId = $n2.utils.getElementIdentifier(opts.elem);
 		};
 		
-		var authService = this.getAuthService();
-		if( authService ){
-			authService.addListeners(function(currentUser){
-				_this.lastCurrentUser = currentUser;
-				_this._loginStateChanged(currentUser);
-			});
-		};
-		
-		var dispatchService = this.getDispatchService();
-		if( dispatchService ){
-			dispatchService.register(DH,'userDocument',function(m){
-				if( m 
-				 && m.userDoc 
-				 && _this.lastCurrentUser 
-				 && _this.lastCurrentUser._id === m.userDoc._id ){
-					_this.lastCurrentUser = m.userDoc;
-					_this._loginStateChanged(m.userDoc);
+		if( this.authService ){
+			this.authService.addListeners(function(ctxt){
+				if( ctxt && ctxt.name ){
+					if( _this.currentUserName !== ctxt.name ){
+						_this.currentUserName = ctxt.name;
+						_this.currentUserDisplay = null;
+					};
+					
+					if( ctxt.userDoc && ctxt.userDoc.display ){
+						_this.currentUserDisplay = ctxt.userDoc.display;
+					};
+				} else {
+					_this.currentUserName = null;
+					_this.currentUserDisplay = null;
 				};
+
+				_this._loginStateChanged();
 			});
 		};
+		
+		if( this.dispatchService ){
+			var f = function(m, addr, d){
+				_this._handleDispatch(m, addr, d);
+			};
+			this.dispatchService.register(DH,'userDocument',f);
+			this.dispatchService.register(DH,'userDocumentComplete',f);
+		};
 	}
 
-	,getWidgetElem: function(){
-		if( this.elemId ){
-			return $('#'+this.elemId);
+	,_getElem: function(){
+		return $('#'+this.elemId);
+	}
+	
+	,_handleDispatch: function(m, addr, dispatcher){
+		// Check if widget still displayed
+		var $elem = this._getElem();
+		if( $elem.length < 1 ){
+			// Deregister
+			dispatcher.deregister(addr);
+			return;
 		};
 		
-		return $('#n2AuthDummy'); // return empty set
+		if( 'userDocument' === m.type ){
+			if( m.userDoc 
+			 && this.currentUserName === m.userDoc.name ){
+				this.currentUserDisplay = m.userDoc.display;
+				this._loginStateChanged();
+			};
+
+		} else if( 'userDocumentComplete' === m.type ){
+			if( m.userDoc 
+			 && this.currentUserName === m.userDoc.name ){
+				this.currentUserDisplay = m.userDoc.display;
+				this._loginStateChanged();
+			};
+		};
 	}
 
-	,getAuthService: function(){
-		return this.authService;
-	}
+	,_loginStateChanged: function() {
 
-	,getShowService: function(){
-		return this.showService;
-	}
-
-	,getDispatchService: function(){
-		return this.dispatchService;
-	}
-
-	,_loginStateChanged: function(currentUser) {
-
-		var $login = this.getWidgetElem();
+		var $login = this._getElem();
 		if( $login.length < 1 ) return;
 		$login.empty();
 		
-		var authService = this.getAuthService();
+		var authService = this.authService;
 		if( authService ) {
 			var href = null;
 			var displayName = null;
@@ -1854,10 +1761,10 @@ var AuthWidget = $n2.Class({
 			var clickFn = null;
 			var greetingFn = null;
 			var greetingClass = null;
-			if( currentUser ){
+			if( this.currentUserName ){
 				href = 'javascript:Logout';
-				displayName = currentUser.display;
-				if( !displayName ) displayName = currentUser.name;
+				displayName = this.currentUserDisplay;
+				if( !displayName ) displayName = this.currentUserName;
 				greetingClass = 'nunaliit_login_greeting_name';
 				buttonText = this.labelLogout ? this.labelLogout : _loc('Logout');
 				clickFn = function(){

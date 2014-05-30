@@ -3048,50 +3048,6 @@ var MapAndControls = $n2.Class({
 
     // === LOGIN STUFF START ========================================================
 
-	,isLoggedIn: function() {
-		var authService = this._getAuthService();
-	    if( authService ) {
-    		// The auth module is present, check if user logged in
-			return authService.isLoggedIn();
-    	} else {
-    		// Authentication module is not loaded
-    		return false;
-    	};
-	}
-	
-	,isUser: function() {
-		if( !this.isLoggedIn() ) return false;
-		
-		var authService = this._getAuthService();
-	    if( authService ) {
-			return authService.isUser();
-    	} else {
-    		return false;
-    	};
-	}
-	
-	,isAdminUser: function() {
-		if( !this.isLoggedIn() ) return false;
-		
-		var authService = this._getAuthService();
-	    if( authService ) {
-			return authService.isAdmin();
-    	} else {
-    		return false;
-    	};
-	}
-	
-	,isAnonymousUser: function() {
-		if( !this.isLoggedIn() ) return false;
-		
-		var authService = this._getAuthService();
-	    if( authService ) {
-			return authService.isAnonymous();
-    	} else {
-    		return false;
-    	};
-	}
-    
     /*
      * function: auth module listener for login state changes.  Only called if the auth
      * module is loaded so checks of that inside this function are not useful.
@@ -3104,22 +3060,13 @@ var MapAndControls = $n2.Class({
 
 		if( null == currentUser ) {
     		showLogin = true;
-    	} else {
-    		var authService = this._getAuthService();
-     		if( this.isAnonymousUser() 
-     		 && authService
-     		 && authService.autoAnonymousBehaviour() ) {
-		    	showLogin = true;
-     		};
     	};
     	
     	if( showLogin ) {
     		this.hideMapInteractionSwitch();
 			this.switchMapMode(this.modes.NAVIGATE);
     	} else {
-    		if( this.isUser() ) {
-    			this.showMapInteractionSwitch();
-    		};
+   			this.showMapInteractionSwitch();
     	};
     }
     	
@@ -3242,7 +3189,7 @@ var MapAndControls = $n2.Class({
     		
     		// The auth module is present, check if user logged in
     		// and is not anonymous
-    		var userNotAnonymous = authService.userLoggedInAndNotAnonymous();
+    		var userNotAnonymous = authService.isLoggedIn();
     		if( userNotAnonymous ) {
     			logInRequired = false;
     		};

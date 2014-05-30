@@ -201,8 +201,8 @@ var UserManagementApplication = $n2.Class({
 				return;
 			};
 			
-			var user = this.authService.getCurrentUser();
-			this.initiateEdit(user.name);
+			var userName = this.authService.getCurrentUserName();
+			this.initiateEdit(userName);
 			
 		} else {
 			alert( _loc('Authentication service must be configured') );
