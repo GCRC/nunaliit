@@ -294,6 +294,9 @@ if( $n2.scripts ) {
 		var langUrl = coreLocation.location + '../nunaliit_lang.'+locale.lang+'.js';
 		$n2.scripts.loadScript(langUrl, coreLocation);
 	};
+	
+	// Notify via DOM classes
+	$('body').addClass('nunaliit_language_'+locale.lang);
 };
 
 })(nunaliit2);
