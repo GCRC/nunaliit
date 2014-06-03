@@ -257,6 +257,13 @@ var AuthService = $n2.Class({
 			this.currentUserDoc = userDoc;
 		};
 
+		var isAdmin = false;
+		if( context 
+		 && context.roles 
+		 && this.doRolesContainAdmin(context.roles) ){
+			isAdmin = true;
+		};
+
 		// Notify other instances of atlas in browser
 		$n2.cookie.setCookie({
 			name: 'NunaliitAuth'
@@ -279,6 +286,11 @@ var AuthService = $n2.Class({
 			$body.addClass('nunaliit_user_advanced');
 		} else {
 			$body.removeClass('nunaliit_user_advanced');
+		};
+		if( isAdmin ) {
+			$body.addClass('nunaliit_user_administrator');
+		} else {
+			$body.removeClass('nunaliit_user_administrator');
 		};
 		
 		// Notify via dispatcher
@@ -1465,6 +1477,38 @@ var AuthService = $n2.Class({
 		};
 
 		return null;
+	}
+	
+	,getCurrentUserRoles: function() {
+		var context = this._getAuthContext();
+
+		if( context && context.roles ) {
+			return context.roles;
+		};
+
+		return null;
+	}
+	
+	,doRolesContainAdmin: function(roles) {
+		var admin = false;
+		
+		if( roles && roles.length ) {
+			if( $.inArray('_admin',roles) >= 0 ) {
+				admin = true;
+			};
+			if( $.inArray('administrator',roles) >= 0 ) {
+				admin = true;
+			};
+			if( typeof(n2atlas) === 'object' 
+			 && typeof(n2atlas.name) === 'string' ) {
+				var dbAdmin = n2atlas.name + '_administrator';
+				if( $.inArray(dbAdmin,roles) >= 0 ) {
+					admin = true;
+				};
+			};
+		};
+
+		return admin;
 	}
 	
 	,_getCurrentUserDoc: function() {

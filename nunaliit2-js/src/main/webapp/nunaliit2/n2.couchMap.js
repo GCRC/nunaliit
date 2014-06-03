@@ -136,17 +136,6 @@ function canDeleteDoc(data) {
 	return false;
 };
 
-function OnFeatureEdit(feature) {
-	if( !feature ) return;
-	var data = feature.data;
-	if( !data ) {
-		data = feature.attributes;
-	}
-	if( !data ) return;
-
-	adjustDocument(data);
-};
-
 function documentContainsMedia(doc){
 	var containsMedia = false;
 	
@@ -456,10 +445,6 @@ function getAllServerRoles(opts_){
 
 
 // Exports
-$.olkitMap = {
-	OnFeatureEdit: OnFeatureEdit
-};
-
 $n2.couchMap = {
 	adjustDocument: adjustDocument
 	,isAdmin: isAdmin
