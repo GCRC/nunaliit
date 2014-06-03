@@ -311,7 +311,7 @@ Help Button
 	margin: 10px 0;
 	display: block;
 }
-.nunaliit_atlas .nunaliit_form_link
+.nunaliit_form_link
 ,.n2s_adjustedExternalMediaLink {
 	padding: 10px 10px 10px 15px;
 	text-decoration: none;
@@ -323,7 +323,6 @@ Help Button
 	display:-moz-inline-stack;
 	display:inline-block;
 	zoom:1;
-	*display:inline;
 	vertical-align:top;
 }
 .nunaliit_atlas .n2ModuleIntro {
@@ -343,6 +342,16 @@ Help Button
 	box-shadow: 1px 1px 2px #b8b8b8;
 	border: 1px solid #9e9e9e;
 }
+
+.nunaliit_form_link_tree_view {
+	display: none;
+}
+
+.nunaliit_user_advanced .nunaliit_form_link_tree_view {
+	display:-moz-inline-stack;
+	display:inline-block;
+}
+
 .intro b {
 	font-size: 26px;
 	font-weight: normal;

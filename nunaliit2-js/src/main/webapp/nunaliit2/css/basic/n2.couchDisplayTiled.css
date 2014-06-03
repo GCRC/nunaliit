@@ -108,3 +108,9 @@ div.n2DisplayTiled_tile_image {
 .n2DisplayTiled_current_buttons a {
     margin:0 10px;   
 }
+.n2DisplayTiled_current_button_tree_view {
+	display: none;
+}
+.nunaliit_user_advanced .n2DisplayTiled_current_button_tree_view {
+	display: inline;
+}

@@ -759,6 +759,18 @@ var TiledDisplay = $n2.Class({
 						return false;
 					});
 			};
+
+			// Show 'Tree View' button
+			if( doc ) {
+				$('<a href="#"></a>')
+					.addClass('n2DisplayTiled_current_button n2DisplayTiled_current_button_tree_view')
+	 				.text( _loc('Tree View') )
+	 				.appendTo($btnDiv)
+	 				.click(function(){
+	 					_this._performTreeView(doc);
+						return false;
+					});
+			};
 		};
 	},
 	
@@ -1301,6 +1313,15 @@ var TiledDisplay = $n2.Class({
 					,crs: 'EPSG:4326'
 				}
 			}
+		});
+	},
+	
+	/*
+	 * Opens a tree view dialog
+	 */
+	_performTreeView: function(doc){
+		new $n2.couchDisplay.TreeDocumentViewer({
+			doc: doc
 		});
 	},
 	

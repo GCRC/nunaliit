@@ -348,6 +348,7 @@ var Display = $n2.Class({
 				,edit: true
 				,'delete': true
 				,addLayer: true
+				,treeView: true
 			});
 			
 			var relatedInfoId = $n2.getUniqueId();
@@ -398,6 +399,7 @@ var Display = $n2.Class({
 			,edit: false
 			,'delete': false
 			,addLayer: false
+			,treeView: false
 		},opt_);
 
 		var $buttons = $('<div></div>');
@@ -413,6 +415,7 @@ var Display = $n2.Class({
 		if( opt.geom ) optionClass += '_geom';
 		if( opt['delete'] ) optionClass += '_delete';
 		if( opt.addLayer ) optionClass += '_addLayer';
+		if( opt.treeView ) optionClass += '_treeView';
 		$buttons.addClass(optionClass);
 
 		var opts = {
@@ -424,6 +427,7 @@ var Display = $n2.Class({
 			,reply: opt.reply
 			,geom: opt.geom
 			,addLayer: opt.addLayer
+			,treeView: opt.treeView
 		};
 		opts['delete'] = opt['delete'];
 		this._displayButtons($buttons, opts);
@@ -440,6 +444,7 @@ var Display = $n2.Class({
 		var fGeom = false;
 		var fDelete = false;
 		var fAddLayer = false;
+		var fTreeView = false;
 		var classAttr = $elem.attr('class');
 		var classes = classAttr.split(' ');
 		for(var i=0,e=classes.length; i<e; ++i){
@@ -458,6 +463,7 @@ var Display = $n2.Class({
 					else if( 'reply' === o ){ fReply = true; }
 					else if( 'geom' === o ){ fGeom = true; }
 					else if( 'addLayer' === o ){ fAddLayer = true; }
+					else if( 'treeView' === o ){ fTreeView = true; }
 					else if( 'delete' === o ){ fDelete = true; };
 				};
 			};
@@ -504,6 +510,7 @@ var Display = $n2.Class({
 				,reply: fReply
 				,geom: fGeom
 				,addLayer: fAddLayer
+				,treeView: fTreeView
 			};
 			opts['delete'] = fDelete;
 			$elem.empty();
@@ -720,6 +727,22 @@ var Display = $n2.Class({
 				return false;
 			});
 			addClasses($addLayerButton, btnText);
+		};
+
+		// Show 'Tree View' button
+		if( opt.treeView
+		 && data
+		 ) {
+			var $treeViewButton = $('<a>')
+				.attr('href','#')
+				.text( _loc('Tree View') )
+				.appendTo($buttons)
+				.click(function(){
+					_this._performDocumentTreeView(data);
+					return false;
+				});
+
+			addClasses($treeViewButton, 'tree_view');
 		};
 
 		/**
@@ -942,6 +965,7 @@ var Display = $n2.Class({
 					,focus: true
 					,geom: true
 					,reply: true
+					,treeView: true
 				});
 			});
 			
@@ -1042,6 +1066,12 @@ var Display = $n2.Class({
 				}
 			});
 		};
+	}
+	
+	,_performDocumentTreeView: function(data) {
+		new TreeDocumentViewer({
+			doc: data
+		});
 	}
 	
 	,_displayDocumentId: function($set, docId) {
@@ -1628,6 +1658,7 @@ function DisplayLinkedInfo(opts_){
 		};
 	};
 };
+
 //===================================================================================
 
 var CommentRelatedInfo = $n2.Class({
@@ -1870,10 +1901,65 @@ var CommentRelatedInfo = $n2.Class({
 
 //===================================================================================
 
+var TreeDocumentViewer = $n2.Class({
+	
+	doc: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+		},opts_);
+		
+		this.doc = opts.doc;
+		
+		this._display();
+	},
+	
+	_display: function(){
+		var $dialog = $('<div>')
+			.addClass('n2Display_treeViewer_dialog');
+		var diagId = $n2.utils.getElementIdentifier($dialog);
+		
+		var $container = $('<div>')
+			.addClass('n2Display_treeViewer_content')
+			.appendTo($dialog);
+		
+		new $n2.tree.ObjectTree($container, this.doc);
+		
+		var $buttons = $('<div>')
+			.addClass('n2Display_treeViewer_buttons')
+			.appendTo($dialog);
+		
+		$('<button>')
+			.text( _loc('Close') )
+			.appendTo($buttons)
+			.click(function(){
+				var $diag = $('#'+diagId);
+				$diag.dialog('close');
+				return false;
+			});
+		
+		$dialog.dialog({
+			autoOpen: true
+			,title: _loc('Tree View')
+			,modal: true
+			,width: 370
+			,close: function(event, ui){
+				var diag = $(event.target);
+				diag.dialog('destroy');
+				diag.remove();
+			}
+		});
+	}
+});
+
+//===================================================================================
+
 // Exports
 $n2.couchDisplay = {
 	Display: Display,
-	CommentRelatedInfo: CommentRelatedInfo
+	CommentRelatedInfo: CommentRelatedInfo,
+	TreeDocumentViewer: TreeDocumentViewer
 //	DisplayRelatedInfo: DisplayRelatedInfo,
 //	DisplayLinkedInfo: DisplayLinkedInfo
 	
