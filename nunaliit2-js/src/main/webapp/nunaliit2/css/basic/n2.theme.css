@@ -29,6 +29,10 @@ input[type="text"], input[type="password"], textarea {
 	-moz-box-shadow: 0 3px 8px rgba(0,0,0,0.5);
 	-webkit-box-shadow: 0 3px 8px rgba(0,0,0,0.5);
 	box-shadow: 0 3px 8px rgba(0,0,0,0.5);
+	color: #fff;
+}
+.nunaliit_atlas .nunaliit_header input {
+	color: #fff;
 }
 .nunaliit_atlas .nunaliit_title {
 	font-size: 2.2em;
@@ -252,7 +256,6 @@ Help Button
 /* Search */
 .nunaliit_atlas .nunaliit_searchInput
 ,.nunaliit_atlas .n2_content_searchInput {
-	padding: 28px 20px 23px 20px;
 	background-color: #fff;
 	border-bottom:1px solid #e5e5e5;
 }
@@ -262,7 +265,6 @@ Help Button
 	background-position:center right;
 	background-repeat:no-repeat;
 	background-color: transparent;
-	color: #ffffff;
 	border-radius: 30px;
 	font-family: helvetica, sans-serif;
 	font-weight: 400;

@@ -163,6 +163,7 @@
 	right: 0;
 	height: 43px;
 	width: 410px;
+	padding: 28px 20px 23px 20px;
 	overflow: visible;
 	z-index: 8;
 }
@@ -177,7 +178,7 @@
 	z-index: 8;
 }
 .n2_display_format_tiled .nunaliit_content .n2_content_searchInput {
-	display: none;
+	width: 600px;
 }
 .n2_content_searchInput input {
 	padding:2.5%;
@@ -194,6 +195,9 @@
 	overflow: auto;
 	padding: 15px 20px 15px 20px;
 }
+.n2_content_contains_search .n2_content_text {
+	top: 95px;
+}
 .n2_content_contains_map .n2_content_text {
 	left: auto;
 	right: 0;
@@ -208,6 +212,9 @@
 	overflow: auto;
     overflow-x: hidden;
     overflow-y: auto;
+}
+.n2_display_format_tiled .n2_content_contains_search .n2_content_text {
+	top: 95px;
 }
 
 /* Map Interactions */

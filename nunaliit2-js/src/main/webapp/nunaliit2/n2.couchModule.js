@@ -451,9 +451,11 @@ var ModuleDisplay = $n2.Class({
 				if( searchInfo && searchInfo.disabled ) {
 					_this.searchPanelName = null;
 					$contentDiv.addClass('n2_content_contains_no_search');
+					
 				} else if( _this.searchPanelName ) {
 					// Search panel is specified. No need to create
-					$contentDiv.addClass('n2_content_contains_search');
+					// Therefore, search is not located within the content
+					$contentDiv.addClass('n2_content_contains_no_search');
 
 				} else {
 					_this.searchPanelName = $n2.getUniqueId();
