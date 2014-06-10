@@ -1,0 +1,9 @@
+<div class="n2_documentForm"><div class="n2_layoutFloat"><div class="demo_comment">
+	{{#demo_comment}}
+		<div class="demo_comment_text">
+			<div class="label n2s_localize">Comment</div>
+			<div class="value">{{#:field}}text,textarea{{/:field}}</div>
+			<div class="end"></div>
+		</div>
+	{{/demo_comment}}
+</div></div></div>

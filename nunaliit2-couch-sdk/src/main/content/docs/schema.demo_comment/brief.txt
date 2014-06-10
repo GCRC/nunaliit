@@ -1,0 +1,1 @@
+<span class="n2s_localize">Comment</span>({{#demo_comment}}{{text}}{{/demo_comment}})

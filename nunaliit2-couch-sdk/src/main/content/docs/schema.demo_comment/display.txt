@@ -1,0 +1,28 @@
+<div class="n2_documentDisplay"><div class="n2_layoutFloat"><div class="demo_comment">
+
+{{#nunaliit_last_updated}}
+	{{#name}}
+		<div class="demo_comment_user">
+			<span class="n2s_localize">By</span>
+			<span class="n2s_insertUserName">{{.}}</span>
+		</div>
+	{{/name}}
+	{{#time}}
+		<div class="demo_comment_time">
+			<span class="n2s_localize">on</span>
+			<span class="n2s_insertTime">{{.}}</span>
+		</div>
+	{{/time}}
+{{/nunaliit_last_updated}}
+
+{{#demo_comment}}
+	{{#text}}
+		<div class="demo_comment_text">
+			<div class="label n2s_localize"></div>
+			<div class="value n2s_preserveSpaces">{{.}}</div>
+			<div class="end"></div>
+		</div>
+	{{/text}}
+{{/demo_comment}}
+
+</div></div></div>
