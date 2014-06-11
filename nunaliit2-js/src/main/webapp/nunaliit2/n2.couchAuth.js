@@ -469,6 +469,7 @@ var AuthService = $n2.Class({
 						
 						$('<textarea>')
 							.addClass('n2Auth_user_agreement_content')
+							.attr('readonly','readonly')
 							.val( agreementContent )
 							.appendTo($content);
 
@@ -1435,9 +1436,10 @@ var AuthService = $n2.Class({
 		function userDocLoaded(userDoc){
 			var userService = _this._getUserService();
 			if( userService ){
-				var dialogId = $n2.getUniqueId();
-				var $dialog = $('<div id="'+dialogId+'" class="n2Auth_userEdit"></div>');
-				$(document.body).append($dialog);
+				var $dialog = $('<div>')
+					.addClass('n2Auth_userEdit')
+					.appendTo( $(document.body) );
+				var dialogId = $n2.utils.getElementIdentifier($dialog);
 				
 				userService.startEdit({
 					userDoc: userDoc

@@ -401,13 +401,9 @@ function main() {
 	dispatcher.register(DH,'unselected',_handle);
 	dispatcher.register(DH,'hashChanged',_handle);
 
-	searchInput = searchServer.installSearch({
-		textInput: $('#searchText')
-		,searchButton: $('#searchButton')
-		,initialSearchText: 'search database'
-		,onlyFinalResults: true
-		//,displayFn: displaySearchResults
-		,dispatchService: dispatcher
+	searchInput = searchServer.installSearchWidget({
+		elem: $('#searchPanel')
+		,useButton: true
 	});
 	
 	// Editor

@@ -597,21 +597,8 @@ var ModuleDisplay = $n2.Class({
 
 			// Search
 			if( _this.searchPanelName ) {
-				var searchWidgetLabel = _loc('search the atlas');
-				if( customService ){
-					var customLabel = customService.getOption('searchWidgetText',null);
-					if( customLabel ){
-						searchWidgetLabel = _loc(customLabel);
-					};
-				};
-				
-				var searchInput = $('<input type="text" class="search_panel_input"></input>');
-				searchInput.val( searchWidgetLabel );
-				$('#'+_this.searchPanelName).empty().append(searchInput);
-				config.directory.searchService.installSearch({
-					textInput: searchInput
-					,initialSearchText: searchWidgetLabel
-					,dispatchService: config.directory.dispatchService
+				config.directory.searchService.installSearchWidget({
+					elem: $('#'+_this.searchPanelName)
 				});
 			};
 			

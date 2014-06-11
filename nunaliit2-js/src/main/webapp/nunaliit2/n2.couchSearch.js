@@ -482,12 +482,7 @@ var SearchInput = $n2.Class({
 		// This way, if the element is removed from the window tree,
 		// it all cleans up easy.
 		var $textInput = this.options.textInput;
-		var textInputId = $textInput.attr('id');
-		if( !textInputId ) {
-			textInputId = $n2.getUniqueId();
-			$textInput.attr('id',textInputId);
-		};
-		this.textInputId = textInputId;
+		this.textInputId = $n2.utils.getElementIdentifier($textInput);
 		this.options.textInput = null; // get rid of reference
 
 		// Same for button
@@ -814,12 +809,76 @@ var SearchServer = $n2.Class({
 		return new SearchInput(opts_, this);
 	}
 	
+	,installSearchWidget: function(opts_) {
+		var opts = $n2.extend({
+			elem: null
+			,label: null
+			,useButton: false
+			,buttonLabel: null
+		},opts_);
+		
+		var customService = this._getCustomService();
+		
+		// Parent element
+		var $elem = $(opts.elem);
+
+		// Text box label
+		var searchWidgetLabel = opts.label;
+		if( null === searchWidgetLabel 
+		 && customService){
+			searchWidgetLabel = customService.getOption('searchWidgetText',null);
+		};
+		if( null === searchWidgetLabel ){
+			searchWidgetLabel = _loc('search the atlas');
+		};
+
+		// Text box
+		$elem.empty();
+		var searchInput = $('<input type="text">')
+			.addClass('search_panel_input')
+			.val( searchWidgetLabel )
+			.appendTo($elem);
+		
+		// Search button label
+		var searchButtonLabel = opts.buttonLabel;
+		if( null === searchButtonLabel 
+		 && customService ){
+			searchButtonLabel = customService.getOption('searchButtonText',null);
+		};
+		if( null === searchButtonLabel ){
+			searchButtonLabel = _loc('Search');
+		};
+		
+		// Search button
+		var searchButton = null;
+		if( opts.useButton ){
+			searchButton = $('<input type="button">')
+				.val( searchButtonLabel )
+				.appendTo($elem);
+		};
+		
+		return new SearchInput({
+				textInput: searchInput
+				,initialSearchText: searchWidgetLabel
+				,dispatchService: this._getDispatcher()
+				,searchButton: searchButton
+			}, this);
+	}
+	
 	,_getDispatcher: function(){
 		var d = null;
 		if( this.options.directory ){
 			d = this.options.directory.dispatchService;
 		};
 		return d;
+	}
+	
+	,_getCustomService: function(){
+		var cs = null;
+		if( this.options.directory ){
+			cs = this.options.directory.customService;
+		};
+		return cs;
 	}
 	
 	,_handle: function(m){

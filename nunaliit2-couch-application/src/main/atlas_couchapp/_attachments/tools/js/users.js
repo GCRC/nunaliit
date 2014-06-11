@@ -907,15 +907,43 @@ var UserCreationApplication = $n2.Class({
 			.addClass('userCreationSuccess')
 			.text( _loc('User created successfully.') )
 			.appendTo($display);
+
+		var text = _loc('Click here to return to main site: ');
+		var link = _loc('main site');
+		var $redirect = $('<div>')
+			.addClass('userCreationRedirect')
+			.text(text)
+			.appendTo($display);
+		
+		$('<a>')
+			.attr('href','../index.html')
+			.text(link)
+			.appendTo($redirect);
 		
 		// Log in user
 		if( this.authService ){
 			this.authService.login({
 				username: emailAdress
 				,password: password
-				,onSuccess: function(context){}
-				,onError: function(errMsg){}
+				,onSuccess: redirectToMainSite
+				,onError: redirectToMainSite
 			});
+		};
+		
+		function redirectToMainSite(){
+			var nextUrl = null;
+			
+			var currentUrl = window.location.href;
+			if( currentUrl ){
+				var toolsIndex = currentUrl.indexOf('/tools/');
+				if( toolsIndex > 0 ){
+					nextUrl = currentUrl.substr(0,toolsIndex) + '/index.html';
+				};
+			};
+			
+			if( nextUrl ){
+				window.location.href = nextUrl;
+			};
 		};
 	}
 });
