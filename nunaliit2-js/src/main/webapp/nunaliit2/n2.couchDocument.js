@@ -701,6 +701,8 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 	
 	submissionDb: null
 	
+	,isSubmissionDataSource: null
+	
 	,initialize: function(opts_){
 		var opts = $n2.extend({
 			submissionDb: null
@@ -708,6 +710,8 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 		
 		CouchDataSource.prototype.initialize.call(this,opts);
 
+		this.isSubmissionDataSource = true;
+		
 		this.submissionDb = opts.submissionDb;
 	},
 	

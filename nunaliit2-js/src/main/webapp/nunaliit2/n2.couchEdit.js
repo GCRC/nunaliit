@@ -1586,10 +1586,20 @@ var CouchDocumentEditor = $n2.Class({
 			// Create or update document
 			if( _this.isInsert ) {
 				// This is an insert
+				var isSubmissionDs = false;
+				if( _this.options.documentSource.isSubmissionDataSource ){
+					isSubmissionDs = true;
+				};
 				_this.options.documentSource.createDocument({
 					doc: _this.editedDocument
 					,onSuccess: function(updatedDoc) {
-						postSaveAttachmentEditor(updatedDoc, true);
+						if( isSubmissionDs ){
+							// In the case of a submission database, the new document
+							// is not yet inserted
+							postSaveAttachmentEditor(updatedDoc, false);
+						} else {
+							postSaveAttachmentEditor(updatedDoc, true);
+						};
 					}
 					,onError: function(err){
 			    		_this._enableControls();
