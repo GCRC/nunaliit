@@ -17,7 +17,7 @@ import ca.carleton.gcrc.couch.client.CouchFactory;
 import ca.carleton.gcrc.couch.client.CouchQuery;
 import ca.carleton.gcrc.couch.client.CouchQueryResults;
 import ca.carleton.gcrc.couch.client.CouchSession;
-import ca.carleton.gcrc.couch.client.CouchUserContext;
+import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
 import ca.carleton.gcrc.couch.client.CouchUserDb;
 import ca.carleton.gcrc.couch.client.impl.CouchContextCookie;
 
@@ -135,7 +135,7 @@ public class UserRepositoryCouchDb implements UserRepository {
 	}
 
 	@Override
-	public CouchUserContext getRolesFromAuthentication(Cookie[] cookies) throws Exception {
+	public CouchAuthenticationContext getRolesFromAuthentication(Cookie[] cookies) throws Exception {
 		CouchContextCookie contextCookie = new CouchContextCookie();
 		for(Cookie cookie : cookies){
 			contextCookie.setCookie(cookie.getName(), cookie.getValue());
@@ -145,7 +145,7 @@ public class UserRepositoryCouchDb implements UserRepository {
 		CouchDb couchDb = factory.getDb(contextCookie, userDb);
 
 		CouchSession session = couchDb.getClient().getSession();
-		CouchUserContext userContext = session.getCurrentUserContext();
+		CouchAuthenticationContext userContext = session.getAuthenticationContext();
 		
 		return userContext;
 	}

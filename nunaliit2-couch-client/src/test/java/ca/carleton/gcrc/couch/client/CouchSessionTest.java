@@ -9,7 +9,7 @@ public class CouchSessionTest extends TestCase {
 		if( null != client ) {
 			CouchSession session = client.getSession();
 			
-			CouchUserContext userCtx = session.getCurrentUserContext();
+			CouchAuthenticationContext userCtx = session.getAuthenticationContext();
 			
 			String userName = TestSupport.getUserName();
 			if( false == userName.equals( userCtx.getName() ) ) {
@@ -30,7 +30,7 @@ public class CouchSessionTest extends TestCase {
 			CouchClient cookieClient = (new CouchFactory()).getClient(cookieContext, client);
 			
 			CouchSession cookieSession = cookieClient.getSession();
-			CouchUserContext userCtx = cookieSession.getCurrentUserContext();
+			CouchAuthenticationContext userCtx = cookieSession.getAuthenticationContext();
 			if( false == userName.equals( userCtx.getName() ) ) {
 				fail("Unexpected user name in session context");
 			}

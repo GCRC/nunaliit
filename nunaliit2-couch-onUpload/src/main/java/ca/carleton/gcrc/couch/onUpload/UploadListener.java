@@ -19,7 +19,7 @@ import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchFactory;
 import ca.carleton.gcrc.couch.client.CouchSession;
-import ca.carleton.gcrc.couch.client.CouchUserContext;
+import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
 import ca.carleton.gcrc.couch.client.impl.CouchContextCookie;
 import ca.carleton.gcrc.couch.utils.CouchNunaliitUtils;
 import ca.carleton.gcrc.upload.LoadedFile;
@@ -118,7 +118,7 @@ public class UploadListener implements OnUploadedListener {
 		try {
 			// Get CouchDb instance on behalf of the user
 			CouchDb userCouchDb = getUserCouchDbFromCookies(cookies);
-			CouchUserContext userContext = getUserFromClient(userCouchDb.getClient());
+			CouchAuthenticationContext userContext = getUserFromClient(userCouchDb.getClient());
 			
 			// Create an upload request
 			JSONObject doc = new JSONObject();
@@ -213,8 +213,8 @@ public class UploadListener implements OnUploadedListener {
 		return factory.getDb(contextCookie, dd.getDatabase());
 	}
 
-	private CouchUserContext getUserFromClient(CouchClient client) throws Exception {
+	private CouchAuthenticationContext getUserFromClient(CouchClient client) throws Exception {
 		CouchSession session = client.getSession();
-		return session.getCurrentUserContext();
+		return session.getAuthenticationContext();
 	}
 }

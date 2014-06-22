@@ -6,7 +6,7 @@ import java.util.Vector;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import ca.carleton.gcrc.couch.client.CouchUserContext;
+import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
 import ca.carleton.gcrc.json.JSONSupport;
 
 public class CouchUtils {
@@ -77,7 +77,7 @@ public class CouchUtils {
 		return effectiveServerUrl + "/" + databaseName;
 	}
 	
-	static CouchUserContext userContextFromDocument(JSONObject userDoc) throws Exception {
+	static CouchAuthenticationContext authenticationContextFromDocument(JSONObject userDoc) throws Exception {
 
 		String name = null;
 		List<String> roles = new Vector<String>();
@@ -98,10 +98,10 @@ public class CouchUtils {
 			throw new Exception("Error parsing user document",e);
 		}
 		
-		CouchUserContextImpl userCtx = new CouchUserContextImpl();
-		userCtx.setName(name);
-		userCtx.setRoles(roles);
+		CouchAuthenticationContextImpl authCtx = new CouchAuthenticationContextImpl();
+		authCtx.setName(name);
+		authCtx.setRoles(roles);
 		
-		return userCtx;
+		return authCtx;
 	}
 }

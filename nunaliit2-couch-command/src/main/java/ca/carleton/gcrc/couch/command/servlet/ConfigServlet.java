@@ -46,6 +46,7 @@ import ca.carleton.gcrc.couch.onUpload.multimedia.MultimediaFileConverter;
 import ca.carleton.gcrc.couch.onUpload.pdf.PdfFileConverter;
 import ca.carleton.gcrc.couch.submission.SubmissionRobot;
 import ca.carleton.gcrc.couch.submission.SubmissionRobotSettings;
+import ca.carleton.gcrc.couch.submission.SubmissionServlet;
 import ca.carleton.gcrc.couch.submission.mail.SubmissionApprovalGenerator;
 import ca.carleton.gcrc.couch.submission.mail.SubmissionMailNotifier;
 import ca.carleton.gcrc.couch.submission.mail.SubmissionMailNotifierImpl;
@@ -157,6 +158,14 @@ public class ConfigServlet extends JsonServlet {
 			initSubmissionRobot(servletContext);
 		} catch(ServletException e) {
 			logger.error("Error while initializing submission robot",e);
+			throw e;
+		}
+		
+		// Configure submission servlet
+		try {
+			initSubmission(servletContext);
+		} catch(ServletException e) {
+			logger.error("Error while configuring submission servlet",e);
 			throw e;
 		}
 		
@@ -608,6 +617,53 @@ public class ConfigServlet extends JsonServlet {
 	}
 
 	private void initUser(ServletContext servletContext) throws ServletException {
+		
+		try {
+			CouchUserDb userDb = couchClient.getUserDatabase();
+			servletContext.setAttribute(UserServlet.ConfigAttributeName_UserDb, userDb);
+			servletContext.setAttribute(
+				UserServlet.ConfigAttributeName_AtlasName
+				,atlasProperties.getAtlasName()
+				);
+			servletContext.setAttribute(UserServlet.ConfigAttributeName_DocumentDb, documentDatabase);
+			
+			byte[] serverKey = atlasProperties.getServerKey();
+			if( null != serverKey ) {
+				ByteBuffer serverKeyBuffer = ByteBuffer.wrap( serverKey );
+				servletContext.setAttribute(
+					UserServlet.ConfigAttributeName_ServerKey
+					,serverKeyBuffer
+					);
+			}
+		} catch(Exception e) {
+			logger.error("Error configuring user service",e);
+			throw new ServletException("Error configuring user service",e);
+		}
+	}
+
+	private void initSubmission(ServletContext servletContext) throws ServletException {
+		try {
+			CouchUserDb userDb = couchClient.getUserDatabase();
+			
+			servletContext.setAttribute(SubmissionServlet.ConfigAttributeName_AtlasName, atlasProperties.getAtlasName());
+			servletContext.setAttribute(SubmissionServlet.ConfigAttributeName_UserDb, userDb);
+
+			// Is submission DB enabled?
+			if( atlasProperties.isCouchDbSubmissionDbEnabled() ){
+
+				// Submission DB name
+				String submissionDbName = atlasProperties.getCouchDbSubmissionDbName();
+
+				CouchDb submissionDb = couchClient.getDatabase(submissionDbName);
+				CouchDesignDocument submissionDesign = submissionDb.getDesignDocument("submission");
+
+				servletContext.setAttribute(SubmissionServlet.ConfigAttributeName_SubmissionDesign, submissionDesign);
+			}
+
+		} catch (Exception e) {
+			logger.error("Error configuring submission servlet",e);
+			throw new ServletException("Error configuring submission servlet",e);
+		}
 		
 		try {
 			CouchUserDb userDb = couchClient.getUserDatabase();

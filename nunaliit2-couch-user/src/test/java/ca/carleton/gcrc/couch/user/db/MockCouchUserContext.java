@@ -3,9 +3,9 @@ package ca.carleton.gcrc.couch.user.db;
 import java.util.List;
 import java.util.Vector;
 
-import ca.carleton.gcrc.couch.client.CouchUserContext;
+import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
 
-public class MockCouchUserContext implements CouchUserContext {
+public class MockCouchUserContext implements CouchAuthenticationContext {
 
 	private String name;
 	private List<String> roles;

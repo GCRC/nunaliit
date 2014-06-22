@@ -10,7 +10,7 @@ public interface CouchSession {
 	
 	URL getUrl();
 	
-	CouchUserContext getCurrentUserContext() throws Exception;
+	CouchAuthenticationContext getAuthenticationContext() throws Exception;
 	
 	CouchContext createSession(String userName, String password) throws Exception;
 

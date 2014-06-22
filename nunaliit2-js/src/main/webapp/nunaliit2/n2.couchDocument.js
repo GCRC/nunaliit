@@ -701,11 +701,16 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 	
 	submissionDb: null
 	
+	,submissionServerUrl: null
+	
+	,submissionServerDb: null
+	
 	,isSubmissionDataSource: null
 	
 	,initialize: function(opts_){
 		var opts = $n2.extend({
 			submissionDb: null
+			,submissionServletUrl: null
 		},opts_);
 		
 		CouchDataSource.prototype.initialize.call(this,opts);
@@ -713,6 +718,18 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 		this.isSubmissionDataSource = true;
 		
 		this.submissionDb = opts.submissionDb;
+		this.submissionServerUrl = opts.submissionServerUrl;
+		
+		var submissionServer = $n2.couch.getServer({
+			pathToServer: this.submissionServerUrl
+			,skipSessionInitialization: true
+			,userDbName: '_users'
+			,onSuccess: function(){}
+			,onError: function(err){}
+		});
+		this.submissionServerDb = submissionServer.getDb({
+			dbName: 'submissionDb'
+		});
 	},
 	
 	/*
@@ -782,7 +799,7 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 
 			_this._adjustDocument(request);
 			
-			_this.submissionDb.createDocument({
+			_this.submissionServerDb.createDocument({
 				data: request
 				,onSuccess: function(docInfo){
 					_this._warnUser();
@@ -843,7 +860,7 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 
 		this._adjustDocument(request);
 		
-		this.submissionDb.createDocument({
+		this.submissionServerDb.createDocument({
 			data: request
 			,onSuccess: function(docInfo){
 				_this._warnUser();
@@ -901,7 +918,7 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 
 		this._adjustDocument(request);
 
-		this.submissionDb.createDocument({
+		this.submissionServerDb.createDocument({
 			data: request
 			,onSuccess: function(docInfo){
 				_this._warnUser();

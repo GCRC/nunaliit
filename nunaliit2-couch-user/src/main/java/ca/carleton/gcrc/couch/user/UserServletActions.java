@@ -19,7 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.client.CouchDb;
-import ca.carleton.gcrc.couch.client.CouchUserContext;
+import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
 import ca.carleton.gcrc.couch.user.agreement.AgreementUtils;
 import ca.carleton.gcrc.couch.user.db.UserRepository;
 import ca.carleton.gcrc.couch.user.error.TokenExpiredException;
@@ -486,7 +486,7 @@ public class UserServletActions {
 	}
 
 	public Collection<JSONObject> getUserDocuments(List<String> userIds, Cookie[] cookies) throws Exception {
-		CouchUserContext context = userRepository.getRolesFromAuthentication(cookies);
+		CouchAuthenticationContext context = userRepository.getRolesFromAuthentication(cookies);
 		List<String> roles = context.getRoles();
 		
 		String atlasAdmin = atlasName + "_administrator";
@@ -538,7 +538,7 @@ public class UserServletActions {
 			throw new Exception("Provided agreement does not match the one found in the atlas.");
 		}
 
-		CouchUserContext context = userRepository.getRolesFromAuthentication(cookies);
+		CouchAuthenticationContext context = userRepository.getRolesFromAuthentication(cookies);
 		
 		JSONObject userDoc = userRepository.getUserFromName(context.getName());
 		

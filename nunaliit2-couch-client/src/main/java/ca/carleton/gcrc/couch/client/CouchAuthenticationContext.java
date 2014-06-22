@@ -2,7 +2,7 @@ package ca.carleton.gcrc.couch.client;
 
 import java.util.List;
 
-public interface CouchUserContext {
+public interface CouchAuthenticationContext {
 
 	String getName();
 

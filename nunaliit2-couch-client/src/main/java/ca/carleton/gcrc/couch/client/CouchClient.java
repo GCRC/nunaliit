@@ -17,6 +17,8 @@ public interface CouchClient {
 	CouchSession getSession() throws Exception;
 
 	String getUuid() throws Exception;
+
+	String[] getUuids(int count) throws Exception;
 	
 	/**
 	 * Performs verification of user name and password stored

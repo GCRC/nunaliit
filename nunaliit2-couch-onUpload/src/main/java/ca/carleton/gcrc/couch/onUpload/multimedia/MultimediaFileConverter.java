@@ -6,7 +6,7 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ca.carleton.gcrc.couch.client.CouchUserContext;
+import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
 import ca.carleton.gcrc.couch.onUpload.UploadConstants;
 import ca.carleton.gcrc.couch.onUpload.UploadProgressAdaptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.AttachmentDescriptor;
@@ -193,7 +193,7 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 	public void analyzeFile(FileConversionContext conversionContext) throws Exception {
 		AttachmentDescriptor attDescription = conversionContext.getAttachmentDescription();
 		OriginalFileDescriptor originalObj = attDescription.getOriginalFileDescription();
-		CouchUserContext submitter = attDescription.getSubmitter();
+		CouchAuthenticationContext submitter = attDescription.getSubmitter();
 		
 		// Figure out media file located on disk
 		File originalFile = originalObj.getMediaFile();

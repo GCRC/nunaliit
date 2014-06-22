@@ -15,7 +15,7 @@ import javax.servlet.http.Cookie;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import ca.carleton.gcrc.couch.client.CouchUserContext;
+import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
 
 public class MockUserRepository implements UserRepository {
 
@@ -183,7 +183,7 @@ public class MockUserRepository implements UserRepository {
 	}
 
 	@Override
-	public CouchUserContext getRolesFromAuthentication(Cookie[] cookies) throws Exception {
+	public CouchAuthenticationContext getRolesFromAuthentication(Cookie[] cookies) throws Exception {
 		return new MockCouchUserContext("test");
 	}
 

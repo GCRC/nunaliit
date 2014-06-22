@@ -5,9 +5,9 @@ import java.io.StringWriter;
 import java.util.List;
 import java.util.Vector;
 
-import ca.carleton.gcrc.couch.client.CouchUserContext;
+import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
 
-public class CouchUserContextImpl implements CouchUserContext {
+public class CouchAuthenticationContextImpl implements CouchAuthenticationContext {
 
 	private String name;
 	private List<String> roles = new Vector<String>();

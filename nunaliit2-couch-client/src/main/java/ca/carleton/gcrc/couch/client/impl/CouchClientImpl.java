@@ -8,6 +8,7 @@ import java.util.Vector;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+
 import ca.carleton.gcrc.couch.client.CouchClient;
 import ca.carleton.gcrc.couch.client.CouchContext;
 import ca.carleton.gcrc.couch.client.CouchDb;
@@ -103,6 +104,35 @@ public class CouchClientImpl implements CouchClient {
 		}
 		
 		return uuid;
+	}
+
+	@Override
+	public String[] getUuids(int count) throws Exception {
+		if( count < 1 ){
+			return new String[0];
+		}
+		
+		// Make request
+		URL effectiveUrl = ConnectionUtils.computeUrlWithParameter(uuidUrl, new UrlParameter("count", ""+count));
+		JSONObject obj = ConnectionUtils.getJsonResource(context, effectiveUrl);
+		
+		// Parse
+		Object uuidsObj = obj.get("uuids");
+		if( null == uuidsObj ) {
+			throw new Exception("Unable to parse UUIDs response");
+		}
+		if( false == (uuidsObj instanceof JSONArray) ) {
+			throw new Exception("Unexpected class for array: "+uuidsObj.getClass().getSimpleName());
+		}
+		JSONArray uuidsArray = (JSONArray)uuidsObj;
+		
+		String[] uuids = new String[uuidsArray.length()];
+		for(int loop=0, end=uuidsArray.length(); loop<end; ++loop) {
+			String uuid = uuidsArray.getString(loop);
+			uuids[loop] = uuid;
+		}
+		
+		return uuids;
 	}
 
 	@Override

@@ -6,14 +6,14 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.json.JSONObject;
-import ca.carleton.gcrc.couch.client.CouchUserContext;
+import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
 
 
 public class CouchNunaliitUtils {
 
 	static public void adjustDocumentForStorage(
 			JSONObject doc
-			,CouchUserContext userContext
+			,CouchAuthenticationContext userContext
 		) throws Exception {
 	
 		long now = (new Date()).getTime();
@@ -48,7 +48,7 @@ public class CouchNunaliitUtils {
 		}
 	}
 	
-	static public boolean hasAdministratorRole(CouchUserContext userContext, String atlasName){
+	static public boolean hasAdministratorRole(CouchAuthenticationContext userContext, String atlasName){
 		if( null == userContext ) {
 			return false;
 		}
@@ -75,7 +75,7 @@ public class CouchNunaliitUtils {
 		return false;
 	}
 	
-	static public boolean hasVetterRole(CouchUserContext userContext, String atlasName){
+	static public boolean hasVetterRole(CouchAuthenticationContext userContext, String atlasName){
 		if( null == userContext ) {
 			return false;
 		}

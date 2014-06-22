@@ -21,6 +21,7 @@ import ca.carleton.gcrc.couch.command.impl.CommandSupport;
 import ca.carleton.gcrc.couch.command.impl.TransparentWithRedirectServlet;
 import ca.carleton.gcrc.couch.command.servlet.ConfigServlet;
 import ca.carleton.gcrc.couch.export.ExportServlet;
+import ca.carleton.gcrc.couch.submission.SubmissionServlet;
 import ca.carleton.gcrc.couch.user.UserServlet;
 import ca.carleton.gcrc.progress.ProgressServlet;
 import ca.carleton.gcrc.upload.UploadServlet;
@@ -205,6 +206,13 @@ public class CommandRun implements Command {
         	ServletHolder servletHolder = new ServletHolder(new UserServlet());
         	servletHolder.setInitOrder(2);
         	context.addServlet(servletHolder,"/servlet/user/*");
+        }
+
+        // Servlet for submission
+        {
+        	ServletHolder servletHolder = new ServletHolder(new SubmissionServlet());
+        	servletHolder.setInitOrder(2);
+        	context.addServlet(servletHolder,"/servlet/submission/*");
         }
 
         // Proxy to site

@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchQuery;
 import ca.carleton.gcrc.couch.client.CouchQueryResults;
-import ca.carleton.gcrc.couch.client.CouchUserContext;
+import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
 import ca.carleton.gcrc.couch.onUpload.conversion.AttachmentDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.FileConversionContext;
 import ca.carleton.gcrc.couch.onUpload.conversion.OriginalFileDescriptor;
@@ -379,7 +379,7 @@ public class UploadWorkerThread extends Thread {
 			OriginalFileDescriptor originalObj = attDescription.getOriginalFileDescription();
 			
 			// Verify if a submitter is specified
-			CouchUserContext submitter = attDescription.getSubmitter();
+			CouchAuthenticationContext submitter = attDescription.getSubmitter();
 
 			boolean pluginFound = false;
 			String fileClass = attDescription.getFileClass();

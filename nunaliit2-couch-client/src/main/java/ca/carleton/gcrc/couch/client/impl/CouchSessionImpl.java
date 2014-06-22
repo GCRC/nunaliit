@@ -12,7 +12,7 @@ import org.json.JSONObject;
 import ca.carleton.gcrc.couch.client.CouchClient;
 import ca.carleton.gcrc.couch.client.CouchContext;
 import ca.carleton.gcrc.couch.client.CouchSession;
-import ca.carleton.gcrc.couch.client.CouchUserContext;
+import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
 import ca.carleton.gcrc.json.JSONSupport;
 
 public class CouchSessionImpl implements CouchSession {
@@ -41,7 +41,7 @@ public class CouchSessionImpl implements CouchSession {
 	}
 
 	@Override
-	public CouchUserContext getCurrentUserContext() throws Exception {
+	public CouchAuthenticationContext getAuthenticationContext() throws Exception {
 
 		// GET _session
 		JSONObject response = ConnectionUtils.getJsonResource(getContext(), url);
@@ -69,11 +69,11 @@ public class CouchSessionImpl implements CouchSession {
 			throw new Exception("Error parsing session context response",e);
 		}
 		
-		CouchUserContextImpl userCtx = new CouchUserContextImpl();
-		userCtx.setName(name);
-		userCtx.setRoles(roles);
+		CouchAuthenticationContextImpl authCtx = new CouchAuthenticationContextImpl();
+		authCtx.setName(name);
+		authCtx.setRoles(roles);
 		
-		return userCtx;
+		return authCtx;
 	}
 
 	@Override
@@ -92,7 +92,7 @@ public class CouchSessionImpl implements CouchSession {
 		ConnectionUtils.captureReponseErrors(jsonUserCtx, "Error while creating session context: ");
 		
 		// Parse response
-		CouchUtils.userContextFromDocument(jsonUserCtx);
+		CouchUtils.authenticationContextFromDocument(jsonUserCtx);
 		
 		return context;
 	}

@@ -7,7 +7,7 @@ import javax.servlet.http.Cookie;
 
 import org.json.JSONObject;
 
-import ca.carleton.gcrc.couch.client.CouchUserContext;
+import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
 
 public interface UserRepository {
 
@@ -25,7 +25,7 @@ public interface UserRepository {
 
 	void recoverPassword(String name, String newPassword) throws Exception;
 	
-	CouchUserContext getRolesFromAuthentication(Cookie[] cookies) throws Exception;
+	CouchAuthenticationContext getRolesFromAuthentication(Cookie[] cookies) throws Exception;
 
 	void computeUserPassword(JSONObject userDoc, String password) throws Exception;
 }

@@ -693,9 +693,15 @@ var Database = $n2.Class({
 	,callbacks: null
 	
 	,initialize: function(opts_, server_) {
-		$.extend(this,opts_);
+		var opts = $n2.extend({
+			dbUrl: null
+			,dbName: null
+		},opts_);
 	
 		this.server = server_;
+		
+		this.dbUrl = opts.dbUrl;
+		this.dbName = opts.dbName;
 		
 		if( !this.dbUrl ) {
 			var pathToServer = server_.getPathToServer();

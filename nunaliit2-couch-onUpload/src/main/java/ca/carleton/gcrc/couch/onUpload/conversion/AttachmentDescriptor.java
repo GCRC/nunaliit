@@ -7,7 +7,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ca.carleton.gcrc.couch.client.CouchUserContext;
+import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
 import ca.carleton.gcrc.couch.client.CouchUserDb;
 import ca.carleton.gcrc.couch.onUpload.UploadConstants;
 
@@ -211,8 +211,8 @@ public class AttachmentDescriptor extends AbstractDescriptor {
 		setStringAttribute(UploadConstants.SUBMITTER_KEY,originalName);
 	}
 	
-	public CouchUserContext getSubmitter() throws Exception {
-		CouchUserContext submitter = null;
+	public CouchAuthenticationContext getSubmitter() throws Exception {
+		CouchAuthenticationContext submitter = null;
 		
 		String submitterName = getSubmitterName();
 		if( null != submitterName ) {

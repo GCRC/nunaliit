@@ -48,6 +48,7 @@ function Configure(options_){
 		,exportServerUrl: null // string
 		,userServerUrl: null // string
 		,submissionDbUrl: null // string
+		,submissionServerUrl: null // string
 		,onSuccess: function(config){}
 	},options_);
 
@@ -116,6 +117,7 @@ function Configure(options_){
 				id: 'main'
 				,db: configuration.atlasDb
 				,submissionDb: configuration.submissionDb
+				,submissionServerUrl: options.submissionServerUrl
 				,dispatchService: configuration.directory.dispatchService
 			});
 		} else {
