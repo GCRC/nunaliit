@@ -13,6 +13,8 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ca.carleton.gcrc.json.JSONSupport;
+
 @SuppressWarnings("serial")
 public abstract class JsonServlet extends HttpServlet {
 
@@ -45,15 +47,7 @@ public abstract class JsonServlet extends HttpServlet {
 			resp.setCharacterEncoding("utf-8");
 			resp.addHeader("Cache-Control", "must-revalidate");
 			
-			JSONObject errorObj = new JSONObject();
-			errorObj.put("error", t.getMessage());
-			
-			int limit = 15;
-			Throwable cause = t;
-			while( null != cause && limit > 0 ){
-				--limit;
-				cause = cause.getCause();
-			}
+			JSONObject errorObj = JSONSupport.fromError(t);
 			
 			OutputStreamWriter osw = new OutputStreamWriter(resp.getOutputStream(), "UTF-8");
 			errorObj.write(osw);

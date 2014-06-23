@@ -715,6 +715,8 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 		
 		CouchDataSource.prototype.initialize.call(this,opts);
 
+		var _this = this;
+		
 		this.isSubmissionDataSource = true;
 		
 		this.submissionDb = opts.submissionDb;
@@ -724,12 +726,17 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 			pathToServer: this.submissionServerUrl
 			,skipSessionInitialization: true
 			,userDbName: '_users'
-			,onSuccess: function(){}
-			,onError: function(err){}
+			,onSuccess: function(server){
+				_this.submissionServerDb = server.getDb({
+					dbName: 'submissionDb'
+				});
+			}
+			,onError: function(err){
+				$n2.log("Unable to initialize submission server",err);
+				alert( _loc('Unable to initialize submission database') );
+			}
 		});
-		this.submissionServerDb = submissionServer.getDb({
-			dbName: 'submissionDb'
-		});
+		
 	},
 	
 	/*
@@ -770,37 +777,8 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 			
 			_this._adjustDocument(doc);
 
-			var copy = {};
-			var reserved = {};
-			for(var key in doc){
-				if( key === '__n2Source' ){
-					// Do not copy
-					
-				} else if ( key.length > 0 && key[0] === '_' ) {
-					var reservedKey = key.substr(1);
-					reserved[reservedKey] = doc[key];
-					
-				} else {
-					copy[key] = doc[key];
-				};
-			};
-			
-			var request = {
-				nunaliit_type: 'document_submission'
-				,nunaliit_submission: {
-					state: 'submitted'
-					,original_reserved: {
-						id: docId
-					}
-					,submitted_doc: copy
-					,submitted_reserved: reserved
-				}
-			};
-
-			_this._adjustDocument(request);
-			
 			_this.submissionServerDb.createDocument({
-				data: request
+				data: doc
 				,onSuccess: function(docInfo){
 					_this._warnUser();
 					doc.__n2Source = this;
@@ -830,38 +808,16 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 		this._adjustDocument(doc);
 		
 		var copy = {};
-		var reserved = {};
 		for(var key in doc){
 			if( key === '__n2Source' ){
 				// Do not copy
-				
-			} else if ( key.length > 0 && key[0] === '_' ) {
-				var reservedKey = key.substr(1);
-				reserved[reservedKey] = doc[key];
-				
 			} else {
 				copy[key] = doc[key];
 			};
 		};
-
-		// create a submission request
-		var request = {
-			nunaliit_type: 'document_submission'
-			,nunaliit_submission: {
-				state: 'submitted'
-				,original_reserved: {
-					id: doc._id
-					,rev: doc._rev
-				}
-				,submitted_doc: copy
-				,submitted_reserved: reserved
-			}
-		};
-
-		this._adjustDocument(request);
 		
-		this.submissionServerDb.createDocument({
-			data: request
+		this.submissionServerDb.updateDocument({
+			data: copy
 			,onSuccess: function(docInfo){
 				_this._warnUser();
 				opts.onSuccess(doc);
@@ -886,40 +842,8 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 		
 		var doc = opts.doc;
 		
-		var copy = {};
-		var reserved = {};
-		for(var key in doc){
-			if( key === '__n2Source' ){
-				// Do not copy
-				
-			} else if ( key.length > 0 && key[0] === '_' ) {
-				var reservedKey = key.substr(1);
-				reserved[reservedKey] = doc[key];
-				
-			} else {
-				copy[key] = doc[key];
-			};
-		};
-
-		// create a submission request
-		var request = {
-			nunaliit_type: 'document_submission'
-			,nunaliit_submission: {
-				state: 'submitted'
-				,original_reserved: {
-					id: doc._id
-					,rev: doc._rev
-				}
-				,deletion: true
-				,submitted_doc: copy
-				,submitted_reserved: reserved
-			}
-		};
-
-		this._adjustDocument(request);
-
-		this.submissionServerDb.createDocument({
-			data: request
+		this.submissionServerDb.deleteDocument({
+			data: doc
 			,onSuccess: function(docInfo){
 				_this._warnUser();
 				opts.onSuccess(doc);

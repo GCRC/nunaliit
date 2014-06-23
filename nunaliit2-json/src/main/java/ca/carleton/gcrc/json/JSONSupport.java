@@ -189,4 +189,40 @@ public class JSONSupport {
 		
 		return c;
 	}
+	
+	static public JSONObject fromError(Throwable t){
+		return fromError(t, 8);
+	}
+	
+	static public JSONObject fromError(Throwable t, int limit){
+		if( limit < 0 ){
+			return null;
+		}
+		if( null == t ){
+			return null;
+		}
+		
+		JSONObject errorObj = new JSONObject();
+		String message = t.getMessage();
+		if( null == message ){
+			message = t.getClass().getName();
+		}
+		errorObj.put("error", message);
+
+		// Stack trace
+		{
+			StackTraceElement[] stackTrace = t.getStackTrace();
+			if( null != stackTrace && stackTrace.length > 0 ){
+				errorObj.put("stack", stackTrace[0].toString());
+			}
+		}
+		
+		// Cause
+		JSONObject causeObj = fromError(t.getCause(), limit-1);
+		if( null != causeObj ){
+			errorObj.put("cause", causeObj);
+		}
+		
+		return errorObj;
+	}
 }

@@ -1,29 +1,41 @@
 package ca.carleton.gcrc.couch.submission;
 
+import java.util.Iterator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
+import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
+import ca.carleton.gcrc.couch.client.CouchDocumentOptions;
 import ca.carleton.gcrc.couch.client.CouchServerVersion;
+import ca.carleton.gcrc.couch.utils.CouchNunaliitUtils;
 import ca.carleton.gcrc.json.JSONSupport;
 
 public class SubmissionServletActions {
+	
+	static private Pattern underscorePattern = Pattern.compile("_(.*)");
 
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 //	private String atlasName = null;
 	private CouchDesignDocument submissionDesign = null;
+	private CouchDb documentCouchDb = null;
 	private JSONObject cached_welcome;
 
 	public SubmissionServletActions(
 			String atlasName
 			,CouchDesignDocument submissionDesign
+			,CouchDb documentCouchDb
 		){
 //		this.atlasName = atlasName;
 		this.submissionDesign = submissionDesign;
+		this.documentCouchDb = documentCouchDb;
 	}
 	
 	synchronized public JSONObject getWelcome() throws Exception{
@@ -84,14 +96,18 @@ public class SubmissionServletActions {
 				}
 			};
 			
-			// On creation, _rev attribute must not be set
-			if( JSONSupport.containsKey(doc, "_rev") ){
-				throw new Exception("Currently accepting only document creation");
-			};
-			
 			validateLastUpdated(authContext, doc);
 			
-			JSONObject result = submissionDesign.getDatabase().createDocument(doc);
+			JSONObject originalDoc = null;
+			if( JSONSupport.containsKey(doc, "_rev") ){
+				CouchDocumentOptions options = new CouchDocumentOptions();
+				options.setRevision( doc.getString("_rev") );
+				originalDoc = documentCouchDb.getDocument(docId, options);
+			}
+			
+			JSONObject submissionRequest = buildSubmissionRequest(authContext, doc, originalDoc);
+			
+			JSONObject result = submissionDesign.getDatabase().createDocument(submissionRequest);
 			
 			return result;
 
@@ -99,7 +115,37 @@ public class SubmissionServletActions {
 			throw new Exception("Only operations against 'submissionDb' are accepted");
 		}
 	}
-	
+
+	public JSONObject deleteDocument(
+			CouchAuthenticationContext authContext 
+			,String dbIdentifier 
+			,String docId 
+			,String rev
+			) throws Exception {
+		
+		if( "submissionDb".equals(dbIdentifier) ) {
+			if( null == docId || null == rev ){
+				throw new Exception("Document identifier and revision must be specified");
+			}
+			
+			JSONObject originalDoc = null;
+			{
+				CouchDocumentOptions options = new CouchDocumentOptions();
+				options.setRevision( rev );
+				originalDoc = documentCouchDb.getDocument(docId, options);
+			}
+			
+			JSONObject submissionRequest = buildSubmissionRequest(authContext, null, originalDoc);
+			
+			JSONObject result = submissionDesign.getDatabase().createDocument(submissionRequest);
+			
+			return result;
+
+		} else {
+			throw new Exception("Only operations against 'submissionDb' are accepted");
+		}
+	}
+
 	private void validateLastUpdated(CouchAuthenticationContext authContext, JSONObject doc) throws Exception{
 		JSONObject lastUpdated = doc.optJSONObject("nunaliit_last_updated");
 		if( null == lastUpdated ){
@@ -114,5 +160,88 @@ public class SubmissionServletActions {
 		if( false == userId.equals(authContext.getName()) ){
 			throw new Exception("Identifier found in the 'nunaliit_last_updated' does not match authenticated user");
 		}
+	}
+
+	private JSONObject buildSubmissionRequest(
+			CouchAuthenticationContext authContext
+			,JSONObject doc
+			,JSONObject original
+			) throws Exception{
+		JSONObject submissionRequest = new JSONObject();
+		
+		submissionRequest.put("nunaliit_type", "document_submission");
+		
+		JSONObject submissionStructure = new JSONObject();
+		submissionRequest.put("nunaliit_submission", submissionStructure);
+		submissionStructure.put("state", "submitted");
+		
+		// Submitter roles
+		{
+			JSONArray roles = new JSONArray();
+			for(String role : authContext.getRoles()){
+				roles.put(role);
+			}
+			submissionStructure.put("submitter_roles", roles);
+		}
+		
+		// Submitted
+		if( null != doc ){
+			JSONObject submittedDoc = new JSONObject();
+			submissionStructure.put("submitted_doc", submittedDoc);
+			JSONObject submittedReserved = new JSONObject();
+			submissionStructure.put("submitted_reserved", submittedReserved);
+			
+			Iterator<?> it = doc.keys();
+			while( it.hasNext() ){
+				Object keyObj = it.next();
+				if( keyObj instanceof String ){
+					String key = (String)keyObj;
+					Object value = doc.get(key);
+					
+					Matcher matcher = underscorePattern.matcher(key);
+					if( matcher.matches() ){
+						String reservedKey = matcher.group(1);
+						submittedReserved.put(reservedKey, value);
+					} else {
+						submittedDoc.put(key, value);
+					}
+				}
+			}
+		} else {
+			submissionStructure.put("deletion", true);
+		}
+		
+		// Original
+		if( null != original ){
+			JSONObject originalDoc = new JSONObject();
+			submissionStructure.put("original_doc", originalDoc);
+			JSONObject originalReserved = new JSONObject();
+			submissionStructure.put("original_reserved", originalReserved);
+			
+			Iterator<?> it = original.keys();
+			while( it.hasNext() ){
+				Object keyObj = it.next();
+				if( keyObj instanceof String ){
+					String key = (String)keyObj;
+					Object value = original.get(key);
+					
+					Matcher matcher = underscorePattern.matcher(key);
+					if( matcher.matches() ){
+						String reservedKey = matcher.group(1);
+						originalReserved.put(reservedKey, value);
+					} else {
+						originalDoc.put(key, value);
+					}
+				}
+			}
+		} else {
+			JSONObject originalReserved = new JSONObject();
+			submissionStructure.put("original_reserved", originalReserved);
+			originalReserved.put("id", doc.getString("_id"));
+		}
+		
+		CouchNunaliitUtils.adjustDocumentForStorage(submissionRequest, authContext);
+		
+		return submissionRequest;
 	}
 }

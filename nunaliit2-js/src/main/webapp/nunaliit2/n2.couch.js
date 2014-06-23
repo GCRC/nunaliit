@@ -1952,7 +1952,7 @@ var Server = $n2.Class({
 				,version: null
 				,skipSessionInitialization: false
 				,userDbName: null
-				,onSuccess: function(){}
+				,onSuccess: function(server){}
 				,onError: function(err){}
 			}
 			,options_
@@ -1960,14 +1960,14 @@ var Server = $n2.Class({
 	
 		this.isInitialized = false;
 		this.uuids = [];
-		this.userDbName = null;
+		this.userDbName = this.options.userDbName;
 		this.userDb = null;
 		this.session = null;
 		this.initListeners = initListeners_;
 		if( !this.initListeners ) {
 			this.initListeners = [];
 		};
-		
+
 		var _this = this;
 
 		getServerVersion();

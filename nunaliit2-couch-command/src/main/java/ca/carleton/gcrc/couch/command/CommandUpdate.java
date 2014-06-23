@@ -8,11 +8,14 @@ import java.util.List;
 import java.util.Stack;
 import java.util.Vector;
 
+import javax.servlet.ServletException;
+
 import ca.carleton.gcrc.couch.app.Document;
 import ca.carleton.gcrc.couch.app.DocumentUpdateListener;
 import ca.carleton.gcrc.couch.app.DocumentUpdateProcess;
 import ca.carleton.gcrc.couch.app.impl.DocumentFile;
 import ca.carleton.gcrc.couch.client.CouchDb;
+import ca.carleton.gcrc.couch.client.CouchDbSecurityDocument;
 import ca.carleton.gcrc.couch.command.impl.CommandSupport;
 import ca.carleton.gcrc.couch.command.impl.GenerateCssLibrariesProcess;
 import ca.carleton.gcrc.couch.command.impl.GenerateJavascriptLibrariesProcess;
@@ -88,7 +91,6 @@ public class CommandUpdate implements Command {
 
 		CouchDb couchDb = CommandSupport.createCouchDb(gs, atlasProperties);
 		
-		
 		// Prepare update process
 		DocumentUpdateProcess updateProcess = 
 				CommandUpdate.createDocumentUpdateProcess(gs, couchDb);
@@ -116,8 +118,10 @@ public class CommandUpdate implements Command {
 		
 		// Update submission database with design document
 		if( atlasProperties.isCouchDbSubmissionDbEnabled() ) {
+			CouchDb submissionCouchDb = null;
+
 			try {
-				CouchDb submissionCouchDb = CommandSupport.createCouchDbSubmission(gs, atlasProperties);
+				submissionCouchDb = CommandSupport.createCouchDbSubmission(gs, atlasProperties);
 	
 				DocumentUpdateProcess updateProcessForSubmissionDb = 
 						CommandUpdate.createDocumentUpdateProcess(gs, submissionCouchDb);
@@ -125,6 +129,37 @@ public class CommandUpdate implements Command {
 				pushSubmissionDesign(gs, atlasDir, atlasProperties, updateProcessForSubmissionDb);
 			} catch(Exception e) {
 				throw new Exception("Unable to upload submission design document", e);
+			}
+
+			// Fix member roles on submission database
+			try {
+				CouchDbSecurityDocument secDoc = submissionCouchDb.getSecurityDocument();
+				
+				boolean updateRequired = false;
+				
+				// Administrator role
+				{
+					String adminRole = atlasProperties.getAtlasName() + "_administrator";
+					if( false == secDoc.getAdminRoles().contains(adminRole) ) {
+						secDoc.addAdminRole(adminRole);
+						updateRequired = true;
+					}
+				}
+				
+				// Vetter role
+				{
+					String vetterRole = atlasProperties.getAtlasName() + "_vetter";
+					if( false == secDoc.getMemberRoles().contains(vetterRole) ) {
+						secDoc.addMemberRole(vetterRole);
+						updateRequired = true;
+					}
+				}
+				
+				if( updateRequired ){
+					submissionCouchDb.setSecurityDocument(secDoc);
+				}
+			} catch(Exception e) {
+				throw new ServletException("Error while adjusting member roles on submission database", e);
 			}
 		}
 		
