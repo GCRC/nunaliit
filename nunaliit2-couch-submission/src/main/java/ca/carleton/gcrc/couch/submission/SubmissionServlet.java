@@ -401,7 +401,7 @@ public class SubmissionServlet extends JsonServlet {
 			}
 		}
 		
-		CouchClient client = submissionDesign.getDatabase().getClient();
+		CouchClient client = documentDesign.getDatabase().getClient();
 		
 		CouchFactory factory = new CouchFactory();
 		CouchClient userClient = factory.getClient(contextCookie, client);

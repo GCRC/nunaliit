@@ -25,6 +25,7 @@ import ca.carleton.gcrc.couch.fsentry.FSEntry;
 import ca.carleton.gcrc.couch.fsentry.FSEntryBuffer;
 import ca.carleton.gcrc.couch.fsentry.FSEntryFile;
 import ca.carleton.gcrc.couch.fsentry.FSEntryMerged;
+import ca.carleton.gcrc.couch.fsentry.FSEntryResource;
 
 public class CommandUpdate implements Command {
 
@@ -309,6 +310,15 @@ public class CommandUpdate implements Command {
 				entries.add(f);
 			}
 			
+			// Install atlas validation routines
+			{
+				FSEntry f = FSEntryResource.getPositionedResource(
+						"a/vendor/nunaliit2/validate.js", 
+						this.getClass().getClassLoader(), 
+						"validate.js");
+				entries.add(f);
+			}
+			
 			// Atlas design template
 			{
 				File atlasDesignDir = PathComputer.computeAtlasDesignDir(installDir);
@@ -473,6 +483,15 @@ public class CommandUpdate implements Command {
 				printAtlasVendorFile(pw, atlasProperties);
 				
 				FSEntry f = FSEntryBuffer.getPositionedBuffer("a/vendor/nunaliit2/atlas.js", sw.toString());
+				entries.add(f);
+			}
+			
+			// Install atlas validation routines
+			{
+				FSEntry f = FSEntryResource.getPositionedResource(
+						"a/vendor/nunaliit2/validate.js", 
+						this.getClass().getClassLoader(), 
+						"validate.js");
 				entries.add(f);
 			}
 			
