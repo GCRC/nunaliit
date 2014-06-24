@@ -323,15 +323,6 @@ public class CommandUpdate implements Command {
 				entries.add(f);
 			}
 			
-			// Install atlas validation routines
-			{
-				FSEntry f = FSEntryResource.getPositionedResource(
-						"a/vendor/nunaliit2/validate.js", 
-						this.getClass().getClassLoader(), 
-						"validate.js");
-				entries.add(f);
-			}
-			
 			// Atlas design template
 			{
 				File atlasDesignDir = PathComputer.computeAtlasDesignDir(installDir);
@@ -499,13 +490,16 @@ public class CommandUpdate implements Command {
 				entries.add(f);
 			}
 			
-			// Install atlas validation routines
+			// Install atlas validation routines from atlas design document
 			{
-				FSEntry f = FSEntryResource.getPositionedResource(
-						"a/vendor/nunaliit2/validate.js", 
-						this.getClass().getClassLoader(), 
-						"validate.js");
-				entries.add(f);
+				File atlasDesignDir = PathComputer.computeAtlasDesignDir(installDir);
+				if( null == atlasDesignDir ) {
+					throw new Exception("Can not find _design/atlas template");
+				} else {
+					File validateFile = new File(atlasDesignDir,"vendor/nunaliit2/validate.js");
+					FSEntry f = FSEntryFile.getPositionedFile("a/vendor/nunaliit2/validate.js", validateFile);
+					entries.add(f);
+				}
 			}
 			
 			// Nunaliit2 vendor libraries

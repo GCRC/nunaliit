@@ -20,9 +20,26 @@
 
 		<script type="text/javascript">
 			// <!--
-			var n2AtlasObj = {
+			var regularAtlas = {
 				name: 'atlas'
 				,restricted: false
+				,isDocumentDb: true
+			};
+			var restrictedAtlas = {
+				name: 'atlas'
+				,restricted: true
+				,isDocumentDb: true
+			};
+			
+			var n2AtlasObj = {};
+			
+			function setAtlas(atlasObj){
+				for(var key in n2AtlasObj){
+					delete n2AtlasObj[key];
+				};
+				for(var key in atlasObj){
+					n2AtlasObj[key] = atlasObj[key];
+				};
 			};
 			
 			window.require = function(n){
@@ -34,7 +51,11 @@
 						extractGeometries: function(){}
 						,isValidGeom: function(){ return true; }
 						,isArray: function(a){ return a && 'number' === typeof(a.length); }
+						,validateDocumentStructure: function(){}
 					};
+					
+				} else if( n.indexOf('validate') >= 0 ) {
+					return n2validate;
 					
 				} else {
 					return {};
@@ -45,7 +66,8 @@
 		
 		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
 		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/jquery-ui.min.js"></script>
-		<script type="text/javascript" src="../../../main/webapp/WEB-INF/atlas_couchapp/app/validate_doc_update.js"></script>
+		<script type="text/javascript" src="../../../main/atlas_couchapp/vendor/nunaliit2/validate.js"></script>
+		<script type="text/javascript" src="../../../main/atlas_couchapp/validate_doc_update.js"></script>
 
 		<script type="text/javascript">
 			// <!--
@@ -136,6 +158,7 @@
 			
 			// *********
 			defineTest('_admin can change a document',function(){
+				setAtlas(regularAtlas);
 				var ctxt = getContext({
 					name: 'john'
 					,roles: ['_admin']
@@ -154,6 +177,7 @@
 			
 			// *********
 			defineTest('atlas administrator can change a document',function(){
+				setAtlas(regularAtlas);
 				var ctxt = getContext({
 					name: 'john'
 					,roles: ['atlas_administrator']
@@ -172,6 +196,7 @@
 			
 			// *********
 			defineTest('atlas replicator can change a document',function(){
+				setAtlas(regularAtlas);
 				var ctxt = getContext({
 					name: 'john'
 					,roles: ['atlas_replicator']
@@ -190,9 +215,10 @@
 			
 			// *********
 			defineTest('administrators from a different atlas can not change a document',function(){
+				setAtlas(regularAtlas);
 				var ctxt = getContext({
 					name: 'john'
-					,roles: ['other_administrator']
+					,roles: ['other_administrator','nunaliit_agreement_atlas']
 				});
 
 				var prev = {
@@ -213,9 +239,10 @@
 			
 			// *********
 			defineTest('atlas vetter can not change a document',function(){
+				setAtlas(regularAtlas);
 				var ctxt = getContext({
 					name: 'john'
-					,roles: ['atlas_vetter']
+					,roles: ['atlas_vetter','nunaliit_agreement_atlas']
 				});
 
 				var prev = {
@@ -236,10 +263,10 @@
 
 			// *********
 			defineTest('in non-restricted mode, a regular user can create a document',function(){
-				n2AtlasObj.restricted = false;
+				setAtlas(regularAtlas);
 				var ctxt = getContext({
 					name: 'john'
-					,roles: []
+					,roles: ['nunaliit_agreement_atlas']
 				});
 
 				var prev = null;
@@ -249,10 +276,14 @@
 					,nunaliit_created:{
 						nunaliit_type: 'actionstamp'
 						,name: ctxt.name
+						,time: 12345
+						,action: 'created'
 					}
 					,nunaliit_last_updated:{
 						nunaliit_type: 'actionstamp'
 						,name: ctxt.name
+						,time: 12345
+						,action: 'updated'
 					}
 				};
 				
@@ -261,10 +292,10 @@
 
 			// *********
 			defineTest('in restricted mode, an atlas user can create a document',function(){
-				n2AtlasObj.restricted = true;
+				setAtlas(restrictedAtlas);
 				var ctxt = getContext({
 					name: 'john'
-					,roles: ['atlas_user']
+					,roles: ['atlas_user','nunaliit_agreement_atlas']
 				});
 
 				var prev = null;
@@ -274,10 +305,14 @@
 					,nunaliit_created:{
 						nunaliit_type: 'actionstamp'
 						,name: ctxt.name
+						,time: 12345
+						,action: 'created'
 					}
 					,nunaliit_last_updated:{
 						nunaliit_type: 'actionstamp'
 						,name: ctxt.name
+						,time: 12345
+						,action: 'updated'
 					}
 				};
 				
@@ -285,11 +320,11 @@
 			});
 
 			// *********
-			defineTest('in restricted mode, an regular user can not create a document',function(){
-				n2AtlasObj.restricted = true;
+			defineTest('in restricted mode, a regular user can not create a document',function(){
+				setAtlas(restrictedAtlas);
 				var ctxt = getContext({
 					name: 'john'
-					,roles: []
+					,roles: ['nunaliit_agreement_atlas']
 				});
 
 				var prev = null;
@@ -299,10 +334,14 @@
 					,nunaliit_created:{
 						nunaliit_type: 'actionstamp'
 						,name: ctxt.name
+						,time: 12345
+						,action: 'created'
 					}
 					,nunaliit_last_updated:{
 						nunaliit_type: 'actionstamp'
 						,name: ctxt.name
+						,time: 12345
+						,action: 'updated'
 					}
 				};
 				

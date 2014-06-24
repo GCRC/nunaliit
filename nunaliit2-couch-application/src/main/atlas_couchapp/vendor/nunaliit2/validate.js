@@ -1,3 +1,4 @@
+// Test
 var n2validate = {
 	reAtlasAdmin: new RegExp("(.*)_administrator"),
 	reAtlasVetter: new RegExp("(.*)_vetter"),
@@ -41,6 +42,11 @@ var n2validate = {
 		
 		} else if( n2atlas.restricted 
 		 && null == userInfo.atlas[n2atlas.name] ) {
+			throw( {forbidden: 'Database submissions are restricted to users associated with database'} );
+			
+		} else if( n2atlas.restricted 
+		 && userInfo.atlas[n2atlas.name]
+		 && !userInfo.atlas[n2atlas.name].user ) {
 			throw( {forbidden: 'Database submissions are restricted to users associated with database'} );
 		
 		} else if( !userInfo.atlas[n2atlas.name]
@@ -401,7 +407,6 @@ var n2validate = {
 			,admin: false
 			,vetter: false
 			,layers: []
-			,atlasAdmin: false
 			,atlas:{}
 		};
 		
@@ -428,7 +433,6 @@ var n2validate = {
 				
 				if( ri.admin ){
 					atlas.admin = true;
-					info.atlasAdmin = true;
 				};
 				if( ri.vetter ){
 					atlas.vetter = true;
