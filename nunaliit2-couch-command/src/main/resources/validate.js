@@ -14,9 +14,9 @@ var n2validate = {
 		var n2utils = x.n2utils;
 		var n2atlas = x.n2atlas;
 		
-//log('validate doc update '+oldDoc+'->'+newDoc+' userCtxt: '+JSON.stringify(userCtxt));
-//log('validate doc update '+JSON.stringify(oldDoc)+'->'+JSON.stringify(newDoc));	
-//log('Atlas name: '+n2atlas.name);
+		//log('validate doc update '+oldDoc+'->'+newDoc+' userCtxt: '+JSON.stringify(userCtxt));
+		//log('validate doc update '+JSON.stringify(oldDoc)+'->'+JSON.stringify(newDoc));	
+		//log('Atlas name: '+n2atlas.name);
 
 		// Must have a user context
 		if( !userCtxt ) {
@@ -24,8 +24,8 @@ var n2validate = {
 		};
 
 		var userInfo = n2validate.getRolesInfo(userCtxt);
-//log('userCtxt.roles: '+userCtxt.roles);	
-//log('userInfo: '+JSON.stringify(userInfo));	
+		//log('userCtxt.roles: '+userCtxt.roles);	
+		//log('userInfo: '+JSON.stringify(userInfo));	
 
 		// Validate new documents and updates submitted to database...
 		if( userInfo.admin ) {
@@ -47,13 +47,13 @@ var n2validate = {
 		 || !userInfo.atlas[n2atlas.name].agreement ) {
 			throw( {forbidden: 'Database submissions are restricted to users that have accepted the user agreement'} );
 		
-		} else if( n2atlas.submissionDbEnabled 
+		} else if( n2atlas.submissionDbEnabled
+		 && n2atlas.isDocumentDb
 		 && !newDoc.nunaliit_upload_request ) {
 			// When the submisison database is enabled, only upload requests are allowed
 			throw( {forbidden: 'Database submissions must be performed via the submission database'} );
 		
 		} else {
-			var userName = userCtxt.name;
 	
 			// Validate the document structure
 			n2utils.validateDocumentStructure(newDoc, function(msg){
@@ -86,7 +86,7 @@ var n2validate = {
 				// performs a vetting action
 				if( typeof(oldDoc.nunaliit_created) === 'object' 
 				 && typeof(oldDoc.nunaliit_created.name) === 'string' 
-				 && oldDoc.nunaliit_created.name === userName ) {
+				 && oldDoc.nunaliit_created.name === userInfo.name ) {
 					// OK to update
 				} else if( vettingAction ) {
 					// OK to update
@@ -521,9 +521,83 @@ var n2validate = {
 		if( layerId === n2validate.publicLayerName ) return true;
 		if( layerId.substr(0,n2validate.publicLayerPrefix.length) === n2validate.publicLayerPrefix ) return true;
 		return false;
+	},
+	
+	validate_submission_doc: function(newDoc, oldDoc, userCtxt, x){
+		// Check that this is a submission document
+		if( typeof(newDoc.nunaliit_submission) !== 'object' ){
+			throw( {forbidden: 'Expected a submission document'} );
+		};
+		
+		// On a new submission, verify changes proposed
+		if( !oldDoc ){
+			// Create a user context
+			var submissionUserCtxt = {};
+			if( typeof(newDoc.nunaliit_created) !== 'object' ){
+				throw( {forbidden: 'Submisison must have a "nunaliit_created" field'} );
+			};
+			if( typeof(newDoc.nunaliit_created.name) !== 'string' ){
+				throw( {forbidden: 'Submisison must have a "nunaliit_created.name" field'} );
+			};
+			submissionUserCtxt.name = newDoc.nunaliit_created.name;
+			if( typeof(newDoc.nunaliit_submission.submitter_roles) !== 'object' ){
+				throw( {forbidden: 'Expected roles for submitter'} );
+			};
+			if( typeof(newDoc.nunaliit_submission.submitter_roles.length) !== 'number' ){
+				throw( {forbidden: 'Expected array of roles for submitter'} );
+			};
+			for(var i=0,e=newDoc.nunaliit_submission.submitter_roles.length; i<e; ++i){
+				var role = newDoc.nunaliit_submission.submitter_roles[i];
+				if( typeof(role) !== 'string' ){
+					throw( {forbidden: 'Expected array of strings for submitter roles'} );
+				};
+			};
+			submissionUserCtxt.roles = newDoc.nunaliit_submission.submitter_roles;
+
+			// Re-create old document
+			var submissionOldDoc = null;
+			if( typeof(newDoc.nunaliit_submission.original_reserved) === 'object'
+			 && typeof(newDoc.nunaliit_submission.original_doc) === 'object' ){
+				submissionOldDoc = {};
+
+				for(var key in newDoc.nunaliit_submission.original_doc){
+					submissionOldDoc[key] = newDoc.nunaliit_submission.original_doc[key];
+				};
+
+				for(var key in newDoc.nunaliit_submission.original_reserved){
+					submissionOldDoc['_'+key] = newDoc.nunaliit_submission.original_reserved[key];
+				};
+			};
+
+			// Re-create new document
+			var submissionNewDoc = null;
+			if( newDoc.nunaliit_submission.deletion ) {
+				submissionNewDoc = {
+					_deleted: true
+					,_id: newDoc.nunaliit_submission.original_reserved.id
+					,_rev: newDoc.nunaliit_submission.original_reserved.rev
+				};
+				
+			} else if( typeof(newDoc.nunaliit_submission.submitted_reserved) === 'object'
+			 && typeof(newDoc.nunaliit_submission.submitted_doc) === 'object' ){
+				submissionNewDoc = {};
+
+				for(var key in newDoc.nunaliit_submission.submitted_doc){
+					submissionNewDoc[key] = newDoc.nunaliit_submission.submitted_doc[key];
+				};
+
+				for(var key in newDoc.nunaliit_submission.submitted_reserved){
+					submissionNewDoc['_'+key] = newDoc.nunaliit_submission.submitted_reserved[key];
+				};
+			};
+			
+			// Perform regular validation on submission
+			n2validate.validate_doc_update(submissionNewDoc, submissionOldDoc, submissionUserCtxt, x);
+		};
 	}
 };
 
 if( typeof(exports) === 'object' ) {
 	exports.validate_doc_update = n2validate.validate_doc_update;
+	exports.validate_submission_doc = n2validate.validate_submission_doc;
 };

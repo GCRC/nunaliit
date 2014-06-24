@@ -28,6 +28,19 @@ import ca.carleton.gcrc.couch.fsentry.FSEntryMerged;
 import ca.carleton.gcrc.couch.fsentry.FSEntryResource;
 
 public class CommandUpdate implements Command {
+	
+	private enum DatabaseType {
+		DOCUMENT_DATABASE("isDocumentDb"),
+		SUBMISSION_DATABASE("isSubmissionDb");
+		
+		private String propName;
+		DatabaseType(String propName){
+			this.propName = propName;
+		}
+		public String getPropName(){
+			return propName;
+		}
+	};
 
 	static public DocumentUpdateProcess createDocumentUpdateProcess(
 		GlobalSettings gs
@@ -220,7 +233,7 @@ public class CommandUpdate implements Command {
 				StringWriter sw = new StringWriter();
 				PrintWriter pw = new PrintWriter(sw);
 				
-				printAtlasVendorFile(pw, atlasProperties);
+				printAtlasVendorFile(pw, atlasProperties, DatabaseType.DOCUMENT_DATABASE);
 				
 				FSEntry f = FSEntryBuffer.getPositionedBuffer("a/vendor/nunaliit2/atlas.js", sw.toString());
 				mergedEntries.add(f);
@@ -302,7 +315,7 @@ public class CommandUpdate implements Command {
 				StringWriter sw = new StringWriter();
 				PrintWriter pw = new PrintWriter(sw);
 				
-				printAtlasVendorFile(pw, atlasProperties);
+				printAtlasVendorFile(pw, atlasProperties, DatabaseType.DOCUMENT_DATABASE);
 				
 				FSEntry f = FSEntryBuffer.getPositionedBuffer("a/vendor/nunaliit2/atlas.js", sw.toString());
 				entries.add(f);
@@ -410,7 +423,7 @@ public class CommandUpdate implements Command {
 				StringWriter sw = new StringWriter();
 				PrintWriter pw = new PrintWriter(sw);
 				
-				printAtlasVendorFile(pw, atlasProperties);
+				printAtlasVendorFile(pw, atlasProperties, DatabaseType.DOCUMENT_DATABASE);
 				
 				FSEntry f = FSEntryBuffer.getPositionedBuffer("a/vendor/nunaliit2/atlas.js", sw.toString());
 				entries.add(f);
@@ -480,7 +493,7 @@ public class CommandUpdate implements Command {
 				StringWriter sw = new StringWriter();
 				PrintWriter pw = new PrintWriter(sw);
 				
-				printAtlasVendorFile(pw, atlasProperties);
+				printAtlasVendorFile(pw, atlasProperties, DatabaseType.SUBMISSION_DATABASE);
 				
 				FSEntry f = FSEntryBuffer.getPositionedBuffer("a/vendor/nunaliit2/atlas.js", sw.toString());
 				entries.add(f);
@@ -569,18 +582,20 @@ public class CommandUpdate implements Command {
 		}
 	}
 	
-	private void printAtlasVendorFile(PrintWriter pw, AtlasProperties atlasProperties){
+	private void printAtlasVendorFile(PrintWriter pw, AtlasProperties atlasProperties, DatabaseType type){
 		pw.println("var n2atlas = {");
 		pw.println("\tname: \""+atlasProperties.getAtlasName()+"\"");
 		pw.println("\t,restricted: "+atlasProperties.isRestricted());
 		pw.println("\t,\"submissionDbEnabled\":"+atlasProperties.isCouchDbSubmissionDbEnabled());
 		pw.println("\t,\"submissionDbName\":\""+atlasProperties.getCouchDbSubmissionDbName()+"\"");
+		pw.println("\t,\""+type.getPropName()+"\":true");
 		pw.println("};");
 		pw.println("if( typeof(exports) === 'object' ) {");
 		pw.println("\texports.name = n2atlas.name;");
 		pw.println("\texports.restricted = n2atlas.restricted;");
 		pw.println("\texports.submissionDbEnabled = n2atlas.submissionDbEnabled;");
 		pw.println("\texports.submissionDbName = n2atlas.submissionDbName;");
+		pw.println("\texports."+type.getPropName()+" = true;");
 		pw.println("};");
 		
 		pw.flush();
