@@ -942,6 +942,51 @@
 	SearchFilter.availableCreateFilters.push(new CreateFilterByDocumentReference());
 
 	// **********************************************************************
+	var CreateFilterSkeleton = $n2.Class(SearchFilter, {
+
+		initialize: function(){
+			SearchFilter.prototype.initialize.apply(this);
+			this.name = _loc('Select skeleton documents');
+		}
+	
+		,printOptions: function($parent){
+		}
+
+		,createList: function(opts_){
+			var opts = $n2.extend({
+				name: null
+				,options: null
+				,progressTitle: _loc('List Creation Progress')
+				,onSuccess: function(list){}
+				,onError: reportError
+			},opts_);
+			
+			atlasDesign.queryView({
+				viewName: 'skeleton-docs'
+				,onSuccess: function(rows){
+					var docIds = [];
+					for(var i=0,e=rows.length; i<e; ++i){
+						var row = rows[i];
+						docIds.push(row.id);
+					};
+					var locStr = _loc('Skeleton documents');
+					var l = new DocumentList({
+						docIds: docIds
+						,name: locStr
+					});
+					opts.onSuccess(l);
+				}
+				,onError: function(err){
+					alert(_loc('Problem obtaining skeleton documents')+': '+err);
+					opts.onError(err);
+				}
+			});
+		}
+	});
+
+	SearchFilter.availableCreateFilters.push(new CreateFilterSkeleton());
+
+	// **********************************************************************
 	var CreateFilterMediaSubmitted = $n2.Class(SearchFilter, {
 
 		initialize: function(){

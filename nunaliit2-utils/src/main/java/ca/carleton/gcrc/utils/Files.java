@@ -77,6 +77,14 @@ public class Files {
 		}
 	}
 	
+	/**
+	 * Given a directory, returns a set of strings which are the paths to all elements
+	 * within the directory. This process recurses through all sub-directories.
+	 * @param dir The directory to be traversed
+	 * @param includeDirectories If set, the name of the paths to directories are included
+	 * in the result.
+	 * @return A set of paths to all elements in the given directory
+	 */
 	static public Set<String> getDescendantPathNames(File dir, boolean includeDirectories) {
 		Set<String> paths = new HashSet<String>();
 		if( dir.exists() && dir.isDirectory() ) {
@@ -132,6 +140,11 @@ public class Files {
 		}
 	}
 
+	/**
+	 * Given a directory, removes all the content found in the directory.
+	 * @param dir The directory to be emptied
+	 * @throws Exception
+	 */
 	static public void emptyDirectory(File dir) throws Exception {
 		String[] fileNames = dir.list();
 		if( null != fileNames ) {
