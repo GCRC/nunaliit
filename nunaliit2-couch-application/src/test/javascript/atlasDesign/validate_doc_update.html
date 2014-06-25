@@ -47,24 +47,18 @@
 				};
 			};
 			
-			window.require = function(n){
-				if( n.indexOf('atlas') >= 0 ){
-					return n2AtlasObj;
-					
-				} else if( n.indexOf('n2.couchUtils') >= 0 ) {
-					return {
-						extractGeometries: function(){}
-						,isValidGeom: function(){ return true; }
-						,isArray: function(a){ return a && 'number' === typeof(a.length); }
-						,validateDocumentStructure: function(){}
-					};
-					
-				} else if( n.indexOf('validate') >= 0 ) {
-					return n2validate;
-					
-				} else {
-					return {};
-				};
+			var fakeN2Utils = {
+				extractGeometries: function(){}
+				,isValidGeom: function(){ return true; }
+				,isArray: function(a){ return a && 'number' === typeof(a.length); }
+				,validateDocumentStructure: function(){}
+			};
+			
+			window.validate_doc_update = function(newDoc, oldDoc, userCtxt){
+				n2validate.validate_doc_update(newDoc, oldDoc, userCtxt, {
+					n2utils: fakeN2Utils
+					,n2atlas: n2AtlasObj
+				});
 			};
 			// -->
 		</script>
@@ -72,7 +66,6 @@
 		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
 		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.6/jquery-ui.min.js"></script>
 		<script type="text/javascript" src="../../../main/atlas_couchapp/vendor/nunaliit2/validate.js"></script>
-		<script type="text/javascript" src="../../../main/atlas_couchapp/validate_doc_update.js"></script>
 
 		<script type="text/javascript">
 			// <!--
@@ -490,11 +483,7 @@
 			};
 			
 			jQuery().ready(function() {
-				if( typeof(validate_doc_update) === 'function' ) {
-					main_init();
-				} else {
-					alert('In userDesignDoc document, you must rename the validate doc update function to "validate_doc_update" to perform this test.');
-				};
+				main_init();
 			});
 			// -->
 		</script>
