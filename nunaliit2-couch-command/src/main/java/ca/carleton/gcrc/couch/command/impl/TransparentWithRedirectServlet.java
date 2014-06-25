@@ -8,8 +8,9 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.eclipse.jetty.servlets.ProxyServlet;
+import org.eclipse.jetty.proxy.ProxyServlet;
 
+@SuppressWarnings("serial")
 public class TransparentWithRedirectServlet extends ProxyServlet.Transparent {
 
 	@Override

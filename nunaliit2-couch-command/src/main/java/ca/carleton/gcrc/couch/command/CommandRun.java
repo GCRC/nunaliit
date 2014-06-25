@@ -14,7 +14,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.servlets.ProxyServlet;
+import org.eclipse.jetty.proxy.ProxyServlet;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import ca.carleton.gcrc.couch.command.impl.CommandSupport;
@@ -137,16 +137,16 @@ public class CommandRun implements Command {
         // Proxy to server
         {
         	ServletHolder servletHolder = new ServletHolder(new ProxyServlet.Transparent());
-        	servletHolder.setInitParameter("ProxyTo", serverUrl.toExternalForm());
-        	servletHolder.setInitParameter("Prefix", "/server");
+        	servletHolder.setInitParameter("proxyTo", serverUrl.toExternalForm());
+        	servletHolder.setInitParameter("prefix", "/server");
         	context.addServlet(servletHolder,"/server/*");
         }
 
         // Proxy to main database
         {
         	ServletHolder servletHolder = new ServletHolder(new ProxyServlet.Transparent());
-        	servletHolder.setInitParameter("ProxyTo", dbUrl.toExternalForm());
-        	servletHolder.setInitParameter("Prefix", "/db");
+        	servletHolder.setInitParameter("proxyTo", dbUrl.toExternalForm());
+        	servletHolder.setInitParameter("prefix", "/db");
         	context.addServlet(servletHolder,"/db/*");
         }
 
@@ -156,8 +156,8 @@ public class CommandRun implements Command {
 			URL submissionDbUrl = new URL(serverUrl,submissionDbName);
         	
         	ServletHolder servletHolder = new ServletHolder(new ProxyServlet.Transparent());
-        	servletHolder.setInitParameter("ProxyTo", submissionDbUrl.toExternalForm());
-        	servletHolder.setInitParameter("Prefix", "/submitDb");
+        	servletHolder.setInitParameter("proxyTo", submissionDbUrl.toExternalForm());
+        	servletHolder.setInitParameter("prefix", "/submitDb");
         	context.addServlet(servletHolder,"/submitDb/*");
         }
 
@@ -218,8 +218,8 @@ public class CommandRun implements Command {
         // Proxy to site
         {
         	ServletHolder servletHolder = new ServletHolder(new TransparentWithRedirectServlet());
-        	servletHolder.setInitParameter("ProxyTo", siteRedirect.toExternalForm());
-        	servletHolder.setInitParameter("Prefix", "/");
+        	servletHolder.setInitParameter("proxyTo", siteRedirect.toExternalForm());
+        	servletHolder.setInitParameter("prefix", "/");
         	context.addServlet(servletHolder,"/*");
         }
 

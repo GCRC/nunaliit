@@ -80,21 +80,28 @@
 	<dependency>
 		<groupId>org.eclipse.jetty</groupId>
 		<artifactId>jetty-server</artifactId>
-		<version>8.1.13.v20130916</version>
+		<version>${jetty.version}</version>
   		<type>jar</type>
   		<scope>compile</scope>
 	</dependency>
 	<dependency>
 		<groupId>org.eclipse.jetty</groupId>
 		<artifactId>jetty-servlet</artifactId>
-		<version>8.1.13.v20130916</version>
+		<version>${jetty.version}</version>
    		<type>jar</type>
    		<scope>compile</scope>
 	</dependency>
 	<dependency>
 		<groupId>org.eclipse.jetty</groupId>
 		<artifactId>jetty-servlets</artifactId>
-		<version>8.1.13.v20130916</version>
+		<version>${jetty.version}</version>
+   		<type>jar</type>
+   		<scope>compile</scope>
+	</dependency>
+	<dependency>
+		<groupId>org.eclipse.jetty</groupId>
+		<artifactId>jetty-proxy</artifactId>
+		<version>${jetty.version}</version>
    		<type>jar</type>
    		<scope>compile</scope>
 	</dependency>
