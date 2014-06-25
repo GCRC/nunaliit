@@ -30,6 +30,11 @@
 				,restricted: true
 				,isDocumentDb: true
 			};
+			var submissionDb = {
+				name: 'atlas'
+				,restricted: false
+				,isSubmissionDb: true
+			};
 			
 			var n2AtlasObj = {};
 			
@@ -351,6 +356,89 @@
 				} catch(e) {
 					// OK
 				};
+			});
+
+			// *********
+			defineTest('vetter can change submission state',function(){
+				setAtlas(submissionDb);
+				var ctxt = getContext({
+					name: 'john'
+					,roles: ['nunaliit_agreement_atlas','atlas_vetter']
+				});
+
+				var prev = {
+					_id: 'doc-1'
+					,_rev: '1-abcde'
+					,nunaliit_created:{
+						nunaliit_type: 'actionstamp'
+						,name: 'someoneelse'
+						,time: 12345
+						,action: 'created'
+					}
+					,nunaliit_last_updated:{
+						nunaliit_type: 'actionstamp'
+						,name: 'someoneelse'
+						,time: 12345
+						,action: 'updated'
+					}
+					,nunaliit_submission:{
+						state: 'submitted'
+						,submitter_name: 'someoneelse'
+						,submitter_roles: ['nunaliit_agreement_atlas']
+						,original_reserved: {
+							id: 'doc-2'
+							,rev: '1-aaaaa'
+						}
+						,original_doc: {
+							context: 'text'
+						}
+						,submitted_reserved: {
+							id: 'doc-2'
+							,rev: '1-aaaaa'
+						}
+						,submitted_doc: {
+							context: 'text'
+						}
+					}
+				};
+				
+				var current = {
+					_id: 'doc-1'
+					,_rev: '1-abcde'
+					,nunaliit_created:{
+						nunaliit_type: 'actionstamp'
+						,name: 'someoneelse'
+						,time: 12345
+						,action: 'created'
+					}
+					,nunaliit_last_updated:{
+						nunaliit_type: 'actionstamp'
+						,name: ctxt.name
+						,time: 23456
+						,action: 'updated'
+					}
+					,nunaliit_submission:{
+						state: 'approved'
+						,submitter_name: 'someoneelse'
+						,submitter_roles: ['nunaliit_agreement_atlas']
+						,original_reserved: {
+							id: 'doc-2'
+							,rev: '1-aaaaa'
+						}
+						,original_doc: {
+							context: 'text'
+						}
+						,submitted_reserved: {
+							id: 'doc-2'
+							,rev: '1-aaaaa'
+						}
+						,submitted_doc: {
+							context: 'text'
+						}
+					}
+				};
+				
+				validate_doc_update(current, prev, ctxt);
 			});
 
 			// *** MAIN ***

@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
-import ca.carleton.gcrc.couch.client.CouchDocumentOptions;
 import ca.carleton.gcrc.couch.client.CouchQuery;
 import ca.carleton.gcrc.couch.client.CouchQueryResults;
 import ca.carleton.gcrc.couch.client.CouchUserDb;
@@ -151,21 +150,29 @@ public class SubmissionRobotThread extends Thread {
 		CouchDb submissionDb = submissionDbDesignDocument.getDatabase();
 		JSONObject submissionDoc = submissionDb.getDocument(submissionDocId);
 		
-		// Get document id
-		String docId = submissionDoc
-			.getJSONObject("nunaliit_submission")
-			.getJSONObject("original_reserved")
-			.getString("id");
-		String revision = submissionDoc
-			.getJSONObject("nunaliit_submission")
-			.getJSONObject("original_reserved")
-			.optString("rev",null);
+		JSONObject submissionInfo = submissionDoc.getJSONObject("nunaliit_submission");
+		JSONObject originalReserved = submissionInfo.optJSONObject("original_reserved");
+		JSONObject submittedReserved = submissionInfo.optJSONObject("submitted_reserved");
+
+		// Get document id and revision
+		String docId = null;
+		String revision = null;
+		if( null != originalReserved ){
+			docId = originalReserved.optString("id");
+			revision = originalReserved.optString("rev");
+		}
+		if( null == docId && null != submittedReserved){
+			docId = submittedReserved.optString("id");
+		}
 		
+		// At this point, we better have a docId
+		if( null == docId ){
+			throw new Exception("Can not find document identifier for original document");
+		}
+
 		// Check if denial email must be sent
 		boolean sendDenialEmail = false;
-		JSONObject denialEmail = submissionDoc
-			.getJSONObject("nunaliit_submission")
-			.optJSONObject("denial_email");
+		JSONObject denialEmail = submissionInfo.optJSONObject("denial_email");
 		if( null != denialEmail ){
 			boolean requested = denialEmail.optBoolean("requested",false);
 			boolean sent = denialEmail.optBoolean("sent",false);
@@ -177,34 +184,32 @@ public class SubmissionRobotThread extends Thread {
 		
 		// Get document in document database
 		CouchDb documentDb = documentDbDesignDocument.getDatabase();
-		JSONObject doc = null;
+		JSONObject currentDoc = null;
 		try {
-			doc = documentDb.getDocument(docId);
+			currentDoc = documentDb.getDocument(docId);
 		} catch(Exception e) {
 			// ignore
 		}
-		if( null == doc 
+		if( null == currentDoc 
 		 && null != revision ) {
-			// Referenced document no longer exists
+			// Referenced document no longer exists. It has been deleted.
 			submissionDoc.getJSONObject("nunaliit_submission")
 				.put("state", "complete");
 			submissionDb.updateDocument(submissionDoc);
 		} else {
-			String stateStr = null;
-			JSONObject jsonSubmission = submissionDoc.getJSONObject("nunaliit_submission");
-			stateStr = jsonSubmission.optString("state",null);
+			String stateStr = submissionInfo.optString("state",null);
 			
 			if( null == stateStr ) {
-				performSubmittedWork(submissionDoc, doc);
+				performSubmittedWork(submissionDoc, currentDoc);
 				
 			} else if( "submitted".equals(stateStr) ) {
-				performSubmittedWork(submissionDoc, doc);
+				performSubmittedWork(submissionDoc, currentDoc);
 
 			} else if( "approved".equals(stateStr) ) {
-				performApprovedWork(submissionDoc, doc);
+				performApprovedWork(submissionDoc, currentDoc);
 
 			} else if( sendDenialEmail ) {
-				performDenialEmail(submissionDoc, doc);
+				performDenialEmail(submissionDoc, currentDoc);
 
 			} else {
 				throw new Exception("Unexpected state for submission document: "+stateStr);
@@ -212,39 +217,36 @@ public class SubmissionRobotThread extends Thread {
 		}
 	}
 
-	public void performSubmittedWork(JSONObject submissionDoc, JSONObject targetDoc) throws Exception {
+	public void performSubmittedWork(JSONObject submissionDoc, JSONObject currentDoc) throws Exception {
 		// Find roles associated with the user who submitted the change
-		String userId = submissionDoc
-			.getJSONObject("nunaliit_last_updated")
-			.getString("name");
-		CouchUserDocContext userDoc = null;
-		try {
-			userDoc = userDb.getUserFromName(userId);
-		} catch(Exception e) {
-			// Ignore if we can not find user
+		List<String> roles = new Vector<String>();
+		JSONObject submissionInfo = submissionDoc.getJSONObject("nunaliit_submission");
+		JSONArray jsonRoles = submissionInfo.optJSONArray("submitter_roles");
+		if( null != jsonRoles ){
+			for(int i=0,e=jsonRoles.length(); i<e; ++i){
+				String role = jsonRoles.getString(i);
+				roles.add(role);
+			}
 		}
-
+		
 		// Check if submission should be automatically approved
 		boolean approved = false;
-		if( null != userDoc ) {
-			List<String> roles = userDoc.getRoles();
-			for(String role : roles){
-				if( "_admin".equals(role) ){
-					approved = true;
-					break;
-				} else if( "administrator".equals(role) ){
-					approved = true;
-					break;
-				} else if( "vetter".equals(role) ){
-					approved = true;
-					break;
-				} else if( adminRole.equals(role) ){
-					approved = true;
-					break;
-				} else if( vetterRole.equals(role) ){
-					approved = true;
-					break;
-				}
+		for(String role : roles){
+			if( "_admin".equals(role) ){
+				approved = true;
+				break;
+			} else if( "administrator".equals(role) ){
+				approved = true;
+				break;
+			} else if( "vetter".equals(role) ){
+				approved = true;
+				break;
+			} else if( adminRole.equals(role) ){
+				approved = true;
+				break;
+			} else if( vetterRole.equals(role) ){
+				approved = true;
+				break;
 			}
 		}
 
@@ -259,19 +261,14 @@ public class SubmissionRobotThread extends Thread {
 				.put("state", "waiting_for_approval");
 			submissionDb.updateDocument(submissionDoc);
 			
-logger.error("Sending waiting for approval notification for submission");			
 			this.mailNotifier.sendSubmissionWaitingForApprovalNotification(submissionDoc);
 		}
 	}
 
 	public void performApprovedWork(JSONObject submissionDoc, JSONObject currentDoc) throws Exception {
-		String docId = submissionDoc
-			.getJSONObject("nunaliit_submission")
-			.getJSONObject("original_reserved")
-			.getString("id");
-		boolean isDeletion = submissionDoc
-			.getJSONObject("nunaliit_submission")
-			.optBoolean("deletion",false);
+		JSONObject submissionInfo = submissionDoc.getJSONObject("nunaliit_submission");
+		boolean isDeletion = submissionInfo.optBoolean("deletion",false);
+		String docId = SubmissionUtils.getDocumentIdentifierFromSubmission(submissionDoc);
 		
 		if( null == currentDoc ) {
 			// New document. Create.
@@ -296,6 +293,7 @@ logger.error("Sending waiting for approval notification for submission");
 			submissionDb.updateDocument(submissionDoc);
 			
 		} else {
+			// Update
 			String currentVersion = currentDoc.getString("_rev");
 			
 			JSONObject approvedDoc = SubmissionUtils.getApprovedDocumentFromSubmission(submissionDoc);
@@ -313,10 +311,7 @@ logger.error("Sending waiting for approval notification for submission");
 				submissionDb.updateDocument(submissionDoc);
 			} else {
 				// Get document that the changes were made against
-				CouchDb couchDb = documentDbDesignDocument.getDatabase();
-				CouchDocumentOptions options = new CouchDocumentOptions();
-				options.setRevision(approvedVersion);
-				JSONObject rootDoc = couchDb.getDocument(docId, options);
+				JSONObject rootDoc = SubmissionUtils.getOriginalDocumentFromSubmission(submissionDoc);
 				
 				// Compute patch from submission
 				JSONObject submissionPatch = JSONPatcher.computePatch(rootDoc, approvedDoc);
@@ -332,10 +327,6 @@ logger.error("Sending waiting for approval notification for submission");
 				JSONPatcher.applyPatch(doc2, submissionPatch);
 				if( 0 == JSONSupport.compare(doc1, doc2) ) {
 					// No collision
-					logger.error("rootDoc: "+rootDoc);
-					logger.error("submissionPatch: "+submissionPatch);
-					logger.error("databasePatch: "+databasePatch);
-					logger.error("no collision: "+doc1);
 					CouchDb targetDb = documentDbDesignDocument.getDatabase();
 					targetDb.updateDocument(doc1);
 					
@@ -359,11 +350,7 @@ logger.error("Sending waiting for approval notification for submission");
 		JSONObject denial_email = submissionInfo.getJSONObject("denial_email");
 		
 		// Find user that submitted the update
-		String userId = null;
-		JSONObject created = submissionDoc.optJSONObject("nunaliit_created");
-		if( null != created ){
-			userId = created.optString("name", null);
-		}
+		String userId = submissionInfo.optString("submitter_name");
 
 		// Get user document
 		CouchUserDocContext userDocContext = null;

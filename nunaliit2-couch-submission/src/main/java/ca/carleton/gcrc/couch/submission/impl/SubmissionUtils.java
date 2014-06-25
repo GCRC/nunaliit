@@ -8,9 +8,31 @@ import ca.carleton.gcrc.json.JSONSupport;
 
 public class SubmissionUtils {
 
+	/**
+	 * Computes the target document identifier for this submission. Returns null
+	 * if it can not be found.
+	 * @param submissionDoc Submission document from the submission database
+	 * @return Document identifier for the submitted document
+	 */
+	static public String getDocumentIdentifierFromSubmission(JSONObject submissionDoc) throws Exception {
+		JSONObject submissionInfo = submissionDoc.getJSONObject("nunaliit_submission");
+		JSONObject originalReserved = submissionInfo.optJSONObject("original_reserved");
+		JSONObject submittedReserved = submissionInfo.optJSONObject("submitted_reserved");
+
+		// Get document id and revision
+		String docId = null;
+		if( null != originalReserved ){
+			docId = originalReserved.optString("id");
+		}
+		if( null == docId && null != submittedReserved){
+			docId = submittedReserved.optString("id");
+		}
+		
+		return docId;
+	}
 	
 	/**
-	 * Re-creates the original document submitted by the client from
+	 * Re-creates the document submitted by the client from
 	 * the submission document.
 	 * @param submissionDoc Submission document from the submission database
 	 * @return Document submitted by user for update
@@ -20,6 +42,21 @@ public class SubmissionUtils {
 		
 		JSONObject doc = submissionInfo.getJSONObject("submitted_doc");
 		JSONObject reserved = submissionInfo.optJSONObject("submitted_reserved");
+		
+		return recreateDocumentFromDocAndReserved(doc, reserved);
+	}
+	
+	/**
+	 * Re-creates the original document when the submission was proposed from
+	 * the submission document.
+	 * @param submissionDoc Submission document from the submission database
+	 * @return Original document when submission was provided
+	 */
+	static public JSONObject getOriginalDocumentFromSubmission(JSONObject submissionDoc) throws Exception {
+		JSONObject submissionInfo = submissionDoc.getJSONObject("nunaliit_submission");
+		
+		JSONObject doc = submissionInfo.getJSONObject("original_doc");
+		JSONObject reserved = submissionInfo.optJSONObject("original_reserved");
 		
 		return recreateDocumentFromDocAndReserved(doc, reserved);
 	}

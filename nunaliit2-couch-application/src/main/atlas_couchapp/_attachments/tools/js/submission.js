@@ -269,57 +269,81 @@
 				
 				var subDocId = subDoc._id;
 				
-				var original_reserved = null;
-				if( subDoc.nunaliit_submission ){
-					original_reserved = subDoc.nunaliit_submission.original_reserved;
+				// State
+				var state = 'submitted';
+				if( subDoc.nunaliit_submission 
+				 && subDoc.nunaliit_submission.state ){
+					state = subDoc.nunaliit_submission.state;
+				};
+				
+				// Document identifier and revision
+				var docId = null;
+				var revision = null;
+				if( subDoc.nunaliit_submission 
+				 && subDoc.nunaliit_submission.original_reserved ){
+					docId = subDoc.nunaliit_submission.original_reserved.id;
+					revision = subDoc.nunaliit_submission.original_reserved.rev;
+				};
+				if( null == docId 
+				 && subDoc.nunaliit_submission 
+				 && subDoc.nunaliit_submission.submitted_reserved ){
+					docId = subDoc.nunaliit_submission.submitted_reserved.id;
+				};
+				
+				// Is deletion?
+				var isDeletion = false;
+				if( subDoc.nunaliit_submission && subDoc.nunaliit_submission.deletion ){
+					isDeletion = true;
+				};
+				
+				// Submitter
+				var submitterName = null;
+				if( subDoc.nunaliit_submission && subDoc.nunaliit_submission.submitter_name ){
+					submitterName = subDoc.nunaliit_submission.submitter_name;
 				};
 	
 				// Information
 				var $info = $('<div class="submission_info">')
 					.appendTo($entry);
 				addKeyValue($info, _loc('Submission Id'), subDocId);
-				if( original_reserved ){
-					addKeyValue($info, _loc('Original Id'), original_reserved.id);
+				if( docId ){
+					addKeyValue($info, _loc('Original Id'), docId);
 					
 					var type = _loc('update');
-					if( subDoc.nunaliit_submission.deletion ) {
+					if( isDeletion ) {
 						type = _loc('deletion');
-					} else if( !original_reserved.rev ) {
+					} else if( !revision ) {
 						type = _loc('creation');
 					};
 					addKeyValue($info, _loc('Submission Type'), type);
 				};
 				
-				if( subDoc.nunaliit_submission 
-				 && subDoc.nunaliit_submission.state ){
-					addKeyValue($info, _loc('Submission State'), subDoc.nunaliit_submission.state);
+				if( state ){
+					addKeyValue($info, _loc('Submission State'), state);
 				};
 				
-				if( submittedDoc
-				 && submittedDoc.nunaliit_last_updated
-				 && submittedDoc.nunaliit_last_updated.name ){
-					var userId = submittedDoc.nunaliit_last_updated.name;
+				if( submitterName ){
 					var $div = $('<div class="key_value">')
 						.appendTo($info);
 					$('<span class="key">')
 						.text(_loc('Submitter')+': ')
 						.appendTo($div);
 					var $val = $('<span class="value">')
-						.text(userId)
+						.text(submitterName)
 						.appendTo($div);
 					if( _this.showService ){
-						_this.showService.printUserName($val, userId);
+						_this.showService.printUserName($val, submitterName);
 					};
 					
 					// Add mailto link
-					var cName = 'submission_mailto_' + $n2.utils.stringToHtmlId(userId);
+					var cName = 'submission_mailto_' + $n2.utils.stringToHtmlId(submitterName);
 					$('<div>')
 						.addClass(cName)
 						.appendTo($info);
 					if( _this.dispatchService ){
 						_this.dispatchService.send(DH,{
 							type: 'requestUserDocumentComplete'
-							,userId: userId
+							,userId: submitterName
 						});
 					};
 				};
@@ -571,18 +595,20 @@
 			};
 			
 			function subDocLoaded(subDoc){
-				var doc = {};
+				var doc = null;
 				if( subDoc.nunaliit_submission ){
-					if( subDoc.nunaliit_submission.submitted_reserved ){
-						for(var key in subDoc.nunaliit_submission.submitted_reserved){
-							var value = subDoc.nunaliit_submission.submitted_reserved[key];
-							doc['_'+key] = value;
-						};
-					};
 					if( subDoc.nunaliit_submission.submitted_doc ){
+						doc = {};
 						for(var key in subDoc.nunaliit_submission.submitted_doc){
 							var value = subDoc.nunaliit_submission.submitted_doc[key];
 							doc[key] = value;
+						};
+					};
+					if( subDoc.nunaliit_submission.submitted_reserved ){
+						doc = doc ? doc : {};
+						for(var key in subDoc.nunaliit_submission.submitted_reserved){
+							var value = subDoc.nunaliit_submission.submitted_reserved[key];
+							doc['_'+key] = value;
 						};
 					};
 				};
@@ -598,8 +624,6 @@
 				,onError: function(err){}
 			},opts_);
 			
-			var _this = this;
-			
 			if( opts.subDoc ) {
 				subDocLoaded(opts.subDoc);
 			} else {
@@ -611,26 +635,24 @@
 			};
 			
 			function subDocLoaded(subDoc){
-				if( subDoc.nunaliit_submission
-				 && subDoc.nunaliit_submission.original_reserved
-				 && subDoc.nunaliit_submission.original_reserved.id ){
-					if( subDoc.nunaliit_submission.original_reserved.rev ) {
-						var docId = subDoc.nunaliit_submission.original_reserved.id;
-						var rev = subDoc.nunaliit_submission.original_reserved.rev;
-						_this.atlasDb.getDocument({
-							docId: docId
-							,rev: rev
-							,onSuccess: function(doc){
-								opts.onSuccess(doc,subDoc);
-							}
-							,onError: opts.onError
-						});
-					} else {
-						opts.onSuccess(null,subDoc);
+				var doc = null;
+				if( subDoc.nunaliit_submission ){
+					if( subDoc.nunaliit_submission.original_doc ){
+						doc = {};
+						for(var key in subDoc.nunaliit_submission.original_doc){
+							var value = subDoc.nunaliit_submission.original_doc[key];
+							doc[key] = value;
+						};
 					};
-				} else {
-					opts.onError( _loc('Invalid submission document') );
+					if( subDoc.nunaliit_submission.original_reserved ){
+						doc = doc ? doc : {};
+						for(var key in subDoc.nunaliit_submission.original_reserved){
+							var value = subDoc.nunaliit_submission.original_reserved[key];
+							doc['_'+key] = value;
+						};
+					};
 				};
+				opts.onSuccess(doc,subDoc);
 			};
 		}
 
@@ -655,17 +677,19 @@
 			};
 			
 			function subDocLoaded(subDoc){
-				if( subDoc.nunaliit_submission
-				 && subDoc.nunaliit_submission.original_reserved
-				 && subDoc.nunaliit_submission.original_reserved.id ){
-					if( subDoc.nunaliit_submission.original_reserved.rev ) {
+				if( subDoc.nunaliit_submission ){
+					if( subDoc.nunaliit_submission.original_reserved
+					 && subDoc.nunaliit_submission.original_reserved.id 
+					 && subDoc.nunaliit_submission.original_reserved.rev ) {
 						var docId = subDoc.nunaliit_submission.original_reserved.id;
 						_this.atlasDb.getDocument({
 							docId: docId
 							,onSuccess: function(doc){
 								opts.onSuccess(doc,subDoc);
 							}
-							,onError: opts.onError
+							,onError: function(err){
+								opts.onSuccess(null,subDoc);
+							}
 						});
 					} else {
 						opts.onSuccess(null,subDoc);
@@ -708,7 +732,7 @@
 			});
 		}
 
-		,_viewSubmission: function(subDocId){
+		,_viewSubmitted: function(subDocId){
 			var _this = this;
 			
 			this._getSubmittedDocument({
@@ -819,19 +843,20 @@
 
 			function initiateMergingView($diag, diagId, originalDoc, submittedDoc, currentDoc, subDoc){
 				var submittedPatch = null;
-				if( originalDoc ) {
+				if( originalDoc && submittedDoc ) {
 					submittedPatch = patcher.computePatch(originalDoc, submittedDoc);
 				};
 				
 				var proposedDoc = submittedDoc;
 				if( submittedPatch && currentDoc ) {
-					var proposedDoc = $n2.extend(true,{},currentDoc);
+					proposedDoc = $n2.extend(true,{},currentDoc);
 					patcher.applyPatch(proposedDoc, submittedPatch);
 				};
 				
-				var $innerDiag = $('<div>')
+				$('<div>')
 					.addClass('submission_view_dialog_inner')
 					.appendTo($diag);
+				
 				displayDocuments(
 					diagId
 					,originalDoc
@@ -846,7 +871,7 @@
 					.empty();
 
 				var submittedPatch = null;
-				if( originalDoc ) {
+				if( originalDoc && submittedDoc ) {
 					submittedPatch = patcher.computePatch(originalDoc, submittedDoc);
 				};
 				
@@ -951,14 +976,16 @@
 							return false;
 						});
 				};
-				$('<button>')
-					.addClass('n2_button_submitted')
-					.text( _loc('View Submitted') )
-					.appendTo($buttons)
-					.click(function(){
-						_this._viewSubmission(subDocId);
-						return false;
-					});
+				if( submittedDoc ) {
+					$('<button>')
+						.addClass('n2_button_submitted')
+						.text( _loc('View Submitted') )
+						.appendTo($buttons)
+						.click(function(){
+							_this._viewSubmitted(subDocId);
+							return false;
+						});
+				};
 				if( ! subDoc.nunaliit_submission.deletion ) {
 					$('<button>')
 						.addClass('n2_button_manual')

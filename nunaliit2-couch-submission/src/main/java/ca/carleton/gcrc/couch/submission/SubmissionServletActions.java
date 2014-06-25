@@ -175,8 +175,9 @@ public class SubmissionServletActions {
 		submissionRequest.put("nunaliit_submission", submissionStructure);
 		submissionStructure.put("state", "submitted");
 		
-		// Submitter roles
+		// Submitter
 		{
+			submissionStructure.put("submitter_name", authContext.getName());
 			JSONArray roles = new JSONArray();
 			for(String role : authContext.getRoles()){
 				roles.put(role);
@@ -234,10 +235,6 @@ public class SubmissionServletActions {
 					}
 				}
 			}
-		} else {
-			JSONObject originalReserved = new JSONObject();
-			submissionStructure.put("original_reserved", originalReserved);
-			originalReserved.put("id", doc.getString("_id"));
 		}
 		
 		CouchNunaliitUtils.adjustDocumentForStorage(submissionRequest, authContext);

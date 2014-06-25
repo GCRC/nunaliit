@@ -24,7 +24,7 @@ var n2validate = {
 			throw( {forbidden: 'Database submissions required a user context'} );
 		};
 
-		var userInfo = n2validate.getRolesInfo(userCtxt);
+		var userInfo = n2validate.getUserInfo(userCtxt);
 		//log('userCtxt.roles: '+userCtxt.roles);	
 		//log('userInfo: '+JSON.stringify(userInfo));	
 
@@ -74,10 +74,19 @@ var n2validate = {
 			
 			// Validate changes in attachment status. Returns true if a vetting action
 			// was performed
-			var vettingAction = n2validate.verifyAttachmentStatus(newDoc, oldDoc, userInfo);
+			var vettingAction = false;
+			if( n2validate.verifyAttachmentStatus(newDoc, oldDoc, userInfo, n2atlas) ) {
+				vettingAction = true;
+			};
+			
+			// Validate changes in submission status. Returns true if a vetting action
+			// was performed
+			if( n2validate.verifySubmission(newDoc, oldDoc, userInfo, n2atlas, n2utils) ){
+				vettingAction = true;
+			};
 			
 			// Verify attachment submitters
-			n2validate.verifyAttachmentSubmitters();
+			n2validate.verifyAttachmentSubmitters(newDoc, oldDoc, userInfo);
 			
 			// Check if allowed to delete
 			n2validate.verifyDeletion(newDoc, oldDoc, userInfo);
@@ -218,7 +227,7 @@ var n2validate = {
 	 * This function verifies that the status of attachment are fixed unless
 	 * changed by a vetter
 	 */
-	verifyAttachmentStatus: function(newDoc, oldDoc, userInfo){
+	verifyAttachmentStatus: function(newDoc, oldDoc, userInfo, n2atlas){
 		// Evaluate vetting status
 		var approveAction = false;
 		var denyAction = false;
@@ -240,6 +249,9 @@ var n2validate = {
 				} else if( newStatus === 'denied' && newStatus !== oldStatus ) {
 					denyAction = true;
 					vettingAction = true;
+
+				} else if( newStatus === 'waiting for upload' && null === oldStatus ) {
+					// OK. creating a new attachment
 				
 				} else if( newStatus !== oldStatus ) {
 					throw( {forbidden: 'Not allowed to change status on attachments'} );
@@ -274,7 +286,7 @@ var n2validate = {
 	 * This function verifies that the name of submitters associated with
 	 * the attachment do not change. 
 	 */
-	verifyAttachmentSubmitters: function(newDoc, oldDoc, userCtxt){
+	verifyAttachmentSubmitters: function(newDoc, oldDoc, userInfo){
 		var oldSubmitters = {};
 		var newSubmitters = {};
 		
@@ -310,7 +322,7 @@ var n2validate = {
 			if( typeof(oldSubmitters[fileName]) === 'undefined' ) {
 				// Adding a new attachment. The submitter must be set to
 				// the current user context
-				if( newSubmitters[fileName] === userCtxt.name ) {
+				if( newSubmitters[fileName] === userInfo.name ) {
 					// OK
 				} else {
 					throw( {forbidden: 'Submitter property associated with an attachment must be set to current user'} );
@@ -323,6 +335,57 @@ var n2validate = {
 				throw( {forbidden: 'Submitter property can not be changed after an attachment is created.'} );
 			};
 		};
+	},
+	
+	/*
+	 * This function verifies that changes in submission document is valid 
+	 */
+	verifySubmission: function(newDoc, oldDoc, userInfo, n2atlas, n2utils){
+		var vettingAction = false;
+		
+		if( newDoc 
+		 && newDoc.nunaliit_submission ){
+			if( n2atlas.isSubmissionDb ){
+				n2validate.validate_submission_doc(newDoc, oldDoc, userInfo, {
+					n2utils: n2utils
+					,n2atlas: n2atlas
+				});
+			} else {
+				throw( {forbidden: 'Submission documents are only allowed in the submission database'} );
+			};
+		};
+		
+		if( oldDoc
+		 && newDoc
+		 && !newDoc._deleted ){
+			// This is an update
+			if( !oldDoc.nunaliit_submission 
+			 && newDoc.nunaliit_submission ){
+				throw( {forbidden: 'Can not insert a submission structure'} );
+			};
+			if( oldDoc.nunaliit_submission 
+			 && !newDoc.nunaliit_submission ){
+				throw( {forbidden: 'Can not remove a submission structure'} );
+			};
+			if( oldDoc.nunaliit_submission 
+			 && newDoc.nunaliit_submission ){
+				if( newDoc.nunaliit_submission.submitter_name !== oldDoc.nunaliit_submission.submitter_name ){
+					throw( {forbidden: 'Not allowed to change submitter on submission request'} );
+				};
+				
+				if( newDoc.nunaliit_submission.state !== oldDoc.nunaliit_submission.state ){
+					// State of submission has changed. This can only be performed by a vetter
+					if( userInfo.atlas[n2atlas.name] && userInfo.atlas[n2atlas.name].vetter ){
+						// OK
+						vettingAction = true;
+					} else {
+						throw( {forbidden: 'Not allowed to change submission state unless vetter'} );
+					};
+				};
+			};
+		};
+		
+		return vettingAction;
 	},
 	
 	/*
@@ -400,7 +463,7 @@ var n2validate = {
 	},
 	
 	// Take an array of roles and accumulate information about them
-	getRolesInfo: function(userCtxt){
+	getUserInfo: function(userCtxt){
 		var info = {
 			name: userCtxt.name
 			,roles:[]
@@ -408,6 +471,7 @@ var n2validate = {
 			,vetter: false
 			,layers: []
 			,atlas:{}
+			,n2Info: true
 		};
 		
 		for(var i=0,e=userCtxt.roles.length; i<e; ++i){
@@ -527,7 +591,7 @@ var n2validate = {
 		return false;
 	},
 	
-	validate_submission_doc: function(newDoc, oldDoc, userCtxt, x){
+	validate_submission_doc: function(newDoc, oldDoc, userInfo, x){
 		// Check that this is a submission document
 		if( typeof(newDoc.nunaliit_submission) !== 'object' ){
 			throw( {forbidden: 'Expected a submission document'} );
@@ -537,13 +601,10 @@ var n2validate = {
 		if( !oldDoc ){
 			// Create a user context
 			var submissionUserCtxt = {};
-			if( typeof(newDoc.nunaliit_created) !== 'object' ){
-				throw( {forbidden: 'Submisison must have a "nunaliit_created" field'} );
+			if( typeof(newDoc.nunaliit_submission.submitter_name) !== 'string' ){
+				throw( {forbidden: 'Submisison must have a "submitter_name" field'} );
 			};
-			if( typeof(newDoc.nunaliit_created.name) !== 'string' ){
-				throw( {forbidden: 'Submisison must have a "nunaliit_created.name" field'} );
-			};
-			submissionUserCtxt.name = newDoc.nunaliit_created.name;
+			submissionUserCtxt.name = newDoc.nunaliit_submission.submitter_name;
 			if( typeof(newDoc.nunaliit_submission.submitter_roles) !== 'object' ){
 				throw( {forbidden: 'Expected roles for submitter'} );
 			};

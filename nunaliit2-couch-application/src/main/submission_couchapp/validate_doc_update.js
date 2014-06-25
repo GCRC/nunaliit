@@ -8,11 +8,4 @@ function(newDoc, oldDoc, userCtxt) {
 		n2utils: n2utils
 		,n2atlas: n2atlas
 	});
-	
-	if( newDoc && newDoc.nunaliit_submission ){
-		n2validate.validate_submission_doc(newDoc, oldDoc, userCtxt, {
-			n2utils: n2utils
-			,n2atlas: n2atlas
-		});
-	};
 }

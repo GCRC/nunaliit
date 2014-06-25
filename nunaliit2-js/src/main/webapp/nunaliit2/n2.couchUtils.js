@@ -16,6 +16,16 @@ var n2utils = {
 		return true;
 	}
 	
+	,isArrayOfStrings: function(o) {
+		if( !n2utils.isArray(o) ) return false;
+		
+		for(var i=0,e=o.length; i<e; ++i){
+			if( typeof o[i] !== 'string' ) return false;
+		};
+		
+		return true;
+	}
+	
 	,isValidBounds: function(b) {
 		if( false == n2utils.isArray(b) ) return false;
 		if( b.length != 4 ) return false;
@@ -601,17 +611,44 @@ var n2utils = {
 			if( typeof doc.nunaliit_submission.state !== 'string' ){
 				errorFn('Submission documents must include a state');
 			};
-			if( typeof doc.nunaliit_submission.original_reserved !== 'object' ){
-				errorFn('Submission documents must include a field named: "original_reserved"');
+			if( typeof doc.nunaliit_submission.submitter_name !== 'string' ){
+				errorFn('Submission documents must include the name of the submitter');
 			};
-			if( typeof doc.nunaliit_submission.original_reserved.id !== 'string' ){
-				errorFn('Submission documents must include the original identifier');
+			if( false == n2utils.isArrayOfStrings(doc.nunaliit_submission.submitter_roles) ){
+				errorFn('Submission documents must include the roles of the submitter');
 			};
-			if( typeof doc.nunaliit_submission.submitted_reserved !== 'object' ){
-				errorFn('Submission documents must include a field named: "submitted_reserved"');
+			if( doc.nunaliit_submission.original_reserved ) {
+				if( typeof doc.nunaliit_submission.original_reserved !== 'object' ){
+					errorFn('Submission documents must have an object for field "original_reserved"');
+				};
+				if( typeof doc.nunaliit_submission.original_reserved.id !== 'string' ){
+					errorFn('Submission documents must include the original identifier');
+				};
 			};
-			if( typeof doc.nunaliit_submission.submitted_doc !== 'object' ){
-				errorFn('Submission documents must include a field named: "submitted_doc"');
+			if( typeof doc.nunaliit_submission.original_doc !== 'object' 
+			 && typeof doc.nunaliit_submission.original_doc !== 'undefined' ){
+				errorFn('In a submission document, if specified, "original_doc" must be an object');
+			};
+			if( typeof doc.nunaliit_submission.submitted_reserved !== 'object' 
+			 && typeof doc.nunaliit_submission.submitted_reserved !== 'undefined' ){
+				errorFn('In a submission document, if specified, "submitted_reserved" must be an object');
+			};
+			if( typeof doc.nunaliit_submission.submitted_doc !== 'object' 
+			 && typeof doc.nunaliit_submission.submitted_doc !== 'undefined' ){
+				errorFn('In a submission document, if specified, "submitted_doc" must be an object');
+			};
+			if( typeof doc.nunaliit_submission.deletion !== 'boolean' 
+			 && typeof doc.nunaliit_submission.deletion !== 'undefined' ){
+				errorFn('In a submission document, if specified, "deletion" must be a boolean');
+			};
+			if( !doc.nunaliit_submission.deletion ){
+				if( !doc.nunaliit_submission.submitted_reserved ){
+					errorFn('In a submission document, if not a deletion, then "submitted_reserved" must be specified');
+				};
+			};
+			if( !doc.nunaliit_submission.submitted_reserved 
+			 && !doc.nunaliit_submission.original_reserved ){
+				errorFn('In a submission document, one of "submitted_reserved" or "original_reserved" must be specified');
 			};
 		};
 		
@@ -680,6 +717,7 @@ var n2utils = {
 
 if( typeof(exports) === 'object' ) {
 	exports.isArray = n2utils.isArray;
+	exports.isArrayOfStrings = n2utils.isArrayOfStrings;
 	exports.isValidBounds = n2utils.isValidBounds;
 	exports.isValidGeom = n2utils.isValidGeom;
 	exports.extractLayers = n2utils.extractLayers;
@@ -701,6 +739,7 @@ if( typeof(exports) === 'object' ) {
 if( typeof(nunaliit2) === 'function' ) {
 	nunaliit2.couchUtils = {};
 	nunaliit2.couchUtils.isArray = n2utils.isArray;
+	nunaliit2.couchUtils.isArrayOfStrings = n2utils.isArrayOfStrings;
 	nunaliit2.couchUtils.isValidBounds = n2utils.isValidBounds;
 	nunaliit2.couchUtils.isValidGeom = n2utils.isValidGeom;
 	nunaliit2.couchUtils.extractLayers = n2utils.extractLayers;

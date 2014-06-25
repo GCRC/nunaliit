@@ -8,8 +8,4 @@ function(newDoc, oldDoc, userCtxt) {
 		n2utils: n2utils
 		,n2atlas: n2atlas
 	});
-	
-	if( newDoc && newDoc.nunaliit_submission ){
-		throw( {forbidden: 'Submission documents are not allowed in the document database'} );
-	};
 }
