@@ -14,8 +14,8 @@
 	<property name="nunaliit.js-external.project.dir" location="${nunaliit2.dir}//nunaliit2-js-external"/>
 
 	<property name="nunaliit.js.compression" value="1"/>
-	<property name="nunaliit2-js.dir" location="${nunaliit.js.project.dir}/src/main/webapp/nunaliit2"/>
-	<property name="external-js.dir" location="${nunaliit.js-external.project.dir}/src/main/webapp/js-external"/>
+	<property name="nunaliit2-js.dir" location="${nunaliit.js.project.dir}/src/main/js/nunaliit2"/>
+	<property name="external-js.dir" location="${nunaliit.js-external.project.dir}/src/main/js/js-external"/>
 	<property name="external-js.debug" value="0"/>
 	
     <!-- ================================= 

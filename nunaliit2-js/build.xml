@@ -31,7 +31,7 @@
     	<!-- Copy -->
     	<mkdir dir="${javascript.dest.dir}/nunaliit2"/>
 		<copy todir="${javascript.dest.dir}/nunaliit2">
-			<fileset dir="./src/main/webapp/nunaliit2"/>
+			<fileset dir="./src/main/js/nunaliit2"/>
 		</copy>
     </target>
 
@@ -61,11 +61,11 @@
     	>
     	<!-- Copy -->
 		<copy 
-			file="./src/main/webapp/nunaliit2/n2.couchUtils.js" 
+			file="./src/main/js/nunaliit2/n2.couchUtils.js" 
 			tofile="${javascript.dest.dir}/n2.couchUtils.js"
 			/>
 		<copy 
-			file="./src/main/webapp/nunaliit2/n2.couchTiles.js" 
+			file="./src/main/js/nunaliit2/n2.couchTiles.js" 
 			tofile="${javascript.dest.dir}/n2.couchTiles.js"
 			/>
     </target>
@@ -101,9 +101,9 @@
         	>
           <arg line="--config-file ./compress/nunaliit2.cfg"/>
           <arg line="--license-file ./compress/license.txt"/>
-          <arg line="--source-dir ./src/main/webapp/nunaliit2"/>
-          <arg line="--output ./src/main/webapp/nunaliit2/nunaliit2.js"/>
-          <arg line="--output-debug ./src/main/webapp/nunaliit2/nunaliit2-debug.js"/>
+          <arg line="--source-dir ./src/main/js/nunaliit2"/>
+          <arg line="--output ./src/main/js/nunaliit2/nunaliit2.js"/>
+          <arg line="--output-debug ./src/main/js/nunaliit2/nunaliit2-debug.js"/>
         </java>
         <java 
         	jar="${compressor.js}"
@@ -111,9 +111,9 @@
         	>
           <arg line="--config-file ./compress/nunaliit2-couch.cfg"/>
           <arg line="--license-file ./compress/license.txt"/>
-          <arg line="--source-dir ./src/main/webapp/nunaliit2"/>
-          <arg line="--output ./src/main/webapp/nunaliit2/nunaliit2-couch.js"/>
-          <arg line="--output-debug ./src/main/webapp/nunaliit2/nunaliit2-couch-debug.js"/>
+          <arg line="--source-dir ./src/main/js/nunaliit2"/>
+          <arg line="--output ./src/main/js/nunaliit2/nunaliit2-couch.js"/>
+          <arg line="--output-debug ./src/main/js/nunaliit2/nunaliit2-couch-debug.js"/>
         </java>
         <java 
         	jar="${compressor.js}"
@@ -121,9 +121,9 @@
         	>
           <arg line="--config-file ./compress/nunaliit2-couch-mobile.cfg"/>
           <arg line="--license-file ./compress/license.txt"/>
-          <arg line="--source-dir ./src/main/webapp/nunaliit2"/>
-          <arg line="--output ./src/main/webapp/nunaliit2/nunaliit2-couch-mobile.js"/>
-          <arg line="--output-debug ./src/main/webapp/nunaliit2/nunaliit2-couch-mobile-debug.js"/>
+          <arg line="--source-dir ./src/main/js/nunaliit2"/>
+          <arg line="--output ./src/main/js/nunaliit2/nunaliit2-couch-mobile.js"/>
+          <arg line="--output-debug ./src/main/js/nunaliit2/nunaliit2-couch-mobile-debug.js"/>
         </java>
         <java 
         	jar="${compressor.js}"
@@ -131,9 +131,9 @@
         	>
           <arg line="--config-file ./compress/isiuop.cfg"/>
           <arg line="--license-file ./compress/license.txt"/>
-          <arg line="--source-dir ./src/main/webapp/nunaliit2"/>
-          <arg line="--output ./src/main/webapp/nunaliit2/isiuop.js"/>
-          <arg line="--output-debug ./src/main/webapp/nunaliit2/isiuop-debug.js"/>
+          <arg line="--source-dir ./src/main/js/nunaliit2"/>
+          <arg line="--output ./src/main/js/nunaliit2/isiuop.js"/>
+          <arg line="--output-debug ./src/main/js/nunaliit2/isiuop-debug.js"/>
         </java>
 
     	<!--  Generate CSS libraries -->
@@ -144,8 +144,8 @@
         	>
           <arg line="--config-file ./compress/nunaliit2-css.cfg"/>
           <arg line="--license-file ./compress/license.txt"/>
-          <arg line="--source-dir ./src/main/webapp/nunaliit2/css/basic"/>
-          <arg line="--output ./src/main/webapp/nunaliit2/css/basic/nunaliit2.css"/>
+          <arg line="--source-dir ./src/main/js/nunaliit2/css/basic"/>
+          <arg line="--output ./src/main/js/nunaliit2/css/basic/nunaliit2.css"/>
         </java>
         <java 
         	jar="${compressor.css}"
@@ -154,8 +154,8 @@
         	>
           <arg line="--config-file ./compress/nunaliit2-css-mobile.cfg"/>
           <arg line="--license-file ./compress/license.txt"/>
-          <arg line="--source-dir ./src/main/webapp/nunaliit2/css/basic"/>
-          <arg line="--output ./src/main/webapp/nunaliit2/css/basic/nunaliit2-mobile.css"/>
+          <arg line="--source-dir ./src/main/js/nunaliit2/css/basic"/>
+          <arg line="--output ./src/main/js/nunaliit2/css/basic/nunaliit2-mobile.css"/>
         </java>
     </target>
 
@@ -183,9 +183,9 @@
           Create links for HTML testing 
          ================================= -->
     <target name="test" description="Build test links">
-    	<delete dir="./src/main/webapp/js-external" failonerror="false"/>
+    	<delete dir="./src/main/js/js-external" failonerror="false"/>
         <exec dir="./src/main/webapp" executable="svn">
-        	<arg line="export https://svn.gcrc.carleton.ca/nunaliit2/trunk/sdk/nunaliit2-js-external/src/main/webapp/js-external js-external"/>
+        	<arg line="export https://svn.gcrc.carleton.ca/nunaliit2/trunk/sdk/nunaliit2-js-external/src/main/js/js-external js-external"/>
         </exec>
     </target>
 	

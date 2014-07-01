@@ -1,135 +1,165 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <artifactId>nunaliit2</artifactId>
-    <groupId>ca.carleton.gcrc</groupId>
-    <version>2.2.1-SNAPSHOT</version>
-  </parent>
-  <groupId>ca.carleton.gcrc</groupId>
-  <artifactId>nunaliit2-js</artifactId>
-  <version>2.2.1-SNAPSHOT</version>
-  <packaging>war</packaging>
-  <name>nunaliit2-js</name>
-  <description>Javascript files produced in-house</description>
-  <build>
-    <plugins>
-		<plugin>
-			<groupId>org.apache.maven.plugins</groupId>
-			<artifactId>maven-dependency-plugin</artifactId>
-			<version>${maven-dependency-plugin.version}</version>
-			<executions>
-				<execution>
-					<phase>prepare-package</phase>
-					<goals>
-						<goal>copy</goal>
-					</goals>
-					<configuration>
-						<stripVersion>true</stripVersion>
-						<artifactItems>
-							<artifactItem>
-								<groupId>ca.carleton.gcrc</groupId>
-								<artifactId>nunaliit2-javascript</artifactId>
-								<version>${project.version}</version>
-								<type>jar</type>
-								<overWrite>true</overWrite>
-								<outputDirectory>target/tools</outputDirectory>
-							</artifactItem>
-							<artifactItem>
-								<groupId>ca.carleton.gcrc</groupId>
-								<artifactId>nunaliit2-css</artifactId>
-								<version>${project.version}</version>
-								<type>jar</type>
-								<overWrite>true</overWrite>
-								<outputDirectory>target/tools</outputDirectory>
-							</artifactItem>
-						</artifactItems>
-					</configuration>
-				</execution>
-			</executions>
-		</plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-antrun-plugin</artifactId>
-        <version>1.6</version>
-        <executions>
-          <execution>
-            <phase>prepare-package</phase>
-            <configuration>
-              <!--  The following is an ANT target -->
-              <target>
-                <!--  Generate javascript libraries -->
-                <java jar="target/tools/nunaliit2-javascript.jar" fork="true" dir=".">
-                  <arg line="--config-file ./compress/nunaliit2.cfg" />
-                  <arg line="--license-file ./compress/license.txt" />
-                  <arg line="--source-dir ./src/main/webapp/nunaliit2" />
-                  <arg line="--output ./src/main/webapp/nunaliit2/nunaliit2.js" />
-                  <arg line="--output-debug ./src/main/webapp/nunaliit2/nunaliit2-debug.js" />
-                </java>
-                <java jar="target/tools/nunaliit2-javascript.jar" fork="true" dir=".">
-                  <arg line="--config-file ./compress/nunaliit2-couch.cfg" />
-                  <arg line="--license-file ./compress/license.txt" />
-                  <arg line="--source-dir ./src/main/webapp/nunaliit2" />
-                  <arg line="--output ./src/main/webapp/nunaliit2/nunaliit2-couch.js" />
-                  <arg line="--output-debug ./src/main/webapp/nunaliit2/nunaliit2-couch-debug.js" />
-                </java>
-                <java jar="target/tools/nunaliit2-javascript.jar" fork="true" dir=".">
-                  <arg line="--config-file ./compress/nunaliit2-couch-mobile.cfg" />
-                  <arg line="--license-file ./compress/license.txt" />
-                  <arg line="--source-dir ./src/main/webapp/nunaliit2" />
-                  <arg line="--output ./src/main/webapp/nunaliit2/nunaliit2-couch-mobile.js" />
-                  <arg line="--output-debug ./src/main/webapp/nunaliit2/nunaliit2-couch-mobile-debug.js" />
-                </java>
-                <java jar="target/tools/nunaliit2-javascript.jar" fork="true" dir=".">
-                  <arg line="--config-file ./compress/isiuop.cfg" />
-                  <arg line="--license-file ./compress/license.txt" />
-                  <arg line="--source-dir ./src/main/webapp/nunaliit2" />
-                  <arg line="--output ./src/main/webapp/nunaliit2/isiuop.js" />
-                  <arg line="--output-debug ./src/main/webapp/nunaliit2/isiuop-debug.js" />
-                </java>
-                
-                <!--  Generate CSS libraries -->
-                <java jar="target/tools/nunaliit2-css.jar" fork="true" dir=".">
-                  <arg line="--config-file ./compress/nunaliit2-css.cfg" />
-                  <arg line="--license-file ./compress/license.txt" />
-                  <arg line="--source-dir ./src/main/webapp/nunaliit2/css/basic" />
-                  <arg line="--output ./src/main/webapp/nunaliit2/css/basic/nunaliit2.css" />
-                </java>
-                <java jar="target/tools/nunaliit2-css.jar" fork="true" dir=".">
-                  <arg line="--config-file ./compress/nunaliit2-css-min.cfg" />
-                  <arg line="--license-file ./compress/license.txt" />
-                  <arg line="--source-dir ./src/main/webapp/nunaliit2/css/basic" />
-                  <arg line="--output ./src/main/webapp/nunaliit2/css/basic/nunaliit2-min.css" />
-                </java>
-                <java jar="target/tools/nunaliit2-css.jar" fork="true" dir=".">
-                  <arg line="--config-file ./compress/nunaliit2-css-mobile.cfg" />
-                  <arg line="--license-file ./compress/license.txt" />
-                  <arg line="--source-dir ./src/main/webapp/nunaliit2/css/basic" />
-                  <arg line="--output ./src/main/webapp/nunaliit2/css/basic/nunaliit2-mobile.css" />
-                </java>
-              </target>
-            </configuration>
-            <goals>
-              <goal>run</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
-  <dependencies>
-   	<dependency>
-   		<groupId>ca.carleton.gcrc</groupId>
-   		<artifactId>nunaliit2-javascript</artifactId>
-   		<version>${project.version}</version>
-   		<type>jar</type>
-   		<scope>provided</scope>
-   	</dependency>
-   	<dependency>
-   		<groupId>ca.carleton.gcrc</groupId>
-   		<artifactId>nunaliit2-css</artifactId>
-   		<version>${project.version}</version>
-   		<type>jar</type>
-   		<scope>provided</scope>
-   	</dependency>
-  </dependencies>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<artifactId>nunaliit2</artifactId>
+		<groupId>ca.carleton.gcrc</groupId>
+		<version>2.2.1-SNAPSHOT</version>
+	</parent>
+	<groupId>ca.carleton.gcrc</groupId>
+	<artifactId>nunaliit2-js</artifactId>
+	<version>2.2.1-SNAPSHOT</version>
+	<packaging>pom</packaging>
+	<name>nunaliit2-js</name>
+	<description>Javascript files produced in-house</description>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>${maven-dependency-plugin.version}</version>
+				<executions>
+					<execution>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>copy</goal>
+						</goals>
+						<configuration>
+							<stripVersion>true</stripVersion>
+							<artifactItems>
+								<artifactItem>
+									<groupId>ca.carleton.gcrc</groupId>
+									<artifactId>nunaliit2-javascript</artifactId>
+									<version>${project.version}</version>
+									<type>jar</type>
+									<overWrite>true</overWrite>
+									<outputDirectory>target/tools</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>ca.carleton.gcrc</groupId>
+									<artifactId>nunaliit2-css</artifactId>
+									<version>${project.version}</version>
+									<type>jar</type>
+									<overWrite>true</overWrite>
+									<outputDirectory>target/tools</outputDirectory>
+								</artifactItem>
+							</artifactItems>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.6</version>
+				<executions>
+					<execution>
+						<phase>prepare-package</phase>
+						<configuration>
+							<!-- The following is an ANT target -->
+							<target>
+								<!-- Generate javascript libraries -->
+								<java jar="target/tools/nunaliit2-javascript.jar" fork="true"
+									dir=".">
+									<arg line="--config-file ./compress/nunaliit2.cfg" />
+									<arg line="--license-file ./compress/license.txt" />
+									<arg line="--source-dir ./src/main/js/nunaliit2" />
+									<arg line="--output ./src/main/js/nunaliit2/nunaliit2.js" />
+									<arg
+										line="--output-debug ./src/main/js/nunaliit2/nunaliit2-debug.js" />
+								</java>
+								<java jar="target/tools/nunaliit2-javascript.jar" fork="true"
+									dir=".">
+									<arg line="--config-file ./compress/nunaliit2-couch.cfg" />
+									<arg line="--license-file ./compress/license.txt" />
+									<arg line="--source-dir ./src/main/js/nunaliit2" />
+									<arg line="--output ./src/main/js/nunaliit2/nunaliit2-couch.js" />
+									<arg
+										line="--output-debug ./src/main/js/nunaliit2/nunaliit2-couch-debug.js" />
+								</java>
+								<java jar="target/tools/nunaliit2-javascript.jar" fork="true"
+									dir=".">
+									<arg line="--config-file ./compress/nunaliit2-couch-mobile.cfg" />
+									<arg line="--license-file ./compress/license.txt" />
+									<arg line="--source-dir ./src/main/js/nunaliit2" />
+									<arg
+										line="--output ./src/main/js/nunaliit2/nunaliit2-couch-mobile.js" />
+									<arg
+										line="--output-debug ./src/main/js/nunaliit2/nunaliit2-couch-mobile-debug.js" />
+								</java>
+								<java jar="target/tools/nunaliit2-javascript.jar" fork="true"
+									dir=".">
+									<arg line="--config-file ./compress/isiuop.cfg" />
+									<arg line="--license-file ./compress/license.txt" />
+									<arg line="--source-dir ./src/main/js/nunaliit2" />
+									<arg line="--output ./src/main/js/nunaliit2/isiuop.js" />
+									<arg line="--output-debug ./src/main/js/nunaliit2/isiuop-debug.js" />
+								</java>
+
+								<!-- Generate CSS libraries -->
+								<java jar="target/tools/nunaliit2-css.jar" fork="true" dir=".">
+									<arg line="--config-file ./compress/nunaliit2-css.cfg" />
+									<arg line="--license-file ./compress/license.txt" />
+									<arg line="--source-dir ./src/main/js/nunaliit2/css/basic" />
+									<arg line="--output ./src/main/js/nunaliit2/css/basic/nunaliit2.css" />
+								</java>
+								<java jar="target/tools/nunaliit2-css.jar" fork="true" dir=".">
+									<arg line="--config-file ./compress/nunaliit2-css-min.cfg" />
+									<arg line="--license-file ./compress/license.txt" />
+									<arg line="--source-dir ./src/main/js/nunaliit2/css/basic" />
+									<arg
+										line="--output ./src/main/js/nunaliit2/css/basic/nunaliit2-min.css" />
+								</java>
+								<java jar="target/tools/nunaliit2-css.jar" fork="true" dir=".">
+									<arg line="--config-file ./compress/nunaliit2-css-mobile.cfg" />
+									<arg line="--license-file ./compress/license.txt" />
+									<arg line="--source-dir ./src/main/js/nunaliit2/css/basic" />
+									<arg
+										line="--output ./src/main/js/nunaliit2/css/basic/nunaliit2-mobile.css" />
+								</java>
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>2.2.1</version>
+				<configuration>
+					<descriptors>
+						<descriptor>src/main/assembly/src.xml</descriptor>
+					</descriptors>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+	<dependencies>
+		<dependency>
+			<groupId>ca.carleton.gcrc</groupId>
+			<artifactId>nunaliit2-javascript</artifactId>
+			<version>${project.version}</version>
+			<type>jar</type>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>ca.carleton.gcrc</groupId>
+			<artifactId>nunaliit2-css</artifactId>
+			<version>${project.version}</version>
+			<type>jar</type>
+			<scope>provided</scope>
+		</dependency>
+	</dependencies>
 </project>

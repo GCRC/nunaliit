@@ -8,7 +8,7 @@ it must be referenced in 3 places:
    This is the place the file is referenced for the
    compressor that creates nunaliit2.js
 
-2. .../src/main/webapp/nunaliit2/nunaliit2-debug.js
+2. .../src/main/js/nunaliit2/nunaliit2-debug.js
    This is the uncompressed debug version of the library
 
 3. .../tools/build.xml

@@ -3,8 +3,6 @@
   <wars>
     <war>ca.carleton.gcrc:nunaliit2-couch-config</war>
     <war>ca.carleton.gcrc:nunaliit2-couch-mobile</war>
-    <war>ca.carleton.gcrc:nunaliit2-js</war>
-    <war>ca.carleton.gcrc:nunaliit2-js-external</war>
   </wars>
 
   <merges>

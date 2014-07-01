@@ -21,7 +21,7 @@ public class GenerateJavascriptLibrariesProcess {
 			throw new Exception("Can not find nunaliit2-js directory");
 		}
 		
-		File nunaliitJsDir = new File(jsDir,"src/main/webapp/nunaliit2");
+		File nunaliitJsDir = new File(jsDir,"src/main/js/nunaliit2");
 		File licenseFile = new File(jsDir,"compress/license.txt");
 		
 		generate(

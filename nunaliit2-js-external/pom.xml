@@ -8,7 +8,6 @@
   <groupId>ca.carleton.gcrc</groupId>
   <artifactId>nunaliit2-js-external</artifactId>
   <version>2.2.1-SNAPSHOT</version>
-  <packaging>war</packaging>
   <name>nunaliit2-js-external</name>
   <description>Javascript files from external projects</description>
 	<licenses>
@@ -35,4 +34,28 @@
 				under LGPL.</comments>
 		</license>
 	</licenses>
+  <build>
+  	<plugins>
+  		<plugin>
+  			<groupId>org.apache.maven.plugins</groupId>
+  			<artifactId>maven-assembly-plugin</artifactId>
+  			<version>2.2.1</version>
+			<configuration>
+				<descriptors>
+					<descriptor>src/main/assembly/src.xml</descriptor>
+				</descriptors>
+			</configuration>
+			<executions>
+				<execution>
+					<id>make-assembly</id>
+					<phase>package</phase>
+					<goals>
+						<goal>single</goal>
+					</goals>
+				</execution>
+			</executions>
+        </plugin>
+  	</plugins>
+  </build>
+  <packaging>pom</packaging>
 </project>

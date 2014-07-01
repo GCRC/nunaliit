@@ -340,7 +340,7 @@ public class PathComputer {
 			
 			// Development environment
 			File nunaliit2Dir = computeNunaliitDir(installDir);
-			templatesDir = new File(nunaliit2Dir, "nunaliit2-js/src/main/webapp/nunaliit2");
+			templatesDir = new File(nunaliit2Dir, "nunaliit2-js/src/main/js/nunaliit2");
 			if( templatesDir.exists() && templatesDir.isDirectory() ) {
 				return templatesDir;
 			}
@@ -366,7 +366,7 @@ public class PathComputer {
 			
 			// Development environment
 			File nunaliit2Dir = computeNunaliitDir(installDir);
-			templatesDir = new File(nunaliit2Dir, "nunaliit2-js-external/src/main/webapp/js-external");
+			templatesDir = new File(nunaliit2Dir, "nunaliit2-js-external/src/main/js/js-external");
 			if( templatesDir.exists() && templatesDir.isDirectory() ) {
 				return templatesDir;
 			}

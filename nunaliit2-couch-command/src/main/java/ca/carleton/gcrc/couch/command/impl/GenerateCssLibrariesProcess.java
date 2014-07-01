@@ -21,7 +21,7 @@ public class GenerateCssLibrariesProcess {
 		}
 		
 		File licenseFile = new File(jsDir, "compress/license.txt");
-		File basicCssDir = new File(jsDir,"src/main/webapp/nunaliit2/css/basic");
+		File basicCssDir = new File(jsDir,"src/main/js/nunaliit2/css/basic");
 		
 		generate(
 			new File(jsDir, "compress/nunaliit2-css.cfg")
