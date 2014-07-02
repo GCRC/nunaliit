@@ -30,16 +30,9 @@ function setAtlas(atlasObj){
 
 // **** Scaffolding ****
 
-var fakeN2Utils = {
-	extractGeometries: function(){}
-	,isValidGeom: function(){ return true; }
-	,isArray: jsunit.isArray
-	,validateDocumentStructure: function(){}
-};
-
 function validate_doc_update(newDoc, oldDoc, userCtxt){
 	n2validate.validate_doc_update(newDoc, oldDoc, userCtxt, {
-		n2utils: fakeN2Utils
+		n2utils: n2utils
 		,n2atlas: n2AtlasObj
 	});
 };
@@ -298,6 +291,64 @@ jsunit.defineTest('in restricted mode, a regular user can not create a document'
 	};
 });
 
+//*********
+jsunit.defineTest('in restricted mode, an atlas_administrator can create a document',function($$){
+	setAtlas(restrictedAtlas);
+	var ctxt = getContext({
+		name: 'john'
+		,roles: ['atlas_administrator','nunaliit_agreement_atlas']
+	});
+
+	var prev = null;
+	
+	var current = {
+		_id: 'doc-1'
+		,nunaliit_created:{
+			nunaliit_type: 'actionstamp'
+			,name: ctxt.name
+			,time: 12345
+			,action: 'created'
+		}
+		,nunaliit_last_updated:{
+			nunaliit_type: 'actionstamp'
+			,name: ctxt.name
+			,time: 12345
+			,action: 'updated'
+		}
+	};
+	
+	validate_doc_update(current, prev, ctxt);
+});
+
+//*********
+jsunit.defineTest('in restricted mode, an atlas_vetter can create a document',function($$){
+	setAtlas(restrictedAtlas);
+	var ctxt = getContext({
+		name: 'john'
+		,roles: ['atlas_administrator','nunaliit_agreement_atlas']
+	});
+
+	var prev = null;
+	
+	var current = {
+		_id: 'doc-1'
+		,nunaliit_created:{
+			nunaliit_type: 'actionstamp'
+			,name: ctxt.name
+			,time: 12345
+			,action: 'created'
+		}
+		,nunaliit_last_updated:{
+			nunaliit_type: 'actionstamp'
+			,name: ctxt.name
+			,time: 12345
+			,action: 'updated'
+		}
+	};
+	
+	validate_doc_update(current, prev, ctxt);
+});
+
 // *********
 jsunit.defineTest('vetter can change submission state',function($$){
 	setAtlas(submissionDb);
@@ -379,4 +430,99 @@ jsunit.defineTest('vetter can change submission state',function($$){
 	};
 	
 	validate_doc_update(current, prev, ctxt);
+});
+
+//*********
+jsunit.defineTest('_admin can create an invalid document',function($$){
+	setAtlas(regularAtlas);
+	var ctxt = getContext({
+		name: 'john'
+		,roles: ['_admin']
+	});
+
+	var prev = null;
+	
+	var current = {
+		_id: 'doc-1'
+		,nunaliit_created:{
+			time: 'Not valid document'
+		}
+	};
+	
+	validate_doc_update(current, prev, ctxt);
+});
+
+//*********
+jsunit.defineTest('atlas_administrator can not create an invalid document',function($$){
+	setAtlas(regularAtlas);
+	var ctxt = getContext({
+		name: 'john'
+		,roles: ['nunaliit_agreement_atlas','atlas_administrator']
+	});
+
+	var prev = null;
+	
+	var current = {
+		_id: 'doc-1'
+		,nunaliit_created:{
+			time: 'Not valid document'
+		}
+	};
+	
+	try {
+		validate_doc_update(current, prev, ctxt);
+		$$.fail('atlas_administrator should not be able to create an invalid document');
+	} catch(e) {
+		// OK
+	};
+});
+
+//*********
+jsunit.defineTest('atlas_vetter can not create an invalid document',function($$){
+	setAtlas(regularAtlas);
+	var ctxt = getContext({
+		name: 'john'
+		,roles: ['nunaliit_agreement_atlas','atlas_vetter']
+	});
+
+	var prev = null;
+	
+	var current = {
+		_id: 'doc-1'
+		,nunaliit_created:{
+			time: 'Not valid document'
+		}
+	};
+	
+	try {
+		validate_doc_update(current, prev, ctxt);
+		$$.fail('atlas_vetter should not be able to create an invalid document');
+	} catch(e) {
+		// OK
+	};
+});
+
+//*********
+jsunit.defineTest('atlas_user can not create an invalid document',function($$){
+	setAtlas(regularAtlas);
+	var ctxt = getContext({
+		name: 'john'
+		,roles: ['nunaliit_agreement_atlas','atlas_user']
+	});
+
+	var prev = null;
+	
+	var current = {
+		_id: 'doc-1'
+		,nunaliit_created:{
+			time: 'Not valid document'
+		}
+	};
+	
+	try {
+		validate_doc_update(current, prev, ctxt);
+		$$.fail('atlas_user should not be able to create an invalid document');
+	} catch(e) {
+		// OK
+	};
 });

@@ -13,6 +13,33 @@
   <description>CouchApp deployment code</description>
   <build>
   	<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>${maven-dependency-plugin.version}</version>
+				<executions>
+					<execution>
+						<id>unpack-js</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>unpack</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>ca.carleton.gcrc</groupId>
+									<artifactId>nunaliit2-js</artifactId>
+									<version>${project.version}</version>
+									<classifier>js</classifier>
+									<type>zip</type>
+									<overWrite>true</overWrite>
+									<outputDirectory>target/nunaliit-js</outputDirectory>
+								</artifactItem>
+							</artifactItems>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
   		<plugin>
   			<groupId>org.apache.maven.plugins</groupId>
   			<artifactId>maven-assembly-plugin</artifactId>
@@ -46,6 +73,13 @@
 			<artifactId>nunaliit2-javascript</artifactId>
 			<version>${project.version}</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>ca.carleton.gcrc</groupId>
+			<artifactId>nunaliit2-js</artifactId>
+			<version>${project.version}</version>
+			<type>pom</type>
+			<scope>compile</scope>
 		</dependency>
 	</dependencies>
 </project>

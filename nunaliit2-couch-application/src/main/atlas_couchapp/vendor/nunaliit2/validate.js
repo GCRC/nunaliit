@@ -34,7 +34,11 @@ var n2validate = {
 			
 		} else if( userInfo.atlas[n2atlas.name] 
 		 && userInfo.atlas[n2atlas.name].admin ) {
-			// atlas admin is allowed anything
+			// atlas admin is allowed anything, as long as the document
+			// has a valid structure
+			n2utils.validateDocumentStructure(newDoc, function(msg){
+				throw( {forbidden: msg} );
+			});
 		
 		} else if( userInfo.atlas[n2atlas.name] 
 		 && userInfo.atlas[n2atlas.name].replicator ) {
@@ -56,7 +60,8 @@ var n2validate = {
 		} else if( n2atlas.submissionDbEnabled
 		 && n2atlas.isDocumentDb
 		 && !newDoc.nunaliit_upload_request ) {
-			// When the submisison database is enabled, only upload requests are allowed
+			// When the submission database is enabled, only upload requests are allowed
+			// in document database
 			throw( {forbidden: 'Database submissions must be performed via the submission database'} );
 		
 		} else {
@@ -169,12 +174,6 @@ var n2validate = {
 			if( newDoc.nunaliit_created.name != userInfo.name ) {
 				throw( {forbidden: '"nunaliit_created.name" string must match user submitting document'} );
 			};
-			if( typeof(newDoc.nunaliit_created.time) !== 'number' ) {
-				throw( {forbidden: '"nunaliit_created.time" must be a number'} );
-			};
-			if( newDoc.nunaliit_created.action !== 'created' ) {
-				throw( {forbidden: '"nunaliit_created.action" must be a "created"'} );
-			};
 			
 		} else if( newDoc._deleted ) {
 			// Do not check on deletion
@@ -194,7 +193,7 @@ var n2validate = {
 			 && !newDoc.nunaliit_created) {
 				// That's OK.
 			} else {
-				throw( {forbidden: 'Field "nunaliit_created" can not be added or deleted on an update'} );
+				throw( {forbidden: 'Field "nunaliit_created" can not be added or deleted on a document update'} );
 			};
 		};
 	},
@@ -213,12 +212,6 @@ var n2validate = {
 			};
 			if( newDoc.nunaliit_last_updated.name != userInfo.name ) {
 				throw( {forbidden: '"nunaliit_last_updated.name" string must match user submitting document'} );
-			};
-			if( typeof(newDoc.nunaliit_last_updated.time) !== 'number' ) {
-				throw( {forbidden: '"nunaliit_last_updated.time" must be a number'} );
-			};
-			if( newDoc.nunaliit_last_updated.action !== 'updated' ) {
-				throw( {forbidden: '"nunaliit_last_updated.action" must be a "updated"'} );
 			};
 		};
 	},

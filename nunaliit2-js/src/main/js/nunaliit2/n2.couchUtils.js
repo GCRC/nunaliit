@@ -536,6 +536,12 @@ var n2utils = {
 			if( doc.nunaliit_created.nunaliit_type !== 'actionstamp' ) {
 				errorFn('"nunaliit_created" must be of type "actionstamp"');
 			};
+			if( typeof doc.nunaliit_created.time !== 'number' ) {
+				errorFn('"nunaliit_created.time" must be a number');
+			};
+			if( doc.nunaliit_created.action !== 'created' ) {
+				errorFn('"nunaliit_created.action" must be a "created"');
+			};
 		};
 
 		// Verify nunaliit_last_updated
@@ -545,6 +551,12 @@ var n2utils = {
 			};
 			if( doc.nunaliit_last_updated.nunaliit_type !== 'actionstamp' ) {
 				errorFn('"nunaliit_last_updated" must be of type "actionstamp"');
+			};
+			if( typeof doc.nunaliit_last_updated.time !== 'number' ) {
+				errorFn('"nunaliit_last_updated.time" must be a number');
+			};
+			if( doc.nunaliit_last_updated.action !== 'updated' ) {
+				errorFn('"nunaliit_last_updated.action" must be a "updated"');
 			};
 		};
 		
@@ -556,6 +568,9 @@ var n2utils = {
 			
 			if( typeof as.name !== 'string' ){
 				errorFn('Action stamps must have a string field named: "name"');
+			};
+			if( typeof as.time !== 'number' ) {
+				errorFn('Action stamps must have a number field named: "time"');
 			};
 		};
 

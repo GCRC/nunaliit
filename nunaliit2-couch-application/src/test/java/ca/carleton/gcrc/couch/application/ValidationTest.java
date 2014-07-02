@@ -14,12 +14,14 @@ public class ValidationTest extends TestCase {
 			
 			File projectDir = TestSupport.findProjectDir();
 			File jsFileAtlas = new File(projectDir,"src/main/atlas_couchapp/vendor/nunaliit2/atlas.js");
+			File jsFileUtils = new File(projectDir,"target/nunaliit-js/nunaliit2/n2.couchUtils.js");
 			File jsFileValidate = new File(projectDir,"src/main/atlas_couchapp/vendor/nunaliit2/validate.js");
 			
 			jsRunner.addJavascript(jsFileAtlas);
+			jsRunner.addJavascript(jsFileUtils);
 			jsRunner.addJavascript(jsFileValidate);
 
-			// Load support
+			// Load Javascript Unit Testing frameowrk
 			jsRunner.addJavascript( new File(projectDir,"src/test/javascript/jsunit.js") );
 
 			// Load test cases
