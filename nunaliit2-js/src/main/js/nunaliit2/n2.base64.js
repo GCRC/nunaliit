@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 // @ requires n2.utils.js
 
-;(function($,$n2){
+;(function($n2){
 
     var codex = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
 	
@@ -96,4 +96,4 @@ $n2.Base64 = {
     }
 };
 
-})(jQuery,nunaliit2);
+})(nunaliit2);

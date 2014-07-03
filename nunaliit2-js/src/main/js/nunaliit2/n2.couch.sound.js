@@ -93,7 +93,7 @@ var HoverSoundService = $n2.Class({
 
 	,findDocumentHoverSound: function(data, opts_) {
 
-		var opts = $.extend({
+		var opts = $n2.extend({
 			installSoundFn: defaultInstallSound
 			,handleDocumentSound: this.options.handleDocumentSound
 		},opts_);

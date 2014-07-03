@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 // @requires n2.core.js
 
-;(function($,$n2){
+;(function($n2){
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
@@ -148,4 +148,4 @@ $n2.storage = {
 	Storage: Storage
 };
 
-})(jQuery,nunaliit2);
+})(nunaliit2);

@@ -44,15 +44,31 @@ $Id: n2.utils.js 8415 2012-08-07 15:39:35Z jpfiset $
  	@param {Object} o1  Object to be inspected in log
  */
 $n2.log = function() {
-	if (typeof(window.console) !== 'undefined' && null != window.console && null != window.console.log) {
+	if( typeof window === 'object'
+	 && window.console 
+	 && typeof window.console.log === 'function' ) {
 		try { window.console.log.apply(window.console,arguments); }
 			catch(e) {};
 	};
 };
 
-if( typeof(window.log) === 'undefined' ) {
-	window.log = $n2.log;
+// Install logger on window
+if( typeof window !== 'undefined' ) {
+	if( typeof(window.log) === 'undefined' ) {
+		window.log = $n2.log;
+	};
 };
+
+var nativeArrayIndexOf = null;
+if( typeof Array !== 'undefined' && Array.prototype ){
+	nativeArrayIndexOf = Array.prototype.indexOf;
+};
+
+var nativeStringTrim = null;
+if( typeof String !== 'undefined' && String.prototype ){
+	nativeStringTrim = String.prototype.trim;
+};
+
 
 var cachedBrowserInfo = null;
 
@@ -111,8 +127,10 @@ $n2.isDefined = function(_v) {
 	return('undefined' != typeof(_v) && null != _v);
 };
 
-if( typeof(window.isDefined) === 'undefined' ) {
-	window.isDefined = $n2.isDefined;
+if( typeof window !== 'undefined' ) {
+	if( typeof(window.isDefined) === 'undefined' ) {
+		window.isDefined = $n2.isDefined;
+	};
 };
 
 //*********************************************
@@ -141,6 +159,44 @@ $n2.isArray = function(o) {
 	
 	return true;
 };
+
+//*********************************************
+// inArray
+
+/**
+	Returns the index of the element if found in
+	the array. Returns -1 if not found.
+	@name inArray
+	@function
+	@memberOf nunaliit2
+	@param {Object} elem Element searched for in array
+	@param {Array} arr Element searched for in array
+	@param {Number} index Index where the search is started
+	@return {Number} Index of found element. Returns -1, if not found.
+*/
+$n2.inArray = function( elem, arr, index ) {
+	var len;
+
+	if ( arr ) {
+		if ( nativeArrayIndexOf ) {
+			return nativeArrayIndexOf.call( arr, elem, index );
+		};
+
+		len = arr.length;
+		index = index ? index : 0;
+		index = index < 0 ? Math.max( 0, len + index ) : index;
+
+		for( ; index < len; ++index) {
+			if( index in arr 
+			 && arr[index] === elem ) {
+				return index;
+			};
+		};
+	};
+
+	return -1;
+};
+
 
 //*********************************************
 // getUniqueId
@@ -247,7 +303,7 @@ $n2.parseLongLatText = function(text) {
 	if( 'S' === matchObj[6] ) {
 		longMult = -1;
 	};
-	result.long = longMult * (
+	result.lng = longMult * (
 		1 * matchObj[1] 
 		+ (1 * matchObj[3] / 60)
 		+ (1 * matchObj[4] / 3600)
@@ -421,9 +477,8 @@ $n2.trim = function(text){
 		return '';
 	};
 	
-	var nativeTrim = String.prototype.trim;
-	if( typeof(nativeTrim) === 'function' ) {
-		return nativeTrim.call(text);
+	if( nativeStringTrim ) {
+		return nativeStringTrim.call(text);
 	};
 
 	// Use own version

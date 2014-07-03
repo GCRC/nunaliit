@@ -33,9 +33,9 @@ $Id: n2.couchGeom.js 8165 2012-05-31 13:14:37Z jpfiset $
 
 // @ requires n2.utils.js
 
-;(function($,$n2){
+;(function($n2){
 
-$n2.couchGeom = $.extend({},{
+$n2.couchGeom = $n2.extend({},{
 
 	/*
 	 * Returns a geometry object used in CouchDb given
@@ -82,7 +82,7 @@ $n2.couchGeom = $.extend({},{
 	 * a geometry obtained from a Couch document.
 	 */
 	,getOpenLayersGeometry: function(options_) {
-		var opts = $.extend({
+		var opts = $n2.extend({
 				couchGeom: null
 				,onError: function(errorMsg){ $n2.reportError(errorMsg); }
 			}
@@ -98,7 +98,7 @@ $n2.couchGeom = $.extend({},{
 	}
 
 	,updateDocumentWithWktGeometry: function(doc, options_) {
-		var opts = $.extend({
+		var opts = $n2.extend({
 				wkt: null
 				,onError: function(errorMsg){ $n2.reportError(errorMsg); }
 			}
@@ -360,4 +360,4 @@ $n2.couchGeom = $.extend({},{
 	}
 });
 
-})(jQuery,nunaliit2);
+})(nunaliit2);

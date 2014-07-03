@@ -69,7 +69,7 @@ function getLocale() {
 		};
 	};
 	
-	if ( null == cachedLocale && navigator ) {
+	if ( null == cachedLocale && typeof navigator === 'object' ) {
 		if ( navigator.language ) {
 	    	cachedLocale = createLocaleFromLanguage(navigator.language);
 	        
@@ -296,7 +296,9 @@ if( $n2.scripts ) {
 	};
 	
 	// Notify via DOM classes
-	$('body').addClass('nunaliit_language_'+locale.lang);
+	if( typeof jQuery !== 'undefined' ) {
+		jQuery('body').addClass('nunaliit_language_'+locale.lang);
+	};
 };
 
 })(nunaliit2);

@@ -1,4 +1,9 @@
 ;(function(){
+	
+	var FAIL_EXCEPTION = {
+		error: 'fail() was called'
+	};
+	
 	// **** Utilities ****
 
 	function isArray(o) {
@@ -120,7 +125,7 @@
 			,name: t.name
 		};
 	};
-	function fail(e){
+	function error(e){
 		if( currentTest ) {
 			currentTest.error = e;
 		} else {
@@ -136,7 +141,10 @@
 			){
 		// Exports
 		var $$ = {
-			fail: fail	
+			fail: function(e){
+				error(e);
+				throw FAIL_EXCEPTION;
+			}	
 		};
 
 		var testOutcomes = [];
@@ -159,10 +167,12 @@
 			try {
 				testFn($$);
 			} catch(e) {
-				if( e.forbidden ){
-					fail(e.forbidden);
+				if( e === FAIL_EXCEPTION ){
+					// already recorded
+				} else if( e.forbidden ){
+					error(e.forbidden);
 				} else {
-					fail(e);
+					error(e);
 				};
 			};
 			

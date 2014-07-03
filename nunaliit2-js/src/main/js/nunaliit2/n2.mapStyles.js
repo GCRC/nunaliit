@@ -33,7 +33,7 @@ $Id: n2.mapAndControls.js 8494 2012-09-21 20:06:50Z jpfiset $
 
 // @requires n2.utils.js
 
-;(function($,$n2){
+;(function($n2){
 
 // Localization
 //var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
@@ -214,7 +214,7 @@ var MapFeatureStyles = $n2.Class({
 		if( userDefinition && userDefinition.layers ){
 			for(var layerName in userDefinition.layers){
 				// Create a new descriptor. Set layer name and increase priority
-				var layerDescriptor = $.extend({},descriptor,{
+				var layerDescriptor = $n2.extend({},descriptor,{
 					layer: layerName
 					,priority: (descriptor.priority + 1)
 				});
@@ -243,7 +243,7 @@ var MapFeatureStyles = $n2.Class({
 		// Create styles for schemas
 		if( userDefinition && userDefinition.schemas ){
 			for(var schemaName in userDefinition.schemas){
-				var schemaDescriptor = $.extend({},descriptor,{
+				var schemaDescriptor = $n2.extend({},descriptor,{
 					schema: schemaName
 					,priority: (descriptor.priority + 1)
 				});
@@ -269,7 +269,7 @@ var MapFeatureStyles = $n2.Class({
 		// Create styles for intents
 		if( userDefinition && userDefinition.intents ){
 			for(var intentName in userDefinition.intents){
-				var intentDescriptor = $.extend({},descriptor,{
+				var intentDescriptor = $n2.extend({},descriptor,{
 					intent: intentName
 					,priority: (descriptor.priority + 1)
 				});
@@ -583,4 +583,4 @@ $n2.mapStyles = {
 	MapFeatureStyles: MapFeatureStyles
 };
 
-})(jQuery,nunaliit2);
+})(nunaliit2);

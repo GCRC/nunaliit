@@ -1,25 +1,25 @@
-package ca.carleton.gcrc.couch.application;
+package ca.carleton.gcrc.js;
 
 import java.io.File;
 
 import ca.carleton.gcrc.javascript.JavascriptRunner;
 import junit.framework.TestCase;
 
-public class ValidationTest extends TestCase {
+public class JavascriptValidateTest extends TestCase {
 
-	public void testValidation() throws Exception {
+	public void testLibrary() throws Exception {
 		JavascriptRunner jsRunner = null;
 		try {
 			jsRunner = new JavascriptRunner();
 			
 			File projectDir = TestSupport.findProjectDir();
-			File jsFileAtlas = new File(projectDir,"src/main/atlas_couchapp/vendor/nunaliit2/atlas.js");
-			File jsFileUtils = new File(projectDir,"target/nunaliit-js/nunaliit2/n2.couchUtils.js");
-			File jsFileValidate = new File(projectDir,"src/main/atlas_couchapp/vendor/nunaliit2/validate.js");
-			
-			jsRunner.addJavascript(jsFileAtlas);
-			jsRunner.addJavascript(jsFileUtils);
-			jsRunner.addJavascript(jsFileValidate);
+
+//			File jQueryFile = new File(projectDir, "target/nunaliit-js-external/js-external/js/jquery.js");
+//			jsRunner.addJavascript(jQueryFile);
+//			
+			for(File file : TestSupport.getLibraryFileSet()){
+				jsRunner.addJavascript(file);
+			}
 
 			// Load Javascript Unit Testing framework
 			jsRunner.addJavascript( new File(projectDir,"target/jsunit/jsunit.js") );

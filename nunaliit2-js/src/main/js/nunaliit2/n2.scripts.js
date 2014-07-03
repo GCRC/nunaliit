@@ -38,19 +38,22 @@ $Id: n2.scripts.js 8165 2012-05-31 13:14:37Z jpfiset $
 
 function getScriptLocation(scriptName) {
 	var result = null;
-	var pattern = new RegExp("(^|(.*?\\/))"+scriptName+"$");
- 
-	var scripts = document.getElementsByTagName('script');
-	for( var loop=0; loop<scripts.length; ++loop ) {
-		var src = scripts[loop].getAttribute('src');
-		if (src) {
-			var match = src.match(pattern);
-			if( match ) {
-				result = {
-					location: match[1]
-					,elem: scripts[loop]
+	
+	if( typeof document === 'object' ) {
+		var pattern = new RegExp("(^|(.*?\\/))"+scriptName+"$");
+	 
+		var scripts = document.getElementsByTagName('script');
+		for( var loop=0; loop<scripts.length; ++loop ) {
+			var src = scripts[loop].getAttribute('src');
+			if (src) {
+				var match = src.match(pattern);
+				if( match ) {
+					result = {
+						location: match[1]
+						,elem: scripts[loop]
+					};
+					break;
 				};
-				break;
 			};
 		};
 	};

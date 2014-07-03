@@ -28,7 +28,7 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
 */
-;(function($,$n2){
+;(function($n2){
 
 // Localization
 //var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
@@ -106,4 +106,4 @@ $n2.custom = {
 	CustomService: CustomService
 };
 
-})(jQuery,nunaliit2);
+})(nunaliit2);

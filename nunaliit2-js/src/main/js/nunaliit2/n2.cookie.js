@@ -30,18 +30,22 @@ POSSIBILITY OF SUCH DAMAGE.
 
 $Id: n2.cookie.js 8165 2012-05-31 13:14:37Z jpfiset $
 */
-;(function($,$n2){
+;(function($n2){
 
 function getCookies(){
 	var cookies = {};
 	
-	var rawCookies = document.cookie.split(';');
-	for(var i=0,e=rawCookies.length; i<e; ++i){
-		var c = rawCookies[i].split('=');
-		if( c.length && c.length > 1 ) {
-			var key = decodeURIComponent( $n2.trim(c[0]) );
-			var value = decodeURIComponent( $n2.trim(c[1]) );
-			cookies[key]=value;
+	if( typeof document !== 'undefined' 
+	 && document.cookie ) {
+		var rawCookies = document.cookie.split(';');
+
+		for(var i=0,e=rawCookies.length; i<e; ++i){
+			var c = rawCookies[i].split('=');
+			if( c.length && c.length > 1 ) {
+				var key = decodeURIComponent( $n2.trim(c[0]) );
+				var value = decodeURIComponent( $n2.trim(c[1]) );
+				cookies[key]=value;
+			};
 		};
 	};
 	
@@ -116,4 +120,4 @@ $n2.cookie = {
 	,deleteCookie: deleteCookie
 };
 	
-})(jQuery,nunaliit2);
+})(nunaliit2);

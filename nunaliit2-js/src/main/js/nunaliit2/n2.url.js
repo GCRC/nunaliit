@@ -106,29 +106,40 @@ $n2.url = {
 	Url: Url
 	
 	,getCurrentLocation: function(){
-		return new Url({
-			url: window.location.href
-		});
+		if( typeof window === 'object' 
+		 && window.location 
+		 && window.location.href ) {
+			return new Url({
+				url: window.location.href
+			});
+		};
+		
+		return null;
 	}
 
 	,getUrlWithoutHash: function() {
-		return $n2.url.getCurrentLocation().getUrlWithoutHash();
+		var loc = $n2.url.getCurrentLocation();
+		return loc ? loc.getUrlWithoutHash() : null;
 	}
 	
 	,getUrlWithoutParams: function() {
-		return $n2.url.getCurrentLocation().getUrlWithoutParams();
+		var loc = $n2.url.getCurrentLocation();
+		return loc ? loc.getUrlWithoutParams() : null;
 	}
 
 	,getParams: function() {
-		return $n2.url.getCurrentLocation().getParams();
+		var loc = $n2.url.getCurrentLocation();
+		return loc ? loc.getParams() : {};
 	}
 		
 	,getParam: function(name) {
-		return $n2.url.getCurrentLocation().getParam(name);
+		var loc = $n2.url.getCurrentLocation();
+		return loc ? loc.getParam(name) : null;
 	}
 
 	,getParamValue: function(name, defaultValue) {
-		return $n2.url.getCurrentLocation().getParamValue(name, defaultValue);
+		var loc = $n2.url.getCurrentLocation();
+		return loc ? loc.getParamValue(name, defaultValue) : defaultValue;
 	}
 };
 

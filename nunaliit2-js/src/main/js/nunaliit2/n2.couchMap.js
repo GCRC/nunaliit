@@ -30,7 +30,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 $Id: n2.couchMap.js 8437 2012-08-14 17:59:23Z jpfiset $
 */
-;(function($,$n2){
+;(function($n2){
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
@@ -72,16 +72,16 @@ function isAdmin() {
 	var sessionContext = $n2.couch.getSession().getContext();
 	if( sessionContext
 	 && sessionContext.roles ) {
-		if( $.inArray('_admin',sessionContext.roles) !== -1 ) {
+		if( $n2.inArray('_admin',sessionContext.roles) !== -1 ) {
 			admin = true;
 		};
-		if( $.inArray('administrator',sessionContext.roles) !== -1 ) {
+		if( $n2.inArray('administrator',sessionContext.roles) !== -1 ) {
 			admin = true;
 		};
 		if( typeof(n2atlas) === 'object' 
 		 && typeof(n2atlas.name) === 'string' ) {
 			var dbAdmin = n2atlas.name + '_administrator';
-			if( $.inArray(dbAdmin,sessionContext.roles) !== -1 ) {
+			if( $n2.inArray(dbAdmin,sessionContext.roles) !== -1 ) {
 				admin = true;
 			};
 		};
@@ -458,4 +458,4 @@ $n2.couchMap = {
 	,getAllServerRoles: getAllServerRoles
 };
 
-})(jQuery,nunaliit2);
+})(nunaliit2);

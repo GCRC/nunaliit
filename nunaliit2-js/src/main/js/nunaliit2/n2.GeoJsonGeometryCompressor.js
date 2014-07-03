@@ -36,7 +36,7 @@ $Id: n2.GeoJsonGeometryCompressor.js 8165 2012-05-31 13:14:37Z jpfiset $
 // @requires n2.class.js
 // @requires n2.GeoJsonFeatureCoordinatesProcessor.js
 
-;(function($,$n2){
+;(function($n2){
 
 	var DEFAULT_PRECISION = 0.00001;
 	var MIN_POSITIONS_LINEAR_RING = 4;
@@ -127,11 +127,11 @@ $Id: n2.GeoJsonGeometryCompressor.js 8165 2012-05-31 13:14:37Z jpfiset $
 		significantDigits: null,
 			
 		initialize: function(/* ... variable argument list ... */) { // duplicates? - rightmost take precedence
-			this.options = $.extend({}, defaultOptions_GJCC);
+			this.options = $n2.extend({}, defaultOptions_GJCC);
 			for (var i=0; i < arguments.length; i++) { // update o with properties from objects in variable arg list.
 				var o = arguments[i];
 				if ($n2.isDefined(o)) {
-					this.options = $.extend(true, this.options, o);
+					this.options = $n2.extend(true, this.options, o);
 				};
 			};
 			
@@ -297,11 +297,11 @@ $Id: n2.GeoJsonGeometryCompressor.js 8165 2012-05-31 13:14:37Z jpfiset $
 		featureProcessor: null,
 
 		initialize: function(/* ... variable argument list ... */) { // duplicates? - rightmost take precedence
-			this.options = $.extend({}, defaultOptions_GJGC);
+			this.options = $n2.extend({}, defaultOptions_GJGC);
 			for (var i=0; i < arguments.length; i++) { // update o with properties from objects in variable arg list.
 				var o = arguments[i];
 				if ($n2.isDefined(o)) {
-					this.options = $.extend(true, this.options, o);
+					this.options = $n2.extend(true, this.options, o);
 				};
 			};
 
@@ -385,4 +385,4 @@ $Id: n2.GeoJsonGeometryCompressor.js 8165 2012-05-31 13:14:37Z jpfiset $
 		}
 	});
 
-})(jQuery,nunaliit2);
+})(nunaliit2);

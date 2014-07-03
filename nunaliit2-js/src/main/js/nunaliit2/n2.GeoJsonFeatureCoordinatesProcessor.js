@@ -35,7 +35,7 @@ $Id: n2.GeoJsonFeatureCoordinatesProcessor.js 8165 2012-05-31 13:14:37Z jpfiset 
 // @requires n2.utils.js
 // @requires n2.class.js
 
-;(function($,$n2){
+;(function($n2){
 
 	function wrapGeoOutput(type, data, status) {
 		var d;
@@ -172,11 +172,11 @@ $Id: n2.GeoJsonFeatureCoordinatesProcessor.js 8165 2012-05-31 13:14:37Z jpfiset 
 		process: {},
 
 		initialize: function(/* ... variable argument list ... */) { // duplicates? - rightmost take precedence
-			this.options = $.extend({}, defaultOptions);
+			this.options = $n2.extend({}, defaultOptions);
 			for (var i=0; i < arguments.length; i++) { // update o with properties from objects in variable arg list.
 				var o = arguments[i];
 				if ($n2.isDefined(o)) {
-					this.options = $.extend(true, this.options, o);
+					this.options = $n2.extend(true, this.options, o);
 				};
 			};
 			
@@ -437,4 +437,4 @@ $Id: n2.GeoJsonFeatureCoordinatesProcessor.js 8165 2012-05-31 13:14:37Z jpfiset 
 		}
 	});
 
-})(jQuery,nunaliit2);
+})(nunaliit2);

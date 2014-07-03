@@ -40,6 +40,4 @@ nunaliit2 = function(){
 
 if( typeof(nunaliit2CoreScript) === 'undefined' ) nunaliit2CoreScript = 'nunaliit2.js';
 
-var $n2 = window.nunaliit2;
-
 })();

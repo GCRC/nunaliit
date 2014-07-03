@@ -30,7 +30,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 $Id: n2.dispatch.js 8443 2012-08-16 18:04:28Z jpfiset $
 */
-;(function($,$n2){
+;(function($n2){
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
@@ -238,4 +238,4 @@ $n2.dispatch = {
 	Dispatcher: Dispatcher
 };
 
-})(jQuery,nunaliit2);
+})(nunaliit2);

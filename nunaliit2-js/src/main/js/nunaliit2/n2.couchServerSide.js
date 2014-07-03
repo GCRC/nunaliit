@@ -30,7 +30,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 $Id: n2.couchServerSide.js 8443 2012-08-16 18:04:28Z jpfiset $
 */
-;(function($,$n2){
+;(function($n2){
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
@@ -69,7 +69,7 @@ var Notifier = $n2.Class({
 	
 				if(updateRecord.changes) {
 					for(var l=0,k=updateRecord.changes.length; l<k; ++l){
-						var latestRev = updateRecord.changes[l].rev;
+						latestRev = updateRecord.changes[l].rev;
 						if( latestRev.substr(0,2) === '1-' ) {
 							isAdded = true;
 						};
@@ -127,4 +127,4 @@ $n2.couchServerSide = {
 	,DefaultNotifier: null
 };
 
-})(jQuery,nunaliit2);
+})(nunaliit2);
