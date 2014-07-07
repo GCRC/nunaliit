@@ -1236,6 +1236,10 @@ var CouchDocumentEditor = $n2.Class({
     
     ,_displayEditor: function(selectedSchema) {
     	var _this = this;
+		
+		$('body').addClass('nunaliit_editing');
+		$('.n2_disable_on_edit')
+			.attr('disabled','disabled');
     	
     	var data = this.editedDocument;
 		
@@ -1895,6 +1899,10 @@ var CouchDocumentEditor = $n2.Class({
 		this.editedDocument = null;
 		this.editedFeature = null;
 		this.editorContainerId = null;
+		
+		$('body').removeClass('nunaliit_editing');
+		$('.n2_disable_on_edit')
+			.removeAttr('disabled');
 	}
 	
 	,refresh: function() {

@@ -835,7 +835,7 @@ var SearchServer = $n2.Class({
 		// Text box
 		$elem.empty();
 		var searchInput = $('<input type="text">')
-			.addClass('search_panel_input')
+			.addClass('search_panel_input n2_disable_on_edit')
 			.val( searchWidgetLabel )
 			.appendTo($elem);
 		
