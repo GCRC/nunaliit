@@ -351,9 +351,10 @@ var Display = $n2.Class({
 				,treeView: true
 			});
 			
-			var relatedInfoId = $n2.getUniqueId();
-			var $div = $('<div id="'+relatedInfoId+'" class="couchDisplayRelated_'+$n2.utils.stringToHtmlId(data._id)+'"></div>');
-			$elem.append($div);
+			var $div = $('<div>')
+				.addClass('n2Display_relatedInfo couchDisplayRelated_'+$n2.utils.stringToHtmlId(data._id))
+				.appendTo($elem);
+			var relatedInfoId = $n2.utils.getElementIdentifier($div);
 			_this.displayRelatedInfoProcess.display({
 				divId: relatedInfoId
 				,display: _this
