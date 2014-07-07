@@ -262,7 +262,7 @@ public class PathComputer {
 			
 			// Development environment
 			File nunaliit2Dir = computeNunaliitDir(installDir);
-			templatesDir = new File(nunaliit2Dir, "nunaliit2-couch-config/src/main/webapp/WEB-INF/uploadDesignDoc");
+			templatesDir = new File(nunaliit2Dir, "nunaliit2-couch-application/src/main/server_couchapp");
 			if( templatesDir.exists() && templatesDir.isDirectory() ) {
 				return templatesDir;
 			}
@@ -392,7 +392,7 @@ public class PathComputer {
 			
 			// Development environment
 			File nunaliit2Dir = computeNunaliitDir(installDir);
-			templatesDir = new File(nunaliit2Dir, "nunaliit2-couch-config/src/main/webapp/WEB-INF/initializeDocs");
+			templatesDir = new File(nunaliit2Dir, "nunaliit2-couch-application/src/main/initializeDocs");
 			if( templatesDir.exists() && templatesDir.isDirectory() ) {
 				return templatesDir;
 			}
@@ -418,7 +418,7 @@ public class PathComputer {
 			
 			// Development environment
 			File nunaliit2Dir = computeNunaliitDir(installDir);
-			templatesDir = new File(nunaliit2Dir, "nunaliit2-couch-config/src/main/webapp/WEB-INF/updateDocs");
+			templatesDir = new File(nunaliit2Dir, "nunaliit2-couch-application/src/main/updateDocs");
 			if( templatesDir.exists() && templatesDir.isDirectory() ) {
 				return templatesDir;
 			}

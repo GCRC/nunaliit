@@ -96,12 +96,10 @@
 		<module>nunaliit2-js-external</module>
 		<module>nunaliit2-js</module>
 		<module>nunaliit2-war-relations</module>
-		<module>nunaliit2-couch-server</module>
 		<module>nunaliit2-couch-config</module>
 		<module>nunaliit2-couch-client</module>
 		<module>nunaliit2-couch-onUpload</module>
 		<module>nunaliit2-couch-application</module>
-		<module>nunaliit2-atlas-couch</module>
 		<module>nunaliit2-couch-replication</module>
 		<module>nunaliit2-gpx</module>
 		<module>nunaliit2-gpx-jaxb</module>

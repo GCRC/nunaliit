@@ -23,5 +23,13 @@
 			<directory>src/main/submission_couchapp</directory>
 			<outputDirectory>/submission_couchapp/</outputDirectory>
 		</fileSet>
+		<fileSet>
+			<directory>src/main/initializeDocs</directory>
+			<outputDirectory>/initializeDocs/</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<directory>src/main/updateDocs</directory>
+			<outputDirectory>/updateDocs/</outputDirectory>
+		</fileSet>
 	</fileSets>
 </assembly>
