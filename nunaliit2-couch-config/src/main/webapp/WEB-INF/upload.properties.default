@@ -1,5 +1,0 @@
-repositoryDir=./media
-;ffmpegInfoCommand=avprobe $1
-;ffmpegConvertVideoCommand=avconv -i $1 -y -acodec libfaac -ab 48000 -ac 2 -vcodec libx264 -b 128000 -s 320x240 -threads 0 -f mp4 $2
-;ffmpegConvertAudioCommand=avconv -i $1 -y -acodec libfaac -ab 48000 -ac 2 -threads 0 -f mp4 $2
-;ffmpegCreateThumbnailCommand=avconv -i $1 -y -ss 00:00:05 -s 80x60 -r 1 -vframes 1 -f image2 $2

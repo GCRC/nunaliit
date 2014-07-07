@@ -9,7 +9,6 @@
   <artifactId>nunaliit2-couch-config</artifactId>
   <version>2.2.1-SNAPSHOT</version>
   <name>nunaliit2-couch-config</name>
-  <packaging>war</packaging>
   <dependencies>
   	<dependency>
   		<groupId>javax.servlet</groupId>

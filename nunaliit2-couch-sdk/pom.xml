@@ -63,18 +63,6 @@
 									<overWrite>true</overWrite>
 									<outputDirectory>target/couchMobile</outputDirectory>
 								</artifactItem>
-							</artifactItems>
-						</configuration>
-					</execution>
-
-					<execution>
-						<id>couch-app</id>
-						<phase>prepare-package</phase>
-						<goals>
-							<goal>unpack</goal>
-						</goals>
-						<configuration>
-							<artifactItems>
 								<artifactItem>
 									<groupId>ca.carleton.gcrc</groupId>
 									<artifactId>nunaliit2-couch-application</artifactId>
