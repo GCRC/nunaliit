@@ -258,8 +258,8 @@ $n2.couchRequests = $n2.Class({
 		//$n2.log('Requested user doc: ',userDoc);		
 
 		this._dispatch({
-			type: 'userDocument'
-			,userDoc: userDoc
+			type: 'userInfo'
+			,userInfo: userDoc
 		});
 
 		for(var j=0,f=this.userListeners.length; j<f; ++j){
@@ -277,7 +277,7 @@ $n2.couchRequests = $n2.Class({
 		//$n2.log('Requested user doc: ',userDoc);		
 
 		this._dispatch({
-			type: 'userDocumentComplete'
+			type: 'userDocument'
 			,userDoc: userDoc
 		});
 	}

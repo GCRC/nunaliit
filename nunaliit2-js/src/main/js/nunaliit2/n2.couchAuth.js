@@ -63,10 +63,14 @@ var defaultError = function(err, options) {
 
 var AuthService = $n2.Class({
 	options: null
+	
+	,couchServer: null
 
 	,loginStateListeners: null
 	
 	,lastAuthSessionCookie: null
+	
+	,lastSessionContext: null
 	
 	,userServiceAvailable: null
 	
@@ -96,8 +100,17 @@ var AuthService = $n2.Class({
 		
 		this.loginStateListeners = [];
 		this.lastAuthSessionCookie = null;
+		this.lastSessionContext = null;
 		this.userServiceAvailable = false;
 		this.autoRegistrationAvailable = false;
+		
+		if( this.options.atlasDb ){
+			this.couchServer = this.options.atlasDb.server;
+		} else {
+			$n2.log('Couch Server must be specified for CouchDb AuthService');
+			this.options.onError( _loc('Server must be specified for CouchDb AuthService') );
+			return;
+		};
 		
 		// Install login state listeners - don't retain as stored options.
 		if( this.options.listeners ) {
@@ -123,14 +136,13 @@ var AuthService = $n2.Class({
 			}
 		);
 
-		$n2.couch.getSession().refreshContext({
+		this.couchServer.getSession().refreshContext({
 			onSuccess: onSuccess
 			,onError: onError
 		});		
 
-		$n2.couch.getSession().addChangedContextListener(function(){
-			_this._notifyListeners();
-			_this._updateUserWithLoggedIn();
+		this.couchServer.getSession().addChangedContextListener(function(sessionContext){
+			_this._handleSessionContextChange(sessionContext);
 		});
 		
 		if( this.options.autoRefresh
@@ -138,7 +150,7 @@ var AuthService = $n2.Class({
 		 && typeof(setInterval) === 'function' ) {
 			setInterval(
 				function(){
-					$n2.couch.getSession().refreshContext({
+					_this.couchServer.getSession().refreshContext({
 						onError: function(){} // ignore
 					});
 				}
@@ -150,7 +162,7 @@ var AuthService = $n2.Class({
 					var cookie = $n2.cookie.getCookie('NunaliitAuth');
 					if( cookie !== _this.lastAuthSessionCookie ) {
 						_this.lastAuthSessionCookie = cookie;
-						$n2.couch.getSession().refreshContext({
+						_this.couchServer.getSession().refreshContext({
 							onError: function(){} // ignore
 						});
 					};
@@ -242,21 +254,12 @@ var AuthService = $n2.Class({
 	
 	,_notifyListeners: function() {
 		var context = this._getAuthContext();
-		var userDoc = this._getCurrentUserDoc();
 		
 		var userName = null;
 		if( context ) {
 			userName = context.name;
 		};
 		
-		if( this.currentUserDoc 
-		 && this.currentUserDoc.name != userName ){
-			this.currentUserDoc = null;
-		};
-		if( userDoc ){
-			this.currentUserDoc = userDoc;
-		};
-
 		var isAdmin = false;
 		if( context 
 		 && context.roles 
@@ -280,13 +283,6 @@ var AuthService = $n2.Class({
 			$body.removeClass('nunaliit_logged_in');
 			$body.addClass('nunaliit_logged_out');
 		};
-		if( this.currentUserDoc
-		 && this.currentUserDoc.nunaliit_options
-		 && this.currentUserDoc.nunaliit_options.advanced ){
-			$body.addClass('nunaliit_user_advanced');
-		} else {
-			$body.removeClass('nunaliit_user_advanced');
-		};
 		if( isAdmin ) {
 			$body.addClass('nunaliit_user_administrator');
 		} else {
@@ -298,7 +294,6 @@ var AuthService = $n2.Class({
 			this._dispatch({
 				type: 'authLoggedIn'
 				,user: context
-				,userDoc: userDoc
 			});
 		} else {
 			this._dispatch({
@@ -321,18 +316,13 @@ var AuthService = $n2.Class({
 	
 	,_getCurrentListenerInfo: function(){
 		var context = this._getAuthContext();
-		var userDoc = this._getCurrentUserDoc();
 		
 		var info = null;
 		if( context && context.name ){
-			info = {};
-			for(var key in context){
-				info[key] = context[key];
+			info = {
+				name: context.name
+				,roles: context.roles
 			};
-		};
-		
-		if( info && userDoc ){
-			info.userDoc = userDoc;
 		};
 		
 		return info;
@@ -381,7 +371,7 @@ var AuthService = $n2.Class({
 		};
 		
 		function doLogin() {
-			$n2.couch.getSession().login({
+			_this.couchServer.getSession().login({
 				name: username
 				,password: password
 				,onSuccess: checkUserAgreement
@@ -393,7 +383,7 @@ var AuthService = $n2.Class({
 		};
 		
 		function checkUserAgreement(sessionResult){
-			$n2.couch.getUserDb().getUser({
+			_this.couchServer.getUserDb().getUser({
 				name: username
 				,onSuccess: function(userDoc){
 					// If the user agreement was accepted, the user
@@ -653,7 +643,7 @@ var AuthService = $n2.Class({
 		
 		function saveUserAnswers(sessionResult, userDoc, answers){
     		// Must reload the user document since it might have changed
-			$n2.couch.getUserDb().getUser({
+			_this.couchServer.getUserDb().getUser({
 				name: userDoc.name
 				,onSuccess: function(userDoc){
 					var atlasName = _this._getAtlasName();
@@ -664,7 +654,7 @@ var AuthService = $n2.Class({
 
 					userDoc.nunaliit_answers[atlasName] = answers;
 					
-					$n2.couch.getUserDb().updateDocument({
+					_this.couchServer.getUserDb().updateDocument({
 						data: userDoc
 						,onSuccess: reloadUserDoc
 						,onError: errorSavingAnswers
@@ -680,7 +670,7 @@ var AuthService = $n2.Class({
 			};
 			
 			function reloadUserDoc(){
-				$n2.couch.getUserDb().getUser({
+				_this.couchServer.getUserDb().getUser({
 					id: userDoc._id
 					,onSuccess: function(updatedUserDoc){
 						onLoginCompleted(sessionResult, updatedUserDoc);
@@ -695,7 +685,7 @@ var AuthService = $n2.Class({
 		
 		function onLoginCompleted(result, userDoc) {
 
-			var context = $n2.couch.getSession().getContext();
+			var context = _this.couchServer.getSession().getContext();
 
 			$n2.log('Login successful',context,opts);
 			
@@ -709,7 +699,7 @@ var AuthService = $n2.Class({
 		};
 		
 		function onError(err) {
-			$n2.couch.getSession().logout({
+			_this.couchServer.getSession().logout({
 				onError: function(){}
 			});			
 			$n2.log('Login error', err);
@@ -1002,7 +992,7 @@ var AuthService = $n2.Class({
 				display = user;
 			};
 			
-			$n2.couch.getUserDb().createUser({
+			_this.couchServer.getUserDb().createUser({
 				name: user
 				,password: password
 				,display: display
@@ -1378,7 +1368,7 @@ var AuthService = $n2.Class({
 		
 		var _this = this;
 
-		$n2.couch.getSession().logout({
+		this.couchServer.getSession().logout({
 			onSuccess: onSuccess
 			,onError: opts.onError
 		});
@@ -1404,19 +1394,20 @@ var AuthService = $n2.Class({
 		
 		var userName = opts.userName;
 		if( !userName ){
-			var currentUser = this._getCurrentUserDoc();
-			if( currentUser._id ) {
-				// This is the user document
-				userDocLoaded(currentUser);
-				return;
-			} else {
+			var context = this._getAuthContext();
+			if( context && context.name ){
 				// All we have is a name
-				userName = currentUser.name;
+				userName = context.name;
 			};
 		};
 		
+		if( !userName ){
+			opts.onError('No user name provided');
+			return;
+		};
+		
 		// Get document
-		$n2.couch.getUserDb().getUser({
+		this.couchServer.getUserDb().getUser({
 			name: userName
 			,onSuccess: userDocLoaded
 			,onError: function(err){
@@ -1511,20 +1502,13 @@ var AuthService = $n2.Class({
 		};
 
 		return admin;
-	}
+	},
 	
-	,_getCurrentUserDoc: function() {
-		var context = this._getAuthContext();
-
-		if( context && context.userDoc ) {
-			return context.userDoc;
-		};
-
-		return null;
-	}
-
-	,_getAuthContext: function() {
-		return $n2.couch.getSession().getContext();
+	/*
+	 * Returns context obtained from CouchDb session
+	 */
+	_getAuthContext: function() {
+		return this.couchServer.getSession().getContext();
 	}
 	
 	,isLoggedIn: function() {
@@ -1597,6 +1581,67 @@ var AuthService = $n2.Class({
 			var h = dispatcher.getHandle('n2.couchAuth');
 			dispatcher.send(h,m);
 		};
+	},
+	
+	/*
+	 * This function is called everytime the CouchDb context is refreshed.
+	 * This can happen often, since the CouchDb layer performs this at a set
+	 * interval.
+	 */
+	_handleSessionContextChange: function(sessionContext){
+		var _this = this;
+		
+		var same = $n2.couch.compareSessionContexts(this.lastSessionContext, sessionContext);
+		if( !same ){
+			this.lastSessionContext = sessionContext;
+			this.currentUserDoc = null;
+			
+			this._notifyListeners();
+
+			// Get current user doc
+			if( sessionContext.name ){
+				this.couchServer.getUserDb().getUser({
+					name: sessionContext.name
+					,onSuccess: function(userDoc){
+						// Check that it is still valid
+						if( userDoc.name === _this.lastSessionContext.name ) {
+							_this._handleCurrentUserDoc(userDoc);
+						};
+					}
+					,onError: function(err){
+						// No document associated with this user
+						// Check that request is still valid
+						if( sessionContext.name === _this.lastSessionContext.name ) {
+							_this._handleCurrentUserDoc(null);
+						};
+					}
+				});
+			};
+		};
+	},
+	
+	_handleCurrentUserDoc: function(userDoc){
+		this.currentUserDoc = userDoc;
+
+		// Notify DOM classes
+		var $body = $('body');
+		if( this.currentUserDoc
+		 && this.currentUserDoc.nunaliit_options
+		 && this.currentUserDoc.nunaliit_options.advanced ){
+			$body.addClass('nunaliit_user_advanced');
+		} else {
+			$body.removeClass('nunaliit_user_advanced');
+		};
+
+		if( userDoc ) {
+			this._dispatch({
+				type: 'authCurrentUserDoc'
+				,userDoc: userDoc
+			});
+		};
+		
+		// Perform updates to the user document, if needed
+		this._updateUserDocWithLoggedIn();
 	}
 	
 	,_handleEvent: function(m){
@@ -1616,6 +1661,8 @@ var AuthService = $n2.Class({
 			// Synchronous call
 			if( this.isLoggedIn() ){
 				m.isLoggedIn = true;
+				m.context = this.lastSessionContext;
+				m.userDoc = this.currentUserDoc;
 			};
 		};
 	}
@@ -1640,18 +1687,18 @@ var AuthService = $n2.Class({
 		};
 
 		return flag;
-	}
+	},
 	
-	,_updateUserWithLoggedIn: function(){
-		// This function verifies if a user is logged in and if so,
-		// updates the user's document to reflect that the user
-		// is accessing the current atlas
-		var authContext = this._getAuthContext();
-		if( authContext
-		 && authContext.userDoc // logged in and userDoc available 
+	/*
+	 * This function verifies if a user is logged in and if so,
+	 * updates the user's document to reflect that the user
+	 * is accessing the current atlas
+	 */
+	_updateUserDocWithLoggedIn: function(){
+		var userDoc = this.currentUserDoc;
+		if( userDoc // logged in and userDoc available 
 		 && n2atlas
 		 && n2atlas.name ){
-			var userDoc = authContext.userDoc;
 			if( userDoc.nunaliit_atlases
 			 && userDoc.nunaliit_atlases[n2atlas.name] 
 			 && userDoc.nunaliit_atlases[n2atlas.name].auth ) {
@@ -1668,7 +1715,7 @@ var AuthService = $n2.Class({
 				};
 				userDoc.nunaliit_atlases[n2atlas.name].auth = true;
 				
-				$n2.couch.getUserDb().updateDocument({
+				this.couchServer.getUserDb().updateDocument({
 					data: userDoc
 					,onSuccess: function() { 
 						// Just fine
@@ -1735,32 +1782,36 @@ var AuthWidget = $n2.Class({
 			this.elemId = $n2.utils.getElementIdentifier(opts.elem);
 		};
 		
-		if( this.authService ){
-			this.authService.addListeners(function(ctxt){
-				if( ctxt && ctxt.name ){
-					if( _this.currentUserName !== ctxt.name ){
-						_this.currentUserName = ctxt.name;
-						_this.currentUserDisplay = null;
-					};
-					
-					if( ctxt.userDoc && ctxt.userDoc.display ){
-						_this.currentUserDisplay = ctxt.userDoc.display;
-					};
-				} else {
-					_this.currentUserName = null;
-					_this.currentUserDisplay = null;
-				};
-
-				_this._loginStateChanged();
-			});
-		};
-		
 		if( this.dispatchService ){
 			var f = function(m, addr, d){
 				_this._handleDispatch(m, addr, d);
 			};
+			this.dispatchService.register(DH,'authLoggedIn',f);
+			this.dispatchService.register(DH,'authLoggedOut',f);
+			this.dispatchService.register(DH,'authCurrentUserDoc',f);
+			this.dispatchService.register(DH,'userInfo',f);
 			this.dispatchService.register(DH,'userDocument',f);
-			this.dispatchService.register(DH,'userDocumentComplete',f);
+
+			// Initialize State
+			var m = {
+				type: 'authIsLoggedIn'
+				,isLoggedIn: false
+			};
+			this.dispatchService.synchronousCall(DH,m);
+			if( m.isLoggedIn ){
+				if( m.context && m.context.name ){
+					this.currentUserName = m.context.name;
+				};
+				if( m.userDoc && m.userDoc.display ){
+					this.currentUserDisplay = m.userDoc.display;
+				};
+				
+			} else {
+				this.currentUserName = null;
+				this.currentUserDisplay = null;
+			};
+			
+			this._loginStateChanged();
 		};
 	}
 
@@ -1777,14 +1828,36 @@ var AuthWidget = $n2.Class({
 			return;
 		};
 		
-		if( 'userDocument' === m.type ){
-			if( m.userDoc 
-			 && this.currentUserName === m.userDoc.name ){
-				this.currentUserDisplay = m.userDoc.display;
+		if( 'authLoggedIn' === m.type ){
+			var ctxt = m.user;
+			if( this.currentUserName !== ctxt.name ){
+				this.currentUserName = ctxt.name;
+				this.currentUserDisplay = null;
+
+				this._loginStateChanged();
+			};
+			
+		} else if( 'authLoggedOut' === m.type ){
+			this.currentUserName = null;
+			this.currentUserDisplay = null;
+			this._loginStateChanged();
+			
+		} else if( 'authCurrentUserDoc' === m.type ){
+			var userDoc = m.userDoc;
+			if( userDoc
+			 && userDoc.display !== this.currentUserDisplay ){
+				this.currentUserDisplay = userDoc.display;
+				this._loginStateChanged();
+			};
+			
+		} else if( 'userInfo' === m.type ){
+			if( m.userInfo 
+			 && this.currentUserName === m.userInfo.name ){
+				this.currentUserDisplay = m.userInfo.display;
 				this._loginStateChanged();
 			};
 
-		} else if( 'userDocumentComplete' === m.type ){
+		} else if( 'userDocument' === m.type ){
 			if( m.userDoc 
 			 && this.currentUserName === m.userDoc.name ){
 				this.currentUserDisplay = m.userDoc.display;

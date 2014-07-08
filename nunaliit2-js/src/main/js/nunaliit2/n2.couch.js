@@ -65,11 +65,60 @@ function fixUserName(userName) {
 // Session
 // =============================================
 
+/*
+ * Accepts two CouchDb session context objects and compares
+ * them. If they are equivalent, returns true. Otherwise, false.
+ */
+function compareSessionContexts(s1, s2){
+	// This takes care of same object and both objects null
+	if( s1 === s2 ) {
+		return true;
+	};
+	
+	// Check that one of them is null or undefined
+	if( !s1 ){
+		return false;
+	};
+	if( !s2 ){
+		return false;
+	};
+	
+	if( s1.name !== s2.name ){
+		return false;
+	};
+
+	// Compare roles
+	var s1Roles = {};
+	if( s1.roles ){
+		for(var i=0,e=s1.roles.length; i<e; ++i){
+			var role = s1.roles[i];
+			s1Roles[role] = true;
+		};
+	};
+	var s2Roles = {};
+	if( s2.roles ){
+		for(var i=0,e=s2.roles.length; i<e; ++i){
+			var role = s2.roles[i];
+			s2Roles[role] = true;
+		};
+	};
+	for(var role in s1Roles){
+		if( !s2Roles[role] ){
+			return false;
+		};
+	};
+	for(var role in s2Roles){
+		if( !s1Roles[role] ){
+			return false;
+		};
+	};
+	
+	return true;
+};
+
 var Session = $n2.Class({
 	
 	server: null
-	
-	,userDb: null
 	
 	,pathToSession: null
 	
@@ -77,10 +126,9 @@ var Session = $n2.Class({
 	
 	,lastSessionContext: null
 	
-	,initialize: function(server_, userDb_, sessionInfo_){
+	,initialize: function(server_, sessionInfo_){
 	
 		this.server = server_;
-		this.userDb = userDb_;
 		
 		this.changedContextListeners = [];
 		this.lastSessionContext = null;
@@ -112,8 +160,6 @@ var Session = $n2.Class({
 	}
 	
 	,changeContext: function(context) {
-		var _this = this;
-		
 		this.lastSessionContext = context;
 		if( this.lastSessionContext ) {
 			for(var i=0,e=this.changedContextListeners.length; i<e; ++i) {
@@ -121,21 +167,6 @@ var Session = $n2.Class({
 				try {
 					listener(this.lastSessionContext);
 				} catch(e) {};
-			};
-			
-			if( !this.lastSessionContext.userDoc && this.lastSessionContext.name ) {
-				// Try to obtain information from user db
-				this.userDb.getUser({
-					name: this.lastSessionContext.name
-					,onError: function(){} // ignore errors
-					,onSuccess: function( userDoc ){
-						if( _this.lastSessionContext
-						 && _this.lastSessionContext.name === userDoc.name ) {
-							_this.lastSessionContext.userDoc = userDoc;
-							_this.changeContext(_this.lastSessionContext); // call listeners
-						}
-					}
-				});
 			};
 		};
 	}
@@ -350,11 +381,10 @@ var designDoc = $n2.Class({
 		if( mustBePost ) {
 			var jsonData = JSON.stringify( data );
 			
+			var effectiveUrl = viewUrl;
 			if( queryCount > 0 ){
 				var params = $.param(query);
-				var effectiveUrl = viewUrl + '?' + params;
-			} else {
-				var effectiveUrl = viewUrl;
+				effectiveUrl = viewUrl + '?' + params;
 			};
 			
 			$.ajax({
@@ -2187,8 +2217,7 @@ var Server = $n2.Class({
 
 	,getSession: function(sessionInfo) {
 		if( !this.session ) {
-			var userDb = this.getUserDb();
-			this.session = new Session(this,userDb,sessionInfo);
+			this.session = new Session(this,sessionInfo);
 		};
 		
 		return this.session;
@@ -2431,6 +2460,8 @@ $n2.couch = $.extend({},{
 	}
 	
 	,addAttachmentToDocument: addAttachmentToDocument
+	
+	,compareSessionContexts: compareSessionContexts
 });
 
 

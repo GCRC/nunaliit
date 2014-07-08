@@ -120,7 +120,7 @@
 				var f = function(m, address, dispatcher){
 					_this._handleMessage(m, address, dispatcher);
 				};
-				this.dispatchService.register(DH,'userDocumentComplete',f);
+				this.dispatchService.register(DH,'userDocument',f);
 			};
 			
 			this._clear();
@@ -1301,7 +1301,7 @@
 			if( $div.length < 1 ){
 				dispatcher.deregister(address);
 				
-			} else if( 'userDocumentComplete' === m.type ) {
+			} else if( 'userDocument' === m.type ) {
 				this._loadedUserDoc(m.userDoc);
 			};
 		}
