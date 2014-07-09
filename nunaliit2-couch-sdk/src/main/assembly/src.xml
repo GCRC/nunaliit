@@ -49,7 +49,7 @@
 			<outputDirectory>/internal/mobileDesign</outputDirectory>
 		</fileSet>
 		<fileSet>
-			<directory>target/nunaliit2-js</directory>
+			<directory>target/nunaliit2-js/nunaliit2</directory>
 			<outputDirectory>/internal/nunaliit2</outputDirectory>
 		</fileSet>
 		<fileSet>

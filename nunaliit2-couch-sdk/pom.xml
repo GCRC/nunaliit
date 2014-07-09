@@ -79,7 +79,7 @@
 									<classifier>js</classifier>
 									<type>zip</type>
 									<overWrite>true</overWrite>
-									<outputDirectory>target/nunaliit-js</outputDirectory>
+									<outputDirectory>target/nunaliit2-js</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>ca.carleton.gcrc</groupId>
