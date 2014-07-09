@@ -20,6 +20,10 @@
 			<outputDirectory>/config_couchapp/</outputDirectory>
 		</fileSet>
 		<fileSet>
+			<directory>src/main/server_couchapp</directory>
+			<outputDirectory>/server_couchapp/</outputDirectory>
+		</fileSet>
+		<fileSet>
 			<directory>src/main/submission_couchapp</directory>
 			<outputDirectory>/submission_couchapp/</outputDirectory>
 		</fileSet>
