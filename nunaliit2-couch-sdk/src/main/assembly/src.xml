@@ -53,7 +53,7 @@
 			<outputDirectory>/internal/nunaliit2</outputDirectory>
 		</fileSet>
 		<fileSet>
-			<directory>target/js-external</directory>
+			<directory>target/js-external/js-external</directory>
 			<outputDirectory>/internal/js-external</outputDirectory>
 		</fileSet>
 		<fileSet>
