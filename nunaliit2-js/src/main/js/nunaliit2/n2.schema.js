@@ -1748,26 +1748,12 @@ var Form = $n2.Class({
 
 				// On key down, save previous value
 				$input.keydown(function(event) {
-					if( typeof(this._n2Numeric) !== 'undefined' ){
-						// Keydown/keyup sequence already in progress, let's
-						// not get ahead of ourselves
-						event.preventDefault();
-						//$n2.log('prevent',val,event);
-						return;
-					};
+					var $input = $(this);
 					
-					// In case of CTRL, SHIFT and ALT (long standing keys)
-					// do not save current state so that we do not prevent
-					// the next key (probably a combined key like CTRL-A)
-					if( event.keyCode >= 16 && event.keyCode <= 18 ){
-						// Ignore
-					} else {
-						var $input = $(this);
-						var val = $input.val();
-						this._n2Numeric = val;
-					};
+					var val = $input.val();
+					$input.attr('n2Numeric', val);
 
-					//$n2.log('key down',val,event);
+					//$n2.log('key down',val,event.keyCode,event);
 				});
 
 				// On key up, verify that new value is correct
@@ -1775,8 +1761,7 @@ var Form = $n2.Class({
 				$input.keyup(function(event) {
 					var $input = $(this);
 					
-					var previous = this._n2Numeric;
-					delete this._n2Numeric;
+					var previous = $input.attr('n2Numeric');
 					
 					var val = $input.val();
 					if( '' === val 

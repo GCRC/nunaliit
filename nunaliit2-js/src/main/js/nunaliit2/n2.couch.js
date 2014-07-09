@@ -295,7 +295,15 @@ var designDoc = $n2.Class({
 	,ddName: null
 	
 	,initialize: function(opts_) {
-		$.extend(this,opts_);
+		var opts = $n2.extend({
+			ddUrl: null
+			,ddName: null
+			,db: null
+		},opts_);
+		
+		this.ddUrl = opts.ddUrl;
+		this.ddName = opts.ddName;
+		this.db = opts.db;
 	}
 	
 	,getQueryUrl: function(opts_){
@@ -757,6 +765,8 @@ var Database = $n2.Class({
 			ddOpts.ddUrl = this.dbUrl + '_design/' + ddOpts.ddName + '/';
 		};
 		
+		ddOpts.db = this;
+		
 		return new designDoc(ddOpts);
 	}
 	
@@ -808,8 +818,6 @@ var Database = $n2.Class({
 		
 		var changeUrl = this.dbUrl + '_changes';
 
-		var _this = this;
-		
 		$.ajax({
 	    	url: changeUrl
 	    	,type: 'GET'
