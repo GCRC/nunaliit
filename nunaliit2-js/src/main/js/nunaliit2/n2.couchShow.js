@@ -46,16 +46,41 @@ var reUrl = /(^|\s)(https?:\/\/[^\s]*)(\s|$)/;
 // *******************************************************
 var DomStyler = $n2.Class({
 	
-	options: null
-
-	,showService: null
+	db: null,
 	
-	,initialize: function(options_, showService_){
-		this.options = options_;
-		this.showService = showService_;
-	}
+	documentSource: null,
 
-	,fixElementAndChildren: function($elem, opt, contextDoc){
+	showService: null,
+	
+	displayFunction: null,
+	
+	editFunction: null,
+	
+	deleteFunction: null,
+	
+	viewLayerFunction: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			db: null
+			,documentSource: null
+			,showService: null
+			,displayFunction: null
+			,editFunction: null
+			,deleteFunction: null
+			,viewLayerFunction: null
+		},opts_);
+		
+		this.db = opts.db;
+		this.documentSource = opts.documentSource;
+		this.showService = opts.showService;
+		this.displayFunction = opts.displayFunction;
+		this.editFunction = opts.editFunction;
+		this.deleteFunction = opts.deleteFunction;
+		this.viewLayerFunction = opts.viewLayerFunction;
+	},
+
+	fixElementAndChildren: function($elem, opt, contextDoc){
 		var _this = this;
 		
 		var $set = $elem.find('*').addBack();
@@ -190,17 +215,17 @@ var DomStyler = $n2.Class({
 			_this._preserveSpaces($jq, opt);
 			$jq.removeClass('n2s_preserveSpaces').addClass('n2s_preservedSpaces');
 		});
-	}
+	},
 
-	,_localize: function($jq, opt_) {
+	_localize: function($jq, opt_) {
 		var text = $jq.text();
 		var locText = _loc(text);
 		if( locText ) {
 			$jq.text(locText);
 		};
-	}
+	},
 	
-	,_preserveSpaces: function($jq, opt_) {
+	_preserveSpaces: function($jq, opt_) {
 		$jq.each(function(){
 			performPreserveSpace(this);
 		});
@@ -217,39 +242,39 @@ var DomStyler = $n2.Class({
 				};
 			};
 		};
-	}
+	},
 	
-	,_briefDisplay: function($jq, opt_) {
+	_briefDisplay: function($jq, opt_) {
 		var docId = $jq.text();
 		this.showService.printBriefDescription($jq, docId);
-	}
+	},
 	
-	,_insertReferenceLink: function($jq, opt_) {
+	_insertReferenceLink: function($jq, opt_) {
 		var _this = this;
 
 		var docId = $jq.text();
 		this.showService.printBriefDescription($jq, docId);
 		$jq.click(function(){
-			var dispatchService = _this.showService.getDispatchService();
+			var dispatchService = _this.showService.dispatchService;
 			if( dispatchService ) {
 				dispatchService.send(DH, {type:'userSelect',docId:docId});
 			};
 
-			if( _this.options.displayFunction ) {
-				_this.options.displayFunction(docId,opt_);
+			if( _this.displayFunction ) {
+				_this.displayFunction(docId,opt_);
 			};
 
 			return false;
 		});
-	}
+	},
 	
-	,_insertTime: function($jq, opt_) {
+	_insertTime: function($jq, opt_) {
 		var time = 1 * $jq.text();
 		var timeStr = (new Date(time)).toString();
 		$jq.text(timeStr);
-	}
+	},
 	
-	,_insertUserName: function($jq, opt_) {
+	_insertUserName: function($jq, opt_) {
 		var userName = $jq.text();
 		
 		this.showService.printUserName(
@@ -257,18 +282,18 @@ var DomStyler = $n2.Class({
 			,userName
 			,{showHandle:true}
 			);
-	}
+	},
 	
-	,_insertLayerName: function($jq, opt_) {
+	_insertLayerName: function($jq, opt_) {
 		var layerIdentifier = $jq.text();
 		
 		this.showService.printLayerName(
 			$jq
 			,layerIdentifier
 			);
-	}
+	},
 
-	,_insertMediaView: function(data, $insertView, opt_) {
+	_insertMediaView: function(data, $insertView, opt_) {
 		var _this = this;
 		var attachmentName = $insertView.attr('nunaliit-attachment');
 		if( !attachmentName ) {
@@ -294,14 +319,14 @@ var DomStyler = $n2.Class({
 		 && attDesc.status === 'attached'
 		 && attachment ) {
 			
-			var attUrl = this.options.db.getAttachmentUrl(data,attachmentName);
+			var attUrl = this.db.getAttachmentUrl(data,attachmentName);
 
 			// An attachment was uploaded for this file
 			var linkDiv = null;
 			if( attDesc.thumbnail
 			 && data._attachments[attDesc.thumbnail]
 			 ) {
-				var thumbUrl = this.options.db.getAttachmentUrl(data,attDesc.thumbnail);
+				var thumbUrl = this.db.getAttachmentUrl(data,attDesc.thumbnail);
 				linkDiv = $('<div class="n2Show_thumb_wrapper"><img src="'+thumbUrl+'"/></div>');
 
 			} else if( attDesc.fileClass === 'image' ) {
@@ -385,9 +410,9 @@ var DomStyler = $n2.Class({
 				return false;
 			};
 		};
-	}
+	},
 	
-	,_insertHoverSoundIcon: function(data, $insertHoverSoundIcon, opt_){
+	_insertHoverSoundIcon: function(data, $insertHoverSoundIcon, opt_){
 		var _this = this;
 		var playSound = false;
 
@@ -403,7 +428,7 @@ var DomStyler = $n2.Class({
 		};
 		
 		function toggleHoverSound(){
-			var dispatchService = _this.showService.getDispatchService();
+			var dispatchService = _this.showService.dispatchService;
 			if( dispatchService ) {
 				if( !playSound ) {
 					dispatchService.send(DH, {type:'playHoverSoundOn',doc:data});
@@ -414,9 +439,9 @@ var DomStyler = $n2.Class({
 				};
 			};
 		};
-	}
+	},
 	
-	,_adjustExternalMediaLink: function(data, $externalLink, opt_) {
+	_adjustExternalMediaLink: function(data, $externalLink, opt_) {
 		var attachmentName = $externalLink.attr('href');
 		
 		var attachment = null;
@@ -436,7 +461,7 @@ var DomStyler = $n2.Class({
 		 && attDesc.status === 'attached' 
 		 && attachment ) {
 			
-			var attUrl = this.options.db.getAttachmentUrl(data,attachmentName);
+			var attUrl = this.db.getAttachmentUrl(data,attachmentName);
 
 			$externalLink.attr('href',attUrl);
 			$externalLink.click(function(e){
@@ -454,9 +479,9 @@ var DomStyler = $n2.Class({
 				return false;
 			});
 		};
-	}
+	},
 	
-	,_insertExternalMediaLink: function(data, $div, opt_) {
+	_insertExternalMediaLink: function(data, $div, opt_) {
 		var attachmentName = $div.attr('nunaliit-attachment');
 		
 		$div.empty();
@@ -477,13 +502,13 @@ var DomStyler = $n2.Class({
 		if( attDesc
 		 && attDesc.status === 'attached' 
 		 && attachment ) {
-			var attUrl = this.options.db.getAttachmentUrl(data,attachmentName);
+			var attUrl = this.db.getAttachmentUrl(data,attachmentName);
 			
 			// Check if original is available
 			if( attDesc.originalAttachment
 			 && data._attachments[attDesc.originalAttachment] ) {
 				// Use original attachment, instead
-				attUrl = this.options.db.getAttachmentUrl(data,attDesc.originalAttachment);
+				attUrl = this.db.getAttachmentUrl(data,attDesc.originalAttachment);
 			};
 
 			// <a class="n2s_externalMediaLink" href="{{.}}">
@@ -511,9 +536,9 @@ var DomStyler = $n2.Class({
 				.text(name)
 				.appendTo($a);
 		};
-	}
+	},
 	
-	,_convertTextUrlToLink: function(data, $jq, opt_) {
+	_convertTextUrlToLink: function(data, $jq, opt_) {
 		$jq.each(function(){
 			performTextUrlToLink(this);
 		});
@@ -565,10 +590,10 @@ var DomStyler = $n2.Class({
 				parent.removeChild(textNode);
 			};
 		};
-	}
+	},
 	
-	,_clickFindGeometryOnMap: function(data, $jq, opt){
-		var dispatcher = this.showService.getDispatchService();
+	_clickFindGeometryOnMap: function(data, $jq, opt){
+		var dispatcher = this.showService.dispatchService;
 
 		if( data 
 		 && data.nunaliit_geom 
@@ -594,13 +619,13 @@ var DomStyler = $n2.Class({
 		} else {
 			$jq.remove();
 		};
-	}
+	},
 	
-	,_clickAddLayerFromDefinition: function(contextDoc, $jq, opt){
+	_clickAddLayerFromDefinition: function(contextDoc, $jq, opt){
 		var _this = this;
 
-		var viewLayerFunction = this.options.viewLayerFunction;
-		var dispatchService = _this.showService.getDispatchService();
+		var viewLayerFunction = this.viewLayerFunction;
+		var dispatchService = _this.showService.dispatchService;
 		
 		if( viewLayerFunction || dispatchService ) {
 			if( contextDoc
@@ -622,7 +647,7 @@ var DomStyler = $n2.Class({
 							,type: 'couchdb'
 							,couchDb: {
 								layerName: layerId
-								,documentSource: _this.options.documentSource
+								,documentSource: _this.documentSource
 							}
 						};
 						
@@ -649,35 +674,35 @@ var DomStyler = $n2.Class({
 		} else {
 			$jq.remove();
 		};
-	}
+	},
 	
-	,_clickEdit: function(contextDoc, $jq, opt){
+	_clickEdit: function(contextDoc, $jq, opt){
 		var _this = this;
 
-		if( this.options.editFunction ) {
+		if( this.editFunction ) {
 			$jq.click(function(){
-				_this.options.editFunction(contextDoc,opt);
+				_this.editFunction(contextDoc,opt);
 				return false;
 			});
 		} else {
 			$jq.empty();
 		};
-	}
+	},
 	
-	,_clickDelete: function(contextDoc, $jq, opt){
+	_clickDelete: function(contextDoc, $jq, opt){
 		var _this = this;
 
-		if( this.options.deleteFunction ) {
+		if( this.deleteFunction ) {
 			$jq.click(function(){
-				_this.options.deleteFunction(contextDoc,opt);
+				_this.deleteFunction(contextDoc,opt);
 				return false;
 			});
 		} else {
 			$jq.empty();
 		};
-	}
+	},
 	
-	,_installMaxHeight: function(contextDoc, $jq, opt){
+	_installMaxHeight: function(contextDoc, $jq, opt){
 		var maxHeight = $jq.attr('_maxheight');
 		
 		if( !maxHeight ) {
@@ -731,11 +756,11 @@ var DomStyler = $n2.Class({
 				.append($link)
 				.appendTo($jq);
 		};
-	}
+	},
 	
-	,_handleHover : function(contextDoc, $jq, opt){
+	_handleHover : function(contextDoc, $jq, opt){
 
-		var dispatchService = this.showService.getDispatchService();
+		var dispatchService = this.showService.dispatchService;
 
 		if( dispatchService ) {
 			$jq.hover(
@@ -761,31 +786,94 @@ var DomStyler = $n2.Class({
 //*******************************************************
 var Show = $n2.Class({
 
-	options: null
+	options: null,
 	
-	,domStyler: null
+	db: null,
 	
-	,initialize: function(opts_){
-		this.options = $n2.extend({
+	documentSource: null,
+	
+	requestService: null,
+	
+	notifierService: null,
+	
+	dispatchService: null,
+	
+	schemaRepository: null,
+	
+	customService: null,
+	
+	defaultSchema: null,
+	
+	displayFunction: null,
+	
+	editFunction: null,
+	
+	deleteFunction: null,
+	
+	viewLayerFunction: null,
+	
+	preprocessDocument: null,
+	
+	eliminateDeniedMedia: null,
+	
+	eliminateNonApprovedMedia: null,
+	
+	domStyler: null,
+	
+	postProcessDisplayFns: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
 			db: null
-			,designDoc: null
 			,documentSource: null
-			,serviceDirectory: null
+			,requestService: null
+			,notifierService: null
+			,dispatchService: null
+			,schemaRepository: null
+			,customService: null
 			,defaultSchema: null
 			,displayFunction: null
 			,editFunction: null
 			,deleteFunction: null
 			,viewLayerFunction: null
-			,preprocessDocument: function(doc){ return doc; }
+			,preprocessDocument: null
 			,eliminateDeniedMedia: false
 			,eliminateNonApprovedMedia: false
 		},opts_);
 		
 		var _this = this;
 		
-		this.domStyler = new DomStyler(this.options, this);
+		// Legacy
+		this.options = {};
+		
+		this.db = opts.db;
+		this.documentSource = opts.documentSource;
+		this.requestService = opts.requestService;
+		this.notifierService = opts.notifierService;
+		this.dispatchService = opts.dispatchService;
+		this.schemaRepository = opts.schemaRepository;
+		this.customService = opts.customService;
+		this.defaultSchema = opts.defaultSchema;
+		this.displayFunction = opts.displayFunction;
+		this.editFunction = opts.editFunction;
+		this.deleteFunction = opts.deleteFunction;
+		this.viewLayerFunction = opts.viewLayerFunction;
+		this.options.preprocessDocument = opts.preprocessDocument;
+		this.eliminateDeniedMedia = opts.eliminateDeniedMedia;
+		this.eliminateNonApprovedMedia = opts.eliminateNonApprovedMedia;
+		this.postProcessDisplayFns = [];
+		
+		this.domStyler = new DomStyler({
+			db: this.db
+			,documentSource: this.documentSource
+			,showService: this
+			,displayFunction: this.displayFunction
+			,editFunction: this.editFunction
+			,deleteFunction: this.deleteFunction
+			,viewLayerFunction: this.viewLayerFunction
+		});
 
-		var requestService = this.getRequestService();
+		var requestService = this.requestService;
 		if( requestService ){
 			requestService.addUserListener(function(userDoc){
 				_this._displayUserDocument(userDoc);
@@ -795,67 +883,33 @@ var Show = $n2.Class({
 			});
 		};
 		
-		var notifierService = this.getNotifierService();
+		var notifierService = this.notifierService;
 		if( notifierService ) {
 			notifierService.addListener(function(change){
 				_this._notifierUpdate(change);
 			});
 		};
-	}
+		
+		var dispatchService = this.dispatchService;
+		if( dispatchService ){
+			var f = function(msg, address, dispatchService){
+				_this._handleDispatch(msg, address, dispatchService);
+			};
+			dispatchService.register(DH, 'start', f);
+		};
+	},
 
-	,getRequestService: function(){
-		if( this.options.requestService ){
-			return this.options.requestService;
+	addPostProcessDisplayFunction: function(fn){
+		if( typeof(fn) === 'function' ){
+			this.postProcessDisplayFns.push(fn);
 		};
-		
-		if( this.options.serviceDirectory 
-		 && this.options.serviceDirectory.requestService ) {
-			return this.options.serviceDirectory.requestService;
-		};
-		
-		return null;
-	}
+	},
 
-	,getNotifierService: function(){
-		if( this.options.notifierService ){
-			return this.options.notifierService;
-		};
-		
-		if( this.options.serviceDirectory 
-		 && this.options.serviceDirectory.notifierService ) {
-			return this.options.serviceDirectory.notifierService;
-		};
-		
-		return null;
-	}
-
-	,getDispatchService: function(){
-		if( this.options.serviceDirectory 
-		 && this.options.serviceDirectory.dispatchService ) {
-			return this.options.serviceDirectory.dispatchService;
-		};
-		
-		return null;
-	}
-
-	,getSchemaRepository: function(){
-		if( this.options.schemaRepository ){
-			return this.options.schemaRepository;
-		};
-		
-		if( this.options.serviceDirectory 
-		 && this.options.serviceDirectory.schemaRepository ) {
-			return this.options.serviceDirectory.schemaRepository;
-		};
-		
-		return null;
-	}
-
-	,fixElementAndChildren: function($elem, opt, contextDoc){
+	fixElementAndChildren: function($elem, opt, contextDoc){
 		this.domStyler.fixElementAndChildren($elem, opt, contextDoc);
-	}
+	},
 	
-	,displayBriefDescription: function($elem, opt, doc){
+	displayBriefDescription: function($elem, opt, doc){
 		// Remember to update
 		if( doc && doc._id ) {
 			$elem.addClass('n2ShowUpdateDoc_'+$n2.utils.stringToHtmlId(doc._id));
@@ -863,18 +917,18 @@ var Show = $n2.Class({
 		};
 		
 		this._displayDocumentBrief($elem, doc, opt);
-	}
+	},
 	
-	,displayDocument: function($elem, opt, doc){
+	displayDocument: function($elem, opt, doc){
 		// Remember to update
 		if( doc && doc._id ) {
 			$elem.addClass('n2ShowUpdateDoc_'+$n2.utils.stringToHtmlId(doc._id));
 		};
 		
 		this._displayDocumentFull($elem, doc, opt);
-	}
+	},
 	
-	,printUserName: function($elem, userName, opts){
+	printUserName: function($elem, userName, opts){
 		$elem.addClass('n2ShowUser_'+$n2.utils.stringToHtmlId(userName));
 		if( opts && opts.showHandle ) {
 			$elem.addClass('n2ShowUserDisplayAndHandle');
@@ -884,17 +938,17 @@ var Show = $n2.Class({
 		$elem.text('('+userName+')');
 
 		this._requestUser(userName); // fetch document
-	}
+	},
 	
-	,printBriefDescription: function($elem, docId, opts){
+	printBriefDescription: function($elem, docId, opts){
 		$elem.addClass('n2ShowDoc_'+$n2.utils.stringToHtmlId(docId));
 		$elem.addClass('n2ShowDocBrief');
 		$elem.text(docId);
 
 		this._requestDocument(docId); // fetch document
-	}
+	},
 	
-	,printDocument: function($elem, docId, opts_){
+	printDocument: function($elem, docId, opts_){
 		var opts = $n2.extend({
 			eliminateNonApprovedMedia: false
 			,eliminateDeniedMedia: false
@@ -912,18 +966,18 @@ var Show = $n2.Class({
 		$elem.text(docId);
 
 		this._requestDocument(docId); // fetch document
-	}
+	},
 	
-	,printLayerName: function($elem, layerIdentifier, opts_){
+	printLayerName: function($elem, layerIdentifier, opts_){
 		
 		$elem.addClass('n2ShowLayerName_'+$n2.utils.stringToHtmlId(layerIdentifier));
 		
 		$elem.text(layerIdentifier);
 
 		this._requestDocument(layerIdentifier); // fetch document
-	}
+	},
 	
-	,_displayUserDocument: function(userDoc){
+	_displayUserDocument: function(userDoc){
 		var id = userDoc._id;
 		
 		// Get display name
@@ -955,9 +1009,9 @@ var Show = $n2.Class({
 				};
 			});
 		};
-	}
+	},
 
-	,_displayDocument: function(doc){
+	_displayDocument: function(doc){
 		var _this = this;
 		
 		var id = doc._id;
@@ -969,14 +1023,14 @@ var Show = $n2.Class({
 			
 			$elem.removeClass(showClass).addClass('n2ShowUpdateDoc_'+$n2.utils.stringToHtmlId(id));
 
-			if( _this.options.eliminateNonApprovedMedia ) {
+			if( _this.eliminateNonApprovedMedia ) {
 				if( $n2.couchMap.documentContainsMedia(doc) 
 				 && false == $n2.couchMap.documentContainsApprovedMedia(doc) ) {
 					$elem.empty();
 					return;
 				};
 				
-			} else if( _this.options.eliminateDeniedMedia ) {
+			} else if( _this.eliminateDeniedMedia ) {
 				if( $n2.couchMap.documentContainsMedia(doc) 
 				 && true == $n2.couchMap.documentContainsDeniedMedia(doc) ) {
 					$elem.empty();
@@ -1005,9 +1059,9 @@ var Show = $n2.Class({
 				$elem.text( name );
 			});
 		};
-	}
+	},
 
-	,_updateDocument: function(doc){
+	_updateDocument: function(doc){
 		var _this = this;
 		
 		var id = doc._id;
@@ -1026,9 +1080,9 @@ var Show = $n2.Class({
 			// Non-brief behaviour
 			_this._displayDocumentFull($elem, doc);
 		});
-	}
+	},
 	
-	,_displayDocumentBrief: function($elem, doc, opt_){
+	_displayDocumentBrief: function($elem, doc, opt_){
 		
 		var opt = $n2.extend({
 			onDisplayed: function($elem, doc, opt_){}
@@ -1039,10 +1093,10 @@ var Show = $n2.Class({
 
 		// Peform pre-processing, allowing client to
 		// augment document prior to display
-		doc = this.options.preprocessDocument(doc);
+		doc = this._preprocessDocument(doc);
 
 		if( opt.schemaName ) {
-			_this.getSchemaRepository().getSchema({
+			_this.schemaRepository.getSchema({
 				name: opt.schemaName
 				,onSuccess: function(schema_) {
 					printBrief($elem,schema_);
@@ -1053,7 +1107,7 @@ var Show = $n2.Class({
 			});
 			
 		} else if( doc.nunaliit_schema ) {
-			_this.getSchemaRepository().getSchema({
+			_this.schemaRepository.getSchema({
 				name: doc.nunaliit_schema
 				,onSuccess: function(schema_) {
 					printBrief($elem,schema_);
@@ -1063,8 +1117,8 @@ var Show = $n2.Class({
 				}
 			});
 			
-		} else if( _this.options.defaultSchema ) {
-			printBrief($elem, _this.options.defaultSchema);
+		} else if( _this.defaultSchema ) {
+			printBrief($elem, _this.defaultSchema);
 			
 		} else {
 			displayError($elem);
@@ -1073,6 +1127,7 @@ var Show = $n2.Class({
 		function printBrief($elem, schema){
 			schema.brief(doc,$elem);
 			_this.fixElementAndChildren($elem, {}, doc);
+			_this._postProcessDisplay($elem, doc);
 			opt.onDisplayed($elem, doc, schema, opt_);
 		};
 		
@@ -1080,9 +1135,9 @@ var Show = $n2.Class({
 			$elem.text( _loc('Unable to display brief description') );
 			opt.onDisplayed($elem, doc, null, opt_);
 		};
-	}
+	},
 	
-	,_displayDocumentFull: function($elem, doc, opt_){
+	_displayDocumentFull: function($elem, doc, opt_){
 		
 		var opt = $n2.extend({
 			onDisplayed: function($elem, doc, opt_){}
@@ -1093,10 +1148,10 @@ var Show = $n2.Class({
 		
 		// Peform pre-processing, allowing client to
 		// augment document prior to display
-		doc = this.options.preprocessDocument(doc);
+		doc = this._preprocessDocument(doc);
 		
 		if( opt.schemaName ) {
-			_this.getSchemaRepository().getSchema({
+			_this.schemaRepository.getSchema({
 				name: opt.schemaName
 				,onSuccess: function(schema){
 					displaySchema($elem, schema);
@@ -1107,7 +1162,7 @@ var Show = $n2.Class({
 			});
 			
 		} else if( doc.nunaliit_schema ) {
-			_this.getSchemaRepository().getSchema({
+			_this.schemaRepository.getSchema({
 				name: doc.nunaliit_schema
 				,onSuccess: function(schema){
 					displaySchema($elem, schema);
@@ -1117,8 +1172,8 @@ var Show = $n2.Class({
 				}
 			});
 			
-		} else if( _this.options.defaultSchema ) {
-			displaySchema($elem, _this.options.defaultSchema);
+		} else if( _this.defaultSchema ) {
+			displaySchema($elem, _this.defaultSchema);
 			
 		} else {
 			displayError($elem);
@@ -1127,29 +1182,49 @@ var Show = $n2.Class({
 		function displaySchema($elem,schema){
 			schema.display(doc,$elem);
 			_this.fixElementAndChildren($elem, {}, doc);
+			_this._postProcessDisplay($elem, doc);
 			opt.onDisplayed($elem, doc, schema, opt_);
 		};
 		
 		function displayError($elem){
 			$elem.text( _loc('Unable to display document') );
 		};
-	}
+	},
 	
-	,_requestUser: function(userName){
-		var requestService = this.getRequestService();
+	_preprocessDocument: function(doc_){
+		var doc = doc_;
+		
+		if( this.options 
+		 && this.options.preprocessDocument ){
+			doc = this.options.preprocessDocument(doc);
+		};
+		
+		return doc;
+	},
+
+	_postProcessDisplay: function($sElem, data){
+		// Perform post-process function 
+		for(var i=0,e=this.postProcessDisplayFns.length; i<e; ++i){
+			var fn = this.postProcessDisplayFns[i];
+			fn(data, $sElem);
+		};
+	},
+	
+	_requestUser: function(userName){
+		var requestService = this.requestService;
 		if( requestService ){
 			requestService.requestUser(userName); // fetch document
 		};
-	}
+	},
 	
-	,_requestDocument: function(docId,cbFn){
-		var requestService = this.getRequestService();
+	_requestDocument: function(docId,cbFn){
+		var requestService = this.requestService;
 		if( requestService ){
 			requestService.requestDocument(docId,cbFn); // fetch document
 		};
-	}
+	},
 	
-	,_notifierUpdate: function(change){
+	_notifierUpdate: function(change){
 		var _this = this;
 		
 		var updatedDocIds = {};
@@ -1193,6 +1268,23 @@ var Show = $n2.Class({
 			this._requestDocument(requestDocIds[i], function(doc){
 				_this._updateDocument(doc);
 			});
+		};
+	},
+	
+	_handleDispatch: function(m, address, dispatchService){
+		if( 'start' === m.type ){
+			// Accept Post-process display functions that are
+			// set during configuration
+			var customService = this.customService;
+			if( customService ){
+				var postProcessFns = customService.getOption('displayPostProcessFunctions');
+				if( postProcessFns ){
+					for(var i=0,e=postProcessFns.length;i<e;++i){
+						var fn = postProcessFns[i];
+						this.addPostProcessDisplayFunction(fn);
+					};
+				};
+			};
 		};
 	}
 });

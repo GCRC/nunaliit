@@ -91,8 +91,6 @@ var Display = $n2.Class({
 	
 	,defaultSchema: null
 	
-	,postProcessDisplayFns: null
-	
 	,displayRelatedInfoProcess: null
 	
 	,displayOnlyRelatedSchemas: null
@@ -128,7 +126,6 @@ var Display = $n2.Class({
 			,showService: null // asynchronous resolver
 			,uploadService: null
 			,serviceDirectory: null
-			,postProcessDisplayFunction: null
 			,displayRelatedInfoFunction: null // legacy
 			,displayRelatedInfoProcess: null
 			,classDisplayFunctions: {}
@@ -167,22 +164,7 @@ var Display = $n2.Class({
 		this.restrictReplyButtonToLoggedIn = 
 			boolOption('restrictReplyButtonToLoggedIn',opts,this.customService);
 			
-		// Post-process display functions
 		var customService = this.customService;
-		this.postProcessDisplayFns = [];
-		if( typeof(opts.postProcessDisplayFunction) === 'function' ){
-			this.postProcessDisplayFns.push(opts.postProcessDisplayFunction);
-		};
-		if( customService ){
-			var postProcessFns = customService.getOption('displayPostProcessFunctions');
-			if( postProcessFns ){
-				for(var i=0,e=postProcessFns.length;i<e;++i){
-					if( typeof postProcessFns[i] === 'function' ){
-						this.postProcessDisplayFns.push(postProcessFns[i]);
-					};
-				};
-			};
-		};
 
 		var dispatcher = this.dispatchService;
 		if( dispatcher ) {
@@ -254,13 +236,6 @@ var Display = $n2.Class({
 		this.defaultSchema = schema;
 	}
 	
-	// external
-	,addPostProcessDisplayFunction: function(fn){
-		if( typeof(fn) === 'function' ){
-			this.postProcessDisplayFns.push(fn);
-		};
-	}
-	
 	,_displayDocument: function($set, doc) {
 
 		var _this = this;
@@ -278,11 +253,11 @@ var Display = $n2.Class({
 	}
 
 	,_shouldSuppressNonApprovedMedia: function(){
-		return this.showService.options.eliminateNonApprovedMedia;
+		return this.showService.eliminateNonApprovedMedia;
 	}
 
 	,_shouldSuppressDeniedMedia: function(){
-		return this.showService.options.eliminateDeniedMedia;
+		return this.showService.eliminateDeniedMedia;
 	}
 	
 	,_getDisplayDiv: function(){
@@ -370,12 +345,6 @@ var Display = $n2.Class({
 					var jqCallback = eachFunctionForClass(className, fn, data, opt);
 					$sElem.find('.'+className).each(jqCallback);
 				};
-			};
-			
-			// Perform post-process function 
-			for(var i=0,e=_this.postProcessDisplayFns.length; i<e; ++i){
-				var fn = _this.postProcessDisplayFns[i];
-				fn(data, $sElem);
 			};
 		};
 

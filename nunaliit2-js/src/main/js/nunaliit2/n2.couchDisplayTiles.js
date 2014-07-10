@@ -150,8 +150,6 @@ var TiledDisplay = $n2.Class({
 	
 	defaultSchema: null,
 	
-	postProcessDisplayFns: null,
-	
 	relatedDocumentDiscoveryProcess: null,
 	
 	documentInfoFunction: null,
@@ -180,8 +178,6 @@ var TiledDisplay = $n2.Class({
 			,schemaRepository: null
 			,customService: null
 			,dispatchService: null
-
-			,postProcessDisplayFunction: null
 			,displayRelatedInfoFunction: null
 			
 			// Boolean options
@@ -260,22 +256,6 @@ var TiledDisplay = $n2.Class({
 		 && this.customService ){
 			this.restrictAddRelatedButtonToLoggedIn = 
 				this.customService.getOption('restrictAddRelatedButtonToLoggedIn',false);
-		};
-		
-		// Post-process display functions
-		this.postProcessDisplayFns = [];
-		if( typeof(opts.postProcessDisplayFunction) === 'function' ){
-			this.postProcessDisplayFns.push(opts.postProcessDisplayFunction);
-		};
-		if( this.customService ){
-			var postProcessFns = this.customService.getOption('displayPostProcessFunctions');
-			if( postProcessFns ){
-				for(var i=0,e=postProcessFns.length;i<e;++i){
-					if( typeof postProcessFns[i] === 'function' ){
-						this.postProcessDisplayFns.push(postProcessFns[i]);
-					};
-				};
-			};
 		};
 
 		var dispatcher = this.dispatchService;
@@ -441,13 +421,6 @@ var TiledDisplay = $n2.Class({
 	// external
 	setSchema: function(schema) {
 		this.defaultSchema = schema;
-	},
-	
-	// external
-	addPostProcessDisplayFunction: function(fn){
-		if( typeof(fn) === 'function' ){
-			this.postProcessDisplayFns.push(fn);
-		};
 	},
 	
 	_handleDispatch: function(msg, addr, dispatcher){

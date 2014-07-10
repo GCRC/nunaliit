@@ -212,9 +212,12 @@ function Configure(options_){
 		
 		configuration.directory.showService = new $n2.couchShow.Show({
 			db: configuration.atlasDb
-			,designDoc: configuration.atlasDesign
 			,documentSource: configuration.documentSource
-			,serviceDirectory: configuration.directory
+			,requestService: configuration.directory.requestService
+			,notifierService: configuration.directory.notifierService
+			,dispatchService: configuration.directory.dispatchService
+			,schemaRepository: configuration.directory.schemaRepository
+			,customService: configuration.directory.customService
 		});
 		
 	 	configuration.couchEditor = new $n2.CouchEditor.Editor({
