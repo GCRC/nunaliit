@@ -848,9 +848,9 @@ var Display = $n2.Class({
 	,_addRelatedDocument: function(docId, relatedSchemaNames){
 		var _this = this;
 		
-		this.createRelatedDocProcess.addRelatedDocumentFromSchemaNames({
-			docId: docId
-			,relatedSchemaNames: relatedSchemaNames
+		this.createRelatedDocProcess.createDocumentFromSchemaNames({
+			schemaNames: relatedSchemaNames
+			,relatedDocId: docId
 			,onSuccess: function(docId){
 //				_this._RefreshClickedFeature();
 			}

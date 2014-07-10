@@ -211,6 +211,7 @@ var TiledDisplay = $n2.Class({
 				// single document selection
 				docId // document identifier
 				doc // document content
+				schema // schema associated with the document
 				height // last detected content height for current document
 				referenceDocIds // doc ids of related info
 				
@@ -491,6 +492,7 @@ var TiledDisplay = $n2.Class({
 			 && this.currentDetails.docId 
 			 && this.currentDetails.doc ){
 				this._receiveDocumentContent(this.currentDetails.doc);
+				this._displayDocumentButtons(this.currentDetails.doc, this.currentDetails.schema);
 			};
 			
 		} else if( msg.type === 'editClosed' ) {
@@ -984,6 +986,7 @@ var TiledDisplay = $n2.Class({
 		
 		var docId = doc._id;
 		if( this.displayedDocuments[docId] ){
+			// We are interested in this document. Save the content
 			this.displayedDocuments[docId].doc = doc;
 		};
 
@@ -1007,6 +1010,7 @@ var TiledDisplay = $n2.Class({
 			};
 			
 			if( update ){
+				// Renew related document ids
 				this.relatedDocumentDiscoveryProcess.getRelatedDocumentIds({
 					doc: doc
 					,onSuccess: function(doc, refDocIds){
@@ -1049,6 +1053,8 @@ var TiledDisplay = $n2.Class({
 			} else {
 				$content.text( doc._id );
 			};
+			
+			_this._displayDocumentButtons(doc, _this.currentDetails.schema);
 			
 			$div.removeClass(waitClassName);
 		});
@@ -1190,14 +1196,33 @@ var TiledDisplay = $n2.Class({
 		};
 		
 		function schemaLoaded(doc, schema){
-			_this._displayDocumentButtons(doc, schema);
+			if( _this.currentDetails.docId === doc._id ){
+				// This is the schema associated with the current
+				// document.
+				if( schema && !_this.currentDetails.schema ){
+					_this.currentDetails.schema = schema;
+					_this._displayDocumentButtons(doc, schema);
+					
+				} else if( _this.currentDetails.schema && !schema ) {
+					_this.currentDetails.schema = null;
+					_this._displayDocumentButtons(doc, null);
+				
+				} else if( _this.currentDetails.schema 
+				 && schema
+				 && _this.currentDetails.schema.name !== schema.name
+				 ) {
+					// Schema is changed
+					_this.currentDetails.schema = schema;
+					_this._displayDocumentButtons(doc, schema);
+				};
+			};
 		};
 	},
 	
 	_addRelatedDocument: function(docId, schemaName){
-		this.createRelatedDocProcess.addRelatedDocumentFromSchemaNames({
-			docId: docId
-			,relatedSchemaNames: [schemaName]
+		this.createRelatedDocProcess.createDocumentFromSchemaNames({
+			schemaNames: [schemaName]
+			,relatedDocId: docId
 			,onSuccess: function(docId){
 			}
 		});
