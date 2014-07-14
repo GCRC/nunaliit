@@ -348,31 +348,14 @@ function _handle(m){
 	};
 };
 
-function main() {
+function main(opts_) {
+	var opts = $n2.extend({
+		config: null
+	},opts_);
 	
-	dispatcher.register(DH,'searchInitiate',_handle);
-	dispatcher.register(DH,'searchResults',_handle);
-	dispatcher.register(DH,'selected',_handle);
-	dispatcher.register(DH,'unselected',_handle);
-	dispatcher.register(DH,'hashChanged',_handle);
-
-	searchInput = searchServer.installSearchWidget({
-		elem: $('#searchPanel')
-		,useButton: true
-	});
+	var config = opts.config;
 	
-	// Editor
-	couchEditor.options.schema = defaultSchema;
-	couchEditor.options.enableAddFile = true;
-	couchEditor.options.onCloseFn = function(){
-		$('#results').empty();
-	};
-	
-	$('#addDocumentButton').click(addDocument);
-};
-
-function main_init(config) {
-	$n2.log('main_init',config);
+	$n2.log('main',config);
 	atlasDb = config.atlasDb;
 	atlasDesign = config.atlasDesign;
 	uploadServer = config.directory.uploadService;
@@ -384,13 +367,6 @@ function main_init(config) {
 	schemaRepository = config.directory.schemaRepository;
 	dispatcher = config.directory.dispatchService;
 	
-	if( config.directory && config.directory.authService ) {
-		authService = config.directory.authService;
-		authService.createAuthWidget({
-			elemId: 'login'
-		});
-	};
-	
 	relatedDocProcess = new $n2.couchRelatedDoc.CreateRelatedDocProcess({
 		documentSource: config.documentSource
 		,schemaRepository: config.directory.schemaRepository
@@ -399,23 +375,41 @@ function main_init(config) {
 		,authService: config.directory.authService
 	});
 
+	dispatcher.register(DH,'searchInitiate',_handle);
+	dispatcher.register(DH,'searchResults',_handle);
+	dispatcher.register(DH,'selected',_handle);
+	dispatcher.register(DH,'unselected',_handle);
+	dispatcher.register(DH,'hashChanged',_handle);
+
+	searchInput = searchServer.installSearchWidget({
+		elem: $('#searchPanel')
+		,useButton: true
+	});
+	
+	
+	$('#addDocumentButton').click(addDocument);
+	
+	// Editor
+	couchEditor.options.enableAddFile = true;
+	couchEditor.options.onCloseFn = function(){
+		$('#results').empty();
+	};
 	schemaRepository.getSchema({
 		name: 'object'
 		,onSuccess: function(schema) {
 			defaultSchema = schema;
-			main();
-			config.start();
+			couchEditor.options.schema = defaultSchema;
 		}
 		,onError: function(err) {
 			$n2.log('Unable to load schema for editor',err);
-			main();
-			config.start();
 		}
 	});
+
+	config.start();
 };
 
-$n2.browse = {
-	main_init: main_init
+$n2.browseApp = {
+	main: main
 };
 
 })(jQuery,nunaliit2);

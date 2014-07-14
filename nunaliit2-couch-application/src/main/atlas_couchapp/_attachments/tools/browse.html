@@ -49,9 +49,21 @@
 		<script type="text/javascript">
 			// <!--
 
+			function main_init(config) {
+				if( config.directory && config.directory.authService ) {
+					config.directory.authService.createAuthWidget({
+						elemId: 'login'
+					});
+				};
+				
+			 	$n2.browseApp.main({
+			 		config: config
+			 	});
+			};
+
 			jQuery().ready(function() {
 				nunaliitConfigure({
-					configuredFunction: $n2.browse.main_init
+					configuredFunction: main_init
 					,rootPath: '../'
 				});
 			});
