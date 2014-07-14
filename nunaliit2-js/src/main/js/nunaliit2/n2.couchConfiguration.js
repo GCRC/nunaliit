@@ -220,14 +220,23 @@ function Configure(options_){
 			,customService: configuration.directory.customService
 		});
 		
-	 	configuration.couchEditor = new $n2.CouchEditor.Editor({
-			documentSource: configuration.documentSource
-			,serviceDirectory: configuration.directory
-		});
-		
 	 	configuration.directory.schemaEditorService = new $n2.CouchEditor.SchemaEditorService({
 			documentSource: configuration.documentSource
-			,serviceDirectory: configuration.directory
+			,showService: configuration.directory.showService
+			,searchService: configuration.directory.searchService
+			,dispatchService: configuration.directory.dispatchService
+		});
+		
+	 	configuration.couchEditor = new $n2.CouchEditor.Editor({
+			documentSource: configuration.documentSource
+			,schemaRepository: configuration.directory.schemaRepository
+			,uploadService: configuration.directory.uploadService
+			,showService: configuration.directory.showService
+			,authService: configuration.directory.authService
+			,dispatchService: configuration.directory.dispatchService
+			,searchService: configuration.directory.searchService
+			,schemaEditorService: configuration.directory.schemaEditorService
+			,customService: configuration.directory.customService
 		});
 		
 	 	configuration.directory.userService = new $n2.couchUser.UserService({

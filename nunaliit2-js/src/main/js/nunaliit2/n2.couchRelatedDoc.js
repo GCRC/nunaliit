@@ -37,10 +37,18 @@ var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
 var CreateRelatedDocProcess = $n2.Class({
 	
-	options: null,
+	documentSource: null,
+
+	schemaRepository: null,
 	
-	initialize: function(options_) {
-		this.options = $n2.extend(
+	uploadService: null,
+	
+	showService: null,
+	
+	authService: null,
+	
+	initialize: function(opts_) {
+		var opts = $n2.extend(
 			{
 				documentSource: null
 				,schemaRepository: null
@@ -48,8 +56,14 @@ var CreateRelatedDocProcess = $n2.Class({
 				,showService: null
 				,authService: null
 			}
-			,options_
+			,opts_
 		);
+		
+		this.documentSource = opts.documentSource;
+		this.schemaRepository = opts.schemaRepository;
+		this.uploadService = opts.uploadService;
+		this.showService = opts.showService;
+		this.authService = opts.authService;
 	},
 
 	createDocumentFromSchema: function(opt_){
@@ -57,7 +71,7 @@ var CreateRelatedDocProcess = $n2.Class({
 		var _this = this;
 	
 		// Check that we are logged in
-		var authService = this.options.authService;
+		var authService = this.authService;
 		if( authService && false == authService.isLoggedIn() ) {
 			authService.showLoginForm({
 				onSuccess: function(result,options) {
@@ -85,7 +99,7 @@ var CreateRelatedDocProcess = $n2.Class({
 		};
 		
 		// Check that upload service is available
-		this.options.uploadService.checkWelcome({
+		this.uploadService.checkWelcome({
 			onSuccess: uploadServiceAvailable
 			,onError: function(err){
 				alert( _loc('Upload service can not be reached. Unable to submit a related document.') );
@@ -125,9 +139,9 @@ var CreateRelatedDocProcess = $n2.Class({
 			};
 			
 			new Editor({
-				documentSource: _this.options.documentSource
-				,uploadService: _this.options.uploadService
-				,showService: _this.options.showService
+				documentSource: _this.documentSource
+				,uploadService: _this.uploadService
+				,showService: _this.showService
 				,obj: obj
 				,schema: opt.schema
 				,prompt: prompt
@@ -143,7 +157,7 @@ var CreateRelatedDocProcess = $n2.Class({
 		var _this = this;
 		
 		// Check that we are logged in
-		var authService = this.options.authService;
+		var authService = this.authService;
 		if( authService && false == authService.isLoggedIn() ) {
 			authService.showLoginForm({
 				onSuccess: function(result,options) {
@@ -163,22 +177,12 @@ var CreateRelatedDocProcess = $n2.Class({
 			,onCancel: function(){}
 		},opt_);
 		
-		this.selectSchemaDialog({
+		this.selectSchemaFromNamesDialog({
 			schemaNames: opt.schemaNames
-			,onSuccess: selectedSchemaName
+			,onSuccess: selectedSchema
 			,onError: opt.onError
 			,onCancel: opt.onCancel
 		});
-		
-		function selectedSchemaName(schemaName){
-			_this.options.schemaRepository.getSchema({
-				name: schemaName
-				,onSuccess: selectedSchema
-				,onError: function(err){
-					opt.onError( _loc('Unable to fetch schema') );
-				}
-			});
-		};
 		
 		function selectedSchema(schema){
 			_this.createDocumentFromSchema({
@@ -198,7 +202,7 @@ var CreateRelatedDocProcess = $n2.Class({
 		var _this = this;
 		
 		// Check that we are logged in
-		var authService = this.options.authService;
+		var authService = this.authService;
 		if( authService && false == authService.isLoggedIn() ) {
 			authService.showLoginForm({
 				onSuccess: function(result,options) {
@@ -243,21 +247,47 @@ var CreateRelatedDocProcess = $n2.Class({
 		});
 	},
 	
-	selectSchemaDialog: function(opt_){
+	selectSchemaFromNamesDialog: function(opt_){
 		var opt = $n2.extend({
 			schemaNames: []
-			,onSuccess: function(schemaName){}
+			,onSuccess: function(schema){}
 			,onError: $n2.reportErrorForced
 			,onCancel: function(){}
 		},opt_);
 		
-		if( !opt.schemaNames.length ) {
+		var _this = this;
+		
+		this.schemaRepository.getSchemas({
+			names: opt.schemaNames
+			,onSuccess: function(schemas){
+				_this.selectSchemaDialog({
+					schemas: schemas
+					,onSuccess: opt.onSuccess
+					,onError: opt.onError
+					,onCancel: opt.onCancel
+				});
+			}
+			,onError: opt.onError
+		});
+	},
+	
+	selectSchemaDialog: function(opt_){
+		var opt = $n2.extend({
+			schemas: []
+			,onSuccess: function(schema){}
+			,onError: $n2.reportErrorForced
+			,onCancel: function(){}
+		},opt_);
+		
+		var _this = this;
+		
+		if( !opt.schemas.length ) {
 			opt.onCancel();
 			return;
 		}
 
-		if( opt.schemaNames.length == 1 ) {
-			opt.onSuccess( opt.schemaNames[0] );
+		if( opt.schemas.length == 1 ) {
+			opt.onSuccess( opt.schemas[0] );
 			return;
 		}
 		
@@ -270,11 +300,14 @@ var CreateRelatedDocProcess = $n2.Class({
 		
 		var $select = $('<select></select>');
 		$dialog.append($select);
-		for(var i=0,e=opt.schemaNames.length; i<e; ++i){
-			var schemaName = opt.schemaNames[i];
-			var $option = $('<option></option>');
-			$option.text(schemaName);
-			$select.append($option);
+		for(var i=0,e=opt.schemas.length; i<e; ++i){
+			var schema = opt.schemas[i];
+			var schemaName = schema.name;
+			var schemaLabel = schema.getLabel();
+			$('<option>')
+				.text(schemaLabel)
+				.val(schemaName)
+				.appendTo($select);
 		};
 
 		$dialog.append( $('<br/>') );
@@ -287,7 +320,13 @@ var CreateRelatedDocProcess = $n2.Class({
 			var $diag = $('#'+diagId);
 			var schemaName = $diag.find('select').val();
 			$diag.dialog('close');
-			opt.onSuccess(schemaName);
+			_this.schemaRepository.getSchema({
+				name: schemaName
+				,onSuccess: opt.onSuccess
+				,onError: function(err){
+					opt.onError( _loc('Unable to fetch schema') );
+				}
+			});
 			return false;
 		});
 		
@@ -318,14 +357,30 @@ var CreateRelatedDocProcess = $n2.Class({
 
 var Editor = $n2.Class({
 	
-	options: null
+	documentSource: null,
+
+	uploadService: null,
 	
-	,diagId: null
+	showService: null,
 	
-	,attachmentUploadHandler: null
+	obj: null,
 	
-	,initialize: function(options_) {
-		this.options = $n2.extend(
+	schema: null,
+	
+	prompt: null,
+	
+	onSuccess: null,
+	
+	onError: null,
+	
+	onCancel: null,
+	
+	diagId: null,
+	
+	attachmentUploadHandler: null,
+	
+	initialize: function(opts_) {
+		var opts = $n2.extend(
 			{
 				documentSource: null
 				,uploadService: null
@@ -337,8 +392,18 @@ var Editor = $n2.Class({
 				,onError: $n2.reportErrorForced
 				,onCancel: function(){}
 			}
-			,options_
+			,opts_
 		);
+		
+		this.documentSource = opts.documentSource;
+		this.uploadService = opts.uploadService;
+		this.showService = opts.showService;
+		this.obj = opts.obj;
+		this.schema = opts.schema;
+		this.prompt = opts.prompt;
+		this.onSuccess = opts.onSuccess;
+		this.onError = opts.onError;
+		this.onCancel = opts.onCancel;
 
 		var _this = this;
 		
@@ -349,15 +414,15 @@ var Editor = $n2.Class({
 			.addClass('n2RelatedDoc_dialog')
 			.appendTo( $('body') );
 		
-		var obj = this.options.obj;
-		var schema = this.options.schema;
+		var obj = this.obj;
+		var schema = this.schema;
 		
 		var $form = $('<div></div>');
 		$dialog.append($form);
 		schema.form(obj, $form);
 		
-		if( this.options.showService ){
-			this.options.showService.fixElementAndChildren($form, {}, obj);
+		if( this.showService ){
+			this.showService.fixElementAndChildren($form, {}, obj);
 		};
 
 		var $fileElement = $('<div></div>');
@@ -365,8 +430,8 @@ var Editor = $n2.Class({
 		this.attachmentUploadHandler = new $n2.CouchEditor.AttachmentEditor({
 			doc: obj
 			,elem: $fileElement
-			,documentSource: this.options.documentSource
-			,uploadService: this.options.uploadService
+			,documentSource: this.documentSource
+			,uploadService: this.uploadService
 			,disableAddFile: true
 			,disableRemoveFile: true
 		});
@@ -400,17 +465,17 @@ var Editor = $n2.Class({
 			}
 		};
 		$dialog.dialog(dialogOptions);
-	}
+	},
 
-	,_clickOK: function(){
+	_clickOK: function(){
 
 		var _this = this;
-		var obj = this.options.obj;
+		var obj = this.obj;
 
 		// Check that a file was provided
 		this.attachmentUploadHandler.performPreSavingActions({
 			doc: obj
-			,documentSource: this.options.documentSource
+			,documentSource: this.documentSource
 			,onSuccess: function(){
 				_this._saveObj();
 			}
@@ -418,31 +483,31 @@ var Editor = $n2.Class({
 				alert(err);
 			}
 		});
-	}
+	},
 
-	,_clickCancel: function(){
+	_clickCancel: function(){
 		$('#'+this.diagId).dialog('close');
-		this.options.onCancel();
-	}
+		this.onCancel();
+	},
 	
-	,_saveObj: function(){
+	_saveObj: function(){
 		var _this = this;
-		var obj = this.options.obj;
+		var obj = this.obj;
 
 		$n2.couchMap.adjustDocument(obj);
 
-		this.options.documentSource.createDocument({
+		this.documentSource.createDocument({
 			doc: obj
 			,onSuccess: function(updatedDoc) {
 				_this._uploadFile(updatedDoc);
 			}
 			,onError: function(err){
-				_this.options.onError( _loc('Unable to reach database to submit document: {err}',{err:err}) );
+				_this.onError( _loc('Unable to reach database to submit document: {err}',{err:err}) );
 			}
 		});
-	}
+	},
 	
-	,_uploadFile: function(doc){
+	_uploadFile: function(doc){
 		var _this = this;
 
 		this.attachmentUploadHandler.performPostSavingActions({
@@ -451,19 +516,19 @@ var Editor = $n2.Class({
 				_this._success(doc._id);
 			}
 			,onError: function(err){
-				_this.options.onError( 
+				_this.onError( 
 					_loc('Error occurred after related document was created. Error: {err}',{err:err})
 				);
 			}
 		});
-	}
+	},
 	
-	,_success: function(docId){
+	_success: function(docId){
 		// Close upload dialog
 		$('#'+this.diagId).dialog('close');
 		
 		// Call back client
-		this.options.onSuccess(docId);
+		this.onSuccess(docId);
 	}
 });
 

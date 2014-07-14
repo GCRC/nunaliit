@@ -580,13 +580,13 @@ var ModuleDisplay = $n2.Class({
 			});
 			if( editInfo && editInfo.newDocumentSchemaNames ){
 				if( 'ALL_SCHEMAS' === editInfo.newDocumentSchemaNames ){
-					config.couchEditor.options.schema = $n2.CouchEditor.Constants.ALL_SCHEMAS;
+					config.couchEditor.setSchemas( $n2.CouchEditor.Constants.ALL_SCHEMAS );
 					
 				} else if( editInfo.newDocumentSchemaNames.length ){
 					config.directory.schemaRepository.getSchemas({
 						names: editInfo.newDocumentSchemaNames
 						,onSuccess: function(schemas){
-							config.couchEditor.options.schema = schemas;
+							config.couchEditor.setSchemas( schemas );
 						}
 						,onError: function(err){
 							$n2.log('Error obtaining new edit document schemas: '+err);

@@ -665,9 +665,8 @@ var TiledDisplay = $n2.Class({
 								,onSuccess: function(schema){
 									$('#'+selectId).find('option').each(function(){
 										var $option = $(this);
-										if( $option.val() === schema.name
-										 && schema.label ){
-											$option.text(schema.label);
+										if( $option.val() === schema.name ){
+											$option.text(schema.getLabel());
 										};
 									});
 								}

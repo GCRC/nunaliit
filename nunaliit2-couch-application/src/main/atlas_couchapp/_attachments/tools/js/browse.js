@@ -19,6 +19,7 @@ var showService = null;
 var schemaRepository = null;
 var dispatcher = null;
 var authService = null;
+var relatedDocProcess = null;
 
 function reportErrorsOnElem(errors, $elem) {
 	$elem.append( $('<div>Error occurred during the request<div>') );
@@ -206,71 +207,25 @@ function addDocument() {
 	
 	schemaRepository.getRootSchemas({
 		onSuccess: function(schemas){
-			selectNewDocumentSchema(schemas);
+			relatedDocProcess.selectSchemaDialog({
+				schemas: schemas
+				,onSuccess: function(schema){
+					// start new document
+					var hash = HASH_NEW_PREFIX + $n2.utils.stringToHtmlId(schema.name);
+					dispatcher.send(DH,{
+						type: 'setHash'
+						,hash: hash
+					});
+					
+					createNewDocument(schema);
+				}
+			});
 		}
 		,onError: function(){
 		}
 	});
 };
 
-function selectNewDocumentSchema(schemas) {
-	
-	var uniqueId = $n2.getUniqueId();
-	var $dialog = $('<div id="'+uniqueId+'"><table>'
-		+'<tr><th>Schema</th><td><select></select></td></tr>'
-		+'<tr><td></td><td><button>OK</button><button>Cancel</button></td></tr>'
-		+'</table></div>');
-	
-	var $select = $dialog.find('select');
-	for(var i=0,e=schemas.length; i<e; ++i) {
-		var $option = $('<option></option>');
-		var label = schemas[i].label;
-		if( !label ) {
-			label = schemas[i].name;
-		};
-		$option.text(label);
-		$option.val(''+schemas[i].name);
-		$select.append( $option );
-	};
-	
-	var $buttons = $dialog.find('button');
-	$buttons.first()
-		.button({icons:{primary:'ui-icon-check'}})
-		.click(function(){
-			var $dialog = $('#'+uniqueId);
-			var $select = $dialog.find('select');
-			var schemaName = $select.val();
-
-			// start new document
-			var hash = HASH_NEW_PREFIX + $n2.utils.stringToHtmlId(schemaName);
-			dispatcher.send(DH,{
-				type: 'setHash'
-				,hash: hash
-			});
-			
-			createNewDocumentFromSchemaName(schemaName);
-			
-			$dialog.dialog('close');
-		});
-	$buttons.first().next()
-		.button({icons:{primary:'ui-icon-cancel'}})
-		.click(function(){
-			var $dialog = $('#'+uniqueId);
-			$dialog.dialog('close');
-		});
-	
-	$dialog.dialog({
-		autoOpen: true
-		,title: 'Select Document Schema'
-		,modal: true
-		,width: 500
-		,close: function(event, ui){
-			var diag = $(event.target);
-			diag.dialog('destroy');
-			diag.remove();
-		}
-	});
-};
 
 function createNewDocumentFromSchemaName(schemaName){
 	if( schemaName ) {
@@ -435,6 +390,14 @@ function main_init(config) {
 			elemId: 'login'
 		});
 	};
+	
+	relatedDocProcess = new $n2.couchRelatedDoc.CreateRelatedDocProcess({
+		documentSource: config.documentSource
+		,schemaRepository: config.directory.schemaRepository
+		,uploadService: config.directory.uploadService
+		,showService: config.directory.showService
+		,authService: config.directory.authService
+	});
 
 	schemaRepository.getSchema({
 		name: 'object'

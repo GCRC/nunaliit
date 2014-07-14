@@ -1061,7 +1061,7 @@ var Schema = $n2.Class({
 
 	,getLabel: function(){
 		if( this.label ) {
-			return this.label;
+			return _loc(this.label);
 		};
 		return this.name;
 	}

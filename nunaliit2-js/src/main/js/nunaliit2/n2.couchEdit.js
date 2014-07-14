@@ -905,63 +905,105 @@ var CouchSimpleDocumentEditor = $n2.Class({
 
 var CouchDocumentEditor = $n2.Class({
 	
-	options: null
+	panelName: null,
+	uploadService: null,
+	searchService: null,
+	showService: null,
+	schemaEditorService: null,
+	schemaRepository: null,
+	customService: null,
+	dispatchService: null,
+	geomName: null,
+	initialLayers: null,
+	schema: null,
+	defaultEditSchema: null,
+	documentSource: null,
+	couchProj: null,
+	onFeatureInsertedFn: null,
+	onFeatureUpdatedFn: null,
+	onFeatureDeletedFn: null,
+	onCancelFn: null,
+	onCloseFn: null,
+	enableAddFile: null,
+	relatedDocProcess: null,
+	schemaEditor: null,
+	treeEditor: null,
+	slideEditor: null,
+	attachmentEditor: null,
+	editedDocument: null,
+	editedFeature: null,
+	currentGeometryWkt: null,
+	editorContainerId: null,
+	isInsert: null,
+	userButtons: null,
+	editorSuppressSlideView: null,
+	editorSuppressTreeView: null,
+	editorSuppressFormView: null,
 	
-	,schemaEditor: null
-	
-	,treeEditor: null
-	
-	,slideEditor: null
-	
-	,attachmentEditor: null
-
-	,editedDocument: null
-	
-	,editedFeature: null
-	
-	,currentGeometryWkt: null
-	
-	,editorContainerId: null
-	
-	,isInsert: null
-	
-	,userButtons: null
-	
-	,editorSuppressSlideView: null
-	
-	,editorSuppressTreeView: null
-	
-	,editorSuppressFormView: null
-	
-	,initialize: function(
-		parentOptions_
-		,ownOptions_
+	initialize: function(
+		opts_
 		) {
 		
-		this.options = $n2.extend({
+		var opts = $n2.extend({
 			panelName: null
+			,uploadService: null
+			,searchService: null
+			,showService: null
+			,schemaEditorService: null
+			,schemaRepository: null
+			,customService: null
+			,dispatchService: null
+			,geomName: null
 			,initialLayers: ['public']
-			,selectAudioFn: function(feature_,cbFn){ alert('Feature not supported'); }
+			,schema: null
+			,defaultEditSchema: null
+			,documentSource: null
+			,couchProj: null
 			,onFeatureInsertedFn: function(fid,feature){}
 			,onFeatureUpdatedFn: function(fid,feature){}
 			,onFeatureDeletedFn: function(fid,feature){}
 			,onCancelFn: function(feature){}
 			,onCloseFn: function(){}
 			,enableAddFile: false
-		}, parentOptions_, ownOptions_);
+			,relatedDocProcess: null
+			
+			// buttonX....
+		}, opts_);
+		
+		this.panelName = opts.panelName;
+		this.uploadService = opts.uploadService;
+		this.searchService = opts.searchService;
+		this.showService = opts.showService;
+		this.schemaEditorService = opts.schemaEditorService;
+		this.schemaRepository = opts.schemaRepository;
+		this.customService = opts.customService;
+		this.dispatchService = opts.dispatchService;
+		this.geomName = opts.geomName;
+		this.initialLayers = opts.initialLayers;
+		this.schema = opts.schema;
+		this.defaultEditSchema = opts.defaultEditSchema;
+		this.documentSource = opts.documentSource;
+		this.couchProj = opts.couchProj;
+		this.onFeatureInsertedFn = opts.onFeatureInsertedFn;
+		this.onFeatureUpdatedFn = opts.onFeatureUpdatedFn;
+		this.onFeatureDeletedFn = opts.onFeatureDeletedFn;
+		this.onCancelFn = opts.onCancelFn;
+		this.onCloseFn = opts.onCloseFn;
+		this.enableAddFile = opts.enableAddFile;
+		this.relatedDocProcess = opts.relatedDocProcess;
 		
 		this.userButtons = [];
 		var label = 'button';
-		for(var key in this.options) {
+		for(var key in opts) {
 			if( key.substr(0,label.length) === label ) {
-				this.userButtons.push(this.options[key]);
+				this.userButtons.push(opts[key]);
 			};
 		};
 
 		this.editorSuppressSlideView = false;
 		this.editorSuppressTreeView = false;
 		this.editorSuppressFormView = false;
-		var cs = this._getCustomService();
+		var cs = this.customService;
 		if( cs ){
 			this.editorSuppressSlideView = cs.getOption('editorSuppressSlideView',false);
 			this.editorSuppressTreeView = cs.getOption('editorSuppressTreeView',false);
@@ -969,63 +1011,9 @@ var CouchDocumentEditor = $n2.Class({
 			
 			var flag = cs.getOption('editorEnableAddFile',false);
 			if( flag ){
-				this.options.enableAddFile = true;
+				this.enableAddFile = true;
 			};
 		};
-	}
-
-	,_getUploadService: function(){
-		if( this.options.serviceDirectory 
-		 && this.options.serviceDirectory.uploadService ) {
-			return this.options.serviceDirectory.uploadService;
-		};
-		
-		return null;
-	}
-
-	,_getSearchService: function(){
-		if( this.options.serviceDirectory 
-		 && this.options.serviceDirectory.searchService ) {
-			return this.options.serviceDirectory.searchService;
-		};
-		
-		return null;
-	}
-
-	,_getShowService: function(){
-		if( this.options.serviceDirectory 
-		 && this.options.serviceDirectory.showService ) {
-			return this.options.serviceDirectory.showService;
-		};
-		
-		return null;
-	}
-
-	,_getSchemaEditorService: function(){
-		if( this.options.serviceDirectory 
-		 && this.options.serviceDirectory.schemaEditorService ) {
-			return this.options.serviceDirectory.schemaEditorService;
-		};
-		
-		return null;
-	}
-
-	,_getSchemaRepository: function(){
-		if( this.options.serviceDirectory 
-		 && this.options.serviceDirectory.schemaRepository ) {
-			return this.options.serviceDirectory.schemaRepository;
-		};
-		
-		return null;
-	}
-
-	,_getCustomService: function(){
-		if( this.options.serviceDirectory 
-		 && this.options.serviceDirectory.customService ) {
-			return this.options.serviceDirectory.customService;
-		};
-		
-		return null;
 	}
 
 	,startFeatureEditing: function(
@@ -1039,8 +1027,8 @@ var CouchDocumentEditor = $n2.Class({
 	
 		this.currentGeometryWkt = null;
 		if( this.editedDocument 
-		 && this.editedDocument[this.options.geomName] ) {
-			this.currentGeometryWkt = this.editedDocument[this.options.geomName].wkt;
+		 && this.editedDocument[this.geomName] ) {
+			this.currentGeometryWkt = this.editedDocument[this.geomName].wkt;
 		};
 		
 		this.isInsert = (typeof(this.editedFeature.fid) === 'undefined' || this.editedFeature.fid === null);
@@ -1049,12 +1037,12 @@ var CouchDocumentEditor = $n2.Class({
 			// must do initial object work
 	    	var geom = this.convertFeatureGeometryForDb(this.editedFeature);
 	    	var g = $n2.couchGeom.getCouchGeometry(geom);
-	    	this.editedDocument[this.options.geomName] = g;
+	    	this.editedDocument[this.geomName] = g;
 			
 			// Add default layers?
-	    	if( this.options.initialLayers 
-	    	 && this.options.initialLayers.length > 0 ) {
-	    		this.editedDocument.nunaliit_layers = this.options.initialLayers;
+	    	if( this.initialLayers 
+	    	 && this.initialLayers.length > 0 ) {
+	    		this.editedDocument.nunaliit_layers = this.initialLayers;
 	    	};
 		};
 
@@ -1071,12 +1059,12 @@ var CouchDocumentEditor = $n2.Class({
 				// must do initial object work
 		    	var geom = _this.convertFeatureGeometryForDb(_this.editedFeature);
 		    	var g = $n2.couchGeom.getCouchGeometry(geom);
-		    	_this.editedDocument[_this.options.geomName] = g;
+		    	_this.editedDocument[_this.geomName] = g;
 				
 				// Add default layers?
-		    	if( _this.options.initialLayers 
-		    	 && _this.options.initialLayers.length > 0 ) {
-		    		_this.editedDocument.nunaliit_layers = _this.options.initialLayers;
+		    	if( _this.initialLayers 
+		    	 && _this.initialLayers.length > 0 ) {
+		    		_this.editedDocument.nunaliit_layers = _this.initialLayers;
 		    	};
 			};
 			
@@ -1111,10 +1099,10 @@ var CouchDocumentEditor = $n2.Class({
 	
 	,_selectSchema: function(callbackFn) {
 		var _this = this;
-
+		
 		// Check hint from document
 		if( this.editedDocument.nunaliit_schema ) {
-			this._getSchemaRepository().getSchema({
+			this.schemaRepository.getSchema({
 				name: this.editedDocument.nunaliit_schema
 				,onSuccess: function(schema){
 					callbackFn(schema);
@@ -1125,12 +1113,15 @@ var CouchDocumentEditor = $n2.Class({
 				}
 			});
 			
-		} else if( this.options.schema && this.isInsert ) {
-			if( $n2.CouchEditor.Constants.ALL_SCHEMAS === this.options.schema ) {
+		} else if( this.schema && this.isInsert ) {
+			if( $n2.CouchEditor.Constants.ALL_SCHEMAS === this.schema ) {
 				// Must select a schema from all root schemas
-				this._getSchemaRepository().getRootSchemas({
+				this.schemaRepository.getRootSchemas({
 					onSuccess: function(schemas){
-						selectFromSchemas(schemas);
+						_this.relatedDocProcess.selectSchemaDialog({
+							schemas: schemas
+							,onSuccess: callbackFn
+						});
 					}
 					,onError: function(err){
 						$n2.log('Error fetching root schemas',err);
@@ -1138,19 +1129,22 @@ var CouchDocumentEditor = $n2.Class({
 					}
 				});
 				
-			} else if( $n2.isArray(this.options.schema) ) {
+			} else if( $n2.isArray(this.schema) ) {
 				// Must select a schema
-				selectFromSchemas(this.options.schema);
+				this.relatedDocProcess.selectSchemaDialog({
+					schemas: this.schema
+					,onSuccess: callbackFn
+				});
 				
 			} else {
 				// Only one schema to select from
-				callbackFn(this.options.schema);
+				callbackFn(this.schema);
 			};
 			
-		} else if( this.options.defaultEditSchema && !this.isInsert ) {
+		} else if( this.defaultEditSchema && !this.isInsert ) {
 			// If the object does not specify a schema, use default schema
 			// if specified
-			callbackFn(this.options.defaultEditSchema);
+			callbackFn(this.defaultEditSchema);
 			
 		} else {
 			// No schema specified, go directly to displaying editor
@@ -1179,7 +1173,7 @@ var CouchDocumentEditor = $n2.Class({
 			var $select = $dialog.find('select');
 			for(var i=0,e=schemas.length; i<e; ++i) {
 				$select.append( $('<option>'+schemas[i].name+'</option>') );
-			}
+			};
 			
 			var cancelOnClose = true;
 			
@@ -1192,7 +1186,7 @@ var CouchDocumentEditor = $n2.Class({
 						var schemaName = $select.val();
 
 						$n2.log('schemaName',schemaName);
-						_this._getSchemaRepository().getSchema({
+						_this.schemaRepository.getSchema({
 							name: schemaName
 							,onSuccess: function(schema){
 								callbackFn(schema);
@@ -1260,7 +1254,7 @@ var CouchDocumentEditor = $n2.Class({
 		var showSlideView = false;
 		var viewCount = 0;
 		var showAccordion = false;
-		var schemaEditorService = this._getSchemaEditorService();
+		var schemaEditorService = this.schemaEditorService;
 		if( !this.editorSuppressFormView 
 		 && selectedSchema 
 		 && schemaEditorService ){
@@ -1279,7 +1273,7 @@ var CouchDocumentEditor = $n2.Class({
 			showAccordion = true;
 		};
     	
-		var attributeDialog = $('#'+this.options.panelName);
+		var attributeDialog = $('#'+this.panelName);
 		attributeDialog.empty();
 		
 		this.editorContainerId = $n2.getUniqueId();
@@ -1403,15 +1397,15 @@ var CouchDocumentEditor = $n2.Class({
 		
 		// Attachment editor
 		{
-			var disableAttachmentEditorButtons = ! this.options.enableAddFile;
+			var disableAttachmentEditorButtons = ! this.enableAddFile;
 			var $attachmentsDiv = $('<div>')
 				.addClass('editorAttachments')
 				.appendTo($editorContainer);
 			this.attachmentEditor = new AttachmentEditor({
 				doc: data
 				,elem: $attachmentsDiv
-				,documentSource: this.options.documentSource
-				,uploadService: this._getUploadService()
+				,documentSource: this.documentSource
+				,uploadService: this.uploadService
 				,disableAddFile: disableAttachmentEditorButtons
 				,disableRemoveFile: disableAttachmentEditorButtons
 				,onChangedFn: function(){
@@ -1503,10 +1497,10 @@ var CouchDocumentEditor = $n2.Class({
 		
     	
     	function deletion(editedDocument) {
-			_this.options.documentSource.deleteDocument({
+			_this.documentSource.deleteDocument({
 				doc: _this.editedDocument
 				,onSuccess: function() {
-					_this.options.onFeatureDeletedFn(editedDocument._id,_this.editedFeature);
+					_this.onFeatureDeletedFn(editedDocument._id,_this.editedFeature);
 					_this._discardEditor({deleted:true});
 				}
 				,onError: function(err){
@@ -1534,9 +1528,9 @@ var CouchDocumentEditor = $n2.Class({
 		this._disableControls();
 		
 		// Verify that upload server is available
-		if( null != this._getUploadService() ){
+		if( this.uploadService ){
 			// Verify that server is available
-    		this._getUploadService().getWelcome({
+    		this.uploadService.getWelcome({
 				onSuccess: function(){ 
 					preSaveAttachmentEditor(); 
 				}
@@ -1591,10 +1585,10 @@ var CouchDocumentEditor = $n2.Class({
 			if( _this.isInsert ) {
 				// This is an insert
 				var isSubmissionDs = false;
-				if( _this.options.documentSource.isSubmissionDataSource ){
+				if( _this.documentSource.isSubmissionDataSource ){
 					isSubmissionDs = true;
 				};
-				_this.options.documentSource.createDocument({
+				_this.documentSource.createDocument({
 					doc: _this.editedDocument
 					,onSuccess: function(updatedDoc) {
 						if( isSubmissionDs ){
@@ -1612,7 +1606,7 @@ var CouchDocumentEditor = $n2.Class({
 				});
 			} else {
 				// This is an update
-				_this.options.documentSource.updateDocument({
+				_this.documentSource.updateDocument({
 					doc: _this.editedDocument
 					,onSuccess: function(updatedDoc) {
 						postSaveAttachmentEditor(updatedDoc, false);
@@ -1647,10 +1641,10 @@ var CouchDocumentEditor = $n2.Class({
 				saved: true
 			};
 			if( inserted ) {
-				_this.options.onFeatureInsertedFn(editedDocument._id,_this.editedFeature);
+				_this.onFeatureInsertedFn(editedDocument._id,_this.editedFeature);
 				discardOpts.inserted = true;
 			} else {
-				_this.options.onFeatureUpdatedFn(editedDocument._id,_this.editedFeature);
+				_this.onFeatureUpdatedFn(editedDocument._id,_this.editedFeature);
 				discardOpts.updated = true;
 			};
 			_this._discardEditor(discardOpts);
@@ -1661,8 +1655,8 @@ var CouchDocumentEditor = $n2.Class({
 		var _this = this;
 
 		searchForDocumentId({
-			searchServer: this._getSearchService()
-			,showService: this._getShowService()
+			searchServer: this.searchService
+			,showService: this.showService
 			,onSelected: function(docId){
 				_this._addRelation(docId);
 			}
@@ -1761,9 +1755,9 @@ var CouchDocumentEditor = $n2.Class({
 	    		};
 	    		_this.refresh();
 			}
-			,documentSource: this.options.documentSource
-			,showService: this._getShowService()
-			,dispatchService: this._getDispatchService()
+			,documentSource: this.documentSource
+			,showService: this.showService
+			,dispatchService: this.dispatchService
     	});
     }
     
@@ -1847,7 +1841,7 @@ var CouchDocumentEditor = $n2.Class({
 			return;
 		};
 	
-		this.options.onCancelFn(this.editedFeature);
+		this.onCancelFn(this.editedFeature);
 
 		this._discardEditor({
 			cancelled:true
@@ -1872,7 +1866,7 @@ var CouchDocumentEditor = $n2.Class({
 		var $editorContainer = this._getEditorContainer();
 		$editorContainer.remove();
 
-		this.options.onCloseFn(this.editedDocument, this);
+		this.onCloseFn(this.editedDocument, this);
 		
 		if( !opts.suppressEvents ) {
 			// Send document only if it was saved or already
@@ -1923,7 +1917,7 @@ var CouchDocumentEditor = $n2.Class({
 	,_adjustInternalValues: function(obj) {
 		// BBOX
 		if( typeof(OpenLayers) !== 'undefined' ) {
-			var geomData = obj[this.options.geomName];
+			var geomData = obj[this.geomName];
 			if( geomData ) {
 				// Check if editor has changed the geometry's WKT
 				if( this.currentGeometryWkt != geomData.wkt ) {
@@ -1939,7 +1933,7 @@ var CouchDocumentEditor = $n2.Class({
 		var $displayRelationsDiv = $editorContainer.find('.editorDisplayRelations');
 		if( $displayRelationsDiv.length < 1 ) return;
 
-    	var showService = this._getShowService();
+    	var showService = this.showService;
 
     	// Compute relations
 		var docIdMap = {};
@@ -2012,7 +2006,7 @@ var CouchDocumentEditor = $n2.Class({
 	}
 	
 	,onEditorObjectChanged: function(obj) {
-		var geomData = obj[this.options.geomName];
+		var geomData = obj[this.geomName];
 		
 		if( !geomData ) return; // avoid errors
 		if( typeof(OpenLayers) === 'undefined' ) return;
@@ -2028,7 +2022,7 @@ var CouchDocumentEditor = $n2.Class({
 				type: 'editGeometryModified'
 				,docId: obj._id
 				,geom: olGeom
-				,proj: this.options.couchProj
+				,proj: this.couchProj
 				,_origin: this
 			});
 		};
@@ -2036,10 +2030,10 @@ var CouchDocumentEditor = $n2.Class({
 	
     ,convertFeatureGeometryForDb: function(feature) {
 		var mapProj = feature.layer.map.projection;
-		if( mapProj.getCode() != this.options.couchProj.getCode() ) {
+		if( mapProj.getCode() != this.couchProj.getCode() ) {
 			// Need to convert
 			var geom = feature.geometry.clone();
-			geom.transform(mapProj,this.options.couchProj);
+			geom.transform(mapProj,this.couchProj);
 			return geom;
 		};
 		return feature.geometry;
@@ -2048,13 +2042,13 @@ var CouchDocumentEditor = $n2.Class({
 	
     ,_featureModified: function(docId, geom, proj) {
 
-		if( proj.getCode() != this.options.couchProj.getCode() ) {
+		if( proj.getCode() != this.couchProj.getCode() ) {
 			// Need to convert
 			geom = geom.clone();
-			geom.transform(proj,this.options.couchProj);
+			geom.transform(proj,this.couchProj);
 		};
     	
-		var geomData = this.editedDocument[this.options.geomName];
+		var geomData = this.editedDocument[this.geomName];
 		geomData.wkt = geom.toString();
 		this.currentGeometryWkt = geomData.wkt;
 		if( this.schemaEditor ) {
@@ -2089,25 +2083,17 @@ var CouchDocumentEditor = $n2.Class({
 		$editorContainer.find('input:text').removeAttr('disabled');
 	}
 	
-	,_getDispatchService: function(){
-		var d = null;
-		if( this.options && this.options.serviceDirectory ){
-			d = this.options.serviceDirectory.dispatchService;
-		};
-		return d;
-	}
-	
 	,_dispatch: function(m){
-		var dispatcher = this._getDispatchService();
+		var dispatcher = this.dispatchService;
 		if( dispatcher ){
 			dispatcher.send(DH,m);
 		};
 	}
 	
 	,_synchronousCall: function(m){
-		var dispatcher = this._getDispatchService();
+		var dispatcher = this.dispatchService;
 		if( dispatcher ){
-			dispatcher.send(DH,m);
+			dispatcher.synchronousCall(DH,m);
 		};
 	}
 	
@@ -2124,100 +2110,215 @@ var CouchDocumentEditor = $n2.Class({
 
 var CouchEditor = $n2.Class({
 
-	options: null
+	options: null,
+	
+	documentSource: null,
+	
+	panelName: null,
+	
+	geomName: null,
+	
+	couchProj: null,
+	
+	schema: null,
+	
+	defaultEditSchema: null,
+	
+	schemaRepository: null,
+	
+	uploadService: null,
+	
+	showService: null,
+	
+	authService: null,
+	
+	dispatchService: null,
+	
+	searchService: null,
+	
+	schemaEditorService: null,
+	
+	customService: null,
+	
+	enableAddFile: null,
+	
+	initialLayers: null,
+	
+	userButtons: null,
+	
+	relatedDocProcess: null,
 
-	,isFormEditor: null
+	isFormEditor: null,
 
-	,currentEditor: null
+	currentEditor: null,
 
-	,initialize: function(options_) {
-		this.options = $.extend({
+	initialize: function(opts_) {
+		var opts = $n2.extend({
 			documentSource: null // must be provided
 			,panelName: null // location where editor is opened
 			,geomName: 'nunaliit_geom'
 			,couchProj: null
 			,schema: null
 			,defaultEditSchema: null
-			,serviceDirectory: null
+			,schemaRepository: null
+			,uploadService: null
+			,showService: null
+			,authService: null
+			,dispatchService: null
+			,searchService: null
+			,schemaEditorService: null
+			,customService: null
 			,enableAddFile: false
 			,initialLayers: ['public']
-		},options_);
+		},opts_);
 		
 		var _this = this;
 		
+		this.options = {};
+		this.documentSource = opts.documentSource;
+		this.panelName = opts.panelName;
+		this.geomName = opts.geomName;
+		this.couchProj = opts.couchProj;
+		this.options.schema = opts.schema;
+		this.defaultEditSchema = opts.defaultEditSchema;
+		this.enableAddFile = opts.enableAddFile;
+		this.initialLayers = opts.initialLayers;
+		this.schemaRepository = opts.schemaRepository;
+		this.uploadService = opts.uploadService;
+		this.showService = opts.showService;
+		this.authService = opts.authService;
+		this.dispatchService = opts.dispatchService;
+		this.searchService = opts.searchService;
+		this.schemaEditorService = opts.schemaEditorService;
+		this.customService = opts.customService;
 		this.isFormEditor = true;
 		
-		if( !this.options.couchProj ) {
-			this.options.couchProj = getDefaultCouchProjection();
+		if( !this.couchProj ) {
+			this.couchProj = getDefaultCouchProjection();
 		};
 		
-		var dispatcher = this._getDispatchService();
+		var dispatcher = this.dispatchService;
 		if( dispatcher ){
 			var f = function(m){ _this._handle(m); };
 			dispatcher.register(DH, 'editGeometryModified', f);
 			dispatcher.register(DH, 'editInitiate', f);
 			dispatcher.register(DH, 'editCancel', f);
 		};
-	}
+		
+		this.relatedDocProcess = new $n2.couchRelatedDoc.CreateRelatedDocProcess({
+			documentSource: this.documentSource
+			,schemaRepository: this.schemaRepository
+			,uploadService: this.uploadService
+			,showService: this.showService
+			,authService: this.authService
+		});
 
-    ,_showAttributeForm: function(feature_, editorOptions_) {
+		// Service defined buttons
+		this.userButtons = {};
+		var label = 'button';
+		for(var key in opts) {
+			if( key.substr(0,label.length) === label ) {
+				this.userButtons[key] = opts[key];
+			};
+		};
+	},
+
+    _showAttributeForm: function(feature_, editorOptions_) {
     	if( null != this.currentEditor ) {
     		this.currentEditor.performCancellation();
     		this.currentEditor = null;
     	};
     	
-    	this.currentEditor = new CouchDocumentEditor(
-    		this.options
-    		,editorOptions_
-    		);
+    	this.currentEditor = this._createEditor(editorOptions_);
     	this.currentEditor.startFeatureEditing(
     		feature_
     		);
-	}
+	},
 
-    ,showDocumentForm: function(document_, editorOptions_) {
+    showDocumentForm: function(document_, editorOptions_) {
     	if( null != this.currentEditor ) {
     		this.currentEditor.performCancellation();
     		this.currentEditor = null;
     	};
     	
-    	this.currentEditor = new CouchDocumentEditor(
-    		this.options
-    		,editorOptions_
-    		);
+    	this.currentEditor = this._createEditor(editorOptions_);
     	this.currentEditor.startDocumentEditing(
     		document_
     		);
-	}
+	},
+    
+    _createEditor: function(o_){
+    	
+    	o_ = o_ ? o_ : {};
+    	
+    	var opts = {
+			panelName: o_.panelName ? o_.panelName : this.panelName
+			,geomName: o_.geomName ? o_.geomName : this.geomName
+			,initialLayers: o_.initialLayers ? o_.initialLayers : this.initialLayers
+			,enableAddFile: o_.enableAddFile ? o_.enableAddFile : this.enableAddFile
+			,schema: o_.schema ? o_.schema : this.options.schema
+			,onFeatureInsertedFn: o_.onFeatureInsertedFn
+			,onFeatureUpdatedFn: o_.onFeatureUpdatedFn
+			,onFeatureDeletedFn: o_.onFeatureDeletedFn
+			,onCancelFn: o_.onCancelFn
+			,onCloseFn: o_.onCloseFn
+			,uploadService: this.uploadService
+			,searchService: this.searchService
+			,showService: this.showService
+			,schemaEditorService: this.schemaEditorService
+			,schemaRepository: this.schemaRepository
+			,customService: this.customService
+			,dispatchService: this.dispatchService
+			,defaultEditSchema: this.defaultEditSchema
+			,documentSource: this.documentSource
+			,couchProj: this.couchProj
+			,relatedDocProcess: this.relatedDocProcess
+			
+			// buttonX....
+    	};
+    	
+    	// Add service buttons
+    	for(var key in this.userButtons){
+    		opts[key] = this.userButtons[key];
+    	};
 
-	,cancelDocumentForm: function(opts) {
+    	// Add caller buttons
+		var label = 'button';
+		for(var key in o_) {
+			if( key.substr(0,label.length) === label ) {
+				opts[key] = o_[key];
+			};
+		};
+    	
+    	var editor = new CouchDocumentEditor(opts);
+    	
+    	return editor;
+    },
+
+	cancelDocumentForm: function(opts) {
     	if( null != this.currentEditor ) {
     		this.currentEditor.performCancellation(opts);
     		this.currentEditor = null;
     	};
-	}
+	},
 
-	,setPanelName: function(panelName) {
-		this.options.panelName = panelName;
-	}
-
-	,getInitialLayerIds: function() {
-		return this.options.initialLayers;
-	}
-
-	,setInitialLayerIds: function(layerIds) {
-		this.options.initialLayers = layerIds;
-	}
+	setPanelName: function(panelName) {
+		this.panelName = panelName;
+	},
 	
-	,_getDispatchService: function(){
-		var d = null;
-		if( this.options && this.options.serviceDirectory ){
-			d = this.options.serviceDirectory.dispatchService;
-		};
-		return d;
-	}
+	setSchemas: function(schemas){
+		this.options.schema = schemas;
+	},
+
+	getInitialLayerIds: function() {
+		return this.initialLayers;
+	},
+
+	setInitialLayerIds: function(layerIds) {
+		this.initialLayers = layerIds;
+	},
 	
-	,_handle: function(m){
+	_handle: function(m){
 		if( 'editInitiate' === m.type ){
 			if( m.feature ) {
 				this._showAttributeForm(m.feature);
@@ -2241,39 +2342,39 @@ var CouchEditor = $n2.Class({
 
 var SchemaEditor = $n2.Class({
 
-	doc: null
+	doc: null,
 	
-	,schema: null
+	schema: null,
 	
-	,$div: null
+	$div: null,
 	
-	,onChanged: null
+	onChanged: null,
 	
-	,formEditor: null
+	formEditor: null,
 	
-	,postProcessFns: null
+	postProcessFns: null,
 
-	,serviceDirectory: null
+	showService: null,
 
-	,initialize: function(options_) {
-		var options = $.extend({
+	initialize: function(opts_) {
+		var opts = $n2.extend({
 			doc: null
 			,schema: null
 			,$div: null
 			,onChanged: function(){}
 			,funcMap: null
 			,postProcessFns: null
-			,serviceDirectory: null
-		},options_);
+			,showService: null
+		},opts_);
 		
 		var _this = this;
 		
-		this.doc = options.doc;
-		this.schema = options.schema;
-		this.$div = options.$div;
-		this.onChanged = options.onChanged;
-		this.postProcessFns = options.postProcessFns;
-		this.serviceDirectory = options.serviceDirectory;
+		this.doc = opts.doc;
+		this.schema = opts.schema;
+		this.$div = opts.$div;
+		this.onChanged = opts.onChanged;
+		this.postProcessFns = opts.postProcessFns;
+		this.showService = opts.showService;
 		
 		this.formEditor = this.schema.form(
 			this.doc
@@ -2282,29 +2383,29 @@ var SchemaEditor = $n2.Class({
 			,function(){ // callback on changes
 				_this.onChanged();
 			}
-			,options.funcMap
+			,opts.funcMap
 		);
 		
-		var showService = this._getShowService();
+		var showService = this.showService;
 		if( showService ){
 			showService.fixElementAndChildren(this.$div, {}, this.doc);
 		};
 		
 		this._performPostProcess();
-	}
+	},
 
-	,refresh: function(){
+	refresh: function(){
 		this.formEditor.refresh();
 		
-		var showService = this._getShowService();
+		var showService = this.showService;
 		if( showService ){
 			showService.fixElementAndChildren(this.$div, {}, this.doc);
 		};
 		
 		this._performPostProcess();
-	}
+	},
 
-	,_performPostProcess: function(){
+	_performPostProcess: function(){
 		
 		for(var i=0,e=this.postProcessFns.length; i<e; ++i){
 			var fn = this.postProcessFns[i];
@@ -2312,15 +2413,6 @@ var SchemaEditor = $n2.Class({
 				fn(this.doc, this.$div);
 			};
 		};
-	}
-
-	,_getShowService: function(){
-		if( this.serviceDirectory 
-		 && this.serviceDirectory.showService ) {
-			return this.serviceDirectory.showService;
-		};
-		
-		return null;
 	}
 });
 
@@ -2332,31 +2424,41 @@ var _defaultOnChanged = function(){};
 
 var SchemaEditorService = $n2.Class({
 
-	serviceDirectory: null
+	documentSource: null,
 	
-	,funcMap: null
-	
-	,postProcessFunctions: null
-	
-	,documentSource: null
+	showService: null,
 
-	,initialize: function(options_) {
-		var options = $.extend({
+	searchService: null,
+	
+	dispatchService: null,
+	
+	funcMap: null,
+	
+	postProcessFunctions: null,
+	
+	documentSource: null,
+
+	initialize: function(opts_) {
+		var opts = $n2.extend({
 			funcMap: {}
 			,postProcessFn: null
 			,documentSource: null
-			,serviceDirectory: null
-		},options_);
+			,showService: null
+			,searchService: null
+			,dispatchService: null
+		},opts_);
 	
 		var _this = this;
 		
-		this.serviceDirectory = options.serviceDirectory;
 		this.postProcessFunctions = [];
-		this.documentSource = options.documentSource;
+		this.documentSource = opts.documentSource;
+		this.showService = opts.showService;
+		this.searchService = opts.searchService;
+		this.dispatchService = opts.dispatchService;
 		
 		this.funcMap = {};
-		for(var key in options.funcMap){
-			var fn = options.funcMap[key];
+		for(var key in opts.funcMap){
+			var fn = opts.funcMap[key];
 			
 			if( typeof(fn) === 'function' ){
 				this.funcMap[key] = fn;
@@ -2375,18 +2477,18 @@ var SchemaEditorService = $n2.Class({
 					currentLayers: currentLayers
 					,cb: cb
 					,resetFn: resetFn
-					,showService: _this._getShowService()
-					,dispatchService: _this._getDispatchService()
+					,showService: _this.showService
+					,dispatchService: _this.dispatchService
 				});
 			};			
 		};
 		
-		if( options.postProcessFn ){
-			this.postProcessFunctions.push( options.postProcessFn );
+		if( opts.postProcessFn ){
+			this.postProcessFunctions.push( opts.postProcessFn );
 		};
-	}
+	},
 
-	,editDocument: function(opts_){
+	editDocument: function(opts_){
 		var opts = $n2.extend({
 			doc: null // document
 			,schema: null // schema that should be used for editing document
@@ -2401,54 +2503,28 @@ var SchemaEditorService = $n2.Class({
 			,onChanged: opts.onChanged
 			,funcMap: this.funcMap
 			,postProcessFns: this.postProcessFunctions
-			,serviceDirectory: this.serviceDirectory
+			,showService: this.showService
 		});
 		
 		return editor;
-	}
+	},
 	
-	,addFunctionMap: function(fnName, fn){
+	addFunctionMap: function(fnName, fn){
 		if( typeof(fn) === 'function' ){
 			this.funcMap[fnName] = fn;
 		};
-	}
+	},
 	
-	,addPostProcessFunction: function(fn){
+	addPostProcessFunction: function(fn){
 		if( typeof(fn) === 'function' ){
 			this.postProcessFunctions.push(fn);
 		};
-	}
+	},
 
-	,_getSearchService: function(){
-		if( this.serviceDirectory 
-		 && this.serviceDirectory.searchService ) {
-			return this.serviceDirectory.searchService;
-		};
+	_searchForDocumentId: function(cb,resetFn){
 		
-		return null;
-	}
-
-	,_getShowService: function(){
-		if( this.serviceDirectory 
-		 && this.serviceDirectory.showService ) {
-			return this.serviceDirectory.showService;
-		};
-		
-		return null;
-	}
-	
-	,_getDispatchService: function(){
-		var d = null;
-		if( this.serviceDirectory ){
-			d = this.serviceDirectory.dispatchService;
-		};
-		return d;
-	}
-
-	,_searchForDocumentId: function(cb,resetFn){
-		
-		var searchServer = this._getSearchService();
-		var showService = this._getShowService();
+		var searchServer = this.searchService;
+		var showService = this.showService;
 		
 		searchForDocumentId({
 			searchServer: searchServer
