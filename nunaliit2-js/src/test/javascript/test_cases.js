@@ -179,3 +179,42 @@ jsunit.defineTest('$n2.trim',function($$){
 		$$.fail("$n2.trim('  aaa  bbb  ')");
 	};
 });
+
+//*********
+jsunit.defineTest('$n2.range',function($$){
+
+	var range1 = new $n2.range.Range({min:10,max:20});
+	var range2 = new $n2.range.Range({min:30,max:40});
+	var range3 = new $n2.range.Range({min:0,max:50});
+	
+	if( range1.intersectsWith(range2) ){
+		$$.fail("Range1 and range2 do not intersect");
+	};
+	
+	if( !range1.intersectsWith(range3) ){
+		$$.fail("Range1 and range3 intersects");
+	};
+});
+
+//*********
+jsunit.defineTest('$n2.date.parseUserDate',function($$){
+
+	var d1980 = $n2.date.parseUserDate('1980');
+	var d198006 = $n2.date.parseUserDate('1980-06');
+	var d19800602 = $n2.date.parseUserDate('1980-06-02');
+	var d198008 = $n2.date.parseUserDate('1980-08');
+	var d1982 = $n2.date.parseUserDate('1982');
+	
+	if( !d1980.intersectsWith(d198006) ){
+		$$.fail("June 1980 should be reported within 1980");
+	};
+	if( !d19800602.intersectsWith(d198006) ){
+		$$.fail("June 2nd, 1980 should be reported within June 1980");
+	};
+	if( d198008.intersectsWith(d198006) ){
+		$$.fail("June 1980 and August 1980 do not intersects");
+	};
+	if( d198008.intersectsWith(d1982) ){
+		$$.fail("June 1980 and 1982 do not intersects");
+	};
+});
