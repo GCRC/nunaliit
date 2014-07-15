@@ -33,7 +33,7 @@ POSSIBILITY OF SUCH DAMAGE.
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 
-var Range = $n2.Class({
+var Interval = $n2.Class({
 	
 	min: null,
 	
@@ -46,51 +46,115 @@ var Range = $n2.Class({
 		},opts_);
 		
 		if( typeof opts.min !== 'number' ){
-			throw _loc('Range min must be a number');
+			throw _loc('Interval min must be a number');
 		};
 		if( typeof opts.max !== 'number' ){
-			throw _loc('Range max must be a number');
+			throw _loc('Interval max must be a number');
 		};
 		if( opts.min > opts.max ){
-			throw _loc('Range min can not be greater than max');
+			throw _loc('Interval min can not be greater than max');
 		};
 		
 		this.min = opts.min;
 		this.max = opts.max;
 	},
+	
+	size: function(){
+		return (this.max - this.min);
+	},
 
-	intersectsWith: function(range){
-		if( !range ){
+	equals: function(interval){
+		if( !interval ){
 			return false;
 		};
 		
-		if( this.min > range.max ){
+		if( typeof interval.min !== 'number' ){
 			return false;
 		};
-		if( this.max < range.min ){
+		if( typeof interval.max !== 'number' ){
+			return false;
+		};
+		
+		if( this.min === interval.min 
+		 && this.max === interval.max ){
+			return true;
+		};
+
+		return false;
+	},
+
+	isIncludedIn: function(interval){
+		if( !interval ){
+			return false;
+		};
+		
+		if( typeof interval.min !== 'number' ){
+			return false;
+		};
+		if( typeof interval.max !== 'number' ){
+			return false;
+		};
+		
+		if( this.min >= interval.min 
+		 && this.max <= interval.max ){
+			return true;
+		};
+
+		return false;
+	},
+
+	extendTo: function(interval){
+		var min = this.min;
+		var max = this.max;
+		
+		if( interval ){
+			if( min > interval.min ){
+				min = interval.min;
+			};
+			
+			if( max < interval.max ){
+				max = interval.max;
+			};
+		};
+		
+		return new Interval({
+			min: min
+			,max: max
+		});
+	},
+
+	intersectsWith: function(interval){
+		if( !interval ){
+			return false;
+		};
+		
+		if( this.min > interval.max ){
+			return false;
+		};
+		if( this.max < interval.min ){
 			return false;
 		};
 		
 		return true;
 	},
 
-	intersection: function(range){
-		if( !this.intersectsWith(range) ){
+	intersection: function(interval){
+		if( !this.intersectsWith(interval) ){
 			return null;
 		};
 		
 		var min = this.min;
 		var max = this.max;
 
-		if( min < range.min ){
-			min = range.min;
+		if( min < interval.min ){
+			min = interval.min;
 		};
 
-		if( max > range.max ){
-			max = range.max;
+		if( max > interval.max ){
+			max = interval.max;
 		};
 		
-		return new Range({
+		return new Interval({
 			min: min
 			,max: max
 		});
@@ -98,8 +162,9 @@ var Range = $n2.Class({
 });
 
 //*******************************************************
-$n2.range = {
-	Range: Range
+$n2.Interval = Interval;
+$n2.interval = {
+	Interval: Interval
 };
 
 })(nunaliit2);

@@ -31,25 +31,33 @@ POSSIBILITY OF SUCH DAMAGE.
 ;(function($n2){
 
 // Localization
-//var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 
 var reYear = /^\s*(\d\d\d\d)\s*$/;
 var reYearMonth = /^\s*(\d\d\d\d)-(\d\d)\s*$/;
 var reYearMonthDay = /^\s*(\d\d\d\d)(\d\d)(\d\d)\s*$/;
 var reYearMonthDay2 = /^\s*(\d\d\d\d)-(\d\d)-(\d\d)\s*$/;
+var reYearMonthDayHM = /^\s*(\d\d\d\d)(\d\d)(\d\d)[ T](\d\d):(\d\d)\s*$/;
+var reYearMonthDayHM2 = /^\s*(\d\d\d\d)-(\d\d)-(\d\d)[ T](\d\d):(\d\d)\s*$/;
+var reYearMonthDayHMS = /^\s*(\d\d\d\d)(\d\d)(\d\d)[ T](\d\d):(\d\d):(\d\d)\s*$/;
+var reYearMonthDayHMS2 = /^\s*(\d\d\d\d)-(\d\d)-(\d\d)[ T](\d\d):(\d\d):(\d\d)\s*$/;
 	
 function parseUserDate(dateStr){
 	var matchYear = reYear.exec(dateStr);
 	var matchYearMonth = reYearMonth.exec(dateStr);
 	var matchYearMonthDay = reYearMonthDay.exec(dateStr);
 	var matchYearMonthDay2 = reYearMonthDay2.exec(dateStr);
+	var matchYearMonthDayHM = reYearMonthDayHM.exec(dateStr);
+	var matchYearMonthDayHM2 = reYearMonthDayHM2.exec(dateStr);
+	var matchYearMonthDayHMS = reYearMonthDayHMS.exec(dateStr);
+	var matchYearMonthDayHMS2 = reYearMonthDayHMS2.exec(dateStr);
 	
 	if( matchYear ){
 		var year = 1 * matchYear[1];
 		var min = (new Date(year,0,1)).getTime();
 		var max = (new Date(year+1,0,1)).getTime();
 		
-		return new $n2.range.Range({
+		return new $n2.Interval({
 			min: min
 			,max: max-1000
 		});
@@ -65,7 +73,7 @@ function parseUserDate(dateStr){
 		var min = (new Date(year,month-1,1)).getTime();
 		var max = (new Date(year,month,1)).getTime();
 		
-		return new $n2.range.Range({
+		return new $n2.Interval({
 			min: min
 			,max: max-1000
 		});
@@ -85,7 +93,7 @@ function parseUserDate(dateStr){
 		var min = (new Date(year,month-1,day)).getTime();
 		var max = (new Date(year,month-1,day+1)).getTime();
 		
-		return new $n2.range.Range({
+		return new $n2.Interval({
 			min: min
 			,max: max-1000
 		});
@@ -105,10 +113,131 @@ function parseUserDate(dateStr){
 		var min = (new Date(year,month-1,day)).getTime();
 		var max = (new Date(year,month-1,day+1)).getTime();
 		
-		return new $n2.range.Range({
+		return new $n2.Interval({
 			min: min
 			,max: max-1000
 		});
+
+	} else if( matchYearMonthDayHM ){
+		var year = 1 * matchYearMonthDayHM[1];
+		var month = 1 * matchYearMonthDayHM[2];
+		var day = 1 * matchYearMonthDayHM[3];
+		var hour = 1 * matchYearMonthDayHM[4];
+		var minutes = 1 * matchYearMonthDayHM[5];
+		
+		if( month < 1 || month > 12 ){
+			throw _loc('Month must be an integer between 1 and 12');
+		};
+		if( day < 1 || day > 31 ){
+			throw _loc('Day must be an integer between 1 and 31');
+		};
+		if( hour < 0 || hour > 23 ){
+			throw _loc('Hour must be an integer between 0 and 23');
+		};
+		if( minutes < 0 || minutes > 59 ){
+			throw _loc('Minutes must be an integer between 0 and 59');
+		};
+
+		var min = (new Date(year,month-1,day,hour,minutes)).getTime();
+		var max = (new Date(year,month-1,day,hour,minutes+1)).getTime();
+		
+		return new $n2.Interval({
+			min: min
+			,max: max-1000
+		});
+
+	} else if( matchYearMonthDayHM2 ){
+		var year = 1 * matchYearMonthDayHM2[1];
+		var month = 1 * matchYearMonthDayHM2[2];
+		var day = 1 * matchYearMonthDayHM2[3];
+		var hour = 1 * matchYearMonthDayHM2[4];
+		var minutes = 1 * matchYearMonthDayHM2[5];
+		
+		if( month < 1 || month > 12 ){
+			throw _loc('Month must be an integer between 1 and 12');
+		};
+		if( day < 1 || day > 31 ){
+			throw _loc('Day must be an integer between 1 and 31');
+		};
+		if( hour < 0 || hour > 23 ){
+			throw _loc('Hour must be an integer between 0 and 23');
+		};
+		if( minutes < 0 || minutes > 59 ){
+			throw _loc('Minutes must be an integer between 0 and 59');
+		};
+
+		var min = (new Date(year,month-1,day,hour,minutes)).getTime();
+		var max = (new Date(year,month-1,day,hour,minutes+1)).getTime();
+		
+		return new $n2.Interval({
+			min: min
+			,max: max-1000
+		});
+
+	} else if( matchYearMonthDayHMS ){
+		var year = 1 * matchYearMonthDayHMS[1];
+		var month = 1 * matchYearMonthDayHMS[2];
+		var day = 1 * matchYearMonthDayHMS[3];
+		var hour = 1 * matchYearMonthDayHMS[4];
+		var minutes = 1 * matchYearMonthDayHMS[5];
+		var secs = 1 * matchYearMonthDayHMS[6];
+		
+		if( month < 1 || month > 12 ){
+			throw _loc('Month must be an integer between 1 and 12');
+		};
+		if( day < 1 || day > 31 ){
+			throw _loc('Day must be an integer between 1 and 31');
+		};
+		if( hour < 0 || hour > 23 ){
+			throw _loc('Hour must be an integer between 0 and 23');
+		};
+		if( minutes < 0 || minutes > 59 ){
+			throw _loc('Minutes must be an integer between 0 and 59');
+		};
+		if( secs < 0 || secs > 59 ){
+			throw _loc('Seconds must be an integer between 0 and 59');
+		};
+
+		var min = (new Date(year,month-1,day,hour,minutes,secs)).getTime();
+		var max = (new Date(year,month-1,day,hour,minutes,secs+1)).getTime();
+		
+		return new $n2.Interval({
+			min: min
+			,max: max-1000
+		});
+
+	} else if( matchYearMonthDayHMS2 ){
+		var year = 1 * matchYearMonthDayHMS2[1];
+		var month = 1 * matchYearMonthDayHMS2[2];
+		var day = 1 * matchYearMonthDayHMS2[3];
+		var hour = 1 * matchYearMonthDayHMS2[4];
+		var minutes = 1 * matchYearMonthDayHMS2[5];
+		var secs = 1 * matchYearMonthDayHMS2[6];
+		
+		if( month < 1 || month > 12 ){
+			throw _loc('Month must be an integer between 1 and 12');
+		};
+		if( day < 1 || day > 31 ){
+			throw _loc('Day must be an integer between 1 and 31');
+		};
+		if( hour < 0 || hour > 23 ){
+			throw _loc('Hour must be an integer between 0 and 23');
+		};
+		if( minutes < 0 || minutes > 59 ){
+			throw _loc('Minutes must be an integer between 0 and 59');
+		};
+		if( secs < 0 || secs > 59 ){
+			throw _loc('Seconds must be an integer between 0 and 59');
+		};
+
+		var min = (new Date(year,month-1,day,hour,minutes,secs)).getTime();
+		var max = (new Date(year,month-1,day,hour,minutes,secs+1)).getTime();
+		
+		return new $n2.Interval({
+			min: min
+			,max: max-1000
+		});
+
 	} else {
 		throw _loc('Can not parse date');
 	};

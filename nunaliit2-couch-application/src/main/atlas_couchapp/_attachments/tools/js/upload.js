@@ -44,7 +44,7 @@ function markMedia(doc, attachmentName, status) {
 				doc.nunaliit_attachments.files[original].status = status;
 			};
 		};
-		$n2.couchMap.adjustDocument(doc);
+		$n2.couchDocument.adjustDocument(doc);
 	};
 };
 

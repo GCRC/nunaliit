@@ -181,18 +181,62 @@ jsunit.defineTest('$n2.trim',function($$){
 });
 
 //*********
-jsunit.defineTest('$n2.range',function($$){
+jsunit.defineTest('$n2.interval',function($$){
 
-	var range1 = new $n2.range.Range({min:10,max:20});
-	var range2 = new $n2.range.Range({min:30,max:40});
-	var range3 = new $n2.range.Range({min:0,max:50});
+	var interval1 = new $n2.Interval({min:10,max:20});
+	var interval2 = new $n2.Interval({min:30,max:40});
+	var interval3 = new $n2.Interval({min:0,max:50});
 	
-	if( range1.intersectsWith(range2) ){
-		$$.fail("Range1 and range2 do not intersect");
+	if( 10 !== interval2.size() ){
+		$$.fail("interval2.size() should be 10");
 	};
 	
-	if( !range1.intersectsWith(range3) ){
-		$$.fail("Range1 and range3 intersects");
+	if( !interval1.equals(interval1) ){
+		$$.fail("interval1 should be equal to itself");
+	};
+	
+	if( interval1.equals(interval2) ){
+		$$.fail("interval1 and interval2 are not equal");
+	};
+	
+	if( interval1.equals(null) ){
+		$$.fail("interval1 should not be equal to null");
+	};
+	
+	if( !interval1.equals({min:10,max:20}) ){
+		$$.fail("interval1 should be equal to an equivalent interval");
+	};
+	
+	if( interval1.isIncludedIn(null) ){
+		$$.fail("interval1 should not be included within null");
+	};
+	
+	if( !interval1.isIncludedIn(interval1) ){
+		$$.fail("interval1 should be included within itself");
+	};
+	
+	if( !interval1.isIncludedIn(interval3) ){
+		$$.fail("interval1 should be included within interval3");
+	};
+	
+	if( interval3.isIncludedIn(interval1) ){
+		$$.fail("interval3 should not be included within interval1");
+	};
+	
+	if( interval1.intersectsWith(interval2) ){
+		$$.fail("interval1 and interval2 do not intersect");
+	};
+	
+	if( !interval1.intersectsWith(interval3) ){
+		$$.fail("interval1 and interval3 intersects");
+	};
+	
+	var interval4 = interval1.extendTo(interval2);
+	if( 10 != interval4.min ){
+		$$.fail("Problem with min after extending");
+	};
+	if( 40 != interval4.max ){
+		$$.fail("Problem with min after extending");
 	};
 });
 
@@ -205,12 +249,19 @@ jsunit.defineTest('$n2.date.parseUserDate',function($$){
 	var d198008 = $n2.date.parseUserDate('1980-08');
 	var d1982 = $n2.date.parseUserDate('1982');
 	
-	if( !d1980.intersectsWith(d198006) ){
-		$$.fail("June 1980 should be reported within 1980");
+	if( d1980.size() <= d198006.size() ){
+		$$.fail("1980 should be larger than 1980-06");
 	};
-	if( !d19800602.intersectsWith(d198006) ){
-		$$.fail("June 2nd, 1980 should be reported within June 1980");
+	if( d198006.size() <= d19800602.size() ){
+		$$.fail("1980-06 should be larger than 1980-06-02");
 	};
+	if( !d198006.isIncludedIn(d1980) ){
+		$$.fail("1980-06 should be included within 1980");
+	};
+	if( !d19800602.isIncludedIn(d198006) ){
+		$$.fail("1980-06-02 should be included within 1980-06");
+	};
+	
 	if( d198008.intersectsWith(d198006) ){
 		$$.fail("June 1980 and August 1980 do not intersects");
 	};

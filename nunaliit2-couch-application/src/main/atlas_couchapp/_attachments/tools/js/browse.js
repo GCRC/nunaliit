@@ -252,7 +252,7 @@ function createNewDocument(schema) {
 		var doc = {};
 	};
 
-	$n2.couchMap.adjustDocument(doc);
+	$n2.couchDocument.adjustDocument(doc);
 	
 	showEdit(doc,schema);
 	

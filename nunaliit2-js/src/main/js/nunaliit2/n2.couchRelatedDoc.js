@@ -494,7 +494,7 @@ var Editor = $n2.Class({
 		var _this = this;
 		var obj = this.obj;
 
-		$n2.couchMap.adjustDocument(obj);
+		$n2.couchDocument.adjustDocument(obj);
 
 		this.documentSource.createDocument({
 			doc: obj

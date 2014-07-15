@@ -416,7 +416,7 @@ $Id: n2.couchImportData.js 8456 2012-08-29 01:08:01Z glennbrauen $
 						return;
 					};
 
-					$n2.couchMap.adjustDocument(nextUpload);
+					$n2.couchDocument.adjustDocument(nextUpload);
 
 					db.createDocument({
 						data: nextUpload,

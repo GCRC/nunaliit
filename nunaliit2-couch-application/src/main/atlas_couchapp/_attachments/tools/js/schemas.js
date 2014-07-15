@@ -256,7 +256,7 @@
 		
 		var data = $n2.extend({},schema);
 		
-		$n2.couchMap.adjustDocument(data);
+		$n2.couchDocument.adjustDocument(data);
 		
 		atlasDb.createDocument({
 			data: data
@@ -280,7 +280,7 @@
 		$d.empty().html('<div class="olkit_wait"></div>');
 		
 		var data = $n2.extend({},schema);
-		$n2.couchMap.adjustDocument(data);
+		$n2.couchDocument.adjustDocument(data);
 
 		atlasDb.getDocument({
 			docId: id

@@ -1531,7 +1531,7 @@ var Form = $n2.Class({
 
 		this.callback = callback;
 		if( !this.callback ) {
-			this.callback = function(){};
+			this.callback = function(obj,selector,value){};
 		};
 		
 		this.functionMap = {};
@@ -1727,12 +1727,14 @@ var Form = $n2.Class({
 					value = value.date;
 				};
 				$input.val(value);
+				$input.attr('n2OriginalDate',value);
 
 				if( $input.datepicker ) {
 					$input.datepicker({
 						dateFormat: 'yy-mm-dd'
 						,gotoCurrent: true
 						,changeYear: true
+						,constrainInput: false
 						,onSelect: function(){
 							var $input = $(this);
 							handler.call($input);
@@ -1858,6 +1860,7 @@ var Form = $n2.Class({
 			var $input = $(this);
 			var parentObj = getDataFromObjectSelector(obj, parentSelector);
 			var effectiveKey = key;
+			var effectiveSelector = selector;
 			
 			if( !parentObj ){
 				if( 'localized' === keyType ) {
@@ -1901,12 +1904,52 @@ var Form = $n2.Class({
 					};
 					
 				} else if( 'date' === keyType ) {
-					if( !parentObj[effectiveKey] ) {
-						parentObj[effectiveKey] = {nunaliit_type:'date'};
+					// For date, we will update object
+					assignValue = false;
+					
+					var dateStr = $input.val();
+					
+					if( !dateStr ){
+						if( parentObj[effectiveKey] ) {
+							delete parentObj[effectiveKey];
+						};
+					} else {
+						var trimmedDateStr = $n2.trim(dateStr);
+						if( '' === trimmedDateStr ){
+							if( parentObj[effectiveKey] ) {
+								delete parentObj[effectiveKey];
+							};
+						} else {
+
+							var dateInt = null;
+							try {
+								dateInt = $n2.date.parseUserDate(dateStr);
+							} catch(e) {
+								var msg = _loc('Invalid date: {err}',{err:e});
+								$n2.log(msg);
+								alert( msg );
+								var original = $input.attr('n2OriginalDate');
+								$input.val(original);
+							};
+
+							if( dateInt ){
+								if( !parentObj[effectiveKey] ) {
+									parentObj[effectiveKey] = {nunaliit_type:'date'};
+								};
+
+								parentObj = parentObj[effectiveKey];
+								parentObj.date = dateStr;
+								parentObj.min = dateInt.min;
+								parentObj.max = dateInt.max;
+							};
+						};
 					};
-					parentObj = parentObj[effectiveKey];
-					effectiveKey = 'date';
-					value = $input.val();
+					
+					// We should be updating parent object with the
+					// complete date structure
+					effectiveSelector = parentSelector;
+					value = parentObj[effectiveKey];
+					
 					
 				} else if( 'numeric' === keyType ) {
 					value = $input.val();
@@ -1938,7 +1981,7 @@ var Form = $n2.Class({
 				if( assignValue ) {
 					parentObj[effectiveKey] = value;
 				};
-				callback(obj,selector,value);
+				callback(obj,effectiveSelector,value);
 			};
 		};
 	}

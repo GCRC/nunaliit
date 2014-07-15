@@ -36,6 +36,54 @@ var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
 var DH = 'n2.couchDocument';
 
+//*******************************************************
+function adjustDocument(doc) {
+
+	// Get user name
+	var userName = null;
+	var sessionContext = $n2.couch.getSession().getContext();
+	if( sessionContext ) {
+		userName = sessionContext.name;
+	};
+	
+	// Get now
+	var nowTime = (new Date()).getTime();
+	
+	if( userName ) {
+		if( null == doc.nunaliit_created ) {
+			doc.nunaliit_created = {
+				nunaliit_type: 'actionstamp'
+				,name: userName
+				,time: nowTime
+				,action: 'created'
+			};
+		};
+		
+		doc.nunaliit_last_updated = {
+			nunaliit_type: 'actionstamp'
+			,name: userName
+			,time: nowTime
+			,action: 'updated'
+		};
+	};
+	
+	// Fix dates
+	var dates = [];
+	$n2.couchUtils.extractSpecificType(doc, 'date', dates);
+	for(var i=0,e=dates.length; i<e; ++i){
+		var d = dates[i];
+		if( d.date ) {
+			try {
+				var dateInt = $n2.date.parseUserDate(d.date);
+				d.min = dateInt.min;
+				d.max = dateInt.max;
+			} catch(e) {
+				if( d.min ) delete d.min;
+				if( d.max ) delete d.max;
+			};
+		};
+	};
+}
 
 // *******************************************************
 var CouchDataSource = $n2.Class($n2.document.DataSource, {
@@ -84,7 +132,7 @@ var CouchDataSource = $n2.Class($n2.document.DataSource, {
 
 		var doc = opts.doc;
 
-		this._adjustDocument(doc);
+		adjustDocument(doc);
 
 		this.db.createDocument({
 			data: doc
@@ -183,7 +231,7 @@ var CouchDataSource = $n2.Class($n2.document.DataSource, {
 
 		var doc = opts.doc;
 
-		this._adjustDocument(doc);
+		adjustDocument(doc);
 
 		var copy = {};
 		for(var key in doc){
@@ -397,37 +445,6 @@ var CouchDataSource = $n2.Class($n2.document.DataSource, {
 		var server = this.db.server;
 		
 		server.getUniqueId(opts);
-	}
-
-	,_adjustDocument: function(doc) {
-
-		// Get user name
-		var userName = null;
-		var sessionContext = $n2.couch.getSession().getContext();
-		if( sessionContext ) {
-			userName = sessionContext.name;
-		};
-		
-		// Get now
-		var nowTime = (new Date()).getTime();
-		
-		if( userName ) {
-			if( null == doc.nunaliit_created ) {
-				doc.nunaliit_created = {
-					nunaliit_type: 'actionstamp'
-					,name: userName
-					,time: nowTime
-					,action: 'created'
-				};
-			};
-			
-			doc.nunaliit_last_updated = {
-				nunaliit_type: 'actionstamp'
-				,name: userName
-				,time: nowTime
-				,action: 'updated'
-			};
-		};
 	}
 	
 	,_dispatch: function(m){
@@ -775,7 +792,7 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 			var doc = opts.doc;
 			doc._id = docId;
 			
-			_this._adjustDocument(doc);
+			adjustDocument(doc);
 
 			_this.submissionServerDb.createDocument({
 				data: doc
@@ -805,7 +822,7 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 		
 		var doc = opts.doc;
 		
-		this._adjustDocument(doc);
+		adjustDocument(doc);
 		
 		var copy = {};
 		for(var key in doc){
@@ -935,6 +952,7 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 $n2.couchDocument = {
 	CouchDataSource: CouchDataSource
 	,CouchDataSourceWithSubmissionDb: CouchDataSourceWithSubmissionDb
+	,adjustDocument: adjustDocument
 };
 
 })(jQuery,nunaliit2);

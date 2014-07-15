@@ -655,7 +655,7 @@ $n2.couchContributions = $n2.Class({
 			};
 		};
 		
-		$n2.couchMap.adjustDocument(contributionDoc);
+		$n2.couchDocument.adjustDocument(contributionDoc);
 		
 		var form = this.options.addContributionSchema.createForm($elem, contributionDoc, {
 			preOK: function() {

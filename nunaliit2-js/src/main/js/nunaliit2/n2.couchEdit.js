@@ -458,9 +458,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
     	});
     	
 		// Update feature data with user info
-		if( $n2.couchMap && $n2.couchMap.adjustDocument ) {
-			$n2.couchMap.adjustDocument(data);
-		};
+		$n2.couchDocument.adjustDocument(data);
 		
 		// Figure out if accordion is needed
 		var accordionNeeded = false;
@@ -1244,9 +1242,7 @@ var CouchDocumentEditor = $n2.Class({
     	});
     	
 		// Update feature data with user info
-		if( $n2.couchMap && $n2.couchMap.adjustDocument ) {
-			$n2.couchMap.adjustDocument(data);
-		};
+		$n2.couchDocument.adjustDocument(data);
 
 		// Compute which views to show
 		var showFormView = false;

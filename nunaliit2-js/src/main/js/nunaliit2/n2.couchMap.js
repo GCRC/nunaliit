@@ -35,35 +35,12 @@ $Id: n2.couchMap.js 8437 2012-08-14 17:59:23Z jpfiset $
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 	
+/*
+ * This function retained for backward compatibility
+ */
 function adjustDocument(doc) {
-
-	// Get user name
-	var userName = null;
-	var sessionContext = $n2.couch.getSession().getContext();
-	if( sessionContext ) {
-		userName = sessionContext.name;
-	};
 	
-	// Get now
-	var nowTime = (new Date()).getTime();
-	
-	if( userName ) {
-		if( null == doc.nunaliit_created ) {
-			doc.nunaliit_created = {
-				nunaliit_type: 'actionstamp'
-				,name: userName
-				,time: nowTime
-				,action: 'created'
-			};
-		};
-		
-		doc.nunaliit_last_updated = {
-			nunaliit_type: 'actionstamp'
-			,name: userName
-			,time: nowTime
-			,action: 'updated'
-		};
-	};
+	$n2.couchDocument.adjustDocument(doc);
 };
 
 function isAdmin() {
