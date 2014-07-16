@@ -626,7 +626,7 @@
 	});
 	
 	SearchFilter.availableSearchFilters.push(new SearchFilterTextSearch());
-	
+
 	// **********************************************************************
 	var SearchFilterJavascript = $n2.Class(SearchFilter, {
 
@@ -1230,6 +1230,42 @@
 	});
 
 	SearchFilter.availableCreateFilters.push(new CreateFilterMediaAttached());
+
+	// **********************************************************************
+	var SearchFilterInvalidDocument = $n2.Class(SearchFilter, {
+
+		initialize: function(){
+			SearchFilter.prototype.initialize.apply(this);
+			this.name = _loc('Select invalid documents');
+		}
+	
+		,printOptions: function($parent){
+		}
+
+		,getFilterFunction: function(opts_){
+			var opts = $n2.extend({
+				options: null
+				,onSuccess: function(filterFn, creationName){}
+				,onError: reportError
+			},opts_);
+
+			var filterFn = function(doc){
+				var invalid = false;
+				$n2.couchUtils.validateDocumentStructure(
+					doc
+					,function(err){
+						invalid = true;
+						reportError( ''+doc._id+' : '+err );
+					}
+				);
+				return invalid;
+			};
+
+			opts.onSuccess(filterFn, _loc('Documents that are invalid') );
+		}
+	});
+
+	SearchFilter.availableSearchFilters.push(new SearchFilterInvalidDocument());
 
 	// **********************************************************************
 	var DocumentTransform = $n2.Class({

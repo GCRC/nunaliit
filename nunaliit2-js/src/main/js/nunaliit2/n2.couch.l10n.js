@@ -74,7 +74,7 @@ function uploadRequest(request) {
 			nunaliit_type: 'actionstamp'
 			,name: userName
 			,time: nowTime
-			,action: 'lastUpdated'
+			,action: 'updated'
 		};
 		
 		configuration.db.createDocument({
