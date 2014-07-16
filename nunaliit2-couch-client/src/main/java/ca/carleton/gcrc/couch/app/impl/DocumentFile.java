@@ -173,6 +173,13 @@ public class DocumentFile implements Document {
 					} else {
 						String value = readStringFile(child);
 						
+						if( "_id".equals(key) ){
+							// It is not likely that preceding and trailing
+							// spaces are intended for document identififer.
+							// They cause way too much trouble.
+							value = value.trim();
+						}
+						
 						this.jsonObj.put(key, value);
 					}
 				} else {

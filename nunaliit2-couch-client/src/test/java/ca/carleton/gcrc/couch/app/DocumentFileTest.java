@@ -221,4 +221,24 @@ public class DocumentFileTest extends TestCase {
 			fail("Unexpected attribute value. It should be empty.");
 		}
 	}
+
+	public void testSpacesOnId() throws Exception {
+		DocumentFile doc = null;
+		{
+			List<FSEntry> entries = new Vector<FSEntry>();
+
+			entries.add( FSEntryBuffer.getPositionedBuffer("a/_id.txt", " test ") );
+			entries.add( FSEntryBuffer.getPositionedBuffer("a/content.json", "{\"a\":1}") );
+			
+			FSEntry merged = new FSEntryMerged(entries);
+			doc = DocumentFile.createDocument(merged);
+		}
+
+		// Check _id
+		JSONObject obj = doc.getJSONObject();
+		String id = obj.getString("_id");
+		if( false == "test".equals(id) ) {
+			fail("Unexpected attribute value: >"+id+"<  Spaces should be removed");
+		}
+	}
 }
