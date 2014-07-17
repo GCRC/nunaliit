@@ -286,6 +286,7 @@ var rFindMonthDay2 = /^(\d\d)(\d\d)/;
 var rFindMonth = /^-?(\d\d)/;
 var rFindHMS = /^( +|T)(\d\d):(\d\d)(:(\d\d))?/;
 var rFindHMS2 = /^( +|T)(\d\d)(\d\d)(\d\d)?/;
+var rDurationSeparator = /^\s*\/\s*?/;
 
 function findDateString(str,index){
 	var result = null;
@@ -517,6 +518,27 @@ function findDateString(str,index){
 				,max: max-1000
 				,dateStr: result.str
 			});
+		};
+		
+		// At this point, we have one date. See if this is a duration, with
+		// another date after an appropriate separator
+		var start = result.index + result.str.length;
+		var another = findDateString(str,start);
+		if( another ){
+			// See if the separator is valid
+			var sepStr = str.substr(start,another.index-start);
+			var mDurationSeparator = rDurationSeparator.exec(sepStr);
+			if( mDurationSeparator ){
+				// This is a duration
+				result.str = str.substr(result.index,another.index+another.str.length-result.index);
+				result.interval = result.interval.extendTo(another.interval);
+				if( typeof result.year !== 'undefined' ) delete result.year;
+				if( typeof result.month !== 'undefined' ) delete result.month;
+				if( typeof result.day !== 'undefined' ) delete result.day;
+				if( typeof result.hours !== 'undefined' ) delete result.hours;
+				if( typeof result.minutes !== 'undefined' ) delete result.minutes;
+				if( typeof result.seconds !== 'undefined' ) delete result.seconds;
+			};
 		};
 	};
 	

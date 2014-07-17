@@ -336,3 +336,27 @@ jsunit.defineTest('$n2.date.findDateString',function($$){
 	t('aaa 1990-06-01T1234 bbb',1990,6,1,12,34);
 	t('aaa 1990-06-01T123456 bbb',1990,6,1,12,34,56);
 });
+
+//*********
+jsunit.defineTest('$n2.date.findDateString(duration)',function($$){
+	
+	function t(str,start,end){
+
+		try {
+			var d = $n2.date.findDateString(str);
+			var ds = $n2.date.findDateString(start);
+			var de = $n2.date.findDateString(end);
+
+			if( d.interval.min != ds.interval.min 
+			 || d.interval.max != de.interval.max ){
+				throw 'min and max do not match what is expected';
+			};
+			
+		} catch(e) {
+			$$.fail("Exception ("+str+"): "+e);
+		};
+	};
+
+	t('aaa 1980 / 1990 bbb','1980','1990');
+	t('aaa 1980/1990 bbb','1980','1990');
+});
