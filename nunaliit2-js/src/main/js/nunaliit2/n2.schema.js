@@ -1933,21 +1933,13 @@ var Form = $n2.Class({
 							};
 
 							if( dateInt ){
-								if( !parentObj[effectiveKey] ) {
-									parentObj[effectiveKey] = {nunaliit_type:'date'};
-								};
-
-								parentObj = parentObj[effectiveKey];
-								parentObj.date = dateStr;
-								parentObj.min = dateInt.min;
-								parentObj.max = dateInt.max;
+								parentObj[effectiveKey] = dateInt.getDocumentStructure();
 							};
 						};
 					};
 					
 					// We should be updating parent object with the
 					// complete date structure
-					effectiveSelector = parentSelector;
 					value = parentObj[effectiveKey];
 					
 					

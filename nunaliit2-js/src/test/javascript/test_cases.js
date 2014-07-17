@@ -268,4 +268,71 @@ jsunit.defineTest('$n2.date.parseUserDate',function($$){
 	if( d198008.intersectsWith(d1982) ){
 		$$.fail("June 1980 and 1982 do not intersects");
 	};
+
+	function valid(str){
+		try {
+			$n2.date.parseUserDate(str);
+		} catch(e) {
+			$$.fail("Date should be valid ("+str+"): "+e);
+		};
+	};
+	
+	valid('1980');
+	valid('  1980  ');
+	valid('1980-06');
+	valid('  1980-06  ');
+	valid('1980-06-01');
+	valid('  1980-06-01  ');
+	valid('19800601');
+	valid('  19800601  ');
+	valid('  19800601  12:34  ');
+	valid('  19800601T12:34  ');
+	valid('  1980-06-01  12:34  ');
+	valid('  1980-06-01T12:34  ');
+	valid('  19800601  12:34:56  ');
+	valid('  19800601T12:34:56  ');
+	valid('  1980-06-01  12:34:56  ');
+	valid('  1980-06-01T12:34:56  ');
+});
+
+//*********
+jsunit.defineTest('$n2.date.findDateString',function($$){
+	
+	function t(str,year,month,day,h,m,s){
+
+		try {
+			var d = $n2.date.findDateString(str);
+			if( d.year !== year ){
+				$$.fail("Wrong year: "+str);
+			};
+			if( d.month !== month ){
+				$$.fail("Wrong month: "+str);
+			};
+			if( d.day !== day ){
+				$$.fail("Wrong day: "+str);
+			};
+			if( d.hours !== h ){
+				$$.fail("Wrong hours: "+str);
+			};
+			if( d.minutes !== m ){
+				$$.fail("Wrong minutes: "+str);
+			};
+			if( d.seconds !== s ){
+				$$.fail("Wrong seconds: "+str);
+			};
+		} catch(e) {
+			$$.fail("Exception ("+str+"): "+e);
+		};
+	};
+
+	t('It happened in 1980, it was a dark night',1980);
+	t('aaa 199006 bbb',1990,6);
+	t('aaa 19900601 bbb',1990,6,1);
+	t('aaa 1990-06 bbb',1990,6);
+	t('aaa 1990-06-01 bbb',1990,6,1);
+	t('aaa 1990-06-01 12:34 bbb',1990,6,1,12,34);
+	t('aaa 1990-06-01   12:34 bbb',1990,6,1,12,34);
+	t('aaa 1990-06-01T12:34 bbb',1990,6,1,12,34);
+	t('aaa 1990-06-01T1234 bbb',1990,6,1,12,34);
+	t('aaa 1990-06-01T123456 bbb',1990,6,1,12,34,56);
 });
