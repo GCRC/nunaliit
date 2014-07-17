@@ -59,6 +59,7 @@ function nunaliitConfigure(opts_) {
 			,exportServerUrl: opts.rootPath + '../../../servlet/export/'
 			,userServerUrl: opts.rootPath + '../../../servlet/user/'
 			,submissionServerUrl: opts.rootPath + '../../../servlet/submission/'
+			,dateServerUrl: opts.rootPath + '../../../servlet/date/'
 	 		,onSuccess: opts.configuredFunction
 	 	};
 	 	

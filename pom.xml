@@ -117,5 +117,6 @@
 		<module>nunaliit2-mail</module>
 		<module>nunaliit2-security</module>
 		<module>nunaliit2-couch-submission</module>
+		<module>nunaliit2-couch-date</module>
 	</modules>
 </project>

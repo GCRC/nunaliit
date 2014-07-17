@@ -28,6 +28,7 @@ import ca.carleton.gcrc.couch.client.CouchFactory;
 import ca.carleton.gcrc.couch.client.CouchUserDb;
 import ca.carleton.gcrc.couch.command.AtlasProperties;
 import ca.carleton.gcrc.couch.command.impl.PathComputer;
+import ca.carleton.gcrc.couch.date.DateServletConfiguration;
 import ca.carleton.gcrc.couch.export.ExportConfiguration;
 import ca.carleton.gcrc.couch.fsentry.FSEntry;
 import ca.carleton.gcrc.couch.fsentry.FSEntryFile;
@@ -182,6 +183,14 @@ public class ConfigServlet extends JsonServlet {
 			initExport(servletContext);
 		} catch(ServletException e) {
 			logger.error("Error while initializing export service",e);
+			throw e;
+		}
+		
+		// Configure date
+		try {
+			initDate(servletContext);
+		} catch(ServletException e) {
+			logger.error("Error while initializing date service",e);
 			throw e;
 		}
 		
@@ -609,6 +618,22 @@ public class ConfigServlet extends JsonServlet {
 			CouchDesignDocument atlasDesign = couchDb.getDesignDocument("atlas");
 			config.setAtlasDesignDocument(atlasDesign);
 			servletContext.setAttribute(ExportConfiguration.CONFIGURATION_KEY, config);
+
+		} catch(Exception e) {
+			logger.error("Error configuring export service",e);
+			throw new ServletException("Error configuring export service",e);
+		}
+	}
+
+	private void initDate(ServletContext servletContext) throws ServletException {
+
+		try {
+			DateServletConfiguration config = new DateServletConfiguration();
+			CouchDb couchDb = couchDd.getDatabase();
+			config.setCouchDb(couchDb);
+			CouchDesignDocument atlasDesign = couchDb.getDesignDocument("atlas");
+			config.setAtlasDesignDocument(atlasDesign);
+			servletContext.setAttribute(DateServletConfiguration.CONFIGURATION_KEY, config);
 
 		} catch(Exception e) {
 			logger.error("Error configuring export service",e);

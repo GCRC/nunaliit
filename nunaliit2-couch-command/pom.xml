@@ -149,6 +149,13 @@
    	</dependency>
    	<dependency>
    		<groupId>ca.carleton.gcrc</groupId>
+   		<artifactId>nunaliit2-couch-date</artifactId>
+   		<version>${project.version}</version>
+   		<type>jar</type>
+   		<scope>compile</scope>
+   	</dependency>
+   	<dependency>
+   		<groupId>ca.carleton.gcrc</groupId>
    		<artifactId>nunaliit2-couch-export</artifactId>
    		<version>${project.version}</version>
    		<type>jar</type>

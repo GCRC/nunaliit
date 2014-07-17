@@ -62,10 +62,11 @@ var SearchRequest = $n2.Class({
 	
 	,searchResults: null
 	
-	,initialize: function(searchTerms, opts_) {
+	,initialize: function(searchTermsLine, opts_) {
 		this.options = $n2.extend({
 			designDoc: null
 			,db: null
+			,dateService: null
 			,searchView: 'text-search'
 			,searchLimit: 25
 			,onlyFinalResults: false
@@ -74,17 +75,38 @@ var SearchRequest = $n2.Class({
 			,onError: function(err){ $n2.reportErrorForced(err); }
 		},opts_);
 		
-		if( typeof(searchTerms) === 'string' ) {
+		var searchTerms = searchTermsLine;
+		if( typeof(searchTermsLine) === 'string' ) {
 			searchTerms = SplitSearchTerms(searchTerms);
+		} else if( $n2.isArray(searchTermsLine) ){
+			searchTermsLine = searchTerms.join(' ');
+		} else {
+			this.options.onError('Search terms must be a string or an array');
+			return;
+		};
+		
+		var dateIntervals = null;
+		if( this.options.dateService ){
+			var dateStrings = $n2.date.findAllDateStrings(searchTermsLine);
+			if( dateStrings && dateStrings.length ){
+				dateIntervals = [];
+				for(var i=0,e=dateStrings.length; i<e; ++i){
+					dateIntervals.push( dateStrings[i].interval );
+				};
+			};
 		};
 
 		// Initialize results
 		this.searchResults = {
 			terms: []
+			,actionReturnedCount: 0
 			,pending: searchTerms.length
 			,map: {}
 			,sorted: []
 			,list: []
+		};
+		if( dateIntervals ){
+			this.searchResults.pending += dateIntervals.length;
 		};
 		
 		// Handle case where nothing is asked
@@ -109,7 +131,14 @@ var SearchRequest = $n2.Class({
 				,endkey: [term, {}]
 //				,limit: this.options.searchLimit
 				,onSuccess: function(rows) {
-					_this._receiveSearchResults(rows);
+					var termResults = [];
+					for(var i=0,e=rows.length; i<e; ++i) {
+						termResults.push({
+							docId: rows[i].id
+							,index: rows[i].key[1]
+						});
+					};
+					_this._receiveSearchResults(termResults);
 				}
 				,onError: function(err) {
 					_this.searchResults = null;
@@ -117,13 +146,36 @@ var SearchRequest = $n2.Class({
 				}
 			});
 		};
+		
+		// Search each time interval
+		if(dateIntervals){
+			for(var i=0, e=dateIntervals.length; i<e; ++i){
+				this.options.dateService.getDocIdsFromInterval({
+					interval: dateIntervals[i]
+					,onSuccess: function(docIds){
+						var dateResults = [];
+						for(var i=0,e=docIds.length; i<e; ++i) {
+							dateResults.push({
+								docId: docIds[i]
+								,index: 0
+							});
+						};
+						_this._receiveSearchResults(dateResults);
+					}
+					,onError: function(err){
+						_this.searchResults = null;
+						_this.options.onError(err);
+					}
+				});
+			};
+		};
 	}
 
 	,abortSearch: function() {
 		this.searchResults = null;
 	}
 	
-	,_receiveSearchResults: function(rows) {
+	,_receiveSearchResults: function(interimResults) {
 	
 		var searchResults = this.searchResults;
 		
@@ -131,17 +183,20 @@ var SearchRequest = $n2.Class({
 		
 		// Remember the returned response
 		--searchResults.pending;
-		var termsReceived = searchResults.terms.length - searchResults.pending;
+		++searchResults.actionReturnedCount;
 
 		// Strict
 		// In this mode, return only the results that meet
 		// all the search terms. If not in strict mode,
 		// it returns all result that meet any term.
-		if( this.options.strict && termsReceived > 1 ) {
+		if( this.options.strict && searchResults.actionReturnedCount > 1 ) {
 			// Add only the new results that match old ones
-			for(var i=0,e=rows.length; i<e; ++i) {
-				var docId = rows[i].id;
-				var index = rows[i].key[1];
+			var docIdsReturned = {};
+			for(var i=0,e=interimResults.length; i<e; ++i) {
+				var docId = interimResults[i].docId;
+				var index = interimResults[i].index;
+				
+				docIdsReturned[docId] = true;
 				
 				if( searchResults.map[docId] ) {
 					// Document already found, increment terms
@@ -153,11 +208,11 @@ var SearchRequest = $n2.Class({
 				};
 			};
 
-			// Remove previous results that do not match the number
-			// of terms received so far 
+			// Remove previous results that are doc ids we have not received,
+			// this time
 			var docIdsToDelete = [];
 			for(var docId in searchResults.map){
-				if( searchResults.map[docId].terms < termsReceived ) {
+				if( !docIdsReturned[docId] ) {
 					docIdsToDelete.push(docId);
 				};
 			};
@@ -170,12 +225,13 @@ var SearchRequest = $n2.Class({
 			for(var docId in searchResults.map){
 				searchResults.sorted.push(searchResults.map[docId]);
 			};
+
 		} else {
 			// This happens in non-strict mode or in the first
 			// round of strict mode. Add all results to map.
-			for(var i=0,e=rows.length; i<e; ++i) {
-				var docId = rows[i].id;
-				var index = rows[i].key[1];
+			for(var i=0,e=interimResults.length; i<e; ++i) {
+				var docId = interimResults[i].docId;
+				var index = interimResults[i].index;
 				
 				if( searchResults.map[docId] ) {
 					// Document already found, increment terms
@@ -753,6 +809,7 @@ var SearchServer = $n2.Class({
 		this.options = $n2.extend({
 			designDoc: null
 			,db: null
+			,dateService: null
 			,directory: null
 			,searchView: 'text-search'
 			,searchLimit: 25
@@ -794,6 +851,7 @@ var SearchServer = $n2.Class({
 		var requestOptions = $n2.extend({
 			designDoc: this.options.designDoc
 			,db: this.options.db
+			,dateService: this.options.dateService
 			,searchView: this.options.searchView
 			,searchLimit: this.options.searchLimit
 		},opts_);

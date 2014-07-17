@@ -524,6 +524,21 @@ function findDateString(str,index){
 };
 
 //*******************************************************
+function findAllDateStrings(str){
+	var results = [];
+	
+	var d = findDateString(str);
+	while(d){
+		results.push(d);
+		
+		var index = d.index + d.str.length;
+		d = findDateString(str,index);
+	};
+	
+	return results;
+};
+
+//*******************************************************
 function parseDateStructure(obj){
 	if( !obj || typeof obj.date !== 'string' ){
 		throw _loc('Invalid date structure');
@@ -540,6 +555,7 @@ $n2.date = {
 	,parseUserDate: parseUserDate
 	,parseDateStructure: parseDateStructure
 	,findDateString: findDateString
+	,findAllDateStrings: findAllDateStrings
 };
 
 })(nunaliit2);

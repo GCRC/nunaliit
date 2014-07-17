@@ -49,6 +49,7 @@ function Configure(options_){
 		,userServerUrl: null // string
 		,submissionDbUrl: null // string
 		,submissionServerUrl: null // string
+		,dateServerUrl: null // string
 		,onSuccess: function(config){}
 	},options_);
 
@@ -184,10 +185,15 @@ function Configure(options_){
 		configuration.directory.exportService = new $n2.couchExport.Export({
 			url: options.exportServerUrl
 		});
+
+		configuration.directory.dateService = new $n2.dateService.DateService({
+			url: options.dateServerUrl
+		});
 		
 	 	configuration.directory.searchService = new $n2.couchSearch.SearchServer({
 			designDoc: configuration.atlasDesign
 			,db: configuration.atlasDb
+			,dateService: configuration.directory.dateService
 			,directory: configuration.directory
 		});
 		

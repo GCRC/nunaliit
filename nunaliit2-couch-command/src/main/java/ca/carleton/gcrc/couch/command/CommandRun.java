@@ -20,6 +20,7 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 import ca.carleton.gcrc.couch.command.impl.CommandSupport;
 import ca.carleton.gcrc.couch.command.impl.TransparentWithRedirectServlet;
 import ca.carleton.gcrc.couch.command.servlet.ConfigServlet;
+import ca.carleton.gcrc.couch.date.DateServlet;
 import ca.carleton.gcrc.couch.export.ExportServlet;
 import ca.carleton.gcrc.couch.submission.SubmissionServlet;
 import ca.carleton.gcrc.couch.user.UserServlet;
@@ -213,6 +214,13 @@ public class CommandRun implements Command {
         	ServletHolder servletHolder = new ServletHolder(new SubmissionServlet());
         	servletHolder.setInitOrder(2);
         	context.addServlet(servletHolder,"/servlet/submission/*");
+        }
+
+        // Servlet for date
+        {
+        	ServletHolder servletHolder = new ServletHolder(new DateServlet());
+        	servletHolder.setInitOrder(2);
+        	context.addServlet(servletHolder,"/servlet/date/*");
         }
 
         // Proxy to site
