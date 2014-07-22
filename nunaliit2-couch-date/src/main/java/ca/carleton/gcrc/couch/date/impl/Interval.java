@@ -65,7 +65,7 @@ public class Interval {
 		if( nextMin > interval.min ){
 			nextMin = interval.min;
 		}
-		if( nextMax > interval.max ){
+		if( nextMax < interval.max ){
 			nextMax = interval.max;
 		}
 		
@@ -116,5 +116,9 @@ public class Interval {
 			
 			return new Interval(min,max);
 		}
+	}
+	
+	public String toString(){
+		return "["+min+","+max+"]";
 	}
 }

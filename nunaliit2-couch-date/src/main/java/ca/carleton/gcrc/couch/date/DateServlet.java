@@ -1,6 +1,9 @@
 package ca.carleton.gcrc.couch.date;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.util.List;
 
 import javax.servlet.ServletConfig;
@@ -13,12 +16,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.date.impl.DateSource;
-import ca.carleton.gcrc.couch.date.impl.DateSourceCouch;
+import ca.carleton.gcrc.couch.date.impl.DateSourceCouchWithCluster;
 import ca.carleton.gcrc.json.servlet.JsonServlet;
 
 @SuppressWarnings("serial")
 public class DateServlet extends JsonServlet {
-	
+
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	private DateServletConfiguration configuration = null;
@@ -38,10 +41,13 @@ public class DateServlet extends JsonServlet {
 		}
 		if( configurationObj instanceof DateServletConfiguration ){
 			configuration = (DateServletConfiguration)configurationObj;
-			
-			DateSource dateSource = new DateSourceCouch(
-					configuration.getCouchDb(), 
-					configuration.getAtlasDesignDocument());
+
+			DateSource dateSource;
+			try {
+				dateSource = new DateSourceCouchWithCluster(configuration.getAtlasDesignDocument());
+			} catch (Exception e) {
+				throw new ServletException("Unable to create date source",e);
+			}
 			
 			actions = new DateServiceActions(dateSource);
 			
@@ -77,6 +83,30 @@ public class DateServlet extends JsonServlet {
 				
 				JSONObject result = actions.getDocIdsFromInterval(min, max);
 				sendJsonResponse(response, result);
+				
+			} else if( paths.size() == 1
+			 && "getInfo".equals(paths.get(0)) ) {
+				response.setContentType("text/plain");
+				response.setCharacterEncoding("utf-8");
+				OutputStream os = response.getOutputStream();
+				OutputStreamWriter osw = new OutputStreamWriter(os,"utf-8");
+				PrintWriter pw = new PrintWriter(osw);
+				
+				actions.getInfo(pw);
+				
+				pw.flush();
+				
+			} else if( paths.size() == 1
+			 && "getDot".equals(paths.get(0)) ) {
+				response.setContentType("text/plain");
+				response.setCharacterEncoding("utf-8");
+				OutputStream os = response.getOutputStream();
+				OutputStreamWriter osw = new OutputStreamWriter(os,"utf-8");
+				PrintWriter pw = new PrintWriter(osw);
+				
+				actions.getDotInfo(pw);
+				
+				pw.flush();
 				
 			} else {
 				throw new Exception("Unrecognized request");

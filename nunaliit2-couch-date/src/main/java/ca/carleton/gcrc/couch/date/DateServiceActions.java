@@ -1,5 +1,6 @@
 package ca.carleton.gcrc.couch.date;
 
+import java.io.PrintWriter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -10,6 +11,8 @@ import org.json.JSONObject;
 import ca.carleton.gcrc.couch.date.impl.DateSource;
 import ca.carleton.gcrc.couch.date.impl.DocumentWithInterval;
 import ca.carleton.gcrc.couch.date.impl.Interval;
+import ca.carleton.gcrc.couch.date.impl.SerializableToDot;
+import ca.carleton.gcrc.couch.date.impl.SerializableToInfo;
 
 public class DateServiceActions {
 	
@@ -37,5 +40,19 @@ public class DateServiceActions {
 		result.put("docIds", arr);
 		
 		return result;
+	}
+
+	public void getInfo(PrintWriter pw) throws Exception {
+		if( dateSource instanceof SerializableToInfo ){
+			SerializableToInfo infoSource = (SerializableToInfo)dateSource;
+			infoSource.printInfo(pw);
+		}
+	}
+
+	public void getDotInfo(PrintWriter pw) throws Exception {
+		if( dateSource instanceof SerializableToDot ){
+			SerializableToDot dotSource = (SerializableToDot)dateSource;
+			dotSource.printDot(pw);
+		}
 	}
 }
