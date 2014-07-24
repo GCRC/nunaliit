@@ -82,4 +82,33 @@ public class TreeRebalanceProcessTest extends TestCase {
 			fail("Unexpected interval for high node: "+rootNode.getHighChildNode().getInterval());
 		}
 	}
+	
+	public void testRecoverTree() throws Exception {
+		List<TreeElement> elements = new Vector<TreeElement>();
+		addTreeElement(elements, null, -5, -4);
+		addTreeElement(elements, null, -5, -3);
+		addTreeElement(elements, null, -4, 0);
+		addTreeElement(elements, null, -4, 1);
+		addTreeElement(elements, null, -1, 4);
+		addTreeElement(elements, 1, 0, 4);
+		addTreeElement(elements, 2, 1, 2);
+		addTreeElement(elements, null, 2, 3);
+		addTreeElement(elements, null, 3, 4);
+		addTreeElement(elements, 3, 4, 5);
+		
+		TreeRebalanceProcess.Result treeInfo = TreeRebalanceProcess.createTree(elements);
+		Tree tree = new Tree(treeInfo, (TreeOperations)null);
+		
+		TreeNode rootNode = tree.getRootNode();
+		if(rootNode.getInterval().getMin() != -5){
+			fail("Unexpected min: "+rootNode.getInterval().getMin());
+		}
+		if(rootNode.getInterval().getMax() != 5){
+			fail("Unexpected max: "+rootNode.getInterval().getMax());
+		}
+
+		if( 3 != tree.getLegacyNodes().size() ){
+			fail("Unexpected number of legacy nodes: "+tree.getLegacyNodes().size());
+		}
+	}
 }

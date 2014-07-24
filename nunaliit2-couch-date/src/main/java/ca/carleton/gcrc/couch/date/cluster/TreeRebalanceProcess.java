@@ -119,6 +119,7 @@ public class TreeRebalanceProcess {
 				TreeNode legacyNode = legacyNodes.get(clusterId);
 				if( null == legacyNode ){
 					legacyNode = new TreeNode(clusterId, element.getInterval());
+					legacyNodes.put(clusterId, legacyNode);
 				} else {
 					legacyNode.extendTo(element.getInterval());
 				}

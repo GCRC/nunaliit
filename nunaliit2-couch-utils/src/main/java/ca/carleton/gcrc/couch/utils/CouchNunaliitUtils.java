@@ -3,9 +3,14 @@ package ca.carleton.gcrc.couch.utils;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
+import java.util.Vector;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
+
 import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
 
 
@@ -100,5 +105,47 @@ public class CouchNunaliitUtils {
 		
 		// Administrators are automatically vetters
 		return hasAdministratorRole(userContext, atlasName);
+	}
+	
+	static public List<JSONObject> findStructuresOfType(String type, JSONObject doc){
+		List<JSONObject> structures = new Vector<JSONObject>();
+		
+		findStructuresOfType(doc, type, structures);
+		
+		return structures;
+	}
+	
+	static private void findStructuresOfType(Object obj, String type, List<JSONObject> structures){
+		if( obj instanceof JSONObject ){
+			JSONObject jsonObj = (JSONObject)obj;
+			
+			String nunaliitType = jsonObj.optString("nunaliit_type");
+			if( null != nunaliitType && nunaliitType.equals(type) ){
+				structures.add(jsonObj);
+			}
+			
+			// Iterate over children structures
+			Iterator<?> it = jsonObj.keys();
+			while( it.hasNext() ){
+				Object keyObj = it.next();
+				if( keyObj instanceof String ){
+					String key = (String)keyObj;
+					Object value = jsonObj.opt(key);
+					if( null != value ){
+						findStructuresOfType(value, type, structures);
+					}
+				}
+			}
+		} else if( obj instanceof JSONArray ) {
+			JSONArray jsonArr = (JSONArray)obj;
+			
+			// Iterate over children values
+			for(int i=0,e=jsonArr.length(); i<e; ++i){
+				Object value = jsonArr.opt(i);
+				if( null != value ){
+					findStructuresOfType(value, type, structures);
+				}
+			};
+		}
 	}
 }

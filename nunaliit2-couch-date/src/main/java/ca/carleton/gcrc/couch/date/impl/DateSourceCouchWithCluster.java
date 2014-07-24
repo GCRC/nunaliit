@@ -34,38 +34,46 @@ public class DateSourceCouchWithCluster implements DateSource, SerializableToDot
 		}
 	}
 	
+	public Tree getClusterTree(){
+		return clusterTree;
+	}
+	
 	@Override
-	public List<DocumentWithInterval> getAllDateIntervals() throws Exception {
+	public SearchResults getAllDateIntervals() throws Exception {
+		SearchResults results = new SearchResults();
+		
 		CouchQuery query = new CouchQuery();
-		query.setViewName("date");
+		query.setViewName("date-index");
 		query.setIncludeDocs(false);
 		query.setReduce(false);
-		CouchQueryResults results = atlasDesignDocument.performQuery(query);
+		CouchQueryResults queryResults = atlasDesignDocument.performQuery(query);
 		
-		List<DocumentWithInterval> result = new ArrayList<DocumentWithInterval>(results.getRows().size());
-		for(JSONObject row : results.getRows()){
+		results.documentWithIntervals = new ArrayList<DocumentWithInterval>(queryResults.getRows().size());
+		for(JSONObject row : queryResults.getRows()){
 			String docId = row.optString("id");
-			JSONArray key = row.optJSONArray("key");
+			JSONArray jsonInterval = row.optJSONArray("value");
 			long min = 0;
 			long max = -1;
-			if( null != key && key.length() >= 2 ){
-				min = key.optLong(0);
-				max = key.optLong(1);
+			if( null != jsonInterval && jsonInterval.length() >= 2 ){
+				min = jsonInterval.optLong(0);
+				max = jsonInterval.optLong(1);
 			}
 			if( null != docId && max >= min ){
 				Interval interval = new Interval(min,max);
 				DocumentWithInterval docWithInt = new DocumentWithInterval(docId, interval);
-				result.add(docWithInt);
+				results.documentWithIntervals.add(docWithInt);
 			}
 		}
 		
-		return result;
+		return results;
 	}
 
 	@Override
-	public List<DocumentWithInterval> getDateIntervalsIntersectingWith(Interval interval) throws Exception {
+	public SearchResults getDateIntervalsIntersectingWith(Interval interval) throws Exception {
+		SearchResults results = new SearchResults();
 		
 		List<Integer> clusterIds = clusterTree.clusterIdsFromInterval(interval);
+		results.clusterCount = clusterIds.size();
 		JSONArray keys = new JSONArray();
 		keys.put(JSONObject.NULL); // always include un-indexed intervals
 		for(Integer clusterId : clusterIds){
@@ -77,12 +85,13 @@ public class DateSourceCouchWithCluster implements DateSource, SerializableToDot
 		query.setIncludeDocs(false);
 		query.setReduce(false);
 		query.setKeys(keys);
-		CouchQueryResults results = atlasDesignDocument.performQuery(query);
+		CouchQueryResults queryResults = atlasDesignDocument.performQuery(query);
 		
-		List<DocumentWithInterval> result = new ArrayList<DocumentWithInterval>(results.getRows().size());
-		for(JSONObject row : results.getRows()){
+		results.documentWithIntervals = new ArrayList<DocumentWithInterval>(queryResults.getRows().size());
+		for(JSONObject row : queryResults.getRows()){
 			String docId = row.optString("id");
 			JSONArray key = row.optJSONArray("value");
+			results.intervalCount++;
 			long min = 0;
 			long max = -1;
 			if( null != key && key.length() >= 2 ){
@@ -93,12 +102,13 @@ public class DateSourceCouchWithCluster implements DateSource, SerializableToDot
 				Interval docInterval = new Interval(min,max);
 				if( docInterval.intersectsWith(interval) ){
 					DocumentWithInterval docWithInt = new DocumentWithInterval(docId, docInterval);
-					result.add(docWithInt);
+					results.documentWithIntervals.add(docWithInt);
+					results.intervalMatched++;
 				}
 			}
 		}
 		
-		return result;
+		return results;
 	}
 
 	@Override

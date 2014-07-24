@@ -1,7 +1,6 @@
 package ca.carleton.gcrc.couch.date.impl;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -19,58 +18,66 @@ public class DateSourceCouch implements DateSource {
 	}
 	
 	@Override
-	public List<DocumentWithInterval> getAllDateIntervals() throws Exception {
-		CouchQuery query = new CouchQuery();
-		query.setViewName("date");
-		query.setIncludeDocs(false);
-		CouchQueryResults results = atlasDesignDocument.performQuery(query);
+	public SearchResults getAllDateIntervals() throws Exception {
+		SearchResults results = new SearchResults();
 		
-		List<DocumentWithInterval> result = new ArrayList<DocumentWithInterval>(results.getRows().size());
-		for(JSONObject row : results.getRows()){
+		CouchQuery query = new CouchQuery();
+		query.setViewName("date-index");
+		query.setIncludeDocs(false);
+		query.setReduce(false);
+		CouchQueryResults queryResults = atlasDesignDocument.performQuery(query);
+		
+		results.documentWithIntervals = new ArrayList<DocumentWithInterval>(queryResults.getRows().size());
+		for(JSONObject row : queryResults.getRows()){
 			String docId = row.optString("id");
-			JSONArray key = row.optJSONArray("key");
+			JSONArray jsonInterval = row.optJSONArray("value");
 			long min = 0;
 			long max = -1;
-			if( null != key && key.length() >= 2 ){
-				min = key.optLong(0);
-				max = key.optLong(1);
+			if( null != jsonInterval && jsonInterval.length() >= 2 ){
+				min = jsonInterval.optLong(0);
+				max = jsonInterval.optLong(1);
 			}
 			if( null != docId && max >= min ){
 				Interval interval = new Interval(min,max);
 				DocumentWithInterval docWithInt = new DocumentWithInterval(docId, interval);
-				result.add(docWithInt);
+				results.documentWithIntervals.add(docWithInt);
 			}
 		}
 		
-		return result;
+		return results;
 	}
 
 	@Override
-	public List<DocumentWithInterval> getDateIntervalsIntersectingWith(Interval range) throws Exception {
+	public SearchResults getDateIntervalsIntersectingWith(Interval range) throws Exception {
+		SearchResults results = new SearchResults();
+
 		CouchQuery query = new CouchQuery();
-		query.setViewName("date");
+		query.setViewName("date-index");
 		query.setIncludeDocs(false);
-		CouchQueryResults results = atlasDesignDocument.performQuery(query);
+		query.setReduce(false);
+		CouchQueryResults queryResults = atlasDesignDocument.performQuery(query);
 		
-		List<DocumentWithInterval> result = new ArrayList<DocumentWithInterval>(results.getRows().size());
-		for(JSONObject row : results.getRows()){
+		results.documentWithIntervals = new ArrayList<DocumentWithInterval>(queryResults.getRows().size());
+		for(JSONObject row : queryResults.getRows()){
 			String docId = row.optString("id");
-			JSONArray key = row.optJSONArray("key");
+			JSONArray jsonInterval = row.optJSONArray("value");
+			results.intervalCount++;
 			long min = 0;
 			long max = -1;
-			if( null != key && key.length() >= 2 ){
-				min = key.optLong(0);
-				max = key.optLong(1);
+			if( null != jsonInterval && jsonInterval.length() >= 2 ){
+				min = jsonInterval.optLong(0);
+				max = jsonInterval.optLong(1);
 			}
 			if( null != docId && max >= min ){
 				Interval interval = new Interval(min,max);
 				if( interval.intersectsWith(range) ){
 					DocumentWithInterval docWithInt = new DocumentWithInterval(docId, interval);
-					result.add(docWithInt);
+					results.documentWithIntervals.add(docWithInt);
+					results.intervalMatched++;
 				}
 			}
 		}
 		
-		return result;
+		return results;
 	}
 }

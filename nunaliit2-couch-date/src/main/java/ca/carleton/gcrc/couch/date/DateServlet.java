@@ -15,7 +15,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ca.carleton.gcrc.couch.date.impl.DateSource;
+import ca.carleton.gcrc.couch.date.impl.DateRobotThread;
 import ca.carleton.gcrc.couch.date.impl.DateSourceCouchWithCluster;
 import ca.carleton.gcrc.json.servlet.JsonServlet;
 
@@ -26,6 +26,7 @@ public class DateServlet extends JsonServlet {
 	
 	private DateServletConfiguration configuration = null;
 	private DateServiceActions actions = null;
+	private DateRobotThread robot = null;
 	
 	public DateServlet() {
 		
@@ -42,7 +43,7 @@ public class DateServlet extends JsonServlet {
 		if( configurationObj instanceof DateServletConfiguration ){
 			configuration = (DateServletConfiguration)configurationObj;
 
-			DateSource dateSource;
+			DateSourceCouchWithCluster dateSource;
 			try {
 				dateSource = new DateSourceCouchWithCluster(configuration.getAtlasDesignDocument());
 			} catch (Exception e) {
@@ -51,13 +52,25 @@ public class DateServlet extends JsonServlet {
 			
 			actions = new DateServiceActions(dateSource);
 			
+			robot = new DateRobotThread(configuration.getAtlasDesignDocument(), dateSource.getClusterTree());
+			robot.start();
+			
 		} else {
 			throw new ServletException("Invalid class for configuration: "+configurationObj.getClass().getName());
 		}
 	}
 	
 	public void destroy() {
-		
+		if( null != robot ){
+			DateRobotThread thread = robot;
+			robot = null;
+			try{
+				thread.shutdown();
+				thread.join();
+			} catch(Exception e) {
+				// just ignore. We're shutting down
+			}
+		}
 	}
 
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

@@ -24,7 +24,8 @@ public class DateServiceActions {
 
 	public JSONObject getDocIdsFromInterval(long min, long max) throws Exception {
 		Interval interval = new Interval(min,max);
-		List<DocumentWithInterval> docWithInts = dateSource.getDateIntervalsIntersectingWith(interval);
+		DateSource.SearchResults searchResults = dateSource.getDateIntervalsIntersectingWith(interval);
+		List<DocumentWithInterval> docWithInts = searchResults.documentWithIntervals;
 		
 		Set<String> docIds = new HashSet<String>();
 		for(DocumentWithInterval docWithInt : docWithInts){
@@ -38,6 +39,10 @@ public class DateServiceActions {
 			arr.put(docId);
 		}
 		result.put("docIds", arr);
+		
+		result.put("clusterCount", searchResults.clusterCount);
+		result.put("intervalCount", searchResults.intervalCount);
+		result.put("intervalMatched", searchResults.intervalMatched);
 		
 		return result;
 	}

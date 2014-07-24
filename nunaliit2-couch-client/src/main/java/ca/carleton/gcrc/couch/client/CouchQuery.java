@@ -17,6 +17,7 @@ public class CouchQuery {
 	private String limit = null;
 	private String includeDocs = null;
 	private boolean reduce = false;
+	private boolean group = false;
 	
 	public String getViewName() {
 		return viewName;
@@ -85,5 +86,12 @@ public class CouchQuery {
 	}
 	public void setReduce(boolean reduce) {
 		this.reduce = reduce;
+	}
+
+	public boolean isGrouping() {
+		return group;
+	}
+	public void setGrouping(boolean group) {
+		this.group = group;
 	}
 }

@@ -1,11 +1,15 @@
 package ca.carleton.gcrc.couch.date.cluster;
 
 import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.date.impl.Interval;
 
@@ -75,17 +79,30 @@ public class Tree implements IntervalClusterTree {
 		return jsonNode;
 	}
 	
-	static public void treeToDot(Tree tree, PrintWriter pw){
-		pw.println("digraph date {");
-		pw.println("ROOT;");
+	static public void treeToDot(Tree tree, PrintWriter pw) throws Exception {
 		
-		nodeToDot(tree.rootNode, pw);
+		List<TreeOperations.ClusterInfo> infoObjs = tree.getOperations().getAllClusterInfo();
+		Map<Integer,TreeOperations.ClusterInfo> infoByClusterId = new HashMap<Integer,TreeOperations.ClusterInfo>();
+		for(TreeOperations.ClusterInfo info : infoObjs){
+			infoByClusterId.put(info.clusterId, info);
+		}
+		
+		TreeOperations.ClusterInfo rootInfo = infoByClusterId.get(null);
+		int rootCount = 0;
+		if( null != rootInfo ) {
+			rootCount = rootInfo.count;
+		}
+		
+		pw.println("digraph date {");
+		pw.println("ROOT [label=\""+rootCount+"\"];");
+		
+		nodeToDot(tree.rootNode, pw, infoByClusterId);
 		pw.println("ROOT -> n"+tree.rootNode.getClusterId()+";");
 		
 		List<TreeNode> legacyNodes = tree.legacyNodes;
 		if( null != legacyNodes ){
 			for(TreeNode legacyNode : legacyNodes){
-				nodeToDot(legacyNode, pw);
+				nodeToDot(legacyNode, pw, infoByClusterId);
 				pw.println("ROOT -> n"+legacyNode.getClusterId()+";");
 			}
 		}
@@ -93,18 +110,25 @@ public class Tree implements IntervalClusterTree {
 		pw.println("}");
 	}
 	
-	static public void nodeToDot(TreeNode node, PrintWriter pw){
-		pw.println("n"+node.getClusterId()+" [label=\""+node.getInterval().getMin()+","
-				+node.getMidPoint()+","
+	static public void nodeToDot(TreeNode node, PrintWriter pw, Map<Integer,TreeOperations.ClusterInfo> infoByClusterId){
+		
+		TreeOperations.ClusterInfo info = infoByClusterId.get(node.getClusterId());
+		
+		int count = 0;
+		if( null != info ){
+			count = info.count;
+		}
+		
+		pw.println("n"+node.getClusterId()+" [label=\""+count+","+node.getInterval().getMin()+","
 				+node.getInterval().getMax()+"\"];");
 		
 		if( null != node.getLowChildNode() ){
-			nodeToDot(node.getLowChildNode(), pw);
+			nodeToDot(node.getLowChildNode(), pw, infoByClusterId);
 			pw.println("n"+node.getClusterId()+" -> n"+node.getLowChildNode().getClusterId()+";");
 		}
 		
 		if( null != node.getHighChildNode() ){
-			nodeToDot(node.getHighChildNode(), pw);
+			nodeToDot(node.getHighChildNode(), pw, infoByClusterId);
 			pw.println("n"+node.getClusterId()+" -> n"+node.getHighChildNode().getClusterId()+";");
 		}
 	}
@@ -151,6 +175,8 @@ public class Tree implements IntervalClusterTree {
 			nodeToInfo(node.getHighChildNode(), treeInfo, depth+1);
 		}
 	}
+
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	private TreeOperations operations;
 	private TreeNode rootNode;
@@ -174,27 +200,58 @@ public class Tree implements IntervalClusterTree {
 		return operations;
 	}
 	
-	public TreeNode getRootNode(){
+	synchronized public TreeNode getRootNode(){
 		return rootNode;
 	}
 	
-	public int getNextClusterId(){
+	synchronized public int getNextClusterId(){
 		return nextId;
 	}
 	
-	public void setNextClusterId(int nextId){
+	synchronized public void setNextClusterId(int nextId){
 		this.nextId = nextId;
 	}
 	
-	public List<TreeNode> getLegacyNodes(){
+	synchronized public List<TreeNode> getLegacyNodes(){
 		return legacyNodes;
 	}
 
-	public void addLegacyNode(TreeNode legacyNode) {
+	synchronized public void addLegacyNode(TreeNode legacyNode) {
 		legacyNodes.add(legacyNode);
 	}
+
+	synchronized public void clearLegacyNodes() {
+		legacyNodes = new Vector<TreeNode>();
+	}
 	
-	public JSONObject toJSON() throws Exception {
+	public void reload() throws Exception {
+		Tree updatedTree = null;
+		try {
+			updatedTree = operations.loadTree();
+		} catch (Exception e) {
+			logger.info("Unable to reload tree",e);
+		}
+		
+		if( null == updatedTree ){
+			try {
+				updatedTree = operations.recoverTree();
+				
+				logger.info("Recovered date cluster tree");
+				
+			} catch(Exception e) {
+				logger.error("Unable to recover date cluster tree",e);
+				throw new Exception("Unable to recover date cluster tree",e);
+			}
+		}
+
+		synchronized(this){
+			rootNode = updatedTree.getRootNode();
+			nextId = updatedTree.getNextClusterId();
+			legacyNodes = updatedTree.getLegacyNodes();
+		}
+	}
+	
+	synchronized public JSONObject toJSON() throws Exception {
 		JSONObject jsonObj = saveNode(rootNode);
 		
 		jsonObj.put("nextId", nextId);
@@ -213,7 +270,7 @@ public class Tree implements IntervalClusterTree {
 	}
 
 	@Override
-	public List<Integer> clusterIdsFromInterval(Interval interval) {
+	synchronized public List<Integer> clusterIdsFromInterval(Interval interval) {
 		List<Integer> clusterIds = new Vector<Integer>();
 		
 		for(TreeNode legacyNode : legacyNodes){

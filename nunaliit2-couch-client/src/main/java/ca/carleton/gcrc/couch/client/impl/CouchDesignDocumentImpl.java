@@ -87,6 +87,10 @@ public class CouchDesignDocumentImpl implements CouchDesignDocument {
 		}
 		if( query.isReduce() ){
 			parameters.add( new UrlParameter("reduce", "true") );
+			
+			if( query.isGrouping() ){
+				parameters.add( new UrlParameter("group", "true") );
+			}
 		} else {
 			parameters.add( new UrlParameter("reduce", "false") );
 		}
