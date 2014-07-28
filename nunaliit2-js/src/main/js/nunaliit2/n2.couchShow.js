@@ -645,7 +645,7 @@ var DomStyler = $n2.Class({
 						var layerDef = {
 							name: layerDefinition.name
 							,type: 'couchdb'
-							,couchDb: {
+							,options: {
 								layerName: layerId
 								,documentSource: _this.documentSource
 							}
