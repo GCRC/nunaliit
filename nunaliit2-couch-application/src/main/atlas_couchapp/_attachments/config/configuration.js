@@ -55,6 +55,7 @@ function nunaliitConfigure(opts_) {
 			,submissionDbUrl: opts.rootPath + '../../../'
 			,progressServerUrl: opts.rootPath + '../../../servlet/progress/'
 			,mediaUrl: opts.rootPath + '../../../media/'
+			,configServerUrl: opts.rootPath + '../../../servlet/configuration/'
 			,uploadServerUrl: opts.rootPath + '../../../servlet/upload/'
 			,exportServerUrl: opts.rootPath + '../../../servlet/export/'
 			,userServerUrl: opts.rootPath + '../../../servlet/user/'

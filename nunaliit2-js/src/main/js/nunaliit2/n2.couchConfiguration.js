@@ -35,6 +35,46 @@ $Id: n2.couchConfiguration.js 8445 2012-08-22 19:11:38Z jpfiset $
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
+//===========================================================
+
+var ConfigService = $n2.Class('ConfigurationService',{
+
+	serverUrl: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			url: null
+		},opts_);
+		
+		this.serverUrl = opts.url;
+	},
+	
+	getNunaliitServerRoles: function(opts_){
+		var opts = $n2.extend({
+			onSuccess: function(roles){}
+			,onError: function(err){}
+		},opts_);
+
+		$.ajax({
+			url: this.serverUrl+'getServerRoles'
+			,type: 'GET'
+			,dataType: 'json'
+			,success: function(data, textStatus, jqXHR){
+				if( data && data.roles ) {
+					opts.onSuccess(data.roles);
+				} else {
+					opts.onError( _loc('Invalid server response') );
+				};
+			}
+			,error: function(jqXHR, textStatus, errorThrown){
+				var err = $n2.utils.parseHttpJsonError(jqXHR, textStatus);
+				opts.onError(err);
+			}
+		});
+	}
+});
+
+// ===========================================================
 function Configure(options_){
 	
 	var options = $n2.extend({
@@ -46,6 +86,7 @@ function Configure(options_){
 		,mediaUrl: null // string
 		,uploadServerUrl: null // string
 		,exportServerUrl: null // string
+		,configServerUrl: null // string
 		,userServerUrl: null // string
 		,submissionDbUrl: null // string
 		,submissionServerUrl: null // string
@@ -83,6 +124,11 @@ function Configure(options_){
 	// Custom Service
 	configuration.directory.customService = new $n2.custom.CustomService({
 		directory: configuration.directory
+	});
+
+	// Configuration
+	configuration.directory.configService = new ConfigService({
+		url: options.configServerUrl
 	});
 	
  	// Turn off cometd
@@ -247,6 +293,7 @@ function Configure(options_){
 		
 	 	configuration.directory.userService = new $n2.couchUser.UserService({
 			userDb: $n2.couch.getUserDb()
+			,configService: configuration.directory.configService
 			,schemaRepository: configuration.directory.schemaRepository
 			,schemaEditorService: configuration.directory.schemaEditorService
 			,userServerUrl: options.userServerUrl
@@ -340,6 +387,7 @@ function Configure(options_){
 
 $n2.couchConfiguration = {
 	Configure: Configure
+	,ConfigService: ConfigService
 };
 
 })(jQuery,nunaliit2);

@@ -89,6 +89,8 @@ var UserEditor = $n2.Class({
 	
 	,schemaEditorService: null
 	
+	,configService: null
+	
 	,originalDoc: null
 	
 	,userDb: null
@@ -120,6 +122,7 @@ var UserEditor = $n2.Class({
 			,userSchema: null
 			,schemaRepository: null
 			,schemaEditorService: null
+			,configService: null
 			,onPreSaveFn: function(userDoc){ return true; }
 			,onSavedFn: function(userDoc){}
 			,onPreDeleteFn: function(userDoc){ return true; }
@@ -139,6 +142,7 @@ var UserEditor = $n2.Class({
 		this.onCancelledFn = opts.onCancelledFn;
 		this.onFinishedFn = opts.onFinishedFn;
 		this.schemaEditorService = opts.schemaEditorService;
+		this.configService = opts.configService;
 		
 		// Keep version of original document
 		this.originalDoc = $n2.extend(true,{},this.userDoc);
@@ -379,14 +383,18 @@ var UserEditor = $n2.Class({
 		};
 		$rolesDialog.dialog(dialogOptions);
 		
-		$n2.couchMap.getAllServerRoles({
-			couchServer: this._getCouchServer()
-			,include_layer_roles: true
-			,onSuccess: loadedRoles
-			,onError: function(msg){
-				loadedRoles([]);
-			}
-		});
+		if( this.configService ){
+			this.configService.getNunaliitServerRoles({
+				onSuccess: function(roles){
+					loadedRoles(roles);
+				}
+				,onError: function(err){
+					loadedRoles([]);
+				}
+			});
+		} else {
+			loadedRoles([]);
+		};
 		
 		function loadedRoles(roles){
 			var roleMap = {};
@@ -601,11 +609,14 @@ var UserService = $n2.Class({
 	,schemaRepository: null
 	
 	,schemaEditorService: null
+
+	,configService: null
 	
 	,initialize: function(opts_){
 		var opts = $n2.extend({
 			userDb: null
 			,userServerUrl: null
+			,configService: null
 			,userSchema: null // optional
 			,schemaRepository: null // optional
 			,schemaEditorService: null // optional
@@ -613,6 +624,7 @@ var UserService = $n2.Class({
 		
 		this.userDb = opts.userDb;
 		this.userServerUrl = opts.userServerUrl;
+		this.configService = opts.configService;
 		this.userSchema = opts.userSchema;
 		this.schemaRepository = opts.schemaRepository;
 		this.schemaEditorService = opts.schemaEditorService;
@@ -628,6 +640,7 @@ var UserService = $n2.Class({
 			,opts_
 			,{
 				userDb: this.userDb
+				,configService: this.configService
 			}
 		);
 		

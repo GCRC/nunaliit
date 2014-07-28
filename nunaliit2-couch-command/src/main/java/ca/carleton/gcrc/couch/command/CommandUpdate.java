@@ -25,7 +25,6 @@ import ca.carleton.gcrc.couch.fsentry.FSEntry;
 import ca.carleton.gcrc.couch.fsentry.FSEntryBuffer;
 import ca.carleton.gcrc.couch.fsentry.FSEntryFile;
 import ca.carleton.gcrc.couch.fsentry.FSEntryMerged;
-import ca.carleton.gcrc.couch.fsentry.FSEntryResource;
 
 public class CommandUpdate implements Command {
 	

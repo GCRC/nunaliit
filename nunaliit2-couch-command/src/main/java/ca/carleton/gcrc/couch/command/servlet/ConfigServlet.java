@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
@@ -14,6 +15,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -717,7 +719,7 @@ public class ConfigServlet extends JsonServlet {
 	private void initActions(ServletContext servletContext) throws ServletException {
 		
 		try {
-			this.actions = new ConfigServletActions();
+			this.actions = new ConfigServletActions(couchClient);
 			this.actions.setSubmissionDbEnabled( atlasProperties.isCouchDbSubmissionDbEnabled() );
 		} catch(Exception e) {
 			logger.error("Error configuring actions",e);
@@ -763,6 +765,36 @@ public class ConfigServlet extends JsonServlet {
 				JSONObject result = actions.getWelcome();
 				sendJsonResponse(resp, result);
 
+			} else if( path.size() == 1 
+			 && "getAtlases".equals(path.get(0)) ) {
+				List<AtlasInfo> atlases = actions.getNunaliitAtlases();
+				
+				JSONObject result = new JSONObject();
+				result.put("ok", true);
+				
+				JSONArray jsonAtlases = new JSONArray();
+				for(AtlasInfo info : atlases){
+					jsonAtlases.put( info.toJSON() );
+				}
+				result.put("atlases", jsonAtlases);
+				
+				sendJsonResponse(resp, result);
+
+			} else if( path.size() == 1 
+			 && "getServerRoles".equals(path.get(0)) ) {
+				Collection<String> roles = actions.getNunaliitServerRoles();
+				
+				JSONObject result = new JSONObject();
+				result.put("ok", true);
+				
+				JSONArray jsonRoles = new JSONArray();
+				for(String role : roles){
+					jsonRoles.put( role );
+				}
+				result.put("roles", jsonRoles);
+				
+				sendJsonResponse(resp, result);
+
 			} else {
 				throw new Exception("Invalid action requested");
 			}
@@ -770,16 +802,5 @@ public class ConfigServlet extends JsonServlet {
 		} catch(Exception e) {
 			reportError(e, resp);
 		}
-		
-//		resp.setStatus(200);
-//		resp.setContentType("application/json");
-//		resp.setCharacterEncoding("utf-8");
-//		resp.addHeader("Cache-Control", "no-cache");
-//		resp.addHeader("Pragma", "no-cache");
-//		resp.addHeader("Expires", "-1");
-//		
-//		OutputStreamWriter osw = new OutputStreamWriter(resp.getOutputStream(), "UTF-8");
-//		osw.write("Test");
-//		osw.flush();
 	}
 }
