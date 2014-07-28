@@ -111,4 +111,16 @@ public class TreeRebalanceProcessTest extends TestCase {
 			fail("Unexpected number of legacy nodes: "+tree.getLegacyNodes().size());
 		}
 	}
+	
+	public void testRecoverTreeEmpty() throws Exception {
+		List<TreeElement> elements = new Vector<TreeElement>();
+		
+		TreeRebalanceProcess.Result treeInfo = TreeRebalanceProcess.createTree(elements);
+		Tree tree = new Tree(treeInfo, (TreeOperations)null);
+		
+		TreeNode rootNode = tree.getRootNode();
+		if( null == rootNode ){
+			fail("Must be able to create a tree, even if no prior information is available.");
+		}
+	}
 }

@@ -126,6 +126,12 @@ public class TreeRebalanceProcess {
 			}
 		}
 		
+		// Need a full interval
+		if( null == fullInterval ){
+			// Create a default one
+			fullInterval = new Interval(0, 1500000000000L);
+		}
+		
 		// Create root node for tree
 		TreeNodeWithElements rootNodeWithElements = new TreeNodeWithElements(results.nextClusterId, fullInterval);
 		results.nextClusterId++;
