@@ -1,0 +1,64 @@
+{
+	"coordinates": {
+		"initialBounds": [-75.72,45.41,-75.67,45.43]
+		,"autoInitialBounds": true
+	}
+	,"backgrounds": [
+		{ 
+			"name": "Google Satellite"
+			,"type": "Google Maps"
+			,"options": {
+				"type": "SATELLITE"
+				, "numZoomLevels": 19 
+			}
+		}
+		,{ 
+			"name": "Google Hybrid"
+			,"type": "Google Maps"
+			,"options": {
+				"type": "HYBRID"
+				,"numZoomLevels": 19
+			}
+		}
+		,{ 
+			"name": "Google Physical"
+			,"type": "Google Maps"
+			,"options": {
+				"type": "TERRAIN"
+				,"numZoomLevels": 16
+			}
+		}
+	]
+	,"overlays": [
+		{
+			"id": "approved"
+			,"name": {
+				"nunaliit_type":"localized"
+				,"en":"Approved Layer"
+				,"fr":"Couche Approuvée"
+			}
+			,"type": "couchdb"
+			,"options": {
+				"layerName": "approved"
+			}
+			,"featurePopupDelayMs": 0
+			,"useHoverSound": true
+		}
+		,{
+			"id": "public"
+			,"name": {
+				"nunaliit_type":"localized"
+				,"en":"Public"
+				,"fr":"Couche Publique"
+			}
+			,"type": "couchdb"
+			,"options": {
+				"layerName": "public"
+			}
+			,"featurePopupDelayMs": 0
+			,"useHoverSound": true
+		}
+	]
+	,"addPointsOnly": false
+	,"toggleClick": true
+}
