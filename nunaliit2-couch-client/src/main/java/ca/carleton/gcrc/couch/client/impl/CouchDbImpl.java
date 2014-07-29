@@ -17,6 +17,7 @@ import org.json.JSONObject;
 import ca.carleton.gcrc.couch.client.CouchClient;
 import ca.carleton.gcrc.couch.client.CouchContext;
 import ca.carleton.gcrc.couch.client.CouchDb;
+import ca.carleton.gcrc.couch.client.CouchDbChangeMonitor;
 import ca.carleton.gcrc.couch.client.CouchDbSecurityDocument;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchDocumentOptions;
@@ -25,6 +26,8 @@ public class CouchDbImpl implements CouchDb {
 
 	private CouchClient client;
 	private URL url;
+	private CouchDbChangeMonitorImpl changeMonitor;
+	
 	
 	public CouchDbImpl(CouchClient client, URL url) {
 		this.client = client;
@@ -39,6 +42,14 @@ public class CouchDbImpl implements CouchDb {
 	@Override
 	public CouchClient getClient() {
 		return client;
+	}
+
+	@Override
+	synchronized public CouchDbChangeMonitor getChangeMonitor() throws Exception {
+		if( null == changeMonitor ){
+			changeMonitor = new CouchDbChangeMonitorImpl(this);
+		}
+		return changeMonitor;
 	}
 
 	@Override

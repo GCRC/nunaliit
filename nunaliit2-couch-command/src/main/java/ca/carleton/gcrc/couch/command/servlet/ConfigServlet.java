@@ -82,6 +82,8 @@ public class ConfigServlet extends JsonServlet {
 	private AtlasProperties atlasProperties = null;
 	private CouchClient couchClient = null;
 	private CouchDb documentDatabase = null;
+	private CouchUserDb userDb = null;
+	private CouchDb submissionDb = null;
 	private CouchDesignDocument couchDd = null;
 	private UploadWorker uploadWorker = null;
 	private SubmissionRobot submissionRobot = null;
@@ -366,10 +368,32 @@ public class ConfigServlet extends JsonServlet {
 		try {
 			documentDatabase = couchClient.getDatabase(dbName);
 		} catch(Exception e) {
-			logger.error("Unable to connect to database: "+dbName,e);
-			throw new ServletException("Unable to connect to database: "+dbName,e);
+			logger.error("Unable to connect to document database: "+dbName,e);
+			throw new ServletException("Unable to connect to document database: "+dbName,e);
 		}
-		logger.info("CouchDb configured: "+documentDatabase.getUrl());
+		logger.info("Document database configured: "+documentDatabase.getUrl());
+
+		// User database
+		try {
+			userDb = couchClient.getUserDatabase();
+		} catch(Exception e) {
+			logger.error("Unable to connect to _users database",e);
+			throw new ServletException("Unable to connect to _users database",e);
+		}
+		logger.info("User database configured: "+userDb.getUrl());
+		
+		// Submission database
+		if( atlasProperties.isCouchDbSubmissionDbEnabled() ){
+			try {
+				String submissionDbName = atlasProperties.getCouchDbSubmissionDbName();
+				submissionDb = couchClient.getDatabase(submissionDbName);
+
+			} catch(Exception e) {
+				logger.error("Unable to connect to submission database",e);
+				throw new ServletException("Unable to connect to submission database",e);
+			}
+			logger.info("Submission database configured: "+submissionDb.getUrl());
+		}
 	}
 
 	private void initServerDesignDocument(ServletContext servletContext) throws ServletException {
@@ -409,7 +433,6 @@ public class ConfigServlet extends JsonServlet {
 	private void initUserDesignDocument(ServletContext servletContext) throws ServletException {
 		// Update document
 		try {
-			CouchDb userDb = couchClient.getDatabase("_users");
 			UserDesignDocumentImpl.updateDesignDocument(userDb);
 		} catch(Exception e) {
 			throw new ServletException("Error while updating user design document",e);
@@ -567,16 +590,9 @@ public class ConfigServlet extends JsonServlet {
 		
 		try {
 			// Is submission DB enabled
-			if( atlasProperties.isCouchDbSubmissionDbEnabled() ){
-
-				// Submission DB name
-				String submissionDbName = atlasProperties.getCouchDbSubmissionDbName();
-
-				CouchDb submissionDb = couchClient.getDatabase(submissionDbName);
+			if( null != submissionDb ){
 				CouchDesignDocument submissionDesign = submissionDb.getDesignDocument("submission");
 
-				CouchUserDb userDb = couchClient.getUserDatabase();
-				
 				SubmissionRobotSettings settings = new SubmissionRobotSettings();
 				settings.setAtlasName(atlasProperties.getAtlasName());
 				settings.setDocumentDesignDocument(couchDd);
@@ -646,7 +662,6 @@ public class ConfigServlet extends JsonServlet {
 	private void initUser(ServletContext servletContext) throws ServletException {
 		
 		try {
-			CouchUserDb userDb = couchClient.getUserDatabase();
 			servletContext.setAttribute(UserServlet.ConfigAttributeName_UserDb, userDb);
 			servletContext.setAttribute(
 				UserServlet.ConfigAttributeName_AtlasName
@@ -670,19 +685,12 @@ public class ConfigServlet extends JsonServlet {
 
 	private void initSubmission(ServletContext servletContext) throws ServletException {
 		try {
-			CouchUserDb userDb = couchClient.getUserDatabase();
-			
 			servletContext.setAttribute(SubmissionServlet.ConfigAttributeName_AtlasName, atlasProperties.getAtlasName());
 			servletContext.setAttribute(SubmissionServlet.ConfigAttributeName_UserDb, userDb);
 			servletContext.setAttribute(SubmissionServlet.ConfigAttributeName_DocumentDesign, couchDd);
 
 			// Is submission DB enabled?
-			if( atlasProperties.isCouchDbSubmissionDbEnabled() ){
-
-				// Submission DB name
-				String submissionDbName = atlasProperties.getCouchDbSubmissionDbName();
-
-				CouchDb submissionDb = couchClient.getDatabase(submissionDbName);
+			if( null != submissionDb ){
 				CouchDesignDocument submissionDesign = submissionDb.getDesignDocument("submission");
 
 				servletContext.setAttribute(SubmissionServlet.ConfigAttributeName_SubmissionDesign, submissionDesign);
@@ -694,7 +702,6 @@ public class ConfigServlet extends JsonServlet {
 		}
 		
 		try {
-			CouchUserDb userDb = couchClient.getUserDatabase();
 			servletContext.setAttribute(UserServlet.ConfigAttributeName_UserDb, userDb);
 			servletContext.setAttribute(
 				UserServlet.ConfigAttributeName_AtlasName
@@ -748,6 +755,26 @@ public class ConfigServlet extends JsonServlet {
 			}
 		} catch (Exception e) {
 			logger.error("Unable to shutdown daily vetter notifications", e);
+		}
+		
+		try {
+			documentDatabase.getChangeMonitor().shutdown();
+		} catch(Exception e) {
+			logger.error("Unable to shutdown change monitor on document database", e);
+		}
+		
+		try {
+			userDb.getChangeMonitor().shutdown();
+		} catch(Exception e) {
+			logger.error("Unable to shutdown change monitor on user database", e);
+		}
+		
+		try {
+			if( null != submissionDb ) {
+				submissionDb.getChangeMonitor().shutdown();
+			}
+		} catch(Exception e) {
+			logger.error("Unable to shutdown change monitor on submission database", e);
 		}
 	}
 

@@ -14,9 +14,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.client.CouchDb;
+import ca.carleton.gcrc.couch.client.CouchDbChangeListener;
+import ca.carleton.gcrc.couch.client.CouchDbChangeMonitor;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchQuery;
 import ca.carleton.gcrc.couch.client.CouchQueryResults;
+import ca.carleton.gcrc.couch.date.cluster.CouchTreeOperations;
 import ca.carleton.gcrc.couch.date.cluster.Tree;
 import ca.carleton.gcrc.couch.date.cluster.TreeElement;
 import ca.carleton.gcrc.couch.date.cluster.TreeInsertProcess;
@@ -24,7 +27,11 @@ import ca.carleton.gcrc.couch.date.cluster.TreeNode;
 import ca.carleton.gcrc.couch.date.cluster.TreeOperations;
 import ca.carleton.gcrc.couch.utils.CouchNunaliitUtils;
 
-public class DateRobotThread extends Thread {
+public class DateRobotThread extends Thread implements CouchDbChangeListener {
+	
+	static final public int DELAY_NO_WORK_POLLING = 5 * 1000; // 5 seconds
+	static final public int DELAY_NO_WORK_MONITOR = 60 * 1000; // 1 minute
+	static final public int DELAY_ERROR = 60 * 1000; // 1 minute
 	
 	static public class Work {
 		public enum Type {
@@ -44,10 +51,18 @@ public class DateRobotThread extends Thread {
 	private Set<String> docIdsToSkip = new HashSet<String>();
 	private Tree clusterTree;
 	private boolean reloadTree = false;
+	private int noWorkDelayInMs = DELAY_NO_WORK_POLLING;
 	
-	public DateRobotThread(CouchDesignDocument atlasDesign, Tree clusterTree) {
+	public DateRobotThread(CouchDesignDocument atlasDesign, Tree clusterTree) throws Exception {
 		this.atlasDesign = atlasDesign;
 		this.clusterTree = clusterTree;
+		
+		noWorkDelayInMs = DELAY_NO_WORK_POLLING;
+		CouchDbChangeMonitor changeMonitor = atlasDesign.getDatabase().getChangeMonitor();
+		if( null != changeMonitor ){
+			changeMonitor.addChangeListener(this);
+			noWorkDelayInMs = DELAY_NO_WORK_MONITOR;
+		}
 	}
 	
 	public void shutdown() {
@@ -87,13 +102,13 @@ public class DateRobotThread extends Thread {
 			
 		} catch (Exception e) {
 			logger.error("Error obtaining work",e);
-			waitMillis(60 * 1000); // wait a minute
+			waitMillis(DELAY_ERROR); // wait a minute
 			return;
 		}
 
 		if( null == allWork || allWork.size() < 1 ) {
-			// Nothing to do, wait 4 secs
-			waitMillis(4 * 1000);
+			// Nothing to do, wait
+			waitMillis(noWorkDelayInMs);
 			return;
 			
 		} else {
@@ -104,7 +119,9 @@ public class DateRobotThread extends Thread {
 					
 				} catch(Exception e) {
 					logger.error("Error performing work "+work.type,e);
-					reloadTree = true;
+					synchronized(this) {
+						reloadTree = true;
+					}
 					return;
 				}
 			}
@@ -114,15 +131,20 @@ public class DateRobotThread extends Thread {
 	private Collection<Work> getWork() throws Exception {
 		List<Work> allWork = new Vector<Work>();
 
-		// Check if cluster date tree document was deleted
-		if( false == reloadTree ){
-			boolean exists = clusterTree.getOperations().treeExists();
-			if( false == exists ){
-				reloadTree = true;
-			}
+		boolean mustReloadTree = false;
+		synchronized(this){
+			mustReloadTree = reloadTree;
 		}
 		
-		if( reloadTree ) {
+		// Check if cluster date tree document was deleted
+//		if( false == reloadTree ){
+//			boolean exists = clusterTree.getOperations().treeExists();
+//			if( false == exists ){
+//				reloadTree = true;
+//			}
+//		}
+		
+		if( mustReloadTree ) {
 			Work work = new Work();
 			work.type = Work.Type.RELOAD_TREE;
 			allWork.add(work);
@@ -141,12 +163,14 @@ public class DateRobotThread extends Thread {
 				query.setKeys(keys);
 		
 				CouchQueryResults results = atlasDesign.performQuery(query);
-				for(JSONObject row : results.getRows()) {
-					String id = row.optString("id");
-					if( null != id 
-					 && false == docIdsToSkip.contains(id) ) {
-						// Found some work
-						docIds.add(id);
+				synchronized(this) { // protect docIdsToSkip
+					for(JSONObject row : results.getRows()) {
+						String id = row.optString("id");
+						if( null != id 
+						 && false == docIdsToSkip.contains(id) ) {
+							// Found some work
+							docIds.add(id);
+						}
 					}
 				}
 			}
@@ -167,12 +191,14 @@ public class DateRobotThread extends Thread {
 					query.setKeys(keys);
 			
 					CouchQueryResults results = atlasDesign.performQuery(query);
-					for(JSONObject row : results.getRows()) {
-						String id = row.optString("id");
-						if( null != id 
-						 && false == docIdsToSkip.contains(id) ) {
-							// Found some work
-							docIds.add(id);
+					synchronized(this) { // protect docIdsToSkip
+						for(JSONObject row : results.getRows()) {
+							String id = row.optString("id");
+							if( null != id 
+							 && false == docIdsToSkip.contains(id) ) {
+								// Found some work
+								docIds.add(id);
+							}
 						}
 					}
 				}
@@ -203,7 +229,9 @@ public class DateRobotThread extends Thread {
 			try {
 				performProcessDocument(work.docId);
 			} catch(Exception e) {
-				docIdsToSkip.add(work.docId);
+				synchronized(this) { // protect docIdsToSkip
+					docIdsToSkip.add(work.docId);
+				}
 				throw e;
 			}
 			
@@ -290,5 +318,22 @@ public class DateRobotThread extends Thread {
 		}
 		
 		return true;
+	}
+
+	@Override
+	public void change(
+			CouchDbChangeListener.Type type
+			,String docId
+			,String rev
+			,JSONObject rawChange
+			,JSONObject doc
+			) {
+		synchronized(this){
+			docIdsToSkip.remove(docId);
+			if( CouchTreeOperations.DATE_CLUSTER_DOC_ID.equals(docId) ){
+				reloadTree = true;
+			}
+			this.notifyAll();
+		}
 	}
 }

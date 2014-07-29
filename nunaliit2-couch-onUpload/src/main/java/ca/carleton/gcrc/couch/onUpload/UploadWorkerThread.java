@@ -13,6 +13,8 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ca.carleton.gcrc.couch.client.CouchDbChangeListener;
+import ca.carleton.gcrc.couch.client.CouchDbChangeMonitor;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchQuery;
 import ca.carleton.gcrc.couch.client.CouchQueryResults;
@@ -29,7 +31,10 @@ import ca.carleton.gcrc.couch.utils.CouchNunaliitUtils;
 import ca.carleton.gcrc.json.JSONSupport;
 import ca.carleton.gcrc.olkit.multimedia.file.SystemFile;
 
-public class UploadWorkerThread extends Thread {
+public class UploadWorkerThread extends Thread implements CouchDbChangeListener {
+	
+	static final public int WORK_DELAY_POLLING = 5 * 1000; // 5 seconds
+	static final public int WORK_DELAY_MONITOR = 60 * 1000; // 1 minute
 
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
@@ -40,6 +45,7 @@ public class UploadWorkerThread extends Thread {
 	private MailNotification mailNotification;
 	private Set<String> docIdsToSkip = new HashSet<String>();
 	private List<FileConversionPlugin> fileConverters;
+	private int workDelayInMs = WORK_DELAY_POLLING;
 	
 	protected UploadWorkerThread(
 		UploadWorkerSettings settings
@@ -47,12 +53,19 @@ public class UploadWorkerThread extends Thread {
 		,File mediaDir
 		,MailNotification mailNotification
 		,List<FileConversionPlugin> fileConverters
-		) {
+		) throws Exception {
 		this.settings = settings;
 		this.dd = dd;
 		this.mediaDir = mediaDir;
 		this.mailNotification = mailNotification;
 		this.fileConverters = fileConverters;
+		
+		workDelayInMs = WORK_DELAY_POLLING;
+		CouchDbChangeMonitor changeMonitor = dd.getDatabase().getChangeMonitor();
+		if( null != changeMonitor ){
+			changeMonitor.addChangeListener(this);
+			workDelayInMs = WORK_DELAY_MONITOR;
+		}
 	}
 	
 	public void shutdown() {
@@ -99,8 +112,8 @@ public class UploadWorkerThread extends Thread {
 		}
 		
 		if( null == work ) {
-			// Nothing to do, wait 5 secs
-			waitMillis(5 * 1000);
+			// Nothing to do, wait
+			waitMillis(workDelayInMs);
 			return;
 		} else {
 			try {
@@ -108,8 +121,10 @@ public class UploadWorkerThread extends Thread {
 				performWork(work);
 				
 			} catch(Exception e) {
+				synchronized(this) {
+					docIdsToSkip.add( work.getDocId() );
+				}
 				logger.error("Error processing document "+work.getDocId()+" ("+work.getState()+")",e);
-				docIdsToSkip.add( work.getDocId() );
 			}
 		}
 	}
@@ -663,8 +678,10 @@ public class UploadWorkerThread extends Thread {
 			};
 			
 			// Discount documents in error state
-			if( docIdsToSkip.contains(id) ) {
-				continue;
+			synchronized(this) {
+				if( docIdsToSkip.contains(id) ) {
+					continue;
+				}
 			}
 			
 			if( UploadConstants.UPLOAD_STATUS_WAITING_FOR_UPLOAD.equals(state) ) {
@@ -770,5 +787,19 @@ public class UploadWorkerThread extends Thread {
 		}
 		
 		return true;
+	}
+
+	@Override
+	public void change(
+			CouchDbChangeListener.Type type
+			,String docId
+			,String rev
+			,JSONObject rawChange
+			,JSONObject doc) {
+
+		synchronized(this) {
+			docIdsToSkip.remove(docId);
+			this.notifyAll();
+		}
 	}
 }

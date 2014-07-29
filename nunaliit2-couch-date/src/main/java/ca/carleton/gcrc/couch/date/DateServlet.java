@@ -52,8 +52,12 @@ public class DateServlet extends JsonServlet {
 			
 			actions = new DateServiceActions(dateSource);
 			
-			robot = new DateRobotThread(configuration.getAtlasDesignDocument(), dateSource.getClusterTree());
-			robot.start();
+			try {
+				robot = new DateRobotThread(configuration.getAtlasDesignDocument(), dateSource.getClusterTree());
+				robot.start();
+			} catch (Exception e) {
+				throw new ServletException("Unable to start date robot",e);
+			}
 			
 		} else {
 			throw new ServletException("Invalid class for configuration: "+configurationObj.getClass().getName());

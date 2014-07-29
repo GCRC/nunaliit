@@ -8,11 +8,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.client.CouchDb;
+import ca.carleton.gcrc.couch.client.CouchDbChangeListener;
+import ca.carleton.gcrc.couch.client.CouchDbChangeMonitor;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchQuery;
 import ca.carleton.gcrc.couch.client.CouchQueryResults;
 
-public class AgreementRobotThread extends Thread {
+public class AgreementRobotThread extends Thread implements CouchDbChangeListener {
+	
+	static final public String DOC_ID_NUNALIIT_USER_AGREEMENT = "org.nunaliit.user_agreement";
+	static final public int DELAY_NO_WORK_POLLING = 30 * 1000; // 30 seconds
+	static final public int DELAY_NO_WORK_MONITOR = 5 * 60 * 1000; // 5 minutes
+	static final public int DELAY_ERROR = 60 * 1000; // 1 minute
 
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
@@ -22,6 +29,7 @@ public class AgreementRobotThread extends Thread {
 	private CouchDesignDocument userDbDesignDocument;
 	private String agreementRole = null;
 	private String lastAgreementVersion = null;
+	private int noWorkDelay = DELAY_NO_WORK_POLLING;
 	
 	public AgreementRobotThread(AgreementRobotSettings settings) throws Exception {
 		this.atlasName = settings.getAtlasName();
@@ -31,6 +39,13 @@ public class AgreementRobotThread extends Thread {
 		agreementRole = "nunaliit_agreement_atlas";
 		if( null != atlasName ){
 			agreementRole = "nunaliit_agreement_" + atlasName;
+		}
+		
+		noWorkDelay = DELAY_NO_WORK_POLLING;
+		CouchDbChangeMonitor changeMonitor = documentDbDesignDocument.getDatabase().getChangeMonitor();
+		if( null != changeMonitor ){
+			noWorkDelay = DELAY_NO_WORK_MONITOR;
+			changeMonitor.addChangeListener(this);
 		}
 	}
 	
@@ -66,17 +81,17 @@ public class AgreementRobotThread extends Thread {
 		JSONObject agreementDoc = null;
 		try {
 			CouchDb db = documentDbDesignDocument.getDatabase();
-			boolean exist = db.documentExists("org.nunaliit.user_agreement");
+			boolean exist = db.documentExists(DOC_ID_NUNALIIT_USER_AGREEMENT);
 			if( exist ) {
-				agreementDoc = db.getDocument("org.nunaliit.user_agreement");
+				agreementDoc = db.getDocument(DOC_ID_NUNALIIT_USER_AGREEMENT);
 			} else {
 				logger.error("User agreement document not found in database");
-				waitMillis(60 * 1000); // wait a minute
+				waitMillis(DELAY_ERROR); // wait a minute
 				return;
 			};
 		} catch (Exception e) {
 			logger.error("Error accessing user agreement document from database",e);
-			waitMillis(60 * 1000); // wait a minute
+			waitMillis(DELAY_ERROR); // wait a minute
 			return;
 		}
 
@@ -84,8 +99,8 @@ public class AgreementRobotThread extends Thread {
 		String version = agreementDoc.optString("_rev",null);
 		if( null == version 
 		 || version.equals(lastAgreementVersion) ){
-			// Nothing to do, wait 30 secs
-			waitMillis(30 * 1000);
+			// Nothing to do, wait
+			waitMillis(noWorkDelay);
 			return;
 		};
 		
@@ -98,8 +113,8 @@ public class AgreementRobotThread extends Thread {
 		} catch(Exception e) {
 			logger.error("Error handling new user agreement",e);
 
-			// Try again in 30 secs
-			waitMillis(30 * 1000);
+			// Try again later
+			waitMillis(DELAY_ERROR);
 			return;
 		}
 	}
@@ -203,5 +218,19 @@ public class AgreementRobotThread extends Thread {
 		}
 		
 		return true;
+	}
+
+	@Override
+	public void change(
+			CouchDbChangeListener.Type type
+			,String docId
+			,String rev
+			,JSONObject rawChange
+			,JSONObject doc) {
+		synchronized(this){
+			if( DOC_ID_NUNALIIT_USER_AGREEMENT.equals(docId) ){
+				this.notifyAll();
+			}
+		}
 	}
 }

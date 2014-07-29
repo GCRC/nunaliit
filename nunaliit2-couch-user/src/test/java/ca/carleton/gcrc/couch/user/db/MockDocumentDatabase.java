@@ -20,6 +20,7 @@ import org.json.JSONObject;
 import ca.carleton.gcrc.couch.client.CouchClient;
 import ca.carleton.gcrc.couch.client.CouchContext;
 import ca.carleton.gcrc.couch.client.CouchDb;
+import ca.carleton.gcrc.couch.client.CouchDbChangeMonitor;
 import ca.carleton.gcrc.couch.client.CouchDbSecurityDocument;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchDocumentOptions;
@@ -234,5 +235,10 @@ public class MockDocumentDatabase implements CouchDb {
 		sw.flush();
 		
 		doc.put("_rev", sw.toString());
+	}
+
+	@Override
+	public CouchDbChangeMonitor getChangeMonitor() throws Exception {
+		return null;
 	}
 }

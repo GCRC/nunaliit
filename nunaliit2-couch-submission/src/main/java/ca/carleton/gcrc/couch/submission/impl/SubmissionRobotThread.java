@@ -12,6 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.client.CouchDb;
+import ca.carleton.gcrc.couch.client.CouchDbChangeListener;
+import ca.carleton.gcrc.couch.client.CouchDbChangeMonitor;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchQuery;
 import ca.carleton.gcrc.couch.client.CouchQueryResults;
@@ -23,7 +25,11 @@ import ca.carleton.gcrc.json.JSONSupport;
 import ca.carleton.gcrc.json.patcher.JSONPatcher;
 import ca.carleton.gcrc.mail.MailRecipient;
 
-public class SubmissionRobotThread extends Thread {
+public class SubmissionRobotThread extends Thread implements CouchDbChangeListener {
+	
+	static final public int DELAY_NO_WORK_POLLING = 5 * 1000; // 5 seconds
+	static final public int DELAY_NO_WORK_MONITOR = 60 * 1000; // 1 minute
+	static final public int DELAY_ERROR = 60 * 1000; // 1 minute
 
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
@@ -35,8 +41,9 @@ public class SubmissionRobotThread extends Thread {
 	private Set<String> docIdsToSkip = new HashSet<String>();
 	private String adminRole = "administrator";
 	private String vetterRole = "vetter";
+	private int noWorkDelay = DELAY_NO_WORK_POLLING;
 	
-	public SubmissionRobotThread(SubmissionRobotSettings settings) {
+	public SubmissionRobotThread(SubmissionRobotSettings settings) throws Exception {
 		this.submissionDbDesignDocument = settings.getSubmissionDesignDocument();
 		this.documentDbDesignDocument = settings.getDocumentDesignDocument();
 		this.userDb = settings.getUserDb();
@@ -45,6 +52,13 @@ public class SubmissionRobotThread extends Thread {
 		if( null != settings.getAtlasName() ){
 			adminRole = settings.getAtlasName() + "_administrator";
 			vetterRole = settings.getAtlasName() + "_vetter";
+		}
+		
+		noWorkDelay = DELAY_NO_WORK_POLLING;
+		CouchDbChangeMonitor changeMonitor = submissionDbDesignDocument.getDatabase().getChangeMonitor();
+		if( null != changeMonitor ){
+			noWorkDelay = DELAY_NO_WORK_MONITOR;
+			changeMonitor.addChangeListener(this);
 		}
 	}
 	
@@ -85,24 +99,26 @@ public class SubmissionRobotThread extends Thread {
 			results = submissionDbDesignDocument.performQuery(query);
 		} catch (Exception e) {
 			logger.error("Error accessing submission database",e);
-			waitMillis(60 * 1000); // wait a minute
+			waitMillis(DELAY_ERROR); // wait a minute
 			return;
 		}
 
 		// Check for work
 		String docId = null;
-		for(JSONObject row : results.getRows()) {
-			String id = row.optString("id");
-			if( false == docIdsToSkip.contains(id) ) {
-				// Found some work
-				docId = id;
-				break;
+		synchronized(this){ // protect docIdsToSkip
+			for(JSONObject row : results.getRows()) {
+				String id = row.optString("id");
+				if( false == docIdsToSkip.contains(id) ) {
+					// Found some work
+					docId = id;
+					break;
+				}
 			}
 		}
 
 		if( null == docId ) {
-			// Nothing to do, wait 4 secs
-			waitMillis(4 * 1000);
+			// Nothing to do, wait
+			waitMillis(noWorkDelay);
 			return;
 		} else {
 			try {
@@ -111,7 +127,9 @@ public class SubmissionRobotThread extends Thread {
 				
 			} catch(Exception e) {
 				logger.error("Error processing document "+docId,e);
-				docIdsToSkip.add(docId);
+				synchronized(this){ // protect docIdsToSkip
+					docIdsToSkip.add(docId);
+				}
 			}
 		}
 	}
@@ -437,5 +455,18 @@ public class SubmissionRobotThread extends Thread {
 		}
 		
 		return true;
+	}
+
+	@Override
+	public void change(
+			CouchDbChangeListener.Type type
+			,String docId
+			,String rev
+			,JSONObject rawChange
+			,JSONObject doc) {
+		synchronized(this){
+			docIdsToSkip.remove(docId);
+			this.notifyAll();
+		}
 	}
 }

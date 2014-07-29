@@ -15,6 +15,8 @@ public interface CouchDb {
 	
 	CouchClient getClient();
 	
+	CouchDbChangeMonitor getChangeMonitor() throws Exception;
+	
 	URL getUrl();
 	
 	Collection<String> getAllDocIds() throws Exception;
