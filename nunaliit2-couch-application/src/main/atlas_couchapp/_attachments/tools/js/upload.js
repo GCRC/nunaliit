@@ -1,11 +1,15 @@
+
+// Localization
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
+
 var atlasDb = null;
 var atlasDesign = null;
 var serverDesign = null;
 var dispatcher = null;
 var requestService = null;
+var attachmentService = null;
 var currentView = 'approval';
 var limit = 10;
-var mediaDir = '../../../../media/';
 var currentlyViewedMedia = [];
 var currentDocumentsShowing = {};
 
@@ -24,26 +28,9 @@ function limitChanged(){
 
 function markMedia(doc, attachmentName, status) {
 	
-	if( doc
-	 && doc.nunaliit_attachments
-	 && doc.nunaliit_attachments.files
-	 && doc.nunaliit_attachments.files[attachmentName] ) {
-		
-		doc.nunaliit_attachments.files[attachmentName].status = status;
-		
-		var thumb = doc.nunaliit_attachments.files[attachmentName].thumbnail;
-		if( null != thumb ) {
-			if( doc.nunaliit_attachments.files[thumb] ) {
-				doc.nunaliit_attachments.files[thumb].status = status;
-			};
-		};
-		
-		var original = doc.nunaliit_attachments.files[attachmentName].originalAttachment;
-		if( null != original ) {
-			if( doc.nunaliit_attachments.files[original] ) {
-				doc.nunaliit_attachments.files[original].status = status;
-			};
-		};
+	var att = attachmentService.getAttachment(doc, attachmentName);
+	if( att ){
+		att.changeStatus(status);
 		$n2.couchDocument.adjustDocument(doc);
 	};
 };
@@ -142,7 +129,6 @@ function _approveDenySelection(selected,status){
 };
 
 function _selectAll(){
-//	var $btn = $(this);
 	
 	var $table = $('.uploadsTable');
 	
@@ -265,6 +251,8 @@ function displayRowFromDocument(trId, doc, attachmentName){
 	
 	var docId = doc._id;
 	
+	var att = attachmentService.getAttachment(doc, attachmentName);
+	
 	// Details
 	var $td = $tr.find('td.upload_body');
 	if( $td.length > 0 ) {
@@ -279,14 +267,8 @@ function displayRowFromDocument(trId, doc, attachmentName){
 		new $n2.tree.ObjectTree($div, doc);
 	};
 	
-	if( doc 
-	 && doc.nunaliit_attachments 
-	 && doc.nunaliit_attachments.nunaliit_type === 'attachment_descriptions' 
-	 && doc.nunaliit_attachments.files 
-	 && doc.nunaliit_attachments.files[attachmentName] ) {
+	if( att ) {
 
-		var file = doc.nunaliit_attachments.files[attachmentName];
-		
 		// Media
 		var $td = $tr.find('td.upload_att');
 		$td.empty();
@@ -295,55 +277,34 @@ function displayRowFromDocument(trId, doc, attachmentName){
 		$spanName.text(attachmentName);
 		$td.append( $spanName );
 		$td.append( $('<br/>') );
-		
-		if( file.original && file.original.mediaFile ) {
-			$td.append('<a href="'+mediaDir+file.original.mediaFile+'">Original</a>');
-			$td.append('<br/>');
-		}
-		if( file.mediaFile ) {
-			$td.append('<a href="'+mediaDir+file.mediaFile+'">Converted</a>');
-			$td.append('<br/>');
-		}
-		if( file.thumbnail 
-		 && doc.nunaliit_attachments.files[file.thumbnail]
-		 && doc.nunaliit_attachments.files[file.thumbnail].mediaFile ) {
-			$td.append('<img src="'+mediaDir+doc.nunaliit_attachments.files[file.thumbnail].mediaFile+'"/>');
-			$td.append('<br/>');
+
+		var attOriginal = att.getOriginalAttachment();
+		if( attOriginal && attOriginal.getMediaFileUrl() ) {
+			$('<a>')
+				.attr('href',attOriginal.getMediaFileUrl())
+				.text( _loc('Original') )
+				.appendTo($td);
+			$('<br>').appendTo($td);
 		}
 		
-		// Actions
-//		var $td = $tr.find('td.upload_buttons');
-//		$td.empty();
-//		
-//		var $approveBtn = $('<input class="uploadButton uploadApproveButton" type="button" value="Approve"/>');
-//		$td.append( $approveBtn );
-//		$td.append( $('<br/>') );
-//		var $denyBtn = $('<input class="uploadButton uploadDenyButton" type="button" value="Deny"/>');
-//		$td.append( $denyBtn );
-//		
-//		_installButtonClicks(doc._id, attachmentName, $approveBtn, $denyBtn);
-		
+		if( att.getMediaFileUrl() ) {
+			$('<a>')
+				.attr('href',att.getMediaFileUrl())
+				.text( _loc('Converted') )
+				.appendTo($td);
+			$('<br>').appendTo($td);
+		}
+
+		var attThumb = att.getThumbnailAttachment();
+		if( attThumb && attThumb.getMediaFileUrl() ) {
+			$('<img>')
+				.attr('src',attThumb.getMediaFileUrl())
+				.appendTo($td);
+			$('<br>').appendTo($td);
+		}
 	} else {
 		// Can not find the attachment
 		$tr.remove();
-	};
-
-	function _installButtonClicks(docId, attachmentName, $approveBtn, $denyBtn) {
-		$approveBtn.click(function(){
-			var selection = {};
-			selection[docId] = {};
-			selection[docId][attachmentName] = true;
-			
-			_approveDenySelection(selection,'approved');
-		});
-		
-		$denyBtn.click(function(){
-			var selection = {};
-			selection[docId] = {};
-			selection[docId][attachmentName] = true;
-			
-			_approveDenySelection(selection,'denied');
-		});
 	};
 };
 
@@ -362,13 +323,6 @@ function showUploads(arr) {
 		$('.uploadData').empty().append($table);
 		
 		$table.append('<tr class="upload_header"><th>Details</th><th>Media</th><td class="upload_header_buttons"></td></tr>');
-//		$table.append('<tr class="upload_header"><th>Details</th><th>Media</th><th>Actions</th><td class="upload_header_buttons"></td></tr>');
-//		var $td = $table.find('.upload_header_buttons');
-//		$('<button></button>')
-//			.appendTo($td)
-//			.text('Selected All')
-//			.click(_selectAll)
-//			;
 	};
 	
 	// Remove no media warning
@@ -514,11 +468,9 @@ function _handleDispatch(m){
 	var type = m.type;
 	
 	if( 'documentCreated' === type ) {
-$n2.log('created',m);		
 		refreshView();
 		
 	} else if( 'documentUpdated' === type ) {
-$n2.log('updated',m);		
 		refreshView();
 		
 	} else if( 'documentDeleted' === type ) {
@@ -536,13 +488,13 @@ function uploadMainInit(config) {
 	atlasDb = config.atlasDb;
 	atlasDesign = config.atlasDesign;
 	serverDesign = atlasDb.getDesignDoc({ddName:'server'});
-	mediaDir = config.mediaRelativePath;
-
+	
 	$n2.log('config', config);
 	
 	if( config.directory ) {
 		dispatcher = config.directory.dispatchService;
 		requestService = config.directory.requestService;
+		attachmentService = config.directory.attachmentService;
 	};
 
 	if( config.directory && config.directory.authService ) {

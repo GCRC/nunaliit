@@ -262,6 +262,10 @@ function Configure(options_){
 			directory: configuration.directory
 		});
 		
+		configuration.directory.attachmentService = new $n2.couchAttachment.AttachmentService({
+			mediaRelativePath: options.mediaUrl
+		});
+		
 		configuration.directory.showService = new $n2.couchShow.Show({
 			db: configuration.atlasDb
 			,documentSource: configuration.documentSource
