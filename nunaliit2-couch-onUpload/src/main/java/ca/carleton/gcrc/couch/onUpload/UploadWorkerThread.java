@@ -3,7 +3,6 @@ package ca.carleton.gcrc.couch.onUpload;
 import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -20,7 +19,9 @@ import ca.carleton.gcrc.couch.client.CouchQuery;
 import ca.carleton.gcrc.couch.client.CouchQueryResults;
 import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
 import ca.carleton.gcrc.couch.onUpload.conversion.AttachmentDescriptor;
+import ca.carleton.gcrc.couch.onUpload.conversion.DocumentDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.FileConversionContext;
+import ca.carleton.gcrc.couch.onUpload.conversion.FileConversionContextImpl;
 import ca.carleton.gcrc.couch.onUpload.conversion.OriginalFileDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.ServerWorkDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.WorkDescriptor;
@@ -28,43 +29,53 @@ import ca.carleton.gcrc.couch.onUpload.mail.MailNotification;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionMetaData;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionPlugin;
 import ca.carleton.gcrc.couch.utils.CouchNunaliitUtils;
-import ca.carleton.gcrc.json.JSONSupport;
 import ca.carleton.gcrc.olkit.multimedia.file.SystemFile;
 
 public class UploadWorkerThread extends Thread implements CouchDbChangeListener {
 	
-	static final public int WORK_DELAY_POLLING = 5 * 1000; // 5 seconds
-	static final public int WORK_DELAY_MONITOR = 60 * 1000; // 1 minute
+	static final public int DELAY_NO_WORK_POLLING = 5 * 1000; // 5 seconds
+	static final public int DELAY_NO_WORK_MONITOR = 60 * 1000; // 1 minute
+	static final public int DELAY_ERROR = 60 * 1000; // 1 minute
 
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	private UploadWorkerSettings settings;
 	private boolean isShuttingDown = false;
-	private CouchDesignDocument dd;
+	private CouchDesignDocument documentDbDesign;
+	private CouchDesignDocument submissionDbDesign;
 	private File mediaDir;
 	private MailNotification mailNotification;
 	private Set<String> docIdsToSkip = new HashSet<String>();
 	private List<FileConversionPlugin> fileConverters;
-	private int workDelayInMs = WORK_DELAY_POLLING;
+	private int noWorkDelayInMs = DELAY_NO_WORK_POLLING;
 	
 	protected UploadWorkerThread(
 		UploadWorkerSettings settings
-		,CouchDesignDocument dd
+		,CouchDesignDocument documentDbDesign
+		,CouchDesignDocument submissionDbDesign
 		,File mediaDir
 		,MailNotification mailNotification
 		,List<FileConversionPlugin> fileConverters
 		) throws Exception {
 		this.settings = settings;
-		this.dd = dd;
+		this.documentDbDesign = documentDbDesign;
+		this.submissionDbDesign = submissionDbDesign;
 		this.mediaDir = mediaDir;
 		this.mailNotification = mailNotification;
 		this.fileConverters = fileConverters;
 		
-		workDelayInMs = WORK_DELAY_POLLING;
-		CouchDbChangeMonitor changeMonitor = dd.getDatabase().getChangeMonitor();
+		noWorkDelayInMs = DELAY_NO_WORK_POLLING;
+		CouchDbChangeMonitor changeMonitor = documentDbDesign.getDatabase().getChangeMonitor();
 		if( null != changeMonitor ){
 			changeMonitor.addChangeListener(this);
-			workDelayInMs = WORK_DELAY_MONITOR;
+			noWorkDelayInMs = DELAY_NO_WORK_MONITOR;
+		}
+		
+		if( null != submissionDbDesign ){
+			changeMonitor = submissionDbDesign.getDatabase().getChangeMonitor();
+			if( null != changeMonitor ){
+				changeMonitor.addChangeListener(this);
+			}			
 		}
 	}
 	
@@ -97,23 +108,18 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 	}
 	
 	private void activity() {
-		CouchQuery query = new CouchQuery();
-		query.setViewName("server_work");
-		
-		CouchQueryResults results;
 		Work work = null;
 		try {
-			results = dd.performQuery(query);
-			work = getWork(results);
+			work = getWork();
 		} catch (Exception e) {
 			logger.error("Error accessing server",e);
-			waitMillis(60 * 1000); // wait a minute
+			waitMillis(DELAY_ERROR); // wait a minute
 			return;
 		}
 		
 		if( null == work ) {
 			// Nothing to do, wait
-			waitMillis(workDelayInMs);
+			waitMillis(noWorkDelayInMs);
 			return;
 		} else {
 			try {
@@ -129,74 +135,101 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 		}
 	}
 	
+	/*
+	 * "waiting for upload"
+	 * Assigns attachmentName, originalName, submitter, uploadId,
+	 * "original" structure and "data" structure.
+	 * Upload id document is deleted from document database.
+	 * -> "submitted" when upload id is found.  
+	 * 
+	 * "submitted"
+	 * Assigns value to "original" structure: size, mime type, encoding type. Set file
+	 * class on attachment.
+	 * -> "analyzed" 
+	 *               
+	 * "submitted_inline"
+	 * The state "submitted_inline" was implemented for the iPad application, where the
+	 * file was attached to the document, but no action from the robot has been taken.
+	 * In that case, download file to disk and move to regular queue (submitted)
+	 * -> "submitted" 
+	 *                
+	 * "analyzed"
+	 * In this phase, the plug-ins are allowed to run. In the case of the multi-media
+	 * attachments, the thumbnail is created. Conversions are performed.
+	 * -> "approved" if submitted by a vetter
+	 * -> "waiting for approval" if submitted by anyone else
+	 * 
+	 * "waiting for approval"
+	 * This phase waits for user intervention.
+	 * -> "approved"
+	 * -> "denied"
+	 * 
+	 * "approved"
+	 * In this phase, the plug-ins are allowed to run. For GPX files, the points are
+	 * uploaded to the document database.
+	 * In general, the uploaded file is attached to the document.
+	 * -> "attached"
+	 */
 	private void performWork(Work work) throws Exception {
 		
-		logger.info("Upload worker thread processing: "+work.getDocId()+" ("+work.getState()+")");
+		logger.info("Upload worker processing: "+work);
 
-		String docId = work.getDocId();
 		String state = work.getState();
 		
 		if( UploadConstants.UPLOAD_STATUS_WAITING_FOR_UPLOAD.equals(state) ) {
-			String uploadId = work.getUploadId();
-			String uploadRequestDocId = work.getUploadRequestDocId();
-			performWaitingForUploadWork(docId, uploadId, uploadRequestDocId);
+			performWaitingForUploadWork(work);
 		
 		} else if( UploadConstants.UPLOAD_STATUS_SUBMITTED.equals(state) ) {
-			String attachmentName = work.getAttachmentName();
-			performSubmittedWork(docId, attachmentName);
+			performSubmittedWork(work);
 			
 		} else if( UploadConstants.UPLOAD_STATUS_SUBMITTED_INLINE.equals(state) ) {
-			String attachmentName = work.getAttachmentName();
-			performSubmittedInlineWork(docId, attachmentName);
+			performSubmittedInlineWork(work);
 			
 		} else if( UploadConstants.UPLOAD_STATUS_ANALYZED.equals(state) ) {
-			String attachmentName = work.getAttachmentName();
-			performAnalyzedWork(docId, attachmentName);
+			performAnalyzedWork(work);
 			
 		} else if( UploadConstants.UPLOAD_STATUS_APPROVED.equals(state) ) {
-			String attachmentName = work.getAttachmentName();
-			performApprovedWork(docId, attachmentName);
+			performApprovedWork(work);
 				
 		} else if( UploadConstants.UPLOAD_WORK_ORIENTATION.equals(state) ) {
-			String attachmentName = work.getAttachmentName();
-			performOrientationWork(docId, attachmentName);
+			performOrientationWork(work);
 			
 		} else if( UploadConstants.UPLOAD_WORK_THUMBNAIL.equals(state) ) {
-			String attachmentName = work.getAttachmentName();
-			performThumbnailWork(docId, attachmentName);
+			performThumbnailWork(work);
 			
 		} else if( UploadConstants.UPLOAD_WORK_UPLOAD_ORIGINAL_IMAGE.equals(state) ) {
-			String attachmentName = work.getAttachmentName();
-			performUploadOriginalImageWork(docId, attachmentName);
+			performUploadOriginalImageWork(work);
 			
 		} else if( UploadConstants.UPLOAD_WORK_ROTATE_CW.equals(state) ) {
-			String attachmentName = work.getAttachmentName();
-			performRotateWork(FileConversionPlugin.WORK_ROTATE_CW, docId, attachmentName);
+			performRotateWork(FileConversionPlugin.WORK_ROTATE_CW, work);
 			
 		} else if( UploadConstants.UPLOAD_WORK_ROTATE_CCW.equals(state) ) {
-			String attachmentName = work.getAttachmentName();
-			performRotateWork(FileConversionPlugin.WORK_ROTATE_CCW, docId, attachmentName);
+			performRotateWork(FileConversionPlugin.WORK_ROTATE_CCW, work);
 			
 		} else if( UploadConstants.UPLOAD_WORK_ROTATE_180.equals(state) ) {
-			String attachmentName = work.getAttachmentName();
-			performRotateWork(FileConversionPlugin.WORK_ROTATE_180, docId, attachmentName);
+			performRotateWork(FileConversionPlugin.WORK_ROTATE_180, work);
 			
 		} else {
 			throw new Exception("Unrecognized state: "+state);
 		}
 
-		logger.info("Upload worker thread completed: "+docId+" ("+state+")");
+		logger.info("Upload worker completed: "+work);
 	}
 
-	private void performWaitingForUploadWork(String docId, String uploadId, String uploadRequestDocId) throws Exception {
-		JSONObject doc = dd.getDatabase().getDocument(docId);
-		JSONObject uploadRequestDoc = dd.getDatabase().getDocument(uploadRequestDocId);
+	private void performWaitingForUploadWork(Work work) throws Exception {
+
+		FileConversionContext conversionContext = 
+			new FileConversionContextImpl(work,documentDbDesign,mediaDir);
 		
-		JSONObject attachment = findAttachmentWithUploadId(doc, uploadId);
-		String attName = attachment.getString("attachmentName");
-		JSONObject nunaliitAttachments = doc.getJSONObject("nunaliit_attachments");
-		JSONObject nunaliitAttachmentsFiles = nunaliitAttachments.getJSONObject("files");
-		nunaliitAttachmentsFiles.remove(attName);
+		DocumentDescriptor docDescriptor = conversionContext.getDocument();
+		
+		String uploadId = work.getUploadId();
+		AttachmentDescriptor attDescription = docDescriptor.findAttachmentWithUploadId(uploadId);
+		
+		String uploadRequestDocId = work.getUploadRequestDocId();
+		JSONObject uploadRequestDoc = documentDbDesign.getDatabase().getDocument(uploadRequestDocId);
+		
+		attDescription.remove();
 		
 		JSONObject uploadRequest = uploadRequestDoc.getJSONObject("nunaliit_upload_request");
 		JSONArray files = uploadRequest.getJSONArray("files");
@@ -211,7 +244,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			JSONObject data = file.getJSONObject("data");
 			
 			String effectiveAttachmentName = attachmentName;
-			if( JSONSupport.containsKey(nunaliitAttachmentsFiles, effectiveAttachmentName) ) {
+			if( docDescriptor.isAttachmentDescriptionAvailable(effectiveAttachmentName) ) {
 				// Select a different file name
 				String prefix = "";
 				String suffix = "";
@@ -223,45 +256,51 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 					suffix = attachmentName.substring(pos);
 				}
 				int counter = 0;
-				while( JSONSupport.containsKey(nunaliitAttachmentsFiles, effectiveAttachmentName) ) {
+				while( docDescriptor.isAttachmentDescriptionAvailable(effectiveAttachmentName) ) {
 					attachmentName = prefix + counter + suffix;
 					++counter;
 				}
 			}
 			
-			JSONObject requestAttachment = new JSONObject();
-			requestAttachment.put("attachmentName", effectiveAttachmentName);
-			requestAttachment.put("status", "submitted");
-			requestAttachment.put("originalName", originalName);
-			requestAttachment.put("submitter", submitter);
-			requestAttachment.put("original", original);
-			requestAttachment.put("data", data);
-			requestAttachment.put("uploadId", uploadId);
+			AttachmentDescriptor requestAttachment = 
+					docDescriptor.getAttachmentDescription(effectiveAttachmentName);
+			requestAttachment.setStatus(UploadConstants.UPLOAD_STATUS_SUBMITTED);
+			requestAttachment.setOriginalName(originalName);
+			requestAttachment.setSubmitterName(submitter);
+			requestAttachment.setUploadId(uploadId);
 			
-			nunaliitAttachmentsFiles.put(effectiveAttachmentName,requestAttachment);
+			JSONObject jsonAtt = requestAttachment.getJson();
+			jsonAtt.put("original", original);
+			jsonAtt.put("data", data);
 		}
 		
 		// Save document
-		dd.getDatabase().updateDocument(doc);
+		conversionContext.saveDocument();
 		
 		// Delete upload request
-		dd.getDatabase().deleteDocument(uploadRequestDoc);
+		documentDbDesign.getDatabase().deleteDocument(uploadRequestDoc);
 	}
 
-	private void performSubmittedWork(String docId, String attachmentName) throws Exception {
-		JSONObject doc = dd.getDatabase().getDocument(docId);
-
-		FileConversionContext conversionContext = 
-			new FileConversionContext(doc,dd,attachmentName,mediaDir);
+	private void performSubmittedWork(Work work) throws Exception {
+		String attachmentName = work.getAttachmentName();
 		
-		if( false == conversionContext.isAttachmentDescriptionAvailable() ) {
+		FileConversionContext conversionContext = 
+			new FileConversionContextImpl(work,documentDbDesign,mediaDir);
+		
+		DocumentDescriptor docDescriptor = conversionContext.getDocument();
+		
+		AttachmentDescriptor attDescription = null;
+		if( docDescriptor.isAttachmentDescriptionAvailable(attachmentName) ){
+			attDescription = docDescriptor.getAttachmentDescription(attachmentName);
+		}
+		
+		if( null == attDescription ) {
 			logger.info("Submission can not be found");
 
-		} else if( false == UploadConstants.UPLOAD_STATUS_SUBMITTED.equals( conversionContext.getAttachmentDescription().getStatus() ) ) {
+		} else if( false == UploadConstants.UPLOAD_STATUS_SUBMITTED.equals( attDescription.getStatus() ) ) {
 			logger.info("File not in submit state");
 			
 		} else {
-			AttachmentDescriptor attDescription = conversionContext.getAttachmentDescription();
 			OriginalFileDescriptor originalObj = attDescription.getOriginalFileDescription();
 			
 			if( null == originalObj) {
@@ -332,20 +371,26 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 	 * @param attachmentName
 	 * @throws Exception
 	 */
-	private void performSubmittedInlineWork(String docId, String attachmentName) throws Exception {
-		JSONObject doc = dd.getDatabase().getDocument(docId);
-
-		FileConversionContext conversionContext = 
-			new FileConversionContext(doc,dd,attachmentName,mediaDir);
+	private void performSubmittedInlineWork(Work work) throws Exception {
+		String attachmentName = work.getAttachmentName();
 		
-		if( false == conversionContext.isAttachmentDescriptionAvailable() ) {
+		FileConversionContext conversionContext = 
+			new FileConversionContextImpl(work,documentDbDesign,mediaDir);
+
+		DocumentDescriptor docDescriptor = conversionContext.getDocument();
+
+		AttachmentDescriptor attDescription = null;
+		if( docDescriptor.isAttachmentDescriptionAvailable(attachmentName) ){
+			attDescription = docDescriptor.getAttachmentDescription(attachmentName);
+		}
+		
+		if( null == attDescription ) {
 			logger.info("Submission can not be found");
 
-		} else if( false == UploadConstants.UPLOAD_STATUS_SUBMITTED_INLINE.equals( conversionContext.getAttachmentDescription().getStatus() ) ) {
+		} else if( false == UploadConstants.UPLOAD_STATUS_SUBMITTED_INLINE.equals( attDescription.getStatus() ) ) {
 			logger.info("File not in submit inline state");
 			
 		} else {
-			AttachmentDescriptor attDescription = conversionContext.getAttachmentDescription();
 
 			// Verify that a file is attached to the document
 			if( false == attDescription.isFilePresent() ) {
@@ -355,7 +400,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			
 			// Download file
 			File outputFile = File.createTempFile("inline", "", mediaDir);
-			conversionContext.downloadFile(outputFile);
+			conversionContext.downloadFile(attachmentName, outputFile);
 			
 			// Create an original structure to point to the file in the
 			// media dir. This way, when we go to "submitted" state, we will
@@ -372,21 +417,26 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 		}
 	}
 
-	private void performAnalyzedWork(String docId, String attachmentName) throws Exception {
-		JSONObject doc = dd.getDatabase().getDocument(docId);
+	private void performAnalyzedWork(Work work) throws Exception {
+		String attachmentName = work.getAttachmentName();
 
 		FileConversionContext conversionContext = 
-			new FileConversionContext(doc,dd,attachmentName,mediaDir);
+			new FileConversionContextImpl(work,documentDbDesign,mediaDir);
+
+		DocumentDescriptor docDescriptor = conversionContext.getDocument();
+
+		AttachmentDescriptor attDescription = null;
+		if( docDescriptor.isAttachmentDescriptionAvailable(attachmentName) ){
+			attDescription = docDescriptor.getAttachmentDescription(attachmentName);
+		}
 		
-		if( false == conversionContext.isAttachmentDescriptionAvailable() ) {
+		if( null == attDescription ) {
 			logger.info("Analysis object not found");
 
-		} else if( false == UploadConstants.UPLOAD_STATUS_ANALYZED.equals( conversionContext.getAttachmentDescription().getStatus() ) ) {
+		} else if( false == UploadConstants.UPLOAD_STATUS_ANALYZED.equals( attDescription.getStatus() ) ) {
 			logger.info("File not in analyzed state");
 			
 		} else {
-			AttachmentDescriptor attDescription = conversionContext.getAttachmentDescription();
-
 			if( false == attDescription.isOriginalFileDescriptionAvailable() ) {
 				logger.error("Analysis required but original object is not present");
 				throw new Exception("Analysis required but original object is not present");
@@ -400,7 +450,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			String fileClass = attDescription.getFileClass();
 			for(FileConversionPlugin fcp : this.fileConverters) {
 				if( fcp.handlesFileClass(fileClass, FileConversionPlugin.WORK_ANALYZE) ) {
-					fcp.performWork(FileConversionPlugin.WORK_ANALYZE, conversionContext);
+					fcp.performWork(FileConversionPlugin.WORK_ANALYZE, attDescription);
 					pluginFound = true;
 					break;
 				}
@@ -428,31 +478,36 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			
 			// Notify that upload is available
 			if( shouldSendNotification ) {
-				sendVettingNotification(docId, doc, attachmentName);
+				sendVettingNotification(work.getDocId(), work.getDocument(), attachmentName);
 			}
 		}
 	}
 
-	private void performApprovedWork(String docId, String attachmentName) throws Exception {
-		JSONObject doc = dd.getDatabase().getDocument(docId);
+	private void performApprovedWork(Work work) throws Exception {
+		String attachmentName = work.getAttachmentName();
 		
 		FileConversionContext conversionContext = 
-			new FileConversionContext(doc,dd,attachmentName,mediaDir);
+			new FileConversionContextImpl(work,documentDbDesign,mediaDir);
 
-		if( false == conversionContext.isAttachmentDescriptionAvailable() ) {
+		DocumentDescriptor docDescriptor = conversionContext.getDocument();
+
+		AttachmentDescriptor attDescription = null;
+		if( docDescriptor.isAttachmentDescriptionAvailable(attachmentName) ){
+			attDescription = docDescriptor.getAttachmentDescription(attachmentName);
+		}
+
+		if( null == attDescription ) {
 			logger.info("Approved object not found");
 
-		} else if( false == UploadConstants.UPLOAD_STATUS_APPROVED.equals( conversionContext.getAttachmentDescription().getStatus() ) ) {
+		} else if( false == UploadConstants.UPLOAD_STATUS_APPROVED.equals( attDescription.getStatus() ) ) {
 			logger.info("File not in approved state");
 			
 		} else {
-			AttachmentDescriptor attDescription = conversionContext.getAttachmentDescription();
-
 			boolean pluginFound = false;
 			String fileClass = attDescription.getFileClass();
 			for(FileConversionPlugin fcp : this.fileConverters) {
 				if( fcp.handlesFileClass(fileClass, FileConversionPlugin.WORK_APPROVE) ) {
-					fcp.performWork(FileConversionPlugin.WORK_APPROVE, conversionContext);
+					fcp.performWork(FileConversionPlugin.WORK_APPROVE, attDescription);
 					pluginFound = true;
 					break;
 				}
@@ -467,7 +522,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				
 				// By default, upload original file
 				conversionContext.uploadFile(
-					conversionContext.getAttachmentName()
+					attDescription.getAttachmentName()
 					,attDescription.getMediaFile()
 					,mimeType
 					);
@@ -479,20 +534,26 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 		}
 	}
 	
-	private void performOrientationWork(String docId, String attachmentName) throws Exception {
-		JSONObject doc = dd.getDatabase().getDocument(docId);
+	private void performOrientationWork(Work work) throws Exception {
+		String attachmentName = work.getAttachmentName();
 		
 		FileConversionContext conversionContext = 
-			new FileConversionContext(doc,dd,attachmentName,mediaDir);
+			new FileConversionContextImpl(work,documentDbDesign,mediaDir);
 
-		if( false == conversionContext.isAttachmentDescriptionAvailable() ) {
+		DocumentDescriptor docDescriptor = conversionContext.getDocument();
+
+		AttachmentDescriptor attDescription = null;
+		if( docDescriptor.isAttachmentDescriptionAvailable(attachmentName) ){
+			attDescription = docDescriptor.getAttachmentDescription(attachmentName);
+		}
+
+		if( null == attDescription ) {
 			logger.info("Approved object not found");
 
-		} else if( false == UploadConstants.UPLOAD_STATUS_ATTACHED.equals( conversionContext.getAttachmentDescription().getStatus() ) ) {
+		} else if( false == UploadConstants.UPLOAD_STATUS_ATTACHED.equals( attDescription.getStatus() ) ) {
 			logger.info("File not in attached state");
 
 		} else {
-			AttachmentDescriptor attDescription = conversionContext.getAttachmentDescription();
 			ServerWorkDescriptor serverDescription = attDescription.getServerWorkDescription();
 			int orientationLevel = serverDescription.getOrientationLevel();
 			
@@ -503,7 +564,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				String fileClass = attDescription.getFileClass();
 				for(FileConversionPlugin fcp : this.fileConverters) {
 					if( fcp.handlesFileClass(fileClass, FileConversionPlugin.WORK_ORIENT) ) {
-						fcp.performWork(FileConversionPlugin.WORK_ORIENT, conversionContext);
+						fcp.performWork(FileConversionPlugin.WORK_ORIENT, attDescription);
 						pluginFound = true;
 						break;
 					}
@@ -518,20 +579,26 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 		}
 	}
 	
-	private void performThumbnailWork(String docId, String attachmentName) throws Exception {
-		JSONObject doc = dd.getDatabase().getDocument(docId);
+	private void performThumbnailWork(Work work) throws Exception {
+		String attachmentName = work.getAttachmentName();
 		
 		FileConversionContext conversionContext = 
-			new FileConversionContext(doc,dd,attachmentName,mediaDir);
+			new FileConversionContextImpl(work,documentDbDesign,mediaDir);
 
-		if( false == conversionContext.isAttachmentDescriptionAvailable() ) {
+		DocumentDescriptor docDescriptor = conversionContext.getDocument();
+
+		AttachmentDescriptor attDescription = null;
+		if( docDescriptor.isAttachmentDescriptionAvailable(attachmentName) ){
+			attDescription = docDescriptor.getAttachmentDescription(attachmentName);
+		}
+
+		if( null == attDescription ) {
 			logger.info("Approved object not found");
 
-		} else if( false == UploadConstants.UPLOAD_STATUS_ATTACHED.equals( conversionContext.getAttachmentDescription().getStatus() ) ) {
+		} else if( false == UploadConstants.UPLOAD_STATUS_ATTACHED.equals( attDescription.getStatus() ) ) {
 			logger.info("File not in attached state");
 
 		} else {
-			AttachmentDescriptor attDescription = conversionContext.getAttachmentDescription();
 			ServerWorkDescriptor serverDescription = attDescription.getServerWorkDescription();
 			String thumbnailReference = attDescription.getThumbnailReference();
 			int thumbnailLevel = serverDescription.getThumbnailLevel();
@@ -557,7 +624,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				String fileClass = attDescription.getFileClass();
 				for(FileConversionPlugin fcp : this.fileConverters) {
 					if( fcp.handlesFileClass(fileClass, FileConversionPlugin.WORK_THUMBNAIL) ) {
-						fcp.performWork(FileConversionPlugin.WORK_THUMBNAIL, conversionContext);
+						fcp.performWork(FileConversionPlugin.WORK_THUMBNAIL, attDescription);
 						pluginFound = true;
 						
 						logger.info("Created thumbnail");
@@ -574,27 +641,33 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 		}
 	}
 	
-	private void performUploadOriginalImageWork(String docId, String attachmentName) throws Exception {
-		JSONObject doc = dd.getDatabase().getDocument(docId);
+	private void performUploadOriginalImageWork(Work work) throws Exception {
+		String attachmentName = work.getAttachmentName();
 		
 		FileConversionContext conversionContext = 
-			new FileConversionContext(doc,dd,attachmentName,mediaDir);
+			new FileConversionContextImpl(work,documentDbDesign,mediaDir);
 
-		if( false == conversionContext.isAttachmentDescriptionAvailable() ) {
+		DocumentDescriptor docDescriptor = conversionContext.getDocument();
+
+		AttachmentDescriptor attDescription = null;
+		if( docDescriptor.isAttachmentDescriptionAvailable(attachmentName) ){
+			attDescription = docDescriptor.getAttachmentDescription(attachmentName);
+		}
+
+		if( null == attDescription ) {
 			throw new Exception("Approved object not found");
 
-		} else if( false == UploadConstants.UPLOAD_STATUS_ATTACHED.equals( conversionContext.getAttachmentDescription().getStatus() ) ) {
+		} else if( false == UploadConstants.UPLOAD_STATUS_ATTACHED.equals( attDescription.getStatus() ) ) {
 			throw new Exception("File not in attached state");
 
 		} else {
-			AttachmentDescriptor attDescription = conversionContext.getAttachmentDescription();
-			WorkDescriptor work = attDescription.getWorkDescription();
+			WorkDescriptor workDescription = attDescription.getWorkDescription();
 
 			boolean pluginFound = false;
 			String fileClass = attDescription.getFileClass();
 			for(FileConversionPlugin fcp : this.fileConverters) {
 				if( fcp.handlesFileClass(fileClass, FileConversionPlugin.WORK_UPLOAD_ORIGINAL) ) {
-					fcp.performWork(FileConversionPlugin.WORK_UPLOAD_ORIGINAL, conversionContext);
+					fcp.performWork(FileConversionPlugin.WORK_UPLOAD_ORIGINAL, attDescription);
 					pluginFound = true;
 					
 					logger.info("Original file uploaded");
@@ -602,7 +675,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				}
 			}
 			if( false == pluginFound ) {
-				work.setStringAttribute(UploadConstants.UPLOAD_WORK_UPLOAD_ORIGINAL_IMAGE, "No plugin found for thumbnail creation, file class: "+fileClass);
+				workDescription.setStringAttribute(UploadConstants.UPLOAD_WORK_UPLOAD_ORIGINAL_IMAGE, "No plugin found for thumbnail creation, file class: "+fileClass);
 			}
 
 			// Update status
@@ -610,27 +683,33 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 		}
 	}
 	
-	private void performRotateWork(String workType, String docId, String attachmentName) throws Exception {
-		JSONObject doc = dd.getDatabase().getDocument(docId);
+	private void performRotateWork(String workType, Work work) throws Exception {
+		String attachmentName = work.getAttachmentName();
 		
 		FileConversionContext conversionContext = 
-			new FileConversionContext(doc,dd,attachmentName,mediaDir);
+			new FileConversionContextImpl(work,documentDbDesign,mediaDir);
 
-		if( false == conversionContext.isAttachmentDescriptionAvailable() ) {
+		DocumentDescriptor docDescriptor = conversionContext.getDocument();
+
+		AttachmentDescriptor attDescription = null;
+		if( docDescriptor.isAttachmentDescriptionAvailable(attachmentName) ){
+			attDescription = docDescriptor.getAttachmentDescription(attachmentName);
+		}
+
+		if( null == attDescription ) {
 			throw new Exception("Approved object not found");
 
-		} else if( false == UploadConstants.UPLOAD_STATUS_ATTACHED.equals( conversionContext.getAttachmentDescription().getStatus() ) ) {
+		} else if( false == UploadConstants.UPLOAD_STATUS_ATTACHED.equals( attDescription.getStatus() ) ) {
 			throw new Exception("File not in attached state");
 
 		} else {
-			AttachmentDescriptor attDescription = conversionContext.getAttachmentDescription();
-			WorkDescriptor work = attDescription.getWorkDescription();
+			WorkDescriptor workDescription = attDescription.getWorkDescription();
 
 			boolean pluginFound = false;
 			String fileClass = attDescription.getFileClass();
 			for(FileConversionPlugin fcp : this.fileConverters) {
 				if( fcp.handlesFileClass(fileClass, workType) ) {
-					fcp.performWork(workType, conversionContext);
+					fcp.performWork(workType, attDescription);
 					pluginFound = true;
 					
 					logger.info("Rotation work complete: "+workType);
@@ -638,7 +717,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				}
 			}
 			if( false == pluginFound ) {
-				work.setStringAttribute(UploadConstants.UPLOAD_WORK_UPLOAD_ORIGINAL_IMAGE, "No plugin found for thumbnail creation, file class: "+fileClass);
+				workDescription.setStringAttribute(UploadConstants.UPLOAD_WORK_UPLOAD_ORIGINAL_IMAGE, "No plugin found for thumbnail creation, file class: "+fileClass);
 			}
 
 			// Update status
@@ -659,58 +738,121 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 		}
 	}
 	
-	private Work getWork(CouchQueryResults results) throws Exception {
-		Map<String,JSONObject> rowsByUploadId = findUploadIds(results);
-				
-		for(JSONObject row : results.getRows()) {
-			String id = row.optString("id");
+	private Work getWork() throws Exception {
+		Map<String,JSONObject> rowsByUploadId = null;
+
+		// Deal with document database
+		{
+			CouchQuery query = new CouchQuery();
+			query.setViewName("server_work");
 			
-			String state = null;
-			String attachmentName = null;
-			JSONArray key = row.optJSONArray("key");
-			if( null != key ){
-				if( key.length() > 0 ){
-					state = key.getString(0);
-				}
-				if( key.length() > 1 ){
-					attachmentName = key.getString(1);
-				}
-			};
-			
-			// Discount documents in error state
-			synchronized(this) {
-				if( docIdsToSkip.contains(id) ) {
-					continue;
-				}
-			}
-			
-			if( UploadConstants.UPLOAD_STATUS_WAITING_FOR_UPLOAD.equals(state) ) {
-				JSONObject uploadIdRow = rowsByUploadId.get(attachmentName);
-				if( null == uploadIdRow ) {
-					// Missing information to continue
-					continue;
-				} else {
-					String uploadRequestDocId = uploadIdRow.getString("id");
+			CouchQueryResults results;
+			results = documentDbDesign.performQuery(query);
+			rowsByUploadId = findUploadIds(results);
 					
-					Work work = new Work();
-					work.setDocId(id);
-					work.setState(state);
-					work.setUploadId(attachmentName);
-					work.setUploadRequestDocId(uploadRequestDocId);
+			for(JSONObject row : results.getRows()) {
+				String id = row.optString("id");
+				
+				String state = null;
+				String attachmentName = null;
+				JSONArray key = row.optJSONArray("key");
+				if( null != key ){
+					if( key.length() > 0 ){
+						state = key.getString(0);
+					}
+					if( key.length() > 1 ){
+						attachmentName = key.getString(1);
+					}
+				};
+				
+				// Discount documents in error state
+				synchronized(this) {
+					if( docIdsToSkip.contains(id) ) {
+						continue;
+					}
+				}
+				
+				if( UploadConstants.UPLOAD_STATUS_WAITING_FOR_UPLOAD.equals(state) ) {
+					// In the case of "waiting_for_upload", the attachment name
+					// refers to the uploadId
+					JSONObject uploadIdRow = rowsByUploadId.get(attachmentName);
+					if( null == uploadIdRow ) {
+						// Missing information to continue
+						continue;
+					} else {
+						String uploadRequestDocId = uploadIdRow.getString("id");
+						
+						WorkDocumentDb work = new WorkDocumentDb(documentDbDesign, state, id);
+						work.setUploadId(attachmentName);
+						work.setUploadRequestDocId(uploadRequestDocId);
+						return work;
+					}
+					
+				} else if( UploadConstants.UPLOAD_WORK_UPLOADED_FILE.equals(state) ) {
+					// Ignore
+					continue;
+					
+				} else {
+					// Everything else
+					WorkDocumentDb work = new WorkDocumentDb(documentDbDesign, state, id);
+					work.setAttachmentName(attachmentName);
 					return work;
 				}
+			}
+		}
+		
+		// At this point, no work found in the document database. Look in the
+		// submission database, if present
+		if( null != submissionDbDesign ){
+			CouchQuery query = new CouchQuery();
+			query.setViewName("upload-work");
+			
+			CouchQueryResults results = submissionDbDesign.performQuery(query);
+			
+			for(JSONObject row : results.getRows()) {
+				String id = row.optString("id");
 				
-			} else if( UploadConstants.UPLOAD_WORK_UPLOADED_FILE.equals(state) ) {
-				// Ignore
-				continue;
+				String state = null;
+				String attachmentName = null;
+				JSONArray key = row.optJSONArray("key");
+				if( null != key ){
+					if( key.length() > 0 ){
+						state = key.getString(0);
+					}
+					if( key.length() > 1 ){
+						attachmentName = key.getString(1);
+					}
+				};
 				
-			} else {
-				// Everything else
-				Work work = new Work();
-				work.setDocId(id);
-				work.setState(state);
-				work.setAttachmentName(attachmentName);
-				return work;
+				// Discount documents in error state
+				synchronized(this) {
+					if( docIdsToSkip.contains(id) ) {
+						continue;
+					}
+				}
+				
+				if( UploadConstants.UPLOAD_STATUS_WAITING_FOR_UPLOAD.equals(state) ) {
+					// In the case of "waiting_for_upload", the attachment name
+					// refers to the uploadId
+					JSONObject uploadIdRow = rowsByUploadId.get(attachmentName);
+					if( null == uploadIdRow ) {
+						// Missing information to continue
+						continue;
+					} else {
+						String uploadRequestDocId = uploadIdRow.getString("id");
+						
+						WorkSubmissionDb work = new WorkSubmissionDb(submissionDbDesign, state, id);
+						work.setUploadId(attachmentName);
+						work.setUploadRequestDocId(uploadRequestDocId);
+						return work;
+					}
+					
+				} else {
+					// Everything else
+					WorkSubmissionDb work = new WorkSubmissionDb(submissionDbDesign, state, id);
+					work.setAttachmentName(attachmentName);
+					return work;
+				}
 			}
 		}
 		
@@ -735,42 +877,41 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			
 			if( UploadConstants.UPLOAD_WORK_UPLOADED_FILE.equals(state) ) {
 				rowsByUploadId.put(uploadId, row);
-				continue;
 			}
 		}
 		
 		return rowsByUploadId;
 	}
 	
-	private JSONObject findAttachmentWithUploadId(JSONObject doc, String uploadId) throws Exception {
-		JSONObject nunaliitAttachments = doc.optJSONObject("nunaliit_attachments");
-
-		JSONObject files = null;
-		if( null != nunaliitAttachments ){
-			files = nunaliitAttachments.optJSONObject("files");
-		}
-		
-		if( null != files ){
-			Iterator<?> keyIt = files.keys();
-			while( keyIt.hasNext() ){
-				Object keyObj = keyIt.next();
-				if( keyObj instanceof String ){
-					String attName = (String)keyObj;
-					JSONObject attachment = files.optJSONObject(attName);
-					if( null != attachment ){
-						String attachmentUploadId = attachment.optString("uploadId");
-						if( null != attachmentUploadId ){
-							if( attachmentUploadId.equals(uploadId) ){
-								return attachment;
-							}
-						}
-					}
-				}
-			}
-		}
-		
-		return null;
-	}
+//	private JSONObject findAttachmentWithUploadId(JSONObject doc, String uploadId) throws Exception {
+//		JSONObject nunaliitAttachments = doc.optJSONObject(UploadConstants.KEY_DOC_ATTACHMENTS);
+//
+//		JSONObject files = null;
+//		if( null != nunaliitAttachments ){
+//			files = nunaliitAttachments.optJSONObject("files");
+//		}
+//		
+//		if( null != files ){
+//			Iterator<?> keyIt = files.keys();
+//			while( keyIt.hasNext() ){
+//				Object keyObj = keyIt.next();
+//				if( keyObj instanceof String ){
+//					String attName = (String)keyObj;
+//					JSONObject attachment = files.optJSONObject(attName);
+//					if( null != attachment ){
+//						String attachmentUploadId = attachment.optString("uploadId");
+//						if( null != attachmentUploadId ){
+//							if( attachmentUploadId.equals(uploadId) ){
+//								return attachment;
+//							}
+//						}
+//					}
+//				}
+//			}
+//		}
+//		
+//		return null;
+//	}
 
 	private boolean waitMillis(int millis) {
 		synchronized(this) {

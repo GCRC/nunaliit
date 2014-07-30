@@ -2,7 +2,6 @@ package ca.carleton.gcrc.couch.onUpload;
 
 public class UploadConstants {
 
-	static public final String ATTACHMENTS_KEY = "nunaliit_attachments";
 
 	static public final String UPLOAD_STATUS_KEY = "status";
 	
@@ -35,6 +34,7 @@ public class UploadConstants {
 	static public final String SOURCE_KEY = "source";
 	static public final String WORK_KEY = "work";
 	static public final String EXIF_DATA_KEY = "exif";
+	static public final String UPLOAD_ID_KEY = "uploadId";
 	
 	// Keys on server work performed
 	static public final String SERVER_ORIENTATION_KEY = "orientation";
@@ -51,8 +51,13 @@ public class UploadConstants {
 	static public final String UPLOAD_WORK_ROTATE_180 = "rotate180";
 	static public final String UPLOAD_WORK_UPLOADED_FILE = "uploadId";
 
-	// Geometries
-	static public final String GEOMETRY_KEY = "nunaliit_geom";
-	static public final String GEOMETRY_TYPE = "geometry";
+	// Top level document keys
+	static public final String KEY_DOC_ID = "_id";
+	static public final String KEY_DOC_GEOMETRY = "nunaliit_geom";
+	static public final String KEY_DOC_ATTACHMENTS = "nunaliit_attachments";
+	
+	// nunaliit_type
+	static public final String VALUE_NUNALIIT_TYPE_ATTACHMENTS = "attachment_descriptions";
+	static public final String VALUE_NUNALIIT_TYPE_GEOMETRY = "geometry";
 	
 }

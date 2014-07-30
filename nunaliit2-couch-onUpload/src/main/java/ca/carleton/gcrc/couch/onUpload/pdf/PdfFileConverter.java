@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
 import ca.carleton.gcrc.couch.onUpload.UploadConstants;
 import ca.carleton.gcrc.couch.onUpload.conversion.AttachmentDescriptor;
+import ca.carleton.gcrc.couch.onUpload.conversion.DocumentDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.FileConversionContext;
 import ca.carleton.gcrc.couch.onUpload.conversion.OriginalFileDescriptor;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionMetaData;
@@ -99,16 +100,16 @@ public class PdfFileConverter implements FileConversionPlugin {
 	@Override
 	public void performWork(
 		String work
-		,FileConversionContext conversionContext
+		,AttachmentDescriptor attDescription
 		) throws Exception {
 		
 		logger.debug("PDF start perform work: "+work);
 		
 		if( work == FileConversionPlugin.WORK_ANALYZE ) {
-			analyzeFile(conversionContext);
+			analyzeFile(attDescription);
 		
 		} else if( work == FileConversionPlugin.WORK_APPROVE ) {
-			approveFile(conversionContext);
+			approveFile(attDescription);
 		
 		} else {
 			throw new Exception("Plugin can not perform work: "+work);
@@ -117,8 +118,8 @@ public class PdfFileConverter implements FileConversionPlugin {
 		logger.debug("PDF end perform work: "+work);
 	}
 
-	public void analyzeFile(FileConversionContext conversionContext) throws Exception {
-		AttachmentDescriptor attDescription = conversionContext.getAttachmentDescription();
+	public void analyzeFile(AttachmentDescriptor attDescription) throws Exception {
+		DocumentDescriptor docDescriptor = attDescription.getDocumentDescriptor();
 		OriginalFileDescriptor originalObj = attDescription.getOriginalFileDescription();
 		CouchAuthenticationContext submitter = attDescription.getSubmitter();
 		
@@ -156,7 +157,7 @@ public class PdfFileConverter implements FileConversionPlugin {
 			SystemFile thumbSf = SystemFile.getSystemFile(thumbFile);
 			
 			String thumbnailAttachmentName = computeThumbnailName(attDescription.getAttachmentName(),"jpeg");
-			AttachmentDescriptor thumbnailObj = conversionContext.getAttachmentDescription(thumbnailAttachmentName);
+			AttachmentDescriptor thumbnailObj = docDescriptor.getAttachmentDescription(thumbnailAttachmentName);
 
 			if( CouchNunaliitUtils.hasVetterRole(submitter, atlasName) ) {
 				thumbnailObj.setStatus(UploadConstants.UPLOAD_STATUS_APPROVED);
@@ -181,13 +182,13 @@ public class PdfFileConverter implements FileConversionPlugin {
 		}
 	}
 
-	public void approveFile(FileConversionContext conversionContext) throws Exception {
+	public void approveFile(AttachmentDescriptor attDescription) throws Exception {
 		// Upload file
-		String attachementName = conversionContext.getAttachmentName();
-		AttachmentDescriptor attDescription = conversionContext.getAttachmentDescription();
+		FileConversionContext conversionContext = attDescription.getContext();
+		String attachmentName = attDescription.getAttachmentName();
 		File file = attDescription.getMediaFile();
-		String mimeType = conversionContext.getAttachmentDescription().getContentType();
-		conversionContext.uploadFile(attachementName, file, mimeType);
+		String mimeType = attDescription.getContentType();
+		conversionContext.uploadFile(attachmentName, file, mimeType);
 	}
 
 	private String computeThumbnailName(String attachmentName, String extension) {

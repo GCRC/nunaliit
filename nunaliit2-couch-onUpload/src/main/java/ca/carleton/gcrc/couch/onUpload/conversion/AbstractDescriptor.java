@@ -7,8 +7,6 @@ import ca.carleton.gcrc.json.JSONSupport;
 public abstract class AbstractDescriptor {
 
 	protected abstract JSONObject getJson() throws Exception;
-
-	protected abstract void setSavingRequired(boolean flag);
 	
 	protected String getStringAttribute(String key) throws Exception {
 		String value = null;
@@ -24,7 +22,6 @@ public abstract class AbstractDescriptor {
 	protected void setStringAttribute(String key, String value) throws Exception {
 		JSONObject json = getJson();
 		json.put(key,value);
-		setSavingRequired(true);
 	}
 
 	protected boolean getBooleanAttribute(String key) throws Exception {
@@ -41,7 +38,6 @@ public abstract class AbstractDescriptor {
 	protected void setBooleanAttribute(String key, boolean value) throws Exception {
 		JSONObject json = getJson();
 		json.put(key, value);
-		setSavingRequired(true);
 	}
 
 	protected long getLongAttribute(String key) throws Exception {
@@ -59,7 +55,6 @@ public abstract class AbstractDescriptor {
 		if( value >= 0 ) {
 			JSONObject json = getJson();
 			json.put(key, value);
-			setSavingRequired(true);
 		}
 	}
 
@@ -78,7 +73,6 @@ public abstract class AbstractDescriptor {
 		if( value >= 0 ) {
 			JSONObject json = getJson();
 			json.put(key, value);
-			setSavingRequired(true);
 		}
 	}
 }

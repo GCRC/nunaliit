@@ -31,14 +31,12 @@ public class WorkDescriptor extends AbstractDescriptor {
 	public void setStringAttribute(String key, String value) throws Exception {
 		JSONObject descriptionObj = getJson();
 		descriptionObj.put(key,value);
-		attDescription.setSavingRequired(true);
 	}
 	
 	public void removeAttribute(String key) throws Exception {
 		JSONObject descriptionObj = getJson();
 		if( JSONSupport.containsKey(descriptionObj, key) ) {
 			descriptionObj.remove(key);
-			attDescription.setSavingRequired(true);
 		}
 	}
 	
@@ -47,10 +45,5 @@ public class WorkDescriptor extends AbstractDescriptor {
 		JSONObject attachmentDescription = attDescription.getJson();
 		
 		return attachmentDescription.getJSONObject(UploadConstants.WORK_KEY);
-	}
-
-	@Override
-	protected void setSavingRequired(boolean flag) {
-		attDescription.setSavingRequired(flag);
 	}
 }

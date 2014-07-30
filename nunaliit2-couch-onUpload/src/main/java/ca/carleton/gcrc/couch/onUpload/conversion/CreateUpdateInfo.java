@@ -6,11 +6,11 @@ import ca.carleton.gcrc.couch.utils.CouchNunaliitConstants;
 
 public class CreateUpdateInfo extends AbstractDescriptor {
 
-	private FileConversionContext context;
+	private DocumentDescriptor documentDescriptor;
 	private String key;
 	
-	public CreateUpdateInfo(FileConversionContext context, String key){
-		this.context = context;
+	public CreateUpdateInfo(DocumentDescriptor documentDescriptor, String key){
+		this.documentDescriptor = documentDescriptor;
 		this.key = key;
 	}
 	
@@ -39,13 +39,8 @@ public class CreateUpdateInfo extends AbstractDescriptor {
 	
 	@Override
 	protected JSONObject getJson() throws Exception {
-		JSONObject doc = context.getDoc();
+		JSONObject doc = documentDescriptor.getJson();
 		
 		return doc.getJSONObject(key);
-	}
-
-	@Override
-	protected void setSavingRequired(boolean flag) {
-		context.setSavingRequired(flag);
 	}
 }

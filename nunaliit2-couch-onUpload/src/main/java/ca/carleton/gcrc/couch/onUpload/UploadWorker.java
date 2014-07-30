@@ -12,7 +12,8 @@ import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionPlugin;
 public class UploadWorker {
 
 	private UploadWorkerSettings settings;
-	private CouchDesignDocument designDocument = null;
+	private CouchDesignDocument documentDbDesign = null;
+	private CouchDesignDocument submissionDbDesign = null;
 	private File mediaDir = null;
 	private UploadWorkerThread workerThread = null;
 	private MailNotification mailNotification = new MailNotificationNull();
@@ -23,12 +24,20 @@ public class UploadWorker {
 		this.settings = settings;
 	}
 	
-	public CouchDesignDocument getDesignDocument() {
-		return designDocument;
+	public CouchDesignDocument getDocumentDbDesign() {
+		return documentDbDesign;
 	}
 
-	public void setDesignDocument(CouchDesignDocument designDocument) {
-		this.designDocument = designDocument;
+	public void setDocumentDbDesign(CouchDesignDocument designDocument) {
+		this.documentDbDesign = designDocument;
+	}
+	
+	public CouchDesignDocument getSubmissionDbDesign() {
+		return submissionDbDesign;
+	}
+
+	public void setSubmissionDbDesign(CouchDesignDocument designDocument) {
+		this.submissionDbDesign = designDocument;
 	}
 
 	public File getMediaDir() {
@@ -52,7 +61,7 @@ public class UploadWorker {
 	}
 
 	synchronized public void start() throws Exception {
-		if( null == designDocument ) {
+		if( null == documentDbDesign ) {
 			throw new Exception("Design document must be specified for upload worker");
 		}
 		if( null == mediaDir ) {
@@ -67,7 +76,8 @@ public class UploadWorker {
 		}
 		workerThread = new UploadWorkerThread(
 				settings
-				,designDocument
+				,documentDbDesign
+				,submissionDbDesign
 				,mediaDir
 				,mailNotification
 				,fileConverters

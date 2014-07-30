@@ -17,11 +17,6 @@ public class ExifDataDescriptor extends AbstractDescriptor {
 		JSONObject attachmentDescription = attDescription.getJson();
 		return attachmentDescription.getJSONObject(UploadConstants.EXIF_DATA_KEY);
 	}
-
-	@Override
-	protected void setSavingRequired(boolean flag) {
-		attDescription.setSavingRequired(flag);
-	}
 	
 	public void addData(String key, String value) throws Exception {
 		setStringAttribute(key,value);

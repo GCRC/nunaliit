@@ -20,7 +20,7 @@ public class OriginalFileDescriptor extends AbstractDescriptor {
 		JSONObject originalObj = getJson();
 		if( JSONSupport.containsKey(originalObj, UploadConstants.MEDIA_FILE_KEY) ) {
 			String mediaFileName = originalObj.optString(UploadConstants.MEDIA_FILE_KEY);
-			file = new File(attDescription.getMediaDir(), mediaFileName);
+			file = attDescription.getContext().getMediaFileFromName(mediaFileName);
 		}
 		
 		return file;
@@ -81,10 +81,5 @@ public class OriginalFileDescriptor extends AbstractDescriptor {
 		JSONObject originalFileDescription = attachmentDescription.optJSONObject(UploadConstants.ORIGINAL_FILE_KEY);
 		
 		return originalFileDescription;
-	}
-
-	@Override
-	protected void setSavingRequired(boolean flag) {
-		attDescription.setSavingRequired(flag);
 	}
 }

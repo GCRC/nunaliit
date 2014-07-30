@@ -8,43 +8,34 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
-import ca.carleton.gcrc.couch.client.CouchUserDb;
 import ca.carleton.gcrc.couch.onUpload.UploadConstants;
 
 public class AttachmentDescriptor extends AbstractDescriptor {
 
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
-	private FileConversionContext context;
-	private String specifiedAttName; // null if stored on context
+	private DocumentDescriptor documentDescriptor;
+	private String attName; // null if stored on context
 	
-	public AttachmentDescriptor(FileConversionContext context, String specifiedAttName){
-		this.context = context;
-		this.specifiedAttName = specifiedAttName;
+	public AttachmentDescriptor(DocumentDescriptor documentDescriptor, String attName){
+		this.documentDescriptor = documentDescriptor;
+		this.attName = attName;
 	}
 	
-	public String getSpecifiedAttachmentName(){
-		if( null != specifiedAttName ){
-			return specifiedAttName;
-		}
+	public DocumentDescriptor getDocumentDescriptor(){
+		return documentDescriptor;
+	}
+	
+	public FileConversionContext getContext(){
+		return documentDescriptor.getContext();
+	}
+	
+	public JSONObject getJson() throws Exception {
 		
-		return context.getAttachmentName();
-	}
-	
-	public void setSpecifiedAttachmentName(String attachmentName){
-		if( null != specifiedAttName ){
-			specifiedAttName = attachmentName;
-		} else {
-			context.setAttachmentName(attachmentName);
-		}
-	}
-	
-	protected JSONObject getJson() throws Exception {
-		
-		JSONObject doc = context.getDoc();
-		JSONObject attachments = doc.getJSONObject("nunaliit_attachments");
+		JSONObject doc = documentDescriptor.getJson();
+		JSONObject attachments = doc.getJSONObject(UploadConstants.KEY_DOC_ATTACHMENTS);
 		JSONObject files = attachments.getJSONObject("files");
-		JSONObject attachmentDescription = files.getJSONObject(getSpecifiedAttachmentName());
+		JSONObject attachmentDescription = files.getJSONObject(attName);
 		
 		return attachmentDescription;
 	}
@@ -72,9 +63,9 @@ public class AttachmentDescriptor extends AbstractDescriptor {
 	 * @throws Exception
 	 */
 	public void renameAttachmentTo(String newAttachmentName) throws Exception {
-		JSONObject doc = context.getDoc();
+		JSONObject doc = documentDescriptor.getJson();
 		JSONObject _attachments = doc.optJSONObject("_attachments");
-		JSONObject nunaliit_attachments = doc.getJSONObject("nunaliit_attachments");
+		JSONObject nunaliit_attachments = doc.getJSONObject(UploadConstants.KEY_DOC_ATTACHMENTS);
 		JSONObject files = nunaliit_attachments.getJSONObject("files");
 
 		// Verify no collision within nunaliit_attachments.files
@@ -92,25 +83,22 @@ public class AttachmentDescriptor extends AbstractDescriptor {
 				throw new Exception("Can not rename attachment because of name collision");
 			}
 		}
+
+		// Not allowed to move a stub		
+		if( null != _attachments ){
+			JSONObject att = _attachments.optJSONObject(attName);
+			if( null != att ){
+				throw new Exception("Can not rename attachment descriptor because file is already attached");
+			}
+		}
 		
 		// Move descriptor to new name
-		String oldAttachmentName = getSpecifiedAttachmentName();
+		String oldAttachmentName = attName;
 		JSONObject descriptor = files.getJSONObject(oldAttachmentName);
 		files.remove(oldAttachmentName);
 		files.put(newAttachmentName, descriptor);
-		setSavingRequired(true);
-		setSpecifiedAttachmentName(newAttachmentName);
-		setAttachmentName(newAttachmentName);
-	
-// Not allowed to move a stub		
-//		// Move attachment, if needed
-//		if( null != _attachments ){
-//			JSONObject att = _attachments.optJSONObject(oldAttachmentName);
-//			if( null != att ){
-//				_attachments.remove(oldAttachmentName);
-//				_attachments.put(newAttachmentName, att);
-//			}
-//		}
+		attName = newAttachmentName;
+		setStringAttribute(UploadConstants.ATTACHMENT_NAME_KEY,newAttachmentName);
 		
 		// Loop through all attachment descriptors, updating "source", "thumbnail"
 		// and "original" attributes
@@ -143,6 +131,35 @@ public class AttachmentDescriptor extends AbstractDescriptor {
 						}
 					}
 				}
+			}
+		}
+	}
+	
+	public void remove() throws Exception {
+		JSONObject doc = documentDescriptor.getJson();
+		JSONObject nunaliit_attachments = doc.getJSONObject(UploadConstants.KEY_DOC_ATTACHMENTS);
+		JSONObject files = nunaliit_attachments.getJSONObject("files");
+
+		// This line will raise an error if the descriptor was already removed
+		files.getJSONObject(attName);
+		
+		// Perform removal
+		files.remove(attName);
+
+		// Remove attachments if this was the last one
+		{
+			int count = 0;
+			
+			Iterator<?> it = files.keys();
+			while( it.hasNext() ){
+				Object objKey = it.next();
+				if( objKey instanceof String ){
+					++count;
+				}
+			}
+			
+			if( count < 1 ){
+				doc.remove(UploadConstants.KEY_DOC_ATTACHMENTS);
 			}
 		}
 	}
@@ -217,8 +234,7 @@ public class AttachmentDescriptor extends AbstractDescriptor {
 		String submitterName = getSubmitterName();
 		if( null != submitterName ) {
 			try {
-				CouchUserDb userDb = context.getClient().getUserDatabase();
-				submitter = userDb.getUserFromName(submitterName);
+				submitter = getContext().getUserFromName(submitterName);
 			} catch(Exception e) {
 				logger.error("Unable to obtain submitter information");
 				// Ignore error
@@ -241,7 +257,7 @@ public class AttachmentDescriptor extends AbstractDescriptor {
 		
 		String mediaFileName = getMediaFileName();
 		if( null != mediaFileName ) {
-			file = new File(context.getMediaDir(), mediaFileName);
+			file = getContext().getMediaFileFromName(mediaFileName);
 		}
 		
 		return file;
@@ -277,6 +293,14 @@ public class AttachmentDescriptor extends AbstractDescriptor {
 	
 	public void setOriginalAttachment(String source) throws Exception {
 		setStringAttribute(UploadConstants.ORIGINAL_ATTACHMENT_KEY, source);
+	}
+
+	public String getUploadId() throws Exception {
+		return getStringAttribute(UploadConstants.UPLOAD_ID_KEY);
+	}
+	
+	public void setUploadId(String uploadId) throws Exception {
+		setStringAttribute(UploadConstants.UPLOAD_ID_KEY,uploadId);
 	}
 
 	public boolean isServerWorkDescriptionAvailable() throws Exception {
@@ -404,26 +428,14 @@ public class AttachmentDescriptor extends AbstractDescriptor {
 	}
 	
 	public boolean isFilePresent() throws Exception {
-		return context.isFilePresent(getSpecifiedAttachmentName());
+		return documentDescriptor.isFilePresent(attName);
 	}
 	
 	public void removeFile() throws Exception {
-		context.removeFile(getSpecifiedAttachmentName());
+		documentDescriptor.removeFile(attName);
 	}
 
-	public JSONObject uploadFile(File uploadedFile, String mimeType) throws Exception {
-		return context.uploadFile(getSpecifiedAttachmentName(), uploadedFile, mimeType);
-	}
-	
-	public File getMediaDir(){
-		return context.getMediaDir();
-	}
-	
-	public boolean isSavingRequired(){
-		return context.isSavingRequired();
-	}
-	
-	public void setSavingRequired(boolean flag){
-		context.setSavingRequired(flag);
+	public void uploadFile(File uploadedFile, String mimeType) throws Exception {
+		getContext().uploadFile(attName, uploadedFile, mimeType);
 	}
 }

@@ -10,6 +10,7 @@ import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
 import ca.carleton.gcrc.couch.onUpload.UploadConstants;
 import ca.carleton.gcrc.couch.onUpload.UploadProgressAdaptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.AttachmentDescriptor;
+import ca.carleton.gcrc.couch.onUpload.conversion.DocumentDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.ExifDataDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.FileConversionContext;
 import ca.carleton.gcrc.couch.onUpload.conversion.GeometryDescriptor;
@@ -170,28 +171,28 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 	@Override
 	public void performWork(
 		String work
-		,FileConversionContext conversionContext
+		,AttachmentDescriptor attDescription
 		) throws Exception {
 
 		if( work == FileConversionPlugin.WORK_ANALYZE ) {
-			analyzeFile(conversionContext);
+			analyzeFile(attDescription);
 		} else if( work == FileConversionPlugin.WORK_APPROVE ) {
-			approveFile(conversionContext);
+			approveFile(attDescription);
 		} else if( work == FileConversionPlugin.WORK_ORIENT ) {
-			orientImage(conversionContext);
+			orientImage(attDescription);
 		} else if( work == FileConversionPlugin.WORK_THUMBNAIL ) {
-			createThumbnail(conversionContext);
+			createThumbnail(attDescription);
 		} else if( work == FileConversionPlugin.WORK_UPLOAD_ORIGINAL ) {
-			uploadOriginalFile(conversionContext);
+			uploadOriginalFile(attDescription);
 		} else if( work == FileConversionPlugin.WORK_ROTATE_CW ) {
-			rotate(work, conversionContext);
+			rotate(work, attDescription);
 		} else {
 			throw new Exception("Plugin does not support work: "+work);
 		}
 	}
 
-	public void analyzeFile(FileConversionContext conversionContext) throws Exception {
-		AttachmentDescriptor attDescription = conversionContext.getAttachmentDescription();
+	public void analyzeFile(AttachmentDescriptor attDescription) throws Exception {
+		DocumentDescriptor docDescriptor = attDescription.getDocumentDescriptor();
 		OriginalFileDescriptor originalObj = attDescription.getOriginalFileDescription();
 		CouchAuthenticationContext submitter = attDescription.getSubmitter();
 		
@@ -250,7 +251,7 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 				
 				// Check collision
 				int index = 0;
-				while( conversionContext.isAttachmentDescriptionAvailable(newAttachmentName) ){
+				while( docDescriptor.isAttachmentDescriptionAvailable(newAttachmentName) ){
 					newAttachmentName = currentPrefix + "_" + index + "." + expectedExtension;
 					++index;
 				}
@@ -283,13 +284,13 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 			// Create geometry if one is present in the EXIF
 			// data and none is defined in the document
 			if( exifData.containsLongLat() 
-			 && false == conversionContext.isGeometryDescriptionAvailable() ) {
+			 && false == docDescriptor.isGeometryDescriptionAvailable() ) {
 				
 				Point point = new Point(exifData.computeLong(),exifData.computeLat());
 				MultiPoint mp = new MultiPoint();
 				mp.addPoint(point);
 				
-				GeometryDescriptor geomDesc = conversionContext.getGeometryDescription();
+				GeometryDescriptor geomDesc = docDescriptor.getGeometryDescription();
 				geomDesc.setGeometry(mp);
 			}
 		}
@@ -333,7 +334,7 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 			}
 			
 			String thumbnailAttachmentName = computeThumbnailName(attDescription.getAttachmentName(),thumbExtension);
-			AttachmentDescriptor thumbnailObj = conversionContext.getAttachmentDescription(thumbnailAttachmentName);
+			AttachmentDescriptor thumbnailObj = docDescriptor.getAttachmentDescription(thumbnailAttachmentName);
 
 			if( CouchNunaliitUtils.hasVetterRole(submitter, atlasName) ) {
 				thumbnailObj.setStatus(UploadConstants.UPLOAD_STATUS_APPROVED);
@@ -364,13 +365,14 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 			String fileClass = attDescription.getFileClass();
 			if( "image".equals(fileClass) && uploadOriginalImages ) {
 				String originalAttachmentName = computeOriginalName(attDescription.getOriginalName());
-				AttachmentDescriptor origDescription = conversionContext.getAttachmentDescription(originalAttachmentName);
+				AttachmentDescriptor origDescription = docDescriptor.getAttachmentDescription(originalAttachmentName);
 
 				if( CouchNunaliitUtils.hasVetterRole(submitter, atlasName) ) {
 					origDescription.setStatus(UploadConstants.UPLOAD_STATUS_APPROVED);
 				} else {
 					origDescription.setStatus(UploadConstants.UPLOAD_STATUS_WAITING_FOR_APPROVAL);
 				}
+				origDescription.setFileClass("image");
 				origDescription.setContentType(attDescription.getContentType());
 				origDescription.setOriginalName(attDescription.getOriginalName());
 				origDescription.setMediaFileName(originalFile.getName());
@@ -391,13 +393,7 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 		}
 	}
 
-	public void uploadOriginalFile(FileConversionContext conversionContext) throws Exception {
-		
-		if( false == conversionContext.isAttachmentDescriptionAvailable() ){
-			throw new Exception("Invalid attachment description");
-		}
-		
-		AttachmentDescriptor attDescription = conversionContext.getAttachmentDescription();
+	public void uploadOriginalFile(AttachmentDescriptor attDescription) throws Exception {
 		
 		if( false == attDescription.isOriginalFileDescriptionAvailable()
 		 || false == attDescription.isWorkDescriptionAvailable()
@@ -405,6 +401,8 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 			throw new Exception("Invalid attachment description");
 		}
 		
+		DocumentDescriptor docDescriptor = attDescription.getDocumentDescriptor();
+		FileConversionContext conversionContext = attDescription.getContext();
 		OriginalFileDescriptor originalObj = attDescription.getOriginalFileDescription();
 		WorkDescriptor work = attDescription.getWorkDescription();
 		
@@ -440,7 +438,7 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 		
 		// Create attachment description for original file
 		String originalAttachmentName = computeOriginalName(attDescription.getOriginalName());
-		AttachmentDescriptor origDescription = conversionContext.getAttachmentDescription(originalAttachmentName);
+		AttachmentDescriptor origDescription = docDescriptor.getAttachmentDescription(originalAttachmentName);
 
 		origDescription.setStatus(attDescription.getStatus());
 		origDescription.setOriginalName(attDescription.getOriginalName());
@@ -470,13 +468,7 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 		conversionContext.uploadFile(originalAttachmentName, originalFile, mimeType);
 	}
 
-	public void rotate(String workType, FileConversionContext conversionContext) throws Exception {
-		
-		if( false == conversionContext.isAttachmentDescriptionAvailable() ){
-			throw new Exception("Invalid attachment description");
-		}
-		
-		AttachmentDescriptor attDescription = conversionContext.getAttachmentDescription();
+	public void rotate(String workType, AttachmentDescriptor attDescription) throws Exception {
 		
 		if( false == attDescription.isOriginalFileDescriptionAvailable()
 		 || false == attDescription.isWorkDescriptionAvailable()
@@ -526,21 +518,23 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 //		conversionContext.uploadFile(originalAttachmentName, originalFile, mimeType);
 	}
 
-	public void approveFile(FileConversionContext conversionContext) throws Exception {
+	public void approveFile(AttachmentDescriptor attDescription) throws Exception {
+		
+		FileConversionContext conversionContext = attDescription.getContext();
+
 		// Upload file
-		String attachementName = conversionContext.getAttachmentName();
-		AttachmentDescriptor attDescription = conversionContext.getAttachmentDescription();
+		String attachementName = attDescription.getAttachmentName();
 		File file = attDescription.getMediaFile();
-		String mimeType = conversionContext.getAttachmentDescription().getContentType();
+		String mimeType = attDescription.getContentType();
 		conversionContext.uploadFile(attachementName, file, mimeType);
 	}
 
-	public void orientImage(FileConversionContext conversionContext) throws Exception {
+	public void orientImage(AttachmentDescriptor attDescription) throws Exception {
 		// Get file
-		AttachmentDescriptor attDescription = conversionContext.getAttachmentDescription();
+		FileConversionContext conversionContext = attDescription.getContext();
 		String mimeType = attDescription.getContentType();
 		File outputFile = File.createTempFile("original_", attDescription.getMediaFileName());
-		conversionContext.downloadFile(outputFile);
+		conversionContext.downloadFile(attDescription.getAttachmentName(), outputFile);
 		
 		ImageMagickProcessor imp = ImageMagick.getInfo().getProcessor();
 		ImageInfo imageInfo = imp.getImageInfo(outputFile);
@@ -555,12 +549,13 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 		serverWork.setOrientationLevel(UploadConstants.SERVER_ORIENTATION_VALUE);
 	}
 
-	public void createThumbnail(FileConversionContext conversionContext) throws Exception {
+	public void createThumbnail(AttachmentDescriptor attDescription) throws Exception {
 		// Get file
-		AttachmentDescriptor attDescription = conversionContext.getAttachmentDescription();
+		DocumentDescriptor docDescriptor = attDescription.getDocumentDescriptor();
+		FileConversionContext conversionContext = attDescription.getContext();
 		String mimeType = attDescription.getContentType();
 		File inFile = File.createTempFile("original_", attDescription.getMediaFileName());
-		conversionContext.downloadFile(inFile);
+		conversionContext.downloadFile(attDescription.getAttachmentName(), inFile);
 
 		File outFile = File.createTempFile("thumb_", attDescription.getMediaFileName());
 		
@@ -600,7 +595,7 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 		// Report thumbnail object
 		if( request.isThumbnailCreated() ) {
 			
-			AttachmentDescriptor thumbnailObj = conversionContext.getAttachmentDescription(thumbnailAttachmentName);
+			AttachmentDescriptor thumbnailObj = docDescriptor.getAttachmentDescription(thumbnailAttachmentName);
 
 			thumbnailObj.setStatus(UploadConstants.UPLOAD_STATUS_ATTACHED);
 			thumbnailObj.setFileClass("image");

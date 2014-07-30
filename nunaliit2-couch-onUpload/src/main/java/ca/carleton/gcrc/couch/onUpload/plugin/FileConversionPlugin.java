@@ -2,7 +2,7 @@ package ca.carleton.gcrc.couch.onUpload.plugin;
 
 import java.io.File;
 
-import ca.carleton.gcrc.couch.onUpload.conversion.FileConversionContext;
+import ca.carleton.gcrc.couch.onUpload.conversion.AttachmentDescriptor;
 
 public interface FileConversionPlugin {
 	
@@ -21,7 +21,7 @@ public interface FileConversionPlugin {
 	
 	boolean handlesFileClass(String fileClass, String work);
 	
-	void performWork(String work, FileConversionContext conversionContext) throws Exception;
+	void performWork(String work, AttachmentDescriptor attachmentDescriptor) throws Exception;
 	
 //	void analyzeFile(FileConversionContext conversionContext) throws Exception;
 //	

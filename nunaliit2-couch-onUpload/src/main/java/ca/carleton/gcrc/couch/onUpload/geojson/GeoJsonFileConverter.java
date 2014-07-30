@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.onUpload.conversion.AttachmentDescriptor;
+import ca.carleton.gcrc.couch.onUpload.conversion.DocumentDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.FileConversionContext;
 import ca.carleton.gcrc.couch.onUpload.conversion.OriginalFileDescriptor;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionMetaData;
@@ -83,16 +84,16 @@ public class GeoJsonFileConverter implements FileConversionPlugin {
 	@Override
 	public void performWork(
 		String work
-		,FileConversionContext conversionContext
+		,AttachmentDescriptor attDescription
 		) throws Exception {
 		
 		logger.debug("GeoJSON start perform work: "+work);
 		
 		if( work == FileConversionPlugin.WORK_ANALYZE ) {
-			analyzeFile(conversionContext);
+			analyzeFile(attDescription);
 		
 		} else if( work == FileConversionPlugin.WORK_APPROVE ) {
-			approveFile(conversionContext);
+			approveFile(attDescription);
 		
 		} else {
 			throw new Exception("Plugin can not perform work: "+work);
@@ -101,9 +102,8 @@ public class GeoJsonFileConverter implements FileConversionPlugin {
 		logger.debug("GeoJSON end perform work: "+work);
 	}
 
-	public void analyzeFile(FileConversionContext conversionContext) throws Exception {
+	public void analyzeFile(AttachmentDescriptor attDescription) throws Exception {
 		// No conversion required.
-		AttachmentDescriptor attDescription = conversionContext.getAttachmentDescription();
 		OriginalFileDescriptor originalObj = attDescription.getOriginalFileDescription();
 		attDescription.setSize(originalObj.getSize());
 		attDescription.setContentType(originalObj.getContentType());
@@ -111,9 +111,10 @@ public class GeoJsonFileConverter implements FileConversionPlugin {
 		attDescription.setMediaFileName(originalObj.getMediaFileName());
 	}
 
-	public void approveFile(FileConversionContext approvedContext) throws Exception {
+	public void approveFile(AttachmentDescriptor attDescription) throws Exception {
 
-		AttachmentDescriptor attDescription = approvedContext.getAttachmentDescription();
+		DocumentDescriptor docDescriptor = attDescription.getDocumentDescriptor();
+		FileConversionContext approvedContext = docDescriptor.getContext();
 		
 		String fullFileName = null;
 		FileInputStream fis = null;
@@ -155,7 +156,7 @@ public class GeoJsonFileConverter implements FileConversionPlugin {
 				JSONObject layerDef = new JSONObject();
 				
 				layerDef.put("nunaliit_type", "layerDefinition");
-				layerDef.put("id", approvedContext.getId());
+				layerDef.put("id", docDescriptor.getDocId());
 
 				String originalFileName = attDescription.getOriginalName();
 				
@@ -192,7 +193,6 @@ public class GeoJsonFileConverter implements FileConversionPlugin {
 				}
 				
 				doc.put("nunaliit_layer_definition", layerDef);
-				approvedContext.setSavingRequired(true);
 			}
 			
 			logger.debug("Updating layer definition document: "+doc.getString("_id"));
@@ -200,11 +200,11 @@ public class GeoJsonFileConverter implements FileConversionPlugin {
 			// Save changes to document
 			approvedContext.saveDocument();
 			
-			logger.debug("Uploading file: "+approvedContext.getAttachmentName());
+			logger.debug("Uploading file: "+attDescription.getAttachmentName());
 			
 			// Upload original file
 			approvedContext.uploadFile(
-				approvedContext.getAttachmentName()
+				attDescription.getAttachmentName()
 				,attDescription.getMediaFile()
 				,"application/xml"
 				);
@@ -228,6 +228,8 @@ public class GeoJsonFileConverter implements FileConversionPlugin {
 		,FileConversionContext approvedContext
 		) throws Exception {
 		
+		DocumentDescriptor docDescriptor = approvedContext.getDocument();
+		
 		JSONObject obj = new JSONObject();
 		
 		// GPX Source
@@ -235,7 +237,7 @@ public class GeoJsonFileConverter implements FileConversionPlugin {
 			JSONObject source = new JSONObject();
 			
 			source.put("nunaliit_type", "reference");
-			source.put("doc", approvedContext.getId());
+			source.put("doc", docDescriptor.getDocId());
 
 			obj.put("source", source);
 		}
@@ -243,15 +245,15 @@ public class GeoJsonFileConverter implements FileConversionPlugin {
 		// Layers
 		{
 			JSONArray layers = new JSONArray();
-			layers.put( approvedContext.getId() );
+			layers.put( docDescriptor.getDocId() );
 			obj.put("nunaliit_layers", layers);
 		}
 		
 		// Created
-		obj.put("nunaliit_created", approvedContext.getCreatedObject().toJson());
+		obj.put("nunaliit_created", docDescriptor.getCreatedObject().toJson());
 		
 		// Last Updated
-		obj.put("nunaliit_last_updated", approvedContext.getLastUpdatedObject().toJson());
+		obj.put("nunaliit_last_updated", docDescriptor.getLastUpdatedObject().toJson());
 		
 		// Geometry
 		{
@@ -288,6 +290,6 @@ public class GeoJsonFileConverter implements FileConversionPlugin {
 		}
 		
 		// Create document
-		approvedContext.getDatabase().createDocument(obj);
+		approvedContext.createDocument(obj);
 	}
 }

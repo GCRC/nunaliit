@@ -9,6 +9,8 @@ import junit.framework.TestCase;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
+import ca.carleton.gcrc.couch.onUpload.MockFileConversionContext;
+
 public class AttachmentDescriptorTest extends TestCase {
 
 	public void testRenameAttachment() throws Exception {
@@ -44,22 +46,22 @@ public class AttachmentDescriptorTest extends TestCase {
 			}
 		}
 		
-		FileConversionContext context = new FileConversionContext(
+		FileConversionContext context = new MockFileConversionContext(
 				doc
 				,null
-				,"test"
 				,new File(".")
 			);
+		DocumentDescriptor documentDescriptor = context.getDocument();
 		
 		String newAttName = "media";
-		AttachmentDescriptor att = context.getAttachmentDescription();
+		AttachmentDescriptor att = documentDescriptor.getAttachmentDescription("test");
 		att.renameAttachmentTo(newAttName);
 		
 		if( false == newAttName.equals(att.getAttachmentName()) ){
 			fail("Attachment name not changed");
 		}
 		
-		AttachmentDescriptor thumbnailDesc = context.getAttachmentDescription("thumbnail");
+		AttachmentDescriptor thumbnailDesc = documentDescriptor.getAttachmentDescription("thumbnail");
 		if( false == newAttName.equals(thumbnailDesc.getSource()) ){
 			fail("Thumbnail source not changed");
 		}

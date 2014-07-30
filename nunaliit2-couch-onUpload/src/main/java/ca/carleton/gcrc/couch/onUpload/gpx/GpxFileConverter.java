@@ -9,7 +9,9 @@ import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+
 import ca.carleton.gcrc.couch.onUpload.conversion.AttachmentDescriptor;
+import ca.carleton.gcrc.couch.onUpload.conversion.DocumentDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.FileConversionContext;
 import ca.carleton.gcrc.couch.onUpload.conversion.OriginalFileDescriptor;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionMetaData;
@@ -67,23 +69,22 @@ public class GpxFileConverter implements FileConversionPlugin {
 	@Override
 	public void performWork(
 		String work
-		,FileConversionContext conversionContext
+		,AttachmentDescriptor attDescription
 		) throws Exception {
 		
 		if( work == FileConversionPlugin.WORK_ANALYZE ) {
-			analyzeFile(conversionContext);
+			analyzeFile(attDescription);
 		
 		} else if( work == FileConversionPlugin.WORK_APPROVE ) {
-			approveFile(conversionContext);
+			approveFile(attDescription);
 		
 		} else {
 			throw new Exception("Plugin can not perform work: "+work);
 		}
 	}
 
-	public void analyzeFile(FileConversionContext conversionContext) throws Exception {
+	public void analyzeFile(AttachmentDescriptor attDescription) throws Exception {
 		// No conversion required.
-		AttachmentDescriptor attDescription = conversionContext.getAttachmentDescription();
 		OriginalFileDescriptor originalObj = attDescription.getOriginalFileDescription();
 		attDescription.setSize(originalObj.getSize());
 		attDescription.setContentType(originalObj.getContentType());
@@ -91,9 +92,9 @@ public class GpxFileConverter implements FileConversionPlugin {
 		attDescription.setMediaFileName(originalObj.getMediaFileName());
 	}
 
-	public void approveFile(FileConversionContext approvedContext) throws Exception {
+	public void approveFile(AttachmentDescriptor attDescription) throws Exception {
 
-		AttachmentDescriptor attDescription = approvedContext.getAttachmentDescription();
+		FileConversionContext approvedContext = attDescription.getContext();
 		
 		GpxFactory factory = new GpxFactory();
 		try {
@@ -108,14 +109,14 @@ public class GpxFileConverter implements FileConversionPlugin {
 			context.setLayerName( doc.getString("_id") );
 			context.setSourceDocumentId( doc.getString("_id") );
 			
-			convertGpx(approvedContext, context, gpx, doc);
+			convertGpx(attDescription, context, gpx, doc);
 			
 			// Save changes to document
 			approvedContext.saveDocument();
 			
 			// Upload original file
 			approvedContext.uploadFile(
-				approvedContext.getAttachmentName()
+				attDescription.getAttachmentName()
 				,attDescription.getMediaFile()
 				,"application/xml"
 				);
@@ -130,7 +131,7 @@ public class GpxFileConverter implements FileConversionPlugin {
 	}
 
 	private void convertGpx(
-		FileConversionContext approvedContext
+		AttachmentDescriptor attDescription
 		,GpxConversionContext context
 		,Gpx gpx
 		,JSONObject doc
@@ -157,7 +158,7 @@ public class GpxFileConverter implements FileConversionPlugin {
 		List<GpxTrack> tracks = gpx.getTracks();
 		if( null != tracks && tracks.size() > 0 ) {
 			for(GpxTrack tr : tracks) {
-				convertTrack(approvedContext, context, tr);
+				convertTrack(attDescription.getContext(), context, tr);
 			}
 		}
 
@@ -165,7 +166,7 @@ public class GpxFileConverter implements FileConversionPlugin {
 		List<GpxRoute> routes = gpx.getRoutes();
 		if( null != routes && routes.size() > 0 ) {
 			for(GpxRoute rt : routes) {
-				convertRoute(approvedContext, context, rt);
+				convertRoute(attDescription.getContext(), context, rt);
 			}
 		}
 
@@ -173,13 +174,12 @@ public class GpxFileConverter implements FileConversionPlugin {
 		List<GpxWayPoint> wayPoints = gpx.getWayPoints();
 		if( null != wayPoints && wayPoints.size() > 0 ) {
 			for(GpxWayPoint wp : wayPoints) {
-				convertWayPoint(approvedContext, context, wp);
+				convertWayPoint(attDescription.getContext(), context, wp);
 			}
 		}
 		
 		// Create layer definition
 		{
-			AttachmentDescriptor attDescription = approvedContext.getAttachmentDescription();
 			JSONObject layerDef = new JSONObject();
 			
 			layerDef.put("nunaliit_type", "layerDefinition");
@@ -290,7 +290,7 @@ public class GpxFileConverter implements FileConversionPlugin {
 		}
 		
 		// Create document
-		approvedContext.getDatabase().createDocument(obj);
+		approvedContext.createDocument(obj);
 	}
 
 	private void convertRoute(
@@ -366,7 +366,7 @@ public class GpxFileConverter implements FileConversionPlugin {
 		}
 		
 		// Create document
-		approvedContext.getDatabase().createDocument(obj);
+		approvedContext.createDocument(obj);
 	}
 
 	private void convertWayPoint(
@@ -426,7 +426,7 @@ public class GpxFileConverter implements FileConversionPlugin {
 		}
 		
 		// Create document
-		approvedContext.getDatabase().createDocument(obj);
+		approvedContext.createDocument(obj);
 	}
 
 	private void installCommonFields(
@@ -434,6 +434,8 @@ public class GpxFileConverter implements FileConversionPlugin {
 		,GpxConversionContext context
 		,JSONObject obj
 		) throws Exception {
+		
+		DocumentDescriptor docDescriptor = approvedContext.getDocument();
 		
 		// GPX Source
 		{
@@ -454,9 +456,9 @@ public class GpxFileConverter implements FileConversionPlugin {
 		
 		
 		// Created
-		obj.put("nunaliit_created", approvedContext.getCreatedObject());
+		obj.put("nunaliit_created", docDescriptor.getCreatedObject());
 		
 		// Last Updated
-		obj.put("nunaliit_last_updated", approvedContext.getLastUpdatedObject());
+		obj.put("nunaliit_last_updated", docDescriptor.getLastUpdatedObject());
 	}
 }

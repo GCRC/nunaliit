@@ -12,21 +12,16 @@ import ca.carleton.gcrc.geom.wkt.WktWriter;
 
 public class GeometryDescriptor extends AbstractDescriptor {
 
-	private FileConversionContext context;
+	private DocumentDescriptor documentDescriptor;
 
-	public GeometryDescriptor(FileConversionContext context){
-		this.context = context;
+	public GeometryDescriptor(DocumentDescriptor documentDescriptor){
+		this.documentDescriptor = documentDescriptor;
 	}
 
 	@Override
 	protected JSONObject getJson() throws Exception {
-		JSONObject doc = context.getDoc();
-		return doc.getJSONObject(UploadConstants.GEOMETRY_KEY);
-	}
-
-	@Override
-	protected void setSavingRequired(boolean flag) {
-		context.setSavingRequired(flag);
+		JSONObject doc = documentDescriptor.getJson();
+		return doc.getJSONObject(UploadConstants.KEY_DOC_GEOMETRY);
 	}
 	
 	public void setGeometry(Geometry geom) throws Exception {
@@ -47,7 +42,5 @@ public class GeometryDescriptor extends AbstractDescriptor {
 		bboxArray.put(bbox.getMaxX());
 		bboxArray.put(bbox.getMaxY());
 		geomObj.put("bbox", bboxArray);
-		
-		setSavingRequired(true);
 	}
 }

@@ -666,7 +666,7 @@ public class ConfigServlet extends HttpServlet {
 			settings.setAtlasName(atlasName);
 			
 			uploadWorker = new UploadWorker(settings);
-			uploadWorker.setDesignDocument(couchDd);
+			uploadWorker.setDocumentDbDesign(couchDd);
 			uploadWorker.setMediaDir(repositoryDir);
 			uploadWorker.setMailNotification(mailNotification);
 			{

@@ -1,4 +1,4 @@
-package ca.carleton.gcrc.couch.submission.impl;
+package ca.carleton.gcrc.couch.utils;
 
 import java.util.Iterator;
 
@@ -7,6 +7,11 @@ import org.json.JSONObject;
 import ca.carleton.gcrc.json.JSONSupport;
 
 public class SubmissionUtils {
+	
+	static public class DocAndReserved {
+		public JSONObject doc;
+		public JSONObject reserved;
+	}
 
 	/**
 	 * Computes the target document identifier for this submission. Returns null
@@ -103,6 +108,39 @@ public class SubmissionUtils {
 					String key = (String)keyObj;
 					Object value = reserved.opt(key);
 					result.put("_"+key, value);
+				}
+			}
+		}
+		
+		return result;
+	}
+	
+	/**
+	 * Given a JSON document, breaks the document into two parts: the doc and reserved portions.
+	 * @param doc
+	 * @return
+	 * @throws Exception
+	 */
+	static public DocAndReserved computeDocAndReservedFromDocument(JSONObject doc) throws Exception {
+		DocAndReserved result = new DocAndReserved();
+		
+		result.doc = new JSONObject();
+		result.reserved = new JSONObject();
+
+		if( null != doc ) {
+			Iterator<?> it = doc.keys();
+			while( it.hasNext() ){
+				Object keyObj = it.next();
+				if( keyObj instanceof String ){
+					String key = (String)keyObj;
+					Object value = doc.opt(key);
+					
+					if( key.startsWith("_") ){
+						String effectiveKey = key.substring(1);
+						result.reserved.put(effectiveKey, value);
+					} else {
+						result.doc.put(key, value);
+					}
 				}
 			}
 		}

@@ -26,7 +26,6 @@ public class UserDataDescriptor extends AbstractDescriptor {
 	public void setStringAttribute(String key, String value) throws Exception {
 		JSONObject descriptionObj = getJson();
 		descriptionObj.put(key,value);
-		attDescription.setSavingRequired(true);
 	}
 	
 	@Override
@@ -34,10 +33,5 @@ public class UserDataDescriptor extends AbstractDescriptor {
 		JSONObject attachmentDescription = attDescription.getJson();
 		
 		return attachmentDescription.getJSONObject(UploadConstants.DATA_KEY);
-	}
-
-	@Override
-	protected void setSavingRequired(boolean flag) {
-		attDescription.setSavingRequired(flag);
 	}
 }

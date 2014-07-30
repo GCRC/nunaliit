@@ -8,7 +8,10 @@ import org.json.JSONTokener;
 
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
+import ca.carleton.gcrc.couch.onUpload.MockFileConversionContext;
 import ca.carleton.gcrc.couch.onUpload.TestSupport;
+import ca.carleton.gcrc.couch.onUpload.conversion.AttachmentDescriptor;
+import ca.carleton.gcrc.couch.onUpload.conversion.DocumentDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.FileConversionContext;
 import junit.framework.TestCase;
 
@@ -78,14 +81,15 @@ public class GeoJsonFileConverterTest extends TestCase {
 			String id = info.getString("id");
 			JSONObject doc = db.getDocument(id);
 			
-			FileConversionContext approvedContext = new FileConversionContext(
+			FileConversionContext approvedContext = new MockFileConversionContext(
 				doc
 				,dd
-				,"file.json"
 				,mediaDir
 				);
+			DocumentDescriptor docDescriptor = approvedContext.getDocument();
+			AttachmentDescriptor attDescription = docDescriptor.getAttachmentDescription("file.json");
 			
-			converter.approveFile(approvedContext);
+			converter.approveFile(attDescription);
 		}
 	}
 }

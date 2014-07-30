@@ -21,6 +21,7 @@ import ca.carleton.gcrc.couch.client.CouchUserDb;
 import ca.carleton.gcrc.couch.client.CouchUserDocContext;
 import ca.carleton.gcrc.couch.submission.SubmissionRobotSettings;
 import ca.carleton.gcrc.couch.submission.mail.SubmissionMailNotifier;
+import ca.carleton.gcrc.couch.utils.SubmissionUtils;
 import ca.carleton.gcrc.json.JSONSupport;
 import ca.carleton.gcrc.json.patcher.JSONPatcher;
 import ca.carleton.gcrc.mail.MailRecipient;

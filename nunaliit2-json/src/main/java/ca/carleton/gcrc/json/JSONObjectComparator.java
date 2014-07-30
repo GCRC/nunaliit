@@ -47,8 +47,8 @@ public class JSONObjectComparator implements Comparator<JSONObject> {
 				}
 			}
 		}
-		if( keys1.size() != keys1.size() ) {
-			return keys1.size() - keys1.size();
+		if( keys1.size() != keys2.size() ) {
+			return keys1.size() - keys2.size();
 		}
 		Collections.sort(keys1);
 		Collections.sort(keys2);

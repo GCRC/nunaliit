@@ -564,7 +564,7 @@ public class ConfigServlet extends JsonServlet {
 			settings.setAtlasName(atlasProperties.getAtlasName());
 			
 			uploadWorker = new UploadWorker(settings);
-			uploadWorker.setDesignDocument(couchDd);
+			uploadWorker.setDocumentDbDesign(couchDd);
 			uploadWorker.setMediaDir(repositoryDir);
 			uploadWorker.setMailNotification(mailNotification);
 			{

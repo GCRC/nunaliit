@@ -20,7 +20,6 @@ public class ServerWorkDescriptor extends AbstractDescriptor {
 	public void setOrientationLevel(int level) throws Exception {
 		JSONObject serverWorkObj = getJson();
 		serverWorkObj.put(UploadConstants.SERVER_ORIENTATION_KEY, UploadConstants.SERVER_ORIENTATION_VALUE);
-		attDescription.setSavingRequired(true);
 	}
 	
 	public int getThumbnailLevel() throws Exception {
@@ -32,17 +31,11 @@ public class ServerWorkDescriptor extends AbstractDescriptor {
 	public void setThumbnailLevel(int level) throws Exception {
 		JSONObject serverWorkObj = getJson();
 		serverWorkObj.put(UploadConstants.SERVER_THUMBNAIL_KEY, UploadConstants.SERVER_THUMBNAIL_VALUE);
-		attDescription.setSavingRequired(true);
 	}
 	
 	@Override
 	protected JSONObject getJson() throws Exception {
 		JSONObject attachmentDescription = attDescription.getJson();
 		return attachmentDescription.getJSONObject(UploadConstants.SERVER_KEY);
-	}
-
-	@Override
-	protected void setSavingRequired(boolean flag) {
-		attDescription.setSavingRequired(flag);
 	}
 }

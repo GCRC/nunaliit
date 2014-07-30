@@ -1,45 +1,18 @@
 package ca.carleton.gcrc.couch.onUpload;
 
-public class Work {
+import java.io.File;
 
-	private String state;
-	private String docId;
-	private String attachmentName;
-	private String uploadId;
-	private String uploadRequestDocId;
+import org.json.JSONObject;
 
-	public String getState() {
-		return state;
-	}
-	public void setState(String state) {
-		this.state = state;
-	}
-	
-	public String getDocId() {
-		return docId;
-	}
-	public void setDocId(String docId) {
-		this.docId = docId;
-	}
+public interface Work {
 
-	public String getAttachmentName() {
-		return attachmentName;
-	}
-	public void setAttachmentName(String attachmentName) {
-		this.attachmentName = attachmentName;
-	}
+	String getState();
+	String getDocId();
+	String getAttachmentName();
+	String getUploadId();
+	String getUploadRequestDocId();
 	
-	public String getUploadId() {
-		return uploadId;
-	}
-	public void setUploadId(String uploadId) {
-		this.uploadId = uploadId;
-	}
-	
-	public String getUploadRequestDocId() {
-		return uploadRequestDocId;
-	}
-	public void setUploadRequestDocId(String uploadRequestDocId) {
-		this.uploadRequestDocId = uploadRequestDocId;
-	}
+	JSONObject getDocument() throws Exception;
+	void saveDocument() throws Exception;
+	void uploadAttachment(String attachmentName, File uploadedFile, String mimeType) throws Exception;
 }
