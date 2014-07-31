@@ -35,6 +35,75 @@ $Id: n2.couchRelatedDoc.js 8484 2012-09-05 19:38:37Z jpfiset $
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
+//===============================================================
+
+var CreateDocWidget = $n2.Class({
+	
+	elemId: null,
+	
+	schemaNames: null,
+	
+	allSchemas: null,
+	
+	label: null,
+	
+	dialogPrompt: null,
+	
+	createDocProcess: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			elem: null
+			,schemaNames: null
+			,allSchemas: false
+			,label: null
+			,dialogPrompt: null
+			,createDocProcess: null
+		},opts_);
+		
+		this.createDocProcess = opts.createDocProcess;
+		this.schemaNames = opts.schemaNames;
+		this.allSchemas = opts.allSchemas;
+		this.label = opts.label;
+		this.dialogPrompt = opts.dialogPrompt;
+		
+		this.elemId = $n2.utils.getElementIdentifier(opts.elem);
+		
+		if( !this.label ){
+			this.label = _loc('Create Document');
+		};
+		
+		this._refresh();
+	},
+	
+	_getElem: function(){
+		return $('#'+this.elemId);
+	},
+	
+	_refresh: function(){
+		var _this = this;
+		
+		var $elem = this._getElem();
+		$elem.empty();
+		
+		$('<button>')
+			.text( this.label )
+			.appendTo($elem)
+			.click(function(){
+				_this._createDocClicked();
+			});
+	},
+	
+	_createDocClicked: function(){
+		this.createDocProcess.createDocumentFromSchemaNames({
+			schemaNames: this.schemaNames
+			,allSchemas: this.allSchemas
+			,prompt: this.dialogPrompt
+		});
+	}
+});
+
+// ===============================================================
 var CreateRelatedDocProcess = $n2.Class({
 	
 	documentSource: null,
@@ -64,6 +133,25 @@ var CreateRelatedDocProcess = $n2.Class({
 		this.uploadService = opts.uploadService;
 		this.showService = opts.showService;
 		this.authService = opts.authService;
+	},
+	
+	getCreateWidget: function(opts_){
+		var opts = $n2.extend({
+			elem: null
+			,schemaNames: null
+			,allSchemas: false
+			,label: null
+			,dialogPrompt: null
+		},opts_);
+		
+		return new CreateDocWidget({
+			elem: opts.elem
+			,schemaNames: opts.schemaNames
+			,allSchemas: opts.allSchemas
+			,label: opts.label
+			,dialogPrompt: opts.dialogPrompt
+			,createDocProcess: this
+		});
 	},
 
 	createDocumentFromSchema: function(opt_){
@@ -169,6 +257,7 @@ var CreateRelatedDocProcess = $n2.Class({
 		
 		var opt = $n2.extend({
 			schemaNames: []
+			,allSchemas: false
 			,relatedDocId: null
 			,originDocId: null
 			,prompt: null
@@ -177,12 +266,26 @@ var CreateRelatedDocProcess = $n2.Class({
 			,onCancel: function(){}
 		},opt_);
 		
-		this.selectSchemaFromNamesDialog({
-			schemaNames: opt.schemaNames
-			,onSuccess: selectedSchema
-			,onError: opt.onError
-			,onCancel: opt.onCancel
-		});
+		if( opt.allSchemas ){
+			this.schemaRepository.getRootSchemas({
+				onSuccess: function(schemas){
+					_this.selectSchemaDialog({
+						schemas: schemas
+						,onSuccess: selectedSchema
+						,onError: opt.onError
+						,onCancel: opt.onCancel
+					});
+				}
+				,onError: opt.onError
+			});
+		} else {
+			this.selectSchemaFromNamesDialog({
+				schemaNames: opt.schemaNames
+				,onSuccess: selectedSchema
+				,onError: opt.onError
+				,onCancel: opt.onCancel
+			});
+		};
 		
 		function selectedSchema(schema){
 			_this.createDocumentFromSchema({

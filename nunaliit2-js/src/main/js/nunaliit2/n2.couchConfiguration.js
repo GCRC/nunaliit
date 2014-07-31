@@ -276,6 +276,14 @@ function Configure(options_){
 			,customService: configuration.directory.customService
 		});
 		
+		configuration.directory.createDocProcess = new $n2.couchRelatedDoc.CreateRelatedDocProcess({
+			documentSource: configuration.documentSource
+			,schemaRepository: configuration.directory.schemaRepository
+			,uploadService: configuration.directory.uploadService
+			,showService: configuration.directory.showService
+			,authService: configuration.directory.authService
+		});
+		
 	 	configuration.directory.schemaEditorService = new $n2.CouchEditor.SchemaEditorService({
 			documentSource: configuration.documentSource
 			,showService: configuration.directory.showService
