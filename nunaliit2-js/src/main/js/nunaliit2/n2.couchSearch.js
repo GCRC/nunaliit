@@ -873,6 +873,7 @@ var SearchServer = $n2.Class({
 			,label: null
 			,useButton: false
 			,buttonLabel: null
+			,doNotDisable: false
 		},opts_);
 		
 		var customService = this._getCustomService();
@@ -893,9 +894,15 @@ var SearchServer = $n2.Class({
 		// Text box
 		$elem.empty();
 		var searchInput = $('<input type="text">')
-			.addClass('search_panel_input n2_disable_on_edit')
+			.addClass('search_panel_input')
 			.val( searchWidgetLabel )
 			.appendTo($elem);
+		
+		if( opts.doNotDisable ){
+			// OK
+		} else {
+			searchInput.addClass('n2_disable_on_edit');
+		};
 		
 		// Search button label
 		var searchButtonLabel = opts.buttonLabel;

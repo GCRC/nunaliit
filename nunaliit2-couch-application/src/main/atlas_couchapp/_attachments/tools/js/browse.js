@@ -19,7 +19,7 @@ var showService = null;
 var schemaRepository = null;
 var dispatcher = null;
 var authService = null;
-var relatedDocProcess = null;
+var createDocProcess = null;
 
 function reportErrorsOnElem(errors, $elem) {
 	$elem.append( $('<div>Error occurred during the request<div>') );
@@ -207,7 +207,7 @@ function addDocument() {
 	
 	schemaRepository.getRootSchemas({
 		onSuccess: function(schemas){
-			relatedDocProcess.selectSchemaDialog({
+			createDocProcess.selectSchemaDialog({
 				schemas: schemas
 				,onSuccess: function(schema){
 					// start new document
@@ -366,14 +366,7 @@ function main(opts_) {
 	showService = config.directory.showService;
 	schemaRepository = config.directory.schemaRepository;
 	dispatcher = config.directory.dispatchService;
-	
-	relatedDocProcess = new $n2.couchRelatedDoc.CreateRelatedDocProcess({
-		documentSource: config.documentSource
-		,schemaRepository: config.directory.schemaRepository
-		,uploadService: config.directory.uploadService
-		,showService: config.directory.showService
-		,authService: config.directory.authService
-	});
+	createDocProcess = config.directory.createDocProcess;
 
 	dispatcher.register(DH,'searchInitiate',_handle);
 	dispatcher.register(DH,'searchResults',_handle);
@@ -384,6 +377,7 @@ function main(opts_) {
 	searchInput = searchServer.installSearchWidget({
 		elem: $('#searchPanel')
 		,useButton: true
+		,doNotDisable: true
 	});
 	
 	
