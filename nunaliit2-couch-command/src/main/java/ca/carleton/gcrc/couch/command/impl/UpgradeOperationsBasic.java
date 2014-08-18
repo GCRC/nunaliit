@@ -102,7 +102,7 @@ public class UpgradeOperationsBasic implements UpgradeOperations {
 			return; // OK
 		}
 		try {
-			boolean created = targetDir.mkdir();
+			boolean created = targetDir.mkdirs();
 			if( !created ) {
 				throw new Exception("Unable to create directory: "+targetDir.getAbsolutePath());
 			}

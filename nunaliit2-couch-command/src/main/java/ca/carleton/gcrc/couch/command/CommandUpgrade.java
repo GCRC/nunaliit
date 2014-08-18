@@ -94,7 +94,8 @@ public class CommandUpgrade implements Command {
 		
 		File atlasDir = gs.getAtlasDir();
 
-		// Verify that content directory is available
+		// Verify that content directory is available (contentDir includes new
+		// versions for files under docs and htdocs)
 		File contentDir = PathComputer.computeContentDir( gs.getInstallDir() );
 		if( null == contentDir 
 		 || false == contentDir.exists() 
@@ -102,7 +103,9 @@ public class CommandUpgrade implements Command {
 			throw new Exception("Unable to find content directory");
 		}
 
-		// Verify that the installation directory is available
+		// Verify that the installation directory is available (installationFilesDir includes
+		// new versions of files under the templates directory. These are files that should not
+		// be upgraded, just installed once).
 		File installationFilesDir = PathComputer.computeTemplatesDir( gs.getInstallDir() );
 		if( null == installationFilesDir 
 		 || false == installationFilesDir.exists() 
