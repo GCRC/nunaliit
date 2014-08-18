@@ -80,6 +80,7 @@
 		,showService: null
 		,schemaEditorService: null
 		,dispatchService: null
+		,attachmentService: null
 		,divId: null
 		,logger: null
 		
@@ -105,6 +106,7 @@
 				this.showService = config.directory.showService;
 				this.schemaEditorService = config.directory.schemaEditorService;
 				this.dispatchService = config.directory.dispatchService;
+				this.attachmentService = config.directory.attachmentService;
 			};
 
 			var $div = $( opts.div );
@@ -123,6 +125,17 @@
 				this.dispatchService.register(DH,'userDocument',f);
 			};
 			
+			// Get changes from submission DB
+			if( this.submissionDb ){
+				this.submissionDb.getChangeNotifier({
+					onSuccess: function(notifier){
+						notifier.addListener(function(changes){
+							_this._refreshSubmissions();
+						});
+					}				
+				});
+			};
+			
 			this._clear();
 			
 			var _this = this;
@@ -130,10 +143,10 @@
 				_this._refreshSubmissions();
 				var $div = _this._getDiv();
 				if( $div.length > 0 ) {
-					window.setTimeout(refresh,5000);
+					window.setTimeout(refresh,60000);
 				};
 			};
-			window.setTimeout(refresh,5000);
+			refresh();
 		}
 	
 		,_getDiv: function(){
@@ -247,158 +260,22 @@
 			});
 		}
 		
-		,_loadedSubmissionDoc: function(subDoc){
+		,_loadedSubmissionDoc: function(submissionDoc){
 			var _this = this;
 
 			this._getSubmittedDocument({
-				subDoc: subDoc
-				,onSuccess: function(submittedDoc, subDoc){
+				subDoc: submissionDoc
+				,onSuccess: function(submittedDoc, submissionDoc){
 					// Refresh submission entry
-					var subDocId = subDoc._id;
+					var subDocId = submissionDoc._id;
 					var cName = 'submission_' + $n2.utils.stringToHtmlId(subDocId);
 					var $entries = $('.'+cName);
 					$entries.each(function(){
 						var $entry = $(this);
-						displaySubmission($entry, subDoc, submittedDoc);
+						_this._displaySubmission($entry, submissionDoc, submittedDoc);
 					});
 				}
 			});
-			
-			function displaySubmission($entry, subDoc, submittedDoc){
-				$entry.empty();
-				
-				var subDocId = subDoc._id;
-				
-				// State
-				var state = 'submitted';
-				if( subDoc.nunaliit_submission 
-				 && subDoc.nunaliit_submission.state ){
-					state = subDoc.nunaliit_submission.state;
-				};
-				
-				// Document identifier and revision
-				var docId = null;
-				var revision = null;
-				if( subDoc.nunaliit_submission 
-				 && subDoc.nunaliit_submission.original_reserved ){
-					docId = subDoc.nunaliit_submission.original_reserved.id;
-					revision = subDoc.nunaliit_submission.original_reserved.rev;
-				};
-				if( null == docId 
-				 && subDoc.nunaliit_submission 
-				 && subDoc.nunaliit_submission.submitted_reserved ){
-					docId = subDoc.nunaliit_submission.submitted_reserved.id;
-				};
-				
-				// Is deletion?
-				var isDeletion = false;
-				if( subDoc.nunaliit_submission && subDoc.nunaliit_submission.deletion ){
-					isDeletion = true;
-				};
-				
-				// Submitter
-				var submitterName = null;
-				if( subDoc.nunaliit_submission && subDoc.nunaliit_submission.submitter_name ){
-					submitterName = subDoc.nunaliit_submission.submitter_name;
-				};
-	
-				// Information
-				var $info = $('<div class="submission_info">')
-					.appendTo($entry);
-				addKeyValue($info, _loc('Submission Id'), subDocId);
-				if( docId ){
-					addKeyValue($info, _loc('Original Id'), docId);
-					
-					var type = _loc('update');
-					if( isDeletion ) {
-						type = _loc('deletion');
-					} else if( !revision ) {
-						type = _loc('creation');
-					};
-					addKeyValue($info, _loc('Submission Type'), type);
-				};
-				
-				if( state ){
-					addKeyValue($info, _loc('Submission State'), state);
-				};
-				
-				if( submitterName ){
-					var $div = $('<div class="key_value">')
-						.appendTo($info);
-					$('<span class="key">')
-						.text(_loc('Submitter')+': ')
-						.appendTo($div);
-					var $val = $('<span class="value">')
-						.text(submitterName)
-						.appendTo($div);
-					if( _this.showService ){
-						_this.showService.printUserName($val, submitterName);
-					};
-					
-					// Add mailto link
-					var cName = 'submission_mailto_' + $n2.utils.stringToHtmlId(submitterName);
-					$('<div>')
-						.addClass(cName)
-						.appendTo($info);
-					if( _this.dispatchService ){
-						_this.dispatchService.send(DH,{
-							type: 'requestUserDocumentComplete'
-							,userId: submitterName
-						});
-					};
-				};
-	
-				// View buttons
-				var $views = $('<div class="submission_views">')
-					.appendTo($entry);
-				$('<button>')
-					.text( _loc('View') )
-					.appendTo($views)
-					.click(function(){
-						_this._viewMerging(subDocId);
-						return false;
-					});
-	
-//				// Action buttons
-//				var $buttons = $('<div class="submission_buttons">')
-//					.appendTo($entry);
-//				var $approveBtn = $('<button>')
-//					.text( _loc('Approve') )
-//					.appendTo($buttons)
-//					.click(function(){
-//						_this._approve(subDocId);
-//						return false;
-//					});
-//				if( subDoc.nunaliit_submission
-//				 && 'collision' === subDoc.nunaliit_submission.state ){
-//					$approveBtn.attr('disabled','disabled');
-//				};
-//				$('<button>')
-//					.text( _loc('Deny') )
-//					.appendTo($buttons)
-//					.click(function(){
-//						_this._deny(subDocId);
-//						return false;
-//					});
-	
-				// Brief display
-				var $brief = $('<div class="submission_brief">')
-					.appendTo($entry);
-				if( _this.showService && submittedDoc ){
-					_this.showService.displayBriefDescription($brief, {}, submittedDoc);
-				};
-			};
-			
-			function addKeyValue($e, key, value){
-				var $div = $('<div class="key_value">')
-					.appendTo($e);
-				$('<span class="key">')
-					.text(key+': ')
-					.appendTo($div);
-				$('<span class="value">')
-					.text(value)
-					.appendTo($div);
-			};
 		}
 
 		,_approve: function(subDocId, approvedDoc){
@@ -698,6 +575,164 @@
 					opts.onError( _loc('Invalid submission document') );
 				};
 			};
+		},
+		
+		_displaySubmission: function($entry, submissionDoc, submittedDoc){
+			var _this = this;
+			
+			$entry.empty();
+			
+			var subDocId = submissionDoc._id;
+			
+			// State
+			var state = 'submitted';
+			if( submissionDoc.nunaliit_submission 
+			 && submissionDoc.nunaliit_submission.state ){
+				state = submissionDoc.nunaliit_submission.state;
+			};
+			
+			// Document identifier and revision
+			var docId = null;
+			var revision = null;
+			if( submissionDoc.nunaliit_submission 
+			 && submissionDoc.nunaliit_submission.original_reserved ){
+				docId = submissionDoc.nunaliit_submission.original_reserved.id;
+				revision = submissionDoc.nunaliit_submission.original_reserved.rev;
+			};
+			if( null == docId 
+			 && submissionDoc.nunaliit_submission 
+			 && submissionDoc.nunaliit_submission.submitted_reserved ){
+				docId = submissionDoc.nunaliit_submission.submitted_reserved.id;
+			};
+			
+			// Is deletion?
+			var isDeletion = false;
+			if( submissionDoc.nunaliit_submission 
+			 && submissionDoc.nunaliit_submission.deletion ){
+				isDeletion = true;
+			};
+			
+			// Submitter
+			var submitterName = null;
+			if( submissionDoc.nunaliit_submission 
+			 && submissionDoc.nunaliit_submission.submitter_name ){
+				submitterName = submissionDoc.nunaliit_submission.submitter_name;
+			};
+			
+			// Attachments waiting for approval
+			var waitingForApprovalAttachments = [];
+			if( this.attachmentService ){
+				var attachments = this.attachmentService.getAttachments(submittedDoc);
+				for(var i=0,e=attachments.length; i<e; ++i){
+					var att = attachments[i];
+					var status = att.getStatus();
+					var sourceAttachment = att.getSourceAttachment();
+					if( 'waiting for approval' === status 
+					 && !sourceAttachment ){
+						waitingForApprovalAttachments.push(att);
+					};
+				};
+			};
+
+			// Information
+			var $info = $('<div class="submission_info">')
+				.appendTo($entry);
+			addKeyValue($info, _loc('Submission Id'), subDocId);
+			if( docId ){
+				addKeyValue($info, _loc('Original Id'), docId);
+				
+				var type = _loc('update');
+				if( isDeletion ) {
+					type = _loc('deletion');
+				} else if( !revision ) {
+					type = _loc('creation');
+				};
+				addKeyValue($info, _loc('Submission Type'), type);
+			};
+			
+			if( state ){
+				addKeyValue($info, _loc('Submission State'), state);
+			};
+			
+			if( submitterName ){
+				var $div = $('<div class="key_value">')
+					.appendTo($info);
+				$('<span class="key">')
+					.text(_loc('Submitter')+': ')
+					.appendTo($div);
+				var $val = $('<span class="value">')
+					.text(submitterName)
+					.appendTo($div);
+				if( this.showService ){
+					this.showService.printUserName($val, submitterName);
+				};
+				
+				// Add mailto link
+				var cName = 'submission_mailto_' + $n2.utils.stringToHtmlId(submitterName);
+				$('<div>')
+					.addClass(cName)
+					.appendTo($info);
+				if( this.dispatchService ){
+					this.dispatchService.send(DH,{
+						type: 'requestUserDocumentComplete'
+						,userId: submitterName
+					});
+				};
+			};
+
+			// View button
+			var $views = $('<div class="submission_views">')
+				.appendTo($entry);
+			$('<button>')
+				.text( _loc('View') )
+				.appendTo($views)
+				.click(function(){
+					_this._viewMerging(subDocId);
+					return false;
+				});
+
+			// Brief display
+			var $brief = $('<div class="submission_brief">')
+				.appendTo($entry);
+			if( this.showService && submittedDoc ){
+				this.showService.displayBriefDescription($brief, {}, submittedDoc);
+			};
+			
+			// Attachments
+			if( waitingForApprovalAttachments.length > 0 ){
+				var $attachmentsDiv = $('<div>')
+					.addClass('submission_attachments')
+					.appendTo($entry);
+				
+				for(var i=0,e=waitingForApprovalAttachments.length; i<e; ++i){
+					var att = waitingForApprovalAttachments[i];
+					var $attDiv = $('<div>')
+						.addClass('submission_attachment')
+						.appendTo($attachmentsDiv);
+					addKeyValue($attDiv, _loc('Attachment Name'), att.getName());
+					
+					var thumbAtt = att.getThumbnailAttachment();
+					if( thumbAtt ){
+						var imageUrl = thumbAtt.getMediaFileUrl();
+						if( imageUrl ){
+							$('<img>')
+								.attr('src',imageUrl)
+								.appendTo($attDiv);
+						};
+					};
+				};
+			};
+
+			function addKeyValue($e, key, value){
+				var $div = $('<div class="key_value">')
+					.appendTo($e);
+				$('<span class="key">')
+					.text(key+': ')
+					.appendTo($div);
+				$('<span class="value">')
+					.text(value)
+					.appendTo($div);
+			};
 		}
 		
 		,_viewOriginal: function(subDocId){
@@ -851,6 +886,20 @@
 				if( submittedPatch && currentDoc ) {
 					proposedDoc = $n2.extend(true,{},currentDoc);
 					patcher.applyPatch(proposedDoc, submittedPatch);
+				};
+				
+				// Approve submitted media
+				if( proposedDoc && _this.attachmentService ){
+					var attachments = _this.attachmentService.getAttachments(proposedDoc);
+					for(var i=0,e=attachments.length; i<e; ++i){
+						var att = attachments[i];
+						var status = att.getStatus();
+						var sourceAttachment = att.getSourceAttachment();
+						if( 'waiting for approval' === status 
+						 && !sourceAttachment ){
+							att.changeStatus('approved');
+						};
+					};
 				};
 				
 				$('<div>')

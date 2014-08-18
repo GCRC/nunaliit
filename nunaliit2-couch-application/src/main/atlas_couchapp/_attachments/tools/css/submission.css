@@ -29,6 +29,11 @@
 	margin-left: 10px;
 }
 
+.submission_attachments {
+	float: left;
+	margin-left: 10px;
+}
+
 .submission_info .key {
 	font-weight: bold;
 }

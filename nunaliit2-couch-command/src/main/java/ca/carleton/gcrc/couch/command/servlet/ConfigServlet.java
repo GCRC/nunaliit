@@ -579,6 +579,10 @@ public class ConfigServlet extends JsonServlet {
 				pdfPlugin.setAtlasName(atlasProperties.getAtlasName());
 				uploadWorker.addConversionPlugin( pdfPlugin );
 			}
+			if( null != submissionDb ){
+				CouchDesignDocument submissionDbDesign = submissionDb.getDesignDocument("submission");
+				uploadWorker.setSubmissionDbDesign(submissionDbDesign);
+			}
 			uploadWorker.start();
 		} catch (Exception e) {
 			logger.error("Error starting upload worker",e);

@@ -813,14 +813,14 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				String id = row.optString("id");
 				
 				String state = null;
-				String attachmentName = null;
+				String uploadId = null;
 				JSONArray key = row.optJSONArray("key");
 				if( null != key ){
 					if( key.length() > 0 ){
 						state = key.getString(0);
 					}
 					if( key.length() > 1 ){
-						attachmentName = key.getString(1);
+						uploadId = key.getString(1);
 					}
 				};
 				
@@ -834,7 +834,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				if( UploadConstants.UPLOAD_STATUS_WAITING_FOR_UPLOAD.equals(state) ) {
 					// In the case of "waiting_for_upload", the attachment name
 					// refers to the uploadId
-					JSONObject uploadIdRow = rowsByUploadId.get(attachmentName);
+					JSONObject uploadIdRow = rowsByUploadId.get(uploadId);
 					if( null == uploadIdRow ) {
 						// Missing information to continue
 						continue;
@@ -842,7 +842,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 						String uploadRequestDocId = uploadIdRow.getString("id");
 						
 						WorkSubmissionDb work = new WorkSubmissionDb(submissionDbDesign, state, id);
-						work.setUploadId(attachmentName);
+						work.setUploadId(uploadId);
 						work.setUploadRequestDocId(uploadRequestDocId);
 						return work;
 					}
@@ -850,12 +850,12 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				} else {
 					// Everything else
 					WorkSubmissionDb work = new WorkSubmissionDb(submissionDbDesign, state, id);
-					work.setAttachmentName(attachmentName);
+					work.setAttachmentName(uploadId);
 					return work;
 				}
 			}
 		}
-		
+
 		return null;
 	}
 	
@@ -883,36 +883,6 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 		return rowsByUploadId;
 	}
 	
-//	private JSONObject findAttachmentWithUploadId(JSONObject doc, String uploadId) throws Exception {
-//		JSONObject nunaliitAttachments = doc.optJSONObject(UploadConstants.KEY_DOC_ATTACHMENTS);
-//
-//		JSONObject files = null;
-//		if( null != nunaliitAttachments ){
-//			files = nunaliitAttachments.optJSONObject("files");
-//		}
-//		
-//		if( null != files ){
-//			Iterator<?> keyIt = files.keys();
-//			while( keyIt.hasNext() ){
-//				Object keyObj = keyIt.next();
-//				if( keyObj instanceof String ){
-//					String attName = (String)keyObj;
-//					JSONObject attachment = files.optJSONObject(attName);
-//					if( null != attachment ){
-//						String attachmentUploadId = attachment.optString("uploadId");
-//						if( null != attachmentUploadId ){
-//							if( attachmentUploadId.equals(uploadId) ){
-//								return attachment;
-//							}
-//						}
-//					}
-//				}
-//			}
-//		}
-//		
-//		return null;
-//	}
-
 	private boolean waitMillis(int millis) {
 		synchronized(this) {
 			if( true == isShuttingDown ) {

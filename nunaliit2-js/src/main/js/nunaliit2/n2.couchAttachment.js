@@ -59,6 +59,11 @@ var Attachment = $n2.Class({
 		return this.attName;
 	},
 	
+	getStatus: function(){
+		var att = this._getAtt();
+		return att.status;
+	},
+	
 	getMediaFileUrl: function(){
 		var att = this._getAtt();
 		if( att 
@@ -67,6 +72,10 @@ var Attachment = $n2.Class({
 			return this.mediaRelativePath + att.mediaFile;
 		};
 		return null;
+	},
+	
+	getStructure: function(){
+		return this._getAtt();
 	},
 	
 	getThumbnailAttachment: function(){
@@ -102,6 +111,27 @@ var Attachment = $n2.Class({
 					originalAtt = new Attachment({
 						doc: this.doc
 						,attName: originalName
+						,mediaRelativePath: this.mediaRelativePath
+					});
+				};
+			};
+		};
+		
+		return originalAtt;
+	},
+	
+	getSourceAttachment: function(){
+		var originalAtt = null;
+		
+		var att = this._getAtt();
+		if( att ){
+			var sourceName = att.source;
+			if( sourceName ) {
+				var otherAtt = this._getAtt(sourceName);
+				if( otherAtt ) {
+					originalAtt = new Attachment({
+						doc: this.doc
+						,attName: sourceName
 						,mediaRelativePath: this.mediaRelativePath
 					});
 				};
@@ -172,6 +202,33 @@ function getAttachmentFromName(doc, attachmentName, mediaRelativePath){
 	
 	return att;
 };
+//========================================================================
+
+/*
+ * Returns a list of attachment structures associated with the document.
+ */
+function getAttachments(doc, mediaRelativePath){
+	var result = [];
+	
+	if( doc
+	 && doc.nunaliit_attachments
+	 && doc.nunaliit_attachments.files ) {
+		
+		for(var attName in doc.nunaliit_attachments.files){
+			var att = new Attachment({
+				doc: doc
+				,attName: attName
+				,mediaRelativePath: mediaRelativePath
+			});
+			
+			if( att ){
+				result.push(att);
+			};
+		};
+	};
+	
+	return result;
+};
 
 // ========================================================================
 
@@ -187,6 +244,10 @@ var AttachmentService = $n2.Class({
 		this.mediaRelativePath = opts.mediaRelativePath;
 	}
 
+	,getAttachments: function(doc){
+		return getAttachments(doc, this.mediaRelativePath);
+	}
+
 	,getAttachment: function(doc, attachmentName){
 		return getAttachmentFromName(doc, attachmentName, this.mediaRelativePath);
 	}
@@ -196,6 +257,7 @@ var AttachmentService = $n2.Class({
 
 $n2.couchAttachment = {
 	AttachmentService: AttachmentService
+	,getAttachments: getAttachments
 	,getAttachmentFromName: getAttachmentFromName
 };
 
