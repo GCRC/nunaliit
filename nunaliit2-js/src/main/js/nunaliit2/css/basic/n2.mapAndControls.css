@@ -384,7 +384,7 @@ table.mediaSelection td {
 }
 
 /* Fix spurious copyright pop-up */
-.olLayerGooglePoweredBy, .gmnoprint {
+.olLayerGooglePoweredBy, .gmnoprint, .gm-style-cc {
 	visibility: hidden;
 }
 
