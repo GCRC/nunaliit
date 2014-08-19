@@ -64,6 +64,12 @@ div.n2DisplayTiled_tile_image {
 	padding: 5%;
 	background-color: rgba(255,255,255,0.8);
     word-wrap:break-word;
+    max-height: 50px;
+    text-overflow: ellipsis;
+    
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;    
 }
 
 .n2DisplayTiled_tile:hover {
