@@ -5,17 +5,16 @@ import java.io.PrintStream;
 import java.util.Calendar;
 import java.util.Stack;
 
-import ca.carleton.gcrc.couch.app.DbDumpProcess;
-import ca.carleton.gcrc.couch.client.CouchDb;
-import ca.carleton.gcrc.couch.command.impl.CommandSupport;
-import ca.carleton.gcrc.couch.command.impl.DumpListener;
+import ca.carleton.gcrc.couch.command.impl.GenerateCssLibrariesProcess;
+import ca.carleton.gcrc.couch.command.impl.GenerateJavascriptLibrariesProcess;
+import ca.carleton.gcrc.couch.command.impl.PathComputer;
 import ca.carleton.gcrc.couch.command.website.WebsiteDumpProcess;
 
-public class CommandStatic implements Command {
+public class CommandWebSite implements Command {
 
 	@Override
 	public String getCommandString() {
-		return "static";
+		return "website";
 	}
 
 	@Override
@@ -38,19 +37,22 @@ public class CommandStatic implements Command {
 
 	@Override
 	public void reportHelp(PrintStream ps) {
-		ps.println("Nunaliit2 Atlas Framework - Static Website Command");
+		ps.println("Nunaliit2 Atlas Framework - Website Command");
 		ps.println();
-		ps.println("The static command creates a set of files that can be used to set");
+		ps.println("EXPERIMENTAL - Do not use this command on a production system");
+		ps.println();
+		ps.println("The website command creates a set of files that can be used to set");
 		ps.println("up a static website using a snapshot of the documents currently in");
-		ps.println("the database.");
+		ps.println("the database. The generated website provides only a subset of the");
+		ps.println("functions available in the full atlas.");
 		ps.println();
 		ps.println("Command Syntax:");
-		ps.println("  nunaliit [<global-options>] static [<static-options>]");
+		ps.println("  nunaliit [<global-options>] website [<website-options>]");
 		ps.println();
 		ps.println("Global Options");
 		CommandHelp.reportGlobalSettingAtlasDir(ps);
 		ps.println();
-		ps.println("Static Options");
+		ps.println("Website Options");
 		ps.println("  --dump-dir <dir>   Directory where web-site should be stored");
 	}
 
@@ -61,6 +63,7 @@ public class CommandStatic implements Command {
 		) throws Exception {
 
 		File atlasDir = gs.getAtlasDir();
+		File installDir = gs.getInstallDir();
 
 		// Compute default dump dir
 		File dumpDir = null;
@@ -94,19 +97,31 @@ public class CommandStatic implements Command {
 				break;
 			}
 		}
+
+		// Update Javascript libraries and CSS libraries, if in development mode
+		{
+			File nunaliitDir = PathComputer.computeNunaliitDir(installDir);
+			if( null != nunaliitDir ) {
+				GenerateJavascriptLibrariesProcess jsProcess = new GenerateJavascriptLibrariesProcess();
+				jsProcess.generate(nunaliitDir);
+				
+				GenerateCssLibrariesProcess cssProcess = new GenerateCssLibrariesProcess();
+				cssProcess.generate(nunaliitDir);
+			}
+		}
+		
 		
 		// Load properties for atlas
-		AtlasProperties atlasProperties = AtlasProperties.fromAtlasDir(atlasDir);
+//		AtlasProperties atlasProperties = AtlasProperties.fromAtlasDir(atlasDir);
 		
-		CouchDb couchDb = CommandSupport.createCouchDb(gs, atlasProperties);
+//		CouchDb couchDb = CommandSupport.createCouchDb(gs, atlasProperties);
 		
 		gs.getOutStream().println("Creating static web-site to "+dumpDir.getAbsolutePath());
-		
-		DumpListener listener = new DumpListener( gs.getOutStream() );
 		
 		WebsiteDumpProcess dumpProcess = new WebsiteDumpProcess();
 		dumpProcess.setAtlasDir(atlasDir);
 		dumpProcess.setDumpDir(dumpDir);
+		dumpProcess.setInstallDir(installDir);
 		dumpProcess.dump();
 	}
 

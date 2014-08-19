@@ -35,7 +35,7 @@ public class Main {
 			allCommands.add( new CommandRestore() );
 			allCommands.add( new CommandUpgrade() );
 			allCommands.add( new CommandVersion() );
-			allCommands.add( new CommandStatic() );
+			allCommands.add( new CommandWebSite() );
 		}
 		
 		return allCommands;
