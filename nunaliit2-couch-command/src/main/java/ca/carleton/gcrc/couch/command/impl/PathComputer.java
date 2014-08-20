@@ -220,6 +220,35 @@ public class PathComputer {
 	}
 	
 	/**
+	 * Finds the "staticWebsite" directory from the installation location
+	 * and returns it. If the command-line tool is packaged and
+	 * deployed, then the "staticWebsite" directory is found at the
+	 * root of the installation. If the command-line tool is run
+	 * from the development environment, then the "staticWebsite" directory
+	 * is found in the SDK sub-project.
+	 * @param installDir Directory where the command-line tool is run from.
+	 * @return Directory where the static website documents are located or null if not found.
+	 * */
+	static public File computeStaticWebsiteDir(File installDir) {
+		if( null != installDir ) {
+			// Command-line package
+			File templatesDir = new File(installDir, "internal/staticWebsite");
+			if( templatesDir.exists() && templatesDir.isDirectory() ) {
+				return templatesDir;
+			}
+			
+			// Development environment
+			File nunaliit2Dir = computeNunaliitDir(installDir);
+			templatesDir = new File(nunaliit2Dir, "nunaliit2-couch-sdk/src/main/internal/staticWebsite");
+			if( templatesDir.exists() && templatesDir.isDirectory() ) {
+				return templatesDir;
+			}
+		}
+		
+		return null;
+	}
+	
+	/**
 	 * Finds the directory supporting the atlas design document from the 
 	 * installation location and returns it.
 	 * @param installDir Directory where the command-line tool is run from.

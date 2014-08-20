@@ -86,5 +86,15 @@ public class WebsiteDumpProcess {
 				Files.copy(externalDir, extTarget);
 			}
 		}
+		
+		// Static content
+		{
+			File staticDir = PathComputer.computeStaticWebsiteDir(installDir);
+			if( null == staticDir ) {
+				throw new Exception("Can not find static website content");
+			} else {
+				Files.copy(staticDir, dumpDir);
+			}
+		}
 	}
 }
