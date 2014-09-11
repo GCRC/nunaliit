@@ -2350,10 +2350,10 @@ var Server = $n2.Class({
 	    	,contentType: 'application/json'
     		,dataType: 'json'
     		,success: function(res) {
-	    		if( res.ok ) {
-	    			opts.onSuccess();
-	    		} else {
+	    		if( res.error ) {
 	    			opts.onError('Error while initiating replication: '+res.error);
+	    		} else {
+	    			opts.onSuccess();
 	    		};
     		}
 	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
