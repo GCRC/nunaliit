@@ -47,6 +47,8 @@ function Configure(opts_) {
 		directory: {}
 	};
 	
+	config.directory.dispatchService = new $n2.dispatch.Dispatcher();
+	
 	// Obtain couch server
 	$n2.couch.getServer({
 		pathToServer: opts.couchDbUrl

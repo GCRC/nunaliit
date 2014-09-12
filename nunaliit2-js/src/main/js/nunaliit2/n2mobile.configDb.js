@@ -54,6 +54,10 @@ var Connection = $n2.Class({
 		//alert( JSON.stringify(this.doc) );
 	},
 	
+	getConnectionId: function(){
+		return this.doc._id;
+	},
+	
 	getLabel: function(){
 		return this.doc.label;
 	},
@@ -137,6 +141,21 @@ var Connection = $n2.Class({
 				}
 			});
 		};
+	},
+	
+	deleteConnection: function(opts_){
+		var opts = $n2.extend({
+			onSuccess: function(){}
+			,onError: function(err){}
+			,onProgress: function(str){}
+		},opts_);
+		
+		this.configDb.removeConnection({
+			connection: this
+			,onSuccess: opts.onSuccess
+			,onError: opts.onError
+			,onProgress: opts.onProgress
+		});
 	},
 	
 	createLocalDb: function(opts_){
@@ -644,6 +663,27 @@ var ConfigDb = $n2.Class({
 		});
 	},
 	
+	getConnection: function(opts_){
+		var opts = $n2.extend({
+			id: null
+			,onSuccess: function(connection){}
+			,onError: function(err){}
+		},opts_);
+		
+		var _this = this;
+
+		this.db.getDocument({
+			docId: opts.id
+			,onSuccess: function(doc){
+				var conn = new Connection(doc, _this);
+				opts.onSuccess(conn);
+			}
+			,onError: function(err){ 
+				opts.onError('Can not find connection document: '+err); 
+			}
+		});
+	},
+	
 	addConnection: function(opts_){
 		var opts = $n2.extend({
 			remoteAtlasUrl: null
@@ -769,7 +809,7 @@ var ConfigDb = $n2.Class({
 		function setCurrent(){
 			opts.onProgress('Set new connection as current one');
 
-			_this.setCurrentDb({
+			_this.setCurrentConnection({
 				connection: connection
 				,onSuccess: done
 				,onError: function(err){
@@ -781,6 +821,53 @@ var ConfigDb = $n2.Class({
 		function done() {
 			opts.onProgress('Completed');
 			opts.onSuccess(connection);
+		};
+	},
+	
+	removeConnection: function(opts_){
+		var opts = $n2.extend({
+			connection: null
+			,onSuccess: function(){}
+			,onError: function(err){}
+			,onProgress: function(str){}
+		},opts_);
+
+		var _this = this;
+		
+		var connId = opts.connection.getConnectionId();
+		
+		this.db.getDocument({
+			docId: connId
+			,onSuccess: connDocLoaded
+			,onError: function(err){ 
+				opts.onError('Unable to find connection document: '+connId); 
+			}
+		});
+		
+		function connDocLoaded(connDoc){
+			var dbName = connDoc.local.dbName;
+
+			_this.couchServer.deleteDb({
+				dbName: dbName
+				,onSuccess: function(){
+					dbDeleted(connDoc);
+				}
+				,onError: function(err){ 
+					opts.onError('Unable to delete local database'); 
+				}
+			});
+		};
+		
+		function dbDeleted(connDoc){
+			var dbName = connDoc.local.dbName;
+
+			_this.db.deleteDocument({
+				data: connDoc
+				,onSuccess: opts.onSuccess
+				,onError: function(err){ 
+					opts.onError('Unable to delete connection document'); 
+				}
+			});
 		};
 	},
 	
@@ -878,6 +965,48 @@ var ConfigDb = $n2.Class({
 			};
 			
 			opts.onSuccess(currentLabel);
+		};
+	},
+	
+	setCurrentConnection: function(opts_){
+		var opts = $n2.extend({
+			connection: null
+			,onSuccess: function(){}
+			,onError: function(err){}
+		},opts_);
+
+		var connectionId = null;
+		if( opts.connection ) {
+			connectionId = opts.connection.getConnectionId();
+		};
+		
+		var db = this.db;
+		db.getDocument({
+			docId:'currentDb'
+			,onSuccess: function(currentDoc){
+				currentDoc.connectionId = connectionId;
+				db.updateDocument({
+					data: currentDoc
+					,onSuccess: success
+					,onError: opts.onError
+				});
+			}
+			,onError: function(){
+				var currentDoc = {
+					_id: 'currentDb'
+					,nunaliit_type: 'currentDb'
+					,connectionId: connectionId
+				};
+				db.createDocument({
+					data: currentDoc
+					,onSuccess: success
+					,onError: opts.onError
+				});
+			}
+		});
+		
+		function success(){
+			opts.onSuccess();
 		};
 	}
 });
