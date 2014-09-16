@@ -35,6 +35,9 @@ $Id: n2.couchSchema.js 8404 2012-07-30 19:34:41Z jpfiset $
 
 ;(function($,$n2){
 
+// Localization
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
+
 var CouchSchemaRepository = $n2.Class($n2.schema.SchemaRepository,{
 	
 	couchOptions: null
@@ -50,6 +53,7 @@ var CouchSchemaRepository = $n2.Class($n2.schema.SchemaRepository,{
 			,dispatchService: null
 			,preload: false
 			,preloadedCallback: function(){}
+			,onError: function(err){}
 		},opts_);
 		
 		var _this = this;
@@ -146,7 +150,9 @@ var CouchSchemaRepository = $n2.Class($n2.schema.SchemaRepository,{
 				_this.rootSchemasQueried = true;
 				_this.couchOptions.preloadedCallback();
 			}
-			,onError: function(){}
+			,onError: function(err){
+				_this.couchOptions.onError( _loc('Unable to preload schemas: {err}',{err:err}) );
+			}
 		});
 	}
 });

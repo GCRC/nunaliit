@@ -2353,7 +2353,7 @@ var Server = $n2.Class({
 	    		if( res.error ) {
 	    			opts.onError('Error while initiating replication: '+res.error);
 	    		} else {
-	    			opts.onSuccess();
+	    			opts.onSuccess(res);
 	    		};
     		}
 	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {

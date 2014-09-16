@@ -76,6 +76,7 @@ function Configure(opts_) {
 	};
 	
 	function configDbCreated(){
+	
 		done();
 	};
 	

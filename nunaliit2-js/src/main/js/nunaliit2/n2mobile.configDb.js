@@ -104,8 +104,8 @@ var Connection = $n2.Class({
 		return url;
 	},
 
-	getRemoteReplicationUrl: function(){
-		return this.getRemoteServerUrl() + '_replicate';
+	getRemoteDbUrl: function(){
+		return this.getRemoteServerUrl() + this.getRemoteDbName();
 	},
 	
 	save: function(opts_){
@@ -211,7 +211,8 @@ var Connection = $n2.Class({
 	},
 	
 	getLocalDb: function(){
-		var db = this._getCouchServer.getDb({dbName:this.doc.local.dbName});
+		var couchServer = this._getCouchServer();
+		var db = couchServer.getDb({dbName:this.doc.local.dbName});
 		return db;
 	},
 	
@@ -354,7 +355,7 @@ var Connection = $n2.Class({
 		var remoteDocIdsToDelete = null;
 		var purgedDocIdsNotOnRemote = null;
 		
-		var remoteReplicationUrl = this.getRemoteReplicationUrl();
+		var remoteDbUrl = this.getRemoteDbUrl();
 
 		opts.onProgress('Trying to reach remote server');
 
@@ -386,11 +387,11 @@ var Connection = $n2.Class({
 		
 		function upgrade(){
 			opts.onProgress('Updating design documents from remote server');
-			opts.onProgress('remoteReplicationUrl='+remoteReplicationUrl);
+			opts.onProgress('remoteDbUrl='+remoteDbUrl);
 			opts.onProgress('_this.getLocalDbName()='+_this.getLocalDbName());
 
 			couchServer.replicate({
-				source: remoteReplicationUrl
+				source: remoteDbUrl
 				,target: _this.getLocalDbName()
 				,filter: 'mobile/onlyMobileApplication'
 				,onSuccess: getRemoteDownloadList
@@ -434,7 +435,7 @@ var Connection = $n2.Class({
 			};
 			
 			couchServer.replicate({
-				source: remoteReplicationUrl
+				source: remoteDbUrl
 				,target: _this.getLocalDbName()
 				,docIds: docIds
 				,onSuccess: upload
@@ -449,7 +450,7 @@ var Connection = $n2.Class({
 
 			couchServer.replicate({
 				source: _this.getLocalDbName()
-				,target: remoteReplicationUrl
+				,target: remoteDbUrl
 				,filter: 'mobile/notDeleted'
 				,onSuccess: forceViewCheckpoint
 				,onError: function(err){
@@ -475,6 +476,142 @@ var Connection = $n2.Class({
 			opts.onProgress('Completed');
 			opts.onSuccess();
 		};
+	},
+	
+	getConfiguration: function(opts_){
+		var opts = $n2.extend({
+			onSuccess: function(config){}
+			,onError: function(err){}
+		},opts_);
+		
+		var configuration = {
+			directory:{}
+		};
+alert('Get configuration');
+		configuration.couchServer = this._getCouchServer();
+		configuration.directory.couchServer = configuration.couchServer;
+		
+		configuration.atlasDb = this.getLocalDb();
+		configuration.atlasDesign = configuration.atlasDb.getDesignDoc({ddName:'mobile'});
+
+		configuration.documentSource = new $n2.couchDocument.CouchDataSource({
+			id: 'main'
+			,db: configuration.atlasDb
+			,dispatchService: configuration.directory.dispatchService
+		});
+
+		configuration.directory.schemaRepository = new $n2.couchSchema.CouchSchemaRepository({
+			db: configuration.atlasDb
+			,designDoc: configuration.atlasDesign
+			,dispatchService: configuration.directory.dispatchService
+			,preload: true
+			,preloadedCallback: schemasPreloaded
+			,onError: function(err){
+				opts.onError(err);
+			}
+		});
+
+		function schemasPreloaded() {
+alert('Get configuration');
+			configuration.atlasDb.getChangeNotifier({
+				onSuccess: function(notifier){
+					configuration.directory.notifierService = notifier;
+					notifierInitialized();
+				}
+			});
+		};
+		
+		function notifierInitialized() {
+
+		 	configuration.directory.searchService = new $n2.couchSearch.SearchServer({
+				designDoc: configuration.atlasDesign
+				,db: configuration.atlasDb
+				,dateService: null
+				,directory: configuration.directory
+			});
+			
+		 	configuration.directory.requestService = new $n2.couchRequests({
+				db: configuration.atlasDb
+				,userDb: null
+				,designDoc: configuration.atlasDesign
+				,dispatchService: configuration.directory.dispatchService
+				,userServerUrl: null
+			});
+	
+			configuration.directory.dispatchSupport = new $n2.couchDispatchSupport.DispatchSupport({
+				db: configuration.atlasDb
+				,directory: configuration.directory
+			});
+	
+			configuration.directory.attachmentService = new $n2.couchAttachment.AttachmentService({
+				mediaRelativePath: options.mediaUrl
+			});
+			
+			configuration.directory.showService = new $n2.couchShow.Show({
+				db: configuration.atlasDb
+				,documentSource: configuration.documentSource
+				,requestService: configuration.directory.requestService
+				,notifierService: configuration.directory.notifierService
+				,dispatchService: configuration.directory.dispatchService
+				,schemaRepository: configuration.directory.schemaRepository
+				,customService: configuration.directory.customService
+			});
+			
+			configuration.directory.createDocProcess = new $n2.couchRelatedDoc.CreateRelatedDocProcess({
+				documentSource: configuration.documentSource
+				,schemaRepository: configuration.directory.schemaRepository
+				,uploadService: configuration.directory.uploadService
+				,showService: configuration.directory.showService
+				,authService: configuration.directory.authService
+			});
+			
+		 	configuration.directory.schemaEditorService = new $n2.CouchEditor.SchemaEditorService({
+				documentSource: configuration.documentSource
+				,showService: configuration.directory.showService
+				,searchService: configuration.directory.searchService
+				,dispatchService: configuration.directory.dispatchService
+			});
+			
+		 	configuration.couchEditor = new $n2.CouchEditor.Editor({
+				documentSource: configuration.documentSource
+				,schemaRepository: configuration.directory.schemaRepository
+				,uploadService: configuration.directory.uploadService
+				,showService: configuration.directory.showService
+				,authService: configuration.directory.authService
+				,dispatchService: configuration.directory.dispatchService
+				,searchService: configuration.directory.searchService
+				,schemaEditorService: configuration.directory.schemaEditorService
+				,customService: configuration.directory.customService
+			});
+		 	
+		 	// Cometd replacement
+		 	configuration.directory.serverSideNotifier = new $n2.couchServerSide.Notifier({
+		 		dbChangeNotifier: configuration.directory.notifierService
+		 		,directory: configuration.directory
+		 	});
+	
+		 	// Set up hover sound
+		 	configuration.directory.hoverSoundService = new $n2.couchSound.HoverSoundService({
+				db: configuration.atlasDb
+				,serviceDirectory: configuration.directory
+		 	});
+			
+			// Set up GeoNames service
+			var geoNamesOptions = {};
+			if( window.nunaliit_custom
+			 && window.nunaliit_custom.geoNames ){
+				if( window.nunaliit_custom.geoNames.username ){
+					geoNamesOptions.username = window.nunaliit_custom.geoNames.username;
+				};
+			};
+			configuration.directory.geoNamesService = new $n2.GeoNames.Service(geoNamesOptions);
+			
+			done();
+		};
+		
+		function done() {
+			opts.onSuccess(configuration);
+		};		
 	},
 	
 	_getCouchServer: function(){
@@ -783,7 +920,8 @@ var ConfigDb = $n2.Class({
 		function saveConnection(){
 			opts.onProgress('saveConnection');
 			connection.save({
-				onSuccess: replicate
+//				onSuccess: replicate
+				onSuccess: done
 				,onError: function(){
 					// Remove local database
 					connection.deleteLocalDb({
