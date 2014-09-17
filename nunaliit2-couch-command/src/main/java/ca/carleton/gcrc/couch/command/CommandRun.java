@@ -18,6 +18,7 @@ import org.eclipse.jetty.proxy.ProxyServlet;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import ca.carleton.gcrc.couch.command.impl.CommandSupport;
+import ca.carleton.gcrc.couch.command.impl.TransparentProxyFixedEscaped;
 import ca.carleton.gcrc.couch.command.impl.TransparentWithRedirectServlet;
 import ca.carleton.gcrc.couch.command.servlet.ConfigServlet;
 import ca.carleton.gcrc.couch.date.DateServlet;
@@ -137,7 +138,7 @@ public class CommandRun implements Command {
 
         // Proxy to server
         {
-        	ServletHolder servletHolder = new ServletHolder(new ProxyServlet.Transparent());
+        	ServletHolder servletHolder = new ServletHolder(new TransparentProxyFixedEscaped());
         	servletHolder.setInitParameter("proxyTo", serverUrl.toExternalForm());
         	servletHolder.setInitParameter("prefix", "/server");
         	context.addServlet(servletHolder,"/server/*");
@@ -145,7 +146,7 @@ public class CommandRun implements Command {
 
         // Proxy to main database
         {
-        	ServletHolder servletHolder = new ServletHolder(new ProxyServlet.Transparent());
+        	ServletHolder servletHolder = new ServletHolder(new TransparentProxyFixedEscaped());
         	servletHolder.setInitParameter("proxyTo", dbUrl.toExternalForm());
         	servletHolder.setInitParameter("prefix", "/db");
         	context.addServlet(servletHolder,"/db/*");
