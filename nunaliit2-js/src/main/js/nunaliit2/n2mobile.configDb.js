@@ -920,8 +920,7 @@ var ConfigDb = $n2.Class({
 		function saveConnection(){
 			opts.onProgress('saveConnection');
 			connection.save({
-//				onSuccess: replicate
-				onSuccess: done
+				onSuccess: replicate
 				,onError: function(){
 					// Remove local database
 					connection.deleteLocalDb({
