@@ -391,6 +391,12 @@ var DomStyler = $n2.Class({
 					if(attDesc.height){
 						mediaOptions.height = attDesc.height;
 					};
+
+					if( 'image' === uploadType 
+					 && attDesc.photosphere
+					 && attDesc.photosphere.type === 'panorama' ) {
+						uploadType = 'photosphere';
+					};
 				};
 
 				// Generate brief HTML
@@ -405,7 +411,6 @@ var DomStyler = $n2.Class({
 						$n2.mediaDisplay.displayMedia(mediaOptions);
 					}
 				});
-
 				
 				return false;
 			};

@@ -85,6 +85,8 @@ $n2.MediaDisplay = $n2.Class({
 		
 		if( 'image' === opts.type ) {
 			this._displayImage(opts);
+		} else if( 'photosphere' === opts.type ) {
+			this._displayPhotosphere(opts);
 		} else if( 'audio' === opts.type ) {
 			if( $.fn && $.fn.mediaelementplayer ) {
 				this._displayAudioMediaElement(opts);
@@ -183,6 +185,54 @@ $n2.MediaDisplay = $n2.Class({
 			};
 			objImagePreloader.src = opts.url;
 		}
+	}
+	
+	,_displayPhotosphere: function(opts) {
+		if( $n2.photosphere.IsAvailable() ){
+			var dialogTitle = defaultDialogTitle;
+			if( opts.title ) {
+				dialogTitle = opts.title;
+			};
+
+			var mediaDialogId = $n2.getUniqueId();
+			
+			var alt = 'image';
+			if( opts.title ){
+				alt = opts.title;
+			};
+
+			var $mediaDialog = $('<div>')
+				.attr('id',mediaDialogId);
+
+			var $panoDiv = $('<div>')
+				.addClass('n2MediaDisplayPhotosphere')
+				.appendTo($mediaDialog);
+
+			var $metaDataDiv = $('<div>')
+				.addClass('n2_dialogMetaData')
+				.appendTo($mediaDialog);
+			this._addMetaData(opts, $metaDataDiv);
+			
+			var dialogOptions = $n2.extend({},baseDialogOptions,{
+				title: dialogTitle
+				,width: 1024
+				,height: 600
+				,close: function(){
+					$('#'+mediaDialogId).remove();
+					opts.onCloseHook();
+				}
+			});
+			$mediaDialog.dialog(dialogOptions);
+
+			// Load photosphere
+			new $n2.photosphere.PhotosphereDisplay({
+				elem: $panoDiv
+				,url: opts.url
+			});
+			
+		} else {
+			this._displayImage(opts);
+		};
 	}
 
 	,_displayVideo: function(opts) {
