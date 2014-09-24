@@ -215,10 +215,23 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 			imageInfo = imageMagick.getImageInfo( inFile );
 		}
 		
+		// Check if image comes from a photosphere camera
+		boolean isPhotosphere = false;
+		if( null != imageInfo 
+		 && null != imageInfo.exif ){
+			if( imageInfo.exif.isKnownPhotosphereCamera() ){
+				isPhotosphere = true;
+			}
+		}
+		
 		// Extract XMP data
 		XmpInfo xmpData = XmpExtractor.extractXmpInfo(inFile);
 		if( null != xmpData ){
 			request.setXmpData(xmpData);
+			
+			if( xmpData.usePanoramaViewer() ){
+				isPhotosphere = true;
+			}
 		}
 
 		boolean conversionRequired = false;
@@ -229,22 +242,25 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 			request.setInWidth( imageInfo.width );
 			request.setExifData( imageInfo.exif );
 
-			// Check if conversion is required
-			conversionRequired = imageConversionThreshold.isConversionRequired(
-					imageInfo.format
-					,null
-					,null
-					,null
-					,new Long(imageInfo.width)
-					,new Long(imageInfo.height)
-					);
-			resizeRequired = imageConversionThreshold.isResizeRequired(
-					new Long(imageInfo.width)
-					,new Long(imageInfo.height)
-					);
-			
-			if( imageInfo.orientation == ImageInfo.Orientation.REQUIRES_CONVERSION ) {
-				reorientationRequired = true;
+			// Do not modify photosphere images
+			if( !isPhotosphere ) {
+				// Check if conversion is required
+				conversionRequired = imageConversionThreshold.isConversionRequired(
+						imageInfo.format
+						,null
+						,null
+						,null
+						,new Long(imageInfo.width)
+						,new Long(imageInfo.height)
+						);
+				resizeRequired = imageConversionThreshold.isResizeRequired(
+						new Long(imageInfo.width)
+						,new Long(imageInfo.height)
+						);
+				
+				if( imageInfo.orientation == ImageInfo.Orientation.REQUIRES_CONVERSION ) {
+					reorientationRequired = true;
+				}
 			}
 		}
 

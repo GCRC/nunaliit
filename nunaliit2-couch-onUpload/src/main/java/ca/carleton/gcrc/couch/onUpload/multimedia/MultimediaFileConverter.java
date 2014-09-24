@@ -271,6 +271,7 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 		}
 		
 		// Report EXIF data
+		boolean isPhotosphere = false;
 		ExifData exifData = request.getExifData();
 		if( null != exifData 
 		 && exifData.getSize() > 0 ) {
@@ -297,24 +298,35 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 				GeometryDescriptor geomDesc = docDescriptor.getGeometryDescription();
 				geomDesc.setGeometry(mp);
 			}
+			
+			if( exifData.isKnownPhotosphereCamera() ){
+				isPhotosphere = true;
+			}
 		}
 		
 		// Report XMP Data
 		XmpInfo xmpData = request.getXmpData();
 		if( null != xmpData ){
+			// Copy data
 			XmpDataDescriptor xmpDescriptor = attDescription.getXmpDataDescription();
-
 			Map<String,String> props = xmpData.getProperties();
 			for(String key : props.keySet()){
 				String value = props.get(key);
 				xmpDescriptor.addData(key, value);
-				
-				if( key.endsWith("UsePanoramaViewer") && "true".equalsIgnoreCase(value) ){
-					PhotosphereDescriptor photosphereDescriptor = attDescription.getPhotosphereDescription();
-					photosphereDescriptor.setType("panorama");
-				}
+			}
+
+			// Check if XMP declares a photosphere
+			if( xmpData.usePanoramaViewer() ){
+				isPhotosphere = true;
 			}
 		}
+
+		// Report photosphere, if needed
+		if( isPhotosphere ){
+			PhotosphereDescriptor photosphereDescriptor = attDescription.getPhotosphereDescription();
+			photosphereDescriptor.setType("panorama");
+		}
+		
 
 		// Report converted object
 		{

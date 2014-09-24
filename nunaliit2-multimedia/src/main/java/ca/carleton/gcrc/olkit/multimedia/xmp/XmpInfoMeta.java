@@ -32,4 +32,23 @@ public class XmpInfoMeta implements XmpInfo {
 
 		return props;
 	}
+
+	@Override
+	public boolean usePanoramaViewer() throws Exception {
+    	XMPIterator iterator = meta.iterator();
+    	while( iterator.hasNext() ) {
+			XMPPropertyInfo propInfo = (XMPPropertyInfo) iterator.next();
+			String path = propInfo.getPath();
+			String value = propInfo.getValue();
+			
+			if( null != path 
+			 && null != value 
+			 && path.endsWith("UsePanoramaViewer") 
+			 && "true".equalsIgnoreCase(value) ){
+				return true;
+			}
+        }
+    	
+		return false;
+	}
 }

@@ -41,6 +41,7 @@ var PhotosphereDisplay = $n2.Class({
 	scene: null,
 	renderer: null,
 	isUserInteracting: null,
+	hasUserInteracted: null,
 	onMouseDownMouseX: null,
 	onMouseDownMouseY: null,
 	lon: null,
@@ -60,6 +61,7 @@ var PhotosphereDisplay = $n2.Class({
 		var _this = this;
 		
 		this.isUserInteracting = false;
+		this.hasUserInteracted = false;
 		this.onMouseDownMouseX = 0;
 		this.onMouseDownMouseY = 0;
 		this.lon = 0;
@@ -102,6 +104,7 @@ var PhotosphereDisplay = $n2.Class({
 			event.preventDefault();
 
 			_this.isUserInteracting = true;
+			_this.hasUserInteracted = true;
 
 			_this.onPointerDownPointerX = event.clientX;
 			_this.onPointerDownPointerY = event.clientY;
@@ -121,9 +124,15 @@ var PhotosphereDisplay = $n2.Class({
 			_this.isUserInteracting = false;
 		});
 		
+		$elem.mouseout(function( event ) {
+			_this.isUserInteracting = false;
+		});
+		
 		$elem.on('mousewheel', function( event ) {
 
 			if( event.originalEvent ) event = event.originalEvent;
+
+			_this.hasUserInteracted = true;
 			
 			// WebKit
 			if ( event.wheelDeltaY ) {
@@ -171,10 +180,8 @@ var PhotosphereDisplay = $n2.Class({
 	
 	_update: function() {
 
-		if( this.isUserInteracting === false ) {
-
-		//	this.lon += 0.1;
-
+		if( this.hasUserInteracted === false ) {
+			this.lon += 0.1;
 		}
 
 		this.lat = Math.max( - 85, Math.min( 85, this.lat ) );

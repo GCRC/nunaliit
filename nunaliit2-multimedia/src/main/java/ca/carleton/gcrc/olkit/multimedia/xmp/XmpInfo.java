@@ -5,4 +5,6 @@ import java.util.Map;
 public interface XmpInfo {
 
 	Map<String,String> getProperties() throws Exception;
+	
+	boolean usePanoramaViewer() throws Exception;
 }

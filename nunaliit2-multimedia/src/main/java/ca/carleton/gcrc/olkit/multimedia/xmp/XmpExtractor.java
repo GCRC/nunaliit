@@ -8,7 +8,6 @@ import com.adobe.xmp.XMPMeta;
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
-import com.drew.metadata.Tag;
 import com.drew.metadata.xmp.XmpDirectory;
 
 public class XmpExtractor {
@@ -20,13 +19,6 @@ public class XmpExtractor {
 			BufferedInputStream bis = new BufferedInputStream(fis);
 			Metadata metadata = ImageMetadataReader.readMetadata(bis, true);
 			for (Directory directory : metadata.getDirectories()) {
-				System.out.println("Directory: "+directory.getName());
-			    for (Tag tag : directory.getTags()) {
-			        System.out.println(tag);
-			    }
-			    for(String err : directory.getErrors()){
-			        System.out.println("Error: "+err);
-			    }
 			    if( directory instanceof XmpDirectory ){
 			    	XmpDirectory xmpDirectory = (XmpDirectory)directory;
 			    	XMPMeta meta = xmpDirectory.getXMPMeta();

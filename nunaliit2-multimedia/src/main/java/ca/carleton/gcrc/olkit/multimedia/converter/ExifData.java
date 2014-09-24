@@ -89,6 +89,16 @@ public class ExifData {
 		return result;
 	}
 	
+	public boolean isKnownPhotosphereCamera(){
+		String model = rawData.get("Model");
+		
+		if( "RICOH THETA".equalsIgnoreCase(model) ){
+			return true;
+		}
+		
+		return false;
+	}
+	
 	private Double parseDegMinSecString(String value){
 		String[] values = value.split(",");
 		
