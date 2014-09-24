@@ -426,6 +426,52 @@ public class AttachmentDescriptor extends AbstractDescriptor {
 		
 		return new ExifDataDescriptor(this);
 	}
+
+	public boolean isXmpDataDescriptionAvailable() throws Exception {
+		JSONObject attachmentDescription = getJson();
+
+		JSONObject json = attachmentDescription.optJSONObject(UploadConstants.XMP_DATA_KEY);
+		if( null == json ) {
+			return false;
+		}
+		
+		return true;
+	}
+
+	public XmpDataDescriptor getXmpDataDescription() throws Exception {
+		
+		if( false == isXmpDataDescriptionAvailable() ){
+			JSONObject attachmentDescription = getJson();
+			
+			JSONObject json = new JSONObject();
+			attachmentDescription.put(UploadConstants.XMP_DATA_KEY, json);
+		}
+		
+		return new XmpDataDescriptor(this);
+	}
+
+	public boolean isPhotosphereDescriptionAvailable() throws Exception {
+		JSONObject attachmentDescription = getJson();
+
+		JSONObject json = attachmentDescription.optJSONObject(UploadConstants.PHOTOSPHERE_DATA_KEY);
+		if( null == json ) {
+			return false;
+		}
+		
+		return true;
+	}
+
+	public PhotosphereDescriptor getPhotosphereDescription() throws Exception {
+		
+		if( false == isPhotosphereDescriptionAvailable() ){
+			JSONObject attachmentDescription = getJson();
+			
+			JSONObject json = new JSONObject();
+			attachmentDescription.put(UploadConstants.PHOTOSPHERE_DATA_KEY, json);
+		}
+		
+		return new PhotosphereDescriptor(this);
+	}
 	
 	public boolean isFilePresent() throws Exception {
 		return documentDescriptor.isFilePresent(attName);

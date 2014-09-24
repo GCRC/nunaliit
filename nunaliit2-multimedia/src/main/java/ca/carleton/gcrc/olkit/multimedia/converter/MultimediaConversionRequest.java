@@ -2,6 +2,8 @@ package ca.carleton.gcrc.olkit.multimedia.converter;
 
 import java.io.File;
 
+import ca.carleton.gcrc.olkit.multimedia.xmp.XmpInfo;
+
 
 public class MultimediaConversionRequest {
 
@@ -21,6 +23,7 @@ public class MultimediaConversionRequest {
 	private int thumbnailHeight = 0;
 	private int thumbnailWidth = 0;
 	private ExifData exifData = null;
+	private XmpInfo xmpInfo = null;
 	private MultimediaConversionProgress progress;
 	
 	public File getInFile() {
@@ -140,5 +143,12 @@ public class MultimediaConversionRequest {
 	}
 	public void setExifData(ExifData exifData) {
 		this.exifData = exifData;
+	}
+	
+	public XmpInfo getXmpData() {
+		return xmpInfo;
+	}
+	public void setXmpData(XmpInfo xmpInfo) {
+		this.xmpInfo = xmpInfo;
 	}
 }

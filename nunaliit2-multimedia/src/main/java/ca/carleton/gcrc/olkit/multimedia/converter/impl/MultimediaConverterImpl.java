@@ -19,6 +19,8 @@ import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageInfo;
 import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagick;
 import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagickInfo;
 import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagickProcessor;
+import ca.carleton.gcrc.olkit.multimedia.xmp.XmpExtractor;
+import ca.carleton.gcrc.olkit.multimedia.xmp.XmpInfo;
 
 public class MultimediaConverterImpl implements MultimediaConverter {
 
@@ -211,6 +213,12 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 		if( imInfo.isAvailable ){
 			ImageMagickProcessor imageMagick = imInfo.getProcessor();
 			imageInfo = imageMagick.getImageInfo( inFile );
+		}
+		
+		// Extract XMP data
+		XmpInfo xmpData = XmpExtractor.extractXmpInfo(inFile);
+		if( null != xmpData ){
+			request.setXmpData(xmpData);
 		}
 
 		boolean conversionRequired = false;

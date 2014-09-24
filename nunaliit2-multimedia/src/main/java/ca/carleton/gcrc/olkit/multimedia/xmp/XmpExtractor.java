@@ -1,0 +1,56 @@
+package ca.carleton.gcrc.olkit.multimedia.xmp;
+
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+
+import com.adobe.xmp.XMPMeta;
+import com.drew.imaging.ImageMetadataReader;
+import com.drew.metadata.Directory;
+import com.drew.metadata.Metadata;
+import com.drew.metadata.Tag;
+import com.drew.metadata.xmp.XmpDirectory;
+
+public class XmpExtractor {
+
+	static public XmpInfo extractXmpInfo(File file) throws Exception {
+		FileInputStream fis = null;
+		try {
+			fis = new FileInputStream(file);
+			BufferedInputStream bis = new BufferedInputStream(fis);
+			Metadata metadata = ImageMetadataReader.readMetadata(bis, true);
+			for (Directory directory : metadata.getDirectories()) {
+				System.out.println("Directory: "+directory.getName());
+			    for (Tag tag : directory.getTags()) {
+			        System.out.println(tag);
+			    }
+			    for(String err : directory.getErrors()){
+			        System.out.println("Error: "+err);
+			    }
+			    if( directory instanceof XmpDirectory ){
+			    	XmpDirectory xmpDirectory = (XmpDirectory)directory;
+			    	XMPMeta meta = xmpDirectory.getXMPMeta();
+			    	
+			    	if( null != meta ){
+			    		return new XmpInfoMeta(meta);
+			    	}
+			    }
+			}			
+		} catch(Exception e) {
+			// throw new Exception("Error reading XMP Data", e);
+			// Ignore. Most likely, tool is not able to read the file
+			
+		} finally {
+			if( null != fis ){
+				try {
+					fis.close();
+					fis = null;
+				} catch(Exception e) {
+					// Ignore
+				}
+			}
+		}
+		
+		return null;
+	}
+}

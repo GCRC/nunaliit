@@ -34,6 +34,8 @@ public class UploadConstants {
 	static public final String SOURCE_KEY = "source";
 	static public final String WORK_KEY = "work";
 	static public final String EXIF_DATA_KEY = "exif";
+	static public final String XMP_DATA_KEY = "xmp";
+	static public final String PHOTOSPHERE_DATA_KEY = "photosphere";
 	static public final String UPLOAD_ID_KEY = "uploadId";
 	
 	// Keys on server work performed

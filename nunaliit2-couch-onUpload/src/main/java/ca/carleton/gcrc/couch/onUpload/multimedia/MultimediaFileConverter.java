@@ -1,6 +1,7 @@
 package ca.carleton.gcrc.couch.onUpload.multimedia;
 
 import java.io.File;
+import java.util.Map;
 import java.util.Properties;
 
 import org.slf4j.Logger;
@@ -15,8 +16,10 @@ import ca.carleton.gcrc.couch.onUpload.conversion.ExifDataDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.FileConversionContext;
 import ca.carleton.gcrc.couch.onUpload.conversion.GeometryDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.OriginalFileDescriptor;
+import ca.carleton.gcrc.couch.onUpload.conversion.PhotosphereDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.ServerWorkDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.WorkDescriptor;
+import ca.carleton.gcrc.couch.onUpload.conversion.XmpDataDescriptor;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionMetaData;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionPlugin;
 import ca.carleton.gcrc.couch.utils.CouchNunaliitUtils;
@@ -32,6 +35,7 @@ import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagick;
 import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagickProcessor;
 import ca.carleton.gcrc.olkit.multimedia.utils.MimeUtils;
 import ca.carleton.gcrc.olkit.multimedia.utils.MimeUtils.MultimediaClass;
+import ca.carleton.gcrc.olkit.multimedia.xmp.XmpInfo;
 
 public class MultimediaFileConverter implements FileConversionPlugin {
 
@@ -292,6 +296,23 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 				
 				GeometryDescriptor geomDesc = docDescriptor.getGeometryDescription();
 				geomDesc.setGeometry(mp);
+			}
+		}
+		
+		// Report XMP Data
+		XmpInfo xmpData = request.getXmpData();
+		if( null != xmpData ){
+			XmpDataDescriptor xmpDescriptor = attDescription.getXmpDataDescription();
+
+			Map<String,String> props = xmpData.getProperties();
+			for(String key : props.keySet()){
+				String value = props.get(key);
+				xmpDescriptor.addData(key, value);
+				
+				if( key.endsWith("UsePanoramaViewer") && "true".equalsIgnoreCase(value) ){
+					PhotosphereDescriptor photosphereDescriptor = attDescription.getPhotosphereDescription();
+					photosphereDescriptor.setType("panorama");
+				}
 			}
 		}
 
