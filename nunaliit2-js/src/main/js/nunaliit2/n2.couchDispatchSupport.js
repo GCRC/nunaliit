@@ -74,6 +74,11 @@ var DispatchSupport = $n2.Class('DispatchSupport',{
 			dispatcher.register(this.dispatcherHandle, 'documentCreated', f);
 			dispatcher.register(this.dispatcherHandle, 'documentUpdated', f);
 			dispatcher.register(this.dispatcherHandle, 'editClosed', f);
+			
+			// Window resize event
+			$(window).resize(function() {
+				_this._windowResized();
+			});
 		};
 
 // This is now handled by the data source
@@ -177,6 +182,13 @@ var DispatchSupport = $n2.Class('DispatchSupport',{
 			type: type
 			,docId: doc._id
 			,doc: doc
+		});
+	}
+	
+	,_windowResized: function(){
+		var d = this._getDispatcher();
+		d.send(_this.dispatcherHandle,{
+			type: 'windowResized'
 		});
 	}
 

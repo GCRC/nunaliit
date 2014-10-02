@@ -1,0 +1,132 @@
+.n2DisplayBoxOverlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 90;
+	right: 0;
+	bottom: 0;
+}
+
+.n2DisplayBoxOuter {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	z-index: 100;
+	text-align: center;
+	line-height: 0;
+}
+
+.n2DisplayBoxOuter a img { 
+	border: none; 
+}
+
+.n2DisplayBoxImageOuter {
+	position: relative;
+	background-color: #fff;
+	width: 250px;
+	height: 250px;
+	margin: 0 auto;
+}
+
+.n2DisplayBoxImageOuter > .n2DisplayBoxNav { 
+	left: 0; 
+}
+
+.n2DisplayBoxImageInner { 
+	padding: 10px; 
+}
+
+.n2DisplayBoxImage {}
+
+.n2DisplayBoxNav {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+	z-index: 10;
+}
+
+.n2DisplayBoxNav a { 
+	outline: none;
+}
+
+.n2DisplayBoxNavBtnPrev, .n2DisplayBoxNavBtnNext {
+	width: 49%;
+	height: 100%;
+	zoom: 1;
+	display: block;
+}
+.n2DisplayBoxNavBtnPrev { 
+	left: 0; 
+	float: left;
+}
+.n2DisplayBoxNavBtnNext { 
+	right: 0; 
+	float: right;
+}
+
+.n2DisplayBoxLoading {
+	position: absolute;
+	top: 40%;
+	left: 0%;
+	height: 25%;
+	width: 100%;
+	text-align: center;
+	line-height: 0;
+}
+
+.n2DisplayBoxLoadingLink {}
+
+.n2DisplayBoxLoadingImg {
+	content: url('images/wait_icon.gif')
+}
+
+.n2DisplayBoxDataOuter {
+	font: 10px Verdana, Helvetica, sans-serif;
+	background-color: #fff;
+	margin: 0 auto;
+	line-height: 1.4em;
+	overflow: auto;
+	width: 100%;
+	padding: 0 10px 0;
+}
+
+.n2DisplayBoxDataInner {
+	padding: 0 10px; 
+	color: #666; 
+}
+
+.n2DisplayBoxDataInner .n2DisplayBoxDataDetails { 
+	width: 70%; 
+	float: left; 
+	text-align: left; 
+}	
+
+.n2DisplayBoxDataCaption { 
+	font-weight: bold; 
+}
+
+.n2DisplayBoxDataNumber {
+	display: block; 
+	clear: left; 
+	padding-bottom: 1.0em;	
+}			
+
+.n2DisplayBoxButtons {}
+
+.n2DisplayBoxButtonClose {
+	display: block;
+	width: 15px;
+	height: 15px;
+	margin: 10px auto;
+	cursor:pointer;
+	background: transparent url('images/x_icon_naked_15.png') no-repeat 0 0;
+	float: right;
+	content: ''
+}
+
+.n2DisplayBoxButtonClose:hover {
+	background-position: -15px 0;
+}
