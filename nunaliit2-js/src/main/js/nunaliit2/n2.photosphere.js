@@ -51,6 +51,8 @@ var PhotosphereDisplay = $n2.Class({
 	phi: null,
 	theta: null,
 	animateFn: null,
+	lastCanvasWidth: null,
+	lastCanvasHeight: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -73,6 +75,8 @@ var PhotosphereDisplay = $n2.Class({
 		this.animateFn = function(){
 			_this._animate();
 		};
+		this.lastCanvasWidth = -1;
+		this.lastCanvasHeight = -1;
 
 		var $elem = opts.elem;
 		this.elemId = $n2.utils.getElementIdentifier($elem);
@@ -174,6 +178,15 @@ var PhotosphereDisplay = $n2.Class({
 		var $elem = this._getElem();
 		if( $elem.length > 0 ) {
 			window.requestAnimationFrame( this.animateFn );
+			
+			var geom = this._getCanvasSize();
+			if( geom.width !== this.lastCanvasWidth 
+			 || geom.height !== this.lastCanvasHeight ){
+				this._onCanvasResize();
+				this.lastCanvasWidth = geom.width;
+				this.lastCanvasHeight = geom.height;
+			};
+			
 			this._update();
 		};
 	},
@@ -215,6 +228,15 @@ var PhotosphereDisplay = $n2.Class({
 		geom.height = $container.height();
 		
 		return geom;
+	},
+	
+	_onCanvasResize: function(){
+		var geom = this._getCanvasSize();
+		
+		this.camera.aspect = geom.width / geom.height;
+		this.camera.updateProjectionMatrix();
+
+		this.renderer.setSize( geom.width, geom.height );
 	}
 });
 

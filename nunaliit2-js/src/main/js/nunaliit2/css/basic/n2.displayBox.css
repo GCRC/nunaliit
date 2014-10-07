@@ -39,32 +39,38 @@
 
 .n2DisplayBoxImage {}
 
-.n2DisplayBoxNav {
+.n2DisplayBoxNavBtn {
 	position: absolute;
 	top: 0;
-	left: 0;
-	height: 100%;
-	width: 100%;
-	z-index: 10;
 }
 
-.n2DisplayBoxNav a { 
+a.n2DisplayBoxNavBtn { 
 	outline: none;
 }
 
 .n2DisplayBoxNavBtnPrev, .n2DisplayBoxNavBtnNext {
-	width: 49%;
+	width: 100px;
 	height: 100%;
 	zoom: 1;
 	display: block;
 }
 .n2DisplayBoxNavBtnPrev { 
 	left: 0; 
-	float: left;
+}
+.n2DisplayBoxNavBtnPrev:hover { 
+	background-image: url('images/arrow_left.png');
+	background-repeat: no-repeat;
+	background-color: transparent;
+	background-position: right center;
 }
 .n2DisplayBoxNavBtnNext { 
 	right: 0; 
-	float: right;
+}
+.n2DisplayBoxNavBtnNext:hover { 
+	background-image: url('images/arrow_right.png');
+	background-repeat: no-repeat;
+	background-color: transparent;
+	background-position: left center;
 }
 
 .n2DisplayBoxLoading {

@@ -62,12 +62,32 @@ var DisplayImageSource = $n2.Class({
 		return url;
 	},
 	
-	printText: function(index, $elem){
+	getInfo: function(index){
+		var info = null;
+		var image = this.images[index];
+		if( image ){
+			info = {
+				index: index
+				,url: image.url
+				,type: image.type
+				,isPhotosphere: image.isPhotosphere
+				,width: image.width
+				,height: image.height
+			};
+		};
+		return info;
+	},
+	
+	printText: function(index, $elem, cb){
 		$elem.empty();
 		
 		var image = this.images[index];
 		if( image && image.text){
 			$elem.text(image.text);
+			
+			if( cb ){
+				cb(index);
+			};
 		};
 	},
 	
@@ -77,17 +97,17 @@ var DisplayImageSource = $n2.Class({
 		var image = this.images[index];
 		if( image ){
 			if( image.loaded ){
-				cb({
-					index: index
-					,url: image.url
-					,width: image.width
-					,height: image.height
-				});
+				if( cb ) {
+					var info = this.getInfo(index);
+					cb(info);
+				};
 			} else {
-				if( image.cb ) {
-					image.cb.push(cb);
-				} else {
-					image.cb = [cb];
+				if( cb ) {
+					if( image.cb ) {
+						image.cb.push(cb);
+					} else {
+						image.cb = [cb];
+					};
 				};
 
 				if( !image.preload ) {
@@ -104,9 +124,20 @@ var DisplayImageSource = $n2.Class({
 						
 						// Forget onload
 						image.preload.onload=function(){};
+						
+						if( image.cb ){
+							var cbs = image.cb;
+							image.cb = null;
+							
+							var info = _this.getInfo(index);
+							for(var i=0,e=cbs.length; i<e; ++i){
+								cbs[i](info);
+							};
+						};
 					};
 					
-					image.preload.src = image.url;
+					var info = this.getInfo(index);
+					image.preload.src = info.url;
 				};
 			};
 		};
@@ -116,7 +147,173 @@ var DisplayImageSource = $n2.Class({
 		this.images.push({
 			url: url
 			,text: text
+			,type: 'image'
+			,isPhotosphere: false
 		});
+	},
+	
+	addPhotosphere: function(url, text){
+		this.images.push({
+			url: url
+			,text: text
+			,type: 'image'
+			,isPhotosphere: true
+		});
+	},
+	
+	getPreviousIndex: function(index){
+		--index;
+		if( index < 0 ){
+			index = this.images.length - 1;
+		};
+		return index;
+	},
+	
+	getNextIndex: function(index){
+		++index;
+		if( index >= this.images.length ){
+			index = 0;
+		};
+		return index;
+	}
+});
+
+//=========================================================================
+
+var DisplayImageSourceDoc = $n2.Class({
+	
+	showService: null,
+	
+	images: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			showService: null
+		},opts_);
+		
+		this.images = [];
+		
+		this.showService = opts.showService;
+	},
+	
+	getCount: function(){
+		return this.images.length;
+	},
+	
+	getUrl: function(index){
+		var url = null;
+		var image = this.images[index];
+		if( image ){
+			var doc = image.doc;
+			var docSource = doc.__n2Source;
+			url = docSource.getDocumentAttachmentUrl(doc, image.attName);
+		};
+		return url;
+	},
+	
+	printText: function(index, $elem, cb){
+		$elem.empty();
+		
+		var image = this.images[index];
+		if( image && this.showService ){
+			this.showService.displayBriefDescription(
+				$elem
+				,{
+					onDisplayed: displayed
+				}
+				,image.doc
+			);
+			$elem.text(image.text);
+		};
+		
+		function displayed($elem, doc, schema, opt_){
+			if( cb ){
+				cb(index);
+			};
+		};
+	},
+	
+	loadImage: function(index, cb){
+		var _this = this;
+		
+		var image = this.images[index];
+		if( image ){
+			if( image.loaded ){
+				if( cb ) {
+					var info = this.getInfo(index);
+					cb({
+						index: index
+						,url: info.url
+						,type: info.type
+						,isPhotoshpere: info.isPhotoshpere
+						,width: image.width
+						,height: image.height
+					});
+				};
+			} else {
+				if( cb ) {
+					if( image.cb ) {
+						image.cb.push(cb);
+					} else {
+						image.cb = [cb];
+					};
+				};
+
+				if( !image.preload ) {
+					var info = this.getInfo(index);
+					
+					image.preload = new Image();
+					image.preload.onload = function() {
+
+						var image = _this.images[index];
+						
+						image.loaded = true;
+						
+						// Save original width and height
+						image.width = image.preload.width;
+						image.height = image.preload.height;
+						
+						// Forget onload
+						image.preload.onload=function(){};
+						
+						if( image.cb ){
+							var cbs = image.cb;
+							image.cb = null;
+							
+							for(var i=0,e=cbs.length; i<e; ++i){
+								cbs[i]({
+									index: index
+									,url: info.url
+									,type: info.type
+									,isPhotosphere: info.isPhotosphere
+									,width: image.width
+									,height: image.height
+								});
+							};
+						};
+					};
+					
+					image.preload.src = info.url;
+				};
+			};
+		};
+	},
+	
+	addDocument: function(doc, attachmentName){
+		var att = null;
+		if( doc 
+		 && doc.nunaliit_attachments 
+		 && doc.nunaliit_attachments[attachmentName] ){
+			att = doc.nunaliit_attachments[attachmentName];
+		};
+		
+		if( att ){
+			this.images.push({
+				doc: doc
+				,att: att
+				,attName: attachmentName
+			});
+		};
 	},
 	
 	getPreviousIndex: function(index){
@@ -153,6 +350,10 @@ var DisplayBox = $n2.Class({
 	imageSource: null,
 	
 	currentImageIndex: null,
+	
+	currentImageWidth: null,
+	
+	currentImageHeight: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -182,13 +383,6 @@ var DisplayBox = $n2.Class({
 				this.imageSource.addImage(opts.url, opts.text);
 			};
 		};
-		
-		// Unset total images in imageArray
-		this.settings.imageArray = [
-			[opts.url, opts.text]
-		];
-		// Unset image active information
-		this.settings.activeImage = 0;
 		
 		this._draw();
 		
@@ -224,20 +418,25 @@ var DisplayBox = $n2.Class({
 		var $imageInnerDiv = $('<div>')
 			.addClass('n2DisplayBoxImageInner')
 			.appendTo($imageOuterDiv);
-		var $image = $('<img>')
-			.addClass('n2DisplayBoxImage')
-			.appendTo($imageInnerDiv);
-		var $navDiv = $('<div>')
-			.addClass('n2DisplayBoxNav')
-			.appendTo($imageInnerDiv);
+//		var $navDiv = $('<div>')
+//			.addClass('n2DisplayBoxNav')
+//			.appendTo($imageInnerDiv);
 		var $btnPrev = $('<a>')
 			.attr('href','#')
-			.addClass('n2DisplayBoxNavBtnPrev')
-			.appendTo($navDiv);
+			.addClass('n2DisplayBoxNavBtn n2DisplayBoxNavBtnPrev')
+			.appendTo($imageInnerDiv)
+			.bind('click',function() {
+				_this._previousImage();
+				return false;
+			});
 		var $btnNext = $('<a>')
 			.attr('href','#')
-			.addClass('n2DisplayBoxNavBtnNext')
-			.appendTo($navDiv);
+			.addClass('n2DisplayBoxNavBtn n2DisplayBoxNavBtnNext')
+			.appendTo($imageInnerDiv)
+			.bind('click',function() {
+				_this._nextImage();
+				return false;
+			});
 		var $loadingDiv = $('<div>')
 			.addClass('n2DisplayBoxLoading')
 			.appendTo($imageInnerDiv);
@@ -272,7 +471,7 @@ var DisplayBox = $n2.Class({
 		var $dataButtonsDiv = $('<div>')
 			.addClass('n2DisplayBoxButtons')
 			.appendTo($dataInnerDiv);
-		var $buttonClose = $('<a>')
+		$('<a>')
 			.attr('href','#')
 			.addClass('n2DisplayBoxButtonClose')
 			//.text( _loc('Close') )
@@ -281,7 +480,6 @@ var DisplayBox = $n2.Class({
 				_this._close();
 				return false;
 			});
-		
 		
 		// Get page sizes and scroll
 		var pageSize = this._getPageSize();
@@ -299,14 +497,12 @@ var DisplayBox = $n2.Class({
 		this._resizeOverlay();
 
 		// Calculate top and left offset for the jquery-lightbox div object and show it
-		$displayDiv.css({
-			top:	pageScroll.yScroll + (pageSize.windowHeight / 10),
-			left:	pageScroll.xScroll
-		}).show()
-			.click(function(){
-				_this._close();
-				return false;
-			});
+		$displayDiv
+			.css({
+				top:	pageScroll.yScroll + (pageSize.windowHeight / 10),
+				left:	pageScroll.xScroll
+			})
+			.show();
 	},
 	
 	_close: function(){
@@ -381,8 +577,8 @@ var DisplayBox = $n2.Class({
 		
 		this.resizing = true;
 		
-		var intImageWidth = this.settings.imageArray[this.settings.activeImage][2];
-		var intImageHeight = this.settings.imageArray[this.settings.activeImage][3];
+		var intImageWidth = this.currentImageWidth;
+		var intImageHeight = this.currentImageHeight;
 		if( this.settings.constrainImage ) {
 			var pageSizes = this._getPageSize();
 			var ratio = 1;
@@ -421,15 +617,6 @@ var DisplayBox = $n2.Class({
 		var intDiffW = intCurrentWidth - intWidth;
 		var intDiffH = intCurrentHeight - intHeight;
 		
-		// Performance the effect
-//		$displayDiv.find('.n2DisplayBoxImageOuter').animate(
-//			{
-//				width: intWidth
-//				,height: intHeight
-//			}
-//			,this.settings.containerResizeSpeed
-//			,function() { _this._showImage(); }
-//		);
 		$displayDiv.find('.n2DisplayBoxImageOuter').css({
 			width: intWidth
 			,height: intHeight
@@ -437,14 +624,6 @@ var DisplayBox = $n2.Class({
 		window.setTimeout(function(){
 			_this._showImage(); 
 		},0);
-		
-//		if ( ( intDiffW == 0 ) && ( intDiffH == 0 ) ) {
-//			if ( $.browser.msie ) {
-//				___pause(250);
-//			} else {
-//				___pause(100);	
-//			}
-//		};
 		
 		$displayDiv.find('.n2DisplayBoxDataOuter').css({ width: intImageWidth });
 		$displayDiv.find('.n2DisplayBoxNavBtnPrev').css('height', intImageHeight + (this.settings.containerBorderSize * 2));
@@ -467,28 +646,36 @@ var DisplayBox = $n2.Class({
 	},
 	
 	_showImageData: function() {
+		var _this = this;
+		
 		var $displayDiv = this._getDisplayDiv();
 
 		$displayDiv.find('.n2DisplayBoxDataOuter').slideDown('fast');
-		$displayDiv.find('.n2DisplayBoxDataCaption').hide();
-		if( this.settings.imageArray[this.settings.activeImage][1] ) {
-			$displayDiv.find('.n2DisplayBoxDataCaption')
-				.html(this.settings.imageArray[this.settings.activeImage][1])
-				.show();
-		};
-		// If we have a image set, display 'Image X of X'
-		if( this.settings.imageArray.length > 1 ) {
-			var current = this.settings.activeImage + 1;
-			var count = this.settings.imageArray.length;
+		
+		var $caption = $displayDiv.find('.n2DisplayBoxDataCaption').hide();
+		this.imageSource.printText(
+			this.currentImageIndex
+			,$caption
+			,function(index){
+				if( _this.currentImageIndex == index ){
+					$caption.show();
+				};
+			}
+		);
+
+		// If we have an image set, display 'Image X of X'
+		var imageCount = this.imageSource.getCount();
+		if( imageCount > 1 ) {
+			var current = this.currentImageIndex + 1;
 			var label = _loc('{index}/{count}', {
 				index: current
-				,count: count
+				,count: imageCount
 			});
 			
 			$displayDiv.find('.n2DisplayBoxDataNumber')
 				.text(label)
 				.show();
-		}		
+		};
 	},
 	
 	_setNavigation: function() {
@@ -496,54 +683,40 @@ var DisplayBox = $n2.Class({
 		
 		var $displayDiv = this._getDisplayDiv();
 
-		$displayDiv.find('.n2DisplayBoxNav').show();
+		$displayDiv.find('.n2DisplayBoxNavBtn').show();
 
 		// Instead to define this configuration in CSS file, we define here. And it's need to IE. Just.
 //		$('#lightbox-nav-btnPrev,#lightbox-nav-btnNext').css({ 'background' : 'transparent url(' + settings.imageLocation + settings.imageBlank + ') no-repeat' });
 		
 		// Show the prev button, if not the first image in set
-		if( this.settings.activeImage != 0 ) {
-			if( this.settings.fixedNavigation ) {
-				$displayDiv.find('.n2DisplayBoxNavBtnPrev')
-					.bind('click',function() {
-						_this.settings.activeImage = _this.settings.activeImage - 1;
-						_this._setImageToView();
-						return false;
-					});
-			} else {
+		if( this.currentImageIndex != 0 ) {
+			if( !this.settings.fixedNavigation ) {
 				// Show the images button for Next buttons
-				$displayDiv.find('.n2DisplayBoxNavBtnPrev')
-					.show()
-					.bind('click',function() {
-						_this.settings.activeImage = _this.settings.activeImage - 1;
-						_this._setImageToView();
-						return false;
-					});
+				$displayDiv.find('.n2DisplayBoxNavBtnPrev').show();
 			};
 		};
 		
 		// Show the next button, if not the last image in set
-		if( this.settings.activeImage != ( this.settings.imageArray.length -1 ) ) {
-			if( this.settings.fixedNavigation ) {
-				$displayDiv.find('.n2DisplayBoxNavBtnNext')
-					.bind('click',function() {
-						_this.settings.activeImage = _this.settings.activeImage + 1;
-						_this._setImageToView();
-						return false;
-					});
-			} else {
+		var count = this.imageSource.getCount();
+		if( this.currentImageIndex != (count - 1) ) {
+			if( !this.settings.fixedNavigation ) {
 				// Show the images button for Next buttons
-				$displayDiv.find('.n2DisplayBoxNavBtnNext')
-					.show().bind('click',function() {
-						_this.settings.activeImage = _this.settings.activeImage + 1;
-						_this._setImageToView();
-						return false;
-					});
+				$displayDiv.find('.n2DisplayBoxNavBtnNext').show();
 			};
 		};
 		
 		// Enable keyboard navigation
 		//_enable_keyboard_navigation();
+	},
+	
+	_nextImage: function(){
+		this.currentImageIndex = this.imageSource.getNextIndex(this.currentImageIndex);
+		this._setImageToView();
+	},
+	
+	_previousImage: function(){
+		this.currentImageIndex = this.imageSource.getPreviousIndex(this.currentImageIndex);
+		this._setImageToView();
 	},
 	
 	_setImageToView: function() { // show the loading
@@ -561,39 +734,50 @@ var DisplayBox = $n2.Class({
 			$displayDiv.find('.n2DisplayBoxImage').hide();
 			$displayDiv.find('.n2DisplayBoxDataOuter').hide();
 			$displayDiv.find('.n2DisplayBoxDataNumber').hide();
-			$displayDiv.find('.n2DisplayBoxNav').hide();
+			$displayDiv.find('.n2DisplayBoxNavBtn').hide();
 		};
 		
-		// Image preload process
-		var objImagePreloader = new Image();
-		objImagePreloader.onload = function() {
-			$displayDiv.find('.n2DisplayBoxImage')
-				.attr('src',_this.settings.imageArray[_this.settings.activeImage][0]);
-			
-			// Save original width and height
-			_this.settings.imageArray[_this.settings.activeImage][2] = objImagePreloader.width;
-			_this.settings.imageArray[_this.settings.activeImage][3] = objImagePreloader.height;
-			
-			// Performance an effect in the image container resizing it
-			_this._resizeContainerImageBox()
-			;
-			//	clear onLoad, IE behaves irratically with animated gifs otherwise
-			objImagePreloader.onload=function(){};
-		};
-		
-		objImagePreloader.src = this.settings.imageArray[this.settings.activeImage][0];
+		this.imageSource.loadImage(this.currentImageIndex, function(data){
+			// Load only current image
+			if( _this.currentImageIndex == data.index ){
+				var $divImageInner = $displayDiv.find('.n2DisplayBoxImageInner');
+				$divImageInner.find('.n2DisplayBoxImage').remove();
+				
+				if( 'image' === data.type ){
+					if( data.isPhotosphere 
+					 && $n2.photosphere 
+					 && $n2.photosphere.IsAvailable() ) {
+						var $photosphere = $('<div>')
+							.addClass('n2DisplayBoxImage')
+							.prependTo($divImageInner);
+						new $n2.photosphere.PhotosphereDisplay({
+							elem: $photosphere
+							,url: data.url
+						});
+					} else {
+						$('<img>')
+							.addClass('n2DisplayBoxImage')
+							.attr('src',data.url)
+							.prependTo($divImageInner);
+					};
+				};
+				
+				// Save original width and height
+				_this.currentImageWidth = data.width;
+				_this.currentImageHeight = data.height;
+				
+				// Performance an effect in the image container resizing it
+				_this._resizeContainerImageBox();
+			};
+		});
 	},
 	
 	_preloadNeighborImages: function() {
-		if( (this.settings.imageArray.length -1) > this.settings.activeImage ) {
-			objNext = new Image();
-			objNext.src = this.settings.imageArray[this.settings.activeImage + 1][0];
-		};
+		var previousIndex = this.imageSource.getPreviousIndex(this.currentImageIndex);
+		this.imageSource.loadImage(previousIndex);
 		
-		if( this.settings.activeImage > 0 ) {
-			objPrev = new Image();
-			objPrev.src = this.settings.imageArray[this.settings.activeImage -1][0];
-		}
+		var nextIndex = this.imageSource.getNextIndex(this.currentImageIndex);
+		this.imageSource.loadImage(nextIndex);
 	},
 	
 	_getDisplayDiv: function() {
@@ -687,13 +871,6 @@ var DisplayBox = $n2.Class({
 			,overlayOpacity: 0.8		// (integer) Opacity value to overlay; inform: 0.X. Where X are number from 0 to 9
 			// Configuration related to navigation
 			,fixedNavigation: false		// (boolean) Boolean that informs if the navigation (next and prev button) will be fixed or not in the interface.
-			// Configuration related to images
-			,imageLocation: 'js-external/css/jquery.lightbox.resources/'
-			,imageLoading: 'lightbox-ico-loading.gif'		// (string) Path and the name of the loading icon
-			,imageBtnPrev: 'lightbox-btn-prev.gif'			// (string) Path and the name of the prev button image
-			,imageBtnNext: 'lightbox-btn-next.gif'			// (string) Path and the name of the next button image
-			,imageBtnClose: 'lightbox-btn-close.gif'		// (string) Path and the name of the close btn
-			,imageBlank: 'lightbox-blank.gif'			// (string) Path and the name of a blank image (one pixel)
 			// Configuration related to container image box
 			,containerBorderSize: 10			// (integer) If you adjust the padding in the CSS for the container, #lightbox-container-image-box, you will need to update this value
 			,containerResizeSpeed: 400		// (integer) Specify the resize duration of container image. These number are miliseconds. 400 is default.
@@ -702,8 +879,6 @@ var DisplayBox = $n2.Class({
 			,keyToPrev: 'p'		// (string) (p = previous) Letter to show the previous image
 			,keyToNext: 'n'		// (string) (n = next) Letter to show the next image.
 			// Don't alter these variables in any way
-			,imageArray: []
-			,activeImage: 0
 			,constrainImage: true
 		};
 	}
@@ -713,6 +888,7 @@ var DisplayBox = $n2.Class({
 
 $n2.displayBox = {
 	DisplayBox: DisplayBox
+	,DisplayImageSource: DisplayImageSource
 };	
 	
 })(jQuery,nunaliit2);
