@@ -50,9 +50,8 @@ $n2.couchRequests = $n2.Class({
 	
 	,initialize: function(options_) {
 		this.options = $n2.extend({},{
-			db: null
+			documentSource: null
 			,userDb: null
-			,designDoc: null
 			,dispatchService: null
 			,userServerUrl: null
 		},options_);
@@ -220,7 +219,7 @@ $n2.couchRequests = $n2.Class({
 		
 		// Documents
 		var cachedDocs = null;
-		if( requests.docs && this.options.db ) {
+		if( requests.docs && this.options.documentSource ) {
 			var docIds = [];
 			for(var docId in requests.docs) {
 				// Check cache
@@ -239,7 +238,7 @@ $n2.couchRequests = $n2.Class({
 
 			// Request the required documents from db
 			if( docIds.length ) {
-				this.options.db.getDocuments({
+				this.options.documentSource.getDocuments({
 					docIds: docIds
 					,onSuccess: function(docs) {
 						_this._callDocumentListeners(docs, requests);

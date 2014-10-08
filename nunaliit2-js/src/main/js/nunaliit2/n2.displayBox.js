@@ -53,15 +53,6 @@ var DisplayImageSource = $n2.Class({
 		return this.images.length;
 	},
 	
-	getUrl: function(index){
-		var url = null;
-		var image = this.images[index];
-		if( image ){
-			url = image.url;
-		};
-		return url;
-	},
-	
 	getInfo: function(index){
 		var info = null;
 		var image = this.images[index];
@@ -200,15 +191,31 @@ var DisplayImageSourceDoc = $n2.Class({
 		return this.images.length;
 	},
 	
-	getUrl: function(index){
-		var url = null;
+	getInfo: function(index){
+		var info = null;
 		var image = this.images[index];
 		if( image ){
 			var doc = image.doc;
 			var docSource = doc.__n2Source;
-			url = docSource.getDocumentAttachmentUrl(doc, image.attName);
+			var url = docSource.getDocumentAttachmentUrl(doc, image.attName);
+
+			var type = image.att.fileClass;
+			var isPhotoshpere = false;
+			if( image.att.photosphere 
+			 && 'panorama' === image.att.photosphere.type ){
+				isPhotoshpere = true;
+			};
+			
+			info = {
+				index: index
+				,url: url
+				,type: type
+				,isPhotosphere: isPhotoshpere
+				,width: image.width
+				,height: image.height
+			};
 		};
-		return url;
+		return info;
 	},
 	
 	printText: function(index, $elem, cb){
@@ -303,8 +310,9 @@ var DisplayImageSourceDoc = $n2.Class({
 		var att = null;
 		if( doc 
 		 && doc.nunaliit_attachments 
-		 && doc.nunaliit_attachments[attachmentName] ){
-			att = doc.nunaliit_attachments[attachmentName];
+		 && doc.nunaliit_attachments.files 
+		 && doc.nunaliit_attachments.files[attachmentName] ){
+			att = doc.nunaliit_attachments.files[attachmentName];
 		};
 		
 		if( att ){
@@ -417,7 +425,11 @@ var DisplayBox = $n2.Class({
 			.appendTo($displayDiv);
 		var $imageInnerDiv = $('<div>')
 			.addClass('n2DisplayBoxImageInner')
-			.appendTo($imageOuterDiv);
+			.appendTo($imageOuterDiv)
+			.click(function(){
+				// Do not close when clicking picture
+				return false;
+			});
 //		var $navDiv = $('<div>')
 //			.addClass('n2DisplayBoxNav')
 //			.appendTo($imageInnerDiv);
@@ -455,7 +467,11 @@ var DisplayBox = $n2.Class({
 		// Data area
 		var $dataOuterDiv = $('<div>')
 			.addClass('n2DisplayBoxDataOuter')
-			.appendTo($displayDiv);
+			.appendTo($displayDiv)
+			.click(function(){
+				// Do not close when clicking data
+				return false;
+			});
 		var $dataInnerDiv = $('<div>')
 			.addClass('n2DisplayBoxDataInner')
 			.appendTo($dataOuterDiv);
@@ -486,10 +502,12 @@ var DisplayBox = $n2.Class({
 		var pageScroll = this._getPageScroll();
 
 		// Style overlay and show it
-		$overlayDiv.css({
-			backgroundColor: this.settings.overlayBgColor
-			,opacity: this.settings.overlayOpacity
-		}).fadeIn()
+		$overlayDiv
+			.css({
+				backgroundColor: this.settings.overlayBgColor
+				,opacity: this.settings.overlayOpacity
+			})
+			.fadeIn()
 			.click(function(){
 				_this._close();
 				return false;
@@ -502,7 +520,11 @@ var DisplayBox = $n2.Class({
 				top:	pageScroll.yScroll + (pageSize.windowHeight / 10),
 				left:	pageScroll.xScroll
 			})
-			.show();
+			.show()
+			.click(function(){
+				_this._close();
+				return false;
+			});
 	},
 	
 	_close: function(){
@@ -548,15 +570,15 @@ var DisplayBox = $n2.Class({
 
 		// Get page dimensions
 		var pageSizes = this._getPageSize();
-		var pageScroll = this._getPageScroll();
+//		var pageScroll = this._getPageScroll();
 
-		$n2.log('pageWidth='+pageSizes.pageWidth
-			+' pageHeight='+pageSizes.pageHeight
-			+' windowWidth='+pageSizes.windowWidth
-			+' windowHeight='+pageSizes.windowHeight
-			+' xScroll='+pageScroll.xScroll
-			+' yScroll='+pageScroll.yScroll
-		);
+//		$n2.log('pageWidth='+pageSizes.pageWidth
+//			+' pageHeight='+pageSizes.pageHeight
+//			+' windowWidth='+pageSizes.windowWidth
+//			+' windowHeight='+pageSizes.windowHeight
+//			+' xScroll='+pageScroll.xScroll
+//			+' yScroll='+pageScroll.yScroll
+//		);
 		
 		// Style overlay and show it
 		$overlayDiv
@@ -683,25 +705,24 @@ var DisplayBox = $n2.Class({
 		
 		var $displayDiv = this._getDisplayDiv();
 
-		$displayDiv.find('.n2DisplayBoxNavBtn').show();
-
-		// Instead to define this configuration in CSS file, we define here. And it's need to IE. Just.
-//		$('#lightbox-nav-btnPrev,#lightbox-nav-btnNext').css({ 'background' : 'transparent url(' + settings.imageLocation + settings.imageBlank + ') no-repeat' });
-		
-		// Show the prev button, if not the first image in set
-		if( this.currentImageIndex != 0 ) {
-			if( !this.settings.fixedNavigation ) {
-				// Show the images button for Next buttons
-				$displayDiv.find('.n2DisplayBoxNavBtnPrev').show();
-			};
+		var imageCount = this.imageSource.getCount();
+		if( imageCount > 1 ) {
+			$displayDiv.find('.n2DisplayBoxNavBtn').show();
+		} else {
+			$displayDiv.find('.n2DisplayBoxNavBtn').hide();
 		};
 		
-		// Show the next button, if not the last image in set
-		var count = this.imageSource.getCount();
-		if( this.currentImageIndex != (count - 1) ) {
-			if( !this.settings.fixedNavigation ) {
+		if( !this.settings.fixedNavigation ) {
+			// Show the prev button, if not the first image in set
+			if( this.currentImageIndex == 0 ) {
 				// Show the images button for Next buttons
-				$displayDiv.find('.n2DisplayBoxNavBtnNext').show();
+				$displayDiv.find('.n2DisplayBoxNavBtnPrev').hide();
+			};
+
+			// Show the next button, if not the last image in set
+			if( this.currentImageIndex == (imageCount - 1) ) {
+				// Show the images button for Next buttons
+				$displayDiv.find('.n2DisplayBoxNavBtnNext').hide();
 			};
 		};
 		
@@ -867,17 +888,12 @@ var DisplayBox = $n2.Class({
 	_initSettings: function(){
 		this.settings = {
 			// Configuration related to overlay
-			overlayBgColor: '#000'		// (string) Background color to overlay; inform a hexadecimal value like: #RRGGBB. Where RR, GG, and BB are the hexadecimal values for the red, green, and blue values of the color.
-			,overlayOpacity: 0.8		// (integer) Opacity value to overlay; inform: 0.X. Where X are number from 0 to 9
+			overlayBgColor: '#000'
+			,overlayOpacity: 0.8
 			// Configuration related to navigation
-			,fixedNavigation: false		// (boolean) Boolean that informs if the navigation (next and prev button) will be fixed or not in the interface.
+			,fixedNavigation: false
 			// Configuration related to container image box
-			,containerBorderSize: 10			// (integer) If you adjust the padding in the CSS for the container, #lightbox-container-image-box, you will need to update this value
-			,containerResizeSpeed: 400		// (integer) Specify the resize duration of container image. These number are miliseconds. 400 is default.
-			// Configuration related to keyboard navigation
-			,keyToClose: 'c'		// (string) (c = close) Letter to close the jQuery lightBox interface. Beyond this letter, the letter X and the SCAPE key is used to.
-			,keyToPrev: 'p'		// (string) (p = previous) Letter to show the previous image
-			,keyToNext: 'n'		// (string) (n = next) Letter to show the next image.
+			,containerBorderSize: 10
 			// Don't alter these variables in any way
 			,constrainImage: true
 		};
@@ -889,6 +905,7 @@ var DisplayBox = $n2.Class({
 $n2.displayBox = {
 	DisplayBox: DisplayBox
 	,DisplayImageSource: DisplayImageSource
+	,DisplayImageSourceDoc: DisplayImageSourceDoc
 };	
 	
 })(jQuery,nunaliit2);

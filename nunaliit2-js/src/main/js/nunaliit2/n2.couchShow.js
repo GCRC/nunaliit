@@ -398,19 +398,30 @@ var DomStyler = $n2.Class({
 						uploadType = 'photosphere';
 					};
 				};
-
-				// Generate brief HTML
-				var $temp = $('<div></div>');
-				_this.showService._displayDocumentBrief($temp,doc,{
-					onDisplayed:function(){
-						var html = $temp.html();
-						mediaOptions.metaDataHtml = html;
-							
-						// Display media
-						mediaOptions.type = uploadType;
-						$n2.mediaDisplay.displayMedia(mediaOptions);
-					}
-				});
+				
+				if( 'image' === uploadType || 'photosphere' === uploadType ){
+					var imageSrc = new nunaliit2.displayBox.DisplayImageSourceDoc({
+						showService: _this.showService
+					});
+					imageSrc.addDocument(doc, attachmentName);
+					new nunaliit2.displayBox.DisplayBox({
+						imageSource: imageSrc
+					});
+					
+				} else {
+					// Generate brief HTML
+					var $temp = $('<div></div>');
+					_this.showService._displayDocumentBrief($temp,doc,{
+						onDisplayed:function(){
+							var html = $temp.html();
+							mediaOptions.metaDataHtml = html;
+								
+							// Display media
+							mediaOptions.type = uploadType;
+							$n2.mediaDisplay.displayMedia(mediaOptions);
+						}
+					});
+				};
 				
 				return false;
 			};

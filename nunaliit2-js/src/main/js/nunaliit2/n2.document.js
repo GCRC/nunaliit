@@ -36,12 +36,12 @@ var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 
 var dataSourceFromId = {};
 
-function getDataSourceFromId(id){
+function getDocumentSourceFromId(id){
 	return dataSourceFromId[id];
 };
 
 // *******************************************************
-var DataSource = $n2.Class({
+var DocumentSource = $n2.Class({
 	id: null
 	
 	,initialize: function(opts_){
@@ -90,6 +90,18 @@ var DataSource = $n2.Class({
 		);
 		
 		opts.onError('Data source does not support the "getDocument" call.');
+	}
+
+	,getDocuments: function(opts_){
+		var opts = $n2.extend({
+				docIds: null
+				,onSuccess: function(docs){}
+				,onError: function(errorMsg){}
+			}
+			,opts_
+		);
+		
+		opts.onError('Data source does not support the "getDocuments" call.');
 	}
 
 	,getDocumentAttachmentUrl: function(doc, attachmentName){
@@ -206,7 +218,7 @@ var DocumentWrapper = $n2.Class({
 		this.doc = doc;
 	}
 
-	,getDataSource: function(){
+	,getDocumentSource: function(){
 		var source = null;
 		if( this.doc ){
 			source = this.doc.__n2Source;
@@ -217,9 +229,9 @@ var DocumentWrapper = $n2.Class({
 
 //*******************************************************
 $n2.document = {
-	DataSource: DataSource
+	DocumentSource: DocumentSource
 	,DocumentWrapper: DocumentWrapper
-	,getDataSourceFromId: getDataSourceFromId
+	,getDocumentSourceFromId: getDocumentSourceFromId
 };
 
 })(nunaliit2);

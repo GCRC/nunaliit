@@ -1170,6 +1170,8 @@ function computeViewObj(origObj, context, parent) {
 		view[PARENT] = parent;
 
 		for(var key in origObj) {
+			if('__n2Source' === key) continue;
+			
 			var value = computeViewObj(origObj[key], context, view);
 			view[key] = value;
 			view[ITERATE].push({key:key,value:value});

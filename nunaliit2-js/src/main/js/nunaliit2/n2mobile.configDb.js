@@ -494,7 +494,7 @@ alert('Get configuration');
 		configuration.atlasDb = this.getLocalDb();
 		configuration.atlasDesign = configuration.atlasDb.getDesignDoc({ddName:'mobile'});
 
-		configuration.documentSource = new $n2.couchDocument.CouchDataSource({
+		configuration.documentSource = new $n2.couchDocument.CouchDocumentSource({
 			id: 'main'
 			,db: configuration.atlasDb
 			,dispatchService: configuration.directory.dispatchService

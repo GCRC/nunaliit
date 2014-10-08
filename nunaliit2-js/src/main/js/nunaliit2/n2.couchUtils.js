@@ -476,6 +476,8 @@ var n2utils = {
 			} else {
 				// This is not what we are looking for. Continue searching.
 				for(var key in obj) {
+					if( '__n2Source' === key ) continue;
+					
 					var value = obj[key];
 					
 					n2utils.extractSpecificType(value,type,result);

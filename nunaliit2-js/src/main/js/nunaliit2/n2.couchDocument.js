@@ -86,7 +86,7 @@ function adjustDocument(doc) {
 }
 
 // *******************************************************
-var CouchDataSource = $n2.Class($n2.document.DataSource, {
+var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 	
 	db: null
 	
@@ -105,7 +105,7 @@ var CouchDataSource = $n2.Class($n2.document.DataSource, {
 			,opts_
 		);
 		
-		$n2.document.DataSource.prototype.initialize.call(this,opts);
+		$n2.document.DocumentSource.prototype.initialize.call(this,opts);
 
 		this.db = opts.db;
 		this.dispatchService = opts.dispatchService;
@@ -172,6 +172,8 @@ var CouchDataSource = $n2.Class($n2.document.DataSource, {
 			,opts_
 		);
 		
+		var _this = this;
+		
 		this.db.getDocument({
 			docId: opts.docId
 			,rev: opts.rev
@@ -180,8 +182,32 @@ var CouchDataSource = $n2.Class($n2.document.DataSource, {
 			,conflicts: opts.conflicts
 			,deleted_conflicts: opts.deleted_conflicts
 			,onSuccess: function(doc){
-				doc.__n2Source = this;
+				doc.__n2Source = _this;
 				opts.onSuccess(doc);
+			}
+			,onError: opts.onError
+		});
+	}
+
+	,getDocuments: function(opts_){
+		var opts = $n2.extend({
+				docIds: null
+				,onSuccess: function(docs){}
+				,onError: function(errorMsg){}
+			}
+			,opts_
+		);
+		
+		var _this = this;
+		
+		this.db.getDocuments({
+			docIds: opts.docIds
+			,onSuccess: function(docs){
+				for(var i=0,e=docs.length; i<e; ++i){
+					var doc = docs[i];
+					doc.__n2Source = _this;
+				};
+				opts.onSuccess(docs);
 			}
 			,onError: opts.onError
 		});
@@ -714,7 +740,7 @@ var GeometryRepository = $n2.Class({
 });
 
 //*******************************************************
-var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
+var CouchDocumentSourceWithSubmissionDb = $n2.Class(CouchDocumentSource, {
 	
 	submissionDb: null
 	
@@ -730,7 +756,7 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 			,submissionServletUrl: null
 		},opts_);
 		
-		CouchDataSource.prototype.initialize.call(this,opts);
+		CouchDocumentSource.prototype.initialize.call(this,opts);
 
 		var _this = this;
 		
@@ -950,8 +976,8 @@ var CouchDataSourceWithSubmissionDb = $n2.Class(CouchDataSource, {
 
 //*******************************************************
 $n2.couchDocument = {
-	CouchDataSource: CouchDataSource
-	,CouchDataSourceWithSubmissionDb: CouchDataSourceWithSubmissionDb
+	CouchDocumentSource: CouchDocumentSource
+	,CouchDocumentSourceWithSubmissionDb: CouchDocumentSourceWithSubmissionDb
 	,adjustDocument: adjustDocument
 };
 

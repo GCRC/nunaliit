@@ -127,7 +127,7 @@ input[type="text"], input[type="password"], textarea {
 	padding:0;
 }
 .nunaliit_atlas .nunaliit_header-nav>ul>li>ul>li, .nunaliit_atlas .nunaliit_header-nav>ul>li>ul>li:hover {
-	background-image: url('../images/left-arrow.png');
+	/* background-image: url('../images/left-arrow.png'); */
 	background-repeat: no-repeat;
 	background-position: center right;
 }

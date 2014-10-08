@@ -160,7 +160,7 @@ function Configure(options_){
 		
 		var couchDbDs = null;
 		if( configuration.submissionDb ){
-			couchDbDs = new $n2.couchDocument.CouchDataSourceWithSubmissionDb({
+			couchDbDs = new $n2.couchDocument.CouchDocumentSourceWithSubmissionDb({
 				id: 'main'
 				,db: configuration.atlasDb
 				,submissionDb: configuration.submissionDb
@@ -168,7 +168,7 @@ function Configure(options_){
 				,dispatchService: configuration.directory.dispatchService
 			});
 		} else {
-			couchDbDs = new $n2.couchDocument.CouchDataSource({
+			couchDbDs = new $n2.couchDocument.CouchDocumentSource({
 				id: 'main'
 				,db: configuration.atlasDb
 				,dispatchService: configuration.directory.dispatchService
@@ -246,9 +246,8 @@ function Configure(options_){
 	 	configuration.mediaRelativePath = options.mediaUrl;
 
 	 	configuration.directory.requestService = new $n2.couchRequests({
-			db: configuration.atlasDb
+			documentSource: configuration.documentSource
 			,userDb: $n2.couch.getUserDb()
-			,designDoc: configuration.atlasDesign
 			,dispatchService: configuration.directory.dispatchService
 			,userServerUrl: options.userServerUrl
 		});
