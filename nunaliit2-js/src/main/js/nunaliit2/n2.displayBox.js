@@ -252,7 +252,7 @@ var DisplayImageSourceDoc = $n2.Class({
 						index: index
 						,url: info.url
 						,type: info.type
-						,isPhotoshpere: info.isPhotoshpere
+						,isPhotosphere: info.isPhotosphere
 						,width: image.width
 						,height: image.height
 					});
@@ -538,6 +538,8 @@ var DisplayBox = $n2.Class({
 		
 		// Show some elements to avoid conflict with overlay in IE. These elements appear above the overlay.
 		$('embed, object, select').css('visibility', 'visible');
+		
+		this.imageSource = null;
 	},
 	
 	_windowResized: function(){

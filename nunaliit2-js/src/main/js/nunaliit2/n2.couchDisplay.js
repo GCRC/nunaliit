@@ -1879,7 +1879,12 @@ var TreeDocumentViewer = $n2.Class({
 			doc: null
 		},opts_);
 		
-		this.doc = opts.doc;
+		this.doc = {};
+		for(var key in opts.doc){
+			if( key !== '__n2Source' ){
+				this.doc[key] = opts.doc[key];
+			};
+		};
 		
 		this._display();
 	},

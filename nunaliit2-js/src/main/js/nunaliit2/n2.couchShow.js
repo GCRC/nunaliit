@@ -400,12 +400,16 @@ var DomStyler = $n2.Class({
 				};
 				
 				if( 'image' === uploadType || 'photosphere' === uploadType ){
-					var imageSrc = new nunaliit2.displayBox.DisplayImageSourceDoc({
-						showService: _this.showService
-					});
-					imageSrc.addDocument(doc, attachmentName);
-					new nunaliit2.displayBox.DisplayBox({
-						imageSource: imageSrc
+					_this.showService.displayImageSourceFactory.getImageSourceForDoc({
+						doc: doc
+						,attName: attachmentName
+						,showService: _this.showService
+						,onSuccess: function(imageSource, doc){
+							new nunaliit2.displayBox.DisplayBox({
+								imageSource: imageSource
+							});
+						}
+						,onError: function(err){}
 					});
 					
 				} else {
@@ -818,6 +822,8 @@ var Show = $n2.Class({
 	
 	customService: null,
 	
+	displayImageSourceFactory: null,
+	
 	defaultSchema: null,
 	
 	displayFunction: null,
@@ -847,6 +853,7 @@ var Show = $n2.Class({
 			,dispatchService: null
 			,schemaRepository: null
 			,customService: null
+			,displayImageSourceFactory: null
 			,defaultSchema: null
 			,displayFunction: null
 			,editFunction: null
@@ -869,6 +876,7 @@ var Show = $n2.Class({
 		this.dispatchService = opts.dispatchService;
 		this.schemaRepository = opts.schemaRepository;
 		this.customService = opts.customService;
+		this.displayImageSourceFactory = opts.displayImageSourceFactory;
 		this.defaultSchema = opts.defaultSchema;
 		this.displayFunction = opts.displayFunction;
 		this.editFunction = opts.editFunction;

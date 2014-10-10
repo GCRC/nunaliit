@@ -64,6 +64,11 @@ var Attachment = $n2.Class({
 		return att.status;
 	},
 	
+	getFileClass: function(){
+		var att = this._getAtt();
+		return att.fileClass;
+	},
+	
 	getMediaFileUrl: function(){
 		var att = this._getAtt();
 		if( att 
@@ -76,6 +81,11 @@ var Attachment = $n2.Class({
 	
 	getStructure: function(){
 		return this._getAtt();
+	},
+	
+	isSource: function(){
+		var att = this._getAtt();
+		return !att.source;
 	},
 	
 	getThumbnailAttachment: function(){

@@ -402,6 +402,35 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 		});
 	}
 
+	,getProductFromId: function(opts_){
+		var opts = $n2.extend({
+				docId: null
+				,onSuccess: function(referenceIds){}
+				,onError: function(errorMsg){}
+			}
+			,opts_
+		);
+		
+		this.designDoc.queryView({
+			viewName: 'nunaliit-source'
+			,startkey: opts.docId
+			,endkey: opts.docId
+			,onSuccess: function(rows){
+				var refIdMap = {};
+				for(var i=0,e=rows.length;i<e;++i){
+					refIdMap[rows[i].id] = true;
+				};
+				
+				var refIds = [];
+				for(var refId in refIdMap){
+					refIds.push(refId);
+				};
+				opts.onSuccess(refIds);
+			}
+			,onError: opts.onError
+		});
+	}
+
 	,getDocumentsFromGeographicFilter: function(opts_){
 		var opts = $n2.extend({
 			docIds: null

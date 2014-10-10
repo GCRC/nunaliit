@@ -179,6 +179,18 @@ var DocumentSource = $n2.Class({
 		opts.onError('Data source does not support the "getReferencesFromId" call.');
 	}
 
+	,getProductFromId: function(opts_){
+		var opts = $n2.extend({
+				docId: null
+				,onSuccess: function(referenceIds){}
+				,onError: function(errorMsg){}
+			}
+			,opts_
+		);
+		
+		opts.onError('Data source does not support the "getProductFromId" call.');
+	}
+
 	,getDocumentsFromGeographicFilter: function(opts_){
 		var opts = $n2.extend({
 				docIds: null

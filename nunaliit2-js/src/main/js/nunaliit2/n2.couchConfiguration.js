@@ -265,6 +265,11 @@ function Configure(options_){
 			mediaRelativePath: options.mediaUrl
 		});
 		
+		configuration.directory.displayImageSourceFactory = new $n2.couchDisplayBox.DisplayImageSourceFactory({
+			documentSource: configuration.documentSource
+			,attachmentService: configuration.directory.attachmentService
+		});
+		
 		configuration.directory.showService = new $n2.couchShow.Show({
 			db: configuration.atlasDb
 			,documentSource: configuration.documentSource
@@ -273,6 +278,7 @@ function Configure(options_){
 			,dispatchService: configuration.directory.dispatchService
 			,schemaRepository: configuration.directory.schemaRepository
 			,customService: configuration.directory.customService
+			,displayImageSourceFactory: configuration.directory.displayImageSourceFactory
 		});
 		
 		configuration.directory.createDocProcess = new $n2.couchRelatedDoc.CreateRelatedDocProcess({
