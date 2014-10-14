@@ -82,6 +82,16 @@ var n2tiles = {
 		var leftX = blTilePosition.x;
 		var rightX = trTilePosition.x;
 		var trTile = trTilePosition.tile;
+		
+		if( minx > maxx // wrap around situation
+		 && leftX === rightX // end up on same tile
+		 ){
+			--rightX;
+			if( rightX < 0 ){
+				rightX = format.nx - 1;
+			};
+		};
+		
 //$n2.log('leftX',leftX);
 //$n2.log('rightX',rightX);
 //$n2.log('trTile',trTile);
