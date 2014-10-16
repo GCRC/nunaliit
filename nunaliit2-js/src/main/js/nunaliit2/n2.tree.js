@@ -1207,7 +1207,15 @@ var ObjectTree = $n2.Class({
 			,createFromObjDefaultOptions
 			,opt_
 			);
-		this.obj = obj;
+		
+		this.obj = {};
+		for(var key in obj){
+			if( '__n2Source' === key ){
+				// Discount this
+			} else {
+				this.obj[key] = obj[key];
+			};
+		};
 
 		if( this.obj ) {
 			var $tree = createTreeFromObject($treeContainer, this.obj, this.options);
@@ -1391,7 +1399,15 @@ var ObjectTreeEditor = $n2.Class({
 			);
 
 		this.$tree = $tree;
-		this.obj = obj;
+
+		this.obj = {};
+		for(var key in obj){
+			if( '__n2Source' === key ){
+				// Discount this
+			} else {
+				this.obj[key] = obj[key];
+			};
+		};
 		
 		this._installEditors();
 	}
