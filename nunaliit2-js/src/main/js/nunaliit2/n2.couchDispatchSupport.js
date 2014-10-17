@@ -187,7 +187,7 @@ var DispatchSupport = $n2.Class('DispatchSupport',{
 	
 	,_windowResized: function(){
 		var d = this._getDispatcher();
-		d.send(_this.dispatcherHandle,{
+		d.send(this.dispatcherHandle,{
 			type: 'windowResized'
 		});
 	}
