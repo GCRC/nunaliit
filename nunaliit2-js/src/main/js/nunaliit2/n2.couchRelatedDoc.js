@@ -501,12 +501,20 @@ var Editor = $n2.Class({
 		this.documentSource = opts.documentSource;
 		this.uploadService = opts.uploadService;
 		this.showService = opts.showService;
-		this.obj = opts.obj;
 		this.schema = opts.schema;
 		this.prompt = opts.prompt;
 		this.onSuccess = opts.onSuccess;
 		this.onError = opts.onError;
 		this.onCancel = opts.onCancel;
+
+		this.obj = {};
+		for(var key in opts.obj){
+			if( '__n2Source' === key ){
+				// ignore
+			} else {
+				this.obj[key] = opts.obj[key];
+			};
+		};
 
 		var _this = this;
 		

@@ -2365,7 +2365,16 @@ var SchemaEditor = $n2.Class({
 		
 		var _this = this;
 		
-		this.doc = opts.doc;
+		this.doc = {};
+		for(var key in opts.doc){
+			if( '__n2Source' === key ){
+				// ignore
+			} else {
+				this.doc[key] = opts.doc[key];
+			};
+		};
+		
+		
 		this.schema = opts.schema;
 		this.$div = opts.$div;
 		this.onChanged = opts.onChanged;
