@@ -884,7 +884,7 @@
 				
 				var proposedDoc = submittedDoc;
 				if( submittedPatch && currentDoc ) {
-					proposedDoc = $n2.extend(true,{},currentDoc);
+					proposedDoc = $n2.document.clone(currentDoc);
 					patcher.applyPatch(proposedDoc, submittedPatch);
 				};
 				
@@ -1108,7 +1108,7 @@
 				var $proposed = $inner.find('.submission_view_dialog_merging_submitted_outer');
 				var $buttons = $inner.find('.submission_view_dialog_merging_buttons');
 				
-				var editedDoc = $n2.extend({},proposedDoc);
+				var editedDoc = $n2.document.clone(proposedDoc);
 				
 				$proposed.empty();
 
@@ -1118,7 +1118,7 @@
 					.appendTo($proposed);
 				
 				var $edit = $('<div>').appendTo($proposed);
-				new $n2.CouchEditor.CouchSimpleDocumentEditor({
+				var editor = new $n2.CouchEditor.CouchSimpleDocumentEditor({
 					elem: $edit
 					,doc: editedDoc
 					,schemaRepository: _this.schemaRepository
@@ -1136,7 +1136,8 @@
 					.text( _loc('Save') )
 					.appendTo($buttons)
 					.click(function(){
-						displayDocuments(diagId, originalDoc, submittedDoc, currentDoc, editedDoc, subDoc);
+						var updatedDoc = editor.getDocument();
+						displayDocuments(diagId, originalDoc, submittedDoc, currentDoc, updatedDoc, subDoc);
 						return false;
 					});
 				$('<button>')
@@ -1253,11 +1254,11 @@
 			};
 			
 			function computeCollisionPatch(originalDoc, currentPatch, submittedPatch){
-				var doc1 = $n2.extend(true,{},originalDoc);
+				var doc1 = $n2.document.clone(originalDoc);
 				patcher.applyPatch(doc1, currentPatch);
 				patcher.applyPatch(doc1, submittedPatch);
 				
-				var doc2 = $n2.extend(true,{},originalDoc);
+				var doc2 = $n2.document.clone(originalDoc);
 				patcher.applyPatch(doc2, submittedPatch);
 				patcher.applyPatch(doc2, currentPatch);
 

@@ -240,10 +240,28 @@ var DocumentWrapper = $n2.Class({
 });
 
 //*******************************************************
+
+// Deep copy of document
+var clone = function(doc){
+	var copy = {};
+	
+	for(var key in doc){
+		if( '__n2Source' === key ){
+			copy[key] = doc[key];
+		} else {
+			copy[key] = $n2.deepCopy(doc[key]);
+		};
+	};
+	
+	return copy;
+};
+
+//*******************************************************
 $n2.document = {
 	DocumentSource: DocumentSource
 	,DocumentWrapper: DocumentWrapper
 	,getDocumentSourceFromId: getDocumentSourceFromId
+	,clone: clone
 };
 
 })(nunaliit2);

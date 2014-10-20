@@ -387,7 +387,6 @@ var CouchSimpleDocumentEditor = $n2.Class({
 			};
 		};
 		
-		this.editedDocument = opts.doc;
 		this.schema = opts.schema;
 		this.defaultEditSchema = opts.defaultEditSchema;
 		this.schemaRepository = opts.schemaRepository;
@@ -396,6 +395,19 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		this.editors = opts.editors;
 		this.geomName = opts.geomName;
 		this.couchProj = opts.couchProj;
+
+		if( opts.doc.__n2Source ){
+			this.editedDocument = {};
+			for(var key in opts.doc){
+				if( '__n2Source' === key ){
+					this.editedDocumentSource = opts.doc[key];
+				} else {
+					this.editedDocument[key] = opts.doc[key];
+				};
+			};
+		} else {
+			this.editedDocument = opts.doc;
+		};
 		
 		this.isInsert = false;
 		
@@ -419,6 +431,10 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		};
 		
 		this._edit();
+	}
+
+	,getDocument: function(){
+		return this.editedDocument;
 	}
 
 	,_getDiv: function(){
@@ -1021,7 +1037,14 @@ var CouchDocumentEditor = $n2.Class({
 		var _this = this;
 	
 		this.editedFeature = feature_;
-		this.editedDocument = feature_.data;
+		this.editedDocument = {};
+		for(var key in feature_.data){
+			if( '__n2Source' === key ) {
+				this.editedDocumentSource = feature_.data[key];
+			} else {
+				this.editedDocument[key] = feature_.data[key];
+			};
+		};
 	
 		this.currentGeometryWkt = null;
 		if( this.editedDocument 
@@ -1076,7 +1099,14 @@ var CouchDocumentEditor = $n2.Class({
 
 		var _this = this;
 		
-		this.editedDocument = doc_;
+		this.editedDocument = {};
+		for(var key in doc_){
+			if( '__n2Source' === key ) {
+				this.editedDocumentSource = doc_[key];
+			} else {
+				this.editedDocument[key] = doc_[key];
+			};
+		};
 	
 		this.isInsert = (typeof(this.editedDocument._id) === 'undefined' || this.editedDocument._id === null);
 	
@@ -2365,15 +2395,7 @@ var SchemaEditor = $n2.Class({
 		
 		var _this = this;
 		
-		this.doc = {};
-		for(var key in opts.doc){
-			if( '__n2Source' === key ){
-				// ignore
-			} else {
-				this.doc[key] = opts.doc[key];
-			};
-		};
-		
+		this.doc = opts.doc;
 		
 		this.schema = opts.schema;
 		this.$div = opts.$div;

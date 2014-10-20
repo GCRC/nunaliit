@@ -139,7 +139,7 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			,onSuccess: function(docInfo){
 				doc._id = docInfo.id;
 				doc._rev = docInfo.rev;
-				doc.__n2Source = this;
+				doc.__n2Source = _this;
 				
 				_this._dispatch({
 					type: 'documentVersion'
@@ -441,11 +441,13 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			,onError: function(errorMsg){}
 		},opts_);
 		
+		var _this = this;
+		
 		// Intercept onSuccess to apply __n2Source attribute
 		var callerSuccess = opts.onSuccess;
 		opts.onSuccess = function(docs){
 			for(var i=0,e=docs.length; i<e; ++i){
-				docs[i].__n2Source = this;
+				docs[i].__n2Source = _this;
 			};
 			callerSuccess(docs);
 		};
@@ -853,7 +855,7 @@ var CouchDocumentSourceWithSubmissionDb = $n2.Class(CouchDocumentSource, {
 				data: doc
 				,onSuccess: function(docInfo){
 					_this._warnUser();
-					doc.__n2Source = this;
+					doc.__n2Source = _this;
 					opts.onSuccess(doc);
 				}
 				,onError: opts.onError

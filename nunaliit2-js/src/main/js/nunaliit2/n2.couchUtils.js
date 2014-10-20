@@ -431,15 +431,24 @@ var n2utils = {
 			);
 	}
 
-	,extractTypes: function(obj, result) {
+	,extractTypes: function(obj, result, ancestors) {
 		// Traverses an object to find all structure types.
+		
+		ancestors = ancestors ? ancestors : [];
+		
+		if( ancestors.indexOf(obj) >= 0 ) {
+			// already visited
+			return;
+		};
+		
+		ancestors.push(obj);
 		
 		if( null === obj ) {
 			// Nothing to do
 			
 		} else if( n2utils.isArray(obj) ) {
 			for(var i=0,e=obj.length; i<e; ++i) {
-				n2utils.extractTypes(obj[i],result);
+				n2utils.extractTypes(obj[i],result,ancestors);
 			};
 
 		} else if( typeof(obj) === 'object' ) {
@@ -452,21 +461,32 @@ var n2utils = {
 			for(var key in obj) {
 				var value = obj[key];
 				
-				n2utils.extractTypes(value,result);
+				n2utils.extractTypes(value,result,ancestors);
 			};
 		};
+
+		ancestors.pop();
 	}
 
-	,extractSpecificType: function(obj, type, result) {
+	,extractSpecificType: function(obj, type, result, ancestors) {
 		// Traverses an object to find all components of a
 		// given type.
+		
+		ancestors = ancestors ? ancestors : [];
+		
+		if( ancestors.indexOf(obj) >= 0 ) {
+			// already visited
+			return;
+		};
+		
+		ancestors.push(obj);
 		
 		if( null === obj ) {
 			// Nothing to do
 			
 		} else if( n2utils.isArray(obj) ) {
 			for(var i=0,e=obj.length; i<e; ++i) {
-				n2utils.extractSpecificType(obj[i],type,result);
+				n2utils.extractSpecificType(obj[i],type,result,ancestors);
 			};
 
 		} else if( typeof(obj) === 'object' ) {
@@ -480,10 +500,12 @@ var n2utils = {
 					
 					var value = obj[key];
 					
-					n2utils.extractSpecificType(value,type,result);
+					n2utils.extractSpecificType(value,type,result,ancestors);
 				};
 			};
 		};
+		
+		ancestors.pop();
 	}
 
 	,extractLinks: function(obj, links) {

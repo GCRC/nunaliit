@@ -919,9 +919,11 @@ function createDisplayFromData(data, opt) {
  * @param selectors {Array} Object selector to identify the data structure
  * @param $ul {Object} A jQuery set that holds the ul element
  * @param opt {Object} Options in use
+ * @param ancestors {Array} Objects that are ancestors of the current data structure.
+ * This is used to detect cyclic strctures.
  */
-function refreshUlFromObject(o, selectors, $ul, opt) {
-	//$n2.log('refreshUlFromObject',o, selectors, $ul, opt);
+function refreshUlFromObject(o, selectors, $ul, opt, ancestors) {
+	//$n2.log('refreshUlFromObject',o, selectors, $ul, opt, ancestors);
 
 	var uuid = getTreeUuid($ul);
 
@@ -949,28 +951,34 @@ function refreshUlFromObject(o, selectors, $ul, opt) {
 		var key = keys[i];
 		var value = o[key];
 		
-		selectors.push(key);
-		
-		var id = computeId(uuid, selectors);
-		var cName = computeClass(selectors);
-		
-		// Find li corresponding to key
-		var $li = $ul.children('#'+id);
-		if( $li.length < 1 ) {
-			$li = $('<li>')
-				.attr('id',id)
-				.addClass('tree_sel '+cName);
-			$('<span>')
-				.addClass('treeKey')
-				.text(key)
-				.appendTo($li);
-			$li[0]['treeObjectKey'] = key;
-			$ul.append($li);
+		if( ancestors.indexOf(value) >= 0 ){
+			// This value is cyclic. Skip
+		} else {
+			selectors.push(key);
+			ancestors.push(value);
+			
+			var id = computeId(uuid, selectors);
+			var cName = computeClass(selectors);
+			
+			// Find li corresponding to key
+			var $li = $ul.children('#'+id);
+			if( $li.length < 1 ) {
+				$li = $('<li>')
+					.attr('id',id)
+					.addClass('tree_sel '+cName);
+				$('<span>')
+					.addClass('treeKey')
+					.text(key)
+					.appendTo($li);
+				$li[0]['treeObjectKey'] = key;
+				$ul.append($li);
+			};
+			
+			refreshLiFromData(value, selectors, $li, opt, ancestors);
+			
+			ancestors.pop();
+			selectors.pop();
 		};
-		
-		refreshLiFromData(value, selectors, $li, opt);
-		
-		selectors.pop();
 	};
 };
 
@@ -980,9 +988,10 @@ function refreshUlFromObject(o, selectors, $ul, opt) {
  * @param selectors {Array} Object selector to identify the array
  * @param $ul {Object} A jQuery set that holds the ul element
  * @param opt {Object} Options in use
+ * 
  */
-function refreshUlFromArray(arr, selectors, $ul, opt) {
-	//$n2.log('refreshUlFromArray',arr, selectors, $ul, opt);	
+function refreshUlFromArray(arr, selectors, $ul, opt, ancestors) {
+	//$n2.log('refreshUlFromArray',arr, selectors, $ul, opt, ancestors);	
 
 	var uuid = getTreeUuid($ul);
 
@@ -1003,29 +1012,35 @@ function refreshUlFromArray(arr, selectors, $ul, opt) {
 	for(var key=0,e=arr.length; key<e; ++key) {
 		var value = arr[key];
 		
-		selectors.push(key);
-		
-		var id = computeId(uuid, selectors);
-		var cName = computeClass(selectors);
-		
-		// Find li based on id
-		var $li = $ul.children('#'+id);
-		if( $li.length < 1 ) {
-			// Must create
-			$li = $('<li>')
-				.attr('id',id)
-				.addClass('tree_sel '+cName);
-			$('<span>')
-				.addClass('treeKey')
-				.text(key)
-				.appendTo($li);
-			$li[0]['treeArrayIndex'] = key;
-			$ul.append($li);
-		};
+		if( ancestors.indexOf(value) >= 0 ){
+			// Cyclic structure detected. Skip
+		} else {
+			selectors.push(key);
+			ancestors.push(value);
+			
+			var id = computeId(uuid, selectors);
+			var cName = computeClass(selectors);
+			
+			// Find li based on id
+			var $li = $ul.children('#'+id);
+			if( $li.length < 1 ) {
+				// Must create
+				$li = $('<li>')
+					.attr('id',id)
+					.addClass('tree_sel '+cName);
+				$('<span>')
+					.addClass('treeKey')
+					.text(key)
+					.appendTo($li);
+				$li[0]['treeArrayIndex'] = key;
+				$ul.append($li);
+			};
 
-		refreshLiFromData(value, selectors, $li, opt);
-		
-		selectors.pop();
+			refreshLiFromData(value, selectors, $li, opt, ancestors);
+			
+			ancestors.pop();
+			selectors.pop();
+		};
 	};
 };
 
@@ -1038,9 +1053,11 @@ function refreshUlFromArray(arr, selectors, $ul, opt) {
  * @param selectors {Array} Object selector to identify the object
  * @param $li {Object} A jQuery set that holds the li element
  * @param opt {Object} Options in use
+ * @param ancestors {Array} Objects that are ancestors of the current data structure.
+ * This is used to detect cyclic strctures.
  */
-function refreshLiFromData(data, selectors, $li, opt) {
-	//$n2.log('refreshLiFromData',data, selectors, $li, opt);	
+function refreshLiFromData(data, selectors, $li, opt, ancestors) {
+	//$n2.log('refreshLiFromData',data, selectors, $li, opt, ancestors);	
 	
 	// Figure out if we should display a value
 	var disp = null;
@@ -1108,7 +1125,7 @@ function refreshLiFromData(data, selectors, $li, opt) {
 			$li.append($ul);
 		};
 		
-		refreshUlFromArray(data, selectors, $ul, opt);
+		refreshUlFromArray(data, selectors, $ul, opt, ancestors);
 
 	} else if( typeof(data) === 'object' ) {
 		// object
@@ -1127,7 +1144,7 @@ function refreshLiFromData(data, selectors, $li, opt) {
 			$li.append($ul);
 		};
 
-		refreshUlFromObject(data, selectors, $ul, opt);
+		refreshUlFromObject(data, selectors, $ul, opt, ancestors);
 		
 	} else {
 		// This is not a handled type (function?). Remove children,
@@ -1159,14 +1176,14 @@ var createFromObjDefaultOptions = {
 function createTreeFromObject($treeContainer, o, opt) {
 
 	$treeContainer.empty();
-	var $tree = $('<ul class="tree"></ul>');
+	var $tree = $('<ul class="tree"></ul>')
+		.appendTo($treeContainer);
 	
-	$treeContainer.append($tree);
 	tree_init($tree,opt);
 	
 	var selectors = [];
 
-	refreshUlFromObject(o,selectors,$tree,opt);
+	refreshUlFromObject(o,selectors,$tree,opt,[]);
 	tree_refresh($tree,opt);
 	
 	return $tree;
@@ -1187,7 +1204,7 @@ function refreshTreeFromObject($tree, o, opt) {
 
 	var selectors = [];
 
-	refreshUlFromObject(o,selectors,$tree,opt);
+	refreshUlFromObject(o,selectors,$tree,opt,[]);
 	tree_refresh($tree,opt);
 	
 	return $tree;
@@ -1208,14 +1225,7 @@ var ObjectTree = $n2.Class({
 			,opt_
 			);
 		
-		this.obj = {};
-		for(var key in obj){
-			if( '__n2Source' === key ){
-				// Discount this
-			} else {
-				this.obj[key] = obj[key];
-			};
-		};
+		this.obj = obj;
 
 		if( this.obj ) {
 			var $tree = createTreeFromObject($treeContainer, this.obj, this.options);
@@ -1400,14 +1410,7 @@ var ObjectTreeEditor = $n2.Class({
 
 		this.$tree = $tree;
 
-		this.obj = {};
-		for(var key in obj){
-			if( '__n2Source' === key ){
-				// Discount this
-			} else {
-				this.obj[key] = obj[key];
-			};
-		};
+		this.obj = obj;
 		
 		this._installEditors();
 	}
@@ -1438,13 +1441,13 @@ var ObjectTreeEditor = $n2.Class({
 	,refresh: function(selectors) {
 		if( null == selectors || selectors.length < 1 ) {
 			// Refresh everything
-			refreshUlFromObject(this.obj, [], this.$tree, this.options);
+			refreshUlFromObject(this.obj, [], this.$tree, this.options, []);
 			
 		} else {
 			var data = findDataFromObject(this.obj, selectors);
 			var $li = findLiFromSelectors(this.$tree, selectors);
 			
-			refreshLiFromData(data, selectors, $li, this.options);
+			refreshLiFromData(data, selectors, $li, this.options, []);
 		};
 		
 		this._installEditors();

@@ -1438,6 +1438,8 @@ function computeFormObj(origObj, context, selector, parent) {
 		view[SELECT] = selector.slice(0);
 
 		for(var key in origObj) {
+			if('__n2Source' === key) continue;
+
 			selector.push(key);
 			var value = computeFormObj(origObj[key], context, selector, view);
 			view[key] = value;
@@ -1459,7 +1461,7 @@ function computeFormObj(origObj, context, selector, parent) {
 		return view;
 		
 	} else {
-		return origObj
+		return origObj;
 	};
 };
 

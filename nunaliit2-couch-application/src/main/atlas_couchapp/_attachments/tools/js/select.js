@@ -2315,7 +2315,7 @@
 	// -----------------------------------------------------------------
 	function editDocument(doc){
 		
-		var editDoc = $n2.extend(true,{},doc);
+		var editDoc = $n2.document.clone(doc);
 		
 		var $div = getDocumentDiv();
 		

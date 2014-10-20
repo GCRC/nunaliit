@@ -1726,7 +1726,7 @@ var MapAndControls = $n2.Class({
 		    		restoreGeom: false
 		    		,layer: featureLayer
 		    		,feature: effectiveFeature
-		    		,data: $n2.extend(true, {}, effectiveFeature.data)
+		    		,data: $n2.document.clone(effectiveFeature.data)
 		    		,style: feature.style
 		    	};
 		    	
@@ -4201,7 +4201,7 @@ var MapAndControls = $n2.Class({
 			 && !valueMap[id].__n2_cache_invalid
 			 ) {
 				// Make a copy for the caller
-				return $n2.extend(true,{},valueMap[id]);
+				return $n2.document.clone(valueMap[id]);
 			};
 		};
 		

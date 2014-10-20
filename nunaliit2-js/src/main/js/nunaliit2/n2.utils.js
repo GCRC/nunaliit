@@ -440,6 +440,40 @@ $n2.extend = function() {
 };
 
 /**
+	Makes a deep copy of the given object.
+	@name deepCopy
+	@function
+	@memberOf nunaliit2
+	@param {Object} o Object to be copied
+	@returns {Object} The copy of the object given in argument
+*/
+$n2.deepCopy = function(o) {
+	if( null === o ){
+		return o;
+		
+	} else if( typeof o === 'undefined' ) {
+		return o;
+		
+	} else if( $n2.isArray(o) ) {
+		var c = [];
+		for(var i=0,e=o.length; i<e; ++i){
+			c[i] = $n2.deepCopy(o[i]);
+		};
+		return c;
+		
+	} else if( typeof(o) === 'object' ) {
+		var c = {};
+		for(var i in o){
+			c[i] = $n2.deepCopy(o[i]);
+		};
+		return c;
+
+	} else {
+		return o;
+	};
+};
+
+/**
 	Helper function for localization. It redirects to l10n
 	package if it is loaded. This function request a string
 	localized for the current locale given a string in the
