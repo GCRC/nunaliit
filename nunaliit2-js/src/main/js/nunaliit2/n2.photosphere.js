@@ -150,6 +150,12 @@ var PhotosphereDisplay = $n2.Class({
 			} else if ( event.detail ) {
 				_this.camera.fov += event.detail * 1.0;
 			};
+			
+			if( _this.camera.fov < 1 ) {
+				_this.camera.fov = 1;
+			} else if( _this.camera.fov > 100 ) {
+				_this.camera.fov = 100;
+			};
 
 			_this.camera.updateProjectionMatrix();
 		});
@@ -166,6 +172,12 @@ var PhotosphereDisplay = $n2.Class({
 			// Firefox
 			} else if ( event.detail ) {
 				_this.camera.fov += event.detail * 1.0;
+			};
+
+			if( _this.camera.fov < 1 ) {
+				_this.camera.fov = 1;
+			} else if( _this.camera.fov > 100 ) {
+				_this.camera.fov = 100;
 			};
 
 			_this.camera.updateProjectionMatrix();

@@ -765,6 +765,10 @@ var DisplayBox = $n2.Class({
 			if( _this.currentImageIndex == data.index ){
 				var $divImageInner = $displayDiv.find('.n2DisplayBoxImageInner');
 				$divImageInner.find('.n2DisplayBoxImage').remove();
+
+				// Save original width and height
+				_this.currentImageWidth = data.width;
+				_this.currentImageHeight = data.height;
 				
 				if( 'image' === data.type ){
 					if( data.isPhotosphere 
@@ -777,6 +781,10 @@ var DisplayBox = $n2.Class({
 							elem: $photosphere
 							,url: data.url
 						});
+
+						// In phtoshpere, make image a fixed ratio
+						_this.currentImageWidth = Math.floor(_this.currentImageHeight * 3 / 2);
+
 					} else {
 						$('<img>')
 							.addClass('n2DisplayBoxImage')
@@ -784,10 +792,6 @@ var DisplayBox = $n2.Class({
 							.prependTo($divImageInner);
 					};
 				};
-				
-				// Save original width and height
-				_this.currentImageWidth = data.width;
-				_this.currentImageHeight = data.height;
 				
 				// Performance an effect in the image container resizing it
 				_this._resizeContainerImageBox();
