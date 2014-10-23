@@ -209,6 +209,20 @@ var DomStyler = $n2.Class({
 			$jq.removeClass('n2s_installMaxHeight').addClass('n2s_installedMaxHeight');
 		});
 		
+		// Login
+		$set.filter('.n2s_clickLogin').each(function(){
+			var $jq = $(this);
+			_this._clickLogin($jq, opt);
+			$jq.removeClass('n2s_clickLogin').addClass('n2s_login');
+		});
+		
+		// Map Edit
+		$set.filter('.n2s_clickMapEdit').each(function(){
+			var $jq = $(this);
+			_this._clickMapEdit($jq, opt);
+			$jq.removeClass('n2s_clickMapEdit').addClass('n2s_mapEdit');
+		});
+		
 		// Preserve Space
 		$set.filter('.n2s_preserveSpaces').each(function(){
 			var $jq = $(this);
@@ -720,6 +734,34 @@ var DomStyler = $n2.Class({
 		} else {
 			$jq.empty();
 		};
+	},
+	
+	_clickLogin: function($jq, opt){
+		var _this = this;
+
+		$jq.click(function(){
+			var dispatchService = _this.showService.dispatchService;
+			if( dispatchService ) {
+				dispatchService.send(DH, {
+					type:'loginShowForm'
+				});
+			};
+			return false;
+		});
+	},
+	
+	_clickMapEdit: function($jq, opt){
+		var _this = this;
+
+		$jq.click(function(){
+			var dispatchService = _this.showService.dispatchService;
+			if( dispatchService ) {
+				dispatchService.send(DH, {
+					type:'mapSwitchToEditMode'
+				});
+			};
+			return false;
+		});
 	},
 	
 	_installMaxHeight: function(contextDoc, $jq, opt){

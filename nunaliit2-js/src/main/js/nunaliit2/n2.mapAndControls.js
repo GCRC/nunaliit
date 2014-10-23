@@ -927,6 +927,7 @@ var MapAndControls = $n2.Class({
 	    this._registerDispatch('mapResetExtent');
 	    this._registerDispatch('mapGetLayers');
 	    this._registerDispatch('setMapLayerVisibility');
+	    this._registerDispatch('mapSwitchToEditMode');
 		
 		// Layers
 		this.defaultLayerInfo = { // feature layer access details.
@@ -4659,6 +4660,8 @@ var MapAndControls = $n2.Class({
 			if( this.layers[layerId] ){
 				this.layers[layerId].setVisibility(visible);
 			};
+		} else if( 'mapSwitchToEditMode' === type ) {
+			this.switchToEditMode();
 		};
 	}
 	
