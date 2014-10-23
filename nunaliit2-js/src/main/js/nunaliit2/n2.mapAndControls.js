@@ -831,12 +831,27 @@ var MapAndControls = $n2.Class({
 			fid: null
 			,features: []
 		};
+		
+		var addOrEditLabel = _loc('Add or Edit a Map Feature');
+		var cancelLabel = _loc('Cancel Feature Editing');
+		var customService = this._getCustomService();
+		if( customService ){
+			var customAdd = customService.getOption('mapLabelEditFeature',null);
+			if( customAdd ){
+				addOrEditLabel = customAdd;
+			};
+
+			var customCancel = customService.getOption('mapLabelCancelEdit',null);
+			if( customCancel ){
+				cancelLabel = customCancel;
+			};
+		};
 
 		// MODES
 		this.modes = {
 			NAVIGATE: {
 				name        : "NAVIGATE"
-				,buttonValue : _loc('Add or Edit a Map Feature')
+				,buttonValue : addOrEditLabel
 				,onStartHover: function(feature, layer) {
 					_this._hoverFeature(feature, layer);
 					_this._hoverFeaturePopup(feature, layer);
@@ -849,7 +864,7 @@ var MapAndControls = $n2.Class({
 			}
 			,EDIT: {
 				name        : "EDIT"
-				,buttonValue : _loc('Cancel Feature Editing')
+				,buttonValue : cancelLabel
 				,onStartHover: function(feature, layer) {
 					_this._hoverFeature(feature, layer);
 					_this._hoverFeaturePopup(feature, layer);
@@ -878,7 +893,7 @@ var MapAndControls = $n2.Class({
 			}
 			,EDIT_FEATURE: {
 				name        : "EDIT_FEATURE"
-				,buttonValue : _loc('Cancel Feature Editing')
+				,buttonValue : cancelLabel
 			}
 		};
 		this.currentMode = this.modes.NAVIGATE;
