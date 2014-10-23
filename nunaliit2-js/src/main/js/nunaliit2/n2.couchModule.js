@@ -150,6 +150,10 @@ var Module = $n2.Class({
 				var content = $n2.couchL10n.getLocalizedString(introInfo.content);
 				if( content ) {
 					$outer.html(content);
+					
+					if( opts.showService ) {
+						opts.showService.fixElementAndChildren($outer);
+					};					
 				};
 				opts.onLoaded();
 				return true;
@@ -209,6 +213,9 @@ var Module = $n2.Class({
 				    		} else {
 					    		$('#'+displayId).html(intro);
 				    		};
+							if( opts.showService ) {
+								opts.showService.fixElementAndChildren($('#'+displayId));
+							};
 							opts.onLoaded();
 				    	}
 				    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
