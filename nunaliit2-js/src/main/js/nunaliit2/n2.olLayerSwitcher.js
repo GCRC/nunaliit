@@ -93,6 +93,13 @@ OpenLayers.Control.NunaliitLayerSwitcher =
      * {Boolean} 
      */
     ascending: true,
+    
+    /**
+     * Internal Property: cachedSymbols
+     * {Object}
+     * Dictionary of symbol paths
+     */
+    cachedSymbols: null,
  
     /**
      * Constructor: OpenLayers.Control.LayerSwitcher
@@ -105,6 +112,7 @@ OpenLayers.Control.NunaliitLayerSwitcher =
     	
         OpenLayers.Control.prototype.initialize.apply(this, arguments);
         this.layerStates = [];
+        this.cachedSymbols = {};
 
         // Callback for base layer radio buttons
         this.__baseFn = function(e){
@@ -420,9 +428,22 @@ OpenLayers.Control.NunaliitLayerSwitcher =
 		                
 		                // Geometry
 		                var geom = null;
-		                if( 'square' === style.graphicName ) {
+		                if( style.graphicName 
+		                 && this.cachedSymbols[style.graphicName] ){
 		                	geom = this._createSVGNode('path');
-			                this._setAttr(geom, 'd', 'M -4.4 -4.4 L -4.4 4.4 L 4.4 4.4 L 4.4 -4.4 Z');
+			                this._setAttr(geom, 'd', this.cachedSymbols[style.graphicName]);
+			                
+		                } else if( style.graphicName 
+				         && OpenLayers.Renderer.symbol[style.graphicName] ) {
+		                	var path = this._computePathFromSymbol(OpenLayers.Renderer.symbol[style.graphicName]);
+		                	this.cachedSymbols[style.graphicName] = path;
+		                	geom = this._createSVGNode('path');
+			                this._setAttr(geom, 'd', this.cachedSymbols[style.graphicName]);
+		                	
+//		                } else if( 'square' === style.graphicName ) {
+//		                	geom = this._createSVGNode('path');
+//			                this._setAttr(geom, 'd', 'M -4.4 -4.4 L -4.4 4.4 L 4.4 4.4 L 4.4 -4.4 Z');
+		                
 		                } else {
 			                geom = this._createSVGNode('circle');
 			                this._setAttr(geom, 'r', 5);
@@ -684,6 +705,86 @@ OpenLayers.Control.NunaliitLayerSwitcher =
         this.minimizeDiv.style.display = "none";
 
         this.div.appendChild(this.minimizeDiv);
+    },
+    
+    /** 
+     * Method: _computePathFromSymbol
+     * Given an OpenLayers symbol (array of points, which are tuples of x,y coordinates),
+     * create a SVG path with an approximate area of 30 (area of a circle with a radius of 5)
+     * Example for symbol: [0,0, 1,0, 1,1, 0,1, 0,0]
+     * Examplke fo SVG Path: 'M -4.4 -4.4 L -4.4 4.4 L 4.4 4.4 L 4.4 -4.4 Z'
+     */
+    _computePathFromSymbol: function(symbol){
+    	var area = 0,
+    	 minx = undefined,
+    	 maxx = undefined,
+    	 miny = undefined,
+    	 maxy = undefined;
+
+    	// Figure out bounding box
+    	for(var i=0,e=symbol.length; i<e; i=i+2){
+    		var x = symbol[i];
+    		var y = symbol[i+1];
+    		
+    		if( typeof minx === 'undefined' ){
+    			minx = x;
+    		} else if( minx > x ){
+    			minx = x;
+    		};
+    		
+    		if( typeof maxx === 'undefined' ){
+    			maxx = x;
+    		} else if( maxx < x ){
+    			maxx = x;
+    		};
+    		
+    		if( typeof miny === 'undefined' ){
+    			miny = y;
+    		} else if( miny > y ){
+    			miny = y;
+    		};
+    		
+    		if( typeof maxy === 'undefined' ){
+    			maxy = y;
+    		} else if( maxy < y ){
+    			maxy = y;
+    		};
+    	};
+    	
+    	// Compute path, recentering the symbol and adjusting the area so
+    	// it fits a bounding box of 10x10
+    	var path = [],
+    	 transx = (minx+maxx)/2,
+    	 transy = (miny+maxy)/2,
+    	 width = maxx-minx,
+    	 height = maxy-miny,
+    	 factor = (width > height) ? width / 10 : height / 10;
+    	if( factor <= 0 ){
+    		factor = 1;
+    	};
+    	for(var i=0,e=symbol.length; i<e; i=i+2){
+    		var x = symbol[i];
+    		var y = symbol[i+1];
+
+    		var effX = (x-transx)/factor;
+    		var effY = (y-transy)/factor;
+    		
+    		// Round to .01
+    		effX = Math.floor(effX * 100) / 100;
+    		effY = Math.floor(effY * 100) / 100;
+    		
+    		if( 0 === i ){
+        		path.push('M ');
+    		} else {
+        		path.push('L ');
+    		};
+    		
+    		path.push(''+effX);
+    		path.push(' '+effY+' ');
+    	};
+    	path.push('Z');
+    	
+    	return path.join('');
     },
     
     CLASS_NAME: "OpenLayers.Control.LayerSwitcher"
