@@ -610,6 +610,11 @@ var ModuleDisplay = $n2.Class({
 					,onError: opts.onError
 				});
 			} else {
+				_this._sendDispatchMessage({
+					type:'reportModuleDisplay'
+					,moduleDisplay: _this
+				});
+
 				opts.onSuccess(_this);
 			};
 		};
@@ -1000,6 +1005,11 @@ var ModuleDisplay = $n2.Class({
 			_this.mapControl.contributions = _this.config.contributions;
 			_this.mapControl.requests = _this.config.directory.requestService;
 			
+			_this._sendDispatchMessage({
+				type:'reportModuleDisplay'
+				,moduleDisplay: _this
+			});
+
 			opts.onSuccess(_this);
 		};
 	}
