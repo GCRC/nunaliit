@@ -423,6 +423,14 @@ var ModuleDisplay = $n2.Class({
 
 			_this.module = new Module(moduleDoc, atlasDb);
 			
+			_this._sendDispatchMessage({
+				type: 'reportModuleDocument'
+				,doc: moduleDoc
+				,module: _this.module
+				,moduleDisplay: _this
+			});
+
+			
 			var moduleInfo = _this.module.getModuleInfo();
 			var mapInfo = _this.module.getMapInfo();
 			var displayInfo = _this.module.getDisplayInfo();
@@ -638,6 +646,7 @@ var ModuleDisplay = $n2.Class({
 		var _this = this;
 		
 		var mapInfo = _this.module.getMapInfo();
+		var customService = this._getCustomService();
 		
 		// Add points only
 		var addPointsOnly = false;
@@ -768,6 +777,12 @@ var ModuleDisplay = $n2.Class({
 		// Overlay Layers
 		if( mapInfo && mapInfo.overlays ){
 			var styleMapFn = _this.styleMapFn;
+			if( !styleMapFn && customService ) {
+				styleMapFn = customService.getOption('mapGetStyleFunctionForLayer');
+				if( typeof styleMapFn !== 'function' ){
+					styleMapFn = null;
+				};
+			};
 			if( !styleMapFn ) {
 				styleMapFn = function(layerInfo_){ 
 					return _this.styles.getStyleMapForLayerInfo(layerInfo_); 

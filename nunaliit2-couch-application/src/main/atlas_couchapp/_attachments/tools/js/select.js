@@ -6,6 +6,7 @@
 	var atlasDb = null;
 	var atlasDesign = null;
 	var serverDesign = null;
+	var siteDesign = null;
 	var schemaRepository = null;
 	var showService = null;
 	var exportService = null;
@@ -2434,6 +2435,7 @@
 		atlasDb = opts_.config.atlasDb;
 		atlasDesign = opts_.config.atlasDesign;
 		serverDesign = opts_.config.serverDesign;
+		siteDesign = opts_.config.siteDesign;
 		schemaRepository = opts_.config.directory.schemaRepository;
 		couchEditor = config.couchEditor;
 
