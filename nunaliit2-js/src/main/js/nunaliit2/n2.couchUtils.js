@@ -122,8 +122,7 @@ var n2utils = {
 	}
 	
 	,excludedSearchAttributes: [
-		'_id'
-		,'_rev'
+		'_rev'
 		,'nunaliit_geom'
 	]
 	
