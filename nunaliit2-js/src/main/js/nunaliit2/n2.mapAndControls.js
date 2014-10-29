@@ -452,6 +452,13 @@ var GazetteerProcess = $n2.Class({
 
 		// Create and add feature
 		var feature = new OpenLayers.Feature.Vector(geom);
+		
+		feature.data.nunaliit_gazetteer = {};
+		for(var key in entry){
+			var value = entry[key];
+			feature.data.nunaliit_gazetteer[key] = value;
+		};
+		
 		editLayer.addFeatures([feature]);
 	}
 	
