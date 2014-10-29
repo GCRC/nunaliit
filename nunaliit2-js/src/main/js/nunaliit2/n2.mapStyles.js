@@ -382,6 +382,11 @@ var MapFeatureStyles = $n2.Class({
 		var lineArgs = [defaultDefinition.base];
 		var polygonArgs = [defaultDefinition.base];
 		
+		// Add default style for geometry
+		pointArgs.push(defaultDefinition.point);
+		lineArgs.push(defaultDefinition.line);
+		polygonArgs.push(defaultDefinition.polygon);
+		
 		// Add all base styles found in arguments
 		for(var i=0,e=arguments.length;i<e;++i){
 			var setDelta = arguments[i];
@@ -392,11 +397,6 @@ var MapFeatureStyles = $n2.Class({
 				polygonArgs.push(setDelta.base);
 			};
 		};
-		
-		// Add default style for geometry
-		pointArgs.push(defaultDefinition.point);
-		lineArgs.push(defaultDefinition.line);
-		polygonArgs.push(defaultDefinition.polygon);
 		
 		// Add all geometry styles found in argument
 		for(var i=0,e=arguments.length;i<e;++i){
