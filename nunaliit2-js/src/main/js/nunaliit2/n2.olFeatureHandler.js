@@ -133,7 +133,7 @@ OpenLayers.Handler.NunaliitFeature = OpenLayers.Class(OpenLayers.Handler, {
      *      mousedowns do propagate. Unhandled mousedowns always propagate,
      *      whatever the value of stopDown. Defaults to true.
      */
-    stopDown: true,
+    stopDown: false,
 
     /**
      * Property: stopUp
