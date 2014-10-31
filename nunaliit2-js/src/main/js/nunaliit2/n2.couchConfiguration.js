@@ -377,6 +377,12 @@ function Configure(options_){
 			};
 		};
 		configuration.directory.geoNamesService = new $n2.GeoNames.Service(geoNamesOptions);
+
+		configuration.directory.importProfileService = new $n2.couchImportProfile.ImportProfileService({
+			atlasDb: configuration.atlasDb
+			,atlasDesign: configuration.atlasDesign
+			,schemaRepository: configuration.directory.schemaRepository
+		});
 		
 		callCustomConfiguration();
 	};
