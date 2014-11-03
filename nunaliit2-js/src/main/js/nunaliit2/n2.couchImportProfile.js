@@ -36,6 +36,29 @@ POSSIBILITY OF SUCH DAMAGE.
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
 //=========================================================================
+var operationPatterns = [];
+
+function addOperationPattern(pattern, aClass){
+	operationPatterns.push({
+		pattern: pattern
+		,supportingClass: aClass
+	});
+};
+
+function createOperationFromString(opString){
+	for(var i=0,e=operationPatterns.length; i<e; ++i){
+		var opPattern = operationPatterns[i];
+		var matches = opPattern.pattern.test(opString);
+		if( matches ){
+			var op = new opPattern.supportingClass(opString);
+			return op;
+		};
+	};
+	
+	return null;
+};
+
+//=========================================================================
 var UpgradeAnalysis = $n2.Class({
 	
 	profile: null,
@@ -132,6 +155,7 @@ var UpgradeAnalysis = $n2.Class({
 		var opts = $n2.extend({
 			importId: null // string
 			,modifiedProperties: null // array
+			,inconsistentProperties: null // array
 			,modifiedGeometry: null // boolean
 			,dbDoc: null // doc
 			,importEntry: null // entry
@@ -147,6 +171,7 @@ var UpgradeAnalysis = $n2.Class({
 			,isModification: true
 			,importId: opts.importId
 			,modifiedProperties: opts.modifiedProperties
+			,inconsistentProperties: opts.inconsistentProperties
 			,modifiedGeometry: opts.modifiedGeometry
 		};
 		++this.modificationCount;
@@ -252,6 +277,7 @@ var UpgradeAnalyzer = $n2.Class({
 								analysis.addModification({
 									importId: c.importId
 									,modifiedProperties: c.modifiedProperties
+									,inconsistentProperties: c.inconsistentProperties
 									,modifiedGeometry: c.modifiedGeometry
 									,dbDoc: dbDocsByImportId[id]
 									,importEntry: importEntriesById[id]
@@ -292,18 +318,36 @@ var UpgradeAnalyzer = $n2.Class({
 		var dbData = doc.nunaliit_import.data;
 		var importId = doc.nunaliit_import.id;
 		
-		var changes = null;
+		var change = null;
 		
+		// Look at values that have changed since the last import
 		for(var propName in props){
 			var value = props[propName];
 			
 			if( value !== dbData[propName] ){
-				if( !changes ) changes = {
+				if( !change ) change = {
 					id:importId
 					,modifiedProperties: []
 					,modifiedGeometry: false
+					,inconsistentProperties: []
 				};
-				changes.modifiedProperties.push(propName);
+				change.modifiedProperties.push(propName);
+			};
+		};
+		
+		// Look for values that have become inconsistent since the last
+		// import
+		var inconsistentProperties = this.profile.getInconsistentProperties(doc);
+		if( inconsistentProperties.length > 0 ){
+			if( !change ) change = {
+				id:importId
+				,modifiedProperties: []
+				,modifiedGeometry: false
+				,inconsistentProperties: []
+			};
+			for(var i=0,e=inconsistentProperties.length; i<e; ++i){
+				var inconsistentProp = inconsistentProperties[i];
+				change.inconsistentProperties.push(inconsistentProp);
 			};
 		};
 		
@@ -311,15 +355,15 @@ var UpgradeAnalyzer = $n2.Class({
 //		var localGeom = doc.nunaliit_import.geometry ? doc.nunaliit_import.geometry : {};
 //		var deltaGeom = patcher.computePatch(localGeom, remoteGeom);
 //		if( deltaGeom ){
-//			if( !changes ) changes = {
+//			if( !change ) change = {
 //				id:importId
 //				,modifiedProperties: []
 //				,modifiedGeometry: false
 //			};
-//			changes.modifiedGeometry = true;
+//			change.modifiedGeometry = true;
 //		};
 		
-		return changes;
+		return change;
 	}
 });
 
@@ -657,10 +701,15 @@ var AnalysisReport = $n2.Class({
 		doc.nunaliit_import.profile = importProfile.getId();
 		
 		// Copy properties
+		var propNames = [];
 		for(var propName in importProperties){
 			var propValue = importProperties[propName];
 			doc.nunaliit_import.data[propName] = propValue;
+			propNames.push(propName);
 		};
+		
+		// Copy data to user's location
+		importProfile.copyImportProperties(doc, propNames);
 		
 		// Cache copy of GeoJSON geometry
 //		doc.geojson.nunaliit_geometry = importEntry.geometry;
@@ -740,11 +789,16 @@ var AnalysisReport = $n2.Class({
 		};
 		
 		// Copy only properties that have changed
+		var propNames = [];
 		for(var i=0,e=change.modifiedProperties.length; i<e; ++i){
 			var propName = change.modifiedProperties[i];
 			var propValue = importProperties[propName];
 			doc.nunaliit_import.data[propName] = propValue;
+			propNames.push(propName);
 		};
+		
+		// Copy data to user's location
+		importProfile.copyImportProperties(doc, propNames);
 		
 		// Import geometry (how to detect a changed geometry?)
 //		if( change.modifiedGeometry ){
@@ -822,6 +876,162 @@ var AnalysisReport = $n2.Class({
 });
 
 //=========================================================================
+var ImportProfileOperation = $n2.Class({
+	initialize: function(){
+		
+	},
+	
+	copyProperties: function(doc, importData, filterProperties){
+		throw 'Subclasses of ImportProfileOperation must implement "copyProperties()"';
+	},
+	
+	reportInconsistentProperties: function(doc, importData, propertiesArray){
+		throw 'Subclasses of ImportProfileOperation must implement "reportInconsistentProperties()"';
+	}
+});
+
+//=========================================================================
+var OPERATION_COPY_ALL = /^\s*copyAll\((.*)\)\s*$/;
+
+var ImportProfileOperationCopyAll = $n2.Class(ImportProfileOperation, {
+	
+	operationString: null,
+	
+	targetSelector: null,
+	
+	initialize: function(operationString){
+		ImportProfileOperation.prototype.initialize.call(this);
+		
+		this.operationString = operationString;
+		
+		var matcher = OPERATION_COPY_ALL.exec(operationString);
+		if( !matcher ) {
+			throw 'Invalid operation string for ImportProfileOperationCopyAll: '+operationString;
+		};
+		
+		this.targetSelector = $n2.objectSelector.parseSelector(matcher[1]);
+	},
+	
+	copyProperties: function(doc, importData, filterProperties){
+		var targetObj = this.targetSelector.getValue(doc);
+		if( typeof targetObj === 'undefined'){
+			targetObj = {};
+			this.targetSelector.setValue(doc, targetObj, true);
+		};
+		
+		for(var key in importData){
+			if( filterProperties.indexOf(key) >= 0 ){
+				targetObj[key] = importData[key];
+			};
+		};
+	},
+	
+	reportInconsistentProperties: function(doc, importData, propertiesArray){
+		var targetObj = this.targetSelector.getValue(doc);
+		for(var key in importData){
+			var targetValue = undefined;
+			if( targetObj ){
+				targetValue = targetObj[key];
+			};
+			
+			if( importData[key] !== targetValue ){
+				var sourceValue = importData[key];
+				var target = this.targetSelector.getSelectorString() + '.' + key;
+				
+				propertiesArray.push({
+					source: key
+					,sourceValue: sourceValue
+					,target: target
+					,targetValue: targetValue
+				});
+			};
+		};
+	}
+});
+
+addOperationPattern(OPERATION_COPY_ALL, ImportProfileOperationCopyAll);
+
+//=========================================================================
+var OPERATION_COPY_AND_FIX_ALL = /^\s*copyAndFixAll\((.*)\)\s*$/;
+
+var ImportProfileOperationCopyAndFixAll = $n2.Class(ImportProfileOperation, {
+	
+	operationString: null,
+	
+	targetSelector: null,
+	
+	initialize: function(operationString){
+		ImportProfileOperation.prototype.initialize.call(this);
+		
+		this.operationString = operationString;
+		
+		var matcher = OPERATION_COPY_AND_FIX_ALL.exec(operationString);
+		if( !matcher ) {
+			throw 'Invalid operation string for ImportProfileOperationCopyAndFixAll: '+operationString;
+		};
+		
+		this.targetSelector = $n2.objectSelector.parseSelector(matcher[1]);
+	},
+	
+	copyProperties: function(doc, importData, filterProperties){
+		var targetObj = this.targetSelector.getValue(doc);
+		if( typeof targetObj === 'undefined'){
+			targetObj = {};
+			this.targetSelector.setValue(doc, targetObj, true);
+		};
+		
+		for(var key in importData){
+			if( filterProperties.indexOf(key) >= 0 ){
+				var fixedKey = this._fixKey(key);
+				targetObj[fixedKey] = importData[key];
+			};
+		};
+	},
+	
+	reportInconsistentProperties: function(doc, importData, propertiesArray){
+		var targetObj = this.targetSelector.getValue(doc);
+		for(var key in importData){
+			var fixedKey = this._fixKey(key);
+
+			var targetValue = undefined;
+			if( targetObj ){
+				targetValue = targetObj[fixedKey];
+			};
+			
+			if( importData[key] !== targetValue ){
+				var sourceValue = importData[key];
+				var target = this.targetSelector.getSelectorString() + '.' + fixedKey;
+				
+				propertiesArray.push({
+					source: key
+					,sourceValue: sourceValue
+					,target: target
+					,targetValue: targetValue
+				});
+			};
+		};
+	},
+	
+	_fixKey: function(key){
+		var fixedKey = [];
+		
+		for(var i=0,e=key.length; i<e; ++i){
+			var c = key[i];
+			
+			if( c >= '0' && c <= '9' ){ fixedKey.push(c); }
+			else if( c >= 'a' && c <= 'z' ){ fixedKey.push(c); }
+			else if( c >= 'A' && c <= 'Z' ){ fixedKey.push(c); }
+			else if( c === '_' ){ fixedKey.push(c); }
+			else { fixedKey.push('_'); };
+		};
+		
+		return fixedKey.join('');
+	}
+});
+
+addOperationPattern(OPERATION_COPY_AND_FIX_ALL, ImportProfileOperationCopyAndFixAll);
+
+//=========================================================================
 var ImportEntry = $n2.Class({
 	initialize: function(){
 		
@@ -845,6 +1055,8 @@ var ImportProfile = $n2.Class({
 	layerName: null,
 	
 	schema: null,
+	
+	operations: null,
 
 	atlasDb: null,
 
@@ -856,6 +1068,7 @@ var ImportProfile = $n2.Class({
 			,label: null
 			,layerName: null
 			,schema: null
+			,operations: null
 			,atlasDb: null
 			,atlasDesign: null
 		},opts_);
@@ -864,6 +1077,7 @@ var ImportProfile = $n2.Class({
 		this.label = opts.label;
 		this.layerName = opts.layerName;
 		this.schema = opts.schema;
+		this.operations = opts.operations;
 		this.atlasDb = opts.atlasDb;
 		this.atlasDesign = opts.atlasDesign;
 	},
@@ -912,6 +1126,28 @@ var ImportProfile = $n2.Class({
 			,onSuccess: opts.onSuccess
 			,onError: opts.onError
 		});
+	},
+	
+	getInconsistentProperties: function(doc){
+		var properties = [];
+		
+		var importData = doc.nunaliit_import.data;
+		
+		for(var i=0,e=this.operations.length; i<e; ++i){
+			var op = this.operations[i];
+			op.reportInconsistentProperties(doc, importData, properties);
+		};
+		
+		return properties;
+	},
+	
+	copyImportProperties: function(doc, filterProperties){
+		var importData = doc.nunaliit_import.data;
+		
+		for(var i=0,e=this.operations.length; i<e; ++i){
+			var op = this.operations[i];
+			op.copyProperties(doc, importData, filterProperties);
+		};
 	}
 });
 
@@ -1133,19 +1369,38 @@ var ImportProfileService = $n2.Class({
 						name:importProfile.schemaName
 						,onSuccess: function(schema){
 							classOpts.schema = schema;
-							schemaLoaded(classOpts);
+							parseOperations(classOpts);
 						}
 						,onError: function(err){
 							opts.onError( _loc('Unknown schema: {name}',{name:importProfile.schemaName}) );
 						}
 					});
 				} else {
-					schemaLoaded(classOpts);
+					parseOperations(classOpts);
 				};
 			};
 		};
 		
-		function schemaLoaded(classOpts){
+		function parseOperations(classOpts){
+			var operations = [];
+			classOpts.operations = operations;
+			
+			if( importProfile.operations ){
+				for(var i=0,e=importProfile.operations.length; i<e; ++i){
+					var opString = importProfile.operations[i];
+					var op = createOperationFromString(opString);
+					if( !op ){
+						opts.onError( _loc('Error creating import profile. Unknown operation string: {string}',{string:opString}) );
+						return;
+					};
+					operations.push(op);
+				};
+			};
+			
+			done(classOpts);
+		};
+		
+		function done(classOpts){
 			try {
 				var profile = new profileClass(classOpts);
 				opts.onSuccess(profile);

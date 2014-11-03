@@ -360,3 +360,27 @@ jsunit.defineTest('$n2.date.findDateString(duration)',function($$){
 	t('aaa 1980 / 1990 bbb','1980','1990');
 	t('aaa 1980/1990 bbb','1980','1990');
 });
+
+//*********
+jsunit.defineTest('$n2.objectSelector',function($$){
+
+	function t(o, sel, v){
+		var objSel = $n2.objectSelector.parseSelector(sel);
+		var value = objSel.getValue(o);
+		
+		if( value !== v ){
+			throw 'Unexpected. Expected value: '+v+' Observed: '+value;
+		};
+	};
+	
+	var obj = {
+		a: {
+			b: {
+				c: 5
+			}
+		}
+	};
+	
+	t(obj, 'a.b.c', 5);
+	t(obj, 'a.b.b', undefined);
+});
