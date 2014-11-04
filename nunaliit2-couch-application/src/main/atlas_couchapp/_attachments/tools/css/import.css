@@ -1,0 +1,89 @@
+.title {
+	font-size: 130%;
+	font-weight: bold;
+	background-color: #dddddd;
+}
+
+.line::after {
+	visibility: hidden;
+	display: block;
+	font-size: 0;
+	content: " ";
+	clear: both;
+	height: 0;
+}
+
+.label {
+	float: left;
+	font-weight: bold;
+	width: 100px;
+}
+
+.value {
+	float: left;
+	width: 80%;
+}
+
+.value input,
+.value textarea {
+	width: 100%;
+}
+
+.value textarea {
+	height: 200px;
+}
+
+.operation {
+	border: 1px #000000 solid;
+}
+
+.operation::after {
+	visibility: hidden;
+	display: block;
+	font-size: 0;
+	content: " ";
+	clear: both;
+	height: 0;
+}
+
+.operation button {
+	float: right;
+}
+
+.explanation {
+	font-weight: bold;
+	font-size: 110%;
+}
+
+.property::after {
+	visibility: hidden;
+	display: block;
+	font-size: 0;
+	content: " ";
+	clear: both;
+	height: 0;
+}
+
+.propertyName {
+	float: left;
+	font-weight: bold;
+}
+
+.previousValue, .newValue {
+	float: left;
+	padding-left: 5px;
+}
+
+.newValue::before {
+	float: left;
+	content: " -> ";
+	font-weight: bold;
+}
+
+.log {
+	color: #0000ff;
+}
+
+.error {
+	color: #ff0000;
+}

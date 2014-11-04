@@ -881,6 +881,86 @@
 	SearchFilter.availableCreateFilters.push(new CreateFilterBySchemaType());
 
 	// **********************************************************************
+	var CreateFilterByImportProfile = $n2.Class(SearchFilter, {
+
+		initialize: function(){
+			SearchFilter.prototype.initialize.apply(this);
+			this.name = _loc('Select documents from an import profile');
+		}
+	
+		,printOptions: function($parent){
+			var $options = $('<div>'
+				+_loc('Import Profile')+': <br/><select class="importProfileList"></select>'
+				+'</div>');
+			
+			$parent.append( $options );
+			
+			atlasDesign.queryView({
+				viewName: 'nunaliit-import-profile'
+				,onSuccess: function(rows){
+					var $sel = $options.find('select.importProfileList');
+					for(var i=0,e=rows.length; i<e; ++i){
+						var profileId = rows[i].key;
+						$('<option></option>')
+							.val(profileId)
+							.text(profileId)
+							.appendTo($sel);
+					};
+				}
+				,onError: function(err){
+					alert(_loc('Unable to obtain list of import profiles')+': '+err);
+					reportError(_loc('Unable to obtain list of import profiles')+': '+err);
+				}
+			});
+		}
+
+		,createList: function(opts_){
+			var opts = $n2.extend({
+				name: null
+				,options: null
+				,progressTitle: _loc('List Creation Progress')
+				,onSuccess: function(list){}
+				,onError: reportError
+			},opts_);
+			
+			var _this = this;
+
+			var $i = opts.options.find('select.importProfileList');
+			var profileId = $i.val();
+			if( !profileId || '' == profileId ) {
+				alert(_loc('Must select an import profile'));
+			} else {
+				atlasDesign.queryView({
+					viewName: 'nunaliit-import'
+					,startkey: [profileId,null]
+					,endkey: [profileId,{}]
+					,onSuccess: function(rows){
+						var docIds = [];
+						for(var i=0,e=rows.length; i<e; ++i){
+							var row = rows[i];
+							docIds.push(row.id);
+						};
+						var locStr = _loc('Documents from import profile: {profileId}',{
+							profileId: profileId
+						});
+						var l = new DocumentList({
+							docIds: docIds
+							,name: locStr
+						});
+						opts.onSuccess(l);
+					}
+					,onError: function(err){
+						alert(_loc('Problem obtaining documents from import profile')+': '+err);
+						opts.onError(err);
+					}
+				});
+			};
+		}
+	});
+
+	SearchFilter.availableCreateFilters.push(new CreateFilterByImportProfile());
+
+	// **********************************************************************
 	var CreateFilterByDocumentReference = $n2.Class(SearchFilter, {
 
 		initialize: function(){

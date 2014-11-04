@@ -369,11 +369,11 @@ var UpgradeAnalyzer = $n2.Class({
 
 //=========================================================================
 var AnalysisReport = $n2.Class({
-	elemId: null
-	,analysis: null
-	,logFn: null
+	elemId: null,
+	analysis: null,
+	logFn: null,
 	
-	,initialize: function(opts_){
+	initialize: function(opts_){
 		var opts = $n2.extend({
 			elem: null
 			,elemId: null
@@ -439,6 +439,32 @@ var AnalysisReport = $n2.Class({
 		
 		var analysis = this.analysis;
 		var changes = analysis.getChanges();
+		
+		if( changes.length < 1 ){
+			$changes.text( _loc('No changes detected in the import data') );
+			return;
+		};
+		
+		if(analysis.getDbDocs().length < 1){
+			var $div = $('<div>')
+				.addClass('prompt')
+				.appendTo($changes);
+			$div.text( _loc('This appears to be the first time that you are importing this profile. Accept all?') );
+			$('<button>')
+				.text( _loc('Proceed') )
+				.appendTo($div)
+				.click(function(){
+					_this._proceedAll();
+				});
+			$('<button>')
+				.text( _loc('Discard') )
+				.appendTo($div)
+				.click(function(){
+					var $button = $(this);
+					var $promptElem = $button.parents('.prompt');
+					$promptElem.remove();
+				});
+		};
 		
 		// Report new
 		for(var i=0,e=changes.length; i<e; ++i){
@@ -624,10 +650,27 @@ var AnalysisReport = $n2.Class({
 				};
 			};
 		};
-	}
+	},
 	
-	,_proceed: function($button){
+	_proceed: function($button){
 		var $opsElem = $button.parents('.operation');
+		this._proceedWithOperationElement($opsElem);
+	},
+
+	_proceedAll: function(){
+		var _this = this;
+		
+		var $elem = this._getElem();
+		var $changes = $elem.find('.changes');
+		var $ops = $changes.find('.operation');
+		
+		$ops.each(function(){
+			var $op = $(this);
+			_this._proceedWithOperationElement($op);
+		});
+	},
+	
+	_proceedWithOperationElement: function($opsElem){
 		var changeId = $opsElem.attr('id');
 		var change = this.analysis.getChange(changeId);
 		if( change.isAddition ){
@@ -645,20 +688,20 @@ var AnalysisReport = $n2.Class({
 		} else {
 			alert( _loc('Operation not recognized') );
 		};
-	}
+	},
 
-	,_discard: function($button){
+	_discard: function($button){
 		var $opsElem = $button.parents('.operation');
 		var elemId = $opsElem.attr('id');
 		this._completed(elemId);
-	}
+	},
 
-	,_completed: function(elemId){
+	_completed: function(elemId){
 		this.analysis.removeChange(elemId);
 		$('#'+elemId).remove();
-	}
+	},
 	
-	,_createDocument: function(change){
+	_createDocument: function(change){
 		var _this = this;
 		
 		var importId = change.importId;
@@ -760,9 +803,9 @@ var AnalysisReport = $n2.Class({
 				alert( _loc('Unable to create document. Are you logged in?') );
 			}
 		});
-	}
+	},
 	
-	,_modifyDocument: function(change){
+	_modifyDocument: function(change){
 		var _this = this;
 		
 		var importId = change.importId;
@@ -850,9 +893,9 @@ var AnalysisReport = $n2.Class({
 				alert( _loc('Unable to update document. Are you logged in?') );
 			}
 		});
-	}
+	},
 	
-	,_deleteDocument: function(change){
+	_deleteDocument: function(change){
 		var _this = this;
 		
 		var importId = change.importId;
@@ -952,9 +995,9 @@ var ImportProfileOperationCopyAll = $n2.Class(ImportProfileOperation, {
 addOperationPattern(OPERATION_COPY_ALL, ImportProfileOperationCopyAll);
 
 //=========================================================================
-var OPERATION_COPY_AND_FIX_ALL = /^\s*copyAndFixAll\((.*)\)\s*$/;
+var OPERATION_COPY_ALL_AND_FIX_NAMES = /^\s*copyAllAndFixNames\((.*)\)\s*$/;
 
-var ImportProfileOperationCopyAndFixAll = $n2.Class(ImportProfileOperation, {
+var ImportProfileOperationCopyAllAndFixNames = $n2.Class(ImportProfileOperation, {
 	
 	operationString: null,
 	
@@ -965,9 +1008,9 @@ var ImportProfileOperationCopyAndFixAll = $n2.Class(ImportProfileOperation, {
 		
 		this.operationString = operationString;
 		
-		var matcher = OPERATION_COPY_AND_FIX_ALL.exec(operationString);
+		var matcher = OPERATION_COPY_ALL_AND_FIX_NAMES.exec(operationString);
 		if( !matcher ) {
-			throw 'Invalid operation string for ImportProfileOperationCopyAndFixAll: '+operationString;
+			throw 'Invalid operation string for ImportProfileOperationCopyAllAndFixNames: '+operationString;
 		};
 		
 		this.targetSelector = $n2.objectSelector.parseSelector(matcher[1]);
@@ -1015,21 +1058,36 @@ var ImportProfileOperationCopyAndFixAll = $n2.Class(ImportProfileOperation, {
 	_fixKey: function(key){
 		var fixedKey = [];
 		
+		var lastCharWasUnderscore = false;
 		for(var i=0,e=key.length; i<e; ++i){
 			var c = key[i];
 			
-			if( c >= '0' && c <= '9' ){ fixedKey.push(c); }
-			else if( c >= 'a' && c <= 'z' ){ fixedKey.push(c); }
-			else if( c >= 'A' && c <= 'Z' ){ fixedKey.push(c); }
-			else if( c === '_' ){ fixedKey.push(c); }
-			else { fixedKey.push('_'); };
+			if( c >= '0' && c <= '9' ){ 
+				fixedKey.push(c);
+				lastCharWasUnderscore = false;
+				
+			} else if( c >= 'a' && c <= 'z' ){ 
+				fixedKey.push(c); 
+				lastCharWasUnderscore = false;
+				
+			} else if( c >= 'A' && c <= 'Z' ){ 
+				fixedKey.push(c); 
+				lastCharWasUnderscore = false;
+
+			} else if( !lastCharWasUnderscore ){ 
+				fixedKey.push('_');
+				lastCharWasUnderscore = true;
+				
+			} else {
+				// do nothing
+			};
 		};
 		
 		return fixedKey.join('');
 	}
 });
 
-addOperationPattern(OPERATION_COPY_AND_FIX_ALL, ImportProfileOperationCopyAndFixAll);
+addOperationPattern(OPERATION_COPY_ALL_AND_FIX_NAMES, ImportProfileOperationCopyAllAndFixNames);
 
 //=========================================================================
 var ImportEntry = $n2.Class({
