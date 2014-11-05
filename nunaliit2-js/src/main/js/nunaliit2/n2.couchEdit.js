@@ -418,6 +418,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		if( this.dispatchService ){
 			var f = function(m){ _this._handle(m); };
 			this.dispatchService.register(DH, 'editGeometryModified', f);
+			this.dispatchService.register(DH, 'mapGeometryAdded', f);
 		};
 		
 		if( !this.editors ){
@@ -774,6 +775,8 @@ var CouchSimpleDocumentEditor = $n2.Class({
 			if( m._origin !== this ){
 				this._featureModified(m.docId, m.geom, m.proj);
 			};
+		} else if( m.type === 'mapGeometryAdded' ){
+			this._addGeometry(m.geom, m.proj);
 		};
 	}
 
@@ -902,6 +905,34 @@ var CouchSimpleDocumentEditor = $n2.Class({
     	
 		var geomData = this.editedDocument[this.geomName];
 		geomData.wkt = geom.toString();
+		this.currentGeometryWkt = geomData.wkt;
+		if( this.schemaEditor ) {
+			this.schemaEditor.refresh();
+		};
+		if( this.treeEditor ) {
+			this.treeEditor.refresh();
+		};
+		if( this.slideEditor ) {
+			this.slideEditor.refresh();
+		};
+    }
+	
+    ,_addGeometry: function(geom, proj) {
+		if( proj.getCode() != this.couchProj.getCode() ) {
+			// Need to convert
+			geom = geom.clone();
+			geom.transform(proj,this.couchProj);
+		};
+    	
+		var geomData = this.editedDocument[this.geomName];
+		if( !geomData ){
+			geomData = {
+				nunaliit_type: 'geometry'
+			};
+			this.editedDocument[this.geomName] = geomData;
+		};
+		geomData.wkt = geom.toString();
+		$n2.couchGeom.adjustBboxOnCouchGeom(geomData);
 		this.currentGeometryWkt = geomData.wkt;
 		if( this.schemaEditor ) {
 			this.schemaEditor.refresh();
@@ -2065,7 +2096,6 @@ var CouchDocumentEditor = $n2.Class({
 		return feature.geometry;
     }
 	
-	
     ,_featureModified: function(docId, geom, proj) {
 
 		if( proj.getCode() != this.couchProj.getCode() ) {
@@ -2076,6 +2106,34 @@ var CouchDocumentEditor = $n2.Class({
     	
 		var geomData = this.editedDocument[this.geomName];
 		geomData.wkt = geom.toString();
+		this.currentGeometryWkt = geomData.wkt;
+		if( this.schemaEditor ) {
+			this.schemaEditor.refresh();
+		};
+		if( this.treeEditor ) {
+			this.treeEditor.refresh();
+		};
+		if( this.slideEditor ) {
+			this.slideEditor.refresh();
+		};
+    }
+	
+    ,_addGeometry: function(geom, proj) {
+		if( proj.getCode() != this.couchProj.getCode() ) {
+			// Need to convert
+			geom = geom.clone();
+			geom.transform(proj,this.couchProj);
+		};
+    	
+		var geomData = this.editedDocument[this.geomName];
+		if( !geomData ){
+			geomData = {
+				nunaliit_type: 'geometry'
+			};
+			this.editedDocument[this.geomName] = geomData;
+		};
+		geomData.wkt = geom.toString();
+		$n2.couchGeom.adjustBboxOnCouchGeom(geomData);
 		this.currentGeometryWkt = geomData.wkt;
 		if( this.schemaEditor ) {
 			this.schemaEditor.refresh();
@@ -2128,6 +2186,9 @@ var CouchDocumentEditor = $n2.Class({
 			if( m._origin !== this ){
 				this._featureModified(m.docId, m.geom, m.proj);
 			};
+			
+		} else if( m.type === 'mapGeometryAdded' ){
+			this._addGeometry(m.geom, m.proj);
 		};
 	}
 });
@@ -2227,6 +2288,7 @@ var CouchEditor = $n2.Class({
 		if( dispatcher ){
 			var f = function(m){ _this._handle(m); };
 			dispatcher.register(DH, 'editGeometryModified', f);
+			dispatcher.register(DH, 'mapGeometryAdded', f);
 			dispatcher.register(DH, 'editInitiate', f);
 			dispatcher.register(DH, 'editCancel', f);
 		};

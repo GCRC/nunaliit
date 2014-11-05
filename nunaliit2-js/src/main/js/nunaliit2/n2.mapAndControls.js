@@ -868,9 +868,12 @@ var MapAndControls = $n2.Class({
 				}
 				,onEndClick: function(feature) {
 				}
+				,featureAdded: function(feature) {
+					
+				}
 			}
-			,EDIT: {
-				name        : "EDIT"
+			,ADD_OR_SELECT_FEATURE: {
+				name        : "ADD_OR_SELECT"
 				,buttonValue : cancelLabel
 				,onStartHover: function(feature, layer) {
 					_this._hoverFeature(feature, layer);
@@ -897,10 +900,44 @@ var MapAndControls = $n2.Class({
 				}
 				,onEndClick: function(feature) {
 				}
+				,featureAdded: function(feature) {
+		    		_this._dispatch({
+		    			type: 'editInitiate'
+		    			,docId: null
+		    			,feature: feature
+		    			,create: true
+		    		});
+				}
+			}
+			,ADD_GEOMETRY: {
+				name        : "ADD_GEOMETRY"
+				,buttonValue : cancelLabel
+				,onStartHover: function(feature, layer) {
+					_this._hoverFeature(feature, layer);
+					_this._hoverFeaturePopup(feature, layer);
+				}
+				,featureAdded: function(feature) {
+					var proj = null;
+					if( feature 
+					 && feature.layer 
+					 && feature.layer.map ){
+						proj = feature.layer.map.projection;
+					};
+					
+		    		_this._dispatch({
+		    			type: 'mapGeometryAdded'
+		    			,feature: feature
+		        		,geom: feature.geometry
+		        		,proj: proj
+		        		,_origin: _this
+		    		});
+				}
 			}
 			,EDIT_FEATURE: {
 				name        : "EDIT_FEATURE"
 				,buttonValue : cancelLabel
+				,featureAdded: function(feature) {
+				}
 			}
 		};
 		this.currentMode = this.modes.NAVIGATE;
@@ -1158,13 +1195,9 @@ var MapAndControls = $n2.Class({
 		    		// Remember that this is a newly added feature
 		    		feature._n2MapNewFeature = true;
 		    	};
+		    	var previousMode = _this.currentMode;
 	    		_this.switchToEditFeatureMode(feature.fid, feature);
-	    		_this._dispatch({
-	    			type: 'editInitiate'
-	    			,docId: null
-	    			,feature: feature
-	    			,create: true
-	    		});
+	    		previousMode.featureAdded(feature);
 	    	};
 		};
 	    this.convertToMultiGeometry = function(evt) {
@@ -1607,7 +1640,8 @@ var MapAndControls = $n2.Class({
 					
 				// Add feature to layer
 				// If in edit mode, first disable editAttribute widget
-				if( _this.currentMode === _this.modes.EDIT ) {
+				if( _this.currentMode === _this.modes.ADD_OR_SELECT_FEATURE 
+				 || _this.currentMode === _this.modes.ADD_GEOMETRY ) {
 					_this.editModeAddFeatureEnabled = false;
 					
 					layerInfo.olLayer.addFeatures(featuresToAdd);
@@ -3119,8 +3153,11 @@ var MapAndControls = $n2.Class({
 		if( this.currentMode === this.modes.NAVIGATE ) {
 			this.switchToEditMode();
 			
-		} else if( this.currentMode === this.modes.EDIT ) {
+		} else if( this.currentMode === this.modes.ADD_OR_SELECT_FEATURE ) {
 			this.switchMapMode(this.modes.NAVIGATE);
+			
+		} else if( this.currentMode === this.modes.ADD_GEOMETRY ) {
+			this._cancelEditFeatureMode();
 			
 		} else if( this.currentMode === this.modes.EDIT_FEATURE ) {
 			this._cancelEditFeatureMode();
@@ -3151,7 +3188,16 @@ var MapAndControls = $n2.Class({
     	};
     	
     	// Remove current mode
-    	if( this.currentMode === this.modes.EDIT ) {
+    	if( this.currentMode === this.modes.ADD_OR_SELECT_FEATURE ) {
+    		this.deactivateControl( this.editControls.addPoints );
+    		this.deactivateControl( this.editControls.toolbar );
+    		this.deactivateControl( this.editControls.modifyFeature );
+    		this.editLayer.events.unregister('featureadded', null, this.editModeAddFeatureCallback);
+            this.editLayer.events.unregister('beforefeaturesadded', null, this.convertToMultiGeometry);
+
+            this.deactivateSelectFeatureControl();
+            
+    	} else if( this.currentMode === this.modes.ADD_GEOMETRY ) {
     		this.deactivateControl( this.editControls.addPoints );
     		this.deactivateControl( this.editControls.toolbar );
     		this.deactivateControl( this.editControls.modifyFeature );
@@ -3171,7 +3217,7 @@ var MapAndControls = $n2.Class({
     	// Apply new mode
     	this.currentMode = mode;
     	this._getMapInteractionSwitch().val(mode.buttonValue);
-    	if( this.currentMode === this.modes.EDIT ) {
+    	if( this.currentMode === this.modes.ADD_OR_SELECT_FEATURE ) {
     		this.editLayer.events.register('featureadded', null, this.editModeAddFeatureCallback);
     		this.editLayer.events.register('beforefeaturesadded', null, this.convertToMultiGeometry);
     		this.activateControl( this.editControls.addPoints );
@@ -3179,6 +3225,25 @@ var MapAndControls = $n2.Class({
     		this.activateControl( this.editControls.modifyFeature );
     		
     		this.activateSelectFeatureControl();
+    		
+    		if( this.editControls.toolbar 
+    		 && this.editControls.toolbar.div ){
+    			var $toolbar = $(this.editControls.toolbar.div);
+    			$toolbar.find('.olControlNavigationItemActive').attr('title',_loc('Scroll Map'));
+    			$toolbar.find('.olControlDrawFeaturePointItemInactive').attr('title',_loc('Add a point to the map'));
+    			$toolbar.find('.olControlDrawFeaturePathItemInactive').attr('title',_loc('Add a line to the map'));
+    			$toolbar.find('.olControlDrawFeaturePolygonItemInactive').attr('title',_loc('Add a polygon to the map'));
+    			$toolbar.find('.olControlNunaliitGazetteerItemInactive').attr('title',_loc('Add a feature to the map based on a gazetteer service'));
+    		};
+            
+    	} else if( this.currentMode === this.modes.ADD_GEOMETRY ) {
+    		this.editFeatureFid = opts.fid;
+
+    		this.editLayer.events.register('featureadded', null, this.editModeAddFeatureCallback);
+    		this.editLayer.events.register('beforefeaturesadded', null, this.convertToMultiGeometry);
+    		this.activateControl( this.editControls.addPoints );
+    		this.activateControl( this.editControls.toolbar );
+    		this.activateControl( this.editControls.modifyFeature );
     		
     		if( this.editControls.toolbar 
     		 && this.editControls.toolbar.div ){
@@ -3226,7 +3291,7 @@ var MapAndControls = $n2.Class({
     			});
     		} else {
     			// Already logged in, just switch
-    	    	this.switchMapMode(this.modes.EDIT);
+    	    	this.switchMapMode(this.modes.ADD_OR_SELECT_FEATURE);
     		};
     	} else {
     		alert("Authentication module not installed.");
@@ -3240,6 +3305,12 @@ var MapAndControls = $n2.Class({
     	});
     }
     
+    ,switchToAddGeometryMode: function(docId) {
+    	this.switchMapMode(this.modes.ADD_GEOMETRY,{
+    		fid: docId
+    	});
+    }
+    
     ,_cancelEditFeatureMode: function() {
    		this._dispatch({
    			type: 'editCancel'
@@ -3249,7 +3320,7 @@ var MapAndControls = $n2.Class({
     // === NAVIGATION MODE ========================================================
 
 
-    // === EDIT MODE ========================================================
+    // === ADD OR SELECT FEATURE MODE =============================================
 
     ,createFirstContribution: function(feature, dataOptions) {
 		if( feature.attributes && feature.attributes.place_id ) {
@@ -3260,7 +3331,7 @@ var MapAndControls = $n2.Class({
     	};
     }
     
-    // ======= EDIT_FEATURE MODE =======================================================
+    // ======= EDIT_FEATURE MODE ==================================================
 
     ,_geometryModified: function(fid, olGeom, proj){
     	if( this.currentMode !== this.modes.EDIT_FEATURE ) return;
@@ -4586,7 +4657,13 @@ var MapAndControls = $n2.Class({
 					};
 				};
 				
-				this.switchToEditFeatureMode(fid, feature);
+				if( m.doc && !m.doc.nunaliit_geom ){
+					// Edit a document that does not have a geometry.
+					// Allow adding a geometry.
+					this.switchToAddGeometryMode(fid);
+				} else {
+					this.switchToEditFeatureMode(fid, feature);
+				};
 			};
 			
 		} else if( 'editCancel' === type ) {
