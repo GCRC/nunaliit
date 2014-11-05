@@ -68,7 +68,7 @@ public class TransparentProxyFixedEscaped extends ProxyServlet.Transparent {
     				String fixedUriString = unescapeUriString(uriStr);
 					URI fixedUri = new URI(fixedUriString);
 					
-					logger.error("proxy decode "+uri+" -> "+fixedUri);
+					logger.debug("proxy decode "+uri+" -> "+fixedUri);
 					
 					uri = fixedUri;
 					
