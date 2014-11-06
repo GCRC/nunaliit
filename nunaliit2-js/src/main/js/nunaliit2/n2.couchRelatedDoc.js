@@ -115,6 +115,8 @@ var CreateRelatedDocProcess = $n2.Class({
 	showService: null,
 	
 	authService: null,
+
+	dialogService: null,
 	
 	initialize: function(opts_) {
 		var opts = $n2.extend(
@@ -124,6 +126,7 @@ var CreateRelatedDocProcess = $n2.Class({
 				,uploadService: null
 				,showService: null
 				,authService: null
+				,dialogService: null
 			}
 			,opts_
 		);
@@ -133,6 +136,7 @@ var CreateRelatedDocProcess = $n2.Class({
 		this.uploadService = opts.uploadService;
 		this.showService = opts.showService;
 		this.authService = opts.authService;
+		this.dialogService = opts.dialogService;
 	},
 	
 	getCreateWidget: function(opts_){
@@ -230,6 +234,7 @@ var CreateRelatedDocProcess = $n2.Class({
 				documentSource: _this.documentSource
 				,uploadService: _this.uploadService
 				,showService: _this.showService
+				,dialogService: _this.dialogService
 				,obj: obj
 				,schema: opt.schema
 				,prompt: prompt
@@ -466,6 +471,8 @@ var Editor = $n2.Class({
 	
 	showService: null,
 	
+	dialogService: null,
+	
 	obj: null,
 	
 	schema: null,
@@ -488,6 +495,7 @@ var Editor = $n2.Class({
 				documentSource: null
 				,uploadService: null
 				,showService: null
+				,dialogService: null
 				,obj: null
 				,schema: null
 				,prompt: null
@@ -501,6 +509,7 @@ var Editor = $n2.Class({
 		this.documentSource = opts.documentSource;
 		this.uploadService = opts.uploadService;
 		this.showService = opts.showService;
+		this.dialogService = opts.dialogService;
 		this.schema = opts.schema;
 		this.prompt = opts.prompt;
 		this.onSuccess = opts.onSuccess;
@@ -528,9 +537,14 @@ var Editor = $n2.Class({
 		var obj = this.obj;
 		var schema = this.schema;
 		
+		var funcMap = {};
+		if( this.dialogService ){
+			funcMap = this.dialogService.getFunctionMap();
+		};
+		
 		var $form = $('<div></div>');
 		$dialog.append($form);
-		schema.form(obj, $form);
+		schema.form(obj, $form, null, null, funcMap);
 		
 		if( this.showService ){
 			this.showService.fixElementAndChildren($form, {}, obj);

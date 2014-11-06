@@ -181,154 +181,6 @@ function searchForDocumentId(options_){
 	};
 };
 
-function selectLayersDialog(opts_){
-	
-	var opts = $n2.extend({
-		currentLayers: []
-		,cb: function(selectedLayerIds){}
-		,resetFn: function(){}
-		,documentSource: null
-		,showService: null
-		,dispatchService: null
-	},opts_);
-	
-	var layers = {};
-	if( typeof(opts.currentLayers) === 'string' ){
-		var layerNames = currentLayers.split(',');
-		for(var i=0,e=layerNames.length;i<e;++i){
-			layers[ $n2.trim(layerNames[i]) ] = {
-				currentlySelected: true
-			};
-		};
-		
-	} else if( $n2.isArray(opts.currentLayers) ){
-		for(var i=0,e=opts.currentLayers.length;i<e;++i){
-			layers[ $n2.trim(opts.currentLayers[i]) ] = {
-				currentlySelected: true
-			};
-		};
-	};
-
-	var shouldReset = true;
-	var dialogId = $n2.getUniqueId();
-	var $dialog = $('<div id="'+dialogId+'" class="editorSelectLayerDialog">'
-			+'<div class="editorSelectLayerContent"></div>'
-			+'<div class="editorSelectLayerButtons"><button class="ok">'+_loc('OK')+'</button>'
-			+'<button class="cancel">'+_loc('Cancel')+'</button></div>'
-			+'</div>');
-	
-	$dialog.find('button.cancel')
-		.button({icons:{primary:'ui-icon-cancel'}})
-		.click(function(){
-			var $dialog = $('#'+dialogId);
-			$dialog.dialog('close');
-			return false;
-		});
-	$dialog.find('button.ok')
-		.button({
-			icons:{primary:'ui-icon-check'}
-			,disabled: true
-		});
-	
-	var dialogOptions = {
-		autoOpen: true
-		,title: _loc('Select Layers')
-		,modal: true
-		,width: 370
-		,close: function(event, ui){
-			var diag = $(event.target);
-			diag.dialog('destroy');
-			diag.remove();
-			if( shouldReset ) {
-				opts.resetFn();
-			};
-		}
-	};
-	$dialog.dialog(dialogOptions);
-	
-	// Get layers
-	if( opts.documentSource ){
-		opts.documentSource.getLayerDefinitions({
-			onSuccess: function(layerDefs){
-				var layerIdentifiers = {};
-				for(var i=0,e=layerDefs.length;i<e;++i){
-					var layerId = layerDefs[i].id;
-					if( !layers[layerId] ){
-						layers[layerId] = {
-							currentlySelected: false
-						};
-					};
-				};
-				getInnerLayers();
-			}
-			,onError: function(errorMsg){ 
-				reportError(errorMsg);
-			}
-		});
-	} else {
-		getInnerLayers();
-	};
-	
-	function getInnerLayers(){
-		var m = {
-			type: 'mapGetLayers'
-			,layers: {}
-		};
-		opts.dispatchService.synchronousCall(DH, m);
-		for(var layerId in m.layers){
-			if( !layers[layerId] ){
-				layers[layerId] = {
-					currentlySelected: false	
-				};
-			};
-		};
-		displayLayers();
-	};
-	
-	function displayLayers(){
-		var $diag = $('#'+dialogId);
-		
-		var $c = $diag.find('.editorSelectLayerContent');
-		$c.empty();
-		for(var layerId in layers){
-			var inputId = $n2.getUniqueId();
-			var $div = $('<div><input id="'+inputId+'" class="layer" type="checkbox"/><label for="'+inputId+'"></label></div>');
-			$c.append($div);
-			$div.find('input').attr('name',layerId);
-			$div.find('label').text(layerId);
-			if( layers[layerId].currentlySelected ){
-				$div.find('input').attr('checked','checked');
-			};
-			
-			if(opts.showService){
-				opts.showService.printLayerName($div.find('label'), layerId);
-			};
-		};
-		
-		$diag.find('button.ok')
-			.button('option','disabled',false)
-			.click(function(){
-				var selectedLayers = [];
-				var $diag = $('#'+dialogId);
-				$diag.find('input.layer').each(function(){
-					var $input = $(this);
-					if( $input.is(':checked') ){
-						var layerId = $input.attr('name');
-						selectedLayers.push(layerId);
-					};
-				});
-				opts.cb(selectedLayers);
-
-				shouldReset = false;
-				$diag.dialog('close');
-			});
-	};
-	
-	function reportError(err){
-		$('#'+dialogId).find('.editorSelectLayerContent').text('Error: '+err);
-	};
-};
-
 
 //++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -958,6 +810,7 @@ var CouchDocumentEditor = $n2.Class({
 	schemaRepository: null,
 	customService: null,
 	dispatchService: null,
+	dialogService: null,
 	geomName: null,
 	initialLayers: null,
 	schema: null,
@@ -998,6 +851,7 @@ var CouchDocumentEditor = $n2.Class({
 			,schemaRepository: null
 			,customService: null
 			,dispatchService: null
+			,dialogService: null
 			,geomName: null
 			,initialLayers: ['public']
 			,schema: null
@@ -1023,6 +877,7 @@ var CouchDocumentEditor = $n2.Class({
 		this.schemaRepository = opts.schemaRepository;
 		this.customService = opts.customService;
 		this.dispatchService = opts.dispatchService;
+		this.dialogService = opts.dialogService;
 		this.geomName = opts.geomName;
 		this.initialLayers = opts.initialLayers;
 		this.schema = opts.schema;
@@ -1711,13 +1566,13 @@ var CouchDocumentEditor = $n2.Class({
 	,_addRelationDialog: function() {
 		var _this = this;
 
-		searchForDocumentId({
-			searchServer: this.searchService
-			,showService: this.showService
-			,onSelected: function(docId){
-				_this._addRelation(docId);
-			}
-		});
+		if( this.dialogService ){
+			this.dialogService.searchForDocumentId({
+				onSelected: function(docId){
+					_this._addRelation(docId);
+				}
+			});
+		};
 	}
     
     ,_addRelation: function(relDocId){
@@ -1800,22 +1655,21 @@ var CouchDocumentEditor = $n2.Class({
     	if( !layers ){
     		layers = [];
     	};
-    	selectLayersDialog({
-    		currentLayers: layers
-			,cb: function(selectedLayers){
-	    		if( selectedLayers.length < 1 ){
-	    			if( data.nunaliit_layers ){
-	    				delete data.nunaliit_layers;
-	    			};
-	    		} else {
-	    			data.nunaliit_layers = selectedLayers;
-	    		};
-	    		_this.refresh();
-			}
-			,documentSource: this.documentSource
-			,showService: this.showService
-			,dispatchService: this.dispatchService
-    	});
+    	if( this.dialogService ){
+    		this.dialogService.selectLayersDialog({
+        		currentLayers: layers
+    			,onSelected: function(selectedLayers){
+    	    		if( selectedLayers.length < 1 ){
+    	    			if( data.nunaliit_layers ){
+    	    				delete data.nunaliit_layers;
+    	    			};
+    	    		} else {
+    	    			data.nunaliit_layers = selectedLayers;
+    	    		};
+    	    		_this.refresh();
+    			}
+    		});
+    	};
     }
     
     ,_removeAttachment: function(attNameToRemove){
@@ -2227,6 +2081,8 @@ var CouchEditor = $n2.Class({
 	
 	customService: null,
 	
+	dialogService: null,
+	
 	enableAddFile: null,
 	
 	initialLayers: null,
@@ -2255,6 +2111,8 @@ var CouchEditor = $n2.Class({
 			,searchService: null
 			,schemaEditorService: null
 			,customService: null
+			,dialogService: null
+			,createDocProcess: null
 			,enableAddFile: false
 			,initialLayers: ['public']
 		},opts_);
@@ -2278,7 +2136,9 @@ var CouchEditor = $n2.Class({
 		this.searchService = opts.searchService;
 		this.schemaEditorService = opts.schemaEditorService;
 		this.customService = opts.customService;
+		this.dialogService = opts.dialogService;
 		this.isFormEditor = true;
+		this.relatedDocProcess = opts.createDocProcess;
 		
 		if( !this.couchProj ) {
 			this.couchProj = getDefaultCouchProjection();
@@ -2293,14 +2153,6 @@ var CouchEditor = $n2.Class({
 			dispatcher.register(DH, 'editCancel', f);
 		};
 		
-		this.relatedDocProcess = new $n2.couchRelatedDoc.CreateRelatedDocProcess({
-			documentSource: this.documentSource
-			,schemaRepository: this.schemaRepository
-			,uploadService: this.uploadService
-			,showService: this.showService
-			,authService: this.authService
-		});
-
 		// Service defined buttons
 		this.userButtons = {};
 		var label = 'button';
@@ -2357,6 +2209,7 @@ var CouchEditor = $n2.Class({
 			,schemaRepository: this.schemaRepository
 			,customService: this.customService
 			,dispatchService: this.dispatchService
+			,dialogService: this.dialogService
 			,defaultEditSchema: this.defaultEditSchema
 			,documentSource: this.documentSource
 			,couchProj: this.couchProj
@@ -2520,6 +2373,8 @@ var SchemaEditorService = $n2.Class({
 	searchService: null,
 	
 	dispatchService: null,
+
+	dialogService: null,
 	
 	funcMap: null,
 	
@@ -2529,12 +2384,12 @@ var SchemaEditorService = $n2.Class({
 
 	initialize: function(opts_) {
 		var opts = $n2.extend({
-			funcMap: {}
-			,postProcessFn: null
+			postProcessFn: null
 			,documentSource: null
 			,showService: null
 			,searchService: null
 			,dispatchService: null
+			,dialogService: null
 		},opts_);
 	
 		var _this = this;
@@ -2544,32 +2399,11 @@ var SchemaEditorService = $n2.Class({
 		this.showService = opts.showService;
 		this.searchService = opts.searchService;
 		this.dispatchService = opts.dispatchService;
+		this.dialogService = opts.dialogService;
 		
 		this.funcMap = {};
-		for(var key in opts.funcMap){
-			var fn = opts.funcMap[key];
-			
-			if( typeof(fn) === 'function' ){
-				this.funcMap[key] = fn;
-			};
-		};
-		
-		// Add 'getDocumentId', if not defined
-		if( !this.funcMap['getDocumentId'] ){
-			this.funcMap['getDocumentId'] = function(cb,resetFn){
-				_this._searchForDocumentId(cb,resetFn);
-			};			
-		};
-		if( !this.funcMap['getLayers'] ){
-			this.funcMap['getLayers'] = function(currentLayers,cb,resetFn){
-				selectLayersDialog({
-					currentLayers: currentLayers
-					,cb: cb
-					,resetFn: resetFn
-					,showService: _this.showService
-					,dispatchService: _this.dispatchService
-				});
-			};			
+		if( this.dialogService ){
+			this.funcMap = this.dialogService.getFunctionMap();
 		};
 		
 		if( opts.postProcessFn ){
@@ -2598,29 +2432,10 @@ var SchemaEditorService = $n2.Class({
 		return editor;
 	},
 	
-	addFunctionMap: function(fnName, fn){
-		if( typeof(fn) === 'function' ){
-			this.funcMap[fnName] = fn;
-		};
-	},
-	
 	addPostProcessFunction: function(fn){
 		if( typeof(fn) === 'function' ){
 			this.postProcessFunctions.push(fn);
 		};
-	},
-
-	_searchForDocumentId: function(cb,resetFn){
-		
-		var searchServer = this.searchService;
-		var showService = this.showService;
-		
-		searchForDocumentId({
-			searchServer: searchServer
-			,showService: showService
-			,onSelected: cb
-			,onReset: resetFn
-		});
 	}
 });
 

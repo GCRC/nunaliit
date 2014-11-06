@@ -178,6 +178,7 @@ var TiledDisplay = $n2.Class({
 			,schemaRepository: null
 			,customService: null
 			,dispatchService: null
+			,createDocProcess: null
 			,displayRelatedInfoFunction: null
 			
 			// Boolean options
@@ -242,6 +243,7 @@ var TiledDisplay = $n2.Class({
 		this.schemaRepository = opts.schemaRepository;
 		this.customService = opts.customService;
 		this.dispatchService = opts.dispatchService;
+		this.createRelatedDocProcess = opts.createdDocProcess;
 		
 		// Initialize display
 		this._getDisplayDiv();
@@ -286,14 +288,6 @@ var TiledDisplay = $n2.Class({
 				};
 			};
 		};
-		
-		this.createRelatedDocProcess = new $n2.couchRelatedDoc.CreateRelatedDocProcess({
-			documentSource: opts.documentSource
-			,schemaRepository: this.schemaRepository
-			,uploadService: this.uploadService
-			,showService: this.showService
-			,authService: this.authService
-		});
 		
 		// Related document discovery process
 		this.relatedDocumentDiscoveryProcess = opts.relatedDocumentDiscoveryProcess;

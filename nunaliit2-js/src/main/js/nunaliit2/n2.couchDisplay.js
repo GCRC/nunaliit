@@ -125,6 +125,7 @@ var Display = $n2.Class({
 			,displayPanelName: null
 			,showService: null // asynchronous resolver
 			,uploadService: null
+			,createDocProcess: null
 			,serviceDirectory: null
 			,displayRelatedInfoFunction: null // legacy
 			,displayRelatedInfoProcess: null
@@ -141,6 +142,7 @@ var Display = $n2.Class({
 		this.displayPanelName = opts.displayPanelName;
 		this.uploadService = opts.uploadService;
 		this.classDisplayFunctions = opts.classDisplayFunctions;
+		this.createRelatedDocProcess = opts.createDocProcess;
 		
 		if( opts.serviceDirectory ){
 			this.showService = opts.serviceDirectory.showService;
@@ -221,14 +223,6 @@ var Display = $n2.Class({
 					= new LegacyDisplayRelatedFunctionAdapter(DisplayLinkedInfo);
 			};
 		};
-		
-		this.createRelatedDocProcess = new $n2.couchRelatedDoc.CreateRelatedDocProcess({
-			documentSource: this.documentSource
-			,schemaRepository: this.schemaRepository
-			,uploadService: this.uploadService
-			,showService: this.showService
-			,authService: this.authService
-		});
 	}
 
 	// external

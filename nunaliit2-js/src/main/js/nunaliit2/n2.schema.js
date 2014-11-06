@@ -1700,8 +1700,8 @@ var Form = $n2.Class({
 							return true;
 						};
 						
-						getDocumentIdFn(
-							function(docId){ // callback with docId
+						getDocumentIdFn({
+							onSelected: function(docId){ // callback with docId
 								var value = getDataFromObjectSelector(obj, selector);
 								if( !value ) {
 									var p = getDataFromObjectSelector(obj, parentSelector);
@@ -1717,10 +1717,10 @@ var Form = $n2.Class({
 								};
 								$input.trigger('focus',{inhibitCallback:true});
 							}
-							,function(){ // reset function
+							,onReset: function(){ // reset function
 								$input.trigger('focus',{inhibitCallback:true});
 							}
-						);
+						});
 						
 						return true;
 					});
@@ -1828,9 +1828,9 @@ var Form = $n2.Class({
 						
 						var layerValue = getDataFromObjectSelector(obj, selector);
 						
-						getLayersFn(
-							layerValue	
-							,function(layers){ // callback with docId
+						getLayersFn({
+							currentLayers: layerValue	
+							,onSelected: function(layers){ // callback with docId
 								var p = getDataFromObjectSelector(obj, parentSelector);
 								if( p ) {
 									p[key] = layers;
@@ -1844,10 +1844,10 @@ var Form = $n2.Class({
 								};
 								$input.trigger('focus',{inhibitCallback:true});
 							}
-							,function(){ // reset function
+							,onReset: function(){ // reset function
 								$input.trigger('focus',{inhibitCallback:true});
 							}
-						);
+						});
 						
 						return true;
 					});

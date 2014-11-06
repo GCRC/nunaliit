@@ -280,6 +280,12 @@ function Configure(options_){
 			,customService: configuration.directory.customService
 			,displayImageSourceFactory: configuration.directory.displayImageSourceFactory
 		});
+
+		configuration.directory.dialogService = new $n2.couchDialogs.DialogService({
+			dispatchService: configuration.directory.dispatchService
+			,searchService: configuration.directory.searchService
+			,showService: configuration.directory.showService
+		});
 		
 		configuration.directory.createDocProcess = new $n2.couchRelatedDoc.CreateRelatedDocProcess({
 			documentSource: configuration.documentSource
@@ -287,6 +293,7 @@ function Configure(options_){
 			,uploadService: configuration.directory.uploadService
 			,showService: configuration.directory.showService
 			,authService: configuration.directory.authService
+			,dialogService: configuration.directory.dialogService
 		});
 		
 	 	configuration.directory.schemaEditorService = new $n2.CouchEditor.SchemaEditorService({
@@ -294,6 +301,7 @@ function Configure(options_){
 			,showService: configuration.directory.showService
 			,searchService: configuration.directory.searchService
 			,dispatchService: configuration.directory.dispatchService
+			,dialogService: configuration.directory.dialogService
 		});
 		
 	 	configuration.couchEditor = new $n2.CouchEditor.Editor({
@@ -306,6 +314,8 @@ function Configure(options_){
 			,searchService: configuration.directory.searchService
 			,schemaEditorService: configuration.directory.schemaEditorService
 			,customService: configuration.directory.customService
+			,dialogService: configuration.directory.dialogService
+			,createDocProcess: configuration.directory.createDocProcess
 		});
 		
 	 	configuration.directory.userService = new $n2.couchUser.UserService({

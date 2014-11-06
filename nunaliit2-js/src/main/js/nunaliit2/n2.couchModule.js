@@ -541,6 +541,7 @@ var ModuleDisplay = $n2.Class({
 					,schemaRepository: config.directory.schemaRepository
 					,customService: config.directory.customService
 					,dispatchService: config.directory.dispatchService
+					,createDocProcess: config.directory.createDocProcess
 				});
 				
 			} else {
@@ -552,10 +553,11 @@ var ModuleDisplay = $n2.Class({
 				var displayOptions = {
 					documentSource: documentSource
 					,displayPanelName: _this.sidePanelName
-					,showService: _this.config.directory.showService
-					,editor: _this.config.couchEditor
-					,uploadService: _this.config.directory.uploadService
-					,serviceDirectory: _this.config.directory
+					,showService: config.directory.showService
+					,editor: config.couchEditor
+					,uploadService: config.directory.uploadService
+					,serviceDirectory: config.directory
+					,createDocProcess: config.directory.createDocProcess
 				};
 				if( displayInfo && displayInfo.displayOnlyRelatedSchemas ){
 					displayOptions.displayOnlyRelatedSchemas 
