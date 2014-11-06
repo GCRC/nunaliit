@@ -1294,8 +1294,20 @@ var ImportProfileJson = $n2.Class(ImportProfile, {
 		var entries = [];
 		for(var i=0,e=jsonObj.length; i<e; ++i){
 			var jsonEntry = jsonObj[i];
+			
+			var props = {};
+			for(var key in jsonEntry){
+				if( !key ){
+					// skip
+				} else if( $n2.trim(key) === '' ) {
+					// skip
+				} else {
+					props[key] = jsonEntry[key];
+				};
+			};
+			
 			var entry = new ImportEntryJson({
-				data: jsonEntry
+				data: props
 				,profile: this
 			});
 			entries.push(entry);
