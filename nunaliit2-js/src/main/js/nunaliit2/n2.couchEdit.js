@@ -1030,24 +1030,15 @@ var CouchDocumentEditor = $n2.Class({
 		} else if( this.schema && this.isInsert ) {
 			if( $n2.CouchEditor.Constants.ALL_SCHEMAS === this.schema ) {
 				// Must select a schema from all root schemas
-				this.schemaRepository.getRootSchemas({
-					onSuccess: function(schemas){
-						_this.relatedDocProcess.selectSchemaDialog({
-							schemas: schemas
-							,onSuccess: callbackFn
-						});
-					}
-					,onError: function(err){
-						$n2.log('Error fetching root schemas',err);
-						callbackFn(null);
-					}
+				this.dialogService.selectSchema({
+					onSelected: callbackFn
 				});
 				
 			} else if( $n2.isArray(this.schema) ) {
 				// Must select a schema
-				this.relatedDocProcess.selectSchemaDialog({
+				this.dialogService.selectSchema({
 					schemas: this.schema
-					,onSuccess: callbackFn
+					,onSelected: callbackFn
 				});
 				
 			} else {

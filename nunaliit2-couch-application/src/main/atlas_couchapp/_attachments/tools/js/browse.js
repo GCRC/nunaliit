@@ -20,6 +20,7 @@ var schemaRepository = null;
 var dispatcher = null;
 var authService = null;
 var createDocProcess = null;
+var dialogService = null;
 
 function reportErrorsOnElem(errors, $elem) {
 	$elem.append( $('<div>Error occurred during the request<div>') );
@@ -205,23 +206,16 @@ function addDocument() {
 		return;
 	};
 	
-	schemaRepository.getRootSchemas({
-		onSuccess: function(schemas){
-			createDocProcess.selectSchemaDialog({
-				schemas: schemas
-				,onSuccess: function(schema){
-					// start new document
-					var hash = HASH_NEW_PREFIX + $n2.utils.stringToHtmlId(schema.name);
-					dispatcher.send(DH,{
-						type: 'setHash'
-						,hash: hash
-					});
-					
-					createNewDocument(schema);
-				}
+	dialogService.selectSchema({
+		onSelected: function(schema){
+			// start new document
+			var hash = HASH_NEW_PREFIX + $n2.utils.stringToHtmlId(schema.name);
+			dispatcher.send(DH,{
+				type: 'setHash'
+				,hash: hash
 			});
-		}
-		,onError: function(){
+			
+			createNewDocument(schema);
 		}
 	});
 };
@@ -367,6 +361,7 @@ function main(opts_) {
 	schemaRepository = config.directory.schemaRepository;
 	dispatcher = config.directory.dispatchService;
 	createDocProcess = config.directory.createDocProcess;
+	dialogService = config.directory.dialogService;
 
 	dispatcher.register(DH,'searchInitiate',_handle);
 	dispatcher.register(DH,'searchResults',_handle);

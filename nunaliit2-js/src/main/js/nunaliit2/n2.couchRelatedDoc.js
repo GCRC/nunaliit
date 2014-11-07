@@ -103,366 +103,7 @@ var CreateDocWidget = $n2.Class({
 	}
 });
 
-// ===============================================================
-var CreateRelatedDocProcess = $n2.Class({
-	
-	documentSource: null,
-
-	schemaRepository: null,
-	
-	uploadService: null,
-	
-	showService: null,
-	
-	authService: null,
-
-	dialogService: null,
-	
-	initialize: function(opts_) {
-		var opts = $n2.extend(
-			{
-				documentSource: null
-				,schemaRepository: null
-				,uploadService: null
-				,showService: null
-				,authService: null
-				,dialogService: null
-			}
-			,opts_
-		);
-		
-		this.documentSource = opts.documentSource;
-		this.schemaRepository = opts.schemaRepository;
-		this.uploadService = opts.uploadService;
-		this.showService = opts.showService;
-		this.authService = opts.authService;
-		this.dialogService = opts.dialogService;
-	},
-	
-	getCreateWidget: function(opts_){
-		var opts = $n2.extend({
-			elem: null
-			,schemaNames: null
-			,allSchemas: false
-			,label: null
-			,dialogPrompt: null
-		},opts_);
-		
-		return new CreateDocWidget({
-			elem: opts.elem
-			,schemaNames: opts.schemaNames
-			,allSchemas: opts.allSchemas
-			,label: opts.label
-			,dialogPrompt: opts.dialogPrompt
-			,createDocProcess: this
-		});
-	},
-
-	createDocumentFromSchema: function(opt_){
-	
-		var _this = this;
-	
-		// Check that we are logged in
-		var authService = this.authService;
-		if( authService && false == authService.isLoggedIn() ) {
-			authService.showLoginForm({
-				onSuccess: function(result,options) {
-					_this.createDocumentFromSchema(opt_);
-				}
-			});
-			return;
-		};
-	
-		var opt = $n2.extend({
-			schema: null
-			,relatedDocId: null
-			,originDocId: null
-			,prompt: null
-			,onSuccess: function(docId){}
-			,onError: $n2.reportErrorForced
-			,onCancel: function(){}
-		},opt_);
-		
-		if( opt.schema && opt.schema.isSchema ) {
-			// OK
-		} else {
-			opt.onError( _loc('A valid schema must be provided') );
-			return;
-		};
-		
-		// Check that upload service is available
-		this.uploadService.checkWelcome({
-			onSuccess: uploadServiceAvailable
-			,onError: function(err){
-				alert( _loc('Upload service can not be reached. Unable to submit a related document.') );
-			}
-		});
-	
-		function uploadServiceAvailable(){
-			var obj = opt.schema.createObject();
-			
-			if( opt.relatedDocId ){
-				obj.nunaliit_source = {
-					nunaliit_type: 'reference'
-					,doc: opt.relatedDocId
-					,category: 'attachment'
-				};
-			};
-			
-			if( opt.originDocId ){
-				obj.nunaliit_origin = {
-					nunaliit_type: 'reference'
-					,doc: opt.originDocId
-				};
-			};
-			
-			// Compute prompt, if not provided
-			var prompt = opt.prompt;
-			if( !prompt ){
-				if( opt.originDocId ){
-					prompt = _loc('Fill Out Reply');
-					
-				} else if( opt.relatedDocId ){
-					prompt = _loc('Fill Out Related Document');
-
-				} else {
-					prompt = _loc('Fill out content of new document');
-				};
-			};
-			
-			new Editor({
-				documentSource: _this.documentSource
-				,uploadService: _this.uploadService
-				,showService: _this.showService
-				,dialogService: _this.dialogService
-				,obj: obj
-				,schema: opt.schema
-				,prompt: prompt
-				,onSuccess: opt.onSuccess
-				,onError: opt.onError
-				,onCancel: opt.onCancel
-			});
-		};
-	},
-
-	createDocumentFromSchemaNames: function(opt_){
-		
-		var _this = this;
-		
-		// Check that we are logged in
-		var authService = this.authService;
-		if( authService && false == authService.isLoggedIn() ) {
-			authService.showLoginForm({
-				onSuccess: function(result,options) {
-					_this.createDocumentFromSchemaNames(opt_);
-				}
-			});
-			return;
-		};
-		
-		var opt = $n2.extend({
-			schemaNames: []
-			,allSchemas: false
-			,relatedDocId: null
-			,originDocId: null
-			,prompt: null
-			,onSuccess: function(docId){}
-			,onError: $n2.reportErrorForced
-			,onCancel: function(){}
-		},opt_);
-		
-		if( opt.allSchemas ){
-			this.schemaRepository.getRootSchemas({
-				onSuccess: function(schemas){
-					_this.selectSchemaDialog({
-						schemas: schemas
-						,onSuccess: selectedSchema
-						,onError: opt.onError
-						,onCancel: opt.onCancel
-					});
-				}
-				,onError: opt.onError
-			});
-		} else {
-			this.selectSchemaFromNamesDialog({
-				schemaNames: opt.schemaNames
-				,onSuccess: selectedSchema
-				,onError: opt.onError
-				,onCancel: opt.onCancel
-			});
-		};
-		
-		function selectedSchema(schema){
-			_this.createDocumentFromSchema({
-				schema: schema
-				,relatedDocId: opt.relatedDocId
-				,originDocId: opt.originDocId
-				,prompt: opt.prompt
-				,onSuccess: opt.onSuccess
-				,onError: opt.onError
-				,onCancel: opt.onCancel
-			});
-		};
-	},
-
-	replyToDocument: function(opt_){
-		
-		var _this = this;
-		
-		// Check that we are logged in
-		var authService = this.authService;
-		if( authService && false == authService.isLoggedIn() ) {
-			authService.showLoginForm({
-				onSuccess: function(result,options) {
-					_this.replyToDocument(opt_);
-				}
-			});
-			return;
-		};
-		
-		var opt = $n2.extend({
-			doc: null
-			,schema: null
-			,originDocId: null
-			,onSuccess: function(docId){}
-			,onError: $n2.reportErrorForced
-			,onCancel: function(){}
-		},opt_);
-
-		if( opt.schema && opt.schema.isSchema ) {
-			// OK
-		} else {
-			opt.onError( _loc('A valid schema must be provided') );
-			return;
-		};
-		
-		var originDocId = null;
-		if( opt.originDocId ){
-			originDocId = opt.originDocId;
-		} else if( opt.doc.nunaliit_origin && opt.doc.nunaliit_origin.doc ) {
-			originDocId = opt.doc.nunaliit_origin.doc;
-		} else if( opt.doc.nunaliit_source && opt.doc.nunaliit_source.doc ) {
-			originDocId = opt.doc.nunaliit_source.doc;
-		};
-		
-		this.createDocumentFromSchema({
-			schema: opt.schema
-			,relatedDocId: opt.doc._id
-			,originDocId: originDocId
-			,onSuccess: opt.onSuccess
-			,onError: opt.onError
-			,onCancel: opt.onCancel
-		});
-	},
-	
-	selectSchemaFromNamesDialog: function(opt_){
-		var opt = $n2.extend({
-			schemaNames: []
-			,onSuccess: function(schema){}
-			,onError: $n2.reportErrorForced
-			,onCancel: function(){}
-		},opt_);
-		
-		var _this = this;
-		
-		this.schemaRepository.getSchemas({
-			names: opt.schemaNames
-			,onSuccess: function(schemas){
-				_this.selectSchemaDialog({
-					schemas: schemas
-					,onSuccess: opt.onSuccess
-					,onError: opt.onError
-					,onCancel: opt.onCancel
-				});
-			}
-			,onError: opt.onError
-		});
-	},
-	
-	selectSchemaDialog: function(opt_){
-		var opt = $n2.extend({
-			schemas: []
-			,onSuccess: function(schema){}
-			,onError: $n2.reportErrorForced
-			,onCancel: function(){}
-		},opt_);
-		
-		var _this = this;
-		
-		if( !opt.schemas.length ) {
-			opt.onCancel();
-			return;
-		}
-
-		if( opt.schemas.length == 1 ) {
-			opt.onSuccess( opt.schemas[0] );
-			return;
-		}
-		
-		var diagId = $n2.getUniqueId();
-		var $dialog = $('<div id="'+diagId+'"></div>');
-
-		var $label = $('<span></span>');
-		$label.text( _loc('Select schema') + ': ' );
-		$dialog.append($label);
-		
-		var $select = $('<select></select>');
-		$dialog.append($select);
-		for(var i=0,e=opt.schemas.length; i<e; ++i){
-			var schema = opt.schemas[i];
-			var schemaName = schema.name;
-			var schemaLabel = schema.getLabel();
-			$('<option>')
-				.text(schemaLabel)
-				.val(schemaName)
-				.appendTo($select);
-		};
-
-		$dialog.append( $('<br/>') );
-		
-		var $ok = $('<button></button>');
-		$ok.text( _loc('OK') );
-		$ok.button({icons:{primary:'ui-icon-check'}});
-		$dialog.append( $ok );
-		$ok.click(function(){
-			var $diag = $('#'+diagId);
-			var schemaName = $diag.find('select').val();
-			$diag.dialog('close');
-			_this.schemaRepository.getSchema({
-				name: schemaName
-				,onSuccess: opt.onSuccess
-				,onError: function(err){
-					opt.onError( _loc('Unable to fetch schema') );
-				}
-			});
-			return false;
-		});
-		
-		var $cancel = $('<button></button>');
-		$cancel.text( _loc('Cancel') );
-		$cancel.button({icons:{primary:'ui-icon-cancel'}});
-		$dialog.append( $cancel );
-		$cancel.click(function(){
-			$('#'+diagId).dialog('close');
-			opt.onCancel();
-			return false;
-		});
-		
-		var dialogOptions = {
-			autoOpen: true
-			,title: _loc('Select a schema')
-			,modal: true
-			,width: 740
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
-			}
-		};
-		$dialog.dialog(dialogOptions);
-	}
-});
-
+//===============================================================
 var Editor = $n2.Class({
 	
 	documentSource: null,
@@ -656,6 +297,254 @@ var Editor = $n2.Class({
 		this.onSuccess(docId);
 	}
 });
+
+// ===============================================================
+var CreateRelatedDocProcess = $n2.Class({
+	
+	documentSource: null,
+
+	schemaRepository: null,
+	
+	uploadService: null,
+	
+	showService: null,
+	
+	authService: null,
+
+	dialogService: null,
+	
+	initialize: function(opts_) {
+		var opts = $n2.extend(
+			{
+				documentSource: null
+				,schemaRepository: null
+				,uploadService: null
+				,showService: null
+				,authService: null
+				,dialogService: null
+			}
+			,opts_
+		);
+		
+		this.documentSource = opts.documentSource;
+		this.schemaRepository = opts.schemaRepository;
+		this.uploadService = opts.uploadService;
+		this.showService = opts.showService;
+		this.authService = opts.authService;
+		this.dialogService = opts.dialogService;
+	},
+	
+	getCreateWidget: function(opts_){
+		var opts = $n2.extend({
+			elem: null
+			,schemaNames: null
+			,allSchemas: false
+			,label: null
+			,dialogPrompt: null
+		},opts_);
+		
+		return new CreateDocWidget({
+			elem: opts.elem
+			,schemaNames: opts.schemaNames
+			,allSchemas: opts.allSchemas
+			,label: opts.label
+			,dialogPrompt: opts.dialogPrompt
+			,createDocProcess: this
+		});
+	},
+
+	createDocumentFromSchema: function(opt_){
+	
+		var _this = this;
+	
+		// Check that we are logged in
+		var authService = this.authService;
+		if( authService && false == authService.isLoggedIn() ) {
+			authService.showLoginForm({
+				onSuccess: function(result,options) {
+					_this.createDocumentFromSchema(opt_);
+				}
+			});
+			return;
+		};
+	
+		var opt = $n2.extend({
+			schema: null
+			,relatedDocId: null
+			,originDocId: null
+			,prompt: null
+			,onSuccess: function(docId){}
+			,onError: $n2.reportErrorForced
+			,onCancel: function(){}
+		},opt_);
+		
+		if( opt.schema && opt.schema.isSchema ) {
+			// OK
+		} else {
+			opt.onError( _loc('A valid schema must be provided') );
+			return;
+		};
+		
+		// Check that upload service is available
+		this.uploadService.checkWelcome({
+			onSuccess: uploadServiceAvailable
+			,onError: function(err){
+				alert( _loc('Upload service can not be reached. Unable to submit a related document.') );
+			}
+		});
+	
+		function uploadServiceAvailable(){
+			var obj = opt.schema.createObject();
+			
+			if( opt.relatedDocId ){
+				obj.nunaliit_source = {
+					nunaliit_type: 'reference'
+					,doc: opt.relatedDocId
+					,category: 'attachment'
+				};
+			};
+			
+			if( opt.originDocId ){
+				obj.nunaliit_origin = {
+					nunaliit_type: 'reference'
+					,doc: opt.originDocId
+				};
+			};
+			
+			// Compute prompt, if not provided
+			var prompt = opt.prompt;
+			if( !prompt ){
+				if( opt.originDocId ){
+					prompt = _loc('Fill Out Reply');
+					
+				} else if( opt.relatedDocId ){
+					prompt = _loc('Fill Out Related Document');
+
+				} else {
+					prompt = _loc('Fill out content of new document');
+				};
+			};
+			
+			new Editor({
+				documentSource: _this.documentSource
+				,uploadService: _this.uploadService
+				,showService: _this.showService
+				,dialogService: _this.dialogService
+				,obj: obj
+				,schema: opt.schema
+				,prompt: prompt
+				,onSuccess: opt.onSuccess
+				,onError: opt.onError
+				,onCancel: opt.onCancel
+			});
+		};
+	},
+
+	createDocumentFromSchemaNames: function(opt_){
+		
+		var _this = this;
+		
+		// Check that we are logged in
+		var authService = this.authService;
+		if( authService && false == authService.isLoggedIn() ) {
+			authService.showLoginForm({
+				onSuccess: function(result,options) {
+					_this.createDocumentFromSchemaNames(opt_);
+				}
+			});
+			return;
+		};
+		
+		var opt = $n2.extend({
+			schemaNames: []
+			,allSchemas: false
+			,relatedDocId: null
+			,originDocId: null
+			,prompt: null
+			,onSuccess: function(docId){}
+			,onError: $n2.reportErrorForced
+			,onCancel: function(){}
+		},opt_);
+		
+		if( opt.allSchemas ){
+			this.dialogService.selectSchema({
+				onSelected: selectedSchema
+				,onError: opt.onError
+				,onReset: opt.onCancel
+			});
+		} else {
+			this.dialogService.selectSchemaFromNames({
+				schemaNames: opt.schemaNames
+				,onSelected: selectedSchema
+				,onError: opt.onError
+				,onReset: opt.onCancel
+			});
+		};
+		
+		function selectedSchema(schema){
+			_this.createDocumentFromSchema({
+				schema: schema
+				,relatedDocId: opt.relatedDocId
+				,originDocId: opt.originDocId
+				,prompt: opt.prompt
+				,onSuccess: opt.onSuccess
+				,onError: opt.onError
+				,onCancel: opt.onCancel
+			});
+		};
+	},
+
+	replyToDocument: function(opt_){
+		
+		var _this = this;
+		
+		// Check that we are logged in
+		var authService = this.authService;
+		if( authService && false == authService.isLoggedIn() ) {
+			authService.showLoginForm({
+				onSuccess: function(result,options) {
+					_this.replyToDocument(opt_);
+				}
+			});
+			return;
+		};
+		
+		var opt = $n2.extend({
+			doc: null
+			,schema: null
+			,originDocId: null
+			,onSuccess: function(docId){}
+			,onError: $n2.reportErrorForced
+			,onCancel: function(){}
+		},opt_);
+
+		if( opt.schema && opt.schema.isSchema ) {
+			// OK
+		} else {
+			opt.onError( _loc('A valid schema must be provided') );
+			return;
+		};
+		
+		var originDocId = null;
+		if( opt.originDocId ){
+			originDocId = opt.originDocId;
+		} else if( opt.doc.nunaliit_origin && opt.doc.nunaliit_origin.doc ) {
+			originDocId = opt.doc.nunaliit_origin.doc;
+		} else if( opt.doc.nunaliit_source && opt.doc.nunaliit_source.doc ) {
+			originDocId = opt.doc.nunaliit_source.doc;
+		};
+		
+		this.createDocumentFromSchema({
+			schema: opt.schema
+			,relatedDocId: opt.doc._id
+			,originDocId: originDocId
+			,onSuccess: opt.onSuccess
+			,onError: opt.onError
+			,onCancel: opt.onCancel
+		});
+	}
+});
+
 
 $n2.couchRelatedDoc = {
 	CreateRelatedDocProcess: CreateRelatedDocProcess	

@@ -294,6 +294,8 @@ var DialogService = $n2.Class({
 	
 	showService: null,
 	
+	schemaRepository: null,
+	
 	funcMap: null,
 	
 	initialize: function(opts_) {
@@ -301,6 +303,7 @@ var DialogService = $n2.Class({
 			dispatchService: null
 			,searchService: null
 			,showService: null
+			,schemaRepository: null
 			,funcMap: null
 		},opts_);
 	
@@ -309,6 +312,7 @@ var DialogService = $n2.Class({
 		this.dispatchService = opts.dispatchService;
 		this.searchService = opts.searchService;
 		this.showService = opts.showService;
+		this.schemaRepository = opts.schemaRepository;
 		
 		this.funcMap = {};
 		for(var key in opts.funcMap){
@@ -374,6 +378,130 @@ var DialogService = $n2.Class({
 			,showService: this.showService
 			,dispatchService: this.dispatchService
 		});
+	},
+
+	selectSchemaFromNames: function(opt_){
+		var opt = $n2.extend({
+			schemaNames: []
+			,onSelected: function(schema){}
+			,onError: $n2.reportErrorForced
+			,onReset: function(){}
+		},opt_);
+		
+		var _this = this;
+		
+		this.schemaRepository.getSchemas({
+			names: opt.schemaNames
+			,onSuccess: function(schemas){
+				_this.selectSchema({
+					schemas: schemas
+					,onSelected: opt.onSelected
+					,onError: opt.onError
+					,onReset: opt.onReset
+				});
+			}
+			,onError: opt.onError
+		});
+	},
+	
+	selectSchema: function(opt_){
+		var opt = $n2.extend({
+			schemas: null
+			,onSelected: function(schema){}
+			,onError: $n2.reportErrorForced
+			,onReset: function(){}
+		},opt_);
+		
+		var _this = this;
+		
+		// Check if all schemas
+		if( null === opt.schemas ){
+			this.schemaRepository.getRootSchemas({
+				names: opt.schemaNames
+				,onSuccess: function(schemas){
+					_this.selectSchema({
+						schemas: schemas
+						,onSelected: opt.onSelected
+						,onError: opt.onError
+						,onReset: opt.onReset
+					});
+				}
+				,onError: opt.onError
+			});
+			return;
+		};
+		
+		if( !opt.schemas.length ) {
+			opt.onReset();
+			return;
+		}
+
+		if( opt.schemas.length == 1 ) {
+			opt.onSelected( opt.schemas[0] );
+			return;
+		}
+		
+		var diagId = $n2.getUniqueId();
+		var $dialog = $('<div id="'+diagId+'"></div>');
+
+		var $label = $('<span></span>');
+		$label.text( _loc('Select schema') + ': ' );
+		$dialog.append($label);
+		
+		var $select = $('<select></select>');
+		$dialog.append($select);
+		for(var i=0,e=opt.schemas.length; i<e; ++i){
+			var schema = opt.schemas[i];
+			var schemaName = schema.name;
+			var schemaLabel = schema.getLabel();
+			$('<option>')
+				.text(schemaLabel)
+				.val(schemaName)
+				.appendTo($select);
+		};
+
+		$dialog.append( $('<br/>') );
+		
+		var $ok = $('<button></button>');
+		$ok.text( _loc('OK') );
+		$ok.button({icons:{primary:'ui-icon-check'}});
+		$dialog.append( $ok );
+		$ok.click(function(){
+			var $diag = $('#'+diagId);
+			var schemaName = $diag.find('select').val();
+			$diag.dialog('close');
+			_this.schemaRepository.getSchema({
+				name: schemaName
+				,onSuccess: opt.onSelected
+				,onError: function(err){
+					opt.onError( _loc('Unable to fetch schema') );
+				}
+			});
+			return false;
+		});
+		
+		var $cancel = $('<button></button>');
+		$cancel.text( _loc('Cancel') );
+		$cancel.button({icons:{primary:'ui-icon-cancel'}});
+		$dialog.append( $cancel );
+		$cancel.click(function(){
+			$('#'+diagId).dialog('close');
+			opt.onReset();
+			return false;
+		});
+		
+		var dialogOptions = {
+			autoOpen: true
+			,title: _loc('Select a schema')
+			,modal: true
+			,width: 740
+			,close: function(event, ui){
+				var diag = $(event.target);
+				diag.dialog('destroy');
+				diag.remove();
+			}
+		};
+		$dialog.dialog(dialogOptions);
 	}
 });
 

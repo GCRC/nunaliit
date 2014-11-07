@@ -285,6 +285,7 @@ function Configure(options_){
 			dispatchService: configuration.directory.dispatchService
 			,searchService: configuration.directory.searchService
 			,showService: configuration.directory.showService
+			,schemaRepository: configuration.directory.schemaRepository
 		});
 		
 		configuration.directory.createDocProcess = new $n2.couchRelatedDoc.CreateRelatedDocProcess({
