@@ -43,7 +43,7 @@
 			var importProfile = importProfiles[i];
 			$('<option>')
 				.val(importProfile.getId())
-				.attr('label', _loc(importProfile.getLabel())+' ('+importProfile.getType()+')')
+				.text( _loc(importProfile.getLabel())+' ('+importProfile.getType()+')' )
 				.appendTo($select);
 		};
 
@@ -117,12 +117,12 @@
 								});
 							}
 							,onError: function(err){
-								fatalError( _loc('Error while analyzing import: {err}',{err:e}) );
+								fatalError( _loc('Error while analyzing import: {err}',{err:err}) );
 							}
 						});
 					}
 					,onError: function(err){
-						fatalError( _loc('Unable to parse import data: {err}',{err:e}) );
+						fatalError( _loc('Unable to parse import data: {err}',{err:err}) );
 					}
 				});
 			});
