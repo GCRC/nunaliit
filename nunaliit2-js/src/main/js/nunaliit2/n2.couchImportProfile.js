@@ -1057,29 +1057,20 @@ var ImportProfileOperationCopyAllAndFixNames = $n2.Class(ImportProfileOperation,
 	
 	_fixKey: function(key){
 		var fixedKey = [];
+		var specialChars = " _.(){}[]!@#$%^&*-+=:;,'\"\\/~`<>";
 		
 		var lastCharWasUnderscore = false;
 		for(var i=0,e=key.length; i<e; ++i){
 			var c = key[i];
 			
-			if( c >= '0' && c <= '9' ){ 
-				fixedKey.push(c);
-				lastCharWasUnderscore = false;
-				
-			} else if( c >= 'a' && c <= 'z' ){ 
-				fixedKey.push(c); 
-				lastCharWasUnderscore = false;
-				
-			} else if( c >= 'A' && c <= 'Z' ){ 
-				fixedKey.push(c); 
-				lastCharWasUnderscore = false;
-
-			} else if( !lastCharWasUnderscore ){ 
-				fixedKey.push('_');
-				lastCharWasUnderscore = true;
-				
+			if( specialChars.indexOf(c) >= 0 ) {
+				if( !lastCharWasUnderscore ){ 
+					fixedKey.push('_');
+					lastCharWasUnderscore = true;
+				};
 			} else {
-				// do nothing
+				fixedKey.push(c); 
+				lastCharWasUnderscore = false;
 			};
 		};
 		

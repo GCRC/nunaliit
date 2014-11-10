@@ -897,13 +897,23 @@
 			
 			atlasDesign.queryView({
 				viewName: 'nunaliit-import-profile'
+				,include_docs: true
 				,onSuccess: function(rows){
 					var $sel = $options.find('select.importProfileList');
 					for(var i=0,e=rows.length; i<e; ++i){
 						var profileId = rows[i].key;
+						var importProfileDoc = rows[i].doc;
+						
+						var profileName = profileId;
+						if( importProfileDoc 
+						 && importProfileDoc.nunaliit_import_profile
+						 && importProfileDoc.nunaliit_import_profile.label ){
+							profileName = _loc(importProfileDoc.nunaliit_import_profile.label);
+						};
+						
 						$('<option></option>')
 							.val(profileId)
-							.text(profileId)
+							.text(profileName)
 							.appendTo($sel);
 					};
 				}
