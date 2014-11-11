@@ -672,7 +672,7 @@ var TiledDisplay = $n2.Class({
 						var val = $(this).val();
 						$(this).val('');
 						if( val ) {
-							_this._addRelatedDocument(doc._id, val);
+							_this._addRelatedDocument(doc, val);
 						};
 						return false;
 					});
@@ -1185,10 +1185,10 @@ var TiledDisplay = $n2.Class({
 		};
 	},
 	
-	_addRelatedDocument: function(docId, schemaName){
+	_addRelatedDocument: function(doc, schemaName){
 		this.createRelatedDocProcess.createDocumentFromSchemaNames({
 			schemaNames: [schemaName]
-			,relatedDocId: docId
+			,relatedDoc: doc
 			,onSuccess: function(docId){
 			}
 		});

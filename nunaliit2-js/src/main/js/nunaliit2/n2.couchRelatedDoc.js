@@ -35,6 +35,8 @@ $Id: n2.couchRelatedDoc.js 8484 2012-09-05 19:38:37Z jpfiset $
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
+var DH = 'n2.couchRelatedDoc';
+
 //===============================================================
 
 var CreateDocWidget = $n2.Class({
@@ -318,10 +320,12 @@ var CreateRelatedDocProcess = $n2.Class({
 			{
 				documentSource: null
 				,schemaRepository: null
+				,dispatchService: null
 				,uploadService: null
 				,showService: null
 				,authService: null
 				,dialogService: null
+				,dispatchService: null
 			}
 			,opts_
 		);
@@ -332,6 +336,7 @@ var CreateRelatedDocProcess = $n2.Class({
 		this.showService = opts.showService;
 		this.authService = opts.authService;
 		this.dialogService = opts.dialogService;
+		this.dispatchService = opts.dispatchService;
 	},
 	
 	getCreateWidget: function(opts_){
@@ -370,7 +375,7 @@ var CreateRelatedDocProcess = $n2.Class({
 	
 		var opt = $n2.extend({
 			schema: null
-			,relatedDocId: null
+			,relatedDoc: null
 			,originDocId: null
 			,prompt: null
 			,onSuccess: function(docId){}
@@ -396,10 +401,10 @@ var CreateRelatedDocProcess = $n2.Class({
 		function uploadServiceAvailable(){
 			var obj = opt.schema.createObject();
 			
-			if( opt.relatedDocId ){
+			if( opt.relatedDoc ){
 				obj.nunaliit_source = {
 					nunaliit_type: 'reference'
-					,doc: opt.relatedDocId
+					,doc: opt.relatedDoc._id
 					,category: 'attachment'
 				};
 			};
@@ -411,13 +416,19 @@ var CreateRelatedDocProcess = $n2.Class({
 				};
 			};
 			
+			_this._dispatch({
+				type: 'preDocCreation'
+				,doc: obj
+				,relatedDoc: opt.relatedDoc
+			});
+			
 			// Compute prompt, if not provided
 			var prompt = opt.prompt;
 			if( !prompt ){
 				if( opt.originDocId ){
 					prompt = _loc('Fill Out Reply');
 					
-				} else if( opt.relatedDocId ){
+				} else if( opt.relatedDoc ){
 					prompt = _loc('Fill Out Related Document');
 
 				} else {
@@ -458,7 +469,7 @@ var CreateRelatedDocProcess = $n2.Class({
 		var opt = $n2.extend({
 			schemaNames: []
 			,allSchemas: false
-			,relatedDocId: null
+			,relatedDoc: null
 			,originDocId: null
 			,prompt: null
 			,onSuccess: function(docId){}
@@ -484,7 +495,7 @@ var CreateRelatedDocProcess = $n2.Class({
 		function selectedSchema(schema){
 			_this.createDocumentFromSchema({
 				schema: schema
-				,relatedDocId: opt.relatedDocId
+				,relatedDoc: opt.relatedDoc
 				,originDocId: opt.originDocId
 				,prompt: opt.prompt
 				,onSuccess: opt.onSuccess
@@ -536,12 +547,18 @@ var CreateRelatedDocProcess = $n2.Class({
 		
 		this.createDocumentFromSchema({
 			schema: opt.schema
-			,relatedDocId: opt.doc._id
+			,relatedDoc: opt.doc
 			,originDocId: originDocId
 			,onSuccess: opt.onSuccess
 			,onError: opt.onError
 			,onCancel: opt.onCancel
 		});
+	},
+	
+	_dispatch: function(msg){
+		if( this.dispatchService ){
+			this.dispatchService.synchronousCall(DH,msg);
+		};
 	}
 });
 

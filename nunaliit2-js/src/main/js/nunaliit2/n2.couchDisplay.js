@@ -808,12 +808,12 @@ var Display = $n2.Class({
 		};
 	}
 	
-	,_addRelatedDocument: function(docId, relatedSchemaNames){
+	,_addRelatedDocument: function(doc, relatedSchemaNames){
 		var _this = this;
 		
 		this.createRelatedDocProcess.createDocumentFromSchemaNames({
 			schemaNames: relatedSchemaNames
-			,relatedDocId: docId
+			,relatedDoc: doc
 			,onSuccess: function(docId){
 //				_this._RefreshClickedFeature();
 			}
@@ -1367,7 +1367,7 @@ var LegacyDisplayRelatedFunctionAdapter = $n2.Class({
 				$addRelatedButton.change(function(){
 					var val = $(this).val();
 					$(this).val('');
-					display._addRelatedDocument(data._id, [val]);
+					display._addRelatedDocument(data, [val]);
 					return false;
 				});
 				

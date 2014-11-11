@@ -295,6 +295,7 @@ function Configure(options_){
 			,showService: configuration.directory.showService
 			,authService: configuration.directory.authService
 			,dialogService: configuration.directory.dialogService
+			,dispatchService: configuration.directory.dispatchService
 		});
 		
 	 	configuration.directory.schemaEditorService = new $n2.CouchEditor.SchemaEditorService({
