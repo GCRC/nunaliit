@@ -662,8 +662,8 @@ var ModuleDisplay = $n2.Class({
 					type: 'canvasDisplay'
 					,canvasType: canvasInfo.type
 					,canvasOption: canvasInfo.options
-					,canvasDivId: _this.mapName
-					,interactionDivId: _this.mapInteractionName
+					,canvasId: _this.mapName
+					,interactionId: _this.mapInteractionName
 					,config: config
 					,moduleDisplay: _this
 					,onSuccess: function(){
