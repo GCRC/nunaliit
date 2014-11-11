@@ -88,6 +88,15 @@ var Module = $n2.Class({
 		return mapInfo;
 	}
 
+	,getCanvasInfo: function(){
+		var canvasInfo = null;
+		var moduleInfo = this.getModuleInfo();
+		if( moduleInfo ){
+			canvasInfo = moduleInfo.canvas;
+		};
+		return canvasInfo;
+	}
+
 	,getDisplayInfo: function(){
 		var displayInfo = null;
 		var moduleInfo = this.getModuleInfo();
@@ -429,13 +438,34 @@ var ModuleDisplay = $n2.Class({
 				,module: _this.module
 				,moduleDisplay: _this
 			});
-
 			
 			var moduleInfo = _this.module.getModuleInfo();
 			var mapInfo = _this.module.getMapInfo();
+			var canvasInfo = _this.module.getCanvasInfo();
 			var displayInfo = _this.module.getDisplayInfo();
 			var editInfo = _this.module.getEditInfo();
 			var searchInfo = _this.module.getSearchInfo();
+			
+			// Check if support for canvas is available
+			var canvasHandlerAvailable = false;
+			if( canvasInfo && canvasInfo.type ) {
+				var msg = {
+					type: 'canvasIsTypeAvailable'
+					,canvasType: canvasInfo.type
+					,canvasOption: canvasInfo.options
+					,isAvailable: false
+				};
+				
+				_this._sendSynchronousMessage(msg);
+				
+				if( msg.isAvailable ){
+					canvasHandlerAvailable = true;
+				};
+			};
+			if( canvasInfo && !canvasHandlerAvailable ){
+				$n2.log('Canvas handler not found for type: '+canvasInfo.type);
+				canvasInfo = null;
+			};
 			
 			// Handle content div
 			if( _this.contentName ){
@@ -443,7 +473,7 @@ var ModuleDisplay = $n2.Class({
 					.empty()
 					;
 				
-				if( mapInfo ) {
+				if( mapInfo || canvasInfo ) {
 					_this.mapName = $n2.getUniqueId();
 					$('<div></div>')
 						.attr('id',_this.mapName)
@@ -626,6 +656,22 @@ var ModuleDisplay = $n2.Class({
 					,onSuccess: opts.onSuccess
 					,onError: opts.onError
 				});
+				
+			} else if( canvasInfo ) {
+				_this._sendDispatchMessage({
+					type: 'canvasDisplay'
+					,canvasType: canvasInfo.type
+					,canvasOption: canvasInfo.options
+					,canvasDivId: _this.mapName
+					,interactionDivId: _this.mapInteractionName
+					,config: config
+					,moduleDisplay: _this
+					,onSuccess: function(){
+						opts.onSuccess(_this);
+					}
+					,onError: opts.onError
+				});
+				
 			} else {
 				_this._sendDispatchMessage({
 					type:'reportModuleDisplay'
@@ -1148,6 +1194,13 @@ var ModuleDisplay = $n2.Class({
 		var d = this._getDispatcher();
 		if( d ){
 			d.send(DH,m);
+		};
+	}
+	
+	,_sendSynchronousMessage: function(m){
+		var d = this._getDispatcher();
+		if( d ){
+			d.synchronousCall(DH,m);
 		};
 	}
 	
