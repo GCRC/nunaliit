@@ -117,7 +117,9 @@ var Interval = $n2.Class({
 			};
 		};
 		
-		return new Interval({
+		var myClass = this.getClass();
+		
+		return new myClass({
 			min: min
 			,max: max
 		});
@@ -154,7 +156,9 @@ var Interval = $n2.Class({
 			max = interval.max;
 		};
 		
-		return new Interval({
+		var myClass = this.getClass();
+		
+		return new myClass({
 			min: min
 			,max: max
 		});

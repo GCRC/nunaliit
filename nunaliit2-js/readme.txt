@@ -25,3 +25,16 @@ the following commands:
 
 The documentation will be generated in a directory called:
   .../jsdoc
+  
+
+Testing
+=======
+
+Some testing of the Javascript code is performed on every build. The
+test cases are found in:
+
+./src/test/javascript/test_cases.js
+
+The Javascript files loaded during testing are defined in the file:
+
+./compress/nunaliit2-test.cfg

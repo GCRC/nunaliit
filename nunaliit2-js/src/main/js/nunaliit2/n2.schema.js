@@ -1674,7 +1674,9 @@ var Form = $n2.Class({
 			if( $n2.schema.GlobalAttributes.disableKeyUpEvents ){
 				// skip
 			} else {
-				$input.keyup(handler);
+				if( 'date' !== classInfo.type ){ // no key up event for date text boxes
+					$input.keyup(handler);
+				};
 			};
 			
 			// Set value

@@ -69,8 +69,11 @@ var reYearMonthDayHM = /^\s*(\d\d\d\d)(\d\d)(\d\d)( +|T)(\d\d):(\d\d)\s*$/;
 var reYearMonthDayHM2 = /^\s*(\d\d\d\d)-(\d\d)-(\d\d)( +|T)(\d\d):(\d\d)\s*$/;
 var reYearMonthDayHMS = /^\s*(\d\d\d\d)(\d\d)(\d\d)( +|T)(\d\d):(\d\d):(\d\d)\s*$/;
 var reYearMonthDayHMS2 = /^\s*(\d\d\d\d)-(\d\d)-(\d\d)( +|T)(\d\d):(\d\d):(\d\d)\s*$/;
+var rePeriod = /^([^\/]*)\/([^\/]*)$/;
+
 	
 function parseUserDate(dateStr){
+	var matchPeriod = rePeriod.exec(dateStr);
 	var matchYear = reYear.exec(dateStr);
 	var matchYearMonth = reYearMonth.exec(dateStr);
 	var matchYearMonthDay = reYearMonthDay.exec(dateStr);
@@ -79,6 +82,28 @@ function parseUserDate(dateStr){
 	var matchYearMonthDayHM2 = reYearMonthDayHM2.exec(dateStr);
 	var matchYearMonthDayHMS = reYearMonthDayHMS.exec(dateStr);
 	var matchYearMonthDayHMS2 = reYearMonthDayHMS2.exec(dateStr);
+	
+	// Period, special case
+	if( matchPeriod ){
+		var startDateStr = matchPeriod[1];
+		var endDateStr = matchPeriod[2];
+		
+		var startDate = null;
+		var endDate = null;
+		try {
+			startDate = parseUserDate(startDateStr);
+			endDate = parseUserDate(endDateStr);
+		} catch(e) {
+			// Ignore. Leave startDate or endDate null
+		};
+		
+		if( startDate && endDate ){
+			var exDate = startDate.extendTo(endDate);
+			exDate.dateStr = dateStr;
+			return exDate;
+		};
+	};
+	
 	
 	if( matchYear ){
 		var year = 1 * matchYear[1];

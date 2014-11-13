@@ -293,6 +293,7 @@ jsunit.defineTest('$n2.date.parseUserDate',function($$){
 	valid('  19800601T12:34:56  ');
 	valid('  1980-06-01  12:34:56  ');
 	valid('  1980-06-01T12:34:56  ');
+	valid('1980/ 1990 ');
 });
 
 //*********
@@ -359,6 +360,26 @@ jsunit.defineTest('$n2.date.findDateString(duration)',function($$){
 
 	t('aaa 1980 / 1990 bbb','1980','1990');
 	t('aaa 1980/1990 bbb','1980','1990');
+});
+
+//*********
+jsunit.defineTest('$n2.date.extendTo',function($$){
+
+	// Check that extending a date returns a date
+	var date1 = $n2.date.parseUserDate("1980");
+	var date2 = $n2.date.parseUserDate("2000");
+	var date3 = date1.extendTo(date2);
+	date3.getDocumentStructure();
+});
+
+//*********
+jsunit.defineTest('$n2.date.intersection',function($$){
+
+	// Check that the intersection of two dates is a date
+	var date1 = $n2.date.parseUserDate("1980/2000");
+	var date2 = $n2.date.parseUserDate("1990/2010");
+	var date3 = date1.intersection(date2);
+	date3.getDocumentStructure();
 });
 
 //*********
