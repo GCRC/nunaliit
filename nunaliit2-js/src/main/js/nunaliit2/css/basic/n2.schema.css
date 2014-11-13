@@ -63,3 +63,15 @@
 	bottom: 0px;
 	min-height: 40px;
 }
+
+.n2schema_referenceDelete {
+	display: inline-block;
+	width: 0px;
+	height: 0px;
+	padding: 15px 15px 0px 0px;
+	background: url(images/x_icon_naked_15.png) no-repeat;
+}
+
+.n2schema_referenceDelete:hover {
+	background-position: -15px 0px;
+}

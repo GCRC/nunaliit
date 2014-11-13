@@ -380,6 +380,27 @@ function _formField() {
 			r.push('</div>');
 		};
 
+	} else if( obj && obj.doc && opts.reference ) {
+		
+			var selector = obj[SELECT];
+			var selClass = null;
+			if( selector ) {
+				selClass = createClassStringFromSelector(selector);
+			};
+
+			r.push('<span class="n2_briefDisplay ');
+			r.push(typeClassStringPrefix + 'reference');
+			r.push('">');
+			r.push(obj.doc);
+			r.push('</span>');
+
+			// Delete button
+			r.push('<div class="');
+			if( selClass ) r.push(selClass);
+			r.push(' n2schema_referenceDelete');
+			r.push('">');
+			r.push('</div>');
+		
 	} else {
 		r.push('<div class="n2s_field_container">');
 		_formSingleField(r,this,sels,opts);
@@ -1558,7 +1579,7 @@ var Form = $n2.Class({
 	,refresh: function($elem) {
 		if(typeof($elem) === 'undefined'){
 			$elem = $('#'+this.elemId);
-		}
+		};
 		if( $elem.length > 0 ) {
 			// Create view for displayTemplate
 			var view = computeFormObj(this.obj, this.context, []);
@@ -1573,7 +1594,7 @@ var Form = $n2.Class({
 				// Install callbacks
 				var _this = this;
 				$divEvent.find('.n2s_input').each(function(){
-					_this._installHandlers($(this),_this.obj,_this.callback);
+					_this._installHandlers($elem, $(this),_this.obj,_this.callback);
 				});
 				
 				$divEvent.click(function(e){
@@ -1602,16 +1623,16 @@ var Form = $n2.Class({
 							};
 							ary.push(newItem);
 						};
-						_this.callback(_this.obj,classInfo.selector,ary);
 						_this.refresh($elem);
+						_this.callback(_this.obj,classInfo.selector,ary);
 						
 					} else if( $clicked.hasClass('n2s_array_item_delete') ){
 						var parentSelector = classInfo.selector.slice(0);
 						var itemIndex = 1 * (parentSelector.pop());
 						var ary = getDataFromObjectSelector(_this.obj, parentSelector);
 						ary.splice(itemIndex,1);
-						_this.callback(_this.obj,classInfo.selector,ary);
 						_this.refresh($elem);
+						_this.callback(_this.obj,classInfo.selector,ary);
 						
 					} else if( $clicked.hasClass('n2s_array_item_down') ){
 						var parentSelector = classInfo.selector.slice(0);
@@ -1620,12 +1641,22 @@ var Form = $n2.Class({
 							var ary = getDataFromObjectSelector(_this.obj, parentSelector);
 							var removedItems = ary.splice(itemIndex,1);
 							ary.splice(itemIndex-1,0,removedItems[0]);
-							_this.callback(_this.obj,classInfo.selector,ary);
 							_this.refresh($elem);
+							_this.callback(_this.obj,classInfo.selector,ary);
+						};
+						
+					} else if( $clicked.hasClass('n2schema_referenceDelete') ){
+						var parentSelector = classInfo.selector.slice(0);
+						var referenceKey = parentSelector.pop();
+						var parentObj = getDataFromObjectSelector(_this.obj, parentSelector);
+						if( parentObj[referenceKey] ){
+							delete parentObj[referenceKey];
+							_this.refresh($elem);
+							_this.callback(_this.obj,classInfo.selector,null);
 						};
 					};
 				});
-			}
+			};
 		};
 	}
 	
@@ -1650,7 +1681,9 @@ var Form = $n2.Class({
 		};
 	}
 	
-	,_installHandlers: function($input,obj,callback) {
+	,_installHandlers: function($elem,$input,obj,callback) {
+		var _this = this;
+		
 		var classNames = $input.attr('class').split(' ');
 		var classInfo = parseClassNames(classNames);
 
@@ -1667,8 +1700,11 @@ var Form = $n2.Class({
 				,parentSelector
 				,classInfo.type
 				,key
-				,callback
-				);
+				,function(obj, selector, value){
+					_this.refresh($elem);
+					callback(obj, selector, value);
+				}
+			);
 			$input.change(handler);
 			//$input.blur(handler);
 			if( $n2.schema.GlobalAttributes.disableKeyUpEvents ){

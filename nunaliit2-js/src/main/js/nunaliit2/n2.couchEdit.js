@@ -2314,6 +2314,11 @@ var SchemaEditor = $n2.Class({
 			,this.$div
 			,{} // context
 			,function(){ // callback on changes
+				var showService = _this.showService;
+				if( showService ){
+					showService.fixElementAndChildren(_this.$div, {}, _this.doc);
+				};
+				
 				_this.onChanged();
 			}
 			,opts.funcMap

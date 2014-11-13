@@ -187,7 +187,17 @@ var Editor = $n2.Class({
 		
 		var $form = $('<div></div>');
 		$dialog.append($form);
-		schema.form(obj, $form, null, null, funcMap);
+		schema.form(
+			obj
+			,$form
+			,null // context
+			,function(){ // callback on changes
+				if( _this.showService ){
+					_this.showService.fixElementAndChildren($form, {}, obj);
+				};
+			}
+			,funcMap
+		);
 		
 		if( this.showService ){
 			this.showService.fixElementAndChildren($form, {}, obj);
