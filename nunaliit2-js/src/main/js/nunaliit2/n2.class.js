@@ -129,7 +129,10 @@ $n2.Class = function() {
     if( !proto.initialize ) {
     	proto.initialize = EmptyInit;
     };
-
+    
+    // Add getClass function
+    proto.getClass = function(){ return Class; };
+    
     Class.prototype = proto;
     Class._vars = vars;
     return Class;
