@@ -323,41 +323,6 @@ $n2.couchGeom = $n2.extend({},{
 		// Make request
 		atlasDesignDoc.queryView(data);
 	}
-	
-	// TBD : does not really belong here 
-	,extractLinks: function(obj) {
-		// Traverses an object to find all link elements.
-		// Return all link elements in a list.
-
-		var links = [];
-		_extractLinks(obj, links);
-		return links;
-		
-		function _extractLinks(obj, result) {
-			// Traverses an object to find all links
-			
-			if( null === obj ) {
-				// Nothing to do
-				
-			} else if( $n2.isArray(obj) ) {
-				for(var i=0,e=obj.length; i<e; ++i) {
-					_extractLinks(obj[i],result);
-				};
-
-			} else if( typeof(obj) === 'object' ) {
-				if( obj.nunaliit_type === 'reference' ) {
-					// This is an object of interest
-					result.push(obj);
-				} else {
-					// This is not what we are looking for. Continue searching.
-					for(var key in obj) {
-						var value = obj[key];
-						_extractLinks(value,result);
-					};
-				};
-			};
-		}
-	}
 });
 
 })(nunaliit2);

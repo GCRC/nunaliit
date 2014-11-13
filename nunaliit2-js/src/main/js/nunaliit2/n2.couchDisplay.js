@@ -896,9 +896,13 @@ var Display = $n2.Class({
 			,onSuccess: function(docId){
 			}
 		});
-	}
+	},
 	
-	,_refreshDocument: function(doc){
+	/**
+	 * This function refreshes the sections surrounding the display of a
+	 * document, such as the buttons below the document displayed.
+	 */
+	_refreshDocument: function(doc){
 
 		var _this = this;
 		
@@ -960,9 +964,14 @@ var Display = $n2.Class({
 				};
 			};
 		};
-	}
+	},
 	
-	,_populateWaitingDocument: function(doc){
+	/**
+	 * This function replaces a section that is waiting for the
+	 * appearance of a document. It replaces the section with an
+	 * actual display of the document.
+	 */
+	_populateWaitingDocument: function(doc){
 		var _this = this;
 		
 		if( doc ) {
@@ -1233,7 +1242,8 @@ var Display = $n2.Class({
 		var _this = this;
 		
 		// Find all documents referenced by this one
-		var links = $n2.couchGeom.extractLinks(doc);
+		var links = [];
+		$n2.couchUtils.extractLinks(doc, links);
 		for(var i=0,e=links.length;i<e;++i){
 			var refDocId = links[i].doc;
 			if( refDocId ){

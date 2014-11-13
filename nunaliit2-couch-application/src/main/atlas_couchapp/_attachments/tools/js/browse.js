@@ -99,7 +99,7 @@ function initiateEdit(docId) {
 		// References to other objects
 		$('#results').append( $('<h3>Other documents referenced by this document</h3>') );
 		var references = [];
-		n2utils.extractLinks(doc, references);
+		$n2.couchUtils.extractLinks(doc, references);
 		var $table = $('<table></table>');
 		$('#results').append($table);
 		for(var i=0,e=references.length; i<e; ++i) {
