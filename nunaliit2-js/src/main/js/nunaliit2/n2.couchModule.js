@@ -452,7 +452,7 @@ var ModuleDisplay = $n2.Class({
 				var msg = {
 					type: 'canvasIsTypeAvailable'
 					,canvasType: canvasInfo.type
-					,canvasOption: canvasInfo.options
+					,canvasOptions: canvasInfo.options
 					,isAvailable: false
 				};
 				
@@ -661,7 +661,7 @@ var ModuleDisplay = $n2.Class({
 				_this._sendDispatchMessage({
 					type: 'canvasDisplay'
 					,canvasType: canvasInfo.type
-					,canvasOption: canvasInfo.options
+					,canvasOptions: canvasInfo.options
 					,canvasId: _this.mapName
 					,interactionId: _this.mapInteractionName
 					,config: config
