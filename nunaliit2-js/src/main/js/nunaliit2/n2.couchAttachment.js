@@ -64,6 +64,21 @@ var Attachment = $n2.Class({
 		return att.status;
 	},
 	
+	isAttached: function(){
+		if( 'attached' !== this.getStatus() ){
+			return false;
+		};
+		
+		// Check that file is actually attached
+		if( this.doc 
+		 && this.doc._attachments 
+		 && this.doc._attachments[this.attName] ){
+			return true;
+		};
+		
+		return false;
+	},
+	
 	getFileClass: function(){
 		var att = this._getAtt();
 		return att.fileClass;

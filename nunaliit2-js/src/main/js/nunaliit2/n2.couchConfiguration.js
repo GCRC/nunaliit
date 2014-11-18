@@ -278,6 +278,7 @@ function Configure(options_){
 			,dispatchService: configuration.directory.dispatchService
 			,schemaRepository: configuration.directory.schemaRepository
 			,customService: configuration.directory.customService
+			,attachmentService: configuration.directory.attachmentService
 			,displayImageSourceFactory: configuration.directory.displayImageSourceFactory
 		});
 
@@ -343,7 +344,7 @@ function Configure(options_){
 	 		};
 	 		
 	 		if( feature.cluster ){
-				var $tmp = $('<span></span>');
+				var $tmp = $('<span class="n2_popup"></span>');
 				$tmp.text( _loc('This cluster contains {count} features',{
 					count: feature.cluster.length
 				}) );
@@ -357,7 +358,7 @@ function Configure(options_){
 	 		} else {
 		 		var doc = opt_.feature.data;
 		 		
-		 		var $tmp = $('<span></span>');
+		 		var $tmp = $('<span class="n2_popup"></span>');
 		 		configuration.directory.showService.displayBriefDescription($tmp,{},doc);
 		 		
 		 		var $wrapper = $('<div></div>');

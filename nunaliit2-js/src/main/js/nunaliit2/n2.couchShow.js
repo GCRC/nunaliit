@@ -139,6 +139,13 @@ var DomStyler = $n2.Class({
 			$jq.removeClass('n2s_insertMediaView').addClass('n2s_insertedMediaView');
 		});
 		
+		// Insert first thumbnail
+		$set.filter('.n2s_insertFirstThumbnail').each(function(){
+			var $jq = $(this);
+			_this._insertFirstThumbnail(contextDoc, $jq, opt);
+			$jq.removeClass('n2s_insertFirstThumbnail').addClass('n2s_insertedFirstThumbnail');
+		});
+		
 		// Insert Hover Sound
 		$set.filter('.n2s_insertHoverSoundIcon').each(function(){
 			var $jq = $(this);
@@ -443,6 +450,38 @@ var DomStyler = $n2.Class({
 				
 				return false;
 			};
+		};
+	},
+	
+	_insertFirstThumbnail: function(doc, $insertElem, opt_){
+		$insertElem.empty();
+
+		var attachmentService = null;
+		if( this.showService ){
+			attachmentService = this.showService.attachmentService;
+		};
+
+		// Select first thumbnail
+		var attachment = null;
+		if( attachmentService ){
+			var attachments = attachmentService.getAttachments(doc);
+			for(var i=0,e=attachments.length; i<e; ++i){
+				var att = attachments[i];
+				if( att.isSource  ){
+					var thumbnailAtt = att.getThumbnailAttachment();
+					if( thumbnailAtt 
+					 && thumbnailAtt.isAttached() ){
+						attachment = thumbnailAtt;
+						break;
+					};
+				};
+			};
+		};
+		
+		if( attachment ){
+			$('<img>')
+				.attr('src',attachment.getMediaFileUrl())
+				.appendTo($insertElem);
 		};
 	},
 	
@@ -864,6 +903,8 @@ var Show = $n2.Class({
 	
 	customService: null,
 	
+	attachmentService: null,
+	
 	displayImageSourceFactory: null,
 	
 	defaultSchema: null,
@@ -895,6 +936,7 @@ var Show = $n2.Class({
 			,dispatchService: null
 			,schemaRepository: null
 			,customService: null
+			,attachmentService: null
 			,displayImageSourceFactory: null
 			,defaultSchema: null
 			,displayFunction: null
@@ -918,6 +960,7 @@ var Show = $n2.Class({
 		this.dispatchService = opts.dispatchService;
 		this.schemaRepository = opts.schemaRepository;
 		this.customService = opts.customService;
+		this.attachmentService = opts.attachmentService;
 		this.displayImageSourceFactory = opts.displayImageSourceFactory;
 		this.defaultSchema = opts.defaultSchema;
 		this.displayFunction = opts.displayFunction;
