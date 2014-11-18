@@ -36,7 +36,6 @@ POSSIBILITY OF SUCH DAMAGE.
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 var DH = 'n2.couchDbPerspective';
 
-//++++++++++++++++++++++++++++++++++++++++++++++
 //--------------------------------------------------------------------------
 var DbSelector = $n2.Class({
 	initialize: function(opts_){
@@ -262,10 +261,11 @@ var DbPerspective = $n2.Class({
 	}
 });
 
-//++++++++++++++++++++++++++++++++++++++++++++++
-
+//--------------------------------------------------------------------------
 $n2.couchDbPerspective = {
-	DialogService: DialogService
+	DbPerspective: DbPerspective
+	,DbSelector: DbSelector
+	,CouchLayerDbSelector: CouchLayerDbSelector
 };
 
 })(jQuery,nunaliit2);
