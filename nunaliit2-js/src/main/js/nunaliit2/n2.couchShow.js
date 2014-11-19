@@ -671,20 +671,16 @@ var DomStyler = $n2.Class({
 		if( data 
 		 && data.nunaliit_geom 
 		 && dispatcher
-		 && dispatcher.isEventTypeRegistered('findOnMap')
+		 && dispatcher.isEventTypeRegistered('find')
 		 ) {
-			var x = (data.nunaliit_geom.bbox[0] + data.nunaliit_geom.bbox[2]) / 2;
-			var y = (data.nunaliit_geom.bbox[1] + data.nunaliit_geom.bbox[3]) / 2;
-			
+
 			$jq.click(function(){
 				dispatcher.send(
 					DH
 					,{
-						type: 'findOnMap'
-						,fid: data._id
-						,srsName: 'EPSG:4326'
-						,x: x
-						,y: y
+						type: 'find'
+						,docId: data._id
+						,doc: data
 					}
 				);
 				return false;

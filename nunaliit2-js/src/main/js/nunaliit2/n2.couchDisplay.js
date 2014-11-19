@@ -579,23 +579,19 @@ var Display = $n2.Class({
 		if( dispatcher 
 		 && opt.geom
 		 && data 
-		 && data.nunaliit_geom 
-		 && dispatcher.isEventTypeRegistered('findOnMap')
+		 && dispatcher.isEventTypeRegistered('findIsAvailable')
+		 && dispatcher.isEventTypeRegistered('find')
 		 ) {
-			// Check iff document can be displayed on a map
+			// Check if document can be displayed on a map
 			var showFindOnMapButton = false;
-			if( data.nunaliit_layers && data.nunaliit_layers.length > 0 ) {
-				var m = {
-					type:'mapGetLayers'
-					,layers:{}
-				};
-				dispatcher.synchronousCall(DH,m);
-				for(var i=0,e=data.nunaliit_layers.length; i<e; ++i){
-					var layerId = data.nunaliit_layers[i];
-					if( m.layers[layerId] ){
-						showFindOnMapButton = true;
-					};
-				};
+			var m = {
+				type:'findIsAvailable'
+				,doc: data
+				,isAvailable:false
+			};
+			dispatcher.synchronousCall(DH,m);
+			if( m.isAvailable ){
+				showFindOnMapButton = true;
 			};
 
 			if( showFindOnMapButton ) {
@@ -604,45 +600,12 @@ var Display = $n2.Class({
 				$findGeomButton.text( findGeomText );
 				$buttons.append($findGeomButton);
 	
-				var x = (data.nunaliit_geom.bbox[0] + data.nunaliit_geom.bbox[2]) / 2;
-				var y = (data.nunaliit_geom.bbox[1] + data.nunaliit_geom.bbox[3]) / 2;
-				
 				$findGeomButton.click(function(){
-					// Check if we need to turn a layer on
-					var visible = false;
-					var layerIdToTurnOn = null;
-					var m = {
-							type:'mapGetLayers'
-							,layers:{}
-						};
-					dispatcher.synchronousCall(DH,m);
-					for(var i=0,e=data.nunaliit_layers.length; i<e; ++i){
-						var layerId = data.nunaliit_layers[i];
-						if( m.layers[layerId] ){
-							if( m.layers[layerId].visible ){
-								visible = true;
-							} else {
-								layerIdToTurnOn = layerId;
-							};
-						};
-					};
-
-					// Turn on layer
-					if( !visible ){
-						_this._dispatch({
-							type: 'setMapLayerVisibility'
-							,layerId: layerIdToTurnOn
-							,visible: true
-						});
-					};
-					
 					// Move map and display feature 
 					_this._dispatch({
-						type: 'findOnMap'
-						,fid: data._id
-						,srsName: 'EPSG:4326'
-						,x: x
-						,y: y
+						type: 'find'
+						,docId: data._id
+						,doc: data
 					});
 					
 					return false;

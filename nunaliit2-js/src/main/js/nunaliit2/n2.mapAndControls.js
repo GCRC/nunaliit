@@ -959,7 +959,8 @@ var MapAndControls = $n2.Class({
 	    this._registerDispatch('focusOn');
 	    this._registerDispatch('focusOff');
 	    this._registerDispatch('focusOnSupplement');
-	    this._registerDispatch('findOnMap');
+	    this._registerDispatch('findIsAvailable');
+	    this._registerDispatch('find');
 	    this._registerDispatch('searchInitiate');
 	    this._registerDispatch('editInitiate');
 	    this._registerDispatch('editCancel');
@@ -4622,11 +4623,58 @@ var MapAndControls = $n2.Class({
 				});
 			};
 			
-		} else if( 'findOnMap' === type ) {
-			this._centerMapOnXY(m.x, m.y, m.srsName);
-			var fid = m.fid;
+		} else if( 'findIsAvailable' === type ) {
+			// Synchronous call. Response sent on message.
+			var doc = m.doc;
+			if( doc.nunaliit_geom 
+			 && doc.nunaliit_layers ){
+				for(var i=0,e=this.infoLayers.length; i<e; ++i) {
+					var infoLayer = this.infoLayers[i];
+					var layerId = infoLayer.id;
+					if( doc.nunaliit_layers.indexOf(layerId) >= 0 ){
+						m.isAvailable = true;
+						break;
+					};
+				};
+			};
+			
+		} else if( 'find' === type ) {
+			var doc = m.doc;
+			if( doc && doc.nunaliit_geom ){
+				var x = (doc.nunaliit_geom.bbox[0] + doc.nunaliit_geom.bbox[2]) / 2;
+				var y = (doc.nunaliit_geom.bbox[1] + doc.nunaliit_geom.bbox[3]) / 2;
+				this._centerMapOnXY(x, y, 'EPSG:4326');
+			};
+			
+			// Remember that this feature is looked for by user
+			var fid = m.docId;
 			var features = this._getMapFeaturesIncludingFid(fid);
 			this._startFindFeature(fid, features);
+			
+			// Check if we need to turn a layer on
+			if( doc && doc.nunaliit_layers ) {
+				var visible = false;
+				var olLayerToTurnOn = null;
+				for(var i=0,e=this.infoLayers.length; i<e; ++i) {
+					var infoLayer = this.infoLayers[i];
+					var layerId = infoLayer.id;
+					var olLayer = infoLayer.olLayer;
+
+					if( doc.nunaliit_layers.indexOf(layerId) >= 0 
+					 && olLayer ) {
+						if( olLayer.visibility ) {
+							visible = true;
+						} else {
+							olLayerToTurnOn = olLayer;
+						};
+					};
+				};
+	
+				// Turn on layer
+				if( !visible && olLayerToTurnOn ){
+					olLayerToTurnOn.setVisibility(true);
+				};
+			};
 			
 		} else if( 'searchInitiate' === type ) {
 			this._endClicked();

@@ -144,6 +144,7 @@ var DbPerspective = $n2.Class({
 			
 			this.dispatchService.register(DH, 'documentContent', fn);
 			this.dispatchService.register(DH, 'documentDeleted', fn);
+			this.dispatchService.register(DH, 'findIsAvailable', fn);
 		};
 	},
 	
@@ -254,6 +255,21 @@ var DbPerspective = $n2.Class({
 							,updated: updated
 							,removed: removed
 						});
+					};
+				};
+			};
+			
+		} else if( 'findIsAvailable' === m.type ) {
+			var doc = m.doc;
+			
+			if( doc && doc.nunaliit_layers ){
+				for(var i=0,e=this.dbSelectors.length; i<e; ++i){
+					var selector = this.dbSelectors[i];
+					if( selector.layer ){
+						if( doc.nunaliit_layers.indexOf(selector.layer) >= 0 ){
+							m.isAvailable = true;
+							break;
+						};
 					};
 				};
 			};

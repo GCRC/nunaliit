@@ -44,7 +44,11 @@ nodes. Nodes should have the format:
 {
 	_id: <string>
 	,_selected: <boolean>
+	,_selectIntent: <null or string>
 	,_focus: <boolean>
+	,_focusIntent: <null or string>
+	,_find: <boolean>
+	,_intent: <null or string>
 }
 
 */
@@ -57,11 +61,14 @@ var IntentView = $n2.Class({
 	
 	selectInfo: null,
 	
+	findInfo: null,
+	
 	nodesArrayById: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: null
+			,suppressFindEvent: false
 		}, opts_);
 
 		var _this = this;
@@ -70,6 +77,9 @@ var IntentView = $n2.Class({
 		
 		this.listeners = [];
 		this.nodesArrayById = {};
+		this.focusInfo = null;
+		this.selectInfo = null;
+		this.findInfo = null;
 		
 		if( this.dispatchService ){
 			var f = function(m){
@@ -82,6 +92,10 @@ var IntentView = $n2.Class({
 			this.dispatchService.register(DH,'focusOn',f);
 			this.dispatchService.register(DH,'focusOnSupplement',f);
 			this.dispatchService.register(DH,'focusOff',f);
+			
+			if( !opts.suppressFindEvent ){
+				this.dispatchService.register(DH,'find',f);
+			};
 		};
 	},
 	
@@ -144,25 +158,66 @@ var IntentView = $n2.Class({
 		
 		// Selection
 		var selected = false;
+		var selectIntent = null;
 		if( this.selectInfo && this.selectInfo.docIds ){
-			if( this.selectInfo.docIds[docId] ){
+			var intent = this.selectInfo.docIds[docId];
+			if( intent ){
 				selected = true;
+				if( typeof intent === 'string' ){
+					selectIntent = intent;
+				};
 			};
 		};
 		if( node._selected !== selected ){
 			node._selected = selected;
 			changed = true;
 		};
+		if( node._selectIntent !== selectIntent ){
+			node._selectIntent = selectIntent;
+			changed = true;
+		};
 
 		// Focus
 		var focus = false;
+		var focusIntent = null;
 		if( this.focusInfo && this.focusInfo.docIds ){
-			if( this.focusInfo.docIds[docId] ){
+			var intent = this.focusInfo.docIds[docId];
+			if( intent ){
 				focus = true;
+				if( typeof intent === 'string' ){
+					focusIntent = intent;
+				};
 			};
 		};
 		if( node._focus !== focus ){
 			node._focus = focus;
+			changed = true;
+		};
+		if( node._focusIntent !== focusIntent ){
+			node._focusIntent = focusIntent;
+			changed = true;
+		};
+		
+		// Find on map
+		var find = false;
+		if( this.findInfo ){
+			var intent = this.findInfo[docId];
+			if( intent ){
+				find = true;
+			};
+		};
+		if( node._find !== find ){
+			node._find = find;
+			changed = true;
+		};
+		
+		// Compute intent
+		var effectiveIntent = focusIntent;
+		if( !effectiveIntent ){
+			effectiveIntent = selectIntent;
+		};
+		if( node._intent !== effectiveIntent ){
+			node._intent = effectiveIntent;
 			changed = true;
 		};
 		
@@ -170,25 +225,36 @@ var IntentView = $n2.Class({
 	},
 	
 	_performUnselect: function(changedArray){
+		var docIds = {};
+
 		if( this.selectInfo 
 		 && this.selectInfo.docIds ) {
-			var docIds = this.selectInfo.docIds;
-			this.selectInfo = null; // needed for _adjustIntentOnNode()
-			
-			for(var selectedDocId in docIds){
-				var nodesArray = this.nodesArrayById[selectedDocId];
-				if( nodesArray ){
-					for(var j=0,k=nodesArray.length; j<k; ++j){
-						var n = nodesArray[j];
-						if( this._adjustIntentOnNode(n) ){
-							changedArray.push(n);
-						};
+			for(var selectedDocId in this.selectInfo.docIds){
+				docIds[selectedDocId] = true;
+			};
+		};
+
+		if( this.findInfo ) {
+			for(var selectedDocId in this.findInfo){
+				docIds[selectedDocId] = true;
+			};
+		};
+
+		// needed for _adjustIntentOnNode()
+		this.selectInfo = null;
+		this.findInfo = null;
+		
+		for(var selectedDocId in docIds){
+			var nodesArray = this.nodesArrayById[selectedDocId];
+			if( nodesArray ){
+				for(var j=0,k=nodesArray.length; j<k; ++j){
+					var n = nodesArray[j];
+					if( this._adjustIntentOnNode(n) ){
+						changedArray.push(n);
 					};
 				};
 			};
 		};
-		
-		this.selectInfo = null;
 	},
 
 	_performFocusOff: function(changedArray){
@@ -243,12 +309,16 @@ var IntentView = $n2.Class({
 		};
 	},
 
-	_handleSelectSupplement: function(docId){
+	_handleSelectSupplement: function(docId, intent){
 		var changed = [];
 
 		// Update current selection
 		if( this.selectInfo && this.selectInfo.docIds ){
-			this.selectInfo.docIds[docId] = true;
+			if( intent ){
+				this.selectInfo.docIds[docId] = intent;
+			} else {
+				this.selectInfo.docIds[docId] = true;
+			};
 
 			// Adjust selected nodes
 			var nodesArray = this.nodesArrayById[docId];
@@ -273,6 +343,48 @@ var IntentView = $n2.Class({
 
 		this._performUnselect(changed);
 
+		// Report to listener the nodes that were changed
+		if( changed.length > 0 ){
+			this._reportChangedNodes(changed);
+		};
+	},
+
+	_handleFind: function(docId){
+		var changed = [];
+
+		var previousNodes = [];
+		if( this.findInfo ){
+			for(var foundDocId in this.findInfo){
+				var nodesArray = this.nodesArrayById[foundDocId];
+				
+				// Append all to previous nodes
+				previousNodes.push.apply(previousNodes, nodesArray);
+			};
+		};
+		
+		// Create new find on map
+		this.findInfo = {};
+		this.findInfo[docId] = true;
+
+		// Adjust previous nodes
+		for(var i=0,e=previousNodes.length; i<e; ++i){
+			var n = previousNodes[i];
+			if( this._adjustIntentOnNode(n) ){
+				changed.push(n);
+			};
+		};
+		
+		// Adjust selected nodes
+		var nodesArray = this.nodesArrayById[docId];
+		if( nodesArray ){
+			for(var j=0,k=nodesArray.length; j<k; ++j){
+				var n = nodesArray[j];
+				if( this._adjustIntentOnNode(n) ){
+					changed.push(n);
+				};
+			};
+		};
+		
 		// Report to listener the nodes that were changed
 		if( changed.length > 0 ){
 			this._reportChangedNodes(changed);
@@ -309,12 +421,16 @@ var IntentView = $n2.Class({
 		};
 	},
 
-	_handleFocusOnSupplement: function(docId){
+	_handleFocusOnSupplement: function(docId, intent){
 		var changed = [];
 
 		// Update current focus
 		if( this.focusInfo && this.focusInfo.docIds ){
-			this.focusInfo.docIds[docId] = true;
+			if( intent ){
+				this.focusInfo.docIds[docId] = intent;
+			} else {
+				this.focusInfo.docIds[docId] = true;
+			};
 
 			// Adjust selected nodes
 			var nodesArray = this.nodesArrayById[docId];
@@ -352,7 +468,8 @@ var IntentView = $n2.Class({
 
 		} else if( 'selectedSupplement' === m.type ) {
 			var docId = m.docId;
-			this._handleSelectSupplement(docId);
+			var intent = m.intent;
+			this._handleSelectSupplement(docId, intent);
 			
 		} else if( 'unselected' === m.type ){
 			this._handleUnselect();
@@ -363,10 +480,15 @@ var IntentView = $n2.Class({
 
 		} else if( 'focusOnSupplement' === m.type ) {
 			var docId = m.docId;
-			this._handleFocusOnSupplement(docId);
+			var intent = m.intent;
+			this._handleFocusOnSupplement(docId, intent);
 			
 		} else if( 'focusOff' === m.type ){
 			this._handleFocusOff();
+			
+		} else if( 'find' === m.type ){
+			var docId = m.docId;
+			this._handleFind(docId);
 		};
 	},
 	

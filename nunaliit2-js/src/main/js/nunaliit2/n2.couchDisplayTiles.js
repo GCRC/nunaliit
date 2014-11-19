@@ -681,23 +681,19 @@ var TiledDisplay = $n2.Class({
 			
 	 		// Show 'find on map' button
 			if( this.dispatchService 
-			 && doc.nunaliit_geom 
-			 && this.dispatchService.isEventTypeRegistered('findOnMap')
+			 && this.dispatchService.isEventTypeRegistered('findIsAvailable')
+			 && this.dispatchService.isEventTypeRegistered('find')
 			 ) {
 				// Check if document can be displayed on a map
 				var showFindOnMapButton = false;
-				if( doc.nunaliit_layers && doc.nunaliit_layers.length > 0 ) {
-					var m = {
-						type:'mapGetLayers'
-						,layers:{}
-					};
-					this.dispatchService.synchronousCall(DH,m);
-					for(var i=0,e=doc.nunaliit_layers.length; i<e; ++i){
-						var layerId = doc.nunaliit_layers[i];
-						if( m.layers[layerId] ){
-							showFindOnMapButton = true;
-						};
-					};
+				var m = {
+					type: 'findIsAvailable'
+					,doc: doc
+					,isAvailable: false
+				};
+				this.dispatchService.synchronousCall(DH,m);
+				if( m.isAvailable ){
+					showFindOnMapButton = true;
 				};
 
 				if( showFindOnMapButton ) {
@@ -706,7 +702,11 @@ var TiledDisplay = $n2.Class({
 		 				.text( _loc('Find on Map') )
 		 				.appendTo($btnDiv)
 		 				.click(function(){
-		 					_this._performFindOnMap(doc);
+		 					_this._dispatch({
+		 						type: 'find'
+	 							,docId: doc._id
+	 							,doc: doc
+	 						});
 							return false;
 						});
 				};
@@ -1225,56 +1225,6 @@ var TiledDisplay = $n2.Class({
 				,onSuccess: function() {}
 			});
 		};
-	},
-	
-	/*
-	 * Initiates the 'Find on Map' action for the button
-	 */
-	_performFindOnMap: function(doc){
-		if( !doc.nunaliit_geom ){
-			$n2.log('Error: can not find nunaliit_geom for "Find on Map"');
-			return;
-		};
-		
-		var x = (doc.nunaliit_geom.bbox[0] + doc.nunaliit_geom.bbox[2]) / 2;
-		var y = (doc.nunaliit_geom.bbox[1] + doc.nunaliit_geom.bbox[3]) / 2;
-		
-		// Check if we need to turn a layer on
-		var visible = false;
-		var layerIdToTurnOn = null;
-		var m = {
-				type:'mapGetLayers'
-				,layers:{}
-			};
-		this.dispatchService.synchronousCall(DH,m);
-		for(var i=0,e=doc.nunaliit_layers.length; i<e; ++i){
-			var layerId = doc.nunaliit_layers[i];
-			if( m.layers[layerId] ){
-				if( m.layers[layerId].visible ){
-					visible = true;
-				} else {
-					layerIdToTurnOn = layerId;
-				};
-			};
-		};
-
-		// Turn on layer
-		if( !visible ){
-			this._dispatch({
-				type: 'setMapLayerVisibility'
-				,layerId: layerIdToTurnOn
-				,visible: true
-			});
-		};
-		
-		// Move map and display feature 
-		this._dispatch({
-			type: 'findOnMap'
-			,fid: doc._id
-			,srsName: 'EPSG:4326'
-			,x: x
-			,y: y
-		});
 	},
 	
 	/*
