@@ -1701,7 +1701,9 @@ var Form = $n2.Class({
 				,classInfo.type
 				,key
 				,function(obj, selector, value){
-					//_this.refresh($elem); // interferes with text areas
+					if( 'reference' === classInfo.type ){
+						_this.refresh($elem);
+					};
 					callback(obj, selector, value);
 				}
 			);
