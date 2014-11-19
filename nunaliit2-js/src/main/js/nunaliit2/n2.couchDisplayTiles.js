@@ -243,7 +243,7 @@ var TiledDisplay = $n2.Class({
 		this.schemaRepository = opts.schemaRepository;
 		this.customService = opts.customService;
 		this.dispatchService = opts.dispatchService;
-		this.createRelatedDocProcess = opts.createdDocProcess;
+		this.createRelatedDocProcess = opts.createDocProcess;
 		
 		// Initialize display
 		this._getDisplayDiv();

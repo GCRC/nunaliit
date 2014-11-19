@@ -1701,7 +1701,7 @@ var Form = $n2.Class({
 				,classInfo.type
 				,key
 				,function(obj, selector, value){
-					_this.refresh($elem);
+					//_this.refresh($elem); // interferes with text areas
 					callback(obj, selector, value);
 				}
 			);

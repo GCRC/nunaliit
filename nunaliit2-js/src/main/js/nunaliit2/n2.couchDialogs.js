@@ -92,6 +92,9 @@ function searchForDocumentId(options_){
 		,onlyFinalResults: true
 	});
 	
+	var $input = $('#'+inputId);
+	$('#'+inputId).focus();
+	
 	function displaySearch(displayData) {
 		if( !displayData ) {
 			reportError('Invalid search results returned');
