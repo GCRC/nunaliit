@@ -212,7 +212,7 @@ var DbPerspective = $n2.Class({
 			} else if( doc && isDocValid ) {
 				if( doc._rev !== loadedDoc._rev ) {
 					updated.push(loadedDoc);
-					delete this.docsById[loadedDoc._id];
+					this.docsById[loadedDoc._id] = loadedDoc;
 				};
 			};
 		};
