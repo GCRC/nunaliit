@@ -239,9 +239,9 @@ var DbPerspective = $n2.Class({
 
 		} else if( 'documentDeleted' === m.type ){
 			var docId = m.docId;
-			var doc = docsById[docId];
+			var doc = this.docsById[docId];
 			if( doc ){
-				delete docsById[docId];
+				delete this.docsById[docId];
 				
 				if( this.listeners.length > 0 ){
 					var added = [];
