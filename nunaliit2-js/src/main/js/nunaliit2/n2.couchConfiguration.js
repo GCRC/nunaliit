@@ -284,6 +284,7 @@ function Configure(options_){
 
 		configuration.directory.dialogService = new $n2.couchDialogs.DialogService({
 			dispatchService: configuration.directory.dispatchService
+			,documentSource: configuration.documentSource
 			,searchService: configuration.directory.searchService
 			,showService: configuration.directory.showService
 			,schemaRepository: configuration.directory.schemaRepository

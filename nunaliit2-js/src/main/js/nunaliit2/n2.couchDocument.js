@@ -333,13 +333,15 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 		
 		this.designDoc.queryView({
 			viewName: 'layer-definitions'
+			,include_docs: true
 			,onSuccess: function(rows){
 				var layerIdentifiers = [];
 				for(var i=0,e=rows.length;i<e;++i){
-					if( rows[i].nunaliit_layer_definition ){
-						var d = rows[i].nunaliit_layer_definition;
+					var doc = rows[i].doc;
+					if( doc.nunaliit_layer_definition ){
+						var d = doc.nunaliit_layer_definition;
 						if( !d.id ){
-							d.id = rows[i]._id;
+							d.id = doc._id;
 						};
 						layerIdentifiers.push(d);
 					};

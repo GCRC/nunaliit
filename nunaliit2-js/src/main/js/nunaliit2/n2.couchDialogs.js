@@ -153,17 +153,23 @@ function selectLayersDialog(opts_){
 	
 	var layers = {};
 	if( typeof(opts.currentLayers) === 'string' ){
-		var layerNames = currentLayers.split(',');
+		var layerNames = opts.currentLayers.split(',');
 		for(var i=0,e=layerNames.length;i<e;++i){
-			layers[ $n2.trim(layerNames[i]) ] = {
+			var layerId = $n2.trim(layerNames[i]);
+			layers[layerId] = {
 				currentlySelected: true
+				,id: layerId
+				,label: null
 			};
 		};
 		
 	} else if( $n2.isArray(opts.currentLayers) ){
 		for(var i=0,e=opts.currentLayers.length;i<e;++i){
-			layers[ $n2.trim(opts.currentLayers[i]) ] = {
+			var layerId = $n2.trim(opts.currentLayers[i]);
+			layers[layerId] = {
 				currentlySelected: true
+				,id: layerId
+				,label: null
 			};
 		};
 	};
@@ -209,13 +215,16 @@ function selectLayersDialog(opts_){
 	if( opts.documentSource ){
 		opts.documentSource.getLayerDefinitions({
 			onSuccess: function(layerDefs){
-				var layerIdentifiers = {};
 				for(var i=0,e=layerDefs.length;i<e;++i){
-					var layerId = layerDefs[i].id;
+					var layerDef = layerDefs[i];
+					var layerId = layerDef.id;
 					if( !layers[layerId] ){
 						layers[layerId] = {
 							currentlySelected: false
 						};
+					};
+					if( layerDef.name ){
+						layers[layerId].label = layerDef.name;
 					};
 				};
 				getInnerLayers();
@@ -250,17 +259,30 @@ function selectLayersDialog(opts_){
 		var $c = $diag.find('.editorSelectLayerContent');
 		$c.empty();
 		for(var layerId in layers){
-			var inputId = $n2.getUniqueId();
-			var $div = $('<div><input id="'+inputId+'" class="layer" type="checkbox"/><label for="'+inputId+'"></label></div>');
-			$c.append($div);
-			$div.find('input').attr('name',layerId);
-			$div.find('label').text(layerId);
-			if( layers[layerId].currentlySelected ){
-				$div.find('input').attr('checked','checked');
+			var label = layerId;
+			if( layers[layerId].label ){
+				label = _loc( layers[layerId].label );
 			};
 			
-			if(opts.showService){
-				opts.showService.printLayerName($div.find('label'), layerId);
+			var inputId = $n2.getUniqueId();
+			var $div = $('<div>')
+				.appendTo($c);
+			var $input = $('<input type="checkbox">')
+				.addClass('layer')
+				.attr('id',inputId)
+				.attr('name',layerId)
+				.appendTo($div);
+			var $label = $('<label>')
+				.attr('for',inputId)
+				.text(label)
+				.appendTo($div);
+
+			if( layers[layerId].currentlySelected ){
+				$input.attr('checked','checked');
+			};
+			
+			if( opts.showService && !layers[layerId].label ){
+				opts.showService.printLayerName($label, layerId);
 			};
 		};
 		
@@ -293,6 +315,8 @@ var DialogService = $n2.Class({
 
 	dispatchService: null,
 	
+	documentSource: null,
+
 	searchService: null,
 	
 	showService: null,
@@ -304,6 +328,7 @@ var DialogService = $n2.Class({
 	initialize: function(opts_) {
 		var opts = $n2.extend({
 			dispatchService: null
+			,documentSource: null
 			,searchService: null
 			,showService: null
 			,schemaRepository: null
@@ -313,6 +338,7 @@ var DialogService = $n2.Class({
 		var _this = this;
 		
 		this.dispatchService = opts.dispatchService;
+		this.documentSource = opts.documentSource;
 		this.searchService = opts.searchService;
 		this.showService = opts.showService;
 		this.schemaRepository = opts.schemaRepository;
@@ -380,6 +406,7 @@ var DialogService = $n2.Class({
 			,resetFn: opts.onReset
 			,showService: this.showService
 			,dispatchService: this.dispatchService
+			,documentSource: this.documentSource
 		});
 	},
 
