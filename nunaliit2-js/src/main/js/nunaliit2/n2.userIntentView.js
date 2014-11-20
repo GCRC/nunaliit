@@ -92,6 +92,7 @@ var IntentView = $n2.Class({
 			this.dispatchService.register(DH,'focusOn',f);
 			this.dispatchService.register(DH,'focusOnSupplement',f);
 			this.dispatchService.register(DH,'focusOff',f);
+			this.dispatchService.register(DH,'searchInitiate',f);
 			
 			if( !opts.suppressFindEvent ){
 				this.dispatchService.register(DH,'find',f);
@@ -486,6 +487,9 @@ var IntentView = $n2.Class({
 		} else if( 'focusOff' === m.type ){
 			this._handleFocusOff();
 			
+		} else if( 'searchInitiate' === m.type ){
+			this._handleUnselect();
+
 		} else if( 'find' === m.type ){
 			var docId = m.docId;
 			this._handleFind(docId);
