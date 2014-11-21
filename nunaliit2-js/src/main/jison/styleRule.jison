@@ -3,37 +3,42 @@
 
 %{
 
-var Node = function(){
-};
-Node.prototype.evalContext = function(ctxt){
-	throw 'All nodes must be able to evaluate context';
-};
-
-var NodeAnd = function(n1, n2){
+var ExpressionAnd = function(n1, n2){
 	this.n1 = n1;
 	this.n2 = n2;
 };
-NodeAnd.prototype.evalContext = function(ctxt){
-	var r1 = this.n1.evalContext(ctxt);
+ExpressionAnd.prototype.getValue = function(ctxt){
+	var r1 = this.n1.getValue(ctxt);
 	if( r1 ){
-		return this.n2.evalContext(ctxt);
+		return this.n2.getValue(ctxt);
 	};
 	return false;
 };
 
-var NodeOr = function(n1, n2){
+var ExpressionOr = function(n1, n2){
 	this.n1 = n1;
 	this.n2 = n2;
 };
-NodeOr.prototype.evalContext = function(ctxt){
-	var r1 = this.n1.evalContext(ctxt);
+ExpressionOr.prototype.getValue = function(ctxt){
+	var r1 = this.n1.getValue(ctxt);
 	if( !r1 ){
-		return this.n2.evalContext(ctxt);
+		return this.n2.getValue(ctxt);
 	};
 	return true;
 };
 
-var NodeIsSelected = function(args_){
+var ExpressionNot = function(n){
+	this.n = n;
+};
+ExpressionNot.prototype.getValue = function(ctxt){
+	var r = this.n.getValue(ctxt);
+	if( r ){
+		return false;
+	};
+	return true;
+};
+
+var IsSelected = function(args_){
 	var args = [];
 	if( args_ ){
 		args = args_.getArguments();
@@ -42,11 +47,37 @@ var NodeIsSelected = function(args_){
 		throw 'isSelected() does not accept arguments';
 	};
 };
-NodeIsSelected.prototype.evalContext = function(ctxt){
+IsSelected.prototype.getValue = function(ctxt){
 	return ctxt._selected;
 };
 
-var NodeIsSchema = function(args_){
+var IsHovered = function(args_){
+	var args = [];
+	if( args_ ){
+		args = args_.getArguments();
+	};
+	if( args.length != 0 ){
+		throw 'isHovered() does not accept arguments';
+	};
+};
+IsHovered.prototype.getValue = function(ctxt){
+	return ctxt._focus;
+};
+
+var IsFound = function(args_){
+	var args = [];
+	if( args_ ){
+		args = args_.getArguments();
+	};
+	if( args.length != 0 ){
+		throw 'isFound() does not accept arguments';
+	};
+};
+IsFound.prototype.getValue = function(ctxt){
+	return ctxt._find;
+};
+
+var IsSchema = function(args_){
 	var args = [];
 	if( args_ ){
 		args = args_.getArguments();
@@ -56,7 +87,7 @@ var NodeIsSchema = function(args_){
 	};
 	this.schemaName = args[0];
 };
-NodeIsSchema.prototype.evalContext = function(ctxt){
+IsSchema.prototype.getValue = function(ctxt){
 	if( ctxt 
 	 && ctxt.doc 
 	 && ctxt.doc.nunaliit_schema === this.schemaName ){
@@ -65,7 +96,7 @@ NodeIsSchema.prototype.evalContext = function(ctxt){
 	return false;
 };
 
-var NodeOnLayer = function(args_){
+var OnLayer = function(args_){
 	var args = [];
 	if( args_ ){
 		args = args_.getArguments();
@@ -75,7 +106,7 @@ var NodeOnLayer = function(args_){
 	};
 	this.layerId = args[0];
 };
-NodeOnLayer.prototype.evalContext = function(ctxt){
+OnLayer.prototype.getValue = function(ctxt){
 	if( ctxt 
 	 && ctxt.doc 
 	 && ctxt.doc.nunaliit_layers ){
@@ -87,16 +118,29 @@ NodeOnLayer.prototype.evalContext = function(ctxt){
 
 function createFunctionNode(fName, args){
 	if( 'isSelected' === fName ){
-		return new NodeIsSelected(args);
+		return new IsSelected(args);
+		
+	} else if( 'isHovered' === fName ){
+		return new IsHovered(args);
+		
+	} else if( 'isFound' === fName ){
+		return new IsFound(args);
 		
 	} else if( 'isSchema' === fName ){
-		return new NodeIsSchema(args);
+		return new IsSchema(args);
 		
 	} else if( 'onLayer' === fName ){
-		return new NodeOnLayer(args);
+		return new OnLayer(args);
 	};
 	
 	throw 'Function '+fName+'() is not recognized';
+};
+
+var Boolean = function(value){
+	this.value = value;
+};
+Boolean.prototype.getValue = function(ctxt){
+	return this.value;
 };
 
 // -----------------------------------------------------------
@@ -130,12 +174,15 @@ Argument.prototype._getArguments = function(args){
 %%
 
 \s+                    { /* skip whitespace */ }
+"true"                 { return 'true'; }
+"false"                { return 'false'; }
 [0-9]+("."[0-9]+)?\b   { return 'NUMBER'; }
 [_a-zA-Z][_a-zA-Z0-9]* { return 'IDENTIFIER'; }
-'"'(\\\"|[^"])*'"'     { yytext = yytext.substr(1,yytext.length-2); return 'STRING'; }
+"'"(\\\'|[^'])*"'"     { yytext = yytext.substr(1,yytext.length-2); return 'STRING'; }
 "("                    { return '('; }
 ")"                    { return ')'; }
 ","                    { return ','; }
+"!"                    { return '!'; }
 "&&"                   { return '&&'; }
 "||"                   { return '||'; }
 <<EOF>>                { return 'EOF'; }
@@ -147,6 +194,7 @@ Argument.prototype._getArguments = function(args){
 
 %left '&&' '||'
 %left ','
+%right '!'
 
 
 %start program
@@ -154,24 +202,32 @@ Argument.prototype._getArguments = function(args){
 %% /* language grammar */
 
 program
-    : rule EOF
+    : expression EOF
         { return $1; }
     ;
 
-rule
-    : rule '&&' rule
+expression
+    : expression '&&' expression
         {
-        	$$ = new NodeAnd($1,$3);
+        	$$ = new ExpressionAnd($1,$3);
         }
-    | rule '||' rule
+    | expression '||' expression
         {
-        	$$ = new NodeOr($1,$3);
+        	$$ = new ExpressionOr($1,$3);
         }
-    | '(' rule ')'
+    | '!' expression
+        {
+        	$$ = new ExpressionNot($2);
+        }
+    | '(' expression ')'
     	{
     		$$ = $2;
     	}
-    | 'IDENTIFIER' '(' ')'
+    | value
+    ;
+    
+value
+	: 'IDENTIFIER' '(' ')'
         {
         	$$ = createFunctionNode($1,null);
         }
@@ -179,6 +235,14 @@ rule
         {
         	$$ = createFunctionNode($1,$3);
         }
+    | 'true'
+    	{
+    		$$ = new Boolean(true);
+    	}
+    | 'false'
+    	{
+    		$$ = new Boolean(false);
+    	}
     ;
 
 arguments

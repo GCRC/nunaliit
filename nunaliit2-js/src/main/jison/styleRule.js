@@ -72,12 +72,12 @@
   }
 */
 var parser = (function(){
-var o=function(k,v,o,l){for(o=o||{},l=k.length;l--;o[k[l]]=v);return o},$V0=[1,3],$V1=[1,4],$V2=[1,6],$V3=[1,7],$V4=[1,15],$V5=[1,16],$V6=[5,6,7,9],$V7=[9,12];
+var o=function(k,v,o,l){for(o=o||{},l=k.length;l--;o[k[l]]=v);return o},$V0=[1,3],$V1=[1,4],$V2=[1,6],$V3=[1,7],$V4=[1,8],$V5=[1,10],$V6=[1,11],$V7=[5,6,7,10],$V8=[1,20],$V9=[1,21],$Va=[10,16];
 var parser = {trace: function trace() { },
 yy: {},
-symbols_: {"error":2,"program":3,"rule":4,"EOF":5,"&&":6,"||":7,"(":8,")":9,"IDENTIFIER":10,"arguments":11,",":12,"NUMBER":13,"STRING":14,"$accept":0,"$end":1},
-terminals_: {2:"error",5:"EOF",6:"&&",7:"||",8:"(",9:")",10:"IDENTIFIER",12:",",13:"NUMBER",14:"STRING"},
-productions_: [0,[3,2],[4,3],[4,3],[4,3],[4,3],[4,4],[11,3],[11,1],[11,1]],
+symbols_: {"error":2,"program":3,"expression":4,"EOF":5,"&&":6,"||":7,"!":8,"(":9,")":10,"value":11,"IDENTIFIER":12,"arguments":13,"true":14,"false":15,",":16,"NUMBER":17,"STRING":18,"$accept":0,"$end":1},
+terminals_: {2:"error",5:"EOF",6:"&&",7:"||",8:"!",9:"(",10:")",12:"IDENTIFIER",14:"true",15:"false",16:",",17:"NUMBER",18:"STRING"},
+productions_: [0,[3,2],[4,3],[4,3],[4,2],[4,3],[4,1],[11,3],[11,4],[11,1],[11,1],[13,3],[13,1],[13,1]],
 performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate /* action[1] */, $$ /* vstack */, _$ /* lstack */) {
 /* this == yyval */
 
@@ -88,43 +88,58 @@ case 1:
 break;
 case 2:
 
-        	this.$ = new NodeAnd($$[$0-2],$$[$0]);
+        	this.$ = new ExpressionAnd($$[$0-2],$$[$0]);
         
 break;
 case 3:
 
-        	this.$ = new NodeOr($$[$0-2],$$[$0]);
+        	this.$ = new ExpressionOr($$[$0-2],$$[$0]);
         
 break;
 case 4:
 
+        	this.$ = new ExpressionNot($$[$0]);
+        
+break;
+case 5:
+
     		this.$ = $$[$0-1];
     	
 break;
-case 5:
+case 7:
 
         	this.$ = createFunctionNode($$[$0-2],null);
         
 break;
-case 6:
+case 8:
 
         	this.$ = createFunctionNode($$[$0-3],$$[$0-1]);
         
 break;
-case 7:
+case 9:
+
+    		this.$ = new Boolean(true);
+    	
+break;
+case 10:
+
+    		this.$ = new Boolean(false);
+    	
+break;
+case 11:
 
         	this.$ = new Argument($$[$0-2],$$[$0]);
         
 break;
-case 8: case 9:
+case 12: case 13:
 
         	this.$ = new Argument($$[$0]);
         
 break;
 }
 },
-table: [{3:1,4:2,8:$V0,10:$V1},{1:[3]},{5:[1,5],6:$V2,7:$V3},{4:8,8:$V0,10:$V1},{8:[1,9]},{1:[2,1]},{4:10,8:$V0,10:$V1},{4:11,8:$V0,10:$V1},{6:$V2,7:$V3,9:[1,12]},{9:[1,13],11:14,13:$V4,14:$V5},o($V6,[2,2]),o($V6,[2,3]),o($V6,[2,4]),o($V6,[2,5]),{9:[1,17],12:[1,18]},o($V7,[2,8]),o($V7,[2,9]),o($V6,[2,6]),{11:19,13:$V4,14:$V5},o($V7,[2,7])],
-defaultActions: {5:[2,1]},
+table: [{3:1,4:2,8:$V0,9:$V1,11:5,12:$V2,14:$V3,15:$V4},{1:[3]},{5:[1,9],6:$V5,7:$V6},{4:12,8:$V0,9:$V1,11:5,12:$V2,14:$V3,15:$V4},{4:13,8:$V0,9:$V1,11:5,12:$V2,14:$V3,15:$V4},o($V7,[2,6]),{9:[1,14]},o($V7,[2,9]),o($V7,[2,10]),{1:[2,1]},{4:15,8:$V0,9:$V1,11:5,12:$V2,14:$V3,15:$V4},{4:16,8:$V0,9:$V1,11:5,12:$V2,14:$V3,15:$V4},o($V7,[2,4]),{6:$V5,7:$V6,10:[1,17]},{10:[1,18],13:19,17:$V8,18:$V9},o($V7,[2,2]),o($V7,[2,3]),o($V7,[2,5]),o($V7,[2,7]),{10:[1,22],16:[1,23]},o($Va,[2,12]),o($Va,[2,13]),o($V7,[2,8]),{13:24,17:$V8,18:$V9},o($Va,[2,11])],
+defaultActions: {9:[2,1]},
 parseError: function parseError(str, hash) {
     if (hash.recoverable) {
         this.trace(str);
@@ -271,37 +286,42 @@ parse: function parse(input) {
 }};
 
 
-var Node = function(){
-};
-Node.prototype.evalContext = function(ctxt){
-	throw 'All nodes must be able to evaluate context';
-};
-
-var NodeAnd = function(n1, n2){
+var ExpressionAnd = function(n1, n2){
 	this.n1 = n1;
 	this.n2 = n2;
 };
-NodeAnd.prototype.evalContext = function(ctxt){
-	var r1 = this.n1.evalContext(ctxt);
+ExpressionAnd.prototype.getValue = function(ctxt){
+	var r1 = this.n1.getValue(ctxt);
 	if( r1 ){
-		return this.n2.evalContext(ctxt);
+		return this.n2.getValue(ctxt);
 	};
 	return false;
 };
 
-var NodeOr = function(n1, n2){
+var ExpressionOr = function(n1, n2){
 	this.n1 = n1;
 	this.n2 = n2;
 };
-NodeOr.prototype.evalContext = function(ctxt){
-	var r1 = this.n1.evalContext(ctxt);
+ExpressionOr.prototype.getValue = function(ctxt){
+	var r1 = this.n1.getValue(ctxt);
 	if( !r1 ){
-		return this.n2.evalContext(ctxt);
+		return this.n2.getValue(ctxt);
 	};
 	return true;
 };
 
-var NodeIsSelected = function(args_){
+var ExpressionNot = function(n){
+	this.n = n;
+};
+ExpressionNot.prototype.getValue = function(ctxt){
+	var r = this.n.getValue(ctxt);
+	if( r ){
+		return false;
+	};
+	return true;
+};
+
+var IsSelected = function(args_){
 	var args = [];
 	if( args_ ){
 		args = args_.getArguments();
@@ -310,11 +330,37 @@ var NodeIsSelected = function(args_){
 		throw 'isSelected() does not accept arguments';
 	};
 };
-NodeIsSelected.prototype.evalContext = function(ctxt){
+IsSelected.prototype.getValue = function(ctxt){
 	return ctxt._selected;
 };
 
-var NodeIsSchema = function(args_){
+var IsHovered = function(args_){
+	var args = [];
+	if( args_ ){
+		args = args_.getArguments();
+	};
+	if( args.length != 0 ){
+		throw 'isHovered() does not accept arguments';
+	};
+};
+IsHovered.prototype.getValue = function(ctxt){
+	return ctxt._focus;
+};
+
+var IsFound = function(args_){
+	var args = [];
+	if( args_ ){
+		args = args_.getArguments();
+	};
+	if( args.length != 0 ){
+		throw 'isFound() does not accept arguments';
+	};
+};
+IsFound.prototype.getValue = function(ctxt){
+	return ctxt._find;
+};
+
+var IsSchema = function(args_){
 	var args = [];
 	if( args_ ){
 		args = args_.getArguments();
@@ -324,7 +370,7 @@ var NodeIsSchema = function(args_){
 	};
 	this.schemaName = args[0];
 };
-NodeIsSchema.prototype.evalContext = function(ctxt){
+IsSchema.prototype.getValue = function(ctxt){
 	if( ctxt 
 	 && ctxt.doc 
 	 && ctxt.doc.nunaliit_schema === this.schemaName ){
@@ -333,7 +379,7 @@ NodeIsSchema.prototype.evalContext = function(ctxt){
 	return false;
 };
 
-var NodeOnLayer = function(args_){
+var OnLayer = function(args_){
 	var args = [];
 	if( args_ ){
 		args = args_.getArguments();
@@ -343,7 +389,7 @@ var NodeOnLayer = function(args_){
 	};
 	this.layerId = args[0];
 };
-NodeOnLayer.prototype.evalContext = function(ctxt){
+OnLayer.prototype.getValue = function(ctxt){
 	if( ctxt 
 	 && ctxt.doc 
 	 && ctxt.doc.nunaliit_layers ){
@@ -355,16 +401,29 @@ NodeOnLayer.prototype.evalContext = function(ctxt){
 
 function createFunctionNode(fName, args){
 	if( 'isSelected' === fName ){
-		return new NodeIsSelected(args);
+		return new IsSelected(args);
+		
+	} else if( 'isHovered' === fName ){
+		return new IsHovered(args);
+		
+	} else if( 'isFound' === fName ){
+		return new IsFound(args);
 		
 	} else if( 'isSchema' === fName ){
-		return new NodeIsSchema(args);
+		return new IsSchema(args);
 		
 	} else if( 'onLayer' === fName ){
-		return new NodeOnLayer(args);
+		return new OnLayer(args);
 	};
 	
 	throw 'Function '+fName+'() is not recognized';
+};
+
+var Boolean = function(value){
+	this.value = value;
+};
+Boolean.prototype.getValue = function(ctxt){
+	return this.value;
 };
 
 // -----------------------------------------------------------
@@ -724,30 +783,36 @@ var YYSTATE=YY_START;
 switch($avoiding_name_collisions) {
 case 0: /* skip whitespace */ 
 break;
-case 1: return 13; 
+case 1: return 14; 
 break;
-case 2: return 10; 
+case 2: return 15; 
 break;
-case 3: yy_.yytext = yy_.yytext.substr(1,yy_.yytext.length-2); return 14; 
+case 3: return 17; 
 break;
-case 4: return 8; 
+case 4: return 12; 
 break;
-case 5: return 9; 
+case 5: yy_.yytext = yy_.yytext.substr(1,yy_.yytext.length-2); return 18; 
 break;
-case 6: return 12; 
+case 6: return 9; 
 break;
-case 7: return 6; 
+case 7: return 10; 
 break;
-case 8: return 7; 
+case 8: return 16; 
 break;
-case 9: return 5; 
+case 9: return 8; 
 break;
-case 10: return 'INVALID'; 
+case 10: return 6; 
+break;
+case 11: return 7; 
+break;
+case 12: return 5; 
+break;
+case 13: return 'INVALID'; 
 break;
 }
 },
-rules: [/^(?:\s+)/,/^(?:[0-9]+(\.[0-9]+)?\b)/,/^(?:[_a-zA-Z][_a-zA-Z0-9]*)/,/^(?:"(\\"|[^"])*")/,/^(?:\()/,/^(?:\))/,/^(?:,)/,/^(?:&&)/,/^(?:\|\|)/,/^(?:$)/,/^(?:.)/],
-conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10],"inclusive":true}}
+rules: [/^(?:\s+)/,/^(?:true\b)/,/^(?:false\b)/,/^(?:[0-9]+(\.[0-9]+)?\b)/,/^(?:[_a-zA-Z][_a-zA-Z0-9]*)/,/^(?:'(\\'|[^'])*')/,/^(?:\()/,/^(?:\))/,/^(?:,)/,/^(?:!)/,/^(?:&&)/,/^(?:\|\|)/,/^(?:$)/,/^(?:.)/],
+conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13],"inclusive":true}}
 });
 return lexer;
 })();
