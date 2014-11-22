@@ -77,6 +77,45 @@ IsFound.prototype.getValue = function(ctxt){
 	return ctxt._find;
 };
 
+var IsPoint = function(args_){
+	var args = [];
+	if( args_ ){
+		args = args_.getArguments();
+	};
+	if( args.length != 0 ){
+		throw 'isPoint() does not accept arguments';
+	};
+};
+IsPoint.prototype.getValue = function(ctxt){
+	return 'point' === ctxt._geometry;
+};
+
+var IsLine = function(args_){
+	var args = [];
+	if( args_ ){
+		args = args_.getArguments();
+	};
+	if( args.length != 0 ){
+		throw 'isLine() does not accept arguments';
+	};
+};
+IsLine.prototype.getValue = function(ctxt){
+	return 'line' === ctxt._geometry;
+};
+
+var IsPolygon = function(args_){
+	var args = [];
+	if( args_ ){
+		args = args_.getArguments();
+	};
+	if( args.length != 0 ){
+		throw 'isPolygon() does not accept arguments';
+	};
+};
+IsPolygon.prototype.getValue = function(ctxt){
+	return 'polygon' === ctxt._geometry;
+};
+
 var IsSchema = function(args_){
 	var args = [];
 	if( args_ ){
@@ -128,6 +167,15 @@ function createFunctionNode(fName, args){
 		
 	} else if( 'isSchema' === fName ){
 		return new IsSchema(args);
+
+	} else if( 'isPoint' === fName ){
+		return new IsPoint(args);
+
+	} else if( 'isLine' === fName ){
+		return new IsLine(args);
+
+	} else if( 'isPolygon' === fName ){
+		return new IsPolygon(args);
 		
 	} else if( 'onLayer' === fName ){
 		return new OnLayer(args);

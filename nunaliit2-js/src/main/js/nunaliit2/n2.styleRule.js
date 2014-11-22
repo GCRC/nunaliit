@@ -46,6 +46,85 @@ var TrueNode = $n2.Class({
 var g_TrueNode = new TrueNode();
 
 //--------------------------------------------------------------------------
+var Symbolizer = $n2.Class({
+	
+	attributes: null,
+	
+	initialize: function(){
+		
+		this.attributes = {};
+		this._n2Symbolizer = true;
+		
+		for(var i=0,e=arguments.length; i<e; ++i){
+			var otherSymbolizer = arguments[i];
+			this.extendWith(otherSymbolizer);
+		};
+	},
+	
+	extendWith: function(symbolizer){
+		if( symbolizer ){
+			if( symbolizer._n2Symbolizer ){
+				var att = symbolizer.attributes;
+				for(var key in att){
+					this.attributes[key] = att[key];
+				};
+			} else {
+				for(var key in symbolizer){
+					this.attributes[key] = symbolizer[key];
+				};
+			};
+		};
+	},
+	
+	adjustSvgElement: function(svgDomElem){
+		var isCircle = false;
+		var hasFill = true;
+		
+		var nodeName = svgDomElem.nodeName.toLowerCase();
+		if(nodeName === 'circle'){
+			isCircle = true;
+		};
+		if(nodeName === 'line'){
+			hasFill = false;
+		};
+		
+		for(var name in this.attributes){
+			var value = this.attributes[name];
+			
+			if( 'fillColor' == name && hasFill ){
+				svgDomElem.setAttributeNS(null, 'fill', value);
+				
+			} else if( 'fillOpacity' == name && hasFill ){
+				svgDomElem.setAttributeNS(null, 'fill-opacity', value);
+			
+			} else if( 'strokeColor' == name ){
+				svgDomElem.setAttributeNS(null, 'stroke', value);
+				
+			} else if( 'strokeWidth' == name ){
+				svgDomElem.setAttributeNS(null, 'stroke-width', value);
+				
+			} else if( 'strokeOpacity' == name ){
+				svgDomElem.setAttributeNS(null, 'stroke-opacity', value);
+				
+			} else if( 'strokeLinecap' == name ){
+				svgDomElem.setAttributeNS(null, 'stroke-linecap', value);
+				
+			} else if( 'pointRadius' == name ){
+				if( isCircle ){
+					svgDomElem.setAttributeNS(null, 'r', value);
+				};
+				
+			} else if( 'pointerEvents' == name ){
+				svgDomElem.setAttributeNS(null, 'pointer-events', value);
+				
+			} else if( 'cursor' == name ){
+				svgDomElem.setAttributeNS(null, 'cursor', value);
+			};
+		};
+	}
+});
+
+//--------------------------------------------------------------------------
 var StyleRule = $n2.Class({
 	
 	condition: null,
@@ -69,9 +148,9 @@ var StyleRule = $n2.Class({
 		
 		this.condition = opts.condition;
 		this.source = opts.source;
-		this.normal = opts.normal;
-		this.selected = opts.selected;
-		this.hovered = opts.hovered;
+		this.normal = new Symbolizer(opts.normal);
+		this.selected = new Symbolizer(opts.selected);
+		this.hovered = new Symbolizer(opts.hovered);
 	},
 	
 	isValidForContext: function(ctxt){
@@ -100,14 +179,13 @@ var StyleRules = $n2.Class({
 		
 		this.rules = [];
 		this.cache = {
-			normal: {}
-			,selected: {}
-			,hovered: {}
+			normal: new Symbolizer()
+			,selected: new Symbolizer()
+			,hovered: new Symbolizer()
 		};
-		
-		var rule = new StyleRule({
-			condition: g_TrueNode
-			,source: "true"
+
+		var rule = loadRuleFromObject({
+			condition: "true"
 			,normal: {
 				fillColor: '#ffffff'
 				,strokeColor: '#ee9999'
@@ -124,6 +202,17 @@ var StyleRules = $n2.Class({
 			}
 			,hovered: {
 				fillColor: "#0000ff"
+			}
+		});
+		this.addRule(rule);
+
+		var rule = loadRuleFromObject({
+			condition: "isLine()"
+			,hovered:{
+				strokeColor: "#0000ff"
+			}
+			,hoveredClicked:{
+				strokeColor: "#0000ff"
 			}
 		});
 		this.addRule(rule);
@@ -166,28 +255,28 @@ var StyleRules = $n2.Class({
 	_getSymbolizerFromStyleAndLabel: function(style, label){
 		if( 'normal' === label ){
 			if( !style.normal ){
-				style.normal = {};
+				style.normal = new Symbolizer();
 			};
 			return style.normal;
 			
 		} else if( '$hovered' === label ){
 			if( !style.$hovered ){
 				var s1 = this._getSymbolizerFromStyleAndLabel(style,'normal');
-				style.$hovered = this._extendSymbolizer(s1, style.hovered);
+				style.$hovered = new Symbolizer(s1, style.hovered);
 			};
 			return style.$hovered;
 			
 		} else if( '$selected' === label ){
 			if( !style.$selected ){
 				var s1 = this._getSymbolizerFromStyleAndLabel(style,'normal');
-				style.$selected = this._extendSymbolizer(s1, style.selected);
+				style.$selected = new Symbolizer(s1, style.selected);
 			};
 			return style.$selected;
 			
 		} else if( '$selectedHovered' === label ){
 			if( !style.$selectedHovered ){
 				var s1 = this._getSymbolizerFromStyleAndLabel(style,'$selected');
-				style.$selectedHovered = this._extendSymbolizer(s1, style.hovered);
+				style.$selectedHovered = new Symbolizer(s1, style.hovered);
 			};
 			return style.$selectedHovered;
 		};
@@ -202,7 +291,7 @@ var StyleRules = $n2.Class({
 				if( current[ruleId] ){
 					current = current[ruleId];
 				} else {
-					var style = this._extendStyle(current, rule);
+					var style = this._extendCachedStyle(current, rule);
 					current[ruleId] = style;
 					current = style;
 				};
@@ -211,27 +300,13 @@ var StyleRules = $n2.Class({
 		return current;
 	},
 	
-	_extendStyle: function(style, rule){
+	_extendCachedStyle: function(style, rule){
 		var extended = {};
-		extended.normal = this._extendSymbolizer(style.normal, rule.normal);
-		extended.selected = this._extendSymbolizer(style.selected, rule.selected);
-		extended.hovered = this._extendSymbolizer(style.hovered, rule.hovered);
+		extended.normal = new Symbolizer(style.normal, rule.normal);
+		extended.selected = new Symbolizer(style.selected, rule.selected);
+		extended.hovered = new Symbolizer(style.hovered, rule.hovered);
+		extended.source = rule.source;
 		return extended;
-	},
-	
-	_extendSymbolizer: function(s1, s2){
-		var s3 = {};
-		if( s1 ) {
-			for(var key in s1){
-				s3[key] = s1[key];
-			};
-		};
-		if( s2 ) {
-			for(var key in s2){
-				s3[key] = s2[key];
-			};
-		};
-		return s3;
 	}
 });
 
