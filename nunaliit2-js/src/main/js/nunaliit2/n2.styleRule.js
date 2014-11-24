@@ -48,11 +48,11 @@ var g_TrueNode = new TrueNode();
 //--------------------------------------------------------------------------
 var Symbolizer = $n2.Class({
 	
-	attributes: null,
+	symbols: null,
 	
 	initialize: function(){
 		
-		this.attributes = {};
+		this.symbols = {};
 		this._n2Symbolizer = true;
 		
 		for(var i=0,e=arguments.length; i<e; ++i){
@@ -64,19 +64,49 @@ var Symbolizer = $n2.Class({
 	extendWith: function(symbolizer){
 		if( symbolizer ){
 			if( symbolizer._n2Symbolizer ){
-				var att = symbolizer.attributes;
+				var att = symbolizer.symbols;
 				for(var key in att){
-					this.attributes[key] = att[key];
+					this.symbols[key] = att[key];
 				};
 			} else {
 				for(var key in symbolizer){
-					this.attributes[key] = symbolizer[key];
+					var symbolValue = symbolizer[key];
+					if( symbolValue 
+					 && symbolValue.length > 0 
+					 && symbolValue[0] === '=' ){
+						try {
+							symbolValue = $n2.styleRuleParser.parse(symbolValue.substr(1));
+						} catch(e) {
+							symbolValue = e;
+						};
+					};
+					this.symbols[key] = symbolValue;
 				};
 			};
 		};
 	},
 	
-	adjustSvgElement: function(svgDomElem){
+	getSymbolValue: function(symbolName, ctxt){
+		var value = this.symbols[symbolName];
+		
+		if( typeof value === 'object'
+		 && typeof value.getValue === 'function' ){
+			value = value.getValue(ctxt);
+		};
+		
+		return value;
+	},
+	
+	forEachSymbol: function(fn, ctxt){
+		if( typeof fn === 'function' ){
+			for(var name in this.symbols){
+				var value = this.getSymbolValue(name, ctxt);
+				fn(name,value);
+			};
+		};
+	},
+	
+	adjustSvgElement: function(svgDomElem,ctxt){
 		var isCircle = false;
 		var hasFill = true;
 		
@@ -88,8 +118,8 @@ var Symbolizer = $n2.Class({
 			hasFill = false;
 		};
 		
-		for(var name in this.attributes){
-			var value = this.attributes[name];
+		for(var name in this.symbols){
+			var value = this.getSymbolValue(name,ctxt);
 			
 			if( 'fillColor' == name && hasFill ){
 				svgDomElem.setAttributeNS(null, 'fill', value);

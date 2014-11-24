@@ -124,12 +124,13 @@ var IsSchema = function(args_){
 	if( args.length != 1 ){
 		throw 'isSchema() must have exactly one argument';
 	};
-	this.schemaName = args[0];
+	this.schemaNameNode = args[0];
 };
 IsSchema.prototype.getValue = function(ctxt){
+	var schemaName = this.schemaNameNode.getValue(ctxt);
 	if( ctxt 
 	 && ctxt.doc 
-	 && ctxt.doc.nunaliit_schema === this.schemaName ){
+	 && ctxt.doc.nunaliit_schema === schemaName ){
 		return true;
 	};
 	return false;
@@ -143,13 +144,14 @@ var OnLayer = function(args_){
 	if( args.length != 1 ){
 		throw 'onLayer() must have exactly one argument';
 	};
-	this.layerId = args[0];
+	this.layerIdNode = args[0];
 };
 OnLayer.prototype.getValue = function(ctxt){
+	var layerId = this.layerIdNode.getValue(ctxt);
 	if( ctxt 
 	 && ctxt.doc 
 	 && ctxt.doc.nunaliit_layers ){
-	 	var index = ctxt.doc.nunaliit_layers.indexOf(this.layerId);
+	 	var index = ctxt.doc.nunaliit_layers.indexOf(layerId);
 		return (index >= 0);
 	};
 	return false;
@@ -184,11 +186,106 @@ function createFunctionNode(fName, args){
 	throw 'Function '+fName+'() is not recognized';
 };
 
-var Boolean = function(value){
+// -----------------------------------------------------------
+var Literal = function(value){
 	this.value = value;
 };
-Boolean.prototype.getValue = function(ctxt){
+Literal.prototype.getValue = function(ctxt){
 	return this.value;
+};
+
+// -----------------------------------------------------------
+var Comparison = function(leftNode, rightNode, op){
+	this.leftNode = leftNode;
+	this.rightNode = rightNode;
+	this.op = op;
+};
+Comparison.prototype.getValue = function(ctxt){
+	var left = this.leftNode.getValue(ctxt);
+	var right = this.rightNode.getValue(ctxt);
+
+	if( '==' === this.op ){
+		return (left == right);
+
+	} else if( '!=' === this.op ){
+		return (left != right);
+
+	} else if( '>=' === this.op ){
+		return (left >= right);
+
+	} else if( '<=' === this.op ){
+		return (left <= right);
+
+	} else if( '>' === this.op ){
+		return (left > right);
+
+	} else if( '<' === this.op ){
+		return (left < right);
+	};
+	
+	return false;
+};
+
+// -----------------------------------------------------------
+var MathOp = function(leftNode, rightNode, op){
+	this.leftNode = leftNode;
+	this.rightNode = rightNode;
+	this.op = op;
+};
+MathOp.prototype.getValue = function(ctxt){
+	var left = this.leftNode.getValue(ctxt);
+	var right = this.rightNode.getValue(ctxt);
+
+	if( '+' === this.op ){
+		return (left + right);
+
+	} else if( '-' === this.op ){
+		return (left - right);
+
+	} else if( '*' === this.op ){
+		return (left * right);
+
+	} else if( '/' === this.op ){
+		return (left / right);
+
+	} else if( '%' === this.op ){
+		return (left % right);
+	};
+	
+	return 0;
+};
+
+// -----------------------------------------------------------
+var ObjectSelector = function(id, previousSelector){
+	this.idNode = id;
+	this.previousSelector = previousSelector;
+};
+ObjectSelector.prototype.getValue = function(ctxt){
+	var obj = undefined;
+	if( ctxt ) {
+		obj = ctxt.doc;
+	};
+	return this._getValue(ctxt,obj);
+};
+ObjectSelector.prototype._getValue = function(ctxt,obj){
+	// Get selection to here
+	var result = obj;
+	if(this.previousSelector){
+		result = this.previousSelector._getValue(ctxt,obj);
+	};
+	
+	// Perform next level of selection
+	if( typeof result === 'undefined' ){
+	} else if( null === result ) {
+		result = undefined;
+	} else if( typeof result === 'object' ) {
+		var id = this.idNode.getValue(ctxt);
+		result = result[id];
+	} else {
+		result = undefined;
+	};
+	
+	return result;
 };
 
 // -----------------------------------------------------------
@@ -198,20 +295,20 @@ var Argument = function(a1, a2){
 		this.a1 = a1;
 		this.a2 = a2;
 	} else {
-		this.value = a1;
+		this.valueNode = a1;
 	};
 };
-Argument.prototype.getArguments = function(){
+Argument.prototype.getArguments = function(ctxt){
 	var args = [];
-	this._getArguments(args);
+	this._getArguments(ctxt, args);
 	return args;
 };
-Argument.prototype._getArguments = function(args){
-	if( this.value ){
-		args.push(this.value);
+Argument.prototype._getArguments = function(ctxt, args){
+	if( this.valueNode ){
+		args.push(this.valueNode);
 	} else {
-		this.a1._getArguments(args);
-		this.a2._getArguments(args);
+		this.a1._getArguments(ctxt, args);
+		this.a2._getArguments(ctxt, args);
 	};
 };
 
@@ -227,10 +324,26 @@ Argument.prototype._getArguments = function(args){
 [0-9]+("."[0-9]+)?\b   { return 'NUMBER'; }
 [_a-zA-Z][_a-zA-Z0-9]* { return 'IDENTIFIER'; }
 "'"(\\\'|[^'])*"'"     { yytext = yytext.substr(1,yytext.length-2); return 'STRING'; }
+"=="                   { return '=='; }
+"!="                   { return '!='; }
+">="                   { return '>='; }
+"<="                   { return '<='; }
+">"                    { return '>'; }
+"<"                    { return '<'; }
 "("                    { return '('; }
 ")"                    { return ')'; }
+"{"                    { return '{'; }
+"}"                    { return '}'; }
+"["                    { return '['; }
+"]"                    { return ']'; }
 ","                    { return ','; }
+"."                    { return '.'; }
 "!"                    { return '!'; }
+"+"                    { return '+'; }
+"-"                    { return '-'; }
+"*"                    { return '*'; }
+"/"                    { return '/'; }
+"%"                    { return '%'; }
 "&&"                   { return '&&'; }
 "||"                   { return '||'; }
 <<EOF>>                { return 'EOF'; }
@@ -241,6 +354,8 @@ Argument.prototype._getArguments = function(args){
 /* operator associations and precedence */
 
 %left '&&' '||'
+%left '+' '-'
+%left '*' '/' '%'
 %left ','
 %right '!'
 
@@ -271,7 +386,41 @@ expression
     	{
     		$$ = $2;
     	}
+    | comparison
+    	{
+    		$$ = $1;
+    	}
     | value
+    	{
+    		$$ = $1;
+    	}
+    ;
+    
+comparison
+    : value '==' value
+        {
+        	$$ = new Comparison($1,$3,'==');
+        }
+    | value '!=' value
+        {
+        	$$ = new Comparison($1,$3,'!=');
+        }
+    | value '>=' value
+        {
+        	$$ = new Comparison($1,$3,'>=');
+        }
+    | value '<=' value
+        {
+        	$$ = new Comparison($1,$3,'<=');
+        }
+    | value '>' value
+        {
+        	$$ = new Comparison($1,$3,'>');
+        }
+    | value '<' value
+        {
+        	$$ = new Comparison($1,$3,'<');
+        }
     ;
     
 value
@@ -283,13 +432,45 @@ value
         {
         	$$ = createFunctionNode($1,$3);
         }
+    | '{' selector '}'
+    	{
+    		$$ = $2;
+    	}
     | 'true'
     	{
-    		$$ = new Boolean(true);
+    		$$ = new Literal(true);
     	}
     | 'false'
     	{
-    		$$ = new Boolean(false);
+    		$$ = new Literal(false);
+    	}
+    | 'NUMBER'
+    	{
+    		$$ = new Literal(1 * $1);
+    	}
+    | 'STRING'
+    	{
+    		$$ = new Literal($1);
+    	}
+    | value '+' value
+    	{
+    		$$ = new MathOp($1,$3,'+');
+    	}
+    | value '-' value
+    	{
+    		$$ = new MathOp($1,$3,'-');
+    	}
+    | value '*' value
+    	{
+    		$$ = new MathOp($1,$3,'*');
+    	}
+    | value '/' value
+    	{
+    		$$ = new MathOp($1,$3,'/');
+    	}
+    | value '%' value
+    	{
+    		$$ = new MathOp($1,$3,'%');
     	}
     ;
 
@@ -298,14 +479,31 @@ arguments
         {
         	$$ = new Argument($1,$3);
         }
-    | 'NUMBER'
+    | value
         {
         	$$ = new Argument($1);
         }
-    | 'STRING'
+    ;
+
+selector
+    : selector '.' 'IDENTIFIER'
         {
-        	$$ = new Argument($1);
+        	var id = new Literal($3);
+        	$$ = new ObjectSelector(id,$1);
         }
+    | selector '[' value ']'
+        {
+        	$$ = new ObjectSelector($3,$1);
+        }
+    | 'IDENTIFIER'
+        {
+        	var id = new Literal($1);
+        	$$ = new ObjectSelector(id);
+        }
+    | '{' selector '}'
+    	{
+        	$$ = new ObjectSelector($2);
+    	}
     ;
 
 %%

@@ -405,3 +405,234 @@ jsunit.defineTest('$n2.objectSelector',function($$){
 	t(obj, 'a.b.c', 5);
 	t(obj, 'a.b.b', undefined);
 });
+
+//*********
+jsunit.defineTest('$n2.styleRuleParser',function($$){
+
+	var doc = {
+		_id: '123456'
+		,a: 'aaa'
+		,b: {
+			c: 1
+			,aaa: 2
+			,d: {
+				e: 3
+			}
+		}
+		,l: '_id'
+		,nunaliit_layers: ['public']
+	};
+	var ctxt_n = {
+		_selected: false
+		,_focus: false
+		,_find: false
+		,_intent: null
+		,doc: doc
+	};
+	var ctxt_s = {
+		_selected: true
+		,_focus: false
+		,_find: false
+		,_intent: null
+		,doc: doc
+	};
+	var ctxt_h = {
+		_selected: false
+		,_focus: true
+		,_find: false
+		,_intent: null
+		,doc: doc
+	};
+	var ctxt_f = {
+		_selected: false
+		,_focus: false
+		,_find: true
+		,_intent: null
+		,doc: doc
+	};
+	
+	function t(ctxt, expected, condition){
+		var node = $n2.styleRuleParser.parse(condition);
+		var value = node.getValue(ctxt);
+		if( value !== expected ){
+			throw 'Unexpected. Expected value: '+expected+' Observed: '+value+' Test:'+condition;
+		};
+	};
+
+	// literal values
+	t(ctxt_n, true, 'true');
+	t(ctxt_n, false, 'false');
+	t(ctxt_n, 'abc', "'abc'");
+	t(ctxt_n, 123, "123");
+	// not
+	t(ctxt_n, false, '!true');
+	t(ctxt_n, true, '!!true');
+	// and / or
+	t(ctxt_n, true, 'true || true');
+	t(ctxt_n, true, 'true || false');
+	t(ctxt_n, true, 'false || true');
+	t(ctxt_n, false, 'false || false');
+	t(ctxt_n, true, 'true && true');
+	t(ctxt_n, false, 'false && true');
+	t(ctxt_n, false, 'true && false');
+	t(ctxt_n, false, 'false && false');
+	// Functions
+	t(ctxt_n, false, 'isSelected()');
+	t(ctxt_s, true, 'isSelected()');
+	t(ctxt_n, false, 'isHovered()');
+	t(ctxt_h, true, 'isHovered()');
+	t(ctxt_n, false, 'isFound()');
+	t(ctxt_f, true, 'isFound()');
+	t(ctxt_n, false, 'isFound()');
+	t(ctxt_n, true, "onLayer('public')");
+	t(ctxt_n, false, "onLayer('approved')");
+	// selector
+	t(ctxt_n, 'aaa', "{a}");
+	t(ctxt_n, 1, "{b.c}");
+	t(ctxt_n, 1, "{b['c']}");
+	t(ctxt_n, 3, "{b['d']['e']}");
+	t(ctxt_n, 'public', "{nunaliit_layers[0]}");
+	t(ctxt_n, undefined, "{b.e}");
+	t(ctxt_n, undefined, "{c.d}");
+	t(ctxt_n, 2, "{b[{a}]}");
+	t(ctxt_n, '123456', "{_id}");
+	t(ctxt_n, '123456', "{{l}}");
+	// Comparison
+	t(ctxt_n, true, "{a} == 'aaa'");
+	t(ctxt_n, false, "{a} == 'bbb'");
+	t(ctxt_n, false, "{a} != 'aaa'");
+	t(ctxt_n, true, "{a} != 'bbb'");
+	t(ctxt_n, true, "{b.c} >= 0");
+	t(ctxt_n, true, "{b.c} >= 1");
+	t(ctxt_n, false, "{b.c} >= 2");
+	t(ctxt_n, false, "{b.c} <= 0");
+	t(ctxt_n, true, "{b.c} <= 1");
+	t(ctxt_n, true, "{b.c} <= 2");
+	t(ctxt_n, true, "{b.c} > 0");
+	t(ctxt_n, false, "{b.c} > 1");
+	t(ctxt_n, false, "{b.c} > 2");
+	t(ctxt_n, false, "{b.c} < 0");
+	t(ctxt_n, false, "{b.c} < 1");
+	t(ctxt_n, true, "{b.c} < 2");
+	// Math
+	t(ctxt_n, true, "1+1 == 2");
+	t(ctxt_n, true, "4-3 == 1");
+	t(ctxt_n, true, "2*3 == 6");
+	t(ctxt_n, true, "9/3 == 3");
+	t(ctxt_n, true, "9%2 == 1");
+	t(ctxt_n, true, "'ab'+5+'cd' == 'ab5cd'");
+	t(ctxt_n, true, "{b.c} + {b.d.e} == 4");
+});
+
+//*********
+jsunit.defineTest('$n2.styleRule',function($$){
+
+	var styleRules = [
+		{
+			condition: "true"
+			,normal: {
+				a: "normal"
+				,b: "normal"
+				,c: "normal"
+			}
+			,selected: {
+				b: "selected"
+			}
+			,hovered: {
+				c: "hovered"
+			}
+		}
+		,{
+			condition: "false"
+			,normal: {
+				a: "xxx"
+				,b: "xxx"
+				,c: "xxx"
+			}
+			,selected: {
+				b: "xxx"
+			}
+			,hovered: {
+				c: "xxx"
+			}
+		}
+		,{
+			condition: "onLayer('approved')"
+			,normal: {
+				a: "approved"
+			}
+			,selected: {
+				b: "={name}"
+			}
+		}
+	];
+	var doc1 = {
+		_id: '123456'
+		,name: 'doc1'
+		,nunaliit_layers: ['public']
+	};
+	var doc2 = {
+		_id: '123457'
+		,name: 'doc2'
+		,nunaliit_layers: ['approved']
+	};
+	var ctxt_n = {
+		_selected: false
+		,_focus: false
+		,_find: false
+		,_intent: null
+		,doc: doc1
+	};
+	var ctxt_s = {
+		_selected: true
+		,_focus: false
+		,_find: false
+		,_intent: null
+		,doc: doc1
+	};
+	var ctxt_h = {
+		_selected: false
+		,_focus: true
+		,_find: false
+		,_intent: null
+		,doc: doc1
+	};
+	var ctxt_sh = {
+		_selected: true
+		,_focus: true
+		,_find: false
+		,_intent: null
+		,doc: doc1
+	};
+	
+	function t(rules, ctxt, doc, expected_a, expected_b, expected_c){
+		var testName = expected_a + '/' + expected_b + '/' + expected_c;
+
+		ctxt.doc = doc;
+		
+		var symbolizer = rules.getSymbolizer(ctxt);
+		var a = symbolizer.getSymbolValue('a',ctxt);
+		var b = symbolizer.getSymbolValue('b',ctxt);
+		var c = symbolizer.getSymbolValue('c',ctxt);
+		if( a !== expected_a ){
+			throw 'Unexpected A. Expected value: '+expected_a+' Observed: '+a+' Test:'+testName;
+		};
+		if( b !== expected_b ){
+			throw 'Unexpected B. Expected value: '+expected_b+' Observed: '+b+' Test:'+testName;
+		};
+		if( c !== expected_c ){
+			throw 'Unexpected C. Expected value: '+expected_c+' Observed: '+c+' Test:'+testName;
+		};
+	};
+	
+	var rules = $n2.styleRule.loadRulesFromObject(styleRules);
+
+	t(rules, ctxt_n,  doc1, 'normal',   'normal',  'normal');
+	t(rules, ctxt_s,  doc1, 'normal',   'selected','normal');
+	t(rules, ctxt_h,  doc1, 'normal',   'normal',  'hovered');
+	t(rules, ctxt_sh, doc1, 'normal',   'selected','hovered');
+	t(rules, ctxt_n,  doc2, 'approved', 'normal',  'normal');
+	t(rules, ctxt_s,  doc2, 'approved', 'doc2',    'normal');
+	t(rules, ctxt_h,  doc2, 'approved', 'normal',  'hovered');
+	t(rules, ctxt_sh, doc2, 'approved', 'doc2',    'hovered');
+});

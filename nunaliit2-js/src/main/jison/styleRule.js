@@ -72,12 +72,12 @@
   }
 */
 var parser = (function(){
-var o=function(k,v,o,l){for(o=o||{},l=k.length;l--;o[k[l]]=v);return o},$V0=[1,3],$V1=[1,4],$V2=[1,6],$V3=[1,7],$V4=[1,8],$V5=[1,10],$V6=[1,11],$V7=[5,6,7,10],$V8=[1,20],$V9=[1,21],$Va=[10,16];
+var o=function(k,v,o,l){for(o=o||{},l=k.length;l--;o[k[l]]=v);return o},$V0=[1,3],$V1=[1,4],$V2=[1,7],$V3=[1,8],$V4=[1,9],$V5=[1,10],$V6=[1,11],$V7=[1,12],$V8=[1,14],$V9=[1,15],$Va=[5,6,7,10],$Vb=[1,24],$Vc=[1,25],$Vd=[1,26],$Ve=[1,27],$Vf=[1,28],$Vg=[1,31],$Vh=[1,32],$Vi=[5,6,7,10,13,14,15,16,17,18,28,29,30,31,32,33,36],$Vj=[1,51],$Vk=[1,52],$Vl=[23,34,35],$Vm=[5,6,7,10,13,14,15,16,17,18,28,29,33,36],$Vn=[10,33];
 var parser = {trace: function trace() { },
 yy: {},
-symbols_: {"error":2,"program":3,"expression":4,"EOF":5,"&&":6,"||":7,"!":8,"(":9,")":10,"value":11,"IDENTIFIER":12,"arguments":13,"true":14,"false":15,",":16,"NUMBER":17,"STRING":18,"$accept":0,"$end":1},
-terminals_: {2:"error",5:"EOF",6:"&&",7:"||",8:"!",9:"(",10:")",12:"IDENTIFIER",14:"true",15:"false",16:",",17:"NUMBER",18:"STRING"},
-productions_: [0,[3,2],[4,3],[4,3],[4,2],[4,3],[4,1],[11,3],[11,4],[11,1],[11,1],[13,3],[13,1],[13,1]],
+symbols_: {"error":2,"program":3,"expression":4,"EOF":5,"&&":6,"||":7,"!":8,"(":9,")":10,"comparison":11,"value":12,"==":13,"!=":14,">=":15,"<=":16,">":17,"<":18,"IDENTIFIER":19,"arguments":20,"{":21,"selector":22,"}":23,"true":24,"false":25,"NUMBER":26,"STRING":27,"+":28,"-":29,"*":30,"/":31,"%":32,",":33,".":34,"[":35,"]":36,"$accept":0,"$end":1},
+terminals_: {2:"error",5:"EOF",6:"&&",7:"||",8:"!",9:"(",10:")",13:"==",14:"!=",15:">=",16:"<=",17:">",18:"<",19:"IDENTIFIER",21:"{",23:"}",24:"true",25:"false",26:"NUMBER",27:"STRING",28:"+",29:"-",30:"*",31:"/",32:"%",33:",",34:".",35:"[",36:"]"},
+productions_: [0,[3,2],[4,3],[4,3],[4,2],[4,3],[4,1],[4,1],[11,3],[11,3],[11,3],[11,3],[11,3],[11,3],[12,3],[12,4],[12,3],[12,1],[12,1],[12,1],[12,1],[12,3],[12,3],[12,3],[12,3],[12,3],[20,3],[20,1],[22,3],[22,4],[22,1],[22,3]],
 performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate /* action[1] */, $$ /* vstack */, _$ /* lstack */) {
 /* this == yyval */
 
@@ -101,45 +101,137 @@ case 4:
         	this.$ = new ExpressionNot($$[$0]);
         
 break;
-case 5:
+case 5: case 16:
 
     		this.$ = $$[$0-1];
     	
 break;
-case 7:
+case 6: case 7:
 
-        	this.$ = createFunctionNode($$[$0-2],null);
-        
+    		this.$ = $$[$0];
+    	
 break;
 case 8:
 
-        	this.$ = createFunctionNode($$[$0-3],$$[$0-1]);
+        	this.$ = new Comparison($$[$0-2],$$[$0],'==');
         
 break;
 case 9:
 
-    		this.$ = new Boolean(true);
-    	
+        	this.$ = new Comparison($$[$0-2],$$[$0],'!=');
+        
 break;
 case 10:
 
-    		this.$ = new Boolean(false);
-    	
+        	this.$ = new Comparison($$[$0-2],$$[$0],'>=');
+        
 break;
 case 11:
+
+        	this.$ = new Comparison($$[$0-2],$$[$0],'<=');
+        
+break;
+case 12:
+
+        	this.$ = new Comparison($$[$0-2],$$[$0],'>');
+        
+break;
+case 13:
+
+        	this.$ = new Comparison($$[$0-2],$$[$0],'<');
+        
+break;
+case 14:
+
+        	this.$ = createFunctionNode($$[$0-2],null);
+        
+break;
+case 15:
+
+        	this.$ = createFunctionNode($$[$0-3],$$[$0-1]);
+        
+break;
+case 17:
+
+    		this.$ = new Literal(true);
+    	
+break;
+case 18:
+
+    		this.$ = new Literal(false);
+    	
+break;
+case 19:
+
+    		this.$ = new Literal(1 * $$[$0]);
+    	
+break;
+case 20:
+
+    		this.$ = new Literal($$[$0]);
+    	
+break;
+case 21:
+
+    		this.$ = new MathOp($$[$0-2],$$[$0],'+');
+    	
+break;
+case 22:
+
+    		this.$ = new MathOp($$[$0-2],$$[$0],'-');
+    	
+break;
+case 23:
+
+    		this.$ = new MathOp($$[$0-2],$$[$0],'*');
+    	
+break;
+case 24:
+
+    		this.$ = new MathOp($$[$0-2],$$[$0],'/');
+    	
+break;
+case 25:
+
+    		this.$ = new MathOp($$[$0-2],$$[$0],'%');
+    	
+break;
+case 26:
 
         	this.$ = new Argument($$[$0-2],$$[$0]);
         
 break;
-case 12: case 13:
+case 27:
 
         	this.$ = new Argument($$[$0]);
         
 break;
+case 28:
+
+        	var id = new Literal($$[$0]);
+        	this.$ = new ObjectSelector(id,$$[$0-2]);
+        
+break;
+case 29:
+
+        	this.$ = new ObjectSelector($$[$0-1],$$[$0-3]);
+        
+break;
+case 30:
+
+        	var id = new Literal($$[$0]);
+        	this.$ = new ObjectSelector(id);
+        
+break;
+case 31:
+
+        	this.$ = new ObjectSelector($$[$0-1]);
+    	
+break;
 }
 },
-table: [{3:1,4:2,8:$V0,9:$V1,11:5,12:$V2,14:$V3,15:$V4},{1:[3]},{5:[1,9],6:$V5,7:$V6},{4:12,8:$V0,9:$V1,11:5,12:$V2,14:$V3,15:$V4},{4:13,8:$V0,9:$V1,11:5,12:$V2,14:$V3,15:$V4},o($V7,[2,6]),{9:[1,14]},o($V7,[2,9]),o($V7,[2,10]),{1:[2,1]},{4:15,8:$V0,9:$V1,11:5,12:$V2,14:$V3,15:$V4},{4:16,8:$V0,9:$V1,11:5,12:$V2,14:$V3,15:$V4},o($V7,[2,4]),{6:$V5,7:$V6,10:[1,17]},{10:[1,18],13:19,17:$V8,18:$V9},o($V7,[2,2]),o($V7,[2,3]),o($V7,[2,5]),o($V7,[2,7]),{10:[1,22],16:[1,23]},o($Va,[2,12]),o($Va,[2,13]),o($V7,[2,8]),{13:24,17:$V8,18:$V9},o($Va,[2,11])],
-defaultActions: {9:[2,1]},
+table: [{3:1,4:2,8:$V0,9:$V1,11:5,12:6,19:$V2,21:$V3,24:$V4,25:$V5,26:$V6,27:$V7},{1:[3]},{5:[1,13],6:$V8,7:$V9},{4:16,8:$V0,9:$V1,11:5,12:6,19:$V2,21:$V3,24:$V4,25:$V5,26:$V6,27:$V7},{4:17,8:$V0,9:$V1,11:5,12:6,19:$V2,21:$V3,24:$V4,25:$V5,26:$V6,27:$V7},o($Va,[2,6]),o($Va,[2,7],{13:[1,18],14:[1,19],15:[1,20],16:[1,21],17:[1,22],18:[1,23],28:$Vb,29:$Vc,30:$Vd,31:$Ve,32:$Vf}),{9:[1,29]},{19:$Vg,21:$Vh,22:30},o($Vi,[2,17]),o($Vi,[2,18]),o($Vi,[2,19]),o($Vi,[2,20]),{1:[2,1]},{4:33,8:$V0,9:$V1,11:5,12:6,19:$V2,21:$V3,24:$V4,25:$V5,26:$V6,27:$V7},{4:34,8:$V0,9:$V1,11:5,12:6,19:$V2,21:$V3,24:$V4,25:$V5,26:$V6,27:$V7},o($Va,[2,4]),{6:$V8,7:$V9,10:[1,35]},{12:36,19:$V2,21:$V3,24:$V4,25:$V5,26:$V6,27:$V7},{12:37,19:$V2,21:$V3,24:$V4,25:$V5,26:$V6,27:$V7},{12:38,19:$V2,21:$V3,24:$V4,25:$V5,26:$V6,27:$V7},{12:39,19:$V2,21:$V3,24:$V4,25:$V5,26:$V6,27:$V7},{12:40,19:$V2,21:$V3,24:$V4,25:$V5,26:$V6,27:$V7},{12:41,19:$V2,21:$V3,24:$V4,25:$V5,26:$V6,27:$V7},{12:42,19:$V2,21:$V3,24:$V4,25:$V5,26:$V6,27:$V7},{12:43,19:$V2,21:$V3,24:$V4,25:$V5,26:$V6,27:$V7},{12:44,19:$V2,21:$V3,24:$V4,25:$V5,26:$V6,27:$V7},{12:45,19:$V2,21:$V3,24:$V4,25:$V5,26:$V6,27:$V7},{12:46,19:$V2,21:$V3,24:$V4,25:$V5,26:$V6,27:$V7},{10:[1,47],12:49,19:$V2,20:48,21:$V3,24:$V4,25:$V5,26:$V6,27:$V7},{23:[1,50],34:$Vj,35:$Vk},o($Vl,[2,30]),{19:$Vg,21:$Vh,22:53},o($Va,[2,2]),o($Va,[2,3]),o($Va,[2,5]),o($Va,[2,8],{28:$Vb,29:$Vc,30:$Vd,31:$Ve,32:$Vf}),o($Va,[2,9],{28:$Vb,29:$Vc,30:$Vd,31:$Ve,32:$Vf}),o($Va,[2,10],{28:$Vb,29:$Vc,30:$Vd,31:$Ve,32:$Vf}),o($Va,[2,11],{28:$Vb,29:$Vc,30:$Vd,31:$Ve,32:$Vf}),o($Va,[2,12],{28:$Vb,29:$Vc,30:$Vd,31:$Ve,32:$Vf}),o($Va,[2,13],{28:$Vb,29:$Vc,30:$Vd,31:$Ve,32:$Vf}),o($Vm,[2,21],{30:$Vd,31:$Ve,32:$Vf}),o($Vm,[2,22],{30:$Vd,31:$Ve,32:$Vf}),o($Vi,[2,23]),o($Vi,[2,24]),o($Vi,[2,25]),o($Vi,[2,14]),{10:[1,54],33:[1,55]},o($Vn,[2,27],{28:$Vb,29:$Vc,30:$Vd,31:$Ve,32:$Vf}),o($Vi,[2,16]),{19:[1,56]},{12:57,19:$V2,21:$V3,24:$V4,25:$V5,26:$V6,27:$V7},{23:[1,58],34:$Vj,35:$Vk},o($Vi,[2,15]),{12:49,19:$V2,20:59,21:$V3,24:$V4,25:$V5,26:$V6,27:$V7},o($Vl,[2,28]),{28:$Vb,29:$Vc,30:$Vd,31:$Ve,32:$Vf,36:[1,60]},o($Vl,[2,31]),o($Vn,[2,26]),o($Vl,[2,29])],
+defaultActions: {13:[2,1]},
 parseError: function parseError(str, hash) {
     if (hash.recoverable) {
         this.trace(str);
@@ -407,12 +499,13 @@ var IsSchema = function(args_){
 	if( args.length != 1 ){
 		throw 'isSchema() must have exactly one argument';
 	};
-	this.schemaName = args[0];
+	this.schemaNameNode = args[0];
 };
 IsSchema.prototype.getValue = function(ctxt){
+	var schemaName = this.schemaNameNode.getValue(ctxt);
 	if( ctxt 
 	 && ctxt.doc 
-	 && ctxt.doc.nunaliit_schema === this.schemaName ){
+	 && ctxt.doc.nunaliit_schema === schemaName ){
 		return true;
 	};
 	return false;
@@ -426,13 +519,14 @@ var OnLayer = function(args_){
 	if( args.length != 1 ){
 		throw 'onLayer() must have exactly one argument';
 	};
-	this.layerId = args[0];
+	this.layerIdNode = args[0];
 };
 OnLayer.prototype.getValue = function(ctxt){
+	var layerId = this.layerIdNode.getValue(ctxt);
 	if( ctxt 
 	 && ctxt.doc 
 	 && ctxt.doc.nunaliit_layers ){
-	 	var index = ctxt.doc.nunaliit_layers.indexOf(this.layerId);
+	 	var index = ctxt.doc.nunaliit_layers.indexOf(layerId);
 		return (index >= 0);
 	};
 	return false;
@@ -467,11 +561,106 @@ function createFunctionNode(fName, args){
 	throw 'Function '+fName+'() is not recognized';
 };
 
-var Boolean = function(value){
+// -----------------------------------------------------------
+var Literal = function(value){
 	this.value = value;
 };
-Boolean.prototype.getValue = function(ctxt){
+Literal.prototype.getValue = function(ctxt){
 	return this.value;
+};
+
+// -----------------------------------------------------------
+var Comparison = function(leftNode, rightNode, op){
+	this.leftNode = leftNode;
+	this.rightNode = rightNode;
+	this.op = op;
+};
+Comparison.prototype.getValue = function(ctxt){
+	var left = this.leftNode.getValue(ctxt);
+	var right = this.rightNode.getValue(ctxt);
+
+	if( '==' === this.op ){
+		return (left == right);
+
+	} else if( '!=' === this.op ){
+		return (left != right);
+
+	} else if( '>=' === this.op ){
+		return (left >= right);
+
+	} else if( '<=' === this.op ){
+		return (left <= right);
+
+	} else if( '>' === this.op ){
+		return (left > right);
+
+	} else if( '<' === this.op ){
+		return (left < right);
+	};
+	
+	return false;
+};
+
+// -----------------------------------------------------------
+var MathOp = function(leftNode, rightNode, op){
+	this.leftNode = leftNode;
+	this.rightNode = rightNode;
+	this.op = op;
+};
+MathOp.prototype.getValue = function(ctxt){
+	var left = this.leftNode.getValue(ctxt);
+	var right = this.rightNode.getValue(ctxt);
+
+	if( '+' === this.op ){
+		return (left + right);
+
+	} else if( '-' === this.op ){
+		return (left - right);
+
+	} else if( '*' === this.op ){
+		return (left * right);
+
+	} else if( '/' === this.op ){
+		return (left / right);
+
+	} else if( '%' === this.op ){
+		return (left % right);
+	};
+	
+	return 0;
+};
+
+// -----------------------------------------------------------
+var ObjectSelector = function(id, previousSelector){
+	this.idNode = id;
+	this.previousSelector = previousSelector;
+};
+ObjectSelector.prototype.getValue = function(ctxt){
+	var obj = undefined;
+	if( ctxt ) {
+		obj = ctxt.doc;
+	};
+	return this._getValue(ctxt,obj);
+};
+ObjectSelector.prototype._getValue = function(ctxt,obj){
+	// Get selection to here
+	var result = obj;
+	if(this.previousSelector){
+		result = this.previousSelector._getValue(ctxt,obj);
+	};
+	
+	// Perform next level of selection
+	if( typeof result === 'undefined' ){
+	} else if( null === result ) {
+		result = undefined;
+	} else if( typeof result === 'object' ) {
+		var id = this.idNode.getValue(ctxt);
+		result = result[id];
+	} else {
+		result = undefined;
+	};
+	
+	return result;
 };
 
 // -----------------------------------------------------------
@@ -481,20 +670,20 @@ var Argument = function(a1, a2){
 		this.a1 = a1;
 		this.a2 = a2;
 	} else {
-		this.value = a1;
+		this.valueNode = a1;
 	};
 };
-Argument.prototype.getArguments = function(){
+Argument.prototype.getArguments = function(ctxt){
 	var args = [];
-	this._getArguments(args);
+	this._getArguments(ctxt, args);
 	return args;
 };
-Argument.prototype._getArguments = function(args){
-	if( this.value ){
-		args.push(this.value);
+Argument.prototype._getArguments = function(ctxt, args){
+	if( this.valueNode ){
+		args.push(this.valueNode);
 	} else {
-		this.a1._getArguments(args);
-		this.a2._getArguments(args);
+		this.a1._getArguments(ctxt, args);
+		this.a2._getArguments(ctxt, args);
 	};
 };
 
@@ -831,36 +1020,68 @@ var YYSTATE=YY_START;
 switch($avoiding_name_collisions) {
 case 0: /* skip whitespace */ 
 break;
-case 1: return 14; 
+case 1: return 24; 
 break;
-case 2: return 15; 
+case 2: return 25; 
 break;
-case 3: return 17; 
+case 3: return 26; 
 break;
-case 4: return 12; 
+case 4: return 19; 
 break;
-case 5: yy_.yytext = yy_.yytext.substr(1,yy_.yytext.length-2); return 18; 
+case 5: yy_.yytext = yy_.yytext.substr(1,yy_.yytext.length-2); return 27; 
 break;
-case 6: return 9; 
+case 6: return 13; 
 break;
-case 7: return 10; 
+case 7: return 14; 
 break;
-case 8: return 16; 
+case 8: return 15; 
 break;
-case 9: return 8; 
+case 9: return 16; 
 break;
-case 10: return 6; 
+case 10: return 17; 
 break;
-case 11: return 7; 
+case 11: return 18; 
 break;
-case 12: return 5; 
+case 12: return 9; 
 break;
-case 13: return 'INVALID'; 
+case 13: return 10; 
+break;
+case 14: return 21; 
+break;
+case 15: return 23; 
+break;
+case 16: return 35; 
+break;
+case 17: return 36; 
+break;
+case 18: return 33; 
+break;
+case 19: return 34; 
+break;
+case 20: return 8; 
+break;
+case 21: return 28; 
+break;
+case 22: return 29; 
+break;
+case 23: return 30; 
+break;
+case 24: return 31; 
+break;
+case 25: return 32; 
+break;
+case 26: return 6; 
+break;
+case 27: return 7; 
+break;
+case 28: return 5; 
+break;
+case 29: return 'INVALID'; 
 break;
 }
 },
-rules: [/^(?:\s+)/,/^(?:true\b)/,/^(?:false\b)/,/^(?:[0-9]+(\.[0-9]+)?\b)/,/^(?:[_a-zA-Z][_a-zA-Z0-9]*)/,/^(?:'(\\'|[^'])*')/,/^(?:\()/,/^(?:\))/,/^(?:,)/,/^(?:!)/,/^(?:&&)/,/^(?:\|\|)/,/^(?:$)/,/^(?:.)/],
-conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13],"inclusive":true}}
+rules: [/^(?:\s+)/,/^(?:true\b)/,/^(?:false\b)/,/^(?:[0-9]+(\.[0-9]+)?\b)/,/^(?:[_a-zA-Z][_a-zA-Z0-9]*)/,/^(?:'(\\'|[^'])*')/,/^(?:==)/,/^(?:!=)/,/^(?:>=)/,/^(?:<=)/,/^(?:>)/,/^(?:<)/,/^(?:\()/,/^(?:\))/,/^(?:\{)/,/^(?:\})/,/^(?:\[)/,/^(?:\])/,/^(?:,)/,/^(?:\.)/,/^(?:!)/,/^(?:\+)/,/^(?:-)/,/^(?:\*)/,/^(?:\/)/,/^(?:%)/,/^(?:&&)/,/^(?:\|\|)/,/^(?:$)/,/^(?:.)/],
+conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29],"inclusive":true}}
 });
 return lexer;
 })();
