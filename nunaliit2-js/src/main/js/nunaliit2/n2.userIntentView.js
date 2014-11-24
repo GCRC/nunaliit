@@ -57,7 +57,7 @@ var IntentView = $n2.Class({
 	
 	listeners: null,
 
-	focusInfo: null,
+	hoverInfo: null,
 	
 	selectInfo: null,
 	
@@ -77,7 +77,7 @@ var IntentView = $n2.Class({
 		
 		this.listeners = [];
 		this.nodesArrayById = {};
-		this.focusInfo = null;
+		this.hoverInfo = null;
 		this.selectInfo = null;
 		this.findInfo = null;
 		
@@ -181,8 +181,8 @@ var IntentView = $n2.Class({
 		// Focus
 		var focus = false;
 		var hoveredIntent = null;
-		if( this.focusInfo && this.focusInfo.docIds ){
-			var intent = this.focusInfo.docIds[docId];
+		if( this.hoverInfo && this.hoverInfo.docIds ){
+			var intent = this.hoverInfo.docIds[docId];
 			if( intent ){
 				focus = true;
 				if( typeof intent === 'string' ){
@@ -259,10 +259,10 @@ var IntentView = $n2.Class({
 	},
 
 	_performFocusOff: function(changedArray){
-		if( this.focusInfo 
-		 && this.focusInfo.docIds ) {
-			var docIds = this.focusInfo.docIds;
-			this.focusInfo = null; // needed for _adjustIntentOnNode()
+		if( this.hoverInfo 
+		 && this.hoverInfo.docIds ) {
+			var docIds = this.hoverInfo.docIds;
+			this.hoverInfo = null; // needed for _adjustIntentOnNode()
 			
 			for(var focusDocId in docIds){
 				var nodesArray = this.nodesArrayById[focusDocId];
@@ -277,7 +277,7 @@ var IntentView = $n2.Class({
 			};
 		};
 		
-		this.focusInfo = null;
+		this.hoverInfo = null;
 	},
 
 	_handleSelect: function(docId){
@@ -399,11 +399,11 @@ var IntentView = $n2.Class({
 		this._performFocusOff(changed);
 
 		// Create new focus
-		this.focusInfo = {
+		this.hoverInfo = {
 			docId: docId
 			,docIds: {}
 		};
-		this.focusInfo.docIds[docId] = true;
+		this.hoverInfo.docIds[docId] = true;
 		
 		// Adjust selected nodes
 		var nodesArray = this.nodesArrayById[docId];
@@ -426,11 +426,11 @@ var IntentView = $n2.Class({
 		var changed = [];
 
 		// Update current focus
-		if( this.focusInfo && this.focusInfo.docIds ){
+		if( this.hoverInfo && this.hoverInfo.docIds ){
 			if( intent ){
-				this.focusInfo.docIds[docId] = intent;
+				this.hoverInfo.docIds[docId] = intent;
 			} else {
-				this.focusInfo.docIds[docId] = true;
+				this.hoverInfo.docIds[docId] = true;
 			};
 
 			// Adjust selected nodes
