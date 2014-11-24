@@ -48,7 +48,7 @@ var IsSelected = function(args_){
 	};
 };
 IsSelected.prototype.getValue = function(ctxt){
-	return ctxt._selected;
+	return ctxt.n2_selected;
 };
 
 var IsHovered = function(args_){
@@ -61,7 +61,7 @@ var IsHovered = function(args_){
 	};
 };
 IsHovered.prototype.getValue = function(ctxt){
-	return ctxt._focus;
+	return ctxt.n2_hovered;
 };
 
 var IsFound = function(args_){
@@ -74,7 +74,7 @@ var IsFound = function(args_){
 	};
 };
 IsFound.prototype.getValue = function(ctxt){
-	return ctxt._find;
+	return ctxt.n2_found;
 };
 
 var IsPoint = function(args_){
@@ -87,7 +87,7 @@ var IsPoint = function(args_){
 	};
 };
 IsPoint.prototype.getValue = function(ctxt){
-	return 'point' === ctxt._geometry;
+	return 'point' === ctxt.n2_geometry;
 };
 
 var IsLine = function(args_){
@@ -100,7 +100,7 @@ var IsLine = function(args_){
 	};
 };
 IsLine.prototype.getValue = function(ctxt){
-	return 'line' === ctxt._geometry;
+	return 'line' === ctxt.n2_geometry;
 };
 
 var IsPolygon = function(args_){
@@ -113,7 +113,7 @@ var IsPolygon = function(args_){
 	};
 };
 IsPolygon.prototype.getValue = function(ctxt){
-	return 'polygon' === ctxt._geometry;
+	return 'polygon' === ctxt.n2_geometry;
 };
 
 var IsSchema = function(args_){
@@ -129,8 +129,8 @@ var IsSchema = function(args_){
 IsSchema.prototype.getValue = function(ctxt){
 	var schemaName = this.schemaNameNode.getValue(ctxt);
 	if( ctxt 
-	 && ctxt.doc 
-	 && ctxt.doc.nunaliit_schema === schemaName ){
+	 && ctxt.n2_doc 
+	 && ctxt.n2_doc.nunaliit_schema === schemaName ){
 		return true;
 	};
 	return false;
@@ -149,9 +149,9 @@ var OnLayer = function(args_){
 OnLayer.prototype.getValue = function(ctxt){
 	var layerId = this.layerIdNode.getValue(ctxt);
 	if( ctxt 
-	 && ctxt.doc 
-	 && ctxt.doc.nunaliit_layers ){
-	 	var index = ctxt.doc.nunaliit_layers.indexOf(layerId);
+	 && ctxt.n2_doc 
+	 && ctxt.n2_doc.nunaliit_layers ){
+	 	var index = ctxt.n2_doc.nunaliit_layers.indexOf(layerId);
 		return (index >= 0);
 	};
 	return false;
@@ -263,7 +263,7 @@ var ObjectSelector = function(id, previousSelector){
 ObjectSelector.prototype.getValue = function(ctxt){
 	var obj = undefined;
 	if( ctxt ) {
-		obj = ctxt.doc;
+		obj = ctxt.n2_doc;
 	};
 	return this._getValue(ctxt,obj);
 };

@@ -42,13 +42,13 @@ This class accepts nodes from a caller and manages the intent on those
 nodes. Nodes should have the format:
 
 {
-	_id: <string>
-	,_selected: <boolean>
-	,_selectIntent: <null or string>
-	,_focus: <boolean>
-	,_focusIntent: <null or string>
-	,_find: <boolean>
-	,_intent: <null or string>
+	n2_id:              <string>         [input]
+	,n2_selected:       <boolean>        [output]
+	,n2_selectedIntent: <null or string> [output]
+	,n2_hovered:        <boolean>        [output]
+	,n2_hoveredIntent:  <null or string> [output]
+	,n2_found:          <boolean>        [output]
+	,n2_intent:         <null or string> [output]
 }
 
 */
@@ -115,12 +115,12 @@ var IntentView = $n2.Class({
 	/**
 	 * This function adds nodes to be monitored for changes in the user intention.
 	 * When this function returns, each node is updated with the current intention
-	 * flags (_selected, _focus)
+	 * flags (n2_selected, n2_hovered)
 	 */
 	addNodes: function(nodes){
 		for(var i=0,e=nodes.length; i<e; ++i){
 			var node = nodes[i];
-			var id = node._id;
+			var id = node.n2_id;
 			var nodesArray = this.nodesArrayById[id];
 			if( !nodesArray ){
 				nodesArray = [];
@@ -137,7 +137,7 @@ var IntentView = $n2.Class({
 	removeNodes: function(nodes){
 		for(var i=0,e=nodes.length; i<e; ++i){
 			var node = nodes[i];
-			var id = node._id;
+			var id = node.n2_id;
 			var nodesArray = this.nodesArrayById[id];
 			if( nodesArray ){
 				var index = nodesArray.indexOf(node);
@@ -159,43 +159,43 @@ var IntentView = $n2.Class({
 		
 		// Selection
 		var selected = false;
-		var selectIntent = null;
+		var selectedIntent = null;
 		if( this.selectInfo && this.selectInfo.docIds ){
 			var intent = this.selectInfo.docIds[docId];
 			if( intent ){
 				selected = true;
 				if( typeof intent === 'string' ){
-					selectIntent = intent;
+					selectedIntent = intent;
 				};
 			};
 		};
-		if( node._selected !== selected ){
-			node._selected = selected;
+		if( node.n2_selected !== selected ){
+			node.n2_selected = selected;
 			changed = true;
 		};
-		if( node._selectIntent !== selectIntent ){
-			node._selectIntent = selectIntent;
+		if( node.n2_selectedIntent !== selectedIntent ){
+			node.n2_selectedIntent = selectedIntent;
 			changed = true;
 		};
 
 		// Focus
 		var focus = false;
-		var focusIntent = null;
+		var hoveredIntent = null;
 		if( this.focusInfo && this.focusInfo.docIds ){
 			var intent = this.focusInfo.docIds[docId];
 			if( intent ){
 				focus = true;
 				if( typeof intent === 'string' ){
-					focusIntent = intent;
+					hoveredIntent = intent;
 				};
 			};
 		};
-		if( node._focus !== focus ){
-			node._focus = focus;
+		if( node.n2_hovered !== focus ){
+			node.n2_hovered = focus;
 			changed = true;
 		};
-		if( node._focusIntent !== focusIntent ){
-			node._focusIntent = focusIntent;
+		if( node.n2_hoveredIntent !== hoveredIntent ){
+			node.n2_hoveredIntent = hoveredIntent;
 			changed = true;
 		};
 		
@@ -207,18 +207,18 @@ var IntentView = $n2.Class({
 				find = true;
 			};
 		};
-		if( node._find !== find ){
-			node._find = find;
+		if( node.n2_found !== find ){
+			node.n2_found = find;
 			changed = true;
 		};
 		
 		// Compute intent
-		var effectiveIntent = focusIntent;
+		var effectiveIntent = hoveredIntent;
 		if( !effectiveIntent ){
-			effectiveIntent = selectIntent;
+			effectiveIntent = selectedIntent;
 		};
-		if( node._intent !== effectiveIntent ){
-			node._intent = effectiveIntent;
+		if( node.n2_intent !== effectiveIntent ){
+			node.n2_intent = effectiveIntent;
 			changed = true;
 		};
 		

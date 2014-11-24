@@ -423,32 +423,32 @@ jsunit.defineTest('$n2.styleRuleParser',function($$){
 		,nunaliit_layers: ['public']
 	};
 	var ctxt_n = {
-		_selected: false
-		,_focus: false
-		,_find: false
-		,_intent: null
-		,doc: doc
+		n2_selected: false
+		,n2_hovered: false
+		,n2_found: false
+		,n2_intent: null
+		,n2_doc: doc
 	};
 	var ctxt_s = {
-		_selected: true
-		,_focus: false
-		,_find: false
-		,_intent: null
-		,doc: doc
+		n2_selected: true
+		,n2_hovered: false
+		,n2_found: false
+		,n2_intent: null
+		,n2_doc: doc
 	};
 	var ctxt_h = {
-		_selected: false
-		,_focus: true
-		,_find: false
-		,_intent: null
-		,doc: doc
+		n2_selected: false
+		,n2_hovered: true
+		,n2_found: false
+		,n2_intent: null
+		,n2_doc: doc
 	};
 	var ctxt_f = {
-		_selected: false
-		,_focus: false
-		,_find: true
-		,_intent: null
-		,doc: doc
+		n2_selected: false
+		,n2_hovered: false
+		,n2_found: true
+		,n2_intent: null
+		,n2_doc: doc
 	};
 	
 	function t(ctxt, expected, condition){
@@ -577,38 +577,38 @@ jsunit.defineTest('$n2.styleRule',function($$){
 		,nunaliit_layers: ['approved']
 	};
 	var ctxt_n = {
-		_selected: false
-		,_focus: false
-		,_find: false
-		,_intent: null
-		,doc: doc1
+		n2_selected: false
+		,n2_hovered: false
+		,n2_found: false
+		,n2_intent: null
+		,n2_doc: doc1
 	};
 	var ctxt_s = {
-		_selected: true
-		,_focus: false
-		,_find: false
-		,_intent: null
-		,doc: doc1
+		n2_selected: true
+		,n2_hovered: false
+		,n2_found: false
+		,n2_intent: null
+		,n2_doc: doc1
 	};
 	var ctxt_h = {
-		_selected: false
-		,_focus: true
-		,_find: false
-		,_intent: null
-		,doc: doc1
+		n2_selected: false
+		,n2_hovered: true
+		,n2_found: false
+		,n2_intent: null
+		,n2_doc: doc1
 	};
 	var ctxt_sh = {
-		_selected: true
-		,_focus: true
-		,_find: false
-		,_intent: null
-		,doc: doc1
+		n2_selected: true
+		,n2_hovered: true
+		,n2_found: false
+		,n2_intent: null
+		,n2_doc: doc1
 	};
 	
 	function t(rules, ctxt, doc, expected_a, expected_b, expected_c){
 		var testName = expected_a + '/' + expected_b + '/' + expected_c;
 
-		ctxt.doc = doc;
+		ctxt.n2_doc = doc;
 		
 		var symbolizer = rules.getSymbolizer(ctxt);
 		var a = symbolizer.getSymbolValue('a',ctxt);

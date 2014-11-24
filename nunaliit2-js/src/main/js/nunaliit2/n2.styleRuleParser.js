@@ -457,7 +457,7 @@ POSSIBILITY OF SUCH DAMAGE.
 		};
 	};
 	IsSelected.prototype.getValue = function(ctxt){
-		return ctxt._selected;
+		return ctxt.n2_selected;
 	};
 
 	var IsHovered = function(args_){
@@ -470,7 +470,7 @@ POSSIBILITY OF SUCH DAMAGE.
 		};
 	};
 	IsHovered.prototype.getValue = function(ctxt){
-		return ctxt._focus;
+		return ctxt.n2_hovered;
 	};
 
 	var IsFound = function(args_){
@@ -483,7 +483,7 @@ POSSIBILITY OF SUCH DAMAGE.
 		};
 	};
 	IsFound.prototype.getValue = function(ctxt){
-		return ctxt._find;
+		return ctxt.n2_found;
 	};
 
 	var IsPoint = function(args_){
@@ -496,7 +496,7 @@ POSSIBILITY OF SUCH DAMAGE.
 		};
 	};
 	IsPoint.prototype.getValue = function(ctxt){
-		return 'point' === ctxt._geometry;
+		return 'point' === ctxt.n2_geometry;
 	};
 
 	var IsLine = function(args_){
@@ -509,7 +509,7 @@ POSSIBILITY OF SUCH DAMAGE.
 		};
 	};
 	IsLine.prototype.getValue = function(ctxt){
-		return 'line' === ctxt._geometry;
+		return 'line' === ctxt.n2_geometry;
 	};
 
 	var IsPolygon = function(args_){
@@ -522,7 +522,7 @@ POSSIBILITY OF SUCH DAMAGE.
 		};
 	};
 	IsPolygon.prototype.getValue = function(ctxt){
-		return 'polygon' === ctxt._geometry;
+		return 'polygon' === ctxt.n2_geometry;
 	};
 
 	var IsSchema = function(args_){
@@ -538,8 +538,8 @@ POSSIBILITY OF SUCH DAMAGE.
 	IsSchema.prototype.getValue = function(ctxt){
 		var schemaName = this.schemaNameNode.getValue(ctxt);
 		if( ctxt 
-		 && ctxt.doc 
-		 && ctxt.doc.nunaliit_schema === schemaName ){
+		 && ctxt.n2_doc 
+		 && ctxt.n2_doc.nunaliit_schema === schemaName ){
 			return true;
 		};
 		return false;
@@ -558,9 +558,9 @@ POSSIBILITY OF SUCH DAMAGE.
 	OnLayer.prototype.getValue = function(ctxt){
 		var layerId = this.layerIdNode.getValue(ctxt);
 		if( ctxt 
-		 && ctxt.doc 
-		 && ctxt.doc.nunaliit_layers ){
-		 	var index = ctxt.doc.nunaliit_layers.indexOf(layerId);
+		 && ctxt.n2_doc 
+		 && ctxt.n2_doc.nunaliit_layers ){
+		 	var index = ctxt.n2_doc.nunaliit_layers.indexOf(layerId);
 			return (index >= 0);
 		};
 		return false;
@@ -672,7 +672,7 @@ POSSIBILITY OF SUCH DAMAGE.
 	ObjectSelector.prototype.getValue = function(ctxt){
 		var obj = undefined;
 		if( ctxt ) {
-			obj = ctxt.doc;
+			obj = ctxt.n2_doc;
 		};
 		return this._getValue(ctxt,obj);
 	};

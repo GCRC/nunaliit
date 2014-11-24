@@ -255,11 +255,11 @@ var StyleRules = $n2.Class({
 	
 	/**
 	 * ctxt: {
-	 *    _selected: <boolean>
-	 *    ,_focus: <boolean>
-	 *    ,_find: <boolean>
-	 *    ,_intent: <null or string>
-	 *    ,doc: <object>
+	 *    n2_selected: <boolean>
+	 *    ,n2_hovered: <boolean>
+	 *    ,n2_found: <boolean>
+	 *    ,n2_intent: <null or string>
+	 *    ,n2_doc: <object>
 	 * }
 	 */
 	getSymbolizer: function(ctxt){
@@ -270,12 +270,12 @@ var StyleRules = $n2.Class({
 	
 	_getSymbolizerFromStyleAndContext: function(style, ctxt){
 		var label = 'normal';
-		if( ctxt._selected ){
+		if( ctxt.n2_selected ){
 			label = '$selected';
-			if( ctxt._focus ){
+			if( ctxt.n2_hovered ){
 				label = '$selectedHovered';
 			};
-		} else if( ctxt._focus ){
+		} else if( ctxt.n2_hovered ){
 			label = '$hovered';
 		};
 		
