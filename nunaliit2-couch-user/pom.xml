@@ -3,7 +3,7 @@
   <parent>
     <groupId>ca.carleton.gcrc</groupId>
     <artifactId>nunaliit2</artifactId>
-    <version>2.2.3-SNAPSHOT</version>
+    <version>2.2.3</version>
   </parent>
   <artifactId>nunaliit2-couch-user</artifactId>
   <name>nunaliit2-couch-user</name>
