@@ -61,7 +61,7 @@ var DbSelector = $n2.Class({
 
 //--------------------------------------------------------------------------
 var CouchLayerDbSelector = $n2.Class(DbSelector, {
-	layer: null,
+	layerId: null,
 	
 	atlasDesign: null,
 	
@@ -73,7 +73,7 @@ var CouchLayerDbSelector = $n2.Class(DbSelector, {
 
 		DbSelector.prototype.initialize.call(this, opts_);
 		
-		this.layer = opts.layer;
+		this.layerId = opts.layer;
 		this.atlasDesign = opts.atlasDesign;
 	},
 	
@@ -88,8 +88,8 @@ var CouchLayerDbSelector = $n2.Class(DbSelector, {
 		this.atlasDesign.queryView({
 			viewName: 'layers'
 			,include_docs: true
-			,startkey: this.layer
-			,endkey: this.layer
+			,startkey: this.layerId
+			,endkey: this.layerId
 			,onSuccess: function(rows){
 				var docs = [];
 				for(var i=0,e=rows.length; i<e; ++i){
@@ -106,7 +106,7 @@ var CouchLayerDbSelector = $n2.Class(DbSelector, {
 	
 	isDocValid: function(doc){
 		if( doc && doc.nunaliit_layers ){
-			if( doc.nunaliit_layers.indexOf(this.layer) >= 0 ){
+			if( doc.nunaliit_layers.indexOf(this.layerId) >= 0 ){
 				return true;
 			};
 		};
@@ -116,6 +116,15 @@ var CouchLayerDbSelector = $n2.Class(DbSelector, {
 });
 
 //--------------------------------------------------------------------------
+/**
+ * This class accepts a number of instances of DbSelector and manages the content
+ * found from the database, via those selectors. It also accepts listeners
+ * and provide them with updates from the database. On each updates, the
+ * created, updated and removed documents are provided.
+ * 
+ * The database perspective also offers caching of documents, via events from the
+ * dispatcher.
+ */
 var DbPerspective = $n2.Class({
 	dispatchService: null,
 	
