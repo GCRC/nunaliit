@@ -123,6 +123,18 @@ var Module = $n2.Class({
 		};
 		return searchInfo;
 	}
+
+	,getWidgetInfos: function(){
+		var widgetInfos = null;
+		var moduleInfo = this.getModuleInfo();
+		if( moduleInfo ){
+			widgetInfos = moduleInfo.widgets;
+		};
+		if( !widgetInfos ){
+			widgetInfos = [];
+		};
+		return widgetInfos;
+	}
 	
 	/*
 	 * Finds the introduction text associated with the module and inserts it
@@ -445,6 +457,7 @@ var ModuleDisplay = $n2.Class({
 			var displayInfo = _this.module.getDisplayInfo();
 			var editInfo = _this.module.getEditInfo();
 			var searchInfo = _this.module.getSearchInfo();
+			var widgetInfos = _this.module.getWidgetInfos();
 			
 			// Check if support for canvas is available
 			var canvasHandlerAvailable = false;
@@ -452,7 +465,7 @@ var ModuleDisplay = $n2.Class({
 				var msg = {
 					type: 'canvasIsTypeAvailable'
 					,canvasType: canvasInfo.type
-					,canvasOptions: canvasInfo.options
+					,canvasOptions: canvasInfo
 					,isAvailable: false
 				};
 				
@@ -465,6 +478,34 @@ var ModuleDisplay = $n2.Class({
 			if( canvasInfo && !canvasHandlerAvailable ){
 				$n2.log('Canvas handler not found for type: '+canvasInfo.type);
 				canvasInfo = null;
+			};
+			
+			// Check for widget support
+			var availableWidgets = [];
+			if( widgetInfos ){
+				for(var i=0,e=widgetInfos.length; i<e; ++i){
+					var widgetInfo = widgetInfos[i];
+					var widgetHandlerAvailable = false;
+					if( widgetInfo && widgetInfo.type ) {
+						msg = {
+							type: 'widgetIsTypeAvailable'
+							,widgetType: widgetInfo.type
+							,widgetOptions: widgetInfo
+							,isAvailable: false
+						};
+						
+						_this._sendSynchronousMessage(msg);
+						
+						if( msg.isAvailable ){
+							widgetHandlerAvailable = true;
+						};
+					};
+					if( widgetInfo && !widgetHandlerAvailable ){
+						$n2.log('Widget handler not found for type: '+widgetInfo.type);
+					} else {
+						availableWidgets.push(widgetInfo);
+					};
+				};
 			};
 			
 			// Handle content div
@@ -649,6 +690,19 @@ var ModuleDisplay = $n2.Class({
 				});
 			};
 			
+			// Widgets
+			for(i=0,e=availableWidgets.length; i<e; ++i){
+				widgetInfo = availableWidgets[i];
+				_this._sendDispatchMessage({
+					type: 'widgetDisplay'
+					,widgetType: widgetInfo.type
+					,widgetOptions: widgetInfo
+					,contentId: _this.contentName
+					,config: config
+					,moduleDisplay: _this
+				});
+			};
+			
 			// Display map
 			if( mapInfo ) {
 				_this._initializeMap({
@@ -661,7 +715,7 @@ var ModuleDisplay = $n2.Class({
 				_this._sendDispatchMessage({
 					type: 'canvasDisplay'
 					,canvasType: canvasInfo.type
-					,canvasOptions: canvasInfo.options
+					,canvasOptions: canvasInfo
 					,canvasId: _this.mapName
 					,interactionId: _this.mapInteractionName
 					,config: config
