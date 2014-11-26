@@ -3,11 +3,11 @@
 	<parent>
 		<artifactId>nunaliit2</artifactId>
 		<groupId>ca.carleton.gcrc</groupId>
-		<version>2.2.3</version>
+		<version>2.2.4-SNAPSHOT</version>
 	</parent>
 	<groupId>ca.carleton.gcrc</groupId>
 	<artifactId>nunaliit2-couch-application</artifactId>
-	<version>2.2.3</version>
+	<version>2.2.4-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>nunaliit2-couch-application</name>
 	<description>CouchApp deployment code</description>
