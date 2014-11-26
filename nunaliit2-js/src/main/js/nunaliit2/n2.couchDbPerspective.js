@@ -31,6 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 ;(function($,$n2) {
+"use strict";
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
@@ -120,7 +121,7 @@ var DbPerspective = $n2.Class({
 	
 	dbSelectors: null,
 	
-	docsById: null,
+	docInfosByDocId: null,
 	
 	listeners: null,
 	
@@ -134,7 +135,7 @@ var DbPerspective = $n2.Class({
 		this.dispatchService = opts.dispatchService;
 		
 		this.dbSelectors = [];
-		this.docsById = {};
+		this.docInfosByDocId = {};
 		this.listeners = [];
 		
 		if( this.dispatchService ) {
@@ -145,6 +146,8 @@ var DbPerspective = $n2.Class({
 			this.dispatchService.register(DH, 'documentContent', fn);
 			this.dispatchService.register(DH, 'documentDeleted', fn);
 			this.dispatchService.register(DH, 'findIsAvailable', fn);
+			this.dispatchService.register(DH, 'documentVersion', fn);
+			this.dispatchService.register(DH, 'cacheRetrieveDocument', fn);
 		};
 	},
 	
@@ -166,8 +169,9 @@ var DbPerspective = $n2.Class({
 		this.listeners.push(listener);
 		
 		var added = [];
-		for(var docId in this.docsById){
-			var doc = this.docsById[docId];
+		for(var docId in this.docInfosByDocId){
+			var docInfo = this.docInfosByDocId[docId];
+			var doc = docInfo.doc;
 			added.push(doc);
 		};
 
@@ -200,19 +204,29 @@ var DbPerspective = $n2.Class({
 			var loadedDoc = loadedDocs[i];
 			
 			var isDocValid = this.isDocValid(loadedDoc);
-			var doc = this.docsById[loadedDoc._id];
+			
+			var doc = null;
+			var docInfo = this.docInfosByDocId[loadedDoc._id];
+			if( docInfo ){
+				doc = docInfo.doc;
+			};
+			
 			if( !doc && isDocValid ){
 				added.push(loadedDoc);
-				this.docsById[loadedDoc._id] = loadedDoc;
+				this.docInfosByDocId[loadedDoc._id] = {
+					doc: loadedDoc
+					,cacheValid: true
+				};
 
 			} else if( doc && !isDocValid ) {
 				removed.push(loadedDoc);
-				delete this.docsById[loadedDoc._id];
+				delete this.docInfosByDocId[loadedDoc._id];
 
 			} else if( doc && isDocValid ) {
 				if( doc._rev !== loadedDoc._rev ) {
 					updated.push(loadedDoc);
-					this.docsById[loadedDoc._id] = loadedDoc;
+					this.docInfosByDocId[loadedDoc._id].doc = loadedDoc;
+					this.docInfosByDocId[loadedDoc._id].cacheValid = true;
 				};
 			};
 		};
@@ -239,14 +253,14 @@ var DbPerspective = $n2.Class({
 
 		} else if( 'documentDeleted' === m.type ){
 			var docId = m.docId;
-			var doc = this.docsById[docId];
-			if( doc ){
-				delete this.docsById[docId];
+			var docInfo = this.docInfosByDocId[docId];
+			if( docInfo ){
+				delete this.docInfosByDocId[docId];
 				
 				if( this.listeners.length > 0 ){
 					var added = [];
 					var updated = [];
-					var removed = [doc];
+					var removed = [docInfo.doc];
 
 					for(var i=0,e=this.listeners.length; i<e; ++i){
 						var listener = this.listeners[i];
@@ -272,6 +286,23 @@ var DbPerspective = $n2.Class({
 						};
 					};
 				};
+			};
+			
+		} else if( 'documentVersion' === m.type ) {
+			var docInfo = this.docInfosByDocId[m.docId];
+			if( docInfo 
+			 && docInfo.doc 
+			 && docInfo.cacheValid 
+			 && docInfo.doc._rev !== m.rev ){
+				docInfo.cacheValid = false;
+			};
+
+		} else if( 'cacheRetrieveDocument' === m.type ) {
+			var docInfo = this.docInfosByDocId[m.docId];
+			if( docInfo 
+			 && docInfo.doc 
+			 && docInfo.cacheValid ){
+				m.doc = docInfo.doc;
 			};
 		};
 	}
