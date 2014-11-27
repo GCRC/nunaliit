@@ -33,9 +33,13 @@ POSSIBILITY OF SUCH DAMAGE.
 ;(function($,$n2) {
 "use strict";
 
-// Localization
-var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
-var DH = 'n2.couchDbPerspective';
+var
+	_loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); }
+	,DH = 'n2.couchDbPerspective'
+	,NOT_VALID_NOT_VISIBLE = { valid:false, visible:false }
+	,VALID_NOT_VISIBLE     = { valid:true,  visible:false }
+	,VALID_VISIBLE         = { valid:true,  visible:true }
+	;
 
 //--------------------------------------------------------------------------
 var DbSelector = $n2.Class({
@@ -56,6 +60,10 @@ var DbSelector = $n2.Class({
 	
 	isDocValid: function(doc){
 		throw 'Subclasses of DbSelector must implement function isValidDoc()';
+	},
+	
+	getLabel: function(){
+		throw 'Subclasses of DbSelector must implement function getLabel()';
 	}
 });
 
@@ -63,17 +71,21 @@ var DbSelector = $n2.Class({
 var CouchLayerDbSelector = $n2.Class(DbSelector, {
 	layerId: null,
 	
+	name: null,
+	
 	atlasDesign: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			layer: null
+			,name: null
 			,atlasDesign: null
 		}, opts_);
 
 		DbSelector.prototype.initialize.call(this, opts_);
 		
 		this.layerId = opts.layer;
+		this.name = opts.name;
 		this.atlasDesign = opts.atlasDesign;
 	},
 	
@@ -112,8 +124,49 @@ var CouchLayerDbSelector = $n2.Class(DbSelector, {
 		};
 		
 		return false;
+	},
+	
+	getLabel: function(){
+		if( this.name ){
+			return this.name;
+		};
+		
+		return this.layerId;
 	}
 });
+
+//--------------------------------------------------------------------------
+function createDbSelectorFromConfigObj(selectorConfig, atlasDesign){
+	var dbSelector = null;
+	
+	if( selectorConfig ){
+		if( 'couchDbLayer' === selectorConfig.type ){
+			var dbSelectorOptions = {
+				layer: null
+				,atlasDesign: atlasDesign
+			};
+			
+			if( selectorConfig.options 
+			 && selectorConfig.options.layerId ){
+				dbSelectorOptions.layer = selectorConfig.options.layerId;
+			} else {
+				$n2.log('DbPerspective unable to create selector. "layerId" required for "couchDbLayer"');
+				return null;
+			};
+
+			if( selectorConfig.name ){
+				dbSelectorOptions.name = selectorConfig.name;
+			};
+			
+			dbSelector = new CouchLayerDbSelector(dbSelectorOptions);
+			
+		} else {
+			$n2.log('Unknown DbPerspective selector type: '+selectorConfig.type);
+		};
+	};
+	
+	return dbSelector;
+};
 
 //--------------------------------------------------------------------------
 /**
@@ -128,24 +181,31 @@ var CouchLayerDbSelector = $n2.Class(DbSelector, {
 var DbPerspective = $n2.Class({
 	dispatchService: null,
 	
+	atlasDesign: null,
+	
 	dbSelectors: null,
+	
+	selectorListeners: null,
 	
 	docInfosByDocId: null,
 	
-	listeners: null,
+	docListeners: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: null
+			,atlasDesign: null
 		}, opts_);
 
 		var _this = this;
 		
 		this.dispatchService = opts.dispatchService;
+		this.atlasDesign = opts.atlasDesign;
 		
 		this.dbSelectors = [];
+		this.selectorListeners = [];
 		this.docInfosByDocId = {};
-		this.listeners = [];
+		this.docListeners = [];
 		
 		if( this.dispatchService ) {
 			var fn = function(m){
@@ -160,10 +220,19 @@ var DbPerspective = $n2.Class({
 		};
 	},
 	
-	addDbSelector: function(dbSelector){
+	addDbSelector: function(dbSelector, opts_){
+		var opts = $n2.extend({
+			visibility: true
+		},opts_);
+		
 		var _this = this;
 		
-		this.dbSelectors.push(dbSelector);
+		var dbSelectorInfo = {
+			selector: dbSelector
+			,visible: opts.visibility
+			,id: $n2.getUniqueId()
+		};
+		this.dbSelectors.push(dbSelectorInfo);
 		
 		dbSelector.load({
 			onSuccess: function(docs){
@@ -172,16 +241,72 @@ var DbPerspective = $n2.Class({
 		});
 	},
 	
-	addListener: function(listener){
-		var _this = this;
+	addDbSelectorFromConfigObject: function(configObj){
+		var selector = createDbSelectorFromConfigObj(configObj, this.atlasDesign);
+		if( selector ){
+			this.addDbSelector(selector,configObj);
+		};
+		return selector;
+	},
+	
+	addSelectorListener: function(listener){
+		this.selectorListeners.push(listener);
 		
-		this.listeners.push(listener);
+		var selectorInfos = this.getDbSelectorInfos();
+		listener(selectorInfos);
+	},
+	
+	getDbSelectorInfos: function(){
+		var infos = [];
+		
+		for(var i=0,e=this.dbSelectors.length; i<e; ++i){
+			var selectorInfo = this.dbSelectors[i];
+			var selector = selectorInfo.selector;
+			var s = {
+				id: selectorInfo.id
+				,visible: selectorInfo.visible
+				,name: selector.getLabel()
+			};
+			infos.push(s);
+		};
+		
+		return infos;
+	},
+	
+	setDbSelectorVisibility: function(selectorId, visibility){
+		var changed = false;
+		for(var i=0,e=this.dbSelectors.length; i<e; ++i){
+			var selectorInfo = this.dbSelectors[i];
+			if( selectorInfo.id === selectorId ){
+				if( visibility !== selectorInfo.visible ){
+					selectorInfo.visible = visibility;
+					changed = true;
+				};
+			};
+		};
+		
+		if( changed ){
+			this._selectorVisibilityChanged();
+
+			var selectorInfos = this.getDbSelectorInfos();
+			for(var i=0,e=this.selectorListeners.length; i<e; ++i){
+				var listener = this.selectorListeners[i];
+				listener(selectorInfos);
+			};
+		};
+	},
+	
+	addListener: function(listener){
+		this.docListeners.push(listener);
 		
 		var added = [];
 		for(var docId in this.docInfosByDocId){
 			var docInfo = this.docInfosByDocId[docId];
 			var doc = docInfo.doc;
-			added.push(doc);
+			var visibilityStatus = this._getDocVisibility(doc);
+			if( visibilityStatus.visible ){
+				added.push(doc);
+			};
 		};
 
 		if( added.length > 0 ){
@@ -195,13 +320,67 @@ var DbPerspective = $n2.Class({
 
 	isDocValid: function(doc){
 		for(var i=0,e=this.dbSelectors.length; i<e; ++i){
-			var s = this.dbSelectors[i];
+			var selectorInfo = this.dbSelectors[i];
+			var s = selectorInfo.selector;
 			if( s.isDocValid(doc) ){
 				return true;
 			};
 		};
 
 		return false;
+	},
+	
+	_selectorVisibilityChanged: function(){
+		var added = [];
+		var updated = [];
+		var removed = [];
+		
+		for(var docId in this.docInfosByDocId){
+			var docInfo = this.docInfosByDocId[docId];
+			var doc = docInfo.doc;
+			
+			var visibilityStatus = this._getDocVisibility(doc);
+			
+			if( !docInfo.visible && visibilityStatus.visible ){
+				added.push(doc);
+			
+			} else if( docInfo.visible && !visibilityStatus.visible ){
+				removed.push(doc);
+			};
+			
+			docInfo.visible = visibilityStatus.visible;
+		};
+		
+		if( added.length > 0
+		 || updated.length > 0 
+		 || removed.length > 0 ){
+			for(var i=0,e=this.docListeners.length; i<e; ++i){
+				var listener = this.docListeners[i];
+				listener({
+					added: added
+					,updated: updated
+					,removed: removed
+				});
+			};
+		};
+	},
+	
+	_getDocVisibility: function(doc){
+		var status = NOT_VALID_NOT_VISIBLE;
+		
+		for(var i=0,e=this.dbSelectors.length; i<e; ++i){
+			var selectorInfo = this.dbSelectors[i];
+			var s = selectorInfo.selector;
+			if( s.isDocValid(doc) ){
+				status = VALID_NOT_VISIBLE;
+				
+				if( selectorInfo.visible ){
+					return VALID_VISIBLE;
+				};
+			};
+		};
+
+		return status;
 	},
 
 	_docsLoaded: function(loadedDocs){
@@ -212,7 +391,7 @@ var DbPerspective = $n2.Class({
 		for(var i=0,e=loadedDocs.length; i<e; ++i){
 			var loadedDoc = loadedDocs[i];
 			
-			var isDocValid = this.isDocValid(loadedDoc);
+			var visibilityStatus = this._getDocVisibility(loadedDoc);
 			
 			var doc = null;
 			var docInfo = this.docInfosByDocId[loadedDoc._id];
@@ -220,22 +399,49 @@ var DbPerspective = $n2.Class({
 				doc = docInfo.doc;
 			};
 			
-			if( !doc && isDocValid ){
-				added.push(loadedDoc);
+			if( !docInfo && visibilityStatus.valid ){
+				// Not previously in cache, but now valid: add
 				this.docInfosByDocId[loadedDoc._id] = {
 					doc: loadedDoc
 					,cacheValid: true
+					,visible: visibilityStatus.visible
+				};
+				
+				// Call listeners only if document is visible
+				if( visibilityStatus.visible ){
+					added.push(loadedDoc);
 				};
 
-			} else if( doc && !isDocValid ) {
-				removed.push(loadedDoc);
+			} else if( docInfo && !visibilityStatus.valid ) {
+				// Previously in cache, but no longer valid
 				delete this.docInfosByDocId[loadedDoc._id];
 
-			} else if( doc && isDocValid ) {
+				// If listeners were previously informed of this document,
+				// report removal
+				if( docInfo.visible ) {
+					removed.push(docInfo.doc);
+				};
+
+			} else if( docInfo && visibilityStatus.valid ) {
+				// Previously in cache. Still valid. Update.
+				
+				// It is not an update if the reported document is the
+				// same version as the one in cache
 				if( doc._rev !== loadedDoc._rev ) {
-					updated.push(loadedDoc);
-					this.docInfosByDocId[loadedDoc._id].doc = loadedDoc;
-					this.docInfosByDocId[loadedDoc._id].cacheValid = true;
+					// Updated. Keep track of this new version of the document.
+					// Assume that it is valid
+					docInfo.doc = loadedDoc;
+					docInfo.cacheValid = true;
+
+					if( docInfo.visible && visibilityStatus.visible ){
+						updated.push(loadedDoc);
+
+					} else if( !docInfo.visible && visibilityStatus.visible ){
+						added.push(loadedDoc);
+					
+					} else if( docInfo.visible && !visibilityStatus.visible ){
+						removed.push(loadedDoc);
+					};
 				};
 			};
 		};
@@ -243,8 +449,8 @@ var DbPerspective = $n2.Class({
 		if( added.length > 0
 		 || updated.length > 0 
 		 || removed.length > 0 ){
-			for(var i=0,e=this.listeners.length; i<e; ++i){
-				var listener = this.listeners[i];
+			for(var i=0,e=this.docListeners.length; i<e; ++i){
+				var listener = this.docListeners[i];
 				listener({
 					added: added
 					,updated: updated
@@ -266,13 +472,13 @@ var DbPerspective = $n2.Class({
 			if( docInfo ){
 				delete this.docInfosByDocId[docId];
 				
-				if( this.listeners.length > 0 ){
+				if( this.docListeners.length > 0 ){
 					var added = [];
 					var updated = [];
 					var removed = [docInfo.doc];
 
-					for(var i=0,e=this.listeners.length; i<e; ++i){
-						var listener = this.listeners[i];
+					for(var i=0,e=this.docListeners.length; i<e; ++i){
+						var listener = this.docListeners[i];
 						listener({
 							added: added
 							,updated: updated
@@ -285,14 +491,13 @@ var DbPerspective = $n2.Class({
 		} else if( 'findIsAvailable' === m.type ) {
 			var doc = m.doc;
 			
-			if( doc && doc.nunaliit_layers ){
+			if( doc ){
 				for(var i=0,e=this.dbSelectors.length; i<e; ++i){
-					var selector = this.dbSelectors[i];
-					if( selector.layer ){
-						if( doc.nunaliit_layers.indexOf(selector.layer) >= 0 ){
-							m.isAvailable = true;
-							break;
-						};
+					var selectorInfo = this.dbSelectors[i];
+					var selector = selectorInfo.selector;
+					if( selector.isDocValid(doc) ){
+						m.isAvailable = true;
+						break;
 					};
 				};
 			};
@@ -318,10 +523,146 @@ var DbPerspective = $n2.Class({
 });
 
 //--------------------------------------------------------------------------
+var DbPerspectiveChooser = $n2.Class({
+	
+	elemId: null,
+	
+	dbPerspective: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dbPerspective: null
+			,elemId: null
+			,style: null
+		},opts_);
+		
+		var _this = this;
+		
+		this.dbPerspective = opts.dbPerspective;
+		
+		this.elemId = $n2.getUniqueId();
+		var $outer = $('<div>')
+			.attr('id',this.elemId)
+			.addClass('n2dbPerspective_chooser')
+			.appendTo( $('#'+opts.elemId) );
+		
+		if( opts.style ){
+			for(var name in opts.style){
+				var value = opts.style[name];
+				if( value ){
+					$outer.css(name,value);
+				};
+			};
+		};
+		
+		$('<div>')
+			.addClass('n2dbPerspective_chooser_button')
+			.appendTo($outer).
+			click(function(){
+				_this._togglePanel();
+			});
+		
+		$('<div>')
+			.addClass('n2dbPerspective_chooser_panel')
+			.appendTo($outer);
+		
+		this._hidePanel();
+		
+		//this._refresh();
+		
+		if( this.dbPerspective ){
+			this.dbPerspective.addSelectorListener(function(selectorInfos){
+				_this._refresh();
+			});
+		};
+	},
+	
+	_refresh: function(){
+		var $elem = this._getElem();
+		var $panel = $elem.find('.n2dbPerspective_chooser_panel');
+		$panel.empty();
+		
+		if( this.dbPerspective ){
+			var selectorInfos = this.dbPerspective.getDbSelectorInfos();
+			for(var i=0,e=selectorInfos.length; i<e; ++i){
+				var selectorInfo = selectorInfos[i];
+				this._addSelector($panel, selectorInfo);
+			};
+		};
+	},
+	
+	_addSelector: function($elem, selectorInfo){
+		var _this = this;
+		var elemId = $n2.getUniqueId();
+		var name = $n2.getUniqueId();
+		var $div = $('<div>')
+			.attr('id',elemId)
+			.addClass('n2dbPerspective_chooser_line')
+			.appendTo($elem);
+		
+		// Checkbox
+		var $inputDiv = $('<div>')
+			.addClass('n2dbPerspective_chooser_line_input')
+			.appendTo($div);
+		var $input = $('<input>')
+			.attr('type','checkbox')
+			.attr('id',name)
+			.appendTo($inputDiv)
+			.change(function(){
+				var selected = $('#'+elemId).find('input').is(':checked');
+				_this.dbPerspective.setDbSelectorVisibility(selectorInfo.id,selected);
+			});
+		if( selectorInfo.visible ){
+			$input.attr('checked','checked');
+		};
+		
+		// Label
+		var label = _loc(selectorInfo.name);
+		var $labelDiv = $('<div>')
+			.addClass('n2dbPerspective_chooser_line_label')
+			.appendTo($div);
+		$('<label>')
+			.attr('for',name)
+			.text(label)
+			.appendTo($labelDiv);
+	},
+	
+	_togglePanel: function(){
+		var $elem = this._getElem();
+		var $panel = $elem.find('.n2dbPerspective_chooser_panel');
+		
+		if( $panel.hasClass('n2dbPerspective_chooser_panel_on') ){
+			this._hidePanel();
+		} else {
+			this._showPanel();
+		};
+	},
+	
+	_showPanel: function(){
+		var $elem = this._getElem();
+		var $panel = $elem.find('.n2dbPerspective_chooser_panel');
+		$panel.removeClass('n2dbPerspective_chooser_panel_off');
+		$panel.addClass('n2dbPerspective_chooser_panel_on');
+	},
+	
+	_hidePanel: function(){
+		var $elem = this._getElem();
+		var $panel = $elem.find('.n2dbPerspective_chooser_panel');
+		$panel.removeClass('n2dbPerspective_chooser_panel_on');
+		$panel.addClass('n2dbPerspective_chooser_panel_off');
+	},
+	
+	_getElem: function(){
+		return $('#'+this.elemId);
+	}
+});
+
+//--------------------------------------------------------------------------
 $n2.couchDbPerspective = {
 	DbPerspective: DbPerspective
 	,DbSelector: DbSelector
 	,CouchLayerDbSelector: CouchLayerDbSelector
+	,DbPerspectiveChooser: DbPerspectiveChooser
 };
 
 })(jQuery,nunaliit2);

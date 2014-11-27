@@ -297,6 +297,37 @@ Help Button
 ,.nunaliit_atlas .n2_content_map_interaction input:hover {
 	opacity:1;
 } 
+
+/* DbPerspectiveChooser */
+
+.nunaliit_atlas .n2dbPerspective_chooser {
+	font-family: sans-serif;
+	font-weight: bold;
+	font-size: smaller;
+	color: #fff;
+}
+
+.n2dbPerspective_chooser_line_label,
+.n2dbPerspective_chooser_line_input {
+	display: inline-block;
+	vertical-align: top;
+}
+
+.n2dbPerspective_chooser_line_label {
+	width: 125px;
+}
+
+.n2dbPerspective_chooser_line_label {
+	padding-left: 5px;
+}
+
+.n2dbPerspective_chooser_panel {
+	position: absolute;
+	top: 0;
+	left: 28px;
+	width: 145px;
+}
+
 /* Table of Contents */
 .nunaliit_atlas .nunaliit_table_of_contents ul li a {
 	border-bottom: 1px solid rgba(0,0,0,0.3);

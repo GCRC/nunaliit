@@ -1,0 +1,29 @@
+/* dbPerspective chooser */
+.n2dbPerspective_chooser {
+	display: none;
+}
+
+.n2_content_contains_map .n2dbPerspective_chooser {
+	position: absolute;
+	display: block;
+	top: 25px;
+	left: 10px;
+}
+
+.n2dbPerspective_chooser_button {
+	background-image: url('openlayers/settings_icon.png');
+	width: 28px;
+	height: 28px;
+	border: none;
+	padding: none;
+}
+
+.n2dbPerspective_chooser_panel {
+	background: url('openlayers/popup_bg.png') no-repeat top left;
+	padding: 11px 20px;
+	margin: 0 0 0 5px;
+}
+
+.n2dbPerspective_chooser_panel_off {
+	display: none;
+}
