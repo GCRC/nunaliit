@@ -34,3 +34,6 @@ div.n2Show_icon_image:hover, div.n2Show_icon_video:hover, div.n2Show_icon_file:h
 	background-position: -75px 0;
 }
 
+.n2Show_docNotFound {
+	color: #ff0000;
+}

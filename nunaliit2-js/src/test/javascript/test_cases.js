@@ -407,6 +407,87 @@ jsunit.defineTest('$n2.objectSelector',function($$){
 });
 
 //*********
+jsunit.defineTest('$n2.objectSelector(encoding)',function($$){
+
+	function compareArrays(a1, a2){
+		if( a1.length != a2.length ){
+			return -1;
+		};
+		for(var i=0,e=a1.length; i<e; ++i){
+			var v1 = a1[i], v2 = a2[i];
+			if( v1 !== v2 ) {
+				return -1;
+			};
+		};
+		return 0;
+	};
+	
+	function t(sel){
+		var objSel = new $n2.objectSelector.ObjectSelector(sel);
+		var domAttribute = objSel.encodeForDomAttribute();
+		var objSel2 = $n2.objectSelector.decodeFromDomAttribute(domAttribute);
+		
+		if( 0 !== compareArrays(objSel.selectors, objSel2.selectors) ){
+			throw 'Error on encoding/decoding: '+sel;
+		};
+	};
+	
+	t([]);
+	t(['abc']);
+	t(['abc','def']);
+	t(['abc','def','ghi']);
+	t(['abc','-','ghi']);
+	t(['abc',5,'ghi']);
+	t(['abc',-5.33,'ghi']);
+	t(['abc',null,'ghi']);
+	t(['abc',true,'ghi']);
+	t(['abc',false,'ghi']);
+	t(['abc',undefined,'ghi']);
+});
+
+//*********
+jsunit.defineTest('$n2.objectSelector(parent/key)',function($$){
+
+	function compareArrays(a1, a2){
+		if( a1.length != a2.length ){
+			return -1;
+		};
+		for(var i=0,e=a1.length; i<e; ++i){
+			var v1 = a1[i], v2 = a2[i];
+			if( v1 !== v2 ) {
+				return -1;
+			};
+		};
+		return 0;
+	};
+	
+	function t(sel, expectedParent, expectedKey){
+		var objSel = new $n2.objectSelector.ObjectSelector(sel);
+		var parentSel = objSel.getParentSelector();
+		var key = objSel.getKey();
+		
+		if( null == expectedParent ){
+			if( null != parentSel ){
+				throw 'Unexpected parent selector: '+sel;
+			};
+		} else {
+			if( 0 !== compareArrays(parentSel.selectors, expectedParent) ){
+				throw 'Unexpected parent selector: '+sel;
+			};
+		};
+
+		if( key !== expectedKey ){
+			throw 'Unexpected key: '+sel;
+		};
+	};
+	
+	t([], null, undefined);
+	t(['abc'], [], 'abc');
+	t(['abc','def'], ['abc'], 'def');
+	t(['abc','def','ghi'], ['abc','def'], 'ghi');
+});
+
+//*********
 jsunit.defineTest('$n2.styleRuleParser',function($$){
 
 	var doc = {

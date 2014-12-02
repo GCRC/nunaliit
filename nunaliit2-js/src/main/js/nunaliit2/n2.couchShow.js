@@ -98,7 +98,13 @@ var DomStyler = $n2.Class({
 		});
 		
 		// Brief display
+		$set.filter('.n2s_briefDisplay').each(function(){
+			var $jq = $(this);
+			_this._briefDisplay($jq, opt);
+			$jq.removeClass('n2s_briefDisplay').addClass('n2s_briefDisplayed');
+		});
 		$set.filter('.n2_briefDisplay').each(function(){
+			// Legacy
 			var $jq = $(this);
 			_this._briefDisplay($jq, opt);
 			$jq.removeClass('n2_briefDisplay').addClass('n2_briefDisplayed');
@@ -1048,6 +1054,7 @@ var Show = $n2.Class({
 	printBriefDescription: function($elem, docId, opts){
 		$elem.addClass('n2ShowDoc_'+$n2.utils.stringToHtmlId(docId));
 		$elem.addClass('n2ShowDocBrief');
+		$elem.addClass('n2Show_docNotFound');
 		$elem.text(docId);
 
 		this._requestDocument(docId); // fetch document
@@ -1060,6 +1067,7 @@ var Show = $n2.Class({
 		},opts_);
 		
 		$elem.addClass('n2ShowDoc_'+$n2.utils.stringToHtmlId(docId));
+		$elem.addClass('n2Show_docNotFound');
 		
 		if( opts.eliminateNonApprovedMedia ) {
 			$elem.addClass('n2NoShowNonApprovedMedia');
@@ -1126,7 +1134,11 @@ var Show = $n2.Class({
 		$('.'+showClass).each(function(i,elem){
 			var $elem = $(elem);
 			
-			$elem.removeClass(showClass).addClass('n2ShowUpdateDoc_'+$n2.utils.stringToHtmlId(id));
+			$elem
+				.removeClass(showClass)
+				.addClass('n2ShowUpdateDoc_'+$n2.utils.stringToHtmlId(id))
+				.removeClass('n2Show_docNotFound')
+				;
 
 			if( _this.eliminateNonApprovedMedia ) {
 				if( $n2.couchMap.documentContainsMedia(doc) 
