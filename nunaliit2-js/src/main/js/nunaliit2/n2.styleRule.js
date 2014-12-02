@@ -125,19 +125,37 @@ var Symbolizer = $n2.Class({
 			if( 'fillColor' == name && hasFill ){
 				svgDomElem.setAttributeNS(null, 'fill', value);
 				
+			} else if( 'fill-color' == name && hasFill ){
+					svgDomElem.setAttributeNS(null, 'fill', value);
+					
 			} else if( 'fillOpacity' == name && hasFill ){
+				svgDomElem.setAttributeNS(null, 'fill-opacity', value);
+				
+			} else if( 'fill-opacity' == name && hasFill ){
 				svgDomElem.setAttributeNS(null, 'fill-opacity', value);
 			
 			} else if( 'strokeColor' == name ){
 				svgDomElem.setAttributeNS(null, 'stroke', value);
 				
+			} else if( 'stroke-color' == name ){
+				svgDomElem.setAttributeNS(null, 'stroke', value);
+				
 			} else if( 'strokeWidth' == name ){
+				svgDomElem.setAttributeNS(null, 'stroke-width', value);
+				
+			} else if( 'stroke-width' == name ){
 				svgDomElem.setAttributeNS(null, 'stroke-width', value);
 				
 			} else if( 'strokeOpacity' == name ){
 				svgDomElem.setAttributeNS(null, 'stroke-opacity', value);
 				
+			} else if( 'stroke-opacity' == name ){
+				svgDomElem.setAttributeNS(null, 'stroke-opacity', value);
+				
 			} else if( 'strokeLinecap' == name ){
+				svgDomElem.setAttributeNS(null, 'stroke-linecap', value);
+				
+			} else if( 'stroke-linecap' == name ){
 				svgDomElem.setAttributeNS(null, 'stroke-linecap', value);
 				
 			} else if( 'pointRadius' == name ){
@@ -146,6 +164,9 @@ var Symbolizer = $n2.Class({
 				};
 				
 			} else if( 'pointerEvents' == name ){
+				svgDomElem.setAttributeNS(null, 'pointer-events', value);
+				
+			} else if( 'pointer-events' == name ){
 				svgDomElem.setAttributeNS(null, 'pointer-events', value);
 				
 			} else if( 'cursor' == name ){
