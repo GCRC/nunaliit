@@ -242,6 +242,13 @@ var DomStyler = $n2.Class({
 			_this._preserveSpaces($jq, opt);
 			$jq.removeClass('n2s_preserveSpaces').addClass('n2s_preservedSpaces');
 		});
+		
+		// Document List
+		$set.filter('.n2s_insertDocumentList').each(function(){
+			var $jq = $(this);
+			_this._insertDocumentList($jq, opt);
+			$jq.removeClass('n2s_insertDocumentList').addClass('n2s_insertedDocumentList');
+		});
 	},
 
 	_localize: function($jq, opt_) {
@@ -268,6 +275,24 @@ var DomStyler = $n2.Class({
 					node = node.nextSibling;
 				};
 			};
+		};
+	},
+	
+	_insertDocumentList: function($jq, opt_){
+		var listType = $jq.attr('n2-list-type');
+		var listName = $jq.attr('n2-list-name');
+		
+		$jq
+			.addClass('n2show_documentList_wait')
+			.empty();
+		
+		var dispatchService = this.showService.dispatchService;
+		if( dispatchService ) {
+			dispatchService.send(DH, {
+				type:'documentListQuery'
+				,listType: listType
+				,listName: listName
+			});
 		};
 	},
 	
@@ -1007,6 +1032,7 @@ var Show = $n2.Class({
 				_this._handleDispatch(msg, address, dispatchService);
 			};
 			dispatchService.register(DH, 'start', f);
+			dispatchService.register(DH, 'documentListResults', f);
 		};
 	},
 
@@ -1388,6 +1414,77 @@ var Show = $n2.Class({
 		};
 	},
 	
+	_handleDocumentListResults: function(m){
+		var _this = this;
+		
+		$('.n2show_documentList_wait').each(function(){
+			var $elem = $(this);
+			var listType = $elem.attr('n2-list-type');
+			var listName = $elem.attr('n2-list-name');
+			
+			if( listType === m.listType 
+			 && listName === m.listName ){
+				$elem
+					.removeClass('n2show_documentList_wait')
+					.empty();
+
+				// Are documents provided?
+				if( m.docs && m.docs.length > 0 ){
+					for(var i=0,e=m.docs.length; i<e; ++i){
+						var doc = m.docs[i];
+						var docId = doc._id;
+						
+						var $doc = $('<div>')
+							.addClass('n2show_documentList_item')
+							.appendTo($elem);
+						
+						var $a = $('<a>')
+							.attr('href','#')
+							.appendTo($doc);
+						
+						_this._displayDocumentBrief($a, doc);
+
+						installClick($a, docId);
+					};
+					
+				// If documents are not provided, docIds are compulsory
+				} else if( m.docIds && m.docIds.length > 0 ){
+					for(var i=0,e=m.docIds.length; i<e; ++i){
+						var docId = m.docIds[i];
+						
+						var $doc = $('<div>')
+							.addClass('n2show_documentList_item')
+							.appendTo($elem);
+						
+						var $a = $('<a>')
+							.addClass('n2s_referenceLink')
+							.attr('href','#')
+							.text(docId)
+							.appendTo($doc);
+					};
+					
+					_this.fixElementAndChildren($elem, {}, null);
+					
+				// If empty, set class to report it
+				} else {
+					$elem.addClass('n2show_documentList_empty');
+				};
+			};
+		});
+		
+		function installClick($a, docId){
+			$a.click(function(){
+				if( _this.dispatchService ) {
+					_this.dispatchService.send(DH, {
+						type:'userSelect'
+						,docId:docId
+					});
+				};
+				return false;
+			});
+		};
+	},
+	
 	_handleDispatch: function(m, address, dispatchService){
 		if( 'start' === m.type ){
 			// Accept Post-process display functions that are
@@ -1402,6 +1499,9 @@ var Show = $n2.Class({
 					};
 				};
 			};
+			
+		} else if( 'documentListResults' === m.type ) {
+			this._handleDocumentListResults(m);
 		};
 	}
 });

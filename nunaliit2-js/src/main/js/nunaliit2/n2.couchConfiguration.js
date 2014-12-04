@@ -397,6 +397,11 @@ function Configure(options_){
 			,atlasDesign: configuration.atlasDesign
 			,schemaRepository: configuration.directory.schemaRepository
 		});
+
+		configuration.directory.documentListService = new $n2.couchDocumentList.DocumentListService({
+			atlasDesign: configuration.atlasDesign
+			,dispatchService: configuration.directory.dispatchService
+		});
 		
 		callCustomConfiguration();
 	};
