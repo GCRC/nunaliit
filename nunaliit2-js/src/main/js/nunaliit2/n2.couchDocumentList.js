@@ -78,6 +78,9 @@ var DocumentListService = $n2.Class({
 		var keys = [];
 		if( m.listName ){
 			keys = m.listName.split(',');
+			for(var i=0,e=keys.length; i<e; ++i){
+				keys[i] = $n2.trim( keys[i] );
+			};
 		};
 		
 		if( this.dispatchService 
