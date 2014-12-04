@@ -63,7 +63,7 @@ public class DigestComputerSha1 implements DigestComputer {
 			return dd;
 			
 		} catch(Exception e) {
-			throw new Exception("Error while computing document digest for "+doc.getId());
+			throw new Exception("Error while computing document digest for "+doc.getId(), e);
 		}
 	}
 
