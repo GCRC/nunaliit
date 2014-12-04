@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="svg2"
+   sodipodi:docname="config_icon.svg"
+   viewBox="0 0 100 100"
+   version="1.1"
+   inkscape:version="0.48.4 r9939"
+   width="100%"
+   height="100%"
+   inkscape:export-filename="/home/jpfiset/eclipse/n2/nunaliit2/nunaliit2-js/src/main/js/nunaliit2/css/basic/images/config_icon.png"
+   inkscape:export-xdpi="25.200001"
+   inkscape:export-ydpi="25.200001">
+  <defs
+     id="defs9" />
+  <title
+     id="title5819">Gear as symbol for option button</title>
+  <sodipodi:namedview
+     id="base"
+     bordercolor="#666666"
+     inkscape:pageshadow="2"
+     inkscape:window-y="24"
+     pagecolor="#000000"
+     inkscape:window-height="1056"
+     inkscape:window-maximized="1"
+     inkscape:zoom="1.858189"
+     inkscape:window-x="65"
+     showgrid="false"
+     borderopacity="1.0"
+     inkscape:current-layer="layer1"
+     inkscape:cx="-129.51382"
+     inkscape:cy="58.321246"
+     inkscape:window-width="1855"
+     inkscape:pageopacity="1"
+     inkscape:document-units="px" />
+  <g
+     id="layer1"
+     inkscape:label="Livello 1"
+     inkscape:groupmode="layer"
+     transform="translate(0 -952.36)">
+    <path
+       id="path2989"
+       style="fill:#ffe1ff;fill-opacity:1"
+       inkscape:connector-curvature="0"
+       d="m 50.006665,970.90937 c -1.81339,0 -3.592886,0.16308 -5.322269,0.45783 l -0.844099,8.94213 c -1.788551,0.49855 -3.481337,1.19566 -5.064713,2.08885 l -6.910486,-5.70852 c -2.918816,2.06622 -5.473935,4.60649 -7.539913,7.52544 l 5.722814,6.91047 c -0.892139,1.58155 -1.604692,3.27856 -2.10314,5.06476 l -8.92704,0.8488 c -0.294863,1.7293 -0.457765,3.50867 -0.457765,5.33847 0,1.817 0.161896,3.5896 0.457827,5.3223 l 8.92767,0.8441 c 0.498472,1.7862 1.211064,3.4833 2.103139,5.0647 l -5.70854,6.9105 c 2.062205,2.9109 4.600348,5.4633 7.510989,7.5255 l 6.924949,-5.7229 c 1.584381,0.894 3.274904,1.6043 5.064714,2.1031 l 0.844098,8.9422 c 1.729381,0.2947 3.508879,0.4435 5.322269,0.4435 1.813327,0 3.57855,-0.1488 5.307932,-0.4435 l 0.844098,-8.9422 c 1.789872,-0.4988 3.480332,-1.2091 5.064713,-2.1031 l 6.92495,5.7229 c 2.910892,-2.0623 5.449034,-4.6147 7.510988,-7.5255 l -5.70854,-6.9105 c 0.892138,-1.5814 1.604692,-3.2785 2.10314,-5.0647 l 8.927669,-0.8441 c 0.295931,-1.7327 0.457827,-3.5053 0.457827,-5.3223 0,-1.8139 -0.162902,-3.59237 -0.457827,-5.32227 l -8.927669,-0.844 c -0.498474,-1.7862 -1.211066,-3.48329 -2.10314,-5.06475 l 5.722813,-6.91049 c -2.065915,-2.91906 -4.621034,-5.45928 -7.539914,-7.52545 l -6.910485,5.70854 c -1.583375,-0.8932 -3.276161,-1.59028 -5.064714,-2.08886 l -0.844098,-8.94213 c -1.729383,-0.29475 -3.494606,-0.45783 -5.307933,-0.45783 z m 0,19.47201 c 6.612436,0 11.96099,5.36236 11.96099,11.97472 0,6.6125 -5.348113,11.9749 -11.96099,11.9749 -6.612437,0 -11.974823,-5.3624 -11.974823,-11.9749 0,-6.61236 5.362386,-11.97472 11.974823,-11.97472 z" />
+  </g>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work>
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/publicdomain/" />
+        <dc:publisher>
+          <cc:Agent
+             rdf:about="http://openclipart.org/">
+            <dc:title>Openclipart</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:title>Gear as symbol for option button</dc:title>
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/publicdomain/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+</svg>
