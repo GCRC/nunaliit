@@ -1,0 +1,29 @@
+/* n2ForceGraph_settings */
+.n2ForceGraph_settings {
+	display: none;
+}
+
+.n2_content_contains_map .n2ForceGraph_settings {
+	position: absolute;
+	display: block;
+	top: 100px;
+	left: 10px;
+}
+
+.n2ForceGraph_settings_button {
+	background-image: url('images/config_icon.png');
+	width: 28px;
+	height: 28px;
+	border: none;
+	padding: none;
+}
+
+.n2ForceGraph_settings_panel {
+	background: url('openlayers/popup_bg.png') no-repeat top left;
+	padding: 11px 20px;
+	margin: 0 0 0 5px;
+}
+
+.n2ForceGraph_settings_panel_off {
+	display: none;
+}

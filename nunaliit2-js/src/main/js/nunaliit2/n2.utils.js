@@ -34,6 +34,7 @@ $Id: n2.utils.js 8415 2012-08-07 15:39:35Z jpfiset $
 // @requires n2.core.js
 // @namespace nunaliit2
 ;(function($n2){
+"use strict";
 
 /**
  	Logs to the console a string and a set of arguments. This works best with Firebug installed.
@@ -210,8 +211,9 @@ var n2UniqueId = 0;
 	@memberOf nunaliit2
 	@return {String} Unique string that can be used as an identifier
 */
-$n2.getUniqueId = function() {
-	var id = 'nunaliit2_uniqueId_'+n2UniqueId;
+$n2.getUniqueId = function(prefix) {
+	prefix = prefix ? prefix : 'nunaliit2_uniqueId_';
+	var id = prefix + n2UniqueId;
 	++n2UniqueId;
 	return id;
 };
