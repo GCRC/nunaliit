@@ -568,33 +568,33 @@ jsunit.defineTest('$n2.styleRuleParser',function($$){
 	t(ctxt_n, true, "onLayer('public')");
 	t(ctxt_n, false, "onLayer('approved')");
 	// selector
-	t(ctxt_n, 'aaa', "{a}");
-	t(ctxt_n, 1, "{b.c}");
-	t(ctxt_n, 1, "{b['c']}");
-	t(ctxt_n, 3, "{b['d']['e']}");
-	t(ctxt_n, 'public', "{nunaliit_layers[0]}");
-	t(ctxt_n, undefined, "{b.e}");
-	t(ctxt_n, undefined, "{c.d}");
-	t(ctxt_n, 2, "{b[{a}]}");
-	t(ctxt_n, '123456', "{_id}");
-	t(ctxt_n, '123456', "{{l}}");
+	t(ctxt_n, 'aaa', "doc.a");
+	t(ctxt_n, 1, "doc.b.c");
+	t(ctxt_n, 1, "doc.b['c']");
+	t(ctxt_n, 3, "doc.b['d']['e']");
+	t(ctxt_n, 'public', "doc.nunaliit_layers[0]");
+	t(ctxt_n, undefined, "doc.b.e");
+	t(ctxt_n, undefined, "doc.c.d");
+	t(ctxt_n, 2, "doc.b[doc.a]");
+	t(ctxt_n, '123456', "doc._id");
+	t(ctxt_n, '123456', "doc[doc.l]");
 	// Comparison
-	t(ctxt_n, true, "{a} == 'aaa'");
-	t(ctxt_n, false, "{a} == 'bbb'");
-	t(ctxt_n, false, "{a} != 'aaa'");
-	t(ctxt_n, true, "{a} != 'bbb'");
-	t(ctxt_n, true, "{b.c} >= 0");
-	t(ctxt_n, true, "{b.c} >= 1");
-	t(ctxt_n, false, "{b.c} >= 2");
-	t(ctxt_n, false, "{b.c} <= 0");
-	t(ctxt_n, true, "{b.c} <= 1");
-	t(ctxt_n, true, "{b.c} <= 2");
-	t(ctxt_n, true, "{b.c} > 0");
-	t(ctxt_n, false, "{b.c} > 1");
-	t(ctxt_n, false, "{b.c} > 2");
-	t(ctxt_n, false, "{b.c} < 0");
-	t(ctxt_n, false, "{b.c} < 1");
-	t(ctxt_n, true, "{b.c} < 2");
+	t(ctxt_n, true, "doc.a == 'aaa'");
+	t(ctxt_n, false, "doc.a == 'bbb'");
+	t(ctxt_n, false, "doc.a != 'aaa'");
+	t(ctxt_n, true, "doc.a != 'bbb'");
+	t(ctxt_n, true, "doc.b.c >= 0");
+	t(ctxt_n, true, "doc.b.c >= 1");
+	t(ctxt_n, false, "doc.b.c >= 2");
+	t(ctxt_n, false, "doc.b.c <= 0");
+	t(ctxt_n, true, "doc.b.c <= 1");
+	t(ctxt_n, true, "doc.b.c <= 2");
+	t(ctxt_n, true, "doc.b.c > 0");
+	t(ctxt_n, false, "doc.b.c > 1");
+	t(ctxt_n, false, "doc.b.c > 2");
+	t(ctxt_n, false, "doc.b.c < 0");
+	t(ctxt_n, false, "doc.b.c < 1");
+	t(ctxt_n, true, "doc.b.c < 2");
 	// Math
 	t(ctxt_n, true, "1+1 == 2");
 	t(ctxt_n, true, "4-3 == 1");
@@ -602,7 +602,36 @@ jsunit.defineTest('$n2.styleRuleParser',function($$){
 	t(ctxt_n, true, "9/3 == 3");
 	t(ctxt_n, true, "9%2 == 1");
 	t(ctxt_n, true, "'ab'+5+'cd' == 'ab5cd'");
-	t(ctxt_n, true, "{b.c} + {b.d.e} == 4");
+	t(ctxt_n, true, "doc.b.c + doc.b.d.e == 4");
+	// Priority...
+	// + *
+	t(ctxt_n, 7, "1+2*3");
+	t(ctxt_n, 9, "(1+2)*3");
+	t(ctxt_n, 5, "2*1+3");
+	t(ctxt_n, 8, "2*(1+3)");
+	// + /
+	t(ctxt_n, 3, "1+6/3");
+	t(ctxt_n, 3, "(3+6)/3");
+	t(ctxt_n, 4, "9/3+1");
+	t(ctxt_n, 3, "9/(2+1)");
+	// - *
+	t(ctxt_n, 1, "7-2*3");
+	t(ctxt_n, 3, "(3-2)*3");
+	t(ctxt_n, 5, "2*3-1");
+	t(ctxt_n, 4, "2*(3-1)");
+	// - /
+	t(ctxt_n, 4, "6-6/3");
+	t(ctxt_n, 0, "(6-6)/3");
+	t(ctxt_n, 2, "9/3-1");
+	t(ctxt_n, 3, "9/(4-1)");
+	// + >
+	t(ctxt_n, true, "1+4>2+1");
+	t(ctxt_n, false, "1+4<2+1");
+	// > &&
+	t(ctxt_n, true, "1<4 && 4>1");
+	t(ctxt_n, false, "1<4 && 4<1");
+	t(ctxt_n, false, "1>4 && 4>1");
+	t(ctxt_n, false, "1>4 && 4<1");
 });
 
 //*********
@@ -643,7 +672,7 @@ jsunit.defineTest('$n2.styleRule',function($$){
 				a: "approved"
 			}
 			,selected: {
-				b: "={name}"
+				b: "=doc.name"
 			}
 		}
 	];

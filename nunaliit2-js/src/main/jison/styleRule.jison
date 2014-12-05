@@ -3,187 +3,105 @@
 
 %{
 
-var ExpressionAnd = function(n1, n2){
-	this.n1 = n1;
-	this.n2 = n2;
-};
-ExpressionAnd.prototype.getValue = function(ctxt){
-	var r1 = this.n1.getValue(ctxt);
-	if( r1 ){
-		return this.n2.getValue(ctxt);
-	};
-	return false;
-};
-
-var ExpressionOr = function(n1, n2){
-	this.n1 = n1;
-	this.n2 = n2;
-};
-ExpressionOr.prototype.getValue = function(ctxt){
-	var r1 = this.n1.getValue(ctxt);
-	if( !r1 ){
-		return this.n2.getValue(ctxt);
-	};
-	return true;
-};
-
-var ExpressionNot = function(n){
-	this.n = n;
-};
-ExpressionNot.prototype.getValue = function(ctxt){
-	var r = this.n.getValue(ctxt);
-	if( r ){
+// Functions in the global space receives the context object
+// as 'this' and the arguments in the form of an instance of
+// class Argument
+var global = {
+	isSelected: function(){
+		return this.n2_selected;
+	}
+	,isHovered: function(){
+		return this.n2_hovered;
+	}
+	,isFound: function(){
+		return this.n2_found;
+	}
+	,isPoint: function(){
+		return 'point' === this.n2_geometry;
+	}
+	,isLine: function(args){
+		return 'line' === this.n2_geometry;
+	}
+	,isPolygon: function(args){
+		return 'polygon' === this.n2_geometry;
+	}
+	,onLayer: function(args){
+		if( args ){
+			var layerId = args.getArgument(this, 0);
+			if( this.n2_doc 
+			 && this.n2_doc.nunaliit_layers ){
+			 	var index = this.n2_doc.nunaliit_layers.indexOf(layerId);
+				return (index >= 0);
+			};
+		};
 		return false;
-	};
-	return true;
+	}
 };
 
-var IsSelected = function(args_){
-	var args = [];
-	if( args_ ){
-		args = args_.getArguments();
-	};
-	if( args.length != 0 ){
-		throw 'isSelected() does not accept arguments';
-	};
+// -----------------------------------------------------------
+var FunctionCall = function(value, args){
+	this.value = value;
+	this.args = args;
 };
-IsSelected.prototype.getValue = function(ctxt){
-	return ctxt.n2_selected;
-};
-
-var IsHovered = function(args_){
-	var args = [];
-	if( args_ ){
-		args = args_.getArguments();
-	};
-	if( args.length != 0 ){
-		throw 'isHovered() does not accept arguments';
-	};
-};
-IsHovered.prototype.getValue = function(ctxt){
-	return ctxt.n2_hovered;
-};
-
-var IsFound = function(args_){
-	var args = [];
-	if( args_ ){
-		args = args_.getArguments();
-	};
-	if( args.length != 0 ){
-		throw 'isFound() does not accept arguments';
-	};
-};
-IsFound.prototype.getValue = function(ctxt){
-	return ctxt.n2_found;
-};
-
-var IsPoint = function(args_){
-	var args = [];
-	if( args_ ){
-		args = args_.getArguments();
-	};
-	if( args.length != 0 ){
-		throw 'isPoint() does not accept arguments';
-	};
-};
-IsPoint.prototype.getValue = function(ctxt){
-	return 'point' === ctxt.n2_geometry;
-};
-
-var IsLine = function(args_){
-	var args = [];
-	if( args_ ){
-		args = args_.getArguments();
-	};
-	if( args.length != 0 ){
-		throw 'isLine() does not accept arguments';
-	};
-};
-IsLine.prototype.getValue = function(ctxt){
-	return 'line' === ctxt.n2_geometry;
-};
-
-var IsPolygon = function(args_){
-	var args = [];
-	if( args_ ){
-		args = args_.getArguments();
-	};
-	if( args.length != 0 ){
-		throw 'isPolygon() does not accept arguments';
-	};
-};
-IsPolygon.prototype.getValue = function(ctxt){
-	return 'polygon' === ctxt.n2_geometry;
-};
-
-var IsSchema = function(args_){
-	var args = [];
-	if( args_ ){
-		args = args_.getArguments();
-	};
-	if( args.length != 1 ){
-		throw 'isSchema() must have exactly one argument';
-	};
-	this.schemaNameNode = args[0];
-};
-IsSchema.prototype.getValue = function(ctxt){
-	var schemaName = this.schemaNameNode.getValue(ctxt);
-	if( ctxt 
-	 && ctxt.n2_doc 
-	 && ctxt.n2_doc.nunaliit_schema === schemaName ){
-		return true;
+FunctionCall.prototype.getValue = function(ctxt){
+	var value = this.value.getValue(ctxt);
+	if( typeof value === 'function' ){
+		return value.call(ctxt, this.args);
 	};
 	return false;
 };
 
-var OnLayer = function(args_){
-	var args = [];
-	if( args_ ){
-		args = args_.getArguments();
+// -----------------------------------------------------------
+// Argument
+var Argument = function(a1, a2){
+	this.valueNode = a1;
+	if( a2 ){
+		this.nextArgument = a2;
+	} else {
+		this.nextArgument = null;
 	};
-	if( args.length != 1 ){
-		throw 'onLayer() must have exactly one argument';
-	};
-	this.layerIdNode = args[0];
 };
-OnLayer.prototype.getValue = function(ctxt){
-	var layerId = this.layerIdNode.getValue(ctxt);
-	if( ctxt 
-	 && ctxt.n2_doc 
-	 && ctxt.n2_doc.nunaliit_layers ){
-	 	var index = ctxt.n2_doc.nunaliit_layers.indexOf(layerId);
-		return (index >= 0);
-	};
-	return false;
-};
-
-function createFunctionNode(fName, args){
-	if( 'isSelected' === fName ){
-		return new IsSelected(args);
-		
-	} else if( 'isHovered' === fName ){
-		return new IsHovered(args);
-		
-	} else if( 'isFound' === fName ){
-		return new IsFound(args);
-		
-	} else if( 'isSchema' === fName ){
-		return new IsSchema(args);
-
-	} else if( 'isPoint' === fName ){
-		return new IsPoint(args);
-
-	} else if( 'isLine' === fName ){
-		return new IsLine(args);
-
-	} else if( 'isPolygon' === fName ){
-		return new IsPolygon(args);
-		
-	} else if( 'onLayer' === fName ){
-		return new OnLayer(args);
+Argument.prototype.getCount = function(){
+	if( this.nextArgument ){
+		return 1 + this.nextArgument.getCount();
 	};
 	
-	throw 'Function '+fName+'() is not recognized';
+	return 1;
+};
+Argument.prototype.getArgument = function(ctxt, position){
+	if( position < 1 ){
+		return this.valueNode.getValue(ctxt);
+	};
+	
+	if( this.nextArgument ){
+		this.nextArgument.getArgument(ctxt, position-1);
+	};
+	
+	return undefined;
+};
+
+// -----------------------------------------------------------
+var Expression = function(n1, op, n2){
+	this.n1 = n1;
+	this.n2 = n2;
+	this.op = op;
+};
+Expression.prototype.getValue = function(ctxt){
+	var r1 = this.n1.getValue(ctxt);
+	var r2 = undefined;
+	if( this.n2 ){
+		r2 = this.n2.getValue(ctxt);
+	};
+	if( '!' === this.op ){
+		return !r1;
+		
+	} else if( '&&' === this.op ){
+		return (r1 && r2);
+		
+	} else if( '||' === this.op ){
+		return (r1 || r2);
+	};
+	return false;
 };
 
 // -----------------------------------------------------------
@@ -261,55 +179,37 @@ var ObjectSelector = function(id, previousSelector){
 	this.previousSelector = previousSelector;
 };
 ObjectSelector.prototype.getValue = function(ctxt){
-	var obj = undefined;
-	if( ctxt ) {
-		obj = ctxt.n2_doc;
-	};
-	return this._getValue(ctxt,obj);
-};
-ObjectSelector.prototype._getValue = function(ctxt,obj){
-	// Get selection to here
-	var result = obj;
-	if(this.previousSelector){
-		result = this.previousSelector._getValue(ctxt,obj);
-	};
-	
-	// Perform next level of selection
-	if( typeof result === 'undefined' ){
-	} else if( null === result ) {
-		result = undefined;
-	} else if( typeof result === 'object' ) {
+	var obj = this.previousSelector.getValue(ctxt);
+	if( typeof obj === 'object' ){
 		var id = this.idNode.getValue(ctxt);
-		result = result[id];
-	} else {
-		result = undefined;
+		if( typeof id === 'undefined' ){
+			return undefined;
+		};
+		
+		return obj[id];
 	};
-	
-	return result;
+
+	return undefined;
 };
 
 // -----------------------------------------------------------
-// Argument
-var Argument = function(a1, a2){
-	if( a2 ){
-		this.a1 = a1;
-		this.a2 = a2;
-	} else {
-		this.valueNode = a1;
-	};
+var Variable = function(variableName){
+	this.variableName = variableName;
 };
-Argument.prototype.getArguments = function(ctxt){
-	var args = [];
-	this._getArguments(ctxt, args);
-	return args;
-};
-Argument.prototype._getArguments = function(ctxt, args){
-	if( this.valueNode ){
-		args.push(this.valueNode);
-	} else {
-		this.a1._getArguments(ctxt, args);
-		this.a2._getArguments(ctxt, args);
+Variable.prototype.getValue = function(ctxt){
+	var obj = undefined;
+	
+	if( ctxt && 'doc' === this.variableName ) {
+		obj = ctxt.n2_doc;
+		
+	} else if( ctxt && ctxt[this.variableName] ) {
+		obj = ctxt[this.variableName];
+		
+	} else if( global && global[this.variableName] ) {
+		obj = global[this.variableName];
 	};
+	
+	return obj;
 };
 
 %}
@@ -322,7 +222,7 @@ Argument.prototype._getArguments = function(ctxt, args){
 "true"                 { return 'true'; }
 "false"                { return 'false'; }
 [0-9]+("."[0-9]+)?\b   { return 'NUMBER'; }
-[_a-zA-Z][_a-zA-Z0-9]* { return 'IDENTIFIER'; }
+[_a-zA-Z][_a-zA-Z0-9]* { return 'VAR_NAME'; }
 "'"(\\\'|[^'])*"'"     { yytext = yytext.substr(1,yytext.length-2); return 'STRING'; }
 "=="                   { return '=='; }
 "!="                   { return '!='; }
@@ -354,6 +254,7 @@ Argument.prototype._getArguments = function(ctxt, args){
 /* operator associations and precedence */
 
 %left '&&' '||'
+%left '<' '>' '<=' '>=' '==' '!='
 %left '+' '-'
 %left '*' '/' '%'
 %left ','
@@ -365,39 +266,28 @@ Argument.prototype._getArguments = function(ctxt, args){
 %% /* language grammar */
 
 program
-    : expression EOF
+    : value EOF
         { return $1; }
     ;
 
-expression
-    : expression '&&' expression
+value
+    : value '&&' value
         {
-        	$$ = new ExpressionAnd($1,$3);
+        	$$ = new Expression($1,'&&',$3);
         }
-    | expression '||' expression
+    | value '||' value
         {
-        	$$ = new ExpressionOr($1,$3);
+        	$$ = new Expression($1,'||',$3);
         }
-    | '!' expression
+    | '!' value
         {
-        	$$ = new ExpressionNot($2);
+        	$$ = new Expression($2,'!');
         }
-    | '(' expression ')'
+    | '(' value ')'
     	{
     		$$ = $2;
     	}
-    | comparison
-    	{
-    		$$ = $1;
-    	}
-    | value
-    	{
-    		$$ = $1;
-    	}
-    ;
-    
-comparison
-    : value '==' value
+    | value '==' value
         {
         	$$ = new Comparison($1,$3,'==');
         }
@@ -421,21 +311,18 @@ comparison
         {
         	$$ = new Comparison($1,$3,'<');
         }
-    ;
-    
-value
-	: 'IDENTIFIER' '(' ')'
+	| identifier '(' ')'
         {
-        	$$ = createFunctionNode($1,null);
+        	$$ = new FunctionCall($1,null);
         }
-    | 'IDENTIFIER' '(' arguments ')'
+    | identifier '(' arguments ')'
         {
-        	$$ = createFunctionNode($1,$3);
+        	$$ = new FunctionCall($1,$3);
         }
-    | '{' selector '}'
-    	{
-    		$$ = $2;
-    	}
+    | identifier
+        {
+        	$$ = $1;
+        }
     | 'true'
     	{
     		$$ = new Literal(true);
@@ -485,25 +372,20 @@ arguments
         }
     ;
 
-selector
-    : selector '.' 'IDENTIFIER'
+identifier
+    : identifier '.' 'VAR_NAME'
         {
         	var id = new Literal($3);
         	$$ = new ObjectSelector(id,$1);
         }
-    | selector '[' value ']'
+    | identifier '[' value ']'
         {
         	$$ = new ObjectSelector($3,$1);
         }
-    | 'IDENTIFIER'
+    | 'VAR_NAME'
         {
-        	var id = new Literal($1);
-        	$$ = new ObjectSelector(id);
+        	$$ = new Variable($1);
         }
-    | '{' selector '}'
-    	{
-        	$$ = new ObjectSelector($2);
-    	}
     ;
 
 %%
