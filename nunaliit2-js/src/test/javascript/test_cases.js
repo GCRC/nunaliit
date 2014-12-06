@@ -675,6 +675,12 @@ jsunit.defineTest('$n2.styleRule',function($$){
 				b: "=doc.name"
 			}
 		}
+		,{
+			condition: "isSchema('place')"
+			,normal: {
+				a: "place"
+			}
+		}
 	];
 	var doc1 = {
 		_id: '123456'
@@ -685,6 +691,11 @@ jsunit.defineTest('$n2.styleRule',function($$){
 		_id: '123457'
 		,name: 'doc2'
 		,nunaliit_layers: ['approved']
+	};
+	var doc3 = {
+		_id: '123457'
+		,name: 'doc2'
+		,nunaliit_schema: 'place'
 	};
 	var ctxt_n = {
 		n2_selected: false
@@ -745,4 +756,5 @@ jsunit.defineTest('$n2.styleRule',function($$){
 	t(rules, ctxt_s,  doc2, 'approved', 'doc2',    'normal');
 	t(rules, ctxt_h,  doc2, 'approved', 'normal',  'hovered');
 	t(rules, ctxt_sh, doc2, 'approved', 'doc2',    'hovered');
+	t(rules, ctxt_n,  doc3, 'place',    'normal',  'normal');
 });

@@ -47,6 +47,82 @@ var TrueNode = $n2.Class({
 var g_TrueNode = new TrueNode();
 
 //--------------------------------------------------------------------------
+var svgSymbolNames = {
+	'fill': {
+		alt: 'fillColor'
+		,applies: {
+			circle: true
+			,line: false
+			,path: true
+		}
+	}
+	,'fill-opacity': {
+		alt: 'fillOpacity'
+		,applies: {
+			circle: true
+			,line: false
+			,path: true
+		}
+	}
+	,'stroke': {
+		alt: 'strokeColor'
+		,applies: {
+			circle: true
+			,line: true
+			,path: true
+		}
+	}
+	,'stroke-width': {
+		alt: 'strokeWidth'
+		,applies: {
+			circle: true
+			,line: true
+			,path: true
+		}
+	}
+	,'stroke-opacity': {
+		alt: 'strokeOpacity'
+		,applies: {
+			circle: true
+			,line: true
+			,path: true
+		}
+	}
+	,'stroke-linecap': {
+		alt: 'strokeLinecap'
+		,applies: {
+			circle: true
+			,line: true
+			,path: true
+		}
+	}
+	,'r': {
+		alt: 'pointRadius'
+		,applies: {
+			circle: true
+			,line: false
+			,path: false
+		}
+	}
+	,'pointer-events': {
+		alt: 'pointEvents'
+		,applies: {
+			circle: true
+			,line: true
+			,path: true
+		}
+	}
+	,'cursor': {
+		alt: 'cursor'
+		,applies: {
+			circle: true
+			,line: true
+			,path: true
+		}
+	}
+};
+
+//--------------------------------------------------------------------------
 var Symbolizer = $n2.Class({
 	
 	symbols: null,
@@ -112,65 +188,18 @@ var Symbolizer = $n2.Class({
 		var hasFill = true;
 		
 		var nodeName = svgDomElem.nodeName.toLowerCase();
-		if(nodeName === 'circle'){
-			isCircle = true;
-		};
-		if(nodeName === 'line'){
-			hasFill = false;
-		};
-		
-		for(var name in this.symbols){
+
+		for(var name in svgSymbolNames){
+			var info = svgSymbolNames[name];
 			var value = this.getSymbolValue(name,ctxt);
+			if( !value && info.alt ){
+				value = this.getSymbolValue(info.alt,ctxt);
+			};
 			
-			if( 'fillColor' == name && hasFill ){
-				svgDomElem.setAttributeNS(null, 'fill', value);
-				
-			} else if( 'fill-color' == name && hasFill ){
-					svgDomElem.setAttributeNS(null, 'fill', value);
-					
-			} else if( 'fillOpacity' == name && hasFill ){
-				svgDomElem.setAttributeNS(null, 'fill-opacity', value);
-				
-			} else if( 'fill-opacity' == name && hasFill ){
-				svgDomElem.setAttributeNS(null, 'fill-opacity', value);
-			
-			} else if( 'strokeColor' == name ){
-				svgDomElem.setAttributeNS(null, 'stroke', value);
-				
-			} else if( 'stroke-color' == name ){
-				svgDomElem.setAttributeNS(null, 'stroke', value);
-				
-			} else if( 'strokeWidth' == name ){
-				svgDomElem.setAttributeNS(null, 'stroke-width', value);
-				
-			} else if( 'stroke-width' == name ){
-				svgDomElem.setAttributeNS(null, 'stroke-width', value);
-				
-			} else if( 'strokeOpacity' == name ){
-				svgDomElem.setAttributeNS(null, 'stroke-opacity', value);
-				
-			} else if( 'stroke-opacity' == name ){
-				svgDomElem.setAttributeNS(null, 'stroke-opacity', value);
-				
-			} else if( 'strokeLinecap' == name ){
-				svgDomElem.setAttributeNS(null, 'stroke-linecap', value);
-				
-			} else if( 'stroke-linecap' == name ){
-				svgDomElem.setAttributeNS(null, 'stroke-linecap', value);
-				
-			} else if( 'pointRadius' == name ){
-				if( isCircle ){
-					svgDomElem.setAttributeNS(null, 'r', value);
+			if( value ){
+				if( info.applies[nodeName] ){
+					svgDomElem.setAttributeNS(null, name, value);
 				};
-				
-			} else if( 'pointerEvents' == name ){
-				svgDomElem.setAttributeNS(null, 'pointer-events', value);
-				
-			} else if( 'pointer-events' == name ){
-				svgDomElem.setAttributeNS(null, 'pointer-events', value);
-				
-			} else if( 'cursor' == name ){
-				svgDomElem.setAttributeNS(null, 'cursor', value);
 			};
 		};
 	}
@@ -239,21 +268,21 @@ var StyleRules = $n2.Class({
 		var rule = loadRuleFromObject({
 			condition: "true"
 			,normal: {
-				fillColor: '#ffffff'
-				,strokeColor: '#ee9999'
-				,strokeWidth: 2
-				,fillOpacity: 0.4
-				,strokeOpacity: 1
-				,strokeLinecap: "round"
-				,strokeDashstyle: "solid"
+				'fillColor': '#ffffff'
+				,'strokeColor': '#ee9999'
+				,'strokeWidth': 2
+				,'fillOpacity': 0.4
+				,'strokeOpacity': 1
+				,'strokeLinecap': "round"
+				,'strokeDashstyle': "solid"
 				,pointRadius: 6
 				,pointerEvents: "visiblePainted"
 			}
 			,selected: {
-				strokeColor: "#ff2200"
+				'strokeColor': "#ff2200"
 			}
 			,hovered: {
-				fillColor: "#0000ff"
+				'fillColor': "#0000ff"
 			}
 		});
 		this.addRule(rule);
@@ -261,10 +290,10 @@ var StyleRules = $n2.Class({
 		var rule = loadRuleFromObject({
 			condition: "isLine()"
 			,hovered:{
-				strokeColor: "#0000ff"
+				'strokeColor': "#0000ff"
 			}
 			,hoveredClicked:{
-				strokeColor: "#0000ff"
+				'strokeColor': "#0000ff"
 			}
 		});
 		this.addRule(rule);

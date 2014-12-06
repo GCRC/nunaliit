@@ -25,10 +25,20 @@ var global = {
 	,isPolygon: function(args){
 		return 'polygon' === this.n2_geometry;
 	}
+	,isSchema: function(args){
+		if( args ){
+			var schemaName = args.getArgument(this, 0);
+			if( schemaName && this.n2_doc ){
+				return (schemaName === this.n2_doc.nunaliit_schema);
+			};
+		};
+		return false;
+	}
 	,onLayer: function(args){
 		if( args ){
 			var layerId = args.getArgument(this, 0);
-			if( this.n2_doc 
+			if( layerId
+			 && this.n2_doc 
 			 && this.n2_doc.nunaliit_layers ){
 			 	var index = this.n2_doc.nunaliit_layers.indexOf(layerId);
 				return (index >= 0);
