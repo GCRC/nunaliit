@@ -887,6 +887,12 @@ var Display = $n2.Class({
 	
 		function refreshDocWithSchema(doc, schema){
 			var docId = doc._id;
+
+			// Refresh buttons under main document display
+			$('.n2Display_buttons_'+$n2.utils.stringToHtmlId(docId)).each(function(){
+				var $elem = $(this);
+				_this._refreshButtons($elem);
+			});
 			
 			$('.displayRelatedButton_'+$n2.utils.stringToHtmlId(docId)).each(function(){
 				var $buttonDiv = $(this);
