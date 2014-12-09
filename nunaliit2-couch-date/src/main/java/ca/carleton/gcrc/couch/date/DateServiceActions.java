@@ -10,7 +10,8 @@ import org.json.JSONObject;
 
 import ca.carleton.gcrc.couch.date.impl.DateSource;
 import ca.carleton.gcrc.couch.date.impl.DocumentWithInterval;
-import ca.carleton.gcrc.couch.date.impl.Interval;
+import ca.carleton.gcrc.couch.date.impl.NowReference;
+import ca.carleton.gcrc.couch.date.impl.TimeInterval;
 import ca.carleton.gcrc.couch.date.impl.SerializableToDot;
 import ca.carleton.gcrc.couch.date.impl.SerializableToInfo;
 
@@ -22,9 +23,9 @@ public class DateServiceActions {
 		this.dateSource = dateSource;
 	}
 
-	public JSONObject getDocIdsFromInterval(long min, long max) throws Exception {
-		Interval interval = new Interval(min,max);
-		DateSource.SearchResults searchResults = dateSource.getDateIntervalsIntersectingWith(interval);
+	public JSONObject getDocIdsFromInterval(TimeInterval interval) throws Exception {
+		NowReference now = NowReference.now();
+		DateSource.SearchResults searchResults = dateSource.getDateIntervalsIntersectingWith(interval, now);
 		List<DocumentWithInterval> docWithInts = searchResults.documentWithIntervals;
 		
 		Set<String> docIds = new HashSet<String>();

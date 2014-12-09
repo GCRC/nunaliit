@@ -59,7 +59,7 @@ public class DateSourceCouchWithCluster implements DateSource, SerializableToDot
 				max = jsonInterval.optLong(1);
 			}
 			if( null != docId && max >= min ){
-				Interval interval = new Interval(min,max);
+				TimeInterval interval = new TimeInterval(min,max);
 				DocumentWithInterval docWithInt = new DocumentWithInterval(docId, interval);
 				results.documentWithIntervals.add(docWithInt);
 			}
@@ -69,10 +69,10 @@ public class DateSourceCouchWithCluster implements DateSource, SerializableToDot
 	}
 
 	@Override
-	public SearchResults getDateIntervalsIntersectingWith(Interval interval) throws Exception {
+	public SearchResults getDateIntervalsIntersectingWith(TimeInterval interval, NowReference now) throws Exception {
 		SearchResults results = new SearchResults();
 		
-		List<Integer> clusterIds = clusterTree.clusterIdsFromInterval(interval);
+		List<Integer> clusterIds = clusterTree.clusterIdsFromInterval(interval, now);
 		results.clusterCount = clusterIds.size();
 		JSONArray keys = new JSONArray();
 		keys.put(JSONObject.NULL); // always include un-indexed intervals
@@ -99,8 +99,8 @@ public class DateSourceCouchWithCluster implements DateSource, SerializableToDot
 				max = key.optLong(1);
 			}
 			if( null != docId && max >= min ){
-				Interval docInterval = new Interval(min,max);
-				if( docInterval.intersectsWith(interval) ){
+				TimeInterval docInterval = new TimeInterval(min,max);
+				if( docInterval.intersectsWith(interval, now) ){
 					DocumentWithInterval docWithInt = new DocumentWithInterval(docId, docInterval);
 					results.documentWithIntervals.add(docWithInt);
 					results.intervalMatched++;

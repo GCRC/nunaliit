@@ -7,14 +7,14 @@ import ca.carleton.gcrc.couch.date.cluster.TreeElement;
 public class DateStructureElement implements TreeElement {
 
 	private JSONObject dateStructure;
-	private Interval interval;
+	private TimeInterval interval;
 	private Integer clusterId;
 	
 	public DateStructureElement(JSONObject dateStructure) throws Exception{
 		this.dateStructure = dateStructure;
 		long min = dateStructure.getLong("min");
 		long max = dateStructure.getLong("max");
-		this.interval = new Interval(min, max);
+		this.interval = new TimeInterval(min, max);
 		
 		int clusterId = dateStructure.optInt("index", -1);
 		if( clusterId >= 0 ){
@@ -23,7 +23,7 @@ public class DateStructureElement implements TreeElement {
 	}
 	
 	@Override
-	public Interval getInterval() {
+	public TimeInterval getInterval() {
 		return interval;
 	}
 

@@ -11,8 +11,16 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ca.carleton.gcrc.couch.date.impl.Interval;
+import ca.carleton.gcrc.couch.date.impl.NowReference;
+import ca.carleton.gcrc.couch.date.impl.TimeInterval;
 
+/**
+ * This is the implementation of a cluster tree. It accepts a number of elements
+ * and builds an index. It creates a number of nodes to manage the various clusters
+ * which ultimately are the keys to the index.
+ * 
+ * A tree is made of nodes in a tree arrangement. The tree holds to the root node.
+ */
 public class Tree implements IntervalClusterTree {
 	
 	static public Tree restoreTree(JSONObject jsonTree, TreeOperations operations) throws Exception {
@@ -59,9 +67,14 @@ public class Tree implements IntervalClusterTree {
 	static private JSONObject saveNode(TreeNode node) throws Exception {
 		JSONObject jsonNode = new JSONObject();
 		
+		TimeInterval nodeInterval = node.getInterval();
 		jsonNode.put("id", node.getClusterId());
-		jsonNode.put("min", node.getInterval().getMin());
-		jsonNode.put("max", node.getInterval().getMax());
+		jsonNode.put("min", nodeInterval.getMin());
+		if( nodeInterval.endsNow() ){
+			jsonNode.put("max", "now");
+		} else {
+			jsonNode.put("max", node.getInterval().getMax(null));
+		}
 		jsonNode.put("mid", node.getMidPoint());
 
 		TreeNode lowChildNode = node.getLowChildNode();
@@ -110,7 +123,10 @@ public class Tree implements IntervalClusterTree {
 		pw.println("}");
 	}
 	
-	static public void nodeToDot(TreeNode node, PrintWriter pw, Map<Integer,TreeOperations.ClusterInfo> infoByClusterId){
+	static public void nodeToDot(
+			TreeNode node
+			,PrintWriter pw
+			,Map<Integer,TreeOperations.ClusterInfo> infoByClusterId) throws Exception{
 		
 		TreeOperations.ClusterInfo info = infoByClusterId.get(node.getClusterId());
 		
@@ -119,8 +135,13 @@ public class Tree implements IntervalClusterTree {
 			count = info.count;
 		}
 		
-		pw.println("n"+node.getClusterId()+" [label=\""+count+","+node.getInterval().getMin()+","
-				+node.getInterval().getMax()+"\"];");
+		TimeInterval nodeInterval = node.getInterval();
+		String minStr = ""+nodeInterval.getMin();
+		String maxStr = "now";
+		if( !nodeInterval.endsNow() ){
+			maxStr = ""+nodeInterval.getMax(null);
+		}
+		pw.println("n"+node.getClusterId()+" [label=\""+count+","+minStr+","+maxStr+"\"];");
 		
 		if( null != node.getLowChildNode() ){
 			nodeToDot(node.getLowChildNode(), pw, infoByClusterId);
@@ -140,9 +161,9 @@ public class Tree implements IntervalClusterTree {
 		public long minInterval = 0;
 	}
 	
-	static public void treeToInfo(Tree tree, PrintWriter pw){
+	static public void treeToInfo(Tree tree, PrintWriter pw) throws Exception {
 		TreeInfo treeInfo = new TreeInfo();
-		treeInfo.minInterval = tree.getRootNode().getInterval().getSize();
+		treeInfo.minInterval = tree.getRootNode().getInterval().getSize(null);
 		
 		treeInfo.legacyNodeCount = tree.getLegacyNodes().size();
 		
@@ -156,15 +177,15 @@ public class Tree implements IntervalClusterTree {
 		
 	}
 
-	static private void nodeToInfo(TreeNode node, TreeInfo treeInfo, int depth){
+	static private void nodeToInfo(TreeNode node, TreeInfo treeInfo, int depth) throws Exception {
 		treeInfo.nodeCount++;
 		
 		if( treeInfo.maxDepth < depth ){
 			treeInfo.maxDepth = depth;
 		}
 		
-		if( treeInfo.minInterval > node.getInterval().getSize() ){
-			treeInfo.minInterval = node.getInterval().getSize();
+		if( treeInfo.minInterval > node.getInterval().getSize(null) ){
+			treeInfo.minInterval = node.getInterval().getSize(null);
 		}
 		
 		if( null != node.getLowChildNode() ){
@@ -270,15 +291,17 @@ public class Tree implements IntervalClusterTree {
 	}
 
 	@Override
-	synchronized public List<Integer> clusterIdsFromInterval(Interval interval) {
+	synchronized public List<Integer> clusterIdsFromInterval(
+			TimeInterval interval, 
+			NowReference now) throws Exception {
 		List<Integer> clusterIds = new Vector<Integer>();
 		
 		for(TreeNode legacyNode : legacyNodes){
-			legacyNode.accumulateClusterIdsFromInterval(interval, clusterIds);
+			legacyNode.accumulateClusterIdsFromInterval(interval, clusterIds, now);
 		}
 		
 		if( null != rootNode ){
-			rootNode.accumulateClusterIdsFromInterval(interval, clusterIds);
+			rootNode.accumulateClusterIdsFromInterval(interval, clusterIds, now);
 		}
 		
 		return clusterIds;

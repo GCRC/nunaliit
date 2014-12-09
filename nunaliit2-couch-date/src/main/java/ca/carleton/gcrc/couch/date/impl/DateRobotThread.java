@@ -258,7 +258,8 @@ public class DateRobotThread extends Thread implements CouchDbChangeListener {
 			treeElements.add(e);
 		}
 		
-		TreeInsertProcess.Result treeInsertInfo = TreeInsertProcess.insertElements(clusterTree, treeElements);
+		NowReference now = NowReference.now();
+		TreeInsertProcess.Result treeInsertInfo = TreeInsertProcess.insertElements(clusterTree, treeElements, now);
 		
 		if( treeInsertInfo.isTreeModified() ){
 			TreeOperations ops = clusterTree.getOperations();

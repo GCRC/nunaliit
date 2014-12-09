@@ -3,7 +3,6 @@ package ca.carleton.gcrc.couch.date.cluster;
 import java.util.List;
 import java.util.Vector;
 
-import ca.carleton.gcrc.couch.date.impl.Interval;
 import junit.framework.TestCase;
 
 public class TreeRebalanceProcessTest extends TestCase {
@@ -63,23 +62,13 @@ public class TreeRebalanceProcessTest extends TestCase {
 		if(rootNode.getInterval().getMin() != -5){
 			fail("Unexpected min: "+rootNode.getInterval().getMin());
 		}
-		if(rootNode.getInterval().getMax() != 5){
-			fail("Unexpected max: "+rootNode.getInterval().getMax());
+		if(rootNode.getInterval().getMax(null) != 5){
+			fail("Unexpected max: "+rootNode.getInterval().getMax(null));
 		}
 		
 		long mid = rootNode.getMidPoint();
 		if( 0 != mid ){
 			fail("Unexpected mid point: "+mid);
-		}
-		
-		Interval lowInt = new Interval(-5,mid);
-		if( false == lowInt.equals( rootNode.getLowChildNode().getInterval() ) ){
-			fail("Unexpected interval for low node: "+rootNode.getLowChildNode().getInterval());
-		}
-		
-		Interval highInt = new Interval(mid,5);
-		if( false == highInt.equals( rootNode.getHighChildNode().getInterval() ) ){
-			fail("Unexpected interval for high node: "+rootNode.getHighChildNode().getInterval());
 		}
 	}
 	
@@ -103,8 +92,8 @@ public class TreeRebalanceProcessTest extends TestCase {
 		if(rootNode.getInterval().getMin() != -5){
 			fail("Unexpected min: "+rootNode.getInterval().getMin());
 		}
-		if(rootNode.getInterval().getMax() != 5){
-			fail("Unexpected max: "+rootNode.getInterval().getMax());
+		if(rootNode.getInterval().getMax(null) != 5){
+			fail("Unexpected max: "+rootNode.getInterval().getMax(null));
 		}
 
 		if( 3 != tree.getLegacyNodes().size() ){

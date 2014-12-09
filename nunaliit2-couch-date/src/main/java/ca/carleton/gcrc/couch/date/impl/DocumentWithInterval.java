@@ -3,9 +3,9 @@ package ca.carleton.gcrc.couch.date.impl;
 public class DocumentWithInterval {
 
 	private String docId;
-	private Interval interval;
+	private TimeInterval interval;
 	
-	public DocumentWithInterval(String docId, Interval interval){
+	public DocumentWithInterval(String docId, TimeInterval interval){
 		this.docId = docId;
 		this.interval = interval;
 	}
@@ -14,7 +14,7 @@ public class DocumentWithInterval {
 		return docId;
 	}
 
-	public Interval getInterval() {
+	public TimeInterval getInterval() {
 		return interval;
 	}
 	

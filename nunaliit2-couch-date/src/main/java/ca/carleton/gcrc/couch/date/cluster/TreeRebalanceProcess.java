@@ -6,95 +6,35 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
-import ca.carleton.gcrc.couch.date.impl.Interval;
+import ca.carleton.gcrc.couch.date.impl.TimeInterval;
 
 public class TreeRebalanceProcess {
 	
 	static final int NODE_ELEMENT_THRESHOLD = 32;
 
+	/**
+	 * Results of creating or rebalancing a cluster tree.
+	 *
+	 */
 	static public class Result {
 		public List<TreeNode> legacyNodes = new Vector<TreeNode>();
 		public TreeNode rootNode = null;
 		public int nextClusterId;
 	}
-	
-	static private class TreeNodeWithElements {
-		private TreeNode node;
-		private List<TreeElement> elements = new Vector<TreeElement>();
-		private TreeNodeWithElements lowNode = null;
-		private TreeNodeWithElements highNode = null;
-		
-		public TreeNodeWithElements(int clusterId, Interval interval) throws Exception {
-			node = new TreeNode(clusterId, interval);
-		}
-		
-		public TreeNode getNode(){
-			return node;
-		}
-		
-		public void addElement(TreeElement element, Result results) throws Exception {
-			
-			if( null != lowNode && lowNode.includes(element) ){
-				// It fits in low node
-				lowNode.addElement(element, results);
-				
-			} else if( null != highNode && highNode.includes(element) ){
-				// It fits in high node
-				highNode.addElement(element, results);
-				
-			} else {
-				elements.add(element);
-				
-				if( elements.size() > NODE_ELEMENT_THRESHOLD 
-				 && null == lowNode ){
-					// Time to create children nodes
-					{
-						Interval lowInterval = new Interval(node.getInterval().getMin(), node.getMidPoint());
-						int lowClusterId = results.nextClusterId;
-						results.nextClusterId++;
-						lowNode = new TreeNodeWithElements(lowClusterId, lowInterval);
-						node.setLowChildNode( lowNode.node );
-						
-						List<TreeElement> childElements = new ArrayList<TreeElement>(elements.size());
-						for(TreeElement elem : elements){
-							if( lowNode.includes(elem) ){
-								childElements.add(elem);
-								lowNode.addElement(elem, results);
-							}
-						}
-						elements.removeAll(childElements);
-					}
 
-					{
-						Interval highInterval = new Interval(node.getMidPoint(), node.getInterval().getMax());
-						int highClusterId = results.nextClusterId;
-						results.nextClusterId++;
-						highNode = new TreeNodeWithElements(highClusterId, highInterval);
-						node.setHighChildNode( highNode.node );
-						
-						List<TreeElement> childElements = new ArrayList<TreeElement>(elements.size());
-						for(TreeElement elem : elements){
-							if( highNode.includes(elem) ){
-								childElements.add(elem);
-								highNode.addElement(elem, results);
-							}
-						}
-						elements.removeAll(childElements);
-					}
-				}
-			}
-		}
-
-		private boolean includes(TreeElement element) {
-			return element.getInterval().isIncludedIn( node.getInterval() );
-		}
-	}
-	
-	static TreeRebalanceProcess.Result createTree(List<? extends TreeElement> elements) throws Exception {
+	/**
+	 * Creates a new cluster tree given the provided elements. If these elements were already
+	 * part of a cluster, then legacy cluster nodes are created to account for those elements.
+	 * This is the perfect process in case the previous tree was lost. 
+	 * @param elements Elements to be considered for the new tree.
+	 * @return Results of creating a new tree.
+	 * @throws Exception
+	 */
+	static public TreeRebalanceProcess.Result createTree(List<? extends TreeElement> elements) throws Exception {
 		Result results = new Result();
 
 		// Compute full interval, next cluster id and legacy nodes
-		Interval fullInterval = null;
+		TimeInterval fullInterval = null;
 		results.nextClusterId = 1;
 		Map<Integer,TreeNode> legacyNodes = new HashMap<Integer,TreeNode>();
 		for(TreeElement element : elements){
@@ -129,18 +69,15 @@ public class TreeRebalanceProcess {
 		// Need a full interval
 		if( null == fullInterval ){
 			// Create a default one
-			fullInterval = new Interval(0, 1500000000000L);
+			fullInterval = new TimeInterval(0, 1500000000000L);
 		}
 		
 		// Create root node for tree
-		TreeNodeWithElements rootNodeWithElements = new TreeNodeWithElements(results.nextClusterId, fullInterval);
+		TreeNode rootNode = new TreeNode(results.nextClusterId, fullInterval);
 		results.nextClusterId++;
-		for(TreeElement element : elements){
-			rootNodeWithElements.addElement(element, results);
-		}
 		
 		// Install root node in results
-		results.rootNode = rootNodeWithElements.getNode();
+		results.rootNode = rootNode;
 		
 		// Install legacy nodes in results
 		results.legacyNodes.addAll( legacyNodes.values() );

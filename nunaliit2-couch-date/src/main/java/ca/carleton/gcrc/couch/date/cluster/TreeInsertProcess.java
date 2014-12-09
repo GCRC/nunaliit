@@ -5,12 +5,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
-import ca.carleton.gcrc.couch.date.impl.Interval;
+import ca.carleton.gcrc.couch.date.impl.NowReference;
+import ca.carleton.gcrc.couch.date.impl.TimeInterval;
 
+/**
+ * This class is used to insert a new element in the cluster tree.
+ *
+ */
 public class TreeInsertProcess {
 
 	static final int NODE_ELEMENT_THRESHOLD = 32;
 
+	/**
+	 * Results of inserting elements in a cluster tree. Reports
+	 * if the tree was modified and where each element is
+	 * inserted.
+	 */
 	static public class Result {
 		private Tree tree;
 		private boolean treeModified = false;
@@ -45,13 +55,21 @@ public class TreeInsertProcess {
 		}
 	}
 	
-	static public Result insertElements(Tree tree, List<TreeElement> elements) throws Exception{
+	/**
+	 * Modifies a cluster tree as a result of adding a new elements in the
+	 * tree.
+	 * @param tree Tree where the element is inserted.
+	 * @param elements Elements to be inserted in the tree
+	 * @return Results of inserting the elements
+	 * @throws Exception
+	 */
+	static public Result insertElements(Tree tree, List<TreeElement> elements, NowReference now) throws Exception {
 		
 		Result result = new Result(tree);
 		
 		TreeNode rootNode = tree.getRootNode();
 		for(TreeElement element : elements){
-			insertElement(rootNode, element, result, tree.getOperations());
+			insertElement(rootNode, element, result, tree.getOperations(), now);
 		}
 		
 		return result;
@@ -61,39 +79,39 @@ public class TreeInsertProcess {
 			TreeNode node, 
 			TreeElement element, 
 			Result result, 
-			TreeOperations operations) throws Exception {
-		Interval elemInt = element.getInterval();
+			TreeOperations operations,
+			NowReference now) throws Exception {
+		TimeInterval elemInt = element.getInterval();
 		
-		if( false == elemInt.isIncludedIn(node.getInterval()) ){
+		if( false == elemInt.isIncludedIn(node.getInterval(), now) ){
 			// Must grow interval
 			node.extendTo( element.getInterval() );
 			result.treeModified = true;
 		}
 		
-		if( elemInt.getMax() <= node.getMidPoint() 
+		if( elemInt.getMax(now) <= node.getMidPoint() 
 		 && null != node.getLowChildNode() ){
-			insertElement(node.getLowChildNode(), element, result, operations);
+			insertElement(node.getLowChildNode(), element, result, operations, now);
 			
 		} else if( elemInt.getMin() >= node.getMidPoint() 
 		 && null != node.getHighChildNode() ){
-			insertElement(node.getHighChildNode(), element, result, operations);
+			insertElement(node.getHighChildNode(), element, result, operations, now);
 		
 		} else {
 			// Check if low should be created
 			if( null == node.getLowChildNode() 
-			 && elemInt.getMax() <= node.getMidPoint() ){
+			 && elemInt.getMax(now) <= node.getMidPoint() ){
 				int count = 1;
 				List<TreeElement> nodeElements = operations.getElementsForClusterId(node.getClusterId());
 				for(TreeElement nodeElement : nodeElements){
-					if( nodeElement.getInterval().getMax() <= node.getMidPoint() ){
+					if( nodeElement.getInterval().getMax(now) <= node.getMidPoint() ){
 						++count;
 					}
 				}
 				if( count > NODE_ELEMENT_THRESHOLD ){
 					// Should create low
 					int clusterId = result.getNextClusterId();
-					Interval childInt = new Interval(node.getInterval().getMin(), node.getMidPoint());
-					TreeNode childNode = new TreeNode(clusterId,childInt);
+					TreeNode childNode = new TreeNode(clusterId,elemInt);
 					node.setLowChildNode(childNode);
 					result.treeModified = true;
 					
@@ -115,8 +133,7 @@ public class TreeInsertProcess {
 				if( count > NODE_ELEMENT_THRESHOLD ){
 					// Should create low
 					int clusterId = result.getNextClusterId();
-					Interval childInt = new Interval(node.getMidPoint(), node.getInterval().getMax());
-					TreeNode childNode = new TreeNode(clusterId,childInt);
+					TreeNode childNode = new TreeNode(clusterId,elemInt);
 					node.setHighChildNode(childNode);
 					result.treeModified = true;
 					

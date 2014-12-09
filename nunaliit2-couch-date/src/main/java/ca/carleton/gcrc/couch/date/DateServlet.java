@@ -17,6 +17,8 @@ import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.date.impl.DateRobotThread;
 import ca.carleton.gcrc.couch.date.impl.DateSourceCouchWithCluster;
+import ca.carleton.gcrc.couch.date.impl.NowReference;
+import ca.carleton.gcrc.couch.date.impl.TimeInterval;
 import ca.carleton.gcrc.json.servlet.JsonServlet;
 
 @SuppressWarnings("serial")
@@ -94,11 +96,18 @@ public class DateServlet extends JsonServlet {
 				if( null == maxs || maxs.length != 1 ){
 					throw new Exception("Parameter 'max' must be specified exactly once");
 				}
+
+				TimeInterval interval = null;
+				if( "now".equals(maxs[0].trim()) ){
+					long min = Long.parseLong(mins[0]);
+					interval = new TimeInterval(min,NowReference.now());
+				} else {
+					long min = Long.parseLong(mins[0]);
+					long max = Long.parseLong(maxs[0]);
+					interval = new TimeInterval(min,max);
+				}
 				
-				long min = Long.parseLong(mins[0]);
-				long max = Long.parseLong(maxs[0]);
-				
-				JSONObject result = actions.getDocIdsFromInterval(min, max);
+				JSONObject result = actions.getDocIdsFromInterval(interval);
 				sendJsonResponse(response, result);
 				
 			} else if( paths.size() == 1

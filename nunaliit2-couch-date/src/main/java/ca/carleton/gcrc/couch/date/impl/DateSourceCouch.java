@@ -38,7 +38,7 @@ public class DateSourceCouch implements DateSource {
 				max = jsonInterval.optLong(1);
 			}
 			if( null != docId && max >= min ){
-				Interval interval = new Interval(min,max);
+				TimeInterval interval = new TimeInterval(min,max);
 				DocumentWithInterval docWithInt = new DocumentWithInterval(docId, interval);
 				results.documentWithIntervals.add(docWithInt);
 			}
@@ -48,7 +48,7 @@ public class DateSourceCouch implements DateSource {
 	}
 
 	@Override
-	public SearchResults getDateIntervalsIntersectingWith(Interval range) throws Exception {
+	public SearchResults getDateIntervalsIntersectingWith(TimeInterval range, NowReference now) throws Exception {
 		SearchResults results = new SearchResults();
 
 		CouchQuery query = new CouchQuery();
@@ -69,8 +69,8 @@ public class DateSourceCouch implements DateSource {
 				max = jsonInterval.optLong(1);
 			}
 			if( null != docId && max >= min ){
-				Interval interval = new Interval(min,max);
-				if( interval.intersectsWith(range) ){
+				TimeInterval interval = new TimeInterval(min,max);
+				if( interval.intersectsWith(range, now) ){
 					DocumentWithInterval docWithInt = new DocumentWithInterval(docId, interval);
 					results.documentWithIntervals.add(docWithInt);
 					results.intervalMatched++;
