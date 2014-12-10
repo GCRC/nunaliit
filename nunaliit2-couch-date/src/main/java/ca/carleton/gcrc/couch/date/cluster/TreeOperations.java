@@ -8,6 +8,7 @@ public interface TreeOperations {
 		Integer clusterId;
 		long min;
 		long max;
+		boolean ongoing;
 		int count;
 	}
 

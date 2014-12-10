@@ -13,6 +13,7 @@ import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchQuery;
 import ca.carleton.gcrc.couch.client.CouchQueryResults;
+import ca.carleton.gcrc.couch.date.impl.TimeInterval;
 import ca.carleton.gcrc.couch.utils.CouchNunaliitUtils;
 
 public class CouchTreeOperations implements TreeOperations {
@@ -47,13 +48,14 @@ public class CouchTreeOperations implements TreeOperations {
 					clusterId = row.getInt("key");
 				}
 			}
-			JSONArray jsonInterval = row.getJSONArray("value");
+
+			JSONObject jsonInterval = row.getJSONObject("value");
+			TimeInterval timeInterval = TimeInterval.fromJson(jsonInterval);
 			
 			CouchTreeElement element = new CouchTreeElement(
 					docId, 
 					clusterId, 
-					jsonInterval.getLong(0), 
-					jsonInterval.getLong(1)
+					timeInterval
 					);
 			elements.add(element);
 		}
@@ -85,13 +87,14 @@ public class CouchTreeOperations implements TreeOperations {
 					elemClusterId = row.getInt("key");
 				}
 			}
-			JSONArray jsonInterval = row.getJSONArray("value");
+			
+			JSONObject jsonInterval = row.getJSONObject("value");
+			TimeInterval timeInterval = TimeInterval.fromJson(jsonInterval);
 			
 			CouchTreeElement element = new CouchTreeElement(
 					docId, 
 					elemClusterId, 
-					jsonInterval.getLong(0), 
-					jsonInterval.getLong(1)
+					timeInterval
 					);
 			elements.add(element);
 		}
@@ -218,8 +221,13 @@ public class CouchTreeOperations implements TreeOperations {
 			ClusterInfo info = new ClusterInfo();
 			info.clusterId = clusterId;
 			info.min = jsonInfo.getLong("min");
-			info.max = jsonInfo.getLong("max");
 			info.count = jsonInfo.getInt("count");
+			info.ongoing = jsonInfo.optBoolean("ongoing",false);
+			if( info.ongoing ){
+				info.max = info.min;
+			} else {
+				info.max = jsonInfo.getLong("max");
+			}
 			
 			infoObjs.add(info);
 		}

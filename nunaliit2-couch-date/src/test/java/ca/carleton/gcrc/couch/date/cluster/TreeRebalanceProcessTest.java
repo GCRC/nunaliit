@@ -58,7 +58,7 @@ public class TreeRebalanceProcessTest extends TestCase {
 		TreeRebalanceProcess.Result treeInfo = TreeRebalanceProcess.createTree(elements);
 		Tree tree = new Tree(treeInfo, (TreeOperations)null);
 		
-		TreeNode rootNode = tree.getRootNode();
+		TreeNodeRegular rootNode = tree.getRegularRootNode();
 		if(rootNode.getInterval().getMin() != -5){
 			fail("Unexpected min: "+rootNode.getInterval().getMin());
 		}
@@ -88,7 +88,7 @@ public class TreeRebalanceProcessTest extends TestCase {
 		TreeRebalanceProcess.Result treeInfo = TreeRebalanceProcess.createTree(elements);
 		Tree tree = new Tree(treeInfo, (TreeOperations)null);
 		
-		TreeNode rootNode = tree.getRootNode();
+		TreeNodeRegular rootNode = tree.getRegularRootNode();
 		if(rootNode.getInterval().getMin() != -5){
 			fail("Unexpected min: "+rootNode.getInterval().getMin());
 		}
@@ -107,7 +107,7 @@ public class TreeRebalanceProcessTest extends TestCase {
 		TreeRebalanceProcess.Result treeInfo = TreeRebalanceProcess.createTree(elements);
 		Tree tree = new Tree(treeInfo, (TreeOperations)null);
 		
-		TreeNode rootNode = tree.getRootNode();
+		TreeNodeRegular rootNode = tree.getRegularRootNode();
 		if( null == rootNode ){
 			fail("Must be able to create a tree, even if no prior information is available.");
 		}

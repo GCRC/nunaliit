@@ -8,9 +8,10 @@ public class CouchTreeElement implements TreeElement {
 	private TimeInterval interval;
 	private String docId;
 	
-	public CouchTreeElement(String docId, Integer clusterId, long min, long max) throws Exception {
+	public CouchTreeElement(String docId, Integer clusterId, TimeInterval interval) throws Exception {
+		this.docId = docId;
 		this.clusterId = clusterId;
-		this.interval = new TimeInterval(min, max);
+		this.interval = interval;
 	}
 	
 	@Override

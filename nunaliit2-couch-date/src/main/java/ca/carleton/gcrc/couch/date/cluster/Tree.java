@@ -20,14 +20,65 @@ import ca.carleton.gcrc.couch.date.impl.TimeInterval;
  * which ultimately are the keys to the index.
  * 
  * A tree is made of nodes in a tree arrangement. The tree holds to the root node.
+ * 
+ * There is also a list of legacy nodes. The legacy nodes represents clusters from a
+ * previous tree. These clusters are still referenced in the database by documents. However,
+ * there is no need for these nodes to be arranged in a tree since no more elements are
+ * added to those nodes.
  */
 public class Tree implements IntervalClusterTree {
 	
 	static public Tree restoreTree(JSONObject jsonTree, TreeOperations operations) throws Exception {
-		TreeNode node = restoreNode(jsonTree);
+
 		int nextId = jsonTree.getInt("nextId");
+
+		// Regular root node
+		TreeNodeRegular regularNode = null;
+		JSONObject regularRoot = jsonTree.optJSONObject("regularRoot");
+		if( null == regularRoot ){
+			if( null != jsonTree.opt("min") 
+			 && null != jsonTree.opt("max")
+			 && null != jsonTree.opt("mid") ){
+				// Legacy image of tree.
+				TreeNode node = restoreNode(jsonTree);
+				if( node instanceof TreeNodeRegular ){
+					regularNode = (TreeNodeRegular)node;
+				} else {
+					throw new Exception("Unexpected class for regular root node: "+node.getClass().getName());
+				}
+			}
+		} else {
+			TreeNode node = restoreNode(regularRoot);
+			if( node instanceof TreeNodeRegular ){
+				regularNode = (TreeNodeRegular)node;
+			} else {
+				throw new Exception("Unexpected class for regular root node: "+node.getClass().getName());
+			}
+		}
+		if( null == regularNode ){
+			TimeInterval interval = new TimeInterval(0, 1500000000000L);
+			regularNode = new TreeNodeRegular(nextId, interval);
+			++nextId;
+		}
 		
-		Tree tree = new Tree(node, nextId, operations);
+		// Ongoing root node
+		TreeNodeOngoing ongoingNode = null;
+		JSONObject nowRoot = jsonTree.optJSONObject("nowRoot");
+		if( null != nowRoot ){
+			TreeNode node = restoreNode(nowRoot);
+			if( node instanceof TreeNodeOngoing ){
+				ongoingNode = (TreeNodeOngoing)node;
+			} else {
+				throw new Exception("Unexpected class for now root node: "+node.getClass().getName());
+			}
+		}
+		if( null == ongoingNode ){
+			TimeInterval interval = new TimeInterval(0, (NowReference)null);
+			ongoingNode = new TreeNodeOngoing(nextId, interval);
+			++nextId;
+		}
+		
+		Tree tree = new Tree(regularNode, ongoingNode, nextId, operations);
 		
 		JSONArray legacyNodes = jsonTree.optJSONArray("legacyNodes");
 		if( null != legacyNodes ){
@@ -44,24 +95,60 @@ public class Tree implements IntervalClusterTree {
 	static private TreeNode restoreNode(JSONObject jsonTree) throws Exception {		
 		int id = jsonTree.getInt("id");
 		long min = jsonTree.getLong("min");
-		long max = jsonTree.getLong("max");
 		long mid = jsonTree.getLong("mid");
-		
-		TreeNode node = new TreeNode(id, min, max, mid);
+		boolean ongoing = jsonTree.optBoolean("ongoing",false);
 
-		JSONObject jsonLowChild = jsonTree.optJSONObject("l");
-		if( null != jsonLowChild ) {
-			TreeNode childNode = restoreNode(jsonLowChild);
-			node.setLowChildNode(childNode);
-		}
+		if( ongoing ){
+			TreeNodeOngoing node = new TreeNodeOngoing(id, min, mid);
 
-		JSONObject jsonHighChild = jsonTree.optJSONObject("h");
-		if( null != jsonHighChild ) {
-			TreeNode childNode = restoreNode(jsonHighChild);
-			node.setHighChildNode(childNode);
+			JSONObject jsonLowChild = jsonTree.optJSONObject("l");
+			if( null != jsonLowChild ) {
+				TreeNode childNode = restoreNode(jsonLowChild);
+				if( childNode instanceof TreeNodeOngoing ){
+					node.setLowChildNode((TreeNodeOngoing)childNode);
+				} else {
+					throw new Exception("Attempting to insert an invalid node in a "+TreeNodeOngoing.class.getName());
+				}
+			}
+
+			JSONObject jsonHighChild = jsonTree.optJSONObject("h");
+			if( null != jsonHighChild ) {
+				TreeNode childNode = restoreNode(jsonHighChild);
+				if( childNode instanceof TreeNodeOngoing ){
+					node.setHighChildNode((TreeNodeOngoing)childNode);
+				} else {
+					throw new Exception("Attempting to insert an invalid node in a "+TreeNodeOngoing.class.getName());
+				}
+			}
+			
+			return node;
+			
+		} else {
+			long max = jsonTree.getLong("max");
+			TreeNodeRegular node = new TreeNodeRegular(id, min, max, mid);
+
+			JSONObject jsonLowChild = jsonTree.optJSONObject("l");
+			if( null != jsonLowChild ) {
+				TreeNode childNode = restoreNode(jsonLowChild);
+				if( childNode instanceof TreeNodeRegular ){
+					node.setLowChildNode((TreeNodeRegular)childNode);
+				} else {
+					throw new Exception("Attempting to insert an invalid node in a "+TreeNodeRegular.class.getName());
+				}
+			}
+
+			JSONObject jsonHighChild = jsonTree.optJSONObject("h");
+			if( null != jsonHighChild ) {
+				TreeNode childNode = restoreNode(jsonHighChild);
+				if( childNode instanceof TreeNodeRegular ){
+					node.setHighChildNode((TreeNodeRegular)childNode);
+				} else {
+					throw new Exception("Attempting to insert an invalid node in a "+TreeNodeRegular.class.getName());
+				}
+			}
+			
+			return node;
 		}
-		
-		return node;
 	}
 
 	static private JSONObject saveNode(TreeNode node) throws Exception {
@@ -70,8 +157,8 @@ public class Tree implements IntervalClusterTree {
 		TimeInterval nodeInterval = node.getInterval();
 		jsonNode.put("id", node.getClusterId());
 		jsonNode.put("min", nodeInterval.getMin());
-		if( nodeInterval.endsNow() ){
-			jsonNode.put("max", "now");
+		if( nodeInterval.isOngoing() ){
+			jsonNode.put("ongoing", true);
 		} else {
 			jsonNode.put("max", node.getInterval().getMax(null));
 		}
@@ -109,8 +196,15 @@ public class Tree implements IntervalClusterTree {
 		pw.println("digraph date {");
 		pw.println("ROOT [label=\""+rootCount+"\"];");
 		
-		nodeToDot(tree.rootNode, pw, infoByClusterId);
-		pw.println("ROOT -> n"+tree.rootNode.getClusterId()+";");
+		if( null != tree.regularRootNode ){
+			nodeToDot(tree.regularRootNode, pw, infoByClusterId);
+			pw.println("ROOT -> n"+tree.regularRootNode.getClusterId()+";");
+		}
+
+		if( null != tree.ongoingRootNode ){
+			nodeToDot(tree.ongoingRootNode, pw, infoByClusterId);
+			pw.println("ROOT -> n"+tree.ongoingRootNode.getClusterId()+";");
+		}
 		
 		List<TreeNode> legacyNodes = tree.legacyNodes;
 		if( null != legacyNodes ){
@@ -138,10 +232,10 @@ public class Tree implements IntervalClusterTree {
 		TimeInterval nodeInterval = node.getInterval();
 		String minStr = ""+nodeInterval.getMin();
 		String maxStr = "now";
-		if( !nodeInterval.endsNow() ){
+		if( !nodeInterval.isOngoing() ){
 			maxStr = ""+nodeInterval.getMax(null);
 		}
-		pw.println("n"+node.getClusterId()+" [label=\""+count+","+minStr+","+maxStr+"\"];");
+		pw.println("n"+node.getClusterId()+" [label=\"count:"+count+",min:"+minStr+",max:"+maxStr+"\"];");
 		
 		if( null != node.getLowChildNode() ){
 			nodeToDot(node.getLowChildNode(), pw, infoByClusterId);
@@ -157,22 +251,37 @@ public class Tree implements IntervalClusterTree {
 	static private class TreeInfo {
 		public int maxDepth = 0;
 		public int nodeCount = 0;
+		public int regularNodeCount = 0;
+		public int ongoingNodeCount = 0;
 		public int legacyNodeCount = 0;
 		public long minInterval = 0;
 	}
 	
 	static public void treeToInfo(Tree tree, PrintWriter pw) throws Exception {
 		TreeInfo treeInfo = new TreeInfo();
-		treeInfo.minInterval = tree.getRootNode().getInterval().getSize(null);
+		
+		if( null != tree.getRegularRootNode() ){
+			treeInfo.minInterval = tree.getRegularRootNode().getInterval().getSize(null);
+		} else {
+			treeInfo.minInterval = 0;
+		}
 		
 		treeInfo.legacyNodeCount = tree.getLegacyNodes().size();
 		
-		nodeToInfo(tree.getRootNode(), treeInfo, 1);
+		if( null != tree.getRegularRootNode() ){
+			nodeToInfo(tree.getRegularRootNode(), treeInfo, 1);
+		}
+		
+		if( null != tree.getOngoingRootNode() ){
+			nodeToInfo(tree.getOngoingRootNode(), treeInfo, 1);
+		}
 		
 		pw.println("Node count: "+treeInfo.nodeCount);
+		pw.println("Regular node count: "+treeInfo.regularNodeCount);
+		pw.println("On-going node count: "+treeInfo.ongoingNodeCount);
 		pw.println("Legacy node count: "+treeInfo.legacyNodeCount);
 		pw.println("Max node depth: "+treeInfo.maxDepth);
-		pw.println("Full interval: "+tree.getRootNode().getInterval());
+		pw.println("Full interval: "+tree.getRegularRootNode().getInterval());
 		pw.println("Min interval size: "+treeInfo.minInterval);
 		
 	}
@@ -184,8 +293,15 @@ public class Tree implements IntervalClusterTree {
 			treeInfo.maxDepth = depth;
 		}
 		
-		if( treeInfo.minInterval > node.getInterval().getSize(null) ){
-			treeInfo.minInterval = node.getInterval().getSize(null);
+		if( node.getInterval().isOngoing() ) {
+			++treeInfo.ongoingNodeCount;
+			
+		} else {
+			++treeInfo.regularNodeCount;
+			
+			if( treeInfo.minInterval > node.getInterval().getSize(null) ){
+				treeInfo.minInterval = node.getInterval().getSize(null);
+			}
 		}
 		
 		if( null != node.getLowChildNode() ){
@@ -200,18 +316,26 @@ public class Tree implements IntervalClusterTree {
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	private TreeOperations operations;
-	private TreeNode rootNode;
+	private TreeNodeRegular regularRootNode;
+	private TreeNodeOngoing ongoingRootNode;
 	private int nextId = 1;
 	private List<TreeNode> legacyNodes = new Vector<TreeNode>();
 	
-	public Tree(TreeNode rootNode, int nextId, TreeOperations operations){
-		this.rootNode = rootNode;
+	public Tree(
+		TreeNodeRegular regularRootNode, 
+		TreeNodeOngoing ongoingRootNode, 
+		int nextId, 
+		TreeOperations operations ){
+		
+		this.regularRootNode = regularRootNode;
+		this.ongoingRootNode = ongoingRootNode;
 		this.nextId = nextId;
 		this.operations = operations;
 	}
 
 	public Tree(TreeRebalanceProcess.Result treeInfo, TreeOperations operations){
-		rootNode = treeInfo.rootNode;
+		regularRootNode = treeInfo.regularRootNode;
+		ongoingRootNode = treeInfo.ongoingRootNode;
 		nextId = treeInfo.nextClusterId;
 		legacyNodes.addAll( treeInfo.legacyNodes );
 		this.operations = operations;
@@ -221,8 +345,12 @@ public class Tree implements IntervalClusterTree {
 		return operations;
 	}
 	
-	synchronized public TreeNode getRootNode(){
-		return rootNode;
+	synchronized public TreeNodeRegular getRegularRootNode(){
+		return regularRootNode;
+	}
+	
+	synchronized public TreeNodeOngoing getOngoingRootNode(){
+		return ongoingRootNode;
 	}
 	
 	synchronized public int getNextClusterId(){
@@ -266,16 +394,27 @@ public class Tree implements IntervalClusterTree {
 		}
 
 		synchronized(this){
-			rootNode = updatedTree.getRootNode();
+			regularRootNode = updatedTree.getRegularRootNode();
 			nextId = updatedTree.getNextClusterId();
 			legacyNodes = updatedTree.getLegacyNodes();
 		}
 	}
 	
 	synchronized public JSONObject toJSON() throws Exception {
-		JSONObject jsonObj = saveNode(rootNode);
+		JSONObject jsonObj = new JSONObject();
+		
+		JSONObject regularRoot = saveNode(regularRootNode);
+		if( null != regularRoot ){
+			jsonObj.put("regularRoot", regularRoot);
+		}
+		
+		JSONObject nowRoot = saveNode(ongoingRootNode);
+		if( null != nowRoot ){
+			jsonObj.put("nowRoot", nowRoot);
+		}
 		
 		jsonObj.put("nextId", nextId);
+		
 		if( legacyNodes.size() > 0 ){
 			JSONArray jsonLegacyNodes = new JSONArray();
 			
@@ -294,14 +433,19 @@ public class Tree implements IntervalClusterTree {
 	synchronized public List<Integer> clusterIdsFromInterval(
 			TimeInterval interval, 
 			NowReference now) throws Exception {
+		
 		List<Integer> clusterIds = new Vector<Integer>();
+		
+		if( null != regularRootNode ){
+			regularRootNode.accumulateClusterIdsFromInterval(interval, clusterIds, now);
+		}
+		
+		if( null != ongoingRootNode ){
+			ongoingRootNode.accumulateClusterIdsFromInterval(interval, clusterIds, now);
+		}
 		
 		for(TreeNode legacyNode : legacyNodes){
 			legacyNode.accumulateClusterIdsFromInterval(interval, clusterIds, now);
-		}
-		
-		if( null != rootNode ){
-			rootNode.accumulateClusterIdsFromInterval(interval, clusterIds, now);
 		}
 		
 		return clusterIds;

@@ -6,9 +6,11 @@ function(doc) {
 	n2utils.extractSpecificType(doc, 'date', arr);
 	for(var i=0,e=arr.length; i<e; ++i){
 		var d = arr[i];
-		if( typeof d.min === 'number' && typeof d.max === 'number' ){
-			var index = d.index ? d.index : null;
-			emit(index, [d.min,d.max]);
+		var index = d.index ? d.index : null;
+		if( d.ongoing && typeof d.min === 'number' ){
+			emit(index, {min:d.min,ongoing:true});
+		} else if( typeof d.min === 'number' && typeof d.max === 'number' ){
+			emit(index, {min:d.min,max:d.max});
 		};
 	};
 };

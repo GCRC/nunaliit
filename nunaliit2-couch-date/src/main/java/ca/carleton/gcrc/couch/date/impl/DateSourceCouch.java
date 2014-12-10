@@ -2,7 +2,6 @@ package ca.carleton.gcrc.couch.date.impl;
 
 import java.util.ArrayList;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
@@ -30,15 +29,9 @@ public class DateSourceCouch implements DateSource {
 		results.documentWithIntervals = new ArrayList<DocumentWithInterval>(queryResults.getRows().size());
 		for(JSONObject row : queryResults.getRows()){
 			String docId = row.optString("id");
-			JSONArray jsonInterval = row.optJSONArray("value");
-			long min = 0;
-			long max = -1;
-			if( null != jsonInterval && jsonInterval.length() >= 2 ){
-				min = jsonInterval.optLong(0);
-				max = jsonInterval.optLong(1);
-			}
-			if( null != docId && max >= min ){
-				TimeInterval interval = new TimeInterval(min,max);
+			JSONObject jsonInterval = row.optJSONObject("value");
+			if( null != docId && null != jsonInterval ){
+				TimeInterval interval = TimeInterval.fromJson(jsonInterval);
 				DocumentWithInterval docWithInt = new DocumentWithInterval(docId, interval);
 				results.documentWithIntervals.add(docWithInt);
 			}
@@ -60,16 +53,10 @@ public class DateSourceCouch implements DateSource {
 		results.documentWithIntervals = new ArrayList<DocumentWithInterval>(queryResults.getRows().size());
 		for(JSONObject row : queryResults.getRows()){
 			String docId = row.optString("id");
-			JSONArray jsonInterval = row.optJSONArray("value");
+			JSONObject jsonInterval = row.optJSONObject("value");
 			results.intervalCount++;
-			long min = 0;
-			long max = -1;
-			if( null != jsonInterval && jsonInterval.length() >= 2 ){
-				min = jsonInterval.optLong(0);
-				max = jsonInterval.optLong(1);
-			}
-			if( null != docId && max >= min ){
-				TimeInterval interval = new TimeInterval(min,max);
+			if( null != docId && null != jsonInterval ){
+				TimeInterval interval = TimeInterval.fromJson(jsonInterval);
 				if( interval.intersectsWith(range, now) ){
 					DocumentWithInterval docWithInt = new DocumentWithInterval(docId, interval);
 					results.documentWithIntervals.add(docWithInt);

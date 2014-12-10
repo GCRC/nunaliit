@@ -51,15 +51,9 @@ public class DateSourceCouchWithCluster implements DateSource, SerializableToDot
 		results.documentWithIntervals = new ArrayList<DocumentWithInterval>(queryResults.getRows().size());
 		for(JSONObject row : queryResults.getRows()){
 			String docId = row.optString("id");
-			JSONArray jsonInterval = row.optJSONArray("value");
-			long min = 0;
-			long max = -1;
-			if( null != jsonInterval && jsonInterval.length() >= 2 ){
-				min = jsonInterval.optLong(0);
-				max = jsonInterval.optLong(1);
-			}
-			if( null != docId && max >= min ){
-				TimeInterval interval = new TimeInterval(min,max);
+			JSONObject jsonInterval = row.optJSONObject("value");
+			if( null != docId && null != jsonInterval ){
+				TimeInterval interval = TimeInterval.fromJson(jsonInterval);
 				DocumentWithInterval docWithInt = new DocumentWithInterval(docId, interval);
 				results.documentWithIntervals.add(docWithInt);
 			}
@@ -90,16 +84,10 @@ public class DateSourceCouchWithCluster implements DateSource, SerializableToDot
 		results.documentWithIntervals = new ArrayList<DocumentWithInterval>(queryResults.getRows().size());
 		for(JSONObject row : queryResults.getRows()){
 			String docId = row.optString("id");
-			JSONArray key = row.optJSONArray("value");
+			JSONObject jsonInterval = row.optJSONObject("value");
 			results.intervalCount++;
-			long min = 0;
-			long max = -1;
-			if( null != key && key.length() >= 2 ){
-				min = key.optLong(0);
-				max = key.optLong(1);
-			}
-			if( null != docId && max >= min ){
-				TimeInterval docInterval = new TimeInterval(min,max);
+			if( null != docId && null != jsonInterval ){
+				TimeInterval docInterval = TimeInterval.fromJson(jsonInterval);
 				if( docInterval.intersectsWith(interval, now) ){
 					DocumentWithInterval docWithInt = new DocumentWithInterval(docId, docInterval);
 					results.documentWithIntervals.add(docWithInt);

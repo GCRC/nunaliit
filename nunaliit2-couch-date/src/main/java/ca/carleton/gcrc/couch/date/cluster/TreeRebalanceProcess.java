@@ -1,11 +1,11 @@
 package ca.carleton.gcrc.couch.date.cluster;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
+import ca.carleton.gcrc.couch.date.impl.NowReference;
 import ca.carleton.gcrc.couch.date.impl.TimeInterval;
 
 public class TreeRebalanceProcess {
@@ -17,8 +17,9 @@ public class TreeRebalanceProcess {
 	 *
 	 */
 	static public class Result {
+		public TreeNodeRegular regularRootNode = null;
+		public TreeNodeOngoing ongoingRootNode = null;
 		public List<TreeNode> legacyNodes = new Vector<TreeNode>();
-		public TreeNode rootNode = null;
 		public int nextClusterId;
 	}
 
@@ -34,17 +35,27 @@ public class TreeRebalanceProcess {
 		Result results = new Result();
 
 		// Compute full interval, next cluster id and legacy nodes
-		TimeInterval fullInterval = null;
+		TimeInterval fullRegularInterval = null;
+		TimeInterval fullOngoingInterval = null;
 		results.nextClusterId = 1;
-		Map<Integer,TreeNode> legacyNodes = new HashMap<Integer,TreeNode>();
+		Map<Integer,TreeNodeRegular> legacyRegularNodes = new HashMap<Integer,TreeNodeRegular>();
+		Map<Integer,TreeNodeOngoing> legacyOngoingNodes = new HashMap<Integer,TreeNodeOngoing>();
 		for(TreeElement element : elements){
 			Integer clusterId = element.getClusterId();
 			
-			// Accumulate full interval
-			if( null == fullInterval ){
-				fullInterval = element.getInterval();
+			// Accumulate full intervals
+			if( element.getInterval().isOngoing() ){
+				if( null == fullOngoingInterval ){
+					fullOngoingInterval = element.getInterval();
+				} else {
+					fullOngoingInterval = fullOngoingInterval.extendTo(element.getInterval());
+				}
 			} else {
-				fullInterval = fullInterval.extendTo(element.getInterval());
+				if( null == fullRegularInterval ){
+					fullRegularInterval = element.getInterval();
+				} else {
+					fullRegularInterval = fullRegularInterval.extendTo(element.getInterval());
+				}
 			}
 			
 			// Figure out next cluster id
@@ -56,32 +67,50 @@ public class TreeRebalanceProcess {
 			
 			// Accumulate legacy nodes
 			if( null != clusterId ){
-				TreeNode legacyNode = legacyNodes.get(clusterId);
-				if( null == legacyNode ){
-					legacyNode = new TreeNode(clusterId, element.getInterval());
-					legacyNodes.put(clusterId, legacyNode);
+				TimeInterval elementInterval = element.getInterval();
+				if( elementInterval.isOngoing() ){
+					TreeNodeOngoing legacyNode = legacyOngoingNodes.get(clusterId);
+					if( null == legacyNode ){
+						legacyNode = new TreeNodeOngoing(clusterId, element.getInterval());
+						legacyOngoingNodes.put(clusterId, legacyNode);
+					} else {
+						legacyNode.extendTo(element.getInterval());
+					}
 				} else {
-					legacyNode.extendTo(element.getInterval());
+					TreeNodeRegular legacyNode = legacyRegularNodes.get(clusterId);
+					if( null == legacyNode ){
+						legacyNode = new TreeNodeRegular(clusterId, element.getInterval());
+						legacyRegularNodes.put(clusterId, legacyNode);
+					} else {
+						legacyNode.extendTo(element.getInterval());
+					}
 				}
 			}
 		}
 		
 		// Need a full interval
-		if( null == fullInterval ){
+		if( null == fullRegularInterval ){
 			// Create a default one
-			fullInterval = new TimeInterval(0, 1500000000000L);
+			fullRegularInterval = new TimeInterval(0, 1500000000000L);
+		}
+		if( null == fullOngoingInterval ){
+			// Create a default one
+			fullOngoingInterval = new TimeInterval(0, (NowReference)null);
 		}
 		
 		// Create root node for tree
-		TreeNode rootNode = new TreeNode(results.nextClusterId, fullInterval);
+		TreeNodeRegular regularRootNode = new TreeNodeRegular(results.nextClusterId, fullRegularInterval);
+		results.nextClusterId++;
+		TreeNodeOngoing ongoingRootNode = new TreeNodeOngoing(results.nextClusterId, fullOngoingInterval);
 		results.nextClusterId++;
 		
 		// Install root node in results
-		results.rootNode = rootNode;
+		results.regularRootNode = regularRootNode;
+		results.ongoingRootNode = ongoingRootNode;
 		
 		// Install legacy nodes in results
-		results.legacyNodes.addAll( legacyNodes.values() );
-		
+		results.legacyNodes.addAll( legacyRegularNodes.values() );
+		results.legacyNodes.addAll( legacyOngoingNodes.values() );
 		return results;
 	}
 }

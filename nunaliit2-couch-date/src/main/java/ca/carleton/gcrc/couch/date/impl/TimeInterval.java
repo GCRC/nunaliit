@@ -1,10 +1,27 @@
 package ca.carleton.gcrc.couch.date.impl;
 
+import org.json.JSONObject;
+
 public class TimeInterval {
+	
+	static public TimeInterval fromJson(JSONObject jsonInterval) throws Exception {
+		TimeInterval timeInterval = null;
+		
+		boolean ongoing = jsonInterval.optBoolean("ongoing", false);
+		long min = jsonInterval.getLong("min");
+		if( ongoing ){
+			timeInterval = new TimeInterval(min, (NowReference)null);
+		} else {
+			long max = jsonInterval.getLong("max");
+			timeInterval = new TimeInterval(min, max);
+		}
+		
+		return timeInterval;
+	}
 	
 	private long min;
 	private long max;
-	private boolean endsNow;
+	private boolean ongoing;
 
 	public TimeInterval(long min, long max) throws Exception {
 		
@@ -14,22 +31,24 @@ public class TimeInterval {
 		
 		this.min = min;
 		this.max = max;
-		this.endsNow = false;
+		this.ongoing = false;
 	}
 
 	public TimeInterval(long min, NowReference now) throws Exception {
 		
-		if( now.getTime() < min ){
-			throw new Exception("Interval bounded by now can not be created with min greater than now reference");
+		if( null != now ) {
+			if( now.getTime() < min ){
+				throw new Exception("Interval bounded by now can not be created with min greater than now reference");
+			}
 		}
 		
 		this.min = min;
 		this.max = min;
-		this.endsNow = true;
+		this.ongoing = true;
 	}
 	
-	public boolean endsNow(){
-		return this.endsNow;
+	public boolean isOngoing(){
+		return this.ongoing;
 	}
 
 	public long getMin() {
@@ -37,7 +56,7 @@ public class TimeInterval {
 	}
 
 	public long getMax(NowReference now) throws Exception {
-		if( endsNow ){
+		if( ongoing ){
 			if( null == now ){
 				throw new Exception("Must provide now reference to access now interval max");
 			}
@@ -59,11 +78,11 @@ public class TimeInterval {
 		if( obj instanceof TimeInterval ){
 			TimeInterval another = (TimeInterval)obj;
 			
-			if( another.endsNow != endsNow ){
+			if( another.ongoing != ongoing ){
 				return false;
 			}
 		
-			if( endsNow ){
+			if( ongoing ){
 				if( another.min == min ) {
 					return true;
 				}
@@ -92,7 +111,7 @@ public class TimeInterval {
 	}
 	
 	public TimeInterval extendTo(TimeInterval interval) throws Exception {
-		if( endsNow != interval.endsNow ){
+		if( ongoing != interval.ongoing ){
 			throw new Exception("Can not extend between time intervals which are fixed and based on now");
 		}
 		
@@ -107,7 +126,7 @@ public class TimeInterval {
 
 		// Adjust max
 		long nextMax = max;
-		if( endsNow ){
+		if( ongoing ){
 			if( nextMax != nextMin ){
 				nextMax = nextMin;
 				newInstanceRequired = true;
@@ -120,7 +139,7 @@ public class TimeInterval {
 		}
 		
 		if( newInstanceRequired ) {
-			if( endsNow ){
+			if( ongoing ){
 				return new TimeInterval(nextMin, new NowReference(nextMin));
 			} else {
 				return new TimeInterval(nextMin, nextMax);
@@ -173,10 +192,23 @@ public class TimeInterval {
 	}
 	
 	public String toString(){
-		if( endsNow ){
+		if( ongoing ){
 			return "["+min+",now]";
 		} else {
 			return "["+min+","+max+"]";
 		}
+	}
+	
+	public JSONObject toJSON() throws Exception {
+		JSONObject jsonObj = new JSONObject();
+		
+		jsonObj.put("min", min);
+		if( ongoing ){
+			jsonObj.put("ongoing", true);
+		} else {
+			jsonObj.put("max", max);
+		}
+		
+		return jsonObj;
 	}
 }
