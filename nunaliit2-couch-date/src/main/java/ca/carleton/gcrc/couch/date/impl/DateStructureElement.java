@@ -13,8 +13,14 @@ public class DateStructureElement implements TreeElement {
 	public DateStructureElement(JSONObject dateStructure) throws Exception{
 		this.dateStructure = dateStructure;
 		long min = dateStructure.getLong("min");
-		long max = dateStructure.getLong("max");
-		this.interval = new TimeInterval(min, max);
+		
+		boolean ongoing = dateStructure.optBoolean("ongoing",false);
+		if( ongoing ){
+			this.interval = new TimeInterval(min, (NowReference)null);
+		} else {
+			long max = dateStructure.getLong("max");
+			this.interval = new TimeInterval(min, max);
+		}
 		
 		int clusterId = dateStructure.optInt("index", -1);
 		if( clusterId >= 0 ){

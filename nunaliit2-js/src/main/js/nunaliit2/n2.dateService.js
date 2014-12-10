@@ -53,23 +53,42 @@ var DateService = $n2.Class({
 			,onError: function(err){}
 		},opts_);
 		
+		var min = null;
 		if( !opts.interval 
-		 || typeof opts.interval.min !== 'number'
-		 || typeof opts.interval.max !== 'number' ){
+		 || typeof opts.interval.min !== 'number' ){
 			opts.onError('Interval must be supplied');
+			return;
+		} else {
+			min = opts.interval.min;
+		};
+		var ongoing = false;
+		var max = min;
+		if( typeof opts.interval.ongoing === 'boolean' ){
+			ongoing = opts.interval.ongoing;
+		};
+		if( !ongoing ){
+			if( typeof opts.interval.max !== 'number' ){
+				opts.onError('Interval must contain ongoing or max');
+				return;
+			} else {
+				max = opts.interval.max;
+			};
 		};
 		
-		var min = opts.interval.min;
-		var max = opts.interval.max;
+		var requestData = {
+			min: min	
+		};
+		if( ongoing ) {
+			requestData.ongoing = true;
+		} else {
+			requestData.max = max;
+		};
 		
 	    $.ajax({
 	    	url: this.url + 'docIdsFromInterval'
 	    	,type: 'get'
 	    	,async: true
-	    	,data: {
-	    		min: min
-	    		,max: max
-	    	}
+	    	,data: requestData
 	    	,dataType: 'json'
 	    	,success: function(res) {
 	    		if( res.docIds ) {

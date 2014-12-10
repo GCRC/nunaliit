@@ -194,7 +194,7 @@ public class Tree implements IntervalClusterTree {
 		}
 		
 		pw.println("digraph date {");
-		pw.println("ROOT [label=\""+rootCount+"\"];");
+		pw.println("ROOT [label=\"id:null,count:"+rootCount+"\"];");
 		
 		if( null != tree.regularRootNode ){
 			nodeToDot(tree.regularRootNode, pw, infoByClusterId);
@@ -235,7 +235,7 @@ public class Tree implements IntervalClusterTree {
 		if( !nodeInterval.isOngoing() ){
 			maxStr = ""+nodeInterval.getMax(null);
 		}
-		pw.println("n"+node.getClusterId()+" [label=\"count:"+count+",min:"+minStr+",max:"+maxStr+"\"];");
+		pw.println("n"+node.getClusterId()+" [label=\"id:"+node.getClusterId()+",count:"+count+",min:"+minStr+",max:"+maxStr+"\"];");
 		
 		if( null != node.getLowChildNode() ){
 			nodeToDot(node.getLowChildNode(), pw, infoByClusterId);

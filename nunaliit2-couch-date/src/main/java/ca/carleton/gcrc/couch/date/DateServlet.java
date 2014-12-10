@@ -88,22 +88,38 @@ public class DateServlet extends JsonServlet {
 				
 			} else if( paths.size() == 1
 			 && "docIdsFromInterval".equals(paths.get(0)) ) {
+				// Parameter 'min'
 				String[] mins = request.getParameterValues("min");
 				if( null == mins || mins.length != 1 ){
 					throw new Exception("Parameter 'min' must be specified exactly once");
 				}
-				String[] maxs = request.getParameterValues("max");
-				if( null == maxs || maxs.length != 1 ){
-					throw new Exception("Parameter 'max' must be specified exactly once");
+				long min = Long.parseLong(mins[0]);
+				
+				// Parameter 'ongoing'
+				String[] ongoings = request.getParameterValues("ongoing");
+				boolean ongoing = false;
+				if( null == ongoings ) {
+					// nothing to do
+				} else if( ongoings.length == 1 ) {
+					ongoing = Boolean.parseBoolean(ongoings[0]);
+				} else if( ongoings.length > 1 ){
+					throw new Exception("Parameter 'ongoing' must be specified at most once");
+				}
+				
+				// Parameter 'max'
+				long max = min;
+				if( !ongoing ){
+					String[] maxs = request.getParameterValues("max");
+					if( null == maxs || maxs.length != 1 ){
+						throw new Exception("If not ongoing request, parameter 'max' must be specified exactly once");
+					}
+					max = Long.parseLong(maxs[0]);
 				}
 
 				TimeInterval interval = null;
-				if( "now".equals(maxs[0].trim()) ){
-					long min = Long.parseLong(mins[0]);
+				if( ongoing ){
 					interval = new TimeInterval(min,NowReference.now());
 				} else {
-					long min = Long.parseLong(mins[0]);
-					long max = Long.parseLong(maxs[0]);
 					interval = new TimeInterval(min,max);
 				}
 				

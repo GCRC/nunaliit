@@ -236,8 +236,174 @@ jsunit.defineTest('$n2.interval',function($$){
 		$$.fail("Problem with min after extending");
 	};
 	if( 40 != interval4.max ){
+		$$.fail("Problem with max after extending");
+	};
+});
+
+//*********
+jsunit.defineTest('$n2.dateInterval',function($$){
+
+	var date1 = new $n2.date.DateInterval({min:10,max:20});
+	var date2 = new $n2.date.DateInterval({min:30,max:40});
+	var date3 = new $n2.date.DateInterval({min:0,max:50});
+	var now = 60;
+	
+	if( 10 !== date2.size(now) ){
+		$$.fail("date2.size(now) should be 10");
+	};
+	
+	if( !date1.equals(date1) ){
+		$$.fail("date1 should be equal to itself");
+	};
+	
+	if( date1.equals(date2) ){
+		$$.fail("date1 and date2 are not equal");
+	};
+	
+	if( date1.equals(null) ){
+		$$.fail("date1 should not be equal to null");
+	};
+	
+	if( !date1.equals({ongoing:false,min:10,max:20}) ){
+		$$.fail("date1 should be equal to an equivalent interval");
+	};
+	
+	if( date1.isIncludedIn(null,now) ){
+		$$.fail("date1 should not be included within null");
+	};
+	
+	if( !date1.isIncludedIn(date1,now) ){
+		$$.fail("date1 should be included within itself");
+	};
+	
+	if( !date1.isIncludedIn(date3,now) ){
+		$$.fail("date1 should be included within date3");
+	};
+	
+	if( date3.isIncludedIn(date1,now) ){
+		$$.fail("date3 should not be included within date1");
+	};
+	
+	if( date1.intersectsWith(date2,now) ){
+		$$.fail("date1 and date2 do not intersect");
+	};
+	
+	if( !date1.intersectsWith(date3,now) ){
+		$$.fail("date1 and date3 intersects");
+	};
+	
+	var interval4 = date1.extendTo(date2,now);
+	if( 10 != interval4.min ){
 		$$.fail("Problem with min after extending");
 	};
+	if( 40 != interval4.max ){
+		$$.fail("Problem with max after extending");
+	};
+});
+
+//*********
+jsunit.defineTest('$n2.dateInterval(ongoing)',function($$){
+
+	var date1 = new $n2.date.DateInterval({ongoing:true,min:10});
+	var date2 = new $n2.date.DateInterval({ongoing:true,min:30});
+	var date3 = new $n2.date.DateInterval({ongoing:true,min:0});
+	var date4 = new $n2.date.DateInterval({min:0,max:5});
+	var now = 60;
+	
+	if( 30 !== date2.size(now) ){
+		$$.fail("date2.size(now) should be 30");
+	};
+	
+	if( !date1.equals(date1) ){
+		$$.fail("date1 should be equal to itself");
+	};
+	
+	if( date1.equals(date2) ){
+		$$.fail("date1 and date2 are not equal");
+	};
+	
+	if( date1.equals(null) ){
+		$$.fail("date1 should not be equal to null");
+	};
+	
+	if( !date1.equals({ongoing:true,min:10}) ){
+		$$.fail("date1 should be equal to an equivalent interval");
+	};
+	
+	if( date1.isIncludedIn(null,now) ){
+		$$.fail("date1 should not be included within null");
+	};
+	
+	if( !date1.isIncludedIn(date1,now) ){
+		$$.fail("date1 should be included within itself");
+	};
+	
+	if( !date1.isIncludedIn(date3,now) ){
+		$$.fail("date1 should be included within date3");
+	};
+	
+	if( date3.isIncludedIn(date1,now) ){
+		$$.fail("date3 should not be included within date1");
+	};
+	
+	if( date1.intersectsWith(date4,now) ){
+		$$.fail("date1 and date4 do not intersect");
+	};
+	
+	if( !date1.intersectsWith(date3,now) ){
+		$$.fail("date1 and date3 intersects");
+	};
+	
+	var date12 = date1.extendTo(date2,now);
+	var date21 = date2.extendTo(date1,now);
+	if( 10 != date12.min || 10 != date21.min ){
+		$$.fail("Problem with min after extending");
+	};
+});
+
+//*********
+jsunit.defineTest('$n2.dateInterval.save',function($$){
+	
+	function label(dateOpts){
+		if( !dateOpts ) return 'null';
+		
+		var arr = [];
+		arr.push('{');
+		
+		var first = true;
+		for(var key in dateOpts){
+			var value = dateOpts[key];
+			
+			if( first ){
+				first = false;
+			} else {
+				arr.push('{');
+			};
+			
+			arr.push(key);
+			arr.push(':');
+			arr.push(value);
+		};
+		
+		arr.push('}');
+		
+		return arr.join('');
+	};
+	
+	function test(dateOpts){
+		var date1 = new $n2.date.DateInterval(dateOpts);
+		var save = date1.save();
+		var date2 = new $n2.date.DateInterval(save);
+		
+		if( ! date1.equals(date2) ){
+			var l = label(dateOpts);
+			$$.fail("Problem with saving: "+l);
+		};
+	};
+	
+	test({ongoing:true,min:25});
+	test({min:25,max:25});
+	test({min:25,max:50});
 });
 
 //*********
@@ -294,6 +460,7 @@ jsunit.defineTest('$n2.date.parseUserDate',function($$){
 	valid('  1980-06-01  12:34:56  ');
 	valid('  1980-06-01T12:34:56  ');
 	valid('1980/ 1990 ');
+	valid('1980/ - ');
 });
 
 //*********
@@ -345,12 +512,24 @@ jsunit.defineTest('$n2.date.findDateString(duration)',function($$){
 
 		try {
 			var d = $n2.date.findDateString(str);
-			var ds = $n2.date.findDateString(start);
-			var de = $n2.date.findDateString(end);
+			var ds = $n2.date.parseUserDate(start);
+			var de = null;
+			if( end ) {
+				de = $n2.date.parseUserDate(end);
+			};
+			
+			var expected = null;
+			if( de ){
+				expected = ds.extendTo(de);
+			} else {
+				expected = new $n2.date.DateInterval({
+					ongoing: true
+					,min: ds.min
+				});
+			};
 
-			if( d.interval.min != ds.interval.min 
-			 || d.interval.max != de.interval.max ){
-				throw 'min and max do not match what is expected';
+			if( ! expected.equals(d.interval) ){
+				throw 'min and max do not match what is expected:'+d.str;
 			};
 			
 		} catch(e) {
@@ -360,6 +539,7 @@ jsunit.defineTest('$n2.date.findDateString(duration)',function($$){
 
 	t('aaa 1980 / 1990 bbb','1980','1990');
 	t('aaa 1980/1990 bbb','1980','1990');
+	t('aaa 1980/- bbb','1980',null);
 });
 
 //*********

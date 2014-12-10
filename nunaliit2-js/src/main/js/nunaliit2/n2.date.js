@@ -29,31 +29,258 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 ;(function($n2){
+"use strict";
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 
 //*******************************************************
-var DateInterval = $n2.Class($n2.Interval, {
+var DateInterval = $n2.Class({
 	
 	dateStr: null,
+
+	min: null,
+	
+	max: null,
+	
+	ongoing: null,
 	
 	initialize: function(opts_){
-		$n2.Interval.prototype.initialize.call(this, opts_);
+		var opts = $n2.extend({
+			dateStr: null
+			,min: null
+			,max: null
+			,ongoing: false
+			,now: null
+		},opts_);
 		
+		this.ongoing = opts.ongoing;
 		this.dateStr = opts_.dateStr;
+		
+		if( typeof opts.min !== 'number' ){
+			throw _loc('Interval min must be a number');
+		};
+		this.min = opts.min;
+		
+		if( this.ongoing ) {
+			this.max = this.min;
+			
+			if( opts.now ){
+				if( this.min > opts.now ){
+					throw _loc('Ongoing time interval must begin before now');
+				};
+			};
+			
+		} else {
+			if( typeof opts.max !== 'number' ){
+				throw _loc('Interval max must be a number');
+			};
+			if( opts.min > opts.max ){
+				throw _loc('Interval min can not be greater than max');
+			};
+			this.max = opts.max;
+		};
+	},
+	
+	getMin: function(){
+		return this.min;
+	},
+	
+	getMax: function(now){
+		if( this.ongoing ){
+			return now;
+		};
+		
+		return this.max;
 	},
 	
 	getDateString: function(){
 		return this.dateStr;
 	},
 	
+	/**
+	 * Returns an object structure that can be saved in a
+	 * document.
+	 */
 	getDocumentStructure: function(){
 		var obj = {
 			nunaliit_type: 'date'
 			,date: this.dateStr
 			,min: this.min
-			,max: this.max
+		};
+		
+		if( this.ongoing ){
+			obj.ongoing = true;
+		} else {
+			obj.max = this.max;
+		};
+		
+		return obj;
+	},
+
+	size: function(now){
+		return (this.getMax(now) - this.min);
+	},
+
+	equals: function(interval){
+		if( !interval ){
+			return false;
+		};
+		
+		// Check that it is an instance of DateInterval
+		if( typeof interval.min !== 'number' ){
+			return false;
+		};
+		var isOngoing = false;
+		if( typeof interval.ongoing === 'boolean' ){
+			isOngoing = interval.ongoing;
+		};
+		if( !isOngoing ){
+			if( typeof interval.max !== 'number' ){
+				return false;
+			};
+		};
+		
+		if( this.ongoing !== isOngoing ){
+			return false;
+		};
+		
+		if( this.ongoing ){
+			if( this.min === interval.min ){
+				return true;
+			};
+		} else {
+			if( this.min === interval.min 
+			 && this.max === interval.max ){
+				return true;
+			};
+		};
+
+		return false;
+	},
+
+	isIncludedIn: function(interval, now){
+		if( !interval ){
+			return false;
+		};
+		
+		if( this.getMin() >= interval.getMin() 
+		 && this.getMax(now) <= interval.getMax(now) ){
+			return true;
+		};
+
+		return false;
+	},
+
+	extendTo: function(interval){
+		if( !interval ){
+			return this;
+		};
+		
+		if( this.ongoing !== interval.ongoing ){
+			throw 'Can not extend ongoing and regular date intervals';
+		};
+		
+		if( this.ongoing ){
+			if( this.min > interval.min ){
+				return new DateInterval({
+					ongoing: true
+					,min: interval.min
+				});
+				
+			} else {
+				return this;
+			};
+			
+		} else {
+			var extended = false;
+			var min = this.min;
+			var max = this.max;
+			
+			if( min > interval.min ){
+				min = interval.min;
+				extended = true;
+			};
+			
+			if( max < interval.max ){
+				max = interval.max;
+				extended = true;
+			};
+
+			if( extended ){
+				return new DateInterval({
+					ongoing: false
+					,min: min
+					,max: max
+				});
+			} else {
+				return this;
+			};
+		};
+	},
+
+	intersectsWith: function(interval, now){
+		if( !interval ){
+			return false;
+		};
+		
+		if( this.getMin() > interval.getMax(now) ){
+			return false;
+		};
+		if( this.getMax(now) < interval.getMin() ){
+			return false;
+		};
+		
+		return true;
+	},
+
+	intersection: function(interval, now){
+		if( !this.intersectsWith(interval, now) ){
+			return null;
+		};
+		
+		if( this.ongoing 
+		 && interval.ongoing ){
+			if( this.min >= interval.min ){
+				return this;
+			} else {
+				return new DateInterval({
+					ongoing: true
+					,min: interval.min
+				});
+			};
+			
+		} else {
+			var min = this.getMin();
+			var max = this.getMax(now);
+
+			if( min < interval.getMin() ){
+				min = interval.getMin();
+			};
+
+			if( max > interval.getMax(now) ){
+				max = interval.getMax(now);
+			};
+			
+			return new DateInterval({
+				ongoing: false
+				,min: min
+				,max: max
+			});
+		};
+	},
+	
+	save: function(){
+		var obj = null;
+		
+		if( this.ongoing ){
+			obj = {ongoing:true,min:this.min};
+		} else {
+			obj = {min:this.min,max:this.max};
+		};
+		
+		if( this.dateStr ){
+			obj.dateStr = this.dateStr;
 		};
 		
 		return obj;
@@ -92,18 +319,33 @@ function parseUserDate(dateStr){
 		var endDate = null;
 		try {
 			startDate = parseUserDate(startDateStr);
-			endDate = parseUserDate(endDateStr);
+			
+			if( "-" === $n2.trim(endDateStr) ){
+				// on going date
+			} else {
+				endDate = parseUserDate(endDateStr);
+			};
 		} catch(e) {
 			// Ignore. Leave startDate or endDate null
 		};
 		
-		if( startDate && endDate ){
-			var exDate = startDate.extendTo(endDate);
-			exDate.dateStr = dateStr;
-			return exDate;
+		if( startDate ){
+			if( endDate ){
+				var exDate = startDate.extendTo(endDate);
+				exDate.dateStr = dateStr;
+				return exDate;
+			} else {
+				// on going
+				var now = Date.now();
+				return new DateInterval({
+					ongoing: true
+					,dateStr: dateStr
+					,min: startDate.min
+					,now: now
+				});
+			};
 		};
 	};
-	
 	
 	if( matchYear ){
 		var year = 1 * matchYear[1];
@@ -311,7 +553,7 @@ var rFindMonthDay2 = /^(\d\d)(\d\d)/;
 var rFindMonth = /^-?(\d\d)/;
 var rFindHMS = /^( +|T)(\d\d):(\d\d)(:(\d\d))?/;
 var rFindHMS2 = /^( +|T)(\d\d)(\d\d)(\d\d)?/;
-var rDurationSeparator = /^\s*\/\s*?/;
+var rDurationSeparator = /^\s*\/\s*/;
 
 function findDateString(str,index){
 	var result = null;
@@ -546,23 +788,49 @@ function findDateString(str,index){
 		};
 		
 		// At this point, we have one date. See if this is a duration, with
-		// another date after an appropriate separator
-		var start = result.index + result.str.length;
-		var another = findDateString(str,start);
-		if( another ){
-			// See if the separator is valid
-			var sepStr = str.substr(start,another.index-start);
-			var mDurationSeparator = rDurationSeparator.exec(sepStr);
-			if( mDurationSeparator ){
-				// This is a duration
-				result.str = str.substr(result.index,another.index+another.str.length-result.index);
-				result.interval = result.interval.extendTo(another.interval);
+		// another date after an appropriate separator. There two variants:
+		// - date / date  This is a regular date interval
+		// - date / -     This is an ongoing date interval
+		next = str.substr(index);
+		var mDurationSeparator = rDurationSeparator.exec(next);
+		if( mDurationSeparator ){
+			index += mDurationSeparator[0].length;
+			
+			if( '-' === str[index] ){
+				// On-Going
+				++index;
+				
+				var l = index - result.index;
+				result.str = str.substr(result.index, l);
+				
+				result.interval = new DateInterval({
+					ongoing: true
+					,min: result.interval.min
+					,dateStr: result.str
+				});
+
 				if( typeof result.year !== 'undefined' ) delete result.year;
 				if( typeof result.month !== 'undefined' ) delete result.month;
 				if( typeof result.day !== 'undefined' ) delete result.day;
 				if( typeof result.hours !== 'undefined' ) delete result.hours;
 				if( typeof result.minutes !== 'undefined' ) delete result.minutes;
 				if( typeof result.seconds !== 'undefined' ) delete result.seconds;
+				
+			} else {
+				var another = findDateString(str,index);
+				if( another && another.index == index ){
+					// This is a regular duration
+					result.str = str.substr(result.index,another.index+another.str.length-result.index);
+					result.interval = result.interval.extendTo(another.interval);
+					result.interval.dateStr = result.str;
+					
+					if( typeof result.year !== 'undefined' ) delete result.year;
+					if( typeof result.month !== 'undefined' ) delete result.month;
+					if( typeof result.day !== 'undefined' ) delete result.day;
+					if( typeof result.hours !== 'undefined' ) delete result.hours;
+					if( typeof result.minutes !== 'undefined' ) delete result.minutes;
+					if( typeof result.seconds !== 'undefined' ) delete result.seconds;
+				};
 			};
 		};
 	};
