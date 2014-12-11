@@ -6,6 +6,9 @@ public class TransparentProxyFixedEscapedTest extends TestCase {
 
 	private void performUriUnescapeTest(String in, String expected){
 		String out = TransparentProxyFixedEscaped.unescapeUriString(in);
+		if( null == out ){
+			out = in;
+		}
 		if( false == expected.equals(out) ){
 			fail("Unescape error. Observed: "+out+" Expected: "+expected);
 		}

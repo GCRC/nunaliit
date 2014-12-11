@@ -1,6 +1,8 @@
 package ca.carleton.gcrc.couch.command.impl;
 
 import java.net.URI;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -10,50 +12,23 @@ import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("serial")
 public class TransparentProxyFixedEscaped extends ProxyServlet.Transparent {
+	
+	static final private Pattern rDesign2f = Pattern.compile("/_design%2[fF]");
 
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
-    static public int hexToInt(char c){
-    	if( c >= 'A' && c <= 'F' ){
-    		return (c - 'A' + 10);
-    	}
-    	if( c >= 'a' && c <= 'f' ){
-    		return (c - 'a' + 10);
-    	}
-    	if( c >= '0' && c <= '9' ){
-    		return (c - '0');
-    	}
-    	return 0;
-    }
     
     static public String unescapeUriString(String uriString){
-    	StringBuilder sb = new StringBuilder();
-    	int i=0,
-    		e=uriString.length();
-    	for(; i<e; ++i){
-    		char c = uriString.charAt(i);
-    		if( '?' == c || '#' == c ) {
-    			// Done unescaping
-    			break;
-    		}
-    		
-    		if( '%' == c && (i+2) < e ){
-    			char h = uriString.charAt(++i);
-    			char l = uriString.charAt(++i);
-    			int code = (hexToInt(h)*16) + hexToInt(l);
-    			char unescaped = (char)code;
-    			sb.append(unescaped);
-    		} else {
-    			sb.append(c);
-    		}
-    	}
-
-    	// Copy until end
-    	for(; i<e; ++i){
-    		char c = uriString.charAt(i);
-   			sb.append(c);
-    	}
-    	
-    	return sb.toString();
+		Matcher mDesign2f = rDesign2f.matcher(uriString);
+		if( mDesign2f.find() ){
+			String fixedUriString = 
+					uriString.substring(0, mDesign2f.start())
+    				+ "/_design/"
+    				+ uriString.substring(mDesign2f.end());
+			
+			return fixedUriString;
+		}
+		
+		return null;
     }
 
     @Override
@@ -63,9 +38,9 @@ public class TransparentProxyFixedEscaped extends ProxyServlet.Transparent {
 
     	if( null != uri ){
     		String uriStr = uri.toString();
-    		if( uriStr.contains("%") ){
+    		String fixedUriString = unescapeUriString(uriStr);
+    		if( null != fixedUriString ){
     			try {
-    				String fixedUriString = unescapeUriString(uriStr);
 					URI fixedUri = new URI(fixedUriString);
 					
 					logger.debug("proxy decode "+uri+" -> "+fixedUri);
