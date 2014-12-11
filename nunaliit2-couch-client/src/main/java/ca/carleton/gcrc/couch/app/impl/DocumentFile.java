@@ -39,6 +39,9 @@ public class DocumentFile implements Document {
 			if( name.startsWith(".") ) {
 				return false;
 			}
+			if( name.endsWith("~") ) {
+				return false;
+			}
 			return true;
 		}
 	};
@@ -175,7 +178,7 @@ public class DocumentFile implements Document {
 						
 						if( "_id".equals(key) ){
 							// It is not likely that preceding and trailing
-							// spaces are intended for document identififer.
+							// spaces are intended for document identifiers.
 							// They cause way too much trouble.
 							value = value.trim();
 						}
