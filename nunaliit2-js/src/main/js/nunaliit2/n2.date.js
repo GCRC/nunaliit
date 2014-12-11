@@ -288,277 +288,36 @@ var DateInterval = $n2.Class({
 });
 
 //*******************************************************
-var reYear = /^\s*(\d\d\d\d)\s*$/;
-var reYearMonth = /^\s*(\d\d\d\d)-(\d\d)\s*$/;
-var reYearMonthDay = /^\s*(\d\d\d\d)(\d\d)(\d\d)\s*$/;
-var reYearMonthDay2 = /^\s*(\d\d\d\d)-(\d\d)-(\d\d)\s*$/;
-var reYearMonthDayHM = /^\s*(\d\d\d\d)(\d\d)(\d\d)( +|T)(\d\d):(\d\d)\s*$/;
-var reYearMonthDayHM2 = /^\s*(\d\d\d\d)-(\d\d)-(\d\d)( +|T)(\d\d):(\d\d)\s*$/;
-var reYearMonthDayHMS = /^\s*(\d\d\d\d)(\d\d)(\d\d)( +|T)(\d\d):(\d\d):(\d\d)\s*$/;
-var reYearMonthDayHMS2 = /^\s*(\d\d\d\d)-(\d\d)-(\d\d)( +|T)(\d\d):(\d\d):(\d\d)\s*$/;
-var rePeriod = /^([^\/]*)\/([^\/]*)$/;
-
-	
-function parseUserDate(dateStr){
-	var matchPeriod = rePeriod.exec(dateStr);
-	var matchYear = reYear.exec(dateStr);
-	var matchYearMonth = reYearMonth.exec(dateStr);
-	var matchYearMonthDay = reYearMonthDay.exec(dateStr);
-	var matchYearMonthDay2 = reYearMonthDay2.exec(dateStr);
-	var matchYearMonthDayHM = reYearMonthDayHM.exec(dateStr);
-	var matchYearMonthDayHM2 = reYearMonthDayHM2.exec(dateStr);
-	var matchYearMonthDayHMS = reYearMonthDayHMS.exec(dateStr);
-	var matchYearMonthDayHMS2 = reYearMonthDayHMS2.exec(dateStr);
-	
-	// Period, special case
-	if( matchPeriod ){
-		var startDateStr = matchPeriod[1];
-		var endDateStr = matchPeriod[2];
-		
-		var startDate = null;
-		var endDate = null;
-		try {
-			startDate = parseUserDate(startDateStr);
-			
-			if( "-" === $n2.trim(endDateStr) ){
-				// on going date
-			} else {
-				endDate = parseUserDate(endDateStr);
-			};
-		} catch(e) {
-			// Ignore. Leave startDate or endDate null
-		};
-		
-		if( startDate ){
-			if( endDate ){
-				var exDate = startDate.extendTo(endDate);
-				exDate.dateStr = dateStr;
-				return exDate;
-			} else {
-				// on going
-				var now = Date.now();
-				return new DateInterval({
-					ongoing: true
-					,dateStr: dateStr
-					,min: startDate.min
-					,now: now
-				});
-			};
-		};
-	};
-	
-	if( matchYear ){
-		var year = 1 * matchYear[1];
-		var min = (new Date(year,0,1)).getTime();
-		var max = (new Date(year+1,0,1)).getTime();
-		
-		return new DateInterval({
-			min: min
-			,max: max-1000
-			,dateStr: matchYear[0]
-		});
-		
-	} else if( matchYearMonth ){
-		var year = 1 * matchYearMonth[1];
-		var month = 1 * matchYearMonth[2];
-		
-		if( month < 1 || month > 12 ){
-			throw _loc('Month must be an integer between 1 and 12');
-		};
-
-		var min = (new Date(year,month-1,1)).getTime();
-		var max = (new Date(year,month,1)).getTime();
-		
-		return new DateInterval({
-			min: min
-			,max: max-1000
-			,dateStr: matchYearMonth[0]
-		});
-		
-	} else if( matchYearMonthDay ){
-		var year = 1 * matchYearMonthDay[1];
-		var month = 1 * matchYearMonthDay[2];
-		var day = 1 * matchYearMonthDay[3];
-		
-		if( month < 1 || month > 12 ){
-			throw _loc('Month must be an integer between 1 and 12');
-		};
-		if( day < 1 || day > 31 ){
-			throw _loc('Day must be an integer between 1 and 31');
-		};
-
-		var min = (new Date(year,month-1,day)).getTime();
-		var max = (new Date(year,month-1,day+1)).getTime();
-		
-		return new DateInterval({
-			min: min
-			,max: max-1000
-			,dateStr: matchYearMonthDay[0]
-		});
-		
-	} else if( matchYearMonthDay2 ){
-		var year = 1 * matchYearMonthDay2[1];
-		var month = 1 * matchYearMonthDay2[2];
-		var day = 1 * matchYearMonthDay2[3];
-		
-		if( month < 1 || month > 12 ){
-			throw _loc('Month must be an integer between 1 and 12');
-		};
-		if( day < 1 || day > 31 ){
-			throw _loc('Day must be an integer between 1 and 31');
-		};
-
-		var min = (new Date(year,month-1,day)).getTime();
-		var max = (new Date(year,month-1,day+1)).getTime();
-		
-		return new DateInterval({
-			min: min
-			,max: max-1000
-			,dateStr: matchYearMonthDay2[0]
-		});
-
-	} else if( matchYearMonthDayHM ){
-		var year = 1 * matchYearMonthDayHM[1];
-		var month = 1 * matchYearMonthDayHM[2];
-		var day = 1 * matchYearMonthDayHM[3];
-		var hour = 1 * matchYearMonthDayHM[5];
-		var minutes = 1 * matchYearMonthDayHM[6];
-		
-		if( month < 1 || month > 12 ){
-			throw _loc('Month must be an integer between 1 and 12');
-		};
-		if( day < 1 || day > 31 ){
-			throw _loc('Day must be an integer between 1 and 31');
-		};
-		if( hour < 0 || hour > 23 ){
-			throw _loc('Hour must be an integer between 0 and 23');
-		};
-		if( minutes < 0 || minutes > 59 ){
-			throw _loc('Minutes must be an integer between 0 and 59');
-		};
-
-		var min = (new Date(year,month-1,day,hour,minutes)).getTime();
-		var max = (new Date(year,month-1,day,hour,minutes+1)).getTime();
-		
-		return new DateInterval({
-			min: min
-			,max: max-1000
-			,dateStr: matchYearMonthDayHM[0]
-		});
-
-	} else if( matchYearMonthDayHM2 ){
-		var year = 1 * matchYearMonthDayHM2[1];
-		var month = 1 * matchYearMonthDayHM2[2];
-		var day = 1 * matchYearMonthDayHM2[3];
-		var hour = 1 * matchYearMonthDayHM2[5];
-		var minutes = 1 * matchYearMonthDayHM2[6];
-		
-		if( month < 1 || month > 12 ){
-			throw _loc('Month must be an integer between 1 and 12');
-		};
-		if( day < 1 || day > 31 ){
-			throw _loc('Day must be an integer between 1 and 31');
-		};
-		if( hour < 0 || hour > 23 ){
-			throw _loc('Hour must be an integer between 0 and 23');
-		};
-		if( minutes < 0 || minutes > 59 ){
-			throw _loc('Minutes must be an integer between 0 and 59');
-		};
-
-		var min = (new Date(year,month-1,day,hour,minutes)).getTime();
-		var max = (new Date(year,month-1,day,hour,minutes+1)).getTime();
-		
-		return new DateInterval({
-			min: min
-			,max: max-1000
-			,dateStr: matchYearMonthDayHM2[0]
-		});
-
-	} else if( matchYearMonthDayHMS ){
-		var year = 1 * matchYearMonthDayHMS[1];
-		var month = 1 * matchYearMonthDayHMS[2];
-		var day = 1 * matchYearMonthDayHMS[3];
-		var hour = 1 * matchYearMonthDayHMS[5];
-		var minutes = 1 * matchYearMonthDayHMS[6];
-		var secs = 1 * matchYearMonthDayHMS[7];
-		
-		if( month < 1 || month > 12 ){
-			throw _loc('Month must be an integer between 1 and 12');
-		};
-		if( day < 1 || day > 31 ){
-			throw _loc('Day must be an integer between 1 and 31');
-		};
-		if( hour < 0 || hour > 23 ){
-			throw _loc('Hour must be an integer between 0 and 23');
-		};
-		if( minutes < 0 || minutes > 59 ){
-			throw _loc('Minutes must be an integer between 0 and 59');
-		};
-		if( secs < 0 || secs > 59 ){
-			throw _loc('Seconds must be an integer between 0 and 59');
-		};
-
-		var min = (new Date(year,month-1,day,hour,minutes,secs)).getTime();
-		var max = (new Date(year,month-1,day,hour,minutes,secs+1)).getTime();
-		
-		return new DateInterval({
-			min: min
-			,max: max-1000
-			,dateStr: matchYearMonthDayHMS[0]
-		});
-
-	} else if( matchYearMonthDayHMS2 ){
-		var year = 1 * matchYearMonthDayHMS2[1];
-		var month = 1 * matchYearMonthDayHMS2[2];
-		var day = 1 * matchYearMonthDayHMS2[3];
-		var hour = 1 * matchYearMonthDayHMS2[5];
-		var minutes = 1 * matchYearMonthDayHMS2[6];
-		var secs = 1 * matchYearMonthDayHMS2[7];
-		
-		if( month < 1 || month > 12 ){
-			throw _loc('Month must be an integer between 1 and 12');
-		};
-		if( day < 1 || day > 31 ){
-			throw _loc('Day must be an integer between 1 and 31');
-		};
-		if( hour < 0 || hour > 23 ){
-			throw _loc('Hour must be an integer between 0 and 23');
-		};
-		if( minutes < 0 || minutes > 59 ){
-			throw _loc('Minutes must be an integer between 0 and 59');
-		};
-		if( secs < 0 || secs > 59 ){
-			throw _loc('Seconds must be an integer between 0 and 59');
-		};
-
-		var min = (new Date(year,month-1,day,hour,minutes,secs)).getTime();
-		var max = (new Date(year,month-1,day,hour,minutes,secs+1)).getTime();
-		
-		return new DateInterval({
-			min: min
-			,max: max-1000
-			,dateStr: matchYearMonthDayHMS2[0]
-		});
-
-	} else {
-		throw _loc('Can not parse date');
-	};
-};
-
-//*******************************************************
 var rFindYear = /(\d\d\d\d)/;
 var rFindMonthDay = /^-(\d\d)-(\d\d)/;
 var rFindMonthDay2 = /^(\d\d)(\d\d)/;
 var rFindMonth = /^-?(\d\d)/;
 var rFindHMS = /^( +|T)(\d\d):(\d\d)(:(\d\d))?/;
 var rFindHMS2 = /^( +|T)(\d\d)(\d\d)(\d\d)?/;
-var rDurationSeparator = /^\s*\/\s*/;
 
-function findDateString(str,index){
+/**
+ * Finds a date string in the form of YYYY-MM-DD hh:mm:ss
+ * and returns an object specifying the found string. Returns
+ * null if nothing is found.
+ * 
+ * If a date string is found, the following structure is returned:
+ * {
+ *    input: <string> original string given to routine
+ *    ,index: <number> index into string where found date string begins
+ *    ,str: <string> date string found in original string
+ *    ,interval: <object> instance od DateInterval that is interpreted from the found date string
+ *    ,year: <number> year specified in found date string
+ *    ,month: <number> month specified in found date string
+ *    ,day: <number> day of month specified in found date string
+ *    ,hours: <number> hours specified in found date string
+ *    ,minutes: <number> minutes specified in found date string
+ *    ,seconds: <number> seconds specified in found date string
+ * }
+ */
+function findSingleDateString(str,index){
 	var result = null;
 	
-	var index = index ? index : 0;
+	index = index ? index : 0;
 	var next = (index>0) ? str.substr(index) : str;
 	
 	var mFindYear = rFindYear.exec(next);
@@ -786,12 +545,36 @@ function findDateString(str,index){
 				,dateStr: result.str
 			});
 		};
-		
+	};
+	
+	return result;
+};
+
+var rDurationSeparator = /^\s*\/\s*/;
+
+/**
+ * Finds a date string or a date range string.
+ * date-range :=  date-string '/' date-string
+ *             |  date-string;
+ * 
+ * If a date range is found, the following structure is returned:
+ * {
+ *    input: <string> original string given to routine
+ *    ,index: <number> index into string where found date range begins
+ *    ,str: <string> date range found in original string
+ *    ,interval: <object> instance of DateInterval that is interpreted from the found date range
+ * }
+ */
+function findDateString(str,index){
+
+	var result = findSingleDateString(str,index);
+	if( result ){
 		// At this point, we have one date. See if this is a duration, with
-		// another date after an appropriate separator. There two variants:
+		// another date after an appropriate separator. There are two variants:
 		// - date / date  This is a regular date interval
 		// - date / -     This is an ongoing date interval
-		next = str.substr(index);
+		index = result.index + result.str.length;
+		var next = str.substr(index);
 		var mDurationSeparator = rDurationSeparator.exec(next);
 		if( mDurationSeparator ){
 			index += mDurationSeparator[0].length;
@@ -817,7 +600,7 @@ function findDateString(str,index){
 				if( typeof result.seconds !== 'undefined' ) delete result.seconds;
 				
 			} else {
-				var another = findDateString(str,index);
+				var another = findSingleDateString(str,index);
 				if( another && another.index == index ){
 					// This is a regular duration
 					result.str = str.substr(result.index,another.index+another.str.length-result.index);
@@ -836,6 +619,29 @@ function findDateString(str,index){
 	};
 	
 	return result;
+};
+
+//*******************************************************
+/**
+ * If the input string contains a date, returns an instance of
+ * DateInterval. Otherwise, returns null.
+ */
+function parseUserDate(dateStr){
+	var dateInterval = null;
+	
+	var effectiveStr = $n2.trim(dateStr);
+	var findStr = findDateString(effectiveStr, 0);
+	if( findStr ){
+		if( effectiveStr === findStr.str ){
+			dateInterval = findStr.interval;
+		};
+	};
+	
+	if( null == dateInterval ){
+		throw _loc('Can not parse date');
+	};
+	
+	return dateInterval;
 };
 
 //*******************************************************

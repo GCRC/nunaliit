@@ -540,6 +540,8 @@ jsunit.defineTest('$n2.date.findDateString(duration)',function($$){
 	t('aaa 1980 / 1990 bbb','1980','1990');
 	t('aaa 1980/1990 bbb','1980','1990');
 	t('aaa 1980/- bbb','1980',null);
+
+	t('aaa 1980/1990/2000 bbb','1980','1990');
 });
 
 //*********
