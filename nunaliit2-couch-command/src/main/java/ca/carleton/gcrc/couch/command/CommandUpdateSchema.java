@@ -8,7 +8,7 @@ import org.json.JSONObject;
 
 import ca.carleton.gcrc.couch.app.Document;
 import ca.carleton.gcrc.couch.app.impl.DocumentFile;
-import ca.carleton.gcrc.couch.command.impl.SchemaDefinition;
+import ca.carleton.gcrc.couch.command.schema.SchemaDefinition;
 import ca.carleton.gcrc.couch.fsentry.FSEntryFile;
 
 public class CommandUpdateSchema implements Command {

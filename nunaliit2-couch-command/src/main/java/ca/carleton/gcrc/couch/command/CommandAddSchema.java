@@ -11,7 +11,7 @@ import java.util.Stack;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
-import ca.carleton.gcrc.couch.command.impl.SchemaDefinition;
+import ca.carleton.gcrc.couch.command.schema.SchemaDefinition;
 
 public class CommandAddSchema implements Command {
 
@@ -79,6 +79,10 @@ public class CommandAddSchema implements Command {
 			} else {
 				break;
 			}
+		}
+		
+		if( null == defFile ){
+			throw new Exception("The option --def must be provided");
 		}
 		
 		// Load definition file

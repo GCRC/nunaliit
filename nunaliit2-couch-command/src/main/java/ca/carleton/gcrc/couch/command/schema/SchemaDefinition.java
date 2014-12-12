@@ -1,4 +1,4 @@
-package ca.carleton.gcrc.couch.command.impl;
+package ca.carleton.gcrc.couch.command.schema;
 
 import java.io.File;
 import java.io.FileOutputStream;
