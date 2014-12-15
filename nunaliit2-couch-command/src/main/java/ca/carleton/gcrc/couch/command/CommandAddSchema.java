@@ -52,7 +52,15 @@ public class CommandAddSchema implements Command {
 		CommandHelp.reportGlobalSettingAtlasDir(ps);
 		ps.println();
 		ps.println("Add Schema Options");
-		ps.println("  --def   <file>   Name of file where schema definition is contained");
+		ps.println("  --def   <file>   Name of file where schema definition is contained. This");
+		ps.println("                   option should be provided only if --id is not.");
+		ps.println();
+		ps.println("  --group <name>   Name of group that the schema is associated with. If");
+		ps.println("                   not provided, defaults to atlas name");
+		ps.println();
+		ps.println("  --id     <name>  Identifier for new schema. Either --id or --def must");
+		ps.println("                   be provided, not both. The effective name of the schema");
+		ps.println("                   is <group> '_' <id>");
 	}
 
 	@Override
@@ -62,9 +70,14 @@ public class CommandAddSchema implements Command {
 		) throws Exception {
 
 		File atlasDir = gs.getAtlasDir();
+
+		// Load properties for atlas
+		AtlasProperties atlasProperties = AtlasProperties.fromAtlasDir(atlasDir);
 		
 		// Pick up options
 		File defFile = null;
+		String groupName = atlasProperties.getAtlasName();
+		String id = null;
 		while( false == argumentStack.empty() ){
 			String optionName = argumentStack.peek();
 			if( "--def".equals(optionName) ){
@@ -76,71 +89,100 @@ public class CommandAddSchema implements Command {
 				String defFileStr = argumentStack.pop();
 				defFile = new File(defFileStr);
 
+			} else if( "--id".equals(optionName) ){
+				argumentStack.pop();
+				if( argumentStack.size() < 1 ){
+					throw new Exception("--id option requires a schema identifier");
+				}
+				
+				if( null != id ){
+					throw new Exception("--id option should be provided only once");
+				}
+				
+				id = argumentStack.pop();
+
+			} else if( "--group".equals(optionName) ){
+				argumentStack.pop();
+				if( argumentStack.size() < 1 ){
+					throw new Exception("--group option requires a group name");
+				}
+				
+				groupName = argumentStack.pop();
+
 			} else {
 				break;
 			}
 		}
 		
-		if( null == defFile ){
-			throw new Exception("The option --def must be provided");
+		if( null == defFile && null == id ){
+			throw new Exception("One of the options --id or --def must be provided");
+		} else if( null != defFile && null != id ) {
+			throw new Exception("Options --id and --def are mutually exclusive");
 		}
 		
 		// Load definition file
-		JSONObject jsonDefinition = null;
-		if( false == defFile.exists() ){
-			throw new Exception("Definition file does not exist: "+defFile.getAbsolutePath());
-		}
-		if( false == defFile.isFile() ){
-			throw new Exception("Path to definition file is not valid: "+defFile.getAbsolutePath());
-		}
-		{
-			StringWriter sw = new StringWriter();
-			InputStream is = null;
-			InputStreamReader isr = null;
-			char[] buffer = new char[100];
-			try {
-				is = new FileInputStream(defFile);
-				isr = new InputStreamReader(is, "UTF-8");
-				
-				int size = isr.read(buffer);
-				while( size >= 0 ) {
-					sw.write(buffer, 0, size);
-					size = isr.read(buffer);
-				}
-				
-				sw.flush();
-				
-				JSONTokener tokener = new JSONTokener(sw.toString());
-				Object objDefinition = tokener.nextValue();
-				if( objDefinition instanceof JSONObject ){
-					jsonDefinition = (JSONObject)objDefinition;
-				} else {
-					throw new Exception("Invalid schema definition");
-				}
-				
-			} catch (Exception e) {
-				throw new Exception("Error while reading file: "+defFile.getName(), e);
-				
-			} finally {
-				if( null != isr ) {
-					try {
-						isr.close();
-					} catch (Exception e) {
-						// Ignore
+		SchemaDefinition schemaDef = null;
+		if( null != defFile ){
+			JSONObject jsonDefinition = null;
+
+			if( false == defFile.exists() ){
+				throw new Exception("Definition file does not exist: "+defFile.getAbsolutePath());
+			}
+			if( false == defFile.isFile() ){
+				throw new Exception("Path to definition file is not valid: "+defFile.getAbsolutePath());
+			}
+			{
+				StringWriter sw = new StringWriter();
+				InputStream is = null;
+				InputStreamReader isr = null;
+				char[] buffer = new char[100];
+				try {
+					is = new FileInputStream(defFile);
+					isr = new InputStreamReader(is, "UTF-8");
+					
+					int size = isr.read(buffer);
+					while( size >= 0 ) {
+						sw.write(buffer, 0, size);
+						size = isr.read(buffer);
 					}
-				}
-				if( null != is ) {
-					try {
-						is.close();
-					} catch (Exception e) {
-						// Ignore
+					
+					sw.flush();
+					
+					JSONTokener tokener = new JSONTokener(sw.toString());
+					Object objDefinition = tokener.nextValue();
+					if( objDefinition instanceof JSONObject ){
+						jsonDefinition = (JSONObject)objDefinition;
+					} else {
+						throw new Exception("Invalid schema definition");
+					}
+					
+				} catch (Exception e) {
+					throw new Exception("Error while reading file: "+defFile.getName(), e);
+					
+				} finally {
+					if( null != isr ) {
+						try {
+							isr.close();
+						} catch (Exception e) {
+							// Ignore
+						}
+					}
+					if( null != is ) {
+						try {
+							is.close();
+						} catch (Exception e) {
+							// Ignore
+						}
 					}
 				}
 			}
+			
+			// Interpret definition
+			schemaDef = SchemaDefinition.fronJson(jsonDefinition);
+
+		} else if( null != id ) {
+			schemaDef = new SchemaDefinition(groupName, id);
 		}
-		
-		// Interpret definition
-		SchemaDefinition schemaDef = SchemaDefinition.fronJson(jsonDefinition);
 		
 		// Save to disk
 		File docsDir = new File(atlasDir, "docs");

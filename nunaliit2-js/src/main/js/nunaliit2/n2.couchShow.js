@@ -242,12 +242,19 @@ var DomStyler = $n2.Class({
 			_this._preserveSpaces($jq, opt);
 			$jq.removeClass('n2s_preserveSpaces').addClass('n2s_preservedSpaces');
 		});
-		
+
 		// Document List
 		$set.filter('.n2s_insertDocumentList').each(function(){
 			var $jq = $(this);
 			_this._insertDocumentList($jq, opt);
 			$jq.removeClass('n2s_insertDocumentList').addClass('n2s_insertedDocumentList');
+		});
+
+		// Select
+		$set.filter('.n2s_select').each(function(){
+			var $jq = $(this);
+			_this._select($jq, opt);
+			$jq.removeClass('n2s_select').addClass('n2s_selected');
 		});
 	},
 
@@ -293,6 +300,25 @@ var DomStyler = $n2.Class({
 				,listType: listType
 				,listName: listName
 			});
+		};
+	},
+
+	_select: function($jq, opt_){
+		var choiceName = $jq.attr('n2-choice');
+		
+		var found = false;
+		$jq.find('.n2s_choice').each(function(){
+			var $choice = $(this);
+			var name = $choice.attr('n2-choice');
+			if( name === choiceName ){
+				found = true;
+			} else {
+				$choice.remove();
+			};
+		});
+
+		if( found ){
+			$jq.find('.n2s_choiceDefault').remove();
 		};
 	},
 	

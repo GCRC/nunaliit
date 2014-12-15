@@ -187,6 +187,24 @@ public class SchemaAttribute {
 					schemaDoc.put(id, defOption.getValue());
 				}
 			}
+			
+		} else if( "file".equals(type) ){
+			JSONObject attachments = doc.optJSONObject("nunaliit_attachments");
+			if( null == attachments ){
+				attachments = new JSONObject();
+				attachments.put("nunaliit_type", "attachment_descriptions");
+				attachments.put("files", new JSONObject());
+				doc.put("nunaliit_attachments", attachments);
+			}
+			JSONObject files = attachments.getJSONObject("files");
+			JSONObject media = files.optJSONObject("media");
+			if( null == media ){
+				media = new JSONObject();
+				
+				media.put("data", new JSONObject());
+				
+				files.put("media", media);
+			}
 
 		} else {
 			throw new Exception("Unable to include type "+type+" in create");
@@ -212,7 +230,17 @@ public class SchemaAttribute {
 			} else if( "selection".equals(type) ){
 				if( null != id ){
 					pw.print("{{#"+schemaName+"}}");
-					pw.print("{{"+id+"}}");
+					pw.print("<span class=\"n2s_select\" n2-choice=\"{{"+id+"}}\">");
+					for(SelectionOption option : options){
+						pw.print("<span class=\"n2s_choice n2s_localize\" n2-choice=\""+option.getValue()+"\">");
+						String label = option.getLabel();
+						if( null == label ){
+							label = option.getValue();
+						}
+						pw.print(label);
+						pw.print("</span>");
+					}
+					pw.print("</span>");
 					pw.print("{{/"+schemaName+"}}");
 				}
 				
@@ -252,8 +280,7 @@ public class SchemaAttribute {
 			}
 
 			if( "string".equals(type) 
-			 || "textarea".equals(type)
-			 || "selection".equals(type) ){
+			 || "textarea".equals(type) ){
 				if( null != id ){
 					pw.println("{{#"+schemaName+"}}");
 					pw.println("\t{{#"+id+"}}");
@@ -310,6 +337,58 @@ public class SchemaAttribute {
 					pw.println("\t{{/"+id+"}}");
 					pw.println("{{/"+schemaName+"}}");
 				}
+				
+			} else if( "selection".equals(type) ){
+				if( null != id ){
+					pw.println("{{#"+schemaName+"}}");
+					pw.println("\t{{#"+id+"}}");
+	
+					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
+	
+					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t<div class=\"value n2s_select\" n2-choice=\"{{.}}\">");
+					
+					for(SelectionOption option : options){
+						String value = option.getValue();
+						String optLabel = option.getLabel();
+						if( null == optLabel ){
+							optLabel = value;
+						}
+						
+						pw.println("\t\t\t\t<span class=\"n2s_choice\" n2-choice=\""+value+"\">"+optLabel+"</span>");
+					}
+
+					pw.println("\t\t\t\t<span class=\"n2s_choiceDefault\">{{.}}</span>");
+					
+					pw.println("\t\t\t</div>");
+					pw.println("\t\t\t<div class=\"end\"></div>");
+					
+					pw.println("\t\t</div>");
+					
+					
+					pw.println("\t{{/"+id+"}}");
+					pw.println("{{/"+schemaName+"}}");
+				}
+							
+			} else if( "file".equals(type) ){
+				pw.println("{{#nunaliit_attachments}}");
+				pw.println("{{#files}}");
+				pw.println("\t{{#:iterate}}");
+				pw.println("\t\t{{#value}}");
+				pw.println("\t\t\t{{^source}}");
+
+				pw.println("\t\t\t\t{{#attachmentName}}");
+				pw.println("\t\t\t\t\t<div class=\"n2_mediaView\">");
+				pw.println("\t\t\t\t\t\t<div class=\"n2s_insertMediaView\" nunaliit-attachment=\"{{.}}\"> </div>");
+				pw.println("\t\t\t\t\t</div>");
+				pw.println("\t\t\t\t\t<div class=\"n2s_insertExternalMediaLink\" nunaliit-attachment=\"{{.}}\"> </div>");
+				pw.println("\t\t\t\t{{/attachmentName}}");
+
+				pw.println("\t\t\t{{/source}}");
+				pw.println("\t\t{{/value}}");
+				pw.println("\t{{/:iterate}}");
+				pw.println("{{/files}}");
+				pw.println("{{/nunaliit_attachments}}");
 							
 			} else {
 				throw new Exception("Unable to include type "+type+" in display");
@@ -383,7 +462,10 @@ public class SchemaAttribute {
 					
 					pw.println("{{/"+schemaName+"}}");
 				}
-						
+
+			} else if( "file".equals(type) ){
+				// nothing to do
+				
 			} else {
 				throw new Exception("Unable to include type "+type+" in form");
 			}

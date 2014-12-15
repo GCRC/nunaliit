@@ -2,7 +2,11 @@ package ca.carleton.gcrc.couch.command;
 
 import java.io.File;
 import java.io.PrintStream;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Stack;
+import java.util.Vector;
 
 import org.json.JSONObject;
 
@@ -51,6 +55,8 @@ public class CommandUpdateSchema implements Command {
 		ps.println();
 		ps.println("Update Schema Options");
 		ps.println("  --name   <name>   Name of schema that should be updated");
+		ps.println();
+		ps.println("  --all             Find and update all schemas with definitions");
 	}
 
 	@Override
@@ -63,6 +69,7 @@ public class CommandUpdateSchema implements Command {
 		
 		// Pick up options
 		String schemaName = null;
+		boolean allSchemas = false;
 		while( false == argumentStack.empty() ){
 			String optionName = argumentStack.peek();
 			if( "--name".equals(optionName) ){
@@ -73,14 +80,19 @@ public class CommandUpdateSchema implements Command {
 				
 				schemaName = argumentStack.pop();
 
+			} else if( "--all".equals(optionName) ){
+				argumentStack.pop();
+
+				allSchemas = true;
+
 			} else {
 				break;
 			}
 		}
 		
-		// Load all documents, looking for desired schema
-		JSONObject jsonDef = null;
-		File schemaDir = null;
+		// Load all documents, looking for schemas
+		Map<String,Document> documentsByDocId = new HashMap<String,Document>();
+		Map<String,File> dirByDocId = new HashMap<String,File>();
 		{
 			File docsDir = new File(atlasDir, "docs");
 			if( docsDir.exists() && docsDir.isDirectory() ){
@@ -101,32 +113,64 @@ public class CommandUpdateSchema implements Command {
 						
 						// Check if this is schema we are looking for
 						JSONObject jsonDoc = doc.getJSONObject();
+						String docId = jsonDoc.optString("_id",null);
 						String nunaliitType = jsonDoc.optString("nunaliit_type",null);
-						String name = jsonDoc.optString("name",null);
 						
-						if( schemaName.equals(name) 
+						if( null != docId 
 						 && "schema".equals(nunaliitType) ){
-							schemaDir = subDir;
-							jsonDef = jsonDoc.optJSONObject("definition");
-							break;
+							documentsByDocId.put(docId, doc);
+							dirByDocId.put(docId, subDir);
 						}
+					}
+				}
+			}
+		}
+		
+		// Accumulate the docIds we wish to process
+		List<String> docIds = new Vector<String>();
+		for(String docId : documentsByDocId.keySet()){
+			Document doc = documentsByDocId.get(docId);
+
+			// Check if this is schema we are looking for
+			JSONObject jsonDoc = doc.getJSONObject();
+			String nunaliitType = jsonDoc.optString("nunaliit_type",null);
+			String name = jsonDoc.optString("name",null);
+			JSONObject jsonDef = jsonDoc.optJSONObject("definition");
+			
+			if( "schema".equals(nunaliitType) ){
+				if( allSchemas ) {
+					// Include only schemas that have a definition
+					if( null != jsonDef ){
+						docIds.add(docId);
+					}
+				} else if( null != schemaName && schemaName.equals(name) ) {
+					if( null != jsonDef ){
+						docIds.add(docId);
+					} else {
+						throw new Exception("Schema was found, but no associated definition was found");
 					}
 				}
 			}
 		}
 	
 		// Check if schema was found
-		if( null == schemaDir ){
-			throw new Exception("Schema was not found");
+		if( docIds.size() < 1 ){
+			throw new Exception("No schema was found");
 		}
-		if( null == jsonDef ){
-			throw new Exception("Schema was found, but no associated definition was found");
+
+		// Loop over all documents
+		for(String docId : docIds){
+			Document doc = documentsByDocId.get(docId);
+			File schemaDir = dirByDocId.get(docId);
+			JSONObject jsonDoc = doc.getJSONObject();
+			String name = jsonDoc.getString("name");
+			JSONObject jsonDef = jsonDoc.getJSONObject("definition");
+			
+			// Refresh from definition
+			SchemaDefinition schemaDef = SchemaDefinition.fronJson(jsonDef);
+			schemaDef.saveToSchemaDir(schemaDir);
+			
+			gs.getOutStream().println("Schema "+name+" refreshed");
 		}
-		
-		// Refresh from definition
-		SchemaDefinition schemaDef = SchemaDefinition.fronJson(jsonDef);
-		schemaDef.saveToSchemaDir(schemaDir);
-		
-		gs.getOutStream().println("Schema refreshed in "+schemaDir.getAbsolutePath());
 	}
 }

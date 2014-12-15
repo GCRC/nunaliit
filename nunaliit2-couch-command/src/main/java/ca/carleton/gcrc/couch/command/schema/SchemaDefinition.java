@@ -169,7 +169,11 @@ public class SchemaDefinition {
 			File file = new File(schemaDir, "label.txt");
 			FileOutputStream fos = new FileOutputStream(file);
 			OutputStreamWriter osw = new OutputStreamWriter(fos);
-			osw.write( getSchemaName() );
+			if( null != label ){
+				osw.write( label );
+			} else {
+				osw.write( getSchemaName() );
+			}
 			osw.flush();
 			fos.flush();
 			fos.close();
