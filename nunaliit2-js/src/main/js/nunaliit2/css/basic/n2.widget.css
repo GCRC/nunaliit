@@ -372,3 +372,14 @@ Gazetteer Dialog
 .n2MapAndControls_gazette_result_location {
 	font-size: 80%;
 }
+
+/* 
+==============================
+CreateDocument widget 
+==============================
+*/
+.n2widget_createDocument {
+	position: absolute;
+	top: 5px;
+	right: 455px;
+}

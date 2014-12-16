@@ -329,6 +329,10 @@ function Configure(options_){
 			,schemaEditorService: configuration.directory.schemaEditorService
 			,userServerUrl: options.userServerUrl
 		});
+		
+	 	configuration.directory.widgetService = new $n2.widgetBasic.Service({
+			dispatchService: configuration.directory.dispatchService
+		});
 
 	 	configuration.contributions = new $n2.couchContributions({
 			db: configuration.atlasDb
