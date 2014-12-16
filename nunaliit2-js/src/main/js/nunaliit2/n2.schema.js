@@ -295,7 +295,7 @@ function _formField() {
 		obj = getDataFromObjectSelector(this, sels);
 	};
 	
-	if( obj
+	if( typeof obj === 'object'
 	 && !obj[SELECT]
 	 && options
 	 && options.data
