@@ -27,12 +27,25 @@ public class SchemaDefinition {
 		}
 		
 		// Attributes
-		JSONArray attributes = jsonDef.optJSONArray("attributes");
-		if( null != attributes ) {
-			for(int i=0,e=attributes.length(); i<e; ++i){
-				JSONObject jsonAttr = attributes.getJSONObject(i);
-				SchemaAttribute attribute = SchemaAttribute.fromJson(jsonAttr);
-				def.addAttribute(attribute);
+		{
+			JSONArray attributes = jsonDef.optJSONArray("attributes");
+			if( null != attributes ) {
+				for(int i=0,e=attributes.length(); i<e; ++i){
+					JSONObject jsonAttr = attributes.getJSONObject(i);
+					SchemaAttribute attribute = SchemaAttribute.fromJson(jsonAttr);
+					def.addAttribute(attribute);
+				}
+			}
+		}
+		
+		// Related schemas
+		{
+			JSONArray relatedSchemas = jsonDef.optJSONArray("relatedSchemas");
+			if( null != relatedSchemas ) {
+				for(int i=0,e=relatedSchemas.length(); i<e; ++i){
+					String schemaName = relatedSchemas.getString(i);
+					def.addRelatedSchema(schemaName);
+				}
 			}
 		}
 		
@@ -43,6 +56,7 @@ public class SchemaDefinition {
 	private String schemaId;
 	private String label;
 	private List<SchemaAttribute> attributes = new Vector<SchemaAttribute>();
+	private List<String> relatedSchemas = new Vector<String>();
 	
 	public SchemaDefinition(String groupName, String schemaId){
 		this.groupName = groupName;
@@ -63,6 +77,14 @@ public class SchemaDefinition {
 
 	public void addAttribute(SchemaAttribute attribute){
 		attributes.add(attribute);
+	}
+	
+	public List<String> getRelatedSchemas(){
+		return relatedSchemas;
+	}
+
+	public void addRelatedSchema(String relatedSchemaName){
+		relatedSchemas.add(relatedSchemaName);
 	}
 	
 	public String getDocumentIdentifier(){
@@ -185,6 +207,9 @@ public class SchemaDefinition {
 			FileOutputStream fos = new FileOutputStream(file);
 			OutputStreamWriter osw = new OutputStreamWriter(fos);
 			JSONArray arr = new JSONArray();
+			for(String schemaName : relatedSchemas){
+				arr.put(schemaName);
+			}
 			osw.write( arr.toString(3) );
 			osw.flush();
 			fos.flush();
@@ -260,6 +285,16 @@ public class SchemaDefinition {
 			}
 			
 			jsonDef.put("attributes", jsonAttributes);
+		}
+		
+		if( relatedSchemas.size() > 0 ){
+			JSONArray jsonRelatedSchemas  = new JSONArray();
+			
+			for(String schemaName : relatedSchemas){
+				jsonRelatedSchemas.put(schemaName);
+			}
+			
+			jsonDef.put("releatedSchemas", jsonRelatedSchemas);
 		}
 		
 		return jsonDef;

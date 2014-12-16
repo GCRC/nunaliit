@@ -47,7 +47,7 @@ public class SchemaAttribute {
 			boolean excludedFromForm = jsonAttr.optBoolean("excludedFromForm",false);
 			attribute.setExcludedFromForm(excludedFromForm);
 		}
-		
+
 		// options
 		{
 			JSONArray jsonOptions = jsonAttr.optJSONArray("options");
@@ -56,6 +56,18 @@ public class SchemaAttribute {
 					JSONObject jsonOption = jsonOptions.getJSONObject(i);
 					SelectionOption option = SelectionOption.fromJson(jsonOption);
 					attribute.addOption(option);
+				}
+			}
+		}
+
+		// checkboxes
+		{
+			JSONArray jsonCheckboxes = jsonAttr.optJSONArray("checkboxes");
+			if( null != jsonCheckboxes ){
+				for(int i=0,e=jsonCheckboxes.length(); i<e; ++i){
+					JSONObject jsonItem = jsonCheckboxes.getJSONObject(i);
+					CheckboxGroupItem item = CheckboxGroupItem.fromJson(jsonItem);
+					attribute.addCheckbox(item);
 				}
 			}
 		}
@@ -70,6 +82,7 @@ public class SchemaAttribute {
 	private boolean excludedFromDisplay;
 	private boolean excludedFromForm;
 	private List<SelectionOption> options = new Vector<SelectionOption>();
+	private List<CheckboxGroupItem> checkboxes = new Vector<CheckboxGroupItem>();
 
 	public SchemaAttribute(String type){
 		this.type = type;
@@ -136,6 +149,14 @@ public class SchemaAttribute {
 		return defOption;
 	}
 
+	public List<CheckboxGroupItem> getCheckboxes() {
+		return checkboxes;
+	}
+
+	public void addCheckbox(CheckboxGroupItem item) {
+		checkboxes.add(item);
+	}
+
 	public JSONObject toJson() throws Exception {
 		JSONObject jsonAttr = new JSONObject();
 		
@@ -146,7 +167,7 @@ public class SchemaAttribute {
 		if( includedInBrief ) jsonAttr.put("includedInBrief", true);
 		if( excludedFromDisplay ) jsonAttr.put("excludedFromDisplay", true);
 		if( excludedFromForm ) jsonAttr.put("excludedFromForm", true);
-		
+
 		if( options.size() > 0 ){
 			JSONArray jsonOptions = new JSONArray();
 			
@@ -156,6 +177,17 @@ public class SchemaAttribute {
 			}
 			
 			jsonAttr.put("options",jsonOptions);
+		}
+
+		if( checkboxes.size() > 0 ){
+			JSONArray jsonCheckboxes = new JSONArray();
+			
+			for(CheckboxGroupItem item : checkboxes){
+				JSONObject jsonItem = item.toJson();
+				jsonCheckboxes.put(jsonItem);
+			}
+			
+			jsonAttr.put("checkboxes",jsonCheckboxes);
 		}
 		
 		return jsonAttr;
@@ -186,6 +218,17 @@ public class SchemaAttribute {
 				} else {
 					schemaDoc.put(id, defOption.getValue());
 				}
+			}
+			
+		} else if( "checkbox".equals(type) ){
+			if( null != id ){
+				schemaDoc.put(id, false);
+			}
+			
+		} else if( "checkbox_group".equals(type) ){
+			for(CheckboxGroupItem item : checkboxes){
+				String itemId = item.getId();
+				schemaDoc.put(itemId, false);
 			}
 			
 		} else if( "file".equals(type) ){
@@ -369,7 +412,57 @@ public class SchemaAttribute {
 					pw.println("\t{{/"+id+"}}");
 					pw.println("{{/"+schemaName+"}}");
 				}
-							
+
+			} else if( "checkbox".equals(type) ){
+				if( null != id ){
+					pw.println("{{#"+schemaName+"}}");
+
+					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
+
+					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t<div class=\"value\">");
+					pw.println("\t\t\t\t{{#if "+id+"}}");
+					pw.println("\t\t\t\t\t<span class=\"n2s_localize\">Yes</span>");
+					pw.println("\t\t\t\t{{else}}");
+					pw.println("\t\t\t\t\t<span class=\"n2s_localize\">No</span>");
+					pw.println("\t\t\t\t{{/if}}");
+					pw.println("\t\t\t</div>");
+					pw.println("\t\t\t<div class=\"end\"></div>");
+					
+					pw.println("\t\t</div>");
+					
+					
+					pw.println("{{/"+schemaName+"}}");
+				}
+
+			} else if( "checkbox_group".equals(type) ){
+				if( null != id ){
+					pw.println("{{#"+schemaName+"}}");
+
+					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
+
+					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t<div class=\"value\">");
+					for(CheckboxGroupItem item : checkboxes){
+						String itemId = item.getId();
+						String itemLabel = item.getLabel();
+						pw.println("\t\t\t\t{{#"+itemId+"}}");
+						if( null == itemLabel ){
+							pw.println("\t\t\t\t\t<div>"+itemId+"</div>");
+						} else {
+							pw.println("\t\t\t\t\t<div class=\"n2s_localize\">"+itemLabel+"</div>");
+						}
+						pw.println("\t\t\t\t{{/"+itemId+"}}");
+					}
+					pw.println("\t\t\t</div>");
+					pw.println("\t\t\t<div class=\"end\"></div>");
+					
+					pw.println("\t\t</div>");
+					
+					
+					pw.println("{{/"+schemaName+"}}");
+				}
+				
 			} else if( "file".equals(type) ){
 				pw.println("{{#nunaliit_attachments}}");
 				pw.println("{{#files}}");
@@ -408,6 +501,7 @@ public class SchemaAttribute {
 			if( "string".equals(type) 
 			 || "textarea".equals(type) 
 			 || "reference".equals(type) 
+			 || "checkbox".equals(type) 
 			 || "date".equals(type) ){
 				if( null != id ){
 					String fieldType = "";
@@ -417,6 +511,8 @@ public class SchemaAttribute {
 						fieldType = ",date";
 					} else if( "reference".equals(type) ){
 						fieldType = ",reference";
+					} else if( "checkbox".equals(type) ){
+						fieldType = ",checkbox";
 					}
 					
 					pw.println("{{#"+schemaName+"}}");
@@ -432,7 +528,7 @@ public class SchemaAttribute {
 					
 					pw.println("{{/"+schemaName+"}}");
 				}
-				
+
 			} else if( "selection".equals(type) ){
 				if( null != id ){
 					pw.println("{{#"+schemaName+"}}");
@@ -454,6 +550,39 @@ public class SchemaAttribute {
 					}
 					
 					pw.println("\t\t\t</select>");
+					pw.println("\t\t</div>");
+					pw.println("\t\t<div class=\"end\"></div>");
+					
+					pw.println("\t</div>");
+					
+					
+					pw.println("{{/"+schemaName+"}}");
+				}
+
+			} else if( "checkbox_group".equals(type) ){
+				if( null != id ){
+					pw.println("{{#"+schemaName+"}}");
+
+					pw.println("\t<div class=\""+schemaName+"_"+id+"\">");
+
+					pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t<div class=\"value\">");
+					
+					for(CheckboxGroupItem item : checkboxes){
+						String itemId = item.getId();
+						String itemLabel = item.getLabel();
+						String forId = id+"_"+itemId;
+						
+						pw.println("\t\t\t\t<div>");
+						pw.print("\t\t\t\t\t<input type=\"checkbox\" class=\"{{#:input}}"+itemId+"{{/:input}}\" id=\""+forId+"\"/>");
+						if( null == itemLabel ) {
+							pw.println(" <label for=\""+forId+"\">"+itemId+"</label>");
+						} else {
+							pw.println(" <label for=\""+forId+"\" class=\"n2s_localize\">"+itemLabel+"</label>");
+						}
+						pw.println("\t\t\t\t</div>");
+					}
+
 					pw.println("\t\t</div>");
 					pw.println("\t\t<div class=\"end\"></div>");
 					

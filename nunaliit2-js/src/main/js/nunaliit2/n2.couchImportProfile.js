@@ -181,8 +181,8 @@ var UpgradeAnalysis = $n2.Class({
 	
 	addDeletion: function(opts_){
 		var opts = $n2.extend({
-			importId: id
-			,dbDoc: dbDocsByImportId[id]
+			importId: null
+			,dbDoc: null
 		},opts_);
 
 		this.dbDocsByImportId[opts.importId] = opts.dbDoc;
@@ -326,7 +326,7 @@ var UpgradeAnalyzer = $n2.Class({
 			
 			if( value !== dbData[propName] ){
 				if( !change ) change = {
-					id:importId
+					importId:importId
 					,modifiedProperties: []
 					,modifiedGeometry: false
 					,inconsistentProperties: []
@@ -908,7 +908,7 @@ var AnalysisReport = $n2.Class({
 			data: doc
 			,onSuccess: function(docInfo){
 				_this._log( _loc('Deleted document with id: {id}',{id:docInfo.id}) );
-				_this._completed(change.elemId);
+				_this._completed(change.changeId);
 			}
 			,onError: function(errorMsg){ 
 				// reportError(errorMsg);
@@ -1079,6 +1079,54 @@ var ImportProfileOperationCopyAllAndFixNames = $n2.Class(ImportProfileOperation,
 });
 
 addOperationPattern(OPERATION_COPY_ALL_AND_FIX_NAMES, ImportProfileOperationCopyAllAndFixNames);
+
+//=========================================================================
+var OPERATION_ASSIGN = /^\s*assign\((.*),\s*'([^']*)'\s*\)\s*$/;
+
+var ImportProfileOperationAssign = $n2.Class(ImportProfileOperation, {
+	
+	operationString: null,
+	
+	sourceName: null,
+	
+	targetSelector: null,
+	
+	initialize: function(operationString){
+		ImportProfileOperation.prototype.initialize.call(this);
+		
+		this.operationString = operationString;
+		
+		var matcher = OPERATION_ASSIGN.exec(operationString);
+		if( !matcher ) {
+			throw 'Invalid operation string for ImportProfileOperationAssign: '+operationString;
+		};
+		
+		this.targetSelector = $n2.objectSelector.parseSelector(matcher[1]);
+		this.sourceName = matcher[2];
+	},
+	
+	copyProperties: function(doc, importData, filterProperties){
+		var sourceValue = importData[this.sourceName];
+		if( typeof sourceValue !== 'undefined' ){
+			this.targetSelector.setValue(doc, sourceValue, true);
+		};
+	},
+	
+	reportInconsistentProperties: function(doc, importData, propertiesArray){
+		var sourceValue = importData[this.sourceName];
+		var targetValue = this.targetSelector.getValue(doc);
+		if( sourceValue !== targetValue ){
+			propertiesArray.push({
+				source: this.sourceName
+				,sourceValue: sourceValue
+				,target: this.targetSelector.getSelectorString()
+				,targetValue: targetValue
+			});
+		};
+	}
+});
+
+addOperationPattern(OPERATION_ASSIGN, ImportProfileOperationAssign);
 
 //=========================================================================
 var ImportEntry = $n2.Class({
