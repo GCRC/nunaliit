@@ -45,16 +45,28 @@ var CreateDocumentWidget = $n2.Class({
 	
 	dispatchService: null,
 	
+	authService: null,
+	
+	showAsLink: null,
+	
+	containerId: null,
+	
 	elemId: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			contentId: null
 			,dispatchService: null
+			,authService: null
+			,showAsLink: false
+			,containerId: null
 		},opts_);
 		
 		this.contentId = opts.contentId;
 		this.dispatchService = opts.dispatchService;
+		this.authService = opts.authService;
+		this.showAsLink = opts.showAsLink;
+		this.containerId = opts.containerId;
 		
 		this._display();
 	},
@@ -64,29 +76,51 @@ var CreateDocumentWidget = $n2.Class({
 		
 		this.elemId = $n2.getUniqueId();
 		
+		var containerId = this.containerId;
+		if( !containerId ){
+			containerId = this.contentId;
+		};
+		
 		var $div = $('<div>')
 			.attr('id',this.elemId)
 			.addClass('n2widget_createDocument')
-			.appendTo( $('#'+this.contentId) );
+			.appendTo( $('#'+containerId) );
 		
-//		$('<a>')
-//			.attr('href','#')
-//			.text( _loc('Create Document') )
-//			.appendTo($div)
-//			.click(function(){
-//				_this._startEdit();
-//				return false;
-//			});
-		$('<button>')
-			.text( _loc('Create Document') )
-			.appendTo($div)
-			.click(function(){
-				_this._startEdit();
-				return false;
-			});
+		if( this.showAsLink ) {
+			$('<a>')
+				.attr('href','#')
+				.text( _loc('Create Document') )
+				.appendTo($div)
+				.click(function(){
+					_this._startEdit();
+					return false;
+				});
+		} else {
+			$('<button>')
+				.text( _loc('Create Document') )
+				.appendTo($div)
+				.click(function(){
+					_this._startEdit();
+					return false;
+				});
+		};
 	},
 	
 	_startEdit: function(){
+		var _this = this;
+		
+		if( this.authService ){
+			if( false == this.authService.isLoggedIn() ){
+				this.authService.showLoginForm({
+					prompt: _loc('You must first log in to create a new document.')
+					,anonymousLoginAllowed: false
+					,onSuccess: function(){ _this._startEdit(); }
+				});
+				
+				return;
+			};
+		};
+
 		this.dispatchService.send(DH, {
 			type: 'editInitiate'
 			,doc: {}
@@ -99,7 +133,7 @@ function BuildCreateDocumentWidgetFromRequest(m){
 	var widgetOptions = m.widgetOptions;
 	var contentId = m.contentId;
 	var config = m.config;
-	var moduleDisplay = m.moduleDisplay;
+	// var moduleDisplay = m.moduleDisplay;
 	
 	var options = {
 		contentId: contentId
@@ -107,6 +141,12 @@ function BuildCreateDocumentWidgetFromRequest(m){
 	
 	if( config && config.directory ){
 		options.dispatchService = config.directory.dispatchService;
+		options.authService = config.directory.authService;
+	};
+	
+	if( widgetOptions ){
+		if( widgetOptions.showAsLink ) options.showAsLink = true;
+		if( widgetOptions.containerId ) options.containerId = widgetOptions.containerId;
 	};
 	
 	new CreateDocumentWidget(options);

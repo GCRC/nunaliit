@@ -236,6 +236,19 @@ Help Button
 }
 
 /*
+CreateDocument widget
+*/
+.nunaliit_atlas .nunaliit_module_title .n2widget_createDocument {
+	float: right;
+	padding: 8px 20px;
+}
+.nunaliit_atlas .nunaliit_module_title .n2widget_createDocument a
+,.nunaliit_atlas .nunaliit_module_title .n2widget_createDocument a:visited {
+	color: #fff;
+	text-decoration: none;
+}
+
+/*
 	Search input located in title bar
 */
 .nunaliit_atlas .nunaliit_search_input {

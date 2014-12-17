@@ -378,7 +378,7 @@ Gazetteer Dialog
 CreateDocument widget 
 ==============================
 */
-.n2widget_createDocument {
+.nunaliit_content .n2widget_createDocument {
 	position: absolute;
 	top: 5px;
 	right: 455px;
