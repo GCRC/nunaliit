@@ -32,11 +32,12 @@ $Id: n2.couchModule.js 8494 2012-09-21 20:06:50Z jpfiset $
 */
 
 ;(function($,$n2){
+"use strict";
 
-var DH = 'n2.couchModule'; // dispatcher handle
-
-// Localization
-var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
+var 
+	_loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); }
+	,DH = 'n2.couchModule'
+	;
 
 //=========================================================================	
 
@@ -122,6 +123,18 @@ var Module = $n2.Class({
 			searchInfo = moduleInfo.search;
 		};
 		return searchInfo;
+	}
+
+	,getModelInfos: function(){
+		var modelInfos = null;
+		var moduleInfo = this.getModuleInfo();
+		if( moduleInfo ){
+			modelInfos = moduleInfo.models;
+		};
+		if( !modelInfos ){
+			modelInfos = [];
+		};
+		return modelInfos;
 	}
 
 	,getWidgetInfos: function(){
@@ -458,6 +471,30 @@ var ModuleDisplay = $n2.Class({
 			var editInfo = _this.module.getEditInfo();
 			var searchInfo = _this.module.getSearchInfo();
 			var widgetInfos = _this.module.getWidgetInfos();
+			var modelInfos = _this.module.getModelInfos();
+			
+			// Create models
+			if( modelInfos ){
+				for(var i=0,e=modelInfos.length; i<e; ++i){
+					var modelInfo = modelInfos[i];
+
+					var msg = {
+						type: 'modelCreate'
+						,modelType: modelInfo.type
+						,modelId: modelInfo.id
+						,modelOptions: modelInfo
+						,created: false
+						,config: config
+						,moduleDisplay: _this
+					};
+						
+					_this._sendSynchronousMessage(msg);
+						
+					if( ! msg.created ){
+						$n2.log('Model not created: '+modelInfo.type+'/'+modelInfo.id);
+					};
+				};
+			};
 			
 			// Check if support for canvas is available
 			var canvasHandlerAvailable = false;

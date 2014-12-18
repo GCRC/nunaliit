@@ -180,13 +180,23 @@ var Service = $n2.Class({
 		if( 'widgetIsTypeAvailable' === m.type ){
 			if( m.widgetType === 'createDocument' ){
 		        m.isAvailable = true;
+
+			} else {
+				if( $n2.couchDbPerspective 
+				 && $n2.couchDbPerspective.HandleWidgetAvailableRequests ){
+					$n2.couchDbPerspective.HandleWidgetAvailableRequests(m);
+				};
 		    };
 		    
 		} else if( 'widgetDisplay' === m.type ){
 			if( m.widgetType === 'createDocument' ){
 				BuildCreateDocumentWidgetFromRequest(m);
+		    } else {
+				if( $n2.couchDbPerspective 
+				 && $n2.couchDbPerspective.HandleWidgetDisplayRequests ){
+					$n2.couchDbPerspective.HandleWidgetDisplayRequests(m);
+				};
 		    };
-			
 		};
 	}
 });

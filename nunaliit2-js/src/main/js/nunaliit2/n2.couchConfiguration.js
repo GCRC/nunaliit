@@ -330,6 +330,10 @@ function Configure(options_){
 			,userServerUrl: options.userServerUrl
 		});
 		
+	 	configuration.directory.modelService = new $n2.model.Service({
+			dispatchService: configuration.directory.dispatchService
+		});
+		
 	 	configuration.directory.widgetService = new $n2.widgetBasic.Service({
 			dispatchService: configuration.directory.dispatchService
 		});

@@ -183,6 +183,8 @@ var DbPerspective = $n2.Class({
 	
 	atlasDesign: null,
 	
+	modelId: null,
+	
 	dbSelectors: null,
 	
 	selectorListeners: null,
@@ -195,17 +197,23 @@ var DbPerspective = $n2.Class({
 		var opts = $n2.extend({
 			dispatchService: null
 			,atlasDesign: null
+			,modelId: null
 		}, opts_);
 
 		var _this = this;
 		
 		this.dispatchService = opts.dispatchService;
 		this.atlasDesign = opts.atlasDesign;
+		this.modelId = opts.modelId;
 		
 		this.dbSelectors = [];
 		this.selectorListeners = [];
 		this.docInfosByDocId = {};
 		this.docListeners = [];
+		
+		if( !this.modelId ){
+			this.modelId = $n2.getUniqueId();
+		};
 		
 		if( this.dispatchService ) {
 			var fn = function(m){
@@ -217,7 +225,11 @@ var DbPerspective = $n2.Class({
 			this.dispatchService.register(DH, 'findIsAvailable', fn);
 			this.dispatchService.register(DH, 'documentVersion', fn);
 			this.dispatchService.register(DH, 'cacheRetrieveDocument', fn);
+			this.dispatchService.register(DH, 'modelGetInfo', fn);
+			this.dispatchService.register(DH, 'modelGetState', fn);
 		};
+		
+		$n2.log('DbPerspective',this);
 	},
 	
 	addDbSelector: function(dbSelector, opts_){
@@ -351,18 +363,7 @@ var DbPerspective = $n2.Class({
 			docInfo.visible = visibilityStatus.visible;
 		};
 		
-		if( added.length > 0
-		 || updated.length > 0 
-		 || removed.length > 0 ){
-			for(var i=0,e=this.docListeners.length; i<e; ++i){
-				var listener = this.docListeners[i];
-				listener({
-					added: added
-					,updated: updated
-					,removed: removed
-				});
-			};
-		};
+		this._reportStateUpdate(added, updated, removed);
 	},
 	
 	_getDocVisibility: function(doc){
@@ -446,18 +447,7 @@ var DbPerspective = $n2.Class({
 			};
 		};
 		
-		if( added.length > 0
-		 || updated.length > 0 
-		 || removed.length > 0 ){
-			for(var i=0,e=this.docListeners.length; i<e; ++i){
-				var listener = this.docListeners[i];
-				listener({
-					added: added
-					,updated: updated
-					,removed: removed
-				});
-			};
-		};
+		this._reportStateUpdate(added, updated, removed);
 	},
 	
 	_handleMessage: function(m){
@@ -472,20 +462,8 @@ var DbPerspective = $n2.Class({
 			if( docInfo ){
 				delete this.docInfosByDocId[docId];
 				
-				if( this.docListeners.length > 0 ){
-					var added = [];
-					var updated = [];
-					var removed = [docInfo.doc];
-
-					for(var i=0,e=this.docListeners.length; i<e; ++i){
-						var listener = this.docListeners[i];
-						listener({
-							added: added
-							,updated: updated
-							,removed: removed
-						});
-					};
-				};
+				var removed = [docInfo.doc];
+				this._reportStateUpdate([], [], removed);
 			};
 			
 		} else if( 'findIsAvailable' === m.type ) {
@@ -518,6 +496,60 @@ var DbPerspective = $n2.Class({
 			 && docInfo.cacheValid ){
 				m.doc = docInfo.doc;
 			};
+			
+		} else if( 'modelGetInfo' === m.type ) {
+			if( m.modelId === this.modelId ){
+				m.modelInfo = {
+					modelId: this.modelId
+					,modelType: 'dbPerspective'
+					,parameters: []
+					,_instance: this
+				};
+			};
+			
+		} else if( 'modelGetState' === m.type ) {
+			if( m.modelId === this.modelId ){
+				var added = [];
+				for(var docId in this.docInfosByDocId){
+					var docInfo = this.docInfosByDocId[docId];
+					var doc = docInfo.doc;
+					var visibilityStatus = this._getDocVisibility(doc);
+					if( visibilityStatus.visible ){
+						added.push(doc);
+					};
+				};
+
+				m.state = {
+					added: added
+					,updated: []
+					,removed: []
+				};
+			};
+		};
+	},
+	
+	_reportStateUpdate: function(added, updated, removed){
+		if( added.length > 0
+		 || updated.length > 0 
+		 || removed.length > 0 ){
+			var stateUpdate = {
+				added: added
+				,updated: updated
+				,removed: removed
+			};
+
+			for(var i=0,e=this.docListeners.length; i<e; ++i){
+				var listener = this.docListeners[i];
+				listener(stateUpdate);
+			};
+			
+			if( this.dispatchService ){
+				this.dispatchService.send(DH,{
+					type: 'modelStateUpdated'
+					,modelId: this.modelId
+					,state: stateUpdate
+				});
+			};
 		};
 	}
 });
@@ -527,24 +559,48 @@ var DbPerspectiveChooser = $n2.Class({
 	
 	elemId: null,
 	
+	dispatchService: null,
+	
+	sourceModelId: null,
+	
 	dbPerspective: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
-			dbPerspective: null
-			,elemId: null
-			,style: null
+			dispatchService: null
+			,sourceModelId: null
+			,contentId: null
+			,containerId: null
 		},opts_);
 		
 		var _this = this;
 		
-		this.dbPerspective = opts.dbPerspective;
+		this.dispatchService = opts.dispatchService;
+		this.sourceModelId = opts.sourceModelId;
+
+		if( this.dispatchService ){
+			var m = {
+				'type': 'modelGetInfo'
+				,'modelId': this.sourceModelId
+			};
+			
+			this.dispatchService.synchronousCall(DH,m);
+			
+			if( m.modelInfo ){
+				this.dbPerspective = m.modelInfo._instance;
+			};
+		};
+		
+		var containerId = opts.containerId;
+		if( !containerId ){
+			containerId = opts.contentId;
+		};
 		
 		this.elemId = $n2.getUniqueId();
 		var $outer = $('<div>')
 			.attr('id',this.elemId)
 			.addClass('n2dbPerspective_chooser')
-			.appendTo( $('#'+opts.elemId) );
+			.appendTo( $('#'+containerId) );
 		
 		if( opts.style ){
 			for(var name in opts.style){
@@ -658,11 +714,44 @@ var DbPerspectiveChooser = $n2.Class({
 });
 
 //--------------------------------------------------------------------------
+function HandleWidgetAvailableRequests(m){
+	if( m.widgetType === 'dbPerspectiveSelector' ){
+      m.isAvailable = true;
+	};
+};
+
+//--------------------------------------------------------------------------
+function HandleWidgetDisplayRequests(m){
+	if( m.widgetType === 'dbPerspectiveSelector' ){
+		var widgetOptions = m.widgetOptions;
+		var contentId = m.contentId;
+		var config = m.config;
+		
+		var options = {
+			contentId: contentId
+		};
+		
+		if( config && config.directory ){
+			options.dispatchService = config.directory.dispatchService;
+		};
+		
+		if( widgetOptions ){
+			if( widgetOptions.sourceModelId ) options.sourceModelId = widgetOptions.sourceModelId;
+			if( widgetOptions.containerId ) options.containerId = widgetOptions.containerId;
+		};
+		
+		new DbPerspectiveChooser(options);
+	};
+};
+
+//--------------------------------------------------------------------------
 $n2.couchDbPerspective = {
 	DbPerspective: DbPerspective
 	,DbSelector: DbSelector
 	,CouchLayerDbSelector: CouchLayerDbSelector
 	,DbPerspectiveChooser: DbPerspectiveChooser
+	,HandleWidgetAvailableRequests: HandleWidgetAvailableRequests
+	,HandleWidgetDisplayRequests: HandleWidgetDisplayRequests
 };
 
 })(jQuery,nunaliit2);
