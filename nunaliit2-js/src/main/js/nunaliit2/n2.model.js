@@ -67,50 +67,88 @@ var Service = $n2.Class({
 				$n2.log('modelType must be provided when creating a model');
 				return;
 			};
+			
 			if( ! m.modelId ){
 				$n2.log('modelId must be provided when creating a model: '+m.modelType);
 				return;
 			};
-			if( m.modelType === 'dbPerspective' ){
-		        this._createDbPerspective(m);
-		    };
+			
+			try {
+				if( m.modelType === 'dbPerspective' ){
+			        this._createDbPerspective(m);
+			    
+				} else if( m.modelType === 'timeFilter' ){
+			        this._createTimeFilter(m);
+			    };
+			} catch(err) {
+				$n2.log('Error while creating model '+m.modelType+'/'+m.modelId+': '+err);
+			};
 		};
 	},
 	
 	_createDbPerspective: function(m){
 		if( $n2.couchDbPerspective 
 		 && $n2.couchDbPerspective.DbPerspective ){
-			try {
-				var options = {
-					modelId: m.modelId
-				};
-				
-				if( m && m.config ){
-					options.atlasDesign = m.config.atlasDesign;
-					
-					if( m.config.directory ){
-						options.dispatchService = m.config.directory.dispatchService;
-					};
-				};
-				
-				var dbPerspective = new $n2.couchDbPerspective.DbPerspective(options);
-				
-				// Load layers
-				if( m.modelOptions 
-				 && m.modelOptions.layers ){
-					var layers = m.modelOptions.layers;
-					for(var i=0,e=layers.length; i<e; ++i){
-						var layerConfigObj = layers[i];
-						dbPerspective.addDbSelectorFromConfigObject(layerConfigObj);
-					};
-				};
-				
-				m.created = true;
-			} catch(err) {
-				$n2.log('Error while creating model: '+m.modelType+'/'+m.modelId);
+			var options = {
+				modelId: m.modelId
 			};
+			
+			if( m && m.config ){
+				options.atlasDesign = m.config.atlasDesign;
+				
+				if( m.config.directory ){
+					options.dispatchService = m.config.directory.dispatchService;
+				};
+			};
+			
+			var dbPerspective = new $n2.couchDbPerspective.DbPerspective(options);
+			
+			// Load layers
+			if( m.modelOptions 
+			 && m.modelOptions.layers ){
+				var layers = m.modelOptions.layers;
+				for(var i=0,e=layers.length; i<e; ++i){
+					var layerConfigObj = layers[i];
+					dbPerspective.addDbSelectorFromConfigObject(layerConfigObj);
+				};
+			};
+			
+			m.created = true;
+
 		} else {
-			$n2.log('Can not create model: '+m.modelType+'. DbPerspective is not available');
+			throw 'DbPerspective is not available';
+		};
+	},
+	
+	_createTimeFilter: function(m){
+		if( $n2.modelTime 
+		 && $n2.modelTime.TimeFilter ){
+			var options = {
+				modelId: m.modelId
+			};
+			
+			if( m && m.modelOptions ){
+				if( m.modelOptions.sourceModelId ){
+					options.sourceModelId = m.modelOptions.sourceModelId;
+				};
+
+				if( m.modelOptions.range ){
+					options.rangeStr = m.modelOptions.range;
+				};
+			};
+			
+			if( m && m.config ){
+				if( m.config.directory ){
+					options.dispatchService = m.config.directory.dispatchService;
+				};
+			};
+			
+			new $n2.modelTime.TimeFilter(options);
+			
+			m.created = true;
+
+		} else {
+			throw 'Model Time is not available';
 		};
 	}
 });

@@ -580,8 +580,8 @@ var DbPerspectiveChooser = $n2.Class({
 
 		if( this.dispatchService ){
 			var m = {
-				'type': 'modelGetInfo'
-				,'modelId': this.sourceModelId
+				type: 'modelGetInfo'
+				,modelId: this.sourceModelId
 			};
 			
 			this.dispatchService.synchronousCall(DH,m);
