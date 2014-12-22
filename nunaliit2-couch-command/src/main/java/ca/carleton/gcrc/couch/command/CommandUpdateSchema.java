@@ -160,17 +160,22 @@ public class CommandUpdateSchema implements Command {
 
 		// Loop over all documents
 		for(String docId : docIds){
-			Document doc = documentsByDocId.get(docId);
-			File schemaDir = dirByDocId.get(docId);
-			JSONObject jsonDoc = doc.getJSONObject();
-			String name = jsonDoc.getString("name");
-			JSONObject jsonDef = jsonDoc.getJSONObject("definition");
+			try {
+				Document doc = documentsByDocId.get(docId);
+				File schemaDir = dirByDocId.get(docId);
+				JSONObject jsonDoc = doc.getJSONObject();
+				String name = jsonDoc.getString("name");
+				JSONObject jsonDef = jsonDoc.getJSONObject("definition");
+				
+				// Refresh from definition
+				SchemaDefinition schemaDef = SchemaDefinition.fronJson(jsonDef);
+				schemaDef.saveToSchemaDir(schemaDir);
+				
+				gs.getOutStream().println("Schema "+name+" refreshed");
 			
-			// Refresh from definition
-			SchemaDefinition schemaDef = SchemaDefinition.fronJson(jsonDef);
-			schemaDef.saveToSchemaDir(schemaDir);
-			
-			gs.getOutStream().println("Schema "+name+" refreshed");
+			} catch(Exception e) {
+				throw new Exception("Error updating schema with id: "+docId, e);
+			}
 		}
 	}
 }
