@@ -30,13 +30,17 @@ POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-;(function($,$n2,$d) {
+;(function($,$n2) {
 "use strict";
 
 var 
  _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); }
  ,DH = 'n2.forceGraph'
  ;
+ 
+// Required library: d3
+var $d = window.d3;
+if( !$d ) return;
  
 //--------------------------------------------------------------------------
  var Popup = $n2.Class({
@@ -1432,4 +1436,4 @@ $n2.forceGraph = {
 	,HandleCanvasDisplayRequest: HandleCanvasDisplayRequest
 };
 
-})(jQuery,nunaliit2,d3);
+})(jQuery,nunaliit2);
