@@ -51,7 +51,11 @@ var TimeFilter = $n2.Class({
 	
 	range: null,
 	
-	filerInterval: null,
+	rangeParameter: null,
+	
+	interval: null,
+	
+	intervalParameter: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -73,6 +77,28 @@ var TimeFilter = $n2.Class({
 		};
 
 		this.docInfosByDocId = {};
+		
+		this.rangeParameter = new $n2.model.ModelParameter({
+			model: this
+			,modelId: this.modelId
+			,type: 'dateInterval'
+			,name: 'range'
+			,label: _loc('Range')
+			,setFn: this._setRangeParameter
+			,getFn: this.getRange
+			,dispatchService: this.dispatchService
+		});
+		
+		this.intervalParameter = new $n2.model.ModelParameter({
+			model: this
+			,modelId: this.modelId
+			,type: 'dateInterval'
+			,name: 'interval'
+			,label: _loc('Interval')
+			,setFn: this._setIntervalParameter
+			,getFn: this.getInterval
+			,dispatchService: this.dispatchService
+		});
 		
 		// Register to events
 		if( this.dispatchService ){
@@ -97,12 +123,24 @@ var TimeFilter = $n2.Class({
 		$n2.log('TimeFilter',this);
 	},
 	
-	getFilterInterval: function(){
-		if( this.filerInterval ){
-			return this.filerInterval;
+	getRange: function(){
+		return this.range;
+	},
+	
+	_setRangeParameter: function(updatedRange){
+		this.range = updatedRange;
+	},
+	
+	getInterval: function(){
+		if( this.interval ){
+			return this.interval;
 		};
 		
 		return this.range;
+	},
+	
+	_setIntervalParameter: function(updatedInterval){
+		this.interval = updatedInterval;
 	},
 	
 	_handle: function(m, addr, dispatcher){
@@ -141,8 +179,11 @@ var TimeFilter = $n2.Class({
 		var info = {
 			modelId: this.modelId
 			,modelType: 'timeFilter'
-			,parameters: []
+			,parameters: {}
 		};
+		
+		info.parameters.range = this.rangeParameter.getInfo();
+		info.parameters.interval = this.intervalParameter.getInfo();
 		
 		return info;
 	},
@@ -267,7 +308,7 @@ var TimeFilter = $n2.Class({
 	},
 	
 	_computeVisibility: function(docInfo, now){
-		var filterInterval = this.getFilterInterval();
+		var filterInterval = this.getInterval();
 		
 		if( docInfo 
 		 && docInfo.intervals 

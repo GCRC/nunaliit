@@ -37,7 +37,152 @@ var
  _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); }
  ,DH = 'n2.model'
  ;
- 
+
+//--------------------------------------------------------------------------
+ /**
+  * This class manages a parameter based on a model. A parameter supports
+  * 3 events:
+  * - get
+  * - change
+  * - set
+  * 
+  * The "get" event returns the current value of a parameter.
+  * The "change" event is sent to the parameter, indicating the new value desired
+  * by the user.
+  * The "set" event is sent went the parameter value is modified.
+  */
+var ModelParameter = $n2.Class({
+
+	model: null,
+	
+	parameterId: null,
+	
+	type: null,
+	
+	name: null,
+	
+	label: null,
+	
+	setFn: null,
+	
+	getFn: null,
+	
+	dispatchService: null,
+	
+	eventNameSet: null,
+	
+	eventNameGet: null,
+	
+	eventNameChange: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			model: null
+			,modelId: null // optional
+			,type: null
+			,name: null
+			,label: null
+			,setFn: null
+			,getFn: null
+			,dispatchService: null
+		},opts_);
+	
+		var _this = this;
+		
+		this.model = opts.model;
+		this.type = opts.type;
+		this.name = opts.name;
+		this.label = opts.label;
+		this.setFn = opts.setFn;
+		this.getFn = opts.getFn;
+		this.dispatchService = opts.dispatchService;
+		
+		var modelId = opts.modelId;
+		if( !modelId ){
+			modelId = $n2.getUniqueId('parameter_');
+		};
+		
+		if( !this.label ){
+			this.label = this.name;
+		};
+		
+		this.parameterId = modelId + '_' + this.name;
+		this.eventNameSet = this.parameterId + '_set';
+		this.eventNameGet = this.parameterId + '_get';
+		this.eventNameChange = this.parameterId + '_change';
+		
+		if( this.dispatchService ){
+			var fn = function(m, addr, dispatcher){
+				_this._handle(m, addr, dispatcher);
+			};
+			this.dispatchService.register(DH, this.eventNameChange, fn);
+			this.dispatchService.register(DH, this.eventNameGet, fn);
+		};
+	},
+
+	getInfo: function(){
+		var info = {
+			parameterId: this.parameterId
+			,type: this.type
+			,name: this.name
+			,label: this.label
+			,setEvent: this.eventNameSet
+			,getEvent: this.eventNameGet
+			,changeEvent: this.eventNameChange
+		};
+		
+		var effectiveValue = this.model[this.name];
+		info.value = effectiveValue;
+		
+		return info;
+	},
+
+	_getValue: function(){
+		var value = null;
+		
+		if( this.getfn ){
+			value = this.getfn.call(this.model);
+		} else {
+			value = this.model[this.name];
+		};
+		
+		return value;
+	},
+
+	_setValue: function(value){
+		if( this.setFn ){
+			this.setFn.call(this.model, value);
+		} else {
+			this.model[this.name] = value;
+		};
+	},
+	
+	_handle: function(m, addr, dispatcher){
+		if( m.type === this.eventNameChange ){
+			var value = m.value;
+
+			var previousValue = this._getValue();
+				
+			this._setValue(value);
+			
+			var effectiveValue = this._getValue();
+			
+			if( previousValue !== effectiveValue ){
+				var reply = {
+					type: this.eventNameSet
+					,parameterId: this.parameterId
+					,value: effectiveValue
+				};
+				this.dispatchService.send(DH, reply);
+			};
+	 			
+		} else if( m.type === this.eventNameGet ){
+			var effectiveValue = this._getValue();
+			m.value = effectiveValue;
+		};
+	}
+});
+
 //--------------------------------------------------------------------------
 var Service = $n2.Class({
 	
@@ -156,6 +301,7 @@ var Service = $n2.Class({
 //--------------------------------------------------------------------------
 $n2.model = {
 	Service: Service
+	,ModelParameter: ModelParameter
 };
 
 })(jQuery,nunaliit2);

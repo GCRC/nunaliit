@@ -502,7 +502,7 @@ var DbPerspective = $n2.Class({
 				m.modelInfo = {
 					modelId: this.modelId
 					,modelType: 'dbPerspective'
-					,parameters: []
+					,parameters: {}
 					,_instance: this
 				};
 			};

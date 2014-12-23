@@ -261,8 +261,8 @@ if( !$d ) return;
  		};
  		
  		if( modelInfo && modelInfo.parameters ){
- 			for(var i=0,e=modelInfo.parameters.length; i<e; ++i){
- 				var paramInfo = modelInfo.parameters[i];
+ 			for(var paramKey in modelInfo.parameters){
+ 				var paramInfo = modelInfo.parameters[paramKey];
  				this.parameters.push(paramInfo);
  				if( paramInfo.changeEvent ){
  					this.parametersByEventId[paramInfo.changeEvent] = paramInfo;

@@ -383,3 +383,23 @@ CreateDocument widget
 	top: 5px;
 	right: 455px;
 }
+
+/* 
+==============================
+Timeline widget 
+==============================
+*/
+.nunaliit_content .n2timeline {
+	position: absolute;
+	bottom: 0px;
+	right: 451px;
+	left: 0px;
+	height: 27px;
+}
+
+.n2timeline {
+	background-color: #00ff88;
+	padding-top: 23px;
+	padding-left: 20px;
+	padding-right: 20px;
+}
