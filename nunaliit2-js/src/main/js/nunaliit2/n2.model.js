@@ -131,17 +131,26 @@ var ModelParameter = $n2.Class({
 			,changeEvent: this.eventNameChange
 		};
 		
-		var effectiveValue = this.model[this.name];
+		var effectiveValue = this._getValue();
 		info.value = effectiveValue;
 		
 		return info;
 	},
 
+	sendUpdate: function(){
+		var effectiveValue = this._getValue();
+		this.dispatchService.send(DH, {
+			type: this.eventNameSet
+			,parameterId: this.parameterId
+			,value: effectiveValue
+		});
+	},
+
 	_getValue: function(){
 		var value = null;
 		
-		if( this.getfn ){
-			value = this.getfn.call(this.model);
+		if( this.getFn ){
+			value = this.getFn.call(this.model);
 		} else {
 			value = this.model[this.name];
 		};
@@ -160,21 +169,8 @@ var ModelParameter = $n2.Class({
 	_handle: function(m, addr, dispatcher){
 		if( m.type === this.eventNameChange ){
 			var value = m.value;
-
-			var previousValue = this._getValue();
 				
 			this._setValue(value);
-			
-			var effectiveValue = this._getValue();
-			
-			if( previousValue !== effectiveValue ){
-				var reply = {
-					type: this.eventNameSet
-					,parameterId: this.parameterId
-					,value: effectiveValue
-				};
-				this.dispatchService.send(DH, reply);
-			};
 	 			
 		} else if( m.type === this.eventNameGet ){
 			var effectiveValue = this._getValue();

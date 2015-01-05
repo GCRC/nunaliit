@@ -403,3 +403,11 @@ Timeline widget
 	padding-left: 20px;
 	padding-right: 20px;
 }
+
+.n2timeline .n2timeline_slider {
+	background-color: #000000;
+}
+
+.n2timeline .n2timeline_slider .ui-slider-range {
+	background-color: #ffffff;
+}

@@ -84,7 +84,7 @@ var TimeFilter = $n2.Class({
 			,type: 'dateInterval'
 			,name: 'range'
 			,label: _loc('Range')
-			,setFn: this._setRangeParameter
+			,setFn: this._setRange
 			,getFn: this.getRange
 			,dispatchService: this.dispatchService
 		});
@@ -95,7 +95,7 @@ var TimeFilter = $n2.Class({
 			,type: 'dateInterval'
 			,name: 'interval'
 			,label: _loc('Interval')
-			,setFn: this._setIntervalParameter
+			,setFn: this._setInterval
 			,getFn: this.getInterval
 			,dispatchService: this.dispatchService
 		});
@@ -127,8 +127,28 @@ var TimeFilter = $n2.Class({
 		return this.range;
 	},
 	
-	_setRangeParameter: function(updatedRange){
+	_setRange: function(updatedRange){
+		var previous = this.getRange();
+		
 		this.range = updatedRange;
+		
+		var current = this.getRange();
+		
+		if( previous.equals(current) ){
+			// Nothing to do
+		} else {
+			this.rangeParameter.sendUpdate();
+			
+			// Verify if changes are required in interval
+			// since interval should always be contained within
+			// range.
+			if( this.interval.min < this.range.min 
+			 || this.interval.max > this.range.max ){
+				// Need to fix interval
+				var updatedInterval = this.range.intersection(this.interval);
+				this._setInterval(updatedInterval);
+			};
+		};
 	},
 	
 	getInterval: function(){
@@ -139,8 +159,21 @@ var TimeFilter = $n2.Class({
 		return this.range;
 	},
 	
-	_setIntervalParameter: function(updatedInterval){
+	_setInterval: function(updatedInterval){
+		var previous = this.getInterval();
+		
 		this.interval = updatedInterval;
+		
+		var current = this.getInterval();
+		
+		if( previous.equals(current) ){
+			// Nothing to do
+		} else {
+			this.intervalParameter.sendUpdate();
+			
+			// Check all documents to see if visibility has changed
+			this._intervalUpdated();
+		};
 	},
 	
 	_handle: function(m, addr, dispatcher){
@@ -280,6 +313,40 @@ var TimeFilter = $n2.Class({
 					if( docInfo.visible ){
 						removed.push(doc);
 					};
+				};
+			};
+		};
+		
+		this._reportStateUpdate(added, updated, removed);
+	},
+	
+	_intervalUpdated: function(){
+		var added = []
+			,updated = []
+			,removed = []
+			;
+		
+		var now = Date.now();
+		
+		// Loop through all documents
+		for(var docId in this.docInfosByDocId){
+			var docInfo = this.docInfosByDocId[docId];
+			var doc = docInfo.doc;
+
+			// Compute new visibility
+			var visibility = this._computeVisibility(docInfo, now);
+			var changeInVisibility = ( visibility !== docInfo.visible );
+			docInfo.visible = visibility;
+
+			// Report change in visibility
+			if( changeInVisibility ){
+				
+				if( docInfo.visible ){
+					// It used to be hidden. Now, it is visible. Add
+					added.push(doc);
+				} else {
+					// It used to be visible. Now, it is hidden. Remove
+					removed.push(doc);
 				};
 			};
 		};

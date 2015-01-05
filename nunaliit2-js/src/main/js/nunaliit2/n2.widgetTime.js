@@ -59,6 +59,14 @@ var TimelineWidget = $n2.Class({
 
 	intervalSetEventName: null,
 	
+	rangeMin: null,
+	
+	rangeMax: null,
+	
+	intervalMin: null,
+	
+	intervalMax: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			contentId: null
@@ -71,6 +79,11 @@ var TimelineWidget = $n2.Class({
 		
 		this.dispatchService = opts.dispatchService;
 		this.sourceModelId = opts.sourceModelId;
+		
+		this.rangeMin = 0;
+		this.rangeMax = 100;
+		this.intervalMin = 0;
+		this.intervalMax = 100;
 		
 		// Set up model listener
 		if( this.dispatchService ){
@@ -90,6 +103,8 @@ var TimelineWidget = $n2.Class({
 				this.rangeChangeEventName = paramInfo.changeEvent;
 				this.rangeGetEventName = paramInfo.getEvent;
 				this.rangeSetEventName = paramInfo.setEvent;
+				this.rangeMin = paramInfo.value.min;
+				this.rangeMax = paramInfo.value.max;
 			};
 			
 			if( sourceModelInfo 
@@ -99,6 +114,8 @@ var TimelineWidget = $n2.Class({
 				this.intervalChangeEventName = paramInfo.changeEvent;
 				this.intervalGetEventName = paramInfo.getEvent;
 				this.intervalSetEventName = paramInfo.setEvent;
+				this.intervalMin = paramInfo.value.min;
+				this.intervalMax = paramInfo.value.max;
 			};
 			
 			var fn = function(m, addr, dispatcher){
@@ -137,6 +154,10 @@ var TimelineWidget = $n2.Class({
 		return $('#'+this.elemId);
 	},
 	
+	_getSlider: function(){
+		return $('#'+this.elemId).find('.n2timeline_slider');
+	},
+	
 	_display: function(){
 		var _this = this;
 		
@@ -153,9 +174,9 @@ var TimelineWidget = $n2.Class({
 		
 		$slider.slider({
 			range: true
-			,min: 0
-			,max: 100
-			,values: [0,100]
+			,min: this.rangeMin
+			,max: this.rangeMax
+			,values: [this.intervalMin, this.intervalMax]
 			,slide: function(event, ui){
 				_this._barUpdated(ui);
 			}
@@ -184,9 +205,21 @@ var TimelineWidget = $n2.Class({
 	
 	_handle: function(m, addr, dispatcher){
 		if( this.rangeSetEventName === m.type ){
+			if( m.value ){
+				var $slider = this._getSlider();
+				$slider.slider({
+					min:m.value.min
+					,max:m.value.max
+				});
+			};
 			
 		} else if( this.intervalSetEventName === m.type ){
-			
+			if( m.value ){
+				var $slider = this._getSlider();
+				$slider.slider({
+					values: [m.value.min,m.value.max]
+				});
+			};
 		};
 	}
 });
