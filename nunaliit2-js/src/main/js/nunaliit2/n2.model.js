@@ -220,6 +220,12 @@ var Service = $n2.Class({
 			    
 				} else if( m.modelType === 'timeFilter' ){
 			        this._createTimeFilter(m);
+				    
+				} else if( m.modelType === 'union' ){
+			        this._createUnionModel(m);
+				    
+				} else if( m.modelType === 'filter' ){
+			        this._createFilterModel(m);
 			    };
 			} catch(err) {
 				$n2.log('Error while creating model '+m.modelType+'/'+m.modelId+': '+err);
@@ -291,7 +297,75 @@ var Service = $n2.Class({
 		} else {
 			throw 'Model Time is not available';
 		};
+	},
+	
+	_createUnionModel: function(m){
+		if( $n2.modelUtils 
+		 && $n2.modelUtils.ModelUnion ){
+			var options = {
+				modelId: m.modelId
+			};
+			
+			if( m && m.modelOptions ){
+				if( m.modelOptions.sourceModelIds 
+				 && m.modelOptions.sourceModelIds.length ){
+					options.sourceModelIds = m.modelOptions.sourceModelIds;
+				};
+			};
+			
+			if( m && m.config ){
+				if( m.config.directory ){
+					options.dispatchService = m.config.directory.dispatchService;
+				};
+			};
+			
+			new $n2.modelUtils.ModelUnion(options);
+			
+			m.created = true;
+
+		} else {
+			throw 'Union Model is not available';
+		};
+	},
+	
+	_createFilterModel: function(m){
+		if( $n2.modelUtils 
+		 && $n2.modelUtils.ModelFilter ){
+			var options = {
+				modelId: m.modelId
+			};
+			
+			if( m && m.modelOptions ){
+				if( m.modelOptions.sourceModelId ){
+					options.sourceModelId = m.modelOptions.sourceModelId;
+				};
+			};
+			
+			if( m && m.config ){
+				if( m.config.directory ){
+					options.dispatchService = m.config.directory.dispatchService;
+				};
+			};
+			
+			var filterFn = null;
+			if( $n2.modelUtils.FilterFunctionFromModelConfiguration ){
+				filterFn = $n2.modelUtils.FilterFunctionFromModelConfiguration(m.modelOptions);
+			};
+			if( filterFn ){
+				options.filterFn = filterFn;
+			} else {
+				throw 'Unable to find function for filter model';
+			};
+			
+			new $n2.modelUtils.ModelFilter(options);
+			
+			m.created = true;
+
+		} else {
+			throw 'Filter Model is not available';
+		};
 	}
+	
 });
 
 //--------------------------------------------------------------------------
