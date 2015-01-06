@@ -40,7 +40,7 @@ var
 
 //--------------------------------------------------------------------------
 function FilterFunctionFromModelConfiguration(modelConf){
-	if( 'filter' === modelConf.type ){
+	if( 'filter' === modelConf.modelType ){
 		if( modelConf.condition ) {
 			var condition = $n2.styleRuleParser.parse(modelConf.condition);
 			var ctxt = {
@@ -62,24 +62,24 @@ function FilterFunctionFromModelConfiguration(modelConf){
 				return value;
 			};
 			
-		} else if( 'all' === modelConf.filterName ){
+		} else if( 'all' === modelConf.useBuiltInFunction ){
 			return function(doc){
 				return true;
 			};
 			
-		} else if( 'none' === modelConf.filterName ){
+		} else if( 'none' === modelConf.useBuiltInFunction ){
 			return function(doc){
 				return false;
 			};
 			
-		} else if( 'withDates' === modelConf.filterName ){
+		} else if( 'withDates' === modelConf.useBuiltInFunction ){
 			return function(doc){
 				var dates = [];
 				$n2.couchUtils.extractSpecificType(doc,'date',dates);
 				return (dates.length > 0);
 			};
 			
-		} else if( 'withoutDates' === modelConf.filterName ){
+		} else if( 'withoutDates' === modelConf.useBuiltInFunction ){
 			return function(doc){
 				var dates = [];
 				$n2.couchUtils.extractSpecificType(doc,'date',dates);

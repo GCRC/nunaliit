@@ -215,8 +215,8 @@ var Service = $n2.Class({
 			};
 			
 			try {
-				if( m.modelType === 'dbPerspective' ){
-			        this._createDbPerspective(m);
+				if( m.modelType === 'couchDb' ){
+			        this._createCouchDbModel(m);
 			    
 				} else if( m.modelType === 'timeFilter' ){
 			        this._createTimeFilter(m);
@@ -233,7 +233,7 @@ var Service = $n2.Class({
 		};
 	},
 	
-	_createDbPerspective: function(m){
+	_createCouchDbModel: function(m){
 		if( $n2.couchDbPerspective 
 		 && $n2.couchDbPerspective.DbPerspective ){
 			var options = {
@@ -252,11 +252,11 @@ var Service = $n2.Class({
 			
 			// Load layers
 			if( m.modelOptions 
-			 && m.modelOptions.layers ){
-				var layers = m.modelOptions.layers;
-				for(var i=0,e=layers.length; i<e; ++i){
-					var layerConfigObj = layers[i];
-					dbPerspective.addDbSelectorFromConfigObject(layerConfigObj);
+			 && m.modelOptions.selectors ){
+				var selectors = m.modelOptions.selectors;
+				for(var i=0,e=selectors.length; i<e; ++i){
+					var selectorConfig = selectors[i];
+					dbPerspective.addDbSelectorFromConfigObject(selectorConfig);
 				};
 			};
 			

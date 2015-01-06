@@ -480,8 +480,8 @@ var ModuleDisplay = $n2.Class({
 
 					var msg = {
 						type: 'modelCreate'
-						,modelType: modelInfo.type
-						,modelId: modelInfo.id
+						,modelType: modelInfo.modelType
+						,modelId: modelInfo.modelId
 						,modelOptions: modelInfo
 						,created: false
 						,config: config
@@ -491,17 +491,17 @@ var ModuleDisplay = $n2.Class({
 					_this._sendSynchronousMessage(msg);
 						
 					if( ! msg.created ){
-						$n2.log('Model not created: '+modelInfo.type+'/'+modelInfo.id);
+						$n2.log('Model not created: '+modelInfo.modelType+'/'+modelInfo.modelId);
 					};
 				};
 			};
 			
 			// Check if support for canvas is available
 			var canvasHandlerAvailable = false;
-			if( canvasInfo && canvasInfo.type ) {
+			if( canvasInfo && canvasInfo.canvasType ) {
 				var msg = {
 					type: 'canvasIsTypeAvailable'
-					,canvasType: canvasInfo.type
+					,canvasType: canvasInfo.canvasType
 					,canvasOptions: canvasInfo
 					,isAvailable: false
 				};
@@ -513,7 +513,7 @@ var ModuleDisplay = $n2.Class({
 				};
 			};
 			if( canvasInfo && !canvasHandlerAvailable ){
-				$n2.log('Canvas handler not found for type: '+canvasInfo.type);
+				$n2.log('Canvas handler not found for type: '+canvasInfo.canvasType);
 				canvasInfo = null;
 			};
 			
@@ -523,10 +523,10 @@ var ModuleDisplay = $n2.Class({
 				for(var i=0,e=widgetInfos.length; i<e; ++i){
 					var widgetInfo = widgetInfos[i];
 					var widgetHandlerAvailable = false;
-					if( widgetInfo && widgetInfo.type ) {
+					if( widgetInfo && widgetInfo.widgetType ) {
 						msg = {
 							type: 'widgetIsTypeAvailable'
-							,widgetType: widgetInfo.type
+							,widgetType: widgetInfo.widgetType
 							,widgetOptions: widgetInfo
 							,isAvailable: false
 						};
@@ -538,7 +538,7 @@ var ModuleDisplay = $n2.Class({
 						};
 					};
 					if( widgetInfo && !widgetHandlerAvailable ){
-						$n2.log('Widget handler not found for type: '+widgetInfo.type);
+						$n2.log('Widget handler not found for type: '+widgetInfo.widgetType);
 					} else {
 						availableWidgets.push(widgetInfo);
 					};
@@ -732,7 +732,7 @@ var ModuleDisplay = $n2.Class({
 				widgetInfo = availableWidgets[i];
 				_this._sendDispatchMessage({
 					type: 'widgetDisplay'
-					,widgetType: widgetInfo.type
+					,widgetType: widgetInfo.widgetType
 					,widgetOptions: widgetInfo
 					,contentId: _this.contentName
 					,config: config
@@ -751,7 +751,7 @@ var ModuleDisplay = $n2.Class({
 			} else if( canvasInfo ) {
 				_this._sendDispatchMessage({
 					type: 'canvasDisplay'
-					,canvasType: canvasInfo.type
+					,canvasType: canvasInfo.canvasType
 					,canvasOptions: canvasInfo
 					,canvasId: _this.mapName
 					,interactionId: _this.mapInteractionName

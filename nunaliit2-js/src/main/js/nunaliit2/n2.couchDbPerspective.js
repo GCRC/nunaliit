@@ -501,7 +501,7 @@ var DbPerspective = $n2.Class({
 			if( m.modelId === this.modelId ){
 				m.modelInfo = {
 					modelId: this.modelId
-					,modelType: 'dbPerspective'
+					,modelType: 'couchDb'
 					,parameters: {}
 					,_instance: this
 				};
@@ -715,14 +715,14 @@ var DbPerspectiveChooser = $n2.Class({
 
 //--------------------------------------------------------------------------
 function HandleWidgetAvailableRequests(m){
-	if( m.widgetType === 'dbPerspectiveSelector' ){
+	if( m.widgetType === 'couchDbSelector' ){
       m.isAvailable = true;
 	};
 };
 
 //--------------------------------------------------------------------------
 function HandleWidgetDisplayRequests(m){
-	if( m.widgetType === 'dbPerspectiveSelector' ){
+	if( m.widgetType === 'couchDbSelector' ){
 		var widgetOptions = m.widgetOptions;
 		var contentId = m.contentId;
 		var config = m.config;
