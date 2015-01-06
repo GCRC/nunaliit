@@ -238,10 +238,12 @@ function HandleWidgetDisplayRequests(m){
 	if( m.widgetType === 'timeline' ){
 		var widgetOptions = m.widgetOptions;
 		var contentId = m.contentId;
+		var containerId = m.containerId;
 		var config = m.config;
 		
 		var options = {
 			contentId: contentId
+			,containerId: containerId
 		};
 		
 		if( config && config.directory ){
@@ -249,7 +251,6 @@ function HandleWidgetDisplayRequests(m){
 		};
 		
 		if( widgetOptions ){
-			if( widgetOptions.containerId ) options.containerId = widgetOptions.containerId;
 			if( widgetOptions.sourceModelId ) options.sourceModelId = widgetOptions.sourceModelId;
 		};
 		

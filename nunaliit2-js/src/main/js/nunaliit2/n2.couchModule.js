@@ -470,7 +470,6 @@ var ModuleDisplay = $n2.Class({
 			var displayInfo = _this.module.getDisplayInfo();
 			var editInfo = _this.module.getEditInfo();
 			var searchInfo = _this.module.getSearchInfo();
-			var widgetInfos = _this.module.getWidgetInfos();
 			var modelInfos = _this.module.getModelInfos();
 			
 			// Create models
@@ -515,34 +514,6 @@ var ModuleDisplay = $n2.Class({
 			if( canvasInfo && !canvasHandlerAvailable ){
 				$n2.log('Canvas handler not found for type: '+canvasInfo.canvasType);
 				canvasInfo = null;
-			};
-			
-			// Check for widget support
-			var availableWidgets = [];
-			if( widgetInfos ){
-				for(var i=0,e=widgetInfos.length; i<e; ++i){
-					var widgetInfo = widgetInfos[i];
-					var widgetHandlerAvailable = false;
-					if( widgetInfo && widgetInfo.widgetType ) {
-						msg = {
-							type: 'widgetIsTypeAvailable'
-							,widgetType: widgetInfo.widgetType
-							,widgetOptions: widgetInfo
-							,isAvailable: false
-						};
-						
-						_this._sendSynchronousMessage(msg);
-						
-						if( msg.isAvailable ){
-							widgetHandlerAvailable = true;
-						};
-					};
-					if( widgetInfo && !widgetHandlerAvailable ){
-						$n2.log('Widget handler not found for type: '+widgetInfo.widgetType);
-					} else {
-						availableWidgets.push(widgetInfo);
-					};
-				};
 			};
 			
 			// Handle content div
@@ -727,24 +698,11 @@ var ModuleDisplay = $n2.Class({
 				});
 			};
 			
-			// Widgets
-			for(i=0,e=availableWidgets.length; i<e; ++i){
-				widgetInfo = availableWidgets[i];
-				_this._sendDispatchMessage({
-					type: 'widgetDisplay'
-					,widgetType: widgetInfo.widgetType
-					,widgetOptions: widgetInfo
-					,contentId: _this.contentName
-					,config: config
-					,moduleDisplay: _this
-				});
-			};
-			
 			// Display map
 			if( mapInfo ) {
 				_this._initializeMap({
 					config: config
-					,onSuccess: opts.onSuccess
+					,onSuccess: drawWidgets
 					,onError: opts.onError
 				});
 				
@@ -757,9 +715,7 @@ var ModuleDisplay = $n2.Class({
 					,interactionId: _this.mapInteractionName
 					,config: config
 					,moduleDisplay: _this
-					,onSuccess: function(){
-						opts.onSuccess(_this);
-					}
+					,onSuccess: drawWidgets
 					,onError: opts.onError
 				});
 				
@@ -769,10 +725,86 @@ var ModuleDisplay = $n2.Class({
 					,moduleDisplay: _this
 				});
 
-				opts.onSuccess(_this);
+				drawWidgets();
 			};
 		};
 		
+		function drawWidgets(){
+			var widgetInfos = _this.module.getWidgetInfos();
+
+			// Check for widget support
+			var availableWidgets = [];
+			if( widgetInfos ){
+				for(var i=0,e=widgetInfos.length; i<e; ++i){
+					var widgetInfo = widgetInfos[i];
+					var widgetHandlerAvailable = false;
+					if( widgetInfo && widgetInfo.widgetType ) {
+						var msg = {
+							type: 'widgetIsTypeAvailable'
+							,widgetType: widgetInfo.widgetType
+							,widgetOptions: widgetInfo
+							,isAvailable: false
+						};
+						
+						_this._sendSynchronousMessage(msg);
+						
+						if( msg.isAvailable ){
+							widgetHandlerAvailable = true;
+						};
+					};
+					if( widgetInfo && !widgetHandlerAvailable ){
+						$n2.log('Widget handler not found for type: '+widgetInfo.widgetType);
+					} else {
+						availableWidgets.push(widgetInfo);
+					};
+				};
+			};
+
+			// Widgets
+			for(i=0,e=availableWidgets.length; i<e; ++i){
+				widgetInfo = availableWidgets[i];
+				var widgetDisplayMsg = {
+					type: 'widgetDisplay'
+					,widgetType: widgetInfo.widgetType
+					,widgetOptions: widgetInfo
+					,contentId: _this.contentName
+					,config: config
+					,moduleDisplay: _this
+				};
+
+				var widgetDisplayed = false;
+				
+				// Install at containerId
+				if( widgetInfo.containerId ){
+					widgetDisplayMsg.containerId = widgetInfo.containerId;
+					_this._sendDispatchMessage(widgetDisplayMsg);
+					widgetDisplayed = true;
+				};
+				
+				// Install under each containerClass
+				if( widgetInfo.containerClass ){
+					$('.'+widgetInfo.containerClass).each(function(){
+						var containerId = $n2.utils.getElementIdentifier(this);
+						widgetDisplayMsg.containerId = containerId;
+						_this._sendDispatchMessage(widgetDisplayMsg);
+					});
+					widgetDisplayed = true;
+				};
+				
+				if( !widgetDisplayed ) {
+					// At this point, neither containerId nor containerClass
+					// were specified
+					widgetDisplayMsg.containerId = _this.contentName;
+					_this._sendDispatchMessage(widgetDisplayMsg);
+				};
+			};
+
+			displayComplete();
+		};
+		
+		function displayComplete(){
+			opts.onSuccess(_this);
+		};
 	}
 
 	,_initializeMap: function(opts_){

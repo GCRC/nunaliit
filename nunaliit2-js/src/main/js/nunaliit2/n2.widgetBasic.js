@@ -132,11 +132,13 @@ var CreateDocumentWidget = $n2.Class({
 function BuildCreateDocumentWidgetFromRequest(m){
 	var widgetOptions = m.widgetOptions;
 	var contentId = m.contentId;
+	var containerId = m.containerId;
 	var config = m.config;
 	// var moduleDisplay = m.moduleDisplay;
 	
 	var options = {
 		contentId: contentId
+		,containerId: containerId
 	};
 	
 	if( config && config.directory ){
@@ -146,7 +148,6 @@ function BuildCreateDocumentWidgetFromRequest(m){
 	
 	if( widgetOptions ){
 		if( widgetOptions.showAsLink ) options.showAsLink = true;
-		if( widgetOptions.containerId ) options.containerId = widgetOptions.containerId;
 	};
 	
 	new CreateDocumentWidget(options);
