@@ -41,24 +41,45 @@ var
 //--------------------------------------------------------------------------
 function FilterFunctionFromModelConfiguration(modelConf){
 	if( 'filter' === modelConf.type ){
-		if( 'all' === modelConf.filter ){
+		if( modelConf.condition ) {
+			var condition = $n2.styleRuleParser.parse(modelConf.condition);
+			var ctxt = {
+				n2_doc: null
+				,n2_selected: false
+				,n2_hovered: false
+				,n2_found: false
+				,n2_intent: null
+			};
+			return function(doc){
+				// Re-use same context to avoid generating
+				// temporary objects
+				ctxt.n2_doc = doc;
+				
+				var value = condition.getValue(ctxt);
+
+				ctxt.n2_doc = null;
+				
+				return value;
+			};
+			
+		} else if( 'all' === modelConf.filterName ){
 			return function(doc){
 				return true;
 			};
 			
-		} else if( 'none' === modelConf.filter ){
+		} else if( 'none' === modelConf.filterName ){
 			return function(doc){
 				return false;
 			};
 			
-		} else if( 'withDates' === modelConf.filter ){
+		} else if( 'withDates' === modelConf.filterName ){
 			return function(doc){
 				var dates = [];
 				$n2.couchUtils.extractSpecificType(doc,'date',dates);
 				return (dates.length > 0);
 			};
 			
-		} else if( 'withoutDates' === modelConf.filter ){
+		} else if( 'withoutDates' === modelConf.filterName ){
 			return function(doc){
 				var dates = [];
 				$n2.couchUtils.extractSpecificType(doc,'date',dates);
