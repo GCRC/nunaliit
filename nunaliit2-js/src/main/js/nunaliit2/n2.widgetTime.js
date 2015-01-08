@@ -126,10 +126,10 @@ var TimelineWidget = $n2.Class({
 		this.dispatchService = opts.dispatchService;
 		this.sourceModelId = opts.sourceModelId;
 		
-		this.rangeMin = 0;
-		this.rangeMax = 100;
-		this.intervalMin = 0;
-		this.intervalMax = 100;
+		this.rangeMin = null;
+		this.rangeMax = null;
+		this.intervalMin = null;
+		this.intervalMax = null;
 		
 		// Set up model listener
 		if( this.dispatchService ){
@@ -207,12 +207,40 @@ var TimelineWidget = $n2.Class({
 	},
 	
 	_getSlider: function(){
-		return $('#'+this.elemId).find('.n2timeline_slider');
+		var _this = this;
+		
+		var $slider = $('#'+this.elemId).find('.n2timeline_slider');
+		if( $slider.length < 1 ){
+			// Must recreate
+			if( typeof this.rangeMin === 'number' 
+			 && typeof this.rangeMax === 'number' 
+			 && typeof this.intervalMin === 'number' 
+			 && typeof this.intervalMax === 'number' ){
+				var $sliderWrapper = $('#'+this.elemId).find('.n2timeline_slider_wrapper');
+
+				$slider = $('<div>')
+					.addClass('n2timeline_slider')
+					.appendTo($sliderWrapper);
+
+				$slider.slider({
+					range: true
+					,min: this.rangeMin
+					,max: this.rangeMax
+					,values: [this.intervalMin, this.intervalMax]
+					,slide: function(event, ui){
+						_this._barUpdated(ui);
+					}
+				});
+			};
+		};
+		return $slider;
+	},
+	
+	_removeSlider: function(){
+		$('#'+this.elemId).find('.n2timeline_slider_wrapper').empty();
 	},
 	
 	_display: function(){
-		var _this = this;
-		
 		var $elem = this._getElem()
 			.empty();
 
@@ -228,24 +256,8 @@ var TimelineWidget = $n2.Class({
 			.addClass('n2timeline_interval')
 			.appendTo($elem);
 
-		var $slider = $('<div>')
-			.addClass('n2timeline_slider')
-			.appendTo($sliderWrapper);
-		
-		if( typeof this.rangeMin === 'number' 
-		 && typeof this.rangeMax === 'number' 
-		 && typeof this.intervalMin === 'number' 
-		 && typeof this.intervalMax === 'number' ){
-			$slider.slider({
-				range: true
-				,min: this.rangeMin
-				,max: this.rangeMax
-				,values: [this.intervalMin, this.intervalMax]
-				,slide: function(event, ui){
-					_this._barUpdated(ui);
-				}
-			});
-		};
+		// Create slider
+		this._getSlider();
 
 		this._displayRange();
 		this._displayInterval();
@@ -257,43 +269,40 @@ var TimelineWidget = $n2.Class({
 		var $topLine = $elem.find('.n2timeline_range')
 			.empty();
 
-		// Compute range
-		var $slider = this._getSlider();
-		var min = $slider.slider('option','min');
-		var max = $slider.slider('option','max');
-		
-		var minDate = new Date(min);
-		var maxDate = new Date(max);
-		
-		var minDateStr = formatDate(minDate, 'YMD');
-		var maxDateStr = formatDate(maxDate, 'YMD');
-
-		// Display
-		var textRange = '' + minDateStr + ' / ' + maxDateStr;
-		$topLine.text(textRange);
+		if( typeof this.rangeMin === 'number' 
+		 && typeof this.rangeMax === 'number' ){
+			// Compute range
+			var minDate = new Date(this.rangeMin);
+			var maxDate = new Date(this.rangeMax);
+			
+			var minDateStr = formatDate(minDate, 'YMD');
+			var maxDateStr = formatDate(maxDate, 'YMD');
+	
+			// Display
+			var textRange = '' + minDateStr + ' / ' + maxDateStr;
+			$topLine.text(textRange);
+		};
 	},
 
 	_displayInterval: function(){
 		var $elem = this._getElem();
 
-		var $topLine = $elem.find('.n2timeline_interval')
+		var $intervalLine = $elem.find('.n2timeline_interval')
 			.empty();
 
-		// Compute range
-		var $slider = this._getSlider();
-		var values = $slider.slider('option','values');
-		var min = values[0];
-		var max = values[1];
-		
-		var minDate = new Date(min);
-		var maxDate = new Date(max);
-		
-		var minDateStr = formatDate(minDate, 'YMD');
-		var maxDateStr = formatDate(maxDate, 'YMD');
-
-		// Display
-		var textRange = '' + minDateStr + ' / ' + maxDateStr;
-		$topLine.text(textRange);
+		if( typeof this.intervalMin === 'number' 
+		 && typeof this.intervalMax === 'number' ){
+			// Compute range
+			var minDate = new Date(this.intervalMin);
+			var maxDate = new Date(this.intervalMax);
+			
+			var minDateStr = formatDate(minDate, 'YMD');
+			var maxDateStr = formatDate(maxDate, 'YMD');
+	
+			// Display
+			var textRange = '' + minDateStr + ' / ' + maxDateStr;
+			$intervalLine.text(textRange);
+		};
 	},
 
 	_barUpdated: function(ui){
@@ -319,24 +328,47 @@ var TimelineWidget = $n2.Class({
 	_handle: function(m, addr, dispatcher){
 		if( this.rangeSetEventName === m.type ){
 			if( m.value ){
+				this.rangeMin = m.value.min;
+				this.rangeMax = m.value.max;
+				
 				var $slider = this._getSlider();
 				$slider.slider({
-					min:m.value.min
-					,max:m.value.max
+					min:this.rangeMin
+					,max:this.rangeMax
 				});
+
+				if( typeof this.intervalMin === 'number' 
+				 && typeof this.intervalMax === 'number' ){
+					$slider.slider({
+						values: [this.intervalMin,this.intervalMax]
+					});
+				};
 				
-				this._displayRange();
+			} else {
+				this.rangeMin = null;
+				this.rangeMax = null;
+				this._removeSlider();
 			};
+			
+			this._displayRange();
 			
 		} else if( this.intervalSetEventName === m.type ){
 			if( m.value ){
+				this.intervalMin = m.value.min;
+				this.intervalMax = m.value.max;
+
 				var $slider = this._getSlider();
 				$slider.slider({
-					values: [m.value.min,m.value.max]
+					values: [this.intervalMin,this.intervalMax]
 				});
 				
-				this._displayInterval();
+			} else {
+				this.intervalMin = null;
+				this.intervalMax = null;
+				this._removeSlider();
 			};
+			
+			this._displayInterval();
 		};
 	}
 });

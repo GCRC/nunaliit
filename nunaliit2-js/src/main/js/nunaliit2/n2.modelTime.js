@@ -138,20 +138,31 @@ var TimeFilter = $n2.Class({
 		
 		var current = this.getRange();
 		
-		if( previous && previous.equals(current) ){
+		if( current === previous ){
+			// Nothing to do. This takes care
+			// of previous and current being null
+		
+		} else if( previous && previous.equals(current) ){
 			// Nothing to do
+		
 		} else {
+			// Range has changed
 			this.rangeParameter.sendUpdate();
 			
 			// Verify if changes are required in interval
 			// since interval should always be contained within
 			// range.
 			if( this.interval ){
-				if( this.interval.min < this.range.min 
-				 || this.interval.max > this.range.max ){
-					// Need to fix interval
-					var updatedInterval = this.range.intersection(this.interval);
-					this._setInterval(updatedInterval);
+				if( this.range ) {
+					if( this.interval.min < this.range.min 
+					 || this.interval.max > this.range.max ){
+						// Need to fix interval
+						var updatedInterval = this.range.intersection(this.interval);
+						this._setInterval(updatedInterval);
+					};
+				} else {
+					// Range is now null. Erase interval
+					this._setInterval(null);
 				};
 			} else {
 				// Range has changed. Since interval is null, then the interval
@@ -179,8 +190,13 @@ var TimeFilter = $n2.Class({
 		
 		var current = this.getInterval();
 		
-		if( previous.equals(current) ){
+		if( previous === current ) {
+			// Nothing to do. This takes care of
+			// previous and current being null
+			
+		} else if( previous && previous.equals(current) ){
 			// Nothing to do
+			
 		} else {
 			this.intervalParameter.sendUpdate();
 			
@@ -375,6 +391,9 @@ var TimeFilter = $n2.Class({
 					});
 					this._setRange(updatedRange);
 				};
+			} else {
+				// No longer any document with a date
+				this._setRange(null);
 			};
 		};
 	},
