@@ -49,6 +49,8 @@ var TimeFilter = $n2.Class({
 	
 	docInfosByDocId: null,
 	
+	autoRange: null,
+	
 	range: null,
 	
 	rangeParameter: null,
@@ -71,9 +73,11 @@ var TimeFilter = $n2.Class({
 		this.modelId = opts.modelId;
 		this.sourceModelId = opts.sourceModelId;
 		
+		this.autoRange = true;
 		if( opts.rangeStr ){
 			this.range = $n2.date.parseUserDate(opts.rangeStr);
 			this.filterInterval = this.range;
+			this.autoRange = false;
 		};
 
 		this.docInfosByDocId = {};
@@ -134,7 +138,7 @@ var TimeFilter = $n2.Class({
 		
 		var current = this.getRange();
 		
-		if( previous.equals(current) ){
+		if( previous && previous.equals(current) ){
 			// Nothing to do
 		} else {
 			this.rangeParameter.sendUpdate();
@@ -142,11 +146,20 @@ var TimeFilter = $n2.Class({
 			// Verify if changes are required in interval
 			// since interval should always be contained within
 			// range.
-			if( this.interval.min < this.range.min 
-			 || this.interval.max > this.range.max ){
-				// Need to fix interval
-				var updatedInterval = this.range.intersection(this.interval);
-				this._setInterval(updatedInterval);
+			if( this.interval ){
+				if( this.interval.min < this.range.min 
+				 || this.interval.max > this.range.max ){
+					// Need to fix interval
+					var updatedInterval = this.range.intersection(this.interval);
+					this._setInterval(updatedInterval);
+				};
+			} else {
+				// Range has changed. Since interval is null, then the interval
+				// has also changed.
+				this.intervalParameter.sendUpdate();
+				
+				// Check all documents to see if visibility has changed
+				this._intervalUpdated();
 			};
 		};
 	},
@@ -316,8 +329,54 @@ var TimeFilter = $n2.Class({
 				};
 			};
 		};
-		
+
+		// Report changes in visibility
 		this._reportStateUpdate(added, updated, removed);
+
+		// Recompute range, if necessary
+		if( this.autoRange ){
+			var updatedRange = null;
+			for(var docId in this.docInfosByDocId){
+				var docInfo = this.docInfosByDocId[docId];
+				if( docInfo 
+				 && docInfo.intervals  ){
+					
+					for(var i=0,e=docInfo.intervals.length; i<e; ++i){
+						var interval = docInfo.intervals[i];
+						
+						if( !updatedRange ){
+							updatedRange = interval;
+						} else {
+							updatedRange = updatedRange.extendTo(interval, now);
+						};
+					};
+				};
+			};
+			
+			if( updatedRange ){
+				var updatedMin = updatedRange.getMin();
+				var updatedMax = updatedRange.getMax(now);
+
+				if( this.range ) {
+					if( updatedMin != this.range.getMin() 
+					 || updatedMax != this.range.getMax(now) ){
+						updatedRange = new $n2.date.DateInterval({
+							min: updatedMin
+							,max: updatedMax
+							,ongoing: false
+						});
+						this._setRange(updatedRange);
+					};
+				} else {
+					updatedRange = new $n2.date.DateInterval({
+						min: updatedMin
+						,max: updatedMax
+						,ongoing: false
+					});
+					this._setRange(updatedRange);
+				};
+			};
+		};
 	},
 	
 	_intervalUpdated: function(){

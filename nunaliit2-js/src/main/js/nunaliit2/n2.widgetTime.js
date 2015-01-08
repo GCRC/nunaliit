@@ -37,6 +37,52 @@ var
  _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); }
  ,DH = 'n2.widgetTime'
  ;
+
+//--------------------------------------------------------------------------
+function numberToPaddedString(d){
+	if (d < 10) {
+        return '0' + d;
+      }
+      return '' + d;
+};
+
+//--------------------------------------------------------------------------
+function formatDate(date, format){
+	var acc = [];
+
+	// Is year requested?
+	if( format.indexOf('Y') >= 0 ){
+		acc.push( date.getUTCFullYear() );
+	};
+	
+	// Is month requested?
+	if( format.indexOf('M') >= 0 ){
+		if( acc.length > 0 ){
+			acc.push( '-' );
+		};
+		acc.push( numberToPaddedString(date.getUTCMonth() + 1) );
+	};
+	
+	// Is day of month requested?
+	if( format.indexOf('D') >= 0 ){
+		if( acc.length > 0 ){
+			acc.push( '-' );
+		};
+		acc.push( numberToPaddedString(date.getUTCDate()) );
+	};
+	
+	// Is time requested?
+	if( format.indexOf('T') >= 0 ){
+		if( acc.length > 0 ){
+			acc.push( ' ' );
+		};
+		acc.push( numberToPaddedString(date.getUTCHours()) );
+		acc.push( ':' );
+		acc.push( numberToPaddedString(date.getUTCMinutes()) );
+	};
+	
+	return acc.join('');
+};
  
 //--------------------------------------------------------------------------
 var TimelineWidget = $n2.Class({
@@ -103,8 +149,11 @@ var TimelineWidget = $n2.Class({
 				this.rangeChangeEventName = paramInfo.changeEvent;
 				this.rangeGetEventName = paramInfo.getEvent;
 				this.rangeSetEventName = paramInfo.setEvent;
-				this.rangeMin = paramInfo.value.min;
-				this.rangeMax = paramInfo.value.max;
+
+				if( paramInfo.value ){
+					this.rangeMin = paramInfo.value.min;
+					this.rangeMax = paramInfo.value.max;
+				};
 			};
 			
 			if( sourceModelInfo 
@@ -114,8 +163,11 @@ var TimelineWidget = $n2.Class({
 				this.intervalChangeEventName = paramInfo.changeEvent;
 				this.intervalGetEventName = paramInfo.getEvent;
 				this.intervalSetEventName = paramInfo.setEvent;
-				this.intervalMin = paramInfo.value.min;
-				this.intervalMax = paramInfo.value.max;
+
+				if( paramInfo.value ){
+					this.intervalMin = paramInfo.value.min;
+					this.intervalMax = paramInfo.value.max;
+				};
 			};
 			
 			var fn = function(m, addr, dispatcher){
@@ -163,26 +215,87 @@ var TimelineWidget = $n2.Class({
 		
 		var $elem = this._getElem()
 			.empty();
+
+		$('<div>')
+			.addClass('n2timeline_range')
+			.appendTo($elem);
 		
 		var $sliderWrapper = $('<div>')
 			.addClass('n2timeline_slider_wrapper')
+			.appendTo($elem);
+
+		$('<div>')
+			.addClass('n2timeline_interval')
 			.appendTo($elem);
 
 		var $slider = $('<div>')
 			.addClass('n2timeline_slider')
 			.appendTo($sliderWrapper);
 		
-		$slider.slider({
-			range: true
-			,min: this.rangeMin
-			,max: this.rangeMax
-			,values: [this.intervalMin, this.intervalMax]
-			,slide: function(event, ui){
-				_this._barUpdated(ui);
-			}
-		});
+		if( typeof this.rangeMin === 'number' 
+		 && typeof this.rangeMax === 'number' 
+		 && typeof this.intervalMin === 'number' 
+		 && typeof this.intervalMax === 'number' ){
+			$slider.slider({
+				range: true
+				,min: this.rangeMin
+				,max: this.rangeMax
+				,values: [this.intervalMin, this.intervalMax]
+				,slide: function(event, ui){
+					_this._barUpdated(ui);
+				}
+			});
+		};
+
+		this._displayRange();
+		this._displayInterval();
 	},
-	
+
+	_displayRange: function(){
+		var $elem = this._getElem();
+
+		var $topLine = $elem.find('.n2timeline_range')
+			.empty();
+
+		// Compute range
+		var $slider = this._getSlider();
+		var min = $slider.slider('option','min');
+		var max = $slider.slider('option','max');
+		
+		var minDate = new Date(min);
+		var maxDate = new Date(max);
+		
+		var minDateStr = formatDate(minDate, 'YMD');
+		var maxDateStr = formatDate(maxDate, 'YMD');
+
+		// Display
+		var textRange = '' + minDateStr + ' / ' + maxDateStr;
+		$topLine.text(textRange);
+	},
+
+	_displayInterval: function(){
+		var $elem = this._getElem();
+
+		var $topLine = $elem.find('.n2timeline_interval')
+			.empty();
+
+		// Compute range
+		var $slider = this._getSlider();
+		var values = $slider.slider('option','values');
+		var min = values[0];
+		var max = values[1];
+		
+		var minDate = new Date(min);
+		var maxDate = new Date(max);
+		
+		var minDateStr = formatDate(minDate, 'YMD');
+		var maxDateStr = formatDate(maxDate, 'YMD');
+
+		// Display
+		var textRange = '' + minDateStr + ' / ' + maxDateStr;
+		$topLine.text(textRange);
+	},
+
 	_barUpdated: function(ui){
 		var min = ui.values[0];
 		var max = ui.values[1];
@@ -211,6 +324,8 @@ var TimelineWidget = $n2.Class({
 					min:m.value.min
 					,max:m.value.max
 				});
+				
+				this._displayRange();
 			};
 			
 		} else if( this.intervalSetEventName === m.type ){
@@ -219,6 +334,8 @@ var TimelineWidget = $n2.Class({
 				$slider.slider({
 					values: [m.value.min,m.value.max]
 				});
+				
+				this._displayInterval();
 			};
 		};
 	}

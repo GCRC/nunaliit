@@ -172,16 +172,19 @@ var DateInterval = $n2.Class({
 		return false;
 	},
 
-	extendTo: function(interval){
+	extendTo: function(interval, now){
 		if( !interval ){
 			return this;
 		};
 		
-		if( this.ongoing !== interval.ongoing ){
+		if( now ){
+			// Ok to extend mixed
+		} else if( this.ongoing !== interval.ongoing ){
 			throw 'Can not extend ongoing and regular date intervals';
 		};
 		
-		if( this.ongoing ){
+		if( this.ongoing && interval.ongoing ){
+			// Extending two on-going intervals
 			if( this.min > interval.min ){
 				return new DateInterval({
 					ongoing: true
@@ -194,25 +197,41 @@ var DateInterval = $n2.Class({
 			
 		} else {
 			var extended = false;
-			var min = this.min;
-			var max = this.max;
+			var myMin = this.min;
+			var otherMin = interval.min;
+			var myMax = this.getMax(now);
+			var otherMax = interval.getMax(now);
 			
-			if( min > interval.min ){
-				min = interval.min;
+			if( myMin > otherMin ){
+				myMin = otherMin;
 				extended = true;
 			};
 			
-			if( max < interval.max ){
-				max = interval.max;
+			var updatedOngoing = false;
+			if( myMax < otherMax ){
+				myMax = otherMax;
 				extended = true;
+				
+				if( interval.ongoing ){
+					updatedOngoing = true;
+				};
+			} else if( this.ongoing ){
+				updatedOngoing = true;
 			};
 
 			if( extended ){
-				return new DateInterval({
-					ongoing: false
-					,min: min
-					,max: max
-				});
+				if( updatedOngoing ){
+					return new DateInterval({
+						ongoing: true
+						,min: myMin
+					});
+				} else {
+					return new DateInterval({
+						ongoing: false
+						,min: myMin
+						,max: myMax
+					});
+				};
 			} else {
 				return this;
 			};

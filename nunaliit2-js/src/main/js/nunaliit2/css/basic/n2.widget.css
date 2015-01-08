@@ -394,14 +394,18 @@ Timeline widget
 	bottom: 0px;
 	right: 451px;
 	left: 0px;
-	height: 27px;
+	height: 62px;
 }
 
 .n2timeline {
 	background-color: #00ff88;
-	padding-top: 23px;
-	padding-left: 20px;
-	padding-right: 20px;
+}
+
+.n2timeline_slider_wrapper {
+	margin-top: 10px;
+	margin-bottom: 10px;
+	margin-left: 20px;
+	margin-right: 20px;
 }
 
 .n2timeline .n2timeline_slider {
@@ -410,4 +414,23 @@ Timeline widget
 
 .n2timeline .n2timeline_slider .ui-slider-range {
 	background-color: #ffffff;
+}
+
+.n2timeline_range {
+	width: 100%;
+	font-size: 12px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+	padding-left: 20px;
+	padding-right: 20px;
+}
+
+
+.n2timeline_interval {
+	width: 100%;
+	font-size: 12px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+	padding-left: 20px;
+	padding-right: 20px;
 }
