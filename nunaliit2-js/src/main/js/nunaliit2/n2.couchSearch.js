@@ -66,6 +66,7 @@ var SearchRequest = $n2.Class({
 		this.options = $n2.extend({
 			designDoc: null
 			,db: null
+			,constraint: null
 			,dateService: null
 			,searchView: 'text-search'
 			,searchLimit: 25
@@ -120,16 +121,29 @@ var SearchRequest = $n2.Class({
 			var t = searchTerms[i].toLowerCase();
 			this.searchResults.terms.push(t);
 		};
+		
+		// Figure out view
+		var searchView = this.options.searchView;
+		if( this.options.constraint ){
+			searchView = 'text-search-constrained';
+		};
 
 		// Search for each term, and merge results later
 		var _this = this;
 		for(var i=0,e=this.searchResults.terms.length; i<e; ++i) {
 			var term = this.searchResults.terms[i];
+			
+			var startKey = [term,0];
+			var endKey = [term,{}];
+			if( this.options.constraint ){
+				startKey = [this.options.constraint,term,0];
+				endKey = [this.options.constraint,term,{}];
+			};
+			
 			this.options.designDoc.queryView({
-				viewName: this.options.searchView
-				,startkey: [term, 0]
-				,endkey: [term, {}]
-//				,limit: this.options.searchLimit
+				viewName: searchView
+				,startkey: startKey
+				,endkey: endKey
 				,onSuccess: function(rows) {
 					var termResults = [];
 					for(var i=0,e=rows.length; i<e; ++i) {
@@ -311,20 +325,52 @@ var SearchRequest = $n2.Class({
 
 var LookAheadService = $n2.Class({
 
-	options: null
+	designDoc: null,
 	
-	,lookAheadMap: null
+	lookAheadView: null,
 	
-	,lookAheadCounter: null
+	lookAheadList: null,
 	
-	,initialize: function(opts_) {
-		this.options = opts_;
+	lookAheadLimit: null,
+	
+	lookAheadPrefixMin: null,
+	
+	lookAheadCacheSize: null,
+	
+	lookAheadMap: null,
+	
+	lookAheadCounter: null,
+	
+	constraint: null,
+	
+	initialize: function(opts_) {
+		var opts = $n2.extend({
+			designDoc: null
+			,lookAheadView: 'text-lookahead'
+			,lookAheadList: 'text-lookahead'
+			,lookAheadLimit: 5
+			,lookAheadPrefixMin: 3
+			,lookAheadCacheSize: 10
+			,constraint: null
+		},opts_);
+		
+		this.designDoc = opts.designDoc;
+		this.lookAheadView = opts.lookAheadView;
+		this.lookAheadList = opts.lookAheadList;
+		this.lookAheadLimit = opts.lookAheadLimit;
+		this.lookAheadPrefixMin = opts.lookAheadPrefixMin;
+		this.lookAheadCacheSize = opts.lookAheadCacheSize;
+		this.constraint = opts.constraint;
 		
 		this.lookAheadMap = {};
 		this.lookAheadCounter = 0;
-	}
+	},
+	
+	setConstraint: function(constraint){
+		this.constraint = constraint;
+	},
 
-	,queryPrefix: function(prefix,callback) {
+	queryPrefix: function(prefix,callback) {
 		var _this = this;
 	
 		var words = this._retrievePrefix(prefix);
@@ -333,13 +379,27 @@ var LookAheadService = $n2.Class({
 			return;
 		};
 		
+		// Figure out query view
+		var viewName = this.lookAheadView;
+		if( this.constraint ){
+			viewName = 'text-lookahead-constrained';
+		};
+		
+		// Figure out start and end keys
+		var startKey = [prefix,null];
+		var endKey = [prefix + '\u9999',{}];
+		if( this.constraint ){
+			startKey = [this.constraint, prefix, null];
+			endKey = [this.constraint, prefix + '\u9999', {}];
+		};
+		
 		// Make request
-		this.options.designDoc.queryView({
-			viewName: this.options.lookAheadView
-			,listName: this.options.lookAheadList
-			,startkey: [prefix,null]
-			,endkey: [prefix + '\u9999',{}]
-			,top: this.options.lookAheadLimit
+		this.designDoc.queryView({
+			viewName: viewName
+			,listName: this.lookAheadList
+			,startkey: startKey
+			,endkey: endKey
+			,top: this.lookAheadLimit
 			,group: true
 			,onlyRows: false
 			,reduce: true
@@ -368,9 +428,9 @@ var LookAheadService = $n2.Class({
 				callback(prefix,null);
 			}
 		});
-	}
+	},
 	
-	,queryTerms: function(terms,callback) {
+	queryTerms: function(terms,callback) {
 
 		if( null === terms
 		 || 0 == terms.length ) {
@@ -398,7 +458,7 @@ var LookAheadService = $n2.Class({
 			callback(null);
 			return;
 		};
-		if( lastTerm.length < this.options.lookAheadPrefixMin ) {
+		if( lastTerm.length < this.lookAheadPrefixMin ) {
 			callback(null);
 			return;
 		};
@@ -420,9 +480,9 @@ var LookAheadService = $n2.Class({
 				callback(results);
 			};
 		});
-	}
+	},
 	
-	,_cachePrefix: function(prefixResult) {
+	_cachePrefix: function(prefixResult) {
 		
 		// Save result under prefix
 		this.lookAheadMap[prefixResult.prefix] = prefixResult;
@@ -434,7 +494,7 @@ var LookAheadService = $n2.Class({
 		// Trim cache
 		var keysToDelete = [];
 		var cachedMap = this.lookAheadMap; // faster access
-		var limit = this.lookAheadCounter - this.options.lookAheadCacheSize;
+		var limit = this.lookAheadCounter - this.lookAheadCacheSize;
 		for(var key in cachedMap) {
 			if( cachedMap[key].counter < limit ) {
 				keysToDelete.push(key);
@@ -443,9 +503,9 @@ var LookAheadService = $n2.Class({
 		for(var i=0,e=keysToDelete.length; i<e; ++i) {
 			delete cachedMap[keysToDelete[i]];
 		};
-	}
+	},
 	
-	,_retrievePrefix: function(prefix) {
+	_retrievePrefix: function(prefix) {
 		
 		// Do we have exact match in cache?
 		if( this.lookAheadMap[prefix] ) {
@@ -454,7 +514,7 @@ var LookAheadService = $n2.Class({
 		
 		// Look for complete results from shorter prefix
 		var sub = prefix.substring(0,prefix.length-1);
-		while( sub.length >= this.options.lookAheadPrefixMin ) {
+		while( sub.length >= this.lookAheadPrefixMin ) {
 			if( this.lookAheadMap[sub] && this.lookAheadMap[sub].full ) {
 				var cachedWords = this.lookAheadMap[sub].words;
 				var words = [];
@@ -473,16 +533,16 @@ var LookAheadService = $n2.Class({
 		
 		// Nothing of value found
 		return null;
-	}
+	},
 
-	,getJqAutoCompleteSource: function() {
+	getJqAutoCompleteSource: function() {
 		var _this = this;
 		return function(request, cb) {
 			_this._jqAutoComplete(request, cb);
 		};
-	}
+	},
 	
-	,_jqAutoComplete: function(request, cb) {
+	_jqAutoComplete: function(request, cb) {
 		var terms = SplitSearchTerms(request.term);
 		var callback = cb;
 //		var callback = function(res){
@@ -514,7 +574,8 @@ var SearchInput = $n2.Class({
 			textInput: null
 			,searchButton: null
 			,initialSearchText: null
-			,displayFn: null // on of displayFn or
+			,constraint: null
+			,displayFn: null // one of displayFn or
 			,dispatchService: null // dispatchService should be supplied
 		},opts_);
 		
@@ -801,16 +862,44 @@ var SearchInput = $n2.Class({
 
 var SearchServer = $n2.Class({
 	
-	options: null
+	options: null,
+
+	designDoc: null,
 	
-	,lookAheadService: null
+	db: null,
 	
-	,initialize: function(opts_) {
-		this.options = $n2.extend({
+	dateService: null,
+	
+	dispatchService: null,
+	
+	customService: null,
+	
+	searchView: null,
+	
+	constraint: null,
+	
+	searchLimit: null,
+	
+	lookAheadView: null,
+	
+	lookAheadList: null,
+	
+	lookAheadLimit: null,
+	
+	lookAheadPrefixMin: null,
+	
+	lookAheadCacheSize: null,
+	
+	lookAheadService: null,
+	
+	initialize: function(opts_) {
+		var opts = $n2.extend({
 			designDoc: null
 			,db: null
 			,dateService: null
-			,directory: null
+			,dispatchService: null
+			,customService: null
+			,constraint: null
 			,searchView: 'text-search'
 			,searchLimit: 25
 			,lookAheadView: 'text-lookahead'
@@ -821,10 +910,24 @@ var SearchServer = $n2.Class({
 		},opts_);
 		
 		var _this = this;
-		
+
+		this.designDoc = opts.designDoc;
+		this.db = opts.db;
+		this.dateService = opts.dateService;
+		this.dispatchService = opts.dispatchService;
+		this.customService = opts.customService;
+		this.constraint = opts.constraint;
+		this.searchView = opts.searchView;
+		this.searchLimit = opts.searchLimit;
+		this.lookAheadView = opts.lookAheadView;
+		this.lookAheadList = opts.lookAheadList;
+		this.lookAheadLimit = opts.lookAheadLimit;
+		this.lookAheadPrefixMin = opts.lookAheadPrefixMin;
+		this.lookAheadCacheSize = opts.lookAheadCacheSize;
+
 		this.lookAheadService = null;
-		
-		var d = this._getDispatcher();
+
+		var d = this.dispatchService;
 		if( d ){
 			var f = function(m){
 				_this._handle(m);
@@ -832,51 +935,69 @@ var SearchServer = $n2.Class({
 			var h = d.getHandle('n2.couchSearch');
 			d.register(h,'searchInitiate',f);
 		};
-	}
+	},
+	
+	setConstraint: function(constraint){
+		this.constraint = constraint;
+		
+		if( this.lookAheadService ){
+			this.lookAheadService.setConstraint(constraint);
+		};
+	},
 
-	,getLookAheadService: function() {
+	getLookAheadService: function() {
 		if( null === this.lookAheadService ) {
-			this.lookAheadService = new LookAheadService(this.options);
+			this.lookAheadService = new LookAheadService({
+				designDoc: this.designDoc
+				,lookAheadView: this.lookAheadView
+				,lookAheadList: this.lookAheadList
+				,lookAheadLimit: this.lookAheadLimit
+				,lookAheadPrefixMin: this.lookAheadPrefixMin
+				,lookAheadCacheSize: this.lookAheadCacheSize
+				,constraint: this.constraint
+			});
 		};
 		
 		return this.lookAheadService;
-	}
+	},
 
 	/*
 	 * Creates a request for search terms and returns an
 	 * object to represent the request. The returned object
 	 * is an instance of class SearchRequest 
 	 */
-	,submitRequest: function(searchTerms, opts_) {
+	submitRequest: function(searchTerms, opts_) {
 		var requestOptions = $n2.extend({
-			designDoc: this.options.designDoc
-			,db: this.options.db
-			,dateService: this.options.dateService
-			,searchView: this.options.searchView
-			,searchLimit: this.options.searchLimit
+			designDoc: this.designDoc
+			,db: this.db
+			,dateService: this.dateService
+			,searchView: this.searchView
+			,searchLimit: this.searchLimit
+			,constraint: this.constraint
 		},opts_);
 		
 		return new SearchRequest(searchTerms, requestOptions);
-	}
+	},
 	
-	,getJqAutoCompleteSource: function() {
+	getJqAutoCompleteSource: function() {
 		return this.getLookAheadService().getJqAutoCompleteSource();
-	}
+	},
 	
-	,installSearch: function(opts_) {
+	installSearch: function(opts_) {
 		return new SearchInput(opts_, this);
-	}
+	},
 	
-	,installSearchWidget: function(opts_) {
+	installSearchWidget: function(opts_) {
 		var opts = $n2.extend({
 			elem: null
 			,label: null
 			,useButton: false
 			,buttonLabel: null
 			,doNotDisable: false
+			,constraint: null
 		},opts_);
 		
-		var customService = this._getCustomService();
+		var customService = this.customService;
 		
 		// Parent element
 		var $elem = $(opts.elem);
@@ -925,32 +1046,17 @@ var SearchServer = $n2.Class({
 		return new SearchInput({
 				textInput: searchInput
 				,initialSearchText: searchWidgetLabel
-				,dispatchService: this._getDispatcher()
+				,dispatchService: this.dispatchService
 				,searchButton: searchButton
+				,constraint: opts.constraint
 			}, this);
-	}
+	},
 	
-	,_getDispatcher: function(){
-		var d = null;
-		if( this.options.directory ){
-			d = this.options.directory.dispatchService;
-		};
-		return d;
-	}
-	
-	,_getCustomService: function(){
-		var cs = null;
-		if( this.options.directory ){
-			cs = this.options.directory.customService;
-		};
-		return cs;
-	}
-	
-	,_handle: function(m){
+	_handle: function(m){
 		if( 'searchInitiate' === m.type ){
 			var searchTerms = m.searchLine;
 
-			var dispatcher = this._getDispatcher();
+			var dispatcher = this.dispatchService;
 			var h = dispatcher.getHandle('n2.couchSearch');
 			this.submitRequest(searchTerms, {
 				onSuccess: function(searchResults){

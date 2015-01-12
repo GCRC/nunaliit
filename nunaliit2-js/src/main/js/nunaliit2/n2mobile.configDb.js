@@ -526,8 +526,9 @@ alert('Get configuration');
 		 	configuration.directory.searchService = new $n2.couchSearch.SearchServer({
 				designDoc: configuration.atlasDesign
 				,db: configuration.atlasDb
+				,dispatchService: configuration.directory.dispatchService
+				,customService: configuration.directory.customService
 				,dateService: null
-				,directory: configuration.directory
 			});
 			
 		 	configuration.directory.requestService = new $n2.couchRequests({

@@ -46,7 +46,6 @@ var UserManagementApplication = $n2.Class({
 		this.userSearchService = new $n2.couchSearch.SearchServer({
 			designDoc: userDesign
 			,db: this.userDb
-			// ,directory: null // do not set
 		});
 		
 		config.directory.schemaRepository.getSchema({

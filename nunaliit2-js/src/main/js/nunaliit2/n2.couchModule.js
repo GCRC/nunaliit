@@ -692,6 +692,9 @@ var ModuleDisplay = $n2.Class({
 			};
 
 			// Search
+			if( searchInfo && searchInfo.constraint ){
+				config.directory.searchService.setConstraint(searchInfo.constraint);
+			};
 			if( _this.searchPanelName ) {
 				config.directory.searchService.installSearchWidget({
 					elem: $('#'+_this.searchPanelName)

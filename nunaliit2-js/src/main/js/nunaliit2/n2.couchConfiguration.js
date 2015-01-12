@@ -239,8 +239,9 @@ function Configure(options_){
 	 	configuration.directory.searchService = new $n2.couchSearch.SearchServer({
 			designDoc: configuration.atlasDesign
 			,db: configuration.atlasDb
+			,dispatchService: configuration.directory.dispatchService
+			,customService: configuration.directory.customService
 			,dateService: configuration.directory.dateService
-			,directory: configuration.directory
 		});
 		
 	 	configuration.mediaRelativePath = options.mediaUrl;
