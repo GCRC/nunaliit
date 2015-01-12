@@ -68,7 +68,6 @@ var SearchRequest = $n2.Class({
 			,db: null
 			,constraint: null
 			,dateService: null
-			,searchView: 'text-search'
 			,searchLimit: 25
 			,onlyFinalResults: false
 			,strict: false
@@ -123,7 +122,7 @@ var SearchRequest = $n2.Class({
 		};
 		
 		// Figure out view
-		var searchView = this.options.searchView;
+		var searchView = 'text-search';
 		if( this.options.constraint ){
 			searchView = 'text-search-constrained';
 		};
@@ -327,10 +326,6 @@ var LookAheadService = $n2.Class({
 
 	designDoc: null,
 	
-	lookAheadView: null,
-	
-	lookAheadList: null,
-	
 	lookAheadLimit: null,
 	
 	lookAheadPrefixMin: null,
@@ -346,8 +341,6 @@ var LookAheadService = $n2.Class({
 	initialize: function(opts_) {
 		var opts = $n2.extend({
 			designDoc: null
-			,lookAheadView: 'text-lookahead'
-			,lookAheadList: 'text-lookahead'
 			,lookAheadLimit: 5
 			,lookAheadPrefixMin: 3
 			,lookAheadCacheSize: 10
@@ -355,8 +348,6 @@ var LookAheadService = $n2.Class({
 		},opts_);
 		
 		this.designDoc = opts.designDoc;
-		this.lookAheadView = opts.lookAheadView;
-		this.lookAheadList = opts.lookAheadList;
 		this.lookAheadLimit = opts.lookAheadLimit;
 		this.lookAheadPrefixMin = opts.lookAheadPrefixMin;
 		this.lookAheadCacheSize = opts.lookAheadCacheSize;
@@ -380,7 +371,7 @@ var LookAheadService = $n2.Class({
 		};
 		
 		// Figure out query view
-		var viewName = this.lookAheadView;
+		var viewName = 'text-lookahead';
 		if( this.constraint ){
 			viewName = 'text-lookahead-constrained';
 		};
@@ -396,7 +387,7 @@ var LookAheadService = $n2.Class({
 		// Make request
 		this.designDoc.queryView({
 			viewName: viewName
-			,listName: this.lookAheadList
+			,listName: 'text-lookahead'
 			,startkey: startKey
 			,endkey: endKey
 			,top: this.lookAheadLimit
@@ -874,15 +865,9 @@ var SearchServer = $n2.Class({
 	
 	customService: null,
 	
-	searchView: null,
-	
 	constraint: null,
 	
 	searchLimit: null,
-	
-	lookAheadView: null,
-	
-	lookAheadList: null,
 	
 	lookAheadLimit: null,
 	
@@ -900,10 +885,7 @@ var SearchServer = $n2.Class({
 			,dispatchService: null
 			,customService: null
 			,constraint: null
-			,searchView: 'text-search'
 			,searchLimit: 25
-			,lookAheadView: 'text-lookahead'
-			,lookAheadList: 'text-lookahead'
 			,lookAheadLimit: 5
 			,lookAheadPrefixMin: 3
 			,lookAheadCacheSize: 10
@@ -917,10 +899,7 @@ var SearchServer = $n2.Class({
 		this.dispatchService = opts.dispatchService;
 		this.customService = opts.customService;
 		this.constraint = opts.constraint;
-		this.searchView = opts.searchView;
 		this.searchLimit = opts.searchLimit;
-		this.lookAheadView = opts.lookAheadView;
-		this.lookAheadList = opts.lookAheadList;
 		this.lookAheadLimit = opts.lookAheadLimit;
 		this.lookAheadPrefixMin = opts.lookAheadPrefixMin;
 		this.lookAheadCacheSize = opts.lookAheadCacheSize;
@@ -949,8 +928,6 @@ var SearchServer = $n2.Class({
 		if( null === this.lookAheadService ) {
 			this.lookAheadService = new LookAheadService({
 				designDoc: this.designDoc
-				,lookAheadView: this.lookAheadView
-				,lookAheadList: this.lookAheadList
 				,lookAheadLimit: this.lookAheadLimit
 				,lookAheadPrefixMin: this.lookAheadPrefixMin
 				,lookAheadCacheSize: this.lookAheadCacheSize
@@ -971,7 +948,6 @@ var SearchServer = $n2.Class({
 			designDoc: this.designDoc
 			,db: this.db
 			,dateService: this.dateService
-			,searchView: this.searchView
 			,searchLimit: this.searchLimit
 			,constraint: this.constraint
 		},opts_);
