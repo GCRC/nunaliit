@@ -281,7 +281,7 @@ var IntentView = $n2.Class({
 		this.hoverInfo = null;
 	},
 
-	_handleSelect: function(docId){
+	_handleSelect: function(docIds){
 		var changed = [];
 
 		// New selection, unselect previous
@@ -289,18 +289,20 @@ var IntentView = $n2.Class({
 
 		// Create new selection
 		this.selectInfo = {
-			docId: docId
-			,docIds: {}
+			docIds: {}
 		};
-		this.selectInfo.docIds[docId] = true;
-		
-		// Adjust selected nodes
-		var nodesArray = this.nodesArrayById[docId];
-		if( nodesArray ){
-			for(var j=0,k=nodesArray.length; j<k; ++j){
-				var n = nodesArray[j];
-				if( this._adjustIntentOnNode(n) ){
-					changed.push(n);
+		for(var i=0,e=docIds.length; i<e; ++i){
+			var docId = docIds[i];
+			this.selectInfo.docIds[docId] = true;
+
+			// Adjust selected nodes
+			var nodesArray = this.nodesArrayById[docId];
+			if( nodesArray ){
+				for(var j=0,k=nodesArray.length; j<k; ++j){
+					var n = nodesArray[j];
+					if( this._adjustIntentOnNode(n) ){
+						changed.push(n);
+					};
 				};
 			};
 		};
@@ -465,8 +467,24 @@ var IntentView = $n2.Class({
 
 	_handleDispatch: function(m){
 		if( 'selected' === m.type ){
-			var docId = m.docId;
-			this._handleSelect(docId);
+			if( m.docId ){
+				var docId = m.docId;
+				this._handleSelect([docId]);
+			} else if( m.docIds ) {
+				this._handleSelect(m.docIds);
+			} else if( m.doc ){
+				var docId = m.doc._id;
+				this._handleSelect([docId]);
+			} else if( m.docs ) {
+				var docIds = [];
+				for(var i=0,e=m.docs.length; i<e; ++i){
+					var doc = m.docs[i];
+					docIds.push(doc._id);
+				};
+				this._handleSelect(docIds);
+			} else {
+				$n2.log('UserIntentView unable to handle "selected" event',m);
+			};
 
 		} else if( 'selectedSupplement' === m.type ) {
 			var docId = m.docId;

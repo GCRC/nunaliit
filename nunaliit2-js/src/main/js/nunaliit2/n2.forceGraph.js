@@ -1349,7 +1349,13 @@ if( !$d ) return;
  	
  	_handleDispatch: function(m){
  		if( 'selected' === m.type ){
- 			this.lastDocIdSelected = m.docId;
+ 			if( m.docId ){
+ 	 			this.lastDocIdSelected = m.docId;
+ 			} else if( m.docIds && m.docIds.length === 1 ){
+ 	 			this.lastDocIdSelected = m.docIds[0];
+ 			} else {
+ 	 			this.lastDocIdSelected = null;
+ 			};
  			
  		} else if( 'unselected' === m.type ){
  			this.lastDocIdSelected = null;
