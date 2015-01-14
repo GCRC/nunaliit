@@ -179,6 +179,10 @@ var ObjectSelector = $n2.Class({
 	
 	setValue: function(obj, value, create){
 		
+		if( typeof value === 'undefined' ){
+			return this.removeValue(obj);
+		};
+		
 		var createFlag = (typeof create !== 'undefined') ? create : false;
 		
 		if( typeof obj !== 'object' ){
@@ -206,6 +210,33 @@ var ObjectSelector = $n2.Class({
 		effObj[lastSel] = value;
 		
 		return true;
+	},
+	
+	removeValue: function(obj){
+		if( typeof obj !== 'object' ){
+			return false;
+		};
+		if( this.selectors.length < 1 ){
+			return false;
+		};
+		
+		var effObj = obj;
+		for(var i=0,e=this.selectors.length-1; i<e; ++i){
+			var sel = this.selectors[i];
+			if( typeof effObj[sel] === 'undefined' ){
+				return false;
+			} else if( typeof effObj[sel] !== 'object' ){
+				return false;
+			};
+			effObj = effObj[sel];
+		};
+		var lastSel = this.selectors[this.selectors.length-1];
+		if( typeof effObj[lastSel] !== 'undefined' ){
+			delete effObj[lastSel];
+			return true;
+		};
+
+		return false;
 	},
 	
 	/**

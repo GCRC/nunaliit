@@ -31,6 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 ;(function($,$n2) {
+"use strict";
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
@@ -59,7 +60,10 @@ function createOperationFromString(opString){
 };
 
 //=========================================================================
-var UpgradeAnalysis = $n2.Class({
+// An instance of this class is used to report all changes that would occur
+// if an import was performed. This allows a user to peruse changes before
+// applying them to the database.
+var ImportAnalysis = $n2.Class({
 	
 	profile: null,
 	
@@ -144,6 +148,7 @@ var UpgradeAnalysis = $n2.Class({
 			changeId: changeId
 			,type: 'addition'
 			,isAddition: true
+			,auto: true
 			,importId: opts.importId
 		};
 		++this.additionCount;
@@ -153,12 +158,39 @@ var UpgradeAnalysis = $n2.Class({
 	
 	addModification: function(opts_){
 		var opts = $n2.extend({
-			importId: null // string
-			,modifiedProperties: null // array
-			,inconsistentProperties: null // array
-			,modifiedGeometry: null // boolean
-			,dbDoc: null // doc
-			,importEntry: null // entry
+			// String that uniquely identifies an import record
+			importId: null,
+			
+			// Entry that is being imported
+			importEntry: null,
+
+			// array of objects with the following structure:
+			// {
+			//    property: <name of the import property>
+			//    ,lastImportValue: <value during last import>
+			//    ,externalValue: <value from this import>
+			//    ,collisions: []
+			// }
+			// The collisions array containts collisions pertinent to
+			// this property. It is an array of objects with the following
+			// structure:
+			// {
+			//    source: <name of the import property>
+			//    ,sourceValue: <value during last import>
+			//    ,target: <string that represent the selector for where the data should go>
+			//    ,targetValue: <value currently found by selector>
+			// }
+			modifiedProperties: null, 
+			
+			// Boolean. Set if the geometry was modified
+			modifiedGeometry: null,
+			
+			// Document from database which is associated with importId
+			dbDoc: null,
+			
+			// Some modification are automatic. Modifications that
+			// have a collision should not be performed automatically
+			auto: false
 		},opts_);
 		
 		this.entriesByImportId[opts.importId] = opts.importEntry;
@@ -169,9 +201,9 @@ var UpgradeAnalysis = $n2.Class({
 			changeId: changeId
 			,type: 'modification'
 			,isModification: true
+			,auto: opts.auto
 			,importId: opts.importId
 			,modifiedProperties: opts.modifiedProperties
-			,inconsistentProperties: opts.inconsistentProperties
 			,modifiedGeometry: opts.modifiedGeometry
 		};
 		++this.modificationCount;
@@ -192,6 +224,7 @@ var UpgradeAnalysis = $n2.Class({
 			changeId: changeId
 			,type: 'deletion'
 			,isDeletion: true
+			,auto: false
 			,importId: opts.importId
 		};
 		++this.deletionCount;
@@ -201,7 +234,8 @@ var UpgradeAnalysis = $n2.Class({
 });
 
 //=========================================================================
-var UpgradeAnalyzer = $n2.Class({
+// Instances of this class are used to create an analysis about an import.
+var ImportAnalyzer = $n2.Class({
 	
 	profile: null,
 	
@@ -226,7 +260,7 @@ var UpgradeAnalyzer = $n2.Class({
 
 		var _this = this;
 		var profileId = this.profile.getId();
-		var analysis = new UpgradeAnalysis({
+		var analysis = new ImportAnalysis({
 			profile: this.profile
 		});
 		var dbDocsByImportId = {};
@@ -258,7 +292,7 @@ var UpgradeAnalyzer = $n2.Class({
 		
 		function dbDocumentsLoaded(){
 			// Explore input import data for changes
-			importEntriesById = {};
+			var importEntriesById = {};
 			if( opts.entries ){
 				for(var i=0,e=opts.entries.length; i<e; ++i){
 					var entry = opts.entries[i];
@@ -276,8 +310,8 @@ var UpgradeAnalyzer = $n2.Class({
 							if( c ){
 								analysis.addModification({
 									importId: c.importId
+									,auto: c.auto
 									,modifiedProperties: c.modifiedProperties
-									,inconsistentProperties: c.inconsistentProperties
 									,modifiedGeometry: c.modifiedGeometry
 									,dbDoc: dbDocsByImportId[id]
 									,importEntry: importEntriesById[id]
@@ -320,34 +354,63 @@ var UpgradeAnalyzer = $n2.Class({
 		
 		var change = null;
 		
-		// Look at values that have changed since the last import
+		// Create a map of all property names
+		var allPropNames = {};
 		for(var propName in props){
-			var value = props[propName];
+			allPropNames[propName] = true;
+		};
+		for(var propName in dbData){
+			allPropNames[propName] = true;
+		};
+		
+		// Look at values that have changed since the last import
+		var modificationsByPropName = {};
+		for(var propName in allPropNames){
+			var lastImportValue = dbData[propName];
+			var externalValue = props[propName];
 			
-			if( value !== dbData[propName] ){
+			if( externalValue !== lastImportValue ){
 				if( !change ) change = {
 					importId:importId
+					,auto: true
 					,modifiedProperties: []
 					,modifiedGeometry: false
-					,inconsistentProperties: []
 				};
-				change.modifiedProperties.push(propName);
+
+				var mod = {
+					property: propName
+					,lastImportValue: lastImportValue
+					,externalValue: externalValue
+					,collisions: []
+				};
+				
+				modificationsByPropName[propName] = mod;
+				
+				change.modifiedProperties.push(mod);
 			};
 		};
 		
 		// Look for values that have become inconsistent since the last
 		// import
 		var inconsistentProperties = this.profile.getInconsistentProperties(doc);
-		if( inconsistentProperties.length > 0 ){
-			if( !change ) change = {
-				id:importId
-				,modifiedProperties: []
-				,modifiedGeometry: false
-				,inconsistentProperties: []
-			};
-			for(var i=0,e=inconsistentProperties.length; i<e; ++i){
-				var inconsistentProp = inconsistentProperties[i];
-				change.inconsistentProperties.push(inconsistentProp);
+		for(var i=0,e=inconsistentProperties.length; i<e; ++i){
+			var inconsistentProp = inconsistentProperties[i];
+			var propName = inconsistentProp.source;
+			
+			// Inconsistencies are important during the import process only if
+			// it interferes with a change in the external data
+			var mod = modificationsByPropName[propName];
+			if( mod ){
+				// It is a collision only if target value is not the same as
+				// the external data. If the external data and the modified
+				// data agree, then this is not a collision
+				if( mod.externalValue !== inconsistentProp.targetValue ){
+					// This is a collision
+					mod.collisions.push(inconsistentProp);
+					
+					// Can not perform this change automatically
+					change.auto = false;
+				};
 			};
 		};
 		
@@ -464,6 +527,37 @@ var AnalysisReport = $n2.Class({
 					var $promptElem = $button.parents('.prompt');
 					$promptElem.remove();
 				});
+			
+		} else {
+			var autoChanges = [];
+			for(var changeIndex=0;changeIndex<changes.length;++changeIndex){
+				var change = changes[changeIndex];
+				if( change.auto ){
+					autoChanges.push(change);
+				};
+			};
+			if( autoChanges.length > 0 ){
+				var $div = $('<div>')
+					.addClass('prompt')
+					.appendTo($changes);
+				$div.text( _loc('It appears that {count} changes can be completed automatically. Accept automatic changes?',{
+					count: autoChanges.length
+				}));
+				$('<button>')
+					.text( _loc('Proceed') )
+					.appendTo($div)
+					.click(function(){
+						_this._proceedAutomatics();
+					});
+				$('<button>')
+					.text( _loc('Discard') )
+					.appendTo($div)
+					.click(function(){
+						var $button = $(this);
+						var $promptElem = $button.parents('.prompt');
+						$promptElem.remove();
+					});
+			};
 		};
 		
 		// Report new
@@ -477,6 +571,11 @@ var AnalysisReport = $n2.Class({
 					.attr('id',change.changeId)
 					.addClass('addition operation')
 					.appendTo($changes);
+				
+				if( change.auto ){
+					$div.addClass('autoOperation');
+				};
+				
 				$('<button>')
 					.addClass('discard')
 					.text( _loc('Discard') )
@@ -487,9 +586,14 @@ var AnalysisReport = $n2.Class({
 					.text( _loc('Create new document') )
 					.appendTo($div)
 					.click(proceedClickFn);
+
+				var explanation = _loc('Create new document');
+				if( change.auto ){
+					explanation += ' ' +_loc('AUTO');
+				};
 				$('<div>')
 					.addClass('explanation')
-					.text( _loc('Create new document') )
+					.text( explanation )
 					.appendTo($div);
 				$('<div>')
 					.addClass('geoJsonId')
@@ -525,23 +629,58 @@ var AnalysisReport = $n2.Class({
 				var importEntry = analysis.getImportEntry(importId);
 				var importProperties = importEntry.getProperties();
 				var doc = analysis.getDbDoc(importId);
+
+				// Go through all the properties that need to be modified
+				var sortedPropNames = [];
+				var modificationsByPropNames = {};
+				var collisionDetected = false;
+				for(var j=0,k=change.modifiedProperties.length; j<k; ++j){
+					var mod = change.modifiedProperties[j];
+					var propName = mod.property;
+					sortedPropNames.push(propName);
+					modificationsByPropNames[propName] = mod;
+					if( mod.collisions && mod.collisions.length > 0 ){
+						collisionDetected = true;
+					};
+				};
+				sortedPropNames.sort();
+				
 				var $div = $('<div>')
 					.attr('id',change.changeId)
 					.addClass('modify operation')
 					.appendTo($changes);
+				if( collisionDetected ){
+					$div.addClass('collision');
+				};
+				if( change.auto ){
+					$div.addClass('autoOperation');
+				};
+				
+				
 				$('<button>')
 					.addClass('discard')
 					.text( _loc('Discard') )
 					.appendTo($div)
 					.click(discardClickFn);
-				$('<button>')
-					.addClass('proceed')
-					.text( _loc('Modify Document') )
-					.appendTo($div)
-					.click(proceedClickFn);
+				
+				if( !collisionDetected ) {
+					$('<button>')
+						.addClass('proceed')
+						.text( _loc('Modify Document') )
+						.appendTo($div)
+						.click(proceedClickFn);
+				};
+				
+				var explanation = _loc('Modify existing document');
+				if( change.auto ){
+					explanation += ' ' +_loc('AUTO');
+				};
+				if( change.collisions && change.collisions.length > 0 ){
+					explanation += ' ' + _loc('COLLISION');
+				};
 				$('<div>')
 					.addClass('explanation')
-					.text( _loc('Modify existing document') )
+					.text( explanation )
 					.appendTo($div);
 				$('<div>')
 					.addClass('geoJsonId')
@@ -554,35 +693,57 @@ var AnalysisReport = $n2.Class({
 				var $properties = $('<div>')
 					.addClass('properties')
 					.appendTo($div);
-				if( importEntry ){
-					for(var propName in importProperties){
-						var propValue = importProperties[propName];
-						var docValue = null;
-						if( doc 
-						 && doc.nunaliit_import 
-						 && doc.nunaliit_import.data ){
-							docValue = doc.nunaliit_import.data[propName];
-						};
+				
+				for(var propNameIndex=0,propNameEnd=sortedPropNames.length; propNameIndex<propNameEnd; ++propNameIndex){
+					var propName = sortedPropNames[propNameIndex];
+					var mod = modificationsByPropNames[propName];
 
-						if( propValue !== docValue ) {
+					var $prop = $('<div>')
+						.addClass('property')
+						.appendTo($properties);
+					$('<div>')
+						.addClass('propertyName')
+						.text(propName)
+						.appendTo($prop);
+					$('<div>')
+						.addClass('previousValue')
+						.text(mod.lastImportValue)
+						.appendTo($prop);
+					$('<div>')
+						.addClass('newValue')
+						.text(mod.externalValue)
+						.appendTo($prop);
+					
+					// Report collisions
+					if( mod.collisions && mod.collisions.length > 0 ){
+						for(var colIndex=0,colEnd=mod.collisions.length; colIndex<colEnd; ++colIndex){
+							var collision = mod.collisions[colIndex];
+							
 							var $prop = $('<div>')
 								.addClass('property')
 								.appendTo($properties);
 							$('<div>')
 								.addClass('propertyName')
-								.text(propName)
+								.text( _loc('Collision on property {property}',{
+									property:propName
+								}) )
 								.appendTo($prop);
 							$('<div>')
-								.addClass('previousValue')
-								.text(docValue)
+								.addClass('targetSelector')
+								.text(collision.target)
 								.appendTo($prop);
+							var targetValue = collision.targetValue;
+							if( !targetValue ){
+								targetValue = '';
+							};
 							$('<div>')
-								.addClass('newValue')
-								.text(propValue)
+								.addClass('targetValue')
+								.text(targetValue)
 								.appendTo($prop);
 						};
 					};
 				};
+
 				if( change.modifiedGeometry ){
 					var $prop = $('<div>')
 						.addClass('property')
@@ -605,6 +766,10 @@ var AnalysisReport = $n2.Class({
 					.attr('id',change.changeId)
 					.addClass('delete operation')
 					.appendTo($changes);
+				if( change.auto ){
+					$div.addClass('autoOperation');
+				};
+				
 				$('<button>')
 					.addClass('discard')
 					.text( _loc('Discard') )
@@ -615,9 +780,14 @@ var AnalysisReport = $n2.Class({
 					.text( _loc('Delete Database Document') )
 					.appendTo($div)
 					.click(proceedClickFn);
+
+				var explanation = _loc('Delete existing document');
+				if( change.auto ){
+					explanation += ' ' +_loc('AUTO');
+				};
 				$('<div>')
 					.addClass('explanation')
-					.text( _loc('Delete existing document') )
+					.text( explanation )
 					.appendTo($div);
 				$('<div>')
 					.addClass('geoJsonId')
@@ -663,6 +833,19 @@ var AnalysisReport = $n2.Class({
 		var $elem = this._getElem();
 		var $changes = $elem.find('.changes');
 		var $ops = $changes.find('.operation');
+		
+		$ops.each(function(){
+			var $op = $(this);
+			_this._proceedWithOperationElement($op);
+		});
+	},
+
+	_proceedAutomatics: function(){
+		var _this = this;
+		
+		var $elem = this._getElem();
+		var $changes = $elem.find('.changes');
+		var $ops = $changes.find('.autoOperation');
 		
 		$ops.each(function(){
 			var $op = $(this);
@@ -834,9 +1017,16 @@ var AnalysisReport = $n2.Class({
 		// Copy only properties that have changed
 		var propNames = [];
 		for(var i=0,e=change.modifiedProperties.length; i<e; ++i){
-			var propName = change.modifiedProperties[i];
-			var propValue = importProperties[propName];
-			doc.nunaliit_import.data[propName] = propValue;
+			var mod = change.modifiedProperties[i];
+			var propName = mod.property;
+			var propValue = mod.externalValue;
+			if( typeof propValue === 'undefined' ){
+				if( typeof doc.nunaliit_import.data[propName] !== 'undefined' ){
+					delete doc.nunaliit_import.data[propName];
+				};
+			} else {
+				doc.nunaliit_import.data[propName] = propValue;
+			};
 			propNames.push(propName);
 		};
 		
@@ -928,6 +1118,22 @@ var ImportProfileOperation = $n2.Class({
 		throw 'Subclasses of ImportProfileOperation must implement "copyProperties()"';
 	},
 	
+	/**
+	 * This function informs the caller of all the properties that have
+	 * been changed in the document since the data was imported. It compares the
+	 * values found in the "nunaliit_import" section with the value copied in the
+	 * document. For each value that differs, an entry in the propertiesArray is added,
+	 * which looks like:
+		{
+			source: 'personName'
+			,sourceValue: 'Blow'
+			,target: 'person.name'
+			,targetValue: 'Bloe'
+		}
+	 *
+	 * The above reports that the value found at nunaliit_import.personName differs from where
+	 * the information was copied in the previous import, person.name. The values show the changes.
+	 */
 	reportInconsistentProperties: function(doc, importData, propertiesArray){
 		throw 'Subclasses of ImportProfileOperation must implement "reportInconsistentProperties()"';
 	}
@@ -962,9 +1168,20 @@ var ImportProfileOperationCopyAll = $n2.Class(ImportProfileOperation, {
 			this.targetSelector.setValue(doc, targetObj, true);
 		};
 		
+		// Copy
 		for(var key in importData){
 			if( filterProperties.indexOf(key) >= 0 ){
 				targetObj[key] = importData[key];
+			};
+		};
+		
+		// Delete
+		for(var i=0,e=filterProperties.length; i<e; ++i){
+			var propName = filterProperties[i];
+			if( typeof importData[propName] === 'undefined' ){
+				if( typeof targetObj[propName] !== 'undefined' ){
+					delete targetObj[propName];
+				};
 			};
 		};
 	},
@@ -1023,10 +1240,22 @@ var ImportProfileOperationCopyAllAndFixNames = $n2.Class(ImportProfileOperation,
 			this.targetSelector.setValue(doc, targetObj, true);
 		};
 		
+		// Copy
 		for(var key in importData){
 			if( filterProperties.indexOf(key) >= 0 ){
 				var fixedKey = this._fixKey(key);
 				targetObj[fixedKey] = importData[key];
+			};
+		};
+		
+		// Delete
+		for(var i=0,e=filterProperties.length; i<e; ++i){
+			var propName = filterProperties[i];
+			if( typeof importData[propName] === 'undefined' ){
+				var fixedKey = this._fixKey(propName);
+				if( typeof targetObj[fixedKey] !== 'undefined' ){
+					delete targetObj[fixedKey];
+				};
 			};
 		};
 	},
@@ -1106,9 +1335,16 @@ var ImportProfileOperationAssign = $n2.Class(ImportProfileOperation, {
 	},
 	
 	copyProperties: function(doc, importData, filterProperties){
-		var sourceValue = importData[this.sourceName];
-		if( typeof sourceValue !== 'undefined' ){
-			this.targetSelector.setValue(doc, sourceValue, true);
+		// This operation makes sense only if our source is included
+		// in the filtered properties
+		if( filterProperties.indexOf(this.sourceName) >= 0 ){
+			var sourceValue = importData[this.sourceName];
+			if( typeof sourceValue === 'undefined' ){
+				// Must delete
+				this.targetSelector.removeValue(doc);
+			} else {
+				this.targetSelector.setValue(doc, sourceValue, true);
+			};
 		};
 	},
 	
@@ -1214,7 +1450,7 @@ var ImportProfile = $n2.Class({
 			,onError: function(err){}
 		},opts_);
 		
-		var analyzer = new UpgradeAnalyzer({
+		var analyzer = new ImportAnalyzer({
 			profile: this
 			,atlasDesign: this.atlasDesign
 		});

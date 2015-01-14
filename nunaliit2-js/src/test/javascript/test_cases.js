@@ -565,7 +565,7 @@ jsunit.defineTest('$n2.date.intersection',function($$){
 });
 
 //*********
-jsunit.defineTest('$n2.objectSelector',function($$){
+jsunit.defineTest('$n2.objectSelector.getValue',function($$){
 
 	function t(o, sel, v){
 		var objSel = $n2.objectSelector.parseSelector(sel);
@@ -586,6 +586,79 @@ jsunit.defineTest('$n2.objectSelector',function($$){
 	
 	t(obj, 'a.b.c', 5);
 	t(obj, 'a.b.b', undefined);
+});
+
+//*********
+jsunit.defineTest('$n2.objectSelector.setValue',function($$){
+
+	function t(o, sel, value, create, expectedInserted){
+		var obj = $n2.extend(true,{},o);
+		
+		var objSel = $n2.objectSelector.parseSelector(sel);
+		var inserted = objSel.setValue(obj, value, create);
+		
+		if( inserted !== expectedInserted ){
+			throw 'Unexpected insert status. Expected value: '+expectedInserted
+				+' Observed: '+inserted + ' ('+sel+')';
+		};
+		
+		if( inserted ){
+			var valueCopy = objSel.getValue(obj);
+			if( valueCopy !== value ){
+				throw 'Unexpected value. Expected value: '+value
+				+' Observed: '+valueCopy + ' ('+sel+')';
+			};
+		};
+	};
+	
+	var obj = {
+		a: {
+			b: {
+				c: 5
+			}
+		}
+	};
+	
+	t(obj, 'a.i', 9, false, true);
+	t(obj, 'a.i', 9, true, true);
+	t(obj, 'a.i.j', 9, false, false);
+	t(obj, 'a.i.j', 9, true, true);
+	t(obj, 'a.b', 9, true, true);
+});
+
+//*********
+jsunit.defineTest('$n2.objectSelector.removeValue',function($$){
+
+	function t(o, sel, expectedRemoved){
+		var obj = $n2.extend(true,{},o);
+		
+		var objSel = $n2.objectSelector.parseSelector(sel);
+		var removed = objSel.removeValue(obj);
+		
+		if( removed !== expectedRemoved ){
+			throw 'Unexpected remove status. Expected value: '+expectedRemoved
+				+' Observed: '+removed + ' ('+sel+')';
+		};
+		
+		var value = objSel.getValue(obj);
+		if( typeof value !== 'undefined' ){
+			throw 'Unexpected value. Value should be removed. Observed: '+value + ' ('+sel+')';
+		};
+	};
+	
+	var obj = {
+		a: {
+			b: {
+				c: 5
+			}
+		}
+	};
+	
+	t(obj, 'a', true);
+	t(obj, 'a.b', true);
+	t(obj, 'a.b.c', true);
+	t(obj, 'a.b.c.d', false);
+	t(obj, 'd', false);
 });
 
 //*********
