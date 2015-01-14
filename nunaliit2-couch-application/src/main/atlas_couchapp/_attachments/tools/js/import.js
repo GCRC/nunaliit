@@ -105,7 +105,7 @@
 				importProfile.parseEntries({
 					importData: importData
 					,onSuccess: function(entries){
-						importProfile.performUpgradeAnalysis({
+						importProfile.performImportAnalysis({
 							entries: entries
 							,onSuccess: function(analysis){
 								$n2.log('analysis',analysis);

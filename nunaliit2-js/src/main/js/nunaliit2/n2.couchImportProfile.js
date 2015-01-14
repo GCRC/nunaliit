@@ -299,6 +299,13 @@ var ImportAnalyzer = $n2.Class({
 					var id = entry.getId();
 					
 					if( id ){
+						if( importEntriesById[id] ){
+							opts.onError( _loc('More than one import entries report identifier: {id}',{
+								id: id
+							}) );
+							return;
+						};
+						
 						importEntriesById[id] = entry;
 						
 						if( dbDocsByImportId[id] ){
@@ -791,7 +798,7 @@ var AnalysisReport = $n2.Class({
 					.appendTo($div);
 				$('<div>')
 					.addClass('geoJsonId')
-					.text( 'Import ID: '+change.id )
+					.text( 'Import ID: '+importId )
 					.appendTo($div);
 				$('<div>')
 					.addClass('docId')
@@ -1443,7 +1450,7 @@ var ImportProfile = $n2.Class({
 		return this.atlasDb;
 	},
 	
-	performUpgradeAnalysis: function(opts_){
+	performImportAnalysis: function(opts_){
 		var opts = $n2.extend({
 			entries: null
 			,onSuccess: function(analysis){}
