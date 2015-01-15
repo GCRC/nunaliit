@@ -221,6 +221,9 @@ var Service = $n2.Class({
 				} else if( m.modelType === 'timeFilter' ){
 			        this._createTimeFilter(m);
 				    
+				} else if( m.modelType === 'timeTransform' ){
+			        this._createTimeTransform(m);
+				    
 				} else if( m.modelType === 'union' ){
 			        this._createUnionModel(m);
 				    
@@ -295,7 +298,39 @@ var Service = $n2.Class({
 			m.created = true;
 
 		} else {
-			throw 'Model Time is not available';
+			throw 'Model TimeFilter is not available';
+		};
+	},
+	
+	_createTimeTransform: function(m){
+		if( $n2.modelTime 
+		 && $n2.modelTime.TimeTransform ){
+			var options = {
+				modelId: m.modelId
+			};
+			
+			if( m && m.modelOptions ){
+				if( m.modelOptions.sourceModelId ){
+					options.sourceModelId = m.modelOptions.sourceModelId;
+				};
+
+				if( m.modelOptions.range ){
+					options.rangeStr = m.modelOptions.range;
+				};
+			};
+			
+			if( m && m.config ){
+				if( m.config.directory ){
+					options.dispatchService = m.config.directory.dispatchService;
+				};
+			};
+			
+			new $n2.modelTime.TimeTransform(options);
+			
+			m.created = true;
+
+		} else {
+			throw 'Model TimeTransform is not available';
 		};
 	},
 	
