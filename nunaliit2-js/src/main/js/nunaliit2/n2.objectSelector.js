@@ -158,6 +158,9 @@ var ObjectSelector = $n2.Class({
 		if( typeof obj === 'undefined' ){
 			return obj;
 			
+		} else if( obj === null ){
+			return undefined;
+
 		} else if( typeof obj === 'object' ){
 			var effObj = obj;
 			for(var i=0,e=this.selectors.length; i<e; ++i){

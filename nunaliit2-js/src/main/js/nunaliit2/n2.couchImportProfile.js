@@ -362,19 +362,23 @@ var ImportAnalyzer = $n2.Class({
 		var change = null;
 		
 		// Create a map of all property names
-		var allPropNames = {};
+		var allPropNamesMap = {};
 		for(var propName in props){
-			allPropNames[propName] = true;
+			allPropNamesMap[propName] = true;
 		};
 		for(var propName in dbData){
-			allPropNames[propName] = true;
+			allPropNamesMap[propName] = true;
 		};
 		
 		// Look at values that have changed since the last import
 		var modificationsByPropName = {};
-		for(var propName in allPropNames){
+		var newPropertyNames = [];
+		var allPropertyNames = [];
+		for(var propName in allPropNamesMap){
 			var lastImportValue = dbData[propName];
 			var externalValue = props[propName];
+			
+			allPropertyNames.push(propName);
 			
 			if( externalValue !== lastImportValue ){
 				if( !change ) change = {
@@ -394,12 +398,17 @@ var ImportAnalyzer = $n2.Class({
 				modificationsByPropName[propName] = mod;
 				
 				change.modifiedProperties.push(mod);
+				
+				if( typeof lastImportValue === 'undefined' ){
+					newPropertyNames.push(propName);
+				};
 			};
 		};
 		
 		// Look for values that have become inconsistent since the last
 		// import
-		var inconsistentProperties = this.profile.getInconsistentProperties(doc);
+		var importData = doc.nunaliit_import.data;
+		var inconsistentProperties = this.profile.getInconsistentProperties(doc, importData, allPropertyNames);
 		for(var i=0,e=inconsistentProperties.length; i<e; ++i){
 			var inconsistentProp = inconsistentProperties[i];
 			var propName = inconsistentProp.source;
@@ -420,6 +429,9 @@ var ImportAnalyzer = $n2.Class({
 				};
 			};
 		};
+		
+		// Finally, look for new properties that might interfere with already existing
+		// data
 		
 //		var remoteGeom = null;
 //		var localGeom = doc.nunaliit_import.geometry ? doc.nunaliit_import.geometry : {};
@@ -612,6 +624,7 @@ var AnalysisReport = $n2.Class({
 				if( importEntry ){
 					for(var propName in importProperties){
 						var propValue = importProperties[propName];
+						var propValueStr = this._printValue(propValue);
 						var $prop = $('<div>')
 							.addClass('property')
 							.appendTo($properties);
@@ -621,7 +634,7 @@ var AnalysisReport = $n2.Class({
 							.appendTo($prop);
 						$('<div>')
 							.addClass('newValue')
-							.text(propValue)
+							.text(propValueStr)
 							.appendTo($prop);
 					};
 				};
@@ -633,8 +646,6 @@ var AnalysisReport = $n2.Class({
 			var change = changes[i];
 			if( change.isModification ) {
 				var importId = change.importId;
-				var importEntry = analysis.getImportEntry(importId);
-				var importProperties = importEntry.getProperties();
 				var doc = analysis.getDbDoc(importId);
 
 				// Go through all the properties that need to be modified
@@ -714,11 +725,11 @@ var AnalysisReport = $n2.Class({
 						.appendTo($prop);
 					$('<div>')
 						.addClass('previousValue')
-						.text(mod.lastImportValue)
+						.text( this._printValue(mod.lastImportValue) )
 						.appendTo($prop);
 					$('<div>')
 						.addClass('newValue')
-						.text(mod.externalValue)
+						.text( this._printValue(mod.externalValue) )
 						.appendTo($prop);
 					
 					// Report collisions
@@ -740,12 +751,9 @@ var AnalysisReport = $n2.Class({
 								.text(collision.target)
 								.appendTo($prop);
 							var targetValue = collision.targetValue;
-							if( !targetValue ){
-								targetValue = '';
-							};
 							$('<div>')
 								.addClass('targetValue')
-								.text(targetValue)
+								.text( this._printValue(targetValue) )
 								.appendTo($prop);
 						};
 					};
@@ -827,6 +835,26 @@ var AnalysisReport = $n2.Class({
 				};
 			};
 		};
+	},
+	
+	_printValue: function(value){
+		if( value === null ){
+			return 'null';
+			
+		} else if( typeof value === 'undefined' ){
+			return 'undefined';
+
+		} else if( typeof value === 'string' ){
+			return '"'+value+'"';
+
+		} else if( typeof value === 'number' ){
+			return ''+value;
+
+		} else if( typeof value === 'boolean' ){
+			return ''+value;
+		};
+		
+		return '<?>';
 	},
 	
 	_proceed: function($button){
@@ -1000,7 +1028,6 @@ var AnalysisReport = $n2.Class({
 		
 		var importId = change.importId;
 		var importEntry = this.analysis.getImportEntry(importId);
-		var importProperties = importEntry.getProperties();
 		var doc = this.analysis.getDbDoc(importId);
 		var importProfile = this.analysis.getImportProfile();
 		var schema = importProfile.getSchema();
@@ -1141,7 +1168,7 @@ var ImportProfileOperation = $n2.Class({
 	 * The above reports that the value found at nunaliit_import.personName differs from where
 	 * the information was copied in the previous import, person.name. The values show the changes.
 	 */
-	reportInconsistentProperties: function(doc, importData, propertiesArray){
+	reportInconsistentProperties: function(opts_){
 		throw 'Subclasses of ImportProfileOperation must implement "reportInconsistentProperties()"';
 	}
 });
@@ -1193,19 +1220,29 @@ var ImportProfileOperationCopyAll = $n2.Class(ImportProfileOperation, {
 		};
 	},
 	
-	reportInconsistentProperties: function(doc, importData, propertiesArray){
-		var targetObj = this.targetSelector.getValue(doc);
-		for(var key in importData){
+	reportInconsistentProperties: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,importData: null
+			,allPropertyNames: null
+			,propertiesArray: null
+		},opts_);
+		
+		var targetObj = this.targetSelector.getValue(opts.doc);
+		for(var i=0,e=opts.allPropertyNames.length; i<e; ++i){
+			var key = opts.allPropertyNames[i];
+			
 			var targetValue = undefined;
 			if( targetObj ){
 				targetValue = targetObj[key];
 			};
 			
-			if( importData[key] !== targetValue ){
-				var sourceValue = importData[key];
+			var sourceValue = opts.importData[key];
+			
+			if( sourceValue !== targetValue ){
 				var target = this.targetSelector.getSelectorString() + '.' + key;
 				
-				propertiesArray.push({
+				opts.propertiesArray.push({
 					source: key
 					,sourceValue: sourceValue
 					,target: target
@@ -1267,21 +1304,31 @@ var ImportProfileOperationCopyAllAndFixNames = $n2.Class(ImportProfileOperation,
 		};
 	},
 	
-	reportInconsistentProperties: function(doc, importData, propertiesArray){
-		var targetObj = this.targetSelector.getValue(doc);
-		for(var key in importData){
+	reportInconsistentProperties: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,importData: null
+			,allPropertyNames: null
+			,propertiesArray: null
+		},opts_);
+
+		var targetObj = this.targetSelector.getValue(opts.doc);
+		for(var i=0,e=opts.allPropertyNames.length; i<e; ++i){
+			var key = opts.allPropertyNames[i];
+			
 			var fixedKey = this._fixKey(key);
 
 			var targetValue = undefined;
 			if( targetObj ){
 				targetValue = targetObj[fixedKey];
 			};
+
+			var sourceValue = opts.importData[key];
 			
-			if( importData[key] !== targetValue ){
-				var sourceValue = importData[key];
+			if( sourceValue !== targetValue ){
 				var target = this.targetSelector.getSelectorString() + '.' + fixedKey;
 				
-				propertiesArray.push({
+				opts.propertiesArray.push({
 					source: key
 					,sourceValue: sourceValue
 					,target: target
@@ -1355,16 +1402,25 @@ var ImportProfileOperationAssign = $n2.Class(ImportProfileOperation, {
 		};
 	},
 	
-	reportInconsistentProperties: function(doc, importData, propertiesArray){
-		var sourceValue = importData[this.sourceName];
-		var targetValue = this.targetSelector.getValue(doc);
-		if( sourceValue !== targetValue ){
-			propertiesArray.push({
-				source: this.sourceName
-				,sourceValue: sourceValue
-				,target: this.targetSelector.getSelectorString()
-				,targetValue: targetValue
-			});
+	reportInconsistentProperties: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,importData: null
+			,allPropertyNames: null
+			,propertiesArray: null
+		},opts_);
+
+		if( opts.allPropertyNames.indexOf(this.sourceName) >= 0 ){
+			var sourceValue = opts.importData[this.sourceName];
+			var targetValue = this.targetSelector.getValue(opts.doc);
+			if( sourceValue !== targetValue ){
+				opts.propertiesArray.push({
+					source: this.sourceName
+					,sourceValue: sourceValue
+					,target: this.targetSelector.getSelectorString()
+					,targetValue: targetValue
+				});
+			};
 		};
 	}
 });
@@ -1468,14 +1524,17 @@ var ImportProfile = $n2.Class({
 		});
 	},
 	
-	getInconsistentProperties: function(doc){
+	getInconsistentProperties: function(doc, importData, allPropertyNames){
 		var properties = [];
-		
-		var importData = doc.nunaliit_import.data;
 		
 		for(var i=0,e=this.operations.length; i<e; ++i){
 			var op = this.operations[i];
-			op.reportInconsistentProperties(doc, importData, properties);
+			op.reportInconsistentProperties({
+				doc: doc
+				,importData: importData
+				,allPropertyNames: allPropertyNames
+				,propertiesArray: properties
+			});
 		};
 		
 		return properties;
