@@ -518,6 +518,11 @@ var AnalysisReport = $n2.Class({
 			_this._discard($btn);
 			return false;
 		};
+		var radioButtonClickFn = function(){
+			var $btn = $(this);
+			_this._radioButtonClicked($btn);
+			return true;
+		};
 		
 		var analysis = this.analysis;
 		var changes = analysis.getChanges();
@@ -681,12 +686,14 @@ var AnalysisReport = $n2.Class({
 					.appendTo($div)
 					.click(discardClickFn);
 				
-				if( !collisionDetected ) {
-					$('<button>')
-						.addClass('proceed')
-						.text( _loc('Modify Document') )
-						.appendTo($div)
-						.click(proceedClickFn);
+				var $proceedButton = $('<button>')
+					.attr('id',change.changeId + '_proceed')
+					.addClass('proceed')
+					.text( _loc('Modify Document') )
+					.appendTo($div)
+					.click(proceedClickFn);
+				if( collisionDetected ) {
+					$proceedButton.attr('disabled','disabled');
 				};
 				
 				var explanation = _loc('Modify existing document');
@@ -755,6 +762,42 @@ var AnalysisReport = $n2.Class({
 								.addClass('targetValue')
 								.text( this._printValue(targetValue) )
 								.appendTo($prop);
+							
+							var $collision = $('<div>')
+								.addClass('collision')
+								.appendTo($properties);
+							
+							var collisionName = propName + '_' + colIndex;
+							
+							var externalId = $n2.getUniqueId();
+							var $externalValueDiv = $('<div>')
+								.appendTo($collision);
+							$('<input>')
+								.attr('type','radio')
+								.attr('id',externalId)
+								.attr('name',collisionName)
+								.attr('value','external')
+								.click(radioButtonClickFn)
+								.appendTo($externalValueDiv);
+							$('<label>')
+								.attr('for',externalId)
+								.text( this._printValue(mod.externalValue) )
+								.appendTo($externalValueDiv);
+							
+							var currentId = $n2.getUniqueId();
+							var $currentValueDiv = $('<div>')
+								.appendTo($collision);
+							$('<input>')
+								.attr('type','radio')
+								.attr('id',currentId)
+								.attr('name',collisionName)
+								.attr('value','current')
+								.click(radioButtonClickFn)
+								.appendTo($currentValueDiv);
+							$('<label>')
+								.attr('for',currentId)
+								.text( this._printValue(targetValue) )
+								.appendTo($currentValueDiv);
 						};
 					};
 				};
@@ -913,6 +956,44 @@ var AnalysisReport = $n2.Class({
 		var elemId = $opsElem.attr('id');
 		this._completed(elemId);
 	},
+	
+	_radioButtonClicked: function(){
+		var analysis = this.analysis;
+		var changes = analysis.getChanges();
+		
+		for(var i=0,e=changes.length; i<e; ++i){
+			var change = changes[i];
+			var changeId = change.changeId;
+
+			if( change.isModification ) {
+				var allCollisionsResolved = true;
+				
+				for(var j=0,k=change.modifiedProperties.length; j<k; ++j){
+					var mod = change.modifiedProperties[j];
+					var propName = mod.property;
+					if( mod.collisions && mod.collisions.length > 0 ){
+						for(var colIndex=0,colEnd=mod.collisions.length; colIndex<colEnd; ++colIndex){
+							var collision = mod.collisions[colIndex];
+							var collisionName = propName + '_' + colIndex;
+							var value = $('input[name='+collisionName+']:checked').val();
+							collision.selectedValue = value;
+							if( typeof value !== 'string' ){
+								allCollisionsResolved = false;
+							};
+						};
+					};
+				};
+				
+				var proceedBtnId = changeId + '_proceed';
+				if( allCollisionsResolved ) {
+					$('#'+proceedBtnId).removeAttr('disabled');
+
+				} else {
+					$('#'+proceedBtnId).attr('disabled','disabled');
+				};
+			};
+		};
+	},
 
 	_completed: function(elemId){
 		this.analysis.removeChange(elemId);
@@ -1054,6 +1135,8 @@ var AnalysisReport = $n2.Class({
 			var mod = change.modifiedProperties[i];
 			var propName = mod.property;
 			var propValue = mod.externalValue;
+			
+			// Update import data
 			if( typeof propValue === 'undefined' ){
 				if( typeof doc.nunaliit_import.data[propName] !== 'undefined' ){
 					delete doc.nunaliit_import.data[propName];
@@ -1061,7 +1144,30 @@ var AnalysisReport = $n2.Class({
 			} else {
 				doc.nunaliit_import.data[propName] = propValue;
 			};
-			propNames.push(propName);
+			
+			// Check that all collisions are resolved
+			var useExternalValue = true;
+			var allCollisionsResolved = true;
+			if( mod.collisions && mod.collisions.length > 0 ){
+				for(var colIndex=0,colEnd=mod.collisions.length; colIndex<colEnd; ++colIndex){
+					var collision = mod.collisions[colIndex];
+					if( !collision.selectedValue ){
+						allCollisionsResolved = false;
+					} else if( 'current' === collision.selectedValue ) {
+						useExternalValue = false;
+					};
+				};
+			};
+			
+			if( !allCollisionsResolved ){
+				throw 'Invalid state for change since some collision is not resolved';
+			};
+			
+			// Keep the names of the properties that were changed and external value
+			// is selected
+			if( useExternalValue ){
+				propNames.push(propName);
+			};
 		};
 		
 		// Copy data to user's location
