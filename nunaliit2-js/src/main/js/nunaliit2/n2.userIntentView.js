@@ -156,7 +156,7 @@ var IntentView = $n2.Class({
 	_adjustIntentOnNode: function(node){
 		var changed = false;
 		
-		var docId = node.getDocId();
+		var docId = node.n2_id;
 		
 		// Selection
 		var selected = false;
