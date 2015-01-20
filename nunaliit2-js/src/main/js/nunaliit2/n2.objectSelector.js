@@ -151,7 +151,39 @@ var ObjectSelector = $n2.Class({
 	selectors: null,
 	
 	initialize: function(selectors){
+		// Verify that this is an array of string or numbers
+		if( !$n2.isArray(selectors) ){
+			throw 'Instances of ObjectSelector must be created using an array';
+		};
+		
+		for(var i=0,e=selectors.length; i<e; ++i){
+			var key = selectors[i];
+			
+			if( typeof key !== 'string' && typeof key !== 'number' ){
+				throw 'Instances of ObjectSelector must be created using an array of strings and numbers';
+			};
+		};
+		
 		this.selectors = selectors;
+	},
+	
+	getChildSelector: function(key){
+		var effectiveKey = null;
+		if( typeof key === 'string' ){
+			effectiveKey = key;
+			
+		} else if ( typeof key === 'number' ) {
+			effectiveKey = key;
+			
+		} else {
+			throw 'A string or number must be provided when creating a child selector';
+		};
+		
+		// Copy current selector
+		var selectors = this.selectors.slice();
+		selectors.push(effectiveKey);
+		
+		return new ObjectSelector(selectors);
 	},
 	
 	getValue: function(obj){

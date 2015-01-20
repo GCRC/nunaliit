@@ -30,6 +30,67 @@ POSSIBILITY OF SUCH DAMAGE.
 
 */
 
+/*
+
+The concept of using profiles to import data is designed to help importing a set
+of data to create an initial set of documents that can be updated later wen re-importing
+a newer version of the external data.
+
+In this design, "external data" refers to a set of data obtained by a party wishing to
+import information to a Nunaliit atlas. The external data can be a spreadsheet, a JSON file,
+a GeoJSON file, etc.
+
+An import profile is used to keep track of a data set that is imported. An import profile is
+a document with a structure that follows:
+
+{
+	"nunaliit_import_profile": {
+	   "id": "demo",
+	   "nunaliit_type": "import_profile",
+	   "label": {
+	       "nunaliit_type": "localized",
+	       "en": "Demo"
+	   },
+	   "type": "json",
+	   "options": {
+	       "idAttribute": "id"
+	   },
+	   "operations": [
+	       "copyAllAndFixNames(demo_doc)"
+	   ],
+	   "layerName": "public",
+	   "schemaName": "demo_doc"
+	}
+}
+
+The main responsibility of an import profile is to indicate how an external data set is
+broken into entries with unique identifiers. For each entry generated from the external
+data, a document is created with the following structure:
+
+{
+	"nunaliit_import": {
+		"id": "123"
+		,"profile": "demo"
+		,"data": {
+			"id": "123"
+			,"a": "abc"
+			,"b": "def"
+		}
+	}
+	,"demo_doc": {
+		"id": "123"
+		,"a": "abc"
+		,"b": "def"
+	}
+	,"nunaliit_layers": [
+		"public"
+	]
+	,"nunaliit_schema": "demo_doc"
+}
+
+ */
+
+
 ;(function($,$n2) {
 "use strict";
 
@@ -372,7 +433,6 @@ var ImportAnalyzer = $n2.Class({
 		
 		// Look at values that have changed since the last import
 		var modificationsByPropName = {};
-		var newPropertyNames = [];
 		var allPropertyNames = [];
 		for(var propName in allPropNamesMap){
 			var lastImportValue = dbData[propName];
@@ -393,57 +453,51 @@ var ImportAnalyzer = $n2.Class({
 					,lastImportValue: lastImportValue
 					,externalValue: externalValue
 					,collisions: []
+					,copyOperations: []
 				};
 				
 				modificationsByPropName[propName] = mod;
 				
 				change.modifiedProperties.push(mod);
-				
-				if( typeof lastImportValue === 'undefined' ){
-					newPropertyNames.push(propName);
-				};
 			};
 		};
 		
-		// Look for values that have become inconsistent since the last
-		// import
-		var importData = doc.nunaliit_import.data;
-		var inconsistentProperties = this.profile.getInconsistentProperties(doc, importData, allPropertyNames);
-		for(var i=0,e=inconsistentProperties.length; i<e; ++i){
-			var inconsistentProp = inconsistentProperties[i];
-			var propName = inconsistentProp.source;
+		// Get all copy operations that are to be executed on import
+		var copyOperations = this.profile.reportCopyOperations(doc, allPropertyNames);
+		
+		// Sort the copy operations with the appropriate property modification
+		for(var copyIndex=0,copyIndexEnd=copyOperations.length; copyIndex<copyIndexEnd; ++copyIndex){
+			var copyOperation = copyOperations[copyIndex];
 			
-			// Inconsistencies are important during the import process only if
-			// it interferes with a change in the external data
-			var mod = modificationsByPropName[propName];
-			if( mod ){
-				// It is a collision only if target value is not the same as
-				// the external data. If the external data and the modified
-				// data agree, then this is not a collision
-				if( mod.externalValue !== inconsistentProp.targetValue ){
-					// This is a collision
-					mod.collisions.push(inconsistentProp);
+			var propertyNames = copyOperation.propertyNames;
+			if( propertyNames ){
+				for(var propIndex=0,propIndexEnd=propertyNames.length; propIndex<propIndexEnd; ++propIndex){
+					var propName = propertyNames[propIndex];
 					
-					// Can not perform this change automatically
-					change.auto = false;
+					var mod = modificationsByPropName[propName];
+					if( mod ){
+						if( copyOperation.isInconsistent ){
+							// It is a collision only if target value is not the same as
+							// the external data. If the external data and the modified
+							// data agree, then this is not a collision
+							if( mod.externalValue !== copyOperation.targetValue ){
+								// This is a collision
+								mod.collisions.push(copyOperation);
+								
+								// Can not perform this change automatically
+								change.auto = false;
+								
+							} else {
+								mod.copyOperations.push(copyOperation);
+							};
+							
+						} else {
+							mod.copyOperations.push(copyOperation);
+						};
+					};
 				};
 			};
 		};
-		
-		// Finally, look for new properties that might interfere with already existing
-		// data
-		
-//		var remoteGeom = null;
-//		var localGeom = doc.nunaliit_import.geometry ? doc.nunaliit_import.geometry : {};
-//		var deltaGeom = patcher.computePatch(localGeom, remoteGeom);
-//		if( deltaGeom ){
-//			if( !change ) change = {
-//				id:importId
-//				,modifiedProperties: []
-//				,modifiedGeometry: false
-//			};
-//			change.modifiedGeometry = true;
-//		};
 		
 		return change;
 	}
@@ -742,6 +796,7 @@ var AnalysisReport = $n2.Class({
 					// Report collisions
 					if( mod.collisions && mod.collisions.length > 0 ){
 						for(var colIndex=0,colEnd=mod.collisions.length; colIndex<colEnd; ++colIndex){
+							// collision is a copyOperation
 							var collision = mod.collisions[colIndex];
 							
 							var $prop = $('<div>')
@@ -755,7 +810,7 @@ var AnalysisReport = $n2.Class({
 								.appendTo($prop);
 							$('<div>')
 								.addClass('targetSelector')
-								.text(collision.target)
+								.text(collision.targetSelector.getSelectorString())
 								.appendTo($prop);
 							var targetValue = collision.targetValue;
 							$('<div>')
@@ -1051,37 +1106,8 @@ var AnalysisReport = $n2.Class({
 		};
 		
 		// Copy data to user's location
-		importProfile.copyImportProperties(doc, propNames);
-		
-		// Cache copy of GeoJSON geometry
-//		doc.geojson.nunaliit_geometry = importEntry.geometry;
-		
-		// Import geometry
-//		if( importEntry.geometry ){
-//			if( typeof OpenLayers !== 'undefined'
-//			 && OpenLayers.Format
-//			 && OpenLayers.Format.GeoJSON ) {
-//				var format = new OpenLayers.Format.GeoJSON();
-//				var geom = format.read(importEntry.geometry, 'Geometry');
-//				if( geom ){
-//					var wkt = geom.toString();
-//					var bounds = geom.getBounds();
-//					doc.nunaliit_geom = {
-//						nunaliit_type:'geometry'
-//						,bbox: [
-//							bounds.left
-//							,bounds.bottom
-//							,bounds.right
-//							,bounds.top
-//						]
-//						,wkt: wkt
-//					};
-//				};
-//			} else {
-//				abort( _loc('OpenLayers is not present. Can not import feature with geometry.') );
-//				return;
-//			};
-//		};
+		var copyOperations = importProfile.reportCopyOperations(doc, propNames);
+		importProfile.performCopyOperations(doc, copyOperations);
 		
 		// Adjust document with created, last updated
 		if( $n2.couchMap
@@ -1108,7 +1134,6 @@ var AnalysisReport = $n2.Class({
 		var _this = this;
 		
 		var importId = change.importId;
-		var importEntry = this.analysis.getImportEntry(importId);
 		var doc = this.analysis.getDbDoc(importId);
 		var importProfile = this.analysis.getImportProfile();
 		var schema = importProfile.getSchema();
@@ -1130,7 +1155,7 @@ var AnalysisReport = $n2.Class({
 		};
 		
 		// Copy only properties that have changed
-		var propNames = [];
+		var copyOperations = [];
 		for(var i=0,e=change.modifiedProperties.length; i<e; ++i){
 			var mod = change.modifiedProperties[i];
 			var propName = mod.property;
@@ -1146,15 +1171,14 @@ var AnalysisReport = $n2.Class({
 			};
 			
 			// Check that all collisions are resolved
-			var useExternalValue = true;
 			var allCollisionsResolved = true;
 			if( mod.collisions && mod.collisions.length > 0 ){
 				for(var colIndex=0,colEnd=mod.collisions.length; colIndex<colEnd; ++colIndex){
 					var collision = mod.collisions[colIndex];
 					if( !collision.selectedValue ){
 						allCollisionsResolved = false;
-					} else if( 'current' === collision.selectedValue ) {
-						useExternalValue = false;
+					} else if( 'external' === collision.selectedValue ) {
+						copyOperations.push(collision);
 					};
 				};
 			};
@@ -1163,46 +1187,17 @@ var AnalysisReport = $n2.Class({
 				throw 'Invalid state for change since some collision is not resolved';
 			};
 			
-			// Keep the names of the properties that were changed and external value
-			// is selected
-			if( useExternalValue ){
-				propNames.push(propName);
+			// Remember operations to be performed
+			if( mod.copyOperations && mod.copyOperations.length > 0 ){
+				for(var copyIndex=0,copyIndexEnd=mod.copyOperations.length; copyIndex<copyIndexEnd; ++copyIndex){
+					var copy = mod.copyOperations[copyIndex];
+					copyOperations.push(copy);
+				};
 			};
 		};
 		
-		// Copy data to user's location
-		importProfile.copyImportProperties(doc, propNames);
-		
-		// Import geometry (how to detect a changed geometry?)
-//		if( change.modifiedGeometry ){
-//			// Remember change in geometry
-//			doc.geojson.nunaliit_geometry = importEntry.geometry;
-//			
-//			// Update geometry
-//			if( typeof OpenLayers !== 'undefined'
-//			 && OpenLayers.Format
-//			 && OpenLayers.Format.GeoJSON ) {
-//				var format = new OpenLayers.Format.GeoJSON();
-//				var geom = format.read(importEntry.geometry, 'Geometry');
-//				if( geom ){
-//					var wkt = geom.toString();
-//					var bounds = geom.getBounds();
-//					doc.nunaliit_geom = {
-//						nunaliit_type:'geometry'
-//						,bbox: [
-//							bounds.left
-//							,bounds.bottom
-//							,bounds.right
-//							,bounds.top
-//						]
-//						,wkt: wkt
-//					};
-//				};
-//			} else {
-//				abort( _loc('OpenLayers is not present. Can not update feature with geometry.') );
-//				return;
-//			};
-//		};
+		// Copy data to user's location according to operations
+		importProfile.performCopyOperations(doc, copyOperations);
 		
 		// Adjust document with created, last updated
 		if( $n2.couchMap
@@ -1254,28 +1249,12 @@ var ImportProfileOperation = $n2.Class({
 		
 	},
 	
-	copyProperties: function(doc, importData, filterProperties){
-		throw 'Subclasses of ImportProfileOperation must implement "copyProperties()"';
+	reportCopyOperations: function(opts_){
+		throw 'Subclasses of ImportProfileOperation must implement "reportCopyOperations()"';
 	},
 	
-	/**
-	 * This function informs the caller of all the properties that have
-	 * been changed in the document since the data was imported. It compares the
-	 * values found in the "nunaliit_import" section with the value copied in the
-	 * document. For each value that differs, an entry in the propertiesArray is added,
-	 * which looks like:
-		{
-			source: 'personName'
-			,sourceValue: 'Blow'
-			,target: 'person.name'
-			,targetValue: 'Bloe'
-		}
-	 *
-	 * The above reports that the value found at nunaliit_import.personName differs from where
-	 * the information was copied in the previous import, person.name. The values show the changes.
-	 */
-	reportInconsistentProperties: function(opts_){
-		throw 'Subclasses of ImportProfileOperation must implement "reportInconsistentProperties()"';
+	performCopyOperation: function(opts_){
+		throw 'Subclasses of ImportProfileOperation must implement "performCopyOperation()"';
 	}
 });
 
@@ -1301,60 +1280,56 @@ var ImportProfileOperationCopyAll = $n2.Class(ImportProfileOperation, {
 		this.targetSelector = $n2.objectSelector.parseSelector(matcher[1]);
 	},
 	
-	copyProperties: function(doc, importData, filterProperties){
-		var targetObj = this.targetSelector.getValue(doc);
-		if( typeof targetObj === 'undefined'){
-			targetObj = {};
-			this.targetSelector.setValue(doc, targetObj, true);
-		};
-		
-		// Copy
-		for(var key in importData){
-			if( filterProperties.indexOf(key) >= 0 ){
-				targetObj[key] = importData[key];
-			};
-		};
-		
-		// Delete
-		for(var i=0,e=filterProperties.length; i<e; ++i){
-			var propName = filterProperties[i];
-			if( typeof importData[propName] === 'undefined' ){
-				if( typeof targetObj[propName] !== 'undefined' ){
-					delete targetObj[propName];
-				};
-			};
-		};
-	},
-	
-	reportInconsistentProperties: function(opts_){
+	reportCopyOperations: function(opts_){
 		var opts = $n2.extend({
 			doc: null
 			,importData: null
 			,allPropertyNames: null
-			,propertiesArray: null
 		},opts_);
+
 		
-		var targetObj = this.targetSelector.getValue(opts.doc);
+		var copyOperations = [];
+		
 		for(var i=0,e=opts.allPropertyNames.length; i<e; ++i){
 			var key = opts.allPropertyNames[i];
 			
-			var targetValue = undefined;
-			if( targetObj ){
-				targetValue = targetObj[key];
+			var targetSelector = this.targetSelector.getChildSelector(key);
+			var targetValue = targetSelector.getValue(opts.doc);
+			
+			var importValue = opts.importData[key];
+			
+			var isInconsistent = false;
+			if( importValue !== targetValue ){
+				isInconsistent = true;
 			};
 			
-			var sourceValue = opts.importData[key];
-			
-			if( sourceValue !== targetValue ){
-				var target = this.targetSelector.getSelectorString() + '.' + key;
-				
-				opts.propertiesArray.push({
-					source: key
-					,sourceValue: sourceValue
-					,target: target
-					,targetValue: targetValue
-				});
-			};
+			copyOperations.push({
+				propertyNames: [key]
+				,lastImportValue: importValue
+				,targetSelector: targetSelector
+				,targetValue: targetValue
+				,isInconsistent: isInconsistent
+			});
+		};
+		
+		return copyOperations;
+	},
+	
+	performCopyOperation: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,importData: null
+			,copyOperation: null
+		},opts_);
+		
+		var key = opts.copyOperation.propertyNames[0];
+		var targetSelector = opts.copyOperation.targetSelector;
+		var importValue = opts.importData[key];
+		
+		if( typeof importValue === 'undefined' ){
+			targetSelector.removeValue(opts.doc);
+		} else {
+			targetSelector.setValue(opts.doc, importValue, true);
 		};
 	}
 });
@@ -1383,64 +1358,58 @@ var ImportProfileOperationCopyAllAndFixNames = $n2.Class(ImportProfileOperation,
 		this.targetSelector = $n2.objectSelector.parseSelector(matcher[1]);
 	},
 	
-	copyProperties: function(doc, importData, filterProperties){
-		var targetObj = this.targetSelector.getValue(doc);
-		if( typeof targetObj === 'undefined'){
-			targetObj = {};
-			this.targetSelector.setValue(doc, targetObj, true);
-		};
-		
-		// Copy
-		for(var key in importData){
-			if( filterProperties.indexOf(key) >= 0 ){
-				var fixedKey = this._fixKey(key);
-				targetObj[fixedKey] = importData[key];
-			};
-		};
-		
-		// Delete
-		for(var i=0,e=filterProperties.length; i<e; ++i){
-			var propName = filterProperties[i];
-			if( typeof importData[propName] === 'undefined' ){
-				var fixedKey = this._fixKey(propName);
-				if( typeof targetObj[fixedKey] !== 'undefined' ){
-					delete targetObj[fixedKey];
-				};
-			};
-		};
-	},
-	
-	reportInconsistentProperties: function(opts_){
+	reportCopyOperations: function(opts_){
 		var opts = $n2.extend({
 			doc: null
 			,importData: null
 			,allPropertyNames: null
-			,propertiesArray: null
 		},opts_);
 
-		var targetObj = this.targetSelector.getValue(opts.doc);
+		
+		var copyOperations = [];
+		
 		for(var i=0,e=opts.allPropertyNames.length; i<e; ++i){
 			var key = opts.allPropertyNames[i];
 			
 			var fixedKey = this._fixKey(key);
-
-			var targetValue = undefined;
-			if( targetObj ){
-				targetValue = targetObj[fixedKey];
-			};
-
-			var sourceValue = opts.importData[key];
 			
-			if( sourceValue !== targetValue ){
-				var target = this.targetSelector.getSelectorString() + '.' + fixedKey;
-				
-				opts.propertiesArray.push({
-					source: key
-					,sourceValue: sourceValue
-					,target: target
-					,targetValue: targetValue
-				});
+			var targetSelector = this.targetSelector.getChildSelector(fixedKey);
+			var targetValue = targetSelector.getValue(opts.doc);
+			
+			var importValue = opts.importData[key];
+			
+			var isInconsistent = false;
+			if( importValue !== targetValue ){
+				isInconsistent = true;
 			};
+			
+			copyOperations.push({
+				propertyNames: [key]
+				,lastImportValue: importValue
+				,targetSelector: targetSelector
+				,targetValue: targetValue
+				,isInconsistent: isInconsistent
+			});
+		};
+		
+		return copyOperations;
+	},
+	
+	performCopyOperation: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,importData: null
+			,copyOperation: null
+		},opts_);
+		
+		var key = opts.copyOperation.propertyNames[0];
+		var targetSelector = opts.copyOperation.targetSelector;
+		var importValue = opts.importData[key];
+		
+		if( typeof importValue === 'undefined' ){
+			targetSelector.removeValue(opts.doc);
+		} else {
+			targetSelector.setValue(opts.doc, importValue, true);
 		};
 	},
 	
@@ -1494,39 +1463,50 @@ var ImportProfileOperationAssign = $n2.Class(ImportProfileOperation, {
 		this.sourceName = matcher[2];
 	},
 	
-	copyProperties: function(doc, importData, filterProperties){
-		// This operation makes sense only if our source is included
-		// in the filtered properties
-		if( filterProperties.indexOf(this.sourceName) >= 0 ){
-			var sourceValue = importData[this.sourceName];
-			if( typeof sourceValue === 'undefined' ){
-				// Must delete
-				this.targetSelector.removeValue(doc);
-			} else {
-				this.targetSelector.setValue(doc, sourceValue, true);
-			};
-		};
-	},
-	
-	reportInconsistentProperties: function(opts_){
+	reportCopyOperations: function(opts_){
 		var opts = $n2.extend({
 			doc: null
 			,importData: null
 			,allPropertyNames: null
-			,propertiesArray: null
 		},opts_);
+		
+		var copyOperations = [];
 
 		if( opts.allPropertyNames.indexOf(this.sourceName) >= 0 ){
-			var sourceValue = opts.importData[this.sourceName];
+			var importValue = opts.importData[this.sourceName];
+
 			var targetValue = this.targetSelector.getValue(opts.doc);
-			if( sourceValue !== targetValue ){
-				opts.propertiesArray.push({
-					source: this.sourceName
-					,sourceValue: sourceValue
-					,target: this.targetSelector.getSelectorString()
-					,targetValue: targetValue
-				});
+			
+			var isInconsistent = false;
+			if( importValue !== targetValue ){
+				isInconsistent = true;
 			};
+			
+			copyOperations.push({
+				propertyNames: [this.sourceName]
+				,lastImportValue: importValue
+				,targetSelector: targetSelector
+				,targetValue: targetValue
+				,isInconsistent: isInconsistent
+			});
+		};
+
+		return copyOperations;
+	},
+	
+	performCopyOperation: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,importData: null
+			,copyOperation: null
+		},opts_);
+		
+		var importValue = opts.importData[this.sourceName];
+		if( typeof importValue === 'undefined' ){
+			// Must delete
+			this.targetSelector.removeValue(doc);
+		} else {
+			this.targetSelector.setValue(doc, importValue, true);
 		};
 	}
 });
@@ -1559,6 +1539,8 @@ var ImportProfile = $n2.Class({
 	schema: null,
 	
 	operations: null,
+	
+	operationsById: null,
 
 	atlasDb: null,
 
@@ -1582,6 +1564,17 @@ var ImportProfile = $n2.Class({
 		this.operations = opts.operations;
 		this.atlasDb = opts.atlasDb;
 		this.atlasDesign = opts.atlasDesign;
+		
+		this.operationsById = {};
+		for(var i=0,e=this.operations.length; i<e; ++i){
+			var operation = this.operations[i];
+			var opId = operation._n2OpId;
+			if( !opId ){
+				opId = $n2.getUniqueId();
+				operation._n2OpId = opId;
+			};
+			this.operationsById[opId] = operation;
+		};
 	},
 	
 	getType: function(){
@@ -1630,28 +1623,48 @@ var ImportProfile = $n2.Class({
 		});
 	},
 	
-	getInconsistentProperties: function(doc, importData, allPropertyNames){
-		var properties = [];
+	reportCopyOperations: function(doc, allPropertyNames){
+		var copyOperations = [];
 		
-		for(var i=0,e=this.operations.length; i<e; ++i){
-			var op = this.operations[i];
-			op.reportInconsistentProperties({
+		var importData = doc.nunaliit_import.data;
+		
+		for(var opIndex=0,opIndexEnd=this.operations.length; opIndex<opIndexEnd; ++opIndex){
+			var op = this.operations[opIndex];
+			var copies = op.reportCopyOperations({
 				doc: doc
 				,importData: importData
 				,allPropertyNames: allPropertyNames
-				,propertiesArray: properties
 			});
+			
+			if( copies && copies.length ){
+				for(var copyIndex=0,copyIndexEnd=copies.length; copyIndex<copyIndexEnd; ++copyIndex){
+					var copy = copies[copyIndex];
+					
+					copy._n2OpId = op._n2OpId;
+					
+					copyOperations.push(copy);
+				};
+			};
 		};
 		
-		return properties;
+		return copyOperations;
 	},
 	
-	copyImportProperties: function(doc, filterProperties){
+	performCopyOperations: function(doc, copyOperations){
 		var importData = doc.nunaliit_import.data;
-		
-		for(var i=0,e=this.operations.length; i<e; ++i){
-			var op = this.operations[i];
-			op.copyProperties(doc, importData, filterProperties);
+			
+		for(var copyIndex=0,copyIndexEnd=copyOperations.length; copyIndex<copyIndexEnd; ++copyIndex){
+			var copy = copyOperations[copyIndex];
+			var opId = copy._n2OpId;
+			var op = this.operationsById[opId];
+			
+			if( op ){
+				op.performCopyOperation({
+					doc: doc
+					,importData: importData
+					,copyOperation: copy
+				});
+			};
 		};
 	}
 });
