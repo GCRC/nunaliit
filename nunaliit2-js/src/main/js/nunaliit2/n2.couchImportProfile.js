@@ -1514,6 +1514,118 @@ var ImportProfileOperationAssign = $n2.Class(ImportProfileOperation, {
 addOperationPattern(OPERATION_ASSIGN, ImportProfileOperationAssign);
 
 //=========================================================================
+var OPERATION_LONGLAT = /^\s*longLat\(\s*'([^']*)'\s*,\s*'([^']*)'\s*\)\s*$/;
+
+var ImportProfileOperationLongLat = $n2.Class(ImportProfileOperation, {
+	
+	operationString: null,
+	
+	longName: null,
+	
+	latName: null,
+	
+	targetSelector: null,
+	
+	initialize: function(operationString){
+		ImportProfileOperation.prototype.initialize.call(this);
+		
+		this.operationString = operationString;
+		
+		var matcher = OPERATION_LONGLAT.exec(operationString);
+		if( !matcher ) {
+			throw 'Invalid operation string for ImportProfileOperationLongLat: '+operationString;
+		};
+		
+		this.longName = matcher[1];
+		this.latName = matcher[2];
+		
+		this.targetSelector = $n2.objectSelector.parseSelector('nunaliit_geom.wkt');
+	},
+	
+	reportCopyOperations: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,importData: null
+			,allPropertyNames: null
+		},opts_);
+		
+		var copyOperations = [];
+
+		if( opts.allPropertyNames.indexOf(this.longName) >= 0 
+		 && opts.allPropertyNames.indexOf(this.latName) >= 0 ){
+			var longValue = opts.importData[this.longName];
+			var latValue = opts.importData[this.latName];
+			
+			var importValue = undefined;
+			if( typeof longValue !== 'undefined' 
+			 && typeof latValue !== 'undefined' ){
+				longValue = 1 * longValue;
+				latValue = 1 * latValue;
+				importValue = 'MULTIPOINT(('+longValue+' '+latValue+'))';
+			};
+
+			var targetValue = this.targetSelector.getValue(opts.doc);
+			
+			var isInconsistent = false;
+			if( importValue !== targetValue ){
+				isInconsistent = true;
+			};
+			
+			copyOperations.push({
+				propertyNames: [this.longName, this.latName]
+				,lastImportValue: importValue
+				,targetSelector: this.targetSelector
+				,targetValue: targetValue
+				,isInconsistent: isInconsistent
+			});
+		};
+
+		return copyOperations;
+	},
+	
+	performCopyOperation: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,importData: null
+			,copyOperation: null
+		},opts_);
+		
+		var doc = opts.doc;
+		
+		var longValue = opts.importData[this.longName];
+		var latValue = opts.importData[this.latName];
+		
+		var importValue = undefined;
+		if( typeof longValue !== 'undefined' 
+		 && typeof latValue !== 'undefined' ){
+			longValue = 1 * longValue;
+			latValue = 1 * latValue;
+			importValue = 'MULTIPOINT(('+longValue+' '+latValue+'))';
+		};
+
+		if( typeof importValue === 'undefined' ){
+			// Must delete
+			if( doc.nunaliit_geom ){
+				delete doc.nunaliit_geom;
+			};
+		} else {
+			doc.nunaliit_geom = {
+				nunaliit_type: 'geometry'
+				,wkt: importValue
+				,bbox: [
+					longValue
+					,latValue
+					,longValue
+					,latValue
+				]
+			};
+		};
+	}
+});
+
+addOperationPattern(OPERATION_LONGLAT, ImportProfileOperationLongLat);
+
+//=========================================================================
 var ImportEntry = $n2.Class({
 	initialize: function(){
 		
