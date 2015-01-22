@@ -75,3 +75,19 @@
 .n2schema_referenceDelete:hover {
 	background-position: -15px 0px;
 }
+
+.n2schema_help_date {
+	display: inline-block;
+	width: 0px;
+	height: 0px;
+	padding: 15px 15px 0px 0px;
+	background: url(images/question_icon_naked_15.png) no-repeat;
+}
+
+.n2schema_help_date:hover {
+	background-position: -15px 0px;
+}
+
+.n2help_content {
+	max-width: 500px;
+}

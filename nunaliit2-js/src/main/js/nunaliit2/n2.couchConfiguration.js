@@ -416,6 +416,21 @@ function Configure(options_){
 			,dispatchService: configuration.directory.dispatchService
 		});
 		
+		// Load help file
+		if( configuration.atlasDb ){
+			configuration.atlasDb.getDocument({
+				docId: 'help.dates'
+				,onSuccess: function(doc){
+					if( doc && doc.nunaliit_help ){
+						$n2.help.InstallHelpInfo('dates',doc.nunaliit_help);
+					};
+				}
+				,onError: function(errorMsg){ 
+					$n2.log('Unable to load help file: help.dates'); 
+				}
+			});
+		};
+		
 		callCustomConfiguration();
 	};
 	

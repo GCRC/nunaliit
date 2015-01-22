@@ -25,6 +25,9 @@
 .n2_documentForm .n2_layoutFloat input {
 	width:90%;
 }
+.n2_documentForm .n2_layoutFloat input.n2schema_type_date {
+	width:80%;
+}
 
 .n2_documentForm .n2_layoutFloat input[type="checkbox"] {
 	width:auto;

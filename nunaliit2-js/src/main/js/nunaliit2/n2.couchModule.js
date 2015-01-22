@@ -1462,6 +1462,8 @@ var ModuleDisplay = $n2.Class({
 					
 					$dialog.dialog(dialogOptions);
 				};
+				
+				return false;
 			});
 		};
 	}

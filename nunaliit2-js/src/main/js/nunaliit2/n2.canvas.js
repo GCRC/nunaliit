@@ -69,10 +69,20 @@ var Service = $n2.Class({
 				$n2.forceGraph.HandleCanvasAvailableRequest(m);
 			};
 
+			if( $n2.forceGraphGeneric 
+			 && $n2.forceGraphGeneric.HandleCanvasAvailableRequest ){
+				$n2.forceGraphGeneric.HandleCanvasAvailableRequest(m);
+			};
+
 		} else if( 'canvasDisplay' === m.type ) {
 			if( $n2.forceGraph 
 			 && $n2.forceGraph.HandleCanvasDisplayRequest ){
 				$n2.forceGraph.HandleCanvasDisplayRequest(m);
+			};
+
+			if( $n2.forceGraphGeneric 
+			 && $n2.forceGraphGeneric.HandleCanvasDisplayRequest ){
+				$n2.forceGraphGeneric.HandleCanvasDisplayRequest(m);
 			};
 		};
 	}

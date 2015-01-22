@@ -266,6 +266,9 @@ function _formSingleField(r,obj,sels,options){
 		r.push('"/>');
 	};
 
+	if( options.date ){
+		r.push('<div class="n2schema_help_date"></div>');
+	};
 };
 
 function _formField() {
@@ -1646,6 +1649,9 @@ var Form = $n2.Class({
 							_this.refresh($elem);
 							_this.callback(_this.obj,classInfo.selector,null);
 						};
+						
+					} else if( $clicked.hasClass('n2schema_help_date') ){
+						$n2.help.ToggleHelp('dates', $clicked);
 					};
 				});
 			};
