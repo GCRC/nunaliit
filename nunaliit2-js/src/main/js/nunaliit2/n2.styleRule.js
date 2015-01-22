@@ -184,9 +184,7 @@ var Symbolizer = $n2.Class({
 	},
 	
 	adjustSvgElement: function(svgDomElem,ctxt){
-		var isCircle = false;
-		var hasFill = true;
-		
+
 		var nodeName = svgDomElem.nodeName.toLowerCase();
 
 		for(var name in svgSymbolNames){
@@ -201,6 +199,13 @@ var Symbolizer = $n2.Class({
 					svgDomElem.setAttributeNS(null, name, value);
 				};
 			};
+		};
+
+		var value = this.getSymbolValue('display',ctxt);
+		if( 'none' === value ){
+			svgDomElem.setAttributeNS(null, 'display', 'none');
+		} else {
+			svgDomElem.setAttributeNS(null, 'display', 'inherit');
 		};
 	}
 });
