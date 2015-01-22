@@ -156,14 +156,6 @@ var ObjectSelector = $n2.Class({
 			throw 'Instances of ObjectSelector must be created using an array';
 		};
 		
-		for(var i=0,e=selectors.length; i<e; ++i){
-			var key = selectors[i];
-			
-			if( typeof key !== 'string' && typeof key !== 'number' ){
-				throw 'Instances of ObjectSelector must be created using an array of strings and numbers';
-			};
-		};
-		
 		this.selectors = selectors;
 	},
 	
