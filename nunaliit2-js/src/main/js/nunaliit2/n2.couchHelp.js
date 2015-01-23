@@ -34,146 +34,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 	
-var HelpDocument = $n2.Class({
-	
-	db: null
-	
-	,doc: null
-	
-	,initialize: function(opts_){
-		var opts = $n2.extend({
-			db: null
-			,doc: null
-		},opts_);
-
-		this.db = opts.db;
-		this.doc = opts.doc;
-	}
-
-	,getHtmlDescription: function(opts_){
-		var opts = $n2.extend({
-			onSuccess: function(html){}
-			,onError: function(err){}
-		},opts_);
-		
-		var doc = this.doc;
-		if( doc 
-		 && doc.nunaliit_help 
-		 && doc.nunaliit_help.nunaliit_type === 'help') {
-			var help = doc.nunaliit_help;
-			if( 'attachment' === help.type ){
-				this._getAttachment(opts);
-				return;
-				
-			} else if( 'html' === help.type ){
-				this._getHtml(opts);
-				return;
-				
-			} else if( 'text' === help.type ){
-				this._getText(opts);
-				return;
-			}
-		};
-		
-		opts.onError( _loc('Invalid help document content') );
-	}
-	
-	,_getAttachment: function(opts){
-		var doc = this.doc;
-		
-		if( doc.nunaliit_help.attachmentName ){
-			var localeStr = $n2.l10n.getStringForLocale(doc.nunaliit_help.attachmentName);
-			if( localeStr.str ) {
-				var attUrl = this.db.getAttachmentUrl(doc,localeStr.str);
-				
-				$.ajax({
-			    	url: attUrl
-			    	,type: 'get'
-			    	,async: true
-			    	,success: function(intro) {
-			    		if( localeStr.fallback ){
-			    			var $outer = $('<span class="n2_localized_string n2_localize_fallback"></span>');
-			    			$('<span class="n2_localize_fallback_lang"></span>')
-			    				.text('('+localeStr.lang+')')
-			    				.appendTo($outer);
-			    			$('<span></span>')
-			    				.html(intro)
-			    				.appendTo($outer);
-		    				opts.onSuccess( $outer.html() );
-			    		} else {
-		    				opts.onSuccess( intro );
-			    		};
-			    	}
-			    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
-						opts.onError( _loc('Error fetching attachment from help document') );
-			    	}
-				});
-				
-				// do not trigger error
-				return;
-			};
-		};
-		
-		opts.onError( _loc('Invalid attachment in help document') );
-	}
-	
-	,_getHtml: function(opts){
-		var doc = this.doc;
-		
-		if( doc.nunaliit_help.content ){
-			var localeStr = $n2.l10n.getStringForLocale(doc.nunaliit_help.content);
-			if( localeStr.str ) {
-	    		if( localeStr.fallback ){
-	    			var $outer = $('<span class="n2_localized_string n2_localize_fallback"></span>');
-	    			$('<span class="n2_localize_fallback_lang"></span>')
-	    				.text('('+localeStr.lang+')')
-	    				.appendTo($outer);
-	    			$('<span></span>')
-	    				.html(localeStr.str)
-	    				.appendTo($outer);
-    				opts.onSuccess( $outer.html() );
-	    		} else {
-    				opts.onSuccess(localeStr.str);
-	    		};
-				
-				// do not trigger error
-				return;
-			};
-		};
-		
-		opts.onError( _loc('Invalid content in help document') );
-	}
-	
-	,_getText: function(opts){
-		var doc = this.doc;
-		
-		if( doc.nunaliit_help.content ){
-			var localeStr = $n2.l10n.getStringForLocale(doc.nunaliit_help.content);
-			if( localeStr.str ) {
-	    		if( localeStr.fallback ){
-	    			var $outer = $('<span class="n2_localized_string n2_localize_fallback"></span>');
-	    			$('<span class="n2_localize_fallback_lang"></span>')
-	    				.text('('+localeStr.lang+')')
-	    				.appendTo($outer);
-	    			$('<span></span>')
-	    				.text(localeStr.str)
-	    				.appendTo($outer);
-    				opts.onSuccess( $outer.html() );
-	    		} else {
-	    			var $outer = $('<span class="n2_localized_string"></span>')
-	    				.text(localeStr.str);
-    				opts.onSuccess( $outer.html() );
-	    		};
-				
-				// do not trigger error
-				return;
-			};
-		};
-		
-		opts.onError( _loc('Invalid content in help document') );
-	}
-});
-
+// ============================================================================
 var LoadHelpDocument = function(opts_){
 	var opts = $n2.extend({
 		db: null
@@ -192,18 +53,96 @@ var LoadHelpDocument = function(opts_){
 	opts.db.getDocument({
 		docId: opts.id
 		,onSuccess: function(doc){
-			var hd = new HelpDocument({
-				db: opts.db
-				,doc: doc
-			});
-			opts.onSuccess(hd);
+			if( doc && doc.nunaliit_help ){
+				if( 'html' === doc.nunaliit_help.type ){
+					opts.onSuccess(doc.nunaliit_help);
+					
+				} else if( 'text' === doc.nunaliit_help.type ){
+					opts.onSuccess(doc.nunaliit_help);
+					
+				} else if( 'attachment' === doc.nunaliit_help.type ){
+					getAttachment(doc);
+					
+				} else {
+					opts.onError( _loc('Unknown type for help document: {{docId}}',{docId: opts.id}) );
+				};
+				
+			} else {
+				opts.onError( _loc('Invalid help document: {{docId}}',{docId: opts.id}) );
+			};
 		}
 		,onError: function(errorMsg){
 			opts.onError( _loc('Unable to access help document: {{docId}}',{docId: opts.id}) );
 		}
 	});
+	
+	function getAttachment(doc){
+		
+		if( doc.nunaliit_help.attachmentName ){
+			var localeStr = $n2.l10n.getStringForLocale(doc.nunaliit_help.attachmentName);
+			if( localeStr.str ) {
+				var attUrl = opts.db.getAttachmentUrl(doc,localeStr.str);
+				
+				$.ajax({
+			    	url: attUrl
+			    	,type: 'get'
+			    	,async: true
+			    	,success: function(intro) {
+			    		var html = intro;
+			    		
+			    		if( localeStr.fallback ){
+			    			var $outer = $('<span class="n2_localized_string n2_localize_fallback"></span>');
+			    			$('<span class="n2_localize_fallback_lang"></span>')
+			    				.text('('+localeStr.lang+')')
+			    				.appendTo($outer);
+			    			$('<span></span>')
+			    				.html(intro)
+			    				.appendTo($outer);
+		    				html = $outer.html();
+			    		};
+			    		
+			    		doc.nunaliit_help.type = 'html';
+			    		doc.nunaliit_help.content = html;
+			    		
+			    		opts.onSuccess(doc.nunaliit_help);
+			    	}
+			    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+						opts.onError( _loc('Error fetching attachment from help document') );
+			    	}
+				});
+				
+				// do not trigger error
+				return;
+			};
+		};
+		
+		opts.onError( _loc('Invalid attachment in help document') );
+	};
 };
 
+//============================================================================
+
+function InstallHelpDocument(opts_){
+	var opts = $n2.extend({
+		db: null
+		,id: null
+		,key: null
+		,onSuccess: function(){}
+		,onError: function(err){}
+	},opts_);
+	
+	LoadHelpDocument({
+		db: opts.db
+		,id: opts.id
+		,onSuccess: function(helpInfo){
+			$n2.help.InstallHelpInfo(opts.key, helpInfo);
+			opts.onSuccess();
+		}
+		,onError: opts.onError
+	});
+};
+
+// ============================================================================
 var CheckBrowserCompliance = function(opts_){
 	var opts = $n2.extend({
 		db: null
@@ -222,16 +161,12 @@ var CheckBrowserCompliance = function(opts_){
 	};
 
 	function reportUnsupportedBrowser(opts){
-		LoadHelpDocument({
+		InstallHelpDocument({
 			db: opts.db
 			,id: opts.helpDocumentId
-			,onSuccess: function(helpDoc){
-				helpDoc.getHtmlDescription({
-					onSuccess: function(html){
-						openDialog(html);
-					}
-					,onError: error
-				});
+			,key: 'browsers'
+			,onSuccess: function(){
+				$n2.help.ShowHelp('browsers');
 			}
 			,onError: error
 		});
@@ -240,43 +175,13 @@ var CheckBrowserCompliance = function(opts_){
 			alert( _loc('Your browser is not supported by this web site.') );
 		};
 	};
-
-	function openDialog(htmlContent){
-		var helpDialogId = $n2.getUniqueId();
-		
-		var $dialog = $('<div id="'+helpDialogId+'" class="n2module_help_content"></div>');
-		$dialog
-			.html(htmlContent)
-			.appendTo( $('body') );
-		
-		var initialHeight = $dialog.height();
-		
-		var windowHeight = $(window).height();
-		var diagMaxHeight = Math.floor(windowHeight * 0.8);
-
-		var dialogOptions = {
-			autoOpen: true
-			,dialogClass:'n2module_help_dialog'
-			,title: _loc('Unsupported Browser')
-			,modal: true
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
-			}
-		};
-		
-		// Ensure height does not exceed maximum
-		if( initialHeight > diagMaxHeight ){
-			dialogOptions.height = diagMaxHeight;
-		};
-		
-		$dialog.dialog(dialogOptions);
-	};
 };
+
+// ============================================================================
 	
 $n2.couchHelp = {
 	LoadHelpDocument: LoadHelpDocument
+	,InstallHelpDocument: InstallHelpDocument
 	,CheckBrowserCompliance: CheckBrowserCompliance
 };
 

@@ -1,5 +1,10 @@
 {
 	"nunaliit_type":"help"
+	,"title": {
+		"nunaliit_type":"localized"
+		,"en":"Unsupported Browser"
+		,"fr":"Fureteur sans support"
+	}
 	,"type":"attachment"
 	,"attachmentName":{
 		"nunaliit_type":"localized"

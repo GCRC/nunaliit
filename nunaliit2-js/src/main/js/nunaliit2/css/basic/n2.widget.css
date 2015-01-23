@@ -336,7 +336,7 @@ Max Height Widget
 Help Dialog 
 ==============================
 */
-.n2module_help_dialog .ui-dialog-titlebar {
+.n2help_dialog .ui-dialog-titlebar {
 	background: #3a3a3a;
 	color: #ffffff;
 	font-family: helvetica, sans-serif;

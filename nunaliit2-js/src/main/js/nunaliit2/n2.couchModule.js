@@ -1381,10 +1381,9 @@ var ModuleDisplay = $n2.Class({
 				docId: moduleInfo.help.doc
 				,onSuccess: function(doc){
 					if( doc 
-					 && doc.nunaliit_help
-					 && doc.nunaliit_help.type === 'html'
-					 && doc.nunaliit_help.content ){
-						helpContentHtml(doc.nunaliit_help.content);
+					 && doc.nunaliit_help ){
+						$n2.help.InstallHelpInfo('main',doc.nunaliit_help);
+						installHelpButton();
 					} else {
 						$n2.log('Do not know how to interpret help document');
 						$elem.attr('n2_error','Do not know how to interpret help document');
@@ -1401,9 +1400,7 @@ var ModuleDisplay = $n2.Class({
 			$elem.attr('n2_error','Do not know how to handle help information');
 		};
 
-		function helpContentHtml(baseContent){
-			// localize content
-			var content = _loc(baseContent);
+		function installHelpButton(){
 			
 			var $a = $('<a class="nunaliit_module_help_button" href="#"></a>');
 			$a.text( _loc('Help') );
@@ -1413,56 +1410,10 @@ var ModuleDisplay = $n2.Class({
 				.append($a);
 			
 			$a.click(function(){
-				if( !_this.helpDialogId ){
-					_this.helpDialogId = $n2.getUniqueId();
-				};
+				var $btn = $(this);
 				
-				// If open, then close it
-				var $dialog = $('#'+_this.helpDialogId);
-				if( $dialog.length > 0 ){
-					var isOpen = $dialog.dialog('isOpen');
-					if( isOpen  ) {
-						$dialog.dialog('close');
-					} else {
-						$dialog.dialog('open');
-					};
-				} else {
-					$dialog = $('<div id="'+_this.helpDialogId+'" class="n2module_help_content"></div>');
-					$dialog
-						.html(content)
-						.appendTo( $('body') );
-					
-					var initialHeight = $dialog.height();
-					
-					var windowHeight = $(window).height();
-					var diagMaxHeight = Math.floor(windowHeight * 0.8);
+				$n2.help.ToggleHelp('main', $btn);
 
-					var dialogOptions = {
-						autoOpen: true
-						,dialogClass:'n2module_help_dialog'
-						,title: _loc('Help')
-						,modal: false
-						,width: 400
-						,position:{
-							my: 'right top'
-							,at: 'right bottom'
-							,of: $('#'+_this.helpButtonName+' .nunaliit_module_help_button')
-						}
-						,close: function(event, ui){
-							var diag = $(event.target);
-							diag.dialog('destroy');
-							diag.remove();
-						}
-					};
-					
-					// Ensure height does not exceed maximum
-					if( initialHeight > diagMaxHeight ){
-						dialogOptions.height = diagMaxHeight;
-					};
-					
-					$dialog.dialog(dialogOptions);
-				};
-				
 				return false;
 			});
 		};
