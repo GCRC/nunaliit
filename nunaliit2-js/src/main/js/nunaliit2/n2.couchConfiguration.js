@@ -418,16 +418,10 @@ function Configure(options_){
 		
 		// Load help file
 		if( configuration.atlasDb ){
-			configuration.atlasDb.getDocument({
-				docId: 'help.dates'
-				,onSuccess: function(doc){
-					if( doc && doc.nunaliit_help ){
-						$n2.help.InstallHelpInfo('dates',doc.nunaliit_help);
-					};
-				}
-				,onError: function(errorMsg){ 
-					$n2.log('Unable to load help file: help.dates'); 
-				}
+			$n2.couchHelp.InstallHelpDocument({
+				db: configuration.atlasDb
+				,id: 'help.dates'
+				,key: 'dates'
 			});
 		};
 		
