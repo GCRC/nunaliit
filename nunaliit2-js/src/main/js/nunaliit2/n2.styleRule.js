@@ -54,6 +54,7 @@ var svgSymbolNames = {
 			circle: true
 			,line: false
 			,path: true
+			,text: false
 		}
 	}
 	,'fill-opacity': {
@@ -62,6 +63,7 @@ var svgSymbolNames = {
 			circle: true
 			,line: false
 			,path: true
+			,text: false
 		}
 	}
 	,'stroke': {
@@ -70,6 +72,7 @@ var svgSymbolNames = {
 			circle: true
 			,line: true
 			,path: true
+			,text: true
 		}
 	}
 	,'stroke-width': {
@@ -78,6 +81,7 @@ var svgSymbolNames = {
 			circle: true
 			,line: true
 			,path: true
+			,text: false
 		}
 	}
 	,'stroke-opacity': {
@@ -86,6 +90,7 @@ var svgSymbolNames = {
 			circle: true
 			,line: true
 			,path: true
+			,text: true
 		}
 	}
 	,'stroke-linecap': {
@@ -94,6 +99,7 @@ var svgSymbolNames = {
 			circle: true
 			,line: true
 			,path: true
+			,text: false
 		}
 	}
 	,'r': {
@@ -102,6 +108,7 @@ var svgSymbolNames = {
 			circle: true
 			,line: false
 			,path: false
+			,text: false
 		}
 	}
 	,'pointer-events': {
@@ -110,6 +117,7 @@ var svgSymbolNames = {
 			circle: true
 			,line: true
 			,path: true
+			,text: true
 		}
 	}
 	,'cursor': {
@@ -118,6 +126,15 @@ var svgSymbolNames = {
 			circle: true
 			,line: true
 			,path: true
+			,text: true
+		}
+	}
+	,'label': {
+		applies: {
+			circle: false
+			,line: false
+			,path: false
+			,text: true
 		}
 	}
 };
@@ -189,14 +206,26 @@ var Symbolizer = $n2.Class({
 
 		for(var name in svgSymbolNames){
 			var info = svgSymbolNames[name];
-			var value = this.getSymbolValue(name,ctxt);
-			if( !value && info.alt ){
-				value = this.getSymbolValue(info.alt,ctxt);
-			};
-			
-			if( value ){
-				if( info.applies[nodeName] ){
-					svgDomElem.setAttributeNS(null, name, value);
+			if( info.applies[nodeName] ){
+				var value = this.getSymbolValue(name,ctxt);
+				if( !value && info.alt ){
+					value = this.getSymbolValue(info.alt,ctxt);
+				};
+				
+				if( value ){
+					if( 'label' === name ){
+						// empty()
+						while ( svgDomElem.firstChild ) {
+							svgDomElem.removeChild( svgDomElem.firstChild );
+						};
+						
+						// text(value)
+						var textNode = svgDomElem.ownerDocument.createTextNode(value);
+						svgDomElem.appendChild(textNode);
+						
+					} else {
+						svgDomElem.setAttributeNS(null, name, value);
+					};
 				};
 			};
 		};

@@ -88,7 +88,6 @@ var Link = $n2.Class({
 	
 	n2_geometry: null,
 	
-	
 	linkId: null,
 	
 	initialize: function(doc, sourceDocId, targetDocId){
@@ -169,6 +168,8 @@ var RadialCanvas = $n2.Class({
 	background: null,
 	
 	toggleSelection: null,
+	
+	line: null,
  	
 	intentView: null,
  	
@@ -242,6 +243,12 @@ var RadialCanvas = $n2.Class({
 // 			this.dispatchService.register(DH,'focusOff',f);
  		};
  		
+ 		this.line = d3.svg.line.radial()
+	 	    //.interpolate("bundle")
+ 			.interpolate("basis")
+	 	    .tension(.85)
+	 	    .radius(function(d) { return d.y; })
+	 	    .angle(function(d) { return d.x / 180 * Math.PI; });
  		
  		this.createGraph();
  		
@@ -382,19 +389,19 @@ var RadialCanvas = $n2.Class({
  		};
 
  		var selectedNodes = this._getSvgElem().select('g.nodes').selectAll('.node')
- 			.data(nodes, function(node){ return node.n2_id; });
+ 			.data(nodes, function(node){ return node.n2_id; })
+ 			;
 
-//	  node = node
-// 	      .data(nodes.filter(function(n) { return !n.children; }))
-// 	    .enter().append("text")
-// 	      .attr("class", "node")
-// 	      .attr("dy", ".31em")
-// 	      .attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + (d.y + 8) + ",0)" + (d.x < 180 ? "" : "rotate(180)"); })
-// 	      .style("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
-// 	      .text(function(d) { return d.key; })
-// 	      .on("mouseover", mouseovered)
-// 	      .on("mouseout", mouseouted);
- 		
+ 		// Animate the position of the nodes around the circle
+ 		selectedNodes.transition()
+			.attr("transform", function(d) { 
+				return "rotate(" + (d.x - 90) 
+					+ ")translate(" + (d.y + 8) + ",0)" 
+					+ (d.x < 180 ? "" : "rotate(180)"); 
+			})
+ 			.style("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
+			;
+
  		var createdNodes = selectedNodes.enter()
  			.append(function(){
  				var args = arguments;
@@ -406,7 +413,7 @@ var RadialCanvas = $n2.Class({
  			.style("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
  			.text(function(d) { 
  				//return d.key; 
- 				return "Test";
+ 				return "";
  			})
  			.on('click', function(n,i){
  				var doc = n.n2_doc;
@@ -427,15 +434,22 @@ var RadialCanvas = $n2.Class({
  			.remove();
  		
  		var updatedNodes = this._getSvgElem().select('g.nodes').selectAll('.node')
- 			.data(updatedNodeData, function(node){ return node.n2_id; });
+ 			.data(updatedNodeData, function(node){ return node.n2_id; })
+ 			;
  		this._adjustElementStyles(updatedNodes);
 
  		var selectedLinks = this._getSvgElem().select('g.links').selectAll('.link')
- 			.data(links, function(link){ return link.linkId; });
+ 			.data(links, function(link){ return link.linkId; })
+			;
+ 		
+ 		selectedLinks.transition()
+			.attr('d',function(link){ return _this.line([link.source,{x:0,y:0},link.target]); })
+			;
 
  		var createdLinks = selectedLinks.enter()
- 			.append('line')
+ 			.append('path')
  			.attr('class','link')
+ 			.attr('d',function(link){ return _this.line([link.source,{x:0,y:0},link.target]); })
  			.on('click', function(n,i){
  				var doc = n.n2_doc;
  				_this._initiateMouseClick(doc);
@@ -455,7 +469,8 @@ var RadialCanvas = $n2.Class({
  			.remove();
  		
  		var updatedLinks = this._getSvgElem().select('g.links').selectAll('.link')
- 			.data(updatedLinkData, function(link){ return link.linkId; });
+ 			.data(updatedLinkData, function(link){ return link.linkId; })
+			;
  		this._adjustElementStyles(updatedLinks);
 
  	},
