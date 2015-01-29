@@ -8,7 +8,11 @@ div.n2Show_icon_wrapper {
 }
 
 /* 26x26 icons */
-div.n2Show_icon_audio, div.n2Show_icon_image, div.n2Show_icon_video, div.n2Show_icon_file {
+div.n2Show_icon_audio, 
+div.n2Show_icon_image, 
+div.n2Show_icon_video, 
+div.n2Show_icon_file,
+div.n2Show_icon_speaker {
 	display: block;
 	width: 75px;
 	height: 75px;
@@ -30,7 +34,11 @@ div.n2Show_icon_file {
 div.n2Show_icon_speaker {
 	background: transparent url(images/image_speaker.png) no-repeat; 
 }
-div.n2Show_icon_image:hover, div.n2Show_icon_video:hover, div.n2Show_icon_file:hover, div.n2Show_icon_audio:hover, div.n2Show_icon_speaker:hover {
+div.n2Show_icon_image:hover, 
+div.n2Show_icon_video:hover, 
+div.n2Show_icon_file:hover, 
+div.n2Show_icon_audio:hover, 
+div.n2Show_icon_speaker:hover {
 	background-position: -75px 0;
 }
 

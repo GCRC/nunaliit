@@ -549,9 +549,13 @@ var DomStyler = $n2.Class({
 		if( $n2.couchSound
 		 && $n2.couchSound.DocumentContainsHoverSound
 		 && $n2.couchSound.DocumentContainsHoverSound(data) ) {
-			$insertHoverSoundIcon.append( 
-					$('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_speaker"></div></div>') );
-				$insertHoverSoundIcon.find('.n2Show_icon_speaker').click(function(){
+			var $wrapper = $('<div>')
+				.addClass('n2Show_icon_wrapper')
+				.appendTo($insertHoverSoundIcon);
+			$('<div>')
+				.addClass('n2Show_icon_speaker')
+				.appendTo($wrapper)
+				.click(function(){
 					toggleHoverSound();
 					return false;
 				});

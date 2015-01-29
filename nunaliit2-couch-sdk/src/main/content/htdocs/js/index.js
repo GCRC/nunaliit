@@ -56,7 +56,7 @@ function main_init(config) {
 		};
 	};
 
-	var moduleDisplay = new $n2.couchModule.ModuleDisplay({
+	new $n2.couchModule.ModuleDisplay({
 		moduleName: moduleName
 		,config: config
 		,titleName: 'title'
@@ -68,7 +68,9 @@ function main_init(config) {
 		,languageSwitcherName: 'language_switcher'
 		,helpButtonName: 'help_button'
 		,searchPanelName: searchPanelName
-		,onSuccess: function(){
+		,onSuccess: function(moduleDisplay){
+			config.moduleDisplay = moduleDisplay;
+			
 			config.start();
 			
 			if( bounds ) {
