@@ -74,9 +74,9 @@ var Service = $n2.Class({
 				$n2.forceGraphGeneric.HandleCanvasAvailableRequest(m);
 			};
 
-			if( $n2.radialCanvas 
-			 && $n2.radialCanvas.HandleCanvasAvailableRequest ){
-				$n2.radialCanvas.HandleCanvasAvailableRequest(m);
+			if( $n2.canvasRadial 
+			 && $n2.canvasRadial.HandleCanvasAvailableRequest ){
+				$n2.canvasRadial.HandleCanvasAvailableRequest(m);
 			};
 
 		} else if( 'canvasDisplay' === m.type ) {
@@ -90,9 +90,9 @@ var Service = $n2.Class({
 				$n2.forceGraphGeneric.HandleCanvasDisplayRequest(m);
 			};
 
-			if( $n2.radialCanvas 
-			 && $n2.radialCanvas.HandleCanvasDisplayRequest ){
-				$n2.radialCanvas.HandleCanvasDisplayRequest(m);
+			if( $n2.canvasRadial 
+			 && $n2.canvasRadial.HandleCanvasDisplayRequest ){
+				$n2.canvasRadial.HandleCanvasDisplayRequest(m);
 			};
 		};
 	}

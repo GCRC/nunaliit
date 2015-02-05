@@ -46,6 +46,8 @@ if( !$d ) return;
 var Node = $n2.Class({
 	isNode: null,
 	
+	fragId: null,
+	
 	n2_id: null,
 
 	n2_doc: null,
@@ -57,6 +59,8 @@ var Node = $n2.Class({
 		this.n2_doc = doc;
 		this.n2_id = doc._id;
 		this.n2_geometry = 'point';
+		
+		this.fragId = 'node_'+doc._id;
 	},
 
 	getDocId: function(){
@@ -73,6 +77,8 @@ var Node = $n2.Class({
 //--------------------------------------------------------------------------
 var Link = $n2.Class({
 	isLink: null,
+	
+	fragId: null,
 
 	n2_doc: null,
 
@@ -95,6 +101,8 @@ var Link = $n2.Class({
 		this.n2_id = doc._id;
 		this.isLink = true;
 		this.n2_geometry = 'line';
+		
+		this.fragId = 'link_' + doc._id + '_' + sourceDocId + '_' + targetDocId;
 		
 		if( sourceDocId < targetDocId ){
 			this.sourceDocId = sourceDocId;
@@ -143,6 +151,190 @@ var Link = $n2.Class({
 		if( target.n2_id === this.targetDocId ){
 			this.target = target;
 		};
+	}
+});
+
+//--------------------------------------------------------------------------
+var ElementGenerator = $n2.Class({
+	
+	contextByDocId: null,
+	
+	fragmentsByDocId: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			
+		},opts_);
+		
+		this.contextByDocId = {};
+		this.fragmentsByDocId = {};
+	},
+	
+	sourceModelUpdated: function(opts_){
+ 		var opts = $n2.extend({
+ 			added: null
+ 			,updated: null
+ 			,removed: null
+ 		},opts_);
+
+ 		var contextsAdded = [];
+ 		var contextsUpdated = [];
+ 		var contextsRemoved = [];
+
+ 		if( opts.added ){
+ 			for(var i=0,e=opts.added.length; i<e; ++i){
+ 				var doc = opts.added[i];
+
+ 				var context = {
+ 					n2_id: doc._id
+					,n2_doc: doc
+ 				};
+ 				contextsAdded.push(context);
+ 				
+ 				this.contextByDocId[doc._id] = context;
+ 			};
+ 		};
+
+ 		if( opts.updated ){
+ 			for(var i=0,e=opts.updated.length; i<e; ++i){
+ 				var doc = opts.updated[i];
+
+ 				var context = this.contextByDocId[doc._id];
+ 				if( context ){
+ 					if( doc._rev !== context.n2_doc._rev ){
+ 						context.n2_doc = doc;
+ 						contextsUpdated.push(context);
+ 					};
+ 					
+ 				} else {
+ 	 				var context = {
+ 	 					n2_id: doc._id
+ 						,n2_doc: doc
+ 	 				};
+ 	 				contextsAdded.push(context);
+ 	 				
+ 	 				this.contextByDocId[doc._id] = context;
+ 				};
+ 			};
+ 		};
+
+ 		if( opts.removed ){
+ 			for(var i=0,e=opts.removed.length; i<e; ++i){
+ 				var doc = opts.removed[i];
+
+ 				var context = this.contextByDocId[doc._id];
+ 				if( context ){
+ 					delete this.contextByDocId[doc._id];
+ 					contextsRemoved.push(context);
+ 				};
+ 			};
+ 		};
+
+ 		if( contextsAdded.length > 0 
+ 		 || contextsUpdated.length > 0 
+ 		 || contextsRemoved.length > 0 ){
+ 			this._contextsUpdated(contextsAdded, contextsUpdated, contextsRemoved);
+ 		};
+	},
+	
+	_contextsUpdated: function(contextsAdded, contextsUpdated, contextsRemoved){
+
+		var fragmentsAdded = [];
+		var fragmentsUpdated = [];
+		var fragmentsRemoved = [];
+		
+		if( contextsAdded ){
+ 			for(var i=0,e=contextsAdded.length; i<e; ++i){
+ 				var context = contextsAdded[i];
+ 				var doc = context.n2_doc;
+ 				var docId = doc._id;
+
+ 				var fragments = this._createFragmentsFromDoc(doc);
+ 				
+ 				var fragmentsForDocId = this.fragmentsByDocId[docId];
+ 				if( !fragmentsForDocId ){
+ 					fragmentsForDocId = [];
+ 					this.fragmentsByDocId[docId] = fragmentsForDocId;
+ 				};
+ 				
+ 				for(var fragIndex=0; fragIndex<fragments.length; ++fragIndex){
+ 					var frag = fragments[fragIndex];
+ 					fragmentsForDocId.push(frag);
+ 					fragmentsAdded.push(frag);
+ 				};
+ 			};
+ 		};
+		
+		if( contextsUpdated ){
+ 			for(var i=0,e=contextsUpdated.length; i<e; ++i){
+ 				var context = contextsUpdated[i];
+ 				var doc = context.n2_doc;
+ 				var docId = doc._id;
+
+ 				var fragments = this._createFragmentsFromDoc(doc);
+ 				
+ 				var currentFragmentIds = {};
+ 				for(var fragIndex=0; fragIndex<fragments.length; ++fragIndex){
+ 					var frag = fragments[fragIndex];
+ 					currentFragmentIds[frag.fragId] = frag;
+ 				};
+ 				if( this.fragmentsByDocId[docId] ){
+ 					var previousFragments = this.fragmentsByDocId[docId];
+ 					var currentFragments = [];
+	 				for(var fragIndex=0; fragIndex<previousFragments.length; ++fragIndex){
+	 					var previousFrag = previousFragments[fragIndex];
+	 					var fragId = previousFrag.fragId;
+	 					if( currentFragmentIds[fragId] ){
+	 						// Updated
+	 						var frag = currentFragmentIds[fragId];
+	 						delete currentFragmentIds[fragId];
+	 						fragmentsUpdated.push(frag);
+	 						previousFragments[fragIndex] = frag;
+	 					} else {
+	 						// Removed
+	 						fragmentsRemoved.push(previousFrag);
+	 					};
+	 				};
+ 				};
+ 				
+ 				
+ 				var fragmentsForDocId = this.fragmentsByDocId[docId];
+ 				if( !fragmentsForDocId ){
+ 					fragmentsForDocId = [];
+ 					this.fragmentsByDocId[docId] = fragmentsForDocId;
+ 				};
+ 				
+ 				for(var fragIndex=0; fragIndex<fragments.length; ++fragIndex){
+ 					var frag = fragments[fragIndex];
+ 					fragmentsForDocId.push(frag);
+ 					fragmentsAdded.push(frag);
+ 				};
+ 			};
+ 		};
+	},
+	
+	_createFragmentsFromDoc: function(doc){
+		var fragments = [];
+		
+		var node = new Node(doc);
+		fragments.push(node);
+		
+ 		// Create links for references
+ 		var refDocIds = {};
+ 		var references = [];
+ 		$n2.couchUtils.extractLinks(doc, references);
+ 		for(var i=0,e=references.length; i<e; ++i){
+ 			var ref = references[i];
+ 			if( ref.doc ){
+ 				refDocIds[ref.doc] = true;
+ 			};
+ 		};
+ 		for(var refDocId in refDocIds){
+ 			var link = new Link(doc, doc._id, refDocId);
+ 			fragments.push(link);
+ 		};
+ 		
+		return fragments;
 	}
 });
 
@@ -980,7 +1172,7 @@ function HandleCanvasDisplayRequest(m){
 };
 
 //--------------------------------------------------------------------------
-$n2.radialCanvas = {
+$n2.canvasRadial = {
 	RadialCanvas: RadialCanvas
 	,HandleCanvasAvailableRequest: HandleCanvasAvailableRequest
 	,HandleCanvasDisplayRequest: HandleCanvasDisplayRequest
