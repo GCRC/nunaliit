@@ -265,7 +265,7 @@ function OlkitAttributeFormManagerSidePanel(options_) {
 	};
 	
     function convertFeatureGeometryForDb(feature) {
-		var proj = feature.layer.map.projection;
+		var proj = feature.layer.map.getProjectionObject();
 		var internalSrsName = proj.getCode();
 		if( internalSrsName != 'EPSG:4326' ) {
 			// Need to convert
@@ -440,7 +440,7 @@ var GazetteerProcess = $n2.Class({
 		var geom = new OpenLayers.Geometry.Point(1 * entry.lng, 1 * entry.lat);
 
 		// Reproject geometry
-		var mapProjection = map.projection;
+		var mapProjection = map.getProjectionObject();
 		var gazetteProjection = new OpenLayers.Projection('EPSG:4326');
 		if( gazetteProjection.getCode() != mapProjection.getCode() ) {
 			geom.transform(gazetteProjection, mapProjection);
@@ -467,7 +467,7 @@ var GazetteerProcess = $n2.Class({
 		var ll = map.getCenter();
 		if( ll ) {
 			// Reproject geometry
-			var mapProjection = map.projection;
+			var mapProjection = map.getProjectionObject();
 			var gazetteProjection = new OpenLayers.Projection('EPSG:4326');
 			if( gazetteProjection.getCode() != mapProjection.getCode() ) {
 				ll.transform(mapProjection, gazetteProjection);
@@ -921,7 +921,7 @@ var MapAndControls = $n2.Class({
 					if( feature 
 					 && feature.layer 
 					 && feature.layer.map ){
-						proj = feature.layer.map.projection;
+						proj = feature.layer.map.getProjectionObject();
 					};
 					
 		    		_this._dispatch({
@@ -1254,7 +1254,7 @@ var MapAndControls = $n2.Class({
 			};
 		};
 
-		this.map = new OpenLayers.Map(this.options.mapIdentifier, {
+		this.map = new OpenLayers.N2Map(this.options.mapIdentifier, {
 			projection: mapProjection
 			,displayProjection: (this.options.mapCoordinateSpecifications.useForMapControls ? userCoordProjection : mapProjection)
 			,units: this.options.mapDisplay.units
@@ -1288,6 +1288,32 @@ var MapAndControls = $n2.Class({
 		this.mapLayers = [];
 		this.vectorLayers = [];
 		this.infoLayers = [];
+		
+		// Re-project vector layer features when base layer is changed
+        this.map.events.register('changebaselayer',null,function(evt){
+        	// var baseLayer = evt.layer;
+        	var lastProjectionObj = evt.oldProjection;
+        	var currentProjectionObj = _this.map.getProjectionObject();
+        	
+    		for(var i=0,e=_this.vectorLayers.length; i<e; ++i) {
+    			var vectorLayer = _this.vectorLayers[i];
+
+            	if( currentProjectionObj 
+            	 && lastProjectionObj 
+            	 && currentProjectionObj.getCode() !== lastProjectionObj.getCode() ){
+            		var features = vectorLayer.features;
+            		
+            		vectorLayer.removeAllFeatures({silent:true});
+            		
+            		for(var i=0,e=features.length; i<e; ++i){
+            			var f = features[i];
+            			f.geometry.transform(lastProjectionObj, currentProjectionObj);
+            		};
+            		
+            		vectorLayer.addFeatures(features,{silent:true});
+            	};
+    		};
+        });
 		
 		// Generate background layers
 		this._genBackgroundMapLayers(this.options);
@@ -1707,10 +1733,12 @@ var MapAndControls = $n2.Class({
 	,_centerMapOnXY: function(x, y, projCode) {
 		var ll = new OpenLayers.LonLat(x, y);
 		
+		var mapProj = this.map.getProjectionObject();
+		
 		if( projCode 
-		 && projCode != this.map.projection.getCode() ) {
+		 && projCode != mapProj.getCode() ) {
 			var proj = new OpenLayers.Projection(projCode);
-			ll.transform(proj, this.map.projection); // transform in place
+			ll.transform(proj, mapProj); // transform in place
 		};
 		
 		var z = this.map.getZoom();
@@ -2175,9 +2203,13 @@ var MapAndControls = $n2.Class({
 				for(var key in options){
 					if( 'url' === key ) {
 						wmsUrl = options[key];
-						
+
 					} else if( 'opacity' === key ) {
 						layerOptions.opacity = options[key];
+
+					} else if( 'srsName' === key ) {
+						var proj = new OpenLayers.Projection( options[key] );
+						layerOptions.projection = proj;
 						
 					} else {
 						wmsOptions[key] = options[key];
@@ -2465,7 +2497,7 @@ var MapAndControls = $n2.Class({
         		type: 'editGeometryModified'
         		,docId: feature.fid
         		,geom: feature.geometry
-        		,proj: olLayer.map.projection
+        		,proj: olLayer.map.getProjectionObject()
         		,_origin: _this
         	});
     	};
@@ -3344,7 +3376,7 @@ var MapAndControls = $n2.Class({
 		if( !fid && editFeature.fid ) return;
     	
 		if( editFeature ) {
-			var mapProj = editFeature.layer.map.projection;
+			var mapProj = editFeature.layer.map.getProjectionObject();
 			if( mapProj.getCode() != proj.getCode() ) {
 				olGeom.transform(proj, mapProj);
 			};
