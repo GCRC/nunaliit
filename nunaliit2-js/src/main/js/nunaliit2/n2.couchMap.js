@@ -78,7 +78,46 @@ function canEditDoc(data) {
 	if( sessionContext ) {
 		userName = sessionContext.name;
 	};
+	var roleMap = {};
+	for(var i=0,e=sessionContext.roles.length; i<e; ++i){
+		roleMap[sessionContext.roles[i]] = true;
+	};
+	
+	// If a document is on a layer, then one must have the roles
+	// associated with all layers. If a document is not on a layer,
+	// then the roles are not relevant.
+	var documentIsControlledLayer = false;
+	if( data.nunaliit_layers && data.nunaliit_layers.length ){
+		for(var i=0,e=data.nunaliit_layers.length; i<e; ++i){
+			var layerId = data.nunaliit_layers[i];
+			if( 'public' === layerId ){
+				// Public layer. Ignore
+			} else {
+				documentIsControlledLayer = true;
+				
+				var requiredRole = null;
+				if( typeof(n2atlas) === 'object' 
+				 && typeof(n2atlas.name) === 'string' ) {
+					requiredRole = n2atlas.name + '_layer_' + layerId;
+				} else {
+					requiredRole = 'layer_' + layerId;
+				};
+				
+				if( !roleMap[requiredRole] ){
+					return false;
+				};
+			};
+		};
+		
+		if( documentIsControlledLayer ){
+			// At this point, there is at least one controlled layer
+			// and we have the roles for all of them.
+			return true;
+		};
+	};
 
+	// If a document is not on a controlled layer, then the creator of the
+	// document can edit it
 	if( data.nunaliit_created
 	 && data.nunaliit_created.nunaliit_type
 	 && data.nunaliit_created.nunaliit_type === 'actionstamp'
@@ -86,31 +125,15 @@ function canEditDoc(data) {
 	 ) {
 		return true;
 	};
-	
+
+	// By default, can not edit a document
 	return false;
 };
 
 function canDeleteDoc(data) {
 
-	if( isAdmin() ) {
-		return true;
-	};
-
-	var userName = null;
-	var sessionContext = $n2.couch.getSession().getContext();
-	if( sessionContext ) {
-		userName = sessionContext.name;
-	};
-
-	if( data.nunaliit_created
-	 && data.nunaliit_created.nunaliit_type
-	 && data.nunaliit_created.nunaliit_type === 'actionstamp'
-	 && data.nunaliit_created.name === userName
-	 ) {
-		return true;
-	};
-	
-	return false;
+	// At this time, if one can edit a document, one can delete it
+	return canEditDoc(data);
 };
 
 function documentContainsMedia(doc){
