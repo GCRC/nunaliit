@@ -1294,20 +1294,32 @@ var MapAndControls = $n2.Class({
         	// var baseLayer = evt.layer;
         	var lastProjectionObj = evt.oldProjection;
         	var currentProjectionObj = _this.map.getProjectionObject();
-        	
-    		for(var i=0,e=_this.vectorLayers.length; i<e; ++i) {
-    			var vectorLayer = _this.vectorLayers[i];
 
-            	if( currentProjectionObj 
-            	 && lastProjectionObj 
-            	 && currentProjectionObj.getCode() !== lastProjectionObj.getCode() ){
+        	// Makes sense only when projection is changed
+        	if( currentProjectionObj 
+           	 && lastProjectionObj 
+           	 && currentProjectionObj.getCode() !== lastProjectionObj.getCode() ){
+        		
+        		// Loop over vector layers
+        		for(var li=0,le=_this.vectorLayers.length; li<le; ++li) {
+        			var vectorLayer = _this.vectorLayers[li];
+
+        			// Process each feature
             		var features = vectorLayer.features;
             		
             		vectorLayer.removeAllFeatures({silent:true});
             		
-            		for(var i=0,e=features.length; i<e; ++i){
-            			var f = features[i];
+            		for(var fi=0,fe=features.length; fi<fe; ++fi){
+            			var f = features[fi];
             			f.geometry.transform(lastProjectionObj, currentProjectionObj);
+            			
+            			// Convert members of cluster, as well, if present
+            			if( f.cluster && f.cluster.length ){
+                    		for(var ci=0,ce=f.cluster.length; ci<ce; ++ci){
+                    			var clustered = f.cluster[ci];
+                    			clustered.geometry.transform(lastProjectionObj, currentProjectionObj);
+                    		};
+            			};
             		};
             		
             		vectorLayer.addFeatures(features,{silent:true});
@@ -1968,7 +1980,6 @@ var MapAndControls = $n2.Class({
 						_this._mapBusyStatus(-1);
 					}
 				}
-				,sourceProjection: layerInfo.sourceProjection
 			});
 			layerInfo.protocol = new OpenLayers.Protocol.Couch(couchProtocolOpt);
 			layerOptions.protocol = layerInfo.protocol;
@@ -2079,7 +2090,11 @@ var MapAndControls = $n2.Class({
 		} else {
 			// Installing strategies make sense only if a protocol is provided
 			if( layerOptions.protocol ) {
-				layerOptions.strategies = [ new OpenLayers.Strategy.BBOX() ];
+				if( 'couchdb' === layerDefinition.type ) {
+					layerOptions.strategies = [ new OpenLayers.Strategy.N2BBOX() ];
+				} else {
+					layerOptions.strategies = [ new OpenLayers.Strategy.BBOX() ];
+				};
 			};
 		};
 		
@@ -2625,6 +2640,47 @@ var MapAndControls = $n2.Class({
 				bg.push( new OpenLayers.Layer.Google("Google Hybrid",{type:google.maps.MapTypeId.HYBRID,numZoomLevels: 20}) );
 			};
 			return bg;
+		};
+	}
+
+	,getBaseLayers: function() {
+		var baseLayers = [];
+		
+		if( this.map 
+		 && this.map.layers ){
+			for(var i=0,e=this.map.layers.length; i<e; ++i){
+				var layer = this.map.layers[i];
+				if( layer.isBaseLayer ){
+					var layerInfo = {
+						id: layer.id
+						,projection: layer.projection
+					};
+					
+					baseLayers.push( layerInfo );
+				};
+			};
+		};
+		
+		return baseLayers;
+	}
+
+	,setBaseLayer: function(layerId) {
+
+		var baseLayer = null;
+		if( this.map 
+		 && this.map.layers ){
+			for(var i=0,e=this.map.layers.length; i<e; ++i){
+				var layer = this.map.layers[i];
+				if( layer.isBaseLayer 
+				 && layer.id === layerId ){
+					baseLayer = layer;
+					break;
+				};
+			};
+		};
+		
+		if( baseLayer ){
+			this.map.setBaseLayer(baseLayer);
 		};
 	}
 	
@@ -4109,7 +4165,11 @@ var MapAndControls = $n2.Class({
 		} else {
 			// Installing strategies make sense only if a protocol is provided
 			if( layerOptions.protocol ) {
-				layerOptions.strategies = [ new OpenLayers.Strategy.BBOX() ];
+				if( layerInfo.couchDb ) {
+					layerOptions.strategies = [ new OpenLayers.Strategy.N2BBOX() ];
+				} else {
+					layerOptions.strategies = [ new OpenLayers.Strategy.BBOX() ];
+				};
 			};
 		};
 		

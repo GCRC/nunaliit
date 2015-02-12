@@ -1022,15 +1022,6 @@ var ModuleDisplay = $n2.Class({
 			};
 		};
 		
-		// Adjust projection on couchDb overlays
-		for(var i=0,e=mapOptions.overlays.length; i<e; ++i){
-			var layerDefinition = mapOptions.overlays[i];
-			
-			if( layerDefinition.type === 'couchdb' ){
-				layerDefinition.sourceSrsName = mapOptions.mapDisplay.srsName;
-			};
-		};
-		
 		if( !initialBounds ) {
 			opts.onError('Initial map extent not specified');
 			return;

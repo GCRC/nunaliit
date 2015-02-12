@@ -1931,7 +1931,7 @@ var CouchDocumentEditor = $n2.Class({
 	}
 	
     ,convertFeatureGeometryForDb: function(feature) {
-		var mapProj = feature.layer.map.projection;
+		var mapProj = feature.layer.map.getProjectionObject();
 		if( mapProj.getCode() != this.couchProj.getCode() ) {
 			// Need to convert
 			var geom = feature.geometry.clone();

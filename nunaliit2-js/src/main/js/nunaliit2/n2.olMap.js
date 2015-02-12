@@ -52,7 +52,9 @@ OpenLayers.N2Map = OpenLayers.Class(OpenLayers.Map, {
         
         if (newBaseLayer != this.baseLayer) {
             var oldProjection = null;
+            var oldExtent = null;
             if (this.baseLayer) {
+            	oldExtent = this.baseLayer.getExtent();
                 oldProjection = this.getProjectionObject();
             };
           
@@ -82,22 +84,32 @@ OpenLayers.N2Map = OpenLayers.Class(OpenLayers.Map, {
                     };
                 };
                 
+                // Handle chnage in projection
                 var newCenter = center;
+            	var newZoom = null;
                 var newProjection = this.getProjectionObject();
                 if( oldProjection 
                  && !oldProjection.equals(newProjection)) {
                 	if( newCenter ){
                         newCenter.transform(oldProjection, newProjection);
                 	};
+
+                	if( oldExtent ){
+                    	var newExtent = this._reprojectExtent(oldExtent, oldProjection, newProjection);
+                    	newZoom = this.getZoomForExtent(newExtent, true);
+                	};
                 };
 
                 // recenter the map
                 if (newCenter != null) {
                     // new zoom level derived from old scale
-                    var newZoom = this.getZoomForResolution(
-                        newResolution || this.resolution, true
-                    );
-                    // zoom and force zoom change
+                	if( !newZoom ){
+                        newZoom = this.getZoomForResolution(
+                            newResolution || this.resolution, true
+                        );
+                	};
+
+                	// zoom and force zoom change
                     this.setCenter(newCenter, newZoom, false, true);
                 };
 
@@ -107,6 +119,72 @@ OpenLayers.N2Map = OpenLayers.Class(OpenLayers.Map, {
                 });
             };        
         };
+    },
+
+    // The concept here is to find a rectangle of the same dimension as in the previous
+    // projection, however oriented in the new projection. This does not ensure that all
+    // geometries visible in the previous projection will remain in the new one. However,
+    // it keeps the same center of view and similar scale.
+    _reprojectExtent: function(oldExtent, sourceProj, targetProj){
+    	var center = {
+    		x: (oldExtent.right + oldExtent.left)/2
+    		,y: (oldExtent.top + oldExtent.bottom)/2
+    	};
+    	var topRight = {'x': oldExtent.right, 'y': oldExtent.top};
+    	var bottomLeft = {'x': oldExtent.left, 'y': oldExtent.bottom};
+    	var topRightAngle = this._getAngle(center, topRight);
+    	
+    	var newCenter = OpenLayers.Projection.transform(center, sourceProj, targetProj);
+    	var newTopRight = OpenLayers.Projection.transform(topRight, sourceProj, targetProj);
+    	var newBottomLeft = OpenLayers.Projection.transform(bottomLeft, sourceProj, targetProj);
+    	
+    	var newTopRightAngle = this._getAngle(newCenter, newTopRight);
+    	var rotateAngle = topRightAngle - newTopRightAngle;
+    	
+    	var rotatedTopRight = this._rotatePoint(newCenter, newTopRight, rotateAngle);
+    	var rotatedBottomLeft = this._rotatePoint(newCenter, newBottomLeft, rotateAngle);
+    	
+    	var newExtent = new OpenLayers.Bounds(
+    		rotatedBottomLeft.x // left
+    		,rotatedBottomLeft.y // bottom
+    		,rotatedTopRight.x // right
+    		,rotatedTopRight.y // top
+    	);
+    	
+    	return newExtent;
+    },
+    
+    _getAngle: function(center, point){
+    	var angle = null;
+    	if( point.x === center.x ){
+    		if( point.y > center.y ){
+    			angle = Math.PI / 2;
+    		} else {
+    			angle = 0 - (Math.PI / 2);
+    		};
+    	} else if( point.x < center.x ){
+    		angle = Math.PI + Math.atan((point.y - center.y) / (point.x - center.x));
+
+    	} else {
+    		angle = Math.atan((point.y - center.y) / (point.x - center.x));
+    	};
+    	
+    	return angle;
+    },
+    
+    _rotatePoint: function(center, point, angle){
+    	var relX = point.x - center.x;
+    	var relY = point.y - center.y;
+    	
+    	var newX = (relX * Math.cos(angle)) - (relY * Math.sin(angle));
+    	var newY = (relX * Math.sin(angle)) + (relY * Math.cos(angle));
+    	
+    	var newPoint = {
+    		x: newX + center.x
+    		,y: newY + center.y
+    	};
+    	
+    	return newPoint;
     }
 });
 	

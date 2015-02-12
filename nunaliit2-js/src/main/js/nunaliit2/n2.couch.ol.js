@@ -118,11 +118,12 @@ OpenLayers.Format.Couch = OpenLayers.Class(OpenLayers.Format, {
         	
         	// Update geometry
         	var geom = f.geometry;
+        	var mapProjection = f.layer.map.getProjectionObject();
         	if( f.layer.projection 
-        	 && f.layer.map.projection
-        	 && f.layer.projection.getCode() != f.layer.map.projection.getCode() ) {
+        	 && mapProjection
+        	 && f.layer.projection.getCode() != mapProjection.getCode() ) {
         	 	geom = geom.clone();
-        	 	geom.transform(f.layer.map.projection, f.layer.projection);
+        	 	geom.transform(mapProjection, f.layer.projection);
         	};
         	if( !data.nunaliit_geom ) data.nunaliit_geom = { nunaliit_type: 'geometry' };
         	data.nunaliit_geom.wkt = geom.toString();
@@ -194,19 +195,6 @@ OpenLayers.Protocol.Couch = OpenLayers.Class(OpenLayers.Protocol, {
      *     defaults to false.
      */
     wildcarded: false,
-    
-    /**
-     * Property: sourceProjection.
-     * {Projection} Projection of the map. This the projection in which bounds
-     * are specified.
-     */
-    sourceProjection: null,
-    
-    /**
-     * Property: dbProjection.
-     * {Projection} Projection used to store information in the database.
-     */
-    dbProjection: null,
 
     /**
      * Constructor: OpenLayers.Protocol.Couch
@@ -230,9 +218,7 @@ OpenLayers.Protocol.Couch = OpenLayers.Class(OpenLayers.Protocol, {
         	options.format = new OpenLayers.Format.Couch();
         };
         
-        if( !options.dbProjection ){
-        	options.dbProjection = new OpenLayers.Projection('EPSG:4326');
-        };
+       	options.projection = new OpenLayers.Projection('EPSG:4326');
         
         OpenLayers.Protocol.prototype.initialize.apply(this, arguments);
     },
@@ -272,6 +258,9 @@ OpenLayers.Protocol.Couch = OpenLayers.Class(OpenLayers.Protocol, {
     		this.notifications.readStart();
     	};
     	
+    	// Obtain layer
+    	var layer = options.object;
+    	
         OpenLayers.Protocol.prototype.read.apply(this, arguments);
         options = OpenLayers.Util.applyDefaults(options, this.options);
         var resp = new OpenLayers.Protocol.Response({requestType: 'read'});
@@ -282,8 +271,10 @@ OpenLayers.Protocol.Couch = OpenLayers.Class(OpenLayers.Protocol, {
 		var layerName = ('string' === typeof(options.layerName) ? options.layerName : null);
 		
 		var projectionCode = null;
-		if( this.sourceProjection ) {
-			projectionCode = this.sourceProjection.getCode();
+		var mapProjection = null;
+		if( layer && layer.map ){
+			mapProjection = layer.map.getProjectionObject();
+			projectionCode = mapProjection.getCode();
 		};
 		
 		this.documentSource.getDocumentsFromGeographicFilter({
@@ -321,14 +312,6 @@ OpenLayers.Protocol.Couch = OpenLayers.Class(OpenLayers.Protocol, {
 
         if(options.callback) {
             resp.features = this.format.read(docs);
-
-            if( this.sourceProjection 
-             && this.dbProjection 
-    		 && this.sourceProjection.getCode() !== this.dbProjection.getCode() ){
-            	for(var i=0,e=resp.features.length; i<e; ++i){
-            		resp.features[i].geometry.transform(this.dbProjection, this.sourceProjection);
-            	};
-            };
 
             // Sorting now saves on rendering a re-sorting later
 	    	$n2.olUtils.sortFeatures(resp.features);
