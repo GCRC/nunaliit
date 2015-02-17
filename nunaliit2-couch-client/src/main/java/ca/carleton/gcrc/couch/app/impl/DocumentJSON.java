@@ -22,7 +22,7 @@ public class DocumentJSON implements Document {
 	@Override
 	public String getId() {
 		if( null != json ) {
-			String id = json.optString("_id");
+			String id = json.optString("_id", null);
 			return id;
 		}
 		return null;

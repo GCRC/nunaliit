@@ -68,7 +68,7 @@ public class DocumentCouchDb implements Document {
 	@Override
 	public String getId() {
 		if( null != jsonObj ) {
-			String id = jsonObj.optString("_id");
+			String id = jsonObj.optString("_id", null);
 			return id;
 		}
 		return null;
