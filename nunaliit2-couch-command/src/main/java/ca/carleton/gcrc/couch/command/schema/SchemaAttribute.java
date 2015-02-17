@@ -29,6 +29,14 @@ public class SchemaAttribute {
 				attribute.setLabel(label);
 			}
 		}
+		
+		// elementType
+		{
+			String elementType = jsonAttr.optString("elementType",null);
+			if( null != elementType ){
+				attribute.setElementType(elementType);
+			}
+		}
 
 		// includedInBrief
 		{
@@ -74,7 +82,7 @@ public class SchemaAttribute {
 		
 		return attribute;
 	}
-	
+
 	private String type;
 	private String id;
 	private String label;
@@ -83,6 +91,7 @@ public class SchemaAttribute {
 	private boolean excludedFromForm;
 	private List<SelectionOption> options = new Vector<SelectionOption>();
 	private List<CheckboxGroupItem> checkboxes = new Vector<CheckboxGroupItem>();
+	private String elementType;
 
 	public SchemaAttribute(String type){
 		this.type = type;
@@ -156,6 +165,14 @@ public class SchemaAttribute {
 	public void addCheckbox(CheckboxGroupItem item) {
 		checkboxes.add(item);
 	}
+	
+	public String getElementType() {
+		return elementType;
+	}
+
+	public void setElementType(String elementType) {
+		this.elementType = elementType;
+	}
 
 	public JSONObject toJson() throws Exception {
 		JSONObject jsonAttr = new JSONObject();
@@ -164,6 +181,7 @@ public class SchemaAttribute {
 		
 		if( null != id ) jsonAttr.put("id", id);
 		if( null != label ) jsonAttr.put("label", label);
+		if( null != elementType ) jsonAttr.put("elementType", elementType);
 		if( includedInBrief ) jsonAttr.put("includedInBrief", true);
 		if( excludedFromDisplay ) jsonAttr.put("excludedFromDisplay", true);
 		if( excludedFromForm ) jsonAttr.put("excludedFromForm", true);
@@ -209,6 +227,12 @@ public class SchemaAttribute {
 			
 		} else if( "reference".equals(type) ){
 			// leave reference attributes as undefined
+			
+		} else if( "array".equals(type) ){
+			if( null != id ){
+				JSONArray arr = new JSONArray();
+				schemaDoc.put(id, arr);
+			}
 			
 		} else if( "selection".equals(type) ){
 			if( null != id ){
@@ -306,6 +330,30 @@ public class SchemaAttribute {
 					pw.print("{{/"+id+"}}");
 					pw.print("{{/"+schemaName+"}}");
 				}
+				
+			} else if( "array".equals(type) ){
+				if( null != id ){
+					pw.print("{{#"+schemaName+"}}");
+					pw.print("{{#"+id+"}}");
+					
+					if( "string".equals(elementType) ){
+						pw.print("{{.}}");
+						
+					} else if( "textarea".equals(elementType) ){
+						pw.print("{{.}}");
+						
+					} else if( "date".equals(elementType) ){
+						pw.print("{{date}}");
+						
+					} else if( "reference".equals(elementType) ){
+						pw.print("{{#doc}}");
+						pw.print("<span class=\"n2s_briefDisplay\">{{.}}</span>");
+						pw.print("{{/doc}}");
+					}
+					
+					pw.print("{{/"+id+"}}");
+					pw.print("{{/"+schemaName+"}}");
+				}
 					
 			} else {
 				throw new Exception("Unable to include type "+type+" in brief");
@@ -381,6 +429,42 @@ public class SchemaAttribute {
 					pw.println("{{/"+schemaName+"}}");
 				}
 				
+			} else if( "array".equals(type) ){
+				if( null != id ){
+					pw.println("{{#"+schemaName+"}}");
+
+					pw.println("\t<div class=\""+schemaName+"_"+id+"\">");
+
+					pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t<div class=\"value\">");
+					pw.println("\t\t{{#"+id+"}}");
+					pw.print("\t\t\t<div class=\"array_element");
+					if( "textarea".equals(elementType) ){
+						pw.print(" n2s_preserveSpaces n2s_installMaxHeight n2s_convertTextUrlToLink\" _maxheight=\"100");
+					}
+					pw.println("\">");
+					
+					if( "string".equals(elementType) ){
+						pw.println("{{.}}");
+					} else if( "textarea".equals(elementType) ){
+						pw.println("{{.}}");
+					} else if( "date".equals(elementType) ){
+						pw.println("{{date}}");
+					} else if( "reference".equals(elementType) ){
+						pw.println("\t\t\t\t<a href=\"#\" class=\"n2s_referenceLink\">{{doc}}</a>");
+					}
+					
+					pw.println("\t\t\t</div>");
+					pw.println("\t\t{{/"+id+"}}");
+					pw.println("\t\t</div>");
+					pw.println("\t\t<div class=\"end\"></div>");
+					
+					pw.println("\t</div>");
+					
+					
+					pw.println("{{/"+schemaName+"}}");
+				}
+
 			} else if( "selection".equals(type) ){
 				if( null != id ){
 					pw.println("{{#"+schemaName+"}}");
@@ -557,6 +641,44 @@ public class SchemaAttribute {
 					
 					
 					pw.println("{{/"+schemaName+"}}");
+				}
+
+			} else if( "array".equals(type) ){
+				if( null != id ){
+					String fieldType = null;
+					String arrayType = "";
+					if( "string".equals(elementType) ){
+						fieldType = "";
+						arrayType = " \"string\"";
+					} else if( "textarea".equals(elementType) ){
+						fieldType = ",textarea";
+						arrayType = " \"string\"";
+					} else if( "date".equals(elementType) ){
+						fieldType = ",date";
+						arrayType = " \"date\"";
+					} else if( "reference".equals(elementType) ){
+						fieldType = ",reference";
+						arrayType = " \"reference\"";
+					}
+					
+					if( null != fieldType ){
+						pw.println("{{#"+schemaName+"}}");
+
+						pw.println("\t<div class=\""+schemaName+"_"+id+"\">");
+
+						pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+						pw.println("\t\t<div class=\"value\">");
+						pw.println("\t\t\t{{#:array "+id+arrayType+"}}");
+						pw.println("\t\t\t\t<div>{{#:field}}."+fieldType+"{{/:field}}</div>");
+						pw.println("\t\t\t{{/:array}}");
+						pw.println("\t\t</div>");
+						pw.println("\t\t<div class=\"end\"></div>");
+						
+						pw.println("\t</div>");
+						
+						
+						pw.println("{{/"+schemaName+"}}");
+					}
 				}
 
 			} else if( "checkbox_group".equals(type) ){

@@ -223,7 +223,7 @@ function _localizeString() {
 	};
 };
 
-function _formSingleField(r,obj,sels,options){
+function _formSingleField(r,obj,completeSelectors,options){
 	
 	// option: textarea
 	if( options.textarea ){
@@ -236,14 +236,8 @@ function _formSingleField(r,obj,sels,options){
 	
 	r.push('n2schema_input');
 	
-	var selector = obj[SELECT];
-	if( selector ) {
-		var completeSelector = selector.slice(0);
-		completeSelector.push.apply(completeSelector,sels);
-		var selClass = createClassStringFromSelector(completeSelector);
-
-		r.push(' '+selClass);
-	};
+	var selClass = createClassStringFromSelector(completeSelectors);
+	r.push(' '+selClass);
 	
 	if( options.date ){
 		r.push(' ' + typeClassStringPrefix + 'date');
@@ -285,27 +279,40 @@ function _formField() {
 	
 	// Gets the text between start and end tags
 	var text = options.fn(this);
+	
+	// Compute current selector
+	var currentSelector = [];
+	if( options 
+	 && options.data 
+	 && options.data.n2_selector ){
+		// Within an array, the current selector is passed in options
+		currentSelector = options.data.n2_selector;
+
+	} else if( typeof this === 'object' 
+     && this !== null 
+     && this[SELECT]){
+		currentSelector = this[SELECT];
+	};
 
 	// Syntax is: <selector>(,<option>)*
-	var obj,sels;
+	var obj,sels,completeSelectors;
 	var splits = text.split(',');
 	var identifier = splits[0];
 	if( '.' === identifier ){
 		obj = this;
 		sels = [];
+		completeSelectors = currentSelector;
 	} else {
 		sels = identifier.split('.');
 		obj = getDataFromObjectSelector(this, sels);
+		completeSelectors = currentSelector.slice(0); // clone
+		completeSelectors.push.apply(completeSelectors, sels);
 	};
 	
 	if( obj
 	 && typeof obj === 'object'
-	 && !obj[SELECT]
-	 && options
-	 && options.data
-	 && options.data.n2_selector
-	 ){
-		obj[SELECT] = options.data.n2_selector;
+	 && !obj[SELECT] ){
+		obj[SELECT] = completeSelectors;
 	};
 	
 	// <option> is one of:
@@ -358,9 +365,13 @@ function _formField() {
 		
 		for(var i=0,e=langs.length;i<e;++i){
 			var lang = langs[i];
+			
+			var langSel = completeSelectors.slice();//copy
+			langSel.push(lang);
+
 			r.push('<div class="n2schema_field_container n2schema_field_container_localized">');
 			r.push('<span class="n2_localize_lang">('+lang+')</span>');
-			_formSingleField(r,obj,[lang],opts);
+			_formSingleField(r,obj,langSel,opts);
 			r.push('</div>');
 		};
 		
@@ -373,7 +384,7 @@ function _formField() {
 		for(var i=0,e=langs.length;i<e;++i){
 			var lang = langs[i];
 			
-			var langSel = sels.slice();//copy
+			var langSel = completeSelectors.slice();//copy
 			langSel.push(lang);
 			
 			r.push('<div class="n2schema_field_container n2schema_field_container_localized">');
@@ -383,15 +394,13 @@ function _formField() {
 		};
 
 	} else if( opts.reference ) {
-		var fullSelector = this[SELECT].slice(0); // clone
-		fullSelector.push.apply(fullSelector,sels); // append selectors in tag
-		var objSel = new $n2.objectSelector.ObjectSelector(fullSelector);
+		var objSel = new $n2.objectSelector.ObjectSelector(completeSelectors);
 		var attr = objSel.encodeForDomAttribute();
 		r.push('<span class="n2schema_field_reference" n2-obj-sel="'+attr+'"></span>');
 		
 	} else {
 		r.push('<div class="n2schema_field_container">');
-		_formSingleField(r,this,sels,opts);
+		_formSingleField(r,this,completeSelectors,opts);
 		r.push('</div>');
 	};
 
@@ -1609,7 +1618,25 @@ var Form = $n2.Class({
 						var ary = getDataFromObjectSelector(_this.obj, classInfo.selector);
 						if( ary ){
 							var newItem = '';
-							if( newType ){
+							if( 'reference' === newType ){
+								newItem = {
+									nunaliit_type: 'reference'
+									,doc: null
+								};
+								
+							} else if( 'date' === newType ){
+								newItem = {
+									nunaliit_type: 'date'
+									,date: null
+								};
+								
+							} else if( 'string' === newType ){
+								newItem = '';
+								
+							} else if( 'textarea' === newType ){
+								newItem = '';
+								
+							} else if( newType ){
 								try {
 									eval('newItem = '+newType);
 								} catch(e) {
@@ -1883,8 +1910,17 @@ var Form = $n2.Class({
 				.addClass('n2schema_referenceDelete')
 				.appendTo($elem)
 				.click(function(){
-					if( parentSelector && key ){
-						var parentObj = parentSelector.getValue(_this.obj);
+					var parentObj = parentSelector.getValue(_this.obj);
+					if( $n2.isArray(parentObj) 
+					 && typeof key === 'number' 
+					 && parentObj.length > key ){
+						// Dealing with an array of references
+						if( parentObj[key] ){
+							parentObj.splice(key,1);
+							_this.refresh($container);
+							_this.callback(_this.obj,objSel.selectors,null);
+						};
+					} else {
 						if( parentObj[key] ){
 							delete parentObj[key];
 							_this.refresh($container);
@@ -1906,32 +1942,30 @@ var Form = $n2.Class({
 			var changeHandler = function(e) {
 				var $input = $(this);
 				
-				if( parentSelector && key ){
-					var parentObj = parentSelector.getValue(_this.obj);
-					if( parentObj ){
-						var value = $input.val();
-						var cbValue = null;
-						
-						if( null === value || value === '' ) {
-							// delete
-							if( parentObj[key] ) {
-								delete parentObj[key];
-							};
-							
-						} else {
-							// update
-							if( !parentObj[key] ) {
-								parentObj[key] = {};
-							};
-							parentObj[key].nunaliit_type = 'reference';
-							parentObj[key].doc = value;
-							
-							cbValue = parentObj[key];
+				var parentObj = parentSelector.getValue(_this.obj);
+				if( parentObj ){
+					var value = $input.val();
+					var cbValue = null;
+					
+					if( null === value || value === '' ) {
+						// delete
+						if( parentObj[key] ) {
+							delete parentObj[key];
 						};
 						
-						_this.refresh($container);
-						_this.callback(_this.obj,objSel.selectors,cbValue);
+					} else {
+						// update
+						if( !parentObj[key] ) {
+							parentObj[key] = {};
+						};
+						parentObj[key].nunaliit_type = 'reference';
+						parentObj[key].doc = value;
+						
+						cbValue = parentObj[key];
 					};
+					
+					_this.refresh($container);
+					_this.callback(_this.obj,objSel.selectors,cbValue);
 				};
 			};
 			$input.change(changeHandler);
@@ -1949,24 +1983,22 @@ var Form = $n2.Class({
 					window.setTimeout(function(){
 						getDocumentIdFn({
 							onSelected: function(docId){ // callback with docId
-								if( parentSelector && key ){
-									var parentObj = parentSelector.getValue(_this.obj);
-									if( parentObj ){
-										if( !parentObj[key] ){
-											parentObj[key] = {};
-										};
-										parentObj[key].nunaliit_type = 'reference';
-										parentObj[key].doc = docId;
-
-										// Update input
-										$input.val(docId);
-										
-										// Call change handler
-										changeHandler.call($input);
-										
-										// Put focus in input
-										$input.trigger('focus',{inhibitCallback:true});
+								var parentObj = parentSelector.getValue(_this.obj);
+								if( parentObj ){
+									if( !parentObj[key] ){
+										parentObj[key] = {};
 									};
+									parentObj[key].nunaliit_type = 'reference';
+									parentObj[key].doc = docId;
+
+									// Update input
+									$input.val(docId);
+									
+									// Call change handler
+									changeHandler.call($input);
+									
+									// Put focus in input
+									$input.trigger('focus',{inhibitCallback:true});
 								};
 							}
 							,onReset: function(){ // reset function
