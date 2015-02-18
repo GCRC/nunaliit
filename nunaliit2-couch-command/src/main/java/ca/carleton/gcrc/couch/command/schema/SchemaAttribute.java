@@ -37,6 +37,14 @@ public class SchemaAttribute {
 				attribute.setElementType(elementType);
 			}
 		}
+		
+		// searchFunction
+		{
+			String searchFunction = jsonAttr.optString("searchFunction",null);
+			if( null != searchFunction ){
+				attribute.setSearchFunction(searchFunction);
+			}
+		}
 
 		// includedInBrief
 		{
@@ -92,6 +100,7 @@ public class SchemaAttribute {
 	private List<SelectionOption> options = new Vector<SelectionOption>();
 	private List<CheckboxGroupItem> checkboxes = new Vector<CheckboxGroupItem>();
 	private String elementType;
+	private String searchFunction;
 
 	public SchemaAttribute(String type){
 		this.type = type;
@@ -174,6 +183,14 @@ public class SchemaAttribute {
 		this.elementType = elementType;
 	}
 
+	public String getSearchFunction() {
+		return searchFunction;
+	}
+
+	public void setSearchFunction(String searchFunction) {
+		this.searchFunction = searchFunction;
+	}
+
 	public JSONObject toJson() throws Exception {
 		JSONObject jsonAttr = new JSONObject();
 		
@@ -182,6 +199,7 @@ public class SchemaAttribute {
 		if( null != id ) jsonAttr.put("id", id);
 		if( null != label ) jsonAttr.put("label", label);
 		if( null != elementType ) jsonAttr.put("elementType", elementType);
+		if( null != searchFunction ) jsonAttr.put("searchFunction", searchFunction);
 		if( includedInBrief ) jsonAttr.put("includedInBrief", true);
 		if( excludedFromDisplay ) jsonAttr.put("excludedFromDisplay", true);
 		if( excludedFromForm ) jsonAttr.put("excludedFromForm", true);
@@ -598,13 +616,18 @@ public class SchemaAttribute {
 					} else if( "checkbox".equals(type) ){
 						fieldType = ",checkbox";
 					}
+
+					String searchFnName = "";
+					if( null != searchFunction ){
+						searchFnName = ",search="+searchFunction;
+					}
 					
 					pw.println("{{#"+schemaName+"}}");
 
 					pw.println("\t<div class=\""+schemaName+"_"+id+"\">");
 
 					pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-					pw.println("\t\t<div class=\"value\">{{#:field}}"+id+fieldType+"{{/:field}}</div>");
+					pw.println("\t\t<div class=\"value\">{{#:field}}"+id+fieldType+searchFnName+"{{/:field}}</div>");
 					pw.println("\t\t<div class=\"end\"></div>");
 					
 					pw.println("\t</div>");
@@ -660,6 +683,11 @@ public class SchemaAttribute {
 						fieldType = ",reference";
 						arrayType = " \"reference\"";
 					}
+
+					String searchFnName = "";
+					if( null != searchFunction ){
+						searchFnName = ",search="+searchFunction;
+					}
 					
 					if( null != fieldType ){
 						pw.println("{{#"+schemaName+"}}");
@@ -669,7 +697,7 @@ public class SchemaAttribute {
 						pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 						pw.println("\t\t<div class=\"value\">");
 						pw.println("\t\t\t{{#:array "+id+arrayType+"}}");
-						pw.println("\t\t\t\t<div>{{#:field}}."+fieldType+"{{/:field}}</div>");
+						pw.println("\t\t\t\t<div>{{#:field}}."+fieldType+searchFnName+"{{/:field}}</div>");
 						pw.println("\t\t\t{{/:array}}");
 						pw.println("\t\t</div>");
 						pw.println("\t\t<div class=\"end\"></div>");

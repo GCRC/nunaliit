@@ -396,7 +396,12 @@ function _formField() {
 	} else if( opts.reference ) {
 		var objSel = new $n2.objectSelector.ObjectSelector(completeSelectors);
 		var attr = objSel.encodeForDomAttribute();
-		r.push('<span class="n2schema_field_reference" n2-obj-sel="'+attr+'"></span>');
+		r.push('<span class="n2schema_field_reference" n2-obj-sel="'+attr+'"');
+		if( opts.search 
+		 && opts.search[0] ){
+			r.push(' n2-search-func="'+opts.search[0]+'"');
+		};
+		r.push('></span>');
 		
 	} else {
 		r.push('<div class="n2schema_field_container">');
@@ -1893,6 +1898,8 @@ var Form = $n2.Class({
 		var parentSelector = objSel.getParentSelector();
 		var key = objSel.getKey();
 
+		var funcIdentifier = $elem.attr('n2-search-func');
+		
 		var ref = objSel.getValue(this.obj);
 		
 		if( ref && ref.doc ) {
@@ -1972,6 +1979,10 @@ var Form = $n2.Class({
 			
 			// Handle focus
 			var getDocumentIdFn = this.functionMap['getDocumentId'];
+			if( funcIdentifier 
+			 && this.functionMap[funcIdentifier] ){
+				getDocumentIdFn = this.functionMap[funcIdentifier];
+			};
 			if( getDocumentIdFn ) {
 				$input.focus(function(e, eventParam){
 					var $input = $(this);

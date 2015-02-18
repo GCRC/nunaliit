@@ -31,6 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 ;(function($,$n2) {
+"use strict";
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
@@ -88,14 +89,14 @@ function searchForDocumentId(options_){
 	options.searchServer.installSearch({
 		textInput: $('#'+inputId)
 		,searchButton: $('#'+searchButtonId)
-		,displayFn: displaySearch
+		,displayFn: receiveSearchResults
 		,onlyFinalResults: true
 	});
 	
 	var $input = $('#'+inputId);
 	$('#'+inputId).focus();
 	
-	function displaySearch(displayData) {
+	function receiveSearchResults(displayData) {
 		if( !displayData ) {
 			reportError('Invalid search results returned');
 
@@ -103,28 +104,50 @@ function searchForDocumentId(options_){
 			$('#'+displayId).empty();
 
 		} else if( 'results' === displayData.type ) {
-			var $table = $('<table></table>');
-			$('#'+displayId).empty().append($table);
-		
+			var docIds = [];
 			for(var i=0,e=displayData.list.length; i<e; ++i) {
 				var docId = displayData.list[i].id;
-				var $tr = $('<tr></tr>');
-
-				$table.append($tr);
-				
-				$td = $('<td class="n2_search_result olkitSearchMod2_'+(i%2)+'">'
-					+'<a href="#'+docId+'" alt="'+docId+'"></a></td>');
-				$tr.append($td);
-				if( options.showService ) {
-					options.showService.printBriefDescription($td.find('a'),docId);
-				} else {
-					$td.find('a').text(docId);
-				};
-				$td.find('a').click( createClickHandler(docId) );
+				docIds.push(docId);
 			};
+			displayDocIds(docIds);
 			
 		} else {
 			reportError('Invalid search results returned');
+		};
+	};
+	
+	function displayDocIds(docIds){
+		if( docIds.length < 1 ){
+			$('#'+displayId)
+				.empty()
+				.append( _loc('Search result is empty') );
+			
+		} else {
+			var $table = $('<table></table>');
+			$('#'+displayId).empty().append($table);
+		
+			for(var i=0,e=docIds.length; i<e; ++i) {
+				var docId = docIds[i];
+				
+				var $tr = $('<tr>')
+					.appendTo($table);
+
+				var $td = $('<td>')
+					.addClass('n2_search_result olkitSearchMod2_'+(i%2))
+					.appendTo($tr);
+				
+				var $a = $('<a>')
+					.attr('href','#'+docId)
+					.attr('alt',docId)
+					.appendTo($td)
+					.click( createClickHandler(docId) );
+
+				if( options.showService ) {
+					options.showService.printBriefDescription($a,docId);
+				} else {
+					$a.text(docId);
+				};
+			};
 		};
 	};
 	
