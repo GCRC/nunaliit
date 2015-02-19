@@ -299,27 +299,34 @@ public class SchemaAttribute {
 		}
 	}
 
-	public void printBrief(PrintWriter pw, String schemaName) throws Exception {
+	public boolean printBrief(PrintWriter pw, String schemaName, boolean isFirst) throws Exception {
+		boolean printed = false;
+		
 		if( includedInBrief ){
 			if( "title".equals(type) ){
 				
 			} else if( "string".equals(type) ){
 				if( null != id ){
 					pw.print("{{#"+schemaName+"}}");
+					if( !isFirst ) pw.print(" ");
 					pw.print("{{"+id+"}}");
 					pw.print("{{/"+schemaName+"}}");
+					printed = true;
 				}
 				
 			} else if( "textarea".equals(type) ){
 				if( null != id ){
 					pw.print("{{#"+schemaName+"}}");
+					if( !isFirst ) pw.print(" ");
 					pw.print("{{"+id+"}}");
 					pw.print("{{/"+schemaName+"}}");
+					printed = true;
 				}
 				
 			} else if( "selection".equals(type) ){
 				if( null != id ){
 					pw.print("{{#"+schemaName+"}}");
+					if( !isFirst ) pw.print(" ");
 					pw.print("<span class=\"n2s_select\" n2-choice=\"{{"+id+"}}\">");
 					for(SelectionOption option : options){
 						pw.print("<span class=\"n2s_choice n2s_localize\" n2-choice=\""+option.getValue()+"\">");
@@ -332,15 +339,18 @@ public class SchemaAttribute {
 					}
 					pw.print("</span>");
 					pw.print("{{/"+schemaName+"}}");
+					printed = true;
 				}
 				
 			} else if( "date".equals(type) ){
 				if( null != id ){
 					pw.print("{{#"+schemaName+"}}");
 					pw.print("{{#"+id+"}}");
+					if( !isFirst ) pw.print(" ");
 					pw.print("{{date}}");
 					pw.print("{{/"+id+"}}");
 					pw.print("{{/"+schemaName+"}}");
+					printed = true;
 				}
 				
 			} else if( "reference".equals(type) ){
@@ -348,16 +358,19 @@ public class SchemaAttribute {
 					pw.print("{{#"+schemaName+"}}");
 					pw.print("{{#"+id+"}}");
 					pw.print("{{#doc}}");
+					if( !isFirst ) pw.print(" ");
 					pw.print("<span class=\"n2s_briefDisplay\">{{.}}</span>");
 					pw.print("{{/doc}}");
 					pw.print("{{/"+id+"}}");
 					pw.print("{{/"+schemaName+"}}");
+					printed = true;
 				}
 				
 			} else if( "array".equals(type) ){
 				if( null != id ){
 					pw.print("{{#"+schemaName+"}}");
 					pw.print("{{#"+id+"}}");
+					if( !isFirst ) pw.print(" ");
 					
 					if( "string".equals(elementType) ){
 						pw.print("{{.}}");
@@ -376,12 +389,15 @@ public class SchemaAttribute {
 					
 					pw.print("{{/"+id+"}}");
 					pw.print("{{/"+schemaName+"}}");
+					printed = true;
 				}
 					
 			} else {
 				throw new Exception("Unable to include type "+type+" in brief");
 			}
 		}
+		
+		return printed;
 	}
 
 	public void printDisplay(PrintWriter pw, String schemaName) throws Exception {

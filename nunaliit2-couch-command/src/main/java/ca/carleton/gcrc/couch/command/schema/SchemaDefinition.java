@@ -318,21 +318,29 @@ public class SchemaDefinition {
 	public void printBrief(PrintWriter pw) throws Exception {
 		String schemaName = getSchemaName();
 
+		pw.print("<span class=\""+schemaName+"_brief\">");
+
 		if( null != label ){
-			pw.print("<span class=\"n2s_localize\">");
+			pw.print("<span class=\"n2s_localize "+schemaName+"_brief_decoration\">");
 			pw.print(label);
-			pw.print("</span>");
 		} else {
+			pw.print("<span class=\""+schemaName+"_brief_decoration\">");
 			pw.print(schemaName);
 		}
-		
-		pw.print("(");
 
+		pw.print("(</span>");
+		
+		boolean first = true;
 		for(SchemaAttribute attribute : attributes){
-			attribute.printBrief(pw,schemaName);
+			boolean printed = attribute.printBrief(pw,schemaName,first);
+			if( printed ){
+				first = false;
+			}
 		}
 		
-		pw.print(")");
+		pw.print("<span class=\""+schemaName+"_brief_decoration\">)</span>");
+
+		pw.print("</span>");
 	}
 	
 	public void printDisplay(PrintWriter pw) throws Exception {
