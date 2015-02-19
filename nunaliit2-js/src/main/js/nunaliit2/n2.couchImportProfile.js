@@ -1485,7 +1485,7 @@ var ImportProfileOperationAssign = $n2.Class(ImportProfileOperation, {
 			copyOperations.push({
 				propertyNames: [this.sourceName]
 				,lastImportValue: importValue
-				,targetSelector: targetSelector
+				,targetSelector: this.targetSelector
 				,targetValue: targetValue
 				,isInconsistent: isInconsistent
 			});
@@ -1504,9 +1504,9 @@ var ImportProfileOperationAssign = $n2.Class(ImportProfileOperation, {
 		var importValue = opts.importData[this.sourceName];
 		if( typeof importValue === 'undefined' ){
 			// Must delete
-			this.targetSelector.removeValue(doc);
+			this.targetSelector.removeValue(opts.doc);
 		} else {
-			this.targetSelector.setValue(doc, importValue, true);
+			this.targetSelector.setValue(opts.doc, importValue, true);
 		};
 	}
 });
