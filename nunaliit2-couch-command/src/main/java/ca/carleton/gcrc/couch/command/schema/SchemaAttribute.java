@@ -230,7 +230,10 @@ public class SchemaAttribute {
 	}
 
 	public void addCreateField(JSONObject doc, JSONObject schemaDoc) throws Exception {
-		if( "string".equals(type) ){
+		if( "title".equals(type) ){
+			// nothing to do
+			
+		} else if( "string".equals(type) ){
 			if( null != id ){
 				schemaDoc.put(id, "");
 			}
@@ -298,7 +301,9 @@ public class SchemaAttribute {
 
 	public void printBrief(PrintWriter pw, String schemaName) throws Exception {
 		if( includedInBrief ){
-			if( "string".equals(type) ){
+			if( "title".equals(type) ){
+				
+			} else if( "string".equals(type) ){
 				if( null != id ){
 					pw.print("{{#"+schemaName+"}}");
 					pw.print("{{"+id+"}}");
@@ -388,7 +393,15 @@ public class SchemaAttribute {
 				labelLocalizeClass = "";
 			}
 
-			if( "string".equals(type) 
+			if( "title".equals(type) ) {
+				pw.println("<div class=\"title\">");
+
+				pw.println("\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t<div class=\"end\"></div>");
+				
+				pw.println("</div>");
+				
+			} else if( "string".equals(type) 
 			 || "textarea".equals(type) ){
 				if( null != id ){
 					pw.println("{{#"+schemaName+"}}");
@@ -405,7 +418,6 @@ public class SchemaAttribute {
 					pw.println("\t\t\t<div class=\"end\"></div>");
 					
 					pw.println("\t\t</div>");
-					
 					
 					pw.println("\t{{/"+id+"}}");
 					pw.println("{{/"+schemaName+"}}");
@@ -600,7 +612,15 @@ public class SchemaAttribute {
 				labelLocalizeClass = "";
 			}
 
-			if( "string".equals(type) 
+			if( "title".equals(type) ){
+				pw.println("<div class=\"title\">");
+
+				pw.println("\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t<div class=\"end\"></div>");
+				
+				pw.println("</div>");
+
+			} else if( "string".equals(type) 
 			 || "textarea".equals(type) 
 			 || "reference".equals(type) 
 			 || "checkbox".equals(type) 
