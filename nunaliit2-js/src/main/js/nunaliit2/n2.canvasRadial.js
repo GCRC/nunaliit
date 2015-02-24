@@ -87,6 +87,7 @@ var RadialCanvas = $n2.Class({
 			,background: null
 			,styleRules: null
 			,toggleSelection: true
+			,elementGenerator: null
 			,onSuccess: function(){}
 			,onError: function(err){}
 		},opts_);
@@ -99,6 +100,7 @@ var RadialCanvas = $n2.Class({
 		this.sourceModelId = opts.sourceModelId;
 		this.background = opts.background;
 		this.toggleSelection = opts.toggleSelection;
+		this.elementGenerator = opts.elementGenerator;
  		
 		this.modelId = $n2.getUniqueId('radialCanvas');
  		
@@ -117,16 +119,20 @@ var RadialCanvas = $n2.Class({
  		this.lastElementIdSelected = null;
  		this.focusInfo = null;
  		this.selectInfo = null;
- 		
- 		this.elementGenerator = new $n2.canvasElementGenerator.ElementGenerator({
-			dispatchService: this.dispatchService
-			,elementsChanged: function(added, updated, removed){
-				_this._elementsChanged(added, updated, removed);
-			}
-			,intentChanged: function(updated){
-				_this._intentChanged(updated);
-			}
- 		});
+
+ 		// Element generator
+ 		if( !this.elementGenerator ){
+ 			// If not defined, use default one
+ 	 		this.elementGenerator = new $n2.canvasElementGenerator.ElementGenerator({
+ 				dispatchService: this.dispatchService
+ 	 		});
+ 		};
+		this.elementGenerator.setElementsChangedListener(function(added, updated, removed){
+			_this._elementsChanged(added, updated, removed);
+		});
+		this.elementGenerator.setIntentChangedListener(function(updated){
+			_this._intentChanged(updated);
+		});
  		
  		// Register to events
  		if( this.dispatchService ){

@@ -123,6 +123,14 @@ var ElementGenerator = $n2.Class({
 		});
 	},
 	
+	setElementsChangedListener: function(listener){
+		this.elementsChanged = listener;
+	},
+	
+	setIntentChangedListener: function(listener){
+		this.intentChanged = listener;
+	},
+	
 	/*
 	 * This function gets called when changes in the underlying documents
 	 * are detected.
@@ -512,17 +520,19 @@ var ElementGenerator = $n2.Class({
 			var frag = fragmentMap[fragId];
 			
 			if( frag.isNode ){
-				var cluster = {
-					id: frag.id
-					,fragments: [
-						frag
-					]
-					,n2_id: frag.context.n2_id
-					,n2_doc: frag.context.n2_doc
-	 	 			,n2_geometry: 'point'
-	 	 			,isLink: frag.isLink
-	 	 			,isNode: frag.isNode
+				var cluster = this.clusterById[frag.id];
+				if( !cluster ){
+					cluster = {
+						id: frag.id
+					};
 				};
+				
+				cluster.fragments = [ frag ];
+				cluster.n2_id = frag.context.n2_id;
+				cluster.n2_doc = frag.context.n2_doc;
+				cluster.n2_geometry = 'point';
+				cluster.isLink = frag.isLink;
+				cluster.isNode = frag.isNode;
 				
 				clusters.push(cluster);
 				
@@ -536,19 +546,20 @@ var ElementGenerator = $n2.Class({
 			if( frag.isLink 
 			 && nodeMap[frag.sourceId] 
 			 && nodeMap[frag.targetId] ){
-				var cluster = {
-					id: frag.id
-					,fragments: [
-						frag
-					]
-					,n2_id: frag.context.n2_id
-					,n2_doc: frag.context.n2_doc
-	 	 			,n2_geometry: 'line'
-	 	 			,isLink: frag.isLink
-	 	 			,isNode: frag.isNode
-	 	 			,source: nodeMap[frag.sourceId]
-					,target: nodeMap[frag.targetId]
+				var cluster = this.clusterById[frag.id];
+				if( !cluster ){
+					cluster = {
+						id: frag.id
+					};
 				};
+				cluster.fragments = [frag];
+				cluster.n2_id = frag.context.n2_id;
+				cluster.n2_doc = frag.context.n2_doc;
+				cluster.n2_geometry = 'line';
+				cluster.isLink = frag.isLink;
+				cluster.isNode = frag.isNode;
+				cluster.source = nodeMap[frag.sourceId];
+				cluster.target = nodeMap[frag.targetId];
 				
 				clusters.push(cluster);
 			};

@@ -64,14 +64,9 @@ var Service = $n2.Class({
 	
 	_handle: function(m, addr, dispatcher){
 		if( 'canvasIsTypeAvailable' === m.type ){
-			if( $n2.forceGraph 
-			 && $n2.forceGraph.HandleCanvasAvailableRequest ){
-				$n2.forceGraph.HandleCanvasAvailableRequest(m);
-			};
-
-			if( $n2.forceGraphGeneric 
-			 && $n2.forceGraphGeneric.HandleCanvasAvailableRequest ){
-				$n2.forceGraphGeneric.HandleCanvasAvailableRequest(m);
+			if( $n2.canvasForceGraph 
+			 && $n2.canvasForceGraph.HandleCanvasAvailableRequest ){
+				$n2.canvasForceGraph.HandleCanvasAvailableRequest(m);
 			};
 
 			if( $n2.canvasRadial 
@@ -80,14 +75,9 @@ var Service = $n2.Class({
 			};
 
 		} else if( 'canvasDisplay' === m.type ) {
-			if( $n2.forceGraph 
-			 && $n2.forceGraph.HandleCanvasDisplayRequest ){
-				$n2.forceGraph.HandleCanvasDisplayRequest(m);
-			};
-
-			if( $n2.forceGraphGeneric 
-			 && $n2.forceGraphGeneric.HandleCanvasDisplayRequest ){
-				$n2.forceGraphGeneric.HandleCanvasDisplayRequest(m);
+			if( $n2.canvasForceGraph 
+			 && $n2.canvasForceGraph.HandleCanvasDisplayRequest ){
+				$n2.canvasForceGraph.HandleCanvasDisplayRequest(m);
 			};
 
 			if( $n2.canvasRadial 
