@@ -42,302 +42,6 @@ var
 var $d = window.d3;
 if( !$d ) return;
  
-//--------------------------------------------------------------------------
-var Node = $n2.Class({
-	isNode: null,
-	
-	fragId: null,
-	
-	n2_id: null,
-
-	n2_doc: null,
-	
-	n2_geometry: null,
-	
-	initialize: function(doc){
-		this.isNode = true;
-		this.n2_doc = doc;
-		this.n2_id = doc._id;
-		this.n2_geometry = 'point';
-		
-		this.fragId = 'node_'+doc._id;
-	},
-
-	getDocId: function(){
-		return this.n2_doc._id;
-	},
-	
-	setDoc: function(doc){
-		if( doc._id === this.n2_doc._id ){
-			this.n2_doc = doc;
-		};
-	}
-});
-
-//--------------------------------------------------------------------------
-var Link = $n2.Class({
-	isLink: null,
-	
-	fragId: null,
-
-	n2_doc: null,
-
-	sourceDocId: null,
-
-	targetDocId: null,
-
-	source: null,
-	
-	target: null,
-	
-	n2_id: null,
-	
-	n2_geometry: null,
-	
-	linkId: null,
-	
-	initialize: function(doc, sourceDocId, targetDocId){
-		this.n2_doc = doc;
-		this.n2_id = doc._id;
-		this.isLink = true;
-		this.n2_geometry = 'line';
-		
-		this.fragId = 'link_' + doc._id + '_' + sourceDocId + '_' + targetDocId;
-		
-		if( sourceDocId < targetDocId ){
-			this.sourceDocId = sourceDocId;
-			this.targetDocId = targetDocId;
-		} else {
-			this.sourceDocId = targetDocId;
-			this.targetDocId = sourceDocId;
-		};
-		
-		this.linkId = this.sourceDocId + '|' + this.targetDocId;
-	},
-	
-	setDoc: function(doc){
-		if( doc._id === this.n2_doc._id ){
-			this.n2_doc = doc;
-		};
-	},
-
-	getDocId: function(){
-		return this.n2_doc._id;
-	},
-
-	getSourceDocId: function(){
-		return this.sourceDocId;
-	},
-
-	getTargetDocId: function(){
-		return this.targetDocId;
-	},
-
-	getSource: function(){
-		return this.source;
-	},
-
-	setSource: function(source){
-		if( source.n2_id === this.sourceDocId ){
-			this.source = source;
-		};
-	},
-	
-	getTarget: function(){
-		return this.target;
-	},
-
-	setTarget: function(target){
-		if( target.n2_id === this.targetDocId ){
-			this.target = target;
-		};
-	}
-});
-
-//--------------------------------------------------------------------------
-var ElementGenerator = $n2.Class({
-	
-	contextByDocId: null,
-	
-	fragmentsByDocId: null,
-	
-	initialize: function(opts_){
-		var opts = $n2.extend({
-			
-		},opts_);
-		
-		this.contextByDocId = {};
-		this.fragmentsByDocId = {};
-	},
-	
-	sourceModelUpdated: function(opts_){
- 		var opts = $n2.extend({
- 			added: null
- 			,updated: null
- 			,removed: null
- 		},opts_);
-
- 		var contextsAdded = [];
- 		var contextsUpdated = [];
- 		var contextsRemoved = [];
-
- 		if( opts.added ){
- 			for(var i=0,e=opts.added.length; i<e; ++i){
- 				var doc = opts.added[i];
-
- 				var context = {
- 					n2_id: doc._id
-					,n2_doc: doc
- 				};
- 				contextsAdded.push(context);
- 				
- 				this.contextByDocId[doc._id] = context;
- 			};
- 		};
-
- 		if( opts.updated ){
- 			for(var i=0,e=opts.updated.length; i<e; ++i){
- 				var doc = opts.updated[i];
-
- 				var context = this.contextByDocId[doc._id];
- 				if( context ){
- 					if( doc._rev !== context.n2_doc._rev ){
- 						context.n2_doc = doc;
- 						contextsUpdated.push(context);
- 					};
- 					
- 				} else {
- 	 				var context = {
- 	 					n2_id: doc._id
- 						,n2_doc: doc
- 	 				};
- 	 				contextsAdded.push(context);
- 	 				
- 	 				this.contextByDocId[doc._id] = context;
- 				};
- 			};
- 		};
-
- 		if( opts.removed ){
- 			for(var i=0,e=opts.removed.length; i<e; ++i){
- 				var doc = opts.removed[i];
-
- 				var context = this.contextByDocId[doc._id];
- 				if( context ){
- 					delete this.contextByDocId[doc._id];
- 					contextsRemoved.push(context);
- 				};
- 			};
- 		};
-
- 		if( contextsAdded.length > 0 
- 		 || contextsUpdated.length > 0 
- 		 || contextsRemoved.length > 0 ){
- 			this._contextsUpdated(contextsAdded, contextsUpdated, contextsRemoved);
- 		};
-	},
-	
-	_contextsUpdated: function(contextsAdded, contextsUpdated, contextsRemoved){
-
-		var fragmentsAdded = [];
-		var fragmentsUpdated = [];
-		var fragmentsRemoved = [];
-		
-		if( contextsAdded ){
- 			for(var i=0,e=contextsAdded.length; i<e; ++i){
- 				var context = contextsAdded[i];
- 				var doc = context.n2_doc;
- 				var docId = doc._id;
-
- 				var fragments = this._createFragmentsFromDoc(doc);
- 				
- 				var fragmentsForDocId = this.fragmentsByDocId[docId];
- 				if( !fragmentsForDocId ){
- 					fragmentsForDocId = [];
- 					this.fragmentsByDocId[docId] = fragmentsForDocId;
- 				};
- 				
- 				for(var fragIndex=0; fragIndex<fragments.length; ++fragIndex){
- 					var frag = fragments[fragIndex];
- 					fragmentsForDocId.push(frag);
- 					fragmentsAdded.push(frag);
- 				};
- 			};
- 		};
-		
-		if( contextsUpdated ){
- 			for(var i=0,e=contextsUpdated.length; i<e; ++i){
- 				var context = contextsUpdated[i];
- 				var doc = context.n2_doc;
- 				var docId = doc._id;
-
- 				var fragments = this._createFragmentsFromDoc(doc);
- 				
- 				var currentFragmentIds = {};
- 				for(var fragIndex=0; fragIndex<fragments.length; ++fragIndex){
- 					var frag = fragments[fragIndex];
- 					currentFragmentIds[frag.fragId] = frag;
- 				};
- 				if( this.fragmentsByDocId[docId] ){
- 					var previousFragments = this.fragmentsByDocId[docId];
- 					var currentFragments = [];
-	 				for(var fragIndex=0; fragIndex<previousFragments.length; ++fragIndex){
-	 					var previousFrag = previousFragments[fragIndex];
-	 					var fragId = previousFrag.fragId;
-	 					if( currentFragmentIds[fragId] ){
-	 						// Updated
-	 						var frag = currentFragmentIds[fragId];
-	 						delete currentFragmentIds[fragId];
-	 						fragmentsUpdated.push(frag);
-	 						previousFragments[fragIndex] = frag;
-	 					} else {
-	 						// Removed
-	 						fragmentsRemoved.push(previousFrag);
-	 					};
-	 				};
- 				};
- 				
- 				
- 				var fragmentsForDocId = this.fragmentsByDocId[docId];
- 				if( !fragmentsForDocId ){
- 					fragmentsForDocId = [];
- 					this.fragmentsByDocId[docId] = fragmentsForDocId;
- 				};
- 				
- 				for(var fragIndex=0; fragIndex<fragments.length; ++fragIndex){
- 					var frag = fragments[fragIndex];
- 					fragmentsForDocId.push(frag);
- 					fragmentsAdded.push(frag);
- 				};
- 			};
- 		};
-	},
-	
-	_createFragmentsFromDoc: function(doc){
-		var fragments = [];
-		
-		var node = new Node(doc);
-		fragments.push(node);
-		
- 		// Create links for references
- 		var refDocIds = {};
- 		var references = [];
- 		$n2.couchUtils.extractLinks(doc, references);
- 		for(var i=0,e=references.length; i<e; ++i){
- 			var ref = references[i];
- 			if( ref.doc ){
- 				refDocIds[ref.doc] = true;
- 			};
- 		};
- 		for(var refDocId in refDocIds){
- 			var link = new Link(doc, doc._id, refDocId);
- 			fragments.push(link);
- 		};
- 		
-		return fragments;
-	}
-});
-
 // --------------------------------------------------------------------------
 var RadialCanvas = $n2.Class({
 
@@ -351,8 +55,6 @@ var RadialCanvas = $n2.Class({
  	
 	dispatchService: null,
 
-	showService: null,
- 	
 	sourceModelId: null,
  	
 	moduleDisplay: null,
@@ -363,19 +65,17 @@ var RadialCanvas = $n2.Class({
 	
 	line: null,
  	
-	intentView: null,
- 	
 	styleRules: null,
- 	
+
 	nodesById: null,
- 	
-	activeLinkArrayById: null,
- 	
-	inactiveLinkArrayById: null,
+
+	linksById: null,
+	
+	elementGenerator: null,
  	
 	currentMouseOver: null,
 
-	lastDocIdSelected: null,
+	lastElementIdSelected: null,
  	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -385,7 +85,6 @@ var RadialCanvas = $n2.Class({
 			,moduleDisplay: null
 			,sourceModelId: null
 			,background: null
-			,force: {}
 			,styleRules: null
 			,toggleSelection: true
 			,onSuccess: function(){}
@@ -409,17 +108,25 @@ var RadialCanvas = $n2.Class({
 		if( config ){
 			if( config.directory ){
 				this.dispatchService = config.directory.dispatchService;
-				this.showService = config.directory.showService;
 			};
 		};
 
  		this.nodesById = {};
- 		this.activeLinkArrayById = {};
- 		this.inactiveLinkArrayById = {};
+ 		this.linksById = {};
  		this.currentMouseOver = null;
- 		this.lastDocIdSelected = null;
+ 		this.lastElementIdSelected = null;
  		this.focusInfo = null;
  		this.selectInfo = null;
+ 		
+ 		this.elementGenerator = new $n2.canvasElementGenerator.ElementGenerator({
+			dispatchService: this.dispatchService
+			,elementsChanged: function(added, updated, removed){
+				_this._elementsChanged(added, updated, removed);
+			}
+			,intentChanged: function(updated){
+				_this._intentChanged(updated);
+			}
+ 		});
  		
  		// Register to events
  		if( this.dispatchService ){
@@ -427,12 +134,8 @@ var RadialCanvas = $n2.Class({
  				_this._handleDispatch(m);
  			};
  			
- 			this.dispatchService.register(DH,'selected',f);
- 			this.dispatchService.register(DH,'unselected',f);
  			this.dispatchService.register(DH,'modelGetInfo',f);
  			this.dispatchService.register(DH,'modelStateUpdated',f);
-// 			this.dispatchService.register(DH,'focusOn',f);
-// 			this.dispatchService.register(DH,'focusOff',f);
  		};
  		
  		this.line = d3.svg.line.radial()
@@ -443,14 +146,6 @@ var RadialCanvas = $n2.Class({
 	 	    .angle(function(d) { return d.x / 180 * Math.PI; });
  		
  		this.createGraph();
- 		
- 		// Create user intent view
- 		this.intentView = new $n2.userIntentView.IntentView({
- 			dispatchService: this.dispatchService
- 		});
- 		this.intentView.addListener(function(changedNodes){
- 			_this._intentViewUpdated(changedNodes);
- 		});
  		
  		opts.onSuccess();
 
@@ -541,13 +236,89 @@ var RadialCanvas = $n2.Class({
  	_getSvgElem: function() {
  		return $d.select('#' + this.svgId);
  	},
+	
+	_elementsChanged: function(addedElements, updatedElements, removedElements){
+		// Remove elements that are no longer there
+		for(var i=0,e=removedElements.length; i<e; ++i){
+			var removed = removedElements[i];
+			
+			if( removed.isNode ){
+				delete this.nodesById[ removed.id ];
+			} else if( removed.isLink ){
+				delete this.linksById[ removed.id ];
+			};
+		};
+		
+		// Add elements
+		for(var i=0,e=addedElements.length; i<e; ++i){
+			var added = addedElements[i];
+			
+			if( added.isNode ){
+				this.nodesById[ added.id ] = added;
+			} else if( added.isLink ){
+				this.linksById[ added.id ] = added;
+			};
+		};
+
+		// Updated nodes
+		var updatedNodes = [];
+		var updatedLinks = [];
+		for(var i=0,e=updatedElements.length; i<e; ++i){
+			var updated = updatedElements[i];
+			
+			if( updated.isNode ){
+				updatedNodes.push(updated);
+			} else if( updated.isLink ){
+				updatedLinks.push(updated);
+			};
+		};
+		
+		this._documentsUpdated(updatedNodes, updatedLinks);
+	},
+	
+	_intentChanged: function(changedElements){
+ 		// Segregate nodes and active links
+ 		var nodes = [];
+ 		var links = [];
+ 		for(var i=0,e=changedElements.length; i<e; ++i){
+ 			var changedNode = changedElements[i];
+ 			
+ 			// $n2.log(changedNode.n2_id+' sel:'+changedNode.n2_selected+' foc:'+changedNode.n2_hovered+' find:'+changedNode.n2_found);
+ 			
+ 			if( changedNode.isNode ){
+ 				nodes.push(changedNode);
+ 				
+ 				if( changedNode.n2_found 
+ 				 && !changedNode.forceFound ){
+ 					changedNode.forceFound = true;
+
+ 				} else if( !changedNode.n2_found 
+ 				 && changedNode.forceFound ){
+ 					changedNode.forceFound = false;
+ 				};
+ 				
+ 			} else if( changedNode.isLink ){
+ 				links.push(changedNode);
+ 			};
+ 		};
+
+ 		// Update style on nodes
+ 		var selectedNodes = this._getSvgElem().select('g.nodes').selectAll('.node')
+ 			.data(nodes, function(node){ return node.id; });
+ 		this._adjustElementStyles(selectedNodes);
+
+ 		// Update style on links
+ 		var selectedLinks = this._getSvgElem().select('g.links').selectAll('.link')
+ 			.data(links, function(link){ return link.id; });
+ 		this._adjustElementStyles(selectedLinks);
+	},
  	
  	_documentsUpdated: function(updatedNodeData, updatedLinkData){
  		var _this = this;
  		
  		var nodes = [];
- 		for(var docId in this.nodesById){
- 			var node = this.nodesById[docId];
+ 		for(var id in this.nodesById){
+ 			var node = this.nodesById[id];
  			nodes.push(node);
  		};
  		
@@ -575,13 +346,13 @@ var RadialCanvas = $n2.Class({
  		};
 
  		var links = [];
- 		for(var docId in this.activeLinkArrayById){
- 			var activeLinkArray = this.activeLinkArrayById[docId];
- 			links.push.apply(links,activeLinkArray);
+ 		for(var id in this.linksById){
+ 			var link = this.linksById[id];
+ 			links.push(link);
  		};
 
  		var selectedNodes = this._getSvgElem().select('g.nodes').selectAll('.node')
- 			.data(nodes, function(node){ return node.n2_id; })
+ 			.data(nodes, function(node){ return node.id; })
  			;
 
  		// Animate the position of the nodes around the circle
@@ -608,16 +379,13 @@ var RadialCanvas = $n2.Class({
  				return "";
  			})
  			.on('click', function(n,i){
- 				var doc = n.n2_doc;
- 				_this._initiateMouseClick(doc);
+ 				_this._initiateMouseClick(n);
  			})
  			.on('mouseover', function(n,i){
- 				var doc = n.n2_doc;
- 				_this._initiateMouseOver(doc);
+ 				_this._initiateMouseOver(n);
  			})
  			.on('mouseout', function(n,i){
- 				var doc = n.n2_doc;
- 				_this._initiateMouseOut(doc);
+ 				_this._initiateMouseOut(n);
  			})
  			;
  		this._adjustElementStyles(createdNodes);
@@ -626,12 +394,12 @@ var RadialCanvas = $n2.Class({
  			.remove();
  		
  		var updatedNodes = this._getSvgElem().select('g.nodes').selectAll('.node')
- 			.data(updatedNodeData, function(node){ return node.n2_id; })
+ 			.data(updatedNodeData, function(node){ return node.id; })
  			;
  		this._adjustElementStyles(updatedNodes);
 
  		var selectedLinks = this._getSvgElem().select('g.links').selectAll('.link')
- 			.data(links, function(link){ return link.linkId; })
+ 			.data(links, function(link){ return link.id; })
 			;
  		
  		selectedLinks.transition()
@@ -643,16 +411,13 @@ var RadialCanvas = $n2.Class({
  			.attr('class','link')
  			.attr('d',function(link){ return _this.line([link.source,{x:0,y:0},link.target]); })
  			.on('click', function(n,i){
- 				var doc = n.n2_doc;
- 				_this._initiateMouseClick(doc);
+ 				_this._initiateMouseClick(n);
  			})
  			.on('mouseover', function(n,i){
- 				var doc = n.n2_doc;
- 				_this._initiateMouseOver(doc);
+ 				_this._initiateMouseOver(n);
  			})
  			.on('mouseout', function(n,i){
- 				var doc = n.n2_doc;
- 				_this._initiateMouseOut(doc);
+ 				_this._initiateMouseOut(n);
  			})
  			;
  		this._adjustElementStyles(createdLinks);
@@ -683,441 +448,45 @@ var RadialCanvas = $n2.Class({
  	},
  	
  	_sourceModelUpdated: function(opts_){
- 		var opts = $n2.extend({
- 			added: null
- 			,updated: null
- 			,removed: null
- 		},opts_);
- 		
- 		var elementsAdded = [];
- 		var elementsRemoved = [];
- 		var nodesUpdated = [];
- 		var linksUpdated = [];
- 		var updatedRequired = false;
-
- 		if( opts.added ){
- 			for(var i=0,e=opts.added.length; i<e; ++i){
- 				var doc = opts.added[i];
-
- 				var node = this._createNodeFromDocument(doc);
- 				if( node ){
- 					this.nodesById[doc._id] = node;
- 					elementsAdded.push(node);
- 					updatedRequired = true;
- 				};
-
- 				var links = this._createLinksFromDocument(doc);
- 				if( links && links.length > 0 ){
- 					this._addLinksToInactiveList(links);
- 					elementsAdded.push.apply(elementsAdded, links);
- 					updatedRequired = true;
- 				};
- 			};
- 		};
-
- 		if( opts.updated ){
- 			for(var i=0,e=opts.updated.length; i<e; ++i){
- 				var doc = opts.updated[i];
-
- 				// Nodes
- 				var updatedNode = this._createNodeFromDocument(doc);
- 				var currentNode = this.nodesById[doc._id];
- 				if( currentNode && !updatedNode ){
- 					// Removed due to update
- 					delete this.nodesById[doc._id];
- 					elementsRemoved.push(currentNode);
- 					updatedRequired = true;
-
- 				} else if( !currentNode && updatedNode ){
- 					// Added due to update
- 					this.nodesById[doc._id] = updatedNode;
- 					elementsAdded.push(currentNode);
- 					updatedRequired = true;
- 				
- 				} else if( currentNode && updatedNode ){
- 					currentNode.setDoc(doc);
- 					nodesUpdated.push(currentNode);
- 					updatedRequired = true;
- 				};
- 				
- 				// Compute updated links
- 				var updatedLinksById = {};
- 				var links = this._createLinksFromDocument(doc);
- 				if( links ){
- 					for(var j=0,k=links.length; j<k; ++j){
- 						var link = links[j];
- 						updatedLinksById[link.linkId] = link;
- 					};
- 				};
- 				
- 				// Check links
- 				var links = this._getLinksFromDocId(doc._id);
- 				for(var j=0,k=links.length; j<k; ++j){
- 					var link = links[j];
- 					if( updatedLinksById[link.linkId] ){
- 						// Updated
- 						link.setDoc(doc);
- 						linksUpdated.push(link);
- 						delete updatedLinksById[link.linkId];
- 						updatedRequired = true;
- 					} else {
- 						// Removed
- 						this._removeLink(link);
- 						elementsRemoved.push(link);
- 						updatedRequired = true;
- 					};
- 				};
- 				
- 				// What is left in updatedLinksById are new links
- 				var addedLinks = [];
- 				for(var linkId in updatedLinksById){
- 					var link = updatedLinksById[linkId];
- 					addedLinks.push(link);
- 				};
- 				if( addedLinks.length > 0 ){
- 					this._addLinksToInactiveList(addedLinks);
- 					elementsAdded.push.apply(elementsAdded, addedLinks);
- 					updatedRequired = true;
- 				};
- 			};
- 		};
-
- 		if( opts.removed ){
- 			for(var i=0,e=opts.removed.length; i<e; ++i){
- 				var doc = opts.removed[i];
-
- 				var node = this.nodesById[doc._id];
- 				if( node ){
- 					elementsRemoved.push(node);
- 					delete this.nodesById[doc._id];
- 					updatedRequired = true;
- 				};
-
- 				var linkArray = this.activeLinkArrayById[doc._id];
- 				if( linkArray ){
- 					elementsRemoved.push.apply(elementsRemoved, linkArray);
- 					delete this.activeLinkArrayById[doc._id];
- 					updatedRequired = true;
- 				};
-
- 				linkArray = this.inactiveLinkArrayById[doc._id];
- 				if( linkArray ){
- 					elementsRemoved.push.apply(elementsRemoved, linkArray);
- 					delete this.inactiveLinkArrayById[doc._id];
- 				};
- 			};
- 		};
-
- 		// Find links going inactive
- 		var linksGoingInactive = [];
- 		for(var docId in this.activeLinkArrayById){
- 			var activeLinkArray = this.activeLinkArrayById[docId];
- 			for(var i=0,e=activeLinkArray.length; i<e; ++i){
- 				var activeLink = activeLinkArray[i];
-
- 				var sourceDocId = activeLink.getSourceDocId();
- 				var targetDocId = activeLink.getTargetDocId();
-
- 				var inactive = false;
- 				if( !this.nodesById[sourceDocId] ){
- 					inactive = true;
- 				} else if( !this.nodesById[targetDocId] ){
- 					inactive = true;
- 				};
- 				
- 				if( inactive ){
- 					linksGoingInactive.push(activeLink);
- 				};
- 			};
- 		};
-
- 		// Find links going active
- 		var linksGoingActive = [];
- 		for(var docId in this.inactiveLinkArrayById){
- 			var inactiveLinkArray = this.inactiveLinkArrayById[docId];
- 			for(var i=0,e=inactiveLinkArray.length; i<e; ++i){
- 				var inactiveLink = inactiveLinkArray[i];
-
- 				var sourceDocId = inactiveLink.getSourceDocId();
- 				var targetDocId = inactiveLink.getTargetDocId();
-
- 				var source = this.nodesById[sourceDocId];
- 				var target = this.nodesById[targetDocId];
-
- 				var active = true;
- 				if( !source ){
- 					active = false;
- 				} else if( !target ){
- 					active = false;
- 				};
- 				
- 				if( active ){
- 					inactiveLink.source = source;
- 					inactiveLink.target = target;
- 					linksGoingActive.push(inactiveLink);
- 				};
- 			};
- 		};
- 		
- 		// Move links
- 		if( linksGoingInactive.length > 0 ){
- 			this._removeLinksFromActiveList(linksGoingInactive);
- 			this._addLinksToInactiveList(linksGoingInactive);
- 			updatedRequired = true;
- 		};
- 		if( linksGoingActive.length > 0 ){
- 			this._removeLinksFromInactiveList(linksGoingActive);
- 			this._addLinksToActiveList(linksGoingActive);
- 			updatedRequired = true;
- 		};
- 		
- 		// Update nodes monitored by intent view
- 		this.intentView.removeNodes(elementsRemoved);
- 		this.intentView.addNodes(elementsAdded);
- 		
- 		if( updatedRequired ){
- 			this._documentsUpdated(nodesUpdated, linksUpdated);
- 		};
+ 		this.elementGenerator.sourceModelUpdated(opts_);
  	},
  	
- 	_intentViewUpdated: function(changedNodes){
- 		// Segregate nodes and active links
- 		var nodes = [];
- 		var activeLinks = [];
- 		var restart = false;
- 		for(var i=0,e=changedNodes.length; i<e; ++i){
- 			var changedNode = changedNodes[i];
- 			
- 			// $n2.log(changedNode.n2_id+' sel:'+changedNode.n2_selected+' foc:'+changedNode.n2_hovered+' find:'+changedNode.n2_found);
- 			
- 			if( changedNode.isNode ){
- 				nodes.push(changedNode);
- 				
- 				if( changedNode.n2_found 
- 				 && !changedNode.forceFound ){
- 					restart = true;
- 					changedNode.forceFound = true;
-
- 				} else if( !changedNode.n2_found 
- 				 && changedNode.forceFound ){
- 					changedNode.forceFound = false;
- 				};
- 				
- 			} else if( changedNode.isLink 
- 			 && this.activeLinkArrayById[changedNode.n2_id] ){
- 				activeLinks.push(changedNode);
- 			};
- 		};
-
- 		// Update style on nodes
- 		var selectedNodes = this._getSvgElem().select('g.nodes').selectAll('.node')
- 			.data(nodes, function(node){ return node.n2_id; });
- 		this._adjustElementStyles(selectedNodes);
-
- 		// Update style on links
- 		var selectedLinks = this._getSvgElem().select('g.links').selectAll('.link')
- 			.data(activeLinks, function(link){ return link.linkId; });
- 		this._adjustElementStyles(selectedLinks);
- 	},
- 	
- 	_createNodeFromDocument: function(doc){
-		return new Node(doc);
- 	},
- 	
- 	_createLinksFromDocument: function(doc){
- 		var links = [];
- 		
- 		// Create links for references
- 		var refDocIds = {};
- 		var references = [];
- 		$n2.couchUtils.extractLinks(doc, references);
- 		for(var i=0,e=references.length; i<e; ++i){
- 			var ref = references[i];
- 			if( ref.doc ){
- 				refDocIds[ref.doc] = true;
- 			};
- 		};
- 		for(var refDocId in refDocIds){
- 			var link = new Link(doc, doc._id, refDocId);
- 			links.push(link);
- 		};
- 		
- 		return links;
- 	},
- 	
- 	_getLinksFromDocId: function(docId){
- 		var result = [];
- 		
- 		var activeLinkArray = this.activeLinkArrayById[docId];
- 		if( activeLinkArray ){
- 			result.push.apply(result, activeLinkArray);
- 		};
-
- 		var inactiveLinkArray = this.inactiveLinkArrayById[docId];
- 		if( inactiveLinkArray ){
- 			result.push.apply(result, inactiveLinkArray);
- 		};
- 		
- 		return result;
- 	},
- 	
- 	_removeLink: function(link){
- 		var docId = link.n2_id;
- 		
- 		var activeLinkArray = this.activeLinkArrayById[docId];
- 		if( activeLinkArray ){
- 			var index = activeLinkArray.indexOf(link);
- 			if( index >= 0 ){
- 				if( activeLinkArray.length < 2 ){
- 					delete this.activeLinkArrayById[docId];
- 				} else {
- 					activeLinkArray.splice(index,1);
- 				};
- 			};
- 		};
-
- 		var inactiveLinkArray = this.inactiveLinkArrayById[docId];
- 		if( inactiveLinkArray ){
- 			var index = inactiveLinkArray.indexOf(link);
- 			if( index >= 0 ){
- 				if( inactiveLinkArray.length < 2 ){
- 					delete this.inactiveLinkArrayById[docId];
- 				} else {
- 					inactiveLinkArray.splice(index,1);
- 				};
- 			};
- 		};
- 	},
- 	
- 	_addLinksToActiveList: function(links){
- 		for(var i=0,e=links.length; i<e; ++i){
- 			var link = links[i];
- 			var docId = link.n2_id;
- 			var activeLinkArray = this.activeLinkArrayById[docId];
- 			if( !activeLinkArray ){
- 				activeLinkArray = [];
- 				this.activeLinkArrayById[docId] = activeLinkArray;
- 			};
- 			var index = activeLinkArray.indexOf(link);
- 			if( index < 0 ){
- 				activeLinkArray.push(link);
- 			};
- 		};
- 	},
- 	
- 	_removeLinksFromActiveList: function(links){
- 		for(var i=0,e=links.length; i<e; ++i){
- 			var link = links[i];
- 			var docId = link.n2_id;
- 			var activeLinkArray = this.activeLinkArrayById[docId];
- 			var index = activeLinkArray.indexOf(link);
- 			if( index >= 0 ){
- 				if( activeLinkArray.length < 2 ){
- 					delete this.activeLinkArrayById[docId];
- 				} else {
- 					activeLinkArray.splice(index,1);
- 				};
- 			};
- 		};
- 	},
- 	
- 	_addLinksToInactiveList: function(links){
- 		for(var i=0,e=links.length; i<e; ++i){
- 			var link = links[i];
- 			var docId = link.n2_id;
- 			var inactiveLinkArray = this.inactiveLinkArrayById[docId];
- 			if( !inactiveLinkArray ){
- 				inactiveLinkArray = [];
- 				this.inactiveLinkArrayById[docId] = inactiveLinkArray;
- 			};
- 			var index = inactiveLinkArray.indexOf(link);
- 			if( index < 0 ){
- 				inactiveLinkArray.push(link);
- 			};
- 		};
- 	},
- 	
- 	_removeLinksFromInactiveList: function(links){
- 		for(var i=0,e=links.length; i<e; ++i){
- 			var link = links[i];
- 			var docId = link.n2_id;
- 			var inactiveLinkArray = this.inactiveLinkArrayById[docId];
- 			var index = inactiveLinkArray.indexOf(link);
- 			if( index >= 0 ){
- 				if( inactiveLinkArray.length < 2 ){
- 					delete this.inactiveLinkArrayById[docId];
- 				} else {
- 					inactiveLinkArray.splice(index,1);
- 				};
- 			};
- 		};
- 	},
- 	
- 	_initiateMouseClick: function(doc){
- 		var docId = doc._id;
+ 	_initiateMouseClick: function(elementData){
+ 		var elementId = elementData.id;
  		if( this.toggleSelection 
- 		 && this.lastDocIdSelected === docId ){
- 			this._dispatch({
- 				type: 'userUnselect'
- 			});
+ 		 && this.lastElementIdSelected === elementId ){
+ 			this.elementGenerator.selectOff(elementData);
+ 			this.lastElementIdSelected = null;
  		} else {
- 			this._dispatch({
- 				type: 'userSelect'
- 				,docId: doc._id
- 				,doc: doc
- 			});
+ 			this.elementGenerator.selectOn(elementData);
+ 			this.lastElementIdSelected = elementId;
  		};
  	},
  	
- 	_initiateMouseOver: function(doc){
- 		var docId = doc._id;
- 		if( docId !== this.currentMouseOver ){
+ 	_initiateMouseOver: function(elementData){
+ 		var elementId = elementData.id;
+ 		if( elementId !== this.currentMouseOver ){
  			// Focus Off before Focus On
  			if( this.currentMouseOver ){
- 				this._dispatch({
- 					type: 'userFocusOff'
- 					,docId: this.currentMouseOver
- 				});
- 				
+ 	 			this.elementGenerator.focusOff(this.currentMouseOver);
  				this.currentMouseOver = null;
  			};
  			
- 			this._dispatch({
- 				type: 'userFocusOn'
- 				,docId: docId
- 				,doc: doc
- 			});
- 			this.currentMouseOver = docId;
+ 			this.elementGenerator.focusOn(elementData);
+ 			this.currentMouseOver = elementId;
  		};
  	},
  	
- 	_initiateMouseOut: function(doc){
- 		var docId = doc._id;
- 		if( docId === this.currentMouseOver ){
- 			this._dispatch({
- 				type: 'userFocusOff'
- 				,docId: this.currentMouseOver
- 				,doc: doc
- 			});
- 			
- 			this.currentMouseOver = null;
+ 	_initiateMouseOut: function(elementData){
+ 		var elementId = elementData.id;
+ 		if( elementId === this.currentMouseOver ){
+ 			this.elementGenerator.focusOff(elementData);
+			this.currentMouseOver = null;
  		};
  	},
  	
  	_handleDispatch: function(m){
- 		if( 'selected' === m.type ){
- 			if( m.docId ){
- 	 			this.lastDocIdSelected = m.docId;
- 			} else if( m.docIds && m.docIds.length === 1 ){
- 	 			this.lastDocIdSelected = m.docIds[0];
- 			} else {
- 	 			this.lastDocIdSelected = null;
- 			};
- 			
- 		} else if( 'unselected' === m.type ){
- 			this.lastDocIdSelected = null;
- 			
- 		} else if( 'modelGetInfo' === m.type ){
+ 		if( 'modelGetInfo' === m.type ){
  			if( m.modelId === this.modelId ){
  				m.modelInfo = this._getModelInfo();
  			};
@@ -1125,7 +494,7 @@ var RadialCanvas = $n2.Class({
  		} else if( 'modelStateUpdated' === m.type ) {
  			if( this.sourceModelId === m.modelId ){
  				if( m.state ){
- 					this._sourceModelUpdated(m.state)
+ 					this._sourceModelUpdated(m.state);
  				};
  			};
  		};
