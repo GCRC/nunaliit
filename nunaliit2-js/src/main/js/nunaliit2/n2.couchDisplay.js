@@ -1101,10 +1101,13 @@ var Display = $n2.Class({
 		var _this = this;
 		
 		var $list = $('<div class="_n2DocumentListParent"></div>');
-		$container.append($list);
+		$container
+			.empty()
+			.append($list);
 		
 		for(var i=0,e=docs.length; i<e; ++i) {
 			var doc = docs[i];
+			var docId = doc._id;
 			
 			var $div = $('<div></div>')
 				.addClass('_n2DocumentListEntry')
@@ -1130,7 +1133,9 @@ var Display = $n2.Class({
 		var _this = this;
 		
 		var $list = $('<div class="_n2DocumentListParent"></div>');
-		$container.append($list);
+		$container
+			.empty()
+			.append($list);
 		
 		for(var i=0,e=docIds.length; i<e; ++i){
 			var docId = docIds[i];

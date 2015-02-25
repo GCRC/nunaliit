@@ -87,6 +87,7 @@ var RadialCanvas = $n2.Class({
 			,background: null
 			,styleRules: null
 			,toggleSelection: true
+			,elementGeneratorType: 'default'
 			,elementGenerator: null
 			,onSuccess: function(){}
 			,onError: function(err){}
@@ -122,17 +123,20 @@ var RadialCanvas = $n2.Class({
 
  		// Element generator
  		if( !this.elementGenerator ){
- 			// If not defined, use default one
- 	 		this.elementGenerator = new $n2.canvasElementGenerator.ElementGenerator({
- 				dispatchService: this.dispatchService
+ 			// If not defined, use the one specified by type
+ 	 		this.elementGenerator = $n2.canvasElementGenerator.CreateElementGenerator({
+ 	 			type: opts.elementGeneratorType
+ 	 			,config: opts.config
  	 		});
  		};
-		this.elementGenerator.setElementsChangedListener(function(added, updated, removed){
-			_this._elementsChanged(added, updated, removed);
-		});
-		this.elementGenerator.setIntentChangedListener(function(updated){
-			_this._intentChanged(updated);
-		});
+ 		if( this.elementGenerator ){
+			this.elementGenerator.setElementsChangedListener(function(added, updated, removed){
+				_this._elementsChanged(added, updated, removed);
+			});
+			this.elementGenerator.setIntentChangedListener(function(updated){
+				_this._intentChanged(updated);
+			});
+ 		};
  		
  		// Register to events
  		if( this.dispatchService ){
@@ -317,6 +321,34 @@ var RadialCanvas = $n2.Class({
  		var selectedLinks = this._getSvgElem().select('g.links').selectAll('.link')
  			.data(links, function(link){ return link.id; });
  		this._adjustElementStyles(selectedLinks);
+ 		
+ 		// Re-order the lines so that hovered are above selected, and selected are above
+ 		// regular
+ 		links = [];
+ 		for(var linkId in this.linksById){
+ 			var link = this.linksById[linkId];
+			links.push(link);
+ 		};
+ 		this._getSvgElem()
+ 			.select('g.links')
+ 			.selectAll('.link')
+			.data(links, function(link){ return link.id; })
+			.filter(function(l){return l.n2_selected;})
+			.each(function(l){
+	 			var svgLink = this;
+	 			svgLink.parentNode.appendChild(svgLink);
+	 		})
+			;
+ 		this._getSvgElem()
+			.select('g.links')
+			.selectAll('.link')
+			.data(links, function(link){ return link.id; })
+			.filter(function(l){return l.n2_hovered;})
+			.each(function(l){
+	 			var svgLink = this;
+	 			svgLink.parentNode.appendChild(svgLink);
+	 		})
+			;
 	},
  	
  	_documentsUpdated: function(updatedNodeData, updatedLinkData){

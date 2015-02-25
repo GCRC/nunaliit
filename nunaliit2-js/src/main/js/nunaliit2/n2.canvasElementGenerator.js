@@ -57,7 +57,7 @@ var
 // provided to the canvas are generally clusters.
  
 //--------------------------------------------------------------------------
-// doc 1---1 context 1---N fragment N---1 cluster
+// doc 1---1 context 1---N fragment N---N cluster
 //
 // doc
 //   must have the following attributes:
@@ -75,13 +75,14 @@ var
 //      n2_id : document identifier for the supporting document
 //      n2_doc : supporting document
 //      context : context associated with supporting document
-//      cluster : cluster, if any, associated with the fragment
+//      clusters : cluster map, by cluster id, for each cluster associated 
+//                 with the fragment
 //
 // cluster
 //   must have the following attributes:
 //      id : unique identifier for cluster
-//      fragments : list of fragments making up cluster
-var ElementGenerator = $n2.Class({
+//      fragments : map of fragments, by fragment id, making up cluster
+var ElementGenerator = $n2.Class('ElementGenerator', {
 	
 	elementsChanged: null,
 	
@@ -119,7 +120,7 @@ var ElementGenerator = $n2.Class({
 			dispatchService: opts.dispatchService
 		});
 		this.userIntentView.addListener(function(changedNodes){
-			_this._intentChangedNodes(changedNodes);
+			_this._intentChangedContexts(changedNodes);
 		});
 	},
 	
@@ -448,7 +449,7 @@ var ElementGenerator = $n2.Class({
 		for(var fragIndex=0; fragIndex<fragmentsRemoved.length; ++fragIndex){
 			var frag = fragmentsRemoved[fragIndex];
 			var fragId = frag.id;
-			frag.cluster = null;
+			frag.clusters = {};
 			if( this.fragmentById[fragId] ){
 				delete this.fragmentById[fragId];
 			};
@@ -457,6 +458,12 @@ var ElementGenerator = $n2.Class({
 			var frag = fragmentsAdded[fragIndex];
 			var fragId = frag.id;
 			this.fragmentById[fragId] = frag;
+		};
+		
+		// Reset clusters on fragments
+		for(var fragId in this.fragmentById){
+			var frag = this.fragmentById[fragId];
+			frag.clusters = {};
 		};
 		
 		var clusters = this._createClusters(this.fragmentById);
@@ -468,9 +475,9 @@ var ElementGenerator = $n2.Class({
 			
 			newClusterMap[clusterId] = cluster;
 			
-			for(var fragIndex=0; fragIndex<cluster.fragments.length; ++fragIndex){
-				var frag = cluster.fragments[fragIndex];
-				frag.cluster = cluster;
+			for(var fragId in cluster.fragments){
+				var frag = cluster.fragments[fragId];
+				frag.clusters[clusterId] = cluster;
 			};
 		};
 		
@@ -523,11 +530,12 @@ var ElementGenerator = $n2.Class({
 				var cluster = this.clusterById[frag.id];
 				if( !cluster ){
 					cluster = {
-						id: frag.id
+						id: fragId
 					};
 				};
 				
-				cluster.fragments = [ frag ];
+				cluster.fragments = {};
+				cluster.fragments[fragId] = frag;
 				cluster.n2_id = frag.context.n2_id;
 				cluster.n2_doc = frag.context.n2_doc;
 				cluster.n2_geometry = 'point';
@@ -546,13 +554,16 @@ var ElementGenerator = $n2.Class({
 			if( frag.isLink 
 			 && nodeMap[frag.sourceId] 
 			 && nodeMap[frag.targetId] ){
-				var cluster = this.clusterById[frag.id];
+				var clusterId = fragId;
+				var cluster = this.clusterById[clusterId];
 				if( !cluster ){
 					cluster = {
-						id: frag.id
+						id: clusterId
 					};
 				};
-				cluster.fragments = [frag];
+				
+				cluster.fragments = {};
+				cluster.fragments[frag.id] = frag;
 				cluster.n2_id = frag.context.n2_id;
 				cluster.n2_doc = frag.context.n2_doc;
 				cluster.n2_geometry = 'line';
@@ -560,7 +571,7 @@ var ElementGenerator = $n2.Class({
 				cluster.isNode = frag.isNode;
 				cluster.source = nodeMap[frag.sourceId];
 				cluster.target = nodeMap[frag.targetId];
-				
+
 				clusters.push(cluster);
 			};
 		};
@@ -587,10 +598,9 @@ var ElementGenerator = $n2.Class({
 		cluster.n2_found = false;
 		cluster.n2_intent = undefined;
 		
-		if( cluster.fragments 
-		 && cluster.fragments.length ){
-			for(var fi=0,fe=cluster.fragments.length; fi<fe; ++fi){
-				var fragment = cluster.fragments[fi];
+		if( cluster.fragments ){
+			for(var fragId in cluster.fragments){
+				var fragment = cluster.fragments[fragId];
 				var context = fragment.context;
 				
 				if( context.n2_selected ){
@@ -637,16 +647,18 @@ var ElementGenerator = $n2.Class({
 	 * This method is called by the UserIntentView to notify changes
 	 * in the user intent. The input array contains instances of context.
 	 */
-	_intentChangedNodes: function(changedContextNodes){
+	_intentChangedContexts: function(changedContextNodes){
 		// Accumulate all clusters from document contexts
 		var changedClusterMap = {};
 		for(var ci=0,ce=changedContextNodes.length; ci<ce; ++ci){
 			var context = changedContextNodes[ci];
 			for(var fi=0,fe=context.fragments.length; fi<fe; ++fi){
 				var fragment = context.fragments[fi];
-				var cluster = fragment.cluster;
-				if( cluster ){
-					changedClusterMap[cluster.id] = cluster;
+				if( fragment.clusters ){
+					for(var clusterId in fragment.clusters){
+						var cluster = fragment.clusters[clusterId];
+						changedClusterMap[clusterId] = cluster;
+					};
 				};
 			};
 		};
@@ -666,7 +678,8 @@ var ElementGenerator = $n2.Class({
 	},
 	
 	/*
-	 * This function returns all the documents associated with a cluster.
+	 * This function returns a map all the documents, indexed by document identifier,
+	 * associated with a cluster.
 	 */
 	_docsFromCluster: function(cluster_){
 		var cluster = cluster_;
@@ -675,13 +688,24 @@ var ElementGenerator = $n2.Class({
 		};
 
 		var docsById = {};
-		if( cluster ){
-			for(var fi=0,fe=cluster.fragments.length; fi<fe; ++fi){
-				var fragment = cluster.fragments[fi];
+		if( cluster && cluster.fragments ){
+			for(var fragId in cluster.fragments){
+				var fragment = cluster.fragments[fragId];
 				var context = fragment.context;
-				var doc = context.n2_doc;
-				var docId = doc._id;
-				docsById[docId] = doc;
+
+				var doc = null;
+				if( context ){
+					doc = context.n2_doc;
+				};
+				
+				var docId = null;
+				if( doc ){
+					docId = doc._id;
+				};
+
+				if( docId ){
+					docsById[docId] = doc;
+				};
 			};
 		};
 		
@@ -689,10 +713,183 @@ var ElementGenerator = $n2.Class({
 	}
 });
 
+//--------------------------------------------------------------------------
+var GroupLinks = $n2.Class('GroupLinks', ElementGenerator, {
+	initialize: function(opts_){
+		ElementGenerator.prototype.initialize.call(this, opts_);
+	},
+	
+	_createClusters: function(fragmentMap){
+		var clusters = [];
+		
+		var nodeMap = {};
+		var fragMap = {};
+		for(var fragId in fragmentMap){
+			var frag = fragmentMap[fragId];
+			
+			if( frag.isNode ){
+				var cluster = this.clusterById[frag.id];
+				if( !cluster ){
+					cluster = {
+						id: fragId
+					};
+				};
+				
+				cluster.fragments = {};
+				cluster.fragments[fragId] = frag;
+				cluster.n2_id = frag.context.n2_id;
+				cluster.n2_doc = frag.context.n2_doc;
+				cluster.n2_geometry = 'point';
+				cluster.isLink = frag.isLink;
+				cluster.isNode = frag.isNode;
+				
+				clusters.push(cluster);
+				
+				nodeMap[frag.context.n2_id] = cluster;
+				fragMap[frag.context.n2_id] = frag;
+			};
+		};
+
+		var linkClustersById = {};
+		for(var fragId in fragmentMap){
+			var frag = fragmentMap[fragId];
+			
+			if( frag.isLink 
+			 && nodeMap[frag.sourceId] 
+			 && nodeMap[frag.targetId] ){
+				var clusterId = 'link'+frag.sourceId+'|'+frag.targetId;
+				var cluster = linkClustersById[clusterId];
+				if( !cluster ){
+					cluster = this.clusterById[clusterId];
+					if( cluster ){
+						clusters.push(cluster);
+					};
+				};
+				if( !cluster ){
+					cluster = {
+						id: clusterId
+						,count: 0
+					};
+					clusters.push(cluster);
+				};
+				linkClustersById[clusterId] = cluster;
+				
+				if( !cluster.fragments ){
+					cluster.fragments = {};
+				};
+				
+				cluster.fragments[frag.id] = frag;
+				cluster.n2_id = frag.context.n2_id;
+				cluster.n2_doc = frag.context.n2_doc;
+				cluster.n2_geometry = 'line';
+				cluster.isLink = frag.isLink;
+				cluster.isNode = frag.isNode;
+				cluster.count = cluster.count + 1;
+				cluster.source = nodeMap[frag.sourceId];
+				cluster.target = nodeMap[frag.targetId];
+				
+				// Associate the document node fragments with this cluster
+				if( fragMap[frag.sourceId] ){
+					var nodeFrag = fragMap[frag.sourceId]; 
+					cluster.fragments[nodeFrag.id] = nodeFrag;
+				};
+				if( fragMap[frag.targetId] ){
+					var nodeFrag = fragMap[frag.targetId]; 
+					cluster.fragments[nodeFrag.id] = nodeFrag;
+				};
+			};
+		};
+
+		return clusters;
+	}
+});
+
+//--------------------------------------------------------------------------
+var elementGeneratorFactoriesByType = {};
+
+function AddElementGeneratorFactory(opts_){
+	var opts = $n2.extend({
+		type: null
+		,factoryFn: null
+	},opts_);
+	
+	var type = opts.type;
+	var factoryFn = opts.factoryFn;
+	
+	if( typeof type === 'string' 
+	 && typeof factoryFn === 'function' ){
+		elementGeneratorFactoriesByType[type] = factoryFn;
+		
+	} else {
+		$n2.log('Unable to register ElementGenerator factory: '+opts.type);
+	};
+};
+
+function CreateElementGenerator(opts_){
+	var opts = $n2.extend({
+		type: null
+		,config: null
+	},opts_);
+	
+	var type = opts.type;
+	var config = opts.config;
+	
+	var elementGenerator = null;
+	
+	// Default
+	if( 'default' === type 
+	 && config 
+	 && config.directory 
+	 && config.directory.dispatchService ){
+		elementGenerator = new ElementGenerator({
+			dispatchService: config.directory.dispatchService
+		});
+	};
+	
+	// GroupLinks
+	if( !elementGenerator 
+	 && 'GroupLinks' === type 
+	 && config 
+	 && config.directory 
+	 && config.directory.dispatchService ){
+		elementGenerator = new GroupLinks({
+			dispatchService: config.directory.dispatchService
+		});
+	};
+
+	// Custom
+	if( !elementGenerator 
+	 && elementGeneratorFactoriesByType[type]
+	 && config ){
+		var factoryFn = elementGeneratorFactoriesByType[type];
+		elementGenerator = factoryFn({
+			type: type
+			,config: config
+		});
+	};
+	
+	// Fallback on default
+	if( !elementGenerator 
+	 && config 
+	 && config.directory 
+	 && config.directory.dispatchService ){
+		
+		$n2.log('Type of ElementGenerator not recognized: '+type);
+		
+		elementGenerator = new ElementGenerator({
+			dispatchService: config.directory.dispatchService
+		});
+	};
+	
+	return elementGenerator;
+};
 
 //--------------------------------------------------------------------------
 $n2.canvasElementGenerator = {
-	ElementGenerator: ElementGenerator
+	CreateElementGenerator: CreateElementGenerator
+	,AddElementGeneratorFactory: AddElementGeneratorFactory
+	,ElementGenerator: ElementGenerator
+	,GroupLinks: GroupLinks
 };
 
 })(jQuery,nunaliit2);

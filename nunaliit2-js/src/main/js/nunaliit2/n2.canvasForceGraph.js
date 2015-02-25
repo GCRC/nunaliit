@@ -428,15 +428,11 @@ if( !$d ) return;
  	
  	modelId: null,
  	
- 	atlasDesign: null,
- 	
  	dispatchService: null,
 
  	showService: null,
  	
  	sourceModelId: null,
- 	
- 	moduleDisplay: null,
  	
  	svgRenderer: null,
  	
@@ -445,8 +441,6 @@ if( !$d ) return;
  	forceOptions: null,
  	
  	forceLayout: null,
- 	
- 	intentView: null,
  	
  	styleRules: null,
  	
@@ -459,8 +453,6 @@ if( !$d ) return;
  	elementGenerator: null,
  	
  	currentMouseOver: null,
-
- 	lastDocIdSelected: null,
  	
  	lastElementIdSelected: null,
  	
@@ -478,6 +470,7 @@ if( !$d ) return;
  			,popup: null
  			,styleRules: null
  			,toggleSelection: true
+			,elementGeneratorType: 'default'
 			,elementGenerator: null
  			,onSuccess: function(){}
  			,onError: function(err){}
@@ -487,7 +480,6 @@ if( !$d ) return;
  	
  		this.canvasId = opts.canvasId;
  		this.interactionId = opts.interactionId;
- 		this.moduleDisplay = opts.moduleDisplay;
  		this.sourceModelId = opts.sourceModelId;
  		this.background = opts.background;
  		this.toggleSelection = opts.toggleSelection;
@@ -509,8 +501,6 @@ if( !$d ) return;
  		
  		var config = opts.config;
  		if( config ){
- 			this.atlasDesign = config.atlasDesign;
- 			
  			if( config.directory ){
  				this.dispatchService = config.directory.dispatchService;
  				this.showService = config.directory.showService;
@@ -547,23 +537,24 @@ if( !$d ) return;
  		this.nodesById = {};
  		this.linksById = {};
  		this.currentMouseOver = null;
- 		this.lastDocIdSelected = null;
- 		this.focusInfo = null;
- 		this.selectInfo = null;
+ 		this.lastElementIdSelected = null;
 
  		// Element generator
  		if( !this.elementGenerator ){
- 			// If not defined, use default one
- 	 		this.elementGenerator = new $n2.canvasElementGenerator.ElementGenerator({
- 				dispatchService: this.dispatchService
+ 			// If not defined, use the one specified by type
+ 	 		this.elementGenerator = $n2.canvasElementGenerator.CreateElementGenerator({
+ 	 			type: opts.elementGeneratorType
+ 	 			,config: opts.config
  	 		});
  		};
-		this.elementGenerator.setElementsChangedListener(function(added, updated, removed){
-			_this._elementsChanged(added, updated, removed);
-		});
-		this.elementGenerator.setIntentChangedListener(function(updated){
-			_this._intentChanged(updated);
-		});
+ 		if( this.elementGenerator ){
+			this.elementGenerator.setElementsChangedListener(function(added, updated, removed){
+				_this._elementsChanged(added, updated, removed);
+			});
+			this.elementGenerator.setIntentChangedListener(function(updated){
+				_this._intentChanged(updated);
+			});
+ 		};
  		
  		// Register to events
  		if( this.dispatchService ){
@@ -594,14 +585,6 @@ if( !$d ) return;
  			});
  		
  		this.createGraph();
- 		
- 		// Create user intent view
- 		this.intentView = new $n2.userIntentView.IntentView({
- 			dispatchService: this.dispatchService
- 		});
- 		this.intentView.addListener(function(changedNodes){
- 			_this._intentViewUpdated(changedNodes);
- 		});
  		
  		opts.onSuccess();
 
@@ -733,7 +716,7 @@ if( !$d ) return;
 	_intentChanged: function(changedNodes){
  		// Segregate nodes and active links
  		var nodes = [];
- 		var activeLinks = [];
+ 		var links = [];
  		var restart = false;
  		for(var i=0,e=changedNodes.length; i<e; ++i){
  			var changedNode = changedNodes[i];
@@ -753,9 +736,8 @@ if( !$d ) return;
  					changedNode.forceFound = false;
  				};
  				
- 			} else if( changedNode.isLink 
- 			 && this.linksById[changedNode.n2_id] ){
- 				activeLinks.push(changedNode);
+ 			} else if( changedNode.isLink ){
+ 				links.push(changedNode);
  			};
  		};
 
@@ -766,7 +748,7 @@ if( !$d ) return;
 
  		// Update style on links
  		var selectedLinks = this._getSvgElem().select('g.links').selectAll('.link')
- 			.data(activeLinks, function(link){ return link.id; });
+ 			.data(links, function(link){ return link.id; });
  		this._adjustElementStyles(selectedLinks);
  		
  		if( restart ){
