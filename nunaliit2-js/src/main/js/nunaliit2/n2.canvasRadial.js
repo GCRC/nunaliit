@@ -68,6 +68,8 @@ var RadialCanvas = $n2.Class({
 	styleRules: null,
 
 	nodesById: null,
+	
+	sortedNodes: null,
 
 	linksById: null,
 	
@@ -115,6 +117,7 @@ var RadialCanvas = $n2.Class({
 		};
 
  		this.nodesById = {};
+ 		this.sortedNodes = [];
  		this.linksById = {};
  		this.currentMouseOver = null;
  		this.lastElementIdSelected = null;
@@ -354,14 +357,14 @@ var RadialCanvas = $n2.Class({
  	_documentsUpdated: function(updatedNodeData, updatedLinkData){
  		var _this = this;
  		
- 		var nodes = [];
+ 		this.sortedNodes = [];
  		for(var id in this.nodesById){
  			var node = this.nodesById[id];
- 			nodes.push(node);
+ 			this.sortedNodes.push(node);
  		};
  		
  		// Sort the nodes
- 		nodes.sort(function(a,b){
+ 		this.sortedNodes.sort(function(a,b){
  			if( a.n2_id < b.n2_id ){
  				return -1;
  			};
@@ -372,12 +375,14 @@ var RadialCanvas = $n2.Class({
  		});
  		
  		// Assign x and y
- 		if( nodes.length > 0 ){
- 	 		var xDelta = 360 / nodes.length;
+ 		if( this.sortedNodes.length > 0 ){
+ 	 		var xDelta = 360 / this.sortedNodes.length;
  	 		var x = 0;
- 	 		for(var i=0,e=nodes.length; i<e; ++i){
- 	 			nodes[i].x = x;
- 	 			nodes[i].y = this.radius;
+ 	 		for(var i=0,e=this.sortedNodes.length; i<e; ++i){
+ 	 			this.sortedNodes[i].orig_x = x;
+ 	 			this.sortedNodes[i].orig_y = this.radius;
+ 	 			this.sortedNodes[i].x = x;
+ 	 			this.sortedNodes[i].y = this.radius;
  	 			
  	 			x += xDelta;
  	 		};
@@ -390,7 +395,7 @@ var RadialCanvas = $n2.Class({
  		};
 
  		var selectedNodes = this._getSvgElem().select('g.nodes').selectAll('.node')
- 			.data(nodes, function(node){ return node.id; })
+ 			.data(this.sortedNodes, function(node){ return node.id; })
  			;
 
  		// Animate the position of the nodes around the circle
@@ -421,6 +426,7 @@ var RadialCanvas = $n2.Class({
  			})
  			.on('mouseover', function(n,i){
  				_this._initiateMouseOver(n);
+ 				_this._magnifyElement(n);
  			})
  			.on('mouseout', function(n,i){
  				_this._initiateMouseOut(n);
@@ -487,6 +493,103 @@ var RadialCanvas = $n2.Class({
  	
  	_sourceModelUpdated: function(opts_){
  		this.elementGenerator.sourceModelUpdated(opts_);
+ 	},
+ 	
+ 	_magnifyElement: function(magnifiedNode){
+ 		var _this = this;
+ 		
+ 		var magnifiedIndex = undefined;
+ 		for(var i=0,e=this.sortedNodes.length; i<e; ++i){
+ 			var node = this.sortedNodes[i];
+ 			if( node === magnifiedNode ){
+ 				node.magnified = true;
+ 				magnifiedIndex = i;
+ 			} else {
+ 				node.magnified = false;
+ 			};
+ 		};
+ 		
+ 		var magAngle = 5;
+ 		
+ 		if( this.sortedNodes.length < 1 ){
+ 			return;
+ 		} else if( (360/this.sortedNodes.length) > magAngle ){
+ 			return;
+ 		};
+ 		
+ 		// Main
+ 		var angle = this.sortedNodes[magnifiedIndex].orig_x;
+ 		this.sortedNodes[magnifiedIndex].x = angle;
+
+ 		// Previous
+ 		var index = getIndex(magnifiedIndex,-1);
+ 		this.sortedNodes[index].x = getAngle(angle,-1 * magAngle);
+ 		
+ 		// Prior
+ 		index = getIndex(magnifiedIndex,-2);
+ 		this.sortedNodes[index].x = getAngle(angle,-1.5 * magAngle);
+
+ 		// Following
+ 		index = getIndex(magnifiedIndex,1);
+ 		this.sortedNodes[index].x = getAngle(angle,1 * magAngle);
+
+ 		// After
+ 		index = getIndex(magnifiedIndex,2);
+ 		this.sortedNodes[index].x = getAngle(angle,1.5 * magAngle);
+ 		
+ 		// Assign all other angles
+ 		angle = this.sortedNodes[index].x;
+ 		var inc = (360-(3*magAngle))/this.sortedNodes.length;
+ 		for(var i=0,e=this.sortedNodes.length-5; i<e; ++i){
+ 			index = getIndex(index, 1);
+ 			angle = getAngle(angle, inc);
+ 	 		this.sortedNodes[index].x = angle;
+ 		};
+
+		// Animate the position of the nodes around the circle
+ 		this._getSvgElem().select('g.nodes').selectAll('.node')
+			.data(this.sortedNodes, function(node){ return node.id; })
+			.transition()
+			.attr("transform", function(d) { 
+				return "rotate(" + (d.x - 90) 
+					+ ")translate(" + (d.y + 8) + ",0)" 
+					+ (d.x < 180 ? "" : "rotate(180)"); 
+			})
+ 			.style("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
+			;
+
+ 		var links = [];
+ 		for(var linkId in this.linksById){
+ 			var link = this.linksById[linkId];
+ 			links.push(link);
+ 		};
+ 		this._getSvgElem().select('g.links').selectAll('.link')
+			.data(links, function(link){ return link.id; })
+			.transition()
+			.attr('d',function(link){ return _this.line([link.source,{x:0,y:0},link.target]); })
+			;
+ 		
+ 		function getIndex(i,d){
+ 			var r = i + d;
+ 			if( r < 0 ){
+ 				r += _this.sortedNodes.length;
+ 			};
+ 			if( r >= _this.sortedNodes.length ){
+ 				r -= _this.sortedNodes.length;
+ 			};
+ 			return r;
+ 		};
+
+ 		function getAngle(i,d){
+ 			var r = i + d;
+ 			if( r < 0 ){
+ 				r += 360;
+ 			};
+ 			if( r >= 360 ){
+ 				r -= 360;
+ 			};
+ 			return r;
+ 		};
  	},
  	
  	_initiateMouseClick: function(elementData){
