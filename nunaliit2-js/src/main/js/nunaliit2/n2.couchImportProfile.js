@@ -1626,6 +1626,106 @@ var ImportProfileOperationLongLat = $n2.Class(ImportProfileOperation, {
 addOperationPattern(OPERATION_LONGLAT, ImportProfileOperationLongLat);
 
 //=========================================================================
+var OPERATION_REF = /^\s*reference\(([^,]*),\s*'([^']*)'\s*\)\s*$/;
+
+var ImportProfileOperationReference = $n2.Class(ImportProfileOperation, {
+	
+	operationString: null,
+	
+	refKey: null,
+	
+	targetSelector: null,
+	
+	initialize: function(operationString){
+		ImportProfileOperation.prototype.initialize.call(this);
+		
+		this.operationString = operationString;
+		
+		var matcher = OPERATION_REF.exec(operationString);
+		if( !matcher ) {
+			throw 'Invalid operation string for ImportProfileOperationReference: '+operationString;
+		};
+		
+		this.targetSelector = $n2.objectSelector.parseSelector(matcher[1]);
+		this.refKey = matcher[2];
+	},
+	
+	reportCopyOperations: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,importData: null
+			,allPropertyNames: null
+		},opts_);
+		
+		var copyOperations = [];
+
+		if( opts.allPropertyNames.indexOf(this.refKey) >= 0 ){
+			var refId = opts.importData[this.refKey];
+			
+			var importValue = undefined;
+			if( refId ){
+				importValue = {
+					nunaliit_type: 'reference'
+					,doc: refId
+				};
+			};
+			
+			var targetValue = this.targetSelector.getValue(opts.doc);
+			
+			var isInconsistent = false;
+			if( importValue === targetValue ){
+				// takes care of both undefined
+			} else if( importValue 
+			 && targetValue 
+			 && importValue.doc === targetValue.doc ){
+				// Consistent
+			} else {
+				isInconsistent = true;
+			};
+			
+			copyOperations.push({
+				propertyNames: [this.refKey]
+				,lastImportValue: importValue
+				,targetSelector: this.targetSelector
+				,targetValue: targetValue
+				,isInconsistent: isInconsistent
+			});
+		};
+
+		return copyOperations;
+	},
+	
+	performCopyOperation: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,importData: null
+			,copyOperation: null
+		},opts_);
+		
+		var doc = opts.doc;
+		
+		var refId = opts.importData[this.refKey];
+		
+		var importValue = undefined;
+		if( refId ){
+			importValue = {
+				nunaliit_type: 'reference'
+				,doc: refId
+			};
+		};
+
+		if( typeof importValue === 'undefined' ){
+			// Must delete
+			this.targetSelector.removeValue(doc);
+		} else {
+			this.targetSelector.setValue(doc, importValue, true);
+		};
+	}
+});
+
+addOperationPattern(OPERATION_REF, ImportProfileOperationReference);
+
+//=========================================================================
 var ImportEntry = $n2.Class({
 	initialize: function(){
 		
