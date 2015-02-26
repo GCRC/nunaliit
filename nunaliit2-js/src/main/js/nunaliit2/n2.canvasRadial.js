@@ -501,6 +501,9 @@ var RadialCanvas = $n2.Class({
  		var magnifiedIndex = undefined;
  		for(var i=0,e=this.sortedNodes.length; i<e; ++i){
  			var node = this.sortedNodes[i];
+ 			
+ 			node.deltaX = 0;
+ 			
  			if( node === magnifiedNode ){
  				node.magnified = true;
  				magnifiedIndex = i;
@@ -509,46 +512,70 @@ var RadialCanvas = $n2.Class({
  			};
  		};
  		
- 		var magAngle = 5;
+ 		var magScope = 15;
+ 		var magFocus = 4;
  		
  		if( this.sortedNodes.length < 1 ){
  			return;
- 		} else if( (360/this.sortedNodes.length) > magAngle ){
+ 		} else if( (360/this.sortedNodes.length) > magFocus ){
  			return;
  		};
  		
  		// Main
  		var angle = this.sortedNodes[magnifiedIndex].orig_x;
- 		this.sortedNodes[magnifiedIndex].x = angle;
 
- 		// Previous
- 		var index = getIndex(magnifiedIndex,-1);
- 		this.sortedNodes[index].x = getAngle(angle,-1 * magAngle);
- 		
- 		// Prior
- 		index = getIndex(magnifiedIndex,-2);
- 		this.sortedNodes[index].x = getAngle(angle,-1.5 * magAngle);
-
- 		// Following
- 		index = getIndex(magnifiedIndex,1);
- 		this.sortedNodes[index].x = getAngle(angle,1 * magAngle);
-
- 		// After
- 		index = getIndex(magnifiedIndex,2);
- 		this.sortedNodes[index].x = getAngle(angle,1.5 * magAngle);
- 		
- 		// Assign all other angles
- 		angle = this.sortedNodes[index].x;
- 		var inc = (360-(3*magAngle))/this.sortedNodes.length;
- 		for(var i=0,e=this.sortedNodes.length-5; i<e; ++i){
- 			index = getIndex(index, 1);
- 			angle = getAngle(angle, inc);
- 	 		this.sortedNodes[index].x = angle;
+ 		var done = false;
+ 		var indexDelta = 1;
+ 		var rate = 1-(magFocus/magScope);
+ 		var distanceToTarget = magScope * rate;
+ 		var kill = this.sortedNodes.length / 3;
+ 		while( !done ){
+ 			var delta = magScope - distanceToTarget;
+ 			
+ 			var index = getIndex(magnifiedIndex,indexDelta);
+ 			var node = this.sortedNodes[index];
+ 			var newX = getAngle(angle + delta);
+ 			node.deltaX = newX - node.orig_x;
+ 			
+			if( getAngleDelta(node.deltaX) < 0.01 ){
+				done = true;
+			};
+ 			
+ 			index = getIndex(magnifiedIndex,0-indexDelta);
+ 			node = this.sortedNodes[index];
+ 			var newX = getAngle(angle - delta);
+ 			node.deltaX = newX - node.orig_x;
+ 			
+ 			distanceToTarget = distanceToTarget * rate;
+ 			
+ 			++indexDelta;
+ 			--kill;
+ 			
+ 			if( kill < 0 ){
+ 				done = true;
+ 			};
  		};
 
 		// Animate the position of the nodes around the circle
  		this._getSvgElem().select('g.nodes').selectAll('.node')
 			.data(this.sortedNodes, function(node){ return node.id; })
+			.filter(function(d){
+				var newX = d.orig_x + d.deltaX;
+				var diffX = getAngle(newX - d.x);
+				
+				d.transitionNeeded = false;
+				if( diffX > 0.01 ){
+					d.transitionNeeded = true;
+				} else if( diffX < 0.01 ) {
+					d.transitionNeeded = true;
+				};
+				
+				if( d.transitionNeeded ){
+					d.x = newX;
+				};
+				
+				return d.transitionNeeded;
+			})
 			.transition()
 			.attr("transform", function(d) { 
 				return "rotate(" + (d.x - 90) 
@@ -565,27 +592,41 @@ var RadialCanvas = $n2.Class({
  		};
  		this._getSvgElem().select('g.links').selectAll('.link')
 			.data(links, function(link){ return link.id; })
+			.filter(function(link){
+				if( link.source.transitionNeeded ) return true;
+				if( link.target.transitionNeeded ) return true;
+				return false;
+			})
 			.transition()
 			.attr('d',function(link){ return _this.line([link.source,{x:0,y:0},link.target]); })
 			;
  		
  		function getIndex(i,d){
  			var r = i + d;
- 			if( r < 0 ){
+ 			while( r < 0 ){
  				r += _this.sortedNodes.length;
  			};
- 			if( r >= _this.sortedNodes.length ){
+ 			while( r >= _this.sortedNodes.length ){
  				r -= _this.sortedNodes.length;
  			};
  			return r;
  		};
 
- 		function getAngle(i,d){
- 			var r = i + d;
+ 		function getAngle(r){
  			if( r < 0 ){
  				r += 360;
  			};
  			if( r >= 360 ){
+ 				r -= 360;
+ 			};
+ 			return r;
+ 		};
+
+ 		function getAngleDelta(r){
+ 			if( r < -180 ){
+ 				r += 360;
+ 			};
+ 			if( r > 180 ){
  				r -= 360;
  			};
  			return r;
