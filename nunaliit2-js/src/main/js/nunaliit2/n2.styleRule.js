@@ -55,6 +55,7 @@ var svgSymbolNames = {
 			,line: false
 			,path: true
 			,text: false
+			,g: true
 		}
 	}
 	,'fill-opacity': {
@@ -64,6 +65,7 @@ var svgSymbolNames = {
 			,line: false
 			,path: true
 			,text: false
+			,g: true
 		}
 	}
 	,'stroke': {
@@ -73,6 +75,7 @@ var svgSymbolNames = {
 			,line: true
 			,path: true
 			,text: true
+			,g: true
 		}
 	}
 	,'stroke-width': {
@@ -82,6 +85,7 @@ var svgSymbolNames = {
 			,line: true
 			,path: true
 			,text: false
+			,g: true
 		}
 	}
 	,'stroke-opacity': {
@@ -91,6 +95,7 @@ var svgSymbolNames = {
 			,line: true
 			,path: true
 			,text: true
+			,g: true
 		}
 	}
 	,'stroke-linecap': {
@@ -100,6 +105,7 @@ var svgSymbolNames = {
 			,line: true
 			,path: true
 			,text: false
+			,g: true
 		}
 	}
 	,'r': {
@@ -109,6 +115,7 @@ var svgSymbolNames = {
 			,line: false
 			,path: false
 			,text: false
+			,g: true
 		}
 	}
 	,'pointer-events': {
@@ -118,6 +125,7 @@ var svgSymbolNames = {
 			,line: true
 			,path: true
 			,text: true
+			,g: true
 		}
 	}
 	,'cursor': {
@@ -127,6 +135,7 @@ var svgSymbolNames = {
 			,line: true
 			,path: true
 			,text: true
+			,g: true
 		}
 	}
 	,'label': {
@@ -135,6 +144,7 @@ var svgSymbolNames = {
 			,line: false
 			,path: false
 			,text: true
+			,g: true
 		}
 	}
 };

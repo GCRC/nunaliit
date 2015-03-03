@@ -202,6 +202,9 @@ var RadialCanvas = $n2.Class({
 
 		$rootGroup.append('g')
  			.attr('class','nodes');
+
+		$rootGroup.append('g')
+ 			.attr('class','labels');
  		
  		this.resizeGraph();
  	},
@@ -320,6 +323,10 @@ var RadialCanvas = $n2.Class({
  			.data(nodes, function(node){ return node.id; });
  		this._adjustElementStyles(selectedNodes);
 
+ 		var selectedLabels = this._getSvgElem().select('g.labels').selectAll('.label')
+			.data(nodes, function(node){ return node.id; });
+		this._adjustElementStyles(selectedLabels);
+
  		// Update style on links
  		var selectedLinks = this._getSvgElem().select('g.links').selectAll('.link')
  			.data(links, function(link){ return link.id; });
@@ -398,8 +405,20 @@ var RadialCanvas = $n2.Class({
  			.data(this.sortedNodes, function(node){ return node.id; })
  			;
 
+ 		var selectedLabels = this._getSvgElem().select('g.labels').selectAll('.label')
+ 			.data(this.sortedNodes, function(node){ return node.id; })
+ 			;
+
  		// Animate the position of the nodes around the circle
  		selectedNodes.transition()
+		.attr("transform", function(d) { 
+			return "rotate(" + (d.x - 90) 
+				+ ")translate(" + d.y + ",0)"; 
+		})
+		;
+ 		
+ 		// Animate the position of the labels around the circle
+ 		selectedLabels.transition()
 			.attr("transform", function(d) { 
 				return "rotate(" + (d.x - 90) 
 					+ ")translate(" + (d.y + 8) + ",0)" 
@@ -409,14 +428,39 @@ var RadialCanvas = $n2.Class({
 			;
 
  		var createdNodes = selectedNodes.enter()
+ 			.append('circle')
+ 			.attr('class','node')
+ 			.attr("r", 3)
+ 			.attr("transform", function(d) { 
+ 				return "rotate(" + (d.x - 90) + ")translate(" + d.y + ",0)"; 
+ 			})
+ 			.on('click', function(n,i){
+ 				_this._initiateMouseClick(n);
+ 			})
+ 			.on('mouseover', function(n,i){
+ 				_this._initiateMouseOver(n);
+ 				_this._magnifyElement(n);
+ 			})
+ 			.on('mouseout', function(n,i){
+ 				_this._initiateMouseOut(n);
+ 			})
+ 			;
+ 		this._adjustElementStyles(createdNodes);
+
+ 		var createdLabels = selectedLabels.enter()
  			.append(function(){
  				var args = arguments;
  				return this.ownerDocument.createElementNS(this.namespaceURI, "text");
  			})
- 			.attr('class','node')
+ 			.attr('class','label')
  			.attr("dy", ".31em")
- 			.attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + (d.y + 8) + ",0)" + (d.x < 180 ? "" : "rotate(180)"); })
- 			.style("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
+ 			.attr("transform", function(d) { 
+ 				return "rotate(" + (d.x - 90) + ")translate(" + (d.y + 8) + ",0)" 
+ 					+ (d.x < 180 ? "" : "rotate(180)"); 
+ 			})
+ 			.style("text-anchor", function(d) { 
+ 				return d.x < 180 ? "start" : "end"; 
+ 			})
  			.text(function(d) { 
  				//return d.key; 
  				return "";
@@ -432,15 +476,23 @@ var RadialCanvas = $n2.Class({
  				_this._initiateMouseOut(n);
  			})
  			;
- 		this._adjustElementStyles(createdNodes);
+ 		this._adjustElementStyles(createdLabels);
  		
  		selectedNodes.exit()
  			.remove();
+
+ 		selectedLabels.exit()
+			.remove();
  		
  		var updatedNodes = this._getSvgElem().select('g.nodes').selectAll('.node')
  			.data(updatedNodeData, function(node){ return node.id; })
  			;
  		this._adjustElementStyles(updatedNodes);
+
+ 		var updatedLabels = this._getSvgElem().select('g.labels').selectAll('.label')
+			.data(updatedNodeData, function(node){ return node.id; })
+			;
+		this._adjustElementStyles(updatedLabels);
 
  		var selectedLinks = this._getSvgElem().select('g.links').selectAll('.link')
  			.data(links, function(link){ return link.id; })
@@ -558,6 +610,33 @@ var RadialCanvas = $n2.Class({
 
 		// Animate the position of the nodes around the circle
  		this._getSvgElem().select('g.nodes').selectAll('.node')
+			.data(this.sortedNodes, function(node){ return node.id; })
+			.filter(function(d){
+				var newX = d.orig_x + d.deltaX;
+				var diffX = getAngle(newX - d.x);
+				
+				d.transitionNeeded = false;
+				if( diffX > 0.01 ){
+					d.transitionNeeded = true;
+				} else if( diffX < 0.01 ) {
+					d.transitionNeeded = true;
+				};
+				
+				if( d.transitionNeeded ){
+					d.x = newX;
+				};
+				
+				return d.transitionNeeded;
+			})
+			.transition()
+			.attr("transform", function(d) { 
+				return "rotate(" + (d.x - 90) 
+					+ ")translate(" + d.y + ",0)"; 
+			})
+			;
+
+		// Animate the position of the labels around the circle
+ 		this._getSvgElem().select('g.labels').selectAll('.label')
 			.data(this.sortedNodes, function(node){ return node.id; })
 			.filter(function(d){
 				var newX = d.orig_x + d.deltaX;
