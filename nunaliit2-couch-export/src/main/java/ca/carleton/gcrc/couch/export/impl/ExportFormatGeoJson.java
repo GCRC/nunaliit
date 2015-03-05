@@ -74,54 +74,62 @@ public class ExportFormatGeoJson implements ExportFormat {
 			Document doc = retrieval.getNext();
 			if( null != doc 
 			 && docFilter.accepts(doc) ) {
-				JSONObject jsonDoc = doc.getJSONObject();
-				
-				String schemaName = jsonDoc.optString("nunaliit_schema");
-				if( null != schemaName ) {
-					boolean containsGeometry = JSONSupport.containsKey(jsonDoc, "nunaliit_geom");
-					SchemaExportInfo exportInfo = schemaCache.getExportInfo(schemaName);
-					
-					if( null != exportInfo || containsGeometry ){
-						jsonWriter.object();
-						
-						jsonWriter.key("type");
-						jsonWriter.value("Feature");
-
-						jsonWriter.key("id");
-						jsonWriter.value(doc.getId());
-						
-						jsonWriter.key("properties");
-						jsonWriter.object();
-						
-						if( null != exportInfo ){
-							for(SchemaExportProperty exportProperty : exportInfo.getProperties()){
-								Object value = exportProperty.select(jsonDoc);
-								if( null != value ) {
-									jsonWriter.key(exportProperty.getLabel());
-									jsonWriter.value(value);
-								}
-							}
-						}
-						
-						jsonWriter.endObject(); // end properties
-						
-						if( containsGeometry ) {
-							JSONObject jsonGeom = jsonDoc.getJSONObject("nunaliit_geom");
-							String wkt = jsonGeom.optString("wkt", null);
-							if( null != wkt ){
-								Geometry geometry = wktParser.parseWkt(wkt); 
-								jsonWriter.key("geometry");
-								geoWriter.writeGeometry(jsonWriter, geometry);
-							}
-						}
-						
-						jsonWriter.endObject(); // end feature
-					}
+				try{
+					outputDocument(jsonWriter, doc, geoWriter, wktParser);
+				} catch(Exception e) {
+					throw new Exception("Error exporting document: "+doc.getId(), e);
 				}
 			}
 		}
 		
 		jsonWriter.endArray(); // end feature collection
 		jsonWriter.endObject(); // end wrapping object
+	}
+
+	private void outputDocument(JSONWriter jsonWriter, Document doc, GeoJsonGeometryWriter geoWriter, WktParser wktParser) throws Exception {
+		JSONObject jsonDoc = doc.getJSONObject();
+		
+		String schemaName = jsonDoc.optString("nunaliit_schema");
+		if( null != schemaName ) {
+			boolean containsGeometry = JSONSupport.containsKey(jsonDoc, "nunaliit_geom");
+			SchemaExportInfo exportInfo = schemaCache.getExportInfo(schemaName);
+			
+			if( null != exportInfo || containsGeometry ){
+				jsonWriter.object();
+				
+				jsonWriter.key("type");
+				jsonWriter.value("Feature");
+	
+				jsonWriter.key("id");
+				jsonWriter.value(doc.getId());
+				
+				jsonWriter.key("properties");
+				jsonWriter.object();
+				
+				if( null != exportInfo ){
+					for(SchemaExportProperty exportProperty : exportInfo.getProperties()){
+						Object value = exportProperty.select(jsonDoc);
+						if( null != value ) {
+							jsonWriter.key(exportProperty.getLabel());
+							jsonWriter.value(value);
+						}
+					}
+				}
+				
+				jsonWriter.endObject(); // end properties
+				
+				if( containsGeometry ) {
+					JSONObject jsonGeom = jsonDoc.getJSONObject("nunaliit_geom");
+					String wkt = jsonGeom.optString("wkt", null);
+					if( null != wkt ){
+						Geometry geometry = wktParser.parseWkt(wkt); 
+						jsonWriter.key("geometry");
+						geoWriter.writeGeometry(jsonWriter, geometry);
+					}
+				}
+				
+				jsonWriter.endObject(); // end feature
+			}
+		}
 	}
 }

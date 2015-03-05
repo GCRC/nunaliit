@@ -137,6 +137,10 @@ public class DbRestoreProcess {
 			try {
 				Document doc = DocumentFile.createDocument(entry);
 				String docId = doc.getId();
+				
+				if( null == docId ){
+					throw new Exception("Document does not specify an identifier");
+				};
 
 				boolean shouldBeIncluded = false;
 				if( allDocs ) {
