@@ -272,8 +272,10 @@ var RadialCanvas = $n2.Class({
 			var added = addedElements[i];
 			
 			if( added.isNode ){
+				added.n2_geometry = 'point';
 				this.nodesById[ added.id ] = added;
 			} else if( added.isLink ){
+				added.n2_geometry = 'line';
 				this.linksById[ added.id ] = added;
 			};
 		};
@@ -285,8 +287,10 @@ var RadialCanvas = $n2.Class({
 			var updated = updatedElements[i];
 			
 			if( updated.isNode ){
+				updated.n2_geometry = 'point';
 				updatedNodes.push(updated);
 			} else if( updated.isLink ){
+				updated.n2_geometry = 'line';
 				updatedLinks.push(updated);
 			};
 		};
