@@ -589,7 +589,7 @@ var RadialTreeCanvas = $n2.Class({
  			})
  			.on('mouseover', function(n,i){
  				_this._initiateMouseOver(n);
- 				_this._magnifyElement(n);
+// 				_this._magnifyElement(n);
  			})
  			.on('mouseout', function(n,i){
  				_this._initiateMouseOut(n);
@@ -624,7 +624,7 @@ var RadialTreeCanvas = $n2.Class({
  		var createdLinks = selectedLinks.enter()
  			.append('path')
  			.attr('class','link')
- 			.attr('d',function(link){ return _this.line([link.source,{x:0,y:0},link.target]); })
+ 			.attr('d',function(link){ return _this.line(link.path); })
  			.on('click', function(n,i){
  				_this._initiateMouseClick(n);
  			})

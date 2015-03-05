@@ -136,6 +136,73 @@ var CouchLayerDbSelector = $n2.Class(DbSelector, {
 });
 
 //--------------------------------------------------------------------------
+var CouchSchemaDbSelector = $n2.Class(DbSelector, {
+	schemaName: null,
+	
+	name: null,
+	
+	atlasDesign: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			schemaName: null
+			,name: null
+			,atlasDesign: null
+		}, opts_);
+
+		DbSelector.prototype.initialize.call(this, opts_);
+		
+		this.schemaName = opts.schemaName;
+		this.name = opts.name;
+		this.atlasDesign = opts.atlasDesign;
+	},
+	
+	load: function(opts_){
+		var opts = $n2.extend({
+			onSuccess: function(docs){}
+			,onError: function(err){}
+		}, opts_);
+		
+		var _this = this;
+		
+		this.atlasDesign.queryView({
+			viewName: 'nunaliit-schema'
+			,include_docs: true
+			,startkey: this.schemaName
+			,endkey: this.schemaName
+			,onSuccess: function(rows){
+				var docs = [];
+				for(var i=0,e=rows.length; i<e; ++i){
+					var doc = rows[i].doc;
+					if( doc && _this.isDocValid(doc) ){
+						docs.push(doc);
+					};
+				};
+				opts.onSuccess(docs);
+			}
+			,onError: opts.onError
+		});
+	},
+	
+	isDocValid: function(doc){
+		if( doc 
+		 && this.schemaName === doc.nunaliit_schema ){
+			return true;
+		};
+		
+		return false;
+	},
+	
+	getLabel: function(){
+		if( this.name ){
+			return this.name;
+		};
+		
+		return this.schemaName;
+	}
+});
+
+//--------------------------------------------------------------------------
 function createDbSelectorFromConfigObj(selectorConfig, atlasDesign){
 	var dbSelector = null;
 	
@@ -159,6 +226,26 @@ function createDbSelectorFromConfigObj(selectorConfig, atlasDesign){
 			};
 			
 			dbSelector = new CouchLayerDbSelector(dbSelectorOptions);
+			
+		} else if( 'couchDbSchema' === selectorConfig.type ){
+				var dbSelectorOptions = {
+					schemaName: null
+					,atlasDesign: atlasDesign
+				};
+				
+				if( selectorConfig.options 
+				 && selectorConfig.options.schemaName ){
+					dbSelectorOptions.schemaName = selectorConfig.options.schemaName;
+				} else {
+					$n2.log('DbPerspective unable to create selector. "schemaName" required for "couchDbSchema"');
+					return null;
+				};
+
+				if( selectorConfig.name ){
+					dbSelectorOptions.name = selectorConfig.name;
+				};
+				
+				dbSelector = new CouchSchemaDbSelector(dbSelectorOptions);
 			
 		} else {
 			$n2.log('Unknown DbPerspective selector type: '+selectorConfig.type);
