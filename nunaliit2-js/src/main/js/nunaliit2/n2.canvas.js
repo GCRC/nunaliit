@@ -74,6 +74,11 @@ var Service = $n2.Class({
 				$n2.canvasRadial.HandleCanvasAvailableRequest(m);
 			};
 
+			if( $n2.canvasRadialTree 
+			 && $n2.canvasRadialTree.HandleCanvasAvailableRequest ){
+				$n2.canvasRadialTree.HandleCanvasAvailableRequest(m);
+			};
+
 			if( $n2.canvasPack 
 			 && $n2.canvasPack.HandleCanvasAvailableRequest ){
 				$n2.canvasPack.HandleCanvasAvailableRequest(m);
@@ -93,6 +98,11 @@ var Service = $n2.Class({
 			if( $n2.canvasRadial 
 			 && $n2.canvasRadial.HandleCanvasDisplayRequest ){
 				$n2.canvasRadial.HandleCanvasDisplayRequest(m);
+			};
+
+			if( $n2.canvasRadialTree 
+			 && $n2.canvasRadialTree.HandleCanvasDisplayRequest ){
+				$n2.canvasRadialTree.HandleCanvasDisplayRequest(m);
 			};
 
 			if( $n2.canvasPack 

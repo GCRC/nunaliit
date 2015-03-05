@@ -35,7 +35,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 var 
  _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); }
- ,DH = 'n2.radialCanvas'
+ ,DH = 'n2.radialTreeCanvas'
  ;
  
 // Required library: d3
@@ -43,7 +43,7 @@ var $d = window.d3;
 if( !$d ) return;
  
 // --------------------------------------------------------------------------
-var RadialCanvas = $n2.Class({
+var RadialTreeCanvas = $n2.Class({
 
 	canvasId: null,
  	
@@ -62,8 +62,6 @@ var RadialCanvas = $n2.Class({
 	background: null,
 	
 	toggleSelection: null,
-	
-	line: null,
  	
 	styleRules: null,
 
@@ -74,6 +72,14 @@ var RadialCanvas = $n2.Class({
 	linksById: null,
 	
 	elementGenerator: null,
+	
+	elementsById: null,
+	
+	layout: null,
+	
+	line: null,
+	
+	bundle: null,
  	
 	currentMouseOver: null,
 
@@ -106,7 +112,7 @@ var RadialCanvas = $n2.Class({
 		this.toggleSelection = opts.toggleSelection;
 		this.elementGenerator = opts.elementGenerator;
  		
-		this.modelId = $n2.getUniqueId('radialCanvas');
+		this.modelId = $n2.getUniqueId('radialTreeCanvas');
  		
 		this.styleRules = $n2.styleRule.loadRulesFromObject(opts.styleRules);
  		
@@ -121,6 +127,7 @@ var RadialCanvas = $n2.Class({
  		this.sortedNodes = [];
  		this.linksById = {};
  		this.currentMouseOver = null;
+ 		this.elementsById = {};
  		this.lastElementIdSelected = null;
  		this.focusInfo = null;
  		this.selectInfo = null;
@@ -153,6 +160,18 @@ var RadialCanvas = $n2.Class({
  			this.dispatchService.register(DH,'modelStateUpdated',f);
  		};
  		
+ 		this.createGraph();
+ 		
+ 		var graphSize = this.getGraphSize();
+ 		graphSize[0] = graphSize[0] - (2 * this.margin);
+ 		graphSize[1] = graphSize[1] - (2 * this.margin);
+
+ 		this.layout = d3.layout.cluster()
+ 			.size([360, this.radius])
+	 	    .sort(null)
+	 	    .value(function(d) { return d.size; })
+ 			;
+
  		this.line = d3.svg.line.radial()
 	 	    //.interpolate("bundle")
  			.interpolate("basis")
@@ -160,7 +179,7 @@ var RadialCanvas = $n2.Class({
 	 	    .radius(function(d) { return d.y; })
 	 	    .angle(function(d) { return d.x / 180 * Math.PI; });
  		
- 		this.createGraph();
+ 		this.bundle = d3.layout.bundle();
  		
  		opts.onSuccess();
 
@@ -178,7 +197,7 @@ var RadialCanvas = $n2.Class({
  			};
  		};
 
- 		$n2.log('RadialCanvas',this);
+ 		$n2.log('RadialTreeCanvas',this);
  	},
  	
  	createGraph: function() {
@@ -256,42 +275,177 @@ var RadialCanvas = $n2.Class({
  	},
 	
 	_elementsChanged: function(addedElements, updatedElements, removedElements){
+
+		// Reset attributes that are computed by layout
+		for(var elemId in this.elementsById){
+			var elem = this.elementsById[elemId];
+			delete elem.parent;
+			delete elem.children;
+			delete elem.depth;
+			delete elem.x;
+			delete elem.y;
+		};
+
 		// Remove elements that are no longer there
 		for(var i=0,e=removedElements.length; i<e; ++i){
 			var removed = removedElements[i];
-			
-			if( removed.isNode ){
-				delete this.nodesById[ removed.id ];
-			} else if( removed.isLink ){
-				delete this.linksById[ removed.id ];
-			};
+			delete this.elementsById[removed.id];
 		};
 		
 		// Add elements
 		for(var i=0,e=addedElements.length; i<e; ++i){
 			var added = addedElements[i];
+			this.elementsById[ added.id ] = added;
+		};
+		
+		// Update elements
+		for(var i=0,e=updatedElements.length; i<e; ++i){
+			var updated = updatedElements[i];
+			this.elementsById[ updated.id ] = updated;
+		};
+
+		// Compute tree
+		var root = {
+			id: '__root__'
+			,name: ''
+			,children: []
+		};
+		var nodes = [];
+		for(var elemId in this.elementsById){
+			var elem = this.elementsById[elemId];
+
+			if( elem.parentId ){
+				var parent = this.elementsById[elem.parentId];
+				if( parent ){
+					elem.parent = parent;
+					if( !parent.children ){
+						parent.children = [];
+					};
+					parent.children.push(elem);
+				};
+				
+			} else if( null === elem.parentId ) {
+				elem.parent = root;
+				root.children.push(elem);
+			};
 			
-			if( added.isNode ){
-				this.nodesById[ added.id ] = added;
-			} else if( added.isLink ){
-				this.linksById[ added.id ] = added;
+			if( elem.isNode ){
+				nodes.push(elem);
 			};
 		};
 
-		// Updated nodes
-		var updatedNodes = [];
-		var updatedLinks = [];
-		for(var i=0,e=updatedElements.length; i<e; ++i){
-			var updated = updatedElements[i];
+//		// Report statistics on tree
+//		var countParentId = 0;
+//		var countNested = 0;
+//		for(var i=0,e=nodes.length; i<e; ++i){
+//			var node = nodes[i];
+//			
+//			if( node.parentId ){
+//				++countParentId;
+//
+//				if( node.parent ){
+//					++countNested;
+//				};
+//			};
+//		};
+//		$n2.log('nodes: '+nodes.length 
+//				+ ' root children: ' + root.children.length 
+//				+ ' nested: ' + countNested 
+//				+ ' parent id: ' + countParentId);
+
+		// Validate tree
+//		function validateTree(n){
+//			if( n.children ){
+//				for(var i=0,e=n.children.length; i<e; ++i){
+//					var c = n.children[i];
+//					if( c.parent !== n ){
+//						return false;
+//					};
+//					
+//					if( !validateTree(c) ){
+//						return false;
+//					};
+//				};
+//			};
+//			return true;
+//		};
+//		var validTree = validateTree(root);
+//		if( !validTree ){
+//			$n2.log('tree is invalid',root);
+//		};
+		
+		this.layout.nodes(root);
+
+		var nodes = [];
+		for(var elemId in this.elementsById){
+			var elem = this.elementsById[elemId];
+
+			if( elem.parentId ){
+				var parent = this.elementsById[elem.parentId];
+				if( parent ){
+					elem.parent = parent;
+					if( !parent.children ){
+						parent.children = [];
+					};
+					parent.children.push(elem);
+				};
+				
+			} else if( null === elem.parentId ) {
+				elem.parent = root;
+				root.children.push(elem);
+			};
 			
-			if( updated.isNode ){
-				updatedNodes.push(updated);
-			} else if( updated.isLink ){
-				updatedLinks.push(updated);
+			if( elem.isNode ){
+				nodes.push(elem);
 			};
 		};
 		
-		this._documentsUpdated(updatedNodes, updatedLinks);
+		this.sortedNodes = [];
+		var links = [];
+		for(var elemId in this.elementsById){
+			var elem = this.elementsById[elemId];
+			
+			if( elem.isLink ){
+				elem.n2_geometry = 'line';
+
+				if( inTree(elem.source) 
+				 && inTree(elem.target) ){
+					links.push(elem);
+				} else {
+					$n2.log('link not in tree',elem);
+				};
+			};
+			
+			if( elem.isNode ){
+				elem.n2_geometry = 'point';
+				
+				if( inTree(elem) ){
+					this.sortedNodes.push(elem);
+				} else {
+					$n2.log('node not in tree.',elem);
+				};
+			};
+		};
+		this.sortedNodes.sort(function(a,b){
+			if( a.x < b.x ) return -1;
+			if( a.x > b.x ) return 1;
+			return 0;
+		});
+		
+		var paths = this.bundle(links);
+		for(var i=0,e=links.length; i<e; ++i){
+			links[i].path = paths[i];
+		};
+		
+		this._documentsUpdated(this.sortedNodes, links);
+		
+		function inTree(n){
+			if( !n ) return false;
+			
+			if( n === root ) return true;
+
+			return inTree(n.parent);
+		};
 	},
 	
 	_intentChanged: function(changedElements){
@@ -365,50 +519,13 @@ var RadialCanvas = $n2.Class({
  	
  	_documentsUpdated: function(updatedNodeData, updatedLinkData){
  		var _this = this;
- 		
- 		this.sortedNodes = [];
- 		for(var id in this.nodesById){
- 			var node = this.nodesById[id];
- 			this.sortedNodes.push(node);
- 		};
- 		
- 		// Sort the nodes
- 		this.sortedNodes.sort(function(a,b){
- 			if( a.n2_id < b.n2_id ){
- 				return -1;
- 			};
- 			if( a.n2_id > b.n2_id ){
- 				return 1;
- 			};
- 			return 0;
- 		});
- 		
- 		// Assign x and y
- 		if( this.sortedNodes.length > 0 ){
- 	 		var xDelta = 360 / this.sortedNodes.length;
- 	 		var x = 0;
- 	 		for(var i=0,e=this.sortedNodes.length; i<e; ++i){
- 	 			this.sortedNodes[i].orig_x = x;
- 	 			this.sortedNodes[i].orig_y = this.radius;
- 	 			this.sortedNodes[i].x = x;
- 	 			this.sortedNodes[i].y = this.radius;
- 	 			
- 	 			x += xDelta;
- 	 		};
- 		};
-
- 		var links = [];
- 		for(var id in this.linksById){
- 			var link = this.linksById[id];
- 			links.push(link);
- 		};
 
  		var selectedNodes = this._getSvgElem().select('g.nodes').selectAll('.node')
- 			.data(this.sortedNodes, function(node){ return node.id; })
+ 			.data(updatedNodeData, function(node){ return node.id; })
  			;
 
  		var selectedLabels = this._getSvgElem().select('g.labels').selectAll('.label')
- 			.data(this.sortedNodes, function(node){ return node.id; })
+ 			.data(updatedNodeData, function(node){ return node.id; })
  			;
 
  		// Animate the position of the nodes around the circle
@@ -441,7 +558,7 @@ var RadialCanvas = $n2.Class({
  			})
  			.on('mouseover', function(n,i){
  				_this._initiateMouseOver(n);
- 				_this._magnifyElement(n);
+// 				_this._magnifyElement(n);
  			})
  			.on('mouseout', function(n,i){
  				_this._initiateMouseOut(n);
@@ -497,11 +614,11 @@ var RadialCanvas = $n2.Class({
 		this._adjustElementStyles(updatedLabels);
 
  		var selectedLinks = this._getSvgElem().select('g.links').selectAll('.link')
- 			.data(links, function(link){ return link.id; })
+ 			.data(updatedLinkData, function(link){ return link.id; })
 			;
  		
  		selectedLinks.transition()
-			.attr('d',function(link){ return _this.line([link.source,{x:0,y:0},link.target]); })
+			.attr('d',function(link){ return _this.line(link.path); })
 			;
 
  		var createdLinks = selectedLinks.enter()
@@ -766,7 +883,7 @@ var RadialCanvas = $n2.Class({
  	_getModelInfo: function(){
  		var info = {
  			modelId: this.modelId
- 			,modelType: 'radialCanvas'
+ 			,modelType: 'radialTreeCanvas'
  			,parameters: []
  		};
  		
@@ -776,14 +893,14 @@ var RadialCanvas = $n2.Class({
  
 //--------------------------------------------------------------------------
 function HandleCanvasAvailableRequest(m){
-	if( m.canvasType === 'radial' ){
+	if( m.canvasType === 'radialTree' ){
 		m.isAvailable = true;
 	};
 };
 
 //--------------------------------------------------------------------------
 function HandleCanvasDisplayRequest(m){
-	if( m.canvasType === 'radial' ){
+	if( m.canvasType === 'radialTree' ){
 		
 		var options = {};
 		if( m.canvasOptions ){
@@ -799,13 +916,13 @@ function HandleCanvasDisplayRequest(m){
 		options.onSuccess = m.onSuccess;
 		options.onError = m.onError;
 		
-		new RadialCanvas(options);
+		new RadialTreeCanvas(options);
 	};
 };
 
 //--------------------------------------------------------------------------
-$n2.canvasRadial = {
-	RadialCanvas: RadialCanvas
+$n2.canvasRadialTree = {
+	RadialTreeCanvas: RadialTreeCanvas
 	,HandleCanvasAvailableRequest: HandleCanvasAvailableRequest
 	,HandleCanvasDisplayRequest: HandleCanvasDisplayRequest
 };

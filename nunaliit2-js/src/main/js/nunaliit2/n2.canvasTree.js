@@ -65,6 +65,8 @@ var TreeCanvas = $n2.Class({
 	
 	margin: null,
 	
+	layoutStyle: null,
+	
 	treeLayout: null,
 	
 	diagonalLine: null,
@@ -88,8 +90,10 @@ var TreeCanvas = $n2.Class({
 			,sourceModelId: null
 			,background: null
 			,styleRules: null
+			,layoutStyle: 'tree'
 			,toggleSelection: true
 			,elementGeneratorType: 'default'
+			,elementGeneratorOptions: null
 			,elementGenerator: null
 			,onSuccess: function(){}
 			,onError: function(err){}
@@ -102,6 +106,7 @@ var TreeCanvas = $n2.Class({
 		this.moduleDisplay = opts.moduleDisplay;
 		this.sourceModelId = opts.sourceModelId;
 		this.background = opts.background;
+		this.layoutStyle = opts.layoutStyle;
 		this.toggleSelection = opts.toggleSelection;
 		this.elementGenerator = opts.elementGenerator;
  		
@@ -128,6 +133,7 @@ var TreeCanvas = $n2.Class({
  			// If not defined, use the one specified by type
  	 		this.elementGenerator = $n2.canvasElementGenerator.CreateElementGenerator({
  	 			type: opts.elementGeneratorType
+ 	 			,options: opts.elementGeneratorOptions
  	 			,config: opts.config
  	 		});
  		};
@@ -155,9 +161,15 @@ var TreeCanvas = $n2.Class({
  		var graphSize = this.getGraphSize();
  		graphSize[0] = graphSize[0] - (2 * this.margin);
  		graphSize[1] = graphSize[1] - (2 * this.margin);
- 		this.treeLayout = d3.layout.tree()
- 			.size(graphSize);
- 		
+
+ 		if( 'cluster' === this.layoutStyle ){
+ 	 		this.treeLayout = d3.layout.cluster()
+ 	 			.size(graphSize);
+ 		} else {
+ 	 		this.treeLayout = d3.layout.tree()
+ 	 			.size(graphSize);
+ 		};
+		
  		this.diagonalLine = d3.svg.diagonal();
  		
  		opts.onSuccess();
@@ -267,14 +279,8 @@ var TreeCanvas = $n2.Class({
 			var addedElement = addedElements[i];
 			this.elementsById[addedElement.id] = addedElement;
 		};
-		
-		var root = {
-			id: '__root__'
-			,name: ''
-			,children: []
-		};
 
-		var nodes = [];
+		// Reset attributes that are computed by layout
 		for(var elemId in this.elementsById){
 			var elem = this.elementsById[elemId];
 			delete elem.parent;
@@ -283,51 +289,55 @@ var TreeCanvas = $n2.Class({
 			delete elem.x;
 			delete elem.y;
 		};
+
+		// Compute tree
+		var root = {
+			id: '__root__'
+			,name: ''
+			,children: []
+		};
+		var nodes = [];
 		for(var elemId in this.elementsById){
 			var elem = this.elementsById[elemId];
 			
-			if( elem.parentId ){
-				var parent = this.elementsById[elem.parentId];
-				if( parent ){
-					elem.parent = parent;
-					if( !parent.children ){
-						parent.children = [];
+			if( elem.isNode ){
+				if( elem.parentId ){
+					var parent = this.elementsById[elem.parentId];
+					if( parent ){
+						elem.parent = parent;
+						if( !parent.children ){
+							parent.children = [];
+						};
+						parent.children.push(elem);
 					};
-					parent.children.push(elem);
 				};
-			};
+					
+				if( !elem.parent ) {
+					elem.parent = root;
+					root.children.push(elem);
+				};
 				
-			if( !elem.parent ) {
-				elem.parent = root;
-				root.children.push(elem);
+				elem.n2_geometry = 'point';
+				
+				nodes.push(elem);
 			};
-			
-			nodes.push(elem);
 		};
-		
-		var countInd = 0;
-		var countOrg = 0;
+
+		// Report statistics on tree
 		var countParentId = 0;
 		var countNested = 0;
-		for(var elemId in this.elementsById){
-			var elem = this.elementsById[elemId];
+		for(var i=0,e=nodes.length; i<e; ++i){
+			var node = nodes[i];
 			
-			if( elem.parentId ){
+			if( node.parentId ){
 				++countParentId;
-				var parent = this.elementsById[elem.parentId];
-				if( parent ){
+
+				if( node.parent ){
 					++countNested;
 				};
 			};
-				
-			if( elem.isIndividual ){
-				++countInd;
-			};
-			if( elem.isOrganization ){
-				++countOrg;
-			};
 		};
-		$n2.log('ind: '+countInd + ' org: ' + countOrg + ' root children: ' + root.children.length + ' nested: ' + countNested + ' parent id: ' + countParentId);
+		$n2.log('nodes: '+nodes.length + ' root children: ' + root.children.length + ' nested: ' + countNested + ' parent id: ' + countParentId);
 		
 		nodes = this.treeLayout.nodes(root);
 		
@@ -336,12 +346,16 @@ var TreeCanvas = $n2.Class({
 			n.y = n.y + _this.margin;
 		});
 		
-		var links = this.treeLayout.links(nodes);
-		
-		links.forEach(function(link){
-			var id = 'link_' + link.source.id + '_' + link.target.id;
-			link.id = id;
-		});
+		var links = [];
+		for(var elemId in this.elementsById){
+			var elem = this.elementsById[elemId];
+			
+			if( elem.isLink ){
+				elem.n2_geometry = 'line';
+
+				links.push(elem);
+			};
+		};
 		
 		this._documentsUpdated(nodes, links);
 	},
@@ -349,30 +363,28 @@ var TreeCanvas = $n2.Class({
 	_intentChanged: function(changedElements){
  		// Segregate nodes and active links
  		var nodes = [];
+ 		var links = [];
  		for(var i=0,e=changedElements.length; i<e; ++i){
  			var changedNode = changedElements[i];
- 			
- 			// $n2.log(changedNode.n2_id+' sel:'+changedNode.n2_selected+' foc:'+changedNode.n2_hovered+' find:'+changedNode.n2_found);
- 			
-			nodes.push(changedNode);
-			
-			if( changedNode.n2_found 
-			 && !changedNode.forceFound ){
-				changedNode.forceFound = true;
 
-			} else if( !changedNode.n2_found 
-			 && changedNode.forceFound ){
-				changedNode.forceFound = false;
-			};
+ 			if( changedNode.isNode ){
+ 				nodes.push(changedNode);
+ 			} else if( changedNode.isLink ){
+ 				links.push(changedNode);
+ 			};
  		};
 
  		// Update style on nodes
  		var selectedNodes = this._getSvgElem().select('g.nodes').selectAll('.node')
  			.data(nodes, function(d){ return d.id; })
- 			//.selectAll('circle')
  			;
  		this._adjustElementStyles(selectedNodes);
- 		
+
+ 		// Update style on links
+ 		var selectedLinks = this._getSvgElem().select('g.links').selectAll('.link')
+ 			.data(links, function(d){ return d.id; })
+ 			;
+ 		this._adjustElementStyles(selectedLinks);
 	},
  	
  	_documentsUpdated: function(nodes, links){
@@ -433,7 +445,21 @@ var TreeCanvas = $n2.Class({
  			.attr('stroke','#000000')
  			.attr('stroke-width',1)
  			.attr('stroke-opacity',1)
+ 			.on('click', function(n,i){
+ 				_this._initiateMouseClick(n);
+ 			})
+ 			.on('mouseover', function(n,i){
+ 				_this._initiateMouseOver(n);
+ 			})
+ 			.on('mouseout', function(n,i){
+ 				_this._initiateMouseOut(n);
+ 			})
  			;
+
+ 		var allLinks = this._getSvgElem().select('g.links').selectAll('.link')
+			.data(links, function(d){ return d.id; })
+			;
+		this._adjustElementStyles(allLinks);
  	},
  	
  	_adjustElementStyles: function(selectedElements){

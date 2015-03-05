@@ -142,6 +142,8 @@ var ElementGenerator = $n2.Class('ElementGenerator', {
  			,updated: null
  			,removed: null
  		},opts_);
+ 		
+ 		//$n2.log('sourceModelUpdated',opts);
 
  		var contextsAdded = [];
  		var contextsUpdated = [];
@@ -507,6 +509,8 @@ var ElementGenerator = $n2.Class('ElementGenerator', {
 			this._adjustClusterIntent(cluster);
 		};
 		
+		//$n2.log('elementsChanged',clustersAdded, clustersUpdated, clustersRemoved);
+		
 		this.elementsChanged(clustersAdded, clustersUpdated, clustersRemoved);
 	},
 	
@@ -828,10 +832,12 @@ function AddElementGeneratorFactory(opts_){
 function CreateElementGenerator(opts_){
 	var opts = $n2.extend({
 		type: null
+		,options: null
 		,config: null
 	},opts_);
 	
 	var type = opts.type;
+	var options = opts.options;
 	var config = opts.config;
 	
 	var elementGenerator = null;
@@ -843,6 +849,7 @@ function CreateElementGenerator(opts_){
 	 && config.directory.dispatchService ){
 		elementGenerator = new ElementGenerator({
 			dispatchService: config.directory.dispatchService
+			,options: options
 		});
 	};
 	
@@ -854,6 +861,7 @@ function CreateElementGenerator(opts_){
 	 && config.directory.dispatchService ){
 		elementGenerator = new GroupLinks({
 			dispatchService: config.directory.dispatchService
+			,options: options
 		});
 	};
 
@@ -864,6 +872,7 @@ function CreateElementGenerator(opts_){
 		var factoryFn = elementGeneratorFactoriesByType[type];
 		elementGenerator = factoryFn({
 			type: type
+			,options: options
 			,config: config
 		});
 	};
@@ -878,6 +887,7 @@ function CreateElementGenerator(opts_){
 		
 		elementGenerator = new ElementGenerator({
 			dispatchService: config.directory.dispatchService
+			,options: options
 		});
 	};
 	

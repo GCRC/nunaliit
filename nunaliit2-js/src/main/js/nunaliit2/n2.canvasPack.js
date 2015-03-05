@@ -86,6 +86,7 @@ var PackCanvas = $n2.Class({
 			,styleRules: null
 			,toggleSelection: true
 			,elementGeneratorType: 'default'
+			,elementGeneratorOptions: null
 			,elementGenerator: null
 			,onSuccess: function(){}
 			,onError: function(err){}
@@ -123,6 +124,7 @@ var PackCanvas = $n2.Class({
  			// If not defined, use the one specified by type
  	 		this.elementGenerator = $n2.canvasElementGenerator.CreateElementGenerator({
  	 			type: opts.elementGeneratorType
+ 	 			,options: opts.elementGeneratorOptions
  	 			,config: opts.config
  	 		});
  		};
