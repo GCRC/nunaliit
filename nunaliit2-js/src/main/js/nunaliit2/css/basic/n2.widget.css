@@ -434,3 +434,20 @@ Timeline widget
 	padding-left: 20px;
 	padding-right: 20px;
 }
+
+/* 
+==============================
+Polar Stereographic Projection Selector 
+==============================
+*/
+.nunaliit_content .n2polarStereographicProjectionSelector {
+	position: absolute;
+	bottom: 10px;
+	left: 10px;
+	width: 100px;
+	height: 100px;
+}
+
+.n2polarStereographicProjectionSelector {
+	/* background-color: #ffffff; */
+}

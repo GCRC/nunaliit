@@ -49,7 +49,8 @@ function nunaliitConfigure(opts_) {
 	 	},opts_);
 	 	
 	 	var confOptions = {
-			couchServerUrl: opts.rootPath + '../../../'
+	 		rootPath: opts.rootPath
+			,couchServerUrl: opts.rootPath + '../../../'
 			,atlasDbUrl: opts.rootPath + '../../'
 			,atlasDesignName: 'atlas'
 			,submissionDbUrl: opts.rootPath + '../../../'

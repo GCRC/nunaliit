@@ -78,7 +78,8 @@ var ConfigService = $n2.Class('ConfigurationService',{
 function Configure(options_){
 	
 	var options = $n2.extend({
-		couchServerUrl: null // string
+		rootPath: null // string
+		,couchServerUrl: null // string
 		,atlasDbUrl: null // string
 		,atlasDesignName: 'atlas'
 		,siteDesignName: 'site'
@@ -96,6 +97,7 @@ function Configure(options_){
 
 	var configuration = {
 		directory: {}
+		,rootPath: options.rootPath
 	};
 	
 	// Start function

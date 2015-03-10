@@ -165,9 +165,50 @@ var Renderer = $n2.Class({
 	}
 });
 
+var svgNs = 'http://www.w3.org/2000/svg';
+var xlinkNs = 'http://www.w3.org/1999/xlink';
+
+function createSVGNode(type, id) {
+    var node = null;
+    if( document.createElementNS ) {
+        node = document.createElementNS(svgNs, type);
+        if (id) {
+            node.setAttributeNS(null, 'id', id);
+        };
+    };
+    return node;    
+};
+
+function setAttr(node, name, value) {
+	node.setAttributeNS(null, name, value);
+};
+
+function setAttrNS(node, ns, name, value) {
+	node.setAttributeNS(ns, name, value);
+};
+
+function addClass(elem, className) {
+	var classNames = [];
+	
+	if( elem.className ){
+		var currentClasses = '' + elem.className;
+		classNames = currentClasses.split(' ');
+	};
+	
+	classNames.push(className);
+	
+	elem.className = classNames.join(' ');
+};
+
 //--------------------------------------------------------------------------
 $n2.svg = {
 	Renderer: Renderer
+	,svgNs: svgNs
+	,xlinkNs: xlinkNs
+	,createSVGNode: createSVGNode
+	,setAttr: setAttr
+	,setAttrNS: setAttrNS
+	,addClass: addClass
 };
 
 })(nunaliit2);
