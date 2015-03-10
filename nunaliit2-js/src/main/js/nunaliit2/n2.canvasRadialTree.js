@@ -173,8 +173,9 @@ var RadialTreeCanvas = $n2.Class({
  			;
 
  		this.line = d3.svg.line.radial()
-	 	    //.interpolate("bundle")
- 			.interpolate("basis")
+	 	    .interpolate("bundle")
+ 			//.interpolate("basis")
+ 			//.interpolate("linear")
 	 	    .tension(.85)
 	 	    .radius(function(d) { return d.y; })
 	 	    .angle(function(d) { return d.x / 180 * Math.PI; });
