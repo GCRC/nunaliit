@@ -602,9 +602,15 @@ var ModuleDisplay = $n2.Class({
 				_this._installHelpButton();
 			};
 			
-			var displayFormat = 'classic';
+			var displayFormat = null;
+			if( displayInfo && displayInfo.type ){
+				displayFormat = displayInfo.type;
+			};
 			if( customService ){
 				displayFormat = customService.getOption('displayFormat',displayFormat);
+			};
+			if( !displayFormat ){
+				displayFormat = 'classic';
 			};
 			
 			if( displayFormat === 'tiled' ) {
