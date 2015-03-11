@@ -58,6 +58,8 @@ var ProjectionSelector = $n2.Class({
 	height: null,
 	
 	imageLocation: null,
+	
+	selectionMap: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -80,7 +82,7 @@ var ProjectionSelector = $n2.Class({
 		
 		// Retrieve map controls if provided
 		if( opts.moduleDisplay ){
-			this.mapControl = opts.moduleDisplay.mapControl;
+			this._setMapControl(opts.moduleDisplay.mapControl);
 		};
 		
 		if( opts.imageLocation ){
@@ -94,7 +96,7 @@ var ProjectionSelector = $n2.Class({
 			this.dispatchService.register(DH,'reportModuleDisplay',function(m){
 				if( m.moduleDisplay 
 				 && m.moduleDisplay.mapControl ){
-					_this.mapControl = m.moduleDisplay.mapControl;
+					_this._setMapControl(m.moduleDisplay.mapControl);
 					_this._display();
 				};
 			});
@@ -117,6 +119,20 @@ var ProjectionSelector = $n2.Class({
 		this._display();
 		
 		$n2.log('ProjectionSelector', this);
+	},
+	
+	_setMapControl: function(mapControl){
+		var _this = this;
+		
+		this.mapControl = mapControl;
+		
+		if( this.mapControl 
+		 && this.mapControl.map
+		 && this.mapControl.map.events ){
+			this.mapControl.map.events.register('changebaselayer',null,function(evt){
+	        	_this._updateFromMap();
+	        });
+		};
 	},
 	
 	_getElem: function(){
@@ -162,17 +178,18 @@ var ProjectionSelector = $n2.Class({
 		for(var i=0,e=layers.length; i<e; ++i){
 			var layer = layers[i];
 			var proj = layer.projection.proj;
-			var long = proj.long0 * 180 / Math.PI;
+			var lng = proj.long0 * 180 / Math.PI;
 			var id = layer.id;
 
-			var angle = 360 - long;
+			var angle = 360 - lng;
 			if( angle > 180 ){
 				angle -= 360;
 			};
 			
 			result[id] = {
-				angle: angle
-				,long: long
+				id: id
+				,angle: angle
+				,lng: lng
 				,srsCode: proj.srsCode
 			};
 		};
@@ -233,19 +250,33 @@ var ProjectionSelector = $n2.Class({
  			.attr('height',imageRadius*2)
  			.attr('xlink:href',this.imageLocation)
  			;
+
+ 		var $arrowsGroup = $rotateGroup
+ 			.append('g')
+ 			.attr('class', 'projArrows')
+ 			;
  		
+ 		var baseLayerData = [];
  		for(var baseLayerId in this.selectionMap){
  			var info = this.selectionMap[baseLayerId];
- 			var long = info.angle;
- 			
- 			$rotateGroup.append('path')
- 				.attr('transform','rotate('+long+') translate(0,'+imageRadius+')')
- 				.attr('d','M 0 0 L -4 -8 L 4 -8 Z')
- 				.attr('fill','#000000')
- 				.attr('stroke','#ffffff')
- 				.attr('stroke-width',1)
- 				;
+ 			baseLayerData.push(info);
  		};
+ 		
+ 		var $arrows = $arrowsGroup.selectAll('.projArrow')
+ 			.data(baseLayerData, function(d){ return d.id; })
+ 			;
+ 		
+ 		$arrows.enter()
+ 			.append('path')
+			.attr('class','projArrow')
+			.attr('transform',function(d){ return 'rotate('+d.angle+') translate(0,'+imageRadius+')'; })
+			.attr('d','M 0 0 L -4 -8 L 4 -8 Z')
+			.attr('fill','#000000')
+			.attr('stroke','#ffffff')
+			.attr('stroke-width',1)
+			;
+ 		
+ 		this._updateFromMap();
  		
 //        var svg = $n2.svg.createSVGNode('svg');
 //        if( svg ) {
@@ -289,12 +320,62 @@ var ProjectionSelector = $n2.Class({
 // 		kick();
 	},
 	
-	_rotateTo: function(angle){
+	_rotateTo: function(lng){
 		$d.select('#' + this.elemId)
 			.select('g.rotateGroup')
 			.transition()
-			.attr('transform', 'rotate(' + angle + ')')
+			.attr('transform', 'rotate(' + lng + ')')
 			;
+	},
+	
+	_updateFromMap: function(){
+		if( this.mapControl 
+		 && this.mapControl.map 
+		 && this.mapControl.map.baseLayer ){
+			var id = this.mapControl.map.baseLayer.id;
+			
+			var lng = null;
+			if( this.selectionMap ){
+				for(var layerId in this.selectionMap){
+					var layerInfo = this.selectionMap[layerId];
+					layerInfo.selected = false;
+					
+					if( layerId === id ){
+						layerInfo.selected = true;
+						lng = layerInfo.lng;
+					};
+				};
+			};
+			
+			if( typeof lng === 'number' ){
+				this._rotateTo(lng);
+			};
+		};
+		
+		this._updateArrowStyles();
+	},
+	
+	_updateArrowStyles: function(){
+		if( this.selectionMap ){
+	 		var $arrowsGroup = $d.select('#' + this.elemId).select('g.projArrows');
+	 		
+	 		var baseLayerData = [];
+	 		for(var baseLayerId in this.selectionMap){
+	 			var info = this.selectionMap[baseLayerId];
+	 			baseLayerData.push(info);
+	 		};
+	 		
+	 		$arrowsGroup.selectAll('.projArrow')
+	 			.data(baseLayerData, function(d){ return d.id; })
+	 			.attr('fill', function(d){
+	 				if( d.selected ){
+	 					return '#ff0000';
+	 				} else {
+	 					return '#000000';
+	 				};
+	 			})
+	 			;
+		};
 	}
 });
 
