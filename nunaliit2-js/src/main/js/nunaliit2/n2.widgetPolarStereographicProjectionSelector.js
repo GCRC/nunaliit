@@ -38,9 +38,9 @@ var
  ,DH = 'n2.widgetPolarStereographicProjectionSelector'
  ;
 
- // Required library: d3
- var $d = window.d3;
- if( !$d ) return;
+// Required library: d3
+var $d = null;
+if( window ){ $d = window.d3; };
 
 var DEFAULT_IMAGE_LOCATION = 'nunaliit2/images/arctic.svg';
 
@@ -123,12 +123,91 @@ var ProjectionSelector = $n2.Class({
 		return $('#'+this.elemId);
 	},
 	
+	_getBaseLayers: function(mapControl){
+		var result = [];
+		
+		if( mapControl && mapControl.map && mapControl.map.layers ){
+			for(var i=0,e=mapControl.map.layers.length; i<e; ++i){
+				var layer = mapControl.map.layers[i];
+				if( layer.isBaseLayer ){
+					result.push(layer);
+				};
+			};
+		};
+		
+		return result;
+	},
+	
+	_selectPolarStereographicLayers: function(layers){
+		var result = [];
+		
+		for(var i=0,e=layers.length; i<e; ++i){
+			var layer = layers[i];
+			var projection = layer.projection;
+			if( projection 
+			 && projection.proj ){
+				if( 'laea' === projection.proj.projName 
+				 && typeof projection.proj.long0 === 'number'){
+					result.push(layer);
+				};
+			};
+		};
+		
+		return result;
+	},
+	
+	_createSelectionMap: function(layers){
+		var result = {};
+		
+		for(var i=0,e=layers.length; i<e; ++i){
+			var layer = layers[i];
+			var proj = layer.projection.proj;
+			var long = proj.long0 * 180 / Math.PI;
+			var id = layer.id;
+
+			var angle = 360 - long;
+			if( angle > 180 ){
+				angle -= 360;
+			};
+			
+			result[id] = {
+				angle: angle
+				,long: long
+				,srsCode: proj.srsCode
+			};
+		};
+		
+		return result;
+	},
+	
 	_display: function(){
 		var $elem = this._getElem()
 			.empty();
 		
 		// No map, no widget
 		if( !this.mapControl ) return;
+		
+		// Extract all base layers
+		var baseLayers = this._getBaseLayers(this.mapControl);
+		var polarLayers = this._selectPolarStereographicLayers(baseLayers);
+		
+		if( baseLayers.length < 1 ){
+			$n2.log('ProjectionSelector: no base layer');
+			return;
+		} else if( baseLayers.length != polarLayers.length ){
+			$n2.log('ProjectionSelector: not all base layers are polar stereographic');
+			return;
+		};
+		
+		this.selectionMap = this._createSelectionMap(polarLayers);
+		
+		var imagePadding = 10;
+		var imageRadius = null;
+		if( this.width > this.height ){
+			imageRadius = Math.floor( (this.height/2) - imagePadding );
+		} else {
+			imageRadius = Math.floor( (this.width/2) - imagePadding );
+		};
 		
  		var $svg = $d.select('#' + this.elemId)
  			.append('svg')
@@ -139,7 +218,7 @@ var ProjectionSelector = $n2.Class({
 
  		var $center = $svg.append('g')
 			.attr('class','centerGroup')
-			.attr('transform','translate(50,50)')
+			.attr('transform','translate('+Math.floor(this.width/2)+','+Math.floor(this.height/2)+')')
 			;
  		
  		var $rotateGroup = $center.append('g')
@@ -148,12 +227,25 @@ var ProjectionSelector = $n2.Class({
  			;
 		
  		$rotateGroup.append('image')
- 			.attr('x',0 - Math.floor(this.width / 2))
- 			.attr('y',0 - Math.floor(this.height / 2))
- 			.attr('width',this.width)
- 			.attr('height',this.height)
+ 			.attr('x',0 - imageRadius)
+ 			.attr('y',0 - imageRadius)
+ 			.attr('width',imageRadius*2)
+ 			.attr('height',imageRadius*2)
  			.attr('xlink:href',this.imageLocation)
  			;
+ 		
+ 		for(var baseLayerId in this.selectionMap){
+ 			var info = this.selectionMap[baseLayerId];
+ 			var long = info.angle;
+ 			
+ 			$rotateGroup.append('path')
+ 				.attr('transform','rotate('+long+') translate(0,'+imageRadius+')')
+ 				.attr('d','M 0 0 L -4 -8 L 4 -8 Z')
+ 				.attr('fill','#000000')
+ 				.attr('stroke','#ffffff')
+ 				.attr('stroke-width',1)
+ 				;
+ 		};
  		
 //        var svg = $n2.svg.createSVGNode('svg');
 //        if( svg ) {
@@ -182,19 +274,19 @@ var ProjectionSelector = $n2.Class({
 //			.attr('height',100)
 //			.appendTo($elem);
  		
- 		var _this = this;
- 		var lastAngle = 0;
- 		function kick(){
- 			window.setTimeout(function(){
- 				lastAngle += 60;
- 				if( lastAngle > 180 ){
- 					lastAngle -= 360;
- 				};
- 				_this._rotateTo(lastAngle);
- 				kick();
- 			},2000);
- 		};
- 		kick();
+// 		var _this = this;
+// 		var lastAngle = 0;
+// 		function kick(){
+// 			window.setTimeout(function(){
+// 				lastAngle += 60;
+// 				if( lastAngle > 180 ){
+// 					lastAngle -= 360;
+// 				};
+// 				_this._rotateTo(lastAngle);
+// 				kick();
+// 			},2000);
+// 		};
+// 		kick();
 	},
 	
 	_rotateTo: function(angle){
@@ -209,7 +301,14 @@ var ProjectionSelector = $n2.Class({
 //--------------------------------------------------------------------------
 function HandleWidgetAvailableRequests(m){
 	if( m.widgetType === 'polarStereographicProjectionSelector' ){
-		m.isAvailable = true;
+		var available = true;
+		
+		 if( !$d ) {
+			 available = false;
+			 $n2.log('Widget polarStereographicProjectionSelector requires d3 library');
+		 };
+
+		m.isAvailable = available;
     };
 };
 
