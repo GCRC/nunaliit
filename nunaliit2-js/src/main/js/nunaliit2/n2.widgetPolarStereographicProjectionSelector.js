@@ -230,8 +230,31 @@ var ProjectionSelector = $n2.Class({
  			.append('svg')
  			.attr('width', this.width)
  			.attr('height', this.height)
- 			.attr('viewbox', '0 0 100 100')
+ 			//.attr('viewbox', '0 0 100 100')
  			;
+ 		
+ 		$svg.append('circle')
+ 			.attr('r',Math.floor(this.width/2)-Math.floor(imagePadding/2))
+ 			.attr('cx',Math.floor(this.width/2))
+ 			.attr('cy',Math.floor(this.height/2))
+ 			.attr('fill','none')
+ 			.attr('stroke','#aaaaaa')
+ 			.attr('stroke-width',Math.floor(imagePadding/2))
+ 			;
+
+ 		$svg.append('path')
+			.attr('d','M 0 0 L -4 -8 L 4 -8 Z')
+			.attr('transform',
+				'translate(' 
+					+ Math.floor(this.width/2)
+					+ ',' + (Math.floor(this.height/2) + imageRadius)
+					+ ')'
+					+ ' rotate(180)' 
+			)
+			.attr('fill','#ff0000')
+			.attr('stroke','#ffffff')
+			.attr('stroke-width',1)
+			;
 
  		var $center = $svg.append('g')
 			.attr('class','centerGroup')
