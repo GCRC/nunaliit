@@ -59,7 +59,11 @@ var ProjectionSelector = $n2.Class({
 	
 	imageLocation: null,
 	
+	imageRotation: null,
+	
 	selectionMap: null,
+	
+	currentLng: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -71,6 +75,7 @@ var ProjectionSelector = $n2.Class({
 			,width: 100
 			,height: 100
 			,imageLocation: null
+			,imageRotation: 0
 		},opts_);
 		
 		var _this = this;
@@ -87,8 +92,10 @@ var ProjectionSelector = $n2.Class({
 		
 		if( opts.imageLocation ){
 			this.imageLocation = this.rootPath + opts.imageLocation;
+			this.imageRotation = opts.imageRotation;
 		} else {
 			this.imageLocation = this.rootPath + DEFAULT_IMAGE_LOCATION;
+			this.imageRotation = 0;
 		};
 		
 		// Wait for map control, if not yet available
@@ -198,8 +205,9 @@ var ProjectionSelector = $n2.Class({
 	},
 	
 	_display: function(){
-		var $elem = this._getElem()
-			.empty();
+		var _this = this;
+		
+		this._getElem().empty();
 		
 		// No map, no widget
 		if( !this.mapControl ) return;
@@ -220,10 +228,13 @@ var ProjectionSelector = $n2.Class({
 		
 		var imagePadding = 10;
 		var imageRadius = null;
+		var overlayRadius = null;
 		if( this.width > this.height ){
 			imageRadius = Math.floor( (this.height/2) - imagePadding );
+			overlayRadius = Math.floor(this.height/2);
 		} else {
 			imageRadius = Math.floor( (this.width/2) - imagePadding );
+			overlayRadius = Math.floor(this.width/2);
 		};
 		
  		var $svg = $d.select('#' + this.elemId)
@@ -232,41 +243,57 @@ var ProjectionSelector = $n2.Class({
  			.attr('height', this.height)
  			//.attr('viewbox', '0 0 100 100')
  			;
- 		
- 		$svg.append('circle')
- 			.attr('r',Math.floor(this.width/2)-Math.floor(imagePadding/2))
- 			.attr('cx',Math.floor(this.width/2))
- 			.attr('cy',Math.floor(this.height/2))
- 			.attr('fill','none')
- 			.attr('stroke','#aaaaaa')
- 			.attr('stroke-width',Math.floor(imagePadding/2))
- 			;
-
- 		$svg.append('path')
-			.attr('d','M 0 0 L -4 -8 L 4 -8 Z')
-			.attr('transform',
-				'translate(' 
-					+ Math.floor(this.width/2)
-					+ ',' + (Math.floor(this.height/2) + imageRadius)
-					+ ')'
-					+ ' rotate(180)' 
-			)
-			.attr('fill','#ff0000')
-			.attr('stroke','#ffffff')
-			.attr('stroke-width',1)
-			;
 
  		var $center = $svg.append('g')
 			.attr('class','centerGroup')
 			.attr('transform','translate('+Math.floor(this.width/2)+','+Math.floor(this.height/2)+')')
 			;
  		
+ 		$center.append('circle')
+ 			.attr('r',Math.floor(this.width/2)-Math.floor(imagePadding/2))
+ 			.attr('fill','none')
+ 			.attr('stroke','#aaaaaa')
+ 			.attr('stroke-width',Math.floor(imagePadding/2))
+ 			;
+
+ 		$center.append('path')
+			.attr('d','M 0 0 L -4 -8 L 4 -8 Z')
+			.attr('transform','translate(0,' + imageRadius + ') rotate(180)')
+			.attr('fill','#ff0000')
+			.attr('stroke','#ffffff')
+			.attr('stroke-width',1)
+			;
+ 		
  		var $rotateGroup = $center.append('g')
  			.attr('class','rotateGroup')
  			.attr('transform','rotate(0)')
  			;
+ 		
+ 		$center.append('circle')
+ 			.attr('r',overlayRadius)
+ 			.attr('fill','#000000')
+ 			.attr('fill-opacity',0.0)
+ 			.attr('stroke','none')
+ 			.on('mouseover', function(n){
+ 				var e = d3.event;
+ 				_this._initiateMouseOver(n,e);
+ 			})
+ 			.on('mousemove', function(n){
+ 				var e = d3.event;
+ 				_this._initiateMouseMove(n,e);
+ 			})
+ 			.on('mouseout', function(n){
+ 				var e = d3.event;
+ 				_this._initiateMouseOut(n,e);
+ 			})
+ 			.on('click', function(n){
+ 				var e = d3.event;
+ 				_this._initiateMouseClick(n,e);
+ 			})
+ 			;
 		
  		$rotateGroup.append('image')
+ 			.attr('transform','rotate('+this.imageRotation+')')
  			.attr('x',0 - imageRadius)
  			.attr('y',0 - imageRadius)
  			.attr('width',imageRadius*2)
@@ -300,50 +327,11 @@ var ProjectionSelector = $n2.Class({
 			;
  		
  		this._updateFromMap();
- 		
-//        var svg = $n2.svg.createSVGNode('svg');
-//        if( svg ) {
-//        	$n2.svg.setAttr(svg, 'version', '1.1');
-//        	$n2.svg.setAttr(svg, 'style', 'display:inline-block');
-//        	$n2.svg.setAttr(svg, 'width', 100);
-//        	$n2.svg.setAttr(svg, 'height', 100);
-//        	$n2.svg.setAttr(svg, 'viewBox', '0 0 100 100');
-//        	
-//        	$(svg).appendTo($elem);
-//
-//        	var image = $n2.svg.createSVGNode('image');
-//        	$n2.svg.setAttr(image, 'x', 0);
-//        	$n2.svg.setAttr(image, 'y', 0);
-//        	$n2.svg.setAttr(image, 'width', 100);
-//        	$n2.svg.setAttr(image, 'height', 100);
-//        	$n2.svg.setAttrNS(image, $n2.svg.xlinkNs, 'xlink:href', this.rootPath + DEFAULT_IMAGE_LOCATION);
-//        	
-//        	$(image).appendTo($(svg));
-//        };
-
- 		
-//		$('img')
-//			.attr('src',this.rootPath + DEFAULT_IMAGE_LOCATION)
-//			.attr('width',100)
-//			.attr('height',100)
-//			.appendTo($elem);
- 		
-// 		var _this = this;
-// 		var lastAngle = 0;
-// 		function kick(){
-// 			window.setTimeout(function(){
-// 				lastAngle += 60;
-// 				if( lastAngle > 180 ){
-// 					lastAngle -= 360;
-// 				};
-// 				_this._rotateTo(lastAngle);
-// 				kick();
-// 			},2000);
-// 		};
-// 		kick();
 	},
 	
 	_rotateTo: function(lng){
+		this.currentLng = lng;
+		
 		$d.select('#' + this.elemId)
 			.select('g.rotateGroup')
 			.transition()
@@ -391,13 +379,147 @@ var ProjectionSelector = $n2.Class({
 	 		$arrowsGroup.selectAll('.projArrow')
 	 			.data(baseLayerData, function(d){ return d.id; })
 	 			.attr('fill', function(d){
-	 				if( d.selected ){
+	 				if( d.hovered ){
+	 					return '#0000ff';
+	 				} else if( d.selected ){
 	 					return '#ff0000';
 	 				} else {
 	 					return '#000000';
 	 				};
 	 			})
 	 			;
+		};
+	},
+	
+	_angleFromMouseHover: function(x,y){
+		var angle = null;
+		
+		var effX = x - Math.floor(this.width/2);
+		var effY = y - Math.floor(this.height/2);
+		if( 0 == effX && 0 == effY){
+			return null;
+			
+		} else if( 0 == effY ){
+			if( effX < 0 ){
+				angle = -90;
+			} else {
+				angle = 90;
+			}
+		} else {
+			angle = Math.atan(effX / effY) * 180 / Math.PI;
+			if( effY < 0 ){
+				angle += 180;
+			};
+			if( angle > 180 ){
+				angle = angle - 360;
+			};
+		};
+
+		return angle;
+	},
+	
+	_getSelectionFromAngle: function(lng){
+		var selected = null;
+		var delta = null;
+		for(var id in this.selectionMap){
+			var selection = this.selectionMap[id];
+			
+			var d = selection.lng - lng;
+			d = Math.abs(d);
+			if( d > 180 ){
+				d = 360 - d;
+			};
+			
+			if( !selected ){
+				selected = selection;
+				delta = d;
+			} else if( d < delta ){
+				selected = selection;
+				delta = d;
+			};
+		};
+		
+		return selected;
+	},
+	
+	_userMouseHover: function(x,y){
+		var angle = this._angleFromMouseHover(x, y);
+		//$n2.log('angle: '+angle);
+
+		if( typeof angle === 'number' 
+		 && typeof this.currentLng === 'number' ){
+			var effLng = angle + this.currentLng;
+			if( effLng > 180 ){
+				effLng -= 360;
+			};
+			if( effLng < -180 ){
+				effLng += 360;
+			};
+			//$n2.log('effLng: '+effLng);
+			
+			// Select closest info
+			var selection = this._getSelectionFromAngle(effLng);
+			for(var id in this.selectionMap){
+				var s = this.selectionMap[id];
+
+				if( selection === s ){
+					s.hovered = true;
+				} else {
+					s.hovered = false;
+				};
+			};
+			
+			this._updateArrowStyles();
+		};
+	},
+	
+	_initiateMouseOver: function(n,e){
+		//$n2.log('over x:'+e.offsetX+' y:'+e.offsetY);
+		this._userMouseHover(e.offsetX,e.offsetY);
+	},
+	
+	_initiateMouseMove: function(n,e){
+		//$n2.log('move x:'+e.offsetX+' y:'+e.offsetY);
+		this._userMouseHover(e.offsetX,e.offsetY);
+	},
+	
+	_initiateMouseOut: function(n,e){
+		// Turn off all
+		for(var id in this.selectionMap){
+			var s = this.selectionMap[id];
+			s.hovered = false;
+		};
+		
+		this._updateArrowStyles();
+	},
+	
+	_initiateMouseClick: function(n,e){
+		var angle = this._angleFromMouseHover(e.offsetX,e.offsetY);
+		//$n2.log('angle: '+angle);
+
+		if( typeof angle === 'number' 
+		 && typeof this.currentLng === 'number' ){
+			var effLng = angle + this.currentLng;
+			if( effLng > 180 ){
+				effLng -= 360;
+			};
+			if( effLng < -180 ){
+				effLng += 360;
+			};
+			//$n2.log('effLng: '+effLng);
+			
+			// Select closest info
+			var selection = this._getSelectionFromAngle(effLng);
+			for(var id in this.selectionMap){
+				var s = this.selectionMap[id];
+
+				if( selection === s ){
+					if( this.mapControl 
+					 && this.mapControl.setBaseLayer ){
+						this.mapControl.setBaseLayer(s.id);
+					};
+				};
+			};
 		};
 	}
 });
@@ -440,7 +562,8 @@ function HandleWidgetDisplayRequests(m){
 		};
 		
 		if( widgetOptions ){
-			if( widgetOptions.sourceModelId ) options.sourceModelId = widgetOptions.sourceModelId;
+			if( widgetOptions.imageLocation ) options.imageLocation = widgetOptions.imageLocation;
+			if( widgetOptions.imageRotation ) options.imageRotation = widgetOptions.imageRotation;
 		};
 		
 		new ProjectionSelector(options);
