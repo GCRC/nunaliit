@@ -107,12 +107,18 @@ function addOperationPattern(pattern, aClass){
 	});
 };
 
-function createOperationFromString(opString){
+function createOperation(opts_){
+	var opts = $n2.extend({
+		operationString: null
+		,atlasDb: null
+		,atlasDesign: null
+	},opts_);
+	
 	for(var i=0,e=operationPatterns.length; i<e; ++i){
 		var opPattern = operationPatterns[i];
-		var matches = opPattern.pattern.test(opString);
+		var matches = opPattern.pattern.test(opts.operationString);
 		if( matches ){
-			var op = new opPattern.supportingClass(opString);
+			var op = new opPattern.supportingClass(opts);
 			return op;
 		};
 	};
@@ -325,6 +331,7 @@ var ImportAnalyzer = $n2.Class({
 			profile: this.profile
 		});
 		var dbDocsByImportId = {};
+		var entriesLeft = [];
 		
 		this.atlasDesign.queryView({
 			viewName: 'nunaliit-import'
@@ -352,7 +359,8 @@ var ImportAnalyzer = $n2.Class({
 		});
 		
 		function dbDocumentsLoaded(){
-			// Explore input import data for changes
+			// Compare given import entries against document in database
+			// to discover changes
 			var importEntriesById = {};
 			if( opts.entries ){
 				for(var i=0,e=opts.entries.length; i<e; ++i){
@@ -368,38 +376,16 @@ var ImportAnalyzer = $n2.Class({
 						};
 						
 						importEntriesById[id] = entry;
+						entriesLeft.push( entry );
 						
-						if( dbDocsByImportId[id] ){
-							// Already exists in database
-							// Check if modified
-							var c = _this._compare(
-								importEntriesById[id]
-								,dbDocsByImportId[id]);
-							if( c ){
-								analysis.addModification({
-									importId: c.importId
-									,auto: c.auto
-									,modifiedProperties: c.modifiedProperties
-									,modifiedGeometry: c.modifiedGeometry
-									,dbDoc: dbDocsByImportId[id]
-									,importEntry: importEntriesById[id]
-								});
-							};
-							
-						} else {
-							// New to database
-							analysis.addAddition({
-								importId: id
-								,importEntry: importEntriesById[id]
-							});
-						};
 					} else {
 						opts.onError( _loc('Imported entry does not contains an id attribute') );
 						return;
 					};
 				};
 			};
-			
+
+			// Discover deletions
 			for(var id in dbDocsByImportId){
 				if( importEntriesById[id] ) {
 					// OK
@@ -410,15 +396,65 @@ var ImportAnalyzer = $n2.Class({
 					});
 				};
 			};
+			
+			processEntries();
+		};
+			
+		function processEntries(){
+			if( entriesLeft.length < 1 ){
+				opts.onSuccess(analysis);
+				return;
+			};
+			
+			var entry = entriesLeft.shift();
+			var id = entry.getId();
 
-			opts.onSuccess(analysis);
+			if( dbDocsByImportId[id] ){
+				// Already exists in database
+				// Check if modified
+				_this._compare({
+					importEntry: entry
+					,doc: dbDocsByImportId[id]
+					,onSuccess: function(c){
+						if( c ){
+							analysis.addModification({
+								importId: c.importId
+								,auto: c.auto
+								,modifiedProperties: c.modifiedProperties
+								,modifiedGeometry: c.modifiedGeometry
+								,dbDoc: dbDocsByImportId[id]
+								,importEntry: entry
+							});
+						};
+						
+						// Next entry
+						processEntries();
+					}
+				});
+				
+			} else {
+				// New to database
+				analysis.addAddition({
+					importId: id
+					,importEntry: entry
+				});
+				
+				// Next entry
+				processEntries();
+			};
 		};
 	},
 	
-	_compare: function(importEntry, doc){
-		var props = importEntry.getProperties();
-		var dbData = doc.nunaliit_import.data;
-		var importId = doc.nunaliit_import.id;
+	_compare: function(opts_){
+		var opts = $n2.extend({
+			importEntry: null
+			,doc: null
+			,onSuccess: function(change){}
+		},opts_);
+		
+		var props = opts.importEntry.getProperties();
+		var dbData = opts.doc.nunaliit_import.data;
+		var importId = opts.doc.nunaliit_import.id;
 		
 		var change = null;
 		
@@ -463,43 +499,47 @@ var ImportAnalyzer = $n2.Class({
 		};
 		
 		// Get all copy operations that are to be executed on import
-		var copyOperations = this.profile.reportCopyOperations(doc, allPropertyNames);
-		
-		// Sort the copy operations with the appropriate property modification
-		for(var copyIndex=0,copyIndexEnd=copyOperations.length; copyIndex<copyIndexEnd; ++copyIndex){
-			var copyOperation = copyOperations[copyIndex];
-			
-			var propertyNames = copyOperation.propertyNames;
-			if( propertyNames ){
-				for(var propIndex=0,propIndexEnd=propertyNames.length; propIndex<propIndexEnd; ++propIndex){
-					var propName = propertyNames[propIndex];
+		this.profile.reportCopyOperations({
+			doc: opts.doc
+			,allPropertyNames: allPropertyNames
+			,onSuccess: function(copyOperations){
+				// Sort the copy operations with the appropriate property modification
+				for(var copyIndex=0,copyIndexEnd=copyOperations.length; copyIndex<copyIndexEnd; ++copyIndex){
+					var copyOperation = copyOperations[copyIndex];
 					
-					var mod = modificationsByPropName[propName];
-					if( mod ){
-						if( copyOperation.isInconsistent ){
-							// It is a collision only if target value is not the same as
-							// the external data. If the external data and the modified
-							// data agree, then this is not a collision
-							if( mod.externalValue !== copyOperation.targetValue ){
-								// This is a collision
-								mod.collisions.push(copyOperation);
-								
-								// Can not perform this change automatically
-								change.auto = false;
-								
-							} else {
-								mod.copyOperations.push(copyOperation);
-							};
+					var propertyNames = copyOperation.propertyNames;
+					if( propertyNames ){
+						for(var propIndex=0,propIndexEnd=propertyNames.length; propIndex<propIndexEnd; ++propIndex){
+							var propName = propertyNames[propIndex];
 							
-						} else {
-							mod.copyOperations.push(copyOperation);
+							var mod = modificationsByPropName[propName];
+							if( mod ){
+								if( copyOperation.isInconsistent ){
+									// It is a collision only if target value is not the same as
+									// the external data. If the external data and the modified
+									// data agree, then this is not a collision
+									if( mod.externalValue !== copyOperation.targetValue ){
+										// This is a collision
+										mod.collisions.push(copyOperation);
+										
+										// Can not perform this change automatically
+										change.auto = false;
+										
+									} else {
+										mod.copyOperations.push(copyOperation);
+									};
+									
+								} else {
+									mod.copyOperations.push(copyOperation);
+								};
+							};
 						};
 					};
 				};
-			};
-		};
-		
-		return change;
+				
+				opts.onSuccess(change);
+			}
+		});
 	}
 });
 
@@ -1106,28 +1146,35 @@ var AnalysisReport = $n2.Class({
 		};
 		
 		// Copy data to user's location
-		var copyOperations = importProfile.reportCopyOperations(doc, propNames);
-		importProfile.performCopyOperations(doc, copyOperations);
-		
-		// Adjust document with created, last updated
-		if( $n2.couchMap
-		 && $n2.couchMap.adjustDocument ) {
-			$n2.couchMap.adjustDocument(doc);
-		};
-		
-		// Save
-		var atlasDb = importProfile.getAtlasDb();
-		atlasDb.createDocument({
-			data: doc
-			,onSuccess: function(docInfo){
-				_this._log( _loc('Created document with id: {id}',{id:docInfo.id}) );
-				_this._completed(change.changeId);
-			}
-			,onError: function(errorMsg){ 
-				//reportError(errorMsg);
-				alert( _loc('Unable to create document. Are you logged in?') );
-			}
+		importProfile.reportCopyOperations({
+			doc: doc
+			,allPropertyNames: propNames
+			,onSuccess: onCopyOperations
 		});
+		
+		function onCopyOperations(copyOperations){
+			importProfile.performCopyOperations(doc, copyOperations);
+			
+			// Adjust document with created, last updated
+			if( $n2.couchMap
+			 && $n2.couchMap.adjustDocument ) {
+				$n2.couchMap.adjustDocument(doc);
+			};
+			
+			// Save
+			var atlasDb = importProfile.getAtlasDb();
+			atlasDb.createDocument({
+				data: doc
+				,onSuccess: function(docInfo){
+					_this._log( _loc('Created document with id: {id}',{id:docInfo.id}) );
+					_this._completed(change.changeId);
+				}
+				,onError: function(errorMsg){ 
+					//reportError(errorMsg);
+					alert( _loc('Unable to create document. Are you logged in?') );
+				}
+			});
+		};
 	},
 	
 	_modifyDocument: function(change){
@@ -1267,12 +1314,18 @@ var ImportProfileOperationCopyAll = $n2.Class(ImportProfileOperation, {
 	
 	targetSelector: null,
 	
-	initialize: function(operationString){
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			operationString: null
+			,atlasDb: null
+			,atlasDesign: null
+		},opts_);
+		
 		ImportProfileOperation.prototype.initialize.call(this);
 		
-		this.operationString = operationString;
+		this.operationString = opts.operationString;
 		
-		var matcher = OPERATION_COPY_ALL.exec(operationString);
+		var matcher = OPERATION_COPY_ALL.exec(this.operationString);
 		if( !matcher ) {
 			throw 'Invalid operation string for ImportProfileOperationCopyAll: '+operationString;
 		};
@@ -1285,6 +1338,7 @@ var ImportProfileOperationCopyAll = $n2.Class(ImportProfileOperation, {
 			doc: null
 			,importData: null
 			,allPropertyNames: null
+			,onSuccess: function(copyOperations){}
 		},opts_);
 
 		
@@ -1305,14 +1359,14 @@ var ImportProfileOperationCopyAll = $n2.Class(ImportProfileOperation, {
 			
 			copyOperations.push({
 				propertyNames: [key]
-				,lastImportValue: importValue
+				,computedValue: importValue
 				,targetSelector: targetSelector
 				,targetValue: targetValue
 				,isInconsistent: isInconsistent
 			});
 		};
 		
-		return copyOperations;
+		opts.onSuccess(copyOperations);
 	},
 	
 	performCopyOperation: function(opts_){
@@ -1345,12 +1399,18 @@ var ImportProfileOperationCopyAllAndFixNames = $n2.Class(ImportProfileOperation,
 	
 	targetSelector: null,
 	
-	initialize: function(operationString){
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			operationString: null
+			,atlasDb: null
+			,atlasDesign: null
+		},opts_);
+		
 		ImportProfileOperation.prototype.initialize.call(this);
 		
-		this.operationString = operationString;
+		this.operationString = opts.operationString;
 		
-		var matcher = OPERATION_COPY_ALL_AND_FIX_NAMES.exec(operationString);
+		var matcher = OPERATION_COPY_ALL_AND_FIX_NAMES.exec(this.operationString);
 		if( !matcher ) {
 			throw 'Invalid operation string for ImportProfileOperationCopyAllAndFixNames: '+operationString;
 		};
@@ -1363,6 +1423,7 @@ var ImportProfileOperationCopyAllAndFixNames = $n2.Class(ImportProfileOperation,
 			doc: null
 			,importData: null
 			,allPropertyNames: null
+			,onSuccess: function(copyOperations){}
 		},opts_);
 
 		
@@ -1385,14 +1446,14 @@ var ImportProfileOperationCopyAllAndFixNames = $n2.Class(ImportProfileOperation,
 			
 			copyOperations.push({
 				propertyNames: [key]
-				,lastImportValue: importValue
+				,computedValue: importValue
 				,targetSelector: targetSelector
 				,targetValue: targetValue
 				,isInconsistent: isInconsistent
 			});
 		};
 		
-		return copyOperations;
+		opts.onSuccess(copyOperations);
 	},
 	
 	performCopyOperation: function(opts_){
@@ -1449,12 +1510,18 @@ var ImportProfileOperationAssign = $n2.Class(ImportProfileOperation, {
 	
 	targetSelector: null,
 	
-	initialize: function(operationString){
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			operationString: null
+			,atlasDb: null
+			,atlasDesign: null
+		},opts_);
+		
 		ImportProfileOperation.prototype.initialize.call(this);
 		
-		this.operationString = operationString;
+		this.operationString = opts.operationString;
 		
-		var matcher = OPERATION_ASSIGN.exec(operationString);
+		var matcher = OPERATION_ASSIGN.exec(this.operationString);
 		if( !matcher ) {
 			throw 'Invalid operation string for ImportProfileOperationAssign: '+operationString;
 		};
@@ -1468,6 +1535,7 @@ var ImportProfileOperationAssign = $n2.Class(ImportProfileOperation, {
 			doc: null
 			,importData: null
 			,allPropertyNames: null
+			,onSuccess: function(copyOperations){}
 		},opts_);
 		
 		var copyOperations = [];
@@ -1484,14 +1552,14 @@ var ImportProfileOperationAssign = $n2.Class(ImportProfileOperation, {
 			
 			copyOperations.push({
 				propertyNames: [this.sourceName]
-				,lastImportValue: importValue
+				,computedValue: importValue
 				,targetSelector: this.targetSelector
 				,targetValue: targetValue
 				,isInconsistent: isInconsistent
 			});
 		};
-
-		return copyOperations;
+		
+		opts.onSuccess(copyOperations);
 	},
 	
 	performCopyOperation: function(opts_){
@@ -1526,12 +1594,18 @@ var ImportProfileOperationLongLat = $n2.Class(ImportProfileOperation, {
 	
 	targetSelector: null,
 	
-	initialize: function(operationString){
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			operationString: null
+			,atlasDb: null
+			,atlasDesign: null
+		},opts_);
+		
 		ImportProfileOperation.prototype.initialize.call(this);
 		
-		this.operationString = operationString;
+		this.operationString = opts.operationString;
 		
-		var matcher = OPERATION_LONGLAT.exec(operationString);
+		var matcher = OPERATION_LONGLAT.exec(this.operationString);
 		if( !matcher ) {
 			throw 'Invalid operation string for ImportProfileOperationLongLat: '+operationString;
 		};
@@ -1547,6 +1621,7 @@ var ImportProfileOperationLongLat = $n2.Class(ImportProfileOperation, {
 			doc: null
 			,importData: null
 			,allPropertyNames: null
+			,onSuccess: function(copyOperations){}
 		},opts_);
 		
 		var copyOperations = [];
@@ -1573,14 +1648,14 @@ var ImportProfileOperationLongLat = $n2.Class(ImportProfileOperation, {
 			
 			copyOperations.push({
 				propertyNames: [this.longName, this.latName]
-				,lastImportValue: importValue
+				,computedValue: importValue
 				,targetSelector: this.targetSelector
 				,targetValue: targetValue
 				,isInconsistent: isInconsistent
 			});
 		};
-
-		return copyOperations;
+		
+		opts.onSuccess(copyOperations);
 	},
 	
 	performCopyOperation: function(opts_){
@@ -1636,12 +1711,18 @@ var ImportProfileOperationReference = $n2.Class(ImportProfileOperation, {
 	
 	targetSelector: null,
 	
-	initialize: function(operationString){
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			operationString: null
+			,atlasDb: null
+			,atlasDesign: null
+		},opts_);
+		
 		ImportProfileOperation.prototype.initialize.call(this);
 		
-		this.operationString = operationString;
+		this.operationString = opts.operationString;
 		
-		var matcher = OPERATION_REF.exec(operationString);
+		var matcher = OPERATION_REF.exec(this.operationString);
 		if( !matcher ) {
 			throw 'Invalid operation string for ImportProfileOperationReference: '+operationString;
 		};
@@ -1655,6 +1736,7 @@ var ImportProfileOperationReference = $n2.Class(ImportProfileOperation, {
 			doc: null
 			,importData: null
 			,allPropertyNames: null
+			,onSuccess: function(copyOperations){}
 		},opts_);
 		
 		var copyOperations = [];
@@ -1685,14 +1767,14 @@ var ImportProfileOperationReference = $n2.Class(ImportProfileOperation, {
 			
 			copyOperations.push({
 				propertyNames: [this.refKey]
-				,lastImportValue: importValue
+				,computedValue: importValue
 				,targetSelector: this.targetSelector
 				,targetValue: targetValue
 				,isInconsistent: isInconsistent
 			});
 		};
-
-		return copyOperations;
+		
+		opts.onSuccess(copyOperations);
 	},
 	
 	performCopyOperation: function(opts_){
@@ -1724,6 +1806,143 @@ var ImportProfileOperationReference = $n2.Class(ImportProfileOperation, {
 });
 
 addOperationPattern(OPERATION_REF, ImportProfileOperationReference);
+
+//=========================================================================
+var OPERATION_IMPORT_REF = /^\s*importReference\(([^,]*),\s*'([^']*)'\s*,\s*'([^']*)'\s*\)\s*$/;
+
+var ImportProfileOperationImportReference = $n2.Class(ImportProfileOperation, {
+	
+	operationString: null,
+	
+	atlasDesign: null,
+	
+	profileId: null,
+	
+	importId: null,
+	
+	targetSelector: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			operationString: null
+			,atlasDb: null
+			,atlasDesign: null
+		},opts_);
+		
+		ImportProfileOperation.prototype.initialize.call(this);
+		
+		this.operationString = opts.operationString;
+		this.atlasDesign = opts.atlasDesign;
+		
+		var matcher = OPERATION_IMPORT_REF.exec(this.operationString);
+		if( !matcher ) {
+			throw 'Invalid operation string for ImportProfileOperationImportReference: '+operationString;
+		};
+		
+		this.targetSelector = $n2.objectSelector.parseSelector(matcher[1]);
+		this.profileId = matcher[2];
+		this.importId = matcher[3];
+	},
+	
+	reportCopyOperations: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,importData: null
+			,allPropertyNames: null
+			,onSuccess: function(copyOperations){}
+		},opts_);
+		
+		var _this = this;
+
+		if( opts.allPropertyNames.indexOf(this.importId) >= 0 ){
+			var importId = opts.importData[this.importId];
+			
+			this.atlasDesign.queryView({
+				viewName: 'nunaliit-import'
+				,startkey: [this.profileId, importId]
+				,endkey: [this.profileId, importId]
+				,onSuccess: function(rows){
+					var refId = null;
+					for(var i=0,e=rows.length; i<e; ++i){
+						var row = rows[i];
+						refId = row.id;
+					};
+					setReference(refId);
+				}
+				,onError: function(){
+					// there are no document with profileId/importId combination
+					setReference(null);
+				}
+			});
+			
+		} else {
+			// entry does not have data for import id
+			setReference(null);
+		};
+		
+		function setReference(refId){
+			var copyOperations = [];
+			
+			var importValue = undefined;
+			if( refId ){
+				importValue = {
+					nunaliit_type: 'reference'
+					,doc: refId
+				};
+			};
+			
+			var targetValue = _this.targetSelector.getValue(opts.doc);
+			
+			var isInconsistent = false;
+			if( importValue === targetValue ){
+				// takes care of both undefined
+			} else if( importValue 
+			 && targetValue 
+			 && importValue.doc === targetValue.doc ){
+				// Consistent
+			} else {
+				isInconsistent = true;
+			};
+			
+			copyOperations.push({
+				propertyNames: [_this.importId]
+				,computedValue: importValue
+				,targetSelector: _this.targetSelector
+				,targetValue: targetValue
+				,isInconsistent: isInconsistent
+			});
+			
+			opts.onSuccess(copyOperations);
+		};
+	},
+	
+	performCopyOperation: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,importData: null
+			,copyOperation: null
+		},opts_);
+		
+		var doc = opts.doc;
+		
+		var refId = opts.importData[this.refKey];
+		
+		var importValue = undefined;
+		if( opts.copyOperation 
+		 && opts.copyOperation.computedValue ){
+			importValue = opts.copyOperation.computedValue;
+		};
+
+		if( typeof importValue === 'undefined' ){
+			// Must delete
+			this.targetSelector.removeValue(doc);
+		} else {
+			this.targetSelector.setValue(doc, importValue, true);
+		};
+	}
+});
+
+addOperationPattern(OPERATION_IMPORT_REF, ImportProfileOperationImportReference);
 
 //=========================================================================
 var ImportEntry = $n2.Class({
@@ -1835,31 +2054,49 @@ var ImportProfile = $n2.Class({
 		});
 	},
 	
-	reportCopyOperations: function(doc, allPropertyNames){
+	reportCopyOperations: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,allPropertyNames: null
+			,onSuccess: function(copyOperations){}
+		},opts_);
+		
 		var copyOperations = [];
 		
-		var importData = doc.nunaliit_import.data;
+		var importData = opts.doc.nunaliit_import.data;
 		
-		for(var opIndex=0,opIndexEnd=this.operations.length; opIndex<opIndexEnd; ++opIndex){
-			var op = this.operations[opIndex];
-			var copies = op.reportCopyOperations({
-				doc: doc
-				,importData: importData
-				,allPropertyNames: allPropertyNames
-			});
-			
-			if( copies && copies.length ){
-				for(var copyIndex=0,copyIndexEnd=copies.length; copyIndex<copyIndexEnd; ++copyIndex){
-					var copy = copies[copyIndex];
-					
-					copy._n2OpId = op._n2OpId;
-					
-					copyOperations.push(copy);
-				};
+		var operations = this.operations.slice(0); // clone
+		
+		report();
+		
+		function report(){
+			if( operations.length < 1 ){
+				opts.onSuccess(copyOperations);
+				return;
 			};
+			
+			var op = operations.shift(); // remove first element
+
+			op.reportCopyOperations({
+				doc: opts.doc
+				,importData: importData
+				,allPropertyNames: opts.allPropertyNames
+				,onSuccess: function(copies){
+					if( copies && copies.length ){
+						for(var copyIndex=0,copyIndexEnd=copies.length; copyIndex<copyIndexEnd; ++copyIndex){
+							var copy = copies[copyIndex];
+							
+							copy._n2OpId = op._n2OpId;
+							
+							copyOperations.push(copy);
+						};
+					};
+					
+					// Perform next one
+					report();
+				}
+			});
 		};
-		
-		return copyOperations;
 	},
 	
 	performCopyOperations: function(doc, copyOperations){
@@ -2075,6 +2312,8 @@ var ImportProfileService = $n2.Class({
 			,onError: function(err){}
 		},opts_);
 		
+		var _this = this;
+		
 		var importProfile = opts.importProfile;
 		if( !importProfile && opts.doc ){
 			if( opts.doc.nunaliit_import_profile ){
@@ -2130,7 +2369,11 @@ var ImportProfileService = $n2.Class({
 			if( importProfile.operations ){
 				for(var i=0,e=importProfile.operations.length; i<e; ++i){
 					var opString = importProfile.operations[i];
-					var op = createOperationFromString(opString);
+					var op = createOperation({
+						operationString: opString
+						,atlasDb: _this.atlasDb
+						,atlasDesign: _this.atlasDesign
+					});
 					if( !op ){
 						opts.onError( _loc('Error creating import profile. Unknown operation string: {string}',{string:opString}) );
 						return;
