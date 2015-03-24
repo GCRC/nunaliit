@@ -43,6 +43,28 @@ var $d = window.d3;
 if( !$d ) return;
  
 // --------------------------------------------------------------------------
+// This canvas displays "node elements" in a circle. It draws line between those elements
+// using "link elements". Elements are expected to have the following format:
+/* 
+{
+	id: <string>  (Unique identifier for this element)
+	parentId: <string>  (If this element is part of a tree, id of parent element)
+	isNode: <boolean>  (true if this is a node element [part of tree])
+	isLink: <boolean>  (true if this is a link element [lines between nodes])
+	source: <object>  (element which is at the beginning of the line [only links])
+	target: <object>  (element which is at the end of the line [only links])
+	sortValue: <string> (value used to sort the elements between themselves)
+}
+
+Here are attributes added by the canvas:
+{
+	x: <number>  (value computed by layout)
+	y: <number>  (value computed by layout)
+	parent: <object>  (element which is parent to this one)
+	children: <array> (elements which are children to this one)
+	n2_geometry: <string> ('line' or 'point', depending on link or node)
+}
+*/
 var RadialTreeCanvas = $n2.Class({
 
 	canvasId: null,
@@ -168,7 +190,9 @@ var RadialTreeCanvas = $n2.Class({
 
  		this.layout = d3.layout.cluster()
  			.size([360, this.radius])
-	 	    .sort(null)
+	 	    .sort(function(a,b){
+	 	    	return d3.ascending(a.sortValue, b.sortValue);
+	 	    })
 	 	    .value(function(d) { return d.size; })
  			;
 

@@ -164,9 +164,15 @@ var TreeCanvas = $n2.Class({
 
  		if( 'cluster' === this.layoutStyle ){
  	 		this.treeLayout = d3.layout.cluster()
+ 	 			.sort(function(a,b){
+ 		 	    	return d3.ascending(a.sortValue, b.sortValue);
+ 		 	    })
  	 			.size(graphSize);
  		} else {
  	 		this.treeLayout = d3.layout.tree()
+ 	 			.sort(function(a,b){
+ 		 	    	return d3.ascending(a.sortValue, b.sortValue);
+ 		 	    })
  	 			.size(graphSize);
  		};
 		

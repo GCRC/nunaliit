@@ -378,13 +378,7 @@ var RadialCanvas = $n2.Class({
  		
  		// Sort the nodes
  		this.sortedNodes.sort(function(a,b){
- 			if( a.n2_id < b.n2_id ){
- 				return -1;
- 			};
- 			if( a.n2_id > b.n2_id ){
- 				return 1;
- 			};
- 			return 0;
+ 			return d3.ascending(a.sortValue, b.sortValue);
  		});
  		
  		// Assign x and y
