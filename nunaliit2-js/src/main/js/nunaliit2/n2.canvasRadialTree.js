@@ -516,9 +516,11 @@ var RadialTreeCanvas = $n2.Class({
  		// Re-order the lines so that hovered are above selected, and selected are above
  		// regular
  		links = [];
- 		for(var linkId in this.linksById){
- 			var link = this.linksById[linkId];
-			links.push(link);
+ 		for(var elemId in this.elementsById){
+ 			var elem = this.elementsById[elemId];
+ 			if( elem.isLink ){
+ 				links.push(elem);
+ 			};
  		};
  		this._getSvgElem()
  			.select('g.links')
