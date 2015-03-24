@@ -335,96 +335,31 @@ var RadialTreeCanvas = $n2.Class({
 			,name: ''
 			,children: []
 		};
-		var nodes = [];
 		for(var elemId in this.elementsById){
 			var elem = this.elementsById[elemId];
 
-			if( elem.parentId ){
-				var parent = this.elementsById[elem.parentId];
-				if( parent ){
-					elem.parent = parent;
-					if( !parent.children ){
-						parent.children = [];
+//			if( elem.isNode ){
+				if( elem.parentId ){
+					var parent = this.elementsById[elem.parentId];
+					if( parent ){
+						elem.parent = parent;
+						if( !parent.children ){
+							parent.children = [];
+						};
+						parent.children.push(elem);
 					};
-					parent.children.push(elem);
+					
+				} else if( null === elem.parentId ) {
+					elem.parent = root;
+					root.children.push(elem);
 				};
-				
-			} else if( null === elem.parentId ) {
-				elem.parent = root;
-				root.children.push(elem);
-			};
-			
-			if( elem.isNode ){
-				nodes.push(elem);
-			};
+//			};
 		};
 
-//		// Report statistics on tree
-//		var countParentId = 0;
-//		var countNested = 0;
-//		for(var i=0,e=nodes.length; i<e; ++i){
-//			var node = nodes[i];
-//			
-//			if( node.parentId ){
-//				++countParentId;
-//
-//				if( node.parent ){
-//					++countNested;
-//				};
-//			};
-//		};
-//		$n2.log('nodes: '+nodes.length 
-//				+ ' root children: ' + root.children.length 
-//				+ ' nested: ' + countNested 
-//				+ ' parent id: ' + countParentId);
-
-		// Validate tree
-//		function validateTree(n){
-//			if( n.children ){
-//				for(var i=0,e=n.children.length; i<e; ++i){
-//					var c = n.children[i];
-//					if( c.parent !== n ){
-//						return false;
-//					};
-//					
-//					if( !validateTree(c) ){
-//						return false;
-//					};
-//				};
-//			};
-//			return true;
-//		};
-//		var validTree = validateTree(root);
-//		if( !validTree ){
-//			$n2.log('tree is invalid',root);
-//		};
-		
+		// Layout tree
 		this.layout.nodes(root);
 
-		var nodes = [];
-		for(var elemId in this.elementsById){
-			var elem = this.elementsById[elemId];
-
-			if( elem.parentId ){
-				var parent = this.elementsById[elem.parentId];
-				if( parent ){
-					elem.parent = parent;
-					if( !parent.children ){
-						parent.children = [];
-					};
-					parent.children.push(elem);
-				};
-				
-			} else if( null === elem.parentId ) {
-				elem.parent = root;
-				root.children.push(elem);
-			};
-			
-			if( elem.isNode ){
-				nodes.push(elem);
-			};
-		};
-		
+		// Get nodes and links
 		this.sortedNodes = [];
 		var links = [];
 		for(var elemId in this.elementsById){
