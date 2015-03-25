@@ -41,7 +41,7 @@ var
 // Required library: d3
 var $d = window.d3;
 if( !$d ) return;
- 
+
 //--------------------------------------------------------------------------
 // Fish eye distortion
 function RadialFishEye(){

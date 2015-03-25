@@ -41,7 +41,80 @@ var
 // Required library: d3
 var $d = window.d3;
 if( !$d ) return;
- 
+
+//--------------------------------------------------------------------------
+// Fish eye distortion
+function RadialFishEye(){
+	var radius = 10,
+		distortion = 2,
+		k0,
+		k1,
+		focusAngle = null,
+		angleAttribute = 'x';
+	
+	function fisheye(d) {
+		var pointAngle = d[angleAttribute];
+		
+		if( null === focusAngle ){
+			return {x: pointAngle, z: 1};
+
+		} else {
+			var dx = pointAngle - focusAngle;
+			
+			if( dx > 180 ) dx -= 360;
+			if( dx < -180 ) dx += 360;
+			
+			var dd = Math.sqrt(dx * dx);
+			if (!dd || dd >= radius) return {x: pointAngle, z: 1};
+			var k = k0 * (1 - Math.exp(-dd * k1)) / dd * .75 + .25;
+			
+			var effAngle = focusAngle + (dx * k);
+			if( effAngle < 0 ) effAngle += 360;
+			if( effAngle > 360 ) effAngle -= 360;
+			
+			return {
+				x: effAngle
+				,z: Math.min(k, 10)
+			};
+		};
+ 	}
+
+	function rescale() {
+		k0 = Math.exp(distortion);
+		k0 = k0 / (k0 - 1) * radius;
+		k1 = distortion / radius;
+		return fisheye;
+	}
+
+	fisheye.radius = function(_) {
+		if (!arguments.length) return radius;
+		radius = +_;
+		return rescale();
+	};
+
+	fisheye.distortion = function(_) {
+		if (!arguments.length) return distortion;
+		distortion = +_;
+		return rescale();
+	};
+
+	fisheye.angle = function(_) {
+		if (!arguments.length) return focusAngle;
+		focusAngle = _;
+		return fisheye;
+	};
+
+	fisheye.angleAttribute = function(_) {
+		if (!arguments.length) return angleAttribute;
+		angleAttribute = _;
+		return fisheye;
+	};
+	
+	rescale();
+	
+	return fisheye;
+};
+
 // --------------------------------------------------------------------------
 var RadialCanvas = $n2.Class({
 
@@ -64,6 +137,8 @@ var RadialCanvas = $n2.Class({
 	toggleSelection: null,
 	
 	line: null,
+	
+	magnify: null,
  	
 	styleRules: null,
 
@@ -87,6 +162,7 @@ var RadialCanvas = $n2.Class({
 			,moduleDisplay: null
 			,sourceModelId: null
 			,background: null
+			,magnify: null
 			,styleRules: null
 			,toggleSelection: true
 			,elementGeneratorType: 'default'
@@ -159,6 +235,28 @@ var RadialCanvas = $n2.Class({
 	 	    .tension(.85)
 	 	    .radius(function(d) { return d.y; })
 	 	    .angle(function(d) { return d.x / 180 * Math.PI; });
+ 		
+ 		// Set-up magnification
+ 		var magnifyOptions = $n2.extend({
+ 			radius: 10
+ 			,distortion: 2
+ 		},opts.magnify);
+ 		this.magnify = RadialFishEye()
+			.angleAttribute('orig_x')
+ 			;
+ 		for(var optionName in magnifyOptions){
+ 			var value = magnifyOptions[optionName];
+ 			
+ 			if( 'radius' === optionName 
+ 			 && typeof value === 'number' ){
+ 				this.magnify.radius(value);
+ 			};
+
+ 			if( 'distortion' === optionName 
+ 			 && typeof value === 'number' ){
+ 				this.magnify.distortion(value);
+ 			};
+ 		};
  		
  		this.createGraph();
  		
@@ -386,10 +484,14 @@ var RadialCanvas = $n2.Class({
  	 		var xDelta = 360 / this.sortedNodes.length;
  	 		var x = 0;
  	 		for(var i=0,e=this.sortedNodes.length; i<e; ++i){
- 	 			this.sortedNodes[i].orig_x = x;
- 	 			this.sortedNodes[i].orig_y = this.radius;
- 	 			this.sortedNodes[i].x = x;
- 	 			this.sortedNodes[i].y = this.radius;
+ 	 			var node = this.sortedNodes[i];
+ 	 			
+ 	 			node.orig_x = x;
+ 	 			node.y = this.radius;
+ 	 			
+ 	 			var mag = this.magnify(node);
+ 	 			node.x = mag.x;
+ 	 			node.z = mag.z;
  	 			
  	 			x += xDelta;
  	 		};
@@ -550,84 +652,31 @@ var RadialCanvas = $n2.Class({
  	_magnifyElement: function(magnifiedNode){
  		var _this = this;
  		
- 		var magnifiedIndex = undefined;
+ 		var focusAngle = magnifiedNode.orig_x;
+ 		this.magnify.angle(focusAngle);
+ 		
+ 		var changedNodes = [];
  		for(var i=0,e=this.sortedNodes.length; i<e; ++i){
  			var node = this.sortedNodes[i];
+
+ 			node.transitionNeeded = false;
  			
- 			node.deltaX = 0;
+ 			var mag = this.magnify(node);
  			
- 			if( node === magnifiedNode ){
- 				node.magnified = true;
- 				magnifiedIndex = i;
+ 			if( mag.z === node.z ) {
+ 				// nothing to do
  			} else {
- 				node.magnified = false;
+ 				node.z = mag.z;
+ 				node.x = mag.x;
+ 				node.transitionNeeded = true;
+ 				
+ 				changedNodes.push(node);
  			};
  		};
  		
- 		var magScope = 15;
- 		var magFocus = 4;
- 		
- 		if( this.sortedNodes.length < 1 ){
- 			return;
- 		} else if( (360/this.sortedNodes.length) > magFocus ){
- 			return;
- 		};
- 		
- 		// Main
- 		var angle = this.sortedNodes[magnifiedIndex].orig_x;
-
- 		var done = false;
- 		var indexDelta = 1;
- 		var rate = 1-(magFocus/magScope);
- 		var distanceToTarget = magScope * rate;
- 		var kill = this.sortedNodes.length / 3;
- 		while( !done ){
- 			var delta = magScope - distanceToTarget;
- 			
- 			var index = getIndex(magnifiedIndex,indexDelta);
- 			var node = this.sortedNodes[index];
- 			var newX = getAngle(angle + delta);
- 			node.deltaX = newX - node.orig_x;
- 			
-			if( getAngleDelta(node.deltaX) < 0.01 ){
-				done = true;
-			};
- 			
- 			index = getIndex(magnifiedIndex,0-indexDelta);
- 			node = this.sortedNodes[index];
- 			var newX = getAngle(angle - delta);
- 			node.deltaX = newX - node.orig_x;
- 			
- 			distanceToTarget = distanceToTarget * rate;
- 			
- 			++indexDelta;
- 			--kill;
- 			
- 			if( kill < 0 ){
- 				done = true;
- 			};
- 		};
-
 		// Animate the position of the nodes around the circle
  		this._getSvgElem().select('g.nodes').selectAll('.node')
-			.data(this.sortedNodes, function(node){ return node.id; })
-			.filter(function(d){
-				var newX = d.orig_x + d.deltaX;
-				var diffX = getAngle(newX - d.x);
-				
-				d.transitionNeeded = false;
-				if( diffX > 0.01 ){
-					d.transitionNeeded = true;
-				} else if( diffX < 0.01 ) {
-					d.transitionNeeded = true;
-				};
-				
-				if( d.transitionNeeded ){
-					d.x = newX;
-				};
-				
-				return d.transitionNeeded;
-			})
+			.data(changedNodes, function(node){ return node.id; })
 			.transition()
 			.attr("transform", function(d) { 
 				return "rotate(" + (d.x - 90) 
@@ -637,24 +686,7 @@ var RadialCanvas = $n2.Class({
 
 		// Animate the position of the labels around the circle
  		this._getSvgElem().select('g.labels').selectAll('.label')
-			.data(this.sortedNodes, function(node){ return node.id; })
-			.filter(function(d){
-				var newX = d.orig_x + d.deltaX;
-				var diffX = getAngle(newX - d.x);
-				
-				d.transitionNeeded = false;
-				if( diffX > 0.01 ){
-					d.transitionNeeded = true;
-				} else if( diffX < 0.01 ) {
-					d.transitionNeeded = true;
-				};
-				
-				if( d.transitionNeeded ){
-					d.x = newX;
-				};
-				
-				return d.transitionNeeded;
-			})
+			.data(changedNodes, function(node){ return node.id; })
 			.transition()
 			.attr("transform", function(d) { 
 				return "rotate(" + (d.x - 90) 
@@ -679,37 +711,6 @@ var RadialCanvas = $n2.Class({
 			.transition()
 			.attr('d',function(link){ return _this.line([link.source,{x:0,y:0},link.target]); })
 			;
- 		
- 		function getIndex(i,d){
- 			var r = i + d;
- 			while( r < 0 ){
- 				r += _this.sortedNodes.length;
- 			};
- 			while( r >= _this.sortedNodes.length ){
- 				r -= _this.sortedNodes.length;
- 			};
- 			return r;
- 		};
-
- 		function getAngle(r){
- 			if( r < 0 ){
- 				r += 360;
- 			};
- 			if( r >= 360 ){
- 				r -= 360;
- 			};
- 			return r;
- 		};
-
- 		function getAngleDelta(r){
- 			if( r < -180 ){
- 				r += 360;
- 			};
- 			if( r > 180 ){
- 				r -= 360;
- 			};
- 			return r;
- 		};
  	},
  	
  	_initiateMouseClick: function(elementData){
