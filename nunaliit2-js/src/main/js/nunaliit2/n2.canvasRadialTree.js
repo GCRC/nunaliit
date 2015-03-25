@@ -115,6 +115,7 @@ var RadialTreeCanvas = $n2.Class({
 			,moduleDisplay: null
 			,sourceModelId: null
 			,background: null
+			,line: null
 			,styleRules: null
 			,toggleSelection: true
 			,elementGeneratorType: 'default'
@@ -196,6 +197,11 @@ var RadialTreeCanvas = $n2.Class({
 	 	    .value(function(d) { return d.size; })
  			;
 
+ 		// Set up line computing
+ 		var lineOptions = $n2.extend({
+ 			interpolate: 'bundle'
+ 			,tension: 0.85
+ 		},opts.line);
  		this.line = d3.svg.line.radial()
 	 	    .interpolate("bundle")
  			//.interpolate("basis")
@@ -203,6 +209,19 @@ var RadialTreeCanvas = $n2.Class({
 	 	    .tension(.85)
 	 	    .radius(function(d) { return d.y; })
 	 	    .angle(function(d) { return d.x / 180 * Math.PI; });
+ 		for(var optionName in lineOptions){
+ 			var value = lineOptions[optionName];
+ 			
+ 			if( 'interpolate' === optionName 
+ 			 && typeof value === 'string' ){
+ 				this.line.interpolate(value);
+ 			};
+
+ 			if( 'tension' === optionName 
+ 			 && typeof value === 'number' ){
+ 				this.line.tension(value);
+ 			};
+ 		};
  		
  		this.bundle = d3.layout.bundle();
  		
@@ -338,22 +357,20 @@ var RadialTreeCanvas = $n2.Class({
 		for(var elemId in this.elementsById){
 			var elem = this.elementsById[elemId];
 
-//			if( elem.isNode ){
-				if( elem.parentId ){
-					var parent = this.elementsById[elem.parentId];
-					if( parent ){
-						elem.parent = parent;
-						if( !parent.children ){
-							parent.children = [];
-						};
-						parent.children.push(elem);
+			if( elem.parentId ){
+				var parent = this.elementsById[elem.parentId];
+				if( parent ){
+					elem.parent = parent;
+					if( !parent.children ){
+						parent.children = [];
 					};
-					
-				} else if( null === elem.parentId ) {
-					elem.parent = root;
-					root.children.push(elem);
+					parent.children.push(elem);
 				};
-//			};
+				
+			} else if( null === elem.parentId ) {
+				elem.parent = root;
+				root.children.push(elem);
+			};
 		};
 
 		// Layout tree
@@ -448,9 +465,13 @@ var RadialTreeCanvas = $n2.Class({
  			.data(links, function(link){ return link.id; });
  		this._adjustElementStyles(selectedLinks);
  		
+ 		this._reOrderLinks();
+	},
+	
+	_reOrderLinks: function(){
  		// Re-order the lines so that hovered are above selected, and selected are above
  		// regular
- 		links = [];
+ 		var links = [];
  		for(var elemId in this.elementsById){
  			var elem = this.elementsById[elemId];
  			if( elem.isLink ){
@@ -607,6 +628,7 @@ var RadialTreeCanvas = $n2.Class({
 			;
  		this._adjustElementStyles(updatedLinks);
 
+ 		this._reOrderLinks();
  	},
  	
  	_adjustElementStyles: function(selectedElements){
