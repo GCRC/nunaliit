@@ -42,7 +42,7 @@ var
 var $d = null;
 if( window ){ $d = window.d3; };
 
-var DEFAULT_IMAGE_LOCATION = 'nunaliit2/images/arctic.svg';
+var DEFAULT_IMAGE_LOCATION = 'nunaliit2/images/arctic.png';
 
 //--------------------------------------------------------------------------
 var ProjectionSelector = $n2.Class({
@@ -64,6 +64,8 @@ var ProjectionSelector = $n2.Class({
 	selectionMap: null,
 	
 	currentLng: null,
+	
+	svgCTM: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -243,6 +245,19 @@ var ProjectionSelector = $n2.Class({
  			.attr('height', this.height)
  			//.attr('viewbox', '0 0 100 100')
  			;
+ 		
+ 		$svg.each(function(){
+ 			var svgNode = this;
+
+ 			try {
+	 			var svgCTM = svgNode.getScreenCTM();
+	 			var inverseScreenCTM = svgCTM.inverse();
+	 			_this.svgCTM = inverseScreenCTM;
+ 			} catch(e) {
+ 				// ignore
+ 				$n2.log('Unable to obtain SVG CTM: '+ e);
+ 			}
+ 		});
 
  		var $center = $svg.append('g')
 			.attr('class','centerGroup')
@@ -473,14 +488,46 @@ var ProjectionSelector = $n2.Class({
 		};
 	},
 	
+	_getLocationFromEvent: function(e){
+		var loc = null;
+		
+		if( typeof e.offsetX === 'number' ){
+			loc = {
+				x: e.offsetX
+				,y: e.offsetY
+			};
+		} else {
+			if( this.svgCTM ){
+				var m = this.svgCTM;
+				var x = (e.clientX * m.a) + (e.clientY * m.c) + m.e;
+				var y = (e.clientX * m.b) + (e.clientY * m.d) + m.f;
+
+				loc = {
+					x: x
+					,y: y
+				};
+			};
+		};
+
+		$n2.log('loc x:'+(loc ? loc.x : null)+' y:'+(loc ? loc.y : null));
+		
+		return loc;
+	},
+	
 	_initiateMouseOver: function(n,e){
-		//$n2.log('over x:'+e.offsetX+' y:'+e.offsetY);
-		this._userMouseHover(e.offsetX,e.offsetY);
+		var loc = this._getLocationFromEvent(e);
+		if( loc ){
+			//$n2.log('over x:'+loc.x+' y:'+loc.y);
+			this._userMouseHover(loc.x, loc.y);
+		};
 	},
 	
 	_initiateMouseMove: function(n,e){
-		//$n2.log('move x:'+e.offsetX+' y:'+e.offsetY);
-		this._userMouseHover(e.offsetX,e.offsetY);
+		var loc = this._getLocationFromEvent(e);
+		if( loc ){
+			//$n2.log('move x:'+loc.x+' y:'+loc.y);
+			this._userMouseHover(loc.x, loc.y);
+		};
 	},
 	
 	_initiateMouseOut: function(n,e){
@@ -494,29 +541,34 @@ var ProjectionSelector = $n2.Class({
 	},
 	
 	_initiateMouseClick: function(n,e){
-		var angle = this._angleFromMouseHover(e.offsetX,e.offsetY);
-		//$n2.log('angle: '+angle);
-
-		if( typeof angle === 'number' 
-		 && typeof this.currentLng === 'number' ){
-			var effLng = angle + this.currentLng;
-			if( effLng > 180 ){
-				effLng -= 360;
-			};
-			if( effLng < -180 ){
-				effLng += 360;
-			};
-			//$n2.log('effLng: '+effLng);
+		var loc = this._getLocationFromEvent(e);
+		if( loc ){
+			//$n2.log('click x:'+loc.x+' y:'+loc.y);
 			
-			// Select closest info
-			var selection = this._getSelectionFromAngle(effLng);
-			for(var id in this.selectionMap){
-				var s = this.selectionMap[id];
-
-				if( selection === s ){
-					if( this.mapControl 
-					 && this.mapControl.setBaseLayer ){
-						this.mapControl.setBaseLayer(s.id);
+			var angle = this._angleFromMouseHover(loc.x, loc.y);
+			//$n2.log('angle: '+angle);
+	
+			if( typeof angle === 'number' 
+			 && typeof this.currentLng === 'number' ){
+				var effLng = angle + this.currentLng;
+				if( effLng > 180 ){
+					effLng -= 360;
+				};
+				if( effLng < -180 ){
+					effLng += 360;
+				};
+				//$n2.log('effLng: '+effLng);
+				
+				// Select closest info
+				var selection = this._getSelectionFromAngle(effLng);
+				for(var id in this.selectionMap){
+					var s = this.selectionMap[id];
+	
+					if( selection === s ){
+						if( this.mapControl 
+						 && this.mapControl.setBaseLayer ){
+							this.mapControl.setBaseLayer(s.id);
+						};
 					};
 				};
 			};
