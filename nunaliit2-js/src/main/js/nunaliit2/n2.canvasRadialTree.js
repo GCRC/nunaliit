@@ -507,10 +507,6 @@ var RadialTreeCanvas = $n2.Class({
 				elem.orig_x = elem.x;
 				
 				if( inTree(elem) ){
-					var mag = this.magnify(elem);
-					elem.z = mag.z;
-					elem.x = mag.x;
-					
 					this.sortedNodes.push(elem);
 				} else {
 					$n2.log('node not in tree.',elem);
@@ -625,24 +621,6 @@ var RadialTreeCanvas = $n2.Class({
  			.data(updatedNodeData, function(node){ return node.id; })
  			;
 
- 		// Animate the position of the nodes around the circle
- 		selectedNodes.transition()
-		.attr("transform", function(d) { 
-			return "rotate(" + (d.x - 90) 
-				+ ")translate(" + d.y + ",0)"; 
-		})
-		;
- 		
- 		// Animate the position of the labels around the circle
- 		selectedLabels.transition()
-			.attr("transform", function(d) { 
-				return "rotate(" + (d.x - 90) 
-					+ ")translate(" + (d.y + 8) + ",0)" 
-					+ (d.x < 180 ? "" : "rotate(180)"); 
-			})
- 			.style("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
-			;
-
  		var createdNodes = selectedNodes.enter()
  			.append('circle')
  			.attr('class','node')
@@ -713,10 +691,6 @@ var RadialTreeCanvas = $n2.Class({
  		var selectedLinks = this._getSvgElem().select('g.links').selectAll('.link')
  			.data(updatedLinkData, function(link){ return link.id; })
 			;
- 		
- 		selectedLinks.transition()
-			.attr('d',function(link){ return _this.line(link.path); })
-			;
 
  		var createdLinks = selectedLinks.enter()
  			.append('path')
@@ -741,6 +715,8 @@ var RadialTreeCanvas = $n2.Class({
  			.data(updatedLinkData, function(link){ return link.linkId; })
 			;
  		this._adjustElementStyles(updatedLinks);
+ 		
+ 		this._positionElements();
 
  		this._reOrderLinks();
  	},
@@ -765,10 +741,14 @@ var RadialTreeCanvas = $n2.Class({
  	},
  	
  	_magnifyElement: function(magnifiedNode){
- 		var _this = this;
- 		
  		var focusAngle = magnifiedNode.orig_x;
  		this.magnify.angle(focusAngle);
+ 		
+ 		this._positionElements();
+ 	},
+ 	
+ 	_positionElements: function(){
+ 		var _this = this;
  		
  		var magnifyEnabled = false;
  		if( typeof this.magnifyThresholdCount === 'number' 
@@ -781,29 +761,37 @@ var RadialTreeCanvas = $n2.Class({
  			var node = this.sortedNodes[i];
 
  			node.transitionNeeded = false;
+ 			var x = null;
+ 			var z = null;
 
  			if( magnifyEnabled ){
  	 			var mag = this.magnify(node);
-
- 	 			if( mag.z === node.z ) {
- 	 				// nothing to do
- 	 			} else {
- 	 				node.z = mag.z;
- 	 				node.x = mag.x;
- 	 				node.transitionNeeded = true;
- 	 				
- 	 				changedNodes.push(node);
- 	 			};
+ 	 			x = mag.x;
+ 	 			z = mag.z;
  	 			
  			} else {
- 				if( node.z !== 1 ){
- 	 				node.z = 1;
- 	 				node.x = node.orig_x;
- 	 				node.transitionNeeded = true;
- 	 				
- 	 				changedNodes.push(node);
+ 				x = node.orig_x;
+ 				z = 1;
+ 			};
+
+ 			node.z = z;
+ 			
+ 			var changed = false;
+ 			if( typeof node.x !== 'number' ){
+ 				node.x = x;
+ 				changed = true;
+ 			} else {
+ 	 			var delta = Math.abs(x - node.x);
+ 				if( delta > 0.01 ){
+ 	 				node.x = x;
+ 	 				changed = true;
  				};
  			};
+			
+			if( changed ){
+ 				node.transitionNeeded = true;
+ 				changedNodes.push(node);
+			};
  		};
  		
 		// Animate the position of the nodes around the circle
