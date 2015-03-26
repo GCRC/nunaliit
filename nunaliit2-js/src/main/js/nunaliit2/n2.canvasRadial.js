@@ -139,6 +139,8 @@ var RadialCanvas = $n2.Class({
 	line: null,
 	
 	magnify: null,
+	
+	magnifyThresholdCount: null,
  	
 	styleRules: null,
 
@@ -200,6 +202,7 @@ var RadialCanvas = $n2.Class({
  		this.lastElementIdSelected = null;
  		this.focusInfo = null;
  		this.selectInfo = null;
+ 		this.magnifyThresholdCount = null;
 
  		// Element generator
  		if( !this.elementGenerator ){
@@ -240,6 +243,7 @@ var RadialCanvas = $n2.Class({
  		var magnifyOptions = $n2.extend({
  			radius: 10
  			,distortion: 2
+ 			,thresholdCount: 120
  		},opts.magnify);
  		this.magnify = RadialFishEye()
 			.angleAttribute('orig_x')
@@ -255,6 +259,11 @@ var RadialCanvas = $n2.Class({
  			if( 'distortion' === optionName 
  			 && typeof value === 'number' ){
  				this.magnify.distortion(value);
+ 			};
+
+ 			if( 'thresholdCount' === optionName 
+ 			 && typeof value === 'number' ){
+ 				this.magnifyThresholdCount = value;
  			};
  		};
  		
@@ -654,23 +663,40 @@ var RadialCanvas = $n2.Class({
  		
  		var focusAngle = magnifiedNode.orig_x;
  		this.magnify.angle(focusAngle);
+
+ 		var magnifyEnabled = false;
+ 		if( typeof this.magnifyThresholdCount === 'number' 
+ 		 && this.magnifyThresholdCount <= this.sortedNodes.length ){
+ 			magnifyEnabled = true;
+ 		};
  		
  		var changedNodes = [];
  		for(var i=0,e=this.sortedNodes.length; i<e; ++i){
  			var node = this.sortedNodes[i];
 
  			node.transitionNeeded = false;
- 			
- 			var mag = this.magnify(node);
- 			
- 			if( mag.z === node.z ) {
- 				// nothing to do
+
+ 			if( magnifyEnabled ){
+ 	 			var mag = this.magnify(node);
+
+ 	 			if( mag.z === node.z ) {
+ 	 				// nothing to do
+ 	 			} else {
+ 	 				node.z = mag.z;
+ 	 				node.x = mag.x;
+ 	 				node.transitionNeeded = true;
+ 	 				
+ 	 				changedNodes.push(node);
+ 	 			};
+ 	 			
  			} else {
- 				node.z = mag.z;
- 				node.x = mag.x;
- 				node.transitionNeeded = true;
- 				
- 				changedNodes.push(node);
+ 				if( node.z !== 1 ){
+ 	 				node.z = 1;
+ 	 				node.x = node.orig_x;
+ 	 				node.transitionNeeded = true;
+ 	 				
+ 	 				changedNodes.push(node);
+ 				};
  			};
  		};
  		
