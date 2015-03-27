@@ -65,7 +65,8 @@ function RadialFishEye(){
 			if( dx < -180 ) dx += 360;
 			
 			var dd = Math.sqrt(dx * dx);
-			if (!dd || dd >= radius) return {x: pointAngle, z: 1};
+			if (dd >= radius) return {x: pointAngle, z: 1};
+			if (!dd) return {x: pointAngle, z: 10};
 			var k = k0 * (1 - Math.exp(-dd * k1)) / dd * .75 + .25;
 			
 			var effAngle = focusAngle + (dx * k);
@@ -774,8 +775,6 @@ var RadialTreeCanvas = $n2.Class({
  				z = 1;
  			};
 
- 			node.z = z;
- 			
  			var changed = false;
  			if( typeof node.x !== 'number' ){
  				node.x = x;
@@ -787,6 +786,16 @@ var RadialTreeCanvas = $n2.Class({
  	 				changed = true;
  				};
  			};
+ 			if( typeof node.z !== 'number' ){
+ 				node.z = z;
+ 				changed = true;
+ 			} else {
+ 	 			var delta = Math.abs(z - node.z);
+ 				if( delta > 0.01 ){
+ 	 				node.z = z;
+ 	 				changed = true;
+ 				};
+ 			};
 			
 			if( changed ){
  				node.transitionNeeded = true;
@@ -795,19 +804,24 @@ var RadialTreeCanvas = $n2.Class({
  		};
  		
 		// Animate the position of the nodes around the circle
- 		this._getSvgElem().select('g.nodes').selectAll('.node')
-			.data(changedNodes, function(node){ return node.id; })
-			.transition()
+ 		var changedPoints = this._getSvgElem().select('g.nodes').selectAll('.node')
+			.data(changedNodes, function(node){ return node.id; });
+ 		
+		changedPoints.transition()
 			.attr("transform", function(d) { 
 				return "rotate(" + (d.x - 90) 
 					+ ")translate(" + d.y + ",0)"; 
 			})
 			;
+ 		
+ 		this._adjustElementStyles(changedPoints);
 
 		// Animate the position of the labels around the circle
- 		this._getSvgElem().select('g.labels').selectAll('.label')
+ 		var changedLabels = this._getSvgElem().select('g.labels').selectAll('.label')
 			.data(changedNodes, function(node){ return node.id; })
-			.transition()
+			;
+ 		
+		changedLabels.transition()
 			.attr("transform", function(d) { 
 				return "rotate(" + (d.x - 90) 
 					+ ")translate(" + (d.y + 8) + ",0)" 
@@ -815,6 +829,8 @@ var RadialTreeCanvas = $n2.Class({
 			})
  			.style("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
 			;
+ 		
+ 		this._adjustElementStyles(changedLabels);
 
  		// Animate links
  		this._getSvgElem().select('g.links').selectAll('.link')

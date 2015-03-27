@@ -147,6 +147,42 @@ var svgSymbolNames = {
 			,g: true
 		}
 	}
+	,'font-family': {
+		applies: {
+			circle: false
+			,line: false
+			,path: false
+			,text: true
+			,g: true
+		}
+	}
+	,'font-size': {
+		applies: {
+			circle: false
+			,line: false
+			,path: false
+			,text: true
+			,g: true
+		}
+	}
+	,'font-style': {
+		applies: {
+			circle: false
+			,line: false
+			,path: false
+			,text: true
+			,g: true
+		}
+	}
+	,'font-weight': {
+		applies: {
+			circle: false
+			,line: false
+			,path: false
+			,text: true
+			,g: true
+		}
+	}
 };
 
 //--------------------------------------------------------------------------
