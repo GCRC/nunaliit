@@ -171,6 +171,8 @@ var RadialTreeCanvas = $n2.Class({
 	
 	elementsById: null,
 	
+	dimensions: null,
+	
 	layout: null,
 	
 	line: null,
@@ -230,6 +232,7 @@ var RadialTreeCanvas = $n2.Class({
  		this.links = [];
  		this.currentMouseOver = null;
  		this.elementsById = {};
+ 		this.dimensions = {};
  		this.lastElementIdSelected = null;
  		this.focusInfo = null;
  		this.selectInfo = null;
@@ -270,7 +273,7 @@ var RadialTreeCanvas = $n2.Class({
  		graphSize[1] = graphSize[1] - (2 * this.margin);
 
  		this.layout = d3.layout.cluster()
- 			.size([360, this.radius])
+ 			.size([360, this.dimensions.radius])
 	 	    .sort(function(a,b){
 	 	    	return d3.ascending(a.sortValue, b.sortValue);
 	 	    })
@@ -368,8 +371,38 @@ var RadialTreeCanvas = $n2.Class({
  			.append('svg')
  			.attr('id',this.svgId);
  		
+ 		$svg.append('rect')
+			.attr('class','radialBackground')
+			.attr('x',0)
+			.attr('y',0)
+			.attr('stroke','none')
+			.attr('fill','#000000')
+			.attr('fill-opacity',0)
+			.on('click', function(){
+ 				_this._initiateBackgroundMouseClick();
+ 			})
+			.on('mousemove', function(){
+ 				_this._magnifyOut();
+ 			})
+			;
+ 		
  		var $rootGroup = $svg.append('g')
 			.attr('class','radialRoot')
+			;
+
+ 		$rootGroup.append('circle')
+			.attr('class','selector')
+			.attr('stroke','#000000')
+			.attr('stroke-opacity',0)
+			.attr('fill','none')
+			.on('mouseover',function(){
+				var e = $d.event;
+				_this._magnifyLocation(e);
+			})
+			.on('mousemove',function(){
+				var e = $d.event;
+				_this._magnifyLocation(e);
+			})
 			;
 
 		$rootGroup.append('g')
@@ -405,12 +438,24 @@ var RadialTreeCanvas = $n2.Class({
  	resizeGraph: function() {
  		var size = this.getGraphSize();
  		
+ 		this.dimensions = {
+ 			width: size[0]
+ 			,height: size[1]
+ 			,cx: Math.floor(size[0]/2)
+ 			,cy: Math.floor(size[1]/2)
+ 		};
+ 		
  		var $svg = this._getSvgElem()
  			.attr('width', size[0])
  			.attr('height', size[1]);
+
+ 		$svg.select('rect.radialBackground')
+			.attr("width", size[0])
+ 			.attr("height", size[1])
+			;
  		
- 		var $rootGroup = $svg.select('g.radialRoot')
-			.attr("transform", "translate(" + (size[0]/2) + "," + (size[1]/2) + ")");
+ 		var $svgRoot = $svg.select('g.radialRoot')
+			.attr("transform", "translate(" + this.dimensions.cx + "," + this.dimensions.cy + ")");
 			;
  		
  		var minDim = size[0];
@@ -418,8 +463,13 @@ var RadialTreeCanvas = $n2.Class({
  			minDim = size[1];
  		};
  		
- 		this.canvasWidth = minDim;
- 		this.radius = Math.floor( (minDim / 2) - 120 );
+ 		this.dimensions.canvasWidth = minDim;
+ 		this.dimensions.radius = Math.floor( (minDim / 2) - 120 );;
+ 		
+ 		$svgRoot.select('circle.selector')
+ 			.attr('r',Math.floor(minDim/2) - 65)
+ 			.attr('stroke-width',130)
+ 			;
  		
  		this._documentsUpdated([],[]);
  	},
@@ -634,7 +684,10 @@ var RadialTreeCanvas = $n2.Class({
  			})
  			.on('mouseover', function(n,i){
  				_this._initiateMouseOver(n);
- 				_this._magnifyElement(n);
+ 				_this._magnifyLocation($d.event);
+ 			})
+ 			.on('mousemove', function(n,i){
+ 				_this._magnifyLocation($d.event);
  			})
  			.on('mouseout', function(n,i){
  				_this._initiateMouseOut(n);
@@ -665,7 +718,10 @@ var RadialTreeCanvas = $n2.Class({
  			})
  			.on('mouseover', function(n,i){
  				_this._initiateMouseOver(n);
- 				_this._magnifyElement(n);
+ 				_this._magnifyLocation($d.event);
+ 			})
+ 			.on('mousemove', function(n,i){
+ 				_this._magnifyLocation($d.event);
  			})
  			.on('mouseout', function(n,i){
  				_this._initiateMouseOut(n);
@@ -740,12 +796,64 @@ var RadialTreeCanvas = $n2.Class({
  	_sourceModelUpdated: function(opts_){
  		this.elementGenerator.sourceModelUpdated(opts_);
  	},
+	
+	_focusAngleFromLocation: function(x,y){
+		var angle = null;
+		
+		var effX = x - this.dimensions.cx;
+		var effY = this.dimensions.cy - y;
+		if( 0 == effX && 0 == effY){
+			return null;
+			
+		} else if( 0 == effY ){
+			if( effX < 0 ){
+				angle = -90;
+			} else {
+				angle = 90;
+			}
+		} else {
+			angle = Math.atan(effX / effY) * 180 / Math.PI;
+			if( effY < 0 ){
+				angle += 180;
+			};
+			if( angle > 360 ){
+				angle = angle - 360;
+			};
+		};
+
+		return angle;
+	},
  	
- 	_magnifyElement: function(magnifiedNode){
- 		var focusAngle = magnifiedNode.orig_x;
- 		this.magnify.angle(focusAngle);
- 		
- 		this._positionElements();
+ 	_magnifyLocation: function(e){
+ 		var m = null;
+
+ 		try {
+ 			var $svg = this._getSvgElem();
+ 			var svgNode = $svg[0][0];
+			var svgCTM = svgNode.getScreenCTM();
+			m = svgCTM.inverse();
+		} catch(e) {
+			// ignore
+		};
+		
+		if( m ){
+			var x = (e.clientX * m.a) + (e.clientY * m.c) + m.e;
+			var y = (e.clientX * m.b) + (e.clientY * m.d) + m.f;
+			
+			var focusAngle = this._focusAngleFromLocation(x,y);
+			//$n2.log('focusAngle:'+focusAngle);
+			
+			if( null !== focusAngle ){
+		 		this.magnify.angle(focusAngle);
+		 		
+		 		this._positionElements();
+			};
+		};
+ 	},
+ 	
+ 	_magnifyOut: function(){
+		this.magnify.angle(null);
+		this._positionElements();
  	},
  	
  	_positionElements: function(){
@@ -843,6 +951,13 @@ var RadialTreeCanvas = $n2.Class({
 			.transition()
 			.attr('d',function(link){ return _this.line(link.path); })
 			;
+ 	},
+ 	
+ 	_initiateBackgroundMouseClick: function(){
+ 		if( this.lastElementIdSelected ){
+ 			this.elementGenerator.selectOff(this.lastElementIdSelected);
+ 			this.lastElementIdSelected = null;
+ 		};
  	},
  	
  	_initiateMouseClick: function(elementData){

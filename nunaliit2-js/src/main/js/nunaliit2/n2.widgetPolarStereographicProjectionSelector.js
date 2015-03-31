@@ -256,7 +256,7 @@ var ProjectionSelector = $n2.Class({
  			} catch(e) {
  				// ignore
  				$n2.log('Unable to obtain SVG CTM: '+ e);
- 			}
+ 			};
  		});
 
  		var $center = $svg.append('g')
