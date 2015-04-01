@@ -264,14 +264,11 @@ var RadialTreeCanvas = $n2.Class({
  			
  			this.dispatchService.register(DH,'modelGetInfo',f);
  			this.dispatchService.register(DH,'modelStateUpdated',f);
+ 			this.dispatchService.register(DH,'windowResized',f);
  		};
  		
  		this.createGraph();
  		
- 		var graphSize = this.getGraphSize();
- 		graphSize[0] = graphSize[0] - (2 * this.margin);
- 		graphSize[1] = graphSize[1] - (2 * this.margin);
-
  		this.layout = d3.layout.cluster()
  			.size([360, this.dimensions.radius])
 	 	    .sort(function(a,b){
@@ -370,7 +367,7 @@ var RadialTreeCanvas = $n2.Class({
  		var $svg = $d.select('#' + this.canvasId)
  			.append('svg')
  			.attr('id',this.svgId);
- 		
+
  		$svg.append('rect')
 			.attr('class','radialBackground')
 			.attr('x',0)
@@ -385,13 +382,17 @@ var RadialTreeCanvas = $n2.Class({
  				_this._magnifyOut();
  			})
 			;
+
+ 		var $scaleGroup = $svg.append('g')
+			.attr('class','radialScale')
+			;
  		
- 		var $rootGroup = $svg.append('g')
+ 		var $rootGroup = $scaleGroup.append('g')
 			.attr('class','radialRoot')
 			;
 
  		$rootGroup.append('circle')
-			.attr('class','selector')
+			.attr('class','magnifyEvents')
 			.attr('stroke','#000000')
 			.attr('stroke-opacity',0)
 			.attr('fill','none')
@@ -422,32 +423,42 @@ var RadialTreeCanvas = $n2.Class({
  		
  		var width = $canvas.width();
  		var height = $canvas.height();
- 		
- 		/*
- 		 * apply minimum sizes
- 		 */
-// 		if (width < this.options.sizes.canvas_min.width) {
-// 			width = this.options.sizes.canvas_min.width;
-// 		};
-// 		if (height < this.options.sizes.canvas_min.height) {
-// 			height = this.options.sizes.canvas_min.height;
-// 		};
+
  		return [width, height];
  	},
  	
  	resizeGraph: function() {
  		var size = this.getGraphSize();
  		
+ 		var minDim = size[0];
+ 		if( minDim > size[1] ){
+ 			minDim = size[1];
+ 		};
+
+ 		var standardDim = 800;
+ 		var maxTextWidth = 100;
+ 		
  		this.dimensions = {
  			width: size[0]
  			,height: size[1]
  			,cx: Math.floor(size[0]/2)
  			,cy: Math.floor(size[1]/2)
+ 			,canvasWidth: minDim
+ 			//,radius: Math.floor( (minDim / 2) - (maxTextWidth * 2) )
+ 			,radius: Math.floor( (standardDim / 2) - maxTextWidth )
+ 			,textWidth: maxTextWidth
  		};
  		
  		var $svg = this._getSvgElem()
  			.attr('width', size[0])
  			.attr('height', size[1]);
+
+ 		$svg.select('g.radialScale')
+			.attr('transform', 
+				'translate(' + this.dimensions.cx + "," + this.dimensions.cy + ')'
+				+' scale(' + (minDim / standardDim) + ')'
+					)
+			;
 
  		$svg.select('rect.radialBackground')
 			.attr("width", size[0])
@@ -455,23 +466,12 @@ var RadialTreeCanvas = $n2.Class({
 			;
  		
  		var $svgRoot = $svg.select('g.radialRoot')
-			.attr("transform", "translate(" + this.dimensions.cx + "," + this.dimensions.cy + ")");
 			;
  		
- 		var minDim = size[0];
- 		if( minDim > size[1] ){
- 			minDim = size[1];
- 		};
- 		
- 		this.dimensions.canvasWidth = minDim;
- 		this.dimensions.radius = Math.floor( (minDim / 2) - 120 );;
- 		
- 		$svgRoot.select('circle.selector')
- 			.attr('r',Math.floor(minDim/2) - 65)
- 			.attr('stroke-width',130)
+ 		$svgRoot.select('circle.magnifyEvents')
+ 			.attr('r',this.dimensions.radius + Math.floor(this.dimensions.textWidth / 2) + 5)
+ 			.attr('stroke-width',(this.dimensions.textWidth + 10))
  			;
- 		
- 		this._documentsUpdated([],[]);
  	},
  	
  	_getSvgElem: function() {
@@ -1006,6 +1006,9 @@ var RadialTreeCanvas = $n2.Class({
  					this._sourceModelUpdated(m.state);
  				};
  			};
+ 			
+ 		} else if( 'windowResized' === m.type ) {
+ 			this.resizeGraph();
  		};
  	},
  	
