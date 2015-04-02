@@ -587,8 +587,8 @@ var RadialTreeCanvas = $n2.Class({
 	},
 	
 	_intentChanged: function(changedElements){
- 		// Segregate nodes and active links
- 		var nodes = [];
+ 		// Segregate nodes and links
+		var nodeMap = {};
  		var links = [];
  		for(var i=0,e=changedElements.length; i<e; ++i){
  			var changedNode = changedElements[i];
@@ -596,20 +596,40 @@ var RadialTreeCanvas = $n2.Class({
  			// $n2.log(changedNode.n2_id+' sel:'+changedNode.n2_selected+' foc:'+changedNode.n2_hovered+' find:'+changedNode.n2_found);
  			
  			if( changedNode.isNode ){
- 				nodes.push(changedNode);
- 				
- 				if( changedNode.n2_found 
- 				 && !changedNode.forceFound ){
- 					changedNode.forceFound = true;
-
- 				} else if( !changedNode.n2_found 
- 				 && changedNode.forceFound ){
- 					changedNode.forceFound = false;
- 				};
+ 				nodeMap[changedNode.id] = changedNode;
  				
  			} else if( changedNode.isLink ){
  				links.push(changedNode);
+ 				
+ 				var derived_selected = changedNode.n2_selected;
+ 				var derived_hovered = changedNode.n2_hovered;
+ 				
+ 				if( changedNode.source.derived_selected !== derived_selected ){
+ 					changedNode.source.derived_selected = derived_selected;
+ 	 				nodeMap[changedNode.source.id] = changedNode.source;
+ 				};
+ 				
+ 				if( changedNode.source.derived_hovered !== derived_hovered ){
+ 					changedNode.source.derived_hovered = derived_hovered;
+ 	 				nodeMap[changedNode.source.id] = changedNode.source;
+ 				};
+ 				
+ 				if( changedNode.target.derived_selected !== derived_selected ){
+ 					changedNode.target.derived_selected = derived_selected;
+ 	 				nodeMap[changedNode.target.id] = changedNode.target;
+ 				};
+ 				
+ 				if( changedNode.target.derived_hovered !== derived_hovered ){
+ 					changedNode.target.derived_hovered = derived_hovered;
+ 	 				nodeMap[changedNode.target.id] = changedNode.target;
+ 				};
  			};
+ 		};
+
+ 		// Convert node map into a node array
+ 		var nodes = [];
+ 		for(var nodeId in nodeMap){
+			nodes.push( nodeMap[nodeId] );
  		};
 
  		// Update style on nodes
@@ -880,7 +900,7 @@ var RadialTreeCanvas = $n2.Class({
  	 			
  			} else {
  				x = node.orig_x;
- 				z = 1;
+ 				z = 2;
  			};
 
  			var changed = false;
