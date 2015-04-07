@@ -49,6 +49,17 @@ public class SchemaDefinition {
 			}
 		}
 		
+		// Related schemas
+		{
+			JSONArray initialLayers = jsonDef.optJSONArray("initialLayers");
+			if( null != initialLayers ) {
+				for(int i=0,e=initialLayers.length(); i<e; ++i){
+					String layerId = initialLayers.getString(i);
+					def.addInitialLayer(layerId);
+				}
+			}
+		}
+		
 		return def;
 	}
 	
@@ -56,6 +67,7 @@ public class SchemaDefinition {
 	private String schemaId;
 	private String label;
 	private List<SchemaAttribute> attributes = new Vector<SchemaAttribute>();
+	private List<String> initialLayers = new Vector<String>();
 	private List<String> relatedSchemas = new Vector<String>();
 	
 	public SchemaDefinition(String groupName, String schemaId){
@@ -85,6 +97,14 @@ public class SchemaDefinition {
 
 	public void addRelatedSchema(String relatedSchemaName){
 		relatedSchemas.add(relatedSchemaName);
+	}
+	
+	public List<String> getInitialLayers(){
+		return initialLayers;
+	}
+
+	public void addInitialLayer(String layerId){
+		initialLayers.add(layerId);
 	}
 	
 	public String getDocumentIdentifier(){
@@ -297,6 +317,16 @@ public class SchemaDefinition {
 			jsonDef.put("releatedSchemas", jsonRelatedSchemas);
 		}
 		
+		if( initialLayers.size() > 0 ){
+			JSONArray jsonInitialLayers  = new JSONArray();
+			
+			for(String layerId : initialLayers){
+				jsonInitialLayers.put(layerId);
+			}
+			
+			jsonDef.put("initialLayers", jsonInitialLayers);
+		}
+		
 		return jsonDef;
 	}
 	
@@ -304,6 +334,16 @@ public class SchemaDefinition {
 		JSONObject jsonCreate = new JSONObject();
 
 		jsonCreate.put("nunaliit_schema", getSchemaName());
+		
+		if( initialLayers.size() > 0 ){
+			JSONArray nunaliit_layers = new JSONArray();
+			
+			for(String layerId : initialLayers){
+				nunaliit_layers.put(layerId);
+			}
+			
+			jsonCreate.put("nunaliit_layers", nunaliit_layers);
+		}
 		
 		JSONObject jsonDoc = new JSONObject();
 		jsonCreate.put(getSchemaName(), jsonDoc);
