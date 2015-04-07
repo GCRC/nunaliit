@@ -488,6 +488,8 @@ var RadialTreeCanvas = $n2.Class({
 			delete elem.depth;
 			delete elem.x;
 			delete elem.y;
+			delete elem.z;
+			delete elem.orig_x;
 		};
 
 		// Remove elements that are no longer there
@@ -556,6 +558,7 @@ var RadialTreeCanvas = $n2.Class({
 			if( elem.isNode ){
 				elem.n2_geometry = 'point';
 				elem.orig_x = elem.x;
+				delete elem.x;
 				
 				if( inTree(elem) ){
 					this.sortedNodes.push(elem);
@@ -697,7 +700,7 @@ var RadialTreeCanvas = $n2.Class({
  			.attr('class','node')
  			.attr("r", 3)
  			.attr("transform", function(d) { 
- 				return "rotate(" + (d.x - 90) + ")translate(" + d.y + ",0)"; 
+ 				return "rotate(" + (d.orig_x - 90) + ")translate(" + d.y + ",0)"; 
  			})
  			.on('click', function(n,i){
  				_this._initiateMouseClick(n);
@@ -723,14 +726,13 @@ var RadialTreeCanvas = $n2.Class({
  			.attr('class','label')
  			.attr("dy", ".31em")
  			.attr("transform", function(d) { 
- 				return "rotate(" + (d.x - 90) + ")translate(" + (d.y + 8) + ",0)" 
- 					+ (d.x < 180 ? "" : "rotate(180)"); 
+ 				return "rotate(" + (d.orig_x - 90) + ")translate(" + (d.y + 8) + ",0)" 
+ 					+ (d.orig_x < 180 ? "" : "rotate(180)"); 
  			})
  			.style("text-anchor", function(d) { 
- 				return d.x < 180 ? "start" : "end"; 
+ 				return d.orig_x < 180 ? "start" : "end"; 
  			})
  			.text(function(d) { 
- 				//return d.key; 
  				return "";
  			})
  			.on('click', function(n,i){
@@ -749,22 +751,19 @@ var RadialTreeCanvas = $n2.Class({
  			;
  		this._adjustElementStyles(createdLabels);
  		
+ 		// Removals
  		selectedNodes.exit()
  			.remove();
 
  		selectedLabels.exit()
 			.remove();
- 		
- 		var updatedNodes = this._getSvgElem().select('g.nodes').selectAll('.node')
- 			.data(updatedNodeData, function(node){ return node.id; })
- 			;
- 		this._adjustElementStyles(updatedNodes);
 
- 		var updatedLabels = this._getSvgElem().select('g.labels').selectAll('.label')
-			.data(updatedNodeData, function(node){ return node.id; })
-			;
-		this._adjustElementStyles(updatedLabels);
+ 		// Updates
+ 		this._adjustElementStyles(selectedNodes);
 
+		this._adjustElementStyles(selectedLabels);
+
+		// Links
  		var selectedLinks = this._getSvgElem().select('g.links').selectAll('.link')
  			.data(updatedLinkData, function(link){ return link.id; })
 			;
@@ -772,7 +771,7 @@ var RadialTreeCanvas = $n2.Class({
  		var createdLinks = selectedLinks.enter()
  			.append('path')
  			.attr('class','link')
- 			.attr('d',function(link){ return _this.line(link.path); })
+// 			.attr('d',function(link){ return _this.line(link.path); })
  			.on('click', function(n,i){
  				_this._initiateMouseClick(n);
  			})
@@ -788,13 +787,12 @@ var RadialTreeCanvas = $n2.Class({
  		selectedLinks.exit()
  			.remove();
  		
- 		var updatedLinks = this._getSvgElem().select('g.links').selectAll('.link')
- 			.data(updatedLinkData, function(link){ return link.linkId; })
-			;
- 		this._adjustElementStyles(updatedLinks);
- 		
+ 		this._adjustElementStyles(selectedLinks);
+
+ 		// Position everything around the circle
  		this._positionElements();
 
+ 		// Re-order links
  		this._reOrderLinks();
  	},
  	
