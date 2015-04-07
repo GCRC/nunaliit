@@ -971,8 +971,250 @@ var TimeTransform = $n2.Class({
 });
 
 //--------------------------------------------------------------------------
+// No time
+// This filter allows documents that have no time information
+var NoTimeFilter = $n2.Class({
+	
+	dispatchService: null,
+	
+	modelId: null,
+	
+	sourceModelId: null,
+	
+	docInfosByDocId: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dispatchService: null
+			,modelId: null
+			,sourceModelId: null
+			,rangeStr: null
+		},opts_);
+		
+		var _this = this;
+		
+		this.dispatchService = opts.dispatchService;
+		this.modelId = opts.modelId;
+		this.sourceModelId = opts.sourceModelId;
+		
+		this.docInfosByDocId = {};
+		
+		// Register to events
+		if( this.dispatchService ){
+			var f = function(m, addr, dispatcher){
+				_this._handle(m, addr, dispatcher);
+			};
+			this.dispatchService.register(DH,'modelGetInfo',f);
+			this.dispatchService.register(DH, 'modelGetState', f);
+			this.dispatchService.register(DH, 'modelStateUpdated', f);
+			
+			// Initialize state
+			var m = {
+				type:'modelGetState'
+				,modelId: this.sourceModelId
+			};
+			this.dispatchService.synchronousCall(DH, m);
+			if( m.state ){
+				this._sourceModelUpdated(m.state);
+			};
+		};
+		
+		$n2.log('NoTimeFilter',this);
+	},
+	
+	_handle: function(m, addr, dispatcher){
+		if( 'modelGetInfo' === m.type ){
+			if( this.modelId === m.modelId ){
+				m.modelInfo = this._getModelInfo();
+			};
+			
+		} else if( 'modelGetState' === m.type ){
+			if( this.modelId === m.modelId ){
+				var added = [];
+				for(var docId in this.docInfosByDocId){
+					var docInfo = this.docInfosByDocId[docId];
+					var doc = docInfo.doc;
+					if( docInfo.visible ){
+						added.push(doc);
+					};
+				};
+
+				m.state = {
+					added: added
+					,updated: []
+					,removed: []
+				};
+			};
+			
+		} else if( 'modelStateUpdated' === m.type ){
+			// Does it come from our source?
+			if( this.sourceModelId === m.modelId ){
+				this._sourceModelUpdated(m.state);
+			};
+		};
+	},
+	
+	_getModelInfo: function(){
+		var info = {
+			modelId: this.modelId
+			,modelType: 'noTimeFilter'
+			,parameters: {}
+		};
+		
+		return info;
+	},
+	
+	_sourceModelUpdated: function(sourceState){
+		var added = []
+			,updated = []
+			,removed = []
+			;
+		
+		// Loop through all added documents
+		if( sourceState.added ){
+			for(var i=0,e=sourceState.added.length; i<e; ++i){
+				var doc = sourceState.added[i];
+				var docId = doc._id;
+				var intervals = this._getTimeIntervalsFromDoc(doc);
+				var docInfo = {
+					id: docId
+					,doc: doc
+					,intervals: intervals
+					,visible: false
+				};
+				
+				// Compute new visibility
+				var visibility = this._computeVisibility(docInfo);
+				
+				docInfo.visible = visibility;
+
+				// Save info
+				this.docInfosByDocId[docId] = docInfo;
+				
+				if( docInfo.visible ){
+					added.push(doc);
+				};
+			};
+		};
+		
+		// Loop through all updated documents
+		if( sourceState.updated ){
+			for(var i=0,e=sourceState.updated.length; i<e; ++i){
+				var doc = sourceState.updated[i];
+				var docId = doc._id;
+				var docInfo = this.docInfosByDocId[docId];
+				var intervals = this._getTimeIntervalsFromDoc(doc);
+				if( !docInfo ) {
+					docInfo = {
+						id: docId
+						,doc: doc
+						,visible: false
+					};
+					this.docInfosByDocId[docId] = docInfo;
+				};
+
+				// Update
+				docInfo.doc = doc;
+				docInfo.intervals = intervals;
+				
+				// Compute new visibility
+				var visibility = this._computeVisibility(docInfo);
+				var changeInVisibility = ( visibility !== docInfo.visible );
+				docInfo.visible = visibility;
+
+				// Report change in visibility
+				if( changeInVisibility ){
+					
+					if( docInfo.visible ){
+						// It used to be hidden. Now, it is visible. Add
+						added.push(doc);
+					} else {
+						// It used to be visible. Now, it is hidden. Remove
+						removed.push(doc);
+					};
+					
+				} else if( docInfo.visible ) {
+					// In this case, there was an update and it used to
+					// be visible and it is still visible. Report update
+					updated.push(doc);
+				};
+			};
+		};
+		
+		// Loop through all removed documents
+		if( sourceState.removed ){
+			for(var i=0,e=sourceState.removed.length; i<e; ++i){
+				var doc = sourceState.removed[i];
+				var docId = doc._id;
+				var docInfo = this.docInfosByDocId[docId];
+				if( docInfo ){
+					delete this.docInfosByDocId[docId];
+					
+					// If previously visible, add to removal list
+					if( docInfo.visible ){
+						removed.push(doc);
+					};
+				};
+			};
+		};
+
+		// Report changes in visibility
+		this._reportStateUpdate(added, updated, removed);
+	},
+	
+	_reportStateUpdate: function(added, updated, removed){
+		if( added.length > 0
+		 || updated.length > 0 
+		 || removed.length > 0 ){
+			var stateUpdate = {
+				added: added
+				,updated: updated
+				,removed: removed
+			};
+
+			if( this.dispatchService ){
+				this.dispatchService.send(DH,{
+					type: 'modelStateUpdated'
+					,modelId: this.modelId
+					,state: stateUpdate
+				});
+			};
+		};
+	},
+	
+	_computeVisibility: function(docInfo){
+
+		if( docInfo 
+		 && docInfo.intervals
+		 && docInfo.intervals.length > 0 ){
+			// Any time interval makes the document invisible
+			return false;
+		};
+		
+		return true;
+	},
+	
+	_getTimeIntervalsFromDoc: function(doc){
+		var dates = [];
+		$n2.couchUtils.extractSpecificType(doc,'date',dates);
+		
+		var intervals = [];
+		for(var i=0,e=dates.length; i<e; ++i){
+			var date = dates[i];
+			var interval = $n2.date.parseDateStructure(date);
+			if( interval ){
+				intervals.push( interval );
+			};
+		};
+		
+		return intervals;
+	}
+});
+
+//--------------------------------------------------------------------------
 $n2.modelTime = {
 	TimeFilter: TimeFilter
+	,NoTimeFilter: NoTimeFilter
 	,TimeTransform: TimeTransform
 };
 

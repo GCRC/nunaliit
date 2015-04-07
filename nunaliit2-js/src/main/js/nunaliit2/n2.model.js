@@ -221,6 +221,9 @@ var Service = $n2.Class({
 				} else if( m.modelType === 'timeFilter' ){
 			        this._createTimeFilter(m);
 				    
+				} else if( m.modelType === 'noTimeFilter' ){
+			        this._createNoTimeFilter(m);
+				    
 				} else if( m.modelType === 'timeTransform' ){
 			        this._createTimeTransform(m);
 				    
@@ -299,6 +302,34 @@ var Service = $n2.Class({
 
 		} else {
 			throw 'Model TimeFilter is not available';
+		};
+	},
+	
+	_createNoTimeFilter: function(m){
+		if( $n2.modelTime 
+		 && $n2.modelTime.NoTimeFilter ){
+			var options = {
+				modelId: m.modelId
+			};
+			
+			if( m && m.modelOptions ){
+				if( m.modelOptions.sourceModelId ){
+					options.sourceModelId = m.modelOptions.sourceModelId;
+				};
+			};
+			
+			if( m && m.config ){
+				if( m.config.directory ){
+					options.dispatchService = m.config.directory.dispatchService;
+				};
+			};
+			
+			new $n2.modelTime.NoTimeFilter(options);
+			
+			m.created = true;
+
+		} else {
+			throw 'Model NoTimeFilter is not available';
 		};
 	},
 	
