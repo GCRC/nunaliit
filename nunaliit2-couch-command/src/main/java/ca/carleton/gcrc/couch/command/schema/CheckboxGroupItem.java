@@ -7,7 +7,7 @@ public class CheckboxGroupItem {
 	static public CheckboxGroupItem fromJson(JSONObject jsonOption) throws Exception {
 		CheckboxGroupItem option = new CheckboxGroupItem();
 		
-		// value
+		// id
 		{
 			String id = jsonOption.getString("id");
 			option.setId(id);

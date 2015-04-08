@@ -49,7 +49,7 @@ public class SchemaDefinition {
 			}
 		}
 		
-		// Related schemas
+		// Initial Layers
 		{
 			JSONArray initialLayers = jsonDef.optJSONArray("initialLayers");
 			if( null != initialLayers ) {
