@@ -92,8 +92,14 @@ OpenLayers.Strategy.NunaliitCluster = OpenLayers.Class(OpenLayers.Strategy, {
     resolution: null,
     
     /**
+     * Property: clusterPrefix
+     * {Integer} The string portion of the identifiers to be given to clusters.
+     */
+    clusterPrefix: null,
+    
+    /**
      * Property: clusterId
-     * {Integer} The interger portion of the next identifier to be given to clusters.
+     * {Integer} The integer portion of the next identifier to be given to clusters.
      */
     clusterId: null,
 
@@ -109,6 +115,7 @@ OpenLayers.Strategy.NunaliitCluster = OpenLayers.Class(OpenLayers.Strategy, {
         
     	OpenLayers.Strategy.prototype.initialize.apply(this, arguments);
 
+    	this.clusterPrefix = 'cluster_' + $n2.getUniqueId() + '_';
     	this.clusterId = 1;
     	
     	if( typeof options.minimumPolygonPixelSize === 'undefined' ){
@@ -333,7 +340,7 @@ OpenLayers.Strategy.NunaliitCluster = OpenLayers.Class(OpenLayers.Strategy, {
             {count: 1}
         );
         cluster.cluster = [feature];
-        cluster.fid = 'cluster_'+this.clusterId;
+        cluster.fid = this.clusterPrefix+this.clusterId;
         ++this.clusterId;
         return cluster;
     },
