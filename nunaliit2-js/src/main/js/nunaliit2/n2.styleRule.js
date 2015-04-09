@@ -401,12 +401,12 @@ var StyleRules = $n2.Class({
 	
 	_getSymbolizerFromStyleAndContext: function(style, ctxt){
 		var label = 'normal';
-		if( ctxt.n2_selected ){
+		if( ctxt.n2_selected || ctxt.n2_derived_selected ){
 			label = '$selected';
-			if( ctxt.n2_hovered ){
+			if( ctxt.n2_hovered || ctxt.n2_derived_hovered ){
 				label = '$selectedHovered';
 			};
-		} else if( ctxt.n2_hovered ){
+		} else if( ctxt.n2_hovered || ctxt.n2_derived_hovered ){
 			label = '$hovered';
 		};
 		

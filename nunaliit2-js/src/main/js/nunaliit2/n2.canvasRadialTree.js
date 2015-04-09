@@ -590,9 +590,16 @@ var RadialTreeCanvas = $n2.Class({
 	},
 	
 	_intentChanged: function(changedElements){
+		// Reset all temp variables
+		for(var elemId in this.elementsById){
+			var elem = this.elementsById[elemId];
+			elem.temp_hovered = false;
+			elem.temp_selected = false;
+		};
+		
  		// Segregate nodes and links
 		var nodeMap = {};
- 		var links = [];
+ 		var linkMap = {};
  		for(var i=0,e=changedElements.length; i<e; ++i){
  			var changedNode = changedElements[i];
  			
@@ -602,37 +609,86 @@ var RadialTreeCanvas = $n2.Class({
  				nodeMap[changedNode.id] = changedNode;
  				
  			} else if( changedNode.isLink ){
- 				links.push(changedNode);
- 				
- 				var derived_selected = changedNode.n2_selected;
- 				var derived_hovered = changedNode.n2_hovered;
- 				
- 				if( changedNode.source.derived_selected !== derived_selected ){
- 					changedNode.source.derived_selected = derived_selected;
- 	 				nodeMap[changedNode.source.id] = changedNode.source;
- 				};
- 				
- 				if( changedNode.source.derived_hovered !== derived_hovered ){
- 					changedNode.source.derived_hovered = derived_hovered;
- 	 				nodeMap[changedNode.source.id] = changedNode.source;
- 				};
- 				
- 				if( changedNode.target.derived_selected !== derived_selected ){
- 					changedNode.target.derived_selected = derived_selected;
- 	 				nodeMap[changedNode.target.id] = changedNode.target;
- 				};
- 				
- 				if( changedNode.target.derived_hovered !== derived_hovered ){
- 					changedNode.target.derived_hovered = derived_hovered;
- 	 				nodeMap[changedNode.target.id] = changedNode.target;
- 				};
+ 				linkMap[changedNode.id] = changedNode;
  			};
  		};
+
+ 		// Compute derived selection and hover
+		for(var elemId in this.elementsById){
+			var elem = this.elementsById[elemId];
+			
+			if( elem.isLink ){
+				// If a link is selected, both associated nodes
+				// are selected (derived)
+				if( elem.n2_selected ){
+					elem.source.temp_selected = true;
+					elem.target.temp_selected = true;
+				};
+				
+				// If a link is hovered, both associated nodes
+				// are hovered (derived)
+				if( elem.n2_hovered ){
+					elem.source.temp_hovered = true;
+					elem.target.temp_hovered = true;
+				};
+
+				// If a link has an associated node which is selected,
+				// then both the link and the other node are selected (derived)
+				if( elem.source.n2_selected ){
+					elem.temp_selected = true;
+					elem.target.temp_selected = true;
+				};
+				if( elem.target.n2_selected ){
+					elem.temp_selected = true;
+					elem.source.temp_selected = true;
+				};
+
+				// If a link has an associated node which is hovered,
+				// then both the link and the other node are hovered (derived)
+				if( elem.source.n2_hovered ){
+					elem.temp_hovered = true;
+					elem.target.temp_hovered = true;
+				};
+				if( elem.target.n2_hovered ){
+					elem.temp_hovered = true;
+					elem.source.temp_hovered = true;
+				};
+			};
+		};
+
+ 		// Detect changes in derived selection and hover
+		for(var elemId in this.elementsById){
+			var elem = this.elementsById[elemId];
+			
+			if( elem.n2_derived_selected !== elem.temp_selected ){
+				elem.n2_derived_selected = elem.temp_selected;
+				if( elem.isLink ){
+					linkMap[elem.id] = elem;
+				} else if( elem.isNode ){
+					nodeMap[elem.id] = elem;
+				};
+			};
+			
+			if( elem.n2_derived_hovered !== elem.temp_hovered ){
+				elem.n2_derived_hovered = elem.temp_hovered;
+				if( elem.isLink ){
+					linkMap[elem.id] = elem;
+				} else if( elem.isNode ){
+					nodeMap[elem.id] = elem;
+				};
+			};
+		};
 
  		// Convert node map into a node array
  		var nodes = [];
  		for(var nodeId in nodeMap){
 			nodes.push( nodeMap[nodeId] );
+ 		};
+
+ 		// Convert link map into a link array
+ 		var links = [];
+ 		for(var linkId in linkMap){
+			links.push( linkMap[linkId] );
  		};
 
  		// Update style on nodes
@@ -647,7 +703,7 @@ var RadialTreeCanvas = $n2.Class({
  		// Update style on links
  		var selectedLinks = this._getSvgElem().select('g.links').selectAll('.link')
  			.data(links, function(link){ return link.id; });
- 		this._adjustElementStyles(selectedLinks);
+ 		this._adjustElementStyles(selectedLinks, true);
  		
  		this._reOrderLinks();
 	},
@@ -782,12 +838,12 @@ var RadialTreeCanvas = $n2.Class({
  				_this._initiateMouseOut(n);
  			})
  			;
- 		this._adjustElementStyles(createdLinks);
+ 		this._adjustElementStyles(createdLinks, true);
  		
  		selectedLinks.exit()
  			.remove();
  		
- 		this._adjustElementStyles(selectedLinks);
+ 		this._adjustElementStyles(selectedLinks, true);
 
  		// Position everything around the circle
  		this._positionElements();
@@ -796,12 +852,16 @@ var RadialTreeCanvas = $n2.Class({
  		this._reOrderLinks();
  	},
  	
- 	_adjustElementStyles: function(selectedElements){
+ 	_adjustElementStyles: function(selectedElements, elementsAreLinks){
  		var _this = this;
  		selectedElements.each(function(n,i){
  			var symbolizer = _this.styleRules.getSymbolizer(n);
  			symbolizer.adjustSvgElement(this,n);
  		});
+ 		
+ 		if( elementsAreLinks ){
+ 			selectedElements.attr('fill','none');
+ 		};
  	},
  	
  	_dispatch: function(m){
