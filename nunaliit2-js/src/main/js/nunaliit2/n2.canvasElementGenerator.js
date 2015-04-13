@@ -607,40 +607,42 @@ var ElementGenerator = $n2.Class('ElementGenerator', {
 				var fragment = cluster.fragments[fragId];
 				var context = fragment.context;
 				
-				if( context.n2_selected ){
-					cluster.n2_selected = true;
-				};
-				if( context.n2_hovered ){
-					cluster.n2_hovered = true;
-				};
-				if( context.n2_found ){
-					cluster.n2_found = true;
-				};
-				if( context.n2_selectedIntent ){
-					if( cluster.n2_selectedIntent === null ){
-						// collision
-					} else if( cluster.n2_selectedIntent === undefined ){
-						cluster.n2_selectedIntent = context.n2_selectedIntent;
-					} else {
-						cluster.n2_selectedIntent = null;
+				if( context ){
+					if( context.n2_selected ){
+						cluster.n2_selected = true;
 					};
-				};
-				if( context.n2_hoveredIntent ){
-					if( cluster.n2_hoveredIntent === null ){
-						// collision
-					} else if( cluster.n2_hoveredIntent === undefined ){
-						cluster.n2_hoveredIntent = context.n2_hoveredIntent;
-					} else {
-						cluster.n2_hoveredIntent = null;
+					if( context.n2_hovered ){
+						cluster.n2_hovered = true;
 					};
-				};
-				if( context.n2_intent ){
-					if( cluster.n2_intent === null ){
-						// collision
-					} else if( cluster.n2_intent === undefined ){
-						cluster.n2_intent = context.n2_intent;
-					} else {
-						cluster.n2_intent = null;
+					if( context.n2_found ){
+						cluster.n2_found = true;
+					};
+					if( context.n2_selectedIntent ){
+						if( cluster.n2_selectedIntent === null ){
+							// collision
+						} else if( cluster.n2_selectedIntent === undefined ){
+							cluster.n2_selectedIntent = context.n2_selectedIntent;
+						} else {
+							cluster.n2_selectedIntent = null;
+						};
+					};
+					if( context.n2_hoveredIntent ){
+						if( cluster.n2_hoveredIntent === null ){
+							// collision
+						} else if( cluster.n2_hoveredIntent === undefined ){
+							cluster.n2_hoveredIntent = context.n2_hoveredIntent;
+						} else {
+							cluster.n2_hoveredIntent = null;
+						};
+					};
+					if( context.n2_intent ){
+						if( cluster.n2_intent === null ){
+							// collision
+						} else if( cluster.n2_intent === undefined ){
+							cluster.n2_intent = context.n2_intent;
+						} else {
+							cluster.n2_intent = null;
+						};
 					};
 				};
 			};
