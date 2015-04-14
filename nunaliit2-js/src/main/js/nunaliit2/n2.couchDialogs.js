@@ -334,6 +334,234 @@ function selectLayersDialog(opts_){
 };
 
 //++++++++++++++++++++++++++++++++++++++++++++++
+// This is a factory class to generate a dialog function that
+// can be used in selecting a document id from a list of presented
+// documents. This is an abstract class and it must be specialized
+// before it can be useful. Each sub-class should implement the
+// method getDocuments() to return a sorted list of documents that
+// can be selected.
+//
+// The dialog presented offers a search box which narrows the list
+// of presented documents, based on the displayed brief.
+var SearchBriefDialogGenerator = $n2.Class({
+
+	showService: null,
+	
+	dialogPrompt: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			showService: null
+			,dialogPrompt: _loc('Select')
+		},opts_);
+		
+		this.showService = opts.showService;
+		this.dialogPrompt = opts.dialogPrompt;
+	},
+	
+	/*
+	 * This method returns a function that can be used in
+	 * DialogService.addFunctionToMap
+	 */
+	getDialogFunction: function(){
+		var _this = this;
+		return function(opts){
+			_this._showDialog(opts);
+		};
+	},
+	
+	/*
+	 * This method must be implemented by sub-classes
+	 */
+	getDocuments: function(opts_){
+		var opts = $n2.extend({
+			onSuccess: function(docs){}
+			,onError: function(err){}
+		},opts_);
+		
+		$n2.log('Subclasses to SearchBriefDialogGenerator must implement getDocuments()');
+		
+		opts.onSuccess([]);
+	},
+	
+	_showDialog: function(opts_){
+		var opts = $n2.extend({
+			onSelected: function(docId){}
+			,onReset: function(){}
+		},opts_);
+		
+		var _this = this;
+
+		var shouldReset = true;
+		
+		var dialogId = $n2.getUniqueId();
+		var inputId = $n2.getUniqueId();
+		var displayId = $n2.getUniqueId();
+		var $dialog = $('<div>')
+			.attr('id',dialogId)
+			.addClass('editorSelectDocumentDialog')
+			;
+		
+		var $searchLine = $('<div>')
+			.appendTo($dialog);
+		
+		$('<label>')
+			.attr('for', inputId)
+			.text( _loc('Search:') )
+			.appendTo($searchLine);
+		
+		$('<input>')
+			.attr('id', inputId)
+			.attr('type', 'text')
+			.appendTo($searchLine)
+			.keyup(function(){
+				var $input = $(this);
+				var text = $input.val();
+				var frags = text.split(' ');
+				var words = [];
+				for(var i=0,e=frags.length; i<e; ++i){
+					var frag = $n2.trim( frags[i].toLowerCase() );
+					if( frag.length > 0 ){
+						words.push(frag);
+					};
+				};
+				$n2.log('text : '+words.join('+'));
+				filterList(words);
+			});
+		
+		var $results = $('<div>')
+			.attr('id',displayId)
+			.addClass('editorSelectDocumentDialogResults')
+			.appendTo($dialog);
+
+		$('<div>')
+			.addClass('olkit_wait')
+			.appendTo($results);
+
+		var $buttons = $('<div>')
+			.appendTo($dialog);
+		
+		$('<button>')
+			.addClass('cancel')
+			.text( _loc('Cancel') )
+			.appendTo($buttons)
+			.button({icons:{primary:'ui-icon-cancel'}})
+			.click(function(){
+				var $dialog = $('#'+dialogId);
+				$dialog.dialog('close');
+				return false;
+			});
+		
+		var dialogOptions = {
+			autoOpen: true
+			,title: this.dialogPrompt
+			,modal: true
+			,width: 370
+			,close: function(event, ui){
+				var diag = $(event.target);
+				diag.dialog('destroy');
+				diag.remove();
+				if( shouldReset ) {
+					opts.onReset();
+				};
+			}
+		};
+		$dialog.dialog(dialogOptions);
+
+		this.getDocuments({
+			onSuccess: displayDocs
+			,onError: function(errorMsg){ 
+				reportError( _loc('Unable to retrieve documents: {err}',{
+					err: errorMsg
+				}) ); 
+			}
+		});
+
+		function displayDocs(docs) {
+
+			if( docs.length < 1 ){
+				$('#'+displayId)
+					.empty()
+					.text( _loc('No document found') );
+				
+			} else {
+				var $table = $('<table></table>');
+				$('#'+displayId).empty().append($table);
+
+				for(var i=0,e=docs.length; i<e; ++i) {
+					var doc = docs[i];
+					var docId = doc._id;
+					
+					var $tr = $('<tr>')
+						.addClass('trResult')
+						.appendTo($table);
+
+					var $td = $('<td>')
+						.addClass('n2_search_result olkitSearchMod2_'+(i%2))
+						.appendTo($tr);
+					
+					var $a = $('<a>')
+						.attr('href','#'+docId)
+						.attr('alt',docId)
+						.appendTo($td)
+						.click( createClickHandler(docId) );
+					
+					if( _this.showService ) {
+						_this.showService.displayBriefDescription($a, {}, doc);
+					} else {
+						$a.text(docId);
+					};
+				};
+			};
+		};
+		
+		function filterList(words){
+			var $dialog = $('#'+dialogId);
+			var $trs = $dialog.find('.trResult');
+			if( !words || words.length < 1 ){
+				$trs.show();
+			} else {
+				$trs.each(function(){
+					var $tr = $(this);
+					var trText = $tr.text().toLowerCase();
+					//$n2.log('trText : '+trText);
+					var show = true;
+					for(var i=0,e=words.length; i<e && show; ++i){
+						var word = words[i];
+						if( trText.indexOf(word) < 0 ){
+							show = false;
+						};
+					};
+					
+					if( show ){
+						$tr.show();
+					} else {
+						$tr.hide();
+					};
+				});
+			};
+		};
+		
+		function createClickHandler(docId) {
+			return function(e){
+				opts.onSelected(docId);
+				shouldReset = false;
+				var $dialog = $('#'+dialogId);
+				$dialog.dialog('close');
+				return false;
+			};
+		};
+		
+		function reportError(err){
+			$('#'+displayId)
+				.empty()
+				.text( err );
+		};
+	}
+
+});
+
+//++++++++++++++++++++++++++++++++++++++++++++++
 var DialogService = $n2.Class({
 
 	dispatchService: null,
@@ -562,6 +790,7 @@ var DialogService = $n2.Class({
 
 $n2.couchDialogs = {
 	DialogService: DialogService
+	,SearchBriefDialogGenerator: SearchBriefDialogGenerator
 };
 
 })(jQuery,nunaliit2);
