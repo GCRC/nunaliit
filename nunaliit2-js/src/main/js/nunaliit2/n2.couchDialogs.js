@@ -343,7 +343,7 @@ function selectLayersDialog(opts_){
 //
 // The dialog presented offers a search box which narrows the list
 // of presented documents, based on the displayed brief.
-var SearchBriefDialogGenerator = $n2.Class({
+var SearchBriefDialogFactory = $n2.Class({
 
 	showService: null,
 	
@@ -366,7 +366,7 @@ var SearchBriefDialogGenerator = $n2.Class({
 	getDialogFunction: function(){
 		var _this = this;
 		return function(opts){
-			_this._showDialog(opts);
+			_this.showDialog(opts);
 		};
 	},
 	
@@ -379,12 +379,12 @@ var SearchBriefDialogGenerator = $n2.Class({
 			,onError: function(err){}
 		},opts_);
 		
-		$n2.log('Subclasses to SearchBriefDialogGenerator must implement getDocuments()');
+		$n2.log('Subclasses to SearchBriefDialogFactory must implement getDocuments()');
 		
 		opts.onSuccess([]);
 	},
 	
-	_showDialog: function(opts_){
+	showDialog: function(opts_){
 		var opts = $n2.extend({
 			onSelected: function(docId){}
 			,onReset: function(){}
@@ -559,6 +559,246 @@ var SearchBriefDialogGenerator = $n2.Class({
 		};
 	}
 
+});
+
+//++++++++++++++++++++++++++++++++++++++++++++++
+// This is a factory class to generate a dialog function that
+// can be used in selecting a document id from a list of presented
+// documents. This is an abstract class and it must be specialized
+// before it can be useful. Each sub-class should implement the
+// method filterDocuments() to return a sorted list of documents that
+// can be selected.
+//
+// The dialog presented offers a search box which performs a text
+// search through the database. The documents retrieved this way
+// are filtered and sorted by the sub-class. Then filtered list is
+// presented to the user for selection.
+var FilteredSearchDialogFactory = $n2.Class({
+
+	atlasDb: null,
+	
+	searchService: null,
+	
+	showService: null,
+	
+	dialogPrompt: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			atlasDb: null
+			,searchService: null
+			,showService: null
+			,dialogPrompt: _loc('Search')
+		},opts_);
+		
+		this.atlasDb = opts.atlasDb;
+		this.searchService = opts.searchService;
+		this.showService = opts.showService;
+		this.dialogPrompt = opts.dialogPrompt;
+	},
+	
+	/*
+	 * This method returns a function that can be used in
+	 * DialogService.addFunctionToMap
+	 */
+	getDialogFunction: function(){
+		var _this = this;
+		return function(opts){
+			_this.showDialog(opts);
+		};
+	},
+	
+	/*
+	 * This method must be implemented by sub-classes
+	 */
+	filterDocuments: function(opts_){
+		var opts = $n2.extend({
+			docs: null
+			,onSuccess: function(docs){}
+			,onError: function(err){}
+		},opts_);
+		
+		$n2.log('Subclasses to FilteredSearchDialogFactory must implement filterDocuments()');
+		
+		opts.onSuccess( opts.docs );
+	},
+	
+	showDialog: function(opts_){
+		var opts = $n2.extend({
+			onSelected: function(docId){}
+			,onReset: function(){}
+		},opts_);
+		
+		var _this = this;
+
+		var shouldReset = true;
+		
+		var dialogId = $n2.getUniqueId();
+		var inputId = $n2.getUniqueId();
+		var searchButtonId = $n2.getUniqueId();
+		var displayId = $n2.getUniqueId();
+		
+		var $dialog = $('<div id="'+dialogId+'" class="editorSelectDocumentDialog">')
+			.attr('id',dialogId)
+			.addClass('editorSelectDocumentDialog');
+		
+		var $searchLine = $('<div>')
+			.appendTo($dialog);
+
+		$('<label>')
+			.attr('for', inputId)
+			.text( _loc('Search:') )
+			.appendTo($searchLine);
+
+		$('<input>')
+			.attr('id', inputId)
+			.attr('type', 'text')
+			.appendTo($searchLine);
+
+		$('<button>')
+			.attr('id', searchButtonId)
+			.text( _loc('Search') )
+			.appendTo($searchLine);
+		
+		$('<div>')
+			.attr('id',displayId)
+			.addClass('editorSelectDocumentDialogResults')
+			.appendTo($dialog);
+		
+		var $buttons = $('<div>')
+			.appendTo($dialog);
+		
+		$('<button>')
+			.addClass('cancel')
+			.text( _loc('Cancel') )
+			.appendTo($buttons)
+			.button({icons:{primary:'ui-icon-cancel'}})
+			.click(function(){
+				var $dialog = $('#'+dialogId);
+				$dialog.dialog('close');
+				return false;
+			});
+
+		var dialogOptions = {
+			autoOpen: true
+			,title: this.dialogPrompt
+			,modal: true
+			,width: 370
+			,close: function(event, ui){
+				var diag = $(event.target);
+				diag.dialog('destroy');
+				diag.remove();
+				if( shouldReset ) {
+					opts.onReset();
+				};
+			}
+		};
+		$dialog.dialog(dialogOptions);
+
+		this.searchService.installSearch({
+			textInput: $('#'+inputId)
+			,searchButton: $('#'+searchButtonId)
+			,displayFn: receiveSearchResults
+			,onlyFinalResults: true
+		});
+		
+		var $input = $('#'+inputId);
+		$('#'+inputId).focus();
+		
+		function receiveSearchResults(displayData) {
+			if( !displayData ) {
+				reportError( _loc('Invalid search results returned') );
+
+			} else if( 'wait' === displayData.type ) {
+				$('#'+displayId).empty();
+
+			} else if( 'results' === displayData.type ) {
+				var docIds = [];
+			
+				for(var i=0,e=displayData.list.length; i<e; ++i) {
+					var docId = displayData.list[i].id;
+					docIds.push(docId);
+				};
+				
+				if( docIds.length < 1 ){
+					displayDocs([]);
+					
+				} else {
+					_this.atlasDb.getDocuments({
+						docIds: docIds
+						,onSuccess: function(docs){
+
+							_this.filterDocuments({
+								docs: docs
+								,onSuccess: displayDocs
+								,onError: reportError
+							});
+						}
+						,onError: function(errorMsg){ 
+							reportError( _loc('Unable to retrieve documents') );
+						}
+					});
+				};
+				
+			} else {
+				reportError( _loc('Invalid search results returned') );
+			};
+		};
+
+		function displayDocs(docs) {
+
+			if( docs.length < 1 ){
+				$('#'+displayId)
+					.empty()
+					.text( _loc('No results returned by search') );
+				
+			} else {
+				var $table = $('<table></table>');
+				$('#'+displayId).empty().append($table);
+
+				for(var i=0,e=docs.length; i<e; ++i) {
+					var doc = docs[i];
+					var docId = doc._id;
+					
+					var $tr = $('<tr></tr>');
+
+					$table.append($tr);
+
+					var $td = $('<td>')
+						.addClass('n2_search_result olkitSearchMod2_'+(i%2))
+						.appendTo($tr);
+					
+					var $a = $('<a>')
+						.attr('href','#'+docId)
+						.attr('alt',docId)
+						.appendTo($td)
+						.click( createClickHandler(docId) );
+					
+					if( _this.showService ) {
+						_this.showService.displayBriefDescription($a, {}, doc);
+					} else {
+						$a.text(docId);
+					};
+				};
+			};
+		};
+		
+		function createClickHandler(docId) {
+			return function(e){
+				opts.onSelected(docId);
+				shouldReset = false;
+				var $dialog = $('#'+dialogId);
+				$dialog.dialog('close');
+				return false;
+			};
+		};
+		
+		function reportError(err){
+			$('#'+displayId)
+				.empty()
+				.text( err );
+		};
+	}
 });
 
 //++++++++++++++++++++++++++++++++++++++++++++++
@@ -790,7 +1030,8 @@ var DialogService = $n2.Class({
 
 $n2.couchDialogs = {
 	DialogService: DialogService
-	,SearchBriefDialogGenerator: SearchBriefDialogGenerator
+	,SearchBriefDialogFactory: SearchBriefDialogFactory
+	,FilteredSearchDialogFactory: FilteredSearchDialogFactory
 };
 
 })(jQuery,nunaliit2);
