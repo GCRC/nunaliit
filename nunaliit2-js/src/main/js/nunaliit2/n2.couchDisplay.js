@@ -1374,90 +1374,85 @@ function _displayRelatedDocuments(display_, contId, relatedSchemaName, relatedDo
 		return;
 	};
 	
-	//legacyDisplay();
-	blindDisplay();
+	var blindId = $n2.getUniqueId();
+	var $blindWidget = $('<div id="'+blindId+'" class="_n2DocumentListParent"><h3></h3><div style="padding-left:0px;padding-right:0px;"></div></div>');
+	$container.append($blindWidget);
+	var bw = $n2.blindWidget($blindWidget,{
+		data: relatedDocIds
+		,onBeforeOpen: beforeOpen
+	});
+	bw.setHtml('<span class="_n2DisplaySchemaName"></span> (<span class="_n2DisplayDocCount"></span>)');
+	if( null == relatedSchemaName ) {
+		$blindWidget.find('._n2DisplaySchemaName').text( _loc('Uncategorized') );
+	} else {
+		$blindWidget.find('._n2DisplaySchemaName').text(relatedSchemaName);
+	};
+	$blindWidget.find('._n2DisplayDocCount').text(''+relatedDocIds.length);
 	
-	function blindDisplay(){
-
-		var blindId = $n2.getUniqueId();
-		var $blindWidget = $('<div id="'+blindId+'" class="_n2DocumentListParent"><h3></h3><div style="padding-left:0px;padding-right:0px;"></div></div>');
-		$container.append($blindWidget);
-		var bw = $n2.blindWidget($blindWidget,{
-			data: relatedDocIds
-			,onBeforeOpen: beforeOpen
+	var schemaRepository = display_.schemaRepository;
+	if( schemaRepository && relatedSchemaName ){
+		schemaRepository.getSchema({
+			name: relatedSchemaName
+			,onSuccess: function(schema){
+				var $blindWidget = $('#'+blindId);
+				$blindWidget.find('._n2DisplaySchemaName').text( _loc(schema.getLabel()) );
+			}
 		});
-		bw.setHtml('<span class="_n2DisplaySchemaName"></span> (<span class="_n2DisplayDocCount"></span>)');
-		if( null == relatedSchemaName ) {
-			$blindWidget.find('._n2DisplaySchemaName').text( _loc('Uncategorized') );
-		} else {
-			$blindWidget.find('._n2DisplaySchemaName').text(relatedSchemaName);
-		};
-		$blindWidget.find('._n2DisplayDocCount').text(''+relatedDocIds.length);
+	};
+
+	function beforeOpen(info){
+		var $div = info.content;
 		
-		var schemaRepository = display_.schemaRepository;
-		if( schemaRepository && relatedSchemaName ){
-			schemaRepository.getSchema({
-				name: relatedSchemaName
-				,onSuccess: function(schema){
-					var $blindWidget = $('#'+blindId);
-					$blindWidget.find('._n2DisplaySchemaName').text( _loc(schema.getLabel()) );
-				}
-			});
+		var $dataloaded = $div.find('.___n2DataLoaded');
+		if( $dataloaded.length > 0 ) {
+			// nothing to do
+			return;
 		};
-
-		function beforeOpen(info){
-			var $div = info.content;
+		
+		// Fetch data
+		var docIds = info.data;
+		$div.empty();
+		$div.append( $('<div class="___n2DataLoaded" style="display:none;"></div>') );
+		for(var i=0,e=docIds.length; i<e; ++i){
+			var docId = docIds[i];
 			
-			var $dataloaded = $div.find('.___n2DataLoaded');
-			if( $dataloaded.length > 0 ) {
-				// nothing to do
-				return;
+			var $docWrapper = $('<div></div>');
+			$div.append($docWrapper);
+			if ( 0 === i ) { // mark first and last one
+				$docWrapper.addClass('_n2DocumentListStart');
 			};
+			if ( (e-1) === i ) {
+				$docWrapper.addClass('_n2DocumentListEnd');
+			};
+			$docWrapper
+				.addClass('_n2DocumentListEntry')
+				.addClass('_n2DocumentListEntry_'+$n2.utils.stringToHtmlId(docId))
+				.addClass('olkitSearchMod2_'+(i%2))
+				.addClass('n2SupressNonApprovedMedia_'+$n2.utils.stringToHtmlId(docId))
+				.addClass('n2SupressDeniedMedia_'+$n2.utils.stringToHtmlId(docId))
+				;
 			
-			// Fetch data
-			var docIds = info.data;
-			$div.empty();
-			$div.append( $('<div class="___n2DataLoaded" style="display:none;"></div>') );
-			for(var i=0,e=docIds.length; i<e; ++i){
-				var docId = docIds[i];
-				
-				var $docWrapper = $('<div></div>');
-				$div.append($docWrapper);
-				if ( 0 === i ) { // mark first and last one
-					$docWrapper.addClass('_n2DocumentListStart');
-				};
-				if ( (e-1) === i ) {
-					$docWrapper.addClass('_n2DocumentListEnd');
-				};
-				$docWrapper
-					.addClass('_n2DocumentListEntry')
-					.addClass('_n2DocumentListEntry_'+$n2.utils.stringToHtmlId(docId))
-					.addClass('olkitSearchMod2_'+(i%2))
-					.addClass('n2SupressNonApprovedMedia_'+$n2.utils.stringToHtmlId(docId))
-					.addClass('n2SupressDeniedMedia_'+$n2.utils.stringToHtmlId(docId))
-					;
-				
-				var $doc = $('<div></div>');
-				$docWrapper.append($doc);
+			var $doc = $('<div>')
+				.addClass('n2s_handleHover')
+				.appendTo($docWrapper);
 
-				if( display_.showService ) {
-					if( display_.displayBriefInRelatedInfo ){
-						display_.showService.printBriefDescription($doc,docId);
-					} else {
-						display_.showService.printDocument($doc,docId);
-					};
+			if( display_.showService ) {
+				if( display_.displayBriefInRelatedInfo ){
+					display_.showService.printBriefDescription($doc,docId);
 				} else {
-					$doc.text(docId);
+					display_.showService.printDocument($doc,docId);
 				};
-				if( display_.requestService ) {
-					var $progressDiv = $('<div class="n2Display_attProgress n2Display_attProgress_'+$n2.utils.stringToHtmlId(docId)+'"></div>');
-					$docWrapper.append($progressDiv);
+			} else {
+				$doc.text(docId);
+			};
+			if( display_.requestService ) {
+				var $progressDiv = $('<div class="n2Display_attProgress n2Display_attProgress_'+$n2.utils.stringToHtmlId(docId)+'"></div>');
+				$docWrapper.append($progressDiv);
 
-					var $buttonDiv = $('<div class="displayRelatedButton displayRelatedButton_'+$n2.utils.stringToHtmlId(docId)+'"></div>');
-					$docWrapper.append($buttonDiv);
-					
-					display_.requestService.requestDocument(docId);
-				};
+				var $buttonDiv = $('<div class="displayRelatedButton displayRelatedButton_'+$n2.utils.stringToHtmlId(docId)+'"></div>');
+				$docWrapper.append($buttonDiv);
+				
+				display_.requestService.requestDocument(docId);
 			};
 		};
 	};
