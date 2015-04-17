@@ -170,6 +170,8 @@ var RadialTreeCanvas = $n2.Class({
 	elementGenerator: null,
 	
 	elementsById: null,
+
+	findableDocsById: null,
 	
 	dimensions: null,
 	
@@ -232,6 +234,7 @@ var RadialTreeCanvas = $n2.Class({
  		this.links = [];
  		this.currentMouseOver = null;
  		this.elementsById = {};
+ 		this.findableDocsById = {};
  		this.dimensions = {};
  		this.lastElementIdSelected = null;
  		this.focusInfo = null;
@@ -265,6 +268,7 @@ var RadialTreeCanvas = $n2.Class({
  			this.dispatchService.register(DH,'modelGetInfo',f);
  			this.dispatchService.register(DH,'modelStateUpdated',f);
  			this.dispatchService.register(DH,'windowResized',f);
+			this.dispatchService.register(DH,'findIsAvailable', f);
  		};
  		
  		this.createGraph();
@@ -509,6 +513,27 @@ var RadialTreeCanvas = $n2.Class({
 			var updated = updatedElements[i];
 			this.elementsById[ updated.id ] = updated;
 		};
+		
+		// Update list of documents that can be found
+		this.findableDocsById = {};
+		for(var id in this.elementsById){
+			var cluster = this.elementsById[id];
+			if( cluster.fragments ){
+				for(var fragId in cluster.fragments){
+					var frag = cluster.fragments[fragId];
+					
+					var context = frag.context;
+					if( context ){
+						var doc = context.n2_doc;
+						if( doc ){
+							var docId = doc._id;
+							
+							this.findableDocsById[docId] = doc;
+						};
+					};
+				};
+			};
+		};
 
 		// Compute tree
 		var root = {
@@ -723,6 +748,16 @@ var RadialTreeCanvas = $n2.Class({
  			.selectAll('.link')
 			.data(links, function(link){ return link.id; })
 			.filter(function(l){return l.n2_selected;})
+			.each(function(l){
+	 			var svgLink = this;
+	 			svgLink.parentNode.appendChild(svgLink);
+	 		})
+			;
+ 		this._getSvgElem()
+			.select('g.links')
+			.selectAll('.link')
+			.data(links, function(link){ return link.id; })
+			.filter(function(l){return l.n2_found;})
 			.each(function(l){
 	 			var svgLink = this;
 	 			svgLink.parentNode.appendChild(svgLink);
@@ -1087,6 +1122,14 @@ var RadialTreeCanvas = $n2.Class({
  			
  		} else if( 'windowResized' === m.type ) {
  			this.resizeGraph();
+ 			
+ 		} else if( 'findIsAvailable' === m.type ) {
+			var doc = m.doc;
+			var docId = doc._id;
+ 			
+ 			if( this.findableDocsById[docId] ){
+ 				m.isAvailable = true;
+ 			};
  		};
  	},
  	

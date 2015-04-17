@@ -309,7 +309,7 @@ var DbPerspective = $n2.Class({
 			
 			this.dispatchService.register(DH, 'documentContent', fn);
 			this.dispatchService.register(DH, 'documentDeleted', fn);
-			this.dispatchService.register(DH, 'findIsAvailable', fn);
+//			this.dispatchService.register(DH, 'findIsAvailable', fn);
 			this.dispatchService.register(DH, 'documentVersion', fn);
 			this.dispatchService.register(DH, 'cacheRetrieveDocument', fn);
 			this.dispatchService.register(DH, 'modelGetInfo', fn);
@@ -553,20 +553,20 @@ var DbPerspective = $n2.Class({
 				this._reportStateUpdate([], [], removed);
 			};
 			
-		} else if( 'findIsAvailable' === m.type ) {
-			var doc = m.doc;
-			
-			if( doc ){
-				for(var i=0,e=this.dbSelectors.length; i<e; ++i){
-					var selectorInfo = this.dbSelectors[i];
-					var selector = selectorInfo.selector;
-					if( selector.isDocValid(doc) ){
-						m.isAvailable = true;
-						break;
-					};
-				};
-			};
-			
+//		} else if( 'findIsAvailable' === m.type ) {
+//			var doc = m.doc;
+//			
+//			if( doc ){
+//				for(var i=0,e=this.dbSelectors.length; i<e; ++i){
+//					var selectorInfo = this.dbSelectors[i];
+//					var selector = selectorInfo.selector;
+//					if( selector.isDocValid(doc) ){
+//						m.isAvailable = true;
+//						break;
+//					};
+//				};
+//			};
+//			
 		} else if( 'documentVersion' === m.type ) {
 			var docInfo = this.docInfosByDocId[m.docId];
 			if( docInfo 

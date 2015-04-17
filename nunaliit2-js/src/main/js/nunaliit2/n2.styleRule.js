@@ -295,6 +295,8 @@ var StyleRule = $n2.Class({
 	normal: null,
 	
 	selected: null,
+
+	found: null,
 	
 	hovered: null,
 	
@@ -304,6 +306,7 @@ var StyleRule = $n2.Class({
 			,source: null
 			,normal: null
 			,selected: null
+			,found: null
 			,hovered: null
 		},opts_);
 		
@@ -311,6 +314,7 @@ var StyleRule = $n2.Class({
 		this.source = opts.source;
 		this.normal = new Symbolizer(opts.normal);
 		this.selected = new Symbolizer(opts.selected);
+		this.found = new Symbolizer(opts.found);
 		this.hovered = new Symbolizer(opts.hovered);
 	},
 	
@@ -361,6 +365,10 @@ var StyleRules = $n2.Class({
 			,selected: {
 				'strokeColor': "#ff2200"
 			}
+			,found: {
+				'strokeColor': "#00ffff"
+				,'fillColor': "#00ffff"
+			}
 			,hovered: {
 				'fillColor': "#0000ff"
 			}
@@ -403,8 +411,18 @@ var StyleRules = $n2.Class({
 		var label = 'normal';
 		if( ctxt.n2_selected || ctxt.n2_derived_selected ){
 			label = '$selected';
-			if( ctxt.n2_hovered || ctxt.n2_derived_hovered ){
+			if( ctxt.n2_found ){
+				label = '$selectedFound';
+				if( ctxt.n2_hovered || ctxt.n2_derived_hovered ){
+					label = '$selectedFoundHovered';
+				};
+			} else if( ctxt.n2_hovered || ctxt.n2_derived_hovered ){
 				label = '$selectedHovered';
+			};
+		} else if( ctxt.n2_found ){
+			label = '$found';
+			if( ctxt.n2_hovered || ctxt.n2_derived_hovered ){
+				label = '$foundHovered';
 			};
 		} else if( ctxt.n2_hovered || ctxt.n2_derived_hovered ){
 			label = '$hovered';
@@ -427,6 +445,13 @@ var StyleRules = $n2.Class({
 			};
 			return style.$hovered;
 			
+		} else if( '$found' === label ){
+			if( !style.$found ){
+				var s1 = this._getSymbolizerFromStyleAndLabel(style,'normal');
+				style.$found = new Symbolizer(s1, style.found);
+			};
+			return style.$found;
+			
 		} else if( '$selected' === label ){
 			if( !style.$selected ){
 				var s1 = this._getSymbolizerFromStyleAndLabel(style,'normal');
@@ -434,12 +459,33 @@ var StyleRules = $n2.Class({
 			};
 			return style.$selected;
 			
+		} else if( '$selectedFound' === label ){
+			if( !style.$selectedFound ){
+				var s1 = this._getSymbolizerFromStyleAndLabel(style,'$selected');
+				style.$selectedFound = new Symbolizer(s1, style.found);
+			};
+			return style.$selectedFound;
+			
 		} else if( '$selectedHovered' === label ){
 			if( !style.$selectedHovered ){
 				var s1 = this._getSymbolizerFromStyleAndLabel(style,'$selected');
 				style.$selectedHovered = new Symbolizer(s1, style.hovered);
 			};
 			return style.$selectedHovered;
+			
+		} else if( '$foundHovered' === label ){
+			if( !style.$foundHovered ){
+				var s1 = this._getSymbolizerFromStyleAndLabel(style,'$found');
+				style.$foundHovered = new Symbolizer(s1, style.hovered);
+			};
+			return style.$foundHovered;
+			
+		} else if( '$selectedFoundHovered' === label ){
+			if( !style.$selectedFoundHovered ){
+				var s1 = this._getSymbolizerFromStyleAndLabel(style,'$selectedFound');
+				style.$selectedFoundHovered = new Symbolizer(s1, style.hovered);
+			};
+			return style.$selectedFoundHovered;
 		};
 	},
 	
@@ -465,6 +511,7 @@ var StyleRules = $n2.Class({
 		var extended = {};
 		extended.normal = new Symbolizer(style.normal, rule.normal);
 		extended.selected = new Symbolizer(style.selected, rule.selected);
+		extended.found = new Symbolizer(style.found, rule.found);
 		extended.hovered = new Symbolizer(style.hovered, rule.hovered);
 		extended.source = rule.source;
 		return extended;
@@ -483,6 +530,7 @@ function loadRuleFromObject(ruleObj){
 		,source: ruleObj.condition
 		,normal: ruleObj.normal ? ruleObj.normal : {}
 		,selected: ruleObj.selected ? ruleObj.selected : {}
+		,found: ruleObj.found ? ruleObj.found : {}
 		,hovered: ruleObj.hovered ? ruleObj.hovered : {}
 	});
 	
