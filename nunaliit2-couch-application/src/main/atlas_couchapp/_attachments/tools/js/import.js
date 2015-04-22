@@ -50,7 +50,7 @@
 		// Json
 		var $line = $('<div class="line">').appendTo($inputSection);
 		$('<div class="label">')
-			.text( _loc('JSON') )
+			.text( _loc('Input') )
 			.appendTo($line);
 		$('<div class="value"><textarea class="importData"></textarea></div>')
 			.appendTo($line);
