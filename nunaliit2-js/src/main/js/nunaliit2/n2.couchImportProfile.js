@@ -238,7 +238,7 @@ var ImportAnalysis = $n2.Class({
 			//    ,externalValue: <value from this import>
 			//    ,collisions: []
 			// }
-			// The collisions array containts collisions pertinent to
+			// The collisions array contains collisions pertinent to
 			// this property. It is an array of objects with the following
 			// structure:
 			// {
@@ -251,6 +251,10 @@ var ImportAnalysis = $n2.Class({
 			
 			// Boolean. Set if the geometry was modified
 			modifiedGeometry: null,
+
+			// Boolean. Set if the geometry was modified and a collision 
+			// is detected
+			collisionGeometry: null,
 			
 			// Document from database which is associated with importId
 			dbDoc: null,
@@ -272,6 +276,7 @@ var ImportAnalysis = $n2.Class({
 			,importId: opts.importId
 			,modifiedProperties: opts.modifiedProperties
 			,modifiedGeometry: opts.modifiedGeometry
+			,collisionGeometry: opts.collisionGeometry
 		};
 		++this.modificationCount;
 		this.changesById[changeId] = change;
@@ -332,7 +337,34 @@ var ImportAnalyzer = $n2.Class({
 		});
 		var dbDocsByImportId = {};
 		var entriesLeft = [];
+
+		// Verify import entries and store them in a dictionary
+		// for easy access by import id
+		var importEntriesById = {};
+		if( opts.entries ){
+			for(var i=0,e=opts.entries.length; i<e; ++i){
+				var entry = opts.entries[i];
+				var id = entry.getId();
+				
+				if( id ){
+					if( importEntriesById[id] ){
+						opts.onError( _loc('More than one import entries report identifier: {id}',{
+							id: id
+						}) );
+						return;
+					};
+					
+					importEntriesById[id] = entry;
+					entriesLeft.push( entry );
+					
+				} else {
+					opts.onError( _loc('Imported entry does not contains an id attribute') );
+					return;
+				};
+			};
+		};
 		
+		// Load documents previously imported using the same profile
 		this.atlasDesign.queryView({
 			viewName: 'nunaliit-import'
 			,reduce: false
@@ -359,32 +391,6 @@ var ImportAnalyzer = $n2.Class({
 		});
 		
 		function dbDocumentsLoaded(){
-			// Compare given import entries against document in database
-			// to discover changes
-			var importEntriesById = {};
-			if( opts.entries ){
-				for(var i=0,e=opts.entries.length; i<e; ++i){
-					var entry = opts.entries[i];
-					var id = entry.getId();
-					
-					if( id ){
-						if( importEntriesById[id] ){
-							opts.onError( _loc('More than one import entries report identifier: {id}',{
-								id: id
-							}) );
-							return;
-						};
-						
-						importEntriesById[id] = entry;
-						entriesLeft.push( entry );
-						
-					} else {
-						opts.onError( _loc('Imported entry does not contains an id attribute') );
-						return;
-					};
-				};
-			};
-
 			// Discover deletions
 			for(var id in dbDocsByImportId){
 				if( importEntriesById[id] ) {
@@ -422,6 +428,7 @@ var ImportAnalyzer = $n2.Class({
 								,auto: c.auto
 								,modifiedProperties: c.modifiedProperties
 								,modifiedGeometry: c.modifiedGeometry
+								,collisionGeometry: c.collisionGeometry
 								,dbDoc: dbDocsByImportId[id]
 								,importEntry: entry
 							});
@@ -452,8 +459,10 @@ var ImportAnalyzer = $n2.Class({
 			,onSuccess: function(change){}
 		},opts_);
 		
-		var props = opts.importEntry.getProperties();
-		var dbData = opts.doc.nunaliit_import.data;
+		var importEntry = opts.importEntry;
+		var props = importEntry.getProperties();
+		var dbImportObj = opts.doc.nunaliit_import;
+		var dbData = dbImportObj.data;
 		var importId = opts.doc.nunaliit_import.id;
 		
 		var change = null;
@@ -465,6 +474,53 @@ var ImportAnalyzer = $n2.Class({
 		};
 		for(var propName in dbData){
 			allPropNamesMap[propName] = true;
+		};
+		
+		// Geometry
+		var isGeometryModified = false;
+		var externalGeom = importEntry.getGeometry();
+		if( externalGeom ){
+			if( dbImportObj.geometry ){
+				if( externalGeom !== dbImportObj.geometry.wkt ){
+					// Geometry modified
+					isGeometryModified = true;
+				};
+			} else {
+				// Geometry added
+				isGeometryModified = true;
+			};
+		} else if( dbImportObj.geometry 
+		 && dbImportObj.geometry.wkt ){
+			// Deleted
+			isGeometryModified = true;
+		};
+		if( isGeometryModified ){
+			change = {
+				importId:importId
+				,auto: true
+				,modifiedProperties: []
+				,modifiedGeometry: true
+				,collisionGeometry: false
+			};
+			
+			// Check if geometry was modified since last import
+			var lastImportGeometry = undefined;
+			var currentGeometry = undefined;
+			if( dbImportObj.geometry ){
+				lastImportGeometry = dbImportObj.geometry.wkt;
+			};
+			if( opts.doc.nunaliit_geom ){
+				currentGeometry = opts.doc.nunaliit_geom.wkt;
+			};
+			
+			if( lastImportGeometry !== currentGeometry ){
+				// Collision on geometry only if not equal to
+				// new external value
+				if( currentGeometry !== externalGeom ){
+					change.collisionGeometry = true;
+					change.auto = false;
+				};
+			};
 		};
 		
 		// Look at values that have changed since the last import
@@ -482,6 +538,7 @@ var ImportAnalyzer = $n2.Class({
 					,auto: true
 					,modifiedProperties: []
 					,modifiedGeometry: false
+					,collisionGeometry: false
 				};
 
 				var mod = {
@@ -737,6 +794,22 @@ var AnalysisReport = $n2.Class({
 							.appendTo($prop);
 					};
 				};
+				
+				// Geometry
+				var externalGeom = importEntry.getGeometry();
+				if( externalGeom ){
+					var $prop = $('<div>')
+						.addClass('property')
+						.appendTo($properties);
+					$('<div>')
+						.addClass('propertyName')
+						.text( _loc('Geometry') )
+						.appendTo($prop);
+					$('<div>')
+						.addClass('newValue')
+						.text( this._printValue(externalGeom) )
+						.appendTo($prop);
+				};
 			};
 		};
 		
@@ -746,6 +819,7 @@ var AnalysisReport = $n2.Class({
 			if( change.isModification ) {
 				var importId = change.importId;
 				var doc = analysis.getDbDoc(importId);
+				var importEntry = analysis.getImportEntry(importId);
 
 				// Go through all the properties that need to be modified
 				var sortedPropNames = [];
@@ -759,6 +833,9 @@ var AnalysisReport = $n2.Class({
 					if( mod.collisions && mod.collisions.length > 0 ){
 						collisionDetected = true;
 					};
+				};
+				if( change.modifiedGeometry && change.collisionGeometry ){
+					collisionDetected = true;
 				};
 				sortedPropNames.sort();
 				
@@ -898,13 +975,87 @@ var AnalysisReport = $n2.Class({
 				};
 
 				if( change.modifiedGeometry ){
+					var lastImportGeometry = undefined;
+					var externalGeometry = importEntry.getGeometry();
+					if( doc.nunaliit_import 
+					 && doc.nunaliit_import.geometry ){
+						lastImportGeometry = doc.nunaliit_import.geometry.wkt;
+					};
+					
 					var $prop = $('<div>')
 						.addClass('property')
 						.appendTo($properties);
 					$('<div>')
 						.addClass('propertyName')
-						.text( _loc('Geometry is modified') )
+						.text( _loc('Geometry') )
 						.appendTo($prop);
+					$('<div>')
+						.addClass('previousValue')
+						.text( this._printValue(lastImportGeometry) )
+						.appendTo($prop);
+					$('<div>')
+						.addClass('newValue')
+						.text( this._printValue(externalGeometry) )
+						.appendTo($prop);
+
+					if( change.collisionGeometry ){
+						var $prop = $('<div>')
+							.addClass('property')
+							.appendTo($properties);
+						$('<div>')
+							.addClass('propertyName')
+							.text( _loc('Collision on Geometry') )
+							.appendTo($prop);
+						$('<div>')
+							.addClass('targetSelector')
+							.text('nunaliit_geom.wkt')
+							.appendTo($prop);
+						var targetValue = undefined;
+						if( doc.nunaliit_geom ){
+							targetValue = doc.nunaliit_geom.wkt;
+						};
+						$('<div>')
+							.addClass('targetValue')
+							.text( this._printValue(targetValue) )
+							.appendTo($prop);
+
+						// Select value to resolve collision
+						var $collision = $('<div>')
+							.addClass('collision')
+							.appendTo($properties);
+						
+						var collisionName = '__geometry__';
+						
+						var externalId = $n2.getUniqueId();
+						var $externalValueDiv = $('<div>')
+							.appendTo($collision);
+						$('<input>')
+							.attr('type','radio')
+							.attr('id',externalId)
+							.attr('name',collisionName)
+							.attr('value','external')
+							.click(radioButtonClickFn)
+							.appendTo($externalValueDiv);
+						$('<label>')
+							.attr('for',externalId)
+							.text( this._printValue(externalGeometry) )
+							.appendTo($externalValueDiv);
+						
+						var currentId = $n2.getUniqueId();
+						var $currentValueDiv = $('<div>')
+							.appendTo($collision);
+						$('<input>')
+							.attr('type','radio')
+							.attr('id',currentId)
+							.attr('name',collisionName)
+							.attr('value','current')
+							.click(radioButtonClickFn)
+							.appendTo($currentValueDiv);
+						$('<label>')
+							.attr('for',currentId)
+							.text( this._printValue(targetValue) )
+							.appendTo($currentValueDiv);
+					};
 				};
 			};
 		};
@@ -1079,6 +1230,15 @@ var AnalysisReport = $n2.Class({
 					};
 				};
 				
+				if( change.modifiedGeometry && change.collisionGeometry ){
+					var collisionName = '__geometry__';
+					var value = $('input[name='+collisionName+']:checked').val();
+					change.selectedGeometry = value;
+					if( typeof value !== 'string' ){
+						allCollisionsResolved = false;
+					};
+				};
+				
 				var proceedBtnId = changeId + '_proceed';
 				if( allCollisionsResolved ) {
 					$('#'+proceedBtnId).removeAttr('disabled');
@@ -1137,6 +1297,28 @@ var AnalysisReport = $n2.Class({
 		doc.nunaliit_import.id = importId;
 		doc.nunaliit_import.profile = importProfile.getId();
 		
+		// Geometry
+		var geom = importEntry.getGeometry();
+		if( geom ){
+			doc.nunaliit_import.geometry = {
+				wkt: geom
+			};
+			doc.nunaliit_geom = {
+				nunaliit_type: 'geometry'
+			};
+			doc.nunaliit_geom.wkt = geom;
+
+			var olWkt = new OpenLayers.Format.WKT();
+			var vectorFeature = olWkt.read(geom);
+			var bounds = vectorFeature.geometry.getBounds();
+			doc.nunaliit_geom.bbox = [ 
+				bounds.left
+				,bounds.bottom
+				,bounds.right
+				,bounds.top
+			];
+		};
+		
 		// Copy properties
 		var propNames = [];
 		for(var propName in importProperties){
@@ -1182,6 +1364,7 @@ var AnalysisReport = $n2.Class({
 		
 		var importId = change.importId;
 		var doc = this.analysis.getDbDoc(importId);
+		var importEntry = this.analysis.getImportEntry(importId);
 		var importProfile = this.analysis.getImportProfile();
 		var schema = importProfile.getSchema();
 
@@ -1199,6 +1382,56 @@ var AnalysisReport = $n2.Class({
 		if( !doc.nunaliit_schema
 		 && schema ) {
 			doc.nunaliit_schema = schema.name;
+		};
+		
+		// Geometry (change only if it was modified)
+		if( change.modifiedGeometry ){
+			var externalGeom = importEntry.getGeometry();
+			var changeCurrentGeometry = true;
+			if( change.collisionGeometry ){
+				if( 'external' == change.selectedGeometry ) {
+					// OK
+				} else if( 'current' == change.selectedGeometry ) {
+					changeCurrentGeometry = false;
+				} else {
+					throw 'Invalid state for change since geometry collision is not resolved';
+				};
+			};
+			if( externalGeom ){
+				if( !doc.nunaliit_import.geometry ){
+					doc.nunaliit_import.geometry = {};
+				};
+				doc.nunaliit_import.geometry.wkt = externalGeom;
+				
+				if( changeCurrentGeometry ){
+					if( !doc.nunaliit_geom ){
+						doc.nunaliit_geom = {};
+					};
+					doc.nunaliit_geom.nunaliit_type = 'geometry';
+					doc.nunaliit_geom.wkt = externalGeom;
+
+					var olWkt = new OpenLayers.Format.WKT();
+					var vectorFeature = olWkt.read(externalGeom);
+					var bounds = vectorFeature.geometry.getBounds();
+					doc.nunaliit_geom.bbox = [ 
+						bounds.left
+						,bounds.bottom
+						,bounds.right
+						,bounds.top
+					];
+				};
+				
+			} else {
+				if( doc.nunaliit_import.geometry ) {
+					delete doc.nunaliit_import.geometry;
+				};
+
+				if( changeCurrentGeometry ){
+					if( doc.nunaliit_geom ) {
+						delete doc.nunaliit_geom;
+					};
+				};
+			};
 		};
 		
 		// Copy only properties that have changed
@@ -1594,6 +1827,8 @@ var ImportProfileOperationLongLat = $n2.Class(ImportProfileOperation, {
 	
 	targetSelector: null,
 	
+	isLegacyLongLat: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			operationString: null
@@ -1602,6 +1837,8 @@ var ImportProfileOperationLongLat = $n2.Class(ImportProfileOperation, {
 		},opts_);
 		
 		ImportProfileOperation.prototype.initialize.call(this);
+	
+		this.isLegacyLongLat = true;
 		
 		this.operationString = opts.operationString;
 		
@@ -1695,6 +1932,21 @@ var ImportProfileOperationLongLat = $n2.Class(ImportProfileOperation, {
 				]
 			};
 		};
+	},
+	
+	getGeometry: function(importData){
+		var longValue = importData[this.longName];
+		var latValue = importData[this.latName];
+		
+		var importValue = undefined;
+		if( typeof longValue !== 'undefined' 
+		 && typeof latValue !== 'undefined' ){
+			longValue = 1 * longValue;
+			latValue = 1 * latValue;
+			importValue = 'MULTIPOINT(('+longValue+' '+latValue+'))';
+		};
+		
+		return importValue;
 	}
 });
 
@@ -1956,6 +2208,10 @@ var ImportEntry = $n2.Class({
 	
 	getProperties: function(){
 		throw 'Subclasses to ImportEntry must implement getProperties()';
+	},
+	
+	getGeometry: function(){
+		throw 'Subclasses to ImportEntry must implement getGeometry()';
 	}
 });
 
@@ -2145,6 +2401,14 @@ var ImportEntryJson = $n2.Class(ImportEntry, {
 	
 	getProperties: function(){
 		return this.data;
+	},
+	
+	getGeometry: function(){
+		if( this.profile.legacyLongLat ){
+			return this.profile.legacyLongLat.getGeometry(this.data);
+		};
+		
+		return undefined;
 	}
 });
 
@@ -2153,11 +2417,15 @@ var ImportProfileJson = $n2.Class(ImportProfile, {
 	
 	idAttribute: null,
 	
+	legacyLongLat: null,
+	
 	initialize: function(opts_){
 		
 		ImportProfile.prototype.initialize.call(this, opts_);
 
 		if( opts_ ){
+			this.legacyLongLat = opts_.legacyLongLat;
+
 			if( opts_.options ){
 				this.idAttribute = opts_.options.idAttribute;
 			};
@@ -2227,6 +2495,163 @@ var ImportProfileJson = $n2.Class(ImportProfile, {
 });
 
 //=========================================================================
+var ImportEntryGeoJson = $n2.Class(ImportEntry, {
+	
+	id: null,
+	
+	data: null,
+	
+	profile: null,
+	
+	geom: undefined,
+	
+	initialize: function(opts_){
+		
+		ImportEntry.prototype.initialize.call(this,opts_);
+		
+		var opts = $n2.extend({
+			id: null
+			,data: null
+			,geom: undefined
+			,profile: null
+		},opts_);
+		
+		this.id = opts.id;
+		this.data = opts.data;
+		this.geom = opts.geom;
+		this.profile = opts.profile;
+	},
+	
+	getId: function(){
+		return this.id;
+	},
+	
+	getProperties: function(){
+		return this.data;
+	},
+	
+	getGeometry: function(){
+		return this.geom;
+	}
+});
+
+//=========================================================================
+var ImportProfileGeoJson = $n2.Class(ImportProfile, {
+	
+	idAttribute: null,
+	
+	olGeoJsonFormat: null,
+	
+	olWktFormat: null,
+	
+	initialize: function(opts_){
+		
+		ImportProfile.prototype.initialize.call(this, opts_);
+
+		if( opts_ ){
+			if( opts_.options ){
+				this.idAttribute = opts_.options.idAttribute;
+			};
+		};
+		
+		if(OpenLayers 
+		 && OpenLayers.Format 
+		 && OpenLayers.Format.GeoJSON ){
+			this.olGeoJsonFormat = new OpenLayers.Format.GeoJSON();
+		};
+		if(OpenLayers 
+		 && OpenLayers.Format 
+		 && OpenLayers.Format.WKT ){
+			this.olWktFormat = new OpenLayers.Format.WKT();
+		};
+		if( !this.olGeoJsonFormat || !this.olWktFormat ){
+			throw 'OpenLayers is required for ImportProfileGeoJson';
+		};
+
+	},
+	
+	getType: function(){
+		return 'geojson';
+	},
+	
+	parseEntries: function(opts_){
+		var opts = $n2.extend({
+			importData: null
+			,onSuccess: function(entries){}
+			,onError: function(err){}
+		},opts_);
+
+		var importData = opts.importData;
+		if( !importData ){
+			opts.onError( _loc('Import data must be provided') );
+			return;
+		};
+		
+		// Parse GeoJSON input
+		var jsonObj = null;
+		try {
+			jsonObj = JSON.parse(importData);
+		} catch(e) {
+			opts.onError( _loc('Unable to parse import data: {err}',{err:e}) );
+			return;
+		};
+		
+		if( jsonObj.type !== 'FeatureCollection' ){
+			opts.onError( _loc('GeoJSON import is supported only for type "FeatureCollection"') );
+			return;
+		};
+		if( !$n2.isArray(jsonObj.features) ){
+			opts.onError( _loc('GeoJSON definition must include an array named "features"') );
+			return;
+		}
+		
+		var entries = [];
+		for(var i=0,e=jsonObj.features.length; i<e; ++i){
+			var feature = jsonObj.features[i];
+			
+			var id = undefined;
+			if( feature.id ){
+				id = feature.id;
+			};
+			
+			var props = {};
+			if( feature.properties ){
+				for(var key in feature.properties){
+					if( !key ){
+						// skip
+					} else if( $n2.trim(key) === '' ) {
+						// skip
+					} else {
+						props[key] = feature.properties[key];
+					};
+					
+					if( key === this.idAttribute && !id ){
+						id = feature.properties[key];
+					};
+				};
+			};
+
+			var geom = null;
+			if( feature.geometry 
+			 && this.olGeoJsonFormat ){
+				var olGeom = this.olGeoJsonFormat.parseGeometry(feature.geometry);
+				geom = this.olWktFormat.extractGeometry(olGeom);
+			};
+			
+			var entry = new ImportEntryGeoJson({
+				id: id
+				,data: props
+				,geom: geom
+				,profile: this
+			});
+			entries.push(entry);
+		};
+		
+		opts.onSuccess(entries);
+	}
+});
+
+//=========================================================================
 var ImportProfileService = $n2.Class({
 	
 	schemaRepository: null,
@@ -2251,6 +2676,7 @@ var ImportProfileService = $n2.Class({
 		this.profileClasses = {};
 		
 		this.addImportProfileClass('json',ImportProfileJson);
+		this.addImportProfileClass('geojson',ImportProfileGeoJson);
 	},
 	
 	addImportProfileClass: function(type, aClass){
@@ -2378,7 +2804,11 @@ var ImportProfileService = $n2.Class({
 						opts.onError( _loc('Error creating import profile. Unknown operation string: {string}',{string:opString}) );
 						return;
 					};
-					operations.push(op);
+					if( op.isLegacyLongLat ){
+						classOpts.legacyLongLat = op;
+					} else {
+						operations.push(op);
+					};
 				};
 			};
 			
