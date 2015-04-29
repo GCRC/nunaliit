@@ -86,116 +86,118 @@ if( browserInfo && browserInfo.browser === 'Explorer' ){
  *  
  *  	$('#sel').menuselector();
  */
-$.widget( 'nunaliit.menuselector', {
+if( typeof $.widget === 'function' ){
+	$.widget( 'nunaliit.menuselector', {
+		
+		options: {
+			menuClass: null
+		}
 	
-	options: {
-		menuClass: null
-	}
-
-	,_create: function() {
-		var _this = this;
-
-		this.wrapper = $('<span>')
-			.addClass('nunaliit-menuselector')
-			.insertAfter(this.element);
-		
-		var classes = this.element.attr('class');
-		
-		var text = this.element.find('option').first().text();
-		this.button = $('<select>')
-			.appendTo(this.wrapper)
-			.mousedown(function(e){
-				_this._toggleMenu();
-				return false;
-			});
-		if( classes ){
-			this.button.attr('class',classes);
-		};
-		$('<option>')
-			.text(text)
-			.appendTo(this.button);
-
-		this.menu = $('<div>')
-			.addClass('nunaliit-menuselector')
-			.css('position','absolute')
-			.css('left','0px')
-			.css('top','0px')
-			.css('display','block')
-			.css('z-index',1000)
-			.hide()
-			.appendTo(this.wrapper);
-
-		this.element.hide();
-	}
+		,_create: function() {
+			var _this = this;
 	
-	,_createMenu: function(wrapper) {
-
-		var _this = this;
-		
-		var $menu = $('<ul>')
-			.appendTo(wrapper)
-			.addClass('nunaliit-menuselector-menu');
-		
-		if( this.options.menuClass ){
-			$menu.addClass(this.options.menuClass);
-		};
-		
-		this.element.find('option').each(function(){
-			var $opt = $(this);
+			this.wrapper = $('<span>')
+				.addClass('nunaliit-menuselector')
+				.insertAfter(this.element);
 			
-			var value = $opt.val();
-			if( value ) {
-				var $li = $('<li>').appendTo($menu);
-				$('<a>')
-					.appendTo($li)
-					.attr('href','#')
-					.text($opt.text())
-					.click(createClickHandler(value))
+			var classes = this.element.attr('class');
+			
+			var text = this.element.find('option').first().text();
+			this.button = $('<select>')
+				.appendTo(this.wrapper)
+				.mousedown(function(e){
+					_this._toggleMenu();
+					return false;
+				});
+			if( classes ){
+				this.button.attr('class',classes);
+			};
+			$('<option>')
+				.text(text)
+				.appendTo(this.button);
+	
+			this.menu = $('<div>')
+				.addClass('nunaliit-menuselector')
+				.css('position','absolute')
+				.css('left','0px')
+				.css('top','0px')
+				.css('display','block')
+				.css('z-index',1000)
+				.hide()
+				.appendTo(this.wrapper);
+	
+			this.element.hide();
+		}
+		
+		,_createMenu: function(wrapper) {
+	
+			var _this = this;
+			
+			var $menu = $('<ul>')
+				.appendTo(wrapper)
+				.addClass('nunaliit-menuselector-menu');
+			
+			if( this.options.menuClass ){
+				$menu.addClass(this.options.menuClass);
+			};
+			
+			this.element.find('option').each(function(){
+				var $opt = $(this);
+				
+				var value = $opt.val();
+				if( value ) {
+					var $li = $('<li>').appendTo($menu);
+					$('<a>')
+						.appendTo($li)
+						.attr('href','#')
+						.text($opt.text())
+						.click(createClickHandler(value))
+						;
+				};
+			});
+			
+			$menu.menu();
+			
+			function createClickHandler(value){
+				return function(){
+					_this._click(value);
+					return false;
+				};
+			};
+		}
+		
+		,_toggleMenu: function(){
+			var wrapper = this.wrapper
+				,menu = wrapper.children('div');
+			
+			// Close if already visible
+			if( menu.is(':visible') ) {
+				menu.empty();
+				menu.hide();
+			} else {
+				this._createMenu(menu);
+				menu.show();
+				menu.position({
+						my:'left top'
+						,at: 'left bottom'
+						//,collision: 'none'
+						,of: this.button
+					})
 					;
 			};
-		});
+		}
 		
-		$menu.menu();
+		,_click: function(value) {
+			this._toggleMenu();
+			this.element.val(value);
+			this.element.trigger('change');
+		}
 		
-		function createClickHandler(value){
-			return function(){
-				_this._click(value);
-				return false;
-			};
-		};
-	}
-	
-	,_toggleMenu: function(){
-		var wrapper = this.wrapper
-			,menu = wrapper.children('div');
-		
-		// Close if already visible
-		if( menu.is(':visible') ) {
-			menu.empty();
-			menu.hide();
-		} else {
-			this._createMenu(menu);
-			menu.show();
-			menu.position({
-					my:'left top'
-					,at: 'left bottom'
-					//,collision: 'none'
-					,of: this.button
-				})
-				;
-		};
-	}
-	
-	,_click: function(value) {
-		this._toggleMenu();
-		this.element.val(value);
-		this.element.trigger('change');
-	}
-	
-	,_destroy : function() {
-		this.wrapper.remove();
-		this.element.show();
-	}
-});
+		,_destroy : function() {
+			this.wrapper.remove();
+			this.element.show();
+		}
+	});
+};
 
 })(jQuery,nunaliit2);
