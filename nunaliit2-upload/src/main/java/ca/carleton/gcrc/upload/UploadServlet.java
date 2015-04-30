@@ -89,9 +89,25 @@ public class UploadServlet extends HttpServlet {
 	private ProgressTracker progressTracker = null;
 
 	private OnUploadedListener onUploadedListener = null;
-	
+
 	public UploadServlet() {
 		
+	}
+	
+	public OnUploadedListener getOnUploadedListener() {
+		return onUploadedListener;
+	}
+
+	public void setOnUploadedListener(OnUploadedListener onUploadedListener) {
+		this.onUploadedListener = onUploadedListener;
+	}
+
+	public File getRepositoryDir() {
+		return repositoryDir;
+	}
+
+	public void setRepositoryDir(File repositoryDir) {
+		this.repositoryDir = repositoryDir;
 	}
 
 	public void init(ServletConfig config) throws ServletException {
@@ -119,7 +135,9 @@ public class UploadServlet extends HttpServlet {
 		}
 
 		// Repository directory (this is where files are sent to)
-		repositoryDir = UploadUtils.getMediaDir(config.getServletContext());
+		if( null == repositoryDir ){
+			repositoryDir = UploadUtils.getMediaDir(config.getServletContext());
+		}
 
 		// Temp directory
 		String tempDirName = props.getProperty("tempDir");
@@ -140,7 +158,9 @@ public class UploadServlet extends HttpServlet {
 		}
 
 		// Load up follow-on task for file upload
-		onUploadedListener = (OnUploadedListener)config.getServletContext().getAttribute(OnUploadedListenerAttributeName);
+		if( null == onUploadedListener ){
+			onUploadedListener = (OnUploadedListener)config.getServletContext().getAttribute(OnUploadedListenerAttributeName);
+		}
 		if( null == onUploadedListener ) {
 			onUploadedListener = OnUploadedListenerSingleton.getSingleton();
 		}
@@ -163,6 +183,14 @@ public class UploadServlet extends HttpServlet {
 		FileCleaningTracker cleaner = FileCleanerCleanup.getFileCleaningTracker(this.getServletContext());
 		if( null != cleaner ) {
 			cleaner.exitWhenFinished();
+		}
+		
+		if( null != onUploadedListener ){
+			if( onUploadedListener instanceof OnUploadedRequiresShutdown ){
+				OnUploadedRequiresShutdown requiresShutdown = 
+					(OnUploadedRequiresShutdown)onUploadedListener;
+				requiresShutdown.shutdown();
+			};
 		}
 	}
 
