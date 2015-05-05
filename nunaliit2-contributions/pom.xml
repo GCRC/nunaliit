@@ -49,7 +49,7 @@
   	<dependency>
   		<groupId>org.cometd.java</groupId>
   		<artifactId>cometd-java-server</artifactId>
-  		<version>1.0.beta8</version>
+  		<version>${cometd-java-server.version}</version>
   	</dependency>
 	<dependency>
 		<groupId>junit</groupId>
