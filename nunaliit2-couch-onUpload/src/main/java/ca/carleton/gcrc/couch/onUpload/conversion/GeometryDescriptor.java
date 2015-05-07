@@ -43,4 +43,17 @@ public class GeometryDescriptor extends AbstractDescriptor {
 		bboxArray.put(bbox.getMaxY());
 		geomObj.put("bbox", bboxArray);
 	}
+	
+	public void setSimplified(JSONObject simplified) throws Exception {
+		JSONObject nunaliit_geom = getJson();
+		
+		if( null == simplified ){
+			Object obj = nunaliit_geom.opt("simplified");
+			if( null != obj ){
+				nunaliit_geom.remove("simplified");
+			}
+		} else {
+			nunaliit_geom.put("simplified", simplified);
+		}
+	}
 }

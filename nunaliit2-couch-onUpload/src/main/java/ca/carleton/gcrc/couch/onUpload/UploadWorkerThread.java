@@ -28,6 +28,8 @@ import ca.carleton.gcrc.couch.onUpload.conversion.WorkDescriptor;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotification;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionMetaData;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionPlugin;
+import ca.carleton.gcrc.couch.onUpload.simplifyGeoms.GeometrySimplifier;
+import ca.carleton.gcrc.couch.onUpload.simplifyGeoms.GeometrySimplifierImpl;
 import ca.carleton.gcrc.couch.utils.CouchNunaliitUtils;
 import ca.carleton.gcrc.olkit.multimedia.file.SystemFile;
 
@@ -208,6 +210,9 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			
 		} else if( UploadConstants.UPLOAD_WORK_ROTATE_180.equals(state) ) {
 			performRotateWork(FileConversionPlugin.WORK_ROTATE_180, work);
+			
+		} else if( UploadConstants.UPLOAD_WORK_SIMPLIFY_GEOMETRY.equals(state) ) {
+			performSimplifyGeometryWork(work);
 			
 		} else {
 			throw new Exception("Unrecognized state: "+state);
@@ -723,6 +728,14 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			// Update status
 			conversionContext.saveDocument();
 		}
+	}
+	
+	private void performSimplifyGeometryWork(Work work) throws Exception {
+		FileConversionContext conversionContext = 
+			new FileConversionContextImpl(work,documentDbDesign,mediaDir);
+		
+		GeometrySimplifier simplifier = new GeometrySimplifierImpl();
+		simplifier.simplyGeometry(conversionContext);
 	}
 	
 	private void sendVettingNotification(String docId, JSONObject doc, String attachmentName) {

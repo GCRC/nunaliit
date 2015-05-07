@@ -79,4 +79,12 @@ function(doc) {
 	 && doc.nunaliit_upload_request.uploadId ) {
 		emit(['uploadId', doc.nunaliit_upload_request.uploadId], null);
 	};
+	
+	if( doc.nunaliit_geom ) {
+		if( doc.nunaliit_geom.simplified ){
+			// Nothing to do
+		} else {
+			emit(['simplifyGeometry'], null);
+		};
+	};
 };
