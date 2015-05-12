@@ -8,6 +8,7 @@ import org.json.JSONObject;
 import ca.carleton.gcrc.couch.onUpload.UploadConstants;
 import ca.carleton.gcrc.geom.BoundingBox;
 import ca.carleton.gcrc.geom.Geometry;
+import ca.carleton.gcrc.geom.wkt.WktParser;
 import ca.carleton.gcrc.geom.wkt.WktWriter;
 
 public class GeometryDescriptor extends AbstractDescriptor {
@@ -22,6 +23,18 @@ public class GeometryDescriptor extends AbstractDescriptor {
 	protected JSONObject getJson() throws Exception {
 		JSONObject doc = documentDescriptor.getJson();
 		return doc.getJSONObject(UploadConstants.KEY_DOC_GEOMETRY);
+	}
+
+	public Geometry getGeometry() throws Exception {
+		Geometry geom = null;
+		
+		JSONObject geomObj = getJson();
+		String wkt = geomObj.getString("wkt");
+		
+		WktParser parser = new WktParser();
+		geom = parser.parseWkt(wkt);
+		
+		return geom;
 	}
 	
 	public void setGeometry(Geometry geom) throws Exception {

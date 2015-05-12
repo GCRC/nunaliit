@@ -2508,6 +2508,7 @@ var MapAndControls = $n2.Class({
         // Called when the feature on the map is modified
     	return function(evt){
         	var feature = evt.feature;
+        	
         	_this._dispatch({
         		type: 'editGeometryModified'
         		,docId: feature.fid

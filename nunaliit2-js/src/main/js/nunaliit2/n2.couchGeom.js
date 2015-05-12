@@ -61,7 +61,7 @@ $n2.couchGeom = $n2.extend({},{
 	/*
 	 * Given a couch geometry, fixes the bbox
 	 */
-	,adjustBboxOnCouchGeom: function(couchGeom) {
+	,updatedGeometry: function(couchGeom) {
 	
 		if( OpenLayers 
 		 && OpenLayers.Geometry 
@@ -74,6 +74,10 @@ $n2.couchGeom = $n2.extend({},{
 				,bounds.right
 				,bounds.top
 				];
+		};
+		
+		if( couchGeom.simplified ){
+			delete couchGeom.simplified;
 		};
 	}
 

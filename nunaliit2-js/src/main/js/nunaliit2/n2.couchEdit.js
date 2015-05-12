@@ -639,7 +639,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 			if( geomData ) {
 				// Check if editor has changed the geometry's WKT
 				if( this.currentGeometryWkt != geomData.wkt ) {
-					$n2.couchGeom.adjustBboxOnCouchGeom(geomData);
+					$n2.couchGeom.updatedGeometry(geomData);
 				};
 			};
 		};
@@ -757,6 +757,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
     	
 		var geomData = this.editedDocument[this.geomName];
 		geomData.wkt = geom.toString();
+		$n2.couchGeom.updatedGeometry(geomData);
 		this.currentGeometryWkt = geomData.wkt;
 		if( this.schemaEditor ) {
 			this.schemaEditor.refresh();
@@ -784,7 +785,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 			this.editedDocument[this.geomName] = geomData;
 		};
 		geomData.wkt = geom.toString();
-		$n2.couchGeom.adjustBboxOnCouchGeom(geomData);
+		$n2.couchGeom.updatedGeometry(geomData);
 		this.currentGeometryWkt = geomData.wkt;
 		if( this.schemaEditor ) {
 			this.schemaEditor.refresh();
@@ -1823,7 +1824,7 @@ var CouchDocumentEditor = $n2.Class({
 			if( geomData ) {
 				// Check if editor has changed the geometry's WKT
 				if( this.currentGeometryWkt != geomData.wkt ) {
-					$n2.couchGeom.adjustBboxOnCouchGeom(geomData);
+					$n2.couchGeom.updatedGeometry(geomData);
 				};
 			};
 		};
@@ -1951,6 +1952,7 @@ var CouchDocumentEditor = $n2.Class({
     	
 		var geomData = this.editedDocument[this.geomName];
 		geomData.wkt = geom.toString();
+		$n2.couchGeom.updatedGeometry(geomData);
 		this.currentGeometryWkt = geomData.wkt;
 		if( this.schemaEditor ) {
 			this.schemaEditor.refresh();
@@ -1978,7 +1980,7 @@ var CouchDocumentEditor = $n2.Class({
 			this.editedDocument[this.geomName] = geomData;
 		};
 		geomData.wkt = geom.toString();
-		$n2.couchGeom.adjustBboxOnCouchGeom(geomData);
+		$n2.couchGeom.updatedGeometry(geomData);
 		this.currentGeometryWkt = geomData.wkt;
 		if( this.schemaEditor ) {
 			this.schemaEditor.refresh();

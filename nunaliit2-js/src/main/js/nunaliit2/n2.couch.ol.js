@@ -130,6 +130,10 @@ OpenLayers.Format.Couch = OpenLayers.Class(OpenLayers.Format, {
         	var bbox = geom.getBounds();
         	data.nunaliit_geom.bbox = [bbox.left,bbox.bottom,bbox.right,bbox.top];
         	
+        	if( data.nunaliit_geom.simplified ){
+        		delete data.nunaliit_geom.simplified;
+        	};
+        	
         	result.push( data );
         };
         
