@@ -52,6 +52,10 @@ var CustomSvgCanvas = $n2.Class({
 	dispatchService: null,
 
 	moduleDisplay: null,
+	
+	intentView: null,
+	
+	nodesById: null,
  	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -76,19 +80,26 @@ var CustomSvgCanvas = $n2.Class({
 				this.dispatchService = config.directory.dispatchService;
 			};
 		};
+		
+		this.nodesById = {};
+		
+		// Create intent view to keep track of user requests
+		if( this.dispatchService ){
+			this.intentView = new $n2.userIntentView.IntentView({
+				dispatchService: this.dispatchService
+			});
+			this.intentView.addListener(function(nodes){
+				_this._intentChanged(nodes);
+			});
+		};
 
  		// Register to events
  		if( this.dispatchService ){
- 			var f = function(m){
- 				_this._handleDispatch(m);
- 			};
- 			
- 			this.dispatchService.register(DH,'focusOn',f);
- 			this.dispatchService.register(DH,'focusOnSupplement',f);
- 			this.dispatchService.register(DH,'focusOff',f);
- 			this.dispatchService.register(DH,'selected',f);
- 			this.dispatchService.register(DH,'selectedSupplement',f);
- 			this.dispatchService.register(DH,'unselected',f);
+// 			var f = function(m){
+// 				_this._handleDispatch(m);
+// 			};
+// 			
+// 			this.dispatchService.register(DH,'focusOn',f);
  		};
  		
  		if( opts.svgAttachment ){
@@ -128,43 +139,6 @@ var CustomSvgCanvas = $n2.Class({
  	},
  	
  	_handleDispatch: function(m){
- 		if( 'focusOn' === m.type ){
- 			var docId = m.docId;
- 			var cls = 'n2LinkIntent_'+$n2.utils.stringToHtmlId(docId);
- 			$d.select('#'+this.canvasId).selectAll('.'+cls)
- 				.classed('n2LinkHovered',true)
- 				;
- 			
- 		} else if( 'focusOnSupplement' === m.type ){
- 		} else if( 'focusOff' === m.type ){
- 			$d.select('#'+this.canvasId).selectAll('.n2LinkHovered')
-				.classed('n2LinkHovered',false)
-				;
-
- 		} else if( 'selected' === m.type ){
- 			var docIds = [];
- 			
- 			if( m.docId ){
- 				docIds.push(m.docId);
- 			};
- 			if( m.docIds ){
- 				docIds.push.apply(docIds, m.docIds);
- 			};
- 			
- 			for(var i=0,e=docIds.length; i<e; ++i){
- 	 			var docId = docIds[i];
- 	 			var cls = 'n2LinkIntent_'+$n2.utils.stringToHtmlId(docId);
- 	 			$d.select('#'+this.canvasId).selectAll('.'+cls)
- 	 				.classed('n2LinkSelected',true)
- 	 				;
- 			};
-
- 		} else if( 'selectedSupplement' === m.type ){
- 		} else if( 'unselected' === m.type ){
- 			$d.select('#'+this.canvasId).selectAll('.n2LinkSelected')
-				.classed('n2LinkSelected',false)
-				;
- 		};
  	},
  	
  	_renderSvgDocument: function(svgDocument){
@@ -175,17 +149,30 @@ var CustomSvgCanvas = $n2.Class({
  		$('#'+this.canvasId)
  			.empty()
  			.append(svgDocument.documentElement);
- 		
- 		$d.select('#'+this.canvasId).selectAll('.n2LinkDocId').each(function(){
+ 
+ 		// Find all elements that are associated with a doc id
+ 		var nodes = [];
+ 		$d.select('#'+this.canvasId).selectAll('.n2canvas_linkDocId').each(function(){
  			var $child = $d.select(this);
+ 			
+ 			var nodeId = $child.attr('id');
+ 			if( !nodeId ){
+ 				nodeId = $n2.getUniqueId();
+ 				$child.attr('id',nodeId);
+ 			};
  			
  			var docId = $child.attr('n2-doc-id');
  			
  			if( docId ){
- 				var cls = 'n2LinkIntent_'+$n2.utils.stringToHtmlId(docId);
- 				
+ 				// Create a node for this element/docId
+ 	 			var node = {
+ 	 	 			n2_id: docId
+ 	 	 			,nodeId: nodeId
+ 	 			};
+ 	 			_this.nodesById[nodeId] = node;
+ 	 			nodes.push(node);
+ 	 			
  	 			$child
- 	 				.classed(cls,true)
 	 				.on('mouseover',function(d,i){
 	 					_this._mouseOver($d.select(this),$d.event);
 	 				})
@@ -200,12 +187,16 @@ var CustomSvgCanvas = $n2.Class({
 
  			$child
 				.classed({
-					'n2LinkDocId':false
-					,'n2LinkedDocId':true
+					'n2canvas_linkDocId':false
+					,'n2canvas_linkedDocId':true
 				});
  		});
 
- 		$d.select('#'+this.canvasId).selectAll('.n2LinkUnselect').each(function(){
+		// Adjust intention on all nodes. Update our elements accordingly
+		this.intentView.addNodes(nodes);
+		this._intentChanged(nodes);
+ 		
+ 		$d.select('#'+this.canvasId).selectAll('.n2canvas_unselect').each(function(){
  			var $child = $d.select(this);
  			
  			$child
@@ -213,8 +204,8 @@ var CustomSvgCanvas = $n2.Class({
  					_this._mouseUnselect($d.select(this),$d.event);
  				})
 				.classed({
-					'n2LinkUnselect':false
-					,'n2LinkUnselected':true
+					'n2canvas_unselect':false
+					,'n2canvas_unselected':true
 				});
  		});
  	},
@@ -256,6 +247,23 @@ var CustomSvgCanvas = $n2.Class({
 		this.dispatchService.send(DH,{
 			type: 'userUnselect'
 		});
+ 	},
+ 	
+ 	/*
+ 	 * This function is called when the user intent view observes
+ 	 * changes in the style of some nodes
+ 	 */
+ 	_intentChanged: function(nodes){
+ 		for(var i=0,e=nodes.length; i<e; ++i){
+ 			var node = nodes[i];
+ 			
+ 			$d.select('#'+node.nodeId)
+ 				.classed({
+ 					'n2LinkHovered': node.n2_hovered
+ 					,'n2LinkSelected': node.n2_selected
+ 					,'n2LinkSelectedHovered': (node.n2_selected && node.n2_hovered)
+ 				});
+ 		};
  	}
 });
  
