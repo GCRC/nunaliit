@@ -64,6 +64,8 @@ var CustomSvgCanvas = $n2.Class({
 			,config: null
 			,moduleDisplay: null
 			,svgAttachment: null
+			,cssAttachment: null
+			,elemIdToDocId: null
 			,onSuccess: function(){}
 			,onError: function(err){}
 		},opts_);
@@ -82,6 +84,20 @@ var CustomSvgCanvas = $n2.Class({
 		};
 		
 		this.nodesById = {};
+		
+		// Populate nodesById with information from user
+		if( typeof opts.elemIdToDocId === 'object' ){
+			for(var elemId in opts.elemIdToDocId){
+				var docId = opts.elemIdToDocId[elemId];
+				
+				var node = {
+					n2_id: docId
+					,nodeId: elemId
+				};
+				
+				this.nodesById[elemId] = node;
+			};
+		};
 		
 		// Create intent view to keep track of user requests
 		if( this.dispatchService ){
@@ -102,46 +118,82 @@ var CustomSvgCanvas = $n2.Class({
 // 			this.dispatchService.register(DH,'focusOn',f);
  		};
  		
- 		if( opts.svgAttachment ){
- 			// Load up SVG as an attachment to the module document
- 			var svgUrl = null;
+ 		if( opts.cssAttachment ){
+ 			// Load up CSS as an attachment to the module document
+ 			var cssUrl = null;
  			if( opts.moduleDisplay 
  			 && opts.moduleDisplay.module ){
- 				svgUrl = opts.moduleDisplay.module.getAttachmentUrl(opts.svgAttachment);
+ 				cssUrl = opts.moduleDisplay.module.getAttachmentUrl(opts.cssAttachment);
  			};
- 			
- 			if( svgUrl ){
+	 			
+ 			if( cssUrl ){
  				$.ajax({
- 					url: svgUrl
+ 					url: cssUrl
  					,type: 'get'
  					,async: true
- 					,dataType: 'xml'
- 					,success: function(svgDocument) {
-						opts.onSuccess();
-						
-						_this._renderSvgDocument(svgDocument);
+ 					,dataType: 'text'
+ 					,success: function(cssDocument) {
+ 						cssLoaded(cssDocument);
  					}
  					,error: function(XMLHttpRequest, textStatus, errorThrown) {
- 						opts.onError( _loc('Error loading SVG from location: {url}',{
- 							url: svgUrl
+ 						opts.onError( _loc('Error loading CSS from location: {url}',{
+ 							url: cssUrl
  						}) );
  					}
  				});
  			} else {
- 				opts.onError( _loc('Location of SVG is undefined for customSvg canvas') );
+ 				opts.onError( _loc('Location of CSS is undefined for customSvg canvas') );
  			};
- 			
+	 			
  		} else {
- 			opts.onError( _loc('A SVG file must be specified for the customSvg canvas') );
+ 			cssLoaded(undefined);
  		};
 
  		$n2.log('CustomSvgCanvas',this);
+ 		
+ 		function cssLoaded(cssContent){
+ 			//$n2.log('CSS content',cssContent);
+ 	 		
+ 	 		if( opts.svgAttachment ){
+ 	 			// Load up SVG as an attachment to the module document
+ 	 			var svgUrl = null;
+ 	 			if( opts.moduleDisplay 
+ 	 			 && opts.moduleDisplay.module ){
+ 	 				svgUrl = opts.moduleDisplay.module.getAttachmentUrl(opts.svgAttachment);
+ 	 			};
+ 	 			
+ 	 			if( svgUrl ){
+ 	 				$.ajax({
+ 	 					url: svgUrl
+ 	 					,type: 'get'
+ 	 					,async: true
+ 	 					,dataType: 'xml'
+ 	 					,success: function(svgDocument) {
+ 							opts.onSuccess();
+ 							
+ 							_this._renderSvgDocument(svgDocument, cssContent);
+ 	 					}
+ 	 					,error: function(XMLHttpRequest, textStatus, errorThrown) {
+ 	 						opts.onError( _loc('Error loading SVG from location: {url}',{
+ 	 							url: svgUrl
+ 	 						}) );
+ 	 					}
+ 	 				});
+ 	 			} else {
+ 	 				opts.onError( _loc('Location of SVG is undefined for customSvg canvas') );
+ 	 			};
+ 	 			
+ 	 		} else {
+ 	 			opts.onError( _loc('A SVG file must be specified for the customSvg canvas') );
+ 	 		};
+
+ 		};
  	},
  	
  	_handleDispatch: function(m){
  	},
  	
- 	_renderSvgDocument: function(svgDocument){
+ 	_renderSvgDocument: function(svgDocument, cssContent){
  		var _this = this;
  		
  		$n2.log('custom svg loaded');
@@ -149,9 +201,47 @@ var CustomSvgCanvas = $n2.Class({
  		$('#'+this.canvasId)
  			.empty()
  			.append(svgDocument.documentElement);
- 
+ 		
+ 		// Try to insert style information
+ 		if( cssContent ){
+ 	 		var $style = $('#'+this.canvasId).find('style');
+ 	 		if( $style.length > 0 ){
+ 	 			$style.append(cssContent);
+ 	 		} else {
+ 	 			// No style. Insert one
+ 	 			var $svg = $('#'+this.canvasId).children('svg');
+ 	 			if( $svg.length > 0 ){
+ 	 				// Style node should be under SVG
+ 	 				$('<style>')
+ 	 					.attr('type','text/css')
+ 	 					.text(cssContent)
+ 	 					.prependTo($svg);
+ 	 			};
+ 	 		};
+ 		};
+
+ 		// Iterate over the elements already in dictionary that
+ 		// were specified using elemIdToDocId option
+ 		for(var nodeId in this.nodesById){
+ 			var node = this.nodesById[nodeId];
+ 			var docId = node.n2_id;
+ 			
+ 			$d.select('#'+nodeId)
+ 				.attr('n2-doc-id', docId)
+ 				.on('mouseover',function(d,i){
+ 					_this._mouseOver($d.select(this),$d.event);
+ 				})
+				.on('mouseout',function(d,i){
+ 					_this._mouseOut($d.select(this),$d.event);
+ 				})
+				.on('click',function(d,i){
+ 					_this._mouseClick($d.select(this),$d.event);
+ 				})
+ 				;
+ 		};
+
+ 		
  		// Find all elements that are associated with a doc id
- 		var nodes = [];
  		$d.select('#'+this.canvasId).selectAll('.n2canvas_linkDocId').each(function(){
  			var $child = $d.select(this);
  			
@@ -170,7 +260,6 @@ var CustomSvgCanvas = $n2.Class({
  	 	 			,nodeId: nodeId
  	 			};
  	 			_this.nodesById[nodeId] = node;
- 	 			nodes.push(node);
  	 			
  	 			$child
 	 				.on('mouseover',function(d,i){
@@ -193,6 +282,11 @@ var CustomSvgCanvas = $n2.Class({
  		});
 
 		// Adjust intention on all nodes. Update our elements accordingly
+ 		var nodes = [];
+ 		for(var nodeId in this.nodesById){
+ 			var node = this.nodesById[nodeId];
+ 			nodes.push(node);
+ 		};
 		this.intentView.addNodes(nodes);
 		this._intentChanged(nodes);
  		
@@ -259,9 +353,9 @@ var CustomSvgCanvas = $n2.Class({
  			
  			$d.select('#'+node.nodeId)
  				.classed({
- 					'n2LinkHovered': node.n2_hovered
- 					,'n2LinkSelected': node.n2_selected
- 					,'n2LinkSelectedHovered': (node.n2_selected && node.n2_hovered)
+ 					'n2canvas_hovered': node.n2_hovered
+ 					,'n2canvas_selected': node.n2_selected
+ 					,'n2canvas_selectedHovered': (node.n2_selected && node.n2_hovered)
  				});
  		};
  	}
