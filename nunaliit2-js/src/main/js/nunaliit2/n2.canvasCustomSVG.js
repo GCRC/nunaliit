@@ -120,12 +120,7 @@ var CustomSvgCanvas = $n2.Class({
  		
  		if( opts.cssAttachment ){
  			// Load up CSS as an attachment to the module document
- 			var cssUrl = null;
- 			if( opts.moduleDisplay 
- 			 && opts.moduleDisplay.module ){
- 				cssUrl = opts.moduleDisplay.module.getAttachmentUrl(opts.cssAttachment);
- 			};
-	 			
+ 			var cssUrl = this._computeAttachmentUrl(opts.cssAttachment);
  			if( cssUrl ){
  				$.ajax({
  					url: cssUrl
@@ -156,12 +151,7 @@ var CustomSvgCanvas = $n2.Class({
  	 		
  	 		if( opts.svgAttachment ){
  	 			// Load up SVG as an attachment to the module document
- 	 			var svgUrl = null;
- 	 			if( opts.moduleDisplay 
- 	 			 && opts.moduleDisplay.module ){
- 	 				svgUrl = opts.moduleDisplay.module.getAttachmentUrl(opts.svgAttachment);
- 	 			};
- 	 			
+ 	 			var svgUrl = _this._computeAttachmentUrl(opts.svgAttachment);
  	 			if( svgUrl ){
  	 				$.ajax({
  	 					url: svgUrl
@@ -219,6 +209,16 @@ var CustomSvgCanvas = $n2.Class({
  	 			};
  	 		};
  		};
+ 		
+ 		// Fix URLs associated with images
+ 		$d.select('#'+this.canvasId).selectAll('image').each(function(){
+ 			var $image = $d.select(this);
+ 			var attName = $image.attr('xlink:href');
+ 			if( attName ){
+ 	 			var url = _this._computeAttachmentUrl(attName);
+ 	 			$image.attr('xlink:href',url);
+ 			};
+ 		});
 
  		// Iterate over the elements already in dictionary that
  		// were specified using elemIdToDocId option
@@ -358,6 +358,17 @@ var CustomSvgCanvas = $n2.Class({
  					,'n2canvas_selectedHovered': (node.n2_selected && node.n2_hovered)
  				});
  		};
+ 	},
+ 	
+ 	_computeAttachmentUrl: function(attName){
+		var url = undefined;
+		
+		if( this.moduleDisplay 
+		 && this.moduleDisplay.module ){
+			url = this.moduleDisplay.module.getAttachmentUrl(attName);
+		};
+		
+		return url;
  	}
 });
  
