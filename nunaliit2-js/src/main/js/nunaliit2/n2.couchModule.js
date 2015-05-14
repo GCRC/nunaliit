@@ -265,6 +265,10 @@ var Module = $n2.Class({
 				return false;
 			};
 		}
+	},
+	
+	getAttachmentUrl: function(attachmentName){
+		return this.atlasDb.getAttachmentUrl(this.moduleDoc, attachmentName);
 	}
 });
 	
