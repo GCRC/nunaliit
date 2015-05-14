@@ -39,8 +39,8 @@ var
  ;
  
 // Required library: d3
-var $d = window.d3;
-if( !$d ) return;
+var $d = undefined;
+if( window ) $d = window.d3;
  
 // --------------------------------------------------------------------------
 var CustomSvgCanvas = $n2.Class({
@@ -375,13 +375,17 @@ var CustomSvgCanvas = $n2.Class({
 //--------------------------------------------------------------------------
 function HandleCanvasAvailableRequest(m){
 	if( m.canvasType === 'customSvg' ){
-		m.isAvailable = true;
+		if( $d ) {
+			m.isAvailable = true;
+		} else {
+			$n2.log('Canvas customSvg requires d3 library');
+		};
 	};
 };
 
 //--------------------------------------------------------------------------
 function HandleCanvasDisplayRequest(m){
-	if( m.canvasType === 'customSvg' ){
+	if( m.canvasType === 'customSvg' && $d ){
 		
 		var options = {};
 		if( m.canvasOptions ){
