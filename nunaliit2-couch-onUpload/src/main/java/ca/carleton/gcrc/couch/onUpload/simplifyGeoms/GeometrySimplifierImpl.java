@@ -1,7 +1,12 @@
 package ca.carleton.gcrc.couch.onUpload.simplifyGeoms;
 
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import ca.carleton.gcrc.couch.onUpload.conversion.DocumentDescriptor;
@@ -12,8 +17,10 @@ import ca.carleton.gcrc.geom.wkt.WktWriter;
 
 public class GeometrySimplifierImpl implements GeometrySimplifier {
 
-	public GeometrySimplifierImpl() {
-		
+	private GeometrySimplificationProcess simplificationProcess;
+	
+	public GeometrySimplifierImpl(GeometrySimplificationProcess simplificationProcess) {
+		this.simplificationProcess = simplificationProcess;
 	}
 
 	@Override
@@ -51,6 +58,31 @@ public class GeometrySimplifierImpl implements GeometrySimplifier {
 			builder.addInlineAttachment(originalName, "text/json+nunaliit2_geometry", originalWkt);
 		}
 		
+		GeometrySimplificationReport report = 
+			simplificationProcess.simplifyGeometry(originalGeometry);
+		JSONObject resolutions = new JSONObject();
+		simplified.put("resolutions", resolutions);
+		List<GeometrySimplification> simplifications = 
+				new ArrayList<GeometrySimplification>(report.getSimplifications());
+		Collections.sort(simplifications,new Comparator<GeometrySimplification>(){
+			@Override
+			public int compare(GeometrySimplification o1,GeometrySimplification o2) {
+				if( o1.getResolution() < o2.getResolution() ){
+					return -1;
+				}
+				if( o1.getResolution() > o2.getResolution() ){
+					return 1;
+				}
+				return 0;
+			}
+		});
+		for(GeometrySimplification simplification : simplifications){
+			String attName = generateAttachmentName(builder,"nunaliit2_geom_res");
+			resolutions.put(attName, simplification.getResolution());
+
+			String wkt = simplification.getGeometry().toString();
+			builder.addInlineAttachment(attName, "text/json+nunaliit2_geometry", wkt);
+		}
 		
 		// Set the simplified structure
 		geomDesc.setSimplified( simplified );

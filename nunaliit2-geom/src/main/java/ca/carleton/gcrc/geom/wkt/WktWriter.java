@@ -1,6 +1,7 @@
 package ca.carleton.gcrc.geom.wkt;
 
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.io.Writer;
 
 import ca.carleton.gcrc.geom.Geometry;
@@ -14,6 +15,12 @@ import ca.carleton.gcrc.geom.Polygon;
 
 public class WktWriter {
 
+	public String toWkt(Geometry geometry) throws Exception {
+		StringWriter sw = new StringWriter();
+		write(geometry, sw);
+		return sw.toString();
+	}
+	
 	public void write(Geometry geometry, Writer writer) throws Exception {
 		PrintWriter pw = new PrintWriter(writer);
 		write(geometry, pw);
@@ -60,7 +67,7 @@ public class WktWriter {
 				pw.write(" ");
 			}
 			
-			pw.println(position);
+			pw.print(position);
 		}
 		pw.write(")");
 	}
@@ -85,7 +92,7 @@ public class WktWriter {
 					pw.write(" ");
 				}
 				
-				pw.println(position);
+				pw.print(position);
 			}
 
 			pw.write(")");
@@ -111,7 +118,7 @@ public class WktWriter {
 					pw.write(" ");
 				}
 				
-				pw.println(position);
+				pw.print(position);
 			}
 		}
 		pw.write(")");
@@ -145,7 +152,7 @@ public class WktWriter {
 						pw.write(" ");
 					}
 					
-					pw.println(position);
+					pw.print(position);
 				}
 			}
 
@@ -182,7 +189,7 @@ public class WktWriter {
 						pw.write(" ");
 					}
 					
-					pw.println(position);
+					pw.print(position);
 				}
 			}
 
@@ -230,7 +237,7 @@ public class WktWriter {
 							pw.write(" ");
 						}
 						
-						pw.println(position);
+						pw.print(position);
 					}
 				}
 

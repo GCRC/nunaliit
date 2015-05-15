@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Vector;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -28,6 +29,7 @@ import ca.carleton.gcrc.couch.onUpload.conversion.WorkDescriptor;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotification;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionMetaData;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionPlugin;
+import ca.carleton.gcrc.couch.onUpload.simplifyGeoms.GeometrySimplificationProcessImpl;
 import ca.carleton.gcrc.couch.onUpload.simplifyGeoms.GeometrySimplifier;
 import ca.carleton.gcrc.couch.onUpload.simplifyGeoms.GeometrySimplifierImpl;
 import ca.carleton.gcrc.couch.utils.CouchNunaliitUtils;
@@ -50,6 +52,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 	private Set<String> docIdsToSkip = new HashSet<String>();
 	private List<FileConversionPlugin> fileConverters;
 	private int noWorkDelayInMs = DELAY_NO_WORK_POLLING;
+	private GeometrySimplifier simplifier = null;
 	
 	protected UploadWorkerThread(
 		UploadWorkerSettings settings
@@ -79,6 +82,15 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				changeMonitor.addChangeListener(this);
 			}			
 		}
+		
+		List<Double> resolutions = new Vector<Double>();
+		resolutions.add(0.00001);
+		resolutions.add(0.0001);
+		resolutions.add(0.001);
+		resolutions.add(0.01);
+		resolutions.add(0.1);
+		GeometrySimplificationProcessImpl simplifierProcess = new GeometrySimplificationProcessImpl(resolutions);
+		simplifier = new GeometrySimplifierImpl(simplifierProcess);
 	}
 	
 	public void shutdown() {
@@ -734,7 +746,6 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 		FileConversionContext conversionContext = 
 			new FileConversionContextImpl(work,documentDbDesign,mediaDir);
 		
-		GeometrySimplifier simplifier = new GeometrySimplifierImpl();
 		simplifier.simplyGeometry(conversionContext);
 	}
 	
