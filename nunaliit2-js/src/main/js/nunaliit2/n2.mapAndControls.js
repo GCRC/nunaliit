@@ -2119,6 +2119,9 @@ var MapAndControls = $n2.Class({
 		
 		// Sort features on a layer so that polygons do not hide points  
 		layerOptions.strategies.push( new OpenLayers.Strategy.NunaliitLayerSorting() );
+
+		// Handle geometry simplification 
+		layerOptions.strategies.push( new OpenLayers.Strategy.NunaliitGeometrySimplification() );
 		
 		//layerOptions.renderers = ['Canvas','SVG','VML'];
 		layerOptions.renderers = ['SVG','VML'];
