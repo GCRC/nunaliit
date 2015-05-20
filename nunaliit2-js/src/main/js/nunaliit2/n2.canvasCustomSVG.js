@@ -192,6 +192,12 @@ var CustomSvgCanvas = $n2.Class({
  			.empty()
  			.append(svgDocument.documentElement);
  		
+ 		// Adjust height and width
+ 		$d.select('#'+this.canvasId).selectAll('svg')
+ 			.attr('width','100%')
+ 			.attr('height','100%')
+ 			;
+ 		
  		// Try to insert style information
  		if( cssContent ){
  	 		var $style = $('#'+this.canvasId).find('style');
