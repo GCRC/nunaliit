@@ -31,6 +31,7 @@ import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionMetaData;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionPlugin;
 import ca.carleton.gcrc.couch.onUpload.simplifyGeoms.GeometrySimplificationProcessImpl;
 import ca.carleton.gcrc.couch.onUpload.simplifyGeoms.GeometrySimplifier;
+import ca.carleton.gcrc.couch.onUpload.simplifyGeoms.GeometrySimplifierDisabled;
 import ca.carleton.gcrc.couch.onUpload.simplifyGeoms.GeometrySimplifierImpl;
 import ca.carleton.gcrc.couch.utils.CouchNunaliitUtils;
 import ca.carleton.gcrc.olkit.multimedia.file.SystemFile;
@@ -83,14 +84,19 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			}			
 		}
 		
-		List<Double> resolutions = new Vector<Double>();
-		resolutions.add(0.00001);
-		resolutions.add(0.0001);
-		resolutions.add(0.001);
-		resolutions.add(0.01);
-		resolutions.add(0.1);
-		GeometrySimplificationProcessImpl simplifierProcess = new GeometrySimplificationProcessImpl(resolutions);
-		simplifier = new GeometrySimplifierImpl(simplifierProcess);
+		if( settings.isGeometrySimplificationDisabled() ){
+			simplifier = new GeometrySimplifierDisabled();
+			
+		} else {
+			List<Double> resolutions = new Vector<Double>();
+			resolutions.add(0.00001);
+			resolutions.add(0.0001);
+			resolutions.add(0.001);
+			resolutions.add(0.01);
+			resolutions.add(0.1);
+			GeometrySimplificationProcessImpl simplifierProcess = new GeometrySimplificationProcessImpl(resolutions);
+			simplifier = new GeometrySimplifierImpl(simplifierProcess);
+		}
 	}
 	
 	public void shutdown() {

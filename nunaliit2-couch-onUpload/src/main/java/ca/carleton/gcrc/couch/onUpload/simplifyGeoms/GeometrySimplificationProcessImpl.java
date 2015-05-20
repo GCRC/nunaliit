@@ -40,24 +40,39 @@ public class GeometrySimplificationProcessImpl implements GeometrySimplification
 				for(Double resolution : resolutions){
 					try {
 						Geometry simplifiedGeom = simplifyGeometryAtResolution(geometry, resolution);
-						if( null != simplifiedGeom ){
-							boolean shouldSave = false;
+						
+						boolean shouldSave = false;
+						if( null == simplifiedGeom 
+						 && null == lastGeometry ){
+							// If original is more simplified than the highest resolution,
+							// then save original for that resolution
+							shouldSave = true;
+							simplifiedGeom = geometry;
+							lastGeometry = simplifiedGeom;
+							
+						} else if( null != simplifiedGeom ){
 							
 							if( null == lastGeometry ){
 								shouldSave = true;
 								lastGeometry = simplifiedGeom;
 							} else {
-								if( 0 != geomComparator.compare(lastGeometry, simplifiedGeom) ){
+								if( lastGeometry instanceof Point ){
+									// Do not need to simplify a point
+									shouldSave = false;
+									
+								} else if( 0 != geomComparator.compare(lastGeometry, simplifiedGeom) ){
+									// save only if this is a different geometry
 									shouldSave = true;
 									lastGeometry = simplifiedGeom;
 								}
 							}
-							
-							if( shouldSave ){
-								GeometrySimplification simplification = new GeometrySimplification(resolution,simplifiedGeom);
-								report.addSimplification(simplification);
-							}
 						}
+						
+						if( shouldSave ){
+							GeometrySimplification simplification = new GeometrySimplification(resolution,simplifiedGeom);
+							report.addSimplification(simplification);
+						}
+
 					} catch (Exception e) {
 						throw new Exception("Error simplifying geometry at resolution "+resolution,e);
 					}

@@ -35,14 +35,15 @@ public class GeometrySimplifierImpl implements GeometrySimplifier {
 		
 		// Remove attachments with geometries
 		for(Attachment att : builder.getAttachments()){
-			if( att.getContentType().equals("text/json+nunaliit2_geometry") ){
+			if( att.getContentType().equals(SIMPLIFIED_GEOMETRY_CONTENT_TYPE) ){
 				builder.removeAttachment(att);
 			}
 		}
 		
 		Geometry originalGeometry = geomDesc.getGeometry();
 		
-		// Original
+		// Save original in its own attachment and save information
+		// in simplified structure
 		{
 			WktWriter wktWriter = new WktWriter();
 			StringWriter sw = new StringWriter();
@@ -55,9 +56,10 @@ public class GeometrySimplifierImpl implements GeometrySimplifier {
 			String originalName = generateAttachmentName(builder,"nunaliit2_geom_original");
 			simplified.put("original", originalName);
 			
-			builder.addInlineAttachment(originalName, "text/json+nunaliit2_geometry", originalWkt);
+			builder.addInlineAttachment(originalName, SIMPLIFIED_GEOMETRY_CONTENT_TYPE, originalWkt);
 		}
 		
+		// Save simplifications in their attachments. Link them to simplified structure
 		GeometrySimplificationReport report = 
 			simplificationProcess.simplifyGeometry(originalGeometry);
 		JSONObject resolutions = new JSONObject();
@@ -81,7 +83,15 @@ public class GeometrySimplifierImpl implements GeometrySimplifier {
 			resolutions.put(attName, simplification.getResolution());
 
 			String wkt = simplification.getGeometry().toString();
-			builder.addInlineAttachment(attName, "text/json+nunaliit2_geometry", wkt);
+			builder.addInlineAttachment(attName, SIMPLIFIED_GEOMETRY_CONTENT_TYPE, wkt);
+		}
+		
+		// If some simplifications are available, replace geometry with most
+		// simplified versions of geometry.
+		if( simplifications.size() > 0 ){
+			GeometrySimplification mostSimplified = simplifications.get( simplifications.size()-1 );
+			geomDesc.setGeometry( mostSimplified.getGeometry() );
+			simplified.put("reported_resolution", mostSimplified.getResolution());
 		}
 		
 		// Set the simplified structure

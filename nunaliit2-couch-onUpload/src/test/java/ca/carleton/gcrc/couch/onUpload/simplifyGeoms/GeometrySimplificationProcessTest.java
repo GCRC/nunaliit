@@ -66,4 +66,18 @@ public class GeometrySimplificationProcessTest extends TestCase {
 			}
 		}
 	}
+
+	public void testSimplifyGeometry() throws Exception {
+		WktParser parser = new WktParser();
+		
+		List<Double> resolutions = new Vector<Double>();
+		resolutions.add(0.1);
+		resolutions.add(1.0);
+		resolutions.add(10.0);
+		GeometrySimplificationProcessImpl process = new GeometrySimplificationProcessImpl(resolutions);
+
+		String test = "POLYGON((0 0,10 0,10 10,0 10),(2 2,8 2,8 8,2 8))";
+		Geometry geom = parser.parseWkt(test);
+		GeometrySimplificationReport report = process.simplifyGeometry(geom);
+	}
 }

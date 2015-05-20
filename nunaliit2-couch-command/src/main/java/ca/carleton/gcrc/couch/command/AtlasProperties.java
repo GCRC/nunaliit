@@ -83,6 +83,15 @@ public class AtlasProperties {
 			}
 		}
 		
+		// Geometry simplification disabled
+		{
+			String disabledString = props.getProperty("geometry.simplification.disabled","false");
+			boolean disabled = Boolean.parseBoolean(disabledString);
+			if( disabled ){
+				atlasProps.setGeometrySimplificationDisabled(disabled);
+			}
+		}
+		
 		return atlasProps;
 	}
 
@@ -272,6 +281,7 @@ public class AtlasProperties {
 	private int serverPort = 8080;
 	private boolean restricted = false;
 	private byte[] serverKey = null;
+	private boolean geometrySimplificationDisabled = false;
 
 	public String getAtlasName() {
 		return atlasName;
@@ -341,5 +351,13 @@ public class AtlasProperties {
 	}
 	public void setServerKey(byte[] serverKey) {
 		this.serverKey = serverKey;
+	}
+
+	public boolean isGeometrySimplificationDisabled() {
+		return geometrySimplificationDisabled;
+	}
+
+	public void setGeometrySimplificationDisabled(boolean geometrySimplificationDisabled) {
+		this.geometrySimplificationDisabled = geometrySimplificationDisabled;
 	}
 }
