@@ -196,6 +196,7 @@ var CustomSvgCanvas = $n2.Class({
  		$d.select('#'+this.canvasId).selectAll('svg')
  			.attr('width','100%')
  			.attr('height','100%')
+ 			.attr('preserveAspectRatio','xMidYMid meet')
  			;
  		
  		// Try to insert style information
