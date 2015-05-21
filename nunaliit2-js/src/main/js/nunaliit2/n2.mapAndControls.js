@@ -1461,6 +1461,11 @@ var MapAndControls = $n2.Class({
     	this.map.events.register( 'mousemove', null, function(evt){
     		_this._handleMapMousePosition(evt);
 		});
+		
+    	// When changing zoom, check if new simpilified geometries should be loaded
+    	this.map.events.register( 'zoomend', null, function(evt){
+    		_this._refreshSimplifiedGeometries();
+		});
 
 		this.initCometChannels();
 	}
@@ -4330,17 +4335,19 @@ var MapAndControls = $n2.Class({
 				};
 			};
 		};
-		
-		$n2.log('geomsNeeded',geomsNeeded);
+
+		// Requested geometries for features that need them
 		var geometriesRequested = [];
 		for(var id in geomsNeeded){
 			geometriesRequested[geometriesRequested.length] = geomsNeeded[id];
 		};
-		
-		this._dispatch({
-			type: 'simplifiedGeometryRequest'
-			,geometriesRequested: geometriesRequested
-		});
+		if( geometriesRequested.length ){
+			$n2.log('geometriesRequested',geometriesRequested);
+			this._dispatch({
+				type: 'simplifiedGeometryRequest'
+				,geometriesRequested: geometriesRequested
+			});
+		};
 		
 		function checkFeature(f, res, geomsNeeded){
 			// Operate only on features that have simplification information
@@ -4388,15 +4395,19 @@ var MapAndControls = $n2.Class({
 				// If the best geometry and the current geometry do not match, add
 				// an entry in the dictionary
 				if( currentGeomAttName !== bestAttName ){
-					geomsNeeded[f.fid] = {
-						id: f.fid
-						,attName: bestAttName
-						,doc: f.data
-						,feature: f
-					};
 					
-					// Also, note on the feature what we would like to have
-					f.n2TargetGeomAttName = bestAttName;
+					// Check if the best geometry has already been requested
+					if( f.n2TargetGeomAttName !== bestAttName ){
+						geomsNeeded[f.fid] = {
+							id: f.fid
+							,attName: bestAttName
+							,doc: f.data
+							,feature: f
+						};
+						
+						// Save that we have requested the best geometry
+						f.n2TargetGeomAttName = bestAttName;
+					};
 				};
 			};
 		};
