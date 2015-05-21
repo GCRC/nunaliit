@@ -973,6 +973,7 @@ var MapAndControls = $n2.Class({
 	    this._registerDispatch('mapGetLayers');
 	    this._registerDispatch('setMapLayerVisibility');
 	    this._registerDispatch('mapSwitchToEditMode');
+	    this._registerDispatch('simplifiedGeometryReport');
 		
 		// Layers
 		this.defaultLayerInfo = { // feature layer access details.
@@ -2120,9 +2121,6 @@ var MapAndControls = $n2.Class({
 		// Sort features on a layer so that polygons do not hide points  
 		layerOptions.strategies.push( new OpenLayers.Strategy.NunaliitLayerSorting() );
 
-		// Handle geometry simplification 
-		layerOptions.strategies.push( new OpenLayers.Strategy.NunaliitGeometrySimplification() );
-		
 		//layerOptions.renderers = ['Canvas','SVG','VML'];
 		layerOptions.renderers = ['SVG','VML'];
 
@@ -2480,6 +2478,9 @@ var MapAndControls = $n2.Class({
 					};
 				};
 			};
+			
+			// When features are added, check the map for new simplified geometries
+			_this._refreshSimplifiedGeometries();
 		});
 		
 		// When features are removed, clear the cache associated with the layer.
@@ -4297,6 +4298,241 @@ var MapAndControls = $n2.Class({
 	
 	// === END -- LAYER MANAGEMENT ========================================================
 
+	// === START -- SIMPLIFIED GEOMETRIES =================================================
+	
+	,_refreshSimplifiedGeometries: function(){
+		var proj = new OpenLayers.Projection('EPSG:4326');
+		var epsg4326Resolution = this._getResolutionInProjection(proj);
+		//$n2.log('epsg4326Resolution',epsg4326Resolution);
+		
+		// Accumulate all geometries that are required
+		var geomsNeeded = {};
+		
+		// Iterate over layers
+		var layers = this.map.layers;
+		for(var li=0,le=layers.length; li<le; ++li){
+			var layer = layers[li];
+
+			// Iterate features
+			if( layer.features ){
+				for(var fi=0,fe=layer.features.length; fi<fe; ++fi){
+					var feature = layer.features[fi];
+					
+					// If feature is a cluster, iterate over its components
+					if( feature.cluster ){
+						for(var ci=0,ce=feature.cluster.length; ci<ce; ++ci){
+							var f = feature.cluster[ci];
+							checkFeature(f,epsg4326Resolution,geomsNeeded);
+						};
+					} else {
+						checkFeature(feature,epsg4326Resolution,geomsNeeded);
+					};
+				};
+			};
+		};
+		
+		$n2.log('geomsNeeded',geomsNeeded);
+		var geometriesRequested = [];
+		for(var id in geomsNeeded){
+			geometriesRequested[geometriesRequested.length] = geomsNeeded[id];
+		};
+		
+		this._dispatch({
+			type: 'simplifiedGeometryRequest'
+			,geometriesRequested: geometriesRequested
+		});
+		
+		function checkFeature(f, res, geomsNeeded){
+			// Operate only on features that have simplification information
+			if( f.data 
+			 && f.data.nunaliit_geom
+			 && f.data.nunaliit_geom.simplified
+			 && f.data.nunaliit_geom.simplified.resolutions ){
+				// Compute which attachment name and resolution would be
+				// ideal for this feature. The best resolution is the greatest
+				// one defined which is smaller than the one requested by the map
+				var bestAttName = undefined;
+				var bestResolution = undefined;
+				for(var attName in f.data.nunaliit_geom.simplified.resolutions){
+					var attRes = 1 * f.data.nunaliit_geom.simplified.resolutions[attName];
+					if( attRes < res ){
+						if( typeof bestResolution === 'undefined' ){
+							bestResolution = attRes;
+							bestAttName = attName;
+						} else if( attRes > bestResolution ){
+							bestResolution = attRes;
+							bestAttName = attName;
+						};
+					};
+				};
+				
+				// If we can not determine an optimal resolution, it is because
+				// the maps resolution is better than the best simplification. Go
+				// with original geometry
+				if( !bestAttName ){
+					if( f.data.nunaliit_geom.simplified.original ){
+						bestAttName = f.data.nunaliit_geom.simplified.original;
+					};
+				};
+				
+				// If we still can not figure out the best resolution, something
+				// went wrong and ignore this feature
+				if( !bestAttName ) return;
+				
+				// Check what geometry is currently displayed on the map
+				var currentGeomAttName = undefined;
+				if( f.n2CurrentGeomAttName ){
+					currentGeomAttName = f.n2CurrentGeomAttName;
+				};
+				
+				// If the best geometry and the current geometry do not match, add
+				// an entry in the dictionary
+				if( currentGeomAttName !== bestAttName ){
+					geomsNeeded[f.fid] = {
+						id: f.fid
+						,attName: bestAttName
+						,doc: f.data
+						,feature: f
+					};
+					
+					// Also, note on the feature what we would like to have
+					f.n2TargetGeomAttName = bestAttName;
+				};
+			};
+		};
+	}
+	
+	,_updateSimplifiedGeometries: function(simplifiedGeometries){
+		var _this = this;
+		
+		// Often used
+		var wktFormat = new OpenLayers.Format.WKT();
+		var dbProj = new OpenLayers.Projection('EPSG:4326');
+
+		// Make a map of all simplified geometries based on id (fid)
+		var simplifiedGeometriesById = {};
+		for(var i=0,e=simplifiedGeometries.length; i<e; ++i){
+			var simplifiedGeometry = simplifiedGeometries[i];
+			simplifiedGeometriesById[simplifiedGeometry.id] = simplifiedGeometry;
+		};
+		
+		// Look for which layers need to be reloaded
+		var layersToReload = {};
+		var layers = this.map.layers;
+		for(var li=0,le=layers.length; li<le; ++li){
+			var layer = layers[li];
+
+			// Iterate features and find those that must be modified
+			if( layer.features ){
+				for(var fi=0,fe=layer.features.length; fi<fe; ++fi){
+					var feature = layer.features[fi];
+					
+					// If feature is a cluster, iterate over its components
+					if( feature.cluster ){
+						for(var ci=0,ce=feature.cluster.length; ci<ce; ++ci){
+							var f = feature.cluster[ci];
+							updateFeature(layer,f,simplifiedGeometriesById,layersToReload);
+						};
+					} else {
+						updateFeature(layer,feature,simplifiedGeometriesById,layersToReload);
+					};
+				};
+			};
+		};
+		
+		// Reload layers that need it
+		for(var layerId in layersToReload){
+			var layer = layersToReload[layerId];
+			
+			// Accumulate all features
+			var features = [];
+			for(var fi=0,fe=layer.features.length; fi<fe; ++fi){
+				var feature = layer.features[fi];
+				
+				// If feature is a cluster, iterate over its components
+				if( feature.cluster ){
+					for(var ci=0,ce=feature.cluster.length; ci<ce; ++ci){
+						features[features.length] = feature.cluster[ci];
+					};
+				} else {
+					features[features.length] = feature;
+				};
+			};
+			
+			// Remove all features
+			layer.removeAllFeatures();
+			
+			// Add them again so that clustering and drawing is based on the
+			// new geometry
+			layer.addFeatures(features);
+		};
+		
+		function updateFeature(layer, f, simplifiedGeometryById, layersToReload){
+			var simplifiedGeometry = simplifiedGeometryById[f.fid];
+			if( simplifiedGeometry ){
+				// Save this information
+				if( !f.n2SimplifiedGeoms ){
+					f.n2SimplifiedGeoms = {};
+				};
+				f.n2SimplifiedGeoms[simplifiedGeometry.attName] = simplifiedGeometry;
+				
+				// If this simplification is already installed, then there is nothing
+				// to do
+				if( simplifiedGeometry.attName 
+				 && simplifiedGeometry.attName !== f.n2CurrentGeomAttName ){
+					// If this simplification is not the target simplification,
+					// then there is nothing to do
+					if( simplifiedGeometry.attName 
+					 && simplifiedGeometry.attName === f.n2TargetGeomAttName ){
+						// OK, we must install this simplification
+						if( simplifiedGeometry.wkt ){
+							var f2 = wktFormat.read(simplifiedGeometry.wkt);
+							if( f2 && f2.geometry ){
+								// Reproject geometry
+								var projectedGeom = _this._reprojectGeometryForMap(f2.geometry, dbProj);
+								
+								// Swap geometry
+								f.geometry = projectedGeom;
+								f.n2CurrentGeomAttName = simplifiedGeometry.attName;
+								
+								// Mark this layer for reload
+								layersToReload[layer.id] = layer;
+							};
+						};
+					};
+				};
+			};
+		};
+	}
+    
+	,_getResolutionInProjection: function(proj){
+    	var targetResolution = this.map.resolution;
+    	
+    	if( this.map.projection.getCode() !== proj.getCode() ){
+    		// Convert [0,0] and [0,1] to proj
+    		var p0 = OpenLayers.Projection.transform({x:0,y:0},this.map.projection,proj);
+    		var p1 = OpenLayers.Projection.transform({x:0,y:1},this.map.projection,proj);
+    		
+    		var factor = Math.sqrt( ((p0.x-p1.x)*(p0.x-p1.x)) + ((p0.y-p1.y)*(p0.y-p1.y)) );
+    		
+    		targetResolution = this.map.resolution * factor;
+    	};
+    	
+    	return targetResolution;
+    }
+    
+	,_reprojectGeometryForMap: function(geom, proj){
+    	var targetGeometry = geom;
+    	
+    	if( this.map.projection.getCode() !== proj.getCode() ){
+    		geom.transform(proj,this.map.projection);
+    	};
+    	
+    	return targetGeometry;
+    }
+	
+	// === END -- SIMPLIFIED GEOMETRIES ===================================================
+
 	,redefineFeatureLayerStylesAndRules : function(layerName) {
 		var layerInfo = this.getNamedLayerInfo(layerName);
 		if (null == layerInfo) {
@@ -4890,6 +5126,9 @@ var MapAndControls = $n2.Class({
 			};
 		} else if( 'mapSwitchToEditMode' === type ) {
 			this.switchToEditMode();
+			
+		} else if( 'simplifiedGeometryReport' === type ) {
+			this._updateSimplifiedGeometries(m.simplifiedGeometries);
 		};
 	}
 	

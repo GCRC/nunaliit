@@ -417,6 +417,11 @@ function Configure(options_){
 			atlasDesign: configuration.atlasDesign
 			,dispatchService: configuration.directory.dispatchService
 		});
+
+		configuration.directory.simplifiedGeometryService = new $n2.couchSimplifiedGeometries.Service({
+			atlasDb: configuration.atlasDb
+			,dispatchService: configuration.directory.dispatchService
+		});
 		
 		// Load help file
 		if( configuration.atlasDb ){
