@@ -2485,7 +2485,7 @@ var MapAndControls = $n2.Class({
 	
 	,_selectedFeatures: function(features, fids){
 		if( this.currentMode !== this.modes.NAVIGATE ){
-			this.switchMapMode(this.modes.NAVIGATE);
+			this._switchMapMode(this.modes.NAVIGATE);
 		};
 		
 		this._endClicked();
@@ -2523,7 +2523,7 @@ var MapAndControls = $n2.Class({
 	,_selectedFeaturesSupplement: function(opts){
 		
 		if( this.currentMode !== this.modes.NAVIGATE ){
-			this.switchMapMode(this.modes.NAVIGATE);
+			this._switchMapMode(this.modes.NAVIGATE);
 		};
 		
 		if( opts.fid ) {
@@ -2926,7 +2926,7 @@ var MapAndControls = $n2.Class({
     	
     	if( showLogin ) {
     		this.hideMapInteractionSwitch();
-			this.switchMapMode(this.modes.NAVIGATE);
+			this._switchMapMode(this.modes.NAVIGATE);
     	} else {
    			this.showMapInteractionSwitch();
     	};
@@ -2959,7 +2959,7 @@ var MapAndControls = $n2.Class({
 			this.switchToEditMode();
 			
 		} else if( this.currentMode === this.modes.ADD_OR_SELECT_FEATURE ) {
-			this.switchMapMode(this.modes.NAVIGATE);
+			this._switchMapMode(this.modes.NAVIGATE);
 			
 		} else if( this.currentMode === this.modes.ADD_GEOMETRY ) {
 			this._cancelEditFeatureMode();
@@ -2986,7 +2986,7 @@ var MapAndControls = $n2.Class({
 		if( control ) control.deactivate();
 	}
 			
-    ,switchMapMode: function(mode, opts) {
+    ,_switchMapMode: function(mode, opts) {
     	if( this.currentMode === mode ) {
     		// nothing to do
     		return;
@@ -3096,7 +3096,7 @@ var MapAndControls = $n2.Class({
     			});
     		} else {
     			// Already logged in, just switch
-    	    	this.switchMapMode(this.modes.ADD_OR_SELECT_FEATURE);
+    	    	this._switchMapMode(this.modes.ADD_OR_SELECT_FEATURE);
     		};
     	} else {
     		alert("Authentication module not installed.");
@@ -3104,14 +3104,14 @@ var MapAndControls = $n2.Class({
     }
     
     ,switchToEditFeatureMode: function(fid, feature) {
-    	this.switchMapMode(this.modes.EDIT_FEATURE,{
+    	this._switchMapMode(this.modes.EDIT_FEATURE,{
     		fid: fid
     		,feature: feature
     	});
     }
     
     ,switchToAddGeometryMode: function(docId) {
-    	this.switchMapMode(this.modes.ADD_GEOMETRY,{
+    	this._switchMapMode(this.modes.ADD_GEOMETRY,{
     		fid: docId
     	});
     }
@@ -3175,11 +3175,11 @@ var MapAndControls = $n2.Class({
 			this.editLayer.destroyFeatures(editedFeature);
 		};
 		
-		this.switchMapMode(this.modes.NAVIGATE);
+		this._switchMapMode(this.modes.NAVIGATE);
     }
 
 	,onAttributeFormCancelled: function(editedFeature) {
-		this.switchMapMode(this.modes.NAVIGATE);
+		this._switchMapMode(this.modes.NAVIGATE);
 	}
     
 	,onAttributeFormInserted: function(fid, feature) {
@@ -4793,12 +4793,12 @@ var MapAndControls = $n2.Class({
 		    		};
 				};
 
-	    		this.switchMapMode(this.modes.NAVIGATE);
+	    		this._switchMapMode(this.modes.NAVIGATE);
 			};
 			
 		} else if( 'editClosed' === type ) {
 			if( this.currentMode !== this.modes.NAVIGATE ){
-				this.switchMapMode(this.modes.NAVIGATE);
+				this._switchMapMode(this.modes.NAVIGATE);
 			};
 			var deleted = m.deleted;
 			if( !deleted ) {
