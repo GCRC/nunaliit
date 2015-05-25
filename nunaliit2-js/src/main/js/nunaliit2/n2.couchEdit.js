@@ -202,8 +202,6 @@ var CouchSimpleDocumentEditor = $n2.Class({
 	
 	,editors: null
 	
-	,geomName: null
-	
 	,couchProj: null
 	
 	,treeEditor: null
@@ -225,7 +223,6 @@ var CouchSimpleDocumentEditor = $n2.Class({
 			,schemaEditorService: null
 			,dispatchService: null
 			,editors: null
-			,geomName: 'nunaliit_geom'
 			,couchProj: null
 		},opts_);
 		
@@ -245,7 +242,6 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		this.schemaEditorService = opts.schemaEditorService;
 		this.dispatchService = opts.dispatchService;
 		this.editors = opts.editors;
-		this.geomName = opts.geomName;
 		this.couchProj = opts.couchProj;
 
 		if( opts.doc.__n2Source ){
@@ -276,10 +272,10 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		if( !this.editors ){
 			// Default
 			this.editors = [
-				$n2.CouchEditor.Constants.FORM_EDITOR
-				,$n2.CouchEditor.Constants.TREE_EDITOR
-				,$n2.CouchEditor.Constants.SLIDE_EDITOR
-				,$n2.CouchEditor.Constants.RELATION_EDITOR
+				$n2.couchEdit.Constants.FORM_EDITOR
+				,$n2.couchEdit.Constants.TREE_EDITOR
+				,$n2.couchEdit.Constants.SLIDE_EDITOR
+				,$n2.couchEdit.Constants.RELATION_EDITOR
 			];
 		};
 		
@@ -335,15 +331,15 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		var editorCount = 0;
 		for(var i=0,e=this.editors.length;i<e;++i){
 			var editorDesc = this.editors[i];
-			if( $n2.CouchEditor.Constants.FORM_EDITOR === editorDesc ){
+			if( $n2.couchEdit.Constants.FORM_EDITOR === editorDesc ){
 				if( selectedSchema && this.schemaEditorService ){
 					++editorCount;
 				};
-			} else if( $n2.CouchEditor.Constants.TREE_EDITOR === editorDesc ){
+			} else if( $n2.couchEdit.Constants.TREE_EDITOR === editorDesc ){
 				++editorCount;
-			} else if( $n2.CouchEditor.Constants.SLIDE_EDITOR === editorDesc ){
+			} else if( $n2.couchEdit.Constants.SLIDE_EDITOR === editorDesc ){
 				++editorCount;
-			} else if( $n2.CouchEditor.Constants.RELATION_EDITOR === editorDesc ){
+			} else if( $n2.couchEdit.Constants.RELATION_EDITOR === editorDesc ){
 				relationEditorNeeded = true;
 			};
 		};
@@ -361,7 +357,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		for(var i=0,e=this.editors.length;i<e;++i){
 			var editorDesc = this.editors[i];
 			
-			if( $n2.CouchEditor.Constants.FORM_EDITOR === editorDesc
+			if( $n2.couchEdit.Constants.FORM_EDITOR === editorDesc
 			 && selectedSchema 
 			 && this.schemaEditorService ) {
 				$n2.schema.GlobalAttributes.disableKeyUpEvents = true;
@@ -397,7 +393,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 					}
 				});
 				
-			} else if( $n2.CouchEditor.Constants.TREE_EDITOR === editorDesc ) {
+			} else if( $n2.couchEdit.Constants.TREE_EDITOR === editorDesc ) {
 				// Accordion Header for Tree
 				if( accordionNeeded ) {
 					var $treeHeader = $('<h3>')
@@ -431,7 +427,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 				var objectTree = new $n2.tree.ObjectTree($treeContainer, data, editorOptions);
 				this.treeEditor = new $n2.tree.ObjectTreeEditor(objectTree, data, editorOptions);
 			
-			} else if( $n2.CouchEditor.Constants.SLIDE_EDITOR === editorDesc ) {
+			} else if( $n2.couchEdit.Constants.SLIDE_EDITOR === editorDesc ) {
 				// Accordion Header for slide editor
 				if( accordionNeeded ) {
 					var $slideHeader = $('<h3>')
@@ -495,7 +491,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 			});
 			
 		} else if( this.schema && this.isInsert ) {
-			if( $n2.CouchEditor.Constants.ALL_SCHEMAS === this.schema ) {
+			if( $n2.couchEdit.Constants.ALL_SCHEMAS === this.schema ) {
 				// Must select a schema from all root schemas
 				this.schemaRepository.getRootSchemas({
 					onSuccess: function(schemas){
@@ -635,7 +631,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 	,_adjustInternalValues: function(obj) {
 		// BBOX
 		if( typeof(OpenLayers) !== 'undefined' ) {
-			var geomData = obj[this.geomName];
+			var geomData = obj.nunaliit_geom;
 			if( geomData ) {
 				// Check if editor has changed the geometry's WKT
 				if( this.currentGeometryWkt != geomData.wkt ) {
@@ -725,7 +721,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 	}
 	
 	,_onEditorObjectChanged: function(obj) {
-		var geomData = obj[this.geomName];
+		var geomData = obj.nunaliit_geom;
 		
 		if( !geomData ) return; // avoid errors
 		if( typeof(OpenLayers) === 'undefined' ) return;
@@ -755,7 +751,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 			geom.transform(proj,this.options.couchProj);
 		};
     	
-		var geomData = this.editedDocument[this.geomName];
+		var geomData = this.editedDocument.nunaliit_geom;
 		geomData.wkt = geom.toString();
 		$n2.couchGeom.updatedGeometry(geomData);
 		this.currentGeometryWkt = geomData.wkt;
@@ -777,12 +773,12 @@ var CouchSimpleDocumentEditor = $n2.Class({
 			geom.transform(proj,this.couchProj);
 		};
     	
-		var geomData = this.editedDocument[this.geomName];
+		var geomData = this.editedDocument.nunaliit_geom;
 		if( !geomData ){
 			geomData = {
 				nunaliit_type: 'geometry'
 			};
-			this.editedDocument[this.geomName] = geomData;
+			this.editedDocument.nunaliit_geom = geomData;
 		};
 		geomData.wkt = geom.toString();
 		$n2.couchGeom.updatedGeometry(geomData);
@@ -812,15 +808,11 @@ var CouchDocumentEditor = $n2.Class({
 	customService: null,
 	dispatchService: null,
 	dialogService: null,
-	geomName: null,
 	initialLayers: null,
 	schema: null,
 	defaultEditSchema: null,
 	documentSource: null,
 	couchProj: null,
-	onFeatureInsertedFn: null,
-	onFeatureUpdatedFn: null,
-	onFeatureDeletedFn: null,
 	onCancelFn: null,
 	onCloseFn: null,
 	enableAddFile: null,
@@ -853,15 +845,11 @@ var CouchDocumentEditor = $n2.Class({
 			,customService: null
 			,dispatchService: null
 			,dialogService: null
-			,geomName: null
 			,initialLayers: ['public']
 			,schema: null
 			,defaultEditSchema: null
 			,documentSource: null
 			,couchProj: null
-			,onFeatureInsertedFn: function(fid,feature){}
-			,onFeatureUpdatedFn: function(fid,feature){}
-			,onFeatureDeletedFn: function(fid,feature){}
 			,onCancelFn: function(feature){}
 			,onCloseFn: function(){}
 			,enableAddFile: false
@@ -879,15 +867,11 @@ var CouchDocumentEditor = $n2.Class({
 		this.customService = opts.customService;
 		this.dispatchService = opts.dispatchService;
 		this.dialogService = opts.dialogService;
-		this.geomName = opts.geomName;
 		this.initialLayers = opts.initialLayers;
 		this.schema = opts.schema;
 		this.defaultEditSchema = opts.defaultEditSchema;
 		this.documentSource = opts.documentSource;
 		this.couchProj = opts.couchProj;
-		this.onFeatureInsertedFn = opts.onFeatureInsertedFn;
-		this.onFeatureUpdatedFn = opts.onFeatureUpdatedFn;
-		this.onFeatureDeletedFn = opts.onFeatureDeletedFn;
 		this.onCancelFn = opts.onCancelFn;
 		this.onCloseFn = opts.onCloseFn;
 		this.enableAddFile = opts.enableAddFile;
@@ -935,8 +919,8 @@ var CouchDocumentEditor = $n2.Class({
 	
 		this.currentGeometryWkt = null;
 		if( this.editedDocument 
-		 && this.editedDocument[this.geomName] ) {
-			this.currentGeometryWkt = this.editedDocument[this.geomName].wkt;
+		 && this.editedDocument.nunaliit_geom ) {
+			this.currentGeometryWkt = this.editedDocument.nunaliit_geom.wkt;
 		};
 		
 		this.isInsert = (typeof(this.editedFeature.fid) === 'undefined' || this.editedFeature.fid === null);
@@ -945,7 +929,7 @@ var CouchDocumentEditor = $n2.Class({
 			// must do initial object work
 	    	var geom = this.convertFeatureGeometryForDb(this.editedFeature);
 	    	var g = $n2.couchGeom.getCouchGeometry(geom);
-	    	this.editedDocument[this.geomName] = g;
+	    	this.editedDocument.nunaliit_geom = g;
 			
 			// Add default layers?
 	    	if( this.initialLayers 
@@ -967,7 +951,7 @@ var CouchDocumentEditor = $n2.Class({
 				// must do initial object work
 		    	var geom = _this.convertFeatureGeometryForDb(_this.editedFeature);
 		    	var g = $n2.couchGeom.getCouchGeometry(geom);
-		    	_this.editedDocument[_this.geomName] = g;
+		    	_this.editedDocument.nunaliit_geom = g;
 				
 				// Add default layers?
 		    	if( _this.initialLayers 
@@ -1029,7 +1013,7 @@ var CouchDocumentEditor = $n2.Class({
 			});
 			
 		} else if( this.schema && this.isInsert ) {
-			if( $n2.CouchEditor.Constants.ALL_SCHEMAS === this.schema ) {
+			if( $n2.couchEdit.Constants.ALL_SCHEMAS === this.schema ) {
 				// Must select a schema from all root schemas
 				this.dialogService.selectSchema({
 					onSelected: callbackFn
@@ -1404,7 +1388,6 @@ var CouchDocumentEditor = $n2.Class({
 			_this.documentSource.deleteDocument({
 				doc: _this.editedDocument
 				,onSuccess: function() {
-					_this.onFeatureDeletedFn(editedDocument._id,_this.editedFeature);
 					_this._discardEditor({deleted:true});
 				}
 				,onError: function(err){
@@ -1545,10 +1528,8 @@ var CouchDocumentEditor = $n2.Class({
 				saved: true
 			};
 			if( inserted ) {
-				_this.onFeatureInsertedFn(editedDocument._id,_this.editedFeature);
 				discardOpts.inserted = true;
 			} else {
-				_this.onFeatureUpdatedFn(editedDocument._id,_this.editedFeature);
 				discardOpts.updated = true;
 			};
 			_this._discardEditor(discardOpts);
@@ -1769,7 +1750,13 @@ var CouchDocumentEditor = $n2.Class({
 		var $editorContainer = this._getEditorContainer();
 		$editorContainer.remove();
 
-		this.onCloseFn(this.editedDocument, this);
+		this.onCloseFn(this.editedDocument, this, {
+			saved: opts.saved
+			,inserted: opts.inserted
+			,updated: opts.updated
+			,deleted: opts.deleted
+			,cancelled: opts.cancelled
+		});
 		
 		if( !opts.suppressEvents ) {
 			// Send document only if it was saved or already
@@ -1820,7 +1807,7 @@ var CouchDocumentEditor = $n2.Class({
 	,_adjustInternalValues: function(obj) {
 		// BBOX
 		if( typeof(OpenLayers) !== 'undefined' ) {
-			var geomData = obj[this.geomName];
+			var geomData = obj.nunaliit_geom;
 			if( geomData ) {
 				// Check if editor has changed the geometry's WKT
 				if( this.currentGeometryWkt != geomData.wkt ) {
@@ -1909,7 +1896,7 @@ var CouchDocumentEditor = $n2.Class({
 	}
 	
 	,onEditorObjectChanged: function(obj) {
-		var geomData = obj[this.geomName];
+		var geomData = obj.nunaliit_geom;
 		
 		if( !geomData ) return; // avoid errors
 		if( typeof(OpenLayers) === 'undefined' ) return;
@@ -1950,7 +1937,7 @@ var CouchDocumentEditor = $n2.Class({
 			geom.transform(proj,this.couchProj);
 		};
     	
-		var geomData = this.editedDocument[this.geomName];
+		var geomData = this.editedDocument.nunaliit_geom;
 		geomData.wkt = geom.toString();
 		$n2.couchGeom.updatedGeometry(geomData);
 		this.currentGeometryWkt = geomData.wkt;
@@ -1972,12 +1959,12 @@ var CouchDocumentEditor = $n2.Class({
 			geom.transform(proj,this.couchProj);
 		};
     	
-		var geomData = this.editedDocument[this.geomName];
+		var geomData = this.editedDocument.nunaliit_geom;
 		if( !geomData ){
 			geomData = {
 				nunaliit_type: 'geometry'
 			};
-			this.editedDocument[this.geomName] = geomData;
+			this.editedDocument.nunaliit_geom = geomData;
 		};
 		geomData.wkt = geom.toString();
 		$n2.couchGeom.updatedGeometry(geomData);
@@ -2042,15 +2029,13 @@ var CouchDocumentEditor = $n2.Class({
 
 //++++++++++++++++++++++++++++++++++++++++++++++
 
-var CouchEditor = $n2.Class({
+var CouchEditService = $n2.Class({
 
 	options: null,
 	
 	documentSource: null,
 	
 	panelName: null,
-	
-	geomName: null,
 	
 	couchProj: null,
 	
@@ -2092,7 +2077,6 @@ var CouchEditor = $n2.Class({
 		var opts = $n2.extend({
 			documentSource: null // must be provided
 			,panelName: null // location where editor is opened
-			,geomName: 'nunaliit_geom'
 			,couchProj: null
 			,schema: null
 			,defaultEditSchema: null
@@ -2115,7 +2099,6 @@ var CouchEditor = $n2.Class({
 		this.options = {};
 		this.documentSource = opts.documentSource;
 		this.panelName = opts.panelName;
-		this.geomName = opts.geomName;
 		this.couchProj = opts.couchProj;
 		this.options.schema = opts.schema;
 		this.defaultEditSchema = opts.defaultEditSchema;
@@ -2186,13 +2169,9 @@ var CouchEditor = $n2.Class({
     	
     	var opts = {
 			panelName: o_.panelName ? o_.panelName : this.panelName
-			,geomName: o_.geomName ? o_.geomName : this.geomName
 			,initialLayers: o_.initialLayers ? o_.initialLayers : this.initialLayers
 			,enableAddFile: o_.enableAddFile ? o_.enableAddFile : this.enableAddFile
 			,schema: o_.schema ? o_.schema : this.options.schema
-			,onFeatureInsertedFn: o_.onFeatureInsertedFn
-			,onFeatureUpdatedFn: o_.onFeatureUpdatedFn
-			,onFeatureDeletedFn: o_.onFeatureDeletedFn
 			,onCancelFn: o_.onCancelFn
 			,onCloseFn: o_.onCloseFn
 			,uploadService: this.uploadService
@@ -3092,8 +3071,8 @@ var AttachmentEditor = $n2.Class({
 
 //++++++++++++++++++++++++++++++++++++++++++++++
 
-$n2.CouchEditor = {
-	Editor: CouchEditor
+$n2.couchEdit = {
+	EditService: CouchEditService
 	,SchemaEditorService: SchemaEditorService
 	,CouchSimpleDocumentEditor: CouchSimpleDocumentEditor
 	,Constants: {
@@ -3104,6 +3083,11 @@ $n2.CouchEditor = {
 		,RELATION_EDITOR: {}
 	}
 	,AttachmentEditor: AttachmentEditor
+};
+
+// Support legacy code
+$n2.CouchEditor = {
+	Constants: $n2.couchEdit.Constants 
 };
 
 })(jQuery,nunaliit2);

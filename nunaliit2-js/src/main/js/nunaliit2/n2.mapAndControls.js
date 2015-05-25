@@ -40,259 +40,6 @@ $Id: n2.mapAndControls.js 8494 2012-09-21 20:06:50Z jpfiset $
 	var DH = 'n2.mapAndControls';
 
 //**************************************************
-function OlkitAttributeFormManagerSidePanel(options_) {
-	var defaultOptions = {
-		tableName: 'names'
-		,geomName: 'the_geom'
-		,panelName: 'side'
-		,selectAudioFn: function(feature_,cbFn){ alert('Feature not supported'); }
-		,onFeatureInsertedFn: function(fid,feature){}
-		,onFeatureUpdatedFn: function(fid,feature){}
-		,onFeatureDeletedFn: function(fid,feature){}
-		,onCancelFn: function(){}
-		,onCloseFn: function(){}
-		,uniqueIdentifier: 'place_id'
-	};
-	
-	var options = $.extend({},defaultOptions,options_);
-	
-	var defaultFieldOpts = {
-		'layer': {
-			defaultValue: 1
-			,choices: [
-				{value:0,label:'Admin'}
-				,{value:1,label:'Public'}
-			]
-		}
-		,'hover_audio': {
-			defaultValue: ''
-			,select: function(cbFn){options.selectAudioFn(feature_,cbFn);}
-		}
-	};
-
-	var cancelled = true;
-	var editedFeature = null;
-	var editedLayer = null;
-	var originalGeometry = null;
-	var originalStyle = null;
-	var attributeDialog = null;
-	var dbWebForm = null;
-	var isInsert = 0;
-
-    function showAttributeForm(feature_) {
-    	editedFeature = feature_;
-		editedLayer = editedFeature.layer;
-    	cancelled = false;
-    	isInsert = false;
-
-		originalGeometry = editedFeature.geometry.clone();
-		originalStyle = editedFeature.style;
-
-		editedLayer.events.register('featuremodified', editedFeature, featureModified);
-
-		attributeDialog = $('#'+options.panelName);
-		attributeDialog.empty();
-
-		var dialogHeader = $('<p class="olkitAttrFormFeatureInstructions">Enter or edit the place attribute values:</p>');
-		attributeDialog.append( dialogHeader );
-
-		var attributeForm = $('<div class="olkitAttrFormFeatureAttributes"></div>');
-		attributeDialog.append( attributeForm );
-
-		var formButtons = $('<div class="olkitAttrFormButtons"></div>');
-		installCancelButton();
-		attributeDialog.append( formButtons );
-		
-		var fOpts = $.extend({}, defaultFieldOpts, options.fieldOpts);
-        var dbWebFormOptions = {
-        	tableName: options.tableName
-        	,installButtons: function(buttons) {
-        		formButtons.empty();
-        		if( buttons.Save ) { installSaveButton( buttons.Save ); };
-        		if( buttons['Delete'] ) { installDeleteButton( buttons['Delete'] ); };
-        		installCancelButton();
-        	}
-        	,fieldOpts: fOpts
-        	,onError: onError
-        };
-        var ids = editedFeature.fid ? editedFeature.fid.split('.') : [];
-        if( ids.length > 1 ) {
-			// Use id, if possible
-        	dbWebFormOptions.whereClauses = [
- 	        		$.NUNALIIT_DBWEB.formatWhereClause(
- 	        			'id'
- 	        			,$.NUNALIIT_DBWEB.whereComparison_eq
- 	        			,ids[1]
- 	        			)
- 	        	];
-        } else if( editedFeature.attributes[options.uniqueIdentifier] ) {
-        	dbWebFormOptions.whereClauses = [
-        		$.NUNALIIT_DBWEB.formatWhereClause(
-        			options.uniqueIdentifier
-        			,$.NUNALIIT_DBWEB.whereComparison_eq
-        			,editedFeature.attributes[options.uniqueIdentifier]
-        			)
-        	];
-        } else {
-        	isInsert = true;
-        	// Adding a new point, provide geometries from map
-        	dbWebFormOptions.data = $.extend({},editedFeature.attributes);
-        	
-        	var geom = convertFeatureGeometryForDb(editedFeature);
-        	dbWebFormOptions.data[options.geomName] = ''+geom;
-        };
-        dbWebForm = attributeForm.dbWebForm(dbWebFormOptions);
-    	
-    	function installSaveButton(cbFn) {
-			var button = $('<input type="button" value="Save"/>');
-			button.click(function(evt){
-				cbFn({
-					onSuccess: onSaved
-					,onError: function(){alert('Error occurred while saving data');}
-				});
-			});
-			formButtons.append(button);
-    	};
-    	
-    	function installDeleteButton(cbFn) {
-			var button = $('<input type="button" value="Delete"/>');
-			button.click(function(evt){
-		  		if( confirm('Do you really want to delete this feature?') ) {
-    				cbFn({
-    					onSuccess:onDeleted
-    					,onError: function(){alert('Error occurred while deleting data');}
-    				});
-		  		};
-			});
-			formButtons.append(button);
-    	};
-    	
-    	function installCancelButton() {
-			var button = $('<input type="button" value="Cancel"/>');
-			button.click(function(evt){
-				cancelAttributeForm();
-			});
-			formButtons.append(button);
-    	};
-    	
-    	function onSaved(savedData) {
-			if( isInsert ) {
-				// This is an insert
-				var fid = options.tableName+'.'+savedData.id;
-				options.onFeatureInsertedFn(fid,editedFeature);
-			} else {
-				// This is an update
-				var fid = feature_.fid;
-				options.onFeatureUpdatedFn(fid,editedFeature);
-			};
-			discardAttributeForm();
-    	};
-    	
-    	function onDeleted() {
-			var fid = feature_.fid;
-			options.onFeatureDeletedFn(fid,feature_);
- 			discardAttributeForm();
-    	};
-    	
-    	function onError(error) {
-			attributeDialog.empty();
-
-			var errorDiv = $('<div class="olkitAttrFormError"></div>');
-			attributeDialog.append( errorDiv );
-
-			formButtons.empty();
-			installCancelButton();
-			attributeDialog.append( formButtons );
-			
-			// Print error
-			var ul = $('<ul></ul>');
-			errorDiv.append(ul);
-			
-			currentError = error;
-			while(currentError) {
-				var li = $('<li>'+currentError.message+'</li>');
-				ul.append(li);
-				
-				currentError = currentError.cause;
-			};
-    	};
-	};
-
-	// Restores feature geometry before discarding the form
-	function cancelAttributeForm() {
-		if( cancelled ) return;
-		cancelled = true;
-	
-		options.onCancelFn(editedFeature);
-
-		// Reinstate the previous geometry		
-		if( editedFeature && originalGeometry ) {
-			// Erase feature before changing geometry
-			if( editedFeature.layer ) {
-				editedFeature.layer.eraseFeatures([editedFeature]);
-			};
-			editedFeature.geometry = originalGeometry;
-		};
-		
-		discardAttributeForm();
-	};
-
-	function discardAttributeForm() {
-		if( null == attributeDialog ) {
-			return;
-		};
-		
-		attributeDialog.empty();
-		attributeDialog = null;
-		dbWebForm = null;
-
-		if( editedFeature ) {
-			editedLayer.events.unregister('featuremodified', editedFeature, featureModified);
-			
-			// Reinstate the original style
-			if( null !== editedFeature.layer ) { // test for deletion
-				editedFeature.style = originalStyle;
-				editedFeature.layer.drawFeature(editedFeature);
-			};
-		};
-
-		options.onCloseFn(editedFeature);
-		
-		editedFeature = null;
-		editedLayer = null;
-		originalGeometry = null;
-		originalStyle = null;
-	};
-	
-    function convertFeatureGeometryForDb(feature) {
-		var proj = feature.layer.map.getProjectionObject();
-		var internalSrsName = proj.getCode();
-		if( internalSrsName != 'EPSG:4326' ) {
-			// Need to convert
-			var geom = editedFeature.geometry.clone();
-			var dbProj = new OpenLayers.Projection('EPSG:4326');
-			geom.transform(proj,dbProj);
-			return geom;
-		};
-		return feature.geometry;
-    };
-	
-    function featureModified(evt_) {
-    	var feature = evt_.feature;
-    	var geom = convertFeatureGeometryForDb(feature);
-    	
-    	if( dbWebForm ) {
-    		dbWebForm.updateData(options.geomName,''+geom);
-    	};
-    };
-	
-	return {
-		showAttributeForm: showAttributeForm
-		,cancelAttributeForm:  cancelAttributeForm
-	};
-};
-
-//**************************************************
 var GazetteerProcess = $n2.Class({
 	
 	geoNamesService: null
@@ -533,17 +280,6 @@ var multiSelectClusterClickCallback = function(feature, mapAndControls){
 //**************************************************
 //**************************************************
 
-// Legacy. Probably no longer in use.
-function basicPopupHtmlFunction(opt_) {
-	var attrs = opt_.feature.attributes;
-	var resArray = [];
-	resArray.push('Name: '+  (attrs.placename?attrs.placename:'') + '<br/>');
-	resArray.push('Meaning: '+  (attrs.meaning?attrs.meaning:'') + '<br/>');
-	resArray.push('Entity: '+  (attrs.entity?attrs.entity:'') + '<br/>');
-	var html = resArray.join('');
-	opt_.onSuccess(html);
-};
-
 function suppressPopupHtmlFunction(opts_){
 	var opts = $n2.extend({
 		feature: null
@@ -672,8 +408,6 @@ var MapAndControls = $n2.Class({
  	,mapMouseMoveListeners: null
 	,olkitDisplayOptions: null
 	,pendingMarkInfo: null
-	,attributeFormManagerOptions: null
-	,attributeFormManager: null
 	,currentPopup: null
 	,dhtmlSoundDivId: null
 	,initialZoomBounds: null
@@ -1044,34 +778,6 @@ var MapAndControls = $n2.Class({
 		
 		if( typeof(this.options.layerInfo) === 'object' && !$n2.isArray(this.options.layerInfo) ) {
 			this.options.layerInfo = [this.options.layerInfo];
-		};
-		
-		// Feature Attribute Form
-		this.attributeFormManagerOptions = {
-			selectAudioFn: function(feature, onSelectCallback){ _this.selectAudioMedia(feature, onSelectCallback); }
-			,onFeatureInsertedFn: function(fid, feature){ _this.onAttributeFormInserted(fid, feature); }
-			,onFeatureUpdatedFn: function(fid, feature){ _this.onAttributeFormUpdated(fid, feature); }
-			,onFeatureDeletedFn: function(fid, feature){ _this.onAttributeFormDeleted(fid, feature); }
-			,onCancelFn: function(editedFeature){ _this.onAttributeFormCancelled(editedFeature); }
-			,onCloseFn: function(editedFeature){ _this.onAttributeFormClosed(editedFeature); }
-			,uniqueIdentifier: this.options.uniqueIdentifier
-			,panelName: null
-		};
-		this.attributeFormManagerOptions.panelName = this.options.sidePanelName;
-		if( this.options.saveFeature && this.options.saveFeature.isFormEditor ) {
-			this.attributeFormManager = this.options.saveFeature;
-		} else {
-			// Legacy
-			var afmOpts = $.extend(
-				{}
-				,this.attributeFormManagerOptions
-				,(null != this.options.saveFeature ? this.options.saveFeature : {})
-			);
-			var attributeFormManagerCreateFn = afmOpts.createFn;
-			if( !attributeFormManagerCreateFn ) {
-				attributeFormManagerCreateFn = OlkitAttributeFormManagerSidePanel;
-			}
-			this.attributeFormManager = attributeFormManagerCreateFn( afmOpts );
 		};
 		
 		initContributionHandler(jQuery, this.options.placeDisplay.contributionOptions);
@@ -4338,8 +4044,28 @@ var MapAndControls = $n2.Class({
 
 		// Requested geometries for features that need them
 		var geometriesRequested = [];
+		var simplificationsReported = [];
 		for(var id in geomsNeeded){
-			geometriesRequested[geometriesRequested.length] = geomsNeeded[id];
+			var request = geomsNeeded[id];
+			var attName = request.attName;
+			
+			// Check if we already have the simplification in memory
+			if( request.feature 
+			 && request.feature.n2SimplifiedGeoms 
+			 && request.feature.n2SimplifiedGeoms[attName] ){
+				var wkt = request.feature.n2SimplifiedGeoms[attName];
+				simplificationsReported[simplificationsReported.length] = {
+					id: request.id
+					,attName: attName
+					,wkt: wkt
+				};
+			} else {
+				geometriesRequested[geometriesRequested.length] = geomsNeeded[id];
+			};
+		};
+		if( simplificationsReported.length ){
+			$n2.log('simplificationsReported',simplificationsReported);
+			this._updateSimplifiedGeometries(simplificationsReported);
 		};
 		if( geometriesRequested.length ){
 			$n2.log('geometriesRequested',geometriesRequested);
@@ -4485,7 +4211,7 @@ var MapAndControls = $n2.Class({
 				if( !f.n2SimplifiedGeoms ){
 					f.n2SimplifiedGeoms = {};
 				};
-				f.n2SimplifiedGeoms[simplifiedGeometry.attName] = simplifiedGeometry;
+				f.n2SimplifiedGeoms[simplifiedGeometry.attName] = simplifiedGeometry.wkt;
 				
 				// If this simplification is already installed, then there is nothing
 				// to do
@@ -5177,7 +4903,6 @@ $n2.mapAndControls.MapAndControls = MapAndControls;
 
 // Pop-up management
 $n2.mapAndControls.DefaultPopupHtmlFunction = null;
-$n2.mapAndControls.BasicPopupHtmlFunction = basicPopupHtmlFunction;
 $n2.mapAndControls.SuppressPopupHtmlFunction = suppressPopupHtmlFunction;
 
 // Cluster click callback

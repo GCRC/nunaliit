@@ -566,14 +566,14 @@ alert('Get configuration');
 				,authService: configuration.directory.authService
 			});
 			
-		 	configuration.directory.schemaEditorService = new $n2.CouchEditor.SchemaEditorService({
+		 	configuration.directory.schemaEditorService = new $n2.couchEdit.SchemaEditorService({
 				documentSource: configuration.documentSource
 				,showService: configuration.directory.showService
 				,searchService: configuration.directory.searchService
 				,dispatchService: configuration.directory.dispatchService
 			});
 			
-		 	configuration.couchEditor = new $n2.CouchEditor.Editor({
+		 	configuration.directory.editService = new $n2.couchEdit.EditService({
 				documentSource: configuration.documentSource
 				,schemaRepository: configuration.directory.schemaRepository
 				,uploadService: configuration.directory.uploadService
@@ -584,6 +584,7 @@ alert('Get configuration');
 				,schemaEditorService: configuration.directory.schemaEditorService
 				,customService: configuration.directory.customService
 			});
+		 	configuration.couchEditor = configuration.directory.editService;
 		 	
 		 	// Cometd replacement
 		 	configuration.directory.serverSideNotifier = new $n2.couchServerSide.Notifier({

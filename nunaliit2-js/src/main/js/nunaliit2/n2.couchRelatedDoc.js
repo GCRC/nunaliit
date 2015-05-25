@@ -205,7 +205,7 @@ var Editor = $n2.Class({
 
 		var $fileElement = $('<div></div>');
 		$dialog.append($fileElement);
-		this.attachmentUploadHandler = new $n2.CouchEditor.AttachmentEditor({
+		this.attachmentUploadHandler = new $n2.couchEdit.AttachmentEditor({
 			doc: obj
 			,elem: $fileElement
 			,documentSource: this.documentSource

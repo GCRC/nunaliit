@@ -303,7 +303,7 @@ function Configure(options_){
 			,dispatchService: configuration.directory.dispatchService
 		});
 		
-	 	configuration.directory.schemaEditorService = new $n2.CouchEditor.SchemaEditorService({
+	 	configuration.directory.schemaEditorService = new $n2.couchEdit.SchemaEditorService({
 			documentSource: configuration.documentSource
 			,showService: configuration.directory.showService
 			,searchService: configuration.directory.searchService
@@ -311,7 +311,7 @@ function Configure(options_){
 			,dialogService: configuration.directory.dialogService
 		});
 		
-	 	configuration.couchEditor = new $n2.CouchEditor.Editor({
+	 	configuration.directory.editService = new $n2.couchEdit.EditService({
 			documentSource: configuration.documentSource
 			,schemaRepository: configuration.directory.schemaRepository
 			,uploadService: configuration.directory.uploadService
@@ -324,6 +324,7 @@ function Configure(options_){
 			,dialogService: configuration.directory.dialogService
 			,createDocProcess: configuration.directory.createDocProcess
 		});
+	 	configuration.couchEditor = configuration.directory.editService; // legacy
 		
 	 	configuration.directory.userService = new $n2.couchUser.UserService({
 			userDb: $n2.couch.getUserDb()

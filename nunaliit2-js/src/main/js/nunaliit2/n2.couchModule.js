@@ -686,7 +686,7 @@ var ModuleDisplay = $n2.Class({
 			});
 			if( editInfo && editInfo.newDocumentSchemaNames ){
 				if( 'ALL_SCHEMAS' === editInfo.newDocumentSchemaNames ){
-					config.couchEditor.setSchemas( $n2.CouchEditor.Constants.ALL_SCHEMAS );
+					config.couchEditor.setSchemas( $n2.couchEdit.Constants.ALL_SCHEMAS );
 					
 				} else if( editInfo.newDocumentSchemaNames.length ){
 					config.directory.schemaRepository.getSchemas({
