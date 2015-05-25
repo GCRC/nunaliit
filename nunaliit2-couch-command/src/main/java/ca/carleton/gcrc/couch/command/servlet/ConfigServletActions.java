@@ -66,8 +66,11 @@ public class ConfigServletActions {
 		
 		for(String databaseName : databaseNames){
 			try {
-				AtlasInfo info = getNunaliitAtlas(databaseName);
-				result.add(info);
+				if( databaseName.length() > 0 
+				 && databaseName.charAt(0) != '_' ){
+					AtlasInfo info = getNunaliitAtlas(databaseName);
+					result.add(info);
+				}
 			} catch (Exception e) {
 				// Ignore
 			}
