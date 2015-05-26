@@ -3,18 +3,7 @@
 */
 ;(function($,$n2){
 
-if( !$n2.l10n ) $n2.l10n = {};
-if( !$n2.l10n.strings ) $n2.l10n.strings = {};	
-if( !$n2.l10n.strings['fr'] ) $n2.l10n.strings['fr'] = {};
-
-function loadStrings(strings) {
-	var dic = $n2.l10n.strings['fr'];
-	for(var key in strings) {
-		dic[key] = strings[key];
-	};
-};
-
-loadStrings({
+$n2.l10n.addLocalizedStrings('fr',{
 	// Language: fr
 	" definition (":" définition ("
 	," definition (index: ":" définition (indice: "

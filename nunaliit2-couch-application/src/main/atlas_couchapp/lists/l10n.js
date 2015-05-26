@@ -35,6 +35,8 @@ function(head, req) {
 		};
 		
 		send(']);');
+
+		send('if( typeof $n2.l10n.refreshLocalizedStrings === "function" ) $n2.l10n.refreshLocalizedStrings();');
 		
 		send('})(nunaliit2);');
 	});

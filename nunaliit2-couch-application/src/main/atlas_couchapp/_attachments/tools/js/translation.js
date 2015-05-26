@@ -167,6 +167,11 @@ function displayTranslated() {
 	function showTranslations(lang,translations){
 		var $div = $('#'+requestPanelName).find('.translationResult');
 		$div.empty();
+
+		$('<div>')
+			.text('Create the file "htdocs/nunaliit_lang.'+lang+'.js" with the following content:')
+			.appendTo($div)
+			;
 		
 		var $pre = $('<pre></pre>');
 		$div.append($pre);
@@ -175,18 +180,7 @@ function displayTranslated() {
 
 		content.push(';(function($n2){\n\n');
 
-		content.push('if( !$n2.l10n ) $n2.l10n = {};\n');
-		content.push('if( !$n2.l10n.strings ) $n2.l10n.strings = {};\n');	
-		content.push('if( !$n2.l10n.strings["'+lang+'"] ) $n2.l10n.strings["'+lang+'"] = {};\n\n');
-
-		content.push('function loadStrings(strings) {\n');
-		content.push('\tvar dic = $n2.l10n.strings["'+lang+'"];\n');
-		content.push('\tfor(var key in strings) {\n');
-		content.push('\t\tdic[key] = strings[key];\n');
-		content.push('\t};\n');
-		content.push('};\n\n');
-
-		content.push('loadStrings({\n');
+		content.push('$n2.l10n.addLocalizedStrings("'+lang+'",{\n');
 		
 		var first = true;
 		for(var original in translations){
@@ -206,12 +200,6 @@ function displayTranslated() {
 		content.push('})(nunaliit2);\n');
 		
 		$pre.text( content.join('') );
-		
-		$('<div></div>')
-			.text('To include the above translations in the release, create a javascript '
-				+ 'file with the content above and include in page.')
-			.appendTo($div)
-			;
 	};
 };
 
