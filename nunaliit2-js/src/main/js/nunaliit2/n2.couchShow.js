@@ -260,9 +260,15 @@ var DomStyler = $n2.Class({
 
 	_localize: function($jq, opt_) {
 		var text = $jq.text();
-		var locText = _loc(text);
-		if( locText ) {
+		var locText = undefined;
+		if( $n2.l10n 
+		 && $n2.l10n.lookupDictionaryTranslation ){
+			locText = $n2.l10n.lookupDictionaryTranslation(text, 'nunaliit2-couch');
+		};
+		if( typeof locText === 'string' ) {
 			$jq.text(locText);
+		} else {
+			$jq.addClass('n2s_waiting_for_localization');
 		};
 	},
 	

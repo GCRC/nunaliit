@@ -37,6 +37,7 @@ $Id: n2.l10n.js 8165 2012-05-31 13:14:37Z jpfiset $
 // @requires n2.utils.js
 // @namespace nunaliit2
 ;(function($n2){
+"use strict";
 
 if( !$n2.l10n ) $n2.l10n = {};
 if( !$n2.l10n.strings ) $n2.l10n.strings = {};
@@ -119,12 +120,14 @@ function getLocale() {
 };
 
 function getDictionaryFromLang(lang) {
+	var dict = strings[lang];
 	
-	if( null == strings[lang] ) {
-		strings[lang] = {};
-	}
+	if( !dict ) {
+		dict = {};
+		strings[lang] = dict;
+	};
 	
-	return strings[lang];
+	return dict;
 };
 
 function getStringForLang(str,lang){
@@ -177,6 +180,8 @@ function getStringForLocale(str){
 };
 
 function getLocalizedString(str, packageName, args) {
+	var suppressTranslationRequest = false;
+	
 	var locale = getLocale();
 	var lang = locale.lang;
 
@@ -186,6 +191,10 @@ function getLocalizedString(str, packageName, args) {
 
 	// Handle content that contains translation
 	if( str.nunaliit_type === 'localized' ){
+		// Translation should be provided in string, not
+		// dictionary
+		suppressTranslationRequest = true;
+		
 		lookupStr = null;
 		
 		// Check request language
@@ -203,7 +212,7 @@ function getLocalizedString(str, packageName, args) {
 			for(var fbLang in str){
 				if( 'nunaliit_type' === fbLang ){
 					// ignore
-				} else {
+				} else if(typeof str[fbLang] === 'string' ) {
 					lookupStr = str[fbLang];
 					lookupLang = fbLang;
 					break;
@@ -216,13 +225,15 @@ function getLocalizedString(str, packageName, args) {
 	var dic = getDictionaryFromLang(lang);
 	var langStr = dic[lookupStr];
 	
-	if( null == langStr ) {
+	if( !langStr ) {
 		// Not in dictionary. Use lookup string
 		langStr = lookupStr;
 
 		if( lookupLang !== lang ) {
 			// Request tranlation for this language
-			requestTranslation(lookupStr, lang, packageName);
+			if( !suppressTranslationRequest ){
+				requestTranslation(lookupStr, lang, packageName);
+			};
 			
 			// Store english version for now
 			dic[lookupStr] = langStr;
@@ -235,14 +246,58 @@ function getLocalizedString(str, packageName, args) {
 	return langStr;
 };
 
+/**
+ * Looks up a string in the dictionary of translations for the current
+ * locale. If a string is not found, return undefined
+ */
+function lookupDictionaryTranslation(str, packageName, args){
+	var locale = getLocale();
+	var lang = locale.lang;
+
+	var dic = getDictionaryFromLang(lang);
+	var langStr = dic[str];
+	
+	if( !langStr ) {
+		// Not in dictionary. Assume that input str is english
+		if( 'en' !== lang ) {
+			// Request tranlation for this language
+			requestTranslation(str, lang, packageName);
+		} else {
+			// A request made in english. If not in dictionary, just use
+			// input string
+			langStr = str;
+		};
+	};
+
+	// Need to format?
+	if( langStr && args ){
+		return $n2.utils.formatString(langStr,args);
+	};
+	
+	return langStr;
+};
+
 function addLocalizedString(enStr, lang, langStr) {
 	var dict = getDictionaryFromLang(lang);
 	dict[enStr] = langStr;
+	
+	$n2.l10n.refreshLocalizedStrings();
 };
+
+function addLocalizedStrings(lang, strings) {
+	var dict = getDictionaryFromLang(lang);
+
+	for(var key in strings) {
+		dict[key] = strings[key];
+	};
+	
+	$n2.l10n.refreshLocalizedStrings();
+};
+
 
 function getTranslationRequestsFromLang(lang) {
 	var dic = translationRequests[lang];
-	if( null == dic ) {
+	if( !dic ) {
 		dic = {};
 		translationRequests[lang] = dic;
 	};
@@ -253,7 +308,7 @@ function requestTranslation(str, lang, packageName) {
 	var dic = getTranslationRequestsFromLang(lang);
 	var request = dic[str];
 	
-	if( null == request ) {
+	if( !request ) {
 		// Request has not yet been made
 		request = {
 			lang: lang
@@ -271,13 +326,30 @@ function requestTranslation(str, lang, packageName) {
 	};
 };
 
+function refreshLocalizedStrings(){
+	if( typeof jQuery !== 'undefined' ) {
+		jQuery('body').find('.n2s_waiting_for_localization').each(function(){
+			var $jq = $(this);
+			var text = $jq.text();
+			var locText = $n2.l10n.lookupDictionaryTranslation(text, 'nunaliit2');
+			if( typeof locText === 'string' ) {
+				$jq.text(locText);
+				$jq.removeClass('n2s_waiting_for_localization');
+			};
+		});
+	};
+};
+
 $n2.l10n.getLocale = getLocale;
 $n2.l10n.getLocalizedString = getLocalizedString;
 $n2.l10n.getStringForLang = getStringForLang;
 $n2.l10n.getStringForLocale = getStringForLocale;
 $n2.l10n.requestTranslation = requestTranslation;
 $n2.l10n.translationRequests = translationRequests;
+$n2.l10n.lookupDictionaryTranslation = lookupDictionaryTranslation;
 $n2.l10n.addLocalizedString = addLocalizedString;
+$n2.l10n.addLocalizedStrings = addLocalizedStrings;
+$n2.l10n.refreshLocalizedStrings = refreshLocalizedStrings;
 
 // Load core translations
 if( $n2.scripts ) {

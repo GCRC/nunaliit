@@ -181,7 +181,7 @@ var Module = $n2.Class({
 					.addClass('n2ModuleIntro n2ModuleIntro_html')
 					.appendTo($elem);
 				
-				var content = $n2.couchL10n.getLocalizedString(introInfo.content);
+				var content = _loc(introInfo.content);
 				if( content ) {
 					$outer.html(content);
 					
@@ -199,7 +199,7 @@ var Module = $n2.Class({
 					.addClass('n2ModuleIntro n2ModuleIntro_text')
 					.appendTo($elem);
 				
-				var content = $n2.couchL10n.getLocalizedString(introInfo.content);
+				var content = _loc(introInfo.content);
 				if( content ) {
 					var $wrapper = $('<div>')
 						.text(content);
@@ -580,7 +580,7 @@ var ModuleDisplay = $n2.Class({
 			
 			// Title
 			if( moduleInfo && moduleInfo.title ) {
-				var title = $n2.couchL10n.getLocalizedString(moduleInfo.title);
+				var title = _loc(moduleInfo.title);
 				//$('head > title').text('' + moduleInfo.title);
 				if( title ) {
 					document.title = title; // needed for IE 6
@@ -1212,7 +1212,7 @@ var ModuleDisplay = $n2.Class({
 			var $title = $('#'+this.titleName);
 			if( $title.length > 0 ){
 				if( doc.nunaliit_navigation.title ){
-					var title = $n2.couchL10n.getLocalizedString(doc.nunaliit_navigation.title);
+					var title = _loc(doc.nunaliit_navigation.title);
 					$title.text(title);
 				} else {
 					$title.empty();
@@ -1244,12 +1244,12 @@ var ModuleDisplay = $n2.Class({
 				if( item.title && item.href ) {
 					var $a = $('<a></a>');
 					$a.attr('href',item.href);
-					var title = $n2.couchL10n.getLocalizedString(item.title);
+					var title = _loc(item.title);
 					$a.text(title);
 					$li.append($a);
 				} else if( item.title ) {
 					var $span = $('<span></span>');
-					var title = $n2.couchL10n.getLocalizedString(item.title);
+					var title = _loc(item.title);
 					$span.text(title);
 					$li.append($span);
 				};
