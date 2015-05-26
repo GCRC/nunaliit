@@ -27,8 +27,6 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
-
-$Id: n2.couch.l10n.js 8165 2012-05-31 13:14:37Z jpfiset $
 */
 
 // L10N = LOCALIZATION
@@ -38,190 +36,218 @@ $Id: n2.couch.l10n.js 8165 2012-05-31 13:14:37Z jpfiset $
 // @ requires n2.l10n.js
 // @namespace nunaliit2
 ;(function($n2){
+"use strict";
 
-var configuration = null;
-var pendingRequests = [];
-var processingRequests = false;
+var DH = 'n2.couchL10n';
 
-function uploadRequest(request) {
-	// Get user name
-	var userName = null;
-	var sessionContext = $n2.couch.getSession().getContext();
-	if( sessionContext ) {
-		userName = sessionContext.name;
-	};
+//----------------------------------------------------------------------------
+var LocalizationService = $n2.Class({
 	
-	// Get now
-	var nowTime = (new Date()).getTime();
-	
-	var data = {
-		nunaliit_type: 'translationRequest'
-		,nunaliit_schema: 'translationRequest'
-		,str: request.str
-		,lang: request.lang
-		,packageName: request.packageName
-	};
+	db: null,
 
-	if( userName ) {
-		data.nunaliit_created = {
-			nunaliit_type: 'actionstamp'
-			,name: userName
-			,time: nowTime
-			,action: 'created'
+	designDoc: null,
+	
+	dispatchService: null,
+	
+	lookupViewName: null,
+	
+	translatedViewName: null,
+	
+	scriptList: null,
+	
+	isLoggedIn: null,
+	
+	pendingRequests: null,
+	
+	processingRequests: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			db: null // must be supplied
+			,designDoc: null // must be supplied
+			,dispatchService: null
+			,lookupViewName: 'l10n-all'
+			,translatedViewName: 'l10n-translated'
+			,scriptList: 'l10n'
+		},opts_);
+		
+		var _this = this;
+		
+		this.db = opts.db;
+		this.designDoc = opts.designDoc;
+		this.dispatchService = opts.dispatchService;
+		this.lookupViewName = opts.lookupViewName;
+		this.translatedViewName = opts.translatedViewName;
+		this.scriptList = opts.scriptList;
+	
+		this.pendingRequests = [];
+		this.processingRequests = false;
+		this.isLoggedIn = false;
+		
+		if( this.dispatchService ){
+			var f = function(m, address, dispatcher){
+				_this._handle(m, address, dispatcher);
+			};
+			
+			this.dispatchService.register(DH, 'authLoggedIn', f);
+			this.dispatchService.register(DH, 'authLoggedOut', f);
+			
+			// Check if already logged in
+			var m = {
+				type: 'authIsLoggedIn'
+				,isLoggedIn: false
+			};
+			this.dispatchService.synchronousCall(DH,m);
+			if( m.isLoggedIn ){
+				this.isLoggedIn = true;
+			};
 		};
 		
-		data.nunaliit_last_updated = {
-			nunaliit_type: 'actionstamp'
-			,name: userName
-			,time: nowTime
-			,action: 'updated'
+		// Configure $n2.l10n.sendTranslationRequest to call this implementation
+		$n2.l10n.sendTranslationRequest = function(request){
+			_this.sendTranslationRequest(request);
 		};
 		
-		configuration.db.createDocument({
-			data: data
-			,onSuccess: verifyRequests
+		// Load translations stored in database
+		this._loadTranslatedStrings();
+		
+		// Start loading translation requests in database
+		this._processPendingRequests();
+	},
+		
+	sendTranslationRequest: function(request) {
+		$n2.log('Translate '+request.str+' to '+request.lang+' ('+request.packageName+')');
+		this.pendingRequests.push(request);
+		this._processPendingRequests();
+	},
+	
+	_handle: function(m, address, dispatcher){
+		if( 'authLoggedIn' === m.type ){
+			this.isLoggedIn = true;
+			this._processPendingRequests();
+			
+		} else if( 'authLoggedOut' === m.type ){
+			this.isLoggedIn = false;
+		};
+	},
+	
+	_tryPostingRequests: function() {
+		var _this = this;
+		
+		if( this.pendingRequests.length < 1 ) {
+			this.processingRequests = false;
+			return;
+		};
+		if( !this.isLoggedIn ) {
+			this.processingRequests = false;
+			return;
+		};
+		
+		var request = this.pendingRequests.shift();
+		var startkey = [request.lang, request.str];
+		
+		
+		this.designDoc.queryView({
+			viewName: this.lookupViewName
+			,startkey: startkey
+			,endkey: startkey
+			,onSuccess: function(results) {
+				if( results.length < 1 ) {
+					// Must upload
+					_uploadRequest(request);
+				} else {
+					// Go to next one
+					_this._tryPostingRequests();
+				}
+			}
 			,onError: function(errorMsg) {
-				$n2.reportError(errorMsg);
-				verifyRequests();
+				$n2.log(errorMsg);
+				_this._tryPostingRequests();
 			}
 		});
-	} else {
-		$n2.log('User not logged in. Translation requests ignored.');
-	};
-};
-
-function verifyRequests() {
-	if( pendingRequests.length < 1 ) {
-		processingRequests = false;
-		return;
-	};
-	
-	var request = pendingRequests.shift();
-	var startkey = [request.lang, request.str];
-	
-	
-	configuration.designDoc.queryView({
-		viewName: configuration.lookupViewName
-		,startkey: startkey
-		,endkey: startkey
-		,onSuccess: function(results) {
-			if( results.length < 1 ) {
-				// Must upload
-				uploadRequest(request);
-			} else {
-				// Go to next one
-				verifyRequests();
-			}
-		}
-		,onError: function(errorMsg) {
-			$n2.log(errorMsg);
-			verifyRequests();
-		}
-	});
-};
-
-function processPendingRequests() {
-	if( configuration 
-	 && pendingRequests.length > 0
-	 && false == processingRequests
-	 ) {
-		processingRequests = true;
-		verifyRequests();
-	};
-};
-	
-function sendTranslationRequest(request) {
-	$n2.log('Translate '+request.str+' to '+request.lang+' ('+request.packageName+')');
-//$n2.log('conf',configuration,pendingRequests);	
-	pendingRequests.push(request);
-	processPendingRequests();
-};
-
-function loadTranslatedStrings() {
-	var lang = $n2.l10n.getLocale().lang;
-	
-	// Load already translated strings
-	var url = configuration.designDoc.ddUrl 
-		+ '_list/' + configuration.scriptList
-		+ '/' + configuration.translatedViewName
-		+ '?startkey="' + lang
-		+ '"&endkey="' + lang
-		+ '"'
-		+ '&include_docs=true&reduce=false'
-		;
-	if( $n2.scripts ) {
-		var coreLocation = $n2.scripts.getCoreScriptLocation();
-		$n2.scripts.loadScript(url, coreLocation);
-	};
-};
-
-var defaultOptions = {
-	db: null // must be supplied
-	,designDoc: null // must be supplied
-	,lookupViewName: 'l10n-all'
-	,translatedViewName: 'l10n-translated'
-	,scriptList: 'l10n'
-};
-function Configure(opt_) {
-	configuration = $n2.extend({},defaultOptions,opt_);
-	loadTranslatedStrings();
-	processPendingRequests();
-};
-
-function getLocalizedString(str, packageName, args){
-	if( typeof(str) === 'string' ){
-		return $n2.l10n.getLocalizedString(str, packageName, args);
-	};
-
-	if( str.nunaliit_type === 'localized' ){
-		var locale = $n2.l10n.getLocale();
-		var lang = locale.lang;
 		
-		// Check request language
-		if( typeof(str[lang]) === 'string' ) {
-			var result = str[lang];
-			if( args && args.length > 0 ){
-				result = $n2.utils.formatString(result,args);
+		function _uploadRequest(request) {
+			// Get user name
+			var userName = null;
+			var sessionContext = $n2.couch.getSession().getContext();
+			if( sessionContext ) {
+				userName = sessionContext.name;
 			};
-			result.nunaliit_lang = lang;
-			return result;
-		};
-		
-		// Fallback to 'en'
-		if( typeof(str.en) === 'string' ) {
-			var result = str.en;
-			if( args && args.length > 0 ){
-				result = $n2.utils.formatString(result,args);
+			
+			// Get now
+			var nowTime = (new Date()).getTime();
+			
+			var data = {
+				nunaliit_type: 'translationRequest'
+				,nunaliit_schema: 'translationRequest'
+				,str: request.str
+				,lang: request.lang
+				,packageName: request.packageName
 			};
-			result.nunaliit_lang = 'en';
-			result.nunaliit_lang_fallback = true;
-			return result;
-		};
-		
-		// Fallback to any language
-		for(var fbLang in str){
-			if( 'nunaliit_type' === fbLang ){
-				// ignore
-			} else {
-				var result = str[fbLang];
-				if( args && args.length > 0 ){
-					result = $n2.utils.formatString(result,args);
+
+			if( userName ) {
+				data.nunaliit_created = {
+					nunaliit_type: 'actionstamp'
+					,name: userName
+					,time: nowTime
+					,action: 'created'
 				};
-				result.nunaliit_lang = fbLang;
-				result.nunaliit_lang_fallback = true;
-				return result;
+				
+				data.nunaliit_last_updated = {
+					nunaliit_type: 'actionstamp'
+					,name: userName
+					,time: nowTime
+					,action: 'updated'
+				};
+				
+				_this.db.createDocument({
+					data: data
+					,onSuccess: function(){
+						_this._tryPostingRequests();
+					}
+					,onError: function(errorMsg) {
+						$n2.reportError(errorMsg);
+						_this._tryPostingRequests();
+					}
+				});
+			} else {
+				// Not logged in. Strange.
+				$n2.log('User not logged in. Translation request ignored.');
+				_this._tryPostingRequests();
 			};
 		};
-	};
-	
-	return null;
-};
-	
-$n2.l10n.sendTranslationRequest = sendTranslationRequest;
+	},
 
+	_processPendingRequests: function() {
+		if( !this.processingRequests ) {
+			this.processingRequests = true;
+			this._tryPostingRequests();
+		};
+	},
+	
+	_loadTranslatedStrings: function() {
+		if( $n2.scripts ) {
+			var lang = $n2.l10n.getLocale().lang;
+			
+			// Load already translated strings
+			var url = this.designDoc.ddUrl 
+				+ '_list/' + this.scriptList
+				+ '/' + this.translatedViewName
+				+ '?startkey="' + lang
+				+ '"&endkey="' + lang
+				+ '"'
+				+ '&include_docs=true&reduce=false'
+				;
+
+			var coreLocation = $n2.scripts.getCoreScriptLocation();
+			$n2.scripts.loadScript(url, coreLocation);
+		};
+	}
+});
+
+//----------------------------------------------------------------------------
 $n2.couchL10n = {
-	Configure: Configure
-	,getLocalizedString: getLocalizedString
+	LocalizationService: LocalizationService
 };
 
 })(nunaliit2);

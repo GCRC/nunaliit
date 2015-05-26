@@ -180,6 +180,8 @@ function getStringForLocale(str){
 };
 
 function getLocalizedString(str, packageName, args) {
+	var suppressTranslationRequest = false;
+	
 	var locale = getLocale();
 	var lang = locale.lang;
 
@@ -189,6 +191,10 @@ function getLocalizedString(str, packageName, args) {
 
 	// Handle content that contains translation
 	if( str.nunaliit_type === 'localized' ){
+		// Translation should be provided in string, not
+		// dictionary
+		suppressTranslationRequest = true;
+		
 		lookupStr = null;
 		
 		// Check request language
@@ -206,7 +212,7 @@ function getLocalizedString(str, packageName, args) {
 			for(var fbLang in str){
 				if( 'nunaliit_type' === fbLang ){
 					// ignore
-				} else {
+				} else if(typeof str[fbLang] === 'string' ) {
 					lookupStr = str[fbLang];
 					lookupLang = fbLang;
 					break;
@@ -225,7 +231,9 @@ function getLocalizedString(str, packageName, args) {
 
 		if( lookupLang !== lang ) {
 			// Request tranlation for this language
-			requestTranslation(lookupStr, lang, packageName);
+			if( !suppressTranslationRequest ){
+				requestTranslation(lookupStr, lang, packageName);
+			};
 			
 			// Store english version for now
 			dic[lookupStr] = langStr;

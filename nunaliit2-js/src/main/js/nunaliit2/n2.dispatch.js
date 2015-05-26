@@ -27,28 +27,58 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
-
-$Id: n2.dispatch.js 8443 2012-08-16 18:04:28Z jpfiset $
 */
 ;(function($n2){
+"use strict";
 
 // Localization
-var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
+//var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 
 // *******************************************************
+/**
+ * This is a service that connects components via an event or messaging system.
+ * The dispatch system supports two types of events or messages:
+ * - asynchronous events
+ * - synchronous messages
+ * 
+ * An event is sent using the sent() function. All events are distributed in the
+ * order in which they were received. All recipients registered for an event will
+ * be given the opportunity to accept the event before the next event is processed.
+ * Events are asynchronous, therefore the sender of the event can not predict when
+ * the event will be completely processed. Therefore, an event sender can not expect
+ * a reply unless it comes in the form of a separate event.
+ * 
+ * A synchronous message is sent using the syncrhonousCall() function. Unlike events,
+ * synchronous messages are delivered immediately, before any events if any are in queue.
+ * All recipients of a synchronous message are called before the function synchronousCall()
+ * returns. Therefore, the reply to a synchronous call can be saved on the message to be
+ * consumed by the sender. A synchronous message is similar to a remote function call.
+ * 
+ * The information transmitted by asynchronous events and synchronous messages are encoded
+ * in a message structure. The message structure is a Javascript object with a "type"
+ * attribute:
+ * {
+ *    "type": "<a message type>"
+ * } 
+ * 
+ * The message type is used to route the events and messages to the appropriate recipients.
+ * 
+ * In a message structure, any attribute other than "type" is defined by the message type.
+ * 
+ */
 var Dispatcher = $n2.Class({
 	
-	options: null
+	options: null,
 	
-	,listeners: null
+	listeners: null,
 	
-	,handles: null
+	handles: null,
 	
-	,dispatching: null
+	dispatching: null,
 	
-	,queue: null
+	queue: null,
 
-	,initialize: function(options_){
+	initialize: function(options_){
 		this.options = $n2.extend({
 			logging: false
 			,loggingIncludesMessage: false
@@ -58,9 +88,13 @@ var Dispatcher = $n2.Class({
 		this.handles = {};
 		this.dispatching = false;
 		this.queue = [];
-	}
+	},
 
-	,getHandle: function(name){
+	/**
+	 * Create a handle based on a string. The string should be unique to help
+	 * debugging.
+	 */
+	getHandle: function(name){
 		var h = this.handles[name];
 		if( !h ) {
 			h = {
@@ -72,9 +106,17 @@ var Dispatcher = $n2.Class({
 			this.handles[name] = h;
 		};
 		return h;
-	}
+	},
 
-	,register: function(handle, type, l){
+	/**
+	 * Registers a recipient to receive events and messages of a specific type.
+	 * @param handle A handle or a string identifying the recipient.
+	 * @param type A string specifying which message type to receive
+	 * @param l A function which is called back with the message when it is received. The
+	 *          signature for this function is function(message, address, dispatcher)
+	 * @return An address (object structure) that can be used in the deregister() function
+	 */
+	register: function(handle, type, l){
 		if( typeof(handle) === 'string' ){
 			handle = this.getHandle(handle);
 		};
@@ -94,9 +136,14 @@ var Dispatcher = $n2.Class({
 		handle.receives[type] = true;
 		
 		return address;
-	}
+	},
 	
-	,deregister: function(address){
+	/**
+	 * Removes a registration based on an address.
+	 * @param address An address previously obtained using register() or when
+	 *                recipient is called back.
+	 */
+	deregister: function(address){
 		if( address ){
 			var type = address.type;
 			var id = address.id;
@@ -118,21 +165,28 @@ var Dispatcher = $n2.Class({
 				};
 			};
 		};
-	}
+	},
 	
-	/*
+	/**
 	 * Returns true if any listener is registered for the
-	 * given event type. 
+	 * given event type.
+	 * @param type Message type that is seeked
+	 * @return True is anyone has registered for the given message type
 	 */
-	,isEventTypeRegistered: function(type){
+	isEventTypeRegistered: function(type){
 		var listeners = this.listeners[type];
 		if( listeners && listeners.length > 0 ) {
 			return true;
 		};
 		return false;
-	}
+	},
 	
-	,send: function(handle, m){
+	/**
+	 * Sends an asynchronous event.
+	 * @param handle Sender's handle or a string. This helps in debugging of dispatcher.
+	 * @param m Message structure to be sent to all recipients registered with the message type.
+	 */
+	send: function(handle, m){
 		
 		if( typeof(handle) === 'string' ){
 			handle = this.getHandle(handle);
@@ -154,9 +208,9 @@ var Dispatcher = $n2.Class({
 				this._sendImmediate(i.h, i.m);
 			};
 		};
-	}
+	},
 	
-	,_sendImmediate: function(h, m) {
+	_sendImmediate: function(h, m) {
 		var logging = this.options.logging;
 		var loggingIncludesMessage = this.options.loggingIncludesMessage;
 
@@ -205,14 +259,15 @@ var Dispatcher = $n2.Class({
 		};
 		
 		this.dispatching = false;
-	}
+	},
 	
 	/**
-	 * A synchronous call is like a function call without a pre-defined
-	 * receiver defined. Therefore, the recipient of a synchronous call can
-	 * store the answer on the message itself.
+	 * Sends a synchronous message to all recipients that have registered for the
+	 * message type.
+	 * @param handle Sender's handle or a string. This helps in debugging of dispatcher.
+	 * @param m Message structure to be sent to all recipients registered with the message type.
 	 */
-	,synchronousCall: function(handle, m){
+	synchronousCall: function(handle, m){
 		
 		if( typeof(handle) === 'string' ){
 			handle = this.getHandle(handle);

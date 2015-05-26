@@ -216,9 +216,10 @@ function Configure(options_){
 	};
 	
 	function notifierInitialized() {
-	 	$n2.couchL10n.Configure({
+		configuration.directory.localizationService = new $n2.couchL10n.LocalizationService({
 			db: configuration.atlasDb
-	 		,designDoc: configuration.atlasDesign 
+	 		,designDoc: configuration.atlasDesign
+	 		,dispatchService: configuration.directory.dispatchService
 	 	});
 
 	 	configuration.directory.progressService = new $n2.progress.ProgressServer({

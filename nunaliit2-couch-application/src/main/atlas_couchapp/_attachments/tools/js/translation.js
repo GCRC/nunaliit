@@ -1,6 +1,7 @@
 ;(function($,$n2){
+"use strict";
 
-var DH = 'translation.js';	
+//var DH = 'translation.js';	
 
 var atlasDb = null;
 var atlasDesign = null;
@@ -182,8 +183,16 @@ function displayTranslated() {
 
 		content.push('$n2.l10n.addLocalizedStrings("'+lang+'",{\n');
 		
-		var first = true;
+		// Sort keys
+		var originals = [];
 		for(var original in translations){
+			originals.push(original);
+		};
+		originals.sort();
+		
+		var first = true;
+		for(var i=0,e=originals.length; i<e; ++i){
+			var original = originals[i];
 			var trans = translations[original];
 			if( first ){
 				first = false;
@@ -241,11 +250,6 @@ function main_init(opts_) {
 	atlasDesign = config.atlasDesign;
 	
 	requestPanelName = opts.requestPanelName;
-
- 	$n2.couchL10n.Configure({
-		db: atlasDb
- 		,designDoc: atlasDesign 
- 	});
 
  	if( config.directory && config.directory.authService ) {
 		config.directory.authService.createAuthWidget({
