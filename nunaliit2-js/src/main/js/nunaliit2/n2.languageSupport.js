@@ -31,6 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 ;(function($,$n2){
+"use strict";
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
@@ -101,7 +102,7 @@ var LanguageSwitcher = $n2.Class({
 		
 		$elem.empty();
 		
-		var $a = $('<a/>')
+		$('<a>')
 			.text( _loc('Language') )
 			.attr('href','#')
 			.appendTo($elem)
@@ -157,9 +158,16 @@ var LanguageSwitcher = $n2.Class({
 				.attr('id',id)
 				.appendTo($div)
 				.change(onChange);
+			
 			if( code ){
-				$input.attr('n2Code',code)
+				$input.attr('n2Code',code);
 			};
+			
+			var locale = $n2.l10n.getLocale();
+			if( locale.lang === code ){
+				$input.attr('checked', 'checked');
+			};
+			
 			$('<label/>')
 				.attr('for',id)
 				.text(name)
@@ -232,7 +240,7 @@ var LanguageToggler = $n2.Class({
 		
 		var language = this._pickLanguageToDisplay();
 		if( language ){
-			var $a = $('<a/>')
+			$('<a>')
 				.text( language.name )
 				.attr('href','#')
 				.appendTo($elem)
