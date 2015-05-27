@@ -1048,6 +1048,19 @@ var CouchDocumentEditor = $n2.Class({
 		};
 		
 		function startEditor(){
+			var olGeom = $n2.couchGeom.getOpenLayersGeometry({
+				doc: editedDoc
+			});
+
+			_this._dispatch({
+				type: 'editReportDocument'
+				,docId: editedDoc._id
+				,doc: editedDoc
+				,geom: olGeom
+				,proj: _this.couchProj
+				,_origin: _this
+			});
+			
 			_this._displayEditor();
 		};
 	},

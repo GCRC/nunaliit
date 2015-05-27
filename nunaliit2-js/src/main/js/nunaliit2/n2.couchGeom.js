@@ -110,20 +110,28 @@ function updatedGeometry(couchGeom) {
  * Returns a geometry object used in OpenLayers given
  * a geometry obtained from a Couch document.
  */
-function getOpenLayersGeometry(options_) {
+function getOpenLayersGeometry(opts_) {
 	var opts = $n2.extend({
-			couchGeom: null
-			,onError: function(errorMsg){ $n2.reportError(errorMsg); }
-		}
-		,options_
-	);
-
-	if( OpenLayers && OpenLayers.Geometry && OpenLayers.Geometry.fromWKT ) {
-		var olGeom = OpenLayers.Geometry.fromWKT(opts.couchGeom.wkt);
-		return olGeom;
-	} else { 
-		opts.onError('OpenLayers must be installed to update document geometries');
+		doc: null
+		,couchGeom: null
+	},opts_);
+	
+	var nunaliit_geom = opts.couchGeom;
+	
+	if( !nunaliit_geom && opts.doc ){
+		nunaliit_geom = opts.doc.nunaliit_geom;
 	};
+	
+	if( nunaliit_geom ){
+		if( OpenLayers && OpenLayers.Geometry && OpenLayers.Geometry.fromWKT ) {
+			var olGeom = OpenLayers.Geometry.fromWKT(nunaliit_geom.wkt);
+			return olGeom;
+		} else { 
+			throw 'OpenLayers must be installed to update document geometries';
+		};
+	};
+
+	return undefined;
 };
 
 /*

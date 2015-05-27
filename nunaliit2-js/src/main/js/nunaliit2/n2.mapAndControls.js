@@ -700,6 +700,7 @@ var MapAndControls = $n2.Class({
 	    this._registerDispatch('editCancel');
 	    this._registerDispatch('editClosed');
 	    this._registerDispatch('editGeometryModified');
+	    this._registerDispatch('editReportDocument');
 	    this._registerDispatch('mapRedrawLayer');
 	    this._registerDispatch('mapSetInitialExtent');
 	    this._registerDispatch('mapSetExtent');
@@ -3164,7 +3165,7 @@ var MapAndControls = $n2.Class({
 			modifyFeatureControl.selectFeature(editFeature);
 		};
     }
-    
+
     ,onAttributeFormClosed: function(editedFeature) {
     	// When closing the dialog with the user, the feature
     	// must be removed from the map if it is a new one, since it does
@@ -4812,6 +4813,41 @@ var MapAndControls = $n2.Class({
 		} else if( 'editGeometryModified' === type ) {
 			if( m._origin !== this ){
 				this._geometryModified(m.docId, m.geom, m.proj);
+			};
+
+		} else if( 'editReportDocument' === type ) {
+			if( m._origin !== this ){
+				if( m.geom ){
+					// Adjust geometry
+					this._geometryModified(m.docId, m.geom, m.proj);
+					
+					// Zoom
+					if( m.doc
+					 && m.doc.nunaliit_geom
+					 && m.doc.nunaliit_geom.bbox 
+					 && m.proj ){
+						var xmin = m.doc.nunaliit_geom.bbox[0];
+						var ymin = m.doc.nunaliit_geom.bbox[1];
+						var xmax = m.doc.nunaliit_geom.bbox[2];
+						var ymax = m.doc.nunaliit_geom.bbox[3];
+						
+						var xdiff = (xmax - xmin) / 3;
+						var ydiff = (ymax - ymin) / 3;
+						
+						// Do not zoom on points
+						if( xdiff > 0 || ydiff > 0 ){
+							xmin = xmin - xdiff;
+							xmax = xmax + xdiff;
+							ymin = ymin - ydiff;
+							ymax = ymax + ydiff;
+							
+							this.setNewExtent(
+								[xmin,ymin,xmax,ymax]
+								,m.proj.getCode()
+							);
+						};
+					};
+				};
 			};
 			
 		} else if( 'mapRedrawLayer' === type ) {
