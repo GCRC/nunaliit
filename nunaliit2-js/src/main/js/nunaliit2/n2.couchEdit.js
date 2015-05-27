@@ -822,6 +822,7 @@ var CouchDocumentEditor = $n2.Class({
 	slideEditor: null,
 	attachmentEditor: null,
 	editedDocument: null,
+	editedDocumentSchema: null,
 	editedFeature: null,
 	currentGeometryWkt: null,
 	editorContainerId: null,
@@ -899,9 +900,9 @@ var CouchDocumentEditor = $n2.Class({
 				this.enableAddFile = true;
 			};
 		};
-	}
+	},
 
-	,startFeatureEditing: function(
+	startFeatureEditing: function(
 		feature_
 		) {
 		
@@ -909,6 +910,7 @@ var CouchDocumentEditor = $n2.Class({
 	
 		this.editedFeature = feature_;
 		this.editedDocument = {};
+		this.editedDocumentSchema = null;
 		for(var key in feature_.data){
 			if( '__n2Source' === key ) {
 				this.editedDocumentSource = feature_.data[key];
@@ -940,11 +942,11 @@ var CouchDocumentEditor = $n2.Class({
 
 		this._selectSchema(schemaSelected);
 		
-		function schemaSelected(schema) {
+		function schemaSelected() {
 			if( _this.isInsert ) {
 				// Create original object by augmenting current one with template
-				if( schema ) {
-					var template = schema.createObject({});
+				if( _this.editedDocumentSchema ) {
+					var template = _this.editedDocumentSchema.createObject({});
 					$n2.extend(true, _this.editedDocument, template);
 				};
 
@@ -960,17 +962,16 @@ var CouchDocumentEditor = $n2.Class({
 		    	};
 			};
 			
-			_this._displayEditor(schema);
+			_this._prepareDocument();
 		};
-	}
+	},
 
-	,startDocumentEditing: function(
-		doc_
-		) {
+	startDocumentEditing: function(doc_) {
 
 		var _this = this;
 		
 		this.editedDocument = {};
+		this.editedDocumentSchema = null;
 		for(var key in doc_){
 			if( '__n2Source' === key ) {
 				this.editedDocumentSource = doc_[key];
@@ -978,32 +979,90 @@ var CouchDocumentEditor = $n2.Class({
 				this.editedDocument[key] = doc_[key];
 			};
 		};
-	
+		
+		this.currentGeometryWkt = null;
+		if( this.editedDocument 
+		 && this.editedDocument.nunaliit_geom ) {
+			this.currentGeometryWkt = this.editedDocument.nunaliit_geom.wkt;
+		};
+
 		this.isInsert = (typeof(this.editedDocument._id) === 'undefined' || this.editedDocument._id === null);
-	
+
 		this._selectSchema(schemaSelected);
 		
-		function schemaSelected(schema) {
+		function schemaSelected() {
 			if( _this.isInsert ) {
 				// Create original object by augmenting current one with template
-				if( schema ) {
-					var template = schema.createObject({});
+				if( _this.editedDocumentSchema ) {
+					var template = _this.editedDocumentSchema.createObject({});
 					$n2.extend(true, _this.editedDocument, template);
 				};
 			};
 			
-			_this._displayEditor(schema);
+			_this._prepareDocument();
 		};
-	}
-	
-	,_selectSchema: function(callbackFn) {
+	},
+
+	_prepareDocument: function() {
+
 		var _this = this;
+
+		// Retrieve original geometry
+		var editedDoc = _this.editedDocument;
+		var nunaliit_geom = editedDoc.nunaliit_geom;
+		
+		if( nunaliit_geom 
+		 && nunaliit_geom.simplified
+		 && nunaliit_geom.simplified.original ) {
+			// Must reload original geometry
+			var attName = nunaliit_geom.simplified.original;
+			
+			// Check that attachment is available
+			if( editedDoc._attachments 
+			 && editedDoc._attachments[attName]
+			 && this.editedDocumentSource ){
+				var url = this.editedDocumentSource.getDocumentAttachmentUrl(editedDoc, attName);
+				$.ajax({
+					url: url
+					,type: 'get'
+					,async: true
+					,dataType: 'text'
+					,success: function(wkt) {
+						$n2.couchGeom.updateDocumentWithWktGeometry({
+				    		doc: editedDoc
+				    		,wkt: wkt
+				    	});
+						startEditor();
+					}
+					,error: function(XMLHttpRequest, textStatus, errorThrown) {
+						$n2.log('Unable to retrieve original geometry',editedDoc);
+						startEditor();
+					}
+				});
+				
+			} else {
+				startEditor();
+			};
+		} else {
+			startEditor();
+		};
+		
+		function startEditor(){
+			_this._displayEditor();
+		};
+	},
+	
+	_selectSchema: function(callbackFn) {
+		var _this = this;
+
+		this.editedDocumentSchema = null;
 		
 		// Check hint from document
 		if( this.editedDocument.nunaliit_schema ) {
 			this.schemaRepository.getSchema({
 				name: this.editedDocument.nunaliit_schema
 				,onSuccess: function(schema){
+					_this.editedDocumentSchema = schema;
 					callbackFn(schema);
 				}
 				,onError: function(err){
@@ -1016,24 +1075,32 @@ var CouchDocumentEditor = $n2.Class({
 			if( $n2.couchEdit.Constants.ALL_SCHEMAS === this.schema ) {
 				// Must select a schema from all root schemas
 				this.dialogService.selectSchema({
-					onSelected: callbackFn
+					onSelected: function(schema){
+						_this.editedDocumentSchema = schema;
+						callbackFn(schema);
+					}
 				});
 				
 			} else if( $n2.isArray(this.schema) ) {
 				// Must select a schema
 				this.dialogService.selectSchema({
 					schemas: this.schema
-					,onSelected: callbackFn
+					,onSelected: function(schema){
+						_this.editedDocumentSchema = schema;
+						callbackFn(schema);
+					}
 				});
 				
 			} else {
 				// Only one schema to select from
+				this.editedDocumentSchema = this.schema;
 				callbackFn(this.schema);
 			};
 			
 		} else if( this.defaultEditSchema && !this.isInsert ) {
 			// If the object does not specify a schema, use default schema
 			// if specified
+			this.editedDocumentSchema = this.defaultEditSchema;
 			callbackFn(this.defaultEditSchema);
 			
 		} else {
@@ -1116,10 +1183,12 @@ var CouchDocumentEditor = $n2.Class({
 			};
 			$dialog.dialog(dialogOptions);
 		};
-	}
+	},
     
-    ,_displayEditor: function(selectedSchema) {
+    _displayEditor: function() {
     	var _this = this;
+    	
+    	var selectedSchema = this.editedDocumentSchema;
 		
 		$('body').addClass('nunaliit_editing');
 		$('.n2_disable_on_edit')
@@ -1405,9 +1474,9 @@ var CouchDocumentEditor = $n2.Class({
 				return false;
 			});
 		};
-	}
+	},
     
-    ,_save: function(){
+    _save: function(){
     	
     	var _this = this;
     	
@@ -1534,9 +1603,9 @@ var CouchDocumentEditor = $n2.Class({
 			};
 			_this._discardEditor(discardOpts);
     	};
-    }
+    },
 	
-	,_addRelationDialog: function() {
+	_addRelationDialog: function() {
 		var _this = this;
 
 		if( this.dialogService ){
@@ -1546,9 +1615,9 @@ var CouchDocumentEditor = $n2.Class({
 				}
 			});
 		};
-	}
+	},
     
-    ,_addRelation: function(relDocId){
+    _addRelation: function(relDocId){
     	var data = this.editedDocument;
 
     	if( data 
@@ -1580,9 +1649,9 @@ var CouchDocumentEditor = $n2.Class({
     		
     		this.refresh();
     	};
-    }
+    },
     
-    ,_removeRelation: function(relDocId){
+    _removeRelation: function(relDocId){
     	var data = this.editedDocument;
     	var refreshRequired = false;
     	
@@ -1619,9 +1688,9 @@ var CouchDocumentEditor = $n2.Class({
     	if( refreshRequired ){
     		this.refresh();
     	};
-    }
+    },
     
-    ,_manageLayersDialog: function(){
+    _manageLayersDialog: function(){
     	var _this = this;
     	var data = this.editedDocument;
     	var layers = data.nunaliit_layers;
@@ -1643,9 +1712,9 @@ var CouchDocumentEditor = $n2.Class({
     			}
     		});
     	};
-    }
+    },
     
-    ,_removeAttachment: function(attNameToRemove){
+    _removeAttachment: function(attNameToRemove){
     	var data = this.editedDocument;
     	
     	// Accumulate all the keys that must be removed
@@ -1707,17 +1776,17 @@ var CouchDocumentEditor = $n2.Class({
     	if( refreshRequired ){
     		this.refresh();
     	};
-    }
+    },
     
-    ,_cancelEdit: function(){
+    _cancelEdit: function(){
 		this._dispatch({
 			type: 'editCancel'
 			,doc: this.editedDocument
 		});
-    }
+    },
 
 	// Restores feature geometry before discarding the form
-	,performCancellation: function(opts_) {
+	performCancellation: function(opts_) {
 		var opts = $n2.extend({
 			suppressEvents:false
 		},opts_);
@@ -1731,9 +1800,9 @@ var CouchDocumentEditor = $n2.Class({
 			cancelled:true
 			,suppressEvents: opts.suppressEvents
 		});
-	}
+	},
 
-	,_discardEditor: function(opts_) {
+	_discardEditor: function(opts_) {
 		var opts = $n2.extend({
 			saved: false
 			,inserted: false
@@ -1787,9 +1856,9 @@ var CouchDocumentEditor = $n2.Class({
 		$('body').removeClass('nunaliit_editing');
 		$('.n2_disable_on_edit')
 			.removeAttr('disabled');
-	}
+	},
 	
-	,refresh: function() {
+	refresh: function() {
 		this._adjustInternalValues(this.editedDocument);
 		if( this.treeEditor ) {
 			this.treeEditor.refresh();
@@ -1802,9 +1871,9 @@ var CouchDocumentEditor = $n2.Class({
 		};
 		this._refreshRelations(this.editedDocument);
 		this.onEditorObjectChanged(this.editedDocument);
-	}
+	},
 	
-	,_adjustInternalValues: function(obj) {
+	_adjustInternalValues: function(obj) {
 		// BBOX
 		if( typeof(OpenLayers) !== 'undefined' ) {
 			var geomData = obj.nunaliit_geom;
@@ -1815,9 +1884,9 @@ var CouchDocumentEditor = $n2.Class({
 				};
 			};
 		};
-	}
+	},
 	
-	,_refreshRelations: function(data){
+	_refreshRelations: function(data){
 		var _this = this;
 		var $editorContainer = this._getEditorContainer();
 		var $displayRelationsDiv = $editorContainer.find('.editorDisplayRelations');
@@ -1893,9 +1962,9 @@ var CouchDocumentEditor = $n2.Class({
 				.click(removeRelationFn)
 				;
 		};
-	}
+	},
 	
-	,onEditorObjectChanged: function(obj) {
+	onEditorObjectChanged: function(obj) {
 		var geomData = obj.nunaliit_geom;
 		
 		if( !geomData ) return; // avoid errors
@@ -1916,9 +1985,9 @@ var CouchDocumentEditor = $n2.Class({
 				,_origin: this
 			});
 		};
-	}
+	},
 	
-    ,convertFeatureGeometryForDb: function(feature) {
+    convertFeatureGeometryForDb: function(feature) {
 		var mapProj = feature.layer.map.getProjectionObject();
 		if( mapProj.getCode() != this.couchProj.getCode() ) {
 			// Need to convert
@@ -1927,9 +1996,9 @@ var CouchDocumentEditor = $n2.Class({
 			return geom;
 		};
 		return feature.geometry;
-    }
+    },
 	
-    ,_featureModified: function(docId, geom, proj) {
+    _featureModified: function(docId, geom, proj) {
 
 		if( proj.getCode() != this.couchProj.getCode() ) {
 			// Need to convert
@@ -1950,9 +2019,9 @@ var CouchDocumentEditor = $n2.Class({
 		if( this.slideEditor ) {
 			this.slideEditor.refresh();
 		};
-    }
+    },
 	
-    ,_addGeometry: function(geom, proj) {
+    _addGeometry: function(geom, proj) {
 		if( proj.getCode() != this.couchProj.getCode() ) {
 			// Need to convert
 			geom = geom.clone();
@@ -1978,14 +2047,14 @@ var CouchDocumentEditor = $n2.Class({
 		if( this.slideEditor ) {
 			this.slideEditor.refresh();
 		};
-    }
+    },
 	
-	,_getEditorContainer: function() {
+	_getEditorContainer: function() {
 		var $editorContainer = $('#'+this.editorContainerId);
 		return $editorContainer;
-	}
+	},
 	
-	,_disableControls: function() {
+	_disableControls: function() {
 		var $editorContainer = this._getEditorContainer();
 		$editorContainer.find('button').attr('disabled','disabled');
 		$editorContainer.find('input:text').attr('disabled','disabled');
@@ -1993,29 +2062,29 @@ var CouchDocumentEditor = $n2.Class({
 		// Do not disable text fields from upload forms, since it does not send
 		// the information
 		$editorContainer.find('.editorAttachFile').find('input:text').removeAttr('disabled');
-	}
+	},
 	
-	,_enableControls: function() {
+	_enableControls: function() {
 		var $editorContainer = this._getEditorContainer();
 		$editorContainer.find('button').removeAttr('disabled');
 		$editorContainer.find('input:text').removeAttr('disabled');
-	}
+	},
 	
-	,_dispatch: function(m){
+	_dispatch: function(m){
 		var dispatcher = this.dispatchService;
 		if( dispatcher ){
 			dispatcher.send(DH,m);
 		};
-	}
+	},
 	
-	,_synchronousCall: function(m){
+	_synchronousCall: function(m){
 		var dispatcher = this.dispatchService;
 		if( dispatcher ){
 			dispatcher.synchronousCall(DH,m);
 		};
-	}
+	},
 	
-	,_handle: function(m){
+	_handle: function(m){
 		if( m.type === 'editGeometryModified' ){
 			if( m._origin !== this ){
 				this._featureModified(m.docId, m.geom, m.proj);
