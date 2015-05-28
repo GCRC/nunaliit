@@ -120,5 +120,6 @@
 		<module>nunaliit2-security</module>
 		<module>nunaliit2-couch-submission</module>
 		<module>nunaliit2-couch-date</module>
+		<module>nunaliit2-couch-simplifiedGeometry</module>
 	</modules>
 </project>

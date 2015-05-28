@@ -47,6 +47,7 @@ import ca.carleton.gcrc.couch.onUpload.mail.MailVetterDailyNotificationTask;
 import ca.carleton.gcrc.couch.onUpload.mail.UploadNotificationGenerator;
 import ca.carleton.gcrc.couch.onUpload.multimedia.MultimediaFileConverter;
 import ca.carleton.gcrc.couch.onUpload.pdf.PdfFileConverter;
+import ca.carleton.gcrc.couch.simplifiedGeometry.SimplifiedGeometryServletConfiguration;
 import ca.carleton.gcrc.couch.submission.SubmissionRobot;
 import ca.carleton.gcrc.couch.submission.SubmissionRobotSettings;
 import ca.carleton.gcrc.couch.submission.SubmissionServlet;
@@ -195,6 +196,14 @@ public class ConfigServlet extends JsonServlet {
 			initDate(servletContext);
 		} catch(ServletException e) {
 			logger.error("Error while initializing date service",e);
+			throw e;
+		}
+		
+		// Configure simplifiedGeometry
+		try {
+			initSimplifiedGeometry(servletContext);
+		} catch(ServletException e) {
+			logger.error("Error while initializing simplified geometry service",e);
 			throw e;
 		}
 		
@@ -661,8 +670,22 @@ public class ConfigServlet extends JsonServlet {
 			servletContext.setAttribute(DateServletConfiguration.CONFIGURATION_KEY, config);
 
 		} catch(Exception e) {
-			logger.error("Error configuring export service",e);
-			throw new ServletException("Error configuring export service",e);
+			logger.error("Error configuring date service",e);
+			throw new ServletException("Error configuring date service",e);
+		}
+	}
+
+	private void initSimplifiedGeometry(ServletContext servletContext) throws ServletException {
+
+		try {
+			SimplifiedGeometryServletConfiguration config = new SimplifiedGeometryServletConfiguration();
+			CouchDb couchDb = couchDd.getDatabase();
+			config.setCouchDb(couchDb);
+			servletContext.setAttribute(SimplifiedGeometryServletConfiguration.CONFIGURATION_KEY, config);
+
+		} catch(Exception e) {
+			logger.error("Error configuring simplified geometry service",e);
+			throw new ServletException("Error configuring simplified geometry service",e);
 		}
 	}
 

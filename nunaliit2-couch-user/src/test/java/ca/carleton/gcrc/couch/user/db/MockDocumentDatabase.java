@@ -191,6 +191,14 @@ public class MockDocumentDatabase implements CouchDb {
 	}
 
 	@Override
+	public String downloadAttachment(
+			String docId, 
+			String name, 
+			OutputStream os) throws Exception {
+		throw new Exception("Not implemented");
+	}
+
+	@Override
 	public JSONObject deleteAttachment(JSONObject doc, String name) throws Exception {
 		throw new Exception("Not implemented");
 	}
