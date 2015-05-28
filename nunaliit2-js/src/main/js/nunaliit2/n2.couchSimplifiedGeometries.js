@@ -30,9 +30,10 @@ POSSIBILITY OF SUCH DAMAGE.
 
 */
 ;(function($,$n2){
+"use strict";
 
 // Localization
-var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
+//var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
 var DH = 'n2.couchSimplifiedGeometry';
 	
@@ -42,6 +43,8 @@ var SimplifiedGeometryService = $n2.Class({
 	dispatchService: null,
 	
 	atlasDb: null,
+	
+	dbProjection: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -53,6 +56,11 @@ var SimplifiedGeometryService = $n2.Class({
 	
 		this.dispatchService = opts.dispatchService;
 		this.atlasDb = opts.atlasDb;
+		
+		this.dbProjection = null;
+		if( typeof OpenLayers !== 'undefined' && OpenLayers.Projection ){
+			this.dbProjection = new OpenLayers.Projection('EPSG:4326');
+		};
 		
 		if( this.dispatchService ){
 			var f = function(m, address, dispatchService){
@@ -78,8 +86,12 @@ var SimplifiedGeometryService = $n2.Class({
 			var id = geometryRequest.id;
 			var doc = geometryRequest.doc;
 			var attName = geometryRequest.attName;
-			
-			var url = this.atlasDb.getAttachmentUrl(doc,attName);
+
+			processRequest(id, doc, attName);
+		};
+		
+		function processRequest(id, doc, attName){
+			var url = _this.atlasDb.getAttachmentUrl(doc,attName);
 			
 			$.ajax({
 		    	url: url
@@ -93,6 +105,10 @@ var SimplifiedGeometryService = $n2.Class({
 		    				id: id
 		    				,attName: attName
 		    				,wkt: wkt
+		    			};
+		    			
+		    			if( _this.dbProjection ){
+		    				simplifiedGeometry.proj = _this.dbProjection;
 		    			};
 		    			
 		    			_this.dispatchService.send(DH,{

@@ -4054,12 +4054,8 @@ var MapAndControls = $n2.Class({
 			if( request.feature 
 			 && request.feature.n2SimplifiedGeoms 
 			 && request.feature.n2SimplifiedGeoms[attName] ){
-				var wkt = request.feature.n2SimplifiedGeoms[attName];
-				simplificationsReported[simplificationsReported.length] = {
-					id: request.id
-					,attName: attName
-					,wkt: wkt
-				};
+				var simplification = request.feature.n2SimplifiedGeoms[attName];
+				simplificationsReported[simplificationsReported.length] = simplification;
 			} else {
 				geometriesRequested[geometriesRequested.length] = geomsNeeded[id];
 			};
@@ -4145,7 +4141,6 @@ var MapAndControls = $n2.Class({
 		
 		// Often used
 		var wktFormat = new OpenLayers.Format.WKT();
-		var dbProj = new OpenLayers.Projection('EPSG:4326');
 
 		// Make a map of all simplified geometries based on id (fid)
 		var simplifiedGeometriesById = {};
@@ -4202,6 +4197,12 @@ var MapAndControls = $n2.Class({
 			
 			// Add them again so that clustering and drawing is based on the
 			// new geometry
+//			$n2.log('Reload features');
+//			for(var i=0;i<features.length;++i){
+//				var f = features[i];
+//				var g = f.geometry;
+//				$n2.log(''+g);
+//			};
 			layer.addFeatures(features);
 		};
 		
@@ -4212,7 +4213,7 @@ var MapAndControls = $n2.Class({
 				if( !f.n2SimplifiedGeoms ){
 					f.n2SimplifiedGeoms = {};
 				};
-				f.n2SimplifiedGeoms[simplifiedGeometry.attName] = simplifiedGeometry.wkt;
+				f.n2SimplifiedGeoms[simplifiedGeometry.attName] = simplifiedGeometry;
 				
 				// If this simplification is already installed, then there is nothing
 				// to do
@@ -4227,7 +4228,11 @@ var MapAndControls = $n2.Class({
 							var f2 = wktFormat.read(simplifiedGeometry.wkt);
 							if( f2 && f2.geometry ){
 								// Reproject geometry
-								var projectedGeom = _this._reprojectGeometryForMap(f2.geometry, dbProj);
+								var projectedGeom = f2.geometry;
+								if( simplifiedGeometry.proj ){
+									var projectedGeom = 
+										_this._reprojectGeometryForMap(f2.geometry, simplifiedGeometry.proj);
+								};
 								
 								// Swap geometry
 								f.geometry = projectedGeom;
