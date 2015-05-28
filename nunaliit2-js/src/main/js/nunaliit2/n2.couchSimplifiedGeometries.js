@@ -62,7 +62,7 @@ var SimplifiedGeometryService = $n2.Class({
 		this.atlasDb = opts.atlasDb;
 		
 		this.sendingRequests = false;
-		this.pendingRequests = [];
+		this.pendingRequests = {};
 		
 		this.dbProjection = null;
 		if( typeof OpenLayers !== 'undefined' && OpenLayers.Projection ){
@@ -88,8 +88,14 @@ var SimplifiedGeometryService = $n2.Class({
 		for(var i=0,e=geometriesRequested.length; i<e; ++i){
 			var geometryRequest = geometriesRequested[i];
 
-			this.pendingRequests.push(geometryRequest);
+			this.pendingRequests[geometryRequest.id] = geometryRequest;
 		};
+		
+		var count = 0;
+		for(var id in this.pendingRequests){
+			++count;
+		};
+		$n2.log('Pending simplified geometry requets: '+count);
 		
 		this._sendRequests();
 	},
@@ -104,12 +110,18 @@ var SimplifiedGeometryService = $n2.Class({
 		next();
 		
 		function next(){
-			if( _this.pendingRequests.length > 0 ){
-				var geometryRequest = _this.pendingRequests.shift();
-				
+			var geometryRequest = null;
+			for(var id in _this.pendingRequests){
+				geometryRequest = _this.pendingRequests[id];
+				break;
+			};
+			
+			if( geometryRequest ){
 				var id = geometryRequest.id;
 				var doc = geometryRequest.doc;
 				var attName = geometryRequest.attName;
+				
+				delete _this.pendingRequests[id];
 				
 				processRequest(id, doc, attName);
 				
