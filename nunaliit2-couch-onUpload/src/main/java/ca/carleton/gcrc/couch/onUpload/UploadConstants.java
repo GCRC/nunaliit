@@ -56,6 +56,7 @@ public class UploadConstants {
 
 	// Top level document keys
 	static public final String KEY_DOC_ID = "_id";
+	static public final String KEY_DOC_REV = "_rev";
 	static public final String KEY_DOC_GEOMETRY = "nunaliit_geom";
 	static public final String KEY_DOC_ATTACHMENTS = "nunaliit_attachments";
 	

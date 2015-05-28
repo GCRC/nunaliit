@@ -29,6 +29,11 @@ public class DocumentDescriptor extends AbstractDescriptor {
 		JSONObject doc = getJson();
 		return doc.getString(UploadConstants.KEY_DOC_ID);
 	}
+	
+	public String getRevision() throws Exception {
+		JSONObject doc = getJson();
+		return doc.optString(UploadConstants.KEY_DOC_REV);
+	}
 
 	public boolean isAttachmentDescriptionAvailable(String attName) throws Exception {
 		JSONObject doc = getJson();

@@ -123,4 +123,27 @@ public class BoundingBox {
 			}
 		}
 	}
+	
+	public Point getCentroid(){
+		List<Number> centroid = new Vector<Number>();
+		
+		int size = this.minimumPositions.size();
+		if( size > this.maximumPositions.size() ){
+			size = this.maximumPositions.size();
+		}
+		
+		for(int i=0; i<size; ++i){
+			Number min = this.minimumPositions.get(i);
+			Number max = this.maximumPositions.get(i);
+			
+			if( null != min && null != max ){
+				Double value = (min.doubleValue() + max.doubleValue())/2;
+				centroid.add(value);
+			} else {
+				centroid.add(null);
+			}
+		}
+		
+		return new Point(centroid);
+	}
 }

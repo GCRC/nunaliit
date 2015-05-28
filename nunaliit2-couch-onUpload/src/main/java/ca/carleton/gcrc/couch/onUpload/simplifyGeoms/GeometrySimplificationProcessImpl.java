@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
 
+import ca.carleton.gcrc.geom.BoundingBox;
 import ca.carleton.gcrc.geom.Geometry;
 import ca.carleton.gcrc.geom.GeometryCollection;
 import ca.carleton.gcrc.geom.GeometryComparator;
@@ -128,14 +129,14 @@ public class GeometrySimplificationProcessImpl implements GeometrySimplification
 			}
 			
 		} else if( geom instanceof Point ) {
-			Point point = (Point)geom;
-			
-			double x = Math.round(point.getX() * factor) / factor;
-			double y = Math.round(point.getY() * factor) / factor;
-			if( x != point.getX() 
-			 || y != point.getY() ){
-				simplifiedGeometry = new Point(x,y);
-			}
+//			Point point = (Point)geom;
+//			
+//			double x = Math.round(point.getX() * factor) / factor;
+//			double y = Math.round(point.getY() * factor) / factor;
+//			if( x != point.getX() 
+//			 || y != point.getY() ){
+//				simplifiedGeometry = new Point(x,y);
+//			}
 			
 		} else if( geom instanceof LineString ) {
 			// The simplification of a LineString might result into a LineString
@@ -145,7 +146,13 @@ public class GeometrySimplificationProcessImpl implements GeometrySimplification
 			List<Point> accumulatedPoints = new Vector<Point>();
 			Point lastPoint = null;
 			
+			// Keep track of bounds
+			BoundingBox bbox = new BoundingBox();
+			
 			for(Point point : lineString.getPoints()){
+				// Keep track of bounds
+				bbox.extendToInclude(point);
+				
 				Geometry simplifiedPointObj = simplify(point, resolution, factor);
 				
 				Point simplifiedPoint = null;
@@ -172,7 +179,8 @@ public class GeometrySimplificationProcessImpl implements GeometrySimplification
 			if( isGeneralized ){
 				// A change occurred
 				if( accumulatedPoints.size() < 2 ){
-					simplifiedGeometry = accumulatedPoints.get(0);
+					// Create a point that represents the centre of the line string
+					simplifiedGeometry = bbox.getCentroid();
 				} else {
 					simplifiedGeometry = new LineString(accumulatedPoints);
 				};

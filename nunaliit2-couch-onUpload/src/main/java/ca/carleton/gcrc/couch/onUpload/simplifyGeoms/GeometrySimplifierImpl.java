@@ -6,12 +6,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import ca.carleton.gcrc.couch.onUpload.conversion.DocumentDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.FileConversionContext;
 import ca.carleton.gcrc.couch.onUpload.conversion.GeometryDescriptor;
+import ca.carleton.gcrc.geom.BoundingBox;
 import ca.carleton.gcrc.geom.Geometry;
 import ca.carleton.gcrc.geom.wkt.WktWriter;
 
@@ -24,9 +24,36 @@ public class GeometrySimplifierImpl implements GeometrySimplifier {
 	}
 
 	@Override
-	public void simplyGeometry(FileConversionContext conversionContext) throws Exception {
+	public void simplifyGeometry(FileConversionContext conversionContext) throws Exception {
 		DocumentDescriptor docDescriptor = conversionContext.getDocument();
 		GeometryDescriptor geomDesc = docDescriptor.getGeometryDescription();
+		
+		// Create a geometry attachment name prefix which is unique to this revision of the
+		// document
+		String attachmentPrefix = "nunaliit2_geom_";
+		{
+			String docRev = docDescriptor.getRevision();
+			
+			String revNumber = null;
+			if( null != docRev ){
+				String[] parts = docRev.split("-");
+				if( parts.length > 1 ){
+					revNumber = parts[0];
+				}
+			}
+			
+			Integer revision = null;
+			if( null != revNumber ){
+				int rev = Integer.parseInt(revNumber);
+				if( rev > 0 ){
+					revision = new Integer(rev+1); // predict next revision
+				}
+			}
+
+			if( null != revision ){
+				attachmentPrefix += "" + revision + "_";
+			}
+		}
 		
 		// Start simplified object
 		JSONObject simplified = new JSONObject();
@@ -53,7 +80,7 @@ public class GeometrySimplifierImpl implements GeometrySimplifier {
 			JSONObject originalAtt = new JSONObject();
 			originalAtt.put("wkt", originalWkt);
 			
-			String originalName = generateAttachmentName(builder,"nunaliit2_geom_original");
+			String originalName = generateAttachmentName(builder, attachmentPrefix+"original");
 			simplified.put("original", originalName);
 			
 			builder.addInlineAttachment(originalName, SIMPLIFIED_GEOMETRY_CONTENT_TYPE, originalWkt);
@@ -79,7 +106,7 @@ public class GeometrySimplifierImpl implements GeometrySimplifier {
 			}
 		});
 		for(GeometrySimplification simplification : simplifications){
-			String attName = generateAttachmentName(builder,"nunaliit2_geom_res");
+			String attName = generateAttachmentName(builder, attachmentPrefix+"res");
 			resolutions.put(attName, simplification.getResolution());
 
 			String wkt = simplification.getGeometry().toString();
@@ -92,6 +119,11 @@ public class GeometrySimplifierImpl implements GeometrySimplifier {
 			GeometrySimplification mostSimplified = simplifications.get( simplifications.size()-1 );
 			geomDesc.setGeometry( mostSimplified.getGeometry() );
 			simplified.put("reported_resolution", mostSimplified.getResolution());
+			
+			// Have bounding box of original geometry saved so that tiling system
+			// works correctly
+			BoundingBox bbox = originalGeometry.getBoundingBox();
+			geomDesc.setBoundingBox(bbox);
 		}
 		
 		// Set the simplified structure

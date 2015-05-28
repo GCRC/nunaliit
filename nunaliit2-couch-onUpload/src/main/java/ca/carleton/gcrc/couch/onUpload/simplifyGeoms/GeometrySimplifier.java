@@ -6,5 +6,5 @@ public interface GeometrySimplifier {
 	
 	static final public String SIMPLIFIED_GEOMETRY_CONTENT_TYPE = "text/nunaliit2_geometry";
 
-	void simplyGeometry(FileConversionContext conversionContext) throws Exception;
+	void simplifyGeometry(FileConversionContext conversionContext) throws Exception;
 }

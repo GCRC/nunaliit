@@ -752,7 +752,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 		FileConversionContext conversionContext = 
 			new FileConversionContextImpl(work,documentDbDesign,mediaDir);
 		
-		simplifier.simplyGeometry(conversionContext);
+		simplifier.simplifyGeometry(conversionContext);
 	}
 	
 	private void sendVettingNotification(String docId, JSONObject doc, String attachmentName) {

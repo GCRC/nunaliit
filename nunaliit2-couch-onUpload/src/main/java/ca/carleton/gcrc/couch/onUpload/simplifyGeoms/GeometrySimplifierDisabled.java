@@ -9,7 +9,7 @@ import ca.carleton.gcrc.couch.onUpload.conversion.GeometryDescriptor;
 public class GeometrySimplifierDisabled implements GeometrySimplifier {
 
 	@Override
-	public void simplyGeometry(FileConversionContext conversionContext) throws Exception {
+	public void simplifyGeometry(FileConversionContext conversionContext) throws Exception {
 		// If we get here, it is because simplification is disabled but the work view continues
 		// to report geometries that needs simplifications. Install a simplified object on
 		// geometry to silence the view.

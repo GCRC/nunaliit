@@ -43,11 +43,34 @@ public class GeometryDescriptor extends AbstractDescriptor {
 		wktWriter.write(geom, sw);
 		String wkt = sw.toString();
 		
-		BoundingBox bbox = geom.getBoundingBox();
-		
 		JSONObject geomObj = getJson();
 		
 		geomObj.put("wkt", wkt);
+		
+		BoundingBox bbox = geom.getBoundingBox();
+		setBoundingBox(bbox);
+	}
+	
+	public BoundingBox getBoundingBox() throws Exception {
+		BoundingBox result = null;
+		
+		JSONObject geomObj = getJson();
+		
+		JSONArray bbox = geomObj.optJSONArray("bbox");
+		if( null != bbox 
+		 && bbox.length() > 3 ){
+			double xmin = bbox.getDouble(0);
+			double ymin = bbox.getDouble(1);
+			double xmax = bbox.getDouble(2);
+			double ymax = bbox.getDouble(3);
+			result = new BoundingBox(xmin,ymin,xmax,ymax);
+		}
+		
+		return result;
+	}
+
+	public void setBoundingBox(BoundingBox bbox) throws Exception {
+		JSONObject geomObj = getJson();
 		
 		JSONArray bboxArray = new JSONArray();
 		bboxArray.put(bbox.getMinX());

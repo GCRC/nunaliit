@@ -67,7 +67,7 @@ public class WktWriter {
 				pw.write(" ");
 			}
 			
-			pw.print(position);
+			writeNumber(pw, position);
 		}
 		pw.write(")");
 	}
@@ -92,7 +92,7 @@ public class WktWriter {
 					pw.write(" ");
 				}
 				
-				pw.print(position);
+				writeNumber(pw, position);
 			}
 
 			pw.write(")");
@@ -118,7 +118,7 @@ public class WktWriter {
 					pw.write(" ");
 				}
 				
-				pw.print(position);
+				writeNumber(pw, position);
 			}
 		}
 		pw.write(")");
@@ -152,7 +152,7 @@ public class WktWriter {
 						pw.write(" ");
 					}
 					
-					pw.print(position);
+					writeNumber(pw, position);
 				}
 			}
 
@@ -189,7 +189,7 @@ public class WktWriter {
 						pw.write(" ");
 					}
 					
-					pw.print(position);
+					writeNumber(pw, position);
 				}
 			}
 
@@ -237,7 +237,7 @@ public class WktWriter {
 							pw.write(" ");
 						}
 						
-						pw.print(position);
+						writeNumber(pw, position);
 					}
 				}
 
@@ -263,5 +263,20 @@ public class WktWriter {
 			write(geometry, pw);
 		}
 		pw.write(")");
+	}
+	
+	/**
+	 * Writes a number to the print writer. If the number is an integer, do not
+	 * write the decimal points.
+	 * @param pw
+	 * @param num
+	 */
+	private void writeNumber(PrintWriter pw, Number num){
+		if( num.doubleValue() == Math.round(num.doubleValue()) ){
+			// Integer
+			pw.print( num.intValue() );
+		} else {
+			pw.print(num);
+		}
 	}
 }
