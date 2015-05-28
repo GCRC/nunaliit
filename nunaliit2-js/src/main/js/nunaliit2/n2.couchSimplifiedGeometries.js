@@ -45,6 +45,10 @@ var SimplifiedGeometryService = $n2.Class({
 	atlasDb: null,
 	
 	dbProjection: null,
+	
+	pendingRequests: null,
+	
+	sendingRequests: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -56,6 +60,9 @@ var SimplifiedGeometryService = $n2.Class({
 	
 		this.dispatchService = opts.dispatchService;
 		this.atlasDb = opts.atlasDb;
+		
+		this.sendingRequests = false;
+		this.pendingRequests = [];
 		
 		this.dbProjection = null;
 		if( typeof OpenLayers !== 'undefined' && OpenLayers.Projection ){
@@ -78,18 +85,39 @@ var SimplifiedGeometryService = $n2.Class({
 	},
 	
 	_handleRequest: function(geometriesRequested){
-		var _this = this;
-		
 		for(var i=0,e=geometriesRequested.length; i<e; ++i){
 			var geometryRequest = geometriesRequested[i];
-			
-			var id = geometryRequest.id;
-			var doc = geometryRequest.doc;
-			var attName = geometryRequest.attName;
 
-			processRequest(id, doc, attName);
+			this.pendingRequests.push(geometryRequest);
 		};
 		
+		this._sendRequests();
+	},
+		
+	_sendRequests: function(){
+		var _this = this;
+		
+		if( this.sendingRequests ) return;
+
+		this.sendingRequests = true;
+		
+		next();
+		
+		function next(){
+			if( _this.pendingRequests.length > 0 ){
+				var geometryRequest = _this.pendingRequests.shift();
+				
+				var id = geometryRequest.id;
+				var doc = geometryRequest.doc;
+				var attName = geometryRequest.attName;
+				
+				processRequest(id, doc, attName);
+				
+			} else {
+				_this.sendingRequests = false;
+			};
+		};
+
 		function processRequest(id, doc, attName){
 			var url = _this.atlasDb.getAttachmentUrl(doc,attName);
 			
@@ -115,10 +143,13 @@ var SimplifiedGeometryService = $n2.Class({
 		    				type: 'simplifiedGeometryReport'
 		    				,simplifiedGeometries: [ simplifiedGeometry ]
 		    			});
+		    			
+		    			next();
 		    		};
 		    	}
 		    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
 					$n2.log('Unable to get simplified geometry: '+geometryRequest.id+' '+attName);
+					next();
 		    	}
 			});
 		};
