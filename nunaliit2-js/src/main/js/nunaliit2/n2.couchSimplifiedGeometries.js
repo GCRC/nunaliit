@@ -40,24 +40,28 @@ var DH = 'n2.couchSimplifiedGeometry';
 //*******************************************************
 var SimplifiedGeometryService = $n2.Class({
 
+	url: null,
+
 	dispatchService: null,
-	
+
 	atlasDb: null,
-	
+
 	dbProjection: null,
-	
+
 	pendingRequests: null,
-	
+
 	sendingRequests: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
-			dispatchService: null
+			url: null
+			,dispatchService: null
 			,atlasDb: null
 		},opts_);
 		
 		var _this = this;
-	
+
+		this.url = opts.url;
 		this.dispatchService = opts.dispatchService;
 		this.atlasDb = opts.atlasDb;
 		
@@ -110,57 +114,81 @@ var SimplifiedGeometryService = $n2.Class({
 		next();
 		
 		function next(){
-			var geometryRequest = null;
-			for(var id in _this.pendingRequests){
-				geometryRequest = _this.pendingRequests[id];
-				break;
+			var serverRequest = {
+					geometryRequests: []
 			};
 			
-			if( geometryRequest ){
-				var id = geometryRequest.id;
-				var doc = geometryRequest.doc;
-				var attName = geometryRequest.attName;
+			for(var id in _this.pendingRequests){
+				var geomRequest = _this.pendingRequests[id];
 				
-				delete _this.pendingRequests[id];
-				
-				processRequest(id, doc, attName);
+				var geometryRequest = {
+					id: geomRequest.id
+					,attName: geomRequest.attName
+				};
+				serverRequest.geometryRequests.push(geometryRequest);
+			};
+			
+			if( serverRequest.geometryRequests.length ){
+				processServerRequest(serverRequest);
 				
 			} else {
 				_this.sendingRequests = false;
 			};
 		};
 
-		function processRequest(id, doc, attName){
-			var url = _this.atlasDb.getAttachmentUrl(doc,attName);
-			
+		function processServerRequest(serverRequest){
 			$.ajax({
-		    	url: url
-		    	,type: 'get'
+		    	url: _this.url + 'getAttachments'
+		    	,type: 'post'
 		    	,async: true
-		    	,dataType: 'text'
-		    	,success: function(wkt) {
-		    		if( wkt ) {
+		    	,data: JSON.stringify(serverRequest)
+		    	,contentType: 'application/json'
+		    	,dataType: 'json'
+		    	,success: function(jsonResp) {
+		    		if( jsonResp && jsonResp.geometries ) {
+		    			var simplifiedGeometries = [];
 		    			
-		    			var simplifiedGeometry = {
-		    				id: id
-		    				,attName: attName
-		    				,wkt: wkt
-		    			};
-		    			
-		    			if( _this.dbProjection ){
-		    				simplifiedGeometry.proj = _this.dbProjection;
+		    			for(var i=0,e=jsonResp.geometries.length; i<e; ++i){
+		    				var geomResp = jsonResp.geometries[i];
+		    				
+			    			var simplifiedGeometry = {
+			    				id: geomResp.id
+			    				,attName: geomResp.attName
+			    				,wkt: geomResp.att
+			    			};
+			    			
+			    			if( _this.dbProjection ){
+			    				simplifiedGeometry.proj = _this.dbProjection;
+			    			};
+			    			
+			    			simplifiedGeometries.push(simplifiedGeometry);
+			    			
+			    			if( _this.pendingRequests[geomResp.id] 
+			    			 && geomResp.attName === _this.pendingRequests[geomResp.id].attName ){
+			    				delete _this.pendingRequests[geomResp.id];
+			    			};
 		    			};
 		    			
 		    			_this.dispatchService.send(DH,{
 		    				type: 'simplifiedGeometryReport'
-		    				,simplifiedGeometries: [ simplifiedGeometry ]
+		    				,simplifiedGeometries: simplifiedGeometries
 		    			});
 		    			
 		    			next();
 		    		};
 		    	}
 		    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
-					$n2.log('Unable to get simplified geometry: '+geometryRequest.id+' '+attName);
+					$n2.log('Unable to get simplified geometries',serverRequest);
+					
+					// Remove one request
+					var id = undefined;
+					for(id in _this.pendingRequests){
+						break;
+					};
+					if( id ){
+						delete _this.pendingRequests[id];
+					};
+					
 					next();
 		    	}
 			});

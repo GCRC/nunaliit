@@ -92,6 +92,7 @@ function Configure(options_){
 		,submissionDbUrl: null // string
 		,submissionServerUrl: null // string
 		,dateServerUrl: null // string
+		,simplifiedGeometryServerUrl: null // string
 		,onSuccess: function(config){}
 	},options_);
 
@@ -421,7 +422,8 @@ function Configure(options_){
 		});
 
 		configuration.directory.simplifiedGeometryService = new $n2.couchSimplifiedGeometries.Service({
-			atlasDb: configuration.atlasDb
+			url: options.simplifiedGeometryServerUrl
+			,atlasDb: configuration.atlasDb
 			,dispatchService: configuration.directory.dispatchService
 		});
 		

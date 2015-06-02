@@ -61,6 +61,7 @@ function nunaliitConfigure(opts_) {
 			,userServerUrl: opts.rootPath + 'servlet/user/'
 			,submissionServerUrl: opts.rootPath + 'servlet/submission/'
 			,dateServerUrl: opts.rootPath + 'servlet/date/'
+			,simplifiedGeometryServerUrl: opts.rootPath + 'servlet/geometry/'
 	 		,onSuccess: opts.configuredFunction
 	 	};
 	 	
