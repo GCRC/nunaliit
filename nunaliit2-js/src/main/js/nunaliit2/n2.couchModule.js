@@ -459,6 +459,11 @@ var ModuleDisplay = $n2.Class({
 				return;
 			};
 
+			if( moduleDoc._id ){
+				var safeId = $n2.utils.stringToHtmlId(moduleDoc._id);
+				$('body').addClass('nunaliit_module_'+safeId);
+			};
+
 			_this.module = new Module(moduleDoc, atlasDb);
 			
 			_this._sendDispatchMessage({
