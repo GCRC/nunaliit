@@ -3,11 +3,11 @@
   <parent>
     <artifactId>nunaliit2</artifactId>
     <groupId>ca.carleton.gcrc</groupId>
-    <version>2.2.4-SNAPSHOT</version>
+    <version>2.2.5-SNAPSHOT</version>
   </parent>
   <groupId>ca.carleton.gcrc</groupId>
   <artifactId>nunaliit2-dbSec</artifactId>
-  <version>2.2.4-SNAPSHOT</version>
+  <version>2.2.5-SNAPSHOT</version>
   <name>nunaliit2-dbSec</name>
   <description>Implements JDBC code to access a database. It enforces a
   set of rules for accessing the database. Rules are stored in database.</description>
