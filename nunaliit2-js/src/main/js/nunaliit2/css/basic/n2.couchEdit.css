@@ -2,6 +2,8 @@
 
 /* DIV that holds editor accordion */
 .n2CouchEditor_container {
+	padding: 15px 20px;
+	width: 600px;
 }
 
 /* Remove extra white space in accordion */
