@@ -49,8 +49,12 @@ var DisplayImageSource = $n2.Class({
 		this.images = [];
 	},
 	
-	getCount: function(){
-		return this.images.length;
+	getCountInfo: function(index){
+		var result = {
+			count: this.images.length
+			,index: (index + 1)
+		};
+		return result;
 	},
 	
 	getInfo: function(index){
@@ -153,6 +157,8 @@ var DisplayImageSource = $n2.Class({
 	},
 	
 	getPreviousIndex: function(index){
+		if( this.images.length < 2 ) return undefined;
+
 		--index;
 		if( index < 0 ){
 			index = this.images.length - 1;
@@ -161,6 +167,8 @@ var DisplayImageSource = $n2.Class({
 	},
 	
 	getNextIndex: function(index){
+		if( this.images.length < 2 ) return undefined;
+
 		++index;
 		if( index >= this.images.length ){
 			index = 0;
@@ -187,8 +195,12 @@ var DisplayImageSourceDoc = $n2.Class({
 		this.showService = opts.showService;
 	},
 	
-	getCount: function(){
-		return this.images.length;
+	getCountInfo: function(index){
+		var result = {
+			count: this.images.length
+			,index: (index + 1)
+		};
+		return result;
 	},
 	
 	getInfo: function(index){
@@ -325,6 +337,8 @@ var DisplayImageSourceDoc = $n2.Class({
 	},
 	
 	getPreviousIndex: function(index){
+		if( this.images.length < 2 ) return undefined;
+		
 		--index;
 		if( index < 0 ){
 			index = this.images.length - 1;
@@ -333,6 +347,8 @@ var DisplayImageSourceDoc = $n2.Class({
 	},
 	
 	getNextIndex: function(index){
+		if( this.images.length < 2 ) return undefined;
+
 		++index;
 		if( index >= this.images.length ){
 			index = 0;
@@ -688,44 +704,37 @@ var DisplayBox = $n2.Class({
 		);
 
 		// If we have an image set, display 'Image X of X'
-		var imageCount = this.imageSource.getCount();
-		if( imageCount > 1 ) {
-			var current = this.currentImageIndex + 1;
+		var imageCountInfo = this.imageSource.getCountInfo(this.currentImageIndex);
+		if( imageCountInfo ) {
 			var label = _loc('{index}/{count}', {
-				index: current
-				,count: imageCount
+				index: imageCountInfo.index
+				,count: imageCountInfo.count
 			});
 			
 			$displayDiv.find('.n2DisplayBoxDataNumber')
 				.text(label)
 				.show();
+		} else {
+			$displayDiv.find('.n2DisplayBoxDataNumber')
+				.hide();
 		};
 	},
 	
 	_setNavigation: function() {
-		var _this = this;
-		
 		var $displayDiv = this._getDisplayDiv();
 
-		var imageCount = this.imageSource.getCount();
-		if( imageCount > 1 ) {
-			$displayDiv.find('.n2DisplayBoxNavBtn').show();
+		var previousIndex = this.imageSource.getPreviousIndex(this.currentImageIndex);
+		if( typeof previousIndex !== 'undefined' ){
+			$displayDiv.find('.n2DisplayBoxNavBtnPrev').show();
 		} else {
-			$displayDiv.find('.n2DisplayBoxNavBtn').hide();
+			$displayDiv.find('.n2DisplayBoxNavBtnPrev').hide();
 		};
-		
-		if( !this.settings.fixedNavigation ) {
-			// Show the prev button, if not the first image in set
-			if( this.currentImageIndex == 0 ) {
-				// Show the images button for Next buttons
-				$displayDiv.find('.n2DisplayBoxNavBtnPrev').hide();
-			};
 
-			// Show the next button, if not the last image in set
-			if( this.currentImageIndex == (imageCount - 1) ) {
-				// Show the images button for Next buttons
-				$displayDiv.find('.n2DisplayBoxNavBtnNext').hide();
-			};
+		var nextIndex = this.imageSource.getNextIndex(this.currentImageIndex);
+		if( typeof nextIndex !== 'undefined' ){
+			$displayDiv.find('.n2DisplayBoxNavBtnNext').show();
+		} else {
+			$displayDiv.find('.n2DisplayBoxNavBtnNext').hide();
 		};
 		
 		// Enable keyboard navigation
@@ -733,13 +742,19 @@ var DisplayBox = $n2.Class({
 	},
 	
 	_nextImage: function(){
-		this.currentImageIndex = this.imageSource.getNextIndex(this.currentImageIndex);
-		this._setImageToView();
+		var nextIndex = this.imageSource.getNextIndex(this.currentImageIndex);
+		if( typeof nextIndex !== 'undefined' ){
+			this.currentImageIndex = nextIndex;
+			this._setImageToView();
+		};
 	},
 	
 	_previousImage: function(){
-		this.currentImageIndex = this.imageSource.getPreviousIndex(this.currentImageIndex);
-		this._setImageToView();
+		var nextIndex = this.imageSource.getPreviousIndex(this.currentImageIndex);
+		if( typeof nextIndex !== 'undefined' ){
+			this.currentImageIndex = nextIndex;
+			this._setImageToView();
+		};
 	},
 	
 	_setImageToView: function() { // show the loading
@@ -749,16 +764,10 @@ var DisplayBox = $n2.Class({
 
 		// Show the loading
 		$displayDiv.find('.n2DisplayBoxLoading').show();
-		if( this.settings.fixedNavigation ) {
-			$displayDiv.find('.n2DisplayBoxImage').hide();
-			$displayDiv.find('.n2DisplayBoxDataOuter').hide();
-			$displayDiv.find('.n2DisplayBoxDataNumber').hide();
-		} else {
-			$displayDiv.find('.n2DisplayBoxImage').hide();
-			$displayDiv.find('.n2DisplayBoxDataOuter').hide();
-			$displayDiv.find('.n2DisplayBoxDataNumber').hide();
-			$displayDiv.find('.n2DisplayBoxNavBtn').hide();
-		};
+		$displayDiv.find('.n2DisplayBoxImage').hide();
+		$displayDiv.find('.n2DisplayBoxDataOuter').hide();
+		$displayDiv.find('.n2DisplayBoxDataNumber').hide();
+		$displayDiv.find('.n2DisplayBoxNavBtn').hide();
 		
 		this.imageSource.loadImage(this.currentImageIndex, function(data){
 			// Load only current image
@@ -801,10 +810,14 @@ var DisplayBox = $n2.Class({
 	
 	_preloadNeighborImages: function() {
 		var previousIndex = this.imageSource.getPreviousIndex(this.currentImageIndex);
-		this.imageSource.loadImage(previousIndex);
+		if( typeof previousIndex !== 'undefined' ){
+			this.imageSource.loadImage(previousIndex);
+		};
 		
 		var nextIndex = this.imageSource.getNextIndex(this.currentImageIndex);
-		this.imageSource.loadImage(nextIndex);
+		if( typeof nextIndex !== 'undefined' ){
+			this.imageSource.loadImage(nextIndex);
+		};
 	},
 	
 	_getDisplayDiv: function() {
@@ -896,8 +909,6 @@ var DisplayBox = $n2.Class({
 			// Configuration related to overlay
 			overlayBgColor: '#000'
 			,overlayOpacity: 0.8
-			// Configuration related to navigation
-			,fixedNavigation: false
 			// Configuration related to container image box
 			,containerBorderSize: 10
 			// Don't alter these variables in any way
