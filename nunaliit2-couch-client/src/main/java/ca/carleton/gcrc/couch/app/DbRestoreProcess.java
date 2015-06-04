@@ -158,7 +158,7 @@ public class DbRestoreProcess {
 				}
 				
 			} catch(Exception e) {
-				throw new Exception("Error loading document at: "+entry.getName());
+				throw new Exception("Error loading document at: "+entry.getName(),e);
 			}
 			
 		}

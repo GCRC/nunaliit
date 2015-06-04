@@ -83,6 +83,18 @@ var DomStyler = $n2.Class({
 	fixElementAndChildren: function($elem, opt, contextDoc){
 		var _this = this;
 		
+		// Call custom code to modify element
+		var dispatchService = this.showService.dispatchService;
+		if( dispatchService ) {
+			dispatchService.synchronousCall(DH, {
+				type:'showPreprocessElement'
+				,elem: $elem
+				,doc: contextDoc
+				,showService: this.showService
+			});
+		};
+		
+		
 		var $set = $elem.find('*').addBack();
 		
 		// Localization
