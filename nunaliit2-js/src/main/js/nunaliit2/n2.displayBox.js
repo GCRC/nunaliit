@@ -156,24 +156,26 @@ var DisplayImageSource = $n2.Class({
 		});
 	},
 	
-	getPreviousIndex: function(index){
-		if( this.images.length < 2 ) return undefined;
+	getPreviousIndex: function(index, cb){
+		if( this.images.length < 2 ) return;
 
-		--index;
-		if( index < 0 ){
-			index = this.images.length - 1;
+		var previousIndex = index - 1;
+		if( previousIndex < 0 ){
+			previousIndex = this.images.length - 1;
 		};
-		return index;
+		
+		cb(previousIndex, index);
 	},
 	
-	getNextIndex: function(index){
-		if( this.images.length < 2 ) return undefined;
+	getNextIndex: function(index, cb){
+		if( this.images.length < 2 ) return;
 
-		++index;
-		if( index >= this.images.length ){
-			index = 0;
+		var nextIndex = index + 1;
+		if( nextIndex >= this.images.length ){
+			nextIndex = 0;
 		};
-		return index;
+		
+		cb(nextIndex, index);
 	}
 });
 
@@ -242,7 +244,6 @@ var DisplayImageSourceDoc = $n2.Class({
 				}
 				,image.doc
 			);
-			$elem.text(image.text);
 		};
 		
 		function displayed($elem, doc, schema, opt_){
@@ -336,24 +337,26 @@ var DisplayImageSourceDoc = $n2.Class({
 		};
 	},
 	
-	getPreviousIndex: function(index){
-		if( this.images.length < 2 ) return undefined;
+	getPreviousIndex: function(index, cb){
+		if( this.images.length < 2 ) return;
 		
-		--index;
-		if( index < 0 ){
-			index = this.images.length - 1;
+		var previousIndex = index - 1;
+		if( previousIndex < 0 ){
+			previousIndex = this.images.length - 1;
 		};
-		return index;
+		
+		cb(previousIndex, index);
 	},
 	
-	getNextIndex: function(index){
-		if( this.images.length < 2 ) return undefined;
+	getNextIndex: function(index, cb){
+		if( this.images.length < 2 ) return;
 
-		++index;
-		if( index >= this.images.length ){
-			index = 0;
+		var nextIndex = index + 1;
+		if( nextIndex >= this.images.length ){
+			nextIndex = 0;
 		};
-		return index;
+		
+		cb(nextIndex, index);
 	}
 });
 
@@ -384,12 +387,13 @@ var DisplayBox = $n2.Class({
 			url: null
 			,text: null
 			,imageSource: null
+			,startIndex: 0
 		},opts_);
 		
 		var _this = this;
 	
 		this.resizing = false;
-		this.currentImageIndex = 0;
+		this.currentImageIndex = opts.startIndex;
 		
 		this._initSettings();
 
@@ -721,40 +725,42 @@ var DisplayBox = $n2.Class({
 	},
 	
 	_setNavigation: function() {
+		var _this = this;
+		
 		var $displayDiv = this._getDisplayDiv();
 
-		var previousIndex = this.imageSource.getPreviousIndex(this.currentImageIndex);
-		if( typeof previousIndex !== 'undefined' ){
-			$displayDiv.find('.n2DisplayBoxNavBtnPrev').show();
-		} else {
-			$displayDiv.find('.n2DisplayBoxNavBtnPrev').hide();
-		};
+		$displayDiv.find('.n2DisplayBoxNavBtnPrev').hide();
+		this.imageSource.getPreviousIndex(this.currentImageIndex,function(previousIndex,currentIndex){
+			if( _this.currentImageIndex === currentIndex ){
+				$displayDiv.find('.n2DisplayBoxNavBtnPrev').show();
+			};
+		});
 
-		var nextIndex = this.imageSource.getNextIndex(this.currentImageIndex);
-		if( typeof nextIndex !== 'undefined' ){
-			$displayDiv.find('.n2DisplayBoxNavBtnNext').show();
-		} else {
-			$displayDiv.find('.n2DisplayBoxNavBtnNext').hide();
-		};
+		$displayDiv.find('.n2DisplayBoxNavBtnNext').hide();
+		this.imageSource.getNextIndex(this.currentImageIndex,function(nextIndex,currentIndex){
+			if( _this.currentImageIndex === currentIndex ){
+				$displayDiv.find('.n2DisplayBoxNavBtnNext').show();
+			};
+		});
 		
 		// Enable keyboard navigation
 		//_enable_keyboard_navigation();
 	},
 	
 	_nextImage: function(){
-		var nextIndex = this.imageSource.getNextIndex(this.currentImageIndex);
-		if( typeof nextIndex !== 'undefined' ){
-			this.currentImageIndex = nextIndex;
-			this._setImageToView();
-		};
+		var _this = this;
+		this.imageSource.getNextIndex(this.currentImageIndex,function(nextIndex){
+			_this.currentImageIndex = nextIndex;
+			_this._setImageToView();
+		});
 	},
 	
 	_previousImage: function(){
-		var nextIndex = this.imageSource.getPreviousIndex(this.currentImageIndex);
-		if( typeof nextIndex !== 'undefined' ){
-			this.currentImageIndex = nextIndex;
-			this._setImageToView();
-		};
+		var _this = this;
+		this.imageSource.getPreviousIndex(this.currentImageIndex,function(previousIndex){
+			_this.currentImageIndex = previousIndex;
+			_this._setImageToView();
+		});
 	},
 	
 	_setImageToView: function() { // show the loading
@@ -771,7 +777,7 @@ var DisplayBox = $n2.Class({
 		
 		this.imageSource.loadImage(this.currentImageIndex, function(data){
 			// Load only current image
-			if( _this.currentImageIndex == data.index ){
+			if( _this.currentImageIndex === data.index ){
 				var $divImageInner = $displayDiv.find('.n2DisplayBoxImageInner');
 				$divImageInner.find('.n2DisplayBoxImage').remove();
 
@@ -809,15 +815,14 @@ var DisplayBox = $n2.Class({
 	},
 	
 	_preloadNeighborImages: function() {
-		var previousIndex = this.imageSource.getPreviousIndex(this.currentImageIndex);
-		if( typeof previousIndex !== 'undefined' ){
-			this.imageSource.loadImage(previousIndex);
-		};
+		var _this = this;
+		this.imageSource.getPreviousIndex(this.currentImageIndex,function(previousIndex){
+			_this.imageSource.loadImage(previousIndex);
+		});
 		
-		var nextIndex = this.imageSource.getNextIndex(this.currentImageIndex);
-		if( typeof nextIndex !== 'undefined' ){
-			this.imageSource.loadImage(nextIndex);
-		};
+		this.imageSource.getNextIndex(this.currentImageIndex,function(nextIndex){
+			_this.imageSource.loadImage(nextIndex);
+		});
 	},
 	
 	_getDisplayDiv: function() {

@@ -541,9 +541,10 @@ var DomStyler = $n2.Class({
 						doc: doc
 						,attName: attachmentName
 						,showService: _this.showService
-						,onSuccess: function(imageSource, doc){
+						,onSuccess: function(imageSource, doc, startIndex){
 							new nunaliit2.displayBox.DisplayBox({
 								imageSource: imageSource
+								,startIndex: startIndex
 							});
 						}
 						,onError: function(err){}
