@@ -480,7 +480,7 @@ var DisplayBox = $n2.Class({
 				_this._close();
 				return false;
 			});
-		var $loadingImg = $('<img>')
+		$('<img>')
 			.addClass('n2DisplayBoxLoadingImg')
 			.appendTo($loadingLink);
 		
@@ -801,10 +801,15 @@ var DisplayBox = $n2.Class({
 						_this.currentImageWidth = Math.floor(_this.currentImageHeight * 3 / 2);
 
 					} else {
-						$('<img>')
+						var $img = $('<img>')
 							.addClass('n2DisplayBoxImage')
 							.attr('src',data.url)
 							.prependTo($divImageInner);
+						
+//						$n2.zoomify.zoomImage({
+//							imageElem: $img
+//							,wrapperElem: $divImageInner
+//						});
 					};
 				};
 				
