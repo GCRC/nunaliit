@@ -241,7 +241,7 @@ $n2.couchRequests = $n2.Class({
 				this.options.documentSource.getDocuments({
 					docIds: docIds
 					,onSuccess: function(docs) {
-						_this._callDocumentListeners(docs, requests);
+						_this._callDocumentListeners(docs, requests, true);
 					}
 				});
 			};
@@ -249,7 +249,7 @@ $n2.couchRequests = $n2.Class({
 		
 		// Report cached documents, if any
 		if( null !== cachedDocs ) {
-			this._callDocumentListeners(cachedDocs, requests);
+			this._callDocumentListeners(cachedDocs, requests, false);
 		};
 	}
 	
@@ -281,16 +281,18 @@ $n2.couchRequests = $n2.Class({
 		});
 	}
 	
-	,_callDocumentListeners: function(docs, requests){
+	,_callDocumentListeners: function(docs, requests, sendVersionEvent){
 		//$n2.log('Requested docs: ',docs);		
 		for(var i=0,e=docs.length; i<e; ++i){
 			var doc = docs[i];
 			
-			this._dispatch({
-				type: 'documentVersion'
-				,docId: doc._id
-				,rev: doc._rev
-			});
+			if( sendVersionEvent ){
+				this._dispatch({
+					type: 'documentVersion'
+					,docId: doc._id
+					,rev: doc._rev
+				});
+			};
 			
 			this._dispatch({
 				type: 'documentContent'

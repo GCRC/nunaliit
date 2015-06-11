@@ -83,6 +83,18 @@ var DomStyler = $n2.Class({
 	fixElementAndChildren: function($elem, opt, contextDoc){
 		var _this = this;
 		
+		// Call custom code to modify element
+		var dispatchService = this.showService.dispatchService;
+		if( dispatchService ) {
+			dispatchService.synchronousCall(DH, {
+				type:'showPreprocessElement'
+				,elem: $elem
+				,doc: contextDoc
+				,showService: this.showService
+			});
+		};
+		
+		
 		var $set = $elem.find('*').addBack();
 		
 		// Localization
@@ -141,7 +153,7 @@ var DomStyler = $n2.Class({
 		// Media View
 		$set.filter('.n2s_insertMediaView').each(function(){
 			var $jq = $(this);
-			_this._insertMediaView(contextDoc, $jq, opt);
+			_this._insertMediaView(contextDoc, $jq);
 			$jq.removeClass('n2s_insertMediaView').addClass('n2s_insertedMediaView');
 		});
 		
@@ -256,6 +268,37 @@ var DomStyler = $n2.Class({
 			_this._select($jq, opt);
 			$jq.removeClass('n2s_select').addClass('n2s_selected');
 		});
+
+		// Install Tiled Image Click
+		$set.filter('.n2s_installTiledImageClick').each(function(){
+			var $jq = $(this);
+			_this._installTiledImageClick(contextDoc, $jq);
+			$jq.removeClass('n2s_installTiledImageClick').addClass('n2s_installedTiledImageClick');
+		});
+	},
+	
+	_updatedDocument: function(doc){
+		var _this = this;
+		
+		var docId = undefined;
+		if( doc ){
+			docId = doc._id;
+		};
+		
+		var docIdClass = undefined;
+		if( docId ){
+			docIdClass = 'n2s_document_' + $n2.utils.stringToHtmlId(docId);
+		};
+		
+		if( docIdClass ){
+			$('.'+docIdClass).each(function(){
+				var $jq = $(this);
+				
+				if( $jq.hasClass('n2s_insertedMediaView') ){
+					_this._insertMediaView(doc, $jq);
+				};
+			});
+		};
 	},
 
 	_localize: function($jq, opt_) {
@@ -377,14 +420,31 @@ var DomStyler = $n2.Class({
 			);
 	},
 
-	_insertMediaView: function(data, $insertView, opt_) {
+	_insertMediaView: function(data, $insertView) {
 		var _this = this;
+		
+		this._associateDocumentToElement(data, $insertView);
+
+		$insertView.empty();
+		
+		var docId = this._getDocumentIdentifier(data, $insertView);
+		
 		var attachmentName = $insertView.attr('nunaliit-attachment');
 		if( !attachmentName ) {
 			attachmentName = $insertView.text();
 		};
 
-		$insertView.empty();
+		if( !data ){
+			var label = _loc('Media({docId},{attName})',{
+				docId: docId
+				,attName: attachmentName
+			});
+			$('<span>')
+				.addClass('n2s_insertMediaView_wait')
+				.text(label)
+				.appendTo($insertView);
+			return;
+		};
 		
 		var attachment = null;
 		if( data._attachments 
@@ -488,9 +548,10 @@ var DomStyler = $n2.Class({
 						doc: doc
 						,attName: attachmentName
 						,showService: _this.showService
-						,onSuccess: function(imageSource, doc){
+						,onSuccess: function(imageSource, doc, startIndex){
 							new nunaliit2.displayBox.DisplayBox({
 								imageSource: imageSource
+								,startIndex: startIndex
 							});
 						}
 						,onError: function(err){}
@@ -944,6 +1005,62 @@ var DomStyler = $n2.Class({
 				}
 			);
 		};
+	},
+
+	_installTiledImageClick: function(doc, $elem){
+		var _this = this;
+		
+		var docId = this._getDocumentIdentifier(doc, $elem);
+		var attName = $elem.attr('nunaliit-attachment');
+		
+		if( !docId ){
+			$elem.attr('nunaliit-error','No document specified');
+		} else if( !attName ){
+			$elem.attr('nunaliit-error','No attachment specified');
+		} else {
+			// docId and attName are specified
+			// Get URL
+			var url = this.db.getAttachmentUrl({_id:docId},attName);
+			
+			$elem
+				.css('cursor','pointer')
+				.click(function(){
+					new $n2.displayTiledImage.DisplayTiledImage({
+						url: url
+						,tileMapResourceName: 'tilemapresource.xml'
+						,docId: docId
+						,showService: _this.showService
+					});
+					return false;
+				});
+		};
+	},
+	
+	_getDocumentIdentifier: function(doc, $elem){
+		var docId = undefined;
+		if( doc ){
+			docId = doc._id;
+		};
+		
+		if( !docId ){
+			docId = $elem.attr('nunaliit-document');
+		};
+		
+		return docId;
+	},
+	
+	_associateDocumentToElement: function(doc, $elem){
+		var docId = this._getDocumentIdentifier(doc, $elem);
+
+		if( docId ){
+			var docIdClass = 'n2s_document_' + $n2.utils.stringToHtmlId(docId);
+			$elem.addClass(docIdClass);
+			
+			if( !doc ){
+				// Request this document
+				this.showService._requestDocument(docId);
+			};
+		};
 	}
 });
 
@@ -1069,6 +1186,7 @@ var Show = $n2.Class({
 			};
 			dispatchService.register(DH, 'start', f);
 			dispatchService.register(DH, 'documentListResults', f);
+			dispatchService.register(DH, 'documentContent', f);
 		};
 	},
 
@@ -1521,6 +1639,12 @@ var Show = $n2.Class({
 		};
 	},
 	
+	_handleDocumentContent: function(doc){
+		if( doc ){
+			this.domStyler._updatedDocument(doc);
+		};
+	},
+	
 	_handleDispatch: function(m, address, dispatchService){
 		if( 'start' === m.type ){
 			// Accept Post-process display functions that are
@@ -1538,6 +1662,9 @@ var Show = $n2.Class({
 			
 		} else if( 'documentListResults' === m.type ) {
 			this._handleDocumentListResults(m);
+			
+		} else if( 'documentContent' === m.type ) {
+			this._handleDocumentContent(m.doc);
 		};
 	}
 });

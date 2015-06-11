@@ -49,8 +49,12 @@ var DisplayImageSource = $n2.Class({
 		this.images = [];
 	},
 	
-	getCount: function(){
-		return this.images.length;
+	getCountInfo: function(index){
+		var result = {
+			count: this.images.length
+			,index: (index + 1)
+		};
+		return result;
 	},
 	
 	getInfo: function(index){
@@ -152,20 +156,26 @@ var DisplayImageSource = $n2.Class({
 		});
 	},
 	
-	getPreviousIndex: function(index){
-		--index;
-		if( index < 0 ){
-			index = this.images.length - 1;
+	getPreviousIndex: function(index, cb){
+		if( this.images.length < 2 ) return;
+
+		var previousIndex = index - 1;
+		if( previousIndex < 0 ){
+			previousIndex = this.images.length - 1;
 		};
-		return index;
+		
+		cb(previousIndex, index);
 	},
 	
-	getNextIndex: function(index){
-		++index;
-		if( index >= this.images.length ){
-			index = 0;
+	getNextIndex: function(index, cb){
+		if( this.images.length < 2 ) return;
+
+		var nextIndex = index + 1;
+		if( nextIndex >= this.images.length ){
+			nextIndex = 0;
 		};
-		return index;
+		
+		cb(nextIndex, index);
 	}
 });
 
@@ -187,8 +197,12 @@ var DisplayImageSourceDoc = $n2.Class({
 		this.showService = opts.showService;
 	},
 	
-	getCount: function(){
-		return this.images.length;
+	getCountInfo: function(index){
+		var result = {
+			count: this.images.length
+			,index: (index + 1)
+		};
+		return result;
 	},
 	
 	getInfo: function(index){
@@ -230,7 +244,6 @@ var DisplayImageSourceDoc = $n2.Class({
 				}
 				,image.doc
 			);
-			$elem.text(image.text);
 		};
 		
 		function displayed($elem, doc, schema, opt_){
@@ -324,20 +337,26 @@ var DisplayImageSourceDoc = $n2.Class({
 		};
 	},
 	
-	getPreviousIndex: function(index){
-		--index;
-		if( index < 0 ){
-			index = this.images.length - 1;
+	getPreviousIndex: function(index, cb){
+		if( this.images.length < 2 ) return;
+		
+		var previousIndex = index - 1;
+		if( previousIndex < 0 ){
+			previousIndex = this.images.length - 1;
 		};
-		return index;
+		
+		cb(previousIndex, index);
 	},
 	
-	getNextIndex: function(index){
-		++index;
-		if( index >= this.images.length ){
-			index = 0;
+	getNextIndex: function(index, cb){
+		if( this.images.length < 2 ) return;
+
+		var nextIndex = index + 1;
+		if( nextIndex >= this.images.length ){
+			nextIndex = 0;
 		};
-		return index;
+		
+		cb(nextIndex, index);
 	}
 });
 
@@ -368,12 +387,13 @@ var DisplayBox = $n2.Class({
 			url: null
 			,text: null
 			,imageSource: null
+			,startIndex: 0
 		},opts_);
 		
 		var _this = this;
 	
 		this.resizing = false;
-		this.currentImageIndex = 0;
+		this.currentImageIndex = opts.startIndex;
 		
 		this._initSettings();
 
@@ -460,7 +480,7 @@ var DisplayBox = $n2.Class({
 				_this._close();
 				return false;
 			});
-		var $loadingImg = $('<img>')
+		$('<img>')
 			.addClass('n2DisplayBoxLoadingImg')
 			.appendTo($loadingLink);
 		
@@ -688,17 +708,19 @@ var DisplayBox = $n2.Class({
 		);
 
 		// If we have an image set, display 'Image X of X'
-		var imageCount = this.imageSource.getCount();
-		if( imageCount > 1 ) {
-			var current = this.currentImageIndex + 1;
+		var imageCountInfo = this.imageSource.getCountInfo(this.currentImageIndex);
+		if( imageCountInfo ) {
 			var label = _loc('{index}/{count}', {
-				index: current
-				,count: imageCount
+				index: imageCountInfo.index
+				,count: imageCountInfo.count
 			});
 			
 			$displayDiv.find('.n2DisplayBoxDataNumber')
 				.text(label)
 				.show();
+		} else {
+			$displayDiv.find('.n2DisplayBoxDataNumber')
+				.hide();
 		};
 	},
 	
@@ -707,39 +729,38 @@ var DisplayBox = $n2.Class({
 		
 		var $displayDiv = this._getDisplayDiv();
 
-		var imageCount = this.imageSource.getCount();
-		if( imageCount > 1 ) {
-			$displayDiv.find('.n2DisplayBoxNavBtn').show();
-		} else {
-			$displayDiv.find('.n2DisplayBoxNavBtn').hide();
-		};
-		
-		if( !this.settings.fixedNavigation ) {
-			// Show the prev button, if not the first image in set
-			if( this.currentImageIndex == 0 ) {
-				// Show the images button for Next buttons
-				$displayDiv.find('.n2DisplayBoxNavBtnPrev').hide();
+		$displayDiv.find('.n2DisplayBoxNavBtnPrev').hide();
+		this.imageSource.getPreviousIndex(this.currentImageIndex,function(previousIndex,currentIndex){
+			if( _this.currentImageIndex === currentIndex ){
+				$displayDiv.find('.n2DisplayBoxNavBtnPrev').show();
 			};
+		});
 
-			// Show the next button, if not the last image in set
-			if( this.currentImageIndex == (imageCount - 1) ) {
-				// Show the images button for Next buttons
-				$displayDiv.find('.n2DisplayBoxNavBtnNext').hide();
+		$displayDiv.find('.n2DisplayBoxNavBtnNext').hide();
+		this.imageSource.getNextIndex(this.currentImageIndex,function(nextIndex,currentIndex){
+			if( _this.currentImageIndex === currentIndex ){
+				$displayDiv.find('.n2DisplayBoxNavBtnNext').show();
 			};
-		};
+		});
 		
 		// Enable keyboard navigation
 		//_enable_keyboard_navigation();
 	},
 	
 	_nextImage: function(){
-		this.currentImageIndex = this.imageSource.getNextIndex(this.currentImageIndex);
-		this._setImageToView();
+		var _this = this;
+		this.imageSource.getNextIndex(this.currentImageIndex,function(nextIndex){
+			_this.currentImageIndex = nextIndex;
+			_this._setImageToView();
+		});
 	},
 	
 	_previousImage: function(){
-		this.currentImageIndex = this.imageSource.getPreviousIndex(this.currentImageIndex);
-		this._setImageToView();
+		var _this = this;
+		this.imageSource.getPreviousIndex(this.currentImageIndex,function(previousIndex){
+			_this.currentImageIndex = previousIndex;
+			_this._setImageToView();
+		});
 	},
 	
 	_setImageToView: function() { // show the loading
@@ -749,20 +770,14 @@ var DisplayBox = $n2.Class({
 
 		// Show the loading
 		$displayDiv.find('.n2DisplayBoxLoading').show();
-		if( this.settings.fixedNavigation ) {
-			$displayDiv.find('.n2DisplayBoxImage').hide();
-			$displayDiv.find('.n2DisplayBoxDataOuter').hide();
-			$displayDiv.find('.n2DisplayBoxDataNumber').hide();
-		} else {
-			$displayDiv.find('.n2DisplayBoxImage').hide();
-			$displayDiv.find('.n2DisplayBoxDataOuter').hide();
-			$displayDiv.find('.n2DisplayBoxDataNumber').hide();
-			$displayDiv.find('.n2DisplayBoxNavBtn').hide();
-		};
+		$displayDiv.find('.n2DisplayBoxImage').hide();
+		$displayDiv.find('.n2DisplayBoxDataOuter').hide();
+		$displayDiv.find('.n2DisplayBoxDataNumber').hide();
+		$displayDiv.find('.n2DisplayBoxNavBtn').hide();
 		
 		this.imageSource.loadImage(this.currentImageIndex, function(data){
 			// Load only current image
-			if( _this.currentImageIndex == data.index ){
+			if( _this.currentImageIndex === data.index ){
 				var $divImageInner = $displayDiv.find('.n2DisplayBoxImageInner');
 				$divImageInner.find('.n2DisplayBoxImage').remove();
 
@@ -786,10 +801,15 @@ var DisplayBox = $n2.Class({
 						_this.currentImageWidth = Math.floor(_this.currentImageHeight * 3 / 2);
 
 					} else {
-						$('<img>')
+						var $img = $('<img>')
 							.addClass('n2DisplayBoxImage')
 							.attr('src',data.url)
 							.prependTo($divImageInner);
+						
+//						$n2.zoomify.zoomImage({
+//							imageElem: $img
+//							,wrapperElem: $divImageInner
+//						});
 					};
 				};
 				
@@ -800,11 +820,14 @@ var DisplayBox = $n2.Class({
 	},
 	
 	_preloadNeighborImages: function() {
-		var previousIndex = this.imageSource.getPreviousIndex(this.currentImageIndex);
-		this.imageSource.loadImage(previousIndex);
+		var _this = this;
+		this.imageSource.getPreviousIndex(this.currentImageIndex,function(previousIndex){
+			_this.imageSource.loadImage(previousIndex);
+		});
 		
-		var nextIndex = this.imageSource.getNextIndex(this.currentImageIndex);
-		this.imageSource.loadImage(nextIndex);
+		this.imageSource.getNextIndex(this.currentImageIndex,function(nextIndex){
+			_this.imageSource.loadImage(nextIndex);
+		});
 	},
 	
 	_getDisplayDiv: function() {
@@ -896,8 +919,6 @@ var DisplayBox = $n2.Class({
 			// Configuration related to overlay
 			overlayBgColor: '#000'
 			,overlayOpacity: 0.8
-			// Configuration related to navigation
-			,fixedNavigation: false
 			// Configuration related to container image box
 			,containerBorderSize: 10
 			// Don't alter these variables in any way
