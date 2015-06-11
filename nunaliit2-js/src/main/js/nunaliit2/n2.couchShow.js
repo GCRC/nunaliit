@@ -1008,6 +1008,8 @@ var DomStyler = $n2.Class({
 	},
 	
 	_insertTiledImageView: function(doc, $elem){
+		var _this = this;
+		
 		var docId = this._getDocumentIdentifier(doc, $elem);
 		var attName = $elem.attr('nunaliit-attachment');
 		
@@ -1028,6 +1030,8 @@ var DomStyler = $n2.Class({
 					new $n2.displayTiledImage.DisplayTiledImage({
 						url: url
 						,tileMapResourceName: 'tilemapresource.xml'
+						,docId: docId
+						,showService: _this.showService
 					});
 					return false;
 				});

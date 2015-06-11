@@ -4,6 +4,53 @@
 	right: 0px;
 	top: 0px;
 	bottom: 0px;
+	margin: 0px;
+	padding: 0px;
 	background-color: #f0f0f0;
 	z-index: 100;
+}
+
+.n2TiledImage_container {
+	position: absolute;
+	left: 10px;
+	right: 10px;
+	top: 10px;
+	bottom: 10px;
+}
+
+.n2TiledImage_map {
+	position: absolute;
+	left: 0px;
+	right: 0px;
+	top: 0px;
+	bottom: 0px;
+	background-color: #000000;
+}
+
+
+.n2TiledImage_footer {
+	position: absolute;
+	left: 0px;
+	right: 0px;
+	bottom: 0px;
+	background-color: #f0f0f0;
+}
+
+.n2TiledImage_close {
+	display: block;
+	width: 15px;
+	height: 15px;
+	margin: 10px;
+	cursor:pointer;
+	background: transparent url('images/x_icon_naked_15.png') no-repeat 0 0;
+	float: right;
+	content: ''
+}
+
+.n2TiledImage_close:hover {
+	background-position: -15px 0;
+}
+
+.n2TiledImage_desc {
+	margin: 5px;
 }

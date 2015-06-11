@@ -57,18 +57,26 @@ var DisplayTiledImage = $n2.Class({
 
 	maxResolution: null,
 
+	docId: null,
+
+	showService: null,
+
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			url: null
 			,parent: null
 			,tileMapResourceName: null
 			,extension: 'png'
+			,docId: null
+			,showService: null
 		},opts_);
 		
 		var _this = this;
 		
 		this.url = opts.url;
 		this.extension = opts.extension;
+		this.docId = opts.docId;
+		this.showService = opts.showService;
 		
 		// Compute parent
 		var $parent;
@@ -114,12 +122,50 @@ var DisplayTiledImage = $n2.Class({
 			});
 		};
 	},
-	
+
 	_draw: function(){
 		var _this = this;
 
+		var $elem = $('#'+this.elemId).empty();
+
+		var $container = $('<div>')
+			.addClass('n2TiledImage_container')
+			.appendTo($elem);
+		
+		var mapId = $n2.getUniqueId();
+		$('<div>')
+			.attr('id',mapId)
+			.addClass('n2TiledImage_map')
+			.appendTo($container);
+
+		var $footer = $('<div>')
+			.addClass('n2TiledImage_footer')
+			.appendTo($container);
+		
+		$('<div>')
+			.addClass('n2TiledImage_close')
+			.appendTo($footer)
+			.click(function(){
+				_this._close();
+				return false;
+			});
+		
+		if( this.docId 
+		 && this.showService ){
+			var $desc = $('<div>')
+				.addClass('n2TiledImage_desc')
+				.appendTo($footer);
+			this.showService.printBriefDescription($desc, this.docId);
+		};
+		
+		this._drawMap(mapId);
+	},
+
+	_drawMap: function(mapDivId){
+		var _this = this;
+
         var options = {
-            div: this.elemId,
+            div: mapDivId,
             controls: [],
             maxExtent: this.mapBounds,
             maxResolution: this.maxResolution,
@@ -139,11 +185,8 @@ var DisplayTiledImage = $n2.Class({
         map.zoomToExtent(this.mapBounds);
   
         map.addControls([
-			new OpenLayers.Control.PanZoomBar(),
-			new OpenLayers.Control.Navigation(),
-			new OpenLayers.Control.MousePosition(),
-			new OpenLayers.Control.ArgParser(),
-			new OpenLayers.Control.Attribution()
+			new OpenLayers.Control.Zoom(),
+			new OpenLayers.Control.Navigation()
 		]);
 
         function getURL(bounds) {
@@ -165,7 +208,7 @@ var DisplayTiledImage = $n2.Class({
             };
         };
 	},
-	
+
 	_close: function(){
 		$('#'+this.elemId).remove();
 	},
