@@ -68,6 +68,8 @@ var DocumentListService = $n2.Class({
 		if( 'documentListQuery' === m.type ){
 			if( 'layer' === m.listType ){
 				this._handleLayerQuery(m);
+			} else if( 'schema' === m.listType ){
+				this._handleSchemaQuery(m);
 			};
 		};
 	},
@@ -88,6 +90,46 @@ var DocumentListService = $n2.Class({
 		 && keys.length > 0 ){
 			this.atlasDesign.queryView({
 				viewName: 'layers'
+				,keys: keys
+				,include_docs: true
+				,onSuccess: function(rows){
+					var docIds = [];
+					var docs = [];
+					for(var i=0,e=rows.length; i<e; ++i){
+						docIds.push( rows[i].id );
+						docs.push( rows[i].doc );
+					};
+					_this.dispatchService.send(DH,{
+						type: 'documentListResults'
+						,listType: m.listType
+						,listName: m.listName
+						,docIds: docIds
+						,docs: docs
+					});
+				}
+				,onError: function(err){
+					$n2.log('Unable to retrieve document list ('+m.listType+'/'+m.listName+')',err);
+				}
+			});
+		};
+	},
+	
+	_handleSchemaQuery: function(m){
+		var _this = this;
+		
+		var keys = [];
+		if( m.listName ){
+			keys = m.listName.split(',');
+			for(var i=0,e=keys.length; i<e; ++i){
+				keys[i] = $n2.trim( keys[i] );
+			};
+		};
+		
+		if( this.dispatchService 
+		 && this.atlasDesign 
+		 && keys.length > 0 ){
+			this.atlasDesign.queryView({
+				viewName: 'nunaliit-schema'
 				,keys: keys
 				,include_docs: true
 				,onSuccess: function(rows){
