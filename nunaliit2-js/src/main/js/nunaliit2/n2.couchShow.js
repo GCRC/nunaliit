@@ -268,6 +268,13 @@ var DomStyler = $n2.Class({
 			_this._select($jq, opt);
 			$jq.removeClass('n2s_select').addClass('n2s_selected');
 		});
+
+		// Tiled Image
+		$set.filter('.n2s_insertTiledImageView').each(function(){
+			var $jq = $(this);
+			_this._insertTiledImageView(contextDoc, $jq);
+			$jq.removeClass('n2s_insertTiledImageView').addClass('n2s_insertedTiledImageView');
+		});
 	},
 	
 	_updatedDocument: function(doc){
@@ -997,6 +1004,33 @@ var DomStyler = $n2.Class({
 					});
 				}
 			);
+		};
+	},
+	
+	_insertTiledImageView: function(doc, $elem){
+		var docId = this._getDocumentIdentifier(doc, $elem);
+		var attName = $elem.attr('nunaliit-attachment');
+		
+		if( !docId ){
+			$elem.attr('nunaliit-error','No document specified');
+		} else if( !attName ){
+			$elem.attr('nunaliit-error','No attachment specified');
+		} else {
+			// docId and attName are specified
+			// Get URL
+			var url = this.db.getAttachmentUrl({_id:docId},attName);
+			
+			$elem.empty();
+			$('<button>')
+				.text( _loc('View Image') )
+				.appendTo($elem)
+				.click(function(){
+					new $n2.displayTiledImage.DisplayTiledImage({
+						url: url
+						,tileMapResourceName: 'tilemapresource.xml'
+					});
+					return false;
+				});
 		};
 	},
 	

@@ -1,0 +1,9 @@
+.n2TiledImage {
+	position: absolute;
+	left: 0px;
+	right: 0px;
+	top: 0px;
+	bottom: 0px;
+	background-color: #f0f0f0;
+	z-index: 100;
+}
