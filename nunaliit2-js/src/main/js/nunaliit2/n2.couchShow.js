@@ -269,11 +269,11 @@ var DomStyler = $n2.Class({
 			$jq.removeClass('n2s_select').addClass('n2s_selected');
 		});
 
-		// Tiled Image
-		$set.filter('.n2s_insertTiledImageView').each(function(){
+		// Install Tiled Image Click
+		$set.filter('.n2s_installTiledImageClick').each(function(){
 			var $jq = $(this);
-			_this._insertTiledImageView(contextDoc, $jq);
-			$jq.removeClass('n2s_insertTiledImageView').addClass('n2s_insertedTiledImageView');
+			_this._installTiledImageClick(contextDoc, $jq);
+			$jq.removeClass('n2s_installTiledImageClick').addClass('n2s_installedTiledImageClick');
 		});
 	},
 	
@@ -1006,8 +1006,8 @@ var DomStyler = $n2.Class({
 			);
 		};
 	},
-	
-	_insertTiledImageView: function(doc, $elem){
+
+	_installTiledImageClick: function(doc, $elem){
 		var _this = this;
 		
 		var docId = this._getDocumentIdentifier(doc, $elem);
@@ -1022,10 +1022,8 @@ var DomStyler = $n2.Class({
 			// Get URL
 			var url = this.db.getAttachmentUrl({_id:docId},attName);
 			
-			$elem.empty();
-			$('<button>')
-				.text( _loc('View Image') )
-				.appendTo($elem)
+			$elem
+				.css('cursor','pointer')
 				.click(function(){
 					new $n2.displayTiledImage.DisplayTiledImage({
 						url: url
