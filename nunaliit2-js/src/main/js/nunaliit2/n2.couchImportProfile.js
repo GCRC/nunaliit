@@ -435,7 +435,8 @@ var ImportAnalyzer = $n2.Class({
 						};
 						
 						// Next entry
-						processEntries();
+						window.setTimeout(processEntries,0); // Do not blow stack on large files
+						//processEntries(); 
 					}
 				});
 				
@@ -447,7 +448,8 @@ var ImportAnalyzer = $n2.Class({
 				});
 				
 				// Next entry
-				processEntries();
+				window.setTimeout(processEntries,0); // Do not blow stack on large files
+				//processEntries();
 			};
 		};
 	},
