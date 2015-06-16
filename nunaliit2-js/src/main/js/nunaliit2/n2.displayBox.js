@@ -42,9 +42,9 @@ var DisplayImageSource = $n2.Class({
 	images: null,
 	
 	initialize: function(opts_){
-		var opts = $n2.extend({
-			
-		},opts_);
+//		var opts = $n2.extend({
+//			
+//		},opts_);
 		
 		this.images = [];
 	},
@@ -361,6 +361,39 @@ var DisplayImageSourceDoc = $n2.Class({
 });
 
 //=========================================================================
+/*
+
+<div id="nunaliit2_uniqueId_127" class="n2DisplayBoxOuter" style="top: 84.5px; left: 0px;">
+	<!-- This div is for setting the top position -->
+	<div class="n2DisplayBoxImageOuter" style="width: 906px; height: 685px;">
+		<div class="n2DisplayBoxImageInner">
+			<img class="n2DisplayBoxImage" src="./db/4ae77032f04d840a2f0fd8c7f1006562/GOPR0027.jpg" style="width: 886px; height: 665px; display: inline;">
+			<a href="#" class="n2DisplayBoxNavBtn n2DisplayBoxNavBtnPrev" style="display: none; height: 685px;"></a>
+			<a href="#" class="n2DisplayBoxNavBtn n2DisplayBoxNavBtnNext" style="display: none; height: 685px;"></a>
+			<div class="n2DisplayBoxLoading" style="display: none;">
+				<a class="n2DisplayBoxLoadingLink" href="#">
+					<img class="n2DisplayBoxLoadingImg">
+				</a>
+			</div>
+		</div>
+	</div>
+	<div class="n2DisplayBoxDataOuter" style="display: block; width: 886px;">
+		<div class="n2DisplayBoxDataInner">
+			<div class="n2DisplayBoxDataDetails">
+				<span class="n2DisplayBoxDataCaption n2ShowUpdateDoc_4ae77032f04d840a2f0fd8c7f1006562 n2ShowDocBrief" style="display: inline;">
+					<span class="n2s_localized">Demo Media</span>
+					(Breakfast at Voyageur Camp)
+				</span>
+				<span class="n2DisplayBoxDataNumber" style="display: block;">1/1</span>
+			</div>
+			<div class="n2DisplayBoxButtons">
+				<a href="#" class="n2DisplayBoxButtonClose"></a>
+			</div>
+		</div>
+	</div>
+</div>
+
+ */
 
 var DisplayBox = $n2.Class({
 	
@@ -377,10 +410,9 @@ var DisplayBox = $n2.Class({
 	imageSource: null,
 	
 	currentImageIndex: null,
-	
-	currentImageWidth: null,
-	
-	currentImageHeight: null,
+
+	/* Information about height and width */
+	currentImage: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -453,7 +485,7 @@ var DisplayBox = $n2.Class({
 //		var $navDiv = $('<div>')
 //			.addClass('n2DisplayBoxNav')
 //			.appendTo($imageInnerDiv);
-		var $btnPrev = $('<a>')
+		$('<a>')
 			.attr('href','#')
 			.addClass('n2DisplayBoxNavBtn n2DisplayBoxNavBtnPrev')
 			.appendTo($imageInnerDiv)
@@ -461,7 +493,7 @@ var DisplayBox = $n2.Class({
 				_this._previousImage();
 				return false;
 			});
-		var $btnNext = $('<a>')
+		$('<a>')
 			.attr('href','#')
 			.addClass('n2DisplayBoxNavBtn n2DisplayBoxNavBtnNext')
 			.appendTo($imageInnerDiv)
@@ -498,10 +530,10 @@ var DisplayBox = $n2.Class({
 		var $dataDetailsDiv = $('<div>')
 			.addClass('n2DisplayBoxDataDetails')
 			.appendTo($dataInnerDiv);
-		var $captionSpan = $('<span>')
+		$('<span>')
 			.addClass('n2DisplayBoxDataCaption')
 			.appendTo($dataDetailsDiv);
-		var $numberSpan = $('<span>')
+		$('<span>')
 			.addClass('n2DisplayBoxDataNumber')
 			.appendTo($dataDetailsDiv);
 		var $dataButtonsDiv = $('<div>')
@@ -621,8 +653,8 @@ var DisplayBox = $n2.Class({
 		
 		this.resizing = true;
 		
-		var intImageWidth = this.currentImageWidth;
-		var intImageHeight = this.currentImageHeight;
+		var intImageWidth = this.currentImage.width;
+		var intImageHeight = this.currentImage.height;
 		if( this.settings.constrainImage ) {
 			var pageSizes = this._getPageSize();
 			var ratio = 1;
@@ -639,7 +671,7 @@ var DisplayBox = $n2.Class({
 			};
 			intImageWidth = Math.floor(ratio * intImageWidth);
 			intImageHeight = Math.floor(ratio * intImageHeight);
-			$displayDiv.find('.n2DisplayBoxImage')
+			$displayDiv.find('.n2DisplayBoxImageWrapper')
 				.css({ width: intImageWidth, height: intImageHeight })
 				.hide();
 //$n2.log('intImageWidth='+intImageWidth+' intImageHeight='+intImageHeight);			
@@ -648,18 +680,9 @@ var DisplayBox = $n2.Class({
 			$displayDiv.find('.n2DisplayBoxDataNumber').hide();
 		};
 		
-		// Get current width and height
-		var $imageBox = $displayDiv.find('.n2DisplayBoxImage');
-		var intCurrentWidth = $imageBox.width();
-		var intCurrentHeight = $imageBox.height();
-		
 		// Get the width and height of the selected image plus the padding
 		var intWidth = (intImageWidth + (this.settings.containerBorderSize * 2)); // Plus the image's width and the left and right padding value
-		var intHeight = (intImageHeight + (this.settings.containerBorderSize * 2)); // Plus the image's height and the left and right padding value
-		
-		// Differences
-		var intDiffW = intCurrentWidth - intWidth;
-		var intDiffH = intCurrentHeight - intHeight;
+		var intHeight = (intImageHeight + (this.settings.containerBorderSize * 2)); // Plus the image's height and the top and bottom padding value
 		
 		$displayDiv.find('.n2DisplayBoxImageOuter').css({
 			width: intWidth
@@ -682,7 +705,7 @@ var DisplayBox = $n2.Class({
 		var $displayDiv = this._getDisplayDiv();
 
 		$displayDiv.find('.n2DisplayBoxLoading').hide();
-		$displayDiv.find('.n2DisplayBoxImage').fadeIn(function() {
+		$displayDiv.find('.n2DisplayBoxImageWrapper').fadeIn(function() {
 			_this._showImageData();
 			_this._setNavigation();
 		});
@@ -770,7 +793,7 @@ var DisplayBox = $n2.Class({
 
 		// Show the loading
 		$displayDiv.find('.n2DisplayBoxLoading').show();
-		$displayDiv.find('.n2DisplayBoxImage').hide();
+		$displayDiv.find('.n2DisplayBoxImageWrapper').hide();
 		$displayDiv.find('.n2DisplayBoxDataOuter').hide();
 		$displayDiv.find('.n2DisplayBoxDataNumber').hide();
 		$displayDiv.find('.n2DisplayBoxNavBtn').hide();
@@ -779,18 +802,20 @@ var DisplayBox = $n2.Class({
 			// Load only current image
 			if( _this.currentImageIndex === data.index ){
 				var $divImageInner = $displayDiv.find('.n2DisplayBoxImageInner');
-				$divImageInner.find('.n2DisplayBoxImage').remove();
+				$divImageInner.find('.n2DisplayBoxImageWrapper').remove();
 
 				// Save original width and height
-				_this.currentImageWidth = data.width;
-				_this.currentImageHeight = data.height;
+				_this.currentImage = {
+					width: data.width
+					,height: data.height
+				};
 				
 				if( 'image' === data.type ){
 					if( data.isPhotosphere 
 					 && $n2.photosphere 
 					 && $n2.photosphere.IsAvailable() ) {
 						var $photosphere = $('<div>')
-							.addClass('n2DisplayBoxImage')
+							.addClass('n2DisplayBoxImageWrapper')
 							.prependTo($divImageInner);
 						new $n2.photosphere.PhotosphereDisplay({
 							elem: $photosphere
@@ -798,17 +823,42 @@ var DisplayBox = $n2.Class({
 						});
 
 						// In phtoshpere, make image a fixed ratio
-						_this.currentImageWidth = Math.floor(_this.currentImageHeight * 3 / 2);
+						_this.currentImage.width = Math.floor(_this.currentImage.height * 3 / 2);
 
 					} else {
-						var $img = $('<img>')
+						var $wrapper = $('<div>')
+							.addClass('n2DisplayBoxImageWrapper')
+							.prependTo($divImageInner);
+						
+//						$('<div>')
+//							.addClass('n2DisplayBoxImageZoomPlus')
+//							.text('plus')
+//							.appendTo($wrapper)
+//							.click(function(){
+//								_this._imageZoom(+1);
+//							});
+//						
+//						$('<div>')
+//							.addClass('n2DisplayBoxImageZoomMinus')
+//							.text('minus')
+//							.appendTo($wrapper)
+//							.click(function(){
+//								_this._imageZoom(-1);
+//							});
+							
+						//var $img = 
+						$('<img>')
 							.addClass('n2DisplayBoxImage')
 							.attr('src',data.url)
-							.prependTo($divImageInner);
+							.css({
+								height: '100%'
+								,width: '100%'
+							})
+							.appendTo($wrapper);
 						
 //						$n2.zoomify.zoomImage({
 //							imageElem: $img
-//							,wrapperElem: $divImageInner
+//							,wrapperElem: $wrapper
 //						});
 					};
 				};
@@ -924,6 +974,15 @@ var DisplayBox = $n2.Class({
 			// Don't alter these variables in any way
 			,constrainImage: true
 		};
+	},
+	
+	_imageZoom: function(change){
+		var $displayDiv = this._getDisplayDiv();
+		if( $displayDiv.length < 1 ) return;
+		
+		var $img = $displayDiv.find('.n2DisplayBoxImage');
+		$n2.log('width:'+$img.css('width')+' height:'+$img.css('height'));
+		
 	}
 });
 
