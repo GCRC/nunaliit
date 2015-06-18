@@ -191,6 +191,7 @@ $n2.l10n.addLocalizedStrings('fr',{
 	,"List is required on transformation":"Une liste est nécessaire durant les transformations"
 	,"Load Info From Database":"Charger l'information de la base de données"
 	,"Load Listing of Media Directory":"Charger la liste des fichiers médiatiques"
+	,"Loading...":"Chargement en cours..."
 	,"Loading document: ":"Chargement de document"
 	,"Login":"Ouvrir session"
 	,"Logout":"Fermer session"
