@@ -86,7 +86,8 @@ function canEditDoc(data) {
 	// On an atlas with a submission database, any user can submit
 	// a change to any document
 	if( typeof(n2atlas) === 'object' 
-	 && n2atlas.submissionDbEnabled) {
+	 && n2atlas.submissionDbEnabled
+	 && userName ) {
 		return true;
 	};
 	
