@@ -87,10 +87,9 @@ public class FSEntryFile implements FSEntry {
 		return FSEntrySupport.extensionFromName(getName());
 	}
 
-//	@Override
-//	public File getFile() {
-//		return file;
-//	}
+	public File getFile() {
+		return file;
+	}
 
 	@Override
 	public InputStream getInputStream() throws Exception {
