@@ -42,22 +42,38 @@
     overflow: hidden;
 }
 
-.n2DisplayBoxImageZoomPlus {
+.n2DisplayBoxImageZoomPlus, .n2DisplayBoxImageZoomMinus {
     position: absolute;
-    top: 10px;
-    left: 10px;
     height: 25px;
     width: 25px;
-    background-color: #ffffff;
+	background-image: url('images/zoom_25.png');
+	background-repeat: no-repeat;
+	background-color: transparent;
+}
+
+.n2DisplayBoxImageZoomPlus {
+    top: 10px;
+    left: 10px;
+	background-position: 0px 0px;
+}
+
+.n2DisplayBoxImageZoomPlus:hover {
+	background-position: -25px 0px;
 }
 
 .n2DisplayBoxImageZoomMinus {
-    position: absolute;
     top: 40px;
     left: 10px;
-    height: 25px;
-    width: 25px;
-    background-color: #ffffff;
+	background-position: 0px -25px;
+}
+
+.n2DisplayBoxImageZoomMinus:hover {
+	background-position: -25px -25px;
+}
+
+.n2DisplayBoxImageZoomPlus.n2DisplayBoxImageZoomDisabled, 
+.n2DisplayBoxImageZoomMinus.n2DisplayBoxImageZoomDisabled {
+	display: none;	
 }
 
 .n2DisplayBoxImage {}
