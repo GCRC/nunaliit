@@ -1,4 +1,6 @@
 ;(function($,$n2){
+"use strict";
+	
 	// Localization
 	var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
@@ -600,8 +602,6 @@
 				,onError: reportError
 			},opts_);
 
-			var _this = this;
-			
 			var $options = opts.options;
 			var $input = $options.find('input');
 			var searchTerm = $input.val();
@@ -641,7 +641,9 @@
 				+_loc('Javascript')+':<br/><textarea></textarea>'
 				+'</div>');
 			
-			$options.find('textarea').val('function(doc){\n\t// return true for selected document\n}')
+			$options.find('textarea').val('function(doc){\n'
+					+'\t// return true for selected document\n'
+					+'}');
 
 			$parent.append( $options );
 		}
@@ -652,7 +654,6 @@
 				,onSuccess: function(filterFn, creationName){}
 				,onError: reportError
 			},opts_);
-			var _this = this;
 			
 			var $options = opts.options;
 			var script = $options.find('textarea').val();
@@ -695,8 +696,6 @@
 				,onError: reportError
 			},opts_);
 			
-			var _this = this;
-
 			atlasDb.listAllDocuments({
 				onSuccess: function(docIds){
 					var l = new DocumentList({
@@ -732,7 +731,6 @@
 				,reduce: true
 				,group: true
 				,onSuccess: function(rows){
-					var names = [];
 					var $sel = $options.find('select.layerNameList');
 					for(var i=0,e=rows.length; i<e; ++i){
 						var layerId = rows[i].key;
@@ -762,8 +760,6 @@
 				,onError: reportError
 			},opts_);
 			
-			var _this = this;
-
 			var $i = opts.options.find('select.layerNameList');
 			var layerName = $i.val();
 			if( !layerName || '' == layerName ) {
@@ -817,7 +813,6 @@
 			atlasDesign.queryView({
 				viewName: 'schemas-root'
 				,onSuccess: function(rows){
-					var names = [];
 					var $sel = $options.find('select.schemaList');
 					for(var i=0,e=rows.length; i<e; ++i){
 						var schemaName = rows[i].key;
@@ -843,8 +838,6 @@
 				,onError: reportError
 			},opts_);
 			
-			var _this = this;
-
 			var $i = opts.options.find('select.schemaList');
 			var schemaName = $i.val();
 			if( !schemaName || '' == schemaName ) {
@@ -933,8 +926,6 @@
 				,onError: reportError
 			},opts_);
 			
-			var _this = this;
-
 			var $i = opts.options.find('select.importProfileList');
 			var profileId = $i.val();
 			if( !profileId || '' == profileId ) {
@@ -995,8 +986,6 @@
 				,onError: reportError
 			},opts_);
 			
-			var _this = this;
-
 			var $i = opts.options.find('input.filterDocumentId');
 			var docId = $i.val();
 			if( !docId || '' == docId ) {
@@ -1031,6 +1020,77 @@
 	});
 
 	SearchFilter.availableCreateFilters.push(new CreateFilterByDocumentReference());
+
+	// **********************************************************************
+	var CreateFilterByDanglingReference = $n2.Class(SearchFilter, {
+
+		initialize: function(){
+			SearchFilter.prototype.initialize.apply(this);
+			this.name = _loc('Select documents that have broken references');
+		}
+	
+		,printOptions: function($parent){
+		}
+
+		,createList: function(opts_){
+			var opts = $n2.extend({
+				name: null
+				,options: null
+				,progressTitle: _loc('List Creation Progress')
+				,onSuccess: function(list){}
+				,onError: reportError
+			},opts_);
+			
+			atlasDb.listAllDocuments({
+				onSuccess: docIdsLoaded
+				,onError: opts.onError
+			});
+			
+			function docIdsLoaded(docIds){
+				// Make a map
+				var docIdsMap = {};
+				for(var i=0,e=docIds.length; i<e; ++i){
+					var docId = docIds[i];
+					docIdsMap[docId] = true;
+				};
+				
+				atlasDesign.queryView({
+					viewName: 'link-references'
+					,onSuccess: function(rows){
+						var brokenDocIds = {};
+						for(var i=0,e=rows.length; i<e; ++i){
+							var row = rows[i];
+							var docId = row.id;
+							var refId = row.key;
+							
+							if( !docIdsMap[refId] ){
+								brokenDocIds[docId] = true;
+							};
+						};
+						
+						reportBrokenDocuments(brokenDocIds);
+					}
+					,onError: opts.onError
+				});
+			};
+
+			function reportBrokenDocuments(brokenDocIds){
+				var docIds = [];
+				for(var docId in brokenDocIds){
+					docIds.push(docId);
+				};
+				
+				var locStr = _loc('Documents with dangling references');
+				var l = new DocumentList({
+					docIds: docIds
+					,name: locStr
+				});
+				opts.onSuccess(l);
+			};
+		}
+	});
+
+	SearchFilter.availableCreateFilters.push(new CreateFilterByDanglingReference());
 
 	// **********************************************************************
 	var CreateFilterSkeleton = $n2.Class(SearchFilter, {
@@ -1097,8 +1157,6 @@
 				,onError: reportError
 			},opts_);
 			
-			var _this = this;
-
 			atlasDesign.queryView({
 				viewName: 'attachments'
 				,startkey: 'submitted'
@@ -1146,8 +1204,6 @@
 				,onError: reportError
 			},opts_);
 			
-			var _this = this;
-
 			atlasDesign.queryView({
 				viewName: 'attachments'
 				,startkey: 'analyzed'
@@ -1195,8 +1251,6 @@
 				,onError: reportError
 			},opts_);
 			
-			var _this = this;
-
 			atlasDesign.queryView({
 				viewName: 'attachments'
 				,startkey: 'waiting for approval'
@@ -1244,8 +1298,6 @@
 				,onError: reportError
 			},opts_);
 			
-			var _this = this;
-
 			atlasDesign.queryView({
 				viewName: 'attachments'
 				,startkey: 'approved'
@@ -1293,8 +1345,6 @@
 				,onError: reportError
 			},opts_);
 			
-			var _this = this;
-
 			atlasDesign.queryView({
 				viewName: 'attachments'
 				,startkey: 'attached'
@@ -1405,8 +1455,6 @@
 				,onError: reportError
 			},opts_);
 			
-			var _this = this;
-
 			if( !opts.list ) {
 				opts.onError(_loc('List is required on transformation'));
 				return;
@@ -1540,8 +1588,6 @@
 				onSuccess: function(transformFn){}
 				,onError: reportError
 			},opts_);
-			var _this = this;
-			
 			var dialogId = $n2.getUniqueId();
 			var $dialog = $('<div id="'+dialogId+'">'
 				+'<div>'+_loc('From')+': <input class="selectAppFrom" type="text"/></div>'
@@ -1625,8 +1671,6 @@
 				onSuccess: function(transformFn){}
 				,onError: reportError
 			},opts_);
-			var _this = this;
-			
 			var dialogId = $n2.getUniqueId();
 			var $dialog = $('<div id="'+dialogId+'" class="selectAppDocumentTransformJavascript">'
 				+'<div>'+_loc('Javascript')+':<br/><textarea></textarea></div>'
@@ -2214,7 +2258,6 @@
 			// Open a new window to get results
 			open('about:blank', windowId);
 			
-			var docIds = list.docIds;
 			exportService.exportByDocIds({
 				docIds: list.docIds
 				,targetWindow: windowId
