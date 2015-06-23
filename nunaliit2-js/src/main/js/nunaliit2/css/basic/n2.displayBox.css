@@ -52,8 +52,8 @@
 }
 
 .n2DisplayBoxImageZoomPlus {
-    top: 10px;
-    left: 10px;
+    top: 20px;
+    left: 20px;
 	background-position: 0px 0px;
 }
 
@@ -62,8 +62,8 @@
 }
 
 .n2DisplayBoxImageZoomMinus {
-    top: 40px;
-    left: 10px;
+    top: 50px;
+    left: 20px;
 	background-position: 0px -25px;
 }
 

@@ -1476,10 +1476,12 @@ var DisplayBox2 = $n2.Class({
 
 		// Show the loading
 		$displayDiv.find('.n2DisplayBoxLoading').show();
-		$displayDiv.find('.n2DisplayBoxImageWrapper').hide();
 		$displayDiv.find('.n2DisplayBoxDataOuter').hide();
 		$displayDiv.find('.n2DisplayBoxDataNumber').hide();
 		$displayDiv.find('.n2DisplayBoxNavBtn').hide();
+
+		$displayDiv.find('.n2DisplayBoxImageWrapper').remove();
+		$displayDiv.find('.n2DisplayBoxImageZoom').remove();
 		
 		this.imageSource.loadImage(this.currentImageIndex, function(data){
 			// Load only current image
@@ -1536,8 +1538,8 @@ var DisplayBox2 = $n2.Class({
 							;
 						
 						$('<div>')
-							.addClass('n2DisplayBoxImageZoomPlus')
-							.appendTo($wrapper)
+							.addClass('n2DisplayBoxImageZoom n2DisplayBoxImageZoomPlus')
+							.appendTo($divImageInner)
 							.click(function(e){
 								e.preventDefault();
 								_this._imageZoom(+1);
@@ -1545,8 +1547,8 @@ var DisplayBox2 = $n2.Class({
 							});
 						
 						$('<div>')
-							.addClass('n2DisplayBoxImageZoomMinus')
-							.appendTo($wrapper)
+							.addClass('n2DisplayBoxImageZoom n2DisplayBoxImageZoomMinus')
+							.appendTo($divImageInner)
 							.click(function(e){
 								e.preventDefault();
 								_this._imageZoom(-1);
