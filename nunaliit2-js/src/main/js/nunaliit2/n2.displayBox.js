@@ -367,7 +367,9 @@ var DisplayImageSourceDoc = $n2.Class({
 	<!-- This div is for setting the top position -->
 	<div class="n2DisplayBoxImageOuter" style="width: 906px; height: 685px;">
 		<div class="n2DisplayBoxImageInner">
-			<img class="n2DisplayBoxImage" src="./db/4ae77032f04d840a2f0fd8c7f1006562/GOPR0027.jpg" style="width: 886px; height: 665px; display: inline;">
+			<div class="n2DisplayBoxImageWrapper">
+				<img class="n2DisplayBoxImage" src="./db/4ae77032f04d840a2f0fd8c7f1006562/GOPR0027.jpg" style="width: 886px; height: 665px; display: inline;">
+			</div>
 			<a href="#" class="n2DisplayBoxNavBtn n2DisplayBoxNavBtnPrev" style="display: none; height: 685px;"></a>
 			<a href="#" class="n2DisplayBoxNavBtn n2DisplayBoxNavBtnNext" style="display: none; height: 685px;"></a>
 			<div class="n2DisplayBoxLoading" style="display: none;">
@@ -375,6 +377,8 @@ var DisplayImageSourceDoc = $n2.Class({
 					<img class="n2DisplayBoxLoadingImg">
 				</a>
 			</div>
+			<div class="n2DisplayBoxImageZoom n2DisplayBoxImageZoomPlus"></div>
+			<div class="n2DisplayBoxImageZoom n2DisplayBoxImageZoomMinus n2DisplayBoxImageZoomDisabled"></div>
 		</div>
 	</div>
 	<div class="n2DisplayBoxDataOuter" style="display: block; width: 886px;">
@@ -396,612 +400,6 @@ var DisplayImageSourceDoc = $n2.Class({
  */
 
 var DisplayBox = $n2.Class({
-	
-	overlayId: null,
-	
-	displayDivId: null,
-	
-	settings: null,
-	
-	windowResizeHandler: null,
-
-	resizing: null,
-	
-	imageSource: null,
-	
-	currentImageIndex: null,
-
-	/* Information about height and width */
-	currentImage: null,
-
-	initialize: function(opts_){
-		var opts = $n2.extend({
-			url: null
-			,text: null
-			,imageSource: null
-			,startIndex: 0
-		},opts_);
-		
-		var _this = this;
-	
-		this.resizing = false;
-		this.currentImageIndex = opts.startIndex;
-		
-		this._initSettings();
-
-		this.windowResizeHandler = function(){
-			_this._windowResized();
-		};
-		$(window).on('resize',this.windowResizeHandler);
-		
-		if( opts.imageSource ){
-			this.imageSource = opts.imageSource;
-		} else {
-			this.imageSource = new DisplayImageSource();
-			
-			if( opts.url && opts.text ){
-				this.imageSource.addImage(opts.url, opts.text);
-			};
-		};
-		
-		this._draw();
-		
-		this._setImageToView();
-	},
-	
-	_draw: function(){
-		var _this = this;
-
-		var $body = $('body');
-		
-		// Hide elements for IE
-		$('embed, object, select').css('visibility','hidden');
-		
-		// Add overlay div
-		this.overlayId = $n2.getUniqueId();
-		var $overlayDiv = $('<div>')
-			.attr('id',this.overlayId)
-			.addClass('n2DisplayBoxOverlay')
-			.appendTo($body);
-		
-		// Add display div
-		this.displayDivId = $n2.getUniqueId();
-		var $displayDiv = $('<div>')
-			.attr('id',this.displayDivId)
-			.addClass('n2DisplayBoxOuter')
-			.appendTo($body);
-		
-		// Image area
-		var $imageOuterDiv = $('<div>')
-			.addClass('n2DisplayBoxImageOuter')
-			.appendTo($displayDiv);
-		var $imageInnerDiv = $('<div>')
-			.addClass('n2DisplayBoxImageInner')
-			.appendTo($imageOuterDiv)
-			.click(function(){
-				// Do not close when clicking picture
-				return false;
-			});
-//		var $navDiv = $('<div>')
-//			.addClass('n2DisplayBoxNav')
-//			.appendTo($imageInnerDiv);
-		$('<a>')
-			.attr('href','#')
-			.addClass('n2DisplayBoxNavBtn n2DisplayBoxNavBtnPrev')
-			.appendTo($imageInnerDiv)
-			.bind('click',function() {
-				_this._previousImage();
-				return false;
-			});
-		$('<a>')
-			.attr('href','#')
-			.addClass('n2DisplayBoxNavBtn n2DisplayBoxNavBtnNext')
-			.appendTo($imageInnerDiv)
-			.bind('click',function() {
-				_this._nextImage();
-				return false;
-			});
-		var $loadingDiv = $('<div>')
-			.addClass('n2DisplayBoxLoading')
-			.appendTo($imageInnerDiv);
-		var $loadingLink = $('<a>')
-			.addClass('n2DisplayBoxLoadingLink')
-			.attr('href','#')
-			.appendTo($loadingDiv)
-			.click(function(){
-				_this._close();
-				return false;
-			});
-		$('<img>')
-			.addClass('n2DisplayBoxLoadingImg')
-			.appendTo($loadingLink);
-		
-		// Data area
-		var $dataOuterDiv = $('<div>')
-			.addClass('n2DisplayBoxDataOuter')
-			.appendTo($displayDiv)
-			.click(function(){
-				// Do not close when clicking data
-				return false;
-			});
-		var $dataInnerDiv = $('<div>')
-			.addClass('n2DisplayBoxDataInner')
-			.appendTo($dataOuterDiv);
-		var $dataDetailsDiv = $('<div>')
-			.addClass('n2DisplayBoxDataDetails')
-			.appendTo($dataInnerDiv);
-		$('<span>')
-			.addClass('n2DisplayBoxDataCaption')
-			.appendTo($dataDetailsDiv);
-		$('<span>')
-			.addClass('n2DisplayBoxDataNumber')
-			.appendTo($dataDetailsDiv);
-		var $dataButtonsDiv = $('<div>')
-			.addClass('n2DisplayBoxButtons')
-			.appendTo($dataInnerDiv);
-		$('<a>')
-			.attr('href','#')
-			.addClass('n2DisplayBoxButtonClose')
-			//.text( _loc('Close') )
-			.appendTo($dataButtonsDiv)
-			.click(function(){
-				_this._close();
-				return false;
-			});
-		
-		// Get page sizes and scroll
-		var pageSize = this._getPageSize();
-		var pageScroll = this._getPageScroll();
-
-		// Style overlay and show it
-		$overlayDiv
-			.css({
-				backgroundColor: this.settings.overlayBgColor
-				,opacity: this.settings.overlayOpacity
-			})
-			.hide()
-			.click(function(){
-				_this._close();
-				return false;
-			});
-		this._resizeOverlay();
-
-		// Calculate top and left offset for the jquery-lightbox div object and show it
-		$displayDiv
-			.css({
-				top:	pageScroll.yScroll + (pageSize.windowHeight / 10),
-				left:	pageScroll.xScroll
-			})
-			.show()
-			.click(function(){
-				_this._close();
-				return false;
-			});
-	},
-	
-	_close: function(){
-		var $overlayDiv = this._getOverlayDiv();
-		var $displayDiv = this._getDisplayDiv();
-
-		$displayDiv.remove();
-		$overlayDiv.fadeOut(function() { 
-			$overlayDiv.remove(); 
-		});
-		
-		// Show some elements to avoid conflict with overlay in IE. These elements appear above the overlay.
-		$('embed, object, select').css('visibility', 'visible');
-		
-		this.imageSource = null;
-	},
-	
-	_windowResized: function(){
-		var $overlayDiv = this._getOverlayDiv();
-		if( $overlayDiv.length < 1 ){
-			$(window).off('resize',this.windowResizeHandler);
-		} else {
-			$overlayDiv.hide();
-
-			var pageSizes = this._getPageSize();
-			var pageScroll = this._getPageScroll();
-
-			// Calculate top and left offset for the display div object and show it
-			var $displayDiv = this._getDisplayDiv();
-			$displayDiv.css({
-				top: pageScroll.yScroll + (pageSizes.windowHeight / 10),
-				left: pageScroll.xScroll
-			});
-			
-			var _this = this;
-			window.setTimeout(function(){
-				_this._resizeOverlay();
-				_this._resizeContainerImageBox();
-			},0);
-		};
-	},
-	
-	_resizeOverlay: function(){
-		var $overlayDiv = this._getOverlayDiv();
-
-		// Get page dimensions
-		var pageSizes = this._getPageSize();
-//		var pageScroll = this._getPageScroll();
-
-//		$n2.log('pageWidth='+pageSizes.pageWidth
-//			+' pageHeight='+pageSizes.pageHeight
-//			+' windowWidth='+pageSizes.windowWidth
-//			+' windowHeight='+pageSizes.windowHeight
-//			+' xScroll='+pageScroll.xScroll
-//			+' yScroll='+pageScroll.yScroll
-//		);
-		
-		// Style overlay and show it
-		$overlayDiv
-			.css({
-				width: pageSizes.pageWidth,
-				height: pageSizes.pageHeight
-			})
-			.show();
-	},
-	
-	_resizeContainerImageBox: function() {
-		if( this.resizing ) return;
-
-		var $displayDiv = this._getDisplayDiv();
-		if( $displayDiv.length < 1 ) return;
-		
-		var _this = this;
-		
-		this.resizing = true;
-		
-		var intImageWidth = this.currentImage.width;
-		var intImageHeight = this.currentImage.height;
-		if( this.settings.constrainImage ) {
-			var pageSizes = this._getPageSize();
-			var ratio = 1;
-			var intMaxWidth = pageSizes.windowWidth - (2 * this.settings.containerBorderSize);
-			if (intImageWidth > intMaxWidth) {
-				ratio = intMaxWidth / intImageWidth;
-			};
-			var intMaxHeight = pageSizes.windowHeight - (2 * this.settings.containerBorderSize) - 60 - 100;
-			if (intImageHeight > intMaxHeight) {
-			    var tmpRatio = intMaxHeight / intImageHeight;
-			    if( tmpRatio < ratio ) {
-			    	ratio = tmpRatio;
-			    };
-			};
-			intImageWidth = Math.floor(ratio * intImageWidth);
-			intImageHeight = Math.floor(ratio * intImageHeight);
-			$displayDiv.find('.n2DisplayBoxImageWrapper')
-				.css({ width: intImageWidth, height: intImageHeight })
-				.hide();
-//$n2.log('intImageWidth='+intImageWidth+' intImageHeight='+intImageHeight);			
-			$displayDiv.find('.n2DisplayBoxLoadingLink').show();
-			$displayDiv.find('.n2DisplayBoxDataOuter').hide();
-			$displayDiv.find('.n2DisplayBoxDataNumber').hide();
-		};
-		
-		// Get the width and height of the selected image plus the padding
-		var intWidth = (intImageWidth + (this.settings.containerBorderSize * 2)); // Plus the image's width and the left and right padding value
-		var intHeight = (intImageHeight + (this.settings.containerBorderSize * 2)); // Plus the image's height and the top and bottom padding value
-		
-		$displayDiv.find('.n2DisplayBoxImageOuter').css({
-			width: intWidth
-			,height: intHeight
-		});
-		window.setTimeout(function(){
-			_this._showImage(); 
-		},0);
-		
-		$displayDiv.find('.n2DisplayBoxDataOuter').css({ width: intImageWidth });
-		$displayDiv.find('.n2DisplayBoxNavBtnPrev').css('height', intImageHeight + (this.settings.containerBorderSize * 2));
-		$displayDiv.find('.n2DisplayBoxNavBtnNext').css('height', intImageHeight + (this.settings.containerBorderSize * 2));
-		
-		this.resizing = false;
-	},
-	
-	_showImage: function() {
-		var _this = this;
-		
-		var $displayDiv = this._getDisplayDiv();
-
-		$displayDiv.find('.n2DisplayBoxLoading').hide();
-		$displayDiv.find('.n2DisplayBoxImageWrapper').fadeIn(function() {
-			_this._showImageData();
-			_this._setNavigation();
-		});
-		_this._preloadNeighborImages();
-	},
-	
-	_showImageData: function() {
-		var _this = this;
-		
-		var $displayDiv = this._getDisplayDiv();
-
-		$displayDiv.find('.n2DisplayBoxDataOuter').slideDown('fast');
-		
-		var $caption = $displayDiv.find('.n2DisplayBoxDataCaption').hide();
-		this.imageSource.printText(
-			this.currentImageIndex
-			,$caption
-			,function(index){
-				if( _this.currentImageIndex == index ){
-					$caption.show();
-				};
-			}
-		);
-
-		// If we have an image set, display 'Image X of X'
-		var imageCountInfo = this.imageSource.getCountInfo(this.currentImageIndex);
-		if( imageCountInfo ) {
-			var label = _loc('{index}/{count}', {
-				index: imageCountInfo.index
-				,count: imageCountInfo.count
-			});
-			
-			$displayDiv.find('.n2DisplayBoxDataNumber')
-				.text(label)
-				.show();
-		} else {
-			$displayDiv.find('.n2DisplayBoxDataNumber')
-				.hide();
-		};
-	},
-	
-	_setNavigation: function() {
-		var _this = this;
-		
-		var $displayDiv = this._getDisplayDiv();
-
-		$displayDiv.find('.n2DisplayBoxNavBtnPrev').hide();
-		this.imageSource.getPreviousIndex(this.currentImageIndex,function(previousIndex,currentIndex){
-			if( _this.currentImageIndex === currentIndex ){
-				$displayDiv.find('.n2DisplayBoxNavBtnPrev').show();
-			};
-		});
-
-		$displayDiv.find('.n2DisplayBoxNavBtnNext').hide();
-		this.imageSource.getNextIndex(this.currentImageIndex,function(nextIndex,currentIndex){
-			if( _this.currentImageIndex === currentIndex ){
-				$displayDiv.find('.n2DisplayBoxNavBtnNext').show();
-			};
-		});
-		
-		// Enable keyboard navigation
-		//_enable_keyboard_navigation();
-	},
-	
-	_nextImage: function(){
-		var _this = this;
-		this.imageSource.getNextIndex(this.currentImageIndex,function(nextIndex){
-			_this.currentImageIndex = nextIndex;
-			_this._setImageToView();
-		});
-	},
-	
-	_previousImage: function(){
-		var _this = this;
-		this.imageSource.getPreviousIndex(this.currentImageIndex,function(previousIndex){
-			_this.currentImageIndex = previousIndex;
-			_this._setImageToView();
-		});
-	},
-	
-	_setImageToView: function() { // show the loading
-		var _this = this;
-		
-		var $displayDiv = this._getDisplayDiv();
-
-		// Show the loading
-		$displayDiv.find('.n2DisplayBoxLoading').show();
-		$displayDiv.find('.n2DisplayBoxImageWrapper').hide();
-		$displayDiv.find('.n2DisplayBoxDataOuter').hide();
-		$displayDiv.find('.n2DisplayBoxDataNumber').hide();
-		$displayDiv.find('.n2DisplayBoxNavBtn').hide();
-		
-		this.imageSource.loadImage(this.currentImageIndex, function(data){
-			// Load only current image
-			if( _this.currentImageIndex === data.index ){
-				var $divImageInner = $displayDiv.find('.n2DisplayBoxImageInner');
-				$divImageInner.find('.n2DisplayBoxImageWrapper').remove();
-
-				// Save original width and height
-				_this.currentImage = {
-					width: data.width
-					,height: data.height
-				};
-				
-				if( 'image' === data.type ){
-					if( data.isPhotosphere 
-					 && $n2.photosphere 
-					 && $n2.photosphere.IsAvailable() ) {
-						var $photosphere = $('<div>')
-							.addClass('n2DisplayBoxImageWrapper')
-							.prependTo($divImageInner);
-						new $n2.photosphere.PhotosphereDisplay({
-							elem: $photosphere
-							,url: data.url
-						});
-
-						// In phtoshpere, make image a fixed ratio
-						_this.currentImage.width = Math.floor(_this.currentImage.height * 3 / 2);
-
-					} else {
-						var $wrapper = $('<div>')
-							.addClass('n2DisplayBoxImageWrapper')
-							.prependTo($divImageInner);
-						
-						$('<img>')
-							.addClass('n2DisplayBoxImage')
-							.attr('src',data.url)
-							.css({
-								height: '100%'
-								,width: '100%'
-							})
-							.appendTo($wrapper);
-					};
-				};
-				
-				// Performance an effect in the image container resizing it
-				_this._resizeContainerImageBox();
-			};
-		});
-	},
-	
-	_preloadNeighborImages: function() {
-		var _this = this;
-		this.imageSource.getPreviousIndex(this.currentImageIndex,function(previousIndex){
-			_this.imageSource.loadImage(previousIndex);
-		});
-		
-		this.imageSource.getNextIndex(this.currentImageIndex,function(nextIndex){
-			_this.imageSource.loadImage(nextIndex);
-		});
-	},
-	
-	_getDisplayDiv: function() {
-		return $('#'+this.displayDivId);
-	},
-	
-	_getOverlayDiv: function() {
-		return $('#'+this.overlayId);
-	},
-	
-	_getPageSize: function() {
-		var xScroll, yScroll, windowWidth = 0, windowHeight = 0, pageWidth, pageHeight;
-		
-		if (window.innerHeight && window.scrollMaxY) {	
-			xScroll = window.innerWidth + window.scrollMaxX;
-			yScroll = window.innerHeight + window.scrollMaxY;
-		} else if (document.body.scrollHeight > document.body.offsetHeight){ // all but Explorer Mac
-			xScroll = document.body.scrollWidth;
-			yScroll = document.body.scrollHeight;
-		} else { // Explorer Mac...would also work in Explorer 6 Strict, Mozilla and Safari
-			xScroll = document.body.offsetWidth;
-			yScroll = document.body.offsetHeight;
-		};
-
-		if( window.self.innerHeight ) {	// all except Explorer
-			if(document.documentElement.clientWidth){
-				windowWidth = document.documentElement.clientWidth; 
-			} else {
-				windowWidth = window.self.innerWidth;
-			};
-			if(document.documentElement.clientWidth){
-				windowHeight = document.documentElement.clientHeight; 
-			} else {
-				windowHeight = window.self.innerHeight;
-			};
-		} else if (document.documentElement && document.documentElement.clientHeight) { // Explorer 6 Strict Mode
-			windowWidth = document.documentElement.clientWidth;
-			windowHeight = document.documentElement.clientHeight;
-		} else if (document.body) { // other Explorers
-			windowWidth = document.body.clientWidth;
-			windowHeight = document.body.clientHeight;
-		};
-		
-		// for small pages with total height less then height of the viewport
-		if(yScroll < windowHeight){
-			pageHeight = windowHeight;
-		} else { 
-			pageHeight = yScroll;
-		};
-		
-		// for small pages with total width less then width of the viewport
-		if(xScroll < windowWidth){	
-			pageWidth = xScroll;		
-		} else {
-			pageWidth = windowWidth;
-		};
-		
-		var pageSize = {
-			pageWidth: pageWidth
-			,pageHeight: pageHeight
-			,windowWidth: windowWidth
-			,windowHeight: windowHeight
-		};
-		return pageSize;
-	},
-	
-	_getPageScroll: function() {
-		var xScroll = 0, yScroll = 0;
-		if (window.self.pageYOffset) {
-			yScroll = window.self.pageYOffset;
-			xScroll = window.self.pageXOffset;
-		} else if (document.documentElement && document.documentElement.scrollTop) {	 // Explorer 6 Strict
-			yScroll = document.documentElement.scrollTop;
-			xScroll = document.documentElement.scrollLeft;
-		} else if (document.body) {// all other Explorers
-			yScroll = document.body.scrollTop;
-			xScroll = document.body.scrollLeft;	
-		};
-		
-		var pageScroll = {
-			xScroll: xScroll
-			,yScroll: yScroll
-		};
-		return pageScroll;
-	},
-	
-	_initSettings: function(){
-		this.settings = {
-			// Configuration related to overlay
-			overlayBgColor: '#000'
-			,overlayOpacity: 0.8
-			// Configuration related to container image box
-			,containerBorderSize: 10
-			// Don't alter these variables in any way
-			,constrainImage: true
-		};
-	},
-	
-	_imageZoom: function(change){
-		var $displayDiv = this._getDisplayDiv();
-		if( $displayDiv.length < 1 ) return;
-		
-		var $img = $displayDiv.find('.n2DisplayBoxImage');
-		$n2.log('width:'+$img.css('width')+' height:'+$img.css('height'));
-		
-	}
-});
-
-//=========================================================================
-/*
-
-<div id="nunaliit2_uniqueId_127" class="n2DisplayBoxOuter" style="top: 84.5px; left: 0px;">
-	<!-- This div is for setting the top position -->
-	<div class="n2DisplayBoxImageOuter" style="width: 906px; height: 685px;">
-		<div class="n2DisplayBoxImageInner">
-			<div class="n2DisplayBoxImageWrapper">
-				<img class="n2DisplayBoxImage" src="./db/4ae77032f04d840a2f0fd8c7f1006562/GOPR0027.jpg" style="width: 886px; height: 665px; display: inline;">
-			</div>
-			<a href="#" class="n2DisplayBoxNavBtn n2DisplayBoxNavBtnPrev" style="display: none; height: 685px;"></a>
-			<a href="#" class="n2DisplayBoxNavBtn n2DisplayBoxNavBtnNext" style="display: none; height: 685px;"></a>
-			<div class="n2DisplayBoxLoading" style="display: none;">
-				<a class="n2DisplayBoxLoadingLink" href="#">
-					<img class="n2DisplayBoxLoadingImg">
-				</a>
-			</div>
-		</div>
-	</div>
-	<div class="n2DisplayBoxDataOuter" style="display: block; width: 886px;">
-		<div class="n2DisplayBoxDataInner">
-			<div class="n2DisplayBoxDataDetails">
-				<span class="n2DisplayBoxDataCaption n2ShowUpdateDoc_4ae77032f04d840a2f0fd8c7f1006562 n2ShowDocBrief" style="display: inline;">
-					<span class="n2s_localized">Demo Media</span>
-					(Breakfast at Voyageur Camp)
-				</span>
-				<span class="n2DisplayBoxDataNumber" style="display: block;">1/1</span>
-			</div>
-			<div class="n2DisplayBoxButtons">
-				<a href="#" class="n2DisplayBoxButtonClose"></a>
-			</div>
-		</div>
-	</div>
-</div>
-
- */
-
-var DisplayBox2 = $n2.Class({
 	
 	overlayId: null,
 	
@@ -1095,27 +493,43 @@ var DisplayBox2 = $n2.Class({
 		var $imageInnerDiv = $('<div>')
 			.addClass('n2DisplayBoxImageInner')
 			.appendTo($imageOuterDiv)
-			.click(function(){
+			.click(function(e){
 				// Do not close when clicking picture
+				e.preventDefault();
+				return false;
+			})
+			.bind('selectstart', function(e){
+				e.preventDefault();
+				return false;
+			})
+			.dblclick(function(e){
+				e.preventDefault();
 				return false;
 			});
-//		var $navDiv = $('<div>')
-//			.addClass('n2DisplayBoxNav')
-//			.appendTo($imageInnerDiv);
 		$('<a>')
 			.attr('href','#')
 			.addClass('n2DisplayBoxNavBtn n2DisplayBoxNavBtnPrev')
 			.appendTo($imageInnerDiv)
-			.bind('click',function() {
+			.bind('click',function(e) {
+				e.preventDefault();
 				_this._previousImage();
+				return false;
+			})
+			.dblclick(function(e){
+				e.preventDefault();
 				return false;
 			});
 		$('<a>')
 			.attr('href','#')
 			.addClass('n2DisplayBoxNavBtn n2DisplayBoxNavBtnNext')
 			.appendTo($imageInnerDiv)
-			.bind('click',function() {
+			.bind('click',function(e) {
+				e.preventDefault();
 				_this._nextImage();
+				return false;
+			})
+			.dblclick(function(e){
+				e.preventDefault();
 				return false;
 			});
 		var $loadingDiv = $('<div>')
@@ -1335,8 +749,6 @@ var DisplayBox2 = $n2.Class({
 			},0);
 			
 			$displayDiv.find('.n2DisplayBoxDataOuter').css({ width: intWrapperWidth });
-			$displayDiv.find('.n2DisplayBoxNavBtnPrev').css('height', intImageHeight + (this.settings.containerBorderSize * 2));
-			$displayDiv.find('.n2DisplayBoxNavBtnNext').css('height', intImageHeight + (this.settings.containerBorderSize * 2));
 		};
 		
 		this.resizing = false;
@@ -1520,6 +932,10 @@ var DisplayBox2 = $n2.Class({
 							.mouseout(function(e){
 								_this._imageMouseOut(e);
 							})
+							.dblclick(function(e){
+								e.preventDefault();
+								return false;
+							})
 							;
 						
 						$('<img>')
@@ -1535,6 +951,10 @@ var DisplayBox2 = $n2.Class({
 							.mouseup(function(e){
 								_this._imageMouseUp(e);
 							})
+							.dblclick(function(e){
+								e.preventDefault();
+								return false;
+							})
 							;
 						
 						$('<div>')
@@ -1544,6 +964,10 @@ var DisplayBox2 = $n2.Class({
 								e.preventDefault();
 								_this._imageZoom(+1);
 								return false;
+							})
+							.dblclick(function(e){
+								e.preventDefault();
+								return false;
 							});
 						
 						$('<div>')
@@ -1552,6 +976,10 @@ var DisplayBox2 = $n2.Class({
 							.click(function(e){
 								e.preventDefault();
 								_this._imageZoom(-1);
+								return false;
+							})
+							.dblclick(function(e){
+								e.preventDefault();
 								return false;
 							});
 					};
@@ -1856,7 +1284,7 @@ var DisplayBox2 = $n2.Class({
 // =========================================================================
 
 $n2.displayBox = {
-	DisplayBox: DisplayBox2
+	DisplayBox: DisplayBox
 	,DisplayImageSource: DisplayImageSource
 	,DisplayImageSourceDoc: DisplayImageSourceDoc
 };	

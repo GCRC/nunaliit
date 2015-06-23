@@ -81,6 +81,7 @@
 .n2DisplayBoxNavBtn {
 	position: absolute;
 	top: 0;
+	bottom: 0;
 }
 
 a.n2DisplayBoxNavBtn { 
@@ -89,11 +90,10 @@ a.n2DisplayBoxNavBtn {
 
 .n2DisplayBoxNavBtnPrev, .n2DisplayBoxNavBtnNext {
 	width: 100px;
-	height: 100%;
-	zoom: 1;
 	display: block;
 }
 .n2DisplayBoxNavBtnPrev { 
+	top: 80px; /* clear the zoom buttons */
 	left: 0; 
 }
 .n2DisplayBoxNavBtnPrev:hover { 
