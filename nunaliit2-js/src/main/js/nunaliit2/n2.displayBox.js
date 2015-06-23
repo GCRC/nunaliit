@@ -502,10 +502,7 @@ var DisplayBox = $n2.Class({
 				e.preventDefault();
 				return false;
 			})
-			.dblclick(function(e){
-				e.preventDefault();
-				return false;
-			});
+			;
 		$('<a>')
 			.attr('href','#')
 			.addClass('n2DisplayBoxNavBtn n2DisplayBoxNavBtnPrev')
@@ -515,10 +512,7 @@ var DisplayBox = $n2.Class({
 				_this._previousImage();
 				return false;
 			})
-			.dblclick(function(e){
-				e.preventDefault();
-				return false;
-			});
+			;
 		$('<a>')
 			.attr('href','#')
 			.addClass('n2DisplayBoxNavBtn n2DisplayBoxNavBtnNext')
@@ -528,10 +522,7 @@ var DisplayBox = $n2.Class({
 				_this._nextImage();
 				return false;
 			})
-			.dblclick(function(e){
-				e.preventDefault();
-				return false;
-			});
+			;
 		var $loadingDiv = $('<div>')
 			.addClass('n2DisplayBoxLoading')
 			.appendTo($imageInnerDiv);
@@ -932,10 +923,6 @@ var DisplayBox = $n2.Class({
 							.mouseout(function(e){
 								_this._imageMouseOut(e);
 							})
-							.dblclick(function(e){
-								e.preventDefault();
-								return false;
-							})
 							;
 						
 						$('<img>')
@@ -951,10 +938,6 @@ var DisplayBox = $n2.Class({
 							.mouseup(function(e){
 								_this._imageMouseUp(e);
 							})
-							.dblclick(function(e){
-								e.preventDefault();
-								return false;
-							})
 							;
 						
 						$('<div>')
@@ -965,10 +948,7 @@ var DisplayBox = $n2.Class({
 								_this._imageZoom(+1);
 								return false;
 							})
-							.dblclick(function(e){
-								e.preventDefault();
-								return false;
-							});
+							;
 						
 						$('<div>')
 							.addClass('n2DisplayBoxImageZoom n2DisplayBoxImageZoomMinus')
@@ -978,10 +958,7 @@ var DisplayBox = $n2.Class({
 								_this._imageZoom(-1);
 								return false;
 							})
-							.dblclick(function(e){
-								e.preventDefault();
-								return false;
-							});
+							;
 					};
 				};
 				
