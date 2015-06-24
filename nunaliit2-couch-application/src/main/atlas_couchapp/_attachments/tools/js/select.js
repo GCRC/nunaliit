@@ -1093,6 +1093,183 @@
 	SearchFilter.availableCreateFilters.push(new CreateFilterByDanglingReference());
 
 	// **********************************************************************
+	var CreateFilterInvalidSourceReference = $n2.Class(SearchFilter, {
+
+		initialize: function(){
+			SearchFilter.prototype.initialize.apply(this);
+			this.name = _loc('Select documents that have an invalid source');
+		}
+	
+		,printOptions: function($parent){
+		}
+
+		,createList: function(opts_){
+			var opts = $n2.extend({
+				name: null
+				,options: null
+				,progressTitle: _loc('List Creation Progress')
+				,onSuccess: function(list){}
+				,onError: reportError
+			},opts_);
+			
+			atlasDb.listAllDocuments({
+				onSuccess: docIdsLoaded
+				,onError: opts.onError
+			});
+			
+			function docIdsLoaded(docIds){
+				// Make a map
+				var docIdsMap = {};
+				for(var i=0,e=docIds.length; i<e; ++i){
+					var docId = docIds[i];
+					docIdsMap[docId] = true;
+				};
+				
+				atlasDesign.queryView({
+					viewName: 'link-references'
+					,onSuccess: function(rows){
+						var brokenDocIds = {};
+						for(var i=0,e=rows.length; i<e; ++i){
+							var row = rows[i];
+							var docId = row.id;
+							var refId = row.key;
+							
+							if( !docIdsMap[refId] ){
+								brokenDocIds[docId] = true;
+							};
+						};
+						
+						documentsWithInvalidReferences(docIdsMap, brokenDocIds);
+					}
+					,onError: opts.onError
+				});
+			};
+
+			function documentsWithInvalidReferences(currentDocIdsMap, brokenDocIds){
+				var docIds = [];
+				for(var docId in brokenDocIds){
+					docIds.push(docId);
+				};
+
+				atlasDb.getDocuments({
+					docIds: docIds
+					,onSuccess: function(docs){
+						var invalidSourceIds = [];
+						
+						for(var i=0,e=docs.length; i<e; ++i){
+							var doc = docs[i];
+							if( doc 
+							 && doc.nunaliit_source 
+							 && doc.nunaliit_source.doc ){
+								var sourceDocId = doc.nunaliit_source.doc;
+								if( !currentDocIdsMap[sourceDocId] ){
+									invalidSourceIds.push(doc._id);
+								};
+							};
+						};
+						
+						reportInvalidSourceDocuments(invalidSourceIds);
+					}
+					,onError: opts.onError
+				});
+			};
+			
+			function reportInvalidSourceDocuments(docIds){
+				var locStr = _loc('Documents that have an invalid source');
+				var l = new DocumentList({
+					docIds: docIds
+					,name: locStr
+				});
+				opts.onSuccess(l);
+			};
+		}
+	});
+
+	SearchFilter.availableCreateFilters.push(new CreateFilterInvalidSourceReference());
+
+	// **********************************************************************
+	var CreateFilterNotReachableByReference = $n2.Class(SearchFilter, {
+
+		initialize: function(){
+			SearchFilter.prototype.initialize.apply(this);
+			this.name = _loc('Select documents that are not reachable by reference');
+		}
+	
+		,printOptions: function($parent){
+		}
+
+		,createList: function(opts_){
+			var opts = $n2.extend({
+				name: null
+				,options: null
+				,progressTitle: _loc('List Creation Progress')
+				,onSuccess: function(list){}
+				,onError: reportError
+			},opts_);
+			
+			atlasDb.listAllDocuments({
+				onSuccess: docIdsLoaded
+				,onError: opts.onError
+			});
+			
+			function docIdsLoaded(docIds){
+				// Make a map
+				var docIdsMap = {};
+				for(var i=0,e=docIds.length; i<e; ++i){
+					var docId = docIds[i];
+					docIdsMap[docId] = true;
+				};
+				
+				atlasDesign.queryView({
+					viewName: 'link-references'
+					,onSuccess: function(rows){
+						var referenceInfo = {};
+						for(var i=0,e=rows.length; i<e; ++i){
+							var row = rows[i];
+							var docId = row.id;
+							var refId = row.key;
+
+							if( docIdsMap[docId] && !referenceInfo[docId] ) {
+								referenceInfo[docId] = {};
+							};
+							if( docIdsMap[refId] && !referenceInfo[refId] ) {
+								referenceInfo[refId] = {};
+							};
+
+							if( docIdsMap[refId] && docIdsMap[docId] ){
+								referenceInfo[docId].reachable = true;
+								referenceInfo[refId].reachable = true;
+							};
+						};
+						
+						reportUnreachableDocuments(referenceInfo);
+					}
+					,onError: opts.onError
+				});
+			};
+
+			function reportUnreachableDocuments(referenceInfo){
+				var docIds = [];
+				for(var docId in referenceInfo){
+					var info = referenceInfo[docId];
+					if( !info.reachable ){
+						docIds.push(docId);
+					};
+				};
+				
+				var locStr = _loc('Documents not reachable by reference');
+				var l = new DocumentList({
+					docIds: docIds
+					,name: locStr
+				});
+				opts.onSuccess(l);
+			};
+		}
+	});
+
+	SearchFilter.availableCreateFilters.push(new CreateFilterNotReachableByReference());
+
+	// **********************************************************************
 	var CreateFilterSkeleton = $n2.Class(SearchFilter, {
 
 		initialize: function(){
