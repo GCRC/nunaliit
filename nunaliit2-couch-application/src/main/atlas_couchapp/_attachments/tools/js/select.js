@@ -2020,12 +2020,25 @@
 			$a.text( _loc('View') );
 			$d.append($a);
 			installView(list, $a);
+			
+			var $a = $('<a href="#"></a>');
+			$a.text( _loc('Text') );
+			$d.append($a);
+			installText(list, $a);
 		};
 		
 		function installView(list, $a){
 			$a.click(function(e){
 				e.stopPropagation();
 				selectList(list);
+				return false;
+			});
+		};
+		
+		function installText(list, $a){
+			$a.click(function(e){
+				e.stopPropagation();
+				selectText(list);
 				return false;
 			});
 		};
@@ -2562,6 +2575,35 @@
 				processDocument(index+1);
 			};
 		};
+	};
+	
+	// -----------------------------------------------------------------
+	function selectText(list){
+		var docIds = list.docIds;
+		
+		var dialogId = $n2.getUniqueId();
+
+		var $dialog = $('<div id="'+dialogId+'">'
+			+'<textarea class="selectAppTextDocIds"></textarea>'
+			+'</div></div>');
+		
+		var text = docIds.join('\n');
+		
+		$dialog.find('textarea.selectAppTextDocIds').text( text );
+		
+		var dialogOptions = {
+			autoOpen: true
+			,title: _loc('Document Identifiers')
+			,modal: true
+			,closeOnEscape: false
+			,dialogClass: 'selectAppTextDialog'
+			,close: function(event, ui){
+				var diag = $(event.target);
+				diag.dialog('destroy');
+				diag.remove();
+			}
+		};
+		$dialog.dialog(dialogOptions);
 	};
 	
 	// -----------------------------------------------------------------
