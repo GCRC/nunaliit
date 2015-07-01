@@ -296,6 +296,9 @@ var DomStyler = $n2.Class({
 				
 				if( $jq.hasClass('n2s_insertedMediaView') ){
 					_this._insertMediaView(doc, $jq);
+					
+				} else if( $jq.hasClass('n2s_insertedFirstThumbnail') ){
+					_this._insertFirstThumbnail(doc, $jq);
 				};
 			});
 		};
@@ -423,18 +426,71 @@ var DomStyler = $n2.Class({
 	_insertMediaView: function(data, $insertView) {
 		var _this = this;
 		
-		this._associateDocumentToElement(data, $insertView);
+		var docId = this._associateDocumentToElement(data, $insertView);
 
 		$insertView.empty();
-		
-		var docId = this._getDocumentIdentifier(data, $insertView);
 		
 		var attachmentName = $insertView.attr('nunaliit-attachment');
 		if( !attachmentName ) {
 			attachmentName = $insertView.text();
 		};
 
-		if( !data ){
+		// Do we have document?
+		if( data && data._id === docId ){
+			var attachment = null;
+			if( data._attachments 
+			 && data._attachments[attachmentName] ){
+				attachment = data._attachments[attachmentName];
+			};
+
+			var attDesc = null;
+			if( data 
+			 && data.nunaliit_attachments 
+			 && data.nunaliit_attachments.files ) {
+				attDesc = data.nunaliit_attachments.files[attachmentName];
+			};
+			
+			if( attDesc
+			 && attDesc.status === 'attached'
+			 && attachment ) {
+				
+				var attUrl = this.db.getAttachmentUrl(data,attachmentName);
+
+				// An attachment was uploaded for this file
+				var linkDiv = null;
+				if( attDesc.thumbnail
+				 && data._attachments[attDesc.thumbnail]
+				 ) {
+					var thumbUrl = this.db.getAttachmentUrl(data,attDesc.thumbnail);
+					linkDiv = $('<div class="n2Show_thumb_wrapper"><img src="'+thumbUrl+'"/></div>');
+
+				} else if( attDesc.fileClass === 'image' ) {
+					linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_image"></div></div>');
+				
+				} else if( attDesc.fileClass === 'audio' ) {
+					linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_audio"></div></div>');
+				
+				} else if( attDesc.fileClass === 'video' ) {
+					linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_video"></div></div>');
+					
+				} else {
+					linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_file"></div></div>');
+				};
+				
+				if( null != linkDiv ) {
+					$insertView.append(linkDiv);
+					var cb = createMediaCallback(
+							attDesc.fileClass
+							,attUrl
+							,data
+							,attachmentName
+						);
+					linkDiv.click(cb);
+				};
+			};
+
+		} else {
+			// Do not have document
 			var label = _loc('Media({docId},{attName})',{
 				docId: docId
 				,attName: attachmentName
@@ -443,59 +499,6 @@ var DomStyler = $n2.Class({
 				.addClass('n2s_insertMediaView_wait')
 				.text(label)
 				.appendTo($insertView);
-			return;
-		};
-		
-		var attachment = null;
-		if( data._attachments 
-		 && data._attachments[attachmentName] ){
-			attachment = data._attachments[attachmentName];
-		};
-
-		var attDesc = null;
-		if( data 
-		 && data.nunaliit_attachments 
-		 && data.nunaliit_attachments.files ) {
-			attDesc = data.nunaliit_attachments.files[attachmentName];
-		};
-		
-		if( attDesc
-		 && attDesc.status === 'attached'
-		 && attachment ) {
-			
-			var attUrl = this.db.getAttachmentUrl(data,attachmentName);
-
-			// An attachment was uploaded for this file
-			var linkDiv = null;
-			if( attDesc.thumbnail
-			 && data._attachments[attDesc.thumbnail]
-			 ) {
-				var thumbUrl = this.db.getAttachmentUrl(data,attDesc.thumbnail);
-				linkDiv = $('<div class="n2Show_thumb_wrapper"><img src="'+thumbUrl+'"/></div>');
-
-			} else if( attDesc.fileClass === 'image' ) {
-				linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_image"></div></div>');
-			
-			} else if( attDesc.fileClass === 'audio' ) {
-				linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_audio"></div></div>');
-			
-			} else if( attDesc.fileClass === 'video' ) {
-				linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_video"></div></div>');
-				
-			} else {
-				linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_file"></div></div>');
-			};
-			
-			if( null != linkDiv ) {
-				$insertView.append(linkDiv);
-				var cb = createMediaCallback(
-						attDesc.fileClass
-						,attUrl
-						,data
-						,attachmentName
-					);
-				linkDiv.click(cb);
-			};
 		};
 		
 		function createMediaCallback(uploadType, attachmentUrl, doc, attachmentName) {
@@ -578,6 +581,9 @@ var DomStyler = $n2.Class({
 	},
 	
 	_insertFirstThumbnail: function(doc, $insertElem, opt_){
+
+		var docId = this._associateDocumentToElement(doc, $insertElem);
+
 		$insertElem.empty();
 
 		var attachmentService = null;
@@ -585,27 +591,29 @@ var DomStyler = $n2.Class({
 			attachmentService = this.showService.attachmentService;
 		};
 
-		// Select first thumbnail
-		var attachment = null;
-		if( attachmentService ){
-			var attachments = attachmentService.getAttachments(doc);
-			for(var i=0,e=attachments.length; i<e; ++i){
-				var att = attachments[i];
-				if( att.isSource  ){
-					var thumbnailAtt = att.getThumbnailAttachment();
-					if( thumbnailAtt 
-					 && thumbnailAtt.isAttached() ){
-						attachment = thumbnailAtt;
-						break;
+		if( doc && doc._id === docId ){
+			// Select first thumbnail
+			var attachment = null;
+			if( attachmentService ){
+				var attachments = attachmentService.getAttachments(doc);
+				for(var i=0,e=attachments.length; i<e; ++i){
+					var att = attachments[i];
+					if( att.isSource  ){
+						var thumbnailAtt = att.getThumbnailAttachment();
+						if( thumbnailAtt 
+						 && thumbnailAtt.isAttached() ){
+							attachment = thumbnailAtt;
+							break;
+						};
 					};
 				};
 			};
-		};
-		
-		if( attachment ){
-			$('<img>')
-				.attr('src',attachment.getMediaFileUrl())
-				.appendTo($insertElem);
+			
+			if( attachment ){
+				$('<img>')
+					.attr('src',attachment.getMediaFileUrl())
+					.appendTo($insertElem);
+			};
 		};
 	},
 	
@@ -1037,13 +1045,10 @@ var DomStyler = $n2.Class({
 	},
 	
 	_getDocumentIdentifier: function(doc, $elem){
-		var docId = undefined;
-		if( doc ){
+		var docId = $elem.attr('nunaliit-document');
+
+		if( !docId && doc ){
 			docId = doc._id;
-		};
-		
-		if( !docId ){
-			docId = $elem.attr('nunaliit-document');
 		};
 		
 		return docId;
@@ -1056,11 +1061,15 @@ var DomStyler = $n2.Class({
 			var docIdClass = 'n2s_document_' + $n2.utils.stringToHtmlId(docId);
 			$elem.addClass(docIdClass);
 			
-			if( !doc ){
+			if( doc && doc._id === docId ){
+				// Already have document
+			} else {
 				// Request this document
 				this.showService._requestDocument(docId);
 			};
 		};
+		
+		return docId;
 	}
 });
 

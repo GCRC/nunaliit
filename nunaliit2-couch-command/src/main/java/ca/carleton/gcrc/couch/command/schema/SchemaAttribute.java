@@ -38,6 +38,14 @@ public class SchemaAttribute {
 			}
 		}
 		
+		// referenceType
+		{
+			String referenceType = jsonAttr.optString("referenceType",null);
+			if( null != referenceType ){
+				attribute.setReferenceType(referenceType);
+			}
+		}
+		
 		// searchFunction
 		{
 			String searchFunction = jsonAttr.optString("searchFunction",null);
@@ -100,6 +108,7 @@ public class SchemaAttribute {
 	private List<SelectionOption> options = new Vector<SelectionOption>();
 	private List<CheckboxGroupItem> checkboxes = new Vector<CheckboxGroupItem>();
 	private String elementType;
+	private String referenceType;
 	private String searchFunction;
 
 	public SchemaAttribute(String type){
@@ -183,6 +192,14 @@ public class SchemaAttribute {
 		this.elementType = elementType;
 	}
 
+	public String getReferenceType() {
+		return referenceType;
+	}
+
+	public void setReferenceType(String referenceType) {
+		this.referenceType = referenceType;
+	}
+
 	public String getSearchFunction() {
 		return searchFunction;
 	}
@@ -199,6 +216,7 @@ public class SchemaAttribute {
 		if( null != id ) jsonAttr.put("id", id);
 		if( null != label ) jsonAttr.put("label", label);
 		if( null != elementType ) jsonAttr.put("elementType", elementType);
+		if( null != referenceType ) jsonAttr.put("referenceType", referenceType);
 		if( null != searchFunction ) jsonAttr.put("searchFunction", searchFunction);
 		if( includedInBrief ) jsonAttr.put("includedInBrief", true);
 		if( excludedFromDisplay ) jsonAttr.put("excludedFromDisplay", true);
@@ -465,7 +483,13 @@ public class SchemaAttribute {
 					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
 
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-					pw.println("\t\t\t<div class=\"value\"><a href=\"#\" class=\"n2s_referenceLink\">{{doc}}</a></div>");
+					
+					if( "thumbnail".equals(referenceType) ){
+						pw.println("\t\t\t<div class=\"value n2s_insertFirstThumbnail\" nunaliit-document=\"{{doc}}\"></div>");
+					} else {
+						pw.println("\t\t\t<div class=\"value\"><a href=\"#\" class=\"n2s_referenceLink\">{{doc}}</a></div>");
+					}
+
 					pw.println("\t\t\t<div class=\"end\"></div>");
 					
 					pw.println("\t\t</div>");

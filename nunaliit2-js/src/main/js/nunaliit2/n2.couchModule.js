@@ -313,7 +313,7 @@ var ModuleDisplay = $n2.Class({
 	
 	,styleMapFn: null
 	
-	,styles: null
+	,mapStyles: null
 	
 	,initialize: function(opts_){
 		var opts = $n2.extend({
@@ -578,7 +578,7 @@ var ModuleDisplay = $n2.Class({
 			};
 
 			// Styles
-			_this.styles = new $n2.mapStyles.MapFeatureStyles( (mapInfo ? mapInfo.styles : null) );
+			_this.mapStyles = new $n2.mapStyles.MapFeatureStyles( (mapInfo ? mapInfo.styles : null) );
 			
 			// Side panel
 			_this._initSidePanel();
@@ -974,7 +974,7 @@ var ModuleDisplay = $n2.Class({
 			};
 			if( !styleMapFn ) {
 				styleMapFn = function(layerInfo_){ 
-					return _this.styles.getStyleMapForLayerInfo(layerInfo_); 
+					return _this.mapStyles.getStyleMapForLayerInfo(layerInfo_); 
 				};
 			};
 			
