@@ -34,7 +34,7 @@ POSSIBILITY OF SUCH DAMAGE.
 "use strict";
 
 // Localization
-var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
+//var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 
 //=========================================================================
 function escapeSelector(sel) {

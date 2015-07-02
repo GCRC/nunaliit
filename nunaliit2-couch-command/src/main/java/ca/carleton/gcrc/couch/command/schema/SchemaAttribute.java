@@ -256,6 +256,11 @@ public class SchemaAttribute {
 				schemaDoc.put(id, "");
 			}
 			
+		} else if( "localized".equals(type) ){
+			if( null != id ){
+				schemaDoc.put(id, JSONObject.NULL);
+			}
+			
 		} else if( "textarea".equals(type) ){
 			if( null != id ){
 				schemaDoc.put(id, "");
@@ -332,6 +337,15 @@ public class SchemaAttribute {
 					printed = true;
 				}
 				
+			} else if( "localized".equals(type) ){
+				if( null != id ){
+					pw.print("{{#"+schemaName+"}}");
+					if( !isFirst ) pw.print(" ");
+					pw.print("{{#:localize}}"+id+"{{/:localize}}");
+					pw.print("{{/"+schemaName+"}}");
+					printed = true;
+				}
+				
 			} else if( "textarea".equals(type) ){
 				if( null != id ){
 					pw.print("{{#"+schemaName+"}}");
@@ -393,6 +407,9 @@ public class SchemaAttribute {
 					if( "string".equals(elementType) ){
 						pw.print("{{.}}");
 						
+					} else if( "localized".equals(elementType) ){
+						pw.print("{{#:localize}}.{{/:localize}}");
+						
 					} else if( "textarea".equals(elementType) ){
 						pw.print("{{.}}");
 						
@@ -435,8 +452,9 @@ public class SchemaAttribute {
 				
 				pw.println("</div>");
 				
-			} else if( "string".equals(type) 
-			 || "textarea".equals(type) ){
+			} else if( "string".equals(type)
+			 || "textarea".equals(type)
+			 || "localized".equals(type) ){
 				if( null != id ){
 					pw.println("{{#"+schemaName+"}}");
 					pw.println("\t{{#"+id+"}}");
@@ -446,7 +464,11 @@ public class SchemaAttribute {
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					if( "textarea".equals(type) ){
 						pw.println("\t\t\t<div class=\"value n2s_preserveSpaces n2s_installMaxHeight n2s_convertTextUrlToLink\" _maxheight=\"100\">{{.}}</div>");
-					} else {
+
+					} else if( "localized".equals(type) ){
+						pw.println("\t\t\t<div class=\"value\">{{#:localize}}.{{/:localize}}</div>");
+					
+					} else if( "string".equals(type) ){
 						pw.println("\t\t\t<div class=\"value\">{{.}}</div>");
 					}
 					pw.println("\t\t\t<div class=\"end\"></div>");
@@ -516,6 +538,8 @@ public class SchemaAttribute {
 					
 					if( "string".equals(elementType) ){
 						pw.println("{{.}}");
+					} else if( "localized".equals(elementType) ){
+						pw.println("{{#:localize}}.{{/:localize}}");
 					} else if( "textarea".equals(elementType) ){
 						pw.println("{{.}}");
 					} else if( "date".equals(elementType) ){
@@ -661,13 +685,16 @@ public class SchemaAttribute {
 				pw.println("</div>");
 
 			} else if( "string".equals(type) 
+			 || "localized".equals(type) 
 			 || "textarea".equals(type) 
 			 || "reference".equals(type) 
 			 || "checkbox".equals(type) 
 			 || "date".equals(type) ){
 				if( null != id ){
 					String fieldType = "";
-					if( "textarea".equals(type) ){
+					if( "localized".equals(type) ){
+						fieldType = ",localized";
+					} else if( "textarea".equals(type) ){
 						fieldType = ",textarea";
 					} else if( "date".equals(type) ){
 						fieldType = ",date";
@@ -733,6 +760,9 @@ public class SchemaAttribute {
 					if( "string".equals(elementType) ){
 						fieldType = "";
 						arrayType = " \"string\"";
+					} else if( "localized".equals(elementType) ){
+						fieldType = ",localized";
+						arrayType = " \"localized\"";
 					} else if( "textarea".equals(elementType) ){
 						fieldType = ",textarea";
 						arrayType = " \"string\"";

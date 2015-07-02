@@ -223,7 +223,7 @@ function _localizeString() {
 	};
 };
 
-function _formSingleField(r,obj,completeSelectors,options){
+function _formSingleField(r,completeSelectors,options){
 	
 	// option: textarea
 	if( options.textarea ){
@@ -340,23 +340,7 @@ function _formField() {
 	r.push('<div class="n2schema_field_wrapper">');
 
 	if( obj && obj.nunaliit_type === 'localized' ) {
-		var langs = [];
-		for(var lang in obj){
-			if( lang === 'nunaliit_type' || lang[0] === ':' ){
-				// ignore
-			} else if( $.inArray(lang,langs) < 0 ) {
-				langs.push(lang);
-			};
-		};
-		if( opts.localized && opts.localized.length ){
-			for(var i=0,e=opts.localized.length;i<e;++i){
-				var lang = opts.localized[i];
-				if( $.inArray(lang,langs) < 0 ) {
-					langs.push(lang);
-				};
-			};
-		};
-		langs.sort();
+		var langs = getSortedLanguages(opts.localized, obj);
 		
 		// Turn on "localized" option, if not already on
 		if( !opts.localized ){
@@ -371,15 +355,16 @@ function _formField() {
 
 			r.push('<div class="n2schema_field_container n2schema_field_container_localized">');
 			r.push('<span class="n2_localize_lang">('+lang+')</span>');
-			_formSingleField(r,obj,langSel,opts);
+			_formSingleField(r,langSel,opts);
 			r.push('</div>');
 		};
 		
 	} else if( !obj && opts.localized ) {
 		// This is a localized string that does not yet exist
+		// This condition is true if obj is an empty string or
+		// if obj is undefined (or null)
 
-		var langs = opts.localized.slice();//copy
-		langs.sort();
+		var langs = getSortedLanguages(opts.localized, null);
 		
 		for(var i=0,e=langs.length;i<e;++i){
 			var lang = langs[i];
@@ -389,7 +374,7 @@ function _formField() {
 			
 			r.push('<div class="n2schema_field_container n2schema_field_container_localized">');
 			r.push('<span class="n2_localize_lang">('+lang+')</span>');
-			_formSingleField(r,this,langSel,opts);
+			_formSingleField(r,langSel,opts);
 			r.push('</div>');
 		};
 
@@ -405,13 +390,59 @@ function _formField() {
 		
 	} else {
 		r.push('<div class="n2schema_field_container">');
-		_formSingleField(r,this,completeSelectors,opts);
+		_formSingleField(r,completeSelectors,opts);
 		r.push('</div>');
 	};
 
 	r.push('</div>');
 	
 	return r.join('');
+	
+	function getSortedLanguages(langOpts, localizedStr){
+		var langMap = {};
+		
+		if( localizedStr ){
+			for(var lang in localizedStr){
+				if( lang === 'nunaliit_type' || lang[0] === ':' ){
+					// ignore
+				} else {
+					langMap[lang] = true;
+				};
+			};
+		};
+
+		if( langOpts ){
+			for(var i=0,e=langOpts.length;i<e;++i){
+				var lang = langOpts[i];
+				langMap[lang] = true;
+			};
+		};
+		
+		var languages = $n2.languageSupport.getLanguages();
+		if( languages ){
+			for(var i=0,e=languages.length; i<e; ++i){
+				var lang = languages[i].code;
+				langMap[lang] = true;
+			};
+		};
+		
+		var langs = [];
+		for(var lang in langMap){
+			langs.push(lang);
+		};
+		
+		var locale = $n2.l10n.getLocale();
+		var localeLang = locale.lang;
+		langs.sort(function(l1,l2){
+			if( l1 === localeLang ) return -1;
+			if( l2 === localeLang ) return 1;
+			if( l1 < l2 ) return -1;
+			if( l1 > l2 ) return 1;
+			return 0;
+		});
+		
+		return langs;
+	};
 };
 
 function _inputField() {
@@ -1638,6 +1669,14 @@ var Form = $n2.Class({
 							} else if( 'string' === newType ){
 								newItem = '';
 								
+							} else if( 'localized' === newType ){
+								newItem = {
+									nunaliit_type: 'localized'
+								};
+								var locale = $n2.l10n.getLocale();
+								var lang = locale.lang;
+								newItem[lang] = '';
+								
 							} else if( 'textarea' === newType ){
 								newItem = '';
 								
@@ -2028,25 +2067,23 @@ var Form = $n2.Class({
 	_createChangeHandler: function(obj, selector, parentSelector, keyType, key, callback) {
 		return function(e) {
 			var $input = $(this);
-			var parentObj = getDataFromObjectSelector(obj, parentSelector);
+			var parentSel = new $n2.objectSelector.ObjectSelector(parentSelector);
+			var parentObj = parentSel.getValue(obj);
 			var effectiveKey = key;
 			var effectiveSelector = selector;
 			
 			if( !parentObj ){
 				if( 'localized' === keyType ) {
-					// Materialize the parent of a localized string
-					var gpSel = parentSelector.slice();
-					var parentKey = gpSel.pop();
-					
-					var gpObj = getDataFromObjectSelector(obj, gpSel);
-					if( gpObj ){
-						parentObj = {'nunaliit_type':'localized'};
-						gpObj[parentKey] = parentObj;
+					var value = $input.val();
+					if( value ){
+						// Materialize the parent of a localized string
+						parentSel.setValue(obj,{'nunaliit_type':'localized'});
+						parentObj = parentSel.getValue(obj);
 					};
 				};
 			};
 			
-			if( null != parentObj ) {
+			if( parentObj ) {
 				var assignValue = true;
 				var type = $input.attr('type');
 				if( 'checkbox' === type ) {
@@ -2071,6 +2108,24 @@ var Form = $n2.Class({
 						};
 						parentObj = parentObj[effectiveKey];
 						effectiveKey = 'doc';
+					};
+					
+				} else if( 'localized' === keyType ) {
+					value = $input.val();
+					parentObj[effectiveKey] = value;
+					assignValue = false;
+					
+					var shouldDelete = true;
+					for(var lang in parentObj){
+						if( 'nunaliit_type' === lang ){
+							// ignore
+						} else if( parentObj[lang] ) {
+							// non-empty string
+							shouldDelete = false;
+						};
+					};
+					if( shouldDelete ){
+						parentSel.removeValue(obj);
 					};
 					
 				} else if( 'date' === keyType ) {
