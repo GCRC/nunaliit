@@ -266,6 +266,11 @@ public class SchemaAttribute {
 				schemaDoc.put(id, "");
 			}
 			
+		} else if( "localizedtextarea".equals(type) ){
+			if( null != id ){
+				schemaDoc.put(id, JSONObject.NULL);
+			}
+			
 		} else if( "date".equals(type) ){
 			// leave date attributes as undefined
 			
@@ -328,7 +333,8 @@ public class SchemaAttribute {
 		if( includedInBrief ){
 			if( "title".equals(type) ){
 				
-			} else if( "string".equals(type) ){
+			} else if( "string".equals(type) 
+			 || "textarea".equals(type) ){
 				if( null != id ){
 					pw.print("{{#"+schemaName+"}}");
 					if( !isFirst ) pw.print(" ");
@@ -337,20 +343,12 @@ public class SchemaAttribute {
 					printed = true;
 				}
 				
-			} else if( "localized".equals(type) ){
+			} else if( "localized".equals(type) 
+			 || "localizedtextarea".equals(type) ){
 				if( null != id ){
 					pw.print("{{#"+schemaName+"}}");
 					if( !isFirst ) pw.print(" ");
 					pw.print("{{#:localize}}"+id+"{{/:localize}}");
-					pw.print("{{/"+schemaName+"}}");
-					printed = true;
-				}
-				
-			} else if( "textarea".equals(type) ){
-				if( null != id ){
-					pw.print("{{#"+schemaName+"}}");
-					if( !isFirst ) pw.print(" ");
-					pw.print("{{"+id+"}}");
 					pw.print("{{/"+schemaName+"}}");
 					printed = true;
 				}
@@ -404,14 +402,13 @@ public class SchemaAttribute {
 					pw.print("{{#"+id+"}}");
 					if( !isFirst ) pw.print(" ");
 					
-					if( "string".equals(elementType) ){
+					if( "string".equals(elementType) 
+					 || "textarea".equals(elementType) ){
 						pw.print("{{.}}");
 						
-					} else if( "localized".equals(elementType) ){
+					} else if( "localized".equals(elementType) || 
+					 "localizedtextarea".equals(elementType) ){
 						pw.print("{{#:localize}}.{{/:localize}}");
-						
-					} else if( "textarea".equals(elementType) ){
-						pw.print("{{.}}");
 						
 					} else if( "date".equals(elementType) ){
 						pw.print("{{date}}");
@@ -454,7 +451,8 @@ public class SchemaAttribute {
 				
 			} else if( "string".equals(type)
 			 || "textarea".equals(type)
-			 || "localized".equals(type) ){
+			 || "localized".equals(type)
+			 || "localizedtextarea".equals(type) ){
 				if( null != id ){
 					pw.println("{{#"+schemaName+"}}");
 					pw.println("\t{{#"+id+"}}");
@@ -462,15 +460,20 @@ public class SchemaAttribute {
 					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
 
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-					if( "textarea".equals(type) ){
+
+					if( "string".equals(type) ){
+						pw.println("\t\t\t<div class=\"value\">{{.}}</div>");
+					
+					} else if( "textarea".equals(type) ){
 						pw.println("\t\t\t<div class=\"value n2s_preserveSpaces n2s_installMaxHeight n2s_convertTextUrlToLink\" _maxheight=\"100\">{{.}}</div>");
 
 					} else if( "localized".equals(type) ){
 						pw.println("\t\t\t<div class=\"value\">{{#:localize}}.{{/:localize}}</div>");
-					
-					} else if( "string".equals(type) ){
-						pw.println("\t\t\t<div class=\"value\">{{.}}</div>");
+
+					} else if( "localizedtextarea".equals(type) ){
+						pw.println("\t\t\t<div class=\"value n2s_preserveSpaces n2s_installMaxHeight n2s_convertTextUrlToLink\" _maxheight=\"100\">{{#:localize}}.{{/:localize}}</div>");
 					}
+					
 					pw.println("\t\t\t<div class=\"end\"></div>");
 					
 					pw.println("\t\t</div>");
@@ -531,17 +534,20 @@ public class SchemaAttribute {
 					pw.println("\t\t<div class=\"value\">");
 					pw.println("\t\t{{#"+id+"}}");
 					pw.print("\t\t\t<div class=\"array_element");
-					if( "textarea".equals(elementType) ){
+					if( "textarea".equals(elementType) 
+					 || "localizedtextarea".equals(elementType) ){
 						pw.print(" n2s_preserveSpaces n2s_installMaxHeight n2s_convertTextUrlToLink\" _maxheight=\"100");
 					}
 					pw.println("\">");
 					
 					if( "string".equals(elementType) ){
 						pw.println("{{.}}");
-					} else if( "localized".equals(elementType) ){
-						pw.println("{{#:localize}}.{{/:localize}}");
 					} else if( "textarea".equals(elementType) ){
 						pw.println("{{.}}");
+					} else if( "localized".equals(elementType) ){
+						pw.println("{{#:localize}}.{{/:localize}}");
+					} else if( "localizedtextarea".equals(elementType) ){
+						pw.println("{{#:localize}}.{{/:localize}}");
 					} else if( "date".equals(elementType) ){
 						pw.println("{{date}}");
 					} else if( "reference".equals(elementType) ){
@@ -687,6 +693,7 @@ public class SchemaAttribute {
 			} else if( "string".equals(type) 
 			 || "localized".equals(type) 
 			 || "textarea".equals(type) 
+			 || "localizedtextarea".equals(type) 
 			 || "reference".equals(type) 
 			 || "checkbox".equals(type) 
 			 || "date".equals(type) ){
@@ -696,6 +703,8 @@ public class SchemaAttribute {
 						fieldType = ",localized";
 					} else if( "textarea".equals(type) ){
 						fieldType = ",textarea";
+					} else if( "localizedtextarea".equals(type) ){
+						fieldType = ",textarea,localized";
 					} else if( "date".equals(type) ){
 						fieldType = ",date";
 					} else if( "reference".equals(type) ){
@@ -766,6 +775,9 @@ public class SchemaAttribute {
 					} else if( "textarea".equals(elementType) ){
 						fieldType = ",textarea";
 						arrayType = " \"string\"";
+					} else if( "localizedtextarea".equals(elementType) ){
+						fieldType = ",textarea,localized";
+						arrayType = " \"localized\"";
 					} else if( "date".equals(elementType) ){
 						fieldType = ",date";
 						arrayType = " \"date\"";
