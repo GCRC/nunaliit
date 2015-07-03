@@ -64,15 +64,15 @@ var LoadHelpDocument = function(opts_){
 					getAttachment(doc);
 					
 				} else {
-					opts.onError( _loc('Unknown type for help document: {{docId}}',{docId: opts.id}) );
+					opts.onError( _loc('Unknown type for help document: {docId}',{docId: opts.id}) );
 				};
 				
 			} else {
-				opts.onError( _loc('Invalid help document: {{docId}}',{docId: opts.id}) );
+				opts.onError( _loc('Invalid help document: {docId}',{docId: opts.id}) );
 			};
 		}
 		,onError: function(errorMsg){
-			opts.onError( _loc('Unable to access help document: {{docId}}',{docId: opts.id}) );
+			opts.onError( _loc('Unable to access help document: {docId}',{docId: opts.id}) );
 		}
 	});
 	

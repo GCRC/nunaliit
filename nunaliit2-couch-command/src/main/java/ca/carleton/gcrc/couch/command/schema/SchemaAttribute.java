@@ -576,7 +576,7 @@ public class SchemaAttribute {
 							optLabel = value;
 						}
 						
-						pw.println("\t\t\t\t<span class=\"n2s_choice\" n2-choice=\""+value+"\">"+optLabel+"</span>");
+						pw.println("\t\t\t\t<span class=\"n2s_choice n2s_localize\" n2-choice=\""+value+"\">"+optLabel+"</span>");
 					}
 
 					pw.println("\t\t\t\t<span class=\"n2s_choiceDefault\">{{.}}</span>");
@@ -734,7 +734,7 @@ public class SchemaAttribute {
 					pw.println("\t\t\t<select class=\"{{#:input}}"+id+"{{/:input}}\">");
 					
 					for(SelectionOption option : options){
-						pw.print("\t\t\t\t<option value=\""+option.getValue()+"\">");
+						pw.print("\t\t\t\t<option class=\"n2s_localize\" value=\""+option.getValue()+"\">");
 						String optLabel = option.getLabel();
 						if( null == optLabel ){
 							optLabel = option.getValue();
