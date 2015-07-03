@@ -182,6 +182,9 @@ function getStringForLocale(str){
 function getLocalizedString(str, packageName, args) {
 	var suppressTranslationRequest = false;
 	
+	if( null === str ) return str;
+	if( typeof str === 'undefined' ) return str;
+	
 	var locale = getLocale();
 	var lang = locale.lang;
 

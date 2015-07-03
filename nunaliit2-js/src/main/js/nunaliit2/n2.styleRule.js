@@ -258,8 +258,10 @@ var Symbolizer = $n2.Class({
 					value = this.getSymbolValue(info.alt,ctxt);
 				};
 				
-				if( value ){
-					if( 'label' === name ){
+				if( 'label' === name ){
+					value = _loc(value);
+					
+					if( value ){
 						// empty()
 						while ( svgDomElem.firstChild ) {
 							svgDomElem.removeChild( svgDomElem.firstChild );
@@ -268,10 +270,10 @@ var Symbolizer = $n2.Class({
 						// text(value)
 						var textNode = svgDomElem.ownerDocument.createTextNode(value);
 						svgDomElem.appendChild(textNode);
-						
-					} else {
-						svgDomElem.setAttributeNS(null, name, value);
 					};
+					
+				} else if( value ){
+					svgDomElem.setAttributeNS(null, name, value);
 				};
 			};
 		};
