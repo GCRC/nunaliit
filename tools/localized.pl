@@ -155,10 +155,12 @@ sub Load_Translations
 	chomp @output;
 	
 	foreach my $line (@output) {
-		if( $line =~ m/nunaliit2\.([a-zA-Z][a-zA-Z])\.js\s*$/ ) {
-			my $file = $line;
-			my $lang = $1;
-			Load_TranslationFile($file, $lang, $dictRef);
+		if( $line =~ m/\/nunaliit2-js\/src\/main\/js\/nunaliit2\// ){
+			if( $line =~ m/nunaliit2\.([a-zA-Z][a-zA-Z])\.js\s*$/ ) {
+				my $file = $line;
+				my $lang = $1;
+				Load_TranslationFile($file, $lang, $dictRef);
+			}
 		}
 	}
 
@@ -169,10 +171,12 @@ sub Load_Translations
 	chomp @output;
 	
 	foreach my $line (@output) {
-		if( $line =~ m/nunaliit_lang\.([a-zA-Z][a-zA-Z])\.js\s*$/ ) {
-			my $file = $line;
-			my $lang = $1;
-			Load_TranslationFile($file, $lang, $dictRef);
+		if( $line =~ m/\.\/htdocs\/nunaliit_lang/ ){
+			if( $line =~ m/nunaliit_lang\.([a-zA-Z][a-zA-Z])\.js\s*$/ ) {
+				my $file = $line;
+				my $lang = $1;
+				Load_TranslationFile($file, $lang, $dictRef);
+			}
 		}
 	}
 }
@@ -181,6 +185,8 @@ sub Load_Translations
 sub Load_TranslationFile
 {
 	my ($file, $lang, $dictRef) = @_;
+
+	print STDERR qq|Load translations ($lang): $file\n|;
 
 	open FILE, "<$file" or die $!;
 
