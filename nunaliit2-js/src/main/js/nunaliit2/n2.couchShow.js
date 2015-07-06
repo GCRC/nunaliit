@@ -796,8 +796,9 @@ var DomStyler = $n2.Class({
 			if( after ){
 				var t3 = parent.ownerDocument.createTextNode(after);
 				parent.insertBefore(t3,textNode);
-				parent.removeChild(textNode);
 			};
+
+			parent.removeChild(textNode);
 		};
 	},
 	

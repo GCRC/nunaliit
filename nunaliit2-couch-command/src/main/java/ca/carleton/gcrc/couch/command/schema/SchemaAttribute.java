@@ -72,6 +72,12 @@ public class SchemaAttribute {
 			attribute.setExcludedFromForm(excludedFromForm);
 		}
 
+		// urlsToLinks
+		{
+			boolean urlsToLinks = jsonAttr.optBoolean("urlsToLinks",false);
+			attribute.setUrlsToLinks(urlsToLinks);
+		}
+
 		// options
 		{
 			JSONArray jsonOptions = jsonAttr.optJSONArray("options");
@@ -105,6 +111,7 @@ public class SchemaAttribute {
 	private boolean includedInBrief;
 	private boolean excludedFromDisplay;
 	private boolean excludedFromForm;
+	private boolean urlsToLinks;
 	private List<SelectionOption> options = new Vector<SelectionOption>();
 	private List<CheckboxGroupItem> checkboxes = new Vector<CheckboxGroupItem>();
 	private String elementType;
@@ -153,6 +160,14 @@ public class SchemaAttribute {
 
 	public void setExcludedFromForm(boolean excludedFromForm) {
 		this.excludedFromForm = excludedFromForm;
+	}
+
+	public boolean isUrlsToLinks() {
+		return urlsToLinks;
+	}
+
+	public void setUrlsToLinks(boolean urlsToLinks) {
+		this.urlsToLinks = urlsToLinks;
 	}
 
 	public List<SelectionOption> getOptions() {
@@ -221,6 +236,7 @@ public class SchemaAttribute {
 		if( includedInBrief ) jsonAttr.put("includedInBrief", true);
 		if( excludedFromDisplay ) jsonAttr.put("excludedFromDisplay", true);
 		if( excludedFromForm ) jsonAttr.put("excludedFromForm", true);
+		if( urlsToLinks ) jsonAttr.put("urlsToLinks", true);
 
 		if( options.size() > 0 ){
 			JSONArray jsonOptions = new JSONArray();
@@ -461,17 +477,22 @@ public class SchemaAttribute {
 
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 
+					String fixUrlClass = "";
+					if( urlsToLinks ){
+						fixUrlClass = " n2s_convertTextUrlToLink";
+					}
+					
 					if( "string".equals(type) ){
-						pw.println("\t\t\t<div class=\"value\">{{.}}</div>");
+						pw.println("\t\t\t<div class=\"value"+fixUrlClass+"\">{{.}}</div>");
 					
 					} else if( "textarea".equals(type) ){
-						pw.println("\t\t\t<div class=\"value n2s_preserveSpaces n2s_installMaxHeight n2s_convertTextUrlToLink\" _maxheight=\"100\">{{.}}</div>");
+						pw.println("\t\t\t<div class=\"value n2s_preserveSpaces n2s_installMaxHeight"+fixUrlClass+"\" _maxheight=\"100\">{{.}}</div>");
 
 					} else if( "localized".equals(type) ){
-						pw.println("\t\t\t<div class=\"value\">{{#:localize}}.{{/:localize}}</div>");
+						pw.println("\t\t\t<div class=\"value"+fixUrlClass+"\">{{#:localize}}.{{/:localize}}</div>");
 
 					} else if( "localizedtextarea".equals(type) ){
-						pw.println("\t\t\t<div class=\"value n2s_preserveSpaces n2s_installMaxHeight n2s_convertTextUrlToLink\" _maxheight=\"100\">{{#:localize}}.{{/:localize}}</div>");
+						pw.println("\t\t\t<div class=\"value n2s_preserveSpaces n2s_installMaxHeight"+fixUrlClass+"\" _maxheight=\"100\">{{#:localize}}.{{/:localize}}</div>");
 					}
 					
 					pw.println("\t\t\t<div class=\"end\"></div>");

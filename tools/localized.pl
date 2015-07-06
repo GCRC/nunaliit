@@ -74,12 +74,27 @@ sub Capture_loc
 	
 	foreach my $line (@output) {
 		if( $line =~ m/(nunaliit2[^\/]*\.js):/ ) {
-			# ignore
+			# ignore the geenrated files such as nunaliit2.js and nunaliit2-couch.js
 			my $fileName = $1;
 			#print STDERR qq|Skip *** $fileName\n|;
 		
 		} elsif(( $line =~ m/(SchemaAttribute\.java):/ ) ) {
-			# ignore
+			# ignore the file SchemaAttribute.java
+			my $fileName = $1;
+			#print STDERR qq|Skip *** $fileName\n|;
+		
+		} elsif(( $line =~ m/^.\/dump.*/ ) ) {
+			# ignore files in dump directory
+			my $fileName = $1;
+			#print STDERR qq|Skip *** $fileName\n|;
+		
+		} elsif(( $line =~ m/^.\/upgrade.*/ ) ) {
+			# ignore files in upgrade directory
+			my $fileName = $1;
+			#print STDERR qq|Skip *** $fileName\n|;
+		
+		} elsif(( $line =~ m/^.\/logs.*/ ) ) {
+			# ignore files in logs directory
 			my $fileName = $1;
 			#print STDERR qq|Skip *** $fileName\n|;
 		
@@ -126,12 +141,27 @@ sub Capture_localized
 	
 	foreach my $line (@output) {
 		if( $line =~ m/(nunaliit2[^\/]*\.js):/ ) {
-			# ignore
+			# ignore the geenrated files such as nunaliit2.js and nunaliit2-couch.js
 			my $fileName = $1;
 			#print STDERR qq|Skip *** $fileName\n|;
 		
 		} elsif(( $line =~ m/(SchemaAttribute\.java):/ ) ) {
-			# ignore
+			# ignore the file SchemaAttribute.java
+			my $fileName = $1;
+			#print STDERR qq|Skip *** $fileName\n|;
+		
+		} elsif(( $line =~ m/^.\/dump.*/ ) ) {
+			# ignore files in dump directory
+			my $fileName = $1;
+			#print STDERR qq|Skip *** $fileName\n|;
+		
+		} elsif(( $line =~ m/^.\/upgrade.*/ ) ) {
+			# ignore files in upgrade directory
+			my $fileName = $1;
+			#print STDERR qq|Skip *** $fileName\n|;
+		
+		} elsif(( $line =~ m/^.\/logs.*/ ) ) {
+			# ignore files in logs directory
 			my $fileName = $1;
 			#print STDERR qq|Skip *** $fileName\n|;
 		
