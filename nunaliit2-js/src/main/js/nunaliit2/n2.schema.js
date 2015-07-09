@@ -61,48 +61,13 @@ var ARRAY = ':array';
 //============================================================
 // Object
 
-function getDataFromObjectSelector(o, selectors) {
-	if( typeof(selectors) === 'string' ) {
-		selectors = selectors.split('.');
-	}
-	return findDataFromObject(o, selectors, 0);
-};
-
-function findDataFromObject(o, selectors, selectorIndex) {
-	if( selectorIndex >= selectors.length ) {
-		return o;
+function parseSelectorString(selStr){
+	if( '.' === selStr ){
+		return new $n2.objectSelector.ObjectSelector([]);
 	};
 	
-	// This is an error. There are more
-	// selectors in the array but we have
-	// a scalar. Return an error.
-	if( null == o
-	 || typeof(o) === 'number' 
-	 || typeof(o) === 'string'
-	 || typeof(o) === 'undefined'
-	 || typeof(o) === 'function' ) {
-		return null;
-	};
-	
-	if( $n2.isArray(o) ) {
-		var index = 1 * selectors[selectorIndex];
-		if( index >= o.length ) {
-			return null;
-		};
-		return findDataFromObject(o[index], selectors, (selectorIndex+1));
-	}
-
-	if( typeof(o) === 'object' ) {
-		var key = selectors[selectorIndex];
-		var value = o[key];
-		if( value === undefined ) {
-			return null;
-		};
-		return findDataFromObject(value, selectors, (selectorIndex+1));
-	};
-	
-	// Should not get here. Error. Return null.
-	return null;
+	var selectors = selStr.split('.');
+	return new $n2.objectSelector.ObjectSelector(selectors);
 };
 
 //============================================================
@@ -141,11 +106,8 @@ function _localizeString() {
 	};
 	
 	// Get data from key
-	if( '.' === key ) {
-		var s = this;
-	} else {
-		s = getDataFromObjectSelector(this, key);
-	};
+	var objSel = parseSelectorString(key);
+	var s = objSel.getValue(this);
 
 	if( s
 	 && typeof(s) === 'object' 
@@ -299,19 +261,11 @@ function _formField() {
 	// parse it
 	var text = options.fn(this);
 	
-	var obj,sels,completeSelectors;
 	var splits = text.split(',');
 	var identifier = splits[0];
-	if( '.' === identifier ){
-		obj = this;
-		sels = [];
-		completeSelectors = currentSelector;
-	} else {
-		sels = identifier.split('.');
-		obj = getDataFromObjectSelector(this, sels);
-		completeSelectors = currentSelector.slice(0); // clone
-		completeSelectors.push.apply(completeSelectors, sels);
-	};
+	var objSel = parseSelectorString(identifier);
+	var obj = objSel.getValue(this);
+	var completeSelectors = currentSelector.getChildSelector(objSel);
 	
 	if( obj
 	 && typeof obj === 'object'
@@ -354,8 +308,7 @@ function _formField() {
 		for(var i=0,e=langs.length;i<e;++i){
 			var lang = langs[i];
 			
-			var langSel = completeSelectors.slice();//copy
-			langSel.push(lang);
+			var langSel = completeSelectors.getChildSelector(lang);
 
 			r.push('<div class="n2schema_field_container n2schema_field_container_localized">');
 			r.push('<span class="n2_localize_lang">('+lang+')</span>');
@@ -373,8 +326,7 @@ function _formField() {
 		for(var i=0,e=langs.length;i<e;++i){
 			var lang = langs[i];
 			
-			var langSel = completeSelectors.slice();//copy
-			langSel.push(lang);
+			var langSel = completeSelectors.getChildSelector(lang);
 			
 			r.push('<div class="n2schema_field_container n2schema_field_container_localized">');
 			r.push('<span class="n2_localize_lang">('+lang+')</span>');
@@ -383,8 +335,7 @@ function _formField() {
 		};
 
 	} else if( opts.reference ) {
-		var objSel = new $n2.objectSelector.ObjectSelector(completeSelectors);
-		var attr = objSel.encodeForDomAttribute();
+		var attr = completeSelectors.encodeForDomAttribute();
 		r.push('<span class="n2schema_field_reference" n2-obj-sel="'+attr+'"');
 		if( opts.search 
 		 && opts.search[0] ){
@@ -464,9 +415,9 @@ function _inputField() {
 	if( options
 	 && options.data
 	 && options.data.n2_selector ){
-		completeSelectors = options.data.n2_selector.slice(0);
+		completeSelectors = options.data.n2_selector;
 	} else if( this[SELECT] ) {
-		completeSelectors = this[SELECT].slice(0);
+		completeSelectors = this[SELECT];
 	} else {
 		return '';
 	};
@@ -474,7 +425,7 @@ function _inputField() {
 		// Current selector is fine
 	} else {
 		var sels = key.split('.');
-		completeSelectors.push.apply(completeSelectors,sels);
+		completeSelectors = completeSelectors.getChildSelector(sels);
 	};	
 	
 	var cl = 'n2schema_input ' + createClassStringFromSelector(completeSelectors);
@@ -507,8 +458,8 @@ function _arrayField() {
 		for(var i=0,e=obj.length; i<e; ++i){
 			var item = obj[i];
 	
-			var completeSelectors = obj[SELECT].slice(0);
-			completeSelectors.push(i);
+			var completeSelectors = obj[SELECT];
+			completeSelectors = completeSelectors.getChildSelector(i);
 			var cl = createClassStringFromSelector(completeSelectors);
 			
 			r.push('<div class="n2schema_array_item">');
@@ -525,7 +476,7 @@ function _arrayField() {
 	};
 
 	if( obj ){
-		var arraySelector = obj[SELECT]
+		var arraySelector = obj[SELECT];
 		var arrayClass = createClassStringFromSelector(arraySelector);
 		r.push('<div class="n2schema_array_add '+arrayClass+'"');
 		if( newType ) {
@@ -642,7 +593,7 @@ $n2.ObjectQuery = function(obj, query){
 	
 	var result = new ObjectQueryResults(obj);
 	return result.query(query);
-}
+};
 
 
 //============================================================
@@ -1413,32 +1364,22 @@ function unescapeSelector(sel) {
 	return res.join('');
 };
 
-function createClassStringFromSelector(selector, key) {
-	var cs = [selectorClassStringPrefix];
-	for(var i=0,e=selector.length; i<e; ++i) {
-		cs.push('-');
-		cs.push( escapeSelector(''+selector[i]) );
-	};
-	if( key ) {
-		cs.push('-');
-		cs.push( escapeSelector(key) );
-	};
-	return cs.join('');
+function createClassStringFromSelector(selector) {
+	var cs = 
+		selectorClassStringPrefix
+		+selector.encodeForDomAttribute();
+	return cs;
 };
 
 // Given a class name, returns an array that represents the encoded selector.
 // Returns null if the class name is not encoding a selector
 function createSelectorFromClassString(classString) {
-	if( selectorClassStringPrefix === classString.substr(0,selectorClassStringPrefix.length) ) {
-		var selectorString = classString.substr(selectorClassStringPrefix.length+1);
-		var selector = selectorString.split('-');
+	if( selectorClassStringPrefix 
+			=== classString.substr(0,selectorClassStringPrefix.length) ) {
+		var selectorString = classString.substr(selectorClassStringPrefix.length);
+		var selector = $n2.objectSelector.decodeFromDomAttribute(selectorString);
 		
-		var res = [];
-		for(var i=0,e=selector.length; i<e; ++i) {
-			res.push( unescapeSelector(selector[i]) );
-		};
-		
-		return res;
+		return selector;
 	};
 	
 	return null;
@@ -1476,13 +1417,12 @@ function computeFormObj(origObj, context, selector, parent) {
 		var view = [];
 		view[CONTEXT] = context;
 		view[PARENT] = parent;
-		view[SELECT] = selector.slice(0);
+		view[SELECT] = selector;
 		
 		for(var i=0,e=origObj.length; i<e; ++i) {
-			selector.push(i);
-			var value = computeFormObj(origObj[i], context, selector, view);
+			var childSelector = selector.getChildSelector(i);
+			var value = computeFormObj(origObj[i], context, childSelector, view);
 			view.push(value);
-			selector.pop();
 		};
 
 		return view;
@@ -1493,16 +1433,15 @@ function computeFormObj(origObj, context, selector, parent) {
 		view[ITERATE] = [];
 		view[CONTEXT] = context;
 		view[PARENT] = parent;
-		view[SELECT] = selector.slice(0);
+		view[SELECT] = selector;
 
 		for(var key in origObj) {
 			if('__n2Source' === key) continue;
 
-			selector.push(key);
-			var value = computeFormObj(origObj[key], context, selector, view);
+			var childSelector = selector.getChildSelector(key);
+			var value = computeFormObj(origObj[key], context, childSelector, view);
 			view[key] = value;
 			view[ITERATE].push({key:key,value:value});
-			selector.pop();
 		};
 		view[EMPTY] = (0 == view[ITERATE].length);
 		
@@ -1619,7 +1558,11 @@ var Form = $n2.Class({
 		};
 		if( $elem.length > 0 ) {
 			// Create view for displayTemplate
-			var view = computeFormObj(this.obj, this.context, []);
+			var view = computeFormObj(
+					this.obj
+					,this.context
+					,new $n2.objectSelector.ObjectSelector([])
+				);
 			this._setHtml(view);
 			
 			$elem.empty();
@@ -1655,7 +1598,7 @@ var Form = $n2.Class({
 					//$n2.log('click',this,e);
 					if( $clicked.hasClass('n2schema_array_add') ){
 						var newType = $clicked.attr('n2_array_new_type');
-						var ary = getDataFromObjectSelector(_this.obj, classInfo.selector);
+						var ary = classInfo.selector.getValue(_this.obj);
 						if( ary ){
 							var newItem = '';
 							if( 'reference' === newType ){
@@ -1694,35 +1637,35 @@ var Form = $n2.Class({
 							ary.push(newItem);
 						};
 						_this.refresh($elem);
-						_this.callback(_this.obj,classInfo.selector,ary);
+						_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						
 					} else if( $clicked.hasClass('n2schema_array_item_delete') ){
-						var parentSelector = classInfo.selector.slice(0);
-						var itemIndex = 1 * (parentSelector.pop());
-						var ary = getDataFromObjectSelector(_this.obj, parentSelector);
+						var itemIndex = 1 * classInfo.selector.getKey();
+						var parentSelector = classInfo.selector.getParentSelector();
+						var ary = parentSelector.getValue(_this.obj);
 						ary.splice(itemIndex,1);
 						_this.refresh($elem);
-						_this.callback(_this.obj,classInfo.selector,ary);
+						_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						
 					} else if( $clicked.hasClass('n2schema_array_item_down') ){
-						var parentSelector = classInfo.selector.slice(0);
-						var itemIndex = 1 * (parentSelector.pop());
+						var itemIndex = 1 * classInfo.selector.getKey();
 						if( itemIndex > 0 ) {
-							var ary = getDataFromObjectSelector(_this.obj, parentSelector);
+							var parentSelector = classInfo.selector.getParentSelector();
+							var ary = parentSelector.getValue(_this.obj);
 							var removedItems = ary.splice(itemIndex,1);
 							ary.splice(itemIndex-1,0,removedItems[0]);
 							_this.refresh($elem);
-							_this.callback(_this.obj,classInfo.selector,ary);
+							_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						};
 						
 					} else if( $clicked.hasClass('n2schema_referenceDelete') ){
-						var parentSelector = classInfo.selector.slice(0);
-						var referenceKey = parentSelector.pop();
-						var parentObj = getDataFromObjectSelector(_this.obj, parentSelector);
+						var referenceKey = classInfo.selector.getKey();
+						var parentSelector = classInfo.selector.getParentSelector();
+						var parentObj = parentSelector.getValue(_this.obj);
 						if( parentObj[referenceKey] ){
 							delete parentObj[referenceKey];
 							_this.refresh($elem);
-							_this.callback(_this.obj,classInfo.selector,null);
+							_this.callback(_this.obj,classInfo.selector.selectors,null);
 						};
 						
 					} else if( $clicked.hasClass('n2schema_help_date') ){
@@ -1761,23 +1704,19 @@ var Form = $n2.Class({
 		var classInfo = parseClassNames(classNames);
 
 		var selector = classInfo.selector;
-		if( null != selector ) {
-			var parentSelector = [];
-			for(var i=0,e=selector.length-1; i<e; ++i) {
-				parentSelector.push(selector[i]);
-			};
-			var key = selector[i];
+		if( selector ) {
+			var parentSelector = selector.getParentSelector();
+			var key = selector.getKey();
 			var handler = this._createChangeHandler(
 				obj
 				,selector
 				,parentSelector
 				,classInfo.type
-				,key
 				,function(obj, selector, value){
 					if( 'reference' === classInfo.type ){
 						_this.refresh($elem);
 					};
-					callback(obj, selector, value);
+					callback(obj, selector.selectors, value);
 				}
 			);
 			$input.change(handler);
@@ -1791,7 +1730,7 @@ var Form = $n2.Class({
 			};
 			
 			// Set value
-			var value = getDataFromObjectSelector(obj, selector);
+			var value = selector.getValue(obj);
 			var type = $input.attr('type');
 			if( 'checkbox' === type ) {
 				if( value ) {
@@ -1900,12 +1839,12 @@ var Form = $n2.Class({
 							return true;
 						};
 						
-						var layerValue = getDataFromObjectSelector(obj, selector);
+						var layerValue = selector.getValue(obj);
 						
 						getLayersFn({
 							currentLayers: layerValue	
 							,onSelected: function(layers){ // callback with docId
-								var p = getDataFromObjectSelector(obj, parentSelector);
+								var p = parentSelector.getValue(obj);
 								if( p ) {
 									p[key] = layers;
 									if( !layers || layers.length === 0 ){
@@ -2068,21 +2007,19 @@ var Form = $n2.Class({
 		};
 	},
 	
-	_createChangeHandler: function(obj, selector, parentSelector, keyType, key, callback) {
+	_createChangeHandler: function(obj, selector, parentSelector, keyType, callback) {
 		return function(e) {
 			var $input = $(this);
-			var parentSel = new $n2.objectSelector.ObjectSelector(parentSelector);
-			var parentObj = parentSel.getValue(obj);
-			var effectiveKey = key;
-			var effectiveSelector = selector;
+			var parentObj = parentSelector.getValue(obj);
+			var effectiveKey = selector.getKey();
 			
 			if( !parentObj ){
 				if( 'localized' === keyType ) {
 					var value = $input.val();
 					if( value ){
 						// Materialize the parent of a localized string
-						parentSel.setValue(obj,{'nunaliit_type':'localized'});
-						parentObj = parentSel.getValue(obj);
+						parentSelector.setValue(obj,{'nunaliit_type':'localized'});
+						parentObj = parentSelector.getValue(obj);
 					};
 				};
 			};
@@ -2129,7 +2066,7 @@ var Form = $n2.Class({
 						};
 					};
 					if( shouldDelete ){
-						parentSel.removeValue(obj);
+						parentSelector.removeValue(obj);
 					};
 					
 				} else if( 'date' === keyType ) {
@@ -2202,7 +2139,7 @@ var Form = $n2.Class({
 				if( assignValue ) {
 					parentObj[effectiveKey] = value;
 				};
-				callback(obj,effectiveSelector,value);
+				callback(obj,selector.selectors,value);
 			};
 		};
 	}
