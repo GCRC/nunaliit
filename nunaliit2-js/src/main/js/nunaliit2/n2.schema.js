@@ -270,15 +270,16 @@ function _formField() {
 	// ([obj,]options)
 	// obj is not provided in this case, since we do not expect any arguments
 	// to {{:field}}
-	// The options hash contains a "fn" attribute, which is a function to
-	// render inner content.
+	// options.fn is a function to render inner content
+	// options.data is provided by helper that is rendering current portion
+	// options.data.n2_selector is provided by the _array() helper
 	// this points to the current object
+	//
+	// Syntax to :form is:
+	// {{#:form}}<selector>(,<option>)*{{/:form}}
 	var args = [];
 	args.push.apply(args,arguments);
 	var options = args.pop();
-	
-	// Gets the text between start and end tags
-	var text = options.fn(this);
 	
 	// Compute current selector
 	var currentSelector = [];
@@ -294,7 +295,10 @@ function _formField() {
 		currentSelector = this[SELECT];
 	};
 
-	// Syntax is: <selector>(,<option>)*
+	// Gets the text between start and end tags and
+	// parse it
+	var text = options.fn(this);
+	
 	var obj,sels,completeSelectors;
 	var splits = text.split(',');
 	var identifier = splits[0];
