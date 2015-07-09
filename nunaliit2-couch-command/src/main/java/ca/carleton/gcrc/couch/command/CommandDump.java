@@ -129,7 +129,6 @@ public class CommandDump implements Command {
 				
 			} else if( "--overwrite-docs".equals(optionName) ){
 				argumentStack.pop();
-				selectSkeletonDocuments = true;
 				overwriteDocs = true;
 
 			} else {
@@ -141,6 +140,12 @@ public class CommandDump implements Command {
 		AtlasProperties atlasProperties = AtlasProperties.fromAtlasDir(atlasDir);
 		
 		CouchDb couchDb = CommandSupport.createCouchDb(gs, atlasProperties);
+
+		// Assume --skeleton if --overwrite-docs is specified, unless --doc-id
+		// is provided
+		if( overwriteDocs && docIds.size() < 1 ){
+			selectSkeletonDocuments = true;
+		}
 		
 		if( selectSkeletonDocuments ){
 			SkeletonDocumentsDetector docFinder = new SkeletonDocumentsDetector(couchDb,gs);
