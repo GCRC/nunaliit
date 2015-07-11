@@ -46,6 +46,14 @@ public class SchemaAttribute {
 			}
 		}
 		
+		// customType
+		{
+			String customType = jsonAttr.optString("customType",null);
+			if( null != customType ){
+				attribute.setCustomType(customType);
+			}
+		}
+		
 		// searchFunction
 		{
 			String searchFunction = jsonAttr.optString("searchFunction",null);
@@ -116,6 +124,7 @@ public class SchemaAttribute {
 	private List<CheckboxGroupItem> checkboxes = new Vector<CheckboxGroupItem>();
 	private String elementType;
 	private String referenceType;
+	private String customType;
 	private String searchFunction;
 
 	public SchemaAttribute(String type){
@@ -215,6 +224,14 @@ public class SchemaAttribute {
 		this.referenceType = referenceType;
 	}
 
+	public String getCustomType() {
+		return customType;
+	}
+
+	public void setCustomType(String customType) {
+		this.customType = customType;
+	}
+
 	public String getSearchFunction() {
 		return searchFunction;
 	}
@@ -232,6 +249,7 @@ public class SchemaAttribute {
 		if( null != label ) jsonAttr.put("label", label);
 		if( null != elementType ) jsonAttr.put("elementType", elementType);
 		if( null != referenceType ) jsonAttr.put("referenceType", referenceType);
+		if( null != customType ) jsonAttr.put("customType", customType);
 		if( null != searchFunction ) jsonAttr.put("searchFunction", searchFunction);
 		if( includedInBrief ) jsonAttr.put("includedInBrief", true);
 		if( excludedFromDisplay ) jsonAttr.put("excludedFromDisplay", true);
@@ -292,6 +310,9 @@ public class SchemaAttribute {
 			
 		} else if( "reference".equals(type) ){
 			// leave reference attributes as undefined
+			
+		} else if( "custom".equals(type) ){
+			// leave custom attributes as undefined
 			
 		} else if( "array".equals(type) ){
 			if( null != id ){
@@ -412,6 +433,19 @@ public class SchemaAttribute {
 					printed = true;
 				}
 				
+			} else if( "custom".equals(type) ){
+				if( null != id && null != customType ){
+					pw.print("{{#"+schemaName+"}}");
+					pw.print("{{#"+id+"}}");
+					if( !isFirst ) pw.print(" ");
+					pw.print("<span class=\"n2s_custom\""
+							+ " nunaliit-custom=\""+customType+"\""
+							+ " nunaliit-selector=\"{{#:selector}}.{{/:selector}}\"></span>");
+					pw.print("{{/"+id+"}}");
+					pw.print("{{/"+schemaName+"}}");
+					printed = true;
+				}
+				
 			} else if( "array".equals(type) ){
 				if( null != id ){
 					pw.print("{{#"+schemaName+"}}");
@@ -520,7 +554,7 @@ public class SchemaAttribute {
 					pw.println("\t{{/"+id+"}}");
 					pw.println("{{/"+schemaName+"}}");
 				}
-				
+
 			} else if( "reference".equals(type) ){
 				if( null != id ){
 					pw.println("{{#"+schemaName+"}}");
@@ -535,6 +569,29 @@ public class SchemaAttribute {
 					} else {
 						pw.println("\t\t\t<div class=\"value\"><a href=\"#\" class=\"n2s_referenceLink\">{{doc}}</a></div>");
 					}
+
+					pw.println("\t\t\t<div class=\"end\"></div>");
+					
+					pw.println("\t\t</div>");
+					
+					
+					pw.println("\t{{/"+id+"}}");
+					pw.println("{{/"+schemaName+"}}");
+				}
+
+			} else if( "custom".equals(type) ){
+				if( null != id && null != customType ){
+					pw.println("{{#"+schemaName+"}}");
+					pw.println("\t{{#"+id+"}}");
+
+					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
+
+					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					
+					pw.println("\t\t\t<div class=\"value n2s_custom\""
+							+ " nunaliit-custom=\""+customType+"\""
+							+ " nunaliit-selector=\"{{#:selector}}.{{/:selector}}\">"
+							+ "</div>");
 
 					pw.println("\t\t\t<div class=\"end\"></div>");
 					
@@ -573,6 +630,12 @@ public class SchemaAttribute {
 						pw.println("{{date}}");
 					} else if( "reference".equals(elementType) ){
 						pw.println("\t\t\t\t<a href=\"#\" class=\"n2s_referenceLink\">{{doc}}</a>");
+					} else if( "custom".equals(elementType) ){
+						if( null != customType ){
+							pw.println("\t\t\t\t<span class=\"n2s_custom\""
+								+ " nunaliit-custom=\""+customType+"\""
+								+ " nunaliit-selector=\"{{#:selector}}.{{/:selector}}\"></span>");
+						}
 					}
 					
 					pw.println("\t\t\t</div>");
@@ -716,6 +779,7 @@ public class SchemaAttribute {
 			 || "textarea".equals(type) 
 			 || "localizedtextarea".equals(type) 
 			 || "reference".equals(type) 
+			 || "custom".equals(type) 
 			 || "checkbox".equals(type) 
 			 || "date".equals(type) ){
 				if( null != id ){
@@ -730,6 +794,8 @@ public class SchemaAttribute {
 						fieldType = ",date";
 					} else if( "reference".equals(type) ){
 						fieldType = ",reference";
+					} else if( "custom".equals(type) ){
+						fieldType = ",custom="+customType;
 					} else if( "checkbox".equals(type) ){
 						fieldType = ",checkbox";
 					}
@@ -805,6 +871,9 @@ public class SchemaAttribute {
 					} else if( "reference".equals(elementType) ){
 						fieldType = ",reference";
 						arrayType = " \"reference\"";
+					} else if( "custom".equals(elementType) ){
+						fieldType = ",custom="+customType;
+						arrayType = " \"custom\"";
 					}
 
 					String searchFnName = "";

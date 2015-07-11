@@ -50,11 +50,12 @@ var typeClassStringPrefix = 'n2schema_type_';
 var HTML = ':html';
 var INPUT = ':input';
 var FIELD = ':field';
+var SELECTOR = ':selector';
 var ITERATE = ':iterate';
 var EMPTY = ':empty';
 var CONTEXT = ':context';
 var PARENT = ':parent';
-var SELECT = ':selector';
+var SELECT = '::cur-selector';
 var LOCALIZE = ':localize';
 var ARRAY = ':array';
 
@@ -490,6 +491,45 @@ function _arrayField() {
 	return r.join('');
 };
 
+function _selectorField(){
+	// The arguments to handlebars block expression functions are:
+	// ([obj,]options)
+	// obj is not provided in this case, since we do not expect any arguments
+	// to {{#:selector}}
+	// options.fn is a function to render inner content
+	// options.data is provided by helper that is rendering current portion
+	// options.data.n2_selector is provided by the _array() helper
+	// this points to the current object
+	//
+	// Syntax to :form is:
+	// {{#:selector}}<selector>{{/:selector}}
+	var args = [];
+	args.push.apply(args,arguments);
+	var options = args.pop();
+	
+	// Compute current selector
+	var currentSelector = [];
+	if( options 
+	 && options.data 
+	 && options.data.n2_selector ){
+		// Within an array, the current selector is passed in options
+		currentSelector = options.data.n2_selector;
+
+	} else if( typeof this === 'object' 
+     && this !== null 
+     && this[SELECT]){
+		currentSelector = this[SELECT];
+	};
+
+	// Gets the text between start and end tags and
+	// parse it
+	var text = options.fn(this);
+	
+	var objSel = parseSelectorString(text);
+	var completeSelectors = currentSelector.getChildSelector(objSel);
+	return completeSelectors.encodeForDomAttribute();
+};
+
 
 if( typeof(Handlebars) !== 'undefined' 
  && Handlebars.registerHelper ) {
@@ -497,9 +537,72 @@ if( typeof(Handlebars) !== 'undefined'
 	Handlebars.registerHelper(FIELD    ,_formField      );
 	Handlebars.registerHelper(INPUT    ,_inputField     );
 	Handlebars.registerHelper(ARRAY    ,_arrayField     );
+	Handlebars.registerHelper(SELECTOR ,_selectorField  );
 } else {
 	$n2.log('Unable to register helper functions with Handlebars. Schemas will not work properly.');
 };
+
+function computeViewObj(origObj, context, selector, parent) {
+	
+	if( !selector ){
+		selector = new $n2.objectSelector.ObjectSelector([]);
+	};
+	
+	if( null === origObj ) {
+		return origObj;
+		
+	} else if( typeof(origObj) === 'undefined' ) {
+		return null;
+		
+	} else if( $n2.isArray(origObj) ) {
+		var view = [];
+		view[CONTEXT] = context;
+		view[PARENT] = parent;
+		view[SELECT] = selector;
+		
+		for(var i=0,e=origObj.length; i<e; ++i) {
+			var childSelector = selector.getChildSelector(i);
+			var value = computeViewObj(origObj[i], context, childSelector, view);
+			view.push(value);
+		};
+
+		return view;
+		
+	} else if( typeof(origObj) === 'object' ) {
+		var view = {};
+		
+		view[ITERATE] = [];
+		view[CONTEXT] = context;
+		view[PARENT] = parent;
+		view[SELECT] = selector;
+
+		for(var key in origObj) {
+			if('__n2Source' === key) continue;
+
+			var childSelector = selector.getChildSelector(key);
+			var value = computeViewObj(origObj[key], context, childSelector, view);
+			view[key] = value;
+			view[ITERATE].push({key:key,value:value});
+		};
+		view[EMPTY] = (0 == view[ITERATE].length);
+		
+		view[ITERATE].sort(function(a,b){
+			if( a.key < b.key ) {
+				return -1;
+			}; 
+			if( a.key > b.key ) {
+				return 1;
+			}; 
+			return 0;
+		});
+		
+		return view;
+		
+	} else {
+		return origObj;
+	};
+};
+
 
 //============================================================
 // Object Query
@@ -1151,59 +1254,6 @@ var Schema = $n2.Class({
 //============================================================
 // Display
 
-function computeViewObj(origObj, context, parent) {
-	
-	if( null === origObj ) {
-		return origObj;
-		
-	} else if( typeof(origObj) === 'undefined' ) {
-		return null;
-		
-	} else if( $n2.isArray(origObj) ) {
-		var view = [];
-		view[CONTEXT] = context;
-		view[PARENT] = parent;
-		
-		for(var i=0,e=origObj.length; i<e; ++i) {
-			var value = computeViewObj(origObj[i], context, view);
-			view.push(value);
-		};
-
-		return view;
-		
-	} else if( typeof(origObj) === 'object' ) {
-		var view = {};
-		
-		view[ITERATE] = [];
-		view[CONTEXT] = context;
-		view[PARENT] = parent;
-
-		for(var key in origObj) {
-			if('__n2Source' === key) continue;
-			
-			var value = computeViewObj(origObj[key], context, view);
-			view[key] = value;
-			view[ITERATE].push({key:key,value:value});
-		};
-		view[EMPTY] = (0 == view[ITERATE].length);
-		
-		view[ITERATE].sort(function(a,b){
-			if( a.key < b.key ) {
-				return -1;
-			}; 
-			if( a.key > b.key ) {
-				return 1;
-			}; 
-			return 0;
-		});
-		
-		return view;
-		
-	} else {
-		return origObj
-	};
-};
-
 function DisplaySelectAny(obj, key) {
 	if( EMPTY === key 
 	 || ITERATE === key
@@ -1405,63 +1455,6 @@ function parseClassNames(classNames) {
 	return parsed;
 };
 
-function computeFormObj(origObj, context, selector, parent) {
-	
-	if( null === origObj ) {
-		return origObj;
-		
-	} else if( typeof(origObj) === 'undefined' ) {
-		return null;
-		
-	} else if( $n2.isArray(origObj) ) {
-		var view = [];
-		view[CONTEXT] = context;
-		view[PARENT] = parent;
-		view[SELECT] = selector;
-		
-		for(var i=0,e=origObj.length; i<e; ++i) {
-			var childSelector = selector.getChildSelector(i);
-			var value = computeFormObj(origObj[i], context, childSelector, view);
-			view.push(value);
-		};
-
-		return view;
-		
-	} else if( typeof(origObj) === 'object' ) {
-		var view = {};
-		
-		view[ITERATE] = [];
-		view[CONTEXT] = context;
-		view[PARENT] = parent;
-		view[SELECT] = selector;
-
-		for(var key in origObj) {
-			if('__n2Source' === key) continue;
-
-			var childSelector = selector.getChildSelector(key);
-			var value = computeFormObj(origObj[key], context, childSelector, view);
-			view[key] = value;
-			view[ITERATE].push({key:key,value:value});
-		};
-		view[EMPTY] = (0 == view[ITERATE].length);
-		
-		view[ITERATE].sort(function(a,b){
-			if( a.key < b.key ) {
-				return -1;
-			}; 
-			if( a.key > b.key ) {
-				return 1;
-			}; 
-			return 0;
-		});
-		
-		return view;
-		
-	} else {
-		return origObj;
-	};
-};
-
 var FormExtension = $n2.Class({
 	
 	schemaExtension: null
@@ -1558,11 +1551,7 @@ var Form = $n2.Class({
 		};
 		if( $elem.length > 0 ) {
 			// Create view for displayTemplate
-			var view = computeFormObj(
-					this.obj
-					,this.context
-					,new $n2.objectSelector.ObjectSelector([])
-				);
+			var view = computeViewObj(this.obj,this.context);
 			this._setHtml(view);
 			
 			$elem.empty();

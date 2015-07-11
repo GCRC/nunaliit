@@ -275,6 +275,13 @@ var DomStyler = $n2.Class({
 			_this._installTiledImageClick(contextDoc, $jq);
 			$jq.removeClass('n2s_installTiledImageClick').addClass('n2s_installedTiledImageClick');
 		});
+
+		// Custom
+		$set.filter('.n2s_custom').each(function(){
+			var $jq = $(this);
+			_this._custom(contextDoc, $jq);
+			$jq.removeClass('n2s_custom').addClass('n2s_customed');
+		});
 	},
 	
 	_updatedDocument: function(doc){
@@ -296,9 +303,12 @@ var DomStyler = $n2.Class({
 				
 				if( $jq.hasClass('n2s_insertedMediaView') ){
 					_this._insertMediaView(doc, $jq);
-					
+
 				} else if( $jq.hasClass('n2s_insertedFirstThumbnail') ){
 					_this._insertFirstThumbnail(doc, $jq);
+
+				} else if( $jq.hasClass('n2s_customed') ){
+					_this._custom(doc, $jq);
 				};
 			});
 		};
@@ -1042,6 +1052,41 @@ var DomStyler = $n2.Class({
 					});
 					return false;
 				});
+		};
+	},
+
+	_custom: function(doc, $elem){
+		var _this = this;
+		
+		var docId = this._associateDocumentToElement(doc, $elem);
+		var customType = $elem.attr('nunaliit-custom');
+		
+		if( !docId ){
+			$elem.attr('nunaliit-error','No document specified');
+		} else if( !customType ){
+			$elem.attr('nunaliit-error','No custom type specified');
+		} else if( doc ){
+			// We have a document and a custom type
+
+			// Get selector
+			var selectorStr = $elem.attr('nunaliit-selector');
+			var selector = undefined;
+			if( selectorStr ){
+				selector = $n2.objectSelector.decodeFromDomAttribute(selectorStr);
+			};
+
+			// Call dispatcher
+			var dispatchService = this.showService.dispatchService;
+			if( dispatchService ) {
+				dispatchService.synchronousCall(DH, {
+					type:'showCustom'
+					,elem: $elem
+					,doc: doc
+					,customType: customType
+					,selector: selector
+					,showService: this.showService
+				});
+			};
 		};
 	},
 	
