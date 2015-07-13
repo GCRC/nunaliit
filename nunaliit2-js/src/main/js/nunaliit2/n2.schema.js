@@ -72,7 +72,21 @@ function parseSelectorString(selStr){
 };
 
 //============================================================
-// Context
+var customFieldHandlers = {};
+
+function registerCustomFieldHandler(opts_){
+	var opts = $n2.extend({
+		customType: null
+		,handler: null
+	},opts_);
+	
+	if( typeof opts.customType === 'string'
+	 && typeof opts.handler === 'function' ){
+		customFieldHandlers[opts.customType] = opts.handler;
+	};
+};
+
+//============================================================
 
 function _localizeString() {
 	var args = [];
@@ -239,7 +253,7 @@ function _formField() {
 	// this points to the current object
 	//
 	// Syntax to :form is:
-	// {{#:form}}<selector>(,<option>)*{{/:form}}
+	// {{#:field}}<selector>(,<option>)*{{/:field}}
 	var args = [];
 	args.push.apply(args,arguments);
 	var options = args.pop();
@@ -298,7 +312,19 @@ function _formField() {
 	
 	r.push('<div class="n2schema_field_wrapper">');
 
-	if( obj && obj.nunaliit_type === 'localized' ) {
+	if( opts.custom ){
+		r.push('<div class="n2schema_field_container n2schema_field_custom"');
+		if( opts.custom.length > 0 && typeof opts.custom[0] === 'string'){
+			r.push(' n2-custom-type="'+opts.custom+'"');
+		} else {
+			r.push(' nunaliit-error="Custom type not specified"');
+		};
+		r.push(' nunaliit-selector="'+completeSelectors.encodeForDomAttribute()+'"');
+		r.push('>');
+		r.push('</div>');
+		
+		
+	} else if( obj && obj.nunaliit_type === 'localized' ) {
 		var langs = getSortedLanguages(opts.localized, obj);
 		
 		// Turn on "localized" option, if not already on
@@ -337,7 +363,7 @@ function _formField() {
 
 	} else if( opts.reference ) {
 		var attr = completeSelectors.encodeForDomAttribute();
-		r.push('<span class="n2schema_field_reference" n2-obj-sel="'+attr+'"');
+		r.push('<span class="n2schema_field_reference" nunaliit-selector="'+attr+'"');
 		if( opts.search 
 		 && opts.search[0] ){
 			r.push(' n2-search-func="'+opts.search[0]+'"');
@@ -1567,10 +1593,15 @@ var Form = $n2.Class({
 				$divEvent.find('.n2schema_input').each(function(){
 					_this._installHandlers($elem, $(this),_this.obj,_this.callback);
 				});
-				
+
 				// Install references
 				$divEvent.find('.n2schema_field_reference').each(function(){
 					_this._installReference($elem, $(this));
+				});
+
+				// Install custom types
+				$divEvent.find('.n2schema_field_custom').each(function(){
+					_this._installCustomType($elem, $(this),_this.obj,_this.callback);
 				});
 				
 				$divEvent.click(function(e){
@@ -1864,7 +1895,7 @@ var Form = $n2.Class({
 	_installReference: function($container, $elem) {
 		var _this = this;
 		
-		var domSelector = $elem.attr('n2-obj-sel');
+		var domSelector = $elem.attr('nunaliit-selector');
 		var objSel = $n2.objectSelector.decodeFromDomAttribute(domSelector);
 		var parentSelector = objSel.getParentSelector();
 		var key = objSel.getKey();
@@ -1994,6 +2025,49 @@ var Form = $n2.Class({
 			};
 			
 		};
+	},
+	
+	_installCustomType: function($container, $elem, doc , callbackFn){
+		var _this = this;
+		
+		var selectorStr = $elem.attr('nunaliit-selector');
+		var selector = null;
+		if( selectorStr ){
+			selector = $n2.objectSelector.decodeFromDomAttribute(selectorStr);
+		};
+		
+		function cb(value){
+			_this.refresh($container);
+			
+			_this.callback(doc,selector,value);
+		};
+		
+		var customType = $elem.attr('n2-custom-type');
+		
+		if( typeof customType === 'string' ){
+			var handler = customFieldHandlers[customType];
+			if( handler ){
+				var obj = undefined;
+				if( selector && doc ){
+					obj = selector.getValue(doc);
+				};
+				
+				handler({
+					elem: $elem
+					,doc: doc
+					,obj: obj
+					,selector: selector
+					,customType: customType
+					,callbackFn: cb
+				});
+			} else {
+				$elem.attr('nunaliit-error','No handler found for custom type: "'+customType+'"');
+			};
+			
+		} else {
+			$elem.attr('nunaliit-error','Custom type not provided');
+		};
+		
 	},
 	
 	_createChangeHandler: function(obj, selector, parentSelector, keyType, callback) {
@@ -2145,6 +2219,7 @@ $n2.schema = {
 	,GlobalAttributes: {
 		disableKeyUpEvents: false
 	}
+	,registerCustomFieldHandler: registerCustomFieldHandler
 };
 
 })(jQuery,nunaliit2);
