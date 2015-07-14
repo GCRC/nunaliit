@@ -259,7 +259,7 @@ function _formField() {
 	var options = args.pop();
 	
 	// Compute current selector
-	var currentSelector = [];
+	var currentSelector = null;
 	if( options 
 	 && options.data 
 	 && options.data.n2_selector ){
@@ -534,7 +534,7 @@ function _selectorField(){
 	var options = args.pop();
 	
 	// Compute current selector
-	var currentSelector = [];
+	var currentSelector = null;
 	if( options 
 	 && options.data 
 	 && options.data.n2_selector ){
@@ -545,6 +545,10 @@ function _selectorField(){
      && this !== null 
      && this[SELECT]){
 		currentSelector = this[SELECT];
+	};
+	
+	if( !currentSelector ){
+		return '';
 	};
 
 	// Gets the text between start and end tags and
