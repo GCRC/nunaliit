@@ -170,10 +170,8 @@ var ElementGenerator = $n2.Class('ElementGenerator', {
 
  				var context = this.contextByDocId[doc._id];
  				if( context ){
- 					if( doc._rev !== context.n2_doc._rev ){
- 						context.n2_doc = doc;
- 						contextsUpdated.push(context);
- 					};
+					context.n2_doc = doc;
+					contextsUpdated.push(context);
  					
  				} else {
  	 				var context = {

@@ -174,12 +174,12 @@ var TimelineWidget = $n2.Class({
 				_this._handle(m, addr, dispatcher);
 			};
 			
-			if( this.rangeSetEventName ){
-				this.dispatchService.register(DH, this.rangeSetEventName, fn);
+			if( this.rangeChangeEventName ){
+				this.dispatchService.register(DH, this.rangeChangeEventName, fn);
 			};
 			
-			if( this.intervalSetEventName ){
-				this.dispatchService.register(DH, this.intervalSetEventName, fn);
+			if( this.intervalChangeEventName ){
+				this.dispatchService.register(DH, this.intervalChangeEventName, fn);
 			};
 		};
 
@@ -319,14 +319,14 @@ var TimelineWidget = $n2.Class({
 			});
 			
 			this.dispatchService.send(DH,{
-				type: this.intervalChangeEventName
+				type: this.intervalSetEventName
 				,value: value
 			});
 		};
 	},
 	
 	_handle: function(m, addr, dispatcher){
-		if( this.rangeSetEventName === m.type ){
+		if( this.rangeChangeEventName === m.type ){
 			if( m.value ){
 				this.rangeMin = m.value.min;
 				this.rangeMax = m.value.max;
@@ -352,7 +352,7 @@ var TimelineWidget = $n2.Class({
 			
 			this._displayRange();
 			
-		} else if( this.intervalSetEventName === m.type ){
+		} else if( this.intervalChangeEventName === m.type ){
 			if( m.value ){
 				this.intervalMin = m.value.min;
 				this.intervalMax = m.value.max;
