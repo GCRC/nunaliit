@@ -27,6 +27,7 @@ import ca.carleton.gcrc.couch.export.impl.DocumentRetrievalFiltered;
 import ca.carleton.gcrc.couch.export.impl.DocumentRetrievalId;
 import ca.carleton.gcrc.couch.export.impl.DocumentRetrievalLayer;
 import ca.carleton.gcrc.couch.export.impl.DocumentRetrievalSchema;
+import ca.carleton.gcrc.couch.export.impl.ExportFormatCSV;
 import ca.carleton.gcrc.couch.export.impl.ExportFormatGeoJson;
 import ca.carleton.gcrc.couch.export.impl.SchemaCacheCouchDb;
 
@@ -218,6 +219,15 @@ public class ExportServlet extends HttpServlet {
 			} catch (Exception e) {
 				throw new ServletException("Problem setting up format: "+format.name(),e);
 			}
+
+		} else if( Format.CSV == format ) {
+			try {
+				SchemaCache schemaCache = new SchemaCacheCouchDb(configuration.getCouchDb());
+				outputFormat = new ExportFormatCSV(schemaCache, docRetrieval);
+			} catch (Exception e) {
+				throw new ServletException("Problem setting up format: "+format.name(),e);
+			}
+		
 		} else {
 			throw new ServletException("Do not know how to handle format: "+format.name());
 		}

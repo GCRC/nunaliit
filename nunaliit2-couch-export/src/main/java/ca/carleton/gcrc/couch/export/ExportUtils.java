@@ -4,6 +4,7 @@ public class ExportUtils {
 
 	public enum Format {
 		GEOJSON("geojson")
+		,CSV("csv")
 		;
 		
 		private String label;
