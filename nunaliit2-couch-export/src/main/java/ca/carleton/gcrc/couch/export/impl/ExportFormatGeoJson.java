@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.app.Document;
-import ca.carleton.gcrc.couch.export.DocumentFilter;
 import ca.carleton.gcrc.couch.export.DocumentRetrieval;
 import ca.carleton.gcrc.couch.export.ExportFormat;
 import ca.carleton.gcrc.couch.export.SchemaCache;
@@ -28,16 +27,13 @@ public class ExportFormatGeoJson implements ExportFormat {
 	
 	private DocumentRetrieval retrieval = null;
 	private SchemaCache schemaCache = null;
-	private DocumentFilter docFilter = null;
 	
 	public ExportFormatGeoJson(
 		SchemaCache schemaCache
 		,DocumentRetrieval retrieval
-		,DocumentFilter docFilter
 		) throws Exception {
 		this.schemaCache = schemaCache;
 		this.retrieval = retrieval;
-		this.docFilter = docFilter;
 	}
 	
 	@Override
@@ -72,8 +68,7 @@ public class ExportFormatGeoJson implements ExportFormat {
 		
 		while( retrieval.hasNext() ){
 			Document doc = retrieval.getNext();
-			if( null != doc 
-			 && docFilter.accepts(doc) ) {
+			if( null != doc  ) {
 				try{
 					outputDocument(jsonWriter, doc, geoWriter, wktParser);
 				} catch(Exception e) {

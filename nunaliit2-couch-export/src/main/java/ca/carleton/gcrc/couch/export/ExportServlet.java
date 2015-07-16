@@ -23,6 +23,7 @@ import ca.carleton.gcrc.couch.export.ExportUtils.Filter;
 import ca.carleton.gcrc.couch.export.ExportUtils.Format;
 import ca.carleton.gcrc.couch.export.ExportUtils.Method;
 import ca.carleton.gcrc.couch.export.impl.DocumentFilterGeometryType;
+import ca.carleton.gcrc.couch.export.impl.DocumentRetrievalFiltered;
 import ca.carleton.gcrc.couch.export.impl.DocumentRetrievalId;
 import ca.carleton.gcrc.couch.export.impl.DocumentRetrievalLayer;
 import ca.carleton.gcrc.couch.export.impl.DocumentRetrievalSchema;
@@ -103,9 +104,7 @@ public class ExportServlet extends HttpServlet {
 		Filter filter = null;
 		{
 			String filterStr = request.getParameter("filter");
-			if( null == filterStr ) {
-				filter = Filter.ALL;
-			} else {
+			if( null != filterStr ) {
 				for(Filter f : Filter.values()){
 					if( f.matches(filterStr) ){
 						filter = f;
@@ -113,12 +112,9 @@ public class ExportServlet extends HttpServlet {
 				}
 			}
 			
-			if( null == filter ) {
-				Exception e = new Exception("Unknown filter");
-				reportError(response,HttpServletResponse.SC_INTERNAL_SERVER_ERROR,e);
-				return;
+			if( null != filter ) {
+				logger.debug("Export Filter: "+filter.name());
 			}
-			logger.debug("Export Filter: "+filter.name());
 		}
 		
 		// Parse method
@@ -207,16 +203,18 @@ public class ExportServlet extends HttpServlet {
 		}
 		
 		// Build document filter based on filter type
-		DocumentFilter docFilter = null;
-		{
-			docFilter = new DocumentFilterGeometryType(filter);
+		if( null != filter ){
+			DocumentFilter docFilter = new DocumentFilterGeometryType(filter);
+			DocumentRetrievalFiltered filteredRetrieval = 
+					new DocumentRetrievalFiltered(docRetrieval, docFilter);
+			docRetrieval = filteredRetrieval;
 		}
 		
 		ExportFormat outputFormat = null;
 		if( Format.GEOJSON == format ) {
 			try {
 				SchemaCache schemaCache = new SchemaCacheCouchDb(configuration.getCouchDb());
-				outputFormat = new ExportFormatGeoJson(schemaCache, docRetrieval, docFilter);
+				outputFormat = new ExportFormatGeoJson(schemaCache, docRetrieval);
 			} catch (Exception e) {
 				throw new ServletException("Problem setting up format: "+format.name(),e);
 			}
