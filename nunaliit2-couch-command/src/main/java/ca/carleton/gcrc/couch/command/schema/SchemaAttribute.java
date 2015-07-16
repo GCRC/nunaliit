@@ -80,6 +80,12 @@ public class SchemaAttribute {
 			attribute.setExcludedFromForm(excludedFromForm);
 		}
 
+		// excludedFromExport
+		{
+			boolean excludedFromExport = jsonAttr.optBoolean("excludedFromExport",false);
+			attribute.setExcludedFromExport(excludedFromExport);
+		}
+
 		// urlsToLinks
 		{
 			boolean urlsToLinks = jsonAttr.optBoolean("urlsToLinks",false);
@@ -119,6 +125,7 @@ public class SchemaAttribute {
 	private boolean includedInBrief;
 	private boolean excludedFromDisplay;
 	private boolean excludedFromForm;
+	private boolean excludedFromExport;
 	private boolean urlsToLinks;
 	private List<SelectionOption> options = new Vector<SelectionOption>();
 	private List<CheckboxGroupItem> checkboxes = new Vector<CheckboxGroupItem>();
@@ -169,6 +176,14 @@ public class SchemaAttribute {
 
 	public void setExcludedFromForm(boolean excludedFromForm) {
 		this.excludedFromForm = excludedFromForm;
+	}
+
+	public boolean isExcludedFromExport() {
+		return excludedFromExport;
+	}
+
+	public void setExcludedFromExport(boolean excludedFromExport) {
+		this.excludedFromExport = excludedFromExport;
 	}
 
 	public boolean isUrlsToLinks() {
@@ -254,6 +269,7 @@ public class SchemaAttribute {
 		if( includedInBrief ) jsonAttr.put("includedInBrief", true);
 		if( excludedFromDisplay ) jsonAttr.put("excludedFromDisplay", true);
 		if( excludedFromForm ) jsonAttr.put("excludedFromForm", true);
+		if( excludedFromExport ) jsonAttr.put("excludedFromExport", true);
 		if( urlsToLinks ) jsonAttr.put("urlsToLinks", true);
 
 		if( options.size() > 0 ){
@@ -940,6 +956,54 @@ public class SchemaAttribute {
 			} else {
 				throw new Exception("Unable to include type "+type+" in form");
 			}
+		}
+	}
+
+	public void addExportField(JSONArray exportArr, String schemaName) throws Exception {
+
+		if( excludedFromExport ) return;
+		
+		if( "title".equals(type) ){
+			// do not export title
+			
+		} else if( "string".equals(type)
+		 || "textarea".equals(type)
+		 ){
+			JSONObject attrExport = new JSONObject();
+			attrExport.put("select", schemaName+"."+id);
+			attrExport.put("label", id);
+			attrExport.put("type", "text");
+			exportArr.put(attrExport);
+
+		} else if( "localized".equals(type) 
+		 || "localizedtextarea".equals(type)
+		 ){
+			JSONObject attrExport = new JSONObject();
+			attrExport.put("select", schemaName+"."+id);
+			attrExport.put("label", id);
+			attrExport.put("type", "json");
+			exportArr.put(attrExport);
+
+		} else if( "date".equals(type) ){
+			JSONObject attrExport = new JSONObject();
+			attrExport.put("select", schemaName+"."+id+".date");
+			attrExport.put("label", id);
+			attrExport.put("type", "text");
+			exportArr.put(attrExport);
+			
+		} else if( "reference".equals(type) ){
+			JSONObject attrExport = new JSONObject();
+			attrExport.put("select", schemaName+"."+id+".doc");
+			attrExport.put("label", id);
+			attrExport.put("type", "text");
+			exportArr.put(attrExport);
+			
+		} else {
+			JSONObject attrExport = new JSONObject();
+			attrExport.put("select", schemaName+"."+id);
+			attrExport.put("label", id);
+			attrExport.put("type", "json");
+			exportArr.put(attrExport);
 		}
 	}
 }

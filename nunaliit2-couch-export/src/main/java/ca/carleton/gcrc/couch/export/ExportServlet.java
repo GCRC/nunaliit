@@ -14,8 +14,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -255,6 +255,33 @@ public class ExportServlet extends HttpServlet {
 				JSONObject obj = new JSONObject();
 				obj.put("ok", true);
 				obj.put("message", "export service");
+				
+				// Formats
+				{
+					JSONArray formats = new JSONArray();
+					for(Format f : Format.values()){
+						formats.put(f.getLabel());
+					}
+					obj.put("formats", formats);
+				}
+				
+				// Filters
+				{
+					JSONArray filters = new JSONArray();
+					for(Filter f : Filter.values()){
+						filters.put(f.getLabel());
+					}
+					obj.put("filters", filters);
+				}
+				
+				// Methods
+				{
+					JSONArray methods = new JSONArray();
+					for(Method f : Method.values()){
+						methods.put(f.getLabel());
+					}
+					obj.put("methods", methods);
+				}
 				
 				response.setCharacterEncoding("utf-8");
 				response.setContentType("text/plain");

@@ -106,6 +106,12 @@ public class ExportFormatGeoJson implements ExportFormat {
 				jsonWriter.key("properties");
 				jsonWriter.object();
 				
+				String rev = jsonDoc.optString("_rev");
+				if( null != rev ){
+					jsonWriter.key("_rev");
+					jsonWriter.value(rev);
+				}
+				
 				if( null != exportInfo ){
 					for(SchemaExportProperty exportProperty : exportInfo.getProperties()){
 						Object value = exportProperty.select(jsonDoc);

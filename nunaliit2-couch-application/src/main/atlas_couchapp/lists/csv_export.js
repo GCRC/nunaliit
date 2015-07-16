@@ -37,7 +37,7 @@ function(head, req) {
 	});
 	
 	function extractTitles(csvExport){
-		var values = [];
+		var values = ['id','rev'];
 		for(var i=0,e=csvExport.length; i<e; ++i){
 			var label = csvExport[i].label;
 			if( !label ) {
@@ -82,6 +82,8 @@ function(head, req) {
 
 	function extractValues(doc, csvExport){
 		var values = [];
+		values.push(doc._id);
+		values.push(doc._rev);
 		for(var i=0,e=csvExport.length; i<e; ++i){
 			var value = selectValue(doc, csvExport[i]._s, csvExport[i].type);
 			values.push(value);
