@@ -6,6 +6,7 @@ import java.io.Writer;
 import java.util.List;
 import java.util.Vector;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,6 +79,8 @@ public class ExportFormatCSV implements ExportFormat {
 					
 					// Output first line
 					List<Object> values = new Vector<Object>();
+					values.add("id");
+					values.add("rev");
 					for(SchemaExportProperty exportProperty : exportInfo.getProperties()){
 						String value = exportProperty.getLabel();
 						values.add(value);
@@ -89,6 +92,19 @@ public class ExportFormatCSV implements ExportFormat {
 			// Output only if matches the schema being processed
 			if( docSchemaName.equals(schemaName) ){
 				List<Object> values = new Vector<Object>();
+				
+				// _id
+				{
+					String id = jsonDoc.optString("_id");
+					values.add(id);
+				}
+				
+				// _rev
+				{
+					String rev = jsonDoc.optString("_rev");
+					values.add(rev);
+				}
+				
 				for(SchemaExportProperty exportProperty : exportInfo.getProperties()){
 					Object value = exportProperty.select(jsonDoc);
 					values.add(value);
@@ -111,21 +127,8 @@ public class ExportFormatCSV implements ExportFormat {
 				writer.write("\"\"");
 			
 			} else if( value instanceof String ) {
-				writer.write("\"");
-				
 				String str = (String)value;
-				for(int loop=0; loop<str.length(); ++loop){
-					char c = str.charAt(loop);
-					switch(c){
-					case '"':
-						writer.write("\"\"");
-						break;
-					default:
-						writer.write(c);
-					}
-				}
-				
-				writer.write("\"");
+				printEscapedString(writer, str);
 			
 			} else if( value instanceof Number ) {
 				Number n = (Number)value;
@@ -134,9 +137,36 @@ public class ExportFormatCSV implements ExportFormat {
 			} else if( value instanceof Boolean ) {
 				Boolean b = (Boolean)value;
 				writer.write( b.toString() );
+
+			} else if( value instanceof JSONObject ) {
+				JSONObject obj = (JSONObject)value;
+				String jsonStr = obj.toString();
+				printEscapedString(writer, jsonStr);
+
+			} else if( value instanceof JSONArray ) {
+				JSONArray arr = (JSONArray)value;
+				String jsonStr = arr.toString();
+				printEscapedString(writer, jsonStr);
 			}
 		}
 		
 		writer.write("\n");
+	}
+
+	private void printEscapedString(Writer writer, String str) throws Exception {
+		writer.write("\"");
+		
+		for(int loop=0; loop<str.length(); ++loop){
+			char c = str.charAt(loop);
+			switch(c){
+			case '"':
+				writer.write("\"\"");
+				break;
+			default:
+				writer.write(c);
+			}
+		}
+		
+		writer.write("\"");
 	}
 }
