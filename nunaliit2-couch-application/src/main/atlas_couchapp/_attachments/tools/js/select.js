@@ -2120,7 +2120,7 @@
 		});
 		
 		var $ex = $('<button></button>');
-		$ex.text( _loc('Export Geometries') );
+		$ex.text( _loc('Export') );
 		$h.append($ex);
 		$ex.click(function(){
 			exportList(list);
@@ -2386,44 +2386,87 @@
 		function getExportSettings(){
 			var dialogId = $n2.getUniqueId();
 			var $dialog = $('<div id="'+dialogId+'"></div>');
+
+			var fileNameId = $n2.getUniqueId();
 			
 			$('<div>'+_loc('Exporting')+' <span></span></div>')
 				.find('span').text(list.print()).end()
 				.appendTo($dialog);
 
-			var $select = $('<select></select>');
-			$dialog.append($select);
+			// Filter
+			var filterId = $n2.getUniqueId();
+			var $filterDiv = $('<div>')
+				.appendTo($dialog);
+			$('<label>')
+				.text( _loc('Filter:') )
+				.attr('for',filterId)
+				.appendTo($filterDiv);
+			var $filterSelect = $('<select>')
+				.attr('id',filterId)
+				.appendTo($filterDiv);
 			$('<option value="all"></options>')
 				.text( _loc('All Documents') )
-				.appendTo($select);
+				.appendTo($filterSelect);
 			$('<option value="points"></options>')
 				.text( _loc('All Point Geometries') )
-				.appendTo($select);
+				.appendTo($filterSelect);
 			$('<option value="linestrings"></options>')
 				.text( _loc('All LineString Geometries') )
-				.appendTo($select);
+				.appendTo($filterSelect);
 			$('<option value="polygons"></options>')
 				.text( _loc('All Polygon Geometries') )
-				.appendTo($select);
+				.appendTo($filterSelect);
+
+			// Format
+			var formatId = $n2.getUniqueId();
+			var $formatDiv = $('<div>')
+				.appendTo($dialog);
+			$('<label>')
+				.text( _loc('Format:') )
+				.attr('for',formatId)
+				.appendTo($formatDiv);
+			var $formatSelect = $('<select>')
+				.attr('id',formatId)
+				.appendTo($formatDiv)
+				.change(formatChanged);
+			$('<option value="geojson"></options>')
+				.text( _loc('geojson') )
+				.appendTo($formatSelect);
+			$('<option value="csv"></options>')
+				.text( _loc('csv') )
+				.appendTo($formatSelect);
 			
-			var inputId = $n2.getUniqueId();
-			$('<div><label for="'+inputId+'">'+_loc('File Name')+': </label>'
-				+'<input type="text" name="'+inputId+'" class="n2_export_fileNameInput" value="export.geojson"/>'
-				+'</div>').appendTo($dialog);
+			// File name
+			var $fileNameDiv = $('<div>')
+				.appendTo($dialog);
+			$('<label>')
+				.text( _loc('File Name:') )
+				.attr('for',fileNameId)
+				.appendTo($fileNameDiv);
+			$('<input>')
+				.attr('type','text')
+				.attr('id',fileNameId)
+				.addClass('n2_export_fileNameInput')
+				.val('export.geojson')
+				.appendTo($dialog);
 
 			$('<div><button>'+_loc('Export')+'</button></div>')
 				.appendTo($dialog);
 			$dialog.find('button').click(function(){
-				var $dialog = $('#'+dialogId);
-				var geomType = $dialog.find('select').val();
+				var filter = $('#'+filterId).val();
+				var format = $('#'+formatId).val();
 				
-				var fileName = $dialog.find('.n2_export_fileNameInput').val();
+				var fileName = $('#'+fileNameId).val();
 				if( '' === fileName ) {
 					fileName = null;
 				};
 				
 				$dialog.dialog('close');
-				performExport(geomType,fileName);
+				performExport({
+					filter: filter
+					,fileName: fileName
+					,format: format
+				});
 				return false;
 			});
 			
@@ -2439,9 +2482,27 @@
 				}
 			};
 			$dialog.dialog(dialogOptions);
+			
+			formatChanged();
+			
+			function formatChanged(){
+				var extension = $('#'+formatId).val();
+				var name = $('#'+fileNameId).val();
+				var i = name.lastIndexOf('.');
+				if( i >= 0 ){
+					name = name.substr(0,i);
+				};
+				name = name + '.' + extension;
+				$('#'+fileNameId).val(name);
+			};
 		};
 		
-		function performExport(geomType,fileName){
+		function performExport(opts_){
+			var opts = $n2.extend({
+				filter: 'all'
+				,fileName: 'export'
+				,format: 'geojson'
+			},opts_);
 			
 			var windowId = $n2.getUniqueId();
 			
@@ -2451,9 +2512,10 @@
 			exportService.exportByDocIds({
 				docIds: list.docIds
 				,targetWindow: windowId
-				,geometryType: geomType
+				,filter: opts.filter
 				,contentType: 'application/binary'
-				,fileName: fileName
+				,fileName: opts.fileName
+				,format: opts.format
 				,onError: function(err){
 					alert(_loc('Error during export')+': '+err);
 				}

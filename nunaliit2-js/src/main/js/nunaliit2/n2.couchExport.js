@@ -85,9 +85,10 @@ var Export = $n2.Class('Export',{
 		var opts = $n2.extend({
 			docIds: null
 			,targetWindow: null
-			,geometryType: 'all'
+			,filter: 'all'
 			,contentType: null
 			,fileName: null
+			,format: null
 			,onError: $n2.reportError
 		},opts_);
 		
@@ -107,15 +108,41 @@ var Export = $n2.Class('Export',{
 		};
 		var $form = $('<form action="'+url+'" method="POST"'+target+'></form>');
 		
-		$('<input type="hidden" name="format" value="geojson"></input>').appendTo($form);
 		$('<input type="hidden" name="method" value="doc-id"></input>').appendTo($form);
-		$('<input type="hidden" name="filter"></input>')
-			.val(opts.geometryType)
-			.appendTo($form);
-		
+
 		if( opts.contentType ){
-			$('<input type="hidden" name="contentType"></input>')
+			$('<input>')
+				.attr('type','hidden')
+				.attr('name','contentType')
 				.val(opts.contentType)
+				.appendTo($form);
+		};
+
+		if( opts.filter ){
+			$('<input>')
+				.attr('type','hidden')
+				.attr('name','filter')
+				.val(opts.filter)
+				.appendTo($form);
+		} else {
+			$('<input>')
+				.attr('type','hidden')
+				.attr('name','filter')
+				.val('all')
+				.appendTo($form);
+		};
+
+		if( opts.format ){
+			$('<input>')
+				.attr('type','hidden')
+				.attr('name','format')
+				.val(opts.format)
+				.appendTo($form);
+		} else {
+			$('<input>')
+				.attr('type','hidden')
+				.attr('name','format')
+				.val('geojson')
 				.appendTo($form);
 		};
 		
