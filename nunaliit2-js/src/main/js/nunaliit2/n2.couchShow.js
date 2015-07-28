@@ -279,7 +279,7 @@ var DomStyler = $n2.Class({
 		// Custom
 		$set.filter('.n2s_custom').each(function(){
 			var $jq = $(this);
-			_this._custom(contextDoc, $jq);
+			_this._custom($jq, contextDoc);
 			$jq.removeClass('n2s_custom').addClass('n2s_customed');
 		});
 	},
@@ -308,7 +308,7 @@ var DomStyler = $n2.Class({
 					_this._insertFirstThumbnail(doc, $jq);
 
 				} else if( $jq.hasClass('n2s_customed') ){
-					_this._custom(doc, $jq);
+					_this._custom($jq, doc);
 				};
 			});
 		};
@@ -1055,15 +1055,13 @@ var DomStyler = $n2.Class({
 		};
 	},
 
-	_custom: function(doc, $elem){
+	_custom: function($elem, doc){
 		var _this = this;
 		
 		var docId = this._associateDocumentToElement(doc, $elem);
 		var customType = $elem.attr('nunaliit-custom');
 		
-		if( !docId ){
-			$elem.attr('nunaliit-error','No document specified');
-		} else if( !customType ){
+		if( !customType ){
 			$elem.attr('nunaliit-error','No custom type specified');
 		} else if( doc ){
 			// We have a document and a custom type
@@ -1084,6 +1082,19 @@ var DomStyler = $n2.Class({
 					,doc: doc
 					,customType: customType
 					,selector: selector
+					,showService: this.showService
+				});
+			};
+		} else {
+			// We have only a custom type
+
+			// Call dispatcher
+			var dispatchService = this.showService.dispatchService;
+			if( dispatchService ) {
+				dispatchService.synchronousCall(DH, {
+					type:'showCustom'
+					,elem: $elem
+					,customType: customType
 					,showService: this.showService
 				});
 			};
