@@ -318,7 +318,7 @@ public class UploadServlet extends HttpServlet {
 								b = stream.read();
 							}
 						} catch (Exception e) {
-							throw new Exception("Error while writing file "+target.getAbsolutePath());
+							throw new Exception("Error while writing file "+target.getAbsolutePath(),e);
 						} finally {
 							if( null != fos ) {
 								try {
