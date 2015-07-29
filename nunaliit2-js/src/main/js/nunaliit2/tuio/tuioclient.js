@@ -11,6 +11,8 @@ function Cursor() {
 	this.down = false;
 	this.downX = Number.Nan;
 	this.downY = Number.Nan;
+	this.index = Number.NaN;
+	this.div = undefined;
 }
 
 /** Construct a new tangible (block). */
@@ -19,6 +21,7 @@ function Tangible() {
 	this.x = new Number();
 	this.y = new Number();
 	this.angle = new Number();
+	this.div = undefined;
 }
 
 // Global dictionaries of alive cursors and tangibles
@@ -77,6 +80,11 @@ function updateAlive(dict, alive) {
 			// Dispatch mouseup event
 			dispatchMouseEvent('mouseup', dict[inst].x, dict[inst].y);
 
+			if (dict[inst].div != undefined) {
+				// Remove calibration div
+				document.body.removeChild(dict[inst].div);
+			}
+
 			// If the cursor is unmoved since mousedown, this is a click
 			if (dict[inst].x == dict[inst].downX &&
 				dict[inst].y == dict[inst].downY) {
@@ -97,11 +105,36 @@ function updateAlive(dict, alive) {
 				   Instead mousedown is dispatched on the initial position
 				   update after a cursor becomes alive. */
 				dict[a] = new Cursor();
+				dict[a].index = a;
 			} else if (dict == tangibles) {
 				dict[a] = new Tangible();
 			}
 		}
 	}
+}
+
+/** Update the visible calibration point for a cursor. */
+function updateCalibrationPoint(cursor) {
+	var div = cursor.div;
+	if (div == undefined) {
+		div = cursor.div = document.createElement("div");
+		div.style.position = "absolute";
+		div.style.width = "28px";
+		div.style.height = "28px";
+		div.style.background = "gray";
+		div.style.borderRadius = "50%";
+		div.style.border = "4px solid white";
+		div.style.color = "white";
+		div.style.fontWeight = "bold";
+		div.style.textAlign = "center";
+		div.style.verticalAlign = "middle";
+		div.style.zIndex = "10";
+		div.innerHTML = cursor.index;
+		document.body.appendChild(div);
+	}
+
+	div.style.left = cursor.x * window.innerWidth + "px";
+	div.style.top = cursor.y * window.innerHeight + "px";
 }
 
 /** Update cursor coordinates according to a position update. */
@@ -144,6 +177,8 @@ function updateCursors(set) {
 			cursors[inst].x = newX;
 			cursors[inst].y = newY;
 			cursors[inst].down = true;
+
+			updateCalibrationPoint(cursors[inst]);
 		}
 	}
 }
