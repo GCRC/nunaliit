@@ -397,6 +397,8 @@ var ReferenceBrowserCanvas = $n2.Class({
 	schemaNames: null,
 	
 	sortingSchemaNames: null,
+	
+	refs: null,
  	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -410,6 +412,7 @@ var ReferenceBrowserCanvas = $n2.Class({
 		this.canvasId = opts.canvasId;
 		this.docsById = {};
 		this.briefsById = {};
+		this.refs = [];
 		
 		this.schemaNames = opts.schemaNames;
 		this.sortingSchemaNames = this.schemaNames.slice(); // clone
@@ -442,19 +445,9 @@ var ReferenceBrowserCanvas = $n2.Class({
 		
 		var $elem = this._getElem();
 		if( $elem ){
-			$elem.addClass('n2ReferenceBrowserCanvas');
-			
-			this._computeBriefs({
-				onSuccess: computedBriefs
-			});
-		};
-		
-		function computedBriefs(){
-			var refs = _this._getReferences();
-			
-			_this._sortReferences(refs);
-
-			$elem.empty();
+			$elem
+				.empty()
+				.addClass('n2ReferenceBrowserCanvas');
 			
 			var $table = $('<table>').appendTo($elem);
 			
@@ -480,8 +473,8 @@ var ReferenceBrowserCanvas = $n2.Class({
 			};
 			
 			// Data
-			for(var i=0,e=refs.length; i<e; ++i){
-				var ref = refs[i];
+			for(var i=0,e=_this.refs.length; i<e; ++i){
+				var ref = _this.refs[i];
 				
 				var $tr = $('<tr>').appendTo($table);
 				for(var j=0,k=_this.schemaNames.length; j<k; ++j){
@@ -545,16 +538,23 @@ var ReferenceBrowserCanvas = $n2.Class({
 				};
 				
 				if( loaded ){
-					_this._display();
+					_this._computeSortValues({
+						onSuccess: sortValuesComputed
+					});
 				};
 			}
 			,onError: function(errorMsg){ 
 				$n2.reportErrorForced(errorMsg); 
 			}
 		});
+		
+		function sortValuesComputed(){
+			_this._computeReferences();
+			_this._display();
+		};
 	},
 	
-	_getReferences: function(){
+	_computeReferences: function(){
 		// Accumulate all references in a double map. Sort
 		// docIds so that a -> b is the same as b -> a
 		var map = {};
@@ -616,7 +616,9 @@ var ReferenceBrowserCanvas = $n2.Class({
 			};
 		};
 		
-		return links;
+		this.refs = links;
+		
+		this._sortReferences();
 	},
 	
 	_sortOnCriteria: function(name){
@@ -625,14 +627,16 @@ var ReferenceBrowserCanvas = $n2.Class({
 			this.sortingSchemaNames.splice(index,1);
 			this.sortingSchemaNames.unshift(name);
 			
-			this.display();
+			this._sortReferences();
+			
+			this._display();
 		};
 	},
 	
-	_sortReferences: function(refs){
+	_sortReferences: function(){
 		var _this = this;
 		
-		refs.sort(function(a,b){
+		this.refs.sort(function(a,b){
 			for(var i=0,e=_this.sortingSchemaNames.length; i<e; ++i){
 				var criteria = _this.sortingSchemaNames[i];
 				
@@ -664,7 +668,7 @@ var ReferenceBrowserCanvas = $n2.Class({
 		});
 	},
 	
-	_computeBriefs: function(opts_){
+	_computeSortValues: function(opts_){
 		var opts = $n2.extend({
 			onSuccess: function(){}
 		},opts_);

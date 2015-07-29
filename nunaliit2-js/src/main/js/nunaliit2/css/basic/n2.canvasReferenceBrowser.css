@@ -1,3 +1,7 @@
+.n2ReferenceBrowserCanvas {
+	overflow: auto;
+}
+
 .n2ReferenceBrowserCanvas table,
 .n2ReferenceBrowserCanvas th,
 .n2ReferenceBrowserCanvas td {
