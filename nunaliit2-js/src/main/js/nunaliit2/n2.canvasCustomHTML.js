@@ -156,7 +156,7 @@ var CustomHtmlCanvas = $n2.Class({
  	 					url: htmlUrl
  	 					,type: 'get'
  	 					,async: true
- 	 					,dataType: 'xml'
+ 	 					,dataType: 'html'
  	 					,success: function(htmlDocument) {
  							opts.onSuccess();
  							
@@ -188,13 +188,15 @@ var CustomHtmlCanvas = $n2.Class({
  		$n2.log('custom html loaded');
  		
  		var $canvas = $('#'+this.canvasId)
- 			.empty()
- 			.append(htmlDocument.documentElement);
+ 			.html(htmlDocument);
  		
  		// Adjust height and width
- 		$canvas.find('html')
- 			.attr('width','100%')
- 			.attr('height','100%')
+ 		$canvas.children()
+ 			.css('width','100%')
+ 			.css('height','100%')
+			.css('position','absolute')
+			.css('left','0')
+			.css('top','0')
  			;
  		
  		// Try to insert style information
