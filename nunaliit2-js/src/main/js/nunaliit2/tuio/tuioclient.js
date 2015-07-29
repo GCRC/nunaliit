@@ -31,12 +31,12 @@ var tangibles = new Object();
  */
 function dispatchMouseEvent(eventType, x, y) {
 	// Convert table coordinates to browser coordinates
-    var winX = x * window.innerWidth;
-    var winY = y * window.innerHeight;
+	var winX = x * window.innerWidth;
+	var winY = y * window.innerHeight;
 
 	// Get the topmost DOM element at this position
-    var el = document.elementFromPoint(winX, winY);
-    //console.log(eventType + " at " + winX + "," + winY + ": " + el + " id: " + el.id);
+	var el = document.elementFromPoint(winX, winY);
+	//console.log(eventType + " at " + winX + "," + winY + ": " + el + " id: " + el.id);
 
 	// Create synthetic mouse event of the given type
 	var event = new MouseEvent(eventType, {
@@ -64,7 +64,7 @@ function updateAlive(dict, alive) {
 		}
 
 		// Check if this instance is still alive
-        var found = false;
+		var found = false;
 		for (var i = alive.length - 1; i >= 0; i--) {
 			if (inst == alive[i]) {
 				found = true;
@@ -74,16 +74,16 @@ function updateAlive(dict, alive) {
 
 		// Instance is not alive, so delete from dict
 		if (!found) {
-            // Dispatch mouseup event
+			// Dispatch mouseup event
 			dispatchMouseEvent('mouseup', dict[inst].x, dict[inst].y);
 
-            // If the cursor is unmoved since mousedown, this is a click
+			// If the cursor is unmoved since mousedown, this is a click
 			if (dict[inst].x == dict[inst].downX &&
 				dict[inst].y == dict[inst].downY) {
 				dispatchMouseEvent('click', dict[inst].x, dict[inst].y);
 			}
 
-            // Remove cursor from dictionary
+			// Remove cursor from dictionary
 			delete dict[inst];
 		}
 	}
@@ -93,9 +93,9 @@ function updateAlive(dict, alive) {
 		if (!dict.hasOwnProperty(alive[i])) {
 			var a = alive[i];
 			if (dict == cursors) {
-                /* This is a mousedown, but we do not have a position here.
-                   Instead mousedown is dispatched on the initial position
-                   update after a cursor becomes alive. */
+				/* This is a mousedown, but we do not have a position here.
+				   Instead mousedown is dispatched on the initial position
+				   update after a cursor becomes alive. */
 				dict[a] = new Cursor();
 			} else if (dict == tangibles) {
 				dict[a] = new Tangible();
@@ -104,8 +104,7 @@ function updateAlive(dict, alive) {
 	}
 }
 
-// set the new coords in the global cursors var
-// set = new set object
+/** Update cursor coordinates according to a position update. */
 function updateCursors(set) {
 	for (var inst in set) {
 		if (!set.hasOwnProperty(inst)) {
@@ -125,18 +124,18 @@ function updateCursors(set) {
 				var dx = (cursors[inst].x - newX);
 				var dy = (cursors[inst].y - newY);
 				moduleDisplay.mapControl.map.pan(dx * mapSize.w * scrollSpeed,
-												 dy * mapSize.h * scrollSpeed,
-                                                 { dragging: true });
+				                                 dy * mapSize.h * scrollSpeed,
+				                                 { dragging: true });
 				*/
 
 				if (!cursors[inst].down) {
-                    // Initial position update: mousedown
+					// Initial position update: mousedown
 					dispatchMouseEvent('mousedown', newX, newY);
 					cursors[inst].down = true;
 					cursors[inst].downX = newX;
 					cursors[inst].downY = newY;
 				} else {
-                    // Subsequent update (already down): mousemove
+					// Subsequent update (already down): mousemove
 					dispatchMouseEvent('mousemove', newX, newY);
 				}
 			}
