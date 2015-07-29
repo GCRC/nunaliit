@@ -408,6 +408,8 @@ var ReferenceBrowserCanvas = $n2.Class({
 			,onSuccess: function(){}
 			,onError: function(err){}
 		},opts_);
+		
+		var _this = this;
  		
 		this.canvasId = opts.canvasId;
 		this.docsById = {};
@@ -425,6 +427,15 @@ var ReferenceBrowserCanvas = $n2.Class({
 				this.showService = opts.config.directory.showService;
 				this.dispatchService = opts.config.directory.dispatchService;
 			};
+		};
+		
+		if( this.dispatchService ){
+			var f = function(m,addr,dispatcher){
+				_this._handle(m,addr,dispatcher);
+			};
+			
+			this.dispatchService.register(DH,'documentContent',f);
+			this.dispatchService.register(DH,'documentDeleted',f);
 		};
 		
 		this._display();
@@ -718,6 +729,67 @@ var ReferenceBrowserCanvas = $n2.Class({
 				,docId: docId
 				,doc: doc
 			});
+		};
+	},
+
+	_addDocument: function(doc){
+		var _this = this;
+		
+		var docId = doc._id;
+		var added = false;
+		
+		if( ! this.docsById[docId] ){
+			this.docsById[docId] = doc;
+			added = true;
+			
+		} else if( this.docsById[docId]._rev !== doc._rev ) {
+			this.docsById[docId] = doc;
+			delete this.briefsById[docId];
+			added = true;
+		};
+		
+		if( added ){
+			this._computeSortValues({
+				onSuccess: sortValuesComputed
+			});
+		};
+
+		function sortValuesComputed(){
+			_this._computeReferences();
+			_this._display();
+		};
+	},
+
+	_deleteDocument: function(docId){
+		if( this.docsById[docId] ){
+			delete this.docsById[docId];
+			delete this.briefsById[docId];
+			this._computeReferences();
+			this._display();
+		};
+	},
+	
+	_handle: function(m,addr,dispatcher){
+		var _this = this;
+		
+		if( 'documentContent' === m.type ){
+			var doc = m.doc;
+			if( doc ){
+				var schemaName = doc.nunaliit_schema;
+				if( this.schemaNames.indexOf(schemaName) < 0 ){
+					// Should be deleted
+					var docId = doc._id;
+					this._deleteDocument(docId);
+					
+				} else {
+					// Should be added
+					this._addDocument(doc);
+				};
+			};
+			
+		} else if( 'documentDeleted' === m.type ){
+			var docId = m.docId;
+			this._deleteDocument(docId);
 		};
 	}
 });
