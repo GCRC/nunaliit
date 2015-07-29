@@ -1,5 +1,6 @@
 .n2ReferenceBrowserCanvas {
 	overflow: auto;
+	padding: 5px;
 }
 
 .n2ReferenceBrowserCanvas table,
