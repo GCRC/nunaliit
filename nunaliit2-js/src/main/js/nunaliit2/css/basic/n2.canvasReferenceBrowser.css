@@ -1,0 +1,9 @@
+.n2ReferenceBrowserCanvas table,
+.n2ReferenceBrowserCanvas th,
+.n2ReferenceBrowserCanvas td {
+	border: solid 1px #cccccc;
+}
+
+.n2ReferenceBrowserCanvas td a {
+	color: #000000;
+}
