@@ -345,13 +345,6 @@ function Configure(options_){
 	 	configuration.directory.widgetService = new $n2.widgetBasic.Service({
 			dispatchService: configuration.directory.dispatchService
 		});
-
-	 	configuration.contributions = new $n2.couchContributions({
-			db: configuration.atlasDb
-			,designDoc: configuration.atlasDesign
-			,showService: configuration.directory.showService
-			,uploads: configuration.directory.uploadService
-		});
 	 	
 	 	$n2.mapAndControls.DefaultPopupHtmlFunction = function(opt_){
 	 		var feature = opt_.feature;
