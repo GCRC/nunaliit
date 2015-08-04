@@ -39,4 +39,13 @@ public class OnUploadedListenerWrapper implements OnUploadedListener {
 		return wrapped.onLoad(progressId, uploadedFiles, parameters, userPrincipal, cookies);
 	}
 
+	@Override
+	public void onError(String progressId, 
+			List<LoadedFile> uploadedFiles,
+			Map<String, List<String>> parameters, 
+			Principal userPrincipal,
+			Cookie[] cookies) {
+		wrapped.onError(progressId, uploadedFiles, parameters, userPrincipal, cookies);
+	}
+
 }

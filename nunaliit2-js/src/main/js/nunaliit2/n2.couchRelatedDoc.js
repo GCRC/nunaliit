@@ -185,8 +185,12 @@ var Editor = $n2.Class({
 			funcMap = this.dialogService.getFunctionMap();
 		};
 		
-		var $form = $('<div></div>');
-		$dialog.append($form);
+		var $diagContent = $('<div>')
+			.addClass('n2RelatedDoc_dialogContent')
+			.appendTo($dialog);
+		
+		var $form = $('<div>')
+			.appendTo($diagContent);
 		schema.form(
 			obj
 			,$form
@@ -203,8 +207,8 @@ var Editor = $n2.Class({
 			this.showService.fixElementAndChildren($form, {}, obj);
 		};
 
-		var $fileElement = $('<div></div>');
-		$dialog.append($fileElement);
+		var $fileElement = $('<div>')
+			.appendTo($diagContent);
 		this.attachmentUploadHandler = new $n2.CouchEditor.AttachmentEditor({
 			doc: obj
 			,elem: $fileElement
@@ -214,23 +218,25 @@ var Editor = $n2.Class({
 			,disableRemoveFile: true
 		});
 		
-		var $ok = $('<button></button>');
-		$ok.text( _loc('OK') );
-		$ok.button({icons:{primary:'ui-icon-check'}});
-		$dialog.append( $ok );
-		$ok.click(function(){
-			_this._clickOK();
-			return false;
-		});
+		// OK
+		$('<button>')
+			.text( _loc('OK') )
+			.button({icons:{primary:'ui-icon-check'}})
+			.appendTo($diagContent)
+			.click(function(){
+				_this._clickOK();
+				return false;
+			});
 		
-		var $cancel = $('<button></button>');
-		$cancel.text( _loc('Cancel') );
-		$cancel.button({icons:{primary:'ui-icon-cancel'}});
-		$dialog.append( $cancel );
-		$cancel.click(function(){
-			_this._clickCancel();
-			return false;
-		});
+		// Cancel
+		$('<button>')
+			.text( _loc('Cancel') )
+			.button({icons:{primary:'ui-icon-cancel'}})
+			.appendTo( $diagContent )
+			.click(function(){
+				_this._clickCancel();
+				return false;
+			});
 		
 		var dialogOptions = {
 			autoOpen: true
@@ -280,7 +286,7 @@ var Editor = $n2.Class({
 				_this._uploadFile(updatedDoc);
 			}
 			,onError: function(err){
-				_this.onError( _loc('Unable to reach database to submit document: {err}',{err:err}) );
+				_this._error( _loc('Unable to reach database to submit document: {err}',{err:err}) );
 			}
 		});
 	},
@@ -294,7 +300,7 @@ var Editor = $n2.Class({
 				_this._success(doc._id);
 			}
 			,onError: function(err){
-				_this.onError( 
+				_this._error( 
 					_loc('Error occurred after related document was created. Error: {err}',{err:err})
 				);
 			}
@@ -307,6 +313,30 @@ var Editor = $n2.Class({
 		
 		// Call back client
 		this.onSuccess(docId);
+	},
+	
+	_error: function(err){
+		var _this = this;
+		
+		var $content = $('#'+this.diagId).find('.n2RelatedDoc_dialogContent')
+			.empty();
+		
+		$('<div>')
+			.addClass('n2RelatedDoc_error')
+			.text( err )
+			.appendTo($content);
+
+		$('<button>')
+			.text( _loc('Cancel') )
+			.button({icons:{primary:'ui-icon-cancel'}})
+			.appendTo( $content )
+			.click(function(){
+				_this._clickCancel();
+				return false;
+			});
+		
+		// Call back client
+		this.onError(err);
 	}
 });
 

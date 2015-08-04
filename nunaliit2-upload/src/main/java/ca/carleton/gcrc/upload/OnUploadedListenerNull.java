@@ -22,4 +22,13 @@ public class OnUploadedListenerNull implements OnUploadedListener {
 		return null;
 	}
 
+	@Override
+	public void onError(
+			String progressId, 
+			List<LoadedFile> uploadedFiles,
+			Map<String, List<String>> parameters, 
+			Principal userPrincipal,
+			Cookie[] cookies) {
+	}
+
 }

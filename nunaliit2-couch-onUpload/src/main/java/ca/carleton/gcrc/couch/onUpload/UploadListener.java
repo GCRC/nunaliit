@@ -203,6 +203,17 @@ public class UploadListener implements OnUploadedListener {
 		return null;
 	}
 
+	@Override
+	public void onError(
+			String progressId, 
+			List<LoadedFile> uploadedFiles,
+			Map<String, List<String>> parameters, 
+			Principal userPrincipal,
+			Cookie[] cookies) {
+		// TODO Auto-generated method stub
+		
+	}
+
 	private CouchDb getUserCouchDbFromCookies(Cookie[] cookies) throws Exception {
 		CouchContextCookie contextCookie = new CouchContextCookie();
 		for(Cookie cookie : cookies){
