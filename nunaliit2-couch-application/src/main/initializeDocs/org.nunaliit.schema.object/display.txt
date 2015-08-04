@@ -1,7 +1,6 @@
 <div class="n2display_document">
 	<table>
 	{{#place}}{{{:html}}}{{/place}}
-	{{#nunaliit_contribution}}{{{:html}}}{{/nunaliit_contribution}}
 	{{#nunaliit_attachments}}{{{:html}}}{{/nunaliit_attachments}}
 	{{#nunaliit_layers}}
 		<tr><td class="label n2_localize">Layer</td><td class="value">{{.}}</td></tr>

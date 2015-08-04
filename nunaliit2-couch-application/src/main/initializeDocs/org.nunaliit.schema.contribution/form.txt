@@ -1,2 +1,0 @@
-	<tr><td class="label n2_localize">Title</td><td class="value"><input type="text" class="{{#:input}}title{{/:input}}"/></td></tr>
-	<tr><td class="label n2_localize">Description</td><td class="value"><textarea class="{{#:input}}description{{/:input}}"></textarea></td></tr>

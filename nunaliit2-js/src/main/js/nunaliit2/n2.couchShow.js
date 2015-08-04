@@ -533,10 +533,6 @@ var DomStyler = $n2.Class({
 				 && attDesc.data
 				 && attDesc.data.title ) {
 					mediaOptions.title = attDesc.data.title;
-
-				} else if( doc.nunaliit_contribution 
-				 && doc.nunaliit_contribution.title ) {
-					mediaOptions.title = doc.nunaliit_contribution.title;
 				};
 				
 				// Height and width
