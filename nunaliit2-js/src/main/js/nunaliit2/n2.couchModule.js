@@ -275,47 +275,49 @@ var Module = $n2.Class({
 //=========================================================================	
 var ModuleDisplay = $n2.Class({
 
-	config: null
-	
-	,module: null
-	
-	,mapControl: null
-	
-	,displayControl: null
+	config: null,
 
-	,titleName: null
+	moduleId: null,
+	
+	module: null,
+	
+	mapControl: null,
+	
+	displayControl: null,
 
-	,moduleTitleName: null
-	
-	,contentName: null
+	titleName: null,
 
-	,mapName: null
+	moduleTitleName: null,
 	
-	,mapInteractionName: null
+	contentName: null,
 
-	,sidePanelName: null
+	mapName: null,
 	
-	,filterPanelName: null
+	mapInteractionName: null,
 
-	,searchPanelName: null
+	sidePanelName: null,
 	
-	,loginPanelNames: null
+	filterPanelName: null,
+
+	searchPanelName: null,
 	
-	,navigationName: null
+	loginPanelNames: null,
 	
-	,navigationDoc: null
+	navigationName: null,
 	
-	,languageSwitcherName: null
+	navigationDoc: null,
 	
-	,helpButtonName: null
+	languageSwitcherName: null,
 	
-	,helpDialogId: null
+	helpButtonName: null,
 	
-	,styleMapFn: null
+	helpDialogId: null,
 	
-	,mapStyles: null
+	styleMapFn: null,
 	
-	,initialize: function(opts_){
+	mapStyles: null,
+	
+	initialize: function(opts_){
 		var opts = $n2.extend({
 			moduleName: null
 			,moduleDoc: null
@@ -412,6 +414,7 @@ var ModuleDisplay = $n2.Class({
 		 * This allows for run-time insertion of layer options (e.g., styling functions).
 		 */
 		if( ! $n2.isDefined(opts.moduleDoc) ) {
+			this.moduleId = opts.moduleName;
 			atlasDb.getDocument({
 				docId: opts.moduleName
 				,onSuccess: moduleDocumentLoaded
@@ -460,8 +463,12 @@ var ModuleDisplay = $n2.Class({
 			};
 
 			if( moduleDoc._id ){
+				this.moduleId = moduleDoc._id;
 				var safeId = $n2.utils.stringToHtmlId(moduleDoc._id);
 				$('body').addClass('nunaliit_module_'+safeId);
+				
+				// Update any associated navigation items
+				$('.n2_nav_module+'+safeId).addClass('n2_nav_currentModule');
 			};
 
 			_this.module = new Module(moduleDoc, atlasDb);
@@ -823,9 +830,17 @@ var ModuleDisplay = $n2.Class({
 
 			opts.onSuccess(_this);
 		};
-	}
+	},
+	
+	getCurrentModuleId: function(){
+		if( this.module && this.module._id ){
+			return this.module._id;
+		};
+		
+		return this.moduleId;
+	},
 
-	,_initializeMap: function(opts_){
+	_initializeMap: function(opts_){
 		var opts = $n2.extend({
 			config: null
 			,onSuccess: function(moduleDisplay){}
@@ -1212,6 +1227,8 @@ var ModuleDisplay = $n2.Class({
 	}
 
 	,_navigationDocumentLoaded: function(doc){
+		var currentModuleId = this.getCurrentModuleId();
+		
 		if( doc && doc.nunaliit_navigation ){
 			// Atlas title
 			var $title = $('#'+this.titleName);
@@ -1243,10 +1260,30 @@ var ModuleDisplay = $n2.Class({
 			for(var i=0,e=items.length; i<e; ++i){
 				var item = items[i];
 				
-				var $li = $('<li></li>');
-				$ul.append($li);
+				var $li = $('<li></li>')
+					.appendTo($ul);
 
 				if( item.title && item.href ) {
+					// Compute module class
+					var moduleId = null;
+					var url = new $n2.url.Url({
+						url: item.href
+					});
+					if( url ){
+						moduleId = url.getParamValue('module',null);
+					};
+					var moduleClass = null;
+					if( moduleId ){
+						moduleClass = 'n2_nav_module_'+ $n2.utils.stringToHtmlId(moduleId);
+					};
+					if( moduleClass ){
+						$li.addClass(moduleClass);
+					};
+					
+					if( moduleId && moduleId === currentModuleId ){
+						$li.addClass('n2_nav_currentModule');
+					};
+					
 					var $a = $('<a></a>');
 					$a.attr('href',item.href);
 					var title = _loc(item.title);
