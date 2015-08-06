@@ -5,7 +5,7 @@ var socket = io('http://localhost:3000');
 var scrollSpeed = 1.0;
 
 // Time in ms a cursor must be gone to be considered up
-var clickDelay = 750;
+var clickDelay = 500;
 
 // Distance a cursor must remain within to count as a click
 var clickDistance = 0.005;
@@ -113,7 +113,7 @@ function updateAlive(dict, alive) {
 		var found = false;
 		for (var i = alive.length - 1; i >= 0; i--) {
 			if (inst == alive[i]) {
-	            inst.lastSeen = Date.now();
+	            dict[inst].lastSeen = Date.now();
 				found = true;
 				break;
 			}
