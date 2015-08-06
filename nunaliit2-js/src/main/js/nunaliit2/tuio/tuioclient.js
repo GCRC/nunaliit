@@ -3,6 +3,10 @@ var socket = io('http://localhost:3000');
 
 // Speed factor for drag scrolling
 var scrollSpeed = 1.0;
+
+// Time in ms a cursor must be gone to be considered up
+var clickDelay = 500;
+
 // Calibration configuration
 var minX = 0.118;
 var minY = 0.00;
@@ -35,6 +39,7 @@ function Cursor() {
 	this.downY = Number.Nan;
 	this.index = Number.NaN;
 	this.div = undefined;
+	this.lastSeen = Date.now();
 }
 
 /** Construct a new tangible (block). */
@@ -100,13 +105,14 @@ function updateAlive(dict, alive) {
 		var found = false;
 		for (var i = alive.length - 1; i >= 0; i--) {
 			if (inst == alive[i]) {
+	            inst.lastSeen = Date.now();
 				found = true;
 				break;
 			}
 		}
 
 		// Instance is not alive, so delete from dict
-		if (!found) {
+		if (!found && (Date.now() - dict[inst].lastSeen) > clickDelay) {
 			// Dispatch mouseup event
 			dispatchMouseEvent('mouseup', dict[inst].x, dict[inst].y);
 
