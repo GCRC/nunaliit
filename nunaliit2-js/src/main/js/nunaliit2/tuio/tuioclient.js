@@ -5,7 +5,10 @@ var socket = io('http://localhost:3000');
 var scrollSpeed = 1.0;
 
 // Time in ms a cursor must be gone to be considered up
-var clickDelay = 500;
+var clickDelay = 750;
+
+// Distance a cursor must remain within to count as a click
+var clickDistance = 0.005;
 
 // Calibration configuration
 var minX = 0.118;
@@ -90,6 +93,11 @@ function dispatchMouseEvent(eventType, x, y) {
 	el.dispatchEvent(event);
 }
 
+/** Return the absolute distance between two points. */
+function distance(x1, y1, x2, y2) {
+	return Math.abs(Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)));
+}
+
 /** Update the list of things that are alive.
  * dict: Dictionary of cursors or tangibles.
  * alive: Updated alive array.
@@ -122,8 +130,9 @@ function updateAlive(dict, alive) {
 			}
 
 			// If the cursor is unmoved since mousedown, this is a click
-			if (dict[inst].x == dict[inst].downX &&
-				dict[inst].y == dict[inst].downY) {
+			var d = distance(dict[inst].x, dict[inst].y,
+						     dict[inst].downX, dict[inst].downY);
+			if (d < clickDistance) {
 				dispatchMouseEvent('click', dict[inst].x, dict[inst].y);
 			}
 
