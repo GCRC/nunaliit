@@ -4,11 +4,17 @@ var socket = io('http://localhost:3000');
 // Speed factor for drag scrolling
 var scrollSpeed = 1.0;
 
+// Toggle for whether non-map page elements are visible (kludge)
+var barsVisible = true;
+
 // Time in ms a cursor must be gone to be considered up
 var clickDelay = 500;
 
 // Distance a cursor must remain within to count as a click
 var clickDistance = 0.005;
+
+// Cursor key currently acting as the mouse, if any
+var mouseCursor = undefined;
 
 // Calibration configuration
 var minX = 0.118;
@@ -121,19 +127,24 @@ function updateAlive(dict, alive) {
 
 		// Instance is not alive, so delete from dict
 		if (!found && (Date.now() - dict[inst].lastSeen) > clickDelay) {
-			// Dispatch mouseup event
-			dispatchMouseEvent('mouseup', dict[inst].x, dict[inst].y);
-
 			if (dict[inst].div != undefined) {
 				// Remove calibration div
 				document.body.removeChild(dict[inst].div);
 			}
 
-			// If the cursor is unmoved since mousedown, this is a click
-			var d = distance(dict[inst].x, dict[inst].y,
-						     dict[inst].downX, dict[inst].downY);
-			if (d < clickDistance) {
-				dispatchMouseEvent('click', dict[inst].x, dict[inst].y);
+			if (inst == mouseCursor) {
+				// This cursor is currently emulating the mouse
+				// Dispatch mouseup event
+				dispatchMouseEvent('mouseup', dict[inst].x, dict[inst].y);
+
+				// If the cursor is unmoved since mousedown, this is a click
+				var d = distance(dict[inst].x, dict[inst].y,
+								 dict[inst].downX, dict[inst].downY);
+				if (d < clickDistance) {
+					dispatchMouseEvent('click', dict[inst].x, dict[inst].y);
+				}
+
+				mouseCursor = undefined;
 			}
 
 			// Remove cursor from dictionary
@@ -214,11 +225,15 @@ function updateCursors(set) {
 
 				if (!cursors[inst].down) {
 					// Initial position update: mousedown
-					dispatchMouseEvent('mousedown', newX, newY);
+					if (mouseCursor == undefined) {
+						dispatchMouseEvent('mousedown', newX, newY);
+						mouseCursor = inst;
+					}
+
 					cursors[inst].down = true;
 					cursors[inst].downX = newX;
 					cursors[inst].downY = newY;
-				} else {
+				} else if (inst == mouseCursor) {
 					// Subsequent update (already down): mousemove
 					dispatchMouseEvent('mousemove', newX, newY);
 				}
@@ -258,3 +273,37 @@ socket.on('tangibles update', function(update) {
 	updateAlive(tangibles, update.alive);
 	updateTangibles(update.set);
 });
+
+window.onkeydown = function (e) {
+	var code = e.keyCode ? e.keyCode : e.which;
+	if (code === 27) {
+		// Escape pressed, toggle non-map UI visibility
+		var content = document.getElementById("content");
+		var head = document.getElementsByClassName("nunaliit_header")[0];
+		var map = document.getElementById("nunaliit2_uniqueId_65");
+		var zoom = document.getElementsByClassName("olControlZoom")[0];
+		var pane = document.getElementById("nunaliit2_uniqueId_66");
+		var text = document.getElementById("nunaliit2_uniqueId_67");
+		var foot = document.getElementsByClassName("nunaliit_footer")[0];
+		if (barsVisible) {
+			head.style.display = "none";
+			map.style.right = "0";
+			zoom.style.top = "45%";
+			pane.style.display = "none";
+			text.style.display = "none";
+			foot.style.display = "none";
+			content.style.top = "0";
+			content.style.bottom = "0";
+		} else {
+			head.style.display = "block";
+			map.style.right = "450px";
+			zoom.style.top = "35px";
+			pane.style.display = "block";
+			text.style.display = "block";
+			foot.style.display = "block";
+			content.style.top = "102px";
+			content.style.bottom = "17px";
+		}
+		barsVisible = !barsVisible;
+	}
+};
