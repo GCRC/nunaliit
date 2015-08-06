@@ -55,12 +55,20 @@ var tangibles = new Object();
  * x, y: 0..1 normalized TUIO cordinates
  */
 function dispatchMouseEvent(eventType, x, y) {
+	if (isNaN(x) || isNaN(y)) {
+	    return;
+	}
+
 	// Convert table coordinates to browser coordinates
 	var winX = x * window.innerWidth;
 	var winY = y * window.innerHeight;
 
 	// Get the topmost DOM element at this position
 	var el = document.elementFromPoint(winX, winY);
+	if (el == null) {
+	    return;
+	}
+
 	//console.log(eventType + " at " + winX + "," + winY + ": " + el + " id: " + el.id);
 
 	// Create synthetic mouse event of the given type
