@@ -622,7 +622,7 @@ var ModuleDisplay = $n2.Class({
 			if( displayInfo && displayInfo.type ){
 				displayFormat = displayInfo.type;
 			};
-			if( customService ){
+			if( !displayFormat && customService ){
 				displayFormat = customService.getOption('displayFormat',displayFormat);
 			};
 			if( !displayFormat ){
