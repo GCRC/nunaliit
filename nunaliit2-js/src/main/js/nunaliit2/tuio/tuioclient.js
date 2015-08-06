@@ -159,27 +159,33 @@ function updateAlive(dict, alive) {
 }
 
 /** Update the visible calibration point for a cursor. */
-function updateCalibrationPoint(cursor) {
-	var div = cursor.div;
-	if (div == undefined) {
-		div = cursor.div = document.createElement("div");
-		div.style.position = "absolute";
-		div.style.width = "28px";
-		div.style.height = "28px";
-		div.style.background = "gray";
-		div.style.borderRadius = "50%";
-		div.style.border = "4px solid white";
-		div.style.color = "white";
-		div.style.fontWeight = "bold";
-		div.style.textAlign = "center";
-		div.style.verticalAlign = "middle";
-		div.style.zIndex = "10";
-		div.innerHTML = cursor.index;
-		document.body.appendChild(div);
+function createDot(x, y, content) {
+	var div = document.createElement("div");
+	div.style.position = "absolute";
+	div.style.width = dotSize + "px";
+	div.style.height = dotSize + "px";
+	div.style.background = "gray";
+	div.style.borderRadius = "50%";
+	div.style.border = "2px solid white";
+	div.style.color = "white";
+	div.style.textAlign = "center";
+	div.style.verticalAlign = "middle";
+	div.style.zIndex = "10";
+	div.style.left = ((x * window.innerWidth) - (dotSize / 2)) + "px";
+	div.style.top = ((y * window.innerHeight) - (dotSize / 2)) + "px";
+	div.innerHTML = content;
+	document.body.appendChild(div);
+
+	return div;
+}
+/** Update the visible calibration point for a cursor. */
+function showFinger(cursor) {
+	if (cursor.div == undefined) {
+	    cursor.div = createDot(cursor.x, cursor.y, cursor.index);
 	}
 
-	div.style.left = cursor.x * window.innerWidth + "px";
-	div.style.top = cursor.y * window.innerHeight + "px";
+	cursor.div.style.left = ((cursor.x * window.innerWidth) - 10) + "px";
+	cursor.div.style.top = ((cursor.y * window.innerHeight) - 10) + "px";
 }
 
 /** Update cursor coordinates according to a position update. */
@@ -223,7 +229,7 @@ function updateCursors(set) {
 			cursors[inst].y = newY;
 			cursors[inst].down = true;
 
-			updateCalibrationPoint(cursors[inst]);
+			showFinger(cursors[inst]);
 		}
 	}
 }
