@@ -39,345 +39,6 @@ var
  ;
 
 // --------------------------------------------------------------------------
-var ObiReferenceTable = $n2.Class({
-		
-	elemId: null,
-	
-	atlasDesign: null,
-	
-	schemaRepository: null,
-	
-	showService: null,
-	
-	dispatchService: null,
-	
-	docsById: null,
-	
-	briefsById: null,
-	
-	schemasByName: null,
-	
-	sortingSchemaNames: null,
-	
-	initialize: function(opts_){
-		var opts = $n2.extend({
-			elem: null
-			,schemaNames: null
-		},opts_);
-
-		this.docsById = {};
-		this.briefsById = {};
-		this.schemasByName = {};
-		
-		// elemId
-		var $elem = $(opts.elem);
-		var id = $elem.attr('id');
-		if( !id ){
-			id = $n2.getUniqueId();
-			$elem.attr('id',id);
-		};
-		this.elemId = id;
-		
-		this.schemaNames = opts.schemaNames;
-		this.sortingSchemaNames = this.schemaNames.slice(); // clone
-		this.atlasDesign = atlasDesign; // from global
-		this.schemaRepository = schemaRepository; // from global
-		this.showService = showService; // from global
-		this.dispatchService = dispatchService; // from global
-		
-		this.display();
-		
-		this.loadDocs();
-	},
-	
-	getElem: function(){
-		var $elem = $('#'+this.elemId);
-		if( $elem.length < 1 ){
-			return undefined;
-		};
-		return $elem;
-	},
-	
-	display: function(){
-		var _this = this;
-		
-		var $elem = this.getElem();
-		if( $elem ){
-			this.computeBriefs({
-				onSuccess: computedBriefs
-			});
-		};
-		
-		function computedBriefs(){
-			var refs = _this.getReferences();
-			
-			_this.sortReferences(refs);
-
-			$elem.empty();
-			
-			var $table = $('<table>').appendTo($elem);
-			
-			// Headings
-			var $tr = $('<tr>').appendTo($table);
-			for(var i=0,e=_this.schemaNames.length; i<e; ++i){
-				var schemaName = _this.schemaNames[i];
-				var $th = $('<th>')
-					.appendTo($tr);
-				
-				$('<a>')
-					.text(schemaName)
-					.attr('href','#')
-					.appendTo($th)
-					.click(function(){
-						var $a = $(this);
-						var schemaName = $a.text();
-						_this._sortOnCriteria(schemaName);
-						return false;
-					})
-					;
-					
-			};
-			
-			// Data
-			for(var i=0,e=refs.length; i<e; ++i){
-				var ref = refs[i];
-				
-				var $tr = $('<tr>').appendTo($table);
-				for(var j=0,k=_this.schemaNames.length; j<k; ++j){
-					var schemaName = _this.schemaNames[j];
-					
-					var info = ref[schemaName];
-					if( info ){
-						var display = info.display;
-						var docId = info.id;
-						var doc = _this.docsById[docId];
-						
-							var $td = $('<td>')
-								.appendTo($tr);
-							var $a = $('<a>')
-								.text(display)
-								.attr('href','#')
-								.attr('n2-doc-id',docId)
-								.appendTo($td)
-								.click(function(){
-									var $a = $(this);
-									var docId = $a.attr('n2-doc-id');
-									_this._select(docId);
-									return false;
-								})
-								;
-
-						if( _this.showService && doc ){
-							_this.showService.displayBriefDescription($a, {}, doc);
-						};
-						
-					} else {
-						$('<td>')
-							.appendTo($tr);
-					};
-				};
-			};
-		};
-	},
-	
-	loadDocs: function(){
-		var _this = this;
-		
-		this.atlasDesign.queryView({
-			viewName: 'nunaliit-schema'
-			,keys: this.schemaNames
-			,include_docs: true
-			,onSuccess: function(rows){
-				var loaded = false;
-				for(var i=0,e=rows.length;i<e;++i){
-					var row = rows[i];
-					var doc = row.doc;
-					var docId = doc._id;
-					
-					_this.docsById[docId] = doc;
-					
-					if( _this.briefsById[docId] ){
-						delete _this.briefsById[docId];
-					};
-					
-					loaded = true;
-				};
-				
-				if( loaded ){
-					_this.display();
-				};
-			}
-			,onError: function(errorMsg){ 
-				$n2.reportErrorForced(errorMsg); 
-			}
-		});
-	},
-	
-	getReferences: function(){
-		// Accumulate all references in a double map. Sort
-		// docIds so that a -> b is the same as b -> a
-		var map = {};
-		for(var docId in this.docsById){
-			var doc = this.docsById[docId];
-			
-			var refs = [];
-			$n2.couchUtils.extractLinks(doc,refs);
-			
-			for(var i=0,e=refs.length; i<e; ++i){
-				var ref = refs[i];
-				if( ref && ref.doc ){
-					var refId = ref.doc;
-					
-					// check that reference points back to a document
-					// that is interesting
-					if( this.docsById[refId] ){
-						var a = docId;
-						var b = refId;
-						if( b < a ){
-							a = refId;
-							b = docId;
-						};
-						
-						// Put in map
-						if( !map[a] ){
-							map[a] = {};
-						};
-						map[a][b] = true;
-					};
-				};
-			};
-		};
-		
-		// Convert into array
-		var links = [];
-		for(var id1 in map){
-			var subMap = map[id1];
-			for(var id2 in subMap){
-				var doc1 = this.docsById[id1];
-				var doc2 = this.docsById[id2];
-				
-				var schemaName1 = doc1.nunaliit_schema;
-				var schemaName2 = doc2.nunaliit_schema;
-
-				var display1 = this.briefsById[id1];
-				var display2 = this.briefsById[id2];
-				
-				var link = {};
-				link[schemaName1] = {
-					id: id1
-					,display: display1
-				};
-				link[schemaName2] = {
-					id: id2
-					,display: display2
-				};
-				links.push(link);
-			};
-		};
-		
-		return links;
-	},
-	
-	_sortOnCriteria: function(name){
-		var index = this.sortingSchemaNames.indexOf(name);
-		if( index >= 0 ){
-			this.sortingSchemaNames.splice(index,1);
-			this.sortingSchemaNames.unshift(name);
-			
-			this.display();
-		};
-	},
-	
-	sortReferences: function(refs){
-		var _this = this;
-		
-		refs.sort(function(a,b){
-			for(var i=0,e=_this.sortingSchemaNames.length; i<e; ++i){
-				var criteria = _this.sortingSchemaNames[i];
-				
-				var aInfo = a[criteria];
-				var bInfo = b[criteria];
-				
-				if( aInfo && bInfo ){
-					var aDisplay = aInfo.display;
-					var bDisplay = bInfo.display;
-					
-					if( aDisplay < bDisplay ){
-						return -1;
-					} else if( aDisplay > bDisplay ){
-						return 1;
-					} else {
-						// wait for next criteria
-					};
-					
-				} else if( aInfo ) {
-					// no bInfo
-					return -1;
-				} else if( bInfo ){
-					// no aInfo
-					return 1;
-				};
-			};
-			
-			return 0;
-		});
-	},
-	
-	computeBriefs: function(opts_){
-		var opts = $n2.extend({
-			onSuccess: function(){}
-		},opts_);
-		
-		var _this = this;
-		
-		this.schemaRepository.getSchemas({
-			names: this.schemaNames
-			,onSuccess: function(schemas){
-				var schemasByName = {};
-				
-				for(var i=0,e=schemas.length; i<e; ++i){
-					var schema = schemas[i];
-					var schemaName = schema.name;
-					schemasByName[schemaName] = schema;
-				};
-				
-				for(var docId in _this.docsById){
-					var doc = _this.docsById[docId];
-					var brief = _this.briefsById[docId];
-					if( !brief ){
-						var schema = schemasByName[doc.nunaliit_schema];
-						
-						if( schema ){
-							var $elem = $('<div>');
-							schema.brief(doc,$elem);
-							brief = $elem.text();
-						} else {
-							brief = doc._id;
-						};
-						
-						_this.briefsById[docId] = brief;
-					};
-				};
-				
-				opts.onSuccess();
-			}
-		});
-	},
-	
-	_select: function(docId){
-		var doc = this.docsById[docId];
-		
-		if( this.dispatchService ){
-			this.dispatchService.send(DH,{
-				type: 'userSelect'
-				,docId: docId
-				,doc: doc
-			});
-		};
-	}
-});
- 
-// --------------------------------------------------------------------------
 var ReferenceBrowserCanvas = $n2.Class({
 
 	canvasId: null,
@@ -459,6 +120,14 @@ var ReferenceBrowserCanvas = $n2.Class({
 			$elem
 				.empty()
 				.addClass('n2ReferenceBrowserCanvas');
+			
+			$('<button>')
+				.text('Export CSV')
+				.appendTo($elem)
+				.click(function(){
+					_this._exportCsv();
+					return false;
+				});
 			
 			var $table = $('<table>').appendTo($elem);
 			
@@ -770,8 +439,6 @@ var ReferenceBrowserCanvas = $n2.Class({
 	},
 	
 	_handle: function(m,addr,dispatcher){
-		var _this = this;
-		
 		if( 'documentContent' === m.type ){
 			var doc = m.doc;
 			if( doc ){
@@ -790,6 +457,77 @@ var ReferenceBrowserCanvas = $n2.Class({
 		} else if( 'documentDeleted' === m.type ){
 			var docId = m.docId;
 			this._deleteDocument(docId);
+		};
+	},
+	
+	_computeCsvContent: function(){
+		var table = [];
+		
+		// Headings
+		var headLine = [];
+		table.push(headLine);
+		for(var i=0,e=this.schemaNames.length; i<e; ++i){
+			var schemaName = this.schemaNames[i];
+			headLine.push( schemaName + '(docId)' );
+			headLine.push( schemaName + '(description)' );
+		};
+		
+		// Data
+		for(var i=0,e=this.refs.length; i<e; ++i){
+			var ref = this.refs[i];
+			
+			var line = [];
+			table.push(line);
+			for(var j=0,k=this.schemaNames.length; j<k; ++j){
+				var schemaName = this.schemaNames[j];
+				
+				var info = ref[schemaName];
+				if( info ){
+					var display = info.display;
+					var docId = info.id;
+					line.push(docId);
+					line.push(display);
+				} else {
+					line.push('');
+					line.push('');
+				};
+			};
+		};
+		
+		var csvContent = $n2.csv.ValueTableToCsvString(table);
+		
+		return csvContent;
+	},
+	
+	_exportCsv: function(){
+		var csvContent = this._computeCsvContent();
+		
+		if( typeof Blob !== 'undefined' 
+		 && typeof saveAs === 'function' ){
+			var blob = new Blob([csvContent],{type: "text/plain;charset=" + document.characterSet});
+			saveAs(blob, 'references.csv');
+			
+		} else {
+			var $dialog = $('<div>')
+				.addClass('n2canvasReferenceBrowser_exportCsv_dialog');
+			var diagId = $n2.utils.getElementIdentifier($dialog);
+			
+			$('<textarea>')
+				.addClass('n2canvasReferenceBrowser_exportCsv_text')
+				.text(csvContent)
+				.appendTo($dialog);
+			
+			$dialog.dialog({
+				autoOpen: true
+				,title: _loc('References')
+				,modal: true
+				,width: 370
+				,close: function(event, ui){
+					var diag = $('#'+diagId);
+					diag.dialog('destroy');
+					diag.remove();
+				}
+			});
 		};
 	}
 });
