@@ -44,8 +44,8 @@ function Cursor() {
 	this.x = Number.NaN;
 	this.y = Number.NaN;
 	this.down = false;
-	this.downX = Number.Nan;
-	this.downY = Number.Nan;
+	this.downX = Number.NaN;
+	this.downY = Number.NaN;
 	this.index = Number.NaN;
 	this.div = undefined;
 	this.lastSeen = Date.now();
