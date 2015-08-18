@@ -375,6 +375,13 @@ public class SchemaAttribute {
 				files.put("media", media);
 			}
 
+		} else if( "geometry".equals(type) ){
+			if( null != id ){
+				throw new Exception("'id' should not be specified for attributes of type 'geometry'");
+			}
+
+			//doc.put("nunaliit_geom", null);
+
 		} else {
 			throw new Exception("Unable to include type "+type+" in create");
 		}
@@ -489,6 +496,15 @@ public class SchemaAttribute {
 					pw.print("{{/"+schemaName+"}}");
 					printed = true;
 				}
+
+			} else if( "geometry".equals(type) ){
+				if( null != id ){
+					throw new Exception("'id' should not be specified for attributes of type 'geometry'");
+				}
+
+				pw.print("{{#nunaliit_geom}}");
+				pw.print("{{wkt}}");
+				pw.print("{{/nunaliit_geom}}");
 					
 			} else {
 				throw new Exception("Unable to include type "+type+" in brief");
@@ -766,6 +782,19 @@ public class SchemaAttribute {
 				pw.println("\t{{/:iterate}}");
 				pw.println("{{/files}}");
 				pw.println("{{/nunaliit_attachments}}");
+
+			} else if( "geometry".equals(type) ){
+				if( null != id ){
+					throw new Exception("'id' should not be specified for attributes of type 'geometry'");
+				}
+
+				pw.println("{{#nunaliit_geom}}");
+				pw.println("\t\t<div class=\"nunaliit_geom\">");
+				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t<div class=\"value\">{{wkt}}</div>");
+				pw.println("\t\t\t<div class=\"end\"></div>");
+				pw.println("\t\t</div>");
+				pw.println("{{/nunaliit_geom}}");
 							
 			} else {
 				throw new Exception("Unable to include type "+type+" in display");
@@ -953,6 +982,24 @@ public class SchemaAttribute {
 			} else if( "file".equals(type) ){
 				// nothing to do
 				
+			} else if( "geometry".equals(type) ){
+				if( null != id ){
+					throw new Exception("'id' should not be specified for attributes of type 'geometry'");
+				}
+
+				pw.println("{{#nunaliit_geom}}");
+
+				pw.println("\t<div class=\"nunaliit_geom\">");
+
+				pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t<div class=\"value\">{{#:field}}wkt,textarea{{/:field}}</div>");
+				pw.println("\t\t<div class=\"end\"></div>");
+				
+				pw.println("\t</div>");
+				
+				
+				pw.println("{{/nunaliit_geom}}");
+				
 			} else {
 				throw new Exception("Unable to include type "+type+" in form");
 			}
@@ -995,6 +1042,13 @@ public class SchemaAttribute {
 			JSONObject attrExport = new JSONObject();
 			attrExport.put("select", schemaName+"."+id+".doc");
 			attrExport.put("label", id);
+			attrExport.put("type", "text");
+			exportArr.put(attrExport);
+			
+		} else if( "geometry".equals(type) ){
+			JSONObject attrExport = new JSONObject();
+			attrExport.put("select", "nunaliit_geom.wkt");
+			attrExport.put("label", "nunaliit_geom");
 			attrExport.put("type", "text");
 			exportArr.put(attrExport);
 			
