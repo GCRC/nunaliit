@@ -537,7 +537,7 @@ public class SchemaAttribute {
 			 || "localizedtextarea".equals(type) ){
 				if( null != id ){
 					pw.println("{{#"+schemaName+"}}");
-					pw.println("\t{{#"+id+"}}");
+					pw.println("\t{{#if "+id+"}}");
 
 					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
 
@@ -549,23 +549,23 @@ public class SchemaAttribute {
 					}
 					
 					if( "string".equals(type) ){
-						pw.println("\t\t\t<div class=\"value"+fixUrlClass+"\">{{.}}</div>");
+						pw.println("\t\t\t<div class=\"value"+fixUrlClass+"\">{{"+id+"}}</div>");
 					
 					} else if( "textarea".equals(type) ){
-						pw.println("\t\t\t<div class=\"value n2s_preserveSpaces n2s_installMaxHeight"+fixUrlClass+"\" _maxheight=\"100\">{{.}}</div>");
+						pw.println("\t\t\t<div class=\"value n2s_preserveSpaces n2s_installMaxHeight"+fixUrlClass+"\" _maxheight=\"100\">{{"+id+"}}</div>");
 
 					} else if( "localized".equals(type) ){
-						pw.println("\t\t\t<div class=\"value"+fixUrlClass+"\">{{#:localize}}.{{/:localize}}</div>");
+						pw.println("\t\t\t<div class=\"value"+fixUrlClass+"\">{{#:localize}}"+id+"{{/:localize}}</div>");
 
 					} else if( "localizedtextarea".equals(type) ){
-						pw.println("\t\t\t<div class=\"value n2s_preserveSpaces n2s_installMaxHeight"+fixUrlClass+"\" _maxheight=\"100\">{{#:localize}}.{{/:localize}}</div>");
+						pw.println("\t\t\t<div class=\"value n2s_preserveSpaces n2s_installMaxHeight"+fixUrlClass+"\" _maxheight=\"100\">{{#:localize}}"+id+"{{/:localize}}</div>");
 					}
 					
 					pw.println("\t\t\t<div class=\"end\"></div>");
 					
 					pw.println("\t\t</div>");
 					
-					pw.println("\t{{/"+id+"}}");
+					pw.println("\t{{/if}}");
 					pw.println("{{/"+schemaName+"}}");
 				}
 				
@@ -684,12 +684,12 @@ public class SchemaAttribute {
 			} else if( "selection".equals(type) ){
 				if( null != id ){
 					pw.println("{{#"+schemaName+"}}");
-					pw.println("\t{{#"+id+"}}");
+					pw.println("\t{{#if "+id+"}}");
 	
 					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
 	
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-					pw.println("\t\t\t<div class=\"value n2s_select\" n2-choice=\"{{.}}\">");
+					pw.println("\t\t\t<div class=\"value n2s_select\" n2-choice=\"{{"+id+"}}\">");
 					
 					for(SelectionOption option : options){
 						String value = option.getValue();
@@ -709,7 +709,7 @@ public class SchemaAttribute {
 					pw.println("\t\t</div>");
 					
 					
-					pw.println("\t{{/"+id+"}}");
+					pw.println("\t{{/if}}");
 					pw.println("{{/"+schemaName+"}}");
 				}
 
