@@ -25,7 +25,7 @@ var dotSize = 16.0;
 
 function normalize(c, min, max) {
 	if (isNaN(c)) {
-	    return Number.NaN;
+		return Number.NaN;
 	}
 
 	return ((c - 0.5) / (max - min)) + 0.5;
@@ -70,7 +70,7 @@ var tangibles = new Object();
  */
 function dispatchMouseEvent(eventType, x, y) {
 	if (isNaN(x) || isNaN(y)) {
-	    return;
+		return;
 	}
 
 	// Convert table coordinates to browser coordinates
@@ -80,7 +80,7 @@ function dispatchMouseEvent(eventType, x, y) {
 	// Get the topmost DOM element at this position
 	var el = document.elementFromPoint(winX, winY);
 	if (el == null) {
-	    return;
+		return;
 	}
 
 	//console.log(eventType + " at " + winX + "," + winY + ": " + el + " id: " + el.id);
@@ -119,7 +119,7 @@ function updateAlive(dict, alive) {
 		var found = false;
 		for (var i = alive.length - 1; i >= 0; i--) {
 			if (inst == alive[i]) {
-	            dict[inst].lastSeen = Date.now();
+				dict[inst].lastSeen = Date.now();
 				found = true;
 				break;
 			}
@@ -192,7 +192,7 @@ function createDot(x, y, content) {
 /** Update the visible calibration point for a cursor. */
 function showFinger(cursor) {
 	if (cursor.div == undefined) {
-	    cursor.div = createDot(cursor.x, cursor.y, cursor.index);
+		cursor.div = createDot(cursor.x, cursor.y, cursor.index);
 	}
 
 	cursor.div.style.left = ((cursor.x * window.innerWidth) - 10) + "px";
