@@ -342,6 +342,10 @@ function Configure(options_){
 			dispatchService: configuration.directory.dispatchService
 		});
 		
+	 	configuration.directory.displayService = new $n2.display.Service({
+			dispatchService: configuration.directory.dispatchService
+		});
+		
 	 	configuration.directory.widgetService = new $n2.widgetBasic.Service({
 			dispatchService: configuration.directory.dispatchService
 		});

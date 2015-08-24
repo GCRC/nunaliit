@@ -484,7 +484,6 @@ var ModuleDisplay = $n2.Class({
 			var mapInfo = _this.module.getMapInfo();
 			var canvasInfo = _this.module.getCanvasInfo();
 			var displayInfo = _this.module.getDisplayInfo();
-			var editInfo = _this.module.getEditInfo();
 			var searchInfo = _this.module.getSearchInfo();
 			var modelInfos = _this.module.getModelInfos();
 			
@@ -618,72 +617,53 @@ var ModuleDisplay = $n2.Class({
 				_this._installHelpButton();
 			};
 			
-			var displayFormat = null;
-			if( displayInfo && displayInfo.type ){
-				displayFormat = displayInfo.type;
-			};
-			if( !displayFormat && customService ){
-				displayFormat = customService.getOption('displayFormat',displayFormat);
-			};
-			if( !displayFormat ){
-				displayFormat = 'classic';
-			};
-			
-			if( displayFormat === 'tiled' ) {
-				$('body').addClass('n2_display_format_tiled');
-				_this.displayControl = new $n2.couchDisplayTiles.TiledDisplay({
-					documentSource: documentSource
-					,displayPanelName: _this.sidePanelName
-					,showService: config.directory.showService
-					,editor: config.couchEditor
-					,uploadService: config.directory.uploadService
-					,authService: config.directory.authService
-					,requestService: config.directory.requestService
-					,schemaRepository: config.directory.schemaRepository
-					,customService: config.directory.customService
-					,dispatchService: config.directory.dispatchService
-					,createDocProcess: config.directory.createDocProcess
-				});
-				
-			} else {
-				if( 'classic' !== displayFormat ){
-					$n2.log('Unknown display format: '+displayFormat+' Reverting to classic display.');
+			// Display 
+			if( displayInfo ){
+				var displayFormat = null;
+				if( displayInfo.type ){
+					displayFormat = displayInfo.type;
+				};
+				if( !displayFormat && customService ){
+					displayFormat = customService.getOption('displayFormat',displayFormat);
+				};
+				if( !displayFormat ){
+					displayFormat = 'classic';
 				};
 				
-				// Classic Display Logic 
-				var displayOptions = {
-					documentSource: documentSource
-					,displayPanelName: _this.sidePanelName
-					,showService: config.directory.showService
-					,editor: config.couchEditor
-					,uploadService: config.directory.uploadService
-					,serviceDirectory: config.directory
-					,createDocProcess: config.directory.createDocProcess
+				var displayHandlerAvailable = false;
+				var msg = {
+					type: 'displayIsTypeAvailable'
+					,displayType: displayFormat
+					,isAvailable: false
+					,displayOptions: displayInfo
 				};
-				if( displayInfo && displayInfo.displayOnlyRelatedSchemas ){
-					displayOptions.displayOnlyRelatedSchemas 
-						= displayInfo.displayOnlyRelatedSchemas;
+				_this._sendSynchronousMessage(msg);
+				if( msg.isAvailable ){
+					displayHandlerAvailable = true;
 				};
-				if( displayInfo && displayInfo.displayBriefInRelatedInfo ){
-					displayOptions.displayBriefInRelatedInfo
-						= displayInfo.displayBriefInRelatedInfo;
+				
+				if( displayHandlerAvailable ){
+					_this._sendDispatchMessage({
+						type: 'displayRender'
+						,displayType: displayFormat
+						,displayOptions: displayInfo
+						,displayId: _this.sidePanelName
+						,config: config
+						,moduleDisplay: _this
+						,onSuccess: function(){
+							drawCanvas(searchInfo, mapInfo, canvasInfo);
+						}
+						,onError: opts.onError
+					});
+				} else {
+					drawCanvas(searchInfo, mapInfo, canvasInfo);
 				};
-				_this.displayControl = new $n2.couchDisplay.Display(displayOptions);
-				var defaultDisplaySchemaName = 'object';
-				if( displayInfo && displayInfo.defaultSchemaName ){
-					defaultDisplaySchemaName = displayInfo.defaultSchemaName;
-				};
-				config.directory.schemaRepository.getSchema({
-					name: defaultDisplaySchemaName
-					,onSuccess: function(schema){
-						if( _this.displayControl.setSchema ) {
-							_this.displayControl.setSchema(schema);
-						};
-					}
-				});
 			};
+		};
 			
-			
+		function drawCanvas(searchInfo, mapInfo, canvasInfo) {
+			var editInfo = _this.module.getEditInfo();
+
 			// Edit logic
 			config.couchEditor.setPanelName(_this.sidePanelName);
 			var defaultEditSchemaName = 'object';

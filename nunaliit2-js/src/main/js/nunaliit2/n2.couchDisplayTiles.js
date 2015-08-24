@@ -31,6 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 $Id: n2.couchDisplay.js 8441 2012-08-15 17:48:33Z jpfiset $
 */
 ;(function($,$n2){
+"use strict";
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
@@ -118,12 +119,6 @@ var TiledDisplay = $n2.Class({
 	
 	showService: null,
 	
-	editor: null,
-	
-	uploadService: null,
-	
-	authService: null,
-	
 	requestService: null,
 	
 	schemaRepository: null,
@@ -144,9 +139,7 @@ var TiledDisplay = $n2.Class({
 	
 	grid: null,
 	
-	createRelatedDocProcess: null,
-	
-	requestService: null,
+	createDocProcess: null,
 	
 	defaultSchema: null,
 	
@@ -171,9 +164,6 @@ var TiledDisplay = $n2.Class({
 			documentSource: null
 			,displayPanelName: null
 			,showService: null
-			,editor: null
-			,uploadService: null
-			,authService: null
 			,requestService: null
 			,schemaRepository: null
 			,customService: null
@@ -236,14 +226,11 @@ var TiledDisplay = $n2.Class({
 		this.documentSource = opts.documentSource;
 		this.displayPanelName = opts.displayPanelName;
 		this.showService = opts.showService;
-		this.editor = opts.editor;
-		this.uploadService = opts.uploadService;
-		this.authService = opts.authService;
 		this.requestService = opts.requestService;
 		this.schemaRepository = opts.schemaRepository;
 		this.customService = opts.customService;
 		this.dispatchService = opts.dispatchService;
-		this.createRelatedDocProcess = opts.createDocProcess;
+		this.createDocProcess = opts.createDocProcess;
 		
 		// Initialize display
 		this._getDisplayDiv();
@@ -410,6 +397,10 @@ var TiledDisplay = $n2.Class({
 				_this._performIntervalTask();
 			};
 		}, 500);
+
+		$('body').addClass('n2_display_format_tiled');
+		
+		$n2.log('TiledDisplay',this);
 	},
 
 	// external
@@ -1186,7 +1177,7 @@ var TiledDisplay = $n2.Class({
 	},
 	
 	_addRelatedDocument: function(doc, schemaName){
-		this.createRelatedDocProcess.createDocumentFromSchemaNames({
+		this.createDocProcess.createDocumentFromSchemaNames({
 			schemaNames: [schemaName]
 			,relatedDoc: doc
 			,onSuccess: function(docId){
@@ -1786,12 +1777,45 @@ var ReferenceRelatedDocumentDiscovery = $n2.Class({
 	}
 });
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//===================================================================================
+function HandleDisplayAvailableRequest(m){
+	if( m.displayType === 'tiled' ){
+		m.isAvailable = true;
+	};
+};
+
+function HandleDisplayRenderRequest(m){
+	if( m.displayType === 'tiled' ){
+		var options = {};
+		if( m.displayOptions ){
+			for(var key in m.displayOptions){
+				options[key] = m.displayOptions[key];
+			};
+		};
+		
+		options.documentSource = m.config.documentSource;
+		options.displayPanelName = m.displayId;
+		options.showService = m.config.directory.showService;
+		options.createDocProcess = m.config.directory.createDocProcess;
+		options.requestService = m.config.directory.requestService;
+		options.schemaRepository = m.config.directory.schemaRepository;
+		options.customService = m.config.directory.customService;
+		options.dispatchService = m.config.directory.dispatchService;
+		
+		new TiledDisplay(options);
+
+		m.onSuccess();
+	};
+};
+
+//===================================================================================
 
 $n2.couchDisplayTiles = {
 	TiledDisplay: TiledDisplay
 	,SchemaFilterFactory: SchemaFilterFactory
 	,ReferenceRelatedDocumentDiscovery: ReferenceRelatedDocumentDiscovery
+	,HandleDisplayAvailableRequest: HandleDisplayAvailableRequest
+	,HandleDisplayRenderRequest: HandleDisplayRenderRequest
 };
 
 })(jQuery,nunaliit2);

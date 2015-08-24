@@ -223,6 +223,10 @@ var Display = $n2.Class({
 					= new LegacyDisplayRelatedFunctionAdapter(DisplayLinkedInfo);
 			};
 		};
+
+		$('body').addClass('n2_display_format_classic');
+		
+		$n2.log('ClassicDisplay',this);
 	}
 
 	// external
@@ -1901,12 +1905,56 @@ var TreeDocumentViewer = $n2.Class({
 });
 
 //===================================================================================
+function HandleDisplayAvailableRequest(m){
+	if( m.displayType === 'classic' ){
+		m.isAvailable = true;
+	};
+};
+
+function HandleDisplayRenderRequest(m){
+	if( m.displayType === 'classic' ){
+		var options = {};
+		if( m.displayOptions ){
+			for(var key in m.displayOptions){
+				options[key] = m.displayOptions[key];
+			};
+		};
+		
+		options.documentSource = m.config.documentSource;
+		options.displayPanelName = m.displayId;
+		options.showService = m.config.directory.showService;
+		options.uploadService = m.config.directory.uploadService;
+		options.createDocProcess = m.config.directory.createDocProcess;
+		options.serviceDirectory = m.config.directory;
+		
+		var displayControl = new Display(options);
+
+		var defaultDisplaySchemaName = 'object';
+		if( m.displayOptions && m.displayOptions.defaultSchemaName ){
+			defaultDisplaySchemaName = m.displayOptions.defaultSchemaName;
+		};
+		m.config.directory.schemaRepository.getSchema({
+			name: defaultDisplaySchemaName
+			,onSuccess: function(schema){
+				if( displayControl.setSchema ) {
+					displayControl.setSchema(schema);
+				};
+			}
+		});
+
+		m.onSuccess();
+	};
+};
+
+//===================================================================================
 
 // Exports
 $n2.couchDisplay = {
 	Display: Display,
 	CommentRelatedInfo: CommentRelatedInfo,
 	TreeDocumentViewer: TreeDocumentViewer
+	,HandleDisplayAvailableRequest: HandleDisplayAvailableRequest
+	,HandleDisplayRenderRequest: HandleDisplayRenderRequest
 //	DisplayRelatedInfo: DisplayRelatedInfo,
 //	DisplayLinkedInfo: DisplayLinkedInfo
 	
