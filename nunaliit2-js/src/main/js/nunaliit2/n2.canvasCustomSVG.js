@@ -66,6 +66,7 @@ var CustomSvgCanvas = $n2.Class({
 			,svgAttachment: null
 			,cssAttachment: null
 			,elemIdToDocId: null
+			,unselectIds: null
 			,onSuccess: function(){}
 			,onError: function(err){}
 		},opts_);
@@ -93,6 +94,20 @@ var CustomSvgCanvas = $n2.Class({
 				var node = {
 					n2_id: docId
 					,nodeId: elemId
+				};
+				
+				this.nodesById[elemId] = node;
+			};
+		};
+		
+		// Add information about "unselect"
+		if( $n2.isArray(opts.unselectIds) ){
+			for(var i=0,e=opts.unselectIds.length; i<e; ++i){
+				var elemId = opts.unselectIds[i];
+				
+				var node = {
+					nodeId: elemId
+					,unselect: true
 				};
 				
 				this.nodesById[elemId] = node;
@@ -231,20 +246,27 @@ var CustomSvgCanvas = $n2.Class({
  		// were specified using elemIdToDocId option
  		for(var nodeId in this.nodesById){
  			var node = this.nodesById[nodeId];
- 			var docId = node.n2_id;
  			
- 			$d.select('#'+nodeId)
- 				.attr('n2-doc-id', docId)
- 				.on('mouseover',function(d,i){
- 					_this._mouseOver($d.select(this),$d.event);
- 				})
-				.on('mouseout',function(d,i){
- 					_this._mouseOut($d.select(this),$d.event);
- 				})
-				.on('click',function(d,i){
- 					_this._mouseClick($d.select(this),$d.event);
- 				})
- 				;
+ 			if( node.n2_id ){
+ 	 			var docId = node.n2_id;
+ 	 			$d.select('#'+nodeId)
+	 				.attr('n2-doc-id', docId)
+	 				.on('mouseover',function(d,i){
+	 					_this._mouseOver($d.select(this),$d.event);
+	 				})
+					.on('mouseout',function(d,i){
+	 					_this._mouseOut($d.select(this),$d.event);
+	 				})
+					.on('click',function(d,i){
+	 					_this._mouseClick($d.select(this),$d.event);
+	 				})
+	 				;
+ 			} else if( node.unselect ) {
+ 	 			$d.select('#'+nodeId)
+					.on('click',function(d,i){
+	 					_this._mouseUnselect($d.select(this),$d.event);
+	 				});
+ 			};
  		};
 
  		
