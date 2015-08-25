@@ -573,13 +573,16 @@ window.onkeydown = function (e) {
 		var head = document.getElementsByClassName("nunaliit_header")[0];
 		var map = document.getElementById("nunaliit2_uniqueId_65");
 		var zoom = document.getElementsByClassName("olControlZoom")[0];
-		var pane = document.getElementById("nunaliit2_uniqueId_66");
+		var pane = document.getElementsByClassName("n2_content_text")[0];
+		var but = document.getElementsByClassName("n2_content_map_interaction")[0];
 		var text = document.getElementById("nunaliit2_uniqueId_67");
 		var foot = document.getElementsByClassName("nunaliit_footer")[0];
-		if (barsVisible) {
+		if (!barsVisible) {
 			head.style.display = "none";
 			map.style.right = "0";
 			zoom.style.top = "45%";
+			but.style.top = "45%";
+			but.style.right = "20px";
 			pane.style.display = "none";
 			text.style.display = "none";
 			foot.style.display = "none";
@@ -589,6 +592,8 @@ window.onkeydown = function (e) {
 			head.style.display = "block";
 			map.style.right = "450px";
 			zoom.style.top = "35px";
+			but.style.top = "33px";
+			but.style.right = "468px";
 			pane.style.display = "block";
 			text.style.display = "block";
 			foot.style.display = "block";
