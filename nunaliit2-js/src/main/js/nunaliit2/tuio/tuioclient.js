@@ -10,8 +10,11 @@ var barsVisible = true;
 // Time in ms a cursor must be gone to be considered up
 var clickDelay = 500;
 
-// Distance a cursor must remain within to count as a click
+// Distance a cursor must remain within to count as a click or press
 var clickDistance = 0.005;
+
+// Time in ms a cursor must be down and still for a long press
+var pressDelay = 1000;
 
 // Maximum distance to consider cursors to be on the same hand
 var handSpan = 0.25;
@@ -19,8 +22,14 @@ var handSpan = 0.25;
 // Next hand instance ID counter
 var nextHandIndex = 1;
 
-// Cursor key currently acting as the mouse, if any
-var mouseCursor = undefined;
+// Key for hand currently acting as the mouse, if any
+var mouseHand = undefined;
+
+// Key for cursor currently doing an exclusive long press, if any
+var pressCursor = undefined;
+
+// Number of cursors currently down
+var downCursors = 0;
 
 // Calibration configuration
 var minX = 0.118;
@@ -102,6 +111,7 @@ function Cursor() {
 	this.x = Number.NaN;
 	this.y = Number.NaN;
 	this.down = false;
+	this.downTime = Date.now();
 	this.downX = Number.NaN;
 	this.downY = Number.NaN;
 	this.index = Number.NaN;
@@ -138,7 +148,6 @@ function Hand(x, y) {
 
 	/** Update the hand position based on cursor positions. */
 	this.updatePosition = function() {
-		this.positionDirty = false;
 		if (this.cursors.length < 0) {
 			return;
 		}
@@ -394,41 +403,74 @@ function handsAreSane(x, y) {
 
 /** Called on the initial position update after a cursor is down. */
 function onCursorDown(inst) {
-	// if (mouseCursor == undefined) {
-	// 	dispatchMouseEvent('mousedown', newX, newY);
-	// 	mouseCursor = inst;
-	// }
+	if (downCursors == 0 && pressCursor == undefined) {
+		// First cursor down, start potential long press
+		pressCursor = inst;
+	} else if (downCursors > 1) {
+		// Multiple cursors down, terminate pending long press
+		pressCursor = undefined;
+	}
+
+	++downCursors;
 }
 
+/** Called when a down cursor is moved. */
 function onCursorMove(inst) {
-	// if (inst == mouseCursor) {
-	// 	dispatchMouseEvent('mousemove', newX, newY);
-	// }
+	var cursor = cursors[inst];
+	if (inst == pressCursor) {
+		var d = distance(cursor.x, cursor.y, cursor.downX, cursor.downY);
+		var elapsed = Date.now() - cursor.downTime;
+		if (d < clickDistance && elapsed > pressDelay) {
+			console.log("Long press!");
+			pressCursor = undefined;
+		}
+	}
 }
 
+/** Called when a cursor is released. */
 function onCursorUp(inst) {
-	// if (inst == mouseCursor) {
-	// 	// This cursor is currently emulating the mouse
-	// 	// Dispatch mouseup event
-	// 	dispatchMouseEvent('mouseup', dict[inst].x, dict[inst].y);
+	var cursor = cursors[inst];
+	if (inst == pressCursor) {
+		var d = distance(cursor.x, cursor.y, cursor.downX, cursor.downY);
+		var elapsed = Date.now() - cursor.downTime;
+		if (d < clickDistance && elapsed < clickDelay) {
+			console.log("Click!");
+			dispatchMouseEvent('click', cursor.x, cursor.y);
+		}
+		pressCursor = undefined;
+	}
 
-	// 	// If the cursor is unmoved since mousedown, this is a click
-	// 	var d = distance(dict[inst].x, dict[inst].y,
-	// 					 dict[inst].downX, dict[inst].downY);
-	// 	if (alive.length == 1 && d < clickDistance) {
-	// 		dispatchMouseEvent('click', dict[inst].x, dict[inst].y);
-	// 	}
-
-	// 	mouseCursor = undefined;
-	// }
+	--downCursors;
 }
 
+/** Called on the initial position update after a hand is down. */
 function onHandDown(inst) {
+	var hand = hands[inst];
+
+	if (mouseHand == undefined) {
+		/* No hand is down yet, start a mouse motion for map dragging. */
+		dispatchMouseEvent('mousedown', hand.x, hand.y);
+		mouseHand = inst;
+	} else {
+		/* A hand was acting as the mouse cursor for map dragging, but now we
+		   have several hands.  Stop drag since this no longer makes sense. */
+		var mouseHand = hands[mouseHand];
+		dispatchMouseEvent('mouseup', mouseHand.x, mouseHand.y);
+		mouseHand = undefined;
+	}
 }
 
+/** Called when a down hand is moved. */
 function onHandMove(inst) {
+	var hand = hands[inst];
+
+	if (inst == mouseHand) {
+		// Hand is acting as mouse cursor, dispatch mouse move
+		dispatchMouseEvent('mousemove', hand.x, hand.y);
+	}
 }
 
+/** Called when a cursor is released. */
 function onHandUp(inst) {
 	var hand = hands[inst];
 
@@ -437,13 +479,13 @@ function onHandUp(inst) {
 		document.body.removeChild(hand.div);
 	}
 
-	if (mouseCursor == hand.index) {
+	if (inst == mouseHand) {
 		// Hand is acting as mouse cursor, dispatch mouse up
 		dispatchMouseEvent('mouseup', hand.x, hand.y);
-		mouseCursor = undefined;
+		mouseHand = undefined;
 	}
 
-	delete hands[hand.index];
+	delete hands[inst];
 }
 
 /** Associate a cursor with a hand, creating a new hand if necessary. */
@@ -490,6 +532,7 @@ function updateCursors(set) {
 		if (!cursors[inst].down) {
 			// Initial cursor position update (cursor down)
 			cursors[inst].down = true;
+			cursors[inst].downTime = Date.now();
 			cursors[inst].downX = newX;
 			cursors[inst].downY = newY;
 
@@ -521,9 +564,7 @@ function updateCursors(set) {
 		var orphans = hand.trimCursors();
 		if (orphans.length > 0) {
 			for (var i = 0; i < orphans.length; ++i) {
-				var orphan = orphans[i];
-				console.log(orphan);
-				addCursorToHand(orphan);
+				addCursorToHand(orphans[i]);
 			}
 			cursorsMoved = true;
 		}
@@ -534,6 +575,7 @@ function updateCursors(set) {
 		var hand = hands[inst];
 		if (hand.positionDirty) {
 			hand.updatePosition();
+			onHandMove(hand.index);
 		}
 
 		hand.show();
