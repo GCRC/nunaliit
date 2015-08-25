@@ -628,44 +628,14 @@ var TiledDisplay = $n2.Class({
 				};
 				
 				if( showAddRelatedButton ) {
-		 			var selectId = $n2.getUniqueId();
-					var $addRelatedButton = $('<select>')
-		 				.addClass('n2DisplayTiled_current_button n2DisplayTiled_current_button_add_related_item')
-						.attr('id',selectId)
+					var $placeHolder = $('<span>')
 						.appendTo($btnDiv);
-					$('<option>')
-						.text( _loc('Add Related Item') )
-						.val('')
-						.appendTo($addRelatedButton);
-					for(var i=0,e=schema.relatedSchemaNames.length; i<e; ++i){
-						var schemaName = schema.relatedSchemaNames[i];
-						$('<option>')
-							.text(schemaName)
-							.val(schemaName)
-							.appendTo($addRelatedButton);
-						
-						if( this.schemaRepository ){
-							this.schemaRepository.getSchema({
-								name: schemaName
-								,onSuccess: function(schema){
-									$('#'+selectId).find('option').each(function(){
-										var $option = $(this);
-										if( $option.val() === schema.name ){
-											$option.text(schema.getLabel());
-										};
-									});
-								}
-							});
-						};
-					};
-					
-					$addRelatedButton.change(function(){
-						var val = $(this).val();
-						$(this).val('');
-						if( val ) {
-							_this._addRelatedDocument(doc, val);
-						};
-						return false;
+					this.createDocProcess.insertAddRelatedSelection({
+						placeHolderElem: $placeHolder
+						,doc: doc
+						,onElementCreated: function($elem){
+							$elem.addClass('n2DisplayTiled_current_button n2DisplayTiled_current_button_add_related_item');
+						}
 					});
 				}; // show button
 			};
@@ -1174,15 +1144,6 @@ var TiledDisplay = $n2.Class({
 				};
 			};
 		};
-	},
-	
-	_addRelatedDocument: function(doc, schemaName){
-		this.createDocProcess.createDocumentFromSchemaNames({
-			schemaNames: [schemaName]
-			,relatedDoc: doc
-			,onSuccess: function(docId){
-			}
-		});
 	},
 	
 	/*

@@ -28,9 +28,9 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
 
-$Id: n2.couchRelatedDoc.js 8484 2012-09-05 19:38:37Z jpfiset $
 */
 ;(function($,$n2){
+"use strict";
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
@@ -593,6 +593,89 @@ var CreateRelatedDocProcess = $n2.Class({
 			,onError: opt.onError
 			,onCancel: opt.onCancel
 		});
+	},
+	
+	insertAddRelatedSelection: function(opts_){
+		var opts = $n2.extend({
+			placeHolderElem: null
+			,doc: null
+			,onElementCreated: function($elem){}
+			,onRelatedDocumentCreated: function(docId){}
+		},opts_);
+		
+		var _this = this;
+		
+		var $placeHolder = $(opts.placeHolderElem);
+		var doc = opts.doc;
+		
+		var docSchemaName = doc.nunaliit_schema;
+		if( !docSchemaName ){
+			noButton();
+			return;
+		};
+		
+		this.schemaRepository.getSchema({
+			name: docSchemaName
+			,onSuccess: function(docSchema){
+				// Check if there are any related document schemas
+				if( docSchema.relatedSchemaNames 
+				 && docSchema.relatedSchemaNames.length > 0 ){
+					_this.schemaRepository.getSchemas({
+						names: docSchema.relatedSchemaNames
+						,onSuccess: loadedRelatedSchemas
+						,onError: noButton
+					});
+				} else {
+					noButton();
+				};
+			}
+			,onError: noButton
+		});
+		
+		function loadedRelatedSchemas(relatedSchemas){
+			if( relatedSchemas.length < 1 ){
+				noButton();
+				return;
+			};
+			
+			var $select = $('<select>');
+
+			$('<option>')
+				.text( _loc('Add Related Item') )
+				.val('')
+				.appendTo($select);
+			
+			for(var i=0,e=relatedSchemas.length; i<e; ++i){
+				var relatedSchema = relatedSchemas[i];
+				
+				$('<option>')
+					.text( relatedSchema.getLabel() )
+					.val( relatedSchema.name )
+					.appendTo($select);
+			};
+			
+			$select.insertBefore($placeHolder)
+				.change(function(){
+					var val = $(this).val();
+					$(this).val('');
+					if( val && val.length > 0 ) {
+						_this.createDocumentFromSchemaNames({
+							schemaNames: [val]
+							,relatedDoc: doc
+							,onSuccess: opts.onRelatedDocumentCreated
+						});
+					};
+					return false;
+				});
+			
+			$placeHolder.remove();
+			
+			opts.onElementCreated($select);
+		};
+		
+		function noButton(){
+			$placeHolder.remove();
+		};
 	},
 	
 	_dispatch: function(msg){
