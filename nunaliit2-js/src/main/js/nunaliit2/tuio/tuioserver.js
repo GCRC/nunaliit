@@ -31,6 +31,7 @@ function TangibleUpdate() {
 udpPort.on("bundle", function (oscBundle) {
     var curUpdate = new CursorUpdate();
     var tanUpdate = new TangibleUpdate();
+    var redundant = false;
 
     // Process each message in the bundle to build updates
     oscBundle.packets.map(function(p) {
@@ -47,6 +48,11 @@ udpPort.on("bundle", function (oscBundle) {
             	var instance = p.args[1];
             	var coords = [p.args[2], p.args[3]];
                 curUpdate.set[instance] = coords;
+            } else if (p.args[0] == 'fseq') {
+                var seq = p.args[1];
+                if (seq == -1) {
+                    redundant = true;
+                }
             }
         } else if (p.address == '/tuio/2Dobj') {
             // Tangible update
@@ -61,14 +67,21 @@ udpPort.on("bundle", function (oscBundle) {
             	var instance = p.args[1];
             	var coords = [p.args[2], p.args[3], p.args[4], p.args[5]];
                 tanUpdate.set[instance] = coords;
+            } else if (p.args[0] == 'fseq') {
+                var seq = p.args[1];
+                if (seq == -1) {
+                    redundant = true;
+                }
             }
         }
 
     });
 
     // Send accumulated cursor and tangible updates
-    io.emit('cursor update', curUpdate);
-    io.emit('tangibles update', tanUpdate);
+    if (!redundant) {
+        io.emit('cursor update', curUpdate);
+        io.emit('tangibles update', tanUpdate);
+    }
 });
 
 // Open the UDP socket to listen for OSC
