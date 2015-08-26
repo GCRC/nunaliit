@@ -32,31 +32,11 @@ var pressCursor = undefined;
 var downCursors = 0;
 
 // Calibration configuration
-var minX = 0.118;
-var minY = 0.00;
-var maxX = 0.850;
-var maxY = 1.0;
 var dotSize = 16.0;
 
 function Point(x, y) {
 	this.x = x;
 	this.y = y;
-}
-
-function normalize(c, min, max) {
-	if (isNaN(c)) {
-		return Number.NaN;
-	}
-
-	return ((c - 0.5) / (max - min)) + 0.5;
-}
-
-function normalizeX(x) {
-	return normalize(x, minX, maxX);
-}
-
-function normalizeY(y) {
-	return normalize(y, minY, maxY);
 }
 
 /** Return the absolute distance between two points. */
@@ -519,8 +499,8 @@ function updateCursors(set) {
 			continue; // Unknown cursor ID
 		}
 
-		var newX = normalizeX(set[inst][0]);
-		var newY = normalizeY(set[inst][1]);
+		var newX = set[inst][0];
+		var newY = set[inst][1];
 		if (isNaN(newX) || isNaN(newY)) {
 			continue;
 		}
@@ -590,8 +570,8 @@ function updateTangibles(set) {
 
 		if (set[inst] != undefined && tangibles[inst] != undefined) {
 			tangibles[inst]['id'] = set[inst][0];
-			tangibles[inst]['x'] = normalizeX(set[inst][1]);
-			tangibles[inst]['y'] = normalizeY(set[inst][2]);
+			tangibles[inst]['x'] = set[inst][1];
+			tangibles[inst]['y'] = set[inst][2];
 			tangibles[inst]['angle'] = set[inst][3];
 		}
 	}
