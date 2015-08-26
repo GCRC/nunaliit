@@ -439,8 +439,8 @@ function onHandDown(inst) {
 	} else {
 		/* A hand was acting as the mouse cursor for map dragging, but now we
 		   have several hands.  Stop drag since this no longer makes sense. */
-		var mouseHand = hands[mouseHand];
-		dispatchMouseEvent('mouseup', mouseHand.x, mouseHand.y);
+		var oldMouseHand = hands[mouseHand];
+		dispatchMouseEvent('mouseup', oldMouseHand.x, oldMouseHand.y);
 		mouseHand = undefined;
 	}
 }
