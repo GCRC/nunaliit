@@ -31,7 +31,8 @@ var pressCursor = undefined;
 // Number of cursors currently down
 var downCursors = 0;
 
-// Calibration configuration
+// Visual finger and hand feedback
+var showDots = false;
 var dotSize = 16.0;
 
 function Point(x, y) {
@@ -99,7 +100,9 @@ function Cursor() {
 	this.lastSeen = Date.now();
 	this.hand = undefined;
 	this.show = function() {
-		if (this.div == undefined) {
+		if (!showDots) {
+			return;
+		} else if (this.div == undefined) {
 			this.div = createDot(this.x, this.y, this.index);
 		}
 
@@ -158,7 +161,9 @@ function Hand(x, y) {
 
 	/** Display a circle representing this hand for feedback. */
 	this.show = function() {
-		if (this.div == undefined) {
+		if (!showDots) {
+			return;
+		} else if (this.div == undefined) {
 			this.div = createDot(this.x, this.y, "H" + this.index);
 		}
 
@@ -623,5 +628,8 @@ window.onkeydown = function (e) {
 			content.style.bottom = "17px";
 		}
 		barsVisible = !barsVisible;
+	} else if (code == 70) {
+		// f pressed, toggle visual feedback
+		showDots = !showDots;
 	}
 };
