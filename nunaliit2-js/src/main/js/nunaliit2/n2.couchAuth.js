@@ -281,6 +281,7 @@ var AuthService = $n2.Class({
 			$body.addClass('nunaliit_logged_in');
 		} else {
 			$body.removeClass('nunaliit_logged_in');
+			$body.removeClass('nunaliit_user_advanced');
 			$body.addClass('nunaliit_logged_out');
 		};
 		if( isAdmin ) {
