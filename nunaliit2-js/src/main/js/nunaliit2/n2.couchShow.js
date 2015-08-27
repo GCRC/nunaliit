@@ -282,6 +282,13 @@ var DomStyler = $n2.Class({
 			_this._custom($jq, contextDoc);
 			$jq.removeClass('n2s_custom').addClass('n2s_customed');
 		});
+
+		// User Events
+		$set.filter('.n2s_userEvents').each(function(){
+			var $jq = $(this);
+			_this._userEvents($jq, contextDoc);
+			$jq.removeClass('n2s_userEvents').addClass('n2s_userEvents_installed');
+		});
 	},
 	
 	_updatedDocument: function(doc){
@@ -303,12 +310,18 @@ var DomStyler = $n2.Class({
 				
 				if( $jq.hasClass('n2s_insertedMediaView') ){
 					_this._insertMediaView(doc, $jq);
-
-				} else if( $jq.hasClass('n2s_insertedFirstThumbnail') ){
+				};
+				
+				if( $jq.hasClass('n2s_insertedFirstThumbnail') ){
 					_this._insertFirstThumbnail(doc, $jq);
-
-				} else if( $jq.hasClass('n2s_customed') ){
+				};
+				
+				if( $jq.hasClass('n2s_customed') ){
 					_this._custom($jq, doc);
+				};
+				
+				if( $jq.hasClass('n2s_userEvents_installed') ){
+					_this._userEvents($jq, doc);
 				};
 			});
 		};
@@ -1097,6 +1110,80 @@ var DomStyler = $n2.Class({
 		};
 	},
 	
+	_userEvents: function($elem, doc){
+		var docId = this._getDocumentIdentifier(doc, $elem);
+		
+		var disableClick = false;
+		var disableClickAttr = $elem.attr('nunaliit-disable-click');
+		if( 'true' == disableClickAttr ){
+			disableClick = true;
+		};
+		
+		var disableHover = false;
+		var disableHoverAttr = $elem.attr('nunaliit-disable-hover');
+		if( 'true' == disableHoverAttr ){
+			disableHover = true;
+		};
+		
+		if( docId ){
+			// We have a document identifier
+			var eventClass = 'n2s_userEvents_doc_' + $n2.utils.stringToHtmlId(docId);
+			$elem.addClass(eventClass);
+
+			// Get current intent from user intent service
+			var dispatchService = this.showService.dispatchService;
+			if( dispatchService ) {
+				// Update classes
+				var msg = {
+					type:'userIntentGetCurrent'
+					,intentMap: null
+				};
+				dispatchService.synchronousCall(DH, msg);
+				if( msg.intentMap ){
+					// Is there a state for this node?
+					var docState = msg.intentMap[docId];
+					if( docState ){
+						if( docState.n2_selected ){
+							$elem.addClass('nunaliit_selected');
+						};
+						if( docState.n2_hovered ){
+							$elem.addClass('nunaliit_hovered');
+						};
+						if( docState.n2_find ){
+							$elem.addClass('nunaliit_found');
+						};
+					};
+				};
+				
+				// Install events
+				if( !disableClick ){
+					$elem.click(function(){
+						dispatchService.send(DH,{
+							type:'userSelect'
+							,docId: docId
+						});
+						return false;
+					});
+				};
+
+				if( !disableHover ){
+					$elem.mouseover(function(e){
+	 		 			dispatchService.send(DH,{
+	 		 				type: 'userFocusOn'
+	 		 				,docId: docId
+	 		 			});
+	 				})
+					.mouseout(function(e){
+	 		 			dispatchService.send(DH,{
+	 		 				type: 'userFocusOff'
+	 		 				,docId: docId
+	 		 			});
+	 				});
+				};
+			};
+		};
+	},
+	
 	_getDocumentIdentifier: function(doc, $elem){
 		var docId = $elem.attr('nunaliit-document');
 
@@ -1249,6 +1336,7 @@ var Show = $n2.Class({
 			dispatchService.register(DH, 'start', f);
 			dispatchService.register(DH, 'documentListResults', f);
 			dispatchService.register(DH, 'documentContent', f);
+			dispatchService.register(DH, 'userIntentChanged', f);
 		};
 	},
 
@@ -1330,6 +1418,26 @@ var Show = $n2.Class({
 		$elem.text(layerIdentifier);
 
 		this._requestDocument(layerIdentifier); // fetch document
+	},
+	
+	installUserEvents: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,elem: null
+			,disableClick: false
+			,disableHover: false
+		},opts_);
+		
+		var $elem = $(opts.elem);
+		
+		if( opts.disableClick ){
+			$elem.attr('nunaliit-disable-click','true');
+		};
+		if( opts.disableHover ){
+			$elem.attr('nunaliit-disable-hover','true');
+		};
+		
+		this.domStyler._userEvents($elem, opts.doc);
 	},
 	
 	_displayUserDocument: function(userDoc){
@@ -1707,6 +1815,37 @@ var Show = $n2.Class({
 		};
 	},
 	
+	_handleUserIntentChanged: function(changes){
+		if( changes && changes.length > 0 ){
+			for(var i=0,e=changes.length; i<e; ++i){
+				var change = changes[i];
+				var docId = change.n2_id;
+				var eventClass = 'n2s_userEvents_doc_' + $n2.utils.stringToHtmlId(docId);
+				$('.'+eventClass).each(function(){
+					var $elem = $(this);
+
+					if( change.n2_selected ){
+						$elem.addClass('nunaliit_selected');
+					} else {
+						$elem.removeClass('nunaliit_selected');
+					};
+
+					if( change.n2_hovered ){
+						$elem.addClass('nunaliit_hovered');
+					} else {
+						$elem.removeClass('nunaliit_hovered');
+					};
+
+					if( change.n2_find ){
+						$elem.addClass('nunaliit_found');
+					} else {
+						$elem.removeClass('nunaliit_found');
+					};
+				});
+			};
+		};
+	},
+	
 	_handleDispatch: function(m, address, dispatchService){
 		if( 'start' === m.type ){
 			// Accept Post-process display functions that are
@@ -1727,6 +1866,11 @@ var Show = $n2.Class({
 			
 		} else if( 'documentContent' === m.type ) {
 			this._handleDocumentContent(m.doc);
+			
+		} else if( 'userIntentChanged' === m.type ) {
+			if( m.changes ){
+				this._handleUserIntentChanged(m.changes);
+			};
 		};
 	}
 });
