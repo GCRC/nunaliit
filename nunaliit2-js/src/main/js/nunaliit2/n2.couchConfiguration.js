@@ -122,10 +122,15 @@ function Configure(options_){
 	configuration.directory.eventService = new $n2.couchEvents.EventSupport({
 		directory: configuration.directory
 	});
-	
+
 	// Custom Service
 	configuration.directory.customService = new $n2.custom.CustomService({
 		directory: configuration.directory
+	});
+
+	// Intent Service
+	configuration.directory.userIntentService = new $n2.userIntentView.IntentService({
+		dispatchService: configuration.directory.dispatchService
 	});
 
 	// Configuration
