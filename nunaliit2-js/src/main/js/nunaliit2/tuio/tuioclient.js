@@ -1,8 +1,11 @@
+var SPRING_K = 50.0;
+var SPRING_LEN = 0.0000000000001;
+
 // Socket to tuioserver.js that emits TUIO events in JSON
 var socket = io('http://localhost:3000');
 
 // Speed factor for drag scrolling
-var scrollSpeed = 1.0;
+var scrollSpeed = 1.5;
 
 // Toggle for whether non-map page elements are visible (kludge)
 var barsVisible = true;
@@ -17,7 +20,7 @@ var clickDistance = 0.005;
 var pressDelay = 1000;
 
 // Maximum distance to consider cursors to be on the same hand
-var handSpan = 0.25;
+var handSpan = 0.4;
 
 // Next hand instance ID counter
 var nextHandIndex = 1;
@@ -35,9 +38,36 @@ var downCursors = 0;
 var showDots = false;
 var dotSize = 16.0;
 
-function Point(x, y) {
+// Last scroll hand coordinates
+var scrollX = undefined;
+var scrollY = undefined;
+
+function Vector(x, y) {
 	this.x = x;
 	this.y = y;
+}
+
+Vector.prototype.add = function(v) {
+	return new Vector(this.x + v.x, this.y + v.y);
+}
+
+Vector.prototype.subtract = function(v) {
+	return new Vector(this.x - v.x, this.y - v.y);
+}
+
+Vector.prototype.scale = function(s) {
+	return new Vector(this.x * s, this.y * s);
+}
+
+Vector.prototype.magnitude = function(v) {
+	return Math.sqrt(this.x * this.x + this.y * this.y);
+}
+
+Vector.prototype.distance = function(v) {
+	var dx = this.x - v.x;
+	var dy = this.y - v.y;
+
+	return Math.sqrt((dx * dx) + (dy * dy));
 }
 
 /** Return the absolute distance between two points. */
@@ -53,7 +83,7 @@ function area(points) {
 	for (var i = 0; i < points.length; j = i++) {
 		var pi = points[i];
 		var pj = points[j];
-		area += (pj.x + pi.x) * (pj.y - pi.y)
+		area += (pj.pos.x + pi.pos.x) * (pj.pos.y - pi.pos.y)
 	}
 
 	return area / 2;
@@ -63,11 +93,11 @@ function area(points) {
 function centroid(points) {
 	if (points.length == 1) {
 		// Center of a single point is that point
-		return points[0];
+		return points[0].pos;
 	} else if (points.length == 2) {
 		// Center of a line is the midpoint of that line
-		return new Point((points[0].x + points[1].x) / 2,
-						 (points[0].y + points[1].y) / 2);
+		return new Vector((points[0].pos.x + points[1].pos.x) / 2,
+						  (points[0].pos.y + points[1].pos.y) / 2);
 	}
 
 	var x = 0;
@@ -77,39 +107,117 @@ function centroid(points) {
 	for (var i = 0; i < points.length; j = i++) {
 		var pi = points[i];
 		var pj = points[j];
-		var f = pi.x * pj.y - pj.x * pi.y;
-		x += (pi.x + pj.x) * f;
-		y += (pi.y + pj.y) * f;
+		var f = pi.pos.x * pj.pos.y - pj.pos.x * pi.pos.y;
+		x += (pi.pos.x + pj.pos.x) * f;
+		y += (pi.pos.y + pj.pos.y) * f;
 	}
 
 	var g = area(points) * 6;
 
-	return new Point(x / g, y / g);
+	return new Vector(x / g, y / g);
 };
+
+function Body(x, y) {
+	this.pos = new Vector(x, y);
+	this.targetPos = new Vector(x, y);
+	this.vel = new Vector(0, 0);
+	this.div = undefined;
+	this.dirty = false;
+	this.lastTime = null;
+}
+
+function springForce(p1, p2, length, k) {
+	var vec = p2.subtract(p1);
+	var mag = vec.magnitude();
+	var displacement = length - mag;
+
+	return vec.scale(k * displacement * 0.5 / mag);
+}
+
+/** Set the target coordinate for the body to move towards. */
+Body.prototype.moveTo = function(x, y) {
+	if (x != this.targetPos.x || y != this.targetPos.y) {
+		this.targetPos = new Vector(x, y);
+		if (isNaN(this.pos.x) || isNaN(this.pos.y)) {
+			this.pos = this.targetPos;
+		}
+		this.dirty = true;
+	}
+	return this.dirty;
+}
+
+/** Update position, moving towards the target if necessary. */
+Body.prototype.updatePosition = function(timestamp, energy) {
+	if (!this.lastTime) {
+		// Initial call, but we need a time delta, wait for next tick
+		this.lastTime = timestamp;
+		return true;
+	} else if (!this.dirty ||
+			   (this.pos.x == this.targetPos.x &&
+				this.pos.y == this.targetPos.y)) {
+		// Nothing to do
+		this.dirty = false;
+		this.lastTime = timestamp;
+		return false;
+	}
+
+	// Time since start in ms
+	var dur = (timestamp - this.lastTime) / 500;
+	this.lastTime = timestamp;
+
+	// Damp old velocity to avoid oscillation
+	this.vel = this.vel.scale(0.1);
+
+	// Calculate amount to move based on spring force
+	var force = springForce(this.targetPos, this.pos, SPRING_LEN, SPRING_K);
+	var velocity = this.vel.add(force.scale(dur)).scale(energy);
+	var dPos = velocity.scale(dur);
+
+	// Calculate new position
+	this.pos = this.pos.add(dPos);
+	this.vel = velocity;
+
+	var snap = dPos.magnitude() < 0.0001;
+	if (snap) {
+		// New position is very close, snap to target
+		this.pos = this.targetPos;
+		this.vel = new Vector(0, 0);
+	}
+
+	// Move div to current position
+	if (this.div != undefined) {
+		this.div.style.left = this.pos.x - (dotSize / 2) + "px";
+		this.div.style.top = this.pos.y - (dotSize / 2) + "px";
+	}
+
+	return true;
+}
 
 /** Construct a new cursor (finger). */
 function Cursor() {
-	this.x = Number.NaN;
-	this.y = Number.NaN;
+	Body.call(this, Number.NaN, Number.NaN);
+
 	this.down = false;
 	this.downTime = Date.now();
 	this.downX = Number.NaN;
 	this.downY = Number.NaN;
 	this.index = Number.NaN;
-	this.div = undefined;
 	this.lastSeen = Date.now();
 	this.hand = undefined;
 	this.show = function() {
 		if (!showDots) {
 			return;
 		} else if (this.div == undefined) {
-			this.div = createDot(this.x, this.y, this.index);
+			this.div = createDot(this.pos.x, this.pos.y, this.index);
 		}
 
-		this.div.style.left = ((this.x * window.innerWidth) - 10) + "px";
-		this.div.style.top = ((this.y * window.innerHeight) - 10) + "px";
+		this.div.style.left = ((this.pos.x * window.innerWidth) - 10) + "px";
+		this.div.style.top = ((this.pos.y * window.innerHeight) - 10) + "px";
 	}
 }
+
+Cursor.prototype = Object.create(Body.prototype);
+Cursor.prototype.constructor = Cursor;
 
 /** Construct a new tangible (block). */
 function Tangible() {
@@ -122,104 +230,113 @@ function Tangible() {
 
 /** Construct a new hand (grouping of cursors). */
 function Hand(x, y) {
+	Body.call(this, x, y);
+
 	this.cursors = [];
-	this.positionDirty = false;
-	this.x = x;
-	this.y = y;
 	this.index = nextHandIndex++;
-	this.div = undefined;
+}
 
-	/** Update the hand position based on cursor positions. */
-	this.updatePosition = function() {
-		if (this.cursors.length < 0) {
-			return;
-		}
+Hand.prototype = Object.create(Body.prototype);
+Hand.prototype.constructor = Hand;
 
-		var pos = centroid(this.cursors);
-		this.x = pos.x;
-		this.y = pos.y;
+/** Update the target position based on cursor positions. */
+Hand.prototype.updateTargetPosition = function(timestamp, energy) {
+	if (this.cursors.length > 0) {
+		var center = centroid(this.cursors);
+		this.moveTo(center.x, center.y);
+	}
+}
+
+Hand.prototype.updatePosition = function(timestamp, energy) {
+	if (this.cursors.length < 1) {
+		return;
 	}
 
-	this.removeCursor = function(cursor) {
-		// Remove cursor from its associated hand's list
-		for (var f = 0; f < this.cursors.length; ++f) {
-			if (this.cursors[f] == cursor) {
-				this.cursors.splice(f, 1);
-				break;
+	var center = centroid(this.cursors);
+	this.moveTo(center.x, center.y);
+
+	Body.prototype.updatePosition.call(this, timestamp, energy);
+}
+
+Hand.prototype.removeCursor = function(cursor) {
+	// Remove cursor from its associated hand's list
+	for (var f = 0; f < this.cursors.length; ++f) {
+		if (this.cursors[f] == cursor) {
+			this.cursors.splice(f, 1);
+			break;
+		}
+	}
+
+	if (this.cursors.length == 0) {
+		// Last finger removed from hand, delete hand
+		onHandUp(this.index);
+	} else {
+		// Update position for hand feedback
+		this.updateTargetPosition();
+		this.show();
+	}
+}
+
+/** Display a circle representing this hand for feedback. */
+Hand.prototype.show = function() {
+	if (!showDots) {
+		return;
+	} else if (this.div == undefined) {
+		this.div = createDot(this.pos.x, this.pos.y, "H" + this.index);
+	}
+
+	this.div.style.left = ((this.pos.x * window.innerWidth) - 10) + "px";
+	this.div.style.top = ((this.pos.y * window.innerHeight) - 10) + "px";
+	this.div.style.borderColor = "red";
+}
+
+/** Return the maximum distance a hand currently spans. */
+Hand.prototype.span = function() {
+	var maxDistance = 0;
+	for (var i = 0; i < this.cursors.length; ++i) {
+		for (var j = 0; j < this.cursors.length; ++j) {
+			if (i != j) {
+				maxDistance = Math.max(
+					maxDistance,
+					distance(this.cursors[i].pos.x, this.cursors[i].pos.y,
+							 this.cursors[j].pos.x, this.cursors[j].pos.y));
 			}
 		}
-
-		if (this.cursors.length == 0) {
-			// Last finger removed from hand, delete hand
-			onHandUp(this.index);
-		} else {
-			// Update position for hand feedback
-			this.updatePosition();
-			this.show();
-		}
 	}
 
-	/** Display a circle representing this hand for feedback. */
-	this.show = function() {
-		if (!showDots) {
-			return;
-		} else if (this.div == undefined) {
-			this.div = createDot(this.x, this.y, "H" + this.index);
-		}
+	return maxDistance;
+}
 
-		this.div.style.left = ((this.x * window.innerWidth) - 10) + "px";
-		this.div.style.top = ((this.y * window.innerHeight) - 10) + "px";
-		this.div.style.borderColor = "red";
-	}
+/** Remove any cursors that can not be a part of this hand.
+ *
+ * A list of the removed cursors is returned.  This is used to correct
+ * situations where the original cursor:hand association proves to be
+ * incorrect after some cursor movement.
+ */
+Hand.prototype.trimCursors = function() {
+	orphans = [];
 
-	/** Return the maximum distance a hand currently spans. */
-	this.span = function() {
+	while (this.span() > handSpan) {
+		// Find the point furthest from the center
 		var maxDistance = 0;
+		var furthest = undefined;
 		for (var i = 0; i < this.cursors.length; ++i) {
-			for (var j = 0; j < this.cursors.length; ++j) {
-				if (i != j) {
-					maxDistance = Math.max(
-						maxDistance,
-						distance(this.cursors[i].x, this.cursors[i].y,
-								 this.cursors[j].x, this.cursors[j].y));
-				}
+			var cursor = this.cursors[i];
+			var d = distance(cursor.pos.x, cursor.pos.y, this.pos.x, this.pos.y);
+			if (d > maxDistance) {
+				maxDistance = d;
+				furthest = i;
 			}
 		}
 
-		return maxDistance;
-	}
-
-	/** Remove any cursors that can not be a part of this hand.
-	 *
-	 * A list of the removed cursors is returned.  This is used to correct
-	 * situations where the original cursor:hand association proves to be
-	 * incorrect after some cursor movement.
-	 */
-	this.trimCursors = function() {
-		orphans = [];
-
-		while (this.span() > handSpan) {
-			// Find the point furthest from the center
-			var maxDistance = 0;
-			var furthest = undefined;
-			for (var i = 0; i < this.cursors.length; ++i) {
-				var cursor = this.cursors[i];
-				var d = distance(cursor.x, cursor.y, this.x, this.y);
-				if (d > maxDistance) {
-					maxDistance = d;
-					furthest = i;
-				}
-			}
-
-			// Remove it
-			if (furthest != undefined) {
-				orphans.push(this.cursors[furthest]);
-				this.removeCursor(this.cursors[furthest]);
-			}
+		// Remove it
+		if (furthest != undefined) {
+			orphans.push(this.cursors[furthest]);
+			this.removeCursor(this.cursors[furthest]);
 		}
-
-		return orphans;
 	}
+
+	return orphans;
 }
 
 // Collections of currently alive things
@@ -349,7 +466,7 @@ function bestHand(x, y) {
 	var hand = null;
 
 	for (var h in hands) {
-		var d = distance(x, y, hands[h].x, hands[h].y);
+		var d = distance(x, y, hands[h].pos.x, hands[h].pos.y);
 		if (d <= handSpan &&
 			hands[h].cursors.length < 5 &&
 			d <= bestDistance) {
@@ -377,8 +494,8 @@ function handsAreSane(x, y) {
 			if (i != j) {
 				maxDistance = Math.max(
 					maxDistance,
-					distance(hand.cursors[i].x, hand.cursors[i].y,
-							 hand.cursors[j].x, hand.cursors[j].y));
+					distance(hand.cursors[i].pos.x, hand.cursors[i].pos.y,
+							 hand.cursors[j].pos.x, hand.cursors[j].pos.y));
 			}
 		}
 	}
@@ -403,7 +520,7 @@ function onCursorDown(inst) {
 function onCursorMove(inst) {
 	var cursor = cursors[inst];
 	if (inst == pressCursor) {
-		var d = distance(cursor.x, cursor.y, cursor.downX, cursor.downY);
+		var d = distance(cursor.pos.x, cursor.pos.y, cursor.downX, cursor.downY);
 		var elapsed = Date.now() - cursor.downTime;
 		if (d < clickDistance && elapsed > pressDelay) {
 			console.log("Long press!");
@@ -416,11 +533,11 @@ function onCursorMove(inst) {
 function onCursorUp(inst) {
 	var cursor = cursors[inst];
 	if (inst == pressCursor) {
-		var d = distance(cursor.x, cursor.y, cursor.downX, cursor.downY);
+		var d = distance(cursor.pos.x, cursor.pos.y, cursor.downX, cursor.downY);
 		var elapsed = Date.now() - cursor.downTime;
 		if (d < clickDistance && elapsed < clickDelay) {
 			console.log("Click!");
-			dispatchMouseEvent('click', cursor.x, cursor.y);
+			dispatchMouseEvent('click', cursor.pos.x, cursor.pos.y);
 		}
 		pressCursor = undefined;
 	}
@@ -434,13 +551,13 @@ function onHandDown(inst) {
 
 	if (mouseHand == undefined) {
 		/* No hand is down yet, start a mouse motion for map dragging. */
-		dispatchMouseEvent('mousedown', hand.x, hand.y);
+		dispatchMouseEvent('mousedown', hand.pos.x, hand.pos.y);
 		mouseHand = inst;
 	} else {
 		/* A hand was acting as the mouse cursor for map dragging, but now we
 		   have several hands.  Stop drag since this no longer makes sense. */
 		var oldMouseHand = hands[mouseHand];
-		dispatchMouseEvent('mouseup', oldMouseHand.x, oldMouseHand.y);
+		dispatchMouseEvent('mouseup', oldMouseHand.pos.x, oldMouseHand.pos.y);
 		mouseHand = undefined;
 	}
 }
@@ -451,11 +568,23 @@ function onHandMove(inst) {
 
 	if (inst == mouseHand) {
 		// Hand is acting as mouse cursor, dispatch mouse move
-		dispatchMouseEvent('mousemove', hand.x, hand.y);
+		// dispatchMouseEvent('mousemove', hand.pos.x, hand.pos.y);
+
+		// Scroll OpenLayers manually
+		var mapSize = moduleDisplay.mapControl.map.getSize();
+		if (scrollX != undefined && scrollY != undefined) {
+			var dx = (scrollX - hand.pos.x);
+			var dy = (scrollY - hand.pos.y);
+			moduleDisplay.mapControl.map.pan(dx * mapSize.w * scrollSpeed,
+											 dy * mapSize.h * scrollSpeed,
+											 { dragging: true });
+		}
+		scrollX = hand.pos.x;
+		scrollY = hand.pos.y;
 	}
 }
 
-/** Called when a cursor is released. */
+/** Called when a hand is released. */
 function onHandUp(inst) {
 	var hand = hands[inst];
 
@@ -466,8 +595,10 @@ function onHandUp(inst) {
 
 	if (inst == mouseHand) {
 		// Hand is acting as mouse cursor, dispatch mouse up
-		dispatchMouseEvent('mouseup', hand.x, hand.y);
+		dispatchMouseEvent('mouseup', hand.pos.x, hand.pos.y);
 		mouseHand = undefined;
+		scrollX = undefined;
+		scrollY = undefined;
 	}
 
 	delete hands[inst];
@@ -477,14 +608,14 @@ function onHandUp(inst) {
 function addCursorToHand(cursor)
 {
 	// Associate cursor with a hand
-	var hand = bestHand(cursor.x, cursor.y);
+	var hand = bestHand(cursor.pos.x, cursor.pos.y);
 	if (hand) {
 		// Add to existing hand
 		hand.cursors.push(cursor);
-		hand.positionDirty = true;
+		hand.dirty = true;
 	} else {
 		// No existing hand is appropriate, create a new one
-		hand = new Hand(cursor.x, cursor.y);
+		hand = new Hand(cursor.pos.x, cursor.pos.y);
 		hand.cursors = [cursor];
 		hands[hand.index] = hand;
 		onHandDown(hand.index);
@@ -511,8 +642,8 @@ function updateCursors(set) {
 		}
 
 		// Update stored cursor position
-		cursors[inst].x = newX;
-		cursors[inst].y = newY;
+		cursors[inst].moveTo(newX, newY);
+		dirty = true;
 
 		if (!cursors[inst].down) {
 			// Initial cursor position update (cursor down)
@@ -523,9 +654,17 @@ function updateCursors(set) {
 
 			addCursorToHand(cursors[inst]);
 			onCursorDown(inst);
+
+			energy = Math.min(1.0, energy + 0.1);
 		} else {
 			// Position update for down cursor (cursor move)
 			onCursorMove(inst);
+
+			// Increase energy for spring layout calculation
+			var increase = Math.abs(
+				distance(cursors[inst].pos.x, cursors[inst].pos.y,
+						 newX, newY));
+			energy = Math.min(1.0, energy + increase);
 		}
 
 		// Update cursor visual feedback
@@ -533,37 +672,8 @@ function updateCursors(set) {
 
 		if (cursors[inst].hand) {
 			// Flag hand position as dirty for recalculation
-			cursors[inst].hand.positionDirty = true;
+			cursors[inst].hand.dirty = true;
 		}
-	}
-
-	// Update the position of any hands that have changed
-	var cursorsMoved = false;
-	for (var inst in hands) {
-		var hand = hands[inst];
-		if (hand.positionDirty) {
-			hand.updatePosition();
-		}
-
-		// Check if any cursors have moved outside a reasonable hand span
-		var orphans = hand.trimCursors();
-		if (orphans.length > 0) {
-			for (var i = 0; i < orphans.length; ++i) {
-				addCursorToHand(orphans[i]);
-			}
-			cursorsMoved = true;
-		}
-	}
-
-	// Show hand visual feedback
-	for (var inst in hands) {
-		var hand = hands[inst];
-		if (hand.positionDirty) {
-			hand.updatePosition();
-			onHandMove(hand.index);
-		}
-
-		hand.show();
 	}
 }
 
@@ -602,16 +712,14 @@ window.onkeydown = function (e) {
 		var zoom = document.getElementsByClassName("olControlZoom")[0];
 		var pane = document.getElementsByClassName("n2_content_text")[0];
 		var but = document.getElementsByClassName("n2_content_map_interaction")[0];
-		var text = document.getElementById("nunaliit2_uniqueId_67");
 		var foot = document.getElementsByClassName("nunaliit_footer")[0];
-		if (!barsVisible) {
+		if (barsVisible) {
 			head.style.display = "none";
 			map.style.right = "0";
 			zoom.style.top = "45%";
 			but.style.top = "45%";
 			but.style.right = "20px";
 			pane.style.display = "none";
-			text.style.display = "none";
 			foot.style.display = "none";
 			content.style.top = "0";
 			content.style.bottom = "0";
@@ -622,7 +730,6 @@ window.onkeydown = function (e) {
 			but.style.top = "33px";
 			but.style.right = "468px";
 			pane.style.display = "block";
-			text.style.display = "block";
 			foot.style.display = "block";
 			content.style.top = "102px";
 			content.style.bottom = "17px";
@@ -633,3 +740,83 @@ window.onkeydown = function (e) {
 		showDots = !showDots;
 	}
 };
+
+var lastTime = null;
+var dirty = false;
+var energy = 1.0;
+
+function reschedule(callback) {
+	var fps = 30;
+	setTimeout(function() {
+		requestAnimationFrame(callback);
+	}, 1000 / fps);
+}
+
+function tick(timestamp) {
+	if (!dirty || !lastTime) {
+		// Nothing to do now, just schedule next tick
+		start = timestamp;
+		lastTime = timestamp;
+		reschedule(tick);
+		return;
+	}
+
+	// Time since last tick in ms
+	var dur = (timestamp - lastTime) / 500;
+	lastTime = timestamp;
+
+	// Reduce overall energy to converge on stable positions
+	energy = Math.max(0.0, energy - (dur * 0.5));
+
+	// Update the position of each cursor
+	var moving = false;
+	for (var inst in cursors) {
+		if (!cursors.hasOwnProperty(inst)) {
+			continue; // Ignore prototypes
+		}
+
+		var cursor = cursors[inst];
+		moving = cursor.updatePosition(timestamp, energy) || moving;
+		cursor.show();
+	}
+
+	// Update the position of any hands that have changed
+	var cursorsMoved = false;
+	for (var inst in hands) {
+		var hand = hands[inst];
+		hand.updateTargetPosition();
+
+		// Check if any cursors have moved outside a reasonable hand span
+		var orphans = hand.trimCursors();
+		if (orphans.length > 0) {
+			for (var i = 0; i < orphans.length; ++i) {
+				addCursorToHand(orphans[i]);
+			}
+			cursorsMoved = true;
+		}
+	}
+
+	// Show hand visual feedback
+	for (var inst in hands) {
+		var hand = hands[inst];
+		if (cursorsMoved) {
+			// Cursors have moved hands, re-calculate target position
+			hand.updateTargetPosition();
+		}
+
+		if (hand.dirty) {
+			moving = hand.updatePosition(timestamp, energy) || moving;
+			onHandMove(hand.index);
+		}
+
+		hand.show();
+	}
+
+	if (!moving) {
+		dirty = false;
+	}
+
+	reschedule(tick);
+}
+
+requestAnimationFrame(tick);
