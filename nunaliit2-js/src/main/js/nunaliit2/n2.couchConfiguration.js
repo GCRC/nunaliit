@@ -279,6 +279,12 @@ function Configure(options_){
 			,attachmentService: configuration.directory.attachmentService
 		});
 		
+		// Navigation Service
+		configuration.directory.navigationService = new $n2.couchNavigation.NavigationService({
+			dispatchService: configuration.directory.dispatchService
+			,documentSource: configuration.documentSource
+		});
+		
 		configuration.directory.showService = new $n2.couchShow.Show({
 			db: configuration.atlasDb
 			,documentSource: configuration.documentSource

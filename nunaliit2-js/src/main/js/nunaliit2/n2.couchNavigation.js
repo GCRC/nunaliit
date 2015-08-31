@@ -1,0 +1,297 @@
+/*
+Copyright (c) 2015, Geomatics and Cartographic Research Centre, Carleton 
+University
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without 
+modification, are permitted provided that the following conditions are met:
+
+ - Redistributions of source code must retain the above copyright notice, 
+   this list of conditions and the following disclaimer.
+ - Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+ - Neither the name of the Geomatics and Cartographic Research Centre, 
+   Carleton University nor the names of its contributors may be used to 
+   endorse or promote products derived from this software without specific 
+   prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+POSSIBILITY OF SUCH DAMAGE.
+
+*/
+
+;(function($,$n2){
+"use strict";
+
+var 
+	_loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); }
+	,DH = 'n2.couchNavigation'
+	;
+
+//=========================================================================	
+var NavigationDisplay = $n2.Class({
+	
+	dispatchService: null,
+	
+	navigationDoc: null,
+	
+	elemId: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dispatchService: null
+			,navigationDoc: null
+			,elem: null
+		},opts_);
+		
+		this.dispatchService = opts.dispatchService;
+		this.navigationDoc = opts.navigationDoc;
+		
+		var $elem = $(opts.elem);
+		this.elemId = $n2.utils.getElementIdentifier($elem);
+		
+		this._display();
+	},
+	
+	_display: function(){
+		var $nav = $('#'+this.elemId);
+		var doc = this.navigationDoc;
+		
+		if( this.navigationDoc 
+		 && this.navigationDoc.nunaliit_navigation 
+		 && $nav.length > 0 ){
+			// Get current module identifier
+			var msg = {
+				type: 'moduleGetCurrent'
+			};
+			this.dispatchService.synchronousCall(DH,msg);
+			var currentModuleId = msg.moduleId;
+
+			// Navigation menu
+			$nav.empty();
+			
+			if( doc.nunaliit_navigation.items 
+			 && doc.nunaliit_navigation.items.length > 0 ) {
+				var $ul = $('<ul></ul>');
+				$nav.append($ul);
+				
+				insertItems($ul, doc.nunaliit_navigation.items, currentModuleId);
+			};
+		};
+		
+		function insertItems($ul, items, currentModuleId){
+			for(var i=0,e=items.length; i<e; ++i){
+				var item = items[i];
+				
+				var $li = $('<li></li>')
+					.appendTo($ul);
+
+				if( item.title && item.href ) {
+					// Compute module class
+					var moduleId = null;
+					var url = new $n2.url.Url({
+						url: item.href
+					});
+					if( url ){
+						moduleId = url.getParamValue('module',null);
+					};
+					if( moduleId ){
+						$li.attr('n2nav-module',moduleId);
+						$li.addClass('n2nav_setModuleCurrent');
+					};
+					
+					if( moduleId && moduleId === currentModuleId ){
+						$li.addClass('n2_nav_currentModule');
+					};
+					
+					var $a = $('<a></a>');
+					$a.attr('href',item.href);
+					var title = _loc(item.title);
+					$a.text(title);
+					$li.append($a);
+				} else if( item.title ) {
+					var $span = $('<span></span>');
+					var title = _loc(item.title);
+					$span.text(title);
+					$li.append($span);
+				};
+				
+				if( item.items && item.items.length > 0 ){
+					var $innerUl = $('<ul></ul>');
+					$li.append($innerUl);
+					insertItems($innerUl, item.items, currentModuleId);
+				};
+			};
+		};
+	}
+});
+	
+//=========================================================================	
+var NavigationService = $n2.Class({
+	
+	dispatchService: null,
+	
+	documentSource: null,
+	
+	currentNavigationDoc: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dispatchService: null
+			,documentSource: null
+		},opts_);
+		
+		var _this = this;
+		
+		this.dispatchService = opts.dispatchService;
+		this.documentSource = opts.documentSource;
+
+		// dispatcher
+		var d = this.dispatchService;
+		if( d ){
+			var f = function(m, addr, d){
+				_this._handle(m, addr, d);
+			};
+			
+			d.register(DH,'reportModuleDocument',f);
+			d.register(DH,'navigationGetCurrent',f);
+			d.register(DH,'showPreprocessElement',f);
+		};
+	},
+	
+	setCurrentNavigation: function(opts_){
+		var opts = $n2.extend({
+			docId: null
+			,doc: null
+		},opts_);
+		
+		var _this = this;
+		
+		if( opts.doc 
+		 && opts.doc.nunaliit_navigation ){
+			this.navigationDoc = opts.doc;
+			
+			this._fixElements($('body'), this.navigationDoc);
+			
+			if( this.dispatchService ){
+				this.dispatchService.send(DH, {
+					type: 'navigationReportCurrent'
+					,navigationId: this.navigationDoc._id
+					,navigationDoc: this.navigationDoc
+				});
+			};
+			
+		} else if( opts.docId ){
+			if( this.documentSource ){
+				this.documentSource.getDocument({
+					docId: opts.docId
+					,onSuccess: function(doc){
+						_this.setCurrentNavigation({
+							doc: doc
+						});
+					}
+				});
+			};
+		};
+	},
+	
+	printTitle: function(opts_){
+		var opts = $n2.extend({
+			elem: null
+		},opts_);
+		
+		var $elem = $(opts.elem).addClass('n2nav_insertTitle');
+		
+		this._fixElements($elem, this.navigationDoc);
+	},
+	
+	printMenu: function(opts_){
+		var opts = $n2.extend({
+			elem: null
+		},opts_);
+		
+		var $elem = $(opts.elem).addClass('n2nav_insertMenu');
+		
+		this._fixElements($elem, this.navigationDoc);
+	},
+	
+	_fixElements: function($root, navigationDoc){
+		if( !navigationDoc ) return;
+
+		var _this = this;
+		
+		var $set = $root.find('*').addBack();
+		
+		// Title
+		$set.filter('.n2nav_insertTitle').each(function(){
+			var $elem = $(this);
+
+			var title = navigationDoc.nunaliit_navigation.title;
+			if( title ){
+				$elem.text( _loc(title) );
+			} else {
+				$elem.empty();
+			};
+
+			$elem.removeClass('n2nav_insertTitle').addClass('n2nav_insertedTitle');
+		});
+		
+		// Menu
+		$set.filter('.n2nav_insertMenu').each(function(){
+			var $elem = $(this);
+
+			new NavigationDisplay({
+				dispatchService: _this.dispatchService
+				,navigationDoc: navigationDoc
+				,elem: $elem
+			});
+
+			$elem.removeClass('n2nav_insertMenu').addClass('n2nav_insertedMenu');
+		});
+	},
+	
+	_handle: function(m, addr, d){
+		if( 'reportModuleDocument' === m.type ){
+			var currentModuleId = m.moduleId;
+			$('.n2nav_setModuleCurrent').each(function(){
+				var $elem = $(this);
+				var moduleId = $elem.attr('n2nav-module');
+				if( moduleId && moduleId === currentModuleId ){
+					$elem.addClass('n2_nav_currentModule');
+				} else {
+					$elem.removeClass('n2_nav_currentModule');
+				};
+			});
+
+		} else if( 'navigationGetCurrent' === m.type ){
+			// Synchronous call
+			if( this.navigationDoc ){
+				m.navigationId = this.navigationDoc._id;
+				m.navigationDoc = this.navigationDoc;
+			};
+
+		} else if( 'showPreprocessElement' === m.type ){
+			var $elem = m.elem;
+			if( this.navigationDoc ){
+				this._fixElements($elem, this.navigationDoc);
+			};
+		};
+	}
+});
+
+$n2.couchNavigation = {
+	NavigationService: NavigationService
+	,NavigationDisplay: NavigationDisplay
+};
+
+})(jQuery,nunaliit2);

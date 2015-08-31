@@ -305,8 +305,8 @@ var ModuleDisplay = $n2.Class({
 	
 	navigationName: null,
 	
-	navigationDoc: null,
-	
+	navigationDocId: null,
+
 	languageSwitcherName: null,
 	
 	helpButtonName: null,
@@ -316,6 +316,12 @@ var ModuleDisplay = $n2.Class({
 	styleMapFn: null,
 	
 	mapStyles: null,
+	
+	// Services
+	
+	dispatchService: null,
+	
+	navigationService: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -361,12 +367,17 @@ var ModuleDisplay = $n2.Class({
 		this.filterPanelName = opts.filterPanelName;
 		this.searchPanelName = opts.searchPanelName;
 		this.navigationName = opts.navigationName;
-		this.navigationDoc = opts.navigationDoc;
+		this.navigationDocId = opts.navigationDoc;
 		this.titleName = opts.titleName;
 		this.moduleTitleName = opts.moduleTitleName;
 		this.languageSwitcherName = opts.languageSwitcherName;
 		this.helpButtonName = opts.helpButtonName;
 		this.styleMapFn = opts.styleMapFn;
+		
+		if( this.config && this.config.directory ){
+			this.dispatchService = this.config.directory.dispatchService;
+			this.navigationService = this.config.directory.navigationService;
+		};
 
 		// Login panels
 		this.loginPanelNames = [];
@@ -392,10 +403,19 @@ var ModuleDisplay = $n2.Class({
 		var customService = this._getCustomService();
 		
 		// dispatcher
-		var d = this._getDispatcher();
+		var d = this.dispatchService;
 		if( d ){
 			d.register(DH,'unselected',function(m){
 				_this._initSidePanel();
+			});
+			d.register(DH,'moduleGetCurrent',function(m){
+				m.moduleId = _this.getCurrentModuleId();
+				
+				if( _this.module ){
+					m.module = _this.module;
+					m.doc = _this.module.moduleDoc;
+					m.moduleDisplay = _this;
+				};
 			});
 		};
 		
@@ -429,29 +449,33 @@ var ModuleDisplay = $n2.Class({
 		/*
 		 * Get navigation document, if required.
 		 */
-		if( this.navigationDoc ){
+		if( this.navigationDocId ){
 			
-			var navDocNeeded = false;
-			
-			if( $('#'+this.navigationName).length > 0 ){
-				$('#'+this.navigationName).empty();
-				navDocNeeded = true;
+			var $title = $('#'+this.titleName);
+			if( $title.length > 0 ){
+				$title.empty();
+
+				if( this.navigationService ){
+					this.navigationService.printTitle({
+						elem: $title
+					});
+				};
 			};
 			
-			if( $('#'+this.titleName).length > 0 ){
-				$('#'+this.titleName).empty();
-				navDocNeeded = true;
+			var $menu = $('#'+this.navigationName);
+			if( $menu.length > 0 ){
+				$menu.empty();
+
+				if( this.navigationService ){
+					this.navigationService.printMenu({
+						elem: $menu
+					});
+				};
 			};
 			
-			if( navDocNeeded ) {
-				atlasDb.getDocument({
-					docId: this.navigationDoc
-					,onSuccess: function(doc){
-						_this._navigationDocumentLoaded(doc);
-					}
-					,onError: function(err){ 
-						$n2.log('Error obtaining navigation document '+_this.navigationDoc,err); 
-					}
+			if( this.navigationService ){
+				this.navigationService.setCurrentNavigation({
+					docId: this.navigationDocId
 				});
 			};
 		};
@@ -476,6 +500,7 @@ var ModuleDisplay = $n2.Class({
 			_this._sendDispatchMessage({
 				type: 'reportModuleDocument'
 				,doc: moduleDoc
+				,moduleId: moduleDoc._id
 				,module: _this.module
 				,moduleDisplay: _this
 			});
@@ -1206,85 +1231,6 @@ var ModuleDisplay = $n2.Class({
 		};
 	}
 
-	,_navigationDocumentLoaded: function(doc){
-		var currentModuleId = this.getCurrentModuleId();
-		
-		if( doc && doc.nunaliit_navigation ){
-			// Atlas title
-			var $title = $('#'+this.titleName);
-			if( $title.length > 0 ){
-				if( doc.nunaliit_navigation.title ){
-					var title = _loc(doc.nunaliit_navigation.title);
-					$title.text(title);
-				} else {
-					$title.empty();
-				};
-			};
-			
-			// Navigation menu
-			var $nav = $('#'+this.navigationName);
-			if( $nav.length > 0 ) {
-				$nav.empty();
-				
-				if( doc.nunaliit_navigation.items 
-				 && doc.nunaliit_navigation.items.length > 0 ) {
-					var $ul = $('<ul></ul>');
-					$nav.append($ul);
-					
-					insertItems($ul, doc.nunaliit_navigation.items);
-				};
-			};
-		};
-		
-		function insertItems($ul, items){
-			for(var i=0,e=items.length; i<e; ++i){
-				var item = items[i];
-				
-				var $li = $('<li></li>')
-					.appendTo($ul);
-
-				if( item.title && item.href ) {
-					// Compute module class
-					var moduleId = null;
-					var url = new $n2.url.Url({
-						url: item.href
-					});
-					if( url ){
-						moduleId = url.getParamValue('module',null);
-					};
-					var moduleClass = null;
-					if( moduleId ){
-						moduleClass = 'n2_nav_module_'+ $n2.utils.stringToHtmlId(moduleId);
-					};
-					if( moduleClass ){
-						$li.addClass(moduleClass);
-					};
-					
-					if( moduleId && moduleId === currentModuleId ){
-						$li.addClass('n2_nav_currentModule');
-					};
-					
-					var $a = $('<a></a>');
-					$a.attr('href',item.href);
-					var title = _loc(item.title);
-					$a.text(title);
-					$li.append($a);
-				} else if( item.title ) {
-					var $span = $('<span></span>');
-					var title = _loc(item.title);
-					$span.text(title);
-					$li.append($span);
-				};
-				
-				if( item.items && item.items.length > 0 ){
-					var $innerUl = $('<ul></ul>');
-					$li.append($innerUl);
-					insertItems($innerUl, item.items);
-				};
-			};
-		};
-	}
-
 	,_initSidePanel: function() {
 		var _this = this;
 
@@ -1310,14 +1256,6 @@ var ModuleDisplay = $n2.Class({
 		};
 	}
 	
-	,_getDispatcher: function(){
-		var d = null;
-		if( this.config.directory ){
-			d = this.config.directory.dispatchService;
-		};
-		return d;
-	}
-	
 	,_getShowService: function(){
 		var ss = null;
 		if( this.config.directory ){
@@ -1335,14 +1273,14 @@ var ModuleDisplay = $n2.Class({
 	}
 	
 	,_sendDispatchMessage: function(m){
-		var d = this._getDispatcher();
+		var d = this.dispatchService;
 		if( d ){
 			d.send(DH,m);
 		};
 	}
 	
 	,_sendSynchronousMessage: function(m){
-		var d = this._getDispatcher();
+		var d = this.dispatchService;
 		if( d ){
 			d.synchronousCall(DH,m);
 		};
@@ -1369,7 +1307,7 @@ var ModuleDisplay = $n2.Class({
 		$elem.empty().append($a);
 		
 		$a.click(function(e){
-			var d = _this._getDispatcher();
+			var d = _this.dispatchService;
 			if( d ){
 				d.send(DH,{
 					type: 'mapResetExtent'
