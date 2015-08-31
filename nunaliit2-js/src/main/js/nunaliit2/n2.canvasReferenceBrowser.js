@@ -99,6 +99,8 @@ var ReferenceBrowserCanvas = $n2.Class({
 			this.dispatchService.register(DH,'documentDeleted',f);
 		};
 		
+		opts.onSuccess();
+		
 		this._display();
 		
 		this._loadDocs();
