@@ -5,7 +5,7 @@ var SPRING_LEN = 0.0000000000001;
 var socket = io('http://localhost:3000');
 
 // Speed factor for drag scrolling
-var scrollSpeed = 1.5;
+var scrollSpeed = 1.0;
 
 // Toggle for whether non-map page elements are visible (kludge)
 var barsVisible = true;
