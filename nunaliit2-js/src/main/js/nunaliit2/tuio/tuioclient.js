@@ -89,8 +89,8 @@ function area(points) {
 	return area / 2;
 };
 
-/** Return the center point of a polygon specified by a set of points. */
-function centroid(points) {
+/** Return the center of a set of points. */
+function centerPoint(points) {
 	if (points.length == 1) {
 		// Center of a single point is that point
 		return points[0].pos;
@@ -100,21 +100,19 @@ function centroid(points) {
 						  (points[0].pos.y + points[1].pos.y) / 2);
 	}
 
-	var x = 0;
-	var y = 0;
-	var j = points.length - 1;
-
-	for (var i = 0; i < points.length; j = i++) {
-		var pi = points[i];
-		var pj = points[j];
-		var f = pi.pos.x * pj.pos.y - pj.pos.x * pi.pos.y;
-		x += (pi.pos.x + pj.pos.x) * f;
-		y += (pi.pos.y + pj.pos.y) * f;
+	var minX = Infinity;
+	var minY = Infinity;
+	var maxX = 0;
+	var maxY = 0;
+	for (var i = 0; i < points.length; ++i) {
+		minX = Math.min(minX, points[i].pos.x);
+		minY = Math.min(minY, points[i].pos.y);
+		maxX = Math.max(maxX, points[i].pos.x);
+		maxY = Math.max(maxY, points[i].pos.y);
 	}
 
-	var g = area(points) * 6;
-
-	return new Vector(x / g, y / g);
+	return new Vector(minX + (maxX - minX) / 2,
+	                  minY + (maxY - minY) / 2);
 };
 
 function Body(x, y) {
@@ -242,7 +240,7 @@ Hand.prototype.constructor = Hand;
 /** Update the target position based on cursor positions. */
 Hand.prototype.updateTargetPosition = function(timestamp, energy) {
 	if (this.cursors.length > 0) {
-		var center = centroid(this.cursors);
+		var center = centerPoint(this.cursors);
 		this.moveTo(center.x, center.y);
 	}
 }
@@ -252,7 +250,7 @@ Hand.prototype.updatePosition = function(timestamp, energy) {
 		return;
 	}
 
-	var center = centroid(this.cursors);
+	var center = centerPoint(this.cursors);
 	this.moveTo(center.x, center.y);
 
 	Body.prototype.updatePosition.call(this, timestamp, energy);
