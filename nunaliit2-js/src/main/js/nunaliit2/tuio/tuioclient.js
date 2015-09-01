@@ -1,4 +1,4 @@
-var SPRING_K = 50.0;
+var SPRING_K = 80.0;
 var SPRING_LEN = 0.0000000000001;
 
 // Socket to tuioserver.js that emits TUIO events in JSON
@@ -575,7 +575,7 @@ function onHandMove(inst) {
 			var dy = (scrollY - hand.pos.y);
 			moduleDisplay.mapControl.map.pan(dx * mapSize.w * scrollSpeed,
 											 dy * mapSize.h * scrollSpeed,
-											 { dragging: true });
+											 { animate: false, dragging: true });
 		}
 		scrollX = hand.pos.x;
 		scrollY = hand.pos.y;
