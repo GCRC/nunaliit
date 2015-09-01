@@ -46,7 +46,7 @@ udpPort.on("bundle", function (oscBundle) {
             } else if (p.args[0] == 'set') {
                 // Set position message
             	var instance = p.args[1];
-            	var coords = [p.args[2], p.args[3]];
+            	var coords = [p.args[2], 1.0 - p.args[3]];
                 curUpdate.set[instance] = coords;
             } else if (p.args[0] == 'fseq') {
                 var seq = p.args[1];
@@ -65,7 +65,7 @@ udpPort.on("bundle", function (oscBundle) {
             } else if (p.args[0] == 'set') {
                 // Set position message [instance, id, x, y, angle]
             	var instance = p.args[1];
-            	var coords = [p.args[2], p.args[3], p.args[4], p.args[5]];
+            	var coords = [p.args[2], p.args[3], 1.0 - p.args[4], p.args[5]];
                 tanUpdate.set[instance] = coords;
             } else if (p.args[0] == 'fseq') {
                 var seq = p.args[1];
