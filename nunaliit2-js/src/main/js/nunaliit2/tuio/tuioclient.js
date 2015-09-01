@@ -42,6 +42,18 @@ var dotSize = 16.0;
 var scrollX = undefined;
 var scrollY = undefined;
 
+// Map visual size and position
+var xMargin = 460;
+var xOffset = -110;
+var yMargin = 15;
+var yOffset = 10;
+
+// TUIO input calibration
+var cursorXScale = 0.672;
+var cursorYScale = 0.937;
+var cursorXOffset = -0.03;
+var cursorYOffset = -0.016;
+
 function Vector(x, y) {
 	this.x = x;
 	this.y = y;
@@ -633,8 +645,8 @@ function updateCursors(set) {
 			continue; // Unknown cursor ID
 		}
 
-		var newX = set[inst][0];
-		var newY = set[inst][1];
+		var newX = (set[inst][0] - 0.5) * cursorXScale + 0.5 + cursorXOffset;
+		var newY = (set[inst][1] - 0.5) * cursorYScale + 0.5 + cursorYOffset;
 		if (isNaN(newX) || isNaN(newY)) {
 			continue;
 		}
@@ -683,8 +695,8 @@ function updateTangibles(set) {
 
 		if (set[inst] != undefined && tangibles[inst] != undefined) {
 			tangibles[inst]['id'] = set[inst][0];
-			tangibles[inst]['x'] = set[inst][1];
-			tangibles[inst]['y'] = set[inst][2];
+			tangibles[inst]['x'] = (set[inst][1] - 0.5) * cursorXScale + 0.5 + cursorXOffset;
+			tangibles[inst]['y'] = (set[inst][2] - 0.5) * cursorYScale + 0.5 + cursorYOffset;
 			tangibles[inst]['angle'] = set[inst][3];
 		}
 	}
@@ -702,18 +714,19 @@ socket.on('tangibles update', function(update) {
 
 window.onkeydown = function (e) {
 	var code = e.keyCode ? e.keyCode : e.which;
+	var map = document.getElementById("nunaliit2_uniqueId_65");
 	if (code === 27) {
 		// Escape pressed, toggle non-map UI visibility
 		var content = document.getElementById("content");
 		var head = document.getElementsByClassName("nunaliit_header")[0];
-		var map = document.getElementById("nunaliit2_uniqueId_65");
 		var zoom = document.getElementsByClassName("olControlZoom")[0];
 		var pane = document.getElementsByClassName("n2_content_text")[0];
 		var but = document.getElementsByClassName("n2_content_map_interaction")[0];
 		var foot = document.getElementsByClassName("nunaliit_footer")[0];
 		if (barsVisible) {
 			head.style.display = "none";
-			map.style.right = "0";
+			map.style.left = (xMargin + xOffset) + "px";
+			map.style.right = (xMargin - xOffset) + "px";
 			zoom.style.top = "45%";
 			but.style.top = "45%";
 			but.style.right = "20px";
@@ -723,6 +736,7 @@ window.onkeydown = function (e) {
 			content.style.bottom = "0";
 		} else {
 			head.style.display = "block";
+			map.style.left = "0px";
 			map.style.right = "450px";
 			zoom.style.top = "35px";
 			but.style.top = "33px";
@@ -736,6 +750,93 @@ window.onkeydown = function (e) {
 	} else if (code == 70) {
 		// f pressed, toggle visual feedback
 		showDots = !showDots;
+    } else if (e.shiftKey) {
+        // TUIO calibration
+	    if (code == 37) {
+            if (e.altKey) {
+                // Shift+Alt+left, offset TUIO left
+                cursorXOffset -= 0.001;
+            } else {
+                // Shift+left, shrink TUIO horizontally
+                cursorXScale -= 0.001;
+            }
+		} else if (code == 39) {
+            if (e.altKey) {
+                // Shift+Alt+right, offset TUIO right
+                cursorXOffset += 0.001;
+            } else {
+                // Shift+right, expand TUIO horizontally
+                cursorXScale += 0.001;
+            }
+	    } else if (code == 40) {
+            if (e.altKey) {
+                // Shift+Alt+down, offset TUIO down
+                cursorYOffset += 0.001;
+            } else {
+			    // Shift+down, shrink TUIO vertically
+                cursorYScale -= 0.001;
+            }
+	    } else if (code == 38) {
+            if (e.altKey) {
+                // Shift+Alt+up, offset TUIO up
+                cursorYOffset -= 0.001;
+            } else {
+                // Shift+up, grow TUIO vertically
+                cursorYScale += 0.001;
+            }
+        }
+
+        console.log("TUIO scale " + cursorXScale + "," + cursorYScale +
+                    " offset " + cursorXOffset + "," + cursorYOffset);
+
+	} else if (code == 37) {
+        if (e.altKey) {
+			// Alt+left, shrink horizontally
+			xMargin += 5;
+		} else {
+			// Left, shift left
+			xOffset -= 5;
+		}
+
+		map.style.left = (xMargin + xOffset) + "px";
+		map.style.right = (xMargin - xOffset) + "px";
+		console.log("X margin " + xMargin + " offset " + xOffset);
+	} else if (code == 39) {
+        if (e.altKey) {
+			// Alt+right, grow horizontally
+			xMargin -= 5;
+		} else {
+			// Right, shift right
+			xOffset += 5;
+		}
+
+		map.style.left = (xMargin + xOffset) + "px";
+		map.style.right = (xMargin - xOffset) + "px";
+		console.log("X margin " + xMargin + " offset " + xOffset);
+	} else if (code == 40) {
+		if (e.altKey) {
+			// Alt+down, shrink vertically
+			yMargin += 5;
+		} else {
+			// Down, shift up
+			yOffset += 5;
+		}
+
+		map.style.top = (yMargin + yOffset) + "px";
+		map.style.bottom = (yMargin - yOffset) + "px";
+		console.log("Y margin " + yMargin + " offset " + yOffset);
+	} else if (code == 38) {
+		if (e.altKey) {
+			// Alt+up, grow vertically
+			yMargin -= 5;
+		} else {
+			// Up, shift down
+			yOffset -= 5;
+		}
+
+		map.style.top = (yMargin + yOffset) + "px";
+		map.style.bottom = (yMargin - yOffset) + "px";
+		console.log("Y margin " + yMargin + " offset " + yOffset);
 	}
 };
 
