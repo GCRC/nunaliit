@@ -4,13 +4,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.StringWriter;
-import java.net.URLDecoder;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Vector;
 
 import javax.servlet.ServletConfig;
@@ -141,10 +137,24 @@ public class SimplifiedGeometryServlet extends JsonServlet {
 					attachmentRequests.add( new GeometryAttachmentRequest(id, attName) );
 				}
 
-				// Perform request
-				JSONObject result = actions.getAttachments(attachmentRequests);
+				if( false ){
+					// Start response
+					response.setStatus(200);
+					response.setContentType("application/json");
+					response.setCharacterEncoding("utf-8");
+					response.addHeader("Cache-Control", "no-cache");
+					response.addHeader("Pragma", "no-cache");
+					response.addHeader("Expires", "-1");
+					OutputStream os = response.getOutputStream();
+					
+					// Perform request
+					actions.getAttachments(attachmentRequests, os);
+				} else {
+					// Perform request
+					JSONObject result = actions.getAttachments(attachmentRequests);
 
-				sendJsonResponse(response, result);
+					sendJsonResponse(response, result);
+				}
 				
 			} else {
 				throw new Exception("Unrecognized request");

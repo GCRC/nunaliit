@@ -3,6 +3,8 @@ package ca.carleton.gcrc.couch.simplifiedGeometry;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
@@ -117,5 +119,50 @@ public class SimplifiedGeometryActions {
 		}
 		
 		return result;
+	}
+
+	public void getAttachments(List<GeometryAttachmentRequest> attachmentRequests, OutputStream os) throws Exception {
+		AttachmentOutputStream attachmentOs = new AttachmentOutputStream(os);
+		PrintStream ps = new PrintStream(attachmentOs);
+		
+		ps.print("{\"geometries\":[");
+		
+		boolean isFirst = true;
+		for(GeometryAttachmentRequest attachmentRequest : attachmentRequests){
+			
+			if( isFirst ){
+				isFirst = false;
+			} else {
+				ps.print(",");
+			}
+			
+			String docId = attachmentRequest.getDocId();
+			String attName = attachmentRequest.getAttName();
+
+			ps.print("{\"id\":");
+			ps.print(JSONObject.quote(docId));
+			ps.print(",\"attName\":");
+			ps.print(JSONObject.quote(attName));
+			ps.print(",\"att\":\"");
+
+			try {
+				attachmentOs.setEscapingString(true);
+				couchDb.downloadAttachment(docId, attName, ps);
+				attachmentOs.setEscapingString(false);
+				
+			} catch (Exception e) {
+				logger.error("Error obtaining attachment "+docId+"/"+attName,e);
+			}
+			
+			ps.print("\"}");
+			
+			if( attachmentOs.getCount() > 100 ){
+				break;
+			}
+		}
+		
+		ps.print("]}");
+		
+		ps.flush();
 	}
 }
