@@ -17,7 +17,7 @@ public class ExportFormatGeoJsonTest extends TestCase {
 		DocumentRetrieval docRetrieval = TestSupport.getTestRetrieval();
 		SchemaCache schemaCache = TestSupport.getTestSchemaCache();
 		
-		ExportFormatGeoJson format = new ExportFormatGeoJson(schemaCache, docRetrieval, new MockDocumentFilter());
+		ExportFormatGeoJson format = new ExportFormatGeoJson(schemaCache, docRetrieval);
 		
 		StringWriter sw = new StringWriter();
 		format.outputExport(sw);
@@ -31,7 +31,7 @@ public class ExportFormatGeoJsonTest extends TestCase {
 		DocumentRetrieval docRetrieval = TestSupport.getTestRetrieval();
 		SchemaCache schemaCache = TestSupport.getTestSchemaCache();
 		
-		ExportFormatGeoJson format = new ExportFormatGeoJson(schemaCache, docRetrieval, new MockDocumentFilter());
+		ExportFormatGeoJson format = new ExportFormatGeoJson(schemaCache, docRetrieval);
 		
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		format.outputExport(baos);

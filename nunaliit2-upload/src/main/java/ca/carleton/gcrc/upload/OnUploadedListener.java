@@ -46,8 +46,7 @@ public interface OnUploadedListener {
 	 * This interface is called when a file has been successfully uploaded.
 	 * @param progressId Progress identifier used to track the file upload via the ProgressTracker.
 	 *                   null if none were specified.
-	 * @param originalFileName File name selected by user when uploading the file.
-	 * @param loadedFile The actual file on disk
+	 * @param uploadedFiles List of files uploaded
 	 * @param parameters Parameters that were sent with the upload request
 	 * @param userPrincipal Authenticated user, or null
 	 * @param cookies Cookies that were sent as part of the request, or null.
@@ -61,4 +60,24 @@ public interface OnUploadedListener {
 		,Principal userPrincipal
 		,Cookie[] cookies
 		) throws Exception;
+
+	/**
+	 * This interface is called when an error was encountered during file upload. As a result, the content
+	 * of the parameters might be incomplete.
+	 * @param progressId Progress identifier used to track the file upload via the ProgressTracker.
+	 *                   null if none were specified.
+	 * @param uploadedFiles List of files uploaded
+	 * @param parameters Parameters that were sent with the upload request
+	 * @param userPrincipal Authenticated user, or null
+	 * @param cookies Cookies that were sent as part of the request, or null.
+	 * @return JSON Object that should be sent as results.
+	 * @throws Exception 
+	 */
+	public void onError(
+		String progressId
+		,List<LoadedFile> uploadedFiles
+		,Map<String,List<String>> parameters
+		,Principal userPrincipal
+		,Cookie[] cookies
+		);
 }

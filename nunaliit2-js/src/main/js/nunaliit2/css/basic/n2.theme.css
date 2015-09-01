@@ -108,6 +108,9 @@ input[type="text"], input[type="password"], textarea {
 	*display:inline;
 	border-bottom:0;
 }
+.nunaliit_atlas .nunaliit_header-nav li.n2_nav_currentModule {
+	background-color: #160E7D;
+}
 .nunaliit_atlas .nunaliit_header-nav ul>li>a:hover {
 	background-color:#000;
 	border-right:0;

@@ -1,7 +1,9 @@
 /* Following definitions are for n2.couchEdit */
 
 /* DIV that holds editor accordion */
-.n2CouchEditor_container {
+.n2_display_format_tiled .n2CouchEditor_container {
+	padding: 15px 20px;
+	width: 600px;
 }
 
 /* Remove extra white space in accordion */

@@ -15,10 +15,10 @@
  * @ requires OpenLayers/Format.js
  */
 
-if( !window.$n2 ) {
-	window.$n2 = window.nunaliit2;
-};
+;(function($,$n2){
 
+// Localization
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
 if( typeof(OpenLayers) !== 'undefined' ) {
 
@@ -149,8 +149,15 @@ OpenLayers.Control.N2LoadingPanel = OpenLayers.Class(OpenLayers.Control, {
      */
     draw: function () {
         OpenLayers.Control.prototype.draw.apply(this, arguments);
-        $(this.div).append( $('<div class="n2LoadingPanel_overlay"></div>') );
-        $(this.div).append( $('<div class="n2LoadingPanel_outertext"><div>Loading...</div></div>') );
+        $('<div>')
+        	.addClass('n2LoadingPanel_overlay')
+        	.appendTo(this.div);
+        var $outer = $('<div>')
+	    	.addClass('n2LoadingPanel_outertext')
+	    	.appendTo(this.div);
+        $('<div>')
+        	.text( _loc('Loading...') )
+        	.appendTo($outer);
         if( this.maximized ) {
         	this.maximizeControl();
         } else {
@@ -208,3 +215,5 @@ OpenLayers.Control.N2LoadingPanel = OpenLayers.Class(OpenLayers.Control, {
 });
 
 }; // If OpenLayers is defined
+
+})(jQuery,nunaliit2);

@@ -82,6 +82,14 @@ function canEditDoc(data) {
 	for(var i=0,e=sessionContext.roles.length; i<e; ++i){
 		roleMap[sessionContext.roles[i]] = true;
 	};
+
+	// On an atlas with a submission database, any user can submit
+	// a change to any document
+	if( typeof(n2atlas) === 'object' 
+	 && n2atlas.submissionDbEnabled
+	 && userName ) {
+		return true;
+	};
 	
 	// If a document is on a layer, then one must have the roles
 	// associated with all layers. If a document is not on a layer,

@@ -49,24 +49,29 @@ var DEFAULT_LANGUAGES = [
 	 }
 ];
 
+var g_LanguageService = undefined;
+
 /*
  * ======================================================
  * HTML Language Switching Widget
  */
 var LanguageSwitcher = $n2.Class({
 	
-	elemId: null
+	elemId: null,
 	
-	,dispatcher: null
+	dispatcher: null,
 	
-	,languages: null
+	languages: null,
 	
-	,initialize: function(opts_){
+	languageService: null,
+	
+	initialize: function(opts_){
 		var opts = $n2.extend({
 			elem: null
 			,elemId: null
 			,dispatcher: null
 			,languages: null
+			,languageService: null
 		},opts_);
 
 		// Get element id
@@ -83,19 +88,28 @@ var LanguageSwitcher = $n2.Class({
 		
 		this.dispatcher = opts.dispatcher;
 		this.languages = opts.languages;
-		
-		if( !this.languages ){
-			this.languages = DEFAULT_LANGUAGES;
-		};
+		this.languageService = opts.languageService;
 		
 		this._display();
-	}
+	},
 
-	,_getElem: function(){
+	_getLanguages: function(){
+		if( this.languageService ){
+			return this.languageService.getLanguages();
+		};
+		
+		if( this.languages ){
+			return this.languages;
+		};
+		
+		return DEFAULT_LANGUAGES;
+	},
+
+	_getElem: function(){
 		return $('#'+this.elemId);
-	}
+	},
 	
-	,_display: function(){
+	_display: function(){
 		var _this = this;
 		
 		var $elem = this._getElem();
@@ -110,9 +124,9 @@ var LanguageSwitcher = $n2.Class({
 				_this._dialog();
 				return false;
 			});
-	}
+	},
 	
-	,_dialog: function(){
+	_dialog: function(){
 		var _this = this;
 		
 		var diagId = $n2.getUniqueId();
@@ -131,8 +145,9 @@ var LanguageSwitcher = $n2.Class({
 			return false;
 		};
 		
-		for(var i=0,e=this.languages.length;i<e;++i){
-			var l = this.languages[i];
+		var languages = this._getLanguages();
+		for(var i=0,e=languages.length;i<e;++i){
+			var l = languages[i];
 			addLanguage($langList, l.name, l.code);
 		};
 
@@ -173,9 +188,9 @@ var LanguageSwitcher = $n2.Class({
 				.text(name)
 				.appendTo($div);
 		};
-	}
+	},
 	
-	,_selectLanguage: function(code){
+	_selectLanguage: function(code){
 		if( this.dispatcher ){
 			this.dispatcher.send(DH,{
 				type: 'languageSelect'
@@ -191,18 +206,21 @@ var LanguageSwitcher = $n2.Class({
  */
 var LanguageToggler = $n2.Class({
 	
-	elemId: null
+	elemId: null,
 	
-	,dispatcher: null
+	dispatcher: null,
 	
-	,languages: null
+	languages: null,
 	
-	,initialize: function(opts_){
+	languageService: null,
+	
+	initialize: function(opts_){
 		var opts = $n2.extend({
 			elem: null
 			,elemId: null
 			,dispatcher: null
 			,languages: null
+			,languageService: null
 		},opts_);
 
 		// Get element id
@@ -219,19 +237,28 @@ var LanguageToggler = $n2.Class({
 		
 		this.dispatcher = opts.dispatcher;
 		this.languages = opts.languages;
-		
-		if( !this.languages ){
-			this.languages = DEFAULT_LANGUAGES;
-		};
+		this.languageService = opts.languageService;
 		
 		this._display();
-	}
+	},
 
-	,_getElem: function(){
+	_getLanguages: function(){
+		if( this.languageService ){
+			return this.languageService.getLanguages();
+		};
+		
+		if( this.languages ){
+			return this.languages;
+		};
+		
+		return DEFAULT_LANGUAGES;
+	},
+
+	_getElem: function(){
 		return $('#'+this.elemId);
-	}
+	},
 	
-	,_display: function(){
+	_display: function(){
 		var _this = this;
 		
 		var $elem = this._getElem();
@@ -249,9 +276,9 @@ var LanguageToggler = $n2.Class({
 					return false;
 				});
 		};
-	}
+	},
 	
-	,_pickLanguageToDisplay: function(){
+	_pickLanguageToDisplay: function(){
 		var locale = $n2.l10n.getLocale();
 		
 		var lang = null;
@@ -259,17 +286,18 @@ var LanguageToggler = $n2.Class({
 			lang = locale.lang;
 		};
 		
-		for(var i=0,e=this.languages.length;i<e;++i){
-			var l = this.languages[i];
+		var languages = this._getLanguages();
+		for(var i=0,e=languages.length;i<e;++i){
+			var l = languages[i];
 			if( l.code !== lang ){
 				return l;
 			};
 		};
 		
 		return null;
-	}
+	},
 	
-	,_selectLanguage: function(code){
+	_selectLanguage: function(code){
 		if( this.dispatcher ){
 			this.dispatcher.send(DH,{
 				type: 'languageSelect'
@@ -285,13 +313,13 @@ var LanguageToggler = $n2.Class({
  */
 var LanguageService = $n2.Class({
 	
-	dispatcher: null
+	dispatcher: null,
 	
-	,languages: null
+	languages: null,
 	
-	,useToggleWidget: null
+	useToggleWidget: null,
 	
-	,initialize: function(opts_){
+	initialize: function(opts_){
 		var opts = $n2.extend({
 			directory: null
 			,languages: null
@@ -299,17 +327,16 @@ var LanguageService = $n2.Class({
 
 		var _this = this;
 		
+		// Save in global variable
+		g_LanguageService = this;
+		
 		if( opts.directory ){
 			this.dispatcher = opts.directory.dispatchService;
 		};
 		
 		this.languages = opts.languages;
 		if( !this.languages ){
-			this.languages = [];
-			for(var i=0,e=DEFAULT_LANGUAGES.length; i<e; ++i){
-				var l = DEFAULT_LANGUAGES[i];
-				this.languages.push(l);
-			};
+			this.languages = DEFAULT_LANGUAGES.slice(0);
 		};
 		
 		this.useToggleWidget = false;
@@ -321,23 +348,23 @@ var LanguageService = $n2.Class({
 			};
 			d.register(DH,'languageSelect',f);
 		};
-	}
+	},
 
-	,getLanguages: function(){
-		this.languages;
-	}
+	getLanguages: function(){
+		return this.languages;
+	},
 	
-	,addLanguage: function(language){
+	addLanguage: function(language){
 		if( language.name && language.code ){
 			this.languages.push(language);
 		};
-	}
+	},
 	
-	,setUseToggleWidget: function(f){
+	setUseToggleWidget: function(f){
 		this.useToggleWidget = f;
-	}
+	},
 
-	,drawWidget: function(opts_){
+	drawWidget: function(opts_){
 		var opts = $n2.extend({
 				elem: null
 				,elemId: null
@@ -345,7 +372,7 @@ var LanguageService = $n2.Class({
 			,opts_
 			,{
 				dispatcher: this.dispatcher
-				,languages: this.languages
+				,languageService: this
 			}
 		);
 		
@@ -354,16 +381,16 @@ var LanguageService = $n2.Class({
 		} else {
 			return new LanguageSwitcher(opts);
 		};
-	}
+	},
 	
-	,_send: function(msg){
+	_send: function(msg){
 		var d = this.dispatcher;
 		if( d ){
 			d.send(DH,msg);
 		};
-	}
+	},
 	
-	,_handle: function(msg){
+	_handle: function(msg){
 		if( 'languageSelect' === msg.type ){
 			if( msg.lang ) {
 				this._selectLanguage(msg.lang);
@@ -371,9 +398,9 @@ var LanguageService = $n2.Class({
 				this._resetLanguage();
 			};
 		};
-	}
+	},
 	
-	,_selectLanguage: function(lang){
+	_selectLanguage: function(lang){
 		// Set cookie
 		$n2.cookie.setCookie({
 			name: 'nunaliit-l10n'
@@ -384,9 +411,9 @@ var LanguageService = $n2.Class({
 		
 		// Reload page
 		location.reload();
-	}
+	},
 	
-	,_resetLanguage: function(){
+	_resetLanguage: function(){
 		// Remove cookie
 		$n2.cookie.deleteCookie('nunaliit-l10n');
 		
@@ -395,11 +422,27 @@ var LanguageService = $n2.Class({
 	}
 });
 
-// Exports
+/*
+ * ======================================================
+ * Function to retrieve languages currently in use
+ */
+function getLanguages(){
+	if( g_LanguageService ){
+		return g_LanguageService.getLanguages();
+	};
+	
+	return DEFAULT_LANGUAGES;
+};
+
+/*
+ * ======================================================
+ * Exports
+ */
 $n2.languageSupport = {
 	LanguageService: LanguageService
 	,LanguageSwitcher: LanguageSwitcher
 	,LanguageToggler: LanguageToggler
+	,getLanguages: getLanguages
 };
 
 })(jQuery,nunaliit2);

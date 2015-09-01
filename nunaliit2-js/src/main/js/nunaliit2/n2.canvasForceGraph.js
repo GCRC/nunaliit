@@ -159,12 +159,12 @@ if( !$d ) return;
  			for(var paramKey in modelInfo.parameters){
  				var paramInfo = modelInfo.parameters[paramKey];
  				this.parameters.push(paramInfo);
- 				if( paramInfo.changeEvent ){
- 					this.parametersByEventId[paramInfo.changeEvent] = paramInfo;
- 				};
  				if( paramInfo.setEvent ){
  					this.parametersByEventId[paramInfo.setEvent] = paramInfo;
- 					var addr = this.dispatchService.register(DH, paramInfo.setEvent, handleFn);
+ 				};
+ 				if( paramInfo.changeEvent ){
+ 					this.parametersByEventId[paramInfo.changeEvent] = paramInfo;
+ 					var addr = this.dispatchService.register(DH, paramInfo.changeEvent, handleFn);
  					this.addresses.push(addr);
  				};
  				if( paramInfo.getEvent ){
@@ -244,7 +244,7 @@ if( !$d ) return;
  				.change(function(){
  					var selected = $('#'+inputId).is(':checked');
  					var m = {
- 						type: parameterInfo.changeEvent
+ 						type: parameterInfo.setEvent
  						,parameterId: parameterInfo.id
  						,value: selected
  					};
@@ -296,7 +296,7 @@ if( !$d ) return;
  	},
  	
  	_handle: function(m, addr, dispatcher){
- 		// Check if widget was remove
+ 		// Check if widget was removed
  		var $elem = this._getElem();
  		if( $elem.length < 1 ){
  			// De-register events
@@ -371,7 +371,7 @@ if( !$d ) return;
  			var fn = function(m, addr, dispatcher){
  				_this._handle(m, addr, dispatcher);
  			};
- 			this.dispatchService.register(DH, this.eventNameChange, fn);
+ 			this.dispatchService.register(DH, this.eventNameSet, fn);
  			this.dispatchService.register(DH, this.eventNameGet, fn);
  		};
  	},
@@ -394,7 +394,7 @@ if( !$d ) return;
  	},
  	
  	_handle: function(m, addr, dispatcher){
- 		if( m.type === this.eventNameChange ){
+ 		if( m.type === this.eventNameSet ){
  			var value = m.value;
  			
  			this.model[this.name] = value;
@@ -404,7 +404,7 @@ if( !$d ) return;
  			
  			var effectiveValue = this.model[this.name];
  			var reply = {
- 				type: this.eventNameSet
+ 				type: this.eventNameChange
  				,parameterId: this.parameterId
  				,value: effectiveValue
  			};

@@ -28,9 +28,9 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
 
-$Id: n2.couchRelatedDoc.js 8484 2012-09-05 19:38:37Z jpfiset $
 */
 ;(function($,$n2){
+"use strict";
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
@@ -185,8 +185,12 @@ var Editor = $n2.Class({
 			funcMap = this.dialogService.getFunctionMap();
 		};
 		
-		var $form = $('<div></div>');
-		$dialog.append($form);
+		var $diagContent = $('<div>')
+			.addClass('n2RelatedDoc_dialogContent')
+			.appendTo($dialog);
+		
+		var $form = $('<div>')
+			.appendTo($diagContent);
 		schema.form(
 			obj
 			,$form
@@ -203,9 +207,9 @@ var Editor = $n2.Class({
 			this.showService.fixElementAndChildren($form, {}, obj);
 		};
 
-		var $fileElement = $('<div></div>');
-		$dialog.append($fileElement);
-		this.attachmentUploadHandler = new $n2.couchEdit.AttachmentEditor({
+		var $fileElement = $('<div>')
+			.appendTo($diagContent);
+		this.attachmentUploadHandler = new $n2.CouchEditor.AttachmentEditor({
 			doc: obj
 			,elem: $fileElement
 			,documentSource: this.documentSource
@@ -214,23 +218,25 @@ var Editor = $n2.Class({
 			,disableRemoveFile: true
 		});
 		
-		var $ok = $('<button></button>');
-		$ok.text( _loc('OK') );
-		$ok.button({icons:{primary:'ui-icon-check'}});
-		$dialog.append( $ok );
-		$ok.click(function(){
-			_this._clickOK();
-			return false;
-		});
+		// OK
+		$('<button>')
+			.text( _loc('OK') )
+			.button({icons:{primary:'ui-icon-check'}})
+			.appendTo($diagContent)
+			.click(function(){
+				_this._clickOK();
+				return false;
+			});
 		
-		var $cancel = $('<button></button>');
-		$cancel.text( _loc('Cancel') );
-		$cancel.button({icons:{primary:'ui-icon-cancel'}});
-		$dialog.append( $cancel );
-		$cancel.click(function(){
-			_this._clickCancel();
-			return false;
-		});
+		// Cancel
+		$('<button>')
+			.text( _loc('Cancel') )
+			.button({icons:{primary:'ui-icon-cancel'}})
+			.appendTo( $diagContent )
+			.click(function(){
+				_this._clickCancel();
+				return false;
+			});
 		
 		var dialogOptions = {
 			autoOpen: true
@@ -280,7 +286,7 @@ var Editor = $n2.Class({
 				_this._uploadFile(updatedDoc);
 			}
 			,onError: function(err){
-				_this.onError( _loc('Unable to reach database to submit document: {err}',{err:err}) );
+				_this._error( _loc('Unable to reach database to submit document: {err}',{err:err}) );
 			}
 		});
 	},
@@ -294,7 +300,7 @@ var Editor = $n2.Class({
 				_this._success(doc._id);
 			}
 			,onError: function(err){
-				_this.onError( 
+				_this._error( 
 					_loc('Error occurred after related document was created. Error: {err}',{err:err})
 				);
 			}
@@ -307,6 +313,30 @@ var Editor = $n2.Class({
 		
 		// Call back client
 		this.onSuccess(docId);
+	},
+	
+	_error: function(err){
+		var _this = this;
+		
+		var $content = $('#'+this.diagId).find('.n2RelatedDoc_dialogContent')
+			.empty();
+		
+		$('<div>')
+			.addClass('n2RelatedDoc_error')
+			.text( err )
+			.appendTo($content);
+
+		$('<button>')
+			.text( _loc('Cancel') )
+			.button({icons:{primary:'ui-icon-cancel'}})
+			.appendTo( $content )
+			.click(function(){
+				_this._clickCancel();
+				return false;
+			});
+		
+		// Call back client
+		this.onError(err);
 	}
 });
 
@@ -563,6 +593,89 @@ var CreateRelatedDocProcess = $n2.Class({
 			,onError: opt.onError
 			,onCancel: opt.onCancel
 		});
+	},
+	
+	insertAddRelatedSelection: function(opts_){
+		var opts = $n2.extend({
+			placeHolderElem: null
+			,doc: null
+			,onElementCreated: function($elem){}
+			,onRelatedDocumentCreated: function(docId){}
+		},opts_);
+		
+		var _this = this;
+		
+		var $placeHolder = $(opts.placeHolderElem);
+		var doc = opts.doc;
+		
+		var docSchemaName = doc.nunaliit_schema;
+		if( !docSchemaName ){
+			noButton();
+			return;
+		};
+		
+		this.schemaRepository.getSchema({
+			name: docSchemaName
+			,onSuccess: function(docSchema){
+				// Check if there are any related document schemas
+				if( docSchema.relatedSchemaNames 
+				 && docSchema.relatedSchemaNames.length > 0 ){
+					_this.schemaRepository.getSchemas({
+						names: docSchema.relatedSchemaNames
+						,onSuccess: loadedRelatedSchemas
+						,onError: noButton
+					});
+				} else {
+					noButton();
+				};
+			}
+			,onError: noButton
+		});
+		
+		function loadedRelatedSchemas(relatedSchemas){
+			if( relatedSchemas.length < 1 ){
+				noButton();
+				return;
+			};
+			
+			var $select = $('<select>');
+
+			$('<option>')
+				.text( _loc('Add Related Item') )
+				.val('')
+				.appendTo($select);
+			
+			for(var i=0,e=relatedSchemas.length; i<e; ++i){
+				var relatedSchema = relatedSchemas[i];
+				
+				$('<option>')
+					.text( relatedSchema.getLabel() )
+					.val( relatedSchema.name )
+					.appendTo($select);
+			};
+			
+			$select.insertBefore($placeHolder)
+				.change(function(){
+					var val = $(this).val();
+					$(this).val('');
+					if( val && val.length > 0 ) {
+						_this.createDocumentFromSchemaNames({
+							schemaNames: [val]
+							,relatedDoc: doc
+							,onSuccess: opts.onRelatedDocumentCreated
+						});
+					};
+					return false;
+				});
+			
+			$placeHolder.remove();
+			
+			opts.onElementCreated($select);
+		};
+		
+		function noButton(){
+			$placeHolder.remove();
+		};
 	},
 	
 	_dispatch: function(msg){

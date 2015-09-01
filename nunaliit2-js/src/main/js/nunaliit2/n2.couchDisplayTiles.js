@@ -31,6 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 $Id: n2.couchDisplay.js 8441 2012-08-15 17:48:33Z jpfiset $
 */
 ;(function($,$n2){
+"use strict";
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
@@ -118,12 +119,6 @@ var TiledDisplay = $n2.Class({
 	
 	showService: null,
 	
-	editor: null,
-	
-	uploadService: null,
-	
-	authService: null,
-	
 	requestService: null,
 	
 	schemaRepository: null,
@@ -144,9 +139,7 @@ var TiledDisplay = $n2.Class({
 	
 	grid: null,
 	
-	createRelatedDocProcess: null,
-	
-	requestService: null,
+	createDocProcess: null,
 	
 	defaultSchema: null,
 	
@@ -171,9 +164,6 @@ var TiledDisplay = $n2.Class({
 			documentSource: null
 			,displayPanelName: null
 			,showService: null
-			,editor: null
-			,uploadService: null
-			,authService: null
 			,requestService: null
 			,schemaRepository: null
 			,customService: null
@@ -236,14 +226,11 @@ var TiledDisplay = $n2.Class({
 		this.documentSource = opts.documentSource;
 		this.displayPanelName = opts.displayPanelName;
 		this.showService = opts.showService;
-		this.editor = opts.editor;
-		this.uploadService = opts.uploadService;
-		this.authService = opts.authService;
 		this.requestService = opts.requestService;
 		this.schemaRepository = opts.schemaRepository;
 		this.customService = opts.customService;
 		this.dispatchService = opts.dispatchService;
-		this.createRelatedDocProcess = opts.createDocProcess;
+		this.createDocProcess = opts.createDocProcess;
 		
 		// Initialize display
 		this._getDisplayDiv();
@@ -410,6 +397,10 @@ var TiledDisplay = $n2.Class({
 				_this._performIntervalTask();
 			};
 		}, 500);
+
+		$('body').addClass('n2_display_format_tiled');
+		
+		$n2.log('TiledDisplay',this);
 	},
 
 	// external
@@ -637,44 +628,14 @@ var TiledDisplay = $n2.Class({
 				};
 				
 				if( showAddRelatedButton ) {
-		 			var selectId = $n2.getUniqueId();
-					var $addRelatedButton = $('<select>')
-		 				.addClass('n2DisplayTiled_current_button n2DisplayTiled_current_button_add_related_item')
-						.attr('id',selectId)
+					var $placeHolder = $('<span>')
 						.appendTo($btnDiv);
-					$('<option>')
-						.text( _loc('Add Related Item') )
-						.val('')
-						.appendTo($addRelatedButton);
-					for(var i=0,e=schema.relatedSchemaNames.length; i<e; ++i){
-						var schemaName = schema.relatedSchemaNames[i];
-						$('<option>')
-							.text(schemaName)
-							.val(schemaName)
-							.appendTo($addRelatedButton);
-						
-						if( this.schemaRepository ){
-							this.schemaRepository.getSchema({
-								name: schemaName
-								,onSuccess: function(schema){
-									$('#'+selectId).find('option').each(function(){
-										var $option = $(this);
-										if( $option.val() === schema.name ){
-											$option.text(schema.getLabel());
-										};
-									});
-								}
-							});
-						};
-					};
-					
-					$addRelatedButton.change(function(){
-						var val = $(this).val();
-						$(this).val('');
-						if( val ) {
-							_this._addRelatedDocument(doc, val);
-						};
-						return false;
+					this.createDocProcess.insertAddRelatedSelection({
+						placeHolderElem: $placeHolder
+						,doc: doc
+						,onElementCreated: function($elem){
+							$elem.addClass('n2DisplayTiled_current_button n2DisplayTiled_current_button_add_related_item');
+						}
 					});
 				}; // show button
 			};
@@ -1183,15 +1144,6 @@ var TiledDisplay = $n2.Class({
 				};
 			};
 		};
-	},
-	
-	_addRelatedDocument: function(doc, schemaName){
-		this.createRelatedDocProcess.createDocumentFromSchemaNames({
-			schemaNames: [schemaName]
-			,relatedDoc: doc
-			,onSuccess: function(docId){
-			}
-		});
 	},
 	
 	/*
@@ -1786,12 +1738,45 @@ var ReferenceRelatedDocumentDiscovery = $n2.Class({
 	}
 });
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//===================================================================================
+function HandleDisplayAvailableRequest(m){
+	if( m.displayType === 'tiled' ){
+		m.isAvailable = true;
+	};
+};
+
+function HandleDisplayRenderRequest(m){
+	if( m.displayType === 'tiled' ){
+		var options = {};
+		if( m.displayOptions ){
+			for(var key in m.displayOptions){
+				options[key] = m.displayOptions[key];
+			};
+		};
+		
+		options.documentSource = m.config.documentSource;
+		options.displayPanelName = m.displayId;
+		options.showService = m.config.directory.showService;
+		options.createDocProcess = m.config.directory.createDocProcess;
+		options.requestService = m.config.directory.requestService;
+		options.schemaRepository = m.config.directory.schemaRepository;
+		options.customService = m.config.directory.customService;
+		options.dispatchService = m.config.directory.dispatchService;
+		
+		new TiledDisplay(options);
+
+		m.onSuccess();
+	};
+};
+
+//===================================================================================
 
 $n2.couchDisplayTiles = {
 	TiledDisplay: TiledDisplay
 	,SchemaFilterFactory: SchemaFilterFactory
 	,ReferenceRelatedDocumentDiscovery: ReferenceRelatedDocumentDiscovery
+	,HandleDisplayAvailableRequest: HandleDisplayAvailableRequest
+	,HandleDisplayRenderRequest: HandleDisplayRenderRequest
 };
 
 })(jQuery,nunaliit2);

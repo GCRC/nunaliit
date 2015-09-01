@@ -14,8 +14,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,9 +23,11 @@ import ca.carleton.gcrc.couch.export.ExportUtils.Filter;
 import ca.carleton.gcrc.couch.export.ExportUtils.Format;
 import ca.carleton.gcrc.couch.export.ExportUtils.Method;
 import ca.carleton.gcrc.couch.export.impl.DocumentFilterGeometryType;
+import ca.carleton.gcrc.couch.export.impl.DocumentRetrievalFiltered;
 import ca.carleton.gcrc.couch.export.impl.DocumentRetrievalId;
 import ca.carleton.gcrc.couch.export.impl.DocumentRetrievalLayer;
 import ca.carleton.gcrc.couch.export.impl.DocumentRetrievalSchema;
+import ca.carleton.gcrc.couch.export.impl.ExportFormatCSV;
 import ca.carleton.gcrc.couch.export.impl.ExportFormatGeoJson;
 import ca.carleton.gcrc.couch.export.impl.SchemaCacheCouchDb;
 
@@ -103,9 +105,7 @@ public class ExportServlet extends HttpServlet {
 		Filter filter = null;
 		{
 			String filterStr = request.getParameter("filter");
-			if( null == filterStr ) {
-				filter = Filter.ALL;
-			} else {
+			if( null != filterStr ) {
 				for(Filter f : Filter.values()){
 					if( f.matches(filterStr) ){
 						filter = f;
@@ -113,12 +113,9 @@ public class ExportServlet extends HttpServlet {
 				}
 			}
 			
-			if( null == filter ) {
-				Exception e = new Exception("Unknown filter");
-				reportError(response,HttpServletResponse.SC_INTERNAL_SERVER_ERROR,e);
-				return;
+			if( null != filter ) {
+				logger.debug("Export Filter: "+filter.name());
 			}
-			logger.debug("Export Filter: "+filter.name());
 		}
 		
 		// Parse method
@@ -207,19 +204,30 @@ public class ExportServlet extends HttpServlet {
 		}
 		
 		// Build document filter based on filter type
-		DocumentFilter docFilter = null;
-		{
-			docFilter = new DocumentFilterGeometryType(filter);
+		if( null != filter ){
+			DocumentFilter docFilter = new DocumentFilterGeometryType(filter);
+			DocumentRetrievalFiltered filteredRetrieval = 
+					new DocumentRetrievalFiltered(docRetrieval, docFilter);
+			docRetrieval = filteredRetrieval;
 		}
 		
 		ExportFormat outputFormat = null;
 		if( Format.GEOJSON == format ) {
 			try {
 				SchemaCache schemaCache = new SchemaCacheCouchDb(configuration.getCouchDb());
-				outputFormat = new ExportFormatGeoJson(schemaCache, docRetrieval, docFilter);
+				outputFormat = new ExportFormatGeoJson(schemaCache, docRetrieval);
 			} catch (Exception e) {
 				throw new ServletException("Problem setting up format: "+format.name(),e);
 			}
+
+		} else if( Format.CSV == format ) {
+			try {
+				SchemaCache schemaCache = new SchemaCacheCouchDb(configuration.getCouchDb());
+				outputFormat = new ExportFormatCSV(schemaCache, docRetrieval);
+			} catch (Exception e) {
+				throw new ServletException("Problem setting up format: "+format.name(),e);
+			}
+		
 		} else {
 			throw new ServletException("Do not know how to handle format: "+format.name());
 		}
@@ -255,6 +263,33 @@ public class ExportServlet extends HttpServlet {
 				JSONObject obj = new JSONObject();
 				obj.put("ok", true);
 				obj.put("message", "export service");
+				
+				// Formats
+				{
+					JSONArray formats = new JSONArray();
+					for(Format f : Format.values()){
+						formats.put(f.getLabel());
+					}
+					obj.put("formats", formats);
+				}
+				
+				// Filters
+				{
+					JSONArray filters = new JSONArray();
+					for(Filter f : Filter.values()){
+						filters.put(f.getLabel());
+					}
+					obj.put("filters", filters);
+				}
+				
+				// Methods
+				{
+					JSONArray methods = new JSONArray();
+					for(Method f : Method.values()){
+						methods.put(f.getLabel());
+					}
+					obj.put("methods", methods);
+				}
 				
 				response.setCharacterEncoding("utf-8");
 				response.setContentType("text/plain");

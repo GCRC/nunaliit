@@ -10,11 +10,6 @@
 		,"schemaName": "attachments"
 	}
 	,{
-		"selector": [ "nunaliit_contribution" ]
-		,"create": false
-		,"schemaName": "contribution"
-	}
-	,{
 		"selector": [ "nunaliit_geom" ]
 		,"create": false
 		,"schemaName": "geom"

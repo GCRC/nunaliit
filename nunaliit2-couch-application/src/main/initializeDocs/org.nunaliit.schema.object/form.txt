@@ -1,7 +1,6 @@
 <div class="n2_form_object">
 	<table>
 		{{#place}}{{{:html}}}{{/place}}
-		{{#nunaliit_contribution}}{{{:html}}}{{/nunaliit_contribution}}
 		{{#nunaliit_geom}}{{{:html}}}{{/nunaliit_geom}}
 		{{#nunaliit_attachments}}{{{:html}}}{{/nunaliit_attachments}}
 	</table>

@@ -182,6 +182,9 @@ function getStringForLocale(str){
 function getLocalizedString(str, packageName, args) {
 	var suppressTranslationRequest = false;
 	
+	if( null === str ) return str;
+	if( typeof str === 'undefined' ) return str;
+	
 	var locale = getLocale();
 	var lang = locale.lang;
 
@@ -288,7 +291,10 @@ function addLocalizedStrings(lang, strings) {
 	var dict = getDictionaryFromLang(lang);
 
 	for(var key in strings) {
-		dict[key] = strings[key];
+		var value = strings[key];
+		if( typeof value === 'string' && value ){
+			dict[key] = value;
+		};
 	};
 	
 	$n2.l10n.refreshLocalizedStrings();

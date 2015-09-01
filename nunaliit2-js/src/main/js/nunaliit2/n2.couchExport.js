@@ -36,23 +36,24 @@ $Id: n2.upload.js 8165 2012-05-31 13:14:37Z jpfiset $
  * @requires n2.class.js
  */
 ;(function($,$n2){
+"use strict";
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 
 var Export = $n2.Class('Export',{
 	
-	serverUrl: null
+	serverUrl: null,
 	
-	,initialize: function(opts_){
+	initialize: function(opts_){
 		var opts = $n2.extend({
 			url: null
 		},opts_);
 		
 		this.serverUrl = opts.url;
-	}
+	},
 
-	,checkAvailable: function(opts_){
+	checkAvailable: function(opts_){
 		var opts = $n2.extend({
 			onAvailable: function(){}
 			,onNotAvailable: function(){}
@@ -63,15 +64,13 @@ var Export = $n2.Class('Export',{
 			return;
 		};
 		
-		var _this = this;
-		
 		$.ajax({
 			url: this.serverUrl+'welcome'
 			,type: 'GET'
 			,dataType: 'json'
 			,success: function(data, textStatus, jqXHR){
 				if( data && data.ok ) {
-					opts.onAvailable();
+					opts.onAvailable(data);
 				} else {
 					opts.onNotAvailable();
 				};
@@ -80,15 +79,16 @@ var Export = $n2.Class('Export',{
 				opts.onNotAvailable();
 			}
 		});
-	}
+	},
 	
-	,exportByDocIds: function(opts_){
+	exportByDocIds: function(opts_){
 		var opts = $n2.extend({
 			docIds: null
 			,targetWindow: null
-			,geometryType: 'all'
+			,filter: 'all'
 			,contentType: null
 			,fileName: null
+			,format: null
 			,onError: $n2.reportError
 		},opts_);
 		
@@ -108,15 +108,41 @@ var Export = $n2.Class('Export',{
 		};
 		var $form = $('<form action="'+url+'" method="POST"'+target+'></form>');
 		
-		$('<input type="hidden" name="format" value="geojson"></input>').appendTo($form);
 		$('<input type="hidden" name="method" value="doc-id"></input>').appendTo($form);
-		$('<input type="hidden" name="filter"></input>')
-			.val(opts.geometryType)
-			.appendTo($form);
-		
+
 		if( opts.contentType ){
-			$('<input type="hidden" name="contentType"></input>')
+			$('<input>')
+				.attr('type','hidden')
+				.attr('name','contentType')
 				.val(opts.contentType)
+				.appendTo($form);
+		};
+
+		if( opts.filter ){
+			$('<input>')
+				.attr('type','hidden')
+				.attr('name','filter')
+				.val(opts.filter)
+				.appendTo($form);
+		} else {
+			$('<input>')
+				.attr('type','hidden')
+				.attr('name','filter')
+				.val('all')
+				.appendTo($form);
+		};
+
+		if( opts.format ){
+			$('<input>')
+				.attr('type','hidden')
+				.attr('name','format')
+				.val(opts.format)
+				.appendTo($form);
+		} else {
+			$('<input>')
+				.attr('type','hidden')
+				.attr('name','format')
+				.val('geojson')
 				.appendTo($form);
 		};
 		

@@ -2313,13 +2313,30 @@ var CouchEditService = $n2.Class({
 		this.initialLayers = layerIds;
 	},
 	
+	_initiateEditor: function(m){
+		var _this = this;
+		
+		// Check that we are logged in
+		var authService = this.authService;
+		if( authService && false == authService.isLoggedIn() ) {
+			authService.showLoginForm({
+				onSuccess: function(result,options) {
+					_this._initiateEditor(m);
+				}
+			});
+			return;
+		};
+		
+		if( m.feature ) {
+			this._showAttributeForm(m.feature);
+		} else {
+			this.showDocumentForm(m.doc);
+		};
+	},
+	
 	_handle: function(m){
 		if( 'editInitiate' === m.type ){
-			if( m.feature ) {
-				this._showAttributeForm(m.feature);
-			} else {
-				this.showDocumentForm(m.doc);
-			};
+			this._initiateEditor(m);
 			
 		} else if( 'editCancel' === m.type ) {
 			this.cancelDocumentForm();

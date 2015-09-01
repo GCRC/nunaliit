@@ -35,21 +35,19 @@ POSSIBILITY OF SUCH DAMAGE.
 
 var 
  _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); }
- ,DH = 'n2.canvasCustomSVG'
+ ,DH = 'n2.canvasCustomHTML'
  ;
- 
-// Required library: d3
-var $d = undefined;
-if( window ) $d = window.d3;
- 
+
 // --------------------------------------------------------------------------
-var CustomSvgCanvas = $n2.Class({
+var CustomHtmlCanvas = $n2.Class({
 
 	canvasId: null,
  	
 	interactionId: null,
  	
 	dispatchService: null,
+
+	showService: null,
 
 	moduleDisplay: null,
 	
@@ -63,10 +61,9 @@ var CustomSvgCanvas = $n2.Class({
 			,interactionId: null
 			,config: null
 			,moduleDisplay: null
-			,svgAttachment: null
+			,htmlAttachment: null
 			,cssAttachment: null
 			,elemIdToDocId: null
-			,unselectIds: null
 			,onSuccess: function(){}
 			,onError: function(err){}
 		},opts_);
@@ -81,6 +78,7 @@ var CustomSvgCanvas = $n2.Class({
 		if( config ){
 			if( config.directory ){
 				this.dispatchService = config.directory.dispatchService;
+				this.showService = config.directory.showService;
 			};
 		};
 		
@@ -94,20 +92,6 @@ var CustomSvgCanvas = $n2.Class({
 				var node = {
 					n2_id: docId
 					,nodeId: elemId
-				};
-				
-				this.nodesById[elemId] = node;
-			};
-		};
-		
-		// Add information about "unselect"
-		if( $n2.isArray(opts.unselectIds) ){
-			for(var i=0,e=opts.unselectIds.length; i<e; ++i){
-				var elemId = opts.unselectIds[i];
-				
-				var node = {
-					nodeId: elemId
-					,unselect: true
 				};
 				
 				this.nodesById[elemId] = node;
@@ -152,44 +136,44 @@ var CustomSvgCanvas = $n2.Class({
  					}
  				});
  			} else {
- 				opts.onError( _loc('Location of CSS is undefined for customSvg canvas') );
+ 				opts.onError( _loc('Location of CSS is undefined for customHtml canvas') );
  			};
 	 			
  		} else {
  			cssLoaded(undefined);
  		};
 
- 		$n2.log('CustomSvgCanvas',this);
+ 		$n2.log('CustomHtmlCanvas',this);
  		
  		function cssLoaded(cssContent){
  			//$n2.log('CSS content',cssContent);
  	 		
- 	 		if( opts.svgAttachment ){
+ 	 		if( opts.htmlAttachment ){
  	 			// Load up SVG as an attachment to the module document
- 	 			var svgUrl = _this._computeAttachmentUrl(opts.svgAttachment);
- 	 			if( svgUrl ){
+ 	 			var htmlUrl = _this._computeAttachmentUrl(opts.htmlAttachment);
+ 	 			if( htmlUrl ){
  	 				$.ajax({
- 	 					url: svgUrl
+ 	 					url: htmlUrl
  	 					,type: 'get'
  	 					,async: true
- 	 					,dataType: 'xml'
- 	 					,success: function(svgDocument) {
+ 	 					,dataType: 'html'
+ 	 					,success: function(htmlDocument) {
  							opts.onSuccess();
  							
- 							_this._renderSvgDocument(svgDocument, cssContent);
+ 							_this._renderHtmlDocument(htmlDocument, cssContent);
  	 					}
  	 					,error: function(XMLHttpRequest, textStatus, errorThrown) {
- 	 						opts.onError( _loc('Error loading SVG from location: {url}',{
- 	 							url: svgUrl
+ 	 						opts.onError( _loc('Error loading HTML from location: {url}',{
+ 	 							url: htmlUrl
  	 						}) );
  	 					}
  	 				});
  	 			} else {
- 	 				opts.onError( _loc('Location of SVG is undefined for customSvg canvas') );
+ 	 				opts.onError( _loc('Location of SVG is undefined for customHtml canvas') );
  	 			};
  	 			
  	 		} else {
- 	 			opts.onError( _loc('A SVG file must be specified for the customSvg canvas') );
+ 	 			opts.onError( _loc('A SVG file must be specified for the customHtml canvas') );
  	 		};
 
  		};
@@ -198,47 +182,53 @@ var CustomSvgCanvas = $n2.Class({
  	_handleDispatch: function(m){
  	},
  	
- 	_renderSvgDocument: function(svgDocument, cssContent){
+ 	_renderHtmlDocument: function(htmlDocument, cssContent){
  		var _this = this;
  		
- 		$n2.log('custom svg loaded');
+ 		$n2.log('custom html loaded');
  		
- 		$('#'+this.canvasId)
- 			.empty()
- 			.append(svgDocument.documentElement);
+ 		var $canvas = $('#'+this.canvasId)
+ 			.html(htmlDocument);
  		
  		// Adjust height and width
- 		$d.select('#'+this.canvasId).selectAll('svg')
- 			.attr('width','100%')
- 			.attr('height','100%')
- 			.attr('preserveAspectRatio','xMidYMid meet')
+ 		$canvas.children()
+ 			.css('width','100%')
+ 			.css('height','100%')
+			.css('position','absolute')
+			.css('left','0')
+			.css('top','0')
  			;
  		
  		// Try to insert style information
  		if( cssContent ){
- 	 		var $style = $('#'+this.canvasId).find('style');
- 	 		if( $style.length > 0 ){
- 	 			$style.append(cssContent);
- 	 		} else {
- 	 			// No style. Insert one
- 	 			var $svg = $('#'+this.canvasId).children('svg');
- 	 			if( $svg.length > 0 ){
- 	 				// Style node should be under SVG
- 	 				$('<style>')
- 	 					.attr('type','text/css')
- 	 					.text(cssContent)
- 	 					.prependTo($svg);
- 	 			};
+			var $html = $canvas.find('html');
+ 	 		if( $html.length < 1 ){
+ 	 			// Use main page
+ 	 			$html = $('html');
+ 	 		};
+			
+ 	 		var $head = $html.find('head');
+ 	 		if( $head.length < 1 ){
+ 	 			$head = $('<head>')
+ 	 				.prependTo($html);
+ 	 		};
+ 	 			
+ 	 		if( $head.length > 0 ){
+ 				var $style = $('<style>')
+					.attr('type','text/css')
+					.text(cssContent);
+
+ 				$head.first().append( $style );
  	 		};
  		};
  		
  		// Fix URLs associated with images
- 		$d.select('#'+this.canvasId).selectAll('image').each(function(){
- 			var $image = $d.select(this);
- 			var attName = $image.attr('xlink:href');
+ 		$canvas.find('img').each(function(){
+ 			var $image = $(this);
+ 			var attName = $image.attr('src');
  			if( attName ){
  	 			var url = _this._computeAttachmentUrl(attName);
- 	 			$image.attr('xlink:href',url);
+ 	 			$image.attr('src',url);
  			};
  		});
 
@@ -246,33 +236,26 @@ var CustomSvgCanvas = $n2.Class({
  		// were specified using elemIdToDocId option
  		for(var nodeId in this.nodesById){
  			var node = this.nodesById[nodeId];
+ 			var docId = node.n2_id;
  			
- 			if( node.n2_id ){
- 	 			var docId = node.n2_id;
- 	 			$d.select('#'+nodeId)
-	 				.attr('n2-doc-id', docId)
-	 				.on('mouseover',function(d,i){
-	 					_this._mouseOver($d.select(this),$d.event);
-	 				})
-					.on('mouseout',function(d,i){
-	 					_this._mouseOut($d.select(this),$d.event);
-	 				})
-					.on('click',function(d,i){
-	 					_this._mouseClick($d.select(this),$d.event);
-	 				})
-	 				;
- 			} else if( node.unselect ) {
- 	 			$d.select('#'+nodeId)
-					.on('click',function(d,i){
-	 					_this._mouseUnselect($d.select(this),$d.event);
-	 				});
- 			};
+ 			$('#'+nodeId)
+ 				.attr('n2-doc-id', docId)
+ 				.mouseover(function(e){
+ 					_this._mouseOver($(this),e);
+ 				})
+				.mouseout(function(e){
+ 					_this._mouseOut($(this),e);
+ 				})
+				.click(function(e){
+ 					_this._mouseClick($(this),e);
+ 				})
+ 				;
  		};
 
  		
  		// Find all elements that are associated with a doc id
- 		$d.select('#'+this.canvasId).selectAll('.n2canvas_linkDocId').each(function(){
- 			var $child = $d.select(this);
+ 		$canvas.find('.n2canvas_linkDocId').each(function(){
+ 			var $child = $(this);
  			
  			var nodeId = $child.attr('id');
  			if( !nodeId ){
@@ -291,23 +274,21 @@ var CustomSvgCanvas = $n2.Class({
  	 			_this.nodesById[nodeId] = node;
  	 			
  	 			$child
-	 				.on('mouseover',function(d,i){
-	 					_this._mouseOver($d.select(this),$d.event);
+	 				.mouseover(function(e){
+	 					_this._mouseOver($(this),e);
 	 				})
-					.on('mouseout',function(d,i){
-	 					_this._mouseOut($d.select(this),$d.event);
+					.mouseout(function(e){
+	 					_this._mouseOut($(this),e);
 	 				})
-					.on('click',function(d,i){
-	 					_this._mouseClick($d.select(this),$d.event);
+					.click(function(e){
+	 					_this._mouseClick($(this),e);
 	 				})
 	 				;
  			};
 
  			$child
-				.classed({
-					'n2canvas_linkDocId':false
-					,'n2canvas_linkedDocId':true
-				});
+				.removeClass('n2canvas_linkDocId')
+				.addClass('n2canvas_linkedDocId');
  		});
 
 		// Adjust intention on all nodes. Update our elements accordingly
@@ -319,18 +300,21 @@ var CustomSvgCanvas = $n2.Class({
 		this.intentView.addNodes(nodes);
 		this._intentChanged(nodes);
  		
- 		$d.select('#'+this.canvasId).selectAll('.n2canvas_unselect').each(function(){
- 			var $child = $d.select(this);
+		$canvas.find('.n2canvas_unselect').each(function(){
+ 			var $child = $(this);
  			
  			$child
-				.on('click',function(d,i){
- 					_this._mouseUnselect($d.select(this),$d.event);
+				.click(function(e){
+ 					_this._mouseUnselect($(this),e);
  				})
-				.classed({
-					'n2canvas_unselect':false
-					,'n2canvas_unselected':true
-				});
+ 				.removeClass('n2canvas_unselect')
+ 				.addClass('n2canvas_unselected');
  		});
+ 		
+ 		// Get show service to fix HTML
+ 		if( this.showService ){
+ 			this.showService.fixElementAndChildren($canvas, {}, undefined);
+ 		};
  	},
  	
  	_mouseOver: function($elem, evt){
@@ -380,12 +364,25 @@ var CustomSvgCanvas = $n2.Class({
  		for(var i=0,e=nodes.length; i<e; ++i){
  			var node = nodes[i];
  			
- 			$d.select('#'+node.nodeId)
- 				.classed({
- 					'n2canvas_hovered': node.n2_hovered
- 					,'n2canvas_selected': node.n2_selected
- 					,'n2canvas_selectedHovered': (node.n2_selected && node.n2_hovered)
- 				});
+ 			var $node = $('#'+node.nodeId);
+ 
+ 			if( node.n2_hovered ){
+ 				$node.addClass('n2canvas_hovered');
+ 			} else {
+ 				$node.removeClass('n2canvas_hovered');
+ 			};
+ 
+ 			if( node.n2_selected ){
+ 				$node.addClass('n2canvas_selected');
+ 			} else {
+ 				$node.removeClass('n2canvas_selected');
+ 			};
+ 			 
+ 			if( node.n2_selected && node.n2_hovered ){
+ 				$node.addClass('n2canvas_selectedHovered');
+ 			} else {
+ 				$node.removeClass('n2canvas_selectedHovered');
+ 			};
  		};
  	},
  	
@@ -403,18 +400,14 @@ var CustomSvgCanvas = $n2.Class({
  
 //--------------------------------------------------------------------------
 function HandleCanvasAvailableRequest(m){
-	if( m.canvasType === 'customSvg' ){
-		if( $d ) {
-			m.isAvailable = true;
-		} else {
-			$n2.log('Canvas customSvg requires d3 library');
-		};
+	if( m.canvasType === 'customHtml' ){
+		m.isAvailable = true;
 	};
 };
 
 //--------------------------------------------------------------------------
 function HandleCanvasDisplayRequest(m){
-	if( m.canvasType === 'customSvg' && $d ){
+	if( m.canvasType === 'customHtml' ){
 		
 		var options = {};
 		if( m.canvasOptions ){
@@ -430,13 +423,13 @@ function HandleCanvasDisplayRequest(m){
 		options.onSuccess = m.onSuccess;
 		options.onError = m.onError;
 		
-		new CustomSvgCanvas(options);
+		new CustomHtmlCanvas(options);
 	};
 };
 
 //--------------------------------------------------------------------------
-$n2.canvasCustomSvg = {
-	CustomSvgCanvas: CustomSvgCanvas
+$n2.canvasCustomHtml = {
+	CustomHtmlCanvas: CustomHtmlCanvas
 	,HandleCanvasAvailableRequest: HandleCanvasAvailableRequest
 	,HandleCanvasDisplayRequest: HandleCanvasDisplayRequest
 };

@@ -318,7 +318,7 @@ public class UploadServlet extends HttpServlet {
 								b = stream.read();
 							}
 						} catch (Exception e) {
-							throw new Exception("Error while writing file "+target.getAbsolutePath());
+							throw new Exception("Error while writing file "+target.getAbsolutePath(),e);
 						} finally {
 							if( null != fos ) {
 								try {
@@ -391,10 +391,37 @@ public class UploadServlet extends HttpServlet {
 				osw.flush();
 			}
 		} catch (SizeLimitExceededException e) {
+			if( null != onUploadedListener ) {
+				onUploadedListener.onError(
+					progressId
+					,loadedFiles
+					,parameterMap
+					,request.getUserPrincipal()
+					,request.getCookies()
+				);
+			}
 			reportError(response, HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE, e, loadedFiles, progressId);
 		} catch (FileSizeLimitExceededException e) {
+			if( null != onUploadedListener ) {
+				onUploadedListener.onError(
+					progressId
+					,loadedFiles
+					,parameterMap
+					,request.getUserPrincipal()
+					,request.getCookies()
+				);
+			}
 			reportError(response, HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE, e, loadedFiles, progressId);
 		} catch (Exception e) {
+			if( null != onUploadedListener ) {
+				onUploadedListener.onError(
+					progressId
+					,loadedFiles
+					,parameterMap
+					,request.getUserPrincipal()
+					,request.getCookies()
+				);
+			}
 			reportError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e, loadedFiles, progressId);
 		}
 	}

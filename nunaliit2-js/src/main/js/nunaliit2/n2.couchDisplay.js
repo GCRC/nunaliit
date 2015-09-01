@@ -223,6 +223,10 @@ var Display = $n2.Class({
 					= new LegacyDisplayRelatedFunctionAdapter(DisplayLinkedInfo);
 			};
 		};
+
+		$('body').addClass('n2_display_format_classic');
+		
+		$n2.log('ClassicDisplay',this);
 	}
 
 	// external
@@ -771,18 +775,6 @@ var Display = $n2.Class({
 		};
 	}
 	
-	,_addRelatedDocument: function(doc, relatedSchemaNames){
-		var _this = this;
-		
-		this.createRelatedDocProcess.createDocumentFromSchemaNames({
-			schemaNames: relatedSchemaNames
-			,relatedDoc: doc
-			,onSuccess: function(docId){
-//				_this._RefreshClickedFeature();
-			}
-		});
-	}
-	
 	,_getAllReferences: function(opts_){
 		var opts = $n2.extend({
 			doc: null
@@ -1298,69 +1290,24 @@ var LegacyDisplayRelatedFunctionAdapter = $n2.Class({
 		},opts_);
 		
 		var display = opts.display;
-		var data = opts.doc;
-		var schema = opts.schema;
+		var doc = opts.doc;
 		var $buttons = $(opts.div);
+		var createRelatedDocProcess = display.createRelatedDocProcess;
 		
-		var schemaRepository = display.schemaRepository;
+		var $placeHolder = $('<span>')
+			.appendTo($buttons);
 		
- 		// Show 'add related' button
-		if( schema
-		 && schema.relatedSchemaNames 
-		 && schema.relatedSchemaNames.length
-		 ) {
-			var showRelatedButton = true;
-			if( display.restrictAddRelatedButtonToLoggedIn ){
-				var sessionContext = $n2.couch.getSession().getContext();
-				if( !sessionContext || !sessionContext.name ) {
-					showRelatedButton = false;
-				};
-			};
-			
-			if( showRelatedButton ) {
-	 			var selectId = $n2.getUniqueId();
-				var $addRelatedButton = $('<select>')
-					.attr('id',selectId)
-					.appendTo($buttons);
-				$('<option>')
-					.text( _loc('Add Related Item') )
-					.val('')
-					.appendTo($addRelatedButton);
-				for(var i=0,e=schema.relatedSchemaNames.length; i<e; ++i){
-					var schemaName = schema.relatedSchemaNames[i];
-					$('<option>')
-						.text(schemaName)
-						.val(schemaName)
-						.appendTo($addRelatedButton);
-					
-					if( schemaRepository ){
-						schemaRepository.getSchema({
-							name: schemaName
-							,onSuccess: function(schema){
-								$('#'+selectId).find('option').each(function(){
-									var $option = $(this);
-									if( $option.val() === schema.name ){
-										$option.text(schema.getLabel());
-									};
-								});
-							}
-						});
-					};
-				};
-				
-				$addRelatedButton.change(function(){
-					var val = $(this).val();
-					$(this).val('');
-					display._addRelatedDocument(data, [val]);
-					return false;
-				});
-				
+		createRelatedDocProcess.insertAddRelatedSelection({
+			placeHolderElem: $placeHolder
+			,doc: doc
+			,onElementCreated: function($addRelatedButton){
 				$addRelatedButton.addClass('nunaliit_form_link');
 				$addRelatedButton.addClass('nunaliit_form_link_add_related_item');
 				
 				$addRelatedButton.menuselector();
-			};
-		};
+			}
+			,onRelatedDocumentCreated: function(docId){}
+		});
 	}
 });
 
@@ -1901,12 +1848,56 @@ var TreeDocumentViewer = $n2.Class({
 });
 
 //===================================================================================
+function HandleDisplayAvailableRequest(m){
+	if( m.displayType === 'classic' ){
+		m.isAvailable = true;
+	};
+};
+
+function HandleDisplayRenderRequest(m){
+	if( m.displayType === 'classic' ){
+		var options = {};
+		if( m.displayOptions ){
+			for(var key in m.displayOptions){
+				options[key] = m.displayOptions[key];
+			};
+		};
+		
+		options.documentSource = m.config.documentSource;
+		options.displayPanelName = m.displayId;
+		options.showService = m.config.directory.showService;
+		options.uploadService = m.config.directory.uploadService;
+		options.createDocProcess = m.config.directory.createDocProcess;
+		options.serviceDirectory = m.config.directory;
+		
+		var displayControl = new Display(options);
+
+		var defaultDisplaySchemaName = 'object';
+		if( m.displayOptions && m.displayOptions.defaultSchemaName ){
+			defaultDisplaySchemaName = m.displayOptions.defaultSchemaName;
+		};
+		m.config.directory.schemaRepository.getSchema({
+			name: defaultDisplaySchemaName
+			,onSuccess: function(schema){
+				if( displayControl.setSchema ) {
+					displayControl.setSchema(schema);
+				};
+			}
+		});
+
+		m.onSuccess();
+	};
+};
+
+//===================================================================================
 
 // Exports
 $n2.couchDisplay = {
 	Display: Display,
 	CommentRelatedInfo: CommentRelatedInfo,
 	TreeDocumentViewer: TreeDocumentViewer
+	,HandleDisplayAvailableRequest: HandleDisplayAvailableRequest
+	,HandleDisplayRenderRequest: HandleDisplayRenderRequest
 //	DisplayRelatedInfo: DisplayRelatedInfo,
 //	DisplayLinkedInfo: DisplayLinkedInfo
 	

@@ -286,6 +286,30 @@ public class SchemaDefinition {
 			fos.flush();
 			fos.close();
 		}
+		
+		// export.json
+		{
+			File file = new File(schemaDir, "export.json");
+			FileOutputStream fos = new FileOutputStream(file);
+			OutputStreamWriter osw = new OutputStreamWriter(fos);
+			JSONArray jsonExport = computeExportField();
+			osw.write( jsonExport.toString(3) );
+			osw.flush();
+			fos.flush();
+			fos.close();
+		}
+		
+		// csvExport.json
+		{
+			File file = new File(schemaDir, "csvExport.json");
+			FileOutputStream fos = new FileOutputStream(file);
+			OutputStreamWriter osw = new OutputStreamWriter(fos);
+			JSONArray jsonExport = computeExportField();
+			osw.write( jsonExport.toString(3) );
+			osw.flush();
+			fos.flush();
+			fos.close();
+		}
 	}
 
 	public JSONObject toJson() throws Exception {
@@ -353,6 +377,35 @@ public class SchemaDefinition {
 		}
 		
 		return jsonCreate;
+	}
+	
+	public JSONArray computeExportField() throws Exception {
+		JSONArray jsonExport = new JSONArray();
+
+//		// id
+//		{
+//			JSONObject o = new JSONObject();
+//			o.put("select", "_id");
+//			o.put("label", "id");
+//			o.put("type", "text");
+//			jsonExport.put(o);
+//		}
+//
+//		// rev
+//		{
+//			JSONObject o = new JSONObject();
+//			o.put("select", "_rev");
+//			o.put("label", "rev");
+//			o.put("type", "text");
+//			jsonExport.put(o);
+//		}
+
+		String schemaName = getSchemaName();
+		for(SchemaAttribute attribute : attributes){
+			attribute.addExportField(jsonExport, schemaName);
+		}
+		
+		return jsonExport;
 	}
 	
 	public void printBrief(PrintWriter pw) throws Exception {

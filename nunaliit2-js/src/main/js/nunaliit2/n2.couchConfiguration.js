@@ -123,10 +123,15 @@ function Configure(options_){
 	configuration.directory.eventService = new $n2.couchEvents.EventSupport({
 		directory: configuration.directory
 	});
-	
+
 	// Custom Service
 	configuration.directory.customService = new $n2.custom.CustomService({
 		directory: configuration.directory
+	});
+
+	// Intent Service
+	configuration.directory.userIntentService = new $n2.userIntentView.IntentService({
+		dispatchService: configuration.directory.dispatchService
 	});
 
 	// Configuration
@@ -275,6 +280,12 @@ function Configure(options_){
 			,attachmentService: configuration.directory.attachmentService
 		});
 		
+		// Navigation Service
+		configuration.directory.navigationService = new $n2.couchNavigation.NavigationService({
+			dispatchService: configuration.directory.dispatchService
+			,documentSource: configuration.documentSource
+		});
+		
 		configuration.directory.showService = new $n2.couchShow.Show({
 			db: configuration.atlasDb
 			,documentSource: configuration.documentSource
@@ -344,15 +355,12 @@ function Configure(options_){
 			dispatchService: configuration.directory.dispatchService
 		});
 		
-	 	configuration.directory.widgetService = new $n2.widgetBasic.Service({
+	 	configuration.directory.displayService = new $n2.display.Service({
 			dispatchService: configuration.directory.dispatchService
 		});
-
-	 	configuration.contributions = new $n2.couchContributions({
-			db: configuration.atlasDb
-			,designDoc: configuration.atlasDesign
-			,showService: configuration.directory.showService
-			,uploads: configuration.directory.uploadService
+		
+	 	configuration.directory.widgetService = new $n2.widgetBasic.Service({
+			dispatchService: configuration.directory.dispatchService
 		});
 	 	
 	 	$n2.mapAndControls.DefaultPopupHtmlFunction = function(opt_){

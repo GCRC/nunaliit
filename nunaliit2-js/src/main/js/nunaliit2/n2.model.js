@@ -115,7 +115,7 @@ var ModelParameter = $n2.Class({
 			var fn = function(m, addr, dispatcher){
 				_this._handle(m, addr, dispatcher);
 			};
-			this.dispatchService.register(DH, this.eventNameChange, fn);
+			this.dispatchService.register(DH, this.eventNameSet, fn);
 			this.dispatchService.register(DH, this.eventNameGet, fn);
 		};
 	},
@@ -140,7 +140,7 @@ var ModelParameter = $n2.Class({
 	sendUpdate: function(){
 		var effectiveValue = this._getValue();
 		this.dispatchService.send(DH, {
-			type: this.eventNameSet
+			type: this.eventNameChange
 			,parameterId: this.parameterId
 			,value: effectiveValue
 		});
@@ -163,11 +163,12 @@ var ModelParameter = $n2.Class({
 			this.setFn.call(this.model, value);
 		} else {
 			this.model[this.name] = value;
+			this.sendUpdate();
 		};
 	},
 	
 	_handle: function(m, addr, dispatcher){
-		if( m.type === this.eventNameChange ){
+		if( m.type === this.eventNameSet ){
 			var value = m.value;
 				
 			this._setValue(value);

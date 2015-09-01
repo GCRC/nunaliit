@@ -50,63 +50,43 @@ var typeClassStringPrefix = 'n2schema_type_';
 var HTML = ':html';
 var INPUT = ':input';
 var FIELD = ':field';
+var SELECTOR = ':selector';
 var ITERATE = ':iterate';
 var EMPTY = ':empty';
 var CONTEXT = ':context';
 var PARENT = ':parent';
-var SELECT = ':selector';
+var SELECT = '::cur-selector';
 var LOCALIZE = ':localize';
 var ARRAY = ':array';
 
 //============================================================
 // Object
 
-function getDataFromObjectSelector(o, selectors) {
-	if( typeof(selectors) === 'string' ) {
-		selectors = selectors.split('.');
-	}
-	return findDataFromObject(o, selectors, 0);
-};
-
-function findDataFromObject(o, selectors, selectorIndex) {
-	if( selectorIndex >= selectors.length ) {
-		return o;
+function parseSelectorString(selStr){
+	if( '.' === selStr ){
+		return new $n2.objectSelector.ObjectSelector([]);
 	};
 	
-	// This is an error. There are more
-	// selectors in the array but we have
-	// a scalar. Return an error.
-	if( null == o
-	 || typeof(o) === 'number' 
-	 || typeof(o) === 'string'
-	 || typeof(o) === 'undefined'
-	 || typeof(o) === 'function' ) {
-		return null;
-	};
-	
-	if( $n2.isArray(o) ) {
-		var index = 1 * selectors[selectorIndex];
-		if( index >= o.length ) {
-			return null;
-		};
-		return findDataFromObject(o[index], selectors, (selectorIndex+1));
-	}
-
-	if( typeof(o) === 'object' ) {
-		var key = selectors[selectorIndex];
-		var value = o[key];
-		if( value === undefined ) {
-			return null;
-		};
-		return findDataFromObject(value, selectors, (selectorIndex+1));
-	};
-	
-	// Should not get here. Error. Return null.
-	return null;
+	var selectors = selStr.split('.');
+	return new $n2.objectSelector.ObjectSelector(selectors);
 };
 
 //============================================================
-// Context
+var customFieldHandlers = {};
+
+function registerCustomFieldHandler(opts_){
+	var opts = $n2.extend({
+		customType: null
+		,handler: null
+	},opts_);
+	
+	if( typeof opts.customType === 'string'
+	 && typeof opts.handler === 'function' ){
+		customFieldHandlers[opts.customType] = opts.handler;
+	};
+};
+
+//============================================================
 
 function _localizeString() {
 	var args = [];
@@ -141,11 +121,8 @@ function _localizeString() {
 	};
 	
 	// Get data from key
-	if( '.' === key ) {
-		var s = this;
-	} else {
-		s = getDataFromObjectSelector(this, key);
-	};
+	var objSel = parseSelectorString(key);
+	var s = objSel.getValue(this);
 
 	if( s
 	 && typeof(s) === 'object' 
@@ -223,7 +200,7 @@ function _localizeString() {
 	};
 };
 
-function _formSingleField(r,obj,completeSelectors,options){
+function _formSingleField(r,completeSelectors,options){
 	
 	// option: textarea
 	if( options.textarea ){
@@ -270,18 +247,19 @@ function _formField() {
 	// ([obj,]options)
 	// obj is not provided in this case, since we do not expect any arguments
 	// to {{:field}}
-	// The options hash contains a "fn" attribute, which is a function to
-	// render inner content.
+	// options.fn is a function to render inner content
+	// options.data is provided by helper that is rendering current portion
+	// options.data.n2_selector is provided by the _array() helper
 	// this points to the current object
+	//
+	// Syntax to :form is:
+	// {{#:field}}<selector>(,<option>)*{{/:field}}
 	var args = [];
 	args.push.apply(args,arguments);
 	var options = args.pop();
 	
-	// Gets the text between start and end tags
-	var text = options.fn(this);
-	
 	// Compute current selector
-	var currentSelector = [];
+	var currentSelector = null;
 	if( options 
 	 && options.data 
 	 && options.data.n2_selector ){
@@ -294,20 +272,15 @@ function _formField() {
 		currentSelector = this[SELECT];
 	};
 
-	// Syntax is: <selector>(,<option>)*
-	var obj,sels,completeSelectors;
+	// Gets the text between start and end tags and
+	// parse it
+	var text = options.fn(this);
+	
 	var splits = text.split(',');
 	var identifier = splits[0];
-	if( '.' === identifier ){
-		obj = this;
-		sels = [];
-		completeSelectors = currentSelector;
-	} else {
-		sels = identifier.split('.');
-		obj = getDataFromObjectSelector(this, sels);
-		completeSelectors = currentSelector.slice(0); // clone
-		completeSelectors.push.apply(completeSelectors, sels);
-	};
+	var objSel = parseSelectorString(identifier);
+	var obj = objSel.getValue(this);
+	var completeSelectors = currentSelector.getChildSelector(objSel);
 	
 	if( obj
 	 && typeof obj === 'object'
@@ -339,24 +312,20 @@ function _formField() {
 	
 	r.push('<div class="n2schema_field_wrapper">');
 
-	if( obj && obj.nunaliit_type === 'localized' ) {
-		var langs = [];
-		for(var lang in obj){
-			if( lang === 'nunaliit_type' || lang[0] === ':' ){
-				// ignore
-			} else if( $.inArray(lang,langs) < 0 ) {
-				langs.push(lang);
-			};
+	if( opts.custom ){
+		r.push('<div class="n2schema_field_container n2schema_field_custom"');
+		if( opts.custom.length > 0 && typeof opts.custom[0] === 'string'){
+			r.push(' n2-custom-type="'+opts.custom+'"');
+		} else {
+			r.push(' nunaliit-error="Custom type not specified"');
 		};
-		if( opts.localized && opts.localized.length ){
-			for(var i=0,e=opts.localized.length;i<e;++i){
-				var lang = opts.localized[i];
-				if( $.inArray(lang,langs) < 0 ) {
-					langs.push(lang);
-				};
-			};
-		};
-		langs.sort();
+		r.push(' nunaliit-selector="'+completeSelectors.encodeForDomAttribute()+'"');
+		r.push('>');
+		r.push('</div>');
+		
+		
+	} else if( obj && obj.nunaliit_type === 'localized' ) {
+		var langs = getSortedLanguages(opts.localized, obj);
 		
 		// Turn on "localized" option, if not already on
 		if( !opts.localized ){
@@ -366,37 +335,35 @@ function _formField() {
 		for(var i=0,e=langs.length;i<e;++i){
 			var lang = langs[i];
 			
-			var langSel = completeSelectors.slice();//copy
-			langSel.push(lang);
+			var langSel = completeSelectors.getChildSelector(lang);
 
 			r.push('<div class="n2schema_field_container n2schema_field_container_localized">');
 			r.push('<span class="n2_localize_lang">('+lang+')</span>');
-			_formSingleField(r,obj,langSel,opts);
+			_formSingleField(r,langSel,opts);
 			r.push('</div>');
 		};
 		
 	} else if( !obj && opts.localized ) {
 		// This is a localized string that does not yet exist
+		// This condition is true if obj is an empty string or
+		// if obj is undefined (or null)
 
-		var langs = opts.localized.slice();//copy
-		langs.sort();
+		var langs = getSortedLanguages(opts.localized, null);
 		
 		for(var i=0,e=langs.length;i<e;++i){
 			var lang = langs[i];
 			
-			var langSel = completeSelectors.slice();//copy
-			langSel.push(lang);
+			var langSel = completeSelectors.getChildSelector(lang);
 			
 			r.push('<div class="n2schema_field_container n2schema_field_container_localized">');
 			r.push('<span class="n2_localize_lang">('+lang+')</span>');
-			_formSingleField(r,this,langSel,opts);
+			_formSingleField(r,langSel,opts);
 			r.push('</div>');
 		};
 
 	} else if( opts.reference ) {
-		var objSel = new $n2.objectSelector.ObjectSelector(completeSelectors);
-		var attr = objSel.encodeForDomAttribute();
-		r.push('<span class="n2schema_field_reference" n2-obj-sel="'+attr+'"');
+		var attr = completeSelectors.encodeForDomAttribute();
+		r.push('<span class="n2schema_field_reference" nunaliit-selector="'+attr+'"');
 		if( opts.search 
 		 && opts.search[0] ){
 			r.push(' n2-search-func="'+opts.search[0]+'"');
@@ -405,13 +372,59 @@ function _formField() {
 		
 	} else {
 		r.push('<div class="n2schema_field_container">');
-		_formSingleField(r,this,completeSelectors,opts);
+		_formSingleField(r,completeSelectors,opts);
 		r.push('</div>');
 	};
 
 	r.push('</div>');
 	
 	return r.join('');
+	
+	function getSortedLanguages(langOpts, localizedStr){
+		var langMap = {};
+		
+		if( localizedStr ){
+			for(var lang in localizedStr){
+				if( lang === 'nunaliit_type' || lang[0] === ':' ){
+					// ignore
+				} else {
+					langMap[lang] = true;
+				};
+			};
+		};
+
+		if( langOpts ){
+			for(var i=0,e=langOpts.length;i<e;++i){
+				var lang = langOpts[i];
+				langMap[lang] = true;
+			};
+		};
+		
+		var languages = $n2.languageSupport.getLanguages();
+		if( languages ){
+			for(var i=0,e=languages.length; i<e; ++i){
+				var lang = languages[i].code;
+				langMap[lang] = true;
+			};
+		};
+		
+		var langs = [];
+		for(var lang in langMap){
+			langs.push(lang);
+		};
+		
+		var locale = $n2.l10n.getLocale();
+		var localeLang = locale.lang;
+		langs.sort(function(l1,l2){
+			if( l1 === localeLang ) return -1;
+			if( l2 === localeLang ) return 1;
+			if( l1 < l2 ) return -1;
+			if( l1 > l2 ) return 1;
+			return 0;
+		});
+		
+		return langs;
+	};
 };
 
 function _inputField() {
@@ -429,9 +442,9 @@ function _inputField() {
 	if( options
 	 && options.data
 	 && options.data.n2_selector ){
-		completeSelectors = options.data.n2_selector.slice(0);
+		completeSelectors = options.data.n2_selector;
 	} else if( this[SELECT] ) {
-		completeSelectors = this[SELECT].slice(0);
+		completeSelectors = this[SELECT];
 	} else {
 		return '';
 	};
@@ -439,7 +452,7 @@ function _inputField() {
 		// Current selector is fine
 	} else {
 		var sels = key.split('.');
-		completeSelectors.push.apply(completeSelectors,sels);
+		completeSelectors = completeSelectors.getChildSelector(sels);
 	};	
 	
 	var cl = 'n2schema_input ' + createClassStringFromSelector(completeSelectors);
@@ -472,8 +485,8 @@ function _arrayField() {
 		for(var i=0,e=obj.length; i<e; ++i){
 			var item = obj[i];
 	
-			var completeSelectors = obj[SELECT].slice(0);
-			completeSelectors.push(i);
+			var completeSelectors = obj[SELECT];
+			completeSelectors = completeSelectors.getChildSelector(i);
 			var cl = createClassStringFromSelector(completeSelectors);
 			
 			r.push('<div class="n2schema_array_item">');
@@ -490,7 +503,7 @@ function _arrayField() {
 	};
 
 	if( obj ){
-		var arraySelector = obj[SELECT]
+		var arraySelector = obj[SELECT];
 		var arrayClass = createClassStringFromSelector(arraySelector);
 		r.push('<div class="n2schema_array_add '+arrayClass+'"');
 		if( newType ) {
@@ -504,6 +517,49 @@ function _arrayField() {
 	return r.join('');
 };
 
+function _selectorField(){
+	// The arguments to handlebars block expression functions are:
+	// ([obj,]options)
+	// obj is not provided in this case, since we do not expect any arguments
+	// to {{#:selector}}
+	// options.fn is a function to render inner content
+	// options.data is provided by helper that is rendering current portion
+	// options.data.n2_selector is provided by the _array() helper
+	// this points to the current object
+	//
+	// Syntax to :form is:
+	// {{#:selector}}<selector>{{/:selector}}
+	var args = [];
+	args.push.apply(args,arguments);
+	var options = args.pop();
+	
+	// Compute current selector
+	var currentSelector = null;
+	if( options 
+	 && options.data 
+	 && options.data.n2_selector ){
+		// Within an array, the current selector is passed in options
+		currentSelector = options.data.n2_selector;
+
+	} else if( typeof this === 'object' 
+     && this !== null 
+     && this[SELECT]){
+		currentSelector = this[SELECT];
+	};
+	
+	if( !currentSelector ){
+		return '';
+	};
+
+	// Gets the text between start and end tags and
+	// parse it
+	var text = options.fn(this);
+	
+	var objSel = parseSelectorString(text);
+	var completeSelectors = currentSelector.getChildSelector(objSel);
+	return completeSelectors.encodeForDomAttribute();
+};
+
 
 if( typeof(Handlebars) !== 'undefined' 
  && Handlebars.registerHelper ) {
@@ -511,9 +567,72 @@ if( typeof(Handlebars) !== 'undefined'
 	Handlebars.registerHelper(FIELD    ,_formField      );
 	Handlebars.registerHelper(INPUT    ,_inputField     );
 	Handlebars.registerHelper(ARRAY    ,_arrayField     );
+	Handlebars.registerHelper(SELECTOR ,_selectorField  );
 } else {
 	$n2.log('Unable to register helper functions with Handlebars. Schemas will not work properly.');
 };
+
+function computeViewObj(origObj, context, selector, parent) {
+	
+	if( !selector ){
+		selector = new $n2.objectSelector.ObjectSelector([]);
+	};
+	
+	if( null === origObj ) {
+		return origObj;
+		
+	} else if( typeof(origObj) === 'undefined' ) {
+		return null;
+		
+	} else if( $n2.isArray(origObj) ) {
+		var view = [];
+		view[CONTEXT] = context;
+		view[PARENT] = parent;
+		view[SELECT] = selector;
+		
+		for(var i=0,e=origObj.length; i<e; ++i) {
+			var childSelector = selector.getChildSelector(i);
+			var value = computeViewObj(origObj[i], context, childSelector, view);
+			view.push(value);
+		};
+
+		return view;
+		
+	} else if( typeof(origObj) === 'object' ) {
+		var view = {};
+		
+		view[ITERATE] = [];
+		view[CONTEXT] = context;
+		view[PARENT] = parent;
+		view[SELECT] = selector;
+
+		for(var key in origObj) {
+			if('__n2Source' === key) continue;
+
+			var childSelector = selector.getChildSelector(key);
+			var value = computeViewObj(origObj[key], context, childSelector, view);
+			view[key] = value;
+			view[ITERATE].push({key:key,value:value});
+		};
+		view[EMPTY] = (0 == view[ITERATE].length);
+		
+		view[ITERATE].sort(function(a,b){
+			if( a.key < b.key ) {
+				return -1;
+			}; 
+			if( a.key > b.key ) {
+				return 1;
+			}; 
+			return 0;
+		});
+		
+		return view;
+		
+	} else {
+		return origObj;
+	};
+};
+
 
 //============================================================
 // Object Query
@@ -607,7 +726,7 @@ $n2.ObjectQuery = function(obj, query){
 	
 	var result = new ObjectQueryResults(obj);
 	return result.query(query);
-}
+};
 
 
 //============================================================
@@ -1165,59 +1284,6 @@ var Schema = $n2.Class({
 //============================================================
 // Display
 
-function computeViewObj(origObj, context, parent) {
-	
-	if( null === origObj ) {
-		return origObj;
-		
-	} else if( typeof(origObj) === 'undefined' ) {
-		return null;
-		
-	} else if( $n2.isArray(origObj) ) {
-		var view = [];
-		view[CONTEXT] = context;
-		view[PARENT] = parent;
-		
-		for(var i=0,e=origObj.length; i<e; ++i) {
-			var value = computeViewObj(origObj[i], context, view);
-			view.push(value);
-		};
-
-		return view;
-		
-	} else if( typeof(origObj) === 'object' ) {
-		var view = {};
-		
-		view[ITERATE] = [];
-		view[CONTEXT] = context;
-		view[PARENT] = parent;
-
-		for(var key in origObj) {
-			if('__n2Source' === key) continue;
-			
-			var value = computeViewObj(origObj[key], context, view);
-			view[key] = value;
-			view[ITERATE].push({key:key,value:value});
-		};
-		view[EMPTY] = (0 == view[ITERATE].length);
-		
-		view[ITERATE].sort(function(a,b){
-			if( a.key < b.key ) {
-				return -1;
-			}; 
-			if( a.key > b.key ) {
-				return 1;
-			}; 
-			return 0;
-		});
-		
-		return view;
-		
-	} else {
-		return origObj
-	};
-};
-
 function DisplaySelectAny(obj, key) {
 	if( EMPTY === key 
 	 || ITERATE === key
@@ -1378,32 +1444,22 @@ function unescapeSelector(sel) {
 	return res.join('');
 };
 
-function createClassStringFromSelector(selector, key) {
-	var cs = [selectorClassStringPrefix];
-	for(var i=0,e=selector.length; i<e; ++i) {
-		cs.push('-');
-		cs.push( escapeSelector(''+selector[i]) );
-	};
-	if( key ) {
-		cs.push('-');
-		cs.push( escapeSelector(key) );
-	};
-	return cs.join('');
+function createClassStringFromSelector(selector) {
+	var cs = 
+		selectorClassStringPrefix
+		+selector.encodeForDomAttribute();
+	return cs;
 };
 
 // Given a class name, returns an array that represents the encoded selector.
 // Returns null if the class name is not encoding a selector
 function createSelectorFromClassString(classString) {
-	if( selectorClassStringPrefix === classString.substr(0,selectorClassStringPrefix.length) ) {
-		var selectorString = classString.substr(selectorClassStringPrefix.length+1);
-		var selector = selectorString.split('-');
+	if( selectorClassStringPrefix 
+			=== classString.substr(0,selectorClassStringPrefix.length) ) {
+		var selectorString = classString.substr(selectorClassStringPrefix.length);
+		var selector = $n2.objectSelector.decodeFromDomAttribute(selectorString);
 		
-		var res = [];
-		for(var i=0,e=selector.length; i<e; ++i) {
-			res.push( unescapeSelector(selector[i]) );
-		};
-		
-		return res;
+		return selector;
 	};
 	
 	return null;
@@ -1427,65 +1483,6 @@ function parseClassNames(classNames) {
 	};
 	
 	return parsed;
-};
-
-function computeFormObj(origObj, context, selector, parent) {
-	
-	if( null === origObj ) {
-		return origObj;
-		
-	} else if( typeof(origObj) === 'undefined' ) {
-		return null;
-		
-	} else if( $n2.isArray(origObj) ) {
-		var view = [];
-		view[CONTEXT] = context;
-		view[PARENT] = parent;
-		view[SELECT] = selector.slice(0);
-		
-		for(var i=0,e=origObj.length; i<e; ++i) {
-			selector.push(i);
-			var value = computeFormObj(origObj[i], context, selector, view);
-			view.push(value);
-			selector.pop();
-		};
-
-		return view;
-		
-	} else if( typeof(origObj) === 'object' ) {
-		var view = {};
-		
-		view[ITERATE] = [];
-		view[CONTEXT] = context;
-		view[PARENT] = parent;
-		view[SELECT] = selector.slice(0);
-
-		for(var key in origObj) {
-			if('__n2Source' === key) continue;
-
-			selector.push(key);
-			var value = computeFormObj(origObj[key], context, selector, view);
-			view[key] = value;
-			view[ITERATE].push({key:key,value:value});
-			selector.pop();
-		};
-		view[EMPTY] = (0 == view[ITERATE].length);
-		
-		view[ITERATE].sort(function(a,b){
-			if( a.key < b.key ) {
-				return -1;
-			}; 
-			if( a.key > b.key ) {
-				return 1;
-			}; 
-			return 0;
-		});
-		
-		return view;
-		
-	} else {
-		return origObj;
-	};
 };
 
 var FormExtension = $n2.Class({
@@ -1584,7 +1581,7 @@ var Form = $n2.Class({
 		};
 		if( $elem.length > 0 ) {
 			// Create view for displayTemplate
-			var view = computeFormObj(this.obj, this.context, []);
+			var view = computeViewObj(this.obj,this.context);
 			this._setHtml(view);
 			
 			$elem.empty();
@@ -1600,10 +1597,15 @@ var Form = $n2.Class({
 				$divEvent.find('.n2schema_input').each(function(){
 					_this._installHandlers($elem, $(this),_this.obj,_this.callback);
 				});
-				
+
 				// Install references
 				$divEvent.find('.n2schema_field_reference').each(function(){
 					_this._installReference($elem, $(this));
+				});
+
+				// Install custom types
+				$divEvent.find('.n2schema_field_custom').each(function(){
+					_this._installCustomType($elem, $(this),_this.obj,_this.callback);
 				});
 				
 				$divEvent.click(function(e){
@@ -1620,7 +1622,7 @@ var Form = $n2.Class({
 					//$n2.log('click',this,e);
 					if( $clicked.hasClass('n2schema_array_add') ){
 						var newType = $clicked.attr('n2_array_new_type');
-						var ary = getDataFromObjectSelector(_this.obj, classInfo.selector);
+						var ary = classInfo.selector.getValue(_this.obj);
 						if( ary ){
 							var newItem = '';
 							if( 'reference' === newType ){
@@ -1638,6 +1640,14 @@ var Form = $n2.Class({
 							} else if( 'string' === newType ){
 								newItem = '';
 								
+							} else if( 'localized' === newType ){
+								newItem = {
+									nunaliit_type: 'localized'
+								};
+								var locale = $n2.l10n.getLocale();
+								var lang = locale.lang;
+								newItem[lang] = '';
+								
 							} else if( 'textarea' === newType ){
 								newItem = '';
 								
@@ -1651,35 +1661,35 @@ var Form = $n2.Class({
 							ary.push(newItem);
 						};
 						_this.refresh($elem);
-						_this.callback(_this.obj,classInfo.selector,ary);
+						_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						
 					} else if( $clicked.hasClass('n2schema_array_item_delete') ){
-						var parentSelector = classInfo.selector.slice(0);
-						var itemIndex = 1 * (parentSelector.pop());
-						var ary = getDataFromObjectSelector(_this.obj, parentSelector);
+						var itemIndex = 1 * classInfo.selector.getKey();
+						var parentSelector = classInfo.selector.getParentSelector();
+						var ary = parentSelector.getValue(_this.obj);
 						ary.splice(itemIndex,1);
 						_this.refresh($elem);
-						_this.callback(_this.obj,classInfo.selector,ary);
+						_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						
 					} else if( $clicked.hasClass('n2schema_array_item_down') ){
-						var parentSelector = classInfo.selector.slice(0);
-						var itemIndex = 1 * (parentSelector.pop());
+						var itemIndex = 1 * classInfo.selector.getKey();
 						if( itemIndex > 0 ) {
-							var ary = getDataFromObjectSelector(_this.obj, parentSelector);
+							var parentSelector = classInfo.selector.getParentSelector();
+							var ary = parentSelector.getValue(_this.obj);
 							var removedItems = ary.splice(itemIndex,1);
 							ary.splice(itemIndex-1,0,removedItems[0]);
 							_this.refresh($elem);
-							_this.callback(_this.obj,classInfo.selector,ary);
+							_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						};
 						
 					} else if( $clicked.hasClass('n2schema_referenceDelete') ){
-						var parentSelector = classInfo.selector.slice(0);
-						var referenceKey = parentSelector.pop();
-						var parentObj = getDataFromObjectSelector(_this.obj, parentSelector);
+						var referenceKey = classInfo.selector.getKey();
+						var parentSelector = classInfo.selector.getParentSelector();
+						var parentObj = parentSelector.getValue(_this.obj);
 						if( parentObj[referenceKey] ){
 							delete parentObj[referenceKey];
 							_this.refresh($elem);
-							_this.callback(_this.obj,classInfo.selector,null);
+							_this.callback(_this.obj,classInfo.selector.selectors,null);
 						};
 						
 					} else if( $clicked.hasClass('n2schema_help_date') ){
@@ -1718,23 +1728,19 @@ var Form = $n2.Class({
 		var classInfo = parseClassNames(classNames);
 
 		var selector = classInfo.selector;
-		if( null != selector ) {
-			var parentSelector = [];
-			for(var i=0,e=selector.length-1; i<e; ++i) {
-				parentSelector.push(selector[i]);
-			};
-			var key = selector[i];
+		if( selector ) {
+			var parentSelector = selector.getParentSelector();
+			var key = selector.getKey();
 			var handler = this._createChangeHandler(
 				obj
 				,selector
 				,parentSelector
 				,classInfo.type
-				,key
 				,function(obj, selector, value){
 					if( 'reference' === classInfo.type ){
 						_this.refresh($elem);
 					};
-					callback(obj, selector, value);
+					callback(obj, selector.selectors, value);
 				}
 			);
 			$input.change(handler);
@@ -1748,7 +1754,7 @@ var Form = $n2.Class({
 			};
 			
 			// Set value
-			var value = getDataFromObjectSelector(obj, selector);
+			var value = selector.getValue(obj);
 			var type = $input.attr('type');
 			if( 'checkbox' === type ) {
 				if( value ) {
@@ -1857,12 +1863,12 @@ var Form = $n2.Class({
 							return true;
 						};
 						
-						var layerValue = getDataFromObjectSelector(obj, selector);
+						var layerValue = selector.getValue(obj);
 						
 						getLayersFn({
 							currentLayers: layerValue	
 							,onSelected: function(layers){ // callback with docId
-								var p = getDataFromObjectSelector(obj, parentSelector);
+								var p = parentSelector.getValue(obj);
 								if( p ) {
 									p[key] = layers;
 									if( !layers || layers.length === 0 ){
@@ -1893,7 +1899,7 @@ var Form = $n2.Class({
 	_installReference: function($container, $elem) {
 		var _this = this;
 		
-		var domSelector = $elem.attr('n2-obj-sel');
+		var domSelector = $elem.attr('nunaliit-selector');
 		var objSel = $n2.objectSelector.decodeFromDomAttribute(domSelector);
 		var parentSelector = objSel.getParentSelector();
 		var key = objSel.getKey();
@@ -2025,28 +2031,67 @@ var Form = $n2.Class({
 		};
 	},
 	
-	_createChangeHandler: function(obj, selector, parentSelector, keyType, key, callback) {
+	_installCustomType: function($container, $elem, doc , callbackFn){
+		var _this = this;
+		
+		var selectorStr = $elem.attr('nunaliit-selector');
+		var selector = null;
+		if( selectorStr ){
+			selector = $n2.objectSelector.decodeFromDomAttribute(selectorStr);
+		};
+		
+		function cb(value){
+			_this.refresh($container);
+			
+			_this.callback(doc,selector,value);
+		};
+		
+		var customType = $elem.attr('n2-custom-type');
+		
+		if( typeof customType === 'string' ){
+			var handler = customFieldHandlers[customType];
+			if( handler ){
+				var obj = undefined;
+				if( selector && doc ){
+					obj = selector.getValue(doc);
+				};
+				
+				handler({
+					elem: $elem
+					,doc: doc
+					,obj: obj
+					,selector: selector
+					,customType: customType
+					,callbackFn: cb
+				});
+			} else {
+				$elem.attr('nunaliit-error','No handler found for custom type: "'+customType+'"');
+			};
+			
+		} else {
+			$elem.attr('nunaliit-error','Custom type not provided');
+		};
+		
+	},
+	
+	_createChangeHandler: function(obj, selector, parentSelector, keyType, callback) {
 		return function(e) {
 			var $input = $(this);
-			var parentObj = getDataFromObjectSelector(obj, parentSelector);
-			var effectiveKey = key;
-			var effectiveSelector = selector;
+			var parentObj = parentSelector.getValue(obj);
+			var effectiveKey = selector.getKey();
 			
 			if( !parentObj ){
 				if( 'localized' === keyType ) {
-					// Materialize the parent of a localized string
-					var gpSel = parentSelector.slice();
-					var parentKey = gpSel.pop();
-					
-					var gpObj = getDataFromObjectSelector(obj, gpSel);
-					if( gpObj ){
-						parentObj = {'nunaliit_type':'localized'};
-						gpObj[parentKey] = parentObj;
+					var value = $input.val();
+					if( value ){
+						// Materialize the parent of a localized string
+						parentSelector.setValue(obj,{'nunaliit_type':'localized'});
+						parentObj = parentSelector.getValue(obj);
 					};
 				};
 			};
 			
-			if( null != parentObj ) {
+			if( parentObj ) {
 				var assignValue = true;
 				var type = $input.attr('type');
 				if( 'checkbox' === type ) {
@@ -2071,6 +2116,24 @@ var Form = $n2.Class({
 						};
 						parentObj = parentObj[effectiveKey];
 						effectiveKey = 'doc';
+					};
+					
+				} else if( 'localized' === keyType ) {
+					value = $input.val();
+					parentObj[effectiveKey] = value;
+					assignValue = false;
+					
+					var shouldDelete = true;
+					for(var lang in parentObj){
+						if( 'nunaliit_type' === lang ){
+							// ignore
+						} else if( parentObj[lang] ) {
+							// non-empty string
+							shouldDelete = false;
+						};
+					};
+					if( shouldDelete ){
+						parentSelector.removeValue(obj);
 					};
 					
 				} else if( 'date' === keyType ) {
@@ -2143,7 +2206,7 @@ var Form = $n2.Class({
 				if( assignValue ) {
 					parentObj[effectiveKey] = value;
 				};
-				callback(obj,effectiveSelector,value);
+				callback(obj,selector.selectors,value);
 			};
 		};
 	}
@@ -2160,6 +2223,7 @@ $n2.schema = {
 	,GlobalAttributes: {
 		disableKeyUpEvents: false
 	}
+	,registerCustomFieldHandler: registerCustomFieldHandler
 };
 
 })(jQuery,nunaliit2);

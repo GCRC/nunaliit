@@ -34,7 +34,7 @@ POSSIBILITY OF SUCH DAMAGE.
 "use strict";
 
 // Localization
-var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
+//var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 
 //=========================================================================
 function escapeSelector(sel) {
@@ -164,8 +164,21 @@ var ObjectSelector = $n2.Class({
 		if( typeof key === 'string' ){
 			effectiveKey = key;
 			
-		} else if ( typeof key === 'number' ) {
+		} else if( typeof key === 'number' ) {
 			effectiveKey = key;
+
+		} else if( typeof key === 'object' 
+		 && $n2.isArray(key) ) {
+			var selectors = this.selectors.slice();
+			selectors.push.apply(selectors, key);
+			return new ObjectSelector(selectors);
+
+		} else if( typeof key === 'object'
+		 && typeof key.selectors === 'object'
+		 && $n2.isArray(key.selectors) ) {
+			var selectors = this.selectors.slice();
+			selectors.push.apply(selectors, key.selectors);
+			return new ObjectSelector(selectors);
 			
 		} else {
 			throw 'A string or number must be provided when creating a child selector';
@@ -179,7 +192,10 @@ var ObjectSelector = $n2.Class({
 	},
 	
 	getValue: function(obj){
-		if( typeof obj === 'undefined' ){
+		if(this.selectors.length < 1){
+			return obj;
+			
+		} else if( typeof obj === 'undefined' ){
 			return obj;
 			
 		} else if( obj === null ){
@@ -189,15 +205,14 @@ var ObjectSelector = $n2.Class({
 			var effObj = obj;
 			for(var i=0,e=this.selectors.length; i<e; ++i){
 				var sel = this.selectors[i];
-				if( typeof effObj[sel] === 'undefined' ){
+				if( null === effObj ){
+					return undefined;
+				} else if( typeof effObj[sel] === 'undefined' ){
 					return undefined;
 				};
 				effObj = effObj[sel];
 			};
 			return effObj;
-			
-		} else if(this.selectors.length < 1){
-			return obj;
 		
 		} else {
 			return undefined;

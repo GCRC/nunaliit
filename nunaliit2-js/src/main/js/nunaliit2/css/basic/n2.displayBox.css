@@ -37,11 +37,51 @@
 	padding: 10px; 
 }
 
+.n2DisplayBoxImageWrapper {
+    position: relative;
+    overflow: hidden;
+}
+
+.n2DisplayBoxImageZoomPlus, .n2DisplayBoxImageZoomMinus {
+    position: absolute;
+    height: 25px;
+    width: 25px;
+	background-image: url('images/zoom_25.png');
+	background-repeat: no-repeat;
+	background-color: transparent;
+}
+
+.n2DisplayBoxImageZoomPlus {
+    top: 20px;
+    left: 20px;
+	background-position: 0px 0px;
+}
+
+.n2DisplayBoxImageZoomPlus:hover {
+	background-position: -25px 0px;
+}
+
+.n2DisplayBoxImageZoomMinus {
+    top: 50px;
+    left: 20px;
+	background-position: 0px -25px;
+}
+
+.n2DisplayBoxImageZoomMinus:hover {
+	background-position: -25px -25px;
+}
+
+.n2DisplayBoxImageZoomPlus.n2DisplayBoxImageZoomDisabled, 
+.n2DisplayBoxImageZoomMinus.n2DisplayBoxImageZoomDisabled {
+	display: none;	
+}
+
 .n2DisplayBoxImage {}
 
 .n2DisplayBoxNavBtn {
 	position: absolute;
 	top: 0;
+	bottom: 0;
 }
 
 a.n2DisplayBoxNavBtn { 
@@ -50,11 +90,10 @@ a.n2DisplayBoxNavBtn {
 
 .n2DisplayBoxNavBtnPrev, .n2DisplayBoxNavBtnNext {
 	width: 100px;
-	height: 100%;
-	zoom: 1;
 	display: block;
 }
 .n2DisplayBoxNavBtnPrev { 
+	top: 80px; /* clear the zoom buttons */
 	left: 0; 
 }
 .n2DisplayBoxNavBtnPrev:hover { 

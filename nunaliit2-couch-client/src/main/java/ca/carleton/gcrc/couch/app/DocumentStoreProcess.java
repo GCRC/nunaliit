@@ -1,25 +1,43 @@
 package ca.carleton.gcrc.couch.app;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.StringWriter;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.json.JSONTokener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.json.JSONSupport;
 import ca.carleton.gcrc.utils.Files;
 
 public class DocumentStoreProcess {
+	
+	protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
+	static final public String FILE_EXT_ARRAY = "array";
+	static final public String FILE_EXT_JSON = "json";
+	static final public String FILE_EXT_TEXT = "txt";
+	static final public String FILE_EXT_HTML = "html";
+	
 	static final public String ATT_INFO_EXTENSION = "_nunaliit";
 	static final public String ATT_INFO_CONTENT_TYPE = "content_type";
 	static final public String ATT_INFO_NAME = "name";
+
+	static private Pattern patternNameExtension = Pattern.compile("^(.*)\\.([^.]*)$");
+	static private Pattern patternIndex = Pattern.compile("^[0-9]+$");
 
 	/**
 	 * Takes a document and stores it to disk.
@@ -36,8 +54,6 @@ public class DocumentStoreProcess {
 		}
 		
 		try {
-			Set<String> previousPaths = new HashSet<String>();
-			
 			// Make dir
 			if( dir.exists() && false == dir.isDirectory() ){
 				throw new Exception("Can not store object in non-directory");
@@ -53,34 +69,50 @@ public class DocumentStoreProcess {
 					throw new Exception("Unable to create directory: "+dir.getAbsolutePath());
 				}
 			} else {
-				previousPaths = Files.getDescendantPathNames(dir, true);
-				Files.emptyDirectory(dir);
+				removeUndesiredFiles(doc.getJSONObject(), dir);
 			}
 			
 			// Create _id.txt
 			{
 				String id = doc.getId();
-				FileOutputStream fos = null;
-				try {
-					File idFile = new File(dir, "_id.txt");
-					fos = new FileOutputStream(idFile);
-					OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
-	
-					osw.write(id);
-					osw.flush();
-					
-					fos.close();
-					fos = null;
-					
-				} catch(Exception e) {
-					throw new Exception("Unable to write _id.txt for: "+id+" at: "+dir.getAbsolutePath());
-					
-				} finally {
-					if( null != fos ){
-						try {
-							fos.close();
-						} catch(Exception e){
-							// Ignore
+
+				boolean fileUpdateRequired = true;
+				File idFile = new File(dir, "_id.txt");
+				if( idFile.exists() ){
+					try{
+						String fileValue = readStringFile(idFile);
+						fileValue = fileValue.trim();
+						if( fileValue.equals(id) ){
+							fileUpdateRequired = false;
+						}
+						
+					} catch(Exception e) {
+						// ignore
+					}
+				}
+				
+				if( fileUpdateRequired ) {
+					FileOutputStream fos = null;
+					try {
+						fos = new FileOutputStream(idFile);
+						OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
+		
+						osw.write(id);
+						osw.flush();
+						
+						fos.close();
+						fos = null;
+						
+					} catch(Exception e) {
+						throw new Exception("Unable to write _id.txt for: "+id+" at: "+dir.getAbsolutePath());
+						
+					} finally {
+						if( null != fos ){
+							try {
+								fos.close();
+							} catch(Exception e){
+								// Ignore
+							}
 						}
 					}
 				}
@@ -105,7 +137,7 @@ public class DocumentStoreProcess {
 						Object value = jsonObj.get(key);
 						// Store
 						try {
-							storeKeyValue(dir, key, value, previousPaths, null);
+							storeKeyValue(dir, key, value, null);
 						} catch(Exception e) {
 							throw new Exception("Error while saving key: "+key, e);
 						}
@@ -118,7 +150,7 @@ public class DocumentStoreProcess {
 			if( attachments.size() > 0 ) {
 				// Create attachment directory
 				File attachmentDir = new File(dir,"_attachments");
-				mkdir(attachmentDir);
+				Files.createDirectory(attachmentDir);
 				
 				for(Attachment attachment : attachments){
 					try {
@@ -138,40 +170,59 @@ public class DocumentStoreProcess {
 			File dir
 			,String key
 			,Object value
-			,Set<String> previousPaths
 			,String pathPrefix
 			) throws Exception {
 
+		// Detect if a file already exists for this key
+		File childFile = null;
+		String fileExtension = null;
+		{
+			File[] childrenFiles = dir.listFiles();
+			for(File child : childrenFiles){
+				String name = child.getName();
+				String extension = null;
+				Matcher matcherNameExtension = patternNameExtension.matcher(name);
+				if( matcherNameExtension.matches() ){
+					name = matcherNameExtension.group(1);
+					extension = matcherNameExtension.group(2);
+				}
+				
+				if( name.equals(key) ){
+					childFile = child;
+					fileExtension = extension;
+					break;
+				}
+			}
+		}
+		
+		// Compute the path to this value
 		String objectPath = key;
 		if( null != pathPrefix ) {
 			objectPath = pathPrefix + File.pathSeparator + key;
 		}
-		String jsonPath = objectPath + ".json";
 
 		if( value instanceof JSONObject ){
-			if( previousPaths.contains(objectPath) ){
-				File objectDir = new File(dir,key);
-				Files.createDirectory(objectDir);
-				storeObjectValue((JSONObject)value, objectDir, previousPaths, objectPath);
+			if( null != childFile && childFile.isDirectory() ){
+				storeObjectValue((JSONObject)value, childFile, objectPath);
 			} else {
 				storeJsonValue(value, dir, key);
 			}
 			
 		} else if( value instanceof JSONArray ){
-			String arrayPath = objectPath + ".array";
-			if( previousPaths.contains(arrayPath) ){
-				File objectDir = new File(dir,key+".array");
-				Files.createDirectory(objectDir);
-				storeArrayValue((JSONArray)value, objectDir, previousPaths, arrayPath);
+			if( null != childFile && childFile.isDirectory() ){
+				storeArrayValue((JSONArray)value, childFile, objectPath);
 			} else {
 				storeJsonValue(value, dir, key);
 			}
 			
 		} else if( value instanceof String ) {
-			if( previousPaths.contains(jsonPath) ){
+			if( null != childFile && FILE_EXT_JSON.equals(fileExtension) ){
 				storeJsonValue(value, dir, key);
+			} else if( null != childFile ){
+				storeStringValue((String)value, childFile, key);
 			} else {
-				storeStringValue((String)value, dir, key);
+				File valueFile = new File(dir, key+"."+FILE_EXT_TEXT);
+				storeStringValue((String)value, valueFile, key);
 			}
 		} else {
 			// integers, double, etc.
@@ -182,7 +233,6 @@ public class DocumentStoreProcess {
 	private void storeObjectValue(
 			JSONObject jsonObj
 			,File dir
-			,Set<String> previousPaths
 			,String pathPrefix
 			) throws Exception {
 		Iterator<?> it = jsonObj.keys();
@@ -193,7 +243,7 @@ public class DocumentStoreProcess {
 				Object value = jsonObj.get(key);
 				
 				try {
-					storeKeyValue(dir, key, value, previousPaths, pathPrefix);
+					storeKeyValue(dir, key, value, pathPrefix);
 				} catch(Exception e) {
 					throw new Exception("Error while saving key: "+pathPrefix+"/"+key, e);
 				}
@@ -204,7 +254,6 @@ public class DocumentStoreProcess {
 	private void storeArrayValue(
 			JSONArray jsonArray
 			,File dir
-			,Set<String> previousPaths
 			,String pathPrefix
 			) throws Exception {
 		int length = jsonArray.length();
@@ -213,7 +262,7 @@ public class DocumentStoreProcess {
 			Object value = jsonArray.get(i);
 
 			try {
-				storeKeyValue(dir, key, value, previousPaths, pathPrefix);
+				storeKeyValue(dir, key, value, pathPrefix);
 			} catch(Exception e) {
 				throw new Exception("Error while saving key: "+pathPrefix+"/"+key, e);
 			}
@@ -226,39 +275,53 @@ public class DocumentStoreProcess {
 			,String key
 			) throws Exception {
 
-		File valueFile =  new File(dir, key+".json");
-
-		FileOutputStream fos = null;
-		try {
-			fos = new FileOutputStream(valueFile);
-			OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
-
-			if( value instanceof JSONObject ){
-				JSONObject valueObj = (JSONObject)value;
-				osw.write(valueObj.toString(3));
-				
-			} else if( value instanceof JSONArray ){
-				JSONArray valueArr = (JSONArray)value;
-				osw.write(valueArr.toString(3));
-				
-			} else {
-				String valueStr = JSONSupport.valueToString(value);
-				osw.write(valueStr);
+		File valueFile =  new File(dir, key+"."+FILE_EXT_JSON);
+		
+		// Do not overwrite a JSON file if the content on disk is
+		// equivalent
+		boolean fileUpdateRequired = true;
+		if( valueFile.exists() && valueFile.isFile() ){
+			// Read in JSON file
+			Object diskValue = readJsonFile(valueFile);
+			
+			if( 0 == JSONSupport.compare(diskValue, value) ) {
+				fileUpdateRequired = false;
 			}
-			osw.flush();
-			
-			fos.close();
-			fos = null;
-			
-		} catch(Exception e) {
-			throw new Exception("Unable to write JSON value for: "+key);
-			
-		} finally {
-			if( null != fos ){
-				try {
-					fos.close();
-				} catch(Exception e){
-					// Ignore
+		}
+
+		if( fileUpdateRequired ){
+			FileOutputStream fos = null;
+			try {
+				fos = new FileOutputStream(valueFile);
+				OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
+
+				if( value instanceof JSONObject ){
+					JSONObject valueObj = (JSONObject)value;
+					osw.write(valueObj.toString(3));
+					
+				} else if( value instanceof JSONArray ){
+					JSONArray valueArr = (JSONArray)value;
+					osw.write(valueArr.toString(3));
+					
+				} else {
+					String valueStr = JSONSupport.valueToString(value);
+					osw.write(valueStr);
+				}
+				osw.flush();
+				
+				fos.close();
+				fos = null;
+				
+			} catch(Exception e) {
+				throw new Exception("Unable to write JSON value for: "+key);
+				
+			} finally {
+				if( null != fos ){
+					try {
+						fos.close();
+					} catch(Exception e){
+						// Ignore
+					}
 				}
 			}
 		}
@@ -266,33 +329,50 @@ public class DocumentStoreProcess {
 
 	private void storeStringValue(
 			String value
-			,File dir
+			,File valueFile
 			,String key
 			) throws Exception {
 
-		File valueFile = new File(dir, key+".txt");
-
-		FileOutputStream fos = null;
-		try {
-			fos = new FileOutputStream(valueFile);
-			OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
-
-			osw.write(value);
-
-			osw.flush();
+		// Do not overwrite a text file if the content on disk is
+		// equivalent
+		boolean fileUpdateRequired = true;
+		if( valueFile.exists() && valueFile.isFile() ){
+			// Read in JSON file
+			String diskValue = readStringFile(valueFile);
 			
-			fos.close();
-			fos = null;
-			
-		} catch(Exception e) {
-			throw new Exception("Unable to write string value for: "+key);
-			
-		} finally {
-			if( null != fos ){
-				try {
-					fos.close();
-				} catch(Exception e){
-					// Ignore
+			if( diskValue.equals(value) ) {
+				fileUpdateRequired = false;
+			}
+		}
+		
+		if( fileUpdateRequired ){
+			FileOutputStream fos = null;
+			OutputStreamWriter osw = null;
+			try {
+				fos = new FileOutputStream(valueFile);
+				osw = new OutputStreamWriter(fos, "UTF-8");
+
+				osw.write(value);
+
+				osw.flush();
+				
+			} catch(Exception e) {
+				throw new Exception("Unable to write string value for: "+key);
+				
+			} finally {
+				if( null != osw ){
+					try {
+						osw.close();
+					} catch(Exception e){
+						// Ignore
+					}
+				}
+				if( null != fos ){
+					try {
+						fos.close();
+					} catch(Exception e){
+						// Ignore
+					}
 				}
 			}
 		}
@@ -310,7 +390,7 @@ public class DocumentStoreProcess {
 				String name = names[loop];
 				File child = new File(currentParent, name);
 				if( false == child.exists() ){
-					mkdir(child);
+					Files.createDirectory(child);
 				} else if( false == child.isDirectory() ) {
 					throw new Exception("Attachment path is not a directory: "+child.getAbsolutePath());
 				}
@@ -394,16 +474,255 @@ public class DocumentStoreProcess {
 			}
 		}
 	}
-	
-	private void mkdir(File dir) throws Exception {
-		boolean created = false;
+
+	private Object readJsonFile(File file) throws Exception {
+		
+		Object result = null;
+		
+		StringWriter sw = new StringWriter();
+		FileInputStream is = null;
+		InputStreamReader isr = null;
+		char[] buffer = new char[100];
 		try {
-			created = dir.mkdir();
-		} catch(Exception e) {
-			throw new Exception("Unable to create directory: "+dir.getAbsolutePath(),e);
+			is = new FileInputStream(file);
+			isr = new InputStreamReader(is, "UTF-8");
+			
+			int size = isr.read(buffer);
+			while( size >= 0 ) {
+				sw.write(buffer, 0, size);
+				size = isr.read(buffer);
+			}
+			
+			sw.flush();
+			
+			JSONTokener tokener = new JSONTokener(sw.toString());
+			result = tokener.nextValue();
+			
+		} catch (Exception e) {
+			throw new Exception("Error while reading file: "+file.getName(), e);
+			
+		} finally {
+			if( null != isr ) {
+				try {
+					isr.close();
+				} catch (Exception e) {
+					// Ignore
+				}
+			}
+			if( null != is ) {
+				try {
+					is.close();
+				} catch (Exception e) {
+					// Ignore
+				}
+			}
 		}
-		if( !created ) {
-			throw new Exception("Unable to create directory: "+dir.getAbsolutePath());
+		
+		return result;
+	}
+	
+	private String readStringFile(File file) throws Exception {
+		StringWriter sw = new StringWriter();
+		FileInputStream is = null;
+		InputStreamReader isr = null;
+		char[] buffer = new char[100];
+		try {
+			is = new FileInputStream(file);
+			isr = new InputStreamReader(is, "UTF-8");
+			
+			int size = isr.read(buffer);
+			while( size >= 0 ) {
+				sw.write(buffer, 0, size);
+				size = isr.read(buffer);
+			}
+			
+			sw.flush();
+			
+		} catch (Exception e) {
+			throw new Exception("Error while reading file: "+file.getName(), e);
+			
+		} finally {
+			if( null != isr ) {
+				try {
+					isr.close();
+				} catch (Exception e) {
+					// Ignore
+				}
+			}
+			if( null != is ) {
+				try {
+					is.close();
+				} catch (Exception e) {
+					// Ignore
+				}
+			}
+		}
+		
+		return sw.toString();
+	}
+	
+	/**
+	 * This function scans the directory for files that are no longer needed to represent
+	 * the document given in arguments. The detected files are deleted from disk.
+	 * @param doc The document that should be stored in the directory
+	 * @param dir The directory where the document is going to be stored
+	 */
+	private void removeUndesiredFiles(JSONObject doc, File dir) throws Exception {
+		Set<String> keysKept = new HashSet<String>();
+		
+		// Loop through each child of directory
+		File[] children = dir.listFiles();
+		for(File child : children){
+			String name = child.getName();
+			String extension = "";
+			Matcher matcherNameExtension = patternNameExtension.matcher(name);
+			if( matcherNameExtension.matches() ){
+				name = matcherNameExtension.group(1);
+				extension = matcherNameExtension.group(2);
+			}
+
+			// Get child object
+			Object childElement = doc.opt(name);
+			
+			// Verify if we should keep this file
+			boolean keepFile = false;
+			if( null == childElement ){
+				// No matching element
+				
+			} else if( "_attachments".equals(name) ) {
+				// Always remove _attachments
+
+			} else if( keysKept.contains(name) ) {
+				// Remove subsequent files that match same key
+				
+			} else if( child.isDirectory() ) {
+				// If extension is array, then check if we have an array of that name
+				if( FILE_EXT_ARRAY.equals(extension) ){
+					// This must be an array
+					if( childElement instanceof JSONArray ){
+						// That's OK
+						keepFile = true;
+						
+						// Continue checking with files in directory
+						JSONArray childArr = (JSONArray)childElement;
+						removeUndesiredFiles(childArr, child);
+					}
+					
+				} else {
+					// This must be an object
+					if( childElement instanceof JSONObject ){
+						// That's OK
+						keepFile = true;
+						
+						// Continue checking with files in directory
+						JSONObject childObj = (JSONObject)childElement;
+						removeUndesiredFiles(childObj, child);
+					}
+				}
+				
+			} else {
+				// Child is a file.
+				if( FILE_EXT_JSON.equals(extension) ){
+					// Anything can be saved in a .json file
+					keepFile = true;
+					
+				} else if( childElement instanceof String ){
+					// Anything else must match a string
+					keepFile = true;
+				}
+			}
+
+			// Remove file if it no longer fits the object
+			if( keepFile ){
+				keysKept.add(name);
+				
+			} else {
+				if( child.isDirectory() ){
+					Files.emptyDirectory(child);
+				}
+				child.delete();
+			}
+		}
+	}
+
+	private void removeUndesiredFiles(JSONArray arr, File dir) throws Exception {
+		Set<String> keysKept = new HashSet<String>();
+		
+		// Loop through each child of directory
+		File[] children = dir.listFiles();
+		for(File child : children){
+			String name = child.getName();
+			String extension = "";
+			Matcher matcherNameExtension = patternNameExtension.matcher(name);
+			if( matcherNameExtension.matches() ){
+				name = matcherNameExtension.group(1);
+				extension = matcherNameExtension.group(2);
+			}
+
+			Matcher matcherIndex = patternIndex.matcher(name);
+			boolean keepFile = false;
+			if( matcherIndex.matches() ){
+				// Get the index
+				int index = Integer.parseInt(name);
+			
+				// Get child object
+				Object childElement = arr.opt(index);
+				
+				// Verify if we should keep this file
+				if( null == childElement ){
+					// No matching element
+					
+				} else if( keysKept.contains(name) ) {
+					// Remove subsequent files that match same key
+					
+				} else if( child.isDirectory() ) {
+					// If extension is array, then check if we have an array of that name
+					if( FILE_EXT_ARRAY.equals(extension) ){
+						// This must be an array
+						if( childElement instanceof JSONArray ){
+							// That's OK
+							keepFile = true;
+							
+							// Continue checking with files in directory
+							JSONArray childArr = (JSONArray)childElement;
+							removeUndesiredFiles(childArr, child);
+						}
+						
+					} else {
+						// This must be an object
+						if( childElement instanceof JSONObject ){
+							// That's OK
+							keepFile = true;
+							
+							// Continue checking with files in directory
+							JSONObject childObj = (JSONObject)childElement;
+							removeUndesiredFiles(childObj, child);
+						}
+					}
+					
+				} else {
+					// Child is a file.
+					if( FILE_EXT_JSON.equals(extension) ){
+						// Anything can be saved in a .json file
+						keepFile = true;
+						
+					} else if( childElement instanceof String ){
+						// Anything else must match a string
+						keepFile = true;
+					}
+				}
+			}
+
+			// Remove file if it no longer fits the object
+			if( keepFile ){
+				keysKept.add(name);
+				
+			} else {
+				if( child.isDirectory() ){
+					Files.emptyDirectory(child);
+				}
+				child.delete();
+			}
 		}
 	}
 }

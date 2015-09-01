@@ -1,4 +1,6 @@
 ;(function($,$n2){
+"use strict";
+	
 	// Localization
 	var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
@@ -600,8 +602,6 @@
 				,onError: reportError
 			},opts_);
 
-			var _this = this;
-			
 			var $options = opts.options;
 			var $input = $options.find('input');
 			var searchTerm = $input.val();
@@ -641,7 +641,9 @@
 				+_loc('Javascript')+':<br/><textarea></textarea>'
 				+'</div>');
 			
-			$options.find('textarea').val('function(doc){\n\t// return true for selected document\n}')
+			$options.find('textarea').val('function(doc){\n'
+					+'\t// return true for selected document\n'
+					+'}');
 
 			$parent.append( $options );
 		}
@@ -652,7 +654,6 @@
 				,onSuccess: function(filterFn, creationName){}
 				,onError: reportError
 			},opts_);
-			var _this = this;
 			
 			var $options = opts.options;
 			var script = $options.find('textarea').val();
@@ -695,8 +696,6 @@
 				,onError: reportError
 			},opts_);
 			
-			var _this = this;
-
 			atlasDb.listAllDocuments({
 				onSuccess: function(docIds){
 					var l = new DocumentList({
@@ -732,7 +731,6 @@
 				,reduce: true
 				,group: true
 				,onSuccess: function(rows){
-					var names = [];
 					var $sel = $options.find('select.layerNameList');
 					for(var i=0,e=rows.length; i<e; ++i){
 						var layerId = rows[i].key;
@@ -762,8 +760,6 @@
 				,onError: reportError
 			},opts_);
 			
-			var _this = this;
-
 			var $i = opts.options.find('select.layerNameList');
 			var layerName = $i.val();
 			if( !layerName || '' == layerName ) {
@@ -817,7 +813,6 @@
 			atlasDesign.queryView({
 				viewName: 'schemas-root'
 				,onSuccess: function(rows){
-					var names = [];
 					var $sel = $options.find('select.schemaList');
 					for(var i=0,e=rows.length; i<e; ++i){
 						var schemaName = rows[i].key;
@@ -843,8 +838,6 @@
 				,onError: reportError
 			},opts_);
 			
-			var _this = this;
-
 			var $i = opts.options.find('select.schemaList');
 			var schemaName = $i.val();
 			if( !schemaName || '' == schemaName ) {
@@ -933,8 +926,6 @@
 				,onError: reportError
 			},opts_);
 			
-			var _this = this;
-
 			var $i = opts.options.find('select.importProfileList');
 			var profileId = $i.val();
 			if( !profileId || '' == profileId ) {
@@ -995,8 +986,6 @@
 				,onError: reportError
 			},opts_);
 			
-			var _this = this;
-
 			var $i = opts.options.find('input.filterDocumentId');
 			var docId = $i.val();
 			if( !docId || '' == docId ) {
@@ -1031,6 +1020,254 @@
 	});
 
 	SearchFilter.availableCreateFilters.push(new CreateFilterByDocumentReference());
+
+	// **********************************************************************
+	var CreateFilterByDanglingReference = $n2.Class(SearchFilter, {
+
+		initialize: function(){
+			SearchFilter.prototype.initialize.apply(this);
+			this.name = _loc('Select documents that have broken references');
+		}
+	
+		,printOptions: function($parent){
+		}
+
+		,createList: function(opts_){
+			var opts = $n2.extend({
+				name: null
+				,options: null
+				,progressTitle: _loc('List Creation Progress')
+				,onSuccess: function(list){}
+				,onError: reportError
+			},opts_);
+			
+			atlasDb.listAllDocuments({
+				onSuccess: docIdsLoaded
+				,onError: opts.onError
+			});
+			
+			function docIdsLoaded(docIds){
+				// Make a map
+				var docIdsMap = {};
+				for(var i=0,e=docIds.length; i<e; ++i){
+					var docId = docIds[i];
+					docIdsMap[docId] = true;
+				};
+				
+				atlasDesign.queryView({
+					viewName: 'link-references'
+					,onSuccess: function(rows){
+						var brokenDocIds = {};
+						for(var i=0,e=rows.length; i<e; ++i){
+							var row = rows[i];
+							var docId = row.id;
+							var refId = row.key;
+							
+							if( !docIdsMap[refId] ){
+								brokenDocIds[docId] = true;
+							};
+						};
+						
+						reportBrokenDocuments(brokenDocIds);
+					}
+					,onError: opts.onError
+				});
+			};
+
+			function reportBrokenDocuments(brokenDocIds){
+				var docIds = [];
+				for(var docId in brokenDocIds){
+					docIds.push(docId);
+				};
+				
+				var locStr = _loc('Documents with dangling references');
+				var l = new DocumentList({
+					docIds: docIds
+					,name: locStr
+				});
+				opts.onSuccess(l);
+			};
+		}
+	});
+
+	SearchFilter.availableCreateFilters.push(new CreateFilterByDanglingReference());
+
+	// **********************************************************************
+	var CreateFilterInvalidSourceReference = $n2.Class(SearchFilter, {
+
+		initialize: function(){
+			SearchFilter.prototype.initialize.apply(this);
+			this.name = _loc('Select documents that have an invalid source');
+		}
+	
+		,printOptions: function($parent){
+		}
+
+		,createList: function(opts_){
+			var opts = $n2.extend({
+				name: null
+				,options: null
+				,progressTitle: _loc('List Creation Progress')
+				,onSuccess: function(list){}
+				,onError: reportError
+			},opts_);
+			
+			atlasDb.listAllDocuments({
+				onSuccess: docIdsLoaded
+				,onError: opts.onError
+			});
+			
+			function docIdsLoaded(docIds){
+				// Make a map
+				var docIdsMap = {};
+				for(var i=0,e=docIds.length; i<e; ++i){
+					var docId = docIds[i];
+					docIdsMap[docId] = true;
+				};
+				
+				atlasDesign.queryView({
+					viewName: 'link-references'
+					,onSuccess: function(rows){
+						var brokenDocIds = {};
+						for(var i=0,e=rows.length; i<e; ++i){
+							var row = rows[i];
+							var docId = row.id;
+							var refId = row.key;
+							
+							if( !docIdsMap[refId] ){
+								brokenDocIds[docId] = true;
+							};
+						};
+						
+						documentsWithInvalidReferences(docIdsMap, brokenDocIds);
+					}
+					,onError: opts.onError
+				});
+			};
+
+			function documentsWithInvalidReferences(currentDocIdsMap, brokenDocIds){
+				var docIds = [];
+				for(var docId in brokenDocIds){
+					docIds.push(docId);
+				};
+
+				atlasDb.getDocuments({
+					docIds: docIds
+					,onSuccess: function(docs){
+						var invalidSourceIds = [];
+						
+						for(var i=0,e=docs.length; i<e; ++i){
+							var doc = docs[i];
+							if( doc 
+							 && doc.nunaliit_source 
+							 && doc.nunaliit_source.doc ){
+								var sourceDocId = doc.nunaliit_source.doc;
+								if( !currentDocIdsMap[sourceDocId] ){
+									invalidSourceIds.push(doc._id);
+								};
+							};
+						};
+						
+						reportInvalidSourceDocuments(invalidSourceIds);
+					}
+					,onError: opts.onError
+				});
+			};
+			
+			function reportInvalidSourceDocuments(docIds){
+				var locStr = _loc('Documents that have an invalid source');
+				var l = new DocumentList({
+					docIds: docIds
+					,name: locStr
+				});
+				opts.onSuccess(l);
+			};
+		}
+	});
+
+	SearchFilter.availableCreateFilters.push(new CreateFilterInvalidSourceReference());
+
+	// **********************************************************************
+	var CreateFilterNotReachableByReference = $n2.Class(SearchFilter, {
+
+		initialize: function(){
+			SearchFilter.prototype.initialize.apply(this);
+			this.name = _loc('Select documents that are not reachable by reference');
+		}
+	
+		,printOptions: function($parent){
+		}
+
+		,createList: function(opts_){
+			var opts = $n2.extend({
+				name: null
+				,options: null
+				,progressTitle: _loc('List Creation Progress')
+				,onSuccess: function(list){}
+				,onError: reportError
+			},opts_);
+			
+			atlasDb.listAllDocuments({
+				onSuccess: docIdsLoaded
+				,onError: opts.onError
+			});
+			
+			function docIdsLoaded(docIds){
+				// Make a map
+				var docIdsMap = {};
+				for(var i=0,e=docIds.length; i<e; ++i){
+					var docId = docIds[i];
+					docIdsMap[docId] = true;
+				};
+				
+				atlasDesign.queryView({
+					viewName: 'link-references'
+					,onSuccess: function(rows){
+						var referenceInfo = {};
+						for(var i=0,e=rows.length; i<e; ++i){
+							var row = rows[i];
+							var docId = row.id;
+							var refId = row.key;
+
+							if( docIdsMap[docId] && !referenceInfo[docId] ) {
+								referenceInfo[docId] = {};
+							};
+							if( docIdsMap[refId] && !referenceInfo[refId] ) {
+								referenceInfo[refId] = {};
+							};
+
+							if( docIdsMap[refId] && docIdsMap[docId] ){
+								referenceInfo[docId].reachable = true;
+								referenceInfo[refId].reachable = true;
+							};
+						};
+						
+						reportUnreachableDocuments(referenceInfo);
+					}
+					,onError: opts.onError
+				});
+			};
+
+			function reportUnreachableDocuments(referenceInfo){
+				var docIds = [];
+				for(var docId in referenceInfo){
+					var info = referenceInfo[docId];
+					if( !info.reachable ){
+						docIds.push(docId);
+					};
+				};
+				
+				var locStr = _loc('Documents not reachable by reference');
+				var l = new DocumentList({
+					docIds: docIds
+					,name: locStr
+				});
+				opts.onSuccess(l);
+			};
+		}
+	});
+
+	SearchFilter.availableCreateFilters.push(new CreateFilterNotReachableByReference());
 
 	// **********************************************************************
 	var CreateFilterSkeleton = $n2.Class(SearchFilter, {
@@ -1097,8 +1334,6 @@
 				,onError: reportError
 			},opts_);
 			
-			var _this = this;
-
 			atlasDesign.queryView({
 				viewName: 'attachments'
 				,startkey: 'submitted'
@@ -1146,8 +1381,6 @@
 				,onError: reportError
 			},opts_);
 			
-			var _this = this;
-
 			atlasDesign.queryView({
 				viewName: 'attachments'
 				,startkey: 'analyzed'
@@ -1195,8 +1428,6 @@
 				,onError: reportError
 			},opts_);
 			
-			var _this = this;
-
 			atlasDesign.queryView({
 				viewName: 'attachments'
 				,startkey: 'waiting for approval'
@@ -1244,8 +1475,6 @@
 				,onError: reportError
 			},opts_);
 			
-			var _this = this;
-
 			atlasDesign.queryView({
 				viewName: 'attachments'
 				,startkey: 'approved'
@@ -1293,8 +1522,6 @@
 				,onError: reportError
 			},opts_);
 			
-			var _this = this;
-
 			atlasDesign.queryView({
 				viewName: 'attachments'
 				,startkey: 'attached'
@@ -1405,8 +1632,6 @@
 				,onError: reportError
 			},opts_);
 			
-			var _this = this;
-
 			if( !opts.list ) {
 				opts.onError(_loc('List is required on transformation'));
 				return;
@@ -1540,8 +1765,6 @@
 				onSuccess: function(transformFn){}
 				,onError: reportError
 			},opts_);
-			var _this = this;
-			
 			var dialogId = $n2.getUniqueId();
 			var $dialog = $('<div id="'+dialogId+'">'
 				+'<div>'+_loc('From')+': <input class="selectAppFrom" type="text"/></div>'
@@ -1625,8 +1848,6 @@
 				onSuccess: function(transformFn){}
 				,onError: reportError
 			},opts_);
-			var _this = this;
-			
 			var dialogId = $n2.getUniqueId();
 			var $dialog = $('<div id="'+dialogId+'" class="selectAppDocumentTransformJavascript">'
 				+'<div>'+_loc('Javascript')+':<br/><textarea></textarea></div>'
@@ -1799,12 +2020,25 @@
 			$a.text( _loc('View') );
 			$d.append($a);
 			installView(list, $a);
+			
+			var $a = $('<a href="#"></a>');
+			$a.text( _loc('Text') );
+			$d.append($a);
+			installText(list, $a);
 		};
 		
 		function installView(list, $a){
 			$a.click(function(e){
 				e.stopPropagation();
 				selectList(list);
+				return false;
+			});
+		};
+		
+		function installText(list, $a){
+			$a.click(function(e){
+				e.stopPropagation();
+				selectText(list);
 				return false;
 			});
 		};
@@ -1886,7 +2120,7 @@
 		});
 		
 		var $ex = $('<button></button>');
-		$ex.text( _loc('Export Geometries') );
+		$ex.text( _loc('Export') );
 		$h.append($ex);
 		$ex.click(function(){
 			exportList(list);
@@ -2152,44 +2386,87 @@
 		function getExportSettings(){
 			var dialogId = $n2.getUniqueId();
 			var $dialog = $('<div id="'+dialogId+'"></div>');
+
+			var fileNameId = $n2.getUniqueId();
 			
 			$('<div>'+_loc('Exporting')+' <span></span></div>')
 				.find('span').text(list.print()).end()
 				.appendTo($dialog);
 
-			var $select = $('<select></select>');
-			$dialog.append($select);
+			// Filter
+			var filterId = $n2.getUniqueId();
+			var $filterDiv = $('<div>')
+				.appendTo($dialog);
+			$('<label>')
+				.text( _loc('Filter:') )
+				.attr('for',filterId)
+				.appendTo($filterDiv);
+			var $filterSelect = $('<select>')
+				.attr('id',filterId)
+				.appendTo($filterDiv);
 			$('<option value="all"></options>')
 				.text( _loc('All Documents') )
-				.appendTo($select);
+				.appendTo($filterSelect);
 			$('<option value="points"></options>')
 				.text( _loc('All Point Geometries') )
-				.appendTo($select);
+				.appendTo($filterSelect);
 			$('<option value="linestrings"></options>')
 				.text( _loc('All LineString Geometries') )
-				.appendTo($select);
+				.appendTo($filterSelect);
 			$('<option value="polygons"></options>')
 				.text( _loc('All Polygon Geometries') )
-				.appendTo($select);
+				.appendTo($filterSelect);
+
+			// Format
+			var formatId = $n2.getUniqueId();
+			var $formatDiv = $('<div>')
+				.appendTo($dialog);
+			$('<label>')
+				.text( _loc('Format:') )
+				.attr('for',formatId)
+				.appendTo($formatDiv);
+			var $formatSelect = $('<select>')
+				.attr('id',formatId)
+				.appendTo($formatDiv)
+				.change(formatChanged);
+			$('<option value="geojson"></options>')
+				.text( _loc('geojson') )
+				.appendTo($formatSelect);
+			$('<option value="csv"></options>')
+				.text( _loc('csv') )
+				.appendTo($formatSelect);
 			
-			var inputId = $n2.getUniqueId();
-			$('<div><label for="'+inputId+'">'+_loc('File Name')+': </label>'
-				+'<input type="text" name="'+inputId+'" class="n2_export_fileNameInput" value="export.geojson"/>'
-				+'</div>').appendTo($dialog);
+			// File name
+			var $fileNameDiv = $('<div>')
+				.appendTo($dialog);
+			$('<label>')
+				.text( _loc('File Name:') )
+				.attr('for',fileNameId)
+				.appendTo($fileNameDiv);
+			$('<input>')
+				.attr('type','text')
+				.attr('id',fileNameId)
+				.addClass('n2_export_fileNameInput')
+				.val('export.geojson')
+				.appendTo($dialog);
 
 			$('<div><button>'+_loc('Export')+'</button></div>')
 				.appendTo($dialog);
 			$dialog.find('button').click(function(){
-				var $dialog = $('#'+dialogId);
-				var geomType = $dialog.find('select').val();
+				var filter = $('#'+filterId).val();
+				var format = $('#'+formatId).val();
 				
-				var fileName = $dialog.find('.n2_export_fileNameInput').val();
+				var fileName = $('#'+fileNameId).val();
 				if( '' === fileName ) {
 					fileName = null;
 				};
 				
 				$dialog.dialog('close');
-				performExport(geomType,fileName);
+				performExport({
+					filter: filter
+					,fileName: fileName
+					,format: format
+				});
 				return false;
 			});
 			
@@ -2205,22 +2482,40 @@
 				}
 			};
 			$dialog.dialog(dialogOptions);
+			
+			formatChanged();
+			
+			function formatChanged(){
+				var extension = $('#'+formatId).val();
+				var name = $('#'+fileNameId).val();
+				var i = name.lastIndexOf('.');
+				if( i >= 0 ){
+					name = name.substr(0,i);
+				};
+				name = name + '.' + extension;
+				$('#'+fileNameId).val(name);
+			};
 		};
 		
-		function performExport(geomType,fileName){
+		function performExport(opts_){
+			var opts = $n2.extend({
+				filter: 'all'
+				,fileName: 'export'
+				,format: 'geojson'
+			},opts_);
 			
 			var windowId = $n2.getUniqueId();
 			
 			// Open a new window to get results
 			open('about:blank', windowId);
 			
-			var docIds = list.docIds;
 			exportService.exportByDocIds({
 				docIds: list.docIds
 				,targetWindow: windowId
-				,geometryType: geomType
+				,filter: opts.filter
 				,contentType: 'application/binary'
-				,fileName: fileName
+				,fileName: opts.fileName
+				,format: opts.format
 				,onError: function(err){
 					alert(_loc('Error during export')+': '+err);
 				}
@@ -2342,6 +2637,35 @@
 				processDocument(index+1);
 			};
 		};
+	};
+	
+	// -----------------------------------------------------------------
+	function selectText(list){
+		var docIds = list.docIds;
+		
+		var dialogId = $n2.getUniqueId();
+
+		var $dialog = $('<div id="'+dialogId+'">'
+			+'<textarea class="selectAppTextDocIds"></textarea>'
+			+'</div></div>');
+		
+		var text = docIds.join('\n');
+		
+		$dialog.find('textarea.selectAppTextDocIds').text( text );
+		
+		var dialogOptions = {
+			autoOpen: true
+			,title: _loc('Document Identifiers')
+			,modal: true
+			,closeOnEscape: false
+			,dialogClass: 'selectAppTextDialog'
+			,close: function(event, ui){
+				var diag = $(event.target);
+				diag.dialog('destroy');
+				diag.remove();
+			}
+		};
+		$dialog.dialog(dialogOptions);
 	};
 	
 	// -----------------------------------------------------------------

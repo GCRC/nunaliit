@@ -33,8 +33,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ;(function($n2) {
 "use strict";
 
-// Localization
-var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
+//var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 var DH = 'n2.userIntentView';
 
 //--------------------------------------------------------------------------
@@ -524,8 +523,448 @@ var IntentView = $n2.Class({
 });
 
 //--------------------------------------------------------------------------
+/*
+	Service used to track the user intent. It keeps an internal set of nodes that
+	expands and shrinks according to the current selection.
+	
+	Internally, the nodes employed to track intent have the following format:
+{
+	n2_id:              <string>         [input]
+	,n2_selected:       <boolean>        [output]
+	,n2_selectedIntent: <null or string> [output]
+	,n2_hovered:        <boolean>        [output]
+	,n2_hoveredIntent:  <null or string> [output]
+	,n2_found:          <boolean>        [output]
+	,n2_intent:         <null or string> [output]
+	,n2_stale:          <boolean>
+}
+
+	Note that when n2_stale is set, this node will no longer be reported and will be
+	removed from the internal set.
+*/
+var IntentService = $n2.Class({
+	dispatchService: null,
+	
+	hoverInfo: null,
+	
+	selectInfo: null,
+	
+	findInfo: null,
+	
+	nodesById: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dispatchService: null
+			,suppressFindEvent: false
+		}, opts_);
+
+		var _this = this;
+		
+		this.dispatchService = opts.dispatchService;
+		
+		this.nodesById = {};
+		this.hoverInfo = null;
+		this.selectInfo = null;
+		this.findInfo = null;
+		
+		if( this.dispatchService ){
+			var f = function(m){
+				_this._handleDispatch(m);
+			};
+			
+			this.dispatchService.register(DH,'selected',f);
+			this.dispatchService.register(DH,'selectedSupplement',f);
+			this.dispatchService.register(DH,'unselected',f);
+			this.dispatchService.register(DH,'focusOn',f);
+			this.dispatchService.register(DH,'focusOnSupplement',f);
+			this.dispatchService.register(DH,'focusOff',f);
+			this.dispatchService.register(DH,'searchInitiate',f);
+			
+			if( !opts.suppressFindEvent ){
+				this.dispatchService.register(DH,'find',f);
+			};
+
+			this.dispatchService.register(DH,'userIntentGetCurrent',f);
+		};
+	},
+	
+	_getNode: function(docId){
+		var node = this.nodesById[docId];
+		if( !node ){
+			node = {
+				n2_id: docId
+			};
+			this.nodesById[docId] = node;
+		};
+		return node;
+	},
+	
+	_adjustIntentOnNode: function(node){
+		var changed = false;
+		
+		var docId = node.n2_id;
+		
+		// Stale. Initially, assume that it is stale
+		var stale = true;
+		
+		// Selection
+		var selected = false;
+		var selectedIntent = null;
+		if( this.selectInfo && this.selectInfo.docIds ){
+			var intent = this.selectInfo.docIds[docId];
+			if( intent ){
+				selected = true;
+				stale = false;
+				if( typeof intent === 'string' ){
+					selectedIntent = intent;
+				};
+			};
+		};
+		if( node.n2_selected !== selected ){
+			node.n2_selected = selected;
+			changed = true;
+		};
+		if( node.n2_selectedIntent !== selectedIntent ){
+			node.n2_selectedIntent = selectedIntent;
+			changed = true;
+		};
+
+		// Focus
+		var focus = false;
+		var hoveredIntent = null;
+		if( this.hoverInfo && this.hoverInfo.docIds ){
+			var intent = this.hoverInfo.docIds[docId];
+			if( intent ){
+				focus = true;
+				stale = false;
+				if( typeof intent === 'string' ){
+					hoveredIntent = intent;
+				};
+			};
+		};
+		if( node.n2_hovered !== focus ){
+			node.n2_hovered = focus;
+			changed = true;
+		};
+		if( node.n2_hoveredIntent !== hoveredIntent ){
+			node.n2_hoveredIntent = hoveredIntent;
+			changed = true;
+		};
+		
+		// Find on map
+		var find = false;
+		if( this.findInfo ){
+			var intent = this.findInfo[docId];
+			if( intent ){
+				find = true;
+				stale = false;
+			};
+		};
+		if( node.n2_found !== find ){
+			node.n2_found = find;
+			changed = true;
+		};
+		
+		// Compute intent
+		var effectiveIntent = hoveredIntent;
+		if( !effectiveIntent ){
+			effectiveIntent = selectedIntent;
+		};
+		if( node.n2_intent !== effectiveIntent ){
+			node.n2_intent = effectiveIntent;
+			changed = true;
+		};
+
+		// This node is no longer interesting. It has become stale
+		// and should be removed from tracked nodes.
+		if( stale ){
+			node.n2_stale = stale;
+			changed = true;
+		};
+		
+		return changed;
+	},
+	
+	_performUnselect: function(changedArray){
+		var docIds = {};
+
+		if( this.selectInfo 
+		 && this.selectInfo.docIds ) {
+			for(var selectedDocId in this.selectInfo.docIds){
+				docIds[selectedDocId] = true;
+			};
+		};
+
+		if( this.findInfo ) {
+			for(var selectedDocId in this.findInfo){
+				docIds[selectedDocId] = true;
+			};
+		};
+
+		// needed for _adjustIntentOnNode()
+		this.selectInfo = null;
+		this.findInfo = null;
+		
+		for(var selectedDocId in docIds){
+			var n = this._getNode(selectedDocId);
+			if( this._adjustIntentOnNode(n) ){
+				changedArray.push(n);
+			};
+		};
+	},
+
+	_performFocusOff: function(changedArray){
+		if( this.hoverInfo 
+		 && this.hoverInfo.docIds ) {
+			var docIds = this.hoverInfo.docIds;
+			this.hoverInfo = null; // needed for _adjustIntentOnNode()
+			
+			for(var focusDocId in docIds){
+				var n = this._getNode(focusDocId);
+				if( this._adjustIntentOnNode(n) ){
+					changedArray.push(n);
+				};
+			};
+		};
+		
+		this.hoverInfo = null;
+	},
+
+	_handleSelect: function(docIds){
+		var changed = [];
+
+		// New selection, unselect previous
+		this._performUnselect(changed);
+
+		// Create new selection
+		this.selectInfo = {
+			docIds: {}
+		};
+		for(var i=0,e=docIds.length; i<e; ++i){
+			var docId = docIds[i];
+			this.selectInfo.docIds[docId] = true;
+
+			// Adjust selected nodes
+			var n = this._getNode(docId);
+			if( this._adjustIntentOnNode(n) ){
+				changed.push(n);
+			};
+		};
+		
+		// Report to listener the nodes that were changed
+		if( changed.length > 0 ){
+			this._reportChangedNodes(changed);
+		};
+	},
+
+	_handleSelectSupplement: function(docId, intent){
+		var changed = [];
+
+		// Update current selection
+		if( this.selectInfo && this.selectInfo.docIds ){
+			if( intent ){
+				this.selectInfo.docIds[docId] = intent;
+			} else {
+				this.selectInfo.docIds[docId] = true;
+			};
+
+			// Adjust selected nodes
+			var n = this._getNode(docId);
+			if( this._adjustIntentOnNode(n) ){
+				changed.push(n);
+			};
+		};
+		
+		// Report to listener the nodes that were changed
+		if( changed.length > 0 ){
+			this._reportChangedNodes(changed);
+		};
+	},
+
+	_handleUnselect: function(){
+		var changed = [];
+
+		this._performUnselect(changed);
+
+		// Report to listener the nodes that were changed
+		if( changed.length > 0 ){
+			this._reportChangedNodes(changed);
+		};
+	},
+
+	_handleFind: function(docId){
+		var changed = [];
+
+		var previousNodes = [];
+		if( this.findInfo ){
+			for(var foundDocId in this.findInfo){
+				var n = this._getNode(foundDocId);
+				
+				previousNodes.push(n);
+			};
+		};
+		
+		// Create new find on map
+		this.findInfo = {};
+		this.findInfo[docId] = true;
+
+		// Adjust previous nodes
+		for(var i=0,e=previousNodes.length; i<e; ++i){
+			var n = previousNodes[i];
+			if( this._adjustIntentOnNode(n) ){
+				changed.push(n);
+			};
+		};
+		
+		// Adjust current node
+		var n = this._getNode(docId);
+		if( this._adjustIntentOnNode(n) ){
+			changed.push(n);
+		};
+		
+		// Report to listener the nodes that were changed
+		if( changed.length > 0 ){
+			this._reportChangedNodes(changed);
+		};
+	},
+
+	_handleFocusOn: function(docId){
+		var changed = [];
+
+		// New selection, unselect previous
+		this._performFocusOff(changed);
+
+		// Create new focus
+		this.hoverInfo = {
+			docId: docId
+			,docIds: {}
+		};
+		this.hoverInfo.docIds[docId] = true;
+		
+		// Adjust current node
+		var n = this._getNode(docId);
+		if( this._adjustIntentOnNode(n) ){
+			changed.push(n);
+		};
+		
+		// Report to listener the nodes that were changed
+		if( changed.length > 0 ){
+			this._reportChangedNodes(changed);
+		};
+	},
+
+	_handleFocusOnSupplement: function(docId, intent){
+		var changed = [];
+
+		// Update current focus
+		if( this.hoverInfo && this.hoverInfo.docIds ){
+			if( intent ){
+				this.hoverInfo.docIds[docId] = intent;
+			} else {
+				this.hoverInfo.docIds[docId] = true;
+			};
+
+			// Adjust current node
+			var n = this._getNode(docId);
+			if( this._adjustIntentOnNode(n) ){
+				changed.push(n);
+			};
+		};
+		
+		// Report to listener the nodes that were changed
+		if( changed.length > 0 ){
+			this._reportChangedNodes(changed);
+		};
+	},
+
+	_handleFocusOff: function(){
+		var changed = [];
+
+		this._performFocusOff(changed);
+
+		// Report to listener the nodes that were changed
+		if( changed.length > 0 ){
+			this._reportChangedNodes(changed);
+		};
+	},
+
+	_handleDispatch: function(m){
+		if( 'selected' === m.type ){
+			if( m.docId ){
+				var docId = m.docId;
+				this._handleSelect([docId]);
+			} else if( m.docIds ) {
+				this._handleSelect(m.docIds);
+			} else if( m.doc ){
+				var docId = m.doc._id;
+				this._handleSelect([docId]);
+			} else if( m.docs ) {
+				var docIds = [];
+				for(var i=0,e=m.docs.length; i<e; ++i){
+					var doc = m.docs[i];
+					docIds.push(doc._id);
+				};
+				this._handleSelect(docIds);
+			} else {
+				$n2.log('UserIntentService unable to handle "selected" event',m);
+			};
+
+		} else if( 'selectedSupplement' === m.type ) {
+			var docId = m.docId;
+			var intent = m.intent;
+			this._handleSelectSupplement(docId, intent);
+			
+		} else if( 'unselected' === m.type ){
+			this._handleUnselect();
+			
+		} else if( 'focusOn' === m.type ){
+			var docId = m.docId;
+			this._handleFocusOn(docId);
+
+		} else if( 'focusOnSupplement' === m.type ) {
+			var docId = m.docId;
+			var intent = m.intent;
+			this._handleFocusOnSupplement(docId, intent);
+			
+		} else if( 'focusOff' === m.type ){
+			this._handleFocusOff();
+			
+		} else if( 'searchInitiate' === m.type ){
+			this._handleUnselect();
+
+		} else if( 'find' === m.type ){
+			var docId = m.docId;
+			this._handleFind(docId);
+			
+		} else if( 'userIntentGetCurrent' === m.type ){
+			// Asynchronous call
+			m.intentMap = this.nodesById;
+		};
+	},
+	
+	_reportChangedNodes: function(changedNodes){
+		this.dispatchService.send(DH,{
+			type: 'userIntentChanged'
+			,intentMap: this.nodesById
+			,changes: changedNodes
+		});
+		
+		// Remove nodes that have become stale
+		for(var i=0,e=changedNodes.length; i<e; ++i){
+			var n = changedNodes[i];
+			if( n.n2_stale ){
+				var docId = n.n2_id;
+				delete this.nodesById[docId];
+			};
+		};
+	}
+});
+
+//--------------------------------------------------------------------------
 $n2.userIntentView = {
 	IntentView: IntentView
+	,IntentService: IntentService
 };
 
 })(nunaliit2);

@@ -275,6 +275,20 @@ var DomStyler = $n2.Class({
 			_this._installTiledImageClick(contextDoc, $jq);
 			$jq.removeClass('n2s_installTiledImageClick').addClass('n2s_installedTiledImageClick');
 		});
+
+		// Custom
+		$set.filter('.n2s_custom').each(function(){
+			var $jq = $(this);
+			_this._custom($jq, contextDoc);
+			$jq.removeClass('n2s_custom').addClass('n2s_customed');
+		});
+
+		// User Events
+		$set.filter('.n2s_userEvents').each(function(){
+			var $jq = $(this);
+			_this._userEvents($jq, contextDoc);
+			$jq.removeClass('n2s_userEvents').addClass('n2s_userEvents_installed');
+		});
 	},
 	
 	_updatedDocument: function(doc){
@@ -296,6 +310,18 @@ var DomStyler = $n2.Class({
 				
 				if( $jq.hasClass('n2s_insertedMediaView') ){
 					_this._insertMediaView(doc, $jq);
+				};
+				
+				if( $jq.hasClass('n2s_insertedFirstThumbnail') ){
+					_this._insertFirstThumbnail(doc, $jq);
+				};
+				
+				if( $jq.hasClass('n2s_customed') ){
+					_this._custom($jq, doc);
+				};
+				
+				if( $jq.hasClass('n2s_userEvents_installed') ){
+					_this._userEvents($jq, doc);
 				};
 			});
 		};
@@ -423,18 +449,71 @@ var DomStyler = $n2.Class({
 	_insertMediaView: function(data, $insertView) {
 		var _this = this;
 		
-		this._associateDocumentToElement(data, $insertView);
+		var docId = this._associateDocumentToElement(data, $insertView);
 
 		$insertView.empty();
-		
-		var docId = this._getDocumentIdentifier(data, $insertView);
 		
 		var attachmentName = $insertView.attr('nunaliit-attachment');
 		if( !attachmentName ) {
 			attachmentName = $insertView.text();
 		};
 
-		if( !data ){
+		// Do we have document?
+		if( data && data._id === docId ){
+			var attachment = null;
+			if( data._attachments 
+			 && data._attachments[attachmentName] ){
+				attachment = data._attachments[attachmentName];
+			};
+
+			var attDesc = null;
+			if( data 
+			 && data.nunaliit_attachments 
+			 && data.nunaliit_attachments.files ) {
+				attDesc = data.nunaliit_attachments.files[attachmentName];
+			};
+			
+			if( attDesc
+			 && attDesc.status === 'attached'
+			 && attachment ) {
+				
+				var attUrl = this.db.getAttachmentUrl(data,attachmentName);
+
+				// An attachment was uploaded for this file
+				var linkDiv = null;
+				if( attDesc.thumbnail
+				 && data._attachments[attDesc.thumbnail]
+				 ) {
+					var thumbUrl = this.db.getAttachmentUrl(data,attDesc.thumbnail);
+					linkDiv = $('<div class="n2Show_thumb_wrapper"><img src="'+thumbUrl+'"/></div>');
+
+				} else if( attDesc.fileClass === 'image' ) {
+					linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_image"></div></div>');
+				
+				} else if( attDesc.fileClass === 'audio' ) {
+					linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_audio"></div></div>');
+				
+				} else if( attDesc.fileClass === 'video' ) {
+					linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_video"></div></div>');
+					
+				} else {
+					linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_file"></div></div>');
+				};
+				
+				if( null != linkDiv ) {
+					$insertView.append(linkDiv);
+					var cb = createMediaCallback(
+							attDesc.fileClass
+							,attUrl
+							,data
+							,attachmentName
+						);
+					linkDiv.click(cb);
+				};
+			};
+
+		} else {
+			// Do not have document
 			var label = _loc('Media({docId},{attName})',{
 				docId: docId
 				,attName: attachmentName
@@ -443,59 +522,6 @@ var DomStyler = $n2.Class({
 				.addClass('n2s_insertMediaView_wait')
 				.text(label)
 				.appendTo($insertView);
-			return;
-		};
-		
-		var attachment = null;
-		if( data._attachments 
-		 && data._attachments[attachmentName] ){
-			attachment = data._attachments[attachmentName];
-		};
-
-		var attDesc = null;
-		if( data 
-		 && data.nunaliit_attachments 
-		 && data.nunaliit_attachments.files ) {
-			attDesc = data.nunaliit_attachments.files[attachmentName];
-		};
-		
-		if( attDesc
-		 && attDesc.status === 'attached'
-		 && attachment ) {
-			
-			var attUrl = this.db.getAttachmentUrl(data,attachmentName);
-
-			// An attachment was uploaded for this file
-			var linkDiv = null;
-			if( attDesc.thumbnail
-			 && data._attachments[attDesc.thumbnail]
-			 ) {
-				var thumbUrl = this.db.getAttachmentUrl(data,attDesc.thumbnail);
-				linkDiv = $('<div class="n2Show_thumb_wrapper"><img src="'+thumbUrl+'"/></div>');
-
-			} else if( attDesc.fileClass === 'image' ) {
-				linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_image"></div></div>');
-			
-			} else if( attDesc.fileClass === 'audio' ) {
-				linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_audio"></div></div>');
-			
-			} else if( attDesc.fileClass === 'video' ) {
-				linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_video"></div></div>');
-				
-			} else {
-				linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_file"></div></div>');
-			};
-			
-			if( null != linkDiv ) {
-				$insertView.append(linkDiv);
-				var cb = createMediaCallback(
-						attDesc.fileClass
-						,attUrl
-						,data
-						,attachmentName
-					);
-				linkDiv.click(cb);
-			};
 		};
 		
 		function createMediaCallback(uploadType, attachmentUrl, doc, attachmentName) {
@@ -520,10 +546,6 @@ var DomStyler = $n2.Class({
 				 && attDesc.data
 				 && attDesc.data.title ) {
 					mediaOptions.title = attDesc.data.title;
-
-				} else if( doc.nunaliit_contribution 
-				 && doc.nunaliit_contribution.title ) {
-					mediaOptions.title = doc.nunaliit_contribution.title;
 				};
 				
 				// Height and width
@@ -578,6 +600,9 @@ var DomStyler = $n2.Class({
 	},
 	
 	_insertFirstThumbnail: function(doc, $insertElem, opt_){
+
+		var docId = this._associateDocumentToElement(doc, $insertElem);
+
 		$insertElem.empty();
 
 		var attachmentService = null;
@@ -585,27 +610,29 @@ var DomStyler = $n2.Class({
 			attachmentService = this.showService.attachmentService;
 		};
 
-		// Select first thumbnail
-		var attachment = null;
-		if( attachmentService ){
-			var attachments = attachmentService.getAttachments(doc);
-			for(var i=0,e=attachments.length; i<e; ++i){
-				var att = attachments[i];
-				if( att.isSource  ){
-					var thumbnailAtt = att.getThumbnailAttachment();
-					if( thumbnailAtt 
-					 && thumbnailAtt.isAttached() ){
-						attachment = thumbnailAtt;
-						break;
+		if( doc && doc._id === docId ){
+			// Select first thumbnail
+			var attachment = null;
+			if( attachmentService ){
+				var attachments = attachmentService.getAttachments(doc);
+				for(var i=0,e=attachments.length; i<e; ++i){
+					var att = attachments[i];
+					if( att.isSource  ){
+						var thumbnailAtt = att.getThumbnailAttachment();
+						if( thumbnailAtt 
+						 && thumbnailAtt.isAttached() ){
+							attachment = thumbnailAtt;
+							break;
+						};
 					};
 				};
 			};
-		};
-		
-		if( attachment ){
-			$('<img>')
-				.attr('src',attachment.getMediaFileUrl())
-				.appendTo($insertElem);
+			
+			if( attachment ){
+				$('<img>')
+					.attr('src',attachment.getMediaFileUrl())
+					.appendTo($insertElem);
+			};
 		};
 	},
 	
@@ -788,8 +815,9 @@ var DomStyler = $n2.Class({
 			if( after ){
 				var t3 = parent.ownerDocument.createTextNode(after);
 				parent.insertBefore(t3,textNode);
-				parent.removeChild(textNode);
 			};
+
+			parent.removeChild(textNode);
 		};
 	},
 	
@@ -1035,15 +1063,132 @@ var DomStyler = $n2.Class({
 				});
 		};
 	},
+
+	_custom: function($elem, doc){
+		var _this = this;
+		
+		var docId = this._associateDocumentToElement(doc, $elem);
+		var customType = $elem.attr('nunaliit-custom');
+		
+		if( !customType ){
+			$elem.attr('nunaliit-error','No custom type specified');
+		} else if( doc ){
+			// We have a document and a custom type
+
+			// Get selector
+			var selectorStr = $elem.attr('nunaliit-selector');
+			var selector = undefined;
+			if( selectorStr ){
+				selector = $n2.objectSelector.decodeFromDomAttribute(selectorStr);
+			};
+
+			// Call dispatcher
+			var dispatchService = this.showService.dispatchService;
+			if( dispatchService ) {
+				dispatchService.synchronousCall(DH, {
+					type:'showCustom'
+					,elem: $elem
+					,doc: doc
+					,customType: customType
+					,selector: selector
+					,showService: this.showService
+				});
+			};
+		} else {
+			// We have only a custom type
+
+			// Call dispatcher
+			var dispatchService = this.showService.dispatchService;
+			if( dispatchService ) {
+				dispatchService.synchronousCall(DH, {
+					type:'showCustom'
+					,elem: $elem
+					,customType: customType
+					,showService: this.showService
+				});
+			};
+		};
+	},
 	
-	_getDocumentIdentifier: function(doc, $elem){
-		var docId = undefined;
-		if( doc ){
-			docId = doc._id;
+	_userEvents: function($elem, doc){
+		var docId = this._getDocumentIdentifier(doc, $elem);
+		
+		var disableClick = false;
+		var disableClickAttr = $elem.attr('nunaliit-disable-click');
+		if( 'true' == disableClickAttr ){
+			disableClick = true;
 		};
 		
-		if( !docId ){
-			docId = $elem.attr('nunaliit-document');
+		var disableHover = false;
+		var disableHoverAttr = $elem.attr('nunaliit-disable-hover');
+		if( 'true' == disableHoverAttr ){
+			disableHover = true;
+		};
+		
+		if( docId ){
+			// We have a document identifier
+			var eventClass = 'n2s_userEvents_doc_' + $n2.utils.stringToHtmlId(docId);
+			$elem.addClass(eventClass);
+
+			// Get current intent from user intent service
+			var dispatchService = this.showService.dispatchService;
+			if( dispatchService ) {
+				// Update classes
+				var msg = {
+					type:'userIntentGetCurrent'
+					,intentMap: null
+				};
+				dispatchService.synchronousCall(DH, msg);
+				if( msg.intentMap ){
+					// Is there a state for this node?
+					var docState = msg.intentMap[docId];
+					if( docState ){
+						if( docState.n2_selected ){
+							$elem.addClass('nunaliit_selected');
+						};
+						if( docState.n2_hovered ){
+							$elem.addClass('nunaliit_hovered');
+						};
+						if( docState.n2_find ){
+							$elem.addClass('nunaliit_found');
+						};
+					};
+				};
+				
+				// Install events
+				if( !disableClick ){
+					$elem.click(function(){
+						dispatchService.send(DH,{
+							type:'userSelect'
+							,docId: docId
+						});
+						return false;
+					});
+				};
+
+				if( !disableHover ){
+					$elem.mouseover(function(e){
+	 		 			dispatchService.send(DH,{
+	 		 				type: 'userFocusOn'
+	 		 				,docId: docId
+	 		 			});
+	 				})
+					.mouseout(function(e){
+	 		 			dispatchService.send(DH,{
+	 		 				type: 'userFocusOff'
+	 		 				,docId: docId
+	 		 			});
+	 				});
+				};
+			};
+		};
+	},
+	
+	_getDocumentIdentifier: function(doc, $elem){
+		var docId = $elem.attr('nunaliit-document');
+
+		if( !docId && doc ){
+			docId = doc._id;
 		};
 		
 		return docId;
@@ -1056,11 +1201,15 @@ var DomStyler = $n2.Class({
 			var docIdClass = 'n2s_document_' + $n2.utils.stringToHtmlId(docId);
 			$elem.addClass(docIdClass);
 			
-			if( !doc ){
+			if( doc && doc._id === docId ){
+				// Already have document
+			} else {
 				// Request this document
 				this.showService._requestDocument(docId);
 			};
 		};
+		
+		return docId;
 	}
 });
 
@@ -1187,6 +1336,7 @@ var Show = $n2.Class({
 			dispatchService.register(DH, 'start', f);
 			dispatchService.register(DH, 'documentListResults', f);
 			dispatchService.register(DH, 'documentContent', f);
+			dispatchService.register(DH, 'userIntentChanged', f);
 		};
 	},
 
@@ -1268,6 +1418,26 @@ var Show = $n2.Class({
 		$elem.text(layerIdentifier);
 
 		this._requestDocument(layerIdentifier); // fetch document
+	},
+	
+	installUserEvents: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,elem: null
+			,disableClick: false
+			,disableHover: false
+		},opts_);
+		
+		var $elem = $(opts.elem);
+		
+		if( opts.disableClick ){
+			$elem.attr('nunaliit-disable-click','true');
+		};
+		if( opts.disableHover ){
+			$elem.attr('nunaliit-disable-hover','true');
+		};
+		
+		this.domStyler._userEvents($elem, opts.doc);
 	},
 	
 	_displayUserDocument: function(userDoc){
@@ -1645,6 +1815,37 @@ var Show = $n2.Class({
 		};
 	},
 	
+	_handleUserIntentChanged: function(changes){
+		if( changes && changes.length > 0 ){
+			for(var i=0,e=changes.length; i<e; ++i){
+				var change = changes[i];
+				var docId = change.n2_id;
+				var eventClass = 'n2s_userEvents_doc_' + $n2.utils.stringToHtmlId(docId);
+				$('.'+eventClass).each(function(){
+					var $elem = $(this);
+
+					if( change.n2_selected ){
+						$elem.addClass('nunaliit_selected');
+					} else {
+						$elem.removeClass('nunaliit_selected');
+					};
+
+					if( change.n2_hovered ){
+						$elem.addClass('nunaliit_hovered');
+					} else {
+						$elem.removeClass('nunaliit_hovered');
+					};
+
+					if( change.n2_find ){
+						$elem.addClass('nunaliit_found');
+					} else {
+						$elem.removeClass('nunaliit_found');
+					};
+				});
+			};
+		};
+	},
+	
 	_handleDispatch: function(m, address, dispatchService){
 		if( 'start' === m.type ){
 			// Accept Post-process display functions that are
@@ -1665,6 +1866,11 @@ var Show = $n2.Class({
 			
 		} else if( 'documentContent' === m.type ) {
 			this._handleDocumentContent(m.doc);
+			
+		} else if( 'userIntentChanged' === m.type ) {
+			if( m.changes ){
+				this._handleUserIntentChanged(m.changes);
+			};
 		};
 	}
 });

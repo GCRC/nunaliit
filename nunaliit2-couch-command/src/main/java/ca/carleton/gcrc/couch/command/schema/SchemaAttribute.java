@@ -38,6 +38,22 @@ public class SchemaAttribute {
 			}
 		}
 		
+		// referenceType
+		{
+			String referenceType = jsonAttr.optString("referenceType",null);
+			if( null != referenceType ){
+				attribute.setReferenceType(referenceType);
+			}
+		}
+		
+		// customType
+		{
+			String customType = jsonAttr.optString("customType",null);
+			if( null != customType ){
+				attribute.setCustomType(customType);
+			}
+		}
+		
 		// searchFunction
 		{
 			String searchFunction = jsonAttr.optString("searchFunction",null);
@@ -62,6 +78,18 @@ public class SchemaAttribute {
 		{
 			boolean excludedFromForm = jsonAttr.optBoolean("excludedFromForm",false);
 			attribute.setExcludedFromForm(excludedFromForm);
+		}
+
+		// excludedFromExport
+		{
+			boolean excludedFromExport = jsonAttr.optBoolean("excludedFromExport",false);
+			attribute.setExcludedFromExport(excludedFromExport);
+		}
+
+		// urlsToLinks
+		{
+			boolean urlsToLinks = jsonAttr.optBoolean("urlsToLinks",false);
+			attribute.setUrlsToLinks(urlsToLinks);
 		}
 
 		// options
@@ -97,9 +125,13 @@ public class SchemaAttribute {
 	private boolean includedInBrief;
 	private boolean excludedFromDisplay;
 	private boolean excludedFromForm;
+	private boolean excludedFromExport;
+	private boolean urlsToLinks;
 	private List<SelectionOption> options = new Vector<SelectionOption>();
 	private List<CheckboxGroupItem> checkboxes = new Vector<CheckboxGroupItem>();
 	private String elementType;
+	private String referenceType;
+	private String customType;
 	private String searchFunction;
 
 	public SchemaAttribute(String type){
@@ -146,6 +178,22 @@ public class SchemaAttribute {
 		this.excludedFromForm = excludedFromForm;
 	}
 
+	public boolean isExcludedFromExport() {
+		return excludedFromExport;
+	}
+
+	public void setExcludedFromExport(boolean excludedFromExport) {
+		this.excludedFromExport = excludedFromExport;
+	}
+
+	public boolean isUrlsToLinks() {
+		return urlsToLinks;
+	}
+
+	public void setUrlsToLinks(boolean urlsToLinks) {
+		this.urlsToLinks = urlsToLinks;
+	}
+
 	public List<SelectionOption> getOptions() {
 		return options;
 	}
@@ -183,6 +231,22 @@ public class SchemaAttribute {
 		this.elementType = elementType;
 	}
 
+	public String getReferenceType() {
+		return referenceType;
+	}
+
+	public void setReferenceType(String referenceType) {
+		this.referenceType = referenceType;
+	}
+
+	public String getCustomType() {
+		return customType;
+	}
+
+	public void setCustomType(String customType) {
+		this.customType = customType;
+	}
+
 	public String getSearchFunction() {
 		return searchFunction;
 	}
@@ -199,10 +263,14 @@ public class SchemaAttribute {
 		if( null != id ) jsonAttr.put("id", id);
 		if( null != label ) jsonAttr.put("label", label);
 		if( null != elementType ) jsonAttr.put("elementType", elementType);
+		if( null != referenceType ) jsonAttr.put("referenceType", referenceType);
+		if( null != customType ) jsonAttr.put("customType", customType);
 		if( null != searchFunction ) jsonAttr.put("searchFunction", searchFunction);
 		if( includedInBrief ) jsonAttr.put("includedInBrief", true);
 		if( excludedFromDisplay ) jsonAttr.put("excludedFromDisplay", true);
 		if( excludedFromForm ) jsonAttr.put("excludedFromForm", true);
+		if( excludedFromExport ) jsonAttr.put("excludedFromExport", true);
+		if( urlsToLinks ) jsonAttr.put("urlsToLinks", true);
 
 		if( options.size() > 0 ){
 			JSONArray jsonOptions = new JSONArray();
@@ -238,9 +306,19 @@ public class SchemaAttribute {
 				schemaDoc.put(id, "");
 			}
 			
+		} else if( "localized".equals(type) ){
+			if( null != id ){
+				schemaDoc.put(id, JSONObject.NULL);
+			}
+			
 		} else if( "textarea".equals(type) ){
 			if( null != id ){
 				schemaDoc.put(id, "");
+			}
+			
+		} else if( "localizedtextarea".equals(type) ){
+			if( null != id ){
+				schemaDoc.put(id, JSONObject.NULL);
 			}
 			
 		} else if( "date".equals(type) ){
@@ -248,6 +326,9 @@ public class SchemaAttribute {
 			
 		} else if( "reference".equals(type) ){
 			// leave reference attributes as undefined
+			
+		} else if( "custom".equals(type) ){
+			// leave custom attributes as undefined
 			
 		} else if( "array".equals(type) ){
 			if( null != id ){
@@ -294,6 +375,13 @@ public class SchemaAttribute {
 				files.put("media", media);
 			}
 
+		} else if( "geometry".equals(type) ){
+			if( null != id ){
+				throw new Exception("'id' should not be specified for attributes of type 'geometry'");
+			}
+
+			//doc.put("nunaliit_geom", null);
+
 		} else {
 			throw new Exception("Unable to include type "+type+" in create");
 		}
@@ -305,7 +393,8 @@ public class SchemaAttribute {
 		if( includedInBrief ){
 			if( "title".equals(type) ){
 				
-			} else if( "string".equals(type) ){
+			} else if( "string".equals(type) 
+			 || "textarea".equals(type) ){
 				if( null != id ){
 					pw.print("{{#"+schemaName+"}}");
 					if( !isFirst ) pw.print(" ");
@@ -314,11 +403,12 @@ public class SchemaAttribute {
 					printed = true;
 				}
 				
-			} else if( "textarea".equals(type) ){
+			} else if( "localized".equals(type) 
+			 || "localizedtextarea".equals(type) ){
 				if( null != id ){
 					pw.print("{{#"+schemaName+"}}");
 					if( !isFirst ) pw.print(" ");
-					pw.print("{{"+id+"}}");
+					pw.print("{{#:localize}}"+id+"{{/:localize}}");
 					pw.print("{{/"+schemaName+"}}");
 					printed = true;
 				}
@@ -366,17 +456,32 @@ public class SchemaAttribute {
 					printed = true;
 				}
 				
+			} else if( "custom".equals(type) ){
+				if( null != id && null != customType ){
+					pw.print("{{#"+schemaName+"}}");
+					pw.print("{{#"+id+"}}");
+					if( !isFirst ) pw.print(" ");
+					pw.print("<span class=\"n2s_custom\""
+							+ " nunaliit-custom=\""+customType+"\""
+							+ " nunaliit-selector=\"{{#:selector}}.{{/:selector}}\"></span>");
+					pw.print("{{/"+id+"}}");
+					pw.print("{{/"+schemaName+"}}");
+					printed = true;
+				}
+				
 			} else if( "array".equals(type) ){
 				if( null != id ){
 					pw.print("{{#"+schemaName+"}}");
 					pw.print("{{#"+id+"}}");
 					if( !isFirst ) pw.print(" ");
 					
-					if( "string".equals(elementType) ){
+					if( "string".equals(elementType) 
+					 || "textarea".equals(elementType) ){
 						pw.print("{{.}}");
 						
-					} else if( "textarea".equals(elementType) ){
-						pw.print("{{.}}");
+					} else if( "localized".equals(elementType) || 
+					 "localizedtextarea".equals(elementType) ){
+						pw.print("{{#:localize}}.{{/:localize}}");
 						
 					} else if( "date".equals(elementType) ){
 						pw.print("{{date}}");
@@ -391,6 +496,15 @@ public class SchemaAttribute {
 					pw.print("{{/"+schemaName+"}}");
 					printed = true;
 				}
+
+			} else if( "geometry".equals(type) ){
+				if( null != id ){
+					throw new Exception("'id' should not be specified for attributes of type 'geometry'");
+				}
+
+				pw.print("{{#nunaliit_geom}}");
+				pw.print("{{wkt}}");
+				pw.print("{{/nunaliit_geom}}");
 					
 			} else {
 				throw new Exception("Unable to include type "+type+" in brief");
@@ -417,25 +531,41 @@ public class SchemaAttribute {
 				
 				pw.println("</div>");
 				
-			} else if( "string".equals(type) 
-			 || "textarea".equals(type) ){
+			} else if( "string".equals(type)
+			 || "textarea".equals(type)
+			 || "localized".equals(type)
+			 || "localizedtextarea".equals(type) ){
 				if( null != id ){
 					pw.println("{{#"+schemaName+"}}");
-					pw.println("\t{{#"+id+"}}");
+					pw.println("\t{{#if "+id+"}}");
 
 					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
 
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-					if( "textarea".equals(type) ){
-						pw.println("\t\t\t<div class=\"value n2s_preserveSpaces n2s_installMaxHeight n2s_convertTextUrlToLink\" _maxheight=\"100\">{{.}}</div>");
-					} else {
-						pw.println("\t\t\t<div class=\"value\">{{.}}</div>");
+
+					String fixUrlClass = "";
+					if( urlsToLinks ){
+						fixUrlClass = " n2s_convertTextUrlToLink";
 					}
+					
+					if( "string".equals(type) ){
+						pw.println("\t\t\t<div class=\"value"+fixUrlClass+"\">{{"+id+"}}</div>");
+					
+					} else if( "textarea".equals(type) ){
+						pw.println("\t\t\t<div class=\"value n2s_preserveSpaces n2s_installMaxHeight"+fixUrlClass+"\" _maxheight=\"100\">{{"+id+"}}</div>");
+
+					} else if( "localized".equals(type) ){
+						pw.println("\t\t\t<div class=\"value"+fixUrlClass+"\">{{#:localize}}"+id+"{{/:localize}}</div>");
+
+					} else if( "localizedtextarea".equals(type) ){
+						pw.println("\t\t\t<div class=\"value n2s_preserveSpaces n2s_installMaxHeight"+fixUrlClass+"\" _maxheight=\"100\">{{#:localize}}"+id+"{{/:localize}}</div>");
+					}
+					
 					pw.println("\t\t\t<div class=\"end\"></div>");
 					
 					pw.println("\t\t</div>");
 					
-					pw.println("\t{{/"+id+"}}");
+					pw.println("\t{{/if}}");
 					pw.println("{{/"+schemaName+"}}");
 				}
 				
@@ -456,7 +586,7 @@ public class SchemaAttribute {
 					pw.println("\t{{/"+id+"}}");
 					pw.println("{{/"+schemaName+"}}");
 				}
-				
+
 			} else if( "reference".equals(type) ){
 				if( null != id ){
 					pw.println("{{#"+schemaName+"}}");
@@ -465,7 +595,36 @@ public class SchemaAttribute {
 					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
 
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-					pw.println("\t\t\t<div class=\"value\"><a href=\"#\" class=\"n2s_referenceLink\">{{doc}}</a></div>");
+					
+					if( "thumbnail".equals(referenceType) ){
+						pw.println("\t\t\t<div class=\"value n2s_insertFirstThumbnail\" nunaliit-document=\"{{doc}}\"></div>");
+					} else {
+						pw.println("\t\t\t<div class=\"value\"><a href=\"#\" class=\"n2s_referenceLink\">{{doc}}</a></div>");
+					}
+
+					pw.println("\t\t\t<div class=\"end\"></div>");
+					
+					pw.println("\t\t</div>");
+					
+					
+					pw.println("\t{{/"+id+"}}");
+					pw.println("{{/"+schemaName+"}}");
+				}
+
+			} else if( "custom".equals(type) ){
+				if( null != id && null != customType ){
+					pw.println("{{#"+schemaName+"}}");
+					pw.println("\t{{#"+id+"}}");
+
+					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
+
+					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					
+					pw.println("\t\t\t<div class=\"value n2s_custom\""
+							+ " nunaliit-custom=\""+customType+"\""
+							+ " nunaliit-selector=\"{{#:selector}}.{{/:selector}}\">"
+							+ "</div>");
+
 					pw.println("\t\t\t<div class=\"end\"></div>");
 					
 					pw.println("\t\t</div>");
@@ -485,7 +644,8 @@ public class SchemaAttribute {
 					pw.println("\t\t<div class=\"value\">");
 					pw.println("\t\t{{#"+id+"}}");
 					pw.print("\t\t\t<div class=\"array_element");
-					if( "textarea".equals(elementType) ){
+					if( "textarea".equals(elementType) 
+					 || "localizedtextarea".equals(elementType) ){
 						pw.print(" n2s_preserveSpaces n2s_installMaxHeight n2s_convertTextUrlToLink\" _maxheight=\"100");
 					}
 					pw.println("\">");
@@ -494,10 +654,20 @@ public class SchemaAttribute {
 						pw.println("{{.}}");
 					} else if( "textarea".equals(elementType) ){
 						pw.println("{{.}}");
+					} else if( "localized".equals(elementType) ){
+						pw.println("{{#:localize}}.{{/:localize}}");
+					} else if( "localizedtextarea".equals(elementType) ){
+						pw.println("{{#:localize}}.{{/:localize}}");
 					} else if( "date".equals(elementType) ){
 						pw.println("{{date}}");
 					} else if( "reference".equals(elementType) ){
 						pw.println("\t\t\t\t<a href=\"#\" class=\"n2s_referenceLink\">{{doc}}</a>");
+					} else if( "custom".equals(elementType) ){
+						if( null != customType ){
+							pw.println("\t\t\t\t<span class=\"n2s_custom\""
+								+ " nunaliit-custom=\""+customType+"\""
+								+ " nunaliit-selector=\"{{#:selector}}.{{/:selector}}\"></span>");
+						}
 					}
 					
 					pw.println("\t\t\t</div>");
@@ -514,12 +684,12 @@ public class SchemaAttribute {
 			} else if( "selection".equals(type) ){
 				if( null != id ){
 					pw.println("{{#"+schemaName+"}}");
-					pw.println("\t{{#"+id+"}}");
+					pw.println("\t{{#if "+id+"}}");
 	
 					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
 	
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-					pw.println("\t\t\t<div class=\"value n2s_select\" n2-choice=\"{{.}}\">");
+					pw.println("\t\t\t<div class=\"value n2s_select\" n2-choice=\"{{"+id+"}}\">");
 					
 					for(SelectionOption option : options){
 						String value = option.getValue();
@@ -528,7 +698,7 @@ public class SchemaAttribute {
 							optLabel = value;
 						}
 						
-						pw.println("\t\t\t\t<span class=\"n2s_choice\" n2-choice=\""+value+"\">"+optLabel+"</span>");
+						pw.println("\t\t\t\t<span class=\"n2s_choice n2s_localize\" n2-choice=\""+value+"\">"+optLabel+"</span>");
 					}
 
 					pw.println("\t\t\t\t<span class=\"n2s_choiceDefault\">{{.}}</span>");
@@ -539,7 +709,7 @@ public class SchemaAttribute {
 					pw.println("\t\t</div>");
 					
 					
-					pw.println("\t{{/"+id+"}}");
+					pw.println("\t{{/if}}");
 					pw.println("{{/"+schemaName+"}}");
 				}
 
@@ -612,6 +782,19 @@ public class SchemaAttribute {
 				pw.println("\t{{/:iterate}}");
 				pw.println("{{/files}}");
 				pw.println("{{/nunaliit_attachments}}");
+
+			} else if( "geometry".equals(type) ){
+				if( null != id ){
+					throw new Exception("'id' should not be specified for attributes of type 'geometry'");
+				}
+
+				pw.println("{{#nunaliit_geom}}");
+				pw.println("\t\t<div class=\"nunaliit_geom\">");
+				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t<div class=\"value\">{{wkt}}</div>");
+				pw.println("\t\t\t<div class=\"end\"></div>");
+				pw.println("\t\t</div>");
+				pw.println("{{/nunaliit_geom}}");
 							
 			} else {
 				throw new Exception("Unable to include type "+type+" in display");
@@ -637,18 +820,27 @@ public class SchemaAttribute {
 				pw.println("</div>");
 
 			} else if( "string".equals(type) 
+			 || "localized".equals(type) 
 			 || "textarea".equals(type) 
+			 || "localizedtextarea".equals(type) 
 			 || "reference".equals(type) 
+			 || "custom".equals(type) 
 			 || "checkbox".equals(type) 
 			 || "date".equals(type) ){
 				if( null != id ){
 					String fieldType = "";
-					if( "textarea".equals(type) ){
+					if( "localized".equals(type) ){
+						fieldType = ",localized";
+					} else if( "textarea".equals(type) ){
 						fieldType = ",textarea";
+					} else if( "localizedtextarea".equals(type) ){
+						fieldType = ",textarea,localized";
 					} else if( "date".equals(type) ){
 						fieldType = ",date";
 					} else if( "reference".equals(type) ){
 						fieldType = ",reference";
+					} else if( "custom".equals(type) ){
+						fieldType = ",custom="+customType;
 					} else if( "checkbox".equals(type) ){
 						fieldType = ",checkbox";
 					}
@@ -683,7 +875,7 @@ public class SchemaAttribute {
 					pw.println("\t\t\t<select class=\"{{#:input}}"+id+"{{/:input}}\">");
 					
 					for(SelectionOption option : options){
-						pw.print("\t\t\t\t<option value=\""+option.getValue()+"\">");
+						pw.print("\t\t\t\t<option class=\"n2s_localize\" value=\""+option.getValue()+"\">");
 						String optLabel = option.getLabel();
 						if( null == optLabel ){
 							optLabel = option.getValue();
@@ -709,15 +901,24 @@ public class SchemaAttribute {
 					if( "string".equals(elementType) ){
 						fieldType = "";
 						arrayType = " \"string\"";
+					} else if( "localized".equals(elementType) ){
+						fieldType = ",localized";
+						arrayType = " \"localized\"";
 					} else if( "textarea".equals(elementType) ){
 						fieldType = ",textarea";
 						arrayType = " \"string\"";
+					} else if( "localizedtextarea".equals(elementType) ){
+						fieldType = ",textarea,localized";
+						arrayType = " \"localized\"";
 					} else if( "date".equals(elementType) ){
 						fieldType = ",date";
 						arrayType = " \"date\"";
 					} else if( "reference".equals(elementType) ){
 						fieldType = ",reference";
 						arrayType = " \"reference\"";
+					} else if( "custom".equals(elementType) ){
+						fieldType = ",custom="+customType;
+						arrayType = " \"custom\"";
 					}
 
 					String searchFnName = "";
@@ -781,9 +982,82 @@ public class SchemaAttribute {
 			} else if( "file".equals(type) ){
 				// nothing to do
 				
+			} else if( "geometry".equals(type) ){
+				if( null != id ){
+					throw new Exception("'id' should not be specified for attributes of type 'geometry'");
+				}
+
+				pw.println("{{#nunaliit_geom}}");
+
+				pw.println("\t<div class=\"nunaliit_geom\">");
+
+				pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t<div class=\"value\">{{#:field}}wkt,textarea{{/:field}}</div>");
+				pw.println("\t\t<div class=\"end\"></div>");
+				
+				pw.println("\t</div>");
+				
+				
+				pw.println("{{/nunaliit_geom}}");
+				
 			} else {
 				throw new Exception("Unable to include type "+type+" in form");
 			}
+		}
+	}
+
+	public void addExportField(JSONArray exportArr, String schemaName) throws Exception {
+
+		if( excludedFromExport ) return;
+		
+		if( "title".equals(type) ){
+			// do not export title
+			
+		} else if( "string".equals(type)
+		 || "textarea".equals(type)
+		 ){
+			JSONObject attrExport = new JSONObject();
+			attrExport.put("select", schemaName+"."+id);
+			attrExport.put("label", id);
+			attrExport.put("type", "text");
+			exportArr.put(attrExport);
+
+		} else if( "localized".equals(type) 
+		 || "localizedtextarea".equals(type)
+		 ){
+			JSONObject attrExport = new JSONObject();
+			attrExport.put("select", schemaName+"."+id);
+			attrExport.put("label", id);
+			attrExport.put("type", "json");
+			exportArr.put(attrExport);
+
+		} else if( "date".equals(type) ){
+			JSONObject attrExport = new JSONObject();
+			attrExport.put("select", schemaName+"."+id+".date");
+			attrExport.put("label", id);
+			attrExport.put("type", "text");
+			exportArr.put(attrExport);
+			
+		} else if( "reference".equals(type) ){
+			JSONObject attrExport = new JSONObject();
+			attrExport.put("select", schemaName+"."+id+".doc");
+			attrExport.put("label", id);
+			attrExport.put("type", "text");
+			exportArr.put(attrExport);
+			
+		} else if( "geometry".equals(type) ){
+			JSONObject attrExport = new JSONObject();
+			attrExport.put("select", "nunaliit_geom.wkt");
+			attrExport.put("label", "nunaliit_geom");
+			attrExport.put("type", "text");
+			exportArr.put(attrExport);
+			
+		} else {
+			JSONObject attrExport = new JSONObject();
+			attrExport.put("select", schemaName+"."+id);
+			attrExport.put("label", id);
+			attrExport.put("type", "json");
+			exportArr.put(attrExport);
 		}
 	}
 }

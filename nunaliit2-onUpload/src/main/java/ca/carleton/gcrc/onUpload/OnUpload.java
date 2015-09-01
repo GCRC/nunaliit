@@ -43,7 +43,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 
 import org.json.JSONObject;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -145,6 +144,15 @@ public class OnUpload implements OnUploadedListener {
 		}
 		
 		return results;
+	}
+
+	@Override
+	public void onError(
+			String progressId, 
+			List<LoadedFile> uploadedFiles,
+			Map<String,List<String>> parameters, 
+			Principal userPrincipal,
+			Cookie[] cookies) {
 	}
 
 }

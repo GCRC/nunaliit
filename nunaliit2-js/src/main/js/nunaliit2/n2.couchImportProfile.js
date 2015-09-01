@@ -435,7 +435,8 @@ var ImportAnalyzer = $n2.Class({
 						};
 						
 						// Next entry
-						processEntries();
+						window.setTimeout(processEntries,0); // Do not blow stack on large files
+						//processEntries(); 
 					}
 				});
 				
@@ -447,7 +448,8 @@ var ImportAnalyzer = $n2.Class({
 				});
 				
 				// Next entry
-				processEntries();
+				window.setTimeout(processEntries,0); // Do not blow stack on large files
+				//processEntries();
 			};
 		};
 	},
@@ -684,7 +686,9 @@ var AnalysisReport = $n2.Class({
 		};
 		
 		if(analysis.getDbDocs().length < 1){
+			var proceedDivId = $n2.getUniqueId();
 			var $div = $('<div>')
+				.attr('id',proceedDivId)
 				.addClass('prompt')
 				.appendTo($changes);
 			$div.text( _loc('This appears to be the first time that you are importing this profile. Accept all?') );
@@ -692,7 +696,9 @@ var AnalysisReport = $n2.Class({
 				.text( _loc('Proceed') )
 				.appendTo($div)
 				.click(function(){
-					_this._proceedAll();
+					_this._proceedAll({
+						onSuccess: function(){ $('#'+proceedDivId).remove(); }
+					});
 				});
 			$('<button>')
 				.text( _loc('Discard') )
@@ -712,7 +718,9 @@ var AnalysisReport = $n2.Class({
 				};
 			};
 			if( autoChanges.length > 0 ){
+				var autoDivId = $n2.getUniqueId();
 				var $div = $('<div>')
+					.attr('id',autoDivId)
 					.addClass('prompt')
 					.appendTo($changes);
 				$div.text( _loc('It appears that {count} changes can be completed automatically. Accept automatic changes?',{
@@ -722,7 +730,9 @@ var AnalysisReport = $n2.Class({
 					.text( _loc('Proceed') )
 					.appendTo($div)
 					.click(function(){
-						_this._proceedAutomatics();
+						_this._proceedAutomatics({
+							onSuccess: function(){ $('#'+autoDivId).remove(); }
+						});
 					});
 				$('<button>')
 					.text( _loc('Discard') )
@@ -1148,52 +1158,137 @@ var AnalysisReport = $n2.Class({
 	
 	_proceed: function($button){
 		var $opsElem = $button.parents('.operation');
-		this._proceedWithOperationElement($opsElem);
-	},
-
-	_proceedAll: function(){
-		var _this = this;
-		
-		var $elem = this._getElem();
-		var $changes = $elem.find('.changes');
-		var $ops = $changes.find('.operation');
-		
-		$ops.each(function(){
-			var $op = $(this);
-			_this._proceedWithOperationElement($op);
+		this._proceedWithOperationElement({
+			elem: $opsElem
 		});
 	},
 
-	_proceedAutomatics: function(){
-		var _this = this;
+	_proceedAll: function(opts_){
+		var opts = $n2.extend({
+			onSuccess: function(){}
+			,onError: function(err){}
+		},opts_);
 		
-		var $elem = this._getElem();
-		var $changes = $elem.find('.changes');
-		var $ops = $changes.find('.autoOperation');
-		
-		$ops.each(function(){
-			var $op = $(this);
-			_this._proceedWithOperationElement($op);
+		this._proceedElementsWithSelector({
+			selector: '.operation'
+			,onSuccess: opts.onSuccess
+			,onError: opts.onError
 		});
+	},
+
+	_proceedAutomatics: function(opts_){
+		var opts = $n2.extend({
+			onSuccess: function(){}
+			,onError: function(err){}
+		},opts_);
+		
+		this._proceedElementsWithSelector({
+			selector: '.autoOperation'
+			,onSuccess: opts.onSuccess
+			,onError: opts.onError
+		});
+	},
+
+	_proceedElementsWithSelector: function(opts_){
+		var opts = $n2.extend({
+			selector: null
+			,onSuccess: function(){}
+			,onError: function(err){}
+		},opts_);
+
+		var _this = this;
+
+		// Open dialog
+		var dialogId = $n2.getUniqueId();
+		var $diag = $('<div>')
+			.attr('id',dialogId);
+		$('<span>')
+			.addClass('n2ImportProfile_progressDialog_text')
+			.appendTo($diag);
+		$diag.dialog({
+			autoOpen: true
+			,title: _loc('Proceed with Import Operations')
+			,modal: true
+			,width: 'auto'
+			,close: function(event, ui){
+				var $diag = $('#'+dialogId);
+				$diag.remove();
+			}
+		});
+		
+		// Remember count
+		var count = undefined;
+
+		processNext();
+		
+		function processNext(){
+			var $elem = _this._getElem();
+			var $changes = $elem.find('.changes');
+			var $ops = $changes.find(opts.selector);
+			
+			if( typeof count === 'undefined' ){
+				count = $ops.length;
+			};
+			
+			if( $ops.length > 0 ){
+				var index = count - $ops.length + 1;
+				$('#'+dialogId).find('.n2ImportProfile_progressDialog_text')
+					.text( _loc('Operation {index} of {count}',{
+						index: index
+						,count: count
+					}) );
+				
+				_this._proceedWithOperationElement({
+					elem: $ops.first()
+					,onSuccess: processNext
+					,onError: opts.onError
+				});
+			} else {
+				// Done
+				$('#'+dialogId).dialog('close');
+				opts.onSuccess();
+			};
+		};
 	},
 	
-	_proceedWithOperationElement: function($opsElem){
+	_proceedWithOperationElement: function(opts_){
+		var opts = $n2.extend({
+			elem: null
+			,onSuccess: function(){}
+			,onError: function(err){}
+		},opts_);
+		
+		var $opsElem = opts.elem;
+		
 		var changeId = $opsElem.attr('id');
 		var change = this.analysis.getChange(changeId);
 		if( change.isAddition ){
 			// Create doc
-			this._createDocument(change);
+			this._createDocument({
+				change:change
+				,onSuccess: opts.onSuccess
+				,onError: opts.onError
+			});
 			
 		} else if( change.isModification ){
 			// Modify document
-			this._modifyDocument(change);
+			this._modifyDocument({
+				change:change
+				,onSuccess: opts.onSuccess
+				,onError: opts.onError
+			});
 			
 		} else if( change.isDeletion ){
 			// Delete database document
-			this._deleteDocument(change);
+			this._deleteDocument({
+				change:change
+				,onSuccess:opts.onSuccess
+				,onError: opts.onError
+			});
 			
 		} else {
 			alert( _loc('Operation not recognized') );
+			opts.onError('Operation not recognized');
 		};
 	},
 
@@ -1255,8 +1350,16 @@ var AnalysisReport = $n2.Class({
 		$('#'+elemId).remove();
 	},
 	
-	_createDocument: function(change){
+	_createDocument: function(opts_){
+		var opts = $n2.extend({
+			change: null
+			,onSuccess: function(){}
+			,onError: function(err){}
+		},opts_);
+		
 		var _this = this;
+		
+		var change = opts.change;
 		
 		var importId = change.importId;
 		var importEntry = this.analysis.getImportEntry(importId);
@@ -1350,17 +1453,27 @@ var AnalysisReport = $n2.Class({
 				,onSuccess: function(docInfo){
 					_this._log( _loc('Created document with id: {id}',{id:docInfo.id}) );
 					_this._completed(change.changeId);
+					opts.onSuccess();
 				}
 				,onError: function(errorMsg){ 
 					//reportError(errorMsg);
 					alert( _loc('Unable to create document. Are you logged in?') );
+					opts.onError(errorMsg);
 				}
 			});
 		};
 	},
 	
-	_modifyDocument: function(change){
+	_modifyDocument: function(opts_){
+		var opts = $n2.extend({
+			change: null
+			,onSuccess: function(){}
+			,onError: function(err){}
+		},opts_);
+		
 		var _this = this;
+		
+		var change = opts.change;
 		
 		var importId = change.importId;
 		var doc = this.analysis.getDbDoc(importId);
@@ -1492,16 +1605,26 @@ var AnalysisReport = $n2.Class({
 			,onSuccess: function(docInfo){
 				_this._log( _loc('Updated document with id: {id}',{id:docInfo.id}) );
 				_this._completed(change.changeId);
+				opts.onSuccess();
 			}
 			,onError: function(errorMsg){ 
 				// reportError(errorMsg);
 				alert( _loc('Unable to update document. Are you logged in?') );
+				opts.onError(errorMsg);
 			}
 		});
 	},
 	
-	_deleteDocument: function(change){
+	_deleteDocument: function(opts_){
+		var opts = $n2.extend({
+			change: null
+			,onSuccess: function(){}
+			,onError: function(err){}
+		},opts_);
+		
 		var _this = this;
+
+		var change = opts.change;
 		
 		var importId = change.importId;
 		var doc = this.analysis.getDbDoc(importId);
@@ -1514,10 +1637,12 @@ var AnalysisReport = $n2.Class({
 			,onSuccess: function(docInfo){
 				_this._log( _loc('Deleted document with id: {id}',{id:docInfo.id}) );
 				_this._completed(change.changeId);
+				opts.onSuccess();
 			}
 			,onError: function(errorMsg){ 
 				// reportError(errorMsg);
 				alert( _loc('Unable to delete document. Are you logged in?') );
+				opts.onError(errorMsg);
 			}
 		});
 	}

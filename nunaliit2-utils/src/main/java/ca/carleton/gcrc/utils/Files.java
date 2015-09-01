@@ -127,6 +127,18 @@ public class Files {
 	}
 
 	static public void createDirectory(File dir) throws Exception {
+		if( null == dir ){
+			throw new Exception("Unable to create directory (null)");
+		}
+		
+		if( dir.exists() ){
+			if( dir.isDirectory() ){
+				// Already done
+				return;
+			}
+			throw new Exception("Unable to create directory: "+dir.getAbsolutePath()+". File exists at location.");
+		}
+		
 		boolean created = false;
 		try {
 			created = dir.mkdirs();

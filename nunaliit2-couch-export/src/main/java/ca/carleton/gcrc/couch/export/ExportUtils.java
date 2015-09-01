@@ -4,11 +4,15 @@ public class ExportUtils {
 
 	public enum Format {
 		GEOJSON("geojson")
+		,CSV("csv")
 		;
 		
 		private String label;
 		private Format(String label){
 			this.label = label;
+		}
+		public String getLabel(){
+			return label;
 		}
 		public boolean matches(String t){
 			return label.equalsIgnoreCase(t);
@@ -25,6 +29,9 @@ public class ExportUtils {
 		private Method(String label){
 			this.label = label;
 		}
+		public String getLabel(){
+			return label;
+		}
 		public boolean matches(String t){
 			return label.equalsIgnoreCase(t);
 		}
@@ -40,6 +47,9 @@ public class ExportUtils {
 		private String label;
 		private Filter(String label){
 			this.label = label;
+		}
+		public String getLabel(){
+			return label;
 		}
 		public boolean matches(String t){
 			return label.equalsIgnoreCase(t);
