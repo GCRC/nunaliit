@@ -76,6 +76,7 @@ public class FileConversionContextImpl implements FileConversionContext {
 			,fos
 			);
 		
+		fos.flush();
 		fos.close();
 	}
 

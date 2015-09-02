@@ -23,7 +23,11 @@ public class AttachmentOutputStream extends OutputStream {
 			} else if( '\\' == b ){
 				sink.write('\\');
 				sink.write('\\');
+			
+			} else {
+				sink.write(b);
 			}
+			
 		} else {
 			sink.write(b);
 		};

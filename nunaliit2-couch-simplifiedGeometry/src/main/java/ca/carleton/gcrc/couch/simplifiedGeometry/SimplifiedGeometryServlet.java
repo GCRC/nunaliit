@@ -57,6 +57,7 @@ public class SimplifiedGeometryServlet extends JsonServlet {
 	public void destroy() {
 	}
 
+	@SuppressWarnings("unused")
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		try {
 			List<String> paths = computeRequestPath(request);
@@ -87,8 +88,24 @@ public class SimplifiedGeometryServlet extends JsonServlet {
 					new ArrayList<GeometryAttachmentRequest>(1);
 				attachmentRequests.add( new GeometryAttachmentRequest(id, att) );
 				
-				JSONObject result = actions.getAttachments(attachmentRequests);
-				sendJsonResponse(response, result);
+				if( true ){
+					// Start response
+					response.setStatus(200);
+					response.setContentType("application/json");
+					response.setCharacterEncoding("utf-8");
+					response.addHeader("Cache-Control", "no-cache");
+					response.addHeader("Pragma", "no-cache");
+					response.addHeader("Expires", "-1");
+					OutputStream os = response.getOutputStream();
+					
+					// Perform request
+					actions.getAttachments(attachmentRequests, os);
+				} else {
+					// Perform request
+					JSONObject result = actions.getAttachments(attachmentRequests);
+
+					sendJsonResponse(response, result);
+				}
 				
 			} else {
 				throw new Exception("Unrecognized request");
@@ -98,6 +115,7 @@ public class SimplifiedGeometryServlet extends JsonServlet {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		try {
@@ -137,7 +155,7 @@ public class SimplifiedGeometryServlet extends JsonServlet {
 					attachmentRequests.add( new GeometryAttachmentRequest(id, attName) );
 				}
 
-				if( false ){
+				if( true ){
 					// Start response
 					response.setStatus(200);
 					response.setContentType("application/json");

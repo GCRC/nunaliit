@@ -385,8 +385,6 @@ public class ConnectionUtils {
 			outputStream.write(b);
 			b = contentStream.read();
 		}
-		outputStream.flush();
-		outputStream.close();
 
 		contentStream.close();
 		conn.disconnect();

@@ -393,6 +393,7 @@ public class CouchDbTest extends TestCase {
 			File outputFile = File.createTempFile("download", ".ogg");
 			FileOutputStream fos = new FileOutputStream(outputFile);
 			db.downloadAttachment(doc, "att01", fos);
+			fos.flush();
 			fos.close();
 			
 			long fileLen = outputFile.length();

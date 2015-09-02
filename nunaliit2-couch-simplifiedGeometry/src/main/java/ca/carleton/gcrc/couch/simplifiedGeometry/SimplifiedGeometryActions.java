@@ -156,7 +156,7 @@ public class SimplifiedGeometryActions {
 			
 			ps.print("\"}");
 			
-			if( attachmentOs.getCount() > 100 ){
+			if( attachmentOs.getCount() > 100000 ){
 				break;
 			}
 		}

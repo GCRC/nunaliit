@@ -98,6 +98,7 @@ public class MockFileConversionContext implements FileConversionContext {
 			,fos
 			);
 		
+		fos.flush();
 		fos.close();
 	}
 
