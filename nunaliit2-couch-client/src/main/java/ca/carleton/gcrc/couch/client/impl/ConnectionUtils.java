@@ -379,12 +379,15 @@ public class ConnectionUtils {
 		contentType = conn.getContentType();
 		//String contentEncoding = conn.getContentEncoding();
 		InputStream contentStream = conn.getInputStream();
-		
-		int b = contentStream.read();
-		while( b >= 0 ) {
-			outputStream.write(b);
-			b = contentStream.read();
-		}
+
+		byte[] buf = new byte[0x1000];
+		while (true) {
+			int r = contentStream.read(buf);
+			if( r < 0 ) {
+				break;
+			}
+			outputStream.write(buf, 0, r);
+		}		
 
 		contentStream.close();
 		conn.disconnect();
