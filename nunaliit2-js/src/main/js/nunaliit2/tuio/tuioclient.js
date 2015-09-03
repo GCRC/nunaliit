@@ -43,8 +43,8 @@ var scrollX = undefined;
 var scrollY = undefined;
 
 // Map visual size and position
-var xMargin = 460;
-var xOffset = -110;
+var xMargin = 455;
+var xOffset = -105;
 var yMargin = 15;
 var yOffset = 10;
 
