@@ -581,12 +581,11 @@ function onHandMove(inst) {
 		// dispatchMouseEvent('mousemove', hand.pos.x, hand.pos.y);
 
 		// Scroll OpenLayers manually
-		var mapSize = moduleDisplay.mapControl.map.getSize();
 		if (scrollX != undefined && scrollY != undefined) {
 			var dx = (scrollX - hand.pos.x);
 			var dy = (scrollY - hand.pos.y);
-			moduleDisplay.mapControl.map.pan(dx * mapSize.w * scrollSpeed,
-											 dy * mapSize.h * scrollSpeed,
+			moduleDisplay.mapControl.map.pan(dx * window.innerWidth * scrollSpeed,
+											 dy * window.innerHeight * scrollSpeed,
 											 { animate: false, dragging: true });
 		}
 		scrollX = hand.pos.x;
