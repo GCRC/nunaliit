@@ -402,6 +402,7 @@ var MapAndControls = $n2.Class({
 	options: null,
 	dbSearchEngine: null,
 	contributionDb: null,
+	mapId: null,
 	map: null,
 	editLayer: null,
 	html: null,
@@ -458,6 +459,8 @@ var MapAndControls = $n2.Class({
 	
 	initialize: function(options_){
 		var _this = this;
+		
+		this.mapId = 'map_' + $n2.getUniqueId();
 		
 		if( typeof(OpenLayers) == 'undefined' ) {
 			$n2.reportError('OpenLayers is required.');
@@ -4067,16 +4070,25 @@ var MapAndControls = $n2.Class({
 			};
 		};
 		if( simplificationsReported.length ){
-			$n2.log('simplificationsReported',simplificationsReported);
+			//$n2.log('simplificationsReported',simplificationsReported);
 			this._updateSimplifiedGeometries(simplificationsReported);
 		};
 		if( geometriesRequested.length ){
-			$n2.log('geometriesRequested',geometriesRequested);
+			//$n2.log('geometriesRequested',geometriesRequested);
 			this._dispatch({
 				type: 'simplifiedGeometryRequest'
 				,geometriesRequested: geometriesRequested
+				,requester: this.mapId
 			});
 		};
+		// Report wait
+		this._dispatch({
+			type: 'waitReport'
+			,requester: this.mapId
+			,name: 'simplifiedGeometries'
+			,label: 'Simplified Geometries'
+			,count: geometriesRequested.length
+		});
 		
 		function checkFeature(f, res, geomsNeeded){
 			// Operate only on features that have simplification information
@@ -4126,7 +4138,7 @@ var MapAndControls = $n2.Class({
 				if( currentGeomAttName !== bestAttName ){
 					
 					// Check if the best geometry has already been requested
-					if( f.n2TargetGeomAttName !== bestAttName ){
+					//if( f.n2TargetGeomAttName !== bestAttName ){
 						geomsNeeded[f.fid] = {
 							id: f.fid
 							,attName: bestAttName
@@ -4136,12 +4148,21 @@ var MapAndControls = $n2.Class({
 						
 						// Save that we have requested the best geometry
 						f.n2TargetGeomAttName = bestAttName;
-					};
+					//};
 				};
 			};
 		};
 	},
 	
+	/*
+	   simplifiedGeometries is an array of object like this:
+	   {
+	   		id: <docId or fid>
+	   		,attName: <string, attachment name>
+	   		,wkt: <string, well known text of simplified geometry>
+	   		,proj: <object(OpenLayers.Projection), projection of simplified geometry>
+	   }
+	 */
 	_updateSimplifiedGeometries: function(simplifiedGeometries){
 		var _this = this;
 		

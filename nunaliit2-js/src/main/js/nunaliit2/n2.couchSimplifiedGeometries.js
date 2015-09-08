@@ -44,26 +44,25 @@ var SimplifiedGeometryService = $n2.Class({
 
 	dispatchService: null,
 
-	atlasDb: null,
-
 	dbProjection: null,
 
 	pendingRequests: null,
 
+	/*
+	 * Boolean. True when communicating with server
+	 */
 	sendingRequests: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			url: null
 			,dispatchService: null
-			,atlasDb: null
 		},opts_);
 		
 		var _this = this;
 
 		this.url = opts.url;
 		this.dispatchService = opts.dispatchService;
-		this.atlasDb = opts.atlasDb;
 		
 		this.sendingRequests = false;
 		this.pendingRequests = {};
@@ -115,7 +114,7 @@ var SimplifiedGeometryService = $n2.Class({
 		
 		function next(){
 			var serverRequest = {
-					geometryRequests: []
+				geometryRequests: []
 			};
 			
 			for(var id in _this.pendingRequests){
