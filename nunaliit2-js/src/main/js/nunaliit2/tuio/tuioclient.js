@@ -1,6 +1,8 @@
 var SPRING_K = 50.0;
 var SPRING_LEN = 0.0000000000001;
 
+var usePhysics = true;
+
 // Socket to tuioserver.js that emits TUIO events in JSON
 var socket = io('http://localhost:3000');
 
@@ -153,12 +155,20 @@ Body.prototype.moveTo = function(x, y) {
 		}
 		this.dirty = true;
 	}
+
+	if (!usePhysics) {
+		this.pos = this.targetPos;
+	}
+
 	return this.dirty;
 }
 
 /** Update position, moving towards the target if necessary. */
 Body.prototype.updatePosition = function(timestamp, energy) {
-	if (!this.lastTime) {
+	if (!usePhysics) {
+		this.pos.x = this.targetPos.x;
+		this.pos.y = this.targetPos.y;
+	} else if (!this.lastTime) {
 		// Initial call, but we need a time delta, wait for next tick
 		this.lastTime = timestamp;
 		return true;
@@ -250,7 +260,7 @@ Hand.prototype = Object.create(Body.prototype);
 Hand.prototype.constructor = Hand;
 
 /** Update the target position based on cursor positions. */
-Hand.prototype.updateTargetPosition = function(timestamp, energy) {
+Hand.prototype.updateTargetPosition = function() {
 	if (this.cursors.length > 0) {
 		var center = centerPoint(this.cursors);
 		this.moveTo(center.x, center.y);
@@ -677,11 +687,45 @@ function updateCursors(set) {
 		}
 
 		// Update cursor visual feedback
-		cursors[inst].show();
+		if (!usePhysics) {
+			cursors[inst].show();
+		}
 
 		if (cursors[inst].hand) {
 			// Flag hand position as dirty for recalculation
 			cursors[inst].hand.dirty = true;
+		}
+	}
+
+	if (!usePhysics) {
+		// Update the position of any hands that have changed
+		for (var inst in hands) {
+			var hand = hands[inst];
+			hand.updateTargetPosition();
+
+			// Check if any cursors have moved outside a reasonable hand span
+			var orphans = hand.trimCursors();
+			if (orphans.length > 0) {
+				for (var i = 0; i < orphans.length; ++i) {
+					addCursorToHand(orphans[i]);
+				}
+				cursorsMoved = true;
+			}
+		}
+
+		// Show hand visual feedback
+		for (var inst in hands) {
+			var hand = hands[inst];
+			if (cursorsMoved) {
+				// Cursors have moved hands, re-calculate target position
+				hand.updateTargetPosition();
+			}
+
+			if (hand.dirty) {
+				onHandMove(hand.index);
+			}
+
+			hand.show();
 		}
 	}
 }
@@ -917,4 +961,6 @@ function tick(timestamp) {
 	reschedule(tick);
 }
 
-requestAnimationFrame(tick);
+if (usePhysics) {
+    requestAnimationFrame(tick);
+}
