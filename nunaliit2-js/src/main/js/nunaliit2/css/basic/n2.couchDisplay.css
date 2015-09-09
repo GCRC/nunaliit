@@ -93,3 +93,8 @@ div.olkit_wait {
 	width: 1000px;
 	height: 500px;
 }
+
+.n2display_geometries_heading {
+	background-color: #dddddd;
+	font-weight: bold;
+}

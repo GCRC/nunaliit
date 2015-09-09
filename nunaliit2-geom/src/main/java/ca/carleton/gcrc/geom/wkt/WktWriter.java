@@ -3,6 +3,7 @@ package ca.carleton.gcrc.geom.wkt;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.text.NumberFormat;
 
 import ca.carleton.gcrc.geom.Geometry;
 import ca.carleton.gcrc.geom.GeometryCollection;
@@ -23,31 +24,40 @@ public class WktWriter {
 	
 	public void write(Geometry geometry, Writer writer) throws Exception {
 		PrintWriter pw = new PrintWriter(writer);
-		write(geometry, pw);
+		write(geometry, null, pw);
+	}
+	
+	public void write(Geometry geometry, NumberFormat numFormat, Writer writer) throws Exception {
+		PrintWriter pw = new PrintWriter(writer);
+		write(geometry, numFormat, pw);
 	}
 
 	public void write(Geometry geometry, PrintWriter pw) throws Exception {
+		write(geometry, null, pw);
+	}
+	
+	public void write(Geometry geometry, NumberFormat numFormat, PrintWriter pw) throws Exception {
 		try {
 			if( geometry instanceof Point ) {
-				writePoint((Point)geometry, pw);
+				writePoint((Point)geometry, numFormat, pw);
 				
 			} else if( geometry instanceof LineString ) {
-				writeLineString((LineString)geometry, pw);
+				writeLineString((LineString)geometry, numFormat, pw);
 				
 			} else if( geometry instanceof Polygon ) {
-				writePolygon((Polygon)geometry, pw);
+				writePolygon((Polygon)geometry, numFormat, pw);
 				
 			} else if( geometry instanceof MultiPoint ) {
-				writeMultiPoint((MultiPoint)geometry, pw);
+				writeMultiPoint((MultiPoint)geometry, numFormat, pw);
 				
 			} else if( geometry instanceof MultiLineString ) {
-				writeMultiLineString((MultiLineString)geometry, pw);
+				writeMultiLineString((MultiLineString)geometry, numFormat, pw);
 				
 			} else if( geometry instanceof MultiPolygon ) {
-				writeMultiPolygon((MultiPolygon)geometry, pw);
+				writeMultiPolygon((MultiPolygon)geometry, numFormat, pw);
 				
 			} else if( geometry instanceof GeometryCollection ) {
-				writeGeometryCollection((GeometryCollection)geometry, pw);
+				writeGeometryCollection((GeometryCollection)geometry, numFormat, pw);
 				
 			} else {
 				throw new Exception("Unknown type: "+geometry.getClass().getName());
@@ -57,7 +67,7 @@ public class WktWriter {
 		}
 	}
 	
-	private void writePoint(Point point, PrintWriter pw) throws Exception {
+	private void writePoint(Point point, NumberFormat numFormat, PrintWriter pw) throws Exception {
 		pw.write("POINT(");
 		boolean firstPosition = true;
 		for(Number position : point.getPositions()){
@@ -67,12 +77,12 @@ public class WktWriter {
 				pw.write(" ");
 			}
 			
-			writeNumber(pw, position);
+			writeNumber(pw, numFormat, position);
 		}
 		pw.write(")");
 	}
 	
-	private void writeMultiPoint(MultiPoint multiPoint, PrintWriter pw) throws Exception {
+	private void writeMultiPoint(MultiPoint multiPoint, NumberFormat numFormat, PrintWriter pw) throws Exception {
 		pw.write("MULTIPOINT(");
 		boolean firstPoint = true;
 		for(Point point : multiPoint.getPoints()){
@@ -92,7 +102,7 @@ public class WktWriter {
 					pw.write(" ");
 				}
 				
-				writeNumber(pw, position);
+				writeNumber(pw, numFormat, position);
 			}
 
 			pw.write(")");
@@ -100,7 +110,7 @@ public class WktWriter {
 		pw.write(")");
 	}
 	
-	private void writeLineString(LineString lineString, PrintWriter pw) throws Exception {
+	private void writeLineString(LineString lineString, NumberFormat numFormat, PrintWriter pw) throws Exception {
 		pw.write("LINESTRING(");
 		boolean firstPoint = true;
 		for(Point point : lineString.getPoints()){
@@ -118,13 +128,13 @@ public class WktWriter {
 					pw.write(" ");
 				}
 				
-				writeNumber(pw, position);
+				writeNumber(pw, numFormat, position);
 			}
 		}
 		pw.write(")");
 	}
 	
-	private void writeMultiLineString(MultiLineString multiLineString, PrintWriter pw) throws Exception {
+	private void writeMultiLineString(MultiLineString multiLineString, NumberFormat numFormat, PrintWriter pw) throws Exception {
 		pw.write("MULTILINESTRING(");
 		boolean firstLineString = true;
 		for(LineString lineString : multiLineString.getLineStrings()){
@@ -152,7 +162,7 @@ public class WktWriter {
 						pw.write(" ");
 					}
 					
-					writeNumber(pw, position);
+					writeNumber(pw, numFormat, position);
 				}
 			}
 
@@ -161,7 +171,7 @@ public class WktWriter {
 		pw.write(")");
 	}
 	
-	private void writePolygon(Polygon polygon, PrintWriter pw) throws Exception {
+	private void writePolygon(Polygon polygon, NumberFormat numFormat, PrintWriter pw) throws Exception {
 		pw.write("POLYGON(");
 		boolean firstLinearRing = true;
 		for(LineString lineString : polygon.getLinearRings()){
@@ -189,7 +199,7 @@ public class WktWriter {
 						pw.write(" ");
 					}
 					
-					writeNumber(pw, position);
+					writeNumber(pw, numFormat, position);
 				}
 			}
 
@@ -198,7 +208,7 @@ public class WktWriter {
 		pw.write(")");
 	}
 	
-	private void writeMultiPolygon(MultiPolygon multiPolygon, PrintWriter pw) throws Exception {
+	private void writeMultiPolygon(MultiPolygon multiPolygon, NumberFormat numFormat, PrintWriter pw) throws Exception {
 		pw.write("MULTIPOLYGON(");
 		
 		boolean firstPolygon = true;
@@ -237,7 +247,7 @@ public class WktWriter {
 							pw.write(" ");
 						}
 						
-						writeNumber(pw, position);
+						writeNumber(pw, numFormat, position);
 					}
 				}
 
@@ -250,7 +260,7 @@ public class WktWriter {
 		pw.write(")");
 	}
 	
-	private void writeGeometryCollection(GeometryCollection geometryCollection, PrintWriter pw) throws Exception {
+	private void writeGeometryCollection(GeometryCollection geometryCollection, NumberFormat numFormat, PrintWriter pw) throws Exception {
 		pw.write("GEOMETRYCOLLECTION(");
 		boolean firstGeometry = true;
 		for(Geometry geometry : geometryCollection.getGeometries()){
@@ -260,7 +270,7 @@ public class WktWriter {
 				pw.write(",");
 			}
 			
-			write(geometry, pw);
+			write(geometry, numFormat, pw);
 		}
 		pw.write(")");
 	}
@@ -271,12 +281,21 @@ public class WktWriter {
 	 * @param pw
 	 * @param num
 	 */
-	private void writeNumber(PrintWriter pw, Number num){
+	private void writeNumber(PrintWriter pw, NumberFormat numFormat, Number num){
 		if( num.doubleValue() == Math.round(num.doubleValue()) ){
 			// Integer
-			pw.print( num.intValue() );
+			if( null != numFormat ){
+				pw.print( numFormat.format(num.intValue()) );
+			} else {
+				pw.print( num.intValue() );
+			}
+			
 		} else {
-			pw.print(num);
+			if( null != numFormat ){
+				pw.print( numFormat.format(num) );
+			} else {
+				pw.print( num );
+			}
 		}
 	}
 }

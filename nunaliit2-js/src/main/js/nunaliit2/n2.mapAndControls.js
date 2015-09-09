@@ -4253,12 +4253,29 @@ var MapAndControls = $n2.Class({
 						// OK, we must install this simplification
 						if( simplifiedGeometry.wkt ){
 							var f2 = wktFormat.read(simplifiedGeometry.wkt);
-							if( f2 && f2.geometry ){
+							
+							var projectedGeom = undefined;
+							
+							// wktFormat.read() returns an array when WKT is GEOMETRYCOLLECTION
+							if( $n2.isArray(f2) ){
+								var components = [];
+								for(var i=0,e=f2.length; i<e; ++i){
+									var vectorFeature = f2[i];
+									if( vectorFeature.geometry ){
+										components.push(vectorFeature.geometry);
+									};
+								};
+								projectedGeom = new OpenLayers.Geometry.Collection(components);
+								
+							} else if( f2 && f2.geometry ) {
+								projectedGeom = f2.geometry;
+							};
+							
+							if( projectedGeom ){
 								// Reproject geometry
-								var projectedGeom = f2.geometry;
 								if( simplifiedGeometry.proj ){
-									var projectedGeom = 
-										_this._reprojectGeometryForMap(f2.geometry, simplifiedGeometry.proj);
+									projectedGeom = 
+										_this._reprojectGeometryForMap(projectedGeom, simplifiedGeometry.proj);
 								};
 								
 								// Swap geometry

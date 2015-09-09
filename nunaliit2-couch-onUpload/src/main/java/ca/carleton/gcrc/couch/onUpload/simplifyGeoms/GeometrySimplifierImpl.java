@@ -1,6 +1,7 @@
 package ca.carleton.gcrc.couch.onUpload.simplifyGeoms;
 
 import java.io.StringWriter;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -68,11 +69,11 @@ public class GeometrySimplifierImpl implements GeometrySimplifier {
 		}
 		
 		Geometry originalGeometry = geomDesc.getGeometry();
+		WktWriter wktWriter = new WktWriter();
 		
 		// Save original in its own attachment and save information
 		// in simplified structure
 		{
-			WktWriter wktWriter = new WktWriter();
 			StringWriter sw = new StringWriter();
 			wktWriter.write(originalGeometry, sw);
 			String originalWkt = sw.toString();
@@ -109,7 +110,12 @@ public class GeometrySimplifierImpl implements GeometrySimplifier {
 			String attName = generateAttachmentName(builder, attachmentPrefix+"res");
 			resolutions.put(attName, simplification.getResolution());
 
-			String wkt = simplification.getGeometry().toString();
+			DecimalFormat numFormat = getNumberFormatFromResolution(simplification.getResolution());
+			
+			StringWriter sw = new StringWriter();
+			wktWriter.write(simplification.getGeometry(), numFormat, sw);
+			String wkt = sw.toString();
+
 			builder.addInlineAttachment(attName, SIMPLIFIED_GEOMETRY_CONTENT_TYPE, wkt);
 		}
 		
@@ -152,5 +158,27 @@ public class GeometrySimplifierImpl implements GeometrySimplifier {
 		}
 		
 		throw new Exception("Too many attachments with same prefix: "+prefix);
+	}
+	
+	private DecimalFormat getNumberFormatFromResolution(double resolution){
+		if( resolution > 0.0 ){
+			double inverseRes = 1/resolution;
+			double p = Math.log10(inverseRes);
+			double exp = Math.ceil( p );
+			
+			int numberOfDecimals = (int)exp;
+			if( numberOfDecimals < 1 ){
+				return new DecimalFormat("0");
+			} else {
+				String pattern = "0.";
+				for(int i=0; i<numberOfDecimals; ++i){
+					pattern += "#";
+				}
+				return new DecimalFormat(pattern);
+			}
+			
+		} else {
+			return null;
+		}
 	}
 }

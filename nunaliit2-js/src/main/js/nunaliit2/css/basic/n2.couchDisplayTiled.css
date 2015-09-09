@@ -120,3 +120,9 @@ div.n2DisplayTiled_tile_image {
 .nunaliit_user_advanced .n2DisplayTiled_current_button_tree_view {
 	display: inline;
 }
+.n2DisplayTiled_current_button_simplified_geoms {
+	display: none;
+}
+.nunaliit_user_advanced .n2DisplayTiled_current_button_simplified_geoms {
+	display: inline;
+}
