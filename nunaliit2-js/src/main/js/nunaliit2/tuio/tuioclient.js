@@ -1,4 +1,4 @@
-var SPRING_K = 80.0;
+var SPRING_K = 50.0;
 var SPRING_LEN = 0.0000000000001;
 
 // Socket to tuioserver.js that emits TUIO events in JSON
@@ -860,7 +860,7 @@ function tick(timestamp) {
 	}
 
 	// Time since last tick in ms
-	var dur = (timestamp - lastTime) / 500;
+	var dur = (timestamp - lastTime) / 250;
 	lastTime = timestamp;
 
 	// Reduce overall energy to converge on stable positions
