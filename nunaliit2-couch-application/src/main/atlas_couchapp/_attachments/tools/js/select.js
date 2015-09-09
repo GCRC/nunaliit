@@ -2090,50 +2090,58 @@
 		$div.append($h);
 		$h.text(list.name);
 		
-		var $tx = $('<button></button>');
-		$tx.text( _loc('Transform') );
-		$h.append($tx);
-		$tx.click(function(){
-			transformList(list);
-			return false;
-		});
-		
-		var $dx = $('<button></button>');
-		$dx.text( _loc('Delete') );
-		$h.append($dx);
-		$dx.click(function(){
-			deleteDocumentsFromList(list);
-			return false;
-		});
-		
-		var $rx = $('<button></button>');
-		$rx.text( _loc('Refine List') );
-		$h.append($rx);
-		$rx.click(function(){
-			SearchFilter.refineList({
-				list: list
-				,onSuccess: function(refinedList){
-					addList(refinedList);
-				}
+		$('<button>')
+			.text( _loc('Transform') )
+			.appendTo($h)
+			.click(function(){
+				transformList(list);
+				return false;
 			});
-			return false;
-		});
 		
-		var $ex = $('<button></button>');
-		$ex.text( _loc('Export') );
-		$h.append($ex);
-		$ex.click(function(){
-			exportList(list);
-			return false;
-		});
+		$('<button>')
+			.text( _loc('Delete') )
+			.appendTo($h)
+			.click(function(){
+				deleteDocumentsFromList(list);
+				return false;
+			});
 		
-		var $resubmitMedia = $('<button></button>');
-		$resubmitMedia.text( _loc('Re-Submit Media') );
-		$h.append($resubmitMedia);
-		$resubmitMedia.click(function(){
-			resubmitMediaInList(list);
-			return false;
-		});
+		$('<button>')
+			.text( _loc('Refine List') )
+			.appendTo($h)
+			.click(function(){
+				SearchFilter.refineList({
+					list: list
+					,onSuccess: function(refinedList){
+						addList(refinedList);
+					}
+				});
+				return false;
+			});
+		
+		$('<button>')
+			.text( _loc('Export') )
+			.appendTo($h)
+			.click(function(){
+				exportList(list);
+				return false;
+			});
+		
+		$('<button>')
+			.text( _loc('Re-Submit Media') )
+			.appendTo($h)
+			.click(function(){
+				resubmitMediaInList(list);
+				return false;
+			});
+		
+		$('<button>')
+			.text( _loc('Re-Submit Geometries') )
+			.appendTo($h)
+			.click(function(){
+				resubmitGeometriesInList(list);
+				return false;
+			});
 
 		for(var i=0,e=list.docIds.length; i<e; ++i){
 			var docId = list.docIds[i];
@@ -2634,6 +2642,105 @@
 				log( _loc('No media found on {docId}',{
 					docId: doc._id
 				}) );
+				processDocument(index+1);
+			};
+		};
+	};
+
+	// -----------------------------------------------------------------
+	function resubmitGeometriesInList(list){
+		var docIds = list.docIds;
+		var errors = 0;
+		var documentsModified = 0;
+		
+		processDocument(0);
+		
+		function processDocument(index){
+			if( index >= docIds.length ) {
+				// Finished
+				var docModifiedStr = _loc('No document modified.');
+				if( documentsModified > 0 ) {
+					docModifiedStr = _loc('{count} document(s) modified.',{
+						count: documentsModified
+					});
+				};
+				
+				if( errors > 0 ) {
+					var locStr = _loc('Errors in process: {count}.',{
+						count: errors
+					});
+					reportError(locStr+' '+docModifiedStr);
+				} else {
+					log(_loc('Process completed.')+' '+docModifiedStr);
+				};
+				return;
+			};
+			
+			var docId = docIds[index];
+			atlasDb.getDocument({
+				docId: docId
+				,onSuccess: function(doc){
+					documentFetched(index, doc);
+				}
+				,onError: function(errorMsg){
+					++errors;
+					var locStr = _loc('Unable to obtain document {docId}',{
+						docId: docId
+					});
+					reportError(locStr+': '+errorMsg);
+					processDocument(index+1);
+				}
+			});
+		};
+		
+		function documentFetched(index, doc){
+			// Mark all attachments as submitted
+			var updateRequired = false;
+			
+			if( doc.nunaliit_geom 
+			 && doc.nunaliit_geom.simplified
+			 && doc.nunaliit_geom.simplified.original ) {
+				var attName = doc.nunaliit_geom.simplified.original;
+				var originalUrl = atlasDb.getAttachmentUrl(doc,attName);
+				$.ajax({
+					url: originalUrl
+					,dataType: 'text'
+					,success: function(wkt){
+						var geom = OpenLayers.Geometry.fromWKT(wkt);
+						var bounds = geom.getBounds();
+						doc.nunaliit_geom = {
+							nunaliit_type: 'geometry'
+							,wkt: wkt
+							,bbox: [
+								bounds.left
+								,bounds.bottom
+								,bounds.right
+								,bounds.top
+							]
+						};
+
+						atlasDb.updateDocument({
+							data: doc
+							,onSuccess: function(docInfo){
+								++documentsModified;
+								log('Updated '+doc._id);
+								processDocument(index+1);
+							}
+							,onError: function(errorMsg){
+								++errors;
+								reportError('Unable to update document '+doc._id+': '+errorMsg);
+								processDocument(index+1);
+							}
+						});
+					}
+					,error: function(){
+						++errors;
+						reportError('Unable to load attachment '+attName+' from doc '+doc._id);
+						processDocument(index+1);
+					}
+				});
+				
+			} else {
 				processDocument(index+1);
 			};
 		};
