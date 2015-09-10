@@ -2,6 +2,7 @@ package ca.carleton.gcrc.geom;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
 
@@ -52,6 +53,13 @@ public class GeometryCollection extends GeometryAbstract implements Geometry {
 	public void extendBoundingBox(BoundingBox boundingBox) {
 		for(Geometry geometry : geometries){
 			geometry.extendBoundingBox(boundingBox);
+		}
+	}
+
+	@Override
+	public void accumulateBasicGeometries(Collection<Geometry> geometries) {
+		for(Geometry geometry : this.geometries){
+			geometry.accumulateBasicGeometries(geometries);
 		}
 	}
 }

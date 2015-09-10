@@ -2,6 +2,7 @@ package ca.carleton.gcrc.geom;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
 
@@ -63,6 +64,13 @@ public class MultiPoint extends GeometryAbstract implements Geometry {
 	public void extendBoundingBox(BoundingBox boundingBox) {
 		for(Point point : points){
 			boundingBox.extendToInclude(point);
+		}
+	}
+
+	@Override
+	public void accumulateBasicGeometries(Collection<Geometry> geometries) {
+		for(Point point : this.points){
+			point.accumulateBasicGeometries(geometries);
 		}
 	}
 }

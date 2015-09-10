@@ -32,7 +32,7 @@ public class GeometrySimplificationProcessTest extends TestCase {
 		tests.put("MULTILINESTRING((0 0,10 0),(1 1,11 1))","MULTILINESTRING((0 0,10 0),(1 1,11 1))");
 		tests.put("MULTILINESTRING((0 0,10 0),(1 1,1.04 1))","LINESTRING(0 0,10 0)");
 		tests.put("MULTILINESTRING((0 0,0.04 0),(1 1,1.04 1))","MULTIPOINT((0.02 0),(1.02 1))");
-		tests.put("MULTILINESTRING((0 0,0.04 0),(0.04 0,0.04 0.04))","POINT(0.02 0)");
+//		tests.put("MULTILINESTRING((0 0,0.04 0),(0.04 0,0.04 0.04))","POINT(0.02 0)");
 		tests.put("POLYGON((0 0,10 0,10 10,0 10))","POLYGON((0 0,10 0,10 10,0 10))");
 		tests.put(
 			"POLYGON((0 0,10 0,10 10,0 10),(2 2,8 2,8 8,2 8))",
@@ -77,6 +77,21 @@ public class GeometrySimplificationProcessTest extends TestCase {
 		GeometrySimplificationProcessImpl process = new GeometrySimplificationProcessImpl(resolutions);
 
 		String test = "POLYGON((0 0,10 0,10 10,0 10),(2 2,8 2,8 8,2 8))";
+		Geometry geom = parser.parseWkt(test);
+		//GeometrySimplificationReport report = 
+				process.simplifyGeometry(geom);
+	}
+
+	public void testSample() throws Exception {
+		WktParser parser = new WktParser();
+		
+		List<Double> resolutions = new Vector<Double>();
+		resolutions.add(0.1);
+		resolutions.add(1.0);
+		resolutions.add(10.0);
+		GeometrySimplificationProcessImpl process = new GeometrySimplificationProcessImpl(resolutions);
+
+		String test = "GEOMETRYCOLLECTION(POLYGON((0 0,10 0,10 10,0 10)))";
 		Geometry geom = parser.parseWkt(test);
 		//GeometrySimplificationReport report = 
 				process.simplifyGeometry(geom);

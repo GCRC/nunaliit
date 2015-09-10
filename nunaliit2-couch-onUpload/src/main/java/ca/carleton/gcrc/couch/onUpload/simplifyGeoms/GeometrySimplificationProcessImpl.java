@@ -17,6 +17,8 @@ import ca.carleton.gcrc.geom.Point;
 import ca.carleton.gcrc.geom.Polygon;
 
 public class GeometrySimplificationProcessImpl implements GeometrySimplificationProcess {
+	
+	static private int pointRadius = 3;
 
 	private List<Double> resolutions = null;
 	
@@ -86,6 +88,15 @@ public class GeometrySimplificationProcessImpl implements GeometrySimplification
 		}
 	}
 	
+	/**
+	 * Accepts a geometry and a resolution. Returns a version of the geometry
+	 * which is simplified for the given resolution. If the initial geometry
+	 * is already simplified enough, then return null.
+	 * @param geometry Geometry to simplify
+	 * @param resolution Resolution at which the geometry should be simplified
+	 * @return The simplified geometry. Null, if no simplification is possible.
+	 * @throws Exception
+	 */
 	public Geometry simplifyGeometryAtResolution(Geometry geometry, double resolution) throws Exception {
 		double inverseRes = 1/resolution;
 		double p = Math.log10(inverseRes);
@@ -113,14 +124,66 @@ public class GeometrySimplificationProcessImpl implements GeometrySimplification
 		if( geom instanceof GeometryCollection ){
 			GeometryCollection collection = (GeometryCollection)geom;
 			boolean isSimplified = false;
+			//List<Geometry> newComponents = new Vector<Geometry>();
+			
+			// Extract basic geometries
+			List<Geometry> basicGeometries = new Vector<Geometry>();
+			collection.accumulateBasicGeometries(basicGeometries);
+			
+			List<Point> accumulatedPoints = new Vector<Point>();
+			List<LineString> accumulatedLineStrings = new Vector<LineString>();
+			List<Polygon> accumulatedPolygons = new Vector<Polygon>();
+			
+			for(Geometry component : basicGeometries){
+				if( component instanceof Point ){
+					Point p = (Point)component;
+					accumulatedPoints.add(p);
+				
+				} else if( component instanceof LineString ){
+					LineString ls = (LineString)component;
+					accumulatedLineStrings.add(ls);
+					
+				} else if( component instanceof Polygon ){
+					Polygon poly = (Polygon)component;
+					accumulatedPolygons.add(poly);
+				}
+			}
+			
 			List<Geometry> newComponents = new Vector<Geometry>();
-			for(Geometry component : collection.getGeometries()){
-				Geometry simplifiedComponent = simplify(component, resolution, factor);
-				if( null != simplifiedComponent ){
+
+			// Deal with polygons in one simplification
+			if( accumulatedPolygons.size() > 0 ){
+				MultiPolygon polygons = new MultiPolygon(accumulatedPolygons);
+				Geometry effectiveComponent = simplify(polygons, resolution, factor);
+				if( null != effectiveComponent ){
 					isSimplified = true;
-					newComponents.add( simplifiedComponent );
+					newComponents.add(effectiveComponent);
 				} else {
-					newComponents.add( component );
+					newComponents.add(polygons);
+				}
+			}
+
+			// Deal with linestrings in one simplification
+			if( accumulatedLineStrings.size() > 0 ){
+				MultiLineString linestrings = new MultiLineString(accumulatedLineStrings);
+				Geometry effectiveComponent = simplify(linestrings, resolution, factor);
+				if( null != effectiveComponent ){
+					isSimplified = true;
+					newComponents.add(effectiveComponent);
+				} else {
+					newComponents.add(linestrings);
+				}
+			}
+
+			// Deal with points in one simplification
+			if( accumulatedPoints.size() > 0 ){
+				MultiPoint points = new MultiPoint(accumulatedPoints);
+				Geometry effectiveComponent = simplify(points, resolution, factor);
+				if( null != effectiveComponent ){
+					isSimplified = true;
+					newComponents.add(effectiveComponent);
+				} else {
+					newComponents.add(points);
 				}
 			}
 			
@@ -167,7 +230,7 @@ public class GeometrySimplificationProcessImpl implements GeometrySimplification
 					lastPoint = simplifiedPoint;
 					accumulatedPoints.add(simplifiedPoint);
 				} else {
-					if( arePointsColliding(simplifiedPoint, lastPoint, resolution) ){
+					if( areLocationsColliding(simplifiedPoint, lastPoint, resolution) ){
 						isGeneralized = true;
 					} else {
 						lastPoint = simplifiedPoint;
@@ -253,7 +316,9 @@ public class GeometrySimplificationProcessImpl implements GeometrySimplification
 					lastPoint = effectivePoint;
 					accumulatedPoints.add(effectivePoint);
 				} else {
-					if( arePointsColliding(effectivePoint, accumulatedPoints, resolution) ){
+					if( areLocationsColliding(effectivePoint, accumulatedPoints, resolution) ){
+						// If this points is colliding with other points, do not
+						// add to resulting collection
 						isGeneralized = true;
 					} else {
 						lastPoint = effectivePoint;
@@ -274,16 +339,23 @@ public class GeometrySimplificationProcessImpl implements GeometrySimplification
 			// A MultiLineString can be simplified into a MultiLineString, a LineString,
 			// a MultiPoint or a Point
 			MultiLineString multiLineString = (MultiLineString)geom;
+			
+			List<LineString> effectiveLineStrings = makeLineStrings(
+					multiLineString.getLineStrings(), 
+					null, 
+					resolution
+					);
+			
 			boolean isGeneralized = false;
 			List<LineString> accumulatedLineStrings = new Vector<LineString>();
 			List<Point> accumulatedPoints = new Vector<Point>();
-			for(LineString lineString : multiLineString.getLineStrings()){
+			for(LineString lineString : effectiveLineStrings){
 				Geometry simplifiedLineString = simplify(lineString, resolution, factor);
 				if( null != simplifiedLineString ){
 					isGeneralized = true;
 					if( simplifiedLineString instanceof Point ){
 						Point simplifiedPoint = (Point)simplifiedLineString;
-						if( false == arePointsColliding(simplifiedPoint, accumulatedPoints, resolution) ){
+						if( false == areLocationsColliding(simplifiedPoint, accumulatedPoints, resolution) ){
 							accumulatedPoints.add(simplifiedPoint);
 						}
 					} else {
@@ -323,7 +395,7 @@ public class GeometrySimplificationProcessImpl implements GeometrySimplification
 					isGeneralized = true;
 					if( simplifiedPolygon instanceof Point ){
 						Point simplifiedPoint = (Point)simplifiedPolygon;
-						if( false == arePointsColliding(simplifiedPoint, accumulatedPoints, resolution) ){
+						if( false == areLocationsColliding(simplifiedPoint, accumulatedPoints, resolution) ){
 							accumulatedPoints.add(simplifiedPoint);
 						}
 					} else {
@@ -354,7 +426,7 @@ public class GeometrySimplificationProcessImpl implements GeometrySimplification
 		return simplifiedGeometry;
 	}
 	
-	private boolean arePointsColliding(Point p1, Point p2, double resolution){
+	private boolean areLocationsColliding(Point p1, Point p2, double resolution){
 		double xDelta = Math.abs( p1.getX() - p2.getX() );
 		double yDelta = Math.abs( p1.getY() - p2.getY() );
 		
@@ -365,13 +437,74 @@ public class GeometrySimplificationProcessImpl implements GeometrySimplification
 		return true;
 	}
 
-	private boolean arePointsColliding(Point p, List<Point> points, double resolution){
+	private boolean areLocationsColliding(Point p, List<Point> points, double resolution){
 		for(Point point : points){
-			if( arePointsColliding(p, point, resolution) ){
+			if( areLocationsColliding(p, point, resolution) ){
 				return true;
 			}
 		}
 
 		return false;
+	}
+	
+	private List<LineString> makeLineStrings(
+			List<LineString> lineStrings, 
+			List<Point> points, 
+			double resolution ){
+		List<LineCreator> lines = new Vector<LineCreator>();
+		
+		if( null != lineStrings ){
+			for(LineString ls : lineStrings){
+				lines.add( new LineCreator(ls.getPoints()) );
+			}
+		}
+		
+		if( null != points ){
+			for(Point point : points){
+				lines.add( new LineCreator(point) );
+			}
+		}
+		
+		boolean merged = mergeLineCreators(lines, resolution);
+		while(merged){
+			merged = mergeLineCreators(lines, resolution);
+		}
+
+		List<LineString> result = new Vector<LineString>();
+		for(LineCreator lc : lines){
+			if( null != lc && lc.getPoints().size() > 1 ){
+				result.add( new LineString(lc.getPoints()) );
+			}
+		}
+		
+		return result;
+	}
+
+	private boolean mergeLineCreators(List<LineCreator> lines, double resolution){
+		boolean merged = false;
+		
+		// System.out.println("mergeLineCreators "+lines.size());
+		
+		for(int i=0; i<lines.size(); ++i){
+			LineCreator lc1 = lines.get(i);
+			
+			if( null != lc1 ){
+				for(int j=i+1; j<lines.size(); ++j){
+					LineCreator lc2 = lines.get(j);
+					
+					if( null != lc2 ){
+						double distance = lc1.getDistance(lc2);
+						
+						if( distance <= (resolution * pointRadius) ){
+							lc1.addLine( lc2 );
+							lines.set(j, null);
+							merged = true;
+						}
+					}
+				}
+			}
+		}
+		
+		return merged;
 	}
 }
