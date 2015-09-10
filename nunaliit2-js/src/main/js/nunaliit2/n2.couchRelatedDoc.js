@@ -209,7 +209,7 @@ var Editor = $n2.Class({
 
 		var $fileElement = $('<div>')
 			.appendTo($diagContent);
-		this.attachmentUploadHandler = new $n2.CouchEditor.AttachmentEditor({
+		this.attachmentUploadHandler = new $n2.couchEdit.AttachmentEditor({
 			doc: obj
 			,elem: $fileElement
 			,documentSource: this.documentSource
