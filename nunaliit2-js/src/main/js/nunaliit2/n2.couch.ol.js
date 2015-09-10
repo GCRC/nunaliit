@@ -23,6 +23,11 @@ if( typeof(OpenLayers) === 'undefined' ) return;
  *  - <OpenLayers.Format>
  */
 OpenLayers.Format.Couch = OpenLayers.Class(OpenLayers.Format, {
+	
+	/**
+	 * Projection that the database uses for the given geometry
+	 */
+	dbProj: null,
     
     /**
      * Constructor: OpenLayers.Format.Couch
@@ -34,6 +39,8 @@ OpenLayers.Format.Couch = OpenLayers.Class(OpenLayers.Format, {
      */
     initialize: function(options) {
         OpenLayers.Format.prototype.initialize.apply(this, [options]);
+        
+        this.dbProj = new OpenLayers.Projection('EPSG:4326');
     },
 
     /**
@@ -77,6 +84,7 @@ OpenLayers.Format.Couch = OpenLayers.Class(OpenLayers.Format, {
 				if( id && geom ) {
 					var f = new OpenLayers.Feature.Vector(geom,doc);
 					f.fid = id;
+					f.n2GeomProj = this.dbProj;
 					results.push(f);
 				} else {
 					$n2.log('Invalid feature',doc);

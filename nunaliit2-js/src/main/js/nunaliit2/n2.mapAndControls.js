@@ -4060,11 +4060,21 @@ var MapAndControls = $n2.Class({
 			var attName = request.attName;
 			
 			// Check if we already have the simplification in memory
-			if( request.feature 
+			if( '__inline' === attName ){
+				var simplification = {
+    				id: id
+    				,attName: attName
+    				,wkt: request.doc.nunaliit_geom.wkt
+    				,proj: request.feature.n2GeomProj
+				};
+				simplificationsReported[simplificationsReported.length] = simplification;
+				
+			} else if( request.feature 
 			 && request.feature.n2SimplifiedGeoms 
 			 && request.feature.n2SimplifiedGeoms[attName] ){
 				var simplification = request.feature.n2SimplifiedGeoms[attName];
 				simplificationsReported[simplificationsReported.length] = simplification;
+			
 			} else {
 				geometriesRequested[geometriesRequested.length] = geomsNeeded[id];
 			};
@@ -4114,6 +4124,14 @@ var MapAndControls = $n2.Class({
 					};
 				};
 				
+				// If the best resolution is the one given inline, no need to
+				// fetch it
+				if( typeof bestResolution !== 'undefined' ){
+					if( f.data.nunaliit_geom.simplified.reported_resolution === bestResolution ){
+						bestAttName = '__inline';
+					};
+				};
+
 				// If we can not determine an optimal resolution, it is because
 				// the maps resolution is better than the best simplification. Go
 				// with original geometry

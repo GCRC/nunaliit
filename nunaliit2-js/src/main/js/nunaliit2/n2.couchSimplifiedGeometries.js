@@ -83,22 +83,19 @@ var SimplifiedGeometryService = $n2.Class({
 	
 	_handleDispatch: function(m, address, dispatchService){
 		if( 'simplifiedGeometryRequest' === m.type ){
-			this._handleRequest(m.geometriesRequested);
+			var requesterId = m.requester;
+			this._handleRequest(requesterId, m.geometriesRequested);
 		};
 	},
 	
-	_handleRequest: function(geometriesRequested){
-		for(var i=0,e=geometriesRequested.length; i<e; ++i){
-			var geometryRequest = geometriesRequested[i];
-
-			this.pendingRequests[geometryRequest.id] = geometryRequest;
-		};
+	_handleRequest: function(requesterId, geometriesRequested){
+		this.pendingRequests[requesterId] = geometriesRequested;
 		
 		var count = 0;
 		for(var id in this.pendingRequests){
-			++count;
+			count += this.pendingRequests[id].length;
 		};
-		$n2.log('Pending simplified geometry requets: '+count);
+		$n2.log('Pending simplified geometry requests: '+count);
 		
 		this._sendRequests();
 	},
@@ -116,15 +113,36 @@ var SimplifiedGeometryService = $n2.Class({
 			var serverRequest = {
 				geometryRequests: []
 			};
+			var requested = {};
+			var requestCount = 0;
 			
 			for(var id in _this.pendingRequests){
-				var geomRequest = _this.pendingRequests[id];
+				var geomRequests = _this.pendingRequests[id];
 				
-				var geometryRequest = {
-					id: geomRequest.id
-					,attName: geomRequest.attName
+				for(var i=0,e=geomRequests.length; i<e && requestCount < 100; ++i){
+					var geomRequest = geomRequests[i];
+					
+					var attNames = requested[geomRequest.id];
+					if( !attNames ){
+						attNames = {};
+						requested[geomRequest.id] = attNames;
+					};
+
+					if( attNames[geomRequest.attName] ){
+						// Already in this request
+					} else {
+						attNames[geomRequest.attName] = true;
+						
+						var geometryRequest = {
+							id: geomRequest.id
+							,attName: geomRequest.attName
+						};
+						
+						serverRequest.geometryRequests.push(geometryRequest);
+						
+						++requestCount;
+					};
 				};
-				serverRequest.geometryRequests.push(geometryRequest);
 			};
 			
 			if( serverRequest.geometryRequests.length ){
@@ -145,35 +163,7 @@ var SimplifiedGeometryService = $n2.Class({
 		    	,dataType: 'json'
 		    	,success: function(jsonResp) {
 		    		if( jsonResp && jsonResp.geometries ) {
-		    			var simplifiedGeometries = [];
-		    			
-		    			for(var i=0,e=jsonResp.geometries.length; i<e; ++i){
-		    				var geomResp = jsonResp.geometries[i];
-		    				
-			    			var simplifiedGeometry = {
-			    				id: geomResp.id
-			    				,attName: geomResp.attName
-			    				,wkt: geomResp.att
-			    			};
-			    			
-			    			if( _this.dbProjection ){
-			    				simplifiedGeometry.proj = _this.dbProjection;
-			    			};
-			    			
-			    			simplifiedGeometries.push(simplifiedGeometry);
-			    			
-			    			if( _this.pendingRequests[geomResp.id] 
-			    			 && geomResp.attName === _this.pendingRequests[geomResp.id].attName ){
-			    				delete _this.pendingRequests[geomResp.id];
-			    			};
-		    			};
-		    			
-		    			_this.dispatchService.send(DH,{
-		    				type: 'simplifiedGeometryReport'
-		    				,simplifiedGeometries: simplifiedGeometries
-		    			});
-		    			
-		    			next();
+		    			receiveSimplifiedGeometries(jsonResp.geometries);
 		    		};
 		    	}
 		    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
@@ -191,6 +181,59 @@ var SimplifiedGeometryService = $n2.Class({
 					next();
 		    	}
 			});
+		};
+		
+		function receiveSimplifiedGeometries(geometries){
+			var simplifiedGeometries = [];
+			var received = {};
+			
+			for(var i=0,e=geometries.length; i<e; ++i){
+				var geomResp = geometries[i];
+				
+    			var simplifiedGeometry = {
+    				id: geomResp.id
+    				,attName: geomResp.attName
+    				,wkt: geomResp.att
+    			};
+    			
+    			if( _this.dbProjection ){
+    				simplifiedGeometry.proj = _this.dbProjection;
+    			};
+    			
+    			simplifiedGeometries.push(simplifiedGeometry);
+    			
+    			var attNames = received[geomResp.id];
+    			if( !attNames ){
+    				attNames = {};
+    				received[geomResp.id] = attNames;
+    			};
+    			attNames[geomResp.att] = true;
+			};
+			
+			// Clean up requests pending
+			for(var requesterId in _this.pendingRequests){
+				var currentRequests = _this.pendingRequests[requesterId];
+				var pendingRequests = [];
+				for(var i=0,e=currentRequests.length; i<e; ++i){
+					var r = currentRequests[i];
+					if( received[r.id] && received[r.id][r.attName] ){
+						// No longer pending
+					} else {
+						pendingRequests.push(r);
+					};
+				};
+				
+				_this.pendingRequests[requesterId] = pendingRequests;
+			};
+			
+			if( simplifiedGeometries.length > 0 ){
+				_this.dispatchService.send(DH,{
+					type: 'simplifiedGeometryReport'
+					,simplifiedGeometries: simplifiedGeometries
+				});
+			};
+			
+			next();
 		};
 	}
 });

@@ -17,6 +17,9 @@ import org.slf4j.LoggerFactory;
 import ca.carleton.gcrc.couch.client.CouchDb;
 
 public class SimplifiedGeometryActions {
+	
+	static final int RESPONSE_LENGHT_LIMIT = 1000000;
+	static final int RESPONSE_TIME_LIMIT_MS = 2000; // 2 seconds
 
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -28,6 +31,8 @@ public class SimplifiedGeometryActions {
 
 	public JSONObject getAttachments(Map<String, String> attNameByDocId) throws Exception {
 		JSONObject result = new JSONObject();
+		
+		long startMs = System.currentTimeMillis();
 		
 		JSONArray geometries = new JSONArray();
 		result.put("geometries", geometries);
@@ -65,7 +70,12 @@ public class SimplifiedGeometryActions {
 				attObj.put("error", true);
 			}
 			
-			if( currentSize > 10000 ){
+			if( currentSize > RESPONSE_LENGHT_LIMIT ){
+				break;
+			}
+			
+			long currentMs = System.currentTimeMillis();
+			if( (currentMs - startMs) > RESPONSE_TIME_LIMIT_MS ){
 				break;
 			}
 		}
@@ -75,6 +85,8 @@ public class SimplifiedGeometryActions {
 
 	public JSONObject getAttachments(List<GeometryAttachmentRequest> attachmentRequests) throws Exception {
 		JSONObject result = new JSONObject();
+		
+		long startMs = System.currentTimeMillis();
 		
 		JSONArray geometries = new JSONArray();
 		result.put("geometries", geometries);
@@ -113,7 +125,12 @@ public class SimplifiedGeometryActions {
 				attObj.put("error", true);
 			}
 			
-			if( currentSize > 1000000 ){
+			if( currentSize > RESPONSE_LENGHT_LIMIT ){
+				break;
+			}
+			
+			long currentMs = System.currentTimeMillis();
+			if( (currentMs - startMs) > RESPONSE_TIME_LIMIT_MS ){
 				break;
 			}
 		}
@@ -124,6 +141,8 @@ public class SimplifiedGeometryActions {
 	public void getAttachments(List<GeometryAttachmentRequest> attachmentRequests, OutputStream os) throws Exception {
 		AttachmentOutputStream attachmentOs = new AttachmentOutputStream(os);
 		PrintStream ps = new PrintStream(attachmentOs);
+		
+		long startMs = System.currentTimeMillis();
 		
 		ps.print("{\"geometries\":[");
 		
@@ -156,7 +175,12 @@ public class SimplifiedGeometryActions {
 			
 			ps.print("\"}");
 			
-			if( attachmentOs.getCount() > 100000 ){
+			if( attachmentOs.getCount() > RESPONSE_LENGHT_LIMIT ){
+				break;
+			}
+			
+			long currentMs = System.currentTimeMillis();
+			if( (currentMs - startMs) > RESPONSE_TIME_LIMIT_MS ){
 				break;
 			}
 		}
