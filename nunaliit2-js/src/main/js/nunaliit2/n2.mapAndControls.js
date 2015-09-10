@@ -34,7 +34,6 @@ $Id: n2.mapAndControls.js 8494 2012-09-21 20:06:50Z jpfiset $
 // @requires n2.utils.js
 
 ;(function($,$n2){
-"use strict";
 
 	// Localization
 	var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
