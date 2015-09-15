@@ -1,7 +1,10 @@
-var SPRING_K = 50.0;
+var MAX_SPRING_K = 75.0;
 var SPRING_LEN = 0.0000000000001;
 
 var usePhysics = true;
+
+// Time in ms to fade spring influence in or out
+var springFadeTime = 600.0;
 
 // Socket to tuioserver.js that emits TUIO events in JSON
 var socket = io('http://localhost:3000');
@@ -135,6 +138,9 @@ function Body(x, y) {
 	this.vel = new Vector(0, 0);
 	this.div = undefined;
 	this.dirty = false;
+	this.alive = true;
+	this.birthTime = Date.now();
+	this.deathTime = undefined;
 	this.lastTime = null;
 }
 
@@ -143,7 +149,11 @@ function springForce(p1, p2, length, k) {
 	var mag = vec.magnitude();
 	var displacement = length - mag;
 
-	return vec.scale(k * displacement * 0.5 / mag);
+	if (mag < length) {
+		return new Vector(0, 0);
+	} else {
+		return vec.scale(k * displacement * 0.5 / mag);
+	}
 }
 
 /** Set the target coordinate for the body to move towards. */
@@ -168,6 +178,7 @@ Body.prototype.updatePosition = function(timestamp, energy) {
 	if (!usePhysics) {
 		this.pos.x = this.targetPos.x;
 		this.pos.y = this.targetPos.y;
+		return true;
 	} else if (!this.lastTime) {
 		// Initial call, but we need a time delta, wait for next tick
 		this.lastTime = timestamp;
@@ -189,7 +200,7 @@ Body.prototype.updatePosition = function(timestamp, energy) {
 	this.vel = this.vel.scale(0.1);
 
 	// Calculate amount to move based on spring force
-	var force = springForce(this.targetPos, this.pos, SPRING_LEN, SPRING_K);
+	var force = springForce(this.targetPos, this.pos, SPRING_LEN, MAX_SPRING_K);
 	var velocity = this.vel.add(force.scale(dur)).scale(energy);
 	var dPos = velocity.scale(dur);
 
@@ -204,12 +215,6 @@ Body.prototype.updatePosition = function(timestamp, energy) {
 		this.vel = new Vector(0, 0);
 	}
 
-	// Move div to current position
-	if (this.div != undefined) {
-		this.div.style.left = this.pos.x - (dotSize / 2) + "px";
-		this.div.style.top = this.pos.y - (dotSize / 2) + "px";
-	}
-
 	return true;
 }
 
@@ -218,7 +223,6 @@ function Cursor() {
 	Body.call(this, Number.NaN, Number.NaN);
 
 	this.down = false;
-	this.downTime = Date.now();
 	this.downX = Number.NaN;
 	this.downY = Number.NaN;
 	this.index = Number.NaN;
@@ -272,10 +276,63 @@ Hand.prototype.updatePosition = function(timestamp, energy) {
 		return;
 	}
 
-	var center = centerPoint(this.cursors);
-	this.moveTo(center.x, center.y);
+	if (!usePhysics) {
+		var center = centerPoint(this.cursors);
+		this.moveTo(center.x, center.y);
+		return true;
+	} else if (!this.lastTime) {
+		// Initial call, but we need a time delta, wait for next tick
+		this.lastTime = timestamp;
+		return true;
+	} else if (!this.dirty) {
+		// Nothing to do
+		this.dirty = false;
+		this.lastTime = timestamp;
+		return false;
+	}
 
-	Body.prototype.updatePosition.call(this, timestamp, energy);
+	// Time since start in ms
+	var dur = (timestamp - this.lastTime) / 500;
+	this.lastTime = timestamp;
+
+	// Damp old velocity to avoid oscillation
+	this.vel = this.vel.scale(0.1);
+
+	var force = new Vector(0, 0);
+	for (var c = 0; c < this.cursors.length; ++c) {
+		var cursor = this.cursors[c];
+		var spring_k = 0.0;
+		if (cursor.alive) {
+			var age = Date.now() - cursor.birthTime;
+			spring_k = Math.min((age / springFadeTime) * MAX_SPRING_K, MAX_SPRING_K);
+		} else {
+			var rot = Date.now() - cursor.deathTime;
+			spring_k = Math.min(((springFadeTime - rot) / springFadeTime) * MAX_SPRING_K, MAX_SPRING_K);
+		}
+
+		// Calculate and add force due to this cursor's spring
+		var f = springForce(cursor.pos, this.pos, SPRING_LEN, spring_k);
+		force = force.add(f);
+	}
+
+	var velocity = this.vel.add(force.scale(dur)).scale(energy);
+	var dPos = velocity.scale(dur);
+
+	// Calculate new position
+	this.pos = this.pos.add(dPos);
+	this.vel = velocity;
+
+	return true;
+}
+
+Hand.prototype.numAliveCursors = function() {
+	var n = 0;
+	for (var c = 0; c < this.cursors.length; ++c) {
+		if (this.cursors[c].alive) {
+			++n;
+		}
+	}
+	return n;
 }
 
 Hand.prototype.removeCursor = function(cursor) {
@@ -399,6 +456,26 @@ function dispatchMouseEvent(eventType, x, y) {
 	el.dispatchEvent(event);
 }
 
+function removeObject(dict, inst) {
+	// Object is long dead and no longer influential, remove
+	if (dict == cursors) {
+		// Cursor is no longer alive, (cursor up)
+		onCursorUp(inst);
+	}
+
+	if (dict[inst].div != undefined) {
+		// Remove calibration div
+		document.body.removeChild(dict[inst].div);
+	}
+
+	if (dict[inst].hand != undefined) {
+		dict[inst].hand.removeCursor(dict[inst]);
+	}
+
+	// Remove cursor from dictionary
+	delete dict[inst];
+}
+
 /** Update the list of things that are alive.
  * dict: Dictionary of cursors or tangibles.
  * alive: Updated alive array.
@@ -410,35 +487,23 @@ function updateAlive(dict, alive) {
 			continue; // Ignore prototypes
 		}
 
-		// Check if this instance is still alive
-		var found = false;
-		for (var i = alive.length - 1; i >= 0; i--) {
-			if (inst == alive[i]) {
-				dict[inst].lastSeen = Date.now();
-				found = true;
-				break;
-			}
-		}
-
-		// Instance is not alive, so delete from dict
-		// if (!found && (Date.now() - dict[inst].lastSeen) > clickDelay) {
-		if (!found) {
-			if (dict == cursors) {
-				// Cursor is no longer alive, (cursor up)
-				onCursorUp(inst);
+		if (dict[inst].alive) {
+			// Check if this instance is still alive
+			var found = false;
+			for (var i = alive.length - 1; i >= 0; i--) {
+				if (inst == alive[i]) {
+					dict[inst].lastSeen = Date.now();
+					found = true;
+					break;
+				}
 			}
 
-			if (dict[inst].div != undefined) {
-				// Remove calibration div
-				document.body.removeChild(dict[inst].div);
+			if (!found) {
+				// No longer alive, flag as dead and schedule removal
+				dict[inst].alive = false;
+				dict[inst].deathTime = Date.now();
+				window.setTimeout(removeObject, springFadeTime, dict, inst);
 			}
-
-			if (dict[inst].hand != undefined) {
-				dict[inst].hand.removeCursor(dict[inst]);
-			}
-
-			// Remove cursor from dictionary
-			delete dict[inst];
 		}
 	}
 
@@ -488,7 +553,7 @@ function bestHand(x, y) {
 	for (var h in hands) {
 		var d = distance(x, y, hands[h].pos.x, hands[h].pos.y);
 		if (d <= handSpan &&
-			hands[h].cursors.length < 5 &&
+			hands[h].numAliveCursors() < 5 &&
 			d <= bestDistance) {
 			hand = hands[h];
 			bestDistance = d;
@@ -541,7 +606,7 @@ function onCursorMove(inst) {
 	var cursor = cursors[inst];
 	if (inst == pressCursor) {
 		var d = distance(cursor.pos.x, cursor.pos.y, cursor.downX, cursor.downY);
-		var elapsed = Date.now() - cursor.downTime;
+		var elapsed = Date.now() - cursor.birthTime;
 		if (d < clickDistance && elapsed > pressDelay) {
 			console.log("Long press!");
 			pressCursor = undefined;
@@ -554,7 +619,7 @@ function onCursorUp(inst) {
 	var cursor = cursors[inst];
 	if (inst == pressCursor) {
 		var d = distance(cursor.pos.x, cursor.pos.y, cursor.downX, cursor.downY);
-		var elapsed = Date.now() - cursor.downTime;
+		var elapsed = Date.now() - cursor.birthTime;
 		if (d < clickDistance && elapsed < clickDelay) {
 			console.log("Click!");
 			dispatchMouseEvent('click', cursor.pos.x, cursor.pos.y);
@@ -667,14 +732,14 @@ function updateCursors(set) {
 		if (!cursors[inst].down) {
 			// Initial cursor position update (cursor down)
 			cursors[inst].down = true;
-			cursors[inst].downTime = Date.now();
+			cursors[inst].birthTime = Date.now();
 			cursors[inst].downX = newX;
 			cursors[inst].downY = newY;
 
 			addCursorToHand(cursors[inst]);
 			onCursorDown(inst);
 
-			energy = Math.min(1.0, energy + 0.1);
+			energy = Math.min(1.0, energy + 1.0);
 		} else {
 			// Position update for down cursor (cursor move)
 			onCursorMove(inst);
@@ -683,7 +748,7 @@ function updateCursors(set) {
 			var increase = Math.abs(
 				distance(cursors[inst].pos.x, cursors[inst].pos.y,
 						 newX, newY));
-			energy = Math.min(1.0, energy + increase);
+			energy = Math.min(1.0, energy + increase * 1000);
 		}
 
 		// Update cursor visual feedback
@@ -716,10 +781,8 @@ function updateCursors(set) {
 		// Show hand visual feedback
 		for (var inst in hands) {
 			var hand = hands[inst];
-			if (cursorsMoved) {
-				// Cursors have moved hands, re-calculate target position
-				hand.updateTargetPosition();
-			}
+			// Re-calculate hand position based on cursors
+			hand.updateTargetPosition();
 
 			if (hand.dirty) {
 				onHandMove(hand.index);
