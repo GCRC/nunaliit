@@ -365,7 +365,6 @@ var CreateRelatedDocProcess = $n2.Class({
 				,showService: null
 				,authService: null
 				,dialogService: null
-				,dispatchService: null
 			}
 			,opts_
 		);
