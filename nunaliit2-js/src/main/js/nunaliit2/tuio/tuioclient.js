@@ -25,7 +25,7 @@ var clickDistance = 0.005;
 var pressDelay = 1000;
 
 // Maximum distance to consider cursors to be on the same hand
-var handSpan = 0.4;
+var handSpan = 0.15;
 
 // Next hand instance ID counter
 var nextHandIndex = 1;
