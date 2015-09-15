@@ -5,6 +5,7 @@
 	var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
 	var config = null;
+	var scriptConfig = null;
 	var atlasDb = null;
 	var atlasDesign = null;
 	var serverDesign = null;
@@ -305,7 +306,7 @@
 				};
 
 				for(var i=0, e=docs.length; i<e; ++i){
-					if( opts.filterFn(docs[i]) ){
+					if( opts.filterFn(docs[i], scriptConfig) ){
 						filteredDocIds.push(docs[i]._id);
 					};
 				};
@@ -660,7 +661,7 @@
 			var scriptFn = null;
 			try {
 				eval('scriptFn = '+script);
-				scriptFn({_id:'test',_revision:'1-abcde'});
+				scriptFn({_id:'test',_revision:'1-abcde'},scriptConfig);
 			} catch(e) {
 				alert(_loc('Error')+': '+e);
 				return;
@@ -1707,7 +1708,8 @@
 					return;
 				};
 
-				opts.transformFn(doc
+				opts.transformFn(
+					doc
 					,function(){ // onTransformedFn
 						saveDocument(doc);
 					}
@@ -1715,6 +1717,7 @@
 						skippedCount += 1;
 						processNext();
 					}
+					,scriptConfig
 				);
 			};
 			
@@ -1906,6 +1909,28 @@
 	});
 	
 	// **********************************************************************
+	var DocumentTransformOnFunction = $n2.Class(DocumentTransform, {
+		
+		transformFn: null,
+		
+		initialize: function(transformFn, name){
+			DocumentTransform.prototype.initialize.apply(this);
+			
+			this.transformFn = transformFn;
+			this.name = name ? name : _loc('Function Transformation');
+		},
+	
+		getTransformFunction: function(opts_){
+			var opts = $n2.extend({
+				onSuccess: function(transformFn){}
+				,onError: reportError
+			},opts_);
+			
+			opts.onSuccess(this.transformFn);
+		}
+	});
+	
+	// **********************************************************************
 	var DocumentList = $n2.Class({
 		docIds: null
 		
@@ -1920,6 +1945,20 @@
 			this.docIds = opts.docIds;
 			if( !this.docIds ){
 				this.docIds = [];
+			};
+			
+			this.docIds = [];
+			var mapById = {};
+			if( opts.docIds && opts.docIds.length ){
+				for(var i=0,e=opts.docIds.length; i<e; ++i){
+					var docId = opts.docIds[i];
+					
+					// Remove duplicates
+					if( !mapById[docId] ){
+						this.docIds.push(docId);
+						mapById[docId]= true;
+					};
+				};
 			};
 			
 			this.name = opts.name;
@@ -2127,14 +2166,6 @@
 			return false;
 		});
 		
-		var $resubmitMedia = $('<button></button>');
-		$resubmitMedia.text( _loc('Re-Submit Media') );
-		$h.append($resubmitMedia);
-		$resubmitMedia.click(function(){
-			resubmitMediaInList(list);
-			return false;
-		});
-
 		for(var i=0,e=list.docIds.length; i<e; ++i){
 			var docId = list.docIds[i];
 			var $d = $('<div></div>');
@@ -2157,6 +2188,24 @@
 				return false;
 			});
 		};
+	};
+	
+	// -----------------------------------------------------------------
+	function transformListUsing(list, transformation){
+		transformation.transformList({
+			list: list
+			,onCompleted: function(totalCount, skippedCount, okCount, failCount){
+				var locStr = _loc('Transformations completed. Successful: {ok} Failures: {fail} Skipped: {skipped}',{
+					ok: okCount
+					,fail: failCount
+					,skipped: skippedCount
+				});
+				log(locStr);
+				if( failCount > 0 ) {
+					alert(_loc('Transformations completed with some failures'));
+				};
+			}
+		});
 	};
 	
 	// -----------------------------------------------------------------
@@ -2195,20 +2244,7 @@
 						};
 					};
 					if( useTransform ) {
-						useTransform.transformList({
-							list: list
-							,onCompleted: function(totalCount, skippedCount, okCount, failCount){
-								var locStr = _loc('Transformations completed. Successful: {ok} Failures: {fail} Skipped: {skipped}',{
-									ok: okCount
-									,fail: failCount
-									,skipped: skippedCount
-								});
-								log(locStr);
-								if( failCount > 0 ) {
-									alert(_loc('Transformations completed with some failures'));
-								};
-							}
-						});
+						transformListUsing(list, useTransform);
 					} else {
 						alert(_loc('Unable to find document transform'));
 					};
@@ -2524,118 +2560,57 @@
 	};
 	
 	// -----------------------------------------------------------------
-	function resubmitMediaInList(list){
-		var docIds = list.docIds;
-		var errors = 0;
-		var documentsModified = 0;
+	function resubmitMediaInList(doc, onTransformed, onSkipped, scriptConfig){
+		// Mark all attachments as submitted
+		var updateRequired = false;
+		var keysToRemove = [];
 		
-		processDocument(0);
-		
-		function processDocument(index){
-			if( index >= docIds.length ) {
-				// Finished
-				var docModifiedStr = _loc('No document modified.');
-				if( documentsModified > 0 ) {
-					docModifiedStr = _loc('{count} document(s) modified.',{
-						count: documentsModified
-					});
+		if( doc.nunaliit_attachments 
+		 && doc.nunaliit_attachments.files ) {
+			for(var attName in doc.nunaliit_attachments.files){
+				var att = doc.nunaliit_attachments.files[attName];
+				att.status = 'submitted';
+				updateRequired = true;
+				
+				if( att.thumbnail ) {
+					keysToRemove.push(att.thumbnail);
 				};
 				
-				if( errors > 0 ) {
-					var locStr = _loc('Errors in process: {count}.',{
-						count: errors
-					});
-					reportError(locStr+' '+docModifiedStr);
-				} else {
-					log(_loc('Process completed.')+' '+docModifiedStr);
+				if( att.originalAttachment ) {
+					keysToRemove.push(att.originalAttachment);
 				};
-				return;
 			};
-			
-			var docId = docIds[index];
-			atlasDb.getDocument({
-				docId: docId
-				,onSuccess: function(doc){
-					documentFetched(index, doc);
-				}
-				,onError: function(errorMsg){
-					++errors;
-					var locStr = _loc('Unable to obtain document {docId}',{
-						docId: docId
-					});
-					reportError(locStr+': '+errorMsg);
-					processDocument(index+1);
-				}
-			});
 		};
 		
-		function documentFetched(index, doc){
-			// Mark all attachments as submitted
-			var updateRequired = false;
-			var keysToRemove = [];
+		// Remove thumbnails and original attachments
+		for(var i=0,e=keysToRemove.length; i<e; ++i){
+			var keyToRemove = keysToRemove[i];
+			
+			var attachmentName = null;
 			
 			if( doc.nunaliit_attachments 
-			 && doc.nunaliit_attachments.files ) {
-				for(var attName in doc.nunaliit_attachments.files){
-					var att = doc.nunaliit_attachments.files[attName];
-					att.status = 'submitted';
-					updateRequired = true;
-					
-					if( att.thumbnail ) {
-						keysToRemove.push(att.thumbnail);
-					};
-					
-					if( att.originalAttachment ) {
-						keysToRemove.push(att.originalAttachment);
-					};
-				};
+			 && doc.nunaliit_attachments.files
+			 && doc.nunaliit_attachments.files[keyToRemove]
+			 ) {
+				attachmentName = doc.nunaliit_attachments.files[keyToRemove].attachmentName;
+				delete doc.nunaliit_attachments.files[keyToRemove];
+				updateRequired = true;
 			};
-			
-			// Remove thumbnails and original attachments
-			for(var i=0,e=keysToRemove.length; i<e; ++i){
-				var keyToRemove = keysToRemove[i];
-				
-				var attachmentName = null;
-				
-				if( doc.nunaliit_attachments 
-				 && doc.nunaliit_attachments.files
-				 && doc.nunaliit_attachments.files[keyToRemove]
-				 ) {
-					attachmentName = doc.nunaliit_attachments.files[keyToRemove].attachmentName;
-					delete doc.nunaliit_attachments.files[keyToRemove];
-					updateRequired = true;
-				};
 
-				if( attachmentName
-				 && doc._attachments 
-				 && doc._attachments[attachmentName]
-				 ) {
-					delete doc._attachments[attachmentName];
-					updateRequired = true;
-				};
+			if( attachmentName
+			 && doc._attachments 
+			 && doc._attachments[attachmentName]
+			 ) {
+				delete doc._attachments[attachmentName];
+				updateRequired = true;
 			};
-			
-			// Update document, if required
-			if( updateRequired ) {
-				atlasDb.updateDocument({
-					data: doc
-					,onSuccess: function(docInfo){
-						++documentsModified;
-						log('Updated '+doc._id);
-						processDocument(index+1);
-					}
-					,onError: function(errorMsg){
-						++errors;
-						reportError('Unable to update document '+doc._id+': '+errorMsg);
-						processDocument(index+1);
-					}
-				});
-			} else {
-				log( _loc('No media found on {docId}',{
-					docId: doc._id
-				}) );
-				processDocument(index+1);
-			};
+		};
+		
+		// Update document, if required
+		if( updateRequired ) {
+			onTransformed();
+		} else {
+			onSkipped();
 		};
 	};
 	
@@ -2852,6 +2827,15 @@
 		siteDesign = opts_.config.siteDesign;
 		schemaRepository = opts_.config.directory.schemaRepository;
 		couchEditor = config.couchEditor;
+		
+		scriptConfig = $n2.extend(
+			{}
+			,config
+			,{
+				log: log
+				,reportError: reportError
+			}
+		);
 
 		$selectAppDiv = opts_.div;
 		
@@ -2872,6 +2856,7 @@
 		// Install transforms
 		documentTransforms.push(new DocumentTransformTextReplace());
 		documentTransforms.push(new DocumentTransformJavascript());
+		documentTransforms.push(new DocumentTransformOnFunction(resubmitMediaInList, 'Resubmit Media'));
 		
 		$selectAppDiv
 			.empty()
