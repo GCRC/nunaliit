@@ -42,17 +42,337 @@ var n2utils = {
 		return true;
 	}
 
+	,isValidWkt: function(str) {
+		function getChar(stream){
+			if(stream.index < stream.str.length){
+				return stream.str[stream.index];
+			};
+			return undefined;
+		};
+		
+		function isSpace(c){
+			if( ' ' === c 
+			 || '\n' === c 
+			 || '\r' === c ){
+				return true;
+			};
+			return false;
+		};
+
+		function skipSpaces(stream){
+			while(stream.index < stream.str.length){
+				var c = stream.str[stream.index];
+				if( isSpace(c) ){
+					++stream.index;
+				} else {
+					break;
+				};
+			};
+		};
+
+		// number := \d+ ( '.' \d* )?
+		function isValidNumber(stream){
+			var isValid = false;
+			
+			var c = getChar(stream);
+			if( '-' === c ){
+				++stream.index;
+				c = getChar(stream);
+			};
+			
+			if( '0' <= c && '9' >= c ){
+				isValid = true;
+				
+				while( '0' <= c && '9' >= c ){
+					++stream.index;
+					c = getChar(stream);
+				};
+				
+				if( '.' === c ){
+					// Floating point
+					++stream.index;
+					c = getChar(stream);
+					while( '0' <= c && '9' >= c ){
+						++stream.index;
+						c = getChar(stream);
+					};
+				};
+			};
+			
+			return isValid;
+		};
+
+		// location := <number> \s+ <number>
+		function isValidLocation(stream){
+			if( !isValidNumber(stream) ) return false;
+			
+			var c = getChar(stream);
+			if( !isSpace(c) ) return false;
+			skipSpaces(stream);
+
+			if( !isValidNumber(stream) ) return false;
+			
+			return true;
+		};
+
+		// point := '(' \s* <location> \s* ')'
+		function isValidPoint(stream){
+			if( '(' !== getChar(stream) ) return false;
+			++stream.index;
+
+			skipSpaces(stream);
+			
+			if( !isValidLocation(stream) ) return false;
+
+			skipSpaces(stream);
+			
+			if( ')' !== getChar(stream) ) return false;
+			++stream.index;
+			
+			return true;
+		};
+			
+		// linestring := '(' \s* <location> \s* (',' \s* <location> \s*)+ ')'
+		function isValidLineString(stream){
+			if( '(' !== getChar(stream) ) return false;
+			++stream.index;
+
+			skipSpaces(stream);
+			
+			if( !isValidLocation(stream) ) return false;
+
+			skipSpaces(stream);
+			
+			var count = 1;
+			while( ',' === getChar(stream) ){
+				++stream.index;
+				
+				++count;
+
+				skipSpaces(stream);
+				
+				if( !isValidLocation(stream) ) return false;
+
+				skipSpaces(stream);
+			};
+			
+			if( ')' !== getChar(stream) ) return false;
+			++stream.index;
+			
+			if( count < 2 ){
+				return false;
+			};
+			
+			return true;
+		};
+		
+		// polygon := '(' \s* <linestring> \s* (',' \s* <linestring> \s*)* ')'
+		function isValidPolygon(stream){
+			if( '(' !== getChar(stream) ) return false;
+			++stream.index;
+
+			skipSpaces(stream);
+			
+			if( !isValidLineString(stream) ) return false;
+
+			skipSpaces(stream);
+			
+			while( ',' === getChar(stream) ){
+				++stream.index;
+				
+				skipSpaces(stream);
+				
+				if( !isValidLineString(stream) ) return false;
+
+				skipSpaces(stream);
+			};
+			
+			if( ')' !== getChar(stream) ) return false;
+			++stream.index;
+			
+			return true;
+		};
+			
+		function isValidGeometry(stream){
+			if( 'point' === stream.str.substr(stream.index,'point'.length).toLowerCase() ){
+				stream.index += 'point'.length;
+
+				skipSpaces(stream);
+				
+				if( !isValidPoint(stream) ) return false;
+				return true;
+				
+			} else if( 'linestring' === stream.str.substr(stream.index,'linestring'.length).toLowerCase() ){
+				stream.index += 'linestring'.length;
+
+				skipSpaces(stream);
+				
+				if( !isValidLineString(stream) ) return false;
+				return true;
+				
+			} else if( 'polygon' === stream.str.substr(stream.index,'polygon'.length).toLowerCase() ){
+				stream.index += 'polygon'.length;
+				
+				skipSpaces(stream);
+
+				if( !isValidPolygon(stream) ) return false;
+				return true;
+
+			} else if( 'multipoint' === stream.str.substr(stream.index,'multipoint'.length).toLowerCase() ){
+				stream.index += 'multipoint'.length;
+
+				skipSpaces(stream);
+				
+				if( '(' !== getChar(stream) ) return false;
+				++stream.index;
+
+				skipSpaces(stream);
+				
+				if( !isValidPoint(stream) ) return false;
+
+				skipSpaces(stream);
+
+				while( ',' === getChar(stream) ){
+					++stream.index;
+					
+					skipSpaces(stream);
+					
+					if( !isValidPoint(stream) ) return false;
+
+					skipSpaces(stream);
+				};
+
+				if( ')' !== getChar(stream) ) return false;
+				++stream.index;
+				
+				return true;
+
+			} else if( 'multilinestring' === stream.str.substr(stream.index,'multilinestring'.length).toLowerCase() ){
+				stream.index += 'multilinestring'.length;
+
+				skipSpaces(stream);
+				
+				if( '(' !== getChar(stream) ) return false;
+				++stream.index;
+
+				skipSpaces(stream);
+				
+				if( !isValidLineString(stream) ) return false;
+
+				skipSpaces(stream);
+
+				while( ',' === getChar(stream) ){
+					++stream.index;
+					
+					skipSpaces(stream);
+					
+					if( !isValidLineString(stream) ) return false;
+
+					skipSpaces(stream);
+				};
+
+				if( ')' !== getChar(stream) ) return false;
+				++stream.index;
+				
+				return true;
+
+			} else if( 'multipolygon' === stream.str.substr(stream.index,'multipolygon'.length).toLowerCase() ){
+				stream.index += 'multipolygon'.length;
+
+				skipSpaces(stream);
+				
+				if( '(' !== getChar(stream) ) return false;
+				++stream.index;
+
+				skipSpaces(stream);
+				
+				if( !isValidPolygon(stream) ) return false;
+
+				skipSpaces(stream);
+
+				while( ',' === getChar(stream) ){
+					++stream.index;
+					
+					skipSpaces(stream);
+					
+					if( !isValidPolygon(stream) ) return false;
+
+					skipSpaces(stream);
+				};
+
+				if( ')' !== getChar(stream) ) return false;
+				++stream.index;
+				
+				return true;
+
+			} else if( 'geometrycollection' === stream.str.substr(stream.index,'geometrycollection'.length).toLowerCase() ){
+				stream.index += 'geometrycollection'.length;
+
+				skipSpaces(stream);
+				
+				if( '(' !== getChar(stream) ) return false;
+				++stream.index;
+
+				skipSpaces(stream);
+				
+				if( !isValidGeometry(stream) ) return false;
+
+				skipSpaces(stream);
+
+				while( ',' === getChar(stream) ){
+					++stream.index;
+					
+					skipSpaces(stream);
+					
+					if( !isValidGeometry(stream) ) return false;
+
+					skipSpaces(stream);
+				};
+
+				if( ')' !== getChar(stream) ) return false;
+				++stream.index;
+				
+				return true;
+			};
+			
+			return false;
+		};
+		
+		var stream = {
+			str: str
+			,index: 0
+		};
+		
+		skipSpaces(stream);
+
+		if( !isValidGeometry(stream) ) return false;
+		
+		skipSpaces(stream);
+		
+		if( stream.str.length !== stream.index ) return false;
+		
+		return true;
+	}
+
 	,isValidGeom: function(o) {
+		function countChar(str,c){
+			return str.split(c).length - 1;
+		};
+
 		if( typeof(o) !== 'object' ) return false;
+
 		if( typeof(o.nunaliit_type) !== 'string' ) return false;
-		if( typeof(o.wkt) !== 'string' ) return false;
 		if( o.nunaliit_type !== 'geometry' ) return false;
+
 		if( o.bbox ) {
 			if( false == n2utils.isValidBounds(o.bbox) ) return false;
 		} else {
 			return false;
 		};
-		
+
+		if( typeof(o.wkt) !== 'string' ) return false;
+		if( !n2utils.isValidWkt(o.wkt) ) return false;
+
 		return true;
 	}
 
@@ -757,6 +1077,7 @@ if( typeof(exports) === 'object' ) {
 	exports.isArray = n2utils.isArray;
 	exports.isArrayOfStrings = n2utils.isArrayOfStrings;
 	exports.isValidBounds = n2utils.isValidBounds;
+	exports.isValidWkt = n2utils.isValidWkt;
 	exports.isValidGeom = n2utils.isValidGeom;
 	exports.extractLayers = n2utils.extractLayers;
 	exports.extractLinks = n2utils.extractLinks;
@@ -779,6 +1100,7 @@ if( typeof(nunaliit2) === 'function' ) {
 	nunaliit2.couchUtils.isArray = n2utils.isArray;
 	nunaliit2.couchUtils.isArrayOfStrings = n2utils.isArrayOfStrings;
 	nunaliit2.couchUtils.isValidBounds = n2utils.isValidBounds;
+	nunaliit2.couchUtils.isValidWkt = n2utils.isValidWkt;
 	nunaliit2.couchUtils.isValidGeom = n2utils.isValidGeom;
 	nunaliit2.couchUtils.extractLayers = n2utils.extractLayers;
 	nunaliit2.couchUtils.extractLinks = n2utils.extractLinks;
