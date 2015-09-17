@@ -67,13 +67,15 @@ $n2.couchGeom = $n2.extend({},{
 		 && OpenLayers.Geometry 
 		 && OpenLayers.Geometry.fromWKT ) {
 			var olGeom = OpenLayers.Geometry.fromWKT(couchGeom.wkt);
-			var bounds = olGeom.getBounds();
-			couchGeom.bbox = [
-				bounds.left
-				,bounds.bottom
-				,bounds.right
-				,bounds.top
+			if( olGeom ){
+				var bounds = olGeom.getBounds();
+				couchGeom.bbox = [
+					bounds.left
+					,bounds.bottom
+					,bounds.right
+					,bounds.top
 				];
+			};
 		};
 	}
 
@@ -84,13 +86,19 @@ $n2.couchGeom = $n2.extend({},{
 	,getOpenLayersGeometry: function(options_) {
 		var opts = $n2.extend({
 				couchGeom: null
+				,wkt: null
 				,onError: function(errorMsg){ $n2.reportError(errorMsg); }
 			}
 			,options_
 		);
+		
+		var wkt = opts.wkt;
+		if( !wkt && opts.couchGeom ){
+			wkt = opts.couchGeom.wkt;
+		};
 
 		if( OpenLayers && OpenLayers.Geometry && OpenLayers.Geometry.fromWKT ) {
-			var olGeom = OpenLayers.Geometry.fromWKT(opts.couchGeom.wkt);
+			var olGeom = OpenLayers.Geometry.fromWKT(wkt);
 			return olGeom;
 		} else { 
 			opts.onError('OpenLayers must be installed to update document geometries');
