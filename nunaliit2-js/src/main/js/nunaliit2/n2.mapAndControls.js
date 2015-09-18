@@ -3148,29 +3148,64 @@ var MapAndControls = $n2.Class({
     // ======= EDIT_FEATURE MODE ==================================================
 
     _geometryModified: function(fid, olGeom, proj){
-    	if( this.currentMode !== this.modes.EDIT_FEATURE ) return;
-    	
-		var editFeature = this.editFeatureControls.modifyFeatureGeometry.feature;
-		
-		// Check that this relates to the right feature
-		if( fid && fid !== editFeature.fid ) return;
-		if( !fid && editFeature.fid ) return;
-    	
-		if( editFeature ) {
-			var mapProj = editFeature.layer.map.getProjectionObject();
+		if( this.currentMode === this.modes.EDIT_FEATURE 
+		 && !olGeom ){
+			// Geometry was deleted by external editor
+			var editFeature = this.editFeatureControls.modifyFeatureGeometry.feature;
+			
+			// Check that this relates to the right feature
+			if( fid && fid !== editFeature.fid ) return;
+			if( !fid && editFeature.fid ) return;
+	    	
+			// Remove feature. By switching out of EDIT mode,
+			// the feature on the EDIT layer will be removed. By
+			// deleting the information about the original feature,
+			// it will not be restored.
+			if( editFeature && editFeature._n2Original) {
+    			delete editFeature._n2Original;
+			};
+
+			this.switchToAddGeometryMode(fid);
+
+		} else if( this.currentMode === this.modes.EDIT_FEATURE 
+		 && olGeom ){
+			// Normal mode: we are editing a feature and the geometry was updated
+			var editFeature = this.editFeatureControls.modifyFeatureGeometry.feature;
+			
+			// Check that this relates to the right feature
+			if( fid && fid !== editFeature.fid ) return;
+			if( !fid && editFeature.fid ) return;
+	    	
+			if( editFeature ) {
+				var mapProj = editFeature.layer.map.getProjectionObject();
+				if( mapProj.getCode() != proj.getCode() ) {
+					olGeom.transform(proj, mapProj);
+				};
+			};
+			
+			// Redraw
+			var modifyFeatureControl = this.editFeatureControls.modifyFeatureGeometry;
+			if( modifyFeatureControl ) {
+				modifyFeatureControl.unselectFeature(editFeature);
+				editFeature.layer.eraseFeatures([editFeature]);
+				editFeature.geometry = olGeom;
+				editFeature.layer.drawFeature(editFeature);
+				modifyFeatureControl.selectFeature(editFeature);
+			};
+
+		} else if( this.currentMode !== this.modes.EDIT_FEATURE 
+		 && olGeom ){
+			// A geometry was added and the map is not yet in edit mode
+			var mapProj = this.editLayer.map.getProjectionObject();
 			if( mapProj.getCode() != proj.getCode() ) {
 				olGeom.transform(proj, mapProj);
 			};
-		};
-		
-		// Redraw
-		var modifyFeatureControl = this.editFeatureControls.modifyFeatureGeometry;
-		if( modifyFeatureControl ) {
-			modifyFeatureControl.unselectFeature(editFeature);
-			editFeature.layer.eraseFeatures([editFeature]);
-			editFeature.geometry = olGeom;
-			editFeature.layer.drawFeature(editFeature);
-			modifyFeatureControl.selectFeature(editFeature);
+			
+			var feature = new OpenLayers.Feature.Vector(olGeom);
+			feature._n2MapNewFeature = true;
+			this.editLayer.addFeatures([feature]);
+			
+			this.switchToEditFeatureMode(fid, feature);
 		};
     },
 
@@ -4824,16 +4859,21 @@ var MapAndControls = $n2.Class({
 			
 		} else if( 'editInitiate' === type ) {
 			var fid = m.docId;
+			
+			var feature = null;
+			var addGeometryMode = true;
+			
 			if( fid ){
 				var features = this._getMapFeaturesIncludingFid(fid);
 				
-				var feature = null;
 				if( features.length > 0 ){
 					feature = features[0];
 				};
 				
 				if( feature ) {
 					this._centerMapOnFeature(feature);
+					addGeometryMode = false;
+					
 				} else {
 					// must center map on feature, if feature contains
 					// a geometry
@@ -4845,16 +4885,18 @@ var MapAndControls = $n2.Class({
 						var x = (bbox[0] + bbox[2]) / 2;
 						var y = (bbox[1] + bbox[3]) / 2;
 						this._centerMapOnXY(x, y, 'EPSG:4326');
+
+						addGeometryMode = false;
 					};
 				};
-				
-				if( m.doc && !m.doc.nunaliit_geom ){
-					// Edit a document that does not have a geometry.
-					// Allow adding a geometry.
-					this.switchToAddGeometryMode(fid);
-				} else {
-					this.switchToEditFeatureMode(fid, feature);
-				};
+			};
+			
+			if( addGeometryMode ){
+				// Edit a document that does not have a geometry.
+				// Allow adding a geometry.
+				this.switchToAddGeometryMode(fid);
+			} else {
+				this.switchToEditFeatureMode(fid, feature);
 			};
 			
 		} else if( 'editCancel' === type ) {

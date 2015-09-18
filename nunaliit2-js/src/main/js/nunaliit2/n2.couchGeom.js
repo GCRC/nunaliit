@@ -77,10 +77,12 @@ function updateDocumentWithWktGeometry(opts_) {
 		return;
 	};		
 
-	var couchGeom = getCouchGeometry(olGeom);
-	
-	// Install geometry
-	opts.doc.nunaliit_geom = couchGeom;
+	if( olGeom ){
+		var couchGeom = getCouchGeometry(olGeom);
+		
+		// Install geometry
+		opts.doc.nunaliit_geom = couchGeom;
+	};
 };
 
 /*
@@ -92,13 +94,15 @@ function updatedGeometry(couchGeom) {
 	 && OpenLayers.Geometry 
 	 && OpenLayers.Geometry.fromWKT ) {
 		var olGeom = OpenLayers.Geometry.fromWKT(couchGeom.wkt);
-		var bounds = olGeom.getBounds();
-		couchGeom.bbox = [
-			bounds.left
-			,bounds.bottom
-			,bounds.right
-			,bounds.top
+		if( olGeom ){
+			var bounds = olGeom.getBounds();
+			couchGeom.bbox = [
+				bounds.left
+				,bounds.bottom
+				,bounds.right
+				,bounds.top
 			];
+		};
 	};
 	
 	if( couchGeom.simplified ){
@@ -114,17 +118,25 @@ function getOpenLayersGeometry(opts_) {
 	var opts = $n2.extend({
 		doc: null
 		,couchGeom: null
+		,wkt: null
 	},opts_);
 	
-	var nunaliit_geom = opts.couchGeom;
+	var wkt = opts.wkt;
 	
-	if( !nunaliit_geom && opts.doc ){
-		nunaliit_geom = opts.doc.nunaliit_geom;
+	if( !wkt 
+	 && opts.couchGeom ){
+		wkt = opts.couchGeom.wkt;
 	};
 	
-	if( nunaliit_geom ){
+	if( !wkt 
+	 && opts.doc 
+	 && opts.doc.nunaliit_geom ){
+		wkt = opts.doc.nunaliit_geom.wkt;
+	};
+	
+	if( wkt ){
 		if( OpenLayers && OpenLayers.Geometry && OpenLayers.Geometry.fromWKT ) {
-			var olGeom = OpenLayers.Geometry.fromWKT(nunaliit_geom.wkt);
+			var olGeom = OpenLayers.Geometry.fromWKT(wkt);
 			return olGeom;
 		} else { 
 			throw 'OpenLayers must be installed to update document geometries';

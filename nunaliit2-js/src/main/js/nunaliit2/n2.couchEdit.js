@@ -919,7 +919,7 @@ var CouchDocumentEditor = $n2.Class({
 			};
 		};
 	
-		this.currentGeometryWkt = null;
+		this.currentGeometryWkt = undefined;
 		if( this.editedDocument 
 		 && this.editedDocument.nunaliit_geom ) {
 			this.currentGeometryWkt = this.editedDocument.nunaliit_geom.wkt;
@@ -979,13 +979,13 @@ var CouchDocumentEditor = $n2.Class({
 				this.editedDocument[key] = doc_[key];
 			};
 		};
-		
-		this.currentGeometryWkt = null;
+	
+		this.currentGeometryWkt = undefined;
 		if( this.editedDocument 
 		 && this.editedDocument.nunaliit_geom ) {
 			this.currentGeometryWkt = this.editedDocument.nunaliit_geom.wkt;
 		};
-
+		
 		this.isInsert = (typeof(this.editedDocument._id) === 'undefined' || this.editedDocument._id === null);
 
 		this._selectSchema(schemaSelected);
@@ -1978,17 +1978,23 @@ var CouchDocumentEditor = $n2.Class({
 	},
 	
 	onEditorObjectChanged: function(obj) {
-		var geomData = obj.nunaliit_geom;
-		
-		if( !geomData ) return; // avoid errors
 		if( typeof(OpenLayers) === 'undefined' ) return;
+		
+		var wkt = undefined;
+		if( obj 
+		 && obj.nunaliit_geom ){
+			wkt = obj.nunaliit_geom.wkt;
+		};
 			
 		// Check if editor has changed the geometry's WKT
-		if( this.currentGeometryWkt !== geomData.wkt ) {
+		if( this.currentGeometryWkt !== wkt ) {
 		
-			this.currentGeometryWkt = geomData.wkt;
+			this.currentGeometryWkt = wkt;
 
-			var olGeom = $n2.couchGeom.getOpenLayersGeometry({couchGeom:geomData});
+			var olGeom = null;
+			if( wkt ){
+				olGeom = $n2.couchGeom.getOpenLayersGeometry({wkt:wkt});
+			};
 			
 			this._dispatch({
 				type: 'editGeometryModified'

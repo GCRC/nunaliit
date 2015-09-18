@@ -987,18 +987,13 @@ public class SchemaAttribute {
 					throw new Exception("'id' should not be specified for attributes of type 'geometry'");
 				}
 
-				pw.println("{{#nunaliit_geom}}");
+				pw.println("<div class=\"nunaliit_geom\">");
 
-				pw.println("\t<div class=\"nunaliit_geom\">");
-
-				pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-				pw.println("\t\t<div class=\"value\">{{#:field}}wkt,textarea{{/:field}}</div>");
-				pw.println("\t\t<div class=\"end\"></div>");
+				pw.println("\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t<div class=\"value\">{{#:field}}nunaliit_geom,geometry{{/:field}}</div>");
+				pw.println("\t<div class=\"end\"></div>");
 				
-				pw.println("\t</div>");
-				
-				
-				pw.println("{{/nunaliit_geom}}");
+				pw.println("</div>");
 				
 			} else {
 				throw new Exception("Unable to include type "+type+" in form");

@@ -1013,3 +1013,107 @@ jsunit.defineTest('$n2.styleRule',function($$){
 	t(rules, ctxt_sh, doc2, 'approved', 'doc2',    'hovered');
 	t(rules, ctxt_n,  doc3, 'place',    'normal',  'normal');
 });
+
+//*********
+jsunit.defineTest('$n2.couchUtils.isValidWkt',function($$){
+
+	function t(wkt,expected){
+		var valid = $n2.couchUtils.isValidWkt(wkt);
+		if( valid !== expected ){
+			$$.fail('Error on WKT: '+wkt)
+		};
+	};
+
+	t('',false); // empty not allowed
+	t('POINT(1 2)', true);
+	t('POINT(12)', false);
+	t('POINT  (1 2)', true);
+	t('    POINT(1 2)', true);
+	t('POINT(1 2)    ', true);
+	t('POINT(1 2)', true);
+	t('POINT(  1 2)', true);
+	t('POINT(1 2  )', true);
+	t('POINT(1   2)', true);
+	t('LINESTRING(1 2)', false);
+	t('LINESTRING(1 2,3 4)', true);
+	t('  LINESTRING(1 2,3 4)', true);
+	t('LINESTRING  (1 2,3 4)  ', true);
+	t('LINESTRING(1 2,3 4)  ', true);
+	t('LINESTRING(  1 2,3 4)', true);
+	t('LINESTRING(1   2,3 4)', true);
+	t('LINESTRING(1 2  ,3 4)', true);
+	t('LINESTRING(1 2,  3 4)', true);
+	t('LINESTRING(1 2,3   4)', true);
+	t('LINESTRING(1 2,3 4  )', true);
+	t('LINESTRING(1 2,3 4,5 6)', true);
+	t('POLYGON(1 2)', false);
+	t('POLYGON((1 2))', false);
+	t('POLYGON((0 0,10 0,10 10,0 10))', true);
+	t('POLYGON((0 0,10 0,10 10,0 10),(1 1,2 1,2 2,1 2),(3 3,4 3,4 4,3 4))', true);
+	t('  POLYGON((0 0,10 0,10 10,0 10),(1 1,2 1,2 2,1 2),(3 3,4 3,4 4,3 4))', true);
+	t('POLYGON  ((0 0,10 0,10 10,0 10),(1 1,2 1,2 2,1 2),(3 3,4 3,4 4,3 4))', true);
+	t('POLYGON(  (0 0,10 0,10 10,0 10),(1 1,2 1,2 2,1 2),(3 3,4 3,4 4,3 4))', true);
+	t('POLYGON((  0 0,10 0,10 10,0 10),(1 1,2 1,2 2,1 2),(3 3,4 3,4 4,3 4))', true);
+	t('POLYGON((0 0,10 0,10 10,0 10  ),(1 1,2 1,2 2,1 2),(3 3,4 3,4 4,3 4))', true);
+	t('POLYGON((0 0,10 0,10 10,0 10)  ,(1 1,2 1,2 2,1 2),(3 3,4 3,4 4,3 4))', true);
+	t('POLYGON((0 0,10 0,10 10,0 10),  (1 1,2 1,2 2,1 2),(3 3,4 3,4 4,3 4))', true);
+	t('POLYGON((0 0,10 0,10 10,0 10),(  1 1,2 1,2 2,1 2),(3 3,4 3,4 4,3 4))', true);
+	t('POLYGON((0 0,10 0,10 10,0 10),(1 1,2 1,2 2,1 2  ),(3 3,4 3,4 4,3 4))', true);
+	t('POLYGON((0 0,10 0,10 10,0 10),(1 1,2 1,2 2,1 2)  ,(3 3,4 3,4 4,3 4))', true);
+	t('POLYGON((0 0,10 0,10 10,0 10),(1 1,2 1,2 2,1 2),  (3 3,4 3,4 4,3 4))', true);
+	t('POLYGON((0 0,10 0,10 10,0 10),(1 1,2 1,2 2,1 2),(  3 3,4 3,4 4,3 4))', true);
+	t('POLYGON((0 0,10 0,10 10,0 10),(1 1,2 1,2 2,1 2),(3 3,4 3,4 4,3 4  ))', true);
+	t('POLYGON((0 0,10 0,10 10,0 10),(1 1,2 1,2 2,1 2),(3 3,4 3,4 4,3 4)  )', true);
+	t('POLYGON((0 0,10 0,10 10,0 10),(1 1,2 1,2 2,1 2),(3 3,4 3,4 4,3 4))  ', true);
+	t('MULTIPOINT(1 2)', false);
+	t('MULTIPOINT((1 2))', true);
+	t('MULTIPOINT((1 2),(3 4))', true);
+	t('  MULTIPOINT((1 2),(3 4))', true);
+	t('MULTIPOINT  ((1 2),(3 4))', true);
+	t('MULTIPOINT(  (1 2),(3 4))', true);
+	t('MULTIPOINT((1 2)  ,(3 4))', true);
+	t('MULTIPOINT((1 2),  (3 4))', true);
+	t('MULTIPOINT((1 2),(3 4)  )', true);
+	t('MULTIPOINT((1 2),(3 4))  ', true);
+	t('MULTILINESTRING(1 2)', false);
+	t('MULTILINESTRING((1 2))', false);
+	t('MULTILINESTRING((1 2,3 4))', true);
+	t('MULTILINESTRING((1 2,3 4),(5 6,7 8))', true);
+	t('  MULTILINESTRING((1 2,3 4),(5 6,7 8))', true);
+	t('MULTILINESTRING  ((1 2,3 4),(5 6,7 8))', true);
+	t('MULTILINESTRING(  (1 2,3 4),(5 6,7 8))', true);
+	t('MULTILINESTRING((1 2,3 4)  ,(5 6,7 8))', true);
+	t('MULTILINESTRING((1 2,3 4),  (5 6,7 8))', true);
+	t('MULTILINESTRING((1 2,3 4),(5 6,7 8)  )', true);
+	t('MULTILINESTRING((1 2,3 4),(5 6,7 8))  ', true);
+	t('MULTIPOLYGON(1 2)', false);
+	t('MULTIPOLYGON((1 2))', false);
+	t('MULTIPOLYGON(((1 2)))', false);
+	t('MULTIPOLYGON(((1 2,3 4,5 6)))', true);
+	t('MULTIPOLYGON(((1 2,3 4,5 6)),((7 8,9 10,11 12)))', true);
+	t('  MULTIPOLYGON(((1 2,3 4,5 6)),((7 8,9 10,11 12)))', true);
+	t('MULTIPOLYGON  (((1 2,3 4,5 6)),((7 8,9 10,11 12)))', true);
+	t('MULTIPOLYGON(  ((1 2,3 4,5 6)),((7 8,9 10,11 12)))', true);
+	t('MULTIPOLYGON(((1 2,3 4,5 6))  ,((7 8,9 10,11 12)))', true);
+	t('MULTIPOLYGON(((1 2,3 4,5 6)),  ((7 8,9 10,11 12)))', true);
+	t('MULTIPOLYGON(((1 2,3 4,5 6)),((7 8,9 10,11 12))  )', true);
+	t('MULTIPOLYGON(((1 2,3 4,5 6)),((7 8,9 10,11 12)))  ', true);
+	t('GEOMETRYCOLLECTION()', false);
+	t('GEOMETRYCOLLECTION(POINT(1 2))', true);
+	t('GEOMETRYCOLLECTION(POINT(1 2),LINESTRING(2 3,5 6))', true);
+	t('  GEOMETRYCOLLECTION(POINT(1 2),LINESTRING(2 3,5 6))', true);
+	t('GEOMETRYCOLLECTION  (POINT(1 2),LINESTRING(2 3,5 6))', true);
+	t('GEOMETRYCOLLECTION(  POINT(1 2),LINESTRING(2 3,5 6))', true);
+	t('GEOMETRYCOLLECTION(POINT(1 2)  ,LINESTRING(2 3,5 6))', true);
+	t('GEOMETRYCOLLECTION(POINT(1 2),  LINESTRING(2 3,5 6))', true);
+	t('GEOMETRYCOLLECTION(POINT(1 2),LINESTRING(2 3,5 6)  )', true);
+	t('GEOMETRYCOLLECTION(POINT(1 2),LINESTRING(2 3,5 6))  ', true);
+	t('GEOMETRYCOLLECTION(GEOMETRYCOLLECTION(POINT(1 2),LINESTRING(2 3,5 6)))', true);
+	t('POINT(0 0)', true);
+	t('POINT(0.1 0)', true);
+	t('POINT(-10 0)', true);
+	t('POINT(-10.12345 0)', true);
+	t('POINT(0.123 0)', true);
+	t('INVALID(0 0)', false);
+	t('POINT(x 0)', false);
+});

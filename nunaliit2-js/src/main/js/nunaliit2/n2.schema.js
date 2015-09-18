@@ -369,6 +369,11 @@ function _formField() {
 			r.push(' n2-search-func="'+opts.search[0]+'"');
 		};
 		r.push('></span>');
+
+	} else if( opts.geometry ) {
+		var attr = completeSelectors.encodeForDomAttribute();
+		r.push('<textarea class="n2schema_field_geometry" nunaliit-selector="'+attr+'"');
+		r.push('></textarea>');
 		
 	} else {
 		r.push('<div class="n2schema_field_container">');
@@ -1603,6 +1608,11 @@ var Form = $n2.Class({
 					_this._installReference($elem, $(this));
 				});
 
+				// Install geometries
+				$divEvent.find('.n2schema_field_geometry').each(function(){
+					_this._installGeometry($elem, $(this));
+				});
+
 				// Install custom types
 				$divEvent.find('.n2schema_field_custom').each(function(){
 					_this._installCustomType($elem, $(this),_this.obj,_this.callback);
@@ -1762,7 +1772,7 @@ var Form = $n2.Class({
 				} else {
 					$input.attr('checked',false);
 				};
-				
+
 			} else if( 'date' === classInfo.type ) {
 				if( value ) {
 					value = value.date;
@@ -1895,7 +1905,7 @@ var Form = $n2.Class({
 			};
 		};
 	},
-	
+
 	_installReference: function($container, $elem) {
 		var _this = this;
 		
@@ -2029,6 +2039,62 @@ var Form = $n2.Class({
 			};
 			
 		};
+	},
+
+	_installGeometry: function($container, $elem) {
+		var _this = this;
+		
+		var domSelector = $elem.attr('nunaliit-selector');
+		var objSel = $n2.objectSelector.decodeFromDomAttribute(domSelector);
+		var parentSelector = objSel.getParentSelector();
+		var key = objSel.getKey();
+
+		var geom = objSel.getValue(this.obj);
+		
+		if( geom && geom.wkt ) {
+			// There is a geometry
+			$elem.val(geom.wkt);
+		} else {
+			$elem.val('');
+		};
+		
+		$elem.change(function(e) {
+			var $elem = $(this);
+			
+			var parentObj = parentSelector.getValue(_this.obj);
+			if( parentObj ){
+				var value = $elem.val();
+				var cbValue = null;
+				
+				if( null === value || value === '' ) {
+					// delete
+					if( parentObj[key] ) {
+						delete parentObj[key];
+					};
+					
+				} else {
+					// update
+					if( !parentObj[key] ) {
+						parentObj[key] = {};
+					};
+					parentObj[key].nunaliit_type = 'geometry';
+					parentObj[key].wkt = value;
+					
+					if( parentObj[key].bbox ){
+						delete parentObj[key].bbox;
+					};
+					
+					if( parentObj[key].simplified ){
+						delete parentObj[key].simplified;
+					};
+					
+					cbValue = parentObj[key];
+				};
+				
+				_this.refresh($container);
+				_this.callback(_this.obj,objSel.selectors,cbValue);
+			};
+		});
 	},
 	
 	_installCustomType: function($container, $elem, doc , callbackFn){
