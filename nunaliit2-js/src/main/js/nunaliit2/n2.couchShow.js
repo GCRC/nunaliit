@@ -289,6 +289,13 @@ var DomStyler = $n2.Class({
 			_this._userEvents($jq, contextDoc);
 			$jq.removeClass('n2s_userEvents').addClass('n2s_userEvents_installed');
 		});
+
+		// Wiki
+		$set.filter('.n2s_wikiTransform').each(function(){
+			var $jq = $(this);
+			_this._wikiTransform($jq);
+			$jq.removeClass('n2s_wikiTransform').addClass('n2s_wikiTransformed');
+		});
 	},
 	
 	_updatedDocument: function(doc){
@@ -1181,6 +1188,18 @@ var DomStyler = $n2.Class({
 	 				});
 				};
 			};
+		};
+	},
+	
+	_wikiTransform: function($elem){
+		var text = $elem.text();
+
+		if( $n2.wiki ){
+			var html = $n2.wiki.WikiToHtml({
+				wiki: text
+			});
+
+			$elem.html(html);
 		};
 	},
 	

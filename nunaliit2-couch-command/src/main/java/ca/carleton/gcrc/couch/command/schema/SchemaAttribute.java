@@ -115,6 +115,12 @@ public class SchemaAttribute {
 				}
 			}
 		}
+
+		// wikiTransform
+		{
+			boolean wikiTransform = jsonAttr.optBoolean("wikiTransform",false);
+			attribute.setWikiTransform(wikiTransform);
+		}
 		
 		return attribute;
 	}
@@ -133,6 +139,7 @@ public class SchemaAttribute {
 	private String referenceType;
 	private String customType;
 	private String searchFunction;
+	private boolean wikiTransform;
 
 	public SchemaAttribute(String type){
 		this.type = type;
@@ -255,6 +262,14 @@ public class SchemaAttribute {
 		this.searchFunction = searchFunction;
 	}
 
+	public boolean isWikiTransform() {
+		return wikiTransform;
+	}
+
+	public void setWikiTransform(boolean wikiTransform) {
+		this.wikiTransform = wikiTransform;
+	}
+
 	public JSONObject toJson() throws Exception {
 		JSONObject jsonAttr = new JSONObject();
 		
@@ -271,6 +286,7 @@ public class SchemaAttribute {
 		if( excludedFromForm ) jsonAttr.put("excludedFromForm", true);
 		if( excludedFromExport ) jsonAttr.put("excludedFromExport", true);
 		if( urlsToLinks ) jsonAttr.put("urlsToLinks", true);
+		if( wikiTransform ) jsonAttr.put("wikiTransform", true);
 
 		if( options.size() > 0 ){
 			JSONArray jsonOptions = new JSONArray();
@@ -547,18 +563,24 @@ public class SchemaAttribute {
 					if( urlsToLinks ){
 						fixUrlClass = " n2s_convertTextUrlToLink";
 					}
+					if( wikiTransform ){
+						fixUrlClass = " n2s_wikiTransform";
+					} else if( "textarea".equals(type) 
+					 || "localizedtextarea".equals(type) ){
+						fixUrlClass = " n2s_preserveSpaces n2s_installMaxHeight";
+					}
 					
 					if( "string".equals(type) ){
 						pw.println("\t\t\t<div class=\"value"+fixUrlClass+"\">{{"+id+"}}</div>");
 					
 					} else if( "textarea".equals(type) ){
-						pw.println("\t\t\t<div class=\"value n2s_preserveSpaces n2s_installMaxHeight"+fixUrlClass+"\" _maxheight=\"100\">{{"+id+"}}</div>");
+						pw.println("\t\t\t<div class=\"value"+fixUrlClass+"\" _maxheight=\"100\">{{"+id+"}}</div>");
 
 					} else if( "localized".equals(type) ){
 						pw.println("\t\t\t<div class=\"value"+fixUrlClass+"\">{{#:localize}}"+id+"{{/:localize}}</div>");
 
 					} else if( "localizedtextarea".equals(type) ){
-						pw.println("\t\t\t<div class=\"value n2s_preserveSpaces n2s_installMaxHeight"+fixUrlClass+"\" _maxheight=\"100\">{{#:localize}}"+id+"{{/:localize}}</div>");
+						pw.println("\t\t\t<div class=\"value"+fixUrlClass+"\" _maxheight=\"100\">{{#:localize}}"+id+"{{/:localize}}</div>");
 					}
 					
 					pw.println("\t\t\t<div class=\"end\"></div>");
