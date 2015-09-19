@@ -64,6 +64,20 @@ function getCharAt(line, index){
 };
 
 //*******************************************************
+function escapeCharacters(text){
+	
+	text = text.replace(/[&><\r]/g,function(m){
+		if( '&' === m ) return '&amp;';
+		if( '>' === m ) return '&gt;';
+		if( '<' === m ) return '&lt;';
+		if( '\r' === m ) return '';
+		return m;
+	});
+	
+	return text;
+};
+
+//*******************************************************
 // Look at consecutive lines and merge them into one if
 // a line is a continuation of another
 function mergeLines(lines){
@@ -224,6 +238,52 @@ function processLists(lines){
 };
 
 //*******************************************************
+function computeLink(linkText){
+	var links = linkText.split('|');
+	
+	var externalLink = false;
+	var docLink = false;
+	var url = links[0];
+	var docId = undefined;
+	if( 'http://' === url.substr(0,'http://'.length)
+	 || 'https://' === url.substr(0,'https://'.length) ){
+		externalLink = true;
+	} else {
+		docLink = true;
+		docId = url;
+		url = '#';
+	};
+
+	var displayProvided = false;
+	var display = url;
+	if( links.length > 1 ){
+		display = links[1];
+		displayProvided = true;
+	};
+	display = escapeCharacters(display);
+	
+	var html = [];
+	html.push('<a class="n2wiki');
+	if( docLink ){
+		html.push(' n2s_userEvents');
+		if( !displayProvided ){
+			html.push(' n2s_briefDisplay');
+		};
+	};
+	html.push('" href="');
+	html.push(url);
+	html.push('"');
+	if( docLink ){
+		html.push(' nunaliit-document="'+docId+'"');
+	};
+	html.push('>');
+	html.push(display);
+	html.push('</a>');
+	
+	return html.join('');
+};
+
+//*******************************************************
 function WikiToHtml(opts_){
 	var opts = $n2.extend({
 		wiki: null
@@ -235,13 +295,7 @@ function WikiToHtml(opts_){
 	};
 
 	// Character escaping
-	text = text.replace(/[&><\r]/g,function(m){
-		if( '&' === m ) return '&amp;';
-		if( '>' === m ) return '&gt;';
-		if( '<' === m ) return '&lt;';
-		if( '\r' === m ) return '';
-		return m;
-	});
+	text = escapeCharacters(text);
 	
 	var lines = text.split('\n');
 	
@@ -260,6 +314,16 @@ function WikiToHtml(opts_){
 		line = line.replace(/(?:^|\n)([-]+)\s*/g, function (m) {
 	        return '<hr class="n2wiki"/>';
 	    });
+
+		// Links
+		line = line.replace(/\x5b\x5b([^\x5d]*)\x5d\x5d/g, function (m,l) {
+	        return computeLink(l);
+	    });
+		
+		if( isBlankLine(line) ){
+			line = '<br/>';
+		};
+		
 		
 		lines[i] = line;
 	};

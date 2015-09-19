@@ -405,7 +405,11 @@ var DomStyler = $n2.Class({
 	},
 	
 	_briefDisplay: function($jq, opt_) {
-		var docId = $jq.text();
+		var docId = $jq.attr('nunaliit-document');
+		if( !docId ){
+			docId = $jq.text();
+		};
+		
 		this.showService.printBriefDescription($jq, docId);
 	},
 	
@@ -1192,6 +1196,8 @@ var DomStyler = $n2.Class({
 	},
 	
 	_wikiTransform: function($elem){
+		var _this = this;
+		
 		var text = $elem.text();
 
 		if( $n2.wiki ){
@@ -1200,6 +1206,10 @@ var DomStyler = $n2.Class({
 			});
 
 			$elem.html(html);
+			
+			$elem.children().each(function(){
+				_this.fixElementAndChildren($(this), {});
+			});
 		};
 	},
 	
