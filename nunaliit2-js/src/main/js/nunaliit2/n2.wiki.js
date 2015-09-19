@@ -499,6 +499,16 @@ function WikiToHtml(opts_){
 		line = line.replace(/\x5b\x5b([^\x5d]*)\x5d\x5d/g, function (m,l) {
 	        return computeLink(l);
 	    });
+
+		// Bold
+		line = line.replace(/'''([^']+)'''/g, function (m,t) {
+	        return '<b>'+t+'</b>';
+	    });
+
+		// Italics
+		line = line.replace(/''([^']+)''/g, function (m,t) {
+	        return '<i>'+t+'</i>';
+	    });
 		
 		if( isBlankLine(line) ){
 			line = '<br/>';
