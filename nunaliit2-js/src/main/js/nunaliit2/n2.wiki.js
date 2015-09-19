@@ -78,6 +78,18 @@ function escapeCharacters(text){
 };
 
 //*******************************************************
+function escapeOptions(text){
+	
+	text = text.replace(/[><]/g,function(m){
+		if( '>' === m ) return '&gt;';
+		if( '<' === m ) return '&lt;';
+		return m;
+	});
+	
+	return text;
+};
+
+//*******************************************************
 // Look at consecutive lines and merge them into one if
 // a line is a continuation of another
 function mergeLines(lines){
@@ -85,6 +97,9 @@ function mergeLines(lines){
 		if( isBlockLine(line) ) return false;
 		if( '*' === line[0] ) return false;
 		if( '#' === line[0] ) return false;
+		if( '{' === line[0] ) return false;
+		if( '|' === line[0] ) return false;
+		if( '!' === line[0] ) return false;
 			
 		return true;
 	};
@@ -238,6 +253,170 @@ function processLists(lines){
 };
 
 //*******************************************************
+var reTableStart = /^\{\|(.*)$/;
+var reTableEnd = /^\|\}(.*)$/;
+var reTableCaption = /^\|\+(.*)$/;
+var reTableCell = /^(?:\||!)(.*)$/;
+var reTableRow = /^\|-(.*)$/;
+function processTables(lines){
+	function startTable(tableOptions, caption, newLines){
+		if( caption ){
+			newLines.push('<div class="n2wiki n2wiki_tableCaption">');
+			newLines.push(caption);
+			newLines.push('</div>');
+		};
+		
+		newLines.push('<table');
+		
+		if( tableOptions ){
+			newLines.push(' ');
+			newLines.push(tableOptions);
+		};
+		
+		newLines.push('>');
+		newLines.push('<tr>');
+	};
+
+	function outputTableLines(lines, newLines){
+		var tableStarted = false;
+		var tableOptions = undefined;
+		var caption = undefined;
+		for(var i=0,e=lines.length; i<e; ++i){
+			var line = lines[i];
+			
+			var mTableStart = reTableStart.exec(line);
+			var mTableEnd = reTableEnd.exec(line);
+			var mTableCaption = reTableCaption.exec(line);
+			var mTableCell = reTableCell.exec(line);
+			var mTableRow = reTableRow.exec(line);
+
+			// Start table
+			if( mTableStart ){
+				var options = escapeOptions( mTableStart[1] );
+				options = $n2.trim(options);
+				if( options.length > 0 ){
+					tableOptions = options;
+				};
+				
+			} else if( mTableEnd ){
+				// End table
+				if( !tableStarted ) {
+					startTable(tableOptions, caption, newLines);
+					tableStarted = true;
+				};
+				newLines.push('</tr></table>');
+			
+			} else if( mTableCaption ){
+				// Table Caption
+				var cap = escapeCharacters( mTableCaption[1] );
+				cap = $n2.trim(cap);
+				if( cap.length > 0 ){
+					caption = cap;
+				};
+				
+			} else if( mTableRow ){
+				// Table Row
+				if( !tableStarted ) {
+					startTable(tableOptions, caption, newLines);
+					tableStarted = true;
+				};
+				
+				var rowOptions = mTableRow[1];
+				rowOptions = escapeOptions(rowOptions);
+				rowOptions = $n2.trim(rowOptions);
+				
+				newLines.push('</tr><tr');
+					
+				if( rowOptions.length > 0 ){
+					newLines.push( ' ' );
+					newLines.push( rowOptions );
+				};
+
+				newLines.push('>');
+				
+			} else if( mTableCell ){
+				// Table Cell
+				if( !tableStarted ) {
+					startTable(tableOptions, caption, newLines);
+					tableStarted = true;
+				};
+				
+				var isHeading = false;
+				if( line[0] === '!' ){
+					isHeading = true;
+				};
+				var cells = mTableCell[1].split('||');
+				for(var j=0,k=cells.length; j<k; ++j){
+					var cell = cells[j];
+					var cellSplits = cell.split('|');
+					var cellOptions = undefined;
+					var cellContent = undefined;
+					if( cellSplits.length > 1 ){
+						cellOptions = cellSplits[0];
+						cellContent = cellSplits[1];
+					} else {
+						cellContent = cellSplits[0];
+					};
+					
+					if( isHeading ){
+						newLines.push('<th');
+					} else {
+						newLines.push('<td');
+					};
+					
+					if( cellOptions ){
+						newLines.push( ' ' );
+						newLines.push( escapeOptions(cellOptions) );
+					};
+
+					newLines.push('>');
+
+					newLines.push( escapeCharacters(cellContent) );
+
+					if( isHeading ){
+						newLines.push('</th>');
+					} else {
+						newLines.push('</td>');
+					};
+				};
+			};
+		};
+	};
+
+	var newLines = [];
+	
+	for(var i=0,e=lines.length; i<e; ++i){
+		var line = lines[i];
+
+		if( '{|' === line.substr(0,2) ){
+			// Start of table
+			
+			var tableLines = [];
+			
+			while( i<e ){
+				line = lines[i];
+
+				if( '|}' === line.substr(0,2) ){
+					// End of table
+					tableLines.push( line );
+					break;
+				} else {
+					tableLines.push( line );
+					++i;
+				};
+			};
+			
+			outputTableLines(tableLines, newLines);
+
+		} else {
+			newLines.push(line);
+		};
+	};
+	
+	return newLines;
+};
+
+//*******************************************************
 function computeLink(linkText){
 	var links = linkText.split('|');
 	
@@ -301,6 +480,7 @@ function WikiToHtml(opts_){
 	
 	lines = mergeLines(lines);
 	lines = processLists(lines);
+	lines = processTables(lines);
 
 	for(var i=0,e=lines.length; i<e; ++i){
 		var line = lines[i];
