@@ -2,6 +2,7 @@ package ca.carleton.gcrc.geom;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
 
@@ -73,5 +74,10 @@ public class Polygon extends GeometryAbstract implements Geometry {
 		for(LineString lineString : linearRings){
 			lineString.extendBoundingBox(boundingBox);
 		}
+	}
+
+	@Override
+	public void accumulateBasicGeometries(Collection<Geometry> geometries) {
+		geometries.add(this);
 	}
 }

@@ -1118,15 +1118,15 @@
 					.appendTo($proposed);
 				
 				var $edit = $('<div>').appendTo($proposed);
-				var editor = new $n2.CouchEditor.CouchSimpleDocumentEditor({
+				var editor = new $n2.couchEdit.CouchSimpleDocumentEditor({
 					elem: $edit
 					,doc: editedDoc
 					,schemaRepository: _this.schemaRepository
 					,schemaEditorService: _this.schemaEditorService
 					,editors: [
-						$n2.CouchEditor.Constants.FORM_EDITOR
-						,$n2.CouchEditor.Constants.TREE_EDITOR
-						,$n2.CouchEditor.Constants.RELATION_EDITOR
+						$n2.couchEdit.Constants.FORM_EDITOR
+						,$n2.couchEdit.Constants.TREE_EDITOR
+						,$n2.couchEdit.Constants.RELATION_EDITOR
 					]
 				});
 				

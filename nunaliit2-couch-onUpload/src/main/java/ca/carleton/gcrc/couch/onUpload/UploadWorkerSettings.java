@@ -5,6 +5,7 @@ import java.util.Properties;
 public class UploadWorkerSettings {
 
 	private String atlasName = null;
+	private boolean geometrySimplificationDisabled = false;
 	
 	public UploadWorkerSettings(){
 		
@@ -23,6 +24,14 @@ public class UploadWorkerSettings {
 
 	public void setAtlasName(String atlasName) {
 		this.atlasName = atlasName;
+	}
+
+	public boolean isGeometrySimplificationDisabled() {
+		return geometrySimplificationDisabled;
+	}
+
+	public void setGeometrySimplificationDisabled(boolean geometrySimplificationDisabled) {
+		this.geometrySimplificationDisabled = geometrySimplificationDisabled;
 	}
 	
 }

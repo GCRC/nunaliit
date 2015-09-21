@@ -322,6 +322,7 @@ var Display = $n2.Class({
 				,'delete': true
 				,addLayer: true
 				,treeView: true
+				,simplifiedGeoms: true
 			});
 			
 			var $div = $('<div>')
@@ -368,6 +369,7 @@ var Display = $n2.Class({
 			,'delete': false
 			,addLayer: false
 			,treeView: false
+			,simplifiedGeoms: false
 		},opt_);
 
 		var $buttons = $('<div></div>');
@@ -384,6 +386,7 @@ var Display = $n2.Class({
 		if( opt['delete'] ) optionClass += '_delete';
 		if( opt.addLayer ) optionClass += '_addLayer';
 		if( opt.treeView ) optionClass += '_treeView';
+		if( opt.simplifiedGeoms ) optionClass += '_simplifiedGeoms';
 		$buttons.addClass(optionClass);
 
 		var opts = {
@@ -396,6 +399,7 @@ var Display = $n2.Class({
 			,geom: opt.geom
 			,addLayer: opt.addLayer
 			,treeView: opt.treeView
+			,simplifiedGeoms: opt.simplifiedGeoms
 		};
 		opts['delete'] = opt['delete'];
 		this._displayButtons($buttons, opts);
@@ -413,6 +417,7 @@ var Display = $n2.Class({
 		var fDelete = false;
 		var fAddLayer = false;
 		var fTreeView = false;
+		var fSimplifiedGeoms = false;
 		var classAttr = $elem.attr('class');
 		var classes = classAttr.split(' ');
 		for(var i=0,e=classes.length; i<e; ++i){
@@ -432,6 +437,7 @@ var Display = $n2.Class({
 					else if( 'geom' === o ){ fGeom = true; }
 					else if( 'addLayer' === o ){ fAddLayer = true; }
 					else if( 'treeView' === o ){ fTreeView = true; }
+					else if( 'simplifiedGeoms' === o ){ fSimplifiedGeoms = true; }
 					else if( 'delete' === o ){ fDelete = true; };
 				};
 			};
@@ -479,6 +485,7 @@ var Display = $n2.Class({
 				,geom: fGeom
 				,addLayer: fAddLayer
 				,treeView: fTreeView
+				,simplifiedGeoms: fSimplifiedGeoms
 			};
 			opts['delete'] = fDelete;
 			$elem.empty();
@@ -674,6 +681,23 @@ var Display = $n2.Class({
 				});
 
 			addClasses($treeViewButton, 'tree_view');
+		};
+
+		// Show 'Simplified Geoms' button
+		if( opt.simplifiedGeoms
+		 && data
+		 && data.nunaliit_geom
+		 ) {
+			var $simplifiedGeomsButton = $('<a>')
+				.attr('href','#')
+				.text( _loc('Geometries') )
+				.appendTo($buttons)
+				.click(function(){
+					_this._performSimplifiedGeometries(data);
+					return false;
+				});
+
+			addClasses($simplifiedGeomsButton, 'simplified_geoms');
 		};
 
 		/**
@@ -895,6 +919,7 @@ var Display = $n2.Class({
 					,geom: true
 					,reply: true
 					,treeView: true
+					,simplifiedGeoms: true
 				});
 			});
 			
@@ -1006,6 +1031,139 @@ var Display = $n2.Class({
 		new TreeDocumentViewer({
 			doc: data
 		});
+	}
+	
+	,_performSimplifiedGeometries: function(doc){
+		var contentId = $n2.getUniqueId();
+		
+		if( doc 
+		 && doc.nunaliit_geom 
+		 && doc.nunaliit_geom.wkt ){
+			var geometries = [];
+			
+			// Inline
+			geometries.push({
+				label: _loc('Inline')
+				,wkt: doc.nunaliit_geom.wkt
+			});
+			if( doc.nunaliit_geom.simplified 
+			 && doc.nunaliit_geom.simplified.reported_resolution ){
+				geometries[0].resolution = doc.nunaliit_geom.simplified.reported_resolution;
+			};
+
+			if( doc.nunaliit_geom.simplified ){
+				
+				var simplified = doc.nunaliit_geom.simplified;
+				if( simplified.original ){
+					var url = this.documentSource.getDocumentAttachmentUrl(doc,simplified.original);
+					geometries.push({
+						label: _loc('Original')
+						,url: url
+						,attName: simplified.original
+					});
+				};
+				
+				if( simplified.resolutions ){
+					var resolutions = [];
+					for(var attName in simplified.resolutions){
+						var res = simplified.resolutions[attName];
+						var url = this.documentSource.getDocumentAttachmentUrl(doc,attName);
+						resolutions.push({
+							label: _loc('Resolution')
+							,url: url
+							,attName: attName
+							,resolution: res
+						});
+					};
+					resolutions.sort(function(a,b){
+						if( a.resolution < b.resolution ) return -1;
+						if( a.resolution > b.resolution ) return 1;
+						return 0;
+					});
+					
+					for(var i=0,e=resolutions.length; i<e; ++i){
+						geometries.push( resolutions[i] );
+					};
+				};
+			};
+			
+			var $content = $('<div>')
+				.attr('id', contentId)
+				;
+			
+			display($content);
+			
+			$content.dialog({
+				autoOpen: true
+				,title: _loc('Geometries')
+				,modal: true
+				,width: 600
+				,close: function(event, ui){
+					var diag = $(event.target);
+					diag.dialog('destroy');
+					diag.remove();
+				}
+			});
+
+			// Request attachments
+			for(var i=0,e=geometries.length; i<e; ++i){
+				var geometry = geometries[i];
+				if( geometry.url && geometry.attName ){
+					loadAttachment(geometry.attName, geometry.url);
+				};
+			};
+		};
+		
+		function display($content){
+			
+			if( !$content ){
+				$content = $('#'+contentId);
+			};
+
+			$content.empty();
+			
+			for(var i=0,e=geometries.length; i<e; ++i){
+				var geometry = geometries[i];
+
+				var heading = geometry.label;
+				if( geometry.resolution ){
+					heading += ' - ' + geometry.resolution;
+				};
+				if( geometry.attName ){
+					heading += ' - ' + geometry.attName;
+				};
+				
+				$('<div>')
+					.addClass('n2display_geometries_heading')
+					.text( heading )
+					.appendTo($content);
+	
+				if( geometry.wkt ){
+					var wkt = geometry.wkt + ' ['+geometry.wkt.length+']';
+					$('<div>')
+						.addClass('n2display_geometries_wkt')
+						.text( wkt )
+						.appendTo($content);
+				};
+			};
+		};
+		
+		function loadAttachment(attName, url){
+			$.ajax({
+				url: url
+				,dataType: 'text'
+				,success: function(wkt){
+					for(var i=0,e=geometries.length; i<e; ++i){
+						var geometry = geometries[i];
+						if( geometry.attName === attName ){
+							geometry.wkt = wkt;
+						};
+					};
+					
+					display();
+				}
+			});
+		};
 	}
 	
 	,_displayDocumentId: function($set, docId) {

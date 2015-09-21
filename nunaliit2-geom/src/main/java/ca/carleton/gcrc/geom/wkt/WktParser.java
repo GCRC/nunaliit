@@ -22,8 +22,12 @@ public class WktParser {
 	}
 	
 	public Geometry parseWkt(String wktString) throws Exception {
-		StringReader sr = new StringReader(wktString);
-		return parseWkt(sr);
+		try {
+			StringReader sr = new StringReader(wktString);
+			return parseWkt(sr);
+		} catch (Exception e) {
+			throw new Exception("Error parsing WKT string: "+wktString);
+		}
 	}
 	
 	public Geometry parseWkt(Reader reader) throws Exception {

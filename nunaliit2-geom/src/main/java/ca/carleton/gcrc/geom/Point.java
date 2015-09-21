@@ -2,6 +2,7 @@ package ca.carleton.gcrc.geom;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
 
@@ -38,6 +39,33 @@ public class Point extends GeometryAbstract implements Geometry {
 		positions.add( position );
 	}
 	
+	public Double getX(){
+		Double x = null;
+		if( positions.size() > 0 ){
+			x = positions.get(0).doubleValue();
+		}
+			
+		return x;
+	}
+	
+	public Double getY(){
+		Double y = null;
+		if( positions.size() > 1 ){
+			y = positions.get(1).doubleValue();
+		}
+			
+		return y;
+	}
+	
+	public Double getZ(){
+		Double z = null;
+		if( positions.size() > 2 ){
+			z = positions.get(2).doubleValue();
+		}
+			
+		return z;
+	}
+	
 	public String toString(){
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
@@ -64,5 +92,10 @@ public class Point extends GeometryAbstract implements Geometry {
 	@Override
 	public void extendBoundingBox(BoundingBox boundingBox) {
 		boundingBox.extendToInclude(this);
+	}
+
+	@Override
+	public void accumulateBasicGeometries(Collection<Geometry> geometries) {
+		geometries.add(this);
 	}
 }

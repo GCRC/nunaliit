@@ -84,7 +84,7 @@ OpenLayers.N2Map = OpenLayers.Class(OpenLayers.Map, {
                     };
                 };
                 
-                // Handle chnage in projection
+                // Handle change in projection
                 var newCenter = center;
             	var newZoom = null;
                 var newProjection = this.getProjectionObject();

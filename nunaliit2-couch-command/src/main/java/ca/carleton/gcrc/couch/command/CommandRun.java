@@ -23,6 +23,7 @@ import ca.carleton.gcrc.couch.command.impl.TransparentWithRedirectServlet;
 import ca.carleton.gcrc.couch.command.servlet.ConfigServlet;
 import ca.carleton.gcrc.couch.date.DateServlet;
 import ca.carleton.gcrc.couch.export.ExportServlet;
+import ca.carleton.gcrc.couch.simplifiedGeometry.SimplifiedGeometryServlet;
 import ca.carleton.gcrc.couch.submission.SubmissionServlet;
 import ca.carleton.gcrc.couch.user.UserServlet;
 import ca.carleton.gcrc.progress.ProgressServlet;
@@ -222,6 +223,13 @@ public class CommandRun implements Command {
         	ServletHolder servletHolder = new ServletHolder(new DateServlet());
         	servletHolder.setInitOrder(2);
         	context.addServlet(servletHolder,"/servlet/date/*");
+        }
+
+        // Servlet for simplified geometry
+        {
+        	ServletHolder servletHolder = new ServletHolder(new SimplifiedGeometryServlet());
+        	servletHolder.setInitOrder(2);
+        	context.addServlet(servletHolder,"/servlet/geometry/*");
         }
 
         // Proxy to site

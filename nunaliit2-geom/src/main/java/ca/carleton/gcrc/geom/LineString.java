@@ -2,6 +2,7 @@ package ca.carleton.gcrc.geom;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
 
@@ -62,5 +63,10 @@ public class LineString extends GeometryAbstract implements Geometry {
 		for(Point point : points){
 			boundingBox.extendToInclude(point);
 		}
+	}
+
+	@Override
+	public void accumulateBasicGeometries(Collection<Geometry> geometries) {
+		geometries.add(this);
 	}
 }

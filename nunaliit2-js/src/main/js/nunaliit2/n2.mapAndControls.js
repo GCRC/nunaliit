@@ -40,259 +40,6 @@ $Id: n2.mapAndControls.js 8494 2012-09-21 20:06:50Z jpfiset $
 	var DH = 'n2.mapAndControls';
 
 //**************************************************
-function OlkitAttributeFormManagerSidePanel(options_) {
-	var defaultOptions = {
-		tableName: 'names'
-		,geomName: 'the_geom'
-		,panelName: 'side'
-		,selectAudioFn: function(feature_,cbFn){ alert('Feature not supported'); }
-		,onFeatureInsertedFn: function(fid,feature){}
-		,onFeatureUpdatedFn: function(fid,feature){}
-		,onFeatureDeletedFn: function(fid,feature){}
-		,onCancelFn: function(){}
-		,onCloseFn: function(){}
-		,uniqueIdentifier: 'place_id'
-	};
-	
-	var options = $.extend({},defaultOptions,options_);
-	
-	var defaultFieldOpts = {
-		'layer': {
-			defaultValue: 1
-			,choices: [
-				{value:0,label:'Admin'}
-				,{value:1,label:'Public'}
-			]
-		}
-		,'hover_audio': {
-			defaultValue: ''
-			,select: function(cbFn){options.selectAudioFn(feature_,cbFn);}
-		}
-	};
-
-	var cancelled = true;
-	var editedFeature = null;
-	var editedLayer = null;
-	var originalGeometry = null;
-	var originalStyle = null;
-	var attributeDialog = null;
-	var dbWebForm = null;
-	var isInsert = 0;
-
-    function showAttributeForm(feature_) {
-    	editedFeature = feature_;
-		editedLayer = editedFeature.layer;
-    	cancelled = false;
-    	isInsert = false;
-
-		originalGeometry = editedFeature.geometry.clone();
-		originalStyle = editedFeature.style;
-
-		editedLayer.events.register('featuremodified', editedFeature, featureModified);
-
-		attributeDialog = $('#'+options.panelName);
-		attributeDialog.empty();
-
-		var dialogHeader = $('<p class="olkitAttrFormFeatureInstructions">Enter or edit the place attribute values:</p>');
-		attributeDialog.append( dialogHeader );
-
-		var attributeForm = $('<div class="olkitAttrFormFeatureAttributes"></div>');
-		attributeDialog.append( attributeForm );
-
-		var formButtons = $('<div class="olkitAttrFormButtons"></div>');
-		installCancelButton();
-		attributeDialog.append( formButtons );
-		
-		var fOpts = $.extend({}, defaultFieldOpts, options.fieldOpts);
-        var dbWebFormOptions = {
-        	tableName: options.tableName
-        	,installButtons: function(buttons) {
-        		formButtons.empty();
-        		if( buttons.Save ) { installSaveButton( buttons.Save ); };
-        		if( buttons['Delete'] ) { installDeleteButton( buttons['Delete'] ); };
-        		installCancelButton();
-        	}
-        	,fieldOpts: fOpts
-        	,onError: onError
-        };
-        var ids = editedFeature.fid ? editedFeature.fid.split('.') : [];
-        if( ids.length > 1 ) {
-			// Use id, if possible
-        	dbWebFormOptions.whereClauses = [
- 	        		$.NUNALIIT_DBWEB.formatWhereClause(
- 	        			'id'
- 	        			,$.NUNALIIT_DBWEB.whereComparison_eq
- 	        			,ids[1]
- 	        			)
- 	        	];
-        } else if( editedFeature.attributes[options.uniqueIdentifier] ) {
-        	dbWebFormOptions.whereClauses = [
-        		$.NUNALIIT_DBWEB.formatWhereClause(
-        			options.uniqueIdentifier
-        			,$.NUNALIIT_DBWEB.whereComparison_eq
-        			,editedFeature.attributes[options.uniqueIdentifier]
-        			)
-        	];
-        } else {
-        	isInsert = true;
-        	// Adding a new point, provide geometries from map
-        	dbWebFormOptions.data = $.extend({},editedFeature.attributes);
-        	
-        	var geom = convertFeatureGeometryForDb(editedFeature);
-        	dbWebFormOptions.data[options.geomName] = ''+geom;
-        };
-        dbWebForm = attributeForm.dbWebForm(dbWebFormOptions);
-    	
-    	function installSaveButton(cbFn) {
-			var button = $('<input type="button" value="Save"/>');
-			button.click(function(evt){
-				cbFn({
-					onSuccess: onSaved
-					,onError: function(){alert('Error occurred while saving data');}
-				});
-			});
-			formButtons.append(button);
-    	};
-    	
-    	function installDeleteButton(cbFn) {
-			var button = $('<input type="button" value="Delete"/>');
-			button.click(function(evt){
-		  		if( confirm('Do you really want to delete this feature?') ) {
-    				cbFn({
-    					onSuccess:onDeleted
-    					,onError: function(){alert('Error occurred while deleting data');}
-    				});
-		  		};
-			});
-			formButtons.append(button);
-    	};
-    	
-    	function installCancelButton() {
-			var button = $('<input type="button" value="Cancel"/>');
-			button.click(function(evt){
-				cancelAttributeForm();
-			});
-			formButtons.append(button);
-    	};
-    	
-    	function onSaved(savedData) {
-			if( isInsert ) {
-				// This is an insert
-				var fid = options.tableName+'.'+savedData.id;
-				options.onFeatureInsertedFn(fid,editedFeature);
-			} else {
-				// This is an update
-				var fid = feature_.fid;
-				options.onFeatureUpdatedFn(fid,editedFeature);
-			};
-			discardAttributeForm();
-    	};
-    	
-    	function onDeleted() {
-			var fid = feature_.fid;
-			options.onFeatureDeletedFn(fid,feature_);
- 			discardAttributeForm();
-    	};
-    	
-    	function onError(error) {
-			attributeDialog.empty();
-
-			var errorDiv = $('<div class="olkitAttrFormError"></div>');
-			attributeDialog.append( errorDiv );
-
-			formButtons.empty();
-			installCancelButton();
-			attributeDialog.append( formButtons );
-			
-			// Print error
-			var ul = $('<ul></ul>');
-			errorDiv.append(ul);
-			
-			currentError = error;
-			while(currentError) {
-				var li = $('<li>'+currentError.message+'</li>');
-				ul.append(li);
-				
-				currentError = currentError.cause;
-			};
-    	};
-	};
-
-	// Restores feature geometry before discarding the form
-	function cancelAttributeForm() {
-		if( cancelled ) return;
-		cancelled = true;
-	
-		options.onCancelFn(editedFeature);
-
-		// Reinstate the previous geometry		
-		if( editedFeature && originalGeometry ) {
-			// Erase feature before changing geometry
-			if( editedFeature.layer ) {
-				editedFeature.layer.eraseFeatures([editedFeature]);
-			};
-			editedFeature.geometry = originalGeometry;
-		};
-		
-		discardAttributeForm();
-	};
-
-	function discardAttributeForm() {
-		if( null == attributeDialog ) {
-			return;
-		};
-		
-		attributeDialog.empty();
-		attributeDialog = null;
-		dbWebForm = null;
-
-		if( editedFeature ) {
-			editedLayer.events.unregister('featuremodified', editedFeature, featureModified);
-			
-			// Reinstate the original style
-			if( null !== editedFeature.layer ) { // test for deletion
-				editedFeature.style = originalStyle;
-				editedFeature.layer.drawFeature(editedFeature);
-			};
-		};
-
-		options.onCloseFn(editedFeature);
-		
-		editedFeature = null;
-		editedLayer = null;
-		originalGeometry = null;
-		originalStyle = null;
-	};
-	
-    function convertFeatureGeometryForDb(feature) {
-		var proj = feature.layer.map.getProjectionObject();
-		var internalSrsName = proj.getCode();
-		if( internalSrsName != 'EPSG:4326' ) {
-			// Need to convert
-			var geom = editedFeature.geometry.clone();
-			var dbProj = new OpenLayers.Projection('EPSG:4326');
-			geom.transform(proj,dbProj);
-			return geom;
-		};
-		return feature.geometry;
-    };
-	
-    function featureModified(evt_) {
-    	var feature = evt_.feature;
-    	var geom = convertFeatureGeometryForDb(feature);
-    	
-    	if( dbWebForm ) {
-    		dbWebForm.updateData(options.geomName,''+geom);
-    	};
-    };
-	
-	return {
-		showAttributeForm: showAttributeForm
-		,cancelAttributeForm:  cancelAttributeForm
-	};
-};
-
-//**************************************************
 var GazetteerProcess = $n2.Class({
 	
 	geoNamesService: null
@@ -533,17 +280,6 @@ var multiSelectClusterClickCallback = function(feature, mapAndControls){
 //**************************************************
 //**************************************************
 
-// Legacy. Probably no longer in use.
-function basicPopupHtmlFunction(opt_) {
-	var attrs = opt_.feature.attributes;
-	var resArray = [];
-	resArray.push('Name: '+  (attrs.placename?attrs.placename:'') + '<br/>');
-	resArray.push('Meaning: '+  (attrs.meaning?attrs.meaning:'') + '<br/>');
-	resArray.push('Entity: '+  (attrs.entity?attrs.entity:'') + '<br/>');
-	var html = resArray.join('');
-	opt_.onSuccess(html);
-};
-
 function suppressPopupHtmlFunction(opts_){
 	var opts = $n2.extend({
 		feature: null
@@ -662,67 +398,68 @@ function suppressPopupHtmlFunction(opts_){
 
 var MapAndControls = $n2.Class({
 	
-	options: null
-	,dbSearchEngine: null
-	,contributionDb: null
-	,map: null
-	,editLayer: null
-	,html: null
- 	,lastMapXy: null
- 	,mapMouseMoveListeners: null
-	,olkitDisplayOptions: null
-	,pendingMarkInfo: null
-	,attributeFormManagerOptions: null
-	,attributeFormManager: null
-	,currentPopup: null
-	,dhtmlSoundDivId: null
-	,initialZoomBounds: null
+	options: null,
+	dbSearchEngine: null,
+	contributionDb: null,
+	mapId: null,
+	map: null,
+	editLayer: null,
+	html: null,
+ 	lastMapXy: null,
+ 	mapMouseMoveListeners: null,
+	olkitDisplayOptions: null,
+	pendingMarkInfo: null,
+	currentPopup: null,
+	dhtmlSoundDivId: null,
+	initialZoomBounds: null,
 
     // HOVER and CLICK
-	,selectFeatureControl: null
-	,hoverInfo: null
-	,clickedInfo: null
-	,focusInfo: null
-	,findFeatureInfo: null
+	selectFeatureControl: null,
+	hoverInfo: null,
+	clickedInfo: null,
+	focusInfo: null,
+	findFeatureInfo: null,
 
     // MODES
-	,modes: null
-	,currentMode: null
+	modes: null,
+	currentMode: null,
 
 	// MAP MODES
-	,navigationControls: null
-	,editControls: null
-	,editFeatureControls: null
+	navigationControls: null,
+	editControls: null,
+	editFeatureControls: null,
 
  	// EDIT mode callbacks
-	,editModeAddFeatureEnabled: null
-	,editModeAddFeatureCallback: null
-    ,convertToMultiGeometry: null
+	editModeAddFeatureEnabled: null,
+	editModeAddFeatureCallback: null,
+    convertToMultiGeometry: null,
     
     // EDIT_FEATURE mode
-    ,editFeatureFid: null
+    editFeatureFid: null,
 
     // COMETD
-    ,cometEnabled: null
-    ,fidChannel: null
-    ,contributionChannel: null
+    cometEnabled: null,
+    fidChannel: null,
+    contributionChannel: null,
 
     // STYLE
-	,defaultStyleMap: null
-	,styleFilterIndex: null
-	,styleFilters: null
+	defaultStyleMap: null,
+	styleFilterIndex: null,
+	styleFilters: null,
 
 	// map layers
-	,defaultLayerInfo: null
-	,mapLayers: null
-	,vectorLayers: null
-	,infoLayers: null
-	,layers: null
-	,mapBusyCount: null
-	,busyMapControl: null
+	defaultLayerInfo: null,
+	mapLayers: null,
+	vectorLayers: null,
+	infoLayers: null,
+	layers: null,
+	mapBusyCount: null,
+	busyMapControl: null,
 	
-	,initialize: function(options_){
+	initialize: function(options_){
 		var _this = this;
+		
+		this.mapId = 'map_' + $n2.getUniqueId();
 		
 		if( typeof(OpenLayers) == 'undefined' ) {
 			$n2.reportError('OpenLayers is required.');
@@ -966,6 +703,7 @@ var MapAndControls = $n2.Class({
 	    this._registerDispatch('editCancel');
 	    this._registerDispatch('editClosed');
 	    this._registerDispatch('editGeometryModified');
+	    this._registerDispatch('editReportDocument');
 	    this._registerDispatch('mapRedrawLayer');
 	    this._registerDispatch('mapSetInitialExtent');
 	    this._registerDispatch('mapSetExtent');
@@ -973,6 +711,7 @@ var MapAndControls = $n2.Class({
 	    this._registerDispatch('mapGetLayers');
 	    this._registerDispatch('setMapLayerVisibility');
 	    this._registerDispatch('mapSwitchToEditMode');
+	    this._registerDispatch('simplifiedGeometryReport');
 		
 		// Layers
 		this.defaultLayerInfo = { // feature layer access details.
@@ -1043,34 +782,6 @@ var MapAndControls = $n2.Class({
 		
 		if( typeof(this.options.layerInfo) === 'object' && !$n2.isArray(this.options.layerInfo) ) {
 			this.options.layerInfo = [this.options.layerInfo];
-		};
-		
-		// Feature Attribute Form
-		this.attributeFormManagerOptions = {
-			selectAudioFn: function(feature, onSelectCallback){ _this.selectAudioMedia(feature, onSelectCallback); }
-			,onFeatureInsertedFn: function(fid, feature){ _this.onAttributeFormInserted(fid, feature); }
-			,onFeatureUpdatedFn: function(fid, feature){ _this.onAttributeFormUpdated(fid, feature); }
-			,onFeatureDeletedFn: function(fid, feature){ _this.onAttributeFormDeleted(fid, feature); }
-			,onCancelFn: function(editedFeature){ _this.onAttributeFormCancelled(editedFeature); }
-			,onCloseFn: function(editedFeature){ _this.onAttributeFormClosed(editedFeature); }
-			,uniqueIdentifier: this.options.uniqueIdentifier
-			,panelName: null
-		};
-		this.attributeFormManagerOptions.panelName = this.options.sidePanelName;
-		if( this.options.saveFeature && this.options.saveFeature.isFormEditor ) {
-			this.attributeFormManager = this.options.saveFeature;
-		} else {
-			// Legacy
-			var afmOpts = $.extend(
-				{}
-				,this.attributeFormManagerOptions
-				,(null != this.options.saveFeature ? this.options.saveFeature : {})
-			);
-			var attributeFormManagerCreateFn = afmOpts.createFn;
-			if( !attributeFormManagerCreateFn ) {
-				attributeFormManagerCreateFn = OlkitAttributeFormManagerSidePanel;
-			}
-			this.attributeFormManager = attributeFormManagerCreateFn( afmOpts );
 		};
 		
 		initContributionHandler(jQuery, this.options.placeDisplay.contributionOptions);
@@ -1460,11 +1171,21 @@ var MapAndControls = $n2.Class({
     	this.map.events.register( 'mousemove', null, function(evt){
     		_this._handleMapMousePosition(evt);
 		});
+		
+    	// When changing zoom, check if new simpilified geometries should be loaded
+    	this.map.events.register( 'zoomend', null, function(evt){
+    		_this._refreshSimplifiedGeometries();
+		});
+		
+    	// When changing zoom, check if new simpilified geometries should be loaded
+    	this.map.events.register( 'move', null, function(evt){
+    		_this._mapMoved();
+		});
 
 		this.initCometChannels();
-	}
+	},
 
-	,getNamedLayerInfo: function(name) {
+	getNamedLayerInfo: function(name) {
 		for(var i=0,e=this.infoLayers.length; i<e; ++i) {
 			var layer = this.infoLayers[i];
 			if( layer.name === name ) {
@@ -1474,9 +1195,9 @@ var MapAndControls = $n2.Class({
 			};
 		}
 		return null;
-	}
+	},
 
-	,insertSound: function(surl) {
+	insertSound: function(surl) {
 		var $dhtmlSoundDiv = $('#'+this.dhtmlSoundDivId);
 		if( $dhtmlSoundDiv.length < 1 ){
 			$dhtmlSoundDiv = $('<div></div>')
@@ -1490,9 +1211,9 @@ var MapAndControls = $n2.Class({
 		} else {
 			$dhtmlSoundDiv.empty();
 		};
-	}
+	},
 	
-	,initAndDisplayClickedPlaceInfo: function(feature) {
+	initAndDisplayClickedPlaceInfo: function(feature) {
 		var dispatchService = this._getDispatchService();
 		if( dispatchService ) {
 			dispatchService.send(DH, {
@@ -1506,9 +1227,9 @@ var MapAndControls = $n2.Class({
 			$n2.placeInfo.setFeatureReinitDisplay(feature);
 			$n2.placeInfo.loadAndRenderContributions();
 		};
-	}
+	},
 	
-	,_getMapFeaturesIncludingFid: function(fid){
+	_getMapFeaturesIncludingFid: function(fid){
 		var features = [];
 		
 		for(var loop=0; loop<this.infoLayers.length; ++loop) {
@@ -1520,9 +1241,9 @@ var MapAndControls = $n2.Class({
 		};
 		
 		return features;
-	}
+	},
 	
-	,_getLayerFeatureIncludingFid: function(layer,fid) {
+	_getLayerFeatureIncludingFid: function(layer,fid) {
 		
 		if( layer && layer.features ) {
 			var loop;
@@ -1543,9 +1264,9 @@ var MapAndControls = $n2.Class({
 		};
 		
 		return null;
-	}
+	},
 	
-	,_getLayerFeaturesFromFilter: function(layer,filter) {
+	_getLayerFeaturesFromFilter: function(layer,filter) {
 		var r = [];
 		
 		if( layer && layer.features ) {
@@ -1559,9 +1280,9 @@ var MapAndControls = $n2.Class({
 		};
 		
 		return r;
-	}
+	},
 	
-	,_reloadFeature: function(filter,options_) {
+	_reloadFeature: function(filter,options_) {
 		// Figure out which layers to reload
 		var reloadInfoLayers = [];
 		for(var loop=0; loop<this.infoLayers.length; ++loop) {
@@ -1587,12 +1308,12 @@ var MapAndControls = $n2.Class({
 			
 			this._loadFeatureOnLayer(layerInfo, filter, options_);
 		};
-	}
+	},
 	
 	/*
 	 * Attempts to reload features given a specified layer and filter
 	 */
-	,_loadFeatureOnLayer: function(layerInfo,filter,options_){
+	_loadFeatureOnLayer: function(layerInfo,filter,options_){
 		var _this = this;
 		
 		// Figure out options
@@ -1700,9 +1421,9 @@ var MapAndControls = $n2.Class({
 			
 			return cb;
 		};
-	}
+	},
 	
-	,_removeFeature: function(fid) {
+	_removeFeature: function(fid) {
 		for(var loop=0; loop<this.vectorLayers.length; ++loop) {
 			var mapLayer = this.vectorLayers[loop];
 			var feature = this._getLayerFeatureIncludingFid(mapLayer,fid);
@@ -1731,18 +1452,18 @@ var MapAndControls = $n2.Class({
 				};
 			};
 		};
-	}
+	},
 	
-	,_centerMapOnFeature: function(feature) {
+	_centerMapOnFeature: function(feature) {
     	var geom = feature.geometry;
     	var bbox = geom.getBounds();
 		var x = (bbox.left + bbox.right) / 2;
 		var y = (bbox.bottom + bbox.top) / 2;
 		
 		this._centerMapOnXY(x,y,null); // same projection as map
-	}
+	},
 
-	,_centerMapOnXY: function(x, y, projCode) {
+	_centerMapOnXY: function(x, y, projCode) {
 		var ll = new OpenLayers.LonLat(x, y);
 		
 		var mapProj = this.map.getProjectionObject();
@@ -1755,9 +1476,9 @@ var MapAndControls = $n2.Class({
 		
 		var z = this.map.getZoom();
 		this.map.setCenter(ll, z, false, false);
-	}
+	},
 	
-	,_installGeometryEditor: function(feature){
+	_installGeometryEditor: function(feature){
 		// Can not install geometry editor if the feature is not on the map.
 		if( !feature ) return;
 		if( !feature.layer ) return;
@@ -1835,9 +1556,9 @@ var MapAndControls = $n2.Class({
 		    	modifyFeatureGeometry.selectFeature(editFeature);
 	    	};
     	};
-	}
+	},
 	
-	,_removeGeometryEditor: function(reinstateOrginalGeometry){
+	_removeGeometryEditor: function(reinstateOrginalGeometry){
 		if( null != this.editFeatureControls.modifyFeatureGeometry ) {
 			var editFeature = this.editFeatureControls.modifyFeatureGeometry.feature;
     		if( null != editFeature ) {
@@ -1900,10 +1621,10 @@ var MapAndControls = $n2.Class({
 				};
 			};
 		};
-	}
+	},
 
 	// @param bounds Instance of OpenLayers.Bounds
-	,convertBoundsToMapProjection: function(bounds, srsName) {
+	convertBoundsToMapProjection: function(bounds, srsName) {
 		// TBD: Can we get the projection directly from the map?
 		var mapProjection = new OpenLayers.Projection(this.options.mapDisplay.srsName);
 		var userCoordProjection = new OpenLayers.Projection(srsName);
@@ -1911,9 +1632,9 @@ var MapAndControls = $n2.Class({
 		if (userCoordProjection.getCode() != mapProjection.getCode()) {
 			bounds.transform(userCoordProjection, mapProjection);
 		};
-	}
+	},
 	
-	,redrawMap: function() {
+	redrawMap: function() {
 		var layers = this.map.layers;
 		for(var loop=0; loop<layers.length; ++loop) {
 	        if (layers[loop].isBaseLayer )  {
@@ -1922,9 +1643,9 @@ var MapAndControls = $n2.Class({
 	            layers[loop].redraw();
 	        };
 		};
-	}
+	},
 
-	,_createOverlayFromDefinition: function(layerDefinition, isBaseLayer) {
+	_createOverlayFromDefinition: function(layerDefinition, isBaseLayer) {
 		var _this = this;
 
 		var cs = this._getCustomService();
@@ -2119,7 +1840,7 @@ var MapAndControls = $n2.Class({
 		
 		// Sort features on a layer so that polygons do not hide points  
 		layerOptions.strategies.push( new OpenLayers.Strategy.NunaliitLayerSorting() );
-		
+
 		//layerOptions.renderers = ['Canvas','SVG','VML'];
 		layerOptions.renderers = ['SVG','VML'];
 
@@ -2140,12 +1861,12 @@ var MapAndControls = $n2.Class({
 		};
 		
 		return layerInfo.olLayer;
-	}
+	},
 	
 	/*
 	 * Creates a Layer from OpenLayers given the layer definition.
 	 */
-	,_createOLLayerFromDefinition: function(layerDefinition, isBaseLayer){
+	_createOLLayerFromDefinition: function(layerDefinition, isBaseLayer){
 		var name = _loc(layerDefinition.name);
 		
 		if( 'Bing' == layerDefinition.type ){
@@ -2366,9 +2087,9 @@ var MapAndControls = $n2.Class({
 		};
 		
 		return null;
-	}
+	},
 	
-	,_registerLayerForEvents: function(layerInfo){
+	_registerLayerForEvents: function(layerInfo){
 		var _this = this;
 		
 		// Report change in visibility for the layer
@@ -2477,6 +2198,9 @@ var MapAndControls = $n2.Class({
 					};
 				};
 			};
+			
+			// When features are added, check the map for new simplified geometries
+			_this._refreshSimplifiedGeometries();
 		});
 		
 		// When features are removed, clear the cache associated with the layer.
@@ -2500,14 +2224,15 @@ var MapAndControls = $n2.Class({
 		});
 		
 		this._createFeatureModifiedHandler(layerInfo.olLayer);
-	}
+	},
     
-    ,_createFeatureModifiedHandler: function(olLayer){
+    _createFeatureModifiedHandler: function(olLayer){
     	var _this = this;
     	
         // Called when the feature on the map is modified
     	return function(evt){
         	var feature = evt.feature;
+        	
         	_this._dispatch({
         		type: 'editGeometryModified'
         		,docId: feature.fid
@@ -2516,9 +2241,9 @@ var MapAndControls = $n2.Class({
         		,_origin: _this
         	});
     	};
-    }
+    },
 
-	,_genBackgroundMapLayers: function(options) {
+	_genBackgroundMapLayers: function(options) {
 		var bg = null;
 		
 		if( options
@@ -2641,9 +2366,9 @@ var MapAndControls = $n2.Class({
 			};
 			return bg;
 		};
-	}
+	},
 
-	,getBaseLayers: function() {
+	getBaseLayers: function() {
 		var baseLayers = [];
 		
 		if( this.map 
@@ -2662,9 +2387,9 @@ var MapAndControls = $n2.Class({
 		};
 		
 		return baseLayers;
-	}
+	},
 
-	,setBaseLayer: function(layerId) {
+	setBaseLayer: function(layerId) {
 
 		var baseLayer = null;
 		if( this.map 
@@ -2682,11 +2407,11 @@ var MapAndControls = $n2.Class({
 		if( baseLayer ){
 			this.map.setBaseLayer(baseLayer);
 		};
-	}
+	},
 	
     // === HOVER AND CLICK START ========================================================
 
-   	,_startClicked: function(mapFeature, forced) {
+   	_startClicked: function(mapFeature, forced) {
    		var feature = mapFeature;
    		if( feature && feature.cluster && feature.cluster.length == 1 ){
    			feature = feature.cluster[0];
@@ -2730,9 +2455,9 @@ var MapAndControls = $n2.Class({
 				this.currentMode.onStartClick(feature, mapFeature);
 			};
 		};
-	}
+	},
 	
-	,_endClicked: function() {
+	_endClicked: function() {
 		this._endFindFeature();
 		
 		if( this.clickedInfo.features ) {
@@ -2765,11 +2490,11 @@ var MapAndControls = $n2.Class({
 		this.clickedInfo.features = [];
 		this.clickedInfo.fids = {};
 		this.clickedInfo.selectedId = null;
-	}
+	},
 	
-	,_selectedFeatures: function(features, fids){
+	_selectedFeatures: function(features, fids){
 		if( this.currentMode !== this.modes.NAVIGATE ){
-			this.switchMapMode(this.modes.NAVIGATE);
+			this._switchMapMode(this.modes.NAVIGATE);
 		};
 		
 		this._endClicked();
@@ -2799,15 +2524,15 @@ var MapAndControls = $n2.Class({
 				};
 			};
 		};
-	}
+	},
 
 	/**
 	 * Add map selection to current selection.
 	 */
-	,_selectedFeaturesSupplement: function(opts){
+	_selectedFeaturesSupplement: function(opts){
 		
 		if( this.currentMode !== this.modes.NAVIGATE ){
-			this.switchMapMode(this.modes.NAVIGATE);
+			this._switchMapMode(this.modes.NAVIGATE);
 		};
 		
 		if( opts.fid ) {
@@ -2836,12 +2561,12 @@ var MapAndControls = $n2.Class({
 				};
 			};
 		};
-	}
+	},
 
 	/**
 	 * Unselect the currently selected feature
 	 */
-   	,_unselectFeature: function(){
+   	_unselectFeature: function(){
    		if( this.clickedInfo.selectedId ) {
    			this._dispatch({
    				type:'userUnselect'
@@ -2850,9 +2575,9 @@ var MapAndControls = $n2.Class({
    		};
    		
 		this._endClicked();
-   	}
+   	},
 	
-	,_startHover: function(feature) {
+	_startHover: function(feature) {
 		var layer = feature.layer;
    		if( feature && feature.cluster && feature.cluster.length == 1 ){
    			feature = feature.cluster[0];
@@ -2876,9 +2601,9 @@ var MapAndControls = $n2.Class({
 		if( this.currentMode.onStartHover ) {
 			this.currentMode.onStartHover(feature, layer);
 		};
-	}
+	},
 	
-	,_endHover: function() {
+	_endHover: function() {
 
 		for(var i=0,e=this.hoverInfo.endFn.length; i<e; ++i) {
 			//try{
@@ -2888,13 +2613,13 @@ var MapAndControls = $n2.Class({
 		
 		this.hoverInfo.feature = null;
 		this.hoverInfo.endFn = [];
-	}
+	},
 	
-	,_registerEndHoverFn: function(fn) {
+	_registerEndHoverFn: function(fn) {
 		this.hoverInfo.endFn.push(fn);
-	}
+	},
 
-	,_startFocus: function(features, fid){
+	_startFocus: function(features, fid){
 		this._endFocus();
 		
 		this.focusInfo.origin = fid;
@@ -2904,9 +2629,9 @@ var MapAndControls = $n2.Class({
 			,fid: fid
 			,origin: fid
 		});
-	}
+	},
 
-	,_addFocus: function(opts){
+	_addFocus: function(opts){
 		if( opts.origin && opts.origin !== this.focusInfo.origin ){
 			// Ignore. Arrived too late.
 			return;
@@ -2925,9 +2650,9 @@ var MapAndControls = $n2.Class({
 				this.focusInfo.features.push( f );
 			};
 		};
-	}
+	},
 	
-	,_endFocus: function() {
+	_endFocus: function() {
 		for(var i=0,e=this.focusInfo.features.length;i<e;++i) {
 			var feature = this.focusInfo.features[i];
 			if( feature.isHovered ) {
@@ -2940,9 +2665,9 @@ var MapAndControls = $n2.Class({
 		this.focusInfo.features = [];
 		this.focusInfo.fids = {};
 		this.focusInfo.origin = null;
-	}
+	},
 	
-	,_startFindFeature: function(fid, features){
+	_startFindFeature: function(fid, features){
 		this._endFindFeature();
 
 		this.findFeatureInfo.fid = fid;
@@ -2957,9 +2682,9 @@ var MapAndControls = $n2.Class({
 				};
 			};
 		};
-	}
+	},
 	
-	,_endFindFeature: function(){
+	_endFindFeature: function(){
 		
 		for(var i=0,e=this.findFeatureInfo.features.length; i<e; ++i){
 			var f = this.findFeatureInfo.features[i];
@@ -2971,24 +2696,24 @@ var MapAndControls = $n2.Class({
 		
 		this.findFeatureInfo.fid = null;
 		this.findFeatureInfo.features = [];
-	}
+	},
 
-	,activateSelectFeatureControl: function() {
+	activateSelectFeatureControl: function() {
 		if( this.selectFeatureControl ) {
 			this.selectFeatureControl.activate();
 		};
-	}
+	},
 
-	,deactivateSelectFeatureControl: function() {
+	deactivateSelectFeatureControl: function() {
 		if( this.selectFeatureControl ) {
 			this.selectFeatureControl.unselectAll();
 			this.selectFeatureControl.deactivate();
 		};
 		this._endHover();
 		this._endClicked();
-	}
+	},
 
-	,_hoverFeature: function(feature, layer) {
+	_hoverFeature: function(feature, layer) {
 		if( null == feature ) {
 			return;
 		};
@@ -3018,9 +2743,9 @@ var MapAndControls = $n2.Class({
 			,doc: feature.data
 			,feature: feature
  		});
-	}
+	},
 	
-	,_hoverFeaturePopup: function(feature, layer) {
+	_hoverFeaturePopup: function(feature, layer) {
 		var _this = this;
 		
 		if( null == feature ) {
@@ -3190,7 +2915,7 @@ var MapAndControls = $n2.Class({
 		
 		function onPopupClose(evt) {
 	    };
-	}
+	},
 
     // === LOGIN STUFF START ========================================================
 
@@ -3201,7 +2926,7 @@ var MapAndControls = $n2.Class({
      * Once installed by the subsequent call to addListener(), this is immediately
      * called and then whenever a login state change is detected.
      */
-    ,loginStateChanged: function(currentUser) {
+    loginStateChanged: function(currentUser) {
     	var showLogin = false;
 
 		if( null == currentUser ) {
@@ -3210,17 +2935,17 @@ var MapAndControls = $n2.Class({
     	
     	if( showLogin ) {
     		this.hideMapInteractionSwitch();
-			this.switchMapMode(this.modes.NAVIGATE);
+			this._switchMapMode(this.modes.NAVIGATE);
     	} else {
    			this.showMapInteractionSwitch();
     	};
-    }
+    },
     	
     // === LOGIN STUFF END ========================================================
 	
     // === MAP MODES START ========================================================
     
- 	,createMapInteractionSwitch: function() {
+ 	createMapInteractionSwitch: function() {
  		var _this = this;
  		var mapInteractionButton = $('<input type="button" class="n2map_map_interaction_switch"/>')
  			.val(this.modes.NAVIGATE.buttonValue)
@@ -3231,19 +2956,19 @@ var MapAndControls = $n2.Class({
 		$("#"+this.options.mapInteractionDivName)
 			.empty()
 			.append(mapInteractionButton);
-	}
+	},
  	
- 	,_getMapInteractionSwitch: function(){
+ 	_getMapInteractionSwitch: function(){
  		return $("#"+this.options.mapInteractionDivName)
  			.find('.n2map_map_interaction_switch');
- 	}
+ 	},
 	
-	,_clickedMapInteractionSwitch: function(e){
+	_clickedMapInteractionSwitch: function(e){
 		if( this.currentMode === this.modes.NAVIGATE ) {
 			this.switchToEditMode();
 			
 		} else if( this.currentMode === this.modes.ADD_OR_SELECT_FEATURE ) {
-			this.switchMapMode(this.modes.NAVIGATE);
+			this._switchMapMode(this.modes.NAVIGATE);
 			
 		} else if( this.currentMode === this.modes.ADD_GEOMETRY ) {
 			this._cancelEditFeatureMode();
@@ -3252,25 +2977,25 @@ var MapAndControls = $n2.Class({
 			this._cancelEditFeatureMode();
 		};
 		return false;
-	}
+	},
 	
- 	,hideMapInteractionSwitch: function() {
+ 	hideMapInteractionSwitch: function() {
  		this._getMapInteractionSwitch().hide();
-	}
+	},
 	
-	,showMapInteractionSwitch: function() {
+	showMapInteractionSwitch: function() {
  		this._getMapInteractionSwitch().show();
-	}
+	},
 	
-	,activateControl: function(control) {
+	activateControl: function(control) {
 		if( control ) control.activate();
-	}
+	},
 	
-	,deactivateControl: function(control) {
+	deactivateControl: function(control) {
 		if( control ) control.deactivate();
-	}
+	},
 			
-    ,switchMapMode: function(mode, opts) {
+    _switchMapMode: function(mode, opts) {
     	if( this.currentMode === mode ) {
     		// nothing to do
     		return;
@@ -3355,9 +3080,9 @@ var MapAndControls = $n2.Class({
     	} else if( this.currentMode === this.modes.NAVIGATE ) {
     		this.activateSelectFeatureControl();
     	};
-    }
+    },
     
-    ,switchToEditMode: function() {
+    switchToEditMode: function() {
     	var _this = this;
     	
     	var authService = this._getAuthService();
@@ -3380,49 +3105,49 @@ var MapAndControls = $n2.Class({
     			});
     		} else {
     			// Already logged in, just switch
-    	    	this.switchMapMode(this.modes.ADD_OR_SELECT_FEATURE);
+    	    	this._switchMapMode(this.modes.ADD_OR_SELECT_FEATURE);
     		};
     	} else {
     		alert("Authentication module not installed.");
     	};
-    }
+    },
     
-    ,switchToEditFeatureMode: function(fid, feature) {
-    	this.switchMapMode(this.modes.EDIT_FEATURE,{
+    switchToEditFeatureMode: function(fid, feature) {
+    	this._switchMapMode(this.modes.EDIT_FEATURE,{
     		fid: fid
     		,feature: feature
     	});
-    }
+    },
     
-    ,switchToAddGeometryMode: function(docId) {
-    	this.switchMapMode(this.modes.ADD_GEOMETRY,{
+    switchToAddGeometryMode: function(docId) {
+    	this._switchMapMode(this.modes.ADD_GEOMETRY,{
     		fid: docId
     	});
-    }
+    },
     
-    ,_cancelEditFeatureMode: function() {
+    _cancelEditFeatureMode: function() {
    		this._dispatch({
    			type: 'editCancel'
    		});
-    }
+    },
     
     // === NAVIGATION MODE ========================================================
 
 
     // === ADD OR SELECT FEATURE MODE =============================================
 
-    ,createFirstContribution: function(feature, dataOptions) {
+    createFirstContribution: function(feature, dataOptions) {
 		if( feature.attributes && feature.attributes.place_id ) {
 			if( NUNALIIT_CONTRIBUTIONS ) {
 				// NUNALIIT_CONTRIBUTIONS module is needed
 				NUNALIIT_CONTRIBUTIONS.addContribution(dataOptions);
 			};
     	};
-    }
+    },
     
     // ======= EDIT_FEATURE MODE ==================================================
 
-    ,_geometryModified: function(fid, olGeom, proj){
+    _geometryModified: function(fid, olGeom, proj){
 		if( this.currentMode === this.modes.EDIT_FEATURE 
 		 && !olGeom ){
 			// Geometry was deleted by external editor
@@ -3482,9 +3207,9 @@ var MapAndControls = $n2.Class({
 			
 			this.switchToEditFeatureMode(fid, feature);
 		};
-    }
-    
-    ,onAttributeFormClosed: function(editedFeature) {
+    },
+
+    onAttributeFormClosed: function(editedFeature) {
     	// When closing the dialog with the user, the feature
     	// must be removed from the map if it is a new one, since it does
     	// not have a valid fid. The feature will be reloaded, anyway. However,
@@ -3494,14 +3219,14 @@ var MapAndControls = $n2.Class({
 			this.editLayer.destroyFeatures(editedFeature);
 		};
 		
-		this.switchMapMode(this.modes.NAVIGATE);
-    }
+		this._switchMapMode(this.modes.NAVIGATE);
+    },
 
-	,onAttributeFormCancelled: function(editedFeature) {
-		this.switchMapMode(this.modes.NAVIGATE);
-	}
+	onAttributeFormCancelled: function(editedFeature) {
+		this._switchMapMode(this.modes.NAVIGATE);
+	},
     
-	,onAttributeFormInserted: function(fid, feature) {
+	onAttributeFormInserted: function(fid, feature) {
 		var _this = this;
 		
 		// This is an insert
@@ -3535,25 +3260,25 @@ var MapAndControls = $n2.Class({
 				};
 			}
 		});
-	}
+	},
     
-	,onAttributeFormUpdated: function(fid, feature) {
+	onAttributeFormUpdated: function(fid, feature) {
 		// This is an update
 		var fid = feature.fid;
 		this.fidUpdated(fid);
 		var filter = $n2.olFilter.fromFid(fid);
 		this._reloadFeature(filter);
-	}
+	},
 	
-	,onAttributeFormDeleted: function(fid, feature) {
+	onAttributeFormDeleted: function(fid, feature) {
 		this.fidDeleted(fid);
 		var layer = feature.layer;
 		if( layer ) {
 			layer.destroyFeatures([feature]);
 		};
-	}
+	},
     
-	,selectAudioMedia: function(feature, onSelectCallback) {
+	selectAudioMedia: function(feature, onSelectCallback) {
 		var _this = this;
 		
 		var placeId = null;
@@ -3651,13 +3376,13 @@ var MapAndControls = $n2.Class({
 
 			tableElem.append(trElem);
 		};
-	}
+	},
 	
     // === EDIT MODE STUFF END ======================================================================
 
     // === COMETD MODE STUFF START ========================================================
     
-    ,initCometChannels: function() {
+    initCometChannels: function() {
     	var _this = this;
     	if( this.cometEnabled && $.cometd ) {
 			$.cometd.init('./cometd');
@@ -3670,9 +3395,9 @@ var MapAndControls = $n2.Class({
 				,function(msg){ _this.contributionHandler(msg); }
 			);
     	}
-    }
+    },
     
-	,fidHandler: function(msg) {
+	fidHandler: function(msg) {
 		//log('fidHandler',msg);
 		if( msg.data && msg.data.type && msg.data.fid ) {
 			// Invalidate cache
@@ -3691,9 +3416,9 @@ var MapAndControls = $n2.Class({
 				this._removeFeature(msg.data.fid);
 			};
 		};
-	}	
+	},	
     	
-	,fidAdded: function(fid) {
+	fidAdded: function(fid) {
 		if( this.cometEnabled && $.cometd ) {
 			var msg = {
 				fid: fid
@@ -3701,9 +3426,9 @@ var MapAndControls = $n2.Class({
 			};
 			$.cometd.publish(this.fidChannel,msg);
 		};
-	}
+	},
 	
-	,fidUpdated: function(fid) {
+	fidUpdated: function(fid) {
 		if( this.cometEnabled && $.cometd ) {
 			var msg = {
 				fid: fid
@@ -3711,9 +3436,9 @@ var MapAndControls = $n2.Class({
 			};
 			$.cometd.publish(this.fidChannel,msg);
 		}
-	}
+	},
 	
-	,fidDeleted: function(fid) {
+	fidDeleted: function(fid) {
 		if( this.cometEnabled && $.cometd ) {
 			var msg = {
 				fid: fid
@@ -3721,9 +3446,9 @@ var MapAndControls = $n2.Class({
 			};
 			$.cometd.publish(this.fidChannel,msg);
 		};
-	}
+	},
 
-	,contributionHandler: function(msg) {
+	contributionHandler: function(msg) {
 		//log('contributionHandler',msg);
 		if( msg.data ) {
 			var data = msg.data;
@@ -3734,13 +3459,13 @@ var MapAndControls = $n2.Class({
 				$n2.placeInfo.loadAndRenderContributions();
 			};
 		};
-	}	
+	},	
 	
     // === COMETD MODE STUFF END ========================================================
 
     // === STYLE MAP STUFF START ========================================================
 
-	,adjustFilterProperties: function(feature) {
+	adjustFilterProperties: function(feature) {
 	
 		feature.isFilteredIn = false;
 		feature.isFilteredOut = false;
@@ -3756,9 +3481,9 @@ var MapAndControls = $n2.Class({
 			};
 		};
 		return false;
-	}
+	},
 	
-	,_createStyleMap: function(styleOptions) {
+	_createStyleMap: function(styleOptions) {
 	
 		var providedMap = styleOptions 
 			? $.extend(true,{},this.defaultStyleMap,styleOptions)
@@ -3807,18 +3532,18 @@ var MapAndControls = $n2.Class({
 			});
 			
 		return styleMap;
-	}
+	},
 	
-	,_createStyleMapFromLayerInfo: function(layerInfo) {
+	_createStyleMapFromLayerInfo: function(layerInfo) {
 	
 		var styleOptions = null;
 		if( layerInfo && layerInfo.styleMap ) {
 			styleOptions = layerInfo.styleMap;
 		};
 		return this._createStyleMap(styleOptions);
-	}
+	},
 	
-	,_createEffectiveStyleMap: function(layerInfo) {
+	_createEffectiveStyleMap: function(layerInfo) {
 	
 		var _this = this;
 		
@@ -3926,17 +3651,17 @@ var MapAndControls = $n2.Class({
 		};
 			
 		return styleMap;
-	}
+	},
 	
-	,turnOffStyleFilter: function( label ) {
+	turnOffStyleFilter: function( label ) {
 		if( this.styleFilters[label] ) {
 			delete this.styleFilters[label];
 			
 			this.redrawMap();
 		};
-	}
+	},
 	
-	,removeStyleFilter: function( filter ) {
+	removeStyleFilter: function( filter ) {
 		var label = null;
 		if( typeof(filter) === 'string' ) {
 			label = filter;
@@ -3948,9 +3673,9 @@ var MapAndControls = $n2.Class({
 		};
 		turnOffStyleFilter(label);
 		$('#_olkit_styleFilter_'+label).remove();
-	}
+	},
 	
-	,addStyleFilter: function( filter_ ) {
+	addStyleFilter: function( filter_ ) {
 		var _this = this;
 		
 		var defaultFilter = {
@@ -4069,14 +3794,14 @@ var MapAndControls = $n2.Class({
 		};
 		
 		return false; 
-	}
+	},
 
     // === STYLE MAP STUFF END ========================================================
 
 	// === START -- LAYER MANAGEMENT ========================================================
 
 	// Legacy method
-	,createLayerFromOptions: function(opt_) {
+	createLayerFromOptions: function(opt_) {
 		var _this = this;
 		
 		var cs = this._getCustomService();
@@ -4233,27 +3958,27 @@ var MapAndControls = $n2.Class({
 		};
 		
 		return layerInfo;
-	}
+	},
 	
-	,findLayerFromId:  function(id) {
+	findLayerFromId:  function(id) {
 		return this.layers[id];
-	}
+	},
 	
-	,addLayer: function(layerDefinition, isBaseLayer) {
+	addLayer: function(layerDefinition, isBaseLayer) {
 		var olLayer = this._createOLLayerFromDefinition(layerDefinition, isBaseLayer);
 		this.map.addLayer( olLayer );
 		this._installFeatureSelector();
-	}
+	},
 	
-	,_uninstallFeatureSelector: function() {
+	_uninstallFeatureSelector: function() {
 		if( this.selectFeatureControl ) {
 			this.selectFeatureControl.deactivate();
 			this.map.removeControl(this.selectFeatureControl);
 			this.selectFeatureControl = null;
 		};
-	}
+	},
 	
-	,_installFeatureSelector: function() {
+	_installFeatureSelector: function() {
 		var _this = this;
 		
 		if( this.selectFeatureControl ) this._uninstallFeatureSelector();
@@ -4308,9 +4033,9 @@ var MapAndControls = $n2.Class({
 
 		this.map.addControl(this.selectFeatureControl);
 		this.selectFeatureControl.activate();
-	}
+	},
 	
-	,_mapBusyStatus: function(delta){
+	_mapBusyStatus: function(delta){
 		var previous = this.mapBusyCount;
 		this.mapBusyCount += delta;
 		if( previous < 1 && this.mapBusyCount > 0 ) {
@@ -4324,11 +4049,330 @@ var MapAndControls = $n2.Class({
 		} else if( this.busyMapControl && delta > 0 ) {
 			this.busyMapControl.increaseCounter();
 		}
-	}
+	},
 	
 	// === END -- LAYER MANAGEMENT ========================================================
 
-	,redefineFeatureLayerStylesAndRules : function(layerName) {
+	// === START -- SIMPLIFIED GEOMETRIES =================================================
+	
+	_refreshSimplifiedGeometries: function(){
+		var proj = new OpenLayers.Projection('EPSG:4326');
+		var epsg4326Resolution = this._getResolutionInProjection(proj);
+		//$n2.log('epsg4326Resolution',epsg4326Resolution);
+		
+		// Accumulate all geometries that are required
+		var geomsNeeded = {};
+		
+		// Iterate over layers
+		var layers = this.map.layers;
+		for(var li=0,le=layers.length; li<le; ++li){
+			var layer = layers[li];
+
+			// Iterate features
+			if( layer.features ){
+				for(var fi=0,fe=layer.features.length; fi<fe; ++fi){
+					var feature = layer.features[fi];
+					
+					// If feature is a cluster, iterate over its components
+					if( feature.cluster ){
+						for(var ci=0,ce=feature.cluster.length; ci<ce; ++ci){
+							var f = feature.cluster[ci];
+							checkFeature(f,epsg4326Resolution,geomsNeeded);
+						};
+					} else {
+						checkFeature(feature,epsg4326Resolution,geomsNeeded);
+					};
+				};
+			};
+		};
+
+		// Requested geometries for features that need them
+		var geometriesRequested = [];
+		var simplificationsReported = [];
+		for(var id in geomsNeeded){
+			var request = geomsNeeded[id];
+			var attName = request.attName;
+			
+			// Check if we already have the simplification in memory
+			if( '__inline' === attName ){
+				var simplification = {
+    				id: id
+    				,attName: attName
+    				,wkt: request.doc.nunaliit_geom.wkt
+    				,proj: request.feature.n2GeomProj
+				};
+				simplificationsReported[simplificationsReported.length] = simplification;
+				
+			} else if( request.feature 
+			 && request.feature.n2SimplifiedGeoms 
+			 && request.feature.n2SimplifiedGeoms[attName] ){
+				var simplification = request.feature.n2SimplifiedGeoms[attName];
+				simplificationsReported[simplificationsReported.length] = simplification;
+			
+			} else {
+				geometriesRequested[geometriesRequested.length] = geomsNeeded[id];
+			};
+		};
+		if( simplificationsReported.length ){
+			//$n2.log('simplificationsReported',simplificationsReported);
+			this._updateSimplifiedGeometries(simplificationsReported);
+		};
+		if( geometriesRequested.length ){
+			//$n2.log('geometriesRequested',geometriesRequested);
+			this._dispatch({
+				type: 'simplifiedGeometryRequest'
+				,geometriesRequested: geometriesRequested
+				,requester: this.mapId
+			});
+		};
+		// Report wait
+		this._dispatch({
+			type: 'waitReport'
+			,requester: this.mapId
+			,name: 'simplifiedGeometries'
+			,label: 'Simplified Geometries'
+			,count: geometriesRequested.length
+		});
+		
+		function checkFeature(f, res, geomsNeeded){
+			// Operate only on features that have simplification information
+			if( f.data 
+			 && f.data.nunaliit_geom
+			 && f.data.nunaliit_geom.simplified
+			 && f.data.nunaliit_geom.simplified.resolutions ){
+				// Compute which attachment name and resolution would be
+				// ideal for this feature. The best resolution is the greatest
+				// one defined which is smaller than the one requested by the map
+				var bestAttName = undefined;
+				var bestResolution = undefined;
+				for(var attName in f.data.nunaliit_geom.simplified.resolutions){
+					var attRes = 1 * f.data.nunaliit_geom.simplified.resolutions[attName];
+					if( attRes < res ){
+						if( typeof bestResolution === 'undefined' ){
+							bestResolution = attRes;
+							bestAttName = attName;
+						} else if( attRes > bestResolution ){
+							bestResolution = attRes;
+							bestAttName = attName;
+						};
+					};
+				};
+				
+				// If the best resolution is the one given inline, no need to
+				// fetch it
+				if( typeof bestResolution !== 'undefined' ){
+					if( f.data.nunaliit_geom.simplified.reported_resolution === bestResolution ){
+						bestAttName = '__inline';
+					};
+				};
+
+				// If we can not determine an optimal resolution, it is because
+				// the maps resolution is better than the best simplification. Go
+				// with original geometry
+				if( !bestAttName ){
+					if( f.data.nunaliit_geom.simplified.original ){
+						bestAttName = f.data.nunaliit_geom.simplified.original;
+					};
+				};
+				
+				// If we still can not figure out the best resolution, something
+				// went wrong and ignore this feature
+				if( !bestAttName ) return;
+				
+				// Check what geometry is currently displayed on the map
+				var currentGeomAttName = undefined;
+				if( f.n2CurrentGeomAttName ){
+					currentGeomAttName = f.n2CurrentGeomAttName;
+				};
+				
+				// If the best geometry and the current geometry do not match, add
+				// an entry in the dictionary
+				if( currentGeomAttName !== bestAttName ){
+					
+					// Check if the best geometry has already been requested
+					//if( f.n2TargetGeomAttName !== bestAttName ){
+						geomsNeeded[f.fid] = {
+							id: f.fid
+							,attName: bestAttName
+							,doc: f.data
+							,feature: f
+						};
+						
+						// Save that we have requested the best geometry
+						f.n2TargetGeomAttName = bestAttName;
+					//};
+				};
+			};
+		};
+	},
+	
+	/*
+	   simplifiedGeometries is an array of object like this:
+	   {
+	   		id: <docId or fid>
+	   		,attName: <string, attachment name>
+	   		,wkt: <string, well known text of simplified geometry>
+	   		,proj: <object(OpenLayers.Projection), projection of simplified geometry>
+	   }
+	 */
+	_updateSimplifiedGeometries: function(simplifiedGeometries){
+		var _this = this;
+		
+		// Often used
+		var wktFormat = new OpenLayers.Format.WKT();
+
+		// Make a map of all simplified geometries based on id (fid)
+		var simplifiedGeometriesById = {};
+		for(var i=0,e=simplifiedGeometries.length; i<e; ++i){
+			var simplifiedGeometry = simplifiedGeometries[i];
+			simplifiedGeometriesById[simplifiedGeometry.id] = simplifiedGeometry;
+		};
+		
+		// Look for which layers need to be reloaded
+		var layersToReload = {};
+		var layers = this.map.layers;
+		for(var li=0,le=layers.length; li<le; ++li){
+			var layer = layers[li];
+
+			// Iterate features and find those that must be modified
+			if( layer.features ){
+				for(var fi=0,fe=layer.features.length; fi<fe; ++fi){
+					var feature = layer.features[fi];
+					
+					// If feature is a cluster, iterate over its components
+					if( feature.cluster ){
+						for(var ci=0,ce=feature.cluster.length; ci<ce; ++ci){
+							var f = feature.cluster[ci];
+							updateFeature(layer,f,simplifiedGeometriesById,layersToReload);
+						};
+					} else {
+						updateFeature(layer,feature,simplifiedGeometriesById,layersToReload);
+					};
+				};
+			};
+		};
+		
+		// Reload layers that need it
+		for(var layerId in layersToReload){
+			var layer = layersToReload[layerId];
+			
+			// Accumulate all features
+			var features = [];
+			for(var fi=0,fe=layer.features.length; fi<fe; ++fi){
+				var feature = layer.features[fi];
+				
+				// If feature is a cluster, iterate over its components
+				if( feature.cluster ){
+					for(var ci=0,ce=feature.cluster.length; ci<ce; ++ci){
+						features[features.length] = feature.cluster[ci];
+					};
+				} else {
+					features[features.length] = feature;
+				};
+			};
+			
+			// Remove all features
+			layer.removeAllFeatures();
+			
+			// Add them again so that clustering and drawing is based on the
+			// new geometry
+//			$n2.log('Reload features');
+//			for(var i=0;i<features.length;++i){
+//				var f = features[i];
+//				var g = f.geometry;
+//				$n2.log(''+g);
+//			};
+			layer.addFeatures(features);
+		};
+		
+		function updateFeature(layer, f, simplifiedGeometryById, layersToReload){
+			var simplifiedGeometry = simplifiedGeometryById[f.fid];
+			if( simplifiedGeometry ){
+				// Save this information
+				if( !f.n2SimplifiedGeoms ){
+					f.n2SimplifiedGeoms = {};
+				};
+				f.n2SimplifiedGeoms[simplifiedGeometry.attName] = simplifiedGeometry;
+				
+				// If this simplification is already installed, then there is nothing
+				// to do
+				if( simplifiedGeometry.attName 
+				 && simplifiedGeometry.attName !== f.n2CurrentGeomAttName ){
+					// If this simplification is not the target simplification,
+					// then there is nothing to do
+					if( simplifiedGeometry.attName 
+					 && simplifiedGeometry.attName === f.n2TargetGeomAttName ){
+						// OK, we must install this simplification
+						if( simplifiedGeometry.wkt ){
+							var f2 = wktFormat.read(simplifiedGeometry.wkt);
+							
+							var projectedGeom = undefined;
+							
+							// wktFormat.read() returns an array when WKT is GEOMETRYCOLLECTION
+							if( $n2.isArray(f2) ){
+								var components = [];
+								for(var i=0,e=f2.length; i<e; ++i){
+									var vectorFeature = f2[i];
+									if( vectorFeature.geometry ){
+										components.push(vectorFeature.geometry);
+									};
+								};
+								projectedGeom = new OpenLayers.Geometry.Collection(components);
+								
+							} else if( f2 && f2.geometry ) {
+								projectedGeom = f2.geometry;
+							};
+							
+							if( projectedGeom ){
+								// Reproject geometry
+								if( simplifiedGeometry.proj ){
+									projectedGeom = 
+										_this._reprojectGeometryForMap(projectedGeom, simplifiedGeometry.proj);
+								};
+								
+								// Swap geometry
+								f.geometry = projectedGeom;
+								f.n2CurrentGeomAttName = simplifiedGeometry.attName;
+								
+								// Mark this layer for reload
+								layersToReload[layer.id] = layer;
+							};
+						};
+					};
+				};
+			};
+		};
+	},
+    
+	_getResolutionInProjection: function(proj){
+    	var targetResolution = this.map.resolution;
+    	
+    	if( this.map.projection.getCode() !== proj.getCode() ){
+    		// Convert [0,0] and [0,1] to proj
+    		var p0 = OpenLayers.Projection.transform({x:0,y:0},this.map.projection,proj);
+    		var p1 = OpenLayers.Projection.transform({x:0,y:1},this.map.projection,proj);
+    		
+    		var factor = Math.sqrt( ((p0.x-p1.x)*(p0.x-p1.x)) + ((p0.y-p1.y)*(p0.y-p1.y)) );
+    		
+    		targetResolution = this.map.resolution * factor;
+    	};
+    	
+    	return targetResolution;
+    },
+    
+	_reprojectGeometryForMap: function(geom, proj){
+    	var targetGeometry = geom;
+    	
+    	if( this.map.projection.getCode() !== proj.getCode() ){
+    		geom.transform(proj,this.map.projection);
+    	};
+    	
+    	return targetGeometry;
+    },
+	
+	// === END -- SIMPLIFIED GEOMETRIES ===================================================
+
+	redefineFeatureLayerStylesAndRules : function(layerName) {
 		var layerInfo = this.getNamedLayerInfo(layerName);
 		if (null == layerInfo) {
 			alert('redefineFeatureLayerStylesAndRules: unknown layer name: ' + layerName);
@@ -4336,23 +4380,30 @@ var MapAndControls = $n2.Class({
     		//this._endClicked();
     		layerInfo.olLayer.redraw();    			
 		};
-	}
+	},
 	
-	,recentreMap: function (ll) { // @param ll OpenLayers LonLat in map projection for centre of map
+	recentreMap: function (ll) { // @param ll OpenLayers LonLat in map projection for centre of map
 		var z = this.map.getZoom();
 		this.map.setCenter(ll, z, false, false);
-	}
+	},
+	
+	/**
+	 * This is called when the map has moved. 
+	 */
+	_mapMoved: function(){
+		
+	},
 	
 	/*
 	 * Returns map to initial bounds/extent
 	 */
-	,resetExtent: function(){
+	resetExtent: function(){
 		if( this.initialZoomBounds ){
 			this.map.zoomToExtent(this.initialZoomBounds);
 		};
-	}
+	},
 	
-	,setInitialExtent: function(bounds, srsName, reset) {
+	setInitialExtent: function(bounds, srsName, reset) {
 
 		var initialExt = new OpenLayers.Bounds(bounds[0], bounds[1], bounds[2], bounds[3]);
 	
@@ -4365,9 +4416,9 @@ var MapAndControls = $n2.Class({
 		if( reset ){
 			this.resetExtent();
 		};
-	}
+	},
 	
-	,setNewExtent: function(bounds, srsName) { // @param bounds OpenLayers Bounds values in array (in map projection coordinates)
+	setNewExtent: function(bounds, srsName) { // @param bounds OpenLayers Bounds values in array (in map projection coordinates)
 
 		var maxExt = new OpenLayers.Bounds(bounds[0], bounds[1], bounds[2], bounds[3]);
 	
@@ -4379,19 +4430,19 @@ var MapAndControls = $n2.Class({
 			maxExt
 			,true
 		);
-	}
+	},
 	
-	,getMediaPath: function() {
+	getMediaPath: function() {
 		return this.dbSearchEngine.getRelMediaPath();
-	}
+	},
 	
-	,getSidePanelName: function() {
+	getSidePanelName: function() {
 		return this.options.sidePanelName;
-	}
+	},
 
-	,getFilterPanelName: function() {
+	getFilterPanelName: function() {
 		return this.options.filterPanelName;
-	}
+	},
 
 	/*
 	 * Add a listener that receives information about the mouse position
@@ -4407,13 +4458,13 @@ var MapAndControls = $n2.Class({
 	 *                 If the listener returns false, then it is removed from subsequent calls.
 	 * 
 	 */
-	,addMapMousePositionListener: function(listener){
+	addMapMousePositionListener: function(listener){
 		if( typeof(listener) === 'function' ) {
 			this.mapMouseMoveListeners.push(listener);
 		};
-	}
+	},
 	
-	,_retrieveCachedValue: function(id) {
+	_retrieveCachedValue: function(id) {
 		// Look through the layers
 		for(var i=0,e=this.infoLayers.length; i<e; ++i){
 			var layerInfo = this.infoLayers[i];
@@ -4428,9 +4479,9 @@ var MapAndControls = $n2.Class({
 		};
 		
 		return null;
-	}
+	},
 	
-	,_getCachedValueMap: function(layerInfo) {
+	_getCachedValueMap: function(layerInfo) {
 		if( layerInfo.cachedValues ) {
 			var valueMap = layerInfo.cachedValues;
 		} else {
@@ -4456,13 +4507,13 @@ var MapAndControls = $n2.Class({
 		};
 		
 		return valueMap;
-	}
+	},
 	
-	,_clearValueCache: function(layerInfo){
+	_clearValueCache: function(layerInfo){
 		layerInfo.cachedValues = null;
-	}
+	},
 	
-	,_cacheInvalidateFeature: function(id) {
+	_cacheInvalidateFeature: function(id) {
 		// Invalidate feature on each layer
 		for(var i=0,e=this.infoLayers.length; i<e; ++i){
 			var layerInfo = this.infoLayers[i];
@@ -4471,9 +4522,9 @@ var MapAndControls = $n2.Class({
 				valueMap[id].__n2_cache_invalid = true;
 			};
 		};
-	}
+	},
 	
-	,_cacheUpdateDocumentVersion: function(id,rev){
+	_cacheUpdateDocumentVersion: function(id,rev){
 		// Iterate over all layers
 		for(var i=0,e=this.infoLayers.length; i<e; ++i){
 			var layerInfo = this.infoLayers[i];
@@ -4486,9 +4537,9 @@ var MapAndControls = $n2.Class({
 				};
 			};
 		};
-	}
+	},
 
-	,_handleMapMousePosition: function(evt){
+	_handleMapMousePosition: function(evt){
 		if( null == evt ) {
 			this.lastMapXy = null;
 		} else {
@@ -4509,9 +4560,9 @@ var MapAndControls = $n2.Class({
 			};
 		};
 		this.mapMouseMoveListeners = newListeners;
-	}
+	},
 	
-	,_getAuthService: function(){
+	_getAuthService: function(){
 		var auth = null;
 		
 		if( this.options.directory ) {
@@ -4519,9 +4570,9 @@ var MapAndControls = $n2.Class({
 		};
 		
 		return auth;
-	}
+	},
 	
-	,_getCustomService: function(){
+	_getCustomService: function(){
 		var cs = null;
 		
 		if( this.options.directory ) {
@@ -4529,25 +4580,25 @@ var MapAndControls = $n2.Class({
 		};
 		
 		return cs;
-	}
+	},
 	
-	,_getDispatchService: function(){
+	_getDispatchService: function(){
 		var d = null;
 		if( this.options.directory ) {
 			d = this.options.directory.dispatchService;
 		};
 		
 		return d;
-	}
+	},
 	
-	,_dispatch: function(m){
+	_dispatch: function(m){
 		var dispatcher = this._getDispatchService();
 		if( dispatcher ) {
 			dispatcher.send(DH,m);
 		};
-	}
+	},
 	
-	,_registerDispatch: function(event, fn){
+	_registerDispatch: function(event, fn){
 		var dispatcher = this._getDispatchService();
 		if( dispatcher ) {
 			var _this = this;
@@ -4562,9 +4613,9 @@ var MapAndControls = $n2.Class({
 
 			dispatcher.register(DH,event,fn);
 		};
-	}
+	},
 	
-	,_handleDispatch: function(m){
+	_handleDispatch: function(m){
 		var type = m.type;
 		if( 'documentVersion' === type ) {
 			this._cacheUpdateDocumentVersion(m.docId,m.rev);
@@ -4858,12 +4909,12 @@ var MapAndControls = $n2.Class({
 		    		};
 				};
 
-	    		this.switchMapMode(this.modes.NAVIGATE);
+	    		this._switchMapMode(this.modes.NAVIGATE);
 			};
 			
 		} else if( 'editClosed' === type ) {
 			if( this.currentMode !== this.modes.NAVIGATE ){
-				this.switchMapMode(this.modes.NAVIGATE);
+				this._switchMapMode(this.modes.NAVIGATE);
 			};
 			var deleted = m.deleted;
 			if( !deleted ) {
@@ -4877,6 +4928,41 @@ var MapAndControls = $n2.Class({
 		} else if( 'editGeometryModified' === type ) {
 			if( m._origin !== this ){
 				this._geometryModified(m.docId, m.geom, m.proj);
+			};
+
+		} else if( 'editReportDocument' === type ) {
+			if( m._origin !== this ){
+				if( m.geom ){
+					// Adjust geometry
+					this._geometryModified(m.docId, m.geom, m.proj);
+					
+					// Zoom
+					if( m.doc
+					 && m.doc.nunaliit_geom
+					 && m.doc.nunaliit_geom.bbox 
+					 && m.proj ){
+						var xmin = m.doc.nunaliit_geom.bbox[0];
+						var ymin = m.doc.nunaliit_geom.bbox[1];
+						var xmax = m.doc.nunaliit_geom.bbox[2];
+						var ymax = m.doc.nunaliit_geom.bbox[3];
+						
+						var xdiff = (xmax - xmin) / 3;
+						var ydiff = (ymax - ymin) / 3;
+						
+						// Do not zoom on points
+						if( xdiff > 0 || ydiff > 0 ){
+							xmin = xmin - xdiff;
+							xmax = xmax + xdiff;
+							ymin = ymin - ydiff;
+							ymax = ymax + ydiff;
+							
+							this.setNewExtent(
+								[xmin,ymin,xmax,ymax]
+								,m.proj.getCode()
+							);
+						};
+					};
+				};
 			};
 			
 		} else if( 'mapRedrawLayer' === type ) {
@@ -4928,10 +5014,13 @@ var MapAndControls = $n2.Class({
 			};
 		} else if( 'mapSwitchToEditMode' === type ) {
 			this.switchToEditMode();
+			
+		} else if( 'simplifiedGeometryReport' === type ) {
+			this._updateSimplifiedGeometries(m.simplifiedGeometries);
 		};
-	}
+	},
 	
-	,_handleAddLayerToMap: function(m){
+	_handleAddLayerToMap: function(m){
 		var layerDef = m.layer;
 		var isBaseLayer = false;
 		if( typeof(m.isBaseLayer) !== 'undefined' ){
@@ -4965,7 +5054,6 @@ $n2.mapAndControls.MapAndControls = MapAndControls;
 
 // Pop-up management
 $n2.mapAndControls.DefaultPopupHtmlFunction = null;
-$n2.mapAndControls.BasicPopupHtmlFunction = basicPopupHtmlFunction;
 $n2.mapAndControls.SuppressPopupHtmlFunction = suppressPopupHtmlFunction;
 
 // Cluster click callback

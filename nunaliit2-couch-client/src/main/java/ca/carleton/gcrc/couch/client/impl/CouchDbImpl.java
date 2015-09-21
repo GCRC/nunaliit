@@ -454,6 +454,17 @@ public class CouchDbImpl implements CouchDb {
 			) throws Exception {
 
 		String docId = doc.getString("_id");
+		
+		return downloadAttachment(docId, name, os);
+	}
+
+	@Override
+	public String downloadAttachment(
+			String docId
+			,String name
+			,OutputStream os
+			) throws Exception {
+
 		String path = URLEncoder.encode(docId,"UTF-8")
 			+ "/"
 			+ URLEncoder.encode(name,"UTF-8");

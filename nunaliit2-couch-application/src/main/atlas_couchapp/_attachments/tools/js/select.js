@@ -2129,43 +2129,51 @@
 		$div.append($h);
 		$h.text(list.name);
 		
-		var $tx = $('<button></button>');
-		$tx.text( _loc('Transform') );
-		$h.append($tx);
-		$tx.click(function(){
-			transformList(list);
-			return false;
-		});
-		
-		var $dx = $('<button></button>');
-		$dx.text( _loc('Delete') );
-		$h.append($dx);
-		$dx.click(function(){
-			deleteDocumentsFromList(list);
-			return false;
-		});
-		
-		var $rx = $('<button></button>');
-		$rx.text( _loc('Refine List') );
-		$h.append($rx);
-		$rx.click(function(){
-			SearchFilter.refineList({
-				list: list
-				,onSuccess: function(refinedList){
-					addList(refinedList);
-				}
+		$('<button>')
+			.text( _loc('Transform') )
+			.appendTo($h)
+			.click(function(){
+				transformList(list);
+				return false;
 			});
-			return false;
-		});
 		
-		var $ex = $('<button></button>');
-		$ex.text( _loc('Export') );
-		$h.append($ex);
-		$ex.click(function(){
-			exportList(list);
-			return false;
-		});
+		$('<button>')
+			.text( _loc('Delete') )
+			.appendTo($h)
+			.click(function(){
+				deleteDocumentsFromList(list);
+				return false;
+			});
 		
+		$('<button>')
+			.text( _loc('Refine List') )
+			.appendTo($h)
+			.click(function(){
+				SearchFilter.refineList({
+					list: list
+					,onSuccess: function(refinedList){
+						addList(refinedList);
+					}
+				});
+				return false;
+			});
+		
+		$('<button>')
+			.text( _loc('Export') )
+			.appendTo($h)
+			.click(function(){
+				exportList(list);
+				return false;
+			});
+		
+		$('<button>')
+			.text( _loc('Re-Submit Geometries') )
+			.appendTo($h)
+			.click(function(){
+				resubmitGeometriesInList(list);
+				return false;
+			});
+
 		for(var i=0,e=list.docIds.length; i<e; ++i){
 			var docId = list.docIds[i];
 			var $d = $('<div></div>');
@@ -2613,6 +2621,43 @@
 			onSkipped();
 		};
 	};
+
+	// -----------------------------------------------------------------
+	function resubmitGeometriesInList(doc, onTransformed, onSkipped, scriptConfig){
+		if( doc.nunaliit_geom 
+		 && doc.nunaliit_geom.simplified
+		 && doc.nunaliit_geom.simplified.original ) {
+			var attName = doc.nunaliit_geom.simplified.original;
+			var originalUrl = atlasDb.getAttachmentUrl(doc,attName);
+			$.ajax({
+				url: originalUrl
+				,dataType: 'text'
+				,success: function(wkt){
+					var geom = OpenLayers.Geometry.fromWKT(wkt);
+					var bounds = geom.getBounds();
+					doc.nunaliit_geom = {
+						nunaliit_type: 'geometry'
+						,wkt: wkt
+						,bbox: [
+							bounds.left
+							,bounds.bottom
+							,bounds.right
+							,bounds.top
+						]
+					};
+
+					onTransformed();
+				}
+				,error: function(){
+					reportError('Unable to load attachment '+attName+' from doc '+doc._id);
+					onSkipped();
+				}
+			});
+			
+		} else {
+			onSkipped();
+		};
+	};
 	
 	// -----------------------------------------------------------------
 	function selectText(list){
@@ -2857,6 +2902,7 @@
 		documentTransforms.push(new DocumentTransformTextReplace());
 		documentTransforms.push(new DocumentTransformJavascript());
 		documentTransforms.push(new DocumentTransformOnFunction(resubmitMediaInList, 'Resubmit Media'));
+		documentTransforms.push(new DocumentTransformOnFunction(resubmitGeometriesInList, 'Resubmit Geometries'));
 		
 		$selectAppDiv
 			.empty()

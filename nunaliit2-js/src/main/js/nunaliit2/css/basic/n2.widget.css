@@ -451,3 +451,32 @@ Polar Stereographic Projection Selector
 .n2polarStereographicProjectionSelector {
 	/* background-color: #ffffff; */
 }
+
+
+/* 
+==============================
+Wait Widget 
+==============================
+*/
+
+.n2wait {
+    position: absolute;
+    display: block;
+    background-color: #ffffff;
+    right: 0;
+    bottom: 0;
+    border: solid #000000 1px;
+}
+
+.n2_content_contains_text.n2_content_contains_map .n2wait {
+    right: 450px;
+	bottom: 15px;
+}
+
+.n2_display_format_tiled .n2_content_contains_text.n2_content_contains_map .n2wait {
+	right: 640px;
+}
+
+.n2wait .n2_wait_name_count {
+	padding-left: 2px;
+}

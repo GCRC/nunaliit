@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Vector;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -28,6 +29,10 @@ import ca.carleton.gcrc.couch.onUpload.conversion.WorkDescriptor;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotification;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionMetaData;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionPlugin;
+import ca.carleton.gcrc.couch.onUpload.simplifyGeoms.GeometrySimplificationProcessImpl;
+import ca.carleton.gcrc.couch.onUpload.simplifyGeoms.GeometrySimplifier;
+import ca.carleton.gcrc.couch.onUpload.simplifyGeoms.GeometrySimplifierDisabled;
+import ca.carleton.gcrc.couch.onUpload.simplifyGeoms.GeometrySimplifierImpl;
 import ca.carleton.gcrc.couch.utils.CouchNunaliitUtils;
 import ca.carleton.gcrc.olkit.multimedia.file.SystemFile;
 
@@ -48,6 +53,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 	private Set<String> docIdsToSkip = new HashSet<String>();
 	private List<FileConversionPlugin> fileConverters;
 	private int noWorkDelayInMs = DELAY_NO_WORK_POLLING;
+	private GeometrySimplifier simplifier = null;
 	
 	protected UploadWorkerThread(
 		UploadWorkerSettings settings
@@ -76,6 +82,20 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			if( null != changeMonitor ){
 				changeMonitor.addChangeListener(this);
 			}			
+		}
+		
+		if( settings.isGeometrySimplificationDisabled() ){
+			simplifier = new GeometrySimplifierDisabled();
+			
+		} else {
+			List<Double> resolutions = new Vector<Double>();
+			resolutions.add(0.00001);
+			resolutions.add(0.0001);
+			resolutions.add(0.001);
+			resolutions.add(0.01);
+			resolutions.add(0.1);
+			GeometrySimplificationProcessImpl simplifierProcess = new GeometrySimplificationProcessImpl(resolutions);
+			simplifier = new GeometrySimplifierImpl(simplifierProcess);
 		}
 	}
 	
@@ -208,6 +228,9 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			
 		} else if( UploadConstants.UPLOAD_WORK_ROTATE_180.equals(state) ) {
 			performRotateWork(FileConversionPlugin.WORK_ROTATE_180, work);
+			
+		} else if( UploadConstants.UPLOAD_WORK_SIMPLIFY_GEOMETRY.equals(state) ) {
+			performSimplifyGeometryWork(work);
 			
 		} else {
 			throw new Exception("Unrecognized state: "+state);
@@ -723,6 +746,13 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			// Update status
 			conversionContext.saveDocument();
 		}
+	}
+	
+	private void performSimplifyGeometryWork(Work work) throws Exception {
+		FileConversionContext conversionContext = 
+			new FileConversionContextImpl(work,documentDbDesign,mediaDir);
+		
+		simplifier.simplifyGeometry(conversionContext);
 	}
 	
 	private void sendVettingNotification(String docId, JSONObject doc, String attachmentName) {

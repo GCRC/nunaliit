@@ -34,303 +34,326 @@ $Id: n2.couchGeom.js 8165 2012-05-31 13:14:37Z jpfiset $
 // @ requires n2.utils.js
 
 ;(function($n2){
+"use strict";
 
-$n2.couchGeom = $n2.extend({},{
+/*
+ * Returns a geometry object used in CouchDb given
+ * a geometry obtained from OpenLayers.
+ */
+function getCouchGeometry(geom) {
 
-	/*
-	 * Returns a geometry object used in CouchDb given
-	 * a geometry obtained from OpenLayers.
-	 */
-	getCouchGeometry: function(geom) {
+	var bounds = geom.getBounds();
+	var wkt = geom.toString();
 	
-		var bounds = geom.getBounds();
-		var wkt = geom.toString();
+	return {
+		nunaliit_type: 'geometry'
+		,wkt: wkt
+		,bbox: [
+			bounds.left
+			,bounds.bottom
+			,bounds.right
+			,bounds.top
+		]
+	};
+};
+
+function updateDocumentWithWktGeometry(opts_) {
+	var opts = $n2.extend({
+		doc: null
+		,wkt: null
+	},opts_);
+	
+	if( !opts.doc ) {
+		throw 'Attribute "doc" not provided while updating a geometry document';
+	}
+	if( !opts.wkt ) {
+		throw 'Attribute "wkt" not provided while updating a geometry document';
+	}
+	
+	if( OpenLayers && OpenLayers.Geometry && OpenLayers.Geometry.fromWKT ) {
+		var olGeom = OpenLayers.Geometry.fromWKT(opts.wkt);
+	} else { 
+		opts.onError('OpenLayers must be installed to update document geometries');
+		return;
+	};		
+
+	if( olGeom ){
+		var couchGeom = getCouchGeometry(olGeom);
 		
-		return {
-			nunaliit_type: 'geometry'
-			,wkt: wkt
-			,bbox: [
+		// Install geometry
+		opts.doc.nunaliit_geom = couchGeom;
+	};
+};
+
+/*
+ * Given a couch geometry, fixes the bbox
+ */
+function updatedGeometry(couchGeom) {
+
+	if( OpenLayers 
+	 && OpenLayers.Geometry 
+	 && OpenLayers.Geometry.fromWKT ) {
+		var olGeom = OpenLayers.Geometry.fromWKT(couchGeom.wkt);
+		if( olGeom ){
+			var bounds = olGeom.getBounds();
+			couchGeom.bbox = [
 				bounds.left
 				,bounds.bottom
 				,bounds.right
 				,bounds.top
-			]
+			];
 		};
-	}
-
-	/*
-	 * Given a couch geometry, fixes the bbox
-	 */
-	,adjustBboxOnCouchGeom: function(couchGeom) {
+	};
 	
-		if( OpenLayers 
-		 && OpenLayers.Geometry 
-		 && OpenLayers.Geometry.fromWKT ) {
-			var olGeom = OpenLayers.Geometry.fromWKT(couchGeom.wkt);
-			if( olGeom ){
-				var bounds = olGeom.getBounds();
-				couchGeom.bbox = [
-					bounds.left
-					,bounds.bottom
-					,bounds.right
-					,bounds.top
-				];
-			};
-		};
-	}
+	if( couchGeom.simplified ){
+		delete couchGeom.simplified;
+	};
+};
 
-	/*
-	 * Returns a geometry object used in OpenLayers given
-	 * a geometry obtained from a Couch document.
-	 */
-	,getOpenLayersGeometry: function(options_) {
-		var opts = $n2.extend({
-				couchGeom: null
-				,wkt: null
-				,onError: function(errorMsg){ $n2.reportError(errorMsg); }
-			}
-			,options_
-		);
-		
-		var wkt = opts.wkt;
-		if( !wkt && opts.couchGeom ){
-			wkt = opts.couchGeom.wkt;
-		};
-
+/*
+ * Returns a geometry object used in OpenLayers given
+ * a geometry obtained from a Couch document.
+ */
+function getOpenLayersGeometry(opts_) {
+	var opts = $n2.extend({
+		doc: null
+		,couchGeom: null
+		,wkt: null
+	},opts_);
+	
+	var wkt = opts.wkt;
+	
+	if( !wkt 
+	 && opts.couchGeom ){
+		wkt = opts.couchGeom.wkt;
+	};
+	
+	if( !wkt 
+	 && opts.doc 
+	 && opts.doc.nunaliit_geom ){
+		wkt = opts.doc.nunaliit_geom.wkt;
+	};
+	
+	if( wkt ){
 		if( OpenLayers && OpenLayers.Geometry && OpenLayers.Geometry.fromWKT ) {
 			var olGeom = OpenLayers.Geometry.fromWKT(wkt);
 			return olGeom;
 		} else { 
-			opts.onError('OpenLayers must be installed to update document geometries');
+			throw 'OpenLayers must be installed to update document geometries';
 		};
-	}
+	};
 
-	,updateDocumentWithWktGeometry: function(doc, options_) {
-		var opts = $n2.extend({
-				wkt: null
-				,onError: function(errorMsg){ $n2.reportError(errorMsg); }
-			}
-			,options_
-		);
-		
-		if( !opts.wkt ) {
-			opts.onError('Attribute "wkt" not provided while updating a geometry document');
-			return;
-		}
-		
-		if( OpenLayers && OpenLayers.Geometry && OpenLayers.Geometry.fromWKT ) {
-			var olGeom = OpenLayers.Geometry.fromWKT(opts.wkt);
-		} else { 
-			opts.onError('OpenLayers must be installed to update document geometries');
-			return;
-		};		
+	return undefined;
+};
 
-		var couchGeom = $n2.couchGeom.getCouchGeometry(olGeom);
-		
-		// Install geometry
-		doc.nunaliit_geom = couchGeom;
-	}
-
-	/*
-	 * Selects a tile layer from a bounding box. If a tile
-	 * layer is selected, then its name is set in the
-	 * 'viewName' attribute if the view options and the
-	 * tile identifiers are saved as an array in the 'keys'
-	 * property.
-	 * If an appropriate tile layer is found, true is returned.
-	 * Otherwise, false is returned.
-	 */	
-	,selectTileViewFromBounds: function(viewOptions, bb, layer, fids) {
-		
-		var views = [
-			{
-				tile:$n2.tiles.format4326_25M
-				,name: 'geom-tile25m'
-				,list: 'noduplicate'
-				,layer: false
-				,fid: false
-			}
-			,{
-				tile:$n2.tiles.format4326_25M
-				,name: 'geom-layer-tile25m'
-				,list: 'noduplicate'
-				,layer: true
-				,fid: false
-			}
-			,{
-				tile:$n2.tiles.format4326_65K
-				,name: 'geom-tile65k'
-				,list: 'noduplicate'
-				,layer: false
-				,fid: false
-			}
-			,{
-				tile:$n2.tiles.format4326_65K
-				,name: 'geom-layer-tile65k'
-				,list: 'noduplicate'
-				,layer: true
-				,fid: false
-			}
-			,{
-				tile:$n2.tiles.format4326_200
-				,name: 'geom-tile200'
-				,list: 'noduplicate'
-				,layer: false
-				,fid: false
-			}
-			,{
-				tile:$n2.tiles.format4326_200
-				,name: 'geom-layer-tile200'
-				,list: 'noduplicate'
-				,layer: true
-				,fid: false
-			}
-			,{
-				tile:null
-				,name: 'geom-layer-fid'
-				,layer: true
-				,fid: true
-			}
-			,{
-				tile:null
-				,name: 'geom-layer'
-				,layer: true
-				,fid: false
-			}
-			,{
-				tile:null
-				,name: 'geom'
-				,layer: false
-				,fid: true
-			}
-		];
-		
-		// bbox and fids are mutually exclusive
-		if( bb && fids ) bb = null;
-		
-		for(var i=0,e=views.length; i<e; ++i) {
-			var v = views[i];
-
-			if( bb && v.tile && layer && v.layer ) {
-				// This view support tiles and layer
-				if( $n2.tiles.getApproxTilesForBounds(
-					v.tile
-					,bb[0],bb[1]
-					,bb[2],bb[3] ) < 500 ) {
-					
-					viewOptions.viewName = v.name;
-					
-					var tiles = $n2.tiles.getTilesFromBounds(
-						v.tile
-						,bb[0],bb[1]
-						,bb[2],bb[3]
-						);
-						
-					viewOptions.keys = [];
-					for(var j=0,k=tiles.length; j<k; ++j) {
-						viewOptions.keys.push( [layer,tiles[j]] );
-					};
-					
-					if( v.list ) viewOptions.listName = v.list;
-					
-					return true;
-				};
-				
-			} else if( bb && v.tile && !layer && !v.layer ) {
-				// This view support tiles only
-				if( $n2.tiles.getApproxTilesForBounds(
-					v.tile
-					,bb[0],bb[1]
-					,bb[2],bb[3] ) < 500 ) {
-					
-					viewOptions.viewName = v.name;
-					
-					viewOptions.keys = $n2.tiles.getTilesFromBounds(
-						v.tile
-						,bb[0],bb[1]
-						,bb[2],bb[3]
-						);
-
-					if( v.list ) viewOptions.listName = v.list;
-					
-					return true;
-				};
-				
-			} else if( fids && v.fid && layer && v.layer ) {
-				// This view supports layer and fid
-				viewOptions.viewName = v.name;
-				
-				viewOptions.keys = [];
-				for(var j=0,k=fids.length; j<k; ++j) {
-					viewOptions.keys.push( [layer,fids[j]] );
-				};
-
-				if( v.list ) viewOptions.listName = v.list;
-					
-				return true;
-				
-			} else if( fids && v.fid && !layer && !v.layer ) {
-				// This view supports fid
-				viewOptions.viewName = v.name;
-				
-				viewOptions.keys = fids;
-
-				if( v.list ) viewOptions.listName = v.list;
-					
-				return true;
-				
-			} else if( !fids && !v.fid && layer && v.layer ) {
-				// This view supports fid
-				viewOptions.viewName = v.name;
-				
-				viewOptions.keys = [layer];
-
-				if( v.list ) viewOptions.listName = v.list;
-					
-				return true;
-				
-			} else if( !bb && !fids && !layer && !v.fid && !v.layer && !v.tile ) {
-				// This view supports fid
-				viewOptions.viewName = v.name;
-
-				if( v.list ) viewOptions.listName = v.list;
-					
-				return true;
-			};
-		};
-		
-		return false;
-	}
+/*
+ * Selects a tile layer from a bounding box. If a tile
+ * layer is selected, then its name is set in the
+ * 'viewName' attribute if the view options and the
+ * tile identifiers are saved as an array in the 'keys'
+ * property.
+ * If an appropriate tile layer is found, true is returned.
+ * Otherwise, false is returned.
+ */	
+function selectTileViewFromBounds(viewOptions, bb, layer, fids) {
 	
-	,queryGeometries: function(atlasDesignDoc, viewOptions) {
+	var views = [
+		{
+			tile:$n2.tiles.format4326_25M
+			,name: 'geom-tile25m'
+			,list: 'noduplicate'
+			,layer: false
+			,fid: false
+		}
+		,{
+			tile:$n2.tiles.format4326_25M
+			,name: 'geom-layer-tile25m'
+			,list: 'noduplicate'
+			,layer: true
+			,fid: false
+		}
+		,{
+			tile:$n2.tiles.format4326_65K
+			,name: 'geom-tile65k'
+			,list: 'noduplicate'
+			,layer: false
+			,fid: false
+		}
+		,{
+			tile:$n2.tiles.format4326_65K
+			,name: 'geom-layer-tile65k'
+			,list: 'noduplicate'
+			,layer: true
+			,fid: false
+		}
+		,{
+			tile:$n2.tiles.format4326_200
+			,name: 'geom-tile200'
+			,list: 'noduplicate'
+			,layer: false
+			,fid: false
+		}
+		,{
+			tile:$n2.tiles.format4326_200
+			,name: 'geom-layer-tile200'
+			,list: 'noduplicate'
+			,layer: true
+			,fid: false
+		}
+		,{
+			tile:null
+			,name: 'geom-layer-fid'
+			,layer: true
+			,fid: true
+		}
+		,{
+			tile:null
+			,name: 'geom-layer'
+			,layer: true
+			,fid: false
+		}
+		,{
+			tile:null
+			,name: 'geom'
+			,layer: false
+			,fid: true
+		}
+	];
+	
+	// bbox and fids are mutually exclusive
+	if( bb && fids ) bb = null;
+	
+	for(var i=0,e=views.length; i<e; ++i) {
+		var v = views[i];
 
-		var bounds = null;
-		
-		// Rebuild view options
-		var data = {};
-
-		// Install default view
-		data.viewName = 'geom';
-		data.listName = 'noduplicate';
-		
-		// Copy over client request
-		for(var key in viewOptions) {
-			if( key === 'bounds' ) {
-				bounds = viewOptions[key];
-			} else {
-				data[key] = viewOptions[key];
+		if( bb && v.tile && layer && v.layer ) {
+			// This view support tiles and layer
+			if( $n2.tiles.getApproxTilesForBounds(
+				v.tile
+				,bb[0],bb[1]
+				,bb[2],bb[3] ) < 500 ) {
+				
+				viewOptions.viewName = v.name;
+				
+				var tiles = $n2.tiles.getTilesFromBounds(
+					v.tile
+					,bb[0],bb[1]
+					,bb[2],bb[3]
+					);
+					
+				viewOptions.keys = [];
+				for(var j=0,k=tiles.length; j<k; ++j) {
+					viewOptions.keys.push( [layer,tiles[j]] );
+				};
+				
+				if( v.list ) viewOptions.listName = v.list;
+				
+				return true;
 			};
+			
+		} else if( bb && v.tile && !layer && !v.layer ) {
+			// This view support tiles only
+			if( $n2.tiles.getApproxTilesForBounds(
+				v.tile
+				,bb[0],bb[1]
+				,bb[2],bb[3] ) < 500 ) {
+				
+				viewOptions.viewName = v.name;
+				
+				viewOptions.keys = $n2.tiles.getTilesFromBounds(
+					v.tile
+					,bb[0],bb[1]
+					,bb[2],bb[3]
+					);
+
+				if( v.list ) viewOptions.listName = v.list;
+				
+				return true;
+			};
+			
+		} else if( fids && v.fid && layer && v.layer ) {
+			// This view supports layer and fid
+			viewOptions.viewName = v.name;
+			
+			viewOptions.keys = [];
+			for(var j=0,k=fids.length; j<k; ++j) {
+				viewOptions.keys.push( [layer,fids[j]] );
+			};
+
+			if( v.list ) viewOptions.listName = v.list;
+				
+			return true;
+			
+		} else if( fids && v.fid && !layer && !v.layer ) {
+			// This view supports fid
+			viewOptions.viewName = v.name;
+			
+			viewOptions.keys = fids;
+
+			if( v.list ) viewOptions.listName = v.list;
+				
+			return true;
+			
+		} else if( !fids && !v.fid && layer && v.layer ) {
+			// This view supports fid
+			viewOptions.viewName = v.name;
+			
+			viewOptions.keys = [layer];
+
+			if( v.list ) viewOptions.listName = v.list;
+				
+			return true;
+			
+		} else if( !bb && !fids && !layer && !v.fid && !v.layer && !v.tile ) {
+			// This view supports fid
+			viewOptions.viewName = v.name;
+
+			if( v.list ) viewOptions.listName = v.list;
+				
+			return true;
 		};
-		
-		// Select proper tile layer
-		if( bounds ) {
-			// Switch view name and add keys for bounds
-			$n2.couchGeom.selectTileViewFromBounds(data, bounds);
+	};
+	
+	return false;
+};
+
+function queryGeometries(atlasDesignDoc, viewOptions) {
+
+	var bounds = null;
+	
+	// Rebuild view options
+	var data = {};
+
+	// Install default view
+	data.viewName = 'geom';
+	data.listName = 'noduplicate';
+	
+	// Copy over client request
+	for(var key in viewOptions) {
+		if( key === 'bounds' ) {
+			bounds = viewOptions[key];
+		} else {
+			data[key] = viewOptions[key];
 		};
-		
-		// Make request
-		atlasDesignDoc.queryView(data);
-	}
-});
+	};
+	
+	// Select proper tile layer
+	if( bounds ) {
+		// Switch view name and add keys for bounds
+		selectTileViewFromBounds(data, bounds);
+	};
+	
+	// Make request
+	atlasDesignDoc.queryView(data);
+};
+
+$n2.couchGeom = {
+	getCouchGeometry: getCouchGeometry
+	,updateDocumentWithWktGeometry: updateDocumentWithWktGeometry
+	,updatedGeometry: updatedGeometry
+	,getOpenLayersGeometry: getOpenLayersGeometry
+	,selectTileViewFromBounds: selectTileViewFromBounds
+	,queryGeometries: queryGeometries
+};
 
 })(nunaliit2);

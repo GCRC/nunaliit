@@ -92,6 +92,7 @@ function Configure(options_){
 		,submissionDbUrl: null // string
 		,submissionServerUrl: null // string
 		,dateServerUrl: null // string
+		,simplifiedGeometryServerUrl: null // string
 		,onSuccess: function(config){}
 	},options_);
 
@@ -315,7 +316,7 @@ function Configure(options_){
 			,dispatchService: configuration.directory.dispatchService
 		});
 		
-	 	configuration.directory.schemaEditorService = new $n2.CouchEditor.SchemaEditorService({
+	 	configuration.directory.schemaEditorService = new $n2.couchEdit.SchemaEditorService({
 			documentSource: configuration.documentSource
 			,showService: configuration.directory.showService
 			,searchService: configuration.directory.searchService
@@ -323,7 +324,7 @@ function Configure(options_){
 			,dialogService: configuration.directory.dialogService
 		});
 		
-	 	configuration.couchEditor = new $n2.CouchEditor.Editor({
+	 	configuration.directory.editService = new $n2.couchEdit.EditService({
 			documentSource: configuration.documentSource
 			,schemaRepository: configuration.directory.schemaRepository
 			,uploadService: configuration.directory.uploadService
@@ -336,6 +337,7 @@ function Configure(options_){
 			,dialogService: configuration.directory.dialogService
 			,createDocProcess: configuration.directory.createDocProcess
 		});
+	 	configuration.couchEditor = configuration.directory.editService; // legacy
 		
 	 	configuration.directory.userService = new $n2.couchUser.UserService({
 			userDb: $n2.couch.getUserDb()
@@ -424,6 +426,12 @@ function Configure(options_){
 
 		configuration.directory.documentListService = new $n2.couchDocumentList.DocumentListService({
 			atlasDesign: configuration.atlasDesign
+			,dispatchService: configuration.directory.dispatchService
+		});
+
+		configuration.directory.simplifiedGeometryService = new $n2.couchSimplifiedGeometries.Service({
+			url: options.simplifiedGeometryServerUrl
+			,atlasDb: configuration.atlasDb
 			,dispatchService: configuration.directory.dispatchService
 		});
 		

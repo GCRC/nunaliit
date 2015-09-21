@@ -83,17 +83,13 @@ function initiateEdit(docId) {
 		couchEditor.showDocumentForm(doc,{
 			panelName: couchEditorId
 			,schema: schema
-			,onFeatureInsertedFn: function(fid,feature){ 
-				initiateEdit(doc._id); 
+			,onCloseFn: function(doc_, editor, closeOptions){
+				if( closeOptions.inserted ){
+					initiateEdit(doc._id);
+				} else if( closeOptions.updated ){
+					initiateEdit(doc._id);
+				};
 			}
-			,onFeatureUpdatedFn: function(fid,feature){ 
-				initiateEdit(doc._id); 
-			}
-			,onFeatureDeletedFn: function(fid,feature){
-			}
-			,onCancelFn: function(){ 
-			}
-			,onCloseFn: function(){}
 		});
 
 		// References to other objects

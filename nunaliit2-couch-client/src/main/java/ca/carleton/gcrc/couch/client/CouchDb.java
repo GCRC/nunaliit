@@ -46,8 +46,10 @@ public interface CouchDb {
 	void uploadAttachment(JSONObject doc, String name, File file, String contentType) throws Exception;
 	
 	JSONObject uploadAttachment(JSONObject doc, String name, InputStream is, String contentType, long size) throws Exception;
-	
+
 	String downloadAttachment(JSONObject doc, String name, OutputStream os) throws Exception;
+
+	String downloadAttachment(String docId, String name, OutputStream os) throws Exception;
 	
 	JSONObject deleteAttachment(JSONObject doc, String name) throws Exception;
 	
