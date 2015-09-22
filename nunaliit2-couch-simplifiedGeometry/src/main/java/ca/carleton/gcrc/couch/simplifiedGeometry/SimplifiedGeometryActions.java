@@ -6,7 +6,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.StringWriter;
-import java.util.List;
 import java.util.Map;
 
 import org.json.JSONArray;
@@ -18,7 +17,7 @@ import ca.carleton.gcrc.couch.client.CouchDb;
 
 public class SimplifiedGeometryActions {
 	
-	static final int RESPONSE_LENGHT_LIMIT = 1000000;
+	static final long RESPONSE_LENGHT_LIMIT = 1000000L;
 	static final int RESPONSE_TIME_LIMIT_MS = 2000; // 2 seconds
 
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -83,16 +82,29 @@ public class SimplifiedGeometryActions {
 		return result;
 	}
 
-	public JSONObject getAttachments(List<GeometryAttachmentRequest> attachmentRequests) throws Exception {
+	public JSONObject getAttachments(
+			SimplifiedGeometryRequest simplifiedGeometryRequest
+		) throws Exception {
 		JSONObject result = new JSONObject();
+
+		Long sizeLimit = simplifiedGeometryRequest.getSizeLimit();
+		if( null == sizeLimit ){
+			sizeLimit = new Long(RESPONSE_LENGHT_LIMIT);
+		}	
+
+		Integer timeLimit = simplifiedGeometryRequest.getTimeLimit();
+		if( null == timeLimit ){
+			timeLimit = new Integer(RESPONSE_TIME_LIMIT_MS);
+		}	
 		
 		long startMs = System.currentTimeMillis();
+		long endMs = startMs + timeLimit;
 		
 		JSONArray geometries = new JSONArray();
 		result.put("geometries", geometries);
 		
 		long currentSize = 0;
-		for(GeometryAttachmentRequest attachmentRequest : attachmentRequests){
+		for(GeometryAttachmentRequest attachmentRequest : simplifiedGeometryRequest.getRequests()){
 			String docId = attachmentRequest.getDocId();
 			String attName = attachmentRequest.getAttName();
 			
@@ -125,12 +137,12 @@ public class SimplifiedGeometryActions {
 				attObj.put("error", true);
 			}
 			
-			if( currentSize > RESPONSE_LENGHT_LIMIT ){
+			if( currentSize > sizeLimit ){
 				break;
 			}
 			
 			long currentMs = System.currentTimeMillis();
-			if( (currentMs - startMs) > RESPONSE_TIME_LIMIT_MS ){
+			if( currentMs > endMs ){
 				break;
 			}
 		}
@@ -138,16 +150,30 @@ public class SimplifiedGeometryActions {
 		return result;
 	}
 
-	public void getAttachments(List<GeometryAttachmentRequest> attachmentRequests, OutputStream os) throws Exception {
+	public void getAttachments(
+			SimplifiedGeometryRequest simplifiedGeometryRequest, 
+			OutputStream os
+		) throws Exception {
 		AttachmentOutputStream attachmentOs = new AttachmentOutputStream(os);
 		PrintStream ps = new PrintStream(attachmentOs);
 		
+		Long sizeLimit = simplifiedGeometryRequest.getSizeLimit();
+		if( null == sizeLimit ){
+			sizeLimit = new Long(RESPONSE_LENGHT_LIMIT);
+		}	
+
+		Integer timeLimit = simplifiedGeometryRequest.getTimeLimit();
+		if( null == timeLimit ){
+			timeLimit = new Integer(RESPONSE_TIME_LIMIT_MS);
+		}	
+		
 		long startMs = System.currentTimeMillis();
+		long endMs = startMs + timeLimit;
 		
 		ps.print("{\"geometries\":[");
 		
 		boolean isFirst = true;
-		for(GeometryAttachmentRequest attachmentRequest : attachmentRequests){
+		for(GeometryAttachmentRequest attachmentRequest : simplifiedGeometryRequest.getRequests()){
 			
 			if( isFirst ){
 				isFirst = false;
@@ -175,12 +201,12 @@ public class SimplifiedGeometryActions {
 			
 			ps.print("\"}");
 			
-			if( attachmentOs.getCount() > RESPONSE_LENGHT_LIMIT ){
+			if( attachmentOs.getCount() > sizeLimit ){
 				break;
 			}
 			
 			long currentMs = System.currentTimeMillis();
-			if( (currentMs - startMs) > RESPONSE_TIME_LIMIT_MS ){
+			if( currentMs > endMs ){
 				break;
 			}
 		}

@@ -5,9 +5,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -84,9 +82,33 @@ public class SimplifiedGeometryServlet extends JsonServlet {
 				}
 				String att = atts[0];
 				
-				List<GeometryAttachmentRequest> attachmentRequests = 
-					new ArrayList<GeometryAttachmentRequest>(1);
-				attachmentRequests.add( new GeometryAttachmentRequest(id, att) );
+				SimplifiedGeometryRequest simplifiedGeometryRequest = 
+						new SimplifiedGeometryRequest();
+				simplifiedGeometryRequest.addRequest(id, att);
+
+				// Parameter 'sizeLimit'
+				{
+					String[] sizeLimits = request.getParameterValues("sizeLimit");
+					if( null != sizeLimits && sizeLimits.length != 1 ){
+						throw new Exception("If parameter 'sizeLimit' is specified, it must be provided exactly once");
+					}
+					if( null != sizeLimits ){
+						long sizeLimit = Long.parseLong( sizeLimits[0] );
+						simplifiedGeometryRequest.setSizeLimit(sizeLimit);
+					}
+				}
+
+				// Parameter 'timeLimit'
+				{
+					String[] timeLimits = request.getParameterValues("timeLimit");
+					if( null != timeLimits && timeLimits.length != 1 ){
+						throw new Exception("If parameter 'timeLimit' is specified, it must be provided exactly once");
+					}
+					if( null != timeLimits ){
+						long timeLimit = Long.parseLong( timeLimits[0] );
+						simplifiedGeometryRequest.setSizeLimit(timeLimit);
+					}
+				}
 				
 				if( true ){
 					// Start response
@@ -99,10 +121,10 @@ public class SimplifiedGeometryServlet extends JsonServlet {
 					OutputStream os = response.getOutputStream();
 					
 					// Perform request
-					actions.getAttachments(attachmentRequests, os);
+					actions.getAttachments(simplifiedGeometryRequest, os);
 				} else {
 					// Perform request
-					JSONObject result = actions.getAttachments(attachmentRequests);
+					JSONObject result = actions.getAttachments(simplifiedGeometryRequest);
 
 					sendJsonResponse(response, result);
 				}
@@ -144,15 +166,27 @@ public class SimplifiedGeometryServlet extends JsonServlet {
 				JSONArray geometryRequests = jsonRequest.getJSONArray("geometryRequests");
 
 				// Process attachment requests
-				List<GeometryAttachmentRequest> attachmentRequests = 
-					new Vector<GeometryAttachmentRequest>();
+				SimplifiedGeometryRequest simplifiedGeometryRequest = 
+					new SimplifiedGeometryRequest();
 				for(int i=0; i<geometryRequests.length(); ++i){
 					JSONObject geomRequest = geometryRequests.getJSONObject(i);
 					
 					String id = geomRequest.getString("id");
 					String attName = geomRequest.getString("attName");
 					
-					attachmentRequests.add( new GeometryAttachmentRequest(id, attName) );
+					simplifiedGeometryRequest.addRequest(id, attName);
+				}
+				
+				// Size limit option
+				{
+					long limit = jsonRequest.optLong("sizeLimit", -1);
+					simplifiedGeometryRequest.setSizeLimit(limit);
+				}
+				
+				// Time limit option
+				{
+					int limit = jsonRequest.optInt("timeLimit", -1);
+					simplifiedGeometryRequest.setTimeLimit(limit);
 				}
 
 				if( true ){
@@ -166,10 +200,10 @@ public class SimplifiedGeometryServlet extends JsonServlet {
 					OutputStream os = response.getOutputStream();
 					
 					// Perform request
-					actions.getAttachments(attachmentRequests, os);
+					actions.getAttachments(simplifiedGeometryRequest, os);
 				} else {
 					// Perform request
-					JSONObject result = actions.getAttachments(attachmentRequests);
+					JSONObject result = actions.getAttachments(simplifiedGeometryRequest);
 
 					sendJsonResponse(response, result);
 				}

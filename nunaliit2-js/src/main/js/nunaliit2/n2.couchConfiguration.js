@@ -433,6 +433,7 @@ function Configure(options_){
 			url: options.simplifiedGeometryServerUrl
 			,atlasDb: configuration.atlasDb
 			,dispatchService: configuration.directory.dispatchService
+			,customService: configuration.directory.customService
 		});
 		
 		// Load help file

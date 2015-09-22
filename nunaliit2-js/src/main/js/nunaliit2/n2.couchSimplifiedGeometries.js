@@ -43,6 +43,8 @@ var SimplifiedGeometryService = $n2.Class({
 	url: null,
 
 	dispatchService: null,
+	
+	customService: null,
 
 	dbProjection: null,
 
@@ -57,12 +59,14 @@ var SimplifiedGeometryService = $n2.Class({
 		var opts = $n2.extend({
 			url: null
 			,dispatchService: null
+			,customService: null
 		},opts_);
 		
 		var _this = this;
 
 		this.url = opts.url;
 		this.dispatchService = opts.dispatchService;
+		this.customService = opts.customService;
 		
 		this.sendingRequests = false;
 		this.pendingRequests = {};
@@ -144,6 +148,22 @@ var SimplifiedGeometryService = $n2.Class({
 					};
 				};
 			};
+
+			// sizeLimit
+			if( _this.customService ){
+				var sizeLimit = _this.customService.getOption('simplifiedGeometriesSizeLimit');
+				if( typeof sizeLimit === 'number' ){
+					serverRequest.sizeLimit = sizeLimit;
+				};
+			};
+
+			// timeLimit
+			if( _this.customService ){
+				var timeLimit = _this.customService.getOption('simplifiedGeometriesTimeLimit');
+				if( typeof timeLimit === 'number' ){
+					serverRequest.timeLimit = timeLimit;
+				};
+			};
 			
 			if( serverRequest.geometryRequests.length ){
 				processServerRequest(serverRequest);
@@ -207,7 +227,7 @@ var SimplifiedGeometryService = $n2.Class({
     				attNames = {};
     				received[geomResp.id] = attNames;
     			};
-    			attNames[geomResp.att] = true;
+    			attNames[geomResp.attName] = true;
 			};
 			
 			// Clean up requests pending
