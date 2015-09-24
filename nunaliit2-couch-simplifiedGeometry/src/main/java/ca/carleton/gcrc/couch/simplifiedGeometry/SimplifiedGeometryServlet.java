@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.util.List;
+import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -137,7 +138,6 @@ public class SimplifiedGeometryServlet extends JsonServlet {
 		}
 	}
 
-	@SuppressWarnings("unused")
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		try {
@@ -180,33 +180,50 @@ public class SimplifiedGeometryServlet extends JsonServlet {
 				// Size limit option
 				{
 					long limit = jsonRequest.optLong("sizeLimit", -1);
-					simplifiedGeometryRequest.setSizeLimit(limit);
+					if( limit > 0 ){
+						simplifiedGeometryRequest.setSizeLimit(limit);
+					}
 				}
 				
 				// Time limit option
 				{
 					int limit = jsonRequest.optInt("timeLimit", -1);
-					simplifiedGeometryRequest.setTimeLimit(limit);
+					if( limit > 0 ){
+						simplifiedGeometryRequest.setTimeLimit(limit);
+					}
+				}
+				
+				// Accept-Encoding header
+				boolean useGZipEncoding = false;
+				{
+					String encodings = request.getHeader("Accept-Encoding");
+					if( encodings != null 
+					 && encodings.indexOf("gzip") != -1 ) {
+						useGZipEncoding = true;
+					}
 				}
 
-				if( true ){
-					// Start response
-					response.setStatus(200);
-					response.setContentType("application/json");
-					response.setCharacterEncoding("utf-8");
-					response.addHeader("Cache-Control", "no-cache");
-					response.addHeader("Pragma", "no-cache");
-					response.addHeader("Expires", "-1");
-					OutputStream os = response.getOutputStream();
-					
-					// Perform request
-					actions.getAttachments(simplifiedGeometryRequest, os);
+				// Start response
+				response.setStatus(200);
+				response.setContentType("application/json");
+				response.setCharacterEncoding("utf-8");
+				response.addHeader("Cache-Control", "no-cache");
+				response.addHeader("Pragma", "no-cache");
+				response.addHeader("Expires", "-1");
+				OutputStream os = null;
+				if( useGZipEncoding ){
+					response.setHeader("Content-Encoding", "gzip");
+					OutputStream respOs = response.getOutputStream();
+					os = new GZIPOutputStream(respOs);
 				} else {
-					// Perform request
-					JSONObject result = actions.getAttachments(simplifiedGeometryRequest);
-
-					sendJsonResponse(response, result);
+					os = response.getOutputStream();
 				}
+				
+				// Perform request
+				actions.getAttachments(simplifiedGeometryRequest, os);
+				
+				os.flush();
+				os.close();
 				
 			} else {
 				throw new Exception("Unrecognized request");
