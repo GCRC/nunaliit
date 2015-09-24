@@ -1,0 +1,12 @@
+ul.n2wiki {
+	list-style: initial;
+}
+
+table.n2wiki {
+	border-collapse: collapse;
+	border: #000000 2px solid;
+}
+
+table.n2wiki td, table.n2wiki th {
+	border: #000000 1px solid;
+}

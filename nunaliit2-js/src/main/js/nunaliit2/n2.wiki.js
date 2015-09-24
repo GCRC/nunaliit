@@ -154,9 +154,9 @@ function processLists(lines){
 		var firstChar = getCharAt(lines[0],offset);
 		
 		if( '*' === firstChar ){
-			newLines.push('<ul>');
+			newLines.push('<ul class="n2wiki">');
 		} else {
-			newLines.push('<ol>');
+			newLines.push('<ol class="n2wiki">');
 		};
 
 		var isOpened = false;
@@ -266,7 +266,7 @@ function processTables(lines){
 			newLines.push('</div>');
 		};
 		
-		newLines.push('<table');
+		newLines.push('<table class="n2wiki"');
 		
 		if( tableOptions ){
 			newLines.push(' ');
