@@ -99,7 +99,7 @@ var SimplifiedGeometryService = $n2.Class({
 		for(var id in this.pendingRequests){
 			count += this.pendingRequests[id].length;
 		};
-		$n2.log('Pending simplified geometry requests: '+count);
+		//$n2.log('Pending simplified geometry requests: '+count);
 		
 		this._sendRequests();
 	},

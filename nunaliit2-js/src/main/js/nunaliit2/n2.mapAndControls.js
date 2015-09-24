@@ -4118,6 +4118,34 @@ var MapAndControls = $n2.Class({
 			this._updateSimplifiedGeometries(simplificationsReported);
 		};
 		if( geometriesRequested.length ){
+			var mapCenter = this.map.getCenter();
+			if( mapCenter ){
+				var mapProjection = this.map.getProjectionObject();
+				if( mapProjection 
+				 && mapProjection.getCode() !== proj.getCode ){
+					mapCenter.transform(mapProjection, proj);
+				};
+				
+				// Sort the requested geometries so that the ones closest to the
+				// center of the view port are listed first
+				for(var i=0,e=geometriesRequested.length; i<e; ++i){
+					var geometryRequest = geometriesRequested[i];
+					var x = (geometryRequest.bbox[0] + geometryRequest.bbox[2]) / 2;
+					var y = (geometryRequest.bbox[1] + geometryRequest.bbox[3]) / 2;
+					
+					var dx = x - mapCenter.lon;
+					var dy = y - mapCenter.lat;
+					
+					geometryRequest.d = (dx * dx) + (dy * dy); // do not bother with Math.sqrt()
+				};
+				
+				geometriesRequested.sort(function(a,b){
+					if( a.d < b.d ) return -1;
+					if( a.d > b.d ) return 1;
+					return 0;
+				});
+			};
+			
 			//$n2.log('geometriesRequested',geometriesRequested);
 			this._dispatch({
 				type: 'simplifiedGeometryRequest'
@@ -4188,19 +4216,16 @@ var MapAndControls = $n2.Class({
 				// If the best geometry and the current geometry do not match, add
 				// an entry in the dictionary
 				if( currentGeomAttName !== bestAttName ){
+					geomsNeeded[f.fid] = {
+						id: f.fid
+						,attName: bestAttName
+						,doc: f.data
+						,feature: f
+						,bbox: f.data.nunaliit_geom.bbox
+					};
 					
-					// Check if the best geometry has already been requested
-					//if( f.n2TargetGeomAttName !== bestAttName ){
-						geomsNeeded[f.fid] = {
-							id: f.fid
-							,attName: bestAttName
-							,doc: f.data
-							,feature: f
-						};
-						
-						// Save that we have requested the best geometry
-						f.n2TargetGeomAttName = bestAttName;
-					//};
+					// Save that we have requested the best geometry
+					f.n2TargetGeomAttName = bestAttName;
 				};
 			};
 		};
