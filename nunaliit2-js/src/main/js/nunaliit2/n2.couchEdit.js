@@ -293,8 +293,8 @@ var CouchSimpleDocumentEditor = $n2.Class({
 	,_edit: function(){
 		var _this = this;
 		
-		this.isInsert = (typeof this.editedDocument._id === 'undefined' 
-			|| this.editedDocument._id === null);
+		this.isInsert = (typeof this.editedDocument._rev === 'undefined' 
+			|| this.editedDocument._rev === null);
 	
 		this._selectSchema(schemaSelected);
 		
@@ -986,7 +986,7 @@ var CouchDocumentEditor = $n2.Class({
 			this.currentGeometryWkt = this.editedDocument.nunaliit_geom.wkt;
 		};
 		
-		this.isInsert = (typeof(this.editedDocument._id) === 'undefined' || this.editedDocument._id === null);
+		this.isInsert = (typeof(this.editedDocument._rev) === 'undefined' || this.editedDocument._rev === null);
 
 		this._selectSchema(schemaSelected);
 		

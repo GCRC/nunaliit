@@ -444,7 +444,7 @@ function computeLink(linkText){
 	var html = [];
 	html.push('<a class="n2wiki');
 	if( docLink ){
-		html.push(' n2s_userEvents');
+		html.push(' n2s_userEvents n2s_createDocOnClick');
 		if( !displayProvided ){
 			html.push(' n2s_briefDisplay');
 		};

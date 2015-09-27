@@ -293,7 +293,7 @@ var DomStyler = $n2.Class({
 		// Wiki
 		$set.filter('.n2s_wikiTransform').each(function(){
 			var $jq = $(this);
-			_this._wikiTransform($jq);
+			_this._wikiTransform($jq, contextDoc);
 			$jq.removeClass('n2s_wikiTransform').addClass('n2s_wikiTransformed');
 		});
 	},
@@ -1122,6 +1122,8 @@ var DomStyler = $n2.Class({
 	},
 	
 	_userEvents: function($elem, doc){
+		var _this = this;
+		
 		var docId = this._getDocumentIdentifier(doc, $elem);
 		
 		var disableClick = false;
@@ -1169,10 +1171,18 @@ var DomStyler = $n2.Class({
 				// Install events
 				if( !disableClick ){
 					$elem.click(function(){
-						dispatchService.send(DH,{
-							type:'userSelect'
-							,docId: docId
-						});
+						var $elem = $(this);
+						
+						var createSchema = $elem.attr('nunaliit-create-schema');
+						if( createSchema ){
+							_this.showService._createDocIfInexistant(docId, createSchema);
+						} else {
+							dispatchService.send(DH,{
+								type:'userSelect'
+								,docId: docId
+							});
+						};
+
 						return false;
 					});
 				};
@@ -1195,7 +1205,7 @@ var DomStyler = $n2.Class({
 		};
 	},
 	
-	_wikiTransform: function($elem){
+	_wikiTransform: function($elem, contextDoc){
 		var _this = this;
 		
 		var text = $elem.text();
@@ -1206,6 +1216,14 @@ var DomStyler = $n2.Class({
 			});
 
 			$elem.html(html);
+			
+			$elem.find('.n2s_createDocOnClick').each(function(){
+				var $node = $(this);
+				if( contextDoc 
+				 && contextDoc.nunaliit_schema ){
+					$node.attr('nunaliit-create-schema',contextDoc.nunaliit_schema);
+				};
+			});
 			
 			$elem.children().each(function(){
 				_this.fixElementAndChildren($(this), {});
@@ -1901,6 +1919,44 @@ var Show = $n2.Class({
 				this._handleUserIntentChanged(m.changes);
 			};
 		};
+	},
+	
+	_createDocIfInexistant: function(docId, schemaName){
+		var _this = this;
+		
+		this.documentSource.getDocumentInfoFromIds({
+			docIds: [ docId ]
+			,onSuccess: function(docInfos){
+				var docInfosById = {};
+				for(var i=0,e=docInfos.length; i<e; ++i){
+					var info = docInfos[i];
+					docInfosById[info.id] = info;
+				};
+				
+				if( docInfosById[docId] ){
+					// Exists. Select
+					_this.dispatchService.send(DH,{
+						type:'userSelect'
+						,docId: docId
+					});
+				} else {
+					// Does not exist. Create
+					_this.schemaRepository.getSchema({
+						name: schemaName
+						,onSuccess: function(schema) {
+							var doc = schema.createObject({
+								_id: docId
+							});
+							_this.dispatchService.send(DH,{
+								type:'editInitiate'
+								,docId: docId
+								,doc: doc
+							});
+						}
+					});
+				};
+			}
+		});
 	}
 });
 
