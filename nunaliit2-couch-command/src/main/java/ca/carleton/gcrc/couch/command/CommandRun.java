@@ -3,7 +3,10 @@ package ca.carleton.gcrc.couch.command;
 import java.io.File;
 import java.io.PrintStream;
 import java.net.URL;
+import java.util.EnumSet;
 import java.util.Stack;
+
+import javax.servlet.DispatcherType;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -12,8 +15,10 @@ import org.apache.log4j.rolling.RollingFileAppender;
 import org.apache.log4j.rolling.TimeBasedRollingPolicy;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.DefaultServlet;
+import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.servlets.GzipFilter;
 import org.eclipse.jetty.proxy.ProxyServlet;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
@@ -134,7 +139,16 @@ public class CommandRun implements Command {
 		Server server = new Server(atlasProperties.getServerPort());
 		
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-        context.setContextPath("/");
+		context.setContextPath("/");
+
+		// GZip
+		{
+			GzipFilter gzipFilter = new GzipFilter();
+			FilterHolder gzipFilterHolder = new FilterHolder(gzipFilter);
+			gzipFilterHolder.setInitParameter("methods", "GET,POST");
+			EnumSet<DispatcherType> dispatches = EnumSet.of(DispatcherType.REQUEST);
+			context.addFilter(gzipFilterHolder, "/*", dispatches);
+		}
         
 		server.setHandler(context);
 
