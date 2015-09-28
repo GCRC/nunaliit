@@ -823,7 +823,6 @@ var CouchDocumentEditor = $n2.Class({
 	attachmentEditor: null,
 	editedDocument: null,
 	editedDocumentSchema: null,
-	editedFeature: null,
 	currentGeometryWkt: null,
 	editorContainerId: null,
 	isInsert: null,
@@ -851,7 +850,7 @@ var CouchDocumentEditor = $n2.Class({
 			,defaultEditSchema: null
 			,documentSource: null
 			,couchProj: null
-			,onCancelFn: function(feature){}
+			,onCancelFn: function(doc){}
 			,onCloseFn: function(){}
 			,enableAddFile: false
 			,relatedDocProcess: null
@@ -908,7 +907,6 @@ var CouchDocumentEditor = $n2.Class({
 		
 		var _this = this;
 	
-		this.editedFeature = feature_;
 		this.editedDocument = {};
 		this.editedDocumentSchema = null;
 		for(var key in feature_.data){
@@ -925,19 +923,12 @@ var CouchDocumentEditor = $n2.Class({
 			this.currentGeometryWkt = this.editedDocument.nunaliit_geom.wkt;
 		};
 		
-		this.isInsert = (typeof(this.editedFeature.fid) === 'undefined' || this.editedFeature.fid === null);
-		
+		this.isInsert = (typeof(feature_.fid) === 'undefined' || feature_.fid === null);
+
+		var insertGeom = undefined;
 		if( this.isInsert ) {
 			// must do initial object work
-	    	var geom = this.convertFeatureGeometryForDb(this.editedFeature);
-	    	var g = $n2.couchGeom.getCouchGeometry(geom);
-	    	this.editedDocument.nunaliit_geom = g;
-			
-			// Add default layers?
-	    	if( this.initialLayers 
-	    	 && this.initialLayers.length > 0 ) {
-	    		this.editedDocument.nunaliit_layers = this.initialLayers;
-	    	};
+			insertGeom = this.convertFeatureGeometryForDb(feature_);
 		};
 
 		this._selectSchema(schemaSelected);
@@ -950,10 +941,12 @@ var CouchDocumentEditor = $n2.Class({
 					$n2.extend(true, _this.editedDocument, template);
 				};
 
-				// must do initial object work
-		    	var geom = _this.convertFeatureGeometryForDb(_this.editedFeature);
-		    	var g = $n2.couchGeom.getCouchGeometry(geom);
-		    	_this.editedDocument.nunaliit_geom = g;
+				// Geometry?
+				if( insertGeom ){
+			    	var g = $n2.couchGeom.getCouchGeometry(insertGeom);
+			    	_this.editedDocument.nunaliit_geom = g;
+			    	this.currentGeometryWkt = g.wkt;
+				};
 				
 				// Add default layers?
 		    	if( _this.initialLayers 
@@ -1807,7 +1800,7 @@ var CouchDocumentEditor = $n2.Class({
 			return;
 		};
 	
-		this.onCancelFn(this.editedFeature);
+		this.onCancelFn(this.editedDocument);
 
 		this._discardEditor({
 			cancelled:true
@@ -1863,7 +1856,6 @@ var CouchDocumentEditor = $n2.Class({
 		};
 		
 		this.editedDocument = null;
-		this.editedFeature = null;
 		this.editorContainerId = null;
 		
 		$('body').removeClass('nunaliit_editing');

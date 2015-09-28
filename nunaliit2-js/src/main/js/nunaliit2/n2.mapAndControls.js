@@ -632,6 +632,7 @@ var MapAndControls = $n2.Class({
 			    			,docId: null
 			    			,feature: feature
 			    			,create: true
+			    			,_origin: _this
 			    		});
 					};
 				}
@@ -643,6 +644,7 @@ var MapAndControls = $n2.Class({
 		    			,docId: null
 		    			,feature: feature
 		    			,create: true
+		    			,_origin: _this
 		    		});
 				}
 			}
@@ -4883,6 +4885,9 @@ var MapAndControls = $n2.Class({
 			this._endClicked();
 			
 		} else if( 'editInitiate' === type ) {
+			
+			if( m._origin === this ) return;
+			
 			var fid = m.docId;
 			
 			var feature = null;
