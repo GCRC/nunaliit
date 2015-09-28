@@ -58,7 +58,7 @@ public class GZipTest extends TestCase {
 		}
 	}
 	
-	public void testCompressionRate() throws Exception {
+	public void testWktCompressionRate() throws Exception {
 		String input = "test";
 		
 		// Load example
@@ -87,7 +87,40 @@ public class GZipTest extends TestCase {
 		
 		byte[] bytes = baos.toByteArray();
 		
-		System.out.println("Input:"+input.length()+" Output:"+bytes.length
+		System.out.println("WKT Input:"+input.length()+" Output:"+bytes.length
+				+" Ratio:"+((double)bytes.length/(double)input.length()));
+	}
+	
+	public void testAllDocsCompressionRate() throws Exception {
+		String input = "test";
+		
+		// Load example
+		{
+			InputStream is = GZipTest.class.getClassLoader().getResourceAsStream("alldocs_0.txt");
+			StringWriter sw = new StringWriter();
+			int c = is.read();
+			while( c >= 0 ){
+				sw.write(c);
+				c = is.read();
+			}
+			sw.flush();
+			is.close();
+			
+			input = sw.toString();
+		}
+		
+
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		OutputStream os = new GZIPOutputStream(baos);
+		PrintStream ps = new PrintStream(os);
+		
+		ps.print(input);
+		ps.flush();
+		ps.close();
+		
+		byte[] bytes = baos.toByteArray();
+		
+		System.out.println("_alldocs Input:"+input.length()+" Output:"+bytes.length
 				+" Ratio:"+((double)bytes.length/(double)input.length()));
 	}
 }

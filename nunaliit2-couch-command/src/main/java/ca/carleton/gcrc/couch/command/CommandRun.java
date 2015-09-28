@@ -135,6 +135,7 @@ public class CommandRun implements Command {
 		
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
         context.setContextPath("/");
+        
 		server.setHandler(context);
 
         // Proxy to server
