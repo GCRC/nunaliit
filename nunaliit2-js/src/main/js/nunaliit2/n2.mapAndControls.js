@@ -436,6 +436,7 @@ var MapAndControls = $n2.Class({
     
     // EDIT_FEATURE mode
     editFeatureFid: null,
+    editFeatureOriginal: null,
 
     // COMETD
     cometEnabled: null,
@@ -554,6 +555,7 @@ var MapAndControls = $n2.Class({
 		this.mapBusyCount = 0;
 		this.dhtmlSoundDivId = $n2.getUniqueId();
 		this.editFeatureFid = null;
+		this.editFeatureOriginal = {};
 
 	    // HOVER and CLICK
 		this.selectFeatureControl = null;
@@ -625,18 +627,18 @@ var MapAndControls = $n2.Class({
 					};
 					
 					if( editAllowed ) {
-						_this.switchToEditFeatureMode(feature.fid, mapFeature);
-						
 			    		_this._dispatch({
 			    			type: 'editInitiate'
 			    			,doc: feature.data
-			    			,_origin: _this
 			    		});
 					};
 				}
 				,onEndClick: function(feature) {
 				}
 				,featureAdded: function(feature) {
+					_this.editFeatureOriginal = {};
+					_this.editFeatureFid = undefined;
+					
 					var mapProj = feature.layer.map.getProjectionObject();
 
 		    		_this._dispatch({
@@ -701,7 +703,6 @@ var MapAndControls = $n2.Class({
 	    this._registerDispatch('find');
 	    this._registerDispatch('searchInitiate');
 	    this._registerDispatch('editInitiate');
-	    this._registerDispatch('editCancel');
 	    this._registerDispatch('editClosed');
 	    this._registerDispatch('editGeometryModified');
 	    this._registerDispatch('editReportDocument');
@@ -1482,9 +1483,8 @@ var MapAndControls = $n2.Class({
 	_installGeometryEditor: function(feature){
 		// Can not install geometry editor if the feature is not on the map.
 		if( !feature ) return;
-		if( !feature.layer ) return;
 		
-		this._removeGeometryEditor(false);
+		this._removeGeometryEditor();
 		
    		var modifyFeatureGeometry = new OpenLayers.Control.ModifyFeature(
    			this.editLayer
@@ -1504,124 +1504,39 @@ var MapAndControls = $n2.Class({
     		modifyFeatureGeometry.selectFeature(feature);
     		
     	} else {
-    		// This is editing an already existing feature from a layer
-    		// other than the EDIT layer
+    		// This is editing an already existing feature
     		
-	    	// Remove feature from current layer
-	    	var featureLayer = feature.layer;
-	    	if( featureLayer ) {
-	    		featureLayer.removeFeatures([feature],{silent:true});
-	    	};
-	    	
-	    	// Compute the actual underlying feature
-	    	var effectiveFeature = null;
-	    	var geom = null;
-	    	var featuresToAddBack = [];
-	    	if( this.editFeatureFid === feature.fid ){
-	        	effectiveFeature = feature;
-	        	geom = feature.geometry;
-	        	
-	    	} else if( feature.cluster ){
-	    		for(var i=0,e=feature.cluster.length; i<e; ++i){
-	    			if( this.editFeatureFid === feature.cluster[i].fid ){
-	    	    		effectiveFeature = feature.cluster[i];
-	    	    		geom = feature.cluster[i].geometry;
-	    			} else {
-	    				featuresToAddBack.push(feature.cluster[i]);
-	    			};
-	    		};
-	    	};
-	    	
-	    	// In cluster, add back the features that are not the one currently
-	    	// in edit mode
-	    	if( featureLayer && featuresToAddBack.length > 0 ){
-	    		featureLayer.addFeatures(featuresToAddBack);
-	    	};
-	    	
-	    	// Clone feature for edit layer
-	    	if( geom ) {
-		    	var editFeature = new OpenLayers.Feature.Vector(geom.clone());
-		    	editFeature.fid = effectiveFeature.fid;
-		    	editFeature._n2Original = {
-		    		restoreGeom: false
-		    		,layer: featureLayer
-		    		,feature: effectiveFeature
-		    		,data: $n2.document.clone(effectiveFeature.data)
-		    		,style: feature.style
-		    	};
-		    	
-		    	this.editModeAddFeatureEnabled = false;
-		    	this.editLayer.addFeatures([editFeature]);
-		    	this.editModeAddFeatureEnabled = true;
-	
-		    	modifyFeatureGeometry.selectFeature(editFeature);
-	    	};
+	    	var editFeature = new OpenLayers.Feature.Vector(feature.geometry.clone());
+	    	editFeature.fid = this.editFeatureFid;
+
+	    	// Add to edit layer
+	    	this.editModeAddFeatureEnabled = false;
+	    	this.editLayer.addFeatures([editFeature]);
+	    	this.editModeAddFeatureEnabled = true;
+
+	    	modifyFeatureGeometry.selectFeature(editFeature);
     	};
 	},
 	
-	_removeGeometryEditor: function(reinstateOrginalGeometry){
-		if( null != this.editFeatureControls.modifyFeatureGeometry ) {
-			var editFeature = this.editFeatureControls.modifyFeatureGeometry.feature;
-    		if( null != editFeature ) {
+	_removeGeometryEditor: function(){
+		var editFeature = undefined;
+		if( this.editFeatureControls.modifyFeatureGeometry ) {
+			editFeature = this.editFeatureControls.modifyFeatureGeometry.feature;
+    		if( editFeature ) {
     			this.editFeatureControls.modifyFeatureGeometry.unselectFeature(editFeature);
     		};
     		this.editFeatureControls.modifyFeatureGeometry.deactivate();
     		this.map.removeControl( this.editFeatureControls.modifyFeatureGeometry );
     		this.editFeatureControls.modifyFeatureGeometry.destroy();
     		this.editFeatureControls.modifyFeatureGeometry = null;
-    		
-			if( reinstateOrginalGeometry && editFeature ){
-				var originalLayer = null;
-				var originalFeature = null;
-				var originalData = null;
-				var originalStyle = null;
-				var restoreGeom = false;
-				if( editFeature._n2Original ) {
-					originalLayer = editFeature._n2Original.layer;
-					originalFeature = editFeature._n2Original.feature;
-					originalData = editFeature._n2Original.data;
-					originalStyle = editFeature._n2Original.style;
-					restoreGeom = editFeature._n2Original.restoreGeom;
-				};
-				
-				// Compute effective feature
-				var effectiveFeature = null;
-				var featuresToAdd = [];
-				if( originalFeature && editFeature.fid === originalFeature.fid ){
-					effectiveFeature = originalFeature;
-					featuresToAdd.push(originalFeature);
-					
-				} else if( originalFeature && originalFeature.cluster ){
-					for(var i=0,e=originalFeature.cluster.length; i<e; ++i){
-						var cf = originalFeature.cluster[i];
-						if( editFeature.fid === cf.fid ){
-							effectiveFeature = cf;
-						};
-						featuresToAdd.push(cf);
-					};
-				};
 
-				// Clone geometry if feature was sucessfully updated
-				if( effectiveFeature ){
-					if( restoreGeom ){
-						effectiveFeature.data = originalData;
-					} else {
-						effectiveFeature.geometry = editFeature.geometry.clone();
-					};
-					effectiveFeature.style = originalStyle;
-				};
-
-	    		// Remove feature from edit layer
-				if( editFeature.layer ) {
-					editFeature.layer.destroyFeatures([editFeature]);
-				};
-
-				// Add features back to original layer
-				if( originalLayer && featuresToAdd.length > 0 ){
-					originalLayer.addFeatures(featuresToAdd);
-				};
+    		// Remove feature from edit layer
+			if( editFeature && editFeature.layer ) {
+				editFeature.layer.destroyFeatures([editFeature]);
 			};
 		};
+		
+		return editFeature;
 	},
 
 	// @param bounds Instance of OpenLayers.Bounds
@@ -2184,18 +2099,45 @@ var MapAndControls = $n2.Class({
 			 && evt_.features.length ){
 				var editFeatureFid = _this.editFeatureFid;
 				
+				var featuresToRemove = [];
 				for(var i=0,e=evt_.features.length; i<e; ++i){
 					var f = evt_.features[i];
 					if( f.fid === editFeatureFid ){
+						featuresToRemove.push(f);
 						_this._installGeometryEditor(f);
 						
 					} else if( f.cluster ){
 						for(var j=0,k=f.cluster.length; j<k; ++j){
 							var cf = f.cluster[j];
 							if( cf.fid === editFeatureFid ){
-								_this._installGeometryEditor(f);
+								_this._installGeometryEditor(cf);
+
+								if( featuresToRemove.indexOf(f) < 0 ) {
+									featuresToRemove.push(f);
+								};
 							};
 						};
+					};
+				};
+				
+				if( featuresToRemove.length ){
+		    		layer.removeFeatures(featuresToRemove,{silent:true});
+		    		
+		    		var featuresAddBack = [];
+					for(var i=0,e=featuresToRemove.length; i<e; ++i){
+						var f = featuresToRemove[i];
+						if( f.cluster ){
+							for(var j=0,k=f.cluster.length; j<k; ++j){
+								var cf = f.cluster[j];
+								if( cf.fid !== editFeatureFid ){
+									featuresAddBack.push(cf);
+								};
+							};
+						};
+					};
+					
+					if( featuresAddBack.length ){
+						layer.removeFeatures(featuresAddBack);
 					};
 				};
 			};
@@ -3022,8 +2964,7 @@ var MapAndControls = $n2.Class({
             this.deactivateSelectFeatureControl();
             
     	} else if( this.currentMode === this.modes.EDIT_FEATURE ) {
-    		this.editFeatureFid = null;
-    		this._removeGeometryEditor(true);
+    		this._removeGeometryEditor();
             
     	} else if( this.currentMode === this.modes.NAVIGATE ) {
     		this.deactivateSelectFeatureControl();
@@ -3052,8 +2993,6 @@ var MapAndControls = $n2.Class({
     		};
             
     	} else if( this.currentMode === this.modes.ADD_GEOMETRY ) {
-    		this.editFeatureFid = opts.fid;
-
     		this.editLayer.events.register('featureadded', null, this.editModeAddFeatureCallback);
     		this.editLayer.events.register('beforefeaturesadded', null, this.convertToMultiGeometry);
     		this.activateControl( this.editControls.addPoints );
@@ -3071,8 +3010,6 @@ var MapAndControls = $n2.Class({
     		};
             
     	} else if( this.currentMode === this.modes.EDIT_FEATURE ) {
-    		this.editFeatureFid = opts.fid;
-
     		var editFeature = opts.feature;
     		if( editFeature ) {
     			this._installGeometryEditor(editFeature);
@@ -3149,49 +3086,41 @@ var MapAndControls = $n2.Class({
     // ======= EDIT_FEATURE MODE ==================================================
 
     _geometryModified: function(fid, olGeom, proj){
+		// Check that this relates to the right feature
+		if( fid && fid !== this.editFeatureFid ) return;
+		if( !fid && this.editFeatureFid ) return;
+    	
 		if( this.currentMode === this.modes.EDIT_FEATURE 
 		 && !olGeom ){
 			// Geometry was deleted by external editor
-			var editFeature = this.editFeatureControls.modifyFeatureGeometry.feature;
 			
-			// Check that this relates to the right feature
-			if( fid && fid !== editFeature.fid ) return;
-			if( !fid && editFeature.fid ) return;
-	    	
 			// Remove feature. By switching out of EDIT mode,
-			// the feature on the EDIT layer will be removed. By
-			// deleting the information about the original feature,
-			// it will not be restored.
-			if( editFeature && editFeature._n2Original) {
-    			delete editFeature._n2Original;
-			};
-
+			// the feature on the EDIT layer will be removed. 
 			this.switchToAddGeometryMode(fid);
 
 		} else if( this.currentMode === this.modes.EDIT_FEATURE 
 		 && olGeom ){
 			// Normal mode: we are editing a feature and the geometry was updated
-			var editFeature = this.editFeatureControls.modifyFeatureGeometry.feature;
 			
-			// Check that this relates to the right feature
-			if( fid && fid !== editFeature.fid ) return;
-			if( !fid && editFeature.fid ) return;
-	    	
-			if( editFeature ) {
-				var mapProj = editFeature.layer.map.getProjectionObject();
-				if( mapProj.getCode() != proj.getCode() ) {
-					olGeom.transform(proj, mapProj);
-				};
-			};
-			
-			// Redraw
+			// Check if editing
 			var modifyFeatureControl = this.editFeatureControls.modifyFeatureGeometry;
 			if( modifyFeatureControl ) {
-				modifyFeatureControl.unselectFeature(editFeature);
-				editFeature.layer.eraseFeatures([editFeature]);
-				editFeature.geometry = olGeom;
-				editFeature.layer.drawFeature(editFeature);
-				modifyFeatureControl.selectFeature(editFeature);
+				var editFeature = modifyFeatureControl.feature;
+
+				// Reproject, if needed
+				if( editFeature ) {
+					var mapProj = editFeature.layer.map.getProjectionObject();
+					if( mapProj.getCode() != proj.getCode() ) {
+						olGeom.transform(proj, mapProj);
+					};
+				
+					// Redraw
+					modifyFeatureControl.unselectFeature(editFeature);
+					editFeature.layer.eraseFeatures([editFeature]);
+					editFeature.geometry = olGeom;
+					editFeature.layer.drawFeature(editFeature);
+					modifyFeatureControl.selectFeature(editFeature);
+				};
 			};
 
 		} else if( this.currentMode !== this.modes.EDIT_FEATURE 
@@ -4885,9 +4814,10 @@ var MapAndControls = $n2.Class({
 			
 		} else if( 'editInitiate' === type ) {
 			
-			if( m._origin === this ) return;
-			
-			var fid = m.docId;
+			var fid = undefined;
+			if( m.doc ){
+				fid = m.doc._id;
+			};
 			
 			var feature = null;
 			var addGeometryMode = true;
@@ -4920,33 +4850,112 @@ var MapAndControls = $n2.Class({
 				};
 			};
 			
+    		this.editFeatureFid = fid;
+			this.editFeatureOriginal = {
+				restoreGeom: false
+				,data: $n2.document.clone(m.doc)
+			};
+	    	var effectiveFeature = null;
+			if( feature ){
+		    	// Remove feature from current layer
+		    	var featureLayer = feature.layer;
+		    	if( featureLayer ) {
+		    		featureLayer.removeFeatures([feature],{silent:true});
+		    	};
+
+		    	// Compute the actual underlying feature
+		    	var geom = null;
+		    	var featuresToAddBack = [];
+		    	if( fid === feature.fid ){
+		        	effectiveFeature = feature;
+		        	geom = feature.geometry;
+		        	
+		    	} else if( feature.cluster ){
+		    		for(var i=0,e=feature.cluster.length; i<e; ++i){
+		    			if( fid === feature.cluster[i].fid ){
+		    	    		effectiveFeature = feature.cluster[i];
+		    	    		geom = feature.cluster[i].geometry;
+		    			} else {
+		    				featuresToAddBack.push(feature.cluster[i]);
+		    			};
+		    		};
+		    	};
+		    	
+		    	// In cluster, add back the features that are not the one currently
+		    	// in edit mode
+		    	if( featureLayer && featuresToAddBack.length > 0 ){
+		    		featureLayer.addFeatures(featuresToAddBack);
+		    	};
+		    	
+		    	this.editFeatureOriginal.layer = featureLayer;
+		    	this.editFeatureOriginal.feature = effectiveFeature;
+		    	this.editFeatureOriginal.style = feature.style;
+			};
+			
 			if( addGeometryMode ){
 				// Edit a document that does not have a geometry.
 				// Allow adding a geometry.
 				this.switchToAddGeometryMode(fid);
 			} else {
-				this.switchToEditFeatureMode(fid, feature);
-			};
-			
-		} else if( 'editCancel' === type ) {
-			if( this.currentMode === this.modes.EDIT_FEATURE ){
-				// Indicate that this modification is cancelled 
-				if( this.editFeatureControls.modifyFeatureGeometry ) {
-	    			var editFeature = this.editFeatureControls.modifyFeatureGeometry.feature;
-		    		if( editFeature && editFeature._n2Original ) {
-		    			editFeature._n2Original.restoreGeom = true;
-		    		};
-				};
-
-	    		this._switchMapMode(this.modes.NAVIGATE);
+				this.switchToEditFeatureMode(fid, effectiveFeature);
 			};
 			
 		} else if( 'editClosed' === type ) {
-			if( this.currentMode !== this.modes.NAVIGATE ){
-				this._switchMapMode(this.modes.NAVIGATE);
+
+			var restoreFeature = true;
+			var restoreOriginalData = false;
+			if( m.deleted ){
+				restoreFeature = false;
 			};
-			var deleted = m.deleted;
-			if( !deleted ) {
+			if( m.cancelled ){
+				restoreOriginalData = true;
+			};
+			
+			var editFeature = this._removeGeometryEditor();
+			
+			// Restore original geometry
+			if( restoreFeature && this.editFeatureOriginal ){
+				var originalLayer = this.editFeatureOriginal.layer;
+				var originalFeature = this.editFeatureOriginal.feature;
+				var originalData = this.editFeatureOriginal.data;
+				var originalStyle = this.editFeatureOriginal.style;
+				
+				// Compute effective feature
+				var effectiveFeature = null;
+				var featuresToAdd = [];
+				if( originalFeature 
+				 && this.editFeatureFid === m.docId ){
+					effectiveFeature = originalFeature;
+					featuresToAdd.push(originalFeature);
+				};
+
+				// Clone geometry if feature was sucessfully updated
+				if( effectiveFeature ){
+					if( restoreOriginalData ){
+						effectiveFeature.data = originalData;
+					} else {
+						// Use current geometry
+						if( editFeature ){
+							effectiveFeature.geometry = editFeature.geometry.clone();
+						};
+					};
+					effectiveFeature.style = originalStyle;
+				};
+
+				// Add features back to original layer
+				if( originalLayer && featuresToAdd.length > 0 ){
+					originalLayer.addFeatures(featuresToAdd);
+				};
+			};
+			
+			this.editFeatureOriginal = {};
+			this.editFeatureFid = undefined;
+			
+			// By switching to the navigate mode, the feature on the
+			// edit layer will be removed.
+			this._switchMapMode(this.modes.NAVIGATE);
+			
+			if( !m.deleted ) {
 				var docId = m.docId;
 				if( docId ) {
 					var features = this._getMapFeaturesIncludingFid(docId);

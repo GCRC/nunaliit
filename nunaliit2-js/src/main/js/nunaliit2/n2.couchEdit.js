@@ -1819,8 +1819,8 @@ var CouchDocumentEditor = $n2.Class({
 		if( !opts.suppressEvents ) {
 			// Send document only if it was saved or already
 			// existed.
-			var docId = null;
-			var doc = null;
+			var docId = undefined;
+			var doc = undefined;
 			if( this.editedDocument._id ){
 				doc = this.editedDocument;
 				docId = doc._id;
