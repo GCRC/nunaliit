@@ -1157,7 +1157,6 @@ var TiledDisplay = $n2.Class({
 			,onSuccess: function(doc){
 				_this._dispatch({
 					type: 'editInitiate'
-					,docId: doc._id
 					,doc: doc
 				});
 			}

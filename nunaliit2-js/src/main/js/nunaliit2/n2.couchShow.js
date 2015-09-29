@@ -1949,7 +1949,6 @@ var Show = $n2.Class({
 							});
 							_this.dispatchService.send(DH,{
 								type:'editInitiate'
-								,docId: docId
 								,doc: doc
 							});
 						}

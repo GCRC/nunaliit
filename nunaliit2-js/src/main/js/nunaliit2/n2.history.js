@@ -185,6 +185,7 @@ var Tracker = $n2.Class({
 			d.register(h,'documentDeleted',f);
 			d.register(h,'searchInitiate',f);
 			d.register(h,'editInitiate',f);
+			d.register(h,'editCreateFromGeometry',f);
 			d.register(h,'editClosed',f);
 		};
 	}
@@ -300,7 +301,8 @@ var Tracker = $n2.Class({
 				});
 			};
 
-		} else if( 'editInitiate' === m.type ){
+		} else if( 'editInitiate' === m.type 
+		 ||  'editCreateFromGeometry' === m.type ){
 			this.last = {
 				edit: true
 			};
