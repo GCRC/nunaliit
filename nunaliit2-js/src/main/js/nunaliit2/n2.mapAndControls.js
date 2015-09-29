@@ -629,9 +629,7 @@ var MapAndControls = $n2.Class({
 						
 			    		_this._dispatch({
 			    			type: 'editInitiate'
-			    			,docId: null
-			    			,feature: feature
-			    			,create: true
+			    			,doc: feature.data
 			    			,_origin: _this
 			    		});
 					};
@@ -639,11 +637,12 @@ var MapAndControls = $n2.Class({
 				,onEndClick: function(feature) {
 				}
 				,featureAdded: function(feature) {
+					var mapProj = feature.layer.map.getProjectionObject();
+
 		    		_this._dispatch({
-		    			type: 'editInitiate'
-		    			,docId: null
-		    			,feature: feature
-		    			,create: true
+		    			type: 'editCreateFromGeometry'
+		    			,geometry: feature.geometry.clone()
+		    			,projection: mapProj
 		    			,_origin: _this
 		    		});
 				}

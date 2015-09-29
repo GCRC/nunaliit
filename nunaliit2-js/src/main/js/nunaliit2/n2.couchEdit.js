@@ -621,7 +621,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		
 		if( m.type === 'editGeometryModified' ){
 			if( m._origin !== this ){
-				this._featureModified(m.docId, m.geom, m.proj);
+				this._geometryModified(m.docId, m.geom, m.proj);
 			};
 		} else if( m.type === 'mapGeometryAdded' ){
 			this._addGeometry(m.geom, m.proj);
@@ -743,7 +743,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		};
 	}
 
-	,_featureModified: function(docId, geom, proj) {
+	,_geometryModified: function(docId, geom, proj) {
 
 		if( proj.getCode() != this.couchProj.getCode() ) {
 			// Need to convert
@@ -901,59 +901,42 @@ var CouchDocumentEditor = $n2.Class({
 		};
 	},
 
-	startFeatureEditing: function(
-		feature_
-		) {
+	startEditingFromGeometry: function(olGeom, olProj) {
 		
 		var _this = this;
 	
 		this.editedDocument = {};
 		this.editedDocumentSchema = null;
-		for(var key in feature_.data){
-			if( '__n2Source' === key ) {
-				this.editedDocumentSource = feature_.data[key];
-			} else {
-				this.editedDocument[key] = feature_.data[key];
-			};
-		};
 	
 		this.currentGeometryWkt = undefined;
-		if( this.editedDocument 
-		 && this.editedDocument.nunaliit_geom ) {
-			this.currentGeometryWkt = this.editedDocument.nunaliit_geom.wkt;
-		};
 		
-		this.isInsert = (typeof(feature_.fid) === 'undefined' || feature_.fid === null);
-
-		var insertGeom = undefined;
-		if( this.isInsert ) {
-			// must do initial object work
-			insertGeom = this.convertFeatureGeometryForDb(feature_);
-		};
+		this.isInsert = true;
 
 		this._selectSchema(schemaSelected);
 		
 		function schemaSelected() {
-			if( _this.isInsert ) {
-				// Create original object by augmenting current one with template
-				if( _this.editedDocumentSchema ) {
-					var template = _this.editedDocumentSchema.createObject({});
-					$n2.extend(true, _this.editedDocument, template);
-				};
-
-				// Geometry?
-				if( insertGeom ){
-			    	var g = $n2.couchGeom.getCouchGeometry(insertGeom);
-			    	_this.editedDocument.nunaliit_geom = g;
-			    	this.currentGeometryWkt = g.wkt;
-				};
-				
-				// Add default layers?
-		    	if( _this.initialLayers 
-		    	 && _this.initialLayers.length > 0 ) {
-		    		_this.editedDocument.nunaliit_layers = _this.initialLayers;
-		    	};
+			// Create original object by augmenting current one with template
+			if( _this.editedDocumentSchema ) {
+				var template = _this.editedDocumentSchema.createObject({});
+				$n2.extend(true, _this.editedDocument, template);
 			};
+
+			// Geometry
+			if( olProj.getCode() != _this.couchProj.getCode() ) {
+				// Need to convert
+				var geom = olGeom.clone();
+				geom.transform(olProj,_this.couchProj);
+				olGeom = geom;
+			};
+	    	var g = $n2.couchGeom.getCouchGeometry(olGeom);
+	    	_this.editedDocument.nunaliit_geom = g;
+	    	_this.currentGeometryWkt = g.wkt;
+			
+			// Add default layers?
+	    	if( _this.initialLayers 
+	    	 && _this.initialLayers.length > 0 ) {
+	    		_this.editedDocument.nunaliit_layers = _this.initialLayers;
+	    	};
 			
 			_this._prepareDocument();
 		};
@@ -1998,18 +1981,7 @@ var CouchDocumentEditor = $n2.Class({
 		};
 	},
 	
-    convertFeatureGeometryForDb: function(feature) {
-		var mapProj = feature.layer.map.getProjectionObject();
-		if( mapProj.getCode() != this.couchProj.getCode() ) {
-			// Need to convert
-			var geom = feature.geometry.clone();
-			geom.transform(mapProj,this.couchProj);
-			return geom;
-		};
-		return feature.geometry;
-    },
-	
-    _featureModified: function(docId, geom, proj) {
+    _geometryModified: function(docId, geom, proj) {
 
 		if( proj.getCode() != this.couchProj.getCode() ) {
 			// Need to convert
@@ -2098,7 +2070,7 @@ var CouchDocumentEditor = $n2.Class({
 	_handle: function(m){
 		if( m.type === 'editGeometryModified' ){
 			if( m._origin !== this ){
-				this._featureModified(m.docId, m.geom, m.proj);
+				this._geometryModified(m.docId, m.geom, m.proj);
 			};
 			
 		} else if( m.type === 'mapGeometryAdded' ){
@@ -2206,6 +2178,7 @@ var CouchEditService = $n2.Class({
 			dispatcher.register(DH, 'editGeometryModified', f);
 			dispatcher.register(DH, 'mapGeometryAdded', f);
 			dispatcher.register(DH, 'editInitiate', f);
+			dispatcher.register(DH, 'editCreateFromGeometry', f);
 			dispatcher.register(DH, 'editCancel', f);
 		};
 		
@@ -2217,18 +2190,6 @@ var CouchEditService = $n2.Class({
 				this.userButtons[key] = opts[key];
 			};
 		};
-	},
-
-    _showAttributeForm: function(feature_, editorOptions_) {
-    	if( null != this.currentEditor ) {
-    		this.currentEditor.performCancellation();
-    		this.currentEditor = null;
-    	};
-    	
-    	this.currentEditor = this._createEditor(editorOptions_);
-    	this.currentEditor.startFeatureEditing(
-    		feature_
-    		);
 	},
 
     showDocumentForm: function(document_, editorOptions_) {
@@ -2311,7 +2272,7 @@ var CouchEditService = $n2.Class({
 		this.initialLayers = layerIds;
 	},
 	
-	_initiateEditor: function(m){
+	_initiateEditor: function(doc){
 		var _this = this;
 		
 		// Check that we are logged in
@@ -2319,22 +2280,44 @@ var CouchEditService = $n2.Class({
 		if( authService && false == authService.isLoggedIn() ) {
 			authService.showLoginForm({
 				onSuccess: function(result,options) {
-					_this._initiateEditor(m);
+					_this._initiateEditor(doc);
 				}
 			});
 			return;
 		};
 		
-		if( m.feature ) {
-			this._showAttributeForm(m.feature);
-		} else {
-			this.showDocumentForm(m.doc);
+		this.showDocumentForm(doc);
+	},
+	
+	_createFromGeometry: function(olGeom, olProj){
+		var _this = this;
+		
+		// Check that we are logged in
+		var authService = this.authService;
+		if( authService && false == authService.isLoggedIn() ) {
+			authService.showLoginForm({
+				onSuccess: function(result,options) {
+					_this._createFromGeometry(olGeom, olProj);
+				}
+			});
+			return;
 		};
+		
+    	if( null != this.currentEditor ) {
+    		this.currentEditor.performCancellation();
+    		this.currentEditor = null;
+    	};
+    	
+    	this.currentEditor = this._createEditor();
+    	this.currentEditor.startEditingFromGeometry(olGeom, olProj);
 	},
 	
 	_handle: function(m){
 		if( 'editInitiate' === m.type ){
-			this._initiateEditor(m);
+			this._initiateEditor(m.doc);
+			
+		} else if( 'editCreateFromGeometry' === m.type ) {
+			this._createFromGeometry(m.geometry, m.projection);
 			
 		} else if( 'editCancel' === m.type ) {
 			this.cancelDocumentForm();
