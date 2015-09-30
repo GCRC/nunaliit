@@ -705,7 +705,7 @@ var MapAndControls = $n2.Class({
 	    this._registerDispatch('editInitiate');
 	    this._registerDispatch('editClosed');
 	    this._registerDispatch('editGeometryModified');
-	    this._registerDispatch('editReportDocument');
+	    this._registerDispatch('editReportOriginalDocument');
 	    this._registerDispatch('mapRedrawLayer');
 	    this._registerDispatch('mapSetInitialExtent');
 	    this._registerDispatch('mapSetExtent');
@@ -905,10 +905,6 @@ var MapAndControls = $n2.Class({
 			// point, line or polygon.
 	    	if( _this.editModeAddFeatureEnabled ) {
 		    	var feature = evt.feature;
-		    	if( feature ) {
-		    		// Remember that this is a newly added feature
-		    		feature._n2MapNewFeature = true;
-		    	};
 		    	var previousMode = _this.currentMode;
 	    		_this.switchToEditFeatureMode(feature.fid, feature);
 	    		previousMode.featureAdded(feature);
@@ -1481,9 +1477,7 @@ var MapAndControls = $n2.Class({
 	},
 	
 	_installGeometryEditor: function(feature){
-		// Can not install geometry editor if the feature is not on the map.
-		if( !feature ) return;
-		
+		// Remove previous editor
 		this._removeGeometryEditor();
 		
    		var modifyFeatureGeometry = new OpenLayers.Control.ModifyFeature(
@@ -1499,14 +1493,37 @@ var MapAndControls = $n2.Class({
 		modifyFeatureGeometry.activate();
     	this.editFeatureControls.modifyFeatureGeometry = modifyFeatureGeometry;
     	
-    	if( feature._n2MapNewFeature ){
+    	if( feature ){
     		// This is a new feature that is on the EDIT layer
     		modifyFeatureGeometry.selectFeature(feature);
-    		
-    	} else {
-    		// This is editing an already existing feature
-    		
-	    	var editFeature = new OpenLayers.Feature.Vector(feature.geometry.clone());
+    	};
+	},
+	
+	_updateGeometryEditor: function(olGeom, proj){
+		// Reproject, if needed
+		var mapProj = this.map.getProjectionObject();
+		if( olGeom 
+		 && proj 
+		 && mapProj.getCode() != proj.getCode() ) {
+			olGeom = olGeom.clone();
+			olGeom.transform(proj, mapProj);
+		} else if( olGeom ) {
+			olGeom = olGeom.clone();
+		};
+
+		var modifyFeatureControl = this.editFeatureControls.modifyFeatureGeometry;
+		
+		var editFeature = modifyFeatureControl.feature;
+		if( editFeature ) {
+			// Redraw
+			modifyFeatureControl.unselectFeature(editFeature);
+			editFeature.layer.eraseFeatures([editFeature]);
+			editFeature.geometry = olGeom;
+			editFeature.layer.drawFeature(editFeature);
+			modifyFeatureControl.selectFeature(editFeature);
+		} else {
+			// Add
+	    	editFeature = new OpenLayers.Feature.Vector(olGeom);
 	    	editFeature.fid = this.editFeatureFid;
 
 	    	// Add to edit layer
@@ -1514,8 +1531,8 @@ var MapAndControls = $n2.Class({
 	    	this.editLayer.addFeatures([editFeature]);
 	    	this.editModeAddFeatureEnabled = true;
 
-	    	modifyFeatureGeometry.selectFeature(editFeature);
-    	};
+	    	modifyFeatureControl.selectFeature(editFeature);
+		};
 	},
 	
 	_removeGeometryEditor: function(){
@@ -2087,8 +2104,8 @@ var MapAndControls = $n2.Class({
 				_this._clearValueCache(infoLayer);
 			};
 
-			// In case a feature is loaded after the EDIT_FEATURE mode is entered,
-			// install geometry editor on the feature.
+			// In case a feature is loaded while the EDIT_FEATURE mode is entered,
+			// do not add features for the feature currently being modified.
 			// This happens when edit is initiated from outside the map. The map
 			// is then moved over to the location of the geometry. In that case,
 			// the geometry might load up after the mode was switched.
@@ -2104,14 +2121,11 @@ var MapAndControls = $n2.Class({
 					var f = evt_.features[i];
 					if( f.fid === editFeatureFid ){
 						featuresToRemove.push(f);
-						_this._installGeometryEditor(f);
 						
 					} else if( f.cluster ){
 						for(var j=0,k=f.cluster.length; j<k; ++j){
 							var cf = f.cluster[j];
 							if( cf.fid === editFeatureFid ){
-								_this._installGeometryEditor(cf);
-
 								if( featuresToRemove.indexOf(f) < 0 ) {
 									featuresToRemove.push(f);
 								};
@@ -3011,9 +3025,7 @@ var MapAndControls = $n2.Class({
             
     	} else if( this.currentMode === this.modes.EDIT_FEATURE ) {
     		var editFeature = opts.feature;
-    		if( editFeature ) {
-    			this._installGeometryEditor(editFeature);
-    		};
+   			this._installGeometryEditor(editFeature);
             
     	} else if( this.currentMode === this.modes.NAVIGATE ) {
     		this.activateSelectFeatureControl();
@@ -3101,41 +3113,13 @@ var MapAndControls = $n2.Class({
 		} else if( this.currentMode === this.modes.EDIT_FEATURE 
 		 && olGeom ){
 			// Normal mode: we are editing a feature and the geometry was updated
-			
-			// Check if editing
-			var modifyFeatureControl = this.editFeatureControls.modifyFeatureGeometry;
-			if( modifyFeatureControl ) {
-				var editFeature = modifyFeatureControl.feature;
-
-				// Reproject, if needed
-				if( editFeature ) {
-					var mapProj = editFeature.layer.map.getProjectionObject();
-					if( mapProj.getCode() != proj.getCode() ) {
-						olGeom.transform(proj, mapProj);
-					};
-				
-					// Redraw
-					modifyFeatureControl.unselectFeature(editFeature);
-					editFeature.layer.eraseFeatures([editFeature]);
-					editFeature.geometry = olGeom;
-					editFeature.layer.drawFeature(editFeature);
-					modifyFeatureControl.selectFeature(editFeature);
-				};
-			};
+			this._updateGeometryEditor(olGeom, proj);
 
 		} else if( this.currentMode !== this.modes.EDIT_FEATURE 
 		 && olGeom ){
 			// A geometry was added and the map is not yet in edit mode
-			var mapProj = this.editLayer.map.getProjectionObject();
-			if( mapProj.getCode() != proj.getCode() ) {
-				olGeom.transform(proj, mapProj);
-			};
-			
-			var feature = new OpenLayers.Feature.Vector(olGeom);
-			feature._n2MapNewFeature = true;
-			this.editLayer.addFeatures([feature]);
-			
-			this.switchToEditFeatureMode(fid, feature);
+			this.switchToEditFeatureMode(fid);
+			this._updateGeometryEditor(olGeom, proj);
 		};
     },
 
@@ -4864,17 +4848,14 @@ var MapAndControls = $n2.Class({
 		    	};
 
 		    	// Compute the actual underlying feature
-		    	var geom = null;
 		    	var featuresToAddBack = [];
 		    	if( fid === feature.fid ){
 		        	effectiveFeature = feature;
-		        	geom = feature.geometry;
 		        	
 		    	} else if( feature.cluster ){
 		    		for(var i=0,e=feature.cluster.length; i<e; ++i){
 		    			if( fid === feature.cluster[i].fid ){
 		    	    		effectiveFeature = feature.cluster[i];
-		    	    		geom = feature.cluster[i].geometry;
 		    			} else {
 		    				featuresToAddBack.push(feature.cluster[i]);
 		    			};
@@ -4897,13 +4878,17 @@ var MapAndControls = $n2.Class({
 				// Allow adding a geometry.
 				this.switchToAddGeometryMode(fid);
 			} else {
-				this.switchToEditFeatureMode(fid, effectiveFeature);
+				// Do not provide the effective feature. The event 'editReportOriginalDocument'
+				// will provide the original geometry. The effective feature might have a simplified
+				// version of the geometry
+				this.switchToEditFeatureMode(fid);
 			};
 			
 		} else if( 'editClosed' === type ) {
 
 			var restoreFeature = true;
 			var restoreOriginalData = false;
+			var reloadRequired = false;
 			if( m.deleted ){
 				restoreFeature = false;
 			};
@@ -4911,7 +4896,10 @@ var MapAndControls = $n2.Class({
 				restoreOriginalData = true;
 			};
 			
+			// By switching to the navigate mode, the feature on the
+			// edit layer will be removed.
 			var editFeature = this._removeGeometryEditor();
+			this._switchMapMode(this.modes.NAVIGATE);
 			
 			// Restore original geometry
 			if( restoreFeature && this.editFeatureOriginal ){
@@ -4922,11 +4910,11 @@ var MapAndControls = $n2.Class({
 				
 				// Compute effective feature
 				var effectiveFeature = null;
-				var featuresToAdd = [];
 				if( originalFeature 
 				 && this.editFeatureFid === m.docId ){
 					effectiveFeature = originalFeature;
-					featuresToAdd.push(originalFeature);
+				} else {
+					reloadRequired = true;
 				};
 
 				// Clone geometry if feature was sucessfully updated
@@ -4940,20 +4928,16 @@ var MapAndControls = $n2.Class({
 						};
 					};
 					effectiveFeature.style = originalStyle;
-				};
-
-				// Add features back to original layer
-				if( originalLayer && featuresToAdd.length > 0 ){
-					originalLayer.addFeatures(featuresToAdd);
+					
+					// Add feature back to original layer
+					if( originalLayer ){
+						originalLayer.addFeatures([effectiveFeature]);
+					};
 				};
 			};
 			
 			this.editFeatureOriginal = {};
 			this.editFeatureFid = undefined;
-			
-			// By switching to the navigate mode, the feature on the
-			// edit layer will be removed.
-			this._switchMapMode(this.modes.NAVIGATE);
 			
 			if( !m.deleted ) {
 				var docId = m.docId;
@@ -4962,43 +4946,48 @@ var MapAndControls = $n2.Class({
 					this._selectedFeatures(features, [docId]);
 				};
 			};
+
+			// Reload feature
+			if( reloadRequired ){
+				var filter = $n2.olFilter.fromFid(docId);
+				this._reloadFeature(filter);
+			};
 			
 		} else if( 'editGeometryModified' === type ) {
 			if( m._origin !== this ){
 				this._geometryModified(m.docId, m.geom, m.proj);
 			};
 
-		} else if( 'editReportDocument' === type ) {
-			if( m._origin !== this ){
-				if( m.geom ){
-					// Adjust geometry
-					this._geometryModified(m.docId, m.geom, m.proj);
+		} else if( 'editReportOriginalDocument' === type ) {
+			if( m.geometry 
+			 && m.docId === this.editFeatureFid ){
+				// Adjust geometry
+				this._geometryModified(m.docId, m.geometry, m.projection);
+				
+				// Zoom
+				if( m.doc
+				 && m.doc.nunaliit_geom
+				 && m.doc.nunaliit_geom.bbox 
+				 && m.projection ){
+					var xmin = m.doc.nunaliit_geom.bbox[0];
+					var ymin = m.doc.nunaliit_geom.bbox[1];
+					var xmax = m.doc.nunaliit_geom.bbox[2];
+					var ymax = m.doc.nunaliit_geom.bbox[3];
 					
-					// Zoom
-					if( m.doc
-					 && m.doc.nunaliit_geom
-					 && m.doc.nunaliit_geom.bbox 
-					 && m.proj ){
-						var xmin = m.doc.nunaliit_geom.bbox[0];
-						var ymin = m.doc.nunaliit_geom.bbox[1];
-						var xmax = m.doc.nunaliit_geom.bbox[2];
-						var ymax = m.doc.nunaliit_geom.bbox[3];
+					var xdiff = (xmax - xmin) / 3;
+					var ydiff = (ymax - ymin) / 3;
+					
+					// Do not zoom on points
+					if( xdiff > 0 || ydiff > 0 ){
+						xmin = xmin - xdiff;
+						xmax = xmax + xdiff;
+						ymin = ymin - ydiff;
+						ymax = ymax + ydiff;
 						
-						var xdiff = (xmax - xmin) / 3;
-						var ydiff = (ymax - ymin) / 3;
-						
-						// Do not zoom on points
-						if( xdiff > 0 || ydiff > 0 ){
-							xmin = xmin - xdiff;
-							xmax = xmax + xdiff;
-							ymin = ymin - ydiff;
-							ymax = ymax + ydiff;
-							
-							this.setNewExtent(
-								[xmin,ymin,xmax,ymax]
-								,m.proj.getCode()
-							);
-						};
+						this.setNewExtent(
+							[xmin,ymin,xmax,ymax]
+							,m.projection.getCode()
+						);
 					};
 				};
 			};

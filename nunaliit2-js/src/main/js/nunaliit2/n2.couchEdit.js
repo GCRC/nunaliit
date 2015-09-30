@@ -1029,11 +1029,11 @@ var CouchDocumentEditor = $n2.Class({
 			});
 
 			_this._dispatch({
-				type: 'editReportDocument'
+				type: 'editReportOriginalDocument'
 				,docId: editedDoc._id
 				,doc: editedDoc
-				,geom: olGeom
-				,proj: _this.couchProj
+				,geometry: olGeom
+				,projection: _this.couchProj
 				,_origin: _this
 			});
 			
