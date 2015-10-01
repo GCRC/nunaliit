@@ -4,7 +4,7 @@ var SPRING_LEN = 0.0000000000001;
 var usePhysics = true;
 
 // Time in ms to fade spring influence in or out
-var springFadeTime = 600.0;
+var springFadeTime = 400.0;
 
 // Socket to tuioserver.js that emits TUIO events in JSON
 var socket = io('http://localhost:3000');
@@ -16,13 +16,13 @@ var scrollSpeed = 1.0;
 var barsVisible = true;
 
 // Time in ms a cursor must be gone to be considered up
-var clickDelay = 500;
+var clickDelay = 1000;
 
 // Distance a cursor must remain within to count as a click or press
 var clickDistance = 0.005;
 
 // Time in ms a cursor must be down and still for a long press
-var pressDelay = 1000;
+var pressDelay = 1250;
 
 // Maximum distance to consider cursors to be on the same hand
 var handSpan = 0.15;
@@ -594,7 +594,7 @@ function onCursorDown(inst) {
 	if (downCursors == 0 && pressCursor == undefined) {
 		// First cursor down, start potential long press
 		pressCursor = inst;
-	} else if (downCursors > 1) {
+	} else if (downCursors > 0) {
 		// Multiple cursors down, terminate pending long press
 		pressCursor = undefined;
 	}
