@@ -799,9 +799,12 @@ var DomStyler = $n2.Class({
 		function convertTextElement(parent, textNode){
 			var text = textNode.nodeValue;
 			
+			var removeTextNode = false;
 			var m = reUrl.exec(text);
 			var after = null;
 			while(m){
+				removeTextNode = true;
+				
 				after = m[3] + text.substr(m.index + m[0].length);
 				var before = text.substr(0, m.index) + m[1];
 				
@@ -828,7 +831,9 @@ var DomStyler = $n2.Class({
 				parent.insertBefore(t3,textNode);
 			};
 
-			parent.removeChild(textNode);
+			if( removeTextNode ) {
+				parent.removeChild(textNode);
+			};
 		};
 	},
 	
