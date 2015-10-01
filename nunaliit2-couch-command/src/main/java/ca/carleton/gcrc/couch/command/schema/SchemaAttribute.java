@@ -121,6 +121,18 @@ public class SchemaAttribute {
 			boolean wikiTransform = jsonAttr.optBoolean("wikiTransform",false);
 			attribute.setWikiTransform(wikiTransform);
 		}
+
+		// disableMaxHeight
+		{
+			boolean disableMaxHeight = jsonAttr.optBoolean("disableMaxHeight",false);
+			attribute.setDisableMaxHeight(disableMaxHeight);
+		}
+
+		// maxHeight
+		{
+			int maxHeight = jsonAttr.optInt("maxHeight",0);
+			attribute.setMaxHeight(maxHeight);
+		}
 		
 		return attribute;
 	}
@@ -140,6 +152,8 @@ public class SchemaAttribute {
 	private String customType;
 	private String searchFunction;
 	private boolean wikiTransform;
+	private boolean disableMaxHeight;
+	private int maxHeight = 0;
 
 	public SchemaAttribute(String type){
 		this.type = type;
@@ -270,6 +284,22 @@ public class SchemaAttribute {
 		this.wikiTransform = wikiTransform;
 	}
 
+	public boolean isDisableMaxHeight() {
+		return disableMaxHeight;
+	}
+
+	public void setDisableMaxHeight(boolean disableMaxHeight) {
+		this.disableMaxHeight = disableMaxHeight;
+	}
+
+	public int getMaxHeight() {
+		return maxHeight;
+	}
+
+	public void setMaxHeight(int maxHeight) {
+		this.maxHeight = maxHeight;
+	}
+
 	public JSONObject toJson() throws Exception {
 		JSONObject jsonAttr = new JSONObject();
 		
@@ -287,6 +317,7 @@ public class SchemaAttribute {
 		if( excludedFromExport ) jsonAttr.put("excludedFromExport", true);
 		if( urlsToLinks ) jsonAttr.put("urlsToLinks", true);
 		if( wikiTransform ) jsonAttr.put("wikiTransform", true);
+		if( disableMaxHeight ) jsonAttr.put("disableMaxHeight", true);
 
 		if( options.size() > 0 ){
 			JSONArray jsonOptions = new JSONArray();
@@ -308,6 +339,10 @@ public class SchemaAttribute {
 			}
 			
 			jsonAttr.put("checkboxes",jsonCheckboxes);
+		}
+
+		if( maxHeight > 0 ){
+			jsonAttr.put("maxHeight", maxHeight);
 		}
 		
 		return jsonAttr;
@@ -560,27 +595,33 @@ public class SchemaAttribute {
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 
 					String fixUrlClass = "";
+					String fixMaxHeight = "";
 					if( urlsToLinks ){
-						fixUrlClass = " n2s_convertTextUrlToLink";
+						fixUrlClass += " n2s_convertTextUrlToLink";
 					}
 					if( wikiTransform ){
-						fixUrlClass = " n2s_wikiTransform";
+						fixUrlClass += " n2s_wikiTransform";
 					} else if( "textarea".equals(type) 
 					 || "localizedtextarea".equals(type) ){
-						fixUrlClass = " n2s_preserveSpaces n2s_installMaxHeight";
+						fixUrlClass += " n2s_preserveSpaces";
+						
+						if( !disableMaxHeight ){
+							fixUrlClass += " n2s_installMaxHeight";
+							fixMaxHeight = " _maxheight=\"" + getEffectiveMaxHeight() + "\"";
+						}
 					}
 					
 					if( "string".equals(type) ){
 						pw.println("\t\t\t<div class=\"value"+fixUrlClass+"\">{{"+id+"}}</div>");
 					
 					} else if( "textarea".equals(type) ){
-						pw.println("\t\t\t<div class=\"value"+fixUrlClass+"\" _maxheight=\"100\">{{"+id+"}}</div>");
+						pw.println("\t\t\t<div class=\"value"+fixUrlClass+"\"" + fixMaxHeight + ">{{"+id+"}}</div>");
 
 					} else if( "localized".equals(type) ){
 						pw.println("\t\t\t<div class=\"value"+fixUrlClass+"\">{{#:localize}}"+id+"{{/:localize}}</div>");
 
 					} else if( "localizedtextarea".equals(type) ){
-						pw.println("\t\t\t<div class=\"value"+fixUrlClass+"\" _maxheight=\"100\">{{#:localize}}"+id+"{{/:localize}}</div>");
+						pw.println("\t\t\t<div class=\"value"+fixUrlClass+"\"" + fixMaxHeight + ">{{#:localize}}"+id+"{{/:localize}}</div>");
 					}
 					
 					pw.println("\t\t\t<div class=\"end\"></div>");
@@ -668,7 +709,11 @@ public class SchemaAttribute {
 					pw.print("\t\t\t<div class=\"array_element");
 					if( "textarea".equals(elementType) 
 					 || "localizedtextarea".equals(elementType) ){
-						pw.print(" n2s_preserveSpaces n2s_installMaxHeight n2s_convertTextUrlToLink\" _maxheight=\"100");
+						if( disableMaxHeight ){
+							pw.print(" n2s_preserveSpaces n2s_convertTextUrlToLink");
+						} else {
+							pw.print(" n2s_preserveSpaces n2s_installMaxHeight n2s_convertTextUrlToLink\" _maxheight=\""+getEffectiveMaxHeight());
+						}
 					}
 					pw.println("\">");
 					
@@ -1076,5 +1121,10 @@ public class SchemaAttribute {
 			attrExport.put("type", "json");
 			exportArr.put(attrExport);
 		}
+	}
+	
+	private int getEffectiveMaxHeight(){
+		if( maxHeight > 0 ) return maxHeight;
+		return 100;
 	}
 }
