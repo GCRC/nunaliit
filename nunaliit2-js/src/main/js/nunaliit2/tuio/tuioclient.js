@@ -537,6 +537,7 @@ function createDot(x, y, content) {
 	div.style.textAlign = "center";
 	div.style.verticalAlign = "middle";
 	div.style.zIndex = "10";
+	div.style.pointerEvents = "none";
 	div.style.left = ((x * window.innerWidth) - (dotSize / 2)) + "px";
 	div.style.top = ((y * window.innerHeight) - (dotSize / 2)) + "px";
 	div.innerHTML = content;
