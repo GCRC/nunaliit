@@ -651,6 +651,14 @@ function onHandDown(inst) {
 function onHandMove(inst) {
 	var hand = hands[inst];
 
+    if (mouseHand == undefined) {
+        /* Mouse hand is no longer around, if this is the only remaining hand,
+           take over scrolling. */
+        if (Object.keys(hands).length == 1) {
+            mouseHand = inst;
+        }
+    }
+
 	if (inst == mouseHand) {
 		// Hand is acting as mouse cursor, dispatch mouse move
 		// dispatchMouseEvent('mousemove', hand.pos.x, hand.pos.y);
