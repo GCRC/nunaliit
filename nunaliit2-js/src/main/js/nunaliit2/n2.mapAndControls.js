@@ -666,10 +666,8 @@ var MapAndControls = $n2.Class({
 					
 		    		_this._dispatch({
 		    			type: 'mapGeometryAdded'
-		    			,feature: feature
-		        		,geom: feature.geometry
-		        		,proj: proj
-		        		,_origin: _this
+		        		,geometry: feature.geometry
+		        		,projection: proj
 		    		});
 				}
 			}

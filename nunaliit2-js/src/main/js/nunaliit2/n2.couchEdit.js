@@ -624,7 +624,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 				this._geometryModified(m.docId, m.geom, m.proj);
 			};
 		} else if( m.type === 'mapGeometryAdded' ){
-			this._addGeometry(m.geom, m.proj);
+			this._addGeometry(m.geometry, m.projection);
 		};
 	}
 
@@ -2074,7 +2074,7 @@ var CouchDocumentEditor = $n2.Class({
 			};
 			
 		} else if( m.type === 'mapGeometryAdded' ){
-			this._addGeometry(m.geom, m.proj);
+			this._addGeometry(m.geometry, m.projection);
 		};
 	}
 });
