@@ -2889,10 +2889,7 @@ var MapAndControls = $n2.Class({
     	};
     	
     	if( showLogin ) {
-    		this.hideMapInteractionSwitch();
 			this._switchMapMode(this.modes.NAVIGATE);
-    	} else {
-   			this.showMapInteractionSwitch();
     	};
     },
     	
@@ -2932,14 +2929,6 @@ var MapAndControls = $n2.Class({
 			this._cancelEditFeatureMode();
 		};
 		return false;
-	},
-	
- 	hideMapInteractionSwitch: function() {
- 		this._getMapInteractionSwitch().hide();
-	},
-	
-	showMapInteractionSwitch: function() {
- 		this._getMapInteractionSwitch().show();
 	},
 	
 	activateControl: function(control) {
