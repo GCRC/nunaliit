@@ -480,3 +480,15 @@ Wait Widget
 .n2wait .n2_wait_name_count {
 	padding-left: 2px;
 }
+
+/* 
+==============================
+Add or Edit Feature Buttons 
+==============================
+*/
+.n2_content_map_interaction {
+	display: none;
+}
+.nunaliit_logged_in .n2_content_map_interaction {
+	display: block;
+}

@@ -3,10 +3,13 @@
 	Browser Reset
 	===============================================================
  */
- body {
+html, body {
  	margin: 0;
  	padding: 0;
- }
+ 	font-family: helvetica, sans-serif;
+    font-weight: 400;
+    font-size: 0.9em; 
+}
 /*
 	===============================================================
 	Layout
@@ -64,7 +67,6 @@
 }
  /* -- footer -- */
 .nunaliit_footer {
-	display: none;
 	position:absolute;
 	bottom:0;
 	left:0;
@@ -74,7 +76,45 @@
 	margin: 0;
 	border: 0;	
 	padding:0;
+	font-size: 0.75em;
+	text-align: right;
+	color: #fff;
+	background-color: #3a3a3a;
 }
+.nunaliit_footer a {
+	color: #fff;
+	text-decoration: none;
+}
+.nunaliit_footer a:hover {
+	text-decoration: underline;
+}
+.nunaliit_footer_content {
+	margin:2px 10px;
+	display:inline-block;
+}
+.nunaliit_footer_nav {
+	margin:2px 10px;
+	list-style:none;
+	display:inline-block;
+}
+.nunaliit_footer_nav ul {
+	margin:0;
+	padding:0;
+}
+.nunaliit_footer_nav ul li {
+	padding:0 10px;
+	margin:0;
+	display:inline-block;
+}
+.nunaliit_footer_nav ul li:first-child {
+	margin-right:19px;
+}
+.nunaliit_footer_nav ul li:last-child {
+	margin-left:0;
+	padding-left:0;
+	border-left:0;	
+}
+
 /*
 	===============================================================
 	Widgets
