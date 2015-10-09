@@ -86,8 +86,8 @@ function loadScript(scriptUrl, refLocation, insertAfter) {
 
 	if( scriptElem ){
 		var s = document.createElement('script');
-		s.src = scriptUrl;
-		s.type = 'text/javascript';
+		s.setAttribute('src',scriptUrl);
+		s.setAttribute('type','text/javascript');
 		if( insertAfter ){
 			scriptElem.parentNode.insertBefore(s,scriptElem.nextSibling);
 		} else {

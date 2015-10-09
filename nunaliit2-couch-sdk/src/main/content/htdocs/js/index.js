@@ -45,46 +45,85 @@ function main_init(config) {
 		navigationName = 'navigation.demo';
 	};
 	
-	// Compute search panel name
-	var searchPanelName = null;
-	var $searchPanel = $('.nunaliit_search_input');
-	if( $searchPanel.length > 0 ){
-		searchPanelName = $searchPanel.attr('id');
-		if( !searchPanelName ){
-			searchPanelName = $n2.getUniqueId();
-			$searchPanel.attr('id',searchPanelName);
-		};
+	// Theme
+	var themeLocation = null;
+	if( config 
+	 && config.directory 
+	 && config.directory.customService 
+	 && config.directory.themesService ){
+		themeLocation = config.directory.customService.getOption('themeLocation','theme/theme.json');
 	};
-
-	new $n2.couchModule.ModuleDisplay({
-		moduleName: moduleName
-		,config: config
-		,titleName: 'title'
-		,moduleTitleName: 'module_title'
-		,loginPanels: $('#login1,#login2')
-		,contentName: 'content'
-		,navigationName: 'navigation'
-		,navigationDoc: navigationName
-		,languageSwitcherName: 'language_switcher'
-		,helpButtonName: 'help_button'
-		,searchPanelName: searchPanelName
-		,onSuccess: function(moduleDisplay){
-			config.moduleDisplay = moduleDisplay;
-			
-			config.start();
-			
-			if( bounds ) {
-				config.directory.dispatchService.send('index.js',{
-					type:'mapSetInitialExtent'
-					,extent: bounds
-					,srsName: srsName
-					,reset: true
+	var $themeElem = $('.nunaliit_template');
+	if( themeLocation && $themeElem.length ){
+		var themesService = config.directory.themesService;
+		
+		themesService.loadTheme({
+			path: themeLocation
+			,onSuccess: function(theme){
+				$n2.log('Loaded theme',theme);
+				theme.install({
+					elem: $themeElem
+					,onSuccess: function(html){
+						$n2.log('theme installed');
+						loadModule();
+					}
+					,onError: function(msg){
+						$n2.log('Unable to install theme');
+						loadModule();
+					}
 				});
-			};
-		}
-		,onError: function(err){ alert('Unable to display module('+moduleName+'): '+err); }
-	});
+			}
+			,onError: function(msg){
+				$n2.log('Unable to load theme');
+				loadModule();
+			}
+		});
+		
+	} else {
+		loadModule();
+	};
 	
+	function loadModule(){
+		// Compute search panel name
+		var searchPanelName = null;
+		var $searchPanel = $('.nunaliit_search_input');
+		if( $searchPanel.length > 0 ){
+			searchPanelName = $searchPanel.attr('id');
+			if( !searchPanelName ){
+				searchPanelName = $n2.getUniqueId();
+				$searchPanel.attr('id',searchPanelName);
+			};
+		};
+	
+		new $n2.couchModule.ModuleDisplay({
+			moduleName: moduleName
+			,config: config
+			,titleName: 'title'
+			,moduleTitleName: 'module_title'
+			,loginPanels: $('#login1,#login2')
+			,contentName: 'content'
+			,navigationName: 'navigation'
+			,navigationDoc: navigationName
+			,languageSwitcherName: 'language_switcher'
+			,helpButtonName: 'help_button'
+			,searchPanelName: searchPanelName
+			,onSuccess: function(moduleDisplay){
+				config.moduleDisplay = moduleDisplay;
+				
+				config.start();
+				
+				if( bounds ) {
+					config.directory.dispatchService.send('index.js',{
+						type:'mapSetInitialExtent'
+						,extent: bounds
+						,srsName: srsName
+						,reset: true
+					});
+				};
+			}
+			,onError: function(err){ alert('Unable to display module('+moduleName+'): '+err); }
+		});
+	};
 };
 
 jQuery().ready(function() {
