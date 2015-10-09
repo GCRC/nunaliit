@@ -13,11 +13,31 @@ html, body {
 /*
 	===============================================================
 	Layout
+	
+body
+	div.nunaliit_header
+		div.nunaliit_header_container
+			span.nunaliit_title
+				a.nunaliit_title_link
+			div.nunaliit_header-nav
+			div.nunaliit_login
+		div.nunaliit_module_title
+			div.nunaliit_header_language
+			div.nunaliit_login
+			div.nunaliit_help_button
+			div.nunaliit_search_input
+			span.nunaliit_module_title_item
+	div.nunaliit_content
+	div.nunaliit_footer
+		span.nunaliit_footer_content
+		div.nunaliit_footer_nav
+			ul
+				li
+					a
 	===============================================================
  */
  /* -- header -- */
 .nunaliit_header {
-	display: none;
 	position:absolute;
 	top:0;
 	left:0;
@@ -27,26 +47,359 @@ html, body {
 	margin: 0;
 	border: 0;	
 	padding:0;
+	border-bottom: 1px solid rgba(255,255,255,1);
+    color: #fff;	
+    background-color: #3a3a3a;
 }
- /* -- content -- */
+.nunaliit_header a {
+    color: #fff;
+    text-decoration: none;
+}
+/* nunaliit_header_container is within nunaliit_header */
+.nunaliit_header_container {
+	position:absolute;
+	top:0;
+	left:0;
+	width: 100%;
+	height:71px;
+}
+/* nunaliit_title is within nunaliit_header_container */
+.nunaliit_title {
+	display:inline-block;
+	margin: 11.5px 20px;
+	border: 0;
+	padding: 0;
+	font-size: 2.2em;
+	font-weight:500;
+	text-shadow: black 1px 1px 1px;
+	color:#fff;
+}
+/* nunaliit_title_link is within nunaliit_title */
+.nunaliit_title_link {
+	display:inline-block;
+	padding: 8px 20px;
+	margin: 0;
+	color:#fff;
+}
+.nunaliit_title_link:hover {
+	text-decoration:none;
+}
+
+/* nunaliit_header-nav is within nunaliit_header_container */
+.nunaliit_header-nav {
+	display:-moz-inline-stack;
+	display:inline-block;
+	margin: 0 0 0 25px;
+	padding: 0;
+	list-style:	none;
+	line-height:1.0;
+	height:100%;
+	vertical-align: top;
+}
+.nunaliit_header-nav ul {
+	position: absolute;
+	top: 0;
+	left:100%;
+	margin: 0;
+	padding: 0;
+	display: none;
+	width: 100%;
+}
+.nunaliit_header-nav li {
+	float: left;
+	position: relative;
+	margin:0;
+	padding:0;
+}
+.nunaliit_header-nav a {
+	display: block;
+	position: relative;
+	padding:15px;
+	padding-right: 25px;
+}
+.nunaliit_header-nav img {
+	display:none;
+}
+.nunaliit_header-nav>ul {
+	top: 0;
+	left:auto;
+	height: 100%;
+	display:block;
+	width: inherit;
+}
+.nunaliit_header-nav>ul>li>ul {
+	left: -1px;
+	width: 150%;
+	top: 100%;
+}
+.nunaliit_header-nav ul li {
+	width: 100%;
+}
+.nunaliit_header-nav>ul>li {
+	width:auto;
+	display:inline-block;
+	height:100%;
+}
+.nunaliit_header-nav li:hover {
+	/*visibility: inherit;  fixes IE7 'sticky bug' */
+	text-decoration:underline;
+}
+.nunaliit_header-nav li:hover>ul {
+	display:block;
+	z-index: 99;
+}
+.nunaliit_header-nav a,
+.nunaliit_header-nav a:visited,
+.nunaliit_header-nav span {
+	color: #fff;
+}
+.nunaliit_header-nav li {
+	background-color: #2f2f2f;
+	border-left: 1px solid rgba(255,255,255,0.6);
+	border-right: 1px solid rgba(255,255,255,0.6);
+	border-bottom:1px solid rgba(255,255,255,0.4);
+}
+.nunaliit_header-nav li:hover {
+	background-color:#1f1f1f;
+}
+.nunaliit_header-nav li:hover ul li:first-child {
+	border-left: 1px solid rgba(0,0,0,0.9);
+}
+.nunaliit_header-nav>ul {
+	background-color: transparent;
+}
+.nunaliit_header-nav>ul>li {
+	position: relative;
+	border-left: 1px solid #838383;
+	border-right: 1px solid #838383;
+	padding: 0 20px;
+	margin:0 0 0 -1px;
+	background-color: #2f2f2f;
+	-webkit-box-shadow: inset 0 2px 3px rgba(0,0,0,0.2);
+	box-shadow: inset 0 2px 3px rgba(0,0,0,0.2);
+	height: 100%;
+	display:-moz-inline-stack;
+	display:inline-block;
+	zoom:1;
+	*display:inline;
+	border-bottom:0;
+}
+.nunaliit_header-nav li.n2_nav_currentModule {
+	background-color: #160E7D;
+}
+.nunaliit_header-nav ul>li>a:hover {
+	background-color:#000;
+	border-right:0;
+}
+.nunaliit_header-nav>ul>li:hover>ul>li:first-child {
+	border-left: 1px solid rgba(255,255,255,0.6);
+}
+.nunaliit_header-nav>ul>li>a,
+.nunaliit_header-nav>ul>li>span {
+	font-weight: normal;
+	display:block;
+	text-decoration: none;
+	color: #fff;
+	line-height: 0;
+	position: relative;
+	top: 35px;	
+	padding:0;
+}
+.nunaliit_header-nav>ul>li>ul>li,
+.nunaliit_header-nav>ul>li>ul>li:hover {
+	/* background-image: url('../images/left-arrow.png'); */
+	background-repeat: no-repeat;
+	background-position: center right;
+}
+.nunaliit_header-nav>ul>li>ul>li>a:hover {
+	cursor: default;
+	text-decoration:none;
+}
+.nunaliit_header-nav>ul>li>a {
+	margin-right:-1px;
+}
+
+.nunaliit_header_container .nunaliit_login {
+	position:absolute;
+	display: table-row;
+	top:0;
+	right:20px;
+	height:71px;
+	overflow: hidden;
+}	
+.nunaliit_header_container .nunaliit_login_link_outer_container {
+	display: table-cell;
+	vertical-align: middle;
+	height:71px;
+	width: 36px;
+	border-left: 1px solid #838383;
+	border-right: 1px solid #838383;
+	padding:0 20px;
+	background-color:#2f2f2f;
+}
+.nunaliit_header_container .nunaliit_login_link_outer_container:hover {
+	background-color:rgba(0,0,0,0.9);
+}
+.nunaliit_header_container .nunaliit_login_link_inner_container {
+	display: inline;
+}
+.nunaliit_header_container .nunaliit_login_link {
+	text-decoration: none;
+	color: #fff;
+}
+.nunaliit_header_container .nunaliit_login_greeting_outer_container {
+	display: table-cell;
+	vertical-align: middle;
+	height:70px;
+	padding:0 20px;
+}
+.nunaliit_header_container .nunaliit_login_greeting_inner_container {
+	display: inline;
+	color: #fff;
+}
+.nunaliit_login_greeting_with_editor {
+	cursor: pointer;
+}
+
+/* nunaliit_module_title is within nunaliit_header */
+.nunaliit_module_title {
+	position:absolute;
+	display: block;
+	top:71px;
+	left:0;
+	width: 100%;
+	height:30px;
+	margin: 0;
+	padding: 0;
+	background-color: #444444;
+	border-top: 1px solid #575757;
+	color:#fff;
+}
+.nunaliit_module_title_item {
+	display: inline-block;
+	padding: 8px 20px;
+}
+.nunaliit_module_title_link {
+	color:#fff;
+}
+.nunaliit_module_title_link:hover {
+	text-decoration:none;
+}
+.nunaliit_module_title .nunaliit_login {
+	display: none;
+	float:right;
+}	
+.nunaliit_module_title .nunaliit_login_link_outer_container {
+	padding: 8px 20px;
+}
+.nunaliit_module_title .nunaliit_login_link {
+	color: #fff;
+	text-decoration: none;
+}
+.nunaliit_module_title .nunaliit_login_greeting_outer_container {
+	display:none;
+}
+.nunaliit_module_title .n2widget_createDocument {
+	float: right;
+	padding: 8px 20px;
+}
+.nunaliit_module_title .n2widget_createDocument a,
+.nunaliit_module_title .n2widget_createDocument a:visited {
+	color: #fff;
+	text-decoration: none;
+}
+.nunaliit_header_language {
+	float: right;
+	padding: 8px 20px;
+}
+.nunaliit_header_language a,
+.nunaliit_header_language a:visited {
+	color: #fff;
+	text-decoration: none;
+}
+.nunaliit_help_button {
+	float: right;
+	padding: 8px 20px;
+}
+.nunaliit_help_button a,
+.nunaliit_help_button a:visited {
+	color: #fff;
+	text-decoration: none;
+}
+.nunaliit_search_input {
+	float: right;
+	padding: 1px 20px;
+}
+.nunaliit_search_input input {
+	background-image: url('images/search.png');
+	background-position:center right;
+	background-repeat:no-repeat;
+	background-color: transparent;
+	border-radius: 30px;
+	border: solid 1px #fff;
+	font-family: helvetica, sans-serif;
+	font-weight: 400;
+	font-size: 0.9em;
+	color: #fff;
+	height: 26px;
+	padding: 0px 10px;
+	margin: 0;
+}
+
+/* -- content -- */
 .nunaliit_content {
 	position:absolute;
 	width:100%;
 	top:102px;
 	bottom:17px;
 }
+
+/* Content Map */
 .n2_content_map {
 	position:absolute;
 	left:0;
 	right:0;
 	top:0;
 	bottom:0;
+	margin: 0;
+	border: 0;
 }
+.n2_content_contains_text .n2_content_map {
+	right:450px;
+}
+.n2_display_format_tiled .n2_content_contains_text .n2_content_map {
+	right: 640px;
+}
+
+/* Content Map Interaction Buttons */
 .n2_content_map_interaction {
-	position:absolute;
-	right:10px;
-	top:10px;
+	position: absolute;
+	right: 33px;
+	top: 33px;
+	padding: 0;
+	margin: 0;
+	border: 0;
+	text-align: right;
 }
+.n2_content_contains_text .n2_content_map_interaction {
+	right: 468px;
+}
+.n2_display_format_tiled .n2_content_contains_text .n2_content_map_interaction {
+	right: 658px;
+}
+.n2_content_map_interaction input { 
+	cursor: pointer;
+}
+
+/* OpenLayers Editing Toolbar */
+.olControlEditingToolbar {
+	position: absolute;
+	right: 185px;
+	top: 33px;
+}
+
+
+/* Content Text */
 .n2_content_text {
 	position:absolute;
 	left:0;
@@ -54,18 +407,18 @@ html, body {
 	top:0;
 	bottom:0;
 }
-.n2_content_contains_text .n2_content_map {
-	right:450px;
-}
-.n2_content_contains_text .n2_content_map_interaction {
-	right:460px;
-}
 .n2_content_contains_map .n2_content_text {
 	right: 0;
 	left: auto;
 	width:450px;
 }
- /* -- footer -- */
+.n2_display_format_tiled .n2_content_contains_map .n2_content_text {
+	left: auto;
+	right: 0;
+	width: 640px;
+}
+
+/* -- footer -- */
 .nunaliit_footer {
 	position:absolute;
 	bottom:0;
@@ -113,6 +466,11 @@ html, body {
 	margin-left:0;
 	padding-left:0;
 	border-left:0;	
+}
+
+/* Search Input is not in content, for theme */
+.n2_content .n2_content_searchInput {
+	display: none;
 }
 
 /*
