@@ -65,16 +65,35 @@ function getCoreScriptLocation() {
 	return getScriptLocation(nunaliit2CoreScript);
 };
 
-function loadScript(scriptUrl, refLocation) {
-	var scriptElem = document.getElementsByTagName('script')[0];
+function loadScript(scriptUrl, refLocation, insertAfter) {
+	var scriptElem = null;
+	
+	if( typeof refLocation === 'boolean' ){
+		insertAfter = refLocation;
+		refLocation = undefined;
+	} else if( typeof refLocation === 'undefined' ) {
+		insertAfter = false;
+	}
+
+	var scriptElems = document.getElementsByTagName('script');
+	if( scriptElems.length > 0 ){
+		scriptElem = scriptElems.item(scriptElems.length - 1);
+	};
+	
 	if( refLocation && refLocation.elem ) {
 		scriptElem = refLocation.elem;
 	};
 
-	var s = document.createElement('script');
-	s.src = scriptUrl;
-	s.type = 'text/javascript';
-	scriptElem.parentNode.insertBefore(s,scriptElem);
+	if( scriptElem ){
+		var s = document.createElement('script');
+		s.src = scriptUrl;
+		s.type = 'text/javascript';
+		if( insertAfter ){
+			scriptElem.parentNode.insertBefore(s,scriptElem.nextSibling);
+		} else {
+			scriptElem.parentNode.insertBefore(s,scriptElem);
+		};
+	};
 };
 
 $n2.scripts = {

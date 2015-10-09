@@ -435,6 +435,10 @@ function Configure(options_){
 			,dispatchService: configuration.directory.dispatchService
 			,customService: configuration.directory.customService
 		});
+
+		configuration.directory.themesService = new $n2.themes.ThemesService({
+			rootPath: options.rootPath
+		});
 		
 		// Load help file
 		if( configuration.atlasDb ){

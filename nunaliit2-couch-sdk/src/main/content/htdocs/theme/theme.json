@@ -1,0 +1,9 @@
+{
+	"styles": [
+		{"href":"theme.css"}
+	]
+	,"libraries": [
+		{"src":"theme.js"}
+	]
+	,"template": "theme.html"
+}
