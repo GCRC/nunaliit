@@ -9,6 +9,8 @@ import java.util.Stack;
 import java.util.Vector;
 
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.app.Document;
 import ca.carleton.gcrc.couch.app.impl.DocumentFile;
@@ -16,6 +18,8 @@ import ca.carleton.gcrc.couch.command.schema.SchemaDefinition;
 import ca.carleton.gcrc.couch.fsentry.FSEntryFile;
 
 public class CommandUpdateSchema implements Command {
+
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	@Override
 	public String getCommandString() {
@@ -108,18 +112,21 @@ public class CommandUpdateSchema implements Command {
 							FSEntryFile entry = new FSEntryFile(subDir);
 							doc = DocumentFile.createDocument(entry);
 						} catch(Exception e){
-							throw new Exception("Unable to read document at: "+subDir.getName(), e);
+							logger.error("Unable to read document at: "+subDir.getName(), e);
+							//throw new Exception("Unable to read document at: "+subDir.getName(), e);
 						}
 						
-						// Check if this is schema we are looking for
-						JSONObject jsonDoc = doc.getJSONObject();
-						String docId = jsonDoc.optString("_id",null);
-						String nunaliitType = jsonDoc.optString("nunaliit_type",null);
-						
-						if( null != docId 
-						 && "schema".equals(nunaliitType) ){
-							documentsByDocId.put(docId, doc);
-							dirByDocId.put(docId, subDir);
+						if( null != doc ){
+							// Check if this is schema we are looking for
+							JSONObject jsonDoc = doc.getJSONObject();
+							String docId = jsonDoc.optString("_id",null);
+							String nunaliitType = jsonDoc.optString("nunaliit_type",null);
+							
+							if( null != docId 
+							 && "schema".equals(nunaliitType) ){
+								documentsByDocId.put(docId, doc);
+								dirByDocId.put(docId, subDir);
+							}
 						}
 					}
 				}
