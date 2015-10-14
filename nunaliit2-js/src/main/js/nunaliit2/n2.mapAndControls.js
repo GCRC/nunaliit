@@ -40,6 +40,213 @@ $Id: n2.mapAndControls.js 8494 2012-09-21 20:06:50Z jpfiset $
 	var DH = 'n2.mapAndControls';
 
 //**************************************************
+var TimeTransformMapBridge = $n2.Class({
+
+    sourceModelId: null,
+    
+    dispatchService: null,
+    
+    config: null,
+    
+    mapControl: null,
+    
+    docStateById: null,
+
+    initialize: function (opts_) {
+        var opts = $n2.extend({
+            sourceModelId: null,
+            config: null
+        }, opts_);
+
+        var _this = this;
+        
+        this.docStateById = {};
+        
+        this.sourceModelId = opts.sourceModelId;
+        this.config = opts.config;
+        
+        if( this.config && this.config.directory ){
+            this.dispatchService = this.config.directory.dispatchService;
+        };
+
+        // Register to events
+        if (this.dispatchService) {
+            var f = function (m, addr, dispatcher){
+                _this._handle (m, addr, dispatcher);
+            };
+            this.dispatchService.register(DH, 'modelStateUpdated', f);
+            
+            if( this.sourceModelId ){
+                // Initialize state
+                var m = {
+                    type:'modelGetState'
+                    ,modelId: this.sourceModelId
+                };
+                this.dispatchService.synchronousCall(DH, m);
+                if (m.state) {
+                    this._sourceModelUpdated(m.state);
+                };
+            };
+        };
+        
+        $n2.log('timeTransformToMapAndControlBridge', this);
+    },
+    
+    _handle: function (m, addr, dispatcher) {
+    	if ('modelStateUpdated' === m.type) {
+            // Does it come from one of our sources?
+            if (this.sourceModelId === m.modelId) {
+                this._sourceModelUpdated(m.state);
+            };
+        };
+    },
+    
+    _sourceModelUpdated: function(sourceState) {
+    	var _this = this;
+    	
+        // Update the nodes according to changes in source model
+    	if( sourceState ){
+    		if( sourceState.added && sourceState.added.length ){
+    			for(var i=0,e=sourceState.added.length; i<e; ++i){
+    				var doc = sourceState.added[i];
+    				updateDoc(doc);
+    			};
+    		};
+
+    		if( sourceState.updated && sourceState.updated.length ){
+    			for(var i=0,e=sourceState.updated.length; i<e; ++i){
+    				var doc = sourceState.updated[i];
+    				updateDoc(doc);
+    			};
+    		};
+
+    		if( sourceState.removed && sourceState.removed.length ){
+    			for(var i=0,e=sourceState.removed.length; i<e; ++i){
+    				var doc = sourceState.removed[i];
+    				var docId = doc._id;
+    				if( this.docStateById[docId] ){
+    					delete this.docStateById[docId];
+    				};
+    			};
+    		};
+    	};
+    	
+    	// Redraw map
+    	this._updateMap();
+    	
+    	function updateDoc(doc){
+    		var docId = doc._id;
+    		
+    		if( doc._n2TimeTransform ){
+    			if( !_this.docStateById[docId] ){
+    				_this.docStateById[docId] = {};
+    			};
+    			
+    			_this.docStateById[docId].visible = doc._n2TimeTransform.intersects;
+    			
+    		} else if( _this.docStateById[docId] ){
+    			delete _this.docStateById[docId];
+    		}
+    	};
+    },
+    
+    _updateMap: function() {
+        // Here is where the magic goes
+        
+        var mapControl = this._getMapControl();
+        if( mapControl 
+         && mapControl.map 
+         && mapControl.map.layers ){
+            // Iterate over all layers
+            for(var i = 0, e = mapControl.map.layers.length; i < e; ++i) {
+                var layer = mapControl.map.layers[i];
+                
+                // Interested only in vector layers
+                if( layer.features ) {
+                    // Iterate over feature
+                    for(var j = 0, l = layer.features.length; j < l; ++j){
+                        var feature = layer.features[j];
+                        
+                        if( feature.data && feature.data._id ) {
+                        	var visible = true;
+                            var docId = feature.data._id;
+                            
+                            if( this.docStateById[docId] ){
+                            	visible = this.docStateById[docId].visible;
+                            };
+                            
+                            if( visible ) {
+                            	if( feature.style ){
+                                    feature.style = null;
+                                    layer.drawFeature(feature);
+                            	};
+                            	
+                            } else {
+                            	if( ! feature.style ){
+                                    feature.style = {
+                                    	display: 'none'
+                                    };
+                                    layer.drawFeature(feature);
+                            	};
+                            };
+                        };
+                    };
+                };
+            };
+        };
+    },
+    
+    _getMapControl: function(){
+    	var _this = this;
+    	
+    	if( ! this.mapControl ) {
+        	// Look into configuration
+        	if( this.config 
+        	 && this.config.moduleDisplay 
+        	 && this.config.moduleDisplay.mapControl ){
+        		this.mapControl = this.config.moduleDisplay.mapControl;
+        	};
+        	
+        	// Register for update events on map. Do this only once
+        	if( this.mapControl
+        	 && this.mapControl.map 
+        	 && this.mapControl.map.layers ){
+        		for(var layerName in this.mapControl.map.layers){
+        			var layer = this.mapControl.map.layers[layerName];
+        			if( layer && layer.events ){
+        				layer.events.register('featuresadded',null,function(evt){
+        					_this._updateMap();
+        				});
+        			};
+        		};
+        	};
+    	};
+    		
+    	return this.mapControl;
+    }
+});
+
+function HandleWidgetAvailableRequests(m){
+    if( m.widgetType === 'timeTransformToMapAndControlBridge' ){
+        m.isAvailable = true;
+    };
+};
+
+function HandleWidgetDisplayRequests(m){
+    if( m.widgetType === 'timeTransformToMapAndControlBridge' ){
+        var options = {
+        	config: m.config
+        };
+        
+        if (m.widgetOptions) {
+            options.sourceModelId = m.widgetOptions.sourceModelId;
+        };
+        
+        new TimeTransformMapBridge(options);
+    };
+};
+
+//**************************************************
 var GazetteerProcess = $n2.Class({
 	
 	geoNamesService: null
@@ -5084,5 +5291,10 @@ $n2.mapAndControls.SuppressPopupHtmlFunction = suppressPopupHtmlFunction;
 // Cluster click callback
 $n2.mapAndControls.ZoomInClusterClickCallback = zoomInClusterClickCallback;
 $n2.mapAndControls.MultiSelectClusterClickCallback = multiSelectClusterClickCallback;
+
+// Widgets
+$n2.mapAndControls.TimeTransformMapBridge = TimeTransformMapBridge;
+$n2.mapAndControls.HandleWidgetAvailableRequests = HandleWidgetAvailableRequests;
+$n2.mapAndControls.HandleWidgetDisplayRequests = HandleWidgetDisplayRequests;
 
 })(jQuery,nunaliit2);

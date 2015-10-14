@@ -397,6 +397,10 @@ Timeline widget
 	height: 62px;
 }
 
+.n2_display_format_tiled .nunaliit_content .n2timeline {
+	right: 640px;
+}
+
 .n2timeline {
 	background-color: #00ff88;
 }

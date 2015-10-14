@@ -202,6 +202,11 @@ var Service = $n2.Class({
 				 && $n2.widgetWait.HandleWidgetAvailableRequests ){
 					$n2.widgetWait.HandleWidgetAvailableRequests(m);
 				};
+
+				if( $n2.mapAndControls 
+				 && $n2.mapAndControls.HandleWidgetAvailableRequests ){
+					$n2.mapAndControls.HandleWidgetAvailableRequests(m);
+				};
 		    };
 		    
 		} else if( 'widgetDisplay' === m.type ){
@@ -226,6 +231,11 @@ var Service = $n2.Class({
 				if( $n2.widgetWait 
 				 && $n2.widgetWait.HandleWidgetDisplayRequests ){
 					$n2.widgetWait.HandleWidgetDisplayRequests(m);
+				};
+
+				if( $n2.mapAndControls 
+				 && $n2.mapAndControls.HandleWidgetDisplayRequests ){
+					$n2.mapAndControls.HandleWidgetDisplayRequests(m);
 				};
 		    };
 		};
