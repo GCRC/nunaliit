@@ -38,6 +38,18 @@ public class DocumentStoreProcess {
 
 	static private Pattern patternNameExtension = Pattern.compile("^(.*)\\.([^.]*)$");
 	static private Pattern patternIndex = Pattern.compile("^[0-9]+$");
+	
+	static private String rightTrim(String s) {
+	    int i = s.length()-1;
+	    
+	    while( i >= 0 && Character.isWhitespace(s.charAt(i)) ) {
+	        --i;
+	    }
+	    
+	    if( i == (s.length()-1) ) return s;
+	    
+	    return s.substring(0,i+1);
+	}
 
 	/**
 	 * Takes a document and stores it to disk.
@@ -217,10 +229,13 @@ public class DocumentStoreProcess {
 			
 		} else if( value instanceof String ) {
 			if( null != childFile && FILE_EXT_JSON.equals(fileExtension) ){
+				// Update current JSON file
 				storeJsonValue(value, dir, key);
 			} else if( null != childFile ){
+				// Update current text file
 				storeStringValue((String)value, childFile, key);
 			} else {
+				// Create new file
 				File valueFile = new File(dir, key+"."+FILE_EXT_TEXT);
 				storeStringValue((String)value, valueFile, key);
 			}
@@ -341,6 +356,11 @@ public class DocumentStoreProcess {
 			String diskValue = readStringFile(valueFile);
 			
 			if( diskValue.equals(value) ) {
+				fileUpdateRequired = false;
+			}
+			
+			// No update required if difference is just last end-of-line
+			if( rightTrim(diskValue).equals( rightTrim(value) ) ) {
 				fileUpdateRequired = false;
 			}
 		}
