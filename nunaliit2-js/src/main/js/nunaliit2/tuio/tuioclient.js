@@ -656,13 +656,13 @@ function onHandDown(inst) {
 function onHandMove(inst) {
 	var hand = hands[inst];
 
-    if (mouseHand == undefined) {
-        /* Mouse hand is no longer around, if this is the only remaining hand,
-           take over scrolling. */
-        if (Object.keys(hands).length == 1) {
-            mouseHand = inst;
-        }
-    }
+	if (mouseHand == undefined) {
+		/* Mouse hand is no longer around, if this is the only remaining hand,
+		   take over scrolling. */
+		if (Object.keys(hands).length == 1) {
+			mouseHand = inst;
+		}
+	}
 
 	if (inst == mouseHand) {
 		// Hand is acting as mouse cursor, dispatch mouse move
@@ -869,47 +869,47 @@ window.onkeydown = function (e) {
 	} else if (code == 70) {
 		// f pressed, toggle visual feedback
 		showDots = !showDots;
-    } else if (e.shiftKey) {
-        // TUIO calibration
-	    if (code == 37) {
-            if (e.altKey) {
-                // Shift+Alt+left, offset TUIO left
-                cursorXOffset -= 0.001;
-            } else {
-                // Shift+left, shrink TUIO horizontally
-                cursorXScale -= 0.001;
-            }
+	} else if (e.shiftKey) {
+		// TUIO calibration
+		if (code == 37) {
+			if (e.altKey) {
+				// Shift+Alt+left, offset TUIO left
+				cursorXOffset -= 0.001;
+			} else {
+				// Shift+left, shrink TUIO horizontally
+				cursorXScale -= 0.001;
+			}
 		} else if (code == 39) {
-            if (e.altKey) {
-                // Shift+Alt+right, offset TUIO right
-                cursorXOffset += 0.001;
-            } else {
-                // Shift+right, expand TUIO horizontally
-                cursorXScale += 0.001;
-            }
-	    } else if (code == 40) {
-            if (e.altKey) {
-                // Shift+Alt+down, offset TUIO down
-                cursorYOffset += 0.001;
-            } else {
-			    // Shift+down, shrink TUIO vertically
-                cursorYScale -= 0.001;
-            }
-	    } else if (code == 38) {
-            if (e.altKey) {
-                // Shift+Alt+up, offset TUIO up
-                cursorYOffset -= 0.001;
-            } else {
-                // Shift+up, grow TUIO vertically
-                cursorYScale += 0.001;
-            }
-        }
+			if (e.altKey) {
+				// Shift+Alt+right, offset TUIO right
+				cursorXOffset += 0.001;
+			} else {
+				// Shift+right, expand TUIO horizontally
+				cursorXScale += 0.001;
+			}
+		} else if (code == 40) {
+			if (e.altKey) {
+				// Shift+Alt+down, offset TUIO down
+				cursorYOffset += 0.001;
+			} else {
+				// Shift+down, shrink TUIO vertically
+				cursorYScale -= 0.001;
+			}
+		} else if (code == 38) {
+			if (e.altKey) {
+				// Shift+Alt+up, offset TUIO up
+				cursorYOffset -= 0.001;
+			} else {
+				// Shift+up, grow TUIO vertically
+				cursorYScale += 0.001;
+			}
+		}
 
-        console.log("TUIO scale " + cursorXScale + "," + cursorYScale +
-                    " offset " + cursorXOffset + "," + cursorYOffset);
+		console.log("TUIO scale " + cursorXScale + "," + cursorYScale +
+					" offset " + cursorXOffset + "," + cursorYOffset);
 
 	} else if (code == 37) {
-        if (e.altKey) {
+		if (e.altKey) {
 			// Alt+left, shrink horizontally
 			xMargin += 5;
 		} else {
@@ -921,7 +921,7 @@ window.onkeydown = function (e) {
 		map.style.right = (xMargin - xOffset) + "px";
 		console.log("X margin " + xMargin + " offset " + xOffset);
 	} else if (code == 39) {
-        if (e.altKey) {
+		if (e.altKey) {
 			// Alt+right, grow horizontally
 			xMargin -= 5;
 		} else {
@@ -1038,5 +1038,5 @@ function tick(timestamp) {
 }
 
 if (usePhysics) {
-    requestAnimationFrame(tick);
+	requestAnimationFrame(tick);
 }
