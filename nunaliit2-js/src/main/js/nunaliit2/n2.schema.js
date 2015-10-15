@@ -1633,7 +1633,7 @@ var Form = $n2.Class({
 					if( $clicked.hasClass('n2schema_array_add') ){
 						var newType = $clicked.attr('n2_array_new_type');
 						var ary = classInfo.selector.getValue(_this.obj);
-						if( ary ){
+						if( ary && $n2.isArray(ary) ){
 							var newItem = '';
 							if( 'reference' === newType ){
 								newItem = {
