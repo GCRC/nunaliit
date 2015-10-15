@@ -119,6 +119,26 @@ var NavigationDisplay = $n2.Class({
 					var title = _loc(item.title);
 					$a.text(title);
 					$li.append($a);
+					
+				} else if( item.title && item.module ) {
+						// Compute URL based on current one
+					var currentUrl = $n2.url.getCurrentLocation();
+					var moduleUrl = currentUrl.clone().setParamValue('module',item.module);
+				
+					// Install module class
+					$li.attr('n2nav-module',item.module);
+					$li.addClass('n2nav_setModuleCurrent');
+					
+					if( item.module === currentModuleId ){
+						$li.addClass('n2_nav_currentModule');
+					};
+					
+					var $a = $('<a></a>');
+					$a.attr('href',moduleUrl.getUrl());
+					var title = _loc(item.title);
+					$a.text(title);
+					$li.append($a);
+						
 				} else if( item.title ) {
 					var $span = $('<span></span>');
 					var title = _loc(item.title);

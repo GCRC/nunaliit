@@ -31,22 +31,32 @@ POSSIBILITY OF SUCH DAMAGE.
 $Id: n2.url.js 8165 2012-05-31 13:14:37Z jpfiset $
 */
 ;(function($n2){
+"use strict";
 
+//-----------------------------------------------------
 var Url = $n2.Class({
 	
-	options: null
+	url: null,
 	
-	,initialize: function(options_){
-		this.options = $n2.extend({
+	initialize: function(opts_){
+		var opts = $n2.extend({
 			url: null // String
-		},options_);
-	}
+		},opts_);
+		
+		this.url = opts.url;
+	},
+	
+	clone: function(){
+		return new Url({
+			url: this.url
+		});
+	},
 
-	,getUrl: function(){
-		return this.options.url;
-	}
+	getUrl: function(){
+		return this.url;
+	},
 
-	,getUrlWithoutHash: function() {
+	getUrlWithoutHash: function() {
 		var href = this.getUrl();
 
 		var index = href.indexOf('#');
@@ -55,20 +65,61 @@ var Url = $n2.Class({
 		};
 		
 		return href;
-	}
+	},
 
-	,getUrlWithoutParams: function() {
+	getHash: function() {
+		var hash = undefined;
+		
+		var href = this.getUrl();
+		var index = href.indexOf('#');
+		if( index >= 0 ) {
+			hash = href.substr(index+1);
+		};
+		
+		return hash;
+	},
+
+	setHash: function(hash) {
+		var href = this.getUrl();
+		var index = href.indexOf('#');
+		if( index >= 0 ) {
+			// There already exist a hash...
+			if( hash ){
+				// ...replace it
+				this.url = href.substr(0,index+1)+hash;
+			} else {
+				// ...remove it
+				this.url = href.substr(0,index);
+			};
+		} else {
+			// Currently, there is no hash...
+			if( hash ){
+				// ...add one
+				this.url = href + '#' + hash;
+			};
+		};
+		
+		return this;
+	},
+
+	getUrlWithoutParams: function() {
 		var href = this.getUrlWithoutHash();
 		
 		var index = href.indexOf('?');
 		if( index >= 0 ) {
 			href = href.substr(0,index);
+		} else {
+			// Do not include hash if no parameters are specified
+			index = href.indexOf('#');
+			if( index >= 0 ){
+				href = href.substr(0,index);
+			};
 		};
 		
 		return href;
-	}
+	},
 
-	,getParams: function() {
+	getParams: function() {
 		var result = {};
 		var href = this.getUrlWithoutHash();
 		var paramsString = href.slice(href.indexOf('?') + 1);
@@ -83,25 +134,73 @@ var Url = $n2.Class({
 			result[key].push( value );
 		}
 		return result;
-	}
+	},
 		
-	,getParam: function(name) {
+	getParam: function(name) {
 		var params = this.getParams();
 		if( null == params[name] ) {
 			return [];
 		}
 		return params[name];
-	}
+	},
 
-	,getParamValue: function(name, defaultValue) {
+	getParamValue: function(name, defaultValue) {
 		var params = this.getParams();
 		if( null == params[name] ) {
 			return defaultValue;
 		}
 		return params[name][0];
+	},
+	
+	setParamValue: function(name, value){
+		var hash = this.getHash();
+		var path = this.getUrlWithoutParams();
+		var params = this.getParams();
+		
+		params[name] = [value];
+		
+		this._setUrlFromComponents(path, params, hash);
+		
+		return this;
+	},
+	
+	_setUrlFromComponents: function(path, params, hash){
+		var newUrl = [path];
+		
+		if( params ){
+			var first = true;
+			for(var name in params){
+				var values = params[name];
+				for(var i=0,e=values.length; i<e; ++i){
+					var value = values[i];
+					
+					if( first ){
+						first = false;
+						newUrl.push('?');
+					} else {
+						newUrl.push('&');
+					};
+					
+					newUrl.push( encodeURIComponent(name) );
+					newUrl.push( '=' );
+					newUrl.push( encodeURIComponent(value) );
+				};
+			};
+		};
+		
+		if( hash ){
+			newUrl.push( '#' );
+			newUrl.push( hash );
+		};
+		
+		this.url = newUrl.join('');
+		
+		return this;
 	}
 });	
 	
+//-----------------------------------------------------
+// Exports
 $n2.url = {
 	Url: Url
 	
