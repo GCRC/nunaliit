@@ -847,6 +847,7 @@ window.onkeydown = function (e) {
 			map.style.left = (xMargin + xOffset) + "px";
 			map.style.right = (xMargin - xOffset) + "px";
 			zoom.style.top = "45%";
+			zoom.style.left = "920px";
 			but.style.top = "45%";
 			but.style.right = "20px";
 			pane.style.display = "none";
