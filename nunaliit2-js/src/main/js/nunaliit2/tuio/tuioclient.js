@@ -1,4 +1,4 @@
-var MAX_SPRING_K = 40.0;
+var MAX_SPRING_K = 60.0;
 var SPRING_LEN = 0.0000000000001;
 
 var usePhysics = true;
