@@ -1,10 +1,10 @@
-var MAX_SPRING_K = 75.0;
+var MAX_SPRING_K = 40.0;
 var SPRING_LEN = 0.0000000000001;
 
 var usePhysics = true;
 
 // Time in ms to fade spring influence in or out
-var springFadeTime = 400.0;
+var springFadeTime = 600.0;
 
 // Socket to tuioserver.js that emits TUIO events in JSON
 var socket = io('http://localhost:3000');
@@ -25,7 +25,7 @@ var clickDistance = 0.005;
 var pressDelay = 1250;
 
 // Maximum distance to consider cursors to be on the same hand
-var handSpan = 0.15;
+var handSpan = 0.20;
 
 // Next hand instance ID counter
 var nextHandIndex = 1;
