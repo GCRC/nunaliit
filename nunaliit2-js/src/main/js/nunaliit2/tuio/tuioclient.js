@@ -647,6 +647,8 @@ function onHandDown(inst) {
 		var oldMouseHand = hands[mouseHand];
 		// dispatchMouseEvent('mouseup', oldMouseHand.pos.x, oldMouseHand.pos.y);
 		mouseHand = undefined;
+		scrollX = undefined;
+		scrollY = undefined;
 	}
 }
 
