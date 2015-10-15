@@ -55,9 +55,9 @@ var yOffset = 10;
 
 // TUIO input calibration
 var cursorXScale = 0.672;
-var cursorYScale = 0.937;
-var cursorXOffset = -0.03;
-var cursorYOffset = -0.016;
+var cursorYScale = 0.951;
+var cursorXOffset = -0.04;
+var cursorYOffset = -0.002;
 
 function Vector(x, y) {
 	this.x = x;
