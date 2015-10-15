@@ -623,6 +623,8 @@ function onCursorUp(inst) {
 		var elapsed = Date.now() - cursor.birthTime;
 		if (d < clickDistance && elapsed < clickDelay) {
 			console.log("Click!");
+			dispatchMouseEvent('mousedown', cursor.pos.x, cursor.pos.y);
+			dispatchMouseEvent('mouseup', cursor.pos.x, cursor.pos.y);
 			dispatchMouseEvent('click', cursor.pos.x, cursor.pos.y);
 		}
 		pressCursor = undefined;
