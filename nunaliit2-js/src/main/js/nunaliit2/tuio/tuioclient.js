@@ -4,7 +4,7 @@ var SPRING_LEN = 0.0000000000001;
 var usePhysics = true;
 
 // Time in ms to fade spring influence in or out
-var springFadeTime = 600.0;
+var springFadeTime = 400.0;
 
 // Socket to tuioserver.js that emits TUIO events in JSON
 var socket = io('http://localhost:3000');
