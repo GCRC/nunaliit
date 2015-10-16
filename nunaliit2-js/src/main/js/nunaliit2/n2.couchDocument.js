@@ -50,7 +50,8 @@ function adjustDocument(doc) {
 	var nowTime = (new Date()).getTime();
 	
 	if( userName ) {
-		if( null == doc.nunaliit_created ) {
+		if( ! doc.nunaliit_created 
+		 && ! doc._rev) {
 			doc.nunaliit_created = {
 				nunaliit_type: 'actionstamp'
 				,name: userName
