@@ -665,7 +665,7 @@ function onHandMove(inst) {
 		}
 	}
 
-	if (inst == mouseHand) {
+	if (inst == mouseHand && hand.cursors.length > 1) {
 		// Hand is acting as mouse cursor, dispatch mouse move
 		// dispatchMouseEvent('mousemove', hand.pos.x, hand.pos.y);
 
