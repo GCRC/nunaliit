@@ -669,8 +669,15 @@ function onHandMove(inst) {
 		// Hand is acting as mouse cursor, dispatch mouse move
 		// dispatchMouseEvent('mousemove', hand.pos.x, hand.pos.y);
 
-		// Scroll OpenLayers manually
-		if (scrollX != undefined && scrollY != undefined) {
+		if (scrollX == undefined && scrollY == undefined) {
+			/* Initial scroll, jump hand position immediately to center.  This
+			   avoids a jumpy scroll because the hand is still moving towards
+			   the center points of the fingers, but we don't need this
+			   smoothing until after scrolling starts. */
+			hand.moveTo(centerPoint(hand.cursors));
+			hand.pos = hand.targetPos;
+		} else {
+			// Scroll OpenLayers manually
 			var dx = (scrollX - hand.pos.x);
 			var dy = (scrollY - hand.pos.y);
 			moduleDisplay.mapControl.map.pan(dx * window.innerWidth * scrollSpeed,
