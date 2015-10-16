@@ -552,7 +552,8 @@ function bestHand(x, y) {
 	var hand = null;
 
 	for (var h in hands) {
-		var d = distance(x, y, hands[h].pos.x, hands[h].pos.y);
+		var center = centerPoint(hands[h].cursors);
+		var d = distance(x, y, center.x, center.y);
 		if (d <= handSpan &&
 			hands[h].numAliveCursors() < 5 &&
 			d <= bestDistance) {
