@@ -30,6 +30,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 */
 ;(function($,$n2){
+"user strict";
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
@@ -113,6 +114,8 @@ var UserEditor = $n2.Class({
 	
 	,onFinishedFn: null
 	
+	,showServerRoles: null
+	
 	,initialize: function(opts_){
 		var opts = $n2.extend({
 			userDoc: null
@@ -129,6 +132,7 @@ var UserEditor = $n2.Class({
 			,onDeletedFn: function(userDoc){}
 			,onCancelledFn: function(userDoc){}
 			,onFinishedFn: function(userDoc){}
+			,showServerRoles: false
 		},opts_);
 		
 		var _this = this;
@@ -143,6 +147,7 @@ var UserEditor = $n2.Class({
 		this.onFinishedFn = opts.onFinishedFn;
 		this.schemaEditorService = opts.schemaEditorService;
 		this.configService = opts.configService;
+		this.showServerRoles = opts.showServerRoles;
 		
 		// Keep version of original document
 		this.originalDoc = $n2.extend(true,{},this.userDoc);
@@ -383,8 +388,19 @@ var UserEditor = $n2.Class({
 		};
 		$rolesDialog.dialog(dialogOptions);
 		
-		if( this.configService ){
+		if( this.configService
+		 && this.showServerRoles ){
 			this.configService.getNunaliitServerRoles({
+				onSuccess: function(roles){
+					loadedRoles(roles);
+				}
+				,onError: function(err){
+					loadedRoles([]);
+				}
+			});
+
+		} else if( this.configService ){
+			this.configService.getAtlasRoles({
 				onSuccess: function(roles){
 					loadedRoles(roles);
 				}
@@ -612,6 +628,8 @@ var UserService = $n2.Class({
 
 	,configService: null
 	
+	,showServerRoles: null
+	
 	,initialize: function(opts_){
 		var opts = $n2.extend({
 			userDb: null
@@ -620,7 +638,10 @@ var UserService = $n2.Class({
 			,userSchema: null // optional
 			,schemaRepository: null // optional
 			,schemaEditorService: null // optional
+			,customService: null // optional
 		},opts_);
+		
+		this.showServerRoles = false;
 		
 		this.userDb = opts.userDb;
 		this.userServerUrl = opts.userServerUrl;
@@ -628,6 +649,13 @@ var UserService = $n2.Class({
 		this.userSchema = opts.userSchema;
 		this.schemaRepository = opts.schemaRepository;
 		this.schemaEditorService = opts.schemaEditorService;
+		
+		if( opts.customService ){
+			var showServerRoles = opts.customService.getOption('userShowServerRoles',false);
+			if( showServerRoles ){
+				this.showServerRoles = true;
+			};
+		};
 	}
 
 	,startEdit: function(opts_){
@@ -636,6 +664,7 @@ var UserService = $n2.Class({
 				userSchema: this.userSchema
 				,schemaRepository: this.schemaRepository
 				,schemaEditorService: this.schemaEditorService
+				,showServerRoles: this.showServerRoles
 			}
 			,opts_
 			,{

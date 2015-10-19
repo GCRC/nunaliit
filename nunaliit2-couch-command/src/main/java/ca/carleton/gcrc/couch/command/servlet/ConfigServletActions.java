@@ -17,11 +17,15 @@ import ca.carleton.gcrc.couch.client.CouchQueryResults;
 public class ConfigServletActions {
 
 	private CouchClient couchClient;
+	private CouchDb couchDb;
+	private String couchDbName;
 	private boolean submissionDbEnabled = false;
 	private JSONObject cached_welcome = null;
 
-	public ConfigServletActions(CouchClient couchClient){
-		this.couchClient = couchClient;
+	public ConfigServletActions(CouchDb couchDb, String couchDbName){
+		this.couchDb = couchDb;
+		this.couchClient = couchDb.getClient();
+		this.couchDbName = couchDbName;
 	}
 	
 	synchronized public JSONObject getWelcome() throws Exception{
@@ -43,8 +47,16 @@ public class ConfigServletActions {
 		this.submissionDbEnabled = submissionDbEnabled;
 	}
 	
-	public AtlasInfo getNunaliitAtlas(String databaseName) throws Exception {
+	public AtlasInfo getCurrentAtlasInfo() throws Exception {
+		return getAtlasInfo(couchDb, couchDbName);
+	}
+	
+	public AtlasInfo getAtlasInfo(String databaseName) throws Exception {
 		CouchDb db = couchClient.getDatabase(databaseName);
+		return getAtlasInfo(db, databaseName);
+	}
+	
+	public AtlasInfo getAtlasInfo(CouchDb db, String databaseName) throws Exception {
 		JSONObject atlasDesign = db.getDocument("_design/atlas");
 		JSONObject nunaliit = atlasDesign.optJSONObject("nunaliit");
 		String atlasName = nunaliit.getString("name");
@@ -68,7 +80,7 @@ public class ConfigServletActions {
 			try {
 				if( databaseName.length() > 0 
 				 && databaseName.charAt(0) != '_' ){
-					AtlasInfo info = getNunaliitAtlas(databaseName);
+					AtlasInfo info = getAtlasInfo(databaseName);
 					result.add(info);
 				}
 			} catch (Exception e) {

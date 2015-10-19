@@ -82,6 +82,7 @@ public class ConfigServlet extends JsonServlet {
 	private File installDir = null;
 	private AtlasProperties atlasProperties = null;
 	private CouchClient couchClient = null;
+	private String documentDatabaseName = null;
 	private CouchDb documentDatabase = null;
 	private CouchUserDb userDb = null;
 	private CouchDb submissionDb = null;
@@ -373,12 +374,12 @@ public class ConfigServlet extends JsonServlet {
 		}
 		
 		// Create database
-		String dbName = atlasProperties.getCouchDbName();
+		documentDatabaseName = atlasProperties.getCouchDbName();
 		try {
-			documentDatabase = couchClient.getDatabase(dbName);
+			documentDatabase = couchClient.getDatabase(documentDatabaseName);
 		} catch(Exception e) {
-			logger.error("Unable to connect to document database: "+dbName,e);
-			throw new ServletException("Unable to connect to document database: "+dbName,e);
+			logger.error("Unable to connect to document database: "+documentDatabaseName,e);
+			throw new ServletException("Unable to connect to document database: "+documentDatabaseName,e);
 		}
 		logger.info("Document database configured: "+documentDatabase.getUrl());
 
@@ -756,7 +757,7 @@ public class ConfigServlet extends JsonServlet {
 	private void initActions(ServletContext servletContext) throws ServletException {
 		
 		try {
-			this.actions = new ConfigServletActions(couchClient);
+			this.actions = new ConfigServletActions(documentDatabase, documentDatabaseName);
 			this.actions.setSubmissionDbEnabled( atlasProperties.isCouchDbSubmissionDbEnabled() );
 		} catch(Exception e) {
 			logger.error("Error configuring actions",e);
@@ -840,6 +841,23 @@ public class ConfigServlet extends JsonServlet {
 			} else if( path.size() == 1 
 			 && "getServerRoles".equals(path.get(0)) ) {
 				Collection<String> roles = actions.getNunaliitServerRoles();
+				
+				JSONObject result = new JSONObject();
+				result.put("ok", true);
+				
+				JSONArray jsonRoles = new JSONArray();
+				for(String role : roles){
+					jsonRoles.put( role );
+				}
+				result.put("roles", jsonRoles);
+				
+				sendJsonResponse(resp, result);
+
+			} else if( path.size() == 1 
+			 && "getAtlasRoles".equals(path.get(0)) ) {
+				AtlasInfo currentInfo = actions.getCurrentAtlasInfo();
+				
+				Collection<String> roles = actions.getNunaliitAtlasRoles(currentInfo);
 				
 				JSONObject result = new JSONObject();
 				result.put("ok", true);

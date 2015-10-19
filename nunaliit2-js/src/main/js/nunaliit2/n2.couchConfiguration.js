@@ -71,6 +71,30 @@ var ConfigService = $n2.Class('ConfigurationService',{
 				opts.onError(err);
 			}
 		});
+	},
+	
+	getAtlasRoles: function(opts_){
+		var opts = $n2.extend({
+			onSuccess: function(roles){}
+			,onError: function(err){}
+		},opts_);
+
+		$.ajax({
+			url: this.serverUrl+'getAtlasRoles'
+			,type: 'GET'
+			,dataType: 'json'
+			,success: function(data, textStatus, jqXHR){
+				if( data && data.roles ) {
+					opts.onSuccess(data.roles);
+				} else {
+					opts.onError( _loc('Invalid server response') );
+				};
+			}
+			,error: function(jqXHR, textStatus, errorThrown){
+				var err = $n2.utils.parseHttpJsonError(jqXHR, textStatus);
+				opts.onError(err);
+			}
+		});
 	}
 });
 
@@ -345,6 +369,7 @@ function Configure(options_){
 			,schemaRepository: configuration.directory.schemaRepository
 			,schemaEditorService: configuration.directory.schemaEditorService
 			,userServerUrl: options.userServerUrl
+			,customService: configuration.directory.customService
 		});
 		
 	 	configuration.directory.modelService = new $n2.model.Service({
