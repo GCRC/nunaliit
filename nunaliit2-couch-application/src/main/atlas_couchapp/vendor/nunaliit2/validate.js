@@ -45,7 +45,7 @@ var n2validate = {
 			// atlas replicator is allowed any changes
 		
 		} else if( n2atlas.restricted 
-		 && null == userInfo.atlas[n2atlas.name] ) {
+		 && !userInfo.atlas[n2atlas.name] ) {
 			throw( {forbidden: 'Database submissions are restricted to users associated with database'} );
 			
 		} else if( n2atlas.restricted 
@@ -74,7 +74,7 @@ var n2validate = {
 			// Check that nunaliit_creation is correct
 			n2validate.verifyCreationStructure(newDoc, oldDoc, userInfo);
 			
-			// Check that nunaliit_creation is correct
+			// Check that nunaliit_last_updated is correct
 			n2validate.verifyLastUpdatedStructure(newDoc, oldDoc, userInfo);
 			
 			// Validate changes in attachment status. Returns true if a vetting action
@@ -93,11 +93,14 @@ var n2validate = {
 			// Verify attachment submitters
 			n2validate.verifyAttachmentSubmitters(newDoc, oldDoc, userInfo);
 			
-			// Check if allowed to delete
-			n2validate.verifyDeletion(newDoc, oldDoc, userInfo);
-			
 			// Validate changes in layers
 			n2validate.verifyLayers(newDoc, oldDoc, userInfo, n2atlas);
+			
+			// Validate layer permissions
+			var layerAction = false;
+			if( n2validate.verifyLayerPermissions(newDoc, oldDoc, userInfo, n2atlas) ){
+				layerAction = true;
+			};
 			
 			// Process document update
 			if( oldDoc && !newDoc._deleted ) {
@@ -110,10 +113,25 @@ var n2validate = {
 					// OK to update
 				} else if( vettingAction ) {
 					// OK to update
+				} else if( layerAction ) {
+					// OK to update
 				} else {
 					throw( {forbidden: 'Not allowed to update documents created by others'} );
 				};
+				
+			} else if( newDoc._deleted ) {
+				// This is a deletion
+				if( typeof(oldDoc.nunaliit_created) === 'object' 
+				 && typeof(oldDoc.nunaliit_created.name) === 'string' 
+				 && oldDoc.nunaliit_created.name === userInfo.name ) {
+					// OK to delete
+				} else if( layerAction ) {
+					// OK to delete
+				} else {
+					throw( {forbidden: 'Not allowed to delete documents created by others'} );
+				};
 			};
+
 		};
 	},
 
@@ -143,22 +161,6 @@ var n2validate = {
 		};
 		
 		return status;
-	},
-	
-	/*
-	 * Detect deletion and validates that only original user can perform it
-	 */
-	verifyDeletion: function(newDoc, oldDoc, userInfo){
-		if( newDoc._deleted ) {
-			// This is a deletion
-			if( typeof(oldDoc.nunaliit_created) === 'object' 
-			 && typeof(oldDoc.nunaliit_created.name) === 'string' 
-			 && oldDoc.nunaliit_created.name === userInfo.name ) {
-				// OK to delete
-			} else {
-				throw( {forbidden: 'Not allowed to delete documents created by others'} );
-			};
-		};
 	},
 	
 	/*
@@ -453,6 +455,54 @@ var n2validate = {
 				};
 			};
 		};
+	},
+	
+	/*
+	 * This function verifies that the current user has the appropriate roles to modifies
+	 * this document. Returns true if the document contains non-public layers and the user
+	 * meets all roles. When returning true, this is a layer action and restricted to users
+	 * that have access to those layers. Throws an exception if a rule is broken. 
+	 */
+	verifyLayerPermissions: function(newDoc, oldDoc, userInfo, n2atlas){
+		var layerAction = false;
+		
+		var layerMap = {};
+		
+		// Accumulate old layers
+		if( oldDoc && oldDoc.nunaliit_layers ) {
+			for(var i=0,e=oldDoc.nunaliit_layers.length; i<e; ++i) {
+				layerMap[ oldDoc.nunaliit_layers[i] ] = true;
+			};
+		};
+		
+		// Accumulate new layers
+		if( newDoc._deleted ) {
+			// deleting an object is like removing all layers
+			// Do not put any layers in the new set
+		} else if( newDoc.nunaliit_layers ) {
+			for(var i=0,e=newDoc.nunaliit_layers.length; i<e; ++i) {
+				layerMap[ newDoc.nunaliit_layers[i] ] = true;
+			};
+		};
+		
+		// Must have appropriate role to update a document on a layer
+		for(var layerName in layerMap) {
+			var isPublic = n2validate.isLayerNamePublic(layerName);
+			if( isPublic ) {
+				// Exception for public layer. Everyone can update documents on a public layer
+			} else {
+				if( userInfo.atlas[n2atlas.name] 
+				 && userInfo.atlas[n2atlas.name].layers.indexOf(layerName) >= 0 ) {
+					// OK
+					layerAction = true;
+				} else {
+					var expectedRole = '' + n2atlas.name + '_layer_' + layerName;
+					throw( {forbidden: 'Updating a document on layer "'+layerName+'" requires role: '+expectedRole} );
+				};
+			};
+		};
+		
+		return layerAction;
 	},
 	
 	// Take an array of roles and accumulate information about them

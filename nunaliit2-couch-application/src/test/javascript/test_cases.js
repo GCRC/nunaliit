@@ -526,3 +526,494 @@ jsunit.defineTest('atlas_user can not create an invalid document',function($$){
 		// OK
 	};
 });
+
+//*********
+jsunit.defineTest('user can not create a document on a layer',function($$){
+	setAtlas(regularAtlas);
+	var ctxt = getContext({
+		name: 'john'
+		,roles: ['nunaliit_agreement_atlas','atlas_user']
+	});
+
+	var prev = null;
+	
+	var current = {
+		_id: 'doc-1'
+		,nunaliit_created:{
+			nunaliit_type: 'actionstamp'
+			,name: ctxt.name
+			,time: 12345
+			,action: 'created'
+		}
+		,nunaliit_last_updated:{
+			nunaliit_type: 'actionstamp'
+			,name: ctxt.name
+			,time: 12345
+			,action: 'updated'
+		}
+		,nunaliit_layers: [ 'test' ]
+	};
+	
+	try {
+		validate_doc_update(current, prev, ctxt);
+		$$.fail('user should not be able to create a document on a layer');
+	} catch(e) {
+		// OK
+	};
+});
+
+//*********
+jsunit.defineTest('user can not delete a document from a layer',function($$){
+	setAtlas(regularAtlas);
+	var ctxt = getContext({
+		name: 'john'
+		,roles: ['nunaliit_agreement_atlas','atlas_user']
+	});
+
+	var prev = {
+		_id: 'doc-1'
+		,nunaliit_created:{
+			nunaliit_type: 'actionstamp'
+			,name: ctxt.name
+			,time: 12345
+			,action: 'created'
+		}
+		,nunaliit_last_updated:{
+			nunaliit_type: 'actionstamp'
+			,name: ctxt.name
+			,time: 12345
+			,action: 'updated'
+		}
+		,nunaliit_layers: [ 'test' ]
+	};
+	
+	var current = {
+		_id: 'doc-1'
+		,_deleted: true
+		,nunaliit_created:{
+			nunaliit_type: 'actionstamp'
+			,name: ctxt.name
+			,time: 12345
+			,action: 'created'
+		}
+		,nunaliit_last_updated:{
+			nunaliit_type: 'actionstamp'
+			,name: ctxt.name
+			,time: 12345
+			,action: 'updated'
+		}
+		,nunaliit_layers: [ 'test' ]
+	};
+	
+	try {
+		validate_doc_update(current, prev, ctxt);
+		$$.fail('user should not be able to delete a document from a layer');
+	} catch(e) {
+		// OK
+	};
+});
+
+//*********
+jsunit.defineTest('user can not update a document on a layer',function($$){
+	setAtlas(regularAtlas);
+	var ctxt = getContext({
+		name: 'john'
+		,roles: ['nunaliit_agreement_atlas','atlas_user']
+	});
+
+	var prev = {
+		_id: 'doc-1'
+		,_rev: '1'
+		,test: {
+			title: 'one'
+		}
+		,nunaliit_created:{
+			nunaliit_type: 'actionstamp'
+			,name: ctxt.name
+			,time: 12345
+			,action: 'created'
+		}
+		,nunaliit_last_updated:{
+			nunaliit_type: 'actionstamp'
+			,name: ctxt.name
+			,time: 12345
+			,action: 'updated'
+		}
+		,nunaliit_layers: [ 'test' ]
+	};
+	
+	var current = {
+		_id: 'doc-1'
+		,_rev: '2'
+		,test: {
+			title: 'two'
+		}
+		,nunaliit_created:{
+			nunaliit_type: 'actionstamp'
+			,name: ctxt.name
+			,time: 12345
+			,action: 'created'
+		}
+		,nunaliit_last_updated:{
+			nunaliit_type: 'actionstamp'
+			,name: ctxt.name
+			,time: 12345
+			,action: 'updated'
+		}
+		,nunaliit_layers: [ 'test' ]
+	};
+	
+	try {
+		validate_doc_update(current, prev, ctxt);
+		$$.fail('user should not be able to update a document on a layer');
+	} catch(e) {
+		// OK
+	};
+});
+
+//*********
+jsunit.defineTest('user can not add document to a layer',function($$){
+	setAtlas(regularAtlas);
+	var ctxt = getContext({
+		name: 'john'
+		,roles: ['nunaliit_agreement_atlas','atlas_user']
+	});
+
+	var prev = {
+		_id: 'doc-1'
+		,_rev: '1'
+		,test: {
+			title: 'one'
+		}
+		,nunaliit_created:{
+			nunaliit_type: 'actionstamp'
+			,name: ctxt.name
+			,time: 12345
+			,action: 'created'
+		}
+		,nunaliit_last_updated:{
+			nunaliit_type: 'actionstamp'
+			,name: ctxt.name
+			,time: 12345
+			,action: 'updated'
+		}
+	};
+	
+	var current = {
+		_id: 'doc-1'
+		,_rev: '2'
+		,test: {
+			title: 'one'
+		}
+		,nunaliit_created:{
+			nunaliit_type: 'actionstamp'
+			,name: ctxt.name
+			,time: 12345
+			,action: 'created'
+		}
+		,nunaliit_last_updated:{
+			nunaliit_type: 'actionstamp'
+			,name: ctxt.name
+			,time: 12345
+			,action: 'updated'
+		}
+		,nunaliit_layers: [ 'test' ]
+	};
+	
+	try {
+		validate_doc_update(current, prev, ctxt);
+		$$.fail('user should not be able to add a document to a layer');
+	} catch(e) {
+		// OK
+	};
+});
+
+//*********
+jsunit.defineTest('user can not remove document from a layer',function($$){
+	setAtlas(regularAtlas);
+	var ctxt = getContext({
+		name: 'john'
+		,roles: ['nunaliit_agreement_atlas','atlas_user']
+	});
+
+	var prev = {
+		_id: 'doc-1'
+		,_rev: '1'
+		,test: {
+			title: 'one'
+		}
+		,nunaliit_created:{
+			nunaliit_type: 'actionstamp'
+			,name: ctxt.name
+			,time: 12345
+			,action: 'created'
+		}
+		,nunaliit_last_updated:{
+			nunaliit_type: 'actionstamp'
+			,name: ctxt.name
+			,time: 12345
+			,action: 'updated'
+		}
+		,nunaliit_layers: [ 'test' ]
+	};
+	
+	var current = {
+		_id: 'doc-1'
+		,_rev: '2'
+		,test: {
+			title: 'one'
+		}
+		,nunaliit_created:{
+			nunaliit_type: 'actionstamp'
+			,name: ctxt.name
+			,time: 12345
+			,action: 'created'
+		}
+		,nunaliit_last_updated:{
+			nunaliit_type: 'actionstamp'
+			,name: ctxt.name
+			,time: 12345
+			,action: 'updated'
+		}
+	};
+	
+	try {
+		validate_doc_update(current, prev, ctxt);
+		$$.fail('user should not be able to remove a document from a layer');
+	} catch(e) {
+		// OK
+	};
+});
+
+//*********
+jsunit.defineTest('layer role can create a document on a layer',function($$){
+	setAtlas(regularAtlas);
+	var ctxt = getContext({
+		name: 'john'
+		,roles: ['nunaliit_agreement_atlas','atlas_user','atlas_layer_test']
+	});
+
+	var prev = null;
+	
+	var current = {
+		_id: 'doc-1'
+		,nunaliit_created:{
+			nunaliit_type: 'actionstamp'
+			,name: ctxt.name
+			,time: 12345
+			,action: 'created'
+		}
+		,nunaliit_last_updated:{
+			nunaliit_type: 'actionstamp'
+			,name: ctxt.name
+			,time: 12345
+			,action: 'updated'
+		}
+		,nunaliit_layers: [ 'test' ]
+	};
+	
+	validate_doc_update(current, prev, ctxt);
+});
+
+//*********
+jsunit.defineTest('layer role can delete a document from a layer',function($$){
+	setAtlas(regularAtlas);
+	var ctxt = getContext({
+		name: 'john'
+		,roles: ['nunaliit_agreement_atlas','atlas_user','atlas_layer_test']
+	});
+
+	var prev = {
+		_id: 'doc-1'
+		,nunaliit_created:{
+			nunaliit_type: 'actionstamp'
+			,name: 'someone'
+			,time: 12345
+			,action: 'created'
+		}
+		,nunaliit_last_updated:{
+			nunaliit_type: 'actionstamp'
+			,name: 'someone'
+			,time: 12345
+			,action: 'updated'
+		}
+		,nunaliit_layers: [ 'test' ]
+	};
+	
+	var current = {
+		_id: 'doc-1'
+		,_deleted: true
+		,nunaliit_created:{
+			nunaliit_type: 'actionstamp'
+			,name: 'someone'
+			,time: 12345
+			,action: 'created'
+		}
+		,nunaliit_last_updated:{
+			nunaliit_type: 'actionstamp'
+			,name: 'someone'
+			,time: 12345
+			,action: 'updated'
+		}
+		,nunaliit_layers: [ 'test' ]
+	};
+	
+	validate_doc_update(current, prev, ctxt);
+});
+
+//*********
+jsunit.defineTest('layer role can update a document on a layer',function($$){
+	setAtlas(regularAtlas);
+	var ctxt = getContext({
+		name: 'john'
+		,roles: ['nunaliit_agreement_atlas','atlas_user','atlas_layer_test']
+	});
+
+	var prev = {
+		_id: 'doc-1'
+		,_rev: '1'
+		,test: {
+			title: 'one'
+		}
+		,nunaliit_created:{
+			nunaliit_type: 'actionstamp'
+			,name: 'someone'
+			,time: 12345
+			,action: 'created'
+		}
+		,nunaliit_last_updated:{
+			nunaliit_type: 'actionstamp'
+			,name: 'someone'
+			,time: 12345
+			,action: 'updated'
+		}
+		,nunaliit_layers: [ 'test' ]
+	};
+	
+	var current = {
+		_id: 'doc-1'
+		,_rev: '2'
+		,test: {
+			title: 'two'
+		}
+		,nunaliit_created:{
+			nunaliit_type: 'actionstamp'
+			,name: 'someone'
+			,time: 12345
+			,action: 'created'
+		}
+		,nunaliit_last_updated:{
+			nunaliit_type: 'actionstamp'
+			,name: ctxt.name
+			,time: 12345
+			,action: 'updated'
+		}
+		,nunaliit_layers: [ 'test' ]
+	};
+	
+	validate_doc_update(current, prev, ctxt);
+});
+
+//*********
+jsunit.defineTest('layer role can add document to a layer',function($$){
+	setAtlas(regularAtlas);
+	var ctxt = getContext({
+		name: 'john'
+		,roles: ['nunaliit_agreement_atlas','atlas_user','atlas_layer_test']
+	});
+
+	var prev = {
+		_id: 'doc-1'
+		,_rev: '1'
+		,test: {
+			title: 'one'
+		}
+		,nunaliit_created:{
+			nunaliit_type: 'actionstamp'
+			,name: 'someone'
+			,time: 12345
+			,action: 'created'
+		}
+		,nunaliit_last_updated:{
+			nunaliit_type: 'actionstamp'
+			,name: 'someone'
+			,time: 12345
+			,action: 'updated'
+		}
+	};
+	
+	var current = {
+		_id: 'doc-1'
+		,_rev: '2'
+		,test: {
+			title: 'one'
+		}
+		,nunaliit_created:{
+			nunaliit_type: 'actionstamp'
+			,name: 'someone'
+			,time: 12345
+			,action: 'created'
+		}
+		,nunaliit_last_updated:{
+			nunaliit_type: 'actionstamp'
+			,name: ctxt.name
+			,time: 12345
+			,action: 'updated'
+		}
+		,nunaliit_layers: [ 'test' ]
+	};
+	
+	validate_doc_update(current, prev, ctxt);
+});
+
+//*********
+jsunit.defineTest('layer role can remove document from a layer',function($$){
+	setAtlas(regularAtlas);
+	var ctxt = getContext({
+		name: 'john'
+		,roles: ['nunaliit_agreement_atlas','atlas_user','atlas_layer_test']
+	});
+
+	var prev = {
+		_id: 'doc-1'
+		,_rev: '1'
+		,test: {
+			title: 'one'
+		}
+		,nunaliit_created:{
+			nunaliit_type: 'actionstamp'
+			,name: 'someone'
+			,time: 12345
+			,action: 'created'
+		}
+		,nunaliit_last_updated:{
+			nunaliit_type: 'actionstamp'
+			,name: 'someone'
+			,time: 12345
+			,action: 'updated'
+		}
+		,nunaliit_layers: [ 'test' ]
+	};
+	
+	var current = {
+		_id: 'doc-1'
+		,_rev: '2'
+		,test: {
+			title: 'one'
+		}
+		,nunaliit_created:{
+			nunaliit_type: 'actionstamp'
+			,name: 'someone'
+			,time: 12345
+			,action: 'created'
+		}
+		,nunaliit_last_updated:{
+			nunaliit_type: 'actionstamp'
+			,name: ctxt.name
+			,time: 12345
+			,action: 'updated'
+		}
+	};
+	
+	validate_doc_update(current, prev, ctxt);
+});
