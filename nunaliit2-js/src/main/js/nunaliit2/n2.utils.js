@@ -910,7 +910,7 @@ $n2.utils = {
 	},
 	
 	/**
-	 * Returns an Javascript object returned in an XMLHttpRequest
+	 * Returns a Javascript object returned in an XMLHttpRequest
 	 * with an error. 
 	 * @name parseHttpJsonError
 	 * @function

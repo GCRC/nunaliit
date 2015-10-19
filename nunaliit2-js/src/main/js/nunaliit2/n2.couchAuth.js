@@ -1171,8 +1171,7 @@ var AuthService = $n2.Class({
 	
 	,_fillDialogWithPasswordRecovery: function(dialogId, opts_){
 		var opts = $n2.extend({
-			prompt: null
-			,userName: null
+			userName: null
 			,onSuccess: function(context){}
 			,onError: function(err){}
 		},opts_);
@@ -1279,13 +1278,14 @@ var AuthService = $n2.Class({
 		    	,dataType: 'json'
 		    	,success: function(result) {
 		    		if( result.error ) {
-						alert( _loc('Unable to recover password: ')+result.error);
+		    			reportError(result.error);
 		    		} else {
 		    			reportSuccess();
 		    		};
 		    	}
 		    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
-					alert( _loc('Unable to recover password: ')+textStatus);
+		    		var result = $n2.utils.parseHttpJsonError(XMLHttpRequest, undefined);
+	    			reportError(result.error);
 				}	
 			});
 		};
@@ -1320,6 +1320,46 @@ var AuthService = $n2.Class({
 				});
 
 			$dialog.dialog('option','title',_loc('Password Recovery Initiated'));
+		};
+		
+		function reportError(errorMessage){
+			var $dialog = $('#'+dialogId);
+
+			$dialog.empty();
+			
+			var $form = $('<div>')
+				.addClass('n2Auth_recoverError')
+				.appendTo($dialog);
+			
+			// Explanation
+			$('<div>')
+				.addClass('n2Auth_recoverError_line')
+				.appendTo($form)
+				.text( _loc('Unable to initiate password recovery. Contact your administrator to resolve this issue.') );
+			
+			// Reported Error
+			if( errorMessage ){
+				$('<div>')
+					.addClass('n2Auth_recoverError_report')
+					.appendTo($form)
+					.text( errorMessage );
+			};
+			
+			// Buttons
+			var $line = $('<div>')
+				.addClass('n2Auth_recoverError_button_line')
+				.appendTo($form);
+			$('<button>')
+				.addClass('n2Auth_button_ok')
+				.text( _loc('OK') )
+				.appendTo($line)
+				.button({icons:{primary:'ui-icon-check'}})
+				.click(function(){
+					_this._fillDialogWithLogin(dialogId, opts);
+					return false;
+				});
+
+			$dialog.dialog('option','title',_loc('Password Recovery Failure'));
 		};
 	}
 
