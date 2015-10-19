@@ -100,6 +100,8 @@ function canEditDoc(data) {
 			var layerId = data.nunaliit_layers[i];
 			if( 'public' === layerId ){
 				// Public layer. Ignore
+			} else if( 'public_' === layerId.substr(0,7) ){
+					// Public layer. Ignore
 			} else {
 				documentIsControlledLayer = true;
 				

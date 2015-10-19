@@ -99,7 +99,11 @@ public class ConfigServletActions {
 			CouchQueryResults queryResults = atlasDesign.performQuery(query);
 			for(JSONObject row : queryResults.getRows()){
 				String layerId = row.getString("key");
-				if( false == "public".equals(layerId) ) {
+				if( "public".equals(layerId) ) {
+					// Do not include public layer
+				} else if( null != layerId && layerId.startsWith("public_") ) {
+					// Do not include public layers
+				} else {
 					String layerRole = atlasInfo.getAtlasName() + "_layer_" + layerId;
 					roles.add(layerRole);
 				}
