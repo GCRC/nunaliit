@@ -1,6 +1,7 @@
 package ca.carleton.gcrc.couch.command.schema;
 
 import java.io.PrintWriter;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.Vector;
 
@@ -155,6 +156,12 @@ public class SchemaAttribute {
 			boolean uploadOptional = jsonAttr.optBoolean("uploadOptional",false);
 			attribute.setUploadOptional(uploadOptional);
 		}
+
+		// placeholder
+		{
+			String placeholder = jsonAttr.optString("placeholder");
+			attribute.setPlaceholder(placeholder);
+		}
 		
 		return attribute;
 	}
@@ -178,6 +185,7 @@ public class SchemaAttribute {
 	private boolean disableMaxHeight;
 	private int maxHeight = 0;
 	private boolean uploadOptional = false;
+	private String placeholder = null;
 
 	public SchemaAttribute(String type){
 		this.type = type;
@@ -340,6 +348,14 @@ public class SchemaAttribute {
 		this.uploadOptional = uploadOptional;
 	}
 
+	public String getPlaceholder() {
+		return placeholder;
+	}
+
+	public void setPlaceholder(String placeholder) {
+		this.placeholder = placeholder;
+	}
+
 	public JSONObject toJson() throws Exception {
 		JSONObject jsonAttr = new JSONObject();
 		
@@ -359,6 +375,7 @@ public class SchemaAttribute {
 		if( wikiTransform ) jsonAttr.put("wikiTransform", true);
 		if( disableMaxHeight ) jsonAttr.put("disableMaxHeight", true);
 		if( uploadOptional ) jsonAttr.put("uploadOptional", true);
+		if( null != placeholder ) jsonAttr.put("placeholder", placeholder);
 
 		if( options.size() > 0 ){
 			JSONArray jsonOptions = new JSONArray();
@@ -920,7 +937,7 @@ public class SchemaAttribute {
 					} else if( "reference".equals(type) ){
 						fieldType = ",reference";
 					} else if( "custom".equals(type) ){
-						fieldType = ",custom="+customType;
+						fieldType = ",custom="+encodeFieldParameter(customType);
 					} else if( "checkbox".equals(type) ){
 						fieldType = ",checkbox";
 					}
@@ -928,10 +945,13 @@ public class SchemaAttribute {
 					if( isTextarea() ){
 						fieldType += ",textarea";
 					}
+					
+					if( null != placeholder ){
+						fieldType += ",placeholder="+encodeFieldParameter(placeholder);
+					}
 
-					String searchFnName = "";
 					if( null != searchFunction ){
-						searchFnName = ",search="+searchFunction;
+						fieldType = ",search="+encodeFieldParameter(searchFunction);
 					}
 					
 					pw.println("{{#"+schemaName+"}}");
@@ -939,7 +959,7 @@ public class SchemaAttribute {
 					pw.println("\t<div class=\""+schemaName+"_"+id+"\">");
 
 					pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-					pw.println("\t\t<div class=\"value\">{{#:field}}"+id+fieldType+searchFnName+"{{/:field}}</div>");
+					pw.println("\t\t<div class=\"value\">{{#:field}}"+id+fieldType+"{{/:field}}</div>");
 					pw.println("\t\t<div class=\"end\"></div>");
 					
 					pw.println("\t</div>");
@@ -1137,5 +1157,11 @@ public class SchemaAttribute {
 	private int getEffectiveMaxHeight(){
 		if( maxHeight > 0 ) return maxHeight;
 		return 100;
+	}
+	
+	private String encodeFieldParameter(String value) throws Exception {
+		String encoded = URLEncoder.encode(value, "UTF-8");
+		encoded = encoded.replaceAll("\\+", "%20");
+		return encoded;
 	}
 }

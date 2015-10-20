@@ -204,14 +204,25 @@ function _formSingleField(r,completeSelectors,options){
 	
 	// option: textarea
 	if( options.textarea ){
-		r.push('<textarea class="');
+		r.push('<textarea');
 	} else if( options.checkbox ){
-		r.push('<input type="checkbox" class="');
+		r.push('<input type="checkbox"');
 	} else {
-		r.push('<input type="text" class="');
+		r.push('<input type="text"');
 	};
 	
-	r.push('n2schema_input');
+	// placeholder
+	if( options.placeholder 
+	 && typeof options.placeholder[0] === 'string' ){
+		var placeHolderValue = options.placeholder[0];
+		placeHolderValue = placeHolderValue.replace(/&/g, '&amp;');
+		placeHolderValue = placeHolderValue.replace(/"/g, '&quot;');
+		r.push(' placeholder="');
+		r.push( _loc(placeHolderValue) );
+		r.push('"');
+	};
+	
+	r.push(' class="n2schema_input');
 	
 	var selClass = createClassStringFromSelector(completeSelectors);
 	r.push(' '+selClass);
@@ -298,11 +309,10 @@ function _formField() {
 		var optSplit = optStr.split('=');
 		if( optSplit.length > 1 ){
 			var valSplits = optSplit[1].split('+');
-			if( valSplits.length > 1 ) {
-				opts[optSplit[0]]=valSplits;
-			} else {
-				opts[optSplit[0]]=[optSplit[1]];
+			for(var j=0,k=valSplits.length; j<k; ++j){
+				valSplits[j] = decodeURIComponent( valSplits[j] );
 			};
+			opts[optSplit[0]]=valSplits;
 		} else {
 			opts[optSplit[0]]=[];
 		};
