@@ -1316,7 +1316,7 @@ var AnalysisReport = $n2.Class({
 						for(var colIndex=0,colEnd=mod.collisions.length; colIndex<colEnd; ++colIndex){
 							var collision = mod.collisions[colIndex];
 							var collisionName = propName + '_' + colIndex;
-							var value = $('input[name='+collisionName+']:checked').val();
+							var value = $('input[name="'+collisionName+'"]:checked').val();
 							collision.selectedValue = value;
 							if( typeof value !== 'string' ){
 								allCollisionsResolved = false;
@@ -1327,7 +1327,7 @@ var AnalysisReport = $n2.Class({
 				
 				if( change.modifiedGeometry && change.collisionGeometry ){
 					var collisionName = '__geometry__';
-					var value = $('input[name='+collisionName+']:checked').val();
+					var value = $('input[name="'+collisionName+'"]:checked').val();
 					change.selectedGeometry = value;
 					if( typeof value !== 'string' ){
 						allCollisionsResolved = false;
