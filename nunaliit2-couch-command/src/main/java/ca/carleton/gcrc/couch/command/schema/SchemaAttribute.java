@@ -149,6 +149,12 @@ public class SchemaAttribute {
 			int maxHeight = jsonAttr.optInt("maxHeight",0);
 			attribute.setMaxHeight(maxHeight);
 		}
+
+		// uploadOptional
+		{
+			boolean uploadOptional = jsonAttr.optBoolean("uploadOptional",false);
+			attribute.setUploadOptional(uploadOptional);
+		}
 		
 		return attribute;
 	}
@@ -171,6 +177,7 @@ public class SchemaAttribute {
 	private boolean wikiTransform;
 	private boolean disableMaxHeight;
 	private int maxHeight = 0;
+	private boolean uploadOptional = false;
 
 	public SchemaAttribute(String type){
 		this.type = type;
@@ -325,6 +332,14 @@ public class SchemaAttribute {
 		this.maxHeight = maxHeight;
 	}
 
+	public boolean isUploadOptional() {
+		return uploadOptional;
+	}
+
+	public void setUploadOptional(boolean uploadOptional) {
+		this.uploadOptional = uploadOptional;
+	}
+
 	public JSONObject toJson() throws Exception {
 		JSONObject jsonAttr = new JSONObject();
 		
@@ -343,6 +358,7 @@ public class SchemaAttribute {
 		if( urlsToLinks ) jsonAttr.put("urlsToLinks", true);
 		if( wikiTransform ) jsonAttr.put("wikiTransform", true);
 		if( disableMaxHeight ) jsonAttr.put("disableMaxHeight", true);
+		if( uploadOptional ) jsonAttr.put("uploadOptional", true);
 
 		if( options.size() > 0 ){
 			JSONArray jsonOptions = new JSONArray();
@@ -437,6 +453,10 @@ public class SchemaAttribute {
 				media = new JSONObject();
 				
 				media.put("data", new JSONObject());
+				
+				if( isUploadOptional() ){
+					media.put("_compulsory", false);
+				}
 				
 				files.put("media", media);
 			}

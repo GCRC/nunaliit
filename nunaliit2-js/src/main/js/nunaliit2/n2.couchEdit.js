@@ -2718,6 +2718,37 @@ var AttachmentEditor = $n2.Class({
 			return;
 		};
 		
+		// Remove forms that do not have a file assigned
+		for(var i=0,e=this.creationAttachmentNames.length; i<e; ++i){
+			var attName = this.creationAttachmentNames[i];
+			var $form = $elem.find('.attachmentEditor_att_' + $n2.utils.stringToHtmlId(attName));
+			var $file = $form.find('input[type="file"]');
+			var fileName = $file.val();
+			if( !fileName ){
+				$form.remove();
+				
+				if( this.doc.nunaliit_attachments 
+				 && this.doc.nunaliit_attachments.files
+				 && this.doc.nunaliit_attachments.files[attName] ){
+					delete this.doc.nunaliit_attachments.files[attName];
+				};
+			};
+		};
+		
+		// Remove doc.nunaliit_attachments if empty
+		if( this.doc.nunaliit_attachments ){
+			var count = 0;
+			if( this.doc.nunaliit_attachments.files ){
+				for(var attName in this.doc.nunaliit_attachments.files){
+					++count;
+				};
+			};
+			
+			if( count < 1 ){
+				delete this.doc.nunaliit_attachments;
+			};
+		};
+		
 		// If nothing to load, no point in continuing
 		var $forms = $elem.find('form');
 		var formCount = $forms.length;
