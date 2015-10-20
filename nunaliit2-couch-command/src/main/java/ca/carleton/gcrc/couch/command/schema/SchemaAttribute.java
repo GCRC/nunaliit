@@ -139,16 +139,15 @@ public class SchemaAttribute {
 			attribute.setWikiTransform(wikiTransform);
 		}
 
-		// disableMaxHeight
-		{
-			boolean disableMaxHeight = jsonAttr.optBoolean("disableMaxHeight",false);
-			attribute.setDisableMaxHeight(disableMaxHeight);
-		}
-
 		// maxHeight
 		{
-			int maxHeight = jsonAttr.optInt("maxHeight",0);
-			attribute.setMaxHeight(maxHeight);
+			Object test = jsonAttr.opt("maxHeight");
+			if( null != test ){
+				int maxHeight = jsonAttr.optInt("maxHeight");
+				if( maxHeight > 0 ){
+					attribute.setMaxHeight(maxHeight);
+				}
+			}
 		}
 
 		// uploadOptional
@@ -182,8 +181,7 @@ public class SchemaAttribute {
 	private String customType;
 	private String searchFunction;
 	private boolean wikiTransform;
-	private boolean disableMaxHeight;
-	private int maxHeight = 0;
+	private Integer maxHeight = null;
 	private boolean uploadOptional = false;
 	private String placeholder = null;
 
@@ -324,19 +322,11 @@ public class SchemaAttribute {
 		this.wikiTransform = wikiTransform;
 	}
 
-	public boolean isDisableMaxHeight() {
-		return disableMaxHeight;
-	}
-
-	public void setDisableMaxHeight(boolean disableMaxHeight) {
-		this.disableMaxHeight = disableMaxHeight;
-	}
-
-	public int getMaxHeight() {
+	public Integer getMaxHeight() {
 		return maxHeight;
 	}
 
-	public void setMaxHeight(int maxHeight) {
+	public void setMaxHeight(Integer maxHeight) {
 		this.maxHeight = maxHeight;
 	}
 
@@ -373,7 +363,7 @@ public class SchemaAttribute {
 		if( excludedFromExport ) jsonAttr.put("excludedFromExport", true);
 		if( urlsToLinks ) jsonAttr.put("urlsToLinks", true);
 		if( wikiTransform ) jsonAttr.put("wikiTransform", true);
-		if( disableMaxHeight ) jsonAttr.put("disableMaxHeight", true);
+		if( null != maxHeight ) jsonAttr.put("maxHeight", maxHeight.intValue());
 		if( uploadOptional ) jsonAttr.put("uploadOptional", true);
 		if( null != placeholder ) jsonAttr.put("placeholder", placeholder);
 
@@ -397,10 +387,6 @@ public class SchemaAttribute {
 			}
 			
 			jsonAttr.put("checkboxes",jsonCheckboxes);
-		}
-
-		if( maxHeight > 0 ){
-			jsonAttr.put("maxHeight", maxHeight);
 		}
 		
 		return jsonAttr;
@@ -650,9 +636,9 @@ public class SchemaAttribute {
 					} else if( isTextarea() ){
 						fixUrlClass += " n2s_preserveSpaces";
 						
-						if( !disableMaxHeight ){
+						if( null != maxHeight && maxHeight.intValue() > 0 ){
 							fixUrlClass += " n2s_installMaxHeight";
-							fixMaxHeight = " _maxheight=\"" + getEffectiveMaxHeight() + "\"";
+							fixMaxHeight = " _maxheight=\"" + maxHeight.intValue() + "\"";
 						}
 					}
 					
@@ -751,8 +737,8 @@ public class SchemaAttribute {
 					}
 					if( isTextarea() ){
 						pw.print(" n2s_preserveSpaces");
-						if( !disableMaxHeight ){
-							pw.print(" n2s_installMaxHeight\" _maxheight=\""+getEffectiveMaxHeight());
+						if( null != maxHeight && maxHeight.intValue() > 0 ){
+							pw.print(" n2s_installMaxHeight\" _maxheight=\""+maxHeight.intValue());
 						}
 					}
 					pw.println("\">");
@@ -1152,11 +1138,6 @@ public class SchemaAttribute {
 			attrExport.put("type", "json");
 			exportArr.put(attrExport);
 		}
-	}
-	
-	private int getEffectiveMaxHeight(){
-		if( maxHeight > 0 ) return maxHeight;
-		return 100;
 	}
 	
 	private String encodeFieldParameter(String value) throws Exception {
