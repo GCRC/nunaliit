@@ -305,16 +305,16 @@
 					_this.submissionDb.updateDocument({
 						data: subDoc
 						,onSuccess: function(docInfo){
-							_this.logger.log( _loc('Submision approved') );
+							_this.logger.log( _loc('Submission approved') );
 							_this._refreshSubmissions();
 						}
 						,onError: function(err){ 
-							_this.logger.error( _loc('Unable to update submision document: {err}',{err:err}) ); 
+							_this.logger.error( _loc('Unable to update submission document: {err}',{err:err}) ); 
 						}
 					});
 				}
 				,onError: function(err){
-					_this.logger.error( _loc('Unable to obtain submision document: {err}',{err:err}) ); 
+					_this.logger.error( _loc('Unable to obtain submission document: {err}',{err:err}) ); 
 				}
 			});
 		}
@@ -343,7 +343,7 @@
 						_this.submissionDb.updateDocument({
 							data: subDoc
 							,onSuccess: function(docInfo){
-								_this.logger.log( _loc('Submision denied') );
+								_this.logger.log( _loc('Submission denied') );
 								
 								if( typeof onDeniedFn === 'function' ){
 									onDeniedFn();
@@ -352,12 +352,12 @@
 								_this._refreshSubmissions();
 							}
 							,onError: function(err){ 
-								_this.logger.error( _loc('Unable to update submision document: {err}',{err:err}) ); 
+								_this.logger.error( _loc('Unable to update submission document: {err}',{err:err}) ); 
 							}
 						});
 					}
 					,onError: function(err){
-						_this.logger.error( _loc('Unable to obtain submision document: {err}',{err:err}) ); 
+						_this.logger.error( _loc('Unable to obtain submission document: {err}',{err:err}) ); 
 					}
 				});
 			});
