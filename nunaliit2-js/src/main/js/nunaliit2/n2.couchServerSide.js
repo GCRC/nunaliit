@@ -31,36 +31,37 @@ POSSIBILITY OF SUCH DAMAGE.
 $Id: n2.couchServerSide.js 8443 2012-08-16 18:04:28Z jpfiset $
 */
 ;(function($n2){
+"use strict";
 
 // Localization
-var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); }
+,DH = 'n2.couchServerSide'
+;
 
 var Notifier = $n2.Class({
-	options: null
+
+	dispatchService: null,
 	
-	,initialize: function(options_){
-		this.options = $n2.extend({
+	initialize: function(opts_){
+		var opts = $n2.extend({
 			dbChangeNotifier: null
-			,directory: null
-		},options_);
+			,dispatchService: null
+		},opts_);
 		
 		var _this = this;
-		if( this.options.dbChangeNotifier ) {
-			this.options.dbChangeNotifier.addListener(function(changes){
+		if( opts.dbChangeNotifier ) {
+			opts.dbChangeNotifier.addListener(function(changes){
 				_this._dbChanges(changes);
 			});
 		};
-	}
+	},
 
-	,_dbChanges: function(changes){
+	_dbChanges: function(changes){
 		$n2.log('update',changes);
 		var lastSeq = changes.last_seq;
 		var results = changes.results;
 		
-		var dispatcher = this._getDispatcher();
-		if( dispatcher ){
-			var dHandle = dispatcher.getHandle('n2.couchServerSide');
-		
+		if( this.dispatchService ){
 			for(var i=0,e=results.length; i<e; ++i){
 				var updateRecord = results[i];
 	
@@ -80,7 +81,7 @@ var Notifier = $n2.Class({
 					// Send 'documentVersion' before create/update so
 					// that caches can invalidate before document is
 					// requested
-					dispatcher.send(dHandle,{
+					this.dispatchService.send(DH,{
 						type: 'documentVersion'
 						,docId: updateRecord.id
 						,rev: latestRev
@@ -88,34 +89,26 @@ var Notifier = $n2.Class({
 				};
 				
 				if( updateRecord.deleted ){
-					dispatcher.send(dHandle,{
+					this.dispatchService.send(DH,{
 						type: 'documentDeleted'
 						,docId: updateRecord.id
 					});
 					
 				} else if( isAdded ){
-					dispatcher.send(dHandle,{
+					this.dispatchService.send(DH,{
 						type: 'documentCreated'
 						,docId: updateRecord.id
 					});
 					
 				} else {
 					// Updated
-					dispatcher.send(dHandle,{
+					this.dispatchService.send(DH,{
 						type: 'documentUpdated'
 						,docId: updateRecord.id
 					});
 				};
 			};
 		};
-	}
-	
-	,_getDispatcher: function(){
-		var d = null;
-		if( this.options.directory ){
-			d = this.options.directory.dispatchService;
-		};
-		return d;
 	}
 });
 

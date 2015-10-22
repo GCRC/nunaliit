@@ -31,6 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 $Id: n2.couchConfiguration.js 8445 2012-08-22 19:11:38Z jpfiset $
 */
 ;(function($,$n2){
+"use strict";
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
@@ -198,12 +199,14 @@ function Configure(options_){
 				,submissionDb: configuration.submissionDb
 				,submissionServerUrl: options.submissionServerUrl
 				,dispatchService: configuration.directory.dispatchService
+				,isDefaultDocumentSource: true
 			});
 		} else {
 			couchDbDs = new $n2.couchDocument.CouchDocumentSource({
 				id: 'main'
 				,db: configuration.atlasDb
 				,dispatchService: configuration.directory.dispatchService
+				,isDefaultDocumentSource: true
 			});
 		};
 		configuration.dataSources.push(couchDbDs);
@@ -302,6 +305,7 @@ function Configure(options_){
 		configuration.directory.displayImageSourceFactory = new $n2.couchDisplayBox.DisplayImageSourceFactory({
 			documentSource: configuration.documentSource
 			,attachmentService: configuration.directory.attachmentService
+			,dispatchService: configuration.directory.dispatchService
 		});
 		
 		// Navigation Service
@@ -424,7 +428,7 @@ function Configure(options_){
 	 	// Cometd replacement
 	 	configuration.directory.serverSideNotifier = new $n2.couchServerSide.Notifier({
 	 		dbChangeNotifier: configuration.directory.notifierService
-	 		,directory: configuration.directory
+			,dispatchService: configuration.directory.dispatchService
 	 	});
 
 	 	// Set up hover sound

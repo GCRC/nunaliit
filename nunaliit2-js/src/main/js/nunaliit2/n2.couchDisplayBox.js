@@ -31,6 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 ;(function($,$n2) {
+"use strict";
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
@@ -41,14 +42,20 @@ var DisplayImageSourceFactory = $n2.Class({
 	
 	documentSource: null,
 	
+	attachmentService: null,
+	
+	dispatchService: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			documentSource: null
 			,attachmentService: null
+			,dispatchService: null
 		},opts_);
 		
 		this.documentSource = opts.documentSource;
 		this.attachmentService = opts.attachmentService;
+		this.dispatchService = opts.dispatchService;
 	},
 
 	getImageSourceForDoc: function(opts_){
@@ -136,6 +143,7 @@ var DisplayImageSourceFactory = $n2.Class({
 			// Create an image source
 			var imageSource = new $n2.displayBox.DisplayImageSourceDoc({
 				showService: opts.showService
+				,dispatchService: _this.dispatchService
 			});
 			imageSource.addDocument(doc, opts.attName);
 			

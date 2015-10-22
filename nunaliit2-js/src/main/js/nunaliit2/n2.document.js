@@ -30,9 +30,12 @@ POSSIBILITY OF SUCH DAMAGE.
 
 */
 ;(function($n2){
+"use strict";
 
 // Localization
-var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); }
+,DH = 'n2.document'
+;
 
 var dataSourceFromId = {};
 
@@ -222,22 +225,27 @@ var DocumentSource = $n2.Class({
 
 //*******************************************************
 
-var DocumentWrapper = $n2.Class({
-	
-	doc: null
-	
-	,initialize: function(doc){
-		this.doc = doc;
-	}
+var getDocumentSourceFromDocument = function(opts_) {
+	var opts = $n2.extend({
+		doc: null
+		,dispatchService: null
+		,dispatchHandle: DH
+	},opts_);
 
-	,getDocumentSource: function(){
-		var source = null;
-		if( this.doc ){
-			source = this.doc.__n2Source;
-		};
-		return source;
-	}
-});
+	var doc = opts.doc;
+	var dispatchService = opts.dispatchService;
+	
+	if( !doc ) return undefined;
+	if( !dispatchService ) return undefined;
+	
+	var m = {
+		type: 'documentSourceFromDocument'
+		,doc: opts.doc
+	};
+	this.dispatchService.synchronousCall(opts.dispatchHandle,m);
+
+	return m.documentSource;
+};
 
 //*******************************************************
 
@@ -259,7 +267,7 @@ var clone = function(doc){
 //*******************************************************
 $n2.document = {
 	DocumentSource: DocumentSource
-	,DocumentWrapper: DocumentWrapper
+	,getDocumentSourceFromDocument: getDocumentSourceFromDocument
 	,getDocumentSourceFromId: getDocumentSourceFromId
 	,clone: clone
 };

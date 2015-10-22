@@ -31,9 +31,12 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 ;(function($,$n2) {
+"use strict";
 
 // Localization
-var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); }
+,DH = 'n2.displayBox'
+;
 
 //=========================================================================
 
@@ -185,16 +188,20 @@ var DisplayImageSourceDoc = $n2.Class({
 	
 	showService: null,
 	
+	dispatchService: null,
+	
 	images: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			showService: null
+			,dispatchService: null
 		},opts_);
 		
 		this.images = [];
 		
 		this.showService = opts.showService;
+		this.dispatchService = opts.dispatchService;
 	},
 	
 	getCountInfo: function(index){
@@ -210,8 +217,21 @@ var DisplayImageSourceDoc = $n2.Class({
 		var image = this.images[index];
 		if( image ){
 			var doc = image.doc;
-			var docSource = doc.__n2Source;
-			var url = docSource.getDocumentAttachmentUrl(doc, image.attName);
+
+			var docSource = undefined;
+			if( this.dispatchService ){
+				var m = {
+					type: 'documentSourceFromDocument'
+					,doc: doc
+				};
+				this.dispatchService.synchronousCall(DH,m);
+				docSource = m.documentSource;
+			};
+
+			var url = undefined;
+			if( docSource ){
+				url = docSource.getDocumentAttachmentUrl(doc, image.attName);
+			};
 
 			var type = image.att.fileClass;
 			var isPhotoshpere = false;

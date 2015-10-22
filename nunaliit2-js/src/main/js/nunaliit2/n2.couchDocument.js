@@ -30,11 +30,12 @@ POSSIBILITY OF SUCH DAMAGE.
 
 */
 ;(function($,$n2){
+"use strict";
 
 // Localization
-var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
-
-var DH = 'n2.couchDocument';
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); }
+,DH = 'n2.couchDocument'
+;
 
 //*******************************************************
 function adjustDocument(doc) {
@@ -89,27 +90,33 @@ function adjustDocument(doc) {
 // *******************************************************
 var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 	
-	db: null
+	db: null,
 	
-	,designDoc: null
+	designDoc: null,
 	
-	,dispatchService: null
+	dispatchService: null,
 	
-	,geometryRepository: null
+	geometryRepository: null,
 	
-	,initialize: function(opts_){
+	isDefaultDocumentSource: null,
+	
+	initialize: function(opts_){
 		var opts = $n2.extend({
 				id: null
 				,db: null
 				,dispatchService: null
+				,isDefaultDocumentSource: false
 			}
 			,opts_
 		);
+		
+		var _this = this;
 		
 		$n2.document.DocumentSource.prototype.initialize.call(this,opts);
 
 		this.db = opts.db;
 		this.dispatchService = opts.dispatchService;
+		this.isDefaultDocumentSource = opts.isDefaultDocumentSource;
 		
 		this.designDoc = this.db.getDesignDoc({ddName:'atlas'});
 		
@@ -118,9 +125,18 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			,designDoc: this.designDoc
 			,dispatchService: this.dispatchService
 		});
-	}
+		
+		if( this.dispatchService ){
+			var f = function(m, addr, d){
+				_this._handle(m, addr, d);
+			};
+			
+			this.dispatchService.register(DH,'documentSourceFromDocument',f);
+		};
+		
+	},
 
-	,createDocument: function(opts_){
+	createDocument: function(opts_){
 		var opts = $n2.extend({
 				doc: {}
 				,onSuccess: function(doc){}
@@ -157,9 +173,9 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			}
 			,onError: opts.onError
 		});
-	}
+	},
 
-	,getDocument: function(opts_){
+	getDocument: function(opts_){
 		var opts = $n2.extend({
 				docId: null
 				,rev: null
@@ -188,9 +204,9 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			}
 			,onError: opts.onError
 		});
-	}
+	},
 
-	,getDocuments: function(opts_){
+	getDocuments: function(opts_){
 		var opts = $n2.extend({
 				docIds: null
 				,onSuccess: function(docs){}
@@ -212,13 +228,13 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			}
 			,onError: opts.onError
 		});
-	}
+	},
 
-	,getDocumentAttachmentUrl: function(doc, attachmentName){
+	getDocumentAttachmentUrl: function(doc, attachmentName){
 		return this.db.getAttachmentUrl(doc, attachmentName);
-	}
+	},
 
-	,verifyDocumentExistence: function(opts_){
+	verifyDocumentExistence: function(opts_){
 		var opts = $n2.extend({
 				docIds: null
 				,onSuccess: function(info){}
@@ -243,9 +259,9 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			}
 			,onError: opts.onError
 		});
-	}
+	},
 
-	,updateDocument: function(opts_){
+	updateDocument: function(opts_){
 		var opts = $n2.extend({
 				doc: null
 				,onSuccess: function(doc){}
@@ -288,9 +304,9 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			}
 			,onError: opts.onError
 		});
-	}
+	},
 
-	,deleteDocument: function(opts_){
+	deleteDocument: function(opts_){
 		var opts = $n2.extend({
 				doc: null
 				,onSuccess: function(){}
@@ -322,9 +338,9 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			}
 			,onError: opts.onError
 		});
-	}
+	},
 
-	,getLayerDefinitions: function(opts_){
+	getLayerDefinitions: function(opts_){
 		var opts = $n2.extend({
 				onSuccess: function(layerDefinitions){}
 				,onError: function(errorMsg){}
@@ -351,9 +367,9 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			}
 			,onError: opts.onError
 		});
-	}
+	},
 
-	,getDocumentInfoFromIds: function(opts_){
+	getDocumentInfoFromIds: function(opts_){
 		var opts = $n2.extend({
 				docIds: null
 				,onSuccess: function(docInfos){}
@@ -374,9 +390,9 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			}
 			,onError: opts.onError
 		});
-	}
+	},
 
-	,getReferencesFromId: function(opts_){
+	getReferencesFromId: function(opts_){
 		var opts = $n2.extend({
 				docId: null
 				,onSuccess: function(referenceIds){}
@@ -403,9 +419,9 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			}
 			,onError: opts.onError
 		});
-	}
+	},
 
-	,getProductFromId: function(opts_){
+	getProductFromId: function(opts_){
 		var opts = $n2.extend({
 				docId: null
 				,onSuccess: function(referenceIds){}
@@ -432,9 +448,9 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			}
 			,onError: opts.onError
 		});
-	}
+	},
 
-	,getDocumentsFromGeographicFilter: function(opts_){
+	getDocumentsFromGeographicFilter: function(opts_){
 		var opts = $n2.extend({
 			docIds: null
 			,layerId: null
@@ -456,13 +472,13 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 		};
 		
 		this.geometryRepository.getDocumentsFromGeographicFilter(opts);
-	}
+	},
 
-	,getGeographicBoundingBox: function(opts_){
+	getGeographicBoundingBox: function(opts_){
 		this.geometryRepository.getGeographicBoundingBox(opts_);
-	}
+	},
 
-	,getReferencesFromOrigin: function(opts_){
+	getReferencesFromOrigin: function(opts_){
 		var opts = $n2.extend({
 				docId: null
 				,onSuccess: function(originReferenceIds){}
@@ -505,11 +521,24 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 		var server = this.db.server;
 		
 		server.getUniqueId(opts);
-	}
+	},
 	
-	,_dispatch: function(m){
+	_dispatch: function(m){
 		if( this.dispatchService ){
 			this.dispatchService.send(DH,m);
+		};
+	},
+	
+	_handle: function(m, addr, dispatcher){
+		if( 'documentSourceFromDocument' === m.type ){
+			var doc = m.doc;
+			if( doc && doc.__n2Source === this ){
+				m.documentSource = this;
+			} else if( doc 
+			 && !doc.__n2Source 
+			 && this.isDefaultDocumentSource ){
+				m.documentSource = this;
+			};
 		};
 	}
 });
@@ -518,19 +547,19 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 
 var GeometryRepository = $n2.Class({
 	
-	db: null
+	db: null,
 	
-	,designDoc: null
+	designDoc: null,
 	
-	,dispatchService: null
+	dispatchService: null,
 	
-	,dbProjection: null
+	dbProjection: null,
 	
-	,poles: null // cache the poles in various projections
+	poles: null, // cache the poles in various projections
 	
-	,mapProjectionMaxWidth: null // cache max width computation
+	mapProjectionMaxWidth: null, // cache max width computation
 	
-	,initialize: function(opts_){
+	initialize: function(opts_){
 		var opts = $n2.extend({
 			db: null
 			,designDoc: null
@@ -549,9 +578,9 @@ var GeometryRepository = $n2.Class({
 			,s:{}
 		};
 		this.mapProjectionMaxWidth = {};
-	}
+	},
 	
-	,getDocumentsFromGeographicFilter: function(opts_){
+	getDocumentsFromGeographicFilter: function(opts_){
 		var opts = $n2.extend({
 				docIds: null
 				,layerId: null
@@ -659,9 +688,9 @@ var GeometryRepository = $n2.Class({
 	    		opts.onSuccess(docs);
 	    	};
 		};
-	}
+	},
 
-	,getGeographicBoundingBox: function(opts_){
+	getGeographicBoundingBox: function(opts_){
 		var opts = $n2.extend({
 				layerId: null
 				,bbox: null
@@ -686,9 +715,9 @@ var GeometryRepository = $n2.Class({
 			}
 			,onError: opts.onError
 		});
-	}
+	},
 
-	,_getPole: function(isNorth, mapProjection){
+	_getPole: function(isNorth, mapProjection){
 		
 		var projCode = mapProjection.getCode();
 		
@@ -725,9 +754,9 @@ var GeometryRepository = $n2.Class({
 		this.poles[label][projCode] = p;
 		
 		return p;
-	}
+	},
 	
-    ,_getMapMaxWidth: function(proj){
+    _getMapMaxWidth: function(proj){
 		
 		var projCode = proj.getCode();
     	
@@ -776,15 +805,15 @@ var GeometryRepository = $n2.Class({
 //*******************************************************
 var CouchDocumentSourceWithSubmissionDb = $n2.Class(CouchDocumentSource, {
 	
-	submissionDb: null
+	submissionDb: null,
 	
-	,submissionServerUrl: null
+	submissionServerUrl: null,
 	
-	,submissionServerDb: null
+	submissionServerDb: null,
 	
-	,isSubmissionDataSource: null
+	isSubmissionDataSource: null,
 	
-	,initialize: function(opts_){
+	initialize: function(opts_){
 		var opts = $n2.extend({
 			submissionDb: null
 			,submissionServletUrl: null
@@ -927,9 +956,9 @@ var CouchDocumentSourceWithSubmissionDb = $n2.Class(CouchDocumentSource, {
 			}
 			,onError: opts.onError
 		});
-	}
+	},
 	
-	,_warnUser: function(){
+	_warnUser: function(){
 		var shouldWarnUser = true;
 		var c = $n2.cookie.getCookie('nunaliit_submissions');
 		if( c ){

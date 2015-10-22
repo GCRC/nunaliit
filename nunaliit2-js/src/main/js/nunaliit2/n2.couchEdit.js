@@ -32,10 +32,12 @@ $Id: n2.couchEdit.js 8458 2012-08-29 13:12:06Z jpfiset $
 */
 
 ;(function($,$n2) {
+"use strict";
 
 // Localization
-var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
-var DH = 'n2.couchEdit';
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); }
+,DH = 'n2.couchEdit'
+;
 
 function getDefaultCouchProjection(){
 	var defaultCouchProj = null;
@@ -244,17 +246,25 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		this.editors = opts.editors;
 		this.couchProj = opts.couchProj;
 
-		if( opts.doc.__n2Source ){
-			this.editedDocument = {};
-			for(var key in opts.doc){
-				if( '__n2Source' === key ){
-					this.editedDocumentSource = opts.doc[key];
-				} else {
-					this.editedDocument[key] = opts.doc[key];
-				};
+		this.editedDocument = {};
+		for(var key in opts.doc){
+			if( '__n2Source' === key ){
+				// Drop information about document source so it does not
+				// appear in the editor
+			} else {
+				this.editedDocument[key] = opts.doc[key];
 			};
-		} else {
-			this.editedDocument = opts.doc;
+		};
+		
+		// Obtain documentSource
+		this.editedDocumentSource = undefined;
+		if( this.dispatchService ){
+			var m = {
+				type: 'documentSourceFromDocument'
+				,doc: opts.doc
+			};
+			this.dispatchService.synchronousCall(DH,m);
+			this.editedDocumentSource = m.documentSource;
 		};
 		
 		this.isInsert = false;
@@ -950,10 +960,22 @@ var CouchDocumentEditor = $n2.Class({
 		this.editedDocumentSchema = null;
 		for(var key in doc_){
 			if( '__n2Source' === key ) {
-				this.editedDocumentSource = doc_[key];
+				// Drop information about document source so it does not
+				// appear in the editor
 			} else {
 				this.editedDocument[key] = doc_[key];
 			};
+		};
+		
+		// Obtain documentSource
+		this.editedDocumentSource = undefined;
+		if( this.dispatchService ){
+			var m = {
+				type: 'documentSourceFromDocument'
+				,doc: opts.doc
+			};
+			this.dispatchService.synchronousCall(DH,m);
+			this.editedDocumentSource = m.documentSource;
 		};
 	
 		this.currentGeometryWkt = undefined;
