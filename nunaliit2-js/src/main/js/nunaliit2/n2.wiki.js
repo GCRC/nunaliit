@@ -90,6 +90,77 @@ function escapeOptions(text){
 };
 
 //*******************************************************
+// Remove comments
+var gStartComment = "<!--";
+var gEndComment = "-->";
+function removeComments(lines){
+	function stripCommentFromLine(info){
+		if( info.commentOpen ){
+			if( info.line.indexOf(gEndComment) >= 0 ){
+				var index = info.line.indexOf(gEndComment);
+				var after = within.substr(index+gEndComment.length);
+				
+				info.line = after;
+				info.commentOpen = false;
+			} else {
+				info.skipLine = true;
+				return;
+			};
+		};
+		
+		if( info.line.indexOf(gStartComment) >= 0 ){
+			var index = info.line.indexOf(gStartComment);
+			var before = info.line.substr(0,index);
+			var within = info.line.substr(index+gStartComment.length);
+			
+			info.commentOpen = true;
+			info.commentFound = true;
+			info.line = before;
+			
+			if( within.indexOf(gEndComment) >= 0 ){
+				var index = within.indexOf(gEndComment);
+				var after = within.substr(index+gEndComment.length);
+				
+				info.line = before + after;
+				info.commentOpen = false;
+				
+				stripCommentFromLine(info);
+			};
+		};
+	};
+	
+	var newLines = [];
+	var info = {
+		commentOpen: false
+		,commentFound: false
+		,skipLine: false
+	};
+	
+	for(var i=0,e=lines.length; i<e; ++i){
+		var line = lines[i];
+
+		info.line = line;
+		info.skipLine = false;
+		info.commentFound = false;
+		
+		stripCommentFromLine(info);
+
+		if( info.skipLine ){
+			// skip line
+		} else if( info.commentFound ){
+			if( $n2.trim(info.line) !== '' ){
+				newLines.push( info.line );
+			};
+			
+		} else {
+			newLines.push( info.line );
+		};
+	};
+	
+	return newLines;
+};
+
+//*******************************************************
 // Look at consecutive lines and merge them into one if
 // a line is a continuation of another
 function mergeLines(lines){
@@ -266,14 +337,16 @@ function processTables(lines){
 			newLines.push('</div>');
 		};
 		
-		newLines.push('<table class="n2wiki"');
+		var tableLine = '<table class="n2wiki"';
 		
 		if( tableOptions ){
-			newLines.push(' ');
-			newLines.push(tableOptions);
+			tableLine += ' ';
+			tableLine += tableOptions;
 		};
 		
-		newLines.push('>');
+		tableLine += '>';
+
+		newLines.push(tableLine);
 		newLines.push('<tr>');
 	};
 
@@ -325,14 +398,18 @@ function processTables(lines){
 				rowOptions = escapeOptions(rowOptions);
 				rowOptions = $n2.trim(rowOptions);
 				
-				newLines.push('</tr><tr');
+				newLines.push('</tr>');
+				
+				var trLine = '<tr';
 					
 				if( rowOptions.length > 0 ){
-					newLines.push( ' ' );
-					newLines.push( rowOptions );
+					trLine += ' ';
+					trLine += rowOptions;
 				};
 
-				newLines.push('>');
+				trLine += '>';
+				
+				newLines.push(trLine);
 				
 			} else if( mTableCell ){
 				// Table Cell
@@ -358,18 +435,18 @@ function processTables(lines){
 						cellContent = cellSplits[0];
 					};
 					
+					var tdLine = '<td';
 					if( isHeading ){
-						newLines.push('<th');
-					} else {
-						newLines.push('<td');
+						tdLine = '<th';
 					};
 					
 					if( cellOptions ){
-						newLines.push( ' ' );
-						newLines.push( escapeOptions(cellOptions) );
+						tdLine += ' ';
+						tdLine += escapeOptions(cellOptions);
 					};
 
-					newLines.push('>');
+					tdLine += '>';
+					newLines.push( tdLine );
 
 					newLines.push( escapeCharacters(cellContent) );
 
@@ -473,10 +550,15 @@ function WikiToHtml(opts_){
 		throw 'Wiki text must be specified for WikiToHtml()';
 	};
 
-	// Character escaping
-	text = escapeCharacters(text);
-	
 	var lines = text.split('\n');
+
+	lines = removeComments(lines);
+	
+	// Character escaping
+	for(var i=0,e=lines.length; i<e; ++i){
+		var line = lines[i];
+		lines[i] = escapeCharacters(line);
+	};
 	
 	lines = mergeLines(lines);
 	lines = processLists(lines);
