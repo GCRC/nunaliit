@@ -307,7 +307,8 @@ var DbPerspective = $n2.Class({
 				_this._handleMessage(m);
 			};
 			
-			this.dispatchService.register(DH, 'documentContent', fn);
+			this.dispatchService.register(DH, 'documentContentCreated', fn);
+			this.dispatchService.register(DH, 'documentContentUpdated', fn);
 			this.dispatchService.register(DH, 'documentDeleted', fn);
 //			this.dispatchService.register(DH, 'findIsAvailable', fn);
 			this.dispatchService.register(DH, 'documentVersion', fn);
@@ -538,7 +539,8 @@ var DbPerspective = $n2.Class({
 	},
 	
 	_handleMessage: function(m){
-		if( 'documentContent' === m.type ){
+		if( 'documentContentCreated' === m.type 
+		 || 'documentContentUpdated' === m.type ){
 			if( m.doc ){
 				this._docsLoaded([m.doc]);
 			};

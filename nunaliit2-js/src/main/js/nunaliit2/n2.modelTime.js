@@ -665,14 +665,13 @@ var TimeTransform = $n2.Class({
 			};
 			
 		} else if( 'modelGetState' === m.type ){
+			// Is this request intended for this time transform?
 			if( this.modelId === m.modelId ){
 				var added = [];
 				for(var docId in this.docInfosByDocId){
 					var docInfo = this.docInfosByDocId[docId];
 					var doc = docInfo.doc;
-					if( docInfo.visible ){
-						added.push(doc);
-					};
+					added.push(doc);
 				};
 
 				m.state = {

@@ -142,7 +142,13 @@ var TimeTransformMapBridge = $n2.Class({
     				_this.docStateById[docId] = {};
     			};
     			
-    			_this.docStateById[docId].visible = doc._n2TimeTransform.intersects;
+    			if( doc._n2TimeTransform.intervalSize <= 0 ){
+    				// The document does not contain any time intervals. By default,
+    				// show
+    				_this.docStateById[docId].visible = true;
+    			} else {
+        			_this.docStateById[docId].visible = doc._n2TimeTransform.intersects;
+    			};
     			
     		} else if( _this.docStateById[docId] ){
     			delete _this.docStateById[docId];
