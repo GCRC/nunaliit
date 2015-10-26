@@ -121,6 +121,13 @@ var DomStyler = $n2.Class({
 			_this._briefDisplay($jq, opt);
 			$jq.removeClass('n2_briefDisplay').addClass('n2_briefDisplayed');
 		});
+		
+		// Full display
+		$set.filter('.n2s_fullDisplay').each(function(){
+			var $jq = $(this);
+			_this._fullDisplay($jq, opt);
+			$jq.removeClass('n2s_fullDisplay').addClass('n2s_fullDisplayed');
+		});
 
 		// Reference Link
 		$set.filter('.n2s_referenceLink').each(function(){
@@ -411,6 +418,12 @@ var DomStyler = $n2.Class({
 		};
 		
 		this.showService.printBriefDescription($jq, docId);
+	},
+	
+	_fullDisplay: function($jq, opt_) {
+		var docId = $jq.attr('nunaliit-document');
+		
+		this.showService.printDocument($jq, docId);
 	},
 	
 	_insertReferenceLink: function($jq, opt_) {

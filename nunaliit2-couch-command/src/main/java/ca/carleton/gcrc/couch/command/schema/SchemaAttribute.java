@@ -158,7 +158,7 @@ public class SchemaAttribute {
 
 		// placeholder
 		{
-			String placeholder = jsonAttr.optString("placeholder");
+			String placeholder = jsonAttr.optString("placeholder",null);
 			attribute.setPlaceholder(placeholder);
 		}
 		
