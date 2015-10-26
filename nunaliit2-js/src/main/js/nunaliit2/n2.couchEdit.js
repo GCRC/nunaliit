@@ -972,7 +972,7 @@ var CouchDocumentEditor = $n2.Class({
 		if( this.dispatchService ){
 			var m = {
 				type: 'documentSourceFromDocument'
-				,doc: opts.doc
+				,doc: doc_
 			};
 			this.dispatchService.synchronousCall(DH,m);
 			this.editedDocumentSource = m.documentSource;

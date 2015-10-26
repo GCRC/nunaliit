@@ -85,7 +85,126 @@ function adjustDocument(doc) {
 			};
 		};
 	};
-}
+};
+
+//*******************************************************
+var Notifier = $n2.Class({
+
+	dispatchService: null,
+	
+	documentSource: null,
+	
+	dbChangeNotifier: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			atlasDb: null
+			,dispatchService: null
+			,documentSource: null
+		},opts_);
+		
+		var _this = this;
+		
+		this.dispatchService = opts.dispatchService;
+		this.documentSource = opts.documentSource;
+		
+		if( opts.atlasDb ){
+			opts.atlasDb.getChangeNotifier({
+				onSuccess: function(notifier){
+					_this.dbChangeNotifier = notifier;
+					if( _this.dbChangeNotifier ){
+						_this.dbChangeNotifier.addListener(function(changes){
+							_this._dbChanges(changes);
+						});
+					};
+				}
+			});
+		};
+	},
+
+	_dbChanges: function(changes){
+		var _this = this;
+		
+		$n2.log('update',changes);
+		var lastSeq = changes.last_seq;
+		var results = changes.results;
+		
+		if( this.dispatchService ){
+			for(var i=0,e=results.length; i<e; ++i){
+				var updateRecord = results[i];
+	
+				var isAdded = false;
+				var latestRev = null;
+	
+				if(updateRecord.changes) {
+					for(var l=0,k=updateRecord.changes.length; l<k; ++l){
+						latestRev = updateRecord.changes[l].rev;
+						if( latestRev.substr(0,2) === '1-' ) {
+							isAdded = true;
+						};
+					};
+				};
+				
+				if( latestRev ){
+					// Send 'documentVersion' before create/update so
+					// that caches can invalidate before document is
+					// requested
+					this.dispatchService.send(DH,{
+						type: 'documentVersion'
+						,docId: updateRecord.id
+						,rev: latestRev
+					});
+				};
+				
+				if( updateRecord.deleted ){
+					this.dispatchService.send(DH,{
+						type: 'documentDeleted'
+						,docId: updateRecord.id
+					});
+					
+				} else if( isAdded ){
+					this.dispatchService.send(DH,{
+						type: 'documentCreated'
+						,docId: updateRecord.id
+					});
+
+					this.documentSource.getDocument({
+						docId: updateRecord.id
+						,onSuccess: function(doc){
+							_this._docUploaded(doc,true);
+						}
+					});
+					
+				} else {
+					// Updated
+					this.dispatchService.send(DH,{
+						type: 'documentUpdated'
+						,docId: updateRecord.id
+					});
+
+					this.documentSource.getDocument({
+						docId: updateRecord.id
+						,onSuccess: function(doc){
+							_this._docUploaded(doc,false);
+						}
+					});
+				};
+			};
+		};
+	},
+	
+	_docUploaded: function(doc,created){
+		if( this.dispatchService ){
+			var type = created ? 'documentContentCreated' : 'documentContentUpdated';
+
+			this.dispatchService.send(DH, {
+				type: type
+				,docId: doc._id
+				,doc: doc
+			});
+		};
+	}
+});
 
 // *******************************************************
 var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
@@ -99,6 +218,8 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 	geometryRepository: null,
 	
 	isDefaultDocumentSource: null,
+	
+	notifier: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -134,6 +255,11 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			this.dispatchService.register(DH,'documentSourceFromDocument',f);
 		};
 		
+		this.notifier = new Notifier({
+			atlasDb: this.db
+			,dispatchService: this.dispatchService
+			,documentSource: this
+		});
 	},
 
 	createDocument: function(opts_){
@@ -167,7 +293,11 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 					type: 'documentCreated'
 					,docId: docInfo.id
 				});
-				
+				_this._dispatch({
+					type: 'documentContentCreated'
+					,docId: doc._id
+					,doc: doc
+				});
 				
 				opts.onSuccess(doc);
 			}
@@ -288,7 +418,9 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 		this.db.updateDocument({
 			data: copy
 			,onSuccess: function(docInfo){
+				doc._id = docInfo.id;
 				doc._rev = docInfo.rev;
+				doc.__n2Source = _this;
 
 				_this._dispatch({
 					type: 'documentVersion'
@@ -298,6 +430,11 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 				_this._dispatch({
 					type: 'documentUpdated'
 					,docId: docInfo.id
+				});
+				_this._dispatch({
+					type: 'documentContentUpdated'
+					,docId: doc._id
+					,doc: doc
 				});
 				
 				opts.onSuccess(doc);

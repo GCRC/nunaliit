@@ -965,12 +965,14 @@ var TiledDisplay = $n2.Class({
 		
 		// Display full document for currently selected document
 		var waitClassName = 'n2DisplayTiled_wait_current_' + $n2.utils.stringToHtmlId(docId);
+		var buttonClassName = 'n2DisplayTiled_current_buttons_' + $n2.utils.stringToHtmlId(docId);
 		$set.find('.'+waitClassName).each(function(){
 			var $div = $(this)
 				.empty();
 
 			$('<div>')
 				.addClass('n2DisplayTiled_current_buttons')
+				.addClass(buttonClassName)
 				.appendTo($div);			
 
 			var $content = $('<div>')
@@ -981,9 +983,14 @@ var TiledDisplay = $n2.Class({
 				$content.text( doc._id );
 			};
 			
-			_this._displayDocumentButtons(doc, _this.currentDetails.schema);
-			
 			$div.removeClass(waitClassName);
+		});
+		
+		// Refresh buttons
+		$('.'+buttonClassName).each(function(){
+			var $div = $(this);
+			
+			_this._displayDocumentButtons(doc, _this.currentDetails.schema);
 		});
 		
 		// Set tile classes based on media associated with document, and schema name

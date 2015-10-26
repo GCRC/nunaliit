@@ -895,8 +895,8 @@ var MapAndControls = $n2.Class({
 	    this._registerDispatch('documentVersion');
 	    this._registerDispatch('documentDeleted');
 	    this._registerDispatch('cacheRetrieveDocument');
-	    this._registerDispatch('featureCreated');
-	    this._registerDispatch('featureUpdated');
+	    this._registerDispatch('documentContentCreated');
+	    this._registerDispatch('documentContentUpdated');
 	    this._registerDispatch('addLayerToMap');
 	    this._registerDispatch('selected');
 	    this._registerDispatch('selectedSupplement');
@@ -4773,40 +4773,42 @@ var MapAndControls = $n2.Class({
 				m.doc = doc;
 			};
 			
-		} else if( 'featureCreated' === type ) {
+		} else if( 'documentContentCreated' === type ) {
 			var doc = m.doc;
 			
-			// Compute map of layer ids
-			var layerIdMap = {};
-			if( doc && doc.nunaliit_layers ){
-				for(var i=0,e=doc.nunaliit_layers.length; i<e; ++i){
-					layerIdMap[ doc.nunaliit_layers[i] ] = true;
+			if( doc && doc.nunaliit_geom ){
+				// Compute map of layer ids
+				var layerIdMap = {};
+				if( doc.nunaliit_layers ){
+					for(var i=0,e=doc.nunaliit_layers.length; i<e; ++i){
+						layerIdMap[ doc.nunaliit_layers[i] ] = true;
+					};
 				};
-			};
-			
-			// Check added to layer
-			for(var i=0,e=this.infoLayers.length; i<e; ++i) {
-				var infoLayer = this.infoLayers[i];
-				var layerId = infoLayer.id;
-				if( layerIdMap[layerId] ){
-					var feature = this._getLayerFeatureIncludingFid(infoLayer.olLayer,doc._id);
-					var mustLoad = true;
-					if( feature && feature.data ){
-						if( feature.data._rev === doc._rev ){
-							// Feature already present
-							mustLoad = false;
+				
+				// Check added to layer
+				for(var i=0,e=this.infoLayers.length; i<e; ++i) {
+					var infoLayer = this.infoLayers[i];
+					var layerId = infoLayer.id;
+					if( layerIdMap[layerId] ){
+						var feature = this._getLayerFeatureIncludingFid(infoLayer.olLayer,doc._id);
+						var mustLoad = true;
+						if( feature && feature.data ){
+							if( feature.data._rev === doc._rev ){
+								// Feature already present
+								mustLoad = false;
+							};
+						};
+						
+						if( mustLoad ) {
+							// This feature belongs on this layer. Load it.
+							var filter = $n2.olFilter.fromFid(m.docId);
+							this._loadFeatureOnLayer(infoLayer, filter);
 						};
 					};
-					
-					if( mustLoad ) {
-						// This feature belongs on this layer. Load it.
-						var filter = $n2.olFilter.fromFid(m.docId);
-						this._loadFeatureOnLayer(infoLayer, filter);
-					};
 				};
 			};
 			
-		} else if( 'featureUpdated' === type ) {
+		} else if( 'documentContentUpdated' === type ) {
 			var doc = m.doc;
 
 			// Compute map of layer ids
@@ -5128,7 +5130,7 @@ var MapAndControls = $n2.Class({
 						effectiveFeature.data = originalData;
 					} else {
 						// Use current geometry
-						if( editFeature ){
+						if( editFeature && editFeature.geometry ){
 							effectiveFeature.geometry = editFeature.geometry.clone();
 						};
 					};

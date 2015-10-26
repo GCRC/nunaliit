@@ -210,18 +210,20 @@ var SimplifiedGeometryService = $n2.Class({
 			for(var i=0,e=geometries.length; i<e; ++i){
 				var geomResp = geometries[i];
 				
-    			var simplifiedGeometry = {
-    				id: geomResp.id
-    				,attName: geomResp.attName
-    				,wkt: geomResp.att
-    			};
-    			
-    			if( _this.dbProjection ){
-    				simplifiedGeometry.proj = _this.dbProjection;
-    			};
-    			
-    			simplifiedGeometries.push(simplifiedGeometry);
-    			
+				if( geomResp.att && geomResp.att.length > 0 ){
+	    			var simplifiedGeometry = {
+        				id: geomResp.id
+        				,attName: geomResp.attName
+        				,wkt: geomResp.att
+        			};
+        			
+        			if( _this.dbProjection ){
+        				simplifiedGeometry.proj = _this.dbProjection;
+        			};
+        			
+        			simplifiedGeometries.push(simplifiedGeometry);
+				};
+				
     			var attNames = received[geomResp.id];
     			if( !attNames ){
     				attNames = {};

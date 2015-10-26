@@ -189,16 +189,16 @@ public class SimplifiedGeometryActions {
 			ps.print(",\"attName\":");
 			ps.print(JSONObject.quote(attName));
 			ps.print(",\"att\":\"");
+			attachmentOs.setEscapingString(true);
 
 			try {
-				attachmentOs.setEscapingString(true);
 				couchDb.downloadAttachment(docId, attName, ps);
-				attachmentOs.setEscapingString(false);
 				
 			} catch (Exception e) {
 				logger.error("Error obtaining attachment "+docId+"/"+attName,e);
 			}
 			
+			attachmentOs.setEscapingString(false);
 			ps.print("\"}");
 			
 			if( attachmentOs.getCount() > sizeLimit ){

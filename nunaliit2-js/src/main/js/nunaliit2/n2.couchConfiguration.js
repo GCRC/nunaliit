@@ -240,15 +240,6 @@ function Configure(options_){
 	
 	function authInitialized() {
 
-		configuration.atlasDb.getChangeNotifier({
-			onSuccess: function(notifier){
-				configuration.directory.notifierService = notifier;
-				notifierInitialized();
-			}
-		});
-	};
-	
-	function notifierInitialized() {
 		configuration.directory.localizationService = new $n2.couchL10n.LocalizationService({
 			db: configuration.atlasDb
 	 		,designDoc: configuration.atlasDesign
@@ -290,8 +281,7 @@ function Configure(options_){
 		});
 
 		configuration.directory.dispatchSupport = new $n2.couchDispatchSupport.DispatchSupport({
-			db: configuration.atlasDb
-			,directory: configuration.directory
+			dispatchService: configuration.directory.dispatchService
 		});
 
 		configuration.directory.languageService = new $n2.languageSupport.LanguageService({
@@ -318,7 +308,6 @@ function Configure(options_){
 			db: configuration.atlasDb
 			,documentSource: configuration.documentSource
 			,requestService: configuration.directory.requestService
-			,notifierService: configuration.directory.notifierService
 			,dispatchService: configuration.directory.dispatchService
 			,schemaRepository: configuration.directory.schemaRepository
 			,customService: configuration.directory.customService
@@ -424,12 +413,6 @@ function Configure(options_){
 		 		opt_.onSuccess(html);
 	 		};
 	 	};
-	 	
-	 	// Cometd replacement
-	 	configuration.directory.serverSideNotifier = new $n2.couchServerSide.Notifier({
-	 		dbChangeNotifier: configuration.directory.notifierService
-			,dispatchService: configuration.directory.dispatchService
-	 	});
 
 	 	// Set up hover sound
 	 	configuration.directory.hoverSoundService = new $n2.couchSound.HoverSoundService({

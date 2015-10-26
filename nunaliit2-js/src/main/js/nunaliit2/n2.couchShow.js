@@ -1276,8 +1276,6 @@ var Show = $n2.Class({
 	
 	requestService: null,
 	
-	notifierService: null,
-	
 	dispatchService: null,
 	
 	schemaRepository: null,
@@ -1313,7 +1311,6 @@ var Show = $n2.Class({
 			db: null
 			,documentSource: null
 			,requestService: null
-			,notifierService: null
 			,dispatchService: null
 			,schemaRepository: null
 			,customService: null
@@ -1337,7 +1334,6 @@ var Show = $n2.Class({
 		this.db = opts.db;
 		this.documentSource = opts.documentSource;
 		this.requestService = opts.requestService;
-		this.notifierService = opts.notifierService;
 		this.dispatchService = opts.dispatchService;
 		this.schemaRepository = opts.schemaRepository;
 		this.customService = opts.customService;
@@ -1373,13 +1369,6 @@ var Show = $n2.Class({
 			});
 		};
 		
-		var notifierService = this.notifierService;
-		if( notifierService ) {
-			notifierService.addListener(function(change){
-				_this._notifierUpdate(change);
-			});
-		};
-		
 		var dispatchService = this.dispatchService;
 		if( dispatchService ){
 			var f = function(msg, address, dispatchService){
@@ -1388,6 +1377,9 @@ var Show = $n2.Class({
 			dispatchService.register(DH, 'start', f);
 			dispatchService.register(DH, 'documentListResults', f);
 			dispatchService.register(DH, 'documentContent', f);
+			dispatchService.register(DH, 'documentDeleted', f);
+			dispatchService.register(DH, 'documentContentCreated', f);
+			dispatchService.register(DH, 'documentContentUpdated', f);
 			dispatchService.register(DH, 'userIntentChanged', f);
 		};
 	},
@@ -1743,53 +1735,6 @@ var Show = $n2.Class({
 		};
 	},
 	
-	_notifierUpdate: function(change){
-		var _this = this;
-		
-		var updatedDocIds = {};
-		var deletedDocIds = {};
-		if( change 
-		 && change.results 
-		 && change.results.length ) {
-			for(var i=0,e=change.results.length; i<e; ++i){
-				var docId = change.results[i].id;
-				var isDeleted = false;
-				if( change.results[i].deleted ) {
-					isDeleted = true;
-				};
-				if( isDeleted ) {
-					deletedDocIds[docId] = true;
-					if( updatedDocIds[docId] ) {
-						delete updatedDocIds[docId];
-					};
-				} else {
-					updatedDocIds[docId] = true;
-				};
-			};
-		};
-		
-		// Remove DOM elements that have deleted document
-		for(var docId in deletedDocIds){
-			var escaped = $n2.utils.stringToHtmlId(docId);
-			$('.n2ShowDoc_'+escaped).remove();
-			$('.n2ShowUpdateDoc_'+escaped).remove();
-		};
-		
-		// Request documents that we are interested in
-		var requestDocIds = [];
-		for(var docId in updatedDocIds){
-			var $elems = $('.n2ShowUpdateDoc_'+$n2.utils.stringToHtmlId(docId));
-			if( $elems.length > 0 ) {
-				requestDocIds.push(docId);
-			};
-		};
-		for(var i=0,e=requestDocIds.length; i<e; ++i) {
-			this._requestDocument(requestDocIds[i], function(doc){
-				_this._updateDocument(doc);
-			});
-		};
-	},
-	
 	_handleDocumentListResults: function(m){
 		var _this = this;
 		
@@ -1916,6 +1861,27 @@ var Show = $n2.Class({
 		} else if( 'documentListResults' === m.type ) {
 			this._handleDocumentListResults(m);
 			
+		} else if( 'documentDeleted' === m.type ) {
+			var docId = m.docId;
+			
+			if( docId ){
+				var escaped = $n2.utils.stringToHtmlId(docId);
+				$('.n2ShowDoc_'+escaped).remove();
+				$('.n2ShowUpdateDoc_'+escaped).remove();
+			};
+
+		} else if( 'documentContentCreated' === m.type ) {
+			var doc = m.doc;
+			if( doc ){
+				this._updateDocument(doc);
+			};
+
+		} else if( 'documentContentUpdated' === m.type ) {
+			var doc = m.doc;
+			if( doc ){
+				this._updateDocument(doc);
+			};
+
 		} else if( 'documentContent' === m.type ) {
 			this._handleDocumentContent(m.doc);
 			
