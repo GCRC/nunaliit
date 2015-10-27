@@ -206,8 +206,8 @@ var SchemaFilter = $n2.Class({
 		$('<a>')
 			.attr('href','#')
 			.text( _loc('All') )
-			.addClass('n2DisplayTiled_filter')
-			.addClass('n2DisplayTiled_filter_all')
+			.addClass('n2DisplayRibbon_filter')
+			.addClass('n2DisplayRibbon_filter_all')
 			.appendTo($elem)
 			.click(clickFn);
 
@@ -228,8 +228,8 @@ var SchemaFilter = $n2.Class({
 				.attr('href','#')
 				.attr('n2SchemaName',schema.name)
 				.text( schemaLabel )
-				.addClass('n2DisplayTiled_filter_schema')
-				.addClass('n2DisplayTiled_filter_schema_'+$n2.utils.stringToHtmlId(schema.name))
+				.addClass('n2DisplayRibbon_filter_schema')
+				.addClass('n2DisplayRibbon_filter_schema_'+$n2.utils.stringToHtmlId(schema.name))
 				.appendTo($elem)
 				.click(clickFn);
 		};
@@ -244,16 +244,16 @@ var SchemaFilter = $n2.Class({
 	_adjustSelection: function(){
 		var $elem = this._getElem();
 		
-		$elem.find('.n2DisplayTiled_filter_selected')
-			.removeClass('n2DisplayTiled_filter_selected');
+		$elem.find('.n2DisplayRibbon_filter_selected')
+			.removeClass('n2DisplayRibbon_filter_selected');
 		
 		if( this.selectedSchema ){
-			$elem.find('.n2DisplayTiled_filter_schema_'+$n2.utils.stringToHtmlId(this.selectedSchema))
-				.addClass('n2DisplayTiled_filter_selected');
+			$elem.find('.n2DisplayRibbon_filter_schema_'+$n2.utils.stringToHtmlId(this.selectedSchema))
+				.addClass('n2DisplayRibbon_filter_selected');
 			
 		} else {
-			$elem.find('.n2DisplayTiled_filter_all')
-				.addClass('n2DisplayTiled_filter_selected');
+			$elem.find('.n2DisplayRibbon_filter_all')
+				.addClass('n2DisplayRibbon_filter_selected');
 		};
 	},
 	
@@ -765,7 +765,7 @@ var RibbonDisplay = $n2.Class({
 	
 		var $set = this._getDisplayDiv();
 	
-		var $current = $set.find('.n2DisplayTiled_info');
+		var $current = $set.find('.n2DisplayRibbon_info');
 		$current.hide();
 	
 		// Use template for document display
@@ -800,7 +800,7 @@ var RibbonDisplay = $n2.Class({
 		
 		if( ids.length < 1 ){
 			var $set = this._getDisplayDiv();
-			var $current = $set.find('.n2DisplayTiled_info');
+			var $current = $set.find('.n2DisplayRibbon_info');
 			$current
 				.text( _loc('Empty search results') )
 				.show();
@@ -815,7 +815,7 @@ var RibbonDisplay = $n2.Class({
 		this._reclaimDisplayDiv();
 	
 		var $set = this._getDisplayDiv();
-		var $current = $set.find('.n2DisplayTiled_info');
+		var $current = $set.find('.n2DisplayRibbon_info');
 		$current.hide();
 		
 		this.currentDetails = {
@@ -849,13 +849,13 @@ var RibbonDisplay = $n2.Class({
 		 && doc._id 
 		 && this.currentDetails.docId === doc._id ){
 			var $set = this._getDisplayDiv();
-			var $btnDiv = $set.find('.n2DisplayTiled_current_buttons')
+			var $btnDiv = $set.find('.n2DisplayRibbon_current_buttons')
 				.empty();
 	
 	 		// 'edit' button
 	 		if( $n2.couchMap.canEditDoc(doc) ) {
 	 			$('<a href="#"></a>')
-	 				.addClass('n2DisplayTiled_current_button n2DisplayTiled_current_button_edit')
+	 				.addClass('n2DisplayRibbon_current_button n2DisplayRibbon_current_button_edit')
 	 				.text( _loc('Edit') )
 	 				.appendTo($btnDiv)
 	 				.click(function(){
@@ -867,7 +867,7 @@ var RibbonDisplay = $n2.Class({
 	 		// Show 'delete' button
 	 		if( $n2.couchMap.canDeleteDoc(doc) ) {
 	 			$('<a href="#"></a>')
-	 				.addClass('n2DisplayTiled_current_button n2DisplayTiled_current_button_delete')
+	 				.addClass('n2DisplayRibbon_current_button n2DisplayRibbon_current_button_delete')
 	 				.text( _loc('Delete') )
 	 				.appendTo($btnDiv)
 	 				.click(function(){
@@ -906,7 +906,7 @@ var RibbonDisplay = $n2.Class({
 						placeHolderElem: $placeHolder
 						,doc: doc
 						,onElementCreated: function($elem){
-							$elem.addClass('n2DisplayTiled_current_button n2DisplayTiled_current_button_add_related_item');
+							$elem.addClass('n2DisplayRibbon_current_button n2DisplayRibbon_current_button_add_related_item');
 						}
 					});
 				}; // show button
@@ -931,7 +931,7 @@ var RibbonDisplay = $n2.Class({
 	
 				if( showFindOnMapButton ) {
 					$('<a href="#"></a>')
-						.addClass('n2DisplayTiled_current_button n2DisplayTiled_current_button_find_on_map')
+						.addClass('n2DisplayRibbon_current_button n2DisplayRibbon_current_button_find_on_map')
 		 				.text( _loc('Find on Map') )
 		 				.appendTo($btnDiv)
 		 				.click(function(){
@@ -952,7 +952,7 @@ var RibbonDisplay = $n2.Class({
 			 && this.dispatchService.isEventTypeRegistered('addLayerToMap')
 			 ) {
 				$('<a href="#"></a>')
-					.addClass('n2DisplayTiled_current_button n2DisplayTiled_current_button_add_layer')
+					.addClass('n2DisplayRibbon_current_button n2DisplayRibbon_current_button_add_layer')
 	 				.text( _loc('Add Layer') )
 	 				.appendTo($btnDiv)
 	 				.click(function(){
@@ -964,7 +964,7 @@ var RibbonDisplay = $n2.Class({
 			// Show 'Tree View' button
 			if( doc ) {
 				$('<a href="#"></a>')
-					.addClass('n2DisplayTiled_current_button n2DisplayTiled_current_button_tree_view')
+					.addClass('n2DisplayRibbon_current_button n2DisplayRibbon_current_button_tree_view')
 	 				.text( _loc('Tree View') )
 	 				.appendTo($btnDiv)
 	 				.click(function(){
@@ -1226,7 +1226,7 @@ var RibbonDisplay = $n2.Class({
 		};
 		
 		// Display brief associated with the document
-		var waitClassName = 'n2DisplayTiled_wait_brief_' + $n2.utils.stringToHtmlId(docId);
+		var waitClassName = 'n2DisplayRibbon_wait_brief_' + $n2.utils.stringToHtmlId(docId);
 		$set.find('.'+waitClassName).each(function(){
 			var $div = $(this);
 			if( _this.showService ) {
@@ -1236,14 +1236,14 @@ var RibbonDisplay = $n2.Class({
 		});
 		
 		// Display full document for currently selected document
-		var waitClassName = 'n2DisplayTiled_wait_current_' + $n2.utils.stringToHtmlId(docId);
-		var buttonClassName = 'n2DisplayTiled_current_buttons_' + $n2.utils.stringToHtmlId(docId);
+		var waitClassName = 'n2DisplayRibbon_wait_current_' + $n2.utils.stringToHtmlId(docId);
+		var buttonClassName = 'n2DisplayRibbon_current_buttons_' + $n2.utils.stringToHtmlId(docId);
 		$set.find('.'+waitClassName).each(function(){
 			var $div = $(this)
 				.empty();
 	
 			$('<div>')
-				.addClass('n2DisplayTiled_current_buttons')
+				.addClass('n2DisplayRibbon_current_buttons')
 				.addClass(buttonClassName)
 				.appendTo($div);			
 	
@@ -1294,20 +1294,20 @@ var RibbonDisplay = $n2.Class({
 		if( doc.nunaliit_schema ){
 			schemaName = doc.nunaliit_schema;
 		};
-		$set.find('.n2DisplayTiled_tile_' + $n2.utils.stringToHtmlId(docId)).each(function(){
+		$set.find('.n2DisplayRibbon_tile_' + $n2.utils.stringToHtmlId(docId)).each(function(){
 			var $tile = $(this);
 			
-			$tile.removeClass('n2DisplayTiled_tile_image n2DisplayTiled_tile_audio n2DisplayTiled_tile_video');
+			$tile.removeClass('n2DisplayRibbon_tile_image n2DisplayRibbon_tile_audio n2DisplayRibbon_tile_video');
 			if(includesVideo){
-				$tile.addClass('n2DisplayTiled_tile_video');
+				$tile.addClass('n2DisplayRibbon_tile_video');
 			} else if(includesAudio){
-				$tile.addClass('n2DisplayTiled_tile_audio');
+				$tile.addClass('n2DisplayRibbon_tile_audio');
 			} else if(includesImage){
-				$tile.addClass('n2DisplayTiled_tile_image');
+				$tile.addClass('n2DisplayRibbon_tile_image');
 			};
 			
 			if( schemaName ){
-				$tile.addClass('n2DisplayTiled_tile_schema_'+$n2.utils.stringToHtmlId(schemaName));
+				$tile.addClass('n2DisplayRibbon_tile_schema_'+$n2.utils.stringToHtmlId(schemaName));
 			};
 		});
 		if( thumbnailName ){
@@ -1322,7 +1322,7 @@ var RibbonDisplay = $n2.Class({
 		if( thumbnailName ){
 			var url = this.documentSource.getDocumentAttachmentUrl(doc,thumbnailName);
 			if( url ){
-				$set.find('.n2DisplayTiled_wait_thumb_' + $n2.utils.stringToHtmlId(docId)).each(function(){
+				$set.find('.n2DisplayRibbon_wait_thumb_' + $n2.utils.stringToHtmlId(docId)).each(function(){
 					var $div = $(this);
 					$div.empty();
 					$('<img>')
@@ -1506,21 +1506,21 @@ var RibbonDisplay = $n2.Class({
 		
 		var $set = this._getDisplayDiv();
 		
-		var $filters = $set.find('.n2DisplayTiled_filters');
-		var $current = $set.find('.n2DisplayTiled_info');
-		var $docs = $set.find('.n2DisplayTiled_documents');
+		var $filters = $set.find('.n2DisplayRibbon_filters');
+		var $current = $set.find('.n2DisplayRibbon_info');
+		var $docs = $set.find('.n2DisplayRibbon_documents');
 		if( $filters.length < 1 
 		 || $current.length < 1
 		 || $docs.length < 1 ){
 			$set.empty();
 			$filters = $('<div>')
-				.addClass('n2DisplayTiled_filters')
+				.addClass('n2DisplayRibbon_filters')
 				.appendTo($set);
 			$current = $('<div>')
-				.addClass('n2DisplayTiled_info')
+				.addClass('n2DisplayRibbon_info')
 				.appendTo($set);
 			$docs = $('<div>')
-				.addClass('n2DisplayTiled_documents')
+				.addClass('n2DisplayRibbon_documents')
 				.appendTo($set);
 			
 			// When the side panel must be re-claimed, then we must
@@ -1532,8 +1532,8 @@ var RibbonDisplay = $n2.Class({
 			this.grid = new Tiles.Grid($docs);
 			this.grid.createTile = function(docId) {
 		        var $elem = $('<div>')
-		        	.addClass('n2DisplayTiled_tile')
-		        	.addClass('n2DisplayTiled_tile_' + $n2.utils.stringToHtmlId(docId))
+		        	.addClass('n2DisplayRibbon_tile')
+		        	.addClass('n2DisplayRibbon_tile_' + $n2.utils.stringToHtmlId(docId))
 		        	.attr('n2DocId',docId);
 		        
 		        $elem.hover(
@@ -1546,12 +1546,12 @@ var RibbonDisplay = $n2.Class({
 		        if( _this.currentDetails
 		         && _this.currentDetails.docId === docId ){
 		        	// Current document
-		        	$elem.addClass('n2DisplayTiled_tile_current');
+		        	$elem.addClass('n2DisplayRibbon_tile_current');
 		        	_this._generateCurrentDocumentContent($elem, docId);
 	
 		        } else {
 		        	// Not current document
-		        	_this._generateDocumentContent($elem, docId);
+		        	_this._generateRelatedDocumentContent($elem, docId);
 		        };
 		        return tile;
 		    };
@@ -1564,7 +1564,7 @@ var RibbonDisplay = $n2.Class({
 	},
 	
 	/*
-	 * Goes over all the tiles and remove the class 'n2DisplayTiled_tile_current'
+	 * Goes over all the tiles and remove the class 'n2DisplayRibbon_tile_current'
 	 * to from tiles that should not have it. Also, it adds the class to the tile
 	 * that should have it, if it exists.
 	 * 
@@ -1574,22 +1574,22 @@ var RibbonDisplay = $n2.Class({
 		var _this = this;
 		
 		var $set = this._getDisplayDiv();
-		var $docs = $set.find('.n2DisplayTiled_documents');
+		var $docs = $set.find('.n2DisplayRibbon_documents');
 		
 		var targetClass = null;
 		if( docId ){
-			targetClass = 'n2DisplayTiled_tile_' + $n2.utils.stringToHtmlId(docId);
+			targetClass = 'n2DisplayRibbon_tile_' + $n2.utils.stringToHtmlId(docId);
 		};
 		
 		// Remove
-		$docs.find('.n2DisplayTiled_tile_current').each(function(){
+		$docs.find('.n2DisplayRibbon_tile_current').each(function(){
 			var $elem = $(this);
 			if( targetClass && $elem.hasClass(targetClass) ) {
 				// That's OK. Leave it
 			} else {
-				$elem.removeClass('n2DisplayTiled_tile_current');
+				$elem.removeClass('n2DisplayRibbon_tile_current');
 				var id = $elem.attr('n2DocId');
-				_this._generateDocumentContent($elem, id);
+				_this._generateRelatedDocumentContent($elem, id);
 			};
 		});
 		
@@ -1597,10 +1597,10 @@ var RibbonDisplay = $n2.Class({
 		if( targetClass ) {
 			$docs.find('.'+targetClass).each(function(){
 				var $elem = $(this);
-				if( $elem.hasClass('n2DisplayTiled_tile_current') ) {
+				if( $elem.hasClass('n2DisplayRibbon_tile_current') ) {
 					// That's OK. Leave it
 				} else {
-					$elem.addClass('n2DisplayTiled_tile_current');
+					$elem.addClass('n2DisplayRibbon_tile_current');
 					var id = $elem.attr('n2DocId');
 					_this._generateCurrentDocumentContent($elem, id);
 				};
@@ -1682,26 +1682,26 @@ var RibbonDisplay = $n2.Class({
 	_generateCurrentDocumentContent: function($elem, docId){
 		$elem.empty();
 		
-		var waitClassName = 'n2DisplayTiled_wait_current_' + $n2.utils.stringToHtmlId(docId);
+		var waitClassName = 'n2DisplayRibbon_wait_current_' + $n2.utils.stringToHtmlId(docId);
 		$('<div>')
 			.addClass(waitClassName)
-			.addClass('n2DisplayTiled_tile_content')
+			.addClass('n2DisplayRibbon_tile_content')
 			.text(docId)
 			.appendTo($elem);
 	},
 	
-	_generateDocumentContent: function($elem, docId){
+	_generateRelatedDocumentContent: function($elem, docId){
 		var _this = this;
 		
 		$elem.empty();
 		
 		$('<div>')
-			.addClass('n2DisplayTiled_thumb n2DisplayTiled_wait_thumb_' + $n2.utils.stringToHtmlId(docId))
+			.addClass('n2DisplayRibbon_thumb n2DisplayRibbon_wait_thumb_' + $n2.utils.stringToHtmlId(docId))
 			.appendTo($elem);
 		
 		$('<div>')
-			.addClass('n2DisplayTiled_wait_brief_' + $n2.utils.stringToHtmlId(docId))
-			.addClass('n2DisplayTiled_tile_brief')
+			.addClass('n2DisplayRibbon_wait_brief_' + $n2.utils.stringToHtmlId(docId))
+			.addClass('n2DisplayRibbon_tile_brief')
 			.text(docId)
 			.appendTo($elem);
 	
@@ -1719,12 +1719,12 @@ var RibbonDisplay = $n2.Class({
 	
 	_performIntervalTask: function(){
 		var $set = this._getDisplayDiv();
-		var $docs = $set.find('.n2DisplayTiled_documents');
+		var $docs = $set.find('.n2DisplayRibbon_documents');
 	
 		if( this.currentDetails
 		 && this.currentDetails.docId ){
-			var $currentTile = $docs.find('.n2DisplayTiled_tile_current')
-				.find('.n2DisplayTiled_tile_content');
+			var $currentTile = $docs.find('.n2DisplayRibbon_tile_current')
+				.find('.n2DisplayRibbon_tile_content');
 			if( $currentTile.length > 0 ){
 				var height = $currentTile.height();
 				if( height != this.currentDetails.height ){
