@@ -30,6 +30,9 @@ var handSpan = 0.20;
 // Next hand instance ID counter
 var nextHandIndex = 1;
 
+// True if currently drawing a zoom region
+var drawZooming = false;
+
 // Key for hand currently acting as the mouse, if any
 var mouseHand = undefined;
 
@@ -58,6 +61,10 @@ var cursorXScale = 0.672;
 var cursorYScale = 0.951;
 var cursorXOffset = -0.04;
 var cursorYOffset = -0.002;
+
+// Pinch zoom parameters
+var lastPinchZoomDistance = undefined;
+var pinchZoomThreshold = 0.15;
 
 function Vector(x, y) {
 	this.x = x;
@@ -421,6 +428,16 @@ var cursors = new Object();
 var tangibles = new Object();
 var hands = new Object();
 
+function numHands() {
+	var count = 0;
+	for (var inst in hands) {
+ 		if (hands.hasOwnProperty(inst)) {
+			++count;
+		}
+	}
+	return count;
+}
+
 /** Dispatch a mouse event as a result of a cursor change.
  * eventType: mousedown, mousemove, mouseup, or click
  * x, y: 0..1 normalized TUIO cordinates
@@ -592,10 +609,14 @@ function handsAreSane(x, y) {
 
 /** Called on the initial position update after a cursor is down. */
 function onCursorDown(inst) {
+	var cursor = cursors[inst];
 	if (downCursors == 0 && pressCursor == undefined) {
 		// First cursor down, start potential long press
 		pressCursor = inst;
-	} else if (downCursors > 0) {
+		if (drawZooming) {
+			dispatchMouseEvent('mousedown', cursor.pos.x, cursor.pos.y);
+		}
+	} else if (downCursors > 0 && !drawZooming) {
 		// Multiple cursors down, terminate pending long press
 		pressCursor = undefined;
 	}
@@ -607,11 +628,15 @@ function onCursorDown(inst) {
 function onCursorMove(inst) {
 	var cursor = cursors[inst];
 	if (inst == pressCursor) {
-		var d = distance(cursor.pos.x, cursor.pos.y, cursor.downX, cursor.downY);
-		var elapsed = Date.now() - cursor.birthTime;
-		if (d < clickDistance && elapsed > pressDelay) {
-			console.log("Long press!");
-			pressCursor = undefined;
+		if (drawZooming) {
+			dispatchMouseEvent('mousemove', cursor.pos.x, cursor.pos.y);
+		} else {
+			var d = distance(cursor.pos.x, cursor.pos.y, cursor.downX, cursor.downY);
+			var elapsed = Date.now() - cursor.birthTime;
+			if (d < clickDistance && elapsed > pressDelay) {
+				console.log("Long press!");
+				pressCursor = undefined;
+			}
 		}
 	}
 }
@@ -620,13 +645,17 @@ function onCursorMove(inst) {
 function onCursorUp(inst) {
 	var cursor = cursors[inst];
 	if (inst == pressCursor) {
-		var d = distance(cursor.pos.x, cursor.pos.y, cursor.downX, cursor.downY);
-		var elapsed = Date.now() - cursor.birthTime;
-		if (d < clickDistance && elapsed < clickDelay) {
-			console.log("Click!");
-			dispatchMouseEvent('mousedown', cursor.pos.x, cursor.pos.y);
+		if (drawZooming) {
 			dispatchMouseEvent('mouseup', cursor.pos.x, cursor.pos.y);
-			dispatchMouseEvent('click', cursor.pos.x, cursor.pos.y);
+		} else {
+			var d = distance(cursor.pos.x, cursor.pos.y, cursor.downX, cursor.downY);
+			var elapsed = Date.now() - cursor.birthTime;
+			if (d < clickDistance && elapsed < clickDelay) {
+				console.log("Click!");
+				dispatchMouseEvent('mousedown', cursor.pos.x, cursor.pos.y);
+				dispatchMouseEvent('mouseup', cursor.pos.x, cursor.pos.y);
+				dispatchMouseEvent('click', cursor.pos.x, cursor.pos.y);
+			}
 		}
 		pressCursor = undefined;
 	}
@@ -642,7 +671,7 @@ function onHandDown(inst) {
 		/* No hand is down yet, start a mouse motion for map dragging. */
 		// dispatchMouseEvent('mousedown', hand.pos.x, hand.pos.y);
 		mouseHand = inst;
-	} else {
+	} else if (!drawZooming) {
 		/* A hand was acting as the mouse cursor for map dragging, but now we
 		   have several hands.  Stop drag since this no longer makes sense. */
 		var oldMouseHand = hands[mouseHand];
@@ -686,6 +715,29 @@ function onHandMove(inst) {
 		}
 		scrollX = hand.pos.x;
 		scrollY = hand.pos.y;
+	} else if (numHands() == 2) {
+		// Get the two hands involved in the zoom gesture
+		var zoomHands = [];
+		for (var inst in hands) {
+ 			if (hands.hasOwnProperty(inst)) {
+				zoomHands.push(hands[inst]);
+			}
+		}
+
+		var d = distance(zoomHands[0].pos.x, zoomHands[0].pos.y,
+						 zoomHands[1].pos.x, zoomHands[1].pos.y);
+		if (lastPinchZoomDistance != undefined) {
+			var delta = lastPinchZoomDistance - d;
+			if (delta > pinchZoomThreshold) {
+				moduleDisplay.mapControl.map.zoomOut();
+				lastPinchZoomDistance = d;
+			} else if (delta < -pinchZoomThreshold) {
+				moduleDisplay.mapControl.map.zoomIn();
+				lastPinchZoomDistance = d;
+			}
+		} else {
+			lastPinchZoomDistance = d;
+		}
 	}
 }
 
@@ -705,6 +757,8 @@ function onHandUp(inst) {
 		scrollX = undefined;
 		scrollY = undefined;
 	}
+
+	lastPinchZoomDistance = undefined;
 
 	delete hands[inst];
 }
@@ -965,6 +1019,35 @@ window.onkeydown = function (e) {
 		map.style.top = (yMargin + yOffset) + "px";
 		map.style.bottom = (yMargin - yOffset) + "px";
 		console.log("Y margin " + yMargin + " offset " + yOffset);
+	} else if (code == 90) {
+		// z, start draw zoom
+		var map = document.getElementById("nunaliit2_uniqueId_65");
+		drawZooming = true;
+		canvas = new DrawOverlay(
+			map, map.offsetWidth, map.offsetHeight,
+			function (points) {
+				// Find bounding rectangle
+				var left = Infinity;
+				var bottom = 0;
+				var right = 0;
+				var top = Infinity;
+				for (var i = 0; i < points.length; ++i) {
+					left = Math.min(left, points[i][0]);
+					bottom = Math.max(bottom, points[i][1]);
+					right = Math.max(right, points[i][0]);
+					top = Math.min(top, points[i][1]);
+				}
+
+				// Convert to lon/lat
+				var tl = moduleDisplay.mapControl.map.getLonLatFromPixel(
+					new OpenLayers.Pixel(left, top));
+				var br = moduleDisplay.mapControl.map.getLonLatFromPixel(
+					new OpenLayers.Pixel(right, bottom));
+
+				// Zoom/center map to/on bounding rectangle
+				moduleDisplay.mapControl.map.zoomToExtent([tl.lon, br.lat, br.lon, tl.lat]);
+				drawZooming = false;
+			});
 	}
 };
 
@@ -1048,4 +1131,76 @@ function tick(timestamp) {
 
 if (usePhysics) {
 	requestAnimationFrame(tick);
+}
+
+function DrawOverlay(parent, width, height, pathCallback) {
+	var self = this;
+
+	this.parent = parent;
+	this.drawing = false;
+	this.points = [];
+	this.pathCallback = pathCallback;
+
+	this.canvas = document.createElement('canvas');
+	this.canvas.width = width || 100;
+	this.canvas.height = height || 100;
+	this.canvas.style.position = "absolute";
+	this.canvas.style.left = "0px";
+	this.canvas.style.top = "0px";
+	this.canvas.style.width = "100%";
+	this.canvas.style.height = "100%";
+	this.canvas.style.zIndex = "999999999";
+	parent.appendChild(this.canvas);
+
+	this.context = this.canvas.getContext('2d');
+
+	this.getMousePosition = function (e) {
+		var box = self.canvas.getBoundingClientRect();
+		return { x: e.clientX - box.left,
+		         y: e.clientY - box.top };
+	}
+
+	this.canvas.onmousedown = function (e) {
+		var pos = self.getMousePosition(e);
+		self.startStroke(pos.x, pos.y);
+	};
+
+	this.canvas.onmousemove = function (e) {
+		var pos = self.getMousePosition(e);
+		self.moveTo(pos.x, pos.y);
+	};
+
+	this.canvas.onmouseup = function (e) {
+		var pos = self.getMousePosition(e);
+		self.endStroke(pos.x, pos.y);
+		self.parent.removeChild(self.canvas);
+		delete self;
+	};
+}
+
+DrawOverlay.prototype.startStroke = function (x, y) {
+	this.drawing = true;
+	this.context.lineCap = 'round';
+	this.context.lineWidth = 8;
+	this.context.strokeStyle = '#DDDDDD';
+	this.context.beginPath();
+
+	this.context.moveTo(x, y);
+	this.points.push([x, y]);
+}
+
+DrawOverlay.prototype.moveTo = function (x, y) {
+	if (!this.drawing) {
+		return;
+	}
+
+	this.context.lineTo(x, y);
+	this.context.stroke();
+	this.points.push([x, y]);
+}
+
+DrawOverlay.prototype.endStroke = function (x, y) {
+	this.drawing = false;
+	this.pathCallback(this.points);
+	this.points = []
 }
