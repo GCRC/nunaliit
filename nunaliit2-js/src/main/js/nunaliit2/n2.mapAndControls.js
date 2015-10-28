@@ -2033,7 +2033,9 @@ var MapAndControls = $n2.Class({
 			
 			if( options && 'string' === typeof(options.type) ){
 				var mapTypeId = null;
-				if( google && google.maps && google.maps.MapTypeId ){
+				if( typeof google !== 'undefined' 
+				 && google.maps 
+				 && google.maps.MapTypeId ){
 					mapTypeId = google.maps.MapTypeId[options.type];
 				};
 				if( mapTypeId ) {
@@ -2516,7 +2518,7 @@ var MapAndControls = $n2.Class({
 				bg.push( new OpenLayers.Layer.Google("Google Physical",{type: G_PHYSICAL_MAP,'sphericalMercator': true}) );
 				bg.push( new OpenLayers.Layer.Google("Google Hybrid",{type: G_HYBRID_MAP,'sphericalMercator': true}) );
 				
-			} else if( google
+			} else if( typeof google !== 'undefined'
 				&& google.maps
 				&& google.maps.MapTypeId 
 				) {

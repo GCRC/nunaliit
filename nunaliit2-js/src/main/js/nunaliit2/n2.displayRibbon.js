@@ -381,6 +381,417 @@ var ReferenceRelatedDocumentDiscovery = $n2.Class({
 	}
 });
 
+//===================================================================================
+// Copied and adapted from http://thinkpixellab.com/tilesjs
+
+var Tile = $n2.Class({
+
+	id: null,
+	top: null,
+	left: null,
+	width: null,
+	height: null,
+	$el: null,
+	parentId: null,
+	
+	initialize: function(tileId, element){
+	    this.id = tileId;
+
+	    // position and dimensions of tile inside the parent panel
+	    this.top = 0;
+	    this.left = 0;
+	    this.width = 0;
+	    this.height = 0;
+
+	    // cache the tile container element
+	    this.$el = $(element || document.createElement('div'));
+	},
+	
+	appendTo: function($parent, fadeIn, delay, duration) {
+		var parentId = $n2.utils.getElementIdentifier($parent);
+		if( parentId !== this.parentId ){
+			this.parentId = parentId;
+
+			this.$el
+		        .hide()
+		        .appendTo($parent);
+	
+		    if (fadeIn) {
+		        this.$el.delay(delay).fadeIn(duration);
+		    } else {
+		        this.$el.show();
+		    };
+		    
+		    return true; // added
+		};
+		
+		return false; // was already in
+	},
+	
+	remove: function(animate, duration) {
+	    if( animate ) {
+	        this.$el.fadeOut({
+	            complete: function() {
+	                $(this).remove();
+	            }
+	        });
+	    } else {
+	        this.$el.remove();
+	    }
+	},
+	
+	// updates the tile layout with optional animation
+	resize: function(pixelRect, animate, duration, onComplete) {
+	   
+	    // store the list of needed changes
+	    var cssChanges = {},
+	        changed = false;
+
+	    // update position and dimensions
+	    if (this.left !== pixelRect.x) {
+	        cssChanges.left = pixelRect.x;
+	        this.left = pixelRect.x;
+	        changed = true;
+	    }
+	    if (this.top !== pixelRect.y) {
+	        cssChanges.top = pixelRect.y;
+	        this.top = pixelRect.y;
+	        changed = true;
+	    }
+	    if (this.width !== pixelRect.width) {
+	        cssChanges.width = pixelRect.width;
+	        this.width = pixelRect.width;
+	        changed = true;
+	    }
+	    if (this.height !== pixelRect.height) {
+	        cssChanges.height = pixelRect.height;
+	        this.height = pixelRect.height;
+	        changed = true;
+	    }
+
+	    // Sometimes animation fails to set the css top and left correctly
+	    // in webkit. We'll validate upon completion of the animation and
+	    // set the properties again if they don't match the expected values.
+	    var tile = this,
+	        validateChangesAndComplete = function() {
+	            var el = tile.$el[0];
+	            if (tile.left !== el.offsetLeft) {
+	                //console.log ('mismatch left:' + tile.left + ' actual:' + el.offsetLeft + ' id:' + tile.id);
+	                tile.$el.css('left', tile.left);
+	            }
+	            if (tile.top !== el.offsetTop) {
+	                //console.log ('mismatch top:' + tile.top + ' actual:' + el.offsetTop + ' id:' + tile.id);
+	                tile.$el.css('top', tile.top);
+	            }
+
+	            if (onComplete) {
+	                onComplete();
+	            }
+	        };
+
+
+	    // make css changes with animation when requested
+	    if (animate && changed) {
+
+	        this.$el.animate(cssChanges, {
+	            duration: duration,
+	            easing: 'swing',
+	            complete: validateChangesAndComplete
+	        });
+	    }
+	    else {
+
+	        if (changed) {
+	            this.$el.css(cssChanges);
+	        }
+
+	        setTimeout(validateChangesAndComplete, duration);
+	    }
+	}
+});
+
+//===================================================================================
+// Reimplements the grid class from http://thinkpixellab.com/tilesjs
+// This instance creates a long horizontal ribbon where the left most location is
+// privileged for the current document. Then, all the other documents are positioned
+// to the right in a single line. These can be browsed using end arrows
+var RibbonGrid = $n2.Class({
+	
+	// Function to create a new tile
+	createTile: null,
+	
+	// Current size of a cell
+	cellSize: null,
+	
+	cellSizeMin: null,
+
+    cellPadding: null,
+    
+    numColumnMin: null,
+    
+	animationDuration: null,
+	
+	// The identifier for the current element
+	elemId: null,
+	
+	// If set, the left most tile
+	currentTile: null,
+	
+	// Array of tiles that are on the right
+	relatedTiles: null,
+	
+	// Tiles that should be removed on next redraw
+	removedTiles: null,
+	
+	initialize: function(element){
+		var $elem = $(element);
+		this.elemId = $n2.utils.getElementIdentifier($elem);
+		
+		this.createTile = function(tileId){
+			var $elem = $('div')
+				.css({
+					position: 'absolute'
+				});
+			return new Tile(tileId, $elem);
+		};
+
+		// animation lasts 500 ms by default
+        this.animationDuration = 500;
+
+        // spacing between tiles
+        this.cellPadding = 10;
+
+        // min width and height of a cell in the grid
+        this.cellSizeMin = 150;
+        
+        // Show at least 3 tiles in the given width
+        this.numColumnMin = 3;
+        
+        this.currentTile = undefined;
+        this.relatedTiles = [];
+        this.removedTiles = [];
+		
+		$elem
+			.empty()
+			.css({
+				overflow: 'hidden'
+			})
+			;
+		var currentPosition = $elem.css('position');
+		if( !currentPosition ){
+			$elem.css('position','relative');
+		} else if( 'absolute' === currentPosition ){
+			// OK
+		} else {
+			$elem.css('position','relative');
+		};
+		$('<div>')
+			.addClass('n2DisplayRibbon_grid_current')
+			.css({
+				position: 'absolute'
+				,left: '0'
+				,top: '0'
+				,bottom: '0'
+				,right: 'auto'
+				,width: '170px'
+				,overflow: 'hidden'
+			})
+			.appendTo($elem);
+		var $extra = $('<div>')
+			.addClass('n2DisplayRibbon_grid_extra')
+			.css({
+				position: 'absolute'
+				,left: '170px'
+				,top: '0'
+				,bottom: '0'
+				,right: '0'
+				,overflow: 'hidden'
+			})
+			.appendTo($elem);
+		$('<div>')
+			.addClass('n2DisplayRibbon_grid_related')
+			.css({
+				position: 'absolute'
+				,left: '0'
+				,top: '0'
+				,bottom: '0'
+				,overflow: 'visible'
+			})
+			.appendTo($extra);
+	},
+
+	updateTiles: function(currentTileId, relatedTileIds){
+		// Make a map of all current tiles, for easy access
+		var tilesById = {};
+		if( this.currentTile ){
+			tilesById[this.currentTile.id] = this.currentTile;
+		};
+		for(var i=0,e=this.relatedTiles.length; i<e; ++i){
+			var tile = this.relatedTiles[i];
+			tilesById[tile.id] = tile;
+		};
+
+		// Load all the ids in a map to remove duplicates
+		var newTilesById = {};
+		
+		var newCurrentTile = undefined;
+		if( currentTileId ){
+			var id = currentTileId;
+			var tile = tilesById[id];
+			
+			if( !tile ){
+				tile = this.createTile(id);
+			};
+
+			if( tile ){
+				newTilesById[id] = tile;
+				newCurrentTile = tile;
+			};
+		};
+		
+		var newRelatedTiles = [];
+		for(var i=0,e=relatedTileIds.length; i<e; ++i){
+			var id = relatedTileIds[i];
+			var tile = tilesById[id];
+			
+			if( !tile ){
+				tile = this.createTile(id);
+			};
+			
+			if( tile ){
+				newTilesById[id] = tile;
+				newRelatedTiles.push(tile);
+			};
+		};
+		
+		var newRemovedTiles = [];
+		for(var id in tilesById){
+			var tile = tilesById[id];
+			if( !newTilesById[id] ){
+				newRemovedTiles.push(tile);
+			};
+		};
+		
+		// Update
+		this.currentTile = newCurrentTile;
+		this.relatedTiles = newRelatedTiles;
+		this.removedTiles = newRemovedTiles;
+	},
+	
+	/*
+	 * This function moves the tiles around according to the new state
+	 * of the instance (currentTile, relatedTiles, removedTiles)
+	 * @param animate Boolean If set, use animation
+	 * @param onComplete Function If specified, called when movement is done, or animation is complete
+	 */
+	redraw: function(animate, onComplete){
+        // see if we should redraw
+        if( !this._shouldRedraw() ) {
+            if (onComplete) {
+                onComplete(false); // tell callback that we did not redraw
+            }
+            return;
+        };
+        
+        var $elem = this._getElem();
+        var $currentElem = $elem.find('.n2DisplayRibbon_grid_current');
+        var $extraElem = $elem.find('.n2DisplayRibbon_grid_extra');
+        var $relatedElem = $elem.find('.n2DisplayRibbon_grid_related');
+        
+        var height = $elem.height();
+        var width = $elem.width();
+        
+        var cellSizeOnHeight = height - (2 * this.cellPadding);
+        if( cellSizeOnHeight < this.cellSizeMin ){
+        	cellSizeOnHeight = this.cellSizeMin;
+        };
+
+        var cellSizeOnWidth = ((width - this.cellPadding) / this.numColumnMin) - this.cellPadding;
+        if( cellSizeOnWidth < this.cellSizeMin ){
+        	cellSizeOnWidth = this.cellSizeMin;
+        };
+        
+        this.cellSize = Math.min(cellSizeOnHeight, cellSizeOnWidth);
+
+        var duration = this.animationDuration;
+        
+        // Move the current and related div
+        if( this.currentTile ){
+        	// Current tile is visible. Show div and
+        	// shrink extra
+        	var currentDivWidth = this.cellSize + (2 * this.cellPadding);
+        	$currentElem.css({
+        		display: 'block'
+        		,width: ''+currentDivWidth+'px'
+        	});
+        	$extraElem.css({
+        		left: ''+currentDivWidth+'px'
+        	});
+        	
+        	// Move current tile to current div
+        	this.currentTile.resize(
+        		{
+        			width: this.cellSize
+        			,height: this.cellSize
+        			,x: this.cellPadding
+        			,y: this.cellPadding
+        		}
+        		,true // animate
+        		,duration
+        		,undefined // onComplete
+        		);
+        	this.currentTile.appendTo($currentElem, false, 0, duration);
+        	
+        } else {
+        	$currentElem.css({
+        		display: 'none'
+        	});
+        	$extraElem.css({
+        		left: '0px'
+        	});
+        };
+
+	    // fade out all removed tiles
+	    for(var i=0, e=this.removedTiles.length; i<e; ++i) {
+	        var tile = this.removedTiles[i];
+	        tile.remove(animate, duration);
+	    }
+	    this.removedTiles = [];
+        
+	    // Deal with related tiles
+	    var currentLeft = this.cellPadding;
+	    for(var i=0,e=this.relatedTiles.length; i<e; ++i){
+	    	var tile = this.relatedTiles[i];
+        	tile.resize(
+        		{
+        			width: this.cellSize
+        			,height: this.cellSize
+        			,x: currentLeft
+        			,y: this.cellPadding
+        		}
+        		,true // animate
+        		,duration
+        		,undefined // onComplete
+        		);
+	    	tile.appendTo($relatedElem, false, 0, duration);
+	    	
+	    	currentLeft += (this.cellSize + this.cellPadding);
+	    };
+        
+	    if( typeof onComplete === 'function' ) {
+	        setTimeout(function() { onComplete(true); }, duration + 10);
+	    };
+	},
+	
+	_shouldRedraw: function(){
+		return true;
+	},
+	
+	_getElem: function(){
+		return $('#'+this.elemId);
+	}
+});
+
 // ===================================================================================
 
 var RibbonDisplay = $n2.Class({
@@ -768,10 +1179,6 @@ var RibbonDisplay = $n2.Class({
 		var $current = $set.find('.n2DisplayRibbon_info');
 		$current.hide();
 	
-		// Use template for document display
-		this.grid.template = null;
-		this.grid.templateFactory = new GridTemplateDocument();
-		
 		this._adjustCurrentTile(docId);
 		
 		// Request document
@@ -822,10 +1229,6 @@ var RibbonDisplay = $n2.Class({
 			docIds: ids
 			,docs: {}
 		};
-		
-		// Use template for multiple documents display
-		this.grid.template = null;
-		this.grid.templateFactory = Tiles.UniformTemplates;
 		
 		this._adjustCurrentTile(null);
 		
@@ -1053,6 +1456,7 @@ var RibbonDisplay = $n2.Class({
 			_this._getDisplayDiv();
 	
 			// Sort
+			var currentDocId = null;
 			var sortedDocIds = null;
 			if( _this.displayedDocumentsOrder ){
 				sortedDocIds = _this.displayedDocumentsOrder;
@@ -1092,7 +1496,7 @@ var RibbonDisplay = $n2.Class({
 				sortedDocIds = [];
 				if( _this.currentDetails
 				 && _this.currentDetails.docId ){
-					sortedDocIds.push(_this.currentDetails.docId);
+					currentDocId = _this.currentDetails.docId;
 					alreadySorted[_this.currentDetails.docId] = true;
 				};
 				
@@ -1107,11 +1511,14 @@ var RibbonDisplay = $n2.Class({
 				};
 			};
 			
-			_this.grid.updateTiles(sortedDocIds);
+			_this.grid.updateTiles(currentDocId, sortedDocIds);
 			_this.grid.isDirty = true; // force redraw to reflect change in order
 	        _this.grid.redraw(true);
 	
 	        // Request content for documents
+	        if( currentDocId ){
+	        	_this._requestDocumentWithId(currentDocId);
+	        };
 			for(var i=0,e=sortedDocIds.length; i<e; ++i){
 				var docId = sortedDocIds[i];
 				_this._requestDocumentWithId(docId);
@@ -1521,6 +1928,9 @@ var RibbonDisplay = $n2.Class({
 				.appendTo($set);
 			$docs = $('<div>')
 				.addClass('n2DisplayRibbon_documents')
+				.css({
+					overflow: 'hidden'
+				})
 				.appendTo($set);
 			
 			// When the side panel must be re-claimed, then we must
@@ -1529,31 +1939,9 @@ var RibbonDisplay = $n2.Class({
 			this.currentDetails = {};
 			
 			// Create grid
-			this.grid = new Tiles.Grid($docs);
+			this.grid = new RibbonGrid($docs);
 			this.grid.createTile = function(docId) {
-		        var $elem = $('<div>')
-		        	.addClass('n2DisplayRibbon_tile')
-		        	.addClass('n2DisplayRibbon_tile_' + $n2.utils.stringToHtmlId(docId))
-		        	.attr('n2DocId',docId);
-		        
-		        $elem.hover(
-	        		_this.hoverInFn
-	        		,_this.hoverOutFn
-		        );
-	
-		        var tile = new Tiles.Tile(docId, $elem);
-		        
-		        if( _this.currentDetails
-		         && _this.currentDetails.docId === docId ){
-		        	// Current document
-		        	$elem.addClass('n2DisplayRibbon_tile_current');
-		        	_this._generateCurrentDocumentContent($elem, docId);
-	
-		        } else {
-		        	// Not current document
-		        	_this._generateRelatedDocumentContent($elem, docId);
-		        };
-		        return tile;
+				return _this._createTile(docId);
 		    };
 		    
 		    // Create document filter
@@ -1561,6 +1949,33 @@ var RibbonDisplay = $n2.Class({
 		    	_this._documentFilterChanged();
 		    });
 		};
+	},
+	
+	_createTile: function(docId){
+        var $elem = $('<div>')
+	    	.addClass('n2DisplayRibbon_tile')
+	    	.addClass('n2DisplayRibbon_tile_' + $n2.utils.stringToHtmlId(docId))
+	    	.attr('n2DocId',docId);
+	    
+	    $elem.hover(
+			this.hoverInFn
+			,this.hoverOutFn
+	    );
+	
+	    var tile = new Tile(docId, $elem);
+	    
+	    if( this.currentDetails
+	     && this.currentDetails.docId === docId ){
+	    	// Current document
+	    	$elem.addClass('n2DisplayRibbon_tile_current');
+	    	this._generateCurrentDocumentContent($elem, docId);
+	
+	    } else {
+	    	// Not current document
+	    	this._generateRelatedDocumentContent($elem, docId);
+	    };
+
+	    return tile;
 	},
 	
 	/*
@@ -1681,29 +2096,40 @@ var RibbonDisplay = $n2.Class({
 	
 	_generateCurrentDocumentContent: function($elem, docId){
 		$elem.empty();
+
+		var $container = $('<div>')
+	    	.addClass('n2DisplayRibbon_tile_container')
+	    	.appendTo($elem);
 		
-		var waitClassName = 'n2DisplayRibbon_wait_current_' + $n2.utils.stringToHtmlId(docId);
 		$('<div>')
-			.addClass(waitClassName)
-			.addClass('n2DisplayRibbon_tile_content')
+			.addClass('n2DisplayRibbon_thumb n2DisplayRibbon_wait_thumb_' + $n2.utils.stringToHtmlId(docId))
+			.appendTo($container);
+		
+		$('<div>')
+			.addClass('n2DisplayRibbon_wait_brief_' + $n2.utils.stringToHtmlId(docId))
+			.addClass('n2DisplayRibbon_tile_brief')
 			.text(docId)
-			.appendTo($elem);
+			.appendTo($container);
 	},
 	
 	_generateRelatedDocumentContent: function($elem, docId){
 		var _this = this;
 		
 		$elem.empty();
+	    
+	    var $container = $('<div>')
+	    	.addClass('n2DisplayRibbon_tile_container')
+	    	.appendTo($elem);
 		
 		$('<div>')
 			.addClass('n2DisplayRibbon_thumb n2DisplayRibbon_wait_thumb_' + $n2.utils.stringToHtmlId(docId))
-			.appendTo($elem);
+			.appendTo($container);
 		
 		$('<div>')
 			.addClass('n2DisplayRibbon_wait_brief_' + $n2.utils.stringToHtmlId(docId))
 			.addClass('n2DisplayRibbon_tile_brief')
 			.text(docId)
-			.appendTo($elem);
+			.appendTo($container);
 	
 		var clickInstalled = $elem.attr('n2Click');
 		if( !clickInstalled ) {
@@ -1721,21 +2147,21 @@ var RibbonDisplay = $n2.Class({
 		var $set = this._getDisplayDiv();
 		var $docs = $set.find('.n2DisplayRibbon_documents');
 	
-		if( this.currentDetails
-		 && this.currentDetails.docId ){
-			var $currentTile = $docs.find('.n2DisplayRibbon_tile_current')
-				.find('.n2DisplayRibbon_tile_content');
-			if( $currentTile.length > 0 ){
-				var height = $currentTile.height();
-				if( height != this.currentDetails.height ){
-					this.currentDetails.height = height;
-					var cellSize = this.grid.cellSize;
-					this.grid.template = null;
-					this.grid.templateFactory = new GridTemplateDocument(height,cellSize);
-					this.grid.redraw(true);
-				};
-			};
-		};
+//		if( this.currentDetails
+//		 && this.currentDetails.docId ){
+//			var $currentTile = $docs.find('.n2DisplayRibbon_tile_current')
+//				.find('.n2DisplayRibbon_tile_content');
+//			if( $currentTile.length > 0 ){
+//				var height = $currentTile.height();
+//				if( height != this.currentDetails.height ){
+//					this.currentDetails.height = height;
+//					var cellSize = this.grid.cellSize;
+//					this.grid.template = null;
+//					this.grid.templateFactory = new GridTemplateDocument(height,cellSize);
+//					this.grid.redraw(true);
+//				};
+//			};
+//		};
 	},
 	
 	_documentFilterChanged: function(){

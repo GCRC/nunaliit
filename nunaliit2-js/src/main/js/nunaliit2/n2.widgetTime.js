@@ -243,18 +243,22 @@ var TimelineWidget = $n2.Class({
 	_display: function(){
 		var $elem = this._getElem()
 			.empty();
+		
+		var $container = $('<div>')
+			.addClass('n2timeline_container')
+			.appendTo($elem);
 
 		$('<div>')
 			.addClass('n2timeline_range')
-			.appendTo($elem);
+			.appendTo($container);
 		
 		var $sliderWrapper = $('<div>')
 			.addClass('n2timeline_slider_wrapper')
-			.appendTo($elem);
+			.appendTo($container);
 
 		$('<div>')
 			.addClass('n2timeline_interval')
-			.appendTo($elem);
+			.appendTo($container);
 
 		// Create slider
 		this._getSlider();
