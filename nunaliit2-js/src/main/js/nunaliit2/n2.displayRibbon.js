@@ -543,8 +543,20 @@ var RibbonGrid = $n2.Class({
 	// Tiles that should be removed on next redraw
 	removedTiles: null,
 	
+	rateOfChange: null,
+	
+	rateOfChangeEnd: null,
+	
+	relatedOffset: null,
+
+	relatedOffsetMin: null,
+	
+	intervalId: null,
+	
 	initialize: function(element){
-		var $elem = $(element);
+        var _this = this;
+
+        var $elem = $(element);
 		this.elemId = $n2.utils.getElementIdentifier($elem);
 		
 		this.createTile = function(tileId){
@@ -570,7 +582,15 @@ var RibbonGrid = $n2.Class({
         this.currentTile = undefined;
         this.relatedTiles = [];
         this.removedTiles = [];
-		
+        this.rateOfChange = 0;
+        this.rateOfChangeEnd = true;
+        this.relatedOffset = 0;
+        this.relatedOffsetMin = 0;
+
+        this.intervalId = window.setInterval(function(){
+        	_this._intervalTask();
+        },300);
+        	
 		$elem
 			.empty()
 			.css({
@@ -618,6 +638,31 @@ var RibbonGrid = $n2.Class({
 				,overflow: 'visible'
 			})
 			.appendTo($extra);
+		$('<div>')
+			.addClass('n2DisplayRibbon_grid_button_previous')
+			.appendTo($extra)
+			.mousedown(function(){
+				_this._buttonChanged('down','previous');
+				return false;
+			})
+			.mouseup(function(){
+				_this._buttonChanged('up','previous');
+				return false;
+			})
+			;
+		$('<div>')
+			.addClass('n2DisplayRibbon_grid_button_next')
+			.appendTo($extra)
+			.mousedown(function(){
+				_this._buttonChanged('down','next');
+				return false;
+			})
+			.mouseup(function(){
+				_this._buttonChanged('up','next');
+				return false;
+			})
+			;
+		
 	},
 
 	updateTiles: function(currentTileId, relatedTileIds){
@@ -714,12 +759,19 @@ var RibbonGrid = $n2.Class({
         this.cellSize = Math.min(cellSizeOnHeight, cellSizeOnWidth);
 
         var duration = this.animationDuration;
+
+        // Reset position of related div
+		this.relatedOffset = 0;
+		$elem.find('.n2DisplayRibbon_grid_related').css({
+			left: this.relatedOffset
+		}); 
         
         // Move the current and related div
+    	var currentDivWidth = 0;
         if( this.currentTile ){
         	// Current tile is visible. Show div and
         	// shrink extra
-        	var currentDivWidth = this.cellSize + (2 * this.cellPadding);
+        	currentDivWidth = this.cellSize + (2 * this.cellPadding);
         	$currentElem.css({
         		display: 'block'
         		,width: ''+currentDivWidth+'px'
@@ -777,6 +829,12 @@ var RibbonGrid = $n2.Class({
 	    	
 	    	currentLeft += (this.cellSize + this.cellPadding);
 	    };
+	    
+	    this.relatedOffsetMin = width - currentDivWidth - currentLeft;
+	    if( this.relatedOffsetMin > 0 ){
+	    	this.relatedOffsetMin = 0;
+	    };
+	    this._updateRelatedOffset(this.relatedOffset);
         
 	    if( typeof onComplete === 'function' ) {
 	        setTimeout(function() { onComplete(true); }, duration + 10);
@@ -785,6 +843,73 @@ var RibbonGrid = $n2.Class({
 	
 	_shouldRedraw: function(){
 		return true;
+	},
+	
+	_buttonChanged: function(state, id){
+		if( 'up' === state ){
+			this.rateOfChangeEnd = true;
+		} else {
+			this.rateOfChangeEnd = false;
+			if( 'next' === id ){
+				this.rateOfChange = -250;
+			} else {
+				this.rateOfChange = 250;
+			};
+		};
+	},
+	
+	_intervalTask: function(){
+		var $elem = this._getElem();
+		if( $elem.length < 1 ){
+			// This grid is oo longer in use
+			window.clearInterval(this.intervalId);
+		} else {
+			if( this.rateOfChange != 0 ){
+				var newOffset = this.relatedOffset;
+				
+				newOffset += this.rateOfChange;
+				
+				this._updateRelatedOffset(newOffset);
+				
+				if( this.rateOfChangeEnd ){
+					this.rateOfChange = 0;
+				};
+			};
+		};
+	},
+	
+	_updateRelatedOffset: function(newRelatedOffset){
+		if( newRelatedOffset > 0 ){
+			newRelatedOffset = 0;
+		};
+		if( newRelatedOffset < this.relatedOffsetMin ){
+			newRelatedOffset = this.relatedOffsetMin;
+		};
+		
+		if( newRelatedOffset != this.relatedOffset ){
+			this.relatedOffset = newRelatedOffset;
+			var $elem = this._getElem();
+			var $related = $elem.find('.n2DisplayRibbon_grid_related');
+			var cssChanges = {
+				left: this.relatedOffset
+			};
+			$related.animate(cssChanges, {
+	            duration: 300,
+	            easing: 'linear'
+	        });
+		};
+		
+		var $elem = this._getElem();
+		if( this.relatedOffset <= this.relatedOffsetMin ){
+			$elem.addClass('n2DisplayRibbon_grid_related_max');
+		} else {
+			$elem.removeClass('n2DisplayRibbon_grid_related_max');
+		};
+		if( this.relatedOffset >= 0 ){
+			$elem.addClass('n2DisplayRibbon_grid_related_min');
+		} else {
+			$elem.removeClass('n2DisplayRibbon_grid_related_min');
+		};
 	},
 	
 	_getElem: function(){
@@ -839,6 +964,8 @@ var RibbonDisplay = $n2.Class({
 	hoverInFn: null,
 	
 	hoverOutFn: null,
+
+	clickFn: null,
 	
 	hoverDocId: null,
 	
@@ -1069,6 +1196,12 @@ var RibbonDisplay = $n2.Class({
 					,docId: docId
 				});
 			};
+		};
+		
+		// Click function
+		this.clickFn = function(){
+			var $tile = $(this);
+			_this._clickedTile($tile);
 		};
 		
 		// Detect changes in displayed current content size
@@ -1961,6 +2094,8 @@ var RibbonDisplay = $n2.Class({
 			this.hoverInFn
 			,this.hoverOutFn
 	    );
+		
+		$elem.click(this.clickFn);
 	
 	    var tile = new Tile(docId, $elem);
 	    
@@ -1972,10 +2107,26 @@ var RibbonDisplay = $n2.Class({
 	
 	    } else {
 	    	// Not current document
+	    	$elem.removeClass('n2DisplayRibbon_tile_current');
 	    	this._generateRelatedDocumentContent($elem, docId);
 	    };
 
 	    return tile;
+	},
+	
+	_clickedTile: function($tile){
+		var docId = $tile.attr('n2DocId');
+		
+		if( this.currentDetails
+		 && this.currentDetails.docId === docId ){
+			
+		} else {
+			// Related tile, select document
+			this._dispatch({
+				type:'userSelect'
+				,docId: docId
+			});
+		};
 	},
 	
 	/*
@@ -2130,17 +2281,6 @@ var RibbonDisplay = $n2.Class({
 			.addClass('n2DisplayRibbon_tile_brief')
 			.text(docId)
 			.appendTo($container);
-	
-		var clickInstalled = $elem.attr('n2Click');
-		if( !clickInstalled ) {
-			$elem.click(function(){
-				_this._dispatch({
-					type:'userSelect'
-					,docId: docId
-				});
-			});
-			$elem.attr('n2Click','installed');
-		};
 	},
 	
 	_performIntervalTask: function(){
