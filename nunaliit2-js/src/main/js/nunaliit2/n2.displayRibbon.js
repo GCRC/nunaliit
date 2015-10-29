@@ -2030,14 +2030,18 @@ var RibbonDisplay = $n2.Class({
 		var $set = this._getDisplayDiv();
 		
 		var $filters = $set.find('.n2DisplayRibbon_filters');
+		var $buttons = $set.find('.n2DisplayRibbon_buttons');
 		var $current = $set.find('.n2DisplayRibbon_info');
 		var $docs = $set.find('.n2DisplayRibbon_documents');
-		if( $filters.length < 1 
+		if( $filters.length < 1
+		 || $buttons.length < 1 
 		 || $current.length < 1
 		 || $docs.length < 1 ){
 			$set.empty();
 			$filters = $('<div>')
 				.addClass('n2DisplayRibbon_filters')
+			$buttons = $('<div>')
+				.addClass('n2DisplayRibbon_buttons')
 				.appendTo($set);
 			$current = $('<div>')
 				.addClass('n2DisplayRibbon_info')
@@ -2057,11 +2061,52 @@ var RibbonDisplay = $n2.Class({
 				return _this._createTile(docId);
 		    };
 		    
-		    // Create document filter
+			// Create document filter
 		    this.filter = this.filterFactory.get($filters,function(){
 		    	_this._documentFilterChanged();
 		    });
+		    		    
+		    // Create navigation buttons
+		    this._createNavigationButtons($buttons);
 		};
+	},
+	
+	_createNavigationButtons: function($buttons){
+		var _this = this;
+
+		$('<div>')
+			.addClass('n2DisplayRibbon_button n2DisplayRibbon_button_forward')
+			.appendTo($buttons)
+			.click(function(){
+				if( _this.dispatchService ){
+					_this.dispatchService.send(DH,{
+						type: 'historyForward'
+					});
+				};
+				return false;
+			});
+		$('<div>')
+			.addClass('n2DisplayRibbon_button n2DisplayRibbon_button_home')
+			.appendTo($buttons)
+			.click(function(){
+				if( _this.dispatchService ){
+					_this.dispatchService.send(DH,{
+						type: 'userUnselect'
+					});
+				};
+				return false;
+			});
+		$('<div>')
+			.addClass('n2DisplayRibbon_button n2DisplayRibbon_button_back')
+			.appendTo($buttons)
+			.click(function(){
+				if( _this.dispatchService ){
+					_this.dispatchService.send(DH,{
+						type: 'historyBack'
+					});
+				};
+				return false;
+			});
 	},
 	
 	_createTile: function(docId){
@@ -2099,18 +2144,20 @@ var RibbonDisplay = $n2.Class({
 		
 		if( this.currentDetails
 		 && this.currentDetails.docId === docId ){
-			var $menu = $tile.find('.n2DisplayRibbon_tile_menu');
-			if( $menu.length < 1 ){
-				$menu = $('<div>')
-					.addClass('n2DisplayRibbon_tile_menu n2DisplayRibbon_current_buttons')
-					.appendTo($tile);
-				
-				if( this.currentDetails 
-				 && this.currentDetails.doc 
-				 && this.currentDetails.schema ){
-					this._displayDocumentButtons(this.currentDetails.doc, this.currentDetails.schema);
-				};
-			};
+//			var $menu = $tile.find('.n2DisplayRibbon_tile_menu');
+//			if( $menu.length < 1 ){
+//				$menu = $('<div>')
+//					.addClass('n2DisplayRibbon_tile_menu n2DisplayRibbon_current_buttons')
+//					.appendTo($tile);
+//				
+//				if( this.currentDetails 
+//				 && this.currentDetails.doc 
+//				 && this.currentDetails.schema ){
+//					this._displayDocumentButtons(this.currentDetails.doc, this.currentDetails.schema);
+//				};
+//			};
+			
+			this._showCurrentPopUp();
 			
 		} else {
 			// Related tile, select document
@@ -2143,6 +2190,69 @@ var RibbonDisplay = $n2.Class({
 		};
 		
 		$tile.find('.n2DisplayRibbon_tile_menu').remove();
+	},
+	
+	_showCurrentPopUp: function(){
+		if( this.currentDetails
+		 && this.currentDetails.docId ){
+			var docId = this.currentDetails.docId;
+	    	var tileClass = '.n2DisplayRibbon_tile_' + $n2.utils.stringToHtmlId(docId);
+
+	    	var $display = this._getDisplayDiv();
+	    	var $tile = $display.find(tileClass);
+
+	    	if( $tile.length > 0 ){
+	    		// Look if pop-up is already showing
+	    		var $popup = $tile.find('.n2DisplayRibbon_popup');
+	    		if( $popup.length < 1 ){
+	    			$popup = $('<div>')
+	    				.addClass('n2DisplayRibbon_popup')
+	    				.appendTo($tile);
+	    			
+	    			this._populateCurrentPopUp(docId, $popup);
+	    		};
+	    	};
+		};
+	},
+	
+	_hideCurrentPopUp: function(){
+    	var $display = this._getDisplayDiv();
+		$display.find('.n2DisplayRibbon_popup').remove();
+	},
+	
+	_populateCurrentPopUp: function(docId, $popup){
+		var _this = this;
+		
+		var $layout = $('<div>')
+			.addClass('n2DisplayRibbon_popup_layout')
+			.appendTo($popup);
+		var $container = $('<div>')
+			.addClass('n2DisplayRibbon_popup_container')
+			.appendTo($layout);
+		
+		var $content = $('<div>')
+			.addClass('n2DisplayRibbon_popup_content')
+			.appendTo($container);
+
+		if( this.showService ) {
+			this.showService.printDocument($content, docId);
+		} else {
+			$content.text( docId );
+		};
+
+		var $buttons = $('<div>')
+			.addClass('n2DisplayRibbon_popup_buttons')
+			.appendTo($container);
+		
+		$('<a>')
+			.attr('href','#')
+			.text( _loc('Close') )
+			.click(function(){
+				var $a = $(this);
+				$a.parents('.n2DisplayRibbon_popup').first().remove();
+				return false;
+			})
+			.appendTo($buttons);
 	},
 	
 	/*

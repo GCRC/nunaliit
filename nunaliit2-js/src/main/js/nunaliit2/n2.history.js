@@ -36,13 +36,16 @@ $Id: n2.form.js 8165 2012-05-31 13:14:37Z jpfiset $
 // @requires n2.class.js
 
 ;(function($,$n2){
+"use strict";
 
 // Localization
-var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); }
+,DH = 'n2.history'
+,TYPE_SELECTED = 'x'
+,TYPE_MULTI_SELECTED = 'm'
+,TYPE_SEARCH = 's'
+;
 
-var TYPE_SELECTED = 'x';
-var TYPE_MULTI_SELECTED = 'm';
-var TYPE_SEARCH = 's';
 
 // ======================= MONITOR ====================================
 // Tracks the changes to hash and reports them as dispatcher messages.
@@ -71,11 +74,11 @@ var Monitor = $n2.Class({
 			var f = function(m){
 				_this._handle(m);
 			};
-			var h = d.getHandle('n2.history');
-			d.register(h,'historyBack',f)
-			d.register(h,'historyForward',f)
-			d.register(h,'setHash',f)
-			d.register(h,'replaceHash',f)
+
+			d.register(DH,'historyBack',f)
+			d.register(DH,'historyForward',f)
+			d.register(DH,'setHash',f)
+			d.register(DH,'replaceHash',f)
 		};
 	}
 
@@ -90,8 +93,7 @@ var Monitor = $n2.Class({
 	,_dispatch: function(m){
 		var d = this._getDispatcher();
 		if( d ){
-			var h = d.getHandle('n2.history');
-			d.send(h,m);
+			d.send(DH,m);
 		};
 	}
 	
