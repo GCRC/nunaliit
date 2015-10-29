@@ -593,9 +593,6 @@ var RibbonGrid = $n2.Class({
         	
 		$elem
 			.empty()
-			.css({
-				overflow: 'hidden'
-			})
 			;
 		var currentPosition = $elem.css('position');
 		if( !currentPosition ){
@@ -614,7 +611,6 @@ var RibbonGrid = $n2.Class({
 				,bottom: '0'
 				,right: 'auto'
 				,width: '170px'
-				,overflow: 'hidden'
 			})
 			.appendTo($elem);
 		var $extra = $('<div>')
@@ -625,7 +621,6 @@ var RibbonGrid = $n2.Class({
 				,top: '0'
 				,bottom: '0'
 				,right: '0'
-				,overflow: 'hidden'
 			})
 			.appendTo($elem);
 		$('<div>')
@@ -635,7 +630,6 @@ var RibbonGrid = $n2.Class({
 				,left: '0'
 				,top: '0'
 				,bottom: '0'
-				,overflow: 'visible'
 			})
 			.appendTo($extra);
 		$('<div>')
@@ -1177,31 +1171,20 @@ var RibbonDisplay = $n2.Class({
 		// Hover in and out
 		this.hoverInFn = function(){
 			var $tile = $(this);
-			var docId = $tile.attr('n2DocId');
-			if( docId && docId !== _this.hoverDocId ) {
-				_this.hoverDocId = docId;
-				_this._dispatch({
-					type: 'userFocusOn'
-					,docId: docId
-				});
-			};
+			_this._hoverInTile($tile);
+			return false;
 		};
 		this.hoverOutFn = function(){
 			var $tile = $(this);
-			var docId = $tile.attr('n2DocId');
-			if( docId && docId === _this.hoverDocId ) {
-				_this.hoverDocId = null;
-				_this._dispatch({
-					type: 'userFocusOff'
-					,docId: docId
-				});
-			};
+			_this._hoverOutTile($tile);
+			return false;
 		};
 		
 		// Click function
 		this.clickFn = function(){
 			var $tile = $(this);
 			_this._clickedTile($tile);
+			return false;
 		};
 		
 		// Detect changes in displayed current content size
@@ -2061,9 +2044,6 @@ var RibbonDisplay = $n2.Class({
 				.appendTo($set);
 			$docs = $('<div>')
 				.addClass('n2DisplayRibbon_documents')
-				.css({
-					overflow: 'hidden'
-				})
 				.appendTo($set);
 			
 			// When the side panel must be re-claimed, then we must
@@ -2119,6 +2099,18 @@ var RibbonDisplay = $n2.Class({
 		
 		if( this.currentDetails
 		 && this.currentDetails.docId === docId ){
+			var $menu = $tile.find('.n2DisplayRibbon_tile_menu');
+			if( $menu.length < 1 ){
+				$menu = $('<div>')
+					.addClass('n2DisplayRibbon_tile_menu n2DisplayRibbon_current_buttons')
+					.appendTo($tile);
+				
+				if( this.currentDetails 
+				 && this.currentDetails.doc 
+				 && this.currentDetails.schema ){
+					this._displayDocumentButtons(this.currentDetails.doc, this.currentDetails.schema);
+				};
+			};
 			
 		} else {
 			// Related tile, select document
@@ -2127,6 +2119,30 @@ var RibbonDisplay = $n2.Class({
 				,docId: docId
 			});
 		};
+	},
+	
+	_hoverInTile: function($tile){
+		var docId = $tile.attr('n2DocId');
+		if( docId && docId !== this.hoverDocId ) {
+			this.hoverDocId = docId;
+			this._dispatch({
+				type: 'userFocusOn'
+				,docId: docId
+			});
+		};
+	},
+	
+	_hoverOutTile: function($tile){
+		var docId = $tile.attr('n2DocId');
+		if( docId && docId === this.hoverDocId ) {
+			this.hoverDocId = null;
+			this._dispatch({
+				type: 'userFocusOff'
+				,docId: docId
+			});
+		};
+		
+		$tile.find('.n2DisplayRibbon_tile_menu').remove();
 	},
 	
 	/*

@@ -1221,12 +1221,18 @@ var ModuleDisplay = $n2.Class({
 			};
 			
 			// Create map control
-			_this.mapControl = nunaliit2.mapAndControls(mapOptions);
-			$n2.log('module',_this);
-			
-			_this.mapControl.contributions = _this.config.contributions;
-			_this.mapControl.requests = _this.config.directory.requestService;
+			try {
+				_this.mapControl = nunaliit2.mapAndControls(mapOptions);
+				_this.mapControl.contributions = _this.config.contributions;
+				_this.mapControl.requests = _this.config.directory.requestService;
+			} catch(e) {
+				$n2.log('Error while creating map: '+e);
+				if( e.stack ) {
+					$n2.log('Stack',e.stack);
+				};
+			};
 
+			$n2.log('module',_this);
 			opts.onSuccess(_this);
 		};
 	}
