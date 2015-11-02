@@ -133,6 +133,8 @@ var BookBrowser = $n2.Class({
 	
 	elemId: null,
 	
+	focusDocId: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			contentId: null
@@ -144,6 +146,7 @@ var BookBrowser = $n2.Class({
 		var _this = this;
 
 		this.book = opts.book;
+		this.focusDocId = undefined;
 		
 		this.dispatchService = opts.dispatchService;
 		if( this.dispatchService ){
@@ -151,7 +154,7 @@ var BookBrowser = $n2.Class({
 				_this._handle(m, addr, dispatcher);
 			};
 
-			//this.dispatchService.register(DH, 'waitReport', fn);
+			this.dispatchService.register(DH, 'selected', fn);
 		};
 
 		// Get container
@@ -253,6 +256,9 @@ var BookBrowser = $n2.Class({
 	_pagesChanged: function(){
 		//var pages = this.book.getPages();
 		this._display();
+		if( this.focusDocId ){
+			this._selectDocId(this.focusDocId);
+		};
 	},
 	
 	_scrollChanged: function( $pagesOuter ){
@@ -272,18 +278,41 @@ var BookBrowser = $n2.Class({
 		var page = this._getPageFromOffset(bookOffset);
 
 		var $preview = $elem.find('.n2BookBrowser_preview').empty();
-		if( page && page.title ){
-			//$n2.log('scrollTop:'+scrollTop+' page:'+page.title);
+		if( page ){
+			if( page.title ){
+				//$n2.log('scrollTop:'+scrollTop+' page:'+page.title);
+				
+				$('<div>')
+					.addClass('n2BookBrowser_previewContent')
+					.text(page.title)
+					.appendTo($preview)
+					.delay(500)
+					.fadeOut(300,function(){
+						_this._getElem().find('.n2BookBrowser_preview').empty();
+					})
+					;
+			};
 			
-			$('<div>')
-				.addClass('n2BookBrowser_previewContent')
-				.text(page.title)
-				.appendTo($preview)
-				.delay(500)
-				.fadeOut(300,function(){
-					_this._getElem().find('.n2BookBrowser_preview').empty();
-				})
-				;
+			this._pageInFocus(page);
+		};
+	},
+	
+	_pageInFocus: function(page){
+		var _this = this;
+		var docId = page.docId;
+		
+		if( this.focusDocId !== docId ){
+			this.focusDocId = docId;
+			window.setTimeout(function(){
+				if( _this.focusDocId === docId ){
+					if( _this.dispatchService ){
+						_this.dispatchService.send(DH,{
+							type: 'userSelect'
+							,docId: docId
+						});
+					};
+				};
+			},800);
 		};
 	},
 	
@@ -307,40 +336,28 @@ var BookBrowser = $n2.Class({
 		return page;
 	},
 
-	_handle: function(m, addr, dispatcher){
-		if( 'waitReport' === m.type ){
-			var requesterId = m.requester;
-			var name = m.name;
-			var count = m.count;
-			var label = m.label;
-			if( !label ){
-				label = name;
-			};
-			
-			if( typeof requesterId === 'string'
-			 && typeof name === 'string' 
-			 && typeof count === 'number' ){
-				// Insert information
-				var waitObjects = this.waitingByRequesterId[requesterId];
-				if( !waitObjects ){
-					waitObjects = {};
-					this.waitingByRequesterId[requesterId] = waitObjects;
-				};
-				
-				var waitObject = waitObjects[name];
-				if( !waitObject ){
-					waitObject = {
-						name: name
-						,label: label
+	_selectDocId: function(docId){
+		var pages = this.book.getPages();
+		if( pages ){
+			for(var i=0,e=pages.length; i<e; ++i){
+				var page = pages[i];
+
+				if( page.docId === docId ){
+					if( page.bookOffset ){
+						var $elem = this._getElem();
+						var $pagesOuter = $elem.find('.n2BookBrowser_pagesOuter');
+						$pagesOuter.scrollTop( page.bookOffset );
 					};
-					waitObjects[name] = waitObject;
 				};
-				
-				waitObject.count = count;
-				
-				// Refresh
-				this._display();
 			};
+		};
+	},
+
+	_handle: function(m, addr, dispatcher){
+		if( 'selected' === m.type ){
+			var docId = m.docId;
+			this.focusDocId = docId;
+			this._selectDocId(docId);
 		};
 	}
 });
