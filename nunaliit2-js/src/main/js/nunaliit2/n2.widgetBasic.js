@@ -207,12 +207,18 @@ var Service = $n2.Class({
 				 && $n2.mapAndControls.HandleWidgetAvailableRequests ){
 					$n2.mapAndControls.HandleWidgetAvailableRequests(m);
 				};
+
+				if( $n2.widgetBookBrowser 
+				 && $n2.widgetBookBrowser.HandleWidgetAvailableRequests ){
+					$n2.widgetBookBrowser.HandleWidgetAvailableRequests(m);
+				};
 		    };
 		    
 		} else if( 'widgetDisplay' === m.type ){
 			if( m.widgetType === 'createDocument' ){
 				BuildCreateDocumentWidgetFromRequest(m);
-		    } else {
+
+			} else {
 				if( $n2.couchDbPerspective 
 				 && $n2.couchDbPerspective.HandleWidgetDisplayRequests ){
 					$n2.couchDbPerspective.HandleWidgetDisplayRequests(m);
@@ -236,6 +242,11 @@ var Service = $n2.Class({
 				if( $n2.mapAndControls 
 				 && $n2.mapAndControls.HandleWidgetDisplayRequests ){
 					$n2.mapAndControls.HandleWidgetDisplayRequests(m);
+				};
+
+				if( $n2.widgetBookBrowser 
+				 && $n2.widgetBookBrowser.HandleWidgetDisplayRequests ){
+					$n2.widgetBookBrowser.HandleWidgetDisplayRequests(m);
 				};
 		    };
 		};
