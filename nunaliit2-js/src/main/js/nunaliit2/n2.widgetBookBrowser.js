@@ -129,24 +129,34 @@ var BookBrowser = $n2.Class({
 	
 	dispatchService: null,
 	
+	pagePadding: null,
+	
 	book: null,
 	
 	elemId: null,
 	
 	focusDocId: null,
+
+	lastScrollTop: null,
+
+	lastPreviewTitle: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			contentId: null
 			,containerId: null
 			,dispatchService: null
+			,pagePadding: 7
 			,book: null
 		},opts_);
 		
 		var _this = this;
 
+		this.pagePadding = opts.pagePadding;
 		this.book = opts.book;
 		this.focusDocId = undefined;
+		this.lastScrollTop = undefined;
+		this.lastPreviewTitle = undefined;
 		
 		this.dispatchService = opts.dispatchService;
 		if( this.dispatchService ){
@@ -220,12 +230,20 @@ var BookBrowser = $n2.Class({
 			var offset = pagePadding;
 			for(var i=0,e=pages.length; i<e; ++i){
 				var page = pages[i];
+				
+				if( !page._book ){
+					page._bookBrowser = {};
+				};
+				
 				var $page = $('<div>')
 					.addClass('n2BookBrowser_page')
 					.css('position','relative')
 					.appendTo($pagesInner);
 				
-				page.bookOffset = offset;
+				var pageId = $n2.utils.getElementIdentifier($page);
+				
+				page._bookBrowser.offset = offset;
+				page._bookBrowser.pageId = pageId;
 				
 				if( page.imageHeight ){
 					$page.css('height',page.imageHeight);
@@ -245,12 +263,18 @@ var BookBrowser = $n2.Class({
 						.text( page.title )
 						.appendTo($pageTitleContainer);
 				};
+
+				$('<div>')
+					.addClass('n2BookBrowser_pageImageContainer')
+					.appendTo($page);
 			};
 		};
 		
 		var $preview = $('<div>')
 			.addClass('n2BookBrowser_preview')
 			.appendTo($content);
+		
+		this._loadImages();
 	},
 	
 	_pagesChanged: function(){
@@ -277,10 +301,13 @@ var BookBrowser = $n2.Class({
 		var bookOffset = scrollTop + middleOffset;
 		var page = this._getPageFromOffset(bookOffset);
 
-		var $preview = $elem.find('.n2BookBrowser_preview').empty();
+		var $preview = $elem.find('.n2BookBrowser_preview');
 		if( page ){
-			if( page.title ){
-				//$n2.log('scrollTop:'+scrollTop+' page:'+page.title);
+			if( page.title 
+			 && this.lastPreviewTitle !== page.title ){
+				this.lastPreviewTitle = page.title;
+
+				$preview.empty();
 				
 				$('<div>')
 					.addClass('n2BookBrowser_previewContent')
@@ -295,6 +322,14 @@ var BookBrowser = $n2.Class({
 			
 			this._pageInFocus(page);
 		};
+		
+		// Wait a bit before loading images
+		this.lastScrollTop = scrollTop;
+		window.setTimeout(function(){
+			if( _this.lastScrollTop === scrollTop ){
+				_this._loadImages();
+			};
+		},500);
 	},
 	
 	_pageInFocus: function(page){
@@ -324,11 +359,14 @@ var BookBrowser = $n2.Class({
 			for(var i=0,e=pages.length; i<e; ++i){
 				var page = pages[i];
 
-				var endOffset = page.bookOffset + page.imageHeight;
-				
-				if( page.bookOffset <= bookOffset 
-				 && bookOffset <= endOffset ){
-					return page;
+				if( page._bookBrowser ){
+					var startOffset = page._bookBrowser.offset;
+					var endOffset = startOffset + page.imageHeight;
+					
+					if( startOffset <= bookOffset 
+					 && bookOffset <= endOffset ){
+						return page;
+					};
 				};
 			};
 		};
@@ -337,18 +375,129 @@ var BookBrowser = $n2.Class({
 	},
 
 	_selectDocId: function(docId){
+		var $elem = this._getElem();
+		var $pagesOuter = $elem.find('.n2BookBrowser_pagesOuter');
+
+		// Check if selected document is already visible
+		var scrollTop = $pagesOuter.scrollTop();
+		var middleOffset = 0;
+		var $outer = $elem.find('.n2BookBrowser_pagesOuter');
+		if( $outer.length > 0 ){
+			middleOffset = $outer.height() / 2;
+		};
+		var bookOffset = scrollTop + middleOffset;
+		var page = this._getPageFromOffset(bookOffset);
+		var currentPage = this._getPageFromOffset(bookOffset);
+		if( currentPage ){
+			var currentDocId = currentPage.getDocId();
+			if( currentDocId === docId ){
+				// No need to move the scroll
+				return;
+			};
+		};
+		
 		var pages = this.book.getPages();
 		if( pages ){
 			for(var i=0,e=pages.length; i<e; ++i){
 				var page = pages[i];
 
 				if( page.docId === docId ){
-					if( page.bookOffset ){
+					if( page._bookBrowser 
+					 && typeof page._bookBrowser.offset === 'number' ){
 						var $elem = this._getElem();
 						var $pagesOuter = $elem.find('.n2BookBrowser_pagesOuter');
-						$pagesOuter.scrollTop( page.bookOffset );
+						$pagesOuter.scrollTop( page._bookBrowser.offset );
 					};
 				};
+			};
+		};
+	},
+	
+	_loadImages: function(){
+		var pages = this.book.getPages();
+		if( pages ){
+			var $elem = this._getElem();
+			var $pagesOuter = $elem.find('.n2BookBrowser_pagesOuter');
+			var bookOffsetTop = $pagesOuter.scrollTop();
+			var bookOffsetBottom = bookOffsetTop + $pagesOuter.height();
+			
+			var unloadByPageId = {};
+			var loadByPageId = {};
+
+			for(var i=0,e=pages.length; i<e; ++i){
+				var page = pages[i];
+
+				if( page._bookBrowser 
+				 && typeof page._bookBrowser.offset === 'number' ){
+					var pageId = page._bookBrowser.pageId;
+					var pageOffsetTop = page._bookBrowser.offset;
+					var pageOffsetBottom = pageOffsetTop + page.imageHeight;
+					
+					if( pageOffsetTop > bookOffsetBottom 
+					 || pageOffsetBottom < bookOffsetTop ){
+						// Not currently visible
+						unloadByPageId[pageId] = page;
+						
+					} else {
+						// Currently visible, or partly visible
+						loadByPageId[pageId] = page;
+
+						// Load page after
+						var nextIndex = i + 1;
+						if( nextIndex < pages.length ){
+							var nextPage = pages[nextIndex];
+							if( nextPage._bookBrowser 
+							 && nextPage._bookBrowser.pageId ){
+								var nextPageId = nextPage._bookBrowser.pageId;
+								loadByPageId[nextPageId] = nextPage;
+							};
+						};
+
+						// Load previous
+						var previousIndex = i - 1;
+						if( previousIndex >= 0 ){
+							var previousPage = pages[previousIndex];
+							if( previousPage._bookBrowser 
+							 && previousPage._bookBrowser.pageId ){
+								var previousPageId = previousPage._bookBrowser.pageId;
+								loadByPageId[previousPageId] = previousPage;
+							};
+						};
+					};
+				};
+			};
+
+			// Load pages
+			for(var pageId in loadByPageId){
+				var page = loadByPageId[pageId];
+				var $page = $('#'+pageId);
+
+				// Do not unload loaded pages
+				if( unloadByPageId[pageId] ){
+					delete unloadByPageId[pageId];
+				};
+				
+				var imageUrl = page.getImageUrl();
+				if( imageUrl ){
+					var $imageContainer = $page.find('.n2BookBrowser_pageImageContainer');
+					var $image = $imageContainer.find('img');
+					if( $image.length < 1 ){
+						// Must load
+						$('<img>')
+							.addClass('n2BookBrowser_pageImage')
+							.attr('src',imageUrl)
+							.appendTo($imageContainer);
+					};
+				};
+			};
+
+			// Unload pages
+			for(var pageId in unloadByPageId){
+				var page = loadByPageId[pageId];
+				var $page = $('#'+pageId);
+
+				var $imageContainer = $page.find('.n2BookBrowser_pageImageContainer');
+				$imageContainer.find('img').remove();
 			};
 		};
 	},
