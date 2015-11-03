@@ -108,12 +108,6 @@ var Url = $n2.Class({
 		var index = href.indexOf('?');
 		if( index >= 0 ) {
 			href = href.substr(0,index);
-		} else {
-			// Do not include hash if no parameters are specified
-			index = href.indexOf('#');
-			if( index >= 0 ){
-				href = href.substr(0,index);
-			};
 		};
 		
 		return href;
@@ -121,18 +115,23 @@ var Url = $n2.Class({
 
 	getParams: function() {
 		var result = {};
+
 		var href = this.getUrlWithoutHash();
-		var paramsString = href.slice(href.indexOf('?') + 1);
-		var params = paramsString.split('&');
-		for(var loop=0; loop<params.length; ++loop) {
-			var s = params[loop].split('=');
-			var key = decodeURIComponent(s[0]);
-			var value = decodeURIComponent(s[1]);
-			if( null == result[key] ) {
-				result[key] = [];
+		var index = href.indexOf('?');
+		if( index >= 0 ){
+			var paramsString = href.slice(index + 1);
+			var params = paramsString.split('&');
+			for(var loop=0; loop<params.length; ++loop) {
+				var s = params[loop].split('=');
+				var key = decodeURIComponent(s[0]);
+				var value = decodeURIComponent(s[1]);
+				if( null == result[key] ) {
+					result[key] = [];
+				}
+				result[key].push( value );
 			}
-			result[key].push( value );
-		}
+		};
+
 		return result;
 	},
 		
