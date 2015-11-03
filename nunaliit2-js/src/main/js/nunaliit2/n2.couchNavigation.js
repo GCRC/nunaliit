@@ -95,6 +95,10 @@ var NavigationDisplay = $n2.Class({
 				
 				var $li = $('<li></li>')
 					.appendTo($ul);
+				
+				if( item.key ){
+					$li.attr('n2nav-key',item.key);
+				};
 
 				if( item.title && item.href ) {
 					// Compute module class
