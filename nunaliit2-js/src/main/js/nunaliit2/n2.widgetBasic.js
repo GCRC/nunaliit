@@ -156,16 +156,22 @@ function BuildCreateDocumentWidgetFromRequest(m){
 //--------------------------------------------------------------------------
 var Service = $n2.Class({
 	
+	config: null,
+	
 	dispatchService: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
-			dispatchService: null
+			config: null
 		},opts_);
 		
 		var _this = this;
 		
-		this.dispatchService = opts.dispatchService;
+		this.config = opts.config;
+		
+		if( this.config && this.config.directory ){
+			this.dispatchService = this.config.directory.dispatchService;
+		};
 		
 		// Register to events
 		if( this.dispatchService ){
@@ -174,6 +180,66 @@ var Service = $n2.Class({
 			};
 			this.dispatchService.register(DH,'widgetIsTypeAvailable',f);
 			this.dispatchService.register(DH,'widgetDisplay',f);
+			this.dispatchService.register(DH,'showPreprocessElement',f);
+		};
+	},
+	
+	_showServicePreprocess: function($elem){
+		var _this = this;
+		
+		var $set = $elem.find('*').addBack();
+		
+		// Localization
+		$set.filter('.n2s_insertWidget').each(function(){
+			var $jq = $(this);
+			_this._insertWidget($jq);
+			$jq.removeClass('n2s_insertWidget').addClass('n2s_insertedWidget');
+		});
+	},
+	
+	_insertWidget: function($jq){
+		var widgetType = $jq.attr('nunaliit-widget');
+		var contentId = $n2.utils.getElementIdentifier($jq);
+		
+		var widgetConfig = undefined;
+		try {
+			var configText = $jq.text();
+			widgetConfig = JSON.parse(configText);
+		} catch(e) {
+			// Ignore
+		};
+		if( !widgetConfig ){
+			widgetConfig = {};
+		};
+		$jq.empty();
+		
+		// Check if it is available
+		var m = {
+			type: 'widgetIsTypeAvailable'
+			,widgetType: widgetType
+			,widgetOptions: widgetConfig
+			,isAvailable: false
+		};
+		
+		var d = this.dispatchService;
+		if( d ){
+			d.synchronousCall(DH,m);
+		};
+		
+		if( !m.isAvailable ){
+			$jq.attr('nunaliit-error','widget type not available');
+			return;
+		};
+		
+		// Insert widget
+		if( d ){
+			d.send(DH,{
+				type: 'widgetDisplay'
+				,widgetType: widgetType
+				,widgetOptions: widgetConfig
+				,contentId: contentId
+				,config: this.config
+			});
 		};
 	},
 	
@@ -212,6 +278,11 @@ var Service = $n2.Class({
 				 && $n2.widgetBookBrowser.HandleWidgetAvailableRequests ){
 					$n2.widgetBookBrowser.HandleWidgetAvailableRequests(m);
 				};
+
+				if( $n2.widgetNavigation 
+				 && $n2.widgetNavigation.HandleWidgetAvailableRequests ){
+					$n2.widgetNavigation.HandleWidgetAvailableRequests(m);
+				};
 		    };
 		    
 		} else if( 'widgetDisplay' === m.type ){
@@ -248,7 +319,16 @@ var Service = $n2.Class({
 				 && $n2.widgetBookBrowser.HandleWidgetDisplayRequests ){
 					$n2.widgetBookBrowser.HandleWidgetDisplayRequests(m);
 				};
+
+				if( $n2.widgetNavigation 
+				 && $n2.widgetNavigation.HandleWidgetDisplayRequests ){
+					$n2.widgetNavigation.HandleWidgetDisplayRequests(m);
+				};
 		    };
+
+		} else if( 'showPreprocessElement' === m.type ){
+			var $elem = m.elem;
+			this._showServicePreprocess($elem);
 		};
 	}
 });

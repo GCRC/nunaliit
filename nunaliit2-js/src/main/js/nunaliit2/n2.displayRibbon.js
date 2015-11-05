@@ -60,135 +60,6 @@ function startsWith(s, prefix) {
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-var NavigationWidget = $n2.Class({
-	elemId: null,
-	
-	dispatchService: null,
-	
-	initialize: function(opts_){
-		var opts = $n2.extend({
-			elem: null
-			,dispatchService: null
-		},opts_);
-		
-		var _this = this;
-		
-		this.dispatchService = opts.dispatchService;
-		
-		var $elem = $(opts.elem);
-		this.elemId = $n2.utils.getElementIdentifier($elem);
-		
-		if( this.dispatchService ){
-			var f = function(m, addr, dispatchService){
-				_this._handle(m, addr, dispatchService);
-			};
-			
-			this.dispatchService.register(DH, 'historyReportState', f);
-			
-			// Get current state
-			var m = {
-				type: 'historyGetState'
-			};
-			this.dispatchService.synchronousCall(DH,m);
-			if( m.state ){
-				this._handleHistoryState(m.state);
-			};
-		};
-		
-		this._display();
-		
-		//$n2.log('NavigationWidget',this);
-	},
-	
-	_display: function(){
-		var _this = this;
-
-		var $elem = this._getElem();
-		
-		$elem.empty();
-
-		$('<div>')
-			.addClass('n2DisplayRibbon_button n2DisplayRibbon_button_forward')
-			.appendTo($elem)
-			.click(function(){
-				// Enable click only if forward is available
-				var $avail = $(this).parents('.n2DisplayRibbon_button_forwardIsAvailable');
-				if( $avail.length > 0 ){
-					if( _this.dispatchService ){
-						_this.dispatchService.send(DH,{
-							type: 'historyForward'
-						});
-					};
-				};
-				return false;
-			});
-		$('<div>')
-			.addClass('n2DisplayRibbon_button n2DisplayRibbon_button_home')
-			.appendTo($elem)
-			.click(function(){
-				if( _this.dispatchService ){
-					_this.dispatchService.send(DH,{
-						type: 'userUnselect'
-					});
-				};
-				return false;
-			});
-		$('<div>')
-			.addClass('n2DisplayRibbon_button n2DisplayRibbon_button_back')
-			.appendTo($elem)
-			.click(function(){
-				// Enable click only if back is available
-				var $avail = $(this).parents('.n2DisplayRibbon_button_backIsAvailable');
-				if( $avail.length > 0 ){
-					if( _this.dispatchService ){
-						_this.dispatchService.send(DH,{
-							type: 'historyBack'
-						});
-					};
-				};
-				return false;
-			});
-	},
-	
-	_getElem: function(){
-		return $('#'+this.elemId);
-	},
-	
-	_handleHistoryState: function(historyState){
-		if( historyState ){
-			var $elem = this._getElem();
-
-			if( historyState.backIsAvailable ){
-				$elem.addClass('n2DisplayRibbon_button_backIsAvailable');
-			} else {
-				$elem.removeClass('n2DisplayRibbon_button_backIsAvailable');
-			};
-
-			if( historyState.forwardIsAvailable ){
-				$elem.addClass('n2DisplayRibbon_button_forwardIsAvailable');
-			} else {
-				$elem.removeClass('n2DisplayRibbon_button_forwardIsAvailable');
-			};
-		};
-	},
-	
-	_handle: function(m, addr, dispatchService){
-		var $elem = this._getElem();
-		if( $elem.length < 1 ){
-			// We have disappeared. Unregister from dispatcher
-			dispatchService.deregister(addr);
-			return;
-		};
-		
-		if( 'historyReportState' === m.type ){
-			var state = m.state;
-			this._handleHistoryState(state);
-		};
-	}
-});
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
 /*
 * Template for document display
 */
@@ -2196,7 +2067,7 @@ var RibbonDisplay = $n2.Class({
 		    });
 		    		    
 		    // Create navigation buttons
-		    new NavigationWidget({
+		    new $n2.widgetNavigation.NavigationWidget({
 				elem: $buttons
 				,dispatchService: this.dispatchService
 		    });

@@ -381,7 +381,7 @@ function Configure(options_){
 		});
 		
 	 	configuration.directory.widgetService = new $n2.widgetBasic.Service({
-			dispatchService: configuration.directory.dispatchService
+	 		config: configuration
 		});
 	 	
 	 	$n2.mapAndControls.DefaultPopupHtmlFunction = function(opt_){
