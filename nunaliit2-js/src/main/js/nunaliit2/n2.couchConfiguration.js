@@ -143,6 +143,9 @@ function Configure(options_){
 	configuration.directory.historyTracker = new $n2.history.Tracker({
 		directory: configuration.directory
 	});
+	configuration.directory.history = new $n2.history.History({
+		dispatchService: configuration.directory.dispatchService
+	});
 	
 	// Event translation
 	configuration.directory.eventService = new $n2.couchEvents.EventSupport({

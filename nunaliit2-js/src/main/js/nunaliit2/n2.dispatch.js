@@ -33,6 +33,9 @@ POSSIBILITY OF SUCH DAMAGE.
 
 // Localization
 //var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
+var HANDLEMARKER = {}
+,ADDRESSMARKER = {}
+;
 
 // *******************************************************
 /**
@@ -102,10 +105,31 @@ var Dispatcher = $n2.Class({
 				,name: name
 				,receives: {}
 				,sends: {}
+				,_marker: HANDLEMARKER
 			};
 			this.handles[name] = h;
 		};
 		return h;
+	},
+	
+	isHandle: function(h){
+		if( typeof h !== 'object' ) return false;
+		
+		if( h._marker === HANDLEMARKER ){
+			return true;
+		};
+		
+		return false;
+	},
+	
+	isAddress: function(addr){
+		if( typeof addr !== 'object' ) return false;
+		
+		if( addr._marker === ADDRESSMARKER ){
+			return true;
+		};
+		
+		return false;
 	},
 
 	/**
@@ -117,15 +141,26 @@ var Dispatcher = $n2.Class({
 	 * @return An address (object structure) that can be used in the deregister() function
 	 */
 	register: function(handle, type, l){
-		if( typeof(handle) === 'string' ){
+		if( typeof handle === 'string' ){
 			handle = this.getHandle(handle);
 		};
+		if( !this.isHandle(handle) ){
+			throw 'DispatchService.register: invalid handle';
+		};
+		if( typeof type !== 'string' ){
+			throw 'DispatchService.register: type must be a string';
+		};
+		if( typeof l !== 'function' ){
+			throw 'DispatchService.register must provide a function';
+		};
+		
 		if( !this.listeners[type] ){
 			this.listeners[type] = [];
 		};
 		var address = {
 			type: type
 			,id: $n2.getUniqueId()
+			,_marker: ADDRESSMARKER
 		};
 		this.listeners[type].push({
 			handle: handle
@@ -144,7 +179,7 @@ var Dispatcher = $n2.Class({
 	 *                recipient is called back.
 	 */
 	deregister: function(address){
-		if( address ){
+		if( this.isAddress(address) ){
 			var type = address.type;
 			var id = address.id;
 			if( type && id ){
@@ -164,6 +199,8 @@ var Dispatcher = $n2.Class({
 					};
 				};
 			};
+		} else {
+			throw 'DispatchService.deregister: invalid address'
 		};
 	},
 	
@@ -222,8 +259,9 @@ var Dispatcher = $n2.Class({
 		this.dispatching = true;
 		var listeners = this.listeners[t];
 		if( listeners ) {
-			for(var i=0,e=listeners.length; i<e; ++i){
-				var l = listeners[i];
+			var copy = listeners.slice(0); // make copy to handle deregister during processing
+			for(var i=0,e=copy.length; i<e; ++i){
+				var l = copy[i];
 				
 				if( logging ){
 					if( loggingIncludesMessage ) {
