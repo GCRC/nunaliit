@@ -962,7 +962,8 @@ var Tracker = $n2.Class({
 		if( m ){
 			m._suppressSetHash = true;
 			
-			if( 'userSelect' === m.type 
+			if( 'userSelect' === m.type
+			 && typeof m.docId === 'string'
 			 && this.last.selected === m.docId ){
 				// Do not replay selection if already selected
 			} else {
