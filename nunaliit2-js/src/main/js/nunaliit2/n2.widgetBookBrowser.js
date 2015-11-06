@@ -131,6 +131,8 @@ var BookBrowser = $n2.Class({
 	
 	pagePadding: null,
 	
+	pageResizing: null,
+	
 	book: null,
 	
 	elemId: null,
@@ -146,13 +148,15 @@ var BookBrowser = $n2.Class({
 			contentId: null
 			,containerId: null
 			,dispatchService: null
-			,pagePadding: 7
+			,pagePadding: 2
+			,pageResizing: true
 			,book: null
 		},opts_);
 		
 		var _this = this;
 
 		this.pagePadding = opts.pagePadding;
+		this.pageResizing = opts.pageResizing;
 		this.book = opts.book;
 		this.focusDocId = undefined;
 		this.lastScrollTop = undefined;
@@ -204,7 +208,7 @@ var BookBrowser = $n2.Class({
 	_display: function(){
 		var _this = this;
 		
-		var pagePadding = 7;
+		var pagePadding = this.pagePadding;
 		
 		var $elem = this._getElem()
 			.empty();
@@ -231,7 +235,7 @@ var BookBrowser = $n2.Class({
 			for(var i=0,e=pages.length; i<e; ++i){
 				var page = pages[i];
 				
-				if( !page._book ){
+				if( !page._bookBrowser ){
 					page._bookBrowser = {};
 				};
 				
@@ -373,20 +377,42 @@ var BookBrowser = $n2.Class({
 		
 		return page;
 	},
+	
+	_getPageFromPageId: function(pageId_){
+		var pages = this.book.getPages();
+		if( pages ){
+			for(var i=0,e=pages.length; i<e; ++i){
+				var page = pages[i];
 
-	_selectDocId: function(docId){
+				if( page._bookBrowser ){
+					var pageId = page._bookBrowser.pageId;
+					
+					if( pageId_ === pageId ){
+						return page;
+					};
+				};
+			};
+		};
+		
+		return undefined;
+	},
+	
+	_getViewportMiddleOffset: function(){
 		var $elem = this._getElem();
 		var $pagesOuter = $elem.find('.n2BookBrowser_pagesOuter');
-
-		// Check if selected document is already visible
 		var scrollTop = $pagesOuter.scrollTop();
 		var middleOffset = 0;
 		var $outer = $elem.find('.n2BookBrowser_pagesOuter');
 		if( $outer.length > 0 ){
 			middleOffset = $outer.height() / 2;
 		};
-		var bookOffset = scrollTop + middleOffset;
-		var page = this._getPageFromOffset(bookOffset);
+		var computedOffset = scrollTop + middleOffset;
+		return computedOffset;
+	},
+
+	_selectDocId: function(docId){
+		var bookOffset = this._getViewportMiddleOffset();
+
 		var currentPage = this._getPageFromOffset(bookOffset);
 		if( currentPage ){
 			var currentDocId = currentPage.getDocId();
@@ -414,6 +440,7 @@ var BookBrowser = $n2.Class({
 	},
 	
 	_loadImages: function(){
+		var _this = this;
 		var pages = this.book.getPages();
 		if( pages ){
 			var $elem = this._getElem();
@@ -485,6 +512,14 @@ var BookBrowser = $n2.Class({
 						// Must load
 						$('<img>')
 							.addClass('n2BookBrowser_pageImage')
+							.attr('n2PageId',pageId)
+							.load(function(){
+								var $img = $(this);
+								var height = $img.height();
+								var pageId = $img.attr('n2PageId');
+								_this._setPageHeight(pageId,height);
+								return true;
+							}) // must come before setting src attribute
 							.attr('src',imageUrl)
 							.appendTo($imageContainer);
 					};
@@ -498,6 +533,85 @@ var BookBrowser = $n2.Class({
 
 				var $imageContainer = $page.find('.n2BookBrowser_pageImageContainer');
 				$imageContainer.find('img').remove();
+			};
+		};
+	},
+	
+	_setPageHeight: function(pageId,height){
+		if( this.pageResizing ){
+			var page = this._getPageFromPageId(pageId);
+			if( page 
+			 && page.imageHeight !== height ){
+				// About to resize a page. Get offset of current page. Resize the page.
+				// Recompute all page offsets. Re-adjust the the scrollTop so that the
+				// same offset in the current page is preserved.
+				
+				// ... compute offset into current page
+				var bookOffset = this._getViewportMiddleOffset();
+				var currentPage = this._getPageFromOffset(bookOffset);
+				var currentPageRatio = undefined;
+				if( currentPage 
+				 && currentPage._bookBrowser 
+				 && typeof currentPage._bookBrowser.offset === 'number' 
+				 && typeof currentPage.imageHeight === 'number' 
+				 && currentPage.imageHeight > 0 ){
+					currentPageRatio = (bookOffset - currentPage._bookBrowser.offset) / currentPage.imageHeight;
+					if( currentPageRatio < 0 ){
+						currentPageRatio = 0;
+					};
+					if( currentPageRatio > 1 ){
+						currentPageRatio = 1;
+					};
+				};
+				
+				// ... resize page
+				page.imageHeight = height;
+				var $page = $('#'+pageId);
+				$page.css('height',page.imageHeight);
+
+				// ... recompute page offsets for all pages
+				var pagePadding = this.pagePadding;
+				var pages = this.book.getPages();
+				if( pages ){
+					var offset = pagePadding;
+					for(var i=0,e=pages.length; i<e; ++i){
+						var page = pages[i];
+						
+						if( !page._bookBrowser ){
+							page._bookBrowser = {};
+						};
+						
+						page._bookBrowser.offset = offset;
+						
+						if( page.imageHeight ){
+							offset += page.imageHeight;
+						};
+						
+						offset += (2 * pagePadding);
+					};
+				};
+				
+				// ... reposition book so that same offset in the current
+				// page is displayed
+				if( typeof currentPageRatio === 'number' ){
+					var effectiveOffset = currentPage._bookBrowser.offset +
+						(currentPageRatio * currentPage.imageHeight);
+
+					var $elem = this._getElem();
+					var middleOffset = 0;
+					var $outer = $elem.find('.n2BookBrowser_pagesOuter');
+					if( $outer.length > 0 ){
+						middleOffset = $outer.height() / 2;
+					};
+
+					var viewPortTopOffset = effectiveOffset - middleOffset;
+					if( viewPortTopOffset < 0 ){
+						viewPortTopOffset = 0;
+					};
+
+					var $pagesOuter = $elem.find('.n2BookBrowser_pagesOuter');
+					$pagesOuter.scrollTop(viewPortTopOffset);
+				};
 			};
 		};
 	},
