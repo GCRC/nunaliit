@@ -913,7 +913,7 @@ var RibbonGrid = $n2.Class({
 
 // ===================================================================================
 
-var RibbonDisplay = $n2.Class({
+var RibbonDisplay = $n2.Class('RibbonDisplay', {
 	
 	documentSource: null,
 	
@@ -2431,7 +2431,7 @@ function HandleDisplayRenderRequest(m){
 		
 		var displayControl = new RibbonDisplay(options);
 
-		m.onSuccess();
+		m.onSuccess(displayControl);
 	};
 };
 

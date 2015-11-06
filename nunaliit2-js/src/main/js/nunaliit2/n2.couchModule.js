@@ -675,7 +675,8 @@ var ModuleDisplay = $n2.Class({
 						,displayId: _this.sidePanelName
 						,config: config
 						,moduleDisplay: _this
-						,onSuccess: function(){
+						,onSuccess: function(displayControl){
+							_this.displayControl = displayControl;
 							drawCanvas(searchInfo, mapInfo, canvasInfo);
 						}
 						,onError: opts.onError

@@ -2042,7 +2042,7 @@ function HandleDisplayRenderRequest(m){
 			}
 		});
 
-		m.onSuccess();
+		m.onSuccess(displayControl);
 	};
 };
 

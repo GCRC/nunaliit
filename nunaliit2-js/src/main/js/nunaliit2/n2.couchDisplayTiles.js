@@ -1769,9 +1769,9 @@ function HandleDisplayRenderRequest(m){
 		options.customService = m.config.directory.customService;
 		options.dispatchService = m.config.directory.dispatchService;
 		
-		new TiledDisplay(options);
+		var displayControl = new TiledDisplay(options);
 
-		m.onSuccess();
+		m.onSuccess(displayControl);
 	};
 };
 
