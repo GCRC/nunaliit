@@ -2175,6 +2175,9 @@ var RibbonDisplay = $n2.Class({
 	    				.appendTo($tile);
 	    			
 	    			this._populateCurrentPopUp(docId, $popup);
+	    		} else {
+	    			// Toggle off
+	    			$popup.remove();
 	    		};
 	    	};
 		};
@@ -2211,6 +2214,7 @@ var RibbonDisplay = $n2.Class({
 		
 		$('<a>')
 			.attr('href','#')
+			.addClass('n2DisplayRibbon_popup_button n2DisplayRibbon_popup_button_close')
 			.text( _loc('Close') )
 			.click(function(){
 				var $a = $(this);
