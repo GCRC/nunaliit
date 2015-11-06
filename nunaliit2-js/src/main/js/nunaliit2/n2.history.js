@@ -229,6 +229,8 @@ var History = $n2.Class({
 	
 	retrievedFromStorage: null,
 	
+	hint: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			sessionId: undefined
@@ -246,6 +248,7 @@ var History = $n2.Class({
 		this.lastHistoryIndex = undefined;
 		this.lastUpdated = undefined;
 		this.retrievedFromStorage = false;
+		this.hint = undefined;
 		
 		if( !this.sessionId ){
 			this.sessionId = 's' + (new Date()).getTime();
@@ -260,6 +263,8 @@ var History = $n2.Class({
 			this.dispatchService.register(DH,'start',f);
 			this.dispatchService.register(DH,'historyHashModified',f);
 			this.dispatchService.register(DH,'historyGetState',f);
+			this.dispatchService.register(DH,'historyBack',f);
+			this.dispatchService.register(DH,'historyForward',f);
 		};
 	},
 	
@@ -429,6 +434,12 @@ var History = $n2.Class({
 				// Synchronous call
 				var state = this._computeState();
 				m.state = state;
+
+			} else if( 'historyBack' === m.type ) {
+				this.hint = 'back';
+
+			} else if( 'historyForward' === m.type ) {
+				this.hint = 'forward';
 			};
 		};
 	},
@@ -520,6 +531,12 @@ var History = $n2.Class({
 				};
 
 			} else {
+				// If hint is 'back', then reverse the indices in
+				// order to favour indices earlier in the history
+				if( 'back' === this.hint ){
+					indices.reverse();
+				};
+
 				// Find closest entry and make it current
 				var minDistance = undefined;
 				var minIndex = undefined;
