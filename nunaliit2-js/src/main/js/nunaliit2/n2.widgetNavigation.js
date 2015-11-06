@@ -93,7 +93,7 @@ var NavigationWidget = $n2.Class({
 			.appendTo($elem)
 			.click(function(){
 				// Enable click only if forward is available
-				if( $(this).hasClass('n2NavigationWidget_button_available') ){
+				if( $(this).hasClass('n2NavigationWidget_button_enabled') ){
 					if( _this.dispatchService ){
 						_this.dispatchService.send(DH,{
 							type: 'historyForward'
@@ -103,7 +103,7 @@ var NavigationWidget = $n2.Class({
 				return false;
 			});
 		$('<div>')
-			.addClass('n2NavigationWidget_button n2NavigationWidget_button_home n2NavigationWidget_button_available')
+			.addClass('n2NavigationWidget_button n2NavigationWidget_button_home n2NavigationWidget_button_enabled')
 			.appendTo($elem)
 			.click(function(){
 				if( _this.dispatchService ){
@@ -118,7 +118,7 @@ var NavigationWidget = $n2.Class({
 			.appendTo($elem)
 			.click(function(){
 				// Enable click only if back is available
-				if( $(this).hasClass('n2NavigationWidget_button_available') ){
+				if( $(this).hasClass('n2NavigationWidget_button_enabled') ){
 					if( _this.dispatchService ){
 						_this.dispatchService.send(DH,{
 							type: 'historyBack'
@@ -138,19 +138,31 @@ var NavigationWidget = $n2.Class({
 			var $elem = this._getElem();
 
 			if( historyState.backIsAvailable ){
-				$elem.addClass('n2NavigationWidget_button_backIsAvailable');
-				$elem.find('.n2NavigationWidget_button_back').addClass('n2NavigationWidget_button_available');
+				$elem.addClass('n2NavigationWidget_button_enabled_back');
+				$elem
+					.find('.n2NavigationWidget_button_back')
+					.addClass('n2NavigationWidget_button_enabled')
+					.removeClass('n2NavigationWidget_button_disabled');
 			} else {
-				$elem.removeClass('n2NavigationWidget_button_backIsAvailable');
-				$elem.find('.n2NavigationWidget_button_back').removeClass('n2NavigationWidget_button_available');
+				$elem.removeClass('n2NavigationWidget_button_enabled_back');
+				$elem
+					.find('.n2NavigationWidget_button_back')
+					.addClass('n2NavigationWidget_button_disabled')
+					.removeClass('n2NavigationWidget_button_enabled');
 			};
 
 			if( historyState.forwardIsAvailable ){
-				$elem.addClass('n2NavigationWidget_button_forwardIsAvailable');
-				$elem.find('.n2NavigationWidget_button_forward').addClass('n2NavigationWidget_button_available');
+				$elem.addClass('n2NavigationWidget_button_enabled_forward');
+				$elem
+					.find('.n2NavigationWidget_button_forward')
+					.addClass('n2NavigationWidget_button_enabled')
+					.removeClass('n2NavigationWidget_button_disabled');
 			} else {
-				$elem.removeClass('n2NavigationWidget_button_forwardIsAvailable');
-				$elem.find('.n2NavigationWidget_button_forward').removeClass('n2NavigationWidget_button_available');
+				$elem.removeClass('n2NavigationWidget_button_enabled_forward');
+				$elem
+					.find('.n2NavigationWidget_button_forward')
+					.addClass('n2NavigationWidget_button_disabled')
+					.removeClass('n2NavigationWidget_button_enabled');
 			};
 		};
 	},
