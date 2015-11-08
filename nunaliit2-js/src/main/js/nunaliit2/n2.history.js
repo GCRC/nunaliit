@@ -376,20 +376,27 @@ var History = $n2.Class({
 			};
 			
 			if( 1 === candidateCount ){
-				// Adopt this history
-				this.sessionId = candidateHistory.sessionId;
-				this.lastUpdated = candidateHistory.lastUpdated;
-				this.retrievedFromStorage = true;
-				
-				var entries = [];
-				for(var i=0,j=candidateHistory.entries.length; i<j; ++i){
-					var entry = candidateHistory.entries[i];
-					entries.push(entry);
+				if( this.sessionId === candidateHistory.sessionId ){
+					// No need to reload. What we found in storage
+					// is a copy of this history. What is in memory is
+					// fine.
+				} else {
+					// Adopt this history
+					this.sessionId = candidateHistory.sessionId;
+					this.lastUpdated = candidateHistory.lastUpdated;
+					
+					var entries = [];
+					for(var i=0,j=candidateHistory.entries.length; i<j; ++i){
+						var entry = candidateHistory.entries[i];
+						entries.push(entry);
+					};
+					this.entries = entries;
+					this.currentEntry = candidateEntry;
+
+					reloaded = true;
 				};
-				this.entries = entries;
-				this.currentEntry = candidateEntry;
-				
-				reloaded = true;
+
+				this.retrievedFromStorage = true;
 			};
 		};
 		
