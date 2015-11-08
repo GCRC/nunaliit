@@ -490,13 +490,8 @@ var History = $n2.Class({
 		var reloaded = this._reloadFromStorage(href, historyIndex);
 		if( reloaded ){
 			$n2.log('history reloaded from storage');
-			this.lastUpdated = (new Date()).getTime();
-			this.saveToStorage();
-			this._reportChange();
-			return;
-		};
 
-		if( this.lastHistoryIndex !== historyIndex ){
+		} else if( this.lastHistoryIndex !== historyIndex ){
 			// This happens only when the history is modified
 			// Must create a new entry
 			insertNewEntry(this, href, historyIndex);
