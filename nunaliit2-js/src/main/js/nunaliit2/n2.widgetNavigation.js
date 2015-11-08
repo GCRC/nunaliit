@@ -56,15 +56,19 @@ var NavigationWidget = $n2.Class({
 		
 		var $elem = $(opts.elem);
 		this.elemId = $n2.utils.getElementIdentifier($elem);
-		
+
 		if( this.dispatchService ){
 			var f = function(m, addr, dispatchService){
 				_this._handle(m, addr, dispatchService);
 			};
 			
 			this.dispatchService.register(DH, 'historyReportState', f);
-			
-			// Get current state
+		};
+		
+		this._display();
+
+		// Get current state
+		if( this.dispatchService ){
 			var m = {
 				type: 'historyGetState'
 			};
@@ -73,8 +77,6 @@ var NavigationWidget = $n2.Class({
 				this._handleHistoryState(m.state);
 			};
 		};
-		
-		this._display();
 		
 		//$n2.log('NavigationWidget',this);
 	},
