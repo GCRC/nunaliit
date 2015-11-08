@@ -127,7 +127,10 @@ var NavigationDisplay = $n2.Class({
 				} else if( item.title && item.module ) {
 						// Compute URL based on current one
 					var currentUrl = $n2.url.getCurrentLocation();
-					var moduleUrl = currentUrl.clone().setParamValue('module',item.module);
+					var moduleUrl = currentUrl
+						.clone()
+						.setHash(null)
+						.setParamValue('module',item.module);
 				
 					// Install module class
 					$li.attr('n2nav-module',item.module);
