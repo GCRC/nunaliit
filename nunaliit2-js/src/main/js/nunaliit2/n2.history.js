@@ -1006,6 +1006,7 @@ function getStorageInfo(timestamp){
 	try {
 		raw = JSON.parse(value);
 	} catch(e) {
+		$n2.log('Error parsing history hash(1):'+value);
 		raw = {};
 	};
 	if( !raw ){
@@ -1020,6 +1021,7 @@ function getStorageInfo(timestamp){
 };
 
 function saveStorageInfo(timestamp, info){
+	$n2.log('Save hash '+timestamp);
 	var storage = $n2.storage.getSessionStorage();
 	var value = storage.getItem('n2_historyHash');
 	
@@ -1027,6 +1029,7 @@ function saveStorageInfo(timestamp, info){
 	try {
 		raw = JSON.parse(value);
 	} catch(e) {
+		$n2.log('Error parsing history hash(2):'+value);
 		raw = {};
 	};
 	if( !raw ){
