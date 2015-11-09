@@ -346,12 +346,52 @@ function decodeFromDomAttribute(domAttribute){
 	return new ObjectSelector(parts);
 };
 
+//=========================================================================
+// Iterate over an object and find all possible selectors according to a
+// a filter function
+function findSelectors(obj, testFn){
+	function traverse(obj, testFn, result, selector){
+		for(var key in obj){
+			var value = obj[key];
+			if( testFn(value) ){
+				var childSelector = selector.getChildSelector(key);
+				result.push(childSelector);
+			};
+			
+			if( typeof value === 'object' ){
+				var childSelector = selector.getChildSelector(key);
+				traverse(value, testFn, result, childSelector);
+			};
+		};
+	};
+
+	if( typeof obj !== 'object' ){
+		throw 'objectSelector.findSelectors() needs an object'
+	};
+	if( typeof testFn !== 'function' ){
+		throw 'objectSelector.findSelectors() needs a test function'
+	};
+	
+	var result = [];
+	var rootSelector = new ObjectSelector([]);
+	
+	if( testFn(obj) ){
+		result.push(rootSelector);
+	};
+	
+	traverse(obj, testFn, result, rootSelector);
+	
+	return result;
+};
+
+
 // =========================================================================
 
 $n2.objectSelector = {
 	ObjectSelector: ObjectSelector
 	,parseSelector: parseSelector
 	,decodeFromDomAttribute: decodeFromDomAttribute
+	,findSelectors: findSelectors
 };	
 	
 })(nunaliit2);
