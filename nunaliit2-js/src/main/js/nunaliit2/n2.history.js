@@ -112,7 +112,9 @@ function decodeEntryFromHash(hash){
 };
 
 function createNewEntry(entry){
-	entry.s = (new Date()).getTime();
+	if( !entry.s ){
+		entry.s = (new Date()).getTime();
+	};
 	return entry;
 };
 
