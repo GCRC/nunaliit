@@ -66,6 +66,9 @@ var cursorYOffset = -0.002;
 var lastPinchZoomDistance = undefined;
 var pinchZoomThreshold = 0.15;
 
+// Time to wait until a finger draw is considered finished, in ms
+var drawDelay = 1000.0;
+
 function Vector(x, y) {
 	this.x = x;
 	this.y = y;
@@ -221,6 +224,10 @@ Body.prototype.updatePosition = function(timestamp, energy) {
 		this.pos = this.targetPos;
 		this.vel = new Vector(0, 0);
 	}
+
+	// Clamp to valid coordinate space
+	this.pos.x = Math.min(Math.max(0.0, this.pos.x), 1.0);
+	this.pos.y = Math.min(Math.max(0.0, this.pos.y), 1.0);
 
 	return true;
 }
@@ -428,16 +435,6 @@ var cursors = new Object();
 var tangibles = new Object();
 var hands = new Object();
 
-function numHands() {
-	var count = 0;
-	for (var inst in hands) {
- 		if (hands.hasOwnProperty(inst)) {
-			++count;
-		}
-	}
-	return count;
-}
-
 /** Dispatch a mouse event as a result of a cursor change.
  * eventType: mousedown, mousemove, mouseup, or click
  * x, y: 0..1 normalized TUIO cordinates
@@ -569,13 +566,15 @@ function bestHand(x, y) {
 	var hand = null;
 
 	for (var h in hands) {
-		var center = centerPoint(hands[h].cursors);
-		var d = distance(x, y, center.x, center.y);
-		if (d <= handSpan &&
-			hands[h].numAliveCursors() < 5 &&
-			d <= bestDistance) {
-			hand = hands[h];
-			bestDistance = d;
+		if (hands.hasOwnProperty(h)) {
+			var center = centerPoint(hands[h].cursors);
+			var d = distance(x, y, center.x, center.y);
+			if (d <= handSpan &&
+				hands[h].numAliveCursors() < 5 &&
+				d <= bestDistance) {
+				hand = hands[h];
+				bestDistance = d;
+			}
 		}
 	}
 
@@ -715,18 +714,29 @@ function onHandMove(inst) {
 		}
 		scrollX = hand.pos.x;
 		scrollY = hand.pos.y;
-	} else if (numHands() == 2) {
-		// Get the two hands involved in the zoom gesture
+	} else {
+		// Get the hands involved in the zoom gesture
 		var zoomHands = [];
 		for (var inst in hands) {
- 			if (hands.hasOwnProperty(inst)) {
+ 			if (hands.hasOwnProperty(inst) && hands[inst].alive) {
 				zoomHands.push(hands[inst]);
 			}
 		}
 
-		var d = distance(zoomHands[0].pos.x, zoomHands[0].pos.y,
-						 zoomHands[1].pos.x, zoomHands[1].pos.y);
-		if (lastPinchZoomDistance != undefined) {
+		if (zoomHands.length < 2) {
+			return;  // Not enough alive hands for pinch zooming
+		}
+
+		// Find the greatest distance between any two hands
+		var d = 0.0;
+		for (var i = 0; i < zoomHands.length - 1; ++i) {
+			d = Math.max(
+				d,
+				distance(zoomHands[i].pos.x, zoomHands[i].pos.y,
+						 zoomHands[i + 1].pos.x, zoomHands[i + 1].pos.y));
+		}
+
+ 		if (lastPinchZoomDistance != undefined) {
 			var delta = lastPinchZoomDistance - d;
 			if (delta > pinchZoomThreshold) {
 				moduleDisplay.mapControl.map.zoomOut();
@@ -1026,7 +1036,11 @@ window.onkeydown = function (e) {
 		canvas = new DrawOverlay(
 			map, map.offsetWidth, map.offsetHeight,
 			function (points) {
-				// Find bounding rectangle
+				if (points.length < 2) {
+					return;  // Not enough points to do anything sensible
+				}
+
+				// Find bounding rectangle (in pixels)
 				var left = Infinity;
 				var bottom = 0;
 				var right = 0;
@@ -1036,6 +1050,14 @@ window.onkeydown = function (e) {
 					bottom = Math.max(bottom, points[i][1]);
 					right = Math.max(right, points[i][0]);
 					top = Math.min(top, points[i][1]);
+				}
+
+				// Ensure bounding rectangle has a reasonable size
+				var width = (right - left);
+				var height = (bottom - top);
+				var area = width * height;
+				if (width < 16 || height < 16 || area < 16) {
+					return;
 				}
 
 				// Convert to lon/lat
@@ -1166,25 +1188,28 @@ function DrawOverlay(parent, width, height, pathCallback) {
 	};
 
 	this.canvas.onmousemove = function (e) {
-		var pos = self.getMousePosition(e);
-		self.moveTo(pos.x, pos.y);
+		if (self.drawing) {
+			var pos = self.getMousePosition(e);
+			self.moveTo(pos.x, pos.y);
+		}
 	};
 
 	this.canvas.onmouseup = function (e) {
 		var pos = self.getMousePosition(e);
-		self.endStroke(pos.x, pos.y);
-		self.parent.removeChild(self.canvas);
-		delete self;
+		self.moveTo(pos.x, pos.y);
+		self.drawing = false;
+		self.mouseUpTime = Date.now();
+		window.setTimeout(function() { self.endStroke(); }, drawDelay);
 	};
 }
 
 DrawOverlay.prototype.startStroke = function (x, y) {
 	this.drawing = true;
 	this.context.lineCap = 'round';
-	this.context.lineWidth = 8;
-	this.context.strokeStyle = '#DDDDDD';
+	this.context.lineWidth = 2;
+	this.context.strokeStyle = '#00FF00';
 	this.context.beginPath();
-
+	this.context.imageSmoothingEnabled = true;
 	this.context.moveTo(x, y);
 	this.points.push([x, y]);
 }
@@ -1199,8 +1224,11 @@ DrawOverlay.prototype.moveTo = function (x, y) {
 	this.points.push([x, y]);
 }
 
-DrawOverlay.prototype.endStroke = function (x, y) {
-	this.drawing = false;
-	this.pathCallback(this.points);
-	this.points = []
+DrawOverlay.prototype.endStroke = function () {
+	if (!this.drawing && Date.now() - this.mouseUpTime >= drawDelay / 2.0) {
+		this.pathCallback(this.points);
+		this.points = [];
+		this.parent.removeChild(this.canvas);
+		delete this;
+	}
 }
