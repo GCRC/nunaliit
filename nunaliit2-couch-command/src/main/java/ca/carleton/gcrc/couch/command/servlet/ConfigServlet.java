@@ -63,6 +63,7 @@ import ca.carleton.gcrc.json.servlet.JsonServlet;
 import ca.carleton.gcrc.mail.MailDelivery;
 import ca.carleton.gcrc.mail.MailDeliveryImpl;
 import ca.carleton.gcrc.mail.MailDeliveryNull;
+import ca.carleton.gcrc.mail.MailServiceRecipients;
 import ca.carleton.gcrc.mail.MailServletConfiguration;
 import ca.carleton.gcrc.mail.messageGenerator.MailMessageGenerator;
 import ca.carleton.gcrc.olkit.multimedia.utils.MultimediaConfiguration;
@@ -466,6 +467,11 @@ public class ConfigServlet extends JsonServlet {
 		try {
 			MailDelivery mailDelivery = null;
 			
+			MailServiceRecipients mailServiceRecipients = new MailServiceRecipientsCouchDb(
+					atlasProperties.getAtlasName(), 
+					UserDesignDocumentImpl.getUserDesignDocument(couchClient)
+					);
+			
 			// Load up configuration information
 			Properties sensitiveProps = loadProperties("sensitive.properties", true);
 			Properties props = loadProperties("mail.properties", true, sensitiveProps);
@@ -552,6 +558,7 @@ public class ConfigServlet extends JsonServlet {
 			{
 				MailServletConfiguration mailServletConfiguration = new MailServletConfiguration();
 				mailServletConfiguration.setMailDelivery(mailDelivery);
+				mailServletConfiguration.setRecipients(mailServiceRecipients);
 				servletContext.setAttribute(MailServletConfiguration.CONFIGURATION_KEY, mailServletConfiguration);
 			}
 			

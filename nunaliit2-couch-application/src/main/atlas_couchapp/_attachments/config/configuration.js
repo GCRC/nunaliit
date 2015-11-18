@@ -63,6 +63,7 @@ function nunaliitConfigure(opts_) {
 			,submissionServerUrl: opts.rootPath + '../../../servlet/submission/'
 			,dateServerUrl: opts.rootPath + '../../../servlet/date/'
 			,simplifiedGeometryServerUrl: opts.rootPath + '../../../servlet/geometry/'
+			,mailServerUrl: opts.rootPath + '../../../servlet/mail/'
 	 		,onSuccess: opts.configuredFunction
 	 	};
 	 	

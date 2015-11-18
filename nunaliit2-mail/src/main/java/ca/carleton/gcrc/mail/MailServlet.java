@@ -26,6 +26,7 @@ public class MailServlet extends JsonServlet {
 		
 	}
 	
+	@Override
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
 		
@@ -37,22 +38,29 @@ public class MailServlet extends JsonServlet {
 		if( configurationObj instanceof MailServletConfiguration ){
 			configuration = (MailServletConfiguration)configurationObj;
 
-			mailActions = new MailServiceActions(configuration.getMailDelivery());
+			mailActions = new MailServiceActions(
+					configuration.getMailDelivery(),
+					configuration.getRecipients()
+					);
 			
 		} else {
 			throw new ServletException("Invalid class for configuration: "+configurationObj.getClass().getName());
 		}
 	}
 	
+	@Override
 	public void destroy() {
 	}
 
+	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		try {
 			List<String> paths = computeRequestPath(request);
 			
 			if( paths.size() < 1 ) {
-				doGetWelcome(request, response);
+				JSONObject result = mailActions.getWelcome();
+
+				sendJsonResponse(response, result);
 				
 			} else {
 				throw new Exception("Unrecognized request");
@@ -62,17 +70,65 @@ public class MailServlet extends JsonServlet {
 		}
 	}
 
-	private void doGetWelcome(HttpServletRequest request, HttpServletResponse resp) throws Exception {
-		JSONObject result = new JSONObject();
-		result.put("ok", true);
-		result.put("service", "mail");
-		
-		if( null != configuration 
-		 && null != configuration.getMailDelivery() 
-		 && configuration.getMailDelivery().isConfigured() ){
-			result.put("configured", true);
+	@Override
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		try {
+			List<String> paths = computeRequestPath(request);
+			
+			if( paths.size() < 1 ) {
+				throw new Exception("Unrecognized request");
+				
+			} else if( paths.size() == 1
+			 && "sendFormMail".equals(paths.get(0)) ) {
+
+				// Destination
+				String destination = null;
+				{
+					String[] destinationStrings = request.getParameterValues("destination");
+					if( null == destinationStrings || destinationStrings.length < 1 ){
+						// optional
+					} else if( destinationStrings.length > 1 ){
+						throw new Exception("'destination' parameter must be specified at most once");
+					} else {
+						destination = destinationStrings[0];
+					}
+				}
+
+				// Contact Information
+				String contact = null;
+				{
+					String[] contactStrings = request.getParameterValues("contact");
+					if( null == contactStrings || contactStrings.length < 1 ){
+						throw new Exception("'contact' parameter must be specified");
+					} else if( contactStrings.length > 1 ){
+						throw new Exception("'contact' parameter must be specified exactly once");
+					} else {
+						contact = contactStrings[0];
+					}
+				}
+
+				// Body
+				String body = null;
+				{
+					String[] bodyStrings = request.getParameterValues("body");
+					if( null == bodyStrings || bodyStrings.length < 1 ){
+						throw new Exception("'body' parameter must be specified");
+					} else if( bodyStrings.length > 1 ){
+						throw new Exception("'body' parameter must be specified exactly once");
+					} else {
+						body = bodyStrings[0];
+					}
+				}
+				
+				JSONObject result = mailActions.sendFormEmail(destination, contact, body);
+				
+				sendJsonResponse(response, result);
+				
+			} else {
+				throw new Exception("Unrecognized request");
+			}
+		} catch (Exception e) {
+			reportError(e, response);
 		}
-		
-		sendJsonResponse(resp, result);
 	}
 }

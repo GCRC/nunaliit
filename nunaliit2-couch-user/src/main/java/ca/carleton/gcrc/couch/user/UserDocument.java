@@ -86,6 +86,27 @@ public class UserDocument {
 		
 		return result;
 	}
+
+	public Set<String> getMailDestinations() {
+		JSONObject options = getNunaliitOptions();
+
+		Set<String> mailDestinations = new HashSet<String>();
+		
+		if( null != options ){
+			JSONArray arr = options.optJSONArray("mailDestinations");
+			if( null != arr ){
+				for(int i=0,e=arr.length(); i<e; ++i){
+					Object obj = arr.opt(i);
+					if( null != obj && obj instanceof String ){
+						String destination = (String)obj;
+						mailDestinations.add(destination);
+					}
+				}
+			}
+		}
+		
+		return mailDestinations;
+	}
 	
 	private JSONObject getNunaliitOptions(){
 		JSONObject options = json.optJSONObject(PROP_NAME_OPTIONS);

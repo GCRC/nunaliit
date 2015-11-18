@@ -118,6 +118,7 @@ function Configure(options_){
 		,submissionServerUrl: null // string
 		,dateServerUrl: null // string
 		,simplifiedGeometryServerUrl: null // string
+		,mailServerUrl: null // string
 		,onSuccess: function(config){}
 	},options_);
 
@@ -256,6 +257,10 @@ function Configure(options_){
 	 	configuration.directory.uploadService = new $n2.upload.Upload({
 			url: options.uploadServerUrl
 			,progressServer: configuration.directory.progressService
+		});
+
+	 	configuration.directory.mailService = new $n2.mail.MailService({
+			url: options.mailServerUrl
 		});
 
 		configuration.directory.exportService = new $n2.couchExport.Export({
