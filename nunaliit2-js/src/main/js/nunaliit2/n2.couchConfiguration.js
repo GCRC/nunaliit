@@ -261,6 +261,7 @@ function Configure(options_){
 
 	 	configuration.directory.mailService = new $n2.mail.MailService({
 			url: options.mailServerUrl
+			,dispatchService: configuration.directory.dispatchService
 		});
 
 		configuration.directory.exportService = new $n2.couchExport.Export({

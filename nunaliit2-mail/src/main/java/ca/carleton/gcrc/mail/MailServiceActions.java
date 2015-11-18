@@ -2,7 +2,6 @@ package ca.carleton.gcrc.mail;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.json.JSONObject;
@@ -55,20 +54,25 @@ public class MailServiceActions {
 				message.addToRecipient( recipient );
 			}
 			
+			message.setSubject("Nunaliit Form Mail");
+			
 			// Generate message
 			StringWriter sw = new StringWriter();
 			PrintWriter pw = new PrintWriter(sw);
 			
-			pw.println("Destination: "+destination);
+			pw.println("<p><b>Destination:</b> "+destination+"</p>");
 			pw.println();
-			pw.println("Contact: ");
+			pw.println("<p><b>Contact:</b> <pre>");
 			pw.println(contactInfo);
+			pw.println("</pre></p>");
 			pw.println();
-			pw.println("Message: ");
+			pw.println("<p><b>Message:</b> <pre>");
 			pw.println(body);
+			pw.println("</pre></p>");
+			pw.println();
 			pw.flush();
 			
-			message.setHtmlContent(body);
+			message.setHtmlContent(sw.toString());
 			
 			// Send message
 			mailDelivery.sendMessage(message);

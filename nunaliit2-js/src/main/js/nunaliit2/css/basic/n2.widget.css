@@ -518,3 +518,26 @@ Splash Page
 	padding-right: 3px;
 }
 
+/* 
+==============================
+Mail Form 
+==============================
+*/
+.n2mailForm_input_contact {
+	width: 500px;
+	height: 150px;
+}
+
+.n2mailForm_input_message {
+	width: 500px;
+	height: 400px;
+}
+
+.n2mailForm_label {
+	padding: 5px 0 0 0;
+}
+
+.n2mailForm_button {
+	float: right;
+	padding: 5px;
+}
