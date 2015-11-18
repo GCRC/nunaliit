@@ -31,6 +31,7 @@ import ca.carleton.gcrc.couch.export.ExportServlet;
 import ca.carleton.gcrc.couch.simplifiedGeometry.SimplifiedGeometryServlet;
 import ca.carleton.gcrc.couch.submission.SubmissionServlet;
 import ca.carleton.gcrc.couch.user.UserServlet;
+import ca.carleton.gcrc.mail.MailServlet;
 import ca.carleton.gcrc.progress.ProgressServlet;
 import ca.carleton.gcrc.upload.UploadServlet;
 
@@ -245,6 +246,13 @@ public class CommandRun implements Command {
         	ServletHolder servletHolder = new ServletHolder(new SimplifiedGeometryServlet());
         	servletHolder.setInitOrder(2);
         	context.addServlet(servletHolder,"/servlet/geometry/*");
+        }
+
+        // Servlet for mail
+        {
+        	ServletHolder servletHolder = new ServletHolder(new MailServlet());
+        	servletHolder.setInitOrder(2);
+        	context.addServlet(servletHolder,"/servlet/mail/*");
         }
 
         // Proxy to site

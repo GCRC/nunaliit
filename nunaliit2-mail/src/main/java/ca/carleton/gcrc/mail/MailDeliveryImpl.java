@@ -1,7 +1,6 @@
 package ca.carleton.gcrc.mail;
 
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -29,6 +28,15 @@ public class MailDeliveryImpl implements MailDelivery {
 	
 	public MailDeliveryImpl() {
 		
+	}
+
+	@Override
+	public boolean isConfigured() {
+		if( null == fromAddress ) {
+			return false;
+		}
+		
+		return true;
 	}
 
 	@Override
