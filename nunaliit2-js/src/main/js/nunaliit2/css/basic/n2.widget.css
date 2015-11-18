@@ -494,3 +494,27 @@ Wait Widget
 .n2wait .n2_wait_name_count {
 	padding-left: 2px;
 }
+
+/* 
+==============================
+Splash Page 
+==============================
+*/
+
+.n2Splash_button {
+	padding: 0 5px;
+}
+
+.n2Splash_buttons .n2Splash_button_disabled {
+	color: transparent;
+}
+
+.n2Splash_button_close {
+	float: right;
+}
+
+.n2Splash_label_dontshow {
+	padding-left: 50px;
+	padding-right: 3px;
+}
+
