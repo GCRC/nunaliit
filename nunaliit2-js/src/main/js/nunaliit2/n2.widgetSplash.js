@@ -113,7 +113,7 @@ var SplashPageWidget = $n2.Class({
 				window.setTimeout(function(){
 					if( !_this.interactionSeen ){
 						_this.showSplashPage = true;
-						_this._showSplash();
+						_this._showInitialSplash();
 					};
 				},0);
 			});
@@ -125,17 +125,38 @@ var SplashPageWidget = $n2.Class({
 			this.dispatchService.register(DH,'searchInitiate',f);
 			this.dispatchService.register(DH,'selected',f);
 			this.dispatchService.register(DH,'splashWidgetSetPages',f);
+			this.dispatchService.register(DH,'showPreprocessElement',f);
+			this.dispatchService.register(DH,'splashShowSplashPage',f);
 		};
 		
-		this._showSplash();
+		this._showInitialSplash();
+		
+		this._handleShowPreprocessElement( $('body') );
 
 		$n2.log('SplashPageWidget', this);
 	},
 	
-	_showSplash: function(){
+	_showInitialSplash: function(){
+		// If a selection is performed from the initial URL,
+		// do not show splash page
+		if( !this.showSplashPage ) return;
+
+		// We are about to show splash. Check if a cookie is
+		// set to prevent us from showing splash
+		if( $n2.cookie && $n2.cookie.getCookie ){
+			var cookie = $n2.cookie.getCookie(this.cookieName);
+			var cookieVersion = 1 * cookie;
+			if( cookieVersion >= this.version ){
+				return;
+			};
+		};
+
+		this._showSplash(true);
+	},
+	
+	_showSplash: function(isInitialPage){
 		var _this = this;
 
-		if( !this.showSplashPage ) return;
 		if( !this.pages ) return;
 
 		// We are about to show splash. Check if a cookie is
@@ -185,24 +206,26 @@ var SplashPageWidget = $n2.Class({
 				return false;
 			});
 
-		var cbId = $n2.getUniqueId();
-		$('<label>')
-			.addClass('n2Splash_label n2Splash_label_dontshow')
-			.attr('for',cbId)
-			.text( _loc('Do not show again') )
-			.appendTo($buttons);
+		if( isInitialPage ){
+			var cbId = $n2.getUniqueId();
+			$('<label>')
+				.addClass('n2Splash_label n2Splash_label_dontshow')
+				.attr('for',cbId)
+				.text( _loc('Do not show again') )
+				.appendTo($buttons);
 
-		$('<input>')
-			.addClass('n2Splash_button n2Splash_button_dontshow')
-			.attr('type','checkbox')
-			.attr('id',cbId)
-			.appendTo($buttons)
-			.click(function(){
-				var $cb = $(this);
-				var isChecked = $cb.is(':checked');
-				_this._doNotShowAgain(isChecked);
-				return true;
-			});
+			$('<input>')
+				.addClass('n2Splash_button n2Splash_button_dontshow')
+				.attr('type','checkbox')
+				.attr('id',cbId)
+				.appendTo($buttons)
+				.click(function(){
+					var $cb = $(this);
+					var isChecked = $cb.is(':checked');
+					_this._doNotShowAgain(isChecked);
+					return true;
+				});
+		};
 		
 		$('<a>')
 			.addClass('n2Splash_button n2Splash_button_close n2Splash_button_enabled')
@@ -249,7 +272,13 @@ var SplashPageWidget = $n2.Class({
 			.empty();
 		
 		if( page.html ){
-			$container.html(page.html);
+			var html = page.html;
+			if( typeof html === 'object' 
+			 && 'localized' === html.nunaliit_type ){
+				html = _loc(html);
+			};
+			
+			$container.html(html);
 			if( this.showService ){
 				this.showService.fixElementAndChildren($container, {}, page.doc);
 			};
@@ -315,6 +344,49 @@ var SplashPageWidget = $n2.Class({
 		};
 	},
 	
+	_insertShowSplashPageButton: function($elem){
+		var _this = this;
+		
+		$elem.empty();
+		var elemId = $n2.utils.getElementIdentifier($elem);
+		
+		var label = $elem.attr('nunaliit-label');
+		if( !label ){
+			label = _loc('Help');
+		};
+		
+		if( this.dispatchService ){
+			var $elem = $('#'+elemId);
+			
+			$('<a>')
+				.addClass('n2splash_showSplashButton')
+				.attr('href','#')
+				.text( label )
+				.appendTo($elem)
+				.click(function(){
+					_this.dispatchService.send(DH,{
+						type: 'splashShowSplashPage'
+					});
+					return false;
+				});
+		};
+	},
+	
+	_handleShowPreprocessElement: function($elem){
+		var _this = this;
+
+		var $set = $elem.find('*').addBack();
+		
+		// Localization
+		$set.filter('.n2s_insertShowSplashPageButton').each(function(){
+			var $jq = $(this);
+			_this._insertShowSplashPageButton($jq);
+			$jq
+				.removeClass('n2s_insertShowSplashPageButton')
+				.addClass('n2s_insertedShowSplashPageButton');
+		});
+	}, 
+	
 	_handle: function(m, addr, dispatcher){
 		// If a 'selected' or 'searchInitiate' event is seen, then the page
 		// has been reloaded
@@ -335,8 +407,15 @@ var SplashPageWidget = $n2.Class({
 				};
 				
 				this.pageIndex = 0;
-				this._showSplash();
+				this._showInitialSplash();
 			};
+
+		} else if( 'showPreprocessElement' === m.type ){
+			var $elem = m.elem;
+			this._handleShowPreprocessElement($elem);
+
+		} else if( 'splashShowSplashPage' === m.type ){
+			this._showSplash(false);
 		};
 	}
 });
