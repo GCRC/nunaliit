@@ -51,6 +51,10 @@ var SplashPageWidget = $n2.Class({
 	
 	pages: null,
 	
+	title: null,
+	
+	dialogWidth: null,
+	
 	pageIndex: null,
 	
 	showSplashPage: null,
@@ -66,6 +70,8 @@ var SplashPageWidget = $n2.Class({
 			,dispatchService: null
 			,showService: null
 			,pages: null
+			,title: null
+			,dialogWidth: 800
 			,version: 1
 			,cookieName: 'NunaliitSplashDontShow'
 		},opts_);
@@ -78,6 +84,8 @@ var SplashPageWidget = $n2.Class({
 		this.pages = undefined;
 		this.pageIndex = 0;
 		
+		this.title = opts.title;
+		this.dialogWidth = opts.dialogWidth;
 		this.dispatchService = opts.dispatchService;
 		this.showService = opts.showService;
 		this.version = opts.version;
@@ -210,17 +218,26 @@ var SplashPageWidget = $n2.Class({
 		// Print HTML
 		this._showCurrentPage();
 		
-		$dialog.dialog({
+		var title = undefined;
+		if( this.title ){
+			title = _loc(this.title);
+		};
+		if( !title ){
+			title = _loc('Welcome');
+		};
+		var diagOptions = {
 			autoOpen: true
-			,title: _loc('Welcome')
+			,title: title
 			,modal: true
-			,width: '75%'
+			,width: this.dialogWidth
 			,close: function(event, ui){
 				var $diag = $(event.target);
 				$diag.dialog('destroy');
 				$diag.remove();
 			}
-		});
+		};
+		
+		$dialog.dialog(diagOptions);
 	},
 
 	_showCurrentPage: function(){
