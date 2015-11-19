@@ -232,6 +232,9 @@ var Symbolizer = $n2.Class({
 		if( typeof value === 'object'
 		 && typeof value.getValue === 'function' ){
 			value = value.getValue(ctxt);
+		} else if( typeof value === 'object'
+		 && 'localized' === value.nunaliit_type){
+			value = _loc(value);
 		};
 		
 		return value;
@@ -259,7 +262,9 @@ var Symbolizer = $n2.Class({
 				};
 				
 				if( 'label' === name ){
-					value = _loc(value);
+					if( typeof value !== 'string' ){
+						value = '' + value;
+					};
 					
 					if( value ){
 						// empty()

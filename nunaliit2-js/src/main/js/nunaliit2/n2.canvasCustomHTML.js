@@ -169,11 +169,11 @@ var CustomHtmlCanvas = $n2.Class({
  	 					}
  	 				});
  	 			} else {
- 	 				opts.onError( _loc('Location of SVG is undefined for customHtml canvas') );
+ 	 				opts.onError( _loc('Location of HTML is undefined for customHtml canvas') );
  	 			};
  	 			
  	 		} else {
- 	 			opts.onError( _loc('A SVG file must be specified for the customHtml canvas') );
+ 	 			opts.onError( _loc('A HTML file must be specified for the customHtml canvas') );
  	 		};
 
  		};
