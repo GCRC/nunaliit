@@ -39,6 +39,7 @@ public class MailServlet extends JsonServlet {
 			configuration = (MailServletConfiguration)configurationObj;
 
 			mailActions = new MailServiceActions(
+					configuration.getAtlasName(),
 					configuration.getMailDelivery(),
 					configuration.getRecipients()
 					);

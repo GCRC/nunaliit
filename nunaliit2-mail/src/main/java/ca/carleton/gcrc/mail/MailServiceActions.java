@@ -12,10 +12,15 @@ public class MailServiceActions {
 
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
+	private String atlasName;
 	private MailDelivery mailDelivery;
 	private MailServiceRecipients mailRecipients;
 	
-	public MailServiceActions(MailDelivery mailDelivery, MailServiceRecipients mailRecipients){
+	public MailServiceActions(
+			String atlasName, 
+			MailDelivery mailDelivery, 
+			MailServiceRecipients mailRecipients ){
+		this.atlasName = atlasName;
 		this.mailDelivery = mailDelivery;
 		this.mailRecipients = mailRecipients;
 	}
@@ -60,8 +65,14 @@ public class MailServiceActions {
 			StringWriter sw = new StringWriter();
 			PrintWriter pw = new PrintWriter(sw);
 			
-			pw.println("<p><b>Destination:</b> "+destination+"</p>");
-			pw.println();
+			if( null != atlasName ){
+				pw.println("<p><b>Atlas:</b> "+atlasName+"</p>");
+				pw.println();
+			}
+			if( null != destination ){
+				pw.println("<p><b>Destination:</b> "+destination+"</p>");
+				pw.println();
+			}
 			pw.println("<p><b>Contact:</b> <pre>");
 			pw.println(contactInfo);
 			pw.println("</pre></p>");

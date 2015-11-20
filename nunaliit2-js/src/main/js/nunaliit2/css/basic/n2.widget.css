@@ -541,3 +541,8 @@ Mail Form
 	float: right;
 	padding: 5px;
 }
+
+.n2mailForm_button_disabled {
+	color: #ccc !important;
+	pointer-events: none;
+}

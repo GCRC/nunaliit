@@ -4,8 +4,17 @@ public class MailServletConfiguration {
 	
 	final static public String CONFIGURATION_KEY = "MAIL_SERVLET_CONFIGURATION";
 
+	private String atlasName;
 	private MailDelivery mailDelivery;
 	private MailServiceRecipients recipients;
+
+	public String getAtlasName() {
+		return atlasName;
+	}
+
+	public void setAtlasName(String atlasName) {
+		this.atlasName = atlasName;
+	}
 
 	public MailDelivery getMailDelivery() {
 		return mailDelivery;

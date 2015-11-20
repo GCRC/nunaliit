@@ -557,6 +557,7 @@ public class ConfigServlet extends JsonServlet {
 			// Mail Service
 			{
 				MailServletConfiguration mailServletConfiguration = new MailServletConfiguration();
+				mailServletConfiguration.setAtlasName(atlasProperties.getAtlasName());
 				mailServletConfiguration.setMailDelivery(mailDelivery);
 				mailServletConfiguration.setRecipients(mailServiceRecipients);
 				servletContext.setAttribute(MailServletConfiguration.CONFIGURATION_KEY, mailServletConfiguration);

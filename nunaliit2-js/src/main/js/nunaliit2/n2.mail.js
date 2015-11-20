@@ -153,8 +153,8 @@ var MailService = $n2.Class({
 			return;
 		};
 		
-		if( !request.message 
-		 || (typeof request.message === 'string' && request.message.length < 1) ){
+		if( !request.body 
+		 || (typeof request.body === 'string' && request.body.length < 1) ){
 			opts.onError( _loc('You must provide a message') );
 			return;
 		};
@@ -201,7 +201,7 @@ var MailService = $n2.Class({
 			.appendTo($content);
 		
 		$('<textarea>')
-			.addClass('n2mailForm_input n2mailForm_input_contact')
+			.addClass('n2mailForm_input n2mailForm_processing_element n2mailForm_input_contact')
 			.attr('placeholder', _loc('Information to contact you'))
 			.appendTo($content);
 		
@@ -211,7 +211,7 @@ var MailService = $n2.Class({
 			.appendTo($content);
 		
 		$('<textarea>')
-			.addClass('n2mailForm_input n2mailForm_input_message')
+			.addClass('n2mailForm_input n2mailForm_processing_element n2mailForm_input_message')
 			.appendTo($content);
 		
 		var $buttons = $('<div>')
@@ -236,9 +236,8 @@ var MailService = $n2.Class({
 			.appendTo($buttons)
 			.click(function(){
 				var $diag = $('#'+diagId);
-				$diag.find('input').attr('disabled','disabled');
-				$diag.find('textarea').attr('disabled','disabled');
-				$diag.find('.n2mailForm_button').addClass('n2mailForm_button_cancel');
+				$diag.find('.n2mailForm_processing_element').attr('disabled','disabled');
+				$diag.find('.n2mailForm_button').addClass('n2mailForm_button_disabled');
 				
 				var contact = $diag.find('.n2mailForm_input_contact').val();
 				var message = $diag.find('.n2mailForm_input_message').val();
@@ -270,7 +269,8 @@ var MailService = $n2.Class({
 							err: err
 						}) );
 						var $diag = $('#'+diagId);
-						$diag.dialog('close');
+						$diag.find('.n2mailForm_processing_element').removeAttr('disabled');
+						$diag.find('.n2mailForm_button').removeClass('n2mailForm_button_disabled');
 					}
 				});
 				
