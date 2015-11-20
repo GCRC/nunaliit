@@ -147,6 +147,18 @@ var MailService = $n2.Class({
 			request.body = opts.message;
 		};
 		
+		if( !request.contact 
+		 || (typeof request.contact === 'string' && request.contact.length < 1) ){
+			opts.onError( _loc('You must provide contact information') );
+			return;
+		};
+		
+		if( !request.message 
+		 || (typeof request.message === 'string' && request.message.length < 1) ){
+			opts.onError( _loc('You must provide a message') );
+			return;
+		};
+		
 		$.ajax({
 			url: this.url + 'sendFormMail'
 			,type: 'post'
@@ -162,6 +174,9 @@ var MailService = $n2.Class({
 			}
 			,error: function(XMLHttpRequest, textStatus, errorThrown) {
 				var errStr = $n2.utils.parseHttpJsonError(XMLHttpRequest, textStatus);
+				if( typeof errStr === 'object' && errStr.error ){
+					errStr = errStr.error;
+				};
 				opts.onError('Error sending form e-mail: '+errStr);
 			}
 		});
