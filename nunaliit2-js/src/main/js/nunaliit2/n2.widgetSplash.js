@@ -158,16 +158,6 @@ var SplashPageWidget = $n2.Class({
 		var _this = this;
 
 		if( !this.pages ) return;
-
-		// We are about to show splash. Check if a cookie is
-		// set to prevent us from showing splash
-		if( $n2.cookie && $n2.cookie.getCookie ){
-			var cookie = $n2.cookie.getCookie(this.cookieName);
-			var cookieVersion = 1 * cookie;
-			if( cookieVersion >= this.version ){
-				return;
-			};
-		};
 		
 		var $dialog = $('<div>')
 			.addClass('n2Splash_dialog')
@@ -182,61 +172,32 @@ var SplashPageWidget = $n2.Class({
 			.addClass('n2Splash_buttons')
 			.appendTo( $dialog );
 
-		$('<a>')
-			.addClass('n2Splash_button n2Splash_button_previous n2Splash_button_disabled')
-			.text( _loc('Previous') )
-			.attr('href','#')
-			.appendTo($buttons)
-			.click(function(){
-				_this._changeCurrentPage(-1);
-				return false;
-			});
+		$('<span>')
+			.addClass('n2Splash_insertPreviousButton')
+			.appendTo($buttons);
 		
 		$('<span>')
-			.addClass('n2Splash_index')
+			.addClass('n2Splash_insertIndex')
+			.appendTo($buttons);
+		
+		$('<span>')
+			.addClass('n2Splash_insertRibbon')
 			.appendTo($buttons);
 
-		$('<a>')
-			.addClass('n2Splash_button n2Splash_button_next n2Splash_button_disabled')
-			.text( _loc('Next') )
-			.attr('href','#')
-			.appendTo($buttons)
-			.click(function(){
-				_this._changeCurrentPage(+1);
-				return false;
-			});
+		$('<span>')
+			.addClass('n2Splash_insertNextButton')
+			.appendTo($buttons);
+	
 
 		if( isInitialPage ){
-			var cbId = $n2.getUniqueId();
-			$('<label>')
-				.addClass('n2Splash_label n2Splash_label_dontshow')
-				.attr('for',cbId)
-				.text( _loc('Do not show again') )
+			$('<span>')
+				.addClass('n2Splash_insertDontShow')
 				.appendTo($buttons);
-
-			$('<input>')
-				.addClass('n2Splash_button n2Splash_button_dontshow')
-				.attr('type','checkbox')
-				.attr('id',cbId)
-				.appendTo($buttons)
-				.click(function(){
-					var $cb = $(this);
-					var isChecked = $cb.is(':checked');
-					_this._doNotShowAgain(isChecked);
-					return true;
-				});
 		};
 		
-		$('<a>')
-			.addClass('n2Splash_button n2Splash_button_close n2Splash_button_enabled')
-			.text( _loc('Close') )
-			.attr('href','#')
-			.appendTo($buttons)
-			.click(function(){
-				var $diag = $('#'+_this.dialogId);
-				$diag.dialog('close');
-				return false;
-			});
+		$('<span>')
+			.addClass('n2Splash_insertCloseButton')
+			.appendTo($buttons);
 
 		// Print HTML
 		this._showCurrentPage();
@@ -264,6 +225,8 @@ var SplashPageWidget = $n2.Class({
 	},
 
 	_showCurrentPage: function(){
+		var _this = this;
+		
 		var page = this.pages[this.pageIndex];
 
 		var $dialog = $('#'+this.dialogId);
@@ -279,20 +242,172 @@ var SplashPageWidget = $n2.Class({
 			};
 			
 			$container.html(html);
-			if( this.showService ){
-				this.showService.fixElementAndChildren($container, {}, page.doc);
-			};
 
 		} else if( page.text ){
 			$container.text(page.text);
 		};
 		
+		this._fixElements($dialog);
+		if( this.showService ){
+			this.showService.fixElementAndChildren($container, {}, page.doc);
+		};
+	},
+	
+	_fixElements: function($dialog){
+		var _this = this;
+
+		// Insert Previous Button
+		$dialog.find('.n2Splash_insertPreviousButton').each(function(){
+			var $elem = $(this);
+
+			$('<a>')
+				.addClass('n2Splash_button n2Splash_button_previous n2Splash_button_disabled')
+				.text( _loc('Previous') )
+				.attr('href','#')
+				.appendTo($elem)
+				.click(function(){
+					var index = _this.pageIndex;
+					_this._goToPage(index-1);
+					return false;
+				});
+			
+			$elem
+				.removeClass('n2Splash_insertPreviousButton')
+				.addClass('n2Splash_insertedPreviousButton');
+		});
+
+		// Insert Next Button
+		$dialog.find('.n2Splash_insertNextButton').each(function(){
+			var $elem = $(this);
+
+			$('<a>')
+				.addClass('n2Splash_button n2Splash_button_next n2Splash_button_disabled')
+				.text( _loc('Next') )
+				.attr('href','#')
+				.appendTo($elem)
+				.click(function(){
+					var index = _this.pageIndex;
+					_this._goToPage(index+1);
+					return false;
+				});
+			
+			$elem
+				.removeClass('n2Splash_insertNextButton')
+				.addClass('n2Splash_insertedNextButton');
+		});
+
+		// Insert Close Button
+		$dialog.find('.n2Splash_insertCloseButton').each(function(){
+			var $elem = $(this);
+
+			$('<a>')
+				.addClass('n2Splash_button n2Splash_button_close n2Splash_button_enabled')
+				.text( _loc('Close') )
+				.attr('href','#')
+				.appendTo($elem)
+				.click(function(){
+					var $diag = $('#'+_this.dialogId);
+					$diag.dialog('close');
+					return false;
+				});
+			
+			$elem
+				.removeClass('n2Splash_insertCloseButton')
+				.addClass('n2Splash_insertedCloseButton');
+		});
+
+		// Insert Index
+		$dialog.find('.n2Splash_insertIndex').each(function(){
+			var $elem = $(this);
+
+			// Just add a class. Recomputed every time
+			$elem.addClass('n2Splash_index');
+			
+			$elem
+				.removeClass('n2Splash_insertIndex')
+				.addClass('n2Splash_insertedIndex');
+		});
+
+		// Insert Ribbon
+		$dialog.find('.n2Splash_insertRibbon').each(function(){
+			var $elem = $(this);
+
+			$elem
+				.empty()
+				.attr('nunaliit-page-count',_this.pages.length);
+
+			for(var i=0,e=_this.pages.length; i<e; ++i){
+				var pageNumber = i + 1;
+
+				var $pageDiv = $('<span>')
+					.addClass('n2Splash_ribbon_page')
+					.attr('nunaliit-page-index',i)
+					.appendTo($elem);
+				
+				$('<a>')
+					.attr('href','#')
+					.text(pageNumber)
+					.appendTo($pageDiv)
+					.click(function(){
+						var $pageDiv = $(this).parent();
+						var pageIndex = 1 * $pageDiv.attr('nunaliit-page-index')
+						_this._goToPage(pageIndex);
+						return false;
+					});
+			};
+			
+			$elem
+				.removeClass('n2Splash_insertRibbon')
+				.addClass('n2Splash_insertedRibbon');
+		});
+		
+		// Insert don't show again
+		$dialog.find('.n2Splash_insertDontShow').each(function(){
+			var $elem = $(this);
+
+			var cbId = $n2.getUniqueId();
+			$('<label>')
+				.addClass('n2Splash_label n2Splash_label_dontshow')
+				.attr('for',cbId)
+				.text( _loc('Do not show again') )
+				.appendTo($elem);
+
+			$('<input>')
+				.addClass('n2Splash_button n2Splash_button_dontshow')
+				.attr('type','checkbox')
+				.attr('id',cbId)
+				.appendTo($elem)
+				.click(function(){
+					var $cb = $(this);
+					var isChecked = $cb.is(':checked');
+					_this._doNotShowAgain(isChecked);
+					return true;
+				});
+			
+			$elem
+				.removeClass('n2Splash_insertDontShow')
+				.addClass('n2Splash_insertedDontShow');
+		});
+		
+		// Update index
 		var $index = $dialog.find('.n2Splash_index').empty();
 		if( this.pages.length > 1 ){
 			var indexStr = '('+(this.pageIndex+1)+'/'+this.pages.length+')';
 			$index.text( indexStr );
 		};
-
+		
+		// Update ribbon
+		$dialog.find('.n2Splash_ribbon_page').each(function(){
+			var $pageDiv = $(this);
+			var pageIndex = 1 * $pageDiv.attr('nunaliit-page-index')
+			if( pageIndex === _this.pageIndex ){
+				$pageDiv.addClass('n2Splash_ribbon_page_current');
+			} else {
+				$pageDiv.removeClass('n2Splash_ribbon_page_current');
+			};
+		});
+		
+		// Update previous buttons
 		var $prevButton = $dialog.find('.n2Splash_button_previous');
 		if( 0 == this.pageIndex ){
 			$prevButton.removeClass('n2Splash_button_enabled');
@@ -302,6 +417,7 @@ var SplashPageWidget = $n2.Class({
 			$prevButton.removeClass('n2Splash_button_disabled');
 		};
 
+		// Update next buttons
 		var $nextButton = $dialog.find('.n2Splash_button_next');
 		if( this.pageIndex >= (this.pages.length-1) ){
 			$nextButton.removeClass('n2Splash_button_enabled');
@@ -327,6 +443,20 @@ var SplashPageWidget = $n2.Class({
 		};
 		
 		this._showCurrentPage();
+	},
+
+	_goToPage: function(pageIndex){
+		if( pageIndex < 0 ){
+			pageIndex = 0;
+
+		} else if( pageIndex >= this.pages.length ){
+			pageIndex = this.pages.length - 1;
+		};
+		
+		if( this.pageIndex !== pageIndex ){
+			this.pageIndex = pageIndex;
+			this._showCurrentPage();
+		};
 	},
 
 	_doNotShowAgain: function(dontShow){

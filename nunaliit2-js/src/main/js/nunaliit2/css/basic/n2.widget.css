@@ -518,6 +518,14 @@ Splash Page
 	padding-right: 3px;
 }
 
+.n2Splash_ribbon_page {
+	padding: 0 2px;
+}
+
+.n2Splash_ribbon_page_current {
+	font-weight: bold;
+}
+
 /* 
 ==============================
 Mail Form 
