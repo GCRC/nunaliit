@@ -380,11 +380,16 @@ var SplashPageWidget = $n2.Class({
 		$dialog.find('.n2Splash_insertDontShow').each(function(){
 			var $elem = $(this);
 
+			var label = $elem.attr('nunaliit-label');
+			if( !label ){
+				label = _loc('Do not show again');
+			};
+
 			var cbId = $n2.getUniqueId();
 			$('<label>')
 				.addClass('n2Splash_label n2Splash_label_dontshow')
 				.attr('for',cbId)
-				.text( _loc('Do not show again') )
+				.text( label )
 				.appendTo($elem);
 
 			$('<input>')
