@@ -76,6 +76,18 @@ var TimeFilter = $n2.Class({
 		this.autoRange = true;
 		if( opts.rangeStr ){
 			this.range = $n2.date.parseUserDate(opts.rangeStr);
+			
+			if( this.range.ongoing ){
+				var now = Date.now();
+				var min = this.range.getMin();
+				var max = this.range.getMax(now);
+				
+				this.range = new $n2.date.DateInterval({
+					min: min
+					,max: max
+				});
+			};
+
 			this.filterInterval = this.range;
 			this.autoRange = false;
 		};
