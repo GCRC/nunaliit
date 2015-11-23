@@ -165,11 +165,11 @@ var SplashPageWidget = $n2.Class({
 		this.dialogId = $n2.utils.getElementIdentifier($dialog);
 		
 		var $content = $('<div>')
-			.addClass('n2Splash_container')
+			.addClass('n2Splash_container n2Splash_updatePageIndex')
 			.appendTo( $dialog );
 
 		var $buttons = $('<div>')
-			.addClass('n2Splash_buttons')
+			.addClass('n2Splash_buttons n2Splash_updatePageIndex')
 			.appendTo( $dialog );
 
 		$('<span>')
@@ -249,7 +249,7 @@ var SplashPageWidget = $n2.Class({
 		
 		this._fixElements($dialog);
 		if( this.showService ){
-			this.showService.fixElementAndChildren($container, {}, page.doc);
+			this.showService.fixElementAndChildren($dialog, {}, page.doc);
 		};
 	},
 	
@@ -260,9 +260,14 @@ var SplashPageWidget = $n2.Class({
 		$dialog.find('.n2Splash_insertPreviousButton').each(function(){
 			var $elem = $(this);
 
+			var label = $elem.attr('nunaliit-label');
+			if( !label ){
+				label = _loc('Previous');
+			};
+
 			$('<a>')
 				.addClass('n2Splash_button n2Splash_button_previous n2Splash_button_disabled')
-				.text( _loc('Previous') )
+				.text( label )
 				.attr('href','#')
 				.appendTo($elem)
 				.click(function(){
@@ -280,9 +285,14 @@ var SplashPageWidget = $n2.Class({
 		$dialog.find('.n2Splash_insertNextButton').each(function(){
 			var $elem = $(this);
 
+			var label = $elem.attr('nunaliit-label');
+			if( !label ){
+				label = _loc('Next');
+			};
+
 			$('<a>')
 				.addClass('n2Splash_button n2Splash_button_next n2Splash_button_disabled')
-				.text( _loc('Next') )
+				.text( label )
 				.attr('href','#')
 				.appendTo($elem)
 				.click(function(){
@@ -300,9 +310,14 @@ var SplashPageWidget = $n2.Class({
 		$dialog.find('.n2Splash_insertCloseButton').each(function(){
 			var $elem = $(this);
 
+			var label = $elem.attr('nunaliit-label');
+			if( !label ){
+				label = _loc('Close');
+			};
+
 			$('<a>')
 				.addClass('n2Splash_button n2Splash_button_close n2Splash_button_enabled')
-				.text( _loc('Close') )
+				.text( label )
 				.attr('href','#')
 				.appendTo($elem)
 				.click(function(){
@@ -387,6 +402,26 @@ var SplashPageWidget = $n2.Class({
 			$elem
 				.removeClass('n2Splash_insertDontShow')
 				.addClass('n2Splash_insertedDontShow');
+		});
+		
+		// Update element attributes that state page index
+		$dialog.find('.n2Splash_updatePageIndex').each(function(){
+			var $elem = $(this);
+			var currentIndex = _this.pageIndex;
+			
+			$elem.attr('nunaliit-page-index',currentIndex);
+			
+			if( 0 === currentIndex ){
+				$elem.addClass('n2Splash_currentIsFirstPage');
+			} else {
+				$elem.removeClass('n2Splash_currentIsFirstPage');
+			};
+			
+			if( currentIndex >= (_this.pages.length - 1) ){
+				$elem.addClass('n2Splash_currentIsLastPage');
+			} else {
+				$elem.removeClass('n2Splash_currentIsLastPage');
+			};
 		});
 		
 		// Update index
