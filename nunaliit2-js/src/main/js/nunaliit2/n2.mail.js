@@ -44,18 +44,22 @@ var MailService = $n2.Class({
 	
 	dispatchService: null,
 	
+	customService: null,
+	
 	welcome: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			url: null
 			,dispatchService: null
+			,customService: null
 		},opts_);
 		
 		var _this = this;
 		
 		this.url = opts.url;
 		this.dispatchService = opts.dispatchService;
+		this.customService = opts.customService;
 		
 		if( this.dispatchService ){
 			var f = function(m, addr, dispatcher){
@@ -65,7 +69,7 @@ var MailService = $n2.Class({
 			this.dispatchService.register(DH,'mailShowMailForm',f);
 			this.dispatchService.register(DH,'showPreprocessElement',f);
 		};
-		
+
 		this.getWelcome({
 			onSuccess: function(welcome){
 				$n2.log('mail service',welcome);
@@ -182,8 +186,31 @@ var MailService = $n2.Class({
 		});
 	},
 	
+	_getMailFormContactFields: function(){
+		var formContactFields = null;
+		
+		if( this.customService ){
+			formContactFields = this.customService.getOption('mailFormContactFields');
+		};
+		
+		// Default
+		if( !$n2.isArray(formContactFields) ){
+			formContactFields = [{
+				"name": "contact_info"
+				,"label": _loc('Contact Information')
+				,"placeholder": _loc('Information to contact you')
+				,"required": true
+				,"textarea": true
+			}];
+		};
+		
+		return formContactFields;
+	},
+	
 	showMailForm: function(){
 		var _this = this;
+
+		var formContactFields = this._getMailFormContactFields();
 		
 		var diagId = $n2.getUniqueId();
 		var $diag = $('<div>')
@@ -194,16 +221,46 @@ var MailService = $n2.Class({
 		var $content = $('<div>')
 			.addClass('n2mailForm_content')
 			.appendTo( $diag );
-		
-		$('<div>')
-			.addClass('n2mailForm_label')
-			.text( _loc('Contact Information') )
-			.appendTo($content);
-		
-		$('<textarea>')
-			.addClass('n2mailForm_input n2mailForm_processing_element n2mailForm_input_contact')
-			.attr('placeholder', _loc('Information to contact you'))
-			.appendTo($content);
+
+		if( formContactFields ){
+			for(var i=0,e=formContactFields.length; i<e; ++i){
+				var contactField = formContactFields[i];
+				if( !contactField.name ){
+					continue;
+				};
+				var label = contactField.label;
+				if( !label ){
+					label = contactField.name;
+				};
+				
+				var labelClassName = 'n2mailForm_label_' + $n2.utils.stringToHtmlId(contactField.name);
+				var inputClassName = 'n2mailForm_input_' + $n2.utils.stringToHtmlId(contactField.name);
+
+				$('<div>')
+					.addClass('n2mailForm_label '+labelClassName)
+					.text( label )
+					.appendTo($content);
+				
+				var $input = null;
+				if( contactField.textarea ){
+					$input = $('<textarea>')
+						.attr('placeholder', _loc('Information to contact you'))
+						.appendTo($content);
+				} else {
+					$input = $('<input>')
+						.attr('type', 'text')
+						.appendTo($content);
+				};
+				
+				$input
+					.addClass('n2mailForm_input n2mailForm_processing_element '+inputClassName)
+					.attr('name',contactField.name);
+				
+				if( contactField.placeholder ){
+					$input.attr('placeholder', contactField.placeholder);
+				};
+			};
+		};
 		
 		$('<div>')
 			.addClass('n2mailForm_label')
@@ -239,12 +296,43 @@ var MailService = $n2.Class({
 				$diag.find('.n2mailForm_processing_element').attr('disabled','disabled');
 				$diag.find('.n2mailForm_button').addClass('n2mailForm_button_disabled');
 				
-				var contact = $diag.find('.n2mailForm_input_contact').val();
+				var contact = [];
+				if( formContactFields ){
+					for(var i=0,e=formContactFields.length; i<e; ++i){
+						var contactField = formContactFields[i];
+						if( !contactField.name ){
+							continue;
+						};
+						var label = contactField.label;
+						if( !label ){
+							label = contactField.name;
+						};
+						
+						var inputClassName = 'n2mailForm_input_' + $n2.utils.stringToHtmlId(contactField.name);
+						var value = $diag.find('.'+inputClassName).val();
+						
+						if( contactField.required ){
+							if( !value || value === '' ){
+								alert( _loc('You must provide field: {label}',{
+									label: label
+								}) );
+								$diag.find('.n2mailForm_processing_element').removeAttr('disabled');
+								$diag.find('.n2mailForm_button').removeClass('n2mailForm_button_disabled');
+								return;
+							};
+						};
+						
+						contact.push({
+							"name": contactField.name
+							,"value": value
+						});
+					};
+				};
 				var message = $diag.find('.n2mailForm_input_message').val();
 				
 				_this.sendFormEmail({
 					destination: null
-					,contact: contact
+					,contact: JSON.stringify(contact)
 					,message: message
 					,onSuccess: function(){
 						var $diag = $('#'+diagId);
