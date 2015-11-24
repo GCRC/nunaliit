@@ -66,6 +66,9 @@ var cursorYOffset = -0.002;
 var lastPinchZoomDistance = undefined;
 var pinchZoomThreshold = 0.15;
 
+// Draw overlay canvas
+var overlay = undefined;
+
 // Time to wait until a finger draw is considered finished, in ms
 var drawDelay = 1000.0;
 
@@ -448,13 +451,20 @@ function dispatchMouseEvent(eventType, x, y) {
 	var winX = x * window.innerWidth;
 	var winY = y * window.innerHeight;
 
+	dispatchMouseEventWin(eventType, winX, winY);
+}
+
+/** Like dispatchMouseEvent but with window-relative coordinates. */
+function dispatchMouseEventWin(eventType, winX, winY)
+{
 	// Get the topmost DOM element at this position
 	var el = document.elementFromPoint(winX, winY);
 	if (el == null) {
 		return;
 	}
 
-	//console.log(eventType + " at " + winX + "," + winY + ": " + el + " id: " + el.id);
+	// console.log(eventType + " at " + winX + "," + winY + ": " + el +
+	//             " id: " + el.id + " class: " + el.className);
 
 	// Create synthetic mouse event of the given type
 	var event = new MouseEvent(eventType, {
@@ -1033,9 +1043,10 @@ window.onkeydown = function (e) {
 		// z, start draw zoom
 		var map = document.getElementById("nunaliit2_uniqueId_65");
 		drawZooming = true;
-		canvas = new DrawOverlay(
+		overlay = new DrawOverlay(
 			map, map.offsetWidth, map.offsetHeight,
-			function (points) {
+			function (bounds, points) {
+				drawZooming = false;
 				if (points.length < 2) {
 					return;  // Not enough points to do anything sensible
 				}
@@ -1057,6 +1068,18 @@ window.onkeydown = function (e) {
 				var height = (bottom - top);
 				var area = width * height;
 				if (width < 16 || height < 16 || area < 16) {
+					// Gesture did not move very far, dispatch click
+					var midX = left + (right - left) / 2.0;
+					var midY = top + (bottom - top) / 2.0;
+
+					// Convert from canvas-relative to client-relative for dispatch
+					midX += bounds.left;
+					midY += bounds.top;
+
+					// Dispatch click
+					dispatchMouseEventWin('mousedown', midX, midY);
+					dispatchMouseEventWin('mouseup', midX, midY);
+					dispatchMouseEventWin('click', midX, midY);
 					return;
 				}
 
@@ -1068,7 +1091,8 @@ window.onkeydown = function (e) {
 
 				// Zoom/center map to/on bounding rectangle
 				moduleDisplay.mapControl.map.zoomToExtent([tl.lon, br.lat, br.lon, tl.lat]);
-				drawZooming = false;
+
+				overlay = undefined;
 			});
 	}
 };
@@ -1160,10 +1184,12 @@ function DrawOverlay(parent, width, height, pathCallback) {
 
 	this.parent = parent;
 	this.drawing = false;
+	this.startTime = Date.now();
 	this.points = [];
 	this.pathCallback = pathCallback;
 
 	this.canvas = document.createElement('canvas');
+	this.canvas.className = "overlay";
 	this.canvas.width = width || 100;
 	this.canvas.height = height || 100;
 	this.canvas.style.position = "absolute";
@@ -1226,9 +1252,16 @@ DrawOverlay.prototype.moveTo = function (x, y) {
 
 DrawOverlay.prototype.endStroke = function () {
 	if (!this.drawing && Date.now() - this.mouseUpTime >= drawDelay / 2.0) {
-		this.pathCallback(this.points);
-		this.points = [];
+		// Save bounding box for passing to path callback
+		var box = this.canvas.getBoundingClientRect();
+
+		// Move canvas out of the way so path callback can dispatch events to
+		// elements underneath it (like the map)
 		this.parent.removeChild(this.canvas);
-		delete this;
+		this.canvas.style.left = "100%";
+		this.canvas.style.width = "0";
+
+		this.pathCallback(box, this.points);
+		this.points = [];
 	}
 }
