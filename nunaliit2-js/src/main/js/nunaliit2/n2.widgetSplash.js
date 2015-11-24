@@ -214,6 +214,7 @@ var SplashPageWidget = $n2.Class({
 			,title: title
 			,modal: true
 			,width: this.dialogWidth
+			,dialogClass: 'n2Splash_dialog_container'
 			,close: function(event, ui){
 				var $diag = $(event.target);
 				$diag.dialog('destroy');
