@@ -44,7 +44,7 @@ public class MailServiceActions {
 		return result;
 	}
 	
-	public JSONObject sendFormEmail(String destination, String contactInfo, String body) throws Exception {
+	public JSONObject sendFormEmail(String destination, String subject, String contactInfo, String body) throws Exception {
 		try {
 			JSONObject result = new JSONObject();
 			
@@ -60,7 +60,10 @@ public class MailServiceActions {
 				message.addToRecipient( recipient );
 			}
 			
-			message.setSubject("Nunaliit Form Mail");
+			if( null == subject ){
+				subject = "Nunaliit Form Mail";
+			}
+			message.setSubject(subject);
 			
 			// Generate message
 			StringWriter sw = new StringWriter();

@@ -134,6 +134,7 @@ var MailService = $n2.Class({
 	sendFormEmail: function(opts_){
 		var opts = $n2.extend({
 			destination: null
+			,subject: null
 			,contact: null
 			,message: null
 			,onSuccess: function(){}
@@ -150,6 +151,9 @@ var MailService = $n2.Class({
 		if( opts.message ){
 			request.body = opts.message;
 		};
+		if( opts.subject ){
+			request.subject = opts.subject;
+		};
 		
 		if( !request.contact 
 		 || (typeof request.contact === 'string' && request.contact.length < 1) ){
@@ -160,6 +164,12 @@ var MailService = $n2.Class({
 		if( !request.body 
 		 || (typeof request.body === 'string' && request.body.length < 1) ){
 			opts.onError( _loc('You must provide a message') );
+			return;
+		};
+		
+		if( request.subject 
+		 && typeof request.subject !== 'string' ){
+			opts.onError( _loc('The mail subject, if specified, must be a string') );
 			return;
 		};
 		
@@ -210,6 +220,11 @@ var MailService = $n2.Class({
 	showMailForm: function(){
 		var _this = this;
 
+		var subject = undefined;
+		if( this.customService ){
+			subject = this.customService.getOption('mailFormSubject',undefined);
+		};
+		
 		var formContactFields = this._getMailFormContactFields();
 		
 		var diagId = $n2.getUniqueId();
@@ -332,6 +347,7 @@ var MailService = $n2.Class({
 				
 				_this.sendFormEmail({
 					destination: null
+					,subject: subject
 					,contact: JSON.stringify(contact)
 					,message: message
 					,onSuccess: function(){
@@ -364,10 +380,18 @@ var MailService = $n2.Class({
 				
 				return false;
 			});
+
+		var title = null;
+		if( this.customService ){
+			title = this.customService.getOption('mailFormTitle',null);
+		};
+		if( typeof title !== 'string' ){
+			title = _loc('E-mail Form');
+		};
 		
 		$diag.dialog({
 			autoOpen: true
-			,title: _loc('E-mail Form')
+			,title: title
 			,modal: true
 			,width: 'auto'
 			,close: function(event, ui){

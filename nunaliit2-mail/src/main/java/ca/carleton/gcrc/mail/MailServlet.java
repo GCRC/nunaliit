@@ -95,6 +95,19 @@ public class MailServlet extends JsonServlet {
 					}
 				}
 
+				// Subject
+				String subject = null;
+				{
+					String[] subjectStrings = request.getParameterValues("subject");
+					if( null == subjectStrings || subjectStrings.length < 1 ){
+						// optional
+					} else if( subjectStrings.length > 1 ){
+						throw new Exception("'subject' parameter must be specified at most once");
+					} else {
+						subject = subjectStrings[0];
+					}
+				}
+
 				// Contact Information
 				String contact = null;
 				{
@@ -121,7 +134,7 @@ public class MailServlet extends JsonServlet {
 					}
 				}
 				
-				JSONObject result = mailActions.sendFormEmail(destination, contact, body);
+				JSONObject result = mailActions.sendFormEmail(destination, subject, contact, body);
 				
 				sendJsonResponse(response, result);
 				
