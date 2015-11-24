@@ -5,7 +5,7 @@
 	var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
 	var config = null;
-	var scriptConfig = null;
+	var g_scriptConfig = null;
 	var atlasDb = null;
 	var atlasDesign = null;
 	var serverDesign = null;
@@ -306,7 +306,7 @@
 				};
 
 				for(var i=0, e=docs.length; i<e; ++i){
-					if( opts.filterFn(docs[i], scriptConfig) ){
+					if( opts.filterFn(docs[i], g_scriptConfig) ){
 						filteredDocIds.push(docs[i]._id);
 					};
 				};
@@ -661,7 +661,7 @@
 			var scriptFn = null;
 			try {
 				eval('scriptFn = '+script);
-				scriptFn({_id:'test',_revision:'1-abcde'},scriptConfig);
+				scriptFn({_id:'test',_revision:'1-abcde'},g_scriptConfig);
 			} catch(e) {
 				alert(_loc('Error')+': '+e);
 				return;
@@ -1717,7 +1717,7 @@
 						skippedCount += 1;
 						processNext();
 					}
-					,scriptConfig
+					,g_scriptConfig
 				);
 			};
 			
@@ -1868,7 +1868,7 @@
 						var scriptFn = null;
 						try {
 							eval('scriptFn = '+script);
-							scriptFn({_id:'test',_revision:'1-abcde'},function(){},function(){});
+							scriptFn({_id:'test',_revision:'1-abcde'},function(){},function(){},g_scriptConfig);
 						} catch(e) {
 							alert(_loc('Error')+': '+e);
 							return;
@@ -2873,7 +2873,7 @@
 		schemaRepository = opts_.config.directory.schemaRepository;
 		couchEditor = config.couchEditor;
 		
-		scriptConfig = $n2.extend(
+		g_scriptConfig = $n2.extend(
 			{}
 			,config
 			,{
