@@ -1,4 +1,4 @@
-var MAX_SPRING_K = 60.0;
+var MAX_SPRING_K = 120.0;
 var SPRING_LEN = 0.0000000000001;
 
 var usePhysics = true;
@@ -25,7 +25,7 @@ var clickDistance = 0.005;
 var pressDelay = 1250;
 
 // Maximum distance to consider cursors to be on the same hand
-var handSpan = 0.20;
+var handSpan = 0.25;
 
 // Next hand instance ID counter
 var nextHandIndex = 1;
@@ -64,7 +64,7 @@ var cursorYOffset = -0.002;
 
 // Pinch zoom parameters
 var lastPinchZoomDistance = undefined;
-var pinchZoomThreshold = 0.15;
+var pinchZoomThreshold = 0.175;
 
 // Draw overlay canvas
 var overlay = undefined;
@@ -206,7 +206,8 @@ Body.prototype.updatePosition = function(timestamp, energy) {
 	}
 
 	// Time since start in ms
-	var dur = (timestamp - this.lastTime) / 500;
+	var elapsed = timestamp - this.lastTime;
+	var dur = elapsed / 250;  // Arbitrary scale for in-universe time
 	this.lastTime = timestamp;
 
 	// Damp old velocity to avoid oscillation
@@ -1117,12 +1118,21 @@ function tick(timestamp) {
 		return;
 	}
 
+	var interval = Math.min(timestamp - lastTime, 15.0);
+	for (var t = lastTime + interval; dirty && t <= timestamp; t += interval) {
+		subtick(t);
+	}
+
+	reschedule(tick);
+}
+
+function subtick(timestamp) {
 	// Time since last tick in ms
-	var dur = (timestamp - lastTime) / 250;
+	var dur = timestamp - lastTime;
 	lastTime = timestamp;
 
 	// Reduce overall energy to converge on stable positions
-	energy = Math.max(0.0, energy - (dur * 0.5));
+	energy = Math.max(0.0, Math.min(energy, energy - (dur / 1000.0)));
 
 	// Update the position of each cursor
 	var moving = false;
@@ -1171,8 +1181,6 @@ function tick(timestamp) {
 	if (!moving) {
 		dirty = false;
 	}
-
-	reschedule(tick);
 }
 
 if (usePhysics) {
