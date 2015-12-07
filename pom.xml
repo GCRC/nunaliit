@@ -58,7 +58,6 @@
 		<servlet-api.version>2.5</servlet-api.version>
 		<log4j.version>1.2.17</log4j.version>
 		<junit.version>3.8.2</junit.version>
-		<cargo.version>1.2.4</cargo.version>
 		<mail.version>1.5.4</mail.version>
 		<json.version>20151123</json.version>
 		<maven-dependency-plugin.version>2.10</maven-dependency-plugin.version>
@@ -68,7 +67,6 @@
 		<mustache.version>0.8.18</mustache.version>
 		<jetty.version>9.2.14.v20151106</jetty.version>
 		<maven-assembly-plugin.version>2.6</maven-assembly-plugin.version>
-		<cometd-java-server.version>1.0.1</cometd-java-server.version>
 	</properties>
 	<modules>
 		<module>nunaliit2-jdbc</module>
@@ -80,11 +78,9 @@
 		<module>nunaliit2-auth-http</module>
 		<module>nunaliit2-dbWeb</module>
 		<module>nunaliit2-adhocQueries</module>
-		<module>nunaliit2-contributions</module>
 		<module>nunaliit2-multimedia</module>
 		<module>nunaliit2-upload</module>
 		<module>nunaliit2-progress</module>
-		<module>nunaliit2-onUpload</module>
 		<module>nunaliit2-js-external</module>
 		<module>nunaliit2-js</module>
 		<module>nunaliit2-couch-config</module>
