@@ -85,10 +85,8 @@
 		<module>nunaliit2-upload</module>
 		<module>nunaliit2-progress</module>
 		<module>nunaliit2-onUpload</module>
-		<module>nunaliit2-atlas-relations</module>
 		<module>nunaliit2-js-external</module>
 		<module>nunaliit2-js</module>
-		<module>nunaliit2-war-relations</module>
 		<module>nunaliit2-couch-config</module>
 		<module>nunaliit2-couch-client</module>
 		<module>nunaliit2-couch-onUpload</module>

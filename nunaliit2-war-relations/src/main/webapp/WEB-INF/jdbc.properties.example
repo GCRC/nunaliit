@@ -1,1 +1,0 @@
-jdbc.connection.default=org.postgresql.Driver|jdbc:postgresql:YOUR_DB_NAME|YOUR_DB_USER|YOUR_DB_PASSWORD
