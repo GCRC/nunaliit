@@ -1,5 +1,8 @@
 package ca.carleton.gcrc.mail;
 
+import ca.carleton.gcrc.mail.messageGenerator.FormEmailMessageGenerator;
+import ca.carleton.gcrc.mail.messageGenerator.MailMessageGenerator;
+
 public class MailServletConfiguration {
 	
 	final static public String CONFIGURATION_KEY = "MAIL_SERVLET_CONFIGURATION";
@@ -7,6 +10,7 @@ public class MailServletConfiguration {
 	private String atlasName;
 	private MailDelivery mailDelivery;
 	private MailServiceRecipients recipients;
+	private MailMessageGenerator formEmailGenerator = new FormEmailMessageGenerator();
 
 	public String getAtlasName() {
 		return atlasName;
@@ -30,5 +34,13 @@ public class MailServletConfiguration {
 
 	public void setRecipients(MailServiceRecipients recipients) {
 		this.recipients = recipients;
+	}
+
+	public MailMessageGenerator getFormEmailGenerator() {
+		return formEmailGenerator;
+	}
+
+	public void setFormEmailGenerator(MailMessageGenerator formEmailGenerator) {
+		this.formEmailGenerator = formEmailGenerator;
 	}
 }

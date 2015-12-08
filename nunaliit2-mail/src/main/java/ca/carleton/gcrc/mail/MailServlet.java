@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.json.servlet.JsonServlet;
+import ca.carleton.gcrc.mail.messageGenerator.MailMessageGenerator;
 
 @SuppressWarnings("serial")
 public class MailServlet extends JsonServlet {
@@ -43,6 +44,11 @@ public class MailServlet extends JsonServlet {
 					configuration.getMailDelivery(),
 					configuration.getRecipients()
 					);
+			
+			MailMessageGenerator formEmailGenerator = configuration.getFormEmailGenerator();
+			if( null != formEmailGenerator ){
+				mailActions.setFormEmailGenerator(formEmailGenerator);
+			}
 			
 		} else {
 			throw new ServletException("Invalid class for configuration: "+configurationObj.getClass().getName());

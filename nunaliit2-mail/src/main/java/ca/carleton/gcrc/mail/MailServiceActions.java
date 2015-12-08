@@ -1,13 +1,16 @@
 package ca.carleton.gcrc.mail;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import ca.carleton.gcrc.mail.messageGenerator.FormEmailMessageGenerator;
+import ca.carleton.gcrc.mail.messageGenerator.MailMessageGenerator;
 
 public class MailServiceActions {
 
@@ -16,6 +19,7 @@ public class MailServiceActions {
 	private String atlasName;
 	private MailDelivery mailDelivery;
 	private MailServiceRecipients mailRecipients;
+	private MailMessageGenerator formEmailGenerator = new FormEmailMessageGenerator();
 	
 	public MailServiceActions(
 			String atlasName, 
@@ -24,6 +28,14 @@ public class MailServiceActions {
 		this.atlasName = atlasName;
 		this.mailDelivery = mailDelivery;
 		this.mailRecipients = mailRecipients;
+	}
+
+	public MailMessageGenerator getFormEmailGenerator() {
+		return formEmailGenerator;
+	}
+
+	public void setFormEmailGenerator(MailMessageGenerator formEmailGenerator) {
+		this.formEmailGenerator = formEmailGenerator;
 	}
 
 	public JSONObject getWelcome() throws Exception {
@@ -52,7 +64,37 @@ public class MailServiceActions {
 			if( recipients.size() < 1 ){
 				throw new Exception("Unable to send form e-mail because no recipients are set: "+destination);
 			}
+			
+			// Parameters
+			Map<String,String> parameters = new HashMap<String,String>();
+			{
+				parameters.put("destination", destination);
+				parameters.put("subject", subject);
+				parameters.put("contactInfo", contactInfo);
+				parameters.put("body", body);
 	
+				if( null != atlasName ){
+					parameters.put("atlasName", atlasName);
+				}
+				
+				// Try to parse contact information
+				try {
+					// Verify
+					JSONArray contactArr = new JSONArray(contactInfo);
+					for(int i=0,e=contactArr.length(); i<e; ++i){
+						JSONObject info = contactArr.getJSONObject(i);
+						String name = info.optString("name");
+						String value = info.optString("value");
+						
+						if( null != name && null != value ){
+							parameters.put(name, value);
+						}
+					}
+				} catch(Exception e) {
+					// Ignore
+				}
+			}
+
 			MailMessage message = new MailMessage();
 			
 			// To
@@ -60,69 +102,7 @@ public class MailServiceActions {
 				message.addToRecipient( recipient );
 			}
 			
-			if( null == subject ){
-				subject = "Nunaliit Form Mail";
-			}
-			message.setSubject(subject);
-			
-			// Generate message
-			StringWriter sw = new StringWriter();
-			PrintWriter pw = new PrintWriter(sw);
-			
-			if( null != atlasName ){
-				pw.println("<p><b>Atlas:</b> "+atlasName+"</p>");
-				pw.println();
-			}
-			if( null != destination ){
-				pw.println("<p><b>Destination:</b> "+destination+"</p>");
-				pw.println();
-			}
-			
-			// Try to parse contact information
-			pw.println("<p><b>Contact:</b>");
-			JSONArray contactArr = null;
-			try {
-				// Verify
-				contactArr = new JSONArray(contactInfo);
-				for(int i=0,e=contactArr.length(); i<e; ++i){
-					JSONObject info = contactArr.getJSONObject(i);
-					if( null == info.getString("name") ){
-						throw new Exception("'name' must be provided");
-					}
-					if( null == info.getString("value") ){
-						throw new Exception("'value' must be provided");
-					}
-				}
-			} catch(Exception e) {
-				// Ignore
-				contactArr = null;
-			}
-			if( null != contactArr ){
-				pw.println("<ul>");
-				for(int i=0,e=contactArr.length(); i<e; ++i){
-					JSONObject info = contactArr.getJSONObject(i);
-					String name = info.getString("name");
-					String value = info.getString("value");
-					pw.print("<li><b>"+name);
-					pw.print("</b>:"+value);
-					pw.println("</li>");
-				}
-				pw.println("</ul>");
-			} else {
-				pw.println("<pre>");
-				pw.println(contactInfo);
-				pw.println("</pre>");
-			}
-			pw.println("</p>");
-			pw.println();
-
-			pw.println("<p><b>Message:</b> <pre>");
-			pw.println(body);
-			pw.println("</pre></p>");
-			pw.println();
-			pw.flush();
-			
-			message.setHtmlContent(sw.toString());
+			formEmailGenerator.generateMessage(message, parameters);
 			
 			// Send message
 			mailDelivery.sendMessage(message);

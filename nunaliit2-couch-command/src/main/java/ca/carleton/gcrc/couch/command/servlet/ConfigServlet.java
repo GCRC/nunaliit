@@ -65,6 +65,7 @@ import ca.carleton.gcrc.mail.MailDeliveryImpl;
 import ca.carleton.gcrc.mail.MailDeliveryNull;
 import ca.carleton.gcrc.mail.MailServiceRecipients;
 import ca.carleton.gcrc.mail.MailServletConfiguration;
+import ca.carleton.gcrc.mail.messageGenerator.FormEmailMessageGenerator;
 import ca.carleton.gcrc.mail.messageGenerator.MailMessageGenerator;
 import ca.carleton.gcrc.olkit.multimedia.utils.MultimediaConfiguration;
 import ca.carleton.gcrc.upload.OnUploadedListenerSingleton;
@@ -560,6 +561,18 @@ public class ConfigServlet extends JsonServlet {
 				mailServletConfiguration.setAtlasName(atlasProperties.getAtlasName());
 				mailServletConfiguration.setMailDelivery(mailDelivery);
 				mailServletConfiguration.setRecipients(mailServiceRecipients);
+
+				// Mail template for form e-mail
+				{
+					MailMessageGenerator template = new FormEmailMessageGenerator();
+					CouchDbTemplateMailMessageGenerator couchdbTemplate = new CouchDbTemplateMailMessageGenerator(
+						documentDatabase,
+						"org.nunaliit.email_template.form_email",
+						template
+						);
+					mailServletConfiguration.setFormEmailGenerator(couchdbTemplate);
+				}
+
 				servletContext.setAttribute(MailServletConfiguration.CONFIGURATION_KEY, mailServletConfiguration);
 			}
 			
