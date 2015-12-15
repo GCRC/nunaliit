@@ -487,7 +487,7 @@ var ModuleDisplay = $n2.Class({
 			};
 
 			if( moduleDoc._id ){
-				this.moduleId = moduleDoc._id;
+				_this.moduleId = moduleDoc._id;
 				var safeId = $n2.utils.stringToHtmlId(moduleDoc._id);
 				$('body').addClass('nunaliit_module_'+safeId);
 				
