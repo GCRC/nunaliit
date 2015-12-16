@@ -2458,8 +2458,6 @@ var SchemaEditorService = $n2.Class({
 	funcMap: null,
 	
 	postProcessFunctions: null,
-	
-	documentSource: null,
 
 	initialize: function(opts_) {
 		var opts = $n2.extend({
