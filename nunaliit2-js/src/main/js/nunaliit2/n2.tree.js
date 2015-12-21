@@ -1714,10 +1714,11 @@ var ObjectTreeEditor = $n2.Class({
 			this.refresh();
 			
 		} else if( typeof(data) === 'object' ) {
-			function cbAddKeyToObject(selectors, newKey, newData) {
-				editor._acceptNewObjectKey(selectors, newKey, newData);
-			};
 			this.options.createNewKey(cbAddKeyToObject, this.obj, selectors, data);
+		};
+
+		function cbAddKeyToObject(selectors, newKey, newData) {
+			editor._acceptNewObjectKey(selectors, newKey, newData);
 		};
 	}
 	

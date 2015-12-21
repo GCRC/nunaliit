@@ -40,24 +40,24 @@ function _olkit_searchInputKeyPressed(evt) {
 		charCode = evt.which;
 	} else if (null != window.event && null != window.event.keyCode) { // IE
 		charCode = window.event.keyCode;
-	}
+	};
 	
 	if (13 == charCode || null == charCode) {
 		// carriage return or I'm not detecting key codes
 		// and have to submit on each key press - yuck...
 		_olkit_searchPanelHandler.textInputSubmitSearch();
-	}
-}
+	};
+};
 
 var _olkit_recenterMapButtonTdId = "_olkit_space_for_recenter_map_button";
 function _olkit_sp_mediaClick(key, path, contribFormatterOptions) {
 	if (null == _olkit_searchPanelHandler) {
 		return;
-	}
+	};
 	var contrib = _olkit_searchPanelHandler.getSearchHit(key);
 	if (null == contrib) {
 		return;
-	}
+	};
 	var html = 
     	'<div class="searchPanelDialog"><p><table class="attrib_header">'+
 		'<tr class="attrib_header">'+
@@ -80,8 +80,8 @@ function _olkit_sp_mediaClick(key, path, contribFormatterOptions) {
 				html += '<tr><td class="label">'+i+
 					': </td><td class="info">'+value+'</td></tr>';
 			};
-		}
-	}
+		};
+	};
 	html += '</table></p>';
 	html += generateModalHtmlForMedia(contrib.filename, contrib.mimetype, path, contrib.title, contrib.notes);
 	html += '</div>';
@@ -109,12 +109,12 @@ function _olkit_sp_mediaClick(key, path, contribFormatterOptions) {
 		) {	
 		if (null == filename || "" == filename) {
 			return('');
-		}
+		};
 		
 		var type = $n2.getMediaType(filename, mimetype);
 		if (null == type) {
 			return('');
-		}
+		};
 	
 		var mediaDisplayOptions = {
 			type: type
@@ -128,21 +128,21 @@ function _olkit_sp_mediaClick(key, path, contribFormatterOptions) {
 		if( typeof(title) === 'string'
 		 && '' !== title ) {
 			mediaDisplayOptions.headerHtml = title;
-		}
+		};
 		var htmlString = $n2.mediaDisplay.generateInlineHtmlForMedia(mediaDisplayOptions);
 		
 		return htmlString;
 	};
-}
+};
 
 function _olkit_sp_placeClick(key) {
 	if (null == _olkit_searchPanelHandler) {
 		return;
-	}
+	};
 	var place = _olkit_searchPanelHandler.getSearchHit(key);
 	if (null == place) {
 		return;
-	}
+	};
 		
 	var workingHtml =
     	'<div class="searchPanelDialog"><p><table class="attrib_header">'+
@@ -154,9 +154,9 @@ function _olkit_sp_placeClick(key) {
 				"id" != i) {
 				workingHtml += '<tr><td class="label">'+i+
 					': </td><td class="info">'+place[i]+'</td></tr>';
-			}
-		}
-	}
+			};
+		};
+	};
 	workingHtml += '</table></p></div>';
 	
 	var dialogOptions = {
@@ -172,7 +172,7 @@ function _olkit_sp_placeClick(key) {
 	$(workingHtml).dialog(dialogOptions);
 	
 	_olkit_searchPanelHandler.addTheMapRecenterButton(key);
-}
+};
 
 function olkit_SearchPanel(aoOptions,dbSearchEngine_) {
 	var defaultOptions = {
@@ -211,19 +211,19 @@ function olkit_SearchPanel(aoOptions,dbSearchEngine_) {
 	 */
 	function cKey(num) { // keys for contributions/comments
 		return("c"+num);
-	}
+	};
 	
 	function pKey(num) { // keys for places / "names"
 		return("p"+num);
-	}
+	};
 	
 	function searchHitIsCont(key) {
 		return("c" == key.charAt(0));
-	}
+	};
 
 	function searchHitIsPlace(key) {
 		return("p" == key.charAt(0));
-	}
+	};
 	
 	var contributionsFetched = false;
 	var placesFetched = false;
@@ -231,8 +231,8 @@ function olkit_SearchPanel(aoOptions,dbSearchEngine_) {
 		if (true == contributionsFetched && true == placesFetched) {
 			lastSearchedString = searchString;
 			displaySearchSummmary(searchString);
-		}
-	}
+		};
+	};
 	
 	function fetchMatchingContributions(searchString) {
 		dbSearchEngine.searchForContributions(ti.value,function(contributions){
@@ -268,7 +268,7 @@ function olkit_SearchPanel(aoOptions,dbSearchEngine_) {
 		var tdClasses = tdClassBase+'_fullwidth '+tdClassBase+'_solid_top_border';
 		if (true == lastRow) {
 			tdClasses += ' '+tdClassBase+'_solid_bottom_border'
-		}
+		};
 		
 		// Result is a tr
 		var trElem = $('<tr class="'+options.contribTableClassBase+'"></tr>');
@@ -283,7 +283,7 @@ function olkit_SearchPanel(aoOptions,dbSearchEngine_) {
 		if ('undefined' != typeof options.subtitleStringFn &&
 			null != options.subtitleStringFn) {
 			placeNameHtml += options.subtitleStringFn(searchHits[key].data)
-		}
+		};
 		placeNameHtml += '</p>';
 		var placeNameElem = $(placeNameHtml);
 		tdElem.append(placeNameElem);
@@ -297,7 +297,7 @@ function olkit_SearchPanel(aoOptions,dbSearchEngine_) {
 		tdElem.append(iconDivElem);
 		
 		return(trElem);
-	}
+	};
 	
  	var cdf = $n2.contributionDisplayFormatter(
 		{
@@ -330,8 +330,8 @@ function olkit_SearchPanel(aoOptions,dbSearchEngine_) {
 				row[0] = k;
 				row[1] = searchHits[k].score;
 				index.push(row);
-			}
-		}
+			};
+		};
 		index.sort(function(a,b) { return(a[1] - b[1]); });
 
 		
@@ -370,7 +370,7 @@ function olkit_SearchPanel(aoOptions,dbSearchEngine_) {
 			;
 		
 		lastDisplayedString = searchString;
-	}
+	};
 	
 	/*
 	 * install search text input and install handlers for it.
@@ -384,11 +384,11 @@ function olkit_SearchPanel(aoOptions,dbSearchEngine_) {
 	
 	function searchedResultsAreCurrent() {
 		return(ti.value == lastSearchedString && "" != ti.value);
-	}
+	};
 			
 	function displayedResultsAreCurrent() {
 		return(lastSearchedString == lastDisplayedString);
-	}
+	};
 			
 	$("#"+inputName).focus(function() {
 			if (initialSearchText == ti.value) {
@@ -416,9 +416,9 @@ function olkit_SearchPanel(aoOptions,dbSearchEngine_) {
 			
 				placesFetched = false;
 				fetchMatchingPlaces(searchTerm);
-			}
-		}
-	}
+			};
+		};
+	};
 			
 	/*
 	 * map recentering
@@ -430,7 +430,7 @@ function olkit_SearchPanel(aoOptions,dbSearchEngine_) {
 	
 	function addOrphanedToModalDisplay(place_id) {
 		$("#"+_olkit_recenterMapButtonTdId).text('The place associated with this contribution was deleted.');
-	}
+	};
 	
 	return {
 		textInputSubmitSearch : function() {
@@ -446,7 +446,7 @@ function olkit_SearchPanel(aoOptions,dbSearchEngine_) {
 				ti.blur();
 			},
 		
-		/*
+		/**
 		 * @param centerX horizontal center of feature in whatever coordinate system is used in the db
 		 * @param centerY vertical center of feature in whatever coordinate system is used in the db
 		 */
@@ -486,4 +486,4 @@ function olkit_SearchPanel(aoOptions,dbSearchEngine_) {
 			};
 		}
 	};
-}
+};

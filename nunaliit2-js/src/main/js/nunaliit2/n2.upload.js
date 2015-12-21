@@ -31,10 +31,6 @@ POSSIBILITY OF SUCH DAMAGE.
 $Id: n2.upload.js 8437 2012-08-14 17:59:23Z jpfiset $
 */
 
-/*
- * @requires n2.utils.js
- * @requires n2.class.js
- */
 ;(function($,$n2){
 
 // Localization

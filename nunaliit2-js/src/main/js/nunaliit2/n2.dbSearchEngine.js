@@ -42,11 +42,9 @@ $Id: n2.dbSearchEngine.js 8165 2012-05-31 13:14:37Z jpfiset $
  	@memberOf nunaliit2
  	@param {Object} options_
  		Options to connect to the database.
- 	@param {String} options_.url
- 		Relative path, from the application root, where the
+ 		url: Relative path, from the application root, where the
  		the database search servlet can be accessed
- 	@param {String} options_.relMediaPath
- 		Relative path, from the application root, where media
+ 		relMediaPath: Relative path, from the application root, where media
  		files are located.
  	@returns {DbSearchEngine}
  		Instance of DbSearchEngine configured according to

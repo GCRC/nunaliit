@@ -34,6 +34,7 @@ public class JavascriptMain {
 		LibraryConfiguration config = new LibraryConfiguration();
 		File outputFile = null;
 		File outputDebugFile = null;
+		boolean performVerification = false;
 		
 		// Turn arguments into a stack
 		Stack<String> argumentStack = new Stack<String>();
@@ -97,10 +98,22 @@ public class JavascriptMain {
 				outputDebugFile = new File(outputFileName);
 				System.out.println("--ouput-debug "+outputDebugFile.getAbsolutePath());
 					
+			} else if( "--verify".equals(optionName) ){
+				argumentStack.pop();
+				
+				performVerification = true;
+				System.out.println("--verify");
+					
 			} else {
 				System.err.println("Unknown option: "+optionName);
 				argumentStack.pop();
 			}
+		}
+		
+		if( performVerification ){
+			System.out.println("Verifying Code");
+			VerificationProcess process = new VerificationProcess();
+			process.verify(config);
 		}
 		
 		// Output release version

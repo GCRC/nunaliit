@@ -84,7 +84,7 @@ $Id: n2.timelineDateMarks.js 8165 2012-05-31 13:14:37Z jpfiset $
 		return($.datepicker.formatDate(target, d));
 	};
 	
-	/*
+	/**
 	 * @param min Date
 	 * @param max Date
 	 * @param base Date duration in milliseconds
@@ -165,7 +165,7 @@ $Id: n2.timelineDateMarks.js 8165 2012-05-31 13:14:37Z jpfiset $
 		return dates;
 	};
 	
-	/*
+	/**
 	 * @param d date to be positioned proportionally along the div
 	 * @param min minimum date for range
 	 * @param max maximum date for range
@@ -177,7 +177,7 @@ $Id: n2.timelineDateMarks.js 8165 2012-05-31 13:14:37Z jpfiset $
 		return(percentage);
 	}
 
-	/*
+	/**
 	 * @param txt text string
 	 * @return array containing the original string split into two (approximate) halves
 	 */
@@ -214,7 +214,7 @@ $Id: n2.timelineDateMarks.js 8165 2012-05-31 13:14:37Z jpfiset $
 		return a;
 	}
 
-	/*
+	/**
 	 * @param wrapper DOM element to which label is added
 	 * @param lft CSS left value as a percentage
 	 * @param txt string to be used as label (only used if lFlag == true)

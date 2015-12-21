@@ -67,6 +67,8 @@
 		<mustache.version>0.8.18</mustache.version>
 		<jetty.version>9.2.14.v20151106</jetty.version>
 		<maven-assembly-plugin.version>2.6</maven-assembly-plugin.version>
+		<jslint4java-maven-plugin.version>2.0.5</jslint4java-maven-plugin.version>
+		<closure-compiler.version>v20151015</closure-compiler.version>		
 	</properties>
 	<modules>
 		<module>nunaliit2-jdbc</module>

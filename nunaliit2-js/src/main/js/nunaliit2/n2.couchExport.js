@@ -31,10 +31,6 @@ POSSIBILITY OF SUCH DAMAGE.
 $Id: n2.upload.js 8165 2012-05-31 13:14:37Z jpfiset $
 */
 
-/*
- * @requires n2.utils.js
- * @requires n2.class.js
- */
 ;(function($,$n2){
 "use strict";
 

@@ -520,62 +520,83 @@ function suppressPopupHtmlFunction(opts_){
  	@memberOf nunaliit2
  	@param {Object} options_ 
  		Object that describes options to configure the map and controls.
-    @param {Object} options_.mapCoordinateSpecifications
+    	
+    	{Object} mapCoordinateSpecifications
     	Optional specification of map coordinate parameters, including:
     	- srsName: the coordinate system in which these parameters are expressed.
 		- maxExtent: maximum geographical extent of the map - an array [ minX, minY, maxX, maxY ]
 		- initialBounds: initially displayed map extent - an array [ minX, minY, maxX, maxY ]
 		- useForMapControls: true => use projection specified by above srsName for map
 		  controls (mouse position, etc.).
-    @param {Object} options_.mapDisplay
+
+    	{Object} mapDisplay
     	Option specification of the map display (projection, resolution, background layers, units, optional display handler hook)
-    @param {Boolean} options_.addPointsOnly=false
+    
+		{Boolean} addPointsOnly=false
     	If true, editing the map can only add points.
-    @param {Object} options_.placeDisplay
+    
+    	{Object} placeDisplay
     	Options for the display handler.
-    @param {Object} options_.background
+    
+    	{Object} background
     	Options for the display of background layers.
-    @param {Object} options_.saveFeature
+
+		{Object} saveFeature
     	Defines how features are saved via the editing interface. Or, instance of editor.
-    @param {String} options_.sidePanelName='side' 
+    
+		{String} sidePanelName='side' 
     	Identifier of the &lt;div&gt; element where the textual display should be rendered.
-    @param {String} options_.filterPanelName
+    
+		{String} filterPanelName
     	Identifier of the &lt;div&gt; element where local map filters should be displayed.
 		If not specified (null), then local map filtering is disabled.
-    @param {Boolean} options_.toggleClick=true 
+    
+		{Boolean} toggleClick=true 
     	If set, then clicking on a feature in a clicked 'state' turns off
 		the clicking state. When turning off this way, the event 'unselected' is
 		dispatched. If reset, clicking on a feature multiple
 		times is ignored.
-    @param {String} options_.uniqueIdentifier='place_id'
+    
+		{String} uniqueIdentifier='place_id'
 		Name of the feature attribute which uniquely identifies the feature.
 		This is important to coordinate all the map extensions. It defaults to 'place_id'
 		for legacy reasons.
-    @param {Object} options_.dbSearchEngine
+    
+    	{Object} dbSearchEngine
 		Options to configure the database search engine (@link nunaliit2#dbSearchEngine). 
-    @param {Object} options_.contributionDb
+    
+    	{Object} contributionDb
 		Options to configure the contribution database.
-    @param {Array} options_.layerInfo
+    
+    	{Array} layerInfo
 		Object or Array of Objects. Each object represents the options for one displayed layer.
-    @param {String} options_.layerInfo.sourceSrsName
+    
+    	{String} layerInfo.sourceSrsName
 		Projection name used in WFS requests. Defaults to 'EPSG:4326'
-    @param {Number} options_.layerInfo.displayInLayerSwitcher
+    
+    	{Number} layerInfo.displayInLayerSwitcher
 		Show layer in Layer Switcher (true, default) or hide layer in switcher (true).
 		Applied in WMS layers only.
-    @param {String} options_.layerInfo.featurePrefix
+    
+    	{String} layerInfo.featurePrefix
 		Short name used in WFS request as 'namespace' or 'workspace'.
-    @param {String} options_.layerInfo.featureType
+    
+		{String} layerInfo.featureType
 		Name used in WFS request to identify a particular layer. 
-    @param {String} options_.layerInfo.featureNS
+    
+		{String} layerInfo.featureNS
 		Full namespace for layer used in WFS requests.
-    @param {String} options_.layerInfo.name
+    
+		{String} layerInfo.name
 		Label by which layer should be referred to.
-    @param {Object} options_.layerInfo.filter
+    
+    	{Object} layerInfo.filter
 		Null if not used. Null by default. This is a JSON object
 		that represents a filter for the layer. If specified,
 		the filter is sent during WFS requests. Syntax for
 		filters is defined by nunaliit2.CreateOpenLayersFilter().
-    @param {Function} options_.layerInfo.featurePopupHtmlFn
+    
+		{Function} layerInfo.featurePopupHtmlFn
 		Function called when a feature pop up is displayed. This function
 		is called with an object contain the feature being hovered and
 		a call back function (onSuccess). The onSuccess callback should
@@ -583,24 +604,30 @@ function suppressPopupHtmlFunction(opts_){
 		popup should be created for this feature, then onSuccess should not
 		be called. By default this option is null and popups are not
 		generated.
-    @param {Number} options_.layerInfo.featurePopupDelay
+    	
+    	{Number} layerInfo.featurePopupDelay
 		Amount of time, in milliseconds, that should elapse between the
 		time a user hovers a feature and the time the popup is generated for it.
 		Defaults to 0.
-    @param {Number} options_.layerInfo.gutter
+    
+    	{Number} layerInfo.gutter
 		Extra sapce, specified in pixels, to add around images fetched from WMS.
 		Useful for WMS labelling in use with tiled service.
-    @param {Boolean} options_.layerInfo.visibility=true
+    
+		{Boolean} layerInfo.visibility=true
 		If set, the layer is initially visible. If false, the layer is
  		initially turned off.
-    @param {Function} options_.layerInfo.styleMapFn
+    
+		{Function} layerInfo.styleMapFn
 		Function called to retrieve a style map for the layer.
 		If not specified, a style map based on defaults and extended using
 		the property 'styleMap' is built.
-    @param {Object} options_.layerInfo.styleMap
+    
+    	{Object} layerInfo.styleMap
 		Options to override default styles for a layer. If property
 		'styleMapFn' is specified, then this property is probably ignored.
-    @param {Function} options_.layerInfo.selectListener
+    
+		{Function} layerInfo.selectListener
 		This function is called when the visibility of a layer
 		is changed. Protoype is: function(isSelected, layerInfo)
 
@@ -998,16 +1025,17 @@ var MapAndControls = $n2.Class({
 		};
 		
 		initContributionHandler(jQuery, this.options.placeDisplay.contributionOptions);
+
+		function progressOnStopCb(keyInfo,options) {
+			if( keyInfo && keyInfo.data && keyInfo.data.place_id ) {
+				if ($n2.placeInfo.getPlaceId() == keyInfo.data.place_id) {
+					$n2.placeInfo.loadAndRenderContributions();
+				}
+			}
+		};
 		
 		// Install callback
 		if( $.progress && $.progress.addProgressTracker) {
-			function progressOnStopCb(keyInfo,options) {
-				if( keyInfo && keyInfo.data && keyInfo.data.place_id ) {
-					if ($n2.placeInfo.getPlaceId() == keyInfo.data.place_id) {
-						$n2.placeInfo.loadAndRenderContributions();
-					}
-				}
-			};
 		
 			$.progress.addProgressTracker({
 					onStart: function(){} 
@@ -4596,7 +4624,7 @@ var MapAndControls = $n2.Class({
 		return this.options.filterPanelName;
 	},
 
-	/*
+	/**
 	 * Add a listener that receives information about the mouse position
 	 * on the map.
 	 * 

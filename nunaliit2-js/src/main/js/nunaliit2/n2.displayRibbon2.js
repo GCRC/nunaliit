@@ -970,7 +970,7 @@ var RibbonGrid = $n2.Class({
 		this.removedTiles = newRemovedTiles;
 	},
 	
-	/*
+	/**
 	 * This function moves the tiles around according to the new state
 	 * of the instance (currentTile, relatedTiles, removedTiles)
 	 * @param animate Boolean If set, use animation

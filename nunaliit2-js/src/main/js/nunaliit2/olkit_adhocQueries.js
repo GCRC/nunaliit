@@ -45,12 +45,6 @@ $Id: olkit_adhocQueries.js 8165 2012-05-31 13:14:37Z jpfiset $
 	
 	var currentOptions = $.extend({},defaultOptions);
 
-	/*
-	 * @param options_.id  Number for query to be selected
-	 * @param options_.label Name for query to be selected (use id or label, not both)
-	 * @param options_.args Array of arguments (e.g., [1,2,3])
-	 * @param options_.onSuccess Function for handling successful response (function(msg, status){})
-	 */
 	function query(options_) {
 	
 		var options = $.extend({}, currentOptions, options_);

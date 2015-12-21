@@ -3,18 +3,6 @@
  * full text of the license. */
 
 
-/**
- * @ requires OpenLayers/Protocol.js
- * @ requires OpenLayers/Feature/Vector.js
- * @ requires OpenLayers/Filter/Spatial.js
- * @ requires OpenLayers/Filter/Comparison.js
- * @ requires OpenLayers/Filter/Logical.js
- */
-
-/**
- * @ requires OpenLayers/Format.js
- */
-
 if( !window.$n2 ) {
 	window.$n2 = window.nunaliit2;
 };

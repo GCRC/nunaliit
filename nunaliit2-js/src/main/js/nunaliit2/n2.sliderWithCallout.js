@@ -303,7 +303,7 @@ $Id: n2.sliderWithCallout.js 8165 2012-05-31 13:14:37Z jpfiset $
 			$(t2).fadeOut('slow', fn);
 		}
 
-		/*
+		/**
 		 * slider building routines
 		 * @return slider jquery DOM object
 		 * 

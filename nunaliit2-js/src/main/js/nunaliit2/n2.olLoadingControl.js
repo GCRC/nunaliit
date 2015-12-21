@@ -3,18 +3,6 @@
  * full text of the license. */
 
 
-/**
- * @ requires OpenLayers/Protocol.js
- * @ requires OpenLayers/Feature/Vector.js
- * @ requires OpenLayers/Filter/Spatial.js
- * @ requires OpenLayers/Filter/Comparison.js
- * @ requires OpenLayers/Filter/Logical.js
- */
-
-/**
- * @ requires OpenLayers/Format.js
- */
-
 ;(function($,$n2){
 
 // Localization
@@ -23,8 +11,6 @@ var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 if( typeof(OpenLayers) !== 'undefined' ) {
 
 /**
- * @requires OpenLayers/Control.js
- *
  * Class: OpenLayers.Control.N2LoadingPanel
  * In some applications, it makes sense to alert the user that something is 
  * happening while tiles are loading. This control displays a div across the 

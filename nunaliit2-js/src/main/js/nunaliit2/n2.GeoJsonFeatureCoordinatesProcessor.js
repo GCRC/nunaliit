@@ -31,10 +31,6 @@ POSSIBILITY OF SUCH DAMAGE.
 $Id: n2.GeoJsonFeatureCoordinatesProcessor.js 8165 2012-05-31 13:14:37Z jpfiset $
 */
 
-// @requires n2.core.js
-// @requires n2.utils.js
-// @requires n2.class.js
-
 ;(function($n2){
 
 	function wrapGeoOutput(type, data, status) {
@@ -82,7 +78,7 @@ $Id: n2.GeoJsonFeatureCoordinatesProcessor.js 8165 2012-05-31 13:14:37Z jpfiset 
 			}
 		},
 		
-		/*
+		/**
 		 * Return the data structure needed for status tracking of the processing to 
 		 * be performed.
 		 */
@@ -90,7 +86,7 @@ $Id: n2.GeoJsonFeatureCoordinatesProcessor.js 8165 2012-05-31 13:14:37Z jpfiset 
 			return null;
 		},
 		
-		/*
+		/**
 		 * Compute the status for a processing step performed on a 'simple' geometry
 		 * (i.e., those other than the feature itself and a geometrycollection).
 		 * 
@@ -105,7 +101,7 @@ $Id: n2.GeoJsonFeatureCoordinatesProcessor.js 8165 2012-05-31 13:14:37Z jpfiset 
 			// do nothing
 		},
 		
-		/*
+		/**
 		 * Accumulate the status for a set of processed geometries.  This is required 
 		 * with geometrycollections and could be, but is not currently used with features
 		 * (there a simple assignment is currently used since it would only be done once).
@@ -117,14 +113,14 @@ $Id: n2.GeoJsonFeatureCoordinatesProcessor.js 8165 2012-05-31 13:14:37Z jpfiset 
 			// do nothing
 		},
 		
-		/*
+		/**
 		 * return an initial context structure.
 		 */
 		"initialContext": function() {
 			return [ ];
 		},
 		
-		/*
+		/**
 		 * @param context context information showing what IS being processed.  Context accumulates
 		 * down (geometryCollection, coordinates) and laterally (geometries, across coordinate arrays).
 		 * @param direction'down' or 'lateral'
@@ -185,7 +181,7 @@ $Id: n2.GeoJsonFeatureCoordinatesProcessor.js 8165 2012-05-31 13:14:37Z jpfiset 
 			 */
 			var that = this;
 			
-			/*
+			/**
 			 * @param feature object with structure corresponding to a GeoJSON
 			 *		feature.
 			 * @return an object encapsulating the object representing the 
@@ -223,7 +219,7 @@ $Id: n2.GeoJsonFeatureCoordinatesProcessor.js 8165 2012-05-31 13:14:37Z jpfiset 
 				return out;
 			};
 
-			/*
+			/**
 			 * @param point object with structure corresponding to a GeoJSON
 			 *		point.
 			 * @return an object encapsulating the object representing the 
@@ -241,7 +237,7 @@ $Id: n2.GeoJsonFeatureCoordinatesProcessor.js 8165 2012-05-31 13:14:37Z jpfiset 
 				return wrapGeoOutput(point.type, p, out.status);
 			};
 
-			/*
+			/**
 			 * @param multipoint object with structure corresponding to a GeoJSON
 			 *		multipoint.
 			 * @return an object encapsulating the object representing the 
@@ -270,7 +266,7 @@ $Id: n2.GeoJsonFeatureCoordinatesProcessor.js 8165 2012-05-31 13:14:37Z jpfiset 
 				return wrapGeoOutput(multipoint.type, out.data, out.status);
 			};
 			
-			/*
+			/**
 			 * @param linestring object with structure corresponding to a GeoJSON
 			 *		linestring.
 			 * @return an object encapsulating the object representing the 
@@ -289,7 +285,7 @@ $Id: n2.GeoJsonFeatureCoordinatesProcessor.js 8165 2012-05-31 13:14:37Z jpfiset 
 				return wrapGeoOutput(linestring.type, s, out.status);
 			};
 
-			/*
+			/**
 			 * @param multilinestring object with structure corresponding to a GeoJSON
 			 *		multilinestring.
 			 * @return an object encapsulating the object representing the 
@@ -318,7 +314,7 @@ $Id: n2.GeoJsonFeatureCoordinatesProcessor.js 8165 2012-05-31 13:14:37Z jpfiset 
 				return wrapGeoOutput(multilinestring.type, out.data, out.status);
 			};
 			
-			/*
+			/**
 			 * @param polygon object with structure corresponding to a GeoJSON
 			 *		polygon.
 			 * @return an object encapsulating the object representing the 
@@ -347,7 +343,7 @@ $Id: n2.GeoJsonFeatureCoordinatesProcessor.js 8165 2012-05-31 13:14:37Z jpfiset 
 				return wrapGeoOutput(polygon.type, out.data, out.status);
 			};
 
-			/*
+			/**
 			 * @param multipolygon object with structure corresponding to a GeoJSON
 			 *		multipolygon.
 			 * @return an object encapsulating the object representing the 
@@ -388,7 +384,7 @@ $Id: n2.GeoJsonFeatureCoordinatesProcessor.js 8165 2012-05-31 13:14:37Z jpfiset 
 				return wrapGeoOutput(multipolygon.type, out.data, out.status);
 			};
 			
-			/*
+			/**
 			 * @param geometrycollection object with structure corresponding to a GeoJSON
 			 *		geometrycollection.
 			 * @return an object encapsulating the object representing the 

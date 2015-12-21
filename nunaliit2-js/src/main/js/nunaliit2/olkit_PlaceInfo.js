@@ -158,7 +158,7 @@ $n2.contributionDisplayFormatter = function(aoOptions,dbSearchEngine_) {
 		contribTableClassBase: "contrib" /* modified as needed to create columns */
 		,contributionAddClick: contributionAddClick
 		
-		/*
+		/**
 		 * contribution media icon click handler
 		 * @param key repository key for the contribution
 		 * @param path media folder path to be concatenated with contribution filename
@@ -801,8 +801,8 @@ $n2.contributionDisplayFormatter = function(aoOptions,dbSearchEngine_) {
 					options.contributionAddClick(feature.attributes.place_id, null);
 				});
 				headTd.append(headButton);
-			}
-		}
+			};
+		};
 		
 		var contribElem = null;
 		if (0 == index.length) {

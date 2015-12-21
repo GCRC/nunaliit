@@ -1,14 +1,5 @@
 
 
-/**
- * @ requires OpenLayers/Protocol.js
- * @ requires OpenLayers/Feature/Vector.js
- * @ requires OpenLayers/Filter/Spatial.js
- * @ requires OpenLayers/Filter/Comparison.js
- * @ requires OpenLayers/Filter/Logical.js
- * @ requires OpenLayers/Format.js
- */
-
 ;(function($,$n2){
 
 // If OpenLayers is not included, do not process further
