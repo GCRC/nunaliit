@@ -17,13 +17,38 @@ import java.util.regex.Pattern;
  *
  */
 public class LibraryConfiguration {
+	
+	public enum CompileLevel {
+		JSMIN("jsmin")
+		,CLOSURE("closure")
+		;
+		
+		private String name;
+		private CompileLevel(String name){
+			this.name = name;
+		}
+		public String getName() {
+			return name;
+		}
+	}
 
 	static private Pattern patternComment = Pattern.compile("#.*?");
 	static private Pattern patternSection = Pattern.compile("\\[(.*)\\]");
 	
+	static public CompileLevel getCompilerLevelFromName(String name) throws Exception {
+		for(CompileLevel level : CompileLevel.values()){
+			if( level.getName().equals(name) ){
+				return level;
+			}
+		}
+		
+		throw new Exception("Unknown compiler level: "+name);
+	}
+	
 	private File sourceDirectory = null;
 	private List<String> inputFilePaths = null;
 	private File licenseFile = null;
+	private CompileLevel compileLevel = CompileLevel.JSMIN;
 
 	public LibraryConfiguration(){
 		inputFilePaths = new Vector<String>();
@@ -52,7 +77,7 @@ public class LibraryConfiguration {
 	public List<String> getInputFilePaths() {
 		return inputFilePaths;
 	}
-	
+
 	public void addInputFilePath(String path){
 		inputFilePaths.add( path );
 	}
@@ -63,6 +88,14 @@ public class LibraryConfiguration {
 
 	public void setLicenseFile(File licenseFile) {
 		this.licenseFile = licenseFile;
+	}
+	
+	public CompileLevel getCompileLevel() {
+		return compileLevel;
+	}
+
+	public void setCompileLevel(CompileLevel compileLevel) {
+		this.compileLevel = compileLevel;
 	}
 
 	public void parseConfiguration(Reader reader) throws Exception {

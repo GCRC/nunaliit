@@ -102,9 +102,9 @@
 									<arg line="--license-file ./compress/license.txt" />
 									<arg line="--source-dir ./src/main/js/nunaliit2" />
 									<arg line="--output ./src/main/js/nunaliit2/nunaliit2.js" />
+									<arg line="--compile-level closure" />
 									<arg line="--verify" />
-									<arg
-										line="--output-debug ./src/main/js/nunaliit2/nunaliit2-debug.js" />
+									<arg line="--output-debug ./src/main/js/nunaliit2/nunaliit2-debug.js" />
 								</java>
 								<java 
 									jar="target/tools/nunaliit2-javascript-compiler.jar" 
@@ -116,9 +116,9 @@
 									<arg line="--license-file ./compress/license.txt" />
 									<arg line="--source-dir ./src/main/js/nunaliit2" />
 									<arg line="--output ./src/main/js/nunaliit2/nunaliit2-couch.js" />
+									<arg line="--compile-level closure" />
 									<arg line="--verify" />
-									<arg
-										line="--output-debug ./src/main/js/nunaliit2/nunaliit2-couch-debug.js" />
+									<arg line="--output-debug ./src/main/js/nunaliit2/nunaliit2-couch-debug.js" />
 								</java>
 								<java 
 									jar="target/tools/nunaliit2-javascript-compiler.jar" 
@@ -129,11 +129,10 @@
 									<arg line="--config-file ./compress/nunaliit2-couch-mobile.cfg" />
 									<arg line="--license-file ./compress/license.txt" />
 									<arg line="--source-dir ./src/main/js/nunaliit2" />
+									<arg line="--compile-level closure" />
 									<arg line="--verify" />
-									<arg
-										line="--output ./src/main/js/nunaliit2/nunaliit2-couch-mobile.js" />
-									<arg
-										line="--output-debug ./src/main/js/nunaliit2/nunaliit2-couch-mobile-debug.js" />
+									<arg line="--output ./src/main/js/nunaliit2/nunaliit2-couch-mobile.js" />
+									<arg line="--output-debug ./src/main/js/nunaliit2/nunaliit2-couch-mobile-debug.js" />
 								</java>
 								<java 
 									jar="target/tools/nunaliit2-javascript-compiler.jar" 
@@ -145,6 +144,7 @@
 									<arg line="--license-file ./compress/license.txt" />
 									<arg line="--source-dir ./src/main/js/nunaliit2" />
 									<arg line="--output ./src/main/js/nunaliit2/isiuop.js" />
+									<arg line="--compile-level closure" />
 									<arg line="--verify" />
 									<arg line="--output-debug ./src/main/js/nunaliit2/isiuop-debug.js" />
 								</java>
@@ -170,8 +170,7 @@
 									<arg line="--config-file ./compress/nunaliit2-css-min.cfg" />
 									<arg line="--license-file ./compress/license.txt" />
 									<arg line="--source-dir ./src/main/js/nunaliit2/css/basic" />
-									<arg
-										line="--output ./src/main/js/nunaliit2/css/basic/nunaliit2-min.css" />
+									<arg line="--output ./src/main/js/nunaliit2/css/basic/nunaliit2-min.css" />
 								</java>
 								<java 
 									jar="target/tools/nunaliit2-css.jar" 
@@ -182,8 +181,7 @@
 									<arg line="--config-file ./compress/nunaliit2-css-mobile.cfg" />
 									<arg line="--license-file ./compress/license.txt" />
 									<arg line="--source-dir ./src/main/js/nunaliit2/css/basic" />
-									<arg
-										line="--output ./src/main/js/nunaliit2/css/basic/nunaliit2-mobile.css" />
+									<arg line="--output ./src/main/js/nunaliit2/css/basic/nunaliit2-mobile.css" />
 								</java>
 							</target>
 						</configuration>

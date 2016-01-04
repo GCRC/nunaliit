@@ -6,8 +6,6 @@ All rights reserved.
 Released under New BSD License.
 Details at:
    https://svn.gcrc.carleton.ca/nunaliit2/trunk/sdk/license.txt
-   
-$Id: license.txt 8178 2012-06-04 20:46:29Z jpfiset $   
 */
 
 ;(function(){

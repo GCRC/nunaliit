@@ -87,6 +87,17 @@ public class JavascriptMain {
 				String outputFileName = argumentStack.pop();
 				outputFile = new File(outputFileName);
 				System.out.println("--ouput "+outputFile.getAbsolutePath());
+
+			} else if( "--compile-level".equals(optionName) ){
+				argumentStack.pop();
+				
+				if( argumentStack.empty() ){
+					throw new Exception("File expected for option '--compile-level'");
+				}
+				String compileLevelStr = argumentStack.pop();
+				LibraryConfiguration.CompileLevel level = LibraryConfiguration.getCompilerLevelFromName(compileLevelStr);
+				config.setCompileLevel(level);
+				System.out.println("--compile-level "+level);
 				
 			} else if( "--output-debug".equals(optionName) ){
 				argumentStack.pop();
@@ -112,15 +123,25 @@ public class JavascriptMain {
 		
 		if( performVerification ){
 			System.out.println("Verifying Code");
-			VerificationProcess process = new VerificationProcess();
-			process.verify(config);
+			ClosureCompilerAdaptor process = new ClosureCompilerAdaptor();
+			process.verifyFiles(config);
 		}
 		
 		// Output release version
 		if( null != outputFile ) {
 			System.out.println("Generating release version");
-			CompressProcess process = new CompressProcess();
-			process.generate(config, outputFile);
+			LibraryConfiguration.CompileLevel level = config.getCompileLevel();
+			if( LibraryConfiguration.CompileLevel.JSMIN == level ){
+				CompressProcess process = new CompressProcess();
+				process.generate(config, outputFile);
+
+			} else if( LibraryConfiguration.CompileLevel.CLOSURE == level ){
+				ClosureCompilerAdaptor process = new ClosureCompilerAdaptor();
+				process.compress(config, outputFile);
+
+			} else {
+				throw new Exception("Unable to compress compile level: "+level);
+			}
 		}
 		
 		// Output debug version

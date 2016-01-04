@@ -13,8 +13,8 @@ public class VerificationProcessTest extends TestCase {
 		config.setSourceDirectory(resourceDir);
 		config.addInputFilePath( "a.js" );
 		
-		VerificationProcess verifyProcess = new VerificationProcess();
-		verifyProcess.verify(config);
+		ClosureCompilerAdaptor verifyProcess = new ClosureCompilerAdaptor();
+		verifyProcess.verifyFiles(config);
 	}
 
 	public void testDuplicate() throws Exception {
@@ -25,8 +25,8 @@ public class VerificationProcessTest extends TestCase {
 		config.addInputFilePath( "invalid_duplicate.js" );
 		
 		try {
-			VerificationProcess verifyProcess = new VerificationProcess();
-			verifyProcess.verify(config);
+			ClosureCompilerAdaptor verifyProcess = new ClosureCompilerAdaptor();
+			verifyProcess.verifyFiles(config);
 			
 			fail("Error should be reported");
 		} catch(Exception e) {
