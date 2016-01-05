@@ -28,12 +28,7 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
 
-$Id: n2.schema.js 8461 2012-08-29 18:54:28Z jpfiset $
 */
-
-// @requires n2.core.js
-// @requires n2.utils.js
-// @requires n2.class.js
 
 ;(function($,$n2){
 "use strict";

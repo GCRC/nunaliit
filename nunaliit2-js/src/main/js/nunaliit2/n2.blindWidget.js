@@ -28,11 +28,7 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
 
-$Id: n2.blindWidget.js 8437 2012-08-14 17:59:23Z jpfiset $
 */
-
-// @requires n2.core.js
-// @requires n2.utils.js
 
 /*
  * This is a widget based on the jquery-ui accordion styles
@@ -41,6 +37,7 @@ $Id: n2.blindWidget.js 8437 2012-08-14 17:59:23Z jpfiset $
  * callbacks.
  */
 ;(function($,$n2){
+"use strict";
 	
 	var noopFn = function(){}
 	

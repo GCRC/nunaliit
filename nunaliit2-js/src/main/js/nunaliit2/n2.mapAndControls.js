@@ -28,12 +28,10 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
 
-$Id: n2.mapAndControls.js 8494 2012-09-21 20:06:50Z jpfiset $
 */
 
-// @requires n2.utils.js
-
 ;(function($,$n2){
+"use strict";
 
 	// Localization
 	var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
@@ -1024,41 +1022,6 @@ var MapAndControls = $n2.Class({
 			this.options.layerInfo = [this.options.layerInfo];
 		};
 		
-		initContributionHandler(jQuery, this.options.placeDisplay.contributionOptions);
-
-		function progressOnStopCb(keyInfo,options) {
-			if( keyInfo && keyInfo.data && keyInfo.data.place_id ) {
-				if ($n2.placeInfo.getPlaceId() == keyInfo.data.place_id) {
-					$n2.placeInfo.loadAndRenderContributions();
-				}
-			}
-		};
-		
-		// Install callback
-		if( $.progress && $.progress.addProgressTracker) {
-		
-			$.progress.addProgressTracker({
-					onStart: function(){} 
-					,onUpdate: function(){} 
-					,onComplete: progressOnStopCb
-					,onRemove: function(){}
-				});
-		} else {
-			log('Progress module not found. Activity tracking will not be available.'); 
-		};
-		
-		// Configure display
-		if( $n2.placeInfo ) {
-			this.olkitDisplayOptions = $.extend(
-				{}
-				,this.options.placeDisplay
-				,{
-					displayDiv: this.options.sidePanelName
-				}
-			);
-			$n2.placeInfo.Configure(this.olkitDisplayOptions,this.dbSearchEngine, this.contributionDb);
-		};
-
 		// STYLE
 		//
 		// This is the default style used by the atlas. Each layer is built
@@ -1459,10 +1422,6 @@ var MapAndControls = $n2.Class({
 				,doc: feature.data
 				,feature: feature
 	 		});
-
-		} else {
-			$n2.placeInfo.setFeatureReinitDisplay(feature);
-			$n2.placeInfo.loadAndRenderContributions();
 		};
 	},
 	
@@ -3327,15 +3286,6 @@ var MapAndControls = $n2.Class({
 
     // === ADD OR SELECT FEATURE MODE =============================================
 
-    createFirstContribution: function(feature, dataOptions) {
-		if( feature.attributes && feature.attributes.place_id ) {
-			if( NUNALIIT_CONTRIBUTIONS ) {
-				// NUNALIIT_CONTRIBUTIONS module is needed
-				NUNALIIT_CONTRIBUTIONS.addContribution(dataOptions);
-			};
-    	};
-    },
-    
     // ======= EDIT_FEATURE MODE ==================================================
 
     _geometryModified: function(fid, olGeom, proj){
@@ -3393,28 +3343,6 @@ var MapAndControls = $n2.Class({
 		};
 
 		this.fidAdded(fid);
-		var filter = $n2.olFilter.fromFid(fid);
-		this._reloadFeature(filter,{
-			onReloaded: function(feature) {
-				if( _this.options.contribInsertedReloadAddContrib ) {
-					if( _this.options.contribInsertedReloadDataFn === null ) {
-						_this.createFirstContribution(
-							feature,
-							{
-								data: {
-									title: 'Added point'
-									,notes: ''
-									,place_id: feature.attributes.place_id
-								}
-							});
-					} else {
-						_this.createFirstContribution(
-							feature,
-							_this.options.contribInsertedReloadDataFn(feature)); // return obj with filled data fields as above
-					};
-				};
-			}
-		});
 	},
     
 	onAttributeFormUpdated: function(fid, feature) {
@@ -3545,10 +3473,6 @@ var MapAndControls = $n2.Class({
 				this.fidChannel
 				,function(msg){ _this.fidHandler(msg); }
 			);
-			$.cometd.subscribe(
-				this.contributionChannel
-				,function(msg){ _this.contributionHandler(msg); }
-			);
     	}
     },
     
@@ -3602,19 +3526,6 @@ var MapAndControls = $n2.Class({
 			$.cometd.publish(this.fidChannel,msg);
 		};
 	},
-
-	contributionHandler: function(msg) {
-		//log('contributionHandler',msg);
-		if( msg.data ) {
-			var data = msg.data;
-			
-			if( data.place_id 
-			 && $n2.placeInfo 
-			 && $n2.placeInfo.getPlaceId() == data.place_id ) {
-				$n2.placeInfo.loadAndRenderContributions();
-			};
-		};
-	},	
 	
     // === COMETD MODE STUFF END ========================================================
 

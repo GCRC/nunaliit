@@ -28,7 +28,6 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
 
-$Id: n2.timelineDateMarks.js 8165 2012-05-31 13:14:37Z jpfiset $
 */
 
 /*
@@ -41,11 +40,8 @@ $Id: n2.timelineDateMarks.js 8165 2012-05-31 13:14:37Z jpfiset $
  * 
  */
 
-// @requires n2.core.js
-// @requires n2.utils.js
-// @requires n2.class.js
-
 ;(function($,$n2){
+"use strict";
 
 	var DAY_MS = 1000 * 60 * 60 * 24; // in milliseconds
 	$n2.TIMELINE_DATE_MARKS_Durations_DAY = DAY_MS;

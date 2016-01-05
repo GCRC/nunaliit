@@ -28,9 +28,9 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
 
-$Id: jquery-progress-slide-1.0.js 8165 2012-05-31 13:14:37Z jpfiset $
 */
 (function($){
+"use strict";
 
 	function CreateHolder() {
 		var $holder = $('#progress-slider');

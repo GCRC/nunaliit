@@ -32,6 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 // This file contains code that corrects/fixes issues when using jQuery with Nunaliit
 
 ;(function($,$n2){
+"use strict";
 
 // In IE8, must disable caching of $.ajax requests
 var browserInfo = $n2.utils.getBrowserInfo();

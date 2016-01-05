@@ -31,8 +31,9 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 ;(function($,$n2){
+"use strict";
 
-if( typeof(OpenLayers) !== 'undefined'
+if( typeof OpenLayers !== 'undefined'
  && OpenLayers.Strategy
  && OpenLayers.Class
  ) {

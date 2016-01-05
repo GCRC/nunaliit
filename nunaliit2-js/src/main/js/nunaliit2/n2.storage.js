@@ -30,9 +30,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-// @requires n2.core.js
-
 ;(function($n2){
+"use strict";
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };

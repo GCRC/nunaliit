@@ -31,6 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 ;(function($n2){
+"use strict";
 
 	var DEFAULT_PRECISION = 0.00001;
 	var MIN_POSITIONS_LINEAR_RING = 4;

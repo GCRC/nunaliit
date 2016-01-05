@@ -134,20 +134,6 @@
 									<arg line="--output ./src/main/js/nunaliit2/nunaliit2-couch-mobile.js" />
 									<arg line="--output-debug ./src/main/js/nunaliit2/nunaliit2-couch-mobile-debug.js" />
 								</java>
-								<java 
-									jar="target/tools/nunaliit2-javascript-compiler.jar" 
-									fork="true"
-									failonerror="true" 
-									dir="."
-									>
-									<arg line="--config-file ./compress/isiuop.cfg" />
-									<arg line="--license-file ./compress/license.txt" />
-									<arg line="--source-dir ./src/main/js/nunaliit2" />
-									<arg line="--output ./src/main/js/nunaliit2/isiuop.js" />
-									<arg line="--compile-level closure" />
-									<arg line="--verify" />
-									<arg line="--output-debug ./src/main/js/nunaliit2/isiuop-debug.js" />
-								</java>
 
 								<!-- Generate CSS libraries -->
 								<java 

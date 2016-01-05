@@ -28,12 +28,10 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
 
-$Id: n2.mapAndControls.js 8494 2012-09-21 20:06:50Z jpfiset $
 */
 
-// @requires n2.utils.js
-
 ;(function($n2){
+"use strict";
 
 // Localization
 //var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };

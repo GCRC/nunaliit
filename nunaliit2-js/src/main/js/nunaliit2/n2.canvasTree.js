@@ -35,7 +35,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 var 
  _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); }
- ,DH = 'n2.canvasPack'
+ ,DH = 'n2.canvasTree'
  ;
  
 // Required library: d3

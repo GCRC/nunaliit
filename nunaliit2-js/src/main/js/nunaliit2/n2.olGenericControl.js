@@ -2,13 +2,11 @@
  * license.  See http://svn.openlayers.org/trunk/openlayers/license.txt for the
  * full text of the license. */
 
-
-if( !window.$n2 ) {
-	window.$n2 = window.nunaliit2;
-};
+;(function($n2){
+"use strict";
 
 
-if( typeof(OpenLayers) !== 'undefined'
+if( typeof OpenLayers !== 'undefined'
  && OpenLayers.Control
  && OpenLayers.Class
  ) {
@@ -64,3 +62,5 @@ if( typeof(OpenLayers) !== 'undefined'
 	});
 
 }; // If OpenLayers is defined
+
+})(nunaliit2);
