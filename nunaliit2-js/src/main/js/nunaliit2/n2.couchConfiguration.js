@@ -153,6 +153,11 @@ function Configure(options_){
 		directory: configuration.directory
 	});
 
+	// Analytics Service
+	configuration.directory.analyticsService = new $n2.analytics.AnalyticsService({
+		dispatchService: configuration.directory.dispatchService
+	});
+
 	// Custom Service
 	configuration.directory.customService = new $n2.custom.CustomService({
 		directory: configuration.directory
