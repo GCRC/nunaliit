@@ -1,3 +1,4 @@
+"use strict";
 var n2utils = {
 
 	isArray: function(o) {
@@ -1072,7 +1073,7 @@ var n2utils = {
 	}
 };
 
-if( typeof(exports) === 'object' ) {
+if( typeof exports === 'object' ) {
 	exports.isArray = n2utils.isArray;
 	exports.isArrayOfStrings = n2utils.isArrayOfStrings;
 	exports.isValidBounds = n2utils.isValidBounds;
@@ -1094,7 +1095,7 @@ if( typeof(exports) === 'object' ) {
 	exports.validateTypes = n2utils.validateTypes;
 };
 
-if( typeof(nunaliit2) === 'function' ) {
+if( typeof nunaliit2 === 'function' ) {
 	nunaliit2.couchUtils = {};
 	nunaliit2.couchUtils.isArray = n2utils.isArray;
 	nunaliit2.couchUtils.isArrayOfStrings = n2utils.isArrayOfStrings;
