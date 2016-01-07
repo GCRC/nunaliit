@@ -1,14 +1,13 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<artifactId>nunaliit2</artifactId>
 		<groupId>ca.carleton.gcrc</groupId>
-		<version>2.2.5-SNAPSHOT</version>
+		<version>2.2.5</version>
 	</parent>
 	<groupId>ca.carleton.gcrc</groupId>
 	<artifactId>nunaliit2-js</artifactId>
-	<version>2.2.5-SNAPSHOT</version>
+	<version>2.2.5</version>
 	<name>nunaliit2-js</name>
 	<description>Javascript files produced in-house</description>
 	<build>
@@ -92,12 +91,7 @@
 							<!-- The following is an ANT target -->
 							<target>
 								<!-- Generate javascript libraries -->
-								<java 
-									jar="target/tools/nunaliit2-javascript-compiler.jar" 
-									fork="true" 
-									failonerror="true" 
-									dir="."
-									>
+								<java jar="target/tools/nunaliit2-javascript-compiler.jar" fork="true" failonerror="true" dir=".">
 									<arg line="--config-file ./compress/nunaliit2.cfg" />
 									<arg line="--license-file ./compress/license.txt" />
 									<arg line="--source-dir ./src/main/js/nunaliit2" />
@@ -106,12 +100,7 @@
 									<arg line="--verify" />
 									<arg line="--output-debug ./src/main/js/nunaliit2/nunaliit2-debug.js" />
 								</java>
-								<java 
-									jar="target/tools/nunaliit2-javascript-compiler.jar" 
-									fork="true" 
-									failonerror="true" 
-									dir="."
-									>
+								<java jar="target/tools/nunaliit2-javascript-compiler.jar" fork="true" failonerror="true" dir=".">
 									<arg line="--config-file ./compress/nunaliit2-couch.cfg" />
 									<arg line="--license-file ./compress/license.txt" />
 									<arg line="--source-dir ./src/main/js/nunaliit2" />
@@ -120,12 +109,7 @@
 									<arg line="--verify" />
 									<arg line="--output-debug ./src/main/js/nunaliit2/nunaliit2-couch-debug.js" />
 								</java>
-								<java 
-									jar="target/tools/nunaliit2-javascript-compiler.jar" 
-									fork="true" 
-									failonerror="true" 
-									dir="."
-									>
+								<java jar="target/tools/nunaliit2-javascript-compiler.jar" fork="true" failonerror="true" dir=".">
 									<arg line="--config-file ./compress/nunaliit2-couch-mobile.cfg" />
 									<arg line="--license-file ./compress/license.txt" />
 									<arg line="--source-dir ./src/main/js/nunaliit2" />
@@ -136,34 +120,19 @@
 								</java>
 
 								<!-- Generate CSS libraries -->
-								<java 
-									jar="target/tools/nunaliit2-css.jar" 
-									fork="true" 
-									failonerror="true" 
-									dir="."
-									>
+								<java jar="target/tools/nunaliit2-css.jar" fork="true" failonerror="true" dir=".">
 									<arg line="--config-file ./compress/nunaliit2-css.cfg" />
 									<arg line="--license-file ./compress/license.txt" />
 									<arg line="--source-dir ./src/main/js/nunaliit2/css/basic" />
 									<arg line="--output ./src/main/js/nunaliit2/css/basic/nunaliit2.css" />
 								</java>
-								<java 
-									jar="target/tools/nunaliit2-css.jar" 
-									fork="true" 
-									failonerror="true" 
-									dir="."
-									>
+								<java jar="target/tools/nunaliit2-css.jar" fork="true" failonerror="true" dir=".">
 									<arg line="--config-file ./compress/nunaliit2-css-min.cfg" />
 									<arg line="--license-file ./compress/license.txt" />
 									<arg line="--source-dir ./src/main/js/nunaliit2/css/basic" />
 									<arg line="--output ./src/main/js/nunaliit2/css/basic/nunaliit2-min.css" />
 								</java>
-								<java 
-									jar="target/tools/nunaliit2-css.jar" 
-									fork="true" 
-									failonerror="true" 
-									dir="."
-									>
+								<java jar="target/tools/nunaliit2-css.jar" fork="true" failonerror="true" dir=".">
 									<arg line="--config-file ./compress/nunaliit2-css-mobile.cfg" />
 									<arg line="--license-file ./compress/license.txt" />
 									<arg line="--source-dir ./src/main/js/nunaliit2/css/basic" />

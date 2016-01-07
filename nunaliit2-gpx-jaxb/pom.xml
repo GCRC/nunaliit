@@ -3,11 +3,11 @@
 	<parent>
 		<artifactId>nunaliit2</artifactId>
 		<groupId>ca.carleton.gcrc</groupId>
-		<version>2.2.5-SNAPSHOT</version>
+		<version>2.2.5</version>
 	</parent>
 	<groupId>ca.carleton.gcrc</groupId>
 	<artifactId>nunaliit2-gpx-jaxb</artifactId>
-	<version>2.2.5-SNAPSHOT</version>
+	<version>2.2.5</version>
 	<name>nunaliit2-gpx-jaxb</name>
 	<build>
 		<plugins>
