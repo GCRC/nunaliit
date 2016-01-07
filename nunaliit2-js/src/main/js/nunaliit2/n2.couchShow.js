@@ -799,7 +799,7 @@ var DomStyler = $n2.Class({
 			var node = parent.firstChild;
 			while(node){
 				if( node.nodeType === 3 ){ // text node
-					nextSibling = node.nextSibling;
+					var nextSibling = node.nextSibling;
 					convertTextElement(parent, node);
 					node = nextSibling;
 				} else {

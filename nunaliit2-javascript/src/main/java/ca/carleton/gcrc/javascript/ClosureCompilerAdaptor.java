@@ -24,10 +24,9 @@ public class ClosureCompilerAdaptor {
 	public void verifyFiles(LibraryConfiguration config) throws Exception {
 		CompilerOptions compilerOptions = new CompilerOptions();
 		compilerOptions.setLanguage(LanguageMode.ECMASCRIPT5_STRICT);
+		compilerOptions.setChecksOnly(true);
 		
 		if( false ){
-			compilerOptions.setChecksOnly(true);
-			
 			// Iterate over the input files
 			for(File file : config.getInputFiles()){
 				List<SourceFile> externs = Collections.emptyList();
