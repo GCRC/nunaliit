@@ -65,7 +65,7 @@ var AnalyticsService = $n2.Class({
 	},
 	
 	_sendEvent: function(action, value){
-		if( ga !== undefined ){
+		if( typeof ga === 'function' ){
 			var event = {
 				hitType: 'event'
 				,eventCategory: 'nunaliit'
