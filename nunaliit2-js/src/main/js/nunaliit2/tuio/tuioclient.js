@@ -15,6 +15,9 @@ var scrollSpeed = 1.0;
 // Toggle for whether non-map page elements are visible (kludge)
 var barsVisible = true;
 
+// Time in ms to wait until abandoning a draw and starting pinch/pan
+var moveDelay = 250.0;
+
 // Time in ms a cursor must be gone to be considered up
 var clickDelay = 1000;
 
@@ -648,6 +651,11 @@ function onCursorMove(inst) {
 				pressCursor = undefined;
 			}
 		}
+	} else if (drawZooming && Date.now() - cursor.birthTime > moveDelay) {
+		// Multiple cursors have been down for a while, abort draw zoom
+		overlay.abortStroke();
+		overlay = undefined;
+		drawZooming = false;
 	}
 }
 
@@ -681,7 +689,15 @@ function onHandDown(inst) {
 		/* No hand is down yet, start a mouse motion for map dragging. */
 		// dispatchMouseEvent('mousedown', hand.pos.x, hand.pos.y);
 		mouseHand = inst;
-	} else if (!drawZooming) {
+	} else if (drawZooming) {
+		// Multiple hands down, terminate draw zoom immediately
+		pressCursor = undefined;
+		if (drawZooming) {
+			overlay.abortStroke();
+			overlay = undefined;
+			drawZooming = false;
+		}
+	} else {
 		/* A hand was acting as the mouse cursor for map dragging, but now we
 		   have several hands.  Stop drag since this no longer makes sense. */
 		var oldMouseHand = hands[mouseHand];
@@ -696,7 +712,9 @@ function onHandDown(inst) {
 function onHandMove(inst) {
 	var hand = hands[inst];
 
-	if (mouseHand == undefined) {
+	if (drawZooming) {
+		return;
+	} else if (mouseHand == undefined) {
 		/* Mouse hand is no longer around, if this is the only remaining hand,
 		   take over scrolling. */
 		if (Object.keys(hands).length == 1) {
@@ -1256,6 +1274,16 @@ DrawOverlay.prototype.moveTo = function (x, y) {
 	this.context.lineTo(x, y);
 	this.context.stroke();
 	this.points.push([x, y]);
+}
+
+DrawOverlay.prototype.abortStroke = function () {
+	if (this.drawing) {
+		this.parent.removeChild(this.canvas);
+		this.canvas.style.left = "100%";
+		this.canvas.style.width = "0";
+		this.drawing = false;
+		this.points = [];
+	}
 }
 
 DrawOverlay.prototype.endStroke = function () {
