@@ -59,7 +59,11 @@ function getScriptLocation(scriptName) {
 };
 
 function getCoreScriptLocation() {
-	return getScriptLocation(nunaliit2CoreScript);
+	if( typeof nunaliit2CoreScript === 'string' ){
+		return getScriptLocation(nunaliit2CoreScript);
+	};
+	
+	return null;
 };
 
 function loadScript(scriptUrl, refLocation) {
