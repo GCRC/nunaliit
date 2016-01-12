@@ -1,7 +1,6 @@
 package ca.carleton.gcrc.couch.command;
 
 import java.io.PrintStream;
-import java.util.Stack;
 
 public interface Command {
 	
@@ -12,12 +11,14 @@ public interface Command {
 	boolean matchesKeyword(String keyword);
 	
 	boolean isDeprecated();
+
+	String[] getExpectedOptions();
 	
 	void reportHelp(PrintStream ps);
 	
 	void runCommand(
 		GlobalSettings gs
-		,Stack<String> argumentStack
+		,Options options
 		) throws Exception;
 
 }

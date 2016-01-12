@@ -3,7 +3,6 @@ package ca.carleton.gcrc.couch.command;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.PrintStream;
-import java.util.Stack;
 
 import ca.carleton.gcrc.couch.command.impl.PathComputer;
 import ca.carleton.gcrc.couch.command.impl.UpgradeOperationsBasic;
@@ -29,6 +28,14 @@ public class CommandCreate implements Command {
 	@Override
 	public boolean isDeprecated() {
 		return false;
+	}
+
+	@Override
+	public String[] getExpectedOptions() {
+		return new String[]{
+				Options.OPTION_ATLAS_DIR
+				,Options.OPTION_NO_CONFIG
+			};
 	}
 
 	@Override
@@ -58,19 +65,17 @@ public class CommandCreate implements Command {
 	@Override
 	public void runCommand(
 		GlobalSettings gs
-		,Stack<String> argumentStack
+		,Options options
 		) throws Exception {
+
+		if( options.getArguments().size() > 1 ){
+			throw new Exception("Unexpected argument: "+options.getArguments().get(1));
+		}
 		
 		// Pick up options
 		boolean noConfig = false;
-		while( false == argumentStack.empty() ){
-			String optionName = argumentStack.peek();
-			if( "--no-config".equals(optionName) ){
-				argumentStack.pop();
-				noConfig = true;
-			} else {
-				break;
-			}
+		if( null != options.getNoConfig() ){
+			noConfig = options.getNoConfig().booleanValue();
 		}
 
 		// Figure out where atlas should be created
@@ -189,8 +194,8 @@ public class CommandCreate implements Command {
 		// Perform configuration, unless disabled
 		if( false == noConfig ){
 			CommandConfig config = new CommandConfig();
-			Stack<String> configArgs = new Stack<String>();
-			config.runCommand(gs, configArgs);
+			Options configOptions = new Options();
+			config.runCommand(gs, configOptions);
 		}
 	}
 

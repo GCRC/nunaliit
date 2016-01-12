@@ -1,7 +1,6 @@
 package ca.carleton.gcrc.couch.command;
 
 import java.io.PrintStream;
-import java.util.Stack;
 
 public class CommandUpdateUser implements Command {
 
@@ -24,6 +23,13 @@ public class CommandUpdateUser implements Command {
 	}
 
 	@Override
+	public String[] getExpectedOptions() {
+		return new String[]{
+				Options.OPTION_ATLAS_DIR
+			};
+	}
+
+	@Override
 	public boolean requiresAtlasDir() {
 		return false;
 	}
@@ -42,7 +48,7 @@ public class CommandUpdateUser implements Command {
 	@Override
 	public void runCommand(
 		GlobalSettings gs
-		,Stack<String> argumentStack
+		,Options options
 		) throws Exception {
 
 		PrintStream ps = gs.getErrStream();

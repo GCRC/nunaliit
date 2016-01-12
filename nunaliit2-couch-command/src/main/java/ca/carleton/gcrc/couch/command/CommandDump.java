@@ -6,8 +6,6 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
-import java.util.Vector;
 
 import ca.carleton.gcrc.couch.app.DbDumpProcess;
 import ca.carleton.gcrc.couch.client.CouchDb;
@@ -34,6 +32,17 @@ public class CommandDump implements Command {
 	@Override
 	public boolean isDeprecated() {
 		return false;
+	}
+
+	@Override
+	public String[] getExpectedOptions() {
+		return new String[]{
+				Options.OPTION_ATLAS_DIR
+				,Options.OPTION_DUMP_DIR
+				,Options.OPTION_DOC_ID
+				,Options.OPTION_SKELETON
+				,Options.OPTION_OVERWRITE_DOCS
+			};
 	}
 
 	@Override
@@ -78,8 +87,12 @@ public class CommandDump implements Command {
 	@Override
 	public void runCommand(
 		GlobalSettings gs
-		,Stack<String> argumentStack
+		,Options options
 		) throws Exception {
+
+		if( options.getArguments().size() > 1 ){
+			throw new Exception("Unexpected argument: "+options.getArguments().get(1));
+		}
 
 		File atlasDir = gs.getAtlasDir();
 
@@ -100,40 +113,18 @@ public class CommandDump implements Command {
 		}
 		
 		// Pick up options
-		List<String> docIds = new Vector<String>();
+		List<String> docIds = options.getDocIds();
 		boolean selectSkeletonDocuments = false;
+		if( null != options.getSkeleton() ){
+			selectSkeletonDocuments = options.getSkeleton().booleanValue();
+		}
 		boolean overwriteDocs = false;
-		while( false == argumentStack.empty() ){
-			String optionName = argumentStack.peek();
-			if( "--dump-dir".equals(optionName) ){
-				argumentStack.pop();
-				if( argumentStack.size() < 1 ){
-					throw new Exception("--dump-dir option requires a directory");
-				}
-				
-				String dumpDirStr = argumentStack.pop();
-				dumpDir = new File(dumpDirStr);
-				
-			} else if( "--doc-id".equals(optionName) ){
-				argumentStack.pop();
-				if( argumentStack.size() < 1 ){
-					throw new Exception("--doc-id option requires a document identifier");
-				}
-				
-				String docId = argumentStack.pop();
-				docIds.add(docId);
-				
-			} else if( "--skeleton".equals(optionName) ){
-				argumentStack.pop();
-				selectSkeletonDocuments = true;
-				
-			} else if( "--overwrite-docs".equals(optionName) ){
-				argumentStack.pop();
-				overwriteDocs = true;
-
-			} else {
-				break;
-			}
+		if( null != options.getOverwriteDocs() ){
+			overwriteDocs = options.getOverwriteDocs().booleanValue();
+		}
+		if( null != options.getDumpDir() ){
+			String dumpDirStr = options.getDumpDir();
+			dumpDir = new File( dumpDirStr );
 		}
 		
 		// Load properties for atlas

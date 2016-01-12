@@ -5,7 +5,6 @@ import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
 import java.util.Vector;
 
 import org.json.JSONObject;
@@ -40,6 +39,15 @@ public class CommandUpdateSchema implements Command {
 	}
 
 	@Override
+	public String[] getExpectedOptions() {
+		return new String[]{
+				Options.OPTION_ATLAS_DIR
+				,Options.OPTION_NAME
+				,Options.OPTION_ALL
+			};
+	}
+
+	@Override
 	public boolean requiresAtlasDir() {
 		return true;
 	}
@@ -66,32 +74,20 @@ public class CommandUpdateSchema implements Command {
 	@Override
 	public void runCommand(
 		GlobalSettings gs
-		,Stack<String> argumentStack
+		,Options options
 		) throws Exception {
+
+		if( options.getArguments().size() > 1 ){
+			throw new Exception("Unexpected argument: "+options.getArguments().get(1));
+		}
 
 		File atlasDir = gs.getAtlasDir();
 		
 		// Pick up options
-		String schemaName = null;
+		String schemaName = options.getName();
 		boolean allSchemas = false;
-		while( false == argumentStack.empty() ){
-			String optionName = argumentStack.peek();
-			if( "--name".equals(optionName) ){
-				argumentStack.pop();
-				if( argumentStack.size() < 1 ){
-					throw new Exception("--name option requires a schema name");
-				}
-				
-				schemaName = argumentStack.pop();
-
-			} else if( "--all".equals(optionName) ){
-				argumentStack.pop();
-
-				allSchemas = true;
-
-			} else {
-				break;
-			}
+		if( null != options.getAll() ){
+			allSchemas = options.getAll().booleanValue();
 		}
 		
 		// Load all documents, looking for schemas

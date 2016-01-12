@@ -5,7 +5,6 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
-import java.util.Stack;
 import java.util.Vector;
 
 import javax.servlet.ServletException;
@@ -72,6 +71,13 @@ public class CommandUpdate implements Command {
 	}
 
 	@Override
+	public String[] getExpectedOptions() {
+		return new String[]{
+				Options.OPTION_ATLAS_DIR
+			};
+	}
+
+	@Override
 	public boolean requiresAtlasDir() {
 		return true;
 	}
@@ -94,8 +100,12 @@ public class CommandUpdate implements Command {
 	@Override
 	public void runCommand(
 		GlobalSettings gs
-		,Stack<String> argumentStack
+		,Options options
 		) throws Exception {
+
+		if( options.getArguments().size() > 1 ){
+			throw new Exception("Unexpected argument: "+options.getArguments().get(1));
+		}
 		
 		File atlasDir = gs.getAtlasDir();
 

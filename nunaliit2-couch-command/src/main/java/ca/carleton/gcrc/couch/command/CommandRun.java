@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.PrintStream;
 import java.net.URL;
 import java.util.EnumSet;
-import java.util.Stack;
 
 import javax.servlet.DispatcherType;
 
@@ -56,6 +55,13 @@ public class CommandRun implements Command {
 	}
 
 	@Override
+	public String[] getExpectedOptions() {
+		return new String[]{
+				Options.OPTION_ATLAS_DIR
+			};
+	}
+
+	@Override
 	public boolean requiresAtlasDir() {
 		return true;
 	}
@@ -80,8 +86,12 @@ public class CommandRun implements Command {
 	@Override
 	public void runCommand(
 		GlobalSettings gs
-		,Stack<String> argumentStack
+		,Options options
 		) throws Exception {
+
+		if( options.getArguments().size() > 1 ){
+			throw new Exception("Unexpected argument: "+options.getArguments().get(1));
+		}
 		
 		File atlasDir = gs.getAtlasDir();
 

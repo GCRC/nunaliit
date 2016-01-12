@@ -6,7 +6,6 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.StringWriter;
 import java.util.Calendar;
-import java.util.Stack;
 
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -41,6 +40,15 @@ public class CommandUpgrade implements Command {
 	}
 
 	@Override
+	public String[] getExpectedOptions() {
+		return new String[]{
+				Options.OPTION_ATLAS_DIR
+				,Options.OPTION_NO_CONFIG
+				,Options.OPTION_TEST
+			};
+	}
+
+	@Override
 	public boolean requiresAtlasDir() {
 		return true;
 	}
@@ -70,27 +78,22 @@ public class CommandUpgrade implements Command {
 	@Override
 	public void runCommand(
 		GlobalSettings gs
-		,Stack<String> argumentStack
+		,Options options
 		) throws Exception {
+
+		if( options.getArguments().size() > 1 ){
+			throw new Exception("Unexpected argument: "+options.getArguments().get(1));
+		}
 		
 		// Pick up options
 		boolean noConfig = false;
-		boolean justTest = false;
-		while( false == argumentStack.empty() ){
-			String optionName = argumentStack.peek();
-			if( "--test".equals(optionName) ){
-				argumentStack.pop();
-				justTest = true;
-				
-			} else if( "--no-config".equals(optionName) ){
-				argumentStack.pop();
-				noConfig = true;
-				
-			} else {
-				break;
-			}
+		if( null != options.getNoConfig() ){
+			noConfig = options.getNoConfig().booleanValue();
 		}
-
+		boolean justTest = false;
+		if( null != options.getTest() ){
+			justTest = options.getTest().booleanValue();
+		}
 		
 		File atlasDir = gs.getAtlasDir();
 
@@ -231,8 +234,8 @@ public class CommandUpgrade implements Command {
 		// Perform configuration, unless disabled
 		if( false == noConfig && false == justTest ){
 			CommandConfig config = new CommandConfig();
-			Stack<String> configArgs = new Stack<String>();
-			config.runCommand(gs, configArgs);
+			Options configOptions = new Options();
+			config.runCommand(gs, configOptions);
 		}
 	}
 }

@@ -32,7 +32,6 @@ public class CommandConfigTest extends TestCase {
 			arguments.add(locString);
 			arguments.add("create");
 			arguments.add("--no-config");
-			arguments.add(locString);
 			main.execute(globalSettings, arguments);
 		}
 		
@@ -40,7 +39,6 @@ public class CommandConfigTest extends TestCase {
 		{
 			List<String> arguments = new Vector<String>();
 			arguments.add("config");
-			arguments.add(locString);
 			
 			// Create input stream
 			TestConfiguration testConfig = new TestConfiguration();

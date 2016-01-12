@@ -4,7 +4,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.Properties;
-import java.util.Stack;
 
 public class CommandVersion implements Command {
 
@@ -27,6 +26,12 @@ public class CommandVersion implements Command {
 	}
 
 	@Override
+	public String[] getExpectedOptions() {
+		return new String[]{
+			};
+	}
+
+	@Override
 	public boolean requiresAtlasDir() {
 		return false;
 	}
@@ -45,8 +50,12 @@ public class CommandVersion implements Command {
 	@Override
 	public void runCommand(
 		GlobalSettings gs
-		,Stack<String> argumentStack
+		,Options options
 		) throws Exception {
+
+		if( options.getArguments().size() > 1 ){
+			throw new Exception("Unexpected argument: "+options.getArguments().get(1));
+		}
 
 		InputStream is = null;
 		InputStreamReader isr = null;

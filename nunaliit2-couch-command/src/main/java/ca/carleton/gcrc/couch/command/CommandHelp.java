@@ -1,7 +1,6 @@
 package ca.carleton.gcrc.couch.command;
 
 import java.io.PrintStream;
-import java.util.Stack;
 
 public class CommandHelp implements Command {
 
@@ -30,6 +29,12 @@ public class CommandHelp implements Command {
 	}
 
 	@Override
+	public String[] getExpectedOptions() {
+		return new String[]{
+			};
+	}
+
+	@Override
 	public boolean requiresAtlasDir() {
 		return false;
 	}
@@ -51,11 +56,15 @@ public class CommandHelp implements Command {
 	@Override
 	public void runCommand(
 		GlobalSettings gs
-		,Stack<String> argumentStack
+		,Options options
 		) throws Exception {
+
+		if( options.getArguments().size() > 2 ){
+			throw new Exception("Unexpected argument: "+options.getArguments().get(2));
+		}
 		
-		if( argumentStack.size() > 0 ) {
-			String commandName = argumentStack.pop();
+		if( options.getArguments().size() > 1 ) {
+			String commandName = options.getArguments().get(1);
 			for(Command command : Main.getCommands()){
 				if( command.matchesKeyword(commandName) ){
 					reportCommandSpecificHelp(gs, command);

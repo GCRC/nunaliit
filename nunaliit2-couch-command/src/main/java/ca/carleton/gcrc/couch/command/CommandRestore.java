@@ -3,8 +3,6 @@ package ca.carleton.gcrc.couch.command;
 import java.io.File;
 import java.io.PrintStream;
 import java.util.List;
-import java.util.Stack;
-import java.util.Vector;
 
 import ca.carleton.gcrc.couch.app.DbRestoreListener;
 import ca.carleton.gcrc.couch.app.DbRestoreProcess;
@@ -30,6 +28,15 @@ public class CommandRestore implements Command {
 	@Override
 	public boolean isDeprecated() {
 		return false;
+	}
+
+	@Override
+	public String[] getExpectedOptions() {
+		return new String[]{
+				Options.OPTION_ATLAS_DIR
+				,Options.OPTION_DUMP_DIR
+				,Options.OPTION_DOC_ID
+			};
 	}
 
 	@Override
@@ -64,42 +71,23 @@ public class CommandRestore implements Command {
 	@Override
 	public void runCommand(
 		GlobalSettings gs
-		,Stack<String> argumentStack
+		,Options options
 		) throws Exception {
+
+		if( options.getArguments().size() > 1 ){
+			throw new Exception("Unexpected argument: "+options.getArguments().get(1));
+		}
 
 		File atlasDir = gs.getAtlasDir();
 
 		// Pick up options
-		File dumpDir = null;
-		List<String> docIds = new Vector<String>();
-		while( false == argumentStack.empty() ){
-			String optionName = argumentStack.peek();
-			if( "--dump-dir".equals(optionName) ){
-				argumentStack.pop();
-				if( argumentStack.size() < 1 ){
-					throw new Exception("--dump-dir option requires a directory");
-				}
-				
-				String dumpDirStr = argumentStack.pop();
-				dumpDir = new File(atlasDir, "dump/"+dumpDirStr);
-				if( false == dumpDir.exists() ) {
-					dumpDir = new File(dumpDirStr);
-				}
-				
-			} else if( "--doc-id".equals(optionName) ){
-				argumentStack.pop();
-				if( argumentStack.size() < 1 ){
-					throw new Exception("--doc-id option requires a document identifier");
-				}
-				
-				String docId = argumentStack.pop();
-				docIds.add(docId);
-				
-			} else {
-				break;
-			}
-		}
+		String dumpDirStr = options.getDumpDir();
+		List<String> docIds = options.getDocIds();
 
+		File dumpDir = null;
+		if( null != dumpDirStr ){
+			dumpDir = new File(dumpDirStr);
+		}
 		if( null == dumpDir ) {
 			throw new Exception("During a restore, the --dump-dir option must be provided");
 		}
