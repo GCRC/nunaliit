@@ -21,7 +21,6 @@ import org.json.JSONTokener;
 
 import ca.carleton.gcrc.couch.app.Attachment;
 import ca.carleton.gcrc.couch.app.Document;
-import ca.carleton.gcrc.couch.app.DocumentStoreProcess;
 import ca.carleton.gcrc.couch.fsentry.FSEntry;
 import ca.carleton.gcrc.couch.fsentry.FSEntryNameFilter;
 import ca.carleton.gcrc.couch.fsentry.FSEntryNull;
@@ -83,7 +82,7 @@ public class DocumentFile implements Document {
 	private FSEntry includeDir;
 	private JSONObject jsonObj = null;
 	private List<AttachmentFile> attachments = new Vector<AttachmentFile>();
-	private String ATT_INFO_PERIOD_EXTENSION = "."+DocumentStoreProcess.ATT_INFO_EXTENSION;
+	private String ATT_INFO_PERIOD_EXTENSION = "."+DocumentStoreProcessImpl.ATT_INFO_EXTENSION;
 
 	private DocumentFile(FSEntry directory, FSEntryNameFilter filter, FSEntry includeDir) throws Exception {
 		this.top = directory;
@@ -249,7 +248,7 @@ public class DocumentFile implements Document {
 						JSONObject info = (JSONObject)infoObj;
 						
 						{
-							String testName = info.optString(DocumentStoreProcess.ATT_INFO_NAME);
+							String testName = info.optString(DocumentStoreProcessImpl.ATT_INFO_NAME);
 							if( null == testName ){
 								// Ignore
 							} else if("".equals(testName)) {
@@ -260,7 +259,7 @@ public class DocumentFile implements Document {
 						}
 
 						{
-							String testContentType = info.optString(DocumentStoreProcess.ATT_INFO_CONTENT_TYPE);
+							String testContentType = info.optString(DocumentStoreProcessImpl.ATT_INFO_CONTENT_TYPE);
 							if( null == testContentType ){
 								// Ignore
 							} else if("".equals(testContentType)) {

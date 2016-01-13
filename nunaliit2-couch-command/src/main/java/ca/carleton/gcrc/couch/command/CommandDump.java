@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import ca.carleton.gcrc.couch.app.DbDumpProcess;
+import ca.carleton.gcrc.couch.app.impl.DocumentStoreProcessImpl;
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.command.impl.CommandSupport;
 import ca.carleton.gcrc.couch.command.impl.DumpListener;
@@ -172,6 +173,14 @@ public class CommandDump implements Command {
 					dumpProcess.addDocId(docId);
 				}
 			}
+		}
+		if( overwriteDocs ){
+			// When overwriting documents, the documents are meant for
+			// source repository. Do not store created and updated timestamp
+			DocumentStoreProcessImpl storeProcess = new DocumentStoreProcessImpl();
+			storeProcess.addKeyToIgnore("nunaliit_created");
+			storeProcess.addKeyToIgnore("nunaliit_last_updated");
+			dumpProcess.setStoreProcess(storeProcess);
 		}
 		dumpProcess.setListener(listener);
 		dumpProcess.dump();
