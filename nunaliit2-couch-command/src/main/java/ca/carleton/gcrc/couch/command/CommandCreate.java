@@ -53,13 +53,13 @@ public class CommandCreate implements Command {
 		ps.println("subsequent commands.");
 		ps.println();
 		ps.println("Command Syntax:");
-		ps.println("  nunaliit [<global-options>] create [<create-options>]");
+		ps.println("  nunaliit create <options>");
 		ps.println();
-		ps.println("Global Options");
-		CommandHelp.reportGlobalSettingAtlasDir(ps);
+		ps.println("options:");
+		ps.println("  "+Options.OPTION_NO_CONFIG);
+		ps.println("    Skips the configuration phase");
 		ps.println();
-		ps.println("Create Options");
-		ps.println("  --no-config   Skips the configuration phase");
+		CommandHelp.reportGlobalOptions(ps,getExpectedOptions());
 	}
 
 	@Override

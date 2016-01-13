@@ -63,16 +63,18 @@ public class CommandUpgrade implements Command {
 		ps.println("atlas creator wishes to use the newer version.");
 		ps.println();
 		ps.println("Command Syntax:");
-		ps.println("  nunaliit [<global-options>] upgrade [<upgrade-options>]");
+		ps.println("  nunaliit upgrade <options>");
 		ps.println();
-		ps.println("Global Options");
-		CommandHelp.reportGlobalSettingAtlasDir(ps);
+		ps.println("options:");
+		ps.println("  "+Options.OPTION_TEST);
+		ps.println("    Does not perform any changes. Simply print what would happen. Does ");
+		ps.println("    not run 'config' command.");
 		ps.println();
-		ps.println("Upgrade Options");
-		ps.println("  --test        Does not perform any changes. Simply print");
-		ps.println("                what would happen. Does not run 'config' command.");
-		ps.println("  --no-config   Supresses the automatic 'config' command after");
-		ps.println("                completing upgrade process.");
+		ps.println("  "+Options.OPTION_NO_CONFIG);
+		ps.println("    Supresses the automatic 'config' command after completing upgrade");
+		ps.println("    process.");
+		ps.println();
+		CommandHelp.reportGlobalOptions(ps,getExpectedOptions());
 	}
 
 	@Override

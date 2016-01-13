@@ -64,24 +64,26 @@ public class CommandDump implements Command {
 		ps.println("found in the database are dumped.");
 		ps.println();
 		ps.println("Command Syntax:");
-		ps.println("  nunaliit [<global-options>] dump [<dump-options>]");
+		ps.println("  nunaliit dump <options>");
 		ps.println();
-		ps.println("Global Options");
-		CommandHelp.reportGlobalSettingAtlasDir(ps);
+		ps.println("options:");
+		ps.println("  "+Options.OPTION_DUMP_DIR+" <dir>");
+		ps.println("    Directory where snapshot should be stored");
 		ps.println();
-		ps.println("Dump Options");
-		ps.println("  --dump-dir <dir>   Directory where snapshot should be stored");
+		ps.println("  "+Options.OPTION_DOC_ID+" <docId>");
+		ps.println("    Specifies which document(s) should be dumped by selecting the ");
+		ps.println("    document identifier. This option can be used multiple times");
+		ps.println("    to include multiple documents in the dump.");
 		ps.println();
-		ps.println("  --doc-id   <docId> Specifies which document(s) should be");
-		ps.println("                     dumped by selecting the document identifier.");
-		ps.println("                     This option can be used multiple times to include");
-		ps.println("                     multiple documents in the dump.");
+		ps.println("  "+Options.OPTION_SKELETON);
+		ps.println("    Select skeleton documents for the dump process.");
 		ps.println();
-		ps.println("  --skeleton         Select skeleton documents for the dump process.");
+		ps.println("  "+Options.OPTION_OVERWRITE_DOCS);
+		ps.println("    Dump skeleton documents in the 'docs' sub-directory of the atlas,");
+		ps.println("    over-writing the files found there. This option includes the "+Options.OPTION_SKELETON);
+		ps.println("    option, as well.");
 		ps.println();
-		ps.println("  --overwrite-docs   Dump skeleton documents in the 'docs' sub-directory");
-		ps.println("                     of the atlas, over-writing the files found there.");
-		ps.println("                     This option includes the --skeleton option, as well.");
+		CommandHelp.reportGlobalOptions(ps,getExpectedOptions());
 	}
 
 	@Override

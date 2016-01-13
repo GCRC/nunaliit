@@ -53,19 +53,19 @@ public class CommandRestore implements Command {
 		ps.println("atlas.");
 		ps.println();
 		ps.println("Command Syntax:");
-		ps.println("  nunaliit [<global-options>] restore [<restore-options>]");
+		ps.println("  nunaliit restore <options>");
 		ps.println();
-		ps.println("Global Options");
-		CommandHelp.reportGlobalSettingAtlasDir(ps);
+		ps.println("options:");
+		ps.println("  "+Options.OPTION_DUMP_DIR+" <dir>");
+		ps.println("    --dump-dir <dir>  Directory where snapshot is stored");
 		ps.println();
-		ps.println("Restore Options");
-		ps.println("  --dump-dir <dir>  Directory where snapshot is stored");
-		ps.println("  --doc-id   <docId> Specifies which document(s) should be");
-		ps.println("                     restored by selecting the document identifier.");
-		ps.println("                     This option can be used multiple times to include");
-		ps.println("                     multiple documents in the restore process. If ");
-		ps.println("                     this option is not used, all documents are");
-		ps.println("                     restored.");
+		ps.println("  "+Options.OPTION_DOC_ID+" <docId>");
+		ps.println("    Specifies which document(s) should be restored by selecting the ");
+		ps.println("    document identifier. This option can be used multiple times to include");
+		ps.println("    multiple documents in the restore process. If  this option is not ");
+		ps.println("    used, all documents are restored.");
+		ps.println();
+		CommandHelp.reportGlobalOptions(ps,getExpectedOptions());
 	}
 
 	@Override

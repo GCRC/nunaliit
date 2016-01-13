@@ -42,7 +42,10 @@ public class CommandUpdateUser implements Command {
 		ps.println("tool to support legacy scripts. It does nothing.");
 		ps.println();
 		ps.println("Command Syntax:");
-		ps.println("  nunaliit [<global-options>] update-user");
+		ps.println("  nunaliit update-user <options>");
+		ps.println();
+		ps.println("options:");
+		CommandHelp.reportGlobalOptions(ps,getExpectedOptions());
 	}
 
 	@Override

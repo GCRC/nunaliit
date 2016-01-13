@@ -1,13 +1,29 @@
 package ca.carleton.gcrc.couch.command;
 
 import java.io.PrintStream;
+import java.util.HashSet;
+import java.util.Set;
 
 public class CommandHelp implements Command {
 
-	static public void reportGlobalSettingAtlasDir(PrintStream ps){
-		ps.println("     --atlas-dir <dir>  Indicates the location of the atlas directory.");
-		ps.println("                        If this option is not specified, the current");
-		ps.println("                        directory is assumed to be the atlas directory.");
+	static public void reportGlobalOptions(PrintStream ps, String[] expectedOptions){
+		Set<String> options = new HashSet<String>();
+		for(String option : expectedOptions){
+			options.add(option);
+		}
+
+		if( options.contains(Options.OPTION_ATLAS_DIR) ){
+			ps.println("  "+Options.OPTION_ATLAS_DIR+" <dir>");
+			ps.println("    Indicates the location of the atlas directory.");
+			ps.println("    If this option is not specified, the current");
+			ps.println("    directory is assumed to be the atlas directory.");
+			ps.println();
+		}
+
+		ps.println("  "+Options.OPTION_DEBUG);
+		ps.println("    When specified, the command reports more information to");
+		ps.println("    help developers with debugging.");
+		ps.println();
 	}
 	
 	@Override

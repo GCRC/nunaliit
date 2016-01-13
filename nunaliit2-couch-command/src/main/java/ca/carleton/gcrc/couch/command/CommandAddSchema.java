@@ -55,21 +55,23 @@ public class CommandAddSchema implements Command {
 		ps.println("on a definition file.");
 		ps.println();
 		ps.println("Command Syntax:");
-		ps.println("  nunaliit [<global-options>] add-schema [<add-schema-options>]");
+		ps.println("  nunaliit add-schema <options>");
 		ps.println();
-		ps.println("Global Options");
-		CommandHelp.reportGlobalSettingAtlasDir(ps);
+		ps.println("options:");
+		ps.println("  "+Options.OPTION_DEF+" <file>");
+		ps.println("    Name of file where schema definition is contained. This");
+		ps.println("    option should be provided only if --id is not.");
 		ps.println();
-		ps.println("Add Schema Options");
-		ps.println("  --def   <file>   Name of file where schema definition is contained. This");
-		ps.println("                   option should be provided only if --id is not.");
+		ps.println("  "+Options.OPTION_GROUP+" <name>");
+		ps.println("    Name of group that the schema is associated with. If");
+		ps.println("    not provided, defaults to atlas name");
 		ps.println();
-		ps.println("  --group <name>   Name of group that the schema is associated with. If");
-		ps.println("                   not provided, defaults to atlas name");
+		ps.println("  "+Options.OPTION_ID+" <name>");
+		ps.println("    Identifier for new schema. Either "+Options.OPTION_ID+" or "+Options.OPTION_DEF+" must");
+		ps.println("    be provided, not both. The effective name of the schema");
+		ps.println("    is <group> '_' <id>");
 		ps.println();
-		ps.println("  --id     <name>  Identifier for new schema. Either --id or --def must");
-		ps.println("                   be provided, not both. The effective name of the schema");
-		ps.println("                   is <group> '_' <id>");
+		CommandHelp.reportGlobalOptions(ps, getExpectedOptions());
 	}
 
 	@Override

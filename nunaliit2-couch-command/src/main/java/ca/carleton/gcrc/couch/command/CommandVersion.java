@@ -44,7 +44,10 @@ public class CommandVersion implements Command {
 		ps.println("command-line tool currently run.");
 		ps.println();
 		ps.println("Command Syntax:");
-		ps.println("  nunaliit version");
+		ps.println("  nunaliit version <options>");
+		ps.println();
+		ps.println("options:");
+		CommandHelp.reportGlobalOptions(ps,getExpectedOptions());
 	}
 
 	@Override

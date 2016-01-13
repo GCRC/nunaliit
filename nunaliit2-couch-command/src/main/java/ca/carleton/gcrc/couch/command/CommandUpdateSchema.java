@@ -60,15 +60,16 @@ public class CommandUpdateSchema implements Command {
 		ps.println("based on its definition.");
 		ps.println();
 		ps.println("Command Syntax:");
-		ps.println("  nunaliit [<global-options>] update-schema [<update-schema-options>]");
+		ps.println("  nunaliit update-schema <options>");
 		ps.println();
-		ps.println("Global Options");
-		CommandHelp.reportGlobalSettingAtlasDir(ps);
+		ps.println("options:");
+		ps.println("  "+Options.OPTION_NAME+" <name>");
+		ps.println("    Name of schema that should be updated");
 		ps.println();
-		ps.println("Update Schema Options");
-		ps.println("  --name   <name>   Name of schema that should be updated");
+		ps.println("  "+Options.OPTION_ALL);
+		ps.println("    Find and update all schemas with definitions");
 		ps.println();
-		ps.println("  --all             Find and update all schemas with definitions");
+		CommandHelp.reportGlobalOptions(ps,getExpectedOptions());
 	}
 
 	@Override

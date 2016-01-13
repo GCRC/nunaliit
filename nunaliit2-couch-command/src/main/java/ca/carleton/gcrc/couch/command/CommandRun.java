@@ -77,10 +77,10 @@ public class CommandRun implements Command {
 		ps.println("Once the server is started, it can be stopped by pressing CTRL-C.");
 		ps.println();
 		ps.println("Command Syntax:");
-		ps.println("  nunaliit [<global-options>] run");
+		ps.println("  nunaliit run <options>");
 		ps.println();
-		ps.println("Global Options");
-		CommandHelp.reportGlobalSettingAtlasDir(ps);
+		ps.println("options:");
+		CommandHelp.reportGlobalOptions(ps,getExpectedOptions());
 	}
 
 	@Override
