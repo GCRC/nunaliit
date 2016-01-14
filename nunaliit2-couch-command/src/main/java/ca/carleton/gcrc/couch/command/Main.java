@@ -11,13 +11,12 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.log4j.WriterAppender;
-import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.command.impl.PathComputer;
 
 public class Main {
 	
-	final static private org.slf4j.Logger logger = LoggerFactory.getLogger(Main.class.getClass());
+	//final static private org.slf4j.Logger logger = LoggerFactory.getLogger(Main.class.getClass());
 	
 	static private List<Command> allCommands = null;
 	synchronized static public List<Command> getCommands(){

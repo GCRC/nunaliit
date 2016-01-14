@@ -117,6 +117,7 @@ public class CommandUpdate implements Command {
 		// Prepare update process
 		DocumentUpdateProcess updateProcess = 
 				CommandUpdate.createDocumentUpdateProcess(gs, couchDb);
+		updateProcess.setIgnoringTimestamps(true);
 		
 		// Update site design document
 		try {
