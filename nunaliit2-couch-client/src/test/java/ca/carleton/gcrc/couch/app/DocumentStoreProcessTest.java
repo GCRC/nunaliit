@@ -25,6 +25,7 @@ import ca.carleton.gcrc.couch.fsentry.FSEntryBuffer;
 import ca.carleton.gcrc.couch.fsentry.FSEntryFile;
 import ca.carleton.gcrc.couch.fsentry.FSEntryMerged;
 import ca.carleton.gcrc.json.JSONObjectComparator;
+import ca.carleton.gcrc.json.JSONSupport;
 import ca.carleton.gcrc.utils.Files;
 
 public class DocumentStoreProcessTest extends TestCase {
@@ -103,7 +104,8 @@ public class DocumentStoreProcessTest extends TestCase {
 			Document doc = new DocumentJSON(obj);
 			
 			DocumentStoreProcessImpl storeProcess = new DocumentStoreProcessImpl();
-			storeProcess.addKeyToIgnore("a");
+			storeProcess.addKeyToIgnore("obj");
+			storeProcess.addKeyToIgnore("arr");
 			storeProcess.store(doc, dir);
 			
 			// Verify the store
@@ -120,7 +122,7 @@ public class DocumentStoreProcessTest extends TestCase {
 				expected.put("i", 123);
 				expected.put("s", "string");
 				
-				if( 0 != JSONObjectComparator.singleton.compare(expected, jsonDisk) ) {
+				if( 0 != JSONSupport.compare(expected, jsonDisk) ) {
 					fail("Stored object loaded from disk differs from expected one");
 				}
 			}

@@ -10,6 +10,7 @@ import ca.carleton.gcrc.couch.app.impl.DigestComputerSha1;
 import ca.carleton.gcrc.couch.app.impl.DocumentCouchDb;
 import ca.carleton.gcrc.couch.app.impl.DocumentFile;
 import ca.carleton.gcrc.couch.app.impl.DocumentManifest;
+import ca.carleton.gcrc.couch.app.impl.UpdateObjectComparator;
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.TestSupport;
 import ca.carleton.gcrc.couch.fsentry.FSEntry;
@@ -128,6 +129,71 @@ public class DocumentUpdateProcessTest extends TestCase {
 					fail("Changes disappeared");
 				} else if( false == "mytest".equals(value) ){
 					fail("Unexpected change: "+value);
+				}
+			}
+		}
+	}
+
+	public void testUpdateWithoutTimestamps() throws Exception {
+		CouchDb couchDb = TestSupport.getTestCouchDb();
+		if( null != couchDb ) {
+			File f = TestSupport.findResourceFile("doc1");
+			FSEntry file = new FSEntryFile( f );
+			
+			Document doc = DocumentFile.createDocument(file);
+			doc.setId("testUpdateWithoutTimestamps");
+			
+			// Push document to database
+			DocumentUpdateProcess updateProcess = new DocumentUpdateProcess(couchDb);
+			updateProcess.setIgnoringTimestamps(true);
+			DocumentUpdateListenerCounter updateListener = new DocumentUpdateListenerCounter();
+			updateProcess.setListener(updateListener);
+			updateProcess.update(doc);
+			
+			// Modify document
+			JSONObject modifiedDoc = null;
+			{
+				JSONObject created = new JSONObject();
+				created.put("nunaliit_type", "actionstamp");
+				created.put("action", "created");
+				created.put("name", "admin");
+				created.put("time", 11111);
+				
+				JSONObject lastUpdated = new JSONObject();
+				lastUpdated.put("nunaliit_type", "actionstamp");
+				lastUpdated.put("action", "updated");
+				lastUpdated.put("name", "admin");
+				lastUpdated.put("time", 22222);
+				
+				modifiedDoc = couchDb.getDocument(doc.getId());
+				modifiedDoc.put("nunaliit_created", created);
+				modifiedDoc.put("nunaliit_last_updated", lastUpdated);
+				couchDb.updateDocument(modifiedDoc);
+			}
+			
+			// Check that document in database verifies as modified
+			{
+				JSONObject dbJson = couchDb.getDocument(doc.getId());
+				if( false == DocumentManifest.hasDocumentBeenModified(dbJson) ){
+					fail("Document should report that it was modified");
+				}
+			}
+
+			// Attempt to push again
+			updateListener.setSkippedBecauseUnchanged(0);
+			updateProcess.update(doc);
+			
+			// Check that listener was called
+			if( 1 != updateListener.getSkippedBecauseUnchanged() ) {
+				fail("Document not reported as unchanged");
+			}
+			
+			// Verify that changes are still available
+			{
+				JSONObject currentDoc = couchDb.getDocument(doc.getId());
+				UpdateObjectComparator comparator = UpdateObjectComparator.getNunaliitComparator();
+				if( 0 != comparator.compare(currentDoc, modifiedDoc) ){
+					fail("Unexpected value found in database");
 				}
 			}
 		}

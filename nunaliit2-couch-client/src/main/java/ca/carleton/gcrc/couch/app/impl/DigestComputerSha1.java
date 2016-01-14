@@ -7,18 +7,15 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.security.MessageDigest;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONWriter;
-
 import org.apache.commons.codec.binary.Base64;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,10 +69,14 @@ public class DigestComputerSha1 implements DigestComputer {
 		String mainDigest = null;
 		
 		try {
+			// While computing the digest, do not include all the keys
+			JSONObjectConverter converter = JSONObjectConverter.getConverterNunaliit();
+			JSONObject convertedJsonObj = converter.convertObject(jsonObj);
+			
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			OutputStreamWriter osw = new OutputStreamWriter(baos, "UTF-8");
 			JSONWriter builder = new JSONWriter(osw);
-			this.writeTopObject(jsonObj, builder);
+			this.writeObject(convertedJsonObj, builder);
 			osw.flush();
 			
 			// Perform SHA-1 digest
@@ -97,35 +98,6 @@ public class DigestComputerSha1 implements DigestComputer {
 		return mainDigest;
 	}
 
-	private void writeTopObject(JSONObject json, JSONWriter builder) throws Exception {
-		List<String> sortedKeys = new Vector<String>();
-		Iterator<?> it = json.keys();
-		while( it.hasNext() ){
-			Object o = it.next();
-			if( o instanceof String ){
-				sortedKeys.add( (String)o );
-			}
-		}
-		Collections.sort(sortedKeys);
-		
-		builder.object();
-		
-		for(String key : sortedKeys) {
-			if( key.charAt(0) == '_' ) {
-				// Do not include special keys in signature
-			} else if( DocumentManifest.MANIFEST_KEY.equals(key) ){
-				// Skip signature
-			} else {
-				builder.key(key);
-				
-				Object value = json.get(key);
-				write(value, builder);
-			}
-		}
-		
-		builder.endObject();
-	}
-
 	private void write(Object value, JSONWriter builder) throws Exception {
 		if( value instanceof String ) {
 			builder.value((String)value);
@@ -139,15 +111,14 @@ public class DigestComputerSha1 implements DigestComputer {
 	}
 
 	private void writeObject(JSONObject json, JSONWriter builder) throws Exception {
-		List<String> sortedKeys = new Vector<String>();
-		Iterator<?> it = json.keys();
-		while( it.hasNext() ){
-			Object o = it.next();
-			if( o instanceof String ){
-				sortedKeys.add( (String)o );
-			}
+		String[] keys = JSONObject.getNames(json);
+		List<String> sortedKeys = null;
+		if( null != keys ){
+			sortedKeys = Arrays.asList(keys);
+			Collections.sort(sortedKeys);
+		} else {
+			sortedKeys = Collections.emptyList();
 		}
-		Collections.sort(sortedKeys);
 		
 		builder.object();
 		
