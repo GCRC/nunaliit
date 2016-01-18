@@ -1000,8 +1000,9 @@ socket.on('tangibles update', function(update) {
 
 function getPaneRotateAngle(e) {
 	var pane = document.getElementsByClassName("n2_content_text")[0];
-	var originX = pane.offsetLeft + (pane.offsetWidth / 2.0);
-	var originY = pane.offsetTop + (pane.offsetHeight / 2.0);
+	var bounds = pane.getBoundingClientRect();
+	var originX = bounds.left + (bounds.width / 2.0);
+	var originY = bounds.top + (bounds.height / 2.0);
 	return Math.atan2(e.pageY - originY, e.pageX - originX) * (180 / Math.PI);
 }
 
@@ -1020,7 +1021,7 @@ function onRotateHandleMove(e) {
 		var pane = document.getElementsByClassName("n2_content_text")[0];
 		var diff = getPaneRotateAngle(e) - paneRotateMouseStartAngle;
 		paneRotateAngle = paneRotateStartAngle + diff;
-		pane.style.transform ='rotate(' + paneRotateAngle + 'deg)';
+		pane.style.transform = 'rotate(' + paneRotateAngle + 'deg)';
 	}
 }
 
