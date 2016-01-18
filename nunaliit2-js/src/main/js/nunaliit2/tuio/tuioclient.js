@@ -496,10 +496,6 @@ function dispatchMouseEventWin(eventType, winX, winY)
 
 function removeObject(dict, inst) {
 	// Object is long dead and no longer influential, remove
-	if (dict == cursors) {
-		// Cursor is no longer alive, (cursor up)
-		onCursorUp(inst);
-	}
 
 	if (dict[inst].div != undefined) {
 		// Remove calibration div
@@ -540,6 +536,13 @@ function updateAlive(dict, alive) {
 				// No longer alive, flag as dead and schedule removal
 				dict[inst].alive = false;
 				dict[inst].deathTime = Date.now();
+
+				// Issue cursor up immediately for responsive clicking
+				if (dict == cursors) {
+					onCursorUp(inst);
+				}
+
+				// Schedule full removal for when spring no longer has influence
 				window.setTimeout(removeObject, springFadeTime, dict, inst);
 			}
 		}
