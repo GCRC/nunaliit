@@ -85,7 +85,6 @@ var paneRotateAngle = 0.0;
 // Angle of initial mouse down point of a rotation drag
 var paneRotateMouseStartAngle = 0.0;
 
-
 function Vector(x, y) {
 	this.x = x;
 	this.y = y;
@@ -1067,11 +1066,11 @@ window.onkeydown = function (e) {
 			content.style.right = (xMargin - xOffset) + "px";
 		} else {
 			$('.nunaliit_content').removeAttr('style');
-			
+
 			$('.n2_content_text')
 				.removeAttr('style')
 				.removeClass('n2tuio_showPane');
-		};
+		}
 	} else if (code == 70) {
 		// f pressed, toggle visual feedback
 		showDots = !showDots;
@@ -1168,9 +1167,9 @@ window.onkeydown = function (e) {
 		var $pane = $('.n2_content_text');
 		$pane.toggleClass('n2tuio_showPane');
 		var isPaneVisible = $pane.hasClass('n2tuio_showPane');
-		if( isPaneVisible ) {
+		if (isPaneVisible) {
 			// Show pane
-			pane.style.transform ='rotate(' + paneRotateAngle + 'deg)';
+			pane.style.transform = 'rotate(' + paneRotateAngle + 'deg)';
 
 			// Create left side rotation handle
 			var lHandle = createRotateHandle();
@@ -1190,8 +1189,7 @@ window.onkeydown = function (e) {
 		} else {
 			$pane.removeAttr('style');
 			$pane.children('.rotate_handle').remove();
-		};
-
+		}
 	}
 };
 
@@ -1211,7 +1209,7 @@ function tick(timestamp) {
 	if (!overlay) {
 		// Initialize draw overlay (first tick)
 		var $map = $('.n2_content_map');
-		if( $map.length > 0 ) {
+		if ($map.length > 0) {
 			var map = $map[0];
 			overlay = new DrawOverlay(map, map.offsetWidth, map.offsetHeight, onPathDraw);
 			drawZooming = true;
@@ -1400,5 +1398,4 @@ if (usePhysics) {
 	requestAnimationFrame(tick);
 }
 
-})(jQuery,nunaliit2);
-
+})(jQuery, nunaliit2);
