@@ -27,7 +27,12 @@
 
 .nunaliit_tuio .n2_content_map_interaction {
 	top: 45%;
-	right: 20px;
+	right: 40px;
+}
+
+.nunaliit_tuio .olControlEditingToolbar {
+	top: 100px;
+	left: 420px;
 }
 
 .nunaliit_tuio .nunaliit_content {
