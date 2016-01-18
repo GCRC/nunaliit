@@ -423,7 +423,7 @@ Hand.prototype.span = function() {
  * incorrect after some cursor movement.
  */
 Hand.prototype.trimCursors = function() {
-	orphans = [];
+	var orphans = [];
 
 	while (this.span() > handSpan) {
 		// Find the point furthest from the center
