@@ -75,6 +75,18 @@ var overlay = undefined;
 // Time to wait until a finger draw is considered finished, in ms
 var drawDelay = 1000.0;
 
+// Whether or not the info pane is visible
+var paneVisible = false;
+
+// Whether or not the pane is currently being rotated
+var paneRotating = false;
+
+// Visible rotation of the pane at the start of a rotation drag
+var paneRotateStartAngle = 0.0;
+
+// Angle of initial mouse down point of a rotation drag
+var paneRotateMouseStartAngle = 0.0;
+
 function Vector(x, y) {
 	this.x = x;
 	this.y = y;
@@ -988,6 +1000,61 @@ socket.on('tangibles update', function(update) {
 	updateTangibles(update.set);
 });
 
+function getPaneRotateAngle(e) {
+	var pane = document.getElementsByClassName("n2_content_text")[0];
+	var originX = pane.offsetLeft + (pane.offsetWidth / 2.0);
+	var originY = pane.offsetTop + (pane.offsetHeight / 2.0);
+	return Math.atan2(e.pageY - originY, e.pageX - originX) * (180 / Math.PI);
+}
+
+function onRotateHandleDown(e) {
+	var pane = document.getElementsByClassName("n2_content_text")[0];
+	e.preventDefault();
+	e.stopPropagation();
+	paneRotating = true;
+	paneRotateMouseStartAngle = getPaneRotateAngle(e);
+}
+
+function onRotateHandleMove(e) {
+	if (paneRotating) {
+		var pane = document.getElementsByClassName("n2_content_text")[0];
+		var diff = getPaneRotateAngle(e) - paneRotateMouseStartAngle;
+		// e.preventDefault();
+		// e.stopPropagation();
+		paneRotateAngle = paneRotateStartAngle + diff;
+		pane.style.transform ='rotate(' + paneRotateAngle + 'deg)';
+	}
+}
+
+function onRotateHandleUp(e) {
+	if (paneRotating) {
+		// e.preventDefault();
+		// e.stopPropagation();
+		paneRotateStartAngle = paneRotateAngle;
+		paneRotating = false;
+	}
+}
+
+function createRotateHandle() {
+	var handle = document.createElement('div');
+	handle.className = "rotate_handle";
+	handle.style.position = "absolute";
+	handle.style.width = "40px";
+	handle.style.top = "350px";
+	handle.style.backgroundColor = "#000";
+	handle.style.color = "#EED";
+	handle.style.opacity = "0.75";
+	handle.style.fontSize = "xx-large";
+	handle.style.lineHeight = "100px";
+	handle.style.textAlign = "center";
+	handle.style.padding = "4px";
+	handle.style.cursor = "move";
+	handle.innerHTML = "&orarr;";
+	handle.onmousedown = onRotateHandleDown;
+
+	return handle;
+}
+
 window.onkeydown = function (e) {
 	var code = e.keyCode ? e.keyCode : e.which;
 	var map = document.getElementById("nunaliit2_uniqueId_65");
@@ -1114,6 +1181,38 @@ window.onkeydown = function (e) {
 		map.style.top = (yMargin + yOffset) + "px";
 		map.style.bottom = (yMargin - yOffset) + "px";
 		console.log("Y margin " + yMargin + " offset " + yOffset);
+	} else if (code == 80) {
+		// P, show/hide pane
+		var pane = document.getElementsByClassName("n2_content_text")[0];
+		if (!paneVisible) {
+			// Show pane
+			pane.style.display = "block";
+			pane.style.position = "absolute";
+			pane.style.opacity = "0.92";
+			pane.style.top = "0px";
+			pane.style.left = (map.offsetLeft + (map.offsetWidth / 2.0) - 210) + "px";
+			pane.style.overflow = "visible";
+
+			// Create left side rotation handle
+			var lHandle = createRotateHandle();
+			lHandle.id = "left_rotate_handle";
+			lHandle.style.left = "-48px";
+			lHandle.style.borderTopLeftRadius = "50px";
+			lHandle.style.borderBottomLeftRadius = "50px";
+			pane.appendChild(lHandle);
+
+			// Create right side rotation handle
+			var rHandle = createRotateHandle();
+			rHandle.id = "right_rotate_handle";
+			rHandle.style.left = "450px";
+			rHandle.style.borderTopRightRadius = "50px";
+			rHandle.style.borderBottomRightRadius = "50px";
+			pane.appendChild(rHandle);
+		} else {
+			pane.style.display = "none";
+		}
+
+		paneVisible = !paneVisible;
 	}
 };
 
@@ -1319,3 +1418,7 @@ DrawOverlay.prototype.endStroke = function () {
 if (usePhysics) {
 	requestAnimationFrame(tick);
 }
+
+// Install handlers for pane rotation drag
+document.onmousemove = onRotateHandleMove;
+document.onmouseup = onRotateHandleUp;
