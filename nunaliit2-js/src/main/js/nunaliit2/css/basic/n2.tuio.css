@@ -46,3 +46,17 @@
 .nunaliit_tuio .olControlZoom {
 	top: 45%;
 }
+
+.nunaliit_tuio .rotate_handle {
+	background-color: #000;
+	color: #EED;
+	cursor: move;
+	font-size: xx-large;
+	line-height: 100px;
+	opacity: 0.65;
+	padding: 4px;
+	position: absolute;
+	text-align: center;
+	top: 440px;
+	width: 40px;
+}

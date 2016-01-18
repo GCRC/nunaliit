@@ -1035,18 +1035,7 @@ function onRotateHandleUp(e) {
 
 function createRotateHandle() {
 	var handle = document.createElement('div');
-	handle.className = "rotate_handle";
-	handle.style.position = "absolute";
-	handle.style.width = "40px";
-	handle.style.top = "350px";
-	handle.style.backgroundColor = "#000";
-	handle.style.color = "#EED";
-	handle.style.opacity = "0.75";
-	handle.style.fontSize = "xx-large";
-	handle.style.lineHeight = "100px";
-	handle.style.textAlign = "center";
-	handle.style.padding = "4px";
-	handle.style.cursor = "move";
+	handle.className = "nunaliit_tuio rotate_handle";
 	handle.innerHTML = "&orarr;";
 	handle.onmousedown = onRotateHandleDown;
 
