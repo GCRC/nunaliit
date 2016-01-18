@@ -1,0 +1,47 @@
+/*
+	The following classes re-adjust the positions and sizes of element to
+	fit on the TUIO table.
+ */
+
+.nunaliit_tuio .nunaliit_header {
+	display: none;
+}
+
+.nunaliit_tuio .nunaliit_footer {
+	display: none;
+}
+
+.nunaliit_tuio .n2_content_text {
+	display: none;
+}
+
+.nunaliit_tuio .n2_content_text.n2tuio_showPane {
+	display: block;
+	position: absolute;
+	opacity: 0.92;
+	top: 0px;
+	left: 210px;
+	overflow: visible;
+}
+
+.nunaliit_tuio .n2_content_map_interaction {
+	top: 45%;
+	right: 20px;
+}
+
+.nunaliit_tuio .nunaliit_content {
+	top: 0;
+	bottom: 0;
+	width: auto;
+}
+
+.nunaliit_tuio .n2_content_map {
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+}
+
+.nunaliit_tuio .olControlZoom {
+	top: 45%;
+}

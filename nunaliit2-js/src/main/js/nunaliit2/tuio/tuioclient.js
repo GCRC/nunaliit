@@ -1,3 +1,6 @@
+;(function($,$n2){
+"use strict";
+
 var MAX_SPRING_K = 120.0;
 var SPRING_LEN = 0.0000000000001;
 
@@ -11,9 +14,6 @@ var socket = io('http://localhost:3000');
 
 // Speed factor for drag scrolling
 var scrollSpeed = 1.0;
-
-// Toggle for whether non-map page elements are visible (kludge)
-var barsVisible = true;
 
 // Time in ms to wait until abandoning a draw and starting pinch/pan
 var moveDelay = 250.0;
@@ -75,17 +75,16 @@ var overlay = undefined;
 // Time to wait until a finger draw is considered finished, in ms
 var drawDelay = 1000.0;
 
-// Whether or not the info pane is visible
-var paneVisible = false;
-
 // Whether or not the pane is currently being rotated
 var paneRotating = false;
 
 // Visible rotation of the pane at the start of a rotation drag
 var paneRotateStartAngle = 0.0;
+var paneRotateAngle = 0.0;
 
 // Angle of initial mouse down point of a rotation drag
 var paneRotateMouseStartAngle = 0.0;
+
 
 function Vector(x, y) {
 	this.x = x;
@@ -1057,40 +1056,22 @@ function createRotateHandle() {
 
 window.onkeydown = function (e) {
 	var code = e.keyCode ? e.keyCode : e.which;
-	var map = document.getElementById("nunaliit2_uniqueId_65");
+	var $content = $('.nunaliit_content');
+	var content = $content[0];
 	if (code === 27) {
 		// Escape pressed, toggle non-map UI visibility
-		var content = document.getElementById("content");
-		var head = document.getElementsByClassName("nunaliit_header")[0];
-		var zoom = document.getElementsByClassName("olControlZoom")[0];
-		var pane = document.getElementsByClassName("n2_content_text")[0];
-		var but = document.getElementsByClassName("n2_content_map_interaction")[0];
-		var foot = document.getElementsByClassName("nunaliit_footer")[0];
-		if (barsVisible) {
-			head.style.display = "none";
-			map.style.left = (xMargin + xOffset) + "px";
-			map.style.right = (xMargin - xOffset) + "px";
-			zoom.style.top = "45%";
-			zoom.style.left = "920px";
-			but.style.top = "45%";
-			but.style.right = "20px";
-			pane.style.display = "none";
-			foot.style.display = "none";
-			content.style.top = "0";
-			content.style.bottom = "0";
+		$('body').toggleClass('nunaliit_tuio');
+		var isTuioEnabled = $('body').hasClass('nunaliit_tuio');
+		if (isTuioEnabled) {
+			content.style.left = (xMargin + xOffset) + "px";
+			content.style.right = (xMargin - xOffset) + "px";
 		} else {
-			head.style.display = "block";
-			map.style.left = "0px";
-			map.style.right = "450px";
-			zoom.style.top = "35px";
-			but.style.top = "33px";
-			but.style.right = "468px";
-			pane.style.display = "block";
-			foot.style.display = "block";
-			content.style.top = "102px";
-			content.style.bottom = "17px";
-		}
-		barsVisible = !barsVisible;
+			$('.nunaliit_content').removeAttr('style');
+			
+			$('.n2_content_text')
+				.removeAttr('style')
+				.removeClass('n2tuio_showPane');
+		};
 	} else if (code == 70) {
 		// f pressed, toggle visual feedback
 		showDots = !showDots;
@@ -1142,8 +1123,8 @@ window.onkeydown = function (e) {
 			xOffset -= 5;
 		}
 
-		map.style.left = (xMargin + xOffset) + "px";
-		map.style.right = (xMargin - xOffset) + "px";
+		content.style.left = (xMargin + xOffset) + "px";
+		content.style.right = (xMargin - xOffset) + "px";
 		console.log("X margin " + xMargin + " offset " + xOffset);
 	} else if (code == 39) {
 		if (e.altKey) {
@@ -1154,8 +1135,8 @@ window.onkeydown = function (e) {
 			xOffset += 5;
 		}
 
-		map.style.left = (xMargin + xOffset) + "px";
-		map.style.right = (xMargin - xOffset) + "px";
+		content.style.left = (xMargin + xOffset) + "px";
+		content.style.right = (xMargin - xOffset) + "px";
 		console.log("X margin " + xMargin + " offset " + xOffset);
 	} else if (code == 40) {
 		if (e.altKey) {
@@ -1166,8 +1147,8 @@ window.onkeydown = function (e) {
 			yOffset += 5;
 		}
 
-		map.style.top = (yMargin + yOffset) + "px";
-		map.style.bottom = (yMargin - yOffset) + "px";
+		content.style.top = (yMargin + yOffset) + "px";
+		content.style.bottom = (yMargin - yOffset) + "px";
 		console.log("Y margin " + yMargin + " offset " + yOffset);
 	} else if (code == 38) {
 		if (e.altKey) {
@@ -1178,20 +1159,18 @@ window.onkeydown = function (e) {
 			yOffset -= 5;
 		}
 
-		map.style.top = (yMargin + yOffset) + "px";
-		map.style.bottom = (yMargin - yOffset) + "px";
+		content.style.top = (yMargin + yOffset) + "px";
+		content.style.bottom = (yMargin - yOffset) + "px";
 		console.log("Y margin " + yMargin + " offset " + yOffset);
 	} else if (code == 80) {
 		// P, show/hide pane
 		var pane = document.getElementsByClassName("n2_content_text")[0];
-		if (!paneVisible) {
+		var $pane = $('.n2_content_text');
+		$pane.toggleClass('n2tuio_showPane');
+		var isPaneVisible = $pane.hasClass('n2tuio_showPane');
+		if( isPaneVisible ) {
 			// Show pane
-			pane.style.display = "block";
-			pane.style.position = "absolute";
-			pane.style.opacity = "0.92";
-			pane.style.top = "0px";
-			pane.style.left = (map.offsetLeft + (map.offsetWidth / 2.0) - 210) + "px";
-			pane.style.overflow = "visible";
+			pane.style.transform ='rotate(' + paneRotateAngle + 'deg)';
 
 			// Create left side rotation handle
 			var lHandle = createRotateHandle();
@@ -1209,13 +1188,14 @@ window.onkeydown = function (e) {
 			rHandle.style.borderBottomRightRadius = "50px";
 			pane.appendChild(rHandle);
 		} else {
-			pane.style.display = "none";
-		}
+			$pane.removeAttr('style');
+			$pane.children('.rotate_handle').remove();
+		};
 
-		paneVisible = !paneVisible;
 	}
 };
 
+var start = undefined;
 var lastTime = null;
 var dirty = false;
 var energy = 1.0;
@@ -1230,8 +1210,9 @@ function reschedule(callback) {
 function tick(timestamp) {
 	if (!overlay) {
 		// Initialize draw overlay (first tick)
-		var map = document.getElementById("nunaliit2_uniqueId_65");
-		if (map) {
+		var $map = $('.n2_content_map');
+		if( $map.length > 0 ) {
+			var map = $map[0];
 			overlay = new DrawOverlay(map, map.offsetWidth, map.offsetHeight, onPathDraw);
 			drawZooming = true;
 		}
@@ -1418,3 +1399,6 @@ DrawOverlay.prototype.endStroke = function () {
 if (usePhysics) {
 	requestAnimationFrame(tick);
 }
+
+})(jQuery,nunaliit2);
+
