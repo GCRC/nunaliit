@@ -1021,14 +1021,16 @@ function onRotateHandleDown(e) {
 	e.stopPropagation();
 	paneRotating = true;
 	paneRotateMouseStartAngle = getPaneRotateAngle(e);
-	document.addEventListener("mousemove", onRotateHandleMove);
-	document.addEventListener("mouseup", onRotateHandleUp);
+	document.addEventListener("mousemove", onRotateHandleMove, true);
+	document.addEventListener("mouseup", onRotateHandleUp, true);
 }
 
 function onRotateHandleMove(e) {
 	if (paneRotating) {
 		var pane = document.getElementsByClassName("n2_content_text")[0];
 		var diff = getPaneRotateAngle(e) - paneRotateMouseStartAngle;
+		e.preventDefault();
+		e.stopPropagation();
 		paneRotateAngle = paneRotateStartAngle + diff;
 		pane.style.transform = 'rotate(' + paneRotateAngle + 'deg)';
 	}
@@ -1036,6 +1038,8 @@ function onRotateHandleMove(e) {
 
 function onRotateHandleUp(e) {
 	if (paneRotating) {
+		e.preventDefault();
+		e.stopPropagation();
 		paneRotateStartAngle = paneRotateAngle;
 		paneRotating = false;
 		document.removeEventListener("mousemove", onRotateHandleMove);
