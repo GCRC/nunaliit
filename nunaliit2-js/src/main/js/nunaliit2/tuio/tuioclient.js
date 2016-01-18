@@ -669,7 +669,13 @@ function onCursorMove(inst) {
 		var elapsed = Date.now() - cursor.birthTime;
 		if (d < clickDistance && elapsed > pressDelay) {
 			console.log("Long press!");
+
+			// Toggle information pane
+			overlay.abortStroke();
+			togglePane();
+
 			pressCursor = undefined;
+			drawZooming = false;
 		}
 	} else if (drawZooming && downCursors > 1 && Date.now() - cursor.birthTime > moveDelay) {
 		// Multiple cursors have been down for a while, abort draw zoom
@@ -1043,6 +1049,49 @@ function createRotateHandle() {
 	return handle;
 }
 
+function showPane() {
+	var $pane = $('.n2_content_text');
+	var pane = document.getElementsByClassName("n2_content_text")[0];
+
+	$pane.addClass('n2tuio_showPane');
+
+	pane.style.transform = 'rotate(' + paneRotateAngle + 'deg)';
+
+	// Create left side rotation handle
+	var lHandle = createRotateHandle();
+	lHandle.id = "left_rotate_handle";
+	lHandle.style.left = "-48px";
+	lHandle.style.borderTopLeftRadius = "50px";
+	lHandle.style.borderBottomLeftRadius = "50px";
+	pane.appendChild(lHandle);
+
+	// Create right side rotation handle
+	var rHandle = createRotateHandle();
+	rHandle.id = "right_rotate_handle";
+	rHandle.style.left = "450px";
+	rHandle.style.borderTopRightRadius = "50px";
+	rHandle.style.borderBottomRightRadius = "50px";
+	pane.appendChild(rHandle);
+}
+
+function hidePane() {
+	var $pane = $('.n2_content_text');
+
+	$pane.removeClass('n2tuio_showPane');
+	$pane.removeAttr('style');
+	$pane.children('.rotate_handle').remove();
+}
+
+function togglePane() {
+	var $pane = $('.n2_content_text');
+	var isPaneVisible = $pane.hasClass('n2tuio_showPane');
+	if (!isPaneVisible) {
+		showPane();
+	} else {
+		hidePane();
+	}
+}
+
 window.onkeydown = function (e) {
 	var code = e.keyCode ? e.keyCode : e.which;
 	var $content = $('.nunaliit_content');
@@ -1153,33 +1202,7 @@ window.onkeydown = function (e) {
 		console.log("Y margin " + yMargin + " offset " + yOffset);
 	} else if (code == 80) {
 		// P, show/hide pane
-		var pane = document.getElementsByClassName("n2_content_text")[0];
-		var $pane = $('.n2_content_text');
-		$pane.toggleClass('n2tuio_showPane');
-		var isPaneVisible = $pane.hasClass('n2tuio_showPane');
-		if (isPaneVisible) {
-			// Show pane
-			pane.style.transform = 'rotate(' + paneRotateAngle + 'deg)';
-
-			// Create left side rotation handle
-			var lHandle = createRotateHandle();
-			lHandle.id = "left_rotate_handle";
-			lHandle.style.left = "-48px";
-			lHandle.style.borderTopLeftRadius = "50px";
-			lHandle.style.borderBottomLeftRadius = "50px";
-			pane.appendChild(lHandle);
-
-			// Create right side rotation handle
-			var rHandle = createRotateHandle();
-			rHandle.id = "right_rotate_handle";
-			rHandle.style.left = "450px";
-			rHandle.style.borderTopRightRadius = "50px";
-			rHandle.style.borderBottomRightRadius = "50px";
-			pane.appendChild(rHandle);
-		} else {
-			$pane.removeAttr('style');
-			$pane.children('.rotate_handle').remove();
-		}
+		togglePane();
 	}
 };
 
