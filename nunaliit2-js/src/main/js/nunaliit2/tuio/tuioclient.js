@@ -1059,17 +1059,17 @@ function showPane() {
 	// Create left side rotation handle
 	var lHandle = createRotateHandle();
 	lHandle.id = "left_rotate_handle";
-	lHandle.style.left = "-48px";
-	lHandle.style.borderTopLeftRadius = "50px";
-	lHandle.style.borderBottomLeftRadius = "50px";
+	lHandle.style.left = "-88px";
+	lHandle.style.borderTopLeftRadius = "130px";
+	lHandle.style.borderBottomLeftRadius = "130px";
 	pane.appendChild(lHandle);
 
 	// Create right side rotation handle
 	var rHandle = createRotateHandle();
 	rHandle.id = "right_rotate_handle";
 	rHandle.style.left = "450px";
-	rHandle.style.borderTopRightRadius = "50px";
-	rHandle.style.borderBottomRightRadius = "50px";
+	rHandle.style.borderTopRightRadius = "130px";
+	rHandle.style.borderBottomRightRadius = "130px";
 	pane.appendChild(rHandle);
 }
 

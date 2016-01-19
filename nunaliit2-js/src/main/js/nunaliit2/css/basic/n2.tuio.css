@@ -57,13 +57,14 @@
 	color: #EED;
 	cursor: move;
 	font-size: xx-large;
-	line-height: 100px;
-	opacity: 0.65;
+	height: 260px;
+	line-height: 260px;
+	opacity: 0.5;
 	padding: 4px;
 	position: absolute;
 	text-align: center;
-	top: 440px;
-	width: 40px;
+	top: 380px;
+	width: 80px;
 }
 
 .nunaliit_tuio .feedback_circle {
