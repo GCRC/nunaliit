@@ -452,6 +452,20 @@ var cursors = new Object();
 var tangibles = new Object();
 var hands = new Object();
 
+/** Get the topmost DOM element at a TUIO position. */
+function getElementAtTablePoint(x, y) {
+	if (isNaN(x) || isNaN(y)) {
+		return null;
+	}
+
+	// Convert table coordinates to browser coordinates
+	var winX = x * window.innerWidth;
+	var winY = y * window.innerHeight;
+
+	// Return the topmost DOM element at this position
+	return document.elementFromPoint(winX, winY);
+}
+
 /** Dispatch a mouse event as a result of a cursor change.
  * eventType: mousedown, mousemove, mouseup, or click
  * x, y: 0..1 normalized TUIO cordinates
@@ -664,9 +678,15 @@ function onCursorMove(inst) {
 		var elapsed = Date.now() - cursor.birthTime;
 		if (d < clickDistance && elapsed > pressDelay) {
 			console.log("Long press!");
+			// Hide overlay so it does not intercept mouse events
+			if (overlay) {
+				overlay.abortStroke();
+			}
+
+			// Dispatch click to select map element, if applicable
+			dispatchMouseEvent('click', cursor.pos.x, cursor.pos.y);
 
 			// Toggle information pane
-			overlay.abortStroke();
 			togglePane();
 
 			pressCursor = undefined;
@@ -685,12 +705,17 @@ function onCursorUp(inst) {
 	if (inst == pressCursor) {
 		if (drawZooming) {
 			dispatchMouseEvent('mouseup', cursor.pos.x, cursor.pos.y);
+			overlay.hide();
 		}
 
 		var d = distance(cursor.pos.x, cursor.pos.y, cursor.downX, cursor.downY);
 		var elapsed = Date.now() - cursor.birthTime;
 		if (d < clickDistance && elapsed < clickDelay) {
 			console.log("Click!");
+			var el = getElementAtTablePoint(cursor.pos.x, cursor.pos.y);
+			if (el && el.id.startsWith("OpenLayers")) {
+				hidePane();
+			}
 			dispatchMouseEvent('mousedown', cursor.pos.x, cursor.pos.y);
 			dispatchMouseEvent('mouseup', cursor.pos.x, cursor.pos.y);
 			dispatchMouseEvent('click', cursor.pos.x, cursor.pos.y);
@@ -1354,11 +1379,13 @@ function DrawOverlay(parent, width, height, pathCallback) {
 DrawOverlay.prototype.show = function () {
 	this.canvas.style.left = "0px";
 	this.canvas.style.width = "100%";
+	this.canvas.style.pointerEvents = "auto";
 }
 
 DrawOverlay.prototype.hide = function () {
 	this.canvas.style.left = "100%";
 	this.canvas.style.width = "0";
+	this.canvas.style.pointerEvents = "none";
 }
 
 DrawOverlay.prototype.startStroke = function (x, y) {
