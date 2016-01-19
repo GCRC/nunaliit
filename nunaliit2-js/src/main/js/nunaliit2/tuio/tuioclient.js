@@ -568,17 +568,9 @@ function updateAlive(dict, alive) {
 /** Update the visible calibration point for a cursor. */
 function createDot(x, y, content) {
 	var div = document.createElement("div");
-	div.style.position = "absolute";
+	div.className = "nunaliit_tuio feedback_circle";
 	div.style.width = dotSize + "px";
 	div.style.height = dotSize + "px";
-	div.style.background = "gray";
-	div.style.borderRadius = "50%";
-	div.style.border = "2px solid white";
-	div.style.color = "white";
-	div.style.textAlign = "center";
-	div.style.verticalAlign = "middle";
-	div.style.zIndex = "10";
-	div.style.pointerEvents = "none";
 	div.style.left = ((x * window.innerWidth) - (dotSize / 2)) + "px";
 	div.style.top = ((y * window.innerHeight) - (dotSize / 2)) + "px";
 	div.innerHTML = content;

@@ -65,3 +65,16 @@
 	top: 440px;
 	width: 40px;
 }
+
+.nunaliit_tuio .feedback_circle {
+	background-color: #000;
+	border-radius: 50%;
+	border: 2px solid #EED;
+	color: #EED;
+	opacity: 0.5;
+	pointer-events: none;
+	position: absolute;
+	text-align: center;
+	vertical-align: middle;
+	z-index: 10;
+}
