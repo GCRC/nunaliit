@@ -61,9 +61,9 @@ var yOffset = 10;
 
 // TUIO input calibration
 var cursorXScale = 0.672;
-var cursorYScale = 0.951;
+var cursorYScale = 0.953;
 var cursorXOffset = -0.04;
-var cursorYOffset = -0.002;
+var cursorYOffset = 0.002;
 
 // Pinch zoom parameters
 var lastPinchZoomDistance = undefined;
@@ -158,6 +158,7 @@ function centerPoint(points) {
 	                  minY + (maxY - minY) / 2);
 };
 
+/** A 2-D point with velocity, used for fingers (cursors) and hands. */
 function Body(x, y) {
 	this.pos = new Vector(x, y);
 	this.targetPos = new Vector(x, y);
@@ -170,6 +171,7 @@ function Body(x, y) {
 	this.lastTime = null;
 }
 
+/** Return the force exerted by a spring between vectors p1 and p2. */
 function springForce(p1, p2, length, k) {
 	var vec = p2.subtract(p1);
 	var mag = vec.magnitude();
@@ -1127,6 +1129,15 @@ window.onkeydown = function (e) {
 		if (isTuioEnabled) {
 			content.style.left = (xMargin + xOffset) + "px";
 			content.style.right = (xMargin - xOffset) + "px";
+
+			// Create draw overlay
+			var $map = $('.n2_content_map');
+			if ($map.length > 0) {
+				var map = $map[0];
+				overlay = new DrawOverlay(
+					map, map.offsetWidth, map.offsetHeight, onPathDraw);
+				drawZooming = true;
+			}
 		} else {
 			$('.nunaliit_content').removeAttr('style');
 
@@ -1230,7 +1241,6 @@ window.onkeydown = function (e) {
 	}
 };
 
-var start = undefined;
 var lastTime = null;
 var dirty = false;
 var energy = 1.0;
@@ -1243,19 +1253,8 @@ function reschedule(callback) {
 }
 
 function tick(timestamp) {
-	if (!overlay) {
-		// Initialize draw overlay (first tick)
-		var $map = $('.n2_content_map');
-		if ($map.length > 0) {
-			var map = $map[0];
-			overlay = new DrawOverlay(map, map.offsetWidth, map.offsetHeight, onPathDraw);
-			drawZooming = true;
-		}
-	}
-
 	if (!dirty || !lastTime) {
 		// Nothing to do now, just schedule next tick
-		start = timestamp;
 		lastTime = timestamp;
 		reschedule(tick);
 		return;
