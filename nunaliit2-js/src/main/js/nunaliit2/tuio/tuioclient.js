@@ -1,6 +1,8 @@
 ;(function($,$n2){
 "use strict";
 
+// requestAnimationFrame : where is it defined?
+
 var MAX_SPRING_K = 120.0;
 var SPRING_LEN = 0.0000000000001;
 
@@ -10,7 +12,13 @@ var usePhysics = true;
 var springFadeTime = 400.0;
 
 // Socket to tuioserver.js that emits TUIO events in JSON
-var socket = io('http://localhost:3000');
+var socket = undefined;
+if( typeof io === 'function' ){
+	socket = io('http://localhost:3000');
+};
+
+// Keep track if connection occurred
+var tuioConnected = false;
 
 // Speed factor for drag scrolling
 var scrollSpeed = 1.0;
@@ -423,7 +431,7 @@ Hand.prototype.span = function() {
  * incorrect after some cursor movement.
  */
 Hand.prototype.trimCursors = function() {
-	orphans = [];
+	var orphans = [];
 
 	while (this.span() > handSpan) {
 		// Find the point furthest from the center
@@ -987,17 +995,27 @@ function updateTangibles(set) {
 			tangibles[inst]['angle'] = set[inst][3];
 		}
 	}
+	$n2.log('tangibles',set,tangibles);
 }
 
-socket.on('cursor update', function(update) {
-	updateAlive(cursors, update.alive);
-	updateCursors(update.set);
-});
+if( socket ){
+	socket.on('cursor update', function(update) {
+		updateAlive(cursors, update.alive);
+		updateCursors(update.set);
+	});
 
-socket.on('tangibles update', function(update) {
-	updateAlive(tangibles, update.alive);
-	updateTangibles(update.set);
-});
+	socket.on('tangibles update', function(update) {
+		updateAlive(tangibles, update.alive);
+		updateTangibles(update.set);
+	});
+
+	socket.on('welcome', function(update) {
+		tuioConnected = true;
+		$n2.log('tuio connected');
+	});
+	
+	socket.emit('new client',{});
+};
 
 function getPaneRotateAngle(e) {
 	var pane = document.getElementsByClassName("n2_content_text")[0];
@@ -1399,6 +1417,15 @@ DrawOverlay.prototype.endStroke = function () {
 if (usePhysics) {
 	requestAnimationFrame(tick);
 }
+
+
+function IsTuioConnected() {
+	return tuioConnected;
+};
+
+$n2.tuioClient = {
+	IsTuioConnected: IsTuioConnected
+};
 
 })(jQuery,nunaliit2);
 

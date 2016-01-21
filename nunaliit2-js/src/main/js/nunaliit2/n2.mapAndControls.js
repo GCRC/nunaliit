@@ -2168,7 +2168,7 @@ var MapAndControls = $n2.Class({
 			
 			if( options && 'string' === typeof(options.type) ){
 				var mapTypeId = null;
-				if( google && google.maps && google.maps.MapTypeId ){
+				if( typeof google !== 'undefined' && google.maps && google.maps.MapTypeId ){
 					mapTypeId = google.maps.MapTypeId[options.type];
 				};
 				if( mapTypeId ) {
