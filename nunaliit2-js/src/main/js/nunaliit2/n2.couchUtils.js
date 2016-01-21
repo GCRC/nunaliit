@@ -445,6 +445,7 @@ var n2utils = {
 	,excludedSearchAttributes: [
 		'_rev'
 		,'nunaliit_geom'
+		,'nunaliit_import.geometry'
 	]
 	
 	,reWordSplit: /[\x00-\x26\x28-\x2f\x3a-\x40\x5b-\x5e\x60\x7b-\x7f]+/ 
