@@ -62,16 +62,16 @@ var scrollX = undefined;
 var scrollY = undefined;
 
 // Map visual size and position
-var xMargin = 455;
-var xOffset = -105;
+var xMargin = 450;
+var xOffset = -90;
 var yMargin = 15;
 var yOffset = 10;
 
 // TUIO input calibration
 var cursorXScale = 0.672;
-var cursorYScale = 0.951;
+var cursorYScale = 0.953;
 var cursorXOffset = -0.04;
-var cursorYOffset = -0.002;
+var cursorYOffset = 0.002;
 
 // Pinch zoom parameters
 var lastPinchZoomDistance = undefined;
@@ -92,7 +92,6 @@ var paneRotateAngle = 0.0;
 
 // Angle of initial mouse down point of a rotation drag
 var paneRotateMouseStartAngle = 0.0;
-
 
 function Vector(x, y) {
 	this.x = x;
@@ -167,6 +166,7 @@ function centerPoint(points) {
 	                  minY + (maxY - minY) / 2);
 };
 
+/** A 2-D point with velocity, used for fingers (cursors) and hands. */
 function Body(x, y) {
 	this.pos = new Vector(x, y);
 	this.targetPos = new Vector(x, y);
@@ -179,6 +179,7 @@ function Body(x, y) {
 	this.lastTime = null;
 }
 
+/** Return the force exerted by a spring between vectors p1 and p2. */
 function springForce(p1, p2, length, k) {
 	var vec = p2.subtract(p1);
 	var mag = vec.magnitude();
@@ -461,6 +462,20 @@ var cursors = new Object();
 var tangibles = new Object();
 var hands = new Object();
 
+/** Get the topmost DOM element at a TUIO position. */
+function getElementAtTablePoint(x, y) {
+	if (isNaN(x) || isNaN(y)) {
+		return null;
+	}
+
+	// Convert table coordinates to browser coordinates
+	var winX = x * window.innerWidth;
+	var winY = y * window.innerHeight;
+
+	// Return the topmost DOM element at this position
+	return document.elementFromPoint(winX, winY);
+}
+
 /** Dispatch a mouse event as a result of a cursor change.
  * eventType: mousedown, mousemove, mouseup, or click
  * x, y: 0..1 normalized TUIO cordinates
@@ -505,10 +520,6 @@ function dispatchMouseEventWin(eventType, winX, winY)
 
 function removeObject(dict, inst) {
 	// Object is long dead and no longer influential, remove
-	if (dict == cursors) {
-		// Cursor is no longer alive, (cursor up)
-		onCursorUp(inst);
-	}
 
 	if (dict[inst].div != undefined) {
 		// Remove calibration div
@@ -549,6 +560,13 @@ function updateAlive(dict, alive) {
 				// No longer alive, flag as dead and schedule removal
 				dict[inst].alive = false;
 				dict[inst].deathTime = Date.now();
+
+				// Issue cursor up immediately for responsive clicking
+				if (dict == cursors) {
+					onCursorUp(inst);
+				}
+
+				// Schedule full removal for when spring no longer has influence
 				window.setTimeout(removeObject, springFadeTime, dict, inst);
 			}
 		}
@@ -574,17 +592,9 @@ function updateAlive(dict, alive) {
 /** Update the visible calibration point for a cursor. */
 function createDot(x, y, content) {
 	var div = document.createElement("div");
-	div.style.position = "absolute";
+	div.className = "nunaliit_tuio feedback_circle";
 	div.style.width = dotSize + "px";
 	div.style.height = dotSize + "px";
-	div.style.background = "gray";
-	div.style.borderRadius = "50%";
-	div.style.border = "2px solid white";
-	div.style.color = "white";
-	div.style.textAlign = "center";
-	div.style.verticalAlign = "middle";
-	div.style.zIndex = "10";
-	div.style.pointerEvents = "none";
 	div.style.left = ((x * window.innerWidth) - (dotSize / 2)) + "px";
 	div.style.top = ((y * window.innerHeight) - (dotSize / 2)) + "px";
 	div.innerHTML = content;
@@ -678,7 +688,19 @@ function onCursorMove(inst) {
 		var elapsed = Date.now() - cursor.birthTime;
 		if (d < clickDistance && elapsed > pressDelay) {
 			console.log("Long press!");
+			// Hide overlay so it does not intercept mouse events
+			if (overlay) {
+				overlay.abortStroke();
+			}
+
+			// Dispatch click to select map element, if applicable
+			dispatchMouseEvent('click', cursor.pos.x, cursor.pos.y);
+
+			// Toggle information pane
+			togglePane();
+
 			pressCursor = undefined;
+			drawZooming = false;
 		}
 	} else if (drawZooming && downCursors > 1 && Date.now() - cursor.birthTime > moveDelay) {
 		// Multiple cursors have been down for a while, abort draw zoom
@@ -693,12 +715,17 @@ function onCursorUp(inst) {
 	if (inst == pressCursor) {
 		if (drawZooming) {
 			dispatchMouseEvent('mouseup', cursor.pos.x, cursor.pos.y);
+			overlay.hide();
 		}
 
 		var d = distance(cursor.pos.x, cursor.pos.y, cursor.downX, cursor.downY);
 		var elapsed = Date.now() - cursor.birthTime;
 		if (d < clickDistance && elapsed < clickDelay) {
 			console.log("Click!");
+			var el = getElementAtTablePoint(cursor.pos.x, cursor.pos.y);
+			if (el && el.id.startsWith("OpenLayers")) {
+				hidePane();
+			}
 			dispatchMouseEvent('mousedown', cursor.pos.x, cursor.pos.y);
 			dispatchMouseEvent('mouseup', cursor.pos.x, cursor.pos.y);
 			dispatchMouseEvent('click', cursor.pos.x, cursor.pos.y);
@@ -1019,8 +1046,9 @@ if( socket ){
 
 function getPaneRotateAngle(e) {
 	var pane = document.getElementsByClassName("n2_content_text")[0];
-	var originX = pane.offsetLeft + (pane.offsetWidth / 2.0);
-	var originY = pane.offsetTop + (pane.offsetHeight / 2.0);
+	var bounds = pane.getBoundingClientRect();
+	var originX = bounds.left + (bounds.width / 2.0);
+	var originY = bounds.top + (bounds.height / 2.0);
 	return Math.atan2(e.pageY - originY, e.pageX - originX) * (180 / Math.PI);
 }
 
@@ -1030,21 +1058,25 @@ function onRotateHandleDown(e) {
 	e.stopPropagation();
 	paneRotating = true;
 	paneRotateMouseStartAngle = getPaneRotateAngle(e);
-	document.addEventListener("mousemove", onRotateHandleMove);
-	document.addEventListener("mouseup", onRotateHandleUp);
+	document.addEventListener("mousemove", onRotateHandleMove, true);
+	document.addEventListener("mouseup", onRotateHandleUp, true);
 }
 
 function onRotateHandleMove(e) {
 	if (paneRotating) {
 		var pane = document.getElementsByClassName("n2_content_text")[0];
 		var diff = getPaneRotateAngle(e) - paneRotateMouseStartAngle;
+		e.preventDefault();
+		e.stopPropagation();
 		paneRotateAngle = paneRotateStartAngle + diff;
-		pane.style.transform ='rotate(' + paneRotateAngle + 'deg)';
+		pane.style.transform = 'rotate(' + paneRotateAngle + 'deg)';
 	}
 }
 
 function onRotateHandleUp(e) {
 	if (paneRotating) {
+		e.preventDefault();
+		e.stopPropagation();
 		paneRotateStartAngle = paneRotateAngle;
 		paneRotating = false;
 		document.removeEventListener("mousemove", onRotateHandleMove);
@@ -1054,22 +1086,54 @@ function onRotateHandleUp(e) {
 
 function createRotateHandle() {
 	var handle = document.createElement('div');
-	handle.className = "rotate_handle";
-	handle.style.position = "absolute";
-	handle.style.width = "40px";
-	handle.style.top = "350px";
-	handle.style.backgroundColor = "#000";
-	handle.style.color = "#EED";
-	handle.style.opacity = "0.75";
-	handle.style.fontSize = "xx-large";
-	handle.style.lineHeight = "100px";
-	handle.style.textAlign = "center";
-	handle.style.padding = "4px";
-	handle.style.cursor = "move";
+	handle.className = "nunaliit_tuio rotate_handle";
 	handle.innerHTML = "&orarr;";
 	handle.onmousedown = onRotateHandleDown;
 
 	return handle;
+}
+
+function showPane() {
+	var $pane = $('.n2_content_text');
+	var pane = document.getElementsByClassName("n2_content_text")[0];
+
+	$pane.addClass('n2tuio_showPane');
+
+	pane.style.transform = 'rotate(' + paneRotateAngle + 'deg)';
+
+	// Create left side rotation handle
+	var lHandle = createRotateHandle();
+	lHandle.id = "left_rotate_handle";
+	lHandle.style.left = "-88px";
+	lHandle.style.borderTopLeftRadius = "130px";
+	lHandle.style.borderBottomLeftRadius = "130px";
+	pane.appendChild(lHandle);
+
+	// Create right side rotation handle
+	var rHandle = createRotateHandle();
+	rHandle.id = "right_rotate_handle";
+	rHandle.style.left = "450px";
+	rHandle.style.borderTopRightRadius = "130px";
+	rHandle.style.borderBottomRightRadius = "130px";
+	pane.appendChild(rHandle);
+}
+
+function hidePane() {
+	var $pane = $('.n2_content_text');
+
+	$pane.removeClass('n2tuio_showPane');
+	$pane.removeAttr('style');
+	$pane.children('.rotate_handle').remove();
+}
+
+function togglePane() {
+	var $pane = $('.n2_content_text');
+	var isPaneVisible = $pane.hasClass('n2tuio_showPane');
+	if (!isPaneVisible) {
+		showPane();
+	} else {
+		hidePane();
+	}
 }
 
 window.onkeydown = function (e) {
@@ -1083,13 +1147,22 @@ window.onkeydown = function (e) {
 		if (isTuioEnabled) {
 			content.style.left = (xMargin + xOffset) + "px";
 			content.style.right = (xMargin - xOffset) + "px";
+
+			// Create draw overlay
+			var $map = $('.n2_content_map');
+			if ($map.length > 0) {
+				var map = $map[0];
+				overlay = new DrawOverlay(
+					map, map.offsetWidth, map.offsetHeight, onPathDraw);
+				drawZooming = true;
+			}
 		} else {
 			$('.nunaliit_content').removeAttr('style');
-			
+
 			$('.n2_content_text')
 				.removeAttr('style')
 				.removeClass('n2tuio_showPane');
-		};
+		}
 	} else if (code == 70) {
 		// f pressed, toggle visual feedback
 		showDots = !showDots;
@@ -1182,38 +1255,10 @@ window.onkeydown = function (e) {
 		console.log("Y margin " + yMargin + " offset " + yOffset);
 	} else if (code == 80) {
 		// P, show/hide pane
-		var pane = document.getElementsByClassName("n2_content_text")[0];
-		var $pane = $('.n2_content_text');
-		$pane.toggleClass('n2tuio_showPane');
-		var isPaneVisible = $pane.hasClass('n2tuio_showPane');
-		if( isPaneVisible ) {
-			// Show pane
-			pane.style.transform ='rotate(' + paneRotateAngle + 'deg)';
-
-			// Create left side rotation handle
-			var lHandle = createRotateHandle();
-			lHandle.id = "left_rotate_handle";
-			lHandle.style.left = "-48px";
-			lHandle.style.borderTopLeftRadius = "50px";
-			lHandle.style.borderBottomLeftRadius = "50px";
-			pane.appendChild(lHandle);
-
-			// Create right side rotation handle
-			var rHandle = createRotateHandle();
-			rHandle.id = "right_rotate_handle";
-			rHandle.style.left = "450px";
-			rHandle.style.borderTopRightRadius = "50px";
-			rHandle.style.borderBottomRightRadius = "50px";
-			pane.appendChild(rHandle);
-		} else {
-			$pane.removeAttr('style');
-			$pane.children('.rotate_handle').remove();
-		};
-
+		togglePane();
 	}
 };
 
-var start = undefined;
 var lastTime = null;
 var dirty = false;
 var energy = 1.0;
@@ -1226,19 +1271,8 @@ function reschedule(callback) {
 }
 
 function tick(timestamp) {
-	if (!overlay) {
-		// Initialize draw overlay (first tick)
-		var $map = $('.n2_content_map');
-		if( $map.length > 0 ) {
-			var map = $map[0];
-			overlay = new DrawOverlay(map, map.offsetWidth, map.offsetHeight, onPathDraw);
-			drawZooming = true;
-		}
-	}
-
 	if (!dirty || !lastTime) {
 		// Nothing to do now, just schedule next tick
-		start = timestamp;
 		lastTime = timestamp;
 		reschedule(tick);
 		return;
@@ -1362,11 +1396,13 @@ function DrawOverlay(parent, width, height, pathCallback) {
 DrawOverlay.prototype.show = function () {
 	this.canvas.style.left = "0px";
 	this.canvas.style.width = "100%";
+	this.canvas.style.pointerEvents = "auto";
 }
 
 DrawOverlay.prototype.hide = function () {
 	this.canvas.style.left = "100%";
 	this.canvas.style.width = "0";
+	this.canvas.style.pointerEvents = "none";
 }
 
 DrawOverlay.prototype.startStroke = function (x, y) {
@@ -1418,7 +1454,6 @@ if (usePhysics) {
 	requestAnimationFrame(tick);
 }
 
-
 function IsTuioConnected() {
 	return tuioConnected;
 };
@@ -1427,5 +1462,4 @@ $n2.tuioClient = {
 	IsTuioConnected: IsTuioConnected
 };
 
-})(jQuery,nunaliit2);
-
+})(jQuery, nunaliit2);
