@@ -1857,7 +1857,7 @@
 				+'<div><button>'+_loc('OK')+'</button><button>'+_loc('Cancel')+'</button></div>'
 				+'</div>');
 
-			$dialog.find('textarea').val('function(doc, onTransformedFn, onSkippedFn){\n\t// return true for selected document\n}')
+			$dialog.find('textarea').val('function(doc, onTransformedFn, onSkippedFn, config){\n\t// Modify document, then call onTransformedFn() to save it\n\t// Otherwise, call onSkippedFn()\n}')
 
 			$dialog.find('button')
 				.first()
