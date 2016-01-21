@@ -3,6 +3,8 @@
 
 // requestAnimationFrame : where is it defined?
 
+var DH = 'n2.tuio';
+
 var MAX_SPRING_K = 120.0;
 var SPRING_LEN = 0.0000000000001;
 
@@ -19,6 +21,9 @@ if( typeof io === 'function' ){
 
 // Keep track if connection occurred
 var tuioConnected = false;
+
+// Keeps track if a service has been defined
+var g_tuioService = undefined;
 
 // Speed factor for drag scrolling
 var scrollSpeed = 1.0;
@@ -539,6 +544,12 @@ function removeObject(dict, inst) {
  * alive: Updated alive array.
  */
 function updateAlive(dict, alive) {
+	var aliveMap = {};
+	for(var i=0,e=alive.length; i<e; ++i) {
+		var id = alive[i];
+		aliveMap[id] = true;
+	};
+
 	// Remove any dead objects
 	for (var inst in dict) {
 		if (!dict.hasOwnProperty(inst)) {
@@ -547,16 +558,7 @@ function updateAlive(dict, alive) {
 
 		if (dict[inst].alive) {
 			// Check if this instance is still alive
-			var found = false;
-			for (var i = alive.length - 1; i >= 0; i--) {
-				if (inst == alive[i]) {
-					dict[inst].lastSeen = Date.now();
-					found = true;
-					break;
-				}
-			}
-
-			if (!found) {
+			if( !aliveMap[inst] ) {
 				// No longer alive, flag as dead and schedule removal
 				dict[inst].alive = false;
 				dict[inst].deathTime = Date.now();
@@ -1020,9 +1022,13 @@ function updateTangibles(set) {
 			tangibles[inst]['x'] = (set[inst][1] - 0.5) * cursorXScale + 0.5 + cursorXOffset;
 			tangibles[inst]['y'] = (set[inst][2] - 0.5) * cursorYScale + 0.5 + cursorYOffset;
 			tangibles[inst]['angle'] = set[inst][3];
+			tangibles[inst]['alive'] = true;
 		}
 	}
-	$n2.log('tangibles',set,tangibles);
+	
+	if( g_tuioService ){
+		g_tuioService._updateTangibles(tangibles);
+	};
 }
 
 if( socket ){
@@ -1456,8 +1462,82 @@ function IsTuioConnected() {
 	return tuioConnected;
 };
 
+var TuioService = $n2.Class({
+	
+	dispatchService: null,
+	
+	unrecognizedTangibles: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dispatchService: null
+		},opts_);
+		
+		var _this = this;
+		
+		this.unrecognizedTangibles = {};
+		
+		this.dispatchService = opts.dispatchService;
+		
+		if( this.dispatchService ){
+			var f = function(m, addr, dispatcher){
+				_this._handle(m, addr, dispatcher);
+			};
+			
+			this.dispatchService.register(DH,'tuioIsConnected',f);
+		};
+		
+		// Register with global variable
+		g_tuioService = this;
+	},
+	
+	_handle: function(m, addr, dispatcher){
+		if( 'tuioIsConnected' === m.type ){
+			// Synchronous call
+			if( tuioConnected ){
+				m.connected = true;
+			};
+		};
+	},
+	
+	_updateTangibles: function(tangibles){
+		for(var tangibleSeq in tangibles){
+			var tangible = tangibles[tangibleSeq];
+			var tangibleId = tangible.id;
+
+			if( !tangible.service ){
+				tangible.service = {};
+			};
+			
+			// Process this tangible
+			if( 0 === tangibleId ){
+				if( tangible.alive 
+				 && !tangible.service.start ){
+					tangible.service.start = true;
+					this.dispatchService.send(DH,{
+						type: 'loginShowForm'
+					});
+				} else if( !tangible.alive 
+				 && !tangible.service.end ){
+					tangible.service.end = true;
+					this.dispatchService.send(DH,{
+						type: 'logout'
+					});
+				};
+			} else {
+				// Tangible id not known. Report in log
+				if( !this.unrecognizedTangibles[tangibleId] ){
+					this.unrecognizedTangibles[tangibleId] = true;
+					$n2.log('Tangible not recognized: '+tangibleId);
+				};
+			};
+		};
+	}
+});
+
 $n2.tuioClient = {
 	IsTuioConnected: IsTuioConnected
+	,TuioService: TuioService
 };
 
 })(jQuery, nunaliit2);

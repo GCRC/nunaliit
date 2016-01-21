@@ -418,6 +418,12 @@ function Configure(options_){
 			atlasDesign: configuration.atlasDesign
 			,dispatchService: configuration.directory.dispatchService
 		});
+
+		if( $n2.tuioClient ){
+			configuration.directory.tuioService = new $n2.tuioClient.TuioService({
+				dispatchService: configuration.directory.dispatchService
+			});
+		};
 		
 		// Load help file
 		if( configuration.atlasDb ){
