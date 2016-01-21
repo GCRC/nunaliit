@@ -592,7 +592,7 @@ function updateAlive(dict, alive) {
 /** Update the visible calibration point for a cursor. */
 function createDot(x, y, content) {
 	var div = document.createElement("div");
-	div.className = "nunaliit_tuio feedback_circle";
+	div.className = "n2tuio_feedback_circle";
 	div.style.width = dotSize + "px";
 	div.style.height = dotSize + "px";
 	div.style.left = ((x * window.innerWidth) - (dotSize / 2)) + "px";
@@ -1086,7 +1086,7 @@ function onRotateHandleUp(e) {
 
 function createRotateHandle() {
 	var handle = document.createElement('div');
-	handle.className = "nunaliit_tuio rotate_handle";
+	handle.className = "n2tuio_rotate_handle";
 	handle.innerHTML = "&orarr;";
 	handle.onmousedown = onRotateHandleDown;
 
@@ -1123,7 +1123,7 @@ function hidePane() {
 
 	$pane.removeClass('n2tuio_showPane');
 	$pane.removeAttr('style');
-	$pane.children('.rotate_handle').remove();
+	$pane.children('.n2tuio_rotate_handle').remove();
 }
 
 function togglePane() {
@@ -1159,9 +1159,7 @@ window.onkeydown = function (e) {
 		} else {
 			$('.nunaliit_content').removeAttr('style');
 
-			$('.n2_content_text')
-				.removeAttr('style')
-				.removeClass('n2tuio_showPane');
+			hidePane();
 		}
 	} else if (code == 70) {
 		// f pressed, toggle visual feedback

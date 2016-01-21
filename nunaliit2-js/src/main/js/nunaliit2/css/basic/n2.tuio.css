@@ -52,7 +52,7 @@
 	top: 45%;
 }
 
-.nunaliit_tuio .rotate_handle {
+.n2tuio_rotate_handle {
 	background-color: #000;
 	color: #EED;
 	cursor: move;
@@ -67,7 +67,7 @@
 	width: 80px;
 }
 
-.nunaliit_tuio .feedback_circle {
+.n2tuio_feedback_circle {
 	background-color: #000;
 	border-radius: 50%;
 	border: 2px solid #EED;
