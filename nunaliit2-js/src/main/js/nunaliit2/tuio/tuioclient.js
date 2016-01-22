@@ -1,8 +1,6 @@
 ;(function($,$n2){
 "use strict";
 
-// requestAnimationFrame : where is it defined?
-
 var DH = 'n2.tuio';
 
 var MAX_SPRING_K = 120.0;
@@ -24,6 +22,9 @@ var tuioConnected = false;
 
 // Keeps track if a service has been defined
 var g_tuioService = undefined;
+
+// Number of escape keys pressed in the last while
+var escapeKeyCount = 0;
 
 // Speed factor for drag scrolling
 var scrollSpeed = 1.0;
@@ -98,6 +99,18 @@ var paneRotateAngle = 0.0;
 // Angle of initial mouse down point of a rotation drag
 var paneRotateMouseStartAngle = 0.0;
 
+//==================================================================
+function IsTuioConnected() {
+	return tuioConnected;
+};
+
+//==================================================================
+function IsTableModeOn() {
+	var isTableModeOn = $('body').hasClass('nunaliit_tuio');
+	return isTableModeOn;
+};
+
+//==================================================================
 function Vector(x, y) {
 	this.x = x;
 	this.y = y;
@@ -125,6 +138,8 @@ Vector.prototype.distance = function(v) {
 
 	return Math.sqrt((dx * dx) + (dy * dy));
 }
+
+//==================================================================
 
 /** Return the absolute distance between two points. */
 function distance(x1, y1, x2, y2) {
@@ -171,19 +186,6 @@ function centerPoint(points) {
 	                  minY + (maxY - minY) / 2);
 };
 
-/** A 2-D point with velocity, used for fingers (cursors) and hands. */
-function Body(x, y) {
-	this.pos = new Vector(x, y);
-	this.targetPos = new Vector(x, y);
-	this.vel = new Vector(0, 0);
-	this.div = undefined;
-	this.dirty = false;
-	this.alive = true;
-	this.birthTime = Date.now();
-	this.deathTime = undefined;
-	this.lastTime = null;
-}
-
 /** Return the force exerted by a spring between vectors p1 and p2. */
 function springForce(p1, p2, length, k) {
 	var vec = p2.subtract(p1);
@@ -195,6 +197,20 @@ function springForce(p1, p2, length, k) {
 	} else {
 		return vec.scale(k * displacement * 0.5 / mag);
 	}
+}
+
+//==================================================================
+/** A 2-D point with velocity, used for fingers (cursors) and hands. */
+function Body(x, y) {
+	this.pos = new Vector(x, y);
+	this.targetPos = new Vector(x, y);
+	this.vel = new Vector(0, 0);
+	this.div = undefined;
+	this.dirty = false;
+	this.alive = true;
+	this.birthTime = Date.now();
+	this.deathTime = undefined;
+	this.lastTime = null;
 }
 
 /** Set the target coordinate for the body to move towards. */
@@ -264,6 +280,7 @@ Body.prototype.updatePosition = function(timestamp, energy) {
 	return true;
 }
 
+//==================================================================
 /** Construct a new cursor (finger). */
 function Cursor() {
 	Body.call(this, Number.NaN, Number.NaN);
@@ -289,6 +306,7 @@ function Cursor() {
 Cursor.prototype = Object.create(Body.prototype);
 Cursor.prototype.constructor = Cursor;
 
+//==================================================================
 /** Construct a new tangible (block). */
 function Tangible() {
 	this.id = new Number();
@@ -298,6 +316,7 @@ function Tangible() {
 	this.div = undefined;
 }
 
+//==================================================================
 /** Construct a new hand (grouping of cursors). */
 function Hand(x, y) {
 	Body.call(this, x, y);
@@ -462,6 +481,7 @@ Hand.prototype.trimCursors = function() {
 	return orphans;
 }
 
+//==================================================================
 // Collections of currently alive things
 var cursors = new Object();
 var tangibles = new Object();
@@ -1031,25 +1051,6 @@ function updateTangibles(set) {
 	};
 }
 
-if( socket ){
-	socket.on('cursor update', function(update) {
-		updateAlive(cursors, update.alive);
-		updateCursors(update.set);
-	});
-
-	socket.on('tangibles update', function(update) {
-		updateAlive(tangibles, update.alive);
-		updateTangibles(update.set);
-	});
-
-	socket.on('welcome', function(update) {
-		tuioConnected = true;
-		$n2.log('tuio connected');
-	});
-	
-	socket.emit('new client',{});
-};
-
 function getPaneRotateAngle(e) {
 	var pane = document.getElementsByClassName("n2_content_text")[0];
 	var bounds = pane.getBoundingClientRect();
@@ -1142,135 +1143,14 @@ function togglePane() {
 	}
 }
 
-window.onkeydown = function (e) {
-	var code = e.keyCode ? e.keyCode : e.which;
-	var $content = $('.nunaliit_content');
-	var content = $content[0];
-	if (code === 27) {
-		// Escape pressed, toggle non-map UI visibility
-		$('body').toggleClass('nunaliit_tuio');
-		var isTuioEnabled = $('body').hasClass('nunaliit_tuio');
-		if (isTuioEnabled) {
-			content.style.left = (xMargin + xOffset) + "px";
-			content.style.right = (xMargin - xOffset) + "px";
-
-			// Create draw overlay
-			var $map = $('.n2_content_map');
-			if ($map.length > 0) {
-				var map = $map[0];
-				overlay = new DrawOverlay(
-					map, map.offsetWidth, map.offsetHeight, onPathDraw);
-				drawZooming = true;
-			}
-		} else {
-			$('.nunaliit_content').removeAttr('style');
-
-			hidePane();
-		}
-	} else if (code == 70) {
-		// f pressed, toggle visual feedback
-		showDots = !showDots;
-	} else if (e.shiftKey) {
-		// TUIO calibration
-		if (code == 37) {
-			if (e.altKey) {
-				// Shift+Alt+left, offset TUIO left
-				cursorXOffset -= 0.001;
-			} else {
-				// Shift+left, shrink TUIO horizontally
-				cursorXScale -= 0.001;
-			}
-		} else if (code == 39) {
-			if (e.altKey) {
-				// Shift+Alt+right, offset TUIO right
-				cursorXOffset += 0.001;
-			} else {
-				// Shift+right, expand TUIO horizontally
-				cursorXScale += 0.001;
-			}
-		} else if (code == 40) {
-			if (e.altKey) {
-				// Shift+Alt+down, offset TUIO down
-				cursorYOffset += 0.001;
-			} else {
-				// Shift+down, shrink TUIO vertically
-				cursorYScale -= 0.001;
-			}
-		} else if (code == 38) {
-			if (e.altKey) {
-				// Shift+Alt+up, offset TUIO up
-				cursorYOffset -= 0.001;
-			} else {
-				// Shift+up, grow TUIO vertically
-				cursorYScale += 0.001;
-			}
-		}
-
-		console.log("TUIO scale " + cursorXScale + "," + cursorYScale +
-					" offset " + cursorXOffset + "," + cursorYOffset);
-
-	} else if (code == 37) {
-		if (e.altKey) {
-			// Alt+left, shrink horizontally
-			xMargin += 5;
-		} else {
-			// Left, shift left
-			xOffset -= 5;
-		}
-
-		content.style.left = (xMargin + xOffset) + "px";
-		content.style.right = (xMargin - xOffset) + "px";
-		console.log("X margin " + xMargin + " offset " + xOffset);
-	} else if (code == 39) {
-		if (e.altKey) {
-			// Alt+right, grow horizontally
-			xMargin -= 5;
-		} else {
-			// Right, shift right
-			xOffset += 5;
-		}
-
-		content.style.left = (xMargin + xOffset) + "px";
-		content.style.right = (xMargin - xOffset) + "px";
-		console.log("X margin " + xMargin + " offset " + xOffset);
-	} else if (code == 40) {
-		if (e.altKey) {
-			// Alt+down, shrink vertically
-			yMargin += 5;
-		} else {
-			// Down, shift up
-			yOffset += 5;
-		}
-
-		content.style.top = (yMargin + yOffset) + "px";
-		content.style.bottom = (yMargin - yOffset) + "px";
-		console.log("Y margin " + yMargin + " offset " + yOffset);
-	} else if (code == 38) {
-		if (e.altKey) {
-			// Alt+up, grow vertically
-			yMargin -= 5;
-		} else {
-			// Up, shift down
-			yOffset -= 5;
-		}
-
-		content.style.top = (yMargin + yOffset) + "px";
-		content.style.bottom = (yMargin - yOffset) + "px";
-		console.log("Y margin " + yMargin + " offset " + yOffset);
-	} else if (code == 80) {
-		// P, show/hide pane
-		togglePane();
-	}
-};
-
 var lastTime = null;
 var dirty = false;
 var energy = 1.0;
 
 function reschedule(callback) {
 	var fps = 30;
-	setTimeout(function() {
-		requestAnimationFrame(callback);
+	window.setTimeout(function() {
+		window.requestAnimationFrame(callback);
 	}, 1000 / fps);
 }
 
@@ -1347,6 +1227,7 @@ function subtick(timestamp) {
 	}
 }
 
+//==================================================================
 function DrawOverlay(parent, width, height, pathCallback) {
 	var self = this;
 
@@ -1454,14 +1335,180 @@ DrawOverlay.prototype.endStroke = function () {
 	}
 }
 
-if (usePhysics) {
-	requestAnimationFrame(tick);
-}
+//==================================================================
+/**
+ * If in regular mode, switch to table mode.
+ * If in table mode, get out of it.
+ */
+function toggleTableMode() {
+	$('body').toggleClass('nunaliit_tuio');
 
-function IsTuioConnected() {
-	return tuioConnected;
+	var $content = $('.nunaliit_content');
+
+	var isTuioEnabled = $('body').hasClass('nunaliit_tuio');
+	if (isTuioEnabled) {
+		$content.css({
+			left: (xMargin + xOffset) + 'px'
+			,right: (xMargin - xOffset) + 'px'
+		});
+
+		// Create draw overlay
+		var $map = $('.n2_content_map');
+		if ($map.length > 0) {
+			var map = $map[0];
+			overlay = new DrawOverlay(
+				map, map.offsetWidth, map.offsetHeight, onPathDraw);
+			drawZooming = true;
+		}
+	} else {
+		$content.removeAttr('style');
+
+		hidePane();
+	};
 };
 
+//==================================================================
+if( socket ){
+	socket.on('cursor update', function(update) {
+		updateAlive(cursors, update.alive);
+		updateCursors(update.set);
+	});
+
+	socket.on('tangibles update', function(update) {
+		updateAlive(tangibles, update.alive);
+		updateTangibles(update.set);
+	});
+
+	socket.on('welcome', function(update) {
+		tuioConnected = true;
+		$n2.log('tuio connected');
+	});
+	
+	socket.emit('new client',{});
+};
+
+window.setInterval(function(){
+	escapeKeyCount = 0;
+},2000);
+
+window.onkeydown = function (e) {
+	var code = e.keyCode ? e.keyCode : e.which;
+
+	if (code === 27) {
+		// Escape pressed, toggle non-map UI visibility
+		++escapeKeyCount;
+		if( escapeKeyCount >= 3 ){
+			escapeKeyCount = 0;
+			toggleTableMode();
+		};
+	};
+
+	if( IsTableModeOn() ){
+		var $content = $('.nunaliit_content');
+		var content = $content[0];
+
+		if (code == 70) {
+			// f pressed, toggle visual feedback
+			showDots = !showDots;
+		} else if (e.shiftKey) {
+			// TUIO calibration
+			if (code == 37) {
+				if (e.altKey) {
+					// Shift+Alt+left, offset TUIO left
+					cursorXOffset -= 0.001;
+				} else {
+					// Shift+left, shrink TUIO horizontally
+					cursorXScale -= 0.001;
+				}
+			} else if (code == 39) {
+				if (e.altKey) {
+					// Shift+Alt+right, offset TUIO right
+					cursorXOffset += 0.001;
+				} else {
+					// Shift+right, expand TUIO horizontally
+					cursorXScale += 0.001;
+				}
+			} else if (code == 40) {
+				if (e.altKey) {
+					// Shift+Alt+down, offset TUIO down
+					cursorYOffset += 0.001;
+				} else {
+					// Shift+down, shrink TUIO vertically
+					cursorYScale -= 0.001;
+				}
+			} else if (code == 38) {
+				if (e.altKey) {
+					// Shift+Alt+up, offset TUIO up
+					cursorYOffset -= 0.001;
+				} else {
+					// Shift+up, grow TUIO vertically
+					cursorYScale += 0.001;
+				}
+			}
+
+			console.log("TUIO scale " + cursorXScale + "," + cursorYScale +
+						" offset " + cursorXOffset + "," + cursorYOffset);
+
+		} else if (code == 37) {
+			if (e.altKey) {
+				// Alt+left, shrink horizontally
+				xMargin += 5;
+			} else {
+				// Left, shift left
+				xOffset -= 5;
+			}
+
+			content.style.left = (xMargin + xOffset) + "px";
+			content.style.right = (xMargin - xOffset) + "px";
+			console.log("X margin " + xMargin + " offset " + xOffset);
+		} else if (code == 39) {
+			if (e.altKey) {
+				// Alt+right, grow horizontally
+				xMargin -= 5;
+			} else {
+				// Right, shift right
+				xOffset += 5;
+			}
+
+			content.style.left = (xMargin + xOffset) + "px";
+			content.style.right = (xMargin - xOffset) + "px";
+			console.log("X margin " + xMargin + " offset " + xOffset);
+		} else if (code == 40) {
+			if (e.altKey) {
+				// Alt+down, shrink vertically
+				yMargin += 5;
+			} else {
+				// Down, shift up
+				yOffset += 5;
+			}
+
+			content.style.top = (yMargin + yOffset) + "px";
+			content.style.bottom = (yMargin - yOffset) + "px";
+			console.log("Y margin " + yMargin + " offset " + yOffset);
+		} else if (code == 38) {
+			if (e.altKey) {
+				// Alt+up, grow vertically
+				yMargin -= 5;
+			} else {
+				// Up, shift down
+				yOffset -= 5;
+			}
+
+			content.style.top = (yMargin + yOffset) + "px";
+			content.style.bottom = (yMargin - yOffset) + "px";
+			console.log("Y margin " + yMargin + " offset " + yOffset);
+		} else if (code == 80) {
+			// P, show/hide pane
+			togglePane();
+		};
+	};
+};
+
+if (usePhysics) {
+	window.requestAnimationFrame(tick);
+}
+
+//==================================================================
 var TuioService = $n2.Class({
 	
 	dispatchService: null,
@@ -1484,7 +1531,7 @@ var TuioService = $n2.Class({
 				_this._handle(m, addr, dispatcher);
 			};
 			
-			this.dispatchService.register(DH,'tuioIsConnected',f);
+			this.dispatchService.register(DH,'tuioGetState',f);
 		};
 		
 		// Register with global variable
@@ -1492,10 +1539,16 @@ var TuioService = $n2.Class({
 	},
 	
 	_handle: function(m, addr, dispatcher){
-		if( 'tuioIsConnected' === m.type ){
+		if( 'tuioGetState' === m.type ){
 			// Synchronous call
-			if( tuioConnected ){
+			if( IsTuioConnected() ){
 				m.connected = true;
+			};
+
+			if( IsTableModeOn() ){
+				m.mode = 'table';
+			} else {
+				m.mode = 'regular';
 			};
 		};
 	},
