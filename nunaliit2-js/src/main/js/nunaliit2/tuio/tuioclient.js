@@ -1408,6 +1408,12 @@ window.onkeydown = function (e) {
 		if (code == 70) {
 			// f pressed, toggle visual feedback
 			showDots = !showDots;
+		} else if ( 67 === code && escapeKeyCount >= 2) {
+			// <esc> <esc> c : calibrate
+			if( g_tuioService ){
+				g_tuioService.startCalibration();
+			};
+			
 		} else if (e.shiftKey) {
 			// TUIO calibration
 			if (code == 37) {
@@ -1507,6 +1513,143 @@ if (usePhysics) {
 }
 
 //==================================================================
+var CalibrationProcess = $n2.Class({
+	
+	intervalId: null,
+	
+	timeLeft: null,
+	
+	canvasId: null,
+	
+	canvasContext: null,
+
+	// Canvas geometries
+
+	width: null,
+
+	height: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			
+		},opts_);
+		
+		var _this = this;
+
+		// Timeout for abort
+		this.timeLeft = 10;
+		this.intervalId = window.setInterval(function(){
+			_this.timeLeft = _this.timeLeft - 1;
+			if( _this.timeLeft <= 0 ){
+				$n2.log('CalibrationProcess aborting',this);
+				_this._abortProcess();
+			};
+		},500);
+		
+		// Install canvas
+		var $content = $('.nunaliit_content');
+		this.width = $content.width();
+		this.height = $content.height();
+		this.canvasId = $n2.getUniqueId();
+		var $canvas = $('<canvas>')
+			.attr('id', this.canvasId)
+			.attr('width',this.width)
+			.attr('height',this.height)
+			.css({
+				position: 'absolute'
+				,left: '0'
+				,top: '0'
+			})
+			.appendTo($content);
+		var canvasElem = $canvas[0];
+		this.canvasContext = canvasElem.getContext('2d');
+		canvasElem.onmousedown = function (e) {
+			return _this._mouseDown(e);
+		};
+		this._startFirstStep();
+		
+		$n2.log('CalibrationProcess',this);
+	},
+	
+	_mouseDown: function(e){
+		var pos = this._getMousePosition(e);
+		$n2.log('calibration mouse down',pos);
+		
+		if( 1 == this.step ){
+			this.press1 = pos;
+			this._clearCanvas();
+			this._startSecondStep();
+
+		} else if( 2 == this.step ){
+			this.press2 = pos;
+			this._clearCanvas();
+			this._calibrate();
+		};
+		
+		return false;
+	},
+	
+	_calibrate: function(){
+		this._abortProcess();
+	},
+	
+	_clearCanvas: function(){
+		this.canvasContext.clearRect(0,0,this.width,this.height);
+	},
+	
+	_startFirstStep: function(){
+		//this.canvasContext.fillStyle = 'rgba(255,0,0,64)';
+		//this.canvasContext.fillRect(0,0,this.width,this.height);
+
+		this.step = 1;
+		this.step1 = {
+			x: Math.floor(this.width / 2)
+			,y: Math.floor(this.height / 2)
+		};
+		
+		this._drawMarker(this.step1);
+	},
+	
+	_startSecondStep: function(){
+		this.step = 2;
+		this.step2 = {
+			x: this.step1.x + 250
+			,y: this.step1.y + 250
+		};
+		
+		this._drawMarker(this.step2);
+	},
+	
+	_drawMarker: function(pos){
+		this.canvasContext.fillStyle = '#000000';
+		this.canvasContext.fillRect(pos.x-7,pos.y-7,14,14);
+
+		this.canvasContext.fillStyle = '#ffff00';
+		this.canvasContext.fillRect(pos.x-5,pos.y-5,10,10);
+
+		this.canvasContext.fillStyle = '#000000';
+		this.canvasContext.fillRect(pos.x-1,pos.y-1,2,2);
+	},
+	
+	_getMousePosition: function(e) {
+		var $canvas = $('#'+this.canvasId);
+		var canvasElem = $canvas[0];
+		var box = canvasElem.getBoundingClientRect();
+		return { x: e.clientX - box.left,
+		         y: e.clientY - box.top };
+	},
+	
+	_abortProcess: function(){
+		window.clearInterval(this.intervalId);
+		
+		$('#'+this.canvasId).remove();
+		this.canvasContext = null;
+
+		$n2.log('CalibrationProcess ended',this);
+	}
+});
+
+//==================================================================
 var TuioService = $n2.Class({
 	
 	dispatchService: null,
@@ -1534,6 +1677,10 @@ var TuioService = $n2.Class({
 		
 		// Register with global variable
 		g_tuioService = this;
+	},
+	
+	startCalibration: function(){
+		new CalibrationProcess();
 	},
 	
 	_handle: function(m, addr, dispatcher){
@@ -1575,6 +1722,14 @@ var TuioService = $n2.Class({
 						type: 'logout'
 					});
 				};
+
+			} else if( 1 === tangibleId ){
+				// Calibration
+				if( !tangible.service.start ){
+					tangible.service.start = true;
+					this.startCalibration();
+				};
+
 			} else {
 				// Tangible id not known. Report in log
 				if( !this.unrecognizedTangibles[tangibleId] ){
