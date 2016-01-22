@@ -614,7 +614,7 @@ function updateAlive(dict, alive) {
 /** Update the visible calibration point for a cursor. */
 function createDot(x, y, content) {
 	var div = document.createElement("div");
-	div.className = "n2tuio_feedback_circle";
+	div.className = "n2tuio_feedback_circle n2tuio_remove";
 	div.style.width = dotSize + "px";
 	div.style.height = dotSize + "px";
 	div.style.left = ((x * window.innerWidth) - (dotSize / 2)) + "px";
@@ -1093,7 +1093,7 @@ function onRotateHandleUp(e) {
 
 function createRotateHandle() {
 	var handle = document.createElement('div');
-	handle.className = "n2tuio_rotate_handle";
+	handle.className = "n2tuio_rotate_handle n2tuio_remove";
 	handle.innerHTML = "&orarr;";
 	handle.onmousedown = onRotateHandleDown;
 
@@ -1238,15 +1238,13 @@ function DrawOverlay(parent, width, height, pathCallback) {
 	this.pathCallback = pathCallback;
 
 	this.canvas = document.createElement('canvas');
-	this.canvas.className = "overlay";
-	this.canvas.width = width || 100;
-	this.canvas.height = height || 100;
-	this.canvas.style.position = "absolute";
-	this.canvas.style.left = "0px";
-	this.canvas.style.top = "0px";
-	this.canvas.style.width = "100%";
-	this.canvas.style.height = "100%";
-	this.canvas.style.zIndex = "999999999";
+	this.canvas.className = "n2tuio_overlay n2tuio_remove";
+	if( width ){
+		this.canvas.width = width;
+	};
+	if( height ){
+		this.canvas.height = height;
+	};
 	parent.appendChild(this.canvas);
 
 	this.context = this.canvas.getContext('2d');
@@ -1362,7 +1360,7 @@ function toggleTableMode() {
 		}
 	} else {
 		$content.removeAttr('style');
-
+		$('.n2tuio_remove').remove();
 		hidePane();
 	};
 };
