@@ -1738,6 +1738,13 @@ var TuioService = $n2.Class({
 				};
 			};
 		};
+		
+		if( this.dispatchService ){
+			this.dispatchService.send(DH,{
+				type: 'tuioTangiblesUpdate'
+				,tangibles: tangibles
+			});
+		};
 	}
 });
 
