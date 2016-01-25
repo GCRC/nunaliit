@@ -70,6 +70,115 @@
 	});
 
 	// -----------------------------------------------------------------
+	var ConfigurationEditor = $n2.Class({
+
+		divId: null,
+		
+		confObj: null,
+
+		initialize: function(opts_){
+			var opts = $n2.extend({
+				div: null
+			},opts_);
+
+			var _this = this;
+
+			this.divId = $n2.utils.getElementIdentifier( opts.div );
+			
+			this.confObj = this._getConfiguration();
+
+			var $outer = this._getDiv();
+			$outer
+				.addClass('n2tangibles_editor')
+				.empty();
+			
+			var $header = $('<div>')
+				.addClass('n2tangibles_editor_menu')
+				.appendTo($outer);
+			$('<span>')
+				.text( _loc('Configuration') )
+				.appendTo($header);
+			$('<button>')
+				.text( _loc('Refresh') )
+				.appendTo($header)
+				.click(function(){
+					_this._refresh();
+					return false;
+				});
+			$('<button>')
+				.text( _loc('Save') )
+				.appendTo($header)
+				.click(function(){
+					_this._save();
+					return false;
+				});
+			$('<button>')
+				.text( _loc('Delete') )
+				.appendTo($header)
+				.click(function(){
+					_this._delete();
+					return false;
+				});
+
+			$('<div>')
+				.addClass('n2tangibles_editor_tree')
+				.appendTo($outer);
+		},
+
+		_getDiv: function(){
+			return $('#'+this.divId);
+		},
+		
+		_refresh: function(){
+			var $tree = this._getDiv().find('.n2tangibles_editor_tree');
+			
+			this.confObj = this._getConfiguration();
+
+			$tree.empty();
+			var objectTree = new $n2.tree.ObjectTree($tree, this.confObj);
+			new $n2.tree.ObjectTreeEditor(objectTree, this.confObj);
+		},
+
+		_save: function(){
+			this._setConfiguration(this.confObj);
+		},
+
+		_delete: function(){
+			var localStorage = $n2.storage.getLocalStorage();
+			localStorage.removeItem('n2tuio_configuration');
+		},
+		
+		_getConfiguration: function(){
+			var localStorage = $n2.storage.getLocalStorage();
+			
+			var tuioConfStr = localStorage.getItem('n2tuio_configuration');
+			
+			var tuioConf = undefined;
+			if( tuioConfStr ){
+				try {
+					tuioConf = JSON.parse(tuioConfStr);
+				} catch(e) {
+					$n2.log('Unable to parse TUIO configuration:'+e);
+				};
+			};
+			
+			if( !tuioConf ){
+				tuioConf = {
+				};
+			};
+			
+			return tuioConf;
+		},
+		
+		_setConfiguration: function(tuioConf){
+			var localStorage = $n2.storage.getLocalStorage();
+			
+			var tuioConfStr = JSON.stringify(tuioConf);
+			localStorage.setItem('n2tuio_configuration',tuioConfStr);
+		}
+	});
+
+	// -----------------------------------------------------------------
 	var TangiblesApp = $n2.Class({
 		
 		dispatchService: null,
@@ -100,10 +209,17 @@
 			
 			var $div = this._getDiv();
 			$div.empty();
-			
+
 			$('<div>')
 				.addClass('n2tangibles_state')
 				.appendTo($div);
+
+			var $editor = $('<div>')
+				.addClass('n2tangibles_editor')
+				.appendTo($div);
+			new ConfigurationEditor({
+				div: $editor
+			});
 		},
 		
 		_getDiv: function(){

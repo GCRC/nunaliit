@@ -94,7 +94,7 @@ var Storage = $n2.Class({
 	},
 	
 	removeItem: function(key){
-		this.browserObj.removeItem(key, value);
+		this.browserObj.removeItem(key);
 	},
 	
 	clear: function(){

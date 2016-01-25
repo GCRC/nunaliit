@@ -67,17 +67,20 @@ var dotSize = 16.0;
 var scrollX = undefined;
 var scrollY = undefined;
 
-// Map visual size and position
-var xMargin = 450;
-var xOffset = -90;
-var yMargin = 15;
-var yOffset = 10;
-
-// TUIO input calibration
-var cursorXScale = 0.672;
-var cursorYScale = 0.953;
-var cursorXOffset = -0.04;
-var cursorYOffset = 0.002;
+// Calibration
+var calibration = {
+	// Input calibration
+	cursorXScale: 0.672
+	,cursorYScale: 0.953
+	,cursorXOffset: -0.04
+	,cursorYOffset: 0.002
+	// Map visual size and position
+	,xMargin: 450
+	,xOffset: -90
+	,yMargin: 15
+	,yOffset: 10
+};
+var calibrationDirty = false;
 
 // Pinch zoom parameters
 var lastPinchZoomDistance = undefined;
@@ -677,7 +680,9 @@ function onCursorDown(inst) {
 	if (downCursors == 0 && pressCursor == undefined) {
 		// First cursor down, start potential long press
 		pressCursor = inst;
-		overlay.show();
+		if( overlay ){
+			overlay.show();
+		};
 		drawZooming = true;
 		dispatchMouseEvent('mousedown', cursor.pos.x, cursor.pos.y);
 	} else if (downCursors > 0) {
@@ -957,8 +962,8 @@ function updateCursors(set) {
 			continue; // Unknown cursor ID
 		}
 
-		var newX = (set[inst][0] - 0.5) * cursorXScale + 0.5 + cursorXOffset;
-		var newY = (set[inst][1] - 0.5) * cursorYScale + 0.5 + cursorYOffset;
+		var newX = (set[inst][0] - 0.5) * calibration.cursorXScale + 0.5 + calibration.cursorXOffset;
+		var newY = (set[inst][1] - 0.5) * calibration.cursorYScale + 0.5 + calibration.cursorYOffset;
 		if (isNaN(newX) || isNaN(newY)) {
 			continue;
 		}
@@ -1039,8 +1044,8 @@ function updateTangibles(set) {
 
 		if (set[inst] != undefined && tangibles[inst] != undefined) {
 			tangibles[inst]['id'] = set[inst][0];
-			tangibles[inst]['x'] = (set[inst][1] - 0.5) * cursorXScale + 0.5 + cursorXOffset;
-			tangibles[inst]['y'] = (set[inst][2] - 0.5) * cursorYScale + 0.5 + cursorYOffset;
+			tangibles[inst]['x'] = (set[inst][1] - 0.5) * calibration.cursorXScale + 0.5 + calibration.cursorXOffset;
+			tangibles[inst]['y'] = (set[inst][2] - 0.5) * calibration.cursorYScale + 0.5 + calibration.cursorYOffset;
 			tangibles[inst]['angle'] = set[inst][3];
 			tangibles[inst]['alive'] = true;
 		}
@@ -1346,8 +1351,8 @@ function toggleTableMode() {
 	var isTuioEnabled = $('body').hasClass('nunaliit_tuio');
 	if (isTuioEnabled) {
 		$content.css({
-			left: (xMargin + xOffset) + 'px'
-			,right: (xMargin - xOffset) + 'px'
+			left: (calibration.xMargin + calibration.xOffset) + 'px'
+			,right: (calibration.xMargin - calibration.xOffset) + 'px'
 		});
 
 		// Create draw overlay
@@ -1363,6 +1368,36 @@ function toggleTableMode() {
 		$('.n2tuio_remove').remove();
 		hidePane();
 	};
+};
+
+//==================================================================
+function loadConfiguration(){
+	var localStorage = $n2.storage.getLocalStorage();
+	
+	var tuioConfStr = localStorage.getItem('n2tuio_configuration');
+	
+	var tuioConf = undefined;
+	if( tuioConfStr ){
+		try {
+			tuioConf = JSON.parse(tuioConfStr);
+		} catch(e) {
+			$n2.log('Unable to parse TUIO configuration:'+e);
+		};
+	};
+	
+	if( !tuioConf ){
+		tuioConf = {};
+	};
+	
+	return tuioConf;
+};
+
+//==================================================================
+function saveConfiguration(tuioConf){
+	var localStorage = $n2.storage.getLocalStorage();
+	
+	var tuioConfStr = JSON.stringify(tuioConf);
+	localStorage.setItem('n2tuio_configuration',tuioConfStr);
 };
 
 //==================================================================
@@ -1385,8 +1420,35 @@ if( socket ){
 	socket.emit('new client',{});
 };
 
+// Load saved calibration
+if( $n2.storage 
+ && $n2.storage.getLocalStorage 
+ && typeof JSON !== 'undefined'
+ && JSON.parse ){
+	var tuioConf = loadConfiguration();
+	if( tuioConf.calibration ){
+		calibration = tuioConf.calibration;
+	};
+};
+
 window.setInterval(function(){
 	escapeKeyCount = 0;
+	
+	if( calibrationDirty ){
+		if( $n2.storage 
+		 && $n2.storage.getLocalStorage 
+		 && typeof JSON !== 'undefined'
+		 && JSON.stringify
+		 && JSON.parse ){
+			var tuioConf = loadConfiguration();
+			
+			tuioConf.calibration = calibration;
+
+			saveConfiguration(tuioConf);
+			
+			calibrationDirty = false;
+		};
+	};
 },2000);
 
 window.onkeydown = function (e) {
@@ -1419,88 +1481,104 @@ window.onkeydown = function (e) {
 			if (code == 37) {
 				if (e.altKey) {
 					// Shift+Alt+left, offset TUIO left
-					cursorXOffset -= 0.001;
+					calibration.cursorXOffset -= 0.001;
+					calibrationDirty = true;
 				} else {
 					// Shift+left, shrink TUIO horizontally
-					cursorXScale -= 0.001;
+					calibration.cursorXScale -= 0.001;
+					calibrationDirty = true;
 				}
 			} else if (code == 39) {
 				if (e.altKey) {
 					// Shift+Alt+right, offset TUIO right
-					cursorXOffset += 0.001;
+					calibration.cursorXOffset += 0.001;
+					calibrationDirty = true;
 				} else {
 					// Shift+right, expand TUIO horizontally
-					cursorXScale += 0.001;
+					calibration.cursorXScale += 0.001;
+					calibrationDirty = true;
 				}
 			} else if (code == 40) {
 				if (e.altKey) {
 					// Shift+Alt+down, offset TUIO down
-					cursorYOffset += 0.001;
+					calibration.cursorYOffset += 0.001;
+					calibrationDirty = true;
 				} else {
 					// Shift+down, shrink TUIO vertically
-					cursorYScale -= 0.001;
+					calibration.cursorYScale -= 0.001;
+					calibrationDirty = true;
 				}
 			} else if (code == 38) {
 				if (e.altKey) {
 					// Shift+Alt+up, offset TUIO up
-					cursorYOffset -= 0.001;
+					calibration.cursorYOffset -= 0.001;
+					calibrationDirty = true;
 				} else {
 					// Shift+up, grow TUIO vertically
-					cursorYScale += 0.001;
+					calibration.cursorYScale += 0.001;
+					calibrationDirty = true;
 				}
 			}
 
-			console.log("TUIO scale " + cursorXScale + "," + cursorYScale +
-						" offset " + cursorXOffset + "," + cursorYOffset);
+			console.log("TUIO scale " + calibration.cursorXScale + "," + calibration.cursorYScale +
+						" offset " + calibration.cursorXOffset + "," + calibration.cursorYOffset);
 
 		} else if (code == 37) {
 			if (e.altKey) {
 				// Alt+left, shrink horizontally
-				xMargin += 5;
+				calibration.xMargin += 5;
+				calibrationDirty = true;
 			} else {
 				// Left, shift left
-				xOffset -= 5;
+				calibration.xOffset -= 5;
+				calibrationDirty = true;
 			}
 
-			content.style.left = (xMargin + xOffset) + "px";
-			content.style.right = (xMargin - xOffset) + "px";
-			console.log("X margin " + xMargin + " offset " + xOffset);
+			content.style.left = (calibration.xMargin + calibration.xOffset) + "px";
+			content.style.right = (calibration.xMargin - calibration.xOffset) + "px";
+			console.log("X margin " + calibration.xMargin + " offset " + calibration.xOffset);
 		} else if (code == 39) {
 			if (e.altKey) {
 				// Alt+right, grow horizontally
-				xMargin -= 5;
+				calibration.xMargin -= 5;
+				calibrationDirty = true;
 			} else {
 				// Right, shift right
-				xOffset += 5;
+				calibration.xOffset += 5;
+				calibrationDirty = true;
 			}
 
-			content.style.left = (xMargin + xOffset) + "px";
-			content.style.right = (xMargin - xOffset) + "px";
-			console.log("X margin " + xMargin + " offset " + xOffset);
+			content.style.left = (calibration.xMargin + calibration.xOffset) + "px";
+			content.style.right = (calibration.xMargin - calibration.xOffset) + "px";
+			console.log("X margin " + calibration.xMargin + " offset " + calibration.xOffset);
 		} else if (code == 40) {
 			if (e.altKey) {
 				// Alt+down, shrink vertically
-				yMargin += 5;
+				calibration.yMargin += 5;
+				calibrationDirty = true;
 			} else {
 				// Down, shift up
-				yOffset += 5;
+				calibration.yOffset += 5;
+				calibrationDirty = true;
 			}
 
-			content.style.top = (yMargin + yOffset) + "px";
-			content.style.bottom = (yMargin - yOffset) + "px";
-			console.log("Y margin " + yMargin + " offset " + yOffset);
+			content.style.top = (calibration.yMargin + calibration.yOffset) + "px";
+			content.style.bottom = (calibration.yMargin - calibration.yOffset) + "px";
+			console.log("Y margin " + calibration.yMargin + " offset " + calibration.yOffset);
 		} else if (code == 38) {
 			if (e.altKey) {
 				// Alt+up, grow vertically
-				yMargin -= 5;
+				calibration.yMargin -= 5;
+				calibrationDirty = true;
 			} else {
 				// Up, shift down
-				yOffset -= 5;
+				calibration.yOffset -= 5;
+				calibrationDirty = true;
 			}
 
-			content.style.top = (yMargin + yOffset) + "px";
-			content.style.bottom = (yMargin - yOffset) + "px";
-			console.log("Y margin " + yMargin + " offset " + yOffset);
+			content.style.top = (calibration.yMargin + calibration.yOffset) + "px";
+			content.style.bottom = (calibration.yMargin - calibration.yOffset) + "px";
+			console.log("Y margin " + calibration.yMargin + " offset " + calibration.yOffset);
 		} else if (code == 80) {
 			// P, show/hide pane
 			togglePane();
