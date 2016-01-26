@@ -68,18 +68,7 @@ var scrollX = undefined;
 var scrollY = undefined;
 
 // Calibration
-var calibration = {
-	// Input calibration
-	cursorXScale: 0.672
-	,cursorYScale: 0.953
-	,cursorXOffset: -0.04
-	,cursorYOffset: 0.002
-	// Map visual size and position
-	,xMargin: 450
-	,xOffset: -90
-	,yMargin: 15
-	,yOffset: 10
-};
+var calibration = null;
 var calibrationDirty = false;
 
 // Pinch zoom parameters
@@ -101,6 +90,8 @@ var paneRotateAngle = 0.0;
 
 // Angle of initial mouse down point of a rotation drag
 var paneRotateMouseStartAngle = 0.0;
+
+var moduleDisplay = undefined;
 
 //==================================================================
 function IsTuioConnected() {
@@ -1461,6 +1452,15 @@ function toggleTableMode() {
 		$('.n2tuio_remove').remove();
 		hidePane();
 	};
+	
+	// Inform OpenLayers that map was resized
+	if( moduleDisplay 
+	 && moduleDisplay.mapControl 
+	 && moduleDisplay.mapControl.map ){
+		window.setTimeout(function(){
+			moduleDisplay.mapControl.map.updateSize();
+		},200);
+	};
 };
 
 //==================================================================
@@ -1810,6 +1810,7 @@ var TuioService = $n2.Class({
 			};
 			
 			this.dispatchService.register(DH,'tuioGetState',f);
+			this.dispatchService.register(DH,'reportModuleDisplay',f);
 		};
 		
 		// Register with global variable
@@ -1832,6 +1833,8 @@ var TuioService = $n2.Class({
 			} else {
 				m.mode = 'regular';
 			};
+		} else if( 'reportModuleDisplay' === m.type ) {
+			moduleDisplay = m.moduleDisplay;
 		};
 	},
 	
