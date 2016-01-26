@@ -700,7 +700,9 @@ function onCursorMove(inst) {
 	if (pressCursor == undefined && drawZooming) {
 		// Had a press cursor, but this showed up before it went away,
 		// so take over drawing duties
-		overlay.show();
+		if (overlay) {
+			overlay.show();
+		}
 		drawZooming = true;
 		dispatchMouseEvent('mousedown', cursor.pos.x, cursor.pos.y);
 		pressCursor = inst;
@@ -731,7 +733,9 @@ function onCursorMove(inst) {
 		}
 	} else if (drawZooming && downCursors > 1 && Date.now() - cursor.birthTime > moveDelay) {
 		// Multiple cursors have been down for a while, abort draw zoom
-		overlay.abortStroke();
+		if (overlay) {
+			overlay.abortStroke();
+		}
 		drawZooming = false;
 	}
 }
@@ -742,7 +746,9 @@ function onCursorUp(inst) {
 	if (inst == pressCursor) {
 		if (drawZooming) {
 			dispatchMouseEvent('mouseup', cursor.pos.x, cursor.pos.y);
-			overlay.hide();
+			if (overlay) {
+				overlay.hide();
+			}
 		}
 
 		var d = distance(cursor.pos.x, cursor.pos.y, cursor.downX, cursor.downY);
@@ -775,7 +781,9 @@ function onHandDown(inst) {
 		if (drawZooming) {
 			// Multiple hands down, terminate draw zoom immediately
 			pressCursor = undefined;
-			overlay.abortStroke();
+			if (overlay) {
+				overlay.abortStroke();
+			}
 			drawZooming = false;
 		}
 
@@ -814,7 +822,7 @@ function onHandMove(inst) {
 			   smoothing until after scrolling starts. */
 			hand.moveTo(centerPoint(hand.cursors));
 			hand.pos = hand.targetPos;
-		} else {
+		} else if (typeof(moduleDisplay) !== 'undefined') {
 			// Scroll OpenLayers manually
 			var dx = (scrollX - hand.pos.x);
 			var dy = (scrollY - hand.pos.y);
