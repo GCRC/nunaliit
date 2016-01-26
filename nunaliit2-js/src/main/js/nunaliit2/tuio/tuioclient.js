@@ -13,15 +13,15 @@ var springFadeTime = 400.0;
 
 // Socket to tuioserver.js that emits TUIO events in JSON
 var socket = undefined;
-if( typeof io === 'function' ){
-	socket = io('http://localhost:3000');
-};
 
 // Keep track if connection occurred
 var tuioConnected = false;
 
 // Keeps track if a service has been defined
 var g_tuioService = undefined;
+
+// Configuration
+var tuioConfiguration = undefined;
 
 // Number of escape keys pressed in the last while
 var escapeKeyCount = 0;
@@ -1339,6 +1339,91 @@ DrawOverlay.prototype.endStroke = function () {
 }
 
 //==================================================================
+var TuioConfiguration = $n2.Class({
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			
+		},opts_);
+	},
+
+	loadConfiguration: function(){
+		var localStorage = $n2.storage.getLocalStorage();
+		
+		var tuioConfStr = localStorage.getItem('n2tuio_configuration');
+		
+		var tuioConf = undefined;
+		if( tuioConfStr ){
+			try {
+				tuioConf = JSON.parse(tuioConfStr);
+			} catch(e) {
+				$n2.log('Unable to parse TUIO configuration:'+e);
+			};
+		};
+		
+		if( !tuioConf ){
+			tuioConf = {};
+		};
+		
+		return tuioConf;
+	},
+
+	saveConfiguration: function(tuioConf){
+		var localStorage = $n2.storage.getLocalStorage();
+		
+		var tuioConfStr = JSON.stringify(tuioConf);
+		localStorage.setItem('n2tuio_configuration',tuioConfStr);
+	},
+	
+	deleteConfiguration: function(){
+		var localStorage = $n2.storage.getLocalStorage();
+		localStorage.removeItem('n2tuio_configuration');
+	},
+	
+	isEnabled: function(){
+		var tuioConf = this.loadConfiguration();
+		return tuioConf.enabled;
+	},
+	
+	setEnabled: function(flag){
+		var tuioConf = this.loadConfiguration();
+		tuioConf.enabled = flag;
+		this.saveConfiguration(tuioConf);
+	},
+	
+	getCalibration: function(){
+		// Default calibration
+		var calibration = {
+			// Input calibration
+			cursorXScale: 0.672
+			,cursorYScale: 0.953
+			,cursorXOffset: -0.04
+			,cursorYOffset: 0.002
+			// Map visual size and position
+			,xMargin: 450
+			,xOffset: -90
+			,yMargin: 15
+			,yOffset: 10
+		};
+
+		var tuioConf = this.loadConfiguration();
+		
+		if( tuioConf.calibration ){
+			calibration = $n2.extend(calibration, tuioConf.calibration);
+		};
+		
+		return calibration;
+	},
+	
+	setCalibration: function(calibration){
+		var tuioConf = this.loadConfiguration();
+		tuioConf.calibration = calibration;
+		this.saveConfiguration(tuioConf);
+	}
+});
+
+
+//==================================================================
 /**
  * If in regular mode, switch to table mode.
  * If in table mode, get out of it.
@@ -1371,224 +1456,190 @@ function toggleTableMode() {
 };
 
 //==================================================================
-function loadConfiguration(){
-	var localStorage = $n2.storage.getLocalStorage();
+
+// Configuration from local storage
+tuioConfiguration = new TuioConfiguration();
+
+if( tuioConfiguration.isEnabled() 
+ && typeof io === 'function' ){
+	socket = io('http://localhost:3000');
 	
-	var tuioConfStr = localStorage.getItem('n2tuio_configuration');
+	if( socket ){
+		socket.on('cursor update', function(update) {
+			updateAlive(cursors, update.alive);
+			updateCursors(update.set);
+		});
 	
-	var tuioConf = undefined;
-	if( tuioConfStr ){
-		try {
-			tuioConf = JSON.parse(tuioConfStr);
-		} catch(e) {
-			$n2.log('Unable to parse TUIO configuration:'+e);
-		};
+		socket.on('tangibles update', function(update) {
+			updateAlive(tangibles, update.alive);
+			updateTangibles(update.set);
+		});
+	
+		socket.on('welcome', function(update) {
+			tuioConnected = true;
+			$n2.log('tuio connected');
+		});
+		
+		socket.emit('new client',{});
 	};
 	
-	if( !tuioConf ){
-		tuioConf = {};
-	};
+	// Load saved calibration
+	calibration = tuioConfiguration.getCalibration();
 	
-	return tuioConf;
-};
-
-//==================================================================
-function saveConfiguration(tuioConf){
-	var localStorage = $n2.storage.getLocalStorage();
-	
-	var tuioConfStr = JSON.stringify(tuioConf);
-	localStorage.setItem('n2tuio_configuration',tuioConfStr);
-};
-
-//==================================================================
-if( socket ){
-	socket.on('cursor update', function(update) {
-		updateAlive(cursors, update.alive);
-		updateCursors(update.set);
-	});
-
-	socket.on('tangibles update', function(update) {
-		updateAlive(tangibles, update.alive);
-		updateTangibles(update.set);
-	});
-
-	socket.on('welcome', function(update) {
-		tuioConnected = true;
-		$n2.log('tuio connected');
-	});
-	
-	socket.emit('new client',{});
-};
-
-// Load saved calibration
-if( $n2.storage 
- && $n2.storage.getLocalStorage 
- && typeof JSON !== 'undefined'
- && JSON.parse ){
-	var tuioConf = loadConfiguration();
-	if( tuioConf.calibration ){
-		calibration = tuioConf.calibration;
-	};
-};
-
-window.setInterval(function(){
-	escapeKeyCount = 0;
-	
-	if( calibrationDirty ){
-		if( $n2.storage 
-		 && $n2.storage.getLocalStorage 
-		 && typeof JSON !== 'undefined'
-		 && JSON.stringify
-		 && JSON.parse ){
-			var tuioConf = loadConfiguration();
-			
-			tuioConf.calibration = calibration;
-
-			saveConfiguration(tuioConf);
-			
-			calibrationDirty = false;
-		};
-	};
-},2000);
-
-window.onkeydown = function (e) {
-	var code = e.keyCode ? e.keyCode : e.which;
-
-	if (code === 27) {
-		// Escape pressed, toggle non-map UI visibility
-		++escapeKeyCount;
-		if( escapeKeyCount >= 3 ){
-			escapeKeyCount = 0;
-			toggleTableMode();
-		};
-	};
-
-	if( IsTableModeOn() ){
-		var $content = $('.nunaliit_content');
-		var content = $content[0];
-
-		if (code == 70) {
-			// f pressed, toggle visual feedback
-			showDots = !showDots;
-		} else if ( 67 === code && escapeKeyCount >= 2) {
-			// <esc> <esc> c : calibrate
-			if( g_tuioService ){
-				g_tuioService.startCalibration();
+	window.setInterval(function(){
+		escapeKeyCount = 0;
+		
+		if( calibrationDirty ){
+			if( $n2.storage 
+			 && $n2.storage.getLocalStorage 
+			 && typeof JSON !== 'undefined'
+			 && JSON.stringify
+			 && JSON.parse ){
+				tuioConfiguration.setCalibration(calibration);
+				calibrationDirty = false;
 			};
-			
-		} else if (e.shiftKey) {
-			// TUIO calibration
-			if (code == 37) {
+		};
+	},2000);
+	
+	window.onkeydown = function (e) {
+		var code = e.keyCode ? e.keyCode : e.which;
+	
+		if (code === 27) {
+			// Escape pressed, toggle non-map UI visibility
+			++escapeKeyCount;
+			if( escapeKeyCount >= 3 ){
+				escapeKeyCount = 0;
+				toggleTableMode();
+			};
+		};
+	
+		if( IsTableModeOn() ){
+			var $content = $('.nunaliit_content');
+			var content = $content[0];
+	
+			if (code == 70) {
+				// f pressed, toggle visual feedback
+				showDots = !showDots;
+			} else if ( 67 === code && escapeKeyCount >= 2) {
+				// <esc> <esc> c : calibrate
+				if( g_tuioService ){
+					g_tuioService.startCalibration();
+				};
+				
+			} else if (e.shiftKey) {
+				// TUIO calibration
+				if (code == 37) {
+					if (e.altKey) {
+						// Shift+Alt+left, offset TUIO left
+						calibration.cursorXOffset -= 0.001;
+						calibrationDirty = true;
+					} else {
+						// Shift+left, shrink TUIO horizontally
+						calibration.cursorXScale -= 0.001;
+						calibrationDirty = true;
+					}
+				} else if (code == 39) {
+					if (e.altKey) {
+						// Shift+Alt+right, offset TUIO right
+						calibration.cursorXOffset += 0.001;
+						calibrationDirty = true;
+					} else {
+						// Shift+right, expand TUIO horizontally
+						calibration.cursorXScale += 0.001;
+						calibrationDirty = true;
+					}
+				} else if (code == 40) {
+					if (e.altKey) {
+						// Shift+Alt+down, offset TUIO down
+						calibration.cursorYOffset += 0.001;
+						calibrationDirty = true;
+					} else {
+						// Shift+down, shrink TUIO vertically
+						calibration.cursorYScale -= 0.001;
+						calibrationDirty = true;
+					}
+				} else if (code == 38) {
+					if (e.altKey) {
+						// Shift+Alt+up, offset TUIO up
+						calibration.cursorYOffset -= 0.001;
+						calibrationDirty = true;
+					} else {
+						// Shift+up, grow TUIO vertically
+						calibration.cursorYScale += 0.001;
+						calibrationDirty = true;
+					}
+				}
+	
+				console.log("TUIO scale " + calibration.cursorXScale + "," + calibration.cursorYScale +
+							" offset " + calibration.cursorXOffset + "," + calibration.cursorYOffset);
+	
+			} else if (code == 37) {
 				if (e.altKey) {
-					// Shift+Alt+left, offset TUIO left
-					calibration.cursorXOffset -= 0.001;
+					// Alt+left, shrink horizontally
+					calibration.xMargin += 5;
 					calibrationDirty = true;
 				} else {
-					// Shift+left, shrink TUIO horizontally
-					calibration.cursorXScale -= 0.001;
+					// Left, shift left
+					calibration.xOffset -= 5;
 					calibrationDirty = true;
 				}
+	
+				content.style.left = (calibration.xMargin + calibration.xOffset) + "px";
+				content.style.right = (calibration.xMargin - calibration.xOffset) + "px";
+				console.log("X margin " + calibration.xMargin + " offset " + calibration.xOffset);
 			} else if (code == 39) {
 				if (e.altKey) {
-					// Shift+Alt+right, offset TUIO right
-					calibration.cursorXOffset += 0.001;
+					// Alt+right, grow horizontally
+					calibration.xMargin -= 5;
 					calibrationDirty = true;
 				} else {
-					// Shift+right, expand TUIO horizontally
-					calibration.cursorXScale += 0.001;
+					// Right, shift right
+					calibration.xOffset += 5;
 					calibrationDirty = true;
 				}
+	
+				content.style.left = (calibration.xMargin + calibration.xOffset) + "px";
+				content.style.right = (calibration.xMargin - calibration.xOffset) + "px";
+				console.log("X margin " + calibration.xMargin + " offset " + calibration.xOffset);
 			} else if (code == 40) {
 				if (e.altKey) {
-					// Shift+Alt+down, offset TUIO down
-					calibration.cursorYOffset += 0.001;
+					// Alt+down, shrink vertically
+					calibration.yMargin += 5;
 					calibrationDirty = true;
 				} else {
-					// Shift+down, shrink TUIO vertically
-					calibration.cursorYScale -= 0.001;
+					// Down, shift up
+					calibration.yOffset += 5;
 					calibrationDirty = true;
 				}
+	
+				content.style.top = (calibration.yMargin + calibration.yOffset) + "px";
+				content.style.bottom = (calibration.yMargin - calibration.yOffset) + "px";
+				console.log("Y margin " + calibration.yMargin + " offset " + calibration.yOffset);
 			} else if (code == 38) {
 				if (e.altKey) {
-					// Shift+Alt+up, offset TUIO up
-					calibration.cursorYOffset -= 0.001;
+					// Alt+up, grow vertically
+					calibration.yMargin -= 5;
 					calibrationDirty = true;
 				} else {
-					// Shift+up, grow TUIO vertically
-					calibration.cursorYScale += 0.001;
+					// Up, shift down
+					calibration.yOffset -= 5;
 					calibrationDirty = true;
 				}
-			}
-
-			console.log("TUIO scale " + calibration.cursorXScale + "," + calibration.cursorYScale +
-						" offset " + calibration.cursorXOffset + "," + calibration.cursorYOffset);
-
-		} else if (code == 37) {
-			if (e.altKey) {
-				// Alt+left, shrink horizontally
-				calibration.xMargin += 5;
-				calibrationDirty = true;
-			} else {
-				// Left, shift left
-				calibration.xOffset -= 5;
-				calibrationDirty = true;
-			}
-
-			content.style.left = (calibration.xMargin + calibration.xOffset) + "px";
-			content.style.right = (calibration.xMargin - calibration.xOffset) + "px";
-			console.log("X margin " + calibration.xMargin + " offset " + calibration.xOffset);
-		} else if (code == 39) {
-			if (e.altKey) {
-				// Alt+right, grow horizontally
-				calibration.xMargin -= 5;
-				calibrationDirty = true;
-			} else {
-				// Right, shift right
-				calibration.xOffset += 5;
-				calibrationDirty = true;
-			}
-
-			content.style.left = (calibration.xMargin + calibration.xOffset) + "px";
-			content.style.right = (calibration.xMargin - calibration.xOffset) + "px";
-			console.log("X margin " + calibration.xMargin + " offset " + calibration.xOffset);
-		} else if (code == 40) {
-			if (e.altKey) {
-				// Alt+down, shrink vertically
-				calibration.yMargin += 5;
-				calibrationDirty = true;
-			} else {
-				// Down, shift up
-				calibration.yOffset += 5;
-				calibrationDirty = true;
-			}
-
-			content.style.top = (calibration.yMargin + calibration.yOffset) + "px";
-			content.style.bottom = (calibration.yMargin - calibration.yOffset) + "px";
-			console.log("Y margin " + calibration.yMargin + " offset " + calibration.yOffset);
-		} else if (code == 38) {
-			if (e.altKey) {
-				// Alt+up, grow vertically
-				calibration.yMargin -= 5;
-				calibrationDirty = true;
-			} else {
-				// Up, shift down
-				calibration.yOffset -= 5;
-				calibrationDirty = true;
-			}
-
-			content.style.top = (calibration.yMargin + calibration.yOffset) + "px";
-			content.style.bottom = (calibration.yMargin - calibration.yOffset) + "px";
-			console.log("Y margin " + calibration.yMargin + " offset " + calibration.yOffset);
-		} else if (code == 80) {
-			// P, show/hide pane
-			togglePane();
+	
+				content.style.top = (calibration.yMargin + calibration.yOffset) + "px";
+				content.style.bottom = (calibration.yMargin - calibration.yOffset) + "px";
+				console.log("Y margin " + calibration.yMargin + " offset " + calibration.yOffset);
+			} else if (code == 80) {
+				// P, show/hide pane
+				togglePane();
+			};
 		};
 	};
+	
+	if (usePhysics) {
+		window.requestAnimationFrame(tick);
+	};
 };
-
-if (usePhysics) {
-	window.requestAnimationFrame(tick);
-}
 
 //==================================================================
 var CalibrationProcess = $n2.Class({
@@ -1829,6 +1880,7 @@ var TuioService = $n2.Class({
 $n2.tuioClient = {
 	IsTuioConnected: IsTuioConnected
 	,TuioService: TuioService
+	,TuioConfiguration: TuioConfiguration
 };
 
 })(jQuery, nunaliit2);
