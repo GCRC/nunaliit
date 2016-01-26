@@ -1793,6 +1793,10 @@ var TuioService = $n2.Class({
 	
 	unrecognizedTangibles: null,
 	
+	editing: null,
+	
+	moduleDisplay: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: null
@@ -1801,6 +1805,7 @@ var TuioService = $n2.Class({
 		var _this = this;
 		
 		this.unrecognizedTangibles = {};
+		this.editing = false;
 		
 		this.dispatchService = opts.dispatchService;
 		
@@ -1811,6 +1816,8 @@ var TuioService = $n2.Class({
 			
 			this.dispatchService.register(DH,'tuioGetState',f);
 			this.dispatchService.register(DH,'reportModuleDisplay',f);
+			this.dispatchService.register(DH,'editInitiate',f);
+			this.dispatchService.register(DH,'editClosed',f);
 		};
 		
 		// Register with global variable
@@ -1819,6 +1826,14 @@ var TuioService = $n2.Class({
 	
 	startCalibration: function(){
 		new CalibrationProcess();
+	},
+	
+	getModuleDisplay: function(){
+		return this.moduleDisplay;
+	},
+	
+	isEditing: function(){
+		return this.editing;
 	},
 	
 	_handle: function(m, addr, dispatcher){
@@ -1833,8 +1848,16 @@ var TuioService = $n2.Class({
 			} else {
 				m.mode = 'regular';
 			};
+
 		} else if( 'reportModuleDisplay' === m.type ) {
 			moduleDisplay = m.moduleDisplay;
+			this.moduleDisplay = m.moduleDisplay;
+
+		} else if( 'editInitiate' === m.type ) {
+			this.editing = true;
+
+		} else if( 'editClosed' === m.type ) {
+			this.editing = false;
 		};
 	},
 	

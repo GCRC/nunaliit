@@ -1,8 +1,5 @@
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit_demo',args); };
 
-// Global moduleDisplay kludge for access from tuioclient.js
-var moduleDisplay = null;
-
 function main_init(config) {
 	
 	// Get module name from URL parameters
@@ -59,7 +56,7 @@ function main_init(config) {
 		};
 	};
 
-	moduleDisplay = new $n2.couchModule.ModuleDisplay({
+	new $n2.couchModule.ModuleDisplay({
 		moduleName: moduleName
 		,config: config
 		,titleName: 'title'
