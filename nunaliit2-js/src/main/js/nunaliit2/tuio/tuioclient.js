@@ -750,9 +750,15 @@ function onCursorUp(inst) {
 			if (el && el.id.startsWith("OpenLayers")) {
 				hidePane();
 			}
-			dispatchMouseEvent('mousedown', cursor.pos.x, cursor.pos.y);
-			dispatchMouseEvent('mouseup', cursor.pos.x, cursor.pos.y);
-			dispatchMouseEvent('click', cursor.pos.x, cursor.pos.y);
+
+			if (el && el.nodeName.toLowerCase() == "input" ||
+				el.nodeName.toLowerCase() == "textarea") {
+				$(el).focus();
+			} else {
+				dispatchMouseEvent('mousedown', cursor.pos.x, cursor.pos.y);
+				dispatchMouseEvent('mouseup', cursor.pos.x, cursor.pos.y);
+				dispatchMouseEvent('click', cursor.pos.x, cursor.pos.y);
+			}
 		}
 		pressCursor = undefined;
 	}
