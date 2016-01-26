@@ -233,14 +233,45 @@
 				if( typeof JSON !== 'undefined' 
 				 && JSON.stringify 
 				 && m.tangibles ){
-					var text = JSON.stringify(m.tangibles, null, 3);
+					var text = JSON.stringify(m.tangibles, replacer, 3);
 
 					$state.empty();
 					$('<pre>')
 						.text( text )
 						.appendTo($state);
 				};
-			}
+			};
+			
+			function replacer(key,value){
+				
+				if( 'hand' === key 
+				 && typeof this.index === 'number' 
+				 && typeof value === 'object' 
+				 && typeof value.index === 'number' ){
+					// Recurse issue with hands in cursor. Just show index of hand
+					return value.index;
+				};
+
+				if( 'cursors' === key 
+				 && typeof this.index === 'number' 
+				 && typeof value === 'object' 
+				 && typeof value.length === 'number'
+				 && value.length > 0 ){
+					// Recurse issue with cursors in hands. Return an
+					// array of cursor indices
+					var result = [];
+					for(var i=0,e=value.length; i<e; ++i){
+						var cursor = value[i];
+						if( typeof cursor.index === 'number' ){
+							result.push(cursor.index);
+						};
+					};
+					return result;
+				};
+				
+				
+				return value;
+			};
 		}
 	});
 	

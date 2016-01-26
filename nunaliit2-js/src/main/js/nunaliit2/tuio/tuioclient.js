@@ -1032,7 +1032,11 @@ function updateCursors(set) {
 
 			hand.show();
 		}
-	}
+	};
+	
+	if( g_tuioService ){
+		g_tuioService._updateCursors(cursors, hands);
+	};
 }
 
 function updateTangibles(set) {
@@ -1791,6 +1795,8 @@ var TuioService = $n2.Class({
 	
 	dispatchService: null,
 	
+	tangibleState: null,
+	
 	unrecognizedTangibles: null,
 	
 	editing: null,
@@ -1804,6 +1810,7 @@ var TuioService = $n2.Class({
 		
 		var _this = this;
 		
+		this.tangibleState = {};
 		this.unrecognizedTangibles = {};
 		this.editing = false;
 		
@@ -1902,10 +1909,24 @@ var TuioService = $n2.Class({
 			};
 		};
 		
+		this.tangibleState.tangibles = tangibles;
+		
 		if( this.dispatchService ){
 			this.dispatchService.send(DH,{
 				type: 'tuioTangiblesUpdate'
-				,tangibles: tangibles
+				,tangibles: this.tangibleState
+			});
+		};
+	},
+	
+	_updateCursors: function(cursors, hands){
+		this.tangibleState.cursors = cursors;
+		this.tangibleState.hands = hands;
+
+		if( this.dispatchService ){
+			this.dispatchService.send(DH,{
+				type: 'tuioTangiblesUpdate'
+				,tangibles: this.tangibleState
 			});
 		};
 	}
