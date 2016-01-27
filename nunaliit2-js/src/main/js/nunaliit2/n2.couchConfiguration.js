@@ -461,6 +461,12 @@ function Configure(options_){
 			,dispatchService: configuration.directory.dispatchService
 			,customService: configuration.directory.customService
 		});
+
+		if( $n2.tuioClient ){
+			configuration.directory.tuioService = new $n2.tuioClient.TuioService({
+				dispatchService: configuration.directory.dispatchService
+			});
+		};
 		
 		// Load help file
 		if( configuration.atlasDb ){

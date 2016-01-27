@@ -3230,6 +3230,16 @@ var MapAndControls = $n2.Class({
     	} else if( this.currentMode === this.modes.NAVIGATE ) {
     		this.activateSelectFeatureControl();
     	};
+
+    	// Broadcast mode change
+		var dispatcher = this._getDispatchService();
+		if( dispatcher ) {
+			dispatcher.send(DH,{
+				type: 'mapReportMode'
+				,mapControl: this
+				,mode: this.currentMode.name
+			});
+		};
     },
     
     switchToEditMode: function() {

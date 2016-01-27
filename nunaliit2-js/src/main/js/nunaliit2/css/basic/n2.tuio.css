@@ -1,0 +1,99 @@
+/*
+	The following classes re-adjust the positions and sizes of element to
+	fit on the TUIO table.
+ */
+
+.nunaliit_tuio .nunaliit_header {
+	display: none;
+}
+
+.nunaliit_tuio .nunaliit_footer {
+	display: none;
+}
+
+.nunaliit_tuio .n2_content_text {
+	display: none;
+}
+
+.nunaliit_tuio .n2_content_text.n2tuio_showPane {
+	display: block;
+	position: absolute;
+	opacity: 0.92;
+	top: 0px;
+	left: 280px;
+	overflow: visible;
+	padding-top: 92px;
+	bottom: 50px;
+    top: 50px;
+    z-index: 10;	
+}
+
+.nunaliit_tuio .n2_content_map_interaction {
+	top: 45%;
+	right: 40px;
+}
+
+.nunaliit_tuio .olControlEditingToolbar {
+	top: 100px;
+	left: 420px;
+}
+
+.nunaliit_tuio .nunaliit_content {
+	top: 0;
+	bottom: 0;
+	width: auto;
+}
+
+.nunaliit_tuio .n2_content_map {
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+}
+
+.nunaliit_tuio .olControlZoom {
+	top: 400px;
+	left: 71px;
+}
+
+.nunaliit_tuio .olControlLayerSwitcher {
+	top: 350px;
+	left: 100px;
+}
+
+.n2tuio_rotate_handle {
+	background-color: #000;
+	color: #EED;
+	cursor: move;
+	font-size: xx-large;
+	height: 260px;
+	line-height: 260px;
+	opacity: 0.5;
+	padding: 4px;
+	position: absolute;
+	text-align: center;
+	top: 380px;
+	width: 80px;
+}
+
+.n2tuio_feedback_circle {
+	background-color: #000;
+	border-radius: 50%;
+	border: 2px solid #EED;
+	color: #EED;
+	opacity: 0.5;
+	pointer-events: none;
+	position: absolute;
+	text-align: center;
+	vertical-align: middle;
+	z-index: 10;
+}
+
+.n2tuio_overlay {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%;
+	z-index: 999999999;
+}
