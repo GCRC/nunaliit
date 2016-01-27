@@ -36,7 +36,7 @@ var moveDelay = 250.0;
 var clickDelay = 1000;
 
 // Distance a cursor must remain within to count as a click or press
-var clickDistance = 0.005;
+var clickDistance = 0.01;
 
 // Time in ms a cursor must be down and still for a long press
 var pressDelay = 1250;
