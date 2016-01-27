@@ -1807,6 +1807,8 @@ var TuioService = $n2.Class({
 	
 	editing: null,
 	
+	mapEditing: null,
+	
 	moduleDisplay: null,
 	
 	initialize: function(opts_){
@@ -1819,6 +1821,7 @@ var TuioService = $n2.Class({
 		this.tangibleState = {};
 		this.unrecognizedTangibles = {};
 		this.editing = false;
+		this.mapEditing = false;
 		
 		this.dispatchService = opts.dispatchService;
 		
@@ -1830,7 +1833,7 @@ var TuioService = $n2.Class({
 			this.dispatchService.register(DH,'tuioGetState',f);
 			this.dispatchService.register(DH,'reportModuleDisplay',f);
 			this.dispatchService.register(DH,'editInitiate',f);
-			this.dispatchService.register(DH,'mapSwitchToEditMode',f);
+			this.dispatchService.register(DH,'mapReportMode',f);
 			this.dispatchService.register(DH,'editClosed',f);
 		};
 		
@@ -1851,15 +1854,8 @@ var TuioService = $n2.Class({
 			return true;
 		};
 		
-		// Check if map is not in navigation mode
-		var mapControl = this.getMapControl();
-		if( mapControl 
-		 && mapControl.currentMode 
-		 && mapControl.modes 
-		 && mapControl.modes.NAVIGATE ){
-			if( mapControl.currentMode !== mapControl.modes.NAVIGATE ){
-				return true;
-			};
+		if( this.mapEditing ){
+			return true;
 		};
 
 		return false;
@@ -1892,12 +1888,23 @@ var TuioService = $n2.Class({
 			moduleDisplay = m.moduleDisplay;
 			this.moduleDisplay = m.moduleDisplay;
 
-		} else if( 'editInitiate' === m.type 
-		 || 'mapSwitchToEditMode' === m.type ) {
+		} else if( 'editInitiate' === m.type ) {
 			this.editing = true;
 
 		} else if( 'editClosed' === m.type ) {
 			this.editing = false;
+
+		} else if( 'mapReportMode' === m.type ) {
+			var mapControl = m.mapControl;
+			if( mapControl 
+			 && mapControl.modes 
+			 && mapControl.modes.NAVIGATE ){
+				if( m.mode === mapControl.modes.NAVIGATE.name ){
+					this.mapEditing = false;
+				} else {
+					this.mapEditing = true;
+				};
+			};
 		};
 	},
 	
