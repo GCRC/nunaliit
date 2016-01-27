@@ -889,51 +889,63 @@ function onHandUp(inst) {
 }
 
 function onPathDraw(bounds, points) {
-	drawZooming = false;
-	if (points.length < 2) {
-		return;  // Not enough points to do anything sensible
-	}
+	// In edit mode, draw a new feature
+	if( g_tuioService && g_tuioService.isEditing() ){
+		var geometryCapture = new GeometryCapture({
+			tuioService: g_tuioService
+		});
+		for(var i=0,e=points.length; i<e; ++i){
+			geometryCapture.addPoint(points[i][0], points[i][1]);
+		};
+		geometryCapture.endDrawing();
+		
+	} else {
+		drawZooming = false;
+		if (points.length < 2) {
+			return;  // Not enough points to do anything sensible
+		}
 
-	// Find bounding rectangle (in pixels)
-	var left = Infinity;
-	var bottom = 0;
-	var right = 0;
-	var top = Infinity;
-	for (var i = 0; i < points.length; ++i) {
-		left = Math.min(left, points[i][0]);
-		bottom = Math.max(bottom, points[i][1]);
-		right = Math.max(right, points[i][0]);
-		top = Math.min(top, points[i][1]);
-	}
+		// Find bounding rectangle (in pixels)
+		var left = Infinity;
+		var bottom = 0;
+		var right = 0;
+		var top = Infinity;
+		for (var i = 0; i < points.length; ++i) {
+			left = Math.min(left, points[i][0]);
+			bottom = Math.max(bottom, points[i][1]);
+			right = Math.max(right, points[i][0]);
+			top = Math.min(top, points[i][1]);
+		}
 
-	// Ensure bounding rectangle has a reasonable size
-	var width = (right - left);
-	var height = (bottom - top);
-	var area = width * height;
-	if (width < 16 || height < 16 || area < 16) {
-		// Gesture did not move very far, dispatch click
-		var midX = left + (right - left) / 2.0;
-		var midY = top + (bottom - top) / 2.0;
+		// Ensure bounding rectangle has a reasonable size
+		var width = (right - left);
+		var height = (bottom - top);
+		var area = width * height;
+		if (width < 16 || height < 16 || area < 16) {
+			// Gesture did not move very far, dispatch click
+			var midX = left + (right - left) / 2.0;
+			var midY = top + (bottom - top) / 2.0;
 
-		// Convert from canvas-relative to client-relative for dispatch
-		midX += bounds.left;
-		midY += bounds.top;
+			// Convert from canvas-relative to client-relative for dispatch
+			midX += bounds.left;
+			midY += bounds.top;
 
-		// Dispatch click
-		dispatchMouseEventWin('mousedown', midX, midY);
-		dispatchMouseEventWin('mouseup', midX, midY);
-		dispatchMouseEventWin('click', midX, midY);
-		return;
-	}
+			// Dispatch click
+			dispatchMouseEventWin('mousedown', midX, midY);
+			dispatchMouseEventWin('mouseup', midX, midY);
+			dispatchMouseEventWin('click', midX, midY);
+			return;
+		}
 
-	// Convert to lon/lat
-	var tl = moduleDisplay.mapControl.map.getLonLatFromPixel(
-		new OpenLayers.Pixel(left, top));
-	var br = moduleDisplay.mapControl.map.getLonLatFromPixel(
-		new OpenLayers.Pixel(right, bottom));
+		// Convert to lon/lat
+		var tl = moduleDisplay.mapControl.map.getLonLatFromPixel(
+			new OpenLayers.Pixel(left, top));
+		var br = moduleDisplay.mapControl.map.getLonLatFromPixel(
+			new OpenLayers.Pixel(right, bottom));
 
-	// Zoom/center map to/on bounding rectangle
-	moduleDisplay.mapControl.map.zoomToExtent([tl.lon, br.lat, br.lon, tl.lat]);
+		// Zoom/center map to/on bounding rectangle
+		moduleDisplay.mapControl.map.zoomToExtent([tl.lon, br.lat, br.lon, tl.lat]);
+	};
 }
 
 /** Associate a cursor with a hand, creating a new hand if necessary. */
@@ -1797,6 +1809,72 @@ var CalibrationProcess = $n2.Class({
 });
 
 //==================================================================
+var GeometryCapture = $n2.Class({
+	
+	tuioService: null,
+	
+	positions: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			tuioService: null
+		},opts_);
+		
+		this.positions = [];
+		
+		this.tuioService = opts.tuioService;
+	},
+	
+	addPoint: function(x,y){
+		this.positions.push({
+			x: x
+			,y: y
+		});
+	},
+	
+	endDrawing: function(){
+		if( !this.tuioService.isEditing() ){
+			return;
+		};
+		
+		var points = [];
+		
+		for(var i=0,e=this.positions.length; i<e; ++i){
+			var position = this.positions[i];
+			var lonlat = this.tuioService.getMapPosition(position.x, position.y);
+			if( lonlat ){
+				var point = new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
+
+				points.push(point);
+			};
+		};
+		
+		//$n2.log('points',points);
+		
+		var geom = new OpenLayers.Geometry.LineString();
+		for(var i=0,e=points.length; i<e; ++i){
+			var point = points[i];
+			geom.addPoint(point);
+		};
+
+		//$n2.log('geom',geom);
+		
+		var mapControl = this.tuioService.getMapControl();
+		if( mapControl ){
+			$n2.log('mapControl',mapControl);
+			var editLayer = mapControl.editLayer;
+			if( editLayer ){
+				//mapControl.editModeAddFeatureEnabled = false;
+				var feature = new OpenLayers.Feature.Vector(geom);
+				editLayer.addFeatures([feature]);
+		    	//mapControl.editModeAddFeatureEnabled = true;
+				//editLayer.redraw();
+			};
+		};
+	}
+});
+
+//==================================================================
 var TuioService = $n2.Class({
 	
 	dispatchService: null,
@@ -1860,7 +1938,7 @@ var TuioService = $n2.Class({
 
 		return false;
 	},
-	
+
 	getMapControl: function(){
 		var mapControl = undefined;
 
@@ -1869,6 +1947,42 @@ var TuioService = $n2.Class({
 		};
 			
 		return mapControl;
+	},
+
+	getOpenLayersMap: function(){
+		var olMap = undefined;
+
+		var mapControl = this.getMapControl();
+		if( mapControl ){
+			olMap = mapControl.map;
+		};
+			
+		return olMap;
+	},
+	
+	getMapPosition: function(x,y){
+		var position = undefined;
+	
+		var olMap = this.getOpenLayersMap();
+		if( olMap ){
+			position = olMap.getLonLatFromPixel({
+				x: x
+				,y: y
+			});
+		};
+		
+		return position;
+	},
+	
+	getMapProjection: function(){
+		var proj = undefined;
+	
+		var olMap = this.getOpenLayersMap();
+		if( olMap ){
+			proj = olMap.getProjectionObject();
+		};
+		
+		return proj;
 	},
 	
 	_handle: function(m, addr, dispatcher){
