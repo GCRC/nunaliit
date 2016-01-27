@@ -38,6 +38,9 @@ var clickDelay = 1000;
 // Distance a cursor must remain within to count as a click or press
 var clickDistance = 0.01;
 
+// Distance in pixels below which to consider two drawn points the same
+var pointDistance = 16.0;
+	
 // Time in ms a cursor must be down and still for a long press
 var pressDelay = 1250;
 
@@ -138,6 +141,25 @@ Vector.prototype.distance = function(v) {
 /** Return the absolute distance between two points. */
 function distance(x1, y1, x2, y2) {
 	return Math.abs(Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)));
+}
+
+/** Return the distance travelled along a line string.
+ *
+ * Returned distance is in the same unit used in the x and y fields of the
+ * input points (typicallly pixels).
+ */
+function lineStringDistance(points) {
+	if (points.length < 2) {
+		return 0.0;
+	}
+
+	var d = 0.0;
+	for (var i = 0; i < points.length - 1; ++i) {
+		var p = points[i];
+		var q = points[i + 1];
+		d += distance(p.x, p.y, q.x, q.y);
+	}
+	return d;
 }
 
 /** Return the area of a polygon specified by a set of points. */
@@ -1831,12 +1853,9 @@ var GeometryCapture = $n2.Class({
 			,y: y
 		});
 	},
-	
-	endDrawing: function(){
-		if( !this.tuioService.isEditing() ){
-			return;
-		};
-		
+
+	// Get captured positions as a list of OpenLayers Points
+	getPoints: function(){
 		var points = [];
 		
 		for(var i=0,e=this.positions.length; i<e; ++i){
@@ -1850,12 +1869,57 @@ var GeometryCapture = $n2.Class({
 		};
 		
 		//$n2.log('points',points);
-		
-		var geom = new OpenLayers.Geometry.LineString();
-		for(var i=0,e=points.length; i<e; ++i){
-			var point = points[i];
-			geom.addPoint(point);
+
+		return points;
+	},
+
+	// Get captured positions as an OpenLayers Geometry
+	getGeometry: function(){
+		if (this.positions.length == 0) {
+			return null;
+		}
+
+		var first = this.positions[0];
+		var last = this.positions[this.positions.length - 1];
+
+		if (lineStringDistance(this.positions) <= pointDistance) {
+			// Gesture didn't move very far, create a single point
+			// TODO: Use center instead of first point
+			var pos = first;
+			var lonlat = this.tuioService.getMapPosition(pos.x, pos.y);
+			if (lonlat) {
+				return new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
+			}
+		} else if (distance(first.x, first.y, last.x, last.y) <= pointDistance) {
+			// Last point and first point are very close, create a closed polygon
+			var points = this.getPoints();
+			var ring = new OpenLayers.Geometry.LinearRing();
+			for (var i = 0; i < points.length; ++i) {
+				ring.addPoint(points[i]);
+			}
+			return new OpenLayers.Geometry.Polygon([ring]);
+		} else {
+			// Doesn't seem to be a point or closed polygon, create a line string
+			var points = this.getPoints();
+			var geom = new OpenLayers.Geometry.LineString();
+			for (var i = 0; i < points.length; ++i) {
+				geom.addPoint(points[i]);
+			}
+			return geom;
+		}
+
+		return null;
+	},
+
+	endDrawing: function(){
+		if( !this.tuioService.isEditing() ){
+			return;
 		};
+
+		var geom = this.getGeometry();
+		if (!geom) {
+			return;
+		}
 
 		//$n2.log('geom',geom);
 		
