@@ -35,7 +35,7 @@
 	</div>
 	<div style="width: 35%; float:left;">
 		{{#attachmentName}}
-			<div class="n2s_insertMediaView">{{.}}</div>
+			<div class="n2s_insertMediaView" nunaliit-attachment="{{.}}"></div>
 		{{/attachmentName}}
 	</div>
 	<div style="clear: both;"></div>
