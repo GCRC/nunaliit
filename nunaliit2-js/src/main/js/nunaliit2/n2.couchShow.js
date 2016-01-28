@@ -415,6 +415,7 @@ var DomStyler = $n2.Class({
 		var docId = $jq.attr('nunaliit-document');
 		if( !docId ){
 			docId = $jq.text();
+			$jq.attr('nunaliit-document',docId);
 		};
 		
 		this.showService.printBriefDescription($jq, docId);
@@ -429,7 +430,12 @@ var DomStyler = $n2.Class({
 	_insertReferenceLink: function($jq, opt_) {
 		var _this = this;
 
-		var docId = $jq.text();
+		var docId = $jq.attr('nunaliit-document');
+		if( !docId ){
+			docId = $jq.text();
+			$jq.attr('nunaliit-document',docId);
+		};
+
 		this.showService.printBriefDescription($jq, docId);
 		$jq.click(function(){
 			var dispatchService = _this.showService.dispatchService;
@@ -474,13 +480,14 @@ var DomStyler = $n2.Class({
 		var _this = this;
 		
 		var docId = this._associateDocumentToElement(data, $insertView);
-
-		$insertView.empty();
 		
 		var attachmentName = $insertView.attr('nunaliit-attachment');
 		if( !attachmentName ) {
 			attachmentName = $insertView.text();
+			$insertView.attr('nunaliit-attachment', attachmentName);
 		};
+
+		$insertView.empty();
 
 		// Do we have document?
 		if( data && data._id === docId ){
