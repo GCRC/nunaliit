@@ -36,7 +36,7 @@
 	var clickDelay = 1000;
 
 	// Distance a cursor must remain within to count as a click or press
-	var clickDistance = 0.01;
+	var clickDistance = 0.015;
 
 	// Distance in pixels below which to consider two drawn points the same
 	var pointDistance = 16.0;
@@ -227,6 +227,7 @@
 		this.alive = true;
 		this.birthTime = Date.now();
 		this.deathTime = undefined;
+		this.distanceMoved = 0.0;
 		this.lastTime = null;
 	}
 
@@ -234,6 +235,10 @@
 
 	/** Set the target coordinate for the body to move towards. */
 	Body.prototype.moveTo = function(x, y) {
+		if (!isNaN(this.x) && !isNaN(this.y)) {
+			this.distanceMoved += distance(this.x, this.y, x, y);
+		}
+
 		if (x != this.targetPos.x || y != this.targetPos.y) {
 			this.targetPos = new Vector(x, y);
 			if (isNaN(this.x) || isNaN(this.y)) {
@@ -736,9 +741,8 @@
 				dispatchMouseEvent('mousemove', cursor.x, cursor.y);
 			}
 
-			var d = distance(cursor.x, cursor.y, cursor.downX, cursor.downY);
 			var elapsed = Date.now() - cursor.birthTime;
-			if (d < clickDistance && elapsed > pressDelay) {
+			if (cursor.distanceMoved <= clickDistance && elapsed > pressDelay) {
 				console.log("Long press!");
 				// Hide overlay so it does not intercept mouse events
 				if (overlay) {
@@ -774,9 +778,8 @@
 				}
 			}
 
-			var d = distance(cursor.x, cursor.y, cursor.downX, cursor.downY);
 			var elapsed = Date.now() - cursor.birthTime;
-			if (d < clickDistance && elapsed < clickDelay) {
+			if (cursor.distanceMoved <= clickDistance && elapsed < clickDelay) {
 				console.log("Click!");
 				var el = getElementAtTablePoint(cursor.x, cursor.y);
 				if (el && el.id.startsWith("OpenLayers")) {
