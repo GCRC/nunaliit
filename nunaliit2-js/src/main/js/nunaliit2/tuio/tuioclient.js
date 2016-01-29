@@ -36,7 +36,7 @@
 	var clickDelay = 1000;
 
 	// Distance a cursor must remain within to count as a click or press
-	var clickDistance = 0.015;
+	var clickDistance = 0.02;
 
 	// Distance in pixels below which to consider two drawn points the same
 	var pointDistance = 16.0;
@@ -832,13 +832,14 @@
 					hidePane();
 				}
 
-				if (el && el.nodeName.toLowerCase() == "input" ||
-					el.nodeName.toLowerCase() == "textarea") {
-					$(el).focus();
-				} else {
-					dispatchMouseEvent('mousedown', cursor.x, cursor.y);
-					dispatchMouseEvent('mouseup', cursor.x, cursor.y);
-					dispatchMouseEvent('click', cursor.x, cursor.y);
+				if (el) {
+					$(el).mousedown();
+					if (el.nodeName.toLowerCase() == "input" ||
+						el.nodeName.toLowerCase() == "textarea") {
+						$(el).focus();
+					}
+					$(el).mouseup();
+					$(el).click();
 				}
 			}
 			pressCursor = undefined;
