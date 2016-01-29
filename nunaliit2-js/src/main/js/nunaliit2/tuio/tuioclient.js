@@ -202,6 +202,52 @@
 		                  minY + (maxY - minY) / 2);
 	};
 
+	/** Return the intersection between the line segments p0->p1 and p2->p3, or null.
+	 *
+	 * Based on algorithm from "Tricks of the Windows Game Programming Gurus" by Andre LeMothe
+	 */
+	function lineIntersection(p0, p1, p2, p3) {
+		var s1 = p1.subtract(p0);
+		var s2 = p3.subtract(p2);
+
+		var s = (-s1.y * (p0.x - p2.x) + s1.x * (p0.y - p2.y)) / (-s2.x * s1.y + s1.x * s2.y);
+		var t = ( s2.x * (p0.y - p2.y) - s2.y * (p0.x - p2.x)) / (-s2.x * s1.y + s1.x * s2.y);
+
+		if (s >= 0.0 && s <= 1.0 && t >= 0.0 && t <= 1.0) {
+			return new Vector(p0.x + (t * s1.x), p0.y + (t * s1.y));
+		}
+
+		return null;
+	}
+
+	/** Return a simplified polygon based on the given line string, or null.
+	 *
+	 * The returned polygon is the given points up until the point where two
+	 * segments intersect.  The intersecting segments are not included in the
+	 * returned list of points, so the returned list does not intersect itself.
+	 */
+	function simplifyPolygon(points) {
+		if (points.length < 4) {
+			return null;
+		}
+
+		for (var i = 0; i < points.length - 3; ++i) {
+			var p0 = points[i];
+			var p1 = points[i + 1];
+
+			for (var j = i + 2; j < points.length - 1; ++j) {
+				var p2 = points[j];
+				var p3 = points[j + 1];
+				var intersection = lineIntersection(p0, p1, p2, p3);
+				if (intersection != null) {
+					return points.slice(i + 1, j);
+				}
+			}
+		}
+
+		return null;
+	}
+
 	/** Return the force exerted by a spring between vectors p1 and p2. */
 	function springForce(p1, p2, length, k) {
 		var vec = p2.subtract(p1);
@@ -1364,6 +1410,10 @@
 	DrawOverlay.prototype.moveTo = function (x, y) {
 		if (!this.drawing) {
 			return;
+		} else if (this.points.length > 0 &&
+		           this.points[this.points.length - 1].x == x &&
+		           this.points[this.points.length - 1].y == y) {
+			return;
 		}
 
 		this.context.lineTo(x, y);
@@ -1862,18 +1912,19 @@
 		},
 
 		addPoint: function(x,y){
-			this.positions.push({
-				x: x
-				,y: y
-			});
+			if (this.positions.length == 0 ||
+			    this.positions[this.positions.length - 1].x != x ||
+			    this.positions[this.positions.length - 1].y != y) {
+			    this.positions.push(new Vector(x, y));
+			}
 		},
 
-		// Get captured positions as a list of OpenLayers Points
-		getPoints: function(){
+		// Convert captured pixel positions to a list of OpenLayers Points
+		positionsToPoints: function(positions){
 			var points = [];
 
-			for(var i=0,e=this.positions.length; i<e; ++i){
-				var position = this.positions[i];
+			for(var i = 0; i < positions.length; ++i) {
+				var position = positions[i];
 				var lonlat = this.tuioService.getMapPosition(position.x, position.y);
 				if( lonlat ){
 					var point = new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
@@ -1895,18 +1946,20 @@
 
 			var first = this.positions[0];
 			var last = this.positions[this.positions.length - 1];
+			var poly = null;
 
 			if (lineStringDistance(this.positions) <= pointDistance) {
 				// Gesture didn't move very far, create a single point
-				// TODO: Use center instead of first point
-				var pos = first;
+				var pos = centerPoint(this.positions);
 				var lonlat = this.tuioService.getMapPosition(pos.x, pos.y);
 				if (lonlat) {
 					return new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
 				}
-			} else if (distance(first.x, first.y, last.x, last.y) <= pointDistance) {
-				// Last point and first point are very close, create a closed polygon
-				var points = this.getPoints();
+			} else if (distance(first.x, first.y, last.x, last.y) <= pointDistance ||
+					   (poly = simplifyPolygon(this.positions)) != null) {
+				// Start/end are close, or there is an intersection, create a polygon
+				var points = (poly ? this.positionsToPoints(poly)
+				                   : this.positionsToPoints(positions));
 				var ring = new OpenLayers.Geometry.LinearRing();
 				for (var i = 0; i < points.length; ++i) {
 					ring.addPoint(points[i]);
@@ -1914,7 +1967,7 @@
 				return new OpenLayers.Geometry.Polygon([ring]);
 			} else {
 				// Doesn't seem to be a point or closed polygon, create a line string
-				var points = this.getPoints();
+				var points = this.positionsToPoints(this.positions);
 				var geom = new OpenLayers.Geometry.LineString();
 				for (var i = 0; i < points.length; ++i) {
 					geom.addPoint(points[i]);
