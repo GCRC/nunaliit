@@ -170,7 +170,7 @@ function area(points) {
 	for (var i = 0; i < points.length; j = i++) {
 		var pi = points[i];
 		var pj = points[j];
-		area += (pj.pos.x + pi.pos.x) * (pj.pos.y - pi.pos.y)
+		area += (pj.x + pi.x) * (pj.y - pi.y)
 	}
 
 	return area / 2;
@@ -180,11 +180,11 @@ function area(points) {
 function centerPoint(points) {
 	if (points.length == 1) {
 		// Center of a single point is that point
-		return points[0].pos;
+		return points[0];
 	} else if (points.length == 2) {
 		// Center of a line is the midpoint of that line
-		return new Vector((points[0].pos.x + points[1].pos.x) / 2,
-						  (points[0].pos.y + points[1].pos.y) / 2);
+		return new Vector((points[0].x + points[1].x) / 2,
+						  (points[0].y + points[1].y) / 2);
 	}
 
 	var minX = Infinity;
@@ -192,10 +192,10 @@ function centerPoint(points) {
 	var maxX = 0;
 	var maxY = 0;
 	for (var i = 0; i < points.length; ++i) {
-		minX = Math.min(minX, points[i].pos.x);
-		minY = Math.min(minY, points[i].pos.y);
-		maxX = Math.max(maxX, points[i].pos.x);
-		maxY = Math.max(maxY, points[i].pos.y);
+		minX = Math.min(minX, points[i].x);
+		minY = Math.min(minY, points[i].y);
+		maxX = Math.max(maxX, points[i].x);
+		maxY = Math.max(maxY, points[i].y);
 	}
 
 	return new Vector(minX + (maxX - minX) / 2,
@@ -218,7 +218,8 @@ function springForce(p1, p2, length, k) {
 //==================================================================
 /** A 2-D point with velocity, used for fingers (cursors) and hands. */
 function Body(x, y) {
-	this.pos = new Vector(x, y);
+	Vector.call(this, x, y);
+
 	this.targetPos = new Vector(x, y);
 	this.vel = new Vector(0, 0);
 	this.div = undefined;
@@ -229,18 +230,22 @@ function Body(x, y) {
 	this.lastTime = null;
 }
 
+Body.prototype = Object.create(Vector.prototype);
+
 /** Set the target coordinate for the body to move towards. */
 Body.prototype.moveTo = function(x, y) {
 	if (x != this.targetPos.x || y != this.targetPos.y) {
 		this.targetPos = new Vector(x, y);
-		if (isNaN(this.pos.x) || isNaN(this.pos.y)) {
-			this.pos = this.targetPos;
+		if (isNaN(this.x) || isNaN(this.y)) {
+			this.x = this.targetPos.x;
+			this.y = this.targetPos.y;
 		}
 		this.dirty = true;
 	}
 
 	if (!usePhysics) {
-		this.pos = this.targetPos;
+		this.x = this.targetPos.x;
+		this.y = this.targetPos.y;
 	}
 
 	return this.dirty;
@@ -249,16 +254,16 @@ Body.prototype.moveTo = function(x, y) {
 /** Update position, moving towards the target if necessary. */
 Body.prototype.updatePosition = function(timestamp, energy) {
 	if (!usePhysics) {
-		this.pos.x = this.targetPos.x;
-		this.pos.y = this.targetPos.y;
+		this.x = this.targetPos.x;
+		this.y = this.targetPos.y;
 		return true;
 	} else if (!this.lastTime) {
 		// Initial call, but we need a time delta, wait for next tick
 		this.lastTime = timestamp;
 		return true;
 	} else if (!this.dirty ||
-			   (this.pos.x == this.targetPos.x &&
-				this.pos.y == this.targetPos.y)) {
+			   (this.x == this.targetPos.x &&
+				this.y == this.targetPos.y)) {
 		// Nothing to do
 		this.dirty = false;
 		this.lastTime = timestamp;
@@ -274,24 +279,27 @@ Body.prototype.updatePosition = function(timestamp, energy) {
 	this.vel = this.vel.scale(0.1);
 
 	// Calculate amount to move based on spring force
-	var force = springForce(this.targetPos, this.pos, SPRING_LEN, MAX_SPRING_K);
+	var force = springForce(this.targetPos, this, SPRING_LEN, MAX_SPRING_K);
 	var velocity = this.vel.add(force.scale(dur)).scale(energy);
 	var dPos = velocity.scale(dur);
 
 	// Calculate new position
-	this.pos = this.pos.add(dPos);
+	var newPos = this.add(dPos);
+	this.x = newPos.x;
+	this.y = newPos.y;
 	this.vel = velocity;
 
 	var snap = dPos.magnitude() < 0.0001;
 	if (snap) {
 		// New position is very close, snap to target
-		this.pos = this.targetPos;
+		this.x = this.targetPos.x;
+		this.y = this.targetPos.y;
 		this.vel = new Vector(0, 0);
 	}
 
 	// Clamp to valid coordinate space
-	this.pos.x = Math.min(Math.max(0.0, this.pos.x), 1.0);
-	this.pos.y = Math.min(Math.max(0.0, this.pos.y), 1.0);
+	this.x = Math.min(Math.max(0.0, this.x), 1.0);
+	this.y = Math.min(Math.max(0.0, this.y), 1.0);
 
 	return true;
 }
@@ -311,11 +319,11 @@ function Cursor() {
 		if (!showDots) {
 			return;
 		} else if (this.div == undefined) {
-			this.div = createDot(this.pos.x, this.pos.y, this.index);
+			this.div = createDot(this.x, this.y, this.index);
 		}
 
-		this.div.style.left = ((this.pos.x * window.innerWidth) - 10) + "px";
-		this.div.style.top = ((this.pos.y * window.innerHeight) - 10) + "px";
+		this.div.style.left = ((this.x * window.innerWidth) - 10) + "px";
+		this.div.style.top = ((this.y * window.innerHeight) - 10) + "px";
 	}
 }
 
@@ -392,7 +400,7 @@ Hand.prototype.updatePosition = function(timestamp, energy) {
 		}
 
 		// Calculate and add force due to this cursor's spring
-		var f = springForce(cursor.pos, this.pos, SPRING_LEN, spring_k);
+		var f = springForce(cursor, this, SPRING_LEN, spring_k);
 		force = force.add(f);
 	}
 
@@ -400,7 +408,9 @@ Hand.prototype.updatePosition = function(timestamp, energy) {
 	var dPos = velocity.scale(dur);
 
 	// Calculate new position
-	this.pos = this.pos.add(dPos);
+	var newPos = this.add(dPos);
+	this.x = newPos.x;
+	this.y = newPos.y;
 	this.vel = velocity;
 
 	return true;
@@ -440,11 +450,11 @@ Hand.prototype.show = function() {
 	if (!showDots) {
 		return;
 	} else if (this.div == undefined) {
-		this.div = createDot(this.pos.x, this.pos.y, "H" + this.index);
+		this.div = createDot(this.x, this.y, "H" + this.index);
 	}
 
-	this.div.style.left = ((this.pos.x * window.innerWidth) - 10) + "px";
-	this.div.style.top = ((this.pos.y * window.innerHeight) - 10) + "px";
+	this.div.style.left = ((this.x * window.innerWidth) - 10) + "px";
+	this.div.style.top = ((this.y * window.innerHeight) - 10) + "px";
 	this.div.style.borderColor = "red";
 }
 
@@ -456,8 +466,8 @@ Hand.prototype.span = function() {
 			if (i != j) {
 				maxDistance = Math.max(
 					maxDistance,
-					distance(this.cursors[i].pos.x, this.cursors[i].pos.y,
-							 this.cursors[j].pos.x, this.cursors[j].pos.y));
+					distance(this.cursors[i].x, this.cursors[i].y,
+							 this.cursors[j].x, this.cursors[j].y));
 			}
 		}
 	}
@@ -480,7 +490,7 @@ Hand.prototype.trimCursors = function() {
 		var furthest = undefined;
 		for (var i = 0; i < this.cursors.length; ++i) {
 			var cursor = this.cursors[i];
-			var d = distance(cursor.pos.x, cursor.pos.y, this.pos.x, this.pos.y);
+			var d = distance(cursor.x, cursor.y, this.x, this.y);
 			if (d > maxDistance) {
 				maxDistance = d;
 				furthest = i;
@@ -678,8 +688,8 @@ function handsAreSane(x, y) {
 			if (i != j) {
 				maxDistance = Math.max(
 					maxDistance,
-					distance(hand.cursors[i].pos.x, hand.cursors[i].pos.y,
-							 hand.cursors[j].pos.x, hand.cursors[j].pos.y));
+					distance(hand.cursors[i].x, hand.cursors[i].y,
+							 hand.cursors[j].x, hand.cursors[j].y));
 			}
 		}
 	}
@@ -697,7 +707,7 @@ function onCursorDown(inst) {
 			overlay.show();
 		};
 		drawZooming = true;
-		dispatchMouseEvent('mousedown', cursor.pos.x, cursor.pos.y);
+		dispatchMouseEvent('mousedown', cursor.x, cursor.y);
 	} else if (downCursors > 0) {
 		// Multiple cursors down, terminate pending long press
 		pressCursor = undefined;
@@ -717,16 +727,16 @@ function onCursorMove(inst) {
 			overlay.show();
 		}
 		drawZooming = true;
-		dispatchMouseEvent('mousedown', cursor.pos.x, cursor.pos.y);
+		dispatchMouseEvent('mousedown', cursor.x, cursor.y);
 		pressCursor = inst;
 	}
 
 	if (inst == pressCursor) {
 		if (drawZooming) {
-			dispatchMouseEvent('mousemove', cursor.pos.x, cursor.pos.y);
+			dispatchMouseEvent('mousemove', cursor.x, cursor.y);
 		}
 
-		var d = distance(cursor.pos.x, cursor.pos.y, cursor.downX, cursor.downY);
+		var d = distance(cursor.x, cursor.y, cursor.downX, cursor.downY);
 		var elapsed = Date.now() - cursor.birthTime;
 		if (d < clickDistance && elapsed > pressDelay) {
 			console.log("Long press!");
@@ -736,7 +746,7 @@ function onCursorMove(inst) {
 			}
 
 			// Dispatch click to select map element, if applicable
-			dispatchMouseEvent('click', cursor.pos.x, cursor.pos.y);
+			dispatchMouseEvent('click', cursor.x, cursor.y);
 
 			// Toggle information pane
 			togglePane();
@@ -758,17 +768,17 @@ function onCursorUp(inst) {
 	var cursor = cursors[inst];
 	if (inst == pressCursor) {
 		if (drawZooming) {
-			dispatchMouseEvent('mouseup', cursor.pos.x, cursor.pos.y);
+			dispatchMouseEvent('mouseup', cursor.x, cursor.y);
 			if (overlay) {
 				overlay.hide();
 			}
 		}
 
-		var d = distance(cursor.pos.x, cursor.pos.y, cursor.downX, cursor.downY);
+		var d = distance(cursor.x, cursor.y, cursor.downX, cursor.downY);
 		var elapsed = Date.now() - cursor.birthTime;
 		if (d < clickDistance && elapsed < clickDelay) {
 			console.log("Click!");
-			var el = getElementAtTablePoint(cursor.pos.x, cursor.pos.y);
+			var el = getElementAtTablePoint(cursor.x, cursor.y);
 			if (el && el.id.startsWith("OpenLayers")) {
 				hidePane();
 			}
@@ -777,9 +787,9 @@ function onCursorUp(inst) {
 				el.nodeName.toLowerCase() == "textarea") {
 				$(el).focus();
 			} else {
-				dispatchMouseEvent('mousedown', cursor.pos.x, cursor.pos.y);
-				dispatchMouseEvent('mouseup', cursor.pos.x, cursor.pos.y);
-				dispatchMouseEvent('click', cursor.pos.x, cursor.pos.y);
+				dispatchMouseEvent('mousedown', cursor.x, cursor.y);
+				dispatchMouseEvent('mouseup', cursor.x, cursor.y);
+				dispatchMouseEvent('click', cursor.x, cursor.y);
 			}
 		}
 		pressCursor = undefined;
@@ -794,7 +804,7 @@ function onHandDown(inst) {
 
 	if (mouseHand == undefined) {
 		/* No hand is down yet, start a mouse motion for map dragging. */
-		// dispatchMouseEvent('mousedown', hand.pos.x, hand.pos.y);
+		// dispatchMouseEvent('mousedown', hand.x, hand.y);
 		mouseHand = inst;
 	} else {
 		if (drawZooming) {
@@ -809,7 +819,7 @@ function onHandDown(inst) {
 		/* A hand was acting as the mouse cursor for map dragging, but now we
 		   have several hands.  Stop drag since this no longer makes sense. */
 		var oldMouseHand = hands[mouseHand];
-		// dispatchMouseEvent('mouseup', oldMouseHand.pos.x, oldMouseHand.pos.y);
+		// dispatchMouseEvent('mouseup', oldMouseHand.x, oldMouseHand.y);
 		mouseHand = undefined;
 		scrollX = undefined;
 		scrollY = undefined;
@@ -832,7 +842,7 @@ function onHandMove(inst) {
 
 	if (inst == mouseHand && hand.cursors.length > 1) {
 		// Hand is acting as mouse cursor, dispatch mouse move
-		// dispatchMouseEvent('mousemove', hand.pos.x, hand.pos.y);
+		// dispatchMouseEvent('mousemove', hand.x, hand.y);
 
 		if (scrollX == undefined && scrollY == undefined) {
 			/* Initial scroll, jump hand position immediately to center.  This
@@ -840,17 +850,18 @@ function onHandMove(inst) {
 			   the center points of the fingers, but we don't need this
 			   smoothing until after scrolling starts. */
 			hand.moveTo(centerPoint(hand.cursors));
-			hand.pos = hand.targetPos;
+			hand.x = hand.targetPos.x;
+			hand.y = hand.targetPos.y;
 		} else if (typeof(moduleDisplay) !== 'undefined') {
 			// Scroll OpenLayers manually
-			var dx = (scrollX - hand.pos.x);
-			var dy = (scrollY - hand.pos.y);
+			var dx = (scrollX - hand.x);
+			var dy = (scrollY - hand.y);
 			moduleDisplay.mapControl.map.pan(dx * window.innerWidth * scrollSpeed,
 											 dy * window.innerHeight * scrollSpeed,
 											 { animate: false, dragging: true });
 		}
-		scrollX = hand.pos.x;
-		scrollY = hand.pos.y;
+		scrollX = hand.x;
+		scrollY = hand.y;
 	} else {
 		// Get the hands involved in the zoom gesture
 		var zoomHands = [];
@@ -869,8 +880,8 @@ function onHandMove(inst) {
 		for (var i = 0; i < zoomHands.length - 1; ++i) {
 			d = Math.max(
 				d,
-				distance(zoomHands[i].pos.x, zoomHands[i].pos.y,
-						 zoomHands[i + 1].pos.x, zoomHands[i + 1].pos.y));
+				distance(zoomHands[i].x, zoomHands[i].y,
+						 zoomHands[i + 1].x, zoomHands[i + 1].y));
 		}
 
  		if (lastPinchZoomDistance != undefined) {
@@ -899,7 +910,7 @@ function onHandUp(inst) {
 
 	if (inst == mouseHand) {
 		// Hand is acting as mouse cursor, dispatch mouse up
-		// dispatchMouseEvent('mouseup', hand.pos.x, hand.pos.y);
+		// dispatchMouseEvent('mouseup', hand.x, hand.y);
 		mouseHand = undefined;
 		scrollX = undefined;
 		scrollY = undefined;
@@ -974,14 +985,14 @@ function onPathDraw(bounds, points) {
 function addCursorToHand(cursor)
 {
 	// Associate cursor with a hand
-	var hand = bestHand(cursor.pos.x, cursor.pos.y);
+	var hand = bestHand(cursor.x, cursor.y);
 	if (hand) {
 		// Add to existing hand
 		hand.cursors.push(cursor);
 		hand.dirty = true;
 	} else {
 		// No existing hand is appropriate, create a new one
-		hand = new Hand(cursor.pos.x, cursor.pos.y);
+		hand = new Hand(cursor.x, cursor.y);
 		hand.cursors = [cursor];
 		hands[hand.index] = hand;
 		onHandDown(hand.index);
@@ -1028,7 +1039,7 @@ function updateCursors(set) {
 
 			// Increase energy for spring layout calculation
 			var increase = Math.abs(
-				distance(cursors[inst].pos.x, cursors[inst].pos.y,
+				distance(cursors[inst].x, cursors[inst].y,
 						 newX, newY));
 			energy = Math.min(1.0, energy + increase * 1000);
 		}
