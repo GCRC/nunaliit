@@ -702,6 +702,13 @@
 		return div;
 	}
 
+	function createRing() {
+		var div = document.createElement("div");
+		div.id = "n2tuio_edit_ring";
+		$('#content')[0].appendChild(div);
+		return div;
+	}
+
 	/** Find the closest non-full hand to the given point. */
 	function bestHand(x, y) {
 		var bestDistance = Infinity;
@@ -1556,6 +1563,10 @@
 					map, map.offsetWidth, map.offsetHeight, onPathDraw);
 				drawZooming = true;
 			}
+
+			// Create green/red edit ring
+			createRing();
+
 		} else {
 			$content.removeAttr('style');
 			$('.n2tuio_remove').remove();
@@ -2147,8 +2158,10 @@
 					&& mapControl.modes.NAVIGATE ){
 					if( m.mode === mapControl.modes.NAVIGATE.name ){
 						this.mapEditing = false;
+						$('body').removeClass('nunaliit_editing');
 					} else {
 						this.mapEditing = true;
+						$('body').addClass('nunaliit_editing');
 					};
 				};
 			};
