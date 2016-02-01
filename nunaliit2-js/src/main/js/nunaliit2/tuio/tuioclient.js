@@ -2016,6 +2016,11 @@
 					//mapControl.editModeAddFeatureEnabled = false;
 					var feature = new OpenLayers.Feature.Vector(geom);
 					editLayer.addFeatures([feature]);
+
+					// Save (empty) document for drawn geometry
+					// Kludge, TODO: inhibit zoom, stay in edit mode
+					$("button.save").click();
+
 					//mapControl.editModeAddFeatureEnabled = true;
 					//editLayer.redraw();
 				};
