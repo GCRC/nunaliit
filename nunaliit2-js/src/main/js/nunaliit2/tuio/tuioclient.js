@@ -1653,7 +1653,13 @@
 					if( g_tuioService ){
 						g_tuioService.startCalibration();
 					};
-
+				} else if (code == 66) {
+					// b, toggle border
+					if ($('#n2tuio_edit_ring')[0].style.display == 'none') {
+						$('#n2tuio_edit_ring')[0].style.display = 'block';
+					} else {
+						$('#n2tuio_edit_ring')[0].style.display = 'none';
+					}
 				} else if (e.shiftKey) {
 					// TUIO calibration
 					if (code == 37) {
