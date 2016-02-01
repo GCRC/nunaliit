@@ -1960,7 +1960,7 @@
 					   (poly = simplifyPolygon(this.positions)) != null) {
 				// Start/end are close, or there is an intersection, create a polygon
 				var points = (poly ? this.positionsToPoints(poly)
-				                   : this.positionsToPoints(positions));
+				                   : this.positionsToPoints(this.positions));
 				var ring = new OpenLayers.Geometry.LinearRing();
 				for (var i = 0; i < points.length; ++i) {
 					ring.addPoint(points[i]);
