@@ -90,17 +90,22 @@ var Export = $n2.Class('Export',{
 			onError('docIds must be provided when exporting by docIds');
 		};
 		
-		// Target window
-		var target = '';
-		if( opts.targetWindow ){
-			target = ' target="'+opts.targetWindow+'"';
-		};
-		
 		var url = this.serverUrl + 'export';
 		if( opts.fileName ){
 			url = url + '/' + opts.fileName;
 		};
-		var $form = $('<form action="'+url+'" method="POST"'+target+'></form>');
+		var $form = $('<form>')
+			.attr('action',url)
+			.attr('method','POST')
+			.css({
+				display: 'none'
+				,visibility: 'hidden'
+			});
+
+		// Target window
+		if( opts.targetWindow ){
+			$form.attr('target',opts.targetWindow);
+		};
 		
 		$('<input type="hidden" name="method" value="doc-id"></input>').appendTo($form);
 

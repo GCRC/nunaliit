@@ -6,7 +6,6 @@ import java.io.Writer;
 
 import org.json.JSONObject;
 import org.json.JSONWriter;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,10 +15,11 @@ import ca.carleton.gcrc.couch.export.ExportFormat;
 import ca.carleton.gcrc.couch.export.SchemaCache;
 import ca.carleton.gcrc.couch.export.SchemaExportInfo;
 import ca.carleton.gcrc.couch.export.SchemaExportProperty;
+import ca.carleton.gcrc.couch.utils.NunaliitDocument;
+import ca.carleton.gcrc.couch.utils.NunaliitGeometry;
 import ca.carleton.gcrc.geom.Geometry;
 import ca.carleton.gcrc.geom.geojson.GeoJsonGeometryWriter;
 import ca.carleton.gcrc.geom.wkt.WktParser;
-import ca.carleton.gcrc.json.JSONSupport;
 
 public class ExportFormatGeoJson implements ExportFormat {
 
@@ -82,21 +82,23 @@ public class ExportFormatGeoJson implements ExportFormat {
 	}
 
 	private void outputDocument(JSONWriter jsonWriter, Document doc, GeoJsonGeometryWriter geoWriter, WktParser wktParser) throws Exception {
-		JSONObject jsonDoc = doc.getJSONObject();
+		NunaliitDocument nunaliitDoc = new NunaliitDocument(doc);
+
+		JSONObject jsonDoc = nunaliitDoc.getJSONObject();
 		
 		String schemaName = jsonDoc.optString("nunaliit_schema");
 		if( null != schemaName ) {
-			boolean containsGeometry = JSONSupport.containsKey(jsonDoc, "nunaliit_geom");
+			NunaliitGeometry docGeometry = nunaliitDoc.getOriginalGometry();
 			SchemaExportInfo exportInfo = schemaCache.getExportInfo(schemaName);
 			
-			if( null != exportInfo || containsGeometry ){
+			if( null != exportInfo || null != docGeometry ){
 				jsonWriter.object();
 				
 				jsonWriter.key("type");
 				jsonWriter.value("Feature");
 	
 				jsonWriter.key("id");
-				jsonWriter.value(doc.getId());
+				jsonWriter.value(nunaliitDoc.getId());
 				
 				jsonWriter.key("properties");
 				jsonWriter.object();
@@ -119,9 +121,8 @@ public class ExportFormatGeoJson implements ExportFormat {
 				
 				jsonWriter.endObject(); // end properties
 				
-				if( containsGeometry ) {
-					JSONObject jsonGeom = jsonDoc.getJSONObject("nunaliit_geom");
-					String wkt = jsonGeom.optString("wkt", null);
+				if( null != docGeometry ) {
+					String wkt = docGeometry.getWKT();
 					if( null != wkt ){
 						Geometry geometry = wktParser.parseWkt(wkt); 
 						jsonWriter.key("geometry");
