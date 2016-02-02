@@ -1667,103 +1667,87 @@
 						if (e.altKey) {
 							// Shift+Alt+left, offset TUIO left
 							calibration.cursorXOffset -= 0.001;
-							calibrationDirty = true;
 						} else {
 							// Shift+left, shrink TUIO horizontally
 							calibration.cursorXScale -= 0.001;
-							calibrationDirty = true;
 						}
+						calibrationDirty = true;
 					} else if (code == 39) {
 						if (e.altKey) {
 							// Shift+Alt+right, offset TUIO right
 							calibration.cursorXOffset += 0.001;
-							calibrationDirty = true;
 						} else {
 							// Shift+right, expand TUIO horizontally
 							calibration.cursorXScale += 0.001;
-							calibrationDirty = true;
 						}
+						calibrationDirty = true;
 					} else if (code == 40) {
 						if (e.altKey) {
 							// Shift+Alt+down, offset TUIO down
 							calibration.cursorYOffset += 0.001;
-							calibrationDirty = true;
 						} else {
 							// Shift+down, shrink TUIO vertically
 							calibration.cursorYScale -= 0.001;
-							calibrationDirty = true;
 						}
+						calibrationDirty = true;
 					} else if (code == 38) {
 						if (e.altKey) {
 							// Shift+Alt+up, offset TUIO up
 							calibration.cursorYOffset -= 0.001;
-							calibrationDirty = true;
 						} else {
 							// Shift+up, grow TUIO vertically
 							calibration.cursorYScale += 0.001;
-							calibrationDirty = true;
 						}
+						calibrationDirty = true;
 					}
-
-					console.log("TUIO scale " + calibration.cursorXScale + "," + calibration.cursorYScale +
-								" offset " + calibration.cursorXOffset + "," + calibration.cursorYOffset);
-
 				} else if (code == 37) {
 					if (e.altKey) {
 						// Alt+left, shrink horizontally
 						calibration.xMargin += 5;
-						calibrationDirty = true;
 					} else {
 						// Left, shift left
 						calibration.xOffset -= 5;
-						calibrationDirty = true;
 					}
 
 					content.style.left = (calibration.xMargin + calibration.xOffset) + "px";
 					content.style.right = (calibration.xMargin - calibration.xOffset) + "px";
-					console.log("X margin " + calibration.xMargin + " offset " + calibration.xOffset);
+					calibrationDirty = true;
 				} else if (code == 39) {
 					if (e.altKey) {
 						// Alt+right, grow horizontally
 						calibration.xMargin -= 5;
-						calibrationDirty = true;
 					} else {
 						// Right, shift right
 						calibration.xOffset += 5;
-						calibrationDirty = true;
 					}
 
 					content.style.left = (calibration.xMargin + calibration.xOffset) + "px";
 					content.style.right = (calibration.xMargin - calibration.xOffset) + "px";
-					console.log("X margin " + calibration.xMargin + " offset " + calibration.xOffset);
+					calibrationDirty = true;
 				} else if (code == 40) {
 					if (e.altKey) {
 						// Alt+down, shrink vertically
 						calibration.yMargin += 5;
-						calibrationDirty = true;
 					} else {
 						// Down, shift up
 						calibration.yOffset += 5;
-						calibrationDirty = true;
 					}
 
 					content.style.top = (calibration.yMargin + calibration.yOffset) + "px";
 					content.style.bottom = (calibration.yMargin - calibration.yOffset) + "px";
-					console.log("Y margin " + calibration.yMargin + " offset " + calibration.yOffset);
+					calibrationDirty = true;
 				} else if (code == 38) {
 					if (e.altKey) {
 						// Alt+up, grow vertically
 						calibration.yMargin -= 5;
-						calibrationDirty = true;
 					} else {
 						// Up, shift down
 						calibration.yOffset -= 5;
-						calibrationDirty = true;
 					}
 
 					content.style.top = (calibration.yMargin + calibration.yOffset) + "px";
 					content.style.bottom = (calibration.yMargin - calibration.yOffset) + "px";
-					console.log("Y margin " + calibration.yMargin + " offset " + calibration.yOffset);
+					calibrationDirty = true;
 				} else if (code == 80) {
 					// P, show/hide pane
 					togglePane();
