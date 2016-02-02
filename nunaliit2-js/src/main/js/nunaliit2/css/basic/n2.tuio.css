@@ -30,17 +30,21 @@
 
 .nunaliit_tuio .n2_content_map_interaction {
 	top: 940px;
-	left: 410px;
+	left: 380px;
 }
 
 .nunaliit_tuio .map_interaction input
 ,.nunaliit_tuio .n2_content_map_interaction input {
+	border-radius: 19px;
+	opacity: 0.5;
 	padding: 16px;
+	width: 250px;
 }
 
 .nunaliit_tuio .olControlEditingToolbar {
-	top: 100px;
+	display: none;
 	left: 420px;
+	top: 100px;
 }
 
 .nunaliit_tuio .nunaliit_content {
@@ -58,20 +62,26 @@
 
 .nunaliit_tuio .olControlZoom {
 	top: 500px;
-	left: 74px;
+	left: 64px;
 }
 
 .nunaliit_tuio div.olControlZoom a {
 	padding: 8px;
 }
 
+.nunaliit_tuio .olButton {
+	border-radius: 19px;
+}
+
 .nunaliit_tuio .olControlLayerSwitcher .maximizeDiv, .nunaliit_tuio .olControlLayerSwitcher .minimizeDiv {
-	top: 350px;
-	left: 25px;
-	width: 38px;
-	height: 38px;
-	background-size: 38px 38px;
 	background-repeat: no-repeat;
+	background-size: 38px 38px;
+	border-radius: 19px;
+	height: 38px;
+	left: 15px;
+	opacity: 0.5;
+	top: 359px;
+	width: 38px;
 }
 
 .n2tuio_rotate_handle {
@@ -126,8 +136,8 @@
 .nunaliit_tuio input[type="radio"]
 , .nunaliit_tuio input[type="checkbox"] {
 	border: 0px;
-	height: 20px;
-	width: 20px;
+	height: 35px;
+	width: 35px;
 }
 
 .nunaliit_tuio .n2layerSwitcher_label_container {
@@ -135,8 +145,9 @@
 }
 
 .nunaliit_tuio .olControlLayerSwitcher .layersDiv {
-
+	font-size: medium;
 	left: 60px;
+	line-height: 40px;
 	padding: 11px 15px;
 	position: absolute;
 	top: 250px;
