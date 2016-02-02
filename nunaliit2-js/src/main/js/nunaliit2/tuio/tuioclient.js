@@ -606,7 +606,7 @@
 		// console.log(eventType + " at " + winX + "," + winY + ": " + el +
 		//             " id: " + el.id + " class: " + el.className);
 
-		dispatchMouseEventTo(eventType, el);
+		dispatchMouseEventTo(eventType, el, winX, winY);
 	}
 
 	/** Dispatch a mouse event to a specific DOM element. */
@@ -837,6 +837,10 @@
 				}
 			}
 
+			// Convert coordinates to window relative for dispatch
+			var winX = cursor.x * window.innerWidth;
+			var winY = cursor.y * window.innerHeight;
+
 			var elapsed = Date.now() - cursor.birthTime;
 			if (cursor.distanceMoved <= clickDistance && elapsed < clickDelay) {
 				console.log("Click!");
@@ -846,13 +850,13 @@
 				}
 
 				if (el) {
-					dispatchMouseEventTo('mousedown', el, cursor.x, cursor.y);
+					dispatchMouseEventTo('mousedown', el, winX, winY);
 					if (el.nodeName.toLowerCase() == "input" ||
 						el.nodeName.toLowerCase() == "textarea") {
 						$(el).focus();
 					}
-					dispatchMouseEventTo('mouseup', el, cursor.x, cursor.y);
-					dispatchMouseEventTo('click', el, cursor.x, cursor.y);
+					dispatchMouseEventTo('mouseup', el, winX, winY);
+					dispatchMouseEventTo('click', el, winX, winY);
 				}
 			}
 			pressCursor = undefined;
