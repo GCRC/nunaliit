@@ -606,6 +606,12 @@
 		// console.log(eventType + " at " + winX + "," + winY + ": " + el +
 		//             " id: " + el.id + " class: " + el.className);
 
+		dispatchMouseEventTo(eventType, el);
+	}
+
+	/** Dispatch a mouse event to a specific DOM element. */
+	function dispatchMouseEventTo(eventType, el, winX, winY)
+	{
 		// Create synthetic mouse event of the given type
 		var event = new MouseEvent(eventType, {
 			'view': window,
@@ -840,13 +846,13 @@
 				}
 
 				if (el) {
-					$(el).mousedown();
+					dispatchMouseEventTo('mousedown', el, cursor.x, cursor.y);
 					if (el.nodeName.toLowerCase() == "input" ||
 						el.nodeName.toLowerCase() == "textarea") {
 						$(el).focus();
 					}
-					$(el).mouseup();
-					$(el).click();
+					dispatchMouseEventTo('mouseup', el, cursor.x, cursor.y);
+					dispatchMouseEventTo('click', el, cursor.x, cursor.y);
 				}
 			}
 			pressCursor = undefined;
