@@ -1553,6 +1553,8 @@
 			$content.css({
 				left: (calibration.xMargin + calibration.xOffset) + 'px'
 				,right: (calibration.xMargin - calibration.xOffset) + 'px'
+				,top: (calibration.yMargin + calibration.yOffset) + 'px'
+				,bottom: (calibration.yMargin - calibration.yOffset) + 'px'
 			});
 
 			// Create draw overlay
