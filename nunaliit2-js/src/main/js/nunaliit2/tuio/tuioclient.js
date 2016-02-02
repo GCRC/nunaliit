@@ -824,7 +824,7 @@
 	function onCursorUp(inst) {
 		var cursor = cursors[inst];
 		if (inst == pressCursor) {
-			if (drawZooming) {
+			if (drawZooming || (g_tuioService && g_tuioService.isEditing())) {
 				dispatchMouseEvent('mouseup', cursor.x, cursor.y);
 				if (overlay) {
 					overlay.hide();
@@ -1349,6 +1349,7 @@
 
 		this.parent = parent;
 		this.drawing = false;
+		this.isMouseDown = false;
 		this.startTime = Date.now();
 		this.points = [];
 		this.pathCallback = pathCallback;
@@ -1373,6 +1374,7 @@
 
 		this.canvas.onmousedown = function (e) {
 			var pos = self.getMousePosition(e);
+			self.isMouseDown = true;
 			self.startStroke(pos.x, pos.y);
 		};
 
@@ -1386,8 +1388,8 @@
 		this.canvas.onmouseup = function (e) {
 			var pos = self.getMousePosition(e);
 			self.moveTo(pos.x, pos.y);
-			self.drawing = false;
 			self.mouseUpTime = Date.now();
+			self.isMouseDown = false;
 			window.setTimeout(function() { self.endStroke(); }, drawDelay);
 		};
 	}
@@ -1405,13 +1407,18 @@
 	}
 
 	DrawOverlay.prototype.startStroke = function (x, y) {
-		this.drawing = true;
 		this.context.lineCap = 'round';
 		this.context.lineWidth = 2;
 		this.context.strokeStyle = '#00FF00';
-		this.context.beginPath();
 		this.context.imageSmoothingEnabled = true;
-		this.context.moveTo(x, y);
+		if (!this.drawing) {
+			this.context.beginPath();
+			this.context.moveTo(x, y);
+			this.drawing = true;
+		} else {
+			this.context.lineTo(x, y);
+		}
+
 		this.points.push([x, y]);
 	}
 
@@ -1439,7 +1446,7 @@
 	}
 
 	DrawOverlay.prototype.endStroke = function () {
-		if (!this.drawing && Date.now() - this.mouseUpTime >= drawDelay / 2.0) {
+		if (!this.isMouseDown && Date.now() - this.mouseUpTime >= drawDelay / 2.0) {
 			// Save bounding box for passing to path callback
 			var box = this.canvas.getBoundingClientRect();
 
@@ -1450,6 +1457,7 @@
 
 			this.pathCallback(box, this.points);
 			this.points = [];
+			this.drawing = false;
 		}
 	}
 
@@ -1553,6 +1561,8 @@
 			$content.css({
 				left: (calibration.xMargin + calibration.xOffset) + 'px'
 				,right: (calibration.xMargin - calibration.xOffset) + 'px'
+				,top: (calibration.yMargin + calibration.yOffset) + 'px'
+				,bottom: (calibration.yMargin - calibration.yOffset) + 'px'
 			});
 
 			// Create draw overlay
@@ -1570,6 +1580,7 @@
 		} else {
 			$content.removeAttr('style');
 			$('.n2tuio_remove').remove();
+			$('#n2tuio_edit_ring').remove();
 			hidePane();
 		};
 
@@ -1666,103 +1677,87 @@
 						if (e.altKey) {
 							// Shift+Alt+left, offset TUIO left
 							calibration.cursorXOffset -= 0.001;
-							calibrationDirty = true;
 						} else {
 							// Shift+left, shrink TUIO horizontally
 							calibration.cursorXScale -= 0.001;
-							calibrationDirty = true;
 						}
+						calibrationDirty = true;
 					} else if (code == 39) {
 						if (e.altKey) {
 							// Shift+Alt+right, offset TUIO right
 							calibration.cursorXOffset += 0.001;
-							calibrationDirty = true;
 						} else {
 							// Shift+right, expand TUIO horizontally
 							calibration.cursorXScale += 0.001;
-							calibrationDirty = true;
 						}
+						calibrationDirty = true;
 					} else if (code == 40) {
 						if (e.altKey) {
 							// Shift+Alt+down, offset TUIO down
 							calibration.cursorYOffset += 0.001;
-							calibrationDirty = true;
 						} else {
 							// Shift+down, shrink TUIO vertically
 							calibration.cursorYScale -= 0.001;
-							calibrationDirty = true;
 						}
+						calibrationDirty = true;
 					} else if (code == 38) {
 						if (e.altKey) {
 							// Shift+Alt+up, offset TUIO up
 							calibration.cursorYOffset -= 0.001;
-							calibrationDirty = true;
 						} else {
 							// Shift+up, grow TUIO vertically
 							calibration.cursorYScale += 0.001;
-							calibrationDirty = true;
 						}
+						calibrationDirty = true;
 					}
-
-					console.log("TUIO scale " + calibration.cursorXScale + "," + calibration.cursorYScale +
-								" offset " + calibration.cursorXOffset + "," + calibration.cursorYOffset);
-
 				} else if (code == 37) {
 					if (e.altKey) {
 						// Alt+left, shrink horizontally
-						calibration.xMargin += 5;
-						calibrationDirty = true;
+						calibration.xMargin += 2;
 					} else {
 						// Left, shift left
-						calibration.xOffset -= 5;
-						calibrationDirty = true;
+						calibration.xOffset -= 2;
 					}
 
 					content.style.left = (calibration.xMargin + calibration.xOffset) + "px";
 					content.style.right = (calibration.xMargin - calibration.xOffset) + "px";
-					console.log("X margin " + calibration.xMargin + " offset " + calibration.xOffset);
+					calibrationDirty = true;
 				} else if (code == 39) {
 					if (e.altKey) {
 						// Alt+right, grow horizontally
-						calibration.xMargin -= 5;
-						calibrationDirty = true;
+						calibration.xMargin -= 2;
 					} else {
 						// Right, shift right
-						calibration.xOffset += 5;
-						calibrationDirty = true;
+						calibration.xOffset += 2;
 					}
 
 					content.style.left = (calibration.xMargin + calibration.xOffset) + "px";
 					content.style.right = (calibration.xMargin - calibration.xOffset) + "px";
-					console.log("X margin " + calibration.xMargin + " offset " + calibration.xOffset);
+					calibrationDirty = true;
 				} else if (code == 40) {
 					if (e.altKey) {
 						// Alt+down, shrink vertically
-						calibration.yMargin += 5;
-						calibrationDirty = true;
+						calibration.yMargin += 2;
 					} else {
 						// Down, shift up
-						calibration.yOffset += 5;
-						calibrationDirty = true;
+						calibration.yOffset += 2;
 					}
 
 					content.style.top = (calibration.yMargin + calibration.yOffset) + "px";
 					content.style.bottom = (calibration.yMargin - calibration.yOffset) + "px";
-					console.log("Y margin " + calibration.yMargin + " offset " + calibration.yOffset);
+					calibrationDirty = true;
 				} else if (code == 38) {
 					if (e.altKey) {
 						// Alt+up, grow vertically
-						calibration.yMargin -= 5;
-						calibrationDirty = true;
+						calibration.yMargin -= 2;
 					} else {
 						// Up, shift down
-						calibration.yOffset -= 5;
-						calibrationDirty = true;
+						calibration.yOffset -= 2;
 					}
 
 					content.style.top = (calibration.yMargin + calibration.yOffset) + "px";
 					content.style.bottom = (calibration.yMargin - calibration.yOffset) + "px";
-					console.log("Y margin " + calibration.yMargin + " offset " + calibration.yOffset);
+					calibrationDirty = true;
 				} else if (code == 80) {
 					// P, show/hide pane
 					togglePane();
