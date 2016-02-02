@@ -1570,6 +1570,7 @@
 		} else {
 			$content.removeAttr('style');
 			$('.n2tuio_remove').remove();
+			$('#n2tuio_edit_ring').remove();
 			hidePane();
 		};
 
