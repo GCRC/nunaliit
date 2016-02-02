@@ -1420,7 +1420,11 @@
 	DrawOverlay.prototype.startStroke = function (x, y) {
 		this.context.lineCap = 'round';
 		this.context.lineWidth = 2;
-		this.context.strokeStyle = '#00FF00';
+		if (g_tuioService && g_tuioService.isEditing()) {
+			this.context.strokeStyle = '#FF0000';
+		} else {
+			this.context.strokeStyle = '#00FF00';
+		}
 		this.context.imageSmoothingEnabled = true;
 		if (!this.drawing) {
 			this.context.beginPath();
