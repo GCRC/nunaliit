@@ -155,6 +155,188 @@ var Export = $n2.Class('Export',{
 		$('body').append($form);
 		
 		$form.submit();
+	},
+	
+	exportBySchemaName: function(opts_){
+		var opts = $n2.extend({
+			schemaName: null
+			,targetWindow: null
+			,filter: 'all'
+			,contentType: null
+			,fileName: null
+			,format: null
+			,onError: $n2.reportError
+		},opts_);
+		
+		if( !opts.schemaName ) {
+			onError('schemaName must be provided when exporting by schema name');
+		};
+		
+		opts.docIds = undefined;
+
+		if( opts.targetWindow ){
+			this._exportByForm(opts);
+		} else {
+			this._exportByAjax(opts);
+		};
+	},
+	
+	_exportByForm: function(opts_){
+		var opts = $n2.extend({
+			docIds: null
+			,schemaName: null
+			,targetWindow: null
+			,filter: 'all'
+			,contentType: 'application/binary'
+			,fileName: null
+			,format: null
+			,onError: $n2.reportError
+		},opts_);
+		
+		var url = this.serverUrl + 'export';
+		if( opts.fileName ){
+			url = url + '/' + opts.fileName;
+		};
+		var $form = $('<form>')
+			.attr('action',url)
+			.attr('method','POST')
+			.css({
+				display: 'none'
+				,visibility: 'hidden'
+			});
+
+		// Target window
+		if( opts.targetWindow ){
+			$form.attr('target',opts.targetWindow);
+		};
+
+		if( opts.docIds ){
+			$('<input>')
+				.attr('type','hidden')
+				.attr('name','method')
+				.attr('value','doc-id')
+				.appendTo($form);
+
+			for(var i=0,e=opts.docIds.length; i<e; ++i){
+				var docId = opts.docIds[i];
+				$('<input>')
+					.attr('type','hidden')
+					.attr('name','name')
+					.val(docId)
+					.appendTo($form);
+			};
+
+		} else if( opts.schemaName ) {
+			$('<input>')
+				.attr('type','hidden')
+				.attr('name','method')
+				.attr('value','schema')
+				.appendTo($form);
+			$('<input>')
+				.attr('type','hidden')
+				.attr('name','name')
+				.val(opts.schemaName)
+				.appendTo($form);
+
+		} else {
+			opts.onError('Unrecognized export method');
+		};
+
+		if( opts.contentType ){
+			$('<input>')
+				.attr('type','hidden')
+				.attr('name','contentType')
+				.val(opts.contentType)
+				.appendTo($form);
+		};
+
+		if( opts.filter ){
+			$('<input>')
+				.attr('type','hidden')
+				.attr('name','filter')
+				.val(opts.filter)
+				.appendTo($form);
+		} else {
+			$('<input>')
+				.attr('type','hidden')
+				.attr('name','filter')
+				.val('all')
+				.appendTo($form);
+		};
+
+		if( opts.format ){
+			$('<input>')
+				.attr('type','hidden')
+				.attr('name','format')
+				.val(opts.format)
+				.appendTo($form);
+		} else {
+			$('<input>')
+				.attr('type','hidden')
+				.attr('name','format')
+				.val('geojson')
+				.appendTo($form);
+		};
+		
+		$('body').append($form);
+		
+		$form.submit();
+	},
+	
+	_exportByAjax: function(opts_){
+		var opts = $n2.extend({
+			docIds: null
+			,schemaName: null
+			,filter: 'all'
+			,format: null
+			,onSuccess: function(result){}
+			,onError: $n2.reportError
+		},opts_);
+		
+		var url = this.serverUrl + 'export';
+
+		var data = {};
+		if( opts.docIds ){
+			data.method = 'doc-id';
+			data.name = opts.docIds;
+
+		} else if( opts.schemaName ) {
+			data.method = 'schema';
+			data.name = opts.schemaName;
+
+		} else {
+			opts.onError('Unrecognized export method');
+		};
+
+		if( opts.contentType ){
+			data.contentType = 'text/plain';
+		};
+
+		if( opts.filter ){
+			data.filter = opts.filter;
+		} else {
+			data.filter = 'all';
+		};
+
+		if( opts.format ){
+			data.format = opts.format;
+		} else {
+			data.format = 'geojson';
+		};
+		
+		$.ajax({
+			url: url
+			,type: 'POST'
+			,data: data
+			,traditional: true
+			,dataType: 'text'
+			,success: function(res, textStatus, jqXHR){
+				opts.onSuccess(res);
+			}
+			,error: function(jqXHR, textStatus, httpError){
+				opts.Error(textStatus);
+			}
+		});
 	}
 });
 	

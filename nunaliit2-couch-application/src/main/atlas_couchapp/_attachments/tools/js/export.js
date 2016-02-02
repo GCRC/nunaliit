@@ -1,24 +1,24 @@
+;(function($,$n2){
+"use strict";
+	
+// Localization
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
 var config = null;
 var atlasDb = null;
 var atlasDesign = null;
 var serverDesign = null;
 var schemaRepository = null;
+var exportService = null;
 var $exportDiv = null;
 
 function showDocs(schema){
 
 	$('.exportResult').html('<div class="olkit_wait"></div>');
 	
-	atlasDesign.queryView({
-		viewName: 'nunaliit-schema'
-		,listName: 'csv_export'
-		,startkey: schema.name
-		,endkey: schema.name
-		,onlyRows: false
-		,include_docs: true
-		,csvExport: schema.csvExport
-		,rawResponse: true
+	exportService.exportBySchemaName({
+		schemaName: schema.name
+		,format: 'csv'
 		,onSuccess: function(csv){
 			$('.exportResult').empty();
 			var $textarea = $('<textarea class="exportCsv"></textarea>');
@@ -27,6 +27,33 @@ function showDocs(schema){
 		}
 		,onError: function(err) {
 			reportError('Problem querying view/list nunaliit-schema: '+err);
+		}
+	});
+};
+
+function downloadDocs(schema){
+
+	var windowId = $n2.getUniqueId();
+	
+	// Open a new iframe to get results
+	$('<iframe>')
+		.attr('name',windowId)
+		.attr('src','javascript:false')
+		.css({
+			visibility: 'hidden'
+			,display: 'none'
+		})
+		.appendTo( $('body') );
+	
+	exportService.exportBySchemaName({
+		schemaName: schema.name
+		,targetWindow: windowId
+		,filter: 'all'
+		,contentType: 'application/binary'
+		,fileName: 'export.csv'
+		,format: 'csv'
+		,onError: function(err){
+			alert(_loc('Error during export')+': '+err);
 		}
 	});
 };
@@ -97,51 +124,54 @@ function updateButtons(){
 	$('.exportDocCount').empty();
 	$('.exportButtons').empty();
 	
-	loadSchemaDocumentIds({
-		onSuccess: function(docIds, schemaName){
-			$('.exportDocCount').text(''+docIds.length+' document(s)');
-		}
-		,onError: function(err){}
-	});
+	if( !exportService ) {
+		$('.exportDocCount').text( _loc('Export service is not configured') );
+	} else {
+		exportService.checkAvailable({
+			onAvailable: prepareForExport
+			,onNotAvailable: function(){
+				$('.exportDocCount').text( _loc('Export service is not available') );
+			}
+		});
+	};
 	
-	loadCurrentSchema({
-		onSuccess: function(schema){
-			// Show local
-			var $showBtn = $('<button>Show</button>');
-			$('.exportButtons').append($showBtn);
-			$showBtn.click(function(){
-				showDocs(schema);
-				return false;
-			});
+	function prepareForExport(){
+		loadSchemaDocumentIds({
+			onSuccess: function(docIds, schemaName){
+				$('.exportDocCount').text(''+docIds.length+' document(s)');
+			}
+			,onError: function(err){}
+		});
+		
+		loadCurrentSchema({
+			onSuccess: function(schema){
+				// Show local
+				var $showBtn = $('<button>')
+					.text( _loc('Show') )
+					.appendTo( $('.exportButtons') )
+					.click(function(){
+						showDocs(schema);
+						return false;
+					});
 
-			// Download form
-			var actionUrl = atlasDesign.getQueryUrl({
-				viewName: 'nunaliit-schema'
-				,listName: 'csv_export'
-			});
-			var $downloadForm = $('<form class="exportForm" method="GET" action="'+actionUrl+'"></form>');
-			$('.exportButtons').append($downloadForm);
-			$downloadForm.append( $('<input type="hidden" name="include_docs" value="true"/>') );
-			$('<input type="hidden" name="startkey"/>')
-				.attr('value',JSON.stringify(schema.name))
-				.appendTo($downloadForm);
-			$('<input type="hidden" name="endkey"/>')
-				.attr('value',JSON.stringify(schema.name))
-				.appendTo($downloadForm);
-			$('<input type="hidden" name="csvExport"/>')
-				.attr('value',JSON.stringify(schema.csvExport))
-				.appendTo($downloadForm);
-			$downloadForm.append( $('<input type="submit" value="Download All"/>') );
-		}
-		,onError: function(err){}
-	});
+				var $downloadBtn = $('<button>')
+					.text( _loc('Download') )
+					.appendTo( $('.exportButtons') )
+					.click(function(){
+						downloadDocs(schema);
+						return false;
+					});
+			}
+			,onError: function(err){}
+		});
+	};
 };
 
 function loadedRootSchemas(schemas){
 	var exportableSchemas = [];
 	for(var i=0,e=schemas.length; i<e; ++i){
 		var s = schemas[i];
-		if( s.csvExport ) {
+		if( s.exportInfo ) {
 			exportableSchemas.push(s);
 		};
 	};
@@ -190,13 +220,19 @@ function reportError(err){
 	$e.append($d);
 };
 
-function exportMain(opts_) {
-	config = opts_.config;
-	atlasDb = opts_.config.atlasDb;
-	atlasDesign = opts_.config.atlasDesign;
-	serverDesign = opts_.config.serverDesign;
-	schemaRepository = opts_.config.directory.schemaRepository;
-	$exportDiv = opts_.div;
+function main(opts_) {
+	var opts = $n2.extend({
+		config: null
+		,div: null
+	},opts_);
+	
+	config = opts.config;
+	atlasDb = config.atlasDb;
+	atlasDesign = config.atlasDesign;
+	serverDesign = config.serverDesign;
+	schemaRepository = config.directory.schemaRepository;
+	exportService = config.directory.exportService;
+	$exportDiv = $(opts.div);
 	
 	$exportDiv
 		.empty()
@@ -215,4 +251,10 @@ function exportMain(opts_) {
 		}
 	});
 };
+
+$n2.exportApp = {
+	main: main
+};
+
+})(jQuery,nunaliit2);
 

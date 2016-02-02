@@ -1156,6 +1156,8 @@ var Schema = $n2.Class({
 	,cachedPopup: null
 	
 	,csvExport: null
+
+	,exportInfo: null
 	
 	,label: null
 
@@ -1174,6 +1176,7 @@ var Schema = $n2.Class({
 		this.formTemplate = jsonDefinition.form;
 		this.create = jsonDefinition.create;
 		this.csvExport = jsonDefinition.csvExport;
+		this.exportInfo = jsonDefinition['export'];
 		this.label = jsonDefinition.label;
 		this.options = jsonDefinition.options;
 		
