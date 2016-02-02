@@ -824,7 +824,7 @@
 	function onCursorUp(inst) {
 		var cursor = cursors[inst];
 		if (inst == pressCursor) {
-			if (drawZooming) {
+			if (drawZooming || (g_tuioService && g_tuioService.isEditing())) {
 				dispatchMouseEvent('mouseup', cursor.x, cursor.y);
 				if (overlay) {
 					overlay.hide();
@@ -1349,6 +1349,7 @@
 
 		this.parent = parent;
 		this.drawing = false;
+		this.isMouseDown = false;
 		this.startTime = Date.now();
 		this.points = [];
 		this.pathCallback = pathCallback;
@@ -1373,6 +1374,7 @@
 
 		this.canvas.onmousedown = function (e) {
 			var pos = self.getMousePosition(e);
+			self.isMouseDown = true;
 			self.startStroke(pos.x, pos.y);
 		};
 
@@ -1386,8 +1388,8 @@
 		this.canvas.onmouseup = function (e) {
 			var pos = self.getMousePosition(e);
 			self.moveTo(pos.x, pos.y);
-			self.drawing = false;
 			self.mouseUpTime = Date.now();
+			self.isMouseDown = false;
 			window.setTimeout(function() { self.endStroke(); }, drawDelay);
 		};
 	}
@@ -1405,13 +1407,18 @@
 	}
 
 	DrawOverlay.prototype.startStroke = function (x, y) {
-		this.drawing = true;
 		this.context.lineCap = 'round';
 		this.context.lineWidth = 2;
 		this.context.strokeStyle = '#00FF00';
-		this.context.beginPath();
 		this.context.imageSmoothingEnabled = true;
-		this.context.moveTo(x, y);
+		if (!this.drawing) {
+			this.context.beginPath();
+			this.context.moveTo(x, y);
+			this.drawing = true;
+		} else {
+			this.context.lineTo(x, y);
+		}
+
 		this.points.push([x, y]);
 	}
 
@@ -1439,7 +1446,7 @@
 	}
 
 	DrawOverlay.prototype.endStroke = function () {
-		if (!this.drawing && Date.now() - this.mouseUpTime >= drawDelay / 2.0) {
+		if (!this.isMouseDown && Date.now() - this.mouseUpTime >= drawDelay / 2.0) {
 			// Save bounding box for passing to path callback
 			var box = this.canvas.getBoundingClientRect();
 
@@ -1450,6 +1457,7 @@
 
 			this.pathCallback(box, this.points);
 			this.points = [];
+			this.drawing = false;
 		}
 	}
 
