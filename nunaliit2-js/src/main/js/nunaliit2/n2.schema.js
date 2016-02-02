@@ -1741,6 +1741,18 @@ var Form = $n2.Class({
 		
 		var classNames = $input.attr('class').split(' ');
 		var classInfo = parseClassNames(classNames);
+		
+		// Special case for references. Convert input into field
+		if( 'reference' === classInfo.type 
+		 && classInfo.selector ){
+			var $span = $('<span>')
+				.attr('nunaliit-selector',classInfo.selector.encodeForDomAttribute())
+				;
+			$input.after($span);
+			$input.remove();
+			this._installReference($elem,$span);
+			return;
+		};
 
 		var selector = classInfo.selector;
 		if( selector ) {
