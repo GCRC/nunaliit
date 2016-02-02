@@ -35,8 +35,8 @@
 	// Time in ms a cursor must be gone to be considered up
 	var clickDelay = 1000;
 
-	// Distance a cursor must remain within to count as a click or press
-	var clickDistance = 0.02;
+	// Maximum cursor travel distance (in TUIO coordinates) for a click/press
+	var clickDistance = 0.1;
 
 	// Distance in pixels below which to consider two drawn points the same
 	var pointDistance = 16.0;
