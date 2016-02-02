@@ -1703,10 +1703,10 @@
 				} else if (code == 37) {
 					if (e.altKey) {
 						// Alt+left, shrink horizontally
-						calibration.xMargin += 5;
+						calibration.xMargin += 2;
 					} else {
 						// Left, shift left
-						calibration.xOffset -= 5;
+						calibration.xOffset -= 2;
 					}
 
 					content.style.left = (calibration.xMargin + calibration.xOffset) + "px";
@@ -1715,10 +1715,10 @@
 				} else if (code == 39) {
 					if (e.altKey) {
 						// Alt+right, grow horizontally
-						calibration.xMargin -= 5;
+						calibration.xMargin -= 2;
 					} else {
 						// Right, shift right
-						calibration.xOffset += 5;
+						calibration.xOffset += 2;
 					}
 
 					content.style.left = (calibration.xMargin + calibration.xOffset) + "px";
@@ -1727,10 +1727,10 @@
 				} else if (code == 40) {
 					if (e.altKey) {
 						// Alt+down, shrink vertically
-						calibration.yMargin += 5;
+						calibration.yMargin += 2;
 					} else {
 						// Down, shift up
-						calibration.yOffset += 5;
+						calibration.yOffset += 2;
 					}
 
 					content.style.top = (calibration.yMargin + calibration.yOffset) + "px";
@@ -1739,10 +1739,10 @@
 				} else if (code == 38) {
 					if (e.altKey) {
 						// Alt+up, grow vertically
-						calibration.yMargin -= 5;
+						calibration.yMargin -= 2;
 					} else {
 						// Up, shift down
-						calibration.yOffset -= 5;
+						calibration.yOffset -= 2;
 					}
 
 					content.style.top = (calibration.yMargin + calibration.yOffset) + "px";
