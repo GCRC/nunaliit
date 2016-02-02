@@ -851,8 +851,9 @@
 
 				if (el) {
 					dispatchMouseEventTo('mousedown', el, winX, winY);
-					if (el.nodeName.toLowerCase() == "input" ||
-						el.nodeName.toLowerCase() == "textarea") {
+					if ((el.nodeName.toLowerCase() == "input" ||
+						 el.nodeName.toLowerCase() == "textarea") &&
+						el.getAttribute("type") != "button") {
 						$(el).focus();
 					}
 					dispatchMouseEventTo('mouseup', el, winX, winY);
