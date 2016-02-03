@@ -3,7 +3,7 @@
 
 	var DH = 'n2.tuio';
 
-	var MAX_SPRING_K = 120.0;
+	var MAX_SPRING_K = 160.0;
 	var SPRING_LEN = 0.0000000000001;
 
 	var usePhysics = true;
@@ -30,7 +30,7 @@
 	var scrollSpeed = 1.0;
 
 	// Time in ms to wait until abandoning a draw and starting pinch/pan
-	var moveDelay = 250.0;
+	var moveDelay = 200.0;
 
 	// Time in ms a cursor must be gone to be considered up
 	var clickDelay = 1000;
@@ -76,7 +76,7 @@
 
 	// Pinch zoom parameters
 	var lastPinchZoomDistance = undefined;
-	var pinchZoomThreshold = 0.175;
+	var pinchZoomThreshold = 0.14;
 
 	// Draw overlay canvas
 	var overlay = undefined;
@@ -323,7 +323,7 @@
 
 		// Time since start in ms
 		var elapsed = timestamp - this.lastTime;
-		var dur = elapsed / 250;  // Arbitrary scale for in-universe time
+		var dur = elapsed / 200;  // Arbitrary scale for in-universe time
 		this.lastTime = timestamp;
 
 		// Damp old velocity to avoid oscillation
