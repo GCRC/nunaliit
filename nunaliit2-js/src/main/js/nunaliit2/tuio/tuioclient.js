@@ -714,6 +714,17 @@
 			.appendTo( $('#content') );
 	}
 
+	function displayError() {
+		$('.n2tuio_edit_ring').css({
+			'background-color': 'red'
+		});
+		window.setTimeout(function() {
+			$('.n2tuio_edit_ring').css({
+				'background-color': 'transparent'
+			});
+		}, 1000);
+	}
+
 	/** Find the closest non-full hand to the given point. */
 	function bestHand(x, y) {
 		var bestDistance = Infinity;
@@ -953,11 +964,21 @@
 
 			if (lastPinchZoomDistance != undefined) {
 				var delta = lastPinchZoomDistance - d;
+				var currentZoom = moduleDisplay.mapControl.map.getZoom();
+				var nZoomLevels = moduleDisplay.mapControl.map.getNumZoomLevels();
 				if (delta > pinchZoomThreshold) {
-					moduleDisplay.mapControl.map.zoomOut();
+					if (currentZoom > 1) {
+						moduleDisplay.mapControl.map.zoomOut();
+					} else {
+						displayError();
+					}
 					lastPinchZoomDistance = d;
 				} else if (delta < -pinchZoomThreshold) {
-					moduleDisplay.mapControl.map.zoomIn();
+					if (currentZoom < nZoomLevels - 1) {
+						moduleDisplay.mapControl.map.zoomIn();
+					} else {
+						displayError();
+					}
 					lastPinchZoomDistance = d;
 				}
 			} else {
