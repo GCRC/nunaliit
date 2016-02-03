@@ -17,6 +17,8 @@ import ca.carleton.gcrc.couch.export.ExportFormat;
 import ca.carleton.gcrc.couch.export.SchemaCache;
 import ca.carleton.gcrc.couch.export.SchemaExportInfo;
 import ca.carleton.gcrc.couch.export.SchemaExportProperty;
+import ca.carleton.gcrc.couch.utils.NunaliitDocument;
+import ca.carleton.gcrc.couch.utils.NunaliitGeometry;
 
 public class ExportFormatCSV implements ExportFormat {
 
@@ -67,13 +69,14 @@ public class ExportFormatCSV implements ExportFormat {
 	}
 
 	private void outputDocument(Writer writer, Document doc) throws Exception {
-		JSONObject jsonDoc = doc.getJSONObject();
+		NunaliitDocument nunaliitDoc = new NunaliitDocument(doc);
+		JSONObject jsonDoc = nunaliitDoc.getJSONObject();
 
 		String docSchemaName = jsonDoc.optString("nunaliit_schema");
 		if( null != docSchemaName ) {
 			// Capture first schema name and associated export info
 			if( null == schemaName ){
-				exportInfo = schemaCache.getExportInfo(docSchemaName);
+				exportInfo = schemaCache.getCsvExportInfo(docSchemaName);
 				if( null != exportInfo ){
 					schemaName = docSchemaName;
 					
@@ -106,7 +109,20 @@ public class ExportFormatCSV implements ExportFormat {
 				}
 				
 				for(SchemaExportProperty exportProperty : exportInfo.getProperties()){
-					Object value = exportProperty.select(jsonDoc);
+					Object value = null;
+					
+					if( SchemaExportProperty.Type.GEOMETRY == exportProperty.getType() ){
+						// Need to select the original geometry
+						NunaliitGeometry docGeometry = nunaliitDoc.getOriginalGometry();
+						if( null != docGeometry ){
+							String wkt = docGeometry.getWKT();
+							value = wkt;
+						}
+
+					} else {
+						value = exportProperty.select(jsonDoc);
+					};
+					
 					values.add(value);
 				}
 				printCsvLine(writer, values);

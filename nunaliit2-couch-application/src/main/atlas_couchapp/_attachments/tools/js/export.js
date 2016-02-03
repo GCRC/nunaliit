@@ -171,7 +171,7 @@ function loadedRootSchemas(schemas){
 	var exportableSchemas = [];
 	for(var i=0,e=schemas.length; i<e; ++i){
 		var s = schemas[i];
-		if( s.exportInfo ) {
+		if( s.csvExport ) {
 			exportableSchemas.push(s);
 		};
 	};
