@@ -2017,8 +2017,8 @@
 				if (lonlat) {
 					return new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
 				}
-			} else if (distance(first.x, first.y, last.x, last.y) <= pointDistance ||
-					   (poly = simplifyPolygon(this.positions)) != null) {
+			} else if ((poly = simplifyPolygon(this.positions)) != null ||
+					   distance(first.x, first.y, last.x, last.y) <= pointDistance) {
 				// Start/end are close, or there is an intersection, create a polygon
 				var points = (poly ? this.positionsToPoints(poly)
 				                   : this.positionsToPoints(this.positions));
