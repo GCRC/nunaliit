@@ -2,11 +2,13 @@ package ca.carleton.gcrc.couch.app.impl;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Vector;
+import java.util.Map;
 
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.app.Attachment;
 import ca.carleton.gcrc.couch.app.Document;
@@ -22,10 +24,12 @@ public class DocumentCouchDb implements Document {
 			throw new Exception("Unable to create document from database",e);
 		}
 	}
+
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	private CouchDb couchDb;
 	private JSONObject jsonObj;
-	private List<AttachmentCouchDb> attachments = new Vector<AttachmentCouchDb>();
+	private Map<String,AttachmentCouchDb> attachmentsByName = new HashMap<String,AttachmentCouchDb>();
 	
 	public DocumentCouchDb(CouchDb couchDb, String docId) throws Exception {
 		if( null == couchDb ){
@@ -59,7 +63,8 @@ public class DocumentCouchDb implements Document {
 							,contentType
 							,size
 							);
-					attachments.add(attachment);
+					attachmentsByName.put(attachmentName,attachment);
+					logger.trace("Attachment: "+getId()+"/"+attachmentName);
 				}
 			}
 		}
@@ -95,7 +100,12 @@ public class DocumentCouchDb implements Document {
 
 	@Override
 	public Collection<Attachment> getAttachments() {
-		return new ArrayList<Attachment>(attachments);
+		return new ArrayList<Attachment>(attachmentsByName.values());
+	}
+
+	@Override
+	public Attachment getAttachmentByName(String name) {
+		return attachmentsByName.get(name);
 	}
 
 }

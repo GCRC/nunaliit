@@ -10,8 +10,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Vector;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -81,7 +82,7 @@ public class DocumentFile implements Document {
 	private FSEntryNameFilter filter = null;
 	private FSEntry includeDir;
 	private JSONObject jsonObj = null;
-	private List<AttachmentFile> attachments = new Vector<AttachmentFile>();
+	private Map<String,AttachmentFile> attachmentsByName = new HashMap<String,AttachmentFile>();
 	private String ATT_INFO_PERIOD_EXTENSION = "."+DocumentStoreProcessImpl.ATT_INFO_EXTENSION;
 
 	private DocumentFile(FSEntry directory, FSEntryNameFilter filter, FSEntry includeDir) throws Exception {
@@ -122,7 +123,12 @@ public class DocumentFile implements Document {
 
 	@Override
 	public Collection<Attachment> getAttachments() {
-		return new ArrayList<Attachment>(attachments);
+		return new ArrayList<Attachment>(attachmentsByName.values());
+	}
+
+	@Override
+	public Attachment getAttachmentByName(String attachmentName) {
+		return attachmentsByName.get(attachmentName);
 	}
 
 	private void readTopDirectory() throws Exception {
@@ -305,7 +311,7 @@ public class DocumentFile implements Document {
 		}
 		
 		AttachmentFile att = new AttachmentFile(attachmentName, file, contentType);
-		this.attachments.add(att);
+		this.attachmentsByName.put(attachmentName,att);
 	}
 
 	private JSONArray readArrayDirectory(FSEntry dir) throws Exception{

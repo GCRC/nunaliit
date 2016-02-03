@@ -1156,6 +1156,8 @@ var Schema = $n2.Class({
 	,cachedPopup: null
 	
 	,csvExport: null
+
+	,exportInfo: null
 	
 	,label: null
 
@@ -1174,6 +1176,7 @@ var Schema = $n2.Class({
 		this.formTemplate = jsonDefinition.form;
 		this.create = jsonDefinition.create;
 		this.csvExport = jsonDefinition.csvExport;
+		this.exportInfo = jsonDefinition['export'];
 		this.label = jsonDefinition.label;
 		this.options = jsonDefinition.options;
 		
@@ -1741,6 +1744,18 @@ var Form = $n2.Class({
 		
 		var classNames = $input.attr('class').split(' ');
 		var classInfo = parseClassNames(classNames);
+		
+		// Special case for references. Convert input into field
+		if( 'reference' === classInfo.type 
+		 && classInfo.selector ){
+			var $span = $('<span>')
+				.attr('nunaliit-selector',classInfo.selector.encodeForDomAttribute())
+				;
+			$input.after($span);
+			$input.remove();
+			this._installReference($elem,$span);
+			return;
+		};
 
 		var selector = classInfo.selector;
 		if( selector ) {

@@ -2551,7 +2551,15 @@
 			var windowId = $n2.getUniqueId();
 			
 			// Open a new window to get results
-			open('about:blank', windowId);
+			//open('about:blank', windowId);
+			$('<iframe>')
+				.attr('name',windowId)
+				.attr('src','javascript:false')
+				.css({
+					visibility: 'hidden'
+					,display: 'none'
+				})
+				.appendTo( $('body') );
 			
 			exportService.exportByDocIds({
 				docIds: list.docIds

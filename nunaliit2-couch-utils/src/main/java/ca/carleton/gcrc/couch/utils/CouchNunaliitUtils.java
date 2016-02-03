@@ -10,11 +10,15 @@ import java.util.Vector;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
 
 
 public class CouchNunaliitUtils {
+	
+	static final protected Logger logger = LoggerFactory.getLogger(CouchNunaliitUtils.class);
 
 	static public void adjustDocumentForStorage(
 			JSONObject doc

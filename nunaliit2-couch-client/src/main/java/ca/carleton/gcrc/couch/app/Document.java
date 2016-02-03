@@ -15,4 +15,12 @@ public interface Document {
 	JSONObject getJSONObject();
 
 	Collection<Attachment> getAttachments();
+	
+	/**
+	 * Returns the attachment associated with the given name.
+	 * Return null if attachment does not exist.
+	 * @param attachmentName Name of seeked attachment
+	 * @return The named attachment, or null if not found
+	 */
+	Attachment getAttachmentByName(String attachmentName);
 }
