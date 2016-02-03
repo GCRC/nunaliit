@@ -2022,8 +2022,9 @@
 				});
 
 				// Save (empty) document for drawn geometry
-				// Kludge, TODO: inhibit zoom, stay in edit mode
-				$("button.save").click();
+				this.tuioService.dispatch({
+					type: 'editTriggerSave'
+				});
 			};
 		}
 	});
@@ -2137,6 +2138,12 @@
 			};
 
 			return proj;
+		},
+
+		dispatch: function(m){
+			if( this.dispatchService ){
+				this.dispatchService.send(DH,m);
+			};
 		},
 
 		_handle: function(m, addr, dispatcher){
