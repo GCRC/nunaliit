@@ -154,7 +154,7 @@
 	width: 190px;
 }
 
-#n2tuio_edit_ring {
+.n2tuio_edit_ring {
 	border-color: green;
 	border-radius: 50%;
 	border-style: solid;
@@ -168,6 +168,10 @@
 	top: 0;
 }
 
-.nunaliit_editing #n2tuio_edit_ring {
+.nunaliit_editing .n2tuio_edit_ring {
 	border-color: red;
+}
+
+.n2tuio_hide {
+	display: none;
 }

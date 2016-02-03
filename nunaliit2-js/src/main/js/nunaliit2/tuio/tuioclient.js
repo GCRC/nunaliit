@@ -709,10 +709,9 @@
 	}
 
 	function createRing() {
-		var div = document.createElement("div");
-		div.id = "n2tuio_edit_ring";
-		$('#content')[0].appendChild(div);
-		return div;
+		var $div = $('<div>')
+			.addClass('n2tuio_edit_ring')
+			.appendTo( $('#content') );
 	}
 
 	/** Find the closest non-full hand to the given point. */
@@ -1595,7 +1594,7 @@
 		} else {
 			$content.removeAttr('style');
 			$('.n2tuio_remove').remove();
-			$('#n2tuio_edit_ring').remove();
+			$('.n2tuio_edit_ring').remove();
 			hidePane();
 		};
 
@@ -1681,11 +1680,7 @@
 					};
 				} else if (code == 66) {
 					// b, toggle border
-					if ($('#n2tuio_edit_ring')[0].style.display == 'none') {
-						$('#n2tuio_edit_ring')[0].style.display = 'block';
-					} else {
-						$('#n2tuio_edit_ring')[0].style.display = 'none';
-					}
+					$('.n2tuio_edit_ring').toggleClass('n2tuio_hide');
 				} else if (e.shiftKey) {
 					// TUIO calibration
 					if (code == 37) {
