@@ -673,8 +673,7 @@ var MapAndControls = $n2.Class({
     convertToMultiGeometry: null,
     
     // EDIT_FEATURE mode
-    editFeatureFid: null,
-    editFeatureOriginal: null,
+    editFeatureInfo: undefined,
 
     // COMETD
     cometEnabled: null,
@@ -792,8 +791,9 @@ var MapAndControls = $n2.Class({
 		this.pendingMarkInfo = null;
 		this.mapBusyCount = 0;
 		this.dhtmlSoundDivId = $n2.getUniqueId();
-		this.editFeatureFid = null;
-		this.editFeatureOriginal = {};
+		this.editFeatureInfo = {
+			original: {}
+		};
 
 	    // HOVER and CLICK
 		this.selectFeatureControl = null;
@@ -874,8 +874,9 @@ var MapAndControls = $n2.Class({
 				,onEndClick: function(feature) {
 				}
 				,featureAdded: function(feature) {
-					_this.editFeatureOriginal = {};
-					_this.editFeatureFid = undefined;
+					_this.editFeatureInfo.original = {};
+					_this.editFeatureInfo.fid = undefined;
+					_this.editFeatureInfo.suppressZoom = true;
 					
 					var mapProj = feature.layer.map.getProjectionObject();
 
@@ -1722,7 +1723,7 @@ var MapAndControls = $n2.Class({
 		} else {
 			// Add
 	    	editFeature = new OpenLayers.Feature.Vector(olGeom);
-	    	editFeature.fid = this.editFeatureFid;
+	    	editFeature.fid = this.editFeatureInfo.fid;
 
 	    	// Add to edit layer
 	    	this.editModeAddFeatureEnabled = false;
@@ -2310,11 +2311,12 @@ var MapAndControls = $n2.Class({
 			// is then moved over to the location of the geometry. In that case,
 			// the geometry might load up after the mode was switched.
 			if( _this.currentMode === _this.modes.EDIT_FEATURE
-			 && _this.editFeatureFid
+			 && _this.editFeatureInfo
+			 && _this.editFeatureInfo.fid
 			 && evt_
 			 && evt_.features 
 			 && evt_.features.length ){
-				var editFeatureFid = _this.editFeatureFid;
+				var editFeatureFid = _this.editFeatureInfo.fid;
 				
 				var featuresToRemove = [];
 				for(var i=0,e=evt_.features.length; i<e; ++i){
@@ -3300,8 +3302,8 @@ var MapAndControls = $n2.Class({
 
     _geometryModified: function(fid, olGeom, proj){
 		// Check that this relates to the right feature
-		if( fid && fid !== this.editFeatureFid ) return;
-		if( !fid && this.editFeatureFid ) return;
+		if( fid && fid !== this.editFeatureInfo.fid ) return;
+		if( !fid && this.editFeatureInfo.fid ) return;
     	
 		if( this.currentMode === this.modes.EDIT_FEATURE 
 		 && !olGeom ){
@@ -4564,6 +4566,31 @@ var MapAndControls = $n2.Class({
 			this.mapMouseMoveListeners.push(listener);
 		};
 	},
+
+	initiateEditFromGeometry: function(opts_){
+		var opts = $n2.extend({
+			geometry: null
+			,suppressCenter: false
+		},opts_);
+
+		if( !opts.geometry ){
+			throw 'Geometry must be provided';
+		};
+
+    	if( this.currentMode === this.modes.ADD_OR_SELECT_FEATURE ) {
+    		this._switchMapMode(this.modes.ADD_OR_SELECT_FEATURE);
+    	};
+		
+		if( opts.suppressCenter ){
+			this.editFeatureInfo.suppressCenter = true;
+		};
+		
+		var editLayer = this.editLayer;
+
+		var feature = new OpenLayers.Feature.Vector(opts.geometry);
+		editLayer.addFeatures([feature]);
+
+	},
 	
 	_retrieveCachedValue: function(id) {
 		// Look through the layers
@@ -4998,10 +5025,10 @@ var MapAndControls = $n2.Class({
 				};
 			};
 			
-    		this.editFeatureFid = fid;
-			this.editFeatureOriginal = {
-				restoreGeom: false
-				,data: $n2.document.clone(m.doc)
+			this.editFeatureInfo = {};
+    		this.editFeatureInfo.fid = fid;
+			this.editFeatureInfo.original = {
+				data: $n2.document.clone(m.doc)
 			};
 	    	var effectiveFeature = null;
 			if( feature ){
@@ -5032,9 +5059,9 @@ var MapAndControls = $n2.Class({
 		    		featureLayer.addFeatures(featuresToAddBack);
 		    	};
 		    	
-		    	this.editFeatureOriginal.layer = featureLayer;
-		    	this.editFeatureOriginal.feature = effectiveFeature;
-		    	this.editFeatureOriginal.style = feature.style;
+		    	this.editFeatureInfo.original.layer = featureLayer;
+		    	this.editFeatureInfo.original.feature = effectiveFeature;
+		    	this.editFeatureInfo.original.style = feature.style;
 			};
 			
 			if( addGeometryMode ){
@@ -5066,16 +5093,16 @@ var MapAndControls = $n2.Class({
 			this._switchMapMode(this.modes.NAVIGATE);
 			
 			// Restore original geometry
-			if( restoreFeature && this.editFeatureOriginal ){
-				var originalLayer = this.editFeatureOriginal.layer;
-				var originalFeature = this.editFeatureOriginal.feature;
-				var originalData = this.editFeatureOriginal.data;
-				var originalStyle = this.editFeatureOriginal.style;
+			if( restoreFeature && this.editFeatureInfo.original ){
+				var originalLayer = this.editFeatureInfo.original.layer;
+				var originalFeature = this.editFeatureInfo.original.feature;
+				var originalData = this.editFeatureInfo.original.data;
+				var originalStyle = this.editFeatureInfo.original.style;
 				
 				// Compute effective feature
 				var effectiveFeature = null;
 				if( originalFeature 
-				 && this.editFeatureFid === m.docId ){
+				 && this.editFeatureInfo.fid === m.docId ){
 					effectiveFeature = originalFeature;
 				} else {
 					reloadRequired = true;
@@ -5100,8 +5127,8 @@ var MapAndControls = $n2.Class({
 				};
 			};
 			
-			this.editFeatureOriginal = {};
-			this.editFeatureFid = undefined;
+			this.editFeatureInfo = {};
+			this.editFeatureInfo.original = {};
 			
 			if( !m.deleted ) {
 				var docId = m.docId;
@@ -5124,11 +5151,16 @@ var MapAndControls = $n2.Class({
 
 		} else if( 'editReportOriginalDocument' === type ) {
 			if( m.geometry 
-			 && m.docId === this.editFeatureFid ){
+			 && m.docId === this.editFeatureInfo.fid ){
 				// Adjust geometry
 				this._geometryModified(m.docId, m.geometry, m.projection);
-				
-				// Zoom
+
+				var zoomRequired = true;
+				if( this.editFeatureInfo.suppressZoom ){
+					zoomRequired = false;
+				};
+
+				// Zoom/Center
 				if( m.doc
 				 && m.doc.nunaliit_geom
 				 && m.doc.nunaliit_geom.bbox 
@@ -5142,7 +5174,11 @@ var MapAndControls = $n2.Class({
 					var ydiff = (ymax - ymin) / 3;
 					
 					// Do not zoom on points
-					if( xdiff > 0 || ydiff > 0 ){
+					if( xdiff <= 0 && ydiff <= 0 ){
+						zoomRequired = false;
+					};
+					
+					if( zoomRequired ){
 						xmin = xmin - xdiff;
 						xmax = xmax + xdiff;
 						ymin = ymin - ydiff;
@@ -5152,6 +5188,11 @@ var MapAndControls = $n2.Class({
 							[xmin,ymin,xmax,ymax]
 							,m.projection.getCode()
 						);
+					} else if( !this.editFeatureInfo.suppressCenter ) {
+						// Center on geometry
+						var x = (xmin + xmax)/2;
+						var y = (ymin + ymax)/2;
+						this._centerMapOnXY(x,y,m.projection.getCode());
 					};
 				};
 			};

@@ -1810,6 +1810,17 @@ var CouchDocumentEditor = $n2.Class({
 			,suppressEvents: opts.suppressEvents
 		});
 	},
+	
+	performSave: function(opts_) {
+		var opts = $n2.extend({
+		},opts_);
+
+		if( null == this.editedDocument ) {
+			return;
+		};
+	
+		this._save();
+	},
 
 	_discardEditor: function(opts_) {
 		var opts = $n2.extend({
@@ -2200,6 +2211,7 @@ var CouchEditService = $n2.Class({
 			dispatcher.register(DH, 'editInitiate', f);
 			dispatcher.register(DH, 'editCreateFromGeometry', f);
 			dispatcher.register(DH, 'editCancel', f);
+			dispatcher.register(DH, 'editTriggerSave', f);
 		};
 		
 		// Service defined buttons
@@ -2275,6 +2287,13 @@ var CouchEditService = $n2.Class({
     		this.currentEditor = null;
     	};
 	},
+	
+	saveDocumentForm: function(opts){
+    	if( null != this.currentEditor ) {
+    		this.currentEditor.performSave(opts);
+    		this.currentEditor = null;
+    	};
+	},
 
 	setPanelName: function(panelName) {
 		this.panelName = panelName;
@@ -2341,6 +2360,9 @@ var CouchEditService = $n2.Class({
 			
 		} else if( 'editCancel' === m.type ) {
 			this.cancelDocumentForm();
+
+		} else if( 'editTriggerSave' === m.type ) {
+			this.saveDocumentForm();
 			
 		} else if( null != this.currentEditor ) {
     		this.currentEditor._handle(m);

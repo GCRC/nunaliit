@@ -24,18 +24,37 @@
 	overflow: visible;
 	padding-top: 92px;
 	bottom: 50px;
-    top: 50px;
-    z-index: 10;	
+	top: 50px;
+	z-index: 10;
 }
 
 .nunaliit_tuio .n2_content_map_interaction {
-	top: 45%;
-	right: 40px;
+	bottom: 75px;
+    left: 50%;
+    top: auto;
+    right: auto;
+}
+
+.nunaliit_tuio .n2_content_map_interaction input {
+    position: absolute;
+    left: -120px;
+    top: 0px;
+    right: auto;
+    bottom: auto;
+}
+
+.nunaliit_tuio .map_interaction input
+,.nunaliit_tuio .n2_content_map_interaction input {
+	border-radius: 19px;
+	opacity: 0.5;
+	padding: 16px;
+	width: 250px;
 }
 
 .nunaliit_tuio .olControlEditingToolbar {
-	top: 100px;
+	display: none;
 	left: 420px;
+	top: 100px;
 }
 
 .nunaliit_tuio .nunaliit_content {
@@ -52,13 +71,27 @@
 }
 
 .nunaliit_tuio .olControlZoom {
-	top: 400px;
-	left: 71px;
+	top: 500px;
+	left: 64px;
 }
 
-.nunaliit_tuio .olControlLayerSwitcher {
-	top: 350px;
-	left: 100px;
+.nunaliit_tuio div.olControlZoom a {
+	padding: 8px;
+}
+
+.nunaliit_tuio .olButton {
+	border-radius: 19px;
+}
+
+.nunaliit_tuio .olControlLayerSwitcher .maximizeDiv, .nunaliit_tuio .olControlLayerSwitcher .minimizeDiv {
+	background-repeat: no-repeat;
+	background-size: 38px 38px;
+	border-radius: 19px;
+	height: 38px;
+	left: 15px;
+	opacity: 0.5;
+	top: 359px;
+	width: 38px;
 }
 
 .n2tuio_rotate_handle {
@@ -96,4 +129,59 @@
 	width: 100%;
 	height: 100%;
 	z-index: 999999999;
+}
+
+.nunaliit_tuio .nunaliit_form_link {
+	padding: 15px 10px 15px 15px;
+}
+
+.nunaliit_tuio .ui-menu-item a {
+	padding: 1em;
+}
+
+.nunaliit_tuio .ui-widget {
+	font-size: 1.1em;
+}
+
+.nunaliit_tuio input[type="radio"]
+, .nunaliit_tuio input[type="checkbox"] {
+	border: 0px;
+	height: 35px;
+	width: 35px;
+}
+
+.nunaliit_tuio .n2layerSwitcher_label_container {
+	vertical-align: middle;
+}
+
+.nunaliit_tuio .olControlLayerSwitcher .layersDiv {
+	font-size: medium;
+	left: 60px;
+	line-height: 40px;
+	padding: 11px 15px;
+	position: absolute;
+	top: 250px;
+	width: 190px;
+}
+
+.n2tuio_edit_ring {
+	border-color: green;
+	border-radius: 50%;
+	border-style: solid;
+	border-width: 40px;
+	bottom: 0;
+	left: 0;
+	opacity: 0.4;
+	pointer-events: none;
+	position: absolute;
+	right: 0;
+	top: 0;
+}
+
+.nunaliit_editing .n2tuio_edit_ring {
+	border-color: red;
+}
+
+.n2tuio_hide {
+	display: none;
 }
