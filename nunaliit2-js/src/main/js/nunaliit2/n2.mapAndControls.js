@@ -4566,6 +4566,31 @@ var MapAndControls = $n2.Class({
 			this.mapMouseMoveListeners.push(listener);
 		};
 	},
+
+	initiateEditFromGeometry: function(opts_){
+		var opts = $n2.extend({
+			geometry: null
+			,suppressCenter: false
+		},opts_);
+
+		if( !opts.geometry ){
+			throw 'Geometry must be provided';
+		};
+
+    	if( this.currentMode === this.modes.ADD_OR_SELECT_FEATURE ) {
+    		this._switchMapMode(this.modes.ADD_OR_SELECT_FEATURE);
+    	};
+		
+		if( opts.suppressCenter ){
+			this.editFeatureInfo.suppressCenter = true;
+		};
+		
+		var editLayer = this.editLayer;
+
+		var feature = new OpenLayers.Feature.Vector(opts.geometry);
+		editLayer.addFeatures([feature]);
+
+	},
 	
 	_retrieveCachedValue: function(id) {
 		// Look through the layers
@@ -5163,7 +5188,7 @@ var MapAndControls = $n2.Class({
 							[xmin,ymin,xmax,ymax]
 							,m.projection.getCode()
 						);
-					} else {
+					} else if( !this.editFeatureInfo.suppressCenter ) {
 						// Center on geometry
 						var x = (xmin + xmax)/2;
 						var y = (ymin + ymax)/2;
