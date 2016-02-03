@@ -840,35 +840,33 @@
 	function onCursorUp(inst) {
 		var cursor = cursors[inst];
 		if (inst == pressCursor) {
-			if (drawZooming || (g_tuioService && g_tuioService.isEditing())) {
-				dispatchMouseEvent('mouseup', cursor.x, cursor.y);
-				if (overlay) {
-					overlay.hide();
-				}
-			}
+			dispatchMouseEvent('mouseup', cursor.x, cursor.y);
 
 			// Convert coordinates to window relative for dispatch
 			var winX = cursor.x * window.innerWidth;
 			var winY = cursor.y * window.innerHeight;
-
+			var isEditing = g_tuioService && g_tuioService.isEditing();
 			var elapsed = Date.now() - cursor.birthTime;
-			if (cursor.distanceMoved <= clickDistance && elapsed < clickDelay) {
+
+			// Get the element (underneath the overlay) at the cursor position
+			var wasSensitive = overlay.setSensitive(false);
+			var el = getElementAtTablePoint(cursor.x, cursor.y);
+			overlay.setSensitive(wasSensitive);
+
+			if (el && cursor.distanceMoved <= clickDistance && elapsed < clickDelay) {
 				console.log("Click!");
-				var el = getElementAtTablePoint(cursor.x, cursor.y);
-				if (el && el.id.startsWith("OpenLayers")) {
+				if (el.id.startsWith("OpenLayers")) {
 					hidePane();
 				}
 
-				if (el) {
-					dispatchMouseEventTo('mousedown', el, winX, winY);
-					if ((el.nodeName.toLowerCase() == "input" ||
-						 el.nodeName.toLowerCase() == "textarea") &&
-						el.getAttribute("type") != "button") {
-						$(el).focus();
-					}
-					dispatchMouseEventTo('mouseup', el, winX, winY);
-					dispatchMouseEventTo('click', el, winX, winY);
+				dispatchMouseEventTo('mousedown', el, winX, winY);
+				if ((el.nodeName.toLowerCase() == "input" ||
+					 el.nodeName.toLowerCase() == "textarea") &&
+					el.getAttribute("type") != "button") {
+					$(el).focus();
 				}
+				dispatchMouseEventTo('mouseup', el, winX, winY);
+				dispatchMouseEventTo('click', el, winX, winY);
 			}
 			pressCursor = undefined;
 		}
@@ -1425,16 +1423,26 @@
 		};
 	}
 
+	DrawOverlay.prototype.setSensitive = function (sensitive) {
+		var wasSensitive = (this.canvas.style.pointerEvents != "none");
+		if (sensitive) {
+			this.canvas.style.pointerEvents = "auto";
+		} else {
+			this.canvas.style.pointerEvents = "none";
+		}
+		return wasSensitive;
+	}
+
 	DrawOverlay.prototype.show = function () {
 		this.canvas.style.left = "0px";
 		this.canvas.style.width = "100%";
-		this.canvas.style.pointerEvents = "auto";
+		this.setSensitive(true);
 	}
 
 	DrawOverlay.prototype.hide = function () {
 		this.canvas.style.left = "100%";
 		this.canvas.style.width = "0";
-		this.canvas.style.pointerEvents = "none";
+		this.setSensitive(false);
 	}
 
 	DrawOverlay.prototype.startStroke = function (x, y) {
@@ -1490,9 +1498,19 @@
 			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 			this.hide();
 
-			this.pathCallback(box, this.points);
-			this.points = [];
+			if (this.points.length > 0) {
+				this.pathCallback(box, this.points);
+				this.points = [];
+			}
 			this.drawing = false;
+		} else {
+			/* The mouse went away, but came back, so reschedule an endStroke.
+			   This should happen on the next mouseup event anyway, but if
+			   events get funny/unreliable, we want to ensure the stroke is
+			   ended, otherwise it will stay visible on the canvas and do
+			   nothing. */
+			var self = this;
+			window.setTimeout(function() { self.endStroke(); }, drawDelay);
 		}
 	}
 
