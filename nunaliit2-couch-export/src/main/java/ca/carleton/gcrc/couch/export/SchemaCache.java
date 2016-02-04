@@ -7,4 +7,6 @@ public interface SchemaCache {
 	Document getSchema(String schemaName) throws Exception;
 	
 	SchemaExportInfo getExportInfo(String schemaName) throws Exception;
+	
+	SchemaExportInfo getCsvExportInfo(String schemaName) throws Exception;
 }

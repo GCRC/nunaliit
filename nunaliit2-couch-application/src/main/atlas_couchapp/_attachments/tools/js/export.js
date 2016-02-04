@@ -9,29 +9,89 @@ var atlasDb = null;
 var atlasDesign = null;
 var serverDesign = null;
 var schemaRepository = null;
+var showService = null;
 var exportService = null;
 var $exportDiv = null;
 
-function showDocs(schema){
+function showDocs(opts_){
+	var opts = $n2.extend({
+		schema: null
+		,layerId: null
+		,format: null
+	},opts_);
 
+	var schema = opts.schema;
+	var layerId = opts.layerId;
+	
+	$('.exportError').empty();
 	$('.exportResult').html('<div class="olkit_wait"></div>');
 	
-	exportService.exportBySchemaName({
-		schemaName: schema.name
-		,format: 'csv'
-		,onSuccess: function(csv){
-			$('.exportResult').empty();
-			var $textarea = $('<textarea class="exportCsv"></textarea>');
-			$('.exportResult').append($textarea);
-			$textarea.text(csv);
-		}
-		,onError: function(err) {
-			reportError('Problem querying view/list nunaliit-schema: '+err);
-		}
-	});
+	var format = 'csv';
+	if( opts.format ){
+		format = opts.format;
+	};
+	
+	if( schema ){
+		exportService.exportBySchemaName({
+			schemaName: schema.name
+			,format: format
+			,onSuccess: function(csv){
+				$('.exportResult').empty();
+				var $textarea = $('<textarea class="exportCsv"></textarea>');
+				$('.exportResult').append($textarea);
+				$textarea.text(csv);
+			}
+			,onError: function(errStr,error) {
+				$('.exportResult').empty();
+				if( error ){
+					reportError(error);
+				} else {
+					reportError('Problem exporting by schema name: '+errStr);
+				};
+			}
+		});
+
+	} else if( layerId ) {
+		exportService.exportByLayerId({
+			layerId: layerId
+			,format: 'csv'
+			,onSuccess: function(csv){
+				$('.exportResult').empty();
+				var $textarea = $('<textarea class="exportCsv"></textarea>');
+				$('.exportResult').append($textarea);
+				$textarea.text(csv);
+			}
+			,onError: function(errStr) {
+				$('.exportResult').empty();
+				if( error ){
+					reportError(error);
+				} else {
+					reportError('Problem exporting by layer id: '+errStr);
+				};
+			}
+		});
+	};
 };
 
-function downloadDocs(schema){
+function downloadDocs(opts_){
+	var opts = $n2.extend({
+		schema: null
+		,layerId: null
+		,format: null
+	},opts_);
+
+	var schema = opts.schema;
+	var layerId = opts.layerId;
+	
+	var format = 'csv';
+	var fileName = 'export.csv';
+	if( opts.format ){
+		format = opts.format;
+		
+		if( 'geojson' === format ){
+			fileName = 'export.geojson';
+		};
+	};
 
 	var windowId = $n2.getUniqueId();
 	
@@ -45,61 +105,46 @@ function downloadDocs(schema){
 		})
 		.appendTo( $('body') );
 	
-	exportService.exportBySchemaName({
-		schemaName: schema.name
-		,targetWindow: windowId
-		,filter: 'all'
-		,contentType: 'application/binary'
-		,fileName: 'export.csv'
-		,format: 'csv'
-		,onError: function(err){
-			alert(_loc('Error during export')+': '+err);
-		}
-	});
-};
+	if( schema ){
+		exportService.exportBySchemaName({
+			schemaName: schema.name
+			,targetWindow: windowId
+			,filter: 'all'
+			,contentType: 'application/binary'
+			,fileName: fileName
+			,format: format
+			,onError: function(err){
+				alert(_loc('Error during export')+': '+err);
+			}
+		});
 
-function getCurrentSchemaName(){
-	var $sel = $('.exportSelect').find('select');
-	if( $sel.length < 1 ) {
-		return null;
+	} else if( layerId ){
+		exportService.exportByLayerId({
+			layerId: layerId
+			,targetWindow: windowId
+			,filter: 'all'
+			,contentType: 'application/binary'
+			,fileName: fileName
+			,format: format
+			,onError: function(err){
+				alert(_loc('Error during export')+': '+err);
+			}
+		});
 	};
-	var schemaName = $sel.val();
-	return schemaName;
-};
-
-function loadCurrentSchema(opts_){
-	var opts = $n2.extend({
-		onSuccess: function(schema){}
-		,onError: function(err){
-			reportError('Error. Unable to load current schema: '+err);
-		}
-	},opts_);
-
-	var schemaName = getCurrentSchemaName();
-	if( !schemaName ) {
-		opts.onError('No schema selected');
-		return;
-	};
-
-	schemaRepository.getSchema({
-		name: schemaName
-		,onSuccess: opts.onSuccess
-		,onError: opts.onError
-	});
 };
 
 function loadSchemaDocumentIds(opts_){
 	var opts = $n2.extend({
-		onSuccess: function(docIds, schemaName){}
+		schemaName: null
+		,onSuccess: function(docIds, schemaName){}
 		,onError: function(err){
 			reportError('Error. Unable to load document related to selected schema: '+err);
 		}
 	},opts_);
 	
-	var schemaName = getCurrentSchemaName();
+	var schemaName = opts.schemaName;
 	if( !schemaName ) {
-		opts.onError('No schema selected');
-		return;
+		throw 'Schema name not specified';
 	};
 	
 	atlasDesign.queryView({
@@ -119,93 +164,293 @@ function loadSchemaDocumentIds(opts_){
 	});
 };
 
-function updateButtons(){
-
-	$('.exportDocCount').empty();
-	$('.exportButtons').empty();
+function loadLayerDocumentIds(opts_){
+	var opts = $n2.extend({
+		layerId: null
+		,onSuccess: function(docIds){}
+		,onError: function(err){
+			reportError('Error. Unable to load document related to selected layer: '+err);
+		}
+	},opts_);
 	
-	if( !exportService ) {
-		$('.exportDocCount').text( _loc('Export service is not configured') );
-	} else {
-		exportService.checkAvailable({
-			onAvailable: prepareForExport
-			,onNotAvailable: function(){
-				$('.exportDocCount').text( _loc('Export service is not available') );
-			}
-		});
+	var layerId = opts.layerId;
+	if( !layerId ) {
+		throw 'layerId not specified';
 	};
 	
-	function prepareForExport(){
-		loadSchemaDocumentIds({
-			onSuccess: function(docIds, schemaName){
-				$('.exportDocCount').text(''+docIds.length+' document(s)');
-			}
-			,onError: function(err){}
+	atlasDesign.queryView({
+		viewName: 'layers'
+		,startkey: layerId
+		,endkey: layerId
+		,onSuccess: function(rows){
+			var docIds = [];
+			for(var i=0,e=rows.length; i<e; ++i){
+				docIds.push(rows[i].id);
+			};
+			opts.onSuccess(docIds);
+		}
+		,onError: function(err) {
+			opts.onError('Problem querying view layers: '+err);
+		}
+	});
+};
+
+function showButtons(opts_){
+	var opts = $n2.extend({
+		schema: null
+		,layerId: null
+		,div: null
+	},opts_);
+	
+	var $div = $( opts.div );
+	$div.empty();
+
+	var $formatSel = $('<select>')
+		.addClass('.exportControls_formatSelector')
+		.appendTo( $div );
+	var formatSelId = $n2.utils.getElementIdentifier($formatSel);
+	var formats = ['csv','geojson'];
+	for(var i=0,e=formats.length; i<e; ++i){
+		var format = formats[i];
+		$('<option>')
+			.text( format )
+			.val( format )
+			.appendTo($formatSel);
+	};
+	
+	$('<button>')
+		.text( _loc('Show') )
+		.appendTo( $div )
+		.click(function(){
+			var $formatSel = $('#'+formatSelId);
+			var format = $formatSel.val();
+			showDocs({
+				schema: opts.schema
+				,layerId: opts.layerId
+				,format: format
+			});
+			return false;
 		});
-		
-		loadCurrentSchema({
-			onSuccess: function(schema){
-				// Show local
-				var $showBtn = $('<button>')
-					.text( _loc('Show') )
-					.appendTo( $('.exportButtons') )
-					.click(function(){
-						showDocs(schema);
-						return false;
+
+	$('<button>')
+		.text( _loc('Download') )
+		.appendTo( $div )
+		.click(function(){
+			var $formatSel = $('#'+formatSelId);
+			var format = $formatSel.val();
+			downloadDocs({
+				schema: opts.schema
+				,layerId: opts.layerId
+				,format: format
+			});
+			return false;
+		});
+};
+
+function schemaSelected($sel){
+
+	$('.exportResult').empty();
+	$('.exportError').empty();
+	var $result = $('.exportControls_schemaResult').empty();
+	
+	$('<span>')
+		.addClass('exportDocCount')
+		.appendTo($result);
+
+	$('<span>')
+		.addClass('exportButtons')
+		.appendTo($result);
+
+	var schemaName = $sel.val();
+	
+	loadSchemaDocumentIds({
+		schemaName: schemaName
+		,onSuccess: function(docIds, schemaName){
+			$('.exportDocCount').text(''+docIds.length+' document(s)');
+		}
+		,onError: function(err){}
+	});
+	
+	schemaRepository.getSchema({
+		name: schemaName
+		,onSuccess: function(schema){
+			showButtons({
+				schema: schema
+				,div: $('.exportButtons')
+			});
+		}
+		,onError: function(err){}
+	});
+};
+
+function layerSelected($sel){
+
+	$('.exportResult').empty();
+	$('.exportError').empty();
+	var $result = $('.exportControls_layerResult').empty();
+	
+	$('<span>')
+		.addClass('exportDocCount')
+		.appendTo($result);
+
+	$('<span>')
+		.addClass('exportButtons')
+		.appendTo($result);
+
+	var layerId = $sel.val();
+	
+	loadLayerDocumentIds({
+		layerId: layerId
+		,onSuccess: function(docIds){
+			$('.exportDocCount').text(''+docIds.length+' document(s)');
+		}
+		,onError: function(err){}
+	});
+	
+	showButtons({
+		layerId: layerId
+		,div: $('.exportButtons')
+	});
+};
+
+function methodChanged($select){
+	$('.exportControls_methodResult')
+		.empty();
+	
+	if( 'schema' === $select.val() ){
+		schemaRepository.getRootSchemas({
+			onSuccess: function(schemas){
+				var exportableSchemas = [];
+				for(var i=0,e=schemas.length; i<e; ++i){
+					var s = schemas[i];
+					if( s.csvExport ) {
+						exportableSchemas.push(s);
+					};
+				};
+				
+				exportableSchemas.sort(function(a,b){
+					if( a.name < b.name ) {
+						return -1;
+					} else if( a.name > b.name ){
+						return 1;
+					} else {
+						return 0;
+					};
+				});
+				
+				var $methodResult = $('.exportControls_methodResult').empty();
+				if( exportableSchemas.length > 0 ) {
+					var $sel = $('<select>')
+						.appendTo($methodResult);
+
+					for(var i=0,e=exportableSchemas.length; i<e; ++i){
+						var s = exportableSchemas[i];
+						var $o = $('<option></option>');
+						$o.text(s.name);
+						$sel.append($o);
+					};
+					
+					$sel.change(function(){
+						var $sel = $(this);
+						schemaSelected($sel);
+						return true;
 					});
 
-				var $downloadBtn = $('<button>')
-					.text( _loc('Download') )
-					.appendTo( $('.exportButtons') )
-					.click(function(){
-						downloadDocs(schema);
-						return false;
-					});
+					$('<span>')
+						.addClass('exportControls_schemaResult')
+						.appendTo($methodResult);
+					
+					schemaSelected($sel);
+
+				} else {
+					$('.exportControls_methodResult').text('No exportable schema found');
+				};
 			}
-			,onError: function(err){}
+			,onError: function(err){
+				reportError('Error. Unable to get schemas: '+err);
+			}
 		});
+
+	} else if( 'layer' === $select.val() ){
+		atlasDesign.queryView({
+			viewName: 'layers'
+			,reduce: true
+			,group: true
+			,onSuccess: function(rows){
+				var layerIds = [];
+				for(var i=0,e=rows.length; i<e; ++i){
+					var layerId = rows[i].key;
+					layerIds.push(layerId);
+				};
+				
+				var $methodResult = $('.exportControls_methodResult').empty();
+				
+				if( layerIds.length > 0 ){
+					var $sel = $('<select>')
+						.appendTo($methodResult);
+					for(var i=0,e=layerIds.length; i<e; ++i){
+						var layerId = layerIds[i];
+						var $o = $('<option></option>')
+							.val(layerId)
+							.text(layerId)
+							.appendTo($sel);
+						
+						if( showService ){
+							showService.printLayerName($o, layerId);
+						};
+					};
+					
+					$sel.change(function(){
+						var $sel = $(this);
+						layerSelected($sel);
+						return true;
+					});
+
+					$('<span>')
+						.addClass('exportControls_layerResult')
+						.appendTo($methodResult);
+					
+					layerSelected($sel);
+				};
+			}
+			,onError: function(err){
+				reportError(_loc('Unable to obtain list of layers')+': '+err);
+			}
+		});
+
+	} else {
+		$('.exportControls_methodResult').text('Not implemented:'+$select.val());
 	};
 };
 
-function loadedRootSchemas(schemas){
-	var exportableSchemas = [];
-	for(var i=0,e=schemas.length; i<e; ++i){
-		var s = schemas[i];
-		if( s.exportInfo ) {
-			exportableSchemas.push(s);
-		};
-	};
+function installMethodButton(){
+	var $controls = $('.exportControls')
+		.empty();
 	
-	exportableSchemas.sort(function(a,b){
-		if( a.name < b.name ) {
-			return -1;
-		} else if( a.name > b.name ){
-			return 1;
-		} else {
-			return 0;
-		};
-	});
-	
-	$('.exportSelect').empty();
-	if( exportableSchemas.length > 0 ) {
-		var $sel = $('<select></select>');
-		for(var i=0,e=exportableSchemas.length; i<e; ++i){
-			var s = exportableSchemas[i];
-			var $o = $('<option></option>');
-			$o.text(s.name);
-			$sel.append($o);
-		};
-		$('.exportSelect').append($sel);
-		
-		$sel.change(function(){
-			$('.exportResult').empty();
-			updateButtons();
+	var $select = $('<select>')
+		.addClass('exportControls_methodSelector')
+		.appendTo($controls)
+		.change(function(){
+			var $sel = $(this);
+			methodChanged($sel);
+			return true;
 		});
-	} else {
-		$('.exportSelect').text('No exportable schema found');
-	};
+
+	$('<option>')
+		.text( _loc('Schemas') )
+		.val('schema')
+		.appendTo($select);
+
+	$('<option>')
+		.text( _loc('Layers') )
+		.val('layer')
+		.appendTo($select);
 	
-	updateButtons();
+	$('<span>')
+		.addClass('exportControls_methodResult')
+		.appendTo($controls);
+	
+	methodChanged($select);
 };
 
 function reportError(err){
@@ -215,9 +460,26 @@ function reportError(err){
 		$exportDiv.append($e);
 	};
 	
-	var $d = $('<div></div>');
-	$d.text(err);
-	$e.append($d);
+	if( typeof err === 'string' ){
+		var $d = $('<div></div>');
+		$d.text(err);
+		$e.append($d);
+
+	} else if( typeof err === 'object' && err.error ) {
+		var cause = err;
+		while( cause ){
+			var $d = $('<div></div>');
+			$d.text(cause.error);
+			$e.append($d);
+			
+			cause = cause.cause;
+		};
+		
+	} else {
+		var $d = $('<div></div>');
+		$d.text(''+err);
+		$e.append($d);
+	};
 };
 
 function main(opts_) {
@@ -227,29 +489,43 @@ function main(opts_) {
 	},opts_);
 	
 	config = opts.config;
-	atlasDb = config.atlasDb;
-	atlasDesign = config.atlasDesign;
-	serverDesign = config.serverDesign;
-	schemaRepository = config.directory.schemaRepository;
-	exportService = config.directory.exportService;
 	$exportDiv = $(opts.div);
+	
+	if( config ){
+		atlasDb = config.atlasDb;
+		atlasDesign = config.atlasDesign;
+		serverDesign = config.serverDesign;
+		
+		if( config.directory ){
+			schemaRepository = config.directory.schemaRepository;
+			showService = config.directory.showService;
+			exportService = config.directory.exportService;
+		};
+	};
 	
 	$exportDiv
 		.empty()
-		.append( $('<div class="exportControls"><span class="exportSelect"></span><span class="exportDocCount"></span><span class="exportButtons"></span><div>') )
-		.append( $('<div class="exportResult"><div>') )
-		.append( $('<div class="exportError"><div>') )
 		;
-	
-	// Get all schemas and select those with CSV export
-	schemaRepository.getRootSchemas({
-		onSuccess: function(schemas){
-			loadedRootSchemas(schemas);
-		}
-		,onError: function(err){
-			reportError('Error. Unable to get schemas: '+err);
-		}
-	});
+	$('<div>')
+		.addClass('exportControls')
+		.appendTo($exportDiv);
+	$('<div>')
+		.addClass('exportResult')
+		.appendTo($exportDiv);
+	$('<div>')
+		.addClass('exportError')
+		.appendTo($exportDiv);
+
+	if( !exportService ) {
+		$('.exportControls').text( _loc('Export service is not configured') );
+	} else {
+		exportService.checkAvailable({
+			onAvailable: installMethodButton
+			,onNotAvailable: function(){
+				$('.exportControls').text( _loc('Export service is not available') );
+			}
+		});
+	};
 };
 
 $n2.exportApp = {

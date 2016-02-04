@@ -169,10 +169,36 @@ var Export = $n2.Class('Export',{
 		},opts_);
 		
 		if( !opts.schemaName ) {
-			onError('schemaName must be provided when exporting by schema name');
+			opts.onError('schemaName must be provided when exporting by schema name');
 		};
 		
 		opts.docIds = undefined;
+		opts.layerId = undefined;
+
+		if( opts.targetWindow ){
+			this._exportByForm(opts);
+		} else {
+			this._exportByAjax(opts);
+		};
+	},
+	
+	exportByLayerId: function(opts_){
+		var opts = $n2.extend({
+			layerId: null
+			,targetWindow: null
+			,filter: 'all'
+			,contentType: null
+			,fileName: null
+			,format: null
+			,onError: $n2.reportError
+		},opts_);
+		
+		if( !opts.layerId ) {
+			opts.onError('layerId must be provided when exporting by layer identifier');
+		};
+		
+		opts.docIds = undefined;
+		opts.schemaName = undefined;
 
 		if( opts.targetWindow ){
 			this._exportByForm(opts);
@@ -185,6 +211,7 @@ var Export = $n2.Class('Export',{
 		var opts = $n2.extend({
 			docIds: null
 			,schemaName: null
+			,layerId: null
 			,targetWindow: null
 			,filter: 'all'
 			,contentType: 'application/binary'
@@ -238,6 +265,18 @@ var Export = $n2.Class('Export',{
 				.val(opts.schemaName)
 				.appendTo($form);
 
+		} else if( opts.layerId ) {
+			$('<input>')
+				.attr('type','hidden')
+				.attr('name','method')
+				.attr('value','layer')
+				.appendTo($form);
+			$('<input>')
+				.attr('type','hidden')
+				.attr('name','name')
+				.val(opts.layerId)
+				.appendTo($form);
+
 		} else {
 			opts.onError('Unrecognized export method');
 		};
@@ -287,6 +326,7 @@ var Export = $n2.Class('Export',{
 		var opts = $n2.extend({
 			docIds: null
 			,schemaName: null
+			,layerId: null
 			,filter: 'all'
 			,format: null
 			,onSuccess: function(result){}
@@ -303,6 +343,10 @@ var Export = $n2.Class('Export',{
 		} else if( opts.schemaName ) {
 			data.method = 'schema';
 			data.name = opts.schemaName;
+
+		} else if( opts.layerId ) {
+			data.method = 'layer';
+			data.name = opts.layerId;
 
 		} else {
 			opts.onError('Unrecognized export method');
@@ -334,7 +378,8 @@ var Export = $n2.Class('Export',{
 				opts.onSuccess(res);
 			}
 			,error: function(jqXHR, textStatus, httpError){
-				opts.Error(textStatus);
+				var error = $n2.utils.parseHttpJsonError(jqXHR,textStatus);
+				opts.onError(error.error,error);
 			}
 		});
 	}

@@ -103,7 +103,7 @@ public class NunaliitDocument implements Document {
 							char[] buffer = new char[1024];
 							int size = isr.read(buffer);
 							while( size >= 0 ){
-								sw.write(buffer);
+								sw.write(buffer,0,size);
 								size = isr.read(buffer);
 							}
 							sw.flush();

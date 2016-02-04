@@ -6,7 +6,6 @@ import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +26,7 @@ public class SchemaCacheCouchDb implements SchemaCache {
 	private CouchDesignDocument dd;
 	private Map<String,Document> documentsFromSchemaName = new HashMap<String,Document>();
 	private Map<String,SchemaExportInfo> exportInfoFromSchemaName = new HashMap<String,SchemaExportInfo>();
+	private Map<String,SchemaExportInfo> csvExportInfoFromSchemaName = new HashMap<String,SchemaExportInfo>();
 	
 	public SchemaCacheCouchDb(CouchDb couchDb) throws Exception {
 //		this.couchDb = couchDb;
@@ -87,6 +87,30 @@ public class SchemaCacheCouchDb implements SchemaCache {
 		}
 		
 		exportInfoFromSchemaName.put(schemaName,exportInfo);
+		
+		return exportInfo;
+	}
+
+	@Override
+	public SchemaExportInfo getCsvExportInfo(String schemaName) throws Exception {
+		if( csvExportInfoFromSchemaName.containsKey(schemaName) ){
+			return csvExportInfoFromSchemaName.get(schemaName);
+		}
+		
+		SchemaExportInfo exportInfo = null;
+		try {
+			Document doc = getSchema(schemaName);
+			if( null != doc ) {
+				JSONArray jsonExport = doc.getJSONObject().optJSONArray("csvExport");
+				if( null != jsonExport ) {
+					exportInfo = SchemaExportInfo.parseJson(jsonExport);
+				}
+			}
+		} catch(Exception e) {
+			throw new Exception("Error parsing CSV export field for schema: "+schemaName,e);
+		}
+		
+		csvExportInfoFromSchemaName.put(schemaName,exportInfo);
 		
 		return exportInfo;
 	}
