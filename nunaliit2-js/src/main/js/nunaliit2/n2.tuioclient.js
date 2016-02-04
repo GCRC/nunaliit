@@ -1666,6 +1666,9 @@
 			if( tuioConfiguration ){
 				tuioConfiguration.setTableModeActive(true);
 			};
+			
+			// Disable map toggle
+			g_tuioService.disableMapToggleClick();
 
 			// Inform OpenLayers that map was resized
 			if( moduleDisplay
@@ -1697,6 +1700,9 @@
 			if( tuioConfiguration ){
 				tuioConfiguration.setTableModeActive(false);
 			};
+			
+			// Restore map toggle
+			g_tuioService.restoreMapToggleClick();
 
 			// Inform OpenLayers that map was resized
 			if( moduleDisplay
@@ -2164,6 +2170,8 @@
 		mapEditing: null,
 
 		moduleDisplay: null,
+		
+		originalMapToggleClick: null,
 
 		initialize: function(opts_){
 			var opts = $n2.extend({
@@ -2176,6 +2184,7 @@
 			this.unrecognizedTangibles = {};
 			this.editing = false;
 			this.mapEditing = false;
+			this.originalMapToggleClick = true;
 
 			this.dispatchService = opts.dispatchService;
 
@@ -2267,6 +2276,20 @@
 				type: 'mapResetExtent'
 			});
 		},
+		
+		disableMapToggleClick: function(){
+			var mapControl = this.getMapControl();
+			if( mapControl && mapControl.options ){
+				mapControl.options.toggleClick = false;
+			};
+		},
+
+		restoreMapToggleClick: function(){
+			var mapControl = this.getMapControl();
+			if( mapControl && mapControl.options ){
+				mapControl.options.toggleClick = this.originalMapToggleClick;
+			};
+		},
 
 		dispatch: function(m){
 			if( this.dispatchService ){
@@ -2290,6 +2313,11 @@
 			} else if( 'reportModuleDisplay' === m.type ) {
 				moduleDisplay = m.moduleDisplay;
 				this.moduleDisplay = m.moduleDisplay;
+				
+				var mapControl = this.getMapControl();
+				if( mapControl && mapControl.options ){
+					this.originalMapToggleClick = mapControl.options.toggleClick;
+				};
 
 			} else if( 'editInitiate' === m.type ) {
 				this.editing = true;
