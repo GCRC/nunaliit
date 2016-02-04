@@ -1638,15 +1638,16 @@
 			var $resetOuter = $('<div>')
 				.addClass('n2tuio_resetExtent_outer n2tuio_remove')
 				.appendTo( $('.nunaliit_content') );
-			$('<input>')
+			$('<a>')
 				.addClass('n2tuio_resetExtent')
-				.attr('type','button')
-				.val( _loc('Reset') )
+				.attr('href','#')
+				.text( '#' )
 				.appendTo( $resetOuter )
 				.click(function(){
 					if( g_tuioService ){
 						g_tuioService.resetMapToInitialExtent();
 					};
+					return false;
 				});
 
 			// Create green/red edit ring
