@@ -496,16 +496,6 @@ function main(opts_) {
 			}
 		});
 	};
-
-	// Get all schemas and select those with CSV export
-//	schemaRepository.getRootSchemas({
-//		onSuccess: function(schemas){
-//			loadedRootSchemas(schemas);
-//		}
-//		,onError: function(err){
-//			reportError('Error. Unable to get schemas: '+err);
-//		}
-//	});
 };
 
 $n2.exportApp = {
