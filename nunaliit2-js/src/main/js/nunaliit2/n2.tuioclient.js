@@ -1037,7 +1037,7 @@
 				tuioService: g_tuioService
 			});
 			for(var i=0,e=points.length; i<e; ++i){
-				geometryCapture.addPoint(points[i][0], points[i][1]);
+				geometryCapture.addPoint(points[i]);
 			};
 			geometryCapture.endDrawing();
 
@@ -1053,10 +1053,10 @@
 			var right = 0;
 			var top = Infinity;
 			for (var i = 0; i < points.length; ++i) {
-				left = Math.min(left, points[i][0]);
-				bottom = Math.max(bottom, points[i][1]);
-				right = Math.max(right, points[i][0]);
-				top = Math.min(top, points[i][1]);
+				left = Math.min(left, points[i].x);
+				bottom = Math.max(bottom, points[i].y);
+				right = Math.max(right, points[i].x);
+				top = Math.min(top, points[i].y);
 			}
 
 			// Ensure bounding rectangle has a reasonable size
@@ -1489,7 +1489,7 @@
 			this.context.lineTo(x, y);
 		}
 
-		this.points.push([x, y]);
+		this.points.push(new Vector(x, y));
 	}
 
 	DrawOverlay.prototype.moveTo = function (x, y) {
@@ -1503,7 +1503,7 @@
 
 		this.context.lineTo(x, y);
 		this.context.stroke();
-		this.points.push([x, y]);
+		this.points.push(new Vector(x, y));
 	}
 
 	DrawOverlay.prototype.abortStroke = function () {
@@ -2081,11 +2081,11 @@
 			this.tuioService = opts.tuioService;
 		},
 
-		addPoint: function(x,y){
+		addPoint: function(pos){
 			if (this.positions.length == 0 ||
-			    this.positions[this.positions.length - 1].x != x ||
-			    this.positions[this.positions.length - 1].y != y) {
-			    this.positions.push(new Vector(x, y));
+				this.positions[this.positions.length - 1].x != pos.x ||
+				this.positions[this.positions.length - 1].y != pos.y) {
+				this.positions.push(pos);
 			}
 		},
 
