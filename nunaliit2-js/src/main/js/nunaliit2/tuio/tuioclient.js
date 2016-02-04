@@ -3,7 +3,7 @@
 
 	var DH = 'n2.tuio';
 
-	var MAX_SPRING_K = 120.0;
+	var MAX_SPRING_K = 160.0;
 	var SPRING_LEN = 0.0000000000001;
 
 	var usePhysics = true;
@@ -30,7 +30,7 @@
 	var scrollSpeed = 1.0;
 
 	// Time in ms to wait until abandoning a draw and starting pinch/pan
-	var moveDelay = 250.0;
+	var moveDelay = 200.0;
 
 	// Time in ms a cursor must be gone to be considered up
 	var clickDelay = 1000;
@@ -76,7 +76,7 @@
 
 	// Pinch zoom parameters
 	var lastPinchZoomDistance = undefined;
-	var pinchZoomThreshold = 0.175;
+	var pinchZoomThreshold = 0.14;
 
 	// Draw overlay canvas
 	var overlay = undefined;
@@ -323,7 +323,7 @@
 
 		// Time since start in ms
 		var elapsed = timestamp - this.lastTime;
-		var dur = elapsed / 250;  // Arbitrary scale for in-universe time
+		var dur = elapsed / 200;  // Arbitrary scale for in-universe time
 		this.lastTime = timestamp;
 
 		// Damp old velocity to avoid oscillation
@@ -714,6 +714,17 @@
 			.appendTo( $('#content') );
 	}
 
+	function displayError() {
+		$('.n2tuio_edit_ring').css({
+			'background-color': 'red'
+		});
+		window.setTimeout(function() {
+			$('.n2tuio_edit_ring').css({
+				'background-color': 'transparent'
+			});
+		}, 1000);
+	}
+
 	/** Find the closest non-full hand to the given point. */
 	function bestHand(x, y) {
 		var bestDistance = Infinity;
@@ -829,35 +840,33 @@
 	function onCursorUp(inst) {
 		var cursor = cursors[inst];
 		if (inst == pressCursor) {
-			if (drawZooming || (g_tuioService && g_tuioService.isEditing())) {
-				dispatchMouseEvent('mouseup', cursor.x, cursor.y);
-				if (overlay) {
-					overlay.hide();
-				}
-			}
+			dispatchMouseEvent('mouseup', cursor.x, cursor.y);
 
 			// Convert coordinates to window relative for dispatch
 			var winX = cursor.x * window.innerWidth;
 			var winY = cursor.y * window.innerHeight;
-
+			var isEditing = g_tuioService && g_tuioService.isEditing();
 			var elapsed = Date.now() - cursor.birthTime;
-			if (cursor.distanceMoved <= clickDistance && elapsed < clickDelay) {
+
+			// Get the element (underneath the overlay) at the cursor position
+			var wasSensitive = overlay.setSensitive(false);
+			var el = getElementAtTablePoint(cursor.x, cursor.y);
+			overlay.setSensitive(wasSensitive);
+
+			if (el && cursor.distanceMoved <= clickDistance && elapsed < clickDelay) {
 				console.log("Click!");
-				var el = getElementAtTablePoint(cursor.x, cursor.y);
-				if (el && el.id.startsWith("OpenLayers")) {
+				if (el.id.startsWith("OpenLayers")) {
 					hidePane();
 				}
 
-				if (el) {
-					dispatchMouseEventTo('mousedown', el, winX, winY);
-					if ((el.nodeName.toLowerCase() == "input" ||
-						 el.nodeName.toLowerCase() == "textarea") &&
-						el.getAttribute("type") != "button") {
-						$(el).focus();
-					}
-					dispatchMouseEventTo('mouseup', el, winX, winY);
-					dispatchMouseEventTo('click', el, winX, winY);
+				dispatchMouseEventTo('mousedown', el, winX, winY);
+				if ((el.nodeName.toLowerCase() == "input" ||
+					 el.nodeName.toLowerCase() == "textarea") &&
+					el.getAttribute("type") != "button") {
+					$(el).focus();
 				}
+				dispatchMouseEventTo('mouseup', el, winX, winY);
+				dispatchMouseEventTo('click', el, winX, winY);
 			}
 			pressCursor = undefined;
 		}
@@ -953,11 +962,21 @@
 
 			if (lastPinchZoomDistance != undefined) {
 				var delta = lastPinchZoomDistance - d;
+				var currentZoom = moduleDisplay.mapControl.map.getZoom();
+				var nZoomLevels = moduleDisplay.mapControl.map.getNumZoomLevels();
 				if (delta > pinchZoomThreshold) {
-					moduleDisplay.mapControl.map.zoomOut();
+					if (currentZoom > 1) {
+						moduleDisplay.mapControl.map.zoomOut();
+					} else {
+						displayError();
+					}
 					lastPinchZoomDistance = d;
 				} else if (delta < -pinchZoomThreshold) {
-					moduleDisplay.mapControl.map.zoomIn();
+					if (currentZoom < nZoomLevels - 1) {
+						moduleDisplay.mapControl.map.zoomIn();
+					} else {
+						displayError();
+					}
 					lastPinchZoomDistance = d;
 				}
 			} else {
@@ -1404,16 +1423,26 @@
 		};
 	}
 
+	DrawOverlay.prototype.setSensitive = function (sensitive) {
+		var wasSensitive = (this.canvas.style.pointerEvents != "none");
+		if (sensitive) {
+			this.canvas.style.pointerEvents = "auto";
+		} else {
+			this.canvas.style.pointerEvents = "none";
+		}
+		return wasSensitive;
+	}
+
 	DrawOverlay.prototype.show = function () {
 		this.canvas.style.left = "0px";
 		this.canvas.style.width = "100%";
-		this.canvas.style.pointerEvents = "auto";
+		this.setSensitive(true);
 	}
 
 	DrawOverlay.prototype.hide = function () {
 		this.canvas.style.left = "100%";
 		this.canvas.style.width = "0";
-		this.canvas.style.pointerEvents = "none";
+		this.setSensitive(false);
 	}
 
 	DrawOverlay.prototype.startStroke = function (x, y) {
@@ -1469,9 +1498,19 @@
 			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 			this.hide();
 
-			this.pathCallback(box, this.points);
-			this.points = [];
+			if (this.points.length > 0) {
+				this.pathCallback(box, this.points);
+				this.points = [];
+			}
 			this.drawing = false;
+		} else {
+			/* The mouse went away, but came back, so reschedule an endStroke.
+			   This should happen on the next mouseup event anyway, but if
+			   events get funny/unreliable, we want to ensure the stroke is
+			   ended, otherwise it will stay visible on the canvas and do
+			   nothing. */
+			var self = this;
+			window.setTimeout(function() { self.endStroke(); }, drawDelay);
 		}
 	}
 
@@ -1978,8 +2017,8 @@
 				if (lonlat) {
 					return new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
 				}
-			} else if (distance(first.x, first.y, last.x, last.y) <= pointDistance ||
-					   (poly = simplifyPolygon(this.positions)) != null) {
+			} else if ((poly = simplifyPolygon(this.positions)) != null ||
+					   distance(first.x, first.y, last.x, last.y) <= pointDistance) {
 				// Start/end are close, or there is an intersection, create a polygon
 				var points = (poly ? this.positionsToPoints(poly)
 				                   : this.positionsToPoints(this.positions));

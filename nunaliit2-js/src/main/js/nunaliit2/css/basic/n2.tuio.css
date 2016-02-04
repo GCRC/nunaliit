@@ -30,17 +30,17 @@
 
 .nunaliit_tuio .n2_content_map_interaction {
 	bottom: 75px;
-    left: 50%;
-    top: auto;
-    right: auto;
+	left: 50%;
+	top: auto;
+	right: auto;
 }
 
 .nunaliit_tuio .n2_content_map_interaction input {
-    position: absolute;
-    left: -120px;
-    top: 0px;
-    right: auto;
-    bottom: auto;
+	position: absolute;
+	left: -120px;
+	top: 0px;
+	right: auto;
+	bottom: auto;
 }
 
 .nunaliit_tuio .map_interaction input
