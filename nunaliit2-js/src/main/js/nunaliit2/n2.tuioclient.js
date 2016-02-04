@@ -82,7 +82,7 @@
 	var overlay = undefined;
 
 	// Time to wait until a finger draw is considered finished, in ms
-	var drawDelay = 1000.0;
+	var drawDelay = 800.0;
 
 	// Whether or not the pane is currently being rotated
 	var paneRotating = false;
