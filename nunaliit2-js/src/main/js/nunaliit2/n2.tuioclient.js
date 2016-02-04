@@ -737,7 +737,7 @@
 			$('.n2tuio_edit_ring').css({
 				'background-color': 'transparent'
 			});
-		}, 1000);
+		}, 500);
 	}
 
 	/** Find the closest non-full hand to the given point. */
