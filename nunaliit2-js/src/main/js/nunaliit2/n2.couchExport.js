@@ -169,7 +169,7 @@ var Export = $n2.Class('Export',{
 		},opts_);
 		
 		if( !opts.schemaName ) {
-			onError('schemaName must be provided when exporting by schema name');
+			opts.onError('schemaName must be provided when exporting by schema name');
 		};
 		
 		opts.docIds = undefined;
@@ -194,7 +194,7 @@ var Export = $n2.Class('Export',{
 		},opts_);
 		
 		if( !opts.layerId ) {
-			onError('layerId must be provided when exporting by layer identifier');
+			opts.onError('layerId must be provided when exporting by layer identifier');
 		};
 		
 		opts.docIds = undefined;
@@ -378,7 +378,8 @@ var Export = $n2.Class('Export',{
 				opts.onSuccess(res);
 			}
 			,error: function(jqXHR, textStatus, httpError){
-				opts.Error(textStatus);
+				var error = $n2.utils.parseHttpJsonError(jqXHR,textStatus);
+				opts.onError(error.error,error);
 			}
 		});
 	}

@@ -1,6 +1,5 @@
 package ca.carleton.gcrc.couch.export;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -10,7 +9,6 @@ import java.util.Vector;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -30,9 +28,10 @@ import ca.carleton.gcrc.couch.export.impl.DocumentRetrievalSchema;
 import ca.carleton.gcrc.couch.export.impl.ExportFormatCSV;
 import ca.carleton.gcrc.couch.export.impl.ExportFormatGeoJson;
 import ca.carleton.gcrc.couch.export.impl.SchemaCacheCouchDb;
+import ca.carleton.gcrc.json.servlet.JsonServlet;
 
 @SuppressWarnings("serial")
-public class ExportServlet extends HttpServlet {
+public class ExportServlet extends JsonServlet {
 
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
@@ -61,202 +60,206 @@ public class ExportServlet extends HttpServlet {
 		
 	}
 	
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		String paths[] = request.getRequestURI().split("/");
-		String path = paths[ paths.length - 1 ];
-		
-		if( "welcome".equalsIgnoreCase(path) ) {
-			doGetWelcome(request, response);
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException {
+		try {
+			String paths[] = request.getRequestURI().split("/");
+			String path = paths[ paths.length - 1 ];
 			
-		} else if( "test".equalsIgnoreCase(path) ) {
-			doGetTest(request, response);
+			if( "welcome".equalsIgnoreCase(path) ) {
+				doGetWelcome(request, response);
 				
-		} else {
-			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Unknown request");
+			} else if( "test".equalsIgnoreCase(path) ) {
+				doGetTest(request, response);
+					
+			} else {
+				throw new Exception("Unknown request");
+			}
+
+		} catch (Exception e) {
+			reportError(e, response);
 		}
 	}
 
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException {
 		// Ignore path. Allows client to set any download file name
 		
-		// Parse format
-		Format format = null;
-		{
-			String formatStr = request.getParameter("format");
-			if( null == formatStr ) {
-				format = Format.GEOJSON;
-			} else {
-				for(Format f : Format.values()){
-					if( f.matches(formatStr) ){
-						format = f;
-					}
-				}
-			}
-			
-			if( null == format ) {
-				Exception e = new Exception("Unknown format");
-				reportError(response,HttpServletResponse.SC_INTERNAL_SERVER_ERROR,e);
-				return;
-			}
-			logger.debug("Export Format: "+format.name());
-		}
-		
-		// Parse filter
-		Filter filter = null;
-		{
-			String filterStr = request.getParameter("filter");
-			if( null != filterStr ) {
-				for(Filter f : Filter.values()){
-					if( f.matches(filterStr) ){
-						filter = f;
-					}
-				}
-			}
-			
-			if( null != filter ) {
-				logger.debug("Export Filter: "+filter.name());
-			}
-		}
-		
-		// Parse method
-		Method method = null;
-		{
-			String methodStr = request.getParameter("method");
-			if( null != methodStr ) {
-				for(Method m : Method.values()){
-					if( m.matches(methodStr) ){
-						method = m;
-					}
-				}
-			}
-			
-			if( null == method ) {
-				Exception e = new Exception("Unknown method");
-				reportError(response,HttpServletResponse.SC_INTERNAL_SERVER_ERROR,e);
-				return;
-			}
-			logger.debug("Export Method: "+method.name());
-		}
-		
-		// Parse identifier
-		String identifier = null;
-		List<String> identifiers = new Vector<String>();
-		{
-			String[] ids = request.getParameterValues("name");
-			if( null != ids ) {
-				for(String id : ids){
-					identifiers.add(id);
-				}
-			}
-			
-			if( identifiers.size() > 0 ) {
-				identifier = identifiers.get(0);
-			}
-			
-			if( null == identifier ) {
-				Exception e = new Exception("Unknown name");
-				reportError(response,HttpServletResponse.SC_INTERNAL_SERVER_ERROR,e);
-				return;
-			}
-			logger.debug("Export Name: "+identifier);
-		}
-		
-		// Parse contentType
-		String contentType = null;
-		{
-			String[] contentTypes = request.getParameterValues("contentType");
-			if( null != contentTypes ) {
-				for(String t : contentTypes){
-					contentType = t;
-				}
-			}
-			
-			if( null != contentType ) {
-				logger.debug("Content-Type: "+contentType);
-			}
-		}
-		
-		// Build doc retrieval based on method
-		DocumentRetrieval docRetrieval = null;
-		if( Method.LAYER == method ) {
-			try {
-				docRetrieval = DocumentRetrievalLayer.create(configuration.getCouchDb(), identifier);
-			} catch (Exception e) {
-				throw new ServletException("Problem retrieving documents from layer: "+identifier,e);
-			}
-			
-		} else if( Method.SCHEMA == method ) {
-			try {
-				docRetrieval = DocumentRetrievalSchema.create(configuration.getCouchDb(), identifier);
-			} catch (Exception e) {
-				throw new ServletException("Problem retrieving documents from schema: "+identifier,e);
-			}
-			
-		} else if( Method.DOC_ID == method ) {
-			try {
-				docRetrieval = DocumentRetrievalId.create(configuration.getCouchDb(), identifiers);
-			} catch (Exception e) {
-				throw new ServletException("Problem retrieving documents from doc ids: "+identifiers,e);
-			}
-			
-		} else {
-			throw new ServletException("Do not know how to handle method: "+method.name());
-		}
-		
-		// Build document filter based on filter type
-		if( null != filter ){
-			DocumentFilter docFilter = new DocumentFilterGeometryType(filter);
-			DocumentRetrievalFiltered filteredRetrieval = 
-					new DocumentRetrievalFiltered(docRetrieval, docFilter);
-			docRetrieval = filteredRetrieval;
-		}
-		
-		ExportFormat outputFormat = null;
-		if( Format.GEOJSON == format ) {
-			try {
-				SchemaCache schemaCache = new SchemaCacheCouchDb(configuration.getCouchDb());
-				outputFormat = new ExportFormatGeoJson(schemaCache, docRetrieval);
-			} catch (Exception e) {
-				throw new ServletException("Problem setting up format: "+format.name(),e);
-			}
-
-		} else if( Format.CSV == format ) {
-			try {
-				SchemaCache schemaCache = new SchemaCacheCouchDb(configuration.getCouchDb());
-				outputFormat = new ExportFormatCSV(schemaCache, docRetrieval);
-			} catch (Exception e) {
-				throw new ServletException("Problem setting up format: "+format.name(),e);
-			}
-		
-		} else {
-			throw new ServletException("Do not know how to handle format: "+format.name());
-		}
-		
-		String charEncoding = outputFormat.getCharacterEncoding();
-		if( null != charEncoding ) {
-			response.setCharacterEncoding( charEncoding );
-		}
-		if( null == contentType ) {
-			contentType = outputFormat.getMimeType();
-		}
-		if( null != contentType ) {
-			response.setContentType(contentType);
-		}
-		response.setHeader("Cache-Control", "no-cache,must-revalidate");
-		response.setDateHeader("Expires", (new Date()).getTime());
-		
-		OutputStream os = response.getOutputStream();
-		
 		try {
-			outputFormat.outputExport(os);
-		} catch (Exception e) {
-			throw new ServletException("Error during export process",e);
+			// Parse format
+			Format format = null;
+			{
+				String formatStr = request.getParameter("format");
+				if( null == formatStr ) {
+					format = Format.GEOJSON;
+				} else {
+					for(Format f : Format.values()){
+						if( f.matches(formatStr) ){
+							format = f;
+						}
+					}
+				}
+				
+				if( null == format ) {
+					throw new Exception("Unknown format");
+				}
+				logger.debug("Export Format: "+format.name());
+			}
+			
+			// Parse filter
+			Filter filter = null;
+			{
+				String filterStr = request.getParameter("filter");
+				if( null != filterStr ) {
+					for(Filter f : Filter.values()){
+						if( f.matches(filterStr) ){
+							filter = f;
+						}
+					}
+				}
+				
+				if( null != filter ) {
+					logger.debug("Export Filter: "+filter.name());
+				}
+			}
+			
+			// Parse method
+			Method method = null;
+			{
+				String methodStr = request.getParameter("method");
+				if( null != methodStr ) {
+					for(Method m : Method.values()){
+						if( m.matches(methodStr) ){
+							method = m;
+						}
+					}
+				}
+				
+				if( null == method ) {
+					throw new Exception("Unknown method");
+				}
+				logger.debug("Export Method: "+method.name());
+			}
+			
+			// Parse identifier
+			String identifier = null;
+			List<String> identifiers = new Vector<String>();
+			{
+				String[] ids = request.getParameterValues("name");
+				if( null != ids ) {
+					for(String id : ids){
+						identifiers.add(id);
+					}
+				}
+				
+				if( identifiers.size() > 0 ) {
+					identifier = identifiers.get(0);
+				}
+				
+				if( null == identifier ) {
+					throw new Exception("Unknown name");
+				}
+				logger.debug("Export Name: "+identifier);
+			}
+			
+			// Parse contentType
+			String contentType = null;
+			{
+				String[] contentTypes = request.getParameterValues("contentType");
+				if( null != contentTypes ) {
+					for(String t : contentTypes){
+						contentType = t;
+					}
+				}
+				
+				if( null != contentType ) {
+					logger.debug("Content-Type: "+contentType);
+				}
+			}
+			
+			// Build doc retrieval based on method
+			DocumentRetrieval docRetrieval = null;
+			if( Method.LAYER == method ) {
+				try {
+					docRetrieval = DocumentRetrievalLayer.create(configuration.getCouchDb(), identifier);
+				} catch (Exception e) {
+					throw new Exception("Problem retrieving documents from layer: "+identifier,e);
+				}
+				
+			} else if( Method.SCHEMA == method ) {
+				try {
+					docRetrieval = DocumentRetrievalSchema.create(configuration.getCouchDb(), identifier);
+				} catch (Exception e) {
+					throw new Exception("Problem retrieving documents from schema: "+identifier,e);
+				}
+				
+			} else if( Method.DOC_ID == method ) {
+				try {
+					docRetrieval = DocumentRetrievalId.create(configuration.getCouchDb(), identifiers);
+				} catch (Exception e) {
+					throw new Exception("Problem retrieving documents from doc ids: "+identifiers,e);
+				}
+				
+			} else {
+				throw new Exception("Do not know how to handle method: "+method.name());
+			}
+			
+			// Build document filter based on filter type
+			if( null != filter ){
+				DocumentFilter docFilter = new DocumentFilterGeometryType(filter);
+				DocumentRetrievalFiltered filteredRetrieval = 
+						new DocumentRetrievalFiltered(docRetrieval, docFilter);
+				docRetrieval = filteredRetrieval;
+			}
+			
+			ExportFormat outputFormat = null;
+			if( Format.GEOJSON == format ) {
+				try {
+					SchemaCache schemaCache = new SchemaCacheCouchDb(configuration.getCouchDb());
+					outputFormat = new ExportFormatGeoJson(schemaCache, docRetrieval);
+				} catch (Exception e) {
+					throw new Exception("Problem setting up format: "+format.name(),e);
+				}
+	
+			} else if( Format.CSV == format ) {
+				try {
+					SchemaCache schemaCache = new SchemaCacheCouchDb(configuration.getCouchDb());
+					outputFormat = new ExportFormatCSV(schemaCache, docRetrieval);
+				} catch (Exception e) {
+					throw new Exception("Problem setting up format: "+format.name(),e);
+				}
+			
+			} else {
+				throw new Exception("Do not know how to handle format: "+format.name());
+			}
+			
+			String charEncoding = outputFormat.getCharacterEncoding();
+			if( null != charEncoding ) {
+				response.setCharacterEncoding( charEncoding );
+			}
+			if( null == contentType ) {
+				contentType = outputFormat.getMimeType();
+			}
+			if( null != contentType ) {
+				response.setContentType(contentType);
+			}
+			response.setHeader("Cache-Control", "no-cache,must-revalidate");
+			response.setDateHeader("Expires", (new Date()).getTime());
+			
+			OutputStream os = response.getOutputStream();
+			
+			try {
+				outputFormat.outputExport(os);
+			} catch (Exception e) {
+				throw new Exception("Error during export process",e);
+			}
+			
+			os.flush();
+
+		} catch(Exception e) {
+			reportError(e,response);
 		}
-		
-		os.flush();
 	}
 
-	private void doGetWelcome(HttpServletRequest request, HttpServletResponse response) throws IOException {
+	private void doGetWelcome(HttpServletRequest request, HttpServletResponse response) throws Exception {
 		try {
 			// Return JSON object to acknowledge the welcome
 			{
@@ -301,11 +304,11 @@ public class ExportServlet extends HttpServlet {
 				osw.flush();
 			}
 		} catch (Exception e) {
-			reportError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e);
+			throw new Exception("Can not generate welcome message",e);
 		}
 	}
 
-	private void doGetTest(HttpServletRequest request, HttpServletResponse response) throws IOException {
+	private void doGetTest(HttpServletRequest request, HttpServletResponse response) throws Exception {
 		try {
 			response.setCharacterEncoding("utf-8");
 			response.setContentType("text/html");
@@ -354,15 +357,7 @@ public class ExportServlet extends HttpServlet {
 			osw.flush();
 
 		} catch (Exception e) {
-			reportError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e);
-		}
-	}
-
-	private void reportError(HttpServletResponse response, int code, Throwable error) throws IOException {
-		if( null != error ) {
-			response.sendError(code, error.getMessage());
-		} else {
-			response.sendError(code);
+			throw new Exception("Can not generate test message",e);
 		}
 	}
 }

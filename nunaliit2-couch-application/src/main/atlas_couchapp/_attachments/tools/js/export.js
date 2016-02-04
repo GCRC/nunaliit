@@ -23,6 +23,7 @@ function showDocs(opts_){
 	var schema = opts.schema;
 	var layerId = opts.layerId;
 	
+	$('.exportError').empty();
 	$('.exportResult').html('<div class="olkit_wait"></div>');
 	
 	var format = 'csv';
@@ -40,8 +41,13 @@ function showDocs(opts_){
 				$('.exportResult').append($textarea);
 				$textarea.text(csv);
 			}
-			,onError: function(err) {
-				reportError('Problem exporting by schema name: '+err);
+			,onError: function(errStr,error) {
+				$('.exportResult').empty();
+				if( error ){
+					reportError(error);
+				} else {
+					reportError('Problem exporting by schema name: '+errStr);
+				};
 			}
 		});
 
@@ -55,8 +61,13 @@ function showDocs(opts_){
 				$('.exportResult').append($textarea);
 				$textarea.text(csv);
 			}
-			,onError: function(err) {
-				reportError('Problem exporting by layer id: '+err);
+			,onError: function(errStr) {
+				$('.exportResult').empty();
+				if( error ){
+					reportError(error);
+				} else {
+					reportError('Problem exporting by layer id: '+errStr);
+				};
 			}
 		});
 	};
@@ -239,6 +250,7 @@ function showButtons(opts_){
 function schemaSelected($sel){
 
 	$('.exportResult').empty();
+	$('.exportError').empty();
 	var $result = $('.exportControls_schemaResult').empty();
 	
 	$('<span>')
@@ -274,6 +286,7 @@ function schemaSelected($sel){
 function layerSelected($sel){
 
 	$('.exportResult').empty();
+	$('.exportError').empty();
 	var $result = $('.exportControls_layerResult').empty();
 	
 	$('<span>')
@@ -447,9 +460,26 @@ function reportError(err){
 		$exportDiv.append($e);
 	};
 	
-	var $d = $('<div></div>');
-	$d.text(err);
-	$e.append($d);
+	if( typeof err === 'string' ){
+		var $d = $('<div></div>');
+		$d.text(err);
+		$e.append($d);
+
+	} else if( typeof err === 'object' && err.error ) {
+		var cause = err;
+		while( cause ){
+			var $d = $('<div></div>');
+			$d.text(cause.error);
+			$e.append($d);
+			
+			cause = cause.cause;
+		};
+		
+	} else {
+		var $d = $('<div></div>');
+		$d.text(''+err);
+		$e.append($d);
+	};
 };
 
 function main(opts_) {
