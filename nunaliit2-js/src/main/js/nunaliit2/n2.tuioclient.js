@@ -1574,6 +1574,17 @@
 			this.saveConfiguration(tuioConf);
 		},
 
+		isTableModeActive: function(){
+			var tuioConf = this.loadConfiguration();
+			return tuioConf.active;
+		},
+
+		setTableModeActive: function(flag){
+			var tuioConf = this.loadConfiguration();
+			tuioConf.active = flag;
+			this.saveConfiguration(tuioConf);
+		},
+
 		getCalibration: function(){
 			// Default calibration
 			var calibration = {
@@ -1608,16 +1619,14 @@
 
 	//==================================================================
 	/**
-	 * If in regular mode, switch to table mode.
-	 * If in table mode, get out of it.
+	 * Switch into table mode
 	 */
-	function toggleTableMode() {
-		$('body').toggleClass('nunaliit_tuio');
+	function startTableMode() {
+		if( !IsTableModeOn() ){
+			$('body').addClass('nunaliit_tuio');
+			
+			var $content = $('.nunaliit_content');
 
-		var $content = $('.nunaliit_content');
-
-		var isTuioEnabled = $('body').hasClass('nunaliit_tuio');
-		if (isTuioEnabled) {
 			$content.css({
 				left: (calibration.xMargin + calibration.xOffset) + 'px'
 				,right: (calibration.xMargin - calibration.xOffset) + 'px'
@@ -1653,192 +1662,242 @@
 			// Create green/red edit ring
 			createRing();
 			
+			// Remember that table mode is active
+			if( tuioConfiguration ){
+				tuioConfiguration.setTableModeActive(true);
+			};
 
-		} else {
-			$content.removeAttr('style');
-			$('.n2tuio_remove').remove();
-			hidePane();
-		};
-
-		// Inform OpenLayers that map was resized
-		if( moduleDisplay
-			&& moduleDisplay.mapControl
-			&& moduleDisplay.mapControl.map ){
-			window.setTimeout(function(){
-				moduleDisplay.mapControl.map.updateSize();
-			},200);
+			// Inform OpenLayers that map was resized
+			if( moduleDisplay
+				&& moduleDisplay.mapControl
+				&& moduleDisplay.mapControl.map ){
+				window.setTimeout(function(){
+					moduleDisplay.mapControl.map.updateSize();
+				},200);
+			};
 		};
 	};
 
 	//==================================================================
+	/**
+	 * Return to regular atlas mode
+	 */
+	function endTableMode() {
+		
+		if( IsTableModeOn() ){
+			$('body').removeClass('nunaliit_tuio');
+			
+			var $content = $('.nunaliit_content');
 
-	// Configuration from local storage
-	tuioConfiguration = new TuioConfiguration();
+			$content.removeAttr('style');
+			$('.n2tuio_remove').remove();
+			hidePane();
+			
+			// Remember that table mode is inactive
+			if( tuioConfiguration ){
+				tuioConfiguration.setTableModeActive(false);
+			};
 
-	if( tuioConfiguration.isEnabled()
-		&& typeof io === 'function' ){
-		socket = io('http://localhost:3000');
-
-		if( socket ){
-			socket.on('cursor update', function(update) {
-				updateAlive(cursors, update.alive);
-				updateCursors(update.set);
-			});
-
-			socket.on('tangibles update', function(update) {
-				updateAlive(tangibles, update.alive);
-				updateTangibles(update.set);
-			});
-
-			socket.on('welcome', function(update) {
-				tuioConnected = true;
-				$n2.log('tuio connected');
-			});
-
-			socket.emit('new client',{});
+			// Inform OpenLayers that map was resized
+			if( moduleDisplay
+				&& moduleDisplay.mapControl
+				&& moduleDisplay.mapControl.map ){
+				window.setTimeout(function(){
+					moduleDisplay.mapControl.map.updateSize();
+				},200);
+			};
 		};
+	};
+	
+	//==================================================================
+	/**
+	 * If in regular mode, switch to table mode.
+	 * If in table mode, get out of it.
+	 */
+	function toggleTableMode() {
+		if( !IsTableModeOn() ){
+			startTableMode();
+		} else {
+			endTableMode();
+		};
+	};
 
-		// Load saved calibration
-		calibration = tuioConfiguration.getCalibration();
+	//==================================================================
+	function Main(){
+		// Configuration from local storage
+		tuioConfiguration = new TuioConfiguration();
 
-		window.setInterval(function(){
-			escapeKeyCount = 0;
+		if( tuioConfiguration.isEnabled()
+			&& typeof io === 'function' ){
+			socket = io('http://localhost:3000');
 
-			if( calibrationDirty ){
-				if( $n2.storage
-					&& $n2.storage.getLocalStorage
-					&& typeof JSON !== 'undefined'
-					&& JSON.stringify
-					&& JSON.parse ){
-					tuioConfiguration.setCalibration(calibration);
-					calibrationDirty = false;
-				};
+			if( socket ){
+				socket.on('cursor update', function(update) {
+					updateAlive(cursors, update.alive);
+					updateCursors(update.set);
+				});
+
+				socket.on('tangibles update', function(update) {
+					updateAlive(tangibles, update.alive);
+					updateTangibles(update.set);
+				});
+
+				socket.on('welcome', function(update) {
+					tuioConnected = true;
+					$n2.log('tuio connected');
+				});
+
+				socket.emit('new client',{});
 			};
-		},2000);
 
-		window.onkeydown = function (e) {
-			var code = e.keyCode ? e.keyCode : e.which;
+			// Load saved calibration
+			calibration = tuioConfiguration.getCalibration();
 
-			if (code === 27) {
-				// Escape pressed, toggle non-map UI visibility
-				++escapeKeyCount;
-				if( escapeKeyCount >= 3 ){
-					escapeKeyCount = 0;
-					toggleTableMode();
-				};
-			};
+			// At regular intervals, attempt to save calibration data
+			window.setInterval(function(){
+				escapeKeyCount = 0;
 
-			if( IsTableModeOn() ){
-				var $content = $('.nunaliit_content');
-				var content = $content[0];
-
-				if (code == 70) {
-					// f pressed, toggle visual feedback
-					showDots = !showDots;
-				} else if ( 67 === code && escapeKeyCount >= 2) {
-					// <esc> <esc> c : calibrate
-					if( g_tuioService ){
-						g_tuioService.startCalibration();
+				if( calibrationDirty ){
+					if( $n2.storage
+						&& $n2.storage.getLocalStorage
+						&& typeof JSON !== 'undefined'
+						&& JSON.stringify
+						&& JSON.parse ){
+						tuioConfiguration.setCalibration(calibration);
+						calibrationDirty = false;
 					};
-				} else if (code == 66) {
-					// b, toggle border
-					$('.n2tuio_edit_ring').toggleClass('n2tuio_hide');
-				} else if (e.shiftKey) {
-					// TUIO calibration
-					if (code == 37) {
-						if (e.altKey) {
-							// Shift+Alt+left, offset TUIO left
-							calibration.cursorXOffset -= 0.001;
-						} else {
-							// Shift+left, shrink TUIO horizontally
-							calibration.cursorXScale -= 0.001;
+				};
+			},2000);
+
+			window.onkeydown = function (e) {
+				var code = e.keyCode ? e.keyCode : e.which;
+
+				if (code === 27) {
+					// Escape pressed, toggle non-map UI visibility
+					++escapeKeyCount;
+					if( escapeKeyCount >= 3 ){
+						escapeKeyCount = 0;
+						toggleTableMode();
+					};
+				};
+
+				if( IsTableModeOn() ){
+					var $content = $('.nunaliit_content');
+					var content = $content[0];
+
+					if (code == 70) {
+						// f pressed, toggle visual feedback
+						showDots = !showDots;
+					} else if ( 67 === code && escapeKeyCount >= 2) {
+						// <esc> <esc> c : calibrate
+						if( g_tuioService ){
+							g_tuioService.startCalibration();
+						};
+					} else if (code == 66) {
+						// b, toggle border
+						$('.n2tuio_edit_ring').toggleClass('n2tuio_hide');
+					} else if (e.shiftKey) {
+						// TUIO calibration
+						if (code == 37) {
+							if (e.altKey) {
+								// Shift+Alt+left, offset TUIO left
+								calibration.cursorXOffset -= 0.001;
+							} else {
+								// Shift+left, shrink TUIO horizontally
+								calibration.cursorXScale -= 0.001;
+							}
+							calibrationDirty = true;
+						} else if (code == 39) {
+							if (e.altKey) {
+								// Shift+Alt+right, offset TUIO right
+								calibration.cursorXOffset += 0.001;
+							} else {
+								// Shift+right, expand TUIO horizontally
+								calibration.cursorXScale += 0.001;
+							}
+							calibrationDirty = true;
+						} else if (code == 40) {
+							if (e.altKey) {
+								// Shift+Alt+down, offset TUIO down
+								calibration.cursorYOffset += 0.001;
+							} else {
+								// Shift+down, shrink TUIO vertically
+								calibration.cursorYScale -= 0.001;
+							}
+							calibrationDirty = true;
+						} else if (code == 38) {
+							if (e.altKey) {
+								// Shift+Alt+up, offset TUIO up
+								calibration.cursorYOffset -= 0.001;
+							} else {
+								// Shift+up, grow TUIO vertically
+								calibration.cursorYScale += 0.001;
+							}
+							calibrationDirty = true;
 						}
+					} else if (code == 37) {
+						if (e.altKey) {
+							// Alt+left, shrink horizontally
+							calibration.xMargin += 2;
+						} else {
+							// Left, shift left
+							calibration.xOffset -= 2;
+						}
+
+						content.style.left = (calibration.xMargin + calibration.xOffset) + "px";
+						content.style.right = (calibration.xMargin - calibration.xOffset) + "px";
 						calibrationDirty = true;
 					} else if (code == 39) {
 						if (e.altKey) {
-							// Shift+Alt+right, offset TUIO right
-							calibration.cursorXOffset += 0.001;
+							// Alt+right, grow horizontally
+							calibration.xMargin -= 2;
 						} else {
-							// Shift+right, expand TUIO horizontally
-							calibration.cursorXScale += 0.001;
+							// Right, shift right
+							calibration.xOffset += 2;
 						}
+
+						content.style.left = (calibration.xMargin + calibration.xOffset) + "px";
+						content.style.right = (calibration.xMargin - calibration.xOffset) + "px";
 						calibrationDirty = true;
 					} else if (code == 40) {
 						if (e.altKey) {
-							// Shift+Alt+down, offset TUIO down
-							calibration.cursorYOffset += 0.001;
+							// Alt+down, shrink vertically
+							calibration.yMargin += 2;
 						} else {
-							// Shift+down, shrink TUIO vertically
-							calibration.cursorYScale -= 0.001;
+							// Down, shift up
+							calibration.yOffset += 2;
 						}
+
+						content.style.top = (calibration.yMargin + calibration.yOffset) + "px";
+						content.style.bottom = (calibration.yMargin - calibration.yOffset) + "px";
 						calibrationDirty = true;
 					} else if (code == 38) {
 						if (e.altKey) {
-							// Shift+Alt+up, offset TUIO up
-							calibration.cursorYOffset -= 0.001;
+							// Alt+up, grow vertically
+							calibration.yMargin -= 2;
 						} else {
-							// Shift+up, grow TUIO vertically
-							calibration.cursorYScale += 0.001;
+							// Up, shift down
+							calibration.yOffset -= 2;
 						}
+
+						content.style.top = (calibration.yMargin + calibration.yOffset) + "px";
+						content.style.bottom = (calibration.yMargin - calibration.yOffset) + "px";
 						calibrationDirty = true;
-					}
-				} else if (code == 37) {
-					if (e.altKey) {
-						// Alt+left, shrink horizontally
-						calibration.xMargin += 2;
-					} else {
-						// Left, shift left
-						calibration.xOffset -= 2;
-					}
-
-					content.style.left = (calibration.xMargin + calibration.xOffset) + "px";
-					content.style.right = (calibration.xMargin - calibration.xOffset) + "px";
-					calibrationDirty = true;
-				} else if (code == 39) {
-					if (e.altKey) {
-						// Alt+right, grow horizontally
-						calibration.xMargin -= 2;
-					} else {
-						// Right, shift right
-						calibration.xOffset += 2;
-					}
-
-					content.style.left = (calibration.xMargin + calibration.xOffset) + "px";
-					content.style.right = (calibration.xMargin - calibration.xOffset) + "px";
-					calibrationDirty = true;
-				} else if (code == 40) {
-					if (e.altKey) {
-						// Alt+down, shrink vertically
-						calibration.yMargin += 2;
-					} else {
-						// Down, shift up
-						calibration.yOffset += 2;
-					}
-
-					content.style.top = (calibration.yMargin + calibration.yOffset) + "px";
-					content.style.bottom = (calibration.yMargin - calibration.yOffset) + "px";
-					calibrationDirty = true;
-				} else if (code == 38) {
-					if (e.altKey) {
-						// Alt+up, grow vertically
-						calibration.yMargin -= 2;
-					} else {
-						// Up, shift down
-						calibration.yOffset -= 2;
-					}
-
-					content.style.top = (calibration.yMargin + calibration.yOffset) + "px";
-					content.style.bottom = (calibration.yMargin - calibration.yOffset) + "px";
-					calibrationDirty = true;
-				} else if (code == 80) {
-					// P, show/hide pane
-					togglePane();
+					} else if (code == 80) {
+						// P, show/hide pane
+						togglePane();
+					};
 				};
 			};
-		};
 
-		if (usePhysics) {
-			window.requestAnimationFrame(tick);
+			if (usePhysics) {
+				window.requestAnimationFrame(tick);
+			};
+			
+			// Restore mode
+			if( tuioConfiguration.isTableModeActive() ){
+				startTableMode();
+			};
 		};
 	};
 
@@ -2130,6 +2189,7 @@
 				this.dispatchService.register(DH,'editInitiate',f);
 				this.dispatchService.register(DH,'mapReportMode',f);
 				this.dispatchService.register(DH,'editClosed',f);
+				this.dispatchService.register(DH,'start',f);
 			};
 
 			// Register with global variable
@@ -2250,6 +2310,10 @@
 						$('body').addClass('nunaliit_editing');
 					};
 				};
+
+			} else if( 'start' === m.type ) {
+				// Configuration is done. Begin operation
+				Main();
 			};
 		},
 
