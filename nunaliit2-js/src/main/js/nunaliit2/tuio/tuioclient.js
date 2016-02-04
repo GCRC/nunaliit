@@ -603,9 +603,6 @@
 			return;
 		}
 
-		// console.log(eventType + " at " + winX + "," + winY + ": " + el +
-		//             " id: " + el.id + " class: " + el.className);
-
 		dispatchMouseEventTo(eventType, el, winX, winY);
 	}
 
@@ -621,6 +618,9 @@
 			'clientY': winY,
 			'button': 0
 		});
+
+		// console.log("Dispatch " + eventType + " @ " + winX + "," + winY +
+		// 			" => " + el + " #" + el.id + " ." + el.className);
 
 		// Dispatch to element
 		el.dispatchEvent(event);
@@ -840,31 +840,34 @@
 	function onCursorUp(inst) {
 		var cursor = cursors[inst];
 		if (inst == pressCursor) {
-			dispatchMouseEvent('mouseup', cursor.x, cursor.y);
-
-			// Convert coordinates to window relative for dispatch
-			var winX = cursor.x * window.innerWidth;
-			var winY = cursor.y * window.innerHeight;
-			var isEditing = g_tuioService && g_tuioService.isEditing();
-			var elapsed = Date.now() - cursor.birthTime;
-
 			// Get the element (underneath the overlay) at the cursor position
 			var wasSensitive = overlay.setSensitive(false);
 			var el = getElementAtTablePoint(cursor.x, cursor.y);
 			overlay.setSensitive(wasSensitive);
 
-			if (el && cursor.distanceMoved <= clickDistance && elapsed < clickDelay) {
-				console.log("Click!");
+			// Check if this down/up sequence was fast enough to be a click
+			var elapsed = Date.now() - cursor.birthTime;
+			var isClick = cursor.distanceMoved <= clickDistance && elapsed < clickDelay;
+			if (el && isClick &&
+				((el.nodeName.toLowerCase() == "input" || el.nodeName.toLowerCase() == "textarea") &&
+				 el.getAttribute("type") != "button")) {
+				$(el).focus();  // Focus non-button input element before mouseup
+
+			}
+
+			dispatchMouseEvent('mouseup', cursor.x, cursor.y);
+
+			if (el && isClick) {
+				var winX = cursor.x * window.innerWidth;
+				var winY = cursor.y * window.innerHeight;
 				if (el.id.startsWith("OpenLayers")) {
 					hidePane();
 				}
 
+				/* Re-sending the mousedown and mouseup events here immediately
+				   before the click seems to be necessary to make OpenLayers
+				   buttons work. */
 				dispatchMouseEventTo('mousedown', el, winX, winY);
-				if ((el.nodeName.toLowerCase() == "input" ||
-					 el.nodeName.toLowerCase() == "textarea") &&
-					el.getAttribute("type") != "button") {
-					$(el).focus();
-				}
 				dispatchMouseEventTo('mouseup', el, winX, winY);
 				dispatchMouseEventTo('click', el, winX, winY);
 			}
@@ -1041,6 +1044,9 @@
 			var height = (bottom - top);
 			var area = width * height;
 			if (width < 16 || height < 16 || area < 16) {
+				// Disable because TUIO onCursorUp etc handlers deal with clicks
+
+				/*
 				// Gesture did not move very far, dispatch click
 				var midX = left + (right - left) / 2.0;
 				var midY = top + (bottom - top) / 2.0;
@@ -1053,6 +1059,7 @@
 				dispatchMouseEventWin('mousedown', midX, midY);
 				dispatchMouseEventWin('mouseup', midX, midY);
 				dispatchMouseEventWin('click', midX, midY);
+				*/
 				return;
 			}
 
