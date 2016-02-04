@@ -1043,8 +1043,10 @@
 
 		} else {
 			drawZooming = false;
-			if (points.length < 2) {
-				return;  // Not enough points to do anything sensible
+			var poly = simplifyPolygon(points);
+			if (!poly) {
+				displayError();
+				return;  // Drawn shape doesn't enclose a region, do nothing
 			}
 
 			// Find bounding rectangle (in pixels)
@@ -1052,45 +1054,27 @@
 			var bottom = 0;
 			var right = 0;
 			var top = Infinity;
-			for (var i = 0; i < points.length; ++i) {
-				left = Math.min(left, points[i].x);
-				bottom = Math.max(bottom, points[i].y);
-				right = Math.max(right, points[i].x);
-				top = Math.min(top, points[i].y);
+			for (var i = 0; i < poly.length; ++i) {
+				left = Math.min(left, poly[i].x);
+				bottom = Math.max(bottom, poly[i].y);
+				right = Math.max(right, poly[i].x);
+				top = Math.min(top, poly[i].y);
 			}
 
-			// Ensure bounding rectangle has a reasonable size
 			var width = (right - left);
 			var height = (bottom - top);
 			var area = width * height;
-			if (width < 16 || height < 16 || area < 16) {
-				// Disable because TUIO onCursorUp etc handlers deal with clicks
+			if (width > 16 && height > 16 && area > 16) {
+				// Bounds have reasonable size, convert to lon/lat
+				var tl = moduleDisplay.mapControl.map.getLonLatFromPixel(
+					new OpenLayers.Pixel(left, top));
+				var br = moduleDisplay.mapControl.map.getLonLatFromPixel(
+					new OpenLayers.Pixel(right, bottom));
 
-				/*
-				// Gesture did not move very far, dispatch click
-				var midX = left + (right - left) / 2.0;
-				var midY = top + (bottom - top) / 2.0;
-
-				// Convert from canvas-relative to client-relative for dispatch
-				midX += bounds.left;
-				midY += bounds.top;
-
-				// Dispatch click
-				dispatchMouseEventWin('mousedown', midX, midY);
-				dispatchMouseEventWin('mouseup', midX, midY);
-				dispatchMouseEventWin('click', midX, midY);
-				*/
-				return;
+				// Zoom/center map to/on bounding rectangle
+				moduleDisplay.mapControl.map.zoomToExtent(
+					[tl.lon, br.lat, br.lon, tl.lat]);
 			}
-
-			// Convert to lon/lat
-			var tl = moduleDisplay.mapControl.map.getLonLatFromPixel(
-				new OpenLayers.Pixel(left, top));
-			var br = moduleDisplay.mapControl.map.getLonLatFromPixel(
-				new OpenLayers.Pixel(right, bottom));
-
-			// Zoom/center map to/on bounding rectangle
-			moduleDisplay.mapControl.map.zoomToExtent([tl.lon, br.lat, br.lon, tl.lat]);
 		};
 	}
 
