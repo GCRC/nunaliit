@@ -710,7 +710,7 @@
 
 	function createRing() {
 		var $div = $('<div>')
-			.addClass('n2tuio_edit_ring')
+			.addClass('n2tuio_edit_ring n2tuio_remove')
 			.appendTo( $('#content') );
 	}
 
@@ -1633,14 +1633,29 @@
 					map, map.offsetWidth, map.offsetHeight, onPathDraw);
 				drawZooming = true;
 			}
+			
+			// Create reset extent button
+			var $resetOuter = $('<div>')
+				.addClass('n2tuio_resetExtent_outer n2tuio_remove')
+				.appendTo( $('.nunaliit_content') );
+			$('<input>')
+				.addClass('n2tuio_resetExtent')
+				.attr('type','button')
+				.val( _loc('Reset') )
+				.appendTo( $resetOuter )
+				.click(function(){
+					if( g_tuioService ){
+						g_tuioService.resetMapToInitialExtent();
+					};
+				});
 
 			// Create green/red edit ring
 			createRing();
+			
 
 		} else {
 			$content.removeAttr('style');
 			$('.n2tuio_remove').remove();
-			$('.n2tuio_edit_ring').remove();
 			hidePane();
 		};
 
@@ -2184,6 +2199,12 @@
 			};
 
 			return proj;
+		},
+		
+		resetMapToInitialExtent: function(){
+			this.dispatch({
+				type: 'mapResetExtent'
+			});
 		},
 
 		dispatch: function(m){

@@ -44,11 +44,31 @@
 }
 
 .nunaliit_tuio .map_interaction input
-,.nunaliit_tuio .n2_content_map_interaction input {
+,.nunaliit_tuio .n2_content_map_interaction input
+,.nunaliit_tuio .n2tuio_resetExtent_outer input {
 	border-radius: 19px;
 	opacity: 0.5;
 	padding: 16px;
 	width: 250px;
+}
+
+.nunaliit_tuio .n2tuio_resetExtent_outer {
+	position: absolute;
+	bottom: auto;
+	left: 50%;
+	top: 75px;
+	right: auto;
+}
+
+.nunaliit_tuio .n2tuio_resetExtent_outer input {
+	position: absolute;
+	left: -120px;
+	top: auto;
+	right: auto;
+	bottom: 0px;
+    background: #000;
+    color: #fff;
+    border: 0;
 }
 
 .nunaliit_tuio .olControlEditingToolbar {
