@@ -279,6 +279,11 @@
 
 	Body.prototype = Object.create(Vector.prototype);
 
+	Body.prototype.kill = function() {
+		this.alive = false;
+		this.deathTime = Date.now();
+	}
+
 	/** Set the target coordinate for the body to move towards. */
 	Body.prototype.moveTo = function(x, y) {
 		if (!isNaN(this.x) && !isNaN(this.y)) {
@@ -381,6 +386,13 @@
 	Cursor.prototype = Object.create(Body.prototype);
 	Cursor.prototype.constructor = Cursor;
 
+	Cursor.prototype.kill = function() {
+		Body.prototype.kill.call(this);
+		if (this.hand != undefined && this.hand.numAliveCursors() == 0) {
+			this.hand.kill();
+		}
+	}
+
 	//==================================================================
 	/** Construct a new tangible (block). */
 	function Tangible() {
@@ -398,6 +410,8 @@
 
 		this.cursors = [];
 		this.index = nextHandIndex++;
+		this.downX = x;
+		this.downY = y;
 	}
 
 	Hand.prototype = Object.create(Body.prototype);
@@ -663,8 +677,9 @@
 				// Check if this instance is still alive
 				if( !aliveMap[inst] ) {
 					// No longer alive, flag as dead and schedule removal
-					dict[inst].alive = false;
-					dict[inst].deathTime = Date.now();
+					if (typeof dict[inst].kill === 'function') {
+						dict[inst].kill();
+					}
 
 					// Issue cursor up immediately for responsive clicking
 					if (dict == cursors) {
@@ -957,10 +972,15 @@
 			// Find the greatest distance between any two hands
 			var d = 0.0;
 			for (var i = 0; i < zoomHands.length - 1; ++i) {
-				d = Math.max(
-					d,
-					distance(zoomHands[i].x, zoomHands[i].y,
-					         zoomHands[i + 1].x, zoomHands[i + 1].y));
+				var startDistance = distance(zoomHands[i].downX, zoomHands[i].downY,
+				                             zoomHands[i + 1].downX, zoomHands[i + 1].downY);
+				if (startDistance > handSpan * 0.5) {
+					var dist = distance(zoomHands[i].x, zoomHands[i].y,
+					                    zoomHands[i + 1].x, zoomHands[i + 1].y);
+					if (dist > handSpan * 0.5 && dist > d) {
+						d = dist;
+					}
+				}
 			}
 
 			if (lastPinchZoomDistance != undefined) {
