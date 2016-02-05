@@ -76,7 +76,7 @@
 
 	// Pinch zoom parameters
 	var lastPinchZoomDistance = undefined;
-	var pinchZoomThreshold = 0.14;
+	var pinchZoomThreshold = 0.18;
 
 	// Draw overlay canvas
 	var overlay = undefined;
@@ -983,14 +983,10 @@
 			// Find the greatest distance between any two hands
 			var d = 0.0;
 			for (var i = 0; i < zoomHands.length - 1; ++i) {
-				var startDistance = distance(zoomHands[i].downX, zoomHands[i].downY,
-				                             zoomHands[i + 1].downX, zoomHands[i + 1].downY);
-				if (startDistance > handSpan * 0.5) {
-					var dist = distance(zoomHands[i].x, zoomHands[i].y,
-					                    zoomHands[i + 1].x, zoomHands[i + 1].y);
-					if (dist > handSpan * 0.5 && dist > d) {
-						d = dist;
-					}
+				var dist = distance(zoomHands[i].x, zoomHands[i].y,
+				                    zoomHands[i + 1].x, zoomHands[i + 1].y);
+				if (dist > handSpan * 0.5 && dist > d) {
+					d = dist;
 				}
 			}
 
