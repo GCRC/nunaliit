@@ -1056,7 +1056,6 @@
 			drawZooming = false;
 			var poly = simplifyPolygon(points);
 			if (!poly) {
-				displayError();
 				return;  // Drawn shape doesn't enclose a region, do nothing
 			}
 
