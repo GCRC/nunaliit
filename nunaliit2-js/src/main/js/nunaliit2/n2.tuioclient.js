@@ -1135,8 +1135,7 @@
 
 			var width = (right - left);
 			var height = (bottom - top);
-			var area = width * height;
-			if (width > 16 && height > 16 && area > 16) {
+			if (width > 12 && height > 12) {
 				// Bounds have reasonable size, convert to lon/lat
 				var tl = moduleDisplay.mapControl.map.getLonLatFromPixel(
 					new OpenLayers.Pixel(left, top));
