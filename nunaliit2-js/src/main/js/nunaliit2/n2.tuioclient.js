@@ -94,6 +94,9 @@
 	// Angle of initial mouse down point of a rotation drag
 	var paneRotateMouseStartAngle = 0.0;
 
+	// Maximum distance to consider points to be touching (pixels)
+	var polyDistance = 30.0;
+
 	var moduleDisplay = undefined;
 
 	//==================================================================
@@ -231,18 +234,84 @@
 			return null;
 		}
 
+		var slices = [];
+		var bestSlice = null;
+		var addPoint = null;
+		function updateBestSlice(begin, end, intersection) {
+			if (!bestSlice) {
+				// First slice, so it's the best slice so far
+				bestSlice = [begin, end];
+				addPoint = intersection;
+			} else {
+				// Check if this slice overlaps a known intersecting slice
+				var overlaps = false;
+				for (var i = 0; i < slices.length; ++i) {
+					if (begin <= slices[i][1] && slices[i][0] <= end) {
+						overlaps = true;
+						break;
+					}
+				}
+
+				if (!overlaps && (end - begin) > bestSlice[1] - bestSlice[0]) {
+					/* Does not contain a subslice with an intersection, and
+					   contains more points than the best slice, so this is our
+					   new best slice.  Using actual distance rather than
+					   number of points may make more sense here, but this
+					   seems to work well and is much less expensive. */
+					bestSlice = [begin, end];
+					addPoint = intersection;
+				}
+			}
+
+			// Add to slices list for overlap checking next time around
+			slices.push([begin, end]);
+		}
+
 		for (var i = 0; i < points.length - 3; ++i) {
 			var p0 = points[i];
 			var p1 = points[i + 1];
 
-			for (var j = i + 2; j < points.length - 1; ++j) {
+			var foundIntersection = false;
+			for (var j = i + 2; j < points.length - 1 && !foundIntersection; ++j) {
 				var p2 = points[j];
 				var p3 = points[j + 1];
+
+				// Check for an actual line intersection
 				var intersection = lineIntersection(p0, p1, p2, p3);
-				if (intersection != null) {
-					return points.slice(i + 1, j);
+				if (intersection) {
+					updateBestSlice(i, j, intersection);
+					foundIntersection = true;
+				} else if (j > i + 4) {
+					// Check if endpoints are close enough to be considered intersecting
+					if (distance(p0.x, p0.y, p2.x, p2.y) <= polyDistance) {
+						updateBestSlice(i, j, null);
+						foundIntersection = true;
+					} else if (distance(p1.x, p1.y, p2.x, p2.y) <= polyDistance) {
+						updateBestSlice(i + 1, j, null);
+						foundIntersection = true;
+					} else if (distance(p0.x, p0.y, p3.x, p3.y) <= polyDistance) {
+						updateBestSlice(i, j + 1, null);
+						foundIntersection = true;
+					} else if (distance(p1.x, p1.y, p3.x, p3.y) <= polyDistance) {
+						updateBestSlice(i + 1, j + 1, null);
+						foundIntersection = true;
+					}
 				}
 			}
+
+			if (foundIntersection) {
+				// Found an intersection, so no point in checking overlapping intervals
+				i = j;
+				foundIntersection = false;
+			}
+		}
+
+		if (bestSlice) {
+			var poly = points.slice(bestSlice[0], bestSlice[1]);
+			if (addPoint) {
+				poly.push(addPoint);
+			}
+			return poly;
 		}
 
 		return null;
