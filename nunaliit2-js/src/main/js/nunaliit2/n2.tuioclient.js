@@ -876,9 +876,6 @@
 			};
 			drawZooming = true;
 			dispatchMouseEvent('mousedown', cursor.x, cursor.y);
-		} else if (downCursors > 0) {
-			// Multiple cursors down, terminate pending long press
-			pressCursor = undefined;
 		}
 
 		++downCursors;
@@ -894,7 +891,6 @@
 			if (overlay) {
 				overlay.show();
 			}
-			drawZooming = true;
 			dispatchMouseEvent('mousedown', cursor.x, cursor.y);
 			pressCursor = inst;
 		}
@@ -926,6 +922,7 @@
 			if (overlay) {
 				overlay.abortStroke();
 			}
+			pressCursor = undefined;
 			drawZooming = false;
 		}
 	}
@@ -946,7 +943,6 @@
 				((el.nodeName.toLowerCase() == "input" || el.nodeName.toLowerCase() == "textarea") &&
 				 el.getAttribute("type") != "button")) {
 				$(el).focus();  // Focus non-button input element before mouseup
-
 			}
 
 			dispatchMouseEvent('mouseup', cursor.x, cursor.y);
@@ -1506,7 +1502,7 @@
 			self.moveTo(pos.x, pos.y);
 			self.mouseUpTime = Date.now();
 			self.isMouseDown = false;
-			window.setTimeout(function() { self.endStroke(); }, drawDelay);
+			window.setTimeout(function() { self.endStroke(); }, drawDelay * 1.5);
 		};
 	}
 
@@ -1571,12 +1567,13 @@
 			this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 			this.hide();
 			this.drawing = false;
+			this.isMouseDown = false;
 			this.points = [];
 		}
 	}
 
 	DrawOverlay.prototype.endStroke = function () {
-		if (!this.isMouseDown && Date.now() - this.mouseUpTime >= drawDelay / 2.0) {
+		if (!this.isMouseDown && Date.now() - this.mouseUpTime >= drawDelay) {
 			// Save bounding box for passing to path callback
 			var box = this.canvas.getBoundingClientRect();
 
@@ -1597,7 +1594,7 @@
 			   ended, otherwise it will stay visible on the canvas and do
 			   nothing. */
 			var self = this;
-			window.setTimeout(function() { self.endStroke(); }, drawDelay);
+			window.setTimeout(function() { self.endStroke(); }, drawDelay * 1.5);
 		}
 	}
 
