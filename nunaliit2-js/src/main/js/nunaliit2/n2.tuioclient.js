@@ -1042,6 +1042,7 @@
 			}
 
 			if (zoomHands.length < 2) {
+				lastPinchZoomDistance = undefined;
 				return;  // Not enough alive hands for pinch zooming
 			}
 
