@@ -1093,6 +1093,7 @@
 			// Add to existing hand
 			hand.cursors.push(cursor);
 			hand.dirty = true;
+			hand.alive = true;
 		} else {
 			// No existing hand is appropriate, create a new one
 			hand = new Hand(cursor.x, cursor.y);
