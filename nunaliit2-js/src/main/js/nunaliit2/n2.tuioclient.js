@@ -1061,7 +1061,7 @@
 				var currentZoom = moduleDisplay.mapControl.map.getZoom();
 				var nZoomLevels = moduleDisplay.mapControl.map.getNumZoomLevels();
 				if (delta > pinchZoomThreshold) {
-					if (currentZoom > 1) {
+					if (currentZoom > 2) {
 						moduleDisplay.mapControl.map.zoomOut();
 					} else {
 						displayError();
