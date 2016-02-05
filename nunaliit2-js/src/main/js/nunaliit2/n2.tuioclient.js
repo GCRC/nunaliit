@@ -709,6 +709,16 @@
 		}
 	}
 
+	function numAliveHands() {
+		var count = 0;
+		for (var inst in hands) {
+			if (hands.hasOwnProperty(inst) && hands[inst].alive) {
+				++count;
+			}
+		}
+		return count;
+	}
+
 	/** Update the visible calibration point for a cursor. */
 	function createDot(x, y, content) {
 		var div = document.createElement("div");
@@ -923,18 +933,19 @@
 	/** Called when a down hand is moved. */
 	function onHandMove(inst) {
 		var hand = hands[inst];
+		var nHands = numAliveHands();
 
 		if (drawZooming) {
 			return;
 		} else if (mouseHand == undefined) {
 			/* Mouse hand is no longer around, if this is the only remaining hand,
 			   take over scrolling. */
-			if (Object.keys(hands).length == 1) {
+			if (nHands == 1) {
 				mouseHand = inst;
 			}
 		}
 
-		if (inst == mouseHand && hand.cursors.length > 1) {
+		if (nHands == 1 && inst == mouseHand && hand.cursors.length > 1) {
 			// Hand is acting as mouse cursor, dispatch mouse move
 			// dispatchMouseEvent('mousemove', hand.x, hand.y);
 
