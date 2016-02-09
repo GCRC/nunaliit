@@ -20,6 +20,40 @@
 	var selectedList = null;
 
 	// **********************************************************************
+	var Logger = $n2.Class({
+		divId: null,
+		
+		initialize: function(opts_){
+			var opts = $n2.extend({
+				elem: null
+			},opts_);
+			
+			var $div = $(opts.elem);
+			this.divId = $n2.utils.getElementIdentifier($div);
+		},
+
+		reportError: function(err){
+			var $e = this._getLogsDiv();
+	
+			var $d = $('<div class="error"></div>');
+			$d.text(err);
+			$e.append($d);
+		},
+		
+		log: function(msg){
+			var $e = this._getLogsDiv();
+	
+			var $d = $('<div class="log"></div>');
+			$d.text(msg);
+			$e.append($d);
+		},
+		
+		_getLogsDiv: function(){
+			return $('#'+this.divId);
+		}
+	});
+	
+	// **********************************************************************
 	var ProgressDialog = $n2.Class({
 		
 		dialogId: null
@@ -254,6 +288,10 @@
 			};
 			var fullCount = allDocIds.length;
 			
+			// Create a copy of the configuration so that user
+			// can save temporary objects to it
+			var my_scriptConfig = $n2.extend({},g_scriptConfig);
+			
 			// Fetch documents, filtering each
 			nextFetch();
 			
@@ -306,7 +344,7 @@
 				};
 
 				for(var i=0, e=docs.length; i<e; ++i){
-					if( opts.filterFn(docs[i], g_scriptConfig) ){
+					if( opts.filterFn(docs[i], my_scriptConfig) ){
 						filteredDocIds.push(docs[i]._id);
 					};
 				};
@@ -659,9 +697,14 @@
 			var $options = opts.options;
 			var script = $options.find('textarea').val();
 			var scriptFn = null;
+
+			// Create a copy of the configuration so that user
+			// can save temporary objects to it
+			var my_scriptConfig = $n2.extend({},g_scriptConfig);
+			
 			try {
 				eval('scriptFn = '+script);
-				scriptFn({_id:'test',_revision:'1-abcde'},g_scriptConfig);
+				scriptFn({_id:'test',_revision:'1-abcde'},my_scriptConfig);
 			} catch(e) {
 				alert(_loc('Error')+': '+e);
 				return;
@@ -713,7 +756,7 @@
 	SearchFilter.availableCreateFilters.push(new CreateFilterAllDocs());
 
 	// **********************************************************************
-	var CreateFilterByLayer = $n2.Class(SearchFilter, {
+	var CreateFilterByGeomLayer = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
@@ -794,7 +837,92 @@
 		}
 	});
 
-	SearchFilter.availableCreateFilters.push(new CreateFilterByLayer());
+	SearchFilter.availableCreateFilters.push(new CreateFilterByGeomLayer());
+	
+	// **********************************************************************
+	var CreateFilterByDocLayer = $n2.Class(SearchFilter, {
+
+		initialize: function(){
+			SearchFilter.prototype.initialize.apply(this);
+			this.name = _loc('Select documents from a layer');
+		}
+	
+		,printOptions: function($parent){
+			var $options = $('<div>'
+				+_loc('Layer name')+':<br/><select class="layerNameList"></select>'
+				+'</div>');
+			
+			$parent.append( $options );
+			
+			atlasDesign.queryView({
+				viewName: 'layers'
+				,reduce: true
+				,group: true
+				,onSuccess: function(rows){
+					var $sel = $options.find('select.layerNameList');
+					for(var i=0,e=rows.length; i<e; ++i){
+						var layerId = rows[i].key;
+						var $o = $('<option></option>')
+							.val(layerId)
+							.text(layerId)
+							.appendTo($sel);
+						
+						if( showService ){
+							showService.printLayerName($o, layerId);
+						};
+					};
+				}
+				,onError: function(err){
+					alert(_loc('Unable to obtain list of layers')+': '+err);
+					reportError(_loc('Unable to obtain list of layers')+': '+err);
+				}
+			});
+		}
+
+		,createList: function(opts_){
+			var opts = $n2.extend({
+				name: null
+				,options: null
+				,progressTitle: _loc('List Creation Progress')
+				,onSuccess: function(list){}
+				,onError: reportError
+			},opts_);
+			
+			var $i = opts.options.find('select.layerNameList');
+			var layerName = $i.val();
+			if( !layerName || '' == layerName ) {
+				alert(_loc('Must enter a layer name'));
+			} else {
+				atlasDesign.queryView({
+					viewName: 'layers'
+					,startkey: layerName
+					,endkey: layerName
+					,reduce: false
+					,onSuccess: function(rows){
+						var docIds = [];
+						for(var i=0,e=rows.length; i<e; ++i){
+							var row = rows[i];
+							docIds.push(row.id);
+						};
+						var locStr = _loc('Documents from layer {layerName}',{
+							layerName: layerName
+						});
+						var l = new DocumentList({
+							docIds: docIds
+							,name: locStr
+						});
+						opts.onSuccess(l);
+					}
+					,onError: function(err){
+						alert(_loc('Problem obtaining documents from layer')+': '+err);
+						opts.onError(err);
+					}
+				});
+			};
+		}
+	});
+
+	SearchFilter.availableCreateFilters.push(new CreateFilterByDocLayer());
 
 	// **********************************************************************
 	var CreateFilterBySchemaType = $n2.Class(SearchFilter, {
@@ -1659,6 +1787,10 @@
 			var skippedCount = 0;
 			var okCount = 0;
 			var failCount = 0;
+
+			// Create a copy of the configuration so that user
+			// can save temporary objects to it
+			var my_scriptConfig = $n2.extend({},g_scriptConfig);
 			
 			processNext();
 			
@@ -1717,7 +1849,7 @@
 						skippedCount += 1;
 						processNext();
 					}
-					,g_scriptConfig
+					,my_scriptConfig
 				);
 			};
 			
@@ -1866,9 +1998,14 @@
 						var $dialog = $('#'+dialogId);
 						var script = $dialog.find('textarea').val();
 						var scriptFn = null;
+						
+						// Create a copy of the configuration so that user
+						// can save temporary objects to it
+						var my_scriptConfig = $n2.extend({},g_scriptConfig);
+
 						try {
 							eval('scriptFn = '+script);
-							scriptFn({_id:'test',_revision:'1-abcde'},function(){},function(){},g_scriptConfig);
+							scriptFn({_id:'test',_revision:'1-abcde'},function(){},function(){},my_scriptConfig);
 						} catch(e) {
 							alert(_loc('Error')+': '+e);
 							return;
@@ -2159,6 +2296,14 @@
 			});
 		
 		$('<button>')
+			.text( _loc('Report') )
+			.appendTo($h)
+			.click(function(){
+				reportList(list);
+				return false;
+			});
+		
+		$('<button>')
 			.text( _loc('Export') )
 			.appendTo($h)
 			.click(function(){
@@ -2182,7 +2327,7 @@
 			var $a = $('<a href="#"></a>');
 			$d.append($a);
 			
-			if( showService ) {
+			if( showService && list.docIds.length < 100 ) {
 				showService.printBriefDescription($a, docId);
 			} else {
 				$a.text(docId);
@@ -2410,6 +2555,159 @@
 			}
 		};
 		$dialog.dialog(dialogOptions);
+	};
+
+	// -----------------------------------------------------------------
+	function reportList(list){
+		
+		var dialogId = $n2.getUniqueId();
+		var $dialog = $('<div>')
+			.attr('id',dialogId)
+			;
+		
+		$('<textarea>')
+			.addClass('n2select_report_script')
+			.val( 'function(opts_){\n\tvar opts = nunaliit2.extend({\n\t\t\tconfig: null\n\t\t\tdoc: null\n\t\t},opts_\n\t);\n}' )
+			.appendTo($dialog);
+
+		$('<div>')
+			.addClass('n2select_report_result')
+			.appendTo($dialog);
+
+		var $buttons = $('<div>')
+			.addClass('n2select_report_buttons')
+			.appendTo($dialog);
+
+		$('<button>')
+			.text( _loc('OK') )
+			.click(function(){
+				performReport();
+				return false;
+			})
+			.appendTo($buttons);
+		
+		var dialogOptions = {
+			autoOpen: true
+			,title: _loc('Enter Report Script')
+			,modal: true
+			,width: 400
+			,close: function(event, ui){
+				var diag = $(event.target);
+				diag.dialog('destroy');
+				diag.remove();
+			}
+		};
+		$dialog.dialog(dialogOptions);
+		
+		function performReport(){
+			var funcStr = $('#'+dialogId).find('.n2select_report_script').val();
+			
+			var func = null;
+			try {
+				eval('func = '+funcStr);
+			} catch(e) {
+				alert(_loc('Error')+': '+e);
+				return;
+			};
+			if( typeof(func) !== 'function' ) {
+				alert( _loc('You must enter a valid function') );
+				return;
+			};
+			
+			var docIdsLeft = [];
+			for(var i=0,e=list.docIds.length; i<e; ++i){
+				docIdsLeft.push( list.docIds[i] );
+			};
+			var totalCount = docIdsLeft.length;
+			var processedCount = 0;
+			var failCount = 0;
+			var opCancelled = false;
+			
+			var progressDialog = new ProgressDialog({
+				title: _loc('Preparing Report')
+				,onCancelFn: function(){
+					opCancelled = true;
+				}
+			});
+			
+			var logger = new Logger({
+				elem: $('#'+dialogId).find('.n2select_report_result')
+			});
+
+			// Create a copy of the configuration so that user
+			// can save temporary objects to it
+			var my_scriptConfig = $n2.extend({},g_scriptConfig);
+			
+			processNext();
+			
+			function processNext(){
+				if( opCancelled ) {
+					cancel();
+					return;
+				};
+
+				if(docIdsLeft.length < 1){
+					progressDialog.updateHtmlMessage('<span>100%</span>');
+					progressDialog.close();
+
+					// Call one last time, without a document
+					func({
+						config: my_scriptConfig
+						,logger: logger
+					});
+					
+					
+				} else {
+					if( totalCount ) {
+						var percent = Math.floor((processedCount+failCount) * 100 / totalCount);
+						var html = ['<div>'];
+						html.push('<span>Percent: '+percent+'%</span><br/>');
+						html.push('<span>Processed: '+processedCount+'</span><br/>');
+						html.push('<span>Failures: '+failCount+'</span><br/>');
+						html.push('</div>');
+						progressDialog.updateHtmlMessage( html.join('') );
+					} else {
+						progressDialog.updateHtmlMessage('<span>0%</span>');
+					};
+					
+					var docId = docIdsLeft.pop();
+					atlasDb.getDocument({
+						docId: docId
+						,onSuccess: retrievedDocument
+						,onError: function(err){
+							var locStr = _loc('Failure to fetch {docId}',{
+								docId: docId
+							});
+							reportError(locStr);
+							failCount += 1;
+							processNext();
+						}
+					});
+				};
+			};
+			
+			function retrievedDocument(doc){
+				if( opCancelled ) {
+					cancel();
+					return;
+				};
+
+				func({
+					doc: doc
+					,config: my_scriptConfig
+					,logger: logger
+				});
+				
+				processedCount += 1;
+
+				processNext();
+			};
+			
+			function cancel(){
+				reportError(_loc('Operation cancelled by user'));
+				progressDialog.close();
+			};
+		};
 	};
 	
 	// -----------------------------------------------------------------
