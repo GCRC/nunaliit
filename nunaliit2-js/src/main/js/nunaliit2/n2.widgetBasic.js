@@ -56,6 +56,7 @@ var CreateDocumentWidget = $n2.Class({
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			contentId: null
+			,containerId: null
 			,dispatchService: null
 			,authService: null
 			,showAsLink: false
@@ -63,10 +64,10 @@ var CreateDocumentWidget = $n2.Class({
 		},opts_);
 		
 		this.contentId = opts.contentId;
+		this.containerId = opts.containerId;
 		this.dispatchService = opts.dispatchService;
 		this.authService = opts.authService;
 		this.showAsLink = opts.showAsLink;
-		this.containerId = opts.containerId;
 		
 		this._display();
 	},
