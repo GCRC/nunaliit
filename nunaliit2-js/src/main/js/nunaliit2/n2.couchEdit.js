@@ -993,6 +993,12 @@ var CouchDocumentEditor = $n2.Class({
 					var template = _this.editedDocumentSchema.createObject({});
 					$n2.extend(true, _this.editedDocument, template);
 				};
+				
+				// Give a chance to external processes to modify document
+				_this._dispatch({
+					type: 'preDocCreation'
+					,doc: _this.editedDocument
+				});
 			};
 			
 			_this._prepareDocument();
