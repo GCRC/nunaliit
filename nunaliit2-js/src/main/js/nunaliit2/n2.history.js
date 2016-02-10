@@ -749,6 +749,8 @@ var Tracker = $n2.Class({
 	
 	last: null,
 	
+	waitingDocId: null,
+	
 	initialize: function(opts_){
 		this.options = $n2.extend({
 			directory: null
@@ -770,6 +772,8 @@ var Tracker = $n2.Class({
 			d.register(DH,'hashChanged',f);
 			d.register(DH,'userSelect',f);
 			d.register(DH,'unselected',f);
+			d.register(DH,'documentCreated',f);
+			d.register(DH,'documentUpdated',f);
 			d.register(DH,'documentDeleted',f);
 			d.register(DH,'searchInitiate',f);
 			d.register(DH,'editInitiate',f);
@@ -823,7 +827,10 @@ var Tracker = $n2.Class({
 						type: type
 						,hash: hash
 					});
+
+					this.waitingDocId = null;
 				};
+
 			} else if( m.docIds ) {
 				this.last = {
 					multi_selected: m.docIds
@@ -846,6 +853,8 @@ var Tracker = $n2.Class({
 						type: type
 						,hash: hash
 					});
+
+					this.waitingDocId = null;
 				};
 			};
 
@@ -859,6 +868,8 @@ var Tracker = $n2.Class({
 					type: 'setHash'
 					,hash: null
 				});
+
+				this.waitingDocId = null;
 			};
 
 		} else if( 'documentDeleted' === m.type ){
@@ -885,6 +896,8 @@ var Tracker = $n2.Class({
 					type: 'setHash'
 					,hash: hash
 				});
+
+				this.waitingDocId = null;
 			};
 
 		} else if( 'editInitiate' === m.type 
@@ -892,6 +905,8 @@ var Tracker = $n2.Class({
 			this.last = {
 				edit: true
 			};
+
+			this.waitingDocId = null;
 
 			this._dispatch({
 				type: 'setHash'
@@ -908,7 +923,7 @@ var Tracker = $n2.Class({
 				editClosed: true
 			};
 
-			if( m.inserted ) {
+			if( m.inserted && !m.submissionDs) {
 				// A document was created. Select it so it is reflected in the
 				// history hash
 				this._dispatch({
@@ -917,13 +932,16 @@ var Tracker = $n2.Class({
 					,_replaceHash: true
 				});
 
-			} else if( m.saved ) {
+			} else if( m.inserted && m.submissionDs ){
+				// For now, go back and wait for document
 				if(lastIsEditInitiate) {
 					this._dispatch({
 						type: 'historyBack'
 					});
-				};	
+				};
 				
+				this.waitingDocId  = m.doc._id;
+
 			} else {
 				// cancelled or deleted
 				if(lastIsEditInitiate) {
@@ -935,6 +953,10 @@ var Tracker = $n2.Class({
 
 		} else if( 'hashChanged' === m.type ){
 			var o = null;
+
+			if( !this.last.editClosed ){
+				this.waitingDocId = null;
+			};
 			
 			if( 'nostate' === m.hash ){
 				// Do not do anything
@@ -968,6 +990,16 @@ var Tracker = $n2.Class({
 			} else  {
 				// Attempt to interpret hash
 				this._reloadHash(m.hash);
+			};
+
+		} else if( 'documentCreated' === m.type 
+		 || 'documentUpdated' === m.type ){
+			if( m.docId && m.docId === this.waitingDocId ){
+				// OK, we have been waiting for this document. Select it
+				this._dispatch({
+					type: 'userSelect'
+					,docId: m.docId
+				});
 			};
 		};
 	},

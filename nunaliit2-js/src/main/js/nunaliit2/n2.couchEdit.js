@@ -1552,23 +1552,18 @@ var CouchDocumentEditor = $n2.Class({
 		};
 			
 		function updateDocument() {
+			var isSubmissionDs = false;
+			if( _this.documentSource.isSubmissionDataSource ){
+				isSubmissionDs = true;
+			};
+
 			// Create or update document
 			if( _this.isInsert ) {
 				// This is an insert
-				var isSubmissionDs = false;
-				if( _this.documentSource.isSubmissionDataSource ){
-					isSubmissionDs = true;
-				};
 				_this.documentSource.createDocument({
 					doc: _this.editedDocument
 					,onSuccess: function(updatedDoc) {
-						if( isSubmissionDs ){
-							// In the case of a submission database, the new document
-							// is not yet inserted
-							postSaveAttachmentEditor(updatedDoc, false);
-						} else {
-							postSaveAttachmentEditor(updatedDoc, true);
-						};
+						postSaveAttachmentEditor(updatedDoc, true, isSubmissionDs);
 					}
 					,onError: function(err){
 			    		_this._enableControls();
@@ -1580,7 +1575,7 @@ var CouchDocumentEditor = $n2.Class({
 				_this.documentSource.updateDocument({
 					doc: _this.editedDocument
 					,onSuccess: function(updatedDoc) {
-						postSaveAttachmentEditor(updatedDoc, false);
+						postSaveAttachmentEditor(updatedDoc, false, isSubmissionDs);
 					}
 					,onError: function(err){
 			    		_this._enableControls();
@@ -1590,11 +1585,11 @@ var CouchDocumentEditor = $n2.Class({
 			};
 		};
 		
-		function postSaveAttachmentEditor(editedDocument, inserted) {
+		function postSaveAttachmentEditor(editedDocument, inserted, isSubmissionDs) {
 			if( _this.attachmentEditor ){
 				_this.attachmentEditor.performPostSavingActions({
 					onSuccess: function(doc){
-						completeSave(editedDocument, inserted);
+						completeSave(editedDocument, inserted, isSubmissionDs);
 					}
 					,onError: function(err){
 			    		_this._enableControls();
@@ -1602,14 +1597,15 @@ var CouchDocumentEditor = $n2.Class({
 					}
 				});
 			} else {
-				completeSave(editedDocument, inserted);
+				completeSave(editedDocument, inserted, isSubmissionDs);
 			};
 		};
 
-		function completeSave(editedDocument, inserted) {
+		function completeSave(editedDocument, inserted, isSubmissionDs) {
 			// Report that save is complete
 			var discardOpts = {
 				saved: true
+				,submissionDs: isSubmissionDs
 			};
 			if( inserted ) {
 				discardOpts.inserted = true;
@@ -1833,6 +1829,7 @@ var CouchDocumentEditor = $n2.Class({
 			saved: false
 			,inserted: false
 			,updated: false
+			,submissionDs: false
 			,deleted: false
 			,cancelled: false
 			,suppressEvents: false
@@ -1872,6 +1869,7 @@ var CouchDocumentEditor = $n2.Class({
 				,updated: opts.updated
 				,deleted: opts.deleted
 				,cancelled: opts.cancelled
+				,submissionDs: opts.submissionDs
 			});
 		};
 		
