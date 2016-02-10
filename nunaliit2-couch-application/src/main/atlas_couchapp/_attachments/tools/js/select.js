@@ -269,8 +269,9 @@
 				return;
 			};
 			
-			if( !opts.name ) {
-				opts.name = this.name;
+			var listName = opts.name;
+			if( !listName ) {
+				listName = this.name;
 			};
 
 			var opCancelled = false;
@@ -326,10 +327,15 @@
 				} else {
 					progressDialog.updatePercent(100);
 
+					var effectiveListName = my_scriptConfig.listName;
+					if( !effectiveListName ){
+						effectiveListName = listName;
+					};
+					
 					// List is complete
 					var l = new DocumentList({
 						docIds: filteredDocIds
-						,name: opts.name
+						,name: effectiveListName
 					});
 					opts.onSuccess(l);
 
