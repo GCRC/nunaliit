@@ -522,6 +522,12 @@ CreateDocument widget
 	-webkit-box-shadow: 1px 1px 3px #e1dfdf;
 	box-shadow: 1px 1px 3px #e1dfdf;
 }
+.editorSelectDocumentDialog .olkitSearchMod2_0, 
+.editorSelectDocumentDialog .olkitSearchMod2_1 {
+	-moz-box-shadow: none;
+	-webkit-box-shadow: none;
+	box-shadow: none;
+}
 
 ._n2DocumentListEntry {
 	border-bottom: 1px solid #cccccc;
