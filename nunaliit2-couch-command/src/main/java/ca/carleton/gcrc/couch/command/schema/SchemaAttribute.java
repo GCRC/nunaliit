@@ -937,7 +937,7 @@ public class SchemaAttribute {
 					}
 
 					if( null != searchFunction ){
-						fieldType = ",search="+encodeFieldParameter(searchFunction);
+						fieldType += ",search="+encodeFieldParameter(searchFunction);
 					}
 					
 					pw.println("{{#"+schemaName+"}}");
