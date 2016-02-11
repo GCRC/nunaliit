@@ -60,7 +60,6 @@ var CreateDocumentWidget = $n2.Class({
 			,dispatchService: null
 			,authService: null
 			,showAsLink: false
-			,containerId: null
 		},opts_);
 		
 		this.contentId = opts.contentId;
