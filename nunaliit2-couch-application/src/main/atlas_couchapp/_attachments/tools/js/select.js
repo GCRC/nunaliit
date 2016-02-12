@@ -13,6 +13,7 @@
 	var schemaRepository = null;
 	var showService = null;
 	var exportService = null;
+	var searchService = null;
 	var couchEditor = null;
 	var $selectAppDiv = null;
 	var documentTransforms = [];
@@ -626,16 +627,16 @@
 	};
 
 	// **********************************************************************
-	var SearchFilterTextSearch = $n2.Class(SearchFilter, {
+	var SearchFilterRegexSearch = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
-			this.name = _loc('Text Search');
+			this.name = _loc('Regex Search');
 		}
 	
 		,printOptions: function($parent){
 			var $options = $('<div>'
-				+_loc('Search term')+': <input type="text"/>'
+				+_loc('Regex Expression')+': <input type="text"/>'
 				+'</div>');
 			$parent.append( $options );
 		}
@@ -663,15 +664,15 @@
 				});
 				return result;
 			};
-			opts.onSuccess(filterFn, _loc('All documents containing {searchTerm}',{
-				searchTerm: searchTerm
+			opts.onSuccess(filterFn, _loc('All documents matching regex {regex}',{
+				regex: searchTerm
 			}));
 			
 			return false;
 		}
 	});
 	
-	SearchFilter.availableSearchFilters.push(new SearchFilterTextSearch());
+	SearchFilter.availableSearchFilters.push(new SearchFilterRegexSearch());
 
 	// **********************************************************************
 	var SearchFilterJavascript = $n2.Class(SearchFilter, {
@@ -760,6 +761,64 @@
 	});
 
 	SearchFilter.availableCreateFilters.push(new CreateFilterAllDocs());
+
+	// **********************************************************************
+	var SearchFilterSearchTerms = $n2.Class(SearchFilter, {
+
+		initialize: function(){
+			SearchFilter.prototype.initialize.apply(this);
+			this.name = _loc('Search Terms');
+		}
+	
+		,printOptions: function($parent){
+			var $options = $('<div>'
+				+_loc('Search terms')+': <input type="text"/>'
+				+'</div>');
+			$parent.append( $options );
+		}
+
+		,createList: function(opts_){
+			var opts = $n2.extend({
+				name: null
+				,options: null
+				,progressTitle: _loc('List Creation Progress')
+				,onSuccess: function(list){}
+				,onError: reportError
+			},opts_);
+
+			// Get search terms
+			var $options = opts.options;
+			var $input = $options.find('input');
+			var searchTerms = $input.val();
+			
+			// Obtain docIds from search service
+			searchService.submitRequest(searchTerms, {
+				onlyFinalResults: true
+				,strict: true
+				,onSuccess: function(searchResults){
+					var docIds = [];
+					if( searchResults && searchResults.list ){
+						for(var i=0,e=searchResults.list.length; i<e; ++i){
+							var foundItem = searchResults.list[i];
+							var docId = foundItem.id;
+							docIds.push(docId);
+						};
+					};
+					
+					var l = new DocumentList({
+						docIds: docIds
+						,name: _loc('All documents containing {searchTerm}',{
+							searchTerm: searchTerms
+						})
+					});
+					opts.onSuccess(l);
+				}
+				,onError: reportError
+			});
+		}
+	});
+	
+	SearchFilter.availableCreateFilters.push(new SearchFilterSearchTerms());
 
 	// **********************************************************************
 	var CreateFilterByGeomLayer = $n2.Class(SearchFilter, {
@@ -3201,6 +3260,7 @@
 		if( config.directory ){
 			showService = config.directory.showService;
 			exportService = config.directory.exportService;
+			searchService = config.directory.searchService;
 			
 			// This application does not use hash to keep track of currently
 			// selected document.

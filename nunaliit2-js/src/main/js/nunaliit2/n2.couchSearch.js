@@ -55,14 +55,31 @@ function SplitSearchTerms(line) {
 };
 
 //============ SearchRequest ========================
-
+/*
+ * Returns a search result:
+ * {
+ *    pending: <integer> // number of search terms that have not yet been returned
+ *    ,actionReturnedCount: <integer> // number of search terms returned so far
+ *    ,terms: <array of strings> // search terms
+ *    ,sorted: <array of found result> // Sorted list of found results
+ *    ,list: <array of found result> // Same as "sorted" but including only the found results
+ *                                   // with the most search terms matched
+ * }
+ * 
+ * found result:
+ * {
+ *    id: <document id>
+ *    ,index: <integer> // earliest position of found term in a field
+ *    ,terms: <integer> // number of terms matched
+ * }
+ */
 var SearchRequest = $n2.Class({
 	
-	options: null
+	options: null,
 	
-	,searchResults: null
+	searchResults: null,
 	
-	,initialize: function(searchTermsLine, opts_) {
+	initialize: function(searchTermsLine, opts_) {
 		this.options = $n2.extend({
 			designDoc: null
 			,db: null
@@ -81,8 +98,7 @@ var SearchRequest = $n2.Class({
 		} else if( $n2.isArray(searchTermsLine) ){
 			searchTermsLine = searchTerms.join(' ');
 		} else {
-			this.options.onError('Search terms must be a string or an array');
-			return;
+			throw 'Search terms must be a string or an array';
 		};
 		
 		var dateIntervals = null;
@@ -182,9 +198,9 @@ var SearchRequest = $n2.Class({
 				});
 			};
 		};
-	}
+	},
 
-	,abortSearch: function() {
+	abortSearch: function() {
 		this.searchResults = null;
 	},
 	
@@ -274,9 +290,9 @@ var SearchRequest = $n2.Class({
 		};
 		
 		this._returnSearchResults();
-	}
+	},
 	
-	,_returnSearchResults: function() {
+	_returnSearchResults: function() {
 		
 		var searchResults = this.searchResults;
 		
