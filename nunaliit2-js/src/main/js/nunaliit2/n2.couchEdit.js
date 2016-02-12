@@ -947,7 +947,7 @@ var CouchDocumentEditor = $n2.Class({
 	    	};
 
 	    	// Give a chance to external processes to modify document
-			_this._dispatch({
+			_this.dispatchService.synchronousCall(DH,{
 				type: 'preDocCreation'
 				,doc: _this.editedDocument
 			});
@@ -1001,7 +1001,7 @@ var CouchDocumentEditor = $n2.Class({
 				};
 				
 				// Give a chance to external processes to modify document
-				_this._dispatch({
+				_this.dispatchService.synchronousCall(DH,{
 					type: 'preDocCreation'
 					,doc: _this.editedDocument
 				});
