@@ -455,7 +455,7 @@ var CreateRelatedDocProcess = $n2.Class({
 				};
 			};
 			
-			_this._dispatch({
+			_this.dispatchService.synchronousCall(DH,{
 				type: 'preDocCreation'
 				,doc: obj
 				,relatedDoc: opt.relatedDoc
