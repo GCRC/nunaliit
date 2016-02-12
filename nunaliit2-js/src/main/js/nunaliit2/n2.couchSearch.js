@@ -70,7 +70,7 @@ var SearchRequest = $n2.Class({
 			,dateService: null
 			,searchLimit: 25
 			,onlyFinalResults: false
-			,strict: false
+			,strict: true
 			,onSuccess: function(searchResults){}
 			,onError: function(err){ $n2.reportErrorForced(err); }
 		},opts_);
@@ -186,9 +186,18 @@ var SearchRequest = $n2.Class({
 
 	,abortSearch: function() {
 		this.searchResults = null;
-	}
+	},
 	
-	,_receiveSearchResults: function(interimResults) {
+	/*
+	 * Receives an array of term results:
+	 * {
+	 *    docId: <docId>
+	 *    ,index: <integer>
+	 * }
+	 * 
+	 * The lower the index, the better the match
+	 */
+	_receiveSearchResults: function(interimResults) {
 	
 		var searchResults = this.searchResults;
 		
