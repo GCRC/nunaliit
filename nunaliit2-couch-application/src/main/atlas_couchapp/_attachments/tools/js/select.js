@@ -143,6 +143,60 @@
 			$div.html( html );
 		}
 	});
+	
+	// **********************************************************************
+	var DocumentList = $n2.Class({
+		docIds: null,
+		
+		name: null,
+		
+		fromList: null,
+		
+		initialize: function(opts_){
+			var opts = $n2.extend({
+				docIds: null
+				,name: _loc('Unknown List')
+				,fromList: null
+			},opts_);
+			
+			this.docIds = opts.docIds;
+			this.fromList = opts.fromList;
+
+			if( !this.docIds ){
+				this.docIds = [];
+			};
+			
+			this.docIds = [];
+			var mapById = {};
+			if( opts.docIds && opts.docIds.length ){
+				for(var i=0,e=opts.docIds.length; i<e; ++i){
+					var docId = opts.docIds[i];
+					
+					// Remove duplicates
+					if( !mapById[docId] ){
+						this.docIds.push(docId);
+						mapById[docId]= true;
+					};
+				};
+			};
+			
+			this.name = opts.name;
+		},
+	
+		print: function(){
+			var locStr = _loc('{count} document(s)',{
+				count: this.docIds.length
+			});
+
+			var label = this.name + ' - ' + locStr;
+			
+			if( this.fromList ){
+				label = label + ' (from:' + this.fromList.name + ')'; 
+			};
+			
+			return label;
+		}
+	});
 
 	// **********************************************************************
 	var SearchFilter = $n2.Class({
@@ -246,6 +300,7 @@
 						var l = new DocumentList({
 							docIds: newListIds
 							,name: listName
+							,fromList: opts.list
 						});
 
 						opts.onSuccess(l);
@@ -256,11 +311,12 @@
 			} else if( typeof this._getFilterFunction === 'function' ) {
 				this._getFilterFunction({
 					options: opts.options
-					,onSuccess: function(filterFn){
+					,onSuccess: function(filterFn, listName){
 						_this._createListFilterDocIds({
 							filterFn: filterFn
-							,name: opts.name
+							,name: listName
 							,docIds: opts.list.docIds
+							,fromList: opts.list
 							,progressTitle: opts.progressTitle
 							,onSuccess: opts.onSuccess
 							,onError: opts.onError
@@ -277,7 +333,6 @@
 		,_createListFilterAllDocs: function(opts_){
 			var opts = $n2.extend({
 				filterFn: null
-				,name: null
 				,progressTitle: _loc('List Creation Progress')
 				,onSuccess: function(list){}
 				,onError: reportError
@@ -289,10 +344,6 @@
 			if( !opts.filterFn ) {
 				opts.onError( _loc('A filter function must be supplied') );
 				return;
-			};
-			
-			if( !opts.name ) {
-				opts.name = this.name;
 			};
 
 			var progressDialog = new ProgressDialog({
@@ -323,7 +374,6 @@
 				
 				_this._createListFilterDocIds({
 					filterFn: opts.filterFn
-					,name: opts.name
 					,docIds: allDocIds_
 					,progressTitle: opts.progressTitle
 					,onSuccess: opts.onSuccess
@@ -337,6 +387,7 @@
 				filterFn: null
 				,name: null
 				,docIds: null
+				,fromList: null
 				,progressTitle: _loc('List Creation Progress')
 				,onSuccess: function(list){}
 				,onError: reportError
@@ -419,6 +470,7 @@
 					var l = new DocumentList({
 						docIds: filteredDocIds
 						,name: effectiveListName
+						,fromList: opts.fromList
 					});
 					opts.onSuccess(l);
 
@@ -2087,48 +2139,6 @@
 			},opts_);
 			
 			opts.onSuccess(this.transformFn);
-		}
-	});
-	
-	// **********************************************************************
-	var DocumentList = $n2.Class({
-		docIds: null
-		
-		,name: null
-		
-		,initialize: function(opts_){
-			var opts = $n2.extend({
-				docIds: null
-				,name: _loc('Unknown List')
-			},opts_);
-			
-			this.docIds = opts.docIds;
-			if( !this.docIds ){
-				this.docIds = [];
-			};
-			
-			this.docIds = [];
-			var mapById = {};
-			if( opts.docIds && opts.docIds.length ){
-				for(var i=0,e=opts.docIds.length; i<e; ++i){
-					var docId = opts.docIds[i];
-					
-					// Remove duplicates
-					if( !mapById[docId] ){
-						this.docIds.push(docId);
-						mapById[docId]= true;
-					};
-				};
-			};
-			
-			this.name = opts.name;
-		}
-	
-		,print: function(){
-			var locStr = _loc('{count} document(s)',{
-				count: this.docIds.length
-			});
-			return this.name + ' - ' + locStr;
 		}
 	});
 
