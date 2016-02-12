@@ -945,6 +945,12 @@ var CouchDocumentEditor = $n2.Class({
 	    	 && _this.initialLayers.length > 0 ) {
 	    		_this.editedDocument.nunaliit_layers = _this.initialLayers;
 	    	};
+
+	    	// Give a chance to external processes to modify document
+			_this._dispatch({
+				type: 'preDocCreation'
+				,doc: _this.editedDocument
+			});
 			
 			_this._prepareDocument();
 		};
