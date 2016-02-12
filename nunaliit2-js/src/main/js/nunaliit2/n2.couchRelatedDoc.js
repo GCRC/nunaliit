@@ -455,11 +455,13 @@ var CreateRelatedDocProcess = $n2.Class({
 				};
 			};
 			
-			_this.dispatchService.synchronousCall(DH,{
-				type: 'preDocCreation'
-				,doc: obj
-				,relatedDoc: opt.relatedDoc
-			});
+			if( _this.dispatchService ){
+				_this.dispatchService.synchronousCall(DH,{
+					type: 'preDocCreation'
+					,doc: obj
+					,relatedDoc: opt.relatedDoc
+				});
+			};
 			
 			// Compute prompt, if not provided
 			var prompt = opt.prompt;
@@ -674,12 +676,6 @@ var CreateRelatedDocProcess = $n2.Class({
 		
 		function noButton(){
 			$placeHolder.remove();
-		};
-	},
-	
-	_dispatch: function(msg){
-		if( this.dispatchService ){
-			this.dispatchService.synchronousCall(DH,msg);
 		};
 	}
 });

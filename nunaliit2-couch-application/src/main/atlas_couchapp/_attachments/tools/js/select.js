@@ -157,42 +157,124 @@
 	
 		,createList: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
 				,onSuccess: function(list){}
 				,onError: reportError
 			},opts_);
 			
 			var _this = this;
+			
+			if( typeof this._retrieveDocIds === 'function' ){
+				// Create list by getting the document ids (generally faster)
+				this._retrieveDocIds({
+					options: opts.options
+					,progressTitle: opts.progressTitle
+					,onSuccess: function(docIds, listName){
+						var l = new DocumentList({
+							docIds: docIds
+							,name: listName
+						});
+						opts.onSuccess(l);
+					}
+					,onError: opts.onError
+				});
+				
+			} else if( typeof this._getFilterFunction === 'function' ) {
+				// Create list by filtering all documents
+				this._getFilterFunction({
+					options: opts.options
+					,onSuccess: function(filterFn, createName){
+						if( !opts.name ) {
+							opts.name = createName;
+						};
+						if( !opts.name ) {
+							opts.name = _this.name;
+						};
+						_this._createListFilterAllDocs({
+							filterFn: filterFn
+							,name: opts.name
+							,progressTitle: opts.progressTitle
+							,onSuccess: opts.onSuccess
+							,onError: opts.onError
+						});
+					}
+					,onError: opts.onError
+				});
 
-			if( typeof(this.getFilterFunction) !== 'function' ) {
-				opts.onError('Subclass must implement function getFilterFunction()');
+			} else {
+				opts.onError('Subclass must implement function _retrieveDocIds() or _getFilterFunction()');
+			};
+		}
+		
+		,refineList: function(opts_){
+			var opts = $n2.extend({
+				list: null
+				,options: null
+				,progressTitle: _loc('List Refinement Progress')
+				,onSuccess: function(list){}
+				,onError: reportError
+			},opts_);
+			
+			var _this = this;
+
+			if( !opts.list ){
+				opts.onError( _loc('A list must be provided for refining') );
 				return;
 			};
 			
-			this.getFilterFunction({
-				options: opts.options
-				,onSuccess: function(filterFn, createName){
-					if( !opts.name ) {
-						opts.name = createName;
-					};
-					if( !opts.name ) {
-						opts.name = _this.name;
-					};
-					_this.createListFilterAllDocs({
-						filterFn: filterFn
-						,name: opts.name
-						,progressTitle: opts.progressTitle
-						,onSuccess: opts.onSuccess
-						,onError: opts.onError
-					});
-				}
-				,onError: opts.onError
-			});
+			if( typeof this._retrieveDocIds === 'function' ) {
+				// Refine list by getting docIds and filtering the list based
+				// on those
+				this._retrieveDocIds({
+					options: opts.options
+					,progressTitle: opts.progressTitle
+					,onSuccess: function(docIds, listName){
+						var docIdMap = {};
+						for(var i=0,e=docIds.length; i<e; ++i){
+							docIdMap[docIds[i]] = true;
+						};
+						
+						var newListIds = [];
+						for(var i=0,e=opts.list.docIds.length; i<e; ++i){
+							var docId = opts.list.docIds[i];
+							if( docIdMap[docId] ){
+								newListIds.push(docId);
+							};
+						};
+						
+						var l = new DocumentList({
+							docIds: newListIds
+							,name: listName
+						});
+
+						opts.onSuccess(l);
+					}
+					,onError: opts.onError
+				});
+
+			} else if( typeof this._getFilterFunction === 'function' ) {
+				this._getFilterFunction({
+					options: opts.options
+					,onSuccess: function(filterFn){
+						_this._createListFilterDocIds({
+							filterFn: filterFn
+							,name: opts.name
+							,docIds: opts.list.docIds
+							,progressTitle: opts.progressTitle
+							,onSuccess: opts.onSuccess
+							,onError: opts.onError
+						});
+					}
+					,onError: opts.onError
+				});
+
+			} else {
+				opts.onError('Subclass must implement function _getFilterFunction() or _retrieveDocIds()');
+			};
 		}
 		
-		,createListFilterAllDocs: function(opts_){
+		,_createListFilterAllDocs: function(opts_){
 			var opts = $n2.extend({
 				filterFn: null
 				,name: null
@@ -239,7 +321,7 @@
 				progressDialog.updatePercent(100);
 				progressDialog.close();
 				
-				_this.createListFilterDocIds({
+				_this._createListFilterDocIds({
 					filterFn: opts.filterFn
 					,name: opts.name
 					,docIds: allDocIds_
@@ -250,7 +332,7 @@
 			};
 		}
 		
-		,createListFilterDocIds: function(opts_){
+		,_createListFilterDocIds: function(opts_){
 			var opts = $n2.extend({
 				filterFn: null
 				,name: null
@@ -363,51 +445,9 @@
 				progressDialog.close();
 			};
 		}
-		
-		,refineList: function(opts_){
-			var opts = $n2.extend({
-				list: null
-				,name: null
-				,options: null
-				,progressTitle: _loc('List Refinement Progress')
-				,onSuccess: function(list){}
-				,onError: reportError
-			},opts_);
-			
-			var _this = this;
-
-			if( !opts.list ){
-				opts.onError( _loc('A list must be provided for refining') );
-				return;
-			};
-			if( !opts.name ){
-				opts.onError( _loc('A name must be provided when refining a list') );
-				return;
-			};
-			if( typeof(this.getFilterFunction) !== 'function' ) {
-				opts.onError('Subclass must implement function getFilterFunction()');
-				return;
-			};
-			
-			this.getFilterFunction({
-				options: opts.options
-				,onSuccess: function(filterFn){
-					_this.createListFilterDocIds({
-						filterFn: filterFn
-						,name: opts.name
-						,docIds: opts.list.docIds
-						,progressTitle: opts.progressTitle
-						,onSuccess: opts.onSuccess
-						,onError: opts.onError
-					});
-				}
-				,onError: opts.onError
-			});
-		}
 	});
 	
 	SearchFilter.availableSearchFilters = [];
-	SearchFilter.availableCreateFilters = [];
 	
 	// Opens a dialog, selects a search filter from available ones, and create
 	// a new list
@@ -425,13 +465,6 @@
 			+'</div>');
 
 		var $select = $dialog.find('select.searchFilterSelector');
-		for(var i=0,e=SearchFilter.availableCreateFilters.length; i<e; ++i) {
-			var searchFilter = SearchFilter.availableCreateFilters[i];
-			var $o = $('<option></option>');
-			$o.text(searchFilter.name);
-			$o.attr('value',searchFilter.id);
-			$select.append( $o );
-		};
 		for(var i=0,e=SearchFilter.availableSearchFilters.length; i<e; ++i) {
 			var searchFilter = SearchFilter.availableSearchFilters[i];
 			var $o = $('<option></option>');
@@ -500,12 +533,6 @@
 		$dialog.dialog(dialogOptions);
 		
 		function findSearchFilterFromId(id){
-			for(var i=0,e=SearchFilter.availableCreateFilters.length; i<e; ++i) {
-				var searchFilter = SearchFilter.availableCreateFilters[i];
-				if( searchFilter.id === id ) {
-					return searchFilter;
-				};
-			};
 			for(var i=0,e=SearchFilter.availableSearchFilters.length; i<e; ++i) {
 				var searchFilter = SearchFilter.availableSearchFilters[i];
 				if( searchFilter.id === id ) {
@@ -527,7 +554,6 @@
 		
 		var dialogId = $n2.getUniqueId();
 		var $dialog = $('<div id="'+dialogId+'">'
-			+'<div>'+_loc('Name of new list')+': <input type="text"/></div>'
 			+'<div>'+_loc('Type of refinement')+': <select class="searchFilterSelector"></select></div>'
 			+'<div class="searchFilterOptions"></div>'
 			+'<div><button>'+_loc('OK')+'</button><button>'+_loc('Cancel')+'</button></div>'
@@ -553,25 +579,20 @@
 				.button({icons:{primary:'ui-icon-check'}})
 				.click(function(){
 					var $dialog = $('#'+dialogId);
-					var listName = $dialog.find('input').val();
 					var $options = $dialog.find('.searchFilterOptions');
 					var filterId = $dialog.find('select.searchFilterSelector').val();
 					
-					if( !listName || '' === listName ){
-						alert( _loc('A list name must be supplied') );
-						$dialog.find('input').focus();
-						return;
-					};
-	
 					$dialog.dialog('close');
 
 					var useFilter = findSearchFilterFromId(filterId);
 					if( useFilter ) {
 						useFilter.refineList({
 							list: opts.list
-							,name: listName
 							,options: $options
 							,onSuccess: opts.onSuccess
+							,onError: function(err){
+								$n2.log('Error refining list: '+err);
+							}
 						});
 					} else {
 						alert( _loc('Unable to find document search filter') );
@@ -627,6 +648,91 @@
 	};
 
 	// **********************************************************************
+	var SearchFilterAllDocs = $n2.Class(SearchFilter, {
+
+		initialize: function(){
+			SearchFilter.prototype.initialize.apply(this);
+			this.name = _loc('All Documents');
+		}
+	
+		,printOptions: function($parent){
+		}
+
+		,_retrieveDocIds: function(opts_){
+			var opts = $n2.extend({
+				options: null
+				,progressTitle: _loc('List Creation Progress')
+				,onSuccess: function(docIds,name){}
+				,onError: reportError
+			},opts_);
+			
+			atlasDb.listAllDocuments({
+				onSuccess: function(docIds){
+					opts.onSuccess(docIds,_loc('All Documents'));
+				}
+				,onError: opts.onError
+			});
+		}
+	});
+
+	SearchFilter.availableSearchFilters.push(new SearchFilterAllDocs());
+
+	// **********************************************************************
+	var SearchFilterSearchTerms = $n2.Class(SearchFilter, {
+
+		initialize: function(){
+			SearchFilter.prototype.initialize.apply(this);
+			this.name = _loc('Search Terms');
+		}
+	
+		,printOptions: function($parent){
+			var $options = $('<div>'
+				+_loc('Search terms')+': <input type="text"/>'
+				+'</div>');
+			$parent.append( $options );
+		}
+
+		,_retrieveDocIds: function(opts_){
+			var opts = $n2.extend({
+				options: null
+				,progressTitle: _loc('List Creation Progress')
+				,onSuccess: function(docIds,name){}
+				,onError: reportError
+			},opts_);
+
+			// Get search terms
+			var $options = opts.options;
+			var $input = $options.find('input');
+			var searchTerms = $input.val();
+			
+			// Obtain docIds from search service
+			searchService.submitRequest(searchTerms, {
+				onlyFinalResults: true
+				,strict: true
+				,onSuccess: function(searchResults){
+					var docIds = [];
+					if( searchResults && searchResults.list ){
+						for(var i=0,e=searchResults.list.length; i<e; ++i){
+							var foundItem = searchResults.list[i];
+							var docId = foundItem.id;
+							docIds.push(docId);
+						};
+					};
+					
+					var name = _loc('All documents containing {searchTerm}',{
+						searchTerm: searchTerms
+					});
+
+					opts.onSuccess(docIds,name);
+				}
+				,onError: reportError
+			});
+		}
+	});
+	
+	SearchFilter.availableSearchFilters.push(new SearchFilterSearchTerms());
+
+	// **********************************************************************
 	var SearchFilterRegexSearch = $n2.Class(SearchFilter, {
 
 		initialize: function(){
@@ -641,7 +747,7 @@
 			$parent.append( $options );
 		}
 	
-		,getFilterFunction: function(opts_){
+		,_getFilterFunction: function(opts_){
 			var opts = $n2.extend({
 				options: null
 				,onSuccess: function(filterFn, creationName){}
@@ -694,7 +800,7 @@
 			$parent.append( $options );
 		}
 
-		,getFilterFunction: function(opts_){
+		,_getFilterFunction: function(opts_){
 			var opts = $n2.extend({
 				options: null
 				,onSuccess: function(filterFn, creationName){}
@@ -728,100 +834,7 @@
 	SearchFilter.availableSearchFilters.push(new SearchFilterJavascript());
 
 	// **********************************************************************
-	var CreateFilterAllDocs = $n2.Class(SearchFilter, {
-
-		initialize: function(){
-			SearchFilter.prototype.initialize.apply(this);
-			this.name = _loc('All Documents');
-		}
-	
-		,printOptions: function($parent){
-		}
-
-		,createList: function(opts_){
-			var opts = $n2.extend({
-				name: null
-				,options: null
-				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
-				,onError: reportError
-			},opts_);
-			
-			atlasDb.listAllDocuments({
-				onSuccess: function(docIds){
-					var l = new DocumentList({
-						docIds: docIds
-						,name: _loc('All Documents')
-					});
-					opts.onSuccess(l);
-				}
-				,onError: opts.onError
-			});
-		}
-	});
-
-	SearchFilter.availableCreateFilters.push(new CreateFilterAllDocs());
-
-	// **********************************************************************
-	var SearchFilterSearchTerms = $n2.Class(SearchFilter, {
-
-		initialize: function(){
-			SearchFilter.prototype.initialize.apply(this);
-			this.name = _loc('Search Terms');
-		}
-	
-		,printOptions: function($parent){
-			var $options = $('<div>'
-				+_loc('Search terms')+': <input type="text"/>'
-				+'</div>');
-			$parent.append( $options );
-		}
-
-		,createList: function(opts_){
-			var opts = $n2.extend({
-				name: null
-				,options: null
-				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
-				,onError: reportError
-			},opts_);
-
-			// Get search terms
-			var $options = opts.options;
-			var $input = $options.find('input');
-			var searchTerms = $input.val();
-			
-			// Obtain docIds from search service
-			searchService.submitRequest(searchTerms, {
-				onlyFinalResults: true
-				,strict: true
-				,onSuccess: function(searchResults){
-					var docIds = [];
-					if( searchResults && searchResults.list ){
-						for(var i=0,e=searchResults.list.length; i<e; ++i){
-							var foundItem = searchResults.list[i];
-							var docId = foundItem.id;
-							docIds.push(docId);
-						};
-					};
-					
-					var l = new DocumentList({
-						docIds: docIds
-						,name: _loc('All documents containing {searchTerm}',{
-							searchTerm: searchTerms
-						})
-					});
-					opts.onSuccess(l);
-				}
-				,onError: reportError
-			});
-		}
-	});
-	
-	SearchFilter.availableCreateFilters.push(new SearchFilterSearchTerms());
-
-	// **********************************************************************
-	var CreateFilterByGeomLayer = $n2.Class(SearchFilter, {
+	var SearchFilterByGeomLayer = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
@@ -860,12 +873,11 @@
 			});
 		}
 
-		,createList: function(opts_){
+		,_retrieveDocIds: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
+				,onSuccess: function(docIds,name){}
 				,onError: reportError
 			},opts_);
 			
@@ -884,14 +896,12 @@
 							var row = rows[i];
 							docIds.push(row.id);
 						};
+
 						var locStr = _loc('Geometries from layer {layerName}',{
 							layerName: layerName
 						});
-						var l = new DocumentList({
-							docIds: docIds
-							,name: locStr
-						});
-						opts.onSuccess(l);
+
+						opts.onSuccess(docIds,locStr);
 					}
 					,onError: function(err){
 						alert(_loc('Problem obtaining documents from layer')+': '+err);
@@ -902,10 +912,10 @@
 		}
 	});
 
-	SearchFilter.availableCreateFilters.push(new CreateFilterByGeomLayer());
+	SearchFilter.availableSearchFilters.push(new SearchFilterByGeomLayer());
 	
 	// **********************************************************************
-	var CreateFilterByDocLayer = $n2.Class(SearchFilter, {
+	var SearchFilterByDocLayer = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
@@ -944,12 +954,11 @@
 			});
 		}
 
-		,createList: function(opts_){
+		,_retrieveDocIds: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
+				,onSuccess: function(docIds,name){}
 				,onError: reportError
 			},opts_);
 			
@@ -972,11 +981,8 @@
 						var locStr = _loc('Documents from layer {layerName}',{
 							layerName: layerName
 						});
-						var l = new DocumentList({
-							docIds: docIds
-							,name: locStr
-						});
-						opts.onSuccess(l);
+
+						opts.onSuccess(docIds,locStr);
 					}
 					,onError: function(err){
 						alert(_loc('Problem obtaining documents from layer')+': '+err);
@@ -987,10 +993,10 @@
 		}
 	});
 
-	SearchFilter.availableCreateFilters.push(new CreateFilterByDocLayer());
+	SearchFilter.availableSearchFilters.push(new SearchFilterByDocLayer());
 
 	// **********************************************************************
-	var CreateFilterBySchemaType = $n2.Class(SearchFilter, {
+	var SearchFilterBySchemaType = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
@@ -1023,12 +1029,11 @@
 			});
 		}
 
-		,createList: function(opts_){
+		,_retrieveDocIds: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
+				,onSuccess: function(docIds,name){}
 				,onError: reportError
 			},opts_);
 			
@@ -1050,11 +1055,8 @@
 						var locStr = _loc('Documents from schema type {schemaName}',{
 							schemaName: schemaName
 						});
-						var l = new DocumentList({
-							docIds: docIds
-							,name: locStr
-						});
-						opts.onSuccess(l);
+
+						opts.onSuccess(docIds,locStr);
 					}
 					,onError: function(err){
 						alert(_loc('Problem obtaining documents from schema')+': '+err);
@@ -1065,10 +1067,10 @@
 		}
 	});
 
-	SearchFilter.availableCreateFilters.push(new CreateFilterBySchemaType());
+	SearchFilter.availableSearchFilters.push(new SearchFilterBySchemaType());
 
 	// **********************************************************************
-	var CreateFilterByImportProfile = $n2.Class(SearchFilter, {
+	var SearchFilterByImportProfile = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
@@ -1111,12 +1113,11 @@
 			});
 		}
 
-		,createList: function(opts_){
+		,_retrieveDocIds: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
+				,onSuccess: function(docIds,name){}
 				,onError: reportError
 			},opts_);
 			
@@ -1138,11 +1139,8 @@
 						var locStr = _loc('Documents from import profile: {profileId}',{
 							profileId: profileId
 						});
-						var l = new DocumentList({
-							docIds: docIds
-							,name: locStr
-						});
-						opts.onSuccess(l);
+
+						opts.onSuccess(docIds,locStr);
 					}
 					,onError: function(err){
 						alert(_loc('Problem obtaining documents from import profile')+': '+err);
@@ -1153,10 +1151,10 @@
 		}
 	});
 
-	SearchFilter.availableCreateFilters.push(new CreateFilterByImportProfile());
+	SearchFilter.availableSearchFilters.push(new SearchFilterByImportProfile());
 
 	// **********************************************************************
-	var CreateFilterByDocumentReference = $n2.Class(SearchFilter, {
+	var SearchFilterByDocumentReference = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
@@ -1171,12 +1169,11 @@
 			$parent.append( $options );
 		}
 
-		,createList: function(opts_){
+		,_retrieveDocIds: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
+				,onSuccess: function(docIds,name){}
 				,onError: reportError
 			},opts_);
 			
@@ -1198,11 +1195,8 @@
 						var locStr = _loc('Documents referencing {docId}',{
 							docId: docId
 						});
-						var l = new DocumentList({
-							docIds: docIds
-							,name: locStr
-						});
-						opts.onSuccess(l);
+
+						opts.onSuccess(docIds, locStr);
 					}
 					,onError: function(err){
 						alert(_loc('Problem obtaining documents from schema')+': '+err);
@@ -1213,10 +1207,10 @@
 		}
 	});
 
-	SearchFilter.availableCreateFilters.push(new CreateFilterByDocumentReference());
+	SearchFilter.availableSearchFilters.push(new SearchFilterByDocumentReference());
 
 	// **********************************************************************
-	var CreateFilterByDanglingReference = $n2.Class(SearchFilter, {
+	var SearchFilterByDanglingReference = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
@@ -1226,12 +1220,11 @@
 		,printOptions: function($parent){
 		}
 
-		,createList: function(opts_){
+		,_retrieveDocIds: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
+				,onSuccess: function(docIds,name){}
 				,onError: reportError
 			},opts_);
 			
@@ -1275,19 +1268,16 @@
 				};
 				
 				var locStr = _loc('Documents with dangling references');
-				var l = new DocumentList({
-					docIds: docIds
-					,name: locStr
-				});
-				opts.onSuccess(l);
+
+				opts.onSuccess(docIds, locStr);
 			};
 		}
 	});
 
-	SearchFilter.availableCreateFilters.push(new CreateFilterByDanglingReference());
+	SearchFilter.availableSearchFilters.push(new SearchFilterByDanglingReference());
 
 	// **********************************************************************
-	var CreateFilterInvalidSourceReference = $n2.Class(SearchFilter, {
+	var SearchFilterInvalidSourceReference = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
@@ -1297,12 +1287,11 @@
 		,printOptions: function($parent){
 		}
 
-		,createList: function(opts_){
+		,_retrieveDocIds: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
+				,onSuccess: function(docIds,name){}
 				,onError: reportError
 			},opts_);
 			
@@ -1370,19 +1359,16 @@
 			
 			function reportInvalidSourceDocuments(docIds){
 				var locStr = _loc('Documents that have an invalid source');
-				var l = new DocumentList({
-					docIds: docIds
-					,name: locStr
-				});
-				opts.onSuccess(l);
+
+				opts.onSuccess(docIds,locStr);
 			};
 		}
 	});
 
-	SearchFilter.availableCreateFilters.push(new CreateFilterInvalidSourceReference());
+	SearchFilter.availableSearchFilters.push(new SearchFilterInvalidSourceReference());
 
 	// **********************************************************************
-	var CreateFilterNotReachableByReference = $n2.Class(SearchFilter, {
+	var SearchFilterNotReachableByReference = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
@@ -1392,12 +1378,11 @@
 		,printOptions: function($parent){
 		}
 
-		,createList: function(opts_){
+		,_retrieveDocIds: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
+				,onSuccess: function(docIds,name){}
 				,onError: reportError
 			},opts_);
 			
@@ -1452,19 +1437,16 @@
 				};
 				
 				var locStr = _loc('Documents not reachable by reference');
-				var l = new DocumentList({
-					docIds: docIds
-					,name: locStr
-				});
-				opts.onSuccess(l);
+
+				opts.onSuccess(docIds,locStr);
 			};
 		}
 	});
 
-	SearchFilter.availableCreateFilters.push(new CreateFilterNotReachableByReference());
+	SearchFilter.availableSearchFilters.push(new SearchFilterNotReachableByReference());
 
 	// **********************************************************************
-	var CreateFilterSkeleton = $n2.Class(SearchFilter, {
+	var SearchFilterSkeleton = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
@@ -1474,12 +1456,11 @@
 		,printOptions: function($parent){
 		}
 
-		,createList: function(opts_){
+		,_retrieveDocIds: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
+				,onSuccess: function(docIds,name){}
 				,onError: reportError
 			},opts_);
 			
@@ -1492,11 +1473,8 @@
 						docIds.push(row.id);
 					};
 					var locStr = _loc('Skeleton documents');
-					var l = new DocumentList({
-						docIds: docIds
-						,name: locStr
-					});
-					opts.onSuccess(l);
+
+					opts.onSuccess(docIds,locStr);
 				}
 				,onError: function(err){
 					alert(_loc('Problem obtaining skeleton documents')+': '+err);
@@ -1506,10 +1484,10 @@
 		}
 	});
 
-	SearchFilter.availableCreateFilters.push(new CreateFilterSkeleton());
+	SearchFilter.availableSearchFilters.push(new SearchFilterSkeleton());
 
 	// **********************************************************************
-	var CreateFilterMediaSubmitted = $n2.Class(SearchFilter, {
+	var SearchFilterMediaSubmitted = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
@@ -1519,12 +1497,11 @@
 		,printOptions: function($parent){
 		}
 
-		,createList: function(opts_){
+		,_retrieveDocIds: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
+				,onSuccess: function(docIds,name){}
 				,onError: reportError
 			},opts_);
 			
@@ -1539,11 +1516,8 @@
 						docIds.push(row.id);
 					};
 					var locStr = _loc('Documents with media files in submitted state');
-					var l = new DocumentList({
-						docIds: docIds
-						,name: locStr
-					});
-					opts.onSuccess(l);
+
+					opts.onSuccess(docIds,locStr);
 				}
 				,onError: function(err){
 					alert(_loc('Problem obtaining documents with media files in submitted state')+': '+err);
@@ -1553,10 +1527,10 @@
 		}
 	});
 
-	SearchFilter.availableCreateFilters.push(new CreateFilterMediaSubmitted());
+	SearchFilter.availableSearchFilters.push(new SearchFilterMediaSubmitted());
 
 	// **********************************************************************
-	var CreateFilterMediaAnalyzed = $n2.Class(SearchFilter, {
+	var SearchFilterMediaAnalyzed = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
@@ -1566,12 +1540,11 @@
 		,printOptions: function($parent){
 		}
 
-		,createList: function(opts_){
+		,_retrieveDocIds: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
+				,onSuccess: function(docIds,name){}
 				,onError: reportError
 			},opts_);
 			
@@ -1586,11 +1559,8 @@
 						docIds.push(row.id);
 					};
 					var locStr = _loc('Documents with media files in analyzed state');
-					var l = new DocumentList({
-						docIds: docIds
-						,name: locStr
-					});
-					opts.onSuccess(l);
+
+					opts.onSuccess(docIds,locStr);
 				}
 				,onError: function(err){
 					alert(_loc('Problem obtaining documents with media files in analyzed state')+': '+err);
@@ -1600,10 +1570,10 @@
 		}
 	});
 
-	SearchFilter.availableCreateFilters.push(new CreateFilterMediaAnalyzed());
+	SearchFilter.availableSearchFilters.push(new SearchFilterMediaAnalyzed());
 
 	// **********************************************************************
-	var CreateFilterMediaWaiting = $n2.Class(SearchFilter, {
+	var SearchFilterMediaWaiting = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
@@ -1613,12 +1583,11 @@
 		,printOptions: function($parent){
 		}
 
-		,createList: function(opts_){
+		,_retrieveDocIds: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
+				,onSuccess: function(docIds,name){}
 				,onError: reportError
 			},opts_);
 			
@@ -1633,11 +1602,8 @@
 						docIds.push(row.id);
 					};
 					var locStr = _loc('Documents with media files in waiting state');
-					var l = new DocumentList({
-						docIds: docIds
-						,name: locStr
-					});
-					opts.onSuccess(l);
+
+					opts.onSuccess(docIds,locStr);
 				}
 				,onError: function(err){
 					alert(_loc('Problem obtaining documents with media files in waiting state')+': '+err);
@@ -1647,10 +1613,10 @@
 		}
 	});
 
-	SearchFilter.availableCreateFilters.push(new CreateFilterMediaWaiting());
+	SearchFilter.availableSearchFilters.push(new SearchFilterMediaWaiting());
 
 	// **********************************************************************
-	var CreateFilterMediaApproved = $n2.Class(SearchFilter, {
+	var SearchFilterMediaApproved = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
@@ -1660,12 +1626,11 @@
 		,printOptions: function($parent){
 		}
 
-		,createList: function(opts_){
+		,_retrieveDocIds: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
+				,onSuccess: function(docIds,name){}
 				,onError: reportError
 			},opts_);
 			
@@ -1680,11 +1645,8 @@
 						docIds.push(row.id);
 					};
 					var locStr = _loc('Documents with media files in approved state');
-					var l = new DocumentList({
-						docIds: docIds
-						,name: locStr
-					});
-					opts.onSuccess(l);
+
+					opts.onSuccess(docIds, locStr);
 				}
 				,onError: function(err){
 					alert(_loc('Problem obtaining documents with media files in approved state')+': '+err);
@@ -1694,10 +1656,10 @@
 		}
 	});
 
-	SearchFilter.availableCreateFilters.push(new CreateFilterMediaApproved());
+	SearchFilter.availableSearchFilters.push(new SearchFilterMediaApproved());
 
 	// **********************************************************************
-	var CreateFilterMediaAttached = $n2.Class(SearchFilter, {
+	var SearchFilterMediaAttached = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
@@ -1707,12 +1669,11 @@
 		,printOptions: function($parent){
 		}
 
-		,createList: function(opts_){
+		,_retrieveDocIds: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
+				,onSuccess: function(docIds,name){}
 				,onError: reportError
 			},opts_);
 			
@@ -1727,11 +1688,8 @@
 						docIds.push(row.id);
 					};
 					var locStr = _loc('Documents with media files in attached state');
-					var l = new DocumentList({
-						docIds: docIds
-						,name: locStr
-					});
-					opts.onSuccess(l);
+
+					opts.onSuccess(docIds,locStr);
 				}
 				,onError: function(err){
 					alert(_loc('Problem obtaining documents with media files in attached state')+': '+err);
@@ -1741,7 +1699,7 @@
 		}
 	});
 
-	SearchFilter.availableCreateFilters.push(new CreateFilterMediaAttached());
+	SearchFilter.availableSearchFilters.push(new SearchFilterMediaAttached());
 
 	// **********************************************************************
 	var SearchFilterInvalidDocument = $n2.Class(SearchFilter, {
@@ -1754,7 +1712,7 @@
 		,printOptions: function($parent){
 		}
 
-		,getFilterFunction: function(opts_){
+		,_getFilterFunction: function(opts_){
 			var opts = $n2.extend({
 				options: null
 				,onSuccess: function(filterFn, creationName){}
