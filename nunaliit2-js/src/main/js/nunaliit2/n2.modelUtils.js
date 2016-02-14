@@ -152,6 +152,7 @@ var ModelFilter = $n2.Class({
 		if( 'modelGetInfo' === m.type ){
 			if( this.modelId === m.modelId ){
 				m.modelInfo = this._getModelInfo();
+				m.modelInstance = this;
 			};
 			
 		} else if( 'modelGetState' === m.type ){
@@ -270,6 +271,36 @@ var ModelFilter = $n2.Class({
 						removed.push(doc);
 					};
 				};
+			};
+		};
+
+		this._reportStateUpdate(added, updated, removed);
+	},
+	
+	/*
+	 * This function should be called if the conditions of the underlying filter
+	 * have changed. Recompute visibility on all documents and report a state update
+	 */
+	_filterChanged: function(){
+		
+		var added = []
+			,updated = []
+			,removed = []
+			;
+
+		// Loop through all documents
+		for(var docId in this.docInfosByDocId){
+			var docInfo = this.docInfosByDocId[docId];
+			var doc = docInfo.doc;
+			var visible = this._computeVisibility(doc);
+			
+			if( visible !== docInfo.visible ){
+				if( visible ){
+					added.push(doc);
+				} else {
+					removed.push(doc);
+				};
+				docInfo.visible = visible;
 			};
 		};
 
@@ -555,6 +586,80 @@ var SchemaFilter = $n2.Class(ModelFilter, {
 });
 
 //--------------------------------------------------------------------------
+/*
+* Filter: a Document Model that filters out certain documents
+* ReferenceFilter: Allows documents that are identified by references
+*/
+var ReferenceFilter = $n2.Class(ModelFilter, {
+		
+	referenceMap: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dispatchService: null
+			,modelId: null
+			,sourceModelId: null
+			,reference: null
+			,references: null
+		},opts_);
+		
+		var _this = this;
+		
+		this.referenceMap = {};
+		if( typeof opts.reference === 'string' ){
+			this.referenceMap[opts.reference] = true;
+		};
+		if( $n2.isArray(opts.references) ){
+			for(var i=0,e=opts.references.length; i<e; ++i){
+				var reference = opts.references[i];
+				if( typeof reference === 'string' ){
+					this.referenceMap[reference] = true;
+				};
+			};
+		};
+		
+		opts.filterFn = function(doc){
+			return _this._isDocVisible(doc);
+		};
+		opts.filterName = 'ReferenceFilter';
+		
+		ModelFilter.prototype.initialize.call(this,opts);
+	},
+
+	getReferences: function(){
+		var references = [];
+		for(var ref in this.referenceMap){
+			references.push(ref);
+		};
+		return references;
+	},
+
+	setReferences: function(references){
+		this.referenceMap = {};
+		for(var i=0,e=references.length; i<e; ++i){
+			var ref = references[i];
+			this.referenceMap[ref] = true;
+		};
+
+		this._filterChanged();
+	},
+	
+	_isDocVisible: function(doc){
+		if( doc ){
+			var links = [];
+			$n2.couchUtils.extractLinks(doc, links);
+			for(var i=0,e=links.length; i<e; ++i){
+				var refId = links[i].doc;
+				if( this.referenceMap[refId] ){
+					return true;
+				};
+			};
+		};
+		return false;
+	}
+});
+
+//--------------------------------------------------------------------------
 function handleModelCreate(m, addr, dispatcher){
 	if( m.modelType === 'union' ){
 		var options = {};
@@ -627,6 +732,27 @@ function handleModelCreate(m, addr, dispatcher){
 		};
 		
 		new SchemaFilter(options);
+		
+		m.created = true;
+
+	} else if( m.modelType === 'referenceFilter' ){
+		var options = {};
+		
+		if( m && m.modelOptions ){
+			for(var key in m.modelOptions){
+				options[key] = m.modelOptions[key];
+			};
+		};
+		
+		options.modelId = m.modelId;
+
+		if( m && m.config ){
+			if( m.config.directory ){
+				options.dispatchService = m.config.directory.dispatchService;
+			};
+		};
+		
+		new ReferenceFilter(options);
 		
 		m.created = true;
 	};
