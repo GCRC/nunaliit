@@ -110,6 +110,7 @@ var ModelFilter = $n2.Class({
 			,modelId: null
 			,sourceModelId: null
 			,filterFn: null
+			,filterName: 'FilterModel'
 		},opts_);
 		
 		var _this = this;
@@ -118,6 +119,7 @@ var ModelFilter = $n2.Class({
 		this.modelId = opts.modelId;
 		this.sourceModelId = opts.sourceModelId;
 		this.filterFn = opts.filterFn;
+		this.filterName = opts.filterName;
 		
 		this.docInfosByDocId = {};
 
@@ -143,7 +145,7 @@ var ModelFilter = $n2.Class({
 			};
 		};
 		
-		$n2.log('FilterModel',this);
+		$n2.log(this.filterName,this);
 	},
 	
 	_handle: function(m, addr, dispatcher){
@@ -157,8 +159,10 @@ var ModelFilter = $n2.Class({
 				var added = [];
 				for(var docId in this.docInfosByDocId){
 					var docInfo = this.docInfosByDocId[docId];
-					var doc = docInfo.doc;
-					added.push(doc);
+					if( docInfo.visible ){
+						var doc = docInfo.doc;
+						added.push(doc);
+					};
 				};
 
 				m.state = {
@@ -500,10 +504,141 @@ var ModelUnion = $n2.Class({
 });
 
 //--------------------------------------------------------------------------
+/*
+ * Filter: a Document Model that filters out certain document
+ * SchemaFilter: Allows documents that are identified by schema names
+ */
+var SchemaFilter = $n2.Class(ModelFilter, {
+		
+	schemaNameMap: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dispatchService: null
+			,modelId: null
+			,sourceModelId: null
+			,schemaName: null
+			,schemaNames: null
+		},opts_);
+		
+		var _this = this;
+		
+		this.schemaNameMap = {};
+		if( typeof opts.schemaName === 'string' ){
+			this.schemaNameMap[opts.schemaName] = true;
+		};
+		if( $n2.isArray(opts.schemaNames) ){
+			for(var i=0,e=opts.schemaNames.length; i<e; ++i){
+				var schemaName = opts.schemaNames[i];
+				if( typeof schemaName === 'string' ){
+					this.schemaNameMap[schemaName] = true;
+				};
+			};
+		};
+		
+		opts.filterFn = function(doc){
+			return _this._isDocVisible(doc);
+		};
+		opts.filterName = 'SchemaFilter';
+		
+		ModelFilter.prototype.initialize.call(this,opts);
+	},
+	
+	_isDocVisible: function(doc){
+		if( doc && doc.nunaliit_schema ){
+			if( this.schemaNameMap[doc.nunaliit_schema] ){
+				return true;
+			};
+		};
+		return false;
+	}
+});
+
+//--------------------------------------------------------------------------
+function handleModelCreate(m, addr, dispatcher){
+	if( m.modelType === 'union' ){
+		var options = {};
+		
+		if( m && m.modelOptions ){
+			if( m.modelOptions.sourceModelIds 
+			 && m.modelOptions.sourceModelIds.length ){
+				options.sourceModelIds = m.modelOptions.sourceModelIds;
+			};
+		};
+
+		options.modelId = m.modelId;
+		
+		if( m && m.config ){
+			if( m.config.directory ){
+				options.dispatchService = m.config.directory.dispatchService;
+			};
+		};
+		
+		new ModelUnion(options);
+		
+		m.created = true;
+
+	} else if( m.modelType === 'filter' ){
+		var options = {};
+		
+		if( m && m.modelOptions ){
+			if( m.modelOptions.sourceModelId ){
+				options.sourceModelId = m.modelOptions.sourceModelId;
+			};
+		};
+
+		options.modelId = m.modelId;
+		
+		if( m && m.config ){
+			if( m.config.directory ){
+				options.dispatchService = m.config.directory.dispatchService;
+			};
+		};
+		
+		var filterFn = null;
+		if( $n2.modelUtils.FilterFunctionFromModelConfiguration ){
+			filterFn = $n2.modelUtils.FilterFunctionFromModelConfiguration(m.modelOptions);
+		};
+		if( filterFn ){
+			options.filterFn = filterFn;
+		} else {
+			throw 'Unable to find function for filter model';
+		};
+		
+		new ModelFilter(options);
+		
+		m.created = true;
+
+	} else if( m.modelType === 'schemaFilter' ){
+		var options = {};
+		
+		if( m && m.modelOptions ){
+			for(var key in m.modelOptions){
+				options[key] = m.modelOptions[key];
+			};
+		};
+		
+		options.modelId = m.modelId;
+
+		if( m && m.config ){
+			if( m.config.directory ){
+				options.dispatchService = m.config.directory.dispatchService;
+			};
+		};
+		
+		new SchemaFilter(options);
+		
+		m.created = true;
+	};
+};
+
+//--------------------------------------------------------------------------
 $n2.modelUtils = {
 	ModelUnion: ModelUnion
 	,ModelFilter: ModelFilter
 	,FilterFunctionFromModelConfiguration: FilterFunctionFromModelConfiguration
+	,SchemaFilter: SchemaFilter
+	,handleModelCreate: handleModelCreate 
 };
 
 })(jQuery,nunaliit2);
