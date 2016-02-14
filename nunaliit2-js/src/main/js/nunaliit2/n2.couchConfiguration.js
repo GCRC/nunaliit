@@ -403,9 +403,14 @@ function Configure(options_){
 	 		};
 	 		
 	 		if( feature.cluster ){
+	 			var clusterSize = feature.cluster.length;
+	 			if( feature.attributes && feature.attributes.count ){
+		 			clusterSize = feature.attributes.count;
+	 			};
+	 			
 				var $tmp = $('<span class="n2_popup"></span>');
 				$tmp.text( _loc('This cluster contains {count} features',{
-					count: feature.cluster.length
+					count: clusterSize
 				}) );
 
 		 		var $wrapper = $('<div></div>');

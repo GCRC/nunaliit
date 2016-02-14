@@ -73,6 +73,7 @@ var TimeTransformMapBridge = $n2.Class({
                 _this._handle (m, addr, dispatcher);
             };
             this.dispatchService.register(DH, 'modelStateUpdated', f);
+            this.dispatchService.register(DH, 'start', f);
             
             if( this.sourceModelId ){
                 // Initialize state
@@ -96,6 +97,9 @@ var TimeTransformMapBridge = $n2.Class({
             if (this.sourceModelId === m.modelId) {
                 this._sourceModelUpdated(m.state);
             };
+
+    	} else if ('start' === m.type) {
+            this._updateMap();
         };
     },
     
@@ -230,8 +234,237 @@ var TimeTransformMapBridge = $n2.Class({
     }
 });
 
+var ModelMapBridge = $n2.Class({
+
+    sourceModelId: null,
+    
+    dispatchService: null,
+    
+    config: null,
+    
+    mapControl: null,
+    
+    docStateById: null,
+
+    initialize: function (opts_) {
+        var opts = $n2.extend({
+            config: null
+            ,sourceModelId: null
+        }, opts_);
+
+        var _this = this;
+        
+        this.docStateById = {};
+        
+        this.sourceModelId = opts.sourceModelId;
+        this.config = opts.config;
+        
+        if( this.config && this.config.directory ){
+            this.dispatchService = this.config.directory.dispatchService;
+        };
+
+        // Register to events
+        if (this.dispatchService) {
+            var f = function (m, addr, dispatcher){
+                _this._handle (m, addr, dispatcher);
+            };
+            this.dispatchService.register(DH, 'modelStateUpdated', f);
+            this.dispatchService.register(DH, 'start', f);
+            
+            if( this.sourceModelId ){
+                // Initialize state
+                var m = {
+                    type:'modelGetState'
+                    ,modelId: this.sourceModelId
+                };
+                this.dispatchService.synchronousCall(DH, m);
+                if (m.state) {
+                    this._sourceModelUpdated(m.state);
+                };
+            };
+        };
+        
+        $n2.log('modelToMapAndControlBridge', this);
+    },
+    
+    _handle: function (m, addr, dispatcher) {
+    	if ('modelStateUpdated' === m.type) {
+            // Does it come from one of our sources?
+            if (this.sourceModelId === m.modelId) {
+                this._sourceModelUpdated(m.state);
+            };
+
+    	} else if ('start' === m.type) {
+            this._updateMap();
+        };
+    },
+    
+    _sourceModelUpdated: function(sourceState) {
+    	var _this = this;
+    	
+        // Update the nodes according to changes in source model
+    	if( sourceState ){
+    		if( sourceState.added && sourceState.added.length ){
+    			for(var i=0,e=sourceState.added.length; i<e; ++i){
+    				var doc = sourceState.added[i];
+    				var docId = doc._id;
+    				this.docStateById[docId] = true;
+    			};
+    		};
+
+    		if( sourceState.updated && sourceState.updated.length ){
+    			for(var i=0,e=sourceState.updated.length; i<e; ++i){
+    				var doc = sourceState.updated[i];
+    				var docId = doc._id;
+    				this.docStateById[docId] = true;
+    			};
+    		};
+
+    		if( sourceState.removed && sourceState.removed.length ){
+    			for(var i=0,e=sourceState.removed.length; i<e; ++i){
+    				var doc = sourceState.removed[i];
+    				var docId = doc._id;
+    				if( this.docStateById[docId] ){
+    					delete this.docStateById[docId];
+    				};
+    			};
+    		};
+    	};
+    	
+    	// Redraw map
+    	this._updateMap();
+    },
+    
+    _updateMap: function() {
+        // Here is where the magic goes
+        
+        var mapControl = this._getMapControl();
+        if( mapControl 
+         && mapControl.map 
+         && mapControl.map.layers ){
+            // Iterate over all layers
+            for(var layerIndex = 0, layerEnd = mapControl.map.layers.length; 
+            	layerIndex < layerEnd; 
+            	++layerIndex) {
+                var layer = mapControl.map.layers[layerIndex];
+                
+                // Interested only in vector layers
+                if( layer.features ) {
+                    // Iterate over feature
+                    for(var featureIndex = 0, featureEnd = layer.features.length; 
+                    	featureIndex < featureEnd; 
+                    	++featureIndex){
+                        var feature = layer.features[featureIndex];
+
+        				if( feature.cluster ){
+        					var visibleCount = 0;
+        					
+        					for(var cfIndex=0,cfEnd=feature.cluster.length; 
+        						cfIndex<cfEnd; 
+        						++cfIndex){
+        						var cf = feature.cluster[cfIndex];
+        						if( cf.fid ){
+                                	var visible = false;
+                                    if( this.docStateById[cf.fid] ){
+                                    	visible = true;
+                                    	++visibleCount;
+                                    };
+                                    
+                                    if( visible ) {
+                                    	if( cf.style ){
+                                    		cf.style = null;
+                                    	};
+                                    	
+                                    } else {
+                                    	if( ! cf.style ){
+                                    		cf.style = {
+                                            	display: 'none'
+                                            };
+                                    	};
+                                    };
+        						};
+        					};
+        					
+        					if( feature.attributes ){
+        						feature.attributes.count = visibleCount;
+        					};
+        					
+        					if( visibleCount > 0 ){
+                            	if( feature.style ){
+                                    feature.style = null;
+                                    layer.drawFeature(feature);
+                            	};
+        					} else {
+                            	if( ! feature.style ){
+                                    feature.style = {
+                                    	display: 'none'
+                                    };
+                                    layer.drawFeature(feature);
+                            	};
+        					};
+
+        				} else if( feature.fid ){
+                        	var visible = false;
+                            if( this.docStateById[feature.fid] ){
+                            	visible = true;
+                            };
+                            
+                            if( visible ) {
+                            	if( feature.style ){
+                                    feature.style = null;
+                                    layer.drawFeature(feature);
+                            	};
+                            	
+                            } else {
+                            	if( ! feature.style ){
+                                    feature.style = {
+                                    	display: 'none'
+                                    };
+                                    layer.drawFeature(feature);
+                            	};
+                            };
+        					
+        				};
+                    };
+                };
+            };
+        };
+    },
+    
+    _getMapControl: function(){
+    	var _this = this;
+    	
+    	if( ! this.mapControl ) {
+        	// Look into configuration
+        	if( this.config 
+        	 && this.config.moduleDisplay 
+        	 && this.config.moduleDisplay.mapControl ){
+        		this.mapControl = this.config.moduleDisplay.mapControl;
+        	};
+        	
+        	// Register for update events on map. Do this only once
+        	if( this.mapControl
+        	 && this.mapControl.map 
+        	 && this.mapControl.map.layers ){
+        		for(var layerName in this.mapControl.map.layers){
+        			var layer = this.mapControl.map.layers[layerName];
+        			if( layer && layer.events ){
+        				layer.events.register('featuresadded',null,function(evt){
+        					_this._updateMap();
+        				});
+        			};
+        		};
+        	};
+    	};
+    		
+    	return this.mapControl;
+    }
+});
+
 function HandleWidgetAvailableRequests(m){
     if( m.widgetType === 'timeTransformToMapAndControlBridge' ){
+        m.isAvailable = true;
+    } else if( m.widgetType === 'modelToMapAndControlBridge' ){
         m.isAvailable = true;
     };
 };
@@ -247,6 +480,19 @@ function HandleWidgetDisplayRequests(m){
         };
         
         new TimeTransformMapBridge(options);
+
+    } else if( m.widgetType === 'modelToMapAndControlBridge' ){
+        var options = {};
+        
+        if( m.widgetOptions ) {
+        	for(var key in m.widgetOptions){
+        		options[key] = m.widgetOptions[key];
+        	};
+        };
+        
+        options.config = m.config;
+        
+        new ModelMapBridge(options);
     };
 };
 
