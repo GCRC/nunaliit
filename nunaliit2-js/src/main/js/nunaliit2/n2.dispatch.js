@@ -225,6 +225,8 @@ var Dispatcher = $n2.Class({
 	 */
 	send: function(handle, m){
 		
+		m.time = Date.now();
+		
 		if( typeof(handle) === 'string' ){
 			handle = this.getHandle(handle);
 		};
@@ -264,10 +266,15 @@ var Dispatcher = $n2.Class({
 				var l = copy[i];
 				
 				if( logging ){
+					var timeStr = '';
+					if( m.time ){
+						timeStr = '' + (m.time/1000)+' ';
+					};
+					
 					if( loggingIncludesMessage ) {
-						$n2.log(''+h.name+' >'+t+'> '+l.handle.name,m);
+						$n2.log(timeStr+h.name+' >'+t+'> '+l.handle.name,m);
 					} else {
-						$n2.log(''+h.name+' >'+t+'> '+l.handle.name);
+						$n2.log(timeStr+h.name+' >'+t+'> '+l.handle.name);
 					};
 				};
 				
@@ -307,6 +314,8 @@ var Dispatcher = $n2.Class({
 	 */
 	synchronousCall: function(handle, m){
 		
+		m.time = Date.now();
+
 		if( typeof(handle) === 'string' ){
 			handle = this.getHandle(handle);
 		};
