@@ -424,39 +424,18 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 				// the conflict if the caller provided an original document
 				if( opts.originalDoc 
 				 && $n2.error.checkErrorCondition(err, 'couchDb_conflict') ){
-					patchConflictingDocument();
+					loadConflictingDocument(true);
 				} else {
 					updateFailure(err);
 				};
 			}
 		});
 		
-		function patchConflictingDocument(){
-			var patch = patcher.computePatch(opts.originalDoc,doc);
-			
-			$n2.log('Conflict detected. Applying patch.',patch);
-			
+		function loadConflictingDocument(retryAllowed){
 			_this.db.getDocument({
 				docId: doc._id
 				,onSuccess: function(conflictingDoc) {
-					// Apply patch to conflicting document
-					patcher.applyPatch(conflictingDoc, patch);
-					
-					// If the patch contains changes to the geometry, then we must
-					// erase the "simplified" structure in the geometry since
-					// it needs to be recomputed by the server
-					if( patch.nunaliit_geom 
-					 && conflictingDoc.nunaliit_geom 
-					 && conflictingDoc.nunaliit_geom.simplified ){
-						delete conflictingDoc.nunaliit_geom.simplified;
-					};
-
-					// Attempt to update once more
-					_this.db.updateDocument({
-						data: conflictingDoc
-						,onSuccess: updateSuccess
-						,onError: updateFailure
-					});
+					patchConflictingDocument(conflictingDoc, retryAllowed);
 				}
 				,onError: function(cause){
 					var err = $n2.error.fromString( 
@@ -464,6 +443,46 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 						,cause
 					);
 					updateFailure(err);
+				}
+			});
+		};
+		
+		function patchConflictingDocument(conflictingDoc, retryAllowed){
+			var patch = patcher.computePatch(opts.originalDoc,doc);
+			
+			$n2.log('Conflict detected. Applying patch.',patch);
+			
+			// Apply patch to conflicting document
+			patcher.applyPatch(conflictingDoc, patch);
+			
+			// If the patch contains changes to the geometry, then we must
+			// erase the "simplified" structure in the geometry since
+			// it needs to be recomputed by the server
+			if( patch.nunaliit_geom 
+			 && conflictingDoc.nunaliit_geom 
+			 && conflictingDoc.nunaliit_geom.simplified ){
+				delete conflictingDoc.nunaliit_geom.simplified;
+			};
+
+			// Attempt to update the patched document
+			_this.db.updateDocument({
+				data: conflictingDoc
+				,onSuccess: updateSuccess
+				,onError: function(err){
+					if( retryAllowed 
+					 && $n2.error.checkErrorCondition(err, 'couchDb_conflict') ){
+						// We have two conflicts in a row. Assume we are sitting
+						// behind a bad proxy server.
+						$n2.couch.setBadProxy(true);
+						$n2.debug.setBadProxy(true);
+
+						$n2.log('Assuming that operations are behind a bad proxy');
+						
+						// Retry one last time
+						loadConflictingDocument(false);
+					} else {
+						updateFailure(err);
+					};
 				}
 			});
 		};
@@ -528,22 +547,38 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 				// Check if this error is due to a database conflict
 				if( $n2.error.checkErrorCondition(err, 'couchDb_conflict') ){
 					$n2.log('Conflict document detected during deletion');
-					reloadAndDelete();
+					reloadAndDelete(true);
 				} else {
 					deletionFailure(err);
 				};
 			}
 		});
 		
-		function reloadAndDelete(){
+		function reloadAndDelete(retry){
 			_this.db.getDocument({
 				docId: doc._id
 				,onSuccess: function(conflictingDoc) {
-					// Delete latest revision. Attempt only once
+					// Delete latest revision
 					_this.db.deleteDocument({
 						data: conflictingDoc
 						,onSuccess: documentDeleted
-						,onError: deletionFailure
+						,onError: function(err){
+							if( retry 
+							 && $n2.error.checkErrorCondition(err, 'couchDb_conflict') ){
+								$n2.log('Conflict document detected during deletion');
+								// We have two conflicts in a row. Assume we are sitting
+								// behind a bad proxy server.
+								$n2.couch.setBadProxy(true);
+								$n2.debug.setBadProxy(true);
+
+								$n2.log('Assuming that operations are behind a bad proxy');
+								
+								// Retry one last time
+								reloadAndDelete(false);
+							} else {
+								deletionFailure(err);
+							};
+						}
 					});
 				}
 				,onError: function(err2){

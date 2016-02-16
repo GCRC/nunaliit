@@ -81,23 +81,33 @@ var DebugConfiguration = $n2.Class({
 
 	isBadProxyEnabled: function(){
 		var debugConf = this.loadConfiguration();
-		return debugConf.badProxy;
+		if( debugConf.badProxy ) return true;
+		return false;
 	},
 
 	setBadProxyEnabled: function(flag){
 		var debugConf = this.loadConfiguration();
-		debugConf.badProxy = flag;
+		if( flag ){
+			debugConf.badProxy = true;
+		} else if( debugConf.badProxy ){
+			delete debugConf.badProxy;
+		};
 		this.saveConfiguration(debugConf);
 	},
 
 	isEventLoggingEnabled: function(){
 		var debugConf = this.loadConfiguration();
-		return debugConf.logging;
+		if( debugConf.logging ) return true;
+		return false;
 	},
 
 	setEventLoggingEnabled: function(flag){
 		var debugConf = this.loadConfiguration();
-		debugConf.logging = flag;
+		if( flag ){
+			debugConf.logging = true;
+		} else if( debugConf.logging ){
+			delete debugConf.logging;
+		};
 		this.saveConfiguration(debugConf);
 	}
 });
@@ -106,6 +116,10 @@ var DebugConfiguration = $n2.Class({
 //*******************************************************
 $n2.debug = {
 	DebugConfiguration: DebugConfiguration
+	,setBadProxy: function(flag){
+		var debugConf = new DebugConfiguration();
+		debugConf.setBadProxyEnabled(flag);
+	}
 };
 
 })(nunaliit2);
