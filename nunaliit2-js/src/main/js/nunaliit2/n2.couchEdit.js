@@ -1620,6 +1620,15 @@ var CouchDocumentEditor = $n2.Class({
 				,onSuccess: function(conflictingDoc) {
 					// Apply patch to conflicting document
 					patcher.applyPatch(conflictingDoc, patch);
+					
+					// If the patch contains changes to the geometry, then we must
+					// erase the "simplified" structure in the geometry since
+					// it needs to be recomputed by the server
+					if( patch.nunaliit_geom 
+					 && conflictingDoc.nunaliit_geom 
+					 && conflictingDoc.nunaliit_geom.simplified ){
+						delete conflictingDoc.nunaliit_geom.simplified;
+					};
 
 					_this.documentSource.updateDocument({
 						doc: conflictingDoc
