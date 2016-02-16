@@ -1022,26 +1022,6 @@ var Display = $n2.Class({
 						options_.onDeleted();
 					};
 				}
-				,onError: function(err){
-					if( $n2.error.checkErrorCondition(err, 'couchDb_conflict') ){
-						$n2.log('Conflict document detected during deletion');
-						// Load latest revision of document
-						_this.documentSource.getDocument({
-							docId: data._id
-							,onSuccess: function(conflictingDoc) {
-								// Delete latest revision
-								_this.documentSource.deleteDocument({
-									doc: conflictingDoc
-									,onSuccess: function() {
-										if( options_.onDeleted ) {
-											options_.onDeleted();
-										};
-									}
-								});
-							}
-						});
-					};
-				}
 			});
 		};
 	}

@@ -466,15 +466,56 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 		
 		this.db.deleteDocument({
 			data: copy
-			,onSuccess: function(docInfo){
-				_this._dispatch({
-					type: 'documentDeleted'
-					,docId: doc._id
-				});
-				opts.onSuccess();
+			,onSuccess: documentDeleted
+			,onError: function(err){
+				// Check if this error is due to a database conflict
+				if( $n2.error.checkErrorCondition(err, 'couchDb_conflict') ){
+					$n2.log('Conflict document detected during deletion');
+					reloadAndDelete();
+				} else {
+					deletionFailure(err);
+				};
 			}
-			,onError: opts.onError
 		});
+		
+		function reloadAndDelete(){
+			_this.db.getDocument({
+				docId: doc._id
+				,onSuccess: function(conflictingDoc) {
+					// Delete latest revision. Attempt only once
+					_this.db.deleteDocument({
+						data: conflictingDoc
+						,onSuccess: documentDeleted
+						,onError: deletionFailure
+					});
+				}
+				,onError: function(err2){
+					var e = $n2.error.fromString(
+						_loc('Error reloading conflicting document during deletion')
+						,err2
+					);
+					opts.onError(e);
+				}
+			});
+		};
+		
+		function documentDeleted(){
+			_this._dispatch({
+				type: 'documentDeleted'
+				,docId: doc._id
+			});
+			opts.onSuccess();
+		};
+		
+		function deletionFailure(err){
+			var e = $n2.error.fromString(
+				_loc('Unable to delete document {id}',{
+					id: doc._id
+				})
+				,err
+			);
+			opts.onError(e);
+		};
 	},
 
 	getLayerDefinitions: function(opts_){

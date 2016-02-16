@@ -1484,31 +1484,8 @@ var CouchDocumentEditor = $n2.Class({
 					_this._discardEditor({deleted:true});
 				}
 				,onError: function(err){
-					if( $n2.error.checkErrorCondition(err, 'couchDb_conflict') ){
-						$n2.log('Conflict detected during deletion');
-						_this.documentSource.getDocument({
-							docId: _this.editedDocument._id
-							,onSuccess: function(conflictingDoc) {
-								_this.documentSource.deleteDocument({
-									doc: conflictingDoc
-									,onSuccess: function() {
-										_this._discardEditor({deleted:true});
-									}
-									,onError: function(err){
-							    		_this._enableControls();
-										$n2.reportErrorForced('Unable to delete document: '+err);
-									}
-								});
-							}
-							,onError: function(err){
-					    		_this._enableControls();
-								$n2.reportErrorForced( _loc('Unable to reload document: {err}',{err:err}) );
-							}
-						});
-					} else {
-			    		_this._enableControls();
-						$n2.reportErrorForced('Unable to delete document: '+err);
-					};
+		    		_this._enableControls();
+					$n2.reportErrorForced('Unable to delete document: '+err);
 				}
 			});
     	};
