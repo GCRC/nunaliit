@@ -1176,10 +1176,27 @@ var TiledDisplay = $n2.Class({
 	 * Initiates the deletion of a document
 	 */
 	_performDocumentDelete: function(doc){
+		var _this = this;
 		if( confirm( _loc('You are about to delete this document. Do you want to proceed?') ) ) {
 			this.documentSource.deleteDocument({
 				doc: doc
 				,onSuccess: function() {}
+				,onError: function(err){
+					if( $n2.error.checkErrorCondition(err, 'couchDb_conflict') ){
+						$n2.log('Conflict document detected during deletion');
+						// Load latest revision of document
+						_this.documentSource.getDocument({
+							docId: doc._id
+							,onSuccess: function(conflictingDoc) {
+								// Delete latest revision
+								_this.documentSource.deleteDocument({
+									doc: conflictingDoc
+									,onSuccess: function() {}
+								});
+							}
+						});
+					};
+				}
 			});
 		};
 	},
