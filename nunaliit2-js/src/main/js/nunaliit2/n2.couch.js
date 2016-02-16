@@ -39,19 +39,30 @@ var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 function httpJsonError(XMLHttpRequest, defaultStr) {
 	// Need JSON
 	if( !JSON || typeof(JSON.parse) !== 'function' ) {
-		return defaultStr;
+		return $n2.error.fromString(defaultStr);
 	};
 	
 	// Need a response text
 	var text = XMLHttpRequest.responseText;
-	if( !text ) return defaultStr;
+	if( !text ) return $n2.error.fromString(defaultStr);
 	
 	// Parse
 	var error = JSON.parse(text);
-	if( !error ) return defaultStr;
-	if( !error.reason ) return defaultStr;
+	if( !error ) return $n2.error.fromString(defaultStr);
 	
-	return error.reason;
+	var err = undefined;
+	if( typeof error.reason === 'string' ) {
+		err = $n2.error.fromString(error.reason);
+	} else {
+		err = $n2.error.fromString(defaultStr);
+	};
+	
+	if( error.error ){
+		var condition = 'couchDb_' + error.error;
+		err.setCondition(condition);
+	};
+	
+	return err;
 };
 
 // Fix name: no spaces, all lowercase
@@ -1064,8 +1075,9 @@ var Database = $n2.Class({
 		    		opts.onSuccess(docInfo);
 		    	}
 		    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
-					var errStr = httpJsonError(XMLHttpRequest, textStatus);
-		    		opts.onError('Error creating document: '+errStr);
+					var cause = httpJsonError(XMLHttpRequest, textStatus);
+					var err = $n2.error.fromString(_loc('Error creating document'),cause);
+		    		opts.onError(err);
 		    	}
 			});
 		};
@@ -1104,8 +1116,9 @@ var Database = $n2.Class({
 	    		opts.onSuccess(docInfo);
 	    	}
 	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
-				var errStr = httpJsonError(XMLHttpRequest, textStatus);
-	    		opts.onError('Error updating document: '+errStr);
+				var cause = httpJsonError(XMLHttpRequest, textStatus);
+				var err = $n2.error.fromString(_loc('Error updating document'),cause);
+	    		opts.onError(err);
 	    	}
 		});
 	}
@@ -1141,8 +1154,9 @@ var Database = $n2.Class({
 	    		opts.onSuccess(docInfo);
 	    	}
 	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
-				var errStr = httpJsonError(XMLHttpRequest, textStatus);
-	    		opts.onError('Error deleting document: '+errStr);
+				var cause = httpJsonError(XMLHttpRequest, textStatus);
+				var err = $n2.error.fromString(_loc('Error deleting document'),cause);
+	    		opts.onError(err);
 	    	}
 		});
 	}
