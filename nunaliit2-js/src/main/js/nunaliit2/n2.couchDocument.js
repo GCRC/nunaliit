@@ -394,6 +394,7 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 	updateDocument: function(opts_){
 		var opts = $n2.extend({
 				doc: null
+				,originalDoc: null // Optional. Needed in case of conflict
 				,onSuccess: function(doc){}
 				,onError: function(errorMsg){}
 			}
@@ -417,30 +418,86 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 		
 		this.db.updateDocument({
 			data: copy
-			,onSuccess: function(docInfo){
-				doc._id = docInfo.id;
-				doc._rev = docInfo.rev;
-				doc.__n2Source = _this;
-
-				_this._dispatch({
-					type: 'documentVersion'
-					,docId: docInfo.id
-					,rev: docInfo.rev
-				});
-				_this._dispatch({
-					type: 'documentUpdated'
-					,docId: docInfo.id
-				});
-				_this._dispatch({
-					type: 'documentContentUpdated'
-					,docId: doc._id
-					,doc: doc
-				});
-				
-				opts.onSuccess(doc);
+			,onSuccess: updateSuccess
+			,onError: function(err){
+				// Check if this is a conflict error. If so, attempt to deal with
+				// the conflict if the caller provided an original document
+				if( opts.originalDoc 
+				 && $n2.error.checkErrorCondition(err, 'couchDb_conflict') ){
+					patchConflictingDocument();
+				} else {
+					updateFailure(err);
+				};
 			}
-			,onError: opts.onError
 		});
+		
+		function patchConflictingDocument(){
+			var patch = patcher.computePatch(opts.originalDoc,doc);
+			
+			$n2.log('Conflict detected. Applying patch.',patch);
+			
+			_this.db.getDocument({
+				docId: doc._id
+				,onSuccess: function(conflictingDoc) {
+					// Apply patch to conflicting document
+					patcher.applyPatch(conflictingDoc, patch);
+					
+					// If the patch contains changes to the geometry, then we must
+					// erase the "simplified" structure in the geometry since
+					// it needs to be recomputed by the server
+					if( patch.nunaliit_geom 
+					 && conflictingDoc.nunaliit_geom 
+					 && conflictingDoc.nunaliit_geom.simplified ){
+						delete conflictingDoc.nunaliit_geom.simplified;
+					};
+
+					// Attempt to update once more
+					_this.db.updateDocument({
+						data: conflictingDoc
+						,onSuccess: updateSuccess
+						,onError: updateFailure
+					});
+				}
+				,onError: function(cause){
+					var err = $n2.error.fromString( 
+						_loc('Unable to reload conflicting document')
+						,cause
+					);
+					updateFailure(err);
+				}
+			});
+		};
+		
+		function updateSuccess(docInfo){
+			doc._id = docInfo.id;
+			doc._rev = docInfo.rev;
+			doc.__n2Source = _this;
+
+			_this._dispatch({
+				type: 'documentVersion'
+				,docId: docInfo.id
+				,rev: docInfo.rev
+			});
+			_this._dispatch({
+				type: 'documentUpdated'
+				,docId: docInfo.id
+			});
+			_this._dispatch({
+				type: 'documentContentUpdated'
+				,docId: doc._id
+				,doc: doc
+			});
+			
+			opts.onSuccess(doc);
+		};
+		
+		function updateFailure(cause){
+			var err = $n2.error.fromString(
+				_loc('Error while updating document {id}',{id:doc._id})
+				,cause
+			);
+			opts.onError(err);
+		};
 	},
 
 	deleteDocument: function(opts_){

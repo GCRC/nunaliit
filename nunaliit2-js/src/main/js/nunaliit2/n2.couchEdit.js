@@ -1575,77 +1575,24 @@ var CouchDocumentEditor = $n2.Class({
 						postSaveAttachmentEditor(updatedDoc, true, isSubmissionDs);
 					}
 					,onError: function(err){
-						if( $n2.error.checkErrorCondition(err, 'couchDb_conflict') ){
-							patchConflictingDocument();
-						} else {
-				    		_this._enableControls();
-							$n2.reportErrorForced( _loc('Unable to create document: {err}',{err:err}) );
-						};
+			    		_this._enableControls();
+						$n2.reportErrorForced( _loc('Unable to submit document: {err}',{err:err}) );
 					}
 				});
 			} else {
 				// This is an update
 				_this.documentSource.updateDocument({
 					doc: _this.editedDocument
+					,originalDoc: _this.originalDocument
 					,onSuccess: function(updatedDoc) {
 						postSaveAttachmentEditor(updatedDoc, false, isSubmissionDs);
 					}
 					,onError: function(err){
-						if( $n2.error.checkErrorCondition(err, 'couchDb_conflict') ){
-							patchConflictingDocument();
-						} else {
-				    		_this._enableControls();
-							$n2.reportErrorForced( _loc('Unable to update document: {err}',{err:err}) );
-						};
+			    		_this._enableControls();
+						$n2.reportErrorForced( _loc('Unable to submit document: {err}',{err:err}) );
 					}
 				});
 			};
-		};
-		
-		function patchConflictingDocument(){
-			var isSubmissionDs = false;
-			if( _this.documentSource.isSubmissionDataSource ){
-				isSubmissionDs = true;
-			};
-
-			var patch = patcher.computePatch(
-				_this.originalDocument,
-				_this.editedDocument
-			);
-			
-			$n2.log('Conflict detected. Applying patch.',patch);
-			
-			_this.documentSource.getDocument({
-				docId: _this.editedDocument._id
-				,onSuccess: function(conflictingDoc) {
-					// Apply patch to conflicting document
-					patcher.applyPatch(conflictingDoc, patch);
-					
-					// If the patch contains changes to the geometry, then we must
-					// erase the "simplified" structure in the geometry since
-					// it needs to be recomputed by the server
-					if( patch.nunaliit_geom 
-					 && conflictingDoc.nunaliit_geom 
-					 && conflictingDoc.nunaliit_geom.simplified ){
-						delete conflictingDoc.nunaliit_geom.simplified;
-					};
-
-					_this.documentSource.updateDocument({
-						doc: conflictingDoc
-						,onSuccess: function(updatedDoc) {
-							postSaveAttachmentEditor(updatedDoc, false, isSubmissionDs);
-						}
-						,onError: function(err){
-				    		_this._enableControls();
-							$n2.reportErrorForced( _loc('Unable to submit patched document: {err}',{err:err}) );
-						}
-					});
-				}
-				,onError: function(err){
-		    		_this._enableControls();
-					$n2.reportErrorForced( _loc('Unable to patch conflicting document: {err}',{err:err}) );
-				}
-			});
 		};
 		
 		function postSaveAttachmentEditor(editedDocument, inserted, isSubmissionDs) {
