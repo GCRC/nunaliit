@@ -88,16 +88,16 @@ var DebugConfiguration = $n2.Class({
 		var debugConf = this.loadConfiguration();
 		debugConf.badProxy = flag;
 		this.saveConfiguration(debugConf);
-	}
+	},
 
 	isEventLoggingEnabled: function(){
 		var debugConf = this.loadConfiguration();
-		return debugConf.badProxy;
+		return debugConf.logging;
 	},
 
 	setEventLoggingEnabled: function(flag){
 		var debugConf = this.loadConfiguration();
-		debugConf.badProxy = flag;
+		debugConf.logging = flag;
 		this.saveConfiguration(debugConf);
 	}
 });

@@ -133,8 +133,20 @@ function Configure(options_){
 		};
 	};
 
+	// Adjust configuration based on local storage
+	var debugConfiguration = new $n2.debug.DebugConfiguration();
+	if( debugConfiguration.isBadProxyEnabled() ){
+		$n2.couch.setBadProxy(true);
+	};
+
 	// Dispatcher
-	configuration.directory.dispatchService = new $n2.dispatch.Dispatcher();
+	var dispatchLogging = false;
+	if( debugConfiguration.isEventLoggingEnabled() ){
+		dispatchLogging = true;
+	};
+	configuration.directory.dispatchService = new $n2.dispatch.Dispatcher({
+		logging: dispatchLogging
+	});
 	
 	// History monitoring
 	configuration.directory.historyMonitor = new $n2.history.Monitor({

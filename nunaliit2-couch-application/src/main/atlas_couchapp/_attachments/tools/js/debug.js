@@ -58,6 +58,7 @@
 
 			var $confContent = $outer.find('.n2debug_configuration_content');
 			$confContent.empty();
+
 			var $div = $('<div>')
 				.addClass('n2debug_configuration_content_badProxy')
 				.appendTo($confContent);
@@ -80,6 +81,31 @@
 					_this._refresh();
 				});
 			if( this.debugConfiguration.isBadProxyEnabled() ){
+				$cb.attr('checked','checked');
+			};
+
+			var $div = $('<div>')
+			.addClass('n2debug_configuration_content_logging')
+			.appendTo($confContent);
+			var loggingId = $n2.getUniqueId();
+			$('<label>')
+				.attr('for',loggingId)
+				.text( _loc('Dispatcher Event Logging') )
+				.appendTo($div);
+			var $cb = $('<input>')
+				.attr('type','checkbox')
+				.attr('name',loggingId)
+				.appendTo($div)
+				.change(function(){
+					var $cb = $(this);
+					if( $cb.attr('checked') ) {
+						_this.debugConfiguration.setEventLoggingEnabled(true);
+					} else {
+						_this.debugConfiguration.setEventLoggingEnabled(false);
+					};
+					_this._refresh();
+				});
+			if( this.debugConfiguration.isEventLoggingEnabled() ){
 				$cb.attr('checked','checked');
 			};
 		}
