@@ -36,6 +36,9 @@ POSSIBILITY OF SUCH DAMAGE.
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
+// This should be set to true if the server is being accessed being a bad proxy
+var badProxy = false;
+
 function httpJsonError(XMLHttpRequest, defaultStr) {
 	// Need JSON
 	if( !JSON || typeof(JSON.parse) !== 'function' ) {
@@ -68,6 +71,17 @@ function httpJsonError(XMLHttpRequest, defaultStr) {
 // Fix name: no spaces, all lowercase
 function fixUserName(userName) {
 	return userName.toLowerCase().replace(' ','');
+};
+
+/*
+ * This should be set if the client is run behind a bad proxy
+ */
+function setBadProxy(flag){
+	if( flag ){
+		badProxy = true;
+	} else {
+		badProxy = false;
+	};
 };
 
 // =============================================
@@ -191,11 +205,18 @@ var Session = $n2.Class({
 		var _this = this;
 		var sessionUrl = this.getUrl();
 		
+		var data = {};
+		
+		if( badProxy ){
+			data.r = Date.now();
+		};
+		
 		$.ajax({
 			url: sessionUrl
 			,type: 'get'
 			,async: true
 			,dataType: 'json'
+			,data: data
 			,success: function(res) {
 				if( res.ok ) {
 					var context = res.userCtx;
@@ -419,6 +440,10 @@ var designDoc = $n2.Class({
 			});
 			
 		} else {
+			if( badProxy ){
+				query.r = Date.now();
+			};
+
 			$.ajax({
 		    	url: viewUrl
 		    	,type: 'GET'
@@ -600,6 +625,10 @@ var ChangeNotifier = $n2.Class({
 		if( this.options.longPoll ) {
 			req.feed = 'longpoll';
 			req.timeout = this.options.timeout;
+		};
+		
+		if( badProxy ){
+			req.r = Date.now();
 		};
 		
 		this.currentRequest = req;
@@ -825,6 +854,10 @@ var Database = $n2.Class({
 			req.include_docs = opt.include_docs;
 		};
 		
+		if( badProxy ){
+			req.r = Date.now();
+		};
+		
 		var changeUrl = this.dbUrl + '_changes';
 
 		$.ajax({
@@ -873,16 +906,22 @@ var Database = $n2.Class({
 			opts.onError('No docId set. Can not retrieve document information');
 			return;
 		};
+		
+		var data = {
+    		startkey: '"' + opts.docId + '"'
+    		,endkey: '"' + opts.docId + '"'
+    		,include_docs: false
+    	};
+		
+		if( badProxy ){
+			data.r = Date.now();
+		};
 
 	    $.ajax({
 	    	url: this.dbUrl + '_all_docs'
 	    	,type: 'get'
 	    	,async: true
-	    	,data: {
-	    		startkey: '"' + opts.docId + '"'
-	    		,endkey: '"' + opts.docId + '"'
-	    		,include_docs: false
-	    	}
+	    	,data: data
 	    	,dataType: 'json'
 	    	,success: function(res) {
 	    		if( res.rows && res.rows[0] && res.rows[0].value && res.rows[0].value.rev ) {
@@ -1246,7 +1285,11 @@ var Database = $n2.Class({
 			data.deleted_conflicts = 'true';
 		};
 		
-		var url = this.dbUrl + opts.docId + '/';
+		if( badProxy ){
+			data.r = Date.now();
+		}
+		
+		var url = this.dbUrl + opts.docId;
 		
 	    $.ajax({
 	    	url: url
@@ -1329,6 +1372,10 @@ var Database = $n2.Class({
 		
 		var viewUrl = this.dbUrl + '_all_docs?include_docs=false';
 		
+		if( badProxy ){
+			viewUrl += '&r=' + Date.now();
+		};
+		
 		$.ajax({
 	    	url: viewUrl
 	    	,type: 'GET'
@@ -1365,6 +1412,10 @@ var Database = $n2.Class({
 		
 		var viewUrl = this.dbUrl + '_all_docs?include_docs=true';
 		
+		if( badProxy ){
+			viewUrl += '&r=' + Date.now();
+		};
+		
 		$.ajax({
 	    	url: viewUrl
 	    	,type: 'GET'
@@ -1399,11 +1450,18 @@ var Database = $n2.Class({
 			,opts_
 		);
 		
+		var data = {};
+		
+		if( badProxy ){
+			data.r = Date.now();
+		};
+		
 		$.ajax({
 	    	url: this.dbUrl
 	    	,type: 'GET'
 	    	,async: true
 	    	,dataType: 'json'
+	    	,data: data
 	    	,success: function(dbInfo) {
 	    		if( dbInfo.error ) {
 		    		opts.onError(dbInfo.error);
@@ -1754,11 +1812,18 @@ var UserDb = $n2.Class(Database,{
 			id = 'org.couchdb.user:'+fixUserName(opts.name);
 		};
 		
+		var data = {};
+		
+		if( badProxy ){
+			data.r = Date.now();
+		};
+		
 	    $.ajax({
 	    	url: userDbUrl + id 
 	    	,type: 'get'
 	    	,async: true
 	    	,dataType: 'json'
+	    	,data: data
 	    	,success: function(userDoc) {
 	    		opts.onSuccess(userDoc);
 	    	}
@@ -1902,6 +1967,10 @@ var UserDb = $n2.Class(Database,{
 			,include_docs: true
 		};
 		
+		if( badProxy ){
+			data.r = Date.now();
+		};
+		
 		var users = [];
 		var missingIds = {};
 		$.ajax({
@@ -2028,11 +2097,18 @@ var Server = $n2.Class({
 				refreshContext();
 
 			} else {
+				var data = {};
+				
+				if( badProxy ){
+					data.r = Date.now();
+				};
+				
 				$.ajax({
 			    	url: _this.options.pathToServer
 			    	,type: 'get'
 			    	,async: true
 			    	,dataType: 'json'
+			    	,data: data
 			    	,success: function(res) {
 			    		if( res.version ) {
 			    			_this.options.version = res.version;
@@ -2060,11 +2136,18 @@ var Server = $n2.Class({
 			} else {
 				var sessionUrl = _this.getSessionUrl();
 				
+				var data = {};
+				
+				if( badProxy ){
+					data.r = Date.now();
+				};
+				
 				$.ajax({
 			    	url: sessionUrl
 			    	,type: 'get'
 			    	,async: true
 			    	,dataType: 'json'
+			    	,data: data
 			    	,success: function(res) {
 			    		if( res.ok ) {
 			    			// Retrieve user db, if available
@@ -2175,13 +2258,19 @@ var Server = $n2.Class({
 			pathUUids = this.options.pathToServer + '_uuids';
 		};
 		
+		var data = {
+	    	count: 10
+		};
+
+		if( badProxy ){
+			data.r = Date.now();
+		};
+		
 		$.ajax({
 	    	url: pathUUids
 	    	,type: 'get'
 	    	,async: true
-	    	,data: {
-	    		count: 10
-	    	}
+	    	,data: data
 	    	,dataType: 'json'
 	    	,success: function(res) {
 	    		if( res.uuids ) {
@@ -2214,12 +2303,19 @@ var Server = $n2.Class({
 		if( !pathToAllDbs ) {
 			pathToAllDbs = this.options.pathToServer + '_all_dbs';
 		};
+		
+		var data = {};
+
+		if( badProxy ){
+			data.r = Date.now();
+		};
 
 		$.ajax({
 	    	url: pathToAllDbs
 	    	,type: 'get'
 	    	,async: true
 	    	,dataType: 'json'
+	    	,data: data
 	    	,success: opts.onSuccess
 	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
 				var errStr = httpJsonError(XMLHttpRequest, textStatus);
@@ -2424,7 +2520,9 @@ function addAttachmentToDocument(opts_){
 
 $n2.couch = $.extend({},{
 	
-	getServer: function(opt_) {
+	setBadProxy: setBadProxy
+	
+	,getServer: function(opt_) {
 		return new Server(opt_);
 	}
 	
