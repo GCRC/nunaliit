@@ -771,6 +771,7 @@ var Tracker = $n2.Class({
 			d.register(DH,'start',f);
 			d.register(DH,'hashChanged',f);
 			d.register(DH,'userSelect',f);
+			d.register(DH,'userSelectCancelled',f); 
 			d.register(DH,'unselected',f);
 			d.register(DH,'documentCreated',f);
 			d.register(DH,'documentUpdated',f);
@@ -856,6 +857,17 @@ var Tracker = $n2.Class({
 
 					this.waitingDocId = null;
 				};
+			};
+
+		} else if( 'userSelectCancelled' === m.type ){
+			this.last = {
+				selectCancel: true
+			};
+
+			if( !m._suppressSetHash ) {
+				this._dispatch({
+					type: 'historyBack'
+				});
 			};
 
 		} else if( 'unselected' === m.type ){

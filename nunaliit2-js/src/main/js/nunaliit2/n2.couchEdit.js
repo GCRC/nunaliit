@@ -2150,12 +2150,16 @@ var CouchEditService = $n2.Class({
 		var dispatcher = this.dispatchService;
 		if( dispatcher ){
 			var f = function(m){ _this._handle(m); };
-			dispatcher.register(DH, 'editGeometryModified', f);
-			dispatcher.register(DH, 'mapGeometryAdded', f);
 			dispatcher.register(DH, 'editInitiate', f);
 			dispatcher.register(DH, 'editCreateFromGeometry', f);
 			dispatcher.register(DH, 'editCancel', f);
 			dispatcher.register(DH, 'editTriggerSave', f);
+			dispatcher.register(DH, 'editGetState', f);
+			dispatcher.register(DH, 'selected', f);
+
+			// The following events will be routed to the current editor
+			dispatcher.register(DH, 'editGeometryModified', f);
+			dispatcher.register(DH, 'mapGeometryAdded', f);
 		};
 		
 		// Service defined buttons
@@ -2295,7 +2299,7 @@ var CouchEditService = $n2.Class({
     	this.currentEditor.startEditingFromGeometry(olGeom, olProj);
 	},
 	
-	_handle: function(m){
+	_handle: function(m, addr, dispatcher){
 		if( 'editInitiate' === m.type ){
 			this._initiateEditor(m.doc);
 			
@@ -2307,6 +2311,20 @@ var CouchEditService = $n2.Class({
 
 		} else if( 'editTriggerSave' === m.type ) {
 			this.saveDocumentForm();
+
+		} else if( 'editGetState' === m.type ) {
+			// Synchronous event
+			if( null != this.currentEditor ){
+				m.isEditing = true;
+			};
+
+		} else if( 'selected' === m.type ) {
+			if( null != this.currentEditor ){
+				this.cancelDocumentForm();
+
+				// Re-send the selection event
+				this.dispatchService.send(DH,m);
+			};
 			
 		} else if( null != this.currentEditor ) {
     		this.currentEditor._handle(m);
