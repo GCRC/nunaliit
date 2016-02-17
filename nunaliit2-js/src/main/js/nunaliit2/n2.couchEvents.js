@@ -105,17 +105,47 @@ var EventSupport = $n2.Class('EventSupport',{
 
 	,_defaultHandler: function(m){
 		if( 'userSelect' === m.type ) {
-			var forward = {
-				type:'selected'
-			};
-			for(var key in m){
-				if( 'type' === key ){
-					forward.type = 'selected';
-				} else {
-					forward[key] = m[key];
+			// Check if currently selecting
+			var isEditing = false;
+			var d = this._getDispatcher();
+			if( d ){
+				var msg = {
+					type: 'editGetState'
+				};
+				d.synchronousCall(DH,msg);
+				if( msg.isEditing ){
+					isEditing = true;
 				};
 			};
-			this._dispatch(forward);
+
+			var forwardAllowed = true;
+			if( isEditing ){
+				if( confirm( _loc('Do you wish to leave document editor?') ) ) {
+					// OK, continue
+					
+				} else {
+					// Go back to edit state
+					forwardAllowed = false;
+				};
+			};
+			
+			if( forwardAllowed ){
+				var forward = {
+					type:'selected'
+				};
+				for(var key in m){
+					if( 'type' === key ){
+						forward.type = 'selected';
+					} else {
+						forward[key] = m[key];
+					};
+				};
+				this._dispatch(forward);
+			} else {
+				this._dispatch({
+					type:'userSelectCancelled'
+				});
+			};
 			
 		} else if( 'userUnselect' === m.type ) {
 			this._dispatch({
