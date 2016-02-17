@@ -241,12 +241,15 @@ Help Button
 /*
 CreateDocument widget
 */
-.nunaliit_atlas .nunaliit_module_title .n2widget_createDocument {
+.nunaliit_atlas .nunaliit_module_title .n2widget_createDocument,
+.nunaliit_atlas .nunaliit_module_title .n2widget_createDocumentFromSchema {
 	float: right;
 	padding: 8px 20px;
 }
-.nunaliit_atlas .nunaliit_module_title .n2widget_createDocument a
-,.nunaliit_atlas .nunaliit_module_title .n2widget_createDocument a:visited {
+.nunaliit_atlas .nunaliit_module_title .n2widget_createDocument a,
+.nunaliit_atlas .nunaliit_module_title .n2widget_createDocumentFromSchema a,
+.nunaliit_atlas .nunaliit_module_title .n2widget_createDocument a:visited,
+.nunaliit_atlas .nunaliit_module_title .n2widget_createDocumentFromSchema a:visited {
 	color: #fff;
 	text-decoration: none;
 }

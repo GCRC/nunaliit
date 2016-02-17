@@ -154,6 +154,179 @@ function BuildCreateDocumentWidgetFromRequest(m){
 };
 
 //--------------------------------------------------------------------------
+var CreateDocumentFromSchemaWidget = $n2.Class({
+	
+	elemId: null,
+	
+	dispatchService: null,
+
+	authService: null,
+
+	schemaRepository: null,
+	
+	schemaName: null,
+	
+	label: null,
+	
+	showAsLink: null,
+
+	schema: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			parentId: null
+			,dispatchService: null
+			,authService: null
+			,schemaRepository: null
+
+			// From configuration
+			,schemaName: null
+			,label: null
+			,showAsLink: null
+		},opts_);
+		
+		var _this = this;
+		
+		this.dispatchService = opts.dispatchService;
+		this.authService = opts.authService;
+		this.schemaRepository = opts.schemaRepository;
+		this.atlasDesign = opts.atlasDesign;
+		this.schemaName = opts.schemaName;
+		this.label = opts.label;
+		this.showAsLink = opts.showAsLink;
+
+		this.schema = null;
+		
+		var $parent = $('#'+opts.parentId);
+		var $elem = $('<div>')
+			.addClass('n2widget_createDocumentFromSchema')
+			.appendTo($parent);
+		this.elemId = $n2.utils.getElementIdentifier($elem);
+		
+		if( this.dispatchService ){
+			var f = function(m, addr, dispatcher){
+				_this._handle(m, addr, dispatcher);
+			};
+		};
+		
+		if( this.schemaRepository && this.schemaName ){
+			this.schemaRepository.getSchema({
+				name: this.schemaName
+				,onSuccess: function(schema){
+					_this.schema = schema;
+					_this._refresh();
+				}
+				,onError: function(){
+					$n2.log('Schema not found: '+this.schemaName);
+				}
+			});
+		} else {
+			$n2.log('Schema repository or schema name not specified');
+		};
+	},
+	
+	_getElem: function(){
+		return $('#'+this.elemId);
+	},
+	
+	_refresh: function(){
+		var _this = this;
+		
+		var $div = this._getElem();
+		
+		var schemaLabel = this.schema.name;
+		if( this.schema.label ){
+			schemaLabel = _loc(this.schema.label);
+		};
+		
+		var controlLabel = _loc('Create {label}',{
+			label: schemaLabel
+		});
+		if( this.label ){
+			controlLabel = this.label;
+		};
+		
+		if( this.showAsLink ) {
+			$('<a>')
+				.attr('href','#')
+				.text(controlLabel)
+				.appendTo($div)
+				.click(function(){
+					_this._startEdit();
+					return false;
+				});
+		} else {
+			$('<button>')
+				.text(controlLabel)
+				.appendTo($div)
+				.click(function(){
+					_this._startEdit();
+					return false;
+				});
+		};
+	},
+	
+	_startEdit: function(){
+		var _this = this;
+		
+		if( this.authService ){
+			if( false == this.authService.isLoggedIn() ){
+				this.authService.showLoginForm({
+					prompt: _loc('You must first log in to create a new document.')
+					,anonymousLoginAllowed: false
+					,onSuccess: function(){ _this._startEdit(); }
+				});
+				
+				return;
+			};
+		};
+
+		this.dispatchService.send(DH, {
+			type: 'editInitiate'
+			,doc: {
+				nunaliit_schema: this.schema.name
+			}
+		});
+	},
+	
+	_handle: function(m, addr, dispatcher){
+	}
+});
+
+//--------------------------------------------------------------------------
+function BuildCreateDocumentFromSchemaWidgetFromRequest(m){
+	var widgetOptions = m.widgetOptions;
+	var contentId = m.contentId;
+	var containerId = m.containerId;
+	var config = m.config;
+	// var moduleDisplay = m.moduleDisplay;
+	
+	var options = {};
+
+	var containerId = m.containerId;
+	if( !containerId ){
+		containerId = m.contentId;
+	};
+	options.parentId = containerId;
+	
+	if( widgetOptions ){
+		for(var key in widgetOptions){
+			options[key] = widgetOptions[key];
+		};
+	};
+	
+	if( config ){
+		if( config.directory ){
+			options.dispatchService = config.directory.dispatchService;
+			options.authService = config.directory.authService;
+			options.schemaRepository = config.directory.schemaRepository;
+		};
+	};
+	
+	new CreateDocumentFromSchemaWidget(options);
+};
+
+//--------------------------------------------------------------------------
 var Service = $n2.Class({
 	
 	config: null,
@@ -248,6 +421,9 @@ var Service = $n2.Class({
 			if( m.widgetType === 'createDocument' ){
 		        m.isAvailable = true;
 
+			} else if( m.widgetType === 'createDocumentFromSchema' ){
+				m.isAvailable = true;
+
 			} else {
 				if( $n2.couchDbPerspective 
 				 && $n2.couchDbPerspective.HandleWidgetAvailableRequests ){
@@ -293,6 +469,9 @@ var Service = $n2.Class({
 		} else if( 'widgetDisplay' === m.type ){
 			if( m.widgetType === 'createDocument' ){
 				BuildCreateDocumentWidgetFromRequest(m);
+
+			} else if( m.widgetType === 'createDocumentFromSchema' ){
+				BuildCreateDocumentFromSchemaWidgetFromRequest(m);
 
 			} else {
 				if( $n2.couchDbPerspective 
@@ -347,6 +526,7 @@ var Service = $n2.Class({
 $n2.widgetBasic = {
 	Service: Service
 	,CreateDocumentWidget: CreateDocumentWidget
+	,CreateDocumentFromSchemaWidget: CreateDocumentFromSchemaWidget
 };
 
 })(jQuery,nunaliit2);

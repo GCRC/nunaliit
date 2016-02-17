@@ -383,6 +383,11 @@ CreateDocument widget
 	top: 5px;
 	right: 455px;
 }
+.nunaliit_content .n2widget_createDocumentFromSchema {
+	position: absolute;
+	top: 5px;
+	right: 455px;
+}
 
 /* 
 ==============================
