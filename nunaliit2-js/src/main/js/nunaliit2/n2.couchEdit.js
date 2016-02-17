@@ -908,6 +908,13 @@ var CouchDocumentEditor = $n2.Class({
 			};
 		};
 	},
+	
+	isEditing: function(){
+		if( this.editedDocument ){
+			return true;
+		};
+		return false;
+	},
 
 	startEditingFromGeometry: function(olGeom, olProj) {
 		
@@ -2290,7 +2297,8 @@ var CouchEditService = $n2.Class({
 
 		} else if( 'editGetState' === m.type ) {
 			// Synchronous event
-			if( null != this.currentEditor ){
+			if( this.currentEditor 
+			 && this.currentEditor.isEditing() ){
 				m.isEditing = true;
 			};
 
@@ -2302,7 +2310,8 @@ var CouchEditService = $n2.Class({
 				this.dispatchService.send(DH,m);
 			};
 			
-		} else if( null != this.currentEditor ) {
+		} else if( this.currentEditor
+		 && this.currentEditor.isEditing() ) {
     		this.currentEditor._handle(m);
     	};
 	}
