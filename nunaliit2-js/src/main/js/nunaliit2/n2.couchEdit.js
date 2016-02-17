@@ -1100,6 +1100,9 @@ var CouchDocumentEditor = $n2.Class({
 						_this.editedDocumentSchema = schema;
 						callbackFn(schema);
 					}
+					,onReset: function(){
+						_this._cancelEdit();
+					}
 				});
 				
 			} else if( $n2.isArray(this.schema) ) {
@@ -1109,6 +1112,9 @@ var CouchDocumentEditor = $n2.Class({
 					,onSelected: function(schema){
 						_this.editedDocumentSchema = schema;
 						callbackFn(schema);
+					}
+					,onReset: function(){
+						_this._cancelEdit();
 					}
 				});
 				
@@ -1127,82 +1133,6 @@ var CouchDocumentEditor = $n2.Class({
 		} else {
 			// No schema specified, go directly to displaying editor
 			callbackFn(null);
-		};
-		
-		function selectFromSchemas(schemas) {
-			// shortcuts
-			if( schemas.length < 1 ) {
-				callbackFn(null);
-				return;
-				
-			} else if( schemas.length == 1 ) {
-				callbackFn(schemas[0]);
-				return;
-			};
-			
-			var dialogId = $n2.getUniqueId();
-			var selectId = $n2.getUniqueId();
-			var $dialog = $('<div id="'+dialogId+'" class="editorSelectSchemaDialog">'
-					+'<label for="'+selectId+'">'+_loc('Select a schema:')+'</label>'
-					+'<select id="'+selectId+'"></select>'
-					+'<div><button>'+_loc('OK')+'</button><button>'+_loc('Cancel')+'</button></div>'
-					+'</div>');
-			
-			var $select = $dialog.find('select');
-			for(var i=0,e=schemas.length; i<e; ++i) {
-				$select.append( $('<option>'+schemas[i].name+'</option>') );
-			};
-			
-			var cancelOnClose = true;
-			
-			$dialog.find('button')
-				.first()
-					.button({icons:{primary:'ui-icon-check'}})
-					.click(function(){
-						var $dialog = $('#'+dialogId);
-						var $select = $dialog.find('select');
-						var schemaName = $select.val();
-
-						$n2.log('schemaName',schemaName);
-						_this.schemaRepository.getSchema({
-							name: schemaName
-							,onSuccess: function(schema){
-								callbackFn(schema);
-							}
-							,onError: function(err){
-								reportError('Unable to get selected schema: '+err);
-								_this._cancelEdit();
-							}
-						});
-				
-						cancelOnClose = false;
-						$dialog.dialog('close');
-						return false;
-					})
-				.next()
-					.button({icons:{primary:'ui-icon-cancel'}})
-					.click(function(){
-						var $dialog = $('#'+dialogId);
-						$dialog.dialog('close');
-						return false;
-					})
-				;
-			
-			var dialogOptions = {
-				autoOpen: true
-				,title: _loc('Select Document Schema')
-				,modal: true
-				,close: function(event, ui){
-					var diag = $(event.target);
-					diag.dialog('destroy');
-					diag.remove();
-					
-					if( cancelOnClose ){
-						_this._cancelEdit();
-					};
-				}
-			};
-			$dialog.dialog(dialogOptions);
 		};
 	},
     
