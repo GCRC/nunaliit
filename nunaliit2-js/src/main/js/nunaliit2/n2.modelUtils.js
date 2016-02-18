@@ -107,10 +107,12 @@ var ModelFilter = $n2.Class({
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: null
+			,filterName: 'FilterModel'
+			,filterFn: null
+
+			// From configuration
 			,modelId: null
 			,sourceModelId: null
-			,filterFn: null
-			,filterName: 'FilterModel'
 		},opts_);
 		
 		var _this = this;
@@ -355,6 +357,8 @@ var ModelUnion = $n2.Class({
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: null
+			
+			// From configuration
 			,modelId: null
 			,sourceModelIds: null
 		},opts_);
@@ -546,6 +550,8 @@ var SchemaFilter = $n2.Class(ModelFilter, {
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: null
+
+			// From configuration
 			,modelId: null
 			,sourceModelId: null
 			,schemaName: null
@@ -597,6 +603,8 @@ var ReferenceFilter = $n2.Class(ModelFilter, {
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: null
+
+			// From configuration
 			,modelId: null
 			,sourceModelId: null
 			,reference: null
@@ -764,6 +772,7 @@ $n2.modelUtils = {
 	,ModelFilter: ModelFilter
 	,FilterFunctionFromModelConfiguration: FilterFunctionFromModelConfiguration
 	,SchemaFilter: SchemaFilter
+	,ReferenceFilter: ReferenceFilter
 	,handleModelCreate: handleModelCreate 
 };
 
