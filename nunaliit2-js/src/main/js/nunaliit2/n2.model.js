@@ -216,7 +216,8 @@ var Service = $n2.Class({
 			};
 			
 			try {
-				if( m.modelType === 'couchDb' ){
+				if( 'couchDb' === m.modelType 
+				 || 'couchDbDataSource' === m.modelType ){
 			        this._createCouchDbModel(m);
 			    
 				} else if( m.modelType === 'timeFilter' ){
