@@ -64,6 +64,8 @@ var WaitWidget = $n2.Class({
 			contentId: null
 			,containerId: null
 			,dispatchService: null
+			
+			// From configuration
 			,showNames: null
 		},opts_);
 		

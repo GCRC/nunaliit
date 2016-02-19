@@ -52,8 +52,10 @@ var TimeTransformMapBridge = $n2.Class({
 
     initialize: function (opts_) {
         var opts = $n2.extend({
-            sourceModelId: null,
             config: null
+            
+            // From configuration object
+            ,sourceModelId: null
         }, opts_);
 
         var _this = this;
@@ -249,6 +251,8 @@ var ModelMapBridge = $n2.Class({
     initialize: function (opts_) {
         var opts = $n2.extend({
             config: null
+            
+            // From configuration object
             ,sourceModelId: null
         }, opts_);
 
