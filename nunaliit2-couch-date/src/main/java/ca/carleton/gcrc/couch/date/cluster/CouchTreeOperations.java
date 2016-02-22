@@ -183,7 +183,7 @@ public class CouchTreeOperations implements TreeOperations {
 			jsonDoc = db.getDocument(DATE_CLUSTER_DOC_ID);
 		} else {
 			jsonDoc = new JSONObject();
-			jsonDoc.put("_id", "org.nunaliit.date_clusters");
+			jsonDoc.put("_id", DATE_CLUSTER_DOC_ID);
 		}
 
 		jsonDoc.put("nunaliit_date_clusters", tree.toJSON());
