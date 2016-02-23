@@ -262,7 +262,10 @@ var Symbolizer = $n2.Class({
 				};
 				
 				if( 'label' === name ){
-					if( typeof value !== 'string' ){
+					if( typeof value === 'object' 
+					 && 'localized' === value.nunaliit_type ){
+						value = _loc( value );
+					} else if( typeof value !== 'string' ){
 						value = '' + value;
 					};
 					
