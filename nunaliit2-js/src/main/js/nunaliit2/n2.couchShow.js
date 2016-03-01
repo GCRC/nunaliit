@@ -305,7 +305,7 @@ var DomStyler = $n2.Class({
 		});
 	},
 	
-	_updatedDocument: function(doc){
+	_receivedDocumentContent: function(doc){
 		var _this = this;
 		
 		var docId = undefined;
@@ -313,31 +313,60 @@ var DomStyler = $n2.Class({
 			docId = doc._id;
 		};
 		
-		var docIdClass = undefined;
+		var contentClass = undefined;
 		if( docId ){
-			docIdClass = 'n2s_document_' + $n2.utils.stringToHtmlId(docId);
+			contentClass = 'n2s_documentContent_' + $n2.utils.stringToHtmlId(docId);
 		};
 		
-		if( docIdClass ){
-			$('.'+docIdClass).each(function(){
+		if( contentClass ){
+			$('.'+contentClass).each(function(){
 				var $jq = $(this);
+
+				_this._refreshElementWithDocument($jq, doc);
 				
-				if( $jq.hasClass('n2s_insertedMediaView') ){
-					_this._insertMediaView(doc, $jq);
-				};
-				
-				if( $jq.hasClass('n2s_insertedFirstThumbnail') ){
-					_this._insertFirstThumbnail(doc, $jq);
-				};
-				
-				if( $jq.hasClass('n2s_customed') ){
-					_this._custom($jq, doc);
-				};
-				
-				if( $jq.hasClass('n2s_userEvents_installed') ){
-					_this._userEvents($jq, doc);
-				};
+				// Content was received. No longer waiting for it.
+				$jq.removeClass(contentClass);
 			});
+		};
+	},
+
+	_receivedDocumentUpdate: function(doc){
+		var _this = this;
+		
+		var docId = undefined;
+		if( doc ){
+			docId = doc._id;
+		};
+		
+		var updateClass = undefined;
+		if( docId ){
+			updateClass = 'n2s_documentUpdate_' + $n2.utils.stringToHtmlId(docId);
+		};
+		
+		if( updateClass ){
+			$('.'+updateClass).each(function(){
+				var $jq = $(this);
+
+				_this._refreshElementWithDocument($jq, doc);
+			});
+		};
+	},
+
+	_refreshElementWithDocument: function($jq, doc){
+		if( $jq.hasClass('n2s_insertedMediaView') ){
+			this._insertMediaView(doc, $jq);
+		};
+		
+		if( $jq.hasClass('n2s_insertedFirstThumbnail') ){
+			this._insertFirstThumbnail(doc, $jq);
+		};
+		
+		if( $jq.hasClass('n2s_customed') ){
+			this._custom($jq, doc);
+		};
+		
+		if( $jq.hasClass('n2s_userEvents_installed') ){
+			this._userEvents($jq, doc);
 		};
 	},
 
@@ -1270,12 +1299,17 @@ var DomStyler = $n2.Class({
 		var docId = this._getDocumentIdentifier(doc, $elem);
 
 		if( docId ){
-			var docIdClass = 'n2s_document_' + $n2.utils.stringToHtmlId(docId);
-			$elem.addClass(docIdClass);
+			// Ready to receive updates
+			var updateClass = 'n2s_documentUpdate_' + $n2.utils.stringToHtmlId(docId);
+			$elem.addClass(updateClass);
 			
 			if( doc && doc._id === docId ){
 				// Already have document
 			} else {
+				// Ready to receive content
+				var contentClass = 'n2s_documentContent_' + $n2.utils.stringToHtmlId(docId);
+				$elem.addClass(contentClass);
+
 				// Request this document
 				this.showService._requestDocument(docId);
 			};
@@ -1828,7 +1862,13 @@ var Show = $n2.Class({
 	
 	_handleDocumentContent: function(doc){
 		if( doc ){
-			this.domStyler._updatedDocument(doc);
+			this.domStyler._receivedDocumentContent(doc);
+		};
+	},
+
+	_handleDocumentUpdate: function(doc){
+		if( doc ){
+			this.domStyler._receivedDocumentUpdate(doc);
 		};
 	},
 	
@@ -1888,18 +1928,21 @@ var Show = $n2.Class({
 				var escaped = $n2.utils.stringToHtmlId(docId);
 				$('.n2ShowDoc_'+escaped).remove();
 				$('.n2ShowUpdateDoc_'+escaped).remove();
+				$('.n2s_documentUpdate_'+escaped).remove();
 			};
 
 		} else if( 'documentContentCreated' === m.type ) {
 			var doc = m.doc;
 			if( doc ){
 				this._updateDocument(doc);
+				this._handleDocumentUpdate(doc);
 			};
 
 		} else if( 'documentContentUpdated' === m.type ) {
 			var doc = m.doc;
 			if( doc ){
 				this._updateDocument(doc);
+				this._handleDocumentUpdate(doc);
 			};
 
 		} else if( 'documentContent' === m.type ) {
