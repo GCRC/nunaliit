@@ -12,6 +12,7 @@ import ca.carleton.gcrc.couch.app.DocumentUpdateListener.Phase;
 import ca.carleton.gcrc.couch.app.impl.DigestComputerSha1;
 import ca.carleton.gcrc.couch.app.impl.DocumentManifest;
 import ca.carleton.gcrc.couch.app.impl.DocumentUpdateListenerDefault;
+import ca.carleton.gcrc.couch.app.impl.JSONObjectConverter;
 import ca.carleton.gcrc.couch.app.impl.StreamProducerDocumentUpdate;
 import ca.carleton.gcrc.couch.app.impl.UpdateObjectComparator;
 import ca.carleton.gcrc.couch.app.impl.UpdateSpecifier;
@@ -213,6 +214,8 @@ public class DocumentUpdateProcess {
 				,currentTargetDoc
 				,updateSpecifier
 				);
+		
+		producer.setJsonObjectConverter( JSONObjectConverter.getUploadConverter() );
 
 		// Compute URL
 		URL effectiveUrl = new URL(couchDb.getUrl(), URLEncoder.encode(docId,"UTF-8"));
