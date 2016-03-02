@@ -20,6 +20,7 @@ public class StreamProducerDocumentUpdate implements StreamProducer {
 	private DocumentDigest documentDigest;
 	private JSONObject previousDoc;
 	private UpdateSpecifier updateSpecifier;
+	private JSONObjectConverter jsonObjectConverter;
 	
 	public StreamProducerDocumentUpdate(
 		Document sourceDoc
@@ -33,6 +34,14 @@ public class StreamProducerDocumentUpdate implements StreamProducer {
 		this.updateSpecifier = updateSpecifier;
 	}
 	
+	public JSONObjectConverter getJsonObjectConverter() {
+		return jsonObjectConverter;
+	}
+
+	public void setJsonObjectConverter(JSONObjectConverter jsonObjectConverter) {
+		this.jsonObjectConverter = jsonObjectConverter;
+	}
+
 	@Override
 	public void produce(OutputStream os) throws Exception {
 		
@@ -46,6 +55,9 @@ public class StreamProducerDocumentUpdate implements StreamProducer {
 		}
 		
 		JSONObject sourceJson = sourceDoc.getJSONObject();
+		if( null != jsonObjectConverter ){
+			sourceJson = jsonObjectConverter.convertObject(sourceJson);
+		}
 		
 		OutputStreamWriter osw = new OutputStreamWriter(os,"UTF-8");
 		JSONWriter builder = new JSONWriter(osw);
