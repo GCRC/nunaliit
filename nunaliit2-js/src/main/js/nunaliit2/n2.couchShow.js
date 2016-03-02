@@ -100,208 +100,208 @@ var DomStyler = $n2.Class({
 		// Localization
 		$set.filter('.n2_localize').each(function(){
 			var $jq = $(this);
-			_this._localize($jq, opt);
 			$jq.removeClass('n2_localize').addClass('n2_localized');
+			_this._localize($jq, opt);
 		});
 		$set.filter('.n2s_localize').each(function(){
 			var $jq = $(this);
-			_this._localize($jq, opt);
 			$jq.removeClass('n2s_localize').addClass('n2s_localized');
+			_this._localize($jq, opt);
 		});
 		
 		// Brief display
 		$set.filter('.n2s_briefDisplay').each(function(){
 			var $jq = $(this);
-			_this._briefDisplay($jq, opt);
 			$jq.removeClass('n2s_briefDisplay').addClass('n2s_briefDisplayed');
+			_this._briefDisplay($jq, contextDoc, opt);
 		});
 		$set.filter('.n2_briefDisplay').each(function(){
 			// Legacy
 			var $jq = $(this);
-			_this._briefDisplay($jq, opt);
 			$jq.removeClass('n2_briefDisplay').addClass('n2_briefDisplayed');
+			_this._briefDisplay($jq, contextDoc, opt);
 		});
 		
 		// Full display
 		$set.filter('.n2s_fullDisplay').each(function(){
 			var $jq = $(this);
-			_this._fullDisplay($jq, opt);
 			$jq.removeClass('n2s_fullDisplay').addClass('n2s_fullDisplayed');
+			_this._fullDisplay($jq, contextDoc, opt);
 		});
 
 		// Reference Link
 		$set.filter('.n2s_referenceLink').each(function(){
 			var $jq = $(this);
-			_this._insertReferenceLink($jq, opt);
 			$jq.removeClass('n2s_referenceLink').addClass('n2s_insertedReferenceLink');
+			_this._insertReferenceLink($jq, opt);
 		});
 		
 		// Time
 		$set.filter('.n2s_insertTime').each(function(){
 			var $jq = $(this);
-			_this._insertTime($jq, opt);
 			$jq.removeClass('n2s_insertTime').addClass('n2s_insertedTime');
+			_this._insertTime($jq, opt);
 		});
 		
 		// User
 		$set.filter('.n2s_insertUserName').each(function(){
 			var $jq = $(this);
-			_this._insertUserName($jq, opt);
 			$jq.removeClass('n2s_insertUserName').addClass('n2s_insertedUserName');
+			_this._insertUserName($jq, opt);
 		});
 		
 		// Layer name
 		$set.filter('.n2s_insertLayerName').each(function(){
 			var $jq = $(this);
-			_this._insertLayerName($jq, opt);
 			$jq.removeClass('n2s_insertLayerName').addClass('n2s_insertedLayerName');
+			_this._insertLayerName($jq, contextDoc, opt);
 		});
 		
 		// Media View
 		$set.filter('.n2s_insertMediaView').each(function(){
 			var $jq = $(this);
-			_this._insertMediaView(contextDoc, $jq);
 			$jq.removeClass('n2s_insertMediaView').addClass('n2s_insertedMediaView');
+			_this._insertMediaView(contextDoc, $jq);
 		});
 		
 		// Insert first thumbnail
 		$set.filter('.n2s_insertFirstThumbnail').each(function(){
 			var $jq = $(this);
-			_this._insertFirstThumbnail(contextDoc, $jq, opt);
 			$jq.removeClass('n2s_insertFirstThumbnail').addClass('n2s_insertedFirstThumbnail');
+			_this._insertFirstThumbnail(contextDoc, $jq, opt);
 		});
 		
 		// Insert Hover Sound
 		$set.filter('.n2s_insertHoverSoundIcon').each(function(){
 			var $jq = $(this);
-			_this._insertHoverSoundIcon(contextDoc, $jq, opt);
 			$jq.removeClass('n2s_insertHoverSoundIcon').addClass('n2s_insertedHoverSoundIcon');
+			_this._insertHoverSoundIcon(contextDoc, $jq, opt);
 		});
 		
 		// External links to media file
 		$set.filter('.n2s_externalMediaLink').each(function(){
 			var $jq = $(this);
-			_this._adjustExternalMediaLink(contextDoc, $jq, opt);
 			$jq.removeClass('n2s_externalMediaLink').addClass('n2s_adjustedExternalMediaLink');
+			_this._adjustExternalMediaLink(contextDoc, $jq, opt);
 		});
 		
 		// External links to media file
 		$set.filter('.n2s_insertExternalMediaLink').each(function(){
 			var $jq = $(this);
-			_this._insertExternalMediaLink(contextDoc, $jq, opt);
 			$jq.removeClass('n2s_insertExternalMediaLink').addClass('n2s_insertedExternalMediaLink');
+			_this._insertExternalMediaLink(contextDoc, $jq, opt);
 		});
 		
 		// Convert text URLs to Links
 		$set.filter('.n2s_convertTextUrlToLink').each(function(){
 			var $jq = $(this);
-			_this._convertTextUrlToLink(contextDoc, $jq, opt);
 			$jq.removeClass('n2s_convertTextUrlToLink').addClass('n2s_convertedTextUrlToLink');
+			_this._convertTextUrlToLink(contextDoc, $jq, opt);
 		});
 
 		// Follow geometry
 		$set.filter('.n2s_clickFindGeometryOnMap').each(function(){
 			var $jq = $(this);
-			_this._clickFindGeometryOnMap(contextDoc, $jq, opt);
 			$jq.removeClass('n2s_clickFindGeometryOnMap').addClass('n2s_findGeometryOnMap');
+			_this._clickFindGeometryOnMap(contextDoc, $jq, opt);
 		});
 
 		// Turn on layer
 		$set.filter('.n2s_clickAddLayerFromDefinition').each(function(){
 			var $jq = $(this);
-			_this._clickAddLayerFromDefinition(contextDoc, $jq, opt);
 			$jq.removeClass('n2s_clickAddLayerFromDefinition').addClass('n2s_addLayerFromDefinition');
+			_this._clickAddLayerFromDefinition(contextDoc, $jq, opt);
 		});
 
 		// Document editing
 		$set.filter('.n2s_clickEdit').each(function(){
 			var $jq = $(this);
-			_this._clickEdit(contextDoc, $jq, opt);
 			$jq.removeClass('n2s_clickEdit').addClass('n2s_edit');
+			_this._clickEdit(contextDoc, $jq, opt);
 		});
 
 		// Document deleting
 		$set.filter('.n2s_clickDelete').each(function(){
 			var $jq = $(this);
-			_this._clickDelete(contextDoc, $jq, opt);
 			$jq.removeClass('n2s_clickDelete').addClass('n2s_delete');
+			_this._clickDelete(contextDoc, $jq, opt);
 		});
 		
 		// Mouse Hover
 		$set.filter('.n2s_handleHover').each(function(){
 			var $jq = $(this);
-			_this._handleHover(contextDoc, $jq, opt);
 			$jq.removeClass('n2s_handleHover').addClass('n2s_handledHover');
+			_this._handleHover(contextDoc, $jq, opt);
 		});
 
 		// Install maximum height
 		$set.filter('.n2s_installMaxHeight').each(function(){
 			var $jq = $(this);
-			_this._installMaxHeight(contextDoc, $jq, opt);
 			$jq.removeClass('n2s_installMaxHeight').addClass('n2s_installedMaxHeight');
+			_this._installMaxHeight(contextDoc, $jq, opt);
 		});
 		
 		// Login
 		$set.filter('.n2s_clickLogin').each(function(){
 			var $jq = $(this);
-			_this._clickLogin($jq, opt);
 			$jq.removeClass('n2s_clickLogin').addClass('n2s_login');
+			_this._clickLogin($jq, opt);
 		});
 		
 		// Map Edit
 		$set.filter('.n2s_clickMapEdit').each(function(){
 			var $jq = $(this);
-			_this._clickMapEdit($jq, opt);
 			$jq.removeClass('n2s_clickMapEdit').addClass('n2s_mapEdit');
+			_this._clickMapEdit($jq, opt);
 		});
 		
 		// Preserve Space
 		$set.filter('.n2s_preserveSpaces').each(function(){
 			var $jq = $(this);
-			_this._preserveSpaces($jq, opt);
 			$jq.removeClass('n2s_preserveSpaces').addClass('n2s_preservedSpaces');
+			_this._preserveSpaces($jq, opt);
 		});
 
 		// Document List
 		$set.filter('.n2s_insertDocumentList').each(function(){
 			var $jq = $(this);
-			_this._insertDocumentList($jq, opt);
 			$jq.removeClass('n2s_insertDocumentList').addClass('n2s_insertedDocumentList');
+			_this._insertDocumentList($jq, opt);
 		});
 
 		// Select
 		$set.filter('.n2s_select').each(function(){
 			var $jq = $(this);
-			_this._select($jq, opt);
 			$jq.removeClass('n2s_select').addClass('n2s_selected');
+			_this._select($jq, opt);
 		});
 
 		// Install Tiled Image Click
 		$set.filter('.n2s_installTiledImageClick').each(function(){
 			var $jq = $(this);
-			_this._installTiledImageClick(contextDoc, $jq);
 			$jq.removeClass('n2s_installTiledImageClick').addClass('n2s_installedTiledImageClick');
+			_this._installTiledImageClick(contextDoc, $jq);
 		});
 
 		// Custom
 		$set.filter('.n2s_custom').each(function(){
 			var $jq = $(this);
-			_this._custom($jq, contextDoc);
 			$jq.removeClass('n2s_custom').addClass('n2s_customed');
+			_this._custom($jq, contextDoc);
 		});
 
 		// User Events
 		$set.filter('.n2s_userEvents').each(function(){
 			var $jq = $(this);
-			_this._userEvents($jq, contextDoc);
 			$jq.removeClass('n2s_userEvents').addClass('n2s_userEvents_installed');
+			_this._userEvents($jq, contextDoc);
 		});
 
 		// Wiki
 		$set.filter('.n2s_wikiTransform').each(function(){
 			var $jq = $(this);
-			_this._wikiTransform($jq, contextDoc);
 			$jq.removeClass('n2s_wikiTransform').addClass('n2s_wikiTransformed');
+			_this._wikiTransform($jq, contextDoc);
 		});
 	},
 	
@@ -315,7 +315,7 @@ var DomStyler = $n2.Class({
 		
 		var contentClass = undefined;
 		if( docId ){
-			contentClass = 'n2s_documentContent_' + $n2.utils.stringToHtmlId(docId);
+			contentClass = 'n2show_documentContent_' + $n2.utils.stringToHtmlId(docId);
 		};
 		
 		if( contentClass ){
@@ -340,7 +340,7 @@ var DomStyler = $n2.Class({
 		
 		var updateClass = undefined;
 		if( docId ){
-			updateClass = 'n2s_documentUpdate_' + $n2.utils.stringToHtmlId(docId);
+			updateClass = 'n2show_documentUpdate_' + $n2.utils.stringToHtmlId(docId);
 		};
 		
 		if( updateClass ){
@@ -367,6 +367,18 @@ var DomStyler = $n2.Class({
 		
 		if( $jq.hasClass('n2s_userEvents_installed') ){
 			this._userEvents($jq, doc);
+		};
+
+		if( $jq.hasClass('n2s_briefDisplayed') ){
+			this._briefDisplay($jq, doc);
+		};
+
+		if( $jq.hasClass('n2s_fullDisplayed') ){
+			this._fullDisplay($jq, doc);
+		};
+
+		if( $jq.hasClass('n2s_insertedLayerName') ){
+			this._insertLayerName($jq, doc);
 		};
 	},
 
@@ -440,20 +452,26 @@ var DomStyler = $n2.Class({
 		};
 	},
 	
-	_briefDisplay: function($jq, opt_) {
+	_briefDisplay: function($jq, data, opt_) {
 		var docId = $jq.attr('nunaliit-document');
 		if( !docId ){
 			docId = $jq.text();
 			$jq.attr('nunaliit-document',docId);
 		};
+
+		var docId = this._associateDocumentToElement(data, $jq);
 		
-		this.showService.printBriefDescription($jq, docId);
+		if( data && data._id === docId ){
+			this.showService._displayDocumentBrief($jq, data);
+		};
 	},
 	
-	_fullDisplay: function($jq, opt_) {
-		var docId = $jq.attr('nunaliit-document');
+	_fullDisplay: function($jq, data, opt_) {
+		var docId = this._associateDocumentToElement(data, $jq);
 		
-		this.showService.printDocument($jq, docId);
+		if( data && data._id === docId ){
+			this.showService._displayDocumentFull($jq, data, opt_);
+		};
 	},
 	
 	_insertReferenceLink: function($jq, opt_) {
@@ -496,13 +514,23 @@ var DomStyler = $n2.Class({
 			);
 	},
 	
-	_insertLayerName: function($jq, opt_) {
-		var layerIdentifier = $jq.text();
+	_insertLayerName: function($jq, data, opt_) {
+		var layerIdentifier = $jq.attr('nunaliit-document');
+		if( !layerIdentifier ){
+			layerIdentifier = $jq.text();
+			$jq.attr('nunaliit-document',layerIdentifier);
+		};
+
+		var layerIdentifier = this._associateDocumentToElement(data, $jq);
 		
-		this.showService.printLayerName(
-			$jq
-			,layerIdentifier
-			);
+		if( data && data._id === layerIdentifier ){
+			if( data.nunaliit_layer_definition
+			 && data.nunaliit_layer_definition.name ){
+				var name = _loc(data.nunaliit_layer_definition.name);
+				
+				$jq.text(name);
+			};
+		};
 	},
 
 	_insertMediaView: function(data, $insertView) {
@@ -1298,16 +1326,21 @@ var DomStyler = $n2.Class({
 	_associateDocumentToElement: function(doc, $elem){
 		var docId = this._getDocumentIdentifier(doc, $elem);
 
-		if( docId ){
+		var associated = $elem.hasClass('n2show_documentAssociated');
+		
+		if( docId && !associated ){
+			$elem.attr('nunaliit-document', docId);
+			$elem.addClass('n2show_documentAssociated');
+
 			// Ready to receive updates
-			var updateClass = 'n2s_documentUpdate_' + $n2.utils.stringToHtmlId(docId);
+			var updateClass = 'n2show_documentUpdate_' + $n2.utils.stringToHtmlId(docId);
 			$elem.addClass(updateClass);
 			
 			if( doc && doc._id === docId ){
 				// Already have document
 			} else {
 				// Ready to receive content
-				var contentClass = 'n2s_documentContent_' + $n2.utils.stringToHtmlId(docId);
+				var contentClass = 'n2show_documentContent_' + $n2.utils.stringToHtmlId(docId);
 				$elem.addClass(contentClass);
 
 				// Request this document
@@ -1418,9 +1451,6 @@ var Show = $n2.Class({
 			requestService.addUserListener(function(userDoc){
 				_this._displayUserDocument(userDoc);
 			});
-			requestService.addDocumentListener(function(doc){
-				_this._displayDocument(doc);
-			});
 		};
 		
 		var dispatchService = this.dispatchService;
@@ -1448,23 +1478,36 @@ var Show = $n2.Class({
 		this.domStyler.fixElementAndChildren($elem, opt, contextDoc);
 	},
 	
-	displayBriefDescription: function($elem, opt, doc){
-		// Remember to update
+	displayBriefDescription: function($elem, opt_, doc){
+		var opt = $n2.extend({
+			onDisplayed: null // function($elem, doc, opt_){}
+			,schemaName: null
+		},opt_);
+
 		if( doc && doc._id ) {
-			$elem.addClass('n2ShowUpdateDoc_'+$n2.utils.stringToHtmlId(doc._id));
-			$elem.addClass('n2ShowDocBrief');
+			$elem.addClass('n2s_briefDisplayed');
+			$elem.attr('nunaliit-document',doc._id);
+
+			this.domStyler._associateDocumentToElement(doc, $elem);
+			
+			this._displayDocumentBrief($elem, doc, opt);
 		};
-		
-		this._displayDocumentBrief($elem, doc, opt);
 	},
 	
-	displayDocument: function($elem, opt, doc){
-		// Remember to update
+	displayDocument: function($elem, opt_, doc){
+		var opt = $n2.extend({
+			onDisplayed: null // function($elem, doc, opt_){}
+			,schemaName: null
+		},opt_);
+
 		if( doc && doc._id ) {
-			$elem.addClass('n2ShowUpdateDoc_'+$n2.utils.stringToHtmlId(doc._id));
+			$elem.addClass('n2s_fullDisplayed');
+			$elem.attr('nunaliit-document',doc._id);
+
+			this.domStyler._associateDocumentToElement(doc, $elem);
+
+			this._displayDocumentFull($elem, doc, opt);
 		};
-		
-		this._displayDocumentFull($elem, doc, opt);
 	},
 	
 	printUserName: function($elem, userName, opts){
@@ -1479,43 +1522,29 @@ var Show = $n2.Class({
 		this._requestUser(userName); // fetch document
 	},
 	
-	printBriefDescription: function($elem, docId, opts){
-		$elem.addClass('n2ShowDoc_'+$n2.utils.stringToHtmlId(docId));
-		$elem.addClass('n2ShowDocBrief');
+	printBriefDescription: function($elem, docId){
+		$elem.addClass('n2s_briefDisplayed');
 		$elem.addClass('n2Show_docNotFound');
-		$elem.text(docId);
+		$elem.attr('nunaliit-document',docId);
 
-		this._requestDocument(docId); // fetch document
+		this.domStyler._briefDisplay($elem);
 	},
 	
-	printDocument: function($elem, docId, opts_){
-		var opts = $n2.extend({
-			eliminateNonApprovedMedia: false
-			,eliminateDeniedMedia: false
-		},opts_);
-		
-		$elem.addClass('n2ShowDoc_'+$n2.utils.stringToHtmlId(docId));
+	printDocument: function($elem, docId){
+		$elem.addClass('n2s_fullDisplayed');
 		$elem.addClass('n2Show_docNotFound');
+		$elem.attr('nunaliit-document',docId);
 		
-		if( opts.eliminateNonApprovedMedia ) {
-			$elem.addClass('n2NoShowNonApprovedMedia');
-		};
-		if( opts.eliminateDeniedMedia ) {
-			$elem.addClass('n2NoShowDenied');
-		};
-		
-		$elem.text(docId);
-
-		this._requestDocument(docId); // fetch document
+		this.domStyler._fullDisplay($elem);
 	},
 	
-	printLayerName: function($elem, layerIdentifier, opts_){
-		
-		$elem.addClass('n2ShowLayerName_'+$n2.utils.stringToHtmlId(layerIdentifier));
-		
+	printLayerName: function($elem, layerIdentifier){
+		$elem.addClass('n2s_insertedLayerName');
+		$elem.attr('nunaliit-document',layerIdentifier);
+
 		$elem.text(layerIdentifier);
-
-		this._requestDocument(layerIdentifier); // fetch document
+		
+		this.domStyler._insertLayerName($elem);
 	},
 	
 	installUserEvents: function(opts_){
@@ -1571,86 +1600,11 @@ var Show = $n2.Class({
 			});
 		};
 	},
-
-	_displayDocument: function(doc){
-		var _this = this;
-		
-		var id = doc._id;
-		
-		var showClass = 'n2ShowDoc_'+$n2.utils.stringToHtmlId(id);
-		
-		$('.'+showClass).each(function(i,elem){
-			var $elem = $(elem);
-			
-			$elem
-				.removeClass(showClass)
-				.addClass('n2ShowUpdateDoc_'+$n2.utils.stringToHtmlId(id))
-				.removeClass('n2Show_docNotFound')
-				;
-
-			if( _this.eliminateNonApprovedMedia ) {
-				if( $n2.couchMap.documentContainsMedia(doc) 
-				 && false == $n2.couchMap.documentContainsApprovedMedia(doc) ) {
-					$elem.empty();
-					return;
-				};
-				
-			} else if( _this.eliminateDeniedMedia ) {
-				if( $n2.couchMap.documentContainsMedia(doc) 
-				 && true == $n2.couchMap.documentContainsDeniedMedia(doc) ) {
-					$elem.empty();
-					return;
-				};
-			};
-			
-			if( $elem.hasClass('n2ShowDocBrief') ) {
-				_this._displayDocumentBrief($elem, doc);
-				return;
-				
-			};
-
-			// Non-brief behaviour
-			_this._displayDocumentFull($elem, doc);
-		});
-		
-		// Layer definition
-		if( doc.nunaliit_layer_definition
-		 && doc.nunaliit_layer_definition.name ){
-			var name = _loc(doc.nunaliit_layer_definition.name);
-			
-			var layerClass = 'n2ShowLayerName_'+$n2.utils.stringToHtmlId(id);
-			$('.'+layerClass).each(function(i,elem){
-				var $elem = $(elem);
-				$elem.text( name );
-			});
-		};
-	},
-
-	_updateDocument: function(doc){
-		var _this = this;
-		
-		var id = doc._id;
-		
-		var updateClass = 'n2ShowUpdateDoc_'+$n2.utils.stringToHtmlId(id);
-		
-		$('.'+updateClass).each(function(i,elem){
-			var $elem = $(elem);
-			
-			if( $elem.hasClass('n2ShowDocBrief') ) {
-				_this._displayDocumentBrief($elem, doc);
-				return;
-				
-			};
-
-			// Non-brief behaviour
-			_this._displayDocumentFull($elem, doc);
-		});
-	},
 	
 	_displayDocumentBrief: function($elem, doc, opt_){
 		
 		var opt = $n2.extend({
-			onDisplayed: function($elem, doc, opt_){}
+			onDisplayed: null // function($elem, doc, opt_){}
 			,schemaName: null
 		},opt_);
 
@@ -1690,22 +1644,29 @@ var Show = $n2.Class({
 		};
 		
 		function printBrief($elem, schema){
+			$elem.removeClass('n2Show_docNotFound');
 			schema.brief(doc,$elem);
 			_this.fixElementAndChildren($elem, {}, doc);
 			_this._postProcessDisplay($elem, doc);
-			opt.onDisplayed($elem, doc, schema, opt_);
+
+			if( typeof opt.onDisplayed === 'function' ){
+				opt.onDisplayed($elem, doc, schema, opt_);
+			};
 		};
 		
 		function displayError($elem){
 			$elem.text( _loc('Unable to display brief description') );
-			opt.onDisplayed($elem, doc, null, opt_);
+
+			if( typeof opt.onDisplayed === 'function' ){
+				opt.onDisplayed($elem, doc, null, opt_);
+			};
 		};
 	},
 	
 	_displayDocumentFull: function($elem, doc, opt_){
 		
 		var opt = $n2.extend({
-			onDisplayed: function($elem, doc, opt_){}
+			onDisplayed: null // function($elem, doc, opt_){}
 			,schemaName: null
 		},opt_);
 		
@@ -1745,10 +1706,14 @@ var Show = $n2.Class({
 		};
 		
 		function displaySchema($elem,schema){
+			$elem.removeClass('n2Show_docNotFound');
 			schema.display(doc,$elem);
 			_this.fixElementAndChildren($elem, {}, doc);
 			_this._postProcessDisplay($elem, doc);
-			opt.onDisplayed($elem, doc, schema, opt_);
+
+			if( typeof opt.onDisplayed === 'function' ){
+				opt.onDisplayed($elem, doc, schema, opt_);
+			};
 		};
 		
 		function displayError($elem){
@@ -1926,22 +1891,18 @@ var Show = $n2.Class({
 			
 			if( docId ){
 				var escaped = $n2.utils.stringToHtmlId(docId);
-				$('.n2ShowDoc_'+escaped).remove();
-				$('.n2ShowUpdateDoc_'+escaped).remove();
-				$('.n2s_documentUpdate_'+escaped).remove();
+				$('.n2show_documentUpdate_'+escaped).remove();
 			};
 
 		} else if( 'documentContentCreated' === m.type ) {
 			var doc = m.doc;
 			if( doc ){
-				this._updateDocument(doc);
 				this._handleDocumentUpdate(doc);
 			};
 
 		} else if( 'documentContentUpdated' === m.type ) {
 			var doc = m.doc;
 			if( doc ){
-				this._updateDocument(doc);
 				this._handleDocumentUpdate(doc);
 			};
 
