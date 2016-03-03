@@ -246,6 +246,8 @@ var ModelMapBridge = $n2.Class({
     
     mapControl: null,
     
+    registeredLayerNames: null,
+    
     docStateById: null,
 
     initialize: function (opts_) {
@@ -259,6 +261,7 @@ var ModelMapBridge = $n2.Class({
         var _this = this;
         
         this.docStateById = {};
+        this.registeredLayerNames = {};
         
         this.sourceModelId = opts.sourceModelId;
         this.config = opts.config;
@@ -270,10 +273,11 @@ var ModelMapBridge = $n2.Class({
         // Register to events
         if (this.dispatchService) {
             var f = function (m, addr, dispatcher){
-                _this._handle (m, addr, dispatcher);
+                _this._handle(m, addr, dispatcher);
             };
             this.dispatchService.register(DH, 'modelStateUpdated', f);
             this.dispatchService.register(DH, 'start', f);
+            this.dispatchService.register(DH, 'mapInitialized', f);
             
             if( this.sourceModelId ){
                 // Initialize state
@@ -297,6 +301,9 @@ var ModelMapBridge = $n2.Class({
             if (this.sourceModelId === m.modelId) {
                 this._sourceModelUpdated(m.state);
             };
+
+    	} else if ('mapInitialized' === m.type) {
+            this._updateMap();
 
     	} else if ('start' === m.type) {
             this._updateMap();
@@ -445,20 +452,25 @@ var ModelMapBridge = $n2.Class({
         	 && this.config.moduleDisplay.mapControl ){
         		this.mapControl = this.config.moduleDisplay.mapControl;
         	};
-        	
-        	// Register for update events on map. Do this only once
-        	if( this.mapControl
-        	 && this.mapControl.map 
-        	 && this.mapControl.map.layers ){
-        		for(var layerName in this.mapControl.map.layers){
+    	};
+
+    	// Register for update events on map. Do this only once per layer
+    	if( this.mapControl
+    	 && this.mapControl.map 
+    	 && this.mapControl.map.layers ){
+    		for(var layerName in this.mapControl.map.layers){
+    			if( this.registeredLayerNames[layerName] ){
+    				// Already registered
+    			} else {
+    				this.registeredLayerNames[layerName] = true;
         			var layer = this.mapControl.map.layers[layerName];
         			if( layer && layer.events ){
         				layer.events.register('featuresadded',null,function(evt){
         					_this._updateMap();
         				});
         			};
-        		};
-        	};
+    			};
+    		};
     	};
     		
     	return this.mapControl;
@@ -1634,6 +1646,14 @@ var MapAndControls = $n2.Class({
 		});
 
 		this.initCometChannels();
+		
+		var dispatcher = this._getDispatchService();
+		if( dispatcher ) {
+			dispatcher.send(DH,{
+				type: 'mapInitialized'
+				,mapControl: this
+			});
+		};
 	},
 
 	getNamedLayerInfo: function(name) {
