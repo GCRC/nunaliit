@@ -246,7 +246,7 @@ var ModelMapBridge = $n2.Class({
     
     mapControl: null,
     
-    registeredLayerNames: null,
+    registeredLayersByIndex: null,
     
     docStateById: null,
 
@@ -261,7 +261,7 @@ var ModelMapBridge = $n2.Class({
         var _this = this;
         
         this.docStateById = {};
-        this.registeredLayerNames = {};
+        this.registeredLayersByIndex = {};
         
         this.sourceModelId = opts.sourceModelId;
         this.config = opts.config;
@@ -367,79 +367,104 @@ var ModelMapBridge = $n2.Class({
                     	++featureIndex){
                         var feature = layer.features[featureIndex];
 
-        				if( feature.cluster ){
-        					var visibleCount = 0;
-        					
-        					for(var cfIndex=0,cfEnd=feature.cluster.length; 
-        						cfIndex<cfEnd; 
-        						++cfIndex){
-        						var cf = feature.cluster[cfIndex];
-        						if( cf.fid ){
-                                	var visible = false;
-                                    if( this.docStateById[cf.fid] ){
-                                    	visible = true;
-                                    	++visibleCount;
-                                    };
-                                    
-                                    if( visible ) {
-                                    	if( cf.style ){
-                                    		cf.style = null;
-                                    	};
-                                    	
-                                    } else {
-                                    	if( ! cf.style ){
-                                    		cf.style = {
-                                            	display: 'none'
-                                            };
-                                    	};
-                                    };
-        						};
-        					};
-        					
-        					if( feature.attributes ){
-        						feature.attributes.count = visibleCount;
-        					};
-        					
-        					if( visibleCount > 0 ){
-                            	if( feature.style ){
-                                    feature.style = null;
-                                    layer.drawFeature(feature);
-                            	};
-        					} else {
-                            	if( ! feature.style ){
-                                    feature.style = {
-                                    	display: 'none'
-                                    };
-                                    layer.drawFeature(feature);
-                            	};
-        					};
-
-        				} else if( feature.fid ){
-                        	var visible = false;
-                            if( this.docStateById[feature.fid] ){
-                            	visible = true;
-                            };
-                            
-                            if( visible ) {
-                            	if( feature.style ){
-                                    feature.style = null;
-                                    layer.drawFeature(feature);
-                            	};
-                            	
-                            } else {
-                            	if( ! feature.style ){
-                                    feature.style = {
-                                    	display: 'none'
-                                    };
-                                    layer.drawFeature(feature);
-                            	};
-                            };
-        					
-        				};
+                        var modified = this._adjustStyleOnFeature(feature);
+                        if( modified ){
+                            layer.drawFeature(feature);
+                        };
                     };
                 };
             };
         };
+    },
+    
+    /**
+     * Change the style on the feature according to the document reported
+     * by the source model. If a document is present, the style is deleted.
+     * If a document is not present, then the style is set to "display: none".
+     * This hides from the map a feature that is not reported by the source model.
+     * 
+     * Returns true if the style on the feature was modified
+     */
+    _adjustStyleOnFeature: function(feature){
+    	var styleModified = false;
+
+    	if( feature.cluster ){
+			var visibleCount = 0;
+			
+			for(var cfIndex=0,cfEnd=feature.cluster.length; 
+				cfIndex<cfEnd; 
+				++cfIndex){
+				var cf = feature.cluster[cfIndex];
+				if( cf.fid ){
+                	var visible = false;
+                    if( this.docStateById[cf.fid] ){
+                    	visible = true;
+                    	++visibleCount;
+                    };
+                    
+                    if( visible ) {
+                    	if( cf.style ){
+                    		delete cf.style;
+                    	};
+                    	
+                    } else {
+                    	if( ! cf.style ){
+                    		cf.style = {
+                            	display: 'none'
+                            };
+                    	};
+                    };
+				};
+			};
+			
+			if( feature.attributes ){
+				feature.attributes.count = visibleCount;
+			};
+			
+			if( visibleCount > 0 ){
+            	if( feature.style ){
+                    delete feature.style;
+            		styleModified = true;
+            	};
+			} else {
+            	if( ! feature.style ){
+                    feature.style = {
+                    	display: 'none'
+                    };
+            		styleModified = true;
+            	};
+			};
+
+		} else if( feature.fid ){
+        	var visible = false;
+            if( this.docStateById[feature.fid] ){
+            	visible = true;
+            };
+            
+            if( visible ) {
+            	if( feature.style ){
+                    delete feature.style;
+            		styleModified = true;
+            	};
+            	
+            } else {
+            	if( ! feature.style ){
+                    feature.style = {
+                    	display: 'none'
+                    };
+            		styleModified = true;
+            	};
+            };
+		};
+		
+		return styleModified;
+    },
+    
+    _handleFeaturesAdded: function(features){
+    	for(var i=0,e=features.length; i<e; ++i) {
+    		var feature = features[i];
+    		this._adjustStyleOnFeature(feature);
+    	};
     },
     
     _getMapControl: function(){
@@ -458,15 +483,19 @@ var ModelMapBridge = $n2.Class({
     	if( this.mapControl
     	 && this.mapControl.map 
     	 && this.mapControl.map.layers ){
-    		for(var layerName in this.mapControl.map.layers){
-    			if( this.registeredLayerNames[layerName] ){
+    		for(var i=0,e=this.mapControl.map.layers.length; i<e; ++i){
+    			if( this.registeredLayersByIndex[i] ){
     				// Already registered
     			} else {
-    				this.registeredLayerNames[layerName] = true;
-        			var layer = this.mapControl.map.layers[layerName];
+    				this.registeredLayersByIndex[i] = true;
+        			var layer = this.mapControl.map.layers[i];
         			if( layer && layer.events ){
-        				layer.events.register('featuresadded',null,function(evt){
-        					_this._updateMap();
+        				layer.events.register('beforefeaturesadded',null,function(evt){
+        					if( evt 
+							 && evt.features 
+							 && evt.features.length ) {
+            					_this._handleFeaturesAdded(evt.features);
+							};
         				});
         			};
     			};
