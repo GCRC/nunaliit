@@ -172,7 +172,7 @@ var DisplayTiledImage = $n2.Class({
             maxResolution: this.maxResolution,
             numZoomLevels: this.numZoomLevels
         };
-        map = new OpenLayers.Map(options);
+        var map = new OpenLayers.Map(options);
 
         var layer = new OpenLayers.Layer.TMS('TMS Layer', '', {
             serviceVersion: '.',
