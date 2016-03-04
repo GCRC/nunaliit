@@ -37,22 +37,21 @@ POSSIBILITY OF SUCH DAMAGE.
 	var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 	var DH = 'n2.mapAndControls';
 
-//**************************************************
-var TimeTransformMapBridge = $n2.Class({
+// **************************************************
+// Generic bridge between document model and map
+var MapBridge = $n2.Class({
 
     sourceModelId: null,
     
     dispatchService: null,
     
-    config: null,
-    
     mapControl: null,
     
-    docStateById: null,
-
+    registeredLayersByName: null,
+    
     initialize: function (opts_) {
         var opts = $n2.extend({
-            config: null
+            dispatchService: null
             
             // From configuration object
             ,sourceModelId: null
@@ -60,21 +59,19 @@ var TimeTransformMapBridge = $n2.Class({
 
         var _this = this;
         
-        this.docStateById = {};
+        this.registeredLayersByName = {};
         
         this.sourceModelId = opts.sourceModelId;
-        this.config = opts.config;
-        
-        if( this.config && this.config.directory ){
-            this.dispatchService = this.config.directory.dispatchService;
-        };
+        this.dispatchService = opts.dispatchService;
 
         // Register to events
-        if (this.dispatchService) {
+        if( this.dispatchService ) {
             var f = function (m, addr, dispatcher){
                 _this._handle (m, addr, dispatcher);
             };
             this.dispatchService.register(DH, 'modelStateUpdated', f);
+            this.dispatchService.register(DH, 'reportModuleDisplay', f);
+            this.dispatchService.register(DH, 'mapInitialized', f);
             this.dispatchService.register(DH, 'start', f);
             
             if( this.sourceModelId ){
@@ -89,80 +86,50 @@ var TimeTransformMapBridge = $n2.Class({
                 };
             };
         };
-        
-        $n2.log('timeTransformToMapAndControlBridge', this);
     },
     
     _handle: function (m, addr, dispatcher) {
-    	if ('modelStateUpdated' === m.type) {
+    	if( 'modelStateUpdated' === m.type ) {
             // Does it come from one of our sources?
             if (this.sourceModelId === m.modelId) {
                 this._sourceModelUpdated(m.state);
+
+                // Redraw map
+            	this._updateMap();
             };
 
-    	} else if ('start' === m.type) {
+    	} else if( 'reportModuleDisplay' === m.type ) {
+    		if( m.moduleDisplay 
+    		 && m.moduleDisplay.mapControl 
+    		 && !this.mapControl ){
+    			this.mapControl = m.moduleDisplay.mapControl;
+            	this._updateMap();
+    		};
+
+    	} else if( 'mapInitialized' === m.type ) {
+    		if( m.mapControl 
+    		 && !this.mapControl ){
+    			this.mapControl = m.mapControl;
+            	this._updateMap();
+    		};
+
+    	} else if( 'start' === m.type ) {
             this._updateMap();
         };
     },
     
     _sourceModelUpdated: function(sourceState) {
-    	var _this = this;
-    	
-        // Update the nodes according to changes in source model
-    	if( sourceState ){
-    		if( sourceState.added && sourceState.added.length ){
-    			for(var i=0,e=sourceState.added.length; i<e; ++i){
-    				var doc = sourceState.added[i];
-    				updateDoc(doc);
-    			};
-    		};
-
-    		if( sourceState.updated && sourceState.updated.length ){
-    			for(var i=0,e=sourceState.updated.length; i<e; ++i){
-    				var doc = sourceState.updated[i];
-    				updateDoc(doc);
-    			};
-    		};
-
-    		if( sourceState.removed && sourceState.removed.length ){
-    			for(var i=0,e=sourceState.removed.length; i<e; ++i){
-    				var doc = sourceState.removed[i];
-    				var docId = doc._id;
-    				if( this.docStateById[docId] ){
-    					delete this.docStateById[docId];
-    				};
-    			};
-    		};
-    	};
-    	
-    	// Redraw map
-    	this._updateMap();
-    	
-    	function updateDoc(doc){
-    		var docId = doc._id;
-    		
-    		if( doc._n2TimeTransform ){
-    			if( !_this.docStateById[docId] ){
-    				_this.docStateById[docId] = {};
-    			};
-    			
-    			if( doc._n2TimeTransform.intervalSize <= 0 ){
-    				// The document does not contain any time intervals. By default,
-    				// show
-    				_this.docStateById[docId].visible = true;
-    			} else {
-        			_this.docStateById[docId].visible = doc._n2TimeTransform.intersects;
-    			};
-    			
-    		} else if( _this.docStateById[docId] ){
-    			delete _this.docStateById[docId];
-    		}
-    	};
+    	throw 'Subclasses must implement _sourceModelUpdated()'
+    },
+    
+    /**
+     * Returns true if the document should be visible
+     */
+    _isDocumentVisible: function(doc){
+    	throw 'Subclasses must implement _isDocumentVisible()'
     },
     
     _updateMap: function() {
-        // Here is where the magic goes
-        
         var mapControl = this._getMapControl();
         if( mapControl 
          && mapControl.map 
@@ -176,196 +143,6 @@ var TimeTransformMapBridge = $n2.Class({
                     // Iterate over feature
                     for(var j = 0, l = layer.features.length; j < l; ++j){
                         var feature = layer.features[j];
-                        
-                        if( feature.data && feature.data._id ) {
-                        	var visible = true;
-                            var docId = feature.data._id;
-                            
-                            if( this.docStateById[docId] ){
-                            	visible = this.docStateById[docId].visible;
-                            };
-                            
-                            if( visible ) {
-                            	if( feature.style ){
-                                    feature.style = null;
-                                    layer.drawFeature(feature);
-                            	};
-                            	
-                            } else {
-                            	if( ! feature.style ){
-                                    feature.style = {
-                                    	display: 'none'
-                                    };
-                                    layer.drawFeature(feature);
-                            	};
-                            };
-                        };
-                    };
-                };
-            };
-        };
-    },
-    
-    _getMapControl: function(){
-    	var _this = this;
-    	
-    	if( ! this.mapControl ) {
-        	// Look into configuration
-        	if( this.config 
-        	 && this.config.moduleDisplay 
-        	 && this.config.moduleDisplay.mapControl ){
-        		this.mapControl = this.config.moduleDisplay.mapControl;
-        	};
-        	
-        	// Register for update events on map. Do this only once
-        	if( this.mapControl
-        	 && this.mapControl.map 
-        	 && this.mapControl.map.layers ){
-        		for(var layerName in this.mapControl.map.layers){
-        			var layer = this.mapControl.map.layers[layerName];
-        			if( layer && layer.events ){
-        				layer.events.register('featuresadded',null,function(evt){
-        					_this._updateMap();
-        				});
-        			};
-        		};
-        	};
-    	};
-    		
-    	return this.mapControl;
-    }
-});
-
-var ModelMapBridge = $n2.Class({
-
-    sourceModelId: null,
-    
-    dispatchService: null,
-    
-    config: null,
-    
-    mapControl: null,
-    
-    registeredLayersByIndex: null,
-    
-    docStateById: null,
-
-    initialize: function (opts_) {
-        var opts = $n2.extend({
-            config: null
-            
-            // From configuration object
-            ,sourceModelId: null
-        }, opts_);
-
-        var _this = this;
-        
-        this.docStateById = {};
-        this.registeredLayersByIndex = {};
-        
-        this.sourceModelId = opts.sourceModelId;
-        this.config = opts.config;
-        
-        if( this.config && this.config.directory ){
-            this.dispatchService = this.config.directory.dispatchService;
-        };
-
-        // Register to events
-        if (this.dispatchService) {
-            var f = function (m, addr, dispatcher){
-                _this._handle(m, addr, dispatcher);
-            };
-            this.dispatchService.register(DH, 'modelStateUpdated', f);
-            this.dispatchService.register(DH, 'start', f);
-            this.dispatchService.register(DH, 'mapInitialized', f);
-            
-            if( this.sourceModelId ){
-                // Initialize state
-                var m = {
-                    type:'modelGetState'
-                    ,modelId: this.sourceModelId
-                };
-                this.dispatchService.synchronousCall(DH, m);
-                if (m.state) {
-                    this._sourceModelUpdated(m.state);
-                };
-            };
-        };
-        
-        $n2.log('modelToMapAndControlBridge', this);
-    },
-    
-    _handle: function (m, addr, dispatcher) {
-    	if ('modelStateUpdated' === m.type) {
-            // Does it come from one of our sources?
-            if (this.sourceModelId === m.modelId) {
-                this._sourceModelUpdated(m.state);
-            };
-
-    	} else if ('mapInitialized' === m.type) {
-            this._updateMap();
-
-    	} else if ('start' === m.type) {
-            this._updateMap();
-        };
-    },
-    
-    _sourceModelUpdated: function(sourceState) {
-    	var _this = this;
-    	
-        // Update the nodes according to changes in source model
-    	if( sourceState ){
-    		if( sourceState.added && sourceState.added.length ){
-    			for(var i=0,e=sourceState.added.length; i<e; ++i){
-    				var doc = sourceState.added[i];
-    				var docId = doc._id;
-    				this.docStateById[docId] = true;
-    			};
-    		};
-
-    		if( sourceState.updated && sourceState.updated.length ){
-    			for(var i=0,e=sourceState.updated.length; i<e; ++i){
-    				var doc = sourceState.updated[i];
-    				var docId = doc._id;
-    				this.docStateById[docId] = true;
-    			};
-    		};
-
-    		if( sourceState.removed && sourceState.removed.length ){
-    			for(var i=0,e=sourceState.removed.length; i<e; ++i){
-    				var doc = sourceState.removed[i];
-    				var docId = doc._id;
-    				if( this.docStateById[docId] ){
-    					delete this.docStateById[docId];
-    				};
-    			};
-    		};
-    	};
-    	
-    	// Redraw map
-    	this._updateMap();
-    },
-    
-    _updateMap: function() {
-        // Here is where the magic goes
-        
-        var mapControl = this._getMapControl();
-        if( mapControl 
-         && mapControl.map 
-         && mapControl.map.layers ){
-            // Iterate over all layers
-            for(var layerIndex = 0, layerEnd = mapControl.map.layers.length; 
-            	layerIndex < layerEnd; 
-            	++layerIndex) {
-                var layer = mapControl.map.layers[layerIndex];
-                
-                // Interested only in vector layers
-                if( layer.features ) {
-                    // Iterate over feature
-                    for(var featureIndex = 0, featureEnd = layer.features.length; 
-                    	featureIndex < featureEnd; 
-                    	++featureIndex){
-                        var feature = layer.features[featureIndex];
 
                         var modified = this._adjustStyleOnFeature(feature);
                         if( modified ){
@@ -395,12 +172,8 @@ var ModelMapBridge = $n2.Class({
 				cfIndex<cfEnd; 
 				++cfIndex){
 				var cf = feature.cluster[cfIndex];
-				if( cf.fid ){
-                	var visible = false;
-                    if( this.docStateById[cf.fid] ){
-                    	visible = true;
-                    	++visibleCount;
-                    };
+				if( cf.data ){
+                	var visible = this._isDocumentVisible(cf.data);
                     
                     if( visible ) {
                     	if( cf.style ){
@@ -435,11 +208,8 @@ var ModelMapBridge = $n2.Class({
             	};
 			};
 
-		} else if( feature.fid ){
-        	var visible = false;
-            if( this.docStateById[feature.fid] ){
-            	visible = true;
-            };
+		} else if( feature.data ){
+        	var visible = this._isDocumentVisible(feature.data);
             
             if( visible ) {
             	if( feature.style ){
@@ -470,25 +240,15 @@ var ModelMapBridge = $n2.Class({
     _getMapControl: function(){
     	var _this = this;
     	
-    	if( ! this.mapControl ) {
-        	// Look into configuration
-        	if( this.config 
-        	 && this.config.moduleDisplay 
-        	 && this.config.moduleDisplay.mapControl ){
-        		this.mapControl = this.config.moduleDisplay.mapControl;
-        	};
-    	};
-
     	// Register for update events on map. Do this only once per layer
     	if( this.mapControl
-    	 && this.mapControl.map 
-    	 && this.mapControl.map.layers ){
-    		for(var i=0,e=this.mapControl.map.layers.length; i<e; ++i){
-    			if( this.registeredLayersByIndex[i] ){
+    	 && this.mapControl.layers ){
+    		for(var layerName in this.mapControl.layers){
+    			if( this.registeredLayersByName[layerName] ){
     				// Already registered
     			} else {
-    				this.registeredLayersByIndex[i] = true;
-        			var layer = this.mapControl.map.layers[i];
+    				this.registeredLayersByName[layerName] = true;
+        			var layer = this.mapControl.layers[layerName];
         			if( layer && layer.events ){
         				layer.events.register('beforefeaturesadded',null,function(evt){
         					if( evt 
@@ -506,6 +266,152 @@ var ModelMapBridge = $n2.Class({
     }
 });
 
+var TimeTransformMapBridge = $n2.Class(MapBridge, {
+
+    docStateById: null,
+
+    initialize: function (opts_) {
+        var opts = $n2.extend({
+            dispatchService: null
+            
+            // From configuration object
+            ,sourceModelId: null
+        }, opts_);
+
+        this.docStateById = {};
+        
+        MapBridge.prototype.initialize.apply(this, arguments);
+
+        $n2.log('timeTransformToMapAndControlBridge', this);
+    },
+    
+    _sourceModelUpdated: function(sourceState) {
+    	var _this = this;
+    	
+        // Update the nodes according to changes in source model
+    	if( sourceState ){
+    		if( sourceState.added && sourceState.added.length ){
+    			for(var i=0,e=sourceState.added.length; i<e; ++i){
+    				var doc = sourceState.added[i];
+    				updateDoc(doc);
+    			};
+    		};
+
+    		if( sourceState.updated && sourceState.updated.length ){
+    			for(var i=0,e=sourceState.updated.length; i<e; ++i){
+    				var doc = sourceState.updated[i];
+    				updateDoc(doc);
+    			};
+    		};
+
+    		if( sourceState.removed && sourceState.removed.length ){
+    			for(var i=0,e=sourceState.removed.length; i<e; ++i){
+    				var doc = sourceState.removed[i];
+    				var docId = doc._id;
+    				if( this.docStateById[docId] ){
+    					delete this.docStateById[docId];
+    				};
+    			};
+    		};
+    	};
+    	
+    	function updateDoc(doc){
+    		var docId = doc._id;
+    		
+    		if( doc._n2TimeTransform ){
+    			if( !_this.docStateById[docId] ){
+    				_this.docStateById[docId] = {};
+    			};
+    			
+    			if( doc._n2TimeTransform.intervalSize <= 0 ){
+    				// The document does not contain any time intervals. By default,
+    				// show
+    				_this.docStateById[docId].visible = true;
+    			} else {
+        			_this.docStateById[docId].visible = doc._n2TimeTransform.intersects;
+    			};
+    			
+    		} else if( _this.docStateById[docId] ){
+    			delete _this.docStateById[docId];
+    		}
+    	};
+    },
+    
+    _isDocumentVisible: function(doc){
+    	if( doc ){
+        	var docId = doc._id;
+        	if( this.docStateById[docId] ){
+        		return this.docStateById[docId].visible;
+        	};
+    	};
+    	
+    	return true;
+    }
+});
+
+var ModelMapBridge = $n2.Class(MapBridge, {
+
+    docStateById: null,
+
+    initialize: function (opts_) {
+        var opts = $n2.extend({
+            dispatchService: null
+            
+            // From configuration object
+            ,sourceModelId: null
+        }, opts_);
+
+        this.docStateById = {};
+        
+        MapBridge.prototype.initialize.apply(this, arguments);
+
+        $n2.log('modelToMapAndControlBridge', this);
+    },
+    
+    _sourceModelUpdated: function(sourceState) {
+    	var _this = this;
+    	
+        // Update the nodes according to changes in source model
+    	if( sourceState ){
+    		if( sourceState.added && sourceState.added.length ){
+    			for(var i=0,e=sourceState.added.length; i<e; ++i){
+    				var doc = sourceState.added[i];
+    				var docId = doc._id;
+    				this.docStateById[docId] = true;
+    			};
+    		};
+
+    		if( sourceState.updated && sourceState.updated.length ){
+    			for(var i=0,e=sourceState.updated.length; i<e; ++i){
+    				var doc = sourceState.updated[i];
+    				var docId = doc._id;
+    				this.docStateById[docId] = true;
+    			};
+    		};
+
+    		if( sourceState.removed && sourceState.removed.length ){
+    			for(var i=0,e=sourceState.removed.length; i<e; ++i){
+    				var doc = sourceState.removed[i];
+    				var docId = doc._id;
+    				if( this.docStateById[docId] ){
+    					delete this.docStateById[docId];
+    				};
+    			};
+    		};
+    	};
+    },
+    
+    _isDocumentVisible: function(doc){
+    	var visible = false;
+
+    	if( doc && this.docStateById[doc._id] ){
+        	visible = true;
+        };
+
+        return visible;
+    }
+});
+
 function HandleWidgetAvailableRequests(m){
     if( m.widgetType === 'timeTransformToMapAndControlBridge' ){
         m.isAvailable = true;
@@ -516,12 +422,18 @@ function HandleWidgetAvailableRequests(m){
 
 function HandleWidgetDisplayRequests(m){
     if( m.widgetType === 'timeTransformToMapAndControlBridge' ){
-        var options = {
-        	config: m.config
+        var options = {};
+        
+        if( m.widgetOptions ) {
+        	for(var key in m.widgetOptions){
+        		options[key] = m.widgetOptions[key];
+        	};
         };
         
-        if (m.widgetOptions) {
-            options.sourceModelId = m.widgetOptions.sourceModelId;
+        if( m.config ){
+            if( m.config.directory ){
+            	options.dispatchService = m.config.directory.dispatchService;
+            };
         };
         
         new TimeTransformMapBridge(options);
@@ -535,7 +447,11 @@ function HandleWidgetDisplayRequests(m){
         	};
         };
         
-        options.config = m.config;
+        if( m.config ){
+            if( m.config.directory ){
+            	options.dispatchService = m.config.directory.dispatchService;
+            };
+        };
         
         new ModelMapBridge(options);
     };
@@ -5593,6 +5509,7 @@ $n2.mapAndControls.MultiSelectClusterClickCallback = multiSelectClusterClickCall
 
 // Widgets
 $n2.mapAndControls.TimeTransformMapBridge = TimeTransformMapBridge;
+$n2.mapAndControls.ModelMapBridge = ModelMapBridge;
 $n2.mapAndControls.HandleWidgetAvailableRequests = HandleWidgetAvailableRequests;
 $n2.mapAndControls.HandleWidgetDisplayRequests = HandleWidgetDisplayRequests;
 
