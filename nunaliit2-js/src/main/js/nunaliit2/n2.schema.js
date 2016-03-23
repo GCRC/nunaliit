@@ -1761,7 +1761,7 @@ var Form = $n2.Class({
 		if( selector ) {
 			var parentSelector = selector.getParentSelector();
 			var key = selector.getKey();
-			var handler = this._createChangeHandler(
+			var changeHandler = this._createChangeHandler(
 				obj
 				,selector
 				,parentSelector
@@ -1773,14 +1773,18 @@ var Form = $n2.Class({
 					callback(obj, selector.selectors, value);
 				}
 			);
-			$input.change(handler);
+			var keyupHandler = this._createChangeHandler(
+					obj
+					,selector
+					,parentSelector
+					,classInfo.type
+					,function(obj, selector, value){
+					}
+				);
+			$input.change(changeHandler);
 			//$input.blur(handler);
-			if( $n2.schema.GlobalAttributes.disableKeyUpEvents ){
-				// skip
-			} else {
-				if( 'date' !== classInfo.type ){ // no key up event for date text boxes
-					$input.keyup(handler);
-				};
+			if( 'date' !== classInfo.type ){ // no key up event for date text boxes
+				$input.keyup(keyupHandler);
 			};
 			
 			// Set value
@@ -1808,7 +1812,7 @@ var Form = $n2.Class({
 						,constrainInput: false
 						,onSelect: function(){
 							var $input = $(this);
-							handler.call($input);
+							changeHandler.call($input);
 						}
 					});
 				};
@@ -2303,12 +2307,8 @@ var Form = $n2.Class({
 $n2.schema = {
 	Schema: Schema
 	,SchemaRepository: SchemaRepository
-//	,DefaultRepository: new SchemaRepository()
 	,Display: Display
 	,Form: Form
-	,GlobalAttributes: {
-		disableKeyUpEvents: false
-	}
 	,registerCustomFieldHandler: registerCustomFieldHandler
 };
 
