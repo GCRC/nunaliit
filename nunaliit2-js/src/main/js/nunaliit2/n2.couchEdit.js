@@ -368,8 +368,6 @@ var CouchSimpleDocumentEditor = $n2.Class({
 			if( $n2.couchEdit.Constants.FORM_EDITOR === editorDesc
 			 && selectedSchema 
 			 && this.schemaEditorService ) {
-				$n2.schema.GlobalAttributes.disableKeyUpEvents = true;
-	
 				// Accordion Header
 				if( accordionNeeded ) {
 					var $schemaHeader = $('<h3>')
@@ -1196,8 +1194,6 @@ var CouchDocumentEditor = $n2.Class({
 		attributeDialog.append($editorContainer);
 
 		if( showFormView ) {
-			$n2.schema.GlobalAttributes.disableKeyUpEvents = true;
-			
 			if( showAccordion ) {
 				var $schemaHeader = $('<h3>').appendTo($editorContainer);
 				$('<a>')
