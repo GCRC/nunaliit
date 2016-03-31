@@ -567,8 +567,14 @@ var Display = $n2.Class({
 		 ) {
 			var showReplyButton = true;
 			if( this.restrictReplyButtonToLoggedIn ){
-				var sessionContext = $n2.couch.getSession().getContext();
-				if( !sessionContext || !sessionContext.name ) {
+				var isLoggedInMsg = {
+					type: 'authIsLoggedIn'
+					,isLoggedIn: false
+				};
+				if( dispatcher ){
+					dispatcher.synchronousCall(DH,isLoggedInMsg);
+				};
+				if( !isLoggedInMsg.isLoggedIn ) {
 					showReplyButton = false;
 				};
 			};

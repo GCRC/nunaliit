@@ -169,9 +169,21 @@ var LocalizationService = $n2.Class({
 		function _uploadRequest(request) {
 			// Get user name
 			var userName = null;
-			var sessionContext = $n2.couch.getSession().getContext();
-			if( sessionContext ) {
-				userName = sessionContext.name;
+			{
+				var sessionContext = null;
+				
+				if( _this.dispatchService ){
+					var isLoggedInMsg = {
+						type: 'authIsLoggedIn'
+					};
+					_this.dispatchService.synchronousCall(DH,isLoggedInMsg);
+					
+					sessionContext = isLoggedInMsg.context;
+				};
+
+				if( sessionContext ) {
+					userName = sessionContext.name;
+				};
 			};
 			
 			// Get now

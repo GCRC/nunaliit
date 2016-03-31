@@ -148,6 +148,10 @@ function Configure(options_){
 		logging: dispatchLogging
 	});
 	
+	$n2.couchMap.Configure({
+		dispatchService: configuration.directory.dispatchService
+	});
+	
 	// History monitoring
 	configuration.directory.historyMonitor = new $n2.history.Monitor({
 		directory: configuration.directory

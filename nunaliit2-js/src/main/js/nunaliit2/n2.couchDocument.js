@@ -37,14 +37,23 @@ var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); }
 ,DH = 'n2.couchDocument'
 ;
 
+var g_dispatcher;
+
 //*******************************************************
 function adjustDocument(doc) {
 
 	// Get user name
 	var userName = null;
-	var sessionContext = $n2.couch.getSession().getContext();
-	if( sessionContext ) {
-		userName = sessionContext.name;
+	if( g_dispatcher ){
+		var isLoggedInMsg = {
+			type: 'authIsLoggedIn'
+		};
+		g_dispatcher.synchronousCall(DH,isLoggedInMsg);
+		
+		var sessionContext = isLoggedInMsg.context;
+		if( sessionContext ) {
+			userName = sessionContext.name;
+		};
 	};
 	
 	// Get now
@@ -237,6 +246,10 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 
 		this.db = opts.db;
 		this.dispatchService = opts.dispatchService;
+		if( this.dispatchService ){
+			// to make adjustDocument() work
+			g_dispatcher = this.dispatchService;
+		};
 		this.isDefaultDocumentSource = opts.isDefaultDocumentSource;
 		
 		this.designDoc = this.db.getDesignDoc({ddName:'atlas'});
