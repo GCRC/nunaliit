@@ -250,6 +250,8 @@ var Dispatcher = $n2.Class({
 	},
 	
 	_sendImmediate: function(h, m) {
+		var _this = this;
+		
 		var logging = this.options.logging;
 		var loggingIncludesMessage = this.options.loggingIncludesMessage;
 
@@ -281,10 +283,7 @@ var Dispatcher = $n2.Class({
 				try {
 					l.fn(m, l.address, this);
 				} catch(e) {
-					$n2.log('Error while dispatching: '+e);
-					if( e.stack ) {
-						$n2.log('Stack',e.stack);
-					};
+					_this._reportError(e,m);
 				};
 			};
 		} else if( typeof listeners === 'undefined' ){
@@ -304,6 +303,13 @@ var Dispatcher = $n2.Class({
 		};
 		
 		this.dispatching = false;
+	},
+	
+	_reportError: function(e,m){
+		$n2.log('Error while dispatching '+m.type+': '+e);
+		if( e.stack ) {
+			$n2.log('Stack: '+e.stack);
+		};
 	},
 	
 	/**
