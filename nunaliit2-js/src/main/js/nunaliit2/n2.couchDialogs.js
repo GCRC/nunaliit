@@ -73,7 +73,6 @@ function searchForDocumentId(options_){
 		autoOpen: true
 		,title: _loc('Select Document')
 		,modal: true
-		,width: 370
 		,close: function(event, ui){
 			var diag = $(event.target);
 			diag.dialog('destroy');
@@ -83,6 +82,12 @@ function searchForDocumentId(options_){
 			};
 		}
 	};
+	
+	var width = this._computeMaxDialogWidth(370);
+	if( typeof width === 'number' ){
+		dialogOptions.width = width;
+	};
+
 	$dialog.dialog(dialogOptions);
 
 	options.searchServer.installSearch({
@@ -221,7 +226,6 @@ function selectLayersDialog(opts_){
 		autoOpen: true
 		,title: _loc('Select Layers')
 		,modal: true
-		,width: 370
 		,close: function(event, ui){
 			var diag = $(event.target);
 			diag.dialog('destroy');
@@ -231,6 +235,12 @@ function selectLayersDialog(opts_){
 			};
 		}
 	};
+	
+	var width = this._computeMaxDialogWidth(370);
+	if( typeof width === 'number' ){
+		dialogOptions.width = width;
+	};
+
 	$dialog.dialog(dialogOptions);
 	
 	// Get layers
@@ -455,7 +465,6 @@ var SearchBriefDialogFactory = $n2.Class({
 			autoOpen: true
 			,title: this.dialogPrompt
 			,modal: true
-			,width: 370
 			,close: function(event, ui){
 				var diag = $(event.target);
 				diag.dialog('destroy');
@@ -465,6 +474,12 @@ var SearchBriefDialogFactory = $n2.Class({
 				};
 			}
 		};
+		
+		var width = this._computeMaxDialogWidth(370);
+		if( typeof width === 'number' ){
+			dialogOptions.width = width;
+		};
+
 		$dialog.dialog(dialogOptions);
 
 		this.getDocuments({
@@ -682,7 +697,6 @@ var FilteredSearchDialogFactory = $n2.Class({
 			autoOpen: true
 			,title: this.dialogPrompt
 			,modal: true
-			,width: 370
 			,close: function(event, ui){
 				var diag = $(event.target);
 				diag.dialog('destroy');
@@ -692,6 +706,12 @@ var FilteredSearchDialogFactory = $n2.Class({
 				};
 			}
 		};
+		
+		var width = this._computeMaxDialogWidth(370);
+		if( typeof width === 'number' ){
+			dialogOptions.width = width;
+		};
+
 		$dialog.dialog(dialogOptions);
 
 		this.searchService.installSearch({
@@ -1014,14 +1034,33 @@ var DialogService = $n2.Class({
 			autoOpen: true
 			,title: _loc('Select a schema')
 			,modal: true
-			,width: 740
 			,close: function(event, ui){
 				var diag = $(event.target);
 				diag.dialog('destroy');
 				diag.remove();
 			}
 		};
+		
+		var width = this._computeMaxDialogWidth(740);
+		if( typeof width === 'number' ){
+			dialogOptions.width = width;
+		};
+		
 		$dialog.dialog(dialogOptions);
+	},
+	
+	_computeMaxDialogWidth: function(preferredWidth){
+		var dialogWidth = preferredWidth;
+		
+		var screenWidth = $('body').width();
+		if( typeof screenWidth === 'number' ){
+			var maxWidth = screenWidth * 0.90;
+			if( dialogWidth > maxWidth ){
+				dialogWidth = maxWidth;
+			};
+		};
+
+		return dialogWidth;
 	}
 });
 
