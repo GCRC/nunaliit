@@ -1781,11 +1781,14 @@ var CouchDocumentEditor = $n2.Class({
 		if( null == this.editedDocument ) {
 			return;
 		};
-
+		
+		var editedDocument = this.editedDocument;
+		this.editedDocument = null;
+		
 		var $editorContainer = this._getEditorContainer();
 		$editorContainer.remove();
 
-		this.onCloseFn(this.editedDocument, this, {
+		this.onCloseFn(editedDocument, this, {
 			saved: opts.saved
 			,inserted: opts.inserted
 			,updated: opts.updated
@@ -1798,8 +1801,8 @@ var CouchDocumentEditor = $n2.Class({
 			// existed.
 			var docId = undefined;
 			var doc = undefined;
-			if( this.editedDocument._id ){
-				doc = this.editedDocument;
+			if( editedDocument._id ){
+				doc = editedDocument;
 				docId = doc._id;
 			};
 			
@@ -1816,7 +1819,6 @@ var CouchDocumentEditor = $n2.Class({
 			});
 		};
 		
-		this.editedDocument = null;
 		this.editorContainerId = null;
 		
 		$('body').removeClass('nunaliit_editing');
@@ -2053,6 +2055,18 @@ var CouchDocumentEditor = $n2.Class({
 			
 		} else if( m.type === 'mapGeometryAdded' ){
 			this._addGeometry(m.geometry, m.projection);
+
+		} else if( 'historyIsHashChangePermitted' === m.type ) {
+			if( null != this.editedDocument ) {
+				if( confirm( _loc('Do you wish to leave document editor?') ) ) {
+					// OK, cancel editor
+					this._cancelEdit();
+					
+				} else {
+					// Do not allow change in hash
+					m.permitted = false;
+				};
+			};
 		};
 	}
 });
@@ -2163,6 +2177,7 @@ var CouchEditService = $n2.Class({
 			// The following events will be routed to the current editor
 			dispatcher.register(DH, 'editGeometryModified', f);
 			dispatcher.register(DH, 'mapGeometryAdded', f);
+			dispatcher.register(DH, 'historyIsHashChangePermitted', f);
 		};
 		
 		// Service defined buttons

@@ -105,26 +105,16 @@ var EventSupport = $n2.Class('EventSupport',{
 
 	,_defaultHandler: function(m){
 		if( 'userSelect' === m.type ) {
-			// Check if currently selecting
-			var isEditing = false;
+			var forwardAllowed = true;
 			var d = this._getDispatcher();
 			if( d ){
-				var msg = {
-					type: 'editGetState'
+				var c = {
+					type: 'historyIsHashChangePermitted'
+					,permitted: true
 				};
-				d.synchronousCall(DH,msg);
-				if( msg.isEditing ){
-					isEditing = true;
-				};
-			};
-
-			var forwardAllowed = true;
-			if( isEditing ){
-				if( confirm( _loc('Do you wish to leave document editor?') ) ) {
-					// OK, continue
-					
-				} else {
-					// Go back to edit state
+				d.synchronousCall(DH,c);
+				
+				if( !c.permitted ){
 					forwardAllowed = false;
 				};
 			};

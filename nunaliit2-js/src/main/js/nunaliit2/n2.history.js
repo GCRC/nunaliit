@@ -797,6 +797,13 @@ var Tracker = $n2.Class({
 			d.send('n2.history.Tracker',m);
 		};
 	},
+
+	_synchronousCall: function(m){
+		var d = this._getDispatcher();
+		if( d ){
+			d.synchronousCall('n2.history.Tracker',m);
+		};
+	},
 	
 	_handle: function(m){
 		if( this.options.disabled ){
@@ -973,35 +980,32 @@ var Tracker = $n2.Class({
 			if( 'nostate' === m.hash ){
 				// Do not do anything
 				
-			} else if( this.last.edit ) {
-				if( confirm( _loc('Do you wish to leave document editor?') ) ) {
-					// OK, continue
-					this.last = {
-						editClosed: true
-					};
-					this._dispatch({
-						type: 'editCancel'
-					});
-					this._reloadHash(m.hash);
-					
+			} else {
+				var c = {
+					type: 'historyIsHashChangePermitted'
+					,permitted: true
+				};
+				this._synchronousCall(c);
+				
+				if( c.permitted ){
+					if( '' === m.hash || !m.hash ){
+						if( !this.last.unselected ){
+							this._dispatch({
+								type: 'unselected'
+								,_suppressSetHash: true
+							});
+						};
+						
+					} else  {
+						// Attempt to interpret hash
+						this._reloadHash(m.hash);
+					};					
 				} else {
 					// Go back to edit state
 					this._dispatch({
 						type: 'historyForward'
 					});
 				};
-				
-			} else if( '' === m.hash || !m.hash ){
-				if( !this.last.unselected ){
-					this._dispatch({
-						type: 'unselected'
-						,_suppressSetHash: true
-					});
-				};
-				
-			} else  {
-				// Attempt to interpret hash
-				this._reloadHash(m.hash);
 			};
 
 		} else if( 'documentCreated' === m.type 
