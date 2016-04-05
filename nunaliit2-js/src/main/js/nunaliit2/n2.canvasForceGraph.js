@@ -636,6 +636,9 @@ if( !$d ) return;
  		$svg.append('g')
  			.attr('class','nodes');
  		
+ 		$svg.append('g')
+			.attr('class','labels');
+		
  		this.svgRenderer = new $n2.svg.Renderer({
  			svgElem: $svg[0][0]
  		});
@@ -752,6 +755,11 @@ if( !$d ) return;
  		var selectedLinks = this._getSvgElem().select('g.links').selectAll('.link')
  			.data(links, function(link){ return link.id; });
  		this._adjustElementStyles(selectedLinks);
+
+ 		// Update style on labels
+ 		var selectedLabels = this._getSvgElem().select('g.labels').selectAll('.label')
+ 			.data(nodes, function(node){ return node.id; });
+ 		this._adjustElementStyles(selectedLabels);
  		
  		if( restart ){
  			this.forceLayout.start();
@@ -777,6 +785,8 @@ if( !$d ) return;
  			.nodes(nodes)
  			.links(links)
  			.start();
+
+ 		// NODES
  		
  		var selectedNodes = this._getSvgElem().select('g.nodes').selectAll('.node')
  			.data(nodes, function(node){ return node.id; });
@@ -815,6 +825,8 @@ if( !$d ) return;
  		var selectedLinks = this._getSvgElem().select('g.links').selectAll('.link')
  			.data(links, function(link){ return link.id; });
 
+ 		// LINKS
+ 		
  		var createdLinks = selectedLinks.enter()
  			.append('line')
  			.attr('class','link')
@@ -837,6 +849,44 @@ if( !$d ) return;
  			.data(updatedLinkData, function(link){ return link.id; });
  		this._adjustElementStyles(updatedLinks);
 
+ 		// LABELS
+ 		
+ 		var selectedLabels = this._getSvgElem().select('g.labels').selectAll('.label')
+			.data(nodes, function(node){ return node.id; });
+		
+		var createdLabels = selectedLabels.enter()
+			.append(function(){
+				var args = arguments;
+				return this.ownerDocument.createElementNS(this.namespaceURI, "text");
+			})
+			.attr('class','label')
+			.on('click', function(n,i){
+				_this._initiateMouseClick(n);
+			})
+			.on('mouseover', function(n,i){
+				_this._initiateMouseOver(n);
+			})
+			.on('mouseout', function(n,i){
+				_this._initiateMouseOut(n);
+			})
+			.call(this.forceLayout.drag)
+			.each(function(datum,i){
+				if( _this.popup && datum.n2_doc ){
+					_this.popup.installPopup(this,datum.n2_doc);
+				};
+			})
+			;
+		this._adjustElementStyles(createdLabels);
+		
+		selectedLabels.exit()
+			.remove();
+		
+		var updatedLabels = this._getSvgElem().select('g.labels').selectAll('.label')
+			.data(updatedNodeData, function(node){ return node.id; });
+		this._adjustElementStyles(updatedLabels);
+
+		// Animate force graph
+		
  		this.forceLayout.on('tick', function(e) {
 
  			// Deal with find event
@@ -871,6 +921,10 @@ if( !$d ) return;
  		        .attr("y1", function(d) { return d.source.y; })
  		        .attr("x2", function(d) { return d.target.x; })
  		        .attr("y2", function(d) { return d.target.y; });		
+
+ 			selectedLabels
+				.attr('x', function(d) { return d.x; })
+				.attr('y', function(d) { return d.y; });
  		});
  	},
  	

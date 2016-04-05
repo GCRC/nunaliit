@@ -183,6 +183,15 @@ var svgSymbolNames = {
 			,g: true
 		}
 	}
+	,'text-anchor': {
+		applies: {
+			circle: false
+			,line: false
+			,path: false
+			,text: true
+			,g: true
+		}
+	}
 };
 
 //--------------------------------------------------------------------------
@@ -265,16 +274,18 @@ var Symbolizer = $n2.Class({
 					if( typeof value === 'object' 
 					 && 'localized' === value.nunaliit_type ){
 						value = _loc( value );
+					} else if( typeof value === 'undefined' ){
+						// ignore
 					} else if( typeof value !== 'string' ){
 						value = '' + value;
 					};
 					
+					// empty()
+					while ( svgDomElem.firstChild ) {
+						svgDomElem.removeChild( svgDomElem.firstChild );
+					};
+
 					if( value ){
-						// empty()
-						while ( svgDomElem.firstChild ) {
-							svgDomElem.removeChild( svgDomElem.firstChild );
-						};
-						
 						// text(value)
 						var textNode = svgDomElem.ownerDocument.createTextNode(value);
 						svgDomElem.appendChild(textNode);
