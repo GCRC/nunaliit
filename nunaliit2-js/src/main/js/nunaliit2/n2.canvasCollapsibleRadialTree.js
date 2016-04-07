@@ -623,10 +623,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 					this.links.push(effectiveLink);
 				};
 
-				for(var fragId in elem.fragments){
-					var frag = elem.fragments[fragId];
-					effectiveLink.fragments[fragId] = frag;
-				};
+				adoptFragments(effectiveLink, sourceNode);
+				adoptFragments(effectiveLink, targetNode);
 
 				if( elem.isShown ){
 					effectiveLink.isShown = true;
@@ -699,6 +697,24 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			var ids = [ node1.id, node2.id ];
 			ids.sort();
 			return ids.join('_to_');
+		};
+		
+		/*
+		 * cluster1 adopts all the fragments from cluster2
+		 */
+		function adoptFragments(cluster1, cluster2){
+			if( !cluster1 || !cluster2 ) return;
+			
+			if( !cluster1.fragments ){
+				cluster1.fragments = {};
+			};
+
+			if( !cluster2.fragments ) return;
+			
+			for(var fragId in cluster2.fragments){
+				var frag = cluster2.fragments[fragId];
+				cluster1.fragments[fragId] = frag;
+			};
 		};
 	},
 	
