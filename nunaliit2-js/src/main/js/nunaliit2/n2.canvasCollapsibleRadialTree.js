@@ -429,6 +429,9 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  			.attr('class','nodes');
 
 		$rootGroup.append('g')
+			.attr('class','controls');
+
+		$rootGroup.append('g')
  			.attr('class','labels');
  		
  		this.resizeGraph();
@@ -496,21 +499,6 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 	
 	_elementsChanged: function(addedElements, updatedElements, removedElements){
 
-		var _this = this;
-		
-		// Reset attributes that are computed by layout
-		for(var elemId in this.elementsById){
-			var elem = this.elementsById[elemId];
-			delete elem.parent;
-			delete elem.children;
-			delete elem.depth;
-			delete elem.x;
-			delete elem.y;
-			delete elem.z;
-			delete elem.orig_x;
-			delete elem.expanded;
-		};
-
 		// Remove elements that are no longer there
 		for(var i=0,e=removedElements.length; i<e; ++i){
 			var removed = removedElements[i];
@@ -549,7 +537,26 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 				};
 			};
 		};
+		
+		this._createGraphicalElements();
+	},
+	
+	_createGraphicalElements: function(){
+		var _this = this;
 
+		// Reset attributes that are computed by layout
+		for(var elemId in this.elementsById){
+			var elem = this.elementsById[elemId];
+			delete elem.parent;
+			delete elem.children;
+			delete elem.depth;
+			delete elem.x;
+			delete elem.y;
+			delete elem.z;
+			delete elem.orig_x;
+			delete elem.expanded;
+		};
+		
 		// Compute tree
 		var root = {
 			id: '__root__'
@@ -882,11 +889,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  	_documentsUpdated: function(updatedNodeData, updatedLinkData){
  		var _this = this;
 
+ 		// Circles that are used to select/hover nodes
  		var selectedNodes = this._getSvgElem().select('g.nodes').selectAll('.node')
- 			.data(updatedNodeData, function(node){ return node.id; })
- 			;
-
- 		var selectedLabels = this._getSvgElem().select('g.labels').selectAll('.label')
  			.data(updatedNodeData, function(node){ return node.id; })
  			;
 
@@ -913,6 +917,45 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  			;
  		this._adjustElementStyles(createdNodes);
 
+ 		selectedNodes.exit().remove();
+
+ 		// Elements that are used to expand/collapse nodes
+ 		var selectedControls = this._getSvgElem().select('g.controls').selectAll('.control')
+ 			.data(updatedNodeData, function(node){ return node.id; })
+ 			;
+
+ 		var createdControls = selectedControls.enter()
+ 			.append('circle')
+ 			.attr('class','control')
+ 			.attr("r", 3)
+ 			.attr("transform", function(d) { 
+ 				return "rotate(" + (d.orig_x - 90) + ")translate(" + (d.y + 10) + ",0)"; 
+ 			})
+ 			.on('click', function(n,i){
+ 				_this._initiateExpandCollapse(n);
+ 			})
+ 			.on('mouseover', function(n,i){
+ 				_this._initiateMouseOver(n);
+ 				_this._magnifyLocation($d.event);
+ 			})
+ 			.on('mousemove', function(n,i){
+ 				_this._magnifyLocation($d.event);
+ 			})
+ 			.on('mouseout', function(n,i){
+ 				_this._initiateMouseOut(n);
+ 			})
+ 			;
+ 		this._adjustElementStyles(createdControls);
+
+ 		selectedControls.exit().remove();
+
+ 		this._adjustElementStyles(selectedControls);
+
+ 		// Labels that name the nodes
+ 		var selectedLabels = this._getSvgElem().select('g.labels').selectAll('.label')
+			.data(updatedNodeData, function(node){ return node.id; })
+			;
+
  		var createdLabels = selectedLabels.enter()
  			.append(function(){
  				var args = arguments;
@@ -921,7 +964,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  			.attr('class','label')
  			.attr("dy", ".31em")
  			.attr("transform", function(d) { 
- 				return "rotate(" + (d.orig_x - 90) + ")translate(" + (d.y + 8) + ",0)" 
+ 				return "rotate(" + (d.orig_x - 90) + ")translate(" + (d.y + 16) + ",0)" 
  					+ (d.orig_x < 180 ? "" : "rotate(180)"); 
  			})
  			.style("text-anchor", function(d) { 
@@ -946,15 +989,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  			;
  		this._adjustElementStyles(createdLabels);
  		
- 		// Removals
- 		selectedNodes.exit()
- 			.remove();
-
- 		selectedLabels.exit()
-			.remove();
-
- 		// Updates
- 		this._adjustElementStyles(selectedNodes);
+ 		selectedLabels.exit().remove();
 
 		this._adjustElementStyles(selectedLabels);
 
@@ -1141,6 +1176,19 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		
  		this._adjustElementStyles(changedPoints);
 
+		// Animate the position of the controls around the circle
+ 		var changedPoints = this._getSvgElem().select('g.controls').selectAll('.control')
+			.data(changedNodes, function(node){ return node.id; });
+ 		
+		changedPoints.transition()
+			.attr("transform", function(d) { 
+				return "rotate(" + (d.x - 90) 
+					+ ")translate(" + (d.y + 10) + ",0)"; 
+			})
+			;
+ 		
+ 		this._adjustElementStyles(changedPoints);
+
 		// Animate the position of the labels around the circle
  		var changedLabels = this._getSvgElem().select('g.labels').selectAll('.label')
 			.data(changedNodes, function(node){ return node.id; })
@@ -1149,7 +1197,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		changedLabels.transition()
 			.attr("transform", function(d) { 
 				return "rotate(" + (d.x - 90) 
-					+ ")translate(" + (d.y + 8) + ",0)" 
+					+ ")translate(" + (d.y + 16) + ",0)" 
 					+ (d.x < 180 ? "" : "rotate(180)"); 
 			})
  			.style("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
@@ -1175,6 +1223,18 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  			this.elementGenerator.selectOff(this.lastElementIdSelected);
  			this.lastElementIdSelected = null;
  		};
+ 	},
+ 	
+ 	_initiateExpandCollapse: function(elementData){
+ 		var elementId = elementData.id;
+ 		if( this.expandedNodesById[elementId] ){
+ 			delete this.expandedNodesById[elementId];
+ 		} else {
+ 			this.expandedNodesById[elementId] = true;
+ 		};
+ 		
+ 		// Need to initiate redrawing
+ 		this._createGraphicalElements();
  	},
  	
  	_initiateMouseClick: function(elementData){
