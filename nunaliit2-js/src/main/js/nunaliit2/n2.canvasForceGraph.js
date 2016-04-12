@@ -754,7 +754,7 @@ if( !$d ) return;
  		// Update style on links
  		var selectedLinks = this._getSvgElem().select('g.links').selectAll('.link')
  			.data(links, function(link){ return link.id; });
- 		this._adjustElementStyles(selectedLinks);
+ 		this._adjustElementStyles(selectedLinks, true);
 
  		// Update style on labels
  		var selectedLabels = this._getSvgElem().select('g.labels').selectAll('.label')
@@ -828,7 +828,7 @@ if( !$d ) return;
  		// LINKS
  		
  		var createdLinks = selectedLinks.enter()
- 			.append('line')
+ 			.append('path')
  			.attr('class','link')
  			.on('click', function(n,i){
  				_this._initiateMouseClick(n);
@@ -840,14 +840,14 @@ if( !$d ) return;
  				_this._initiateMouseOut(n);
  			})
  			;
- 		this._adjustElementStyles(createdLinks);
+ 		this._adjustElementStyles(createdLinks, true);
  		
  		selectedLinks.exit()
  			.remove();
  		
  		var updatedLinks = this._getSvgElem().select('g.links').selectAll('.link')
  			.data(updatedLinkData, function(link){ return link.id; });
- 		this._adjustElementStyles(updatedLinks);
+ 		this._adjustElementStyles(updatedLinks, true);
 
  		// LABELS
  		
@@ -917,10 +917,18 @@ if( !$d ) return;
  				.attr('cx', function(d) { return d.x; })
  				.attr('cy', function(d) { return d.y; });
  			
- 			selectedLinks.attr("x1", function(d) { return d.source.x; })
- 		        .attr("y1", function(d) { return d.source.y; })
- 		        .attr("x2", function(d) { return d.target.x; })
- 		        .attr("y2", function(d) { return d.target.y; });		
+ 			selectedLinks
+ 				.attr('d', function(d){
+ 					if( typeof d.pathFn === 'function' ){
+ 						return d.pathFn(d, d.source, d.target);
+ 					} else {
+ 	 					var path = [
+		 					'M', d.source.x, ' ', d.source.y,
+		 					' L ', d.target.x, ' ', d.target.y
+	 					].join('');
+	 					return path;
+ 					};
+ 				});		
 
  			selectedLabels
 				.attr('x', function(d) { return d.x; })
@@ -928,12 +936,18 @@ if( !$d ) return;
  		});
  	},
  	
- 	_adjustElementStyles: function(selectedElements){
+ 	_adjustElementStyles: function(selectedElements, isLine){
  		var _this = this;
  		selectedElements.each(function(n,i){
+ 			n.n2_elem = this;
  			var symbolizer = _this.styleRules.getSymbolizer(n);
  			symbolizer.adjustSvgElement(this,n);
+ 			delete n.n2_elem;
  		});
+ 		
+ 		if( isLine ){
+ 			selectedElements.attr('fill','none');
+ 		};
  	},
  	
  	_dispatch: function(m){
