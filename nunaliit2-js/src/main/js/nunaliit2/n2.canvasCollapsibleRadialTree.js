@@ -472,14 +472,10 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 
  		// Set up line computing
  		var lineOptions = $n2.extend({
- 			interpolate: 'bundle'
+ 			interpolate: 'bundle' // 'bundle' 'basis' 'linear'
  			,tension: 0.85
  		},opts.line);
  		this.line = d3.svg.line.radial()
-	 	    .interpolate("bundle")
- 			//.interpolate("basis")
- 			//.interpolate("linear")
-	 	    .tension(.85)
 	 	    .radius(function(d) { return d.y; })
 	 	    .angle(function(d) { return d.x / 180 * Math.PI; });
  		for(var optionName in lineOptions){
@@ -817,9 +813,12 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			};
 		};
 
-		var paths = this.bundle(this.links);
+		//var paths = this.bundle(this.links);
 		for(var i=0,e=this.links.length; i<e; ++i){
-			this.links[i].path = paths[i];
+			var link = this.links[i];
+			//var path = paths[i];
+			var path = [link.source, root, link.target];
+			link.path = path;
 		};
 
 		// Adjust nodes and sort
@@ -988,6 +987,10 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  			.data(nodes, function(node){ return node.id; });
  		this._adjustElementStyles(selectedNodes);
 
+ 		var selectedControls = this._getSvgElem().select('g.controls').selectAll('.control')
+			.data(nodes, function(node){ return node.id; });
+ 		this._adjustElementStyles(selectedControls);
+
  		var selectedLabels = this._getSvgElem().select('g.labels').selectAll('.label')
 			.data(nodes, function(node){ return node.id; });
 		this._adjustElementStyles(selectedLabels);
@@ -1080,7 +1083,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  			.data(
  				updatedNodeData.filter(function(node){
  					return node.children ? (node.children.length > 0) : false;
- 				}) 
+ 				}) // Only the nodes that have children have an "expand" control
  				,function(node){ 
  					return node.id; 
  				}
@@ -1340,17 +1343,17 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		this._adjustElementStyles(changedPoints);
 
 		// Animate the position of the controls around the circle
- 		var changedPoints = this._getSvgElem().select('g.controls').selectAll('.control')
+ 		var changedControls = this._getSvgElem().select('g.controls').selectAll('.control')
 			.data(changedNodes, function(node){ return node.id; });
  		
-		changedPoints.transition()
+ 		changedControls.transition()
 			.attr("transform", function(d) { 
 				return "rotate(" + (d.x - 90) 
 					+ ")translate(" + (d.y + 10) + ",0)"; 
 			})
 			;
  		
- 		this._adjustElementStyles(changedPoints);
+ 		this._adjustElementStyles(changedControls);
 
 		// Animate the position of the labels around the circle
  		var changedLabels = this._getSvgElem().select('g.labels').selectAll('.label')
