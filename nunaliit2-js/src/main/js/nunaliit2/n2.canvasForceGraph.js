@@ -645,6 +645,14 @@ if( !$d ) return;
  		//this.svgRenderer._importGraphic('star');
  		
  		this.resizeGraph();
+
+ 		// Report canvas
+ 		if( this.dispatchService ){
+ 			this.dispatchService.send(DH,{
+ 				type: 'canvasForceGraphReportCanvas'
+ 				,svg: $svg
+ 			});
+ 		};
  	},
  	
  	getGraphSize: function() {

@@ -192,6 +192,33 @@ var svgSymbolNames = {
 			,g: true
 		}
 	}
+	,'marker-start': {
+		applies: {
+			circle: false
+			,line: false
+			,path: true
+			,text: false
+			,g: true
+		}
+	}
+	,'marker-end': {
+		applies: {
+			circle: false
+			,line: false
+			,path: true
+			,text: false
+			,g: true
+		}
+	}
+	,'marker-mid': {
+		applies: {
+			circle: false
+			,line: false
+			,path: true
+			,text: false
+			,g: true
+		}
+	}
 };
 
 //--------------------------------------------------------------------------
