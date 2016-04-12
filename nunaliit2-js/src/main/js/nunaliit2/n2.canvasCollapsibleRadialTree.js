@@ -116,8 +116,161 @@ function RadialFishEye(){
 	return fisheye;
 };
 
+//--------------------------------------------------------------------------
+// This is a d3 layout function used to position a collapsible tree in 
+var CollapsibleLayout = $n2.Class({
+	
+	xSize: null,
+
+	ySize: null,
+	
+	shownFn: null,
+	
+	assignFn: null,
+	
+	sortFn: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			xSize: 1
+			,ySize: 1
+			,shownFn: null
+			,assignFn: null
+			,sortFn: null
+		},opts_);
+
+		this.xSize = opts.xSize;
+		this.ySize = opts.ySize;
+		this.shown( opts.shownFn );
+		this.assign( opts.assignFn );
+		this.sort( opts.sortFn );
+		
+		if( !this.shownFn ){
+			this.shownFn = function(n){
+				return n.shown;
+			};
+		};
+
+		if( !this.assignFn ){
+			this.assignFn = function(n, x, y){
+				n.x = x;
+				n.y = y;
+			};
+		};
+	},
+
+	nodes: function(root){
+		var _this = this;
+		
+		var nodesShown = [];
+		var numberOfLevels = 0;
+		
+		processLevel([ root ], 0);
+
+		// Compute xIndent
+		var xIndent = 0;
+		if( this.xSize > 0 && nodesShown.length > 0 ){
+			xIndent = this.xSize / nodesShown.length;
+		};
+
+		// Compute yIndent
+		var yIndent = 0;
+		if( this.ySize > 0 && numberOfLevels > 0 ){
+			yIndent = this.ySize / numberOfLevels;
+		};
+		
+		// Assign x and y to shown nodes
+		var nodes = [];
+		for(var i=0,e=nodesShown.length; i<e; ++i){
+			var node = nodesShown[i];
+
+			if( node ){
+				var x = i * xIndent;
+				var y = node.y * yIndent;
+				
+				this.assignFn(node, x, y);
+				
+				nodes.push(node);
+			};
+		};
+		
+		return nodes;
+		
+		function processLevel(nodes, level){
+			var anyNodeShown = false;
+			
+			for(var i=0,e=nodes.length; i<e; ++i){
+				var node = nodes[i];
+				var shown = _this.shownFn(node);
+				if( shown ){
+					anyNodeShown = true;
+					node.y = level;
+					
+					nodesShown.push(node);
+				};
+				
+				if( node.children ){
+					if( _this.sortFn ){
+						var children = node.children.slice(0); // clone
+						children.sort(_this.sortFn);
+						processLevel(children, level+1);
+					} else {
+						processLevel(node.children, level+1);
+					};
+				};
+			};
+			
+			if( anyNodeShown ){
+				// Add a null for spacing
+				//nodesShown.push(null);
+
+				// Add a level, if needed
+				if( numberOfLevels < level ){
+					numberOfLevels = level;
+				};
+			};
+		};
+	},
+	
+	size: function(xSize, ySize){
+		this.xSize = xSize;
+		this.ySize = ySize;
+	},
+	
+	shown: function(f){
+		if( typeof f === 'function' ){
+			this.shownFn = f;
+
+		} else if( typeof f === 'string' ){
+			this.shownFn = function(n){
+				return n[f];
+			};
+		};
+	},
+	
+	assign: function(x,y){
+		if( typeof x === 'function' ){
+			this.assignFn = x;
+
+		} else if( typeof x === 'string' && typeof y === 'string' ){
+			this.assignFn = function(n, x, y){
+				n[x] = x;
+				n[y] = y;
+			};
+		};
+	},
+	
+	sort: function(f){
+		if( typeof f === 'function' ){
+			this.sortFn = f;
+		};
+	}
+});
+
+
 // --------------------------------------------------------------------------
-// This canvas displays "node elements" in a circle. It draws line between those elements
+// This canvas displays "node elements" in a circle. It draws line between those
+// elements
 // using "link elements". Elements are expected to have the following format:
 /* 
 {
@@ -285,13 +438,37 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		
  		this.createGraph();
  		
- 		this.layout = d3.layout.cluster()
- 			.size([360, this.dimensions.radius])
-	 	    .sort(function(a,b){
-	 	    	return d3.ascending(a.sortValue, b.sortValue);
-	 	    })
-	 	    .value(function(d) { return d.size; })
- 			;
+ 		this.layout = new CollapsibleLayout({
+ 			xSize: 360
+ 			,assignFn: function(node,x,y){
+ 				node.x = x;
+ 				node.y = _this.dimensions.radius;
+ 				node.shown = true;
+ 			}
+ 			,shownFn: function(node){
+ 				node.shown = false;
+
+ 				if( node.parent ) {
+ 					return isExpanded(node.parent);
+ 				};
+ 				
+ 				// Root is hidden
+ 				return false;
+ 				
+ 				function isExpanded(n){
+ 	 				var expanded = n.expanded;
+ 	 				if( expanded && n.parent ){
+ 	 					expanded = isExpanded(n.parent);
+ 	 				};
+ 	 				return expanded;
+ 				};
+ 			}
+ 			,sortFn: function(n1, n2){
+ 				if( n1.sortValue < n2.sortValue ) return -1;
+ 				if( n1.sortValue > n2.sortValue ) return 1;
+ 				return 0;
+ 			}
+ 		});
 
  		// Set up line computing
  		var lineOptions = $n2.extend({
@@ -561,15 +738,20 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		var root = {
 			id: '__root__'
 			,name: ''
+			,x: 0
+			,y: 0
 			,children: []
 			,expanded: true
 		};
-		this.sortedNodes = [];
 		var links = [];
 		for(var elemId in this.elementsById){
 			var elem = this.elementsById[elemId];
 			
 			if( elem.isNode ){
+				if( !elem.children ){
+					elem.children = [];
+				};
+
 				if( this.expandedNodesById[elemId] ){
 					elem.expanded = true;
 				} else {
@@ -578,19 +760,15 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 
 				if( elem.parentId ){
 					var parent = this.elementsById[elem.parentId];
-					if( parent && parent.expanded ){
-						elem.parent = parent;
-						if( !parent.children ){
-							parent.children = [];
-						};
-						parent.children.push(elem);
-						this.sortedNodes.push(elem);
+					elem.parent = parent;
+					if( !parent.children ){
+						parent.children = [];
 					};
+					parent.children.push(elem);
 					
-				} else if( null === elem.parentId ) {
+				} else {
 					elem.parent = root;
 					root.children.push(elem);
-					this.sortedNodes.push(elem);
 				};
 			};
 
@@ -600,7 +778,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		};
 
 		// Layout tree (sets x and y)
-		this.layout.nodes(root);
+		this.sortedNodes = this.layout.nodes(root);
 		
 		// Create links. Here, we collapse the links that join two visible nodes.
 		// Since some nodes are collapsed into one, links can collide on source/target
@@ -652,12 +830,6 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			node.orig_x = node.x;
 			delete node.x;
 		};
-		this.sortedNodes.sort(function(a,b){
-			if( a.orig_x < b.orig_x ) return -1;
-			if( a.orig_x > b.orig_x ) return 1;
-			return 0;
-		});
-
 		
 		this._documentsUpdated(this.sortedNodes, this.links);
 		
@@ -669,34 +841,18 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			return inTree(n.parent);
 		};
 
-		function isAvailableNode(n){
-			if( !n ) return false;
-			
-			if( n === root ) return true;
-			
-			var parent = n.parent;
-			if( parent ){
-				return isAvailableNode(parent);
-			} else {
-				var parentId = n.parentId;
-				if( !parentId ) return false;
-				
-				var parentElem = _this.elementsById[parentId];
-				return isAvailableNode(parentElem);
-			};
-		};
-		
 		function findVisibleNode(n){
 			if( !n ) return null;
 
-			if( inTree(n) ){
-				return n;
+			if( !inTree(n) ){
+				return null;
 			};
 			
-			var parentId = n.parentId;
-			if( !parentId ) return null;
+			if( n.shown ) return n;
+			
+			var parent = n.parent;
+			if( !parent ) return null;
 
-			var parent = _this.elementsById[parentId];
 			return findVisibleNode(parent);
 		};
 		
@@ -921,7 +1077,14 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 
  		// Elements that are used to expand/collapse nodes
  		var selectedControls = this._getSvgElem().select('g.controls').selectAll('.control')
- 			.data(updatedNodeData, function(node){ return node.id; })
+ 			.data(
+ 				updatedNodeData.filter(function(node){
+ 					return node.children ? (node.children.length > 0) : false;
+ 				}) 
+ 				,function(node){ 
+ 					return node.id; 
+ 				}
+ 			)
  			;
 
  		var createdControls = selectedControls.enter()
@@ -1214,7 +1377,9 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 				return false;
 			})
 			.transition()
-			.attr('d',function(link){ return _this.line(link.path); })
+			.attr('d',function(link){ 
+				return _this.line(link.path); 
+			})
 			;
  	},
  	
