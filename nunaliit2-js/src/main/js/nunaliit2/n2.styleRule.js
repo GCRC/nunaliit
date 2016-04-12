@@ -422,6 +422,7 @@ var StyleRules = $n2.Class({
 	 *    ,n2_found: <boolean>
 	 *    ,n2_intent: <null or string>
 	 *    ,n2_doc: <object>
+	 *    ,n2_elem: HTML element, SVG element, undefined
 	 * }
 	 */
 	getSymbolizer: function(ctxt){

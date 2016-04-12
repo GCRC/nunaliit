@@ -406,6 +406,19 @@ parse: function parse(input) {
     // return true; // unreachable
 }};
 
+// Utilities
+function classNamesFromElement(elem){
+	var names = undefined;
+	
+	var classAttr = elem.getAttribute('class');
+	if( classAttr ){
+		names = classAttr.split(' ').filter(function(name){
+			return (name.length > 0);
+		});
+	};
+	
+	return names;
+};
 
 // Functions in the global space receives the context object
 // as 'this' and the arguments in the form of an instance of
@@ -445,6 +458,21 @@ var global = {
 			 && this.n2_doc 
 			 && this.n2_doc.nunaliit_layers ){
 			 	var index = this.n2_doc.nunaliit_layers.indexOf(layerId);
+				return (index >= 0);
+			};
+		};
+		return false;
+	}
+	,hasClass: function(args){
+		if( args ){
+			var className = args.getArgument(this, 0);
+			if( className
+			 && this.n2_elem ){
+				var classNames = classNamesFromElement(this.n2_elem);
+			 	var index = -1;
+			 	if( classNames ){
+				 	index = classNames.indexOf(className);
+			 	};
 				return (index >= 0);
 			};
 		};

@@ -117,7 +117,44 @@ function RadialFishEye(){
 };
 
 //--------------------------------------------------------------------------
-// This is a d3 layout function used to position a collapsible tree in 
+// This is a d3 layout function used to position a collapsible tree in a
+// two-dimension space. The layout accepts a tree structure and assigns
+// x,y values to each node.
+// The tree requires nodes with the following format:
+// {
+//    parent: <object> Parent node to this node. Not defined for root node.
+//    children: <array> Array of nodes that are children to this node
+// }
+//
+// Options to layout:
+// xSize: Dimension of X axis. Defaults to 1. All shown nodes are distributed
+//        evenly over this axis. The order of the nodes is based on a depth-first
+//        visit strategy, respecting sorting of sibling nodes.
+// ySize: Dimension of Y axis. Defaults to 1. All shown nodes are given a value on
+//        this axis based on the depth of the node in the tree. The root node is assigned
+//        0, while the nodes farthest from root are assigned 1.
+// shownFn: Function that reports whether a node is shown or not. This function returns a boolean
+//          which is true if the node should be considered visible. This function has the
+//          following signature: function(node){}. If no shownFn is specified, then all nodes in
+//          the tree are considered visible.
+// comparatorFn: Function used to compare the sort order of two nodes. This function has the 
+//               following signature: function(node1,node2){}. This function returns 0 if both
+//               nodes are equivalent in the collation order. It returns -1 is node1 comes before
+//               node2. Finally, it return 1 if node1 comes after node2. If this function is
+//               not specified, then the order of the children array is respected for assigning
+//               values.
+// assignFn: Function used to assign values to the node. This function has the following
+//           signature: function(node,values){}. If this function is not specified, then a default
+//           assignment functions is supplied where x and y are assigned to the properties 'x' and
+//           'y', respectively. The format of the argument 'values' is as follow:
+//           {
+//               x: <number> value on X-axis
+//               xMax: <number> maximum value on X-axis from children nodes
+//               y: <number> value on Y-axis
+//               level: <number> Integer that represents the depth of this node in the tree
+//               xIndent: <number> distance between two nodes in the X-axis
+//               yIndent: <number> distance between two levels in the Y-axis
+//           }
 var CollapsibleLayout = $n2.Class({
 	
 	xSize: null,
@@ -128,7 +165,7 @@ var CollapsibleLayout = $n2.Class({
 	
 	assignFn: null,
 	
-	sortFn: null,
+	comparatorFn: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -136,25 +173,25 @@ var CollapsibleLayout = $n2.Class({
 			,ySize: 1
 			,shownFn: null
 			,assignFn: null
-			,sortFn: null
+			,comparatorFn: null
 		},opts_);
 
 		this.xSize = opts.xSize;
 		this.ySize = opts.ySize;
 		this.shown( opts.shownFn );
 		this.assign( opts.assignFn );
-		this.sort( opts.sortFn );
+		this.comparator( opts.comparatorFn );
 		
 		if( !this.shownFn ){
 			this.shownFn = function(n){
-				return n.shown;
+				return true;
 			};
 		};
 
 		if( !this.assignFn ){
-			this.assignFn = function(n, x, y){
-				n.x = x;
-				n.y = y;
+			this.assignFn = function(n, v){
+				n.x = v.x;
+				n.y = v.y;
 			};
 		};
 	},
@@ -165,7 +202,7 @@ var CollapsibleLayout = $n2.Class({
 		var nodesShown = [];
 		var numberOfLevels = 0;
 		
-		processLevel([ root ], 0);
+		processLevel([ root ], 0, undefined);
 
 		// Compute xIndent
 		var xIndent = 0;
@@ -179,16 +216,33 @@ var CollapsibleLayout = $n2.Class({
 			yIndent = this.ySize / numberOfLevels;
 		};
 		
-		// Assign x and y to shown nodes
+		// Compute values. Values that are set by visiting
+		// all nodes: parent, level
+		// Derived values: x, y, xIndent, yIndent
+		for(var i=0,e=nodesShown.length; i<e; ++i){
+			var wrapper = nodesShown[i];
+
+			if( wrapper ){
+				var node = wrapper.node;
+
+				wrapper.x = i * xIndent;
+				wrapper.y = wrapper.level * yIndent;
+				wrapper.xIndent = xIndent;
+				wrapper.yIndent = yIndent;
+				
+				assignMaxX(wrapper, wrapper.x);
+			};
+		};
+
+		// Assign values to shown nodes
 		var nodes = [];
 		for(var i=0,e=nodesShown.length; i<e; ++i){
-			var node = nodesShown[i];
+			var wrapper = nodesShown[i];
 
-			if( node ){
-				var x = i * xIndent;
-				var y = node.y * yIndent;
-				
-				this.assignFn(node, x, y);
+			if( wrapper ){
+				var node = wrapper.node;
+
+				this.assignFn(node, wrapper);
 				
 				nodes.push(node);
 			};
@@ -196,26 +250,31 @@ var CollapsibleLayout = $n2.Class({
 		
 		return nodes;
 		
-		function processLevel(nodes, level){
+		function processLevel(nodes, level, parent){
 			var anyNodeShown = false;
 			
 			for(var i=0,e=nodes.length; i<e; ++i){
 				var node = nodes[i];
+				var wrapper = {
+					level: level
+					,node: node
+					,parent: parent
+				};
+
 				var shown = _this.shownFn(node);
 				if( shown ){
 					anyNodeShown = true;
-					node.y = level;
 					
-					nodesShown.push(node);
+					nodesShown.push(wrapper);
 				};
 				
 				if( node.children ){
-					if( _this.sortFn ){
+					if( _this.comparatorFn ){
 						var children = node.children.slice(0); // clone
-						children.sort(_this.sortFn);
-						processLevel(children, level+1);
+						children.sort(_this.comparatorFn);
+						processLevel(children, level+1, wrapper);
 					} else {
-						processLevel(node.children, level+1);
+						processLevel(node.children, level+1, wrapper);
 					};
 				};
 			};
@@ -228,6 +287,13 @@ var CollapsibleLayout = $n2.Class({
 				if( numberOfLevels < level ){
 					numberOfLevels = level;
 				};
+			};
+		};
+		
+		function assignMaxX(wrapper, xMax){
+			if( wrapper ){
+				wrapper.xMax = xMax;
+				assignMaxX(wrapper.parent, xMax);
 			};
 		};
 	},
@@ -248,21 +314,15 @@ var CollapsibleLayout = $n2.Class({
 		};
 	},
 	
-	assign: function(x,y){
-		if( typeof x === 'function' ){
-			this.assignFn = x;
-
-		} else if( typeof x === 'string' && typeof y === 'string' ){
-			this.assignFn = function(n, x, y){
-				n[x] = x;
-				n[y] = y;
-			};
+	assign: function(f){
+		if( typeof f === 'function' ){
+			this.assignFn = f;
 		};
 	},
 	
-	sort: function(f){
+	comparator: function(f){
 		if( typeof f === 'function' ){
-			this.sortFn = f;
+			this.comparatorFn = f;
 		};
 	}
 });
@@ -440,13 +500,15 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		
  		this.layout = new CollapsibleLayout({
  			xSize: 360
- 			,assignFn: function(node,x,y){
- 				node.x = x;
+ 			,assignFn: function(node,v){
+ 				node.x = v.x;
+ 				node.xMax = v.xMax
+ 				node.xIndent = v.xIndent
  				node.y = _this.dimensions.radius;
- 				node.shown = true;
+ 				node.shown = true; // if assigned a value, then it is shown
  			}
  			,shownFn: function(node){
- 				node.shown = false;
+ 				node.shown = false; // Reset shown flag when visited by layout
 
  				if( node.parent ) {
  					return isExpanded(node.parent);
@@ -463,7 +525,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  	 				return expanded;
  				};
  			}
- 			,sortFn: function(n1, n2){
+ 			,comparatorFn: function(n1, n2){
  				if( n1.sortValue < n2.sortValue ) return -1;
  				if( n1.sortValue > n2.sortValue ) return 1;
  				return 0;
@@ -594,6 +656,9 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 				_this._magnifyLocation(e);
 			})
 			;
+
+		$rootGroup.append('g')
+			.attr('class','arcs');
 
 		$rootGroup.append('g')
  			.attr('class','links');
@@ -995,6 +1060,10 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			.data(nodes, function(node){ return node.id; });
 		this._adjustElementStyles(selectedLabels);
 
+ 		var selectedArcs = this._getSvgElem().select('g.arcs').selectAll('.arc')
+			.data(nodes, function(node){ return node.id; });
+		this._adjustElementStyles(selectedArcs);
+
  		// Update style on links
  		var selectedLinks = this._getSvgElem().select('g.links').selectAll('.link')
  			.data(links, function(link){ return link.id; });
@@ -1044,7 +1113,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 	 		})
 			;
 	},
- 	
+	
  	_documentsUpdated: function(updatedNodeData, updatedLinkData){
  		var _this = this;
 
@@ -1079,15 +1148,11 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		selectedNodes.exit().remove();
 
  		// Elements that are used to expand/collapse nodes
+ 		var controlData = updatedNodeData.filter(function(node){
+			return node.children ? (node.children.length > 0) : false;
+		});
  		var selectedControls = this._getSvgElem().select('g.controls').selectAll('.control')
- 			.data(
- 				updatedNodeData.filter(function(node){
- 					return node.children ? (node.children.length > 0) : false;
- 				}) // Only the nodes that have children have an "expand" control
- 				,function(node){ 
- 					return node.id; 
- 				}
- 			)
+ 			.data(controlData, function(node){ return node.id; })
  			;
 
  		var createdControls = selectedControls.enter()
@@ -1119,8 +1184,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 
  		// Labels that name the nodes
  		var selectedLabels = this._getSvgElem().select('g.labels').selectAll('.label')
-			.data(updatedNodeData, function(node){ return node.id; })
-			;
+			.data(updatedNodeData, function(node){ return node.id; });
 
  		var createdLabels = selectedLabels.enter()
  			.append(function(){
@@ -1159,10 +1223,39 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 
 		this._adjustElementStyles(selectedLabels);
 
+		// Elements that are used to draw arcs to show parent/children relationship
+		var arcData = updatedNodeData.filter(function(node){
+			return node.children ? (node.children.length > 0) : false;
+		});
+ 		var selectedArcs = this._getSvgElem().select('g.arcs').selectAll('.arc')
+ 			.data(arcData,function(node){ return node.id; });
+
+ 		var createdArcs = selectedArcs.enter()
+ 			.append('path')
+ 			.attr('class','arc')
+ 			.on('click', function(n,i){
+ 				_this._initiateMouseClick(n);
+ 			})
+ 			.on('mouseover', function(n,i){
+ 				_this._initiateMouseOver(n);
+ 				_this._magnifyLocation($d.event);
+ 			})
+ 			.on('mousemove', function(n,i){
+ 				_this._magnifyLocation($d.event);
+ 			})
+ 			.on('mouseout', function(n,i){
+ 				_this._initiateMouseOut(n);
+ 			})
+ 			;
+ 		this._adjustElementStyles(createdArcs);
+
+ 		selectedArcs.exit().remove();
+
+ 		this._adjustElementStyles(selectedArcs);
+
 		// Links
  		var selectedLinks = this._getSvgElem().select('g.links').selectAll('.link')
- 			.data(updatedLinkData, function(link){ return link.id; })
-			;
+ 			.data(updatedLinkData, function(link){ return link.id; });
 
  		var createdLinks = selectedLinks.enter()
  			.append('path')
@@ -1195,8 +1288,10 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  	_adjustElementStyles: function(selectedElements, elementsAreLinks){
  		var _this = this;
  		selectedElements.each(function(n,i){
+ 			n.n2_elem = this;
  			var symbolizer = _this.styleRules.getSymbolizer(n);
  			symbolizer.adjustSvgElement(this,n);
+ 			delete n.n2_elem;
  		});
  		
  		if( elementsAreLinks ){
@@ -1370,6 +1465,29 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			;
  		
  		this._adjustElementStyles(changedLabels);
+
+ 		// Animate the position of the arcs around the circle
+ 		var changedArcs = this._getSvgElem().select('g.arcs').selectAll('.arc')
+			.data(changedNodes, function(node){ return node.id; });
+ 		
+ 		changedArcs
+ 			.transition()
+			.attr('transform', function(d) { 
+				return 'rotate(' + (d.x - 90) + ')';
+			})
+			.attr('d', function(d) {
+				var angle = (d.xMax - d.x + d.xIndent) / 180 * Math.PI;
+				var x = (d.y - 10) * Math.cos(angle);
+				var y = (d.y - 10) * Math.sin(angle);
+				var path = [
+				   'M', (d.y - 10), ' 0'
+				   ,' A ', (d.y - 10), ' ',  (d.y - 10), ' 0 0 1 ', x, ' ', y
+				].join('');
+				return path;
+			})
+			;
+ 		
+ 		this._adjustElementStyles(changedArcs);
 
  		// Animate links
  		this._getSvgElem().select('g.links').selectAll('.link')
