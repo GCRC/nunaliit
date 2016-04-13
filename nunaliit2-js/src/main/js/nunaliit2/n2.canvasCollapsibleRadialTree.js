@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015, Geomatics and Cartographic Research Centre, Carleton 
+Copyright (c) 2016, Geomatics and Cartographic Research Centre, Carleton 
 University
 All rights reserved.
 
@@ -41,6 +41,63 @@ var
 // Required library: d3
 var $d = window.d3;
 if( !$d ) return;
+
+//--------------------------------------------------------------------------
+// Tree visiting
+// node: {
+//    parent: <object> node that is parent of this one
+//    children: <array> array of nodes that are children to this one
+// }
+// callback: function(node, depth){
+// }
+function visitTree(root, callback){
+	if( typeof root === 'object' 
+	 && null !== root 
+	 && typeof callback === 'function' ){
+		visitNode(root, 0, callback);
+	};
+	
+	function visitNode(node, depth, callback){
+		callback(node, depth);
+		
+		if( $n2.isArray(node.children) ){
+			for(var i=0,e=node.children.length; i<e; ++i){
+				var child = node.children[i];
+				visitNode(child, (depth+1), callback);
+			};
+		};
+	};
+};
+function nodeDepth(node){
+	if( node && node.parent ){
+		return 1 + nodeDepth(node.parent);
+	};
+	return 0;
+};
+function visitParents(node, callback){
+	if( node && typeof callback === 'function' ){
+		var depth = nodeDepth(node);
+		if( node.parent ){
+			visitParent(node.parent, depth-1, callback);
+		};
+	};
+	
+	function visitParent(p, depth, callback){
+		callback(p, depth);
+
+		if( p.parent ){
+			visitParent(p.parent, depth-1, callback);
+		};
+	};
+};
+function isNodeInTree(n,root){
+	if( !n ) return false;
+	if( !root ) return false;
+	
+	if( n === root ) return true;
+
+	return isNodeInTree(n.parent,root);
+};
 
 //--------------------------------------------------------------------------
 // Fish eye distortion
@@ -406,6 +463,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 	magnify: null,
 	
 	magnifyThresholdCount: null,
+	
+	filterOptions: null,
  	
 	currentMouseOver: null,
 
@@ -424,6 +483,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			,line: null
 			,magnify: null
 			,styleRules: null
+			,filter: null
 			,toggleSelection: true
 			,elementGeneratorType: 'default'
 			,elementGeneratorOptions: null
@@ -505,25 +565,11 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  				node.xMax = v.xMax
  				node.xIndent = v.xIndent
  				node.y = _this.dimensions.radius;
- 				node.shown = true; // if assigned a value, then it is shown
  			}
  			,shownFn: function(node){
- 				node.shown = false; // Reset shown flag when visited by layout
-
- 				if( node.parent ) {
- 					return isExpanded(node.parent);
- 				};
- 				
- 				// Root is hidden
+ 				if( node.canvasVisible ) return true;
+ 				if( node.canvasVisibleDerived ) return true;
  				return false;
- 				
- 				function isExpanded(n){
- 	 				var expanded = n.expanded;
- 	 				if( expanded && n.parent ){
- 	 					expanded = isExpanded(n.parent);
- 	 				};
- 	 				return expanded;
- 				};
  			}
  			,comparatorFn: function(n1, n2){
  				if( n1.sortValue < n2.sortValue ) return -1;
@@ -585,6 +631,11 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  				this.magnifyThresholdCount = value;
  			};
  		};
+ 		
+ 		// Filter options
+ 		this.filterOptions = $n2.extend({
+ 			expanded: false
+ 		},opts.filter);
  		
  		opts.onSuccess();
 
@@ -837,6 +888,81 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 				links.push(elem);
 			};
 		};
+		
+		// Find which nodes are visible
+		if( this.filterOptions.expanded ){
+			var deepestExpandedNode = undefined;
+			var maxDepth = -1;
+			visitTree(root,function(n,d){
+				n.canvasVisible = false;
+				n.canvasVisibleDerived = false;
+				
+				if( n.expanded && maxDepth < d ){
+					deepestExpandedNode = n;
+					maxDepth = d;
+				};
+
+				if( root === n ){
+					n.canvasAvailable = false;
+				} else if( n.parent && n.parent.expanded ) {
+					n.canvasAvailable = true;
+				} else {
+					n.canvasAvailable = false;
+				};
+			});
+			
+			if( deepestExpandedNode && deepestExpandedNode.children ){
+				for(var i=0,e=deepestExpandedNode.children.length; i<e; ++i){
+					var node = deepestExpandedNode.children[i];
+					node.canvasVisible = true;
+				};
+				
+				deepestExpandedNode.canvasVisible = true;
+
+				visitParents(deepestExpandedNode, function(n,d){
+					if( root === n ){
+						n.canvasVisible = false;
+					} else {
+						n.canvasVisible = true;
+					};
+				});
+			};
+			
+			// Nodes that are linked to visible ones are also visible
+			for(var i=0,e=links.length; i<e; ++i){
+				var link = links[i];
+
+				var sourceNodeVisible = findVisibleNode(link.source);
+				var targetNodeVisible = findVisibleNode(link.target);
+
+				var sourceNodeAvailable = findAvailableNode(link.source);
+				var targetNodeAvailable = findAvailableNode(link.target);
+				
+				if( sourceNodeVisible && targetNodeVisible ){
+					// Both are visible, nothing to do
+				} else if( sourceNodeVisible && targetNodeAvailable ){
+					targetNodeAvailable.canvasVisibleDerived = true;
+				} else if( targetNodeVisible && sourceNodeAvailable ){
+					sourceNodeAvailable.canvasVisibleDerived = true;
+				};
+			};
+			
+		} else {
+			// Do not filter on expand
+			visitTree(root,function(n,d){
+				if( root === n ){
+					n.canvasVisible = false;
+				} else if( n.parent && n.parent.expanded ) {
+					n.canvasVisible = true;
+				} else {
+					n.canvasVisible = false;
+				};
+			});
+		};
+		
+		// Never show root node
+		root.canvasVisible = false;
+		root.canvasVisibleDerived = false;
 
 		// Layout tree (sets x and y)
 		this.sortedNodes = this.layout.nodes(root);
@@ -850,8 +976,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			var elem = links[i];
 			var elemId = elem.id;
 
-			var sourceNode = findVisibleNode(elem.source);
-			var targetNode = findVisibleNode(elem.target);
+			var sourceNode = findShownNode(elem.source);
+			var targetNode = findShownNode(elem.target);
 			
 			if( sourceNode && targetNode ){
 				var effectiveLinkId = computeLinkId(sourceNode,targetNode);
@@ -871,10 +997,6 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 
 				adoptFragments(effectiveLink, sourceNode);
 				adoptFragments(effectiveLink, targetNode);
-
-				if( elem.isShown ){
-					effectiveLink.isShown = true;
-				};
 			};
 		};
 
@@ -897,22 +1019,45 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		
 		this._documentsUpdated(this.sortedNodes, this.links);
 		
-		function inTree(n){
-			if( !n ) return false;
-			
-			if( n === root ) return true;
-
-			return inTree(n.parent);
-		};
-
 		function findVisibleNode(n){
 			if( !n ) return null;
 
-			if( !inTree(n) ){
+			if( !isNodeInTree(n,root) ){
 				return null;
 			};
 			
-			if( n.shown ) return n;
+			if( n.canvasVisible ) return n;
+			
+			var parent = n.parent;
+			if( !parent ) return null;
+
+			return findVisibleNode(parent);
+		};
+
+		function findAvailableNode(n){
+			if( !n ) return null;
+
+			if( !isNodeInTree(n,root) ){
+				return null;
+			};
+			
+			if( n.canvasAvailable ) return n;
+			
+			var parent = n.parent;
+			if( !parent ) return null;
+
+			return findAvailableNode(parent);
+		};
+
+		function findShownNode(n){
+			if( !n ) return null;
+
+			if( !isNodeInTree(n,root) ){
+				return null;
+			};
+			
+			if( n.canvasVisible ) return n;
+			if( n.canvasVisibleDerived ) return n;
 			
 			var parent = n.parent;
 			if( !parent ) return null;
@@ -1473,15 +1618,18 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		changedArcs
  			.transition()
 			.attr('transform', function(d) { 
-				return 'rotate(' + (d.x - 90) + ')';
+				return 'rotate(' + (d.x - 90 - (d.xIndent / 2)) + ')';
 			})
 			.attr('d', function(d) {
-				var angle = (d.xMax - d.x + d.xIndent) / 180 * Math.PI;
+				var angleDeg = (d.xMax - d.x + d.xIndent);
+				var angle = angleDeg / 180 * Math.PI;
 				var x = (d.y - 10) * Math.cos(angle);
 				var y = (d.y - 10) * Math.sin(angle);
 				var path = [
 				   'M', (d.y - 10), ' 0'
-				   ,' A ', (d.y - 10), ' ',  (d.y - 10), ' 0 0 1 ', x, ' ', y
+				   ,' A ', (d.y - 10), ' ',  (d.y - 10), ' 0 '
+				   ,(angleDeg > 180 ? '1' : '0') // large arc
+				   ,' 1 ', x, ' ', y
 				].join('');
 				return path;
 			})
