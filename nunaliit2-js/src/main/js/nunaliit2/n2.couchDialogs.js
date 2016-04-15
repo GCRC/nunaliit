@@ -37,6 +37,21 @@ var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 var DH = 'n2.couchDialogs';
 
 //++++++++++++++++++++++++++++++++++++++++++++++
+function computeMaxDialogWidth(preferredWidth){
+	var dialogWidth = preferredWidth;
+	
+	var screenWidth = $('body').width();
+	if( typeof screenWidth === 'number' ){
+		var maxWidth = screenWidth * 0.90;
+		if( dialogWidth > maxWidth ){
+			dialogWidth = maxWidth;
+		};
+	};
+
+	return dialogWidth;
+};
+
+//++++++++++++++++++++++++++++++++++++++++++++++
 function searchForDocumentId(options_){
 
 	var options = $n2.extend({
@@ -83,7 +98,7 @@ function searchForDocumentId(options_){
 		}
 	};
 	
-	var width = this._computeMaxDialogWidth(370);
+	var width = computeMaxDialogWidth(370);
 	if( typeof width === 'number' ){
 		dialogOptions.width = width;
 	};
@@ -236,7 +251,7 @@ function selectLayersDialog(opts_){
 		}
 	};
 	
-	var width = this._computeMaxDialogWidth(370);
+	var width = computeMaxDialogWidth(370);
 	if( typeof width === 'number' ){
 		dialogOptions.width = width;
 	};
@@ -475,7 +490,7 @@ var SearchBriefDialogFactory = $n2.Class({
 			}
 		};
 		
-		var width = this._computeMaxDialogWidth(370);
+		var width = computeMaxDialogWidth(370);
 		if( typeof width === 'number' ){
 			dialogOptions.width = width;
 		};
@@ -707,7 +722,7 @@ var FilteredSearchDialogFactory = $n2.Class({
 			}
 		};
 		
-		var width = this._computeMaxDialogWidth(370);
+		var width = computeMaxDialogWidth(370);
 		if( typeof width === 'number' ){
 			dialogOptions.width = width;
 		};
@@ -1041,26 +1056,12 @@ var DialogService = $n2.Class({
 			}
 		};
 		
-		var width = this._computeMaxDialogWidth(740);
+		var width = computeMaxDialogWidth(740);
 		if( typeof width === 'number' ){
 			dialogOptions.width = width;
 		};
 		
 		$dialog.dialog(dialogOptions);
-	},
-	
-	_computeMaxDialogWidth: function(preferredWidth){
-		var dialogWidth = preferredWidth;
-		
-		var screenWidth = $('body').width();
-		if( typeof screenWidth === 'number' ){
-			var maxWidth = screenWidth * 0.90;
-			if( dialogWidth > maxWidth ){
-				dialogWidth = maxWidth;
-			};
-		};
-
-		return dialogWidth;
 	}
 });
 
