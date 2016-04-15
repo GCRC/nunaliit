@@ -1642,11 +1642,30 @@ var MapAndControls = $n2.Class({
 	},
 	
 	_getMapFeaturesIncludingFid: function(fid){
+		var fidMap = {};
+		fidMap[fid] = true;
+		
+		var features = this._getMapFeaturesIncludingFidMap(fidMap);
+		return features;
+	},
+	
+	_getMapFeaturesIncludingFids: function(fids){
+		var fidMap = {};
+		for(var i=0,e=fids.length; i<e; ++i){
+			var fid = fids[i];
+			fidMap[fid] = true;
+		};
+		
+		var features = this._getMapFeaturesIncludingFidMap(fidMap);
+		return features;
+	},
+	
+	_getMapFeaturesIncludingFidMap: function(fidMap){
 		var features = [];
 		
 		for(var loop=0; loop<this.infoLayers.length; ++loop) {
 			var layerInfo = this.infoLayers[loop];
-			var feature = this._getLayerFeatureIncludingFid(layerInfo.olLayer,fid);
+			var feature = this._getLayerFeatureIncludingFidMap(layerInfo.olLayer,fidMap);
 			if( feature ) {
 				features.push(feature);
 			};
@@ -1655,19 +1674,19 @@ var MapAndControls = $n2.Class({
 		return features;
 	},
 	
-	_getLayerFeatureIncludingFid: function(layer,fid) {
+	_getLayerFeatureIncludingFidMap: function(layer,fidMap) {
 		
 		if( layer && layer.features ) {
 			var loop;
 			var features = layer.features;
 			for(loop=0;loop<features.length;++loop) {
 				var feature = features[loop];
-				if( feature.fid && feature.fid === fid ) {
+				if( feature.fid && fidMap[feature.fid] ) {
 					return feature;
 				} else if( feature.cluster ) {
 					for(var j=0,k=feature.cluster.length; j<k; ++j){
 						var f = feature.cluster[j];
-						if( f.fid && f.fid === fid ){
+						if( f.fid && fidMap[f.fid] ){
 							return feature;
 						};
 					};
@@ -2993,28 +3012,37 @@ var MapAndControls = $n2.Class({
 		this.hoverInfo.endFn.push(fn);
 	},
 
-	_startFocus: function(features, fid){
+	_startFocus: function(fids){
 		this._endFocus();
 		
-		this.focusInfo.origin = fid;
+		this.focusInfo.origin = {};
+		for(var i=0,e=fids.length; i<e; ++i){
+			var fid = fids[i];
+			this.focusInfo.origin[fid] = true;
+		};
 		
 		this._addFocus({
-			features: features
-			,fid: fid
-			,origin: fid
+			fids: fids
 		});
 	},
 
-	_addFocus: function(opts){
-		if( opts.origin && opts.origin !== this.focusInfo.origin ){
-			// Ignore. Arrived too late.
-			return;
+	_addFocus: function(opts_){
+		var opts = $n2.extend({
+			fids: null
+			,intent: null
+		},opts_);
+
+		if( opts.fids ){
+			for(var i=0,e=opts.fids.length; i<e; ++i){
+				var fid = opts.fids[i];
+				this.focusInfo.fids[fid] = true;
+			};
 		};
 		
-		this.focusInfo.fids[opts.fid] = true;
+		var features = this._getMapFeaturesIncludingFidMap(this.focusInfo.fids);
 		
-		for(var i=0,e=opts.features.length; i<e; ++i){
-			var f = opts.features[i];
+		for(var i=0,e=features.length; i<e; ++i){
+			var f = features[i];
 			if( f && !f.isHovered ) {
 				f.isHovered = true;
 				if( opts.intent ){
@@ -5098,16 +5126,7 @@ var MapAndControls = $n2.Class({
 				this._selectedFeatures(features, [m.docId]);
 				
 			} else if( m.docIds ) {
-				var features = [];
-				for(var i=0,e=m.docIds.length; i<e; ++i){
-					var feats = this._getMapFeaturesIncludingFid(m.docIds[i]);
-					for(var j=0,k=feats.length; j<k; ++j){
-						var f = feats[j];
-						if( features.indexOf(f) < 0 ){
-							features.push(f);
-						};
-					};
-				};
+				var features = this._getMapFeaturesIncludingFids(m.docIds);
 				this._selectedFeatures(features, m.docIds);
 			};
 			
@@ -5126,23 +5145,33 @@ var MapAndControls = $n2.Class({
 			this._endClicked();
 			
 		} else if( 'focusOn' === type ) {
-			var fid = m.docId;
-
-			var features = this._getMapFeaturesIncludingFid(fid);
-			this._startFocus(features,fid);
+			if( m.docId ){
+				this._startFocus([m.docId]);
+			} else if( m.docIds ){
+				this._startFocus(m.docIds);
+			};
 			
 		} else if( 'focusOff' === type ) {
 			this._endFocus();
 			
 		} else if( 'focusOnSupplement' === type ) {
 			var fid = m.docId;
-			if( fid ) {
-				var features = this._getMapFeaturesIncludingFid(fid);
+			
+			// Check if this is still valid
+			var valid = true;
+			if( m.origin ){
+				valid = false;
+				if( this.focusInfo 
+				 && this.focusInfo.origin
+				 && this.focusInfo.origin[m.origin] ){
+					valid = true;
+				};
+			};
+			
+			if( fid && valid ) {
 				this._addFocus({
-					fid: fid
-					,features: features
+					fids: [fid]
 					,intent: m.intent
-					,origin: m.origin
 				});
 			};
 			

@@ -276,26 +276,27 @@ var ElementGenerator = $n2.Class('ElementGenerator', {
 		if( element ){
 			var docsById = this._docsFromCluster(element);
 			
-			var firstDoc = null;
+			var docIds = [];
+			var docs = [];
 			for(var docId in docsById){
 				var doc = docsById[docId];
+				docIds.push(docId);
+				docs.push(doc);
+			};
+			
+			if( docIds.length > 1 ){
+				this.dispatchService.send(DH,{
+					type: 'userFocusOn'
+					,docIds: docIds
+					,docs: docs
+				});
 
-				if( firstDoc ) {
-					this.dispatchService.send(DH,{
-						type: 'focusOnSupplement'
-						,docId: docId
-						,origin: firstDoc._id
-					});
-
-				} else {
-					this.dispatchService.send(DH,{
-						type: 'userFocusOn'
-						,docId: docId
-						,doc: doc
-					});
-
-					firstDoc = doc;
-				};
+			} else if( docIds.length > 0 ){
+				this.dispatchService.send(DH,{
+					type: 'userFocusOn'
+					,docId: docIds[0]
+					,doc: docs[0]
+				});
 			};
 		};
 	},

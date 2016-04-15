@@ -150,6 +150,8 @@ var EventSupport = $n2.Class('EventSupport',{
 				type:'focusOn'
 				,docId: m.docId
 				,doc: m.doc
+				,docIds: m.docIds
+				,docs: m.docs
 				,feature: m.feature
 			});
 			
@@ -158,6 +160,8 @@ var EventSupport = $n2.Class('EventSupport',{
 				type:'focusOff'
 				,docId: m.docId
 				,doc: m.doc
+				,docIds: m.docIds
+				,docs: m.docs
 				,feature: m.feature
 			});
 		};
