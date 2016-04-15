@@ -452,6 +452,10 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 
 	findableDocsById: null,
 	
+	effectiveElementsById: null,
+
+	elementToEffectiveId: null,
+	
 	dimensions: null,
 	
 	layout: null,
@@ -519,6 +523,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		this.currentMouseOver = null;
  		this.elementsById = {};
  		this.findableDocsById = {};
+ 		this.effectiveElementsById = {};
+ 		this.elementToEffectiveId = {};
  		this.dimensions = {};
  		this.lastElementIdSelected = null;
  		this.focusInfo = null;
@@ -970,7 +976,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		// Create links. Here, we collapse the links that join two visible nodes.
 		// Since some nodes are collapsed into one, links can collide on source/target
 		// combination. 
-		var effectiveLinksById = {};
+		this.effectiveElementsById = {};
+		this.elementToEffectiveId = {};
 		this.links = [];
 		for(var i=0,e=links.length; i<e; ++i){
 			var elem = links[i];
@@ -981,19 +988,25 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			
 			if( sourceNode && targetNode ){
 				var effectiveLinkId = computeLinkId(sourceNode,targetNode);
-				var effectiveLink = effectiveLinksById[effectiveLinkId];
+				var effectiveLink = this.effectiveElementsById[effectiveLinkId];
 				if( !effectiveLink ){
 					effectiveLink = {
 						id: effectiveLinkId
 						,isLink: true
 						,source: sourceNode
 						,target: targetNode
+						,elementIds: []
 						,fragments: {}
 						,n2_geometry: 'line'
 					};
-					effectiveLinksById[effectiveLinkId] = effectiveLink;
+					this.effectiveElementsById[effectiveLinkId] = effectiveLink;
 					this.links.push(effectiveLink);
 				};
+				
+				effectiveLink.elementIds.push(elemId);
+				
+				// Remember mapping from element to effective link
+				this.elementToEffectiveId[elemId] = effectiveLinkId;
 
 				adoptFragments(effectiveLink, sourceNode);
 				adoptFragments(effectiveLink, targetNode);
@@ -1090,6 +1103,61 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		};
 	},
 	
+	_refreshEffectiveElementIntent: function(effectiveElement){
+		effectiveElement.n2_selected = false;
+		effectiveElement.n2_selectedIntent = undefined;
+		effectiveElement.n2_hovered = false;
+		effectiveElement.n2_hoveredIntent = undefined;
+		effectiveElement.n2_found = false;
+		effectiveElement.n2_intent = undefined;
+		
+		if( effectiveElement.elementIds ){
+			for(var i=0,e=effectiveElement.elementIds.length; i<e; ++i){
+				var elemId = effectiveElement.elementIds[i];
+				var elem = this.elementsById[elemId];
+				
+				if( elem ){
+					if( elem.n2_selected ){
+						effectiveElement.n2_selected = true;
+					};
+					if( elem.n2_hovered ){
+						effectiveElement.n2_hovered = true;
+					};
+					if( elem.n2_found ){
+						effectiveElement.n2_found = true;
+					};
+					if( elem.n2_selectedIntent ){
+						if( effectiveElement.n2_selectedIntent === null ){
+							// collision
+						} else if( effectiveElement.n2_selectedIntent === undefined ){
+							effectiveElement.n2_selectedIntent = elem.n2_selectedIntent;
+						} else {
+							effectiveElement.n2_selectedIntent = null;
+						};
+					};
+					if( elem.n2_hoveredIntent ){
+						if( effectiveElement.n2_hoveredIntent === null ){
+							// collision
+						} else if( effectiveElement.n2_hoveredIntent === undefined ){
+							effectiveElement.n2_hoveredIntent = elem.n2_hoveredIntent;
+						} else {
+							effectiveElement.n2_hoveredIntent = null;
+						};
+					};
+					if( elem.n2_intent ){
+						if( effectiveElement.n2_intent === null ){
+							// collision
+						} else if( effectiveElement.n2_intent === undefined ){
+							effectiveElement.n2_intent = elem.n2_intent;
+						} else {
+							effectiveElement.n2_intent = null;
+						};
+					};
+				};
+			};
+		};
+	},
+	
 	_intentChanged: function(changedElements){
 		// Reset all temp variables
 		for(var elemId in this.elementsById){
@@ -1097,10 +1165,41 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			elem.temp_hovered = false;
 			elem.temp_selected = false;
 		};
-		
- 		// Segregate nodes and links
+		for(var elemId in this.effectiveElementsById){
+			var elem = this.effectiveElementsById[elemId];
+			elem.temp_hovered = false;
+			elem.temp_selected = false;
+		};
+
+		// Keep track of modified nodes and links
 		var nodeMap = {};
  		var linkMap = {};
+		
+		// Update effective elements from the ones received from the element generator
+		var effectiveIdsToUpdate = {};
+		for(var i=0,e=changedElements.length; i<e; ++i){
+			var changedElement = changedElements[i];
+			var changedElementId = changedElement.id;
+			var changedEffectiveElementId = this.elementToEffectiveId[changedElementId];
+			if( changedEffectiveElementId ){
+				effectiveIdsToUpdate[changedEffectiveElementId] = true;
+			};
+		};
+		for(var changedEffectiveElementId in effectiveIdsToUpdate){
+			var effectiveElement = this.effectiveElementsById[changedEffectiveElementId];
+			if( effectiveElement ){
+				this._refreshEffectiveElementIntent(effectiveElement);
+				
+				if( effectiveElement.isNode ){
+					nodeMap[effectiveElement.id] = effectiveElement;
+	 				
+	 			} else if( effectiveElement.isLink ){
+	 				linkMap[effectiveElement.id] = effectiveElement;
+				};
+			};
+		};
+		
+ 		// Segregate nodes and links
  		for(var i=0,e=changedElements.length; i<e; ++i){
  			var changedNode = changedElements[i];
  			
