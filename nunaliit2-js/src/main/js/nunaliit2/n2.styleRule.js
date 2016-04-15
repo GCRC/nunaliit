@@ -108,6 +108,16 @@ var svgSymbolNames = {
 			,g: true
 		}
 	}
+	,'stroke-dasharray': {
+		alt: 'strokeDashArray'
+		,applies: {
+			circle: false
+			,line: true
+			,path: true
+			,text: false
+			,g: true
+		}
+	}
 	,'r': {
 		alt: 'pointRadius'
 		,applies: {
