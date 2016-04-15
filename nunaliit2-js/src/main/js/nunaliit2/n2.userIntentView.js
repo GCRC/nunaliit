@@ -856,16 +856,18 @@ var IntentService = $n2.Class({
 			originMap: {}
 			,docIds: {}
 		};
-		for(var i=0,e=docIds.length; i<e; ++i){
-			var docId = docIds[i];
+		if( docIds ){
+			for(var i=0,e=docIds.length; i<e; ++i){
+				var docId = docIds[i];
 
-			this.hoverInfo.originMap[docId] = true;
-			this.hoverInfo.docIds[docId] = true;
-			
-			// Adjust current node
-			var n = this._getNode(docId);
-			if( this._adjustIntentOnNode(n) ){
-				changed.push(n);
+				this.hoverInfo.originMap[docId] = true;
+				this.hoverInfo.docIds[docId] = true;
+				
+				// Adjust current node
+				var n = this._getNode(docId);
+				if( this._adjustIntentOnNode(n) ){
+					changed.push(n);
+				};
 			};
 		};
 		
@@ -940,8 +942,11 @@ var IntentService = $n2.Class({
 			this._handleUnselect();
 			
 		} else if( 'focusOn' === m.type ){
-			var docId = m.docId;
-			this._handleFocusOn(docId);
+			if( m.docId ){
+				this._handleFocusOn([m.docId]);
+			} else if( m.docIds ){
+				this._handleFocusOn(m.docIds);
+			};
 
 		} else if( 'focusOnSupplement' === m.type ) {
 			var docId = m.docId;

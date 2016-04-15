@@ -3116,35 +3116,58 @@ var MapAndControls = $n2.Class({
 	},
 
 	_hoverFeature: function(feature, layer) {
-		if( null == feature ) {
+		if( !feature ) {
 			return;
 		};
-		if( null == layer ) {
+		if( !layer ) {
 			return;
 		};
 		
 		var layerInfo = layer._layerInfo;
-		if( null == layerInfo ) {
+		if( !layerInfo ) {
 			return;
 		};
 
 		var dispatchService = this._getDispatchService();
+		
+		var docIds = [];
+		var docs = [];
+		if( feature.cluster ){
+			for(var ci=0,ce=feature.cluster.length; ci<ce; ++ci){
+				var f = feature.cluster[ci];
+				docIds.push( f.fid );
+				docs.push( f.data );
+			};
+			
+		} else {
+			docIds.push( feature.fid );
+			docs.push( feature.data );
+		};
 
 		this._registerEndHoverFn(function(){
 			dispatchService.send(DH, {
 				type: 'userFocusOff'
-				,docId: feature.fid
-				,doc: feature.data
+				,docIds: docIds
+				,docs: docs
 				,feature: feature
 	 		});
 		});
 
-		dispatchService.send(DH, {
-			type: 'userFocusOn'
-			,docId: feature.fid
-			,doc: feature.data
-			,feature: feature
- 		});
+		if( docIds.length > 1 ){
+			dispatchService.send(DH, {
+				type: 'userFocusOn'
+				,docIds: docIds
+				,docs: docs
+				,feature: feature
+	 		});
+		} else if( docIds.length > 0 ){
+			dispatchService.send(DH, {
+				type: 'userFocusOn'
+				,docId: docIds[0]
+				,doc: docs[0]
+				,feature: feature
+	 		});
+		};
 	},
 	
 	_hoverFeaturePopup: function(feature, layer) {
