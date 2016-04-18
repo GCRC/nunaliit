@@ -156,6 +156,7 @@ var Module = $n2.Class({
 		var opts = $n2.extend({
 			elem: null
 			,showService: null
+			,dispatchService: null
 			,onLoaded: function(){}
 		},opts_);
 		
@@ -168,8 +169,29 @@ var Module = $n2.Class({
 		};
 		
 		if( !introInfo ){
-			$elem.empty();
-			return false;
+			var needToClear = true;
+
+			// Via the dispatcher, see if a component can display intro
+			if( opts.dispatchService ){
+				var msg = {
+					type: 'modulePerformIntroduction'
+					,performed: false
+					,elem: opts.elem
+					,module: this
+				};
+				opts.dispatchService.synchronousCall(DH,msg);
+				
+				// If an introduction was performed, then no need
+				// to empty the element
+				if( msg.performed ){
+					needToClear = false;
+				};
+			};
+			
+			if( needToClear ){
+				$elem.empty();
+				return false;
+			};
 
 		} else {
 			if( 'html' === introInfo.type && introInfo.content ) {
@@ -609,9 +631,6 @@ var ModuleDisplay = $n2.Class({
 			// Styles
 			_this.mapStyles = new $n2.mapStyles.MapFeatureStyles( (mapInfo ? mapInfo.styles : null) );
 			
-			// Side panel
-			_this._initSidePanel();
-			
 			// Title
 			if( moduleInfo && moduleInfo.title ) {
 				var title = _loc(moduleInfo.title);
@@ -827,6 +846,9 @@ var ModuleDisplay = $n2.Class({
 		};
 		
 		function displayComplete(){
+			// Side panel
+			_this._initSidePanel();
+
 			_this._sendDispatchMessage({
 				type:'reportModuleDisplay'
 				,moduleDisplay: _this
@@ -1254,6 +1276,7 @@ var ModuleDisplay = $n2.Class({
 			this.module.displayIntro({
 				elem: $elem
 				,showService: this._getShowService()
+				,dispatchService: this.dispatchService
 				,onLoaded: function(){
 					_this._sendDispatchMessage({type:'loadedModuleContent'});
 				}
