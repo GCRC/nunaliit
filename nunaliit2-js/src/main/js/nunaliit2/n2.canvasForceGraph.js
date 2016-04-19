@@ -566,6 +566,7 @@ if( !$d ) return;
  			
  			this.dispatchService.register(DH,'modelGetInfo',f);
  			this.dispatchService.register(DH,'modelStateUpdated',f);
+ 			this.dispatchService.register(DH,'windowResized',f);
  		};
  		
  		this.forceLayout = $d.layout.force()
@@ -619,16 +620,46 @@ if( !$d ) return;
  	createGraph: function() {
  		var _this = this; // for use in callbacks
 
- 		if( this.background 
- 		 && typeof this.background.color === 'string' ){
- 			var $canvas = $('#' + this.canvasId);
- 			$canvas.css('background-color',this.background.color);
- 		};
- 		
  		this.svgId = $n2.getUniqueId();
  		var $svg = $d.select('#' + this.canvasId)
  			.append('svg')
- 			.attr('id',this.svgId);
+ 			.attr('id',this.svgId)
+ 			.classed({
+ 				'n2CanvasForceGraph': true
+ 			})
+ 			;
+ 		
+ 		var $background = $svg.append('rect')
+ 			.attr({
+ 				x: '0'
+ 				,y:'0'
+ 			})
+ 			.classed({
+ 				'n2CanvasForceGraph_background': true
+ 			})
+ 			.on('click', function(){
+	 			_this._backgroundClicked();
+	 		});
+ 		if( this.background 
+ 		 && typeof this.background === 'object' ){
+ 			var allowedAttributes = $n2.svg.presentationAttributeMap;
+ 			for(var key in this.background){
+ 				if( typeof key === 'string' 
+ 				 && allowedAttributes[key] ){
+ 	 				var value = this.background[key];
+ 	 				if( typeof value === 'string' ){
+ 	 					$background.attr(key,value);
+ 	 				} else if( typeof value === 'number' ){
+ 	 					$background.attr(key,value);
+ 	 				};
+ 				};
+ 			};
+ 		} else {
+ 			$background.attr({
+ 				'stroke-opacity': 0
+ 	 			,'fill-opacity': 0
+ 			});
+ 		};
 
  		$svg.append('g')
  			.attr('class','links');
@@ -678,9 +709,17 @@ if( !$d ) return;
  		
  		this.forceLayout.size([size[0], size[1]]).start();
  		
- 		this._getSvgElem()
- 			.attr('width', size[0])
- 			.attr('height', size[1]);
+ 		var $svg = this._getSvgElem()
+ 			.attr({
+ 				width: size[0]
+				,height: size[1]
+ 			});
+ 		
+ 		var $background = $svg.select('.n2CanvasForceGraph_background')
+ 			.attr({
+ 				width: size[0]
+				,height: size[1]
+ 			});
  	},
  	
  	_getSvgElem: function() {
@@ -1003,6 +1042,12 @@ if( !$d ) return;
  		};
  	},
  	
+ 	_backgroundClicked: function(){
+ 		this._dispatch({
+ 			type: 'userUnselect'
+ 		});
+ 	},
+ 	
  	_handleDispatch: function(m){
  		if( 'modelGetInfo' === m.type ){
  			if( m.modelId === this.modelId ){
@@ -1015,6 +1060,9 @@ if( !$d ) return;
  					this._dbPerspectiveUpdated(m.state);
  				};
  			};
+
+ 		} else if( 'windowResized' === m.type ) {
+ 			this.resizeGraph();
  		};
  	},
  	
