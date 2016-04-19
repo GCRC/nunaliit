@@ -1065,6 +1065,7 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 			dispatcher.register(DH, 'documentContent', f);
 			dispatcher.register(DH, 'documentContentCreated', f);
 			dispatcher.register(DH, 'documentContentUpdated', f);
+			dispatcher.register(DH, 'windowResized', f);
 		};
 		
 		if( !opts.displayRelatedInfoFunction ) {
@@ -1269,6 +1270,11 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 			
 		} else if( msg.type === 'documentContentUpdated' ) {
 			this._receiveDocumentContent(msg.doc);
+			
+		} else if( msg.type === 'windowResized' ) {
+			if( this.grid ){
+		        this.grid.redraw(true);
+			};
 		};
 	},
 	
