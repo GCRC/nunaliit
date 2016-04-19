@@ -640,7 +640,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		
  		// Filter options
  		this.filterOptions = $n2.extend({
- 			expanded: false
+ 			expand: false
  		},opts.filter);
  		
  		opts.onSuccess();
@@ -896,7 +896,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		};
 		
 		// Find which nodes are visible
-		if( this.filterOptions.expanded ){
+		if( this.filterOptions.expand ){
 			var deepestExpandedNode = undefined;
 			var maxDepth = -1;
 			visitTree(root,function(n,d){
@@ -910,7 +910,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 
 				if( root === n ){
 					n.canvasAvailable = false;
-				} else if( n.parent && n.parent.expanded ) {
+				} else if( n.parent && isExpandedNode(n.parent) ) {
 					n.canvasAvailable = true;
 				} else {
 					n.canvasAvailable = false;
@@ -1060,6 +1060,28 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			if( !parent ) return null;
 
 			return findAvailableNode(parent);
+		};
+		
+		/*
+		 * A node is expanded if it is marked expanded and all
+		 * parents are also expanded
+		 */
+		function isExpandedNode(n){
+			if( !n ) return false;
+
+			if( !isNodeInTree(n,root) ){
+				return false;
+			};
+			
+			if( !n.expanded ){
+				return false;
+			};
+			
+			if( n.parent && !isExpandedNode(n.parent) ){
+				return false;
+			};
+			
+			return true;
 		};
 
 		function findShownNode(n){
