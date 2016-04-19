@@ -1182,9 +1182,20 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 		};
 		
 		// Click function
-		this.clickFn = function(){
-			var $tile = $(this);
-			_this._clickedTile($tile);
+		this.clickFn = function(e){
+			var ignore = false;
+			if( e && e.target ){
+				var $target = $(e.target);
+				var $popupParents = $target.parents('.n2DisplayRibbon_popup');
+				if( $popupParents.length > 0 ){
+					// This click originated from inside a popup
+					ignore = true;
+				};
+			};
+			if( !ignore ){
+				var $tile = $(this);
+				_this._clickedTile($tile);
+			};
 			return false;
 		};
 		
