@@ -2197,9 +2197,12 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 	_populateCurrentPopUp: function(docId, $popup){
 		var _this = this;
 		
+		var $outerLayout = $('<div>')
+			.addClass('n2DisplayRibbon_popup_outer_layout')
+			.appendTo($popup);
 		var $layout = $('<div>')
 			.addClass('n2DisplayRibbon_popup_layout')
-			.appendTo($popup);
+			.appendTo($outerLayout);
 		var $container = $('<div>')
 			.addClass('n2DisplayRibbon_popup_container')
 			.appendTo($layout);
