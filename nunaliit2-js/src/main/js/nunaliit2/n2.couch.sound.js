@@ -39,15 +39,15 @@ function defaultInstallSound(info) {};
 function defaultHandleDocumentSound(info_, cb_){cb_(info_);};
 
 var HoverSoundService = $n2.Class({
-	options: null
+	options: null,
 	
-	,dispatcher: null
+	dispatcher: null,
 	
-	,requestService: null
+	requestService: null,
 	
-	,currentFocusSoundDocId: null
+	currentFocusDocIdMap: null,
 	
-	,initialize: function(options_){
+	initialize: function(options_){
 		var _this = this;
 		
 		this.options = $n2.extend({
@@ -56,7 +56,7 @@ var HoverSoundService = $n2.Class({
 			,handleDocumentSound: defaultHandleDocumentSound
 		},options_);
 
-		this.currentFocusSoundDocId = null;
+		this.currentFocusDocIdMap = {};
 		
 		if( this.options.serviceDirectory ) {
 			this.dispatcher = this.options.serviceDirectory.dispatchService;
@@ -73,9 +73,9 @@ var HoverSoundService = $n2.Class({
 			this.dispatcher.register(DH, 'playSoundOn', f);
 			this.dispatcher.register(DH, 'playSoundOff', f);
 		};
-	}
+	},
 
-	,handleFeatureHover: function(feature, opts_) {
+	handleFeatureHover: function(feature, opts_) {
 
 		if( !feature ) return;
 		
@@ -89,9 +89,9 @@ var HoverSoundService = $n2.Class({
 		};
 
 		this.findDocumentHoverSound(data, opts_);
-	}
+	},
 
-	,findDocumentHoverSound: function(data, opts_) {
+	findDocumentHoverSound: function(data, opts_) {
 
 		var opts = $n2.extend({
 			installSoundFn: defaultInstallSound
@@ -112,9 +112,9 @@ var HoverSoundService = $n2.Class({
 		opts.handleDocumentSound(info, function(info_){
 			_this._defaultDocumentSound(info_);
 		});
-	}
+	},
 
-	,_defaultDocumentSound: function(info) {
+	_defaultDocumentSound: function(info) {
 
 		var _this = this;
 
@@ -132,49 +132,93 @@ var HoverSoundService = $n2.Class({
 				}
 			});
 		};
-	}
+	},
 	
-	,_handleDispatch: function(m){
+	_handleDispatch: function(m){
 		var _this = this;
 		
 		if(m.type==='focusOn'){
 			if(m.doc) {
-				if( this.currentFocusSoundDocId ) {
-					this._removeFocusSound(this.currentFocusSoundDocId);
+				for(var docId in this.currentFocusDocIdMap) {
+					this._removeFocusSound(docId);
 				};
 				
-				this.currentFocusSoundDocId = m.doc._id;
+				this.currentFocusDocIdMap = {};
+				this.currentFocusDocIdMap[m.doc._id] = true;
 				
 				this.findDocumentHoverSound(m.doc, {
 					installSoundFn: function(info){
 						_this._installFocusSound(info);
 					}
 				});
-				
-			} else if(m.docId) {
-				if( this.currentFocusSoundDocId ) {
-					this._removeFocusSound(this.currentFocusSoundDocId);
+
+			} else if(m.docs) {
+				for(var docId in this.currentFocusDocIdMap) {
+					this._removeFocusSound(docId);
 				};
 				
-				this.currentFocusSoundDocId = m.docId;
+				this.currentFocusDocIdMap = {};
+				
+				for(var i=0,e=m.docs.length; i<e; ++i){
+					var doc = m.docs[i];
+					
+					this.currentFocusDocIdMap[doc._id] = true;
+					
+					this.findDocumentHoverSound(doc, {
+						installSoundFn: function(info){
+							_this._installFocusSound(info);
+						}
+					});
+				};
+				
+			} else if(m.docId) {
+				for(var docId in this.currentFocusDocIdMap) {
+					this._removeFocusSound(docId);
+				};
+				
+				this.currentFocusDocIdMap = {};
+				
+				this.currentFocusDocIdMap[m.docId] = true;
 				
 				if( this.requestService ) {
 					this.requestService.requestDocument(m.docId, function(doc){
-						_this.findDocumentHoverSound(doc, {
-							installSoundFn: function(info){
-								_this._installFocusSound(info);
-							}
-						});
+						if( _this.currentFocusDocIdMap[m.docId] ){
+							_this.findDocumentHoverSound(doc, {
+								installSoundFn: function(info){
+									_this._installFocusSound(info);
+								}
+							});
+						};
 					});
+				};
+				
+			} else if(m.docIds) {
+				for(var docId in this.currentFocusDocIdMap) {
+					this._removeFocusSound(docId);
+				};
+				
+				this.currentFocusDocIdMap = {};
+				
+				for(var i=0,e=m.docIds.length; i<e; ++i){
+					this.currentFocusDocIdMap[m.docId] = true;
+					
+					if( this.requestService ) {
+						this.requestService.requestDocument(m.docId, function(doc){
+							if( _this.currentFocusDocIdMap[m.docId] ){
+								_this.findDocumentHoverSound(doc, {
+									installSoundFn: function(info){
+										_this._installFocusSound(info);
+									}
+								});
+							};
+						});
+					};
 				};
 			};
 			
 		} else if(m.type==='focusOff'){
-			if(m.doc) {
-				this._removeFocusSound(m.doc._id);
-				
-			} else if(m.docId) {
-				this._removeFocusSound(m.docId);
+			for(var docId in this.currentFocusDocIdMap) {
+				this._removeFocusSound(docId);
 			};
 			
 		} else if(m.type==='playHoverSoundOn'){
@@ -207,31 +251,36 @@ var HoverSoundService = $n2.Class({
 				this._removePlaySound(m.id);
 			};
 		};
-	}
+	},
 	
-	,_installFocusSound: function(info){
+	_installFocusSound: function(info){
 		var docId = info.docId;
 		var url = info.soundUrl;
 		
-		if( url && this.currentFocusSoundDocId === docId ) {
+		if( url && this.currentFocusDocIdMap[docId] ) {
 			var $div = this._getFocusSoundDiv();
-			this._insertSoundElement($div, url);
+			var className = this._computeFocusClassName(docId);
+			
+			this._insertSoundElement($div, url, className);
 		};
-	}
+	},
 	
-	,_removeFocusSound: function(docId){
-		if( this.currentFocusSoundDocId === docId ) {
-			var $div = this._getFocusSoundDiv();
-			$div.empty();
-			this.currentFocusSoundDocId = null;
-		};
-	}
+	_removeFocusSound: function(docId){
+		var className = this._computeFocusClassName(docId);
+		var $div = this._getFocusSoundDiv();
+		$div.find('.'+className).remove();
+	},
+	
+	_computeFocusClassName: function(docId){
+		var className = 'n2SoundFocus_' + $n2.utils.stringToHtmlId(docId);
+		return className;
+	},
 
 	/**
 	 * Create a div to receive the play sound. If div is removed, then
 	 * sound is no longer needed
 	 */
-	,_initiatePlaySound: function(docId){
+	_initiatePlaySound: function(docId){
 		var divId = 'n2CouchPlaySound_' + $n2.utils.stringToHtmlId(docId);
 
 		var $div = $('#'+divId);
@@ -239,39 +288,39 @@ var HoverSoundService = $n2.Class({
 			$div = $('<div id="'+divId+'"></div>');
 			this._getSoundDiv().append($div);
 		};
-	}
+	},
 	
 	/**
 	 * Takes the sound url and installs a playing element in the
 	 * appropriate div. If the div has disappeared, then the sound
 	 * is no longer needed and should be ignored.
 	 */
-	,_installPlaySound: function(info){
+	_installPlaySound: function(info){
 		var docId = info.docId;
 		var url = info.soundUrl;
 
 		var $div = $('#n2CouchPlaySound_'+$n2.utils.stringToHtmlId(docId));
 		this._insertSoundElement($div, url);
-	}
+	},
 
 	/**
 	 * Sound no longer needed. Remove associated div.
 	 */
-	,_removePlaySound: function(docId){
+	_removePlaySound: function(docId){
 		var $div = $('#n2CouchPlaySound_'+$n2.utils.stringToHtmlId(docId));
 		$div.remove();
-	}
+	},
 	
-	,_getSoundDiv: function(){
+	_getSoundDiv: function(){
 		var $div = $('#n2CouchSound');
 		if( $div.length < 1 ) {
 			$div = $('<div id="n2CouchSound"></div>');
 			$('body').append( $div );
 		};
 		return $div;
-	}
+	},
 	
-	,_getFocusSoundDiv: function(){
+	_getFocusSoundDiv: function(){
 		var $div = $('#n2CouchFocusSound');
 		if( $div.length < 1 ) {
 			var $parent = this._getSoundDiv();
@@ -279,10 +328,19 @@ var HoverSoundService = $n2.Class({
 			$parent.append( $div );
 		};
 		return $div;
-	}
+	},
 	
-	,_insertSoundElement: function($div, url){
-		$div.html('<embed src="'+url+'" hidden="true" autostart="true" loop="false"/>');
+	_insertSoundElement: function($div, url, className){
+		var $embed = $('<embed>')
+			.attr('src',url)
+			.attr('hidden',true)
+			.attr('autostart',true)
+			.attr('loop',false)
+			;
+		if( className ){
+			$embed.addClass(className);
+		};
+		$div.append($embed);
 	}
 });	
 
