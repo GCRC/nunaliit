@@ -38,9 +38,7 @@ var
  ,DH = 'n2.canvasTree'
  ;
  
-// Required library: d3
-var $d = window.d3;
-if( !$d ) return;
+var $d = undefined;
  
 // --------------------------------------------------------------------------
 var TreeCanvas = $n2.Class({
@@ -549,8 +547,15 @@ var TreeCanvas = $n2.Class({
  
 //--------------------------------------------------------------------------
 function HandleCanvasAvailableRequest(m){
+	// Required library: d3
+	if( !$d && window ) $d = window.d3;
+
 	if( m.canvasType === 'tree' ){
-		m.isAvailable = true;
+		if( $d ) {
+			m.isAvailable = true;
+		} else {
+			$n2.log('Canvas tree requires d3 library');
+		};
 	};
 };
 

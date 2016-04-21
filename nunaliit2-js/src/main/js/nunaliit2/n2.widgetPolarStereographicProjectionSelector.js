@@ -578,15 +578,15 @@ var ProjectionSelector = $n2.Class({
 
 //--------------------------------------------------------------------------
 function HandleWidgetAvailableRequests(m){
-	if( m.widgetType === 'polarStereographicProjectionSelector' ){
-		var available = true;
-		
-		 if( !$d ) {
-			 available = false;
-			 $n2.log('Widget polarStereographicProjectionSelector requires d3 library');
-		 };
+	// Required library: d3
+	if( !$d && window ) $d = window.d3;
 
-		m.isAvailable = available;
+	if( m.widgetType === 'polarStereographicProjectionSelector' ){
+		if( $d ) {
+			m.isAvailable = true;
+		} else {
+			$n2.log('Widget polarStereographicProjectionSelector requires d3 library');
+		};
     };
 };
 

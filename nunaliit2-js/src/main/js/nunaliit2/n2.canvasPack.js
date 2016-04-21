@@ -38,9 +38,7 @@ var
  ,DH = 'n2.canvasPack'
  ;
  
-// Required library: d3
-var $d = window.d3;
-if( !$d ) return;
+var $d = undefined;
  
 // --------------------------------------------------------------------------
 var PackCanvas = $n2.Class({
@@ -586,8 +584,15 @@ var PackCanvas = $n2.Class({
  
 //--------------------------------------------------------------------------
 function HandleCanvasAvailableRequest(m){
+	// Required library: d3
+	if( !$d && window ) $d = window.d3;
+
 	if( m.canvasType === 'pack' ){
-		m.isAvailable = true;
+		if( $d ) {
+			m.isAvailable = true;
+		} else {
+			$n2.log('Canvas pack requires d3 library');
+		};
 	};
 };
 

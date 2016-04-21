@@ -38,9 +38,7 @@ var
  ,DH = 'n2.radialTreeCanvas'
  ;
  
-// Required library: d3
-var $d = window.d3;
-if( !$d ) return;
+var $d = undefined;
 
 //--------------------------------------------------------------------------
 // Fish eye distortion
@@ -1146,8 +1144,15 @@ var RadialTreeCanvas = $n2.Class({
  
 //--------------------------------------------------------------------------
 function HandleCanvasAvailableRequest(m){
+	// Required library: d3
+	if( !$d && window ) $d = window.d3;
+
 	if( m.canvasType === 'radialTree' ){
-		m.isAvailable = true;
+		if( $d ) {
+			m.isAvailable = true;
+		} else {
+			$n2.log('Canvas radialTree requires d3 library');
+		};
 	};
 };
 

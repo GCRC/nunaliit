@@ -502,6 +502,12 @@ function Configure(options_){
 	};
 	
 	function callCustomConfiguration(){
+		if( !$n2.scripts.areAllCustomScriptsLoaded() ){
+			// More scripts needed to load
+			window.setTimeout(callCustomConfiguration, 100);
+			return;
+		};
+
 		if( window 
 		 && window.nunaliit_custom 
 		 && typeof(window.nunaliit_custom.configuration) === 'function' ){
