@@ -443,12 +443,12 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 	/*
 	 * Displayed nodes
 	 */
-	sortedNodes: null,
+	displayedNodesSorted: null,
 
 	/*
 	 * Displayed links. These are effective links
 	 */
-	links: null,
+	displayedLinks: null,
 	
 	elementGenerator: null,
 	
@@ -462,8 +462,11 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 	
 	/*
 	 * This is a map of all effective elements, stored by
-	 * id. Effective elements are elements derived from the
-	 * ones provided by the generator.
+	 * id. Effective elements are displayed on the canvas.
+	 * Some effective elements (like nodes) are the source elements
+	 * received from the element generator. Other effective elements 
+	 * are derived from the ones provided by the generator and might
+	 * even combine multiple source elements.
 	 */
 	effectiveElementsById: null,
 
@@ -536,8 +539,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		};
 
  		this.nodesById = {};
- 		this.sortedNodes = [];
- 		this.links = [];
+ 		this.displayedNodesSorted = [];
+ 		this.displayedLinks = [];
  		this.currentMouseOver = null;
  		this.elementsById = {};
  		this.findableDocsById = {};
@@ -870,6 +873,10 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			delete elem.expanded;
 		};
 		
+		// Reset effective map
+		this.effectiveElementsById = {};
+		this.elementToEffectiveId = {};
+		
 		// Compute tree
 		var root = {
 			id: '__root__'
@@ -989,14 +996,12 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		root.canvasVisibleDerived = false;
 
 		// Layout tree (sets x and y)
-		this.sortedNodes = this.layout.nodes(root);
+		this.displayedNodesSorted = this.layout.nodes(root);
 		
 		// Create links. Here, we collapse the links that join two visible nodes.
 		// Since some nodes are collapsed into one, links can collide on source/target
 		// combination. 
-		this.effectiveElementsById = {};
-		this.elementToEffectiveId = {};
-		this.links = [];
+		this.displayedLinks = [];
 		for(var i=0,e=sourceLinks.length; i<e; ++i){
 			var elem = sourceLinks[i];
 			var elemId = elem.id;
@@ -1013,42 +1018,55 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 						,isLink: true
 						,source: sourceNode
 						,target: targetNode
-						,elementIds: []
+						,elementIds: [
+							sourceNode.id
+							,targetNode.id
+						]
 						,fragments: {}
 						,n2_geometry: 'line'
 					};
 					this.effectiveElementsById[effectiveLinkId] = effectiveLink;
-					this.links.push(effectiveLink);
+					this.displayedLinks.push(effectiveLink);
 				};
 				
-				effectiveLink.elementIds.push(elemId);
+				// Adopt the fragments from both nodes. This is to perform translation
+				// of selection to the model
+				adoptFragments(effectiveLink, sourceNode);
+				adoptFragments(effectiveLink, targetNode);
 				
 				// Remember mapping from element to effective link
 				this.elementToEffectiveId[elemId] = effectiveLinkId;
 
-				adoptFragments(effectiveLink, sourceNode);
-				adoptFragments(effectiveLink, targetNode);
 			};
 		};
 
-		//var paths = this.bundle(this.links);
-		for(var i=0,e=this.links.length; i<e; ++i){
-			var link = this.links[i];
+		//var paths = this.bundle(this.displayedLinks);
+		for(var i=0,e=this.displayedLinks.length; i<e; ++i){
+			var link = this.displayedLinks[i];
 			//var path = paths[i];
 			var path = [link.source, root, link.target];
 			link.path = path;
+			
+			// Adjust styling
+			this._refreshEffectiveLinkIntent(link);
 		};
 
 		// Adjust nodes and sort
-		for(var i=0,e=this.sortedNodes.length; i<e; ++i){
-			var node = this.sortedNodes[i];
+		for(var i=0,e=this.displayedNodesSorted.length; i<e; ++i){
+			var node = this.displayedNodesSorted[i];
 
 			node.n2_geometry = 'point';
 			node.orig_x = node.x;
 			delete node.x;
+			
+			// Add to map of displayed elements
+			this.effectiveElementsById[node.id] = node;
 		};
 		
-		this._documentsUpdated(this.sortedNodes, this.links);
+		// Compute derived intents
+		this._computeDerivedIntent({}, {});
+		
+		this._documentsUpdated(this.displayedNodesSorted, this.displayedLinks);
 		
 		function findVisibleNode(n){
 			if( !n ) return null;
@@ -1143,61 +1161,6 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		};
 	},
 	
-	_refreshEffectiveNodeIntent: function(effectiveElement){
-		effectiveElement.n2_selected = false;
-		effectiveElement.n2_selectedIntent = undefined;
-		effectiveElement.n2_hovered = false;
-		effectiveElement.n2_hoveredIntent = undefined;
-		effectiveElement.n2_found = false;
-		effectiveElement.n2_intent = undefined;
-		
-		if( effectiveElement.elementIds ){
-			for(var i=0,e=effectiveElement.elementIds.length; i<e; ++i){
-				var elemId = effectiveElement.elementIds[i];
-				var elem = this.elementsById[elemId];
-				
-				if( elem ){
-					if( elem.n2_selected ){
-						effectiveElement.n2_selected = true;
-					};
-					if( elem.n2_hovered ){
-						effectiveElement.n2_hovered = true;
-					};
-					if( elem.n2_found ){
-						effectiveElement.n2_found = true;
-					};
-					if( elem.n2_selectedIntent ){
-						if( effectiveElement.n2_selectedIntent === null ){
-							// collision
-						} else if( effectiveElement.n2_selectedIntent === undefined ){
-							effectiveElement.n2_selectedIntent = elem.n2_selectedIntent;
-						} else {
-							effectiveElement.n2_selectedIntent = null;
-						};
-					};
-					if( elem.n2_hoveredIntent ){
-						if( effectiveElement.n2_hoveredIntent === null ){
-							// collision
-						} else if( effectiveElement.n2_hoveredIntent === undefined ){
-							effectiveElement.n2_hoveredIntent = elem.n2_hoveredIntent;
-						} else {
-							effectiveElement.n2_hoveredIntent = null;
-						};
-					};
-					if( elem.n2_intent ){
-						if( effectiveElement.n2_intent === null ){
-							// collision
-						} else if( effectiveElement.n2_intent === undefined ){
-							effectiveElement.n2_intent = elem.n2_intent;
-						} else {
-							effectiveElement.n2_intent = null;
-						};
-					};
-				};
-			};
-		};
-	},
-	
 	_refreshEffectiveLinkIntent: function(effectiveElement){
 		// On links, all elements must be selected for the link to
 		// be selected. Start assuming that the link is selected. If any
@@ -1277,13 +1240,95 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		};
 	},
 	
+	_computeDerivedIntent: function(changedNodeMap, changedLinkMap){
+ 		// Count number of visible nodes selected and hovered.
+ 		var nodesSelectedCount = 0;
+		var nodesHoveredCount = 0;
+		for(var elemId in this.effectiveElementsById){
+			var elem = this.effectiveElementsById[elemId];
+			if( elem.isNode ){
+				if( elem.n2_selected ){
+					++nodesSelectedCount;
+				};
+				if( elem.n2_hovered ){
+					++nodesHoveredCount;
+				};
+			};
+		};
+
+ 		// Compute derived selection and hover
+		for(var elemId in this.effectiveElementsById){
+			var elem = this.effectiveElementsById[elemId];
+			
+			if( elem.isLink ){
+				// If a link is selected, both associated nodes
+				// are selected (derived)
+				if( elem.n2_selected ){
+					elem.source.temp_selected = true;
+					elem.target.temp_selected = true;
+				};
+				
+				// If a link is hovered, both associated nodes
+				// are hovered (derived)
+				if( elem.n2_hovered ){
+					elem.source.temp_hovered = true;
+					elem.target.temp_hovered = true;
+				};
+
+				// If a link is associated with a node which is the sole node selected,
+				// then both the link and the other node are selected (derived)
+				if( elem.source.n2_selected 
+				 && nodesSelectedCount < 2 ){
+					elem.temp_selected = true;
+					elem.target.temp_selected = true;
+				};
+				if( elem.target.n2_selected 
+				 && nodesSelectedCount < 2 ){
+					elem.temp_selected = true;
+					elem.source.temp_selected = true;
+				};
+
+				// If a link is associated node which is the sole node hovered,
+				// then both the link and the other node are hovered (derived)
+				if( elem.source.n2_hovered 
+				 && nodesHoveredCount < 2 ){
+					elem.temp_hovered = true;
+					elem.target.temp_hovered = true;
+				};
+				if( elem.target.n2_hovered 
+				 && nodesHoveredCount < 2 ){
+					elem.temp_hovered = true;
+					elem.source.temp_hovered = true;
+				};
+			};
+		};
+
+ 		// Detect changes in derived selection and hover
+		for(var elemId in this.effectiveElementsById){
+			var elem = this.effectiveElementsById[elemId];
+			
+			if( elem.n2_derived_selected !== elem.temp_selected ){
+				elem.n2_derived_selected = elem.temp_selected;
+				if( elem.isLink ){
+					changedLinkMap[elem.id] = elem;
+				} else if( elem.isNode ){
+					changedNodeMap[elem.id] = elem;
+				};
+			};
+			
+			if( elem.n2_derived_hovered !== elem.temp_hovered ){
+				elem.n2_derived_hovered = elem.temp_hovered;
+				if( elem.isLink ){
+					changedLinkMap[elem.id] = elem;
+				} else if( elem.isNode ){
+					changedNodeMap[elem.id] = elem;
+				};
+			};
+		};
+	},
+	
 	_intentChanged: function(changedElements){
 		// Reset all temp variables
-		for(var elemId in this.elementsById){
-			var elem = this.elementsById[elemId];
-			elem.temp_hovered = false;
-			elem.temp_selected = false;
-		};
 		for(var elemId in this.effectiveElementsById){
 			var elem = this.effectiveElementsById[elemId];
 			elem.temp_hovered = false;
@@ -1302,134 +1347,24 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			var changedEffectiveElementId = this.elementToEffectiveId[changedElementId];
 			if( changedEffectiveElementId ){
 				effectiveIdsToUpdate[changedEffectiveElementId] = true;
+			} else {
+				effectiveIdsToUpdate[changedElementId] = true;
 			};
 		};
 		for(var changedEffectiveElementId in effectiveIdsToUpdate){
 			var effectiveElement = this.effectiveElementsById[changedEffectiveElementId];
 			if( effectiveElement ){
-				
 				if( effectiveElement.isNode ){
-					this._refreshEffectiveNodeIntent(effectiveElement);
-					nodeMap[effectiveElement.id] = effectiveElement;
-	 				
-	 			} else if( effectiveElement.isLink ){
+	 				nodeMap[effectiveElement.id] = effectiveElement;
+				} else if( effectiveElement.isLink ){
 					this._refreshEffectiveLinkIntent(effectiveElement);
 	 				linkMap[effectiveElement.id] = effectiveElement;
 				};
 			};
 		};
-		
- 		// Segregate nodes and links.
- 		for(var i=0,e=changedElements.length; i<e; ++i){
- 			var changedNode = changedElements[i];
- 			
- 			// $n2.log(changedNode.n2_id+' sel:'+changedNode.n2_selected+' foc:'+changedNode.n2_hovered+' find:'+changedNode.n2_found);
- 			
- 			if( changedNode.isNode ){
- 				nodeMap[changedNode.id] = changedNode;
- 				
- 			} else if( changedNode.isLink ){
- 				linkMap[changedNode.id] = changedNode;
- 			};
- 		};
 
- 		// Count number of visible nodes selected and hovered.
- 		var nodesSelectedCount = 0;
-		var nodesHoveredCount = 0;
-		for(var elemId in this.elementsById){
-			var elem = this.elementsById[elemId];
-			if( elem.isNode ){
-				if( elem.canvasVisible || elem.canvasVisibleDerived ){
-					if( elem.n2_selected ){
-						++nodesSelectedCount;
-					};
-					if( elem.n2_hovered ){
-						++nodesHoveredCount;
-					};
-				};
-			};
-		};
-		for(var elemId in this.effectiveElementsById){
-			var elem = this.effectiveElementsById[elemId];
-			if( elem.isNode ){
-				if( elem.n2_selected ){
-					++nodesSelectedCount;
-				};
-				if( elem.n2_hovered ){
-					++nodesHoveredCount;
-				};
-			};
-		};
-
- 		// Compute derived selection and hover
-		for(var elemId in this.elementsById){
-			var elem = this.elementsById[elemId];
-			
-			if( elem.isLink ){
-				// If a link is selected, both associated nodes
-				// are selected (derived)
-				if( elem.n2_selected ){
-					elem.source.temp_selected = true;
-					elem.target.temp_selected = true;
-				};
-				
-				// If a link is hovered, both associated nodes
-				// are hovered (derived)
-				if( elem.n2_hovered ){
-					elem.source.temp_hovered = true;
-					elem.target.temp_hovered = true;
-				};
-
-				// If a link has an associated node which is selected,
-				// then both the link and the other node are selected (derived)
-				if( elem.source.n2_selected 
-				 && nodesSelectedCount < 2 ){
-					elem.temp_selected = true;
-					elem.target.temp_selected = true;
-				};
-				if( elem.target.n2_selected 
-				 && nodesSelectedCount < 2 ){
-					elem.temp_selected = true;
-					elem.source.temp_selected = true;
-				};
-
-				// If a link has an associated node which is hovered,
-				// then both the link and the other node are hovered (derived)
-				if( elem.source.n2_hovered 
-				 && nodesHoveredCount < 2 ){
-					elem.temp_hovered = true;
-					elem.target.temp_hovered = true;
-				};
-				if( elem.target.n2_hovered 
-				 && nodesHoveredCount < 2 ){
-					elem.temp_hovered = true;
-					elem.source.temp_hovered = true;
-				};
-			};
-		};
-
- 		// Detect changes in derived selection and hover
-		for(var elemId in this.elementsById){
-			var elem = this.elementsById[elemId];
-			
-			if( elem.n2_derived_selected !== elem.temp_selected ){
-				elem.n2_derived_selected = elem.temp_selected;
-				if( elem.isLink ){
-					linkMap[elem.id] = elem;
-				} else if( elem.isNode ){
-					nodeMap[elem.id] = elem;
-				};
-			};
-			
-			if( elem.n2_derived_hovered !== elem.temp_hovered ){
-				elem.n2_derived_hovered = elem.temp_hovered;
-				if( elem.isLink ){
-					linkMap[elem.id] = elem;
-				} else if( elem.isNode ){
-					nodeMap[elem.id] = elem;
-				};
-			};
-		};
+		// Compute derived intent
+		this._computeDerivedIntent(nodeMap, linkMap);
 
  		// Convert node map into a node array
  		var nodes = [];
@@ -1770,13 +1705,13 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		
  		var magnifyEnabled = false;
  		if( typeof this.magnifyThresholdCount === 'number' 
- 		 && this.magnifyThresholdCount <= this.sortedNodes.length ){
+ 		 && this.magnifyThresholdCount <= this.displayedNodesSorted.length ){
  			magnifyEnabled = true;
  		};
  		
  		var changedNodes = [];
- 		for(var i=0,e=this.sortedNodes.length; i<e; ++i){
- 			var node = this.sortedNodes[i];
+ 		for(var i=0,e=this.displayedNodesSorted.length; i<e; ++i){
+ 			var node = this.displayedNodesSorted[i];
 
  			node.transitionNeeded = false;
  			var x = null;
@@ -1890,7 +1825,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 
  		// Animate links
  		this._getSvgElem().select('g.links').selectAll('.link')
-			.data(this.links, function(link){ return link.id; })
+			.data(this.displayedLinks, function(link){ return link.id; })
 			.filter(function(link){
 				if( link.source.transitionNeeded ) return true;
 				if( link.target.transitionNeeded ) return true;
