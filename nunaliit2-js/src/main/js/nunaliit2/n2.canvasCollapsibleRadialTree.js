@@ -440,18 +440,38 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 
 	nodesById: null,
 	
+	/*
+	 * Displayed nodes
+	 */
 	sortedNodes: null,
 
+	/*
+	 * Displayed links. These are effective links
+	 */
 	links: null,
 	
 	elementGenerator: null,
 	
+	/*
+	 * This is a dictionary of all elements received by the element
+	 * generator, stored by id
+	 */
 	elementsById: null,
 
 	findableDocsById: null,
 	
+	/*
+	 * This is a map of all effective elements, stored by
+	 * id. Effective elements are elements derived from the
+	 * ones provided by the generator.
+	 */
 	effectiveElementsById: null,
 
+	/*
+	 * Effective elements are derived from one or multiple
+	 * source elements (the ones from the generator). This maps the
+	 * source element ids to effective element ids
+	 */
 	elementToEffectiveId: null,
 	
 	dimensions: null,
@@ -670,7 +690,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		};
  		
  		this.svgId = $n2.getUniqueId();
- 		var $svg = $d.select('#' + this.canvasId)
+ 		var $svg = d3.select('#' + this.canvasId)
  			.append('svg')
  			.attr('id',this.svgId);
 
@@ -703,11 +723,11 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			.attr('stroke-opacity',0)
 			.attr('fill','none')
 			.on('mouseover',function(){
-				var e = $d.event;
+				var e = d3.event;
 				_this._magnifyLocation(e);
 			})
 			.on('mousemove',function(){
-				var e = $d.event;
+				var e = d3.event;
 				_this._magnifyLocation(e);
 			})
 			;
@@ -787,7 +807,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  	},
  	
  	_getSvgElem: function() {
- 		return $d.select('#' + this.svgId);
+ 		return d3.select('#' + this.svgId);
  	},
 	
 	_elementsChanged: function(addedElements, updatedElements, removedElements){
@@ -859,7 +879,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			,children: []
 			,expanded: true
 		};
-		var links = [];
+		var sourceLinks = [];
 		for(var elemId in this.elementsById){
 			var elem = this.elementsById[elemId];
 			
@@ -889,7 +909,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			};
 
 			if( elem.isLink ){
-				links.push(elem);
+				sourceLinks.push(elem);
 			};
 		};
 		
@@ -933,8 +953,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			};
 			
 			// Nodes that are linked to visible ones are also visible
-			for(var i=0,e=links.length; i<e; ++i){
-				var link = links[i];
+			for(var i=0,e=sourceLinks.length; i<e; ++i){
+				var link = sourceLinks[i];
 
 				var sourceNodeVisible = findVisibleNode(link.source);
 				var targetNodeVisible = findVisibleNode(link.target);
@@ -977,15 +997,15 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		this.effectiveElementsById = {};
 		this.elementToEffectiveId = {};
 		this.links = [];
-		for(var i=0,e=links.length; i<e; ++i){
-			var elem = links[i];
+		for(var i=0,e=sourceLinks.length; i<e; ++i){
+			var elem = sourceLinks[i];
 			var elemId = elem.id;
 
 			var sourceNode = findShownNode(elem.source);
 			var targetNode = findShownNode(elem.target);
 			
 			if( sourceNode && targetNode ){
-				var effectiveLinkId = computeLinkId(sourceNode,targetNode);
+				var effectiveLinkId = computeEffectiveLinkId(sourceNode,targetNode);
 				var effectiveLink = this.effectiveElementsById[effectiveLinkId];
 				if( !effectiveLink ){
 					effectiveLink = {
@@ -1098,7 +1118,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			return findVisibleNode(parent);
 		};
 		
-		function computeLinkId(node1,node2){
+		function computeEffectiveLinkId(node1,node2){
 			var ids = [ node1.id, node2.id ];
 			ids.sort();
 			return ids.join('_to_');
@@ -1123,7 +1143,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		};
 	},
 	
-	_refreshEffectiveElementIntent: function(effectiveElement){
+	_refreshEffectiveNodeIntent: function(effectiveElement){
 		effectiveElement.n2_selected = false;
 		effectiveElement.n2_selectedIntent = undefined;
 		effectiveElement.n2_hovered = false;
@@ -1178,6 +1198,85 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		};
 	},
 	
+	_refreshEffectiveLinkIntent: function(effectiveElement){
+		// On links, all elements must be selected for the link to
+		// be selected. Start assuming that the link is selected. If any
+		// element is not selected, then turn off selection
+		effectiveElement.n2_selected = true;
+		effectiveElement.n2_selectedIntent = undefined;
+		effectiveElement.n2_hovered = true;
+		effectiveElement.n2_hoveredIntent = undefined;
+		effectiveElement.n2_found = true;
+		effectiveElement.n2_intent = undefined;
+		
+		var atLeastOneElement = false;
+		if( effectiveElement.elementIds ){
+			for(var i=0,e=effectiveElement.elementIds.length; i<e; ++i){
+				var elemId = effectiveElement.elementIds[i];
+				var elem = this.elementsById[elemId];
+				
+				if( elem ){
+					atLeastOneElement = true;
+					
+					if( !elem.n2_selected ){
+						effectiveElement.n2_selected = false;
+					};
+					if( !elem.n2_hovered ){
+						effectiveElement.n2_hovered = false;
+					};
+					if( !elem.n2_found ){
+						effectiveElement.n2_found = false;
+					};
+					if( elem.n2_selectedIntent ){
+						if( effectiveElement.n2_selectedIntent === null ){
+							// collision
+						} else if( effectiveElement.n2_selectedIntent === undefined ){
+							effectiveElement.n2_selectedIntent = elem.n2_selectedIntent;
+						} else {
+							effectiveElement.n2_selectedIntent = null;
+						};
+					};
+					if( elem.n2_hoveredIntent ){
+						if( effectiveElement.n2_hoveredIntent === null ){
+							// collision
+						} else if( effectiveElement.n2_hoveredIntent === undefined ){
+							effectiveElement.n2_hoveredIntent = elem.n2_hoveredIntent;
+						} else {
+							effectiveElement.n2_hoveredIntent = null;
+						};
+					};
+					if( elem.n2_intent ){
+						if( effectiveElement.n2_intent === null ){
+							// collision
+						} else if( effectiveElement.n2_intent === undefined ){
+							effectiveElement.n2_intent = elem.n2_intent;
+						} else {
+							effectiveElement.n2_intent = null;
+						};
+					};
+				};
+			};
+		};
+		
+		// It is not selected if not associated with any element
+		if( !atLeastOneElement ){
+			effectiveElement.n2_selected = false;
+			effectiveElement.n2_hovered = false;
+			effectiveElement.n2_intent = false;
+		};
+		
+		// Turn off intent if not selected
+		if( !effectiveElement.n2_selected ){
+			effectiveElement.n2_selectedIntent = undefined;
+		};
+		if( !effectiveElement.n2_hovered ) {
+			effectiveElement.n2_hoveredIntent = undefined;
+		};
+		if( !effectiveElement.n2_found ){
+			effectiveElement.n2_intent = undefined;
+		};
+	},
+	
 	_intentChanged: function(changedElements){
 		// Reset all temp variables
 		for(var elemId in this.elementsById){
@@ -1194,7 +1293,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		// Keep track of modified nodes and links
 		var nodeMap = {};
  		var linkMap = {};
-		
+
 		// Update effective elements from the ones received from the element generator
 		var effectiveIdsToUpdate = {};
 		for(var i=0,e=changedElements.length; i<e; ++i){
@@ -1208,18 +1307,19 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		for(var changedEffectiveElementId in effectiveIdsToUpdate){
 			var effectiveElement = this.effectiveElementsById[changedEffectiveElementId];
 			if( effectiveElement ){
-				this._refreshEffectiveElementIntent(effectiveElement);
 				
 				if( effectiveElement.isNode ){
+					this._refreshEffectiveNodeIntent(effectiveElement);
 					nodeMap[effectiveElement.id] = effectiveElement;
 	 				
 	 			} else if( effectiveElement.isLink ){
+					this._refreshEffectiveLinkIntent(effectiveElement);
 	 				linkMap[effectiveElement.id] = effectiveElement;
 				};
 			};
 		};
 		
- 		// Segregate nodes and links
+ 		// Segregate nodes and links.
  		for(var i=0,e=changedElements.length; i<e; ++i){
  			var changedNode = changedElements[i];
  			
@@ -1232,6 +1332,34 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  				linkMap[changedNode.id] = changedNode;
  			};
  		};
+
+ 		// Count number of visible nodes selected and hovered.
+ 		var nodesSelectedCount = 0;
+		var nodesHoveredCount = 0;
+		for(var elemId in this.elementsById){
+			var elem = this.elementsById[elemId];
+			if( elem.isNode ){
+				if( elem.canvasVisible || elem.canvasVisibleDerived ){
+					if( elem.n2_selected ){
+						++nodesSelectedCount;
+					};
+					if( elem.n2_hovered ){
+						++nodesHoveredCount;
+					};
+				};
+			};
+		};
+		for(var elemId in this.effectiveElementsById){
+			var elem = this.effectiveElementsById[elemId];
+			if( elem.isNode ){
+				if( elem.n2_selected ){
+					++nodesSelectedCount;
+				};
+				if( elem.n2_hovered ){
+					++nodesHoveredCount;
+				};
+			};
+		};
 
  		// Compute derived selection and hover
 		for(var elemId in this.elementsById){
@@ -1254,22 +1382,26 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 
 				// If a link has an associated node which is selected,
 				// then both the link and the other node are selected (derived)
-				if( elem.source.n2_selected ){
+				if( elem.source.n2_selected 
+				 && nodesSelectedCount < 2 ){
 					elem.temp_selected = true;
 					elem.target.temp_selected = true;
 				};
-				if( elem.target.n2_selected ){
+				if( elem.target.n2_selected 
+				 && nodesSelectedCount < 2 ){
 					elem.temp_selected = true;
 					elem.source.temp_selected = true;
 				};
 
 				// If a link has an associated node which is hovered,
 				// then both the link and the other node are hovered (derived)
-				if( elem.source.n2_hovered ){
+				if( elem.source.n2_hovered 
+				 && nodesHoveredCount < 2 ){
 					elem.temp_hovered = true;
 					elem.target.temp_hovered = true;
 				};
-				if( elem.target.n2_hovered ){
+				if( elem.target.n2_hovered 
+				 && nodesHoveredCount < 2 ){
 					elem.temp_hovered = true;
 					elem.source.temp_hovered = true;
 				};
@@ -1398,10 +1530,10 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  			})
  			.on('mouseover', function(n,i){
  				_this._initiateMouseOver(n);
- 				_this._magnifyLocation($d.event);
+ 				_this._magnifyLocation(d3.event);
  			})
  			.on('mousemove', function(n,i){
- 				_this._magnifyLocation($d.event);
+ 				_this._magnifyLocation(d3.event);
  			})
  			.on('mouseout', function(n,i){
  				_this._initiateMouseOut(n);
@@ -1431,10 +1563,10 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  			})
  			.on('mouseover', function(n,i){
  				_this._initiateMouseOver(n);
- 				_this._magnifyLocation($d.event);
+ 				_this._magnifyLocation(d3.event);
  			})
  			.on('mousemove', function(n,i){
- 				_this._magnifyLocation($d.event);
+ 				_this._magnifyLocation(d3.event);
  			})
  			.on('mouseout', function(n,i){
  				_this._initiateMouseOut(n);
@@ -1472,10 +1604,10 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  			})
  			.on('mouseover', function(n,i){
  				_this._initiateMouseOver(n);
- 				_this._magnifyLocation($d.event);
+ 				_this._magnifyLocation(d3.event);
  			})
  			.on('mousemove', function(n,i){
- 				_this._magnifyLocation($d.event);
+ 				_this._magnifyLocation(d3.event);
  			})
  			.on('mouseout', function(n,i){
  				_this._initiateMouseOut(n);
@@ -1502,10 +1634,10 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  			})
  			.on('mouseover', function(n,i){
  				_this._initiateMouseOver(n);
- 				_this._magnifyLocation($d.event);
+ 				_this._magnifyLocation(d3.event);
  			})
  			.on('mousemove', function(n,i){
- 				_this._magnifyLocation($d.event);
+ 				_this._magnifyLocation(d3.event);
  			})
  			.on('mouseout', function(n,i){
  				_this._initiateMouseOut(n);
@@ -1863,11 +1995,10 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  
 //--------------------------------------------------------------------------
 function HandleCanvasAvailableRequest(m){
-	// Required library: d3
-	if( !$d && window ) $d = window.d3;
 
 	if( m.canvasType === 'collapsibleRadialTree' ){
-		if( $d ) {
+		// Required library: d3
+		if( window && window.d3 ) {
 			m.isAvailable = true;
 		} else {
 			$n2.log('Canvas collapsibleRadialTree requires d3 library');
