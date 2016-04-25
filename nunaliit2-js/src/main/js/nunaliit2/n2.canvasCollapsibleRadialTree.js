@@ -396,6 +396,7 @@ var CollapsibleLayout = $n2.Class({
 	source: <object>  (element which is at the beginning of the line [only links])
 	target: <object>  (element which is at the end of the line [only links])
 	sortValue: <string> (value used to sort the elements between themselves)
+	group: <string> (Optional. Grouping nodes)
 }
 
 Here are attributes added by the canvas:
@@ -438,8 +439,6 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  	
 	styleRules: null,
 
-	nodesById: null,
-	
 	/*
 	 * Displayed nodes
 	 */
@@ -457,6 +456,19 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 	 * generator, stored by id
 	 */
 	elementsById: null,
+
+	/*
+	 * This is a dictionary of all elements received by the element
+	 * generator, organized by group names
+	 */
+	elementsByGroup: null,
+	
+	/*
+	 * This is a dictionary of all elements received by the generator
+	 * that are associated with a group. This dictionary maps element identifier
+	 * to group name.
+	 */
+	elementIdToGroupName: null,
 
 	findableDocsById: null,
 	
@@ -538,7 +550,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			};
 		};
 
- 		this.nodesById = {};
+ 		this.elementsByGroup = {};
+ 		this.elementIdToGroupName = {};
  		this.displayedNodesSorted = [];
  		this.displayedLinks = [];
  		this.currentMouseOver = null;
@@ -662,6 +675,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		// Filter options
  		this.filterOptions = $n2.extend({
  			expand: false
+ 			,showGroupMembers: true
  		},opts.filter);
  		
  		opts.onSuccess();
@@ -819,18 +833,77 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		for(var i=0,e=removedElements.length; i<e; ++i){
 			var removed = removedElements[i];
 			delete this.elementsById[removed.id];
+			
+			// Groups
+			var groupName = this.elementIdToGroupName[removed.id];
+			if( groupName ){
+				var groupElems = this.elementsByGroup[groupName];
+				if( groupElems ){
+					groupElems = groupElems.filter(function(elem){
+						if( elem.id === removed.id ){
+							return false;
+						};
+						return true;
+					});
+					this.elementsByGroup[groupName] = groupElems;
+				};
+				
+				delete elementIdToGroupName[removed.id];
+			};
 		};
 		
 		// Add elements
 		for(var i=0,e=addedElements.length; i<e; ++i){
 			var added = addedElements[i];
 			this.elementsById[ added.id ] = added;
+			
+			// Groups
+			if( added.group ){
+				var groupName = added.group;
+				var groupElems = this.elementsByGroup[groupName];
+				if( !groupElems ){
+					groupElems = [];
+					this.elementsByGroup[groupName] = groupElems;
+				};
+				groupElems.push(added);
+				this.elementIdToGroupName[added.id] = groupName;
+			};
 		};
 		
 		// Update elements
 		for(var i=0,e=updatedElements.length; i<e; ++i){
 			var updated = updatedElements[i];
 			this.elementsById[ updated.id ] = updated;
+			
+			// Groups
+			var groupName = this.elementIdToGroupName[updated.id];
+			if( groupName !== updated.group ){
+				if( groupName ){
+					var groupElems = this.elementsByGroup[groupName];
+					if( groupElems ){
+						groupElems = groupElems.filter(function(elem){
+							if( elem.id === updated.id ){
+								return false;
+							};
+							return true;
+						});
+						this.elementsByGroup[groupName] = groupElems;
+					};
+
+					delete elementIdToGroupName[updated.id];
+				};
+				
+				if( updated.group ){
+					var groupName = updated.group;
+					var groupElems = this.elementsByGroup[groupName];
+					if( !groupElems ){
+						groupElems = [];
+						this.elementsByGroup[groupName] = groupElems;
+					};
+					groupElems.push(updated);
+					this.elementIdToGroupName[updated.id] = groupName;
+				};
+			};
 		};
 		
 		// Update list of documents that can be found
@@ -924,6 +997,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		if( this.filterOptions.expand ){
 			var deepestExpandedNode = undefined;
 			var maxDepth = -1;
+			
+			// Compute which nodes are available for display
 			visitTree(root,function(n,d){
 				n.canvasVisible = false;
 				n.canvasVisibleDerived = false;
@@ -942,6 +1017,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 				};
 			});
 			
+			// The children of the deepest expanded node are visible, including
+			// the parents
 			if( deepestExpandedNode && deepestExpandedNode.children ){
 				for(var i=0,e=deepestExpandedNode.children.length; i<e; ++i){
 					var node = deepestExpandedNode.children[i];
@@ -977,6 +1054,16 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 					sourceNodeAvailable.canvasVisibleDerived = true;
 				};
 			};
+
+			// If by option, we show nodes that are grouped, then
+			// add back the nodes that are grouped
+			var showGroupMembers = this.filterOptions.showGroupMembers;
+			visitTree(root,function(n,d){
+				if( showGroupMembers && n.group ){
+					n.canvasAvailable = true;
+					n.canvasVisible = true;
+				};
+			});
 			
 		} else {
 			// Do not filter on expand
@@ -1851,6 +1938,21 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  			delete this.expandedNodesById[elementId];
  		} else {
  			this.expandedNodesById[elementId] = true;
+ 			
+ 			// If expanding a node and the node is part of a group,
+ 			// then collapse all nodes associated with the same group
+ 			var groupName = elementData.group;
+ 			if( groupName ){
+ 				var groupElems = this.elementsByGroup[groupName];
+ 				if( groupElems ){
+ 					for(var i=0,e=groupElems.length; i<e; ++i){
+ 						var groupNode = groupElems[i];
+ 						if( groupNode.id !== elementData.id ){
+ 							delete this.expandedNodesById[groupNode.id];
+ 						};
+ 					};
+ 				};
+ 			};
  		};
  		
  		// Need to initiate redrawing
