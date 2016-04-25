@@ -502,6 +502,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 	magnifyThresholdCount: null,
 	
 	filterOptions: null,
+	
+	arcOptions: null,
  	
 	currentMouseOver: null,
 
@@ -521,6 +523,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			,magnify: null
 			,styleRules: null
 			,filter: null
+			,arcs: null
 			,toggleSelection: false
 			,originAngle: 0
 			,elementGeneratorType: 'default'
@@ -687,6 +690,13 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  			expand: false
  			,showGroupMembers: true
  		},opts.filter);
+ 		
+ 		// Arc options
+ 		this.arcOptions = $n2.extend({
+ 			show: true
+ 			,offset: 0
+ 			,extent: 200
+ 		},opts.arcs);
  		
  		opts.onSuccess();
 
@@ -1498,9 +1508,11 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			.data(nodes, function(node){ return node.id; });
 		this._adjustElementStyles(selectedLabels);
 
- 		var selectedArcs = this._getSvgElem().select('g.arcs').selectAll('.arc')
-			.data(nodes, function(node){ return node.id; });
-		this._adjustElementStyles(selectedArcs);
+		if( this.arcOptions.show ){
+	 		var selectedArcs = this._getSvgElem().select('g.arcs').selectAll('.arc')
+				.data(nodes, function(node){ return node.id; });
+			this._adjustElementStyles(selectedArcs);
+		};
 
  		// Update style on links
  		var selectedLinks = this._getSvgElem().select('g.links').selectAll('.link')
@@ -1663,35 +1675,37 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		this._adjustElementStyles(selectedLabels);
 
 		// Elements that are used to draw arcs to show parent/children relationship
-		var arcData = updatedNodeData.filter(function(node){
-			return node.children ? (node.children.length > 0) : false;
-		});
- 		var selectedArcs = this._getSvgElem().select('g.arcs').selectAll('.arc')
- 			.data(arcData,function(node){ return node.id; });
-
- 		var createdArcs = selectedArcs.enter()
- 			.append('path')
- 			.attr('class','arc')
- 			.on('click', function(n,i){
- 				_this._initiateMouseClick(n);
- 				_this._initiateExpandCollapse(n);
- 			})
- 			.on('mouseover', function(n,i){
- 				_this._initiateMouseOver(n);
- 				_this._magnifyLocation(d3.event);
- 			})
- 			.on('mousemove', function(n,i){
- 				_this._magnifyLocation(d3.event);
- 			})
- 			.on('mouseout', function(n,i){
- 				_this._initiateMouseOut(n);
- 			})
- 			;
- 		this._adjustElementStyles(createdArcs);
-
- 		selectedArcs.exit().remove();
-
- 		this._adjustElementStyles(selectedArcs);
+		if( this.arcOptions.show ){
+			var arcData = updatedNodeData.filter(function(node){
+				return node.children ? (node.children.length > 0) : false;
+			});
+	 		var selectedArcs = this._getSvgElem().select('g.arcs').selectAll('.arc')
+	 			.data(arcData,function(node){ return node.id; });
+	
+	 		var createdArcs = selectedArcs.enter()
+	 			.append('path')
+	 			.attr('class','arc')
+	 			.on('click', function(n,i){
+	 				_this._initiateMouseClick(n);
+	 				_this._initiateExpandCollapse(n);
+	 			})
+	 			.on('mouseover', function(n,i){
+	 				_this._initiateMouseOver(n);
+	 				_this._magnifyLocation(d3.event);
+	 			})
+	 			.on('mousemove', function(n,i){
+	 				_this._magnifyLocation(d3.event);
+	 			})
+	 			.on('mouseout', function(n,i){
+	 				_this._initiateMouseOut(n);
+	 			})
+	 			;
+	 		this._adjustElementStyles(createdArcs);
+	
+	 		selectedArcs.exit().remove();
+	
+	 		this._adjustElementStyles(selectedArcs);
+		};
 
 		// Links
  		var selectedLinks = this._getSvgElem().select('g.links').selectAll('.link')
@@ -1907,30 +1921,51 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		this._adjustElementStyles(changedLabels);
 
  		// Animate the position of the arcs around the circle
- 		var changedArcs = this._getSvgElem().select('g.arcs').selectAll('.arc')
-			.data(changedNodes, function(node){ return node.id; });
- 		
- 		changedArcs
- 			.transition()
-			.attr('transform', function(d) { 
-				return 'rotate(' + (d.x - 90 - (d.xIndent / 2)) + ')';
-			})
-			.attr('d', function(d) {
-				var angleDeg = (d.xMax - d.x + d.xIndent);
-				var angle = angleDeg / 180 * Math.PI;
-				var x = (d.y - 10) * Math.cos(angle);
-				var y = (d.y - 10) * Math.sin(angle);
-				var path = [
-				   'M', (d.y - 10), ' 0'
-				   ,' A ', (d.y - 10), ' ',  (d.y - 10), ' 0 '
-				   ,(angleDeg > 180 ? '1' : '0') // large arc
-				   ,' 1 ', x, ' ', y
-				].join('');
-				return path;
-			})
-			;
- 		
- 		this._adjustElementStyles(changedArcs);
+		if( this.arcOptions.show ){
+	 		var changedArcs = this._getSvgElem().select('g.arcs').selectAll('.arc')
+				.data(changedNodes, function(node){ return node.id; });
+	 		
+	 		var arcOffset = this.arcOptions.offset;
+	 		var arcExtent = this.arcOptions.extent;
+	 		
+	 		changedArcs
+	 			.transition()
+				.attr('transform', function(d) { 
+					return 'rotate(' + (d.x - 90 - (d.xIndent / 2)) + ')';
+				})
+				.attr('d', function(d) {
+					var x1 = d.y + arcOffset;
+					var y1 = 0;
+					
+					var angleDeg = (d.xMax - d.x + d.xIndent);
+					var angle = angleDeg / 180 * Math.PI;
+					var x2 = x1 * Math.cos(angle);
+					var y2 = x1 * Math.sin(angle);
+					
+					var x3 = (x1 + arcExtent) * Math.cos(angle);
+					var y3 = (x1 + arcExtent) * Math.sin(angle);
+	
+					var x4 = x1 + arcExtent;
+					var y4 = 0;
+	
+					// A rx ry x-axis-rotation large-arc-flag sweep-flag x y
+					var path = [
+					   'M', x1, ' ', y1
+					   ,' A ', x1, ' ',  x1, ' 0 '
+					   ,(angleDeg > 180 ? '1' : '0') // large arc
+					   ,' 1 ', x2, ' ', y2
+					   ,' L', x3, ' ', y3
+					   ,' A ', (x1 + arcExtent), ' ',  (x1 + arcExtent), ' 0 '
+					   ,(angleDeg > 180 ? '1' : '0') // large arc
+					   ,' 0 ', x4, ' ', y4
+					   ,' Z'
+					].join('');
+					return path;
+				})
+				;
+	 		
+	 		this._adjustElementStyles(changedArcs);
+		};
 
  		// Animate links
  		this._getSvgElem().select('g.links').selectAll('.link')
