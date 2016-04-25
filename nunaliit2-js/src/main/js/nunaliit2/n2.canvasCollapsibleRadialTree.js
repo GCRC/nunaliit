@@ -522,6 +522,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			,styleRules: null
 			,filter: null
 			,toggleSelection: false
+			,originAngle: 0
 			,elementGeneratorType: 'default'
 			,elementGeneratorOptions: null
 			,elementGenerator: null
@@ -537,6 +538,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		this.sourceModelId = opts.sourceModelId;
 		this.background = opts.background;
 		this.toggleSelection = opts.toggleSelection;
+		this.originAngle = opts.originAngle;
 		this.elementGenerator = opts.elementGenerator;
  		
 		this.modelId = $n2.getUniqueId('collapsibleRadialTreeCanvas');
@@ -548,6 +550,14 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			if( config.directory ){
 				this.dispatchService = config.directory.dispatchService;
 			};
+		};
+		
+		// Verify originAngle
+		if( typeof this.originAngle !== 'number' ){
+			this.originAngle = 0 + this.originAngle;
+		};
+		if( typeof this.originAngle !== 'number' ){
+			this.originAngle = 0;
 		};
 
  		this.elementsByGroup = {};
@@ -1143,8 +1153,18 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			var node = this.displayedNodesSorted[i];
 
 			node.n2_geometry = 'point';
-			node.orig_x = node.x;
+			node.orig_x = node.x + this.originAngle;
+			if( node.orig_x < 0 ){
+				node.orig_x = node.orig_x + 360;
+			};
 			delete node.x;
+			
+			if( node.xMax ){
+				node.xMax = node.xMax + this.originAngle;
+				if( node.xMax < 0 ){
+					node.xMax = node.xMax + 360;
+				};
+			};
 			
 			// Add to map of displayed elements
 			this.effectiveElementsById[node.id] = node;
