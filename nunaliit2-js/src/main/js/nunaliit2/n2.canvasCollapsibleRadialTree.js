@@ -40,6 +40,190 @@ var
  
 var $d = undefined;
 
+
+//--------------------------------------------------------------------------
+function Degrees(num){
+	if( typeof num !== 'number' ){
+		throw 'Degrees() accepts only numbers';
+	};
+	
+	if( num > 360 ){
+		num = num % 360;
+	};
+	
+	if( num < -360 ){
+		num = num % 360;
+	};
+
+	if( num < 0 ){
+		num = num + 360;
+	};
+	
+	return num;
+};
+
+Degrees.toRadians = function(num){
+	if( typeof num !== 'number' ){
+		throw 'Degrees.toRadians() accepts only numbers';
+	};
+	
+	return num * Math.PI / 180;
+};
+
+Degrees.sin = function(deg){
+	var rad = Degrees.toRadians(deg);
+	return Math.sin(rad);
+};
+
+Degrees.cos = function(deg){
+	var rad = Degrees.toRadians(deg);
+	return Math.cos(rad);
+};
+
+Degrees.atan = function(frac){
+	var rad = Math.atan(frac);
+	return rad * 180 / Math.PI;
+};
+
+//--------------------------------------------------------------------------
+var Angle = $n2.Class('Angle',{
+	
+	degrees: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			degrees: undefined
+			,radians: undefined
+		},opts_);
+		
+		if( typeof opts.degrees === 'number' ){
+			this.degrees = opts.degrees;
+		} else if( typeof opts.radians === 'number' ){
+			this.degrees = opts.radians * 180 / Math.PI;
+		};
+		
+		if( typeof this.degrees !== 'number' ){
+			throw 'An angle must be specified in degrees or radians';
+		};
+		
+		this._adjust();
+	},
+	
+	asDegrees: function(){
+		return this.degrees;
+	},
+	
+	asRadians: function(){
+		return this.degrees * Math.PI / 180;
+	},
+	
+	sin: function(){
+		return Math.sin(this.degrees * Math.PI / 180);
+	},
+	
+	cos: function(){
+		return Math.cos(this.degrees * Math.PI / 180);
+	},
+	
+	add: function(angle){
+		return new Angle({
+			degrees: (this.degrees + angle.degrees)
+		});
+	},
+	
+	subtract: function(angle){
+		return new Angle({
+			degrees: (this.degrees - angle.degrees)
+		});
+	},
+	
+	_adjust: function(){
+		this.degrees = Degrees(this.degrees);
+	}
+});
+
+//--------------------------------------------------------------------------
+var AngleInterval = $n2.Class('AngleInterval',{
+	
+	min: null,
+
+	max: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			min: undefined
+			,max: undefined
+		},opts_);
+		
+		this.min = opts.min;
+		this.max = opts.max;
+		
+		if( typeof this.min === 'object' 
+		 && typeof this.min.degrees === 'number' ){
+			// OK
+		} else {
+			throw 'AngleInterval must be given an angle as min property';
+		};
+		
+		if( typeof this.max === 'object' 
+		 && typeof this.max.degrees === 'number' ){
+			// OK
+		} else {
+			throw 'AngleInterval must be given an angle as max property';
+		};
+	},
+	
+	getMin: function(){
+		return this.min;
+	},
+	
+	getMax: function(){
+		return this.max;
+	},
+	
+	add: function(angle){
+		var min = this.min.add(angle);
+		var max = this.max.add(angle);
+		
+		return new AngleInterval({
+			min: min
+			,max: max
+		});
+	},
+	
+	subtract: function(angle){
+		var min = this.min.subtract(angle);
+		var max = this.max.subtract(angle);
+		
+		return new AngleInterval({
+			min: min
+			,max: max
+		});
+	},
+
+	includes: function(angle){
+		if( this.min.degrees === this.max.degrees ){
+			if( this.min.degrees === angle.degrees ){
+				return true;
+			};
+
+		} else if( this.min.degrees < this.max.degrees ){
+			if( this.min.degrees <= angle.degrees 
+			 && angle.degrees <= this.max.degrees ){
+				return true;
+			};
+
+		} else if( this.min.degrees > this.max.degrees ){
+			if( this.min.degrees >= angle.degrees 
+			 || angle.degrees >= this.max.degrees ){
+				return true;
+			};
+		};
+		
+		return false;
+	}
+});
+
 //--------------------------------------------------------------------------
 // Tree visiting
 // node: {
@@ -105,10 +289,12 @@ function RadialFishEye(){
     	k0,
     	k1,
     	focusAngle = null,
-    	angleAttribute = 'x';
+    	angleAttribute = function(d){
+			return d.x;
+		};
 	
 	function fisheye(d) {
-		var pointAngle = d[angleAttribute];
+		var pointAngle = angleAttribute(d);
 		
 		if( null === focusAngle ){
 			return {x: pointAngle, z: 1};
@@ -162,7 +348,15 @@ function RadialFishEye(){
 
     fisheye.angleAttribute = function(_) {
         if (!arguments.length) return angleAttribute;
-        angleAttribute = _;
+        if( typeof _ === 'function' ){
+            angleAttribute = _;
+        } else if( typeof _ === 'string' ){
+            angleAttribute = function(d){
+            	return d[_];
+            };
+        } else {
+        	throw 'Invalid angleAttribute property';
+        };
         return fisheye;
     };
     
@@ -436,6 +630,12 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 	background: null,
 	
 	toggleSelection: null,
+	
+	/*
+	 * Rotation of the graph as an angle. Positive angle
+	 * is clockwise.
+	 */
+	originAngle: null,
  	
 	styleRules: null,
 
@@ -534,14 +734,13 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		},opts_);
  		
 		var _this = this;
- 	
+		
 		this.canvasId = opts.canvasId;
 		this.interactionId = opts.interactionId;
 		this.moduleDisplay = opts.moduleDisplay;
 		this.sourceModelId = opts.sourceModelId;
 		this.background = opts.background;
 		this.toggleSelection = opts.toggleSelection;
-		this.originAngle = opts.originAngle;
 		this.elementGenerator = opts.elementGenerator;
  		
 		this.modelId = $n2.getUniqueId('collapsibleRadialTreeCanvas');
@@ -555,13 +754,14 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			};
 		};
 		
-		// Verify originAngle
-		if( typeof this.originAngle !== 'number' ){
-			this.originAngle = 0 + this.originAngle;
+		// originAngle
+		if( typeof opts.originAngle !== 'number' ){
+			opts.originAngle = 0 + opts.originAngle;
 		};
-		if( typeof this.originAngle !== 'number' ){
-			this.originAngle = 0;
+		if( typeof opts.originAngle !== 'number' ){
+			opts.originAngle = 0;
 		};
+		this.originAngle = Degrees(opts.originAngle);
 
  		this.elementsByGroup = {};
  		this.elementIdToGroupName = {};
@@ -664,7 +864,9 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		this.magnify = RadialFishEye()
  			.radius(10)
  			.distortion(2)
- 			.angleAttribute('orig_x')
+ 			.angleAttribute(function(n){
+ 				return n.orig_x;
+ 			})
  			;
  		for(var optionName in magnifyOptions){
  			var value = magnifyOptions[optionName];
@@ -1163,17 +1365,11 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			var node = this.displayedNodesSorted[i];
 
 			node.n2_geometry = 'point';
-			node.orig_x = node.x + this.originAngle;
-			if( node.orig_x < 0 ){
-				node.orig_x = node.orig_x + 360;
-			};
+			node.orig_x = Degrees(node.x + this.originAngle);
 			delete node.x;
 			
 			if( node.xMax ){
-				node.xMax = node.xMax + this.originAngle;
-				if( node.xMax < 0 ){
-					node.xMax = node.xMax + 360;
-				};
+				node.xMax = Degrees(node.xMax + this.originAngle);
 			};
 			
 			// Add to map of displayed elements
@@ -1577,7 +1773,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  			.attr('class','node')
  			.attr("r", 3)
  			.attr("transform", function(d) { 
- 				return "rotate(" + (d.orig_x - 90) + ")translate(" + d.y + ",0)"; 
+ 				return "rotate(" + Degrees(d.orig_x - 90) + ")translate(" + d.y + ",0)"; 
  			})
  			.on('click', function(n,i){
  				_this._initiateMouseClick(n);
@@ -1610,7 +1806,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 // 			.attr('class','control')
 // 			.attr("r", 3)
 // 			.attr("transform", function(d) { 
-// 				return "rotate(" + (d.orig_x - 90) + ")translate(" + (d.y + 10) + ",0)"; 
+// 				return "rotate(" + Degrees(d.orig_x - 90) + ")translate(" + (d.y + 10) + ",0)"; 
 // 			})
 // 			.on('click', function(n,i){
 // 				_this._initiateExpandCollapse(n);
@@ -1644,7 +1840,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  			.attr('class','label')
  			.attr("dy", ".31em")
  			.attr("transform", function(d) { 
- 				return "rotate(" + (d.orig_x - 90) + ")translate(" + (d.y + 6) + ",0)" 
+ 				return "rotate(" + Degrees(d.orig_x - 90) + ")translate(" + (d.y + 6) + ",0)" 
  					+ (d.orig_x < 180 ? "" : "rotate(180)"); 
  			})
  			.style("text-anchor", function(d) { 
@@ -1779,7 +1975,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 				angle = 90;
 			}
 		} else {
-			angle = Math.atan(effX / effY) * 180 / Math.PI;
+			angle = Degrees.atan(effX / effY);
 			if( effY < 0 ){
 				angle += 180;
 			};
@@ -1937,13 +2133,12 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 					var x1 = d.y + arcOffset;
 					var y1 = 0;
 					
-					var angleDeg = (d.xMax - d.x + d.xIndent);
-					var angle = angleDeg / 180 * Math.PI;
-					var x2 = x1 * Math.cos(angle);
-					var y2 = x1 * Math.sin(angle);
+					var angleDeg = Degrees(d.xMax - d.x + d.xIndent);
+					var x2 = x1 * Degrees.cos(angleDeg);
+					var y2 = x1 * Degrees.sin(angleDeg);
 					
-					var x3 = (x1 + arcExtent) * Math.cos(angle);
-					var y3 = (x1 + arcExtent) * Math.sin(angle);
+					var x3 = (x1 + arcExtent) * Degrees.cos(angleDeg);
+					var y3 = (x1 + arcExtent) * Degrees.sin(angleDeg);
 	
 					var x4 = x1 + arcExtent;
 					var y4 = 0;
