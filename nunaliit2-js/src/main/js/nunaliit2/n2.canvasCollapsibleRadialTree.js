@@ -635,6 +635,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 	sourceModelId: null,
  	
 	moduleDisplay: null,
+	
+	radius: null,
  	
 	background: null,
 	
@@ -727,6 +729,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			,config: null
 			,moduleDisplay: null
 			,sourceModelId: null
+			,radius: 300
 			,background: null
 			,line: null
 			,magnify: null
@@ -748,6 +751,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		this.interactionId = opts.interactionId;
 		this.moduleDisplay = opts.moduleDisplay;
 		this.sourceModelId = opts.sourceModelId;
+		this.radius = 0 + opts.radius;
 		this.background = opts.background;
 		this.toggleSelection = opts.toggleSelection;
 		this.elementGenerator = opts.elementGenerator;
@@ -1016,7 +1020,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		};
 
  		var standardDim = 800;
- 		var maxTextWidth = 100;
+ 		var maxTextWidth = standardDim - this.radius;
  		
  		this.dimensions = {
  			width: size[0]
@@ -1024,8 +1028,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  			,cx: Math.floor(size[0]/2)
  			,cy: Math.floor(size[1]/2)
  			,canvasWidth: minDim
- 			//,radius: Math.floor( (minDim / 2) - (maxTextWidth * 2) )
- 			,radius: Math.floor( (standardDim / 2) - maxTextWidth )
+ 			,radius: Math.floor( this.radius )
  			,textWidth: maxTextWidth
  		};
  		
@@ -2059,10 +2062,10 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  			};
 
  			var changed = false;
- 			if( assignToNode(node, 'x', m.x, 0.01) ){
+ 			if( assignToNode(node, 'x', m.x) ){
  				changed = true;
  			};
- 			if( assignToNode(node, 'z', m.z, 0.01) ){
+ 			if( assignToNode(node, 'z', m.z) ){
  				changed = true;
  			};
  			if( assignToNode(node, 'xArcStart', m.xArcStart) ){
@@ -2082,7 +2085,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		var changedPoints = this._getSvgElem().select('g.nodes').selectAll('.node')
 			.data(changedNodes, function(node){ return node.id; });
  		
-		changedPoints.transition()
+		changedPoints
+			.transition()
 			.attr("transform", function(d) { 
 				return "rotate(" + (d.x - 90) 
 					+ ")translate(" + d.y + ",0)"; 
@@ -2095,7 +2099,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 // 		var changedControls = this._getSvgElem().select('g.controls').selectAll('.control')
 //			.data(changedNodes, function(node){ return node.id; });
 // 		
-// 		changedControls.transition()
+// 		changedControls
+// 			.transition()
 //			.attr("transform", function(d) { 
 //				return "rotate(" + (d.x - 90) 
 //					+ ")translate(" + (d.y + 10) + ",0)"; 
@@ -2109,7 +2114,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			.data(changedNodes, function(node){ return node.id; })
 			;
  		
-		changedLabels.transition()
+		changedLabels
+			.transition()
 			.attr("transform", function(d) { 
 				return "rotate(" + (d.x - 90) 
 					+ ")translate(" + (d.y + 6) + ",0)" 
@@ -2129,7 +2135,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 	 		var arcExtent = this.arcOptions.extent;
 	 		
 	 		changedArcs
-	 			//.transition()
+	 			.transition()
 		 		.attr('transform', function(d) { 
 					return 'rotate(-90)';
 				})
