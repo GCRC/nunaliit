@@ -145,13 +145,13 @@ var Dispatcher = $n2.Class({
 			handle = this.getHandle(handle);
 		};
 		if( !this.isHandle(handle) ){
-			throw 'DispatchService.register: invalid handle';
+			throw new Error('DispatchService.register: invalid handle');
 		};
 		if( typeof type !== 'string' ){
-			throw 'DispatchService.register: type must be a string';
+			throw new Error('DispatchService.register: type must be a string');
 		};
 		if( typeof l !== 'function' ){
-			throw 'DispatchService.register must provide a function';
+			throw new Error('DispatchService.register must provide a function');
 		};
 		
 		if( !this.listeners[type] ){
@@ -200,7 +200,7 @@ var Dispatcher = $n2.Class({
 				};
 			};
 		} else {
-			throw 'DispatchService.deregister: invalid address'
+			throw new Error('DispatchService.deregister: invalid address');
 		};
 	},
 	
