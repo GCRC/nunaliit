@@ -607,10 +607,13 @@ Here are attributes added by the canvas:
 {
 	x: <number>  (value computed by layout)
 	y: <number>  (value computed by layout)
+	z: <number>  (value computed by magnify)
 	parent: <object>  (element which is parent to this one)
 	children: <array> (elements which are children to this one)
 	n2_geometry: <string> ('line' or 'point', depending on link or node)
 	expanded: <boolean> True if the children of this element are to appear in the graph
+	detailedView: <boolean> Set if the node or link is associated with the expanded nodes
+	generalView: <boolean> Set if detailedView is not set
 }
 
 The nodes are expected to form a tree. Nodes that do not have a parent identifier are assumed
@@ -1365,14 +1368,13 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			};
 		};
 
-		//var paths = this.bundle(this.displayedLinks);
+		// Compute paths for displayed links
 		for(var i=0,e=this.displayedLinks.length; i<e; ++i){
 			var link = this.displayedLinks[i];
-			//var path = paths[i];
 			var path = [link.source, root, link.target];
 			link.path = path;
 			
-			// Adjust styling
+			// Adjust intent
 			this._refreshEffectiveLinkIntent(link);
 		};
 
@@ -1392,6 +1394,81 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			this.effectiveElementsById[node.id] = node;
 		};
 		
+		// Assign attributes on nodes and links to keep track of which part of the
+		// graph is part of the detailed look. The algorithm here is to:
+		// 1. visit all nodes and comute their depth
+		// 2. all nodes with the largest depth, assign the attribute "detailedView"
+		// 3. all links that touch a node "detailedView" is marked as "detailedView"
+		// 4. all nodes that touch a link "detailedView" is marked as "detailedView"
+		// 5. all nodes and links that are not marked "detailedView", are mark "generalView"
+		{
+			var maxDepth = undefined;
+			var maxDepthNodes = undefined;
+			visitTree(root,function(n,depth){
+				delete n.detailedView;
+				delete n.generalView;
+
+				if( n.canvasVisible || n.canvasVisibleDerived ){
+					if( typeof maxDepth === 'number' ){
+						if( maxDepth < depth ){
+							maxDepth = depth;
+							maxDepthNodes = [];
+							maxDepthNodes.push(n);
+						} else if( maxDepth === depth ){
+							maxDepthNodes.push(n);
+						};
+					} else {
+						maxDepth = depth;
+						maxDepthNodes = [];
+						maxDepthNodes.push(n);
+					};
+				};
+			});
+			
+			// Assign "detailedView" to the deepest nodes
+			if( maxDepthNodes ){
+				for(var i=0,e=maxDepthNodes.length; i<e; ++i){
+					var node = maxDepthNodes[i];
+					node.detailedView = true;
+				};
+			};
+	
+			// Propagate detailedView to links
+			for(var i=0,e=this.displayedLinks.length; i<e; ++i){
+				var link = this.displayedLinks[i];
+				
+				delete link.detailedView;
+				delete link.generalView;
+
+				if( link.source.detailedView ){
+					link.detailedView = true;
+				} else if( link.target.detailedView ){
+					link.detailedView = true;
+				} else {
+					link.generalView = true;
+				};
+			};
+
+			// Propagate detailedView from links to nodes
+			for(var i=0,e=this.displayedLinks.length; i<e; ++i){
+				var link = this.displayedLinks[i];
+
+				if( link.detailedView ){
+					link.source.detailedView = true;
+					link.target.detailedView = true;
+				};
+			};
+			
+			// Assign general view to nodes
+			for(var i=0,e=this.displayedNodesSorted.length; i<e; ++i){
+				var node = this.displayedNodesSorted[i];
+
+				if( !node.detailedView ){
+					node.generalView = true;
+				};
+			};
+		};
+
 		// Compute derived intents
 		this._computeDerivedIntent({}, {});
 		
