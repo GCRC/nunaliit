@@ -709,6 +709,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 	
 	bundle: null,
 	
+	magnifyOptions: null,
+	
 	magnify: null,
 	
 	magnifyThresholdCount: null,
@@ -870,8 +872,9 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		this.bundle = d3.layout.bundle();
  		
  		// Set up magnification
- 		var magnifyOptions = $n2.extend({
- 			radius: 10
+ 		this.magnifyOptions = $n2.extend({
+ 			enabled: true
+ 			,radius: 10
  			,distortion: 2
  			,thresholdCount: 100
  		},opts.magnify);
@@ -882,8 +885,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  				return n.orig_x;
  			})
  			;
- 		for(var optionName in magnifyOptions){
- 			var value = magnifyOptions[optionName];
+ 		for(var optionName in this.magnifyOptions){
+ 			var value = this.magnifyOptions[optionName];
  			
  			if( 'radius' === optionName 
  			 && typeof value === 'number' ){
@@ -2035,10 +2038,11 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  	_positionElements: function(){
  		var _this = this;
  		
- 		var magnifyEnabled = false;
- 		if( typeof this.magnifyThresholdCount === 'number' 
- 		 && this.magnifyThresholdCount <= this.displayedNodesSorted.length ){
- 			magnifyEnabled = true;
+ 		var magnifyEnabled = this.magnifyOptions.enabled;
+ 		if( magnifyEnabled 
+ 		 && typeof this.magnifyThresholdCount === 'number' 
+ 		 && this.magnifyThresholdCount > this.displayedNodesSorted.length ){
+ 			magnifyEnabled = false;
  		};
  		
  		var changedNodes = [];
