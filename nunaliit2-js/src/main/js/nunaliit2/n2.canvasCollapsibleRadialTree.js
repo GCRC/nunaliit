@@ -600,6 +600,7 @@ var CollapsibleLayout = $n2.Class({
 	target: <object>  (element which is at the end of the line [only links])
 	sortValue: <string> (value used to sort the elements between themselves)
 	group: <string> (Optional. Grouping nodes)
+	showArc: <boolean> (Optional. If set, an arc is drawn around this node)
 }
 
 Here are attributes added by the canvas:
@@ -1885,7 +1886,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		// Elements that are used to draw arcs to show parent/children relationship
 		if( this.arcOptions.show ){
 			var arcData = updatedNodeData.filter(function(node){
-				return node.children ? (node.children.length > 0) : false;
+				return (typeof node.showArc === 'boolean') ? node.showArc : false;
 			});
 	 		var selectedArcs = this._getSvgElem().select('g.arcs').selectAll('.arc')
 	 			.data(arcData,function(node){ return node.id; });
