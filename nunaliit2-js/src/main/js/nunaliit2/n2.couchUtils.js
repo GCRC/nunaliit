@@ -920,13 +920,8 @@ var n2utils = {
 
 		// Verify layers
 		if( doc.nunaliit_layers ) {
-			if( !n2utils.isArray(doc.nunaliit_layers) ) {
-				errorFn('nunaliit_layers must be an array');
-			};
-			for(var i=0,e=doc.nunaliit_layers.length; i<e; ++i) {
-				if( typeof(doc.nunaliit_layers[i]) !== 'string' ) {
-					errorFn('nunaliit_layers must be an array of strings');
-				};
+			if( !n2utils.isArrayOfStrings(doc.nunaliit_layers) ) {
+				errorFn('nunaliit_layers must be an array of strings');
 			};
 		};
 
