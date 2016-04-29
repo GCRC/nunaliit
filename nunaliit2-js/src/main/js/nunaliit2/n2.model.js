@@ -218,20 +218,15 @@ var Service = $n2.Class({
 			if( $n2.modelUtils && typeof $n2.modelUtils.handleModelCreate === 'function' ){
 				$n2.modelUtils.handleModelCreate(m, addr, dispatcher);
 			};
+
+			if( $n2.modelTime && typeof $n2.modelTime.handleModelCreate === 'function' ){
+				$n2.modelTime.handleModelCreate(m, addr, dispatcher);
+			};
 			
 			try {
 				if( 'couchDb' === m.modelType 
 				 || 'couchDbDataSource' === m.modelType ){
 			        this._createCouchDbModel(m);
-				    
-				} else if( m.modelType === 'timeFilter' ){
-			        this._createTimeFilter(m);
-				    
-				} else if( m.modelType === 'noTimeFilter' ){
-			        this._createNoTimeFilter(m);
-				    
-				} else if( m.modelType === 'timeTransform' ){
-			        this._createTimeTransform(m);
 			    };
 			} catch(err) {
 				$n2.log('Error while creating model '+m.modelType+'/'+m.modelId+': '+err);
@@ -270,98 +265,6 @@ var Service = $n2.Class({
 
 		} else {
 			throw 'DbPerspective is not available';
-		};
-	},
-	
-	_createTimeFilter: function(m){
-		if( $n2.modelTime 
-		 && $n2.modelTime.TimeFilter ){
-			var options = {
-				modelId: m.modelId
-			};
-			
-			if( m && m.modelOptions ){
-				if( m.modelOptions.sourceModelId ){
-					options.sourceModelId = m.modelOptions.sourceModelId;
-				};
-
-				if( m.modelOptions.range ){
-					options.rangeStr = m.modelOptions.range;
-				};
-			};
-			
-			if( m && m.config ){
-				if( m.config.directory ){
-					options.dispatchService = m.config.directory.dispatchService;
-				};
-			};
-			
-			new $n2.modelTime.TimeFilter(options);
-			
-			m.created = true;
-
-		} else {
-			throw 'Model TimeFilter is not available';
-		};
-	},
-	
-	_createNoTimeFilter: function(m){
-		if( $n2.modelTime 
-		 && $n2.modelTime.NoTimeFilter ){
-			var options = {
-				modelId: m.modelId
-			};
-			
-			if( m && m.modelOptions ){
-				if( m.modelOptions.sourceModelId ){
-					options.sourceModelId = m.modelOptions.sourceModelId;
-				};
-			};
-			
-			if( m && m.config ){
-				if( m.config.directory ){
-					options.dispatchService = m.config.directory.dispatchService;
-				};
-			};
-			
-			new $n2.modelTime.NoTimeFilter(options);
-			
-			m.created = true;
-
-		} else {
-			throw 'Model NoTimeFilter is not available';
-		};
-	},
-	
-	_createTimeTransform: function(m){
-		if( $n2.modelTime 
-		 && $n2.modelTime.TimeTransform ){
-			var options = {
-				modelId: m.modelId
-			};
-			
-			if( m && m.modelOptions ){
-				if( m.modelOptions.sourceModelId ){
-					options.sourceModelId = m.modelOptions.sourceModelId;
-				};
-
-				if( m.modelOptions.range ){
-					options.rangeStr = m.modelOptions.range;
-				};
-			};
-			
-			if( m && m.config ){
-				if( m.config.directory ){
-					options.dispatchService = m.config.directory.dispatchService;
-				};
-			};
-			
-			new $n2.modelTime.TimeTransform(options);
-			
-			m.created = true;
-
-		} else {
-			throw 'Model TimeTransform is not available';
 		};
 	}
 });

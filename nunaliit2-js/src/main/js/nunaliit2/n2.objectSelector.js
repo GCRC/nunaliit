@@ -153,7 +153,7 @@ var ObjectSelector = $n2.Class({
 	initialize: function(selectors){
 		// Verify that this is an array of string or numbers
 		if( !$n2.isArray(selectors) ){
-			throw 'Instances of ObjectSelector must be created using an array';
+			throw new Error('Instances of ObjectSelector must be created using an array');
 		};
 		
 		this.selectors = selectors;
@@ -181,7 +181,7 @@ var ObjectSelector = $n2.Class({
 			return new ObjectSelector(selectors);
 			
 		} else {
-			throw 'A string or number must be provided when creating a child selector';
+			throw new Error('A string or number must be provided when creating a child selector');
 		};
 		
 		// Copy current selector
@@ -366,10 +366,10 @@ function findSelectors(obj, testFn){
 	};
 
 	if( typeof obj !== 'object' ){
-		throw 'objectSelector.findSelectors() needs an object'
+		throw new Error('objectSelector.findSelectors() needs an object');
 	};
 	if( typeof testFn !== 'function' ){
-		throw 'objectSelector.findSelectors() needs a test function'
+		throw new Error('objectSelector.findSelectors() needs a test function');
 	};
 	
 	var result = [];
