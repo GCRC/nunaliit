@@ -20,7 +20,7 @@ public class SchemaDefinition {
 
 		// label
 		{
-			String label = jsonDef.optString("label");
+			String label = jsonDef.optString("label",null);
 			if( null != label ){
 				def.setLabel(label);
 			}
