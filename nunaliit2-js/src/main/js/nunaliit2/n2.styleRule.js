@@ -111,7 +111,7 @@ var svgSymbolNames = {
 	,'stroke-dasharray': {
 		alt: 'strokeDashArray'
 		,applies: {
-			circle: false
+			circle: true
 			,line: true
 			,path: true
 			,text: false
