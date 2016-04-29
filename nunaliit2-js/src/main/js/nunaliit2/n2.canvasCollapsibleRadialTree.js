@@ -1089,7 +1089,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 					this.elementsByGroup[groupName] = groupElems;
 				};
 				
-				delete elementIdToGroupName[removed.id];
+				delete this.elementIdToGroupName[removed.id];
 			};
 		};
 		
@@ -1131,7 +1131,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 						this.elementsByGroup[groupName] = groupElems;
 					};
 
-					delete elementIdToGroupName[updated.id];
+					delete this.elementIdToGroupName[updated.id];
 				};
 				
 				if( updated.group ){
