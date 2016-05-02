@@ -225,18 +225,28 @@ var TimeIntervalModel = $n2.Class({
 // This time filter retrieves all date structures in a document and create a set
 // of intervals from them. The documents sent downstream are the one with intervals 
 // that intersects the one reported by the model.
+//
+// If the option 'selectors' is specified, then only the portions of the document
+// that correspond to the selectors are searched for date structure.
+//
+// If the option 'allowNoDate', if set, will not filter documents where no date structure
+// are found. In other word, when 'allowNoDate' is set, documents that do not provide a date
+// structure will not be filtered out and pass on to downstream listeners.
 var TimeFilter = $n2.Class('TimeFilter',TimeIntervalModel,{
 	
 	sourceModelId: null,
+
+	selectors: null,
+	
+	allowNoDate: null,
 	
 	docInfosByDocId: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
-			dispatchService: null
-			,modelId: null
-			,sourceModelId: null
-			,range: null
+			sourceModelId: null
+			,selectors: null
+			,allowNoDate: false
 		},opts_);
 		
 		TimeIntervalModel.prototype.initialize.apply(this,arguments);
@@ -244,6 +254,25 @@ var TimeFilter = $n2.Class('TimeFilter',TimeIntervalModel,{
 		var _this = this;
 		
 		this.sourceModelId = opts.sourceModelId;
+		this.allowNoDate = opts.allowNoDate;
+		
+		if( $n2.isArray(opts.selectors) ) {
+			this.selectors = [];
+			for(var i=0,e=opts.selectors.length; i<e; ++i){
+				var sel = opts.selectors[i];
+				if( typeof sel === 'string' ){
+					sel = $n2.objectSelector.parseSelector(sel);
+				};
+				if( sel ){
+					this.selectors.push(sel);
+				};
+			};
+		} else {
+			this.selectors = [
+				new $n2.objectSelector.ObjectSelector([]) // root
+			];
+		};
+		
 		this.docInfosByDocId = {};
 		
 		// Register to events
@@ -519,15 +548,21 @@ var TimeFilter = $n2.Class('TimeFilter',TimeIntervalModel,{
 		var filterInterval = this.getInterval();
 		
 		if( docInfo 
-		 && docInfo.intervals 
-		 && filterInterval ){
-			
-			for(var i=0,e=docInfo.intervals.length; i<e; ++i){
-				var interval = docInfo.intervals[i];
+		 && docInfo.intervals ) {
+			 if( docInfo.intervals.length > 0 
+			  && filterInterval ){
 				
-				if( interval.intersectsWith(filterInterval, now) ){
-					return true;
+				for(var i=0,e=docInfo.intervals.length; i<e; ++i){
+					var interval = docInfo.intervals[i];
+					
+					if( interval.intersectsWith(filterInterval, now) ){
+						return true;
+					};
 				};
+
+			 } else if( docInfo.intervals.length < 1 
+					 && this.allowNoDate ){
+				 return true;
 			};
 		};
 		
@@ -535,16 +570,22 @@ var TimeFilter = $n2.Class('TimeFilter',TimeIntervalModel,{
 	},
 	
 	_getTimeIntervalsFromDoc: function(doc){
-		var dates = [];
-		$n2.couchUtils.extractSpecificType(doc,'date',dates);
-		
 		var intervals = [];
-		for(var i=0,e=dates.length; i<e; ++i){
-			var date = dates[i];
-			var interval = $n2.date.parseDateStructure(date);
-			if( interval ){
-				intervals.push( interval );
-			};
+		
+		for(var i=0,e=this.selectors.length; i<e; ++i){
+			var selector = this.selectors[i];
+			selector.traverse(doc,function(value, sel){
+				if( typeof value === 'object' 
+				 && null !== value 
+				 && value.nunaliit_type === 'date'
+				 && typeof value.date === 'string' ){
+					// is a date
+					var interval = $n2.date.parseDateStructure(value);
+					if( interval ){
+						intervals.push( interval );
+					};
+				};
+			});
 		};
 		
 		return intervals;
@@ -579,10 +620,7 @@ var TimeTransform = $n2.Class('TimeTransform',TimeIntervalModel,{
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
-			dispatchService: null
-			,modelId: null
-			,sourceModelId: null
-			,rangeStr: null
+			sourceModelId: null
 		},opts_);
 		
 		TimeIntervalModel.prototype.initialize.apply(this,arguments);
@@ -1318,7 +1356,6 @@ var NoTimeFilter = $n2.Class({
 			dispatchService: null
 			,modelId: null
 			,sourceModelId: null
-			,rangeStr: null
 		},opts_);
 		
 		var _this = this;
@@ -1544,19 +1581,16 @@ var NoTimeFilter = $n2.Class({
 //--------------------------------------------------------------------------
 function handleModelCreate(m, addr, dispatcher){
 	if( m.modelType === 'timeFilter' ){
-		var options = {
-			modelId: m.modelId
-		};
+		var options = {};
 		
 		if( m && m.modelOptions ){
-			if( m.modelOptions.sourceModelId ){
-				options.sourceModelId = m.modelOptions.sourceModelId;
-			};
-
-			if( m.modelOptions.range ){
-				options.range = m.modelOptions.range;
+			for(var key in m.modelOptions){
+				var value = m.modelOptions[key];
+				options[key] = value;
 			};
 		};
+		
+		options.modelId = m.modelId;
 		
 		if( m && m.config ){
 			if( m.config.directory ){
@@ -1569,15 +1603,16 @@ function handleModelCreate(m, addr, dispatcher){
 		m.created = true;
 	    
 	} else if( m.modelType === 'noTimeFilter' ){
-		var options = {
-			modelId: m.modelId
-		};
+		var options = {};
 		
 		if( m && m.modelOptions ){
-			if( m.modelOptions.sourceModelId ){
-				options.sourceModelId = m.modelOptions.sourceModelId;
+			for(var key in m.modelOptions){
+				var value = m.modelOptions[key];
+				options[key] = value;
 			};
 		};
+		
+		options.modelId = m.modelId;
 		
 		if( m && m.config ){
 			if( m.config.directory ){
@@ -1590,19 +1625,16 @@ function handleModelCreate(m, addr, dispatcher){
 		m.created = true;
 	    
 	} else if( m.modelType === 'timeTransform' ){
-		var options = {
-			modelId: m.modelId
-		};
+		var options = {};
 		
 		if( m && m.modelOptions ){
-			if( m.modelOptions.sourceModelId ){
-				options.sourceModelId = m.modelOptions.sourceModelId;
-			};
-
-			if( m.modelOptions.range ){
-				options.rangeStr = m.modelOptions.range;
+			for(var key in m.modelOptions){
+				var value = m.modelOptions[key];
+				options[key] = value;
 			};
 		};
+		
+		options.modelId = m.modelId;
 		
 		if( m && m.config ){
 			if( m.config.directory ){
@@ -1615,16 +1647,16 @@ function handleModelCreate(m, addr, dispatcher){
 		m.created = true;
 	    
 	} else if( m.modelType === 'datedReferenceTransform' ){
-		var options = {
-			modelId: m.modelId
-		};
+		var options = {};
 		
-		if( m.modelOptions ){
+		if( m && m.modelOptions ){
 			for(var key in m.modelOptions){
 				var value = m.modelOptions[key];
 				options[key] = value;
 			};
 		};
+		
+		options.modelId = m.modelId;
 		
 		if( m.config ){
 			if( m.config.directory ){
