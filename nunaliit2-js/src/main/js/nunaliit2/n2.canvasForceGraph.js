@@ -417,8 +417,22 @@ if( !$d ) return;
  	}
  });
  
- // --------------------------------------------------------------------------
- var ForceGraph = $n2.Class({
+// --------------------------------------------------------------------------
+// This is a canvas that show nodes and links using a force graph layout. This canvas
+// expects elements with the following format:
+// {
+//    id: <string> Required. Identifier that uniquely identifies the node or the link
+//    isNode: <boolean> Set if this element is a node
+//    isLink: <boolean> Set if this element is a link between two nodes
+//    source: <object> Required for links. Node that is one end of the link
+//    target: <object> Required for links. Node that is the other end of the link
+// }
+//
+// The following attributes are added to the elements by the force graph canvas
+// x: <number> X position. Added only to nodes.
+// y: <number> Y position. Added only to nodes.
+//
+var ForceGraph = $n2.Class({
 
  	canvasId: null,
  	
