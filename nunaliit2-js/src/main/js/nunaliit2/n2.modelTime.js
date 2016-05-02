@@ -39,15 +39,22 @@ var
  ;
  
 //--------------------------------------------------------------------------
-var TimeFilter = $n2.Class({
+// This is a generic model that manages a time interval.
+// It provides a time range and an interval.
+//
+// Subclasses should implement the method _intervalUpdated() to detect
+// when the time interval is modified.
+//
+// Subclasses should call _addModelInfoParameters() to augment the model info
+// message.
+//
+// Subclasses should call the method _setRange() to report the range reported by the
+// documents.
+var TimeIntervalModel = $n2.Class({
 	
 	dispatchService: null,
 	
 	modelId: null,
-	
-	sourceModelId: null,
-	
-	docInfosByDocId: null,
 	
 	autoRange: null,
 	
@@ -59,40 +66,33 @@ var TimeFilter = $n2.Class({
 	
 	intervalParameter: null,
 	
+	now: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: null
 			,modelId: null
-			,sourceModelId: null
-			,rangeStr: null
+			,range: null
 		},opts_);
 		
 		var _this = this;
+
+		this.docInfosByDocId = {};
+		this.now = Date.now();
 		
 		this.dispatchService = opts.dispatchService;
 		this.modelId = opts.modelId;
-		this.sourceModelId = opts.sourceModelId;
 		
 		this.autoRange = true;
-		if( opts.rangeStr ){
-			this.range = $n2.date.parseUserDate(opts.rangeStr);
-			
-			if( this.range.ongoing ){
-				var now = Date.now();
-				var min = this.range.getMin();
-				var max = this.range.getMax(now);
-				
-				this.range = new $n2.date.DateInterval({
-					min: min
-					,max: max
-				});
+		if( opts.range ){
+			this.range = $n2.date.parseUserDate(opts.range);
+			if( this.range && this.range.ongoing ){
+				this.range.ongoing = false;
+				this.range.max = this.now;
 			};
-
-			this.filterInterval = this.range;
+			this.interval = this.range;
 			this.autoRange = false;
 		};
-
-		this.docInfosByDocId = {};
 		
 		this.rangeParameter = new $n2.model.ModelParameter({
 			model: this
@@ -115,28 +115,6 @@ var TimeFilter = $n2.Class({
 			,getFn: this.getInterval
 			,dispatchService: this.dispatchService
 		});
-		
-		// Register to events
-		if( this.dispatchService ){
-			var f = function(m, addr, dispatcher){
-				_this._handle(m, addr, dispatcher);
-			};
-			this.dispatchService.register(DH,'modelGetInfo',f);
-			this.dispatchService.register(DH, 'modelGetState', f);
-			this.dispatchService.register(DH, 'modelStateUpdated', f);
-			
-			// Initialize state
-			var m = {
-				type:'modelGetState'
-				,modelId: this.sourceModelId
-			};
-			this.dispatchService.synchronousCall(DH, m);
-			if( m.state ){
-				this._sourceModelUpdated(m.state);
-			};
-		};
-		
-		$n2.log('TimeFilter',this);
 	},
 	
 	getRange: function(){
@@ -147,6 +125,10 @@ var TimeFilter = $n2.Class({
 		var previous = this.getRange();
 		
 		this.range = updatedRange;
+		if( this.range && this.range.ongoing ){
+			this.range.max = this.now;
+			this.range.ongoing = false;
+		};
 		
 		var current = this.getRange();
 		
@@ -199,6 +181,9 @@ var TimeFilter = $n2.Class({
 		var previous = this.getInterval();
 		
 		this.interval = updatedInterval;
+		if( this.interval && this.interval.ongoing ){
+			this.interval.max = this.now;
+		};
 		
 		var current = this.getInterval();
 		
@@ -215,6 +200,73 @@ var TimeFilter = $n2.Class({
 			// Check all documents to see if visibility has changed
 			this._intervalUpdated();
 		};
+	},
+	
+	_addModelInfoParameters: function(modelInfo){
+		if( !modelInfo.parameters ){
+			modelInfo.parameters = {};
+		};
+		
+		modelInfo.parameters.range = this.rangeParameter.getInfo();
+		modelInfo.parameters.interval = this.intervalParameter.getInfo();
+	},
+	
+	_intervalUpdated: function(){
+		throw new Error('Subclasses to TimeIntervalModel must implement _intervalUpdated()');
+	}
+});
+
+//--------------------------------------------------------------------------
+// This is a document filter model. In other words, it accepts documents from
+// a source model and makes those documents available to listeners. Since it 
+// is a filter, the documents are sent or not to downstream listeners based on
+// a boolean function.
+//
+// This time filter retrieves all date structures in a document and create a set
+// of intervals from them. The documents sent downstream are the one with intervals 
+// that intersects the one reported by the model.
+var TimeFilter = $n2.Class('TimeFilter',TimeIntervalModel,{
+	
+	sourceModelId: null,
+	
+	docInfosByDocId: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dispatchService: null
+			,modelId: null
+			,sourceModelId: null
+			,range: null
+		},opts_);
+		
+		TimeIntervalModel.prototype.initialize.apply(this,arguments);
+		
+		var _this = this;
+		
+		this.sourceModelId = opts.sourceModelId;
+		this.docInfosByDocId = {};
+		
+		// Register to events
+		if( this.dispatchService ){
+			var f = function(m, addr, dispatcher){
+				_this._handle(m, addr, dispatcher);
+			};
+			this.dispatchService.register(DH, 'modelGetInfo', f);
+			this.dispatchService.register(DH, 'modelGetState', f);
+			this.dispatchService.register(DH, 'modelStateUpdated', f);
+			
+			// Initialize state
+			var m = {
+				type:'modelGetState'
+				,modelId: this.sourceModelId
+			};
+			this.dispatchService.synchronousCall(DH, m);
+			if( m.state ){
+				this._sourceModelUpdated(m.state);
+			};
+		};
+		
+		$n2.log('TimeFilter',this);
 	},
 	
 	_handle: function(m, addr, dispatcher){
@@ -248,7 +300,7 @@ var TimeFilter = $n2.Class({
 			};
 		};
 	},
-	
+
 	_getModelInfo: function(){
 		var info = {
 			modelId: this.modelId
@@ -256,8 +308,7 @@ var TimeFilter = $n2.Class({
 			,parameters: {}
 		};
 		
-		info.parameters.range = this.rangeParameter.getInfo();
-		info.parameters.interval = this.intervalParameter.getInfo();
+		this._addModelInfoParameters(info);
 		
 		return info;
 	},
@@ -500,28 +551,31 @@ var TimeFilter = $n2.Class({
 	}
 });
 
-//--------------------------------------------------------------------------
-var TimeTransform = $n2.Class({
-	
-	dispatchService: null,
-	
-	modelId: null,
+// --------------------------------------------------------------------------
+// This is a document transform model. In other words, it accepts documents from
+// another model and makes those documents available to listeners. Since it is a
+// transform, it modifies the document contents before passing them on.
+//
+// This time transform retrieves all date structures in a document and create a set
+// of intervals from them. The documents sent downstream are updated with an attribute
+// reporting how well the intervals match the time interval reported by the model.
+//
+// The attribute added by this transform has the following format:
+// {
+//    _n2TimeTransform: {
+//       intersects: <boolean> Set if the document intersects with the model interval
+//       ,intervalSize: <number> Size of the time interval reported by the document
+//        ,filterIntervalSize: <number> Size of the time interval reported by the model
+//       ,intersectionSize: <number> Size of the intersection between the time interval 
+//                                   reported by the document and the one reported by the
+//                                   model
+//    }
+// }
+var TimeTransform = $n2.Class('TimeTransform',TimeIntervalModel,{
 	
 	sourceModelId: null,
 	
 	docInfosByDocId: null,
-	
-	autoRange: null,
-	
-	range: null,
-	
-	rangeParameter: null,
-	
-	interval: null,
-	
-	intervalParameter: null,
-	
-	now: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -531,50 +585,20 @@ var TimeTransform = $n2.Class({
 			,rangeStr: null
 		},opts_);
 		
+		TimeIntervalModel.prototype.initialize.apply(this,arguments);
+		
 		var _this = this;
 		
-		this.dispatchService = opts.dispatchService;
-		this.modelId = opts.modelId;
 		this.sourceModelId = opts.sourceModelId;
-		
-		this.autoRange = true;
-		if( opts.rangeStr ){
-			this.range = $n2.date.parseUserDate(opts.rangeStr);
-			this.filterInterval = this.range;
-			this.autoRange = false;
-		};
-
 		this.docInfosByDocId = {};
 		this.now = Date.now();
-		
-		this.rangeParameter = new $n2.model.ModelParameter({
-			model: this
-			,modelId: this.modelId
-			,type: 'dateInterval'
-			,name: 'range'
-			,label: _loc('Range')
-			,setFn: this._setRange
-			,getFn: this.getRange
-			,dispatchService: this.dispatchService
-		});
-		
-		this.intervalParameter = new $n2.model.ModelParameter({
-			model: this
-			,modelId: this.modelId
-			,type: 'dateInterval'
-			,name: 'interval'
-			,label: _loc('Interval')
-			,setFn: this._setInterval
-			,getFn: this.getInterval
-			,dispatchService: this.dispatchService
-		});
 		
 		// Register to events
 		if( this.dispatchService ){
 			var f = function(m, addr, dispatcher){
 				_this._handle(m, addr, dispatcher);
 			};
-			this.dispatchService.register(DH,'modelGetInfo',f);
+			this.dispatchService.register(DH, 'modelGetInfo', f);
 			this.dispatchService.register(DH, 'modelGetState', f);
 			this.dispatchService.register(DH, 'modelStateUpdated', f);
 			
@@ -590,84 +614,6 @@ var TimeTransform = $n2.Class({
 		};
 		
 		$n2.log('TimeTransform',this);
-	},
-	
-	getRange: function(){
-		return this.range;
-	},
-	
-	_setRange: function(updatedRange){
-		var previous = this.getRange();
-		
-		this.range = updatedRange;
-		
-		var current = this.getRange();
-		
-		if( current === previous ){
-			// Nothing to do. This takes care
-			// of previous and current being null
-		
-		} else if( previous && previous.equals(current) ){
-			// Nothing to do
-		
-		} else {
-			// Range has changed
-			this.rangeParameter.sendUpdate();
-			
-			// Verify if changes are required in interval
-			// since interval should always be contained within
-			// range.
-			if( this.interval ){
-				if( this.range ) {
-					if( this.interval.min < this.range.min 
-					 || this.interval.max > this.range.max ){
-						// Need to fix interval
-						var updatedInterval = this.range.intersection(this.interval);
-						this._setInterval(updatedInterval);
-					};
-				} else {
-					// Range is now null. Erase interval
-					this._setInterval(null);
-				};
-			} else {
-				// Range has changed. Since interval is null, then the interval
-				// has also changed.
-				this.intervalParameter.sendUpdate();
-				
-				// Check all documents to see if visibility has changed
-				this._intervalUpdated();
-			};
-		};
-	},
-	
-	getInterval: function(){
-		if( this.interval ){
-			return this.interval;
-		};
-		
-		return this.range;
-	},
-	
-	_setInterval: function(updatedInterval){
-		var previous = this.getInterval();
-		
-		this.interval = updatedInterval;
-		
-		var current = this.getInterval();
-		
-		if( previous === current ) {
-			// Nothing to do. This takes care of
-			// previous and current being null
-			
-		} else if( previous && previous.equals(current) ){
-			// Nothing to do
-			
-		} else {
-			this.intervalParameter.sendUpdate();
-			
-			// Check all documents to see if visibility has changed
-			this._intervalUpdated();
-		};
 	},
 	
 	_handle: function(m, addr, dispatcher){
@@ -700,16 +646,15 @@ var TimeTransform = $n2.Class({
 			};
 		};
 	},
-	
+
 	_getModelInfo: function(){
 		var info = {
 			modelId: this.modelId
-			,modelType: 'timeFilter'
+			,modelType: 'timeTransform'
 			,parameters: {}
 		};
 		
-		info.parameters.range = this.rangeParameter.getInfo();
-		info.parameters.interval = this.intervalParameter.getInfo();
+		this._addModelInfoParameters(info);
 		
 		return info;
 	},
@@ -1012,77 +957,24 @@ var TimeTransform = $n2.Class({
 //       ,originalDoc: <object> document received from source model
 //    }
 // }
-var DatedReferenceTransform = $n2.Class({
-	
-	dispatchService: null,
-	
-	modelId: null,
+var DatedReferenceTransform = $n2.Class('DatedReferenceTransform',TimeIntervalModel,{
 	
 	sourceModelId: null,
 	
 	docInfosByDocId: null,
 	
-	autoRange: null,
-	
-	range: null,
-	
-	rangeParameter: null,
-	
-	interval: null,
-	
-	intervalParameter: null,
-	
-	now: null,
-	
 	initialize: function(opts_){
 		var opts = $n2.extend({
-			dispatchService: null
-			,modelId: null
-			,sourceModelId: null
-			,range: null
+			sourceModelId: null
 		},opts_);
+		
+		TimeIntervalModel.prototype.initialize.apply(this,arguments);
 		
 		var _this = this;
 
 		this.docInfosByDocId = {};
-		this.now = Date.now();
 		
-		this.dispatchService = opts.dispatchService;
-		this.modelId = opts.modelId;
 		this.sourceModelId = opts.sourceModelId;
-		
-		this.autoRange = true;
-		if( opts.range ){
-			this.range = $n2.date.parseUserDate(opts.range);
-			if( this.range && this.range.ongoing ){
-				this.range.ongoing = false;
-				this.range.max = this.now;
-			};
-			this.interval = this.range;
-			this.autoRange = false;
-		};
-		
-		this.rangeParameter = new $n2.model.ModelParameter({
-			model: this
-			,modelId: this.modelId
-			,type: 'dateInterval'
-			,name: 'range'
-			,label: _loc('Range')
-			,setFn: this._setRange
-			,getFn: this.getRange
-			,dispatchService: this.dispatchService
-		});
-		
-		this.intervalParameter = new $n2.model.ModelParameter({
-			model: this
-			,modelId: this.modelId
-			,type: 'dateInterval'
-			,name: 'interval'
-			,label: _loc('Interval')
-			,setFn: this._setInterval
-			,getFn: this.getInterval
-			,dispatchService: this.dispatchService
-		});
 		
 		// Register to events
 		if( this.dispatchService ){
@@ -1105,91 +997,6 @@ var DatedReferenceTransform = $n2.Class({
 		};
 		
 		$n2.log('DatedReferenceTransform',this);
-	},
-	
-	getRange: function(){
-		return this.range;
-	},
-	
-	_setRange: function(updatedRange){
-		var previous = this.getRange();
-		
-		this.range = updatedRange;
-		if( this.range && this.range.ongoing ){
-			this.range.max = this.now;
-			this.range.ongoing = false;
-		};
-		
-		var current = this.getRange();
-		
-		if( current === previous ){
-			// Nothing to do. This takes care
-			// of previous and current being null
-		
-		} else if( previous && previous.equals(current) ){
-			// Nothing to do
-		
-		} else {
-			// Range has changed
-			this.rangeParameter.sendUpdate();
-			
-			// Verify if changes are required in interval
-			// since interval should always be contained within
-			// range.
-			if( this.interval ){
-				if( this.range ) {
-					if( this.interval.min < this.range.min 
-					 || this.interval.max > this.range.max ){
-						// Need to fix interval
-						var updatedInterval = this.range.intersection(this.interval);
-						this._setInterval(updatedInterval);
-					};
-				} else {
-					// Range is now null. Erase interval
-					this._setInterval(null);
-				};
-			} else {
-				// Range has changed. Since interval is null, then the interval
-				// has also changed.
-				this.intervalParameter.sendUpdate();
-				
-				// Check all documents to see if visibility has changed
-				this._intervalUpdated();
-			};
-		};
-	},
-	
-	getInterval: function(){
-		if( this.interval ){
-			return this.interval;
-		};
-		
-		return this.range;
-	},
-	
-	_setInterval: function(updatedInterval){
-		var previous = this.getInterval();
-		
-		this.interval = updatedInterval;
-		if( this.interval && this.interval.ongoing ){
-			this.interval.max = this.now;
-		};
-		
-		var current = this.getInterval();
-		
-		if( previous === current ) {
-			// Nothing to do. This takes care of
-			// previous and current being null
-			
-		} else if( previous && previous.equals(current) ){
-			// Nothing to do
-			
-		} else {
-			this.intervalParameter.sendUpdate();
-			
-			// Check all documents to see if visibility has changed
-			this._intervalUpdated();
-		};
 	},
 	
 	_handle: function(m, addr, dispatcher){
@@ -1222,16 +1029,15 @@ var DatedReferenceTransform = $n2.Class({
 			};
 		};
 	},
-	
+
 	_getModelInfo: function(){
 		var info = {
 			modelId: this.modelId
-			,modelType: 'timeFilter'
+			,modelType: 'datedReferenceTransform'
 			,parameters: {}
 		};
 		
-		info.parameters.range = this.rangeParameter.getInfo();
-		info.parameters.interval = this.intervalParameter.getInfo();
+		this._addModelInfoParameters(info);
 		
 		return info;
 	},
@@ -1494,8 +1300,9 @@ var DatedReferenceTransform = $n2.Class({
 });
 
 //--------------------------------------------------------------------------
-// No time
-// This filter allows documents that have no time information
+// No time filter.
+// This is a document filter that allows through documents that do not contain
+// any time intervals.
 var NoTimeFilter = $n2.Class({
 	
 	dispatchService: null,
@@ -1747,7 +1554,7 @@ function handleModelCreate(m, addr, dispatcher){
 			};
 
 			if( m.modelOptions.range ){
-				options.rangeStr = m.modelOptions.range;
+				options.range = m.modelOptions.range;
 			};
 		};
 		
