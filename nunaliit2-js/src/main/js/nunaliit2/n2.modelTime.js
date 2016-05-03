@@ -1579,6 +1579,338 @@ var NoTimeFilter = $n2.Class({
 });
 
 //--------------------------------------------------------------------------
+// This is a not a document model. This model does not provide any document to
+// listeners.
+//
+// Instead, this model monitors other time models and unifies the range/intervals
+// reported by them.
+//
+// This model monitors the range intervals reported by all source models, merges
+// those intervals and report the result to the listeners. It ignores requests to change
+// the range.
+// 
+var TimeSynchronize = $n2.Class('TimeSynchronize',{
+	
+	dispatchService: null,
+	
+	modelId: null,
+
+	rangeChangeEvent: null,
+
+	rangeSetEvent: null,
+	
+	rangeGetEvent: null,
+	
+	currentRange: null,
+
+	intervalChangeEvent: null,
+
+	intervalSetEvent: null,
+	
+	intervalGetEvent: null,
+	
+	currentInterval: null,
+	
+	sourceModelsById: null,
+	
+	now: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dispatchService: null
+			,modelId: null
+			,sourceModelIds: null
+		},opts_);
+		
+		var _this = this;
+		
+		this.sourceModelsById = {};
+
+		this.dispatchService = opts.dispatchService;
+		this.modelId = opts.modelId;
+		this.now = Date.now();
+		
+		this.rangeChangeEvent = this.modelId + '_range_change_event';
+		this.rangeSetEvent = this.modelId + '_range_set_event';
+		this.rangeGetEvent = this.modelId + '_range_get_event';
+
+		this.intervalChangeEvent = this.modelId + '_interval_change_event';
+		this.intervalSetEvent = this.modelId + '_interval_set_event';
+		this.intervalGetEvent = this.modelId + '_interval_get_event';
+		
+		if( this.dispatchService ){
+			var fn = function(m, addr, dispatcher){
+				_this._handle(m, addr, dispatcher);
+			};
+			
+			this.dispatchService.register(DH, 'modelGetInfo', fn);
+			this.dispatchService.register(DH, this.rangeGetEvent, fn);
+			this.dispatchService.register(DH, this.intervalSetEvent, fn);
+			this.dispatchService.register(DH, this.intervalGetEvent, fn);
+
+			if( $n2.isArray(opts.sourceModelIds)  ){
+				// Register change events with source models
+				for(var i=0,e=opts.sourceModelIds.length; i<e; ++i){
+					var sourceModelId = opts.sourceModelIds[i];
+					if( sourceModelId && typeof sourceModelId === 'string' ){
+						var sourceModelInfo = {
+							id: sourceModelId
+						};
+						this.sourceModelsById[sourceModelId] = sourceModelInfo;
+						
+						// Get model info
+						var modelInfoRequest = {
+							type: 'modelGetInfo'
+							,modelId: sourceModelId
+							,modelInfo: null
+						};
+						this.dispatchService.synchronousCall(DH, modelInfoRequest);
+						var modelInfo = modelInfoRequest.modelInfo;
+						
+						if( modelInfo 
+						 && modelInfo.parameters 
+						 && modelInfo.parameters.range ){
+							var paramInfo = modelInfo.parameters.range;
+							sourceModelInfo.rangeChangeEventName = paramInfo.changeEvent;
+							sourceModelInfo.rangeGetEventName = paramInfo.getEvent;
+							sourceModelInfo.rangeSetEventName = paramInfo.setEvent;
+							
+							var parameterId = paramInfo.parameterId;
+							if( parameterId ){
+								this.sourceModelsById[parameterId] = sourceModelInfo;
+							};
+	
+							if( paramInfo.value ){
+								sourceModelInfo.range = paramInfo.value;
+							};
+						};
+						
+						if( modelInfo 
+						 && modelInfo.parameters 
+						 && modelInfo.parameters.interval ){
+							var paramInfo = modelInfo.parameters.interval;
+							sourceModelInfo.intervalChangeEventName = paramInfo.changeEvent;
+							sourceModelInfo.intervalGetEventName = paramInfo.getEvent;
+							sourceModelInfo.intervalSetEventName = paramInfo.setEvent;
+	
+							var parameterId = paramInfo.parameterId;
+							if( parameterId ){
+								this.sourceModelsById[parameterId] = sourceModelInfo;
+							};
+	
+							if( paramInfo.value ){
+								sourceModelInfo.interval = paramInfo.value;
+							};
+						};
+						
+						if( sourceModelInfo.rangeChangeEventName ){
+							this.dispatchService.register(DH, sourceModelInfo.rangeChangeEventName, fn);
+						};
+						
+						if( sourceModelInfo.intervalChangeEventName ){
+							this.dispatchService.register(DH, sourceModelInfo.intervalChangeEventName, fn);
+						};
+					};
+				};
+			};
+		};
+		
+		// Report current values
+		this._recomputeRange();
+		
+		$n2.log('TimeSynchronize',this);
+	},
+	
+	_handle: function(m, addr, dispatcher){
+		if( 'modelGetInfo' === m.type ){
+			if( this.modelId === m.modelId ){
+				m.modelInfo = this._getModelInfo();
+			};
+			
+		} else if( this.rangeGetEvent === m.type ){
+			m.value = this.currentRange;
+
+		} else if( this.intervalGetEvent === m.type ){
+			m.value = this.currentInterval;
+
+		} else if( this.intervalSetEvent === m.type ){
+			var value = m.value;
+			this._setInterval(value);
+
+		} else if( m.parameterId 
+		 && this.sourceModelsById[m.parameterId] ){
+			var sourceModelInfo = this.sourceModelsById[m.parameterId];
+			if( m.type === sourceModelInfo.intervalChangeEventName ){
+				// Interval from a source model was changed
+			} else if( m.type === sourceModelInfo.rangeChangeEventName ){
+				// Range from a source model was changed
+				sourceModelInfo.range = m.value;
+				this._recomputeRange();
+			};
+		};
+	},
+	
+	_getModelInfo: function(){
+		var modelInfo = {
+			modelId: this.modelId
+			,modelType: 'timeSynchronize'
+			,parameters: {}
+		};
+		
+		// Add range parameter
+		modelInfo.parameters.range = {
+			parameterId: this.modelId + '_range'
+			,type: 'dateInterval'
+			,name: 'range'
+			,label: _loc('Range')
+			,setEvent: this.rangeSetEvent
+			,getEvent: this.rangeGetEvent
+			,changeEvent: this.rangeChangeEvent
+		};
+		
+		// Add interval parameter
+		modelInfo.parameters.interval = {
+			parameterId: this.modelId + '_interval'
+			,type: 'dateInterval'
+			,name: 'interval'
+			,label: _loc('Interval')
+			,setEvent: this.intervalSetEvent
+			,getEvent: this.intervalGetEvent
+			,changeEvent: this.intervalChangeEvent
+		};
+		
+		return modelInfo;
+	},
+
+	_recomputeRange: function(){
+		var newRange = undefined;
+		var previousInterval = this.getInterval();
+		
+		for(var sourceModelId in this.sourceModelsById){
+			var sourceModelInfo = this.sourceModelsById[sourceModelId];
+			if( sourceModelInfo.range ){
+				if( !newRange ){
+					newRange = sourceModelInfo.range;
+				} else {
+					newRange.extendTo(sourceModelInfo.range, this.now);
+				};
+			};
+		};
+		
+		var rangeChanged = false;
+		if( this.currentRange && !newRange ){
+			this.currentRange = newRange;
+			rangeChanged = true;
+
+		} else if( !this.currentRange && newRange ) {
+			this.currentRange = newRange;
+			rangeChanged = true;
+
+		} else if( this.currentRange && newRange ){
+			if( this.currentRange.equals(newRange) ){
+				// Nothing to do
+			} else {
+				this.currentRange = newRange;
+				rangeChanged = true;
+			};
+
+		} else {
+			// !this.currentRange && !newRange: do nothing
+		};
+		
+		if( rangeChanged ){
+			this._contrainIntervalToRange();
+			
+			var currentInterval = this.getInterval();
+			
+			if( currentInterval === previousInterval ){
+				// Nothing to do. Takes care of null === null
+			} else if( currentInterval && currentInterval.equals(previousInterval) ){
+				// Nothing to do
+			} else {
+				this._reportChangedInterval();
+			};
+			
+			this._reportChangedRange();
+		};
+	},
+	
+	_reportChangedRange: function(){
+		this.dispatchService.send(DH, {
+			type: this.rangeChangeEvent
+			,parameterId: this.modelId + '_range'
+			,value: this.currentRange
+		});
+	},
+	
+	getInterval: function(){
+		if( this.currentInterval ){
+			return this.currentInterval;
+		};
+		
+		return this.currentRange;
+		
+	},
+	
+	_contrainIntervalToRange: function(){
+		if( this.currentInterval && this.currentRange ){
+			// Interval should not fall outside range
+			this.currentInterval = this.currentInterval.intersection(this.currentRange, this.now);
+		} else if( !this.currentRange ) {
+			// No range, then no interval
+			this.currentInterval = null;
+		};
+
+		if( this.currentInterval && this.currentInterval.ongoing ){
+			this.currentInterval.max = this.now;
+		};
+	},
+	
+	_setInterval: function(updatedInterval){
+		var previous = this.getInterval();
+		
+		this.currentInterval = updatedInterval;
+
+		this._contrainIntervalToRange();
+		
+		var current = this.getInterval();
+		
+		if( previous === current ) {
+			// Nothing to do. This takes care of
+			// previous and current being null
+			
+		} else if( previous && previous.equals(current) ){
+			// Nothing to do
+			
+		} else {
+			this._reportChangedInterval();
+		};
+	},
+	
+	_reportChangedInterval: function(){
+		var current = this.getInterval();
+		
+		// Notify all source models
+		for(var sourceModelId in this.sourceModelsById){
+			var sourceModelInfo = this.sourceModelsById[sourceModelId];
+			if( sourceModelInfo.intervalSetEventName ){
+				this.dispatchService.send(DH, {
+					type: sourceModelInfo.intervalSetEventName
+					,parameterId: sourceModelInfo.parameterId
+					,value: current
+				});
+			};
+		};
+
+		this.dispatchService.send(DH, {
+			type: this.intervalChangeEvent
+			,parameterId: this.modelId + '_interval'
+			,value: current
+		});
+	}
+});
+
+//--------------------------------------------------------------------------
 function handleModelCreate(m, addr, dispatcher){
 	if( m.modelType === 'timeFilter' ){
 		var options = {};
@@ -1667,15 +1999,38 @@ function handleModelCreate(m, addr, dispatcher){
 		new DatedReferenceTransform(options);
 		
 		m.created = true;
+	    
+	} else if( m.modelType === 'timeSynchronize' ){
+		var options = {};
+		
+		if( m && m.modelOptions ){
+			for(var key in m.modelOptions){
+				var value = m.modelOptions[key];
+				options[key] = value;
+			};
+		};
+		
+		options.modelId = m.modelId;
+		
+		if( m.config ){
+			if( m.config.directory ){
+				options.dispatchService = m.config.directory.dispatchService;
+			};
+		};
+		
+		new TimeSynchronize(options);
+		
+		m.created = true;
     };
 };
 
 //--------------------------------------------------------------------------
 $n2.modelTime = {
 	TimeFilter: TimeFilter
-	,NoTimeFilter: NoTimeFilter
 	,TimeTransform: TimeTransform
 	,DatedReferenceTransform: DatedReferenceTransform
+	,NoTimeFilter: NoTimeFilter
+	,TimeSynchronize: TimeSynchronize
 	,handleModelCreate: handleModelCreate
 };
 
