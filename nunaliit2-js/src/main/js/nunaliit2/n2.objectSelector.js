@@ -342,7 +342,7 @@ var ObjectSelector = $n2.Class({
 				callbackFn(value, childSelector);
 				
 				if( typeof value === 'object' && null !== value ){
-					traverse(value, callbackFn, childSelector);
+					traverseObj(value, callbackFn, childSelector);
 				};
 			};
 		};
