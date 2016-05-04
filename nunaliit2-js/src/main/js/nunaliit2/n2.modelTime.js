@@ -1766,6 +1766,7 @@ var TimeSynchronize = $n2.Class('TimeSynchronize',{
 			,setEvent: this.rangeSetEvent
 			,getEvent: this.rangeGetEvent
 			,changeEvent: this.rangeChangeEvent
+			,value: this.currentRange
 		};
 		
 		// Add interval parameter
@@ -1777,6 +1778,7 @@ var TimeSynchronize = $n2.Class('TimeSynchronize',{
 			,setEvent: this.intervalSetEvent
 			,getEvent: this.intervalGetEvent
 			,changeEvent: this.intervalChangeEvent
+			,value: this.getInterval()
 		};
 		
 		return modelInfo;
