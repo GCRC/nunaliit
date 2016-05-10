@@ -1019,6 +1019,20 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  			.attr('class','labels');
  		
  		this.resizeGraph();
+
+ 		// Report canvas
+ 		if( this.dispatchService ){
+ 			var m = {
+ 				type: 'canvasReportSvg'
+ 				,canvasType: 'collapsibleRadialTree'
+ 				,canvas: this
+ 				,svg: undefined
+ 			};
+ 			$svg.each(function(){
+ 				m.svg = this;
+ 			});
+ 			this.dispatchService.send(DH,m);
+ 		};
  	},
  	
  	getGraphSize: function() {
@@ -2068,13 +2082,6 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		
  		if( elementsAreLinks ){
  			selectedElements.attr('fill','none');
- 		};
- 	},
- 	
- 	_dispatch: function(m){
- 		var d = this.dispatchService;
- 		if( d ){
- 			d.send(DH,m);
  		};
  	},
  	

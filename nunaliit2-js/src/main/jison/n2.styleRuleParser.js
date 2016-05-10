@@ -31,17 +31,24 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 ;(function($n2) {
+"use strict";
 
 $merge$
 	
 //--------------------------------------------------------------------------
 function parse(){
-	return parser.parse.apply(parser, arguments);
+	return styleRule.parse.apply(styleRule, arguments);
+};
+
+//--------------------------------------------------------------------------
+function getGlobalContext(){
+	return styleRule.global;
 };
 	
 //--------------------------------------------------------------------------
 $n2.styleRuleParser = {
 	parse: parse
+	,getGlobalContext: getGlobalContext
 };
 
 })(nunaliit2);
