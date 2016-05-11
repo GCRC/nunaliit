@@ -408,6 +408,7 @@ function RadialFishEye(){
 //           {
 //               x: <number> value on X-axis
 //               xMax: <number> maximum value on X-axis from children nodes
+//               xMin: <number> minimum value on X-axis from children nodes
 //               y: <number> value on Y-axis
 //               level: <number> Integer that represents the depth of this node in the tree
 //               xIndent: <number> distance between two nodes in the X-axis
@@ -461,9 +462,17 @@ var CollapsibleLayout = $n2.Class({
 	nodes: function(root){
 		var _this = this;
 		
+		// Capture the nodes that are shown, sorted in order
+		// of presentation. Also, compute the depth of the tree.
+		// The array 'nodesShown' is an array of node wrappers of the
+		// following format:
+		// {
+		//     level: <number> depth at which the node is at [0,...]
+		//     ,node: <object> An original node from the given tree
+		//     ,parent: <object> Parent wrapper object, if any
+		// }
 		var nodesShown = [];
 		var numberOfLevels = 0;
-		
 		processLevel([ root ], 0, undefined);
 
 		// Compute xIndent
@@ -480,19 +489,17 @@ var CollapsibleLayout = $n2.Class({
 		
 		// Compute values. Values that are set by visiting
 		// all nodes: parent, level
-		// Derived values: x, y, xIndent, yIndent
+		// Derived values: x, y, xIndent, yIndent, xMax, xMin
 		for(var i=0,e=nodesShown.length; i<e; ++i){
 			var wrapper = nodesShown[i];
 
 			if( wrapper ){
-				var node = wrapper.node;
-
 				wrapper.x = i * xIndent;
 				wrapper.y = wrapper.level * yIndent;
 				wrapper.xIndent = xIndent;
 				wrapper.yIndent = yIndent;
 				
-				assignMaxX(wrapper, wrapper.x);
+				assignMinMaxX(wrapper, wrapper.x);
 			};
 		};
 
@@ -524,7 +531,7 @@ var CollapsibleLayout = $n2.Class({
 				};
 
 				var shown = _this.shownFn(node);
-				if( shown ){
+				if( shown && !_this.reverseOrder ){
 					anyNodeShown = true;
 					
 					nodesShown.push(wrapper);
@@ -542,12 +549,15 @@ var CollapsibleLayout = $n2.Class({
 						processLevel(node.children, level+1, wrapper);
 					};
 				};
+
+				if( shown && _this.reverseOrder ){
+					anyNodeShown = true;
+					
+					nodesShown.push(wrapper);
+				};
 			};
 			
 			if( anyNodeShown ){
-				// Add a null for spacing
-				//nodesShown.push(null);
-
 				// Add a level, if needed
 				if( numberOfLevels < level ){
 					numberOfLevels = level;
@@ -555,10 +565,21 @@ var CollapsibleLayout = $n2.Class({
 			};
 		};
 		
-		function assignMaxX(wrapper, xMax){
+		function assignMinMaxX(wrapper, x){
 			if( wrapper ){
-				wrapper.xMax = xMax;
-				assignMaxX(wrapper.parent, xMax);
+				if( typeof wrapper.xMax !== 'number' ){
+					wrapper.xMax = x;
+				} else if( wrapper.xMax < x ){
+					wrapper.xMax = x;
+				};
+
+				if( typeof wrapper.xMin !== 'number' ){
+					wrapper.xMin = x;
+				} else if( wrapper.xMin > x ){
+					wrapper.xMin = x;
+				};
+
+				assignMinMaxX(wrapper.parent, x);
 			};
 		};
 	},
@@ -859,8 +880,9 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 	 			xSize: 360
 	 			,assignFn: function(node,v){
 	 				node.x = v.x;
-	 				node.xMax = v.xMax
-	 				node.xIndent = v.xIndent
+	 				node.xMax = v.xMax;
+	 				node.xMin = v.xMin;
+	 				node.xIndent = v.xIndent;
 	 				node.y = _this.dimensions.radius;
 	 			}
 	 			,shownFn: function(node){
@@ -1444,8 +1466,11 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			node.orig_x = Degrees(node.x + this.originAngle);
 			delete node.x;
 			
-			if( node.xMax ){
+			if( typeof node.xMax === 'number' ){
 				node.xMax = Degrees(node.xMax + this.originAngle);
+			};
+			if( typeof node.xMin === 'number' ){
+				node.xMin = Degrees(node.xMin + this.originAngle);
 			};
 			
 			// Add to map of displayed elements
@@ -2188,8 +2213,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  				m.x = node.orig_x;
  				m.z = 2;
 
- 				if( node.xMax ){
- 	 				m.xArcStart = node.orig_x - (node.xIndent / 2);
+ 				if( typeof node.xMax === 'number' ){
+ 	 				m.xArcStart = node.xMin - (node.xIndent / 2);
  	 				m.xArcEnd = node.xMax + (node.xIndent / 2);
  	 			};
  			};
@@ -2325,10 +2350,12 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		function magnifyNode(n){
  			var m = _this.magnify(n);
  			
- 			if( n.xMax ){
+ 			if( typeof n.xMin === 'number' ){
  				m.xArcStart = _this.magnify.compute(
- 					n.orig_x - (n.xIndent / 2)
+ 					n.xMin - (n.xIndent / 2)
 				).x;
+ 			};
+ 	 		if( typeof n.xMax === 'number' ){
  				m.xArcEnd = _this.magnify.compute(
  					n.xMax + (n.xIndent / 2)
 				).x;
