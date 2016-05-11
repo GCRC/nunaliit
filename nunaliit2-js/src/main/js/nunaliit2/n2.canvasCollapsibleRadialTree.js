@@ -425,6 +425,8 @@ var CollapsibleLayout = $n2.Class({
 	
 	comparatorFn: null,
 	
+	reverseOrder: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			xSize: 1
@@ -432,6 +434,7 @@ var CollapsibleLayout = $n2.Class({
 			,shownFn: null
 			,assignFn: null
 			,comparatorFn: null
+			,reverseOrder: false
 		},opts_);
 
 		this.xSize = opts.xSize;
@@ -439,6 +442,7 @@ var CollapsibleLayout = $n2.Class({
 		this.shown( opts.shownFn );
 		this.assign( opts.assignFn );
 		this.comparator( opts.comparatorFn );
+		this.reverseOrder = opts.reverseOrder;
 		
 		if( !this.shownFn ){
 			this.shownFn = function(n){
@@ -530,6 +534,9 @@ var CollapsibleLayout = $n2.Class({
 					if( _this.comparatorFn ){
 						var children = node.children.slice(0); // clone
 						children.sort(_this.comparatorFn);
+						if( _this.reverseOrder ){
+							children.reverse();
+						};
 						processLevel(children, level+1, wrapper);
 					} else {
 						processLevel(node.children, level+1, wrapper);
@@ -748,6 +755,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			,sourceModelId: null
 			,radius: 300
 			,background: null
+			,layout: null
 			,line: null
 			,magnify: null
 			,styleRules: null
@@ -842,25 +850,32 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		
  		this.createGraph();
  		
- 		this.layout = new CollapsibleLayout({
- 			xSize: 360
- 			,assignFn: function(node,v){
- 				node.x = v.x;
- 				node.xMax = v.xMax
- 				node.xIndent = v.xIndent
- 				node.y = _this.dimensions.radius;
- 			}
- 			,shownFn: function(node){
- 				if( node.canvasVisible ) return true;
- 				if( node.canvasVisibleDerived ) return true;
- 				return false;
- 			}
- 			,comparatorFn: function(n1, n2){
- 				if( n1.sortValue < n2.sortValue ) return -1;
- 				if( n1.sortValue > n2.sortValue ) return 1;
- 				return 0;
- 			}
- 		});
+ 		var layoutOptions = $n2.extend(
+ 			{
+	 			reverseOrder: false
+	 		}
+	 		,opts.layout
+	 		,{
+	 			xSize: 360
+	 			,assignFn: function(node,v){
+	 				node.x = v.x;
+	 				node.xMax = v.xMax
+	 				node.xIndent = v.xIndent
+	 				node.y = _this.dimensions.radius;
+	 			}
+	 			,shownFn: function(node){
+	 				if( node.canvasVisible ) return true;
+	 				if( node.canvasVisibleDerived ) return true;
+	 				return false;
+	 			}
+	 			,comparatorFn: function(n1, n2){
+	 				if( n1.sortValue < n2.sortValue ) return -1;
+	 				if( n1.sortValue > n2.sortValue ) return 1;
+	 				return 0;
+	 			}
+	 		}
+	 	);
+ 		this.layout = new CollapsibleLayout(layoutOptions);
 
  		// Set up line computing
  		var lineOptions = $n2.extend({

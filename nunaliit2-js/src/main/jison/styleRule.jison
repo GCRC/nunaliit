@@ -17,8 +17,7 @@ function classNamesFromElement(elem){
 };
 
 // Functions in the global space receives the context object
-// as 'this' and the arguments in the form of an instance of
-// class Argument
+// as 'this'.
 var global = {
 	isSelected: function(){
 		return this.n2_selected;
@@ -404,7 +403,7 @@ value
     ;
 
 arguments
-    : arguments ',' arguments
+    : value ',' arguments
         {
         	$$ = new Argument($1,$3);
         }
