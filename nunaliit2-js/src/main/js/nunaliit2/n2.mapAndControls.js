@@ -1674,6 +1674,12 @@ var MapAndControls = $n2.Class({
 		return features;
 	},
 	
+	_getLayerFeatureIncludingFid: function(layer, fid){
+		var map = {};
+		map[fid] = true;
+		return this._getLayerFeatureIncludingFidMap(layer, map);
+	},
+	
 	_getLayerFeatureIncludingFidMap: function(layer,fidMap) {
 		
 		if( layer && layer.features ) {

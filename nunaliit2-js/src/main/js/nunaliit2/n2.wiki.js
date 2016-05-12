@@ -494,6 +494,73 @@ function processTables(lines){
 };
 
 //*******************************************************
+var regexAttribute = /^\s*([-_a-zA-Z][-_a-zA-Z0-9]*)\s*=\s*"(.*)"\s*$/;
+function insertShowService(links){
+	var classNames = [];
+	classNames.push( links.shift() );
+
+	// Parse attributes
+	var attributeValuesByName = {};
+	for(var i=0,e=links.length; i<e; ++i){
+		var link = links[i];
+		var matcher = regexAttribute.exec(link);
+		if( matcher ){
+			var name = matcher[1];
+			var value = matcher[2];
+			
+			if( 'class' === name ){
+				classNames.push(value);
+			} else {
+				attributeValuesByName[name] = value;
+			};
+			
+		} else {
+			$n2.log('Invalid wiki nunaliit attribute: '+link);
+		};
+	};
+
+	// Generate HTML
+	var html = [];
+	
+	html.push('<div class="');
+
+	for(var i=0,e=classNames.length; i<e; ++i){
+		var className = classNames[i];
+		if( i > 0 ){
+			html.push(' ');
+		};
+		html.push(className);
+	};
+	html.push('"');
+	
+	for(var name in attributeValuesByName){
+		var validAttribute = false;
+		// Black list all scripts
+		if( 'on' === name.substr(0,'on'.length) ){
+			// Do not output "on" attributes
+		} else if( 'nunaliit-' === name.substr(0,'nunaliit-'.length) ){
+			// Allow nunaliit specific attributes
+			validAttribute = true;
+		} else if( $n2.html.isAttributeNameValid(name) ){
+			validAttribute = true;
+		};
+		
+		if( validAttribute ){
+			var value = attributeValuesByName[name];
+			html.push(' ');
+			html.push(name);
+			html.push('="');
+			html.push(value);
+			html.push('"');
+		};
+	};
+
+	html.push('/>');
+	
+	return html.join('');
+};
+
+//*******************************************************
 function computeLink(linkText){
 	var links = linkText.split('|');
 	
@@ -504,6 +571,11 @@ function computeLink(linkText){
 	if( 'http://' === url.substr(0,'http://'.length)
 	 || 'https://' === url.substr(0,'https://'.length) ){
 		externalLink = true;
+
+	} else if( 'nunaliit:' === url.substr(0,'nunaliit:'.length) ){
+		links[0] = url.substr('nunaliit:'.length);
+		return insertShowService(links);
+
 	} else {
 		docLink = true;
 		docId = url;
