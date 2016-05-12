@@ -679,6 +679,10 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 	 * is clockwise.
 	 */
 	originAngle: null,
+	
+	transitionDuration: null,
+
+	collapseBeforeExpand: null,
  	
 	styleRules: null,
 
@@ -784,6 +788,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			,arcs: null
 			,toggleSelection: false
 			,originAngle: 0
+			,transitionDuration: 250
+			,collapseBeforeExpand: true
 			,elementGeneratorType: 'default'
 			,elementGeneratorOptions: null
 			,elementGenerator: null
@@ -801,6 +807,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		this.background = opts.background;
 		this.toggleSelection = opts.toggleSelection;
 		this.elementGenerator = opts.elementGenerator;
+		this.transitionDuration = opts.transitionDuration;
+		this.collapseBeforeExpand = opts.collapseBeforeExpand;
  		
 		this.modelId = $n2.getUniqueId('collapsibleRadialTreeCanvas');
  		
@@ -2245,6 +2253,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		
 		changedPoints
 			.transition()
+			.duration(this.transitionDuration)
 			.attr("transform", function(d) { 
 				return "rotate(" + (d.x - 90) 
 					+ ")translate(" + d.y + ",0)"; 
@@ -2259,6 +2268,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 // 		
 // 		changedControls
 // 			.transition()
+//			.duration(this.transitionDuration)
 //			.attr("transform", function(d) { 
 //				return "rotate(" + (d.x - 90) 
 //					+ ")translate(" + (d.y + 10) + ",0)"; 
@@ -2274,6 +2284,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		
 		changedLabels
 			.transition()
+			.duration(this.transitionDuration)
 			.attr("transform", function(d) { 
 				return "rotate(" + (d.x - 90) 
 					+ ")translate(" + (d.y + 6) + ",0)" 
@@ -2294,6 +2305,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 	 		
 	 		changedArcs
 	 			.transition()
+				.duration(this.transitionDuration)
 		 		.attr('transform', function(d) { 
 					return 'rotate(-90)';
 				})
@@ -2342,6 +2354,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 				return false;
 			})
 			.transition()
+			.duration(this.transitionDuration)
 			.attr('d',function(link){ 
 				return _this.line(link.path); 
 			})
@@ -2398,6 +2411,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  	},
  	
  	_initiateExpandCollapse: function(elementData){
+ 		var _this = this;
+
  		// No collapse/expand on nodes that do not have children
  		if( !elementData.children ){
  			return;
@@ -2406,17 +2421,17 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  			return;
  		};
  		
- 		this.fixOriginOnNode = {
- 			id: elementData.id
- 			,position: Degrees(elementData.orig_x - this.originAngle)
- 		};
- 		
  		var elementId = elementData.id;
  		if( this.expandedNodesById[elementId] ){
+ 			// Collapse
+ 	 		this.fixOriginOnNode = {
+ 	 			id: elementData.id
+ 	 			,position: Degrees(elementData.orig_x - this.originAngle)
+ 	 		};
+ 	 	 		
  			delete this.expandedNodesById[elementId];
+
  		} else {
- 			this.expandedNodesById[elementId] = true;
- 			
  			// If expanding a node and the node is part of a group,
  			// then collapse all nodes associated with the same group
  			var groupName = elementData.group;
@@ -2425,12 +2440,35 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  				if( groupElems ){
  					for(var i=0,e=groupElems.length; i<e; ++i){
  						var groupNode = groupElems[i];
- 						if( groupNode.id !== elementData.id ){
- 							delete this.expandedNodesById[groupNode.id];
+ 						if( groupNode.id !== elementData.id 
+ 						 && this.expandedNodesById[groupNode.id] ){
+ 							// Collapse this node
+ 							if( this.collapseBeforeExpand ){
+ 	 							// In this option, the node is collapsed before the
+ 								// new one is expanded
+ 	 							this._initiateExpandCollapse(groupNode);
+ 	 							window.setTimeout(
+ 	 								function(){
+ 	 									_this._initiateExpandCollapse(elementData);
+ 	 								}
+ 	 								,this.transitionDuration
+ 	 							);
+ 	 							return;
+ 							} else {
+ 								// Mark as collapsed
+ 	 							delete this.expandedNodesById[groupNode.id];
+ 							};
  						};
  					};
  				};
  			};
+
+ 	 		this.fixOriginOnNode = {
+ 	 			id: elementData.id
+ 	 			,position: Degrees(elementData.orig_x - this.originAngle)
+ 	 		};
+
+ 	 		this.expandedNodesById[elementId] = true;
  		};
  		
  		// Need to initiate redrawing
