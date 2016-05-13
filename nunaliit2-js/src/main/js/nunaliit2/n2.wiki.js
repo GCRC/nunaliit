@@ -164,15 +164,16 @@ function removeComments(lines){
 // Look at consecutive lines and merge them into one if
 // a line is a continuation of another
 function mergeLines(lines){
-	function isContinuingLine(line){
-		if( isBlockLine(line) ) return false;
-		if( '*' === line[0] ) return false;
-		if( '#' === line[0] ) return false;
-		if( '{' === line[0] ) return false;
-		if( '|' === line[0] ) return false;
-		if( '!' === line[0] ) return false;
+	function isInstructionLine(line){
+		if( isBlockLine(line) ) return true;
+		if( '*' === line[0] ) return true;
+		if( '#' === line[0] ) return true;
+		if( '{' === line[0] ) return true;
+		if( '}' === line[0] ) return true;
+		if( '|' === line[0] ) return true;
+		if( '!' === line[0] ) return true;
 			
-		return true;
+		return false;
 	};
 	
 	var newLines = [];
@@ -183,9 +184,9 @@ function mergeLines(lines){
 		var line = lines[i];
 	
 		if( null === previousLine ){
-			if( isBlockLine(line) ){
-				// This is a block line. Can not be continued
-				previousLine = null;
+			if( isInstructionLine(line) ){
+				// This line contains an instruction and should not be continued
+
 			} else {
 				previousLine = line;
 			};
@@ -195,22 +196,16 @@ function mergeLines(lines){
 			
 			
 		} else {
-			if( isContinuingLine(line) ){
+			if( ! isInstructionLine(line) ){
 				// Should continue previous line
 				previousLine = previousLine + ' ' + line;
 				newLines[newLines.length-1] = previousLine;
 				
 			} else {
 				
-				if( isBlockLine(line) ){
-					// This is a block line. Can not be continued
-					previousLine = null;
-				} else {
-					previousLine = line;
-				};
+				previousLine = null;
 
 				newLines.push(line);
-
 			};
 		};
 	};
@@ -757,7 +752,11 @@ function computeLink(linkText){
 // Styling:
 // ''italics''
 // '''bold'''
-// 
+//
+// Sections:
+// {{ attr1="value1" | attr2="value2"
+// ...
+// }}
 function WikiToHtml(opts_){
 	var opts = $n2.extend({
 		wiki: null
