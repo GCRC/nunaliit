@@ -399,6 +399,10 @@ function Configure(options_){
 			dispatchService: configuration.directory.dispatchService
 		});
 		
+	 	configuration.directory.utilityService = new $n2.utilities.Service({
+			dispatchService: configuration.directory.dispatchService
+		});
+		
 	 	configuration.directory.canvasService = new $n2.canvas.Service({
 			dispatchService: configuration.directory.dispatchService
 		});

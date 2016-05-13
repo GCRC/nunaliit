@@ -61,69 +61,69 @@ function isSrsNameSupported(srsName){
 //=========================================================================	
 var Module = $n2.Class({
 	
-	moduleDoc: null
+	moduleDoc: null,
 	
-	,atlasDb: null
+	atlasDb: null,
 	
-	,initialize: function(moduleDoc, atlasDb){
+	initialize: function(moduleDoc, atlasDb){
 		this.moduleDoc = moduleDoc;
 		this.atlasDb = atlasDb;
-	}
+	},
 
-	,getModuleInfo: function(){
+	getModuleInfo: function(){
 		var moduleInfo = null;
 		if( this.moduleDoc ){
 			moduleInfo = this.moduleDoc.nunaliit_module;
 		};
 		return moduleInfo;
-	}
+	},
 
-	,getMapInfo: function(){
+	getMapInfo: function(){
 		var mapInfo = null;
 		var moduleInfo = this.getModuleInfo();
 		if( moduleInfo ){
 			mapInfo = moduleInfo.map;
 		};
 		return mapInfo;
-	}
+	},
 
-	,getCanvasInfo: function(){
+	getCanvasInfo: function(){
 		var canvasInfo = null;
 		var moduleInfo = this.getModuleInfo();
 		if( moduleInfo ){
 			canvasInfo = moduleInfo.canvas;
 		};
 		return canvasInfo;
-	}
+	},
 
-	,getDisplayInfo: function(){
+	getDisplayInfo: function(){
 		var displayInfo = null;
 		var moduleInfo = this.getModuleInfo();
 		if( moduleInfo ){
 			displayInfo = moduleInfo.display;
 		};
 		return displayInfo;
-	}
+	},
 
-	,getEditInfo: function(){
+	getEditInfo: function(){
 		var editInfo = null;
 		var moduleInfo = this.getModuleInfo();
 		if( moduleInfo ){
 			editInfo = moduleInfo.edit;
 		};
 		return editInfo;
-	}
+	},
 
-	,getSearchInfo: function(){
+	getSearchInfo: function(){
 		var searchInfo = null;
 		var moduleInfo = this.getModuleInfo();
 		if( moduleInfo ){
 			searchInfo = moduleInfo.search;
 		};
 		return searchInfo;
-	}
+	},
 
-	,getModelInfos: function(){
+	getModelInfos: function(){
 		var modelInfos = null;
 		var moduleInfo = this.getModuleInfo();
 		if( moduleInfo ){
@@ -133,9 +133,21 @@ var Module = $n2.Class({
 			modelInfos = [];
 		};
 		return modelInfos;
-	}
+	},
+	
+	getUtilityInfos: function(){
+		var utilityInfos = null;
+		var moduleInfo = this.getModuleInfo();
+		if( moduleInfo ){
+			utilityInfos = moduleInfo.utilities;
+		};
+		if( !utilityInfos ){
+			utilityInfos = [];
+		};
+		return utilityInfos;
+	},
 
-	,getWidgetInfos: function(){
+	getWidgetInfos: function(){
 		var widgetInfos = null;
 		var moduleInfo = this.getModuleInfo();
 		if( moduleInfo ){
@@ -145,14 +157,14 @@ var Module = $n2.Class({
 			widgetInfos = [];
 		};
 		return widgetInfos;
-	}
+	},
 	
 	/*
 	 * Finds the introduction text associated with the module and inserts it
 	 * in the element provided. Once the content of the introduction is loaded
 	 * in the DOM, the "onLoaded" function is called.
 	 */
-	,displayIntro: function(opts_){
+	displayIntro: function(opts_){
 		var opts = $n2.extend({
 			elem: null
 			,showService: null
@@ -531,6 +543,7 @@ var ModuleDisplay = $n2.Class({
 			var displayInfo = _this.module.getDisplayInfo();
 			var searchInfo = _this.module.getSearchInfo();
 			var modelInfos = _this.module.getModelInfos();
+			var utilityInfos = _this.module.getUtilityInfos();
 			
 			// Create models
 			if( modelInfos ){
@@ -551,6 +564,28 @@ var ModuleDisplay = $n2.Class({
 						
 					if( ! msg.created ){
 						$n2.log('Model not created: '+modelInfo.modelType+'/'+modelInfo.modelId);
+					};
+				};
+			};
+			
+			// Create utilities
+			if( utilityInfos ){
+				for(var i=0,e=utilityInfos.length; i<e; ++i){
+					var utilityInfo = utilityInfos[i];
+
+					var msg = {
+						type: 'utilityCreate'
+						,utilityType: utilityInfo.utilityType
+						,utilityOptions: utilityInfo
+						,created: false
+						,config: config
+						,moduleDisplay: _this
+					};
+						
+					_this._sendSynchronousMessage(msg);
+						
+					if( ! msg.created ){
+						$n2.log('Utility not created: '+utilityInfo.utilityType);
 					};
 				};
 			};
