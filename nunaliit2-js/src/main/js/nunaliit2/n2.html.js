@@ -65,7 +65,7 @@ var globalAttributeMap = {
 
 //--------------------------------------------------------------------------
 function isAttributeNameValid(attrName){
-	var attrName = attrName.toLower();
+	var attrName = attrName.toLowerCase();
 	
 	if( globalAttributeMap[attrName] ){
 		return true;

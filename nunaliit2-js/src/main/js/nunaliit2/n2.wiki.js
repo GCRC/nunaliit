@@ -494,6 +494,98 @@ function processTables(lines){
 };
 
 //*******************************************************
+var reSectionOption = /^\s*([-_a-zA-Z][-_a-zA-Z0-9]*)\s*=\s*"(.*)"\s*$/;
+function processSections(lines){
+
+	var sections = [];
+	var pendingSections = [];
+	
+	for(var i=0,e=lines.length; i<e; ++i){
+		var line = lines[i];
+
+		if( '{{' === line.substr(0,2) ){
+			// Start of Section
+			
+			var section = {
+				start: i
+			};
+			pendingSections.push(section);
+
+		} else if( '}}' === line.substr(0,2) ){
+			// End of Section
+			if( pendingSections.length > 0 ){
+				var section = pendingSections.pop();
+				section.end = i;
+				sections.push(section);
+			};
+		};
+	};
+	
+	for(var i=0,e=sections.length; i<e; ++i){
+		var section = sections[i];
+		var startLine = lines[section.start];
+		var replacementLine = getReplacementLine(startLine);
+		
+		if( replacementLine ){
+			lines[section.start] = replacementLine;
+			lines[section.end] = '</div>';
+		};
+	};
+	
+	return lines;
+	
+	function getReplacementLine(line){
+		var line = line.substr(2);
+		var options = line.split('|');
+		var attributeMap = {};
+		
+		for(var i=0,e=options.length; i<e; ++i){
+			var option = options[i];
+			var matcher = reSectionOption.exec(option);
+			if( matcher ){
+				var name = matcher[1];
+				var value = matcher[2];
+				
+				attributeMap[name] = value;
+				
+			} else {
+				$n2.log('Invalid wiki section attribute: '+option);
+			};
+		};
+		
+		var html = [];
+		
+		html.push('<div');
+
+		for(var name in attributeMap){
+			var validAttribute = false;
+			// Black list all scripts
+			if( 'on' === name.substr(0,'on'.length) ){
+				// Do not output "on" attributes
+			} else if( 'nunaliit-' === name.substr(0,'nunaliit-'.length) ){
+				// Allow nunaliit specific attributes
+				validAttribute = true;
+			} else if( $n2.html.isAttributeNameValid(name) ){
+				validAttribute = true;
+			};
+			
+			if( validAttribute ){
+				var value = attributeMap[name];
+				html.push(' ');
+				html.push(name);
+				html.push('="');
+				html.push(value);
+				html.push('"');
+			};
+		};
+
+		html.push('>');
+		
+		return html.join('');
+	};
+};
+
+//*******************************************************
 var regexAttribute = /^\s*([-_a-zA-Z][-_a-zA-Z0-9]*)\s*=\s*"(.*)"\s*$/;
 function insertShowService(links){
 	var classNames = [];
@@ -612,14 +704,68 @@ function computeLink(linkText){
 };
 
 //*******************************************************
+// Transform wiki markup to HTML
+// Comments:
+//    <!-- -->
+//
+// Special characters are escaped:
+//    & -> &amp;
+//    < -> &lt;
+//    > -> &gt;
+//
+// Unordered list:
+// * line
+// * line
+// ** line
+// ** line
+// * line
+//
+// Ordered list:
+// # line
+// # line
+// ## line
+// ## line
+// # line
+//
+// Tables:
+// {|                   Start table
+// |+                   Table caption
+// |-                   New row
+// !                    Heading cell
+// |                    Cell
+// | options | content  Cell with options
+// | cell1 || cell2     Multiple cells on one line
+// |}                   End table
+//
+// Headings:
+// = Heading1 =
+// == Heading2 ==
+// === Heading3 ===
+// ==== Heading4 ====
+// ===== Heading5 =====
+// ====== Heading6 ======
+// 
+// Horizontal lines:
+// ----
+//
+// Links:
+// [[http://abc.com | description]]   External link
+// [[https://abc.com | description]]  External link
+// [[docId | description]]            Internal link
+// [[nunaliit:class | option]]        Show service insert
+//
+// Styling:
+// ''italics''
+// '''bold'''
+// 
 function WikiToHtml(opts_){
 	var opts = $n2.extend({
 		wiki: null
 	},opts_);
 	
 	var text = opts.wiki;
-	if( !text ){
-		throw 'Wiki text must be specified for WikiToHtml()';
+	if( typeof text !== 'string' ){
+		throw new Error('Wiki text must be specified for WikiToHtml()');
 	};
 
 	var lines = text.split('\n');
@@ -635,6 +781,7 @@ function WikiToHtml(opts_){
 	lines = mergeLines(lines);
 	lines = processLists(lines);
 	lines = processTables(lines);
+	lines = processSections(lines);
 
 	for(var i=0,e=lines.length; i<e; ++i){
 		var line = lines[i];
