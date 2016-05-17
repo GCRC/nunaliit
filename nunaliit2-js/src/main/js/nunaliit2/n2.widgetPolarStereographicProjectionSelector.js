@@ -69,8 +69,7 @@ var ProjectionSelector = $n2.Class({
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
-			contentId: null
-			,containerId: null
+			containerId: null
 			,dispatchService: null
 			,rootPath: './'
 			,moduleDisplay: null
@@ -114,7 +113,7 @@ var ProjectionSelector = $n2.Class({
 		// Get container
 		var containerId = opts.containerId;
 		if( !containerId ){
-			containerId = opts.contentId;
+			throw new Error('containerId must be specified');
 		};
 		var $container = $('#'+containerId);
 		
@@ -290,19 +289,19 @@ var ProjectionSelector = $n2.Class({
  			.attr('fill-opacity',0.0)
  			.attr('stroke','none')
  			.on('mouseover', function(n){
- 				var e = d3.event;
+ 				var e = $d.event;
  				_this._initiateMouseOver(n,e);
  			})
  			.on('mousemove', function(n){
- 				var e = d3.event;
+ 				var e = $d.event;
  				_this._initiateMouseMove(n,e);
  			})
  			.on('mouseout', function(n){
- 				var e = d3.event;
+ 				var e = $d.event;
  				_this._initiateMouseOut(n,e);
  			})
  			.on('click', function(n){
- 				var e = d3.event;
+ 				var e = $d.event;
  				_this._initiateMouseClick(n,e);
  			})
  			;
@@ -509,7 +508,7 @@ var ProjectionSelector = $n2.Class({
 			};
 		};
 
-		$n2.log('loc x:'+(loc ? loc.x : null)+' y:'+(loc ? loc.y : null));
+		//$n2.log('loc x:'+(loc ? loc.x : null)+' y:'+(loc ? loc.y : null));
 		
 		return loc;
 	},
@@ -594,16 +593,21 @@ function HandleWidgetAvailableRequests(m){
 function HandleWidgetDisplayRequests(m){
 	if( m.widgetType === 'polarStereographicProjectionSelector' ){
 		var widgetOptions = m.widgetOptions;
-		var contentId = m.contentId;
 		var containerId = m.containerId;
 		var moduleDisplay = m.moduleDisplay;
 		var config = m.config;
 		
-		var options = {
-			contentId: contentId
-			,containerId: containerId
-			,moduleDisplay: moduleDisplay
+		var options = {};
+		
+		if( widgetOptions ){
+			for(var key in widgetOptions){
+				var value = widgetOptions[key];
+				options[key] = value;
+			};
 		};
+
+		options.containerId = containerId;
+		options.moduleDisplay = moduleDisplay;
 		
 		if( config && config.directory ){
 			options.rootPath = config.rootPath;
@@ -611,11 +615,6 @@ function HandleWidgetDisplayRequests(m){
 			if( config.directory ){
 				options.dispatchService = config.directory.dispatchService;
 			};
-		};
-		
-		if( widgetOptions ){
-			if( widgetOptions.imageLocation ) options.imageLocation = widgetOptions.imageLocation;
-			if( widgetOptions.imageRotation ) options.imageRotation = widgetOptions.imageRotation;
 		};
 		
 		new ProjectionSelector(options);

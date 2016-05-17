@@ -65,9 +65,7 @@ var SplashPageWidget = $n2.Class({
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
-			contentId: null
-			,containerId: null
-			,dispatchService: null
+			dispatchService: null
 			,showService: null
 			,pages: null
 			,title: null
@@ -602,14 +600,9 @@ function HandleWidgetAvailableRequests(m){
 function HandleWidgetDisplayRequests(m){
 	if( m.widgetType === 'splashPage' ){
 		var widgetOptions = m.widgetOptions;
-		var contentId = m.contentId;
-		var containerId = m.containerId;
 		var config = m.config;
 		
-		var options = {
-			contentId: contentId
-			,containerId: containerId
-		};
+		var options = {};
 
 		if( widgetOptions ){
 			for(var key in widgetOptions){

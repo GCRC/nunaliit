@@ -61,8 +61,7 @@ var WaitWidget = $n2.Class({
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
-			contentId: null
-			,containerId: null
+			containerId: null
 			,dispatchService: null
 			
 			// From configuration
@@ -90,7 +89,7 @@ var WaitWidget = $n2.Class({
 		// Get container
 		var containerId = opts.containerId;
 		if( !containerId ){
-			containerId = opts.contentId;
+			throw new Error('containerId must be specified');
 		};
 		var $container = $('#'+containerId);
 		
@@ -252,20 +251,18 @@ function HandleWidgetAvailableRequests(m){
 function HandleWidgetDisplayRequests(m){
 	if( m.widgetType === 'wait' ){
 		var widgetOptions = m.widgetOptions;
-		var contentId = m.contentId;
 		var containerId = m.containerId;
 		var config = m.config;
 		
-		var options = {
-			contentId: contentId
-			,containerId: containerId
-		};
+		var options = {};
 		
 		if( widgetOptions ){
 			for(var opName in widgetOptions){
 				options[opName] = widgetOptions[opName];
 			};
 		};
+
+		options.containerId = containerId;
 		
 		if( config && config.directory ){
 			options.dispatchService = config.directory.dispatchService;

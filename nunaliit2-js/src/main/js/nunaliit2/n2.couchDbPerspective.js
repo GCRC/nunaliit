@@ -658,7 +658,6 @@ var DbPerspectiveChooser = $n2.Class({
 		var opts = $n2.extend({
 			dispatchService: null
 			,sourceModelId: null
-			,contentId: null
 			,containerId: null
 		},opts_);
 		
@@ -682,7 +681,7 @@ var DbPerspectiveChooser = $n2.Class({
 		
 		var containerId = opts.containerId;
 		if( !containerId ){
-			containerId = opts.contentId;
+			throw new Error('containerId must be specified');
 		};
 		
 		this.elemId = $n2.getUniqueId();
@@ -817,17 +816,20 @@ function HandleWidgetDisplayRequests(m){
 		var containerId = m.containerId;
 		var config = m.config;
 		
-		var options = {
-			contentId: contentId
-			,containerId: containerId
+		var options = {};
+		
+		if( widgetOptions ){
+			for(var key in widgetOptions){
+				var value = widgetOptions[key];
+				options[key] = value;
+			};
 		};
+
+		options.contentId = contentId;
+		options.containerId = containerId;
 		
 		if( config && config.directory ){
 			options.dispatchService = config.directory.dispatchService;
-		};
-		
-		if( widgetOptions ){
-			if( widgetOptions.sourceModelId ) options.sourceModelId = widgetOptions.sourceModelId;
 		};
 		
 		new DbPerspectiveChooser(options);

@@ -67,6 +67,10 @@ var CreateDocumentWidget = $n2.Class({
 		this.dispatchService = opts.dispatchService;
 		this.authService = opts.authService;
 		this.showAsLink = opts.showAsLink;
+
+		if( !this.containerId ){
+			throw new Error('containerId must be specified');
+		};
 		
 		this._display();
 	},
@@ -77,9 +81,6 @@ var CreateDocumentWidget = $n2.Class({
 		this.elemId = $n2.getUniqueId();
 		
 		var containerId = this.containerId;
-		if( !containerId ){
-			containerId = this.contentId;
-		};
 		
 		var $div = $('<div>')
 			.attr('id',this.elemId)
@@ -136,18 +137,21 @@ function BuildCreateDocumentWidgetFromRequest(m){
 	var config = m.config;
 	// var moduleDisplay = m.moduleDisplay;
 	
-	var options = {
-		contentId: contentId
-		,containerId: containerId
+	var options = {};
+
+	if( widgetOptions ){
+		for(var key in widgetOptions){
+			var value = widgetOptions[key];
+			options[key] = value;
+		};
 	};
-	
+
+	options.contentId = contentId;
+	options.containerId = containerId;
+
 	if( config && config.directory ){
 		options.dispatchService = config.directory.dispatchService;
 		options.authService = config.directory.authService;
-	};
-	
-	if( widgetOptions ){
-		if( widgetOptions.showAsLink ) options.showAsLink = true;
 	};
 	
 	new CreateDocumentWidget(options);
@@ -174,7 +178,7 @@ var CreateDocumentFromSchemaWidget = $n2.Class({
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
-			parentId: null
+			containerId: null
 			,dispatchService: null
 			,authService: null
 			,schemaRepository: null
@@ -197,7 +201,7 @@ var CreateDocumentFromSchemaWidget = $n2.Class({
 
 		this.schema = null;
 		
-		var $parent = $('#'+opts.parentId);
+		var $parent = $('#'+opts.containerId);
 		var $elem = $('<div>')
 			.addClass('n2widget_createDocumentFromSchema')
 			.appendTo($parent);
@@ -294,7 +298,7 @@ var CreateDocumentFromSchemaWidget = $n2.Class({
 });
 
 //--------------------------------------------------------------------------
-function BuildCreateDocumentFromSchemaWidgetFromRequest(m){
+function BuildCreateDocumentFromSchemaWidget(m){
 	var widgetOptions = m.widgetOptions;
 	var contentId = m.contentId;
 	var containerId = m.containerId;
@@ -303,17 +307,13 @@ function BuildCreateDocumentFromSchemaWidgetFromRequest(m){
 	
 	var options = {};
 
-	var containerId = m.containerId;
-	if( !containerId ){
-		containerId = m.contentId;
-	};
-	options.parentId = containerId;
-	
 	if( widgetOptions ){
 		for(var key in widgetOptions){
 			options[key] = widgetOptions[key];
 		};
 	};
+	
+	options.containerId = containerId;
 	
 	if( config ){
 		if( config.directory ){
@@ -372,7 +372,7 @@ var Service = $n2.Class({
 	
 	_insertWidget: function($jq){
 		var widgetType = $jq.attr('nunaliit-widget');
-		var contentId = $n2.utils.getElementIdentifier($jq);
+		var containerId = $n2.utils.getElementIdentifier($jq);
 		
 		var widgetConfig = undefined;
 		try {
@@ -410,7 +410,7 @@ var Service = $n2.Class({
 				type: 'widgetDisplay'
 				,widgetType: widgetType
 				,widgetOptions: widgetConfig
-				,contentId: contentId
+				,containerId: containerId
 				,config: this.config
 			});
 		};
@@ -471,7 +471,7 @@ var Service = $n2.Class({
 				BuildCreateDocumentWidgetFromRequest(m);
 
 			} else if( m.widgetType === 'createDocumentFromSchema' ){
-				BuildCreateDocumentFromSchemaWidgetFromRequest(m);
+				BuildCreateDocumentFromSchemaWidget(m);
 
 			} else {
 				if( $n2.couchDbPerspective 

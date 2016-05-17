@@ -145,8 +145,7 @@ var BookBrowser = $n2.Class({
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
-			contentId: null
-			,containerId: null
+			containerId: null
 			,dispatchService: null
 			,pagePadding: 2
 			,pageResizing: true
@@ -174,7 +173,7 @@ var BookBrowser = $n2.Class({
 		// Get container
 		var containerId = opts.containerId;
 		if( !containerId ){
-			containerId = opts.contentId;
+			throw new Error('containerId must be specified');
 		};
 		var $container = $('#'+containerId);
 		
@@ -640,16 +639,16 @@ function HandleWidgetDisplayRequests(m){
 		var containerId = m.containerId;
 		var config = m.config;
 		
-		var options = {
-			contentId: contentId
-			,containerId: containerId
-		};
+		var options = {};
 		
 		if( widgetOptions ){
 			for(var opName in widgetOptions){
 				options[opName] = widgetOptions[opName];
 			};
 		};
+		
+		options.contentId = contentId;
+		options.containerId = containerId;
 		
 		if( config && config.directory ){
 			options.dispatchService = config.directory.dispatchService;
