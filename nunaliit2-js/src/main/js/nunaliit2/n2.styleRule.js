@@ -49,8 +49,7 @@ var g_TrueNode = new TrueNode();
 //--------------------------------------------------------------------------
 var svgSymbolNames = {
 	'fill': {
-		alt: 'fillColor'
-		,applies: {
+		applies: {
 			circle: true
 			,line: false
 			,path: true
@@ -59,8 +58,7 @@ var svgSymbolNames = {
 		}
 	}
 	,'fill-opacity': {
-		alt: 'fillOpacity'
-		,applies: {
+		applies: {
 			circle: true
 			,line: false
 			,path: true
@@ -69,8 +67,7 @@ var svgSymbolNames = {
 		}
 	}
 	,'stroke': {
-		alt: 'strokeColor'
-		,applies: {
+		applies: {
 			circle: true
 			,line: true
 			,path: true
@@ -79,8 +76,7 @@ var svgSymbolNames = {
 		}
 	}
 	,'stroke-width': {
-		alt: 'strokeWidth'
-		,applies: {
+		applies: {
 			circle: true
 			,line: true
 			,path: true
@@ -89,8 +85,7 @@ var svgSymbolNames = {
 		}
 	}
 	,'stroke-opacity': {
-		alt: 'strokeOpacity'
-		,applies: {
+		applies: {
 			circle: true
 			,line: true
 			,path: true
@@ -99,8 +94,7 @@ var svgSymbolNames = {
 		}
 	}
 	,'stroke-linecap': {
-		alt: 'strokeLinecap'
-		,applies: {
+		applies: {
 			circle: true
 			,line: true
 			,path: true
@@ -109,8 +103,7 @@ var svgSymbolNames = {
 		}
 	}
 	,'stroke-dasharray': {
-		alt: 'strokeDashArray'
-		,applies: {
+		applies: {
 			circle: true
 			,line: true
 			,path: true
@@ -119,8 +112,7 @@ var svgSymbolNames = {
 		}
 	}
 	,'r': {
-		alt: 'pointRadius'
-		,applies: {
+		applies: {
 			circle: true
 			,line: false
 			,path: false
@@ -129,8 +121,7 @@ var svgSymbolNames = {
 		}
 	}
 	,'pointer-events': {
-		alt: 'pointEvents'
-		,applies: {
+		applies: {
 			circle: true
 			,line: true
 			,path: true
@@ -139,8 +130,7 @@ var svgSymbolNames = {
 		}
 	}
 	,'cursor': {
-		alt: 'cursor'
-		,applies: {
+		applies: {
 			circle: true
 			,line: true
 			,path: true
@@ -232,6 +222,19 @@ var svgSymbolNames = {
 };
 
 //--------------------------------------------------------------------------
+var SymbolTranslationMap = {
+	'fillColor': 'fill'	
+	,'fillOpacity': 'fill-opacity'
+	,'strokeColor': 'stroke'
+	,'strokeWidth': 'stroke-width'
+	,'strokeOpacity': 'stroke-opacity'
+	,'strokeLinecap': 'stroke-linecap'
+	,'strokeDashArray': 'stroke-dasharray'
+	,'pointRadius': 'r'
+	,'pointEvents': 'pointer-events'
+};
+
+//--------------------------------------------------------------------------
 var Symbolizer = $n2.Class({
 	
 	symbols: null,
@@ -250,23 +253,40 @@ var Symbolizer = $n2.Class({
 	extendWith: function(symbolizer){
 		if( symbolizer ){
 			if( symbolizer._n2Symbolizer ){
+				// From another instance of Symbolizer
 				var att = symbolizer.symbols;
 				for(var key in att){
-					this.symbols[key] = att[key];
+					var value = att[key];
+					this.symbols[key] = value;
 				};
 			} else {
+				// From a user supplied dictionary. Must translate
 				for(var key in symbolizer){
 					var symbolValue = symbolizer[key];
+
+					// Translate key, if needed
+					if( SymbolTranslationMap[key] ){
+						key = SymbolTranslationMap[key];
+					};
+
+					// Parse value if it starts with a '='
 					if( symbolValue 
 					 && symbolValue.length > 0 
 					 && symbolValue[0] === '=' ){
 						try {
+							// This should return an object with a function getValue(ctxt)
 							symbolValue = $n2.styleRuleParser.parse(symbolValue.substr(1));
 						} catch(e) {
 							symbolValue = e;
 						};
 					};
-					this.symbols[key] = symbolValue;
+
+					if( 'opacity' === key ){
+						this.symbols['fill-opacity'] = symbolValue;
+						this.symbols['stroke-opacity'] = symbolValue;
+					} else {
+						this.symbols[key] = symbolValue;
+					};
 				};
 			};
 		};
@@ -303,9 +323,6 @@ var Symbolizer = $n2.Class({
 			var info = svgSymbolNames[name];
 			if( info.applies[nodeName] ){
 				var value = this.getSymbolValue(name,ctxt);
-				if( !value && info.alt ){
-					value = this.getSymbolValue(info.alt,ctxt);
-				};
 				
 				if( 'label' === name ){
 					if( value === null ){
@@ -330,7 +347,7 @@ var Symbolizer = $n2.Class({
 						svgDomElem.appendChild(textNode);
 					};
 					
-				} else if( value ){
+				} else if( typeof value !== 'undefined' ){
 					svgDomElem.setAttributeNS(null, name, value);
 				};
 			};
@@ -418,7 +435,6 @@ var StyleRules = $n2.Class({
 				,'fillOpacity': 0.4
 				,'strokeOpacity': 1
 				,'strokeLinecap': "round"
-				,'strokeDashstyle': "solid"
 				,pointRadius: 6
 				,pointerEvents: "visiblePainted"
 			}
