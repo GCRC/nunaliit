@@ -1899,23 +1899,16 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  			.data(links, function(link){ return link.id; });
  		this._adjustElementStyles(selectedLinks, true);
  		
- 		this._reOrderLinks();
+ 		this._reOrderElements();
 	},
 	
-	_reOrderLinks: function(){
+	_reOrderElements: function(){
  		// Re-order the lines so that hovered are above selected, and selected are above
  		// regular
- 		var links = [];
- 		for(var elemId in this.elementsById){
- 			var elem = this.elementsById[elemId];
- 			if( elem.isLink ){
- 				links.push(elem);
- 			};
- 		};
  		this._getSvgElem()
  			.select('g.links')
  			.selectAll('.link')
-			.data(links, function(link){ return link.id; })
+			.data(this.displayedLinks, function(link){ return link.id; })
 			.filter(function(l){return l.n2_selected;})
 			.each(function(l){
 	 			var svgLink = this;
@@ -1925,7 +1918,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		this._getSvgElem()
 			.select('g.links')
 			.selectAll('.link')
-			.data(links, function(link){ return link.id; })
+			.data(this.displayedLinks, function(link){ return link.id; })
 			.filter(function(l){return l.n2_found;})
 			.each(function(l){
 	 			var svgLink = this;
@@ -1935,11 +1928,44 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		this._getSvgElem()
 			.select('g.links')
 			.selectAll('.link')
-			.data(links, function(link){ return link.id; })
+			.data(this.displayedLinks, function(link){ return link.id; })
 			.filter(function(l){return l.n2_hovered;})
 			.each(function(l){
 	 			var svgLink = this;
 	 			svgLink.parentNode.appendChild(svgLink);
+	 		})
+			;
+
+ 		// Re-order the arcs so that hovered are above found, found are above
+ 		// selected, and selected are above regular
+ 		this._getSvgElem()
+ 			.select('g.arcs')
+ 			.selectAll('.arc')
+			.data(this.displayedNodesSorted, function(n){ return n.id; })
+			.filter(function(n){return n.n2_selected;})
+			.each(function(n){
+	 			var elem = this;
+	 			elem.parentNode.appendChild(elem);
+	 		})
+			;
+ 		this._getSvgElem()
+			.select('g.arcs')
+			.selectAll('.arc')
+			.data(this.displayedNodesSorted, function(n){ return n.id; })
+			.filter(function(n){return n.n2_found;})
+			.each(function(n){
+	 			var elem = this;
+	 			elem.parentNode.appendChild(elem);
+	 		})
+			;
+ 		this._getSvgElem()
+			.select('g.arcs')
+			.selectAll('.arc')
+			.data(this.displayedNodesSorted, function(n){ return n.id; })
+			.filter(function(n){return n.n2_hovered;})
+			.each(function(n){
+	 			var elem = this;
+	 			elem.parentNode.appendChild(elem);
 	 		})
 			;
 	},
@@ -2116,7 +2142,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		this._positionElements();
 
  		// Re-order links
- 		this._reOrderLinks();
+ 		this._reOrderElements();
  	},
  	
  	_adjustElementStyles: function(selectedElements, elementsAreLinks){
