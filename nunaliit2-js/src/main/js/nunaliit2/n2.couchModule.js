@@ -179,33 +179,28 @@ var Module = $n2.Class({
 		if( moduleInfo ){
 			introInfo = moduleInfo.introduction;
 		};
-		
-		if( !introInfo ){
-			var needToClear = true;
 
-			// Via the dispatcher, see if a component can display intro
-			if( opts.dispatchService ){
-				var msg = {
-					type: 'modulePerformIntroduction'
-					,performed: false
-					,elem: opts.elem
-					,module: this
-				};
-				opts.dispatchService.synchronousCall(DH,msg);
-				
-				// If an introduction was performed, then no need
-				// to empty the element
-				if( msg.performed ){
-					needToClear = false;
-				};
+		// Keep track if we need to empty content area
+		var introDisplayed = false;
+
+		// Via the dispatcher, see if a component can display introduction
+		if( opts.dispatchService ){
+			var msg = {
+				type: 'modulePerformIntroduction'
+				,performed: false
+				,elem: opts.elem
+				,module: this
 			};
+			opts.dispatchService.synchronousCall(DH,msg);
 			
-			if( needToClear ){
-				$elem.empty();
-				return false;
+			// If an introduction was performed, then no need
+			// to empty the element
+			if( msg.performed ){
+				introDisplayed = true;
 			};
-
-		} else {
+		};
+		
+		if( !introDisplayed && introInfo ){
 			if( 'html' === introInfo.type && introInfo.content ) {
 				
 				$elem.empty();
@@ -222,7 +217,7 @@ var Module = $n2.Class({
 					};					
 				};
 				opts.onLoaded();
-				return true;
+				introDisplayed = true;
 				
 			} else if( 'text' === introInfo.type && introInfo.content ) {
 				
@@ -245,7 +240,7 @@ var Module = $n2.Class({
 					};
 				};
 				opts.onLoaded();
-				return true;
+				introDisplayed = true;
 				
 			} else if( 'attachment' === introInfo.type 
 			 && introInfo.attachmentName
@@ -257,6 +252,7 @@ var Module = $n2.Class({
 					.attr('id', displayId)
 					.addClass('n2ModuleIntro n2ModuleIntro_attachment')
 					.appendTo($elem);
+				introDisplayed = true;
 				
 				var localeStr = $n2.l10n.getStringForLocale(introInfo.attachmentName);
 				if( localeStr.str ) {
@@ -289,14 +285,15 @@ var Module = $n2.Class({
 				    	}
 					});
 				};
-				
-				return true;
-				
-			} else {
-				$elem.empty();
-				return false;
 			};
-		}
+		};
+		
+		if( !introDisplayed ){
+			$elem.empty();
+			return false;
+		};
+		
+		return true;
 	},
 	
 	getAttachmentUrl: function(attachmentName){

@@ -86,6 +86,73 @@ var AssignLayerOnDocumentCreation = $n2.Class({
 });
 
 //--------------------------------------------------------------------------
+var SelectDocumentOnModuleIntroduction = $n2.Class({
+		
+	docIds: null,
+
+	dispatchService: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			docId: null
+			,docIds: null
+			,dispatchService: null
+		},opts_);
+		
+		var _this = this;
+		
+		this.dispatchService = opts.dispatchService;
+		this.docIds = [];
+		
+		this.moduleStarted = false;
+		
+		if( typeof opts.docId === 'string' ){
+			this.docIds.push(opts.docId);
+		};
+		if( $n2.isArray(opts.docIds) ){
+			for(var i=0,e=opts.docIds.length; i<e; ++i){
+				var docId = opts.docIds[i];
+				if( typeof docId === 'string' ){
+					this.docIds.push(docId);
+				};
+			};
+		};
+			
+		// Register to events
+		if( this.dispatchService ){
+			var f = function(m, addr, dispatcher){
+				_this._handle(m, addr, dispatcher);
+			};
+
+			this.dispatchService.register(DH,'modulePerformIntroduction',f);
+		};
+		
+		$n2.log('SelectDocumentOnModuleIntroduction', this);
+	},
+	
+	_handle: function(m, addr, dispatcher){
+		if( 'modulePerformIntroduction' === m.type ){
+			if( !m.performed ){
+				if( this.docIds.length > 1 ){
+					m.performed = true;
+					this.dispatchService.send(DH,{
+						type: 'selected'
+						,docIds: this.docIds
+					});
+	
+				} else if( this.docIds.length > 0 ){
+					m.performed = true;
+					this.dispatchService.send(DH,{
+						type: 'selected'
+						,docId: this.docIds[0]
+					});
+				};
+			};
+		};
+	}
+});
+
+//--------------------------------------------------------------------------
 var Service = $n2.Class({
 	
 	dispatchService: null,
@@ -134,6 +201,26 @@ var Service = $n2.Class({
 		        new AssignLayerOnDocumentCreation(options);
 		        
 		        m.created = true;
+
+			} else if( 'selectDocumentOnModuleIntroduction' === m.utilityType ){
+				var options = {};
+				
+				if( typeof m.utilityOptions === 'object' ){
+					for(var key in m.utilityOptions){
+						var value = m.utilityOptions[key];
+						options[key] = value;
+					};
+				};
+				
+				if( m.config ){
+					if( m.config.directory ){
+						options.dispatchService = m.config.directory.dispatchService;
+					};
+				};
+				
+		        new SelectDocumentOnModuleIntroduction(options);
+		        
+		        m.created = true;
 		    };
 		};
 	}
@@ -143,6 +230,7 @@ var Service = $n2.Class({
 $n2.utilities = {
 	Service: Service
 	,AssignLayerOnDocumentCreation: AssignLayerOnDocumentCreation
+	,SelectDocumentOnModuleIntroduction: SelectDocumentOnModuleIntroduction
 };
 
 })(jQuery,nunaliit2);
