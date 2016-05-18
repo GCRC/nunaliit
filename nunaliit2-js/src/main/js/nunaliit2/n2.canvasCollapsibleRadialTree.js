@@ -303,16 +303,18 @@ function RadialFishEye(){
 			if( dx > 180 ) dx -= 360;
 			if( dx < -180 ) dx += 360;
 			
-			var dd = Math.sqrt(dx * dx);
+			var dd = Math.abs(dx);
 			if (dd >= radius) return {x: pointAngle, z: 1};
-			if (!dd) return {x: pointAngle, z: 10};
+			if (!dd) return {x: pointAngle, z: distortion};
+			
+			// This formula returns a number between 1 and distortion
 			var k = k0 * (1 - Math.exp(-dd * k1)) / dd * .75 + .25;
 			
 			var effAngle = Degrees(focusAngle + (dx * k));
 			
 			return {
 				x: effAngle
-				,z: Math.min(k, 10)
+				,z: Math.min(k, distortion)
 			};
 		};
     };
@@ -635,7 +637,8 @@ Here are attributes added by the canvas:
 {
 	x: <number>  (value computed by layout)
 	y: <number>  (value computed by layout)
-	z: <number>  (value computed by magnify)
+	z: <number>  (value computed by magnify range 1 to distortion (generally 2). Defaults to 1)
+	zFactor: <number>  (value representing how close nodes are, range 0 to 1. 0 is closer, 1 is farther)
 	parent: <object>  (element which is parent to this one)
 	children: <array> (elements which are children to this one)
 	n2_geometry: <string> ('line' or 'point', depending on link or node)
@@ -1254,6 +1257,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			delete elem.x;
 			delete elem.y;
 			delete elem.z;
+			delete elem.zFactor;
 			delete elem.orig_x;
 			delete elem.expanded;
 		};
@@ -1467,6 +1471,13 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		};
 
 		// Adjust nodes and sort
+		var zFactor = 1;
+		if( this.displayedNodesSorted.length > 0 ){
+			zFactor = 80 / this.displayedNodesSorted.length;
+			if( zFactor > 1 ){
+				zFactor = 1;
+			};
+		};
 		for(var i=0,e=this.displayedNodesSorted.length; i<e; ++i){
 			var node = this.displayedNodesSorted[i];
 
@@ -1480,6 +1491,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			if( typeof node.xMin === 'number' ){
 				node.xMin = Degrees(node.xMin + this.originAngle);
 			};
+			
+			node.zFactor = zFactor;
 			
 			// Add to map of displayed elements
 			this.effectiveElementsById[node.id] = node;
@@ -2245,7 +2258,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  			} else {
  				m = {};
  				m.x = node.orig_x;
- 				m.z = 2;
+ 				m.z = 1;
 
  				if( typeof node.xMax === 'number' ){
  	 				m.xArcStart = node.xMin - (node.xIndent / 2);

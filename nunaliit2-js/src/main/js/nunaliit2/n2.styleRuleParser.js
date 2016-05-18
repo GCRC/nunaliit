@@ -475,6 +475,7 @@ var global = {
 		};
 		return false;
 	}
+	,Math: Math
 };
 parser.global = global;
 
