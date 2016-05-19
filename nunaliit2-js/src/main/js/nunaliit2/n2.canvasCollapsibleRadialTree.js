@@ -1041,6 +1041,9 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			.attr('stroke','#000000')
 			.attr('stroke-opacity',0)
 			.attr('fill','none')
+			.on('click', function(){
+ 				_this._initiateBackgroundMouseClick();
+ 			})
 			.on('mouseover',function(){
 				var e = d3.event;
 				_this._magnifyLocation(e);
@@ -2443,10 +2446,14 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  	},
  	
  	_initiateBackgroundMouseClick: function(){
- 		if( this.lastElementIdSelected ){
- 			this.elementGenerator.selectOff(this.lastElementIdSelected);
- 			this.lastElementIdSelected = null;
- 		};
+		this.lastElementIdSelected = null;
+ 		this.dispatchService.send(DH,{
+ 			type: 'userUnselect'
+ 		});
+// 		if( this.lastElementIdSelected ){
+// 			this.elementGenerator.selectOff(this.lastElementIdSelected);
+// 			this.lastElementIdSelected = null;
+// 		};
  	},
  	
  	_initiateExpandCollapse: function(elementData){
