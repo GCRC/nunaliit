@@ -364,6 +364,16 @@ var DomStyler = $n2.Class({
 	},
 
 	_refreshElementWithDocument: function($jq, doc){
+		var dispatchService = this.showService.dispatchService;
+		if( dispatchService ) {
+			dispatchService.synchronousCall(DH, {
+				type:'showPreprocessElement'
+				,elem: $jq
+				,doc: doc
+				,showService: this.showService
+			});
+		};
+
 		if( $jq.hasClass('n2s_insertedMediaView') ){
 			this._insertMediaView(doc, $jq);
 		};

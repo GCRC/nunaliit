@@ -262,29 +262,88 @@ var NavigationService = $n2.Class({
 		// Title
 		$set.filter('.n2nav_insertTitle').each(function(){
 			var $elem = $(this);
-
-			var title = navigationDoc.nunaliit_navigation.title;
-			if( title ){
-				$elem.text( _loc(title) );
-			} else {
-				$elem.empty();
-			};
-
 			$elem.removeClass('n2nav_insertTitle').addClass('n2nav_insertedTitle');
+			_this._insertTitle($elem, navigationDoc);
 		});
 		
 		// Menu
 		$set.filter('.n2nav_insertMenu').each(function(){
 			var $elem = $(this);
+			$elem.removeClass('n2nav_insertMenu').addClass('n2nav_insertedMenu');
+			_this._insertMenu($elem, navigationDoc);
+		});
+	},
+	
+	_insertTitle: function($elem, doc){
 
+		var docId = this._associateDocumentToElement(doc, $elem);
+		
+		if( doc && docId === doc._id ){
+			var title = undefined;
+			if( doc.nunaliit_navigation ) {
+				title = doc.nunaliit_navigation.title;
+			};
+			if( title ){
+				$elem.text( _loc(title) );
+			} else {
+				$elem.empty();
+			};
+		};
+	},
+	
+	_insertMenu: function($elem, doc){
+
+		var docId = this._associateDocumentToElement(doc, $elem);
+		
+		if( doc && docId === doc._id ){
 			new NavigationDisplay({
-				dispatchService: _this.dispatchService
-				,navigationDoc: navigationDoc
+				dispatchService: this.dispatchService
+				,navigationDoc: doc
 				,elem: $elem
 			});
+		};
+	},
 
-			$elem.removeClass('n2nav_insertMenu').addClass('n2nav_insertedMenu');
-		});
+	_associateDocumentToElement: function(doc, $elem){
+		var docId = $elem.attr('nunaliit-document');
+
+		if( !docId 
+		 && doc ) {
+			if( doc.nunaliit_navigation ){
+				docId = doc._id;
+			} else {
+				docId = this.navigationDoc._id;
+			};
+		} else if( !docId && !doc ) {
+			 docId = this.navigationDoc._id;
+		};
+
+		var associated = $elem.hasClass('n2show_documentAssociated');
+		
+		if( docId && !associated ){
+			$elem.attr('nunaliit-document', docId);
+			$elem.addClass('n2show_documentAssociated');
+
+			// Ready to receive updates
+			var updateClass = 'n2show_documentUpdate_' + $n2.utils.stringToHtmlId(docId);
+			$elem.addClass(updateClass);
+			
+			if( doc && doc._id === docId ){
+				// Already have document
+			} else {
+				// Ready to receive content
+				var contentClass = 'n2show_documentContent_' + $n2.utils.stringToHtmlId(docId);
+				$elem.addClass(contentClass);
+
+				// Request this document
+				this.dispatchService.send(DH,{
+					type: 'requestDocument'
+					,docId: docId
+				});
+			};
+		};
+		
+		return docId;
 	},
 	
 	_handle: function(m, addr, d){
@@ -309,9 +368,8 @@ var NavigationService = $n2.Class({
 
 		} else if( 'showPreprocessElement' === m.type ){
 			var $elem = m.elem;
-			if( this.navigationDoc ){
-				this._fixElements($elem, this.navigationDoc);
-			};
+			var doc = m.doc;
+			this._fixElements($elem, doc);
 		};
 	}
 });
