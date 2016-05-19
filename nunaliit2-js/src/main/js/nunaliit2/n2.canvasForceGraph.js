@@ -464,6 +464,8 @@ var ForceGraph = $n2.Class({
  	
  	linksById: null,
  	
+ 	elementsByDocId: null,
+ 	
  	elementGenerator: null,
  	
  	currentMouseOver: null,
@@ -551,6 +553,7 @@ var ForceGraph = $n2.Class({
 
  		this.nodesById = {};
  		this.linksById = {};
+ 		this.elementsByDocId = {};
  		this.currentMouseOver = null;
  		this.lastElementIdSelected = null;
 
@@ -581,6 +584,7 @@ var ForceGraph = $n2.Class({
  			this.dispatchService.register(DH,'modelGetInfo',f);
  			this.dispatchService.register(DH,'modelStateUpdated',f);
  			this.dispatchService.register(DH,'windowResized',f);
+ 			this.dispatchService.register(DH,'findIsAvailable',f);
  		};
  		
  		this.forceLayout = $d.layout.force()
@@ -776,7 +780,60 @@ var ForceGraph = $n2.Class({
 			};
 		};
 		
+		// Update elements by doc id map
+ 		this.elementsByDocId = {};
+ 		for(var id in this.nodesById){
+ 			var element = this.nodesById[id];
+			if( element.fragments ){
+				for(var fragId in element.fragments){
+					var frag = element.fragments[fragId];
+					
+					var context = frag.context;
+					if( context ){
+						var doc = context.n2_doc;
+						if( doc ){
+							var docId = doc._id;
+							
+							var elements = this.elementsByDocId[docId];
+							if( !elements ){
+								elements = [];
+								this.elementsByDocId[docId] = elements;
+							};
+							elements.push(element);
+						};
+					};
+				};
+			};
+ 		};
+ 		for(var id in this.linksById){
+ 			var element = this.linksById[id];
+			if( element.fragments ){
+				for(var fragId in element.fragments){
+					var frag = element.fragments[fragId];
+					
+					var context = frag.context;
+					if( context ){
+						var doc = context.n2_doc;
+						if( doc ){
+							var docId = doc._id;
+							
+							var elements = this.elementsByDocId[docId];
+							if( !elements ){
+								elements = [];
+								this.elementsByDocId[docId] = elements;
+							};
+							elements.push(element);
+						};
+					};
+				};
+			};
+ 		};
+		
 		this._documentsUpdated(updatedNodes, updatedLinks);
+		
+		this.dispatchService.send(DH,{
+			type: 'findAvailabilityChanged'
+		});
  	},
  	
 	_intentChanged: function(changedNodes){
@@ -1077,6 +1134,14 @@ var ForceGraph = $n2.Class({
 
  		} else if( 'windowResized' === m.type ) {
  			this.resizeGraph();
+
+ 		} else if( 'findIsAvailable' === m.type ) {
+ 			var docId = m.docId;
+ 			if( docId 
+ 			 && this.elementsByDocId[docId] 
+ 			 && this.elementsByDocId[docId].length ){
+ 				m.isAvailable = true;
+ 			};
  		};
  	},
  	

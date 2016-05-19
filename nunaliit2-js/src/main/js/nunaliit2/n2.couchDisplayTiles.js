@@ -640,36 +640,24 @@ var TiledDisplay = $n2.Class({
 			};
 			
 	 		// Show 'find on map' button
-			if( this.dispatchService 
-			 && this.dispatchService.isEventTypeRegistered('findIsAvailable')
-			 && this.dispatchService.isEventTypeRegistered('find')
-			 ) {
-				// Check if document can be displayed on a map
-				var showFindOnMapButton = false;
-				var m = {
-					type: 'findIsAvailable'
+			{
+				var $findOnMapButton = $('<a href="#"></a>')
+					.addClass('n2DisplayTiled_current_button n2DisplayTiled_current_button_find_on_map')
+	 				.text( _loc('Find on Map') )
+	 				.appendTo($btnDiv)
+	 				.click(function(){
+	 					_this._dispatch({
+	 						type: 'find'
+ 							,docId: doc._id
+ 							,doc: doc
+ 						});
+						return false;
+					});
+				
+				this.showService.showFindAvailable({
+					elem: $findOnMapButton
 					,doc: doc
-					,isAvailable: false
-				};
-				this.dispatchService.synchronousCall(DH,m);
-				if( m.isAvailable ){
-					showFindOnMapButton = true;
-				};
-
-				if( showFindOnMapButton ) {
-					$('<a href="#"></a>')
-						.addClass('n2DisplayTiled_current_button n2DisplayTiled_current_button_find_on_map')
-		 				.text( _loc('Find on Map') )
-		 				.appendTo($btnDiv)
-		 				.click(function(){
-		 					_this._dispatch({
-		 						type: 'find'
-	 							,docId: doc._id
-	 							,doc: doc
-	 						});
-							return false;
-						});
-				};
+				});
 			};
 
 			// Show 'Add Layer' button

@@ -720,7 +720,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 	 */
 	elementIdToGroupName: null,
 
-	findableDocsById: null,
+	elementsByDocId: null,
 	
 	/*
 	 * This is a map of all effective elements, stored by
@@ -839,7 +839,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		this.displayedLinks = [];
  		this.currentMouseOver = null;
  		this.elementsById = {};
- 		this.findableDocsById = {};
+ 		this.elementsByDocId = {};
  		this.effectiveElementsById = {};
  		this.elementToEffectiveId = {};
  		this.dimensions = {};
@@ -878,6 +878,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  			this.dispatchService.register(DH,'modelStateUpdated',f);
  			this.dispatchService.register(DH,'windowResized',f);
 			this.dispatchService.register(DH,'findIsAvailable', f);
+			this.dispatchService.register(DH,'find', f);
  		};
  		
  		this.createGraph();
@@ -1225,12 +1226,12 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		};
 		
 		// Update list of documents that can be found
-		this.findableDocsById = {};
+		this.elementsByDocId = {};
 		for(var id in this.elementsById){
-			var cluster = this.elementsById[id];
-			if( cluster.fragments ){
-				for(var fragId in cluster.fragments){
-					var frag = cluster.fragments[fragId];
+			var element = this.elementsById[id];
+			if( element.fragments ){
+				for(var fragId in element.fragments){
+					var frag = element.fragments[fragId];
 					
 					var context = frag.context;
 					if( context ){
@@ -1238,7 +1239,12 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 						if( doc ){
 							var docId = doc._id;
 							
-							this.findableDocsById[docId] = doc;
+							var elements = this.elementsByDocId[docId];
+							if( !elements ){
+								elements = [];
+								this.elementsByDocId[docId] = elements;
+							};
+							elements.push(element);
 						};
 					};
 				};
@@ -1246,6 +1252,10 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		};
 		
 		this._createGraphicalElements();
+		
+		this.dispatchService.send(DH,{
+			type: 'findAvailabilityChanged'
+		});
 	},
 	
 	_createGraphicalElements: function(){
@@ -2555,6 +2565,41 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		};
  	},
  	
+ 	_showElements: function(elements){
+ 		var _this = this;
+ 		
+ 		var redrawRequired = false;
+ 		
+ 		for(var i=0,e=elements.length; i<e; ++i){
+ 			var element = elements[i];
+ 			if( element.isNode && !element.canvasVisible ){
+ 				visitParents(element, function(n){
+ 					// Skip root
+ 					if( n.parent ){
+ 						if( !n.expanded ){
+ 							// This node needs to be expanded
+ 							_this.expandedNodesById[n.id] = true;
+ 							redrawRequired = true;
+
+ 							// Animation should be fixed on the first visible
+ 							// parent that is expanded
+ 							if( n.canvasVisible ){
+ 	 							_this.fixOriginOnNode = {
+ 				 	 	 			id: n.id
+ 				 	 	 			,position: Degrees(n.orig_x - _this.originAngle)
+ 				 	 	 		};
+ 							};
+ 						};
+ 					};
+ 				});
+ 			};
+ 		};
+ 		
+ 		if( redrawRequired ){
+ 			this._createGraphicalElements();
+ 		};
+ 	},
+ 	
  	_handleDispatch: function(m){
  		if( 'modelGetInfo' === m.type ){
  			if( m.modelId === this.modelId ){
@@ -2575,8 +2620,21 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			var doc = m.doc;
 			var docId = doc._id;
  			
- 			if( this.findableDocsById[docId] ){
+ 			if( this.elementsByDocId[docId] ){
  				m.isAvailable = true;
+ 			};
+ 		} else if( 'find' === m.type ) {
+ 			// If elements are associated with the found document
+ 			// expand nodes to make found document visible
+ 			var docId = m.docId;
+ 			
+ 			var elements = undefined;
+ 			if( docId ){
+ 				elements = this.elementsByDocId[docId];
+ 			};
+ 			
+ 			if( elements ){
+				this._showElements(elements);
  			};
  		};
  	},

@@ -593,42 +593,28 @@ var Display = $n2.Class({
 		};
 		
  		// Show 'find on map' button
-		if( dispatcher 
-		 && opt.geom
-		 && data 
-		 && dispatcher.isEventTypeRegistered('findIsAvailable')
-		 && dispatcher.isEventTypeRegistered('find')
-		 ) {
-			// Check if document can be displayed on a map
-			var showFindOnMapButton = false;
-			var m = {
-				type:'findIsAvailable'
-				,doc: data
-				,isAvailable:false
-			};
-			dispatcher.synchronousCall(DH,m);
-			if( m.isAvailable ){
-				showFindOnMapButton = true;
-			};
+		if( data ) {
+			var $findGeomButton = $('<a href="#"></a>');
+			var findGeomText = _loc('Find on Map');
+			$findGeomButton.text( findGeomText );
+			$buttons.append($findGeomButton);
 
-			if( showFindOnMapButton ) {
-				var $findGeomButton = $('<a href="#"></a>');
-				var findGeomText = _loc('Find on Map');
-				$findGeomButton.text( findGeomText );
-				$buttons.append($findGeomButton);
-	
-				$findGeomButton.click(function(){
-					// Move map and display feature 
-					_this._dispatch({
-						type: 'find'
-						,docId: data._id
-						,doc: data
-					});
-					
-					return false;
+			$findGeomButton.click(function(){
+				// Move map and display feature 
+				_this._dispatch({
+					type: 'find'
+					,docId: data._id
+					,doc: data
 				});
-				addClasses($findGeomButton, findGeomText);
-			};
+				
+				return false;
+			});
+			addClasses($findGeomButton, findGeomText);
+			
+			this.showService.showFindAvailable({
+				elem: $findGeomButton
+				,doc: data
+			});
 		};
 
 		// Show 'Add Layer' button

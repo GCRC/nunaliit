@@ -410,6 +410,9 @@ CreateDocument widget
 	zoom:1;
 	vertical-align:top;
 }
+.nunaliit_form_link.n2show_findNotAvailable {
+	display: none;
+}
 .nunaliit_atlas .n2ModuleIntro {
 	padding: 20px;
 }

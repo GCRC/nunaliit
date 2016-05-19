@@ -303,6 +303,13 @@ var DomStyler = $n2.Class({
 			$jq.removeClass('n2s_wikiTransform').addClass('n2s_wikiTransformed');
 			_this._wikiTransform($jq, contextDoc);
 		});
+
+		// Find Available
+		$set.filter('.n2s_showFindAvailable').each(function(){
+			var $jq = $(this);
+			$jq.removeClass('n2s_showFindAvailable').addClass('n2s_showedFindAvailable');
+			_this._showFindAvailable($jq, contextDoc);
+		});
 	},
 	
 	_receivedDocumentContent: function(doc){
@@ -323,9 +330,13 @@ var DomStyler = $n2.Class({
 				var $jq = $(this);
 
 				_this._refreshElementWithDocument($jq, doc);
+
+				var isContinuous = $jq.attr('data-content-continuous');
 				
 				// Content was received. No longer waiting for it.
-				$jq.removeClass(contentClass);
+				if( !isContinuous ){
+					$jq.removeClass(contentClass);
+				};
 			});
 		};
 	},
@@ -379,6 +390,10 @@ var DomStyler = $n2.Class({
 
 		if( $jq.hasClass('n2s_insertedLayerName') ){
 			this._insertLayerName($jq, doc);
+		};
+
+		if( $jq.hasClass('n2s_showedFindAvailable') ){
+			this._showFindAvailable($jq, doc);
 		};
 	},
 
@@ -1313,6 +1328,52 @@ var DomStyler = $n2.Class({
 		};
 	},
 	
+	/*
+	 * Keep track of a document's availability for the 'find' event. Adjust
+	 * classes on the element depending on status: 'n2show_findAvailable' or 
+	 * 'n2show_findNotAvailable'
+	 */
+	_showFindAvailable: function($elem, doc){
+		var _this = this;
+		
+		var docId = this._associateDocumentToElement(doc, $elem);
+		
+		// "find is available" is special. It should be recomputed for every
+		// received document content.
+		var contentClass = 'n2show_documentContent_' + $n2.utils.stringToHtmlId(docId);
+		$elem
+			.addClass(contentClass)
+			.attr('data-content-continuous','true');
+
+		if( doc && doc._id === docId ){
+			var findAvailable = false;
+			
+			var dispatchService = this.showService.dispatchService;
+			if( dispatchService ) {
+				var msg = {
+					type: 'findIsAvailable'
+					,docId: docId
+					,doc: doc
+					,isAvailable: false
+				};
+				dispatchService.synchronousCall(DH,msg);
+				if( msg.isAvailable ){
+					findAvailable = true;
+				};
+			};
+			
+			if( findAvailable ){
+				$elem
+					.removeClass('n2show_findNotAvailable')
+					.addClass('n2show_findAvailable');
+			} else {
+				$elem
+					.removeClass('n2show_findAvailable')
+					.addClass('n2show_findNotAvailable');
+			};
+		};
+	},
+	
 	_getDocumentIdentifier: function(doc, $elem){
 		var docId = $elem.attr('nunaliit-document');
 
@@ -1465,6 +1526,7 @@ var Show = $n2.Class({
 			dispatchService.register(DH, 'documentContentCreated', f);
 			dispatchService.register(DH, 'documentContentUpdated', f);
 			dispatchService.register(DH, 'userIntentChanged', f);
+			dispatchService.register(DH, 'findAvailabilityChanged', f);
 		};
 	},
 
@@ -1567,6 +1629,33 @@ var Show = $n2.Class({
 		this.domStyler._userEvents($elem, opts.doc);
 	},
 	
+	showFindAvailable: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,docId: null
+			,elem: null
+		},opts_);
+		
+		var doc = opts.doc;
+		var docId = opts.docId;
+
+		if( !docId && doc ){
+			docId = doc._id;
+		};
+
+		var $elem = null;
+		if( opts.elem ){
+			$elem = $(opts.elem);
+		};
+
+		if( docId && $elem && $elem.length > 0 ){
+			$elem.addClass('n2s_showedFindAvailable');
+			$elem.attr('nunaliit-document',docId);
+			
+			this.domStyler._showFindAvailable($elem, doc);
+		};
+	},
+
 	_displayUserDocument: function(userDoc){
 		var id = userDoc._id;
 		
@@ -1912,6 +2001,26 @@ var Show = $n2.Class({
 		} else if( 'userIntentChanged' === m.type ) {
 			if( m.changes ){
 				this._handleUserIntentChanged(m.changes);
+			};
+			
+		} else if( 'findAvailabilityChanged' === m.type ) {
+			// A canvas is reporting a different set of documents
+			// available for 'find'. Compile all docIds related to
+			// 'find'
+			var docIdMap = {};
+			$('.n2s_showedFindAvailable').each(function(){
+				var $elem = $(this);
+				var docId = $elem.attr('nunaliit-document');
+				if( docId ){
+					docIdMap[docId] = true;
+				};
+			});
+			
+			// Get the content of the documents, since 'findIsAvailable' synchronous
+			// call requires the document content. When receiving document content,
+			// all elements with class 'n2s_showedFindAvailable' are updated accordingly
+			for(var docId in docIdMap){
+				this._requestDocument(docId);
 			};
 		};
 	},
