@@ -53,7 +53,7 @@ var svgSymbolNames = {
 			circle: true
 			,line: false
 			,path: true
-			,text: false
+			,text: true
 			,g: true
 		}
 	}
@@ -62,7 +62,7 @@ var svgSymbolNames = {
 			circle: true
 			,line: false
 			,path: true
-			,text: false
+			,text: true
 			,g: true
 		}
 	}
