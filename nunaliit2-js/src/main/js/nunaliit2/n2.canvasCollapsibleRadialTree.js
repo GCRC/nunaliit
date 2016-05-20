@@ -225,14 +225,19 @@ var AngleInterval = $n2.Class('AngleInterval',{
 });
 
 //--------------------------------------------------------------------------
-// Tree visiting
+// Tree
 // node: {
 //    parent: <object> node that is parent of this one
 //    children: <array> array of nodes that are children to this one
 // }
+function Tree(){
+	
+};
+// Tree visiting
+// root: node from which to start visit
 // callback: function(node, depth){
 // }
-function visitTree(root, callback){
+Tree.visitNodes = function(root, callback){
 	if( typeof root === 'object' 
 	 && null !== root 
 	 && typeof callback === 'function' ){
@@ -250,15 +255,15 @@ function visitTree(root, callback){
 		};
 	};
 };
-function nodeDepth(node){
+Tree.getNodeDepth = function(node){
 	if( node && node.parent ){
-		return 1 + nodeDepth(node.parent);
+		return 1 + Tree.getNodeDepth(node.parent);
 	};
 	return 0;
 };
-function visitParents(node, callback){
+Tree.visitParents = function(node, callback){
 	if( node && typeof callback === 'function' ){
-		var depth = nodeDepth(node);
+		var depth = Tree.getNodeDepth(node);
 		if( node.parent ){
 			visitParent(node.parent, depth-1, callback);
 		};
@@ -272,13 +277,13 @@ function visitParents(node, callback){
 		};
 	};
 };
-function isNodeInTree(n,root){
+Tree.isNodeInTree = function(n,root){
 	if( !n ) return false;
 	if( !root ) return false;
 	
 	if( n === root ) return true;
 
-	return isNodeInTree(n.parent,root);
+	return Tree.isNodeInTree(n.parent,root);
 };
 
 //--------------------------------------------------------------------------
@@ -1328,7 +1333,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			var maxDepth = -1;
 			
 			// Compute which nodes are available for display
-			visitTree(root,function(n,d){
+			Tree.visitNodes(root,function(n,d){
 				n.canvasVisible = false;
 				n.canvasVisibleDerived = false;
 				
@@ -1356,7 +1361,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 				
 				deepestExpandedNode.canvasVisible = true;
 
-				visitParents(deepestExpandedNode, function(n,d){
+				Tree.visitParents(deepestExpandedNode, function(n,d){
 					if( root === n ){
 						n.canvasVisible = false;
 					} else {
@@ -1387,7 +1392,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			// If by option, we show nodes that are grouped, then
 			// add back the nodes that are grouped
 			var showGroupMembers = this.filterOptions.showGroupMembers;
-			visitTree(root,function(n,d){
+			Tree.visitNodes(root,function(n,d){
 				if( showGroupMembers && n.group ){
 					n.canvasAvailable = true;
 					n.canvasVisible = true;
@@ -1396,7 +1401,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			
 		} else {
 			// Do not filter on expand
-			visitTree(root,function(n,d){
+			Tree.visitNodes(root,function(n,d){
 				if( root === n ){
 					n.canvasVisible = false;
 				} else if( n.parent && n.parent.expanded ) {
@@ -1521,7 +1526,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		{
 			var maxDepth = undefined;
 			var maxDepthNodes = undefined;
-			visitTree(root,function(n,depth){
+			Tree.visitNodes(root,function(n,depth){
 				delete n.detailedView;
 				delete n.generalView;
 
@@ -1594,7 +1599,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		function findVisibleNode(n){
 			if( !n ) return null;
 
-			if( !isNodeInTree(n,root) ){
+			if( !Tree.isNodeInTree(n,root) ){
 				return null;
 			};
 			
@@ -1609,7 +1614,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		function findAvailableNode(n){
 			if( !n ) return null;
 
-			if( !isNodeInTree(n,root) ){
+			if( !Tree.isNodeInTree(n,root) ){
 				return null;
 			};
 			
@@ -1628,7 +1633,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		function isExpandedNode(n){
 			if( !n ) return false;
 
-			if( !isNodeInTree(n,root) ){
+			if( !Tree.isNodeInTree(n,root) ){
 				return false;
 			};
 			
@@ -1646,7 +1651,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		function findShownNode(n){
 			if( !n ) return null;
 
-			if( !isNodeInTree(n,root) ){
+			if( !Tree.isNodeInTree(n,root) ){
 				return null;
 			};
 			
@@ -2573,7 +2578,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		for(var i=0,e=elements.length; i<e; ++i){
  			var element = elements[i];
  			if( element.isNode && !element.canvasVisible ){
- 				visitParents(element, function(n){
+ 				Tree.visitParents(element, function(n){
  					// Skip root
  					if( n.parent ){
  						if( !n.expanded ){
