@@ -634,8 +634,6 @@ var SelectionTracker = $n2.Class({
 	
 	selectedMap: null,
 	
-	//foundMap: null,
-	
 	onChangeFn: null,
 	
 	eventSourcesToIgnoreMap: null,
@@ -650,7 +648,6 @@ var SelectionTracker = $n2.Class({
 		this.dispatchService = opts.dispatchService;
 		
 		this.selectedMap = {};
-		//this.foundMap = {};
 		this.eventSourcesToIgnoreMap = {};
 		
 		if( this.dispatchService ){
@@ -661,7 +658,6 @@ var SelectionTracker = $n2.Class({
 			this.dispatchService.register(DH, 'selected', f);
 			this.dispatchService.register(DH, 'selectedSupplement', f);
 			this.dispatchService.register(DH, 'unselected', f);
-			this.dispatchService.register(DH, 'find', f);
 		};
 	},
 	
@@ -681,9 +677,6 @@ var SelectionTracker = $n2.Class({
 			for(var docId in this.selectedMap){
 				map[docId] = true;
 			};
-//			for(var docId in this.foundMap){
-//				map[docId] = true;
-//			};
 			this.onChangeFn(map);
 		};
 	},
@@ -694,12 +687,8 @@ var SelectionTracker = $n2.Class({
 		for(var docId in this.selectedMap){
 			changed = true;
 		};
-//		for(var docId in this.foundMap){
-//			changed = true;
-//		};
 		
 		this.selectedMap = {};
-//		this.foundMap = {};
 		
 		if( changed && !suppressChangeReport ){
 			this._reportChange();
@@ -748,11 +737,6 @@ var SelectionTracker = $n2.Class({
 	_performFind: function(docId){
 		var changed = false;
 
-//		if( !this.foundMap[docId] ){
-//			this.foundMap[docId] = true;
-//			changed = true;
-//		};
-
 		if( changed ){
 			this._reportChange();
 		};
@@ -794,13 +778,6 @@ var SelectionTracker = $n2.Class({
 		} else if( 'unselected' === m.type ){
 			if( !this._shoudIgnoreEvent(m) ){
 				this._performUnselected();
-			};
-
-		} else if( 'find' === m.type ){
-			if( !this._shoudIgnoreEvent(m) ){
-				if( m.docId ) {
-					this._performFind(m.docId);
-				};
 			};
 		};
 	}
@@ -2822,7 +2799,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		};
  	},
  	
- 	_showElements: function(elements){
+ 	_findElements: function(elements){
  		var _this = this;
  		
  		var redrawRequired = false;
@@ -2892,7 +2869,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  			};
  			
  			if( elements ){
-				this._showElements(elements);
+				this._findElements(elements);
  			};
  		};
  	},
