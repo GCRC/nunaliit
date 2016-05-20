@@ -138,12 +138,12 @@ var EventSupport = $n2.Class('EventSupport',{
 			};
 			
 		} else if( 'userUnselect' === m.type ) {
-			this._dispatch({
-				type:'unselected'
-				,docId: m.docId
-				,doc: m.doc
-				,feature: m.feature
-			});
+			var forward = {};
+			for(var key in m){
+				forward[key] = m[key];
+			};
+			forward.type = 'unselected';
+			this._dispatch(forward);
 			
 		} else if( 'userFocusOn' === m.type ) {
 			this._dispatch({

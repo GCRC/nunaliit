@@ -98,9 +98,12 @@ var ElementGenerator = $n2.Class('ElementGenerator', {
 	
 	userIntentView: null,
 	
+	eventSource: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: null
+			,eventSource: null
 			,elementsChanged: function(added, updated, removed){}
 			,intentChanged: function(updated){}
 		},opts_);
@@ -113,6 +116,11 @@ var ElementGenerator = $n2.Class('ElementGenerator', {
 		this.contextByDocId = {};
 		this.fragmentById = {};
 		this.clusterById = {};
+		
+		this.eventSource = undefined;
+		if( opts.eventSource ){
+			this.eventSource = opts.eventSource;
+		};
 	
 		this.dispatchService = opts.dispatchService;
 		
@@ -130,6 +138,10 @@ var ElementGenerator = $n2.Class('ElementGenerator', {
 	
 	setIntentChangedListener: function(listener){
 		this.intentChanged = listener;
+	},
+	
+	setEventSource: function(eventSource){
+		this.eventSource = eventSource;
 	},
 	
 	/*
@@ -238,12 +250,14 @@ var ElementGenerator = $n2.Class('ElementGenerator', {
 					type: 'userSelect'
 					,docId: docIds[0]
 					,doc: docs[0]
+					,_source: this.eventSource
 				});
 			} else if( docIds.length > 1 ){
 				this.dispatchService.send(DH,{
 					type: 'userSelect'
 					,docIds: docIds
 					,docs: docs
+					,_source: this.eventSource
 				});
 			};
 		};
@@ -263,6 +277,7 @@ var ElementGenerator = $n2.Class('ElementGenerator', {
 					type: 'userUnselect'
 					,docId: docId
 					,doc: doc
+					,_source: this.eventSource
 				});
 			};
 		};
@@ -289,6 +304,7 @@ var ElementGenerator = $n2.Class('ElementGenerator', {
 					type: 'userFocusOn'
 					,docIds: docIds
 					,docs: docs
+					,_source: this.eventSource
 				});
 
 			} else if( docIds.length > 0 ){
@@ -296,6 +312,7 @@ var ElementGenerator = $n2.Class('ElementGenerator', {
 					type: 'userFocusOn'
 					,docId: docIds[0]
 					,doc: docs[0]
+					,_source: this.eventSource
 				});
 			};
 		};
@@ -315,6 +332,7 @@ var ElementGenerator = $n2.Class('ElementGenerator', {
 					type: 'userFocusOff'
 					,docId: docId
 					,doc: doc
+					,_source: this.eventSource
 				});
 			};
 		};

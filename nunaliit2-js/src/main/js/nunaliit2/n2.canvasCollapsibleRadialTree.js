@@ -36,6 +36,7 @@ POSSIBILITY OF SUCH DAMAGE.
 var 
  _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); }
  ,DH = 'n2.collapsibleRadialTreeCanvas'
+ ,uniqueId = 0
  ;
  
 var $d = undefined;
@@ -284,6 +285,11 @@ Tree.isNodeInTree = function(n,root){
 	if( n === root ) return true;
 
 	return Tree.isNodeInTree(n.parent,root);
+};
+Tree.isRoot = function(n){
+	if( n.parent ) return false;
+
+	return true;
 };
 
 //--------------------------------------------------------------------------
@@ -620,6 +626,185 @@ var CollapsibleLayout = $n2.Class({
 	}
 });
 
+//--------------------------------------------------------------------------
+// Instances of this class keep track of selections
+var SelectionTracker = $n2.Class({
+	
+	dispatchService: null,
+	
+	selectedMap: null,
+	
+	//foundMap: null,
+	
+	onChangeFn: null,
+	
+	eventSourcesToIgnoreMap: null,
+	
+	initialize: function(opts_) {
+		var opts = $n2.extend({
+			dispatchService: null
+		},opts_);
+		
+		var _this = this;
+		
+		this.dispatchService = opts.dispatchService;
+		
+		this.selectedMap = {};
+		//this.foundMap = {};
+		this.eventSourcesToIgnoreMap = {};
+		
+		if( this.dispatchService ){
+			var f = function(m, addr, dispatcher){
+				_this._handle(m, addr, dispatcher);
+			};
+
+			this.dispatchService.register(DH, 'selected', f);
+			this.dispatchService.register(DH, 'selectedSupplement', f);
+			this.dispatchService.register(DH, 'unselected', f);
+			this.dispatchService.register(DH, 'find', f);
+		};
+	},
+	
+	onChange: function(onChangeFn){
+		if( typeof onChangeFn === 'function' ){
+			this.onChangeFn = onChangeFn;
+		};
+	},
+	
+	addIgnoreEventSource: function(eventSource){
+		this.eventSourcesToIgnoreMap[eventSource] = true;
+	},
+	
+	_reportChange: function(){
+		if( typeof this.onChangeFn === 'function' ){
+			var map = {};
+			for(var docId in this.selectedMap){
+				map[docId] = true;
+			};
+//			for(var docId in this.foundMap){
+//				map[docId] = true;
+//			};
+			this.onChangeFn(map);
+		};
+	},
+	
+	_performUnselected: function(suppressChangeReport){
+		var changed = false;
+
+		for(var docId in this.selectedMap){
+			changed = true;
+		};
+//		for(var docId in this.foundMap){
+//			changed = true;
+//		};
+		
+		this.selectedMap = {};
+//		this.foundMap = {};
+		
+		if( changed && !suppressChangeReport ){
+			this._reportChange();
+		};
+		
+		return changed;
+	},
+	
+	_performSelected: function(docIds){
+		var changed = this._performUnselected(true);
+		
+		if( typeof docIds === 'string' ){
+			this.selectedMap[docIds] = true;
+			changed = true;
+
+		} else if( $n2.isArray(docIds) ){
+			for(var i=0,e=docIds.length; i<e; ++i){
+				var docId = docIds[i];
+				this.selectedMap[docId] = true;
+				changed = true;
+			};
+		};
+
+		if( changed ){
+			this._reportChange();
+		};
+		
+		return changed;
+	},
+	
+	_performSelectedSupplement: function(docId){
+		var changed = false;
+		
+		if( !this.selectedMap[docId] ){
+			this.selectedMap[docId] = true;
+			changed = true;
+		};
+
+		if( changed ){
+			this._reportChange();
+		};
+		
+		return changed;
+	},
+
+	_performFind: function(docId){
+		var changed = false;
+
+//		if( !this.foundMap[docId] ){
+//			this.foundMap[docId] = true;
+//			changed = true;
+//		};
+
+		if( changed ){
+			this._reportChange();
+		};
+		
+		return changed;
+	},
+	
+	_shoudIgnoreEvent: function(m){
+		if( m._source ){
+			if( this.eventSourcesToIgnoreMap[m._source] ){
+				return true;
+			};
+		};
+		
+		return false;
+	},
+	
+	_handle: function(m, addr, dispatcher){
+		if( 'selected' === m.type ){
+			if( !this._shoudIgnoreEvent(m) ){
+				if( m.docId ){
+					this._performSelected(m.docId);
+				} else if( m.docIds ){
+					this._performSelected(m.docIds);
+				};
+			};
+
+		} else if( 'selectedSupplement' === m.type ){
+			if( !this._shoudIgnoreEvent(m) ){
+				if( m.origin ){
+					if( this.selectedMap[m.origin] ){
+						this._performSelectedSupplement(m.docId);
+					};
+				} else if( m.docId ) {
+					this._performSelectedSupplement(m.docId);
+				};
+			};
+
+		} else if( 'unselected' === m.type ){
+			if( !this._shoudIgnoreEvent(m) ){
+				this._performUnselected();
+			};
+
+		} else if( 'find' === m.type ){
+			if( !this._shoudIgnoreEvent(m) ){
+				if( m.docId ) {
+					this._performFind(m.docId);
+				};
+			};
+		};
+	}
+});
 
 // --------------------------------------------------------------------------
 // This canvas displays "node elements" in a circle. It draws line between those
@@ -704,6 +889,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 	 */
 	displayedLinks: null,
 	
+	eventSource: null,
+	
 	elementGenerator: null,
 	
 	/*
@@ -765,6 +952,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 	currentMouseOver: null,
 
 	lastElementIdSelected: null,
+	
+	selectedDocIdMap: null,
 	
 	expandedNodesById: null,
 	
@@ -852,10 +1041,13 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		this.focusInfo = null;
  		this.selectInfo = null;
  		this.magnifyThresholdCount = null;
+ 		this.selectedDocIdMap = null;
  		this.expandedNodesById = {};
  		this.fixOriginOnNode = null;
 
  		// Element generator
+ 		this.eventSource = 'CollapsibleRadialTreeCanvas_' + uniqueId;
+ 		++uniqueId;
  		if( !this.elementGenerator ){
  			// If not defined, use the one specified by type
  	 		this.elementGenerator = $n2.canvasElementGenerator.CreateElementGenerator({
@@ -871,6 +1063,10 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			this.elementGenerator.setIntentChangedListener(function(updated){
 				_this._intentChanged(updated);
 			});
+			
+			if( typeof this.elementGenerator.setEventSource === 'function' ){
+				this.elementGenerator.setEventSource(this.eventSource);
+			};
  		};
  		
  		// Register to events
@@ -884,6 +1080,15 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  			this.dispatchService.register(DH,'windowResized',f);
 			this.dispatchService.register(DH,'findIsAvailable', f);
 			this.dispatchService.register(DH,'find', f);
+			
+			// Track selection
+			this.selectionTracker = new SelectionTracker({
+				dispatchService: this.dispatchService
+			});
+			this.selectionTracker.addIgnoreEventSource(this.eventSource);
+			this.selectionTracker.onChange(function(docIdMap){
+				_this._selectionChanged(docIdMap);
+			});
  		};
  		
  		this.createGraph();
@@ -1283,6 +1488,11 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		// Reset effective map
 		this.effectiveElementsById = {};
 		this.elementToEffectiveId = {};
+		
+		// If nodes have been selected, recomute expanded map
+		if( this.selectedDocIdMap ){
+			
+		};
 		
 		// Compute tree
 		var root = {
@@ -2601,6 +2811,58 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		};
  		
  		if( redrawRequired ){
+ 			this._createGraphicalElements();
+ 		};
+ 	},
+ 	
+ 	_selectionChanged: function(docIdMap){
+ 		var _this = this;
+
+ 		//this.selectedDocIdMap = docIdMap;
+ 		// Compute a map of all concerned elements
+ 		var atLeastOneElement = false;
+ 		var elementMap = {};
+ 		for(var docId in docIdMap){
+ 			var elements = undefined;
+ 			if( docId ){
+ 				elements = this.elementsByDocId[docId];
+ 			};
+ 			
+ 			if( elements ){
+				for(var i=0,e=elements.length; i<e; ++i){
+					var element = elements[i];
+					elementMap[element.id] = element;
+					atLeastOneElement = true;
+				};
+ 			};
+ 		};
+ 		
+ 		// If at least one element selected, adjust the canvas
+ 		// accordingly
+ 		if( atLeastOneElement ){
+			this.expandedNodesById = {};
+	 		for(var elementId in elementMap){
+	 			var element = elementMap[elementId];
+	 			if( element.isNode ){
+	 				Tree.visitParents(element, function(n){
+	 					// Skip root
+	 					if( !Tree.isRoot(n) ){
+ 							// This node needs to be expanded
+ 							_this.expandedNodesById[n.id] = true;
+
+ 							// Animation should be fixed on the first visible
+ 							// parent that is expanded
+ 							if( n.canvasVisible ){
+ 	 							_this.fixOriginOnNode = {
+ 				 	 	 			id: n.id
+ 				 	 	 			,position: Degrees(n.orig_x - _this.originAngle)
+ 				 	 	 		};
+ 							};
+	 					};
+	 				});
+	 			};
+	 		};
+	 		
  			this._createGraphicalElements();
  		};
  	},
