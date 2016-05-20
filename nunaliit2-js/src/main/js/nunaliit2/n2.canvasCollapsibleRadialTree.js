@@ -953,7 +953,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 
 	lastElementIdSelected: null,
 	
-	selectedDocIdMap: null,
+	outsideSelectionDocIdMap: null,
 	
 	expandedNodesById: null,
 	
@@ -1041,7 +1041,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		this.focusInfo = null;
  		this.selectInfo = null;
  		this.magnifyThresholdCount = null;
- 		this.selectedDocIdMap = null;
+ 		this.outsideSelectionDocIdMap = null;
  		this.expandedNodesById = {};
  		this.fixOriginOnNode = null;
 
@@ -1489,11 +1489,6 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		this.effectiveElementsById = {};
 		this.elementToEffectiveId = {};
 		
-		// If nodes have been selected, recomute expanded map
-		if( this.selectedDocIdMap ){
-			
-		};
-		
 		// Compute tree
 		var root = {
 			id: '__root__'
@@ -1510,12 +1505,6 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			if( elem.isNode ){
 				if( !elem.children ){
 					elem.children = [];
-				};
-
-				if( this.expandedNodesById[elemId] ){
-					elem.expanded = true;
-				} else {
-					elem.expanded = false;
 				};
 
 				if( elem.parentId ){
@@ -1536,6 +1525,53 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 				sourceLinks.push(elem);
 			};
 		};
+		
+		// If nodes have been selected, recomute expanded map
+		if( this.outsideSelectionDocIdMap ){
+	 		// Compute a map of all concerned elements
+	 		var elementMap = {};
+	 		for(var docId in this.outsideSelectionDocIdMap){
+	 			var elements = undefined;
+	 			if( docId ){
+	 				elements = this.elementsByDocId[docId];
+	 			};
+	 			
+	 			if( elements ){
+					for(var i=0,e=elements.length; i<e; ++i){
+						var element = elements[i];
+						elementMap[element.id] = element;
+					};
+	 			};
+	 		};
+	 		
+			this.expandedNodesById = {};
+	 		for(var elementId in elementMap){
+	 			var element = elementMap[elementId];
+	 			if( element.isNode ){
+	 				Tree.visitParents(element, function(n){
+	 					// Skip root
+	 					if( !Tree.isRoot(n) ){
+ 							// This node needs to be expanded
+ 							_this.expandedNodesById[n.id] = true;
+	 					};
+	 				});
+	 			};
+	 		};
+		};
+
+		// Apply "expanded" on nodes
+		for(var elemId in this.elementsById){
+			var elem = this.elementsById[elemId];
+			
+			if( elem.isNode ){
+				if( this.expandedNodesById[elemId] ){
+					elem.expanded = true;
+				} else {
+					elem.expanded = false;
+				};
+			};
+		};
+
 		
 		// Find which nodes are visible
 		if( this.filterOptions.expand ){
@@ -2692,6 +2728,10 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  			return;
  		};
  		
+ 		// Canvas is being interacted with. Ignore outside
+ 		// selection
+ 		this.outsideSelectionDocIdMap = null;
+ 		
  		var elementId = elementData.id;
  		if( this.expandedNodesById[elementId] ){
  			// Collapse
@@ -2818,53 +2858,9 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  	_selectionChanged: function(docIdMap){
  		var _this = this;
 
- 		//this.selectedDocIdMap = docIdMap;
- 		// Compute a map of all concerned elements
- 		var atLeastOneElement = false;
- 		var elementMap = {};
- 		for(var docId in docIdMap){
- 			var elements = undefined;
- 			if( docId ){
- 				elements = this.elementsByDocId[docId];
- 			};
- 			
- 			if( elements ){
-				for(var i=0,e=elements.length; i<e; ++i){
-					var element = elements[i];
-					elementMap[element.id] = element;
-					atLeastOneElement = true;
-				};
- 			};
- 		};
- 		
- 		// If at least one element selected, adjust the canvas
- 		// accordingly
- 		if( atLeastOneElement ){
-			this.expandedNodesById = {};
-	 		for(var elementId in elementMap){
-	 			var element = elementMap[elementId];
-	 			if( element.isNode ){
-	 				Tree.visitParents(element, function(n){
-	 					// Skip root
-	 					if( !Tree.isRoot(n) ){
- 							// This node needs to be expanded
- 							_this.expandedNodesById[n.id] = true;
+ 		this.outsideSelectionDocIdMap = docIdMap;
 
- 							// Animation should be fixed on the first visible
- 							// parent that is expanded
- 							if( n.canvasVisible ){
- 	 							_this.fixOriginOnNode = {
- 				 	 	 			id: n.id
- 				 	 	 			,position: Degrees(n.orig_x - _this.originAngle)
- 				 	 	 		};
- 							};
-	 					};
-	 				});
-	 			};
-	 		};
-	 		
- 			this._createGraphicalElements();
- 		};
+ 		this._createGraphicalElements();
  	},
  	
  	_handleDispatch: function(m){
