@@ -959,14 +959,16 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 	
 	/*
 	 * This is a structure that is used when a node is expanded/collapsed.
-	 * It stores the node is being that is expanded/collapsed and the position
-	 * it had at time of expansion/collapse. Used to adjust originAngle. Format:
+	 * It stores the node that is expanded/collapsed and the position
+	 * it had at time of expansion/collapse. Used to adjust originOffset. Format:
 	 * {
 	 * 	  id: <string> Node identifier
 	 *    position: <number> Original position of node
 	 * }
 	 */
 	fixOriginOnNode: null,
+	
+	originOffset: null,
  	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -1044,6 +1046,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		this.outsideSelectionDocIdMap = null;
  		this.expandedNodesById = {};
  		this.fixOriginOnNode = null;
+ 		this.originOffset = 0;
 
  		// Element generator
  		this.eventSource = 'CollapsibleRadialTreeCanvas_' + uniqueId;
@@ -1665,18 +1668,17 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		// Layout tree (sets x and y)
 		this.displayedNodesSorted = this.layout.nodes(root);
 		
-		// Adjust origin based on expanded/collapsed node
+		// Adjust origin offset based on expanded/collapsed node
+		this.originOffset = 0;
 		if( this.fixOriginOnNode ){
 			var nodeId = this.fixOriginOnNode.id;
 			var position = this.fixOriginOnNode.position;
-			this.fixOriginOnNode = null;
 			
 			if( typeof position === 'number' ){
 				for(var i=0,e=this.displayedNodesSorted.length; i<e; ++i){
 					var node = this.displayedNodesSorted[i];
 					if( nodeId === node.id ){
-						var offset = position - node.x;
-						this.originAngle = Degrees(this.originAngle + offset);
+						this.originOffset = position - node.x;
 					};
 				};
 			};
@@ -1746,14 +1748,14 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			var node = this.displayedNodesSorted[i];
 
 			node.n2_geometry = 'point';
-			node.orig_x = Degrees(node.x + this.originAngle);
+			node.orig_x = Degrees(node.x + this.originAngle + this.originOffset);
 			delete node.x;
 			
 			if( typeof node.xMax === 'number' ){
-				node.xMax = Degrees(node.xMax + this.originAngle);
+				node.xMax = Degrees(node.xMax + this.originAngle + this.originOffset);
 			};
 			if( typeof node.xMin === 'number' ){
-				node.xMin = Degrees(node.xMin + this.originAngle);
+				node.xMin = Degrees(node.xMin + this.originAngle + this.originOffset);
 			};
 			
 			node.zFactor = zFactor;
@@ -2835,15 +2837,6 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  							// This node needs to be expanded
  							_this.expandedNodesById[n.id] = true;
  							redrawRequired = true;
-
- 							// Animation should be fixed on the first visible
- 							// parent that is expanded
- 							if( n.canvasVisible ){
- 	 							_this.fixOriginOnNode = {
- 				 	 	 			id: n.id
- 				 	 	 			,position: Degrees(n.orig_x - _this.originAngle)
- 				 	 	 		};
- 							};
  						};
  					};
  				});
@@ -2857,6 +2850,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  	
  	_selectionChanged: function(docIdMap){
  		var _this = this;
+
+		this.fixOriginOnNode = null;
 
  		this.outsideSelectionDocIdMap = docIdMap;
 
