@@ -172,7 +172,7 @@ public class CommandUpdateSchema implements Command {
 				JSONObject jsonDef = jsonDoc.getJSONObject("definition");
 				
 				// Refresh from definition
-				SchemaDefinition schemaDef = SchemaDefinition.fronJson(jsonDef);
+				SchemaDefinition schemaDef = SchemaDefinition.fromJson(jsonDef);
 				schemaDef.saveToSchemaDir(schemaDir);
 				
 				gs.getOutStream().println("Schema "+name+" refreshed");

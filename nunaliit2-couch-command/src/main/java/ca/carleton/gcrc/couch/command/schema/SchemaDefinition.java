@@ -12,7 +12,7 @@ import org.json.JSONObject;
 
 public class SchemaDefinition {
 	
-	static public SchemaDefinition fronJson(JSONObject jsonDef) throws Exception {
+	static public SchemaDefinition fromJson(JSONObject jsonDef) throws Exception {
 		String groupName = jsonDef.getString("group");
 		String schemaId = jsonDef.getString("id");
 		
@@ -223,29 +223,83 @@ public class SchemaDefinition {
 		
 		// relatedSchemas.json
 		{
+			boolean eraseFile = false;
 			File file = new File(schemaDir, "relatedSchemas.json");
-			FileOutputStream fos = new FileOutputStream(file);
-			OutputStreamWriter osw = new OutputStreamWriter(fos);
-			JSONArray arr = new JSONArray();
-			for(String schemaName : relatedSchemas){
-				arr.put(schemaName);
+			FileOutputStream fos = null;
+			try {
+				fos = new FileOutputStream(file);
+				OutputStreamWriter osw = new OutputStreamWriter(fos);
+				JSONArray arr = new JSONArray();
+				for(String schemaName : relatedSchemas){
+					arr.put(schemaName);
+				}
+				osw.write( arr.toString(3) );
+				osw.flush();
+				fos.flush();
+				fos.close();
+				fos = null;
+				
+			} catch(Exception e) {
+				eraseFile = true;
+				throw new Exception("Error while creating file "+file,e);
+				
+			} finally {
+				if( null != fos ){
+					try {
+						fos.close();
+					} catch(Exception e) {
+						// Ignore
+					}
+				}
+				
+				// Do not leave file in invalid state
+				try {
+					if( eraseFile ){
+						file.delete();
+					}
+				} catch(Exception e) {
+					// ignore
+				}
 			}
-			osw.write( arr.toString(3) );
-			osw.flush();
-			fos.flush();
-			fos.close();
 		}
 		
 		// create.json
 		{
+			boolean eraseFile = false;
 			File file = new File(schemaDir, "create.json");
-			FileOutputStream fos = new FileOutputStream(file);
-			OutputStreamWriter osw = new OutputStreamWriter(fos);
-			JSONObject jsonCreate = computeCreateField();
-			osw.write( jsonCreate.toString(3) );
-			osw.flush();
-			fos.flush();
-			fos.close();
+			FileOutputStream fos = null;
+			try {
+				fos = new FileOutputStream(file);
+				OutputStreamWriter osw = new OutputStreamWriter(fos);
+				JSONObject jsonCreate = computeCreateField();
+				osw.write( jsonCreate.toString(3) );
+				osw.flush();
+				fos.flush();
+				fos.close();
+				fos = null;
+				
+			} catch(Exception e) {
+				eraseFile = true;
+				throw new Exception("Error while creating file "+file,e);
+				
+			} finally {
+				if( null != fos ){
+					try {
+						fos.close();
+					} catch(Exception e) {
+						// Ignore
+					}
+				}
+				
+				// Do not leave file in invalid state
+				try {
+					if( eraseFile ){
+						file.delete();
+					}
+				} catch(Exception e) {
+					// ignore
+				}
+			}
 		}
 		
 		// brief.txt
@@ -289,26 +343,80 @@ public class SchemaDefinition {
 		
 		// export.json
 		{
+			boolean eraseFile = false;
 			File file = new File(schemaDir, "export.json");
-			FileOutputStream fos = new FileOutputStream(file);
-			OutputStreamWriter osw = new OutputStreamWriter(fos);
-			JSONArray jsonExport = computeExportField();
-			osw.write( jsonExport.toString(3) );
-			osw.flush();
-			fos.flush();
-			fos.close();
+			FileOutputStream fos = null;
+			try {
+				fos = new FileOutputStream(file);
+				OutputStreamWriter osw = new OutputStreamWriter(fos);
+				JSONArray jsonExport = computeExportField();
+				osw.write( jsonExport.toString(3) );
+				osw.flush();
+				fos.flush();
+				fos.close();
+				fos = null;
+				
+			} catch(Exception e) {
+				eraseFile = true;
+				throw new Exception("Error while creating file "+file,e);
+				
+			} finally {
+				if( null != fos ){
+					try {
+						fos.close();
+					} catch(Exception e) {
+						// Ignore
+					}
+				}
+				
+				// Do not leave file in invalid state
+				try {
+					if( eraseFile ){
+						file.delete();
+					}
+				} catch(Exception e) {
+					// ignore
+				}
+			}
 		}
 		
 		// csvExport.json
 		{
+			boolean eraseFile = false;
 			File file = new File(schemaDir, "csvExport.json");
-			FileOutputStream fos = new FileOutputStream(file);
-			OutputStreamWriter osw = new OutputStreamWriter(fos);
-			JSONArray jsonExport = computeExportField();
-			osw.write( jsonExport.toString(3) );
-			osw.flush();
-			fos.flush();
-			fos.close();
+			FileOutputStream fos = null;
+			try {
+				fos = new FileOutputStream(file);
+				OutputStreamWriter osw = new OutputStreamWriter(fos);
+				JSONArray jsonExport = computeExportField();
+				osw.write( jsonExport.toString(3) );
+				osw.flush();
+				fos.flush();
+				fos.close();
+				fos = null;
+				
+			} catch(Exception e) {
+				eraseFile = true;
+				throw new Exception("Error while creating file "+file,e);
+				
+			} finally {
+				if( null != fos ){
+					try {
+						fos.close();
+					} catch(Exception e) {
+						// Ignore
+					}
+				}
+				
+				// Do not leave file in invalid state
+				try {
+					if( eraseFile ){
+						file.delete();
+					}
+				} catch(Exception e) {
+					// ignore
+				}
+			}
 		}
 	}
 

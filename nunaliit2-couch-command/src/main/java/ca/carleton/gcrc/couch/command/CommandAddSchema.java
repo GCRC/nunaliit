@@ -164,7 +164,7 @@ public class CommandAddSchema implements Command {
 			}
 			
 			// Interpret definition
-			schemaDef = SchemaDefinition.fronJson(jsonDefinition);
+			schemaDef = SchemaDefinition.fromJson(jsonDefinition);
 
 		} else if( null != id ) {
 			schemaDef = new SchemaDefinition(groupName, id);
