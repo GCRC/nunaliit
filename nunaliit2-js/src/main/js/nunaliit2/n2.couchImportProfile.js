@@ -1371,6 +1371,12 @@ var AnalysisReport = $n2.Class({
 		var doc = null;
 		if( schema ){
 			doc = schema.createObject();
+			
+			// Remove attachment instructions
+			if( doc.nunaliit_attachments ){
+				delete doc.nunaliit_attachments;
+			};
+
 		} else {
 			doc = {};
 		};
