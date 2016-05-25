@@ -427,37 +427,45 @@ var StyleRules = $n2.Class({
 		};
 
 		var rule = loadRuleFromObject({
-			condition: "true"
+			condition: 'true'
 			,normal: {
 				'fillColor': '#ffffff'
 				,'strokeColor': '#ee9999'
 				,'strokeWidth': 2
-				,'fillOpacity': 0.4
+				,'fillOpacity': 1
 				,'strokeOpacity': 1
-				,'strokeLinecap': "round"
+				,'strokeLinecap': 'round'
 				,pointRadius: 6
-				,pointerEvents: "visiblePainted"
+				,pointerEvents: 'visiblePainted'
 			}
 			,selected: {
-				'strokeColor': "#ff2200"
+				'strokeColor': '#ff2200'
 			}
 			,found: {
-				'strokeColor': "#00ffff"
-				,'fillColor': "#00ffff"
+				'strokeColor': '#00ffff'
+				,'fillColor': '#00ffff'
 			}
 			,hovered: {
-				'fillColor': "#0000ff"
+				'fillColor': '#0000ff'
 			}
 		});
 		this.addRule(rule);
 
 		var rule = loadRuleFromObject({
-			condition: "isLine()"
-			,hovered:{
-				'strokeColor': "#0000ff"
+			condition: 'isLine()'
+			,normal: {
+				'fillColor': 'none'
 			}
-			,hoveredClicked:{
-				'strokeColor': "#0000ff"
+			,selected: {
+				'fillColor': 'none'
+			}
+			,hovered:{
+				'strokeColor': '#0000ff'
+				,'fillColor': 'none'
+			}
+			,found: {
+				'strokeColor': '#00ffff'
+				,'fillColor': 'none'
 			}
 		});
 		this.addRule(rule);
