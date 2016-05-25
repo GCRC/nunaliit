@@ -419,7 +419,7 @@ var ElementGenerator = $n2.Class('ElementGenerator', {
 		};
 	},
 	
-	/*
+	/**
 	 * This method should be re-implemented by sub-classes to establish other representations.
 	 * 
 	 * This method is used to create a set of fragments given a document. A document can generate
