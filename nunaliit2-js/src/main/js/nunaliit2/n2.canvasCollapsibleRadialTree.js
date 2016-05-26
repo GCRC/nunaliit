@@ -1456,12 +1456,6 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			var elem = this.elementsById[elemId];
 			delete elem.parent;
 			delete elem.children;
-			delete elem.depth;
-			delete elem.x;
-			delete elem.y;
-			delete elem.z;
-			delete elem.zFactor;
-			delete elem.orig_x;
 			delete elem.expanded;
 		};
 		
@@ -1524,7 +1518,9 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 	 			};
 	 		};
 	 		
-			this.expandedNodesById = {};
+	 		// Compute a new map of expanded nodes so as to show
+	 		// everything selected by the outside selection
+	 		var updatedExpandedNodes = {};
 	 		for(var elementId in elementMap){
 	 			var element = elementMap[elementId];
 	 			if( element.isNode ){
@@ -1532,11 +1528,20 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 	 					// Skip root
 	 					if( !Tree.isRoot(n) ){
  							// This node needs to be expanded
- 							_this.expandedNodesById[n.id] = true;
+	 						updatedExpandedNodes[n.id] = true;
+	 						
+	 						if( !_this.expandedNodesById[n.id] 
+	 						 && typeof n.orig_x === 'number' ){
+	 				 	 		_this.fixOriginOnNode = {
+ 				 	 	 			id: n.id
+ 				 	 	 			,position: Degrees(n.orig_x - _this.originAngle)
+ 				 	 	 		};
+	 						};
 	 					};
 	 				});
 	 			};
 	 		};
+			this.expandedNodesById = updatedExpandedNodes;
 		};
 
 		// Apply "expanded" on nodes
