@@ -1501,9 +1501,16 @@ var MapAndControls = $n2.Class({
 		
 		this.map.addLayers(this.mapLayers);
 
+		// Install mouse position widget
+		var mousePositionProjection = this.options.mapCoordinateSpecifications.useForMapControls ? 
+				userCoordProjection : mapProjection;
+		if( this.options.mapCoordinateSpecifications.mousePositionSrsName ){
+			mousePositionProjection = new OpenLayers.Projection(
+				this.options.mapCoordinateSpecifications.mousePositionSrsName
+			);
+		};
 		this.map.addControl(new OpenLayers.Control.MousePosition({
-			displayProjection: (this.options.mapCoordinateSpecifications.useForMapControls ? 
-					userCoordProjection : mapProjection)
+			displayProjection: mousePositionProjection
 		}));
 		
 		// Layer switcher control

@@ -984,6 +984,12 @@ var ModuleDisplay = $n2.Class({
 				mapOptions.mapDisplay.srsName = 'EPSG:4326';
 				mapOptions.mapCoordinateSpecifications.srsName = 'EPSG:4326';
 			};
+
+			
+			if( mapInfo.coordinates.mousePositionSrsName ){
+				mapOptions.mapCoordinateSpecifications.mousePositionSrsName = 
+					mapInfo.coordinates.mousePositionSrsName;
+			};
 			
 			// Detect forced display projections based on background layer
 			if( mapInfo.backgrounds ){
