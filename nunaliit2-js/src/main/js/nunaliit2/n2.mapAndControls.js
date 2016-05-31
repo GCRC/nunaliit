@@ -460,13 +460,15 @@ function HandleWidgetDisplayRequests(m){
 //**************************************************
 var GazetteerProcess = $n2.Class({
 	
-	geoNamesService: null
+	geoNamesService: null,
 	
-	,initialize: function(geoNamesService_){
+	inputId: null,
+	
+	initialize: function(geoNamesService_){
 		this.geoNamesService = geoNamesService_;
-	}
+	},
 
-	,initiateCapture: function(mapControl){
+	initiateCapture: function(mapControl){
 		var _this = this;
 		
 		var dialogId = $n2.getUniqueId();
@@ -474,8 +476,8 @@ var GazetteerProcess = $n2.Class({
 			.attr('id',dialogId)
 			.addClass('n2MapAndControls_gazette_dialog');
 		
-		var inputId = $n2.getUniqueId();
-		$('<div><input id="'+inputId+'" type="text"/></div>')
+		this.inputId = $n2.getUniqueId();
+		$('<div><input id="'+this.inputId+'" type="text"/></div>')
 			.appendTo($dialog);
 
 		$('<div class="n2MapAndControls_gazette_results"></div>')
@@ -494,7 +496,7 @@ var GazetteerProcess = $n2.Class({
 		};
 		$dialog.dialog(dialogOptions);
 		
-		var $input = $('#'+inputId);
+		var $input = $('#'+this.inputId);
 		
 		this.geoNamesService.installAutoComplete({
 			input: $input
@@ -512,17 +514,22 @@ var GazetteerProcess = $n2.Class({
 			
 			// $n2.log('key',key);
 			
+			var $input = $('#'+_this.inputId);
 			if( key === 13 ) {
-				var $input = $('#'+inputId);
 				var val = $input.val();
 				
 				if( $input.autocomplete ){
 					$input.autocomplete('close');
+					$input.autocomplete('option','disabled',true);
 				};
 
 				request.name = val;
 				
 				_this._searchForName(request);
+			} else {
+				if( $input.autocomplete ){
+					$input.autocomplete('option','disabled',false);
+				};
 			};
 			
 			return true;
@@ -530,9 +537,9 @@ var GazetteerProcess = $n2.Class({
 		
 		// Get centre of map to find biased country
 		this._findCurrentLocation(request);
-	}
+	},
 	
-	,_searchForName: function(request){
+	_searchForName: function(request){
 		var _this = this;
 		
 		var countryBias = null;
@@ -585,17 +592,17 @@ var GazetteerProcess = $n2.Class({
 				};
 			}
 		});
-	}
+	},
 	
-	,_installOnClick: function(request, $entry, entry){
+	_installOnClick: function(request, $entry, entry){
 		var _this = this;
 		
 		$entry.click(function(){
 			_this._selectEntry(request, entry);
 		});
-	}
+	},
 	
-	,_selectEntry: function(request, entry){
+	_selectEntry: function(request, entry){
 		var $dialog = $('#'+request.dialogId);
 		$dialog.dialog('close');
 		
@@ -625,9 +632,9 @@ var GazetteerProcess = $n2.Class({
 		};
 		
 		editLayer.addFeatures([feature]);
-	}
+	},
 	
-	,_findCurrentLocation: function(request){
+	_findCurrentLocation: function(request){
 		var map = request.mapControl.map;
 		var ll = map.getCenter();
 		if( ll ) {
