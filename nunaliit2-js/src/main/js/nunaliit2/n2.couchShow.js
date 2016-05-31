@@ -1129,29 +1129,28 @@ var DomStyler = $n2.Class({
 		};
 	},
 	
-	_handleHover : function(contextDoc, $jq, opt){
+	_handleHover: function(contextDoc, $jq, opt){
 
-		var dispatchService = this.showService.dispatchService;
+        var dispatchService = this.showService.dispatchService;
+        var docId = this._getDocumentIdentifier(contextDoc, $jq);
 
-		if( dispatchService ) {
-			$jq.hover(
-				function(){ // in
-					dispatchService.send(DH, {
-						type:'userFocusOn'
-						,docId:contextDoc._id
-						,doc:contextDoc
-					});
-				}
-				,function(){ // out
-					dispatchService.send(DH, {
-						type:'userFocusOff'
-						,docId:contextDoc._id
-						,doc:contextDoc
-					});
-				}
-			);
-		};
-	},
+        if( dispatchService ) {
+            $jq.hover(
+                function(){ // in
+                    dispatchService.send(DH, {
+                        type:'userFocusOn'
+                        ,docId:docId
+                    });
+                }
+                ,function(){ // out
+                    dispatchService.send(DH, {
+                        type:'userFocusOff'
+                        ,docId:docId
+                    });
+                }
+            );
+        };
+    },
 
 	_installTiledImageClick: function(doc, $elem){
 		var _this = this;
