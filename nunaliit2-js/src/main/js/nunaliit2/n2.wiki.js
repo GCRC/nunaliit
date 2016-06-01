@@ -791,8 +791,12 @@ function WikiToHtml(opts_){
 	    });
 		
 		// Horizontal Line
-		line = line.replace(/(?:^|\n)([-]+)\s*/g, function (m) {
-	        return '<hr class="n2wiki"/>';
+		line = line.replace(/(?:^|\n)([-]+)\s*/g, function (m, l) {
+		    if (l.length > 3) {
+		        return '<hr class="n2wiki"/>';			
+		    } else {
+			return l;
+		    };
 	    });
 
 		// Links
