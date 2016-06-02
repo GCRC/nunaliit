@@ -2718,6 +2718,14 @@ var ImportProfileGeoJson = $n2.Class(ImportProfile, {
 			return;
 		};
 		
+		// Deal with computed idAttribute values
+		var idAttributeFn = undefined;
+		if( typeof this.idAttribute === 'string'
+		 && this.idAttribute.length > 0 
+		 && this.idAttribute[0] === '=' ){
+			idAttributeFn = $n2.styleRuleParser.parse(this.idAttribute.substr(1));
+		};
+		
 		// Parse GeoJSON input
 		var jsonObj = null;
 		try {
@@ -2760,6 +2768,13 @@ var ImportProfileGeoJson = $n2.Class(ImportProfile, {
 						id = feature.properties[key];
 					};
 				};
+			};
+			
+			// Compute id from formula?
+			if( typeof id === 'undefined'
+			 && idAttributeFn
+			 && typeof idAttributeFn.getValue === 'function' ){
+				id = idAttributeFn.getValue(feature);
 			};
 
 			var geom = null;

@@ -54,12 +54,12 @@ var EventSupport = $n2.Class('EventSupport',{
 	
 		this.registeredEvents = {};
 		
-		this.handler = function(m){
-			_this._defaultHandler(m);
+		this.handler = function(m, addr, dispatcher){
+			_this._defaultHandler(m, addr, dispatcher);
 		};
 		
-		this.dispatchCallback = function(m){
-			_this.handler(m);
+		this.dispatchCallback = function(m, addr, dispatcher){
+			_this.handler(m, addr, dispatcher);
 		};
 		
 		this.register('userSelect');
@@ -103,7 +103,7 @@ var EventSupport = $n2.Class('EventSupport',{
 		};
 	}
 
-	,_defaultHandler: function(m){
+	,_defaultHandler: function(m, addr, dispatcher){
 		if( 'userSelect' === m.type ) {
 			var forwardAllowed = true;
 			var d = this._getDispatcher();
