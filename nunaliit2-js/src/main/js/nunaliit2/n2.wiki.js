@@ -628,6 +628,9 @@ function insertShowService(links){
 		} else if( 'nunaliit-' === name.substr(0,'nunaliit-'.length) ){
 			// Allow nunaliit specific attributes
 			validAttribute = true;
+		} else if( 'n2-' === name.substr(0,'n2-'.length) ){
+			// Allow n2 specific attributes
+			validAttribute = true;
 		} else if( $n2.html.isAttributeNameValid(name) ){
 			validAttribute = true;
 		};
