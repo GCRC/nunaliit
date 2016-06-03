@@ -1873,9 +1873,6 @@ var Show = $n2.Class({
 				listName = $elem.attr('n2-list-name');
 			};
 			
-			//var listType = $elem.attr('n2-list-type');
-			//var listName = $elem.attr('n2-list-name');
-			
 			if( listType === m.listType 
 			 && listName === m.listName ){
 				$elem
