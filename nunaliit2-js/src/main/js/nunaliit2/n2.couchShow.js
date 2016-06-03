@@ -1863,8 +1863,18 @@ var Show = $n2.Class({
 		
 		$('.n2show_documentList_wait').each(function(){
 			var $elem = $(this);
-			var listType = $elem.attr('n2-list-type');
-			var listName = $elem.attr('n2-list-name');
+			
+			var listType = $elem.attr('nunaliit-list-type');
+			if( typeof listType === 'undefined'){
+				listType = $elem.attr('n2-list-type');
+			};
+			var listName = $elem.attr('nunaliit-list-name');
+			if( typeof listName === 'undefined'){
+				listName = $elem.attr('n2-list-name');
+			};
+			
+			//var listType = $elem.attr('n2-list-type');
+			//var listName = $elem.attr('n2-list-name');
 			
 			if( listType === m.listType 
 			 && listName === m.listName ){
