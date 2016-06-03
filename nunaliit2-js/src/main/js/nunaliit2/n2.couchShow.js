@@ -441,8 +441,14 @@ var DomStyler = $n2.Class({
 	},
 	
 	_insertDocumentList: function($jq, opt_){
-		var listType = $jq.attr('n2-list-type');
-		var listName = $jq.attr('n2-list-name');
+		var listType = $jq.attr('nunaliit-list-type');
+		if( typeof listType === 'undefined' ){
+			listType = $jq.attr('n2-list-type');
+		};
+		var listName = $jq.attr('nunaliit-list-name');
+		if( typeof listName === 'undefined' ){
+			listName = $jq.attr('n2-list-name');
+		};
 		
 		$jq
 			.addClass('n2show_documentList_wait')
