@@ -656,7 +656,8 @@ function computeLink(linkText){
 	var url = links[0];
 	var docId = undefined;
 	if( 'http://' === url.substr(0,'http://'.length)
-	 || 'https://' === url.substr(0,'https://'.length) ){
+	 || 'https://' === url.substr(0,'https://'.length) 
+	 || 'mailto:' === url.substr(0,'mailto:'.length)){
 		externalLink = true;
 
 	} else if( 'nunaliit:' === url.substr(0,'nunaliit:'.length) ){
@@ -744,10 +745,11 @@ function computeLink(linkText){
 // ----
 //
 // Links:
-// [[http://abc.com | description]]   External link
-// [[https://abc.com | description]]  External link
-// [[docId | description]]            Internal link
-// [[nunaliit:class | option]]        Show service insert
+// [[http://abc.com | description]]   		External link
+// [[https://abc.com | description]]  		External link
+// [[mailto:name@abc.com | description]]	External link
+// [[docId | description]]            		Internal link
+// [[nunaliit:class | option]]        		Show service insert
 //
 // Styling:
 // ''italics''
