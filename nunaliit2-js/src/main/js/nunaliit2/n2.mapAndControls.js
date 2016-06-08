@@ -47,8 +47,6 @@ var MapBridge = $n2.Class({
     
     mapControl: null,
     
-    registeredLayersByName: null,
-    
     initialize: function (opts_) {
         var opts = $n2.extend({
             dispatchService: null
@@ -58,8 +56,6 @@ var MapBridge = $n2.Class({
         }, opts_);
 
         var _this = this;
-        
-        this.registeredLayersByName = {};
         
         this.sourceModelId = opts.sourceModelId;
         this.dispatchService = opts.dispatchService;
@@ -123,145 +119,34 @@ var MapBridge = $n2.Class({
     },
     
     /**
-     * Returns true if the document should be visible
+     * Returns array of document ids that are currently visible
      */
-    _isDocumentVisible: function(doc){
-    	throw 'Subclasses must implement _isDocumentVisible()'
+    _getVisibleDocumentIds: function(){
+    	throw new Error('Subclasses must implement _getVisibleDocumentIds()');
     },
     
     _updateMap: function() {
         var mapControl = this._getMapControl();
         if( mapControl 
-         && mapControl.map 
-         && mapControl.map.layers ){
-            // Iterate over all layers
-            for(var i = 0, e = mapControl.map.layers.length; i < e; ++i) {
-                var layer = mapControl.map.layers[i];
+         && mapControl.infoLayers ){
+        	var visibleDocIds = this._getVisibleDocumentIds();
+        	
+        	// Iterate over all layers
+    		for(var loop=0; loop<mapControl.infoLayers.length; ++loop) {
+    			var layerInfo = mapControl.infoLayers[loop];
                 
                 // Interested only in vector layers
-                if( layer.features ) {
-                    // Iterate over feature
-                    for(var j = 0, l = layer.features.length; j < l; ++j){
-                        var feature = layer.features[j];
-
-                        var modified = this._adjustStyleOnFeature(feature);
-                        if( modified ){
-                            layer.drawFeature(feature);
-                        };
-                    };
+                if( layerInfo 
+                 && layerInfo.featureStrategy ) {
+                	layerInfo.featureStrategy.setAllowDocumentIds(visibleDocIds);
                 };
             };
         };
     },
     
-    /**
-     * Change the style on the feature according to the document reported
-     * by the source model. If a document is present, the style is deleted.
-     * If a document is not present, then the style is set to "display: none".
-     * This hides from the map a feature that is not reported by the source model.
-     * 
-     * Returns true if the style on the feature was modified
-     */
-    _adjustStyleOnFeature: function(feature){
-    	var styleModified = false;
-
-    	if( feature.cluster ){
-			var visibleCount = 0;
-			
-			for(var cfIndex=0,cfEnd=feature.cluster.length; 
-				cfIndex<cfEnd; 
-				++cfIndex){
-				var cf = feature.cluster[cfIndex];
-				if( cf.data ){
-                	var visible = this._isDocumentVisible(cf.data);
-                    
-                    if( visible ) {
-                    	if( cf.style ){
-                    		delete cf.style;
-                    	};
-                    	
-                    } else {
-                    	if( ! cf.style ){
-                    		cf.style = {
-                            	display: 'none'
-                            };
-                    	};
-                    };
-				};
-			};
-			
-			if( feature.attributes ){
-				feature.attributes.count = visibleCount;
-			};
-			
-			if( visibleCount > 0 ){
-            	if( feature.style ){
-                    delete feature.style;
-            		styleModified = true;
-            	};
-			} else {
-            	if( ! feature.style ){
-                    feature.style = {
-                    	display: 'none'
-                    };
-            		styleModified = true;
-            	};
-			};
-
-		} else if( feature.data ){
-        	var visible = this._isDocumentVisible(feature.data);
-            
-            if( visible ) {
-            	if( feature.style ){
-                    delete feature.style;
-            		styleModified = true;
-            	};
-            	
-            } else {
-            	if( ! feature.style ){
-                    feature.style = {
-                    	display: 'none'
-                    };
-            		styleModified = true;
-            	};
-            };
-		};
-		
-		return styleModified;
-    },
-    
-    _handleFeaturesAdded: function(features){
-    	for(var i=0,e=features.length; i<e; ++i) {
-    		var feature = features[i];
-    		this._adjustStyleOnFeature(feature);
-    	};
-    },
-    
     _getMapControl: function(){
     	var _this = this;
     	
-    	// Register for update events on map. Do this only once per layer
-    	if( this.mapControl
-    	 && this.mapControl.layers ){
-    		for(var layerName in this.mapControl.layers){
-    			if( this.registeredLayersByName[layerName] ){
-    				// Already registered
-    			} else {
-    				this.registeredLayersByName[layerName] = true;
-        			var layer = this.mapControl.layers[layerName];
-        			if( layer && layer.events ){
-        				layer.events.register('beforefeaturesadded',null,function(evt){
-        					if( evt 
-							 && evt.features 
-							 && evt.features.length ) {
-            					_this._handleFeaturesAdded(evt.features);
-							};
-        				});
-        			};
-    			};
-    		};
-    	};
-    		
     	return this.mapControl;
     }
 });
@@ -337,15 +222,14 @@ var TimeTransformMapBridge = $n2.Class(MapBridge, {
     	};
     },
     
-    _isDocumentVisible: function(doc){
-    	if( doc ){
-        	var docId = doc._id;
-        	if( this.docStateById[docId] ){
-        		return this.docStateById[docId].visible;
-        	};
+    _getVisibleDocumentIds: function(){
+    	var docIds = [];
+    	for(var docId in this.docStateById){
+    		if( this.docStateById[docId].visible ){
+    			docIds.push(docId);
+    		};
     	};
-    	
-    	return true;
+    	return docIds;
     }
 });
 
@@ -401,14 +285,12 @@ var ModelMapBridge = $n2.Class(MapBridge, {
     	};
     },
     
-    _isDocumentVisible: function(doc){
-    	var visible = false;
-
-    	if( doc && this.docStateById[doc._id] ){
-        	visible = true;
-        };
-
-        return visible;
+    _getVisibleDocumentIds: function(){
+    	var docIds = [];
+    	for(var docId in this.docStateById){
+   			docIds.push(docId);
+    	};
+    	return docIds;
     }
 });
 
@@ -2207,7 +2089,9 @@ var MapAndControls = $n2.Class({
 		
 		if( !layerOptions.strategies ){
 			layerOptions.strategies = [];
-		}
+		};
+		layerInfo.featureStrategy = new OpenLayers.Strategy.NunaliitFeatureStrategy();
+		layerOptions.strategies.push( layerInfo.featureStrategy );
 		if( layerInfo.clustering ) {
 			var clusterOptions = {};
 			for(var cProp in layerInfo.clustering){
@@ -2221,12 +2105,9 @@ var MapAndControls = $n2.Class({
 					clusterOptions[cProp] = cValue;
 				};
 			};
-			layerOptions.strategies.push( new OpenLayers.Strategy.NunaliitCluster(clusterOptions) );
+			layerInfo.featureStrategy.setClustering(clusterOptions);
 		};
 		
-		// Sort features on a layer so that polygons do not hide points  
-		layerOptions.strategies.push( new OpenLayers.Strategy.NunaliitLayerSorting() );
-
 		//layerOptions.renderers = ['Canvas','SVG','VML'];
 		layerOptions.renderers = ['SVG','VML'];
 
@@ -4420,6 +4301,8 @@ var MapAndControls = $n2.Class({
 	// === START -- SIMPLIFIED GEOMETRIES =================================================
 	
 	_refreshSimplifiedGeometries: function(){
+		var _this = this;
+
 		var proj = new OpenLayers.Projection('EPSG:4326');
 		var epsg4326Resolution = this._getResolutionInProjection(proj);
 		//$n2.log('epsg4326Resolution',epsg4326Resolution);
@@ -4474,12 +4357,18 @@ var MapAndControls = $n2.Class({
 				simplificationsReported[simplificationsReported.length] = simplification;
 			
 			} else {
-				geometriesRequested[geometriesRequested.length] = geomsNeeded[id];
+				if( geomsNeeded[id].feature && geomsNeeded[id].feature.n2FilteredOut ){
+					// Do not fetch simplifications for features not currently shown
+				} else {
+					geometriesRequested[geometriesRequested.length] = geomsNeeded[id];
+				};
 			};
 		};
 		if( simplificationsReported.length ){
 			//$n2.log('simplificationsReported',simplificationsReported);
-			this._updateSimplifiedGeometries(simplificationsReported);
+			window.setTimeout(function(){
+				_this._updateSimplifiedGeometries(simplificationsReported);
+			},0);
 		};
 		if( geometriesRequested.length ){
 			var mapCenter = this.map.getCenter();
@@ -4504,8 +4393,22 @@ var MapAndControls = $n2.Class({
 				};
 				
 				geometriesRequested.sort(function(a,b){
+					var aSeen = true;
+					var bSeen = true;
+					
+					if( a.feature && a.feature.n2FilteredOut ){
+						aSeen = false;
+					};
+					if( b.feature && b.feature.n2FilteredOut ){
+						bSeen = false;
+					};
+					
+					if( aSeen && !bSeen ) return -1;
+					if( bSeen && !aSeen ) return 1;
+					
 					if( a.d < b.d ) return -1;
 					if( a.d > b.d ) return 1;
+
 					return 0;
 				});
 			};
@@ -4661,7 +4564,7 @@ var MapAndControls = $n2.Class({
 			};
 			
 			// Remove all features
-			layer.removeAllFeatures();
+			layer.removeAllFeatures({silent:true});
 			
 			// Add them again so that clustering and drawing is based on the
 			// new geometry
