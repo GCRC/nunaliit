@@ -41,28 +41,28 @@ if( typeof OpenLayers !== 'undefined'
 //+++++++++++++++++++++++++++++++++++++++++++++++
 var Filtering = $n2.Class({
 	
-	allowAllFeatures: null,
+	// Boolean: if true, the set doc ids are allowed through, other
+	// ones filtered out
+	whiteList: null,
 	
     docIdMap: null,
 
     initialize: function(opts_){
 		var opts = $n2.extend({
+			whiteList: false
 		},opts_);
 
-		this.allowAllFeatures = true;
+		this.whiteList = opts.whiteList;
 		this.docIdMap = {};
-	},
-	
-	setAllowAllFeatures: function(flag){
-		this.allowAllFeatures = flag;
 	},
 	
 	setDocIds: function(docIds){
 		var _this = this;
 
-		this.allowAllFeatures = false;
 		this.docIdMap = {};
-		if( docIds ){
+		if( typeof docIds === 'string' ){
+			this.docIdMap[docIds] = true;
+		} else {
 			docIds.forEach(function(docId){
 				_this.docIdMap[docId] = true;
 			});
@@ -72,43 +72,36 @@ var Filtering = $n2.Class({
 	performFiltering: function(features, filteredOutFeatures){
 		var _this = this;
 		
-		if( this.allowAllFeatures ){
-			// Nothing to do
-		} else {
-			var newFeatures = [];
-			features.forEach(function(feature){
-				var id = undefined;
-				if( feature && feature.data ){
-					id = feature.data._id;
-				};
-				if( id && _this.docIdMap[id] ){
-					newFeatures.push(feature);
-				} else if(filteredOutFeatures) {
-					filteredOutFeatures.push(feature);
-				};
-			});
-			features = newFeatures;
-		};
-		
-		// Indicate that the features are visible
+		var newFeatures = [];
 		features.forEach(function(feature){
-        	if( feature.style ){
-        		delete feature.style;
-        	};
-        	feature.n2FilteredOut = false;
+			var visible = _this._isFeatureVisible(feature);
+
+			if( visible ){
+				newFeatures.push(feature);
+			} else if(filteredOutFeatures) {
+				filteredOutFeatures.push(feature);
+			};
 		});
 		
-		// Indicate that the features are not visible
-		if( filteredOutFeatures ){
-			filteredOutFeatures.forEach(function(feature){
-				feature.style = {
-                	display: 'none'
-                };
-	        	feature.n2FilteredOut = true;
-			});
+		return newFeatures;
+	},
+	
+	_isFeatureVisible: function(feature){
+		var visible = true;
+		
+		var id = undefined;
+		if( feature && feature.data ){
+			id = feature.data._id;
+		};
+		if( id && this.docIdMap[id] ){
+			visible = false;
 		};
 		
-		return features;
+		if( this.whiteList ){
+			visible = !visible;
+		};
+		
+		return visible;
 	}
 });
 
@@ -246,9 +239,11 @@ var Clustering = $n2.Class({
                 var candidate = featuresToAdd[i];
                 if( candidate.cluster 
                  && candidate.cluster.length < this.threshold ) {
-                	finalFeatures.push.apply(finalFeatures, candidate.cluster);
+                	candidate.cluster.forEach(function(f){
+                    	finalFeatures[finalFeatures.length] = f;
+                	});
                 } else {
-                	finalFeatures.push(candidate);
+                	finalFeatures[finalFeatures.length] = candidate;
                 };
             };
 
@@ -389,9 +384,16 @@ OpenLayers.Strategy.NunaliitFeatureStrategy = OpenLayers.Class(OpenLayers.Strate
 
     /**
      * Property: filtering
-     * {Object} Component that performs filtering
+     * {Object} Component that performs white list filtering
      */
     filtering: null,
+    
+    /**
+     * Property: editFiltering
+     * {Object} Component that removes a feature because it is in the process
+     * of being edited.
+     */
+    editFiltering: null,
     
     /**
      * Property: clustering
@@ -425,7 +427,8 @@ OpenLayers.Strategy.NunaliitFeatureStrategy = OpenLayers.Class(OpenLayers.Strate
 
     	this.addingToLayer = false;
     	
-    	this.filtering = new Filtering();
+    	this.filtering = null;
+    	this.editFiltering = null;
     	this.clustering = null;
     	this.sorting = new Sorting();
     },
@@ -434,15 +437,28 @@ OpenLayers.Strategy.NunaliitFeatureStrategy = OpenLayers.Class(OpenLayers.Strate
     	this.clustering = new Clustering(opts_);
     },
     
-    setAllowDocumentIds: function(docIds){
+    setWhiteListDocumentIds: function(docIds){
+    	if( docIds ){
+    		this.filtering = new Filtering({
+    			whiteList: true
+    		});
+        	this.filtering.setDocIds(docIds);
+    	} else {
+        	this.filtering = null;
+    	};
     	this.filtering.setDocIds(docIds);
 
     	var features = this._computeFeatureSet();
     	this._accountForFeatures(features);
     },
-    
-    setAllowAllDocuments: function(flag){
-    	this.filtering.setAllowAllFeatures(flag);
+
+    setEditedFeatureIds: function(featureIds){
+    	if( featureIds ){
+    		this.editFiltering = new Filtering();
+        	this.editFiltering.setDocIds(featureIds);
+    	} else {
+        	this.editFiltering = null;
+    	};
 
     	var features = this._computeFeatureSet();
     	this._accountForFeatures(features);
@@ -529,33 +545,50 @@ OpenLayers.Strategy.NunaliitFeatureStrategy = OpenLayers.Class(OpenLayers.Strate
     
     _accountForFeatures: function(features){
     	var filteredOutFeatures = [];
-    	var installRequired = false;
+    	
+		// Assume all features are visible
+    	features.forEach(function(feature){
+        	if( feature.style ){
+        		delete feature.style;
+        	};
+        	feature.n2FilteredOut = false;
+		});
+
+    	if( this.editFiltering ){
+    		features = this.editFiltering.performFiltering(features, filteredOutFeatures);
+    	};
 
     	if( this.filtering ){
     		features = this.filtering.performFiltering(features, filteredOutFeatures);
-    		installRequired = true;
     	};
 
     	if( this.clustering ){
             var resolution = this.layer.map.getResolution();
             this.clustering.setResolution(resolution);
     		features = this.clustering.performClustering(features);
-    		installRequired = true;
     	};
 
     	if( this.sorting ){
     		features = this.sorting.performSorting(features);
-    		installRequired = true;
     	};
+		
+		// Indicate which features are not visible
+		if( filteredOutFeatures ){
+			filteredOutFeatures.forEach(function(feature){
+				feature.style = {
+                	display: 'none'
+                };
+	        	feature.n2FilteredOut = true;
 
-    	// Re-insert filtered out features
-    	features.push.apply(features, filteredOutFeatures);
+	        	// Re-insert filtered out features at the
+	        	// end of the displayed features
+        		features[features.length] = feature;
+			});
+		};
     	
     	//$n2.log('accoutForFeatures',features.length);
     	
-    	if( installRequired ){
-    		this._installFeaturesOnLayer(features);
-    	};
+   		this._installFeaturesOnLayer(features);
     },
     
     _computeFeatureSet: function(newFeatures){

@@ -138,7 +138,7 @@ var MapBridge = $n2.Class({
                 // Interested only in vector layers
                 if( layerInfo 
                  && layerInfo.featureStrategy ) {
-                	layerInfo.featureStrategy.setAllowDocumentIds(visibleDocIds);
+                	layerInfo.featureStrategy.setWhiteListDocumentIds(visibleDocIds);
                 };
             };
         };
@@ -599,6 +599,210 @@ function suppressPopupHtmlFunction(opts_){
 	opts.onSuccess(null);
 };
 
+//**************************************************
+//**************************************************
+var LayerInfo = $n2.Class({
+
+	customService: null,
+	
+	id: null,
+	
+	type: null,
+	
+	options: null,
+
+	sourceSrsName: null,
+	
+	sourceProjection: null,
+		
+	featurePrefix: null,
+
+	featureType: null,
+	
+	featureNS: null,
+	
+	name: null,
+	
+	filter: null,
+	
+	featurePopupHtmlFn: null,
+
+	featurePopupDelay: null,
+
+	visibility: null,
+	
+	styleMapFn: null,
+
+	styleMap: null,
+
+	selectListener: null,
+	
+	clusterClickCallback: null,
+	
+	// Options relating to clustering process
+	clustering: null,
+
+	// Boolean
+	useHoverSound: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			customService: null,
+			
+			// Type of layer: 'couchdb', 'wfs', ...
+			type: null,
+
+			// Options related ot type
+			options: null,
+			
+			// String to identify this layer among others
+			id: null,
+			
+			 /*
+			  * sourceSrsName: default source projection of WFS feature data - Geoserver can reproject but cannot
+			  * handle a bbox param on a GetFeature in reprojected coordinates.  This is used to tell the atlas 
+			  * what coordinates to use when request the vector layer features.
+			  */
+			sourceSrsName: 'EPSG:4326',
+			
+			// featurePrefix and featureType jointly form the WFS typename for this layer but because we now
+			// use filtering on layers, this typename (featurePrefix:featureType) is not unique.
+			featurePrefix: null,
+			featureType: null,
+			
+			// Full name space associated with prefix
+			featureNS: null,
+			
+			// name should be unique - doesn't have to be but this is used in the layer switcher so
+			// the map designer should be selecting something to differentiate ... this is used for
+			// regenerating a specific layers style map.
+			name: null,
+			
+			// filter for selection of features from the WFS layer
+			filter: null,
+			
+			featurePopupHtmlFn: null,
+			featurePopupDelay: 0,
+			visibility: true,
+			
+			// Style Map fn - returns an OpenLayers style map to be installed
+			// on the layer.  
+			//
+			// If not specified, a style map based on a defaults and extended
+			// using the property 'styleMap' is created.
+			styleMapFn: null,
+
+			// To update the default style associated with a layer, insert an object containing the
+			// named styles e.g.
+			// layerInfo.styleMap: {
+			//   normal: {
+			//     strokeColor: "#f4f4f4"		
+			//   }
+			//   ,clicked: {
+			//     strokeColor: "#ff0000"
+			//   }
+			// }
+			// The style names in use are:
+			// - normal -> default style for features
+			// - hovered -> style when a feature is moused over
+			// - clicked -> style when a feature is currently selected (clicked on)
+			// - hoveredClicked -> style when a feature is currently selected (clicked on) and moused over
+			// - filteredOut -> style when a feature does not fall within a filter
+			// 
+			// If the property 'styleMapFn' is provided, then this property is most
+			// likely going to be ignored. 
+			styleMap: null,
+
+			selectListener: function(isSelected, layerInfo){},
+			
+			// This is the function called back when a cluster with
+			// more than one feature is clicked
+			clusterClickCallback: null,
+			
+			clustering: null,
+			
+			useHoverSound: false
+			
+		},opts_);
+		
+		var _this = this;
+
+		this.id = opts.id;
+		this.type = opts.type;
+		this.options = opts.options;
+		this.customService = opts.customService;
+		this.sourceSrsName = opts.sourceSrsName;
+		this.featurePrefix = opts.featurePrefix;
+		this.featureType = opts.featureType;
+		this.featureNS = opts.featureNS;
+		this.name = opts.name;
+		this.filter = opts.filter;
+		this.featurePopupHtmlFn = opts.featurePopupHtmlFn;
+		this.featurePopupDelay = opts.featurePopupDelay;
+		this.visibility = opts.visibility;
+		this.styleMapFn = opts.styleMapFn;
+		this.styleMap = opts.styleMap;
+		this.selectListener = opts.selectListener;
+		this.clusterClickCallback = opts.clusterClickCallback;
+		this.clustering = opts.clustering;
+		this.useHoverSound = opts.useHoverSound;
+
+		// Derive database projection from name
+		if( this.sourceSrsName ){
+			this.sourceProjection = new OpenLayers.Projection(this.sourceSrsName);
+		};
+
+		// Localize name
+		if( this.name ){
+			this.name = _loc(this.name);
+		};
+
+		// Popup function
+		if( !this.featurePopupHtmlFn ){
+			if( this.customService ){
+				var cb = this.customService.getOption('mapFeaturePopupCallback');
+				if( typeof cb === 'function' ) {
+					this.featurePopupHtmlFn = cb;
+				};
+			};
+		};
+		if( !this.featurePopupHtmlFn ){
+			this.featurePopupHtmlFn = $n2.mapAndControls.DefaultPopupHtmlFunction;
+		};
+		
+		// Cluster click callback
+		if( !this.clusterClickCallback ){
+			if( this.customService ){
+				var cb = this.customService.getOption('mapClusterClickCallback');
+				if( typeof cb === 'function' ) {
+					this.clusterClickCallback = cb;
+				};
+			};
+		};
+		if( !this.clusterClickCallback ){
+			this.clusterClickCallback = $n2.mapAndControls.ZoomInClusterClickCallback;
+		};
+	},
+	
+	forEachFeature: function(callback){
+		if( typeof callback === 'function'
+		 && this.olLayer 
+		 && this.olLayer.features ){
+			for(var i=0,e=this.olLayer.features.length; i<e; ++i){
+				var feature = this.olLayer.features[i];
+				if( feature.cluster ){
+					for(var j=0,k=feature.cluster; j<k; ++j){
+						var cf = feature.cluster[j];
+						callback.call(this,cf,feature);
+					};
+				} else {
+					callback.call(this,feature);
+				};
+			};
+		};
+	}
+});
+
 
 //**************************************************
 //**************************************************
@@ -782,7 +986,6 @@ var MapAndControls = $n2.Class({
 	styleFilters: null,
 
 	// map layers
-	defaultLayerInfo: null,
 	mapLayers: null,
 	vectorLayers: null,
 	infoLayers: null,
@@ -1049,70 +1252,6 @@ var MapAndControls = $n2.Class({
 	    this._registerDispatch('simplifiedGeometryReport');
 		
 		// Layers
-		this.defaultLayerInfo = { // feature layer access details.
-			 /*
-			  * sourceSrsName: default source projection of WFS feature data - Geoserver can reproject but cannot
-			  * handle a bbox param on a GetFeature in reprojected coordinates.  This is used to tell the atlas 
-			  * what coordinates to use when request the vector layer features.
-			  */
-			sourceSrsName: 'EPSG:4326'
-			
-			// featurePrefix and featureType jointly form the WFS typename for this layer but because we now
-			// use filtering on layers, this typename (featurePrefix:featureType) is not unique.
-			,featurePrefix: null
-			,featureType: null
-			
-			// Full name space associated with prefix
-			,featureNS: null
-			
-			// name should be unique - doesn't have to be but this is used in the layer switcher so
-			// the map designer should be selecting something to differentiate ... this is used for
-			// regenerating a specific layers style map.
-			,name: null
-			
-			// filter for selection of features from the WFS layer
-			,filter: null
-			
-			,featurePopupHtmlFn: null
-			,featurePopupDelay: 0
-			,visibility: true
-			
-			// Style Map fn - returns an OpenLayers style map to be installed
-			// on the layer.  
-			//
-			// If not specified, a style map based on a defaults and extended
-			// using the property 'styleMap' is created.
-			,styleMapFn: function(layerInfo){ 
-				return _this._createStyleMapFromLayerInfo(layerInfo); 
-			}
-
-			// To update the default style associated with a layer, insert an object containing the
-			// named styles e.g.
-			// layerInfo.styleMap: {
-			//   normal: {
-			//     strokeColor: "#f4f4f4"		
-			//   }
-			//   ,clicked: {
-			//     strokeColor: "#ff0000"
-			//   }
-			// }
-			// The style names in use are:
-			// - normal -> default style for features
-			// - hovered -> style when a feature is moused over
-			// - clicked -> style when a feature is currently selected (clicked on)
-			// - hoveredClicked -> style when a feature is currently selected (clicked on) and moused over
-			// - filteredOut -> style when a feature does not fall within a filter
-			// 
-			// If the property 'styleMapFn' is provided, then this property is most
-			// likely going to be ignored. 
-			,styleMap: null
-
-			,selectListener: function(isSelected, layerInfo){}
-			
-			// This is the function called back when a cluster with
-			// more than one feature is clicked
-			,clusterClickCallback: null
-		};
 		this.infoLayers = [];
 		
 		if( typeof(this.options.layerInfo) === 'object' && !$n2.isArray(this.options.layerInfo) ) {
@@ -1537,6 +1676,16 @@ var MapAndControls = $n2.Class({
 		};
 	},
 	
+	forEachVectorLayer: function(callback){
+		if( this.infoLayers && typeof callback === 'function' ){
+			for(var i=0,e=this.infoLayers.length; i<e; ++i){
+				var layerInfo = this.infoLayers[i];
+				var layer = layerInfo.olLayer;
+				callback.call(this,layerInfo,layer);
+			};
+		};
+	},
+	
 	_getMapFeaturesIncludingFid: function(fid){
 		var fidMap = {};
 		fidMap[fid] = true;
@@ -1915,41 +2064,16 @@ var MapAndControls = $n2.Class({
 
 	_createOverlayFromDefinition: function(layerDefinition, isBaseLayer) {
 		var _this = this;
-
 		var cs = this._getCustomService();
-		
-		var layerInfo = $.extend({}, this.defaultLayerInfo, layerDefinition);
-		
-		// Derive database projection from name
-		layerInfo.sourceProjection = new OpenLayers.Projection(layerInfo.sourceSrsName);
 
-		layerInfo.name = _loc(layerInfo.name);
-		
-		// Popup function
-		if( !layerInfo.featurePopupHtmlFn ){
-			if( cs ){
-				var cb = cs.getOption('mapFeaturePopupCallback');
-				if( typeof cb === 'function' ) {
-					layerInfo.featurePopupHtmlFn = cb;
-				};
-			};
-		};
-		if( !layerInfo.featurePopupHtmlFn ){
-			layerInfo.featurePopupHtmlFn = $n2.mapAndControls.DefaultPopupHtmlFunction;
-		};
-		
-		// Cluster click callback
-		if( !layerInfo.clusterClickCallback ){
-			if( cs ){
-				var cb = cs.getOption('mapClusterClickCallback');
-				if( typeof cb === 'function' ) {
-					layerInfo.clusterClickCallback = cb;
-				};
-			};
-		};
-		if( !layerInfo.clusterClickCallback ){
-			layerInfo.clusterClickCallback = $n2.mapAndControls.ZoomInClusterClickCallback;
-		};
+		// Create LayerInfo
+		var layerInfoOptions = $.extend({
+			styleMapFn: function(layerInfo){ 
+				return _this._createStyleMapFromLayerInfo(layerInfo); 
+			}
+		}, layerDefinition);
+		layerInfoOptions.customService = cs; 
+		var layerInfo = new LayerInfo(layerInfoOptions);
 		
 		var layerOptions = {
 			name: layerInfo.name
@@ -1960,7 +2084,7 @@ var MapAndControls = $n2.Class({
 
 		if( 'couchdb' === layerDefinition.type ) {
 			// This is a couch layer
-			var couchProtocolOpt = $n2.extend({},layerInfo.options,{
+			var couchProtocolOpt = $n2.extend({},layerDefinition.options,{
 				notifications: {
 					readStart: function(){
 						_this._mapBusyStatus(1);
@@ -2419,6 +2543,8 @@ var MapAndControls = $n2.Class({
 					};
 				};
 			};
+			
+			return true;
 		});
 		
 		layerInfo.olLayer.events.register('featuresadded', null, function(evt_){
@@ -2440,59 +2566,6 @@ var MapAndControls = $n2.Class({
 				_this._clearValueCache(infoLayer);
 			};
 
-			// In case a feature is loaded while the EDIT_FEATURE mode is entered,
-			// do not add features for the feature currently being modified.
-			// This happens when edit is initiated from outside the map. The map
-			// is then moved over to the location of the geometry. In that case,
-			// the geometry might load up after the mode was switched.
-			if( _this.currentMode === _this.modes.EDIT_FEATURE
-			 && _this.editFeatureInfo
-			 && _this.editFeatureInfo.fid
-			 && evt_
-			 && evt_.features 
-			 && evt_.features.length ){
-				var editFeatureFid = _this.editFeatureInfo.fid;
-				
-				var featuresToRemove = [];
-				for(var i=0,e=evt_.features.length; i<e; ++i){
-					var f = evt_.features[i];
-					if( f.fid === editFeatureFid ){
-						featuresToRemove.push(f);
-						
-					} else if( f.cluster ){
-						for(var j=0,k=f.cluster.length; j<k; ++j){
-							var cf = f.cluster[j];
-							if( cf.fid === editFeatureFid ){
-								if( featuresToRemove.indexOf(f) < 0 ) {
-									featuresToRemove.push(f);
-								};
-							};
-						};
-					};
-				};
-				
-				if( featuresToRemove.length ){
-		    		layer.removeFeatures(featuresToRemove,{silent:true});
-		    		
-		    		var featuresAddBack = [];
-					for(var i=0,e=featuresToRemove.length; i<e; ++i){
-						var f = featuresToRemove[i];
-						if( f.cluster ){
-							for(var j=0,k=f.cluster.length; j<k; ++j){
-								var cf = f.cluster[j];
-								if( cf.fid !== editFeatureFid ){
-									featuresAddBack.push(cf);
-								};
-							};
-						};
-					};
-					
-					if( featuresAddBack.length ){
-						layer.removeFeatures(featuresAddBack);
-					};
-				};
-			};
-			
 			// When features are added, check the map for new simplified geometries
 			_this._refreshSimplifiedGeometries();
 		});
@@ -2516,8 +2589,6 @@ var MapAndControls = $n2.Class({
 				_this._clearValueCache(infoLayer);
 			};
 		});
-		
-		this._createFeatureModifiedHandler(layerInfo.olLayer);
 	},
     
     _createFeatureModifiedHandler: function(olLayer){
@@ -4051,28 +4122,20 @@ var MapAndControls = $n2.Class({
 		
 		var cs = this._getCustomService();
 		
-		var layerInfo = $.extend({}, this.defaultLayerInfo, opt_);
+		// Create LayerInfo
+		var layerInfoOptions = $.extend({
+			styleMapFn: function(layerInfo){ 
+				return _this._createStyleMapFromLayerInfo(layerInfo); 
+			}
+		}, opt_);
+		layerInfoOptions.customService = cs; 
+		var layerInfo = new LayerInfo(layerInfoOptions);
 		
-		// Popup function
-		if( !layerInfo.featurePopupHtmlFn ){
-			if( cs ){
-				var cb = cs.getOption('mapFeaturePopupCallback');
-				if( typeof cb === 'function' ) {
-					layerInfo.featurePopupHtmlFn = cb;
-				};
-			};
-		};
-		if( !layerInfo.featurePopupHtmlFn ){
-			layerInfo.featurePopupHtmlFn = $n2.mapAndControls.DefaultPopupHtmlFunction;
-		};
-
 		layerInfo.typename = layerInfo.featurePrefix + ':' + layerInfo.featureType;
 		layerInfo.schema = layerInfo.wfsUrl 
 			+ '?service=WFS&version=' + layerInfo.wfsVersion 
 			+ '&request=DescribeFeatureType&typeName=' + layerInfo.typename;
 		
-		layerInfo.sourceProjection = new OpenLayers.Projection(layerInfo.sourceSrsName);
-
 		var layerOptions = {
 			projection: layerInfo.sourceProjection
 			,visibility: layerInfo.visibility
@@ -4081,7 +4144,7 @@ var MapAndControls = $n2.Class({
 
 		if( layerInfo.couchDb ) {
 			// This is a couch layer
-			var couchProtocolOpt = $n2.extend({},layerInfo.couchDb,{
+			var couchProtocolOpt = $n2.extend({},opt_.couchDb,{
 				notifications: {
 					readStart: function(){
 						_this._mapBusyStatus(1);
@@ -4933,6 +4996,8 @@ var MapAndControls = $n2.Class({
 	},
 	
 	_handleDispatch: function(m){
+		var _this = this;
+
 		var type = m.type;
 		if( 'documentVersion' === type ) {
 			this._cacheUpdateDocumentVersion(m.docId,m.rev);
@@ -5215,6 +5280,13 @@ var MapAndControls = $n2.Class({
 				};
 			};
 			
+			// Remove feature from map
+			this.infoLayers.forEach(function(layerInfo){
+				if( layerInfo.featureStrategy ){
+					layerInfo.featureStrategy.setEditedFeatureIds([fid]);
+				};
+			});
+			
 			this.editFeatureInfo = {};
     		this.editFeatureInfo.fid = fid;
 			this.editFeatureInfo.original = {
@@ -5224,12 +5296,8 @@ var MapAndControls = $n2.Class({
 			if( feature ){
 		    	// Remove feature from current layer
 		    	var featureLayer = feature.layer;
-		    	if( featureLayer ) {
-		    		featureLayer.removeFeatures([feature],{silent:true});
-		    	};
 
 		    	// Compute the actual underlying feature
-		    	var featuresToAddBack = [];
 		    	if( fid === feature.fid ){
 		        	effectiveFeature = feature;
 		        	
@@ -5237,21 +5305,12 @@ var MapAndControls = $n2.Class({
 		    		for(var i=0,e=feature.cluster.length; i<e; ++i){
 		    			if( fid === feature.cluster[i].fid ){
 		    	    		effectiveFeature = feature.cluster[i];
-		    			} else {
-		    				featuresToAddBack.push(feature.cluster[i]);
 		    			};
 		    		};
 		    	};
 		    	
-		    	// In cluster, add back the features that are not the one currently
-		    	// in edit mode
-		    	if( featureLayer && featuresToAddBack.length > 0 ){
-		    		featureLayer.addFeatures(featuresToAddBack);
-		    	};
-		    	
 		    	this.editFeatureInfo.original.layer = featureLayer;
 		    	this.editFeatureInfo.original.feature = effectiveFeature;
-		    	this.editFeatureInfo.original.style = feature.style;
 			};
 			
 			if( addGeometryMode ){
@@ -5268,66 +5327,48 @@ var MapAndControls = $n2.Class({
 		} else if( 'editClosed' === type ) {
 
 			var restoreFeature = true;
-			var restoreOriginalData = false;
-			var reloadRequired = false;
-			if( m.deleted ){
-				restoreFeature = false;
-			};
+			var reloadRequired = true;
 			if( m.cancelled ){
-				restoreOriginalData = true;
+				reloadRequired = false;
 			};
 			
 			// By switching to the navigate mode, the feature on the
 			// edit layer will be removed.
 			var editFeature = this._removeGeometryEditor();
 			this._switchMapMode(this.modes.NAVIGATE);
-			
-			// Restore original geometry
-			if( restoreFeature && this.editFeatureInfo.original ){
-				var originalLayer = this.editFeatureInfo.original.layer;
-				var originalFeature = this.editFeatureInfo.original.feature;
-				var originalData = this.editFeatureInfo.original.data;
-				var originalStyle = this.editFeatureInfo.original.style;
-				
-				// Compute effective feature
-				var effectiveFeature = null;
-				if( originalFeature 
-				 && this.editFeatureInfo.fid === m.docId ){
-					effectiveFeature = originalFeature;
-				} else {
-					reloadRequired = true;
-				};
 
-				// Clone geometry if feature was sucessfully updated
-				if( effectiveFeature ){
-					if( restoreOriginalData ){
-						effectiveFeature.data = originalData;
-					} else {
-						// Use current geometry
-						if( editFeature && editFeature.geometry ){
-							effectiveFeature.geometry = editFeature.geometry.clone();
-						};
-					};
-					effectiveFeature.style = originalStyle;
-					
-					// Add feature back to original layer
-					if( originalLayer ){
-						originalLayer.addFeatures([effectiveFeature]);
-					};
+			// Add back feature to map
+			this.infoLayers.forEach(function(layerInfo){
+				if( layerInfo.featureStrategy ){
+					layerInfo.featureStrategy.setEditedFeatureIds(null);
 				};
+			});
+			
+			// If feature was deleted, then remove it from map
+			if( m.deleted ){
+				restoreFeature = false;
+
+				this.forEachVectorLayer(function(layerInfo, layer){
+					var reloadLayer = false;
+					var featuresToAdd = [];
+					layerInfo.forEachFeature(function(f){
+						if( f.fid === _this.editFeatureInfo.fid ){
+							reloadLayer = true;
+						} else {
+							featuresToAdd.push(f);
+						};
+					});
+					
+					if( reloadLayer ){
+						layer.removeAllFeatures({silent:true});
+						layer.addFeatures(featuresToAdd);
+					};
+				});
 			};
 			
 			this.editFeatureInfo = {};
 			this.editFeatureInfo.original = {};
 			
-			if( !m.deleted ) {
-				var docId = m.docId;
-				if( docId ) {
-					var features = this._getMapFeaturesIncludingFid(docId);
-					this._selectedFeatures(features, [docId]);
-				};
-			};
-
 			// Reload feature
 			if( reloadRequired ){
 				var filter = $n2.olFilter.fromFid(docId);
