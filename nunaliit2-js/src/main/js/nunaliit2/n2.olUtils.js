@@ -56,6 +56,9 @@ function isValidGeom(olGeom){
 //Between polygons and linestrings, sort the largest
 //geometries first.
 function sortFeatures(features){
+	features.forEach(function(f){
+		delete f._n2Sort;
+	});
     features.sort(featureSorting);
 };
 function featureSorting(a,b){
@@ -107,16 +110,23 @@ function prepareFeatureForSorting(f){
 		f._n2Sort.largestDim = 0;
 	} else {
 		f._n2Sort.isLineString = (geomClass.indexOf('LineString') >= 0);
-		f._n2Sort.isPolygon = (false == f._n2Sort.isLineString);
-		
-		// One of the two geometries is not a point
-		var bounds = f.geometry.getBounds();
-		
-		f._n2Sort.largestDim = bounds.top - bounds.bottom;
-		var tmp = bounds.right - bounds.left;
-		if( f._n2Sort.largestDim < tmp ) {
-			f._n2Sort.largestDim = tmp;
+		if( f._n2Sort.isLineString ){
+			var bounds = f.geometry.getBounds();
+			
+			f._n2Sort.largestDim = bounds.top - bounds.bottom;
+			var tmp = bounds.right - bounds.left;
+			if( f._n2Sort.largestDim < tmp ) {
+				f._n2Sort.largestDim = tmp;
+			};
+		} else {
+			f._n2Sort.isPolygon = true;
+			
+			var bounds = f.geometry.getBounds();
+			
+			// Use area
+			f._n2Sort.largestDim = (bounds.top - bounds.bottom) * (bounds.right - bounds.left);
 		};
+		
 	};
 	return f._n2Sort;
 };

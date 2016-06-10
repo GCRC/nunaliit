@@ -2600,7 +2600,7 @@
 		
 		$('<textarea>')
 			.addClass('n2select_report_script')
-			.val( 'function(opts_){\n\tvar opts = nunaliit2.extend({\n\t\t\tconfig: null\n\t\t\t,doc: null\n\t\t\t,logger: null\n\t\t},opts_\n\t);\n}' )
+			.val( 'function(opts_){\n\tvar opts = nunaliit2.extend({\n\t\tconfig: null\n\t\t,doc: null\n\t\t,logger: null\n\t},opts_);\n\n\tif( opts.doc ){\n\n\t} else {\n\t\topts.logger.log("Finished");\n\t}\n}' )
 			.appendTo($dialog);
 
 		$('<div>')
