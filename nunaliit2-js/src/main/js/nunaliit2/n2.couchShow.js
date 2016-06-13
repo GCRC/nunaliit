@@ -339,6 +339,30 @@ var DomStyler = $n2.Class({
 				};
 			});
 		};
+		
+		// Handle layer definitions
+		if( doc 
+		 && doc.nunaliit_layer_definition ){
+			var layerId = doc.nunaliit_layer_definition.id;
+			if( !layerId ){
+				layerId = doc._id;
+			};
+
+			if( layerId ){
+				contentClass = 'n2show_layerContent_' + $n2.utils.stringToHtmlId(layerId);
+
+				$('.'+contentClass).each(function(){
+					var $jq = $(this);
+					
+					// No longer waiting for layer. Update with
+					// document
+					$jq.removeClass(contentClass);
+					_this._associateDocumentToElement(doc, $jq);
+
+					_this._refreshElementWithDocument($jq, doc);
+				});
+			};
+		};
 	},
 
 	_receivedDocumentUpdate: function(doc){
@@ -535,31 +559,85 @@ var DomStyler = $n2.Class({
 		$jq.text(timeStr);
 	},
 	
-	_insertUserName: function($jq, opt_) {
-		var userName = $jq.text();
+	_insertUserName: function($elem, opt_) {
+		var userName = $elem.text();
 		
 		this.showService.printUserName(
-			$jq
+			$elem
 			,userName
 			,{showHandle:true}
 			);
 	},
 	
-	_insertLayerName: function($jq, data, opt_) {
-		var layerIdentifier = $jq.attr('nunaliit-document');
-		if( !layerIdentifier ){
-			layerIdentifier = $jq.text();
-			$jq.attr('nunaliit-document',layerIdentifier);
+	_insertLayerName: function($elem, data, opt_) {
+		var layerIdentifier = $elem.attr('nunaliit-layer');
+		var docId = $elem.attr('nunaliit-document');
+		
+		// Legacy: layer id used to be specified as text
+		if( !layerIdentifier && !docId ){
+			layerIdentifier = $elem.text();
+			$elem.attr('nunaliit-layer',layerIdentifier);
+		};
+		
+		// Compute inline layer definition
+		var inlineDefinition = undefined;
+		if( data 
+		 && data.nunaliit_layer_definition ){
+			inlineDefinition = data.nunaliit_layer_definition;
+			if( !inlineDefinition.id ){
+				// Legacy: layer definition uses doc id
+				inlineDefinition.id = data._id;
+			};
 		};
 
-		var layerIdentifier = this._associateDocumentToElement(data, $jq);
+		// Associated by layer id?
+		var doc = undefined;
+		if( layerIdentifier ){
+			if( inlineDefinition 
+			 && inlineDefinition.id === layerIdentifier ){
+				// No need to make a request. We already have the document.
+				doc = data;
+			} else {
+				var associated = $elem.hasClass('n2show_layerAssociated');
+				if( !associated ){
+					// Must request this layer definition
+					$elem.addClass('n2show_layerAssociated');
+					var contentClass = 'n2show_layerContent_' + $n2.utils.stringToHtmlId(layerIdentifier);
+					$elem.addClass(contentClass);
+
+					// Request this document
+					this.showService._requestLayerDefinition(layerIdentifier);
+				};
+			};
+			
+		} else if( docId ) {
+			// Associated by docId?
+			if( data && data._id === docId ){
+				// No need to make a request. We already have the document
+				doc = data;
+			};
+			this._associateDocumentToElement(data, $elem);
+			
+		} else if( inlineDefinition ){
+			// Associated with inline-document?
+			doc = data;
+			this._associateDocumentToElement(data, $elem);
+		};
+
 		
-		if( data && data._id === layerIdentifier ){
-			if( data.nunaliit_layer_definition
-			 && data.nunaliit_layer_definition.name ){
-				var name = _loc(data.nunaliit_layer_definition.name);
-				
-				$jq.text(name);
+		if( doc 
+		 && doc.nunaliit_layer_definition ){
+			var layerId = doc.nunaliit_layer_definition.id;
+			if( !layerId ){
+				layerId = doc._id;
+			};
+			
+			if( layerId === layerIdentifier ){
+				if( doc.nunaliit_layer_definition.name ){
+					var name = _loc(doc.nunaliit_layer_definition.name);
+					
+					$elem.text(name);
+				};
 			};
 		};
 	},
@@ -1617,7 +1695,7 @@ var Show = $n2.Class({
 	
 	printLayerName: function($elem, layerIdentifier){
 		$elem.addClass('n2s_insertedLayerName');
-		$elem.attr('nunaliit-document',layerIdentifier);
+		$elem.attr('nunaliit-layer',layerIdentifier);
 
 		$elem.text(layerIdentifier);
 		
@@ -1850,11 +1928,18 @@ var Show = $n2.Class({
 			requestService.requestUser(userName); // fetch document
 		};
 	},
-	
+
 	_requestDocument: function(docId,cbFn){
 		var requestService = this.requestService;
 		if( requestService ){
 			requestService.requestDocument(docId,cbFn); // fetch document
+		};
+	},
+
+	_requestLayerDefinition: function(layerId){
+		var requestService = this.requestService;
+		if( requestService ){
+			requestService.requestLayerDefinition(layerId); // fetch document
 		};
 	},
 	

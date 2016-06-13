@@ -625,20 +625,33 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 
 	getLayerDefinitions: function(opts_){
 		var opts = $n2.extend({
-				onSuccess: function(layerDefinitions){}
+				layerIds: null
+				,fullDocuments: false
+				,onSuccess: function(layerDefinitions){}
 				,onError: function(errorMsg){}
 			}
 			,opts_
 		);
 		
+		var keys = undefined;
+		if( opts.layerIds ){
+			keys = [];
+			opts.layerIds.forEach(function(layerId){
+				keys.push(layerId);
+			});
+		};
+		
 		this.designDoc.queryView({
 			viewName: 'layer-definitions'
 			,include_docs: true
+			,keys: keys
 			,onSuccess: function(rows){
 				var layerIdentifiers = [];
 				for(var i=0,e=rows.length;i<e;++i){
 					var doc = rows[i].doc;
-					if( doc.nunaliit_layer_definition ){
+					if( opts.fullDocuments ){
+						layerIdentifiers.push(doc);
+					} else if( doc.nunaliit_layer_definition ){
 						var d = doc.nunaliit_layer_definition;
 						if( !d.id ){
 							d.id = doc._id;

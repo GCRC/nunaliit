@@ -456,6 +456,17 @@ Timeline widget
 
 /* 
 ==============================
+Layer selection widget 
+==============================
+*/
+.nunaliit_module_title .n2layerSelectionWidget {
+    display: inline;
+    padding: 6px 20px;
+}
+
+
+/* 
+==============================
 Polar Stereographic Projection Selector 
 ==============================
 */

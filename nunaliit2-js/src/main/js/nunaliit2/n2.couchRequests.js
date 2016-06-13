@@ -124,6 +124,17 @@ $n2.couchRequests = $n2.Class({
 		
 		this._schedule();
 	}
+	
+	,requestLayerDefinition: function(layerId){
+		// Remember request
+		if( !this.currentRequests.layerIds ) {
+			this.currentRequests.layerIds = {};
+		};
+		
+		this.currentRequests.layerIds[layerId] = true;
+		
+		this._schedule();
+	}
 
 	,_schedule: function() {
 		if( this.scheduled ) return;
@@ -250,6 +261,26 @@ $n2.couchRequests = $n2.Class({
 		// Report cached documents, if any
 		if( null !== cachedDocs ) {
 			this._callDocumentListeners(cachedDocs, requests, false);
+		};
+		
+		// Layer definitions
+		if( requests.layerIds 
+		 && this.options.documentSource ) {
+
+			var layerIds = [];
+			for(var layerId in requests.layerIds){
+				layerIds[layerIds.length] = layerId;
+			};
+			
+			if( layerIds.length > 0 ){
+				this.options.documentSource.getLayerDefinitions({
+					layerIds: layerIds
+					,fullDocuments: true
+					,onSuccess: function(docs) {
+						_this._callDocumentListeners(docs, requests, true);
+					}
+				});
+			};
 		};
 	}
 	

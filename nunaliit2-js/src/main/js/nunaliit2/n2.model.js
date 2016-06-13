@@ -222,6 +222,10 @@ var Service = $n2.Class({
 			if( $n2.modelTime && typeof $n2.modelTime.handleModelCreate === 'function' ){
 				$n2.modelTime.handleModelCreate(m, addr, dispatcher);
 			};
+
+			if( $n2.modelLayer && typeof $n2.modelLayer.handleModelCreate === 'function' ){
+				$n2.modelLayer.handleModelCreate(m, addr, dispatcher);
+			};
 			
 			try {
 				if( 'couchDb' === m.modelType 
