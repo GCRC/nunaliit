@@ -247,7 +247,7 @@ var CreateDocumentFromSchemaWidget = $n2.Class({
 			label: schemaLabel
 		});
 		if( this.label ){
-			controlLabel = this.label;
+			controlLabel = _loc(this.label);
 		};
 		
 		if( this.showAsLink ) {
