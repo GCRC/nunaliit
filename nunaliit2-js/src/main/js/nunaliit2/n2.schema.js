@@ -233,6 +233,7 @@ function _formSingleField(r,completeSelectors,options){
 		
 	} else if( options.localized ){
 		r.push(' ' + typeClassStringPrefix + 'localized');
+	
 	};
 
 	if( options.textarea ){
@@ -245,6 +246,10 @@ function _formSingleField(r,completeSelectors,options){
 
 	if( options.date ){
 		r.push('<div class="n2schema_help_date"></div>');
+	};
+	
+	if( options.wikiTransform ){
+		r.push('<div class="n2schema_help_wiki"></div>');
 	};
 };
 
@@ -1712,6 +1717,9 @@ var Form = $n2.Class({
 						
 					} else if( $clicked.hasClass('n2schema_help_date') ){
 						$n2.help.ToggleHelp('dates', $clicked);
+						
+					} else if( $clicked.hasClass('n2schema_help_wiki') ){
+						$n2.help.ToggleHelp('wiki', $clicked);
 					};
 				});
 			};

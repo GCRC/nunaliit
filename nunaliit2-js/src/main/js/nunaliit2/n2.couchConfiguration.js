@@ -502,6 +502,15 @@ function Configure(options_){
 			});
 		};
 		
+		// Load help file
+		if( configuration.atlasDb ){
+			$n2.couchHelp.InstallHelpDocument({
+				db: configuration.atlasDb
+				,id: 'help.wiki'
+				,key: 'wiki'
+			});
+		};
+		
 		callCustomConfiguration();
 	};
 	
