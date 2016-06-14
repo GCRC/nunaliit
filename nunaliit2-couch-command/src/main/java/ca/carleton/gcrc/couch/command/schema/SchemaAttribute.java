@@ -927,11 +927,15 @@ public class SchemaAttribute {
 					} else if( "checkbox".equals(type) ){
 						fieldType = ",checkbox";
 					}
-					
+
 					if( isTextarea() ){
 						fieldType += ",textarea";
 					}
-					
+
+					if( isWikiTransform() ){
+						fieldType += ",wikiTransform";
+					}
+
 					if( null != placeholder ){
 						fieldType += ",placeholder="+encodeFieldParameter(placeholder);
 					}

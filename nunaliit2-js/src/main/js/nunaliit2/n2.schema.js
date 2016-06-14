@@ -233,6 +233,7 @@ function _formSingleField(r,completeSelectors,options){
 		
 	} else if( options.localized ){
 		r.push(' ' + typeClassStringPrefix + 'localized');
+	
 	};
 
 	if( options.textarea ){
@@ -1791,10 +1792,6 @@ var Form = $n2.Class({
 			$input.change(changeHandler);
 			//$input.blur(handler);
 			if( 'date' !== classInfo.type ){ // no key up event for date text boxes
-				$input.keyup(keyupHandler);
-			};
-			
-			if( 'wikiTransform' !== classInfo.type ){ // no key up event for date text boxes
 				$input.keyup(keyupHandler);
 			};
 			
