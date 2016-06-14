@@ -38,6 +38,12 @@ var
 	,DH = 'n2.couchNavigation'
 	;
 
+//=========================================================================
+function setNavElementAsCurrentModule($elem){
+	$elem.addClass('n2_nav_currentModule');
+	$elem.parents('.n2nav_setChildModuleCurrent').addClass('n2_nav_childModuleCurrent');
+};
+	
 //=========================================================================	
 var NavigationDisplay = $n2.Class({
 	
@@ -82,8 +88,9 @@ var NavigationDisplay = $n2.Class({
 			
 			if( doc.nunaliit_navigation.items 
 			 && doc.nunaliit_navigation.items.length > 0 ) {
-				var $ul = $('<ul></ul>');
-				$nav.append($ul);
+				var $ul = $('<ul>')
+					.addClass('n2nav_setChildModuleCurrent')
+					.appendTo($nav);
 				
 				insertItems($ul, doc.nunaliit_navigation.items, currentModuleId);
 			};
@@ -93,7 +100,8 @@ var NavigationDisplay = $n2.Class({
 			for(var i=0,e=items.length; i<e; ++i){
 				var item = items[i];
 				
-				var $li = $('<li></li>')
+				var $li = $('<li>')
+					.addClass('n2nav_setChildModuleCurrent')
 					.appendTo($ul);
 				
 				if( item.key ){
@@ -115,7 +123,7 @@ var NavigationDisplay = $n2.Class({
 					};
 					
 					if( moduleId && moduleId === currentModuleId ){
-						$li.addClass('n2_nav_currentModule');
+						setNavElementAsCurrentModule($li);
 					};
 					
 					var $a = $('<a></a>');
@@ -137,7 +145,7 @@ var NavigationDisplay = $n2.Class({
 					$li.addClass('n2nav_setModuleCurrent');
 					
 					if( item.module === currentModuleId ){
-						$li.addClass('n2_nav_currentModule');
+						setNavElementAsCurrentModule($li);
 					};
 					
 					var $a = $('<a></a>');
@@ -154,8 +162,9 @@ var NavigationDisplay = $n2.Class({
 				};
 				
 				if( item.items && item.items.length > 0 ){
-					var $innerUl = $('<ul></ul>');
-					$li.append($innerUl);
+					var $innerUl = $('<ul>')
+						.addClass('n2nav_setChildModuleCurrent')
+						.appendTo($li);
 					insertItems($innerUl, item.items, currentModuleId);
 				};
 			};
@@ -349,13 +358,13 @@ var NavigationService = $n2.Class({
 	_handle: function(m, addr, d){
 		if( 'reportModuleDocument' === m.type ){
 			var currentModuleId = m.moduleId;
+			$('.n2nav_setModuleCurrent').removeClass('n2_nav_currentModule');
+			$('.n2nav_setChildModuleCurrent').removeClass('n2_nav_childModuleCurrent');
 			$('.n2nav_setModuleCurrent').each(function(){
 				var $elem = $(this);
 				var moduleId = $elem.attr('n2nav-module');
 				if( moduleId && moduleId === currentModuleId ){
-					$elem.addClass('n2_nav_currentModule');
-				} else {
-					$elem.removeClass('n2_nav_currentModule');
+					setNavElementAsCurrentModule($elem);
 				};
 			});
 
