@@ -246,6 +246,10 @@ function _formSingleField(r,completeSelectors,options){
 	if( options.date ){
 		r.push('<div class="n2schema_help_date"></div>');
 	};
+	
+	if( options.wikiTransform ){
+		r.push('<div class="n2schema_help_wiki"></div>');
+	};
 };
 
 function _formField() {
@@ -1712,6 +1716,9 @@ var Form = $n2.Class({
 						
 					} else if( $clicked.hasClass('n2schema_help_date') ){
 						$n2.help.ToggleHelp('dates', $clicked);
+						
+					} else if( $clicked.hasClass('n2schema_help_wiki') ){
+						$n2.help.ToggleHelp('wiki', $clicked);
 					};
 				});
 			};
@@ -1784,6 +1791,10 @@ var Form = $n2.Class({
 			$input.change(changeHandler);
 			//$input.blur(handler);
 			if( 'date' !== classInfo.type ){ // no key up event for date text boxes
+				$input.keyup(keyupHandler);
+			};
+			
+			if( 'wikiTransform' !== classInfo.type ){ // no key up event for date text boxes
 				$input.keyup(keyupHandler);
 			};
 			
