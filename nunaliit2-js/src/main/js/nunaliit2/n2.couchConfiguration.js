@@ -493,17 +493,14 @@ function Configure(options_){
 			});
 		};
 		
-		// Load help file
+		// Load help files
 		if( configuration.atlasDb ){
 			$n2.couchHelp.InstallHelpDocument({
 				db: configuration.atlasDb
 				,id: 'help.dates'
 				,key: 'dates'
 			});
-		};
-		
-		// Load help file
-		if( configuration.atlasDb ){
+
 			$n2.couchHelp.InstallHelpDocument({
 				db: configuration.atlasDb
 				,id: 'help.wiki'
