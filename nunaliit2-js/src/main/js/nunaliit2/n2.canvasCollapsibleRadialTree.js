@@ -1503,7 +1503,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		// If nodes have been selected, recomute expanded map
 		if( this.outsideSelectionDocIdMap ){
 	 		// Compute a map of all concerned elements
-	 		var elementMap = {};
+	 		var selectedElementById = {};
 	 		for(var docId in this.outsideSelectionDocIdMap){
 	 			var elements = undefined;
 	 			if( docId ){
@@ -1513,7 +1513,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 	 			if( elements ){
 					for(var i=0,e=elements.length; i<e; ++i){
 						var element = elements[i];
-						elementMap[element.id] = element;
+						selectedElementById[element.id] = element;
 					};
 	 			};
 	 		};
@@ -1521,17 +1521,34 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 	 		// Compute a new map of expanded nodes so as to show
 	 		// everything selected by the outside selection
 	 		var updatedExpandedNodes = {};
-	 		for(var elementId in elementMap){
-	 			var element = elementMap[elementId];
+	 		for(var elementId in selectedElementById){
+	 			var element = selectedElementById[elementId];
+	 			
 	 			if( element.isNode ){
+		 			// If this node was previously visible and it now selected,
+		 			// attempt to rotate the graph in such a way that this node
+		 			// does not move
+	 				if( element.canvasVisible ){
+	 					if( !_this.fixOriginOnNode ){
+	 						_this.fixOriginOnNode = {
+ 								id: element.id
+			 	 	 			,position: Degrees(element.orig_x - _this.originAngle)	
+	 						};
+	 					};
+	 				};
+		 			
 	 				Tree.visitParents(element, function(n){
 	 					// Skip root
 	 					if( !Tree.isRoot(n) ){
  							// This node needs to be expanded
 	 						updatedExpandedNodes[n.id] = true;
 	 						
+	 						// If this node was not previously expanded,
+	 						// then try to keep the graph position stable
+	 						// on this node
 	 						if( !_this.expandedNodesById[n.id] 
-	 						 && typeof n.orig_x === 'number' ){
+	 						 && typeof n.orig_x === 'number'
+	 						 && !_this.fixOriginOnNode ){
 	 				 	 		_this.fixOriginOnNode = {
  				 	 	 			id: n.id
  				 	 	 			,position: Degrees(n.orig_x - _this.originAngle)
