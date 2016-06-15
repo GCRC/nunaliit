@@ -5326,7 +5326,7 @@ var MapAndControls = $n2.Class({
 			
 		} else if( 'editClosed' === type ) {
 
-			var restoreFeature = true;
+			var fid = this.editFeatureInfo.fid;
 			var reloadRequired = true;
 			if( m.cancelled ){
 				reloadRequired = false;
@@ -5345,14 +5345,14 @@ var MapAndControls = $n2.Class({
 			});
 			
 			// If feature was deleted, then remove it from map
-			if( m.deleted ){
-				restoreFeature = false;
+			if( m.deleted && fid ){
+				reloadRequired = false;
 
 				this.forEachVectorLayer(function(layerInfo, layer){
 					var reloadLayer = false;
 					var featuresToAdd = [];
 					layerInfo.forEachFeature(function(f){
-						if( f.fid === _this.editFeatureInfo.fid ){
+						if( f.fid === fid ){
 							reloadLayer = true;
 						} else {
 							featuresToAdd.push(f);
@@ -5371,7 +5371,7 @@ var MapAndControls = $n2.Class({
 			
 			// Reload feature
 			if( reloadRequired ){
-				var filter = $n2.olFilter.fromFid(docId);
+				var filter = $n2.olFilter.fromFid(fid);
 				this._reloadFeature(filter);
 			};
 			
