@@ -347,7 +347,11 @@ function _formField() {
 			
 			var langSel = completeSelectors.getChildSelector(lang);
 
-			r.push('<div class="n2schema_field_container n2schema_field_container_localized">');
+			r.push('<div class="n2schema_field_container n2schema_field_container_localized');
+			if( opts.textarea ){
+				r.push(' n2schema_field_container_textarea');
+			};
+			r.push('">');
 			r.push('<span class="n2_localize_lang">('+lang+')</span>');
 			_formSingleField(r,langSel,opts);
 			r.push('</div>');
@@ -365,7 +369,11 @@ function _formField() {
 			
 			var langSel = completeSelectors.getChildSelector(lang);
 			
-			r.push('<div class="n2schema_field_container n2schema_field_container_localized">');
+			r.push('<div class="n2schema_field_container n2schema_field_container_localized');
+			if( opts.textarea ){
+				r.push(' n2schema_field_container_textarea');
+			};
+			r.push('">');
 			r.push('<span class="n2_localize_lang">('+lang+')</span>');
 			_formSingleField(r,langSel,opts);
 			r.push('</div>');
@@ -386,7 +394,11 @@ function _formField() {
 		r.push('></textarea>');
 		
 	} else {
-		r.push('<div class="n2schema_field_container">');
+		r.push('<div class="n2schema_field_container');
+		if( opts.textarea ){
+			r.push(' n2schema_field_container_textarea');
+		};
+		r.push('">');
 		_formSingleField(r,completeSelectors,opts);
 		r.push('</div>');
 	};

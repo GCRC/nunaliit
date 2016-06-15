@@ -76,8 +76,7 @@
 	background-position: -15px 0px;
 }
 
-.n2schema_help_date,
-.n2schema_help_wiki {
+.n2schema_help_date {
 	display: inline-block;
 	width: 0px;
 	height: 0px;
@@ -85,7 +84,26 @@
 	background: url(images/question_icon_naked_15.png) no-repeat;
 }
 
-.n2schema_help_date:hover,
+.n2schema_help_date:hover {
+	background-position: -15px 0px;
+}
+
+.n2schema_field_container {
+	position: relative;
+}
+
+.n2schema_help_wiki {
+	position:absolute;
+	top: 17px;
+	right: 7px;
+	width: 0;
+	height: 0;
+	margin: 0;
+	border: 0;
+	padding: 15px 15px 0px 0px;
+	background: url(images/question_icon_naked_15.png) no-repeat;
+}
+
 .n2schema_help_wiki:hover {
 	background-position: -15px 0px;
 }
