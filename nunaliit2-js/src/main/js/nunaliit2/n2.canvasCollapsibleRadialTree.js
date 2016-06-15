@@ -908,6 +908,14 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 	 */
 	elementToEffectiveId: null,
 	
+	/*
+	 * The canvas operates on a tree. This is the root of the tree
+	 * that the canvas uses. Recomputed when elements are changed.
+	 */
+	elementTreeRoot: null,
+	
+	sourceLinks: null,
+	
 	dimensions: null,
 	
 	layout: null,
@@ -1449,8 +1457,6 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 	},
 	
 	_createGraphicalElements: function(){
-		var _this = this;
-
 		// Reset attributes that are computed by layout
 		for(var elemId in this.elementsById){
 			var elem = this.elementsById[elemId];
@@ -1459,12 +1465,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			delete elem.expanded;
 		};
 		
-		// Reset effective map
-		this.effectiveElementsById = {};
-		this.elementToEffectiveId = {};
-		
 		// Compute tree
-		var root = {
+		this.elementTreeRoot = {
 			id: '__root__'
 			,name: ''
 			,x: 0
@@ -1472,7 +1474,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			,children: []
 			,expanded: true
 		};
-		var sourceLinks = [];
+		this.sourceLinks = [];
 		for(var elemId in this.elementsById){
 			var elem = this.elementsById[elemId];
 			
@@ -1490,15 +1492,25 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 					parent.children.push(elem);
 					
 				} else {
-					elem.parent = root;
-					root.children.push(elem);
+					elem.parent = this.elementTreeRoot;
+					this.elementTreeRoot.children.push(elem);
 				};
 			};
 
 			if( elem.isLink ){
-				sourceLinks.push(elem);
+				this.sourceLinks.push(elem);
 			};
 		};
+		
+		this._redraw();
+	},
+	
+	_redraw: function(){
+		var _this = this;
+
+		// Reset effective map
+		this.effectiveElementsById = {};
+		this.elementToEffectiveId = {};
 		
 		// If nodes have been selected, recomute expanded map
 		if( this.outsideSelectionDocIdMap ){
@@ -1581,7 +1593,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			var maxDepth = -1;
 			
 			// Compute which nodes are available for display
-			Tree.visitNodes(root,function(n,d){
+			Tree.visitNodes(this.elementTreeRoot,function(n,d){
 				n.canvasVisible = false;
 				n.canvasVisibleDerived = false;
 				
@@ -1590,7 +1602,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 					maxDepth = d;
 				};
 
-				if( root === n ){
+				if( Tree.isRoot(n) ){
 					n.canvasAvailable = false;
 				} else if( n.parent && isExpandedNode(n.parent) ) {
 					n.canvasAvailable = true;
@@ -1610,7 +1622,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 				deepestExpandedNode.canvasVisible = true;
 
 				Tree.visitParents(deepestExpandedNode, function(n,d){
-					if( root === n ){
+					if( Tree.isRoot(n) ){
 						n.canvasVisible = false;
 					} else {
 						n.canvasVisible = true;
@@ -1619,8 +1631,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			};
 			
 			// Nodes that are linked to visible ones are also visible
-			for(var i=0,e=sourceLinks.length; i<e; ++i){
-				var link = sourceLinks[i];
+			for(var i=0,e=this.sourceLinks.length; i<e; ++i){
+				var link = this.sourceLinks[i];
 
 				var sourceNodeVisible = findVisibleNode(link.source);
 				var targetNodeVisible = findVisibleNode(link.target);
@@ -1640,7 +1652,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			// If by option, we show nodes that are grouped, then
 			// add back the nodes that are grouped
 			var showGroupMembers = this.filterOptions.showGroupMembers;
-			Tree.visitNodes(root,function(n,d){
+			Tree.visitNodes(this.elementTreeRoot,function(n,d){
 				if( showGroupMembers && n.group ){
 					n.canvasAvailable = true;
 					n.canvasVisible = true;
@@ -1649,8 +1661,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			
 		} else {
 			// Do not filter on expand
-			Tree.visitNodes(root,function(n,d){
-				if( root === n ){
+			Tree.visitNodes(this.elementTreeRoot,function(n,d){
+				if( Tree.isRoot(n) ){
 					n.canvasVisible = false;
 				} else if( n.parent && n.parent.expanded ) {
 					n.canvasVisible = true;
@@ -1661,11 +1673,11 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		};
 		
 		// Never show root node
-		root.canvasVisible = false;
-		root.canvasVisibleDerived = false;
+		this.elementTreeRoot.canvasVisible = false;
+		this.elementTreeRoot.canvasVisibleDerived = false;
 
 		// Layout tree (sets x and y)
-		this.displayedNodesSorted = this.layout.nodes(root);
+		this.displayedNodesSorted = this.layout.nodes(this.elementTreeRoot);
 		
 		// Adjust origin offset based on expanded/collapsed node
 		this.originOffset = 0;
@@ -1687,8 +1699,8 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		// Since some nodes are collapsed into one, links can collide on source/target
 		// combination. 
 		this.displayedLinks = [];
-		for(var i=0,e=sourceLinks.length; i<e; ++i){
-			var elem = sourceLinks[i];
+		for(var i=0,e=this.sourceLinks.length; i<e; ++i){
+			var elem = this.sourceLinks[i];
 			var elemId = elem.id;
 
 			var sourceNode = findShownNode(elem.source);
@@ -1728,7 +1740,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		// Compute paths for displayed links
 		for(var i=0,e=this.displayedLinks.length; i<e; ++i){
 			var link = this.displayedLinks[i];
-			var path = [link.source, root, link.target];
+			var path = [link.source, this.elementTreeRoot, link.target];
 			link.path = path;
 			
 			// Adjust intent
@@ -1773,7 +1785,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		{
 			var maxDepth = undefined;
 			var maxDepthNodes = undefined;
-			Tree.visitNodes(root,function(n,depth){
+			Tree.visitNodes(this.elementTreeRoot,function(n,depth){
 				delete n.detailedView;
 				delete n.generalView;
 
@@ -1846,7 +1858,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		function findVisibleNode(n){
 			if( !n ) return null;
 
-			if( !Tree.isNodeInTree(n,root) ){
+			if( !Tree.isNodeInTree(n,_this.elementTreeRoot) ){
 				return null;
 			};
 			
@@ -1861,7 +1873,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		function findAvailableNode(n){
 			if( !n ) return null;
 
-			if( !Tree.isNodeInTree(n,root) ){
+			if( !Tree.isNodeInTree(n,_this.elementTreeRoot) ){
 				return null;
 			};
 			
@@ -1880,7 +1892,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		function isExpandedNode(n){
 			if( !n ) return false;
 
-			if( !Tree.isNodeInTree(n,root) ){
+			if( !Tree.isNodeInTree(n,_this.elementTreeRoot) ){
 				return false;
 			};
 			
@@ -1898,7 +1910,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		function findShownNode(n){
 			if( !n ) return null;
 
-			if( !Tree.isNodeInTree(n,root) ){
+			if( !Tree.isNodeInTree(n,_this.elementTreeRoot) ){
 				return null;
 			};
 			
@@ -2784,7 +2796,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		};
  		
  		// Need to initiate redrawing
- 		this._createGraphicalElements();
+ 		this._redraw();
  	},
  	
  	_initiateMouseClick: function(elementData){
@@ -2843,7 +2855,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		};
  		
  		if( redrawRequired ){
- 			this._createGraphicalElements();
+ 			this._redraw();
  		};
  	},
  	
@@ -2854,7 +2866,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 
  		this.outsideSelectionDocIdMap = docIdMap;
 
- 		this._createGraphicalElements();
+ 		this._redraw();
  	},
  	
  	_handleDispatch: function(m){
