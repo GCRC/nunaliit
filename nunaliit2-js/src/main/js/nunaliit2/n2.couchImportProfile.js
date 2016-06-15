@@ -346,21 +346,20 @@ var ImportAnalyzer = $n2.Class({
 				var entry = opts.entries[i];
 				var id = entry.getId();
 				
-				if( id ){
-					if( importEntriesById[id] ){
-						opts.onError( _loc('More than one import entries report identifier: {id}',{
-							id: id
-						}) );
-						return;
-					};
-					
-					importEntriesById[id] = entry;
-					entriesLeft.push( entry );
-					
-				} else {
+				if( typeof id === 'undefined' || null === id){
 					opts.onError( _loc('Imported entry does not contains an id attribute') );
 					return;
 				};
+
+				if( importEntriesById[id] ){
+					opts.onError( _loc('More than one import entries report identifier: {id}',{
+						id: id
+					}) );
+					return;
+				};
+				
+				importEntriesById[id] = entry;
+				entriesLeft.push( entry );
 			};
 		};
 		
@@ -377,7 +376,8 @@ var ImportAnalyzer = $n2.Class({
 					var doc = rows[i].doc;
 					if( doc 
 					 && doc.nunaliit_import 
-					 && doc.nunaliit_import.id ) {
+					 && typeof doc.nunaliit_import.id !== 'undefined'
+					 && null !== doc.nunaliit_import.id ) {
 						++count;
 						dbDocsByImportId[doc.nunaliit_import.id] = doc;
 					};

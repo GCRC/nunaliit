@@ -88,7 +88,7 @@ $n2.l10n.addLocalizedStrings('fr',{
 	,"Create feature from name":"Créer une géométrie à partir d'un nom"
 	,"Create new document":"Créer un nouveau document"
 	,"Created by":"Créer par"
-	,"Created document with id: {id}":"Nouveau document créé: {ïd}"
+	,"Created document with id: {id}":"Nouveau document créé: {id}"
 	,"Creating a user associated with the e-mail address: {address}":"Creation d'un usager associé avec l'adresse courriel: {address}"
 	,"Data Modification Application":"Application de modification des données"
 	,"Date":"Date"
