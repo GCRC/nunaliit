@@ -123,7 +123,10 @@ var ReferenceBrowserCanvas = $n2.Class({
 		if( $elem ){
 			$elem
 				.empty()
-				.addClass('n2ReferenceBrowserCanvas');
+				.addClass('n2ReferenceBrowserCanvas')
+				.click(function(e){
+					_this._backgroundClicked();
+				});
 			
 			$('<button>')
 				.text('Export CSV')
