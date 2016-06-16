@@ -109,6 +109,11 @@ var Service = $n2.Class({
 				$n2.canvasReferenceBrowser.HandleCanvasAvailableRequest(m);
 			};
 
+			if( $n2.canvasTable 
+			 && $n2.canvasTable.HandleCanvasAvailableRequest ){
+				$n2.canvasTable.HandleCanvasAvailableRequest(m);
+			};
+
 		} else if( 'canvasDisplay' === m.type ) {
 			if( $n2.canvasForceGraph 
 			 && $n2.canvasForceGraph.HandleCanvasDisplayRequest ){
@@ -153,6 +158,11 @@ var Service = $n2.Class({
 			if( $n2.canvasReferenceBrowser 
 			 && $n2.canvasReferenceBrowser.HandleCanvasDisplayRequest ){
 				$n2.canvasReferenceBrowser.HandleCanvasDisplayRequest(m);
+			};
+
+			if( $n2.canvasTable 
+			 && $n2.canvasTable.HandleCanvasDisplayRequest ){
+				$n2.canvasTable.HandleCanvasDisplayRequest(m);
 			};
 		};
 	}
