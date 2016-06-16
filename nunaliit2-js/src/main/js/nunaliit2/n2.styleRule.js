@@ -80,7 +80,7 @@ var svgSymbolNames = {
 			circle: true
 			,line: true
 			,path: true
-			,text: false
+			,text: true
 			,g: true
 		}
 	}
