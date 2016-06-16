@@ -385,6 +385,13 @@ var DomStyler = $n2.Class({
 				_this._refreshElementWithDocument($jq, doc);
 			});
 		};
+		
+		// On update, it is possible that a list is affected.
+		$('.n2show_documentList').each(function(){
+			var $jq = $(this);
+
+			_this._insertDocumentList($jq);
+		});
 	},
 
 	_refreshElementWithDocument: function($jq, doc){
@@ -468,14 +475,20 @@ var DomStyler = $n2.Class({
 		var listType = $jq.attr('nunaliit-list-type');
 		if( typeof listType === 'undefined' ){
 			listType = $jq.attr('n2-list-type');
+			if( listType ){
+				$jq.attr('nunaliit-list-type',listType);
+			};
 		};
 		var listName = $jq.attr('nunaliit-list-name');
 		if( typeof listName === 'undefined' ){
 			listName = $jq.attr('n2-list-name');
+			if( listName ){
+				$jq.attr('nunaliit-list-name',listName);
+			};
 		};
 		
 		$jq
-			.addClass('n2show_documentList_wait')
+			.addClass('n2show_documentList n2show_documentList_wait')
 			.empty();
 		
 		var dispatchService = this.showService.dispatchService;
