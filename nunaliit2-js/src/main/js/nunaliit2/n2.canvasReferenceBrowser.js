@@ -96,6 +96,8 @@ var ReferenceBrowserCanvas = $n2.Class({
 			};
 			
 			this.dispatchService.register(DH,'documentContent',f);
+			this.dispatchService.register(DH,'documentContentCreated',f);
+			this.dispatchService.register(DH,'documentContentUpdated',f);
 			this.dispatchService.register(DH,'documentDeleted',f);
 		};
 		
@@ -193,6 +195,14 @@ var ReferenceBrowserCanvas = $n2.Class({
 					};
 				};
 			};
+		};
+	},
+	
+	_backgroundClicked: function(){
+		if( this.dispatchService ){
+			this.dispatchService.send(DH,{
+				type: 'userUnselect'
+			});
 		};
 	},
 	
@@ -441,7 +451,9 @@ var ReferenceBrowserCanvas = $n2.Class({
 	},
 	
 	_handle: function(m,addr,dispatcher){
-		if( 'documentContent' === m.type ){
+		if( 'documentContent' === m.type 
+		 || 'documentContentCreated' === m.type 
+		 || 'documentContentUpdated' === m.type ){
 			var doc = m.doc;
 			if( doc ){
 				var schemaName = doc.nunaliit_schema;
