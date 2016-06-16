@@ -745,7 +745,7 @@ var RadialTreeCanvas = $n2.Class({
  			.select('g.links')
  			.selectAll('.link')
 			.data(links, function(link){ return link.id; })
-			.filter(function(l){return l.n2_selected;})
+			.filter(function(l){return l.n2_selected || l.n2_derived_selected;})
 			.each(function(l){
 	 			var svgLink = this;
 	 			svgLink.parentNode.appendChild(svgLink);
@@ -765,7 +765,7 @@ var RadialTreeCanvas = $n2.Class({
 			.select('g.links')
 			.selectAll('.link')
 			.data(links, function(link){ return link.id; })
-			.filter(function(l){return l.n2_hovered;})
+			.filter(function(l){return l.n2_hovered || l.n2_derived_hovered;})
 			.each(function(l){
 	 			var svgLink = this;
 	 			svgLink.parentNode.appendChild(svgLink);
