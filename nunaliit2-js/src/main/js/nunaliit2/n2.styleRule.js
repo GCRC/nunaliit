@@ -359,6 +359,25 @@ var Symbolizer = $n2.Class({
 		} else {
 			svgDomElem.setAttributeNS(null, 'display', 'inherit');
 		};
+	},
+	
+	adjustHtmlElement: function(htmlDomElement,ctxt){
+
+		var cssArr = [];
+		
+		this.forEachSymbol(function(name,value){
+			if( 'display' === name ){
+				if( 'none' === value ){
+					cssArr.push('display:none');
+				};
+				
+			} else {
+				cssArr.push(name+':'+value);
+			};
+		},ctxt);
+
+		var cssString = cssArr.join(';');
+		htmlDomElement.setAttribute("style", cssString);
 	}
 });
 

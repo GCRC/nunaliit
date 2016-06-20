@@ -78,11 +78,14 @@ var TableCanvas = $n2.Class({
 	
 	headings: null,
 
+	styleRules: null,
+
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			canvasId: null
 			,sourceModelId: null
 			,elementGenerator: null
+			,styleRules: null
 			,dispatchService: null
 			,onSuccess: function(){}
 			,onError: function(err){}
@@ -98,6 +101,8 @@ var TableCanvas = $n2.Class({
 		this.elementsById = {};
 		this.sortedElements = [];
 		this.headings = [];
+
+		this.styleRules = $n2.styleRule.loadRulesFromObject(opts.styleRules);
  		
  		// Element generator
  		if( this.elementGenerator ){
@@ -232,22 +237,36 @@ var TableCanvas = $n2.Class({
 		
 		this.sortedElements.forEach(function(element){
 			var $tr = $('<tr>')
+				.attr('nunaliit-element',element.id)
 				.appendTo($table);
+			
+			_this._adjustElementStyles($tr, element);
 
 			_this.headings.forEach(function(heading){
 				var name = heading.name;
 				var value = element.cells ? element.cells[name] : undefined;
 				var $td = $('<td>')
 					.appendTo($tr);
-
+				
 				if( value ){
 					var $a = $('<a>')
 						.attr('href','#')
+						.attr('nunaliit-element',element.id)
 						.text(value)
 						.appendTo($td)
 						.click(function(){
 							var $a = $(this);
 							_this._selectedLink($a);
+							return false;
+						})
+						.mouseover(function(){
+							var $a = $(this);
+							_this._mouseOver($a);
+							return false;
+						})
+						.mouseout(function(){
+							var $a = $(this);
+							_this._mouseOut($a);
 							return false;
 						});
 				};
@@ -256,10 +275,60 @@ var TableCanvas = $n2.Class({
 	},
 	
 	_selectedLink: function($a){
-		
+		var elementId = $a.attr('nunaliit-element');
+		var element = undefined;
+		if( elementId ){
+			element = this.elementsById[elementId];
+		};
+		if( element ){
+ 			this.elementGenerator.selectOn(element);
+		};
+	},
+	
+	_mouseOver: function($a){
+		var elementId = $a.attr('nunaliit-element');
+		var element = undefined;
+		if( elementId ){
+			element = this.elementsById[elementId];
+		};
+		if( element ){
+ 			this.elementGenerator.focusOn(element);
+		};
+	},
+	
+	_mouseOut: function($a){
+		var elementId = $a.attr('nunaliit-element');
+		var element = undefined;
+		if( elementId ){
+			element = this.elementsById[elementId];
+		};
+		if( element ){
+ 			this.elementGenerator.focusOff(element);
+		};
 	},
 
 	_intentChanged: function(changedElements){
+		var _this = this;
+
+		var changedElementsById = {};
+		changedElements.forEach(function(element){
+			changedElementsById[element.id] = element;
+		});
+
+		var $elem = this._getElem();
+		$elem.find('tr').each(function(){
+			var $tr = $(this);
+			var elementId = $tr.attr('nunaliit-element');
+			
+			var element = undefined;
+			if( elementId ){
+				element = changedElementsById[elementId];
+			};
+			
+			if( element ){
+				_this._adjustElementStyles($tr, element);
+			};
+		});
 	},
  	
  	_sourceModelUpdated: function(state){
@@ -279,6 +348,13 @@ var TableCanvas = $n2.Class({
  				};
  			};
  		};
+ 	},
+
+ 	_adjustElementStyles: function($elem, element){
+		element.n2_elem = $elem[0];
+		var symbolizer = this.styleRules.getSymbolizer(element);
+		symbolizer.adjustHtmlElement($elem[0],element);
+		delete element.n2_elem;
  	},
  	
  	_sortElements: function(elements){
@@ -360,6 +436,7 @@ var DefaultTableElementGenerator = $n2.Class('DefaultTableElementGenerator', Ele
 				id: doc._id
 				,rev: doc._rev
 			};
+			element.n2_id = doc._id;
 		};
 		
 		return elementsById;
@@ -373,7 +450,20 @@ function DefaultTableElementGeneratorFactory(opts_){
 		,config: null
 	},opts_);
 	
-	return new DefaultTableElementGenerator();
+	var options = {};
+	if( opts.options ){
+		for(var key in opts.options){
+			var value = opts.options[key];
+			options[key] = value;
+		};
+	};
+	
+	if( opts.config 
+	 && opts.config.directory ){
+		options.dispatchService = opts.config.directory.dispatchService;
+	};
+	
+	return new DefaultTableElementGenerator(options);
 };
 
 $n2.canvasElementGenerator.AddElementGeneratorFactory({
