@@ -690,7 +690,7 @@ var SelectionTracker = $n2.Class({
 		
 		this.selectedMap = {};
 		
-		if( changed && !suppressChangeReport ){
+		if( !suppressChangeReport ){
 			this._reportChange();
 		};
 		
@@ -776,9 +776,9 @@ var SelectionTracker = $n2.Class({
 			};
 
 		} else if( 'unselected' === m.type ){
-			if( !this._shoudIgnoreEvent(m) ){
+			//if( !this._shoudIgnoreEvent(m) ){
 				this._performUnselected();
-			};
+			//};
 		};
 	}
 });
@@ -1512,7 +1512,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 		this.effectiveElementsById = {};
 		this.elementToEffectiveId = {};
 		
-		// If nodes have been selected, recomute expanded map
+		// If nodes have been selected, recompute expanded map
 		if( this.outsideSelectionDocIdMap ){
 	 		// Compute a map of all concerned elements
 	 		var selectedElementById = {};
