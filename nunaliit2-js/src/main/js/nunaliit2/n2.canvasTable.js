@@ -73,6 +73,10 @@ var TableCanvas = $n2.Class({
 	dispatchService: null,
 	
 	elementsById: null,
+	
+	sortedElements: null,
+	
+	headings: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -92,6 +96,8 @@ var TableCanvas = $n2.Class({
 		this.dispatchService = opts.dispatchService;
 		
 		this.elementsById = {};
+		this.sortedElements = [];
+		this.headings = [];
  		
  		// Element generator
  		if( this.elementGenerator ){
@@ -160,8 +166,11 @@ var TableCanvas = $n2.Class({
  	},
 
  	_elementsChanged: function(addedElements, updatedElements, removedElements){
+ 		var _this = this;
+ 		
+ 		var sortedElements = [];
 
-		// Remove elements that are no longer there
+ 		// Remove elements that are no longer there
 		for(var i=0,e=removedElements.length; i<e; ++i){
 			var removed = removedElements[i];
 			delete this.elementsById[removed.id];
@@ -170,28 +179,91 @@ var TableCanvas = $n2.Class({
 		// Add elements
 		for(var i=0,e=addedElements.length; i<e; ++i){
 			var added = addedElements[i];
-			this.elementsById[ added.id ] = added;
+			if( added.isHeader ){
+				installHeader(added);
+			} else {
+				this.elementsById[ added.id ] = added;
+				sortedElements.push(added);
+			};
 		};
 		
 		// Update elements
 		for(var i=0,e=updatedElements.length; i<e; ++i){
 			var updated = updatedElements[i];
-			this.elementsById[ updated.id ] = updated;
+			if( updated.isHeader ){
+				installHeader(updated);
+			} else {
+				this.elementsById[ updated.id ] = updated;
+				sortedElements.push(updated);
+			};
 		};
+		
+		this._sortElements(sortedElements);
+		this.sortedElements = sortedElements;
 
 		this._redraw();
+		
+		function installHeader(element){
+			if( element.columns ){
+				_this.headings = element.columns;
+			};
+		};
 	},
 	
 	_redraw: function(){
 		var _this = this;
 
+		var $elem = this._getElem();
+		var $table = $elem.find('table');
+		
+		$table.empty();
+		
+		var $tr = $('<tr>')
+			.appendTo($table);
+		this.headings.forEach(function(heading){
+			var label = _loc( heading.label );
+			if( !label ){
+				label = heading.name;
+			};
+			$('<th>')
+				.text(label)
+				.appendTo($tr);
+		});
+		
+		this.sortedElements.forEach(function(element){
+			var $tr = $('<tr>')
+				.appendTo($table);
+
+			_this.headings.forEach(function(heading){
+				var name = heading.name;
+				var value = element.cells ? element.cells[name] : undefined;
+				var $td = $('<td>')
+					.appendTo($tr);
+
+				if( value ){
+					var $a = $('<a>')
+						.attr('href','#')
+						.text(value)
+						.appendTo($td)
+						.click(function(){
+							var $a = $(this);
+							_this._selectedLink($a);
+							return false;
+						});
+				};
+			});
+		});
+	},
+	
+	_selectedLink: function($a){
+		
 	},
 
 	_intentChanged: function(changedElements){
 	},
  	
- 	_sourceModelUpdated: function(opts_){
- 		this.elementGenerator.sourceModelUpdated(opts_);
+ 	_sourceModelUpdated: function(state){
+ 		this.elementGenerator.sourceModelUpdated(state);
  	},
 
  	_handleDispatch: function(m){
@@ -207,9 +279,108 @@ var TableCanvas = $n2.Class({
  				};
  			};
  		};
+ 	},
+ 	
+ 	_sortElements: function(elements){
+ 		var _this = this;
+
+ 		elements.sort(function(a,b){
+ 			for(var i=0,e=_this.headings.length; i<e; ++i){
+ 				var heading = _this.headings[i];
+ 				var name = heading.name;
+ 				var aValue = a.cells ? a.cells[name] : undefined;
+ 				var bValue = b.cells ? b.cells[name] : undefined;
+ 				
+ 				if( aValue < bValue ) {
+ 					return -1;
+ 				} else if( aValue > bValue ) {
+ 					return 1;
+ 				};
+ 			};
+ 			
+ 			return 0;
+ 		});
  	}
 });
- 
+
+//--------------------------------------------------------------------------
+// Define default element generator for table canvas
+var ElementGenerator = $n2.canvasElementGenerator.ElementGenerator;
+
+var DefaultTableElementGenerator = $n2.Class('DefaultTableElementGenerator', ElementGenerator, {
+	initialize: function(opts_){
+		ElementGenerator.prototype.initialize.call(this, opts_);
+	},
+
+	_createFragmentsFromDoc: function(doc){
+		return [
+			{
+				id: doc._id
+				,n2_id: doc._id
+				,n2_doc: doc
+			}
+		];
+	},
+
+	_updateElements: function(fragmentMap, currentElementMap){
+		var elementsById = {};
+		
+		var header = {
+			id: '__HEADER__'
+			,isHeader: true
+			,columns: [
+			   {
+				   name: 'id'
+				   ,label: 'id'
+			   }
+			   ,{
+				   name: 'rev'
+				   ,label: 'rev'
+			   }
+			]
+		};
+		elementsById[header.id] = header;
+		
+		for(var fragId in fragmentMap){
+			var frag = fragmentMap[fragId];
+			
+			var elementId = fragId;
+			var element = currentElementMap[elementId];
+			if( !element ){
+				element = {
+					id: elementId
+				};
+			};
+			element.fragments = {};
+			element.fragments[fragId] = frag;
+			elementsById[elementId] = element;
+			
+			var doc = frag.n2_doc;
+			element.cells = {
+				id: doc._id
+				,rev: doc._rev
+			};
+		};
+		
+		return elementsById;
+	}
+});
+
+function DefaultTableElementGeneratorFactory(opts_){
+	var opts = $n2.extend({
+		type: null
+		,options: null
+		,config: null
+	},opts_);
+	
+	return new DefaultTableElementGenerator();
+};
+
+$n2.canvasElementGenerator.AddElementGeneratorFactory({
+	type: 'tableDefault'
+	,factoryFn: DefaultTableElementGeneratorFactory
+});
+
 //--------------------------------------------------------------------------
 function HandleCanvasAvailableRequest(m){
 
@@ -222,7 +393,9 @@ function HandleCanvasAvailableRequest(m){
 function HandleCanvasDisplayRequest(m){
 	if( m.canvasType === 'table' ){
 		
-		var options = {};
+		var options = {
+			elementGeneratorType: 'tableDefault'
+		};
 		if( m.canvasOptions ){
 			for(var key in m.canvasOptions){
 				options[key] = m.canvasOptions[key];

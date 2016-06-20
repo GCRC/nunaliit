@@ -423,9 +423,17 @@ var ElementGenerator = $n2.Class('ElementGenerator', {
 	 * This method should be re-implemented by sub-classes to establish other representations.
 	 * 
 	 * This method is used to create a set of fragments given a document. A document can generate
-	 * 0, 1 or multiple fragments. A fragment should have an id that differenciate it from
-	 * all other fragment. It is a good idea to derive the fragment id from the document id
+	 * 0, 1 or multiple fragments. A fragment should have an id that differentiate it from
+	 * all other fragments. It is a good idea to derive the fragment id from the document id
 	 * to avoid collision.
+	 * 
+	 * A fragment created by this method should have at least the following properties:
+	 * {
+	 *    id : unique identifier for fragment
+	 *    n2_id : document identifier for the supporting document
+	 *    n2_doc : supporting document
+	 * }
+	 * 
 	 * @param doc Object. Document that fragments should be generated from
 	 * @return Array of fragments.
 	 * 
@@ -516,12 +524,22 @@ var ElementGenerator = $n2.Class('ElementGenerator', {
 		this.elementsChanged(elementsAdded, elementsUpdated, elementsRemoved);
 	},
 	
-	/*
+	/**
 	 * This method takes a map of all fragments (fragments by identifier) and a map of
 	 * the current elements (elements by identifier). Then, it computes a new set of elements 
 	 * based on the fragments.
 	 * 
+	 * Each element created by this function should have at least the following properties:
+	 * {
+	 *    id : unique identifier for element
+	 *    fragments : map of fragments, by fragment id, making up element
+	 * }
+	 *  
 	 * Sub-classes should re-implement this method.
+	 * 
+	 * @param fragmentMap Dictionary of fragments, by fragment id
+	 * @param currentElementMap Dictionary of current elements, by element id
+	 * @return Dictionary of new elements, by element id
 	 */
 	_updateElements: function(fragmentMap, currentElementMap){
 		if( typeof this._createClusters === 'function' ){
