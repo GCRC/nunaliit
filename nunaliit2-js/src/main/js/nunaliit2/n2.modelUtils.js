@@ -190,7 +190,13 @@ var ModelFilter = $n2.Class({
 			,parameters: {}
 		};
 		
+		this._addModelInfoParameters(info);
+		
 		return info;
+	},
+	
+	_addModelInfoParameters: function(info){
+		// Used by sub-classes to add parameters
 	},
 	
 	_sourceModelUpdated: function(sourceState){
@@ -668,6 +674,75 @@ var ReferenceFilter = $n2.Class(ModelFilter, {
 });
 
 //--------------------------------------------------------------------------
+/*
+* Filter: a Document Model that filters out certain documents
+* SingleDocumentFilter: Allows only one designed document
+*/
+var SingleDocumentFilter = $n2.Class(ModelFilter, {
+
+	selectedDocParameter: null,
+
+	selectedDocId: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dispatchService: null
+
+			// From configuration
+			,modelId: null
+			,sourceModelId: null
+			,selectedDocId: null
+		},opts_);
+		
+		var _this = this;
+		
+		this.selectedDocId = opts.selectedDocId;
+		
+		this.selectedDocParameter = new $n2.model.ModelParameter({
+			model: this
+			,type: 'string'
+			,name: 'selectedDocumentId'
+			,label: 'Selected Document Id'
+			,setFn: function(docId){
+				_this._setSelectedDocId(docId);
+			}
+			,getFn: function(){
+				return _this._getSelectedDocId();
+			}
+			,dispatchService: opts.dispatchService
+		});
+		
+		opts.filterFn = function(doc){
+			return _this._isDocVisible(doc);
+		};
+		opts.filterName = 'SingleDocumentFilter';
+		
+		ModelFilter.prototype.initialize.call(this,opts);
+	},
+	
+	_getSelectedDocId: function(){
+		return this.selectedDocId;
+	},
+	
+	_setSelectedDocId: function(docId){
+		this.selectedDocId = docId;
+		
+		this._filterChanged();
+	},
+	
+	_addModelInfoParameters: function(info){
+		info.parameters.selectedDocumentId = this.selectedDocParameter.getInfo();
+	},
+	
+	_isDocVisible: function(doc){
+		if( doc && doc._id === this.selectedDocId ){
+			return true;
+		};
+		return false;
+	}
+});
+
+//--------------------------------------------------------------------------
 function handleModelCreate(m, addr, dispatcher){
 	if( m.modelType === 'union' ){
 		var options = {};
@@ -761,6 +836,27 @@ function handleModelCreate(m, addr, dispatcher){
 		};
 		
 		new ReferenceFilter(options);
+		
+		m.created = true;
+
+	} else if( m.modelType === 'singleDocumentFilter' ){
+		var options = {};
+		
+		if( m && m.modelOptions ){
+			for(var key in m.modelOptions){
+				options[key] = m.modelOptions[key];
+			};
+		};
+		
+		options.modelId = m.modelId;
+
+		if( m && m.config ){
+			if( m.config.directory ){
+				options.dispatchService = m.config.directory.dispatchService;
+			};
+		};
+		
+		new SingleDocumentFilter(options);
 		
 		m.created = true;
 	};

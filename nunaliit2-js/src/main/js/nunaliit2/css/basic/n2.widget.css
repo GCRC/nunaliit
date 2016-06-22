@@ -570,3 +570,13 @@ Mail Form
 	color: #ccc !important;
 	pointer-events: none;
 }
+
+/* 
+==============================
+Document Selector 
+==============================
+*/
+.nunaliit_module_title .n2widget_documentSelector {
+	float: right;
+	padding: 8px 20px;
+}

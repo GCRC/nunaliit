@@ -327,6 +327,268 @@ function BuildCreateDocumentFromSchemaWidget(m){
 };
 
 //--------------------------------------------------------------------------
+var DocumentSelectorWidget = $n2.Class({
+	
+	elemId: null,
+	
+	dispatchService: null,
+
+	showService: null,
+
+	filterModelId: null,
+	
+	filterParameterId: null,
+
+	listModelId: null,
+	
+	selectedDocumentIdObserver: null,
+	
+	listDocumentMap: null,
+	
+	label: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			containerId: null
+			,dispatchService: null
+			,showService: null
+
+			// From configuration
+			,filterModelId: null
+			,filterParameterId: 'selectedDocumentId'
+			,listModelId: null
+			,label: null
+		},opts_);
+		
+		var _this = this;
+
+		this.dispatchService = opts.dispatchService;
+		this.showService = opts.showService;
+		this.filterModelId = opts.filterModelId;
+		this.filterParameterId = opts.filterParameterId;
+		this.listModelId = opts.listModelId;
+		this.label = opts.label;
+		this.listDocumentMap = {};
+
+		var $parent = $('#'+opts.containerId);
+		var $elem = $('<div>')
+			.addClass('n2widget_documentSelector')
+			.appendTo($parent);
+		this.elemId = $n2.utils.getElementIdentifier($elem);
+		
+		if( this.dispatchService ){
+			var f = function(m, addr, dispatcher){
+				_this._handle(m, addr, dispatcher);
+			};
+			
+			this.dispatchService.register(DH,'modelStateUpdated',f);
+
+			// Filter
+			if( this.filterModelId ){
+				var m = {
+					type: 'modelGetInfo'
+					,modelId: this.filterModelId
+				};
+				this.dispatchService.synchronousCall(DH,m);
+				if( m.modelInfo
+				 && m.modelInfo.parameters 
+				 && m.modelInfo.parameters[this.filterParameterId] ){
+					var parameterInfo = m.modelInfo.parameters[this.filterParameterId];
+
+					this.selectedDocumentIdObserver = new $n2.model.ModelParameterObserver({
+						parameterInfo: parameterInfo
+						,dispatchService: this.dispatchService
+						,onChangeFn: function(selectedDocId){
+							_this._selectedDocIdChanged(selectedDocId);
+						}
+					});
+				};
+			};
+			
+			// Get document list
+			if( this.listModelId ){
+				var m = {
+					type: 'modelGetState'
+					,modelId: this.listModelId
+				};
+				this.dispatchService.synchronousCall(DH,m);
+				if( m.state ){
+					this._listModelStateUpdated(m.state);
+				};
+			};
+		};
+		
+		$n2.log('DocumentSelectorWidget',this);
+		
+		this._refresh();
+	},
+	
+	_getElem: function(){
+		return $('#'+this.elemId);
+	},
+	
+	_listModelStateUpdated: function(state){
+		// Loop through all added documents
+		if( state.added ){
+			for(var i=0,e=state.added.length; i<e; ++i){
+				var doc = state.added[i];
+				var docId = doc._id;
+				
+				this.listDocumentMap[docId] = doc;
+			};
+		};
+		
+		// Loop through all updated documents
+		if( state.updated ){
+			for(var i=0,e=state.updated.length; i<e; ++i){
+				var doc = state.updated[i];
+				var docId = doc._id;
+	
+				this.listDocumentMap[docId] = doc;
+			};
+		};
+		
+		// Loop through all removed documents
+		if( state.removed ){
+			for(var i=0,e=state.removed.length; i<e; ++i){
+				var doc = state.removed[i];
+				var docId = doc._id;
+
+				delete this.listDocumentMap[docId];
+			};
+		};
+	},
+	
+	/**
+	 * This is called when the document filter is modified
+	 */
+	_selectedDocIdChanged: function(selectedDocId){
+		this._refresh();
+	},
+	
+	_refresh: function(){
+		var _this = this;
+		
+		// Create array of information object
+		var selections = [];
+		for(var docId in this.listDocumentMap){
+			var doc = this.listDocumentMap[docId];
+			var sel = {
+				docId: docId
+				,doc: doc
+				,display: docId
+			};
+			if( this.showService ){
+				var $div = $('<div>');
+				this.showService.displayBriefDescription($div, {}, doc);
+				sel.display = $div.text();
+			};
+			selections.push(sel);
+		};
+		selections.sort(function(a,b){
+			if( a.display < b.display ) return -1;
+			if( a.display > b.display ) return 1;
+			return 0;
+		});
+		
+		var $div = this._getElem()
+			.empty();
+		
+		var $select = $('<select>')
+			.appendTo($div)
+			.change(function(){
+				var $selection = $(this);
+				_this._selectionChanged($selection);
+			});
+
+		var emptyLabel = '--';
+		if( this.label ){
+			emptyLabel = _loc(this.label);
+		};
+		var $opt = $('<option>')
+			.val('__NO_SELECTION__')
+			.text(emptyLabel)
+			.appendTo($select);
+
+		var optionFound = false;
+		var currentSelection = undefined;
+		if( this.selectedDocumentIdObserver ){
+			currentSelection = this.selectedDocumentIdObserver.getValue();
+		};
+
+		selections.forEach(function(sel){
+			var docId = sel.docId;
+			var doc = sel.doc;
+			
+			if( docId === currentSelection ){
+				optionFound = true;
+			};
+			
+			var $opt = $('<option>')
+				.val(docId)
+				.text(sel.display)
+				.appendTo($select);
+			if( _this.showService ){
+				_this.showService.displayBriefDescription($opt, {}, doc);
+			};
+		});
+		
+		if( optionFound ){
+			$select.val(currentSelection);
+		} else {
+			$select.val('__NO_SELECTION__');
+		};
+	},
+	
+	_selectionChanged: function($select){
+		var value = $select.val();
+		if( this.selectedDocumentIdObserver ){
+			if( !value ) {
+				this.selectedDocumentIdObserver.setValue(null);
+			} else if( '__NO_SELECTION__' === value ){
+				this.selectedDocumentIdObserver.setValue(null);
+			} else {
+				this.selectedDocumentIdObserver.setValue(value);
+			};
+		};
+	},
+	
+	_handle: function(m, addr, dispatcher){
+		if( m.type === 'modelStateUpdated'
+		 && m.modelId === this.listModelId
+		 && m.state ){
+			this._listModelStateUpdated(m.state);
+			this._refresh();
+		};
+	}
+});
+
+//--------------------------------------------------------------------------
+function BuildDocumentSelectorWidget(m){
+	var widgetOptions = m.widgetOptions;
+	var config = m.config;
+	
+	var options = {};
+
+	if( widgetOptions ){
+		for(var key in widgetOptions){
+			options[key] = widgetOptions[key];
+		};
+	};
+	
+	options.containerId = m.containerId;
+	
+	if( config ){
+		if( config.directory ){
+			options.dispatchService = config.directory.dispatchService;
+			options.showService = config.directory.showService;
+		};
+	};
+	
+	new DocumentSelectorWidget(options);
+};
+
+//--------------------------------------------------------------------------
 var Service = $n2.Class({
 	
 	config: null,
@@ -424,6 +686,9 @@ var Service = $n2.Class({
 			} else if( m.widgetType === 'createDocumentFromSchema' ){
 				m.isAvailable = true;
 
+			} else if( m.widgetType === 'documentSelector' ){
+				m.isAvailable = true;
+
 			} else {
 				if( $n2.couchDbPerspective 
 				 && $n2.couchDbPerspective.HandleWidgetAvailableRequests ){
@@ -477,6 +742,9 @@ var Service = $n2.Class({
 
 			} else if( m.widgetType === 'createDocumentFromSchema' ){
 				BuildCreateDocumentFromSchemaWidget(m);
+
+			} else if( m.widgetType === 'documentSelector' ){
+				BuildDocumentSelectorWidget(m);
 
 			} else {
 				if( $n2.couchDbPerspective 

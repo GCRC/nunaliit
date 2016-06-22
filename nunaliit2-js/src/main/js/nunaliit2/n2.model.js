@@ -181,6 +181,102 @@ var ModelParameter = $n2.Class({
 });
 
 //--------------------------------------------------------------------------
+/**
+ * This class implements a generic Observer to monitor a ParameterModel.
+ * Build an instance of observer by providing the info structure obtained
+ * by a model.
+ */
+var ModelParameterObserver = $n2.Class({
+
+	dispatchService: null,
+	
+	onChangeFn: null,
+
+	// Variables obtained from info
+	
+	parameterId: null,
+
+	type: null,
+
+	name: null,
+
+	label: null,
+
+	setEvent: null,
+	
+	getEvent: null,
+	
+	changeEvent: null,
+	
+	// Cached value that was observed last
+	
+	lastValue: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			parameterInfo: null
+			,dispatchService: null
+			,onChangeFn: null
+		},opts_);
+	
+		var _this = this;
+		
+		this.onChangeFn = opts.onChangeFn;
+		this.dispatchService = opts.dispatchService;
+		this.lastValue = undefined;
+
+		if( opts.parameterInfo 
+		 && typeof opts.parameterInfo === 'object' ){
+			this.parameterId = opts.parameterInfo.parameterId;
+			this.type = opts.parameterInfo.type;
+			this.name = opts.parameterInfo.name;
+			this.label = opts.parameterInfo.label;
+			this.setEvent = opts.parameterInfo.setEvent;
+			this.getEvent = opts.parameterInfo.getEvent;
+			this.changeEvent = opts.parameterInfo.changeEvent;
+			this.lastValue = opts.parameterInfo.value;
+		} else {
+			throw new Error('parameterInfo must be provided');
+		};
+
+		if( this.dispatchService ){
+			var fn = function(m, addr, dispatcher){
+				_this._handle(m, addr, dispatcher);
+			};
+			this.dispatchService.register(DH, this.changeEvent, fn);
+		};
+	},
+	
+	getValue: function(){
+		return this.lastValue;
+	},
+	
+	setValue: function(value){
+		this.lastValue = value;
+
+		this.dispatchService.send(DH, {
+			type: this.setEvent
+			,value: value
+		});
+	},
+
+	_handle: function(m, addr, dispatcher){
+		if( m.type === this.changeEvent  
+		 && m.parameterId === this.parameterId ){
+			var value = m.value;
+			
+			if( this.lastValue !== value ){
+				var previousValue = this.lastValue;
+				this.lastValue = value;
+				if( typeof this.onChangeFn === 'function' ){
+					this.onChangeFn(this.lastValue, previousValue);
+				};
+			};
+		};
+	}
+});
+
+//--------------------------------------------------------------------------
 var Service = $n2.Class({
 	
 	dispatchService: null,
@@ -277,6 +373,7 @@ var Service = $n2.Class({
 $n2.model = {
 	Service: Service
 	,ModelParameter: ModelParameter
+	,ModelParameterObserver: ModelParameterObserver
 };
 
 })(jQuery,nunaliit2);
