@@ -41,6 +41,33 @@ var
  
 var $d = undefined;
 
+//--------------------------------------------------------------------------
+// Helper functions for elements accepted by the table canvas
+function Element(element){
+	element.getInfo = Element.getInfo;
+	element.getValue = Element.getValue;
+	element.getSortValue = Element.getSortValue;
+};
+
+Element.getInfo = function(name){
+	var info = this.cells ? this.cells[name] : undefined;
+	return info;
+};
+
+Element.getValue = function(name){
+	var info = this.getInfo(name);
+	var value = info ? info.value : undefined;
+	return value;
+};
+
+Element.getSortValue = function(name){
+	var info = this.getInfo(name);
+	var sortValue = info ? info.sort : undefined;
+	if( typeof sortValue === 'undefined' ){
+		sortValue = this.getValue(name);
+	};
+	return sortValue;
+};
 
 // --------------------------------------------------------------------------
 /* 
@@ -52,8 +79,12 @@ var $d = undefined;
 {
 	id: <string>  (Unique identifier for this element)
 	cells: {
-		"heading1": "value1"
-		,"heading2": "value2"
+		"heading1": {
+			value: "value1"
+		}
+		,"heading2": {
+			value: "value2"
+		}
 	}
 }
 
@@ -188,6 +219,7 @@ var TableCanvas = $n2.Class({
 				installHeader(added);
 			} else {
 				this.elementsById[ added.id ] = added;
+				Element(added);
 				sortedElements.push(added);
 			};
 		};
@@ -199,6 +231,7 @@ var TableCanvas = $n2.Class({
 				installHeader(updated);
 			} else {
 				this.elementsById[ updated.id ] = updated;
+				Element(updated);
 				sortedElements.push(updated);
 			};
 		};
@@ -244,13 +277,13 @@ var TableCanvas = $n2.Class({
 
 			_this.headings.forEach(function(heading){
 				var name = heading.name;
-				var value = element.cells ? element.cells[name] : undefined;
+				var value = element.getValue(name);
 				var $td = $('<td>')
 					.appendTo($tr);
 				
-				if( value ){
+				if( typeof value !== 'undefined' ){
 					var $a = $('<a>')
-						.attr('href','#')
+						.attr('href','#'+element.id)
 						.attr('nunaliit-element',element.id)
 						.text(value)
 						.appendTo($td)
@@ -364,8 +397,8 @@ var TableCanvas = $n2.Class({
  			for(var i=0,e=_this.headings.length; i<e; ++i){
  				var heading = _this.headings[i];
  				var name = heading.name;
- 				var aValue = a.cells ? a.cells[name] : undefined;
- 				var bValue = b.cells ? b.cells[name] : undefined;
+ 				var aValue = a.getSortValue(name);
+ 				var bValue = b.getSortValue(name);
  				
  				if( aValue < bValue ) {
  					return -1;
@@ -433,8 +466,12 @@ var DefaultTableElementGenerator = $n2.Class('DefaultTableElementGenerator', Ele
 			
 			var doc = frag.n2_doc;
 			element.cells = {
-				id: doc._id
-				,rev: doc._rev
+				id: {
+					value: doc._id
+				}
+				,rev: {
+					value: doc._rev
+				}
 			};
 			element.n2_id = doc._id;
 		};
