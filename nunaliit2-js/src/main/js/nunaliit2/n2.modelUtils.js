@@ -136,13 +136,12 @@ var ModelFilter = $n2.Class({
 			
 			if( this.sourceModelId ){
 				// Initialize state
-				var m = {
-					type:'modelGetState'
+				var state = $n2.model.getModelState({
+					dispatchService: this.dispatchService
 					,modelId: this.sourceModelId
-				};
-				this.dispatchService.synchronousCall(DH, m);
-				if( m.state ){
-					this._sourceModelUpdated(m.state);
+				});
+				if( state ){
+					this._sourceModelUpdated(state);
 				};
 			};
 		};
@@ -396,13 +395,12 @@ var ModelUnion = $n2.Class({
 			
 			for(var sourceModelId in this.sourceModelIds){
 				// Initialize state
-				var m = {
-					type:'modelGetState'
+				var state = $n2.model.getModelState({
+					dispatchService: this.dispatchService
 					,modelId: sourceModelId
-				};
-				this.dispatchService.synchronousCall(DH, m);
-				if( m.state ){
-					this._sourceModelUpdated(m.modelId, m.state);
+				});
+				if( state ){
+					this._sourceModelUpdated(sourceModelId, state);
 				};
 			};
 		};

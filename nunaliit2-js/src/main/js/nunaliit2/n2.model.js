@@ -277,6 +277,58 @@ var ModelParameterObserver = $n2.Class({
 });
 
 //--------------------------------------------------------------------------
+function getModelInfo(opts_){
+	var opts = $n2.extend({
+		dispatchService: null
+		,modelId: null
+	},opts_);
+	
+	var dispatchService = opts.dispatchService;
+	var modelId = opts.modelId;
+	
+	if( !dispatchService ){
+		throw new Error('dispatchService must be specified');
+	};
+	if( typeof modelId !== 'string' ){
+		throw new Error('modelId must be specified');
+	};
+
+	var m = {
+		type: 'modelGetInfo'
+		,modelId: modelId
+	};
+	dispatchService.synchronousCall(DH,m);
+	
+	return m.modelInfo;
+};
+
+//--------------------------------------------------------------------------
+function getModelState(opts_){
+	var opts = $n2.extend({
+		dispatchService: null
+		,modelId: null
+	},opts_);
+	
+	var dispatchService = opts.dispatchService;
+	var modelId = opts.modelId;
+	
+	if( !dispatchService ){
+		throw new Error('dispatchService must be specified');
+	};
+	if( typeof modelId !== 'string' ){
+		throw new Error('modelId must be specified');
+	};
+
+	var m = {
+		type: 'modelGetState'
+		,modelId: modelId
+	};
+	dispatchService.synchronousCall(DH,m);
+	
+	return m.state;
+};
+
+//--------------------------------------------------------------------------
 var Service = $n2.Class({
 	
 	dispatchService: null,
@@ -374,6 +426,8 @@ $n2.model = {
 	Service: Service
 	,ModelParameter: ModelParameter
 	,ModelParameterObserver: ModelParameterObserver
+	,getModelInfo: getModelInfo
+	,getModelState: getModelState
 };
 
 })(jQuery,nunaliit2);

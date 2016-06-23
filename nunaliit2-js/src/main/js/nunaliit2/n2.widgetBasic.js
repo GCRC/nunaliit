@@ -398,15 +398,14 @@ var DocumentSelectorWidget = $n2.Class({
 
 			// Filter
 			if( this.filterModelId ){
-				var m = {
-					type: 'modelGetInfo'
+				var modelInfo = $n2.model.getModelInfo({
+					dispatchService: this.dispatchService
 					,modelId: this.filterModelId
-				};
-				this.dispatchService.synchronousCall(DH,m);
-				if( m.modelInfo
-				 && m.modelInfo.parameters 
-				 && m.modelInfo.parameters[this.filterParameterId] ){
-					var parameterInfo = m.modelInfo.parameters[this.filterParameterId];
+				});
+				if( modelInfo
+				 && modelInfo.parameters 
+				 && modelInfo.parameters[this.filterParameterId] ){
+					var parameterInfo = modelInfo.parameters[this.filterParameterId];
 
 					this.selectedDocumentIdObserver = new $n2.model.ModelParameterObserver({
 						parameterInfo: parameterInfo
@@ -420,13 +419,12 @@ var DocumentSelectorWidget = $n2.Class({
 			
 			// Get document list
 			if( this.listModelId ){
-				var m = {
-					type: 'modelGetState'
+				var state = $n2.model.getModelState({
+					dispatchService: this.dispatchService
 					,modelId: this.listModelId
-				};
-				this.dispatchService.synchronousCall(DH,m);
-				if( m.state ){
-					this._listModelStateUpdated(m.state);
+				});
+				if( state ){
+					this._listModelStateUpdated(state);
 				};
 			};
 		};
