@@ -341,6 +341,8 @@ var DocumentSelectorWidget = $n2.Class({
 
 	listModelId: null,
 	
+	listLabelSelectors: null,
+	
 	selectedDocumentIdObserver: null,
 	
 	listDocumentMap: null,
@@ -357,6 +359,7 @@ var DocumentSelectorWidget = $n2.Class({
 			,filterModelId: null
 			,filterParameterId: 'selectedDocumentId'
 			,listModelId: null
+			,listLabelSelectors: null
 			,label: null
 		},opts_);
 		
@@ -369,6 +372,16 @@ var DocumentSelectorWidget = $n2.Class({
 		this.listModelId = opts.listModelId;
 		this.label = opts.label;
 		this.listDocumentMap = {};
+		
+		this.listLabelSelectors = [];
+		if( $n2.isArray(opts.listLabelSelectors) ){
+			opts.listLabelSelectors.forEach(function(labelSelectorStr){
+				if( typeof labelSelectorStr === 'string' ){
+					var selector = $n2.objectSelector.parseSelector(labelSelectorStr);
+					_this.listLabelSelectors.push(selector);
+				};
+			});
+		};
 
 		var $parent = $('#'+opts.containerId);
 		var $elem = $('<div>')
@@ -466,6 +479,31 @@ var DocumentSelectorWidget = $n2.Class({
 		this._refresh();
 	},
 	
+	_getDisplayValueFromDoc: function(doc){
+		var value = undefined;
+		
+		this.listLabelSelectors.forEach(function(selector){
+			if( value === undefined ){
+				value = selector.getValue(doc);
+				if( value && value.nunaliit_type === 'localized' ){
+					value = _loc( value );
+				};
+			};
+		});
+		
+		if( value === undefined && this.showService ){
+			var $div = $('<div>');
+			this.showService.displayBriefDescription($div, {}, doc);
+			value = $div.text();
+		};
+		
+		if( value === undefined ){
+			value = doc._id;
+		};
+		
+		return value;
+	},
+	
 	_refresh: function(){
 		var _this = this;
 		
@@ -476,12 +514,7 @@ var DocumentSelectorWidget = $n2.Class({
 			var sel = {
 				docId: docId
 				,doc: doc
-				,display: docId
-			};
-			if( this.showService ){
-				var $div = $('<div>');
-				this.showService.displayBriefDescription($div, {}, doc);
-				sel.display = $div.text();
+				,display: this._getDisplayValueFromDoc(doc)
 			};
 			selections.push(sel);
 		};
@@ -528,9 +561,6 @@ var DocumentSelectorWidget = $n2.Class({
 				.val(docId)
 				.text(sel.display)
 				.appendTo($select);
-			if( _this.showService ){
-				_this.showService.displayBriefDescription($opt, {}, doc);
-			};
 		});
 		
 		if( optionFound ){
