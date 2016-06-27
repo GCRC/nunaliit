@@ -490,8 +490,8 @@ var DisplayBox = $n2.Class({
 		var $body = $('body');
 		
 		// Hide elements for IE
-		$('embed, object, select').css('visibility','hidden');		
-				
+		$('embed, object, select').css('visibility','hidden');
+
 		// Add overlay div
 		this.overlayId = $n2.getUniqueId();
 		var $overlayDiv = $('<div>')
@@ -646,7 +646,7 @@ var DisplayBox = $n2.Class({
 		
 		// Show some elements to avoid conflict with overlay in IE. These elements appear above the overlay.
 		$('embed, object, select').css('visibility', 'visible');
-		
+
 		this.imageSource = null;
 	},
 	
