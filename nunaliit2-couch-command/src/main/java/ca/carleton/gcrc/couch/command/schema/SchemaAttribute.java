@@ -863,7 +863,6 @@ public class SchemaAttribute {
 				pw.println("\t\t\t\t\t<div class=\"n2_mediaView\">");
 				pw.println("\t\t\t\t\t\t<div class=\"n2s_insertMediaView\" nunaliit-attachment=\"{{.}}\"> </div>");
 				pw.println("\t\t\t\t\t</div>");
-				pw.println("\t\t\t\t\t<div class=\"n2s_insertExternalMediaLink\" nunaliit-attachment=\"{{.}}\"> </div>");
 				pw.println("\t\t\t\t{{/attachmentName}}");
 
 				pw.println("\t\t\t{{/source}}");

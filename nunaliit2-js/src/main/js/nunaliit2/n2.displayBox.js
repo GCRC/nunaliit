@@ -490,8 +490,8 @@ var DisplayBox = $n2.Class({
 		var $body = $('body');
 		
 		// Hide elements for IE
-		$('embed, object, select').css('visibility','hidden');
-		
+		$('embed, object, select').css('visibility','hidden');		
+				
 		// Add overlay div
 		this.overlayId = $n2.getUniqueId();
 		var $overlayDiv = $('<div>')
@@ -505,6 +505,22 @@ var DisplayBox = $n2.Class({
 			.attr('id',this.displayDivId)
 			.addClass('n2DisplayBoxOuter')
 			.appendTo($body);
+		
+		// Title bar area
+		var $titleBarDiv = $('<div>')
+			.addClass('n2DisplayBoxTitleBar')
+			.appendTo($displayDiv);
+		
+		$('<a>')
+    		.attr('href','#')
+    		.attr('title', _loc('Close'))
+    		.addClass('n2DisplayBoxButtonClose')
+    		//.text( _loc('Close') )
+    		.appendTo($titleBarDiv)
+    		.click(function(){
+    			_this._close();
+    			return false;
+    		});
 		
 		// Image area
 		var $imageOuterDiv = $('<div>')
@@ -581,20 +597,18 @@ var DisplayBox = $n2.Class({
 		var $dataButtonsDiv = $('<div>')
 			.addClass('n2DisplayBoxButtons')
 			.appendTo($dataInnerDiv);
-		$('<a>')
-			.attr('href','#')
-			.attr('title', _loc('Close'))
-			.addClass('n2DisplayBoxButtonClose')
-			//.text( _loc('Close') )
-			.appendTo($dataButtonsDiv)
-			.click(function(){
-				_this._close();
-				return false;
-			});
+
 		$('<a>')
 			.attr('href','#')
 			.attr('title', _loc('Download'))
 			.addClass('n2DisplayBoxButtonDownload')
+			.click(function(e){
+				if( confirm( _loc('You are about to leave this page. Do you wish to continue?') ) ) {
+					_this._close();
+					return true;
+				};
+				return false;
+			})
 			.appendTo($dataButtonsDiv);
 		
 		// Style overlay and show it
@@ -652,7 +666,7 @@ var DisplayBox = $n2.Class({
 
 			window.setTimeout(function(){
 				_this._refreshCurrentGeometries();
-				
+
 				_this._resizeOverlay();
 				_this._resizeDisplay();
 			},0);
@@ -757,6 +771,8 @@ var DisplayBox = $n2.Class({
 			var intWidth = (intWrapperWidth + (this.settings.containerBorderSize * 2)); // Plus the image's width and the left and right padding value
 			var intHeight = (intWrapperHeight + (this.settings.containerBorderSize * 2)); // Plus the image's height and the top and bottom padding value
 			
+			$displayDiv.find('.n2DisplayBoxTitleBar').css({ width: intWrapperWidth });
+			
 			$displayDiv.find('.n2DisplayBoxImageOuter').css({
 				width: intWidth
 				,height: intHeight
@@ -857,6 +873,13 @@ var DisplayBox = $n2.Class({
 			$displayDiv.find('.n2DisplayBoxDataNumber')
 				.hide();
 		};
+		
+		
+		// Update Image URL for downloading
+		var imageDownloadButton = $displayDiv.find('.n2DisplayBoxButtonDownload');
+		imageDownloadButton.attr('href','./db/' + this.imageSource.images[this.currentImageIndex].doc._id + '/' + this.imageSource.images[this.currentImageIndex].attName)
+		
+		
 	},
 	
 	_setNavigation: function() {

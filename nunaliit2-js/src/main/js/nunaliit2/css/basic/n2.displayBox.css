@@ -21,6 +21,14 @@
 	border: none; 
 }
 
+.n2DisplayBoxTitleBar {
+	position: relative;
+	background-color: #fff;
+	min-height: 25px;
+	margin: 0 auto;
+	padding: 0 10px 0;
+}
+
 .n2DisplayBoxImageOuter {
 	position: relative;
 	background-color: #fff;
@@ -180,7 +188,7 @@ a.n2DisplayBoxNavBtn {
 	display: block;
 	width: 30px;
 	height: 25px;
-	margin: 10px 10px 10px auto;
+	margin: 10px auto;
 	cursor:pointer;
 	background: transparent url('images/download_icon_30.png') no-repeat 0 0;
 	float: right;
