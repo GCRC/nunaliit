@@ -460,6 +460,7 @@ function handleModelCreate(m, addr, dispatcher){
 		};
 		
 		options.modelId = m.modelId;
+		options.modelType = m.modelType;
 		
 		if( m && m.config ){
 			if( m.config.directory ){

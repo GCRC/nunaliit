@@ -741,6 +741,89 @@ var SingleDocumentFilter = $n2.Class(ModelFilter, {
 });
 
 //--------------------------------------------------------------------------
+/*
+* This class is a document source model. This means that it is a document model
+* (a model that makes documents available to other entities), but it does not
+* connect to a source model. Instead, being a source, it generates a stream of
+* documents for other entities.
+* 
+* This document model is static, meaning that it does not change over time. It
+* has a set of documents that it manages in memory and makes it available.
+*/
+var StaticDocumentSource = $n2.Class('StaticDocumentSource', $n2.model.DocumentModel, {
+
+	docsById: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dispatchService: null
+
+			// From configuration
+			,modelId: null
+			,modelType: null
+			,docs: null
+		},opts_);
+		
+		$n2.model.DocumentModel.prototype.initialize.call(this,opts);
+
+		this.docsById = {};
+		
+		$n2.log('StaticDocumentSource', this);
+
+		if( $n2.isArray(opts.docs) ){
+			this.setDocuments(opts.docs);
+		};
+	},
+	
+	setDocuments: function(docs){
+		var _this = this;
+		
+		var added = [];
+		var updated = [];
+		var removed = [];
+		
+		var newDocsById = {};
+		docs.forEach(function(doc){
+			if( doc && doc._id ){
+				var docId = doc._id;
+
+				newDocsById[docId] = doc;
+				
+				if( _this.docsById ){
+					updated.push(doc);
+				} else {
+					added.push(doc);
+				};
+			};
+		});
+		
+		// Figure out removed document
+		for(var docId in this.docsById){
+			var doc = this.docsById[docId];
+			if( !newDocsById[docId] ){
+				removed.push(doc);
+			};
+		};
+		
+		// Install new document map
+		this.docsById = newDocsById;
+		
+		this._reportStateUpdate(added, updated, removed);
+	},
+	
+	_getCurrentDocuments: function(){
+		var docs = [];
+		
+		for(var docId in this.docsById){
+			var doc = this.docsById[docId];
+			docs[docs.length] = doc;
+		};
+		
+		return docs;
+	}
+});
+
+//--------------------------------------------------------------------------
 function handleModelCreate(m, addr, dispatcher){
 	if( m.modelType === 'union' ){
 		var options = {};
@@ -753,6 +836,7 @@ function handleModelCreate(m, addr, dispatcher){
 		};
 
 		options.modelId = m.modelId;
+		options.modelType = m.modelType;
 		
 		if( m && m.config ){
 			if( m.config.directory ){
@@ -774,6 +858,7 @@ function handleModelCreate(m, addr, dispatcher){
 		};
 
 		options.modelId = m.modelId;
+		options.modelType = m.modelType;
 		
 		if( m && m.config ){
 			if( m.config.directory ){
@@ -805,6 +890,7 @@ function handleModelCreate(m, addr, dispatcher){
 		};
 		
 		options.modelId = m.modelId;
+		options.modelType = m.modelType;
 
 		if( m && m.config ){
 			if( m.config.directory ){
@@ -826,6 +912,7 @@ function handleModelCreate(m, addr, dispatcher){
 		};
 		
 		options.modelId = m.modelId;
+		options.modelType = m.modelType;
 
 		if( m && m.config ){
 			if( m.config.directory ){
@@ -847,6 +934,7 @@ function handleModelCreate(m, addr, dispatcher){
 		};
 		
 		options.modelId = m.modelId;
+		options.modelType = m.modelType;
 
 		if( m && m.config ){
 			if( m.config.directory ){
@@ -855,6 +943,28 @@ function handleModelCreate(m, addr, dispatcher){
 		};
 		
 		new SingleDocumentFilter(options);
+		
+		m.created = true;
+
+	} else if( m.modelType === 'staticDocumentSource' ){
+		var options = {};
+		
+		if( m && m.modelOptions ){
+			for(var key in m.modelOptions){
+				options[key] = m.modelOptions[key];
+			};
+		};
+		
+		options.modelId = m.modelId;
+		options.modelType = m.modelType;
+
+		if( m && m.config ){
+			if( m.config.directory ){
+				options.dispatchService = m.config.directory.dispatchService;
+			};
+		};
+		
+		new StaticDocumentSource(options);
 		
 		m.created = true;
 	};
@@ -867,6 +977,7 @@ $n2.modelUtils = {
 	,FilterFunctionFromModelConfiguration: FilterFunctionFromModelConfiguration
 	,SchemaFilter: SchemaFilter
 	,ReferenceFilter: ReferenceFilter
+	,StaticDocumentSource: StaticDocumentSource
 	,handleModelCreate: handleModelCreate 
 };
 

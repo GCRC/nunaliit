@@ -329,6 +329,207 @@ function getModelState(opts_){
 };
 
 //--------------------------------------------------------------------------
+/*
+ * This is an abstract class for a document model.
+ */
+var DocumentModel = $n2.Class('DocumentModel', {
+
+	dispatchService: null,
+	
+	modelId: null,
+
+	modelType: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dispatchService: null
+			,modelId: null
+			,modelType: null
+		},opts_);
+	
+		var _this = this;
+		
+		this.dispatchService = opts.dispatchService;
+		this.modelId = opts.modelId;
+		this.modelType = opts.modelType;
+
+		if( typeof this.modelId !== 'string' ){
+			throw new Error('modelId must be specified and it must be a string');
+		};
+
+		if( this.dispatchService ){
+			var fn = function(m, addr, dispatcher){
+				_this._handle(m, addr, dispatcher);
+			};
+			this.dispatchService.register(DH, 'modelGetInfo', function(m, addr, dispatcher){
+				if( m.modelId === _this.modelId ){
+					m.modelInfo = _this._getModelInfo();
+				}
+			});
+			this.dispatchService.register(DH, 'modelGetState', function(m, addr, dispatcher){
+				if( m.modelId === _this.modelId ){
+					var currentDocs = _this._getCurrentDocuments();
+					m.state = {
+						added: currentDocs
+						,updated: []
+						,removed: []
+					};
+				}
+			});
+		};
+	},
+
+	_getModelInfo: function(){
+		var info = {
+			modelId: this.modelId
+			,modelType: 'filter'
+			,parameters: {}
+		};
+		
+		this._addModelInfoParameters(info);
+		
+		return info;
+	},
+	
+	_addModelInfoParameters: function(info){
+	},
+
+	/**
+	 * This method should be used by sub-classes to report the changes
+	 * in the current state.
+	 * @param added Array of documents that were added
+	 * @param updated Array of documents that were modified since last state report
+	 * @param removed Array of documents that were removed from the state
+	 */
+	_reportStateUpdate: function(added, updated, removed){
+		if( added.length > 0
+		 || updated.length > 0 
+		 || removed.length > 0 ){
+			var stateUpdate = {
+				added: added
+				,updated: updated
+				,removed: removed
+			};
+
+			if( this.dispatchService ){
+				this.dispatchService.send(DH,{
+					type: 'modelStateUpdated'
+					,modelId: this.modelId
+					,state: stateUpdate
+				});
+			};
+		};
+	},
+	
+	/*
+	 * Return an array of documents that represent the current state of the model
+	 */
+	_getCurrentDocuments: function(){
+		throw new Error('Subclasses must implement the method _getCurrentDocuments()');
+	}
+});
+
+//--------------------------------------------------------------------------
+/*
+ * This is an observer for a document model. It registers to a document model
+ * identified by the sourceModelId. The observer can be queried for the currently
+ * observed documents. 
+ */
+var DocumentModelObserver = $n2.Class('DocumentModelObserver', {
+
+	dispatchService: null,
+	
+	sourceModelId: null,
+	
+	docsById: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dispatchService: null
+			,sourceModelId: null
+		},opts_);
+	
+		var _this = this;
+		
+		this.docsById = {};
+		
+		this.dispatchService = opts.dispatchService;
+		this.sourceModelId = opts.sourceModelId;
+
+		if( typeof this.sourceModelId !== 'string' ){
+			throw new Error('sourceModelId must be specified and it must be a string');
+		};
+
+		if( this.dispatchService ){
+			this.dispatchService.register(DH, 'modelStateUpdated', function(m, addr, dispatcher){
+				if( _this.sourceModelId === m.modelId ){
+					_this._sourceModelUpdated(m.state);
+				};
+			});
+			
+			// Get current state
+			var state = $n2.model.getModelState({
+				dispatchService: this.dispatchService
+				,modelId: this.sourceModelId
+			});
+			if( state ){
+				this._sourceModelUpdated(state);
+			};
+		};
+	},
+	
+	getDocuments: function(){
+		var docs = [];
+		for(var docId in this.docsById){
+			var doc = this.docsById[docId];
+			docs[docs.length] = doc;
+		};
+		return docs;
+	},
+	
+	_sourceModelUpdated: function(sourceState){
+		
+		var _this = this;
+		
+		// Loop through all added documents
+		if( $n2.isArray(sourceState.added) ){
+			sourceState.added.forEach(function(doc){
+				var docId = doc._id;
+				
+				_this.docsById[docId] = doc;
+			});
+		};
+		
+		// Loop through all updated documents
+		if( $n2.isArray(sourceState.updated) ){
+			sourceState.updated.forEach(function(doc){
+				var docId = doc._id;
+				
+				_this.docsById[docId] = doc;
+			});
+		};
+		
+		// Loop through all removed documents
+		if( $n2.isArray(sourceState.removed) ){
+			sourceState.removed.forEach(function(doc){
+				var docId = doc._id;
+				
+				delete _this.docsById[docId];
+			});
+		};
+		
+		this._documentUpdated();
+	},
+	
+	/*
+	 * Called when there is a change in the document set
+	 */
+	_documentUpdated: function(){
+		
+	}
+});
+
+//--------------------------------------------------------------------------
 var Service = $n2.Class({
 	
 	dispatchService: null,
@@ -424,6 +625,8 @@ var Service = $n2.Class({
 //--------------------------------------------------------------------------
 $n2.model = {
 	Service: Service
+	,DocumentModel: DocumentModel
+	,DocumentModelObserver: DocumentModelObserver
 	,ModelParameter: ModelParameter
 	,ModelParameterObserver: ModelParameterObserver
 	,getModelInfo: getModelInfo
