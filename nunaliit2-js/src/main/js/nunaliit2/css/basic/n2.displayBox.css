@@ -175,3 +175,20 @@ a.n2DisplayBoxNavBtn {
 .n2DisplayBoxButtonClose:hover {
 	background-position: -15px 0;
 }
+
+.n2DisplayBoxButtonDownload {
+	display: block;
+	width: 30px;
+	height: 25px;
+	margin: 10px 10px 10px auto;
+	cursor:pointer;
+	background: transparent url('images/download_icon_30.png') no-repeat 0 0;
+	float: right;
+	content: ''
+}
+
+.n2DisplayBoxButtonDownload:hover {
+	background-position: -30px 0;
+}
+
+

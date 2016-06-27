@@ -583,6 +583,7 @@ var DisplayBox = $n2.Class({
 			.appendTo($dataInnerDiv);
 		$('<a>')
 			.attr('href','#')
+			.attr('title', _loc('Close'))
 			.addClass('n2DisplayBoxButtonClose')
 			//.text( _loc('Close') )
 			.appendTo($dataButtonsDiv)
@@ -590,6 +591,11 @@ var DisplayBox = $n2.Class({
 				_this._close();
 				return false;
 			});
+		$('<a>')
+			.attr('href','#')
+			.attr('title', _loc('Download'))
+			.addClass('n2DisplayBoxButtonDownload')
+			.appendTo($dataButtonsDiv);
 		
 		// Style overlay and show it
 		$overlayDiv
@@ -933,7 +939,7 @@ var DisplayBox = $n2.Class({
 							,url: data.url
 						});
 
-						// In phtoshpere, make image a fixed ratio
+						// In photosphere, make image a fixed ratio
 						_this.currentImage.width = Math.floor(_this.currentImage.height * 3 / 2);
 
 					} else {

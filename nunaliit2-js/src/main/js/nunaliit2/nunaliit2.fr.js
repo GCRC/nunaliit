@@ -131,6 +131,7 @@ $n2.l10n.addLocalizedStrings('fr',{
 	,"Documents with media files in waiting state":"Documents avec des médias numériques en phase d'attente"
 	,"Done":"Complété"
 	,"Done.":"Complété."
+	,"Download":"Télécharger"
 	,"E-Mail address must be specified":"Adresse courriel doit être spécifié"
 	,"E-mail":"Courriel"
 	,"E-mail Form":"Formulaire Courriel"
