@@ -488,7 +488,7 @@ var DisplayBox = $n2.Class({
 		var _this = this;
 
 		var $body = $('body');
-		
+
 		// Hide elements for IE
 		$('embed, object, select').css('visibility','hidden');
 
@@ -498,14 +498,14 @@ var DisplayBox = $n2.Class({
 			.attr('id',this.overlayId)
 			.addClass('n2DisplayBoxOverlay')
 			.appendTo($body);
-		
+
 		// Add display div
 		this.displayDivId = $n2.getUniqueId();
 		var $displayDiv = $('<div>')
 			.attr('id',this.displayDivId)
 			.addClass('n2DisplayBoxOuter')
 			.appendTo($body);
-		
+
 		// Title bar area
 		var $titleBarDiv = $('<div>')
 			.addClass('n2DisplayBoxTitleBar')
