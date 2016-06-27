@@ -108,6 +108,8 @@ var TableCanvas = $n2.Class({
 	sortedElements: null,
 	
 	headings: null,
+	
+	sortOrder: null,
 
 	styleRules: null,
 
@@ -132,6 +134,7 @@ var TableCanvas = $n2.Class({
 		this.elementsById = {};
 		this.sortedElements = [];
 		this.headings = [];
+		this.sortOrder = [];
 
 		this.styleRules = $n2.styleRule.loadRulesFromObject(opts.styleRules);
  		
@@ -195,6 +198,15 @@ var TableCanvas = $n2.Class({
 				.click(function(e){
 					_this._backgroundClicked();
 				});
+
+			$('<button>')
+				.text('Export CSV')
+				.appendTo($elem)
+				.click(function(){
+					_this._exportCsv();
+					return false;
+				});
+		
 
 			$('<table>')
 				.appendTo($elem);
@@ -263,9 +275,19 @@ var TableCanvas = $n2.Class({
 			if( !label ){
 				label = heading.name;
 			};
-			$('<th>')
-				.text(label)
+			var $th = $('<th>')
 				.appendTo($tr);
+			$('<a>')
+				.attr('href','#')
+				.attr('data-sort-name',heading.name)
+				.text(label)
+				.appendTo($th)
+				.click(function(){
+					var $a = $(this);
+					var headingName = $a.attr('data-sort-name');
+					_this._sortOnName(headingName);
+					return false;
+				});
 		});
 		
 		this.sortedElements.forEach(function(element){
@@ -339,6 +361,50 @@ var TableCanvas = $n2.Class({
  			this.elementGenerator.focusOff(element);
 		};
 	},
+	
+	_sortOnName: function(name){
+		// Special case: first time clicking on first column
+		// Assume that first column was already clicked
+		if( this.sortOrder.length < 1 
+		 && this.headings.length > 0
+		 && this.headings[0].name === name ){
+			this.sortOrder.unshift({
+				name: name
+				,direction: 1
+			});
+		};
+		
+		// Detect if already in array
+		var index = -1;
+		this.sortOrder.forEach(function(sortEntry, i){
+			if( sortEntry.name === name ){
+				index = i;
+			};
+		});
+		
+		var insert = true;
+		if( index == 0 ){
+			// Selecting same twice. Reverse direction
+			this.sortOrder[0].direction = this.sortOrder[0].direction * -1;
+			insert = false;
+
+		} else if( index >= 0  ){
+			// remove it
+			this.sortOrder.splice(index,1);
+		};
+
+		// Insert at the beginning
+		if( insert ){
+			this.sortOrder.unshift({
+				name: name
+				,direction: 1
+			});
+		};
+		
+		this._sortElements(this.sortedElements);
+		
+		this._redraw();
+	},
 
 	_intentChanged: function(changedElements){
 		var _this = this;
@@ -392,24 +458,113 @@ var TableCanvas = $n2.Class({
  	
  	_sortElements: function(elements){
  		var _this = this;
+ 		
+ 		// Figure out the order in which things should be sorted
+ 		var orderedNames = [];
+ 		var seenNameMap = {};
+ 		this.sortOrder.forEach(function(sortEntry){
+ 			var name = sortEntry.name;
+
+ 			if( !seenNameMap[name] ){
+ 	 			orderedNames.push(sortEntry);
+ 	 			seenNameMap[name] = true;
+ 			};
+ 		});
+ 		this.headings.forEach(function(heading){
+ 			var name = heading.name;
+ 			if( !seenNameMap[name] ){
+ 	 			orderedNames.push({
+ 	 				name: name
+ 	 				,direction: 1
+ 	 			});
+ 	 			seenNameMap[name] = true;
+ 			};
+ 		});
 
  		elements.sort(function(a,b){
- 			for(var i=0,e=_this.headings.length; i<e; ++i){
- 				var heading = _this.headings[i];
- 				var name = heading.name;
+ 			for(var i=0,e=orderedNames.length; i<e; ++i){
+ 				var name = orderedNames[i].name;
+ 				var direction = orderedNames[i].direction;
+
  				var aValue = a.getSortValue(name);
  				var bValue = b.getSortValue(name);
  				
  				if( aValue < bValue ) {
- 					return -1;
+ 					return -1 * direction;
  				} else if( aValue > bValue ) {
- 					return 1;
+ 					return 1 * direction;
  				};
  			};
  			
  			return 0;
  		});
- 	}
+ 	},
+
+ 	_computeCsvContent: function(){
+ 		var _this = this;
+ 		var table = [];
+		
+		// Headings
+		var headLine = [];
+		table.push(headLine);
+		this.headings.forEach(function(heading){
+			headLine.push(heading.name);
+		});
+		
+		// Data
+		if( this.sortedElements ){
+			this.sortedElements.forEach(function(element){
+				var line = [];
+				table.push(line);
+				_this.headings.forEach(function(heading){
+					var name = heading.name;
+					
+					var value = undefined;
+					if( element.cells && element.cells[name] ){
+						value = element.cells[name].value;
+					};
+
+					line.push(value);
+				});
+			});
+		};
+		
+		var csvContent = $n2.csv.ValueTableToCsvString(table);
+		
+		return csvContent;
+	},
+
+ 	_exportCsv: function(){
+		var csvContent = this._computeCsvContent();
+		
+		if( typeof Blob !== 'undefined' 
+		 && typeof saveAs === 'function' ){
+			var blob = new Blob([csvContent],{type: "text/plain;charset=" + document.characterSet});
+			saveAs(blob, 'table.csv');
+			
+		} else {
+			var $dialog = $('<div>')
+				.addClass('n2canvasReferenceBrowser_exportCsv_dialog');
+			var diagId = $n2.utils.getElementIdentifier($dialog);
+			
+			$('<textarea>')
+				.addClass('n2canvasTable_exportCsv_text')
+				.text(csvContent)
+				.appendTo($dialog);
+			
+			$dialog.dialog({
+				autoOpen: true
+				,title: _loc('CSV')
+				,modal: true
+				,width: 370
+				,close: function(event, ui){
+					var diag = $('#'+diagId);
+					diag.dialog('destroy');
+					diag.remove();
+				}
+			});
+		};
+	}
 });
 
 //--------------------------------------------------------------------------
