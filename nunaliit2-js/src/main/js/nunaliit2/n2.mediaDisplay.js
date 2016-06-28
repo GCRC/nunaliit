@@ -578,7 +578,6 @@ $n2.MediaDisplay = $n2.Class({
 		.addClass('n2DisplayBoxButtonDownload')
 		.click(function(e){
 			if( confirm( _loc('You are about to leave this page. Do you wish to continue?') ) ) {
-				_this._close();
 				return true;
 			};
 			return false;
