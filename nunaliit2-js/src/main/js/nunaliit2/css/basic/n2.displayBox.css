@@ -189,6 +189,7 @@ a.n2DisplayBoxNavBtn {
 	width: 30px;
 	height: 25px;
 	margin: 10px auto;
+	color: transparent !important;
 	cursor:pointer;
 	background: transparent url('images/download_icon_30.png') no-repeat 0 0;
 	float: right;

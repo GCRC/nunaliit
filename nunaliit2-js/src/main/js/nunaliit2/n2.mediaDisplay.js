@@ -288,6 +288,7 @@ $n2.MediaDisplay = $n2.Class({
 		var $mediaDialog = $( mkup.join('') );
 		
 		this._addMetaData(opts, $mediaDialog);
+		this._addDownloadButton($mediaDialog);
 
 		var dialogOptions = $n2.extend({}
 			,baseDialogOptions
@@ -356,6 +357,7 @@ $n2.MediaDisplay = $n2.Class({
 		var $mediaDialog = $( mkup.join('') );
 		
 		this._addMetaData(opts, $mediaDialog);
+		this._addDownloadButton(opts, $mediaDialog);
 
 		var dialogOptions = $n2.extend({}
 			,baseDialogOptions
@@ -426,6 +428,7 @@ $n2.MediaDisplay = $n2.Class({
 		};
 		
 		this._addMetaData(opts, $mediaDialog);
+		this._addDownloadButton(opts, $mediaDialog);
 
 		var dialogOptions = $n2.extend({},baseDialogOptions,{
 			title: dialogTitle
@@ -488,6 +491,7 @@ $n2.MediaDisplay = $n2.Class({
 		var $mediaDialog = $( mkup.join('') );
 		
 		this._addMetaData(opts, $mediaDialog);
+		this._addDownloadButton(opts, $mediaDialog);
 
 		var dialogOptions = $n2.extend({},baseDialogOptions,{
 			title: dialogTitle
@@ -565,6 +569,21 @@ $n2.MediaDisplay = $n2.Class({
 				$elem.append( $desc );
 			};
 		};
+	}
+	
+	,_addDownloadButton: function(opts, $elem) {
+		$('<a>')
+		.attr('href',opts.url)
+		.attr('title', _loc('Download'))
+		.addClass('n2DisplayBoxButtonDownload')
+		.click(function(e){
+			if( confirm( _loc('You are about to leave this page. Do you wish to continue?') ) ) {
+				_this._close();
+				return true;
+			};
+			return false;
+		})
+		.appendTo($elem);
 	}
 	
 	,generateInlineHtmlForMedia: function(opts_) {	
