@@ -488,23 +488,39 @@ var DisplayBox = $n2.Class({
 		var _this = this;
 
 		var $body = $('body');
-		
+
 		// Hide elements for IE
 		$('embed, object, select').css('visibility','hidden');
-		
+
 		// Add overlay div
 		this.overlayId = $n2.getUniqueId();
 		var $overlayDiv = $('<div>')
 			.attr('id',this.overlayId)
 			.addClass('n2DisplayBoxOverlay')
 			.appendTo($body);
-		
+
 		// Add display div
 		this.displayDivId = $n2.getUniqueId();
 		var $displayDiv = $('<div>')
 			.attr('id',this.displayDivId)
 			.addClass('n2DisplayBoxOuter')
 			.appendTo($body);
+
+		// Title bar area
+		var $titleBarDiv = $('<div>')
+			.addClass('n2DisplayBoxTitleBar')
+			.appendTo($displayDiv);
+		
+		$('<a>')
+    		.attr('href','#')
+    		.attr('title', _loc('Close'))
+    		.addClass('n2DisplayBoxButtonClose')
+    		//.text( _loc('Close') )
+    		.appendTo($titleBarDiv)
+    		.click(function(){
+    			_this._close();
+    			return false;
+    		});
 		
 		// Image area
 		var $imageOuterDiv = $('<div>')
@@ -581,15 +597,19 @@ var DisplayBox = $n2.Class({
 		var $dataButtonsDiv = $('<div>')
 			.addClass('n2DisplayBoxButtons')
 			.appendTo($dataInnerDiv);
+
 		$('<a>')
 			.attr('href','#')
-			.addClass('n2DisplayBoxButtonClose')
-			//.text( _loc('Close') )
-			.appendTo($dataButtonsDiv)
-			.click(function(){
-				_this._close();
+			.attr('title', _loc('Download'))
+			.addClass('n2DisplayBoxButtonDownload')
+			.click(function(e){
+				if( confirm( _loc('You are about to leave this page. Do you wish to continue?') ) ) {
+					_this._close();
+					return true;
+				};
 				return false;
-			});
+			})
+			.appendTo($dataButtonsDiv);
 		
 		// Style overlay and show it
 		$overlayDiv
@@ -626,7 +646,7 @@ var DisplayBox = $n2.Class({
 		
 		// Show some elements to avoid conflict with overlay in IE. These elements appear above the overlay.
 		$('embed, object, select').css('visibility', 'visible');
-		
+
 		this.imageSource = null;
 	},
 	
@@ -646,7 +666,7 @@ var DisplayBox = $n2.Class({
 
 			window.setTimeout(function(){
 				_this._refreshCurrentGeometries();
-				
+
 				_this._resizeOverlay();
 				_this._resizeDisplay();
 			},0);
@@ -751,6 +771,8 @@ var DisplayBox = $n2.Class({
 			var intWidth = (intWrapperWidth + (this.settings.containerBorderSize * 2)); // Plus the image's width and the left and right padding value
 			var intHeight = (intWrapperHeight + (this.settings.containerBorderSize * 2)); // Plus the image's height and the top and bottom padding value
 			
+			$displayDiv.find('.n2DisplayBoxTitleBar').css({ width: intWrapperWidth });
+			
 			$displayDiv.find('.n2DisplayBoxImageOuter').css({
 				width: intWidth
 				,height: intHeight
@@ -851,6 +873,13 @@ var DisplayBox = $n2.Class({
 			$displayDiv.find('.n2DisplayBoxDataNumber')
 				.hide();
 		};
+		
+		
+		// Update Image URL for downloading
+		var imageDownloadButton = $displayDiv.find('.n2DisplayBoxButtonDownload');
+		imageDownloadButton.attr('href','./db/' + this.imageSource.images[this.currentImageIndex].doc._id + '/' + this.imageSource.images[this.currentImageIndex].attName)
+		
+		
 	},
 	
 	_setNavigation: function() {
@@ -933,7 +962,7 @@ var DisplayBox = $n2.Class({
 							,url: data.url
 						});
 
-						// In phtoshpere, make image a fixed ratio
+						// In photosphere, make image a fixed ratio
 						_this.currentImage.width = Math.floor(_this.currentImage.height * 3 / 2);
 
 					} else {
