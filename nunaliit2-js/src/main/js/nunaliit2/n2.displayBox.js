@@ -587,9 +587,11 @@ var DisplayBox = $n2.Class({
 		var $dataOuterDiv = $('<div>')
 			.addClass('n2DisplayBoxDataOuter')
 			.appendTo($displayDiv)
-			.click(function(){
+			.click(function(e){
+				var allowed = _this._isPassThruEvent(e);
+				
 				// Do not close when clicking data
-				return false;
+				return allowed;
 			});
 		var $dataInnerDiv = $('<div>')
 			.addClass('n2DisplayBoxDataInner')
@@ -610,14 +612,8 @@ var DisplayBox = $n2.Class({
 		$('<a>')
 			.attr('href','#')
 			.attr('title', _loc('Download'))
-			.addClass('n2DisplayBoxButtonDownload')
-			.click(function(e){
-				if( confirm( _loc('You are about to leave this page. Do you wish to continue?') ) ) {
-					_this._close();
-					return true;
-				};
-				return false;
-			})
+			.attr('download', 'image')
+			.addClass('n2DisplayBoxButtonDownload n2DisplayBox_passThru')
 			.appendTo($dataButtonsDiv);
 		
 		// Style overlay and show it
@@ -635,7 +631,14 @@ var DisplayBox = $n2.Class({
 		// Calculate top and left offset for the jquery-lightbox div object and show it
 		$displayDiv
 			.hide()
-			.click(function(){
+			.click(function(e){
+				var passThru = _this._isPassThruEvent(e);
+				
+				if( passThru ){
+					return true;
+				};
+
+				// When clicking, close image
 				_this._close();
 				return false;
 			});
@@ -890,8 +893,19 @@ var DisplayBox = $n2.Class({
 		if( !originalUrl ){
 			originalUrl = imageInfo.url;
 		};
+		var name = imageInfo.name;
+		if( !name ){
+			var names = originalUrl.split('/');
+			if( names.length > 0 ){
+				name = names[names.length - 1];
+				name = decodeURIComponent(name);
+			} else {
+				name = 'image';
+			};
+		};
 		var imageDownloadButton = $displayDiv.find('.n2DisplayBoxButtonDownload');
 		imageDownloadButton.attr('href',originalUrl);
+		imageDownloadButton.attr('download',name);
 	},
 	
 	_setNavigation: function() {
@@ -1316,6 +1330,22 @@ var DisplayBox = $n2.Class({
 			coords[1] = e.clientY;
 		};
 		return coords;
+	},
+	
+	_isPassThruEvent: function(e){
+		var $target = $(e.target);
+		var allowed = false;
+		if( $target.hasClass('n2DisplayBox_passThru') ){
+			allowed = true;
+		};
+		if( !allowed ){
+			var allowedParents = $target.parents('.n2DisplayBox_passThru');
+			if( allowedParents.length > 0 ){
+				allowed = true;
+			};
+		};
+		
+		return allowed;
 	}
 });
 
