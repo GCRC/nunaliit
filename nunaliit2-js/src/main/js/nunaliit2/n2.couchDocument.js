@@ -224,6 +224,8 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 	
 	dispatchService: null,
 	
+	attachmentService: null,
+	
 	geometryRepository: null,
 	
 	isDefaultDocumentSource: null,
@@ -235,6 +237,7 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 				id: null
 				,db: null
 				,dispatchService: null
+				,attachmentService: null
 				,isDefaultDocumentSource: false
 			}
 			,opts_
@@ -245,6 +248,7 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 		$n2.document.DocumentSource.prototype.initialize.call(this,opts);
 
 		this.db = opts.db;
+		this.attachmentService = opts.attachmentService;
 		this.dispatchService = opts.dispatchService;
 		if( this.dispatchService ){
 			// to make adjustDocument() work
@@ -371,6 +375,14 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			}
 			,onError: opts.onError
 		});
+	},
+
+	getDocumentAttachments: function(doc){
+		return this.attachmentService.getAttachments(doc, this);
+	},
+
+	getDocumentAttachment: function(doc, attachmentName){
+		return this.attachmentService.getAttachment(doc, attachmentName, this);
 	},
 
 	getDocumentAttachmentUrl: function(doc, attachmentName){

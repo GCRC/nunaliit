@@ -786,7 +786,9 @@ var DomStyler = $n2.Class({
 								,startIndex: startIndex
 							});
 						}
-						,onError: function(err){}
+						,onError: function(err){
+							$n2.log('Error while creating image source factory', err);
+						}
 					});
 					
 				} else {

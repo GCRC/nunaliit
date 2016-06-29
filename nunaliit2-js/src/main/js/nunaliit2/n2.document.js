@@ -37,6 +37,7 @@ var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); }
 ,DH = 'n2.document'
 ;
 
+//*******************************************************
 var dataSourceFromId = {};
 
 function getDocumentSourceFromId(id){
@@ -45,9 +46,9 @@ function getDocumentSourceFromId(id){
 
 // *******************************************************
 var DocumentSource = $n2.Class({
-	id: null
+	id: null,
 	
-	,initialize: function(opts_){
+	initialize: function(opts_){
 		var opts = $n2.extend({
 			id: null
 		},opts_);
@@ -59,14 +60,14 @@ var DocumentSource = $n2.Class({
 		if( this.id ){
 			dataSourceFromId[this.id] = this;
 		};
-	}
+	},
 
-	,getId: function(){
+	getId: function(){
 		return this.id;
-	}
+	},
 
 
-	,createDocument: function(opts_){
+	createDocument: function(opts_){
 		var opts = $n2.extend({
 				doc: {}
 				,onSuccess: function(doc){}
@@ -76,9 +77,9 @@ var DocumentSource = $n2.Class({
 		);
 
 		opts.onError('Data source does not support the "createDocument" call.');
-	}
+	},
 
-	,getDocument: function(opts_){
+	getDocument: function(opts_){
 		var opts = $n2.extend({
 				docId: null
 				,rev: null
@@ -93,9 +94,9 @@ var DocumentSource = $n2.Class({
 		);
 		
 		opts.onError('Data source does not support the "getDocument" call.');
-	}
+	},
 
-	,getDocuments: function(opts_){
+	getDocuments: function(opts_){
 		var opts = $n2.extend({
 				docIds: null
 				,onSuccess: function(docs){}
@@ -105,13 +106,21 @@ var DocumentSource = $n2.Class({
 		);
 		
 		opts.onError('Data source does not support the "getDocuments" call.');
-	}
+	},
 
-	,getDocumentAttachmentUrl: function(doc, attachmentName){
-		return null;
-	}
+	getDocumentAttachments: function(doc){
+		throw new Error('Subclasses must implement getDocumentAttachments(doc)');
+	},
 
-	,verifyDocumentExistence: function(opts_){
+	getDocumentAttachment: function(doc, attachmentName){
+		throw new Error('Subclasses must implement getDocumentAttachment(doc,attachmentName)');
+	},
+
+	getDocumentAttachmentUrl: function(doc, attachmentName){
+		throw new Error('Subclasses must implement getDocumentAttachmentUrl(doc,attachmentName)');
+	},
+
+	verifyDocumentExistence: function(opts_){
 		var opts = $n2.extend({
 				docIds: null
 				,onSuccess: function(info){}
@@ -121,9 +130,9 @@ var DocumentSource = $n2.Class({
 		);
 		
 		opts.onError('Data source does not support the "verifyDocumentExistence" call.');
-	}
+	},
 
-	,updateDocument: function(opts_){
+	updateDocument: function(opts_){
 		var opts = $n2.extend({
 				doc: null
 				,onSuccess: function(doc){}
@@ -133,9 +142,9 @@ var DocumentSource = $n2.Class({
 		);
 		
 		opts.onError('Data source does not support the "updateDocument" call.');
-	}
+	},
 
-	,deleteDocument: function(opts_){
+	deleteDocument: function(opts_){
 		var opts = $n2.extend({
 				doc: null
 				,onSuccess: function(){}
@@ -145,9 +154,9 @@ var DocumentSource = $n2.Class({
 		);
 		
 		opts.onError('Data source does not support the "deleteDocument" call.');
-	}
+	},
 
-	,getLayerDefinitions: function(opts_){
+	getLayerDefinitions: function(opts_){
 		var opts = $n2.extend({
 				onSuccess: function(layerDefinitions){}
 				,onError: function(errorMsg){}
@@ -156,9 +165,9 @@ var DocumentSource = $n2.Class({
 		);
 		
 		opts.onError('Data source does not support the "getLayerDefinitions" call.');
-	}
+	},
 
-	,getDocumentInfoFromIds: function(opts_){
+	getDocumentInfoFromIds: function(opts_){
 		var opts = $n2.extend({
 				docIds: null
 				,onSuccess: function(docInfos){}
@@ -168,9 +177,9 @@ var DocumentSource = $n2.Class({
 		);
 		
 		opts.onError('Data source does not support the "getDocumentInfoFromIds" call.');
-	}
+	},
 
-	,getReferencesFromId: function(opts_){
+	getReferencesFromId: function(opts_){
 		var opts = $n2.extend({
 				docId: null
 				,onSuccess: function(referenceIds){}
@@ -180,9 +189,9 @@ var DocumentSource = $n2.Class({
 		);
 		
 		opts.onError('Data source does not support the "getReferencesFromId" call.');
-	}
+	},
 
-	,getProductFromId: function(opts_){
+	getProductFromId: function(opts_){
 		var opts = $n2.extend({
 				docId: null
 				,onSuccess: function(referenceIds){}
@@ -192,9 +201,9 @@ var DocumentSource = $n2.Class({
 		);
 		
 		opts.onError('Data source does not support the "getProductFromId" call.');
-	}
+	},
 
-	,getDocumentsFromGeographicFilter: function(opts_){
+	getDocumentsFromGeographicFilter: function(opts_){
 		var opts = $n2.extend({
 				docIds: null
 				,layerId: null
@@ -207,9 +216,9 @@ var DocumentSource = $n2.Class({
 		);
 		
 		opts.onError('Data source does not support the "getDocumentsFromGeographicFilter" call.');
-	}
+	},
 
-	,getGeographicBoundingBox: function(opts_){
+	getGeographicBoundingBox: function(opts_){
 		var opts = $n2.extend({
 				layerId: null
 				,bbox: null
@@ -242,7 +251,7 @@ var getDocumentSourceFromDocument = function(opts_) {
 		type: 'documentSourceFromDocument'
 		,doc: opts.doc
 	};
-	this.dispatchService.synchronousCall(opts.dispatchHandle,m);
+	opts.dispatchService.synchronousCall(opts.dispatchHandle,m);
 
 	return m.documentSource;
 };

@@ -208,6 +208,11 @@ function Configure(options_){
 		configuration.atlasDb = configuration.couchServer.getDb({dbUrl:options.atlasDbUrl});
 		configuration.atlasDesign = configuration.atlasDb.getDesignDoc({ddName:options.atlasDesignName});
 		configuration.siteDesign = configuration.atlasDb.getDesignDoc({ddName:options.siteDesignName});
+
+		configuration.directory.attachmentService = new $n2.couchAttachment.AttachmentService({
+			mediaRelativePath: options.mediaUrl
+			,dispatchService: configuration.directory.dispatchService
+		});
 		
 		if( options.submissionDbUrl ){
 			configuration.submissionDb = configuration.couchServer.getDb({dbUrl:options.submissionDbUrl});
@@ -223,6 +228,7 @@ function Configure(options_){
 				,submissionDb: configuration.submissionDb
 				,submissionServerUrl: options.submissionServerUrl
 				,dispatchService: configuration.directory.dispatchService
+				,attachmentService: configuration.directory.attachmentService
 				,isDefaultDocumentSource: true
 			});
 		} else {
@@ -230,6 +236,7 @@ function Configure(options_){
 				id: 'main'
 				,db: configuration.atlasDb
 				,dispatchService: configuration.directory.dispatchService
+				,attachmentService: configuration.directory.attachmentService
 				,isDefaultDocumentSource: true
 			});
 		};
@@ -318,14 +325,8 @@ function Configure(options_){
 			directory: configuration.directory
 		});
 		
-		configuration.directory.attachmentService = new $n2.couchAttachment.AttachmentService({
-			mediaRelativePath: options.mediaUrl
-		});
-		
 		configuration.directory.displayImageSourceFactory = new $n2.couchDisplayBox.DisplayImageSourceFactory({
-			documentSource: configuration.documentSource
-			,attachmentService: configuration.directory.attachmentService
-			,dispatchService: configuration.directory.dispatchService
+			dispatchService: configuration.directory.dispatchService
 		});
 		
 		// Navigation Service

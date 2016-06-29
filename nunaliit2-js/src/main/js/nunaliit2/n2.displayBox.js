@@ -229,8 +229,16 @@ var DisplayImageSourceDoc = $n2.Class({
 			};
 
 			var url = undefined;
+			var originalUrl = undefined;
 			if( docSource ){
-				url = docSource.getDocumentAttachmentUrl(doc, image.attName);
+				var att = docSource.getDocumentAttachment(doc, image.attName);
+				
+				url = att.computeUrl();
+				
+				var originalAtt = att.getOriginalAttachment();
+				if( originalAtt ){
+					originalUrl = originalAtt.computeUrl();
+				};
 			};
 
 			var type = image.att.fileClass;
@@ -243,6 +251,7 @@ var DisplayImageSourceDoc = $n2.Class({
 			info = {
 				index: index
 				,url: url
+				,originalUrl: originalUrl
 				,type: type
 				,isPhotosphere: isPhotoshpere
 				,width: image.width
@@ -876,10 +885,13 @@ var DisplayBox = $n2.Class({
 		
 		
 		// Update Image URL for downloading
+		var imageInfo = this.imageSource.getInfo(this.currentImageIndex);
+		var originalUrl = imageInfo.originalUrl;
+		if( !originalUrl ){
+			originalUrl = imageInfo.url;
+		};
 		var imageDownloadButton = $displayDiv.find('.n2DisplayBoxButtonDownload');
-		imageDownloadButton.attr('href','./db/' + this.imageSource.images[this.currentImageIndex].doc._id + '/' + this.imageSource.images[this.currentImageIndex].attName)
-		
-		
+		imageDownloadButton.attr('href',originalUrl);
 	},
 	
 	_setNavigation: function() {
