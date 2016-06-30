@@ -1804,7 +1804,7 @@
 		,transformList: function(opts_){
 			var opts = $n2.extend({
 				list: null
-				,onCompleted: function(totalCount, skippedCount, okCount, failCount){}
+				,onCompleted: function(totalCount, skippedCount, okCount, failCount, transformedCount, deletedCount){}
 				,onError: reportError
 			},opts_);
 			
@@ -1832,7 +1832,7 @@
 			var opts = $n2.extend({
 				list: null
 				,transformFn: null
-				,onCompleted: function(totalCount, skippedCount, okCount, failCount){}
+				,onCompleted: function(totalCount, skippedCount, okCount, failCount, transformedCount, deletedCount){}
 				,onError: reportError
 			},opts_);
 			
@@ -1861,6 +1861,8 @@
 			var totalCount = docIdsLeft.length;
 			var skippedCount = 0;
 			var okCount = 0;
+			var deletedCount = 0;
+			var transformedCount = 0;
 			var failCount = 0;
 
 			// Create a copy of the configuration so that user
@@ -1877,7 +1879,7 @@
 
 				if(docIdsLeft.length < 1){
 					progressDialog.updateHtmlMessage('<span>100%</span>');
-					opts.onCompleted(totalCount, skippedCount, okCount, failCount);
+					opts.onCompleted(totalCount, skippedCount, okCount, failCount, transformedCount, deletedCount);
 					progressDialog.close();
 				} else {
 					if( totalCount ) {
@@ -1917,8 +1919,16 @@
 
 				opts.transformFn(
 					doc
-					,function(){ // onTransformedFn
-						saveDocument(doc);
+					,function(opts_){ // onTransformedFn
+						var opts = $n2.extend({
+							deleteDocument: false
+						},opts_);
+						
+						if( opts.deleteDocument ){
+							deleteDocument(doc);
+						} else {
+							saveDocument(doc);
+						};
 					}
 					,function(){ // onSkippedFn
 						skippedCount += 1;
@@ -1942,10 +1952,39 @@
 						});
 						log(locStr);
 						okCount += 1;
+						transformedCount += 1;
 						processNext();
 					}
 					,onError: function(errorMsg){ 
 						var locStr = _loc('Failure to save {docId}',{
+							docId: doc._id
+						});
+						reportError(locStr+': '+errorMsg);
+						failCount += 1;
+						processNext();
+					}
+				});
+			};
+			
+			function deleteDocument(doc){
+				if( opCancelled ) {
+					cancel();
+					return;
+				};
+
+				atlasDb.deleteDocument({
+					data: doc
+					,onSuccess: function(docInfo){
+						var locStr = _loc('{docId} deleted',{
+							docId: doc._id
+						});
+						log(locStr);
+						okCount += 1;
+						deletedCount += 1;
+						processNext();
+					}
+					,onError: function(errorMsg){ 
+						var locStr = _loc('Failure to delete {docId}',{
 							docId: doc._id
 						});
 						reportError(locStr+': '+errorMsg);
