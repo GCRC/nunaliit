@@ -35,7 +35,8 @@ POSSIBILITY OF SUCH DAMAGE.
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
-var DH = 'n2.couchRequests';
+var DH = 'n2.couchRequests',
+	MAX_REQUEST_SIZE = 25;
 
 $n2.couchRequests = $n2.Class({
 	options: null
@@ -249,8 +250,24 @@ $n2.couchRequests = $n2.Class({
 
 			// Request the required documents from db
 			if( docIds.length ) {
+				var effectiveDocIds = docIds;
+				if( effectiveDocIds.length > MAX_REQUEST_SIZE ){
+					var extraDocIds = effectiveDocIds.splice(MAX_REQUEST_SIZE);
+					
+					var extraRequests = this.currentRequests.docs;
+					if( !extraRequests ){
+						extraRequests = {};
+						this.currentRequests.docs = extraRequests;
+					};
+					extraDocIds.forEach(function(docId){
+						extraRequests[docId] = requests.docs[docId];
+					});
+					
+					this._schedule();
+				};
+				
 				this.options.documentSource.getDocuments({
-					docIds: docIds
+					docIds: effectiveDocIds
 					,onSuccess: function(docs) {
 						_this._callDocumentListeners(docs, requests, true);
 					}

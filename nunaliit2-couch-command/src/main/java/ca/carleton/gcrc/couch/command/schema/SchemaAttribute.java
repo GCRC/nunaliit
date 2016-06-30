@@ -790,7 +790,7 @@ public class SchemaAttribute {
 						pw.println("\t\t\t\t<span class=\"n2s_choice n2s_localize\" n2-choice=\""+value+"\">"+optLabel+"</span>");
 					}
 
-					pw.println("\t\t\t\t<span class=\"n2s_choiceDefault\">{{.}}</span>");
+					pw.println("\t\t\t\t<span class=\"n2s_choiceDefault\">{{"+id+"}}</span>");
 					
 					pw.println("\t\t\t</div>");
 					pw.println("\t\t\t<div class=\"end\"></div>");
