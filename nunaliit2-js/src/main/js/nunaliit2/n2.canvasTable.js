@@ -43,30 +43,67 @@ var $d = undefined;
 
 //--------------------------------------------------------------------------
 // Helper functions for elements accepted by the table canvas
-function Element(element){
-	element.getInfo = Element.getInfo;
-	element.getValue = Element.getValue;
-	element.getSortValue = Element.getSortValue;
+function Cell(cell){
+	cell.getValue = Cell.getValue;
+	cell.getSortValue = Cell.getSortValue;
+	cell.getExportValue = Cell.getExportValue;
 };
-
-Element.getInfo = function(name){
-	var info = this.cells ? this.cells[name] : undefined;
-	return info;
+Cell.getValue = function(element){
+	if( typeof this.value === 'function' ){
+		return this.value(this, element);
+	}
+	return this.value;
 };
-
-Element.getValue = function(name){
-	var info = this.getInfo(name);
-	var value = info ? info.value : undefined;
-	return value;
-};
-
-Element.getSortValue = function(name){
-	var info = this.getInfo(name);
-	var sortValue = info ? info.sort : undefined;
+Cell.getSortValue = function(element){
+	var sortValue = this.sortValue;
 	if( typeof sortValue === 'undefined' ){
-		sortValue = this.getValue(name);
+		sortValue = this.getValue(element);
 	};
 	return sortValue;
+};
+Cell.getExportValue = function(element){
+	var exportValue = undefined;
+	if( typeof this.exportValue === 'function' ){
+		exportValue = this.exportValue(this, element);
+	} else if(  typeof this.exportValue !== 'undefined'  ){
+		exportValue = this.exportValue;
+	} else {
+		exportValue = this.getValue(element);
+	};
+	return exportValue;
+};
+
+function Element(element){
+	element.getCell = Element.getCell;
+	element.getValue = Element.getValue;
+	element.getSortValue = Element.getSortValue;
+	element.getExportValue = Element.getExportValue;
+	
+	if( element.cells ){
+		for(var name in element.cells){
+			var cell = element.cells[name];
+			Cell(cell);
+		};
+	};
+};
+Element.getCell = function(name){
+	var cell = this.cells ? this.cells[name] : undefined;
+	return cell;
+};
+Element.getValue = function(name){
+	var cell = this.getCell(name);
+	var value = cell ? cell.getValue(this) : undefined;
+	return value;
+};
+Element.getSortValue = function(name){
+	var cell = this.getCell(name);
+	var sortValue = cell ? cell.getSortValue(this) : undefined;
+	return sortValue;
+};
+Element.getExportValue = function(name){
+	var cell = this.getCell(name);
+	var exportValue = cell ? cell.getExportValue(this) : undefined;
+	return exportValue;
 };
 
 // --------------------------------------------------------------------------
@@ -81,16 +118,54 @@ Element.getSortValue = function(name){
 	cells: {
 		"heading1": {
 			value: "value1"
+			,sortValue: "value1"
+			,exportValue: "value1"
+			,type: "string"
 		}
 		,"heading2": {
-			value: "value2"
+			value: "123456789"
+			,display: function($td, cell, element){ ... }
+			,sortValue: "ABC"
+			,exportValue: "ABC"
+			,type: "reference"
 		}
 	}
 }
 
-Here are attributes added by the canvas:
+The attribute for each cell is described here:
+- value: Required. This is the value of the cell. It can be a string, a number, a boolean, etc.
+         If it is a function, it will be called with the following signature: function(cell, element)
+- sortValue: Optional. Value to be used when sorting the column based on this value. If not specified,
+             the value is used.
+- exportValue: Optional. Value to be used when table is exported. If not specified, the value is
+               used. If this is a function, the following signature is used: function(cell, element)
+- type: Optional. Type of the value. If not specified, it assumed to be 'string'. Supported types
+        are 'string' and 'reference'.
+- display: Optional. Function to be used when displaying this value to the user. This replaces the
+           default behaviour and allows the element generator to supply any display function.
+           When used, the following signature is used: function($td, cell, element) 
+
+
+One element can be provided to specify the columns and the order in which they should be
+displayed. This element has the following format:
+
 {
+	isHeader: true,
+	columns: [
+		{
+			name: 'heading1'
+			,label: 'First'
+		}
+		,{
+			name: 'heading2'
+			,label: {
+				nunaliit_type: 'localized'
+				,en: 'Second'
+			}
+		}
+	]
 }
+
 
 */
 var TableCanvas = $n2.Class({
@@ -102,6 +177,8 @@ var TableCanvas = $n2.Class({
 	elementGenerator: null,
 
 	dispatchService: null,
+
+	showService: null,
 	
 	elementsById: null,
 	
@@ -120,6 +197,7 @@ var TableCanvas = $n2.Class({
 			,elementGenerator: null
 			,styleRules: null
 			,dispatchService: null
+			,showService: null
 			,onSuccess: function(){}
 			,onError: function(err){}
 		},opts_);
@@ -130,6 +208,7 @@ var TableCanvas = $n2.Class({
 		this.sourceModelId = opts.sourceModelId;
 		this.elementGenerator = opts.elementGenerator;
 		this.dispatchService = opts.dispatchService;
+		this.showService = opts.showService;
 		
 		this.elementsById = {};
 		this.sortedElements = [];
@@ -299,15 +378,18 @@ var TableCanvas = $n2.Class({
 
 			_this.headings.forEach(function(heading){
 				var name = heading.name;
-				var value = element.getValue(name);
 				var $td = $('<td>')
 					.appendTo($tr);
+				var cell = element.getCell(name);
 				
-				if( typeof value !== 'undefined' ){
+				if( typeof cell.display === 'function' ){
+					cell.display($td, cell, element);
+
+				} else if( typeof cell.display === 'string' ){
 					var $a = $('<a>')
 						.attr('href','#'+element.id)
 						.attr('nunaliit-element',element.id)
-						.text(value)
+						.text(cell.display)
 						.appendTo($td)
 						.click(function(){
 							var $a = $(this);
@@ -324,6 +406,42 @@ var TableCanvas = $n2.Class({
 							_this._mouseOut($a);
 							return false;
 						});
+					
+				} else {
+					var value = element.getValue(name);
+
+					if( typeof value !== 'undefined' ){
+						if( 'reference' === cell.type ){
+							var $a = $('<a>')
+								.addClass('n2s_referenceLink')
+								.attr('nunaliit-document',value)
+								.text(value)
+								.appendTo($td);
+							_this.showService.fixElementAndChildren($elem);
+							
+						} else {
+							var $a = $('<a>')
+								.attr('href','#'+element.id)
+								.attr('nunaliit-element',element.id)
+								.text(value)
+								.appendTo($td)
+								.click(function(){
+									var $a = $(this);
+									_this._selectedLink($a);
+									return false;
+								})
+								.mouseover(function(){
+									var $a = $(this);
+									_this._mouseOver($a);
+									return false;
+								})
+								.mouseout(function(){
+									var $a = $(this);
+									_this._mouseOut($a);
+									return false;
+								});
+						};
+					};
 				};
 			});
 		});
@@ -519,10 +637,7 @@ var TableCanvas = $n2.Class({
 				_this.headings.forEach(function(heading){
 					var name = heading.name;
 					
-					var value = undefined;
-					if( element.cells && element.cells[name] ){
-						value = element.cells[name].value;
-					};
+					var value = element.getExportValue(name);
 
 					line.push(value);
 				});
@@ -702,6 +817,7 @@ function HandleCanvasDisplayRequest(m){
 		if( m.config ){
 			if( m.config.directory ){
 				options.dispatchService = m.config.directory.dispatchService;
+				options.showService = m.config.directory.showService;
 			};
 		};
 		
