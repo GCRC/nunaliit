@@ -1206,6 +1206,97 @@
 	SearchFilter.availableSearchFilters.push(new SearchFilterByImportProfile());
 
 	// **********************************************************************
+	var SearchFilterByView = $n2.Class(SearchFilter, {
+
+		initialize: function(){
+			SearchFilter.prototype.initialize.apply(this);
+			this.name = _loc('Select documents reported in a view');
+		}
+	
+		,printOptions: function($parent){
+			var $options = $('<div>'
+				+_loc('View')+': <br/><select class="viewList"></select>'
+				+'</div>');
+			
+			$parent.append( $options );
+			
+			atlasDb.getAllDocuments({
+				startkey: '_design'
+				,endkey: '_design~'
+				,onSuccess: function(docs){
+					var $sel = $options.find('select.viewList');
+					docs.forEach(function(designDoc){
+						var docId = designDoc._id;
+						var names = docId.split('/');
+						if( names.length > 1 ){
+							var designName = names[1];
+							if( designDoc && designDoc.views ){
+								for(var viewName in designDoc.views){
+									var label = designName + '/' + viewName;
+									$('<option></option>')
+										.val(label)
+										.text(label)
+										.appendTo($sel);
+								};
+							};
+						};
+					});
+				}
+				,onError: function(err){
+					alert(_loc('Unable to obtain list of views')+': '+err);
+					reportError(_loc('Unable to obtain list of views')+': '+err);
+				}
+			});
+		}
+
+		,_retrieveDocIds: function(opts_){
+			var opts = $n2.extend({
+				options: null
+				,progressTitle: _loc('List Creation Progress')
+				,onSuccess: function(docIds,name){}
+				,onError: reportError
+			},opts_);
+			
+			var $i = opts.options.find('select.viewList');
+			var label = $i.val();
+			if( !label ) {
+				alert(_loc('Must select a view'));
+			} else {
+				var names = label.split('/');
+				var designName = names[0];
+				var viewName = names[1];
+				var design = atlasDb.getDesignDoc({ddName:designName});
+				design.queryView({
+					viewName: viewName
+					,onSuccess: function(rows){
+						var docIds = [];
+						var docIdMap = {};
+						for(var i=0,e=rows.length; i<e; ++i){
+							var row = rows[i];
+							var docId = row.id;
+							if( !docIdMap[docId] ){
+								docIds.push(docId);
+								docIdMap[docId] = true;
+							};
+						};
+						var locStr = _loc('Documents from view {label}',{
+							label: label
+						});
+
+						opts.onSuccess(docIds,locStr);
+					}
+					,onError: function(err){
+						alert(_loc('Problem obtaining documents from view')+': '+err);
+						opts.onError(err);
+					}
+				});
+			};
+		}
+	});
+
+	SearchFilter.availableSearchFilters.push(new SearchFilterByView());
+
+	// **********************************************************************
 	var SearchFilterByDocumentReference = $n2.Class(SearchFilter, {
 
 		initialize: function(){
@@ -2720,13 +2811,17 @@
 
 				if(docIdsLeft.length < 1){
 					progressDialog.updateHtmlMessage('<span>100%</span>');
-					progressDialog.close();
 
 					// Call one last time, without a document
+					my_scriptConfig.continueOnExit = true;
+					my_scriptConfig.onContinue = onFinish;
 					func({
 						config: my_scriptConfig
 						,logger: logger
 					});
+					if( my_scriptConfig.continueOnExit ){
+						onFinish();
+					};
 					
 					
 				} else {
@@ -2764,12 +2859,25 @@
 					return;
 				};
 
+				my_scriptConfig.continueOnExit = true;
+				my_scriptConfig.onContinue = onContinue;
 				func({
 					doc: doc
 					,config: my_scriptConfig
 					,logger: logger
 				});
 				
+				if( my_scriptConfig.continueOnExit ){
+					onContinue();
+				};
+				
+			};
+
+			function onFinish(){
+				progressDialog.close();
+			};
+
+			function onContinue(){
 				processedCount += 1;
 
 				processNext();

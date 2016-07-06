@@ -1404,22 +1404,44 @@ var Database = $n2.Class({
 
 	,getAllDocuments: function(opts_) {
 		var opts = $.extend(true, {
-				onSuccess: function(docs){}
+				startkey: null
+				,endkey: null
+				,onSuccess: function(docs){}
 				,onError: function(errorMsg){ $n2.reportErrorForced(errorMsg); }
 			}
 			,opts_
 		);
+
+		if( JSON && JSON.stringify ) {
+			// OK
+		} else {
+			opts.onError('json.js is required to query a view');
+		};
 		
-		var viewUrl = this.dbUrl + '_all_docs?include_docs=true';
+		var data = {
+			include_docs: true
+		};
+		for(var k in opts) {
+			if( null === opts[k] ){
+				// Ignore
+
+			} else if( k === 'startkey' 
+					|| k === 'endkey' ) { 
+				data[k] = JSON.stringify( opts[k] );
+			};
+		};
+		
+		var viewUrl = this.dbUrl + '_all_docs';
 		
 		if( badProxy ){
-			viewUrl += '&r=' + Date.now();
+			data.r = Date.now();
 		};
 		
 		$.ajax({
 	    	url: viewUrl
 	    	,type: 'GET'
 	    	,async: true
+	    	,data: data
 	    	,dataType: 'json'
 	    	,success: function(queryResult) {
 	    		if( queryResult.rows ) {
@@ -1428,7 +1450,7 @@ var Database = $n2.Class({
 	    				var row = queryResult.rows[i];
 	    				if( row && row.doc ) {
 	    					docs.push(row.doc);
-	    				}
+	    				};
 	    			};
 	    			opts.onSuccess(docs);
 	    		} else {
@@ -1545,12 +1567,6 @@ var UserDb = $n2.Class(Database,{
 
 		var userDbUrl = this.getUrl();
 
-		// Check that sha1 is installed
-		if( typeof(hex_sha1) !== 'function' ) {
-			opts.onError('SHA-1 must be installed');
-			return;
-		};
-
 		// Check that JSON is installed
 		if( !JSON || typeof(JSON.stringify) !== 'function' ) {
 			opts.onError('json.js is required to create database documents');
@@ -1564,7 +1580,7 @@ var UserDb = $n2.Class(Database,{
 	    function onUuid(uuid) {
 			var id = 'org.couchdb.user:'+fixUserName(opts.name);
 			var salt = uuid;
-			var password_sha = hex_sha1(opts.password + salt);
+			var password_sha = $n2.crypto.hex_sha1(opts.password + salt);
 		
 			// Create user document
 			var doc = {};
@@ -1651,12 +1667,6 @@ var UserDb = $n2.Class(Database,{
 
 		var userDbUrl = this.getUrl();
 
-		// Check that sha1 is installed
-		if( typeof(hex_sha1) !== 'function' ) {
-			opts.onError('SHA-1 must be installed');
-			return;
-		};
-
 		if( !JSON || typeof(JSON.stringify) !== 'function' ) {
 			opts.onError('json.js is required to set user password');
 			return;
@@ -1706,12 +1716,6 @@ var UserDb = $n2.Class(Database,{
 			,options_
 		);
 
-		// Check that sha1 is installed
-		if( typeof(hex_sha1) !== 'function' ) {
-			opts.onError('SHA-1 must be installed');
-			return;
-		};
-
 		if( !JSON || typeof(JSON.stringify) !== 'function' ) {
 			opts.onError('json.js is required to set user password');
 			return;
@@ -1733,7 +1737,7 @@ var UserDb = $n2.Class(Database,{
 	    
 	    function onUuid(uuid) {
 			var salt = uuid;
-			var password_sha = hex_sha1(opts.password + salt);
+			var password_sha = $n2.crypto.hex_sha1(opts.password + salt);
 			
 			// Remove unwanted fields
 			if( opts.userDoc.password ) delete opts.userDoc.password;

@@ -90,9 +90,11 @@ var Export = $n2.Class('Export',{
 			onError('docIds must be provided when exporting by docIds');
 		};
 		
-		var url = this.serverUrl + 'export';
+		var url = this.serverUrl + 'export/definition/';
 		if( opts.fileName ){
-			url = url + '/' + opts.fileName;
+			url = url + opts.fileName;
+		} else {
+			url = url + 'export';
 		};
 		var $form = $('<form>')
 			.attr('action',url)
@@ -220,9 +222,11 @@ var Export = $n2.Class('Export',{
 			,onError: $n2.reportError
 		},opts_);
 		
-		var url = this.serverUrl + 'export';
+		var url = this.serverUrl + 'export/definition/';
 		if( opts.fileName ){
-			url = url + '/' + opts.fileName;
+			url = url + opts.fileName;
+		} else {
+			url = url + 'export';
 		};
 		var $form = $('<form>')
 			.attr('action',url)
@@ -333,7 +337,7 @@ var Export = $n2.Class('Export',{
 			,onError: $n2.reportError
 		},opts_);
 		
-		var url = this.serverUrl + 'export';
+		var url = this.serverUrl + 'export/definition/export';
 
 		var data = {};
 		if( opts.docIds ){
