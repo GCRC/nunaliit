@@ -8,6 +8,7 @@
 
 .n2schema_array_item {
 	position: relative;
+	min-height: 40px;
 }
 
 .n2schema_array_add, .n2schema_array_item_delete, .n2schema_array_item_down {
@@ -56,12 +57,11 @@
 }
 
 .n2schema_array_item_wrapper {
-	position: absolute:
+	position: absolute;
 	left: 0px;
 	right: 16px;
 	top: 0px;
 	bottom: 0px;
-	min-height: 40px;
 }
 
 .n2schema_referenceDelete {

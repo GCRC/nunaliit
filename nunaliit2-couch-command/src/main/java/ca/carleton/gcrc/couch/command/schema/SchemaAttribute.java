@@ -725,6 +725,7 @@ public class SchemaAttribute {
 			} else if( "array".equals(type) ){
 				if( null != id ){
 					pw.println("{{#"+schemaName+"}}");
+					pw.println("\t{{#if "+id+"}}");
 
 					pw.println("\t<div class=\""+schemaName+"_"+id+"\">");
 
@@ -766,7 +767,7 @@ public class SchemaAttribute {
 					
 					pw.println("\t</div>");
 					
-					
+					pw.println("\t{{/if}}");
 					pw.println("{{/"+schemaName+"}}");
 				}
 
