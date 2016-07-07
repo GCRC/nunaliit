@@ -3,6 +3,8 @@ package ca.carleton.gcrc.couch.export;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.Date;
 import java.util.List;
 import java.util.Vector;
@@ -14,6 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.json.JSONTokener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +31,7 @@ import ca.carleton.gcrc.couch.export.impl.DocumentRetrievalSchema;
 import ca.carleton.gcrc.couch.export.impl.ExportFormatCSV;
 import ca.carleton.gcrc.couch.export.impl.ExportFormatGeoJson;
 import ca.carleton.gcrc.couch.export.impl.SchemaCacheCouchDb;
+import ca.carleton.gcrc.couch.export.records.JSONArrayReaderIterator;
 import ca.carleton.gcrc.json.servlet.JsonServlet;
 
 @SuppressWarnings("serial")
@@ -306,7 +310,24 @@ public class ExportServlet extends JsonServlet {
 				if( null == format ) {
 					throw new Exception("Unknown format");
 				}
-				logger.debug("Export Format: "+format.name());
+				logger.error("Export Format: "+format.name());
+			}
+			
+			// Parse filter
+			Filter filter = null;
+			{
+				String filterStr = request.getParameter("filter");
+				if( null != filterStr ) {
+					for(Filter f : Filter.values()){
+						if( f.matches(filterStr) ){
+							filter = f;
+						}
+					}
+				}
+				
+				if( null != filter ) {
+					logger.error("Export Filter: "+filter.name());
+				}
 			}
 			
 			// Parse contentType
@@ -320,21 +341,30 @@ public class ExportServlet extends JsonServlet {
 				}
 				
 				if( null != contentType ) {
-					logger.debug("Content-Type: "+contentType);
+					logger.error("Content-Type: "+contentType);
 				}
 			}
 			
-			// Parse records
-			List<String> records = new Vector<String>();
+			// Parse data
+			String data = null;
 			{
-				String[] recs = request.getParameterValues("record");
-				if( null != recs ) {
-					for(String rec : recs){
-						records.add(rec);
-					}
+				String[] arr = request.getParameterValues("data");
+				if( arr.length != 1 ) {
+					throw new Exception("There must be exactly one 'data' parameter");
 				}
-				logger.debug("Number of records: "+records.size());
+				
+				data = arr[0];
+
+				logger.error("Data: "+data);
 			}
+			
+			StringReader reader = new StringReader(data);
+			JSONArrayReaderIterator it = new JSONArrayReaderIterator(reader);
+			while( it.hasNext() ){
+				Object value = it.next();
+				logger.error("Record: "+value.getClass().getName());
+			}
+			
 			
 			// Build doc retrieval based on method
 //			DocumentRetrieval docRetrieval = null;
@@ -472,6 +502,8 @@ public class ExportServlet extends JsonServlet {
 			PrintWriter pw = new PrintWriter(osw);
 			
 			pw.println("<html><head><title>Export Test Page</title></head><body>");
+
+			pw.println("<h1>Export using Schema Definition</h1>");
 			pw.println("<form action=\"definition/export\" method=\"POST\">");
 			
 			pw.println("<label for=\"format\">Format: </label>");
@@ -503,8 +535,37 @@ public class ExportServlet extends JsonServlet {
 			pw.println("<br/>");
 			
 			pw.println("<input type=\"submit\" value=\"OK\"/>");
-			
 			pw.println("</form>");
+
+			pw.println("<h1>Export using Records</h1>");
+			pw.println("<form action=\"records/export\" method=\"POST\">");
+			
+			pw.println("<label for=\"format\">Format: </label>");
+			pw.println("<select id=\"format\" name=\"format\">");
+			pw.println("<option value=\"geojson\">GEOJson</option>");
+			pw.println("<option value=\"invalid\">Invalid Format</option>");
+			pw.println("</select>");
+			pw.println("<br/>");
+			
+			pw.println("<label for=\"filter\">Filter: </label>");
+			pw.println("<select id=\"filter\" name=\"filter\">");
+			pw.println("<option value=\"all\">All Documents</option>");
+			pw.println("<option value=\"points\">Only Point Geometries</option>");
+			pw.println("<option value=\"lines\">Only Line Geometries</option>");
+			pw.println("<option value=\"polygons\">Only Polygon Geometries</option>");
+			pw.println("</select>");
+			pw.println("<br/>");
+			
+			pw.println("<label for=\"rec1\">Record: </label>");
+			pw.println("<input id=\"rec1\" type=\"text\" name=\"record\" value=\"&quot;_id&quot;,&quot;_geometry&quot;,&quot;value&quot;\"/>");
+			pw.println("<br/>");
+			pw.println("<label for=\"rec2\">Record: </label>");
+			pw.println("<input id=\"rec2\" type=\"text\" name=\"record\" value=\"&quot;123&quot;,&quot;456&quot;,&quot;abc&quot;\"/>");
+			pw.println("<br/>");
+			
+			pw.println("<input type=\"submit\" value=\"OK\"/>");
+			pw.println("</form>");
+
 			pw.println("</body></html>");
 			
 			osw.flush();

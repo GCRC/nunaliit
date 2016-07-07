@@ -75,6 +75,85 @@ var Export = $n2.Class('Export',{
 		});
 	},
 	
+	exportByRecords: function(opts_){
+		var opts = $n2.extend({
+			records: null
+			,targetWindow: null
+			,contentType: null
+			,fileName: null
+			,format: null
+			,onError: $n2.reportError
+		},opts_);
+		
+		if( !$n2.isArray(opts.records) ) {
+			throw new Error('records must be provided as an array when exporting by records');
+		};
+		
+		var url = this.serverUrl + 'records/';
+		if( opts.fileName ){
+			url = url + opts.fileName;
+		} else {
+			url = url + 'export';
+		};
+		var $form = $('<form>')
+			.attr('action',url)
+			.attr('method','POST')
+			.css({
+				display: 'none'
+				,visibility: 'hidden'
+			});
+
+		// Target window
+		if( opts.targetWindow ){
+			$form.attr('target',opts.targetWindow);
+		};
+		
+		if( opts.contentType ){
+			$('<input>')
+				.attr('type','hidden')
+				.attr('name','contentType')
+				.val(opts.contentType)
+				.appendTo($form);
+		};
+
+		if( opts.filter ){
+			$('<input>')
+				.attr('type','hidden')
+				.attr('name','filter')
+				.val(opts.filter)
+				.appendTo($form);
+		} else {
+			$('<input>')
+				.attr('type','hidden')
+				.attr('name','filter')
+				.val('all')
+				.appendTo($form);
+		};
+
+		if( opts.format ){
+			$('<input>')
+				.attr('type','hidden')
+				.attr('name','format')
+				.val(opts.format)
+				.appendTo($form);
+		} else {
+			$('<input>')
+				.attr('type','hidden')
+				.attr('name','format')
+				.val('geojson')
+				.appendTo($form);
+		};
+		
+		// Data
+		$('<input type="hidden" name="data"></input>')
+			.val( JSON.stringify(opts.records) )
+			.appendTo($form);
+
+		$('body').append($form);
+		
+		$form.submit();
+	},
+	
 	exportByDocIds: function(opts_){
 		var opts = $n2.extend({
 			docIds: null
