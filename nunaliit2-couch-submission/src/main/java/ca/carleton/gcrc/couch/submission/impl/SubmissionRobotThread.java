@@ -43,6 +43,7 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 	private String adminRole = "administrator";
 	private String vetterRole = "vetter";
 	private int noWorkDelay = DELAY_NO_WORK_POLLING;
+	private String atlasName = null;
 	
 	public SubmissionRobotThread(SubmissionRobotSettings settings) throws Exception {
 		this.submissionDbDesignDocument = settings.getSubmissionDesignDocument();
@@ -51,6 +52,7 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 		this.mailNotifier = settings.getMailNotifier();
 		
 		if( null != settings.getAtlasName() ){
+			atlasName = settings.getAtlasName();
 			adminRole = settings.getAtlasName() + "_administrator";
 			vetterRole = settings.getAtlasName() + "_vetter";
 		}
@@ -248,6 +250,12 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 			}
 		}
 		
+		JSONObject submittedDoc = submissionInfo.optJSONObject("submitted_doc");
+		JSONArray nunaliitLayers = null;
+		if( null != submittedDoc ){
+			nunaliitLayers = submittedDoc.optJSONArray("nunaliit_layers");
+		}
+
 		// Check if submission should be automatically approved
 		boolean approved = false;
 		for(String role : roles){
@@ -267,6 +275,39 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 				approved = true;
 				break;
 			}
+		}
+		
+		// Check if all layer roles are satisfied
+		if( !approved ){
+			boolean atLeastOneLayer = false;
+			boolean allLayerRoles = true;
+			
+			if( null != nunaliitLayers ){
+				for(int i=0;i<nunaliitLayers.length(); ++i){
+					String layerId = nunaliitLayers.optString(i);
+					if( null != layerId ){
+						if( "public".equals(layerId) ){
+							// Public layer, ignore
+						} else if( layerId.startsWith("public_") ){
+							// Public layer, ignore
+						} else {
+							atLeastOneLayer = true;
+							
+							if( rolesHaveAccessToLayerId(roles, layerId) ){
+								// OK
+							} else {
+								allLayerRoles = false;
+							}
+						}
+					}
+				}
+			}
+
+			// If the document is on a controlled layer and the user
+			// has access to all those layers, the we can automatically approve
+			if( atLeastOneLayer && allLayerRoles ){
+				approved = true;
+			};
 		}
 
 		if( approved ) {
@@ -469,5 +510,31 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 			docIdsToSkip.remove(docId);
 			this.notifyAll();
 		}
+	}
+	
+	private boolean rolesHaveAccessToLayerId(List<String> roles, String layerId){
+		boolean haveAccess = false;
+		
+		// Check global roles
+		{
+			String globalRole = "layer_" + layerId;
+			for(String role : roles){
+				if( globalRole.equals(role) ){
+					haveAccess = true;
+				}
+			}
+		}
+		
+		// Check atlas role
+		if( !haveAccess && null != atlasName ){
+			String atlasRole = atlasName + "_layer_" + layerId;
+			for(String role : roles){
+				if( atlasRole.equals(role) ){
+					haveAccess = true;
+				}
+			}
+		};
+		
+		return haveAccess;
 	}
 }
