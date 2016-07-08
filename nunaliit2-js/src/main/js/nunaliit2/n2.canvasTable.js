@@ -291,6 +291,14 @@ var TableCanvas = $n2.Class({
 				.appendTo($elem);
 		};
  	},
+ 		
+	_backgroundClicked: function(){
+		if( this.dispatchService ){
+			this.dispatchService.send(DH,{
+				type: 'userUnselect'
+			});
+		};
+	},
 
  	_elementsChanged: function(addedElements, updatedElements, removedElements){
  		var _this = this;
