@@ -18,6 +18,10 @@ public class GeometryCollection extends GeometryAbstract implements Geometry {
 		this.geometries = geometries;
 	}
 	
+	public int size(){
+		return geometries.size();
+	}
+	
 	public List<Geometry> getGeometries(){
 		return geometries;
 	}

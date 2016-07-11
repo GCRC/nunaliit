@@ -14,9 +14,17 @@ import ca.carleton.gcrc.couch.app.Document;
 import ca.carleton.gcrc.couch.app.impl.DocumentCouchDb;
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.export.ExportFormat;
+import ca.carleton.gcrc.couch.export.ExportUtils.Filter;
 import ca.carleton.gcrc.couch.utils.NunaliitDocument;
 import ca.carleton.gcrc.couch.utils.NunaliitGeometry;
 import ca.carleton.gcrc.geom.Geometry;
+import ca.carleton.gcrc.geom.GeometryCollection;
+import ca.carleton.gcrc.geom.LineString;
+import ca.carleton.gcrc.geom.MultiLineString;
+import ca.carleton.gcrc.geom.MultiPoint;
+import ca.carleton.gcrc.geom.MultiPolygon;
+import ca.carleton.gcrc.geom.Point;
+import ca.carleton.gcrc.geom.Polygon;
 import ca.carleton.gcrc.geom.geojson.GeoJsonGeometryWriter;
 import ca.carleton.gcrc.geom.wkt.WktParser;
 import ca.carleton.gcrc.json.JSONSupport;
@@ -27,12 +35,21 @@ public class ExportRecordsGeoJson implements ExportFormat {
 
 	private CouchDb couchDb;
 	private JSONArrayReaderIterator recordReader;
+	private Filter filter = Filter.ALL;
 	
 	public ExportRecordsGeoJson(CouchDb couchDb, JSONArrayReaderIterator recordReader){
 		this.couchDb = couchDb;
 		this.recordReader = recordReader;
 	}
 	
+	public Filter getFilter() {
+		return filter;
+	}
+
+	public void setFilter(Filter filter) {
+		this.filter = filter;
+	}
+
 	@Override
 	public String getMimeType() {
 		return "application/json";
@@ -154,10 +171,101 @@ public class ExportRecordsGeoJson implements ExportFormat {
 					geometry = wktParser.parseWkt(wkt); 
 				}
 			}
+			
+			if( null != geometry ){
+				geometry = filterGeometry(geometry);
+			}
 
 			return geometry;
 		} catch (Exception e) {
 			throw new Exception("Error while fetching original geometry for "+geomId,e);
+		}
+	}
+	
+	private Geometry filterGeometry(Geometry geometry){
+		Geometry filteredGeometry = null;
+		
+		if( Filter.ALL == filter ){
+			filteredGeometry = geometry;
+
+		} else if( Filter.POINTS == filter ){
+			if( geometry instanceof Point ){
+				filteredGeometry = geometry;
+			} else if( geometry instanceof MultiPoint ){
+				filteredGeometry = geometry;
+			} else if(  geometry instanceof GeometryCollection ){
+				GeometryCollection collection = new GeometryCollection();
+				accumulateFilteredGeometries(collection, (GeometryCollection)geometry);
+				if( collection.size() > 0 ){
+					geometry = collection;
+				}
+			}
+
+		} else if( Filter.LINESTRINGS == filter ){
+			if( geometry instanceof LineString ){
+				filteredGeometry = geometry;
+			} else if( geometry instanceof MultiLineString ){
+				filteredGeometry = geometry;
+			} else if(  geometry instanceof GeometryCollection ){
+				GeometryCollection collection = new GeometryCollection();
+				accumulateFilteredGeometries(collection, (GeometryCollection)geometry);
+				if( collection.size() > 0 ){
+					geometry = collection;
+				}
+			}
+
+		} else if( Filter.POLYGONS == filter ){
+			if( geometry instanceof Polygon ){
+				filteredGeometry = geometry;
+			} else if( geometry instanceof MultiPolygon ){
+				filteredGeometry = geometry;
+			} else if(  geometry instanceof GeometryCollection ){
+				GeometryCollection collection = new GeometryCollection();
+				accumulateFilteredGeometries(collection, (GeometryCollection)geometry);
+				if( collection.size() > 0 ){
+					geometry = collection;
+				}
+			}
+		}
+		
+		return filteredGeometry;
+	}
+
+	private void accumulateFilteredGeometries(
+			GeometryCollection out,
+			GeometryCollection in
+			) {
+		for(Geometry geometry : in.getGeometries()){
+			if( Filter.ALL == filter ){
+				out.addGeometry(geometry);
+
+			} else if( Filter.POINTS == filter ){
+				if( geometry instanceof Point ){
+					out.addGeometry(geometry);
+				} else if( geometry instanceof MultiPoint ){
+					out.addGeometry(geometry);
+				} else if(  geometry instanceof GeometryCollection ){
+					accumulateFilteredGeometries(out, (GeometryCollection)geometry);
+				}
+
+			} else if( Filter.LINESTRINGS == filter ){
+				if( geometry instanceof LineString ){
+					out.addGeometry(geometry);
+				} else if( geometry instanceof MultiLineString ){
+					out.addGeometry(geometry);
+				} else if(  geometry instanceof GeometryCollection ){
+					accumulateFilteredGeometries(out, (GeometryCollection)geometry);
+				}
+
+			} else if( Filter.POLYGONS == filter ){
+				if( geometry instanceof Polygon ){
+					out.addGeometry(geometry);
+				} else if( geometry instanceof MultiPolygon ){
+					out.addGeometry(geometry);
+				} else if(  geometry instanceof GeometryCollection ){
+					accumulateFilteredGeometries(out, (GeometryCollection)geometry);
+				}
+			}
 		}
 	}
 }

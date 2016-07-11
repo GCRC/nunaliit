@@ -353,9 +353,9 @@ public class ExportServlet extends JsonServlet {
 
 			    } else if( "data".equals(name) ){
 			    	// Start export. Item "data" should be last item in form
-					logger.error("Export Format: "+format.name());
-					logger.error("Filter: "+filter);
-					logger.error("Content-Type: "+contentType);
+					logger.debug("Export Format: "+format.name());
+					logger.debug("Filter: "+filter);
+					logger.debug("Content-Type: "+contentType);
 					
 					String encoding = request.getCharacterEncoding();
 					if( null == encoding ){
@@ -368,7 +368,11 @@ public class ExportServlet extends JsonServlet {
 					// Create export process
 					ExportFormat exportProcess = null;
 					if( Format.GEOJSON == format ){
-						exportProcess = new ExportRecordsGeoJson(configuration.getCouchDb(),recordsReader);
+						ExportRecordsGeoJson exportRecordsGeoJson = new ExportRecordsGeoJson(configuration.getCouchDb(),recordsReader);
+						if( null != filter ){
+							exportRecordsGeoJson.setFilter(filter);
+						}
+						exportProcess = exportRecordsGeoJson;
 					} else {
 						throw new Exception("Unsupported format: "+format.getLabel());
 					}
