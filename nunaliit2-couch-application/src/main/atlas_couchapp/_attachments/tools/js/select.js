@@ -2475,6 +2475,14 @@
 			});
 		
 		$('<button>')
+			.text( _loc('Export by Script') )
+			.appendTo($h)
+			.click(function(){
+				exportListByScript(list);
+				return false;
+			});
+		
+		$('<button>')
 			.text( _loc('Re-Submit Geometries') )
 			.appendTo($h)
 			.click(function(){
@@ -3050,6 +3058,302 @@
 					alert(_loc('Error during export')+': '+err);
 				}
 			});
+		};
+	};
+	
+	// -----------------------------------------------------------------
+	function exportListByScript(list){
+
+		// Check if service is available
+		if( !exportService ) {
+			alert( _loc('Export service is not configured') );
+		} else {
+			exportService.checkAvailable({
+				onAvailable: getExportSettings
+				,onNotAvailable: function(){
+					alert( _loc('Export service is not available') );
+				}
+			});
+		};
+		
+		function getExportSettings(){
+			var dialogId = $n2.getUniqueId();
+			var $dialog = $('<div id="'+dialogId+'"></div>');
+
+			$('<div>'+_loc('Exporting')+' <span></span></div>')
+				.find('span').text(list.print()).end()
+				.appendTo($dialog);
+
+			// Filter
+			var filterId = $n2.getUniqueId();
+			var $filterDiv = $('<div>')
+				.appendTo($dialog);
+			$('<label>')
+				.text( _loc('Filter:') )
+				.attr('for',filterId)
+				.appendTo($filterDiv);
+			var $filterSelect = $('<select>')
+				.attr('id',filterId)
+				.appendTo($filterDiv);
+			$('<option value="all"></options>')
+				.text( _loc('All Geometries') )
+				.appendTo($filterSelect);
+			$('<option value="points"></options>')
+				.text( _loc('Only Point Geometries') )
+				.appendTo($filterSelect);
+			$('<option value="linestrings"></options>')
+				.text( _loc('Only LineString Geometries') )
+				.appendTo($filterSelect);
+			$('<option value="polygons"></options>')
+				.text( _loc('Only Polygon Geometries') )
+				.appendTo($filterSelect);
+
+			// Format
+			var formatId = $n2.getUniqueId();
+			var $formatDiv = $('<div>')
+				.appendTo($dialog);
+			$('<label>')
+				.text( _loc('Format:') )
+				.attr('for',formatId)
+				.appendTo($formatDiv);
+			var $formatSelect = $('<select>')
+				.attr('id',formatId)
+				.appendTo($formatDiv)
+				.change(formatChanged);
+			$('<option value="geojson"></options>')
+				.text( _loc('geojson') )
+				.appendTo($formatSelect);
+//			$('<option value="csv"></options>')
+//				.text( _loc('csv') )
+//				.appendTo($formatSelect);
+			
+			// File name
+			var fileNameId = $n2.getUniqueId();
+			var $fileNameDiv = $('<div>')
+				.appendTo($dialog);
+			$('<label>')
+				.text( _loc('File Name:') )
+				.attr('for',fileNameId)
+				.appendTo($fileNameDiv);
+			$('<input>')
+				.attr('type','text')
+				.attr('id',fileNameId)
+				.addClass('n2_export_fileNameInput')
+				.val('export.geojson')
+				.appendTo($dialog);
+			
+			// Script
+			var scriptAreaId = $n2.getUniqueId();
+			var $scriptDiv = $('<div>')
+				.appendTo($dialog);
+			$('<label>')
+				.text( _loc('Script:') )
+				.attr('for',scriptAreaId)
+				.appendTo($scriptDiv);
+			$('<textarea>')
+				.attr('id',scriptAreaId)
+				.addClass('n2_export_scriptArea')
+				.val('function(opts){\n\tvar config = opts.config;\n\tvar doc = opts.doc;\n\tif( doc ){\n\t\tvar record = { _id: doc._id, _geometry: doc._id };\n\t\topts.addRecord(record);\n\t};\n\topts.next();\n}')
+				.appendTo($scriptDiv);
+
+			$('<div><button>'+_loc('Export')+'</button></div>')
+				.appendTo($dialog);
+			$dialog.find('button').click(function(){
+				var filter = $('#'+filterId).val();
+				var format = $('#'+formatId).val();
+				
+				var fileName = $('#'+fileNameId).val();
+				if( '' === fileName ) {
+					fileName = null;
+				};
+				
+				var script = $('#'+scriptAreaId).val();
+				
+				$dialog.dialog('close');
+				performExportScript({
+					filter: filter
+					,fileName: fileName
+					,format: format
+					,script: script
+				});
+				return false;
+			});
+			
+			var dialogOptions = {
+				autoOpen: true
+				,title: _loc('Export')
+				,modal: true
+				,width: 550
+				,close: function(event, ui){
+					var diag = $(event.target);
+					diag.dialog('destroy');
+					diag.remove();
+				}
+			};
+			$dialog.dialog(dialogOptions);
+			
+			formatChanged();
+			
+			function formatChanged(){
+				var extension = $('#'+formatId).val();
+				var name = $('#'+fileNameId).val();
+				var i = name.lastIndexOf('.');
+				if( i >= 0 ){
+					name = name.substr(0,i);
+				};
+				name = name + '.' + extension;
+				$('#'+fileNameId).val(name);
+			};
+		};
+		
+		function performExportScript(opts_){
+			var opts = $n2.extend({
+				filter: 'all'
+				,fileName: 'export'
+				,format: 'geojson'
+				,script: null
+			},opts_);
+			
+			// Initialize with all doc ids
+			var docIdsRemaining = [];
+			for(var i=0,e=list.docIds.length; i<e; ++i){
+				docIdsRemaining.push( list.docIds[i] );
+			};
+			var totalCount = docIdsRemaining.length;
+			var processedCount = 0;
+			var opCancelled = false;
+			var records = [];
+			
+			// Create a copy of the configuration so that user
+			// can save temporary objects to it
+			var my_scriptConfig = $n2.extend({},g_scriptConfig);
+
+			// Compile script
+			var scriptFn = null;
+			try {
+				eval('scriptFn = '+opts.script);
+			} catch(e) {
+				alert(_loc('Error')+': '+e);
+				return;
+			};
+			if( typeof(scriptFn) !== 'function' ) {
+				alert( _loc('You must enter a valid function') );
+				return;
+			};
+			
+			var progressDialog = new ProgressDialog({
+				title: _loc('Compiling records')
+				,onCancelFn: function(){
+					opCancelled = true;
+				}
+			});
+			
+			processNextDocument();
+			
+			function processNextDocument(){
+				if( opCancelled ) {
+					cancel();
+					return;
+				};
+
+				if(docIdsRemaining.length < 1){
+					progressDialog.updateHtmlMessage('<span>100%</span>');
+
+					// Do not include document to indicate that the export
+					// is completed. This allows the script to perform record
+					// operations before performing export
+					scriptFn({
+						config: my_scriptConfig
+						,addRecord: addRecord
+						,next: onFinish
+					});
+					
+					
+				} else {
+					if( totalCount ) {
+						var percent = Math.floor((processedCount) * 100 / totalCount);
+						var html = ['<div>'];
+						html.push('<span>Percent: '+percent+'%</span><br/>');
+						html.push('<span>Processed: '+processedCount+'</span><br/>');
+						html.push('</div>');
+						progressDialog.updateHtmlMessage( html.join('') );
+					} else {
+						progressDialog.updateHtmlMessage('<span>0%</span>');
+					};
+					
+					var docId = docIdsRemaining.pop();
+					atlasDb.getDocument({
+						docId: docId
+						,onSuccess: retrievedDocument
+						,onError: function(err){
+							var locStr = _loc('Failure to fetch {docId}',{
+								docId: docId
+							});
+							reportError(locStr);
+							processNextDocument();
+						}
+					});
+				};
+			};
+			
+			function retrievedDocument(doc){
+				if( opCancelled ) {
+					cancel();
+					return;
+				};
+
+				scriptFn({
+					doc: doc
+					,config: my_scriptConfig
+					,addRecord: addRecord
+					,next: next
+				});
+			};
+			
+			function addRecord(record){
+				records.push(record);
+			};
+			
+			function next(){
+				processedCount += 1;
+
+				processNextDocument();
+			};
+
+			function onFinish(){
+				progressDialog.updateHtmlMessage('<span>Sending records to server</span>');
+				
+				// Open a new window to get results
+				// open('about:blank', windowId);
+				var windowId = $n2.getUniqueId();
+				$('<iframe>')
+					.attr('name',windowId)
+					.attr('src','javascript:false')
+					.css({
+						visibility: 'hidden'
+						,display: 'none'
+					})
+					.appendTo( $('body') );
+				
+				exportService.exportByRecords({
+					records: records
+					,targetWindow: windowId
+					,filter: opts.filter
+					,contentType: 'application/binary'
+					,fileName: opts.fileName
+					,format: opts.format
+					,onError: function(err){
+						alert(_loc('Error during export')+': '+err);
+					}
+				});
+
+				progressDialog.close();
+			};
+			
+			function cancel(){
+				reportError(_loc('Operation cancelled by user'));
+				progressDialog.close();
+			};
 		};
 	};
 	
