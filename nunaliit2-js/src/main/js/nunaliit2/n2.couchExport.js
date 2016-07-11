@@ -98,6 +98,7 @@ var Export = $n2.Class('Export',{
 		var $form = $('<form>')
 			.attr('action',url)
 			.attr('method','POST')
+			.attr('enctype','multipart/form-data')
 			.css({
 				display: 'none'
 				,visibility: 'hidden'

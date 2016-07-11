@@ -1,9 +1,10 @@
 package ca.carleton.gcrc.couch.export;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.io.StringReader;
 import java.util.Date;
 import java.util.List;
 import java.util.Vector;
@@ -13,6 +14,10 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.fileupload.FileItemIterator;
+import org.apache.commons.fileupload.FileItemStream;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.fileupload.util.Streams;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -292,100 +297,107 @@ public class ExportServlet extends JsonServlet {
 		// Ignore final path. Allows client to set any download file name
 		
 		try {
-			// Parse format
-			Format format = null;
-			{
-				String formatStr = request.getParameter("format");
-				if( null == formatStr ) {
-					format = Format.GEOJSON;
-				} else {
+			boolean isMultipart = ServletFileUpload.isMultipartContent(request);
+			if( !isMultipart ){
+				throw new Exception("Must be multipart form data");
+			}
+
+			Format format = Format.GEOJSON;
+			Filter filter = null;
+			String contentType = null;
+			
+			// Parse the request
+			ServletFileUpload upload = new ServletFileUpload();
+			FileItemIterator iter = upload.getItemIterator(request);
+			while (iter.hasNext()) {
+			    FileItemStream item = iter.next();
+			    String name = item.getFieldName();
+			    InputStream stream = item.openStream();
+
+		    	// Parse format
+			    if( "format".equals(name) ){
+					String formatStr = Streams.asString(stream);
+					
+					boolean found = false;
 					for(Format f : Format.values()){
 						if( f.matches(formatStr) ){
 							format = f;
+							found = true;
 						}
 					}
-				}
-				
-				if( null == format ) {
-					throw new Exception("Unknown format");
-				}
-				logger.error("Export Format: "+format.name());
-			}
-			
-			// Parse filter
-			Filter filter = null;
-			{
-				String filterStr = request.getParameter("filter");
-				if( null != filterStr ) {
+					
+					if( !found ) {
+						throw new Exception("Unknown format: "+formatStr);
+					}
+
+			    } else if( "filter".equals(name) ){
+			    	// Parse filter
+					String filterStr = Streams.asString(stream);
+
+					
+					boolean found = false;
 					for(Filter f : Filter.values()){
 						if( f.matches(filterStr) ){
 							filter = f;
+							found = true;
 						}
 					}
-				}
-				
-				if( null != filter ) {
-					logger.error("Export Filter: "+filter.name());
-				}
-			}
-			
-			// Parse contentType
-			String contentType = null;
-			{
-				String[] contentTypes = request.getParameterValues("contentType");
-				if( null != contentTypes ) {
-					for(String t : contentTypes){
-						contentType = t;
+					
+					if( !found ) {
+						throw new Exception("Unknown filter: "+filterStr);
 					}
-				}
-				
-				if( null != contentType ) {
+
+			    } else if( "contentType".equals(name) ){
+			    	// Parse contentType
+			    	contentType = Streams.asString(stream);
+
+			    } else if( "data".equals(name) ){
+			    	// Start export. Item "data" should be last item in form
+					logger.error("Export Format: "+format.name());
+					logger.error("Filter: "+filter);
 					logger.error("Content-Type: "+contentType);
-				}
-			}
-			
-			// Parse data
-			String data = null;
-			JSONArrayReaderIterator recordsReader = null;
-			{
-				String[] arr = request.getParameterValues("data");
-				if( arr.length != 1 ) {
-					throw new Exception("There must be exactly one 'data' parameter");
-				}
-				
-				data = arr[0];
+					
+					String encoding = request.getCharacterEncoding();
+					if( null == encoding ){
+						encoding = "UTF-8";
+					}
+					
+					InputStreamReader isr = new InputStreamReader(stream,encoding);
+					JSONArrayReaderIterator recordsReader = new JSONArrayReaderIterator(isr);
 
-				// Brute force approach
-				StringReader reader = new StringReader(data);
-				recordsReader = new JSONArrayReaderIterator(reader);
+					// Create export process
+					ExportFormat exportProcess = null;
+					if( Format.GEOJSON == format ){
+						exportProcess = new ExportRecordsGeoJson(configuration.getCouchDb(),recordsReader);
+					} else {
+						throw new Exception("Unsupported format: "+format.getLabel());
+					}
+					
+					// Set headers on response
+					String charEncoding = exportProcess.getCharacterEncoding();
+					if( null != charEncoding ) {
+						response.setCharacterEncoding( charEncoding );
+					}
+					if( null == contentType ) {
+						contentType = exportProcess.getMimeType();
+					}
+					if( null != contentType ) {
+						response.setContentType(contentType);
+					}
+					response.setHeader("Cache-Control", "no-cache,must-revalidate");
+					response.setDateHeader("Expires", (new Date()).getTime());
+					
+					OutputStream os = response.getOutputStream();
+					
+					try {
+						exportProcess.outputExport(os);
+					} catch (Exception e) {
+						throw new Exception("Error during export process",e);
+					}
+					
+					os.flush();
+			    }
 			}
-
-			// Create export process
-			ExportRecordsGeoJson exportProcess = new ExportRecordsGeoJson(configuration.getCouchDb(),recordsReader);
-			
-			// Set headers on response
-			String charEncoding = exportProcess.getCharacterEncoding();
-			if( null != charEncoding ) {
-				response.setCharacterEncoding( charEncoding );
-			}
-			if( null == contentType ) {
-				contentType = exportProcess.getMimeType();
-			}
-			if( null != contentType ) {
-				response.setContentType(contentType);
-			}
-			response.setHeader("Cache-Control", "no-cache,must-revalidate");
-			response.setDateHeader("Expires", (new Date()).getTime());
-			
-			OutputStream os = response.getOutputStream();
-			
-			try {
-				exportProcess.outputExport(os);
-			} catch (Exception e) {
-				throw new Exception("Error during export process",e);
-			}
-			
-			os.flush();
 
 		} catch(Exception e) {
 			reportError(e,response);
