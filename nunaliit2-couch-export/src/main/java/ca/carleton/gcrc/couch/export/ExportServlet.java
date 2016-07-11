@@ -4,7 +4,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringReader;
-import java.io.StringWriter;
 import java.util.Date;
 import java.util.List;
 import java.util.Vector;
@@ -16,7 +15,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.json.JSONTokener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +29,7 @@ import ca.carleton.gcrc.couch.export.impl.DocumentRetrievalSchema;
 import ca.carleton.gcrc.couch.export.impl.ExportFormatCSV;
 import ca.carleton.gcrc.couch.export.impl.ExportFormatGeoJson;
 import ca.carleton.gcrc.couch.export.impl.SchemaCacheCouchDb;
+import ca.carleton.gcrc.couch.export.records.ExportRecordsGeoJson;
 import ca.carleton.gcrc.couch.export.records.JSONArrayReaderIterator;
 import ca.carleton.gcrc.json.servlet.JsonServlet;
 
@@ -347,6 +346,7 @@ public class ExportServlet extends JsonServlet {
 			
 			// Parse data
 			String data = null;
+			JSONArrayReaderIterator recordsReader = null;
 			{
 				String[] arr = request.getParameterValues("data");
 				if( arr.length != 1 ) {
@@ -355,87 +355,37 @@ public class ExportServlet extends JsonServlet {
 				
 				data = arr[0];
 
-				logger.error("Data: "+data);
+				// Brute force approach
+				StringReader reader = new StringReader(data);
+				recordsReader = new JSONArrayReaderIterator(reader);
+			}
+
+			// Create export process
+			ExportRecordsGeoJson exportProcess = new ExportRecordsGeoJson(configuration.getCouchDb(),recordsReader);
+			
+			// Set headers on response
+			String charEncoding = exportProcess.getCharacterEncoding();
+			if( null != charEncoding ) {
+				response.setCharacterEncoding( charEncoding );
+			}
+			if( null == contentType ) {
+				contentType = exportProcess.getMimeType();
+			}
+			if( null != contentType ) {
+				response.setContentType(contentType);
+			}
+			response.setHeader("Cache-Control", "no-cache,must-revalidate");
+			response.setDateHeader("Expires", (new Date()).getTime());
+			
+			OutputStream os = response.getOutputStream();
+			
+			try {
+				exportProcess.outputExport(os);
+			} catch (Exception e) {
+				throw new Exception("Error during export process",e);
 			}
 			
-			StringReader reader = new StringReader(data);
-			JSONArrayReaderIterator it = new JSONArrayReaderIterator(reader);
-			while( it.hasNext() ){
-				Object value = it.next();
-				logger.error("Record: "+value.getClass().getName());
-			}
-			
-			
-			// Build doc retrieval based on method
-//			DocumentRetrieval docRetrieval = null;
-//			if( Method.LAYER == method ) {
-//				try {
-//					docRetrieval = DocumentRetrievalLayer.create(configuration.getCouchDb(), identifier);
-//				} catch (Exception e) {
-//					throw new Exception("Problem retrieving documents from layer: "+identifier,e);
-//				}
-//				
-//			} else if( Method.SCHEMA == method ) {
-//				try {
-//					docRetrieval = DocumentRetrievalSchema.create(configuration.getCouchDb(), identifier);
-//				} catch (Exception e) {
-//					throw new Exception("Problem retrieving documents from schema: "+identifier,e);
-//				}
-//				
-//			} else if( Method.DOC_ID == method ) {
-//				try {
-//					docRetrieval = DocumentRetrievalId.create(configuration.getCouchDb(), identifiers);
-//				} catch (Exception e) {
-//					throw new Exception("Problem retrieving documents from doc ids: "+identifiers,e);
-//				}
-//				
-//			} else {
-//				throw new Exception("Do not know how to handle method: "+method.name());
-//			}
-			
-//			ExportFormat outputFormat = null;
-//			if( Format.GEOJSON == format ) {
-//				try {
-//					SchemaCache schemaCache = new SchemaCacheCouchDb(configuration.getCouchDb());
-//					outputFormat = new ExportFormatGeoJson(schemaCache, docRetrieval);
-//				} catch (Exception e) {
-//					throw new Exception("Problem setting up format: "+format.name(),e);
-//				}
-//	
-//			} else if( Format.CSV == format ) {
-//				try {
-//					SchemaCache schemaCache = new SchemaCacheCouchDb(configuration.getCouchDb());
-//					outputFormat = new ExportFormatCSV(schemaCache, docRetrieval);
-//				} catch (Exception e) {
-//					throw new Exception("Problem setting up format: "+format.name(),e);
-//				}
-//			
-//			} else {
-//				throw new Exception("Do not know how to handle format: "+format.name());
-//			}
-			
-//			String charEncoding = outputFormat.getCharacterEncoding();
-//			if( null != charEncoding ) {
-//				response.setCharacterEncoding( charEncoding );
-//			}
-//			if( null == contentType ) {
-//				contentType = outputFormat.getMimeType();
-//			}
-//			if( null != contentType ) {
-//				response.setContentType(contentType);
-//			}
-//			response.setHeader("Cache-Control", "no-cache,must-revalidate");
-//			response.setDateHeader("Expires", (new Date()).getTime());
-//			
-//			OutputStream os = response.getOutputStream();
-//			
-//			try {
-//				outputFormat.outputExport(os);
-//			} catch (Exception e) {
-//				throw new Exception("Error during export process",e);
-//			}
-//			
-//			os.flush();
+			os.flush();
 
 		} catch(Exception e) {
 			reportError(e,response);
