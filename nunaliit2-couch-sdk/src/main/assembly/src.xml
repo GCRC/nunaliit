@@ -17,7 +17,7 @@
 		</fileSet>
 		<fileSet>
 			<directory>target/appassembler/repo</directory>
-			<outputDirectory>${file.separator}rep${file.separator}/</outputDirectory>
+			<outputDirectory>${file.separator}repo${file.separator}/</outputDirectory>
 		</fileSet>
 
 		<!-- Internal directories -->
