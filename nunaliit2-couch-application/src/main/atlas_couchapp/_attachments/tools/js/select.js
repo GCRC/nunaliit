@@ -1224,7 +1224,7 @@
 				startkey: '_design'
 				,endkey: '_design~'
 				,onSuccess: function(docs){
-					var $sel = $options.find('select.viewList');
+					var sortedViewLabels = [];
 					docs.forEach(function(designDoc){
 						var docId = designDoc._id;
 						var names = docId.split('/');
@@ -1233,13 +1233,20 @@
 							if( designDoc && designDoc.views ){
 								for(var viewName in designDoc.views){
 									var label = designName + '/' + viewName;
-									$('<option></option>')
-										.val(label)
-										.text(label)
-										.appendTo($sel);
+									sortedViewLabels.push(label);
 								};
 							};
 						};
+					});
+					
+					sortedViewLabels.sort();
+					
+					var $sel = $options.find('select.viewList');
+					sortedViewLabels.forEach(function(viewLabel){
+						$('<option></option>')
+							.val(viewLabel)
+							.text(viewLabel)
+							.appendTo($sel);
 					});
 				}
 				,onError: function(err){
