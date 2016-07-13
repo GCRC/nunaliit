@@ -476,7 +476,7 @@ public class SchemaAttribute {
 		}
 	}
 
-	public boolean printBrief(PrintWriter pw, String schemaName, boolean isFirst) throws Exception {
+	public boolean printBrief(PrintWriter pw, String schemaStructure, String schemaClass, boolean isFirst) throws Exception {
 		boolean printed = false;
 		
 		if( includedInBrief ){
@@ -484,25 +484,25 @@ public class SchemaAttribute {
 				
 			} else if( "string".equals(type) ){
 				if( null != id ){
-					pw.print("{{#"+schemaName+"}}");
+					pw.print("{{#"+schemaStructure+"}}");
 					if( !isFirst ) pw.print(" ");
 					pw.print("{{"+id+"}}");
-					pw.print("{{/"+schemaName+"}}");
+					pw.print("{{/"+schemaStructure+"}}");
 					printed = true;
 				}
 				
 			} else if( "localized".equals(type) ){
 				if( null != id ){
-					pw.print("{{#"+schemaName+"}}");
+					pw.print("{{#"+schemaStructure+"}}");
 					if( !isFirst ) pw.print(" ");
 					pw.print("{{#:localize}}"+id+"{{/:localize}}");
-					pw.print("{{/"+schemaName+"}}");
+					pw.print("{{/"+schemaStructure+"}}");
 					printed = true;
 				}
 				
 			} else if( "selection".equals(type) ){
 				if( null != id ){
-					pw.print("{{#"+schemaName+"}}");
+					pw.print("{{#"+schemaStructure+"}}");
 					if( !isFirst ) pw.print(" ");
 					pw.print("<span class=\"n2s_select\" n2-choice=\"{{"+id+"}}\">");
 					for(SelectionOption option : options){
@@ -515,50 +515,50 @@ public class SchemaAttribute {
 						pw.print("</span>");
 					}
 					pw.print("</span>");
-					pw.print("{{/"+schemaName+"}}");
+					pw.print("{{/"+schemaStructure+"}}");
 					printed = true;
 				}
 				
 			} else if( "date".equals(type) ){
 				if( null != id ){
-					pw.print("{{#"+schemaName+"}}");
+					pw.print("{{#"+schemaStructure+"}}");
 					pw.print("{{#"+id+"}}");
 					if( !isFirst ) pw.print(" ");
 					pw.print("{{date}}");
 					pw.print("{{/"+id+"}}");
-					pw.print("{{/"+schemaName+"}}");
+					pw.print("{{/"+schemaStructure+"}}");
 					printed = true;
 				}
 				
 			} else if( "reference".equals(type) ){
 				if( null != id ){
-					pw.print("{{#"+schemaName+"}}");
+					pw.print("{{#"+schemaStructure+"}}");
 					pw.print("{{#"+id+"}}");
 					pw.print("{{#doc}}");
 					if( !isFirst ) pw.print(" ");
 					pw.print("<span class=\"n2s_briefDisplay\">{{.}}</span>");
 					pw.print("{{/doc}}");
 					pw.print("{{/"+id+"}}");
-					pw.print("{{/"+schemaName+"}}");
+					pw.print("{{/"+schemaStructure+"}}");
 					printed = true;
 				}
 				
 			} else if( "custom".equals(type) ){
 				if( null != id && null != customType ){
-					pw.print("{{#"+schemaName+"}}");
+					pw.print("{{#"+schemaStructure+"}}");
 					pw.print("{{#"+id+"}}");
 					if( !isFirst ) pw.print(" ");
 					pw.print("<span class=\"n2s_custom\""
 							+ " nunaliit-custom=\""+customType+"\""
 							+ " nunaliit-selector=\"{{#:selector}}.{{/:selector}}\"></span>");
 					pw.print("{{/"+id+"}}");
-					pw.print("{{/"+schemaName+"}}");
+					pw.print("{{/"+schemaStructure+"}}");
 					printed = true;
 				}
 				
 			} else if( "array".equals(type) ){
 				if( null != id ){
-					pw.print("{{#"+schemaName+"}}");
+					pw.print("{{#"+schemaStructure+"}}");
 					pw.print("{{#"+id+"}}");
 					if( !isFirst ) pw.print(" ");
 					
@@ -578,7 +578,7 @@ public class SchemaAttribute {
 					}
 					
 					pw.print("{{/"+id+"}}");
-					pw.print("{{/"+schemaName+"}}");
+					pw.print("{{/"+schemaStructure+"}}");
 					printed = true;
 				}
 
@@ -599,7 +599,7 @@ public class SchemaAttribute {
 		return printed;
 	}
 
-	public void printDisplay(PrintWriter pw, String schemaName) throws Exception {
+	public void printDisplay(PrintWriter pw, String schemaStructure, String schemaClass) throws Exception {
 		if( false == excludedFromDisplay ){
 			String label = this.label;
 			String labelLocalizeClass = " n2s_localize";
@@ -619,10 +619,10 @@ public class SchemaAttribute {
 			} else if( "string".equals(type)
 			 || "localized".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 					pw.println("\t{{#if "+id+"}}");
 
-					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 
@@ -654,15 +654,15 @@ public class SchemaAttribute {
 					pw.println("\t\t</div>");
 					
 					pw.println("\t{{/if}}");
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 				
 			} else if( "date".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 					pw.println("\t{{#"+id+"}}");
 
-					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					pw.println("\t\t\t<div class=\"value\">{{date}}</div>");
@@ -672,15 +672,15 @@ public class SchemaAttribute {
 					
 					
 					pw.println("\t{{/"+id+"}}");
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "reference".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 					pw.println("\t{{#"+id+"}}");
 
-					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					
@@ -696,15 +696,15 @@ public class SchemaAttribute {
 					
 					
 					pw.println("\t{{/"+id+"}}");
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "custom".equals(type) ){
 				if( null != id && null != customType ){
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 					pw.println("\t{{#"+id+"}}");
 
-					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					
@@ -719,14 +719,14 @@ public class SchemaAttribute {
 					
 					
 					pw.println("\t{{/"+id+"}}");
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 				
 			} else if( "array".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 
-					pw.println("\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					pw.println("\t\t<div class=\"value\">");
@@ -767,15 +767,15 @@ public class SchemaAttribute {
 					pw.println("\t</div>");
 					
 					
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "selection".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 					pw.println("\t{{#if "+id+"}}");
 	
-					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 	
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					pw.println("\t\t\t<div class=\"value n2s_select\" n2-choice=\"{{"+id+"}}\">");
@@ -799,14 +799,14 @@ public class SchemaAttribute {
 					
 					
 					pw.println("\t{{/if}}");
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "checkbox".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 
-					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					pw.println("\t\t\t<div class=\"value\">");
@@ -821,14 +821,14 @@ public class SchemaAttribute {
 					pw.println("\t\t</div>");
 					
 					
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "checkbox_group".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 
-					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					pw.println("\t\t\t<div class=\"value\">");
@@ -849,7 +849,7 @@ public class SchemaAttribute {
 					pw.println("\t\t</div>");
 					
 					
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 				
 			} else if( "file".equals(type) ){
@@ -890,7 +890,7 @@ public class SchemaAttribute {
 		}
 	}
 
-	public void printForm(PrintWriter pw, String schemaName) throws Exception {
+	public void printForm(PrintWriter pw, String schemaStructure, String schemaClass) throws Exception {
 		if( false == excludedFromForm ){
 			String label = this.label;
 			String labelLocalizeClass = " n2s_localize";
@@ -943,9 +943,9 @@ public class SchemaAttribute {
 						fieldType += ",search="+encodeFieldParameter(searchFunction);
 					}
 					
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 
-					pw.println("\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					pw.println("\t\t<div class=\"value\">{{#:field}}"+id+fieldType+"{{/:field}}</div>");
@@ -954,14 +954,14 @@ public class SchemaAttribute {
 					pw.println("\t</div>");
 					
 					
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "selection".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 
-					pw.println("\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					pw.println("\t\t<div class=\"value\">");
@@ -984,7 +984,7 @@ public class SchemaAttribute {
 					pw.println("\t</div>");
 					
 					
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "array".equals(type) ){
@@ -1018,9 +1018,9 @@ public class SchemaAttribute {
 					}
 					
 					if( null != fieldType ){
-						pw.println("{{#"+schemaName+"}}");
+						pw.println("{{#"+schemaStructure+"}}");
 
-						pw.println("\t<div class=\""+schemaName+"_"+id+"\">");
+						pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
 
 						pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 						pw.println("\t\t<div class=\"value\">");
@@ -1033,15 +1033,15 @@ public class SchemaAttribute {
 						pw.println("\t</div>");
 						
 						
-						pw.println("{{/"+schemaName+"}}");
+						pw.println("{{/"+schemaStructure+"}}");
 					}
 				}
 
 			} else if( "checkbox_group".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 
-					pw.println("\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					pw.println("\t\t<div class=\"value\">");
@@ -1067,7 +1067,7 @@ public class SchemaAttribute {
 					pw.println("\t</div>");
 					
 					
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "file".equals(type) ){

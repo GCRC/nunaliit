@@ -102,6 +102,11 @@ var n2validate = {
 				layerAction = true;
 			};
 			
+			// Validate script documents
+			if( n2validate.validateScriptDocuments(newDoc) ){
+				layerAction = true;
+			};
+			
 			// Process document update
 			if( oldDoc && !newDoc._deleted ) {
 	
@@ -503,6 +508,27 @@ var n2validate = {
 		};
 		
 		return layerAction;
+	},
+	
+	validateScriptDocuments: function(newDoc){
+		// A script document must be on the layer "scripts"
+		if( newDoc && newDoc.nunaliit_script ){
+			var onScriptLayer = false;
+			
+			if( newDoc.nunaliit_layers ){
+				for(var i=0,e=newDoc.nunaliit_layers.length; i<e; ++i){
+					var layerId = newDoc.nunaliit_layers[i];
+					
+					if( 'scripts' === layerId ){
+						onScriptLayer = true;
+					};
+				};
+			};
+			
+			if( !onScriptLayer ){
+				throw( {forbidden: 'Script documents must be associated with layer "scripts"'} );
+			};
+		};
 	},
 	
 	// Take an array of roles and accumulate information about them

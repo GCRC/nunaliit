@@ -1,0 +1,1 @@
+<span class="nunaliit_script_schema_brief"><span class="n2s_localize nunaliit_script_schema_brief_decoration">Script(</span>{{#nunaliit_script}}{{name}}{{/nunaliit_script}}<span class="nunaliit_script_schema_brief_decoration">)</span></span>

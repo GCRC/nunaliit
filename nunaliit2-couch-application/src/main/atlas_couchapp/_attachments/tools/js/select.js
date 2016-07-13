@@ -3084,6 +3084,9 @@
 		};
 		
 		function getExportSettings(){
+			var knownScriptById = {};
+			var currentScript = 'function(opts){\n\tvar config = opts.config;\n\tvar doc = opts.doc;\n\tif( doc ){\n\t\tvar record = { _id: doc._id, _geometry: doc._id };\n\t\topts.addRecord(record);\n\t};\n\topts.next();\n}';
+
 			var dialogId = $n2.getUniqueId();
 			var $dialog = $('<div id="'+dialogId+'"></div>');
 
@@ -3091,6 +3094,23 @@
 				.find('span').text(list.print()).end()
 				.appendTo($dialog);
 
+			// Method
+			var methodId = $n2.getUniqueId();
+			var $methodDiv = $('<div>')
+				.appendTo($dialog);
+			$('<label>')
+				.text( _loc('Script:') )
+				.attr('for',filterId)
+				.appendTo($methodDiv);
+			var $methodSelect = $('<select>')
+				.attr('id',methodId)
+				.appendTo($methodDiv)
+				.change(methodChanged);
+			$('<option>')
+				.val('__custom__')
+				.text( _loc('Custom Script') )
+				.appendTo($methodSelect);
+			
 			// Filter
 			var filterId = $n2.getUniqueId();
 			var $filterDiv = $('<div>')
@@ -3149,8 +3169,9 @@
 				.val('export.geojson')
 				.appendTo($dialog);
 			
-			// Script
+			// Script text area
 			var scriptAreaId = $n2.getUniqueId();
+			var scriptDisplayId = $n2.getUniqueId();
 			var $scriptDiv = $('<div>')
 				.appendTo($dialog);
 			$('<label>')
@@ -3160,7 +3181,10 @@
 			$('<textarea>')
 				.attr('id',scriptAreaId)
 				.addClass('n2_export_scriptArea')
-				.val('function(opts){\n\tvar config = opts.config;\n\tvar doc = opts.doc;\n\tif( doc ){\n\t\tvar record = { _id: doc._id, _geometry: doc._id };\n\t\topts.addRecord(record);\n\t};\n\topts.next();\n}')
+				.appendTo($scriptDiv);
+			$('<div>')
+				.attr('id',scriptDisplayId)
+				.addClass('n2_export_scriptDisplay')
 				.appendTo($scriptDiv);
 
 			$('<div><button>'+_loc('Export')+'</button></div>')
@@ -3200,6 +3224,45 @@
 			$dialog.dialog(dialogOptions);
 			
 			formatChanged();
+			methodChanged();
+			
+			// Load up known scripts for export
+			atlasDesign.queryView({
+				viewName: 'nunaliit-script'
+				,include_docs: true
+				,onSuccess: function(rows){
+					rows.forEach(function(row){
+						var $sel = $('#'+methodId);
+
+						var scriptDoc = row.doc;
+						if( scriptDoc 
+						 && scriptDoc.nunaliit_script 
+						 && scriptDoc.nunaliit_script.type === 'export' 
+						 && scriptDoc.nunaliit_script.script ){
+							var label = undefined;
+							if( scriptDoc.nunaliit_script.label ){
+								label = _loc(scriptDoc.nunaliit_script.label);
+							} else {
+								label = scriptDoc.nunaliit_script.name;
+							};
+							if( !label ){
+								label = scriptDoc._id;
+							};
+							
+							$('<option>')
+								.val(scriptDoc._id)
+								.text( label )
+								.appendTo($sel);
+
+							knownScriptById[scriptDoc._id] = scriptDoc.nunaliit_script.script;
+						};
+					});
+				}
+				,onError: function(err){
+					alert(_loc('Unable to obtain list of layers')+': '+err);
+					reportError(_loc('Unable to obtain list of layers')+': '+err);
+				}
+			});
 			
 			function formatChanged(){
 				var extension = $('#'+formatId).val();
@@ -3210,6 +3273,37 @@
 				};
 				name = name + '.' + extension;
 				$('#'+fileNameId).val(name);
+			};
+			
+			function methodChanged(){
+				var method = $('#'+methodId).val();
+
+				var scriptText = knownScriptById[method];
+				if( scriptText ){
+					currentScript = scriptText;
+				};
+
+				var $scriptArea = $('#'+scriptAreaId);
+				var $scriptDisplay = $('#'+scriptDisplayId);
+				
+				$scriptArea.text(currentScript);
+				$scriptDisplay.text(currentScript);
+				
+				if( '__custom__' === method ){
+					$scriptArea
+						.removeAttr('disabled')
+						.css('display','');
+					$scriptDisplay
+						.css('display','none');
+				} else {
+					$scriptArea
+						.attr('disabled','disabled')
+						.css('display','none');
+					$scriptDisplay
+						.css('display','');
+				};
+				
+				return true;
 			};
 		};
 		
@@ -3355,6 +3449,38 @@
 				});
 
 				progressDialog.close();
+				
+				warnDownload();
+			};
+			
+			function warnDownload(){
+				var dialogId = $n2.getUniqueId();
+				var $dialog = $('<div>')
+					.attr('id',dialogId);
+				
+				$('<div>')
+					.text( _loc('Please, wait until download starts. It might take a while.') )
+					.appendTo($dialog);
+				$('<button>')
+					.text( _loc('OK') )
+					.appendTo($dialog)
+					.click(function(){
+						$('#'+dialogId).dialog('close');
+						return true;
+					});
+				
+				var dialogOptions = {
+					autoOpen: true
+					,title: _loc('Warning')
+					,modal: true
+					,closeOnEscape: false
+					,close: function(event, ui){
+						var diag = $(event.target);
+						diag.dialog('destroy');
+						diag.remove();
+					}
+				};
+				$dialog.dialog(dialogOptions);
 			};
 			
 			function cancel(){
