@@ -30,7 +30,7 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 ;(function($,$n2){
-"use strict";
+// "use strict"; // Can not use strict with eval
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
