@@ -391,6 +391,35 @@ CreateDocument widget
 
 /* 
 ==============================
+Export Widget 
+==============================
+*/
+.nunaliit_content .n2widget_export {
+	position: absolute;
+	top: 5px;
+	right: 455px;
+}
+
+.n2_export_scriptArea {
+	width: 500px;
+	height: 300px;
+}
+
+.n2_export_scriptDisplay {
+	position: relative;
+	padding: 8px;
+	width: 500px;
+	height: 300px;
+    overflow: auto;
+    white-space: pre;
+	background-color: rgb(255, 255, 255);
+	border-color: rgb(204, 204, 204);
+	border-style: solid;
+	border-width: 1px;
+}
+
+/* 
+==============================
 Timeline widget 
 ==============================
 */
