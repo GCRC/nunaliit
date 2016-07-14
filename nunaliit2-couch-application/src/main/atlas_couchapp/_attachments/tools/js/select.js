@@ -21,130 +21,6 @@
 	var selectedList = null;
 
 	// **********************************************************************
-	var Logger = $n2.Class({
-		divId: null,
-		
-		initialize: function(opts_){
-			var opts = $n2.extend({
-				elem: null
-			},opts_);
-			
-			var $div = $(opts.elem);
-			this.divId = $n2.utils.getElementIdentifier($div);
-		},
-
-		reportError: function(err){
-			var $e = this._getLogsDiv();
-	
-			var $d = $('<div class="error"></div>');
-			$d.text(err);
-			$e.append($d);
-		},
-		
-		log: function(msg){
-			var $e = this._getLogsDiv();
-	
-			var $d = $('<div class="log"></div>');
-			$d.text(msg);
-			$e.append($d);
-		},
-		
-		_getLogsDiv: function(){
-			return $('#'+this.divId);
-		}
-	});
-	
-	// **********************************************************************
-	var ProgressDialog = $n2.Class({
-		
-		dialogId: null
-		
-		,onCancelFn: null
-		
-		,cancellingLabel: null
-		
-		,initialize: function(opts_){
-			var opts = $n2.extend({
-				title: _loc('Progress')
-				,onCancelFn: null
-				,cancelButtonLabel: _loc('Cancel') 
-				,cancellingLabel: _loc('Cancelling Operation...')
-			},opts_);
-			
-			var _this = this;
-			
-			this.dialogId = $n2.getUniqueId();
-			this.onCancelFn = opts.onCancelFn;
-			this.cancellingLabel = opts.cancellingLabel;
-
-			var $dialog = $('<div id="'+this.dialogId+'">'
-				+'<div class="selectAppProgressDialogMessage">'
-				+'<span class="selectAppLabel"></span>: <span class="selectAppProgress"></span>'
-				+'</div></div>');
-			$dialog.find('span.selectAppLabel').text( _loc('Progress') );
-			
-			var dialogOptions = {
-				autoOpen: true
-				,title: opts.title
-				,modal: true
-				,closeOnEscape: false
-				,close: function(event, ui){
-					var diag = $(event.target);
-					diag.dialog('destroy');
-					diag.remove();
-				}
-			};
-			$dialog.dialog(dialogOptions);
-			
-			// Remove close button
-			$dialog.parents('.ui-dialog').first().find('.ui-dialog-titlebar-close').hide();
-
-			// Add cancel button, if needed
-			if( typeof(opts.onCancelFn) === 'function'  ) {
-				var cancelLine = $('<div><button class="n2ProgressModalCancel"></button></div>');
-				$dialog.append(cancelLine);
-				cancelLine.find('button')
-					.text(opts.cancelButtonLabel)
-					.click(function(){
-						_this.cancel();
-						return false;
-					})
-					;
-			};
-			
-			this.updatePercent(0);
-		}
-	
-		,cancel: function(){
-			if( typeof(this.onCancelFn) === 'function' ) {
-				var $dialog = $('#'+this.dialogId);
-				var $cb = $dialog.find('.n2ProgressModalCancel');
-				var $m = $('<span></span>').text(this.cancellingLabel);
-				$cb.before($m).remove();
-				
-				this.onCancelFn();
-			};
-		}
-	
-		,close: function(){
-			var $dialog = $('#'+this.dialogId);
-			$dialog.dialog('close');
-		}
-	
-		,updatePercent: function(percent){
-			var $dialog = $('#'+this.dialogId);
-			var $p = $dialog.find('.selectAppProgress');
-			$p.text( ''+Math.floor(percent)+'%' );
-		}
-		
-		,updateHtmlMessage: function(html){
-			var $dialog = $('#'+this.dialogId);
-			var $div = $dialog.find('.selectAppProgressDialogMessage');
-			$div.html( html );
-		}
-	});
-	
-	// **********************************************************************
 	var DocumentList = $n2.Class({
 		docIds: null,
 		
@@ -346,7 +222,7 @@
 				return;
 			};
 
-			var progressDialog = new ProgressDialog({
+			var progressDialog = new $n2.couchDialogs.ProgressDialog({
 				title: _loc('Fetching All Document Ids')
 				,onCancelFn: function(){
 					opCancelled = true;
@@ -409,7 +285,7 @@
 			};
 
 			var opCancelled = false;
-			var progressDialog = new ProgressDialog({
+			var progressDialog = new $n2.couchDialogs.ProgressDialog({
 				title: opts.progressTitle
 				,onCancelFn: function(){
 					opCancelled = true;
@@ -1944,7 +1820,7 @@
 			};
 
 			var opCancelled = false;
-			var progressDialog = new ProgressDialog({
+			var progressDialog = new $n2.couchDialogs.ProgressDialog({
 				title: _loc('Transform Progress')
 				,onCancelFn: function(){
 					opCancelled = true;
@@ -2628,7 +2504,7 @@
 				$dialog.dialog('close');
 
 				var opCancelled = false;
-				var progressDialog = new ProgressDialog({
+				var progressDialog = new $n2.couchDialogs.ProgressDialog({
 					title: _loc('Deletion Progress')
 					,onCancelFn: function(){
 						opCancelled = true;
@@ -2801,14 +2677,14 @@
 			var failCount = 0;
 			var opCancelled = false;
 			
-			var progressDialog = new ProgressDialog({
+			var progressDialog = new $n2.couchDialogs.ProgressDialog({
 				title: _loc('Preparing Report')
 				,onCancelFn: function(){
 					opCancelled = true;
 				}
 			});
 			
-			var logger = new Logger({
+			var logger = new $n2.logger.HtmlLogger({
 				elem: $('#'+dialogId).find('.n2select_report_result')
 			});
 
@@ -3075,418 +2951,18 @@
 		if( !exportService ) {
 			alert( _loc('Export service is not configured') );
 		} else {
-			exportService.checkAvailable({
-				onAvailable: getExportSettings
-				,onNotAvailable: function(){
-					alert( _loc('Export service is not available') );
-				}
-			});
-		};
-		
-		function getExportSettings(){
-			var knownScriptById = {};
-			var currentScript = 'function(opts){\n\tvar config = opts.config;\n\tvar doc = opts.doc;\n\tif( doc ){\n\t\tvar record = { _id: doc._id, _geometry: doc._id };\n\t\topts.addRecord(record);\n\t};\n\topts.next();\n}';
-
-			var dialogId = $n2.getUniqueId();
-			var $dialog = $('<div id="'+dialogId+'"></div>');
-
-			$('<div>'+_loc('Exporting')+' <span></span></div>')
-				.find('span').text(list.print()).end()
-				.appendTo($dialog);
-
-			// Method
-			var methodId = $n2.getUniqueId();
-			var $methodDiv = $('<div>')
-				.appendTo($dialog);
-			$('<label>')
-				.text( _loc('Script:') )
-				.attr('for',filterId)
-				.appendTo($methodDiv);
-			var $methodSelect = $('<select>')
-				.attr('id',methodId)
-				.appendTo($methodDiv)
-				.change(methodChanged);
-			$('<option>')
-				.val('__custom__')
-				.text( _loc('Custom Script') )
-				.appendTo($methodSelect);
-			
-			// Filter
-			var filterId = $n2.getUniqueId();
-			var $filterDiv = $('<div>')
-				.appendTo($dialog);
-			$('<label>')
-				.text( _loc('Filter:') )
-				.attr('for',filterId)
-				.appendTo($filterDiv);
-			var $filterSelect = $('<select>')
-				.attr('id',filterId)
-				.appendTo($filterDiv);
-			$('<option value="all"></options>')
-				.text( _loc('All Geometries') )
-				.appendTo($filterSelect);
-			$('<option value="points"></options>')
-				.text( _loc('Only Point Geometries') )
-				.appendTo($filterSelect);
-			$('<option value="linestrings"></options>')
-				.text( _loc('Only LineString Geometries') )
-				.appendTo($filterSelect);
-			$('<option value="polygons"></options>')
-				.text( _loc('Only Polygon Geometries') )
-				.appendTo($filterSelect);
-
-			// Format
-			var formatId = $n2.getUniqueId();
-			var $formatDiv = $('<div>')
-				.appendTo($dialog);
-			$('<label>')
-				.text( _loc('Format:') )
-				.attr('for',formatId)
-				.appendTo($formatDiv);
-			var $formatSelect = $('<select>')
-				.attr('id',formatId)
-				.appendTo($formatDiv)
-				.change(formatChanged);
-			$('<option value="geojson"></options>')
-				.text( _loc('geojson') )
-				.appendTo($formatSelect);
-//			$('<option value="csv"></options>')
-//				.text( _loc('csv') )
-//				.appendTo($formatSelect);
-			
-			// File name
-			var fileNameId = $n2.getUniqueId();
-			var $fileNameDiv = $('<div>')
-				.appendTo($dialog);
-			$('<label>')
-				.text( _loc('File Name:') )
-				.attr('for',fileNameId)
-				.appendTo($fileNameDiv);
-			$('<input>')
-				.attr('type','text')
-				.attr('id',fileNameId)
-				.addClass('n2_export_fileNameInput')
-				.val('export.geojson')
-				.appendTo($dialog);
-			
-			// Script text area
-			var scriptAreaId = $n2.getUniqueId();
-			var scriptDisplayId = $n2.getUniqueId();
-			var $scriptDiv = $('<div>')
-				.appendTo($dialog);
-			$('<label>')
-				.text( _loc('Script:') )
-				.attr('for',scriptAreaId)
-				.appendTo($scriptDiv);
-			$('<textarea>')
-				.attr('id',scriptAreaId)
-				.addClass('n2_export_scriptArea')
-				.appendTo($scriptDiv);
-			$('<div>')
-				.attr('id',scriptDisplayId)
-				.addClass('n2_export_scriptDisplay')
-				.appendTo($scriptDiv);
-
-			$('<div><button>'+_loc('Export')+'</button></div>')
-				.appendTo($dialog);
-			$dialog.find('button').click(function(){
-				var filter = $('#'+filterId).val();
-				var format = $('#'+formatId).val();
-				
-				var fileName = $('#'+fileNameId).val();
-				if( '' === fileName ) {
-					fileName = null;
-				};
-				
-				var script = $('#'+scriptAreaId).val();
-				
-				$dialog.dialog('close');
-				performExportScript({
-					filter: filter
-					,fileName: fileName
-					,format: format
-					,script: script
-				});
-				return false;
-			});
-			
-			var dialogOptions = {
-				autoOpen: true
-				,title: _loc('Export')
-				,modal: true
-				,width: 550
-				,close: function(event, ui){
-					var diag = $(event.target);
-					diag.dialog('destroy');
-					diag.remove();
-				}
-			};
-			$dialog.dialog(dialogOptions);
-			
-			formatChanged();
-			methodChanged();
-			
-			// Load up known scripts for export
-			atlasDesign.queryView({
-				viewName: 'nunaliit-script'
-				,include_docs: true
-				,onSuccess: function(rows){
-					rows.forEach(function(row){
-						var $sel = $('#'+methodId);
-
-						var scriptDoc = row.doc;
-						if( scriptDoc 
-						 && scriptDoc.nunaliit_script 
-						 && scriptDoc.nunaliit_script.type === 'export' 
-						 && scriptDoc.nunaliit_script.script ){
-							var label = undefined;
-							if( scriptDoc.nunaliit_script.label ){
-								label = _loc(scriptDoc.nunaliit_script.label);
-							} else {
-								label = scriptDoc.nunaliit_script.name;
-							};
-							if( !label ){
-								label = scriptDoc._id;
-							};
-							
-							$('<option>')
-								.val(scriptDoc._id)
-								.text( label )
-								.appendTo($sel);
-
-							knownScriptById[scriptDoc._id] = scriptDoc.nunaliit_script.script;
-						};
-					});
-				}
-				,onError: function(err){
-					alert(_loc('Unable to obtain list of layers')+': '+err);
-					reportError(_loc('Unable to obtain list of layers')+': '+err);
-				}
-			});
-			
-			function formatChanged(){
-				var extension = $('#'+formatId).val();
-				var name = $('#'+fileNameId).val();
-				var i = name.lastIndexOf('.');
-				if( i >= 0 ){
-					name = name.substr(0,i);
-				};
-				name = name + '.' + extension;
-				$('#'+fileNameId).val(name);
-			};
-			
-			function methodChanged(){
-				var method = $('#'+methodId).val();
-
-				var scriptText = knownScriptById[method];
-				if( scriptText ){
-					currentScript = scriptText;
-				};
-
-				var $scriptArea = $('#'+scriptAreaId);
-				var $scriptDisplay = $('#'+scriptDisplayId);
-				
-				$scriptArea.text(currentScript);
-				$scriptDisplay.text(currentScript);
-				
-				if( '__custom__' === method ){
-					$scriptArea
-						.removeAttr('disabled')
-						.css('display','');
-					$scriptDisplay
-						.css('display','none');
-				} else {
-					$scriptArea
-						.attr('disabled','disabled')
-						.css('display','none');
-					$scriptDisplay
-						.css('display','');
-				};
-				
-				return true;
-			};
-		};
-		
-		function performExportScript(opts_){
-			var opts = $n2.extend({
-				filter: 'all'
-				,fileName: 'export'
-				,format: 'geojson'
-				,script: null
-			},opts_);
-			
-			// Initialize with all doc ids
-			var docIdsRemaining = [];
+			var docIds = [];
 			for(var i=0,e=list.docIds.length; i<e; ++i){
-				docIdsRemaining.push( list.docIds[i] );
-			};
-			var totalCount = docIdsRemaining.length;
-			var processedCount = 0;
-			var opCancelled = false;
-			var records = [];
-			
-			// Create a copy of the configuration so that user
-			// can save temporary objects to it
-			var my_scriptConfig = $n2.extend({},g_scriptConfig);
-
-			// Compile script
-			var scriptFn = null;
-			try {
-				eval('scriptFn = '+opts.script);
-			} catch(e) {
-				alert(_loc('Error')+': '+e);
-				return;
-			};
-			if( typeof(scriptFn) !== 'function' ) {
-				alert( _loc('You must enter a valid function') );
-				return;
+				docIds.push( list.docIds[i] );
 			};
 			
-			var progressDialog = new ProgressDialog({
-				title: _loc('Compiling records')
-				,onCancelFn: function(){
-					opCancelled = true;
-				}
+			exportService.createExportApplication({
+				docIds: docIds
+				,logger: new $n2.logger.CustomLogger({
+					logFn: log
+					,reportErrorFn: reportError
+				})
 			});
-			
-			processNextDocument();
-			
-			function processNextDocument(){
-				if( opCancelled ) {
-					cancel();
-					return;
-				};
-
-				if(docIdsRemaining.length < 1){
-					progressDialog.updateHtmlMessage('<span>100%</span>');
-
-					// Do not include document to indicate that the export
-					// is completed. This allows the script to perform record
-					// operations before performing export
-					scriptFn({
-						config: my_scriptConfig
-						,addRecord: addRecord
-						,next: onFinish
-					});
-					
-					
-				} else {
-					if( totalCount ) {
-						var percent = Math.floor((processedCount) * 100 / totalCount);
-						var html = ['<div>'];
-						html.push('<span>Percent: '+percent+'%</span><br/>');
-						html.push('<span>Processed: '+processedCount+'</span><br/>');
-						html.push('</div>');
-						progressDialog.updateHtmlMessage( html.join('') );
-					} else {
-						progressDialog.updateHtmlMessage('<span>0%</span>');
-					};
-					
-					var docId = docIdsRemaining.pop();
-					atlasDb.getDocument({
-						docId: docId
-						,onSuccess: retrievedDocument
-						,onError: function(err){
-							var locStr = _loc('Failure to fetch {docId}',{
-								docId: docId
-							});
-							reportError(locStr);
-							processNextDocument();
-						}
-					});
-				};
-			};
-			
-			function retrievedDocument(doc){
-				if( opCancelled ) {
-					cancel();
-					return;
-				};
-
-				scriptFn({
-					doc: doc
-					,config: my_scriptConfig
-					,addRecord: addRecord
-					,next: next
-				});
-			};
-			
-			function addRecord(record){
-				records.push(record);
-			};
-			
-			function next(){
-				processedCount += 1;
-
-				processNextDocument();
-			};
-
-			function onFinish(){
-				progressDialog.updateHtmlMessage('<span>Sending records to server</span>');
-				
-				// Open a new window to get results
-				// open('about:blank', windowId);
-				var windowId = $n2.getUniqueId();
-				$('<iframe>')
-					.attr('name',windowId)
-					.attr('src','javascript:false')
-					.css({
-						visibility: 'hidden'
-						,display: 'none'
-					})
-					.appendTo( $('body') );
-				
-				exportService.exportByRecords({
-					records: records
-					,targetWindow: windowId
-					,filter: opts.filter
-					,contentType: 'application/binary'
-					,fileName: opts.fileName
-					,format: opts.format
-					,onError: function(err){
-						alert(_loc('Error during export')+': '+err);
-					}
-				});
-
-				progressDialog.close();
-				
-				warnDownload();
-			};
-			
-			function warnDownload(){
-				var dialogId = $n2.getUniqueId();
-				var $dialog = $('<div>')
-					.attr('id',dialogId);
-				
-				$('<div>')
-					.text( _loc('Please, wait until download starts. It might take a while.') )
-					.appendTo($dialog);
-				$('<button>')
-					.text( _loc('OK') )
-					.appendTo($dialog)
-					.click(function(){
-						$('#'+dialogId).dialog('close');
-						return true;
-					});
-				
-				var dialogOptions = {
-					autoOpen: true
-					,title: _loc('Warning')
-					,modal: true
-					,closeOnEscape: false
-					,close: function(event, ui){
-						var diag = $(event.target);
-						diag.dialog('destroy');
-						diag.remove();
-					}
-				};
-				$dialog.dialog(dialogOptions);
-			};
-			
-			function cancel(){
-				reportError(_loc('Operation cancelled by user'));
-				progressDialog.close();
-			};
 		};
 	};
 	
