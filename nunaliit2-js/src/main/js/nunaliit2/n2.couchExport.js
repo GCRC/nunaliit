@@ -30,7 +30,7 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 ;(function($,$n2){
-// "use strict"; // Can not use strict with eval
+"use strict";
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
@@ -96,7 +96,7 @@ var ExportApplication = $n2.Class('ExportApplication',{
 	
 	_logError: function(err){
 		if( this.logger ){
-			logger.reportError(err);
+			this.logger.reportError(err);
 		};
 	},
 	
@@ -217,14 +217,14 @@ var ExportApplication = $n2.Class('ExportApplication',{
 					fileName = null;
 				};
 				
-				var script = $('#'+scriptAreaId).val();
+				var scriptText = $('#'+scriptAreaId).val();
 				
 				$dialog.dialog('close');
 				_this._performExportScript({
 					filter: filter
 					,fileName: fileName
 					,format: format
-					,script: script
+					,script: scriptText
 				});
 				return false;
 			});
@@ -339,6 +339,10 @@ var ExportApplication = $n2.Class('ExportApplication',{
 		
 		var _this = this;
 		
+		if( typeof opts.script !== 'string' ){
+			throw new Error('Script is not a string');
+		};
+		
 		// Initialize with all doc ids
 		var docIdsRemaining = [];
 		for(var i=0,e=this.docIds.length; i<e; ++i){
@@ -356,10 +360,12 @@ var ExportApplication = $n2.Class('ExportApplication',{
 
 		// Compile script
 		var scriptFn = null;
+		//$n2.log('Script',opts.script);
 		try {
-			eval('scriptFn = '+opts.script);
+			scriptFn = eval('('+opts.script+');');
 		} catch(e) {
 			this._reportError(_loc('Error')+': '+e);
+			this._logError('Unable to evaluate script: '+e,opts.script);
 			return;
 		};
 		if( typeof(scriptFn) !== 'function' ) {
