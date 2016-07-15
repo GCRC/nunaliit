@@ -150,7 +150,11 @@ var ExportWidget = $n2.Class({
 				.text( this.label )
 				.appendTo( $elem )
 				.click(function(){
-					_this._performExport();
+					try {
+						_this._performExport();
+					} catch(e) {
+						$n2.log('Error during export: '+e);
+					};
 					return false;
 				});
 		};
@@ -164,14 +168,14 @@ var ExportWidget = $n2.Class({
 	},
 	
 	_performExport: function(){
-		var docIds = [];
+		var docs = [];
 		for(var docId in this.modelDocsById){
 			var doc = this.modelDocsById[docId];
-			docIds.push( doc._id );
+			docs.push( doc );
 		};
 		
 		this.exportService.createExportApplication({
-			docIds: docIds
+			docs: docs
 			,logger: new $n2.logger.CustomLogger({
 				logFn: function(){}
 				,reportErrorFn: function(err){

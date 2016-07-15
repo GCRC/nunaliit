@@ -58,6 +58,7 @@ var ExportApplication = $n2.Class('ExportApplication',{
 			,config: null
 			,logger: null
 			,docIds: null
+			,docs: null
 		},opts_);
 
 		var _this = this;
@@ -67,10 +68,18 @@ var ExportApplication = $n2.Class('ExportApplication',{
 		this.atlasDesign = opts.atlasDesign;
 		this.config = opts.config;
 		this.logger = opts.logger;
-		this.docIds = opts.docIds;
-		
-		if( !$n2.isArray(this.docIds) ){
-			throw new Error('In ExportApplication, docIds must be supplied as an array');
+
+		// Accumulate docs and doc ids
+		this.docIds = [];
+		if( $n2.isArray(opts.docIds) ){
+			opts.docIds.forEach(function(docId){
+				_this.docIds.push(docId);
+			});
+		};
+		if( $n2.isArray(opts.docs) ){
+			opts.docs.forEach(function(doc){
+				_this.docIds.push(doc);
+			});
 		};
 		
 		if( !this.exportService ){
@@ -415,18 +424,32 @@ var ExportApplication = $n2.Class('ExportApplication',{
 				};
 				
 				var docId = docIdsRemaining.pop();
-				_this.atlasDb.getDocument({
-					docId: docId
-					,onSuccess: retrievedDocument
-					,onError: function(err){
-						var locStr = _loc('Failure to fetch {docId}',{
-							docId: docId
-						});
-						_this._logError(locStr);
+				if( typeof docId === 'string' ){
+					_this.atlasDb.getDocument({
+						docId: docId
+						,onSuccess: retrievedDocument
+						,onError: function(err){
+							var locStr = _loc('Failure to fetch {docId}',{
+								docId: docId
+							});
+							_this._logError(locStr);
+							errorCount += 1;
+							processNextDocument();
+						}
+					});
+				} else if( typeof docId === 'object' ){
+					// This is the document. Use setTimeout to save running out of stack
+					window.setTimeout(function(){
+						retrievedDocument(docId);
+					},0);
+
+				} else {
+					window.setTimeout(function(){
+						_this._logError(_loc('Invalid document'));
 						errorCount += 1;
 						processNextDocument();
-					}
-				});
+					},0);
+				};
 			};
 		};
 		
