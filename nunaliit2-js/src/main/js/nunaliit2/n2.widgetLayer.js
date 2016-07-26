@@ -303,7 +303,7 @@ function HandleWidgetDisplayRequests(m){
 };
 
 //--------------------------------------------------------------------------
-$n2.widgetTime = {
+$n2.widgetLayer = {
 	LayerSelectionWidget: LayerSelectionWidget
 	,HandleWidgetAvailableRequests: HandleWidgetAvailableRequests
 	,HandleWidgetDisplayRequests: HandleWidgetDisplayRequests
