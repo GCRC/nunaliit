@@ -2,11 +2,12 @@ package ca.carleton.gcrc.geom;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
 
-public class MultiLineString extends GeometryAbstract implements Geometry {
+public class MultiLineString extends GeometryAbstract implements Geometry,GeometryAssembly {
 
 	private List<LineString> lineStrings;
 	
@@ -16,6 +17,17 @@ public class MultiLineString extends GeometryAbstract implements Geometry {
 	
 	public MultiLineString(List<LineString> lineStrings) {
 		this.lineStrings = lineStrings;
+	}
+
+	@Override
+	public int size() {
+		return lineStrings.size();
+	}
+
+	@Override
+	public List<Geometry> getGeometries() {
+		ArrayList<Geometry> geometries = new ArrayList<Geometry>(lineStrings);
+		return geometries;
 	}
 	
 	public List<LineString> getLineStrings(){

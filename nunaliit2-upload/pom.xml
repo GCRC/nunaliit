@@ -14,12 +14,12 @@
   	<dependency>
   		<groupId>commons-fileupload</groupId>
   		<artifactId>commons-fileupload</artifactId>
-  		<version>1.2.1</version>
+  		<version>${commons-fileupload.version}</version>
   	</dependency>
   	<dependency>
   		<groupId>commons-io</groupId>
   		<artifactId>commons-io</artifactId>
-  		<version>1.4</version>
+  		<version>${commons-io.version}</version>
   	</dependency>
   	<dependency>
   		<groupId>javax.servlet</groupId>

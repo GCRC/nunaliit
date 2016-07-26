@@ -108,11 +108,19 @@ public class SchemaDefinition {
 	}
 	
 	public String getDocumentIdentifier(){
-		return "schema."+groupName+"_"+schemaId;
+		if( "nunaliit".equals(groupName) ){
+			return "org.nunaliit.schema:" + schemaId;
+		} else {
+			return "schema."+groupName+"_"+schemaId;
+		}
 	}
 	
 	public String getSchemaName(){
-		return groupName+"_"+schemaId;
+		if( "nunaliit".equals(groupName) ){
+			return schemaId;
+		} else {
+			return groupName+"_"+schemaId;
+		}
 	}
 	
 	public String getSchemaLabel(){
@@ -122,6 +130,19 @@ public class SchemaDefinition {
 		
 		return label;
 	}
+
+	public String getSchemaStructure(){
+		return groupName+"_"+schemaId;
+	}
+
+	public String getSchemaClass(){
+		if( "nunaliit".equals(groupName) ){
+			return "nunaliit_" + schemaId + "_schema";
+		} else {
+			return groupName+"_"+schemaId;
+		}
+	}
+	
 	
 	public void saveToDocsDir(File parentDir) throws Exception {
 		
@@ -517,41 +538,43 @@ public class SchemaDefinition {
 	}
 	
 	public void printBrief(PrintWriter pw) throws Exception {
-		String schemaName = getSchemaName();
+		String schemaClass = getSchemaClass();
+		String schemaStructure = getSchemaStructure();
 
-		pw.print("<span class=\""+schemaName+"_brief\">");
+		pw.print("<span class=\""+schemaClass+"_brief\">");
 
 		if( null != label ){
-			pw.print("<span class=\"n2s_localize "+schemaName+"_brief_decoration\">");
+			pw.print("<span class=\"n2s_localize "+schemaClass+"_brief_decoration\">");
 			pw.print(label);
 		} else {
-			pw.print("<span class=\""+schemaName+"_brief_decoration\">");
-			pw.print(schemaName);
+			pw.print("<span class=\""+schemaClass+"_brief_decoration\">");
+			pw.print( getSchemaName() );
 		}
 
 		pw.print("(</span>");
 		
 		boolean first = true;
 		for(SchemaAttribute attribute : attributes){
-			boolean printed = attribute.printBrief(pw,schemaName,first);
+			boolean printed = attribute.printBrief(pw,schemaStructure,schemaClass,first);
 			if( printed ){
 				first = false;
 			}
 		}
 		
-		pw.print("<span class=\""+schemaName+"_brief_decoration\">)</span>");
+		pw.print("<span class=\""+schemaClass+"_brief_decoration\">)</span>");
 
 		pw.print("</span>");
 	}
 	
 	public void printDisplay(PrintWriter pw) throws Exception {
-		String schemaName = getSchemaName();
+		String schemaClass = getSchemaClass();
+		String schemaStructure = getSchemaStructure();
 		
 		pw.println("<div class=\"n2_documentDisplay\"><div class=\"n2_layoutFloat\">");
-		pw.println("<div class=\""+schemaName+"\">");
+		pw.println("<div class=\""+schemaClass+"\">");
 
 		for(SchemaAttribute attribute : attributes){
-			attribute.printDisplay(pw,schemaName);
+			attribute.printDisplay(pw,schemaStructure,schemaClass);
 		}
 		
 		pw.println("</div>");
@@ -559,13 +582,14 @@ public class SchemaDefinition {
 	}
 	
 	public void printForm(PrintWriter pw) throws Exception {
-		String schemaName = getSchemaName();
+		String schemaClass = getSchemaClass();
+		String schemaStructure = getSchemaStructure();
 		
 		pw.println("<div class=\"n2_documentForm\"><div class=\"n2_layoutFloat\">");
-		pw.println("<div class=\""+schemaName+"\">");
+		pw.println("<div class=\""+schemaClass+"\">");
 
 		for(SchemaAttribute attribute : attributes){
-			attribute.printForm(pw,schemaName);
+			attribute.printForm(pw,schemaStructure,schemaClass);
 		}
 		
 		pw.println("</div>");

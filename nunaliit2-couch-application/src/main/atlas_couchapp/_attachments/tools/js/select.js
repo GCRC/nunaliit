@@ -21,130 +21,6 @@
 	var selectedList = null;
 
 	// **********************************************************************
-	var Logger = $n2.Class({
-		divId: null,
-		
-		initialize: function(opts_){
-			var opts = $n2.extend({
-				elem: null
-			},opts_);
-			
-			var $div = $(opts.elem);
-			this.divId = $n2.utils.getElementIdentifier($div);
-		},
-
-		reportError: function(err){
-			var $e = this._getLogsDiv();
-	
-			var $d = $('<div class="error"></div>');
-			$d.text(err);
-			$e.append($d);
-		},
-		
-		log: function(msg){
-			var $e = this._getLogsDiv();
-	
-			var $d = $('<div class="log"></div>');
-			$d.text(msg);
-			$e.append($d);
-		},
-		
-		_getLogsDiv: function(){
-			return $('#'+this.divId);
-		}
-	});
-	
-	// **********************************************************************
-	var ProgressDialog = $n2.Class({
-		
-		dialogId: null
-		
-		,onCancelFn: null
-		
-		,cancellingLabel: null
-		
-		,initialize: function(opts_){
-			var opts = $n2.extend({
-				title: _loc('Progress')
-				,onCancelFn: null
-				,cancelButtonLabel: _loc('Cancel') 
-				,cancellingLabel: _loc('Cancelling Operation...')
-			},opts_);
-			
-			var _this = this;
-			
-			this.dialogId = $n2.getUniqueId();
-			this.onCancelFn = opts.onCancelFn;
-			this.cancellingLabel = opts.cancellingLabel;
-
-			var $dialog = $('<div id="'+this.dialogId+'">'
-				+'<div class="selectAppProgressDialogMessage">'
-				+'<span class="selectAppLabel"></span>: <span class="selectAppProgress"></span>'
-				+'</div></div>');
-			$dialog.find('span.selectAppLabel').text( _loc('Progress') );
-			
-			var dialogOptions = {
-				autoOpen: true
-				,title: opts.title
-				,modal: true
-				,closeOnEscape: false
-				,close: function(event, ui){
-					var diag = $(event.target);
-					diag.dialog('destroy');
-					diag.remove();
-				}
-			};
-			$dialog.dialog(dialogOptions);
-			
-			// Remove close button
-			$dialog.parents('.ui-dialog').first().find('.ui-dialog-titlebar-close').hide();
-
-			// Add cancel button, if needed
-			if( typeof(opts.onCancelFn) === 'function'  ) {
-				var cancelLine = $('<div><button class="n2ProgressModalCancel"></button></div>');
-				$dialog.append(cancelLine);
-				cancelLine.find('button')
-					.text(opts.cancelButtonLabel)
-					.click(function(){
-						_this.cancel();
-						return false;
-					})
-					;
-			};
-			
-			this.updatePercent(0);
-		}
-	
-		,cancel: function(){
-			if( typeof(this.onCancelFn) === 'function' ) {
-				var $dialog = $('#'+this.dialogId);
-				var $cb = $dialog.find('.n2ProgressModalCancel');
-				var $m = $('<span></span>').text(this.cancellingLabel);
-				$cb.before($m).remove();
-				
-				this.onCancelFn();
-			};
-		}
-	
-		,close: function(){
-			var $dialog = $('#'+this.dialogId);
-			$dialog.dialog('close');
-		}
-	
-		,updatePercent: function(percent){
-			var $dialog = $('#'+this.dialogId);
-			var $p = $dialog.find('.selectAppProgress');
-			$p.text( ''+Math.floor(percent)+'%' );
-		}
-		
-		,updateHtmlMessage: function(html){
-			var $dialog = $('#'+this.dialogId);
-			var $div = $dialog.find('.selectAppProgressDialogMessage');
-			$div.html( html );
-		}
-	});
-	
-	// **********************************************************************
 	var DocumentList = $n2.Class({
 		docIds: null,
 		
@@ -346,7 +222,7 @@
 				return;
 			};
 
-			var progressDialog = new ProgressDialog({
+			var progressDialog = new $n2.couchDialogs.ProgressDialog({
 				title: _loc('Fetching All Document Ids')
 				,onCancelFn: function(){
 					opCancelled = true;
@@ -409,7 +285,7 @@
 			};
 
 			var opCancelled = false;
-			var progressDialog = new ProgressDialog({
+			var progressDialog = new $n2.couchDialogs.ProgressDialog({
 				title: opts.progressTitle
 				,onCancelFn: function(){
 					opCancelled = true;
@@ -1224,7 +1100,7 @@
 				startkey: '_design'
 				,endkey: '_design~'
 				,onSuccess: function(docs){
-					var $sel = $options.find('select.viewList');
+					var sortedViewLabels = [];
 					docs.forEach(function(designDoc){
 						var docId = designDoc._id;
 						var names = docId.split('/');
@@ -1233,13 +1109,20 @@
 							if( designDoc && designDoc.views ){
 								for(var viewName in designDoc.views){
 									var label = designName + '/' + viewName;
-									$('<option></option>')
-										.val(label)
-										.text(label)
-										.appendTo($sel);
+									sortedViewLabels.push(label);
 								};
 							};
 						};
+					});
+					
+					sortedViewLabels.sort();
+					
+					var $sel = $options.find('select.viewList');
+					sortedViewLabels.forEach(function(viewLabel){
+						$('<option></option>')
+							.val(viewLabel)
+							.text(viewLabel)
+							.appendTo($sel);
 					});
 				}
 				,onError: function(err){
@@ -1937,7 +1820,7 @@
 			};
 
 			var opCancelled = false;
-			var progressDialog = new ProgressDialog({
+			var progressDialog = new $n2.couchDialogs.ProgressDialog({
 				title: _loc('Transform Progress')
 				,onCancelFn: function(){
 					opCancelled = true;
@@ -2475,6 +2358,14 @@
 			});
 		
 		$('<button>')
+			.text( _loc('Export by Script') )
+			.appendTo($h)
+			.click(function(){
+				exportListByScript(list);
+				return false;
+			});
+		
+		$('<button>')
 			.text( _loc('Re-Submit Geometries') )
 			.appendTo($h)
 			.click(function(){
@@ -2613,7 +2504,7 @@
 				$dialog.dialog('close');
 
 				var opCancelled = false;
-				var progressDialog = new ProgressDialog({
+				var progressDialog = new $n2.couchDialogs.ProgressDialog({
 					title: _loc('Deletion Progress')
 					,onCancelFn: function(){
 						opCancelled = true;
@@ -2786,14 +2677,14 @@
 			var failCount = 0;
 			var opCancelled = false;
 			
-			var progressDialog = new ProgressDialog({
+			var progressDialog = new $n2.couchDialogs.ProgressDialog({
 				title: _loc('Preparing Report')
 				,onCancelFn: function(){
 					opCancelled = true;
 				}
 			});
 			
-			var logger = new Logger({
+			var logger = new $n2.logger.HtmlLogger({
 				elem: $('#'+dialogId).find('.n2select_report_result')
 			});
 
@@ -3049,6 +2940,28 @@
 				,onError: function(err){
 					alert(_loc('Error during export')+': '+err);
 				}
+			});
+		};
+	};
+	
+	// -----------------------------------------------------------------
+	function exportListByScript(list){
+
+		// Check if service is available
+		if( !exportService ) {
+			alert( _loc('Export service is not configured') );
+		} else {
+			var docIds = [];
+			for(var i=0,e=list.docIds.length; i<e; ++i){
+				docIds.push( list.docIds[i] );
+			};
+			
+			exportService.createExportApplication({
+				docIds: docIds
+				,logger: new $n2.logger.CustomLogger({
+					logFn: log
+					,reportErrorFn: reportError
+				})
 			});
 		};
 	};

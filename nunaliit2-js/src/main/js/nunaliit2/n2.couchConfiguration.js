@@ -292,8 +292,11 @@ function Configure(options_){
 			,customService: configuration.directory.customService
 		});
 
-		configuration.directory.exportService = new $n2.couchExport.Export({
+		configuration.directory.exportService = new $n2.couchExport.ExportService({
 			url: options.exportServerUrl
+			,atlasDb: configuration.atlasDb
+			,atlasDesign: configuration.atlasDesign
+			,config: configuration
 		});
 
 		configuration.directory.dateService = new $n2.dateService.DateService({

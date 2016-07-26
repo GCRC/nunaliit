@@ -1,0 +1,10 @@
+{
+   "nunaliit_layers": ["scripts"],
+   "nunaliit_schema": "script",
+   "script": {
+      "label": null,
+      "name": "",
+      "script": "",
+      "type": "export"
+   }
+}

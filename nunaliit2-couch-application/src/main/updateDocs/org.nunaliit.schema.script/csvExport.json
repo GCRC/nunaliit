@@ -1,0 +1,22 @@
+[
+   {
+      "label": "name",
+      "select": "script.name",
+      "type": "text"
+   },
+   {
+      "label": "label",
+      "select": "script.label",
+      "type": "json"
+   },
+   {
+      "label": "type",
+      "select": "script.type",
+      "type": "json"
+   },
+   {
+      "label": "script",
+      "select": "script.script",
+      "type": "text"
+   }
+]
