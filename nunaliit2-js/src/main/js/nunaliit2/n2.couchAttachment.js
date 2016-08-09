@@ -301,7 +301,7 @@ var AttachmentService = $n2.Class({
 
 	getAttachments: function(doc, documentSource){
 		if( !documentSource ){
-			documentSource = $n2.document.DocumentSource({
+			documentSource = new $n2.document.DocumentSource({
 				doc: doc
 				,dispatchService: this.dispatchService
 				,dispatchHandle: DH
