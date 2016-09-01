@@ -927,7 +927,8 @@ var DomStyler = $n2.Class({
 		$div.empty();
 		
 		var attachment = null;
-		if( data._attachments 
+		if( data 
+		 && data._attachments 
 		 && data._attachments[attachmentName] ) {
 			attachment = data._attachments[attachmentName];
 		};

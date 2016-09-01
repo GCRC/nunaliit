@@ -172,6 +172,7 @@ var Module = $n2.Class({
 			,onLoaded: function(){}
 		},opts_);
 		
+		var _this = this;
 		var $elem = opts.elem;
 		
 		var introInfo = null;
@@ -213,7 +214,7 @@ var Module = $n2.Class({
 					$outer.html(content);
 					
 					if( opts.showService ) {
-						opts.showService.fixElementAndChildren($outer);
+						opts.showService.fixElementAndChildren($outer, {}, this.moduleDoc);
 					};					
 				};
 				opts.onLoaded();
@@ -236,7 +237,7 @@ var Module = $n2.Class({
 					
 					if( opts.showService ) {
 						$wrapper.addClass('n2s_preserveSpaces');
-						opts.showService.fixElementAndChildren($wrapper);
+						opts.showService.fixElementAndChildren($wrapper, {}, this.moduleDoc);
 					};
 				};
 				opts.onLoaded();
@@ -276,7 +277,7 @@ var Module = $n2.Class({
 					    		$('#'+displayId).html(intro);
 				    		};
 							if( opts.showService ) {
-								opts.showService.fixElementAndChildren($('#'+displayId));
+								opts.showService.fixElementAndChildren($('#'+displayId), {}, _this.moduleDoc);
 							};
 							opts.onLoaded();
 				    	}
