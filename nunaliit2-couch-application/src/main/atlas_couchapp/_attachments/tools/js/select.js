@@ -360,12 +360,42 @@
 					return;
 				};
 
-				for(var i=0, e=docs.length; i<e; ++i){
-					if( opts.filterFn(docs[i], my_scriptConfig) ){
-						filteredDocIds.push(docs[i]._id);
-					};
+				if( docs.length > 0 ){
+					var doc = docs.shift();
+					nextDoc(doc, docs);
+				} else {
+					nextFetch();
 				};
-				nextFetch();
+			};
+			
+			function nextDoc(doc, docs){
+				if( opCancelled ) {
+					cancel();
+					return;
+				};
+
+				// Adjust config
+				var callbackExecuted = false;
+				my_scriptConfig.continueOnExit = true;
+				my_scriptConfig.includeDocument = function(shouldBeIncluded){
+					if( callbackExecuted ) return; // ignore second call
+					if( my_scriptConfig.continueOnExit ) return; // error
+					
+					resultOnDocument(doc, shouldBeIncluded, docs);
+				};
+
+				// Perform filter function
+				var shouldBeIncluded = opts.filterFn(doc, my_scriptConfig);
+				if( my_scriptConfig.continueOnExit ){
+					resultOnDocument(doc, shouldBeIncluded, docs)
+				};
+			};
+			
+			function resultOnDocument(doc, shouldBeIncluded, docs){
+				if( shouldBeIncluded ){
+					filteredDocIds.push(doc._id);
+				};
+				receiveDocs(docs);
 			};
 			
 			function cancel(){
@@ -741,11 +771,12 @@
 
 			// Create a copy of the configuration so that user
 			// can save temporary objects to it
-			var my_scriptConfig = $n2.extend({},g_scriptConfig);
+//			var my_scriptConfig = $n2.extend({},g_scriptConfig);
+//			my_scriptConfig.includeDocument = function(shouldBeIncluded){};
 			
 			try {
 				eval('scriptFn = '+script);
-				scriptFn({_id:'test',_revision:'1-abcde'},my_scriptConfig);
+//				scriptFn({_id:'test',_revision:'1-abcde'},my_scriptConfig);
 			} catch(e) {
 				alert(_loc('Error')+': '+e);
 				return;
