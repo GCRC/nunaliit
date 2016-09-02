@@ -97,6 +97,12 @@ public class DumpSettings {
 				String docId = argumentStack.pop();
 				docIds.add(docId);
 
+			} else if( "--schema".equals(optionName) ){
+				argumentStack.pop();
+				if( argumentStack.size() < 1 ){
+					throw new Exception("--schema option requires the name of the document schema");
+				}
+				
 			} else if( "--server".equals(optionName) ){
 				argumentStack.pop();
 				if( argumentStack.size() < 1 ){
