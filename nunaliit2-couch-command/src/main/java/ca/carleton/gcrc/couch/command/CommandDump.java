@@ -41,6 +41,7 @@ public class CommandDump implements Command {
 				Options.OPTION_ATLAS_DIR
 				,Options.OPTION_DUMP_DIR
 				,Options.OPTION_DOC_ID
+				,Options.OPTION_SCHEMA
 				,Options.OPTION_SKELETON
 				,Options.OPTION_OVERWRITE_DOCS
 			};

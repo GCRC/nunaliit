@@ -14,6 +14,7 @@ public class Options {
 	static final public String OPTION_ID = "--id";
 	static final public String OPTION_DUMP_DIR = "--dump-dir";
 	static final public String OPTION_DOC_ID = "--doc-id";
+	static final public String OPTION_SCHEMA = "--schema";
 	static final public String OPTION_NAME = "--name";
 
 	static final public String OPTION_DEBUG = "--debug";
