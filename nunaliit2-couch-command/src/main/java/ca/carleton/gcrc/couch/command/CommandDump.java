@@ -77,6 +77,10 @@ public class CommandDump implements Command {
 		ps.println("    document identifier. This option can be used multiple times");
 		ps.println("    to include multiple documents in the dump.");
 		ps.println();
+		ps.println("  "+Options.OPTION_SCHEMA);
+		ps.println("    Specifies which document(s) should be dumped by selecting the ");
+		ps.println("    document's schema.");
+		ps.println();
 		ps.println("  "+Options.OPTION_SKELETON);
 		ps.println("    Select skeleton documents for the dump process.");
 		ps.println();
