@@ -408,10 +408,10 @@ html, body {
 /*START - Font Styles*/
 h1 { font-size: 2.2em; letter-spacing:0;}
 h2 { font-size: 1.55em; line-height: 1.2em; }
-h3 { font-size: 20px; line-height:20px; }
-h4 { font-size: 18px; margin-bottom:10px; }
-h5 { font-size: 16px; }
-h6 { font-size: 15px; }
+h3 { font-size: 1.17em; line-height:20px; }
+h4 { font-size: 1em; margin-bottom:10px; }
+h5 { font-size: 0.83em; }
+h6 { font-size: 0.67em; }
 a { text-decoration:none; }
 a:hover { text-decoration:underline; }
 p { margin:0 0 10px 0; line-height:1.4em}
