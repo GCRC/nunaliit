@@ -2,11 +2,12 @@ package ca.carleton.gcrc.geom;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
 
-public class MultiPolygon extends GeometryAbstract implements Geometry {
+public class MultiPolygon extends GeometryAbstract implements Geometry,GeometryAssembly {
 
 	private List<Polygon> polygons;
 	
@@ -16,6 +17,17 @@ public class MultiPolygon extends GeometryAbstract implements Geometry {
 	
 	public MultiPolygon(List<Polygon> polygons) {
 		this.polygons = polygons;
+	}
+
+	@Override
+	public int size() {
+		return polygons.size();
+	}
+
+	@Override
+	public List<Geometry> getGeometries() {
+		ArrayList<Geometry> geometries = new ArrayList<Geometry>(polygons);
+		return geometries;
 	}
 	
 	public List<Polygon> getPolygons(){

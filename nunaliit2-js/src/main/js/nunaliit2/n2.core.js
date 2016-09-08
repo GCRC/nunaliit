@@ -27,17 +27,23 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
-
-$Id: n2.core.js 8165 2012-05-31 13:14:37Z jpfiset $
 */
-;(function(){
 
-if( typeof(nunaliit2) === 'function' ) return;
+"use strict";
 
-/** @class Nunaliit2 Atlas Toolkit */
-nunaliit2 = function(){
+var nunaliit2CoreScript;
+
+if( typeof nunaliit2 !== 'function' ) {
+	/** @class Nunaliit2 Atlas Toolkit */
+	var nunaliit2 = function(){
+	};
+
+	if( typeof nunaliit2CoreScript === 'undefined' ){
+		nunaliit2CoreScript = 'nunaliit2.js';
+	};
+
+	if( typeof window !== 'undefined' ){
+		window.nunaliit2 = nunaliit2;
+		window.nunaliit2CoreScript = nunaliit2CoreScript;
+	};
 };
-
-if( typeof(nunaliit2CoreScript) === 'undefined' ) nunaliit2CoreScript = 'nunaliit2.js';
-
-})();

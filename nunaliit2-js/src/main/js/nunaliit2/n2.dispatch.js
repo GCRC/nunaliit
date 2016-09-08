@@ -33,6 +33,9 @@ POSSIBILITY OF SUCH DAMAGE.
 
 // Localization
 //var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
+var HANDLEMARKER = {}
+,ADDRESSMARKER = {}
+;
 
 // *******************************************************
 /**
@@ -102,10 +105,31 @@ var Dispatcher = $n2.Class({
 				,name: name
 				,receives: {}
 				,sends: {}
+				,_marker: HANDLEMARKER
 			};
 			this.handles[name] = h;
 		};
 		return h;
+	},
+	
+	isHandle: function(h){
+		if( typeof h !== 'object' ) return false;
+		
+		if( h._marker === HANDLEMARKER ){
+			return true;
+		};
+		
+		return false;
+	},
+	
+	isAddress: function(addr){
+		if( typeof addr !== 'object' ) return false;
+		
+		if( addr._marker === ADDRESSMARKER ){
+			return true;
+		};
+		
+		return false;
 	},
 
 	/**
@@ -117,15 +141,26 @@ var Dispatcher = $n2.Class({
 	 * @return An address (object structure) that can be used in the deregister() function
 	 */
 	register: function(handle, type, l){
-		if( typeof(handle) === 'string' ){
+		if( typeof handle === 'string' ){
 			handle = this.getHandle(handle);
 		};
+		if( !this.isHandle(handle) ){
+			throw new Error('DispatchService.register: invalid handle');
+		};
+		if( typeof type !== 'string' ){
+			throw new Error('DispatchService.register: type must be a string');
+		};
+		if( typeof l !== 'function' ){
+			throw new Error('DispatchService.register must provide a function');
+		};
+		
 		if( !this.listeners[type] ){
 			this.listeners[type] = [];
 		};
 		var address = {
 			type: type
 			,id: $n2.getUniqueId()
+			,_marker: ADDRESSMARKER
 		};
 		this.listeners[type].push({
 			handle: handle
@@ -144,7 +179,7 @@ var Dispatcher = $n2.Class({
 	 *                recipient is called back.
 	 */
 	deregister: function(address){
-		if( address ){
+		if( this.isAddress(address) ){
 			var type = address.type;
 			var id = address.id;
 			if( type && id ){
@@ -164,6 +199,8 @@ var Dispatcher = $n2.Class({
 					};
 				};
 			};
+		} else {
+			throw new Error('DispatchService.deregister: invalid address');
 		};
 	},
 	
@@ -188,6 +225,8 @@ var Dispatcher = $n2.Class({
 	 */
 	send: function(handle, m){
 		
+		m.time = Date.now();
+		
 		if( typeof(handle) === 'string' ){
 			handle = this.getHandle(handle);
 		};
@@ -211,6 +250,8 @@ var Dispatcher = $n2.Class({
 	},
 	
 	_sendImmediate: function(h, m) {
+		var _this = this;
+		
 		var logging = this.options.logging;
 		var loggingIncludesMessage = this.options.loggingIncludesMessage;
 
@@ -222,24 +263,27 @@ var Dispatcher = $n2.Class({
 		this.dispatching = true;
 		var listeners = this.listeners[t];
 		if( listeners ) {
-			for(var i=0,e=listeners.length; i<e; ++i){
-				var l = listeners[i];
+			var copy = listeners.slice(0); // make copy to handle deregister during processing
+			for(var i=0,e=copy.length; i<e; ++i){
+				var l = copy[i];
 				
 				if( logging ){
+					var timeStr = '';
+					if( m.time ){
+						timeStr = '' + (m.time/1000)+' ';
+					};
+					
 					if( loggingIncludesMessage ) {
-						$n2.log(''+h.name+' >'+t+'> '+l.handle.name,m);
+						$n2.log(timeStr+h.name+' >'+t+'> '+l.handle.name,m);
 					} else {
-						$n2.log(''+h.name+' >'+t+'> '+l.handle.name);
+						$n2.log(timeStr+h.name+' >'+t+'> '+l.handle.name);
 					};
 				};
 				
 				try {
 					l.fn(m, l.address, this);
 				} catch(e) {
-					$n2.log('Error while dispatching: '+e);
-					if( e.stack ) {
-						$n2.log('Stack',e.stack);
-					};
+					_this._reportError(e,m);
 				};
 			};
 		} else if( typeof listeners === 'undefined' ){
@@ -261,6 +305,13 @@ var Dispatcher = $n2.Class({
 		this.dispatching = false;
 	},
 	
+	_reportError: function(e,m){
+		$n2.log('Error while dispatching '+m.type+': '+e);
+		if( e.stack ) {
+			$n2.log('Stack: '+e.stack);
+		};
+	},
+	
 	/**
 	 * Sends a synchronous message to all recipients that have registered for the
 	 * message type.
@@ -269,6 +320,8 @@ var Dispatcher = $n2.Class({
 	 */
 	synchronousCall: function(handle, m){
 		
+		m.time = Date.now();
+
 		if( typeof(handle) === 'string' ){
 			handle = this.getHandle(handle);
 		};

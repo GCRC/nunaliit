@@ -30,9 +30,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-// @ requires n2.utils.js
-
 ;(function($n2){
+"use strict";
 
     var codex = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
 	

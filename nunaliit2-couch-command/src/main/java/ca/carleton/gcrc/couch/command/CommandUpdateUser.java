@@ -1,7 +1,6 @@
 package ca.carleton.gcrc.couch.command;
 
 import java.io.PrintStream;
-import java.util.Stack;
 
 public class CommandUpdateUser implements Command {
 
@@ -24,6 +23,13 @@ public class CommandUpdateUser implements Command {
 	}
 
 	@Override
+	public String[] getExpectedOptions() {
+		return new String[]{
+				Options.OPTION_ATLAS_DIR
+			};
+	}
+
+	@Override
 	public boolean requiresAtlasDir() {
 		return false;
 	}
@@ -36,13 +42,16 @@ public class CommandUpdateUser implements Command {
 		ps.println("tool to support legacy scripts. It does nothing.");
 		ps.println();
 		ps.println("Command Syntax:");
-		ps.println("  nunaliit [<global-options>] update-user");
+		ps.println("  nunaliit update-user <options>");
+		ps.println();
+		ps.println("options:");
+		CommandHelp.reportGlobalOptions(ps,getExpectedOptions());
 	}
 
 	@Override
 	public void runCommand(
 		GlobalSettings gs
-		,Stack<String> argumentStack
+		,Options options
 		) throws Exception {
 
 		PrintStream ps = gs.getErrStream();

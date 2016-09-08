@@ -27,15 +27,16 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
-
-$Id: n2.couchRequests.js 8443 2012-08-16 18:04:28Z jpfiset $
 */
+
 ;(function($,$n2){
+"use strict";
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
-var DH = 'n2.couchRequests';
+var DH = 'n2.couchRequests',
+	MAX_REQUEST_SIZE = 25;
 
 $n2.couchRequests = $n2.Class({
 	options: null
@@ -121,6 +122,17 @@ $n2.couchRequests = $n2.Class({
 		if( cbFn ) {
 			this.currentRequests.docs[docId].push(cbFn);
 		};
+		
+		this._schedule();
+	}
+	
+	,requestLayerDefinition: function(layerId){
+		// Remember request
+		if( !this.currentRequests.layerIds ) {
+			this.currentRequests.layerIds = {};
+		};
+		
+		this.currentRequests.layerIds[layerId] = true;
 		
 		this._schedule();
 	}
@@ -238,8 +250,24 @@ $n2.couchRequests = $n2.Class({
 
 			// Request the required documents from db
 			if( docIds.length ) {
+				var effectiveDocIds = docIds;
+				if( effectiveDocIds.length > MAX_REQUEST_SIZE ){
+					var extraDocIds = effectiveDocIds.splice(MAX_REQUEST_SIZE);
+					
+					var extraRequests = this.currentRequests.docs;
+					if( !extraRequests ){
+						extraRequests = {};
+						this.currentRequests.docs = extraRequests;
+					};
+					extraDocIds.forEach(function(docId){
+						extraRequests[docId] = requests.docs[docId];
+					});
+					
+					this._schedule();
+				};
+				
 				this.options.documentSource.getDocuments({
-					docIds: docIds
+					docIds: effectiveDocIds
 					,onSuccess: function(docs) {
 						_this._callDocumentListeners(docs, requests, true);
 					}
@@ -250,6 +278,26 @@ $n2.couchRequests = $n2.Class({
 		// Report cached documents, if any
 		if( null !== cachedDocs ) {
 			this._callDocumentListeners(cachedDocs, requests, false);
+		};
+		
+		// Layer definitions
+		if( requests.layerIds 
+		 && this.options.documentSource ) {
+
+			var layerIds = [];
+			for(var layerId in requests.layerIds){
+				layerIds[layerIds.length] = layerId;
+			};
+			
+			if( layerIds.length > 0 ){
+				this.options.documentSource.getLayerDefinitions({
+					layerIds: layerIds
+					,fullDocuments: true
+					,onSuccess: function(docs) {
+						_this._callDocumentListeners(docs, requests, true);
+					}
+				});
+			};
 		};
 	}
 	

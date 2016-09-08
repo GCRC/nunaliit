@@ -52,6 +52,11 @@ public class DocumentJSON implements Document {
 		return new ArrayList<Attachment>(attachments.values());
 	}
 
+	@Override
+	public Attachment getAttachmentByName(String attachmentName) {
+		return attachments.get(attachmentName);
+	}
+
 	public void addAttachment(Attachment attachment){
 		attachments.put(attachment.getName(), attachment);
 	}

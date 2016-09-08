@@ -27,9 +27,8 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
-
-$Id: n2.couchDisplay.js 8441 2012-08-15 17:48:33Z jpfiset $
 */
+
 ;(function($,$n2){
 "use strict";
 
@@ -641,36 +640,24 @@ var TiledDisplay = $n2.Class({
 			};
 			
 	 		// Show 'find on map' button
-			if( this.dispatchService 
-			 && this.dispatchService.isEventTypeRegistered('findIsAvailable')
-			 && this.dispatchService.isEventTypeRegistered('find')
-			 ) {
-				// Check if document can be displayed on a map
-				var showFindOnMapButton = false;
-				var m = {
-					type: 'findIsAvailable'
+			{
+				var $findOnMapButton = $('<a href="#"></a>')
+					.addClass('n2DisplayTiled_current_button n2DisplayTiled_current_button_find_on_map')
+	 				.text( _loc('Find on Map') )
+	 				.appendTo($btnDiv)
+	 				.click(function(){
+	 					_this._dispatch({
+	 						type: 'find'
+ 							,docId: doc._id
+ 							,doc: doc
+ 						});
+						return false;
+					});
+				
+				this.showService.showFindAvailable({
+					elem: $findOnMapButton
 					,doc: doc
-					,isAvailable: false
-				};
-				this.dispatchService.synchronousCall(DH,m);
-				if( m.isAvailable ){
-					showFindOnMapButton = true;
-				};
-
-				if( showFindOnMapButton ) {
-					$('<a href="#"></a>')
-						.addClass('n2DisplayTiled_current_button n2DisplayTiled_current_button_find_on_map')
-		 				.text( _loc('Find on Map') )
-		 				.appendTo($btnDiv)
-		 				.click(function(){
-		 					_this._dispatch({
-		 						type: 'find'
-	 							,docId: doc._id
-	 							,doc: doc
-	 						});
-							return false;
-						});
-				};
+				});
 			};
 
 			// Show 'Add Layer' button
@@ -965,12 +952,14 @@ var TiledDisplay = $n2.Class({
 		
 		// Display full document for currently selected document
 		var waitClassName = 'n2DisplayTiled_wait_current_' + $n2.utils.stringToHtmlId(docId);
+		var buttonClassName = 'n2DisplayTiled_current_buttons_' + $n2.utils.stringToHtmlId(docId);
 		$set.find('.'+waitClassName).each(function(){
 			var $div = $(this)
 				.empty();
 
 			$('<div>')
 				.addClass('n2DisplayTiled_current_buttons')
+				.addClass(buttonClassName)
 				.appendTo($div);			
 
 			var $content = $('<div>')
@@ -981,9 +970,14 @@ var TiledDisplay = $n2.Class({
 				$content.text( doc._id );
 			};
 			
-			_this._displayDocumentButtons(doc, _this.currentDetails.schema);
-			
 			$div.removeClass(waitClassName);
+		});
+		
+		// Refresh buttons
+		$('.'+buttonClassName).each(function(){
+			var $div = $(this);
+			
+			_this._displayDocumentButtons(doc, _this.currentDetails.schema);
 		});
 		
 		// Set tile classes based on media associated with document, and schema name
@@ -1762,9 +1756,9 @@ function HandleDisplayRenderRequest(m){
 		options.customService = m.config.directory.customService;
 		options.dispatchService = m.config.directory.dispatchService;
 		
-		new TiledDisplay(options);
+		var displayControl = new TiledDisplay(options);
 
-		m.onSuccess();
+		m.onSuccess(displayControl);
 	};
 };
 

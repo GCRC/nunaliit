@@ -307,7 +307,8 @@ var DbPerspective = $n2.Class({
 				_this._handleMessage(m);
 			};
 			
-			this.dispatchService.register(DH, 'documentContent', fn);
+			this.dispatchService.register(DH, 'documentContentCreated', fn);
+			this.dispatchService.register(DH, 'documentContentUpdated', fn);
 			this.dispatchService.register(DH, 'documentDeleted', fn);
 //			this.dispatchService.register(DH, 'findIsAvailable', fn);
 			this.dispatchService.register(DH, 'documentVersion', fn);
@@ -538,7 +539,8 @@ var DbPerspective = $n2.Class({
 	},
 	
 	_handleMessage: function(m){
-		if( 'documentContent' === m.type ){
+		if( 'documentContentCreated' === m.type 
+		 || 'documentContentUpdated' === m.type ){
 			if( m.doc ){
 				this._docsLoaded([m.doc]);
 			};
@@ -656,7 +658,6 @@ var DbPerspectiveChooser = $n2.Class({
 		var opts = $n2.extend({
 			dispatchService: null
 			,sourceModelId: null
-			,contentId: null
 			,containerId: null
 		},opts_);
 		
@@ -680,7 +681,7 @@ var DbPerspectiveChooser = $n2.Class({
 		
 		var containerId = opts.containerId;
 		if( !containerId ){
-			containerId = opts.contentId;
+			throw new Error('containerId must be specified');
 		};
 		
 		this.elemId = $n2.getUniqueId();
@@ -815,17 +816,20 @@ function HandleWidgetDisplayRequests(m){
 		var containerId = m.containerId;
 		var config = m.config;
 		
-		var options = {
-			contentId: contentId
-			,containerId: containerId
+		var options = {};
+		
+		if( widgetOptions ){
+			for(var key in widgetOptions){
+				var value = widgetOptions[key];
+				options[key] = value;
+			};
 		};
+
+		options.contentId = contentId;
+		options.containerId = containerId;
 		
 		if( config && config.directory ){
 			options.dispatchService = config.directory.dispatchService;
-		};
-		
-		if( widgetOptions ){
-			if( widgetOptions.sourceModelId ) options.sourceModelId = widgetOptions.sourceModelId;
 		};
 		
 		new DbPerspectiveChooser(options);

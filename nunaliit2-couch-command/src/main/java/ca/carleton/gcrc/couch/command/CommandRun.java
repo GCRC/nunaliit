@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.PrintStream;
 import java.net.URL;
 import java.util.EnumSet;
-import java.util.Stack;
 
 import javax.servlet.DispatcherType;
 
@@ -31,6 +30,7 @@ import ca.carleton.gcrc.couch.export.ExportServlet;
 import ca.carleton.gcrc.couch.simplifiedGeometry.SimplifiedGeometryServlet;
 import ca.carleton.gcrc.couch.submission.SubmissionServlet;
 import ca.carleton.gcrc.couch.user.UserServlet;
+import ca.carleton.gcrc.mail.MailServlet;
 import ca.carleton.gcrc.progress.ProgressServlet;
 import ca.carleton.gcrc.upload.UploadServlet;
 
@@ -55,6 +55,13 @@ public class CommandRun implements Command {
 	}
 
 	@Override
+	public String[] getExpectedOptions() {
+		return new String[]{
+				Options.OPTION_ATLAS_DIR
+			};
+	}
+
+	@Override
 	public boolean requiresAtlasDir() {
 		return true;
 	}
@@ -70,17 +77,21 @@ public class CommandRun implements Command {
 		ps.println("Once the server is started, it can be stopped by pressing CTRL-C.");
 		ps.println();
 		ps.println("Command Syntax:");
-		ps.println("  nunaliit [<global-options>] run");
+		ps.println("  nunaliit run <options>");
 		ps.println();
-		ps.println("Global Options");
-		CommandHelp.reportGlobalSettingAtlasDir(ps);
+		ps.println("options:");
+		CommandHelp.reportGlobalOptions(ps,getExpectedOptions());
 	}
 
 	@Override
 	public void runCommand(
 		GlobalSettings gs
-		,Stack<String> argumentStack
+		,Options options
 		) throws Exception {
+
+		if( options.getArguments().size() > 1 ){
+			throw new Exception("Unexpected argument: "+options.getArguments().get(1));
+		}
 		
 		File atlasDir = gs.getAtlasDir();
 
@@ -245,6 +256,13 @@ public class CommandRun implements Command {
         	ServletHolder servletHolder = new ServletHolder(new SimplifiedGeometryServlet());
         	servletHolder.setInitOrder(2);
         	context.addServlet(servletHolder,"/servlet/geometry/*");
+        }
+
+        // Servlet for mail
+        {
+        	ServletHolder servletHolder = new ServletHolder(new MailServlet());
+        	servletHolder.setInitOrder(2);
+        	context.addServlet(servletHolder,"/servlet/mail/*");
         }
 
         // Proxy to site

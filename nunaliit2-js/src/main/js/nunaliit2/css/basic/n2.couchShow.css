@@ -45,3 +45,7 @@ div.n2Show_icon_speaker:hover {
 .n2Show_docNotFound {
 	color: #ff0000;
 }
+
+.n2show_findNotAvailable {
+	display: none;
+}

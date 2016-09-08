@@ -2,25 +2,11 @@
  * license.  See http://svn.openlayers.org/trunk/openlayers/license.txt for the
  * full text of the license. */
 
-
-/**
- * @ requires OpenLayers/Protocol.js
- * @ requires OpenLayers/Feature/Vector.js
- * @ requires OpenLayers/Filter/Spatial.js
- * @ requires OpenLayers/Filter/Comparison.js
- * @ requires OpenLayers/Filter/Logical.js
- */
-
-/**
- * @ requires OpenLayers/Format.js
- */
-
-if( !window.$n2 ) {
-	window.$n2 = window.nunaliit2;
-};
+;(function($n2){
+"use strict";
 
 
-if( typeof(OpenLayers) !== 'undefined'
+if( typeof OpenLayers !== 'undefined'
  && OpenLayers.Control
  && OpenLayers.Class
  ) {
@@ -76,3 +62,5 @@ if( typeof(OpenLayers) !== 'undefined'
 	});
 
 }; // If OpenLayers is defined
+
+})(nunaliit2);

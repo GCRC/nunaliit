@@ -10,8 +10,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Vector;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,7 +22,6 @@ import org.json.JSONTokener;
 
 import ca.carleton.gcrc.couch.app.Attachment;
 import ca.carleton.gcrc.couch.app.Document;
-import ca.carleton.gcrc.couch.app.DocumentStoreProcess;
 import ca.carleton.gcrc.couch.fsentry.FSEntry;
 import ca.carleton.gcrc.couch.fsentry.FSEntryNameFilter;
 import ca.carleton.gcrc.couch.fsentry.FSEntryNull;
@@ -82,8 +82,8 @@ public class DocumentFile implements Document {
 	private FSEntryNameFilter filter = null;
 	private FSEntry includeDir;
 	private JSONObject jsonObj = null;
-	private List<AttachmentFile> attachments = new Vector<AttachmentFile>();
-	private String ATT_INFO_PERIOD_EXTENSION = "."+DocumentStoreProcess.ATT_INFO_EXTENSION;
+	private Map<String,AttachmentFile> attachmentsByName = new HashMap<String,AttachmentFile>();
+	private String ATT_INFO_PERIOD_EXTENSION = "."+DocumentStoreProcessImpl.ATT_INFO_EXTENSION;
 
 	private DocumentFile(FSEntry directory, FSEntryNameFilter filter, FSEntry includeDir) throws Exception {
 		this.top = directory;
@@ -123,7 +123,12 @@ public class DocumentFile implements Document {
 
 	@Override
 	public Collection<Attachment> getAttachments() {
-		return new ArrayList<Attachment>(attachments);
+		return new ArrayList<Attachment>(attachmentsByName.values());
+	}
+
+	@Override
+	public Attachment getAttachmentByName(String attachmentName) {
+		return attachmentsByName.get(attachmentName);
 	}
 
 	private void readTopDirectory() throws Exception {
@@ -249,7 +254,7 @@ public class DocumentFile implements Document {
 						JSONObject info = (JSONObject)infoObj;
 						
 						{
-							String testName = info.optString(DocumentStoreProcess.ATT_INFO_NAME);
+							String testName = info.optString(DocumentStoreProcessImpl.ATT_INFO_NAME);
 							if( null == testName ){
 								// Ignore
 							} else if("".equals(testName)) {
@@ -260,7 +265,7 @@ public class DocumentFile implements Document {
 						}
 
 						{
-							String testContentType = info.optString(DocumentStoreProcess.ATT_INFO_CONTENT_TYPE);
+							String testContentType = info.optString(DocumentStoreProcessImpl.ATT_INFO_CONTENT_TYPE);
 							if( null == testContentType ){
 								// Ignore
 							} else if("".equals(testContentType)) {
@@ -306,7 +311,7 @@ public class DocumentFile implements Document {
 		}
 		
 		AttachmentFile att = new AttachmentFile(attachmentName, file, contentType);
-		this.attachments.add(att);
+		this.attachmentsByName.put(attachmentName,att);
 	}
 
 	private JSONArray readArrayDirectory(FSEntry dir) throws Exception{

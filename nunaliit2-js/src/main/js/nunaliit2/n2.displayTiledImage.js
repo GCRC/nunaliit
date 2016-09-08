@@ -31,6 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 ;(function($,$n2) {
+"use strict";
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
@@ -171,7 +172,7 @@ var DisplayTiledImage = $n2.Class({
             maxResolution: this.maxResolution,
             numZoomLevels: this.numZoomLevels
         };
-        map = new OpenLayers.Map(options);
+        var map = new OpenLayers.Map(options);
 
         var layer = new OpenLayers.Layer.TMS('TMS Layer', '', {
             serviceVersion: '.',

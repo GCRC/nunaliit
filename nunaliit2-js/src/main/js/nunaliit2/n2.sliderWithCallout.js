@@ -28,7 +28,6 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
 
-$Id: n2.sliderWithCallout.js 8165 2012-05-31 13:14:37Z jpfiset $
 */
 
 /*
@@ -45,13 +44,8 @@ $Id: n2.sliderWithCallout.js 8165 2012-05-31 13:14:37Z jpfiset $
  *     a slider value ... this is probably overkill.
  */
 
-// @requires n2.core.js
-// @requires n2.utils.js
-// @requires n2.class.js
-
-// also requires jquery slider, jquery.format plugin (python style) but those are external
-
 ;(function($,$n2){
+"use strict";
 	
 	$n2.SLIDER_CONSTANTS = {};
 	/*
@@ -106,7 +100,7 @@ $Id: n2.sliderWithCallout.js 8165 2012-05-31 13:14:37Z jpfiset $
 		,format: '%d' // default integer formatting
 	};
 
-	numericValueHandler = $n2.Class({
+	var numericValueHandler = $n2.Class({
 		/*
 		 * Expected options:
 		 * min: numeric
@@ -143,7 +137,7 @@ $Id: n2.sliderWithCallout.js 8165 2012-05-31 13:14:37Z jpfiset $
 		
 	});
 	
-	dateValueHandler = $n2.Class({
+	var dateValueHandler = $n2.Class({
 		/*
 		 * Expected options:
 		 * min: date object
@@ -303,7 +297,7 @@ $Id: n2.sliderWithCallout.js 8165 2012-05-31 13:14:37Z jpfiset $
 			$(t2).fadeOut('slow', fn);
 		}
 
-		/*
+		/**
 		 * slider building routines
 		 * @return slider jquery DOM object
 		 * 

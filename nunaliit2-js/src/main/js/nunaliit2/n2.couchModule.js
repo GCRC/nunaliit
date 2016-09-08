@@ -27,8 +27,6 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
-
-$Id: n2.couchModule.js 8494 2012-09-21 20:06:50Z jpfiset $
 */
 
 ;(function($,$n2){
@@ -63,69 +61,69 @@ function isSrsNameSupported(srsName){
 //=========================================================================	
 var Module = $n2.Class({
 	
-	moduleDoc: null
+	moduleDoc: null,
 	
-	,atlasDb: null
+	atlasDb: null,
 	
-	,initialize: function(moduleDoc, atlasDb){
+	initialize: function(moduleDoc, atlasDb){
 		this.moduleDoc = moduleDoc;
 		this.atlasDb = atlasDb;
-	}
+	},
 
-	,getModuleInfo: function(){
+	getModuleInfo: function(){
 		var moduleInfo = null;
 		if( this.moduleDoc ){
 			moduleInfo = this.moduleDoc.nunaliit_module;
 		};
 		return moduleInfo;
-	}
+	},
 
-	,getMapInfo: function(){
+	getMapInfo: function(){
 		var mapInfo = null;
 		var moduleInfo = this.getModuleInfo();
 		if( moduleInfo ){
 			mapInfo = moduleInfo.map;
 		};
 		return mapInfo;
-	}
+	},
 
-	,getCanvasInfo: function(){
+	getCanvasInfo: function(){
 		var canvasInfo = null;
 		var moduleInfo = this.getModuleInfo();
 		if( moduleInfo ){
 			canvasInfo = moduleInfo.canvas;
 		};
 		return canvasInfo;
-	}
+	},
 
-	,getDisplayInfo: function(){
+	getDisplayInfo: function(){
 		var displayInfo = null;
 		var moduleInfo = this.getModuleInfo();
 		if( moduleInfo ){
 			displayInfo = moduleInfo.display;
 		};
 		return displayInfo;
-	}
+	},
 
-	,getEditInfo: function(){
+	getEditInfo: function(){
 		var editInfo = null;
 		var moduleInfo = this.getModuleInfo();
 		if( moduleInfo ){
 			editInfo = moduleInfo.edit;
 		};
 		return editInfo;
-	}
+	},
 
-	,getSearchInfo: function(){
+	getSearchInfo: function(){
 		var searchInfo = null;
 		var moduleInfo = this.getModuleInfo();
 		if( moduleInfo ){
 			searchInfo = moduleInfo.search;
 		};
 		return searchInfo;
-	}
+	},
 
-	,getModelInfos: function(){
+	getModelInfos: function(){
 		var modelInfos = null;
 		var moduleInfo = this.getModuleInfo();
 		if( moduleInfo ){
@@ -135,9 +133,21 @@ var Module = $n2.Class({
 			modelInfos = [];
 		};
 		return modelInfos;
-	}
+	},
+	
+	getUtilityInfos: function(){
+		var utilityInfos = null;
+		var moduleInfo = this.getModuleInfo();
+		if( moduleInfo ){
+			utilityInfos = moduleInfo.utilities;
+		};
+		if( !utilityInfos ){
+			utilityInfos = [];
+		};
+		return utilityInfos;
+	},
 
-	,getWidgetInfos: function(){
+	getWidgetInfos: function(){
 		var widgetInfos = null;
 		var moduleInfo = this.getModuleInfo();
 		if( moduleInfo ){
@@ -147,20 +157,22 @@ var Module = $n2.Class({
 			widgetInfos = [];
 		};
 		return widgetInfos;
-	}
+	},
 	
 	/*
 	 * Finds the introduction text associated with the module and inserts it
 	 * in the element provided. Once the content of the introduction is loaded
 	 * in the DOM, the "onLoaded" function is called.
 	 */
-	,displayIntro: function(opts_){
+	displayIntro: function(opts_){
 		var opts = $n2.extend({
 			elem: null
 			,showService: null
+			,dispatchService: null
 			,onLoaded: function(){}
 		},opts_);
 		
+		var _this = this;
 		var $elem = opts.elem;
 		
 		var introInfo = null;
@@ -168,12 +180,28 @@ var Module = $n2.Class({
 		if( moduleInfo ){
 			introInfo = moduleInfo.introduction;
 		};
-		
-		if( !introInfo ){
-			$elem.empty();
-			return false;
 
-		} else {
+		// Keep track if we need to empty content area
+		var introDisplayed = false;
+
+		// Via the dispatcher, see if a component can display introduction
+		if( opts.dispatchService ){
+			var msg = {
+				type: 'modulePerformIntroduction'
+				,performed: false
+				,elem: opts.elem
+				,module: this
+			};
+			opts.dispatchService.synchronousCall(DH,msg);
+			
+			// If an introduction was performed, then no need
+			// to empty the element
+			if( msg.performed ){
+				introDisplayed = true;
+			};
+		};
+		
+		if( !introDisplayed && introInfo ){
 			if( 'html' === introInfo.type && introInfo.content ) {
 				
 				$elem.empty();
@@ -186,11 +214,11 @@ var Module = $n2.Class({
 					$outer.html(content);
 					
 					if( opts.showService ) {
-						opts.showService.fixElementAndChildren($outer);
+						opts.showService.fixElementAndChildren($outer, {}, this.moduleDoc);
 					};					
 				};
 				opts.onLoaded();
-				return true;
+				introDisplayed = true;
 				
 			} else if( 'text' === introInfo.type && introInfo.content ) {
 				
@@ -209,11 +237,11 @@ var Module = $n2.Class({
 					
 					if( opts.showService ) {
 						$wrapper.addClass('n2s_preserveSpaces');
-						opts.showService.fixElementAndChildren($wrapper);
+						opts.showService.fixElementAndChildren($wrapper, {}, this.moduleDoc);
 					};
 				};
 				opts.onLoaded();
-				return true;
+				introDisplayed = true;
 				
 			} else if( 'attachment' === introInfo.type 
 			 && introInfo.attachmentName
@@ -225,6 +253,7 @@ var Module = $n2.Class({
 					.attr('id', displayId)
 					.addClass('n2ModuleIntro n2ModuleIntro_attachment')
 					.appendTo($elem);
+				introDisplayed = true;
 				
 				var localeStr = $n2.l10n.getStringForLocale(introInfo.attachmentName);
 				if( localeStr.str ) {
@@ -248,7 +277,7 @@ var Module = $n2.Class({
 					    		$('#'+displayId).html(intro);
 				    		};
 							if( opts.showService ) {
-								opts.showService.fixElementAndChildren($('#'+displayId));
+								opts.showService.fixElementAndChildren($('#'+displayId), {}, _this.moduleDoc);
 							};
 							opts.onLoaded();
 				    	}
@@ -257,14 +286,15 @@ var Module = $n2.Class({
 				    	}
 					});
 				};
-				
-				return true;
-				
-			} else {
-				$elem.empty();
-				return false;
 			};
-		}
+		};
+		
+		if( !introDisplayed ){
+			$elem.empty();
+			return false;
+		};
+		
+		return true;
 	},
 	
 	getAttachmentUrl: function(attachmentName){
@@ -487,7 +517,7 @@ var ModuleDisplay = $n2.Class({
 			};
 
 			if( moduleDoc._id ){
-				this.moduleId = moduleDoc._id;
+				_this.moduleId = moduleDoc._id;
 				var safeId = $n2.utils.stringToHtmlId(moduleDoc._id);
 				$('body').addClass('nunaliit_module_'+safeId);
 				
@@ -511,6 +541,7 @@ var ModuleDisplay = $n2.Class({
 			var displayInfo = _this.module.getDisplayInfo();
 			var searchInfo = _this.module.getSearchInfo();
 			var modelInfos = _this.module.getModelInfos();
+			var utilityInfos = _this.module.getUtilityInfos();
 			
 			// Create models
 			if( modelInfos ){
@@ -531,6 +562,28 @@ var ModuleDisplay = $n2.Class({
 						
 					if( ! msg.created ){
 						$n2.log('Model not created: '+modelInfo.modelType+'/'+modelInfo.modelId);
+					};
+				};
+			};
+			
+			// Create utilities
+			if( utilityInfos ){
+				for(var i=0,e=utilityInfos.length; i<e; ++i){
+					var utilityInfo = utilityInfos[i];
+
+					var msg = {
+						type: 'utilityCreate'
+						,utilityType: utilityInfo.utilityType
+						,utilityOptions: utilityInfo
+						,created: false
+						,config: config
+						,moduleDisplay: _this
+					};
+						
+					_this._sendSynchronousMessage(msg);
+						
+					if( ! msg.created ){
+						$n2.log('Utility not created: '+utilityInfo.utilityType);
 					};
 				};
 			};
@@ -611,9 +664,6 @@ var ModuleDisplay = $n2.Class({
 			// Styles
 			_this.mapStyles = new $n2.mapStyles.MapFeatureStyles( (mapInfo ? mapInfo.styles : null) );
 			
-			// Side panel
-			_this._initSidePanel();
-			
 			// Title
 			if( moduleInfo && moduleInfo.title ) {
 				var title = _loc(moduleInfo.title);
@@ -675,7 +725,8 @@ var ModuleDisplay = $n2.Class({
 						,displayId: _this.sidePanelName
 						,config: config
 						,moduleDisplay: _this
-						,onSuccess: function(){
+						,onSuccess: function(displayControl){
+							_this.displayControl = displayControl;
 							drawCanvas(searchInfo, mapInfo, canvasInfo);
 						}
 						,onError: opts.onError
@@ -828,6 +879,9 @@ var ModuleDisplay = $n2.Class({
 		};
 		
 		function displayComplete(){
+			// Side panel
+			_this._initSidePanel();
+
 			_this._sendDispatchMessage({
 				type:'reportModuleDisplay'
 				,moduleDisplay: _this
@@ -930,6 +984,12 @@ var ModuleDisplay = $n2.Class({
 				// Defaults to EPSG:4326
 				mapOptions.mapDisplay.srsName = 'EPSG:4326';
 				mapOptions.mapCoordinateSpecifications.srsName = 'EPSG:4326';
+			};
+
+			
+			if( mapInfo.coordinates.mousePositionSrsName ){
+				mapOptions.mapCoordinateSpecifications.mousePositionSrsName = 
+					mapInfo.coordinates.mousePositionSrsName;
 			};
 			
 			// Detect forced display projections based on background layer
@@ -1221,12 +1281,18 @@ var ModuleDisplay = $n2.Class({
 			};
 			
 			// Create map control
-			_this.mapControl = nunaliit2.mapAndControls(mapOptions);
-			$n2.log('module',_this);
-			
-			_this.mapControl.contributions = _this.config.contributions;
-			_this.mapControl.requests = _this.config.directory.requestService;
+			try {
+				_this.mapControl = nunaliit2.mapAndControls(mapOptions);
+				_this.mapControl.contributions = _this.config.contributions;
+				_this.mapControl.requests = _this.config.directory.requestService;
+			} catch(e) {
+				$n2.log('Error while creating map: '+e);
+				if( e.stack ) {
+					$n2.log('Stack',e.stack);
+				};
+			};
 
+			$n2.log('module',_this);
 			opts.onSuccess(_this);
 		};
 	}
@@ -1249,6 +1315,7 @@ var ModuleDisplay = $n2.Class({
 			this.module.displayIntro({
 				elem: $elem
 				,showService: this._getShowService()
+				,dispatchService: this.dispatchService
 				,onLoaded: function(){
 					_this._sendDispatchMessage({type:'loadedModuleContent'});
 				}

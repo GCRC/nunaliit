@@ -28,13 +28,10 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
 
-$Id: n2.olUtils.js 8165 2012-05-31 13:14:37Z jpfiset $
 */
 
-// @requires n2.utils.js
-// @requires n2.class.js
-
 ;(function($,$n2){
+"use strict";
 
 function isValidGeom(olGeom){
 	var vertices = olGeom.getVertices();
@@ -59,6 +56,9 @@ function isValidGeom(olGeom){
 //Between polygons and linestrings, sort the largest
 //geometries first.
 function sortFeatures(features){
+	features.forEach(function(f){
+		delete f._n2Sort;
+	});
     features.sort(featureSorting);
 };
 function featureSorting(a,b){
@@ -110,16 +110,23 @@ function prepareFeatureForSorting(f){
 		f._n2Sort.largestDim = 0;
 	} else {
 		f._n2Sort.isLineString = (geomClass.indexOf('LineString') >= 0);
-		f._n2Sort.isPolygon = (false == f._n2Sort.isLineString);
-		
-		// One of the two geometries is not a point
-		var bounds = f.geometry.getBounds();
-		
-		f._n2Sort.largestDim = bounds.top - bounds.bottom;
-		var tmp = bounds.right - bounds.left;
-		if( f._n2Sort.largestDim < tmp ) {
-			f._n2Sort.largestDim = tmp;
+		if( f._n2Sort.isLineString ){
+			var bounds = f.geometry.getBounds();
+			
+			f._n2Sort.largestDim = bounds.top - bounds.bottom;
+			var tmp = bounds.right - bounds.left;
+			if( f._n2Sort.largestDim < tmp ) {
+				f._n2Sort.largestDim = tmp;
+			};
+		} else {
+			f._n2Sort.isPolygon = true;
+			
+			var bounds = f.geometry.getBounds();
+			
+			// Use area
+			f._n2Sort.largestDim = (bounds.top - bounds.bottom) * (bounds.right - bounds.left);
 		};
+		
 	};
 	return f._n2Sort;
 };

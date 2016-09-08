@@ -1,6 +1,7 @@
 package ca.carleton.gcrc.couch.app.impl;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -10,7 +11,6 @@ import java.util.Set;
 import org.json.JSONObject;
 
 import ca.carleton.gcrc.couch.app.Attachment;
-import ca.carleton.gcrc.couch.app.DigestComputer;
 import ca.carleton.gcrc.couch.app.Document;
 import ca.carleton.gcrc.couch.app.DocumentDigest;
 import ca.carleton.gcrc.couch.app.DocumentUpdateProcess;
@@ -38,6 +38,7 @@ public class UpdateSpecifier {
 				,dd
 				,targetDoc
 				,DocumentUpdateProcess.Schedule.UPDATE_UNLESS_MODIFIED
+				,UpdateObjectComparator.getNunaliitComparator()
 				);
 	}
 	
@@ -56,12 +57,10 @@ public class UpdateSpecifier {
 			,DocumentDigest documentDigest
 			,JSONObject targetDoc
 			,DocumentUpdateProcess.Schedule schedule
+			,Comparator<JSONObject> objectComparator
 			) throws Exception {
 		
 		UpdateSpecifier result = new UpdateSpecifier();
-		
-		// Select digest computer
-		DigestComputer dc = new DigestComputerSha1();
 		
 		// Verify main document
 		if( schedule == DocumentUpdateProcess.Schedule.UPDATE_FORCED ){
@@ -70,9 +69,7 @@ public class UpdateSpecifier {
 			// Document creation
 			result.setDocumentModified(true);
 		} else {
-			String sourceDigest = documentDigest.getDocDigest();
-			String targetDigest = dc.computeDigestFromJsonObject(targetDoc);
-			if( false == sourceDigest.equals(targetDigest) ){
+			if( 0 != objectComparator.compare(sourceDoc.getJSONObject(), targetDoc) ){
 				result.setDocumentModified(true);
 			}
 		}

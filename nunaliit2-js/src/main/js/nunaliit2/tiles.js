@@ -5,6 +5,7 @@
 var Tiles = {};
 
 (function($) {
+"use strict";
 
     var Tile = Tiles.Tile = function(tileId, element) {
 

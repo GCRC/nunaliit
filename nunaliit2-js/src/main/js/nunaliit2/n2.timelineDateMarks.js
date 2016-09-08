@@ -28,7 +28,6 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
 
-$Id: n2.timelineDateMarks.js 8165 2012-05-31 13:14:37Z jpfiset $
 */
 
 /*
@@ -41,11 +40,8 @@ $Id: n2.timelineDateMarks.js 8165 2012-05-31 13:14:37Z jpfiset $
  * 
  */
 
-// @requires n2.core.js
-// @requires n2.utils.js
-// @requires n2.class.js
-
 ;(function($,$n2){
+"use strict";
 
 	var DAY_MS = 1000 * 60 * 60 * 24; // in milliseconds
 	$n2.TIMELINE_DATE_MARKS_Durations_DAY = DAY_MS;
@@ -84,7 +80,7 @@ $Id: n2.timelineDateMarks.js 8165 2012-05-31 13:14:37Z jpfiset $
 		return($.datepicker.formatDate(target, d));
 	};
 	
-	/*
+	/**
 	 * @param min Date
 	 * @param max Date
 	 * @param base Date duration in milliseconds
@@ -165,7 +161,7 @@ $Id: n2.timelineDateMarks.js 8165 2012-05-31 13:14:37Z jpfiset $
 		return dates;
 	};
 	
-	/*
+	/**
 	 * @param d date to be positioned proportionally along the div
 	 * @param min minimum date for range
 	 * @param max maximum date for range
@@ -177,7 +173,7 @@ $Id: n2.timelineDateMarks.js 8165 2012-05-31 13:14:37Z jpfiset $
 		return(percentage);
 	}
 
-	/*
+	/**
 	 * @param txt text string
 	 * @return array containing the original string split into two (approximate) halves
 	 */
@@ -214,7 +210,7 @@ $Id: n2.timelineDateMarks.js 8165 2012-05-31 13:14:37Z jpfiset $
 		return a;
 	}
 
-	/*
+	/**
 	 * @param wrapper DOM element to which label is added
 	 * @param lft CSS left value as a percentage
 	 * @param txt string to be used as label (only used if lFlag == true)

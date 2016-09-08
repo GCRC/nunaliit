@@ -28,9 +28,9 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
 
-$Id: n2.couchConfiguration.js 8445 2012-08-22 19:11:38Z jpfiset $
 */
 ;(function($,$n2){
+"use strict";
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
@@ -71,6 +71,30 @@ var ConfigService = $n2.Class('ConfigurationService',{
 				opts.onError(err);
 			}
 		});
+	},
+	
+	getAtlasRoles: function(opts_){
+		var opts = $n2.extend({
+			onSuccess: function(roles){}
+			,onError: function(err){}
+		},opts_);
+
+		$.ajax({
+			url: this.serverUrl+'getAtlasRoles'
+			,type: 'GET'
+			,dataType: 'json'
+			,success: function(data, textStatus, jqXHR){
+				if( data && data.roles ) {
+					opts.onSuccess(data.roles);
+				} else {
+					opts.onError( _loc('Invalid server response') );
+				};
+			}
+			,error: function(jqXHR, textStatus, errorThrown){
+				var err = $n2.utils.parseHttpJsonError(jqXHR, textStatus);
+				opts.onError(err);
+			}
+		});
 	}
 });
 
@@ -93,6 +117,7 @@ function Configure(options_){
 		,submissionServerUrl: null // string
 		,dateServerUrl: null // string
 		,simplifiedGeometryServerUrl: null // string
+		,mailServerUrl: null // string
 		,onSuccess: function(config){}
 	},options_);
 
@@ -108,8 +133,24 @@ function Configure(options_){
 		};
 	};
 
+	// Adjust configuration based on local storage
+	var debugConfiguration = new $n2.debug.DebugConfiguration();
+	if( debugConfiguration.isBadProxyEnabled() ){
+		$n2.couch.setBadProxy(true);
+	};
+
 	// Dispatcher
-	configuration.directory.dispatchService = new $n2.dispatch.Dispatcher();
+	var dispatchLogging = false;
+	if( debugConfiguration.isEventLoggingEnabled() ){
+		dispatchLogging = true;
+	};
+	configuration.directory.dispatchService = new $n2.dispatch.Dispatcher({
+		logging: dispatchLogging
+	});
+	
+	$n2.couchMap.Configure({
+		dispatchService: configuration.directory.dispatchService
+	});
 	
 	// History monitoring
 	configuration.directory.historyMonitor = new $n2.history.Monitor({
@@ -118,10 +159,18 @@ function Configure(options_){
 	configuration.directory.historyTracker = new $n2.history.Tracker({
 		directory: configuration.directory
 	});
+	configuration.directory.history = new $n2.history.History({
+		dispatchService: configuration.directory.dispatchService
+	});
 	
 	// Event translation
 	configuration.directory.eventService = new $n2.couchEvents.EventSupport({
 		directory: configuration.directory
+	});
+
+	// Analytics Service
+	configuration.directory.analyticsService = new $n2.analytics.AnalyticsService({
+		dispatchService: configuration.directory.dispatchService
 	});
 
 	// Custom Service
@@ -159,6 +208,11 @@ function Configure(options_){
 		configuration.atlasDb = configuration.couchServer.getDb({dbUrl:options.atlasDbUrl});
 		configuration.atlasDesign = configuration.atlasDb.getDesignDoc({ddName:options.atlasDesignName});
 		configuration.siteDesign = configuration.atlasDb.getDesignDoc({ddName:options.siteDesignName});
+
+		configuration.directory.attachmentService = new $n2.couchAttachment.AttachmentService({
+			mediaRelativePath: options.mediaUrl
+			,dispatchService: configuration.directory.dispatchService
+		});
 		
 		if( options.submissionDbUrl ){
 			configuration.submissionDb = configuration.couchServer.getDb({dbUrl:options.submissionDbUrl});
@@ -174,12 +228,16 @@ function Configure(options_){
 				,submissionDb: configuration.submissionDb
 				,submissionServerUrl: options.submissionServerUrl
 				,dispatchService: configuration.directory.dispatchService
+				,attachmentService: configuration.directory.attachmentService
+				,isDefaultDocumentSource: true
 			});
 		} else {
 			couchDbDs = new $n2.couchDocument.CouchDocumentSource({
 				id: 'main'
 				,db: configuration.atlasDb
 				,dispatchService: configuration.directory.dispatchService
+				,attachmentService: configuration.directory.attachmentService
+				,isDefaultDocumentSource: true
 			});
 		};
 		configuration.dataSources.push(couchDbDs);
@@ -213,15 +271,6 @@ function Configure(options_){
 	
 	function authInitialized() {
 
-		configuration.atlasDb.getChangeNotifier({
-			onSuccess: function(notifier){
-				configuration.directory.notifierService = notifier;
-				notifierInitialized();
-			}
-		});
-	};
-	
-	function notifierInitialized() {
 		configuration.directory.localizationService = new $n2.couchL10n.LocalizationService({
 			db: configuration.atlasDb
 	 		,designDoc: configuration.atlasDesign
@@ -237,8 +286,17 @@ function Configure(options_){
 			,progressServer: configuration.directory.progressService
 		});
 
-		configuration.directory.exportService = new $n2.couchExport.Export({
+	 	configuration.directory.mailService = new $n2.mail.MailService({
+			url: options.mailServerUrl
+			,dispatchService: configuration.directory.dispatchService
+			,customService: configuration.directory.customService
+		});
+
+		configuration.directory.exportService = new $n2.couchExport.ExportService({
 			url: options.exportServerUrl
+			,atlasDb: configuration.atlasDb
+			,atlasDesign: configuration.atlasDesign
+			,config: configuration
 		});
 
 		configuration.directory.dateService = new $n2.dateService.DateService({
@@ -263,21 +321,15 @@ function Configure(options_){
 		});
 
 		configuration.directory.dispatchSupport = new $n2.couchDispatchSupport.DispatchSupport({
-			db: configuration.atlasDb
-			,directory: configuration.directory
+			dispatchService: configuration.directory.dispatchService
 		});
 
 		configuration.directory.languageService = new $n2.languageSupport.LanguageService({
 			directory: configuration.directory
 		});
 		
-		configuration.directory.attachmentService = new $n2.couchAttachment.AttachmentService({
-			mediaRelativePath: options.mediaUrl
-		});
-		
 		configuration.directory.displayImageSourceFactory = new $n2.couchDisplayBox.DisplayImageSourceFactory({
-			documentSource: configuration.documentSource
-			,attachmentService: configuration.directory.attachmentService
+			dispatchService: configuration.directory.dispatchService
 		});
 		
 		// Navigation Service
@@ -290,7 +342,6 @@ function Configure(options_){
 			db: configuration.atlasDb
 			,documentSource: configuration.documentSource
 			,requestService: configuration.directory.requestService
-			,notifierService: configuration.directory.notifierService
 			,dispatchService: configuration.directory.dispatchService
 			,schemaRepository: configuration.directory.schemaRepository
 			,customService: configuration.directory.customService
@@ -345,9 +396,14 @@ function Configure(options_){
 			,schemaRepository: configuration.directory.schemaRepository
 			,schemaEditorService: configuration.directory.schemaEditorService
 			,userServerUrl: options.userServerUrl
+			,customService: configuration.directory.customService
 		});
 		
 	 	configuration.directory.modelService = new $n2.model.Service({
+			dispatchService: configuration.directory.dispatchService
+		});
+		
+	 	configuration.directory.utilityService = new $n2.utilities.Service({
 			dispatchService: configuration.directory.dispatchService
 		});
 		
@@ -360,7 +416,7 @@ function Configure(options_){
 		});
 		
 	 	configuration.directory.widgetService = new $n2.widgetBasic.Service({
-			dispatchService: configuration.directory.dispatchService
+	 		config: configuration
 		});
 	 	
 	 	$n2.mapAndControls.DefaultPopupHtmlFunction = function(opt_){
@@ -371,9 +427,14 @@ function Configure(options_){
 	 		};
 	 		
 	 		if( feature.cluster ){
+	 			var clusterSize = feature.cluster.length;
+	 			if( feature.attributes && feature.attributes.count ){
+		 			clusterSize = feature.attributes.count;
+	 			};
+	 			
 				var $tmp = $('<span class="n2_popup"></span>');
 				$tmp.text( _loc('This cluster contains {count} features',{
-					count: feature.cluster.length
+					count: clusterSize
 				}) );
 
 		 		var $wrapper = $('<div></div>');
@@ -395,12 +456,6 @@ function Configure(options_){
 		 		opt_.onSuccess(html);
 	 		};
 	 	};
-	 	
-	 	// Cometd replacement
-	 	configuration.directory.serverSideNotifier = new $n2.couchServerSide.Notifier({
-	 		dbChangeNotifier: configuration.directory.notifierService
-	 		,directory: configuration.directory
-	 	});
 
 	 	// Set up hover sound
 	 	configuration.directory.hoverSoundService = new $n2.couchSound.HoverSoundService({
@@ -439,13 +494,25 @@ function Configure(options_){
 		configuration.directory.themesService = new $n2.themes.ThemesService({
 			rootPath: options.rootPath
 		});
+
+		if( $n2.tuioClient ){
+			configuration.directory.tuioService = new $n2.tuioClient.TuioService({
+				dispatchService: configuration.directory.dispatchService
+			});
+		};
 		
-		// Load help file
+		// Load help files
 		if( configuration.atlasDb ){
 			$n2.couchHelp.InstallHelpDocument({
 				db: configuration.atlasDb
 				,id: 'help.dates'
 				,key: 'dates'
+			});
+
+			$n2.couchHelp.InstallHelpDocument({
+				db: configuration.atlasDb
+				,id: 'help.wiki'
+				,key: 'wiki'
 			});
 		};
 		
@@ -453,6 +520,12 @@ function Configure(options_){
 	};
 	
 	function callCustomConfiguration(){
+		if( !$n2.scripts.areAllCustomScriptsLoaded() ){
+			// More scripts needed to load
+			window.setTimeout(callCustomConfiguration, 100);
+			return;
+		};
+
 		if( window 
 		 && window.nunaliit_custom 
 		 && typeof(window.nunaliit_custom.configuration) === 'function' ){

@@ -38,9 +38,7 @@ var
  ,DH = 'n2.radialTreeCanvas'
  ;
  
-// Required library: d3
-var $d = window.d3;
-if( !$d ) return;
+var $d = undefined;
 
 //--------------------------------------------------------------------------
 // Fish eye distortion
@@ -747,7 +745,7 @@ var RadialTreeCanvas = $n2.Class({
  			.select('g.links')
  			.selectAll('.link')
 			.data(links, function(link){ return link.id; })
-			.filter(function(l){return l.n2_selected;})
+			.filter(function(l){return l.n2_selected || l.n2_derived_selected;})
 			.each(function(l){
 	 			var svgLink = this;
 	 			svgLink.parentNode.appendChild(svgLink);
@@ -767,7 +765,7 @@ var RadialTreeCanvas = $n2.Class({
 			.select('g.links')
 			.selectAll('.link')
 			.data(links, function(link){ return link.id; })
-			.filter(function(l){return l.n2_hovered;})
+			.filter(function(l){return l.n2_hovered || l.n2_derived_hovered;})
 			.each(function(l){
 	 			var svgLink = this;
 	 			svgLink.parentNode.appendChild(svgLink);
@@ -890,8 +888,10 @@ var RadialTreeCanvas = $n2.Class({
  	_adjustElementStyles: function(selectedElements, elementsAreLinks){
  		var _this = this;
  		selectedElements.each(function(n,i){
+ 			n.n2_elem = this;
  			var symbolizer = _this.styleRules.getSymbolizer(n);
  			symbolizer.adjustSvgElement(this,n);
+ 			delete n.n2_elem;
  		});
  		
  		if( elementsAreLinks ){
@@ -1146,8 +1146,15 @@ var RadialTreeCanvas = $n2.Class({
  
 //--------------------------------------------------------------------------
 function HandleCanvasAvailableRequest(m){
+	// Required library: d3
+	if( !$d && window ) $d = window.d3;
+
 	if( m.canvasType === 'radialTree' ){
-		m.isAvailable = true;
+		if( $d ) {
+			m.isAvailable = true;
+		} else {
+			$n2.log('Canvas radialTree requires d3 library');
+		};
 	};
 };
 

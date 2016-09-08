@@ -62,6 +62,10 @@ import ca.carleton.gcrc.couch.utils.CouchDbTemplateMailMessageGenerator;
 import ca.carleton.gcrc.json.servlet.JsonServlet;
 import ca.carleton.gcrc.mail.MailDelivery;
 import ca.carleton.gcrc.mail.MailDeliveryImpl;
+import ca.carleton.gcrc.mail.MailDeliveryNull;
+import ca.carleton.gcrc.mail.MailServiceRecipients;
+import ca.carleton.gcrc.mail.MailServletConfiguration;
+import ca.carleton.gcrc.mail.messageGenerator.FormEmailMessageGenerator;
 import ca.carleton.gcrc.mail.messageGenerator.MailMessageGenerator;
 import ca.carleton.gcrc.olkit.multimedia.utils.MultimediaConfiguration;
 import ca.carleton.gcrc.upload.OnUploadedListenerSingleton;
@@ -82,6 +86,7 @@ public class ConfigServlet extends JsonServlet {
 	private File installDir = null;
 	private AtlasProperties atlasProperties = null;
 	private CouchClient couchClient = null;
+	private String documentDatabaseName = null;
 	private CouchDb documentDatabase = null;
 	private CouchUserDb userDb = null;
 	private CouchDb submissionDb = null;
@@ -373,12 +378,12 @@ public class ConfigServlet extends JsonServlet {
 		}
 		
 		// Create database
-		String dbName = atlasProperties.getCouchDbName();
+		documentDatabaseName = atlasProperties.getCouchDbName();
 		try {
-			documentDatabase = couchClient.getDatabase(dbName);
+			documentDatabase = couchClient.getDatabase(documentDatabaseName);
 		} catch(Exception e) {
-			logger.error("Unable to connect to document database: "+dbName,e);
-			throw new ServletException("Unable to connect to document database: "+dbName,e);
+			logger.error("Unable to connect to document database: "+documentDatabaseName,e);
+			throw new ServletException("Unable to connect to document database: "+documentDatabaseName,e);
 		}
 		logger.info("Document database configured: "+documentDatabase.getUrl());
 
@@ -460,23 +465,36 @@ public class ConfigServlet extends JsonServlet {
 	}
 
 	private void initMail(ServletContext servletContext) throws ServletException {
-		
-		// Load up configuration information
-		Properties sensitiveProps = loadProperties("sensitive.properties", true);
-		Properties props = loadProperties("mail.properties", true, sensitiveProps);
-		if( null == props  ){
-			logger.error("Unable to load mail.properties");
-			mailNotification = new MailNotificationNull();
-			this.submissionNotifier = new SubmissionMailNotifierNull();
+		try {
+			MailDelivery mailDelivery = null;
 			
-		} else {
-			// Create mail notification
-			MailNotificationImpl mail = null;
-			SubmissionMailNotifierImpl submissionNotifier = null;
-			try {
-				MailDeliveryImpl mailDelivery = new MailDeliveryImpl();
-				mailDelivery.setMailProperties(props);
-				servletContext.setAttribute(MailDelivery.ConfigAttributeName_MailDelivery, mailDelivery);
+			MailServiceRecipients mailServiceRecipients = new MailServiceRecipientsCouchDb(
+					atlasProperties.getAtlasName(), 
+					UserDesignDocumentImpl.getUserDesignDocument(couchClient)
+					);
+			
+			// Load up configuration information
+			Properties sensitiveProps = loadProperties("sensitive.properties", true);
+			Properties props = loadProperties("mail.properties", true, sensitiveProps);
+			if( null == props  ){
+				logger.error("Unable to load mail.properties");
+				mailNotification = new MailNotificationNull();
+				this.submissionNotifier = new SubmissionMailNotifierNull();
+				
+				mailDelivery = new MailDeliveryNull();
+				
+			} else {
+				// Create mail notification
+				MailNotificationImpl mail = null;
+				SubmissionMailNotifierImpl submissionNotifier = null;
+				
+				// Mail delivery
+				{
+					MailDeliveryImpl mailDeliveryImpl = new MailDeliveryImpl();
+					mailDeliveryImpl.setMailProperties(props);
+					servletContext.setAttribute(MailDelivery.ConfigAttributeName_MailDelivery, mailDeliveryImpl);
+					mailDelivery = mailDeliveryImpl;
+				}
 
 				mail = new MailNotificationImpl(
 					atlasProperties.getAtlasName()
@@ -535,13 +553,35 @@ public class ConfigServlet extends JsonServlet {
 				mailNotification = mail;
 				this.submissionNotifier = submissionNotifier;
 
-			} catch(Exception e) {
-				mailNotification = new MailNotificationNull();
-				this.submissionNotifier = new SubmissionMailNotifierNull();
-
-				logger.error("Unable to configure mail notification",e);
-				throw new ServletException("Unable to configure mail notification",e);
 			}
+
+			// Mail Service
+			{
+				MailServletConfiguration mailServletConfiguration = new MailServletConfiguration();
+				mailServletConfiguration.setAtlasName(atlasProperties.getAtlasName());
+				mailServletConfiguration.setMailDelivery(mailDelivery);
+				mailServletConfiguration.setRecipients(mailServiceRecipients);
+
+				// Mail template for form e-mail
+				{
+					MailMessageGenerator template = new FormEmailMessageGenerator();
+					CouchDbTemplateMailMessageGenerator couchdbTemplate = new CouchDbTemplateMailMessageGenerator(
+						documentDatabase,
+						"org.nunaliit.email_template.form_email",
+						template
+						);
+					mailServletConfiguration.setFormEmailGenerator(couchdbTemplate);
+				}
+
+				servletContext.setAttribute(MailServletConfiguration.CONFIGURATION_KEY, mailServletConfiguration);
+			}
+			
+		} catch(Exception e) {
+			mailNotification = new MailNotificationNull();
+			this.submissionNotifier = new SubmissionMailNotifierNull();
+
+			logger.error("Unable to configure mail notification",e);
+			throw new ServletException("Unable to configure mail notification",e);
 		}
 	}
 
@@ -756,7 +796,7 @@ public class ConfigServlet extends JsonServlet {
 	private void initActions(ServletContext servletContext) throws ServletException {
 		
 		try {
-			this.actions = new ConfigServletActions(couchClient);
+			this.actions = new ConfigServletActions(documentDatabase, documentDatabaseName);
 			this.actions.setSubmissionDbEnabled( atlasProperties.isCouchDbSubmissionDbEnabled() );
 		} catch(Exception e) {
 			logger.error("Error configuring actions",e);
@@ -840,6 +880,23 @@ public class ConfigServlet extends JsonServlet {
 			} else if( path.size() == 1 
 			 && "getServerRoles".equals(path.get(0)) ) {
 				Collection<String> roles = actions.getNunaliitServerRoles();
+				
+				JSONObject result = new JSONObject();
+				result.put("ok", true);
+				
+				JSONArray jsonRoles = new JSONArray();
+				for(String role : roles){
+					jsonRoles.put( role );
+				}
+				result.put("roles", jsonRoles);
+				
+				sendJsonResponse(resp, result);
+
+			} else if( path.size() == 1 
+			 && "getAtlasRoles".equals(path.get(0)) ) {
+				AtlasInfo currentInfo = actions.getCurrentAtlasInfo();
+				
+				Collection<String> roles = actions.getNunaliitAtlasRoles(currentInfo);
 				
 				JSONObject result = new JSONObject();
 				result.put("ok", true);

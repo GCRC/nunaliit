@@ -3,7 +3,7 @@
   <parent>
     <groupId>ca.carleton.gcrc</groupId>
     <artifactId>nunaliit2</artifactId>
-    <version>2.2.5-SNAPSHOT</version>
+    <version>2.2.8-SNAPSHOT</version>
   </parent>
   <artifactId>nunaliit2-mail</artifactId>
   <name>nunaliit2-mail</name>
@@ -26,5 +26,18 @@
 		<artifactId>javax.mail</artifactId>
         <version>${mail.version}</version>
     </dependency>
+  	<dependency>
+  		<groupId>javax.servlet</groupId>
+  		<artifactId>servlet-api</artifactId>
+  		<version>${servlet-api.version}</version>
+  		<scope>provided</scope>
+  	</dependency>
+   	<dependency>
+   		<groupId>ca.carleton.gcrc</groupId>
+   		<artifactId>nunaliit2-json</artifactId>
+   		<version>${project.version}</version>
+   		<type>jar</type>
+   		<scope>compile</scope>
+   	</dependency>
   </dependencies>
 </project>

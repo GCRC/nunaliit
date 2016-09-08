@@ -1,0 +1,219 @@
+/*
+	The following classes re-adjust the positions and sizes of element to
+	fit on the TUIO table.
+ */
+
+.nunaliit_tuio .nunaliit_header {
+	display: none;
+}
+
+.nunaliit_tuio .nunaliit_footer {
+	display: none;
+}
+
+.nunaliit_tuio .n2_content_text {
+	display: none;
+}
+
+.nunaliit_tuio .n2_content_text.n2tuio_showPane {
+	display: block;
+	position: absolute;
+	opacity: 0.92;
+	top: 0px;
+	left: 280px;
+	overflow: visible;
+	padding-top: 92px;
+	bottom: 50px;
+	top: 50px;
+	z-index: 10;
+}
+
+.nunaliit_tuio .n2_content_map_interaction {
+	bottom: 105px;
+	left: 50%;
+	top: auto;
+	right: auto;
+}
+
+.nunaliit_tuio .n2_content_map_interaction input {
+	position: absolute;
+	left: -120px;
+	top: 0px;
+	right: auto;
+	bottom: auto;
+}
+
+.nunaliit_tuio .map_interaction input
+,.nunaliit_tuio .n2_content_map_interaction input {
+	border-radius: 19px;
+	opacity: 0.5;
+	padding: 16px;
+	width: 250px;
+}
+
+.nunaliit_tuio .n2tuio_resetExtent_outer {
+	position: absolute;
+	bottom: auto;
+	left: 62px;
+	top: 548px;
+	right: auto;
+}
+
+.nunaliit_tuio .n2tuio_resetExtent_outer a {
+	position: absolute;
+	display: block;
+	top: 0;
+	left: 0;
+
+	margin: 1px;
+	padding: 0;
+	color: white;
+	font-size: 18px;
+	font-family: 'Lucida Grande', Verdana, Geneva, Lucida, Arial, Helvetica, sans-serif;
+	font-weight: bold;
+	text-decoration: none;
+	text-align: center;
+	height: 22px;
+	width: 22px;
+	line-height: 19px;
+	background: #000;
+	opacity: 0.5;
+	border-radius: 19px;
+	padding: 8px;
+}
+
+.nunaliit_tuio .olControlEditingToolbar {
+	display: none;
+	left: 420px;
+	top: 100px;
+}
+
+.nunaliit_tuio .nunaliit_content {
+	top: 0;
+	bottom: 0;
+	width: auto;
+}
+
+.nunaliit_tuio .n2_content_map {
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+}
+
+.nunaliit_tuio .olControlZoom {
+	top: 470px;
+	left: 58px;
+}
+
+.nunaliit_tuio div.olControlZoom a {
+	padding: 8px;
+	opacity: 0.5;
+}
+
+.nunaliit_tuio .olButton {
+	border-radius: 19px;
+}
+
+.nunaliit_tuio .olControlLayerSwitcher .maximizeDiv, .nunaliit_tuio .olControlLayerSwitcher .minimizeDiv {
+	background-repeat: no-repeat;
+	background-size: 38px 38px;
+	border-radius: 19px;
+	height: 38px;
+	left: 15px;
+	opacity: 0.5;
+	top: 329px;
+	width: 38px;
+}
+
+.n2tuio_rotate_handle {
+	background-color: #000;
+	color: #EED;
+	cursor: move;
+	font-size: xx-large;
+	height: 260px;
+	line-height: 260px;
+	opacity: 0.5;
+	padding: 4px;
+	position: absolute;
+	text-align: center;
+	top: 380px;
+	width: 80px;
+}
+
+.n2tuio_feedback_circle {
+	background-color: #000;
+	border-radius: 50%;
+	border: 2px solid #EED;
+	color: #EED;
+	opacity: 0.5;
+	pointer-events: none;
+	position: absolute;
+	text-align: center;
+	vertical-align: middle;
+	z-index: 10;
+}
+
+.n2tuio_overlay {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%;
+	z-index: 999999999;
+}
+
+.nunaliit_tuio .nunaliit_form_link {
+	padding: 15px 10px 15px 15px;
+}
+
+.nunaliit_tuio .ui-menu-item a {
+	padding: 1em;
+}
+
+.nunaliit_tuio .ui-widget {
+	font-size: 1.1em;
+}
+
+.nunaliit_tuio input[type="radio"]
+, .nunaliit_tuio input[type="checkbox"] {
+	border: 0px;
+	height: 35px;
+	width: 35px;
+}
+
+.nunaliit_tuio .n2layerSwitcher_label_container {
+	vertical-align: middle;
+}
+
+.nunaliit_tuio .olControlLayerSwitcher .layersDiv {
+	font-size: medium;
+	left: 60px;
+	line-height: 40px;
+	padding: 11px 15px;
+	position: absolute;
+	top: 250px;
+	width: 190px;
+}
+
+.n2tuio_edit_ring {
+	border-color: green;
+	border-radius: 50%;
+	border-style: solid;
+	border-width: 40px;
+	bottom: 0;
+	left: 0;
+	opacity: 0.4;
+	pointer-events: none;
+	position: absolute;
+	right: 0;
+	top: 0;
+}
+
+.nunaliit_editing .n2tuio_edit_ring {
+	border-color: red;
+}
+
+.n2tuio_hide {
+	display: none;
+}

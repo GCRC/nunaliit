@@ -28,11 +28,10 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
 
-$Id: n2.olStyleMapCallback.js 8165 2012-05-31 13:14:37Z jpfiset $
 */
 
-// @requires n2.utils.js
-
+;(function(){
+"use strict";
 
 //**************************************************
 // OPEN LAYERS STYLE MAP CALLBACK
@@ -41,7 +40,7 @@ $Id: n2.olStyleMapCallback.js 8165 2012-05-31 13:14:37Z jpfiset $
 // initialization.
 //
 // This code is not needed if OpenLayers is not installed.
-if( typeof(OpenLayers) != 'undefined' ) {
+if( typeof OpenLayers != 'undefined' ) {
 
 /**
  * Class: OpenLayers.StyleMapCallback
@@ -114,3 +113,4 @@ OpenLayers.StyleMapCallback = OpenLayers.Class({
 
 };
  
+})();

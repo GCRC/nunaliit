@@ -28,21 +28,16 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
 
-$Id: n2.GeoJsonGeometryCompressor.js 8165 2012-05-31 13:14:37Z jpfiset $
 */
 
-// @requires n2.core.js
-// @requires n2.utils.js
-// @requires n2.class.js
-// @requires n2.GeoJsonFeatureCoordinatesProcessor.js
-
 ;(function($n2){
+"use strict";
 
 	var DEFAULT_PRECISION = 0.00001;
 	var MIN_POSITIONS_LINEAR_RING = 4;
 	var MIN_POSITIONS_LINE_STRING = 2;
 	
-	/*
+	/**
 	 * @param ca coordinate array.  Note this is not what is called 'coordinates' in GeoJSON
 	 *           because that is a misnomer, except in the case of Point and Multipoint.
 	 *           That is an array of positions (the GeoJSON spec explains
@@ -144,7 +139,7 @@ $Id: n2.GeoJsonGeometryCompressor.js 8165 2012-05-31 13:14:37Z jpfiset $
 			this.significantDigits = computeSignificantDecimalDigits(this.options.precision);
 		},
 		
-		/*
+		/**
 		 * @param coordinates array of coordinate pairs, each an array, to be compressed
 		 * @return compressed array of coordinates or null if precision-adjustment geometry
 		 * is insignificant.
@@ -194,7 +189,7 @@ $Id: n2.GeoJsonGeometryCompressor.js 8165 2012-05-31 13:14:37Z jpfiset $
 		}
 	});
 
-	/*
+	/**
 	 * class-level utility functions for $n2.GeoJsonFeatureCoordinatesProcessor
 	 */
 	function initialStatus() {
@@ -204,7 +199,7 @@ $Id: n2.GeoJsonGeometryCompressor.js 8165 2012-05-31 13:14:37Z jpfiset $
 		};
 	};
 	
-	/*
+	/**
 	 * @param accumulate accumulating status structure
 	 * @param update the result status
 	 */
@@ -215,7 +210,7 @@ $Id: n2.GeoJsonGeometryCompressor.js 8165 2012-05-31 13:14:37Z jpfiset $
 		accumulate.processed.linestrings += update.processed.linestrings;
 	};
 
-	/*
+	/**
 	 * @param accumulate accumulating status structure
 	 * @param inData the original unprocessed data
 	 * @param update the result of processing (data and status)
@@ -373,7 +368,7 @@ $Id: n2.GeoJsonGeometryCompressor.js 8165 2012-05-31 13:14:37Z jpfiset $
 			});
 		},
 		
-		/*
+		/**
 		 * @param feature object with structure corresponding to a GeoJSON
 		 *		feature.
 		 * @return an object encapsulating the object representing the 

@@ -417,8 +417,22 @@ if( !$d ) return;
  	}
  });
  
- // --------------------------------------------------------------------------
- var ForceGraph = $n2.Class({
+// --------------------------------------------------------------------------
+// This is a canvas that show nodes and links using a force graph layout. This canvas
+// expects elements with the following format:
+// {
+//    id: <string> Required. Identifier that uniquely identifies the node or the link
+//    isNode: <boolean> Set if this element is a node
+//    isLink: <boolean> Set if this element is a link between two nodes
+//    source: <object> Required for links. Node that is one end of the link
+//    target: <object> Required for links. Node that is the other end of the link
+// }
+//
+// The following attributes are added to the elements by the force graph canvas
+// x: <number> X position. Added only to nodes.
+// y: <number> Y position. Added only to nodes.
+//
+var ForceGraph = $n2.Class({
 
  	canvasId: null,
  	
@@ -449,6 +463,8 @@ if( !$d ) return;
  	nodesById: null,
  	
  	linksById: null,
+ 	
+ 	elementsByDocId: null,
  	
  	elementGenerator: null,
  	
@@ -537,6 +553,7 @@ if( !$d ) return;
 
  		this.nodesById = {};
  		this.linksById = {};
+ 		this.elementsByDocId = {};
  		this.currentMouseOver = null;
  		this.lastElementIdSelected = null;
 
@@ -566,6 +583,8 @@ if( !$d ) return;
  			
  			this.dispatchService.register(DH,'modelGetInfo',f);
  			this.dispatchService.register(DH,'modelStateUpdated',f);
+ 			this.dispatchService.register(DH,'windowResized',f);
+ 			this.dispatchService.register(DH,'findIsAvailable',f);
  		};
  		
  		this.forceLayout = $d.layout.force()
@@ -619,16 +638,46 @@ if( !$d ) return;
  	createGraph: function() {
  		var _this = this; // for use in callbacks
 
- 		if( this.background 
- 		 && typeof this.background.color === 'string' ){
- 			var $canvas = $('#' + this.canvasId);
- 			$canvas.css('background-color',this.background.color);
- 		};
- 		
  		this.svgId = $n2.getUniqueId();
  		var $svg = $d.select('#' + this.canvasId)
  			.append('svg')
- 			.attr('id',this.svgId);
+ 			.attr('id',this.svgId)
+ 			.classed({
+ 				'n2CanvasForceGraph': true
+ 			})
+ 			;
+ 		
+ 		var $background = $svg.append('rect')
+ 			.attr({
+ 				x: '0'
+ 				,y:'0'
+ 			})
+ 			.classed({
+ 				'n2CanvasForceGraph_background': true
+ 			})
+ 			.on('click', function(){
+	 			_this._backgroundClicked();
+	 		});
+ 		if( this.background 
+ 		 && typeof this.background === 'object' ){
+ 			var allowedAttributes = $n2.svg.presentationAttributeMap;
+ 			for(var key in this.background){
+ 				if( typeof key === 'string' 
+ 				 && allowedAttributes[key] ){
+ 	 				var value = this.background[key];
+ 	 				if( typeof value === 'string' ){
+ 	 					$background.attr(key,value);
+ 	 				} else if( typeof value === 'number' ){
+ 	 					$background.attr(key,value);
+ 	 				};
+ 				};
+ 			};
+ 		} else {
+ 			$background.attr({
+ 				'stroke-opacity': 0
+ 	 			,'fill-opacity': 0
+ 			});
+ 		};
 
  		$svg.append('g')
  			.attr('class','links');
@@ -636,12 +685,23 @@ if( !$d ) return;
  		$svg.append('g')
  			.attr('class','nodes');
  		
+ 		$svg.append('g')
+			.attr('class','labels');
+		
  		this.svgRenderer = new $n2.svg.Renderer({
  			svgElem: $svg[0][0]
  		});
  		//this.svgRenderer._importGraphic('star');
  		
  		this.resizeGraph();
+
+ 		// Report canvas
+ 		if( this.dispatchService ){
+ 			this.dispatchService.send(DH,{
+ 				type: 'canvasForceGraphReportCanvas'
+ 				,svg: $svg
+ 			});
+ 		};
  	},
  	
  	getGraphSize: function() {
@@ -667,9 +727,17 @@ if( !$d ) return;
  		
  		this.forceLayout.size([size[0], size[1]]).start();
  		
- 		this._getSvgElem()
- 			.attr('width', size[0])
- 			.attr('height', size[1]);
+ 		var $svg = this._getSvgElem()
+ 			.attr({
+ 				width: size[0]
+				,height: size[1]
+ 			});
+ 		
+ 		var $background = $svg.select('.n2CanvasForceGraph_background')
+ 			.attr({
+ 				width: size[0]
+				,height: size[1]
+ 			});
  	},
  	
  	_getSvgElem: function() {
@@ -712,7 +780,60 @@ if( !$d ) return;
 			};
 		};
 		
+		// Update elements by doc id map
+ 		this.elementsByDocId = {};
+ 		for(var id in this.nodesById){
+ 			var element = this.nodesById[id];
+			if( element.fragments ){
+				for(var fragId in element.fragments){
+					var frag = element.fragments[fragId];
+					
+					var context = frag.context;
+					if( context ){
+						var doc = context.n2_doc;
+						if( doc ){
+							var docId = doc._id;
+							
+							var elements = this.elementsByDocId[docId];
+							if( !elements ){
+								elements = [];
+								this.elementsByDocId[docId] = elements;
+							};
+							elements.push(element);
+						};
+					};
+				};
+			};
+ 		};
+ 		for(var id in this.linksById){
+ 			var element = this.linksById[id];
+			if( element.fragments ){
+				for(var fragId in element.fragments){
+					var frag = element.fragments[fragId];
+					
+					var context = frag.context;
+					if( context ){
+						var doc = context.n2_doc;
+						if( doc ){
+							var docId = doc._id;
+							
+							var elements = this.elementsByDocId[docId];
+							if( !elements ){
+								elements = [];
+								this.elementsByDocId[docId] = elements;
+							};
+							elements.push(element);
+						};
+					};
+				};
+			};
+ 		};
+		
 		this._documentsUpdated(updatedNodes, updatedLinks);
+		
+		this.dispatchService.send(DH,{
+			type: 'findAvailabilityChanged'
+		});
  	},
  	
 	_intentChanged: function(changedNodes){
@@ -751,7 +872,12 @@ if( !$d ) return;
  		// Update style on links
  		var selectedLinks = this._getSvgElem().select('g.links').selectAll('.link')
  			.data(links, function(link){ return link.id; });
- 		this._adjustElementStyles(selectedLinks);
+ 		this._adjustElementStyles(selectedLinks, true);
+
+ 		// Update style on labels
+ 		var selectedLabels = this._getSvgElem().select('g.labels').selectAll('.label')
+ 			.data(nodes, function(node){ return node.id; });
+ 		this._adjustElementStyles(selectedLabels);
  		
  		if( restart ){
  			this.forceLayout.start();
@@ -777,6 +903,8 @@ if( !$d ) return;
  			.nodes(nodes)
  			.links(links)
  			.start();
+
+ 		// NODES
  		
  		var selectedNodes = this._getSvgElem().select('g.nodes').selectAll('.node')
  			.data(nodes, function(node){ return node.id; });
@@ -815,8 +943,10 @@ if( !$d ) return;
  		var selectedLinks = this._getSvgElem().select('g.links').selectAll('.link')
  			.data(links, function(link){ return link.id; });
 
+ 		// LINKS
+ 		
  		var createdLinks = selectedLinks.enter()
- 			.append('line')
+ 			.append('path')
  			.attr('class','link')
  			.on('click', function(n,i){
  				_this._initiateMouseClick(n);
@@ -828,15 +958,53 @@ if( !$d ) return;
  				_this._initiateMouseOut(n);
  			})
  			;
- 		this._adjustElementStyles(createdLinks);
+ 		this._adjustElementStyles(createdLinks, true);
  		
  		selectedLinks.exit()
  			.remove();
  		
  		var updatedLinks = this._getSvgElem().select('g.links').selectAll('.link')
  			.data(updatedLinkData, function(link){ return link.id; });
- 		this._adjustElementStyles(updatedLinks);
+ 		this._adjustElementStyles(updatedLinks, true);
 
+ 		// LABELS
+ 		
+ 		var selectedLabels = this._getSvgElem().select('g.labels').selectAll('.label')
+			.data(nodes, function(node){ return node.id; });
+		
+		var createdLabels = selectedLabels.enter()
+			.append(function(){
+				var args = arguments;
+				return this.ownerDocument.createElementNS(this.namespaceURI, "text");
+			})
+			.attr('class','label')
+			.on('click', function(n,i){
+				_this._initiateMouseClick(n);
+			})
+			.on('mouseover', function(n,i){
+				_this._initiateMouseOver(n);
+			})
+			.on('mouseout', function(n,i){
+				_this._initiateMouseOut(n);
+			})
+			.call(this.forceLayout.drag)
+			.each(function(datum,i){
+				if( _this.popup && datum.n2_doc ){
+					_this.popup.installPopup(this,datum.n2_doc);
+				};
+			})
+			;
+		this._adjustElementStyles(createdLabels);
+		
+		selectedLabels.exit()
+			.remove();
+		
+		var updatedLabels = this._getSvgElem().select('g.labels').selectAll('.label')
+			.data(updatedNodeData, function(node){ return node.id; });
+		this._adjustElementStyles(updatedLabels);
+
+		// Animate force graph
+		
  		this.forceLayout.on('tick', function(e) {
 
  			// Deal with find event
@@ -867,19 +1035,37 @@ if( !$d ) return;
  				.attr('cx', function(d) { return d.x; })
  				.attr('cy', function(d) { return d.y; });
  			
- 			selectedLinks.attr("x1", function(d) { return d.source.x; })
- 		        .attr("y1", function(d) { return d.source.y; })
- 		        .attr("x2", function(d) { return d.target.x; })
- 		        .attr("y2", function(d) { return d.target.y; });		
+ 			selectedLinks
+ 				.attr('d', function(d){
+ 					if( typeof d.pathFn === 'function' ){
+ 						return d.pathFn(d, d.source, d.target);
+ 					} else {
+ 	 					var path = [
+		 					'M', d.source.x, ' ', d.source.y,
+		 					' L ', d.target.x, ' ', d.target.y
+	 					].join('');
+	 					return path;
+ 					};
+ 				});		
+
+ 			selectedLabels
+				.attr('x', function(d) { return d.x; })
+				.attr('y', function(d) { return d.y; });
  		});
  	},
  	
- 	_adjustElementStyles: function(selectedElements){
+ 	_adjustElementStyles: function(selectedElements, isLine){
  		var _this = this;
  		selectedElements.each(function(n,i){
+ 			n.n2_elem = this;
  			var symbolizer = _this.styleRules.getSymbolizer(n);
  			symbolizer.adjustSvgElement(this,n);
+ 			delete n.n2_elem;
  		});
+ 		
+ 		if( isLine ){
+ 			selectedElements.attr('fill','none');
+ 		};
  	},
  	
  	_dispatch: function(m){
@@ -927,6 +1113,12 @@ if( !$d ) return;
  		};
  	},
  	
+ 	_backgroundClicked: function(){
+ 		this._dispatch({
+ 			type: 'userUnselect'
+ 		});
+ 	},
+ 	
  	_handleDispatch: function(m){
  		if( 'modelGetInfo' === m.type ){
  			if( m.modelId === this.modelId ){
@@ -938,6 +1130,17 @@ if( !$d ) return;
  				if( m.state ){
  					this._dbPerspectiveUpdated(m.state);
  				};
+ 			};
+
+ 		} else if( 'windowResized' === m.type ) {
+ 			this.resizeGraph();
+
+ 		} else if( 'findIsAvailable' === m.type ) {
+ 			var docId = m.docId;
+ 			if( docId 
+ 			 && this.elementsByDocId[docId] 
+ 			 && this.elementsByDocId[docId].length ){
+ 				m.isAvailable = true;
  			};
  		};
  	},

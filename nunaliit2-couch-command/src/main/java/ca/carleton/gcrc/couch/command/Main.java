@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Stack;
 import java.util.Vector;
 
 import org.apache.log4j.Level;
@@ -12,13 +11,12 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.log4j.WriterAppender;
-import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.command.impl.PathComputer;
 
 public class Main {
 	
-	final static private org.slf4j.Logger logger = LoggerFactory.getLogger(Main.class.getClass());
+	//final static private org.slf4j.Logger logger = LoggerFactory.getLogger(Main.class.getClass());
 	
 	static private List<Command> allCommands = null;
 	synchronized static public List<Command> getCommands(){
@@ -59,7 +57,7 @@ public class Main {
 			
 		} catch(Exception e) {
 
-			logger.error("Error: "+e.getMessage(),e);
+			//logger.error("Error: "+e.getMessage(),e);
 			
 			PrintStream err = System.err;
 			if( null != globalSettings ) {
@@ -90,15 +88,13 @@ public class Main {
 	}
 	
 	public void execute(GlobalSettings globalSettings, List<String> args) throws Exception {
-		
-		// Turn arguments into a stack
-		Stack<String> argumentStack = new Stack<String>();
-		for(int i=args.size()-1; i>=0; --i){
-			argumentStack.push( args.get(i) );
-		}
+
+		Options options = new Options();
+		options.parseOptions(args);
+		List<String> arguments = options.getArguments();
 		
 		// Process global options
-		processGlobalOptions(globalSettings, argumentStack);
+		processGlobalOptions(globalSettings, options);
 
 		// Default log4j configuration
 		{
@@ -115,17 +111,23 @@ public class Main {
 		}
 		
 		// Find out command
-		if( argumentStack.empty() ){
+		if( arguments.size() < 1 ){
 			throw new Exception("No command provided. Try 'help'.");
 		}
-		String commandKeyword = argumentStack.pop();
+		String commandKeyword = arguments.get(0);
 		for(Command command : getCommands()){
 			if( command.matchesKeyword(commandKeyword) ) {
 				// Found the command in question
+
+				// Check options for this command
+				String[] expectedOptions = command.getExpectedOptions();
+				options.validateExpectedOptions(expectedOptions);
+
+				// Execute
 				performCommand(
 					command
 					,globalSettings
-					,argumentStack
+					,options
 				);
 				return;
 			}
@@ -137,34 +139,26 @@ public class Main {
 
 	private void processGlobalOptions(
 		GlobalSettings globalSettings
-		,Stack<String> argumentStack
+		,Options options
 		) throws Exception {
 
-		// Pick up options
-		while( false == argumentStack.empty() ){
-			String optionName = argumentStack.peek();
-			if( "--atlas-dir".equals(optionName) ){
-				argumentStack.pop();
-				
-				if( argumentStack.empty() ){
-					throw new Exception("Directory expected for global option '--atlas-dir'");
-				}
-				String atlasDirStr = argumentStack.pop();
-				File atlasDir = PathComputer.computeAtlasDir(atlasDirStr);
-				globalSettings.setAtlasDir(atlasDir);
-				
-			} else if( "--debug".equals(optionName) ){
-					argumentStack.pop();
-					globalSettings.setDebug(true);
-					
-			} else {
-				break;
+		// Atlas directory
+		String atlasDirStr = options.getAtlasDir();
+		if( null != atlasDirStr ){
+			File atlasDir = PathComputer.computeAtlasDir(atlasDirStr);
+			globalSettings.setAtlasDir(atlasDir);
+		}
+
+		// Debug
+		Boolean debug = options.getDebug();
+		if( null != debug ){
+			if( debug.booleanValue() ){
+				globalSettings.setDebug(true);
 			}
 		}
-		
 	}
 
-	private void performCommand(Command command, GlobalSettings gs, Stack<String> argumentStack) throws Exception {
+	private void performCommand(Command command, GlobalSettings gs, Options options) throws Exception {
 		if( command.requiresAtlasDir() ){
 			if( null == gs.getAtlasDir() ) {
 				// Use current directory
@@ -203,6 +197,6 @@ public class Main {
 			}
 		}
 		
-		command.runCommand(gs ,argumentStack);
+		command.runCommand(gs ,options);
 	}
 }

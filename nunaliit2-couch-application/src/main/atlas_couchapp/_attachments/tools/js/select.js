@@ -5,7 +5,7 @@
 	var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
 	var config = null;
-	var scriptConfig = null;
+	var g_scriptConfig = null;
 	var atlasDb = null;
 	var atlasDesign = null;
 	var serverDesign = null;
@@ -13,6 +13,7 @@
 	var schemaRepository = null;
 	var showService = null;
 	var exportService = null;
+	var searchService = null;
 	var couchEditor = null;
 	var $selectAppDiv = null;
 	var documentTransforms = [];
@@ -20,92 +21,56 @@
 	var selectedList = null;
 
 	// **********************************************************************
-	var ProgressDialog = $n2.Class({
+	var DocumentList = $n2.Class({
+		docIds: null,
 		
-		dialogId: null
+		name: null,
 		
-		,onCancelFn: null
+		fromList: null,
 		
-		,cancellingLabel: null
-		
-		,initialize: function(opts_){
+		initialize: function(opts_){
 			var opts = $n2.extend({
-				title: _loc('Progress')
-				,onCancelFn: null
-				,cancelButtonLabel: _loc('Cancel') 
-				,cancellingLabel: _loc('Cancelling Operation...')
+				docIds: null
+				,name: _loc('Unknown List')
+				,fromList: null
 			},opts_);
 			
-			var _this = this;
-			
-			this.dialogId = $n2.getUniqueId();
-			this.onCancelFn = opts.onCancelFn;
-			this.cancellingLabel = opts.cancellingLabel;
+			this.docIds = opts.docIds;
+			this.fromList = opts.fromList;
 
-			var $dialog = $('<div id="'+this.dialogId+'">'
-				+'<div class="selectAppProgressDialogMessage">'
-				+'<span class="selectAppLabel"></span>: <span class="selectAppProgress"></span>'
-				+'</div></div>');
-			$dialog.find('span.selectAppLabel').text( _loc('Progress') );
-			
-			var dialogOptions = {
-				autoOpen: true
-				,title: opts.title
-				,modal: true
-				,closeOnEscape: false
-				,close: function(event, ui){
-					var diag = $(event.target);
-					diag.dialog('destroy');
-					diag.remove();
-				}
+			if( !this.docIds ){
+				this.docIds = [];
 			};
-			$dialog.dialog(dialogOptions);
 			
-			// Remove close button
-			$dialog.parents('.ui-dialog').first().find('.ui-dialog-titlebar-close').hide();
+			this.docIds = [];
+			var mapById = {};
+			if( opts.docIds && opts.docIds.length ){
+				for(var i=0,e=opts.docIds.length; i<e; ++i){
+					var docId = opts.docIds[i];
+					
+					// Remove duplicates
+					if( !mapById[docId] ){
+						this.docIds.push(docId);
+						mapById[docId]= true;
+					};
+				};
+			};
+			
+			this.name = opts.name;
+		},
+	
+		print: function(){
+			var locStr = _loc('{count} document(s)',{
+				count: this.docIds.length
+			});
 
-			// Add cancel button, if needed
-			if( typeof(opts.onCancelFn) === 'function'  ) {
-				var cancelLine = $('<div><button class="n2ProgressModalCancel"></button></div>');
-				$dialog.append(cancelLine);
-				cancelLine.find('button')
-					.text(opts.cancelButtonLabel)
-					.click(function(){
-						_this.cancel();
-						return false;
-					})
-					;
+			var label = this.name + ' - ' + locStr;
+			
+			if( this.fromList ){
+				label = label + ' (from:' + this.fromList.name + ')'; 
 			};
 			
-			this.updatePercent(0);
-		}
-	
-		,cancel: function(){
-			if( typeof(this.onCancelFn) === 'function' ) {
-				var $dialog = $('#'+this.dialogId);
-				var $cb = $dialog.find('.n2ProgressModalCancel');
-				var $m = $('<span></span>').text(this.cancellingLabel);
-				$cb.before($m).remove();
-				
-				this.onCancelFn();
-			};
-		}
-	
-		,close: function(){
-			var $dialog = $('#'+this.dialogId);
-			$dialog.dialog('close');
-		}
-	
-		,updatePercent: function(percent){
-			var $dialog = $('#'+this.dialogId);
-			var $p = $dialog.find('.selectAppProgress');
-			$p.text( ''+Math.floor(percent)+'%' );
-		}
-		
-		,updateHtmlMessage: function(html){
-			var $dialog = $('#'+this.dialogId);
-			var $div = $dialog.find('.selectAppProgressDialogMessage');
-			$div.html( html );
+			return label;
 		}
 	});
 
@@ -122,45 +87,128 @@
 	
 		,createList: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
 				,onSuccess: function(list){}
 				,onError: reportError
 			},opts_);
 			
 			var _this = this;
+			
+			if( typeof this._retrieveDocIds === 'function' ){
+				// Create list by getting the document ids (generally faster)
+				this._retrieveDocIds({
+					options: opts.options
+					,progressTitle: opts.progressTitle
+					,onSuccess: function(docIds, listName){
+						var l = new DocumentList({
+							docIds: docIds
+							,name: listName
+						});
+						opts.onSuccess(l);
+					}
+					,onError: opts.onError
+				});
+				
+			} else if( typeof this._getFilterFunction === 'function' ) {
+				// Create list by filtering all documents
+				this._getFilterFunction({
+					options: opts.options
+					,onSuccess: function(filterFn, createName){
+						if( !opts.name ) {
+							opts.name = createName;
+						};
+						if( !opts.name ) {
+							opts.name = _this.name;
+						};
+						_this._createListFilterAllDocs({
+							filterFn: filterFn
+							,name: opts.name
+							,progressTitle: opts.progressTitle
+							,onSuccess: opts.onSuccess
+							,onError: opts.onError
+						});
+					}
+					,onError: opts.onError
+				});
 
-			if( typeof(this.getFilterFunction) !== 'function' ) {
-				opts.onError('Subclass must implement function getFilterFunction()');
+			} else {
+				opts.onError('Subclass must implement function _retrieveDocIds() or _getFilterFunction()');
+			};
+		}
+		
+		,refineList: function(opts_){
+			var opts = $n2.extend({
+				list: null
+				,options: null
+				,progressTitle: _loc('List Refinement Progress')
+				,onSuccess: function(list){}
+				,onError: reportError
+			},opts_);
+			
+			var _this = this;
+
+			if( !opts.list ){
+				opts.onError( _loc('A list must be provided for refining') );
 				return;
 			};
 			
-			this.getFilterFunction({
-				options: opts.options
-				,onSuccess: function(filterFn, createName){
-					if( !opts.name ) {
-						opts.name = createName;
-					};
-					if( !opts.name ) {
-						opts.name = _this.name;
-					};
-					_this.createListFilterAllDocs({
-						filterFn: filterFn
-						,name: opts.name
-						,progressTitle: opts.progressTitle
-						,onSuccess: opts.onSuccess
-						,onError: opts.onError
-					});
-				}
-				,onError: opts.onError
-			});
+			if( typeof this._retrieveDocIds === 'function' ) {
+				// Refine list by getting docIds and filtering the list based
+				// on those
+				this._retrieveDocIds({
+					options: opts.options
+					,progressTitle: opts.progressTitle
+					,onSuccess: function(docIds, listName){
+						var docIdMap = {};
+						for(var i=0,e=docIds.length; i<e; ++i){
+							docIdMap[docIds[i]] = true;
+						};
+						
+						var newListIds = [];
+						for(var i=0,e=opts.list.docIds.length; i<e; ++i){
+							var docId = opts.list.docIds[i];
+							if( docIdMap[docId] ){
+								newListIds.push(docId);
+							};
+						};
+						
+						var l = new DocumentList({
+							docIds: newListIds
+							,name: listName
+							,fromList: opts.list
+						});
+
+						opts.onSuccess(l);
+					}
+					,onError: opts.onError
+				});
+
+			} else if( typeof this._getFilterFunction === 'function' ) {
+				this._getFilterFunction({
+					options: opts.options
+					,onSuccess: function(filterFn, listName){
+						_this._createListFilterDocIds({
+							filterFn: filterFn
+							,name: listName
+							,docIds: opts.list.docIds
+							,fromList: opts.list
+							,progressTitle: opts.progressTitle
+							,onSuccess: opts.onSuccess
+							,onError: opts.onError
+						});
+					}
+					,onError: opts.onError
+				});
+
+			} else {
+				opts.onError('Subclass must implement function _getFilterFunction() or _retrieveDocIds()');
+			};
 		}
 		
-		,createListFilterAllDocs: function(opts_){
+		,_createListFilterAllDocs: function(opts_){
 			var opts = $n2.extend({
 				filterFn: null
-				,name: null
 				,progressTitle: _loc('List Creation Progress')
 				,onSuccess: function(list){}
 				,onError: reportError
@@ -173,12 +221,8 @@
 				opts.onError( _loc('A filter function must be supplied') );
 				return;
 			};
-			
-			if( !opts.name ) {
-				opts.name = this.name;
-			};
 
-			var progressDialog = new ProgressDialog({
+			var progressDialog = new $n2.couchDialogs.ProgressDialog({
 				title: _loc('Fetching All Document Ids')
 				,onCancelFn: function(){
 					opCancelled = true;
@@ -204,9 +248,8 @@
 				progressDialog.updatePercent(100);
 				progressDialog.close();
 				
-				_this.createListFilterDocIds({
+				_this._createListFilterDocIds({
 					filterFn: opts.filterFn
-					,name: opts.name
 					,docIds: allDocIds_
 					,progressTitle: opts.progressTitle
 					,onSuccess: opts.onSuccess
@@ -215,11 +258,12 @@
 			};
 		}
 		
-		,createListFilterDocIds: function(opts_){
+		,_createListFilterDocIds: function(opts_){
 			var opts = $n2.extend({
 				filterFn: null
 				,name: null
 				,docIds: null
+				,fromList: null
 				,progressTitle: _loc('List Creation Progress')
 				,onSuccess: function(list){}
 				,onError: reportError
@@ -235,12 +279,13 @@
 				return;
 			};
 			
-			if( !opts.name ) {
-				opts.name = this.name;
+			var listName = opts.name;
+			if( !listName ) {
+				listName = this.name;
 			};
 
 			var opCancelled = false;
-			var progressDialog = new ProgressDialog({
+			var progressDialog = new $n2.couchDialogs.ProgressDialog({
 				title: opts.progressTitle
 				,onCancelFn: function(){
 					opCancelled = true;
@@ -253,6 +298,10 @@
 				allDocIds.push(opts.docIds[i]);
 			};
 			var fullCount = allDocIds.length;
+			
+			// Create a copy of the configuration so that user
+			// can save temporary objects to it
+			var my_scriptConfig = $n2.extend({},g_scriptConfig);
 			
 			// Fetch documents, filtering each
 			nextFetch();
@@ -288,10 +337,16 @@
 				} else {
 					progressDialog.updatePercent(100);
 
+					var effectiveListName = my_scriptConfig.listName;
+					if( !effectiveListName ){
+						effectiveListName = listName;
+					};
+					
 					// List is complete
 					var l = new DocumentList({
 						docIds: filteredDocIds
-						,name: opts.name
+						,name: effectiveListName
+						,fromList: opts.fromList
 					});
 					opts.onSuccess(l);
 
@@ -305,12 +360,42 @@
 					return;
 				};
 
-				for(var i=0, e=docs.length; i<e; ++i){
-					if( opts.filterFn(docs[i], scriptConfig) ){
-						filteredDocIds.push(docs[i]._id);
-					};
+				if( docs.length > 0 ){
+					var doc = docs.shift();
+					nextDoc(doc, docs);
+				} else {
+					nextFetch();
 				};
-				nextFetch();
+			};
+			
+			function nextDoc(doc, docs){
+				if( opCancelled ) {
+					cancel();
+					return;
+				};
+
+				// Adjust config
+				var callbackExecuted = false;
+				my_scriptConfig.continueOnExit = true;
+				my_scriptConfig.includeDocument = function(shouldBeIncluded){
+					if( callbackExecuted ) return; // ignore second call
+					if( my_scriptConfig.continueOnExit ) return; // error
+					
+					resultOnDocument(doc, shouldBeIncluded, docs);
+				};
+
+				// Perform filter function
+				var shouldBeIncluded = opts.filterFn(doc, my_scriptConfig);
+				if( my_scriptConfig.continueOnExit ){
+					resultOnDocument(doc, shouldBeIncluded, docs)
+				};
+			};
+			
+			function resultOnDocument(doc, shouldBeIncluded, docs){
+				if( shouldBeIncluded ){
+					filteredDocIds.push(doc._id);
+				};
+				receiveDocs(docs);
 			};
 			
 			function cancel(){
@@ -318,51 +403,9 @@
 				progressDialog.close();
 			};
 		}
-		
-		,refineList: function(opts_){
-			var opts = $n2.extend({
-				list: null
-				,name: null
-				,options: null
-				,progressTitle: _loc('List Refinement Progress')
-				,onSuccess: function(list){}
-				,onError: reportError
-			},opts_);
-			
-			var _this = this;
-
-			if( !opts.list ){
-				opts.onError( _loc('A list must be provided for refining') );
-				return;
-			};
-			if( !opts.name ){
-				opts.onError( _loc('A name must be provided when refining a list') );
-				return;
-			};
-			if( typeof(this.getFilterFunction) !== 'function' ) {
-				opts.onError('Subclass must implement function getFilterFunction()');
-				return;
-			};
-			
-			this.getFilterFunction({
-				options: opts.options
-				,onSuccess: function(filterFn){
-					_this.createListFilterDocIds({
-						filterFn: filterFn
-						,name: opts.name
-						,docIds: opts.list.docIds
-						,progressTitle: opts.progressTitle
-						,onSuccess: opts.onSuccess
-						,onError: opts.onError
-					});
-				}
-				,onError: opts.onError
-			});
-		}
 	});
 	
 	SearchFilter.availableSearchFilters = [];
-	SearchFilter.availableCreateFilters = [];
 	
 	// Opens a dialog, selects a search filter from available ones, and create
 	// a new list
@@ -380,13 +423,6 @@
 			+'</div>');
 
 		var $select = $dialog.find('select.searchFilterSelector');
-		for(var i=0,e=SearchFilter.availableCreateFilters.length; i<e; ++i) {
-			var searchFilter = SearchFilter.availableCreateFilters[i];
-			var $o = $('<option></option>');
-			$o.text(searchFilter.name);
-			$o.attr('value',searchFilter.id);
-			$select.append( $o );
-		};
 		for(var i=0,e=SearchFilter.availableSearchFilters.length; i<e; ++i) {
 			var searchFilter = SearchFilter.availableSearchFilters[i];
 			var $o = $('<option></option>');
@@ -455,12 +491,6 @@
 		$dialog.dialog(dialogOptions);
 		
 		function findSearchFilterFromId(id){
-			for(var i=0,e=SearchFilter.availableCreateFilters.length; i<e; ++i) {
-				var searchFilter = SearchFilter.availableCreateFilters[i];
-				if( searchFilter.id === id ) {
-					return searchFilter;
-				};
-			};
 			for(var i=0,e=SearchFilter.availableSearchFilters.length; i<e; ++i) {
 				var searchFilter = SearchFilter.availableSearchFilters[i];
 				if( searchFilter.id === id ) {
@@ -482,7 +512,6 @@
 		
 		var dialogId = $n2.getUniqueId();
 		var $dialog = $('<div id="'+dialogId+'">'
-			+'<div>'+_loc('Name of new list')+': <input type="text"/></div>'
 			+'<div>'+_loc('Type of refinement')+': <select class="searchFilterSelector"></select></div>'
 			+'<div class="searchFilterOptions"></div>'
 			+'<div><button>'+_loc('OK')+'</button><button>'+_loc('Cancel')+'</button></div>'
@@ -508,25 +537,20 @@
 				.button({icons:{primary:'ui-icon-check'}})
 				.click(function(){
 					var $dialog = $('#'+dialogId);
-					var listName = $dialog.find('input').val();
 					var $options = $dialog.find('.searchFilterOptions');
 					var filterId = $dialog.find('select.searchFilterSelector').val();
 					
-					if( !listName || '' === listName ){
-						alert( _loc('A list name must be supplied') );
-						$dialog.find('input').focus();
-						return;
-					};
-	
 					$dialog.dialog('close');
 
 					var useFilter = findSearchFilterFromId(filterId);
 					if( useFilter ) {
 						useFilter.refineList({
 							list: opts.list
-							,name: listName
 							,options: $options
 							,onSuccess: opts.onSuccess
+							,onError: function(err){
+								$n2.log('Error refining list: '+err);
+							}
 						});
 					} else {
 						alert( _loc('Unable to find document search filter') );
@@ -582,21 +606,106 @@
 	};
 
 	// **********************************************************************
-	var SearchFilterTextSearch = $n2.Class(SearchFilter, {
+	var SearchFilterAllDocs = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
-			this.name = _loc('Text Search');
+			this.name = _loc('All Documents');
+		}
+	
+		,printOptions: function($parent){
+		}
+
+		,_retrieveDocIds: function(opts_){
+			var opts = $n2.extend({
+				options: null
+				,progressTitle: _loc('List Creation Progress')
+				,onSuccess: function(docIds,name){}
+				,onError: reportError
+			},opts_);
+			
+			atlasDb.listAllDocuments({
+				onSuccess: function(docIds){
+					opts.onSuccess(docIds,_loc('All Documents'));
+				}
+				,onError: opts.onError
+			});
+		}
+	});
+
+	SearchFilter.availableSearchFilters.push(new SearchFilterAllDocs());
+
+	// **********************************************************************
+	var SearchFilterSearchTerms = $n2.Class(SearchFilter, {
+
+		initialize: function(){
+			SearchFilter.prototype.initialize.apply(this);
+			this.name = _loc('Search Terms');
 		}
 	
 		,printOptions: function($parent){
 			var $options = $('<div>'
-				+_loc('Search term')+': <input type="text"/>'
+				+_loc('Search terms')+': <input type="text"/>'
+				+'</div>');
+			$parent.append( $options );
+		}
+
+		,_retrieveDocIds: function(opts_){
+			var opts = $n2.extend({
+				options: null
+				,progressTitle: _loc('List Creation Progress')
+				,onSuccess: function(docIds,name){}
+				,onError: reportError
+			},opts_);
+
+			// Get search terms
+			var $options = opts.options;
+			var $input = $options.find('input');
+			var searchTerms = $input.val();
+			
+			// Obtain docIds from search service
+			searchService.submitRequest(searchTerms, {
+				onlyFinalResults: true
+				,strict: true
+				,onSuccess: function(searchResults){
+					var docIds = [];
+					if( searchResults && searchResults.list ){
+						for(var i=0,e=searchResults.list.length; i<e; ++i){
+							var foundItem = searchResults.list[i];
+							var docId = foundItem.id;
+							docIds.push(docId);
+						};
+					};
+					
+					var name = _loc('All documents containing {searchTerm}',{
+						searchTerm: searchTerms
+					});
+
+					opts.onSuccess(docIds,name);
+				}
+				,onError: reportError
+			});
+		}
+	});
+	
+	SearchFilter.availableSearchFilters.push(new SearchFilterSearchTerms());
+
+	// **********************************************************************
+	var SearchFilterRegexSearch = $n2.Class(SearchFilter, {
+
+		initialize: function(){
+			SearchFilter.prototype.initialize.apply(this);
+			this.name = _loc('Regex Search');
+		}
+	
+		,printOptions: function($parent){
+			var $options = $('<div>'
+				+_loc('Regex Expression')+': <input type="text"/>'
 				+'</div>');
 			$parent.append( $options );
 		}
 	
-		,getFilterFunction: function(opts_){
+		,_getFilterFunction: function(opts_){
 			var opts = $n2.extend({
 				options: null
 				,onSuccess: function(filterFn, creationName){}
@@ -619,15 +728,15 @@
 				});
 				return result;
 			};
-			opts.onSuccess(filterFn, _loc('All documents containing {searchTerm}',{
-				searchTerm: searchTerm
+			opts.onSuccess(filterFn, _loc('All documents matching regex {regex}',{
+				regex: searchTerm
 			}));
 			
 			return false;
 		}
 	});
 	
-	SearchFilter.availableSearchFilters.push(new SearchFilterTextSearch());
+	SearchFilter.availableSearchFilters.push(new SearchFilterRegexSearch());
 
 	// **********************************************************************
 	var SearchFilterJavascript = $n2.Class(SearchFilter, {
@@ -649,7 +758,7 @@
 			$parent.append( $options );
 		}
 
-		,getFilterFunction: function(opts_){
+		,_getFilterFunction: function(opts_){
 			var opts = $n2.extend({
 				options: null
 				,onSuccess: function(filterFn, creationName){}
@@ -659,9 +768,15 @@
 			var $options = opts.options;
 			var script = $options.find('textarea').val();
 			var scriptFn = null;
+
+			// Create a copy of the configuration so that user
+			// can save temporary objects to it
+//			var my_scriptConfig = $n2.extend({},g_scriptConfig);
+//			my_scriptConfig.includeDocument = function(shouldBeIncluded){};
+			
 			try {
 				eval('scriptFn = '+script);
-				scriptFn({_id:'test',_revision:'1-abcde'},scriptConfig);
+//				scriptFn({_id:'test',_revision:'1-abcde'},my_scriptConfig);
 			} catch(e) {
 				alert(_loc('Error')+': '+e);
 				return;
@@ -678,42 +793,7 @@
 	SearchFilter.availableSearchFilters.push(new SearchFilterJavascript());
 
 	// **********************************************************************
-	var CreateFilterAllDocs = $n2.Class(SearchFilter, {
-
-		initialize: function(){
-			SearchFilter.prototype.initialize.apply(this);
-			this.name = _loc('All Documents');
-		}
-	
-		,printOptions: function($parent){
-		}
-
-		,createList: function(opts_){
-			var opts = $n2.extend({
-				name: null
-				,options: null
-				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
-				,onError: reportError
-			},opts_);
-			
-			atlasDb.listAllDocuments({
-				onSuccess: function(docIds){
-					var l = new DocumentList({
-						docIds: docIds
-						,name: _loc('All Documents')
-					});
-					opts.onSuccess(l);
-				}
-				,onError: opts.onError
-			});
-		}
-	});
-
-	SearchFilter.availableCreateFilters.push(new CreateFilterAllDocs());
-
-	// **********************************************************************
-	var CreateFilterByLayer = $n2.Class(SearchFilter, {
+	var SearchFilterByGeomLayer = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
@@ -752,12 +832,11 @@
 			});
 		}
 
-		,createList: function(opts_){
+		,_retrieveDocIds: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
+				,onSuccess: function(docIds,name){}
 				,onError: reportError
 			},opts_);
 			
@@ -776,14 +855,12 @@
 							var row = rows[i];
 							docIds.push(row.id);
 						};
+
 						var locStr = _loc('Geometries from layer {layerName}',{
 							layerName: layerName
 						});
-						var l = new DocumentList({
-							docIds: docIds
-							,name: locStr
-						});
-						opts.onSuccess(l);
+
+						opts.onSuccess(docIds,locStr);
 					}
 					,onError: function(err){
 						alert(_loc('Problem obtaining documents from layer')+': '+err);
@@ -794,10 +871,91 @@
 		}
 	});
 
-	SearchFilter.availableCreateFilters.push(new CreateFilterByLayer());
+	SearchFilter.availableSearchFilters.push(new SearchFilterByGeomLayer());
+	
+	// **********************************************************************
+	var SearchFilterByDocLayer = $n2.Class(SearchFilter, {
+
+		initialize: function(){
+			SearchFilter.prototype.initialize.apply(this);
+			this.name = _loc('Select documents from a layer');
+		}
+	
+		,printOptions: function($parent){
+			var $options = $('<div>'
+				+_loc('Layer name')+':<br/><select class="layerNameList"></select>'
+				+'</div>');
+			
+			$parent.append( $options );
+			
+			atlasDesign.queryView({
+				viewName: 'layers'
+				,reduce: true
+				,group: true
+				,onSuccess: function(rows){
+					var $sel = $options.find('select.layerNameList');
+					for(var i=0,e=rows.length; i<e; ++i){
+						var layerId = rows[i].key;
+						var $o = $('<option></option>')
+							.val(layerId)
+							.text(layerId)
+							.appendTo($sel);
+						
+						if( showService ){
+							showService.printLayerName($o, layerId);
+						};
+					};
+				}
+				,onError: function(err){
+					alert(_loc('Unable to obtain list of layers')+': '+err);
+					reportError(_loc('Unable to obtain list of layers')+': '+err);
+				}
+			});
+		}
+
+		,_retrieveDocIds: function(opts_){
+			var opts = $n2.extend({
+				options: null
+				,progressTitle: _loc('List Creation Progress')
+				,onSuccess: function(docIds,name){}
+				,onError: reportError
+			},opts_);
+			
+			var $i = opts.options.find('select.layerNameList');
+			var layerName = $i.val();
+			if( !layerName || '' == layerName ) {
+				alert(_loc('Must enter a layer name'));
+			} else {
+				atlasDesign.queryView({
+					viewName: 'layers'
+					,startkey: layerName
+					,endkey: layerName
+					,reduce: false
+					,onSuccess: function(rows){
+						var docIds = [];
+						for(var i=0,e=rows.length; i<e; ++i){
+							var row = rows[i];
+							docIds.push(row.id);
+						};
+						var locStr = _loc('Documents from layer {layerName}',{
+							layerName: layerName
+						});
+
+						opts.onSuccess(docIds,locStr);
+					}
+					,onError: function(err){
+						alert(_loc('Problem obtaining documents from layer')+': '+err);
+						opts.onError(err);
+					}
+				});
+			};
+		}
+	});
+
+	SearchFilter.availableSearchFilters.push(new SearchFilterByDocLayer());
 
 	// **********************************************************************
-	var CreateFilterBySchemaType = $n2.Class(SearchFilter, {
+	var SearchFilterBySchemaType = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
@@ -830,12 +988,11 @@
 			});
 		}
 
-		,createList: function(opts_){
+		,_retrieveDocIds: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
+				,onSuccess: function(docIds,name){}
 				,onError: reportError
 			},opts_);
 			
@@ -857,11 +1014,8 @@
 						var locStr = _loc('Documents from schema type {schemaName}',{
 							schemaName: schemaName
 						});
-						var l = new DocumentList({
-							docIds: docIds
-							,name: locStr
-						});
-						opts.onSuccess(l);
+
+						opts.onSuccess(docIds,locStr);
 					}
 					,onError: function(err){
 						alert(_loc('Problem obtaining documents from schema')+': '+err);
@@ -872,10 +1026,10 @@
 		}
 	});
 
-	SearchFilter.availableCreateFilters.push(new CreateFilterBySchemaType());
+	SearchFilter.availableSearchFilters.push(new SearchFilterBySchemaType());
 
 	// **********************************************************************
-	var CreateFilterByImportProfile = $n2.Class(SearchFilter, {
+	var SearchFilterByImportProfile = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
@@ -918,12 +1072,11 @@
 			});
 		}
 
-		,createList: function(opts_){
+		,_retrieveDocIds: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
+				,onSuccess: function(docIds,name){}
 				,onError: reportError
 			},opts_);
 			
@@ -945,11 +1098,8 @@
 						var locStr = _loc('Documents from import profile: {profileId}',{
 							profileId: profileId
 						});
-						var l = new DocumentList({
-							docIds: docIds
-							,name: locStr
-						});
-						opts.onSuccess(l);
+
+						opts.onSuccess(docIds,locStr);
 					}
 					,onError: function(err){
 						alert(_loc('Problem obtaining documents from import profile')+': '+err);
@@ -960,10 +1110,108 @@
 		}
 	});
 
-	SearchFilter.availableCreateFilters.push(new CreateFilterByImportProfile());
+	SearchFilter.availableSearchFilters.push(new SearchFilterByImportProfile());
 
 	// **********************************************************************
-	var CreateFilterByDocumentReference = $n2.Class(SearchFilter, {
+	var SearchFilterByView = $n2.Class(SearchFilter, {
+
+		initialize: function(){
+			SearchFilter.prototype.initialize.apply(this);
+			this.name = _loc('Select documents reported in a view');
+		}
+	
+		,printOptions: function($parent){
+			var $options = $('<div>'
+				+_loc('View')+': <br/><select class="viewList"></select>'
+				+'</div>');
+			
+			$parent.append( $options );
+			
+			atlasDb.getAllDocuments({
+				startkey: '_design'
+				,endkey: '_design~'
+				,onSuccess: function(docs){
+					var sortedViewLabels = [];
+					docs.forEach(function(designDoc){
+						var docId = designDoc._id;
+						var names = docId.split('/');
+						if( names.length > 1 ){
+							var designName = names[1];
+							if( designDoc && designDoc.views ){
+								for(var viewName in designDoc.views){
+									var label = designName + '/' + viewName;
+									sortedViewLabels.push(label);
+								};
+							};
+						};
+					});
+					
+					sortedViewLabels.sort();
+					
+					var $sel = $options.find('select.viewList');
+					sortedViewLabels.forEach(function(viewLabel){
+						$('<option></option>')
+							.val(viewLabel)
+							.text(viewLabel)
+							.appendTo($sel);
+					});
+				}
+				,onError: function(err){
+					alert(_loc('Unable to obtain list of views')+': '+err);
+					reportError(_loc('Unable to obtain list of views')+': '+err);
+				}
+			});
+		}
+
+		,_retrieveDocIds: function(opts_){
+			var opts = $n2.extend({
+				options: null
+				,progressTitle: _loc('List Creation Progress')
+				,onSuccess: function(docIds,name){}
+				,onError: reportError
+			},opts_);
+			
+			var $i = opts.options.find('select.viewList');
+			var label = $i.val();
+			if( !label ) {
+				alert(_loc('Must select a view'));
+			} else {
+				var names = label.split('/');
+				var designName = names[0];
+				var viewName = names[1];
+				var design = atlasDb.getDesignDoc({ddName:designName});
+				design.queryView({
+					viewName: viewName
+					,onSuccess: function(rows){
+						var docIds = [];
+						var docIdMap = {};
+						for(var i=0,e=rows.length; i<e; ++i){
+							var row = rows[i];
+							var docId = row.id;
+							if( !docIdMap[docId] ){
+								docIds.push(docId);
+								docIdMap[docId] = true;
+							};
+						};
+						var locStr = _loc('Documents from view {label}',{
+							label: label
+						});
+
+						opts.onSuccess(docIds,locStr);
+					}
+					,onError: function(err){
+						alert(_loc('Problem obtaining documents from view')+': '+err);
+						opts.onError(err);
+					}
+				});
+			};
+		}
+	});
+
+	SearchFilter.availableSearchFilters.push(new SearchFilterByView());
+
+	// **********************************************************************
+	var SearchFilterByDocumentReference = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
@@ -978,12 +1226,11 @@
 			$parent.append( $options );
 		}
 
-		,createList: function(opts_){
+		,_retrieveDocIds: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
+				,onSuccess: function(docIds,name){}
 				,onError: reportError
 			},opts_);
 			
@@ -1005,11 +1252,8 @@
 						var locStr = _loc('Documents referencing {docId}',{
 							docId: docId
 						});
-						var l = new DocumentList({
-							docIds: docIds
-							,name: locStr
-						});
-						opts.onSuccess(l);
+
+						opts.onSuccess(docIds, locStr);
 					}
 					,onError: function(err){
 						alert(_loc('Problem obtaining documents from schema')+': '+err);
@@ -1020,10 +1264,10 @@
 		}
 	});
 
-	SearchFilter.availableCreateFilters.push(new CreateFilterByDocumentReference());
+	SearchFilter.availableSearchFilters.push(new SearchFilterByDocumentReference());
 
 	// **********************************************************************
-	var CreateFilterByDanglingReference = $n2.Class(SearchFilter, {
+	var SearchFilterByDanglingReference = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
@@ -1033,12 +1277,11 @@
 		,printOptions: function($parent){
 		}
 
-		,createList: function(opts_){
+		,_retrieveDocIds: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
+				,onSuccess: function(docIds,name){}
 				,onError: reportError
 			},opts_);
 			
@@ -1082,19 +1325,16 @@
 				};
 				
 				var locStr = _loc('Documents with dangling references');
-				var l = new DocumentList({
-					docIds: docIds
-					,name: locStr
-				});
-				opts.onSuccess(l);
+
+				opts.onSuccess(docIds, locStr);
 			};
 		}
 	});
 
-	SearchFilter.availableCreateFilters.push(new CreateFilterByDanglingReference());
+	SearchFilter.availableSearchFilters.push(new SearchFilterByDanglingReference());
 
 	// **********************************************************************
-	var CreateFilterInvalidSourceReference = $n2.Class(SearchFilter, {
+	var SearchFilterInvalidSourceReference = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
@@ -1104,12 +1344,11 @@
 		,printOptions: function($parent){
 		}
 
-		,createList: function(opts_){
+		,_retrieveDocIds: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
+				,onSuccess: function(docIds,name){}
 				,onError: reportError
 			},opts_);
 			
@@ -1177,19 +1416,16 @@
 			
 			function reportInvalidSourceDocuments(docIds){
 				var locStr = _loc('Documents that have an invalid source');
-				var l = new DocumentList({
-					docIds: docIds
-					,name: locStr
-				});
-				opts.onSuccess(l);
+
+				opts.onSuccess(docIds,locStr);
 			};
 		}
 	});
 
-	SearchFilter.availableCreateFilters.push(new CreateFilterInvalidSourceReference());
+	SearchFilter.availableSearchFilters.push(new SearchFilterInvalidSourceReference());
 
 	// **********************************************************************
-	var CreateFilterNotReachableByReference = $n2.Class(SearchFilter, {
+	var SearchFilterNotReachableByReference = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
@@ -1199,12 +1435,11 @@
 		,printOptions: function($parent){
 		}
 
-		,createList: function(opts_){
+		,_retrieveDocIds: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
+				,onSuccess: function(docIds,name){}
 				,onError: reportError
 			},opts_);
 			
@@ -1259,19 +1494,16 @@
 				};
 				
 				var locStr = _loc('Documents not reachable by reference');
-				var l = new DocumentList({
-					docIds: docIds
-					,name: locStr
-				});
-				opts.onSuccess(l);
+
+				opts.onSuccess(docIds,locStr);
 			};
 		}
 	});
 
-	SearchFilter.availableCreateFilters.push(new CreateFilterNotReachableByReference());
+	SearchFilter.availableSearchFilters.push(new SearchFilterNotReachableByReference());
 
 	// **********************************************************************
-	var CreateFilterSkeleton = $n2.Class(SearchFilter, {
+	var SearchFilterSkeleton = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
@@ -1281,12 +1513,11 @@
 		,printOptions: function($parent){
 		}
 
-		,createList: function(opts_){
+		,_retrieveDocIds: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
+				,onSuccess: function(docIds,name){}
 				,onError: reportError
 			},opts_);
 			
@@ -1299,11 +1530,8 @@
 						docIds.push(row.id);
 					};
 					var locStr = _loc('Skeleton documents');
-					var l = new DocumentList({
-						docIds: docIds
-						,name: locStr
-					});
-					opts.onSuccess(l);
+
+					opts.onSuccess(docIds,locStr);
 				}
 				,onError: function(err){
 					alert(_loc('Problem obtaining skeleton documents')+': '+err);
@@ -1313,10 +1541,10 @@
 		}
 	});
 
-	SearchFilter.availableCreateFilters.push(new CreateFilterSkeleton());
+	SearchFilter.availableSearchFilters.push(new SearchFilterSkeleton());
 
 	// **********************************************************************
-	var CreateFilterMediaSubmitted = $n2.Class(SearchFilter, {
+	var SearchFilterMediaSubmitted = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
@@ -1326,12 +1554,11 @@
 		,printOptions: function($parent){
 		}
 
-		,createList: function(opts_){
+		,_retrieveDocIds: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
+				,onSuccess: function(docIds,name){}
 				,onError: reportError
 			},opts_);
 			
@@ -1346,11 +1573,8 @@
 						docIds.push(row.id);
 					};
 					var locStr = _loc('Documents with media files in submitted state');
-					var l = new DocumentList({
-						docIds: docIds
-						,name: locStr
-					});
-					opts.onSuccess(l);
+
+					opts.onSuccess(docIds,locStr);
 				}
 				,onError: function(err){
 					alert(_loc('Problem obtaining documents with media files in submitted state')+': '+err);
@@ -1360,10 +1584,10 @@
 		}
 	});
 
-	SearchFilter.availableCreateFilters.push(new CreateFilterMediaSubmitted());
+	SearchFilter.availableSearchFilters.push(new SearchFilterMediaSubmitted());
 
 	// **********************************************************************
-	var CreateFilterMediaAnalyzed = $n2.Class(SearchFilter, {
+	var SearchFilterMediaAnalyzed = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
@@ -1373,12 +1597,11 @@
 		,printOptions: function($parent){
 		}
 
-		,createList: function(opts_){
+		,_retrieveDocIds: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
+				,onSuccess: function(docIds,name){}
 				,onError: reportError
 			},opts_);
 			
@@ -1393,11 +1616,8 @@
 						docIds.push(row.id);
 					};
 					var locStr = _loc('Documents with media files in analyzed state');
-					var l = new DocumentList({
-						docIds: docIds
-						,name: locStr
-					});
-					opts.onSuccess(l);
+
+					opts.onSuccess(docIds,locStr);
 				}
 				,onError: function(err){
 					alert(_loc('Problem obtaining documents with media files in analyzed state')+': '+err);
@@ -1407,10 +1627,10 @@
 		}
 	});
 
-	SearchFilter.availableCreateFilters.push(new CreateFilterMediaAnalyzed());
+	SearchFilter.availableSearchFilters.push(new SearchFilterMediaAnalyzed());
 
 	// **********************************************************************
-	var CreateFilterMediaWaiting = $n2.Class(SearchFilter, {
+	var SearchFilterMediaWaiting = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
@@ -1420,12 +1640,11 @@
 		,printOptions: function($parent){
 		}
 
-		,createList: function(opts_){
+		,_retrieveDocIds: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
+				,onSuccess: function(docIds,name){}
 				,onError: reportError
 			},opts_);
 			
@@ -1440,11 +1659,8 @@
 						docIds.push(row.id);
 					};
 					var locStr = _loc('Documents with media files in waiting state');
-					var l = new DocumentList({
-						docIds: docIds
-						,name: locStr
-					});
-					opts.onSuccess(l);
+
+					opts.onSuccess(docIds,locStr);
 				}
 				,onError: function(err){
 					alert(_loc('Problem obtaining documents with media files in waiting state')+': '+err);
@@ -1454,10 +1670,10 @@
 		}
 	});
 
-	SearchFilter.availableCreateFilters.push(new CreateFilterMediaWaiting());
+	SearchFilter.availableSearchFilters.push(new SearchFilterMediaWaiting());
 
 	// **********************************************************************
-	var CreateFilterMediaApproved = $n2.Class(SearchFilter, {
+	var SearchFilterMediaApproved = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
@@ -1467,12 +1683,11 @@
 		,printOptions: function($parent){
 		}
 
-		,createList: function(opts_){
+		,_retrieveDocIds: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
+				,onSuccess: function(docIds,name){}
 				,onError: reportError
 			},opts_);
 			
@@ -1487,11 +1702,8 @@
 						docIds.push(row.id);
 					};
 					var locStr = _loc('Documents with media files in approved state');
-					var l = new DocumentList({
-						docIds: docIds
-						,name: locStr
-					});
-					opts.onSuccess(l);
+
+					opts.onSuccess(docIds, locStr);
 				}
 				,onError: function(err){
 					alert(_loc('Problem obtaining documents with media files in approved state')+': '+err);
@@ -1501,10 +1713,10 @@
 		}
 	});
 
-	SearchFilter.availableCreateFilters.push(new CreateFilterMediaApproved());
+	SearchFilter.availableSearchFilters.push(new SearchFilterMediaApproved());
 
 	// **********************************************************************
-	var CreateFilterMediaAttached = $n2.Class(SearchFilter, {
+	var SearchFilterMediaAttached = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
@@ -1514,12 +1726,11 @@
 		,printOptions: function($parent){
 		}
 
-		,createList: function(opts_){
+		,_retrieveDocIds: function(opts_){
 			var opts = $n2.extend({
-				name: null
-				,options: null
+				options: null
 				,progressTitle: _loc('List Creation Progress')
-				,onSuccess: function(list){}
+				,onSuccess: function(docIds,name){}
 				,onError: reportError
 			},opts_);
 			
@@ -1534,11 +1745,8 @@
 						docIds.push(row.id);
 					};
 					var locStr = _loc('Documents with media files in attached state');
-					var l = new DocumentList({
-						docIds: docIds
-						,name: locStr
-					});
-					opts.onSuccess(l);
+
+					opts.onSuccess(docIds,locStr);
 				}
 				,onError: function(err){
 					alert(_loc('Problem obtaining documents with media files in attached state')+': '+err);
@@ -1548,7 +1756,7 @@
 		}
 	});
 
-	SearchFilter.availableCreateFilters.push(new CreateFilterMediaAttached());
+	SearchFilter.availableSearchFilters.push(new SearchFilterMediaAttached());
 
 	// **********************************************************************
 	var SearchFilterInvalidDocument = $n2.Class(SearchFilter, {
@@ -1561,7 +1769,7 @@
 		,printOptions: function($parent){
 		}
 
-		,getFilterFunction: function(opts_){
+		,_getFilterFunction: function(opts_){
 			var opts = $n2.extend({
 				options: null
 				,onSuccess: function(filterFn, creationName){}
@@ -1601,7 +1809,7 @@
 		,transformList: function(opts_){
 			var opts = $n2.extend({
 				list: null
-				,onCompleted: function(totalCount, skippedCount, okCount, failCount){}
+				,onCompleted: function(totalCount, skippedCount, okCount, failCount, transformedCount, deletedCount){}
 				,onError: reportError
 			},opts_);
 			
@@ -1629,7 +1837,7 @@
 			var opts = $n2.extend({
 				list: null
 				,transformFn: null
-				,onCompleted: function(totalCount, skippedCount, okCount, failCount){}
+				,onCompleted: function(totalCount, skippedCount, okCount, failCount, transformedCount, deletedCount){}
 				,onError: reportError
 			},opts_);
 			
@@ -1643,7 +1851,7 @@
 			};
 
 			var opCancelled = false;
-			var progressDialog = new ProgressDialog({
+			var progressDialog = new $n2.couchDialogs.ProgressDialog({
 				title: _loc('Transform Progress')
 				,onCancelFn: function(){
 					opCancelled = true;
@@ -1658,7 +1866,13 @@
 			var totalCount = docIdsLeft.length;
 			var skippedCount = 0;
 			var okCount = 0;
+			var deletedCount = 0;
+			var transformedCount = 0;
 			var failCount = 0;
+
+			// Create a copy of the configuration so that user
+			// can save temporary objects to it
+			var my_scriptConfig = $n2.extend({},g_scriptConfig);
 			
 			processNext();
 			
@@ -1670,7 +1884,7 @@
 
 				if(docIdsLeft.length < 1){
 					progressDialog.updateHtmlMessage('<span>100%</span>');
-					opts.onCompleted(totalCount, skippedCount, okCount, failCount);
+					opts.onCompleted(totalCount, skippedCount, okCount, failCount, transformedCount, deletedCount);
 					progressDialog.close();
 				} else {
 					if( totalCount ) {
@@ -1710,14 +1924,22 @@
 
 				opts.transformFn(
 					doc
-					,function(){ // onTransformedFn
-						saveDocument(doc);
+					,function(opts_){ // onTransformedFn
+						var opts = $n2.extend({
+							deleteDocument: false
+						},opts_);
+						
+						if( opts.deleteDocument ){
+							deleteDocument(doc);
+						} else {
+							saveDocument(doc);
+						};
 					}
 					,function(){ // onSkippedFn
 						skippedCount += 1;
 						processNext();
 					}
-					,scriptConfig
+					,my_scriptConfig
 				);
 			};
 			
@@ -1735,10 +1957,39 @@
 						});
 						log(locStr);
 						okCount += 1;
+						transformedCount += 1;
 						processNext();
 					}
 					,onError: function(errorMsg){ 
 						var locStr = _loc('Failure to save {docId}',{
+							docId: doc._id
+						});
+						reportError(locStr+': '+errorMsg);
+						failCount += 1;
+						processNext();
+					}
+				});
+			};
+			
+			function deleteDocument(doc){
+				if( opCancelled ) {
+					cancel();
+					return;
+				};
+
+				atlasDb.deleteDocument({
+					data: doc
+					,onSuccess: function(docInfo){
+						var locStr = _loc('{docId} deleted',{
+							docId: doc._id
+						});
+						log(locStr);
+						okCount += 1;
+						deletedCount += 1;
+						processNext();
+					}
+					,onError: function(errorMsg){ 
+						var locStr = _loc('Failure to delete {docId}',{
 							docId: doc._id
 						});
 						reportError(locStr+': '+errorMsg);
@@ -1857,7 +2108,7 @@
 				+'<div><button>'+_loc('OK')+'</button><button>'+_loc('Cancel')+'</button></div>'
 				+'</div>');
 
-			$dialog.find('textarea').val('function(doc, onTransformedFn, onSkippedFn){\n\t// return true for selected document\n}')
+			$dialog.find('textarea').val('function(doc, onTransformedFn, onSkippedFn, config){\n\t// Modify document, then call onTransformedFn() to save it\n\t// Otherwise, call onSkippedFn()\n}')
 
 			$dialog.find('button')
 				.first()
@@ -1866,9 +2117,14 @@
 						var $dialog = $('#'+dialogId);
 						var script = $dialog.find('textarea').val();
 						var scriptFn = null;
+						
+						// Create a copy of the configuration so that user
+						// can save temporary objects to it
+						var my_scriptConfig = $n2.extend({},g_scriptConfig);
+
 						try {
 							eval('scriptFn = '+script);
-							scriptFn({_id:'test',_revision:'1-abcde'},function(){},function(){});
+							scriptFn({_id:'test',_revision:'1-abcde'},function(){},function(){},my_scriptConfig);
 						} catch(e) {
 							alert(_loc('Error')+': '+e);
 							return;
@@ -1927,48 +2183,6 @@
 			},opts_);
 			
 			opts.onSuccess(this.transformFn);
-		}
-	});
-	
-	// **********************************************************************
-	var DocumentList = $n2.Class({
-		docIds: null
-		
-		,name: null
-		
-		,initialize: function(opts_){
-			var opts = $n2.extend({
-				docIds: null
-				,name: _loc('Unknown List')
-			},opts_);
-			
-			this.docIds = opts.docIds;
-			if( !this.docIds ){
-				this.docIds = [];
-			};
-			
-			this.docIds = [];
-			var mapById = {};
-			if( opts.docIds && opts.docIds.length ){
-				for(var i=0,e=opts.docIds.length; i<e; ++i){
-					var docId = opts.docIds[i];
-					
-					// Remove duplicates
-					if( !mapById[docId] ){
-						this.docIds.push(docId);
-						mapById[docId]= true;
-					};
-				};
-			};
-			
-			this.name = opts.name;
-		}
-	
-		,print: function(){
-			var locStr = _loc('{count} document(s)',{
-				count: this.docIds.length
-			});
-			return this.name + ' - ' + locStr;
 		}
 	});
 
@@ -2159,10 +2373,26 @@
 			});
 		
 		$('<button>')
+			.text( _loc('Report') )
+			.appendTo($h)
+			.click(function(){
+				reportList(list);
+				return false;
+			});
+		
+		$('<button>')
 			.text( _loc('Export') )
 			.appendTo($h)
 			.click(function(){
 				exportList(list);
+				return false;
+			});
+		
+		$('<button>')
+			.text( _loc('Export by Script') )
+			.appendTo($h)
+			.click(function(){
+				exportListByScript(list);
 				return false;
 			});
 		
@@ -2182,7 +2412,7 @@
 			var $a = $('<a href="#"></a>');
 			$d.append($a);
 			
-			if( showService ) {
+			if( showService && list.docIds.length < 100 ) {
 				showService.printBriefDescription($a, docId);
 			} else {
 				$a.text(docId);
@@ -2305,7 +2535,7 @@
 				$dialog.dialog('close');
 
 				var opCancelled = false;
-				var progressDialog = new ProgressDialog({
+				var progressDialog = new $n2.couchDialogs.ProgressDialog({
 					title: _loc('Deletion Progress')
 					,onCancelFn: function(){
 						opCancelled = true;
@@ -2410,6 +2640,176 @@
 			}
 		};
 		$dialog.dialog(dialogOptions);
+	};
+
+	// -----------------------------------------------------------------
+	function reportList(list){
+		
+		var dialogId = $n2.getUniqueId();
+		var $dialog = $('<div>')
+			.attr('id',dialogId)
+			;
+		
+		$('<textarea>')
+			.addClass('n2select_report_script')
+			.val( 'function(opts_){\n\tvar opts = nunaliit2.extend({\n\t\tconfig: null\n\t\t,doc: null\n\t\t,logger: null\n\t},opts_);\n\n\tif( opts.doc ){\n\n\t} else {\n\t\topts.logger.log("Finished");\n\t}\n}' )
+			.appendTo($dialog);
+
+		$('<div>')
+			.addClass('n2select_report_result')
+			.appendTo($dialog);
+
+		var $buttons = $('<div>')
+			.addClass('n2select_report_buttons')
+			.appendTo($dialog);
+
+		$('<button>')
+			.text( _loc('OK') )
+			.click(function(){
+				performReport();
+				return false;
+			})
+			.appendTo($buttons);
+		
+		var dialogOptions = {
+			autoOpen: true
+			,title: _loc('Enter Report Script')
+			,modal: true
+			,width: 400
+			,close: function(event, ui){
+				var diag = $(event.target);
+				diag.dialog('destroy');
+				diag.remove();
+			}
+		};
+		$dialog.dialog(dialogOptions);
+		
+		function performReport(){
+			var funcStr = $('#'+dialogId).find('.n2select_report_script').val();
+			
+			var func = null;
+			try {
+				eval('func = '+funcStr);
+			} catch(e) {
+				alert(_loc('Error')+': '+e);
+				return;
+			};
+			if( typeof(func) !== 'function' ) {
+				alert( _loc('You must enter a valid function') );
+				return;
+			};
+			
+			var docIdsLeft = [];
+			for(var i=0,e=list.docIds.length; i<e; ++i){
+				docIdsLeft.push( list.docIds[i] );
+			};
+			var totalCount = docIdsLeft.length;
+			var processedCount = 0;
+			var failCount = 0;
+			var opCancelled = false;
+			
+			var progressDialog = new $n2.couchDialogs.ProgressDialog({
+				title: _loc('Preparing Report')
+				,onCancelFn: function(){
+					opCancelled = true;
+				}
+			});
+			
+			var logger = new $n2.logger.HtmlLogger({
+				elem: $('#'+dialogId).find('.n2select_report_result')
+			});
+
+			// Create a copy of the configuration so that user
+			// can save temporary objects to it
+			var my_scriptConfig = $n2.extend({},g_scriptConfig);
+			
+			processNext();
+			
+			function processNext(){
+				if( opCancelled ) {
+					cancel();
+					return;
+				};
+
+				if(docIdsLeft.length < 1){
+					progressDialog.updateHtmlMessage('<span>100%</span>');
+
+					// Call one last time, without a document
+					my_scriptConfig.continueOnExit = true;
+					my_scriptConfig.onContinue = onFinish;
+					func({
+						config: my_scriptConfig
+						,logger: logger
+					});
+					if( my_scriptConfig.continueOnExit ){
+						onFinish();
+					};
+					
+					
+				} else {
+					if( totalCount ) {
+						var percent = Math.floor((processedCount+failCount) * 100 / totalCount);
+						var html = ['<div>'];
+						html.push('<span>Percent: '+percent+'%</span><br/>');
+						html.push('<span>Processed: '+processedCount+'</span><br/>');
+						html.push('<span>Failures: '+failCount+'</span><br/>');
+						html.push('</div>');
+						progressDialog.updateHtmlMessage( html.join('') );
+					} else {
+						progressDialog.updateHtmlMessage('<span>0%</span>');
+					};
+					
+					var docId = docIdsLeft.pop();
+					atlasDb.getDocument({
+						docId: docId
+						,onSuccess: retrievedDocument
+						,onError: function(err){
+							var locStr = _loc('Failure to fetch {docId}',{
+								docId: docId
+							});
+							reportError(locStr);
+							failCount += 1;
+							processNext();
+						}
+					});
+				};
+			};
+			
+			function retrievedDocument(doc){
+				if( opCancelled ) {
+					cancel();
+					return;
+				};
+
+				my_scriptConfig.continueOnExit = true;
+				my_scriptConfig.onContinue = onContinue;
+				func({
+					doc: doc
+					,config: my_scriptConfig
+					,logger: logger
+				});
+				
+				if( my_scriptConfig.continueOnExit ){
+					onContinue();
+				};
+				
+			};
+
+			function onFinish(){
+				progressDialog.close();
+			};
+
+			function onContinue(){
+				processedCount += 1;
+
+				processNext();
+			};
+			
+			function cancel(){
+				reportError(_loc('Operation cancelled by user'));
+				progressDialog.close();
+			};
+		};
 	};
 	
 	// -----------------------------------------------------------------
@@ -2551,7 +2951,15 @@
 			var windowId = $n2.getUniqueId();
 			
 			// Open a new window to get results
-			open('about:blank', windowId);
+			//open('about:blank', windowId);
+			$('<iframe>')
+				.attr('name',windowId)
+				.attr('src','javascript:false')
+				.css({
+					visibility: 'hidden'
+					,display: 'none'
+				})
+				.appendTo( $('body') );
 			
 			exportService.exportByDocIds({
 				docIds: list.docIds
@@ -2563,6 +2971,28 @@
 				,onError: function(err){
 					alert(_loc('Error during export')+': '+err);
 				}
+			});
+		};
+	};
+	
+	// -----------------------------------------------------------------
+	function exportListByScript(list){
+
+		// Check if service is available
+		if( !exportService ) {
+			alert( _loc('Export service is not configured') );
+		} else {
+			var docIds = [];
+			for(var i=0,e=list.docIds.length; i<e; ++i){
+				docIds.push( list.docIds[i] );
+			};
+			
+			exportService.createExportApplication({
+				docIds: docIds
+				,logger: new $n2.logger.CustomLogger({
+					logFn: log
+					,reportErrorFn: reportError
+				})
 			});
 		};
 	};
@@ -2873,7 +3303,7 @@
 		schemaRepository = opts_.config.directory.schemaRepository;
 		couchEditor = config.couchEditor;
 		
-		scriptConfig = $n2.extend(
+		g_scriptConfig = $n2.extend(
 			{}
 			,config
 			,{
@@ -2889,6 +3319,7 @@
 		if( config.directory ){
 			showService = config.directory.showService;
 			exportService = config.directory.exportService;
+			searchService = config.directory.searchService;
 			
 			// This application does not use hash to keep track of currently
 			// selected document.

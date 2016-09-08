@@ -27,133 +27,56 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
-
-$Id$
 */
+
 ;(function($n2){
+"use strict";
 
 // Localization
-var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); }
+,DH = 'n2.couchDispatchSupport'
+;
 
 var DispatchSupport = $n2.Class('DispatchSupport',{
-	options: null
 	
-	,dispatcherHandle: null
+	dispatchService: null,
 	
-	,docCreatedCb: null
-
-	,docUpdatedCb: null
-	
-	,docRevisionMap: null
-	
-	,initialize: function(opts_){
-		this.options = $n2.extend({
-			db: null
-			,directory: null
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dispatchService: null
 		},opts_);
 		
 		var _this = this;
 		
-		this.docRevisionMap = {};
-		
-		this.docCreatedCb = function(doc){
-			_this._docUploaded(doc,true);
-		};
-		this.docUpdatedCb = function(doc){
-			_this._docUploaded(doc,false);
-		};
-		
-		var dispatcher = this._getDispatcher();
-		if( dispatcher ) {
-			this.dispatcherHandle = dispatcher.getHandle('n2.couchDispatchSupport');
-			
+		this.dispatchService = opts.dispatchService;
+		if( this.dispatchService ) {
 			var f = function(m){
 				_this._handleDispatch(m);
 			};
 			
-			dispatcher.register(this.dispatcherHandle, 'documentCreated', f);
-			dispatcher.register(this.dispatcherHandle, 'documentUpdated', f);
-			dispatcher.register(this.dispatcherHandle, 'editClosed', f);
-			
-			// Window resize event
-			$(window).resize(function() {
-				_this._windowResized();
-			});
+			this.dispatchService.register(DH, 'editClosed', f);
 		};
+		
+		// Window resize event
+		$(window).resize(function() {
+			_this._windowResized();
+		});
+	},
 
-// This is now handled by the data source
-//		// If a database was provided, register callbacks for creation, update and
-//		// deletion. On those events, inform system, through dispatcher, of the changes.
-//		if( this.options.db ) {
-//			var dbCallbacks = _this.options.db.callbacks;
-//			if( dbCallbacks ) {
-//				dbCallbacks.addOnCreatedCallback(function(docInfo){
-//					var dispatcher = _this._getDispatcher();
-//					if( dispatcher ) {
-//						dispatcher.send(_this.dispatcherHandle,{
-//							type: 'documentVersion'
-//							,docId: docInfo.id
-//							,rev: docInfo.rev
-//						});
-//						dispatcher.send(_this.dispatcherHandle,{
-//							type: 'documentCreated'
-//							,docId: docInfo.id
-//						});
-//					};
-//				});
-//				dbCallbacks.addOnUpdatedCallback(function(docInfo){
-//					var dispatcher = _this._getDispatcher();
-//					if( dispatcher ) {
-//						dispatcher.send(_this.dispatcherHandle,{
-//							type: 'documentVersion'
-//							,docId: docInfo.id
-//							,rev: docInfo.rev
-//						});
-//						dispatcher.send(_this.dispatcherHandle,{
-//							type: 'documentUpdated'
-//							,docId: docInfo.id
-//						});
-//					};
-//				});
-//				dbCallbacks.addOnDeletedCallback(function(docInfo){
-//					var dispatcher = _this._getDispatcher();
-//					if( dispatcher ) {
-//						dispatcher.send(_this.dispatcherHandle,{
-//							type: 'documentDeleted'
-//							,docId: docInfo.id
-//						});
-//					};
-//				});
-//			};
-//		};
-	}
-
-	,_handleDispatch: function(m){
-		if( 'documentCreated' === m.type ) {
-			var requestService = this._getRequestService();
-			if( requestService ){
-				requestService.requestDocument(m.docId, this.docCreatedCb);
-			};
-			
-		} else if( 'documentUpdated' === m.type ) {
-			var requestService = this._getRequestService();
-			if( requestService ){
-				requestService.requestDocument(m.docId, this.docUpdatedCb);
-			};
-			
-		} else if( 'editClosed' === m.type ) {
-//			var dispatcher = this._getDispatcher();
+	_handleDispatch: function(m){
+		if( 'editClosed' === m.type ) {
+//			var dispatcher = this.dispatchService;
 //			if( dispatcher ) {
 //				if( m.deleted ) {
-//					dispatcher.send(this.dispatcherHandle,{
+//					dispatcher.send(DH,{
 //						type: 'unselected'
 //					});
 //				} else if( m.cancelled ) {
-//					dispatcher.send(this.dispatcherHandle,{
+//					dispatcher.send(DH,{
 //						type: 'historyBack'
 //					});
 //				} else {
-//					dispatcher.send(this.dispatcherHandle,{
+//					dispatcher.send(DH,{
 //						type: 'selected'
 //						,docId: m.doc._id
 //						,doc: m.doc
@@ -161,58 +84,15 @@ var DispatchSupport = $n2.Class('DispatchSupport',{
 //				};
 //			};
 		};
-	}
+	},
 
-	,_docUploaded: function(doc,created){
-		if( doc.nunaliit_geom ){
-			var type = created ? 'featureCreated' : 'featureUpdated';
-
-			// This is a feature
-			this._dispatch({
-				type: type
-				,docId: doc._id
-				,doc: doc
+	_windowResized: function(){
+		var d = this.dispatchService;
+		if( d ){
+			d.send(DH,{
+				type: 'windowResized'
 			});
 		};
-
-		var type = created ? 'documentContentCreated' : 'documentContentUpdated';
-
-		// This is a feature
-		this._dispatch({
-			type: type
-			,docId: doc._id
-			,doc: doc
-		});
-	}
-	
-	,_windowResized: function(){
-		var d = this._getDispatcher();
-		d.send(this.dispatcherHandle,{
-			type: 'windowResized'
-		});
-	}
-
-	,_getDispatcher: function(){
-		var d = null;
-		if( this.options.directory ){
-			d = this.options.directory.dispatchService;
-		};
-		return d;
-	}
-	
-	,_dispatch: function(m){
-		var dispatcher = this._getDispatcher();
-		if( dispatcher ) {
-			dispatcher.send(this.dispatcherHandle, m);
-		};
-	}
-	
-	,_getRequestService: function(){
-		var r = null;
-		if( this.options.directory ){
-			r = this.options.directory.requestService;
-		};
-		return r;
 	}
 });
 

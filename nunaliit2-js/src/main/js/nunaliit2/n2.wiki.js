@@ -90,18 +90,90 @@ function escapeOptions(text){
 };
 
 //*******************************************************
+// Remove comments
+var gStartComment = "<!--";
+var gEndComment = "-->";
+function removeComments(lines){
+	function stripCommentFromLine(info){
+		if( info.commentOpen ){
+			if( info.line.indexOf(gEndComment) >= 0 ){
+				var index = info.line.indexOf(gEndComment);
+				var after = within.substr(index+gEndComment.length);
+				
+				info.line = after;
+				info.commentOpen = false;
+			} else {
+				info.skipLine = true;
+				return;
+			};
+		};
+		
+		if( info.line.indexOf(gStartComment) >= 0 ){
+			var index = info.line.indexOf(gStartComment);
+			var before = info.line.substr(0,index);
+			var within = info.line.substr(index+gStartComment.length);
+			
+			info.commentOpen = true;
+			info.commentFound = true;
+			info.line = before;
+			
+			if( within.indexOf(gEndComment) >= 0 ){
+				var index = within.indexOf(gEndComment);
+				var after = within.substr(index+gEndComment.length);
+				
+				info.line = before + after;
+				info.commentOpen = false;
+				
+				stripCommentFromLine(info);
+			};
+		};
+	};
+	
+	var newLines = [];
+	var info = {
+		commentOpen: false
+		,commentFound: false
+		,skipLine: false
+	};
+	
+	for(var i=0,e=lines.length; i<e; ++i){
+		var line = lines[i];
+
+		info.line = line;
+		info.skipLine = false;
+		info.commentFound = false;
+		
+		stripCommentFromLine(info);
+
+		if( info.skipLine ){
+			// skip line
+		} else if( info.commentFound ){
+			if( $n2.trim(info.line) !== '' ){
+				newLines.push( info.line );
+			};
+			
+		} else {
+			newLines.push( info.line );
+		};
+	};
+	
+	return newLines;
+};
+
+//*******************************************************
 // Look at consecutive lines and merge them into one if
 // a line is a continuation of another
 function mergeLines(lines){
-	function isContinuingLine(line){
-		if( isBlockLine(line) ) return false;
-		if( '*' === line[0] ) return false;
-		if( '#' === line[0] ) return false;
-		if( '{' === line[0] ) return false;
-		if( '|' === line[0] ) return false;
-		if( '!' === line[0] ) return false;
+	function isInstructionLine(line){
+		if( isBlockLine(line) ) return true;
+		if( '*' === line[0] ) return true;
+		if( '#' === line[0] ) return true;
+		if( '{' === line[0] ) return true;
+		if( '}' === line[0] ) return true;
+		if( '|' === line[0] ) return true;
+		if( '!' === line[0] ) return true;
 			
-		return true;
+		return false;
 	};
 	
 	var newLines = [];
@@ -112,9 +184,9 @@ function mergeLines(lines){
 		var line = lines[i];
 	
 		if( null === previousLine ){
-			if( isBlockLine(line) ){
-				// This is a block line. Can not be continued
-				previousLine = null;
+			if( isInstructionLine(line) ){
+				// This line contains an instruction and should not be continued
+
 			} else {
 				previousLine = line;
 			};
@@ -124,22 +196,16 @@ function mergeLines(lines){
 			
 			
 		} else {
-			if( isContinuingLine(line) ){
+			if( ! isInstructionLine(line) ){
 				// Should continue previous line
 				previousLine = previousLine + ' ' + line;
 				newLines[newLines.length-1] = previousLine;
 				
 			} else {
 				
-				if( isBlockLine(line) ){
-					// This is a block line. Can not be continued
-					previousLine = null;
-				} else {
-					previousLine = line;
-				};
+				previousLine = null;
 
 				newLines.push(line);
-
 			};
 		};
 	};
@@ -266,14 +332,16 @@ function processTables(lines){
 			newLines.push('</div>');
 		};
 		
-		newLines.push('<table class="n2wiki"');
+		var tableLine = '<table class="n2wiki"';
 		
 		if( tableOptions ){
-			newLines.push(' ');
-			newLines.push(tableOptions);
+			tableLine += ' ';
+			tableLine += tableOptions;
 		};
 		
-		newLines.push('>');
+		tableLine += '>';
+
+		newLines.push(tableLine);
 		newLines.push('<tr>');
 	};
 
@@ -325,14 +393,18 @@ function processTables(lines){
 				rowOptions = escapeOptions(rowOptions);
 				rowOptions = $n2.trim(rowOptions);
 				
-				newLines.push('</tr><tr');
+				newLines.push('</tr>');
+				
+				var trLine = '<tr';
 					
 				if( rowOptions.length > 0 ){
-					newLines.push( ' ' );
-					newLines.push( rowOptions );
+					trLine += ' ';
+					trLine += rowOptions;
 				};
 
-				newLines.push('>');
+				trLine += '>';
+				
+				newLines.push(trLine);
 				
 			} else if( mTableCell ){
 				// Table Cell
@@ -358,18 +430,18 @@ function processTables(lines){
 						cellContent = cellSplits[0];
 					};
 					
+					var tdLine = '<td';
 					if( isHeading ){
-						newLines.push('<th');
-					} else {
-						newLines.push('<td');
+						tdLine = '<th';
 					};
 					
 					if( cellOptions ){
-						newLines.push( ' ' );
-						newLines.push( escapeOptions(cellOptions) );
+						tdLine += ' ';
+						tdLine += escapeOptions(cellOptions);
 					};
 
-					newLines.push('>');
+					tdLine += '>';
+					newLines.push( tdLine );
 
 					newLines.push( escapeCharacters(cellContent) );
 
@@ -417,6 +489,165 @@ function processTables(lines){
 };
 
 //*******************************************************
+var reSectionOption = /^\s*([-_a-zA-Z][-_a-zA-Z0-9]*)\s*=\s*"(.*)"\s*$/;
+function processSections(lines){
+
+	var sections = [];
+	var pendingSections = [];
+	
+	for(var i=0,e=lines.length; i<e; ++i){
+		var line = lines[i];
+
+		if( '{{' === line.substr(0,2) ){
+			// Start of Section
+			
+			var section = {
+				start: i
+			};
+			pendingSections.push(section);
+
+		} else if( '}}' === line.substr(0,2) ){
+			// End of Section
+			if( pendingSections.length > 0 ){
+				var section = pendingSections.pop();
+				section.end = i;
+				sections.push(section);
+			};
+		};
+	};
+	
+	for(var i=0,e=sections.length; i<e; ++i){
+		var section = sections[i];
+		var startLine = lines[section.start];
+		var replacementLine = getReplacementLine(startLine);
+		
+		if( replacementLine ){
+			lines[section.start] = replacementLine;
+			lines[section.end] = '</div>';
+		};
+	};
+	
+	return lines;
+	
+	function getReplacementLine(line){
+		var line = line.substr(2);
+		var options = line.split('|');
+		var attributeMap = {};
+		
+		for(var i=0,e=options.length; i<e; ++i){
+			var option = options[i];
+			var matcher = reSectionOption.exec(option);
+			if( matcher ){
+				var name = matcher[1];
+				var value = matcher[2];
+				
+				attributeMap[name] = value;
+				
+			} else {
+				$n2.log('Invalid wiki section attribute: '+option);
+			};
+		};
+		
+		var html = [];
+		
+		html.push('<div');
+
+		for(var name in attributeMap){
+			var validAttribute = false;
+			// Black list all scripts
+			if( 'on' === name.substr(0,'on'.length) ){
+				// Do not output "on" attributes
+			} else if( 'nunaliit-' === name.substr(0,'nunaliit-'.length) ){
+				// Allow nunaliit specific attributes
+				validAttribute = true;
+			} else if( $n2.html.isAttributeNameValid(name) ){
+				validAttribute = true;
+			};
+			
+			if( validAttribute ){
+				var value = attributeMap[name];
+				html.push(' ');
+				html.push(name);
+				html.push('="');
+				html.push(value);
+				html.push('"');
+			};
+		};
+
+		html.push('>');
+		
+		return html.join('');
+	};
+};
+
+//*******************************************************
+var regexAttribute = /^\s*([-_a-zA-Z][-_a-zA-Z0-9]*)\s*=\s*"(.*)"\s*$/;
+function insertShowService(links){
+	var classNames = [];
+	classNames.push( links.shift() );
+
+	// Parse attributes
+	var attributeValuesByName = {};
+	for(var i=0,e=links.length; i<e; ++i){
+		var link = links[i];
+		var matcher = regexAttribute.exec(link);
+		if( matcher ){
+			var name = matcher[1];
+			var value = matcher[2];
+			
+			if( 'class' === name ){
+				classNames.push(value);
+			} else {
+				attributeValuesByName[name] = value;
+			};
+			
+		} else {
+			$n2.log('Invalid wiki nunaliit attribute: '+link);
+		};
+	};
+
+	// Generate HTML
+	var html = [];
+	
+	html.push('<div class="');
+
+	for(var i=0,e=classNames.length; i<e; ++i){
+		var className = classNames[i];
+		if( i > 0 ){
+			html.push(' ');
+		};
+		html.push(className);
+	};
+	html.push('"');
+	
+	for(var name in attributeValuesByName){
+		var validAttribute = false;
+		// Black list all scripts
+		if( 'on' === name.substr(0,'on'.length) ){
+			// Do not output "on" attributes
+		} else if( 'nunaliit-' === name.substr(0,'nunaliit-'.length) ){
+			// Allow nunaliit specific attributes
+			validAttribute = true;
+		} else if( $n2.html.isAttributeNameValid(name) ){
+			validAttribute = true;
+		};
+		
+		if( validAttribute ){
+			var value = attributeValuesByName[name];
+			html.push(' ');
+			html.push(name);
+			html.push('="');
+			html.push(value);
+			html.push('"');
+		};
+	};
+
+	html.push('/>');
+	
+	return html.join('');
+};
+
+//*******************************************************
 function computeLink(linkText){
 	var links = linkText.split('|');
 	
@@ -425,8 +656,14 @@ function computeLink(linkText){
 	var url = links[0];
 	var docId = undefined;
 	if( 'http://' === url.substr(0,'http://'.length)
-	 || 'https://' === url.substr(0,'https://'.length) ){
+	 || 'https://' === url.substr(0,'https://'.length) 
+	 || 'mailto:' === url.substr(0,'mailto:'.length)){
 		externalLink = true;
+
+	} else if( 'nunaliit:' === url.substr(0,'nunaliit:'.length) ){
+		links[0] = url.substr('nunaliit:'.length);
+		return insertShowService(links);
+
 	} else {
 		docLink = true;
 		docId = url;
@@ -463,24 +700,89 @@ function computeLink(linkText){
 };
 
 //*******************************************************
+// Transform wiki markup to HTML
+// Comments:
+//    <!-- -->
+//
+// Special characters are escaped:
+//    & -> &amp;
+//    < -> &lt;
+//    > -> &gt;
+//
+// Unordered list:
+// * line
+// * line
+// ** line
+// ** line
+// * line
+//
+// Ordered list:
+// # line
+// # line
+// ## line
+// ## line
+// # line
+//
+// Tables:
+// {|                   Start table
+// |+                   Table caption
+// |-                   New row
+// !                    Heading cell
+// |                    Cell
+// | options | content  Cell with options
+// | cell1 || cell2     Multiple cells on one line
+// |}                   End table
+//
+// Headings:
+// = Heading1 =
+// == Heading2 ==
+// === Heading3 ===
+// ==== Heading4 ====
+// ===== Heading5 =====
+// ====== Heading6 ======
+// 
+// Horizontal lines:
+// ----
+//
+// Links:
+// [[http://abc.com | description]]   		External link
+// [[https://abc.com | description]]  		External link
+// [[mailto:name@abc.com | description]]	External link
+// [[docId | description]]            		Internal link
+// [[nunaliit:class | option]]        		Show service insert
+//
+// Styling:
+// ''italics''
+// '''bold'''
+//
+// Sections:
+// {{ attr1="value1" | attr2="value2"
+// ...
+// }}
 function WikiToHtml(opts_){
 	var opts = $n2.extend({
 		wiki: null
 	},opts_);
 	
 	var text = opts.wiki;
-	if( !text ){
-		throw 'Wiki text must be specified for WikiToHtml()';
+	if( typeof text !== 'string' ){
+		throw new Error('Wiki text must be specified for WikiToHtml()');
 	};
 
-	// Character escaping
-	text = escapeCharacters(text);
-	
 	var lines = text.split('\n');
+
+	lines = removeComments(lines);
+	
+	// Character escaping
+	for(var i=0,e=lines.length; i<e; ++i){
+		var line = lines[i];
+		lines[i] = escapeCharacters(line);
+	};
 	
 	lines = mergeLines(lines);
 	lines = processLists(lines);
 	lines = processTables(lines);
+	lines = processSections(lines);
 
 	for(var i=0,e=lines.length; i<e; ++i){
 		var line = lines[i];
@@ -491,8 +793,13 @@ function WikiToHtml(opts_){
 	    });
 		
 		// Horizontal Line
-		line = line.replace(/(?:^|\n)([-]+)\s*/g, function (m) {
-	        return '<hr class="n2wiki"/>';
+		line = line.replace(/(?:^|\n)([-]+)\s*/g, function (m, l) {
+		    var minDashQuantity = 4;
+		    if (l.length >= minDashQuantity) {
+		        return '<hr class="n2wiki"/>';			
+		    } else {
+			return l;
+		    };
 	    });
 
 		// Links

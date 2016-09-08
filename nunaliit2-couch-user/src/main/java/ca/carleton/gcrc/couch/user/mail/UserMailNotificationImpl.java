@@ -67,6 +67,18 @@ public class UserMailNotificationImpl implements UserMailNotification {
 				passwordRecoveryUrl = value;
 			}
 		}
+		
+		if( sendNotice ){
+			if( null == fromAddress ){
+				logger.error("user.sendNotification is set but user.sender is not provided");
+			}
+			if( null == createUserUrl ){
+				logger.error("user.sendNotification is set but user.url.creation is not provided");
+			}
+			if( null == passwordRecoveryUrl ){
+				logger.error("user.sendNotification is set but user.url.passwordRecovery is not provided");
+			}
+		}
 	}
 
 	@Override
@@ -74,8 +86,16 @@ public class UserMailNotificationImpl implements UserMailNotification {
 		if( false == sendNotice ) {
 			return false;
 		}
+
+		if( null == fromAddress ){
+			return false;
+		}
 		
 		if( null == createUserUrl ) {
+			return false;
+		}
+		
+		if( null == passwordRecoveryUrl ){
 			return false;
 		}
 		

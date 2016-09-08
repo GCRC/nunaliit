@@ -28,13 +28,10 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
 
-$Id: n2.mediaDisplay.js 8265 2012-06-29 20:28:56Z glennbrauen $
 */
 
-// @requires n2.utils.js
-// @requires n2.class.js
-
 ;(function($,$n2){
+"use strict";
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
@@ -291,6 +288,7 @@ $n2.MediaDisplay = $n2.Class({
 		var $mediaDialog = $( mkup.join('') );
 		
 		this._addMetaData(opts, $mediaDialog);
+		this._addDownloadButton($mediaDialog);
 
 		var dialogOptions = $n2.extend({}
 			,baseDialogOptions
@@ -359,6 +357,7 @@ $n2.MediaDisplay = $n2.Class({
 		var $mediaDialog = $( mkup.join('') );
 		
 		this._addMetaData(opts, $mediaDialog);
+		this._addDownloadButton(opts, $mediaDialog);
 
 		var dialogOptions = $n2.extend({}
 			,baseDialogOptions
@@ -429,6 +428,7 @@ $n2.MediaDisplay = $n2.Class({
 		};
 		
 		this._addMetaData(opts, $mediaDialog);
+		this._addDownloadButton(opts, $mediaDialog);
 
 		var dialogOptions = $n2.extend({},baseDialogOptions,{
 			title: dialogTitle
@@ -491,6 +491,7 @@ $n2.MediaDisplay = $n2.Class({
 		var $mediaDialog = $( mkup.join('') );
 		
 		this._addMetaData(opts, $mediaDialog);
+		this._addDownloadButton(opts, $mediaDialog);
 
 		var dialogOptions = $n2.extend({},baseDialogOptions,{
 			title: dialogTitle
@@ -568,6 +569,20 @@ $n2.MediaDisplay = $n2.Class({
 				$elem.append( $desc );
 			};
 		};
+	}
+	
+	,_addDownloadButton: function(opts, $elem) {
+		$('<a>')
+		.attr('href',opts.url)
+		.attr('title', _loc('Download'))
+		.addClass('n2DisplayBoxButtonDownload')
+		.click(function(e){
+			if( confirm( _loc('You are about to leave this page. Do you wish to continue?') ) ) {
+				return true;
+			};
+			return false;
+		})
+		.appendTo($elem);
 	}
 	
 	,generateInlineHtmlForMedia: function(opts_) {	

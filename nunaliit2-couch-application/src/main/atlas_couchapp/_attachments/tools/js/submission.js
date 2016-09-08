@@ -305,16 +305,16 @@
 					_this.submissionDb.updateDocument({
 						data: subDoc
 						,onSuccess: function(docInfo){
-							_this.logger.log( _loc('Submision approved') );
+							_this.logger.log( _loc('Submission approved') );
 							_this._refreshSubmissions();
 						}
 						,onError: function(err){ 
-							_this.logger.error( _loc('Unable to update submision document: {err}',{err:err}) ); 
+							_this.logger.error( _loc('Unable to update submission document: {err}',{err:err}) ); 
 						}
 					});
 				}
 				,onError: function(err){
-					_this.logger.error( _loc('Unable to obtain submision document: {err}',{err:err}) ); 
+					_this.logger.error( _loc('Unable to obtain submission document: {err}',{err:err}) ); 
 				}
 			});
 		}
@@ -343,7 +343,7 @@
 						_this.submissionDb.updateDocument({
 							data: subDoc
 							,onSuccess: function(docInfo){
-								_this.logger.log( _loc('Submision denied') );
+								_this.logger.log( _loc('Submission denied') );
 								
 								if( typeof onDeniedFn === 'function' ){
 									onDeniedFn();
@@ -352,12 +352,12 @@
 								_this._refreshSubmissions();
 							}
 							,onError: function(err){ 
-								_this.logger.error( _loc('Unable to update submision document: {err}',{err:err}) ); 
+								_this.logger.error( _loc('Unable to update submission document: {err}',{err:err}) ); 
 							}
 						});
 					}
 					,onError: function(err){
-						_this.logger.error( _loc('Unable to obtain submision document: {err}',{err:err}) ); 
+						_this.logger.error( _loc('Unable to obtain submission document: {err}',{err:err}) ); 
 					}
 				});
 			});
@@ -605,6 +605,16 @@
 				docId = submissionDoc.nunaliit_submission.submitted_reserved.id;
 			};
 			
+			// Submission date
+			var timeStamp = undefined;
+			if( submissionDoc.nunaliit_last_updated ){
+				timeStamp = submissionDoc.nunaliit_last_updated.time;
+			};
+			if( !timeStamp 
+			 && submissionDoc.nunaliit_created ){
+				timeStamp = submissionDoc.nunaliit_created.time;
+			};
+			
 			// Is deletion?
 			var isDeletion = false;
 			if( submissionDoc.nunaliit_submission 
@@ -637,6 +647,10 @@
 			// Information
 			var $info = $('<div class="submission_info">')
 				.appendTo($entry);
+			if( timeStamp ){
+				var tsStr = (new Date(timeStamp)).toString();
+				addKeyValue($info, _loc('Date'), tsStr);
+			};
 			addKeyValue($info, _loc('Submission Id'), subDocId);
 			if( docId ){
 				addKeyValue($info, _loc('Original Id'), docId);

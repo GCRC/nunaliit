@@ -1,3 +1,4 @@
+"use strict";
 var n2utils = {
 
 	isArray: function(o) {
@@ -444,6 +445,7 @@ var n2utils = {
 	,excludedSearchAttributes: [
 		'_rev'
 		,'nunaliit_geom'
+		,'nunaliit_import.geometry'
 	]
 	
 	,reWordSplit: /[\x00-\x26\x28-\x2f\x3a-\x40\x5b-\x5e\x60\x7b-\x7f]+/ 
@@ -567,7 +569,6 @@ var n2utils = {
 ,0xed: 0x69
 ,0xee: 0x69
 ,0xef: 0x69
-,0xf1: 0x6e
 ,0xf1: 0x6e
 ,0xf2: 0x6f
 ,0xf3: 0x6f
@@ -919,13 +920,8 @@ var n2utils = {
 
 		// Verify layers
 		if( doc.nunaliit_layers ) {
-			if( !n2utils.isArray(doc.nunaliit_layers) ) {
-				errorFn('nunaliit_layers must be an array');
-			};
-			for(var i=0,e=doc.nunaliit_layers.length; i<e; ++i) {
-				if( typeof(doc.nunaliit_layers[i]) !== 'string' ) {
-					errorFn('nunaliit_layers must be an array of strings');
-				};
+			if( !n2utils.isArrayOfStrings(doc.nunaliit_layers) ) {
+				errorFn('nunaliit_layers must be an array of strings');
 			};
 		};
 
@@ -1073,7 +1069,7 @@ var n2utils = {
 	}
 };
 
-if( typeof(exports) === 'object' ) {
+if( typeof exports === 'object' ) {
 	exports.isArray = n2utils.isArray;
 	exports.isArrayOfStrings = n2utils.isArrayOfStrings;
 	exports.isValidBounds = n2utils.isValidBounds;
@@ -1095,7 +1091,7 @@ if( typeof(exports) === 'object' ) {
 	exports.validateTypes = n2utils.validateTypes;
 };
 
-if( typeof(nunaliit2) === 'function' ) {
+if( typeof nunaliit2 === 'function' ) {
 	nunaliit2.couchUtils = {};
 	nunaliit2.couchUtils.isArray = n2utils.isArray;
 	nunaliit2.couchUtils.isArrayOfStrings = n2utils.isArrayOfStrings;

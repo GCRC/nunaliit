@@ -8,6 +8,7 @@
 
 .n2schema_array_item {
 	position: relative;
+	min-height: 40px;
 }
 
 .n2schema_array_add, .n2schema_array_item_delete, .n2schema_array_item_down {
@@ -56,12 +57,11 @@
 }
 
 .n2schema_array_item_wrapper {
-	position: absolute:
+	position: absolute;
 	left: 0px;
 	right: 16px;
 	top: 0px;
 	bottom: 0px;
-	min-height: 40px;
 }
 
 .n2schema_referenceDelete {
@@ -85,6 +85,26 @@
 }
 
 .n2schema_help_date:hover {
+	background-position: -15px 0px;
+}
+
+.n2schema_field_container {
+	position: relative;
+}
+
+.n2schema_help_wiki {
+	position:absolute;
+	top: 17px;
+	right: 7px;
+	width: 0;
+	height: 0;
+	margin: 0;
+	border: 0;
+	padding: 15px 15px 0px 0px;
+	background: url(images/question_icon_naked_15.png) no-repeat;
+}
+
+.n2schema_help_wiki:hover {
 	background-position: -15px 0px;
 }
 

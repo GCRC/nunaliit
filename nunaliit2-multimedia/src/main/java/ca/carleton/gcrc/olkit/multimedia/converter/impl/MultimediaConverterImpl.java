@@ -264,7 +264,10 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 			}
 		}
 
-		String outputExtension = getExtensionFromImageFormat(imageInfo.format);
+		String outputExtension = null;
+		if( null != imageInfo ){
+			outputExtension = getExtensionFromImageFormat(imageInfo.format);
+		}
 		if( null == outputExtension ){
 			outputExtension = "jpg";
 		}

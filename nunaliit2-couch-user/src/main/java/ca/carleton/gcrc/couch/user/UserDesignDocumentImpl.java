@@ -103,6 +103,29 @@ public class UserDesignDocumentImpl implements UserDesignDocument {
 	public CouchDesignDocument getSupportingDesignDocument(){
 		return dd;
 	}
+
+	@Override
+	public Collection<UserDocument> getAllUsers() throws Exception {
+		CouchDb userDb = dd.getDatabase();
+		Collection<String> allDocIds = userDb.getAllDocIds();
+		
+		List<String> userDocIds = new ArrayList<String>( allDocIds.size() );
+		for(String docId : allDocIds){
+			if( docId.startsWith("org.couchdb.user:") ){
+				userDocIds.add(docId);
+			}
+		}
+		
+		List<UserDocument> users = new ArrayList<UserDocument>( userDocIds.size() );
+		
+		Collection<JSONObject> docs = userDb.getDocuments(userDocIds);
+		for(JSONObject doc : docs){
+			UserDocument user = new UserDocument(doc);
+			users.add(user);
+		}
+		
+		return users;
+	}
 	
 	@Override
 	public Collection<UserDocument> getUsersWithRole(String role) throws Exception {

@@ -6,10 +6,9 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
-import java.util.Vector;
 
 import ca.carleton.gcrc.couch.app.DbDumpProcess;
+import ca.carleton.gcrc.couch.app.impl.DocumentStoreProcessImpl;
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.command.impl.CommandSupport;
 import ca.carleton.gcrc.couch.command.impl.DumpListener;
@@ -37,6 +36,17 @@ public class CommandDump implements Command {
 	}
 
 	@Override
+	public String[] getExpectedOptions() {
+		return new String[]{
+				Options.OPTION_ATLAS_DIR
+				,Options.OPTION_DUMP_DIR
+				,Options.OPTION_DOC_ID
+				,Options.OPTION_SKELETON
+				,Options.OPTION_OVERWRITE_DOCS
+			};
+	}
+
+	@Override
 	public boolean requiresAtlasDir() {
 		return true;
 	}
@@ -55,31 +65,37 @@ public class CommandDump implements Command {
 		ps.println("found in the database are dumped.");
 		ps.println();
 		ps.println("Command Syntax:");
-		ps.println("  nunaliit [<global-options>] dump [<dump-options>]");
+		ps.println("  nunaliit dump <options>");
 		ps.println();
-		ps.println("Global Options");
-		CommandHelp.reportGlobalSettingAtlasDir(ps);
+		ps.println("options:");
+		ps.println("  "+Options.OPTION_DUMP_DIR+" <dir>");
+		ps.println("    Directory where snapshot should be stored");
 		ps.println();
-		ps.println("Dump Options");
-		ps.println("  --dump-dir <dir>   Directory where snapshot should be stored");
+		ps.println("  "+Options.OPTION_DOC_ID+" <docId>");
+		ps.println("    Specifies which document(s) should be dumped by selecting the ");
+		ps.println("    document identifier. This option can be used multiple times");
+		ps.println("    to include multiple documents in the dump.");
 		ps.println();
-		ps.println("  --doc-id   <docId> Specifies which document(s) should be");
-		ps.println("                     dumped by selecting the document identifier.");
-		ps.println("                     This option can be used multiple times to include");
-		ps.println("                     multiple documents in the dump.");
+		ps.println("  "+Options.OPTION_SKELETON);
+		ps.println("    Select skeleton documents for the dump process.");
 		ps.println();
-		ps.println("  --skeleton         Select skeleton documents for the dump process.");
+		ps.println("  "+Options.OPTION_OVERWRITE_DOCS);
+		ps.println("    Dump skeleton documents in the 'docs' sub-directory of the atlas,");
+		ps.println("    over-writing the files found there. This option includes the "+Options.OPTION_SKELETON);
+		ps.println("    option, as well.");
 		ps.println();
-		ps.println("  --overwrite-docs   Dump skeleton documents in the 'docs' sub-directory");
-		ps.println("                     of the atlas, over-writing the files found there.");
-		ps.println("                     This option includes the --skeleton option, as well.");
+		CommandHelp.reportGlobalOptions(ps,getExpectedOptions());
 	}
 
 	@Override
 	public void runCommand(
 		GlobalSettings gs
-		,Stack<String> argumentStack
+		,Options options
 		) throws Exception {
+
+		if( options.getArguments().size() > 1 ){
+			throw new Exception("Unexpected argument: "+options.getArguments().get(1));
+		}
 
 		File atlasDir = gs.getAtlasDir();
 
@@ -100,40 +116,18 @@ public class CommandDump implements Command {
 		}
 		
 		// Pick up options
-		List<String> docIds = new Vector<String>();
+		List<String> docIds = options.getDocIds();
 		boolean selectSkeletonDocuments = false;
+		if( null != options.getSkeleton() ){
+			selectSkeletonDocuments = options.getSkeleton().booleanValue();
+		}
 		boolean overwriteDocs = false;
-		while( false == argumentStack.empty() ){
-			String optionName = argumentStack.peek();
-			if( "--dump-dir".equals(optionName) ){
-				argumentStack.pop();
-				if( argumentStack.size() < 1 ){
-					throw new Exception("--dump-dir option requires a directory");
-				}
-				
-				String dumpDirStr = argumentStack.pop();
-				dumpDir = new File(dumpDirStr);
-				
-			} else if( "--doc-id".equals(optionName) ){
-				argumentStack.pop();
-				if( argumentStack.size() < 1 ){
-					throw new Exception("--doc-id option requires a document identifier");
-				}
-				
-				String docId = argumentStack.pop();
-				docIds.add(docId);
-				
-			} else if( "--skeleton".equals(optionName) ){
-				argumentStack.pop();
-				selectSkeletonDocuments = true;
-				
-			} else if( "--overwrite-docs".equals(optionName) ){
-				argumentStack.pop();
-				overwriteDocs = true;
-
-			} else {
-				break;
-			}
+		if( null != options.getOverwriteDocs() ){
+			overwriteDocs = options.getOverwriteDocs().booleanValue();
+		}
+		if( null != options.getDumpDir() ){
+			String dumpDirStr = options.getDumpDir();
+			dumpDir = new File( dumpDirStr );
 		}
 		
 		// Load properties for atlas
@@ -179,6 +173,14 @@ public class CommandDump implements Command {
 					dumpProcess.addDocId(docId);
 				}
 			}
+		}
+		if( overwriteDocs ){
+			// When overwriting documents, the documents are meant for
+			// source repository. Do not store created and updated timestamp
+			DocumentStoreProcessImpl storeProcess = new DocumentStoreProcessImpl();
+			storeProcess.addKeyToIgnore("nunaliit_created");
+			storeProcess.addKeyToIgnore("nunaliit_last_updated");
+			dumpProcess.setStoreProcess(storeProcess);
 		}
 		dumpProcess.setListener(listener);
 		dumpProcess.dump();

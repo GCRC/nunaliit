@@ -38,9 +38,7 @@ var
  ,DH = 'n2.canvasCustomSVG'
  ;
  
-// Required library: d3
 var $d = undefined;
-if( window ) $d = window.d3;
  
 // --------------------------------------------------------------------------
 var CustomSvgCanvas = $n2.Class({
@@ -403,6 +401,9 @@ var CustomSvgCanvas = $n2.Class({
  
 //--------------------------------------------------------------------------
 function HandleCanvasAvailableRequest(m){
+	// Required library: d3
+	if( !$d && window ) $d = window.d3;
+
 	if( m.canvasType === 'customSvg' ){
 		if( $d ) {
 			m.isAvailable = true;

@@ -181,6 +181,355 @@ var ModelParameter = $n2.Class({
 });
 
 //--------------------------------------------------------------------------
+/**
+ * This class implements a generic Observer to monitor a ParameterModel.
+ * Build an instance of observer by providing the info structure obtained
+ * by a model.
+ */
+var ModelParameterObserver = $n2.Class({
+
+	dispatchService: null,
+	
+	onChangeFn: null,
+
+	// Variables obtained from info
+	
+	parameterId: null,
+
+	type: null,
+
+	name: null,
+
+	label: null,
+
+	setEvent: null,
+	
+	getEvent: null,
+	
+	changeEvent: null,
+	
+	// Cached value that was observed last
+	
+	lastValue: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			parameterInfo: null
+			,dispatchService: null
+			,onChangeFn: null
+		},opts_);
+	
+		var _this = this;
+		
+		this.onChangeFn = opts.onChangeFn;
+		this.dispatchService = opts.dispatchService;
+		this.lastValue = undefined;
+
+		if( opts.parameterInfo 
+		 && typeof opts.parameterInfo === 'object' ){
+			this.parameterId = opts.parameterInfo.parameterId;
+			this.type = opts.parameterInfo.type;
+			this.name = opts.parameterInfo.name;
+			this.label = opts.parameterInfo.label;
+			this.setEvent = opts.parameterInfo.setEvent;
+			this.getEvent = opts.parameterInfo.getEvent;
+			this.changeEvent = opts.parameterInfo.changeEvent;
+			this.lastValue = opts.parameterInfo.value;
+		} else {
+			throw new Error('parameterInfo must be provided');
+		};
+
+		if( this.dispatchService ){
+			var fn = function(m, addr, dispatcher){
+				_this._handle(m, addr, dispatcher);
+			};
+			this.dispatchService.register(DH, this.changeEvent, fn);
+		};
+	},
+	
+	getValue: function(){
+		return this.lastValue;
+	},
+	
+	setValue: function(value){
+		this.lastValue = value;
+
+		this.dispatchService.send(DH, {
+			type: this.setEvent
+			,value: value
+		});
+	},
+
+	_handle: function(m, addr, dispatcher){
+		if( m.type === this.changeEvent  
+		 && m.parameterId === this.parameterId ){
+			var value = m.value;
+			
+			if( this.lastValue !== value ){
+				var previousValue = this.lastValue;
+				this.lastValue = value;
+				if( typeof this.onChangeFn === 'function' ){
+					this.onChangeFn(this.lastValue, previousValue);
+				};
+			};
+		};
+	}
+});
+
+//--------------------------------------------------------------------------
+function getModelInfo(opts_){
+	var opts = $n2.extend({
+		dispatchService: null
+		,modelId: null
+	},opts_);
+	
+	var dispatchService = opts.dispatchService;
+	var modelId = opts.modelId;
+	
+	if( !dispatchService ){
+		throw new Error('dispatchService must be specified');
+	};
+	if( typeof modelId !== 'string' ){
+		throw new Error('modelId must be specified');
+	};
+
+	var m = {
+		type: 'modelGetInfo'
+		,modelId: modelId
+	};
+	dispatchService.synchronousCall(DH,m);
+	
+	return m.modelInfo;
+};
+
+//--------------------------------------------------------------------------
+function getModelState(opts_){
+	var opts = $n2.extend({
+		dispatchService: null
+		,modelId: null
+	},opts_);
+	
+	var dispatchService = opts.dispatchService;
+	var modelId = opts.modelId;
+	
+	if( !dispatchService ){
+		throw new Error('dispatchService must be specified');
+	};
+	if( typeof modelId !== 'string' ){
+		throw new Error('modelId must be specified');
+	};
+
+	var m = {
+		type: 'modelGetState'
+		,modelId: modelId
+	};
+	dispatchService.synchronousCall(DH,m);
+	
+	return m.state;
+};
+
+//--------------------------------------------------------------------------
+/*
+ * This is an abstract class for a document model.
+ */
+var DocumentModel = $n2.Class('DocumentModel', {
+
+	dispatchService: null,
+	
+	modelId: null,
+
+	modelType: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dispatchService: null
+			,modelId: null
+			,modelType: null
+		},opts_);
+	
+		var _this = this;
+		
+		this.dispatchService = opts.dispatchService;
+		this.modelId = opts.modelId;
+		this.modelType = opts.modelType;
+
+		if( typeof this.modelId !== 'string' ){
+			throw new Error('modelId must be specified and it must be a string');
+		};
+
+		if( this.dispatchService ){
+			var fn = function(m, addr, dispatcher){
+				_this._handle(m, addr, dispatcher);
+			};
+			this.dispatchService.register(DH, 'modelGetInfo', function(m, addr, dispatcher){
+				if( m.modelId === _this.modelId ){
+					m.modelInfo = _this._getModelInfo();
+				}
+			});
+			this.dispatchService.register(DH, 'modelGetState', function(m, addr, dispatcher){
+				if( m.modelId === _this.modelId ){
+					var currentDocs = _this._getCurrentDocuments();
+					m.state = {
+						added: currentDocs
+						,updated: []
+						,removed: []
+					};
+				}
+			});
+		};
+	},
+
+	_getModelInfo: function(){
+		var info = {
+			modelId: this.modelId
+			,modelType: 'filter'
+			,parameters: {}
+		};
+		
+		this._addModelInfoParameters(info);
+		
+		return info;
+	},
+	
+	_addModelInfoParameters: function(info){
+	},
+
+	/**
+	 * This method should be used by sub-classes to report the changes
+	 * in the current state.
+	 * @param added Array of documents that were added
+	 * @param updated Array of documents that were modified since last state report
+	 * @param removed Array of documents that were removed from the state
+	 */
+	_reportStateUpdate: function(added, updated, removed){
+		if( added.length > 0
+		 || updated.length > 0 
+		 || removed.length > 0 ){
+			var stateUpdate = {
+				added: added
+				,updated: updated
+				,removed: removed
+			};
+
+			if( this.dispatchService ){
+				this.dispatchService.send(DH,{
+					type: 'modelStateUpdated'
+					,modelId: this.modelId
+					,state: stateUpdate
+				});
+			};
+		};
+	},
+	
+	/*
+	 * Return an array of documents that represent the current state of the model
+	 */
+	_getCurrentDocuments: function(){
+		throw new Error('Subclasses must implement the method _getCurrentDocuments()');
+	}
+});
+
+//--------------------------------------------------------------------------
+/*
+ * This is an observer for a document model. It registers to a document model
+ * identified by the sourceModelId. The observer can be queried for the currently
+ * observed documents. 
+ */
+var DocumentModelObserver = $n2.Class('DocumentModelObserver', {
+
+	dispatchService: null,
+	
+	sourceModelId: null,
+	
+	docsById: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dispatchService: null
+			,sourceModelId: null
+		},opts_);
+	
+		var _this = this;
+		
+		this.docsById = {};
+		
+		this.dispatchService = opts.dispatchService;
+		this.sourceModelId = opts.sourceModelId;
+
+		if( typeof this.sourceModelId !== 'string' ){
+			throw new Error('sourceModelId must be specified and it must be a string');
+		};
+
+		if( this.dispatchService ){
+			this.dispatchService.register(DH, 'modelStateUpdated', function(m, addr, dispatcher){
+				if( _this.sourceModelId === m.modelId ){
+					_this._sourceModelUpdated(m.state);
+				};
+			});
+			
+			// Get current state
+			var state = $n2.model.getModelState({
+				dispatchService: this.dispatchService
+				,modelId: this.sourceModelId
+			});
+			if( state ){
+				this._sourceModelUpdated(state);
+			};
+		};
+	},
+	
+	getDocuments: function(){
+		var docs = [];
+		for(var docId in this.docsById){
+			var doc = this.docsById[docId];
+			docs[docs.length] = doc;
+		};
+		return docs;
+	},
+	
+	_sourceModelUpdated: function(sourceState){
+		
+		var _this = this;
+		
+		// Loop through all added documents
+		if( $n2.isArray(sourceState.added) ){
+			sourceState.added.forEach(function(doc){
+				var docId = doc._id;
+				
+				_this.docsById[docId] = doc;
+			});
+		};
+		
+		// Loop through all updated documents
+		if( $n2.isArray(sourceState.updated) ){
+			sourceState.updated.forEach(function(doc){
+				var docId = doc._id;
+				
+				_this.docsById[docId] = doc;
+			});
+		};
+		
+		// Loop through all removed documents
+		if( $n2.isArray(sourceState.removed) ){
+			sourceState.removed.forEach(function(doc){
+				var docId = doc._id;
+				
+				delete _this.docsById[docId];
+			});
+		};
+		
+		this._documentUpdated();
+	},
+	
+	/*
+	 * Called when there is a change in the document set
+	 */
+	_documentUpdated: function(){
+		
+	}
+});
+
+//--------------------------------------------------------------------------
 var Service = $n2.Class({
 	
 	dispatchService: null,
@@ -215,24 +564,22 @@ var Service = $n2.Class({
 				return;
 			};
 			
+			if( $n2.modelUtils && typeof $n2.modelUtils.handleModelCreate === 'function' ){
+				$n2.modelUtils.handleModelCreate(m, addr, dispatcher);
+			};
+
+			if( $n2.modelTime && typeof $n2.modelTime.handleModelCreate === 'function' ){
+				$n2.modelTime.handleModelCreate(m, addr, dispatcher);
+			};
+
+			if( $n2.modelLayer && typeof $n2.modelLayer.handleModelCreate === 'function' ){
+				$n2.modelLayer.handleModelCreate(m, addr, dispatcher);
+			};
+			
 			try {
-				if( m.modelType === 'couchDb' ){
+				if( 'couchDb' === m.modelType 
+				 || 'couchDbDataSource' === m.modelType ){
 			        this._createCouchDbModel(m);
-			    
-				} else if( m.modelType === 'timeFilter' ){
-			        this._createTimeFilter(m);
-				    
-				} else if( m.modelType === 'noTimeFilter' ){
-			        this._createNoTimeFilter(m);
-				    
-				} else if( m.modelType === 'timeTransform' ){
-			        this._createTimeTransform(m);
-				    
-				} else if( m.modelType === 'union' ){
-			        this._createUnionModel(m);
-				    
-				} else if( m.modelType === 'filter' ){
-			        this._createFilterModel(m);
 			    };
 			} catch(err) {
 				$n2.log('Error while creating model '+m.modelType+'/'+m.modelId+': '+err);
@@ -272,173 +619,18 @@ var Service = $n2.Class({
 		} else {
 			throw 'DbPerspective is not available';
 		};
-	},
-	
-	_createTimeFilter: function(m){
-		if( $n2.modelTime 
-		 && $n2.modelTime.TimeFilter ){
-			var options = {
-				modelId: m.modelId
-			};
-			
-			if( m && m.modelOptions ){
-				if( m.modelOptions.sourceModelId ){
-					options.sourceModelId = m.modelOptions.sourceModelId;
-				};
-
-				if( m.modelOptions.range ){
-					options.rangeStr = m.modelOptions.range;
-				};
-			};
-			
-			if( m && m.config ){
-				if( m.config.directory ){
-					options.dispatchService = m.config.directory.dispatchService;
-				};
-			};
-			
-			new $n2.modelTime.TimeFilter(options);
-			
-			m.created = true;
-
-		} else {
-			throw 'Model TimeFilter is not available';
-		};
-	},
-	
-	_createNoTimeFilter: function(m){
-		if( $n2.modelTime 
-		 && $n2.modelTime.NoTimeFilter ){
-			var options = {
-				modelId: m.modelId
-			};
-			
-			if( m && m.modelOptions ){
-				if( m.modelOptions.sourceModelId ){
-					options.sourceModelId = m.modelOptions.sourceModelId;
-				};
-			};
-			
-			if( m && m.config ){
-				if( m.config.directory ){
-					options.dispatchService = m.config.directory.dispatchService;
-				};
-			};
-			
-			new $n2.modelTime.NoTimeFilter(options);
-			
-			m.created = true;
-
-		} else {
-			throw 'Model NoTimeFilter is not available';
-		};
-	},
-	
-	_createTimeTransform: function(m){
-		if( $n2.modelTime 
-		 && $n2.modelTime.TimeTransform ){
-			var options = {
-				modelId: m.modelId
-			};
-			
-			if( m && m.modelOptions ){
-				if( m.modelOptions.sourceModelId ){
-					options.sourceModelId = m.modelOptions.sourceModelId;
-				};
-
-				if( m.modelOptions.range ){
-					options.rangeStr = m.modelOptions.range;
-				};
-			};
-			
-			if( m && m.config ){
-				if( m.config.directory ){
-					options.dispatchService = m.config.directory.dispatchService;
-				};
-			};
-			
-			new $n2.modelTime.TimeTransform(options);
-			
-			m.created = true;
-
-		} else {
-			throw 'Model TimeTransform is not available';
-		};
-	},
-	
-	_createUnionModel: function(m){
-		if( $n2.modelUtils 
-		 && $n2.modelUtils.ModelUnion ){
-			var options = {
-				modelId: m.modelId
-			};
-			
-			if( m && m.modelOptions ){
-				if( m.modelOptions.sourceModelIds 
-				 && m.modelOptions.sourceModelIds.length ){
-					options.sourceModelIds = m.modelOptions.sourceModelIds;
-				};
-			};
-			
-			if( m && m.config ){
-				if( m.config.directory ){
-					options.dispatchService = m.config.directory.dispatchService;
-				};
-			};
-			
-			new $n2.modelUtils.ModelUnion(options);
-			
-			m.created = true;
-
-		} else {
-			throw 'Union Model is not available';
-		};
-	},
-	
-	_createFilterModel: function(m){
-		if( $n2.modelUtils 
-		 && $n2.modelUtils.ModelFilter ){
-			var options = {
-				modelId: m.modelId
-			};
-			
-			if( m && m.modelOptions ){
-				if( m.modelOptions.sourceModelId ){
-					options.sourceModelId = m.modelOptions.sourceModelId;
-				};
-			};
-			
-			if( m && m.config ){
-				if( m.config.directory ){
-					options.dispatchService = m.config.directory.dispatchService;
-				};
-			};
-			
-			var filterFn = null;
-			if( $n2.modelUtils.FilterFunctionFromModelConfiguration ){
-				filterFn = $n2.modelUtils.FilterFunctionFromModelConfiguration(m.modelOptions);
-			};
-			if( filterFn ){
-				options.filterFn = filterFn;
-			} else {
-				throw 'Unable to find function for filter model';
-			};
-			
-			new $n2.modelUtils.ModelFilter(options);
-			
-			m.created = true;
-
-		} else {
-			throw 'Filter Model is not available';
-		};
 	}
-	
 });
 
 //--------------------------------------------------------------------------
 $n2.model = {
 	Service: Service
+	,DocumentModel: DocumentModel
+	,DocumentModelObserver: DocumentModelObserver
 	,ModelParameter: ModelParameter
+	,ModelParameterObserver: ModelParameterObserver
+	,getModelInfo: getModelInfo
+	,getModelState: getModelState
 };
 
 })(jQuery,nunaliit2);

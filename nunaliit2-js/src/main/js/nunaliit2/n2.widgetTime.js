@@ -115,8 +115,7 @@ var TimelineWidget = $n2.Class({
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
-			contentId: null
-			,containerId: null
+			containerId: null
 			,dispatchService: null
 			,sourceModelId: null
 		},opts_);
@@ -186,7 +185,7 @@ var TimelineWidget = $n2.Class({
 		// Get container
 		var containerId = opts.containerId;
 		if( !containerId ){
-			containerId = opts.contentId;
+			throw new Error('containerId must be specified');
 		};
 		var $container = $('#'+containerId);
 		
@@ -243,18 +242,22 @@ var TimelineWidget = $n2.Class({
 	_display: function(){
 		var $elem = this._getElem()
 			.empty();
+		
+		var $container = $('<div>')
+			.addClass('n2timeline_container')
+			.appendTo($elem);
 
 		$('<div>')
 			.addClass('n2timeline_range')
-			.appendTo($elem);
+			.appendTo($container);
 		
 		var $sliderWrapper = $('<div>')
 			.addClass('n2timeline_slider_wrapper')
-			.appendTo($elem);
+			.appendTo($container);
 
 		$('<div>')
 			.addClass('n2timeline_interval')
-			.appendTo($elem);
+			.appendTo($container);
 
 		// Create slider
 		this._getSlider();
@@ -386,21 +389,22 @@ function HandleWidgetAvailableRequests(m){
 function HandleWidgetDisplayRequests(m){
 	if( m.widgetType === 'timeline' ){
 		var widgetOptions = m.widgetOptions;
-		var contentId = m.contentId;
 		var containerId = m.containerId;
 		var config = m.config;
 		
-		var options = {
-			contentId: contentId
-			,containerId: containerId
+		var options = {};
+		
+		if( widgetOptions ){
+			for(var key in widgetOptions){
+				var value = widgetOptions[key];
+				options[key] = value;
+			};
 		};
+
+		options.containerId = containerId;
 		
 		if( config && config.directory ){
 			options.dispatchService = config.directory.dispatchService;
-		};
-		
-		if( widgetOptions ){
-			if( widgetOptions.sourceModelId ) options.sourceModelId = widgetOptions.sourceModelId;
 		};
 		
 		new TimelineWidget(options);

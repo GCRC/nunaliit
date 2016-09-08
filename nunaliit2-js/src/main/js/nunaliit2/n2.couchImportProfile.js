@@ -346,21 +346,20 @@ var ImportAnalyzer = $n2.Class({
 				var entry = opts.entries[i];
 				var id = entry.getId();
 				
-				if( id ){
-					if( importEntriesById[id] ){
-						opts.onError( _loc('More than one import entries report identifier: {id}',{
-							id: id
-						}) );
-						return;
-					};
-					
-					importEntriesById[id] = entry;
-					entriesLeft.push( entry );
-					
-				} else {
+				if( typeof id === 'undefined' || null === id){
 					opts.onError( _loc('Imported entry does not contains an id attribute') );
 					return;
 				};
+
+				if( importEntriesById[id] ){
+					opts.onError( _loc('More than one import entries report identifier: {id}',{
+						id: id
+					}) );
+					return;
+				};
+				
+				importEntriesById[id] = entry;
+				entriesLeft.push( entry );
 			};
 		};
 		
@@ -377,7 +376,8 @@ var ImportAnalyzer = $n2.Class({
 					var doc = rows[i].doc;
 					if( doc 
 					 && doc.nunaliit_import 
-					 && doc.nunaliit_import.id ) {
+					 && typeof doc.nunaliit_import.id !== 'undefined'
+					 && null !== doc.nunaliit_import.id ) {
 						++count;
 						dbDocsByImportId[doc.nunaliit_import.id] = doc;
 					};
@@ -1316,7 +1316,7 @@ var AnalysisReport = $n2.Class({
 						for(var colIndex=0,colEnd=mod.collisions.length; colIndex<colEnd; ++colIndex){
 							var collision = mod.collisions[colIndex];
 							var collisionName = propName + '_' + colIndex;
-							var value = $('input[name='+collisionName+']:checked').val();
+							var value = $('input[name="'+collisionName+'"]:checked').val();
 							collision.selectedValue = value;
 							if( typeof value !== 'string' ){
 								allCollisionsResolved = false;
@@ -1327,7 +1327,7 @@ var AnalysisReport = $n2.Class({
 				
 				if( change.modifiedGeometry && change.collisionGeometry ){
 					var collisionName = '__geometry__';
-					var value = $('input[name='+collisionName+']:checked').val();
+					var value = $('input[name="'+collisionName+'"]:checked').val();
 					change.selectedGeometry = value;
 					if( typeof value !== 'string' ){
 						allCollisionsResolved = false;
@@ -1371,6 +1371,12 @@ var AnalysisReport = $n2.Class({
 		var doc = null;
 		if( schema ){
 			doc = schema.createObject();
+			
+			// Remove attachment instructions
+			if( doc.nunaliit_attachments ){
+				delete doc.nunaliit_attachments;
+			};
+
 		} else {
 			doc = {};
 		};
@@ -2712,6 +2718,14 @@ var ImportProfileGeoJson = $n2.Class(ImportProfile, {
 			return;
 		};
 		
+		// Deal with computed idAttribute values
+		var idAttributeFn = undefined;
+		if( typeof this.idAttribute === 'string'
+		 && this.idAttribute.length > 0 
+		 && this.idAttribute[0] === '=' ){
+			idAttributeFn = $n2.styleRuleParser.parse(this.idAttribute.substr(1));
+		};
+		
 		// Parse GeoJSON input
 		var jsonObj = null;
 		try {
@@ -2754,6 +2768,13 @@ var ImportProfileGeoJson = $n2.Class(ImportProfile, {
 						id = feature.properties[key];
 					};
 				};
+			};
+			
+			// Compute id from formula?
+			if( typeof id === 'undefined'
+			 && idAttributeFn
+			 && typeof idAttributeFn.getValue === 'function' ){
+				id = idAttributeFn.getValue(feature);
 			};
 
 			var geom = null;

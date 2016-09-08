@@ -12,6 +12,7 @@ public class MockSchemaCache implements SchemaCache {
 
 	private Map<String,Document> documentsFromSchemaName = new HashMap<String,Document>();
 	private Map<String,SchemaExportInfo> exportInfoFromSchemaName = new HashMap<String,SchemaExportInfo>();
+	private Map<String,SchemaExportInfo> csvExportInfoFromSchemaName = new HashMap<String,SchemaExportInfo>();
 	
 	@Override
 	public Document getSchema(String schemaName) throws Exception {
@@ -36,6 +37,28 @@ public class MockSchemaCache implements SchemaCache {
 		}
 		
 		exportInfoFromSchemaName.put(schemaName,exportInfo);
+		
+		return exportInfo;
+	}
+
+	@Override
+	public SchemaExportInfo getCsvExportInfo(String schemaName) throws Exception {
+		if( csvExportInfoFromSchemaName.containsKey(schemaName) ){
+			return csvExportInfoFromSchemaName.get(schemaName);
+		}
+		
+		SchemaExportInfo exportInfo = null;
+		try {
+			Document doc = getSchema(schemaName);
+			JSONArray jsonExport = doc.getJSONObject().optJSONArray("csvExport");
+			if( null != jsonExport ) {
+				exportInfo = SchemaExportInfo.parseJson(jsonExport);
+			}
+		} catch(Exception e) {
+			throw new Exception("Error parsing CSV export field for schema: "+schemaName);
+		}
+		
+		csvExportInfoFromSchemaName.put(schemaName,exportInfo);
 		
 		return exportInfo;
 	}

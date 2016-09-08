@@ -1,0 +1,34 @@
+<html>
+	<head>
+		<title>Nunaliit Form Submission E-mail</title>
+	</head>
+	<body>
+		<h1>Nunaliit Form Submission E-mail</h1>
+		{{#atlasName}}
+			<p>
+				<b>Atlas:</b> {{.}}
+			</p>
+		{{/atlasName}}
+		{{#destination}}
+			<p>
+				<b>Destination:</b> {{.}}
+			</p>
+		{{/destination}}
+		{{#contactInfo}}
+			<p>
+				<b>Contact:</b>
+				<pre>
+					{{.}}
+				</pre>
+			</p>
+		{{/contactInfo}}
+		{{#body}}
+			<p>
+				<b>Message:</b>
+				<pre>
+					{{.}}
+				</pre>
+			</p>
+		{{/body}}
+	</body>
+</html>

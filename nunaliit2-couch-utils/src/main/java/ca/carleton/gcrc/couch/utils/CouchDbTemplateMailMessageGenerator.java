@@ -71,11 +71,19 @@ public class CouchDbTemplateMailMessageGenerator implements MailMessageGenerator
 			Map<String, String> parameters
 			) throws Exception {
 
+		JSONObject doc = null;
 		if( null != documentDb 
 		 && null != docId ) {
 			try {
-				JSONObject doc = documentDb.getDocument(docId);
-		
+				doc = documentDb.getDocument(docId);
+			} catch(Exception e) {
+				logger.error("Unable load CouchDb e-mail template: "+docId);
+			}
+		}
+
+		boolean needToGenerateDefaultMessage = true;
+		if( null != doc ) {
+			try {
 				JSONObject jsonTemplate = doc.getJSONObject("nunaliit_email_template");
 				String subject = jsonTemplate.getString("subject");
 				String body = jsonTemplate.getString("body");
@@ -100,11 +108,15 @@ public class CouchDbTemplateMailMessageGenerator implements MailMessageGenerator
 					String formatted = sw.toString();
 					message.setHtmlContent(formatted);
 				}
+				
+				needToGenerateDefaultMessage = false;
+
 			} catch(Exception e) {
-				logger.error("Unable load CouchDb e-mail template",e);
-				generateDefaultMessage(message,parameters);
+				logger.error("Unable create message from template: "+docId,e);
 			}
-		} else {
+		}
+
+		if( needToGenerateDefaultMessage ) {
 			generateDefaultMessage(message,parameters);
 		}
 	}
@@ -120,5 +132,4 @@ public class CouchDbTemplateMailMessageGenerator implements MailMessageGenerator
 			throw new Exception("Default message generator is not set");
 		}
 	}
-	
 }

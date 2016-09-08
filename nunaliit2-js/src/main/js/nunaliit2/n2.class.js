@@ -28,13 +28,10 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
 
-$Id: n2.class.js 8165 2012-05-31 13:14:37Z jpfiset $
 */
 
-// @requires n2.core.js
-// @requires n2.utils.js
-
 ;(function($n2){
+"use strict";
 
 var EmptyInit = function(){};
 
@@ -62,6 +59,11 @@ $n2.Class = function() {
 	// This function is the class. It also represents the constructor
 	// that is called when a new instance of the class is created.
     var Class = function() {
+    	// Check that 'new' was called
+    	if( this.initialize !== proto.initialize ){
+    		throw new Error('"new" must be called when creating an instance of this class');
+    	};
+    	
     	// Initialize instance variables from templates.
     	for(var key in vars){
     		if( vars[key] === null ) {

@@ -14,7 +14,6 @@
 	<div class="n2_mediaView">
 		<div class="n2s_insertMediaView" nunaliit-attachment="{{.}}"> </div>
 	</div>
-	<div class="n2s_insertExternalMediaLink" nunaliit-attachment="{{.}}"> </div>
 					{{/attachmentName}}
 
 				{{/source}}

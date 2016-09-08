@@ -27,7 +27,6 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
-
 */
 
 ;(function($,$n2) {
@@ -36,6 +35,172 @@ POSSIBILITY OF SUCH DAMAGE.
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 var DH = 'n2.couchDialogs';
+
+//++++++++++++++++++++++++++++++++++++++++++++++
+function computeMaxDialogWidth(preferredWidth){
+	var dialogWidth = preferredWidth;
+	
+	var screenWidth = $('body').width();
+	if( typeof screenWidth === 'number' ){
+		var maxWidth = screenWidth * 0.90;
+		if( dialogWidth > maxWidth ){
+			dialogWidth = maxWidth;
+		};
+	};
+
+	return dialogWidth;
+};
+
+// **********************************************************************
+var ProgressDialog = $n2.Class({
+	
+	dialogId: null,
+	
+	progressLabel: null,
+	
+	onCancelFn: null,
+	
+	cancellingLabel: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			title: _loc('Progress')
+			,progressLabel: _loc('Progress')
+			,onCancelFn: null
+			,cancelButtonLabel: _loc('Cancel') 
+			,cancellingLabel: _loc('Cancelling Operation...')
+		},opts_);
+		
+		var _this = this;
+		
+		this.dialogId = $n2.getUniqueId();
+		this.progressLabel = opts.progressLabel;
+		this.onCancelFn = opts.onCancelFn;
+		this.cancellingLabel = opts.cancellingLabel;
+
+		var $dialog = $('<div id="'+this.dialogId+'" class="n2dialogs_progress">'
+			+'<div class="n2dialogs_progress_message">'
+			+'<span class="n2dialogs_progress_label"></span>: <span class="n2dialogs_progress_percent"></span>'
+			+'</div></div>');
+		$dialog.find('span.n2dialogs_progress_label').text( this.progressLabel );
+		
+		var dialogOptions = {
+			autoOpen: true
+			,title: opts.title
+			,modal: true
+			,closeOnEscape: false
+			,close: function(event, ui){
+				var diag = $(event.target);
+				diag.dialog('destroy');
+				diag.remove();
+			}
+		};
+		$dialog.dialog(dialogOptions);
+		
+		// Remove close button
+		$dialog.parents('.ui-dialog').first().find('.ui-dialog-titlebar-close').hide();
+
+		// Add cancel button, if needed
+		if( typeof(opts.onCancelFn) === 'function'  ) {
+			var cancelLine = $('<div><button class="n2dialogs_progress_cancelButton"></button></div>');
+			$dialog.append(cancelLine);
+			cancelLine.find('button')
+				.text(opts.cancelButtonLabel)
+				.click(function(){
+					_this.cancel();
+					return false;
+				})
+				;
+		};
+		
+		this.updatePercent(0);
+	},
+
+	cancel: function(){
+		if( typeof(this.onCancelFn) === 'function' ) {
+			var $dialog = $('#'+this.dialogId);
+			var $cb = $dialog.find('.n2dialogs_progress_cancelButton');
+			var $m = $('<span></span>').text(this.cancellingLabel);
+			$cb.before($m).remove();
+			
+			this.onCancelFn();
+		};
+	},
+
+	close: function(){
+		var $dialog = $('#'+this.dialogId);
+		$dialog.dialog('close');
+	},
+
+	updatePercent: function(percent){
+		var $dialog = $('#'+this.dialogId);
+		var $p = $dialog.find('.n2dialogs_progress_percent');
+		$p.text( ''+Math.floor(percent)+'%' );
+	},
+	
+	updateHtmlMessage: function(html){
+		var $dialog = $('#'+this.dialogId);
+		var $div = $dialog.find('.n2dialogs_progress_message');
+		$div.html( html );
+	}
+});
+
+
+//**********************************************************************
+var AlertDialog = $n2.Class({
+	
+	dialogId: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			title: _loc('Alert')
+			,message: null
+		},opts_);
+		
+		var _this = this;
+		
+		this.dialogId = $n2.getUniqueId();
+
+		var $dialog = $('<div>')
+			.attr('id',this.dialogId)
+			.addClass('n2dialogs_alert');
+		$('<div>')
+			.addClass('n2dialogs_alert_message')
+			.text(opts.message)
+			.appendTo($dialog);
+		
+		var $okLine = $('<div>')
+			.appendTo($dialog);
+		$('<button>')
+			.addClass('n2dialogs_alert_okButton')
+			.text( _loc('OK') )
+			.appendTo($okLine)
+			.click(function(){
+				_this.close();
+				return false;
+			});
+	
+		var dialogOptions = {
+			autoOpen: true
+			,title: opts.title
+			,modal: true
+			,closeOnEscape: false
+			,close: function(event, ui){
+				var diag = $(event.target);
+				diag.dialog('destroy');
+				diag.remove();
+			}
+		};
+		$dialog.dialog(dialogOptions);
+		
+	},
+
+	close: function(){
+		var $dialog = $('#'+this.dialogId);
+		$dialog.dialog('close');
+	}
+});
+
 
 //++++++++++++++++++++++++++++++++++++++++++++++
 function searchForDocumentId(options_){
@@ -74,7 +239,6 @@ function searchForDocumentId(options_){
 		autoOpen: true
 		,title: _loc('Select Document')
 		,modal: true
-		,width: 370
 		,close: function(event, ui){
 			var diag = $(event.target);
 			diag.dialog('destroy');
@@ -84,6 +248,12 @@ function searchForDocumentId(options_){
 			};
 		}
 	};
+	
+	var width = computeMaxDialogWidth(370);
+	if( typeof width === 'number' ){
+		dialogOptions.width = width;
+	};
+
 	$dialog.dialog(dialogOptions);
 
 	options.searchServer.installSearch({
@@ -222,7 +392,6 @@ function selectLayersDialog(opts_){
 		autoOpen: true
 		,title: _loc('Select Layers')
 		,modal: true
-		,width: 370
 		,close: function(event, ui){
 			var diag = $(event.target);
 			diag.dialog('destroy');
@@ -232,6 +401,12 @@ function selectLayersDialog(opts_){
 			};
 		}
 	};
+	
+	var width = computeMaxDialogWidth(370);
+	if( typeof width === 'number' ){
+		dialogOptions.width = width;
+	};
+
 	$dialog.dialog(dialogOptions);
 	
 	// Get layers
@@ -456,7 +631,6 @@ var SearchBriefDialogFactory = $n2.Class({
 			autoOpen: true
 			,title: this.dialogPrompt
 			,modal: true
-			,width: 370
 			,close: function(event, ui){
 				var diag = $(event.target);
 				diag.dialog('destroy');
@@ -466,6 +640,12 @@ var SearchBriefDialogFactory = $n2.Class({
 				};
 			}
 		};
+		
+		var width = computeMaxDialogWidth(370);
+		if( typeof width === 'number' ){
+			dialogOptions.width = width;
+		};
+
 		$dialog.dialog(dialogOptions);
 
 		this.getDocuments({
@@ -683,7 +863,6 @@ var FilteredSearchDialogFactory = $n2.Class({
 			autoOpen: true
 			,title: this.dialogPrompt
 			,modal: true
-			,width: 370
 			,close: function(event, ui){
 				var diag = $(event.target);
 				diag.dialog('destroy');
@@ -693,6 +872,12 @@ var FilteredSearchDialogFactory = $n2.Class({
 				};
 			}
 		};
+		
+		var width = computeMaxDialogWidth(370);
+		if( typeof width === 'number' ){
+			dialogOptions.width = width;
+		};
+
 		$dialog.dialog(dialogOptions);
 
 		this.searchService.installSearch({
@@ -1015,13 +1200,18 @@ var DialogService = $n2.Class({
 			autoOpen: true
 			,title: _loc('Select a schema')
 			,modal: true
-			,width: 740
 			,close: function(event, ui){
 				var diag = $(event.target);
 				diag.dialog('destroy');
 				diag.remove();
 			}
 		};
+		
+		var width = computeMaxDialogWidth(740);
+		if( typeof width === 'number' ){
+			dialogOptions.width = width;
+		};
+		
 		$dialog.dialog(dialogOptions);
 	}
 });
@@ -1032,6 +1222,8 @@ $n2.couchDialogs = {
 	DialogService: DialogService
 	,SearchBriefDialogFactory: SearchBriefDialogFactory
 	,FilteredSearchDialogFactory: FilteredSearchDialogFactory
+	,ProgressDialog: ProgressDialog
+	,AlertDialog: AlertDialog
 };
 
 })(jQuery,nunaliit2);

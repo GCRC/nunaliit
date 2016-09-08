@@ -27,14 +27,42 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
-
-$Id: n2.couchMap.js 8437 2012-08-14 17:59:23Z jpfiset $
 */
+
 ;(function($n2){
+"use strict";
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
+var DH = 'n2.couchMap';
 	
+var g_dispatcher;
+
+function Configure(opts_){
+	var opts = $n2.extend({
+		dispatchService: null
+	},opts_);
+	
+	if( opts.dispatchService ){
+		g_dispatcher = opts.dispatchService;
+	};
+};
+
+function getCurrentContext(){
+	var sessionContext = null;
+	
+	if( g_dispatcher ){
+		var isLoggedInMsg = {
+			type: 'authIsLoggedIn'
+		};
+		g_dispatcher.synchronousCall(DH,isLoggedInMsg);
+		
+		sessionContext = isLoggedInMsg.context;
+	};
+	
+	return sessionContext;
+};
+
 /*
  * This function retained for backward compatibility
  */
@@ -46,7 +74,7 @@ function adjustDocument(doc) {
 function isAdmin() {
 
 	var admin = false;
-	var sessionContext = $n2.couch.getSession().getContext();
+	var sessionContext = getCurrentContext();
 	if( sessionContext
 	 && sessionContext.roles ) {
 		if( $n2.inArray('_admin',sessionContext.roles) !== -1 ) {
@@ -74,13 +102,16 @@ function canEditDoc(data) {
 	};
 
 	var userName = null;
-	var sessionContext = $n2.couch.getSession().getContext();
+	var roleMap = {};
+	var sessionContext = getCurrentContext();
 	if( sessionContext ) {
 		userName = sessionContext.name;
-	};
-	var roleMap = {};
-	for(var i=0,e=sessionContext.roles.length; i<e; ++i){
-		roleMap[sessionContext.roles[i]] = true;
+		
+		if( sessionContext.roles ){
+			for(var i=0,e=sessionContext.roles.length; i<e; ++i){
+				roleMap[sessionContext.roles[i]] = true;
+			};
+		};
 	};
 
 	// On an atlas with a submission database, any user can submit
@@ -100,6 +131,8 @@ function canEditDoc(data) {
 			var layerId = data.nunaliit_layers[i];
 			if( 'public' === layerId ){
 				// Public layer. Ignore
+			} else if( 'public_' === layerId.substr(0,7) ){
+					// Public layer. Ignore
 			} else {
 				documentIsControlledLayer = true;
 				
@@ -197,7 +230,8 @@ function documentContainsDeniedMedia(doc){
 
 // Exports
 $n2.couchMap = {
-	adjustDocument: adjustDocument
+	Configure: Configure
+	,adjustDocument: adjustDocument
 	,isAdmin: isAdmin
 	,canEditDoc: canEditDoc
 	,canDeleteDoc: canDeleteDoc

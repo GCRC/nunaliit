@@ -326,7 +326,7 @@ $n2.parseLongLatText = function(text) {
 	return result;
 };
 
-/*
+/**
  * Generate the HTML representation of a hyperlink, given a text label,
  * url, and optional css classes (single string or array of strings).
  * If no url is included or it is an empty string, then a string is returned
@@ -910,7 +910,7 @@ $n2.utils = {
 	},
 	
 	/**
-	 * Returns an Javascript object returned in an XMLHttpRequest
+	 * Returns a Javascript object returned in an XMLHttpRequest
 	 * with an error. 
 	 * @name parseHttpJsonError
 	 * @function

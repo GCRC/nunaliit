@@ -57,6 +57,8 @@ var ReferenceBrowserCanvas = $n2.Class({
 	
 	schemaNames: null,
 	
+	schemaLabelByName: null,
+	
 	sortingSchemaNames: null,
 	
 	refs: null,
@@ -75,6 +77,7 @@ var ReferenceBrowserCanvas = $n2.Class({
 		this.canvasId = opts.canvasId;
 		this.docsById = {};
 		this.briefsById = {};
+		this.schemaLabelByName = {};
 		this.refs = [];
 		
 		this.schemaNames = opts.schemaNames;
@@ -96,6 +99,8 @@ var ReferenceBrowserCanvas = $n2.Class({
 			};
 			
 			this.dispatchService.register(DH,'documentContent',f);
+			this.dispatchService.register(DH,'documentContentCreated',f);
+			this.dispatchService.register(DH,'documentContentUpdated',f);
 			this.dispatchService.register(DH,'documentDeleted',f);
 		};
 		
@@ -104,6 +109,25 @@ var ReferenceBrowserCanvas = $n2.Class({
 		this._display();
 		
 		this._loadDocs();
+		
+		if( this.schemaRepository ){
+			this.schemaRepository.getSchemas({
+				names: this.schemaNames
+				,onSuccess: function(schemas){
+					var schemasByName = {};
+					
+					schemas.forEach(function(schema){
+						var label = schema.name;
+						if( schema.label ){
+							label = _loc( schema.label );
+						};
+						_this.schemaLabelByName[schema.name] = label;
+					});
+
+					_this._display();
+				}
+			});
+		};
 	},
 	
 	_getElem: function(){
@@ -121,7 +145,10 @@ var ReferenceBrowserCanvas = $n2.Class({
 		if( $elem ){
 			$elem
 				.empty()
-				.addClass('n2ReferenceBrowserCanvas');
+				.addClass('n2ReferenceBrowserCanvas')
+				.click(function(e){
+					_this._backgroundClicked();
+				});
 			
 			$('<button>')
 				.text('Export CSV')
@@ -137,16 +164,21 @@ var ReferenceBrowserCanvas = $n2.Class({
 			var $tr = $('<tr>').appendTo($table);
 			for(var i=0,e=_this.schemaNames.length; i<e; ++i){
 				var schemaName = _this.schemaNames[i];
+				var schemaLabel = _this.schemaLabelByName[schemaName];
+				if( !schemaLabel ){
+					schemaLabel = schemaName;
+				};
 				var $th = $('<th>')
 					.appendTo($tr);
 				
 				$('<a>')
-					.text(schemaName)
+					.text(schemaLabel)
 					.attr('href','#')
+					.attr('data-schema-name',schemaName)
 					.appendTo($th)
 					.click(function(){
 						var $a = $(this);
-						var schemaName = $a.text();
+						var schemaName = $a.attr('data-schema-name');
 						_this._sortOnCriteria(schemaName);
 						return false;
 					})
@@ -193,6 +225,14 @@ var ReferenceBrowserCanvas = $n2.Class({
 					};
 				};
 			};
+		};
+	},
+	
+	_backgroundClicked: function(){
+		if( this.dispatchService ){
+			this.dispatchService.send(DH,{
+				type: 'userUnselect'
+			});
 		};
 	},
 	
@@ -441,7 +481,9 @@ var ReferenceBrowserCanvas = $n2.Class({
 	},
 	
 	_handle: function(m,addr,dispatcher){
-		if( 'documentContent' === m.type ){
+		if( 'documentContent' === m.type 
+		 || 'documentContentCreated' === m.type 
+		 || 'documentContentUpdated' === m.type ){
 			var doc = m.doc;
 			if( doc ){
 				var schemaName = doc.nunaliit_schema;

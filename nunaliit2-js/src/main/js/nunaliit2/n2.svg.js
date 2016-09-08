@@ -50,7 +50,70 @@ var PredefinedGraphicsByName = {
      "square": [0,0, 0,1, 1,1, 1,0, 0,0],
      "triangle": [0,10, 10,10, 5,0, 0,10]
  };
- 
+
+//--------------------------------------------------------------------------
+// List of SVG presentation attributes served in a map for fast access
+var presentationAttributeMap = {
+	'alignment-baseline': true
+	,'baseline-shift': true
+	,'clip': true
+	,'clip-path': true
+	,'clip-rule': true
+	,'color': true
+	,'color-interpolation': true
+	,'color-interpolation-filters': true
+	,'color-profile': true
+	,'color-rendering': true
+	,'cursor': true
+	,'direction': true
+	,'display': true
+	,'dominant-baseline': true
+	,'enable-background': true
+	,'fill': true
+	,'fill-opacity': true
+	,'fill-rule': true
+	,'filter': true
+	,'flood-color': true
+	,'flood-opacity': true
+	,'font-family': true
+	,'font-size': true
+	,'font-size-adjust': true
+	,'font-stretch': true
+	,'font-style': true
+	,'font-variant': true
+	,'font-weight': true
+	,'glyph-orientation-horizontal': true
+	,'glyph-orientation-vertical': true
+	,'image-rendering': true
+	,'kerning': true
+	,'letter-spacing': true
+	,'lighting-color': true
+	,'marker-end': true
+	,'marker-mid': true
+	,'marker-start': true
+	,'mask': true
+	,'opacity': true
+	,'overflow': true
+	,'pointer-events': true
+	,'shape-rendering': true
+	,'stop-color': true
+	,'stop-opacity': true
+	,'stroke': true
+	,'stroke-dasharray': true
+	,'stroke-dashoffset': true
+	,'stroke-linecap': true
+	,'stroke-linejoin': true
+	,'stroke-miterlimit': true
+	,'stroke-opacity': true
+	,'stroke-width': true
+	,'text-anchor': true
+	,'text-decoration': true
+	,'text-rendering': true
+	,'unicode-bidi': true
+	,'visibility': true
+	,'word-spacing': true
+	,'writing-mode': true
+};
 
 //--------------------------------------------------------------------------
 var Renderer = $n2.Class({
@@ -209,6 +272,7 @@ $n2.svg = {
 	,setAttr: setAttr
 	,setAttrNS: setAttrNS
 	,addClass: addClass
+	,presentationAttributeMap: presentationAttributeMap
 };
 
 })(nunaliit2);

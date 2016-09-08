@@ -22,6 +22,28 @@ public class MockUserDesignDocument implements UserDesignDocument {
 	}
 
 	@Override
+	public Collection<UserDocument> getAllUsers() throws Exception {
+		JSONObject obj = new JSONObject();
+		obj.put("_id", "org.couchdb.user:test");
+		obj.put("name", "test");
+		obj.put("type", "user");
+		
+		if( null != displayName ){
+			obj.put("display", displayName);
+		}
+		if( null != emailAddress ){
+			JSONArray ary = new JSONArray();
+			ary.put(emailAddress);
+			obj.put("nunaliit_emails", ary);
+		}
+		
+		UserDocument user = new UserDocument(obj);
+		List<UserDocument> users = new ArrayList<UserDocument>(1);
+		users.add(user);
+		return users;
+	}
+
+	@Override
 	public Collection<UserDocument> getUsersWithRole(String role) throws Exception {
 		List<String> roles = new ArrayList<String>(1);
 		roles.add(role);

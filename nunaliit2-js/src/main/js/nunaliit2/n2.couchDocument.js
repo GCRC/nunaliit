@@ -30,27 +30,38 @@ POSSIBILITY OF SUCH DAMAGE.
 
 */
 ;(function($,$n2){
+"use strict";
 
 // Localization
-var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); }
+,DH = 'n2.couchDocument'
+;
 
-var DH = 'n2.couchDocument';
+var g_dispatcher;
 
 //*******************************************************
 function adjustDocument(doc) {
 
 	// Get user name
 	var userName = null;
-	var sessionContext = $n2.couch.getSession().getContext();
-	if( sessionContext ) {
-		userName = sessionContext.name;
+	if( g_dispatcher ){
+		var isLoggedInMsg = {
+			type: 'authIsLoggedIn'
+		};
+		g_dispatcher.synchronousCall(DH,isLoggedInMsg);
+		
+		var sessionContext = isLoggedInMsg.context;
+		if( sessionContext ) {
+			userName = sessionContext.name;
+		};
 	};
 	
 	// Get now
 	var nowTime = (new Date()).getTime();
 	
 	if( userName ) {
-		if( null == doc.nunaliit_created ) {
+		if( ! doc.nunaliit_created 
+		 && ! doc._rev) {
 			doc.nunaliit_created = {
 				nunaliit_type: 'actionstamp'
 				,name: userName
@@ -83,32 +94,167 @@ function adjustDocument(doc) {
 			};
 		};
 	};
-}
+};
+
+//*******************************************************
+var Notifier = $n2.Class({
+
+	dispatchService: null,
+	
+	documentSource: null,
+	
+	dbChangeNotifier: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			atlasDb: null
+			,dispatchService: null
+			,documentSource: null
+		},opts_);
+		
+		var _this = this;
+		
+		this.dispatchService = opts.dispatchService;
+		this.documentSource = opts.documentSource;
+		
+		if( opts.atlasDb ){
+			opts.atlasDb.getChangeNotifier({
+				onSuccess: function(notifier){
+					_this.dbChangeNotifier = notifier;
+					if( _this.dbChangeNotifier ){
+						_this.dbChangeNotifier.addListener(function(changes){
+							_this._dbChanges(changes);
+						});
+					};
+				}
+			});
+		};
+	},
+
+	_dbChanges: function(changes){
+		var _this = this;
+		
+		$n2.log('update',changes);
+		var lastSeq = changes.last_seq;
+		var results = changes.results;
+		
+		if( this.dispatchService ){
+			for(var i=0,e=results.length; i<e; ++i){
+				var updateRecord = results[i];
+	
+				var isAdded = false;
+				var latestRev = null;
+	
+				if(updateRecord.changes) {
+					for(var l=0,k=updateRecord.changes.length; l<k; ++l){
+						latestRev = updateRecord.changes[l].rev;
+						if( latestRev.substr(0,2) === '1-' ) {
+							isAdded = true;
+						};
+					};
+				};
+				
+				if( latestRev ){
+					// Send 'documentVersion' before create/update so
+					// that caches can invalidate before document is
+					// requested
+					this.dispatchService.send(DH,{
+						type: 'documentVersion'
+						,docId: updateRecord.id
+						,rev: latestRev
+					});
+				};
+				
+				if( updateRecord.deleted ){
+					this.dispatchService.send(DH,{
+						type: 'documentDeleted'
+						,docId: updateRecord.id
+					});
+					
+				} else if( isAdded ){
+					this.dispatchService.send(DH,{
+						type: 'documentCreated'
+						,docId: updateRecord.id
+					});
+
+					this.documentSource.getDocument({
+						docId: updateRecord.id
+						,onSuccess: function(doc){
+							_this._docUploaded(doc,true);
+						}
+					});
+					
+				} else {
+					// Updated
+					this.dispatchService.send(DH,{
+						type: 'documentUpdated'
+						,docId: updateRecord.id
+					});
+
+					this.documentSource.getDocument({
+						docId: updateRecord.id
+						,onSuccess: function(doc){
+							_this._docUploaded(doc,false);
+						}
+					});
+				};
+			};
+		};
+	},
+	
+	_docUploaded: function(doc,created){
+		if( this.dispatchService ){
+			var type = created ? 'documentContentCreated' : 'documentContentUpdated';
+
+			this.dispatchService.send(DH, {
+				type: type
+				,docId: doc._id
+				,doc: doc
+			});
+		};
+	}
+});
 
 // *******************************************************
 var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 	
-	db: null
+	db: null,
 	
-	,designDoc: null
+	designDoc: null,
 	
-	,dispatchService: null
+	dispatchService: null,
 	
-	,geometryRepository: null
+	attachmentService: null,
 	
-	,initialize: function(opts_){
+	geometryRepository: null,
+	
+	isDefaultDocumentSource: null,
+	
+	notifier: null,
+	
+	initialize: function(opts_){
 		var opts = $n2.extend({
 				id: null
 				,db: null
 				,dispatchService: null
+				,attachmentService: null
+				,isDefaultDocumentSource: false
 			}
 			,opts_
 		);
 		
+		var _this = this;
+		
 		$n2.document.DocumentSource.prototype.initialize.call(this,opts);
 
 		this.db = opts.db;
+		this.attachmentService = opts.attachmentService;
 		this.dispatchService = opts.dispatchService;
+		if( this.dispatchService ){
+			// to make adjustDocument() work
+			g_dispatcher = this.dispatchService;
+		};
+		this.isDefaultDocumentSource = opts.isDefaultDocumentSource;
 		
 		this.designDoc = this.db.getDesignDoc({ddName:'atlas'});
 		
@@ -117,9 +263,23 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			,designDoc: this.designDoc
 			,dispatchService: this.dispatchService
 		});
-	}
+		
+		if( this.dispatchService ){
+			var f = function(m, addr, d){
+				_this._handle(m, addr, d);
+			};
+			
+			this.dispatchService.register(DH,'documentSourceFromDocument',f);
+		};
+		
+		this.notifier = new Notifier({
+			atlasDb: this.db
+			,dispatchService: this.dispatchService
+			,documentSource: this
+		});
+	},
 
-	,createDocument: function(opts_){
+	createDocument: function(opts_){
 		var opts = $n2.extend({
 				doc: {}
 				,onSuccess: function(doc){}
@@ -139,7 +299,7 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			,onSuccess: function(docInfo){
 				doc._id = docInfo.id;
 				doc._rev = docInfo.rev;
-				doc.__n2Source = _this;
+				doc.__n2Source = _this.getId();
 				
 				_this._dispatch({
 					type: 'documentVersion'
@@ -150,15 +310,19 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 					type: 'documentCreated'
 					,docId: docInfo.id
 				});
-				
+				_this._dispatch({
+					type: 'documentContentCreated'
+					,docId: doc._id
+					,doc: doc
+				});
 				
 				opts.onSuccess(doc);
 			}
 			,onError: opts.onError
 		});
-	}
+	},
 
-	,getDocument: function(opts_){
+	getDocument: function(opts_){
 		var opts = $n2.extend({
 				docId: null
 				,rev: null
@@ -182,14 +346,14 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			,conflicts: opts.conflicts
 			,deleted_conflicts: opts.deleted_conflicts
 			,onSuccess: function(doc){
-				doc.__n2Source = _this;
+				doc.__n2Source = _this.getId();
 				opts.onSuccess(doc);
 			}
 			,onError: opts.onError
 		});
-	}
+	},
 
-	,getDocuments: function(opts_){
+	getDocuments: function(opts_){
 		var opts = $n2.extend({
 				docIds: null
 				,onSuccess: function(docs){}
@@ -205,19 +369,27 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			,onSuccess: function(docs){
 				for(var i=0,e=docs.length; i<e; ++i){
 					var doc = docs[i];
-					doc.__n2Source = _this;
+					doc.__n2Source = _this.getId();
 				};
 				opts.onSuccess(docs);
 			}
 			,onError: opts.onError
 		});
-	}
+	},
 
-	,getDocumentAttachmentUrl: function(doc, attachmentName){
+	getDocumentAttachments: function(doc){
+		return this.attachmentService.getAttachments(doc, this);
+	},
+
+	getDocumentAttachment: function(doc, attachmentName){
+		return this.attachmentService.getAttachment(doc, attachmentName, this);
+	},
+
+	getDocumentAttachmentUrl: function(doc, attachmentName){
 		return this.db.getAttachmentUrl(doc, attachmentName);
-	}
+	},
 
-	,verifyDocumentExistence: function(opts_){
+	verifyDocumentExistence: function(opts_){
 		var opts = $n2.extend({
 				docIds: null
 				,onSuccess: function(info){}
@@ -242,11 +414,12 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			}
 			,onError: opts.onError
 		});
-	}
+	},
 
-	,updateDocument: function(opts_){
+	updateDocument: function(opts_){
 		var opts = $n2.extend({
 				doc: null
+				,originalDoc: null // Optional. Needed in case of conflict
 				,onSuccess: function(doc){}
 				,onError: function(errorMsg){}
 			}
@@ -270,26 +443,108 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 		
 		this.db.updateDocument({
 			data: copy
-			,onSuccess: function(docInfo){
-				doc._rev = docInfo.rev;
-
-				_this._dispatch({
-					type: 'documentVersion'
-					,docId: docInfo.id
-					,rev: docInfo.rev
-				});
-				_this._dispatch({
-					type: 'documentUpdated'
-					,docId: docInfo.id
-				});
-				
-				opts.onSuccess(doc);
+			,onSuccess: updateSuccess
+			,onError: function(err){
+				// Check if this is a conflict error. If so, attempt to deal with
+				// the conflict if the caller provided an original document
+				if( opts.originalDoc 
+				 && $n2.error.checkErrorCondition(err, 'couchDb_conflict') ){
+					loadConflictingDocument(true);
+				} else {
+					updateFailure(err);
+				};
 			}
-			,onError: opts.onError
 		});
-	}
+		
+		function loadConflictingDocument(retryAllowed){
+			_this.db.getDocument({
+				docId: doc._id
+				,onSuccess: function(conflictingDoc) {
+					patchConflictingDocument(conflictingDoc, retryAllowed);
+				}
+				,onError: function(cause){
+					var err = $n2.error.fromString( 
+						_loc('Unable to reload conflicting document')
+						,cause
+					);
+					updateFailure(err);
+				}
+			});
+		};
+		
+		function patchConflictingDocument(conflictingDoc, retryAllowed){
+			var patch = patcher.computePatch(opts.originalDoc,doc);
+			
+			$n2.log('Conflict detected. Applying patch.',patch);
+			
+			// Apply patch to conflicting document
+			patcher.applyPatch(conflictingDoc, patch);
+			
+			// If the patch contains changes to the geometry, then we must
+			// erase the "simplified" structure in the geometry since
+			// it needs to be recomputed by the server
+			if( patch.nunaliit_geom 
+			 && conflictingDoc.nunaliit_geom 
+			 && conflictingDoc.nunaliit_geom.simplified ){
+				delete conflictingDoc.nunaliit_geom.simplified;
+			};
 
-	,deleteDocument: function(opts_){
+			// Attempt to update the patched document
+			_this.db.updateDocument({
+				data: conflictingDoc
+				,onSuccess: updateSuccess
+				,onError: function(err){
+					if( retryAllowed 
+					 && $n2.error.checkErrorCondition(err, 'couchDb_conflict') ){
+						// We have two conflicts in a row. Assume we are sitting
+						// behind a bad proxy server.
+						$n2.couch.setBadProxy(true);
+						$n2.debug.setBadProxy(true);
+
+						$n2.log('Assuming that operations are behind a bad proxy');
+						
+						// Retry one last time
+						loadConflictingDocument(false);
+					} else {
+						updateFailure(err);
+					};
+				}
+			});
+		};
+		
+		function updateSuccess(docInfo){
+			doc._id = docInfo.id;
+			doc._rev = docInfo.rev;
+			doc.__n2Source = _this.getId();
+
+			_this._dispatch({
+				type: 'documentVersion'
+				,docId: docInfo.id
+				,rev: docInfo.rev
+			});
+			_this._dispatch({
+				type: 'documentUpdated'
+				,docId: docInfo.id
+			});
+			_this._dispatch({
+				type: 'documentContentUpdated'
+				,docId: doc._id
+				,doc: doc
+			});
+			
+			opts.onSuccess(doc);
+		};
+		
+		function updateFailure(cause){
+			var err = $n2.error.fromString(
+				_loc('Error while updating document {id}',{id:doc._id})
+				,cause
+			);
+			opts.onError(err);
+		};
+	},
+
+	deleteDocument: function(opts_){
 		var opts = $n2.extend({
 				doc: null
 				,onSuccess: function(){}
@@ -312,33 +567,103 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 		
 		this.db.deleteDocument({
 			data: copy
-			,onSuccess: function(docInfo){
-				_this._dispatch({
-					type: 'documentDeleted'
-					,docId: doc._id
-				});
-				opts.onSuccess();
+			,onSuccess: documentDeleted
+			,onError: function(err){
+				// Check if this error is due to a database conflict
+				if( $n2.error.checkErrorCondition(err, 'couchDb_conflict') ){
+					$n2.log('Conflict document detected during deletion');
+					reloadAndDelete(true);
+				} else {
+					deletionFailure(err);
+				};
 			}
-			,onError: opts.onError
 		});
-	}
+		
+		function reloadAndDelete(retry){
+			_this.db.getDocument({
+				docId: doc._id
+				,onSuccess: function(conflictingDoc) {
+					// Delete latest revision
+					_this.db.deleteDocument({
+						data: conflictingDoc
+						,onSuccess: documentDeleted
+						,onError: function(err){
+							if( retry 
+							 && $n2.error.checkErrorCondition(err, 'couchDb_conflict') ){
+								$n2.log('Conflict document detected during deletion');
+								// We have two conflicts in a row. Assume we are sitting
+								// behind a bad proxy server.
+								$n2.couch.setBadProxy(true);
+								$n2.debug.setBadProxy(true);
 
-	,getLayerDefinitions: function(opts_){
+								$n2.log('Assuming that operations are behind a bad proxy');
+								
+								// Retry one last time
+								reloadAndDelete(false);
+							} else {
+								deletionFailure(err);
+							};
+						}
+					});
+				}
+				,onError: function(err2){
+					var e = $n2.error.fromString(
+						_loc('Error reloading conflicting document during deletion')
+						,err2
+					);
+					opts.onError(e);
+				}
+			});
+		};
+		
+		function documentDeleted(){
+			_this._dispatch({
+				type: 'documentDeleted'
+				,docId: doc._id
+			});
+			opts.onSuccess();
+		};
+		
+		function deletionFailure(err){
+			var e = $n2.error.fromString(
+				_loc('Unable to delete document {id}',{
+					id: doc._id
+				})
+				,err
+			);
+			opts.onError(e);
+		};
+	},
+
+	getLayerDefinitions: function(opts_){
 		var opts = $n2.extend({
-				onSuccess: function(layerDefinitions){}
+				layerIds: null
+				,fullDocuments: false
+				,onSuccess: function(layerDefinitions){}
 				,onError: function(errorMsg){}
 			}
 			,opts_
 		);
 		
+		var keys = undefined;
+		if( opts.layerIds ){
+			keys = [];
+			opts.layerIds.forEach(function(layerId){
+				keys.push(layerId);
+			});
+		};
+		
 		this.designDoc.queryView({
 			viewName: 'layer-definitions'
 			,include_docs: true
+			,keys: keys
 			,onSuccess: function(rows){
 				var layerIdentifiers = [];
 				for(var i=0,e=rows.length;i<e;++i){
 					var doc = rows[i].doc;
-					if( doc.nunaliit_layer_definition ){
+					if( opts.fullDocuments ){
+						layerIdentifiers.push(doc);
+					} else if( doc.nunaliit_layer_definition ){
 						var d = doc.nunaliit_layer_definition;
 						if( !d.id ){
 							d.id = doc._id;
@@ -350,9 +675,9 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			}
 			,onError: opts.onError
 		});
-	}
+	},
 
-	,getDocumentInfoFromIds: function(opts_){
+	getDocumentInfoFromIds: function(opts_){
 		var opts = $n2.extend({
 				docIds: null
 				,onSuccess: function(docInfos){}
@@ -373,9 +698,9 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			}
 			,onError: opts.onError
 		});
-	}
+	},
 
-	,getReferencesFromId: function(opts_){
+	getReferencesFromId: function(opts_){
 		var opts = $n2.extend({
 				docId: null
 				,onSuccess: function(referenceIds){}
@@ -402,9 +727,9 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			}
 			,onError: opts.onError
 		});
-	}
+	},
 
-	,getProductFromId: function(opts_){
+	getProductFromId: function(opts_){
 		var opts = $n2.extend({
 				docId: null
 				,onSuccess: function(referenceIds){}
@@ -431,9 +756,9 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			}
 			,onError: opts.onError
 		});
-	}
+	},
 
-	,getDocumentsFromGeographicFilter: function(opts_){
+	getDocumentsFromGeographicFilter: function(opts_){
 		var opts = $n2.extend({
 			docIds: null
 			,layerId: null
@@ -449,19 +774,19 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 		var callerSuccess = opts.onSuccess;
 		opts.onSuccess = function(docs){
 			for(var i=0,e=docs.length; i<e; ++i){
-				docs[i].__n2Source = _this;
+				docs[i].__n2Source = _this.getId();
 			};
 			callerSuccess(docs);
 		};
 		
 		this.geometryRepository.getDocumentsFromGeographicFilter(opts);
-	}
+	},
 
-	,getGeographicBoundingBox: function(opts_){
+	getGeographicBoundingBox: function(opts_){
 		this.geometryRepository.getGeographicBoundingBox(opts_);
-	}
+	},
 
-	,getReferencesFromOrigin: function(opts_){
+	getReferencesFromOrigin: function(opts_){
 		var opts = $n2.extend({
 				docId: null
 				,onSuccess: function(originReferenceIds){}
@@ -504,11 +829,24 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 		var server = this.db.server;
 		
 		server.getUniqueId(opts);
-	}
+	},
 	
-	,_dispatch: function(m){
+	_dispatch: function(m){
 		if( this.dispatchService ){
 			this.dispatchService.send(DH,m);
+		};
+	},
+	
+	_handle: function(m, addr, dispatcher){
+		if( 'documentSourceFromDocument' === m.type ){
+			var doc = m.doc;
+			if( doc && doc.__n2Source === this.getId() ){
+				m.documentSource = this;
+			} else if( doc 
+			 && !doc.__n2Source 
+			 && this.isDefaultDocumentSource ){
+				m.documentSource = this;
+			};
 		};
 	}
 });
@@ -517,19 +855,19 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 
 var GeometryRepository = $n2.Class({
 	
-	db: null
+	db: null,
 	
-	,designDoc: null
+	designDoc: null,
 	
-	,dispatchService: null
+	dispatchService: null,
 	
-	,dbProjection: null
+	dbProjection: null,
 	
-	,poles: null // cache the poles in various projections
+	poles: null, // cache the poles in various projections
 	
-	,mapProjectionMaxWidth: null // cache max width computation
+	mapProjectionMaxWidth: null, // cache max width computation
 	
-	,initialize: function(opts_){
+	initialize: function(opts_){
 		var opts = $n2.extend({
 			db: null
 			,designDoc: null
@@ -548,9 +886,9 @@ var GeometryRepository = $n2.Class({
 			,s:{}
 		};
 		this.mapProjectionMaxWidth = {};
-	}
+	},
 	
-	,getDocumentsFromGeographicFilter: function(opts_){
+	getDocumentsFromGeographicFilter: function(opts_){
 		var opts = $n2.extend({
 				docIds: null
 				,layerId: null
@@ -658,9 +996,9 @@ var GeometryRepository = $n2.Class({
 	    		opts.onSuccess(docs);
 	    	};
 		};
-	}
+	},
 
-	,getGeographicBoundingBox: function(opts_){
+	getGeographicBoundingBox: function(opts_){
 		var opts = $n2.extend({
 				layerId: null
 				,bbox: null
@@ -685,9 +1023,9 @@ var GeometryRepository = $n2.Class({
 			}
 			,onError: opts.onError
 		});
-	}
+	},
 
-	,_getPole: function(isNorth, mapProjection){
+	_getPole: function(isNorth, mapProjection){
 		
 		var projCode = mapProjection.getCode();
 		
@@ -724,9 +1062,9 @@ var GeometryRepository = $n2.Class({
 		this.poles[label][projCode] = p;
 		
 		return p;
-	}
+	},
 	
-    ,_getMapMaxWidth: function(proj){
+    _getMapMaxWidth: function(proj){
 		
 		var projCode = proj.getCode();
     	
@@ -775,15 +1113,15 @@ var GeometryRepository = $n2.Class({
 //*******************************************************
 var CouchDocumentSourceWithSubmissionDb = $n2.Class(CouchDocumentSource, {
 	
-	submissionDb: null
+	submissionDb: null,
 	
-	,submissionServerUrl: null
+	submissionServerUrl: null,
 	
-	,submissionServerDb: null
+	submissionServerDb: null,
 	
-	,isSubmissionDataSource: null
+	isSubmissionDataSource: null,
 	
-	,initialize: function(opts_){
+	initialize: function(opts_){
 		var opts = $n2.extend({
 			submissionDb: null
 			,submissionServletUrl: null
@@ -857,7 +1195,7 @@ var CouchDocumentSourceWithSubmissionDb = $n2.Class(CouchDocumentSource, {
 				data: doc
 				,onSuccess: function(docInfo){
 					_this._warnUser();
-					doc.__n2Source = _this;
+					doc.__n2Source = _this.getId();
 					opts.onSuccess(doc);
 				}
 				,onError: opts.onError
@@ -926,9 +1264,9 @@ var CouchDocumentSourceWithSubmissionDb = $n2.Class(CouchDocumentSource, {
 			}
 			,onError: opts.onError
 		});
-	}
+	},
 	
-	,_warnUser: function(){
+	_warnUser: function(){
 		var shouldWarnUser = true;
 		var c = $n2.cookie.getCookie('nunaliit_submissions');
 		if( c ){

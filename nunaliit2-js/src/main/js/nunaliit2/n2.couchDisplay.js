@@ -27,10 +27,10 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
-
-$Id: n2.couchDisplay.js 8441 2012-08-15 17:48:33Z jpfiset $
 */
+
 ;(function($,$n2){
+"use strict";
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
@@ -567,8 +567,14 @@ var Display = $n2.Class({
 		 ) {
 			var showReplyButton = true;
 			if( this.restrictReplyButtonToLoggedIn ){
-				var sessionContext = $n2.couch.getSession().getContext();
-				if( !sessionContext || !sessionContext.name ) {
+				var isLoggedInMsg = {
+					type: 'authIsLoggedIn'
+					,isLoggedIn: false
+				};
+				if( dispatcher ){
+					dispatcher.synchronousCall(DH,isLoggedInMsg);
+				};
+				if( !isLoggedInMsg.isLoggedIn ) {
 					showReplyButton = false;
 				};
 			};
@@ -587,42 +593,28 @@ var Display = $n2.Class({
 		};
 		
  		// Show 'find on map' button
-		if( dispatcher 
-		 && opt.geom
-		 && data 
-		 && dispatcher.isEventTypeRegistered('findIsAvailable')
-		 && dispatcher.isEventTypeRegistered('find')
-		 ) {
-			// Check if document can be displayed on a map
-			var showFindOnMapButton = false;
-			var m = {
-				type:'findIsAvailable'
-				,doc: data
-				,isAvailable:false
-			};
-			dispatcher.synchronousCall(DH,m);
-			if( m.isAvailable ){
-				showFindOnMapButton = true;
-			};
+		if( data ) {
+			var $findGeomButton = $('<a href="#"></a>');
+			var findGeomText = _loc('Find on Map');
+			$findGeomButton.text( findGeomText );
+			$buttons.append($findGeomButton);
 
-			if( showFindOnMapButton ) {
-				var $findGeomButton = $('<a href="#"></a>');
-				var findGeomText = _loc('Find on Map');
-				$findGeomButton.text( findGeomText );
-				$buttons.append($findGeomButton);
-	
-				$findGeomButton.click(function(){
-					// Move map and display feature 
-					_this._dispatch({
-						type: 'find'
-						,docId: data._id
-						,doc: data
-					});
-					
-					return false;
+			$findGeomButton.click(function(){
+				// Move map and display feature 
+				_this._dispatch({
+					type: 'find'
+					,docId: data._id
+					,doc: data
 				});
-				addClasses($findGeomButton, findGeomText);
-			};
+				
+				return false;
+			});
+			addClasses($findGeomButton, findGeomText);
+			
+			this.showService.showFindAvailable({
+				elem: $findGeomButton
+				,doc: data
+			});
 		};
 
 		// Show 'Add Layer' button
@@ -2042,7 +2034,7 @@ function HandleDisplayRenderRequest(m){
 			}
 		});
 
-		m.onSuccess();
+		m.onSuccess(displayControl);
 	};
 };
 

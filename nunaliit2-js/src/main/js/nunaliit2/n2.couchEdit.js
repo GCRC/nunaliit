@@ -27,15 +27,15 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
-
-$Id: n2.couchEdit.js 8458 2012-08-29 13:12:06Z jpfiset $
 */
 
 ;(function($,$n2) {
+"use strict";
 
 // Localization
-var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
-var DH = 'n2.couchEdit';
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); }
+,DH = 'n2.couchEdit'
+;
 
 function getDefaultCouchProjection(){
 	var defaultCouchProj = null;
@@ -244,17 +244,25 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		this.editors = opts.editors;
 		this.couchProj = opts.couchProj;
 
-		if( opts.doc.__n2Source ){
-			this.editedDocument = {};
-			for(var key in opts.doc){
-				if( '__n2Source' === key ){
-					this.editedDocumentSource = opts.doc[key];
-				} else {
-					this.editedDocument[key] = opts.doc[key];
-				};
+		this.editedDocument = {};
+		for(var key in opts.doc){
+			if( '__n2Source' === key ){
+				// Drop information about document source so it does not
+				// appear in the editor
+			} else {
+				this.editedDocument[key] = opts.doc[key];
 			};
-		} else {
-			this.editedDocument = opts.doc;
+		};
+		
+		// Obtain documentSource
+		this.editedDocumentSource = undefined;
+		if( this.dispatchService ){
+			var m = {
+				type: 'documentSourceFromDocument'
+				,doc: opts.doc
+			};
+			this.dispatchService.synchronousCall(DH,m);
+			this.editedDocumentSource = m.documentSource;
 		};
 		
 		this.isInsert = false;
@@ -360,8 +368,6 @@ var CouchSimpleDocumentEditor = $n2.Class({
 			if( $n2.couchEdit.Constants.FORM_EDITOR === editorDesc
 			 && selectedSchema 
 			 && this.schemaEditorService ) {
-				$n2.schema.GlobalAttributes.disableKeyUpEvents = true;
-	
 				// Accordion Header
 				if( accordionNeeded ) {
 					var $schemaHeader = $('<h3>')
@@ -821,6 +827,7 @@ var CouchDocumentEditor = $n2.Class({
 	treeEditor: null,
 	slideEditor: null,
 	attachmentEditor: null,
+	originalDocument: null,
 	editedDocument: null,
 	editedDocumentSchema: null,
 	currentGeometryWkt: null,
@@ -900,6 +907,13 @@ var CouchDocumentEditor = $n2.Class({
 			};
 		};
 	},
+	
+	isEditing: function(){
+		if( this.editedDocument ){
+			return true;
+		};
+		return false;
+	},
 
 	startEditingFromGeometry: function(olGeom, olProj) {
 		
@@ -937,6 +951,12 @@ var CouchDocumentEditor = $n2.Class({
 	    	 && _this.initialLayers.length > 0 ) {
 	    		_this.editedDocument.nunaliit_layers = _this.initialLayers;
 	    	};
+
+	    	// Give a chance to external processes to modify document
+			_this.dispatchService.synchronousCall(DH,{
+				type: 'preDocCreation'
+				,doc: _this.editedDocument
+			});
 			
 			_this._prepareDocument();
 		};
@@ -950,10 +970,22 @@ var CouchDocumentEditor = $n2.Class({
 		this.editedDocumentSchema = null;
 		for(var key in doc_){
 			if( '__n2Source' === key ) {
-				this.editedDocumentSource = doc_[key];
+				// Drop information about document source so it does not
+				// appear in the editor
 			} else {
 				this.editedDocument[key] = doc_[key];
 			};
+		};
+		
+		// Obtain documentSource
+		this.editedDocumentSource = undefined;
+		if( this.dispatchService ){
+			var m = {
+				type: 'documentSourceFromDocument'
+				,doc: doc_
+			};
+			this.dispatchService.synchronousCall(DH,m);
+			this.editedDocumentSource = m.documentSource;
 		};
 	
 		this.currentGeometryWkt = undefined;
@@ -973,6 +1005,12 @@ var CouchDocumentEditor = $n2.Class({
 					var template = _this.editedDocumentSchema.createObject({});
 					$n2.extend(true, _this.editedDocument, template);
 				};
+				
+				// Give a chance to external processes to modify document
+				_this.dispatchService.synchronousCall(DH,{
+					type: 'preDocCreation'
+					,doc: _this.editedDocument
+				});
 			};
 			
 			_this._prepareDocument();
@@ -1024,6 +1062,8 @@ var CouchDocumentEditor = $n2.Class({
 		};
 		
 		function startEditor(){
+			_this.originalDocument = $n2.extend(true,{},editedDoc);
+			
 			var olGeom = $n2.couchGeom.getOpenLayersGeometry({
 				doc: editedDoc
 			});
@@ -1068,6 +1108,9 @@ var CouchDocumentEditor = $n2.Class({
 						_this.editedDocumentSchema = schema;
 						callbackFn(schema);
 					}
+					,onReset: function(){
+						_this._cancelEdit();
+					}
 				});
 				
 			} else if( $n2.isArray(this.schema) ) {
@@ -1077,6 +1120,9 @@ var CouchDocumentEditor = $n2.Class({
 					,onSelected: function(schema){
 						_this.editedDocumentSchema = schema;
 						callbackFn(schema);
+					}
+					,onReset: function(){
+						_this._cancelEdit();
 					}
 				});
 				
@@ -1095,82 +1141,6 @@ var CouchDocumentEditor = $n2.Class({
 		} else {
 			// No schema specified, go directly to displaying editor
 			callbackFn(null);
-		};
-		
-		function selectFromSchemas(schemas) {
-			// shortcuts
-			if( schemas.length < 1 ) {
-				callbackFn(null);
-				return;
-				
-			} else if( schemas.length == 1 ) {
-				callbackFn(schemas[0]);
-				return;
-			};
-			
-			var dialogId = $n2.getUniqueId();
-			var selectId = $n2.getUniqueId();
-			var $dialog = $('<div id="'+dialogId+'" class="editorSelectSchemaDialog">'
-					+'<label for="'+selectId+'">'+_loc('Select a schema:')+'</label>'
-					+'<select id="'+selectId+'"></select>'
-					+'<div><button>'+_loc('OK')+'</button><button>'+_loc('Cancel')+'</button></div>'
-					+'</div>');
-			
-			var $select = $dialog.find('select');
-			for(var i=0,e=schemas.length; i<e; ++i) {
-				$select.append( $('<option>'+schemas[i].name+'</option>') );
-			};
-			
-			var cancelOnClose = true;
-			
-			$dialog.find('button')
-				.first()
-					.button({icons:{primary:'ui-icon-check'}})
-					.click(function(){
-						var $dialog = $('#'+dialogId);
-						var $select = $dialog.find('select');
-						var schemaName = $select.val();
-
-						$n2.log('schemaName',schemaName);
-						_this.schemaRepository.getSchema({
-							name: schemaName
-							,onSuccess: function(schema){
-								callbackFn(schema);
-							}
-							,onError: function(err){
-								reportError('Unable to get selected schema: '+err);
-								_this._cancelEdit();
-							}
-						});
-				
-						cancelOnClose = false;
-						$dialog.dialog('close');
-						return false;
-					})
-				.next()
-					.button({icons:{primary:'ui-icon-cancel'}})
-					.click(function(){
-						var $dialog = $('#'+dialogId);
-						$dialog.dialog('close');
-						return false;
-					})
-				;
-			
-			var dialogOptions = {
-				autoOpen: true
-				,title: _loc('Select Document Schema')
-				,modal: true
-				,close: function(event, ui){
-					var diag = $(event.target);
-					diag.dialog('destroy');
-					diag.remove();
-					
-					if( cancelOnClose ){
-						_this._cancelEdit();
-					};
-				}
-			};
-			$dialog.dialog(dialogOptions);
 		};
 	},
     
@@ -1227,8 +1197,6 @@ var CouchDocumentEditor = $n2.Class({
 		attributeDialog.append($editorContainer);
 
 		if( showFormView ) {
-			$n2.schema.GlobalAttributes.disableKeyUpEvents = true;
-			
 			if( showAccordion ) {
 				var $schemaHeader = $('<h3>').appendTo($editorContainer);
 				$('<a>')
@@ -1526,23 +1494,18 @@ var CouchDocumentEditor = $n2.Class({
 		};
 			
 		function updateDocument() {
+			var isSubmissionDs = false;
+			if( _this.documentSource.isSubmissionDataSource ){
+				isSubmissionDs = true;
+			};
+
 			// Create or update document
 			if( _this.isInsert ) {
 				// This is an insert
-				var isSubmissionDs = false;
-				if( _this.documentSource.isSubmissionDataSource ){
-					isSubmissionDs = true;
-				};
 				_this.documentSource.createDocument({
 					doc: _this.editedDocument
 					,onSuccess: function(updatedDoc) {
-						if( isSubmissionDs ){
-							// In the case of a submission database, the new document
-							// is not yet inserted
-							postSaveAttachmentEditor(updatedDoc, false);
-						} else {
-							postSaveAttachmentEditor(updatedDoc, true);
-						};
+						postSaveAttachmentEditor(updatedDoc, true, isSubmissionDs);
 					}
 					,onError: function(err){
 			    		_this._enableControls();
@@ -1553,8 +1516,9 @@ var CouchDocumentEditor = $n2.Class({
 				// This is an update
 				_this.documentSource.updateDocument({
 					doc: _this.editedDocument
+					,originalDoc: _this.originalDocument
 					,onSuccess: function(updatedDoc) {
-						postSaveAttachmentEditor(updatedDoc, false);
+						postSaveAttachmentEditor(updatedDoc, false, isSubmissionDs);
 					}
 					,onError: function(err){
 			    		_this._enableControls();
@@ -1564,11 +1528,11 @@ var CouchDocumentEditor = $n2.Class({
 			};
 		};
 		
-		function postSaveAttachmentEditor(editedDocument, inserted) {
+		function postSaveAttachmentEditor(editedDocument, inserted, isSubmissionDs) {
 			if( _this.attachmentEditor ){
 				_this.attachmentEditor.performPostSavingActions({
 					onSuccess: function(doc){
-						completeSave(editedDocument, inserted);
+						completeSave(editedDocument, inserted, isSubmissionDs);
 					}
 					,onError: function(err){
 			    		_this._enableControls();
@@ -1576,14 +1540,15 @@ var CouchDocumentEditor = $n2.Class({
 					}
 				});
 			} else {
-				completeSave(editedDocument, inserted);
+				completeSave(editedDocument, inserted, isSubmissionDs);
 			};
 		};
 
-		function completeSave(editedDocument, inserted) {
+		function completeSave(editedDocument, inserted, isSubmissionDs) {
 			// Report that save is complete
 			var discardOpts = {
 				saved: true
+				,submissionDs: isSubmissionDs
 			};
 			if( inserted ) {
 				discardOpts.inserted = true;
@@ -1790,12 +1755,24 @@ var CouchDocumentEditor = $n2.Class({
 			,suppressEvents: opts.suppressEvents
 		});
 	},
+	
+	performSave: function(opts_) {
+		var opts = $n2.extend({
+		},opts_);
+
+		if( null == this.editedDocument ) {
+			return;
+		};
+	
+		this._save();
+	},
 
 	_discardEditor: function(opts_) {
 		var opts = $n2.extend({
 			saved: false
 			,inserted: false
 			,updated: false
+			,submissionDs: false
 			,deleted: false
 			,cancelled: false
 			,suppressEvents: false
@@ -1804,11 +1781,14 @@ var CouchDocumentEditor = $n2.Class({
 		if( null == this.editedDocument ) {
 			return;
 		};
-
+		
+		var editedDocument = this.editedDocument;
+		this.editedDocument = null;
+		
 		var $editorContainer = this._getEditorContainer();
 		$editorContainer.remove();
 
-		this.onCloseFn(this.editedDocument, this, {
+		this.onCloseFn(editedDocument, this, {
 			saved: opts.saved
 			,inserted: opts.inserted
 			,updated: opts.updated
@@ -1821,8 +1801,8 @@ var CouchDocumentEditor = $n2.Class({
 			// existed.
 			var docId = undefined;
 			var doc = undefined;
-			if( this.editedDocument._id ){
-				doc = this.editedDocument;
+			if( editedDocument._id ){
+				doc = editedDocument;
 				docId = doc._id;
 			};
 			
@@ -1835,10 +1815,10 @@ var CouchDocumentEditor = $n2.Class({
 				,updated: opts.updated
 				,deleted: opts.deleted
 				,cancelled: opts.cancelled
+				,submissionDs: opts.submissionDs
 			});
 		};
 		
-		this.editedDocument = null;
 		this.editorContainerId = null;
 		
 		$('body').removeClass('nunaliit_editing');
@@ -2075,6 +2055,18 @@ var CouchDocumentEditor = $n2.Class({
 			
 		} else if( m.type === 'mapGeometryAdded' ){
 			this._addGeometry(m.geometry, m.projection);
+
+		} else if( 'historyIsHashChangePermitted' === m.type ) {
+			if( null != this.editedDocument ) {
+				if( confirm( _loc('Do you wish to leave document editor?') ) ) {
+					// OK, cancel editor
+					this._cancelEdit();
+					
+				} else {
+					// Do not allow change in hash
+					m.permitted = false;
+				};
+			};
 		};
 	}
 });
@@ -2175,11 +2167,17 @@ var CouchEditService = $n2.Class({
 		var dispatcher = this.dispatchService;
 		if( dispatcher ){
 			var f = function(m){ _this._handle(m); };
-			dispatcher.register(DH, 'editGeometryModified', f);
-			dispatcher.register(DH, 'mapGeometryAdded', f);
 			dispatcher.register(DH, 'editInitiate', f);
 			dispatcher.register(DH, 'editCreateFromGeometry', f);
 			dispatcher.register(DH, 'editCancel', f);
+			dispatcher.register(DH, 'editTriggerSave', f);
+			dispatcher.register(DH, 'editGetState', f);
+			dispatcher.register(DH, 'selected', f);
+
+			// The following events will be routed to the current editor
+			dispatcher.register(DH, 'editGeometryModified', f);
+			dispatcher.register(DH, 'mapGeometryAdded', f);
+			dispatcher.register(DH, 'historyIsHashChangePermitted', f);
 		};
 		
 		// Service defined buttons
@@ -2255,6 +2253,13 @@ var CouchEditService = $n2.Class({
     		this.currentEditor = null;
     	};
 	},
+	
+	saveDocumentForm: function(opts){
+    	if( null != this.currentEditor ) {
+    		this.currentEditor.performSave(opts);
+    		this.currentEditor = null;
+    	};
+	},
 
 	setPanelName: function(panelName) {
 		this.panelName = panelName;
@@ -2312,7 +2317,7 @@ var CouchEditService = $n2.Class({
     	this.currentEditor.startEditingFromGeometry(olGeom, olProj);
 	},
 	
-	_handle: function(m){
+	_handle: function(m, addr, dispatcher){
 		if( 'editInitiate' === m.type ){
 			this._initiateEditor(m.doc);
 			
@@ -2321,8 +2326,27 @@ var CouchEditService = $n2.Class({
 			
 		} else if( 'editCancel' === m.type ) {
 			this.cancelDocumentForm();
+
+		} else if( 'editTriggerSave' === m.type ) {
+			this.saveDocumentForm();
+
+		} else if( 'editGetState' === m.type ) {
+			// Synchronous event
+			if( this.currentEditor 
+			 && this.currentEditor.isEditing() ){
+				m.isEditing = true;
+			};
+
+		} else if( 'selected' === m.type ) {
+			if( null != this.currentEditor ){
+				this.cancelDocumentForm();
+
+				// Re-send the selection event
+				this.dispatchService.send(DH,m);
+			};
 			
-		} else if( null != this.currentEditor ) {
+		} else if( this.currentEditor
+		 && this.currentEditor.isEditing() ) {
     		this.currentEditor._handle(m);
     	};
 	}
@@ -2436,8 +2460,6 @@ var SchemaEditorService = $n2.Class({
 	funcMap: null,
 	
 	postProcessFunctions: null,
-	
-	documentSource: null,
 
 	initialize: function(opts_) {
 		var opts = $n2.extend({
@@ -2716,6 +2738,37 @@ var AttachmentEditor = $n2.Class({
 		if( missingAttachment ){
 			opts.onError( _loc('A file must be selected') );
 			return;
+		};
+		
+		// Remove forms that do not have a file assigned
+		for(var i=0,e=this.creationAttachmentNames.length; i<e; ++i){
+			var attName = this.creationAttachmentNames[i];
+			var $form = $elem.find('.attachmentEditor_att_' + $n2.utils.stringToHtmlId(attName));
+			var $file = $form.find('input[type="file"]');
+			var fileName = $file.val();
+			if( !fileName ){
+				$form.remove();
+				
+				if( this.doc.nunaliit_attachments 
+				 && this.doc.nunaliit_attachments.files
+				 && this.doc.nunaliit_attachments.files[attName] ){
+					delete this.doc.nunaliit_attachments.files[attName];
+				};
+			};
+		};
+		
+		// Remove doc.nunaliit_attachments if empty
+		if( this.doc.nunaliit_attachments ){
+			var count = 0;
+			if( this.doc.nunaliit_attachments.files ){
+				for(var attName in this.doc.nunaliit_attachments.files){
+					++count;
+				};
+			};
+			
+			if( count < 1 ){
+				delete this.doc.nunaliit_attachments;
+			};
 		};
 		
 		// If nothing to load, no point in continuing

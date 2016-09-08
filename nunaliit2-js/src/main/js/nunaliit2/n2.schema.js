@@ -28,12 +28,7 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
 
-$Id: n2.schema.js 8461 2012-08-29 18:54:28Z jpfiset $
 */
-
-// @requires n2.core.js
-// @requires n2.utils.js
-// @requires n2.class.js
 
 ;(function($,$n2){
 "use strict";
@@ -204,14 +199,25 @@ function _formSingleField(r,completeSelectors,options){
 	
 	// option: textarea
 	if( options.textarea ){
-		r.push('<textarea class="');
+		r.push('<textarea');
 	} else if( options.checkbox ){
-		r.push('<input type="checkbox" class="');
+		r.push('<input type="checkbox"');
 	} else {
-		r.push('<input type="text" class="');
+		r.push('<input type="text"');
 	};
 	
-	r.push('n2schema_input');
+	// placeholder
+	if( options.placeholder 
+	 && typeof options.placeholder[0] === 'string' ){
+		var placeHolderValue = options.placeholder[0];
+		placeHolderValue = placeHolderValue.replace(/&/g, '&amp;');
+		placeHolderValue = placeHolderValue.replace(/"/g, '&quot;');
+		r.push(' placeholder="');
+		r.push( _loc(placeHolderValue) );
+		r.push('"');
+	};
+	
+	r.push(' class="n2schema_input');
 	
 	var selClass = createClassStringFromSelector(completeSelectors);
 	r.push(' '+selClass);
@@ -227,6 +233,7 @@ function _formSingleField(r,completeSelectors,options){
 		
 	} else if( options.localized ){
 		r.push(' ' + typeClassStringPrefix + 'localized');
+	
 	};
 
 	if( options.textarea ){
@@ -239,6 +246,10 @@ function _formSingleField(r,completeSelectors,options){
 
 	if( options.date ){
 		r.push('<div class="n2schema_help_date"></div>');
+	};
+	
+	if( options.wikiTransform ){
+		r.push('<div class="n2schema_help_wiki"></div>');
 	};
 };
 
@@ -298,11 +309,10 @@ function _formField() {
 		var optSplit = optStr.split('=');
 		if( optSplit.length > 1 ){
 			var valSplits = optSplit[1].split('+');
-			if( valSplits.length > 1 ) {
-				opts[optSplit[0]]=valSplits;
-			} else {
-				opts[optSplit[0]]=[optSplit[1]];
+			for(var j=0,k=valSplits.length; j<k; ++j){
+				valSplits[j] = decodeURIComponent( valSplits[j] );
 			};
+			opts[optSplit[0]]=valSplits;
 		} else {
 			opts[optSplit[0]]=[];
 		};
@@ -337,7 +347,11 @@ function _formField() {
 			
 			var langSel = completeSelectors.getChildSelector(lang);
 
-			r.push('<div class="n2schema_field_container n2schema_field_container_localized">');
+			r.push('<div class="n2schema_field_container n2schema_field_container_localized');
+			if( opts.textarea ){
+				r.push(' n2schema_field_container_textarea');
+			};
+			r.push('">');
 			r.push('<span class="n2_localize_lang">('+lang+')</span>');
 			_formSingleField(r,langSel,opts);
 			r.push('</div>');
@@ -355,7 +369,11 @@ function _formField() {
 			
 			var langSel = completeSelectors.getChildSelector(lang);
 			
-			r.push('<div class="n2schema_field_container n2schema_field_container_localized">');
+			r.push('<div class="n2schema_field_container n2schema_field_container_localized');
+			if( opts.textarea ){
+				r.push(' n2schema_field_container_textarea');
+			};
+			r.push('">');
 			r.push('<span class="n2_localize_lang">('+lang+')</span>');
 			_formSingleField(r,langSel,opts);
 			r.push('</div>');
@@ -376,7 +394,11 @@ function _formField() {
 		r.push('></textarea>');
 		
 	} else {
-		r.push('<div class="n2schema_field_container">');
+		r.push('<div class="n2schema_field_container');
+		if( opts.textarea ){
+			r.push(' n2schema_field_container_textarea');
+		};
+		r.push('">');
 		_formSingleField(r,completeSelectors,opts);
 		r.push('</div>');
 	};
@@ -1151,6 +1173,8 @@ var Schema = $n2.Class({
 	,cachedPopup: null
 	
 	,csvExport: null
+
+	,exportInfo: null
 	
 	,label: null
 
@@ -1169,6 +1193,7 @@ var Schema = $n2.Class({
 		this.formTemplate = jsonDefinition.form;
 		this.create = jsonDefinition.create;
 		this.csvExport = jsonDefinition.csvExport;
+		this.exportInfo = jsonDefinition['export'];
 		this.label = jsonDefinition.label;
 		this.options = jsonDefinition.options;
 		
@@ -1633,7 +1658,7 @@ var Form = $n2.Class({
 					if( $clicked.hasClass('n2schema_array_add') ){
 						var newType = $clicked.attr('n2_array_new_type');
 						var ary = classInfo.selector.getValue(_this.obj);
-						if( ary ){
+						if( ary && $n2.isArray(ary) ){
 							var newItem = '';
 							if( 'reference' === newType ){
 								newItem = {
@@ -1704,6 +1729,9 @@ var Form = $n2.Class({
 						
 					} else if( $clicked.hasClass('n2schema_help_date') ){
 						$n2.help.ToggleHelp('dates', $clicked);
+						
+					} else if( $clicked.hasClass('n2schema_help_wiki') ){
+						$n2.help.ToggleHelp('wiki', $clicked);
 					};
 				});
 			};
@@ -1736,12 +1764,24 @@ var Form = $n2.Class({
 		
 		var classNames = $input.attr('class').split(' ');
 		var classInfo = parseClassNames(classNames);
+		
+		// Special case for references. Convert input into field
+		if( 'reference' === classInfo.type 
+		 && classInfo.selector ){
+			var $span = $('<span>')
+				.attr('nunaliit-selector',classInfo.selector.encodeForDomAttribute())
+				;
+			$input.after($span);
+			$input.remove();
+			this._installReference($elem,$span);
+			return;
+		};
 
 		var selector = classInfo.selector;
 		if( selector ) {
 			var parentSelector = selector.getParentSelector();
 			var key = selector.getKey();
-			var handler = this._createChangeHandler(
+			var changeHandler = this._createChangeHandler(
 				obj
 				,selector
 				,parentSelector
@@ -1753,14 +1793,18 @@ var Form = $n2.Class({
 					callback(obj, selector.selectors, value);
 				}
 			);
-			$input.change(handler);
+			var keyupHandler = this._createChangeHandler(
+					obj
+					,selector
+					,parentSelector
+					,classInfo.type
+					,function(obj, selector, value){
+					}
+				);
+			$input.change(changeHandler);
 			//$input.blur(handler);
-			if( $n2.schema.GlobalAttributes.disableKeyUpEvents ){
-				// skip
-			} else {
-				if( 'date' !== classInfo.type ){ // no key up event for date text boxes
-					$input.keyup(handler);
-				};
+			if( 'date' !== classInfo.type ){ // no key up event for date text boxes
+				$input.keyup(keyupHandler);
 			};
 			
 			// Set value
@@ -1788,7 +1832,7 @@ var Form = $n2.Class({
 						,constrainInput: false
 						,onSelect: function(){
 							var $input = $(this);
-							handler.call($input);
+							changeHandler.call($input);
 						}
 					});
 				};
@@ -2283,12 +2327,8 @@ var Form = $n2.Class({
 $n2.schema = {
 	Schema: Schema
 	,SchemaRepository: SchemaRepository
-//	,DefaultRepository: new SchemaRepository()
 	,Display: Display
 	,Form: Form
-	,GlobalAttributes: {
-		disableKeyUpEvents: false
-	}
 	,registerCustomFieldHandler: registerCustomFieldHandler
 };
 

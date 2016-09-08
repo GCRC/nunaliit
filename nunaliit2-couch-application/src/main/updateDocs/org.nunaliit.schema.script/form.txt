@@ -1,0 +1,40 @@
+<div class="n2_documentForm"><div class="n2_layoutFloat">
+<div class="nunaliit_script_schema">
+<div class="title">
+	<div class="label n2s_localize">Script</div>
+	<div class="end"></div>
+</div>
+{{#nunaliit_script}}
+	<div class="nunaliit_script_schema_name">
+		<div class="label n2s_localize">Name</div>
+		<div class="value">{{#:field}}name{{/:field}}</div>
+		<div class="end"></div>
+	</div>
+{{/nunaliit_script}}
+{{#nunaliit_script}}
+	<div class="nunaliit_script_schema_label">
+		<div class="label n2s_localize">Label</div>
+		<div class="value">{{#:field}}label,localized{{/:field}}</div>
+		<div class="end"></div>
+	</div>
+{{/nunaliit_script}}
+{{#nunaliit_script}}
+	<div class="nunaliit_script_schema_type">
+		<div class="label n2s_localize">Type</div>
+		<div class="value">
+			<select class="{{#:input}}type{{/:input}}">
+				<option class="n2s_localize" value="export">Export</option>
+			</select>
+		</div>
+		<div class="end"></div>
+	</div>
+{{/nunaliit_script}}
+{{#nunaliit_script}}
+	<div class="nunaliit_script_schema_script">
+		<div class="label n2s_localize">Script</div>
+		<div class="value">{{#:field}}script,textarea{{/:field}}</div>
+		<div class="end"></div>
+	</div>
+{{/nunaliit_script}}
+</div>
+</div></div>

@@ -9,6 +9,7 @@ import java.util.Map;
 
 import ca.carleton.gcrc.couch.app.impl.DbDumpListenerNull;
 import ca.carleton.gcrc.couch.app.impl.DocumentCouchDb;
+import ca.carleton.gcrc.couch.app.impl.DocumentStoreProcessImpl;
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.utils.Files;
 
@@ -16,7 +17,7 @@ public class DbDumpProcess {
 
 	private CouchDb couchDb = null;
 	private File dumpDir = null;
-	private DocumentStoreProcess storeProcess = new DocumentStoreProcess();
+	private DocumentStoreProcess storeProcess = new DocumentStoreProcessImpl();
 	private boolean allDocs = false;
 	private Map<String,File> docIdsToFile = new HashMap<String,File>();
 	private DbDumpListener listener = new DbDumpListenerNull();

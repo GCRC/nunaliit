@@ -1,14 +1,29 @@
 package ca.carleton.gcrc.couch.command;
 
 import java.io.PrintStream;
-import java.util.Stack;
+import java.util.HashSet;
+import java.util.Set;
 
 public class CommandHelp implements Command {
 
-	static public void reportGlobalSettingAtlasDir(PrintStream ps){
-		ps.println("     --atlas-dir <dir>  Indicates the location of the atlas directory.");
-		ps.println("                        If this option is not specified, the current");
-		ps.println("                        directory is assumed to be the atlas directory.");
+	static public void reportGlobalOptions(PrintStream ps, String[] expectedOptions){
+		Set<String> options = new HashSet<String>();
+		for(String option : expectedOptions){
+			options.add(option);
+		}
+
+		if( options.contains(Options.OPTION_ATLAS_DIR) ){
+			ps.println("  "+Options.OPTION_ATLAS_DIR+" <dir>");
+			ps.println("    Indicates the location of the atlas directory.");
+			ps.println("    If this option is not specified, the current");
+			ps.println("    directory is assumed to be the atlas directory.");
+			ps.println();
+		}
+
+		ps.println("  "+Options.OPTION_DEBUG);
+		ps.println("    When specified, the command reports more information to");
+		ps.println("    help developers with debugging.");
+		ps.println();
 	}
 	
 	@Override
@@ -27,6 +42,12 @@ public class CommandHelp implements Command {
 	@Override
 	public boolean isDeprecated() {
 		return false;
+	}
+
+	@Override
+	public String[] getExpectedOptions() {
+		return new String[]{
+			};
 	}
 
 	@Override
@@ -51,11 +72,15 @@ public class CommandHelp implements Command {
 	@Override
 	public void runCommand(
 		GlobalSettings gs
-		,Stack<String> argumentStack
+		,Options options
 		) throws Exception {
+
+		if( options.getArguments().size() > 2 ){
+			throw new Exception("Unexpected argument: "+options.getArguments().get(2));
+		}
 		
-		if( argumentStack.size() > 0 ) {
-			String commandName = argumentStack.pop();
+		if( options.getArguments().size() > 1 ) {
+			String commandName = options.getArguments().get(1);
 			for(Command command : Main.getCommands()){
 				if( command.matchesKeyword(commandName) ){
 					reportCommandSpecificHelp(gs, command);

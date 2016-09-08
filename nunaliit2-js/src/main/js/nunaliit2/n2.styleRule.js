@@ -49,28 +49,25 @@ var g_TrueNode = new TrueNode();
 //--------------------------------------------------------------------------
 var svgSymbolNames = {
 	'fill': {
-		alt: 'fillColor'
-		,applies: {
+		applies: {
 			circle: true
 			,line: false
 			,path: true
-			,text: false
+			,text: true
 			,g: true
 		}
 	}
 	,'fill-opacity': {
-		alt: 'fillOpacity'
-		,applies: {
+		applies: {
 			circle: true
 			,line: false
 			,path: true
-			,text: false
+			,text: true
 			,g: true
 		}
 	}
 	,'stroke': {
-		alt: 'strokeColor'
-		,applies: {
+		applies: {
 			circle: true
 			,line: true
 			,path: true
@@ -79,18 +76,16 @@ var svgSymbolNames = {
 		}
 	}
 	,'stroke-width': {
-		alt: 'strokeWidth'
-		,applies: {
+		applies: {
 			circle: true
 			,line: true
 			,path: true
-			,text: false
+			,text: true
 			,g: true
 		}
 	}
 	,'stroke-opacity': {
-		alt: 'strokeOpacity'
-		,applies: {
+		applies: {
 			circle: true
 			,line: true
 			,path: true
@@ -99,8 +94,16 @@ var svgSymbolNames = {
 		}
 	}
 	,'stroke-linecap': {
-		alt: 'strokeLinecap'
-		,applies: {
+		applies: {
+			circle: true
+			,line: true
+			,path: true
+			,text: false
+			,g: true
+		}
+	}
+	,'stroke-dasharray': {
+		applies: {
 			circle: true
 			,line: true
 			,path: true
@@ -109,8 +112,7 @@ var svgSymbolNames = {
 		}
 	}
 	,'r': {
-		alt: 'pointRadius'
-		,applies: {
+		applies: {
 			circle: true
 			,line: false
 			,path: false
@@ -119,8 +121,7 @@ var svgSymbolNames = {
 		}
 	}
 	,'pointer-events': {
-		alt: 'pointEvents'
-		,applies: {
+		applies: {
 			circle: true
 			,line: true
 			,path: true
@@ -129,8 +130,7 @@ var svgSymbolNames = {
 		}
 	}
 	,'cursor': {
-		alt: 'cursor'
-		,applies: {
+		applies: {
 			circle: true
 			,line: true
 			,path: true
@@ -183,6 +183,55 @@ var svgSymbolNames = {
 			,g: true
 		}
 	}
+	,'text-anchor': {
+		applies: {
+			circle: false
+			,line: false
+			,path: false
+			,text: true
+			,g: true
+		}
+	}
+	,'marker-start': {
+		applies: {
+			circle: false
+			,line: false
+			,path: true
+			,text: false
+			,g: true
+		}
+	}
+	,'marker-end': {
+		applies: {
+			circle: false
+			,line: false
+			,path: true
+			,text: false
+			,g: true
+		}
+	}
+	,'marker-mid': {
+		applies: {
+			circle: false
+			,line: false
+			,path: true
+			,text: false
+			,g: true
+		}
+	}
+};
+
+//--------------------------------------------------------------------------
+var SymbolTranslationMap = {
+	'fillColor': 'fill'	
+	,'fillOpacity': 'fill-opacity'
+	,'strokeColor': 'stroke'
+	,'strokeWidth': 'stroke-width'
+	,'strokeOpacity': 'stroke-opacity'
+	,'strokeLinecap': 'stroke-linecap'
+	,'strokeDashArray': 'stroke-dasharray'
+	,'pointRadius': 'r'
+	,'pointEvents': 'pointer-events'
 };
 
 //--------------------------------------------------------------------------
@@ -204,23 +253,40 @@ var Symbolizer = $n2.Class({
 	extendWith: function(symbolizer){
 		if( symbolizer ){
 			if( symbolizer._n2Symbolizer ){
+				// From another instance of Symbolizer
 				var att = symbolizer.symbols;
 				for(var key in att){
-					this.symbols[key] = att[key];
+					var value = att[key];
+					this.symbols[key] = value;
 				};
 			} else {
+				// From a user supplied dictionary. Must translate
 				for(var key in symbolizer){
 					var symbolValue = symbolizer[key];
+
+					// Translate key, if needed
+					if( SymbolTranslationMap[key] ){
+						key = SymbolTranslationMap[key];
+					};
+
+					// Parse value if it starts with a '='
 					if( symbolValue 
 					 && symbolValue.length > 0 
 					 && symbolValue[0] === '=' ){
 						try {
+							// This should return an object with a function getValue(ctxt)
 							symbolValue = $n2.styleRuleParser.parse(symbolValue.substr(1));
 						} catch(e) {
 							symbolValue = e;
 						};
 					};
-					this.symbols[key] = symbolValue;
+
+					if( 'opacity' === key ){
+						this.symbols['fill-opacity'] = symbolValue;
+						this.symbols['stroke-opacity'] = symbolValue;
+					} else {
+						this.symbols[key] = symbolValue;
+					};
 				};
 			};
 		};
@@ -232,6 +298,9 @@ var Symbolizer = $n2.Class({
 		if( typeof value === 'object'
 		 && typeof value.getValue === 'function' ){
 			value = value.getValue(ctxt);
+		} else if( typeof value === 'object'
+		 && 'localized' === value.nunaliit_type){
+			value = _loc(value);
 		};
 		
 		return value;
@@ -254,25 +323,31 @@ var Symbolizer = $n2.Class({
 			var info = svgSymbolNames[name];
 			if( info.applies[nodeName] ){
 				var value = this.getSymbolValue(name,ctxt);
-				if( !value && info.alt ){
-					value = this.getSymbolValue(info.alt,ctxt);
-				};
 				
 				if( 'label' === name ){
-					value = _loc(value);
+					if( value === null ){
+						// ignore
+					} else if( typeof value === 'object' 
+					 && 'localized' === value.nunaliit_type ){
+						value = _loc( value );
+					} else if( typeof value === 'undefined' ){
+						// ignore
+					} else if( typeof value !== 'string' ){
+						value = '' + value;
+					};
 					
+					// empty()
+					while ( svgDomElem.firstChild ) {
+						svgDomElem.removeChild( svgDomElem.firstChild );
+					};
+
 					if( value ){
-						// empty()
-						while ( svgDomElem.firstChild ) {
-							svgDomElem.removeChild( svgDomElem.firstChild );
-						};
-						
 						// text(value)
 						var textNode = svgDomElem.ownerDocument.createTextNode(value);
 						svgDomElem.appendChild(textNode);
 					};
 					
-				} else if( value ){
+				} else if( typeof value !== 'undefined' ){
 					svgDomElem.setAttributeNS(null, name, value);
 				};
 			};
@@ -284,6 +359,25 @@ var Symbolizer = $n2.Class({
 		} else {
 			svgDomElem.setAttributeNS(null, 'display', 'inherit');
 		};
+	},
+	
+	adjustHtmlElement: function(htmlDomElement,ctxt){
+
+		var cssArr = [];
+		
+		this.forEachSymbol(function(name,value){
+			if( 'display' === name ){
+				if( 'none' === value ){
+					cssArr.push('display:none');
+				};
+				
+			} else {
+				cssArr.push(name+':'+value);
+			};
+		},ctxt);
+
+		var cssString = cssArr.join(';');
+		htmlDomElement.setAttribute("style", cssString);
 	}
 });
 
@@ -352,38 +446,45 @@ var StyleRules = $n2.Class({
 		};
 
 		var rule = loadRuleFromObject({
-			condition: "true"
+			condition: 'true'
 			,normal: {
 				'fillColor': '#ffffff'
 				,'strokeColor': '#ee9999'
 				,'strokeWidth': 2
-				,'fillOpacity': 0.4
+				,'fillOpacity': 1
 				,'strokeOpacity': 1
-				,'strokeLinecap': "round"
-				,'strokeDashstyle': "solid"
+				,'strokeLinecap': 'round'
 				,pointRadius: 6
-				,pointerEvents: "visiblePainted"
+				,pointerEvents: 'visiblePainted'
 			}
 			,selected: {
-				'strokeColor': "#ff2200"
+				'strokeColor': '#ff2200'
 			}
 			,found: {
-				'strokeColor': "#00ffff"
-				,'fillColor': "#00ffff"
+				'strokeColor': '#00ffff'
+				,'fillColor': '#00ffff'
 			}
 			,hovered: {
-				'fillColor': "#0000ff"
+				'fillColor': '#0000ff'
 			}
 		});
 		this.addRule(rule);
 
 		var rule = loadRuleFromObject({
-			condition: "isLine()"
-			,hovered:{
-				'strokeColor': "#0000ff"
+			condition: 'isLine()'
+			,normal: {
+				'fillColor': 'none'
 			}
-			,hoveredClicked:{
-				'strokeColor': "#0000ff"
+			,selected: {
+				'fillColor': 'none'
+			}
+			,hovered:{
+				'strokeColor': '#0000ff'
+				,'fillColor': 'none'
+			}
+			,found: {
+				'strokeColor': '#00ffff'
+				,'fillColor': 'none'
 			}
 		});
 		this.addRule(rule);
@@ -401,6 +502,7 @@ var StyleRules = $n2.Class({
 	 *    ,n2_found: <boolean>
 	 *    ,n2_intent: <null or string>
 	 *    ,n2_doc: <object>
+	 *    ,n2_elem: HTML element, SVG element, undefined
 	 * }
 	 */
 	getSymbolizer: function(ctxt){

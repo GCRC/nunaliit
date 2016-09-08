@@ -2,6 +2,7 @@ package ca.carleton.gcrc.couch.app;
 
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.Comparator;
 
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -11,7 +12,9 @@ import ca.carleton.gcrc.couch.app.DocumentUpdateListener.Phase;
 import ca.carleton.gcrc.couch.app.impl.DigestComputerSha1;
 import ca.carleton.gcrc.couch.app.impl.DocumentManifest;
 import ca.carleton.gcrc.couch.app.impl.DocumentUpdateListenerDefault;
+import ca.carleton.gcrc.couch.app.impl.JSONObjectConverter;
 import ca.carleton.gcrc.couch.app.impl.StreamProducerDocumentUpdate;
+import ca.carleton.gcrc.couch.app.impl.UpdateObjectComparator;
 import ca.carleton.gcrc.couch.app.impl.UpdateSpecifier;
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.impl.ConnectionUtils;
@@ -55,7 +58,8 @@ public class DocumentUpdateProcess {
 	private CouchDb couchDb;
 	private DigestComputerSha1 digestComputer = new DigestComputerSha1();
 	private DocumentUpdateListener listener = defaultListener;
-	
+	private boolean ignoringTimestamps = false;
+
 	public DocumentUpdateProcess(
 		CouchDb couchDb
 		) throws Exception {
@@ -72,6 +76,14 @@ public class DocumentUpdateProcess {
 
 	public void setListener(DocumentUpdateListener listener) {
 		this.listener = listener;
+	}
+	
+	public boolean isIgnoringTimestamps() {
+		return ignoringTimestamps;
+	}
+
+	public void setIgnoringTimestamps(boolean ignoreTimestamps) {
+		this.ignoringTimestamps = ignoreTimestamps;
 	}
 
 	public void update(Document sourceDoc) throws Exception {
@@ -111,9 +123,19 @@ public class DocumentUpdateProcess {
 		boolean modified = false;
 		UpdateSpecifier updateSpecifier = null;
 		try {
+			Comparator<JSONObject> comparator = UpdateObjectComparator.getNunaliitComparator();
+			if( ignoringTimestamps ){
+				comparator = UpdateObjectComparator.getComparatorNoTimestamps();
+			}
+
 			if( false == couchDb.documentExists(docId) ) {
 				creationRequired = true;
-				updateSpecifier = UpdateSpecifier.computeUpdateSpecifier(sourceDoc, dd, null, schedule);
+				updateSpecifier = UpdateSpecifier.computeUpdateSpecifier(
+					sourceDoc, 
+					dd, 
+					null, 
+					schedule,
+					comparator);
 				
 			} else {
 				// Get document from database
@@ -124,7 +146,12 @@ public class DocumentUpdateProcess {
 				
 				// Figure out the differences between the source document and
 				// the target document
-				updateSpecifier = UpdateSpecifier.computeUpdateSpecifier(sourceDoc, dd, currentTargetDoc, schedule);
+				updateSpecifier = UpdateSpecifier.computeUpdateSpecifier(
+					sourceDoc, 
+					dd, 
+					currentTargetDoc, 
+					schedule,
+					comparator);
 			}
 		} catch(Exception e) {
 			throw new Exception("Unable to access current document", e);
@@ -187,6 +214,8 @@ public class DocumentUpdateProcess {
 				,currentTargetDoc
 				,updateSpecifier
 				);
+		
+		producer.setJsonObjectConverter( JSONObjectConverter.getUploadConverter() );
 
 		// Compute URL
 		URL effectiveUrl = new URL(couchDb.getUrl(), URLEncoder.encode(docId,"UTF-8"));

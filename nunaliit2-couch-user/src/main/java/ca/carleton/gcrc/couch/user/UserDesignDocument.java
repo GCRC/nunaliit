@@ -9,6 +9,8 @@ public interface UserDesignDocument {
 	
 	CouchDesignDocument getSupportingDesignDocument();
 	
+	Collection<UserDocument> getAllUsers() throws Exception;
+	
 	Collection<UserDocument> getUsersWithRole(String role) throws Exception;
 	
 	Collection<UserDocument> getUsersWithRoles(List<String> roles) throws Exception;

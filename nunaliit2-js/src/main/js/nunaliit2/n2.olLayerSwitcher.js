@@ -4,6 +4,7 @@
  * full text of the license. */
 
 ;(function($,$n2){
+"use strict";
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
@@ -543,15 +544,17 @@ OpenLayers.Control.NunaliitLayerSwitcher =
     
     _addClass: function(elem, className) {
     	var classNames = [];
-    	
-    	if( elem.className ){
-    		var currentClasses = '' + elem.className;
+
+    	var currentClasses = elem.getAttribute('class') || '';
+    	if( currentClasses ) {
     		classNames = currentClasses.split(' ');
     	};
+
+    	if( classNames.indexOf(className) < 0 ){
+        	classNames.push(className);
+    	};
     	
-    	classNames.push(className);
-    	
-		elem.className = classNames.join(' ');
+    	elem.setAttribute('class',classNames.join(' '));
     },
 
     /** 

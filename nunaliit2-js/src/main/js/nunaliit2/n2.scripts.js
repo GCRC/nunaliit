@@ -28,13 +28,12 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
 
-$Id: n2.scripts.js 8165 2012-05-31 13:14:37Z jpfiset $
 */
 
-// @requires n2.core.js
-// @requires n2.utils.js
-// @namespace nunaliit2
 ;(function($n2){
+"use strict";
+
+var customScriptsByUrl = {};
 
 function getScriptLocation(scriptName) {
 	var result = null;
@@ -62,7 +61,11 @@ function getScriptLocation(scriptName) {
 };
 
 function getCoreScriptLocation() {
-	return getScriptLocation(nunaliit2CoreScript);
+	if( typeof nunaliit2CoreScript === 'string' ){
+		return getScriptLocation(nunaliit2CoreScript);
+	};
+	
+	return null;
 };
 
 function loadScript(scriptUrl, refLocation, insertAfter) {
@@ -96,10 +99,110 @@ function loadScript(scriptUrl, refLocation, insertAfter) {
 	};
 };
 
+function _loadedScript(url){
+	var customScript = customScriptsByUrl[url];
+	if( customScript ){
+		customScript.loaded = true;
+	};
+};
+
+function loadCustomScripts(scriptUrls) {
+	var scriptElems = document.getElementsByTagName('script');
+	var insertBeforeElem = scriptElems.item( scriptElems.length - 1 );
+	var location = '';
+
+	var nunaliitCustomLocation = getScriptLocation('nunaliit_custom.js');
+	if( nunaliitCustomLocation && nunaliitCustomLocation.elem ) {
+		insertBeforeElem = nunaliitCustomLocation.elem;
+		location = nunaliitCustomLocation.location;
+	};
+	
+	// Convert string urls into request objects
+	if( typeof scriptUrls === 'string' ){
+		// Convert single string into an array
+		scriptUrls = [scriptUrls];
+	};
+	if( $n2.isArray(scriptUrls) ){
+		for(var i=0,e=scriptUrls.length; i<e; ++i){
+			var scriptUrl = scriptUrls[i];
+			if( typeof scriptUrl === 'string' ){
+				var request = {
+					url: scriptUrl
+					,requiredForConfiguration: true
+				};
+				scriptUrls[i] = request;
+			};
+		};
+	};
+	
+	if( $n2.isArray(scriptUrls) ){
+		// Accumulate scripts to install
+		var requestsToInstall = [];
+		for(var i=0,e=scriptUrls.length; i<e; ++i){
+			var request = $n2.extend({
+				url: null
+				,requiredForConfiguration: true
+			},scriptUrls[i]);
+
+			var url = request.url;
+			if( url ){
+				if( customScriptsByUrl[url] ){
+					// Already requested. Nothing to do
+				} else {
+					customScriptsByUrl[url] = request;
+					request.loaded = false;
+					requestsToInstall.push(request);
+				};
+			};
+		};
+
+		for(var i=0,e=requestsToInstall.length; i<e; ++i){
+			var request = requestsToInstall[i];
+			var url = request.url;
+			
+			var s = document.createElement('script');
+			s.src = location + url;
+			s.type = 'text/javascript';
+			var cb = getLoadedCallback(url);
+			if( typeof s.addEventListener === 'function' ){
+				s.addEventListener('load',cb);
+				s.addEventListener('error',cb);
+			} else {
+				s.onload = cb;
+				s.onerror = cb;
+			};
+			insertBeforeElem.parentNode.insertBefore(s,insertBeforeElem);
+		};
+	};
+	
+	function getLoadedCallback(url){
+		return function(){
+			_loadedScript(url);
+			return true;
+		};
+	};
+};
+
+function areAllCustomScriptsLoaded(){
+	var allLoaded = true;
+	
+	for(var url in customScriptsByUrl){
+		var customScript = customScriptsByUrl[url];
+		if( customScript.requiredForConfiguration 
+		 && !customScript.loaded ){
+			allLoaded = false;
+		};
+	};
+	
+	return allLoaded;
+};
+
 $n2.scripts = {
 	getScriptLocation: getScriptLocation
 	,getCoreScriptLocation: getCoreScriptLocation
 	,loadScript: loadScript
+	,loadCustomScripts: loadCustomScripts
+	,areAllCustomScriptsLoaded: areAllCustomScriptsLoaded 
 };
 
 })(nunaliit2);

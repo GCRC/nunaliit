@@ -31,6 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 ;(function($,$n2) {
+"use strict";
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
@@ -39,16 +40,14 @@ var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
 var DisplayImageSourceFactory = $n2.Class({
 	
-	documentSource: null,
+	dispatchService: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
-			documentSource: null
-			,attachmentService: null
+			dispatchService: null
 		},opts_);
 		
-		this.documentSource = opts.documentSource;
-		this.attachmentService = opts.attachmentService;
+		this.dispatchService = opts.dispatchService;
 	},
 
 	getImageSourceForDoc: function(opts_){
@@ -63,6 +62,11 @@ var DisplayImageSourceFactory = $n2.Class({
 		var _this = this;
 		
 		var doc = opts.doc;
+		
+		var documentSource = $n2.document.getDocumentSourceFromDocument({
+			doc: doc
+			,dispatchService: this.dispatchService
+		});
 
 		// Map to accumulate all references
 		var docIdMap = {};
@@ -76,7 +80,7 @@ var DisplayImageSourceFactory = $n2.Class({
 		};
 
 		// Obtain reverse references
-		this.documentSource.getReferencesFromId({
+		documentSource.getReferencesFromId({
 			docId: doc._id
 			,onSuccess: function(referenceIds){
 				for(var i=0, e=referenceIds.length; i<e; ++i){
@@ -96,7 +100,7 @@ var DisplayImageSourceFactory = $n2.Class({
 			// If we have a source, load all documents with the same source
 			if( doc.nunaliit_source 
 			 && doc.nunaliit_source.doc ){
-				_this.documentSource.getProductFromId({
+				documentSource.getProductFromId({
 					docId: doc.nunaliit_source.doc
 					,onSuccess: function(docIds){
 						for(var i=0, e=docIds.length; i<e; ++i){
@@ -123,7 +127,7 @@ var DisplayImageSourceFactory = $n2.Class({
 				};
 			};
 			
-			_this.documentSource.getDocuments({
+			documentSource.getDocuments({
 				docIds: refDocIds
 				,onSuccess: loadedDocs
 				,onError: function(errorMsg){
@@ -136,13 +140,14 @@ var DisplayImageSourceFactory = $n2.Class({
 			// Create an image source
 			var imageSource = new $n2.displayBox.DisplayImageSourceDoc({
 				showService: opts.showService
+				,dispatchService: _this.dispatchService
 			});
 			imageSource.addDocument(doc, opts.attName);
 			
 			// Go over all documents and look for viable attachments
 			for(var i=0,e=docs.length; i<e; ++i){
 				var refDoc = docs[i];
-				var atts = _this.attachmentService.getAttachments(refDoc);
+				var atts = documentSource.getDocumentAttachments(refDoc);
 				for(var j=0,k=atts.length; j<k; ++j){
 					var att = atts[j];
 					if( 'image' === att.getFileClass() 

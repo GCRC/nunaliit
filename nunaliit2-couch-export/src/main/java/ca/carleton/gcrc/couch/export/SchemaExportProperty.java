@@ -6,13 +6,50 @@ import java.util.List;
 import org.json.JSONObject;
 
 public class SchemaExportProperty {
+	
+	public enum Type {
+		TEXT("text")
+		,JSON("json")
+		,GEOMETRY("geometry")
+		;
+		
+		private String definitionString;
+		private Type(String definitionString){
+			this.definitionString = definitionString;
+		}
+		public String getDefinitionString(){
+			return definitionString;
+		}
+	};
+	
+	static public Type typeFromDefinitionString(String definitionString) throws Exception{
+		for(Type type : Type.values()){
+			if( type.getDefinitionString().equals(definitionString) ){
+				return type;
+			};
+		};
+		
+		throw new Exception("Unknown export type: "+definitionString);
+	};
 
 	static public SchemaExportProperty parseJson(JSONObject jsonExportProperty) throws Exception {
 
-		String type = jsonExportProperty.optString("type");
-		String label = jsonExportProperty.optString("label");
-		String selectString = jsonExportProperty.optString("select");
-		if( null == selectString ){
+		String typeStr = jsonExportProperty.optString("type",null);
+		String label = jsonExportProperty.optString("label",null);
+		String selectString = jsonExportProperty.optString("select",null);
+		
+		Type type = Type.TEXT;
+		if( null != typeStr ){
+			type = typeFromDefinitionString(typeStr);
+		}
+		
+		// Verify select attribute
+		if( type == Type.GEOMETRY ){
+			// Geometry does not required a 'select'
+			if( null != selectString ){
+				throw new Exception("Attribute 'select' should not be provided in an export property of type GEOMETRY: "+label);
+			}
+		} else if( null == selectString ){
 			throw new Exception("Attribute 'select' must be provided in an export property: "+label);
 		}
 		
@@ -20,10 +57,13 @@ public class SchemaExportProperty {
 			label = selectString;
 		}
 		
-		String[] selectors = selectString.split("\\.");
-		ArrayList<String> selector = new ArrayList<String>(selectors.length);
-		for(int i=0; i<selectors.length; ++i){
-			selector.add( selectors[i] );
+		ArrayList<String> selector = null;
+		if( null != selectString ){
+			String[] selectors = selectString.split("\\.");
+			selector = new ArrayList<String>(selectors.length);
+			for(int i=0; i<selectors.length; ++i){
+				selector.add( selectors[i] );
+			}
 		}
 
 		SchemaExportProperty property = new SchemaExportProperty();
@@ -37,7 +77,7 @@ public class SchemaExportProperty {
 
 	private String label;
 	private List<String> selector;
-	private String type;
+	private Type type = Type.TEXT;
 	
 	public String getLabel() {
 		return label;
@@ -55,11 +95,11 @@ public class SchemaExportProperty {
 		this.selector = selector;
 	}
 	
-	public String getType() {
+	public Type getType() {
 		return type;
 	}
 	
-	public void setType(String type) {
+	public void setType(Type type) {
 		this.type = type;
 	}
 	

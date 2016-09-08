@@ -28,13 +28,10 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
 
-$Id: n2.olFilter.js 8165 2012-05-31 13:14:37Z jpfiset $
 */
 
-// @requires n2.utils.js
-// @requires n2.class.js
-
 ;(function($,$n2){
+"use strict";
 
 function reportFilterError(errStr, filterObj) {
 	$n2.reportError('OL_FILTER','Filter error. Application might not work properly. '+errStr);

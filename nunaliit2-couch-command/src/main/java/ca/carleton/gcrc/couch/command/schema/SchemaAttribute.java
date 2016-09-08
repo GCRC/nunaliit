@@ -1,6 +1,7 @@
 package ca.carleton.gcrc.couch.command.schema;
 
 import java.io.PrintWriter;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.Vector;
 
@@ -138,16 +139,27 @@ public class SchemaAttribute {
 			attribute.setWikiTransform(wikiTransform);
 		}
 
-		// disableMaxHeight
-		{
-			boolean disableMaxHeight = jsonAttr.optBoolean("disableMaxHeight",false);
-			attribute.setDisableMaxHeight(disableMaxHeight);
-		}
-
 		// maxHeight
 		{
-			int maxHeight = jsonAttr.optInt("maxHeight",0);
-			attribute.setMaxHeight(maxHeight);
+			Object test = jsonAttr.opt("maxHeight");
+			if( null != test ){
+				int maxHeight = jsonAttr.optInt("maxHeight");
+				if( maxHeight > 0 ){
+					attribute.setMaxHeight(maxHeight);
+				}
+			}
+		}
+
+		// uploadOptional
+		{
+			boolean uploadOptional = jsonAttr.optBoolean("uploadOptional",false);
+			attribute.setUploadOptional(uploadOptional);
+		}
+
+		// placeholder
+		{
+			String placeholder = jsonAttr.optString("placeholder",null);
+			attribute.setPlaceholder(placeholder);
 		}
 		
 		return attribute;
@@ -169,8 +181,9 @@ public class SchemaAttribute {
 	private String customType;
 	private String searchFunction;
 	private boolean wikiTransform;
-	private boolean disableMaxHeight;
-	private int maxHeight = 0;
+	private Integer maxHeight = null;
+	private boolean uploadOptional = false;
+	private String placeholder = null;
 
 	public SchemaAttribute(String type){
 		this.type = type;
@@ -309,20 +322,28 @@ public class SchemaAttribute {
 		this.wikiTransform = wikiTransform;
 	}
 
-	public boolean isDisableMaxHeight() {
-		return disableMaxHeight;
-	}
-
-	public void setDisableMaxHeight(boolean disableMaxHeight) {
-		this.disableMaxHeight = disableMaxHeight;
-	}
-
-	public int getMaxHeight() {
+	public Integer getMaxHeight() {
 		return maxHeight;
 	}
 
-	public void setMaxHeight(int maxHeight) {
+	public void setMaxHeight(Integer maxHeight) {
 		this.maxHeight = maxHeight;
+	}
+
+	public boolean isUploadOptional() {
+		return uploadOptional;
+	}
+
+	public void setUploadOptional(boolean uploadOptional) {
+		this.uploadOptional = uploadOptional;
+	}
+
+	public String getPlaceholder() {
+		return placeholder;
+	}
+
+	public void setPlaceholder(String placeholder) {
+		this.placeholder = placeholder;
 	}
 
 	public JSONObject toJson() throws Exception {
@@ -342,7 +363,9 @@ public class SchemaAttribute {
 		if( excludedFromExport ) jsonAttr.put("excludedFromExport", true);
 		if( urlsToLinks ) jsonAttr.put("urlsToLinks", true);
 		if( wikiTransform ) jsonAttr.put("wikiTransform", true);
-		if( disableMaxHeight ) jsonAttr.put("disableMaxHeight", true);
+		if( null != maxHeight ) jsonAttr.put("maxHeight", maxHeight.intValue());
+		if( uploadOptional ) jsonAttr.put("uploadOptional", true);
+		if( null != placeholder ) jsonAttr.put("placeholder", placeholder);
 
 		if( options.size() > 0 ){
 			JSONArray jsonOptions = new JSONArray();
@@ -364,10 +387,6 @@ public class SchemaAttribute {
 			}
 			
 			jsonAttr.put("checkboxes",jsonCheckboxes);
-		}
-
-		if( maxHeight > 0 ){
-			jsonAttr.put("maxHeight", maxHeight);
 		}
 		
 		return jsonAttr;
@@ -438,6 +457,10 @@ public class SchemaAttribute {
 				
 				media.put("data", new JSONObject());
 				
+				if( isUploadOptional() ){
+					media.put("_compulsory", false);
+				}
+				
 				files.put("media", media);
 			}
 
@@ -453,7 +476,7 @@ public class SchemaAttribute {
 		}
 	}
 
-	public boolean printBrief(PrintWriter pw, String schemaName, boolean isFirst) throws Exception {
+	public boolean printBrief(PrintWriter pw, String schemaStructure, String schemaClass, boolean isFirst) throws Exception {
 		boolean printed = false;
 		
 		if( includedInBrief ){
@@ -461,25 +484,25 @@ public class SchemaAttribute {
 				
 			} else if( "string".equals(type) ){
 				if( null != id ){
-					pw.print("{{#"+schemaName+"}}");
+					pw.print("{{#"+schemaStructure+"}}");
 					if( !isFirst ) pw.print(" ");
 					pw.print("{{"+id+"}}");
-					pw.print("{{/"+schemaName+"}}");
+					pw.print("{{/"+schemaStructure+"}}");
 					printed = true;
 				}
 				
 			} else if( "localized".equals(type) ){
 				if( null != id ){
-					pw.print("{{#"+schemaName+"}}");
+					pw.print("{{#"+schemaStructure+"}}");
 					if( !isFirst ) pw.print(" ");
 					pw.print("{{#:localize}}"+id+"{{/:localize}}");
-					pw.print("{{/"+schemaName+"}}");
+					pw.print("{{/"+schemaStructure+"}}");
 					printed = true;
 				}
 				
 			} else if( "selection".equals(type) ){
 				if( null != id ){
-					pw.print("{{#"+schemaName+"}}");
+					pw.print("{{#"+schemaStructure+"}}");
 					if( !isFirst ) pw.print(" ");
 					pw.print("<span class=\"n2s_select\" n2-choice=\"{{"+id+"}}\">");
 					for(SelectionOption option : options){
@@ -492,50 +515,50 @@ public class SchemaAttribute {
 						pw.print("</span>");
 					}
 					pw.print("</span>");
-					pw.print("{{/"+schemaName+"}}");
+					pw.print("{{/"+schemaStructure+"}}");
 					printed = true;
 				}
 				
 			} else if( "date".equals(type) ){
 				if( null != id ){
-					pw.print("{{#"+schemaName+"}}");
+					pw.print("{{#"+schemaStructure+"}}");
 					pw.print("{{#"+id+"}}");
 					if( !isFirst ) pw.print(" ");
 					pw.print("{{date}}");
 					pw.print("{{/"+id+"}}");
-					pw.print("{{/"+schemaName+"}}");
+					pw.print("{{/"+schemaStructure+"}}");
 					printed = true;
 				}
 				
 			} else if( "reference".equals(type) ){
 				if( null != id ){
-					pw.print("{{#"+schemaName+"}}");
+					pw.print("{{#"+schemaStructure+"}}");
 					pw.print("{{#"+id+"}}");
 					pw.print("{{#doc}}");
 					if( !isFirst ) pw.print(" ");
 					pw.print("<span class=\"n2s_briefDisplay\">{{.}}</span>");
 					pw.print("{{/doc}}");
 					pw.print("{{/"+id+"}}");
-					pw.print("{{/"+schemaName+"}}");
+					pw.print("{{/"+schemaStructure+"}}");
 					printed = true;
 				}
 				
 			} else if( "custom".equals(type) ){
 				if( null != id && null != customType ){
-					pw.print("{{#"+schemaName+"}}");
+					pw.print("{{#"+schemaStructure+"}}");
 					pw.print("{{#"+id+"}}");
 					if( !isFirst ) pw.print(" ");
 					pw.print("<span class=\"n2s_custom\""
 							+ " nunaliit-custom=\""+customType+"\""
 							+ " nunaliit-selector=\"{{#:selector}}.{{/:selector}}\"></span>");
 					pw.print("{{/"+id+"}}");
-					pw.print("{{/"+schemaName+"}}");
+					pw.print("{{/"+schemaStructure+"}}");
 					printed = true;
 				}
 				
 			} else if( "array".equals(type) ){
 				if( null != id ){
-					pw.print("{{#"+schemaName+"}}");
+					pw.print("{{#"+schemaStructure+"}}");
 					pw.print("{{#"+id+"}}");
 					if( !isFirst ) pw.print(" ");
 					
@@ -555,7 +578,7 @@ public class SchemaAttribute {
 					}
 					
 					pw.print("{{/"+id+"}}");
-					pw.print("{{/"+schemaName+"}}");
+					pw.print("{{/"+schemaStructure+"}}");
 					printed = true;
 				}
 
@@ -576,7 +599,7 @@ public class SchemaAttribute {
 		return printed;
 	}
 
-	public void printDisplay(PrintWriter pw, String schemaName) throws Exception {
+	public void printDisplay(PrintWriter pw, String schemaStructure, String schemaClass) throws Exception {
 		if( false == excludedFromDisplay ){
 			String label = this.label;
 			String labelLocalizeClass = " n2s_localize";
@@ -596,10 +619,10 @@ public class SchemaAttribute {
 			} else if( "string".equals(type)
 			 || "localized".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 					pw.println("\t{{#if "+id+"}}");
 
-					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 
@@ -613,9 +636,9 @@ public class SchemaAttribute {
 					} else if( isTextarea() ){
 						fixUrlClass += " n2s_preserveSpaces";
 						
-						if( !disableMaxHeight ){
+						if( null != maxHeight && maxHeight.intValue() > 0 ){
 							fixUrlClass += " n2s_installMaxHeight";
-							fixMaxHeight = " _maxheight=\"" + getEffectiveMaxHeight() + "\"";
+							fixMaxHeight = " _maxheight=\"" + maxHeight.intValue() + "\"";
 						}
 					}
 					
@@ -631,15 +654,15 @@ public class SchemaAttribute {
 					pw.println("\t\t</div>");
 					
 					pw.println("\t{{/if}}");
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 				
 			} else if( "date".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 					pw.println("\t{{#"+id+"}}");
 
-					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					pw.println("\t\t\t<div class=\"value\">{{date}}</div>");
@@ -649,15 +672,15 @@ public class SchemaAttribute {
 					
 					
 					pw.println("\t{{/"+id+"}}");
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "reference".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 					pw.println("\t{{#"+id+"}}");
 
-					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					
@@ -673,15 +696,15 @@ public class SchemaAttribute {
 					
 					
 					pw.println("\t{{/"+id+"}}");
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "custom".equals(type) ){
 				if( null != id && null != customType ){
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 					pw.println("\t{{#"+id+"}}");
 
-					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					
@@ -696,14 +719,16 @@ public class SchemaAttribute {
 					
 					
 					pw.println("\t{{/"+id+"}}");
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 				
 			} else if( "array".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaName+"}}");
 
-					pw.println("\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("{{#"+schemaStructure+"}}");
+					pw.println("\t{{#if "+id+"}}");
+
+					pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					pw.println("\t\t<div class=\"value\">");
@@ -714,8 +739,8 @@ public class SchemaAttribute {
 					}
 					if( isTextarea() ){
 						pw.print(" n2s_preserveSpaces");
-						if( !disableMaxHeight ){
-							pw.print(" n2s_installMaxHeight\" _maxheight=\""+getEffectiveMaxHeight());
+						if( null != maxHeight && maxHeight.intValue() > 0 ){
+							pw.print(" n2s_installMaxHeight\" _maxheight=\""+maxHeight.intValue());
 						}
 					}
 					pw.println("\">");
@@ -743,16 +768,16 @@ public class SchemaAttribute {
 					
 					pw.println("\t</div>");
 					
-					
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("\t{{/if}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "selection".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 					pw.println("\t{{#if "+id+"}}");
 	
-					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 	
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					pw.println("\t\t\t<div class=\"value n2s_select\" n2-choice=\"{{"+id+"}}\">");
@@ -767,7 +792,7 @@ public class SchemaAttribute {
 						pw.println("\t\t\t\t<span class=\"n2s_choice n2s_localize\" n2-choice=\""+value+"\">"+optLabel+"</span>");
 					}
 
-					pw.println("\t\t\t\t<span class=\"n2s_choiceDefault\">{{.}}</span>");
+					pw.println("\t\t\t\t<span class=\"n2s_choiceDefault\">{{"+id+"}}</span>");
 					
 					pw.println("\t\t\t</div>");
 					pw.println("\t\t\t<div class=\"end\"></div>");
@@ -776,14 +801,14 @@ public class SchemaAttribute {
 					
 					
 					pw.println("\t{{/if}}");
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "checkbox".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 
-					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					pw.println("\t\t\t<div class=\"value\">");
@@ -798,14 +823,14 @@ public class SchemaAttribute {
 					pw.println("\t\t</div>");
 					
 					
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "checkbox_group".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 
-					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					pw.println("\t\t\t<div class=\"value\">");
@@ -826,7 +851,7 @@ public class SchemaAttribute {
 					pw.println("\t\t</div>");
 					
 					
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 				
 			} else if( "file".equals(type) ){
@@ -840,7 +865,6 @@ public class SchemaAttribute {
 				pw.println("\t\t\t\t\t<div class=\"n2_mediaView\">");
 				pw.println("\t\t\t\t\t\t<div class=\"n2s_insertMediaView\" nunaliit-attachment=\"{{.}}\"> </div>");
 				pw.println("\t\t\t\t\t</div>");
-				pw.println("\t\t\t\t\t<div class=\"n2s_insertExternalMediaLink\" nunaliit-attachment=\"{{.}}\"> </div>");
 				pw.println("\t\t\t\t{{/attachmentName}}");
 
 				pw.println("\t\t\t{{/source}}");
@@ -868,7 +892,7 @@ public class SchemaAttribute {
 		}
 	}
 
-	public void printForm(PrintWriter pw, String schemaName) throws Exception {
+	public void printForm(PrintWriter pw, String schemaStructure, String schemaClass) throws Exception {
 		if( false == excludedFromForm ){
 			String label = this.label;
 			String labelLocalizeClass = " n2s_localize";
@@ -900,39 +924,46 @@ public class SchemaAttribute {
 					} else if( "reference".equals(type) ){
 						fieldType = ",reference";
 					} else if( "custom".equals(type) ){
-						fieldType = ",custom="+customType;
+						fieldType = ",custom="+encodeFieldParameter(customType);
 					} else if( "checkbox".equals(type) ){
 						fieldType = ",checkbox";
 					}
-					
+
 					if( isTextarea() ){
 						fieldType += ",textarea";
 					}
 
-					String searchFnName = "";
+					if( isWikiTransform() ){
+						fieldType += ",wikiTransform";
+					}
+
+					if( null != placeholder ){
+						fieldType += ",placeholder="+encodeFieldParameter(placeholder);
+					}
+
 					if( null != searchFunction ){
-						searchFnName = ",search="+searchFunction;
+						fieldType += ",search="+encodeFieldParameter(searchFunction);
 					}
 					
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 
-					pw.println("\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-					pw.println("\t\t<div class=\"value\">{{#:field}}"+id+fieldType+searchFnName+"{{/:field}}</div>");
+					pw.println("\t\t<div class=\"value\">{{#:field}}"+id+fieldType+"{{/:field}}</div>");
 					pw.println("\t\t<div class=\"end\"></div>");
 					
 					pw.println("\t</div>");
 					
 					
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "selection".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 
-					pw.println("\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					pw.println("\t\t<div class=\"value\">");
@@ -955,7 +986,7 @@ public class SchemaAttribute {
 					pw.println("\t</div>");
 					
 					
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "array".equals(type) ){
@@ -989,9 +1020,9 @@ public class SchemaAttribute {
 					}
 					
 					if( null != fieldType ){
-						pw.println("{{#"+schemaName+"}}");
+						pw.println("{{#"+schemaStructure+"}}");
 
-						pw.println("\t<div class=\""+schemaName+"_"+id+"\">");
+						pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
 
 						pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 						pw.println("\t\t<div class=\"value\">");
@@ -1004,15 +1035,15 @@ public class SchemaAttribute {
 						pw.println("\t</div>");
 						
 						
-						pw.println("{{/"+schemaName+"}}");
+						pw.println("{{/"+schemaStructure+"}}");
 					}
 				}
 
 			} else if( "checkbox_group".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 
-					pw.println("\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					pw.println("\t\t<div class=\"value\">");
@@ -1038,7 +1069,7 @@ public class SchemaAttribute {
 					pw.println("\t</div>");
 					
 					
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "file".equals(type) ){
@@ -1114,8 +1145,9 @@ public class SchemaAttribute {
 		}
 	}
 	
-	private int getEffectiveMaxHeight(){
-		if( maxHeight > 0 ) return maxHeight;
-		return 100;
+	private String encodeFieldParameter(String value) throws Exception {
+		String encoded = URLEncoder.encode(value, "UTF-8");
+		encoded = encoded.replaceAll("\\+", "%20");
+		return encoded;
 	}
 }

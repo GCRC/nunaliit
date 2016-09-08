@@ -241,12 +241,18 @@ Help Button
 /*
 CreateDocument widget
 */
-.nunaliit_atlas .nunaliit_module_title .n2widget_createDocument {
+.nunaliit_atlas .nunaliit_module_title .n2widget_createDocument,
+.nunaliit_atlas .nunaliit_module_title .n2widget_createDocumentFromSchema,
+.nunaliit_atlas .nunaliit_module_title .n2widget_export {
 	float: right;
 	padding: 8px 20px;
 }
-.nunaliit_atlas .nunaliit_module_title .n2widget_createDocument a
-,.nunaliit_atlas .nunaliit_module_title .n2widget_createDocument a:visited {
+.nunaliit_atlas .nunaliit_module_title .n2widget_createDocument a,
+.nunaliit_atlas .nunaliit_module_title .n2widget_createDocumentFromSchema a,
+.nunaliit_atlas .nunaliit_module_title .n2widget_export a,
+.nunaliit_atlas .nunaliit_module_title .n2widget_createDocument a:visited,
+.nunaliit_atlas .nunaliit_module_title .n2widget_createDocumentFromSchema a:visited,
+.nunaliit_atlas .nunaliit_module_title .n2widget_export a:visited {
 	color: #fff;
 	text-decoration: none;
 }
@@ -407,6 +413,9 @@ CreateDocument widget
 	zoom:1;
 	vertical-align:top;
 }
+.nunaliit_form_link.n2show_findNotAvailable {
+	display: none;
+}
 .nunaliit_atlas .n2ModuleIntro {
 	padding: 20px;
 }
@@ -521,6 +530,12 @@ CreateDocument widget
 	-moz-box-shadow: 1px 1px 3px #e1dfdf;
 	-webkit-box-shadow: 1px 1px 3px #e1dfdf;
 	box-shadow: 1px 1px 3px #e1dfdf;
+}
+.editorSelectDocumentDialog .olkitSearchMod2_0, 
+.editorSelectDocumentDialog .olkitSearchMod2_1 {
+	-moz-box-shadow: none;
+	-webkit-box-shadow: none;
+	box-shadow: none;
 }
 
 ._n2DocumentListEntry {

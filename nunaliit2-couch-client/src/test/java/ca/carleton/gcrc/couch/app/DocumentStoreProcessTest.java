@@ -17,6 +17,7 @@ import org.json.JSONObject;
 import ca.carleton.gcrc.couch.app.impl.DigestComputerSha1;
 import ca.carleton.gcrc.couch.app.impl.DocumentFile;
 import ca.carleton.gcrc.couch.app.impl.DocumentJSON;
+import ca.carleton.gcrc.couch.app.impl.DocumentStoreProcessImpl;
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.TestSupport;
 import ca.carleton.gcrc.couch.fsentry.FSEntry;
@@ -24,6 +25,7 @@ import ca.carleton.gcrc.couch.fsentry.FSEntryBuffer;
 import ca.carleton.gcrc.couch.fsentry.FSEntryFile;
 import ca.carleton.gcrc.couch.fsentry.FSEntryMerged;
 import ca.carleton.gcrc.json.JSONObjectComparator;
+import ca.carleton.gcrc.json.JSONSupport;
 import ca.carleton.gcrc.utils.Files;
 
 public class DocumentStoreProcessTest extends TestCase {
@@ -59,7 +61,7 @@ public class DocumentStoreProcessTest extends TestCase {
 			
 			Document doc = new DocumentJSON(obj);
 			
-			DocumentStoreProcess storeProcess = new DocumentStoreProcess();
+			DocumentStoreProcess storeProcess = new DocumentStoreProcessImpl();
 			storeProcess.store(doc, dir);
 			
 			// Verify the store
@@ -71,6 +73,57 @@ public class DocumentStoreProcessTest extends TestCase {
 				
 				if( 0 != JSONObjectComparator.singleton.compare(obj, jsonDisk) ) {
 					fail("Stored object loaded from disk differs from original one");
+				}
+			}
+		}
+	}
+
+	public void testKeysToIgnore() throws Exception {
+		CouchDb couchDb = TestSupport.getTestCouchDb();
+		if( null != couchDb ) {
+			File testDir = TestSupport.getTestRunDir();
+			File dir = new File(testDir, "testKeysToIgnore");
+
+			JSONObject obj = new JSONObject();
+			obj.put("_id", "testObjectStoring");
+			obj.put("b1", true);
+			obj.put("b2", false);
+			obj.put("i", 123);
+			obj.put("s", "string");
+
+			JSONObject innerObj = new JSONObject();
+			innerObj.put("a", "1");
+			obj.put("obj", innerObj);
+
+			JSONArray innerArr = new JSONArray();
+			innerArr.put(1);
+			innerArr.put(2);
+			innerArr.put(3);
+			obj.put("arr", innerArr);
+			
+			Document doc = new DocumentJSON(obj);
+			
+			DocumentStoreProcessImpl storeProcess = new DocumentStoreProcessImpl();
+			storeProcess.addKeyToIgnore("obj");
+			storeProcess.addKeyToIgnore("arr");
+			storeProcess.store(doc, dir);
+			
+			// Verify the store
+			{
+				FSEntry fileEntry = new FSEntryFile(dir);
+				Document diskDoc = DocumentFile.createDocument(fileEntry);
+				
+				JSONObject jsonDisk = diskDoc.getJSONObject();
+
+				JSONObject expected = new JSONObject();
+				expected.put("_id", "testObjectStoring");
+				expected.put("b1", true);
+				expected.put("b2", false);
+				expected.put("i", 123);
+				expected.put("s", "string");
+				
+				if( 0 != JSONSupport.compare(expected, jsonDisk) ) {
+					fail("Stored object loaded from disk differs from expected one");
 				}
 			}
 		}
@@ -105,7 +158,7 @@ public class DocumentStoreProcessTest extends TestCase {
 				doc = DocumentFile.createDocument(mergedEntry);
 			}
 			
-			DocumentStoreProcess storeProcess = new DocumentStoreProcess();
+			DocumentStoreProcess storeProcess = new DocumentStoreProcessImpl();
 			storeProcess.store(doc, dir);
 			
 			// Verify the store
@@ -153,7 +206,7 @@ public class DocumentStoreProcessTest extends TestCase {
 				doc = DocumentFile.createDocument(mergedEntry);
 			}
 			
-			DocumentStoreProcess storeProcess = new DocumentStoreProcess();
+			DocumentStoreProcess storeProcess = new DocumentStoreProcessImpl();
 			storeProcess.store(doc, dir);
 			
 			// Verify the store
@@ -191,7 +244,7 @@ public class DocumentStoreProcessTest extends TestCase {
 			}
 
 			// Store back to disk
-			DocumentStoreProcess storeProcess = new DocumentStoreProcess();
+			DocumentStoreProcess storeProcess = new DocumentStoreProcessImpl();
 			storeProcess.store(doc, dir);
 			
 			Set<String> originalPaths = Files.getDescendantPathNames(original, true);

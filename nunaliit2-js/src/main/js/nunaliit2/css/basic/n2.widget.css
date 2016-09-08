@@ -383,6 +383,40 @@ CreateDocument widget
 	top: 5px;
 	right: 455px;
 }
+.nunaliit_content .n2widget_createDocumentFromSchema {
+	position: absolute;
+	top: 5px;
+	right: 455px;
+}
+
+/* 
+==============================
+Export Widget 
+==============================
+*/
+.nunaliit_content .n2widget_export {
+	position: absolute;
+	top: 5px;
+	right: 455px;
+}
+
+.n2_export_scriptArea {
+	width: 500px;
+	height: 300px;
+}
+
+.n2_export_scriptDisplay {
+	position: relative;
+	padding: 8px;
+	width: 500px;
+	height: 300px;
+    overflow: auto;
+    white-space: pre;
+	background-color: rgb(255, 255, 255);
+	border-color: rgb(204, 204, 204);
+	border-style: solid;
+	border-width: 1px;
+}
 
 /* 
 ==============================
@@ -397,15 +431,29 @@ Timeline widget
 	height: 62px;
 }
 
+.n2_display_format_tiled .nunaliit_content .n2timeline {
+	right: 640px;
+}
+
 .n2timeline {
 	background-color: #00ff88;
+}
+
+.n2timeline_container {
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    top: 0;
+    bottom: 0;
 }
 
 .n2timeline_slider_wrapper {
 	margin-top: 10px;
 	margin-bottom: 10px;
-	margin-left: 20px;
-	margin-right: 20px;
+	margin-left: 0;
+	margin-right: 0;
+	padding: 0;
+	border: none;
 }
 
 .n2timeline .n2timeline_slider {
@@ -421,8 +469,8 @@ Timeline widget
 	font-size: 12px;
 	padding-top: 2px;
 	padding-bottom: 2px;
-	padding-left: 20px;
-	padding-right: 20px;
+	padding-left: 0;
+	padding-right: 0;
 }
 
 
@@ -431,9 +479,20 @@ Timeline widget
 	font-size: 12px;
 	padding-top: 2px;
 	padding-bottom: 2px;
-	padding-left: 20px;
-	padding-right: 20px;
+	padding-left: 0;
+	padding-right: 0;
 }
+
+/* 
+==============================
+Layer selection widget 
+==============================
+*/
+.nunaliit_module_title .n2layerSelectionWidget {
+    display: inline;
+    padding: 6px 20px;
+}
+
 
 /* 
 ==============================
@@ -491,4 +550,74 @@ Add or Edit Feature Buttons
 }
 .nunaliit_logged_in .n2_content_map_interaction {
 	display: block;
+}
+
+/* 
+==============================
+Splash Page 
+==============================
+*/
+
+.n2Splash_button {
+	padding: 0 5px;
+}
+
+.n2Splash_buttons .n2Splash_button_disabled {
+	color: transparent;
+}
+
+.n2Splash_button_close {
+	float: right;
+}
+
+.n2Splash_label_dontshow {
+	padding-left: 50px;
+	padding-right: 3px;
+}
+
+.n2Splash_ribbon_page {
+	padding: 0 2px;
+}
+
+.n2Splash_ribbon_page_current {
+	font-weight: bold;
+}
+
+/* 
+==============================
+Mail Form 
+==============================
+*/
+.n2mailForm_input_contact {
+	width: 500px;
+	height: 150px;
+}
+
+.n2mailForm_input_message {
+	width: 500px;
+	height: 400px;
+}
+
+.n2mailForm_label {
+	padding: 5px 0 0 0;
+}
+
+.n2mailForm_button {
+	float: right;
+	padding: 5px;
+}
+
+.n2mailForm_button_disabled {
+	color: #ccc !important;
+	pointer-events: none;
+}
+
+/* 
+==============================
+Document Selector 
+==============================
+*/
+.nunaliit_module_title .n2widget_documentSelector {
+	float: right;
+	padding: 8px 20px;
 }

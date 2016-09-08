@@ -3,7 +3,6 @@ package ca.carleton.gcrc.couch.command;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.PrintStream;
-import java.util.Stack;
 
 import ca.carleton.gcrc.couch.command.impl.PathComputer;
 import ca.carleton.gcrc.couch.command.impl.UpgradeOperationsBasic;
@@ -32,6 +31,14 @@ public class CommandCreate implements Command {
 	}
 
 	@Override
+	public String[] getExpectedOptions() {
+		return new String[]{
+				Options.OPTION_ATLAS_DIR
+				,Options.OPTION_NO_CONFIG
+			};
+	}
+
+	@Override
 	public boolean requiresAtlasDir() {
 		return false;
 	}
@@ -46,31 +53,29 @@ public class CommandCreate implements Command {
 		ps.println("subsequent commands.");
 		ps.println();
 		ps.println("Command Syntax:");
-		ps.println("  nunaliit [<global-options>] create [<create-options>]");
+		ps.println("  nunaliit create <options>");
 		ps.println();
-		ps.println("Global Options");
-		CommandHelp.reportGlobalSettingAtlasDir(ps);
+		ps.println("options:");
+		ps.println("  "+Options.OPTION_NO_CONFIG);
+		ps.println("    Skips the configuration phase");
 		ps.println();
-		ps.println("Create Options");
-		ps.println("  --no-config   Skips the configuration phase");
+		CommandHelp.reportGlobalOptions(ps,getExpectedOptions());
 	}
 
 	@Override
 	public void runCommand(
 		GlobalSettings gs
-		,Stack<String> argumentStack
+		,Options options
 		) throws Exception {
+
+		if( options.getArguments().size() > 1 ){
+			throw new Exception("Unexpected argument: "+options.getArguments().get(1));
+		}
 		
 		// Pick up options
 		boolean noConfig = false;
-		while( false == argumentStack.empty() ){
-			String optionName = argumentStack.peek();
-			if( "--no-config".equals(optionName) ){
-				argumentStack.pop();
-				noConfig = true;
-			} else {
-				break;
-			}
+		if( null != options.getNoConfig() ){
+			noConfig = options.getNoConfig().booleanValue();
 		}
 
 		// Figure out where atlas should be created
@@ -189,8 +194,8 @@ public class CommandCreate implements Command {
 		// Perform configuration, unless disabled
 		if( false == noConfig ){
 			CommandConfig config = new CommandConfig();
-			Stack<String> configArgs = new Stack<String>();
-			config.runCommand(gs, configArgs);
+			Options configOptions = new Options();
+			config.runCommand(gs, configOptions);
 		}
 	}
 

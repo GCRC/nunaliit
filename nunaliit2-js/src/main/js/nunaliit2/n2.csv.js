@@ -52,9 +52,13 @@ function ComputeCsvLine(values){
 	var line = [];
 	for(var j=0,k=values.length; j<k; ++j){
 		var value = values[j];
-		if( typeof(value) === 'string' ) {
+		if( typeof value === 'string' ) {
 			value = value.replace(/"/g,'""');
 			line.push('"'+value+'"');
+
+		} else if( typeof value === 'undefined' ) {
+			line.push('');
+
 		} else {
 			line.push(''+value);
 		};

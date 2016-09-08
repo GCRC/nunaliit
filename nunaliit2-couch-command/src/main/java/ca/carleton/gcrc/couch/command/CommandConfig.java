@@ -6,7 +6,6 @@ import java.io.PrintStream;
 import java.net.URL;
 import java.security.SecureRandom;
 import java.util.Properties;
-import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -40,6 +39,13 @@ public class CommandConfig implements Command {
 	}
 
 	@Override
+	public String[] getExpectedOptions() {
+		return new String[]{
+				Options.OPTION_ATLAS_DIR
+			};
+	}
+
+	@Override
 	public boolean requiresAtlasDir() {
 		return true;
 	}
@@ -52,17 +58,21 @@ public class CommandConfig implements Command {
 		ps.println("used to access and update an atlas.");
 		ps.println();
 		ps.println("Command Syntax:");
-		ps.println("  nunaliit [<global-options>] config");
+		ps.println("  nunaliit config <options>");
 		ps.println();
-		ps.println("Global Options");
-		CommandHelp.reportGlobalSettingAtlasDir(ps);
+		ps.println("options:");
+		CommandHelp.reportGlobalOptions(ps,getExpectedOptions());
 	}
 
 	@Override
 	public void runCommand(
 		GlobalSettings gs
-		,Stack<String> argumentStack
+		,Options options
 		) throws Exception {
+		
+		if( options.getArguments().size() > 1 ){
+			throw new Exception("Unexpected argument: "+options.getArguments().get(1));
+		}
 		
 		// Check that atlas directory exists
 		File atlasDir = gs.getAtlasDir();

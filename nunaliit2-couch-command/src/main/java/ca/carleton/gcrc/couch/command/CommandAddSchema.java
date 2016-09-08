@@ -6,7 +6,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.StringWriter;
-import java.util.Stack;
 
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -34,6 +33,16 @@ public class CommandAddSchema implements Command {
 	}
 
 	@Override
+	public String[] getExpectedOptions() {
+		return new String[]{
+				Options.OPTION_ATLAS_DIR
+				,Options.OPTION_DEF
+				,Options.OPTION_GROUP
+				,Options.OPTION_ID
+			};
+	}
+
+	@Override
 	public boolean requiresAtlasDir() {
 		return true;
 	}
@@ -46,28 +55,34 @@ public class CommandAddSchema implements Command {
 		ps.println("on a definition file.");
 		ps.println();
 		ps.println("Command Syntax:");
-		ps.println("  nunaliit [<global-options>] add-schema [<add-schema-options>]");
+		ps.println("  nunaliit add-schema <options>");
 		ps.println();
-		ps.println("Global Options");
-		CommandHelp.reportGlobalSettingAtlasDir(ps);
+		ps.println("options:");
+		ps.println("  "+Options.OPTION_DEF+" <file>");
+		ps.println("    Name of file where schema definition is contained. This");
+		ps.println("    option should be provided only if --id is not.");
 		ps.println();
-		ps.println("Add Schema Options");
-		ps.println("  --def   <file>   Name of file where schema definition is contained. This");
-		ps.println("                   option should be provided only if --id is not.");
+		ps.println("  "+Options.OPTION_GROUP+" <name>");
+		ps.println("    Name of group that the schema is associated with. If");
+		ps.println("    not provided, defaults to atlas name");
 		ps.println();
-		ps.println("  --group <name>   Name of group that the schema is associated with. If");
-		ps.println("                   not provided, defaults to atlas name");
+		ps.println("  "+Options.OPTION_ID+" <name>");
+		ps.println("    Identifier for new schema. Either "+Options.OPTION_ID+" or "+Options.OPTION_DEF+" must");
+		ps.println("    be provided, not both. The effective name of the schema");
+		ps.println("    is <group> '_' <id>");
 		ps.println();
-		ps.println("  --id     <name>  Identifier for new schema. Either --id or --def must");
-		ps.println("                   be provided, not both. The effective name of the schema");
-		ps.println("                   is <group> '_' <id>");
+		CommandHelp.reportGlobalOptions(ps, getExpectedOptions());
 	}
 
 	@Override
 	public void runCommand(
 		GlobalSettings gs
-		,Stack<String> argumentStack
+		,Options options
 		) throws Exception {
+		
+		if( options.getArguments().size() > 1 ){
+			throw new Exception("Unexpected argument: "+options.getArguments().get(1));
+		}
 
 		File atlasDir = gs.getAtlasDir();
 
@@ -76,43 +91,14 @@ public class CommandAddSchema implements Command {
 		
 		// Pick up options
 		File defFile = null;
-		String groupName = atlasProperties.getAtlasName();
-		String id = null;
-		while( false == argumentStack.empty() ){
-			String optionName = argumentStack.peek();
-			if( "--def".equals(optionName) ){
-				argumentStack.pop();
-				if( argumentStack.size() < 1 ){
-					throw new Exception("--def option requires a file name");
-				}
-				
-				String defFileStr = argumentStack.pop();
-				defFile = new File(defFileStr);
-
-			} else if( "--id".equals(optionName) ){
-				argumentStack.pop();
-				if( argumentStack.size() < 1 ){
-					throw new Exception("--id option requires a schema identifier");
-				}
-				
-				if( null != id ){
-					throw new Exception("--id option should be provided only once");
-				}
-				
-				id = argumentStack.pop();
-
-			} else if( "--group".equals(optionName) ){
-				argumentStack.pop();
-				if( argumentStack.size() < 1 ){
-					throw new Exception("--group option requires a group name");
-				}
-				
-				groupName = argumentStack.pop();
-
-			} else {
-				break;
-			}
+		if( null != options.getDef() ){
+			defFile = new File( options.getDef() );
 		}
+		String groupName = atlasProperties.getAtlasName();
+		if( null != options.getGroup() ){
+			groupName = options.getGroup();
+		}
+		String id = options.getId();
 		
 		if( null == defFile && null == id ){
 			throw new Exception("One of the options --id or --def must be provided");
@@ -178,7 +164,7 @@ public class CommandAddSchema implements Command {
 			}
 			
 			// Interpret definition
-			schemaDef = SchemaDefinition.fronJson(jsonDefinition);
+			schemaDef = SchemaDefinition.fromJson(jsonDefinition);
 
 		} else if( null != id ) {
 			schemaDef = new SchemaDefinition(groupName, id);

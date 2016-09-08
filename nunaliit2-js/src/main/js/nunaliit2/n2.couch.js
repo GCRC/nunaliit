@@ -28,37 +28,60 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
 
-$Id: n2.couch.js 8464 2012-08-30 15:43:23Z jpfiset $
 */
 
-// @ requires n2.utils.js
-
 ;(function($,$n2){
+"use strict";
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
+// This should be set to true if the server is being accessed being a bad proxy
+var badProxy = false;
+
 function httpJsonError(XMLHttpRequest, defaultStr) {
 	// Need JSON
 	if( !JSON || typeof(JSON.parse) !== 'function' ) {
-		return defaultStr;
+		return $n2.error.fromString(defaultStr);
 	};
 	
 	// Need a response text
 	var text = XMLHttpRequest.responseText;
-	if( !text ) return defaultStr;
+	if( !text ) return $n2.error.fromString(defaultStr);
 	
 	// Parse
 	var error = JSON.parse(text);
-	if( !error ) return defaultStr;
-	if( !error.reason ) return defaultStr;
+	if( !error ) return $n2.error.fromString(defaultStr);
 	
-	return error.reason;
+	var err = undefined;
+	if( typeof error.reason === 'string' ) {
+		err = $n2.error.fromString(error.reason);
+	} else {
+		err = $n2.error.fromString(defaultStr);
+	};
+	
+	if( error.error ){
+		var condition = 'couchDb_' + error.error;
+		err.setCondition(condition);
+	};
+	
+	return err;
 };
 
 // Fix name: no spaces, all lowercase
 function fixUserName(userName) {
 	return userName.toLowerCase().replace(' ','');
+};
+
+/*
+ * This should be set if the client is run behind a bad proxy
+ */
+function setBadProxy(flag){
+	if( flag ){
+		badProxy = true;
+	} else {
+		badProxy = false;
+	};
 };
 
 // =============================================
@@ -182,11 +205,18 @@ var Session = $n2.Class({
 		var _this = this;
 		var sessionUrl = this.getUrl();
 		
+		var data = {};
+		
+		if( badProxy ){
+			data.r = Date.now();
+		};
+		
 		$.ajax({
 			url: sessionUrl
 			,type: 'get'
 			,async: true
 			,dataType: 'json'
+			,data: data
 			,success: function(res) {
 				if( res.ok ) {
 					var context = res.userCtx;
@@ -410,6 +440,10 @@ var designDoc = $n2.Class({
 			});
 			
 		} else {
+			if( badProxy ){
+				query.r = Date.now();
+			};
+
 			$.ajax({
 		    	url: viewUrl
 		    	,type: 'GET'
@@ -591,6 +625,10 @@ var ChangeNotifier = $n2.Class({
 		if( this.options.longPoll ) {
 			req.feed = 'longpoll';
 			req.timeout = this.options.timeout;
+		};
+		
+		if( badProxy ){
+			req.r = Date.now();
 		};
 		
 		this.currentRequest = req;
@@ -816,6 +854,10 @@ var Database = $n2.Class({
 			req.include_docs = opt.include_docs;
 		};
 		
+		if( badProxy ){
+			req.r = Date.now();
+		};
+		
 		var changeUrl = this.dbUrl + '_changes';
 
 		$.ajax({
@@ -864,16 +906,22 @@ var Database = $n2.Class({
 			opts.onError('No docId set. Can not retrieve document information');
 			return;
 		};
+		
+		var data = {
+    		startkey: '"' + opts.docId + '"'
+    		,endkey: '"' + opts.docId + '"'
+    		,include_docs: false
+    	};
+		
+		if( badProxy ){
+			data.r = Date.now();
+		};
 
 	    $.ajax({
 	    	url: this.dbUrl + '_all_docs'
 	    	,type: 'get'
 	    	,async: true
-	    	,data: {
-	    		startkey: '"' + opts.docId + '"'
-	    		,endkey: '"' + opts.docId + '"'
-	    		,include_docs: false
-	    	}
+	    	,data: data
 	    	,dataType: 'json'
 	    	,success: function(res) {
 	    		if( res.rows && res.rows[0] && res.rows[0].value && res.rows[0].value.rev ) {
@@ -1066,8 +1114,9 @@ var Database = $n2.Class({
 		    		opts.onSuccess(docInfo);
 		    	}
 		    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
-					var errStr = httpJsonError(XMLHttpRequest, textStatus);
-		    		opts.onError('Error creating document: '+errStr);
+					var cause = httpJsonError(XMLHttpRequest, textStatus);
+					var err = $n2.error.fromString(_loc('Error creating document'),cause);
+		    		opts.onError(err);
 		    	}
 			});
 		};
@@ -1106,8 +1155,9 @@ var Database = $n2.Class({
 	    		opts.onSuccess(docInfo);
 	    	}
 	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
-				var errStr = httpJsonError(XMLHttpRequest, textStatus);
-	    		opts.onError('Error updating document: '+errStr);
+				var cause = httpJsonError(XMLHttpRequest, textStatus);
+				var err = $n2.error.fromString(_loc('Error updating document'),cause);
+	    		opts.onError(err);
 	    	}
 		});
 	}
@@ -1143,8 +1193,9 @@ var Database = $n2.Class({
 	    		opts.onSuccess(docInfo);
 	    	}
 	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
-				var errStr = httpJsonError(XMLHttpRequest, textStatus);
-	    		opts.onError('Error deleting document: '+errStr);
+				var cause = httpJsonError(XMLHttpRequest, textStatus);
+				var err = $n2.error.fromString(_loc('Error deleting document'),cause);
+	    		opts.onError(err);
 	    	}
 		});
 	}
@@ -1234,7 +1285,11 @@ var Database = $n2.Class({
 			data.deleted_conflicts = 'true';
 		};
 		
-		var url = this.dbUrl + opts.docId + '/';
+		if( badProxy ){
+			data.r = Date.now();
+		}
+		
+		var url = this.dbUrl + opts.docId;
 		
 	    $.ajax({
 	    	url: url
@@ -1317,6 +1372,10 @@ var Database = $n2.Class({
 		
 		var viewUrl = this.dbUrl + '_all_docs?include_docs=false';
 		
+		if( badProxy ){
+			viewUrl += '&r=' + Date.now();
+		};
+		
 		$.ajax({
 	    	url: viewUrl
 	    	,type: 'GET'
@@ -1345,18 +1404,44 @@ var Database = $n2.Class({
 
 	,getAllDocuments: function(opts_) {
 		var opts = $.extend(true, {
-				onSuccess: function(docs){}
+				startkey: null
+				,endkey: null
+				,onSuccess: function(docs){}
 				,onError: function(errorMsg){ $n2.reportErrorForced(errorMsg); }
 			}
 			,opts_
 		);
+
+		if( JSON && JSON.stringify ) {
+			// OK
+		} else {
+			opts.onError('json.js is required to query a view');
+		};
 		
-		var viewUrl = this.dbUrl + '_all_docs?include_docs=true';
+		var data = {
+			include_docs: true
+		};
+		for(var k in opts) {
+			if( null === opts[k] ){
+				// Ignore
+
+			} else if( k === 'startkey' 
+					|| k === 'endkey' ) { 
+				data[k] = JSON.stringify( opts[k] );
+			};
+		};
+		
+		var viewUrl = this.dbUrl + '_all_docs';
+		
+		if( badProxy ){
+			data.r = Date.now();
+		};
 		
 		$.ajax({
 	    	url: viewUrl
 	    	,type: 'GET'
 	    	,async: true
+	    	,data: data
 	    	,dataType: 'json'
 	    	,success: function(queryResult) {
 	    		if( queryResult.rows ) {
@@ -1365,7 +1450,7 @@ var Database = $n2.Class({
 	    				var row = queryResult.rows[i];
 	    				if( row && row.doc ) {
 	    					docs.push(row.doc);
-	    				}
+	    				};
 	    			};
 	    			opts.onSuccess(docs);
 	    		} else {
@@ -1387,11 +1472,18 @@ var Database = $n2.Class({
 			,opts_
 		);
 		
+		var data = {};
+		
+		if( badProxy ){
+			data.r = Date.now();
+		};
+		
 		$.ajax({
 	    	url: this.dbUrl
 	    	,type: 'GET'
 	    	,async: true
 	    	,dataType: 'json'
+	    	,data: data
 	    	,success: function(dbInfo) {
 	    		if( dbInfo.error ) {
 		    		opts.onError(dbInfo.error);
@@ -1475,12 +1567,6 @@ var UserDb = $n2.Class(Database,{
 
 		var userDbUrl = this.getUrl();
 
-		// Check that sha1 is installed
-		if( typeof(hex_sha1) !== 'function' ) {
-			opts.onError('SHA-1 must be installed');
-			return;
-		};
-
 		// Check that JSON is installed
 		if( !JSON || typeof(JSON.stringify) !== 'function' ) {
 			opts.onError('json.js is required to create database documents');
@@ -1494,7 +1580,7 @@ var UserDb = $n2.Class(Database,{
 	    function onUuid(uuid) {
 			var id = 'org.couchdb.user:'+fixUserName(opts.name);
 			var salt = uuid;
-			var password_sha = hex_sha1(opts.password + salt);
+			var password_sha = $n2.crypto.hex_sha1(opts.password + salt);
 		
 			// Create user document
 			var doc = {};
@@ -1581,12 +1667,6 @@ var UserDb = $n2.Class(Database,{
 
 		var userDbUrl = this.getUrl();
 
-		// Check that sha1 is installed
-		if( typeof(hex_sha1) !== 'function' ) {
-			opts.onError('SHA-1 must be installed');
-			return;
-		};
-
 		if( !JSON || typeof(JSON.stringify) !== 'function' ) {
 			opts.onError('json.js is required to set user password');
 			return;
@@ -1636,12 +1716,6 @@ var UserDb = $n2.Class(Database,{
 			,options_
 		);
 
-		// Check that sha1 is installed
-		if( typeof(hex_sha1) !== 'function' ) {
-			opts.onError('SHA-1 must be installed');
-			return;
-		};
-
 		if( !JSON || typeof(JSON.stringify) !== 'function' ) {
 			opts.onError('json.js is required to set user password');
 			return;
@@ -1663,7 +1737,7 @@ var UserDb = $n2.Class(Database,{
 	    
 	    function onUuid(uuid) {
 			var salt = uuid;
-			var password_sha = hex_sha1(opts.password + salt);
+			var password_sha = $n2.crypto.hex_sha1(opts.password + salt);
 			
 			// Remove unwanted fields
 			if( opts.userDoc.password ) delete opts.userDoc.password;
@@ -1742,11 +1816,18 @@ var UserDb = $n2.Class(Database,{
 			id = 'org.couchdb.user:'+fixUserName(opts.name);
 		};
 		
+		var data = {};
+		
+		if( badProxy ){
+			data.r = Date.now();
+		};
+		
 	    $.ajax({
 	    	url: userDbUrl + id 
 	    	,type: 'get'
 	    	,async: true
 	    	,dataType: 'json'
+	    	,data: data
 	    	,success: function(userDoc) {
 	    		opts.onSuccess(userDoc);
 	    	}
@@ -1890,6 +1971,10 @@ var UserDb = $n2.Class(Database,{
 			,include_docs: true
 		};
 		
+		if( badProxy ){
+			data.r = Date.now();
+		};
+		
 		var users = [];
 		var missingIds = {};
 		$.ajax({
@@ -2016,11 +2101,18 @@ var Server = $n2.Class({
 				refreshContext();
 
 			} else {
+				var data = {};
+				
+				if( badProxy ){
+					data.r = Date.now();
+				};
+				
 				$.ajax({
 			    	url: _this.options.pathToServer
 			    	,type: 'get'
 			    	,async: true
 			    	,dataType: 'json'
+			    	,data: data
 			    	,success: function(res) {
 			    		if( res.version ) {
 			    			_this.options.version = res.version;
@@ -2048,11 +2140,18 @@ var Server = $n2.Class({
 			} else {
 				var sessionUrl = _this.getSessionUrl();
 				
+				var data = {};
+				
+				if( badProxy ){
+					data.r = Date.now();
+				};
+				
 				$.ajax({
 			    	url: sessionUrl
 			    	,type: 'get'
 			    	,async: true
 			    	,dataType: 'json'
+			    	,data: data
 			    	,success: function(res) {
 			    		if( res.ok ) {
 			    			// Retrieve user db, if available
@@ -2163,13 +2262,19 @@ var Server = $n2.Class({
 			pathUUids = this.options.pathToServer + '_uuids';
 		};
 		
+		var data = {
+	    	count: 10
+		};
+
+		if( badProxy ){
+			data.r = Date.now();
+		};
+		
 		$.ajax({
 	    	url: pathUUids
 	    	,type: 'get'
 	    	,async: true
-	    	,data: {
-	    		count: 10
-	    	}
+	    	,data: data
 	    	,dataType: 'json'
 	    	,success: function(res) {
 	    		if( res.uuids ) {
@@ -2202,12 +2307,19 @@ var Server = $n2.Class({
 		if( !pathToAllDbs ) {
 			pathToAllDbs = this.options.pathToServer + '_all_dbs';
 		};
+		
+		var data = {};
+
+		if( badProxy ){
+			data.r = Date.now();
+		};
 
 		$.ajax({
 	    	url: pathToAllDbs
 	    	,type: 'get'
 	    	,async: true
 	    	,dataType: 'json'
+	    	,data: data
 	    	,success: opts.onSuccess
 	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
 				var errStr = httpJsonError(XMLHttpRequest, textStatus);
@@ -2412,7 +2524,9 @@ function addAttachmentToDocument(opts_){
 
 $n2.couch = $.extend({},{
 	
-	getServer: function(opt_) {
+	setBadProxy: setBadProxy
+	
+	,getServer: function(opt_) {
 		return new Server(opt_);
 	}
 	

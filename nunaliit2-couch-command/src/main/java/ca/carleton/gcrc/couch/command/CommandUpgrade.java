@@ -6,7 +6,6 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.StringWriter;
 import java.util.Calendar;
-import java.util.Stack;
 
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -41,6 +40,15 @@ public class CommandUpgrade implements Command {
 	}
 
 	@Override
+	public String[] getExpectedOptions() {
+		return new String[]{
+				Options.OPTION_ATLAS_DIR
+				,Options.OPTION_NO_CONFIG
+				,Options.OPTION_TEST
+			};
+	}
+
+	@Override
 	public boolean requiresAtlasDir() {
 		return true;
 	}
@@ -55,42 +63,39 @@ public class CommandUpgrade implements Command {
 		ps.println("atlas creator wishes to use the newer version.");
 		ps.println();
 		ps.println("Command Syntax:");
-		ps.println("  nunaliit [<global-options>] upgrade [<upgrade-options>]");
+		ps.println("  nunaliit upgrade <options>");
 		ps.println();
-		ps.println("Global Options");
-		CommandHelp.reportGlobalSettingAtlasDir(ps);
+		ps.println("options:");
+		ps.println("  "+Options.OPTION_TEST);
+		ps.println("    Does not perform any changes. Simply print what would happen. Does ");
+		ps.println("    not run 'config' command.");
 		ps.println();
-		ps.println("Upgrade Options");
-		ps.println("  --test        Does not perform any changes. Simply print");
-		ps.println("                what would happen. Does not run 'config' command.");
-		ps.println("  --no-config   Supresses the automatic 'config' command after");
-		ps.println("                completing upgrade process.");
+		ps.println("  "+Options.OPTION_NO_CONFIG);
+		ps.println("    Supresses the automatic 'config' command after completing upgrade");
+		ps.println("    process.");
+		ps.println();
+		CommandHelp.reportGlobalOptions(ps,getExpectedOptions());
 	}
 
 	@Override
 	public void runCommand(
 		GlobalSettings gs
-		,Stack<String> argumentStack
+		,Options options
 		) throws Exception {
+
+		if( options.getArguments().size() > 1 ){
+			throw new Exception("Unexpected argument: "+options.getArguments().get(1));
+		}
 		
 		// Pick up options
 		boolean noConfig = false;
-		boolean justTest = false;
-		while( false == argumentStack.empty() ){
-			String optionName = argumentStack.peek();
-			if( "--test".equals(optionName) ){
-				argumentStack.pop();
-				justTest = true;
-				
-			} else if( "--no-config".equals(optionName) ){
-				argumentStack.pop();
-				noConfig = true;
-				
-			} else {
-				break;
-			}
+		if( null != options.getNoConfig() ){
+			noConfig = options.getNoConfig().booleanValue();
 		}
-
+		boolean justTest = false;
+		if( null != options.getTest() ){
+			justTest = options.getTest().booleanValue();
+		}
 		
 		File atlasDir = gs.getAtlasDir();
 
@@ -231,8 +236,8 @@ public class CommandUpgrade implements Command {
 		// Perform configuration, unless disabled
 		if( false == noConfig && false == justTest ){
 			CommandConfig config = new CommandConfig();
-			Stack<String> configArgs = new Stack<String>();
-			config.runCommand(gs, configArgs);
+			Options configOptions = new Options();
+			config.runCommand(gs, configOptions);
 		}
 	}
 }

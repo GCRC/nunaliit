@@ -27,8 +27,8 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
-
 */
+
 ;(function($,$n2){
 "use strict";
 
@@ -210,18 +210,20 @@ var SimplifiedGeometryService = $n2.Class({
 			for(var i=0,e=geometries.length; i<e; ++i){
 				var geomResp = geometries[i];
 				
-    			var simplifiedGeometry = {
-    				id: geomResp.id
-    				,attName: geomResp.attName
-    				,wkt: geomResp.att
-    			};
-    			
-    			if( _this.dbProjection ){
-    				simplifiedGeometry.proj = _this.dbProjection;
-    			};
-    			
-    			simplifiedGeometries.push(simplifiedGeometry);
-    			
+				if( geomResp.att && geomResp.att.length > 0 ){
+	    			var simplifiedGeometry = {
+        				id: geomResp.id
+        				,attName: geomResp.attName
+        				,wkt: geomResp.att
+        			};
+        			
+        			if( _this.dbProjection ){
+        				simplifiedGeometry.proj = _this.dbProjection;
+        			};
+        			
+        			simplifiedGeometries.push(simplifiedGeometry);
+				};
+				
     			var attNames = received[geomResp.id];
     			if( !attNames ){
     				attNames = {};

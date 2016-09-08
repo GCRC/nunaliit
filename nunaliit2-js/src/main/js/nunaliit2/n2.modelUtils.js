@@ -107,9 +107,12 @@ var ModelFilter = $n2.Class({
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: null
+			,filterName: 'FilterModel'
+			,filterFn: null
+
+			// From configuration
 			,modelId: null
 			,sourceModelId: null
-			,filterFn: null
 		},opts_);
 		
 		var _this = this;
@@ -118,6 +121,7 @@ var ModelFilter = $n2.Class({
 		this.modelId = opts.modelId;
 		this.sourceModelId = opts.sourceModelId;
 		this.filterFn = opts.filterFn;
+		this.filterName = opts.filterName;
 		
 		this.docInfosByDocId = {};
 
@@ -132,24 +136,24 @@ var ModelFilter = $n2.Class({
 			
 			if( this.sourceModelId ){
 				// Initialize state
-				var m = {
-					type:'modelGetState'
+				var state = $n2.model.getModelState({
+					dispatchService: this.dispatchService
 					,modelId: this.sourceModelId
-				};
-				this.dispatchService.synchronousCall(DH, m);
-				if( m.state ){
-					this._sourceModelUpdated(m.state);
+				});
+				if( state ){
+					this._sourceModelUpdated(state);
 				};
 			};
 		};
 		
-		$n2.log('FilterModel',this);
+		$n2.log(this.filterName,this);
 	},
 	
 	_handle: function(m, addr, dispatcher){
 		if( 'modelGetInfo' === m.type ){
 			if( this.modelId === m.modelId ){
 				m.modelInfo = this._getModelInfo();
+				m.modelInstance = this;
 			};
 			
 		} else if( 'modelGetState' === m.type ){
@@ -157,8 +161,10 @@ var ModelFilter = $n2.Class({
 				var added = [];
 				for(var docId in this.docInfosByDocId){
 					var docInfo = this.docInfosByDocId[docId];
-					var doc = docInfo.doc;
-					added.push(doc);
+					if( docInfo.visible ){
+						var doc = docInfo.doc;
+						added.push(doc);
+					};
 				};
 
 				m.state = {
@@ -183,7 +189,13 @@ var ModelFilter = $n2.Class({
 			,parameters: {}
 		};
 		
+		this._addModelInfoParameters(info);
+		
 		return info;
+	},
+	
+	_addModelInfoParameters: function(info){
+		// Used by sub-classes to add parameters
 	},
 	
 	_sourceModelUpdated: function(sourceState){
@@ -272,6 +284,36 @@ var ModelFilter = $n2.Class({
 		this._reportStateUpdate(added, updated, removed);
 	},
 	
+	/*
+	 * This function should be called if the conditions of the underlying filter
+	 * have changed. Recompute visibility on all documents and report a state update
+	 */
+	_filterChanged: function(){
+		
+		var added = []
+			,updated = []
+			,removed = []
+			;
+
+		// Loop through all documents
+		for(var docId in this.docInfosByDocId){
+			var docInfo = this.docInfosByDocId[docId];
+			var doc = docInfo.doc;
+			var visible = this._computeVisibility(doc);
+			
+			if( visible !== docInfo.visible ){
+				if( visible ){
+					added.push(doc);
+				} else {
+					removed.push(doc);
+				};
+				docInfo.visible = visible;
+			};
+		};
+
+		this._reportStateUpdate(added, updated, removed);
+	},
+	
 	_reportStateUpdate: function(added, updated, removed){
 		if( added.length > 0
 		 || updated.length > 0 
@@ -320,6 +362,8 @@ var ModelUnion = $n2.Class({
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: null
+			
+			// From configuration
 			,modelId: null
 			,sourceModelIds: null
 		},opts_);
@@ -351,13 +395,12 @@ var ModelUnion = $n2.Class({
 			
 			for(var sourceModelId in this.sourceModelIds){
 				// Initialize state
-				var m = {
-					type:'modelGetState'
+				var state = $n2.model.getModelState({
+					dispatchService: this.dispatchService
 					,modelId: sourceModelId
-				};
-				this.dispatchService.synchronousCall(DH, m);
-				if( m.state ){
-					this._sourceModelUpdated(m.modelId, m.state);
+				});
+				if( state ){
+					this._sourceModelUpdated(sourceModelId, state);
 				};
 			};
 		};
@@ -500,10 +543,442 @@ var ModelUnion = $n2.Class({
 });
 
 //--------------------------------------------------------------------------
+/*
+ * Filter: a Document Model that filters out certain document
+ * SchemaFilter: Allows documents that are identified by schema names
+ */
+var SchemaFilter = $n2.Class(ModelFilter, {
+		
+	schemaNameMap: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dispatchService: null
+
+			// From configuration
+			,modelId: null
+			,sourceModelId: null
+			,schemaName: null
+			,schemaNames: null
+		},opts_);
+		
+		var _this = this;
+		
+		this.schemaNameMap = {};
+		if( typeof opts.schemaName === 'string' ){
+			this.schemaNameMap[opts.schemaName] = true;
+		};
+		if( $n2.isArray(opts.schemaNames) ){
+			for(var i=0,e=opts.schemaNames.length; i<e; ++i){
+				var schemaName = opts.schemaNames[i];
+				if( typeof schemaName === 'string' ){
+					this.schemaNameMap[schemaName] = true;
+				};
+			};
+		};
+		
+		opts.filterFn = function(doc){
+			return _this._isDocVisible(doc);
+		};
+		opts.filterName = 'SchemaFilter';
+		
+		ModelFilter.prototype.initialize.call(this,opts);
+	},
+	
+	_isDocVisible: function(doc){
+		if( doc && doc.nunaliit_schema ){
+			if( this.schemaNameMap[doc.nunaliit_schema] ){
+				return true;
+			};
+		};
+		return false;
+	}
+});
+
+//--------------------------------------------------------------------------
+/*
+* Filter: a Document Model that filters out certain documents
+* ReferenceFilter: Allows documents that are identified by references
+*/
+var ReferenceFilter = $n2.Class(ModelFilter, {
+		
+	referenceMap: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dispatchService: null
+
+			// From configuration
+			,modelId: null
+			,sourceModelId: null
+			,reference: null
+			,references: null
+		},opts_);
+		
+		var _this = this;
+		
+		this.referenceMap = {};
+		if( typeof opts.reference === 'string' ){
+			this.referenceMap[opts.reference] = true;
+		};
+		if( $n2.isArray(opts.references) ){
+			for(var i=0,e=opts.references.length; i<e; ++i){
+				var reference = opts.references[i];
+				if( typeof reference === 'string' ){
+					this.referenceMap[reference] = true;
+				};
+			};
+		};
+		
+		opts.filterFn = function(doc){
+			return _this._isDocVisible(doc);
+		};
+		opts.filterName = 'ReferenceFilter';
+		
+		ModelFilter.prototype.initialize.call(this,opts);
+	},
+
+	getReferences: function(){
+		var references = [];
+		for(var ref in this.referenceMap){
+			references.push(ref);
+		};
+		return references;
+	},
+
+	setReferences: function(references){
+		this.referenceMap = {};
+		for(var i=0,e=references.length; i<e; ++i){
+			var ref = references[i];
+			this.referenceMap[ref] = true;
+		};
+
+		this._filterChanged();
+	},
+	
+	_isDocVisible: function(doc){
+		if( doc ){
+			var links = [];
+			$n2.couchUtils.extractLinks(doc, links);
+			for(var i=0,e=links.length; i<e; ++i){
+				var refId = links[i].doc;
+				if( this.referenceMap[refId] ){
+					return true;
+				};
+			};
+		};
+		return false;
+	}
+});
+
+//--------------------------------------------------------------------------
+/*
+* Filter: a Document Model that filters out certain documents
+* SingleDocumentFilter: Allows only one designed document
+*/
+var SingleDocumentFilter = $n2.Class(ModelFilter, {
+
+	selectedDocParameter: null,
+
+	selectedDocId: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dispatchService: null
+
+			// From configuration
+			,modelId: null
+			,sourceModelId: null
+			,selectedDocId: null
+		},opts_);
+		
+		var _this = this;
+		
+		this.selectedDocId = opts.selectedDocId;
+		
+		this.selectedDocParameter = new $n2.model.ModelParameter({
+			model: this
+			,type: 'string'
+			,name: 'selectedDocumentId'
+			,label: 'Selected Document Id'
+			,setFn: function(docId){
+				_this._setSelectedDocId(docId);
+			}
+			,getFn: function(){
+				return _this._getSelectedDocId();
+			}
+			,dispatchService: opts.dispatchService
+		});
+		
+		opts.filterFn = function(doc){
+			return _this._isDocVisible(doc);
+		};
+		opts.filterName = 'SingleDocumentFilter';
+		
+		ModelFilter.prototype.initialize.call(this,opts);
+	},
+	
+	_getSelectedDocId: function(){
+		return this.selectedDocId;
+	},
+	
+	_setSelectedDocId: function(docId){
+		this.selectedDocId = docId;
+		
+		this._filterChanged();
+	},
+	
+	_addModelInfoParameters: function(info){
+		info.parameters.selectedDocumentId = this.selectedDocParameter.getInfo();
+	},
+	
+	_isDocVisible: function(doc){
+		if( doc && doc._id === this.selectedDocId ){
+			return true;
+		};
+		return false;
+	}
+});
+
+//--------------------------------------------------------------------------
+/*
+* This class is a document source model. This means that it is a document model
+* (a model that makes documents available to other entities), but it does not
+* connect to a source model. Instead, being a source, it generates a stream of
+* documents for other entities.
+* 
+* This document model is static, meaning that it does not change over time. It
+* has a set of documents that it manages in memory and makes it available.
+*/
+var StaticDocumentSource = $n2.Class('StaticDocumentSource', $n2.model.DocumentModel, {
+
+	docsById: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dispatchService: null
+
+			// From configuration
+			,modelId: null
+			,modelType: null
+			,docs: null
+		},opts_);
+		
+		$n2.model.DocumentModel.prototype.initialize.call(this,opts);
+
+		this.docsById = {};
+		
+		$n2.log('StaticDocumentSource', this);
+
+		if( $n2.isArray(opts.docs) ){
+			this.setDocuments(opts.docs);
+		};
+	},
+	
+	setDocuments: function(docs){
+		var _this = this;
+		
+		var added = [];
+		var updated = [];
+		var removed = [];
+		
+		var newDocsById = {};
+		docs.forEach(function(doc){
+			if( doc && doc._id ){
+				var docId = doc._id;
+
+				newDocsById[docId] = doc;
+				
+				if( _this.docsById ){
+					updated.push(doc);
+				} else {
+					added.push(doc);
+				};
+			};
+		});
+		
+		// Figure out removed document
+		for(var docId in this.docsById){
+			var doc = this.docsById[docId];
+			if( !newDocsById[docId] ){
+				removed.push(doc);
+			};
+		};
+		
+		// Install new document map
+		this.docsById = newDocsById;
+		
+		this._reportStateUpdate(added, updated, removed);
+	},
+	
+	_getCurrentDocuments: function(){
+		var docs = [];
+		
+		for(var docId in this.docsById){
+			var doc = this.docsById[docId];
+			docs[docs.length] = doc;
+		};
+		
+		return docs;
+	}
+});
+
+//--------------------------------------------------------------------------
+function handleModelCreate(m, addr, dispatcher){
+	if( m.modelType === 'union' ){
+		var options = {};
+		
+		if( m && m.modelOptions ){
+			if( m.modelOptions.sourceModelIds 
+			 && m.modelOptions.sourceModelIds.length ){
+				options.sourceModelIds = m.modelOptions.sourceModelIds;
+			};
+		};
+
+		options.modelId = m.modelId;
+		options.modelType = m.modelType;
+		
+		if( m && m.config ){
+			if( m.config.directory ){
+				options.dispatchService = m.config.directory.dispatchService;
+			};
+		};
+		
+		new ModelUnion(options);
+		
+		m.created = true;
+
+	} else if( m.modelType === 'filter' ){
+		var options = {};
+		
+		if( m && m.modelOptions ){
+			if( m.modelOptions.sourceModelId ){
+				options.sourceModelId = m.modelOptions.sourceModelId;
+			};
+		};
+
+		options.modelId = m.modelId;
+		options.modelType = m.modelType;
+		
+		if( m && m.config ){
+			if( m.config.directory ){
+				options.dispatchService = m.config.directory.dispatchService;
+			};
+		};
+		
+		var filterFn = null;
+		if( $n2.modelUtils.FilterFunctionFromModelConfiguration ){
+			filterFn = $n2.modelUtils.FilterFunctionFromModelConfiguration(m.modelOptions);
+		};
+		if( filterFn ){
+			options.filterFn = filterFn;
+		} else {
+			throw 'Unable to find function for filter model';
+		};
+		
+		new ModelFilter(options);
+		
+		m.created = true;
+
+	} else if( m.modelType === 'schemaFilter' ){
+		var options = {};
+		
+		if( m && m.modelOptions ){
+			for(var key in m.modelOptions){
+				options[key] = m.modelOptions[key];
+			};
+		};
+		
+		options.modelId = m.modelId;
+		options.modelType = m.modelType;
+
+		if( m && m.config ){
+			if( m.config.directory ){
+				options.dispatchService = m.config.directory.dispatchService;
+			};
+		};
+		
+		new SchemaFilter(options);
+		
+		m.created = true;
+
+	} else if( m.modelType === 'referenceFilter' ){
+		var options = {};
+		
+		if( m && m.modelOptions ){
+			for(var key in m.modelOptions){
+				options[key] = m.modelOptions[key];
+			};
+		};
+		
+		options.modelId = m.modelId;
+		options.modelType = m.modelType;
+
+		if( m && m.config ){
+			if( m.config.directory ){
+				options.dispatchService = m.config.directory.dispatchService;
+			};
+		};
+		
+		new ReferenceFilter(options);
+		
+		m.created = true;
+
+	} else if( m.modelType === 'singleDocumentFilter' ){
+		var options = {};
+		
+		if( m && m.modelOptions ){
+			for(var key in m.modelOptions){
+				options[key] = m.modelOptions[key];
+			};
+		};
+		
+		options.modelId = m.modelId;
+		options.modelType = m.modelType;
+
+		if( m && m.config ){
+			if( m.config.directory ){
+				options.dispatchService = m.config.directory.dispatchService;
+			};
+		};
+		
+		new SingleDocumentFilter(options);
+		
+		m.created = true;
+
+	} else if( m.modelType === 'staticDocumentSource' ){
+		var options = {};
+		
+		if( m && m.modelOptions ){
+			for(var key in m.modelOptions){
+				options[key] = m.modelOptions[key];
+			};
+		};
+		
+		options.modelId = m.modelId;
+		options.modelType = m.modelType;
+
+		if( m && m.config ){
+			if( m.config.directory ){
+				options.dispatchService = m.config.directory.dispatchService;
+			};
+		};
+		
+		new StaticDocumentSource(options);
+		
+		m.created = true;
+	};
+};
+
+//--------------------------------------------------------------------------
 $n2.modelUtils = {
 	ModelUnion: ModelUnion
 	,ModelFilter: ModelFilter
 	,FilterFunctionFromModelConfiguration: FilterFunctionFromModelConfiguration
+	,SchemaFilter: SchemaFilter
+	,ReferenceFilter: ReferenceFilter
+	,StaticDocumentSource: StaticDocumentSource
+	,handleModelCreate: handleModelCreate 
 };
 
 })(jQuery,nunaliit2);

@@ -302,7 +302,7 @@ public class UserServletActions {
 			// Ignore
 		}
 		if( null == user ){
-			throw new Exception("No user assciated with e-mail address: "+emailAddr);
+			throw new Exception("No user associated with e-mail address: "+emailAddr);
 		}
 
 		// Create token

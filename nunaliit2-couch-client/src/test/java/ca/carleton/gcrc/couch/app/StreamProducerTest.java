@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import ca.carleton.gcrc.couch.app.impl.DigestComputerSha1;
 import ca.carleton.gcrc.couch.app.impl.DocumentFile;
 import ca.carleton.gcrc.couch.app.impl.StreamProducerDocumentUpdate;
+import ca.carleton.gcrc.couch.app.impl.UpdateObjectComparator;
 import ca.carleton.gcrc.couch.app.impl.UpdateSpecifier;
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.TestSupport;
@@ -34,6 +35,7 @@ public class StreamProducerTest extends TestCase {
 					,dd
 					,null
 					,DocumentUpdateProcess.Schedule.UPDATE_UNLESS_MODIFIED
+					,UpdateObjectComparator.getNunaliitComparator()
 					);
 			
 			StreamProducerDocumentUpdate producer = new StreamProducerDocumentUpdate(
@@ -70,6 +72,7 @@ public class StreamProducerTest extends TestCase {
 					,dd
 					,null
 					,DocumentUpdateProcess.Schedule.UPDATE_UNLESS_MODIFIED
+					,UpdateObjectComparator.getNunaliitComparator()
 					);
 			
 			StreamProducerDocumentUpdate producer = new StreamProducerDocumentUpdate(

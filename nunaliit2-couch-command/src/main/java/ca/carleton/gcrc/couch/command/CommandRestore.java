@@ -3,8 +3,6 @@ package ca.carleton.gcrc.couch.command;
 import java.io.File;
 import java.io.PrintStream;
 import java.util.List;
-import java.util.Stack;
-import java.util.Vector;
 
 import ca.carleton.gcrc.couch.app.DbRestoreListener;
 import ca.carleton.gcrc.couch.app.DbRestoreProcess;
@@ -33,6 +31,15 @@ public class CommandRestore implements Command {
 	}
 
 	@Override
+	public String[] getExpectedOptions() {
+		return new String[]{
+				Options.OPTION_ATLAS_DIR
+				,Options.OPTION_DUMP_DIR
+				,Options.OPTION_DOC_ID
+			};
+	}
+
+	@Override
 	public boolean requiresAtlasDir() {
 		return true;
 	}
@@ -46,60 +53,41 @@ public class CommandRestore implements Command {
 		ps.println("atlas.");
 		ps.println();
 		ps.println("Command Syntax:");
-		ps.println("  nunaliit [<global-options>] restore [<restore-options>]");
+		ps.println("  nunaliit restore <options>");
 		ps.println();
-		ps.println("Global Options");
-		CommandHelp.reportGlobalSettingAtlasDir(ps);
+		ps.println("options:");
+		ps.println("  "+Options.OPTION_DUMP_DIR+" <dir>");
+		ps.println("    --dump-dir <dir>  Directory where snapshot is stored");
 		ps.println();
-		ps.println("Restore Options");
-		ps.println("  --dump-dir <dir>  Directory where snapshot is stored");
-		ps.println("  --doc-id   <docId> Specifies which document(s) should be");
-		ps.println("                     restored by selecting the document identifier.");
-		ps.println("                     This option can be used multiple times to include");
-		ps.println("                     multiple documents in the restore process. If ");
-		ps.println("                     this option is not used, all documents are");
-		ps.println("                     restored.");
+		ps.println("  "+Options.OPTION_DOC_ID+" <docId>");
+		ps.println("    Specifies which document(s) should be restored by selecting the ");
+		ps.println("    document identifier. This option can be used multiple times to include");
+		ps.println("    multiple documents in the restore process. If  this option is not ");
+		ps.println("    used, all documents are restored.");
+		ps.println();
+		CommandHelp.reportGlobalOptions(ps,getExpectedOptions());
 	}
 
 	@Override
 	public void runCommand(
 		GlobalSettings gs
-		,Stack<String> argumentStack
+		,Options options
 		) throws Exception {
+
+		if( options.getArguments().size() > 1 ){
+			throw new Exception("Unexpected argument: "+options.getArguments().get(1));
+		}
 
 		File atlasDir = gs.getAtlasDir();
 
 		// Pick up options
-		File dumpDir = null;
-		List<String> docIds = new Vector<String>();
-		while( false == argumentStack.empty() ){
-			String optionName = argumentStack.peek();
-			if( "--dump-dir".equals(optionName) ){
-				argumentStack.pop();
-				if( argumentStack.size() < 1 ){
-					throw new Exception("--dump-dir option requires a directory");
-				}
-				
-				String dumpDirStr = argumentStack.pop();
-				dumpDir = new File(atlasDir, "dump/"+dumpDirStr);
-				if( false == dumpDir.exists() ) {
-					dumpDir = new File(dumpDirStr);
-				}
-				
-			} else if( "--doc-id".equals(optionName) ){
-				argumentStack.pop();
-				if( argumentStack.size() < 1 ){
-					throw new Exception("--doc-id option requires a document identifier");
-				}
-				
-				String docId = argumentStack.pop();
-				docIds.add(docId);
-				
-			} else {
-				break;
-			}
-		}
+		String dumpDirStr = options.getDumpDir();
+		List<String> docIds = options.getDocIds();
 
+		File dumpDir = null;
+		if( null != dumpDirStr ){
+			dumpDir = new File(dumpDirStr);
+		}
 		if( null == dumpDir ) {
 			throw new Exception("During a restore, the --dump-dir option must be provided");
 		}
