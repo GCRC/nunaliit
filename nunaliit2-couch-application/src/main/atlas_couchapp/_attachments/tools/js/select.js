@@ -2406,14 +2406,21 @@
 
 		for(var i=0,e=list.docIds.length; i<e; ++i){
 			var docId = list.docIds[i];
-			var $d = $('<div></div>');
-			$div.append($d);
+			var $d = $('<div>')
+				.appendTo($div);
 			
-			var $a = $('<a href="#"></a>');
-			$d.append($a);
+			var $a = $('<a>')
+				.attr('href','#')
+				.appendTo($d);
 			
 			if( showService && list.docIds.length < 100 ) {
 				showService.printBriefDescription($a, docId);
+			} else if( showService ) {
+				$a
+					.addClass('n2SelectApp_waitForMouseOver')
+					.attr('nunaliit-document',docId)
+					.text(docId)
+					.mouseover(mouseOverDisplay);
 			} else {
 				$a.text(docId);
 			};
@@ -2425,6 +2432,15 @@
 				viewDocument(docId);
 				return false;
 			});
+		};
+
+		function mouseOverDisplay(){
+			var $a = $(this);
+			if( $a.hasClass('n2SelectApp_waitForMouseOver') ){
+				$a.removeClass('n2SelectApp_waitForMouseOver');
+				var docId = $a.attr('nunaliit-document');
+				showService.printBriefDescription($a, docId);
+			};
 		};
 	};
 	
@@ -2675,7 +2691,7 @@
 			autoOpen: true
 			,title: _loc('Enter Report Script')
 			,modal: true
-			,width: 400
+			,width: 550
 			,close: function(event, ui){
 				var diag = $(event.target);
 				diag.dialog('destroy');
