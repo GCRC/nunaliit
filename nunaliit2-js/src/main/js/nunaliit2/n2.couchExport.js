@@ -681,7 +681,7 @@ var ExportService = $n2.Class('ExportService',{
 			onError('docIds must be provided when exporting by docIds');
 		};
 		
-		var url = this.serverUrl + 'export/definition/';
+		var url = this.serverUrl + 'definition/';
 		if( opts.fileName ){
 			url = url + opts.fileName;
 		} else {

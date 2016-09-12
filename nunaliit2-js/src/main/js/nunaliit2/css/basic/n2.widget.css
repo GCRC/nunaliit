@@ -609,3 +609,32 @@ Document Selector
 	float: right;
 	padding: 8px 20px;
 }
+
+/* 
+==============================
+Model Browser Widget 
+==============================
+*/
+.nunaliit_footer .n2modelBrowserWidget {
+	float: right;
+	margin: 2px;
+}
+.nunaliit_footer .n2modelBrowserWidget a {
+	text-decoration: none;
+	color: #fff;
+}
+.nunaliit_footer .n2modelBrowserWidget a:visited {
+	color: #fff;
+}
+.n2modelBrowserWidget_model {
+	display: block;
+}
+.n2modelBrowserWidget_model_selected {
+	background-color: #ccc;
+}
+.n2modelBrowserWidget_list_docId {
+	display: block;
+}
+.n2modelBrowserWidget_list_docId_selected {
+	background-color: #ccc;
+}
