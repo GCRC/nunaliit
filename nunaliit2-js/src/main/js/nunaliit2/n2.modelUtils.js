@@ -50,7 +50,7 @@ function FilterFunctionFromModelConfiguration(modelConf){
 				,n2_found: false
 				,n2_intent: null
 			};
-			function filterOnCondition(doc){
+			var filterOnCondition = function(doc){
 				// Re-use same context to avoid generating
 				// temporary objects
 				ctxt.n2_doc = doc;
@@ -66,7 +66,7 @@ function FilterFunctionFromModelConfiguration(modelConf){
 			return filterOnCondition;
 			
 		} else if( 'all' === modelConf.useBuiltInFunction ){
-			function allDocuments(doc){
+			var allDocuments = function(doc){
 				return true;
 			};
 			allDocuments.NAME = "allDocuments";
@@ -74,7 +74,7 @@ function FilterFunctionFromModelConfiguration(modelConf){
 			return allDocuments;
 			
 		} else if( 'none' === modelConf.useBuiltInFunction ){
-			function noDocument(doc){
+			var noDocument = function(doc){
 				return false;
 			};
 			noDocument.NAME = "noDocument";
@@ -82,7 +82,7 @@ function FilterFunctionFromModelConfiguration(modelConf){
 			return noDocument;
 			
 		} else if( 'withDates' === modelConf.useBuiltInFunction ){
-			function withDates(doc){
+			var withDates = function(doc){
 				var dates = [];
 				$n2.couchUtils.extractSpecificType(doc,'date',dates);
 				return (dates.length > 0);
@@ -92,7 +92,7 @@ function FilterFunctionFromModelConfiguration(modelConf){
 			return withDates;
 			
 		} else if( 'withoutDates' === modelConf.useBuiltInFunction ){
-			function withoutDates(doc){
+			var withoutDates = function(doc){
 				var dates = [];
 				$n2.couchUtils.extractSpecificType(doc,'date',dates);
 				return (dates.length < 1);
@@ -102,7 +102,7 @@ function FilterFunctionFromModelConfiguration(modelConf){
 			return withoutDates;
 
 		} else if( 'withoutGeometry' === modelConf.useBuiltInFunction ){
-			function withoutGeometry(doc){
+			var withoutGeometry = function(doc){
 				if( doc ){
 					if( !doc.nunaliit_geom ){
 						return true;
