@@ -106,7 +106,7 @@ public class ExportServlet extends JsonServlet {
 				doPostRecords(request, response);
 					
 			} else {
-				throw new Exception("Unknown request");
+				throw new Exception("Unknown request: "+path);
 			}
 
 		} catch (Exception e) {
