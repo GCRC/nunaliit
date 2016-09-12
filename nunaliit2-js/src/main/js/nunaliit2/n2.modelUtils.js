@@ -50,7 +50,7 @@ function FilterFunctionFromModelConfiguration(modelConf){
 				,n2_found: false
 				,n2_intent: null
 			};
-			return function(doc){
+			function filterOnCondition(doc){
 				// Re-use same context to avoid generating
 				// temporary objects
 				ctxt.n2_doc = doc;
@@ -61,30 +61,58 @@ function FilterFunctionFromModelConfiguration(modelConf){
 				
 				return value;
 			};
+			filterOnCondition.NAME = "filterOnCondition("+modelConf.condition+")";
+			
+			return filterOnCondition;
 			
 		} else if( 'all' === modelConf.useBuiltInFunction ){
-			return function(doc){
+			function allDocuments(doc){
 				return true;
 			};
+			allDocuments.NAME = "allDocuments";
+			
+			return allDocuments;
 			
 		} else if( 'none' === modelConf.useBuiltInFunction ){
-			return function(doc){
+			function noDocument(doc){
 				return false;
 			};
+			noDocument.NAME = "noDocument";
+			
+			return noDocument;
 			
 		} else if( 'withDates' === modelConf.useBuiltInFunction ){
-			return function(doc){
+			function withDates(doc){
 				var dates = [];
 				$n2.couchUtils.extractSpecificType(doc,'date',dates);
 				return (dates.length > 0);
 			};
+			withDates.NAME = "withDates";
+			
+			return withDates;
 			
 		} else if( 'withoutDates' === modelConf.useBuiltInFunction ){
-			return function(doc){
+			function withoutDates(doc){
 				var dates = [];
 				$n2.couchUtils.extractSpecificType(doc,'date',dates);
 				return (dates.length < 1);
 			};
+			withoutDates.NAME = "withoutDates";
+			
+			return withoutDates;
+
+		} else if( 'withoutGeometry' === modelConf.useBuiltInFunction ){
+			function withoutGeometry(doc){
+				if( doc ){
+					if( !doc.nunaliit_geom ){
+						return true;
+					};
+				};
+				return false;
+			};
+			withoutGeometry.NAME = "withoutGeometry";
+			
+			return withoutGeometry;
 		};
 	};
 	
@@ -869,6 +897,9 @@ function handleModelCreate(m, addr, dispatcher){
 		var filterFn = null;
 		if( $n2.modelUtils.FilterFunctionFromModelConfiguration ){
 			filterFn = $n2.modelUtils.FilterFunctionFromModelConfiguration(m.modelOptions);
+			if( filterFn.NAME ){
+				options.filterName = 'FilterModel - ' + filterFn.NAME;
+			};
 		};
 		if( filterFn ){
 			options.filterFn = filterFn;
