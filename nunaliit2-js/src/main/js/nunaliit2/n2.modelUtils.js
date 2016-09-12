@@ -280,16 +280,25 @@ var ModelFilter = $n2.Class({
 				// Compute new visibility
 				var visible = this._computeVisibility(doc);
 				
-				if( visible !== docInfo.visible ){
-					if( visible ){
-						added.push(doc);
+				if( visible ){
+					if( docInfo.visible ){
+						// Is visible and used to be visible: update
+						updated.push(doc);
 					} else {
-						removed.push(doc);
+						// Is visible and did not used to be visible: added
+						added.push(doc);
 					};
-					
-				} else if(visible) {
-					updated.push(doc);
+				} else {
+					if( docInfo.visible ){
+						// Is not visible and used to be visible: remove
+						removed.push(doc);
+					} else {
+						// Is not visible and did not used to be visible: nothing
+					};
 				};
+				
+				// Update visibility
+				docInfo.visible = visible;
 			};
 		};
 		
@@ -303,6 +312,7 @@ var ModelFilter = $n2.Class({
 					delete this.docInfosByDocId[docId];
 					
 					if( docInfo.visible ){
+						// Has been removed, but used to be visible: remove
 						removed.push(doc);
 					};
 				};
@@ -327,16 +337,28 @@ var ModelFilter = $n2.Class({
 		for(var docId in this.docInfosByDocId){
 			var docInfo = this.docInfosByDocId[docId];
 			var doc = docInfo.doc;
+			
+			// Compute new visibility
 			var visible = this._computeVisibility(doc);
 			
-			if( visible !== docInfo.visible ){
-				if( visible ){
-					added.push(doc);
+			if( visible ){
+				if( docInfo.visible ){
+					// Is visible and used to be visible: nothing
 				} else {
-					removed.push(doc);
+					// Is visible and did not used to be visible: added
+					added.push(doc);
 				};
-				docInfo.visible = visible;
+			} else {
+				if( docInfo.visible ){
+					// Is not visible and used to be visible: remove
+					removed.push(doc);
+				} else {
+					// Is not visible and did not used to be visible: nothing
+				};
 			};
+			
+			// Update visibility
+			docInfo.visible = visible;
 		};
 
 		this._reportStateUpdate(added, updated, removed);

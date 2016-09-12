@@ -51,6 +51,8 @@ var ModelTracker = $n2.Class({
 	sourceModelId: null,
 
 	dispatchService: null,
+	
+	docsById: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -60,6 +62,8 @@ var ModelTracker = $n2.Class({
 		
 		this.sourceModelId = opts.sourceModelId;
 		this.dispatchService = opts.dispatchService;
+		
+		this.docsById = {};
 
 		var _this = this;
 		
@@ -76,6 +80,7 @@ var ModelTracker = $n2.Class({
 	
 	refresh: function(){
 		if( this.sourceModelId ){
+			$n2.log(DH+': refreshing from my source');
 			// Get current state
 			var state = $n2.model.getModelState({
 				dispatchService: this.dispatchService
@@ -91,29 +96,22 @@ var ModelTracker = $n2.Class({
 		if( 'modelStateUpdated' === m.type ){
 			// Does it come from our source?
 			if( this.sourceModelId === m.modelId ){
+				$n2.log(DH+': this my source');
 				this._sourceModelUpdated(m.state);
+			} else {
+				$n2.log(DH+': not my source');
 			};
 		};
 	},
 	
 	_sourceModelUpdated: function(sourceState){
-		// Prepare an event to report document list result
-		var m = {
-			type: 'documentListResults'
-			,listType: 'model'
-			,listName: this.sourceModelId
-			,docIds: []
-			,docs: []
-		};
-		
 		// Loop through all added documents
 		if( sourceState.added ){
 			for(var i=0,e=sourceState.added.length; i<e; ++i){
 				var doc = sourceState.added[i];
 				var docId = doc._id;
 				
-				m.docIds.push(docId);
-				m.docs.push(doc);
+				this.docsById[docId] = doc;
 			};
 		};
 		
@@ -123,10 +121,38 @@ var ModelTracker = $n2.Class({
 				var doc = sourceState.updated[i];
 				var docId = doc._id;
 				
-				m.docIds.push(docId);
-				m.docs.push(doc);
+				this.docsById[docId] = doc;
 			};
 		};
+		
+		// Loop through all removed documents
+		if( sourceState.removed ){
+			for(var i=0,e=sourceState.removed.length; i<e; ++i){
+				var doc = sourceState.removed[i];
+				var docId = doc._id;
+				
+				if( this.docsById[docId] ){
+					delete this.docsById[docId];
+				};
+			};
+		};
+
+		// Prepare an event to report document list result
+		var m = {
+			type: 'documentListResults'
+			,listType: 'model'
+			,listName: this.sourceModelId
+			,docIds: []
+			,docs: []
+		};
+		
+		for(var docId in this.docsById){
+			var doc = this.docsById[docId];
+			m.docIds.push(docId);
+			m.docs.push(doc);
+		};
+		
+		$n2.log(DH+': sending '+m.docIds.length);
 
 		// Send event
 		this.dispatchService.send(DH,m);
