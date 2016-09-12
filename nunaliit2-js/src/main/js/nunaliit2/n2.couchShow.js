@@ -1973,12 +1973,21 @@ var Show = $n2.Class({
 			if( typeof listName === 'undefined'){
 				listName = $elem.attr('n2-list-name');
 			};
+			var listLive = $elem.attr('nunaliit-list-live');
+			if( listLive === 'false'){
+				listLive = undefined;
+			};
 			
 			if( listType === m.listType 
 			 && listName === m.listName ){
-				$elem
-					.removeClass('n2show_documentList_wait')
-					.empty();
+				$elem.removeClass('n2show_documentList_empty');
+
+				if( !listLive ) {
+					// If not live, do not wait for any more updates
+					$elem.removeClass('n2show_documentList_wait');
+				};
+				
+				$elem.empty();
 
 				// Are documents provided?
 				if( m.docs && m.docs.length > 0 ){
@@ -1993,7 +2002,7 @@ var Show = $n2.Class({
 						var $a = $('<a>')
 							.attr('href','#')
 							.appendTo($doc);
-						
+	
 						_this._displayDocumentBrief($a, doc);
 
 						installClick($a, docId);
