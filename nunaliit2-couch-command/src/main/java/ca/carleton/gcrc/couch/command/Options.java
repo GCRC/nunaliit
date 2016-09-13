@@ -36,7 +36,7 @@ public class Options {
 	private String group;
 	private String id;
 	private String dumpDir;
-	private String schema;
+	private String schemaName;
 	private List<String> docIds = new Vector<String>();
 	private String name;
 	
@@ -133,11 +133,11 @@ public class Options {
 						throw new Exception(OPTION_SCHEMA+" option requires the name of a schema");
 					}
 					
-					if( null != schema ){
+					if( null != schemaName ){
 						throw new Exception("Option "+OPTION_SCHEMA+" can be specified only once");
 					}
 
-					schema = argumentStack.pop();
+					schemaName = argumentStack.pop();
 
 				} else if( OPTION_DOC_ID.equals(arg) ){
 					if( argumentStack.size() < 1 ){
@@ -185,7 +185,7 @@ public class Options {
 		if( null != skeleton && false == expected.contains(OPTION_SKELETON)){
 			throw new Exception("Unexpected option: "+OPTION_SKELETON);
 		}
-		if( null != schema && false == expected.contains(OPTION_SCHEMA)){
+		if( null != schemaName && false == expected.contains(OPTION_SCHEMA)){
 			throw new Exception("Unexpected option: "+OPTION_SCHEMA);
 		}
 		if( null != overwriteDocs && false == expected.contains(OPTION_OVERWRITE_DOCS)){
