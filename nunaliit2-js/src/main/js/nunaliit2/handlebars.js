@@ -1775,7 +1775,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        return true;
 	                }
 	            }
-	            return true;
+	            // return true;  // unreachable
 	        }
 	    };
 	    /* Jison generated lexer */
@@ -4445,15 +4445,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var SourceNode = undefined;
 
-	try {
-	  /* istanbul ignore next */
-	  if (false) {
-	    // We don't support this in AMD environments. For these environments, we asusme that
-	    // they are running on the browser and thus have no need for the source-map library.
-	    var SourceMap = require('source-map');
-	    SourceNode = SourceMap.SourceNode;
-	  }
-	} catch (err) {}
+	// Unreachable
+//	try {
+//	  /* istanbul ignore next */
+//	  if (false) {
+//	    // We don't support this in AMD environments. For these environments, we asusme that
+//	    // they are running on the browser and thus have no need for the source-map library.
+//	    var SourceMap = require('source-map');
+//	    SourceNode = SourceMap.SourceNode;
+//	  }
+//	} catch (err) {}
 	/* NOP */
 
 	/* istanbul ignore if: tested but not covered in istanbul due to dist build  */
