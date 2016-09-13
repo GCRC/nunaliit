@@ -534,6 +534,10 @@ var Service = $n2.Class({
 	
 	dispatchService: null,
 	
+	modelIdMap: null,
+	
+	modelIds: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: null
@@ -542,6 +546,9 @@ var Service = $n2.Class({
 		var _this = this;
 		
 		this.dispatchService = opts.dispatchService;
+
+		this.modelIdMap = {};
+		this.modelIds = [];
 		
 		// Register to events
 		if( this.dispatchService ){
@@ -549,6 +556,8 @@ var Service = $n2.Class({
 				_this._handle(m, addr, dispatcher);
 			};
 			this.dispatchService.register(DH,'modelCreate',f);
+			this.dispatchService.register(DH,'modelStateUpdated',f);
+			this.dispatchService.register(DH,'modelGetList',f);
 		};
 	},
 	
@@ -584,6 +593,25 @@ var Service = $n2.Class({
 			} catch(err) {
 				$n2.log('Error while creating model '+m.modelType+'/'+m.modelId+': '+err);
 			};
+
+		} else if( 'modelStateUpdated' === m.type ){
+			// Keep track of model identifiers
+			var modelId = m.modelId;
+			if( modelId ){
+				if( !this.modelIdMap[modelId] ){
+					this.modelIdMap[modelId] = true;
+					this.modelIds.push(modelId);
+				};
+			};
+
+		} else if( 'modelGetList' === m.type ){
+			// This is a synchronous request to find all model identifiers
+			if( !m.modelIds ){
+				m.modelIds = [];
+			};
+			this.modelIds.forEach(function(modelId){
+				m.modelIds.push(modelId);
+			});
 		};
 	},
 	

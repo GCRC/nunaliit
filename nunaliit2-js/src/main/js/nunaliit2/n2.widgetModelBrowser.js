@@ -34,11 +34,7 @@ POSSIBILITY OF SUCH DAMAGE.
  To use this widget, add the following definition to a module widget list:
 	{
 		"_comment": "Debug models"
-        ,"containerClass": "nunaliit_footer"
 		,"widgetType": "modelBrowserWidget"
-		,"sourceModelIds":[
-			...
-		]
 	}
  */
 ;(function($,$n2) {
@@ -95,7 +91,7 @@ var ModelBrowserWidget = $n2.Class({
 		
 		$('<div>')
 			.attr('id',this.elemId)
-			.addClass('n2modelBrowserWidget')
+			.addClass('n2widget_modelBrowser')
 			.appendTo($container);
 		
 		if( this.dispatchService ){
@@ -115,7 +111,7 @@ var ModelBrowserWidget = $n2.Class({
 			if( m.docId === this.selectedDocId ){
 				// Get document tree pane
 				var $dialog = $('#'+this.browserId);
-				var $treePane = $dialog.find('.n2modelBrowserWidget_document_tree');
+				var $treePane = $dialog.find('.n2widget_modelBrowser_document_tree');
 				
 				$treePane.empty();
 				new $n2.tree.ObjectTree($treePane, m.doc);
@@ -135,7 +131,7 @@ var ModelBrowserWidget = $n2.Class({
 		$elem.empty();
 		
 		$('<a>')
-			.addClass('n2modelBrowserWidget_button')
+			.addClass('n2widget_modelBrowser_button')
 			.attr('href','#')
 			.text( _loc('Models') )
 			.appendTo($elem)
@@ -154,21 +150,21 @@ var ModelBrowserWidget = $n2.Class({
 		var _this = this;
 
 		var $dialog = $('<div>')
-			.addClass('n2modelBrowserWidget_window')
+			.addClass('n2widget_modelBrowser_window')
 			.attr('id', this.browserId)
 			.appendTo($('body'))
 			;
 		
 		$('<div>')
-			.addClass('n2modelBrowserWidget_models')
+			.addClass('n2widget_modelBrowser_models')
 			.appendTo($dialog);
 		
 		$('<div>')
-			.addClass('n2modelBrowserWidget_list')
+			.addClass('n2widget_modelBrowser_list')
 			.appendTo($dialog);
 		
 		$('<div>')
-			.addClass('n2modelBrowserWidget_document')
+			.addClass('n2widget_modelBrowser_document')
 			.appendTo($dialog);
 		
 		this._refreshModels();
@@ -191,39 +187,48 @@ var ModelBrowserWidget = $n2.Class({
 		var _this = this;
 
 		var $dialog = $('#'+this.browserId);
-		var $modelsPane = $dialog.find('.n2modelBrowserWidget_models')
+		var $modelsPane = $dialog.find('.n2widget_modelBrowser_models')
 			.empty();
 		
-		if( this.sourceModelIds ){
-			var sourceModelIdMap = {};
-
-			for(var i=0,e=this.sourceModelIds.length; i<e; ++i){
-				var sourceModelId = this.sourceModelIds[i];
-
-				sourceModelIdMap[sourceModelId] = true;
-				
-				var $a = $('<a>')
-					.addClass('n2modelBrowserWidget_model')
-					.attr('href','#')
-					.attr('nunaliit-source-model-id',sourceModelId)
-					.text(sourceModelId)
-					.appendTo($modelsPane)
-					.click(function(){
-						var $a = $(this);
-						var sourceModelId = $a.attr('nunaliit-source-model-id');
-						_this.selectedModelId = sourceModelId;
-						_this._refreshModels();
-						return false;
-					});
-				
-				if( sourceModelId === this.selectedModelId ){
-					$a.addClass('n2modelBrowserWidget_model_selected');
-				};
+		var sourceModelIds = this.sourceModelIds;
+		if( !sourceModelIds ){
+			// Not specified. Request full list
+			var m = {
+				type: 'modelGetList'
+				,modelIds: []
 			};
+			this.dispatchService.synchronousCall(DH,m);
+			sourceModelIds = m.modelIds;
+		};
+		
+		var sourceModelIdMap = {};
+
+		for(var i=0,e=sourceModelIds.length; i<e; ++i){
+			var sourceModelId = sourceModelIds[i];
+
+			sourceModelIdMap[sourceModelId] = true;
 			
-			if( !sourceModelIdMap[this.selectedModelId] ){
-				this.selectedModelId = null;
+			var $a = $('<a>')
+				.addClass('n2widget_modelBrowser_model')
+				.attr('href','#')
+				.attr('nunaliit-source-model-id',sourceModelId)
+				.text(sourceModelId)
+				.appendTo($modelsPane)
+				.click(function(){
+					var $a = $(this);
+					var sourceModelId = $a.attr('nunaliit-source-model-id');
+					_this.selectedModelId = sourceModelId;
+					_this._refreshModels();
+					return false;
+				});
+			
+			if( sourceModelId === this.selectedModelId ){
+				$a.addClass('n2widget_modelBrowser_model_selected');
 			};
+		};
+		
+		if( !sourceModelIdMap[this.selectedModelId] ){
+			this.selectedModelId = null;
 		};
 
 		_this._refreshList();
@@ -233,7 +238,7 @@ var ModelBrowserWidget = $n2.Class({
 		var _this = this;
 
 		var $dialog = $('#'+this.browserId);
-		var $listPane = $dialog.find('.n2modelBrowserWidget_list')
+		var $listPane = $dialog.find('.n2widget_modelBrowser_list')
 			.empty();
 		
 		if( this.selectedModelId ){
@@ -264,17 +269,18 @@ var ModelBrowserWidget = $n2.Class({
 			};
 			
 			var $count = $('<div>')
-				.addClass('n2modelBrowserWidget_list_count')
+				.addClass('n2widget_modelBrowser_list_count')
 				.text( _loc('Number of documents: {count}', {count:docIds.length}) )
 				.appendTo($listPane);
 			
 			var $items = $('<div>')
-				.addClass('n2modelBrowserWidget_list_docIds')
+				.addClass('n2widget_modelBrowser_list_docIds')
 				.appendTo($listPane);
 			
 			docIds.forEach(function(docId){
 				var $a = $('<a>')
-					.addClass('n2modelBrowserWidget_list_docId')
+					.addClass('n2widget_modelBrowser_list_docId')
+					.addClass('n2widget_modelBrowser_list_docId_raw')
 					.attr('href','#')
 					.attr('nunaliit-document-id',docId)
 					.appendTo($items)
@@ -285,10 +291,24 @@ var ModelBrowserWidget = $n2.Class({
 						_this.selectedDocId = docId;
 						_this._refreshList();
 						return false;
+					})
+					.mouseover(function(){
+						var $a = $(this);
+						if( $a.hasClass('n2widget_modelBrowser_list_docId_raw') ) {
+							var docId = $a.attr('nunaliit-document-id');
+							if( _this.showService ){
+								_this.showService.printBriefDescription($a,docId);
+								$a.removeClass('n2widget_modelBrowser_list_docId_raw');
+							};
+						};
 					});
 				
 				if( _this.selectedDocId === docId ){
-					$a.addClass('n2modelBrowserWidget_list_docId_selected');
+					$a.addClass('n2widget_modelBrowser_list_docId_selected');
+					if( _this.showService ){
+						_this.showService.printBriefDescription($a,docId);
+						$a.removeClass('n2widget_modelBrowser_list_docId_raw');
+					};
 				};
 			});
 		};
@@ -300,17 +320,17 @@ var ModelBrowserWidget = $n2.Class({
 		var _this = this;
 
 		var $dialog = $('#'+this.browserId);
-		var $docPane = $dialog.find('.n2modelBrowserWidget_document')
+		var $docPane = $dialog.find('.n2widget_modelBrowser_document')
 			.empty();
 		
 		if( this.selectedDocId ){
 			$('<div>')
-				.addClass('n2modelBrowserWidget_document_id')
+				.addClass('n2widget_modelBrowser_document_id')
 				.text( _loc('Document: {id}', {id:this.selectedDocId}) )
 				.appendTo($docPane);
 
 			$('<div>')
-				.addClass('n2modelBrowserWidget_document_tree')
+				.addClass('n2widget_modelBrowser_document_tree')
 				.attr('nunaliit-document', this.selectedDocId)
 				.appendTo($docPane);
 			
@@ -328,9 +348,7 @@ var ModelBrowserWidget = $n2.Class({
 //--------------------------------------------------------------------------
 function HandleWidgetAvailableRequests(m){
 	if( m.widgetType === 'modelBrowserWidget' ){
-		if( $.fn.slider ) {
-			m.isAvailable = true;
-		};
+		m.isAvailable = true;
     };
 };
 
@@ -344,13 +362,16 @@ function HandleWidgetDisplayRequests(m){
 		var options = {};
 		
 		if( widgetOptions ){
-			var sourceModelIds = [];
+			var sourceModelIds = undefined;
 			
 			for(var key in widgetOptions){
 				var value = widgetOptions[key];
 
 				if( 'sourceModelId' === key ){
 					if( typeof value === 'string' ){
+						if( !sourceModelIds ){
+							sourceModelIds = [];
+						};
 						sourceModelIds.push(value);
 					} else {
 						throw new Error('In modelBrowserWidget configuration, sourceModelId must be a string');
@@ -360,6 +381,9 @@ function HandleWidgetDisplayRequests(m){
 					if( $n2.isArray(value) ){
 						value.forEach(function(sourceModelId){
 							if( typeof sourceModelId === 'string' ){
+								if( !sourceModelIds ){
+									sourceModelIds = [];
+								};
 								sourceModelIds.push(sourceModelId);
 							} else {
 								throw new Error('In modelBrowserWidget configuration, sourceModelIds must be an array of strings');

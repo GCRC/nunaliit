@@ -615,26 +615,31 @@ Document Selector
 Model Browser Widget 
 ==============================
 */
-.nunaliit_footer .n2modelBrowserWidget {
+.nunaliit_footer .n2widget_modelBrowser {
+	display: none;
+}
+.nunaliit_user_advanced .nunaliit_footer .n2widget_modelBrowser,
+.nunaliit_show_modelBrowserWidget .nunaliit_footer .n2widget_modelBrowser {
+	display: block;
 	float: right;
 	margin: 2px;
 }
-.nunaliit_footer .n2modelBrowserWidget a {
+.nunaliit_footer .n2widget_modelBrowser a {
 	text-decoration: none;
 	color: #fff;
 }
-.nunaliit_footer .n2modelBrowserWidget a:visited {
+.nunaliit_footer .n2widget_modelBrowser a:visited {
 	color: #fff;
 }
-.n2modelBrowserWidget_model {
+.n2widget_modelBrowser_model {
 	display: block;
 }
-.n2modelBrowserWidget_model_selected {
+.n2widget_modelBrowser_model_selected {
 	background-color: #ccc;
 }
-.n2modelBrowserWidget_list_docId {
+.n2widget_modelBrowser_list_docId {
 	display: block;
 }
-.n2modelBrowserWidget_list_docId_selected {
+.n2widget_modelBrowser_list_docId_selected {
 	background-color: #ccc;
 }

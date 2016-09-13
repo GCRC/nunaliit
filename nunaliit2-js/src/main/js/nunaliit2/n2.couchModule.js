@@ -837,6 +837,7 @@ var ModuleDisplay = $n2.Class({
 			};
 
 			// Widgets
+			var modelBrowserSpecified = false;
 			for(i=0,e=availableWidgets.length; i<e; ++i){
 				widgetInfo = availableWidgets[i];
 				var widgetDisplayMsg = {
@@ -871,6 +872,30 @@ var ModuleDisplay = $n2.Class({
 					// At this point, neither containerId nor containerClass
 					// were specified
 					widgetDisplayMsg.containerId = _this.contentName;
+					_this._sendDispatchMessage(widgetDisplayMsg);
+				};
+				
+				if( 'modelBrowserWidget' === widgetInfo.widgetType ){
+					modelBrowserSpecified = true;
+				};
+			};
+			
+			// Add model browser widget, if not specified
+			if( !modelBrowserSpecified ){
+				var $footer = $('.nunaliit_footer');
+				if( $footer.length > 0 ){
+					var containerId = $n2.utils.getElementIdentifier($footer);
+					var widgetDisplayMsg = {
+						type: 'widgetDisplay'
+						,widgetType: 'modelBrowserWidget'
+						,widgetOptions: {
+							widgetType: 'modelBrowserWidget'
+						}
+						,contentId: _this.contentName
+						,containerId: containerId
+						,config: config
+						,moduleDisplay: _this
+					};
 					_this._sendDispatchMessage(widgetDisplayMsg);
 				};
 			};

@@ -243,16 +243,20 @@ CreateDocument widget
 */
 .nunaliit_atlas .nunaliit_module_title .n2widget_createDocument,
 .nunaliit_atlas .nunaliit_module_title .n2widget_createDocumentFromSchema,
-.nunaliit_atlas .nunaliit_module_title .n2widget_export {
+.nunaliit_atlas .nunaliit_module_title .n2widget_export,
+.nunaliit_atlas .nunaliit_module_title .n2widget_modelBrowser
+ {
 	float: right;
 	padding: 8px 20px;
 }
 .nunaliit_atlas .nunaliit_module_title .n2widget_createDocument a,
 .nunaliit_atlas .nunaliit_module_title .n2widget_createDocumentFromSchema a,
 .nunaliit_atlas .nunaliit_module_title .n2widget_export a,
+.nunaliit_atlas .nunaliit_module_title .n2widget_modelBrowser a,
 .nunaliit_atlas .nunaliit_module_title .n2widget_createDocument a:visited,
 .nunaliit_atlas .nunaliit_module_title .n2widget_createDocumentFromSchema a:visited,
-.nunaliit_atlas .nunaliit_module_title .n2widget_export a:visited {
+.nunaliit_atlas .nunaliit_module_title .n2widget_export a:visited,
+.nunaliit_atlas .nunaliit_module_title .n2widget_modelBrowser a:visited {
 	color: #fff;
 	text-decoration: none;
 }
