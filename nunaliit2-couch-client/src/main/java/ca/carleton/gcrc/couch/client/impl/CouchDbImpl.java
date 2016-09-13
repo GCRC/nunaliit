@@ -92,7 +92,7 @@ public class CouchDbImpl implements CouchDb {
 		
 		JSONObject response = ConnectionUtils.getJsonResource(getContext(), effectiveUrl);
 		
-		ConnectionUtils.captureReponseErrors(response, "Error while fetching all schema doc ids: ");
+		ConnectionUtils.captureReponseErrors(response, "Error while fetching all doc ids with schema: "+schemaName);
 		
 		List<String> result = new Vector<String>();
 		

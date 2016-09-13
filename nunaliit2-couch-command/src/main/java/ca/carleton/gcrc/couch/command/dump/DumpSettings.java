@@ -35,7 +35,7 @@ public class DumpSettings {
 	private boolean debug = false;
 	private File dumpDir = null;
 	private List<String> docIds = new Vector<String>();
-	private String schema = null;
+	private String schemaName = null;
 	private String server = null;
 	private String user = null;
 	private String password = null;
@@ -344,11 +344,10 @@ public class DumpSettings {
 	}
 
 	public String getSchema() {
-		return schema;
+		return schemaName;
 	}
-	public void setSchema(String 
-			schema) {
-		this.schema = schema;
+	public void setSchema(String schemaName) {
+		this.schemaName = schemaName;
 	}
 	
 	public String getServer() {
