@@ -44,6 +44,10 @@ public class DbDumpProcess {
 		this.allDocs = allDocs;
 	}
 	
+	public String getSchema() {
+		return schemaName;
+	}
+	
 	public void setSchema(String schemaName) {
 		this.schemaName = schemaName;
 	}

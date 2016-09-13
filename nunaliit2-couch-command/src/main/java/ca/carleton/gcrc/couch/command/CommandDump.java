@@ -123,6 +123,7 @@ public class CommandDump implements Command {
 		// Pick up options
 		List<String> docIds = options.getDocIds();
 		boolean selectSkeletonDocuments = false;
+		String schemaName = options.getSchema();
 		if( null != options.getSkeleton() ){
 			selectSkeletonDocuments = options.getSkeleton().booleanValue();
 		}
@@ -168,8 +169,10 @@ public class CommandDump implements Command {
 		DumpListener listener = new DumpListener( gs.getOutStream() );
 		
 		DbDumpProcess dumpProcess = new DbDumpProcess(couchDb, dumpDir);
-		if( docIds.size() < 1 && false == selectSkeletonDocuments ) {
+		if( docIds.size() < 1 && false == selectSkeletonDocuments && null == schemaName ) {
 			dumpProcess.setAllDocs(true);
+		} else if( null != schemaName ) {
+			dumpProcess.setSchema(schemaName);
 		} else {
 			for(String docId : docIds) {
 				if( docIdToFile.containsKey(docId) ){

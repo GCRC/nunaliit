@@ -275,4 +275,8 @@ public class Options {
 	public String getName() {
 		return name;
 	}
+	
+	public String getSchema() {
+		return schemaName;
+	}
 }

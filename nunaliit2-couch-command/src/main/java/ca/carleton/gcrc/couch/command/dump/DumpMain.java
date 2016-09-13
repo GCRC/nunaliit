@@ -90,10 +90,11 @@ public class DumpMain {
 		DumpListener listener = new DumpListener( dumpSettings.getOutStream() );
 		DbDumpProcess dumpProcess = new DbDumpProcess(couchDb, dumpDir);
 		List<String> docIds = dumpSettings.getDocIds();
+		String schemaName = dumpSettings.getSchema();
 		if( docIds.size() < 1 ) {
 			dumpProcess.setAllDocs(true);
-		} else if(null != dumpSettings.getSchema()) {
-			dumpProcess.setSchema(dumpSettings.getSchema());
+		} else if( null != schemaName ) {
+			dumpProcess.setSchema(schemaName);
 			
 		} else {
 			for(String docId : docIds) {
@@ -126,6 +127,9 @@ public class DumpMain {
 		ps.println();
 		ps.println("--dump-dir <dir>");
 		ps.println("    Directory where all documents are dumped to.");
+		ps.println();
+		ps.println("--schema <schemaName>");
+		ps.println("    This option dumps all documents with a specified schema.");
 		ps.println();
 		ps.println("--server <url>");
 		ps.println("    URL to the CouchDb server.");
