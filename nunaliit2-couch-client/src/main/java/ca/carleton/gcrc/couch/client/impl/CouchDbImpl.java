@@ -80,6 +80,36 @@ public class CouchDbImpl implements CouchDb {
 
 		return result;
 	}
+	
+	@Override
+	public Collection<String> getSchemaDocIds( String schemaName ) throws Exception {
+		// Compute URL
+		List<UrlParameter> parameters = new ArrayList<UrlParameter>(3);
+		parameters.add( new UrlParameter("include_docs","false") );
+		parameters.add( new UrlParameter("startkey","\""+schemaName+"\"") );
+		parameters.add( new UrlParameter("endkey","\""+schemaName+"\"") );
+		URL effectiveUrl = ConnectionUtils.computeUrlWithParameters(new URL(url, "_design/atlas/_view/nunaliit-schema"), parameters);
+		
+		JSONObject response = ConnectionUtils.getJsonResource(getContext(), effectiveUrl);
+		
+		ConnectionUtils.captureReponseErrors(response, "Error while fetching all schema doc ids: ");
+		
+		List<String> result = new Vector<String>();
+		
+		try {
+			JSONArray rows = response.getJSONArray("rows");
+			for(int loop=0,e=rows.length(); loop<e; ++loop){
+				JSONObject row = rows.getJSONObject(loop);
+				String docId = row.getString("id");
+				result.add(docId);
+			}
+			
+		} catch(Exception e) {
+			throw new Exception("Error parsing document existence with schema: "+schemaName, e);
+		}
+
+		return result;
+	}
 
 	@Override
 	public JSONObject createDocument(JSONObject doc) throws Exception {

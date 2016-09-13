@@ -92,6 +92,9 @@ public class DumpMain {
 		List<String> docIds = dumpSettings.getDocIds();
 		if( docIds.size() < 1 ) {
 			dumpProcess.setAllDocs(true);
+		} else if(null != dumpSettings.getSchema()) {
+			dumpProcess.setSchema(dumpSettings.getSchema());
+			
 		} else {
 			for(String docId : docIds) {
 				dumpProcess.addDocId(docId);

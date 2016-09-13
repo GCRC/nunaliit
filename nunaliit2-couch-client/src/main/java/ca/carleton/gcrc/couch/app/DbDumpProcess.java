@@ -21,6 +21,7 @@ public class DbDumpProcess {
 	private boolean allDocs = false;
 	private Map<String,File> docIdsToFile = new HashMap<String,File>();
 	private DbDumpListener listener = new DbDumpListenerNull();
+	private String schemaName = null;
 	
 	public DbDumpProcess(CouchDb couchDb, File dumpDir){
 		this.couchDb = couchDb;
@@ -41,6 +42,10 @@ public class DbDumpProcess {
 
 	public void setAllDocs(boolean allDocs) {
 		this.allDocs = allDocs;
+	}
+	
+	public void setSchema(String schemaName) {
+		this.schemaName = schemaName;
 	}
 
 	public List<String> getDocIds() {
@@ -125,6 +130,11 @@ public class DbDumpProcess {
 			// Get all documents from database
 			Collection<String> allDocIds = couchDb.getAllDocIds();
 			return new ArrayList<String>(allDocIds);
+			
+		} else if( null != schemaName ) {
+			// Get all documents from database with specified schema
+			Collection<String> schemaDocIds = couchDb.getSchemaDocIds(schemaName);
+			return new ArrayList<String>(schemaDocIds);
 			
 		} else {
 			return getDocIds();
