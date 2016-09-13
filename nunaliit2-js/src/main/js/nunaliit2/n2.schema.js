@@ -1764,6 +1764,10 @@ var Form = $n2.Class({
 		
 		var classNames = $input.attr('class').split(' ');
 		var classInfo = parseClassNames(classNames);
+		var inputNodeName = $input.prop('nodeName');
+		if( typeof inputNodeName === 'string' ){
+			inputNodeName = inputNodeName.toLowerCase();
+		};
 		
 		// Special case for references. Convert input into field
 		if( 'reference' === classInfo.type 
@@ -1946,6 +1950,44 @@ var Form = $n2.Class({
 				
 			} else {
 				$input.val(value);
+			};
+			
+			// After setting the value to a <select>, it is possible that no option
+			// is representing the current value. In this case, insert an option to
+			// represent the current state
+			if( 'select' === inputNodeName ){
+				var effectiveValue = value;
+				if( null === effectiveValue ){
+					// This is a text field. Null does not have a meaning
+					effectiveValue = '';
+				};
+
+				var selectedOptions = $input[0].selectedOptions;
+				if( selectedOptions ){
+					var foundCurrentValue = false;
+					for(var i=0,e=selectedOptions.length; i<e; ++i){
+						var selectedOption = selectedOptions.item(i);
+						var $selectedOptions = $(selectedOption);
+						var selectedValue = $selectedOptions.attr('value');
+						if( selectedValue === effectiveValue ){
+							foundCurrentValue = true;
+						};
+					};
+					
+					if( !foundCurrentValue ){
+						// At this point, the value carried by the document is not
+						// properly represented by the <select> form element. Correct
+						// the situation by prepending an <option> element with the
+						// correct value. Make this option 'disabled' so that user can
+						// not choose it.
+						$('<option>')
+							.attr('value',effectiveValue)
+							.attr('disabled','disabled')
+							.text( effectiveValue )
+							.prependTo($input);
+						$input.val(value);
+					};
+				};
 			};
 		};
 	},
