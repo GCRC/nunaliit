@@ -1691,10 +1691,7 @@ var Form = $n2.Class({
 						if( ary && $n2.isArray(ary) ){
 							var newItem = '';
 							if( 'reference' === newType ){
-								newItem = {
-									nunaliit_type: 'reference'
-									,doc: null
-								};
+								newItem = null;
 								
 							} else if( 'date' === newType ){
 								newItem = {
