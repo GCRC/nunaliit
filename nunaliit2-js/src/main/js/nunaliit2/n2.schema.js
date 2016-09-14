@@ -529,8 +529,17 @@ function _arrayField() {
 		};
 	};
 
+	// Add a new item
+	var arraySelector = undefined;
 	if( obj ){
-		var arraySelector = obj[SELECT];
+		arraySelector = obj[SELECT];
+	} else if( options && options.ids && options.ids.length ){
+		var selectors = [];
+		pathFromData(options.data, selectors);
+		selectors.push(options.ids[0]);
+		arraySelector = new $n2.objectSelector.ObjectSelector(selectors);
+	};
+	if( arraySelector ){
 		var arrayClass = createClassStringFromSelector(arraySelector);
 		r.push('<div class="n2schema_array_add '+arrayClass+'"');
 		if( newType ) {
@@ -542,6 +551,15 @@ function _arrayField() {
 	r.push('</div>');
 	
 	return r.join('');
+	
+	function pathFromData(data, path){
+		if( data._parent ){
+			pathFromData(data._parent, path);
+		};
+		if( data.contextPath ){
+			path.push(data.contextPath);
+		};
+	};
 };
 
 function _selectorField(){
@@ -1416,7 +1434,7 @@ var Display = $n2.Class({
 		if( !compiledTemplate ) {
 			var displayTemplate = this.schema[this.templateName];
 			if( displayTemplate ) {
-				compiledTemplate = Handlebars.compile(displayTemplate);
+				compiledTemplate = Handlebars.compile(displayTemplate, {trackIds:true});
 				this.schema[this.templateName + '__compiled'] = compiledTemplate;
 			};
 		};
@@ -1658,6 +1676,18 @@ var Form = $n2.Class({
 					if( $clicked.hasClass('n2schema_array_add') ){
 						var newType = $clicked.attr('n2_array_new_type');
 						var ary = classInfo.selector.getValue(_this.obj);
+						if( !ary ){
+							// Array does not yet exist. Try to create
+							var parentSelector = classInfo.selector.getParentSelector();
+							var parentObj = undefined;
+							if( parentSelector ){
+								parentObj = parentSelector.getValue(_this.obj);
+							};
+							if( parentObj && typeof parentObj === 'object' ){
+								classInfo.selector.setValue(_this.obj,[]);
+								ary = classInfo.selector.getValue(_this.obj);
+							};
+						};
 						if( ary && $n2.isArray(ary) ){
 							var newItem = '';
 							if( 'reference' === newType ){
@@ -1750,7 +1780,7 @@ var Form = $n2.Class({
 		if( !compiledTemplate ) {
 			var formTemplate = this.schema.formTemplate;
 			if( formTemplate ) {
-				compiledTemplate = Handlebars.compile(formTemplate);
+				compiledTemplate = Handlebars.compile(formTemplate,{trackIds:true});
 				this.schema.formTemplate__compiled = compiledTemplate;
 			};
 		};
