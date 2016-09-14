@@ -1694,10 +1694,7 @@ var Form = $n2.Class({
 								newItem = null;
 								
 							} else if( 'date' === newType ){
-								newItem = {
-									nunaliit_type: 'date'
-									,date: null
-								};
+								newItem = null;
 								
 							} else if( 'string' === newType ){
 								newItem = '';
@@ -2323,13 +2320,13 @@ var Form = $n2.Class({
 					
 					if( !dateStr ){
 						if( parentObj[effectiveKey] ) {
-							delete parentObj[effectiveKey];
+							parentObj[effectiveKey] = null;
 						};
 					} else {
 						var trimmedDateStr = $n2.trim(dateStr);
 						if( '' === trimmedDateStr ){
 							if( parentObj[effectiveKey] ) {
-								delete parentObj[effectiveKey];
+								parentObj[effectiveKey] = null;
 							};
 						} else {
 
