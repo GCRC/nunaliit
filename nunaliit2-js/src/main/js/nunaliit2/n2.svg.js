@@ -52,6 +52,21 @@ var PredefinedGraphicsByName = {
  };
 
 //--------------------------------------------------------------------------
+var PredefinedMarkersByName = {
+	'endArrow': {
+		attributes: {
+			viewBox: '0 0 10 10'
+			,refX: '1'
+			,refY: '5'
+			,markerWidth: '6' 
+			,markerHeight: '6'
+			,orient: 'auto'
+		}
+		,path: 'M 0 0 L 10 5 L 0 10 z'
+	}
+};
+
+//--------------------------------------------------------------------------
 // List of SVG presentation attributes served in a map for fast access
 var presentationAttributeMap = {
 	'alignment-baseline': true
@@ -162,7 +177,7 @@ var Renderer = $n2.Class({
     _importGraphic: function (graphicName)  {
     	var defsElem = this._getDefsElem();
 
-        var graphicId = this.svgElemId + "-grpahic-" + graphicName;
+        var graphicId = this.svgElemId + "-graphic-" + graphicName;
         
         // Try to get by id
         var graphicNode = document.getElementById(graphicId);
@@ -217,6 +232,39 @@ var Renderer = $n2.Class({
         };
         
         return graphicNode;
+    },
+	
+    _importMarker: function (markerName)  {
+    	var defsElem = this._getDefsElem();
+
+        var markerId = this.svgElemId + "-marker-" + markerName;
+        
+        // Try to get by id
+        var markerNode = document.getElementById(markerId);
+        if( !markerNode ) {
+            var marker = PredefinedMarkersByName[markerName];
+            if (!marker) {
+                throw ('' + markerName + ' is not a valid marker name');
+            }
+
+            var markerNode = this._createNode('marker',markerId);
+			if( marker.attributes ){
+				for(var markerAttributeName in marker.attributes){
+					var markerAttributeValue = marker.attributes[markerAttributeName];
+					markerNode.setAttributeNS(null, markerAttributeName, markerAttributeValue);
+				};
+			};
+
+            if( marker.path ){
+                var path = this._createNode('path');
+    			path.setAttributeNS(null, 'd', marker.path);
+                markerNode.appendChild(path);
+            };
+
+            defsElem.appendChild(markerNode);
+        };
+        
+        return markerNode;
     },
 	
 	_createNode: function(name, id){
