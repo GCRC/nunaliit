@@ -1981,7 +1981,7 @@ var Form = $n2.Class({
 			// represent the current state
 			if( 'select' === inputNodeName ){
 				var effectiveValue = value;
-				if( null === effectiveValue ){
+				if( null === effectiveValue || undefined === effectiveValue ){
 					// This is a text field. Null does not have a meaning
 					effectiveValue = '';
 				};
