@@ -3539,7 +3539,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var node = this.aliases[alias];
 
 	      if (this.aliases.hasOwnProperty(alias) && node.children && node.referenceCount > 1) {
-	        varDeclarations += ', alias' + ++aliasCount + '=' + alias;
+	        varDeclarations += ', alias' + (++aliasCount) + '=' + alias;
 	        node.children[0] = 'alias' + aliasCount;
 	      }
 	    }
