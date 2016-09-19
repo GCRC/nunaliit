@@ -267,6 +267,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			JSONObject data = file.getJSONObject("data");
 			
 			String effectiveAttachmentName = attachmentName;
+
 			if( docDescriptor.isAttachmentDescriptionAvailable(effectiveAttachmentName) ) {
 				// Select a different file name
 				String prefix = "";
@@ -280,8 +281,12 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				}
 				int counter = 0;
 				while( docDescriptor.isAttachmentDescriptionAvailable(effectiveAttachmentName) ) {
-					attachmentName = prefix + counter + suffix;
+					effectiveAttachmentName = prefix + counter + suffix;
 					++counter;
+
+					if( counter > 100 ){
+						throw new Exception("Unable to compute a new attachment name from: "+attachmentName);
+					}
 				}
 			}
 			
