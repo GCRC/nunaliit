@@ -263,7 +263,12 @@ var ElementGenerator = $n2.Class('ElementGenerator', {
 				docs.push(doc);
 			};
 			
-			if( docIds.length == 1 ){
+			if( docIds.length < 1 ){
+				this.dispatchService.send(DH,{
+					type: 'userUnselect'
+					,_source: this.eventSource
+				});
+			} else if( docIds.length == 1 ){
 				this.dispatchService.send(DH,{
 					type: 'userSelect'
 					,docId: docIds[0]
