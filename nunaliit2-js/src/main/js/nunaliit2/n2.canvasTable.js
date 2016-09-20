@@ -47,7 +47,6 @@ function Cell(cell){
 	cell.getValue = Cell.getValue;
 	cell.getSortValue = Cell.getSortValue;
 	cell.getExportValue = Cell.getExportValue;
-	cell.getFragments = Cell.getFragments;
 };
 Cell.getValue = function(element){
 	if( typeof this.value === 'function' ){
@@ -73,9 +72,6 @@ Cell.getExportValue = function(element){
 	};
 	return exportValue;
 };
-Cell.getFragments = function(element){
-	return this.fragments;
-};
 
 function Element(element){
 	element.getCell = Element.getCell;
@@ -87,12 +83,6 @@ function Element(element){
 		for(var name in element.cells){
 			var cell = element.cells[name];
 			Cell(cell);
-			
-			// If a cell is not assigned any fragment, then inherit
-			// those from the row
-			if( !cell.fragments ){
-				cell.fragments = element.fragments;
-			};
 		};
 	};
 };
@@ -131,7 +121,6 @@ Element.getExportValue = function(name){
 			,sortValue: "value1"
 			,exportValue: "value1"
 			,type: "string"
-			,fragments: {} (optional)
 		}
 		,"heading2": {
 			value: "123456789"
@@ -408,7 +397,6 @@ var TableCanvas = $n2.Class({
 					var $a = $('<a>')
 						.attr('href','#'+element.id)
 						.attr('nunaliit-element',element.id)
-						.attr('nunaliit-cell',name)
 						.text(cell.display)
 						.appendTo($td)
 						.click(function(){
@@ -443,7 +431,6 @@ var TableCanvas = $n2.Class({
 							var $a = $('<a>')
 								.attr('href','#'+element.id)
 								.attr('nunaliit-element',element.id)
-								.attr('nunaliit-cell',name)
 								.text(value)
 								.appendTo($td)
 								.click(function(){
@@ -470,17 +457,12 @@ var TableCanvas = $n2.Class({
 	
 	_selectedLink: function($a){
 		var elementId = $a.attr('nunaliit-element');
-		var cellName = $a.attr('nunaliit-cell');
 		var element = undefined;
 		if( elementId ){
 			element = this.elementsById[elementId];
 		};
-		var cell = undefined;
 		if( element ){
-			cell = element.getCell(cellName);
-		};
-		if( cell ){
- 			this.elementGenerator.selectOn(cell);
+ 			this.elementGenerator.selectOn(element);
 		};
 	},
 	
