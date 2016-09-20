@@ -397,7 +397,7 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 			
 			String fileClass = attDescription.getFileClass();
 			if( "image".equals(fileClass) && uploadOriginalImages ) {
-				String originalAttachmentName = computeOriginalName(attDescription.getOriginalName());
+				String originalAttachmentName = computeOriginalName(attDescription.getAttachmentName());
 				AttachmentDescriptor origDescription = docDescriptor.getAttachmentDescription(originalAttachmentName);
 
 				if( CouchNunaliitUtils.hasVetterRole(submitter, atlasName) ) {
@@ -470,7 +470,7 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 		}
 		
 		// Create attachment description for original file
-		String originalAttachmentName = computeOriginalName(attDescription.getOriginalName());
+		String originalAttachmentName = computeOriginalName(attDescription.getAttachmentName());
 		AttachmentDescriptor origDescription = docDescriptor.getAttachmentDescription(originalAttachmentName);
 
 		origDescription.setStatus(attDescription.getStatus());

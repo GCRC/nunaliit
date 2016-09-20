@@ -276,12 +276,12 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				if( pos < 0 ) {
 					prefix = attachmentName;
 				} else {
-					prefix = attachmentName.substring(0, pos-1);
+					prefix = attachmentName.substring(0, pos);
 					suffix = attachmentName.substring(pos);
 				}
 				int counter = 0;
 				while( docDescriptor.isAttachmentDescriptionAvailable(effectiveAttachmentName) ) {
-					effectiveAttachmentName = prefix + counter + suffix;
+					effectiveAttachmentName = prefix + "." + counter + suffix;
 					++counter;
 
 					if( counter > 100 ){
