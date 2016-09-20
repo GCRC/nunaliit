@@ -166,12 +166,17 @@ displayed. This element has the following format:
 		{
 			name: 'heading1'
 			,label: 'First'
+			,title: 'Explanation of First'
 		}
 		,{
 			name: 'heading2'
 			,label: {
 				nunaliit_type: 'localized'
 				,en: 'Second'
+			}
+			,title: {
+				nunaliit_type: 'localized'
+				,en: 'Explanation of Second'
 			}
 		}
 	]
@@ -375,7 +380,7 @@ var TableCanvas = $n2.Class({
 			};
 			var $th = $('<th>')
 				.appendTo($tr);
-			$('<a>')
+			var $a = $('<a>')
 				.attr('href','#')
 				.attr('data-sort-name',heading.name)
 				.text(label)
@@ -386,6 +391,10 @@ var TableCanvas = $n2.Class({
 					_this._sortOnName(headingName);
 					return false;
 				});
+			
+			if( heading.title ){
+				$a.attr('title', _loc(heading.title));
+			};
 		});
 		
 		this.sortedElements.forEach(function(element){
