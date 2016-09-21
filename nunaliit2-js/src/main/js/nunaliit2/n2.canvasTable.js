@@ -42,12 +42,15 @@ var
 var $d = undefined;
 
 //--------------------------------------------------------------------------
-// Helper functions for elements accepted by the table canvas
+// ROW ELEMENTS
+// Helper functions for elements accepted by the table canvas. These functions
+// are used to support element generators that provides elements that are complete
+// rows.
+//
 function Cell(cell){
 	cell.getValue = Cell.getValue;
 	cell.getSortValue = Cell.getSortValue;
 	cell.getExportValue = Cell.getExportValue;
-	cell.getFragments = Cell.getFragments;
 };
 Cell.getValue = function(element){
 	if( typeof this.value === 'function' ){
@@ -73,15 +76,14 @@ Cell.getExportValue = function(element){
 	};
 	return exportValue;
 };
-Cell.getFragments = function(element){
-	return this.fragments;
-};
 
-function Element(element){
-	element.getCell = Element.getCell;
-	element.getValue = Element.getValue;
-	element.getSortValue = Element.getSortValue;
-	element.getExportValue = Element.getExportValue;
+function RowElement(element){
+	element.getCell = RowElement.getCell;
+	element.getValue = RowElement.getValue;
+	element.getSortValue = RowElement.getSortValue;
+	element.getExportValue = RowElement.getExportValue;
+	element.getRowName = RowElement.getRowName;
+	element.isRowElement = true;
 	
 	if( element.cells ){
 		for(var name in element.cells){
@@ -96,33 +98,115 @@ function Element(element){
 		};
 	};
 };
-Element.getCell = function(name){
+RowElement.getCell = function(name){
 	var cell = this.cells ? this.cells[name] : undefined;
 	return cell;
 };
-Element.getValue = function(name){
+RowElement.getValue = function(name){
 	var cell = this.getCell(name);
 	var value = cell ? cell.getValue(this) : undefined;
 	return value;
 };
-Element.getSortValue = function(name){
+RowElement.getSortValue = function(name){
 	var cell = this.getCell(name);
 	var sortValue = cell ? cell.getSortValue(this) : undefined;
 	return sortValue;
 };
-Element.getExportValue = function(name){
+RowElement.getExportValue = function(name){
 	var cell = this.getCell(name);
 	var exportValue = cell ? cell.getExportValue(this) : undefined;
 	return exportValue;
+};
+RowElement.getRowName = function(){
+	// The name of a row in a row element is its id
+	return this.id;
+};
+
+//--------------------------------------------------------------------------
+// CELL ELEMENTS
+// Helper functions for elements accepted by the table canvas. These functions
+// are used to support element generators that provides elements that are cells.
+//
+function CellElement(cell){
+	cell.getValue = CellElement.getValue;
+	cell.getSortValue = CellElement.getSortValue;
+	cell.getExportValue = CellElement.getExportValue;
+
+	cell.isCellElement = true;
+};
+CellElement.getValue = function(row){
+	if( typeof this.value === 'function' ){
+		return this.value(this, row);
+	}
+	return this.value;
+};
+CellElement.getSortValue = function(row){
+	var sortValue = this.sortValue;
+	if( typeof sortValue === 'undefined' ){
+		sortValue = this.getValue(row);
+	};
+	return sortValue;
+};
+CellElement.getExportValue = function(row){
+	var exportValue = undefined;
+	if( typeof this.exportValue === 'function' ){
+		exportValue = this.exportValue(this, row);
+	} else if(  typeof this.exportValue !== 'undefined'  ){
+		exportValue = this.exportValue;
+	} else {
+		exportValue = this.getValue(row);
+	};
+	return exportValue;
+};
+
+function CompositeRow(row){
+	row.addCell = CompositeRow.addCell;
+	row.getCell = CompositeRow.getCell;
+	row.getValue = CompositeRow.getValue;
+	row.getSortValue = CompositeRow.getSortValue;
+	row.getExportValue = CompositeRow.getExportValue;
+	row.getRowName = CompositeRow.getRowName;
+	
+	if( !row.cells ){
+		row.cells = {};
+	};
+};
+CompositeRow.addCell = function(cell){
+	var columnName = cell.column;
+	this.cells[columnName] = cell;
+};
+CompositeRow.getCell = function(name){
+	var cell = this.cells ? this.cells[name] : undefined;
+	return cell;
+};
+CompositeRow.getValue = function(name){
+	var cell = this.getCell(name);
+	var value = cell ? cell.getValue(this) : undefined;
+	return value;
+};
+CompositeRow.getSortValue = function(name){
+	var cell = this.getCell(name);
+	var sortValue = cell ? cell.getSortValue(this) : undefined;
+	return sortValue;
+};
+CompositeRow.getExportValue = function(name){
+	var cell = this.getCell(name);
+	var exportValue = cell ? cell.getExportValue(this) : undefined;
+	return exportValue;
+};
+CompositeRow.getRowName = function(){
+	return this.rowName;
 };
 
 // --------------------------------------------------------------------------
 /* 
  This canvas displays tabular data in an HTML table. The elements from the generators
- represent rows in a table. Each row has a number of cells, which are the values found
- under each heading.
+ can take two formats: rows or cells.
+ 
+ In the case of row elements, each element represents a row in a table. Each row has a 
+ number of cells, which are the values found under each heading.
 
- Elements are expected to have the following format:
+ Row elements are expected to have the following format:
 {
 	id: <string>  (Unique identifier for this element)
 	cells: {
@@ -131,7 +215,6 @@ Element.getExportValue = function(name){
 			,sortValue: "value1"
 			,exportValue: "value1"
 			,type: "string"
-			,fragments: {} (optional)
 		}
 		,"heading2": {
 			value: "123456789"
@@ -143,18 +226,39 @@ Element.getExportValue = function(name){
 	}
 }
 
+ In the case of cell elements, each element is associated with a single cell. Cell element
+ are expected to have the following format:
+{
+	id: <string>  (Unique identifier for this element)
+	,row: <string> (Identifier of the row)
+	,column: <string> (Identifier of the colmun)
+	,value: "value1"
+	,display: function($td, cell, element){ ... }
+	,sortValue: "value1"
+	,exportValue: "value1"
+	,type: "string"  ("string" or "reference")
+}
+
 The attribute for each cell is described here:
 - value: Required. This is the value of the cell. It can be a string, a number, a boolean, etc.
-         If it is a function, it will be called with the following signature: function(cell, element)
+         If it is a function, it will be called with the following signature: function(cell, row)
+         Note that depending on the type of elements provided by the element generator, it is possible
+         that the element is the cell or the row.
+         
 - sortValue: Optional. Value to be used when sorting the column based on this value. If not specified,
              the value is used.
+
 - exportValue: Optional. Value to be used when table is exported. If not specified, the value is
-               used. If this is a function, the following signature is used: function(cell, element)
+               used. If this is a function, the following signature is used: function(cell, row).
+               Note that depending on the type of elements provided by the element generator, it is 
+               possible that the element is the cell or the row.
+               
 - type: Optional. Type of the value. If not specified, it assumed to be 'string'. Supported types
         are 'string' and 'reference'.
+
 - display: Optional. Function to be used when displaying this value to the user. This replaces the
            default behaviour and allows the element generator to supply any display function.
-           When used, the following signature is used: function($td, cell, element) 
+           When used, the following signature is used: function($td, cell, row) 
 
 
 One element can be provided to specify the columns and the order in which they should be
@@ -198,7 +302,9 @@ var TableCanvas = $n2.Class({
 	
 	elementsById: null,
 	
-	sortedElements: null,
+	rowsByName: null,
+	
+	sortedRows: null,
 	
 	headings: null,
 	
@@ -227,7 +333,8 @@ var TableCanvas = $n2.Class({
 		this.showService = opts.showService;
 		
 		this.elementsById = {};
-		this.sortedElements = [];
+		this.rowsByName = {};
+		this.sortedRows = [];
 		this.headings = [];
 		this.sortOrder = [];
 
@@ -319,8 +426,6 @@ var TableCanvas = $n2.Class({
  	_elementsChanged: function(addedElements, updatedElements, removedElements){
  		var _this = this;
  		
- 		var sortedElements = [];
-
  		// Remove elements that are no longer there
 		for(var i=0,e=removedElements.length; i<e; ++i){
 			var removed = removedElements[i];
@@ -332,10 +437,16 @@ var TableCanvas = $n2.Class({
 			var added = addedElements[i];
 			if( added.isHeader ){
 				installHeader(added);
-			} else {
+
+			} else if( added.cells ) {
+				// This is an element that is a complete row
 				this.elementsById[ added.id ] = added;
-				Element(added);
-				sortedElements.push(added);
+				RowElement(added);
+				
+			} else if( added.row && added.column ) {
+				// This is an element that provides only a cell.
+				this.elementsById[ added.id ] = added;
+				CellElement(added);
 			};
 		};
 		
@@ -344,15 +455,47 @@ var TableCanvas = $n2.Class({
 			var updated = updatedElements[i];
 			if( updated.isHeader ){
 				installHeader(updated);
-			} else {
+
+			} else if( updated.cells ) {
+				// This is an element that is a complete row
 				this.elementsById[ updated.id ] = updated;
-				Element(updated);
-				sortedElements.push(updated);
+				RowElement(updated);
+
+			} else if( updated.row && updated.column ) {
+				// This is an element that provides only a cell.
+				this.elementsById[ updated.id ] = updated;
+				CellElement(updated);
 			};
 		};
 		
-		this._sortElements(sortedElements);
-		this.sortedElements = sortedElements;
+		// Make rows from elements
+ 		var sortedRows = [];
+ 		var rowsByName = {};
+ 		for(var elementId in this.elementsById){
+ 			var element = this.elementsById[elementId];
+ 			
+ 			if( element.cells ){
+ 				// This is a RowElement. Insert as a row
+ 				sortedRows.push(element);
+	 			rowsByName[element.getRowName()] = element;
+ 			} else if( element.row && element.column ){
+ 				// This is a cell element. Insert into a row.
+ 				var rowName = element.row;
+ 				var row = rowsByName[rowName];
+ 				if( !row ){
+ 	 				row = {
+ 	 					rowName: rowName
+ 	 				};
+ 	 				CompositeRow(row);
+ 	 				rowsByName[rowName] = row;
+ 	 				sortedRows.push(row);
+ 				};
+ 				row.addCell(element);
+ 			};
+ 		};
+		this._sortRows(sortedRows);
+		this.sortedRows = sortedRows;
+		this.rowsByName = rowsByName;
 
 		this._redraw();
 		
@@ -397,79 +540,98 @@ var TableCanvas = $n2.Class({
 			};
 		});
 		
-		this.sortedElements.forEach(function(element){
+		this.sortedRows.forEach(function(row){
 			var $tr = $('<tr>')
-				.attr('nunaliit-element',element.id)
+				.attr('nunaliit-row',row.getRowName())
 				.appendTo($table);
 			
-			_this._adjustElementStyles($tr, element);
+			if( row.isRowElement ) {
+				if( !row.elemId ){
+					row.elemId = $n2.getUniqueId();
+				};
+				$tr.attr('id',row.elemId);
+
+				_this._adjustStyles($tr, row);
+			};
 
 			_this.headings.forEach(function(heading){
 				var name = heading.name;
 				var $td = $('<td>')
+					.attr('nunaliit-column',name)
 					.appendTo($tr);
-				var cell = element.getCell(name);
+				var cell = row.getCell(name);
 				
-				if( typeof cell.display === 'function' ){
-					cell.display($td, cell, element);
-
-				} else if( typeof cell.display === 'string' ){
-					var $a = $('<a>')
-						.attr('href','#'+element.id)
-						.attr('nunaliit-element',element.id)
-						.attr('nunaliit-cell',name)
-						.text(cell.display)
-						.appendTo($td)
-						.click(function(){
-							var $a = $(this);
-							_this._selectedLink($a);
-							return false;
-						})
-						.mouseover(function(){
-							var $a = $(this);
-							_this._mouseOver($a);
-							return false;
-						})
-						.mouseout(function(){
-							var $a = $(this);
-							_this._mouseOut($a);
-							return false;
-						});
+				if( cell ){
+					if( cell.isCellElement ){
+						if( !cell.elemId ){
+							cell.elemId = $n2.getUniqueId();
+						};
+						$td.attr('id',cell.elemId);
+	
+						_this._adjustStyles($td, cell);
+					};
 					
-				} else {
-					var value = element.getValue(name);
-
-					if( typeof value !== 'undefined' ){
-						if( 'reference' === cell.type ){
-							var $a = $('<a>')
-								.addClass('n2s_referenceLink')
-								.attr('nunaliit-document',value)
-								.text(value)
-								.appendTo($td);
-							_this.showService.fixElementAndChildren($elem);
-							
-						} else {
-							var $a = $('<a>')
-								.attr('href','#'+element.id)
-								.attr('nunaliit-element',element.id)
-								.attr('nunaliit-cell',name)
-								.text(value)
-								.appendTo($td)
-								.click(function(){
-									var $a = $(this);
-									_this._selectedLink($a);
-									return false;
-								})
-								.mouseover(function(){
-									var $a = $(this);
-									_this._mouseOver($a);
-									return false;
-								})
-								.mouseout(function(){
-									var $a = $(this);
-									_this._mouseOut($a);
-									return false;
-								});
+					if( typeof cell.display === 'function' ){
+						cell.display($td, cell, row);
+	
+					} else if( typeof cell.display === 'string' ){
+						var $a = $('<a>')
+							.attr('href','#')
+							.attr('nunaliit-row',row.getRowName())
+							.attr('nunaliit-colmun',name)
+							.text(cell.display)
+							.appendTo($td)
+							.click(function(){
+								var $a = $(this);
+								_this._selectedCell($a);
+								return false;
+							})
+							.mouseover(function(){
+								var $a = $(this);
+								_this._mouseOver($a);
+								return false;
+							})
+							.mouseout(function(){
+								var $a = $(this);
+								_this._mouseOut($a);
+								return false;
+							});
+						
+					} else {
+						var value = row.getValue(name);
+	
+						if( typeof value !== 'undefined' ){
+							if( 'reference' === cell.type ){
+								var $a = $('<a>')
+									.addClass('n2s_referenceLink')
+									.attr('nunaliit-document',value)
+									.text(value)
+									.appendTo($td);
+								_this.showService.fixElementAndChildren($elem);
+								
+							} else {
+								var $a = $('<a>')
+									.attr('href','#')
+									.attr('nunaliit-row',row.getRowName())
+									.attr('nunaliit-column',name)
+									.text(value)
+									.appendTo($td)
+									.click(function(){
+										var $a = $(this);
+										_this._selectedCell($a);
+										return false;
+									})
+									.mouseover(function(){
+										var $a = $(this);
+										_this._mouseOver($a);
+										return false;
+									})
+									.mouseout(function(){
+										var $a = $(this);
+										_this._mouseOut($a);
+										return false;
+									});
+							};
 						};
 					};
 				};
@@ -477,42 +639,47 @@ var TableCanvas = $n2.Class({
 		});
 	},
 	
-	_selectedLink: function($a){
-		var elementId = $a.attr('nunaliit-element');
-		var cellName = $a.attr('nunaliit-cell');
-		var element = undefined;
-		if( elementId ){
-			element = this.elementsById[elementId];
-		};
-		var cell = undefined;
+	_selectedCell: function($a){
+		var element = this._getElementFromHtml($a);
+
 		if( element ){
-			cell = element.getCell(cellName);
-		};
-		if( cell ){
- 			this.elementGenerator.selectOn(cell);
+ 			this.elementGenerator.selectOn(element);
 		};
 	},
 	
 	_mouseOver: function($a){
-		var elementId = $a.attr('nunaliit-element');
-		var element = undefined;
-		if( elementId ){
-			element = this.elementsById[elementId];
-		};
+		var element = this._getElementFromHtml($a);
+
 		if( element ){
  			this.elementGenerator.focusOn(element);
 		};
 	},
 	
 	_mouseOut: function($a){
-		var elementId = $a.attr('nunaliit-element');
-		var element = undefined;
-		if( elementId ){
-			element = this.elementsById[elementId];
-		};
+		var element = this._getElementFromHtml($a);
+
 		if( element ){
  			this.elementGenerator.focusOff(element);
 		};
+	},
+	
+	_getElementFromHtml: function($a){
+		var rowName = $a.attr('nunaliit-row');
+		var columnName = $a.attr('nunaliit-column');
+		var row = this.rowsByName[rowName];
+		
+		if( row ){
+			var cell = row.getCell(columnName);
+			if( cell && cell.isCellElement ){
+				return cell;
+			};
+			
+			if( row.isRowElement ){
+				return row;
+			};
+		};
+		
+		return undefined;
 	},
 	
 	_sortOnName: function(name){
@@ -554,7 +721,7 @@ var TableCanvas = $n2.Class({
 			});
 		};
 		
-		this._sortElements(this.sortedElements);
+		this._sortRows(this.sortedRows);
 		
 		this._redraw();
 	},
@@ -562,23 +729,12 @@ var TableCanvas = $n2.Class({
 	_intentChanged: function(changedElements){
 		var _this = this;
 
-		var changedElementsById = {};
 		changedElements.forEach(function(element){
-			changedElementsById[element.id] = element;
-		});
-
-		var $elem = this._getElem();
-		$elem.find('tr').each(function(){
-			var $tr = $(this);
-			var elementId = $tr.attr('nunaliit-element');
-			
-			var element = undefined;
-			if( elementId ){
-				element = changedElementsById[elementId];
-			};
-			
-			if( element ){
-				_this._adjustElementStyles($tr, element);
+			if( element.elemId ){
+				var $elem = $('#'+element.elemId);
+				if( $elem.length > 0 ){
+					_this._adjustStyles($elem, element);
+				};
 			};
 		});
 	},
@@ -602,14 +758,14 @@ var TableCanvas = $n2.Class({
  		};
  	},
 
- 	_adjustElementStyles: function($elem, element){
+ 	_adjustStyles: function($elem, element){
 		element.n2_elem = $elem[0];
 		var symbolizer = this.styleRules.getSymbolizer(element);
 		symbolizer.adjustHtmlElement($elem[0],element);
 		delete element.n2_elem;
  	},
  	
- 	_sortElements: function(elements){
+ 	_sortRows: function(rows){
  		var _this = this;
  		
  		// Figure out the order in which things should be sorted
@@ -634,7 +790,7 @@ var TableCanvas = $n2.Class({
  			};
  		});
 
- 		elements.sort(function(a,b){
+ 		rows.sort(function(a,b){
  			for(var i=0,e=orderedNames.length; i<e; ++i){
  				var name = orderedNames[i].name;
  				var direction = orderedNames[i].direction;
@@ -665,8 +821,8 @@ var TableCanvas = $n2.Class({
 		});
 		
 		// Data
-		if( this.sortedElements ){
-			this.sortedElements.forEach(function(element){
+		if( this.sortedRows ){
+			this.sortedRows.forEach(function(element){
 				var line = [];
 				table.push(line);
 				_this.headings.forEach(function(heading){
