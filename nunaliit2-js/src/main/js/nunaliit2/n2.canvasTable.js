@@ -286,7 +286,6 @@ displayed. This element has the following format:
 	]
 }
 
-
 */
 var TableCanvas = $n2.Class({
 
