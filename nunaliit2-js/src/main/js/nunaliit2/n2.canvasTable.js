@@ -544,13 +544,15 @@ var TableCanvas = $n2.Class({
 			var $tr = $('<tr>')
 				.attr('nunaliit-row',row.getRowName())
 				.appendTo($table);
-			
-			if( row.isRowElement ) {
-				if( !row.elemId ){
-					row.elemId = $n2.getUniqueId();
-				};
-				$tr.attr('id',row.elemId);
 
+			// Assign element id to row
+			if( !row.elemId ){
+				row.elemId = $n2.getUniqueId();
+			};
+			$tr.attr('id',row.elemId);
+			
+			// If row is an element, adjust styles
+			if( row.isRowElement ) {
 				_this._adjustStyles($tr, row);
 			};
 
@@ -724,7 +726,22 @@ var TableCanvas = $n2.Class({
 		
 		this._sortRows(this.sortedRows);
 		
-		this._redraw();
+		this._reorderDisplayedRows();
+	},
+	
+	_reorderDisplayedRows: function(){
+		this.sortedRows.forEach(function(row){
+			var rowId = row.elemId;
+			if( rowId ){
+				var $row = $('#'+rowId);
+				if( $row.length > 0 ){
+					var $parent = $row.parent();
+					$row
+						.remove()
+						.appendTo($parent);
+				};
+			};
+		});
 	},
 
 	_intentChanged: function(changedElements){
