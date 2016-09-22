@@ -575,7 +575,7 @@ var TableCanvas = $n2.Class({
 						cell.display($td, cell, row);
 	
 					} else if( typeof cell.display === 'string' ){
-						var $a = $('<a>')
+						$('<a>')
 							.attr('href','#')
 							.attr('nunaliit-row',row.getRowName())
 							.attr('nunaliit-colmun',name)
@@ -602,15 +602,14 @@ var TableCanvas = $n2.Class({
 	
 						if( typeof value !== 'undefined' ){
 							if( 'reference' === cell.type ){
-								var $a = $('<a>')
+								$('<a>')
 									.addClass('n2s_referenceLink')
 									.attr('nunaliit-document',value)
 									.text(value)
 									.appendTo($td);
-								_this.showService.fixElementAndChildren($elem);
 								
 							} else {
-								var $a = $('<a>')
+								$('<a>')
 									.attr('href','#')
 									.attr('nunaliit-row',row.getRowName())
 									.attr('nunaliit-column',name)
@@ -637,6 +636,8 @@ var TableCanvas = $n2.Class({
 				};
 			});
 		});
+
+		this.showService.fixElementAndChildren($table);
 	},
 	
 	_selectedCell: function($a){
