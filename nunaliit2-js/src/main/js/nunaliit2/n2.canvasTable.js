@@ -381,6 +381,11 @@ var TableCanvas = $n2.Class({
 			var $tr = $('<tr>')
 				.attr('nunaliit-element',element.id)
 				.appendTo($table);
+
+			if( !element.elemId ){
+				element.elemId = $n2.getUniqueId();
+			};
+			$tr.attr('id',element.elemId);
 			
 			_this._adjustElementStyles($tr, element);
 
@@ -532,7 +537,22 @@ var TableCanvas = $n2.Class({
 		
 		this._sortElements(this.sortedElements);
 		
-		this._redraw();
+		this._reorderDisplayedRows();
+	},
+	
+	_reorderDisplayedRows: function(){
+		this.sortedElements.forEach(function(row){
+			var rowId = row.elemId;
+			if( rowId ){
+				var $row = $('#'+rowId);
+				if( $row.length > 0 ){
+					var $parent = $row.parent();
+					$row
+						.remove()
+						.appendTo($parent);
+				};
+			};
+		});
 	},
 
 	_intentChanged: function(changedElements){
