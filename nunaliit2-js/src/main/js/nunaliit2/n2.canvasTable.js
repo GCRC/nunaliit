@@ -420,15 +420,16 @@ var TableCanvas = $n2.Class({
 
 					if( typeof value !== 'undefined' ){
 						if( 'reference' === cell.type ){
-							var $a = $('<a>')
-								.addClass('n2s_referenceLink')
-								.attr('nunaliit-document',value)
-								.text(value)
-								.appendTo($td);
-							_this.showService.fixElementAndChildren($elem);
+							if( typeof value === 'string' ){
+								$('<a>')
+									.addClass('n2s_referenceLink')
+									.attr('nunaliit-document',value)
+									.text(value)
+									.appendTo($td);
+							};
 							
 						} else {
-							var $a = $('<a>')
+							$('<a>')
 								.attr('href','#'+element.id)
 								.attr('nunaliit-element',element.id)
 								.text(value)
@@ -453,6 +454,8 @@ var TableCanvas = $n2.Class({
 				};
 			});
 		});
+
+		this.showService.fixElementAndChildren($table);
 	},
 	
 	_selectedLink: function($a){
