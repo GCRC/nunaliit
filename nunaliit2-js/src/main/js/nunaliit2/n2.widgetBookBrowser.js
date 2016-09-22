@@ -125,6 +125,43 @@ var Book = $n2.Class({
 });
  
 //--------------------------------------------------------------------------
+// The book browser widget creates a vertical scrolling that displays individual
+// pages from a book. Each page from the book is an image that is loaded only when
+// in comes into view.
+//
+// When the book browser is scrolled, the currently seen page is used to generate a selection
+// event through the dispatcher. The document selected is the one associated with the current
+// page. The current page is determined as the one crossing the horizontal line dividing
+// the book browser in halves.
+//
+// The book browser also listens to dispatcher events. When a selected doc id corresponds to
+// one of the pages, then the book is scrolled to show that page.
+// 
+// The widget creates HTML elements in the following format:
+// <div class="n2BookBrowser_container">
+//    <div class="n2BookBrowser_content">
+//       <div class="n2BookBrowser_pagesOuter" scrollTop="x"> <!-- this is where the scrolling happens -->
+//          <div class="n2BookBrowser_pagesInner">
+//             <!-- There is a div.n2BookBrowser_page for each page of the book -->
+//             <div class="n2BookBrowser_page" style="position:relative;height:x">
+//                <div class="n2BookBrowser_pageTitleContainer"> <!-- only if a title is specified -->
+//                   <div class="n2BookBrowser_pageTitleContent">
+//                      text (title)
+//                   </div>
+//                </div>
+//                <div class="n2BookBrowser_pageImageContainer">
+//                </div>
+//             </div>
+//             ...
+//             <div class="n2BookBrowser_preview"> <!-- to display overlay of page title, momentarily -->
+//                <div class="n2BookBrowser_previewContent">
+//                   text (title)
+//                </div>
+//             </div>
+//          </div>
+//       </div>
+//    </div>
+// </div>
 var BookBrowser = $n2.Class({
 	
 	dispatchService: null,
