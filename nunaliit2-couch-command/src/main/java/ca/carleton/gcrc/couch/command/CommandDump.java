@@ -193,7 +193,7 @@ public class CommandDump implements Command {
 		DumpListener listener = new DumpListener( gs.getOutStream() );
 		
 		DbDumpProcess dumpProcess = new DbDumpProcess(couchDb, dumpDir);
-		if( docIds.size() < 1 && false == selectSkeletonDocuments && schemaNames.size() < 1 ) {
+		if( docIds.size() < 1 && false == selectSkeletonDocuments ) {
 			dumpProcess.setAllDocs(true);
 		} else {
 			for(String docId : docIds) {
