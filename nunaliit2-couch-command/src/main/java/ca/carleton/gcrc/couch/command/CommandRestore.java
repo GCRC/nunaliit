@@ -2,7 +2,7 @@ package ca.carleton.gcrc.couch.command;
 
 import java.io.File;
 import java.io.PrintStream;
-import java.util.List;
+import java.util.Set;
 
 import ca.carleton.gcrc.couch.app.DbRestoreListener;
 import ca.carleton.gcrc.couch.app.DbRestoreProcess;
@@ -82,7 +82,7 @@ public class CommandRestore implements Command {
 
 		// Pick up options
 		String dumpDirStr = options.getDumpDir();
-		List<String> docIds = options.getDocIds();
+		Set<String> docIds = options.getDocIds();
 
 		File dumpDir = null;
 		if( null != dumpDirStr ){

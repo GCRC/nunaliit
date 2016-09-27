@@ -2,14 +2,21 @@ package ca.carleton.gcrc.couch.command;
 
 import java.io.File;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import org.json.JSONObject;
 
 import ca.carleton.gcrc.couch.app.DbDumpProcess;
 import ca.carleton.gcrc.couch.app.impl.DocumentStoreProcessImpl;
 import ca.carleton.gcrc.couch.client.CouchDb;
+import ca.carleton.gcrc.couch.client.CouchDesignDocument;
+import ca.carleton.gcrc.couch.client.CouchQuery;
+import ca.carleton.gcrc.couch.client.CouchQueryResults;
 import ca.carleton.gcrc.couch.command.impl.CommandSupport;
 import ca.carleton.gcrc.couch.command.impl.DumpListener;
 import ca.carleton.gcrc.couch.command.impl.FileUtils;
@@ -121,9 +128,9 @@ public class CommandDump implements Command {
 		}
 		
 		// Pick up options
-		List<String> docIds = options.getDocIds();
+		Set<String> docIds = options.getDocIds();
+		Set<String> schemaNames = options.getSchemaNames();
 		boolean selectSkeletonDocuments = false;
-		String schemaName = options.getSchema();
 		if( null != options.getSkeleton() ){
 			selectSkeletonDocuments = options.getSkeleton().booleanValue();
 		}
@@ -158,6 +165,23 @@ public class CommandDump implements Command {
 			}
 		}
 		
+		// If the user has provided schema names, we need to find the doc identifiers for
+		// those documents
+		if( schemaNames.size() > 0 ){
+			CouchDesignDocument designDoc = couchDb.getDesignDocument("atlas");
+			CouchQuery query = new CouchQuery();
+			query.setViewName("nunaliit-schema");
+			query.setKeys( new ArrayList<String>(schemaNames) );
+			CouchQueryResults results = designDoc.performQuery(query);
+			List<JSONObject> rows = results.getRows();
+			for(JSONObject row : rows){
+				String docId = row.getString("id");
+				docIds.add(docId);
+			}
+		};
+		
+		// Create a map of all documents on disk, so that we can predict where to 
+		// save specific docIds
 		Map<String,File> docIdToFile = new HashMap<String,File>();
 		if( overwriteDocs ){
 			dumpDir = new File(atlasDir, "docs");
@@ -169,13 +193,13 @@ public class CommandDump implements Command {
 		DumpListener listener = new DumpListener( gs.getOutStream() );
 		
 		DbDumpProcess dumpProcess = new DbDumpProcess(couchDb, dumpDir);
-		if( docIds.size() < 1 && false == selectSkeletonDocuments && null == schemaName ) {
+		if( docIds.size() < 1 && false == selectSkeletonDocuments && schemaNames.size() < 1 ) {
 			dumpProcess.setAllDocs(true);
-		} else if( null != schemaName ) {
-			dumpProcess.setSchema(schemaName);
 		} else {
 			for(String docId : docIds) {
+				// Do we know where to store this docId?
 				if( docIdToFile.containsKey(docId) ){
+					// Yes!
 					dumpProcess.addDocId(docId, docIdToFile.get(docId));
 				} else {
 					dumpProcess.addDocId(docId);

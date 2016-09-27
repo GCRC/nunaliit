@@ -36,8 +36,8 @@ public class Options {
 	private String group;
 	private String id;
 	private String dumpDir;
-	private String schemaName;
-	private List<String> docIds = new Vector<String>();
+	private Set<String> schemaNames = new HashSet<String>();
+	private Set<String> docIds = new HashSet<String>();
 	private String name;
 	
 	public Options() {
@@ -133,11 +133,8 @@ public class Options {
 						throw new Exception(OPTION_SCHEMA+" option requires the name of a schema");
 					}
 					
-					if( null != schemaName ){
-						throw new Exception("Option "+OPTION_SCHEMA+" can be specified only once");
-					}
-
-					schemaName = argumentStack.pop();
+					String schemaName = argumentStack.pop();
+					schemaNames.add(schemaName);
 
 				} else if( OPTION_DOC_ID.equals(arg) ){
 					if( argumentStack.size() < 1 ){
@@ -185,7 +182,7 @@ public class Options {
 		if( null != skeleton && false == expected.contains(OPTION_SKELETON)){
 			throw new Exception("Unexpected option: "+OPTION_SKELETON);
 		}
-		if( null != schemaName && false == expected.contains(OPTION_SCHEMA)){
+		if( schemaNames.size() > 0 && false == expected.contains(OPTION_SCHEMA)){
 			throw new Exception("Unexpected option: "+OPTION_SCHEMA);
 		}
 		if( null != overwriteDocs && false == expected.contains(OPTION_OVERWRITE_DOCS)){
@@ -268,7 +265,7 @@ public class Options {
 		return dumpDir;
 	}
 
-	public List<String> getDocIds() {
+	public Set<String> getDocIds() {
 		return docIds;
 	}
 
@@ -276,7 +273,7 @@ public class Options {
 		return name;
 	}
 	
-	public String getSchema() {
-		return schemaName;
+	public Set<String> getSchemaNames() {
+		return schemaNames;
 	}
 }

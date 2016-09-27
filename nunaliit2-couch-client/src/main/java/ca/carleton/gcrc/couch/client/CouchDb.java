@@ -21,8 +21,6 @@ public interface CouchDb {
 	
 	Collection<String> getAllDocIds() throws Exception;
 	
-	Collection<String> getSchemaDocIds( String schemaName ) throws Exception;
-	
 	JSONObject createDocument(JSONObject doc) throws Exception;
 	
 	boolean documentExists(String docId) throws Exception;

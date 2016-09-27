@@ -50,13 +50,6 @@ public class MockDocumentDatabase implements CouchDb {
 		result.addAll( docsById.keySet() );
 		return result;
 	}
-	
-	@Override
-	public Collection<String> getSchemaDocIds(String schemaName) throws Exception {
-		List<String> result = new Vector<String>();
-		//result.addAll( docsById.keySet() );
-		return result;
-	}
 
 	@Override
 	public JSONObject createDocument(JSONObject doc) throws Exception {

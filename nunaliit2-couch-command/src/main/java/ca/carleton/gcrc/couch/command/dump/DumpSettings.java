@@ -35,7 +35,6 @@ public class DumpSettings {
 	private boolean debug = false;
 	private File dumpDir = null;
 	private List<String> docIds = new Vector<String>();
-	private String schemaName = null;
 	private String server = null;
 	private String user = null;
 	private String password = null;
@@ -98,15 +97,6 @@ public class DumpSettings {
 				String docId = argumentStack.pop();
 				docIds.add(docId);
 
-			} else if( "--schema".equals(optionName) ){
-				argumentStack.pop();
-				if( argumentStack.size() < 1 ){
-					throw new Exception("--schema option requires the name of the document schema");
-				}
-				
-				String schemaName = argumentStack.pop();
-				setSchema( schemaName );
-				
 			} else if( "--server".equals(optionName) ){
 				argumentStack.pop();
 				if( argumentStack.size() < 1 ){
@@ -343,13 +333,6 @@ public class DumpSettings {
 		return docIds;
 	}
 
-	public String getSchema() {
-		return schemaName;
-	}
-	public void setSchema(String schemaName) {
-		this.schemaName = schemaName;
-	}
-	
 	public String getServer() {
 		return server;
 	}
