@@ -696,11 +696,11 @@ var DisplayBox = $n2.Class({
 		this.currentGeometries.xScroll = pageScroll.xScroll;
 		this.currentGeometries.yScroll = pageScroll.yScroll;
 		
-		$n2.log('windowWidth:'+this.currentGeometries.windowWidth
-				+' windowHeight:'+this.currentGeometries.windowHeight
-				+' pageWidth:'+this.currentGeometries.pageWidth
-				+' pageHeight:'+this.currentGeometries.pageHeight
-				);
+//		$n2.log('windowWidth:'+this.currentGeometries.windowWidth
+//				+' windowHeight:'+this.currentGeometries.windowHeight
+//				+' pageWidth:'+this.currentGeometries.pageWidth
+//				+' pageHeight:'+this.currentGeometries.pageHeight
+//				);
 	},
 	
 	_resizeOverlay: function(){
@@ -753,7 +753,7 @@ var DisplayBox = $n2.Class({
 				this.currentImage.ratio = ratios.min;
 			};
 			
-			$n2.log('effective ratio: '+this.currentImage.ratio);
+			// $n2.log('effective ratio: '+this.currentImage.ratio);
 
 			var intImageWidth = Math.floor(this.currentImage.ratio * this.currentImage.width);
 			var intImageHeight = Math.floor(this.currentImage.ratio * this.currentImage.height);
@@ -831,7 +831,7 @@ var DisplayBox = $n2.Class({
 				};
 			};
 
-			$n2.log('ratio min:'+results.min+' max:'+results.max);
+			//$n2.log('ratio min:'+results.min+' max:'+results.max);
 		};
 		
 		
@@ -1197,7 +1197,7 @@ var DisplayBox = $n2.Class({
 		if( $displayDiv.length < 1 ) return;
 		
 		var $img = $displayDiv.find('.n2DisplayBoxImage');
-		$n2.log('width:'+$img.css('width')+' height:'+$img.css('height'));
+		// $n2.log('width:'+$img.css('width')+' height:'+$img.css('height'));
 
 		var height = this.currentImage.height * this.currentImage.ratio;
 		var width = this.currentImage.width * this.currentImage.ratio;
