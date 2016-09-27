@@ -49,6 +49,7 @@ public class CommandDump implements Command {
 				,Options.OPTION_DUMP_DIR
 				,Options.OPTION_DOC_ID
 				,Options.OPTION_SCHEMA
+				,Options.OPTION_LAYER
 				,Options.OPTION_SKELETON
 				,Options.OPTION_OVERWRITE_DOCS
 			};
@@ -86,7 +87,11 @@ public class CommandDump implements Command {
 		ps.println();
 		ps.println("  "+Options.OPTION_SCHEMA);
 		ps.println("    Specifies which document(s) should be dumped by selecting the ");
-		ps.println("    document's schema.");
+		ps.println("    document's by schema type.");
+		ps.println();
+		ps.println("  "+Options.OPTION_LAYER);
+		ps.println("    Specifies which document(s) should be dumped by selecting the ");
+		ps.println("    document's by layer type.");
 		ps.println();
 		ps.println("  "+Options.OPTION_SKELETON);
 		ps.println("    Select skeleton documents for the dump process.");
@@ -130,6 +135,7 @@ public class CommandDump implements Command {
 		// Pick up options
 		Set<String> docIds = options.getDocIds();
 		Set<String> schemaNames = options.getSchemaNames();
+		Set<String> layerNames = options.getLayerNames();
 		boolean selectSkeletonDocuments = false;
 		if( null != options.getSkeleton() ){
 			selectSkeletonDocuments = options.getSkeleton().booleanValue();
@@ -172,6 +178,21 @@ public class CommandDump implements Command {
 			CouchQuery query = new CouchQuery();
 			query.setViewName("nunaliit-schema");
 			query.setKeys( new ArrayList<String>(schemaNames) );
+			CouchQueryResults results = designDoc.performQuery(query);
+			List<JSONObject> rows = results.getRows();
+			for(JSONObject row : rows){
+				String docId = row.getString("id");
+				docIds.add(docId);
+			}
+		};
+		
+		// If the user has provided layer names, we need to find the doc identifiers for
+		// those documents
+		if( layerNames.size() > 0 ){
+			CouchDesignDocument designDoc = couchDb.getDesignDocument("atlas");
+			CouchQuery query = new CouchQuery();
+			query.setViewName("layers");
+			query.setKeys( new ArrayList<String>(layerNames) );
 			CouchQueryResults results = designDoc.performQuery(query);
 			List<JSONObject> rows = results.getRows();
 			for(JSONObject row : rows){
