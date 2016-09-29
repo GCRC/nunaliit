@@ -33,7 +33,8 @@ POSSIBILITY OF SUCH DAMAGE.
 "use strict";
 
 // Localization
-var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); }
+,DH = 'n2.couchConfiguration';
 
 //===========================================================
 
@@ -41,12 +42,30 @@ var ConfigService = $n2.Class('ConfigurationService',{
 
 	serverUrl: null,
 	
+	dispatchService: null,
+	
+	configuration: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			url: null
+			,dispatchService: null
+			,configuration: null
 		},opts_);
 		
+		var _this = this;
+		
 		this.serverUrl = opts.url;
+		this.dispatchService = opts.dispatchService;
+		this.configuration = opts.configuration;
+		
+		if( this.dispatchService ){
+			var f = function(m, addr, dispatcher){
+				_this._handle(m, addr, dispatcher);
+			};
+			
+			this.dispatchService.register(DH, 'configurationGetCurrentSettings', f);
+		};
 	},
 	
 	getNunaliitServerRoles: function(opts_){
@@ -95,6 +114,13 @@ var ConfigService = $n2.Class('ConfigurationService',{
 				opts.onError(err);
 			}
 		});
+	},
+	
+	_handle: function(m, addr, dispatcher){
+		if( 'configurationGetCurrentSettings' === m.type ){
+			// Synchronous call to retrieve current configuration
+			m.configuration = this.configuration;
+		};
 	}
 });
 
@@ -186,6 +212,8 @@ function Configure(options_){
 	// Configuration
 	configuration.directory.configService = new ConfigService({
 		url: options.configServerUrl
+		,dispatchService: configuration.directory.dispatchService
+		,configuration: configuration
 	});
 	
  	// Turn off cometd

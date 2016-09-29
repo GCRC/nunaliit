@@ -194,7 +194,7 @@ var CommentStreamDisplay = $n2.Class({
 	_addReply: function(docId){
 		var _this = this;
 		var documentSource = this.documentSource;
-		var createRelatedDocProcess = this.createRelatedDocProcess;
+		var createRelatedDocProcess = this.createDocProcess;
 		
 		documentSource.getDocument({
 			docId: docId
@@ -286,7 +286,7 @@ var CommentService = $n2.Class({
 	 * Use this function to add a button to an element. The button
 	 * initiates adding a comment associated with the given document.
 	 */
-	addButton: function(opts_){
+	insertAddCommentButton: function(opts_){
 		var opts = $n2.extend({
 			div: null
 			,doc: null
