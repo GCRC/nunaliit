@@ -499,6 +499,8 @@ var Display = $n2.Class({
 		var data = opt.doc;
 		var schema = opt.schema;
 		
+		var buttonDisplay = new ButtonDisplay();
+		
 		var dispatcher = this.dispatchService;
 		var schemaRepository = _this.schemaRepository;
 
@@ -506,46 +508,43 @@ var Display = $n2.Class({
  		if( opt.focus 
  		 && data
  		 && data._id ) {
-			var $focusButton = $('<a href="#"></a>');
-			var focusText = _loc('More Info');
-			$focusButton.text( focusText );
-			$buttons.append($focusButton);
-			$focusButton.click(function(){
-				_this._dispatch({
-					type:'userSelect'
-					,docId: data._id
-				})
-				return false;
-			});
-			addClasses($focusButton, focusText);
+ 			buttonDisplay.drawButton({
+ 				elem: $buttons
+ 				,name: 'more_info'
+ 				,label: _loc('More Info')
+ 				,click: function(){
+ 					_this._dispatch({
+ 						type:'userSelect'
+ 						,docId: data._id
+ 					});
+ 				}
+ 			});
  		};
 
  		// Show 'edit' button
  		if( opt.edit 
  		 && $n2.couchMap.canEditDoc(data) ) {
-			var $editButton = $('<a href="#"></a>');
-			var editText = _loc('Edit');
-			$editButton.text( editText );
-			$buttons.append($editButton);
-			$editButton.click(function(){
-				_this._performDocumentEdit(data, opt);
-				return false;
-			});
-			addClasses($editButton, editText);
+ 			buttonDisplay.drawButton({
+ 				elem: $buttons
+ 				,name: 'edit'
+ 				,label: _loc('Edit')
+ 				,click: function(){
+ 					_this._performDocumentEdit(data, opt);
+ 				}
+ 			});
  		};
 
  		// Show 'delete' button
  		if( opt['delete'] 
  		 && $n2.couchMap.canDeleteDoc(data) ) {
-			var $deleteButton = $('<a href="#"></a>');
-			var deleteText = _loc('Delete');
-			$deleteButton.text( deleteText );
-			$buttons.append($deleteButton);
-			$deleteButton.click(function(){
-				_this._performDocumentDelete(data, opt);
-				return false;
-			});
-			addClasses($deleteButton, deleteText);
+ 			buttonDisplay.drawButton({
+ 				elem: $buttons
+ 				,name: 'delete'
+ 				,label: _loc('Delete')
+ 				,click: function(){
+ 					_this._performDocumentDelete(data, opt);
+ 				}
+ 			});
  		};
 		
  		// Show 'add related' button
@@ -556,6 +555,7 @@ var Display = $n2.Class({
  				,div: $buttons[0]
  				,doc: data
  				,schema: opt.schema
+ 				,buttonDisplay: buttonDisplay
  			});
  		};
 		
@@ -580,36 +580,31 @@ var Display = $n2.Class({
 			};
 			
 			if( showReplyButton ) {
-				var $replyButton = $('<a href="#"></a>');
-				var replyText = _loc('Reply');
-				$replyButton.text( replyText );
-				$buttons.append($replyButton);
-				$replyButton.click(function(){
-					_this._replyToDocument(data, opt.schema);
-					return false;
-				});
-				addClasses($replyButton, 'reply');
+	 			buttonDisplay.drawButton({
+	 				elem: $buttons
+	 				,name: 'reply'
+	 				,label: _loc('Reply')
+	 				,click: function(){
+						_this._replyToDocument(data, opt.schema);
+	 				}
+	 			});
 			};
 		};
 		
  		// Show 'find on map' button
 		if( data ) {
-			var $findGeomButton = $('<a href="#"></a>');
-			var findGeomText = _loc('Find on Map');
-			$findGeomButton.text( findGeomText );
-			$buttons.append($findGeomButton);
-
-			$findGeomButton.click(function(){
-				// Move map and display feature 
-				_this._dispatch({
-					type: 'find'
-					,docId: data._id
-					,doc: data
-				});
-				
-				return false;
-			});
-			addClasses($findGeomButton, findGeomText);
+			var $findGeomButton = buttonDisplay.drawButton({
+ 				elem: $buttons
+ 				,name: 'find_on_map'
+ 				,label: _loc('Find on Map')
+ 				,click: function(){
+ 					_this._dispatch({
+ 						type: 'find'
+ 						,docId: data._id
+ 						,doc: data
+ 					});
+ 				}
+ 			});
 			
 			this.showService.showFindAvailable({
 				elem: $findGeomButton
@@ -624,55 +619,51 @@ var Display = $n2.Class({
 		 && dispatcher
 		 && dispatcher.isEventTypeRegistered('addLayerToMap')
 		 ) {
-			var $addLayerButton = $('<a href="#"></a>');
-			var btnText = _loc('Add Layer');
-			$addLayerButton.text( btnText );
-			$buttons.append($addLayerButton);
+ 			buttonDisplay.drawButton({
+ 				elem: $buttons
+ 				,name: 'add_layer'
+ 				,label: _loc('Add Layer')
+ 				,click: function(){
+ 					var layerDefinition = data.nunaliit_layer_definition;
+ 					var layerId = layerDefinition.id;
+ 					if( !layerId ){
+ 						layerId = data._id;
+ 					};
+ 					var layerDef = {
+ 						name: layerDefinition.name
+ 						,type: 'couchdb'
+ 						,options: {
+ 							layerName: layerId
+ 							,documentSource: _this.documentSource
+ 						}
+ 					};
 
-			var layerDefinition = data.nunaliit_layer_definition;
-			var layerId = layerDefinition.id;
-			if( !layerId ){
-				layerId = data._id;
-			};
-			var layerDef = {
-				name: layerDefinition.name
-				,type: 'couchdb'
-				,options: {
-					layerName: layerId
-					,documentSource: this.documentSource
-				}
-			};
-			
-			$addLayerButton.click(function(){
-				_this._dispatch({
-					type: 'addLayerToMap'
-					,layer: layerDef
-					,options: {
-						setExtent: {
-							bounds: layerDefinition.bbox
-							,crs: 'EPSG:4326'
-						}
-					}
-				});
-				return false;
-			});
-			addClasses($addLayerButton, btnText);
+ 					_this._dispatch({
+ 						type: 'addLayerToMap'
+ 						,layer: layerDef
+ 						,options: {
+ 							setExtent: {
+ 								bounds: layerDefinition.bbox
+ 								,crs: 'EPSG:4326'
+ 							}
+ 						}
+ 					});
+ 				}
+ 			});
 		};
 
 		// Show 'Tree View' button
 		if( opt.treeView
 		 && data
 		 ) {
-			var $treeViewButton = $('<a>')
-				.attr('href','#')
-				.text( _loc('Tree View') )
-				.appendTo($buttons)
-				.click(function(){
+ 			buttonDisplay.drawButton({
+ 				elem: $buttons
+ 				,name: 'tree_view'
+ 				,label: _loc('Tree View')
+ 				,click: function(){
 					_this._performDocumentTreeView(data);
-					return false;
-				});
-
-			addClasses($treeViewButton, 'tree_view');
+ 				}
+ 			});
 		};
 
 		// Show 'Simplified Geoms' button
@@ -680,36 +671,15 @@ var Display = $n2.Class({
 		 && data
 		 && data.nunaliit_geom
 		 ) {
-			var $simplifiedGeomsButton = $('<a>')
-				.attr('href','#')
-				.text( _loc('Geometries') )
-				.appendTo($buttons)
-				.click(function(){
+ 			buttonDisplay.drawButton({
+ 				elem: $buttons
+ 				,name: 'simplified_geoms'
+ 				,label: _loc('Geometries')
+ 				,click: function(){
 					_this._performSimplifiedGeometries(data);
-					return false;
-				});
-
-			addClasses($simplifiedGeomsButton, 'simplified_geoms');
+ 				}
+ 			});
 		};
-
-		/**
-		 * Generate and insert css classes for the generated element, based on the given tag.
-		 * @param elem the jQuery element to be modified
-		 * @param tag the string tag to be used in generating classes for elem
-		 */
-		function addClasses(elem, tag) {
-			elem.addClass('nunaliit_form_link');
-			
-			var compactTag = tag;
-			var spaceIndex = compactTag.indexOf(' ');
-			while (-1 !== spaceIndex) {
-				compactTag = compactTag.slice(0,spaceIndex) + '_' +
-					compactTag.slice(spaceIndex + 1);
-				spaceIndex = compactTag.indexOf(' ');
-			};
-			elem.addClass('nunaliit_form_link_' + compactTag.toLowerCase());
-		};
-		
 	}
 	
 	,_addAttachmentProgress: function($elem, data){
@@ -1762,6 +1732,7 @@ var CommentRelatedInfo = $n2.Class({
 			,div: null
 			,doc: null
 			,schema: null
+			,buttonDisplay: null
 		},opts_);
 		
 		if( !this.commentService ){
@@ -1772,7 +1743,94 @@ var CommentRelatedInfo = $n2.Class({
 		this.commentService.insertAddCommentButton({
 			div: opts.div
 			,doc: opts.doc
+			,buttonDisplay: opts.buttonDisplay
 		});
+	}
+});
+
+//===================================================================================
+// An instance of this class is used to draw a HTML button in the DOM structure.
+var ButtonDisplay = $n2.Class({
+
+	initialize: function(opts_){
+		
+	},
+	
+	drawButton: function(opts_){
+		var opts = $n2.extend({
+			// Location where button is to be drawn
+			elem: null,
+			
+			// Name of button
+			name: null,
+			
+			// Label is shown on the button
+			label: null,
+			
+			// Function to be called when button is clicked
+			click: null,
+			
+			// String. Class name to be added to button
+			className: null,
+			
+			// Array of string. Class names to be added to button
+			classNames: null
+		},opts_);
+		
+		if( !opts.elem ){
+			throw new Error('In ButtonDisplay.drawButton(), parameter "elem" must be provided');
+		};
+		
+		var $elem = $(opts.elem);
+		var name = opts.name;
+		var label = opts.label;
+		if( !label ){
+			label = name;
+		};
+		
+		var $linkButton = $('<a>')
+			.attr('href','#')
+			.appendTo($elem)
+			.addClass('nunaliit_form_link')
+			.click(wrapAndReturnFalse(opts.click));
+		
+		if( label ){
+			$linkButton.text(label);
+		};
+
+		if( name ){
+			var compactTag = name;
+			var spaceIndex = compactTag.indexOf(' ');
+			while (-1 !== spaceIndex) {
+				compactTag = compactTag.slice(0,spaceIndex) + '_' +
+					compactTag.slice(spaceIndex + 1);
+				spaceIndex = compactTag.indexOf(' ');
+			};
+			$linkButton.addClass('nunaliit_form_link_' + compactTag.toLowerCase());
+		};
+		
+		if( typeof opts.className === 'string' ){
+			$linkButton.addClass(opts.className);
+		};
+		
+		if( $n2.isArray(opts.classNames) ){
+			opts.classNames.forEach(function(className){
+				if( typeof className === 'string' ){
+					$linkButton.addClass(className);
+				};
+			});
+		};
+		
+		return $linkButton;
+
+		function wrapAndReturnFalse(callback){
+			return function(){
+				if( typeof callback === 'function' ){
+					callback.apply(this,arguments);
+				};
+				return false;
+			};
+		};
 	}
 });
 
@@ -1886,6 +1944,7 @@ $n2.couchDisplay = {
 	TreeDocumentViewer: TreeDocumentViewer
 	,HandleDisplayAvailableRequest: HandleDisplayAvailableRequest
 	,HandleDisplayRenderRequest: HandleDisplayRenderRequest
+	,ButtonDisplay: ButtonDisplay
 //	DisplayRelatedInfo: DisplayRelatedInfo,
 //	DisplayLinkedInfo: DisplayLinkedInfo
 	

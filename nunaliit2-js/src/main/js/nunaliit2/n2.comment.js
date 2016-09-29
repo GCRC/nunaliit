@@ -94,6 +94,8 @@ var CommentStreamDisplay = $n2.Class({
 		var documentSource = this.documentSource;
 		var showService = this.showService;
 		
+		var buttonDisplay = new $n2.couchDisplay.ButtonDisplay();
+		
 		var $elem = opts.div;
 		if( ! $elem ) {
 			$elem = $('#'+opts.divId);
@@ -154,39 +156,37 @@ var CommentStreamDisplay = $n2.Class({
 				var docInfo = docInfos[i];
 				var docId = docInfo.id;
 				var $commentDiv = $('<div>')
-					.addClass('n2DisplayComment_doc n2DisplayComment_doc_'+$n2.utils.stringToHtmlId(docId))
+					.addClass('n2Comment_doc n2Comment_doc_'+$n2.utils.stringToHtmlId(docId))
 					.attr('n2DocId',docId)
 					.appendTo($elem);
 				var $content = $('<div>')
-					.addClass('n2DisplayComment_content')
+					.addClass('n2Comment_content')
 					.appendTo($commentDiv);
 				showService.printDocument($content, docId);
 
 				var $buttons = $('<div>')
-					.addClass('n2DisplayComment_buttons')
+					.addClass('n2Comment_buttons')
 					.appendTo($commentDiv);
 				
-				$('<a>')
-					.attr('href','#')
-					.text( _loc('Reply') )
-					.addClass('n2DisplayComment_button_reply')
-					.appendTo($buttons)
-					.click(function(){
-						var docId = $(this).parents('.n2DisplayComment_doc').attr('n2DocId');
+				buttonDisplay.drawButton({
+					elem: $buttons
+					,name: 'reply'
+					,label: _loc('Reply')
+					,click: function(){
+						var docId = $(this).parents('.n2Comment_doc').attr('n2DocId');
 						_this._addReply(docId);
-						return false;
-					});
-				
-				$('<a>')
-					.attr('href','#')
-					.text( _loc('More Details') )
-					.addClass('n2DisplayComment_button_focus')
-					.appendTo($buttons)
-					.click(function(){
-						var docId = $(this).parents('.n2DisplayComment_doc').attr('n2DocId');
+					}
+				});
+
+				buttonDisplay.drawButton({
+					elem: $buttons
+					,name: 'more_details'
+					,label: _loc('More Details')
+					,click: function(){
+						var docId = $(this).parents('.n2Comment_doc').attr('n2DocId');
 						_this._changeFocus(docId);
-						return false;
-					});
+					}
+				});
 			};
 		};
 	},
@@ -230,7 +230,7 @@ var CommentStreamDisplay = $n2.Class({
 				// Related. Check if we are still displaying comments
 				var $section = $('#'+this.lastDivId);
 				if( $section.length > 0 ){
-					var $entry = $section.find('.n2DisplayComment_doc_'+$n2.utils.stringToHtmlId(doc._id));
+					var $entry = $section.find('.n2Comment_doc_'+$n2.utils.stringToHtmlId(doc._id));
 					if( $entry.length < 1 ){
 						// OK, need to add a comment entry. Refresh.
 						this.display({
@@ -280,6 +280,16 @@ var CommentService = $n2.Class({
 
 	setCommentSchema: function(commentSchema){
 		this.commentSchema = commentSchema;
+		
+		if( this.commentSchema ){
+			$('.n2Comment_button_addcomment')
+				.removeClass('n2Comment_button_addcomment_unavailable')
+				.addClass('n2Comment_button_addcomment_available');
+		} else {
+			$('.n2Comment_button_addcomment')
+				.removeClass('n2Comment_button_addcomment_available')
+				.addClass('n2Comment_button_addcomment_unavailable');
+		};
 	},
 
 	/**
@@ -290,28 +300,36 @@ var CommentService = $n2.Class({
 		var opts = $n2.extend({
 			div: null
 			,doc: null
+			,buttonDisplay: null
 		},opts_);
 		
 		var _this = this;
 
-		if( this.commentSchema ){
-			var doc = opts.doc;
-			var $buttons = $(opts.div);
-			
-	 		// Show 'add comment' button
-			var $button = $('<a>')
-				.attr('href','#')
-				.text( _loc('Add Comment') )
-				.appendTo($buttons)
-				.click(function(){
-					_this._addComment(doc);
-					return false;
-				});
-
-			$button.addClass('nunaliit_form_link');
-			$button.addClass('nunaliit_form_link_add_related_item');
+		var doc = opts.doc;
+		var $buttons = $(opts.div);
+		
+		var buttonDisplay = opts.buttonDisplay;
+		if( !buttonDisplay ){
+			buttonDisplay = new $n2.couchDisplay.ButtonDisplay();
 		};
 		
+		var classNames = ['n2Comment_button_addcomment'];
+		if( this.commentSchema ){
+			classNames.push('n2Comment_button_addcomment_available');
+		} else {
+			classNames.push('n2Comment_button_addcomment_unavailable');
+		};
+
+		// Show 'add comment' button
+		buttonDisplay.drawButton({
+			elem: $buttons
+			,name: 'add_comment'
+			,label: _loc('Add Comment')
+			,classNames: classNames
+			,click: function(){
+				_this._addComment(doc);
+			}
+		});
 	},
 	
 	_addComment: function(doc){

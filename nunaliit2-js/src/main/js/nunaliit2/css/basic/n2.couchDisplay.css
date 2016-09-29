@@ -98,3 +98,7 @@ div.olkit_wait {
 	background-color: #dddddd;
 	font-weight: bold;
 }
+
+.n2Comment_button_addcomment_unavailable {
+	display: none !important;
+}
