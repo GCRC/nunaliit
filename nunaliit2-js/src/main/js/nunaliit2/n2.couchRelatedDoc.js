@@ -142,6 +142,7 @@ var Editor = $n2.Class({
 				,obj: null
 				,schema: null
 				,prompt: null
+				,elem: null // location where editor should be opened
 				,onSuccess: function(docId){}
 				,onError: $n2.reportErrorForced
 				,onCancel: function(){}
@@ -174,8 +175,16 @@ var Editor = $n2.Class({
 		this.diagId = diagId;
 		var $dialog = $('<div>')
 			.attr('id',diagId)
-			.addClass('n2RelatedDoc_dialog')
-			.appendTo( $('body') );
+			.addClass('n2RelatedDoc_dialog');
+		
+		if( opts.elem ){
+			var $elem = $(opts.elem);
+			$dialog
+				.addClass('n2RelatedDoc_located')
+				.appendTo($elem);
+		} else {
+			$dialog.appendTo( $('body') );
+		};
 		
 		var obj = this.obj;
 		var schema = this.schema;
@@ -238,17 +247,19 @@ var Editor = $n2.Class({
 				return false;
 			});
 		
-		var dialogOptions = {
-			autoOpen: true
-			,title: _loc('Fill Out Related Document')
-			,modal: true
-			,width: 740
-			,close: function(event, ui){
-				var diag = $('#'+diagId);
-				diag.remove();
-			}
+		if( !opts.elem ){
+			var dialogOptions = {
+				autoOpen: true
+				,title: _loc('Fill Out Related Document')
+				,modal: true
+				,width: 740
+				,close: function(event, ui){
+					var diag = $('#'+diagId);
+					diag.remove();
+				}
+			};
+			$dialog.dialog(dialogOptions);
 		};
-		$dialog.dialog(dialogOptions);
 	},
 
 	_clickOK: function(){
@@ -270,7 +281,14 @@ var Editor = $n2.Class({
 	},
 
 	_clickCancel: function(){
-		$('#'+this.diagId).dialog('close');
+		var $diag = $('#'+this.diagId);
+		
+		if( $diag.hasClass('n2RelatedDoc_located') ){
+			$diag.remove();
+		} else {
+			$('#'+this.diagId).dialog('close');
+		};
+
 		this.onCancel();
 	},
 	
@@ -414,6 +432,7 @@ var CreateRelatedDocProcess = $n2.Class({
 	
 		var opt = $n2.extend({
 			schema: null
+			,elem: null
 			,relatedDoc: null
 			,originDocId: null
 			,prompt: null
@@ -485,6 +504,7 @@ var CreateRelatedDocProcess = $n2.Class({
 				,obj: obj
 				,schema: opt.schema
 				,prompt: prompt
+				,elem: opt.elem
 				,onSuccess: opt.onSuccess
 				,onError: opt.onError
 				,onCancel: opt.onCancel
@@ -563,6 +583,7 @@ var CreateRelatedDocProcess = $n2.Class({
 		
 		var opt = $n2.extend({
 			doc: null
+			,elem: null
 			,schema: null
 			,originDocId: null
 			,onSuccess: function(docId){}
@@ -588,6 +609,7 @@ var CreateRelatedDocProcess = $n2.Class({
 		
 		this.createDocumentFromSchema({
 			schema: opt.schema
+			,elem: opt.elem
 			,relatedDoc: opt.doc
 			,originDocId: originDocId
 			,onSuccess: opt.onSuccess

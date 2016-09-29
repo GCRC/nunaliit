@@ -50,10 +50,6 @@ var CommentStreamDisplay = $n2.Class({
 	
 	createDocProcess: null,
 	
-	lastDoc: null,
-	
-	lastDivId: null,
-	
 	initialize: function(opts_){
 		
 		var opts = $n2.extend({
@@ -76,7 +72,9 @@ var CommentStreamDisplay = $n2.Class({
 			var f = function(msg, addr, dispatcher){
 				_this._handleDispatch(msg, addr, dispatcher);
 			};
-			this.dispatchService.register(DH, 'documentContent', f);
+			this.dispatchService.register(DH, 'documentContentCreated', f);
+			this.dispatchService.register(DH, 'documentContentUpdated', f);
+			this.dispatchService.register(DH, 'documentDeleted', f);
 		};
 	},
 	
@@ -91,7 +89,6 @@ var CommentStreamDisplay = $n2.Class({
 		
 		var doc = opts.doc;
 		var docId = doc._id;
-		var documentSource = this.documentSource;
 		var showService = this.showService;
 		
 		var buttonDisplay = new $n2.couchDisplay.ButtonDisplay();
@@ -108,18 +105,42 @@ var CommentStreamDisplay = $n2.Class({
 			return;
 		};
 		
-		this.lastDoc = doc;
-		this.lastDivId = $n2.utils.getElementIdentifier($elem);
-
-		// Get references
-		documentSource.getReferencesFromOrigin({
+		$elem.empty();
+		
+		// Insert comment stream
+		$('<div>')
+			.addClass('n2Comment_stream n2Comment_stream_'+$n2.utils.stringToHtmlId(docId))
+			.appendTo($elem);
+		this._refreshStream({
 			docId: docId
+		});
+
+		// Insert 'Add Comment' section
+		var $addSection = $('<div>')
+			.addClass('n2Comment_add_section')
+			.appendTo($elem);
+		this._resetAddSection(doc, $addSection);
+	},
+	
+	_refreshStream: function(opts_){
+		var opts = $n2.extend({
+			docId: null
+		},opts_);
+		
+		var _this = this;
+
+		var originId = opts.docId;
+		var buttonDisplay = new $n2.couchDisplay.ButtonDisplay();
+		
+		// Get references
+		this.documentSource.getReferencesFromOrigin({
+			docId: originId
 			,onSuccess: loadedDocIds
 		});
 		
 		function loadedDocIds(refDocIds){
 			// Get documents that include comments
-			documentSource.getDocumentInfoFromIds({
+			_this.documentSource.getDocumentInfoFromIds({
 				docIds: refDocIds
 				,onSuccess: loadedDocInfos
 			});
@@ -151,50 +172,100 @@ var CommentStreamDisplay = $n2.Class({
 			});
 
 			// Display comments
-			$elem.empty();
-			for(var i=0,e=docInfos.length; i<e; ++i){
-				var docInfo = docInfos[i];
-				var docId = docInfo.id;
-				var $commentDiv = $('<div>')
-					.addClass('n2Comment_doc n2Comment_doc_'+$n2.utils.stringToHtmlId(docId))
-					.attr('n2DocId',docId)
-					.appendTo($elem);
-				var $content = $('<div>')
-					.addClass('n2Comment_content')
-					.appendTo($commentDiv);
-				showService.printDocument($content, docId);
+			var $stream = $('.n2Comment_stream_'+$n2.utils.stringToHtmlId(originId));
+			if( $stream.length > 0 ){
+				$stream.empty();
+				docInfos.forEach(function(docInfo){
+					var docId = docInfo.id;
+					var $commentDiv = $('<div>')
+						.addClass('n2Comment_doc n2Comment_doc_'+$n2.utils.stringToHtmlId(docId))
+						.attr('n2DocId',docId)
+						.appendTo($stream);
+					var $content = $('<div>')
+						.addClass('n2Comment_content')
+						.appendTo($commentDiv);
+					_this.showService.printDocument($content, docId);
 
-				var $buttons = $('<div>')
-					.addClass('n2Comment_buttons')
-					.appendTo($commentDiv);
-				
-				buttonDisplay.drawButton({
-					elem: $buttons
-					,name: 'reply'
-					,label: _loc('Reply')
-					,click: function(){
-						var docId = $(this).parents('.n2Comment_doc').attr('n2DocId');
-						_this._addReply(docId);
-					}
-				});
+					var $buttons = $('<div>')
+						.addClass('n2Comment_buttons')
+						.appendTo($commentDiv);
+					
+					buttonDisplay.drawButton({
+						elem: $buttons
+						,name: 'reply'
+						,label: _loc('Reply')
+						,click: function(){
+							var $outer = $(this).parents('.n2Comment_doc');
+							var docId = $outer.attr('n2DocId');
+							_this._addReply(docId,$outer);
+						}
+					});
 
-				buttonDisplay.drawButton({
-					elem: $buttons
-					,name: 'more_details'
-					,label: _loc('More Details')
-					,click: function(){
-						var docId = $(this).parents('.n2Comment_doc').attr('n2DocId');
-						_this._changeFocus(docId);
-					}
+					buttonDisplay.drawButton({
+						elem: $buttons
+						,name: 'more_details'
+						,label: _loc('More Details')
+						,click: function(){
+							var docId = $(this).parents('.n2Comment_doc').attr('n2DocId');
+							_this._changeFocus(docId);
+						}
+					});
 				});
 			};
 		};
 	},
 	
-	_addReply: function(docId){
+	_resetAddSection: function(doc, $addSection){
+		var _this = this;
+
+		var buttonDisplay = new $n2.couchDisplay.ButtonDisplay();
+
+		$addSection.empty();
+		buttonDisplay.drawButton({
+			elem: $addSection
+			,name: 'add_comment'
+			,label: _loc('Add Comment')
+			,click: function(){
+				var $addSection = $(this).parents('.n2Comment_add_section');
+				$addSection.empty();
+				_this._addComment(doc,$addSection);
+			}
+		});
+
+	},
+
+	_addComment: function(doc, elem){
+		var _this = this;
+
+		var createRelatedDocProcess = this.createDocProcess;
+		createRelatedDocProcess.replyToDocument({
+			doc: doc
+			,schema: this.commentSchema
+			,originDocId: doc._id
+			,elem: elem
+			,onSuccess: function(docId){
+				_this._resetAddSection(doc, elem);
+			}
+			,onError: function(err){
+				_this._resetAddSection(doc, elem);
+			}
+			,onCancel: function(){
+				_this._resetAddSection(doc, elem);
+			}
+		});
+	},
+	
+	_addReply: function(docId, $outerDiv){
 		var _this = this;
 		var documentSource = this.documentSource;
 		var createRelatedDocProcess = this.createDocProcess;
+		
+		var $elem = undefined;
+		if( $outerDiv.length > 0 ){
+			$elem = $('<div>')
+				.addClass('n2Comment_reply')
+				.appendTo($outerDiv);
+		};
 		
 		documentSource.getDocument({
 			docId: docId
@@ -202,6 +273,7 @@ var CommentStreamDisplay = $n2.Class({
 				createRelatedDocProcess.replyToDocument({
 					doc: doc
 					,schema: _this.commentSchema
+					,elem: $elem
 				});
 			}
 		});
@@ -217,30 +289,45 @@ var CommentStreamDisplay = $n2.Class({
 	},
 	
 	_handleDispatch: function(m, address, dispatcher){
-		if( 'documentContent' === m.type ){
+		if( 'documentContentCreated' === m.type ){
 			var doc = m.doc;
 			this._handleDocumentContent(doc);
+
+		} else if( 'documentContentUpdated' === m.type ){
+			var doc = m.doc;
+			this._handleDocumentContent(doc);
+
+		} else if( 'documentDeleted' === m.type ){
+			var docId = m.docId;
+			this._handleDocumentDeleted(docId);
 		};
 	},
 	
 	_handleDocumentContent: function(doc){
-		if( doc.nunaliit_origin ){
-			// Check if we should add an entry for this document
-			if( doc.nunaliit_origin.doc === this.lastDoc._id ){
-				// Related. Check if we are still displaying comments
-				var $section = $('#'+this.lastDivId);
-				if( $section.length > 0 ){
-					var $entry = $section.find('.n2Comment_doc_'+$n2.utils.stringToHtmlId(doc._id));
-					if( $entry.length < 1 ){
-						// OK, need to add a comment entry. Refresh.
-						this.display({
-							divId: this.lastDivId
-							,doc: this.lastDoc
-							,schema: null
-						});
-					};
-				};
+		if( doc.nunaliit_origin 
+		 && typeof doc.nunaliit_origin.doc === 'string' ){
+			var originId = doc.nunaliit_origin.doc;
+			var $stream = $('.n2Comment_stream_'+$n2.utils.stringToHtmlId(originId));
+			if( $stream.length > 0 ){
+				// OK, need to refresh this stream
+				var divId = $n2.utils.getElementIdentifier($stream);
+				this._refreshStream({
+					docId: originId
+				});
 			};
+		};
+	},
+	
+	_handleDocumentDeleted: function(docId){
+		if( doc.nunaliit_origin 
+		 && typeof doc.nunaliit_origin.doc === 'string' ){
+			// Remove associated streams
+			var $section = $( '.n2Comment_stream_'+$n2.utils.stringToHtmlId(docId) );
+			$section.remove();
+			
+			// Remove associated sections
+			var $section = $( '.n2Comment_doc_'+$n2.utils.stringToHtmlId(docId) );
+			$section.remove();
 		};
 	}
 });
