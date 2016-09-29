@@ -367,6 +367,14 @@ function Configure(options_){
 			,dispatchService: configuration.directory.dispatchService
 		});
 		
+	 	configuration.directory.commentService = new $n2.comment.Service({
+			documentSource: configuration.documentSource
+			,showService: configuration.directory.showService
+			,createDocProcess: configuration.directory.createDocProcess
+			,dispatchService: configuration.directory.dispatchService
+			,customService: configuration.directory.customService
+		});
+		
 	 	configuration.directory.schemaEditorService = new $n2.couchEdit.SchemaEditorService({
 			documentSource: configuration.documentSource
 			,showService: configuration.directory.showService
