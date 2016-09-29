@@ -1878,7 +1878,7 @@ var CommentRelatedInfo = $n2.Class({
 		createRelatedDocProcess.replyToDocument({
 			doc: doc
 			,schema: this.commentSchema
-			,origin: doc._id
+			,originDocId: doc._id
 		});
 	},
 	
