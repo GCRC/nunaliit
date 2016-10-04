@@ -286,7 +286,7 @@ var Editor = $n2.Class({
 		if( $diag.hasClass('n2RelatedDoc_located') ){
 			$diag.remove();
 		} else {
-			$('#'+this.diagId).dialog('close');
+			$diag.dialog('close');
 		};
 
 		this.onCancel();
@@ -327,7 +327,13 @@ var Editor = $n2.Class({
 	
 	_success: function(docId){
 		// Close upload dialog
-		$('#'+this.diagId).dialog('close');
+		var $diag = $('#'+this.diagId);
+		
+		if( $diag.hasClass('n2RelatedDoc_located') ){
+			$diag.remove();
+		} else {
+			$diag.dialog('close');
+		};
 		
 		// Call back client
 		this.onSuccess(docId);

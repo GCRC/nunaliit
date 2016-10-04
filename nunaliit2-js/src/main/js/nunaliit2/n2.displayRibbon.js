@@ -382,6 +382,85 @@ var ReferenceRelatedDocumentDiscovery = $n2.Class({
 });
 
 //===================================================================================
+// This is a class used to display and manage the information displayed when a
+// selected document is clicked again on the ribbon
+
+var RibbonInfoDisplay = $n2.Class({
+	
+	showService: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			showService: undefined
+		},opts_);
+		
+		this.showService = opts.showService;
+	},
+	
+	showInfo: function(opts_){
+		var opts = $n2.extend({
+			doc: undefined
+			,locationElem: undefined
+			,onClose: function(){}
+		},opts_);
+
+		var $elem = $(opts.locationElem);
+		var doc = opts.doc;
+		var docId = doc._id;
+		
+		var $outerLayout = $('<div>')
+			.addClass('n2DisplayRibbon_popup_outer_layout n2DisplayRibbon_popup_'+$n2.utils.stringToHtmlId(docId))
+			.appendTo($elem);
+		var $layout = $('<div>')
+			.addClass('n2DisplayRibbon_popup_layout')
+			.appendTo($outerLayout);
+		var $container = $('<div>')
+			.addClass('n2DisplayRibbon_popup_container')
+			.appendTo($layout);
+		
+		var $content = $('<div>')
+			.addClass('n2DisplayRibbon_popup_content')
+			.appendTo($container);
+
+		if( this.showService ) {
+			this.showService.printDocument($content, docId);
+		} else {
+			$content.text( docId );
+		};
+
+		var $buttons = $('<div>')
+			.addClass('n2DisplayRibbon_popup_buttons')
+			.appendTo($container);
+		
+		$('<a>')
+			.attr('href','#')
+			.addClass('n2DisplayRibbon_popup_button n2DisplayRibbon_popup_button_close')
+			.text( _loc('Close') )
+			.click(function(){
+				var $a = $(this);
+				$a.parents('.n2DisplayRibbon_popup_outer_layout').first().remove();
+				opts.onClose();
+				return false;
+			})
+			.appendTo($buttons);
+	},
+	
+	removeInfo: function(opts_){
+		var opts = $n2.extend({
+			docId: undefined
+			,locationElem: undefined
+		},opts_);
+
+		var $elem = $(opts.locationElem);
+		var docId = opts.docId;
+		
+		var outerClass = 'n2DisplayRibbon_popup_'+$n2.utils.stringToHtmlId(docId);
+		var $outer = $elem.find('.'+outerClass);
+		$outer.remove();
+	}
+});
+
+//===================================================================================
 // Copied and adapted from http://thinkpixellab.com/tilesjs
 
 var Tile = $n2.Class({
@@ -963,6 +1042,8 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 	
 	hoverDocId: null,
 	
+	infoDisplay: null,
+	
 	initialize: function(opts_) {
 		var opts = $n2.extend({
 			documentSource: null
@@ -993,6 +1074,9 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 			
 			// Factory to create filters
 			,filterFactory: null
+			
+			// Name of display for document info
+			,infoDisplay: null
 		},opts_);
 
 		var _this = this;
@@ -1183,19 +1267,18 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 		
 		// Click function
 		this.clickFn = function(e){
-			var ignore = false;
 			if( e && e.target ){
 				var $target = $(e.target);
 				var $popupParents = $target.parents('.n2DisplayRibbon_popup');
 				if( $popupParents.length > 0 ){
 					// This click originated from inside a popup
-					ignore = true;
+					return true;
 				};
 			};
-			if( !ignore ){
-				var $tile = $(this);
-				_this._clickedTile($tile);
-			};
+
+			var $tile = $(this);
+			_this._clickedTile($tile);
+
 			return false;
 		};
 		
@@ -1208,6 +1291,27 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 				_this._performIntervalTask();
 			};
 		}, 500);
+		
+		// Info display logic
+		if( opts.infoDisplay ){
+			if( typeof opts.infoDisplay === 'string' ){
+				// Obtain from dispatcher
+				if( this.dispatchService ){
+					var m = {
+						type: 'ribbonGetInfoDisplay'
+						,name: opts.infoDisplay
+						,infoDisplay: null
+					};
+					this.dispatchService.synchronousCall(DH,m);
+					this.infoDisplay = m.infoDisplay;
+				};
+			};
+		}
+		if( !this.infoDisplay ){
+			this.infoDisplay = new RibbonInfoDisplay({
+				showService: this.showService
+			});
+		};
 
 		$('body').addClass('n2_display_format_ribbon');
 		
@@ -2178,6 +2282,7 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 		if( this.currentDetails
 		 && this.currentDetails.docId ){
 			var docId = this.currentDetails.docId;
+			var doc = this.currentDetails.doc;
 	    	var tileClass = '.n2DisplayRibbon_tile_' + $n2.utils.stringToHtmlId(docId);
 
 	    	var $display = this._getDisplayDiv();
@@ -2191,57 +2296,25 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 	    				.addClass('n2DisplayRibbon_popup')
 	    				.appendTo($tile);
 	    			
-	    			this._populateCurrentPopUp(docId, $popup);
+	    			this.infoDisplay.showInfo({
+    					doc: doc
+    					,locationElem: $popup
+    					,onClose: function(){
+    						$popup.remove();
+    					}
+	    			});
+
 	    		} else {
 	    			// Toggle off
+	    			this.infoDisplay.removeInfo({
+    					docId: docId
+    					,locationElem: $popup
+	    			});
+
 	    			$popup.remove();
 	    		};
 	    	};
 		};
-	},
-	
-	_hideCurrentPopUp: function(){
-    	var $display = this._getDisplayDiv();
-		$display.find('.n2DisplayRibbon_popup').remove();
-	},
-	
-	_populateCurrentPopUp: function(docId, $popup){
-		var _this = this;
-		
-		var $outerLayout = $('<div>')
-			.addClass('n2DisplayRibbon_popup_outer_layout')
-			.appendTo($popup);
-		var $layout = $('<div>')
-			.addClass('n2DisplayRibbon_popup_layout')
-			.appendTo($outerLayout);
-		var $container = $('<div>')
-			.addClass('n2DisplayRibbon_popup_container')
-			.appendTo($layout);
-		
-		var $content = $('<div>')
-			.addClass('n2DisplayRibbon_popup_content')
-			.appendTo($container);
-
-		if( this.showService ) {
-			this.showService.printDocument($content, docId);
-		} else {
-			$content.text( docId );
-		};
-
-		var $buttons = $('<div>')
-			.addClass('n2DisplayRibbon_popup_buttons')
-			.appendTo($container);
-		
-		$('<a>')
-			.attr('href','#')
-			.addClass('n2DisplayRibbon_popup_button n2DisplayRibbon_popup_button_close')
-			.text( _loc('Close') )
-			.click(function(){
-				var $a = $(this);
-				$a.parents('.n2DisplayRibbon_popup').first().remove();
-				return false;
-			})
-			.appendTo($buttons);
 	},
 	
 	/*

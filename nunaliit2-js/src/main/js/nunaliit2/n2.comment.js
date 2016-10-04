@@ -324,7 +324,6 @@ var CommentStreamDisplay = $n2.Class({
 		var commentSchema = this.commentService.getCommentSchema();
 
 		var $outerDiv = $('<div>')
-			.addClass('n2Comment_reinsert n2Comment_reinsert_add')
 			.appendTo($elem);
 		
 		createRelatedDocProcess.replyToDocument({
