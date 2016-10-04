@@ -37,10 +37,14 @@ var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); },
 DH = 'n2.comment';
 
 //===================================================================================
+/*
+ * There should be one instance of this class, per Nunaliit configuration. This is
+ * because this component registers events with the dispatcher.
+ */
 
 var CommentStreamDisplay = $n2.Class({
 	
-	commentSchema: null,
+	commentService: null,
 	
 	dispatchService: null,
 	
@@ -50,10 +54,14 @@ var CommentStreamDisplay = $n2.Class({
 	
 	createDocProcess: null,
 	
+	cachedCommentsByDocId: null,
+	
+	reinsertElementsId: null,
+	
 	initialize: function(opts_){
 		
 		var opts = $n2.extend({
-			schema: null
+			commentService: null
 			,dispatchService: null
 			,documentSource: null
 			,showService: null
@@ -62,7 +70,7 @@ var CommentStreamDisplay = $n2.Class({
 		
 		var _this = this;
 		
-		this.commentSchema = opts.schema;
+		this.commentService = opts.commentService;
 		this.dispatchService = opts.dispatchService;
 		this.documentSource = opts.documentSource;
 		this.showService = opts.showService;
@@ -75,7 +83,19 @@ var CommentStreamDisplay = $n2.Class({
 			this.dispatchService.register(DH, 'documentContentCreated', f);
 			this.dispatchService.register(DH, 'documentContentUpdated', f);
 			this.dispatchService.register(DH, 'documentDeleted', f);
+			this.dispatchService.register(DH, 'cacheRetrieveDocument', f);
 		};
+		
+		// Create an area to keep elements that should be re-inserted in the
+		// comment stream on a redraw.
+		var $reinsertElements = $('<div>')
+			.css({
+				position: 'absolute'
+				,display: 'none'
+			})
+			.addClass('n2comment_reinsert_cache')
+			.appendTo( $('body') );
+		this.reinsertElementsId = $n2.utils.getElementIdentifier($reinsertElements);
 	},
 	
 	display: function(opts_){
@@ -140,43 +160,98 @@ var CommentStreamDisplay = $n2.Class({
 		
 		function loadedDocIds(refDocIds){
 			// Get documents that include comments
-			_this.documentSource.getDocumentInfoFromIds({
+			_this.documentSource.getDocuments({
 				docIds: refDocIds
-				,onSuccess: loadedDocInfos
+				,onSuccess: loadedDocs
 			});
 		};
 		
-		function loadedDocInfos(docInfos){
+		function loadedDocs(docs){
+			// Cache documents to save show service from reloading them
+			_this.cachedCommentsByDocId = {};
+			docs.forEach(function(doc){
+				var docId = doc._id;
+				_this.cachedCommentsByDocId[docId] = doc;
+			});
+			
 			// Sort comments by last updated time
-			docInfos.sort(function(a,b){
-				var aTime = a.updatedTime;
-				if( !aTime ){
-					aTime = a.createdTime;
+			docs.sort(function(a,b){
+				var aTime = undefined;
+				if( a && a.nunaliit_created ){
+					aTime = a.nunaliit_created.time;
+				};
+				if( a && a.nunaliit_last_updated ){
+					aTime = a.nunaliit_last_updated.time;
 				};
 
-				var bTime = b.updatedTime;
-				if( !bTime ){
-					bTime = b.createdTime;
+				var bTime = undefined;
+				if( b && b.nunaliit_created ){
+					bTime = b.nunaliit_created.time;
+				};
+				if( b && b.nunaliit_last_updated ){
+					bTime = b.nunaliit_last_updated.time;
 				};
 				
-				if( aTime && bTime ){
+				if( typeof aTime === 'number' 
+				 && typeof bTime === 'number' ){
 					return bTime - aTime;
 				};
 				if( aTime ) return -1;
 				if( bTime ) return 1;
 				
-				if( a.id > b.id ) {
+				if( a._id > b._id ) {
 					return 1;
 				}
 				return -1;
 			});
+			
+			// Create comment stream tree
+			var leavesByDocId = {};
+			var tree = {};
+			docs.forEach(function(doc){
+				var docId = doc._id;
+				var leaf = {
+					docId: docId
+					,doc: doc
+					,replies: {}
+					,inReplyToId: undefined
+				};
+				leavesByDocId[docId] = leaf;
+			});
+			for(var docId in leavesByDocId){
+				var leaf = leavesByDocId[docId];
+				var doc = leaf.doc;
+				var topLevelLeaf = true;
+				if( doc 
+				 && doc.nunaliit_source 
+				 && typeof doc.nunaliit_source.doc === 'string' ){
+					var inReplyToId = doc.nunaliit_source.doc;
+					var replyToLeaf = leavesByDocId[inReplyToId];
+					if( replyToLeaf ){
+						leaf.inReplyToId = inReplyToId;
+						replyToLeaf.replies[docId] = leaf;
+						topLevelLeaf = false;
+					};
+				};
+				
+				if( topLevelLeaf ){
+					tree[docId] = leaf;
+				};
+			};
+			
+			// Retrieve display element cache
+			var $reinsertElementsCache = $('#'+_this.reinsertElementsId);
 
 			// Display comments
 			var $stream = $('.n2Comment_stream_'+$n2.utils.stringToHtmlId(originId));
 			if( $stream.length > 0 ){
+				// Save elements that require surviving of redraw
+				var $reinsertElements = $stream.find('.n2Comment_reinsert');
+				$reinsertElements.appendTo($reinsertElementsCache);
+				
 				$stream.empty();
-				docInfos.forEach(function(docInfo){
-					var docId = docInfo.id;
+				docs.forEach(function(doc){
+					var docId = doc._id;
 					var $commentDiv = $('<div>')
 						.addClass('n2Comment_doc n2Comment_doc_'+$n2.utils.stringToHtmlId(docId))
 						.attr('n2DocId',docId)
@@ -210,8 +285,16 @@ var CommentStreamDisplay = $n2.Class({
 							_this._changeFocus(docId);
 						}
 					});
+					
+					// Re-insert the elements, if present
+					$reinsertElementsCache
+						.find('.n2Comment_reinsert_'+$n2.utils.stringToHtmlId(docId))
+						.appendTo($commentDiv);
 				});
 			};
+
+			// No need for cached elements, anymore
+			$reinsertElementsCache.empty();
 		};
 	},
 	
@@ -234,23 +317,29 @@ var CommentStreamDisplay = $n2.Class({
 
 	},
 
-	_addComment: function(doc, elem){
+	_addComment: function(doc, $elem){
 		var _this = this;
 
 		var createRelatedDocProcess = this.createDocProcess;
+		var commentSchema = this.commentService.getCommentSchema();
+
+		var $outerDiv = $('<div>')
+			.addClass('n2Comment_reinsert n2Comment_reinsert_add')
+			.appendTo($elem);
+		
 		createRelatedDocProcess.replyToDocument({
 			doc: doc
-			,schema: this.commentSchema
+			,schema: commentSchema
 			,originDocId: doc._id
-			,elem: elem
+			,elem: $outerDiv
 			,onSuccess: function(docId){
-				_this._resetAddSection(doc, elem);
+				_this._resetAddSection(doc, $elem);
 			}
 			,onError: function(err){
-				_this._resetAddSection(doc, elem);
+				_this._resetAddSection(doc, $elem);
 			}
 			,onCancel: function(){
-				_this._resetAddSection(doc, elem);
+				_this._resetAddSection(doc, $elem);
 			}
 		});
 	},
@@ -259,11 +348,12 @@ var CommentStreamDisplay = $n2.Class({
 		var _this = this;
 		var documentSource = this.documentSource;
 		var createRelatedDocProcess = this.createDocProcess;
+		var commentSchema = this.commentService.getCommentSchema();
 		
 		var $elem = undefined;
 		if( $outerDiv.length > 0 ){
 			$elem = $('<div>')
-				.addClass('n2Comment_reply')
+				.addClass('n2Comment_reply n2Comment_reinsert n2Comment_reinsert_'+$n2.utils.stringToHtmlId(docId))
 				.appendTo($outerDiv);
 		};
 		
@@ -272,7 +362,7 @@ var CommentStreamDisplay = $n2.Class({
 			,onSuccess: function(doc){
 				createRelatedDocProcess.replyToDocument({
 					doc: doc
-					,schema: _this.commentSchema
+					,schema: commentSchema
 					,elem: $elem
 				});
 			}
@@ -300,35 +390,53 @@ var CommentStreamDisplay = $n2.Class({
 		} else if( 'documentDeleted' === m.type ){
 			var docId = m.docId;
 			this._handleDocumentDeleted(docId);
+
+		} else if( 'cacheRetrieveDocument' === m.type ){
+			// Synchronous call
+			var docId = m.docId;
+			if( this.cachedCommentsByDocId ){
+				var doc = this.cachedCommentsByDocId[docId];
+				
+				if( doc ){
+					m.doc = doc;
+				};
+			};
 		};
 	},
 	
 	_handleDocumentContent: function(doc){
+		// Update cache
+		if( this.cachedCommentsByDocId 
+		 && this.cachedCommentsByDocId[doc._id]){
+			this.cachedCommentsByDocId[doc._id] = doc;
+		};
+		
 		if( doc.nunaliit_origin 
 		 && typeof doc.nunaliit_origin.doc === 'string' ){
 			var originId = doc.nunaliit_origin.doc;
 			var $stream = $('.n2Comment_stream_'+$n2.utils.stringToHtmlId(originId));
 			if( $stream.length > 0 ){
 				// OK, need to refresh this stream
-				var divId = $n2.utils.getElementIdentifier($stream);
 				this._refreshStream({
 					docId: originId
 				});
 			};
+		} else {
+			// This document does not have an origin. Should no longer be part of a
+			// comment stream
+			var $commentDoc = $('.n2Comment_doc_'+$n2.utils.stringToHtmlId(doc._id));
+			$commentDoc.remove();
 		};
 	},
 	
 	_handleDocumentDeleted: function(docId){
-		if( doc.nunaliit_origin 
-		 && typeof doc.nunaliit_origin.doc === 'string' ){
-			// Remove associated streams
-			var $section = $( '.n2Comment_stream_'+$n2.utils.stringToHtmlId(docId) );
-			$section.remove();
-			
-			// Remove associated sections
-			var $section = $( '.n2Comment_doc_'+$n2.utils.stringToHtmlId(docId) );
-			$section.remove();
-		};
+		// Remove associated streams
+		var $section = $( '.n2Comment_stream_'+$n2.utils.stringToHtmlId(docId) );
+		$section.remove();
+		
+		// Remove associated sections
+		var $section = $( '.n2Comment_doc_'+$n2.utils.stringToHtmlId(docId) );
+		$section.remove();
 	}
 });
 
@@ -346,6 +454,8 @@ var CommentService = $n2.Class({
 	customService: null,
 	
 	commentSchema: null,
+	
+	commentStreamDisplay: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -363,6 +473,10 @@ var CommentService = $n2.Class({
 		this.dispatchService = opts.dispatchService;
 		this.customService = opts.customService;
 		this.commentSchema = opts.commentSchema;
+	},
+
+	getCommentSchema: function(){
+		return this.commentSchema;
 	},
 
 	setCommentSchema: function(commentSchema){
@@ -429,15 +543,17 @@ var CommentService = $n2.Class({
 	},
 	
 	getCommentStreamDisplay: function(){
-		var commentStreamDisplay = new CommentStreamDisplay({
-			schema: this.commentSchema
-			,dispatchService: this.dispatchService
-			,documentSource: this.documentSource
-			,showService: this.showService
-			,createDocProcess: this.createDocProcess
-		});
+		if( !this.commentStreamDisplay ){
+			this.commentStreamDisplay = new CommentStreamDisplay({
+				commentService: this
+				,dispatchService: this.dispatchService
+				,documentSource: this.documentSource
+				,showService: this.showService
+				,createDocProcess: this.createDocProcess
+			});
+		};
 		
-		return commentStreamDisplay;
+		return this.commentStreamDisplay;
 	}
 });
 
