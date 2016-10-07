@@ -222,7 +222,7 @@ var History = $n2.Class({
 
 	lastHref: null,
 
-	lastHistoryIndex: null,
+	lastHistorySize: null,
 	
 	retrievedFromStorage: null,
 	
@@ -242,7 +242,7 @@ var History = $n2.Class({
 		this.entries = [];
 		this.currentEntry = undefined;
 		this.lastHref = undefined;
-		this.lastHistoryIndex = undefined;
+		this.lastHistorySize = undefined;
 		this.lastUpdated = undefined;
 		this.retrievedFromStorage = false;
 		this.hint = undefined;
@@ -304,7 +304,7 @@ var History = $n2.Class({
 			var entry = this.entries[i];
 			var e = {
 				h: entry.href
-				,i: entry.historyIndex
+				,i: entry.historySize
 			};
 			h.entries.push(e);
 		};
@@ -344,7 +344,7 @@ var History = $n2.Class({
 				var e = h.entries[i];
 				var entry = {
 					href: e.h
-					,historyIndex: e.i
+					,historySize: e.i
 					,event: getEventFromHref(e.h)
 				};
 				this.entries.push(entry);
@@ -353,7 +353,7 @@ var History = $n2.Class({
 		this.lastUpdated = h.lastUpdated;
 	},
 
-	_reloadFromStorage: function(href,historyIndex){
+	_reloadFromStorage: function(href,historySize){
 		var reloaded = false;
 
 		if( !this.retrievedFromStorage ){
@@ -364,7 +364,7 @@ var History = $n2.Class({
 			var candidateEntry = undefined;
 			for(var i=0,j=histories.length; i<j; ++i){
 				var history = histories[i];
-				var entry = history._entryWithHref(href,historyIndex);
+				var entry = history._entryWithHref(href,historySize);
 				if( entry ){
 					++candidateCount;
 					candidateHistory = history;
@@ -400,13 +400,13 @@ var History = $n2.Class({
 		return reloaded;
 	},
 	
-	_entryWithHref: function(href, historyIndex){
+	_entryWithHref: function(href, historySize){
 		var entry = undefined;
 		
 		for(var i=0,j=this.entries.length; i<j; ++i){
 			var e = this.entries[i];
 			if( e.href === href ){
-				if( e.historyIndex <= historyIndex ){
+				if( e.historySize <= historySize ){
 					entry = e;
 				};
 			};
@@ -449,23 +449,23 @@ var History = $n2.Class({
 	},
 	
 	_checkHistoryChange: function(){
-		var historyIndex = undefined;
+		var historySize = undefined;
 		if( window && window.history ){
-			historyIndex = window.history.length;
+			historySize = window.history.length;
 		};
 		
 		var href = window.location.href;
 
 		if( this.lastHref !== href ){
-			this._historyChanged(href, historyIndex);
+			this._historyChanged(href, historySize);
 		};
 	},
 
-	_historyChanged: function(href, historyIndex){
-		function insertNewEntry(history, href, historyIndex){
+	_historyChanged: function(href, historySize){
+		function insertNewEntry(history, href, historySize){
 			var entry = {
 				href: href
-				,historyIndex: historyIndex
+				,historySize: historySize
 				,event: getEventFromHref(href)
 			};
 			
@@ -474,7 +474,7 @@ var History = $n2.Class({
 			var found = undefined;
 			for(var i=0,j=history.entries.length; i<j; ++i){
 				var e = history.entries[i];
-				if( e.historyIndex === historyIndex ){
+				if( e.historySize === historySize ){
 					found = i;
 					break;
 				};
@@ -488,17 +488,17 @@ var History = $n2.Class({
 			history.currentEntry = entry;
 		};
 
-		//$n2.log('historyIndex:'+historyIndex+' href:'+href);
+		//$n2.log('historySize:'+historySize+' href:'+href);
 		
 		// See if we can find the full history from storage
-		var reloaded = this._reloadFromStorage(href, historyIndex);
+		var reloaded = this._reloadFromStorage(href, historySize);
 		if( reloaded ){
 			$n2.log('history reloaded from storage');
 
-		} else if( this.lastHistoryIndex !== historyIndex ){
+		} else if( this.lastHistorySize !== historySize ){
 			// This happens only when the history is modified
 			// Must create a new entry
-			insertNewEntry(this, href, historyIndex);
+			insertNewEntry(this, href, historySize);
 			
 		} else {
 			// In general, when the index does not change, it is because
@@ -521,8 +521,8 @@ var History = $n2.Class({
 				// This happens when while the second last href is displayed,
 				// a new one is selected
 				if( this.currentEntry 
-				 && this.currentEntry.historyIndex === (historyIndex - 1) ){
-					insertNewEntry(this, href, historyIndex);
+				 && this.currentEntry.historySize === (historySize - 1) ){
+					insertNewEntry(this, href, historySize);
 
 				} else {
 					// Not sure what to do here
@@ -564,7 +564,7 @@ var History = $n2.Class({
 		};
 		
 		this.lastHref = href;
-		this.lastHistoryIndex = historyIndex;
+		this.lastHistorySize = historySize;
 
 		this.lastUpdated = (new Date()).getTime();
 		this.saveToStorage();
