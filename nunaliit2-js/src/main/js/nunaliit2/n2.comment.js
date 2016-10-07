@@ -250,6 +250,7 @@ var CommentStreamDisplay = $n2.Class({
 				$reinsertElements.appendTo($reinsertElementsCache);
 				
 				$stream.empty();
+				var commentIndex = 0;
 				docs.forEach(function(doc){
 					var docId = doc._id;
 					var $commentDiv = $('<div>')
@@ -257,7 +258,7 @@ var CommentStreamDisplay = $n2.Class({
 						.attr('n2DocId',docId)
 						.appendTo($stream);
 					var $content = $('<div>')
-						.addClass('n2Comment_content')
+						.addClass('n2Comment_content nunaliit_list_mod2_'+(commentIndex%2))
 						.appendTo($commentDiv);
 					_this.showService.printDocument($content, docId);
 
@@ -290,6 +291,8 @@ var CommentStreamDisplay = $n2.Class({
 					$reinsertElementsCache
 						.find('.n2Comment_reinsert_'+$n2.utils.stringToHtmlId(docId))
 						.appendTo($commentDiv);
+					
+					++commentIndex;
 				});
 			};
 
