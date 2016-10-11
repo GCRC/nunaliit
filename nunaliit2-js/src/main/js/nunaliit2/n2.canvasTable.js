@@ -735,9 +735,7 @@ var TableCanvas = $n2.Class({
 				var $row = $('#'+rowId);
 				if( $row.length > 0 ){
 					var $parent = $row.parent();
-					$row
-						.remove()
-						.appendTo($parent);
+					$row.appendTo($parent);
 				};
 			};
 		});
