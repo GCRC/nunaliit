@@ -86,12 +86,12 @@ public class CommandDump implements Command {
 		ps.println("    to include multiple documents in the dump.");
 		ps.println();
 		ps.println("  "+Options.OPTION_SCHEMA);
-		ps.println("    Specifies which document(s) should be dumped by selecting the ");
-		ps.println("    document's by schema type.");
+		ps.println("    Specifies which document(s) should be dumped by selecting a");
+		ps.println("    schema type.");
 		ps.println();
 		ps.println("  "+Options.OPTION_LAYER);
-		ps.println("    Specifies which document(s) should be dumped by selecting the ");
-		ps.println("    document's by layer type.");
+		ps.println("    Specifies which document(s) should be dumped by selecting a");
+		ps.println("    layer identifier.");
 		ps.println();
 		ps.println("  "+Options.OPTION_SKELETON);
 		ps.println("    Select skeleton documents for the dump process.");
@@ -132,6 +132,10 @@ public class CommandDump implements Command {
 			dumpDir = new File(atlasDir, "dump/"+name);
 		}
 		
+
+		// Assume all docs
+		boolean allDocs = true;
+
 		// Pick up options
 		Set<String> docIds = options.getDocIds();
 		Set<String> schemaNames = options.getSchemaNames();
@@ -139,6 +143,7 @@ public class CommandDump implements Command {
 		boolean selectSkeletonDocuments = false;
 		if( null != options.getSkeleton() ){
 			selectSkeletonDocuments = options.getSkeleton().booleanValue();
+			allDocs = false;
 		}
 		boolean overwriteDocs = false;
 		if( null != options.getOverwriteDocs() ){
@@ -148,6 +153,9 @@ public class CommandDump implements Command {
 			String dumpDirStr = options.getDumpDir();
 			dumpDir = new File( dumpDirStr );
 		}
+		if( docIds.size() > 0 ){
+			allDocs = false;
+		};
 		
 		// Load properties for atlas
 		AtlasProperties atlasProperties = AtlasProperties.fromAtlasDir(atlasDir);
@@ -158,6 +166,7 @@ public class CommandDump implements Command {
 		// is provided
 		if( overwriteDocs && docIds.size() < 1 ){
 			selectSkeletonDocuments = true;
+			allDocs = false;
 		}
 		
 		if( selectSkeletonDocuments ){
@@ -174,6 +183,7 @@ public class CommandDump implements Command {
 		// If the user has provided schema names, we need to find the doc identifiers for
 		// those documents
 		if( schemaNames.size() > 0 ){
+			allDocs = false;
 			CouchDesignDocument designDoc = couchDb.getDesignDocument("atlas");
 			CouchQuery query = new CouchQuery();
 			query.setViewName("nunaliit-schema");
@@ -189,6 +199,7 @@ public class CommandDump implements Command {
 		// If the user has provided layer names, we need to find the doc identifiers for
 		// those documents
 		if( layerNames.size() > 0 ){
+			allDocs = false;
 			CouchDesignDocument designDoc = couchDb.getDesignDocument("atlas");
 			CouchQuery query = new CouchQuery();
 			query.setViewName("layers");
@@ -214,7 +225,7 @@ public class CommandDump implements Command {
 		DumpListener listener = new DumpListener( gs.getOutStream() );
 		
 		DbDumpProcess dumpProcess = new DbDumpProcess(couchDb, dumpDir);
-		if( docIds.size() < 1 && false == selectSkeletonDocuments ) {
+		if( allDocs ) {
 			dumpProcess.setAllDocs(true);
 		} else {
 			for(String docId : docIds) {
