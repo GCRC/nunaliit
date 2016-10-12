@@ -266,27 +266,15 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			JSONObject original = file.getJSONObject("original");
 			JSONObject data = file.getJSONObject("data");
 			
-			String effectiveAttachmentName = attachmentName;
+			String effectiveAttachmentName = computeEffectiveAttachmentName(attachmentName, null);
 
-			if( docDescriptor.isAttachmentDescriptionAvailable(effectiveAttachmentName) ) {
-				// Select a different file name
-				String prefix = "";
-				String suffix = "";
-				int pos = attachmentName.indexOf('.', 1);
-				if( pos < 0 ) {
-					prefix = attachmentName;
-				} else {
-					prefix = attachmentName.substring(0, pos);
-					suffix = attachmentName.substring(pos);
-				}
-				int counter = 0;
-				while( docDescriptor.isAttachmentDescriptionAvailable(effectiveAttachmentName) ) {
-					effectiveAttachmentName = prefix + "." + counter + suffix;
-					++counter;
+			int counter = 0;
+			while( docDescriptor.isAttachmentDescriptionAvailable(effectiveAttachmentName) ) {
+				effectiveAttachmentName = computeEffectiveAttachmentName(attachmentName, counter);
+				++counter;
 
-					if( counter > 100 ){
-						throw new Exception("Unable to compute a new attachment name from: "+attachmentName);
-					}
+				if( counter > 100 ){
+					throw new Exception("Unable to compute a new attachment name from: "+attachmentName);
 				}
 			}
 			
@@ -916,6 +904,34 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 		}
 		
 		return rowsByUploadId;
+	}
+	
+	private String computeEffectiveAttachmentName(String attachmentName, Integer counter){
+		String prefix = "";
+		String suffix = "";
+		int pos = attachmentName.indexOf('.', 1);
+		if( pos < 0 ) {
+			prefix = attachmentName;
+		} else {
+			prefix = attachmentName.substring(0, pos);
+			suffix = attachmentName.substring(pos);
+		}
+		
+		// Remove leading '_' from prefix
+		while( prefix.length() > 0 && prefix.charAt(0) == '_' ){
+			prefix = prefix.substring(1);
+		}
+		if( prefix.length() < 1 ){
+			prefix = "a";
+		}
+		String effectiveAttachmentName = null;
+		if( null != counter ){
+			effectiveAttachmentName = prefix + "." + counter + suffix;
+		} else {
+			effectiveAttachmentName = prefix + suffix;
+		}
+		
+		return effectiveAttachmentName;
 	}
 	
 	private boolean waitMillis(int millis) {
