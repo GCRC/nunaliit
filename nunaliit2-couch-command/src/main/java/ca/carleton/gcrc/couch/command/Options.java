@@ -14,6 +14,8 @@ public class Options {
 	static final public String OPTION_ID = "--id";
 	static final public String OPTION_DUMP_DIR = "--dump-dir";
 	static final public String OPTION_DOC_ID = "--doc-id";
+	static final public String OPTION_SCHEMA = "--schema";
+	static final public String OPTION_LAYER = "--layer";
 	static final public String OPTION_NAME = "--name";
 
 	static final public String OPTION_DEBUG = "--debug";
@@ -35,7 +37,9 @@ public class Options {
 	private String group;
 	private String id;
 	private String dumpDir;
-	private List<String> docIds = new Vector<String>();
+	private Set<String> schemaNames = new HashSet<String>();
+	private Set<String> layerNames = new HashSet<String>();
+	private Set<String> docIds = new HashSet<String>();
 	private String name;
 	
 	public Options() {
@@ -126,6 +130,22 @@ public class Options {
 
 					dumpDir = argumentStack.pop();
 
+				} else if( OPTION_SCHEMA.equals(arg) ){
+					if( argumentStack.size() < 1 ){
+						throw new Exception(OPTION_SCHEMA+" option requires the name of a schema");
+					}
+					
+					String schemaName = argumentStack.pop();
+					schemaNames.add(schemaName);
+
+				} else if( OPTION_LAYER.equals(arg) ){
+					if( argumentStack.size() < 1 ){
+						throw new Exception(OPTION_LAYER+" option requires the name of a layer");
+					}
+					
+					String layerName = argumentStack.pop();
+					layerNames.add(layerName);
+
 				} else if( OPTION_DOC_ID.equals(arg) ){
 					if( argumentStack.size() < 1 ){
 						throw new Exception(OPTION_DOC_ID+" option requires a document identifier");
@@ -171,6 +191,12 @@ public class Options {
 		}
 		if( null != skeleton && false == expected.contains(OPTION_SKELETON)){
 			throw new Exception("Unexpected option: "+OPTION_SKELETON);
+		}
+		if( schemaNames.size() > 0 && false == expected.contains(OPTION_SCHEMA)){
+			throw new Exception("Unexpected option: "+OPTION_SCHEMA);
+		}
+		if( layerNames.size() > 0 && false == expected.contains(OPTION_LAYER)){
+			throw new Exception("Unexpected option: "+OPTION_LAYER);
 		}
 		if( null != overwriteDocs && false == expected.contains(OPTION_OVERWRITE_DOCS)){
 			throw new Exception("Unexpected option: "+OPTION_OVERWRITE_DOCS);
@@ -252,11 +278,19 @@ public class Options {
 		return dumpDir;
 	}
 
-	public List<String> getDocIds() {
+	public Set<String> getDocIds() {
 		return docIds;
 	}
 
 	public String getName() {
 		return name;
+	}
+	
+	public Set<String> getSchemaNames() {
+		return schemaNames;
+	}
+	
+	public Set<String> getLayerNames() {
+		return layerNames;
 	}
 }
