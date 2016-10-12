@@ -643,3 +643,16 @@ Model Browser Widget
 .n2widget_modelBrowser_list_docId_selected {
 	background-color: #ccc;
 }
+
+/* 
+==============================
+Sound 
+==============================
+*/
+.n2CouchSound {
+	position: absolute;
+	height: 0;
+	width: 0;
+	overflow: hidden;
+	visibility: hidden;
+}

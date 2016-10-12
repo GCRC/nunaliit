@@ -314,8 +314,10 @@ var HoverSoundService = $n2.Class({
 	_getSoundDiv: function(){
 		var $div = $('#n2CouchSound');
 		if( $div.length < 1 ) {
-			$div = $('<div id="n2CouchSound"></div>');
-			$('body').append( $div );
+			$div = $('<div>')
+				.attr('id','n2CouchSound')
+				.addClass('n2CouchSound')
+				.appendTo( $('body') );
 		};
 		return $div;
 	},
@@ -324,8 +326,10 @@ var HoverSoundService = $n2.Class({
 		var $div = $('#n2CouchFocusSound');
 		if( $div.length < 1 ) {
 			var $parent = this._getSoundDiv();
-			$div = $('<div id="n2CouchFocusSound"></div>');
-			$parent.append( $div );
+			$div = $('<div>')
+				.attr('id','n2CouchFocusSound')
+				.addClass('n2CouchFocusSound')
+				.appendTo( $parent );
 		};
 		return $div;
 	},

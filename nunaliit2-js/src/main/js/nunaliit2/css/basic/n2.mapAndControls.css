@@ -387,8 +387,3 @@ table.mediaSelection td {
 .olLayerGooglePoweredBy, .gmnoprint, .gm-style-cc {
 	visibility: hidden;
 }
-
-/* Allow hidden embed tags. This was broken by insertion of n2.base.css */
-embed[hidden] {
-	display: block;
-}
