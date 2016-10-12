@@ -331,16 +331,114 @@ var HoverSoundService = $n2.Class({
 	},
 	
 	_insertSoundElement: function($div, url, className){
-		var $embed = $('<embed>')
-			.attr('src',url)
-			.attr('hidden',true)
-			.attr('autostart',true)
-			.attr('loop',false)
-			;
-		if( className ){
-			$embed.addClass(className);
+		var browserInfo = $n2.utils.getBrowserInfo();
+		$n2.log('browser info',browserInfo);
+		if( "Safari" === browserInfo.browser ){
+			var embedHtml = this._generateHtml5Tag({
+				url: url
+				,sourceType: 'audio'
+				,autoplay: true
+				,loop: false
+				,controller: false
+			});
+			var $embed = $(embedHtml);
+			if( className ){
+				$embed.addClass(className);
+			};
+			$div.append($embed);
+			
+		} else {
+			var $embed = $('<embed>')
+				.attr('src',url)
+				.attr('autostart',true)
+				.attr('loop',false)
+				;
+			if( className ){
+				$embed.addClass(className);
+			};
+			$embed.css('visibility','hidden');
+			$div.append($embed);
 		};
-		$div.append($embed);
+	},
+	
+	_generateHtml5Tag: function(opts_) {
+		var opts = $n2.extend({
+			url: null
+			,sourceType: null
+			,mimeType: null
+			,width: null
+			,height: null
+			,autoplay: false
+			,loop: false
+			,controller: false
+		},opts_);
+		
+		var html = [];
+		if( 'video' === opts.sourceType ) {
+			html.push('<video');
+		} else if( 'audio' === opts.sourceType ) {
+			html.push('<audio');
+		} else {
+			return null;
+		};
+		
+		if( opts.width ) {
+			html.push(' width="'+opts.width+'"');
+		};
+		if( opts.height ) {
+			html.push(' height="'+opts.height+'"');
+		};
+		if( opts.controller ) {
+			html.push(' controls="controls"');
+		};
+		if( opts.autoplay ) {
+			html.push(' autoplay="autoplay"');
+		};
+		
+		// Source
+		html.push(' src="');
+		html.push(opts.url);
+		html.push('"');
+		
+		if( opts.mimeType ) {
+			html.push(' type="'+opts.mimeType+'"');
+		};
+		
+		html.push('>');
+		
+		// Embed tag in case HTML 5 is not supported
+		html.push('<embed');
+		if( opts.width ) {
+			html.push(' width="'+opts.width+'"');
+		};
+		if( opts.height ) {
+			html.push(' height="'+opts.height+'"');
+		};
+		if( opts.autoplay ) {
+			html.push(' autoplay="true"');
+		} else {
+			html.push(' autoplay="false"');
+		};
+		if( opts.controller ) {
+			html.push(' controller="true"');
+		};
+		if( opts.loop ) {
+			html.push(' loop="true"');
+		};
+		html.push(' src="');
+		html.push(opts.url);
+		html.push('"></embed>');
+		
+		// Close Tag
+		if( 'video' === opts.sourceType ) {
+			html.push('</video>');
+		} else if( 'audio' === opts.sourceType ) {
+			html.push('</audio>');
+		} else {
+			return null;
+		};
+		 
+		return html.join(''); 
 	}
 });	
 
