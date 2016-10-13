@@ -60,12 +60,15 @@ var LayerSelectionWidget = $n2.Class({
 	
 	lastSelectedLayerId: null,
 	
+	allLayersLabel: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			containerId: null
 			,dispatchService: null
 			,showService: null
 			,sourceModelId: null
+			,allLayersLabel: null
 		},opts_);
 		
 		var _this = this;
@@ -73,6 +76,7 @@ var LayerSelectionWidget = $n2.Class({
 		this.dispatchService = opts.dispatchService;
 		this.showService = opts.showService;
 		this.sourceModelId = opts.sourceModelId;
+		this.allLayersLabel = opts.allLayersLabel;
 		
 		this.availableLayers = [];
 		this.lastSelectedLayerId = ALL_LAYERS;
@@ -159,8 +163,12 @@ var LayerSelectionWidget = $n2.Class({
 				_this._selectionChanged();
 			});
 
+		var allLayersLabel = _loc('All Layers');
+		if( this.allLayersLabel ){
+			allLayersLabel = _loc(this.allLayersLabel);
+		};
 		$('<option>')
-			.text( _loc('All Layers') )
+			.text( allLayersLabel )
 			.val(ALL_LAYERS)
 			.appendTo($selector);
 		
