@@ -1997,6 +1997,8 @@ var Show = $n2.Class({
 						
 						var $doc = $('<div>')
 							.addClass('n2show_documentList_item')
+							.addClass('n2s_userEvents')
+							.attr('nunaliit-document',docId)
 							.appendTo($elem);
 						
 						var $a = $('<a>')
@@ -2004,9 +2006,9 @@ var Show = $n2.Class({
 							.appendTo($doc);
 	
 						_this._displayDocumentBrief($a, doc);
-
-						installClick($a, docId);
 					};
+
+					_this.fixElementAndChildren($elem, {}, null);
 					
 				// If documents are not provided, docIds are compulsory
 				} else if( m.docIds && m.docIds.length > 0 ){
@@ -2015,11 +2017,14 @@ var Show = $n2.Class({
 						
 						var $doc = $('<div>')
 							.addClass('n2show_documentList_item')
+							.addClass('n2s_userEvents')
+							.attr('nunaliit-document',docId)
 							.appendTo($elem);
 						
 						var $a = $('<a>')
-							.addClass('n2s_referenceLink')
 							.attr('href','#')
+							.addClass('n2s_briefDisplay')
+							.attr('nunaliit-document',docId)
 							.text(docId)
 							.appendTo($doc);
 					};
@@ -2032,18 +2037,6 @@ var Show = $n2.Class({
 				};
 			};
 		});
-		
-		function installClick($a, docId){
-			$a.click(function(){
-				if( _this.dispatchService ) {
-					_this.dispatchService.send(DH, {
-						type:'userSelect'
-						,docId:docId
-					});
-				};
-				return false;
-			});
-		};
 	},
 	
 	_handleDocumentContent: function(doc){
