@@ -49,3 +49,14 @@ div.n2Show_icon_speaker:hover {
 .n2show_findNotAvailable {
 	display: none;
 }
+
+/* Document list */
+.n2show_documentList_item a {
+	text-decoration: none;
+}
+.n2show_documentList_item.nunaliit_hovered {
+	background-color: #ccf;
+}
+.n2show_documentList_item.nunaliit_selected {
+	font-weight: bold;
+}
