@@ -319,6 +319,7 @@ var TableCanvas = $n2.Class({
 			,styleRules: null
 			,dispatchService: null
 			,showService: null
+			,sortOrder: null
 			,onSuccess: function(){}
 			,onError: function(err){}
 		},opts_);
@@ -330,12 +331,41 @@ var TableCanvas = $n2.Class({
 		this.elementGenerator = opts.elementGenerator;
 		this.dispatchService = opts.dispatchService;
 		this.showService = opts.showService;
+		this.sortOrder = [];
+		if( typeof opts.sortOrder === 'string' ){
+			// Only one column, assume ascending
+			this.sortOrder.push({
+				name: opts.sortOrder
+				,direction: 1
+			});
+		} else if( $n2.isArray(opts.sortOrder) ) {
+			for(var i=0,e=opts.sortOrder.length; i<e; ++i){
+				var s = opts.sortOrder[i];
+				if( typeof s === 'string' ){
+					// Column name, assume ascending
+					this.sortOrder.push({name: s, direction: 1});
+				} else if( typeof s === 'object' 
+				 && typeof s.name === 'string' ){
+					if( typeof s.direction !== 'number' ){
+						// If not specified, assume ascending
+						s.direction = 1;
+					};
+					this.sortOrder.push(s);
+				};
+			};
+		} else if( typeof opts.sortOrder === 'object' 
+		 && typeof opts.sortOrder.name === 'string' ){
+			if( typeof opts.sortOrder.direction !== 'number' ){
+				// If not specified, assume ascending
+				opts.sortOrder.direction = 1;
+			};
+			this.sortOrder.push(opts.sortOrder);
+		};
 		
 		this.elementsById = {};
 		this.rowsByName = {};
 		this.sortedRows = [];
 		this.headings = [];
-		this.sortOrder = [];
 
 		this.styleRules = $n2.styleRule.loadRulesFromObject(opts.styleRules);
  		
