@@ -319,6 +319,7 @@ var TableCanvas = $n2.Class({
 			,styleRules: null
 			,dispatchService: null
 			,showService: null
+			,sortOrder: []
 			,onSuccess: function(){}
 			,onError: function(err){}
 		},opts_);
@@ -330,12 +331,12 @@ var TableCanvas = $n2.Class({
 		this.elementGenerator = opts.elementGenerator;
 		this.dispatchService = opts.dispatchService;
 		this.showService = opts.showService;
+		this.sortOrder = opts.sortOrder;
 		
 		this.elementsById = {};
 		this.rowsByName = {};
 		this.sortedRows = [];
 		this.headings = [];
-		this.sortOrder = [];
 
 		this.styleRules = $n2.styleRule.loadRulesFromObject(opts.styleRules);
  		
