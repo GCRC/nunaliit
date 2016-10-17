@@ -232,7 +232,8 @@ var TableCanvas = $n2.Class({
 					this.sortOrder.push(s);
 				};
 			};
-		} else if( typeof opts.sortOrder === 'object' 
+		} else if( opts.sortOrder 
+		 && typeof opts.sortOrder === 'object' 
 		 && typeof opts.sortOrder.name === 'string' ){
 			if( typeof opts.sortOrder.direction !== 'number' ){
 				// If not specified, assume ascending
