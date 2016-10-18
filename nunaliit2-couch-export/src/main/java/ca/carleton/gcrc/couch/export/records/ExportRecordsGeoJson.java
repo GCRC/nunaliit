@@ -113,9 +113,15 @@ public class ExportRecordsGeoJson implements ExportFormat {
 		try {
 			// Attempt to get geometry
 			Geometry geometry = null;
-			String geomId = jsonRecord.optString("_geometry");
+			String geomId = jsonRecord.optString("_geometry",null);
+			String wkt = jsonRecord.optString("_wkt",null);
 			if( null != geomId ){
 				geometry = fetchGeometryFromDocId(geomId, wktParser);
+			} else if( null != wkt ){
+				geometry = wktParser.parseWkt(wkt);
+			}
+			if( null != geometry ){
+				geometry = filterGeometry(geometry);
 			}
 
 			// Output only if a geometry is available
@@ -136,6 +142,8 @@ public class ExportRecordsGeoJson implements ExportFormat {
 					if( "_id".equals(key) ){
 						// Ignore
 					} else if( "_geometry".equals(key) ){
+						// Ignore
+					} else if( "_wkt".equals(key) ){
 						// Ignore
 					} else {
 						Object value = jsonRecord.get(key);
@@ -172,10 +180,6 @@ public class ExportRecordsGeoJson implements ExportFormat {
 				}
 			}
 			
-			if( null != geometry ){
-				geometry = filterGeometry(geometry);
-			}
-
 			return geometry;
 		} catch (Exception e) {
 			throw new Exception("Error while fetching original geometry for "+geomId,e);
