@@ -1003,7 +1003,8 @@ var CouchDocumentEditor = $n2.Class({
 				// Create original object by augmenting current one with template
 				if( _this.editedDocumentSchema ) {
 					var template = _this.editedDocumentSchema.createObject({});
-					$n2.extend(true, _this.editedDocument, template);
+					$n2.extend(true, template, _this.editedDocument);
+					_this.editedDocument = template;
 				};
 				
 				// Give a chance to external processes to modify document
