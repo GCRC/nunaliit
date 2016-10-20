@@ -2097,6 +2097,16 @@ var MapAndControls = $n2.Class({
 			layerInfo.protocol = new OpenLayers.Protocol.Couch(couchProtocolOpt);
 			layerOptions.protocol = layerInfo.protocol;
 			
+		} else if( 'model' === layerDefinition.type ) {
+			var modelProtocolOptions = $n2.extend({},layerDefinition.options);
+			modelProtocolOptions.dispatchService = this._getDispatchService();
+			modelProtocolOptions.onUpdateCallback = function(state){
+				_this._modelLayerUpdated(layerOptions, state);
+			};
+			
+			layerInfo.protocol = new OpenLayers.Protocol.Model(modelProtocolOptions);
+			layerOptions.protocol = layerInfo.protocol;
+
 		} else if( 'wfs' === layerDefinition.type ) {
 			// This is a WFS layer
 			
@@ -2205,6 +2215,8 @@ var MapAndControls = $n2.Class({
 			if( layerOptions.protocol ) {
 				if( 'couchdb' === layerDefinition.type ) {
 					layerOptions.strategies = [ new OpenLayers.Strategy.N2BBOX() ];
+				} else if( 'model' === layerDefinition.type ){
+					// no bounding box strategies for model layers
 				} else {
 					layerOptions.strategies = [ new OpenLayers.Strategy.BBOX() ];
 				};
@@ -2304,6 +2316,7 @@ var MapAndControls = $n2.Class({
 			};
 			
 		} else if( 'couchdb' === layerDefinition.type
+		 || 'model' === layerDefinition.type
 		 || 'wfs' === layerDefinition.type ){
 			if( isBaseLayer ) {
 				$n2.reportError('Layer type not suitable for background: '+layerDefinition.type);
@@ -5480,6 +5493,95 @@ var MapAndControls = $n2.Class({
 			
 		} else if( 'simplifiedGeometryReport' === type ) {
 			this._updateSimplifiedGeometries(m.simplifiedGeometries);
+		};
+	},
+	
+	_modelLayerUpdated: function(layerOptions, state){
+		$n2.log('_modelLayerUpdated',layerOptions, state);
+		
+		var _this = this;
+		var layerInfo = layerOptions._layerInfo;
+		var mapLayer = layerInfo.olLayer;
+
+		var mustReproject = false;
+        var remoteProjection = mapLayer.projection;
+	    var localProjection = layerInfo.olLayer.map.getProjectionObject();
+        if( false == localProjection.equals(remoteProjection) ) {
+        	mustReproject = true;
+        };
+		
+		// Remove features. Remove features that are to be updated
+        var featureIdsToRemoveMap = {};
+        state.removed.forEach(function(f){
+        	featureIdsToRemoveMap[f.fid] = true;
+        });
+        state.updated.forEach(function(f){
+        	featureIdsToRemoveMap[f.fid] = true;
+        });
+        var featuresToRemove = [];
+        var featuresToAdd = [];
+		if( mapLayer && mapLayer.features ) {
+			var loop;
+			var features = mapLayer.features;
+			for(loop=0;loop<features.length;++loop) {
+				var feature = features[loop];
+				if( feature.fid && featureIdsToRemoveMap[feature.fid] ) {
+					featuresToRemove.push(feature);
+				} else if( feature.cluster ) {
+					var removeCluster = false;
+					for(var j=0,k=feature.cluster.length; j<k; ++j){
+						var f = feature.cluster[j];
+						if( f.fid && featureIdsToRemoveMap[f.fid] ){
+							removeCluster = true;
+						};
+					};
+					if( removeCluster ){
+						featuresToRemove.push(feature);
+						for(var j=0,k=feature.cluster.length; j<k; ++j){
+							var f = feature.cluster[j];
+							if( f.fid && !featureIdsToRemoveMap[f.fid] ){
+								featuresToAdd.push(f);
+							};
+						};
+					};
+				};
+			};
+		};
+			
+		// Prepare features to be added to layer
+        var featuresToAdd = [];
+        state.added.forEach(function(f){
+			if( mustReproject ){
+	            var geom = f.geometry;
+			    if( geom ) {
+	        		geom.transform(remoteProjection, localProjection);
+	            };
+			};
+        	featuresToAdd.push(f);
+        });
+        state.updated.forEach(function(f){
+			if( mustReproject ){
+	            var geom = f.geometry;
+			    if( geom ) {
+	        		geom.transform(remoteProjection, localProjection);
+	            };
+			};
+        	featuresToAdd.push(f);
+        });
+
+        // Remove features
+        if( featuresToRemove.length ){
+			mapLayer.destroyFeatures(featuresToRemove);
+		};
+
+		// Add features
+		if( featuresToAdd.length > 0 ){
+			// If in edit mode, first disable editAttribute widget
+			this.editModeAddFeatureEnabled = false;
+
+			mapLayer.addFeatures(featuresToAdd);
+			
+			this.editModeAddFeatureEnabled = true;
 		};
 	},
 	

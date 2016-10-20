@@ -442,11 +442,14 @@ var DocumentModelObserver = $n2.Class('DocumentModelObserver', {
 	sourceModelId: null,
 	
 	docsById: null,
+	
+	updatedCallback: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: null
 			,sourceModelId: null
+			,updatedCallback: null
 		},opts_);
 	
 		var _this = this;
@@ -455,6 +458,7 @@ var DocumentModelObserver = $n2.Class('DocumentModelObserver', {
 		
 		this.dispatchService = opts.dispatchService;
 		this.sourceModelId = opts.sourceModelId;
+		this.updatedCallback = opts.updatedCallback;
 
 		if( typeof this.sourceModelId !== 'string' ){
 			throw new Error('sourceModelId must be specified and it must be a string');
@@ -518,14 +522,16 @@ var DocumentModelObserver = $n2.Class('DocumentModelObserver', {
 			});
 		};
 		
-		this._documentUpdated();
+		this._documentUpdated(sourceState);
 	},
 	
 	/*
 	 * Called when there is a change in the document set
 	 */
-	_documentUpdated: function(){
-		
+	_documentUpdated: function(sourceState){
+		if( typeof this.updatedCallback === 'function' ){
+			this.updatedCallback(sourceState);
+		};
 	}
 });
 
