@@ -575,10 +575,169 @@ var MapFeatureStyles = $n2.Class({
 		
 		return styleMap;
 	}
-}); 
+});
+
+//=========================================================================
+var olStyleNames = {
+	"fill": "fillColor"
+	,"fill-opacity": "fillOpacity"
+	,"stroke": "strokeColor"
+	,"stroke-opacity": "strokeOpacity"
+	,"stroke-width": "strokeWidth"
+	,"stroke-linecap": "strokeLinecap"
+	,"stroke-dasharray": "strokeDashArray"
+	,"r": "pointRadius"
+	,"pointer-events": "pointEvents"
+	,"color": "fontColor"
+	,"font-family": "fontFamily"
+	,"font-size": "fontSize"
+	,"font-weight": "fontWeight"
+};
+
+var stringStyles = {
+	"label": true
+};
+
+var MapStylesAdaptor = $n2.Class({
 	
+	styleRules: null,
+	
+	dispatchService: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			ruleArray: null
+			,dispatchService: null
+		},opts_);
+		
+		var rules = [];
+
+		// Base rule
+		rules.push({
+			condition: 'true'
+			,normal:{
+				fillColor: '#ffffff'
+				,strokeColor: '#ee9999'
+				,strokeWidth: 2
+				,fillOpacity: 0.4
+				,strokeOpacity: 1
+				,strokeLinecap: "round"
+				,strokeDashstyle: "solid"
+				,pointRadius: 6
+				,pointerEvents: "visiblePainted"
+			}
+			,selected:{
+				strokeColor: "#ff2200"
+			}
+			,hovered:{
+				fillColor: "#0000ff"
+			}
+			,found: {
+				'strokeColor': '#00ffff'
+				,'fillColor': '#00ffff'
+			}
+		});
+		
+		// Line
+		rules.push({
+			condition: 'isLine()'
+			,normal: {
+				'fillColor': 'none'
+			}
+			,selected: {
+				'fillColor': 'none'
+			}
+			,hovered:{
+				'strokeColor': '#0000ff'
+				,'fillColor': 'none'
+			}
+			,found: {
+				'strokeColor': '#00ffff'
+				,'fillColor': 'none'
+			}
+		});
+
+		if( $n2.isArray(opts.ruleArray) ){
+			opts.ruleArray.forEach(function(rule){
+				rules.push(rule);
+			});
+		};
+		
+		this.styleRules = $n2.styleRule.loadRulesFromObject(rules, {
+			skipDefaults: true
+		});
+		this.dispatchService = opts.dispatchService;
+		
+	},
+
+	getStyleMapForLayerInfo: function(layerInfo){
+		
+		var _this = this;
+		
+		var styleMap = new OpenLayers.StyleMapCallback(function(feature,intent){
+
+	    	if( feature.isHovered ) {
+		        feature.n2_hovered = true;
+	    	} else {
+		        feature.n2_hovered = false;
+	    	};
+	    	
+	    	if( feature.isClicked ) {
+	    		feature.n2_selected = true;
+	    	} else {
+	    		feature.n2_selected = false;
+	    	};
+	    	
+	    	// Figure out type of geometry
+	    	var geomType = feature.geometry._n2Type;
+	    	if( !geomType ){
+	    		if( feature.geometry.CLASS_NAME.indexOf('Line') >= 0 ) {
+	    			geomType = feature.geometry._n2Type = 'line';
+	    		} else if( feature.geometry.CLASS_NAME.indexOf('Polygon') >= 0 ) {
+	    			geomType = feature.geometry._n2Type = 'polygon';
+	    		} else {
+	    			geomType = feature.geometry._n2Type = 'point';
+	    		};
+	    	};
+	    	feature.n2_geometry = geomType;
+
+			// Retrieve data. Handle clusters
+	    	var data = feature.data;
+			if( feature 
+			 && feature.cluster 
+			 && 1 === feature.cluster.length ){
+				data = feature.cluster[0].data;
+			};
+			feature.n2_doc = data;
+
+			var symbolizer = _this.styleRules.getSymbolizer(feature);
+
+			var symbols = {};
+			symbolizer.forEachSymbol(function(name,value){
+				name = olStyleNames[name] ? olStyleNames[name] : name;
+				
+				if( stringStyles[name] ){
+					if( null === value ){
+						// Nothing
+					} else if( typeof value === 'number' ) {
+						value = '' + value;
+					};
+				};
+				
+				symbols[name] = value;
+			},feature);
+
+			return symbols;
+		});
+		
+		return styleMap;
+	}
+});
+
+//=========================================================================
 $n2.mapStyles = {
 	MapFeatureStyles: MapFeatureStyles
+	,MapStylesAdaptor: MapStylesAdaptor
 };
 
 })(nunaliit2);

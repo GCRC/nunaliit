@@ -662,7 +662,18 @@ var ModuleDisplay = $n2.Class({
 			};
 
 			// Styles
-			_this.mapStyles = new $n2.mapStyles.MapFeatureStyles( (mapInfo ? mapInfo.styles : null) );
+			if( mapInfo && $n2.isArray(mapInfo.styles) ){
+				_this.mapStyles = new $n2.mapStyles.MapStylesAdaptor({
+					ruleArray: mapInfo.styles
+					,dispatchService: this.dispatchService
+				});
+
+			} else if( mapInfo && typeof mapInfo.styles === 'object' ){
+				_this.mapStyles = new $n2.mapStyles.MapFeatureStyles(mapInfo.styles);
+			
+			} else {
+				_this.mapStyles = new $n2.mapStyles.MapFeatureStyles(null);
+			};
 			
 			// Title
 			if( moduleInfo && moduleInfo.title ) {
