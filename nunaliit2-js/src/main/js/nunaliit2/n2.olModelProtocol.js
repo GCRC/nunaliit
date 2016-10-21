@@ -350,6 +350,18 @@ OpenLayers.Protocol.Model = OpenLayers.Class(OpenLayers.Protocol, {
 
 
 		var docs = this.modelObserver.getDocuments();
+		
+		var fidMap = this._getFidMapFromFilter(options.filter);
+		if( fidMap ){
+			docs = docs.filter(function(doc){
+				var docId = doc._id;
+				if( fidMap[docId] ) {
+					return true;
+				};
+				return false;
+			});
+		};
+		
         if(options.callback) {
             resp.features = this.format.read(docs);
 
@@ -760,28 +772,46 @@ OpenLayers.Protocol.Model = OpenLayers.Class(OpenLayers.Protocol, {
     },
 
     /**
-     * Method: getFidsFromFilter
+     * Method: _getFidMapFromFilter
      * This method is used to find the FID filter within the given
      * filter and return the information in a format useable by the view system.
      *
      * Parameters:
      * filter - {<OpenLayers.Filter>}
      */
-    getFidsFromFilter: function(filter) {
+    _getFidMapFromFilter: function(filter) {
 
     	if( !filter ) return null;
 
     	if( filter.CLASS_NAME === 'OpenLayers.Filter.FeatureId' ) {
     		// This is a FIDs
-    		return filter.fids;
+			var map = null;
+    		if( filter.fids ){
+    			filter.fids.forEach(function(fid){
+    				if( null == map ){
+    					map = {};
+    				};
+    				map[fid] = true;
+    			});
+    		};
+    		return map;
     	}
 
     	if( filter.filters ) {
     		// Logical, continue search
+			var map = null;
     		for(var i=0,e=filter.filters.length; i<e; ++i) {
-    			var fids = this.getFidsFromFilter(filter.filters[i]);
-    			if( fids ) return fids;
-    		}
+    			var fidMap = this._getFidMapFromFilter(filter.filters[i]);
+    			if( fidMap ) {
+    				for(var fid in fidMap){
+    					if( null === map ){
+    						map = {};
+    					};
+    					map[fid] = true;
+    				};
+    			};
+    		};
+    		return map;
     	}
 
     	return null;

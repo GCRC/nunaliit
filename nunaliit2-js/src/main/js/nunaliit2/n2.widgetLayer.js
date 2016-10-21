@@ -173,6 +173,8 @@ var LayerSelectionWidget = $n2.Class({
 			.appendTo($selector);
 		
 		var currentFound = null;
+		var optionElements = [];
+		this.availableLayers.sort();
 		for(var i=0,e=this.availableLayers.length; i<e; ++i){
 			var layerId = this.availableLayers[i];
 			
@@ -180,6 +182,8 @@ var LayerSelectionWidget = $n2.Class({
 				.text(layerId)
 				.val(layerId)
 				.appendTo($selector);
+
+			optionElements.push($option);
 			
 			if( layerId === this.lastSelectedLayerId ){
 				currentFound = layerId;
