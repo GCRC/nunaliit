@@ -687,6 +687,12 @@ var MapStylesAdaptor = $n2.Class({
 	    	} else {
 	    		feature.n2_selected = false;
 	    	};
+
+	    	if( 'find' === feature.n2Intent ) {
+	    		feature.n2_found = true;
+	    	} else {
+	    		feature.n2_found = false;
+	    	};
 	    	
 	    	// Figure out type of geometry
 	    	var geomType = feature.geometry._n2Type;
