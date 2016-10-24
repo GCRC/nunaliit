@@ -280,6 +280,8 @@ var DbPerspective = $n2.Class({
 	
 	docListeners: null,
 	
+	loadingCount: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: null
@@ -297,6 +299,7 @@ var DbPerspective = $n2.Class({
 		this.selectorListeners = [];
 		this.docInfosByDocId = {};
 		this.docListeners = [];
+		this.loadingCount = 0;
 		
 		if( !this.modelId ){
 			this.modelId = $n2.getUniqueId();
@@ -334,9 +337,14 @@ var DbPerspective = $n2.Class({
 		};
 		this.dbSelectors.push(dbSelectorInfo);
 		
+		this._startLoading();
 		dbSelector.load({
 			onSuccess: function(docs){
 				_this._docsLoaded(docs);
+				_this._endLoading();
+			},
+			onError: function(err){
+				_this._endLoading();
 			}
 		});
 	},
@@ -592,6 +600,7 @@ var DbPerspective = $n2.Class({
 					modelId: this.modelId
 					,modelType: 'couchDb'
 					,parameters: {}
+					,loading: (this.loadingCount > 0) ? true : false
 					,_instance: this
 				};
 			};
@@ -637,6 +646,34 @@ var DbPerspective = $n2.Class({
 					type: 'modelStateUpdated'
 					,modelId: this.modelId
 					,state: stateUpdate
+				});
+			};
+		};
+	},
+	
+	_startLoading: function(){
+		++this.loadingCount;
+		if( this.loadingCount === 1 ){
+			if( this.dispatchService ){
+				this.dispatchService.send(DH,{
+					type: 'modelLoading'
+					,modelId: this.modelId
+					,sourceModelId: this.modelId
+					,loading: true
+				});
+			};
+		};
+	},
+	
+	_endLoading: function(){
+		--this.loadingCount;
+		if( this.loadingCount === 0 ){
+			if( this.dispatchService ){
+				this.dispatchService.send(DH,{
+					type: 'modelLoading'
+					,modelId: this.modelId
+					,sourceModelId: this.modelId
+					,loading: false
 				});
 			};
 		};

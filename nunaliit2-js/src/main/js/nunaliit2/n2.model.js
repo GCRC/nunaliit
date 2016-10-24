@@ -382,7 +382,7 @@ var DocumentModel = $n2.Class('DocumentModel', {
 	_getModelInfo: function(){
 		var info = {
 			modelId: this.modelId
-			,modelType: 'filter'
+			,modelType: this.modelType
 			,parameters: {}
 		};
 		
@@ -441,24 +441,31 @@ var DocumentModelObserver = $n2.Class('DocumentModelObserver', {
 	
 	sourceModelId: null,
 	
+	modelIsLoading: null,
+	
 	docsById: null,
 	
 	updatedCallback: null,
+	
+	loadingCallback: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: null
 			,sourceModelId: null
 			,updatedCallback: null
+			,loadingCallback: null
 		},opts_);
 	
 		var _this = this;
 		
 		this.docsById = {};
+		this.modelIsLoading = false;
 		
 		this.dispatchService = opts.dispatchService;
 		this.sourceModelId = opts.sourceModelId;
 		this.updatedCallback = opts.updatedCallback;
+		this.loadingCallback = opts.loadingCallback;
 
 		if( typeof this.sourceModelId !== 'string' ){
 			throw new Error('sourceModelId must be specified and it must be a string');
@@ -468,6 +475,12 @@ var DocumentModelObserver = $n2.Class('DocumentModelObserver', {
 			this.dispatchService.register(DH, 'modelStateUpdated', function(m, addr, dispatcher){
 				if( _this.sourceModelId === m.modelId ){
 					_this._sourceModelUpdated(m.state);
+				};
+			});
+
+			this.dispatchService.register(DH, 'modelLoading', function(m, addr, dispatcher){
+				if( _this.sourceModelId === m.modelId ){
+					_this._sourceModelLoading(m, addr, dispatcher);
 				};
 			});
 			
@@ -525,6 +538,15 @@ var DocumentModelObserver = $n2.Class('DocumentModelObserver', {
 		this._documentUpdated(sourceState);
 	},
 	
+	isLoading: function(){
+		return this.modelIsLoading;
+	},
+	
+	_sourceModelLoading: function(m, addr, dispatcher){
+		this.modelIsLoading = m.loading;
+		this._loadingUpdated(this.modelIsLoading);
+	},
+	
 	/*
 	 * Called when there is a change in the document set
 	 */
@@ -532,10 +554,21 @@ var DocumentModelObserver = $n2.Class('DocumentModelObserver', {
 		if( typeof this.updatedCallback === 'function' ){
 			this.updatedCallback(sourceState);
 		};
+	},
+	
+	/*
+	 * Called when there is a change in the loading state
+	 */
+	_loadingUpdated: function(flag){
+		if( typeof this.loadingCallback === 'function' ){
+			this.loadingCallback(flag);
+		};
 	}
 });
 
 //--------------------------------------------------------------------------
+var MODEL_CONFIRMED = '__confirmed__';
+var MODEL_SUSPECTED = '__suspected__';
 var Service = $n2.Class({
 	
 	dispatchService: null,
@@ -564,6 +597,7 @@ var Service = $n2.Class({
 			this.dispatchService.register(DH,'modelCreate',f);
 			this.dispatchService.register(DH,'modelStateUpdated',f);
 			this.dispatchService.register(DH,'modelGetList',f);
+			this.dispatchService.register(DH,'modelGetState',f);
 		};
 	},
 	
@@ -577,6 +611,11 @@ var Service = $n2.Class({
 			if( ! m.modelId ){
 				$n2.log('modelId must be provided when creating a model: '+m.modelType);
 				return;
+			};
+			
+			// Suspect this model id
+			if( !this.modelIdMap[m.modelId] ){
+				this.modelIdMap[m.modelId] = MODEL_SUSPECTED;
 			};
 			
 			if( $n2.modelUtils && typeof $n2.modelUtils.handleModelCreate === 'function' ){
@@ -600,12 +639,20 @@ var Service = $n2.Class({
 				$n2.log('Error while creating model '+m.modelType+'/'+m.modelId+': '+err);
 			};
 
+		} else if( 'modelGetState' === m.type ){
+			var modelId = m.modelId;
+
+			// Suspect this model id
+			if( !this.modelIdMap[m.modelId] ){
+				this.modelIdMap[m.modelId] = MODEL_SUSPECTED;
+			};
+			
 		} else if( 'modelStateUpdated' === m.type ){
 			// Keep track of model identifiers
 			var modelId = m.modelId;
 			if( modelId ){
-				if( !this.modelIdMap[modelId] ){
-					this.modelIdMap[modelId] = true;
+				if( this.modelIdMap[modelId] !== MODEL_CONFIRMED ){
+					this.modelIdMap[modelId] = MODEL_CONFIRMED;
 					this.modelIds.push(modelId);
 				};
 			};
@@ -615,6 +662,24 @@ var Service = $n2.Class({
 			if( !m.modelIds ){
 				m.modelIds = [];
 			};
+			
+			// Attempt to confirm suspected models
+			for(var modelId in this.modelIdMap){
+				var state = this.modelIdMap[modelId];
+				if( MODEL_SUSPECTED === state ){
+					var m = {
+						type: 'modelGetInfo'
+						,modelId: modelId
+					};
+					dispatchService.synchronousCall(DH,m);
+					
+					if( m.modelInfo ){
+						this.modelIdMap[modelId] = MODEL_CONFIRMED;
+						this,modelIds.push(modelId);
+					};
+				};
+			};
+			
 			this.modelIds.forEach(function(modelId){
 				m.modelIds.push(modelId);
 			});

@@ -5497,7 +5497,7 @@ var MapAndControls = $n2.Class({
 	},
 	
 	_modelLayerUpdated: function(layerOptions, state){
-		$n2.log('_modelLayerUpdated',layerOptions, state);
+		//$n2.log('_modelLayerUpdated',layerOptions, state);
 		
 		var _this = this;
 		var layerInfo = layerOptions._layerInfo;
