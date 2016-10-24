@@ -337,14 +337,17 @@ var DbPerspective = $n2.Class({
 		};
 		this.dbSelectors.push(dbSelectorInfo);
 		
-		this._startLoading();
+		++this.loadingCount;
+		this._reportStateUpdate([], [], []);
+		
 		dbSelector.load({
 			onSuccess: function(docs){
+				--_this.loadingCount;
 				_this._docsLoaded(docs);
-				_this._endLoading();
 			},
 			onError: function(err){
-				_this._endLoading();
+				--_this.loadingCount;
+				_this._reportStateUpdate([], [], []);
 			}
 		});
 	},
@@ -436,6 +439,10 @@ var DbPerspective = $n2.Class({
 		};
 
 		return false;
+	},
+	
+	isLoading: function(){
+		return (this.loadingCount > 0);
 	},
 	
 	_selectorVisibilityChanged: function(){
@@ -562,21 +569,7 @@ var DbPerspective = $n2.Class({
 				var removed = [docInfo.doc];
 				this._reportStateUpdate([], [], removed);
 			};
-			
-//		} else if( 'findIsAvailable' === m.type ) {
-//			var doc = m.doc;
-//			
-//			if( doc ){
-//				for(var i=0,e=this.dbSelectors.length; i<e; ++i){
-//					var selectorInfo = this.dbSelectors[i];
-//					var selector = selectorInfo.selector;
-//					if( selector.isDocValid(doc) ){
-//						m.isAvailable = true;
-//						break;
-//					};
-//				};
-//			};
-//			
+
 		} else if( 'documentVersion' === m.type ) {
 			var docInfo = this.docInfosByDocId[m.docId];
 			if( docInfo 
@@ -600,7 +593,6 @@ var DbPerspective = $n2.Class({
 					modelId: this.modelId
 					,modelType: 'couchDb'
 					,parameters: {}
-					,loading: (this.loadingCount > 0) ? true : false
 					,_instance: this
 				};
 			};
@@ -621,61 +613,31 @@ var DbPerspective = $n2.Class({
 					added: added
 					,updated: []
 					,removed: []
+					,loading: this.isLoading()
 				};
 			};
 		};
 	},
 	
 	_reportStateUpdate: function(added, updated, removed){
-		if( added.length > 0
-		 || updated.length > 0 
-		 || removed.length > 0 ){
-			var stateUpdate = {
-				added: added
-				,updated: updated
-				,removed: removed
-			};
+		var stateUpdate = {
+			added: added
+			,updated: updated
+			,removed: removed
+			,loading: this.isLoading()
+		};
 
-			for(var i=0,e=this.docListeners.length; i<e; ++i){
-				var listener = this.docListeners[i];
-				listener(stateUpdate);
-			};
-			
-			if( this.dispatchService ){
-				this.dispatchService.send(DH,{
-					type: 'modelStateUpdated'
-					,modelId: this.modelId
-					,state: stateUpdate
-				});
-			};
+		for(var i=0,e=this.docListeners.length; i<e; ++i){
+			var listener = this.docListeners[i];
+			listener(stateUpdate);
 		};
-	},
-	
-	_startLoading: function(){
-		++this.loadingCount;
-		if( this.loadingCount === 1 ){
-			if( this.dispatchService ){
-				this.dispatchService.send(DH,{
-					type: 'modelLoading'
-					,modelId: this.modelId
-					,sourceModelId: this.modelId
-					,loading: true
-				});
-			};
-		};
-	},
-	
-	_endLoading: function(){
-		--this.loadingCount;
-		if( this.loadingCount === 0 ){
-			if( this.dispatchService ){
-				this.dispatchService.send(DH,{
-					type: 'modelLoading'
-					,modelId: this.modelId
-					,sourceModelId: this.modelId
-					,loading: false
-				});
-			};
+		
+		if( this.dispatchService ){
+			this.dispatchService.send(DH,{
+				type: 'modelStateUpdated'
+				,modelId: this.modelId
+				,state: stateUpdate
+			});
 		};
 	}
 });

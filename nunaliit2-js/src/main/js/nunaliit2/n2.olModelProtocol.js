@@ -239,6 +239,8 @@ OpenLayers.Protocol.Model = OpenLayers.Class(OpenLayers.Protocol, {
      *     defaults to false.
      */
     wildcarded: false,
+    
+    readWasCalled: false,
 
     /**
      * Constructor: OpenLayers.Protocol.Couch
@@ -272,7 +274,7 @@ OpenLayers.Protocol.Model = OpenLayers.Class(OpenLayers.Protocol, {
 			dispatchService: this.dispatchService
 			,sourceModelId: this.sourceModelId
 			,updatedCallback: function(state){
-				if( _this.modelObserver ){
+				if( _this.readWasCallled ){
 					_this._modelSourceUpdated(state);
 				};
 			}
@@ -295,6 +297,10 @@ OpenLayers.Protocol.Model = OpenLayers.Class(OpenLayers.Protocol, {
     			added: []
 				,updated: []
 				,removed: []
+    		};
+    		
+    		if( typeof state.loading === 'boolean' ){
+    			mapState.loading = state.loading;
     		};
     		
     		if( state.added ){
@@ -333,6 +339,8 @@ OpenLayers.Protocol.Model = OpenLayers.Class(OpenLayers.Protocol, {
     read: function(options) {
 
     	var _this = this;
+    	
+    	this.readWasCallled = true;
 
     	// Obtain layer
     	var layer = options.object;
@@ -349,6 +357,7 @@ OpenLayers.Protocol.Model = OpenLayers.Class(OpenLayers.Protocol, {
 		};
 
 
+		var isLoading = this.modelObserver.isLoading();
 		var docs = this.modelObserver.getDocuments();
 		
 		var fidMap = this._getFidMapFromFilter(options.filter);

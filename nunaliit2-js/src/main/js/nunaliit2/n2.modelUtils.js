@@ -130,6 +130,8 @@ var ModelFilter = $n2.Class({
 	
 	docInfosByDocId: null,
 	
+	modelIsLoading: null,
+	
 	filterFn: null,
 	
 	initialize: function(opts_){
@@ -152,6 +154,7 @@ var ModelFilter = $n2.Class({
 		this.filterName = opts.filterName;
 		
 		this.docInfosByDocId = {};
+		this.modelIsLoading = false;
 
 		// Register to events
 		if( this.dispatchService ){
@@ -199,6 +202,7 @@ var ModelFilter = $n2.Class({
 					added: added
 					,updated: []
 					,removed: []
+					,loading: this.modelIsLoading
 				};
 			};
 			
@@ -232,7 +236,12 @@ var ModelFilter = $n2.Class({
 			,updated = []
 			,removed = []
 			;
-		
+
+		if( typeof sourceState.loading === 'boolean' 
+		 && this.modelIsLoading !== sourceState.loading ){
+			this.modelIsLoading = sourceState.loading;
+		};
+
 		// Loop through all added documents
 		if( sourceState.added ){
 			for(var i=0,e=sourceState.added.length; i<e; ++i){
@@ -365,22 +374,19 @@ var ModelFilter = $n2.Class({
 	},
 	
 	_reportStateUpdate: function(added, updated, removed){
-		if( added.length > 0
-		 || updated.length > 0 
-		 || removed.length > 0 ){
-			var stateUpdate = {
-				added: added
-				,updated: updated
-				,removed: removed
-			};
+		var stateUpdate = {
+			added: added
+			,updated: updated
+			,removed: removed
+			,loading: this.modelIsLoading
+		};
 
-			if( this.dispatchService ){
-				this.dispatchService.send(DH,{
-					type: 'modelStateUpdated'
-					,modelId: this.modelId
-					,state: stateUpdate
-				});
-			};
+		if( this.dispatchService ){
+			this.dispatchService.send(DH,{
+				type: 'modelStateUpdated'
+				,modelId: this.modelId
+				,state: stateUpdate
+			});
 		};
 	},
 	
@@ -409,6 +415,8 @@ var ModelUnion = $n2.Class({
 	
 	docInfosByDocId: null,
 	
+	loadingMap: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: null
@@ -433,6 +441,7 @@ var ModelUnion = $n2.Class({
 		};
 		
 		this.docInfosByDocId = {};
+		this.loadingMap = {};
 
 		// Register to events
 		if( this.dispatchService ){
@@ -458,6 +467,16 @@ var ModelUnion = $n2.Class({
 		$n2.log('UnionModel',this);
 	},
 	
+	isLoading: function(){
+		for(var modelId in this.loadingMap){
+			var loading = this.loadingMap[modelId];
+			if( loading ){
+				return true;
+			};
+		};
+		return false;
+	},
+	
 	_handle: function(m, addr, dispatcher){
 		if( 'modelGetInfo' === m.type ){
 			if( this.modelId === m.modelId ){
@@ -477,6 +496,7 @@ var ModelUnion = $n2.Class({
 					added: added
 					,updated: []
 					,removed: []
+					,loading: this.isLoading()
 				};
 			};
 			
@@ -509,6 +529,10 @@ var ModelUnion = $n2.Class({
 			,updated = []
 			,removed = []
 			;
+		
+		if( typeof sourceState.loading === 'boolean' ){
+			this.loadingMap[sourceModelId] = sourceState.loading;
+		};
 		
 		// Loop through all added and modified documents
 		var addedAndModifiedDocs = sourceState.added ? sourceState.added.slice(0) : [];
@@ -572,22 +596,19 @@ var ModelUnion = $n2.Class({
 	},
 	
 	_reportStateUpdate: function(added, updated, removed){
-		if( added.length > 0
-		 || updated.length > 0 
-		 || removed.length > 0 ){
-			var stateUpdate = {
-				added: added
-				,updated: updated
-				,removed: removed
-			};
+		var stateUpdate = {
+			added: added
+			,updated: updated
+			,removed: removed
+			,loading: this.isLoading()
+		};
 
-			if( this.dispatchService ){
-				this.dispatchService.send(DH,{
-					type: 'modelStateUpdated'
-					,modelId: this.modelId
-					,state: stateUpdate
-				});
-			};
+		if( this.dispatchService ){
+			this.dispatchService.send(DH,{
+				type: 'modelStateUpdated'
+				,modelId: this.modelId
+				,state: stateUpdate
+			});
 		};
 	}
 });
@@ -870,6 +891,10 @@ var StaticDocumentSource = $n2.Class('StaticDocumentSource', $n2.model.DocumentM
 		};
 		
 		return docs;
+	},
+
+	_isLoading: function(){
+		return false;
 	}
 });
 

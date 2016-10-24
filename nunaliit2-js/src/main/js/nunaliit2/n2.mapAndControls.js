@@ -2217,6 +2217,7 @@ var MapAndControls = $n2.Class({
 					layerOptions.strategies = [ new OpenLayers.Strategy.N2BBOX() ];
 				} else if( 'model' === layerDefinition.type ){
 					// no bounding box strategies for model layers
+					layerOptions.strategies = [ new OpenLayers.Strategy.Fixed() ];
 				} else {
 					layerOptions.strategies = [ new OpenLayers.Strategy.BBOX() ];
 				};

@@ -64,6 +64,8 @@ var LayerFilter = $n2.Class({
 	
 	docInfosByDocId: null,
 	
+	modelIsLoading: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: null
@@ -76,6 +78,7 @@ var LayerFilter = $n2.Class({
 		this.docInfosByDocId = {};
 		this.selectedLayers = {};
 		this.availableLayers = {};
+		this.modelIsLoading = false;
 		
 		this.dispatchService = opts.dispatchService;
 		this.modelId = opts.modelId;
@@ -237,6 +240,7 @@ var LayerFilter = $n2.Class({
 					added: added
 					,updated: []
 					,removed: []
+					,loading: this.modelIsLoading
 				};
 			};
 			
@@ -266,6 +270,11 @@ var LayerFilter = $n2.Class({
 			,updated = []
 			,removed = []
 			;
+		
+		if( typeof sourceState.loading === 'boolean' 
+		 && this.modelIsLoading !== sourceState.loading ){
+			this.modelIsLoading = sourceState.loading;
+		};
 		
 		// Loop through all added documents
 		if( sourceState.added ){
@@ -402,22 +411,19 @@ var LayerFilter = $n2.Class({
 	},
 	
 	_reportStateUpdate: function(added, updated, removed){
-		if( added.length > 0
-		 || updated.length > 0 
-		 || removed.length > 0 ){
-			var stateUpdate = {
-				added: added
-				,updated: updated
-				,removed: removed
-			};
+		var stateUpdate = {
+			added: added
+			,updated: updated
+			,removed: removed
+			,loading: this.modelIsLoading
+		};
 
-			if( this.dispatchService ){
-				this.dispatchService.send(DH,{
-					type: 'modelStateUpdated'
-					,modelId: this.modelId
-					,state: stateUpdate
-				});
-			};
+		if( this.dispatchService ){
+			this.dispatchService.send(DH,{
+				type: 'modelStateUpdated'
+				,modelId: this.modelId
+				,state: stateUpdate
+			});
 		};
 	},
 	

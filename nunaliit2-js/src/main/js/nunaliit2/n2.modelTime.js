@@ -242,6 +242,8 @@ var TimeFilter = $n2.Class('TimeFilter',TimeIntervalModel,{
 	
 	docInfosByDocId: null,
 	
+	modelIsLoading: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			sourceModelId: null
@@ -274,6 +276,7 @@ var TimeFilter = $n2.Class('TimeFilter',TimeIntervalModel,{
 		};
 		
 		this.docInfosByDocId = {};
+		this.modelIsLoading = false;
 		
 		// Register to events
 		if( this.dispatchService ){
@@ -319,6 +322,7 @@ var TimeFilter = $n2.Class('TimeFilter',TimeIntervalModel,{
 					added: added
 					,updated: []
 					,removed: []
+					,loading: this.modelIsLoading
 				};
 			};
 			
@@ -349,6 +353,11 @@ var TimeFilter = $n2.Class('TimeFilter',TimeIntervalModel,{
 			;
 		
 		var now = Date.now();
+		
+		if( typeof sourceState.loading === 'boolean' 
+		 && this.modelIsLoading !== sourceState.loading ){
+			this.modelIsLoading = sourceState.loading;
+		};
 		
 		// Loop through all added documents
 		if( sourceState.added ){
@@ -525,22 +534,19 @@ var TimeFilter = $n2.Class('TimeFilter',TimeIntervalModel,{
 	},
 	
 	_reportStateUpdate: function(added, updated, removed){
-		if( added.length > 0
-		 || updated.length > 0 
-		 || removed.length > 0 ){
-			var stateUpdate = {
-				added: added
-				,updated: updated
-				,removed: removed
-			};
+		var stateUpdate = {
+			added: added
+			,updated: updated
+			,removed: removed
+			,loading: this.modelIsLoading
+		};
 
-			if( this.dispatchService ){
-				this.dispatchService.send(DH,{
-					type: 'modelStateUpdated'
-					,modelId: this.modelId
-					,state: stateUpdate
-				});
-			};
+		if( this.dispatchService ){
+			this.dispatchService.send(DH,{
+				type: 'modelStateUpdated'
+				,modelId: this.modelId
+				,state: stateUpdate
+			});
 		};
 	},
 	
@@ -618,6 +624,8 @@ var TimeTransform = $n2.Class('TimeTransform',TimeIntervalModel,{
 	
 	docInfosByDocId: null,
 	
+	modelIsLoading: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			sourceModelId: null
@@ -629,6 +637,7 @@ var TimeTransform = $n2.Class('TimeTransform',TimeIntervalModel,{
 		
 		this.sourceModelId = opts.sourceModelId;
 		this.docInfosByDocId = {};
+		this.modelIsLoading = false;
 		this.now = Date.now();
 		
 		// Register to events
@@ -674,6 +683,7 @@ var TimeTransform = $n2.Class('TimeTransform',TimeIntervalModel,{
 					added: added
 					,updated: []
 					,removed: []
+					,loading: this.modelIsLoading
 				};
 			};
 			
@@ -704,6 +714,11 @@ var TimeTransform = $n2.Class('TimeTransform',TimeIntervalModel,{
 			;
 		
 		var _this = this;
+		
+		if( typeof sourceState.loading === 'boolean' 
+		 && this.modelIsLoading !== sourceState.loading ){
+			this.modelIsLoading = sourceState.loading;
+		};
 		
 		// Loop through all added documents
 		if( sourceState.added ){
@@ -868,22 +883,19 @@ var TimeTransform = $n2.Class('TimeTransform',TimeIntervalModel,{
 	},
 	
 	_reportStateUpdate: function(added, updated, removed){
-		if( added.length > 0
-		 || updated.length > 0 
-		 || removed.length > 0 ){
-			var stateUpdate = {
-				added: added
-				,updated: updated
-				,removed: removed
-			};
+		var stateUpdate = {
+			added: added
+			,updated: updated
+			,removed: removed
+			,loading: this.modelIsLoading
+		};
 
-			if( this.dispatchService ){
-				this.dispatchService.send(DH,{
-					type: 'modelStateUpdated'
-					,modelId: this.modelId
-					,state: stateUpdate
-				});
-			};
+		if( this.dispatchService ){
+			this.dispatchService.send(DH,{
+				type: 'modelStateUpdated'
+				,modelId: this.modelId
+				,state: stateUpdate
+			});
 		};
 	},
 	
@@ -1001,6 +1013,8 @@ var DatedReferenceTransform = $n2.Class('DatedReferenceTransform',TimeIntervalMo
 	
 	docInfosByDocId: null,
 	
+	modelIsLoading: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			sourceModelId: null
@@ -1011,6 +1025,7 @@ var DatedReferenceTransform = $n2.Class('DatedReferenceTransform',TimeIntervalMo
 		var _this = this;
 
 		this.docInfosByDocId = {};
+		this.modelIsLoading = false;
 		
 		this.sourceModelId = opts.sourceModelId;
 		
@@ -1057,6 +1072,7 @@ var DatedReferenceTransform = $n2.Class('DatedReferenceTransform',TimeIntervalMo
 					added: added
 					,updated: []
 					,removed: []
+					,loading: this.modelIsLoading
 				};
 			};
 			
@@ -1087,6 +1103,11 @@ var DatedReferenceTransform = $n2.Class('DatedReferenceTransform',TimeIntervalMo
 			;
 		
 		var _this = this;
+		
+		if( typeof sourceState.loading === 'boolean'
+		 && this.modelIsLoading !== sourceState.loading ){
+			this.modelIsLoading = sourceState.loading;
+		};
 		
 		// Loop through all added documents
 		if( sourceState.added ){
@@ -1258,22 +1279,19 @@ var DatedReferenceTransform = $n2.Class('DatedReferenceTransform',TimeIntervalMo
 	},
 	
 	_reportStateUpdate: function(added, updated, removed){
-		if( added.length > 0
-		 || updated.length > 0 
-		 || removed.length > 0 ){
-			var stateUpdate = {
-				added: added
-				,updated: updated
-				,removed: removed
-			};
+		var stateUpdate = {
+			added: added
+			,updated: updated
+			,removed: removed
+			,loading: this.modelIsLoading
+		};
 
-			if( this.dispatchService ){
-				this.dispatchService.send(DH,{
-					type: 'modelStateUpdated'
-					,modelId: this.modelId
-					,state: stateUpdate
-				});
-			};
+		if( this.dispatchService ){
+			this.dispatchService.send(DH,{
+				type: 'modelStateUpdated'
+				,modelId: this.modelId
+				,state: stateUpdate
+			});
 		};
 	},
 	
@@ -1351,6 +1369,8 @@ var NoTimeFilter = $n2.Class({
 	
 	docInfosByDocId: null,
 	
+	modelIsLoading: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: null
@@ -1365,6 +1385,7 @@ var NoTimeFilter = $n2.Class({
 		this.sourceModelId = opts.sourceModelId;
 		
 		this.docInfosByDocId = {};
+		this.modelIsLoading = false;
 		
 		// Register to events
 		if( this.dispatchService ){
@@ -1410,6 +1431,7 @@ var NoTimeFilter = $n2.Class({
 					added: added
 					,updated: []
 					,removed: []
+					,loading: this.modelIsLoading
 				};
 			};
 			
@@ -1436,6 +1458,11 @@ var NoTimeFilter = $n2.Class({
 			,updated = []
 			,removed = []
 			;
+		
+		if( typeof sourceState.loading === 'boolean' 
+		 && this.modelIsLoading !== sourceState.loading ){
+			this.modelIsLoading = sourceState.loading;
+		};
 		
 		// Loop through all added documents
 		if( sourceState.added ){
@@ -1530,22 +1557,19 @@ var NoTimeFilter = $n2.Class({
 	},
 	
 	_reportStateUpdate: function(added, updated, removed){
-		if( added.length > 0
-		 || updated.length > 0 
-		 || removed.length > 0 ){
-			var stateUpdate = {
-				added: added
-				,updated: updated
-				,removed: removed
-			};
+		var stateUpdate = {
+			added: added
+			,updated: updated
+			,removed: removed
+			,loading: this.modelIsLoading
+		};
 
-			if( this.dispatchService ){
-				this.dispatchService.send(DH,{
-					type: 'modelStateUpdated'
-					,modelId: this.modelId
-					,state: stateUpdate
-				});
-			};
+		if( this.dispatchService ){
+			this.dispatchService.send(DH,{
+				type: 'modelStateUpdated'
+				,modelId: this.modelId
+				,state: stateUpdate
+			});
 		};
 	},
 	

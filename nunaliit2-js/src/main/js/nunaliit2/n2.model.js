@@ -373,6 +373,7 @@ var DocumentModel = $n2.Class('DocumentModel', {
 						added: currentDocs
 						,updated: []
 						,removed: []
+						,loading: _this._isLoading()
 					};
 				}
 			});
@@ -402,22 +403,19 @@ var DocumentModel = $n2.Class('DocumentModel', {
 	 * @param removed Array of documents that were removed from the state
 	 */
 	_reportStateUpdate: function(added, updated, removed){
-		if( added.length > 0
-		 || updated.length > 0 
-		 || removed.length > 0 ){
-			var stateUpdate = {
-				added: added
-				,updated: updated
-				,removed: removed
-			};
+		var stateUpdate = {
+			added: added
+			,updated: updated
+			,removed: removed
+			,loading: this._isLoading()
+		};
 
-			if( this.dispatchService ){
-				this.dispatchService.send(DH,{
-					type: 'modelStateUpdated'
-					,modelId: this.modelId
-					,state: stateUpdate
-				});
-			};
+		if( this.dispatchService ){
+			this.dispatchService.send(DH,{
+				type: 'modelStateUpdated'
+				,modelId: this.modelId
+				,state: stateUpdate
+			});
 		};
 	},
 	
@@ -426,6 +424,13 @@ var DocumentModel = $n2.Class('DocumentModel', {
 	 */
 	_getCurrentDocuments: function(){
 		throw new Error('Subclasses must implement the method _getCurrentDocuments()');
+	},
+	
+	/*
+	 * Returns true if the model is currently loading
+	 */
+	_isLoading: function(){
+		throw new Error('Subclasses must implement the method _isLoading()');
 	}
 });
 
@@ -447,14 +452,11 @@ var DocumentModelObserver = $n2.Class('DocumentModelObserver', {
 	
 	updatedCallback: null,
 	
-	loadingCallback: null,
-
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: null
 			,sourceModelId: null
 			,updatedCallback: null
-			,loadingCallback: null
 		},opts_);
 	
 		var _this = this;
@@ -465,7 +467,6 @@ var DocumentModelObserver = $n2.Class('DocumentModelObserver', {
 		this.dispatchService = opts.dispatchService;
 		this.sourceModelId = opts.sourceModelId;
 		this.updatedCallback = opts.updatedCallback;
-		this.loadingCallback = opts.loadingCallback;
 
 		if( typeof this.sourceModelId !== 'string' ){
 			throw new Error('sourceModelId must be specified and it must be a string');
@@ -475,12 +476,6 @@ var DocumentModelObserver = $n2.Class('DocumentModelObserver', {
 			this.dispatchService.register(DH, 'modelStateUpdated', function(m, addr, dispatcher){
 				if( _this.sourceModelId === m.modelId ){
 					_this._sourceModelUpdated(m.state);
-				};
-			});
-
-			this.dispatchService.register(DH, 'modelLoading', function(m, addr, dispatcher){
-				if( _this.sourceModelId === m.modelId ){
-					_this._sourceModelLoading(m, addr, dispatcher);
 				};
 			});
 			
@@ -507,6 +502,11 @@ var DocumentModelObserver = $n2.Class('DocumentModelObserver', {
 	_sourceModelUpdated: function(sourceState){
 		
 		var _this = this;
+		
+		if( typeof sourceState.loading === 'boolean'
+		 && this.modelIsLoading !== sourceState.loading ){
+			this.modelIsLoading = sourceState.loading;
+		};
 		
 		// Loop through all added documents
 		if( $n2.isArray(sourceState.added) ){
@@ -542,26 +542,12 @@ var DocumentModelObserver = $n2.Class('DocumentModelObserver', {
 		return this.modelIsLoading;
 	},
 	
-	_sourceModelLoading: function(m, addr, dispatcher){
-		this.modelIsLoading = m.loading;
-		this._loadingUpdated(this.modelIsLoading);
-	},
-	
 	/*
 	 * Called when there is a change in the document set
 	 */
 	_documentUpdated: function(sourceState){
 		if( typeof this.updatedCallback === 'function' ){
-			this.updatedCallback(sourceState);
-		};
-	},
-	
-	/*
-	 * Called when there is a change in the loading state
-	 */
-	_loadingUpdated: function(flag){
-		if( typeof this.loadingCallback === 'function' ){
-			this.loadingCallback(flag);
+			this.updatedCallback(sourceState, this.sourceModelId);
 		};
 	}
 });

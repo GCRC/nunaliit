@@ -71,7 +71,13 @@ var HANDLEMARKER = {}
  */
 var Dispatcher = $n2.Class({
 	
-	options: null,
+	logging: null,
+	
+	loggingIncludesMessage: null,
+	
+	loggingHandleMap: null,
+
+	loggingTypeMap: null,
 	
 	listeners: null,
 	
@@ -81,11 +87,36 @@ var Dispatcher = $n2.Class({
 	
 	queue: null,
 
-	initialize: function(options_){
-		this.options = $n2.extend({
+	initialize: function(opts_){
+		var opts = $n2.extend({
 			logging: false
 			,loggingIncludesMessage: false
-		},options_);
+			,loggingHandles: null
+			,loggingTypes: null
+		},opts_);
+		
+		var _this = this;
+		
+		this.logging = opts.logging;
+		this.loggingIncludesMessage = opts.loggingIncludesMessage;
+		
+		this.loggingHandleMap = {};
+		if( $n2.isArray(opts.loggingHandles) ){
+			opts.loggingHandles.forEach(function(handle){
+				if( typeof handle === 'string' ){
+					_this.loggingHandleMap[handle] = true;
+				};
+			});
+		};
+		
+		this.loggingTypeMap = {};
+		if( $n2.isArray(opts.loggingTypes) ){
+			opts.loggingTypes.forEach(function(type){
+				if( typeof type === 'string' ){
+					_this.loggingTypeMap[type] = true;
+				};
+			});
+		};
 		
 		this.listeners = {};
 		this.handles = {};
@@ -252,8 +283,15 @@ var Dispatcher = $n2.Class({
 	_sendImmediate: function(h, m) {
 		var _this = this;
 		
-		var logging = this.options.logging;
-		var loggingIncludesMessage = this.options.loggingIncludesMessage;
+		var logging = false;
+		if( this.logging ){
+			logging = true;
+		} else if( this.loggingHandleMap[h.name] ){
+			logging = true;
+		} else if( this.loggingTypeMap[m.type] ){
+			logging = true;
+		};
+		var loggingIncludesMessage = this.loggingIncludesMessage;
 
 		var t = m.type;
 
