@@ -2103,6 +2103,14 @@ var MapAndControls = $n2.Class({
 			modelProtocolOptions.onUpdateCallback = function(state){
 				_this._modelLayerUpdated(layerOptions, state);
 			};
+			modelProtocolOptions.notifications = {
+				readStart: function(){
+					_this._mapBusyStatus(1);
+				}
+				,readEnd: function(){
+					_this._mapBusyStatus(-1);
+				}
+			};
 			
 			layerInfo.protocol = new OpenLayers.Protocol.Model(modelProtocolOptions);
 			layerOptions.protocol = layerInfo.protocol;

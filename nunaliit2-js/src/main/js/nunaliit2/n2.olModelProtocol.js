@@ -225,7 +225,7 @@ OpenLayers.Protocol.Model = OpenLayers.Class(OpenLayers.Protocol, {
 
     /**
      * Property: notifications
-     * {Object} Set of functions to call to report on bubsy status
+     * {Object} Set of functions to call to report on busy status
      */
     notifications: null,
 
@@ -241,6 +241,8 @@ OpenLayers.Protocol.Model = OpenLayers.Class(OpenLayers.Protocol, {
     wildcarded: false,
     
     readWasCalled: false,
+    
+    loading: false,
 
     /**
      * Constructor: OpenLayers.Protocol.Couch
@@ -274,7 +276,7 @@ OpenLayers.Protocol.Model = OpenLayers.Class(OpenLayers.Protocol, {
 			dispatchService: this.dispatchService
 			,sourceModelId: this.sourceModelId
 			,updatedCallback: function(state){
-				if( _this.readWasCallled ){
+				if( _this.readWasCalled ){
 					_this._modelSourceUpdated(state);
 				};
 			}
@@ -301,6 +303,7 @@ OpenLayers.Protocol.Model = OpenLayers.Class(OpenLayers.Protocol, {
     		
     		if( typeof state.loading === 'boolean' ){
     			mapState.loading = state.loading;
+   				this._reportLoading(state.loading);
     		};
     		
     		if( state.added ){
@@ -340,7 +343,7 @@ OpenLayers.Protocol.Model = OpenLayers.Class(OpenLayers.Protocol, {
 
     	var _this = this;
     	
-    	this.readWasCallled = true;
+    	this.readWasCalled = true;
 
     	// Obtain layer
     	var layer = options.object;
@@ -356,8 +359,11 @@ OpenLayers.Protocol.Model = OpenLayers.Class(OpenLayers.Protocol, {
 			projectionCode = mapProjection.getCode();
 		};
 
-
 		var isLoading = this.modelObserver.isLoading();
+		if( typeof isLoading === 'boolean' ){
+			this._reportLoading(isLoading);
+		};
+
 		var docs = this.modelObserver.getDocuments();
 		
 		var fidMap = this._getFidMapFromFilter(options.filter);
@@ -824,6 +830,22 @@ OpenLayers.Protocol.Model = OpenLayers.Class(OpenLayers.Protocol, {
     	}
 
     	return null;
+    },
+    
+    _reportLoading: function(flag){
+    	if( this.loading && !flag ){
+    		this.loading = false;
+        	if( this.notifications 
+	    	 && typeof this.notifications.readEnd === 'function'){
+	    		this.notifications.readEnd();
+	    	};
+    	} else if( !this.loading && flag ){
+    		this.loading = true;
+        	if( this.notifications 
+	    	 && typeof this.notifications.readStart === 'function'){
+	    		this.notifications.readStart();
+	    	};
+    	};
     },
     
     CLASS_NAME: "OpenLayers.Protocol.Model" 
