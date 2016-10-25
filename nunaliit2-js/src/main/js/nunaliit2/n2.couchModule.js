@@ -1161,11 +1161,21 @@ var ModuleDisplay = $n2.Class({
 		 && mapInfo.coordinates
 		 && mapInfo.coordinates.autoInitialBounds
 		 ){
-			computeAutoInitialBounds(
-				mapOptions
-				,initialBounds
-				,mapInfo.coordinates.autoInitialBounds
-				);
+			if( typeof mapInfo.coordinates.autoInitialBounds === 'object' ){
+				// Initial bounds computed from a configured object
+				var m = {
+					type: 'instanceCreate'
+					,instanceConfiguration: mapInfo.coordinates.autoInitialBounds
+				};
+				_this.dispatchService.synchronousCall(DH,m);
+				
+			} else if( typeof mapInfo.coordinates.autoInitialBounds === 'boolean' ){
+				computeAutoInitialBounds(
+						mapOptions
+						,initialBounds
+						,mapInfo.coordinates.autoInitialBounds
+						);
+			};
 		} else {
 			initialBoundsComputed(mapOptions, initialBounds);
 		};

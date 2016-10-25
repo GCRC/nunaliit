@@ -245,6 +245,10 @@ var Session = $n2.Class({
 
 		var _this = this;
 		var sessionUrl = this.getUrl();
+
+		if( badProxy ){
+			sessionUrl += '?r='+Date.now();
+		};
 		
 		// Fix name: no spaces, all lowercase
 		if( opts.name ) {

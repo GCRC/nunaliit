@@ -443,6 +443,10 @@ function Configure(options_){
 			dispatchService: configuration.directory.dispatchService
 		});
 		
+	 	configuration.directory.instanceService = new $n2.instance.Service({
+			dispatchService: configuration.directory.dispatchService
+		});
+		
 	 	configuration.directory.canvasService = new $n2.canvas.Service({
 			dispatchService: configuration.directory.dispatchService
 		});
