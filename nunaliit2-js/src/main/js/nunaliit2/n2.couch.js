@@ -250,6 +250,10 @@ var Session = $n2.Class({
 			sessionUrl += '?r='+Date.now();
 		};
 		
+		if( badProxy ){
+			sessionUrl += '?r='+Date.now();
+		};
+		
 		// Fix name: no spaces, all lowercase
 		if( opts.name ) {
 			var name = fixUserName(opts.name);
