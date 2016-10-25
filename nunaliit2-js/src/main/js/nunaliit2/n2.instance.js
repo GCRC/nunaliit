@@ -63,11 +63,6 @@ var Service = $n2.Class({
 	
 	_handle: function(m, addr, dispatcher){
 		if( 'instanceCreate' === m.type ){
-			if( typeof m.instanceType !== 'string' ){
-				$n2.log('instanceType must be provided when creating an instance');
-				return;
-			};
-
 			if( typeof m.instanceConfiguration !== 'object' ){
 				$n2.log('instanceConfiguration must be provided when creating an instance');
 				return;

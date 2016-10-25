@@ -1153,14 +1153,19 @@ var ModuleDisplay = $n2.Class({
 			};
 		};
 		
-		if( !initialBounds ) {
-			opts.onError('Initial map extent not specified');
-			return;
-		};
 		if( mapInfo 
 		 && mapInfo.coordinates
 		 && mapInfo.coordinates.autoInitialBounds
 		 ){
+			// Figure out projection for configuration
+			var coordinateProjection = undefined;
+			if( mapOptions.mapCoordinateSpecifications.srsName ){
+				coordinateProjection = new OpenLayers.Projection(mapOptions.mapCoordinateSpecifications.srsName);
+			} else {
+				coordinateProjection = new OpenLayers.Projection('EPSG:4326');
+			};
+			
+			var autoBounds = undefined;
 			if( typeof mapInfo.coordinates.autoInitialBounds === 'object' ){
 				// Initial bounds computed from a configured object
 				var m = {
@@ -1168,146 +1173,53 @@ var ModuleDisplay = $n2.Class({
 					,instanceConfiguration: mapInfo.coordinates.autoInitialBounds
 				};
 				_this.dispatchService.synchronousCall(DH,m);
-				
-			} else if( typeof mapInfo.coordinates.autoInitialBounds === 'boolean' ){
-				computeAutoInitialBounds(
-						mapOptions
-						,initialBounds
-						,mapInfo.coordinates.autoInitialBounds
-						);
+				autoBounds = m.instance;
 			};
+			
+			if( !autoBounds ){
+				// Default
+				var m = {
+					type: 'instanceCreate'
+					,instanceConfiguration: {
+						type: 'mapAutoInitialBoundsCouchDbOverlays'
+					}
+				};
+				_this.dispatchService.synchronousCall(DH,m);
+				autoBounds = m.instance;
+			};
+			
+			if( autoBounds 
+			 && typeof autoBounds.computeInitialBounds === 'function' ){
+				autoBounds.computeInitialBounds({
+					mapOptions: mapOptions
+					,mapInfo: mapInfo
+					,initialBounds: initialBounds
+					,coordinateProjection: coordinateProjection
+					,onSuccess: function(bounds){
+						if( !bounds ){
+							initialBoundsComputed(mapOptions, initialBounds);
+						} else {
+							initialBoundsComputed(mapOptions, bounds);
+						};
+					}
+					,onError: function(err){
+						$n2.log('Error while computing initial bounds: '+err);
+						initialBoundsComputed(mapOptions, initialBounds);
+					}
+				});
+			} else {
+				initialBoundsComputed(mapOptions, initialBounds);
+			};
+
 		} else {
 			initialBoundsComputed(mapOptions, initialBounds);
 		};
 		
-		function computeAutoInitialBounds(mapOptions, initialBounds, autoInitialBounds){
-			
-			// Loop over all layers, computing initial bounding box for
-			// each
-			var layerBoundingBox = null;
-			var layersPending = 0;
-			for(var i=0,e=mapOptions.overlays.length; i<e; ++i){
-				var layerDef = mapOptions.overlays[i];
-				if( layerDef.type === 'couchdb' ){
-					++layersPending;
-					var documentSource = layerDef.options.documentSource;
-					var layerName = layerDef.options.layerName;
-					documentSource.getGeographicBoundingBox({
-						layerId: layerName
-						,onSuccess: function(bbox){
-							reportLayer(bbox);
-						}
-						,onError: function(errorMsg){ 
-							$n2.log('Error computing bounds for layer '+layerName+': '+errorMsg); 
-							reportLayer(null);
-						}
-					});
-				};
-			};
-			testDone();
-			
-			function reportLayer(bounds){
-				--layersPending;
-				if( null == bounds ) {
-					// ignore
-				} else if( false == _this._isValidBounds(bounds) ) {
-					// ignore
-				} else {
-					if( null == layerBoundingBox ) {
-						layerBoundingBox = bounds;
-					} else {
-						if( layerBoundingBox[0] > bounds[0] ) layerBoundingBox[0] = bounds[0];
-						if( layerBoundingBox[1] > bounds[1] ) layerBoundingBox[1] = bounds[1];
-						if( layerBoundingBox[2] < bounds[2] ) layerBoundingBox[2] = bounds[2];
-						if( layerBoundingBox[3] < bounds[3] ) layerBoundingBox[3] = bounds[3];
-					};
-				};
-				testDone();
-			};
-			
-			function testDone(){
-				if( layersPending > 0 ){
-					return;
-				};
-				
-				// If nothing specified by layers, just use what the user specified
-				if( null == layerBoundingBox ){
-					// Nothing defined by the layers, use initial bounds
-					initialBoundsComputed(mapOptions, initialBounds);
-					return;
-				};
-		
-				// If computations from layers is invalid, use the initial bounds specified
-				// by user
-				if( false == _this._isValidBounds(layerBoundingBox) ) {
-					$n2.log('Invalid bounding box reported for layer in database.',layerBoundingBox);
-					initialBoundsComputed(mapOptions, initialBounds);
-					return;
-				};
-				
-				// layerBoundingBox is in EPSG:4326
-				// initialBounds is in the user coordinate projection
-				var userInitialBounds = new OpenLayers.Bounds(
-						initialBounds[0]
-						,initialBounds[1]
-						,initialBounds[2]
-						,initialBounds[3]
-						);
-				var layerInitialBounds = new OpenLayers.Bounds(
-						layerBoundingBox[0]
-						,layerBoundingBox[1]
-						,layerBoundingBox[2]
-						,layerBoundingBox[3]
-						);
-				if( mapOptions.mapCoordinateSpecifications.srsName !== 'EPSG:4326' ){
-					var userProj = new OpenLayers.Projection(mapOptions.mapCoordinateSpecifications.srsName);
-					var dbProj = new OpenLayers.Projection('EPSG:4326');
-					layerInitialBounds.transform(dbProj,userProj);
-				};
-				
-				if( userInitialBounds.containsBounds(layerInitialBounds) ){
-					// Bounds defined by layers fit within the one specified by user.
-					// Just use initial bounds (prevent too much zooming in)
-					initialBoundsComputed(mapOptions, initialBounds);
-					
-				} else if( layerInitialBounds.getWidth() < userInitialBounds.getWidth() 
-				 || layerInitialBounds.getHeight() < userInitialBounds.getHeight() ){
-					// The bounds defined by the layers are smaller than that of the bounds
-					// specified by user. Adjust size of bounds so that zoom is not too high
-					
-					if( layerInitialBounds.getWidth() < userInitialBounds.getWidth() ){
-						var l = userInitialBounds.getWidth()/2;
-						var m = (layerInitialBounds.left+layerInitialBounds.right)/2;
-						layerInitialBounds.left = m - l;
-						layerInitialBounds.right = m + l;
-					};
-					
-					if( layerInitialBounds.getHeight() < userInitialBounds.getHeight() ){
-						var l = userInitialBounds.getHeight()/2;
-						var m = (layerInitialBounds.bottom+layerInitialBounds.top)/2;
-						layerInitialBounds.bottom = m - l;
-						layerInitialBounds.top = m + l;
-					};
-					initialBoundsComputed(mapOptions, [
-						layerInitialBounds.left
-						,layerInitialBounds.bottom
-						,layerInitialBounds.right
-						,layerInitialBounds.top
-					]);
-					
-				} else {
-					// Use bounds computed by layers
-					initialBoundsComputed(mapOptions, [
-							layerInitialBounds.left
-							,layerInitialBounds.bottom
-							,layerInitialBounds.right
-							,layerInitialBounds.top
-						]);
-				};
-			};
-		};
-		
 		function initialBoundsComputed(mapOptions, initialBounds){
+			if( !initialBounds ) {
+				opts.onError('Initial map extent not specified');
+				return;
+			};
 		
 			mapOptions.mapCoordinateSpecifications.initialBounds = initialBounds;
 			
@@ -1397,18 +1309,6 @@ var ModuleDisplay = $n2.Class({
 		if( d ){
 			d.synchronousCall(DH,m);
 		};
-	}
-	
-	,_isValidBounds: function(bounds){
-		if( !bounds.length ) return false;
-		if( bounds.length < 4 ) return false;
-		
-		if( bounds[0] < -180 || bounds[0] > 180 ) return false;
-		if( bounds[2] < -180 || bounds[2] > 180 ) return false;
-		if( bounds[1] < -90 || bounds[1] > 90 ) return false;
-		if( bounds[3] < -90 || bounds[3] > 90 ) return false;
-		
-		return true;
 	}
 	
 	,_installModuleTitle: function($elem, text){
