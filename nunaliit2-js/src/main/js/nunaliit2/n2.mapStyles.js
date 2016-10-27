@@ -598,6 +598,24 @@ var stringStyles = {
 	"label": true
 };
 
+var featureStyleFunctions = {
+	getDocuments: function(){
+		// this is the feature
+
+		var documents = [];
+
+		if( $n2.isArray(this.cluster) ) {
+			this.cluster.forEach(function(f){
+				documents.push(f.data);
+			});
+		} else {
+			documents.push(this.data);
+		};
+
+		return documents;
+	}
+};
+
 var MapStylesAdaptor = $n2.Class({
 	
 	styleRules: null,
@@ -676,6 +694,11 @@ var MapStylesAdaptor = $n2.Class({
 		
 		var styleMap = new OpenLayers.StyleMapCallback(function(feature,intent){
 
+			// Install functions on feature to support style system
+			for(var fnName in featureStyleFunctions){
+				feature[fnName] = featureStyleFunctions[fnName];
+			};
+			
 	    	if( feature.isHovered ) {
 		        feature.n2_hovered = true;
 	    	} else {
