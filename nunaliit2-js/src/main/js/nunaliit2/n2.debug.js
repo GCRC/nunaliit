@@ -109,6 +109,22 @@ var DebugConfiguration = $n2.Class({
 			delete debugConf.logging;
 		};
 		this.saveConfiguration(debugConf);
+	},
+
+	isCouchDbCachingEnabled: function(){
+		var debugConf = this.loadConfiguration();
+		if( debugConf.couchDbCaching ) return true;
+		return false;
+	},
+
+	setCouchDbCachingEnabled: function(flag){
+		var debugConf = this.loadConfiguration();
+		if( flag ){
+			debugConf.couchDbCaching = true;
+		} else if( debugConf.couchDbCaching ){
+			delete debugConf.couchDbCaching;
+		};
+		this.saveConfiguration(debugConf);
 	}
 });
 

@@ -4,15 +4,19 @@
 // ===================================================
 var DB_STORE_DOCS = 'docs';
 var DocumentDatabase = $n2.Class({
-	
+
 	db: null,
-	
+
+	dbName: null,
+
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			db: null
+			,dbName: null
 		},opts_);
 		
 		this.db = opts.db;
+		this.dbName = opts.dbName;
 	},
 	
 	getDocument: function(opts_){
@@ -33,6 +37,56 @@ var DocumentDatabase = $n2.Class({
 		};
 		req.onerror = function(evt) {
 			opts.onError(this.error);
+		};
+	},
+	
+	getDocuments: function(opts_){
+		var opts = $n2.extend({
+			docIds: null
+			,onSuccess: function(docs){}
+			,onError: function(err){}
+		},opts_);
+
+		var countSeeked = 0;
+		var docIdMap = {};
+		opts.docIds.forEach(function(docId){
+			docIdMap[docId] = true;
+			++countSeeked;
+		});
+		
+		var docs = [];
+
+		var db = this.db;
+		
+		var transaction = db.transaction(DB_STORE_DOCS, 'readonly');
+	    var store = transaction.objectStore(DB_STORE_DOCS);
+	    var req = store.openCursor();
+		req.onsuccess = function(event) {
+			var cursor = event.target.result;
+			if(cursor) {
+				var doc = cursor.value;
+				var docId = doc._id;
+				if( docIdMap[docId] ){
+					docs.push(doc);
+					--countSeeked;
+				};
+
+				if( countSeeked <= 0 ){
+					done();
+				} else {
+					cursor.continue();
+				};
+			} else {
+				// no more results
+				done();
+			};
+		};
+		req.onerror = function(evt) {
+			opts.onError(this.error);
+		};
+		
+		function done(){
+			opts.onSuccess(docs);
 		};
 	},
 	
@@ -85,9 +139,36 @@ var DocumentDatabase = $n2.Class({
 });
 
 //===================================================
+var NunaliitIndexDb = $n2.Class({
+
+	db: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			db: null
+		},opts_);
+		
+		this.db = opts.db;
+	},
+
+	getDocumentDatabase: function(opts_){
+		var opts = $n2.extend({
+			dbName: null
+		},opts_);
+		
+		var docDb = new DocumentDatabase({
+			db: this.db
+			,dbName: opts.dbName
+		});
+		
+		return docDb;
+	}
+});
+
+//===================================================
 var DB_NAME = 'nunaliit';
 var DB_VERSION = 1;
-function openDocumentDatabase(opts_){
+function openIndexDb(opts_){
 	var opts = $n2.extend({
 		onSuccess: function(documentDatabase){}
 		,onError: function(err){}
@@ -100,11 +181,11 @@ function openDocumentDatabase(opts_){
 		// db = req.result;
 		var db = this.result;
 		
-		var docDb = new DocumentDatabase({
+		var n2IndexDb = new NunaliitIndexDb({
 			db: db
 		});
 
-		opts.onSuccess(docDb);
+		opts.onSuccess(n2IndexDb);
 	};
 
 	req.onerror = function (evt) {
@@ -136,7 +217,7 @@ function openDocumentDatabase(opts_){
 	
 //===================================================
 $n2.indexdb = {
-	openDocumentDatabase: openDocumentDatabase
+	openIndexDb: openIndexDb
 };
 	
 })(nunaliit2);

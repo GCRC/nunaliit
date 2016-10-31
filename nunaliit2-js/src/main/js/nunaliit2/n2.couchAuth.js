@@ -103,9 +103,11 @@ var AuthService = $n2.Class({
 		this.userServiceAvailable = false;
 		this.autoRegistrationAvailable = false;
 		
-		if( this.options.atlasDb ){
-			this.couchServer = this.options.atlasDb.server;
-		} else {
+		this.couchServer = undefined;
+		if( this.options.directory ){
+			this.couchServer = this.options.directory.couchServer;
+		};
+		if( !this.couchServer ){
 			$n2.log('Couch Server must be specified for CouchDb AuthService');
 			this.options.onError( _loc('Server must be specified for CouchDb AuthService') );
 			return;

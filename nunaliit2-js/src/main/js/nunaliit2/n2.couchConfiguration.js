@@ -164,6 +164,7 @@ function Configure(options_){
 	if( debugConfiguration.isBadProxyEnabled() ){
 		$n2.couch.setBadProxy(true);
 	};
+	var couchDbCachingEnabled = debugConfiguration.isCouchDbCachingEnabled();
 
 	// Dispatcher
 	var dispatchLogging = false;
@@ -223,15 +224,27 @@ function Configure(options_){
  		,publish: function(){}
  	};
  	
- 	$n2.couch.initialize({
-    	pathToServer: options.couchServerUrl
-    	,onSuccess: couchInitialized
- 	});
+ 	if( couchDbCachingEnabled ){
+ 	 	$n2.couch.initialize({
+ 	    	pathToServer: options.couchServerUrl
+ 	    	,onSuccess: function(couchServer){
+ 				$n2.couchIndexDb.getServer({
+ 					couchServer: couchServer
+ 					,onSuccess: couchInitialized
+ 				});
+ 	    	}
+ 	 	});
+ 	} else {
+ 	 	$n2.couch.initialize({
+ 	    	pathToServer: options.couchServerUrl
+ 	    	,onSuccess: couchInitialized
+ 	 	});
+ 	};
 	
-	function couchInitialized() {
+	function couchInitialized(couchServer) {
 		
-		configuration.couchServer = $n2.couch.DefaultServer;
-		configuration.directory.couchServer = configuration.couchServer;
+		configuration.couchServer = couchServer;
+		configuration.directory.couchServer = couchServer;
 		
 		configuration.atlasDb = configuration.couchServer.getDb({dbUrl:options.atlasDbUrl});
 		configuration.atlasDesign = configuration.atlasDb.getDesignDoc({ddName:options.atlasDesignName});
