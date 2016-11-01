@@ -1983,7 +1983,7 @@ var Form = $n2.Class({
 								};
 								if( layers ) {
 									$input.val( layers.join(',') );
-									handler.call($input);
+									changeHandler.call($input);
 								};
 								$input.trigger('focus',{inhibitCallback:true});
 							}

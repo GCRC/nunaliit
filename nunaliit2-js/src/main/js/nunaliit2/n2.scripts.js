@@ -35,6 +35,28 @@ POSSIBILITY OF SUCH DAMAGE.
 
 var customScriptsByUrl = {};
 
+/**
+ * Return true if the URL is associated with a global resource
+ * (as opposed to a relative URL)
+ */
+function isContextIndependentURL(url){
+	var prefixes = [
+		"http://"
+		,"https://"
+	];
+	
+	for(var i in prefixes){
+		var prefix = prefixes[i];
+		
+		// If URL starts with prefix, then is is context independent
+		if( url.substr(0,prefix.length) === prefix ){
+			return true;
+		};
+	};
+	
+	return false;
+};
+
 function getScriptLocation(scriptName) {
 	var result = null;
 	
@@ -143,7 +165,12 @@ function loadCustomScripts(scriptUrls) {
 			var url = request.url;
 			
 			var s = document.createElement('script');
-			s.src = location + url;
+			if( isContextIndependentURL(url) ){
+				s.src = url;
+			} else {
+				// relative URL must be fixed for location
+				s.src = location + url;
+			};
 			s.type = 'text/javascript';
 			var cb = getLoadedCallback(url);
 			if( typeof s.addEventListener === 'function' ){
