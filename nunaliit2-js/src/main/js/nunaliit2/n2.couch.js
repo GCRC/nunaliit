@@ -76,6 +76,9 @@ function fixUserName(userName) {
 /*
  * This should be set if the client is run behind a bad proxy
  */
+function isBadProxy(){
+	return badProxy;
+};
 function setBadProxy(flag){
 	if( flag ){
 		badProxy = true;
@@ -250,9 +253,10 @@ var Session = $n2.Class({
 			sessionUrl += '?r='+Date.now();
 		};
 		
-		if( badProxy ){
+		// Login does not happen often. Always assume bad proxy.
+		//if( badProxy ){
 			sessionUrl += '?r='+Date.now();
-		};
+		//};
 		
 		// Fix name: no spaces, all lowercase
 		if( opts.name ) {
@@ -2532,7 +2536,9 @@ function addAttachmentToDocument(opts_){
 
 $n2.couch = $.extend({},{
 	
-	setBadProxy: setBadProxy
+	isBadProxy: isBadProxy
+
+	,setBadProxy: setBadProxy
 	
 	,getServer: function(opt_) {
 		return new Server(opt_);
