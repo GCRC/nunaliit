@@ -95,6 +95,79 @@ var ConfigService = $n2.Class('ConfigurationService',{
 				opts.onError(err);
 			}
 		});
+	},
+	
+	testBadProxy: function(opts_){
+		var opts = $n2.extend({
+			onSuccess: function(isBadProxy){}
+			,onError: function(err){}
+		},opts_);
+		
+		var _this = this;
+		
+		// Assume that there is no bad proxy
+		var badProxy = false;
+
+		// Get two random strings from server. The server always return
+		// a new string. If two responses are the same, then there exists
+		// a proxy badly configured between client and server.
+		var randomStr1 = undefined;
+		var randomStr2 = undefined;
+		this._getChannelRandom({
+			onSuccess: firstRandomReceived
+			,onError: testFailed
+		});
+		
+		function firstRandomReceived(str){
+			randomStr1 = str;
+			_this._getChannelRandom({
+				onSuccess: secondRandomReceived
+				,onError: testFailed
+			});
+		};
+
+		function secondRandomReceived(str){
+			randomStr2 = str;
+			
+			if( randomStr1 && randomStr1 === randomStr2 ){
+				badProxy = true;
+			};
+			
+			done();
+		};
+		
+		function testFailed(err){
+			$n2.log('Problem testing for bad proxy',err);
+			done();
+		};
+		
+		function done(){
+			opts.onSuccess(badProxy);
+		};
+	},
+	
+	_getChannelRandom: function(opts_){
+		var opts = $n2.extend({
+			onSuccess: function(randomString){}
+			,onError: function(err){}
+		},opts_);
+
+		$.ajax({
+			url: this.serverUrl+'testChannel'
+			,type: 'GET'
+			,dataType: 'json'
+			,success: function(data, textStatus, jqXHR){
+				if( data && data.random ) {
+					opts.onSuccess(data.random);
+				} else {
+					opts.onError( 'Did not receive random from server' );
+				};
+			}
+			,error: function(jqXHR, textStatus, errorThrown){
+				var err = $n2.utils.parseHttpJsonError(jqXHR, textStatus);
+				opts.onError(err);
+			}
+		});
 	}
 });
 
@@ -183,22 +256,45 @@ function Configure(options_){
 		dispatchService: configuration.directory.dispatchService
 	});
 
-	// Configuration
-	configuration.directory.configService = new ConfigService({
-		url: options.configServerUrl
-	});
-	
- 	// Turn off cometd
+	// Turn off cometd
  	$.cometd = {
  		init: function(){}
  		,subscribe: function(){}
  		,publish: function(){}
  	};
- 	
- 	$n2.couch.initialize({
-    	pathToServer: options.couchServerUrl
-    	,onSuccess: couchInitialized
- 	});
+
+	// Configuration
+	configuration.directory.configService = new ConfigService({
+		url: options.configServerUrl
+	});
+	
+	if( $n2.couch.isBadProxy() ){
+		// User has already decided that client is behind bad proxy.
+		// No need to test.
+		communicationsTested();
+
+	} else {
+		// Test to see if sitting behind a bad proxy
+		configuration.directory.configService.testBadProxy({
+			onSuccess: function(badProxy){
+				if( badProxy ){
+					$n2.couch.setBadProxy(true);
+					$n2.log('Detected bad proxy in communication channel');
+				};
+				communicationsTested();
+			}
+			,onError: communicationsTested // continue
+		});
+	};
+	
+	function communicationsTested(){
+
+	 	// Initialize CouchDB
+	 	$n2.couch.initialize({
+	    	pathToServer: options.couchServerUrl
+	    	,onSuccess: couchInitialized
+	 	});
+	};
 	
 	function couchInitialized() {
 		
