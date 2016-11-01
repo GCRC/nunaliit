@@ -245,12 +245,13 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		this.couchProj = opts.couchProj;
 
 		this.editedDocument = {};
-		for(var key in opts.doc){
+		var clonedDoc = $n2.extend(true,{},opts.doc); // deep copy
+		for(var key in clonedDoc){
 			if( '__n2Source' === key ){
 				// Drop information about document source so it does not
 				// appear in the editor
 			} else {
-				this.editedDocument[key] = opts.doc[key];
+				this.editedDocument[key] = clonedDoc[key];
 			};
 		};
 		
@@ -968,12 +969,13 @@ var CouchDocumentEditor = $n2.Class({
 		
 		this.editedDocument = {};
 		this.editedDocumentSchema = null;
-		for(var key in doc_){
+		var clonedDoc = $n2.extend(true,{},doc_); // deep copy
+		for(var key in clonedDoc){
 			if( '__n2Source' === key ) {
 				// Drop information about document source so it does not
 				// appear in the editor
 			} else {
-				this.editedDocument[key] = doc_[key];
+				this.editedDocument[key] = clonedDoc[key];
 			};
 		};
 		
