@@ -11,8 +11,7 @@
 	min-height: 40px;
 }
 
-.n2schema_array_add, .n2schema_array_item_delete, .n2schema_array_item_down {
-	display: inline-block;
+.n2schema_array_add, .n2schema_array_item_delete, .n2schema_array_item_down, .n2schema_array_item_up {
 	width: 16px;
 	height: 16px;
 	margin: 0px;	
@@ -21,6 +20,7 @@
 }
 
 .n2schema_array_add {
+	display: inline-block;
 	background: url(tree/icons.png) no-repeat;
 	background-position: 0px 0px;
 	float: right;
@@ -30,13 +30,17 @@
 	background-position: -16px 0px;
 }
 
-.n2schema_array_item_delete {
+.n2schema_array_item_buttons {
 	position: absolute;
 	right: 0px;
 	top: 0px;
+	width: 16px;
+	z-index: 1;
+}
+
+.n2schema_array_item_delete {
 	background: url(tree/icons.png) no-repeat;
 	background-position: -160px 0px;
-	float: right;
 }
 
 .n2schema_array_item_delete:hover {
@@ -44,24 +48,25 @@
 }
 
 .n2schema_array_item_down {
-	position: absolute;
-	right: 0px;
-	top: 16px;
 	background: url(tree/icons.png) no-repeat;
-	background-position: -64px 0px;
-	float: right;
+	background-position: -96px 0px;
 }
 
 .n2schema_array_item_down:hover {
+	background-position: -112px 0px;
+}
+
+.n2schema_array_item_up {
+	background: url(tree/icons.png) no-repeat;
+	background-position: -64px 0px;
+}
+
+.n2schema_array_item_up:hover {
 	background-position: -80px 0px;
 }
 
 .n2schema_array_item_wrapper {
-	position: absolute;
-	left: 0px;
-	right: 16px;
-	top: 0px;
-	bottom: 0px;
+	margin-right: 16px;
 }
 
 .n2schema_referenceDelete {

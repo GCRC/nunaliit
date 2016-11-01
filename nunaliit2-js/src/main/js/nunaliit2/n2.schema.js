@@ -517,9 +517,20 @@ function _arrayField() {
 			var cl = createClassStringFromSelector(completeSelectors);
 			
 			r.push('<div class="n2schema_array_item">');
+
+			r.push('<div class="n2schema_array_item_buttons">');
 	
 			r.push('<div class="n2schema_array_item_delete '+cl+'"></div>');
-			r.push('<div class="n2schema_array_item_down '+cl+'"></div>');
+			
+			if( 0 !== i ){
+				r.push('<div class="n2schema_array_item_up '+cl+'"></div>');
+			};
+			
+			if( i < (obj.length-1) ){
+				r.push('<div class="n2schema_array_item_down '+cl+'"></div>');
+			};
+
+			r.push('</div>'); // close buttons
 	
 			r.push('<div class="n2schema_array_item_wrapper">');
 	
@@ -1730,13 +1741,26 @@ var Form = $n2.Class({
 						_this.refresh($elem);
 						_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						
-					} else if( $clicked.hasClass('n2schema_array_item_down') ){
+					} else if( $clicked.hasClass('n2schema_array_item_up') ){
+						// Push item earlier in array
 						var itemIndex = 1 * classInfo.selector.getKey();
 						if( itemIndex > 0 ) {
 							var parentSelector = classInfo.selector.getParentSelector();
 							var ary = parentSelector.getValue(_this.obj);
 							var removedItems = ary.splice(itemIndex,1);
 							ary.splice(itemIndex-1,0,removedItems[0]);
+							_this.refresh($elem);
+							_this.callback(_this.obj,classInfo.selector.selectors,ary);
+						};
+						
+					} else if( $clicked.hasClass('n2schema_array_item_down') ){
+						// Push item later in array
+						var itemIndex = 1 * classInfo.selector.getKey();
+						var parentSelector = classInfo.selector.getParentSelector();
+						var ary = parentSelector.getValue(_this.obj);
+						if( itemIndex < (ary.length - 1) ) {
+							var removedItems = ary.splice(itemIndex,1);
+							ary.splice(itemIndex+1,0,removedItems[0]);
 							_this.refresh($elem);
 							_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						};
