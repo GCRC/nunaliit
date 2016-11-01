@@ -978,7 +978,7 @@ var CouchDocumentEditor = $n2.Class({
 				this.editedDocument[key] = clonedDoc[key];
 			};
 		};
-		
+
 		// Obtain documentSource
 		this.editedDocumentSource = undefined;
 		if( this.dispatchService ){
@@ -1785,6 +1785,7 @@ var CouchDocumentEditor = $n2.Class({
 			return;
 		};
 		
+		var originalDocument = this.originalDocument;
 		var editedDocument = this.editedDocument;
 		this.editedDocument = null;
 		
@@ -1800,18 +1801,21 @@ var CouchDocumentEditor = $n2.Class({
 		});
 		
 		if( !opts.suppressEvents ) {
-			// Send document only if it was saved or already
-			// existed.
-			var docId = undefined;
 			var doc = undefined;
-			if( editedDocument._id ){
+			if( opts.cancelled ) {
+				// If cancelled, send original document
+				if( originalDocument && originalDocument._id ){
+					// Send a document only if it already existed
+					doc = originalDocument;
+				};
+			} else if( opts.saved ) {
+				// If saved, send edited document
 				doc = editedDocument;
-				docId = doc._id;
 			};
 			
 			this._dispatch({
 				type: 'editClosed'
-				,docId: docId
+				,docId: doc._id
 				,doc: doc
 				,saved: opts.saved
 				,inserted: opts.inserted
