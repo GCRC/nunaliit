@@ -1802,20 +1802,23 @@ var CouchDocumentEditor = $n2.Class({
 		
 		if( !opts.suppressEvents ) {
 			var doc = undefined;
+			var docId = undefined;
 			if( opts.cancelled ) {
 				// If cancelled, send original document
 				if( originalDocument && originalDocument._id ){
 					// Send a document only if it already existed
 					doc = originalDocument;
+					docId = doc._id;
 				};
-			} else if( opts.saved ) {
+			} else if( opts.saved && editedDocument && editedDocument._id ) {
 				// If saved, send edited document
 				doc = editedDocument;
+				docId = doc._id;
 			};
 			
 			this._dispatch({
 				type: 'editClosed'
-				,docId: doc._id
+				,docId: docId
 				,doc: doc
 				,saved: opts.saved
 				,inserted: opts.inserted
