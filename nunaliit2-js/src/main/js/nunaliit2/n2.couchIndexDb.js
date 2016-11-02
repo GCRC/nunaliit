@@ -44,12 +44,16 @@ var DesignDoc = $n2.Class({
 
 	couchDesignDoc: null,
 	
+	db: null,
+	
 	initialize: function(opts_) {
 		var opts = $n2.extend({
 			couchDesignDoc: null
+			,db: null
 		},opts_);
 		
 		this.couchDesignDoc = opts.couchDesignDoc;
+		this.db = opts.db;
 	},
 	
 	getQueryUrl: function(opts_){
@@ -57,7 +61,71 @@ var DesignDoc = $n2.Class({
 	},
 
 	queryView: function(opts_) {
-		this.couchDesignDoc.queryView(opts_);
+		var opts = $n2.extend({},opts_);
+		
+		var _this = this;
+		
+		// Figure out if documents were requested
+		var include_docs = false;
+		if( opts.include_docs ){
+			include_docs = true;
+			opts.include_docs = false;
+		};
+		
+		// Intercept success
+		var onSuccess = opts.onSuccess;
+		opts.onSuccess = queryResult;
+		
+		this.couchDesignDoc.queryView(opts);
+		
+		function queryResult(results){
+			if( opts.reduce ){
+				// Reducing. No documents return
+				onSuccess(results);
+				
+			} else if( include_docs ){
+				// Need to fetch documents
+				var docIds = [];
+				var rowsByDocId = {};
+				results.forEach(function(row){
+					var docId = row.id;
+					
+					var rows = rowsByDocId[docId];
+					if( !rows ){
+						rows = [];
+						rowsByDocId[docId] = rows;
+						docIds.push(docId);
+					};
+
+					rows.push(row);
+				});
+
+				_this.db.getDocuments({
+					docIds: docIds
+					,onSuccess: function(docs){
+						docs.forEach(function(doc){
+							var docId = doc._id;
+							var rows = rowsByDocId[docId];
+							if( rows ){
+								rows.forEach(function(row){
+									row.doc = doc;
+								});
+							};
+						});
+						
+						onSuccess(results);
+					}
+					,onError: function(cause){
+						var err = $n2.error.fromString('Error obtaining documents returned by query',cause);
+						opts.onError(err);
+					}
+				});
+				
+			} else {
+				// Just return
+				onSuccess(results);
+			};
+		};
 	}
 });
 
@@ -90,6 +158,7 @@ var Database = $n2.Class({
 
 		var designDoc = new DesignDoc({
 			couchDesignDoc: couchDesignDoc
+			,db: this
 		});
 
 		return designDoc;

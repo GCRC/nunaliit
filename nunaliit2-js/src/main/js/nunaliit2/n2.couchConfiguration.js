@@ -318,12 +318,23 @@ function Configure(options_){
 	};
 	
 	function communicationsTested(){
-
 	 	// Initialize CouchDB
-	 	$n2.couch.initialize({
-	    	pathToServer: options.couchServerUrl
-	    	,onSuccess: couchInitialized
-	 	});
+		if( couchDbCachingEnabled ){
+	 	 	$n2.couch.initialize({
+	 	    	pathToServer: options.couchServerUrl
+	 	    	,onSuccess: function(couchServer){
+	 				$n2.couchIndexDb.getServer({
+	 					couchServer: couchServer
+	 					,onSuccess: couchInitialized
+	 				});
+	 	    	}
+	 	 	});
+	 	} else {
+	 	 	$n2.couch.initialize({
+	 	    	pathToServer: options.couchServerUrl
+	 	    	,onSuccess: couchInitialized
+	 	 	});
+	 	};
 	};
 	
 	function couchInitialized(couchServer) {
