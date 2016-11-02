@@ -8,7 +8,7 @@
 
 .n2schema_array_item {
 	position: relative;
-	min-height: 40px;
+	min-height: 58px;
 }
 
 .n2schema_array_add, .n2schema_array_item_delete, .n2schema_array_item_down, .n2schema_array_item_up {
