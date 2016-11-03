@@ -19,6 +19,40 @@ var DocumentDatabase = $n2.Class({
 		this.dbName = opts.dbName;
 	},
 	
+	/**
+	 * Checks the document cache for a docId. If the revision
+	 * associated with the document matches the given one, keep the
+	 * document in the cache. Otherwise, remove it.
+	 */
+	checkDocumentRevision: function(opts_){
+		var opts = $n2.extend({
+			docId: null
+			,rev: null
+			,onSuccess: function(){}
+			,onError: function(err){}
+		},opts_);
+		
+		var _this = this;
+		
+		this.getDocument({
+			docId: opts.docId
+			,onSuccess: retrievedDocument
+			,onError: opts.onError
+		});
+		
+		function retrievedDocument(doc){
+			if( doc ){
+				if( doc._rev !== opts.rev ){
+					_this.deleteDocument({
+						docId: opts.docId
+						,onSuccess: opts.onSuccess
+						,onError: opts.onError
+					});
+				};
+			};
+		};
+	},
+	
 	getDocument: function(opts_){
 		var opts = $n2.extend({
 			docId: null
@@ -41,6 +75,43 @@ var DocumentDatabase = $n2.Class({
 	},
 	
 	getDocuments: function(opts_){
+		var opts = $n2.extend({
+			docIds: null
+			,onSuccess: function(docs){}
+			,onError: function(err){}
+		},opts_);
+
+		var db = this.db;
+		
+		var transaction = db.transaction(DB_STORE_DOCS, 'readonly');
+	    var store = transaction.objectStore(DB_STORE_DOCS);
+
+	    var docs = [];
+	    var docIds = opts.docIds.slice(); // clone
+	    var index = 0;
+	    fetch();
+	    
+	    function fetch(){
+	    	if( index >= docIds.length ){
+	    		opts.onSuccess(docs);
+	    	} else {
+	    		var docId = docIds[index];
+	    		++index;
+	    		
+	    	    var req = store.get(docId);
+	    	    req.onsuccess = function (evt) {
+	    	    	var doc = this.result;
+	    	    	if( doc ){
+		    			docs.push(doc);
+	    	    	};
+	    			fetch();
+	    		};
+	    		req.onerror = fetch;
+	    	};
+	    };
+	},
+	
+	_getDocuments: function(opts_){
 		var opts = $n2.extend({
 			docIds: null
 			,onSuccess: function(docs){}

@@ -342,7 +342,10 @@ function Configure(options_){
 		configuration.couchServer = couchServer;
 		configuration.directory.couchServer = couchServer;
 		
-		configuration.atlasDb = configuration.couchServer.getDb({dbUrl:options.atlasDbUrl});
+		configuration.atlasDb = configuration.couchServer.getDb({
+			dbUrl:options.atlasDbUrl
+			,allowCaching: true
+		});
 		configuration.atlasDesign = configuration.atlasDb.getDesignDoc({ddName:options.atlasDesignName});
 		configuration.siteDesign = configuration.atlasDb.getDesignDoc({ddName:options.siteDesignName});
 

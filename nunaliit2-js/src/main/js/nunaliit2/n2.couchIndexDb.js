@@ -139,14 +139,30 @@ var Database = $n2.Class({
 	
 	documentCache: null,
 	
+	dbChangeNotifier: null,
+	
 	initialize: function(opts_) {
 		var opts = $n2.extend({
 			couchDb: null
 			,documentCache: null
 		},opts_);
+		
+		var _this = this;
 	
 		this.wrappedDb = opts.couchDb;
 		this.documentCache = opts.documentCache;
+		
+		this.getChangeNotifier({
+			onSuccess: function(notifier){
+				_this.dbChangeNotifier = notifier;
+				if( _this.dbChangeNotifier ){
+					_this.dbChangeNotifier.addListener(function(changes){
+						_this._dbChanges(changes);
+					});
+				};
+			}
+		});
+
 	},
 
 	getUrl: function(){
@@ -369,6 +385,42 @@ var Database = $n2.Class({
 	
 	queryTemporaryView: function(opts_){
 		this.wrappedDb.queryTemporaryView(opts_);
+	},
+	
+	_dbChanges: function(changes){
+		var _this = this;
+		
+		$n2.log('update',changes);
+		var lastSeq = changes.last_seq;
+		var results = changes.results;
+		
+		for(var i=0,e=results.length; i<e; ++i){
+			var updateRecord = results[i];
+			var docId = updateRecord.id;
+
+			var latestRev = null;
+
+			if( $n2.isArray(updateRecord.changes) ) {
+				updateRecord.changes.forEach(function(change){
+					latestRev = change.rev;
+				});
+			};
+			
+			if( updateRecord.deleted ){
+				// Remove from cache
+				_this.documentCache.deleteDocument({
+					docId: docId
+				});
+				
+			} else if( latestRev ){
+				// Ensure we only keep the current revision in the
+				// indexDb cache
+				_this.documentCache.checkDocumentRevision({
+					docId: docId
+					,rev: latestRev
+				});
+			};
+		};
 	}
 });
 
@@ -387,7 +439,7 @@ var Server = $n2.Class({
 			couchServer: null
 			,indexDbCache: null
 		},opts_);
-
+		
 		this.wrappedServer = opts.couchServer;
 		this.indexDbCache = opts.indexDbCache;
 	},
@@ -430,13 +482,17 @@ var Server = $n2.Class({
 	
 	getDb: function(opts_) {
 		var db = this.wrappedServer.getDb(opts_);
-		var documentCache = this.indexDbCache.getDocumentDatabase({
-			dbName: opts_.dbName
-		});
-		return new Database({
-			couchDb: db
-			,documentCache: documentCache
-		});
+		if( opts_.allowCaching ){
+			var documentCache = this.indexDbCache.getDocumentDatabase({
+				dbName: opts_.dbName
+			});
+			return new Database({
+				couchDb: db
+				,documentCache: documentCache
+			});
+		} else {
+			return db;
+		};
 	},
 	
 	createDb: function(opts_) {
