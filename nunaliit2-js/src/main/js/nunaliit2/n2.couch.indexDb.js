@@ -34,7 +34,9 @@ POSSIBILITY OF SUCH DAMAGE.
 "use strict";
 
 // Localization
-var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); }
+,DH = 'n2.couch.indexDb'
+;
 
 // =============================================
 // Design Document
@@ -141,16 +143,34 @@ var Database = $n2.Class({
 	
 	dbChangeNotifier: null,
 	
+	dispatchService: null,
+	
+	remoteDocumentCountLimit: null,
+	
+	id: null,
+	
+	outstandingDocumentCount: null,
+	
+	outstandingStoreCount: null,
+	
 	initialize: function(opts_) {
 		var opts = $n2.extend({
 			couchDb: null
 			,documentCache: null
+			,dispatchService: null
+			,remoteDocumentCountLimit: null
 		},opts_);
 		
 		var _this = this;
 	
 		this.wrappedDb = opts.couchDb;
 		this.documentCache = opts.documentCache;
+		this.dispatchService = opts.dispatchService;
+		this.remoteDocumentCountLimit = opts.remoteDocumentCountLimit;
+		
+		this.id = $n2.getUniqueId();
+		this.outstandingDocumentCount = 0;
+		this.outstandingStoreCount = 0;
 		
 		this.getChangeNotifier({
 			onSuccess: function(notifier){
@@ -279,10 +299,19 @@ var Database = $n2.Class({
 		var docIdMap = {};
 		var docsToReturn = [];
 		var docsToStore = [];
+		var docIdsToFetchRemotely = [];
 		
+		var count = 0;
 		opts_.docIds.forEach(function(docId){
-			docIdMap[docId] = true;
+			if( docIdMap[docId] ){
+				// Already requesed
+			} else {
+				docIdMap[docId] = true;
+				++count;
+			};
 		});
+
+		this._updateOutstandingDocumentCount(count);
 		
 		// Are the requested documents in cache?
 		this.documentCache.getDocuments({
@@ -324,17 +353,77 @@ var Database = $n2.Class({
 		
 		function performNative(){
 			// Figure out which docIds to fetch
-			var docIdsToFetch = [];
 			for(var docIdToFetch in docIdMap){
 				if( docIdMap[docIdToFetch] === true ){
-					docIdsToFetch.push(docIdToFetch);
+					docIdsToFetchRemotely.push(docIdToFetch);
 				};
 			};
+
+			// Discount the number of documents received from the cache
+			var delta = docIdsToFetchRemotely.length - count;
+			_this._updateOutstandingDocumentCount(delta);
+			count = docIdsToFetchRemotely.length;
 			
-			if( docIdsToFetch.length > 0 ){
+			performRemoteRequest();
+			
+//			if( docIdsToFetchRemotely.length > 0 ){
+//				var delta = docIdsToFetchRemotely.length - count;
+//				_this._updateOutstandingDocumentCount(delta);
+//				count = docIdsToFetchRemotely.length;
+//				
+//				var opts = $n2.extend({},opts_,{
+//					docIds: docIdsToFetchRemotely
+//					,onSuccess: function(docs){
+//						_this._updateOutstandingDocumentCount(0 - count);
+//						count = 0;
+//						storeDocuments(docs);
+//					}
+//					,onError: function(err){
+//						_this._updateOutstandingDocumentCount(0 - count);
+//						count = 0;
+//						opts_.onError(err);
+//					}
+//				});
+//				
+//				_this.wrappedDb.getDocuments(opts);
+//			} else {
+//				done();
+//			};
+		};
+		
+		function performRemoteRequest(){
+			// Figure out how many docs to fetch in this request
+			if( docIdsToFetchRemotely.length > 0 ){
+				var docIdsThisRequest;
+				if( typeof _this.remoteDocumentCountLimit === 'number' ){
+					docIdsThisRequest = docIdsToFetchRemotely.splice(0, _this.remoteDocumentCountLimit);
+				} else {
+					// No limit, ask for them all
+					docIdsThisRequest = docIdsToFetchRemotely;
+					docIdsToFetchRemotely = [];
+				};
+				
 				var opts = $n2.extend({},opts_,{
-					docIds: docIdsToFetch
-					,onSuccess: storeDocuments
+					docIds: docIdsThisRequest
+					,onSuccess: function(docs){
+						_this._updateOutstandingDocumentCount(0 - docIdsThisRequest.length);
+						count = count - docIdsThisRequest.length;
+
+						docs.forEach(function(doc){
+							docsToReturn.push(doc);	
+							docsToStore.push(doc);	
+						});
+
+						_this._updateOutstandingStoreCount(docs.length);
+						storeDocuments();
+						
+						performRemoteRequest();
+					}
+					,onError: function(err){
+						_this._updateOutstandingDocumentCount(0 - count);
+						count = 0;
+						opts_.onError(err);
+					}
 				});
 				
 				_this.wrappedDb.getDocuments(opts);
@@ -343,17 +432,8 @@ var Database = $n2.Class({
 			};
 		};
 		
-		function storeDocuments(docs){
-			docs.forEach(function(doc){
-				docsToReturn.push(doc);	
-				docsToStore.push(doc);	
-			});
-			next();
-		};
-		
-		function next(){
+		function storeDocuments(){
 			if( docsToStore.length < 1 ){
-				done();
 				return;
 			};
 			
@@ -361,12 +441,20 @@ var Database = $n2.Class({
 			
 			_this.documentCache.updateDocument({
 				doc: doc
-				,onSuccess: next
-				,onError: next
+				,onSuccess: function(){
+					_this._updateOutstandingStoreCount(-1);
+					storeDocuments();
+				}
+				,onError: function(){
+					_this._updateOutstandingStoreCount(-1);
+					storeDocuments();
+				}
 			});
 		};
 		
 		function done(){
+			_this._updateOutstandingDocumentCount(0 - count);
+			count = 0;
 			opts_.onSuccess(docsToReturn);
 		};
 	},
@@ -421,6 +509,32 @@ var Database = $n2.Class({
 				});
 			};
 		};
+	},
+	
+	_updateOutstandingDocumentCount: function(delta){
+		this.outstandingDocumentCount += delta;
+		if( this.dispatchService ){
+			this.dispatchService.send(DH,{
+				type: 'waitReport'
+				,requester: this.id
+				,name: 'documents'
+				,label: _loc('Outstanding documents')
+				,count: this.outstandingDocumentCount
+			});
+		};
+	},
+	
+	_updateOutstandingStoreCount: function(delta){
+		this.outstandingStoreCount += delta;
+		if( this.dispatchService ){
+			this.dispatchService.send(DH,{
+				type: 'waitReport'
+				,requester: this.id
+				,name: 'store'
+				,label: _loc('Storing documents')
+				,count: this.outstandingStoreCount
+			});
+		};
 	}
 });
 
@@ -434,14 +548,18 @@ var Server = $n2.Class({
 	
 	indexDbCache: null,
 	
+	dispatchService: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			couchServer: null
 			,indexDbCache: null
+			,dispatchService: null
 		},opts_);
 		
 		this.wrappedServer = opts.couchServer;
 		this.indexDbCache = opts.indexDbCache;
+		this.dispatchService = opts.dispatchService;
 	},
 
 	getPathToServer: function() {
@@ -489,6 +607,8 @@ var Server = $n2.Class({
 			return new Database({
 				couchDb: db
 				,documentCache: documentCache
+				,dispatchService: this.dispatchService
+				,remoteDocumentCountLimit: opts_.remoteDocumentCountLimit
 			});
 		} else {
 			return db;
@@ -535,6 +655,7 @@ $n2.couchIndexDb = {
 	getServer: function(opts_) {
 		var opts = $n2.extend({
 			couchServer: null
+			,dispatchService: null
 			,onSuccess: function(couchServer){}
 			,onError: function(err){}
 		},opts_);
@@ -544,6 +665,7 @@ $n2.couchIndexDb = {
 
 				var server = new Server({
 					couchServer: opts.couchServer
+					,dispatchService: opts.dispatchService
 					,indexDbCache: n2IndexDb
 				});
 				

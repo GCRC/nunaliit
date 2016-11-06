@@ -124,7 +124,7 @@ var ConfigService = $n2.Class('ConfigurationService',{
 		};
 	},
 
-	testBadProxy: function(opts_){
+	testConnection: function(opts_){
 		var opts = $n2.extend({
 			onSuccess: function(isBadProxy){}
 			,onError: function(err){}
@@ -132,14 +132,18 @@ var ConfigService = $n2.Class('ConfigurationService',{
 		
 		var _this = this;
 		
-		// Assume that there is no bad proxy
-		var badProxy = false;
+		var connectionInfo = {
+			badProxy: false // Assume that there is no bad proxy
+			,speed: 0 // assume fast
+		};
 
 		// Get two random strings from server. The server always return
 		// a new string. If two responses are the same, then there exists
 		// a proxy badly configured between client and server.
-		var randomStr1 = undefined;
-		var randomStr2 = undefined;
+		var randomStr1;
+		var randomStr2;
+		var startTime = Date.now();
+		var endTime;
 		this._getChannelRandom({
 			onSuccess: firstRandomReceived
 			,onError: testFailed
@@ -154,10 +158,16 @@ var ConfigService = $n2.Class('ConfigurationService',{
 		};
 
 		function secondRandomReceived(str){
+			endTime = Date.now();
 			randomStr2 = str;
 			
 			if( randomStr1 && randomStr1 === randomStr2 ){
-				badProxy = true;
+				connectionInfo.badProxy = true;
+			};
+			
+			connectionInfo.testDurationInMs = endTime - startTime;
+			if( connectionInfo.testDurationInMs > 1500 ){
+				connectionInfo.speed = 1; // slow
 			};
 			
 			done();
@@ -169,7 +179,7 @@ var ConfigService = $n2.Class('ConfigurationService',{
 		};
 		
 		function done(){
-			opts.onSuccess(badProxy);
+			opts.onSuccess(connectionInfo);
 		};
 	},
 	
@@ -298,24 +308,24 @@ function Configure(options_){
 		,configuration: configuration
 	});
 	
-	if( $n2.couch.isBadProxy() ){
-		// User has already decided that client is behind bad proxy.
-		// No need to test.
-		communicationsTested();
-
-	} else {
-		// Test to see if sitting behind a bad proxy
-		configuration.directory.configService.testBadProxy({
-			onSuccess: function(badProxy){
-				if( badProxy ){
-					$n2.couch.setBadProxy(true);
-					$n2.log('Detected bad proxy in communication channel');
-				};
-				communicationsTested();
-			}
-			,onError: communicationsTested // continue
-		});
-	};
+	// Test to see if sitting behind a bad proxy
+	var isSlowConnection = false;
+	configuration.directory.configService.testConnection({
+		onSuccess: function(connectionInfo){
+			if( connectionInfo.badProxy ){
+				$n2.couch.setBadProxy(true);
+				$n2.log('Detected bad proxy in communication channel');
+			};
+			if( connectionInfo.speed > 0 ){
+				isSlowConnection = true;
+				$n2.log('Detected slow connection ('+connectionInfo.testDurationInMs+'ms)');
+			} else {
+				$n2.log('Connection speed ' + connectionInfo.speed + ' ('+connectionInfo.testDurationInMs+'ms)');
+			};
+			communicationsTested();
+		}
+		,onError: communicationsTested // continue
+	});
 	
 	function communicationsTested(){
 	 	// Initialize CouchDB
@@ -325,6 +335,7 @@ function Configure(options_){
 	 	    	,onSuccess: function(couchServer){
 	 				$n2.couchIndexDb.getServer({
 	 					couchServer: couchServer
+	 					,dispatchService: configuration.directory.dispatchService
 	 					,onSuccess: couchInitialized
 	 				});
 	 	    	}
@@ -342,9 +353,14 @@ function Configure(options_){
 		configuration.couchServer = couchServer;
 		configuration.directory.couchServer = couchServer;
 		
+		var remoteDocumentCountLimit = 1000;
+		if( isSlowConnection ){
+			remoteDocumentCountLimit = 100;
+		};
 		configuration.atlasDb = configuration.couchServer.getDb({
 			dbUrl:options.atlasDbUrl
 			,allowCaching: true
+			,remoteDocumentCountLimit: remoteDocumentCountLimit
 		});
 		configuration.atlasDesign = configuration.atlasDb.getDesignDoc({ddName:options.atlasDesignName});
 		configuration.siteDesign = configuration.atlasDb.getDesignDoc({ddName:options.siteDesignName});

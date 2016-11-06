@@ -58,6 +58,8 @@ var WaitWidget = $n2.Class({
 	waitingByRequesterId: null,
 	
 	showNames: null,
+	
+	refreshIntervalInMs: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -66,6 +68,7 @@ var WaitWidget = $n2.Class({
 			
 			// From configuration
 			,showNames: null
+			,refreshIntervalInMs: null
 		},opts_);
 		
 		var _this = this;
@@ -75,6 +78,12 @@ var WaitWidget = $n2.Class({
 
 		if( typeof opts.showNames === 'boolean' ){
 			this.showNames = opts.showNames;
+		};
+
+		if( typeof opts.refreshIntervalInMs === 'number' ){
+			this.refreshIntervalInMs = opts.refreshIntervalInMs;
+		} else {
+			this.refreshIntervalInMs = 300;
 		};
 		
 		this.dispatchService = opts.dispatchService;
@@ -176,27 +185,44 @@ var WaitWidget = $n2.Class({
 	},
 	
 	_display: function(){
-		var $elem = this._getElem()
-			.empty();
+		var _this = this;
 		
-		var count = this.getCount();
-		if( count > 0 ){
-			$elem.show();
-			
-			if( this.showNames ){
-				var $names = $('<div>')
-					.addClass('n2wait_names')
+		var $elem = this._getElem();
+		if( $elem.hasClass('n2wait_showing') ){
+			// Already showing
+		} else {
+			displayTask();
+		};
+		
+		function displayTask(){
+			var $elem = _this._getElem()
+				.empty();
+
+			var count = _this.getCount();
+			if( count > 0 ){
+				$elem
+					.show()
+					.addClass('n2wait_showing');
+				
+				if( _this.showNames ){
+					var $names = $('<div>')
+						.addClass('n2wait_names')
+						.appendTo($elem);
+					
+					_this._displayNames($names);
+				};
+				
+				$('<div>')
+					.addClass('olkit_wait')
 					.appendTo($elem);
 				
-				this._displayNames($names);
+				setTimeout(displayTask, _this.refreshIntervalInMs); // Reschedule
+				
+			} else {
+				$elem
+					.hide()
+					.removeClass('n2wait_showing');
 			};
-			
-			$('<div>')
-				.addClass('olkit_wait')
-				.appendTo($elem);
-			
-		} else {
-			$elem.hide();
 		};
 	},
 

@@ -492,24 +492,38 @@ var designDoc = $n2.Class({
 
 var ChangeNotifier = $n2.Class({
 
-	options: null
+	changeUrl: null,
 	
-	,db: null
+	include_docs: null,
 	
-	,listeners: null
+	pollInterval: null,
 	
-	,lastSequence: null
+	longPoll: null,
+	
+	timeout: null,
+	
+	style: null,
+	
+	db: null,
+	
+	listeners: null,
+	
+	lastSequence: null,
 
-	,currentRequest: null
+	currentRequest: null,
 	
-	,currentWait: null
+	currentWait: null,
 	
-	,onError: function(err) { $n2.log(err); }
+	onError: function(err) { $n2.log(err); },
 
-	,initialize: function(db, opts_) {
-		this.options = $n2.extend({
-			changeUrl: null
-			,doNotReset: false
+	initialized: null,
+	
+	initializationListeners: null,
+
+	initialize: function(opts_) {
+		var opts = $n2.extend({
+			db: null
+			,changeUrl: null
 			,include_docs: false
 			,pollInterval: 5000
 			,longPoll: false
@@ -519,21 +533,33 @@ var ChangeNotifier = $n2.Class({
 			,onSuccess: function(notifier){}
 		},opts_);
 
-		this.db = db;
+		var _this = this;
+		
+		this.initialized = false;
+		this.initializationListeners = [];
 		this.listeners = [];
-		if( this.options.listeners ) {
-			for(var i=0,e=this.options.listeners.length; i<e; ++i){
-				this.listeners.push( this.options.listeners[i] );
-			};
-			delete this.options.listeners;
+
+		this.db = opts.db;
+		this.changeUrl = opts.changeUrl;
+		this.include_docs = opts.include_docs;
+		this.pollInterval = opts.pollInterval;
+		this.longPoll = opts.longPoll;
+		this.timeout = opts.timeout;
+		this.style = opts.style;
+
+		if( $n2.isArray(opts.listeners) ) {
+			opts.listeners.forEach(function(listener){
+				if( typeof listener === 'function' ){
+					_this.listeners.push( listener );
+				};
+			});
+		};
+
+		if( typeof opts.onSuccess === 'function' ){
+			this.initializationListeners.push(opts.onSuccess);
 		};
 		
-		var onSuccessFn = this.options.onSuccess;
-		delete this.options.onSuccess;
-		
-		var _this = this;
-
-		if( this.options.doNotReset ) {
+		if( opts.doNotReset ) {
 			finishInitialization();
 		} else {
 			this.resetLastSequence({
@@ -546,17 +572,31 @@ var ChangeNotifier = $n2.Class({
 			_this.reschedule();
 			_this.requestChanges();
 			
-			onSuccessFn(_this);
+			_this.initialized = true;
+			_this.initializationListeners.forEach(function(listener){
+				listener(_this);
+			});
+			_this.initializationListeners = null;
 		};
-	}
+	},
 
-	,addListener: function(listener) {
+	addListener: function(listener) {
 		if( typeof(listener) === 'function' ) {
 			this.listeners.push(listener);
 			
 			this.requestChanges();
 		};
-	}
+	},
+
+	addInitializationListener: function(listener) {
+		if( typeof listener === 'function' ) {
+			if( this.initialized ){
+				listener(this);
+			} else {
+				this.initializationListeners.push(listener);
+			};
+		};
+	},
 	
 	/*
 	 * This function does not report any changes. Instead, it
@@ -564,7 +604,7 @@ var ChangeNotifier = $n2.Class({
 	 * means that the next request for changes will report only
 	 * changes that have happened since 'now'.
 	 */
-	,resetLastSequence: function(opt_) {
+	resetLastSequence: function(opt_) {
 		
 		var opt = $n2.extend({
 			onSuccess: function(){}
@@ -583,13 +623,13 @@ var ChangeNotifier = $n2.Class({
 				opt.onError('Error during a query of current update sequence: '+errStr);
 	    	}
 		});
-	}
+	},
 	
-	,getLastSequence: function(){
+	getLastSequence: function(){
 		return this.lastSequence;
-	}
+	},
 	
-	,_reportChanges: function(changes) {
+	_reportChanges: function(changes) {
 		
 		if( changes.last_seq ) {
 			this.lastSequence = changes.last_seq;
@@ -600,12 +640,12 @@ var ChangeNotifier = $n2.Class({
 				this.listeners[i](changes);
 			};
 		};
-	}
+	},
 	
 	/**
 		Request the server for changes.
 	 */
-	,requestChanges: function() {
+	requestChanges: function() {
 		
 		if( !this.listeners 
 		 || this.listeners.length < 1 ) {
@@ -623,20 +663,20 @@ var ChangeNotifier = $n2.Class({
 	
 		var req = {
 			feed: 'normal'
-			,style: this.options.style
+			,style: this.style
 		};
 	
 		if( typeof(this.lastSequence) === 'number' ) {
 			req.since = this.lastSequence;
 		};
 		
-		if( this.options.include_docs ) {
-			req.include_docs = this.options.include_docs;
+		if( this.include_docs ) {
+			req.include_docs = this.include_docs;
 		};
 		
-		if( this.options.longPoll ) {
+		if( this.longPoll ) {
 			req.feed = 'longpoll';
-			req.timeout = this.options.timeout;
+			req.timeout = this.timeout;
 		};
 		
 		if( badProxy ){
@@ -648,7 +688,7 @@ var ChangeNotifier = $n2.Class({
 		var _this = this;
 		
 		$.ajax({
-	    	url: this.options.changeUrl
+	    	url: this.changeUrl
 	    	,type: 'GET'
 	    	,async: true
 	    	,data: req
@@ -666,15 +706,15 @@ var ChangeNotifier = $n2.Class({
 	    		_this.reschedule();
 	    	}
 		});
-	}
+	},
 	
 	/**
 		Reschedule the next request for changes
 	 */
-	,reschedule: function() {
+	reschedule: function() {
 
 		var now = $n2.utils.getCurrentTime();
-		var expected = now + this.options.pollInterval;
+		var expected = now + this.pollInterval;
 		
 		if( this.currentWait ) {
 			// Already waiting
@@ -693,7 +733,7 @@ var ChangeNotifier = $n2.Class({
 
 		// Start a new timeout	
 		this.currentWait = {
-			delayInMs: this.options.pollInterval
+			delayInMs: this.pollInterval
 			,expected: expected
 		};
 		
@@ -780,6 +820,8 @@ var Database = $n2.Class({
 	
 	,callbacks: null
 	
+	,changeNotifier: null
+	
 	,initialize: function(opts_, server_) {
 		var opts = $n2.extend({
 			dbUrl: null
@@ -820,20 +862,22 @@ var Database = $n2.Class({
 		return new designDoc(ddOpts);
 	}
 	
-	,getChangeNotifier: function(opt_) {
-		var opt = $n2.extend({
+	,getChangeNotifier: function(opts_) {
+		var opts = $n2.extend({
 			onSuccess: function(notifier){}
-		},opt_);
+		},opts_);
 		
-		var changeNotifier = new ChangeNotifier(
-			this
-			,{
-				changeUrl: this.dbUrl + '_changes'
-				,onSuccess: opt.onSuccess
-			}
-		);
+		if( !this.changeNotifier ){
+			this.changeNotifier = new ChangeNotifier({
+				db: this
+				,changeUrl: this.dbUrl + '_changes'
+				,onSuccess: opts.onSuccess
+			});
+		} else {
+			this.changeNotifier.addInitializationListener(opts.onSuccess);
+		};
 			
-		return changeNotifier;
+		return this.changeNotifier;
 	}
 	
 	,getChanges: function(opt_) {
