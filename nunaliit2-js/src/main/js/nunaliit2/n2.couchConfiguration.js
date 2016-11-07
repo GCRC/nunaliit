@@ -179,6 +179,7 @@ var ConfigService = $n2.Class('ConfigurationService',{
 		};
 		
 		function done(){
+			_this.connectionInfo = connectionInfo;
 			opts.onSuccess(connectionInfo);
 		};
 	},
@@ -310,17 +311,21 @@ function Configure(options_){
 	
 	// Test to see if sitting behind a bad proxy
 	var isSlowConnection = false;
+	if( debugConfiguration.forceSlowConnectionHandling() ){
+		isSlowConnection = true;
+	};
 	configuration.directory.configService.testConnection({
 		onSuccess: function(connectionInfo){
+			$n2.log('Connection speed:'+ connectionInfo.speed +' elapsed:'+connectionInfo.testDurationInMs+'ms');
 			if( connectionInfo.badProxy ){
 				$n2.couch.setBadProxy(true);
 				$n2.log('Detected bad proxy in communication channel');
 			};
 			if( connectionInfo.speed > 0 ){
 				isSlowConnection = true;
-				$n2.log('Detected slow connection ('+connectionInfo.testDurationInMs+'ms)');
+				$n2.log('Detected slow connection');
 			} else {
-				$n2.log('Connection speed ' + connectionInfo.speed + ' ('+connectionInfo.testDurationInMs+'ms)');
+				
 			};
 			communicationsTested();
 		}
@@ -328,7 +333,14 @@ function Configure(options_){
 	});
 	
 	function communicationsTested(){
-	 	// Initialize CouchDB
+		if( isSlowConnection ){
+			$n2.log('Slow connection handling requested');
+		};
+		if( $n2.couch.isBadProxy() ){
+			$n2.log('Bad proxy circumvention requested');
+		};
+
+		// Initialize CouchDB
 		if( couchDbCachingEnabled ){
 	 	 	$n2.couch.initialize({
 	 	    	pathToServer: options.couchServerUrl
@@ -353,14 +365,20 @@ function Configure(options_){
 		configuration.couchServer = couchServer;
 		configuration.directory.couchServer = couchServer;
 		
-		var remoteDocumentCountLimit = 1000;
+		var remoteDocumentCountLimit = undefined;
+		var remoteRevisionCountLimit = undefined;
+		var changeNotifierRefreshIntervalInMs = undefined;
 		if( isSlowConnection ){
 			remoteDocumentCountLimit = 100;
+			remoteRevisionCountLimit = 1000;
+			changeNotifierRefreshIntervalInMs = 15000;
 		};
 		configuration.atlasDb = configuration.couchServer.getDb({
 			dbUrl:options.atlasDbUrl
 			,allowCaching: true
 			,remoteDocumentCountLimit: remoteDocumentCountLimit
+			,remoteRevisionCountLimit: remoteRevisionCountLimit
+			,changeNotifierRefreshIntervalInMs: changeNotifierRefreshIntervalInMs
 		});
 		configuration.atlasDesign = configuration.atlasDb.getDesignDoc({ddName:options.atlasDesignName});
 		configuration.siteDesign = configuration.atlasDb.getDesignDoc({ddName:options.siteDesignName});
@@ -416,12 +434,17 @@ function Configure(options_){
 	};
 	
 	function schemasPreloaded() {
+		var refreshIntervalInSec = undefined; // do not change default
+		if( isSlowConnection ){
+			refreshIntervalInSec = 10;
+		};
 		configuration.directory.authService = new $n2.couchAuth.AuthService({
 			onSuccess: authInitialized
 			,atlasDb: configuration.atlasDb
 			,schemaRepository: configuration.directory.schemaRepository
 			,directory: configuration.directory
 			,userServerUrl: options.userServerUrl
+			,refreshIntervalInSec: refreshIntervalInSec
 		});
 	};
 	

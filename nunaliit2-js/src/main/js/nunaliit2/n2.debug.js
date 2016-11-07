@@ -125,6 +125,22 @@ var DebugConfiguration = $n2.Class({
 			delete debugConf.couchDbCaching;
 		};
 		this.saveConfiguration(debugConf);
+	},
+
+	forceSlowConnectionHandling: function(){
+		var debugConf = this.loadConfiguration();
+		if( debugConf.forceSlowConnectionHandling ) return true;
+		return false;
+	},
+
+	setForceSlowConnectionHandling: function(flag){
+		var debugConf = this.loadConfiguration();
+		if( flag ){
+			debugConf.forceSlowConnectionHandling = true;
+		} else if( debugConf.forceSlowConnectionHandling ){
+			delete debugConf.forceSlowConnectionHandling;
+		};
+		this.saveConfiguration(debugConf);
 	}
 });
 

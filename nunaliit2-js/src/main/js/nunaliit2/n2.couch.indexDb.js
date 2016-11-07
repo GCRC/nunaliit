@@ -147,11 +147,13 @@ var Database = $n2.Class({
 	
 	remoteDocumentCountLimit: null,
 	
+	remoteRevisionCountLimit: null,
+	
 	id: null,
 	
 	outstandingDocumentCount: null,
 	
-	outstandingStoreCount: null,
+	outstandingRevisionCount: null,
 	
 	initialize: function(opts_) {
 		var opts = $n2.extend({
@@ -159,6 +161,7 @@ var Database = $n2.Class({
 			,documentCache: null
 			,dispatchService: null
 			,remoteDocumentCountLimit: null
+			,remoteRevisionCountLimit: null
 		},opts_);
 		
 		var _this = this;
@@ -167,10 +170,11 @@ var Database = $n2.Class({
 		this.documentCache = opts.documentCache;
 		this.dispatchService = opts.dispatchService;
 		this.remoteDocumentCountLimit = opts.remoteDocumentCountLimit;
+		this.remoteRevisionCountLimit = opts.remoteRevisionCountLimit;
 		
 		this.id = $n2.getUniqueId();
 		this.outstandingDocumentCount = 0;
-		this.outstandingStoreCount = 0;
+		this.outstandingRevisionCount = 0;
 		
 		this.getChangeNotifier({
 			onSuccess: function(notifier){
@@ -221,7 +225,59 @@ var Database = $n2.Class({
 	},
 	
 	getDocumentRevisions: function(opts_) {
-		this.wrappedDb.getDocumentRevisions(opts_);
+		var _this = this;
+		
+		if( typeof this.remoteRevisionCountLimit === 'number' ){
+			// Break up requests in chunks of appropriate size, re-assemble
+			// response
+			var docIds = opts_.docIds.slice(); // clone
+			var info = {};
+			var outstandingCount = docIds.length;
+			
+			this._updateOutstandingRevisionCount(outstandingCount);
+			
+			var opts = $n2.extend({
+				onSuccess: function(info){}
+				,onError: function(err){}
+			},opts_);
+			
+			fetchChunk();
+			
+		} else {
+			// No limit. Make complete request
+			this.wrappedDb.getDocumentRevisions(opts_);
+		};
+		
+		function fetchChunk(){
+			if( docIds.length <= 0 ){
+				// Call complete
+				_this._updateOutstandingRevisionCount(0 - outstandingCount);
+				opts.onSuccess(info);
+
+			} else {
+				var requestDocIds = docIds.splice(0,_this.remoteRevisionCountLimit);
+				_this.wrappedDb.getDocumentRevisions({
+					docIds: requestDocIds
+					,onSuccess: function(requestInfo){
+						_this._updateOutstandingRevisionCount(0 - requestDocIds.length);
+						outstandingCount = outstandingCount - requestDocIds.length;
+						
+						// Accumulate revisions in one response
+						for(var docId in requestInfo){
+							var rev = requestInfo[docId];
+							info[docId] = rev;
+						};
+						
+						// Fetch next chunk
+						fetchChunk();
+					}
+					,onError: function(err){
+						_this._updateOutstandingRevisionCount(0 - outstandingCount);
+						opts.onError(err);
+					}
+				});
+			};
+		};
 	},
 	
 	buildUploadFileForm: function(jQuerySet, options_) {
@@ -245,9 +301,6 @@ var Database = $n2.Class({
 	},
 	
 	getDocument: function(opts_) {
-		var opts = $n2.extend({},opts_,{
-			onSuccess: storeDocument
-		});
 		
 		var _this = this;
 		
@@ -278,19 +331,14 @@ var Database = $n2.Class({
 		
 		function performNative(){
 			// Get document from CouchDb
-			_this.wrappedDb.getDocument(opts);
-		};
-		
-		function storeDocument(doc){
-			_this.documentCache.updateDocument({
-				doc: doc
-				,onSuccess: function(){
-					opts_.onSuccess(doc);
-				}
-				,onError: function(err){
+			var opts = $n2.extend({},opts_,{
+				onSuccess: function(doc){
+					_this.documentCache.updateDocument(doc);
 					opts_.onSuccess(doc);
 				}
 			});
+
+			_this.wrappedDb.getDocument(opts);
 		};
 	},
 
@@ -365,30 +413,6 @@ var Database = $n2.Class({
 			count = docIdsToFetchRemotely.length;
 			
 			performRemoteRequest();
-			
-//			if( docIdsToFetchRemotely.length > 0 ){
-//				var delta = docIdsToFetchRemotely.length - count;
-//				_this._updateOutstandingDocumentCount(delta);
-//				count = docIdsToFetchRemotely.length;
-//				
-//				var opts = $n2.extend({},opts_,{
-//					docIds: docIdsToFetchRemotely
-//					,onSuccess: function(docs){
-//						_this._updateOutstandingDocumentCount(0 - count);
-//						count = 0;
-//						storeDocuments(docs);
-//					}
-//					,onError: function(err){
-//						_this._updateOutstandingDocumentCount(0 - count);
-//						count = 0;
-//						opts_.onError(err);
-//					}
-//				});
-//				
-//				_this.wrappedDb.getDocuments(opts);
-//			} else {
-//				done();
-//			};
 		};
 		
 		function performRemoteRequest(){
@@ -413,9 +437,8 @@ var Database = $n2.Class({
 							docsToReturn.push(doc);	
 							docsToStore.push(doc);	
 						});
-
-						_this._updateOutstandingStoreCount(docs.length);
-						storeDocuments();
+						
+						_this.documentCache.updateDocuments(docs);
 						
 						performRemoteRequest();
 					}
@@ -430,26 +453,6 @@ var Database = $n2.Class({
 			} else {
 				done();
 			};
-		};
-		
-		function storeDocuments(){
-			if( docsToStore.length < 1 ){
-				return;
-			};
-			
-			var doc = docsToStore.pop();
-			
-			_this.documentCache.updateDocument({
-				doc: doc
-				,onSuccess: function(){
-					_this._updateOutstandingStoreCount(-1);
-					storeDocuments();
-				}
-				,onError: function(){
-					_this._updateOutstandingStoreCount(-1);
-					storeDocuments();
-				}
-			});
 		};
 		
 		function done(){
@@ -517,22 +520,22 @@ var Database = $n2.Class({
 			this.dispatchService.send(DH,{
 				type: 'waitReport'
 				,requester: this.id
-				,name: 'documents'
-				,label: _loc('Outstanding documents')
+				,name: 'fetchDocuments'
+				,label: _loc('Retrieving documents')
 				,count: this.outstandingDocumentCount
 			});
 		};
 	},
 	
-	_updateOutstandingStoreCount: function(delta){
-		this.outstandingStoreCount += delta;
+	_updateOutstandingRevisionCount: function(delta){
+		this.outstandingRevisionCount += delta;
 		if( this.dispatchService ){
 			this.dispatchService.send(DH,{
 				type: 'waitReport'
 				,requester: this.id
-				,name: 'store'
-				,label: _loc('Storing documents')
-				,count: this.outstandingStoreCount
+				,name: 'fetchRevisions'
+				,label: _loc('Verifying revisions')
+				,count: this.outstandingRevisionCount
 			});
 		};
 	}
@@ -601,14 +604,16 @@ var Server = $n2.Class({
 	getDb: function(opts_) {
 		var db = this.wrappedServer.getDb(opts_);
 		if( opts_.allowCaching ){
-			var documentCache = this.indexDbCache.getDocumentDatabase({
+			var documentCache = this.indexDbCache.getDocumentCache({
 				dbName: opts_.dbName
+				,dispatchService: this.dispatchService
 			});
 			return new Database({
 				couchDb: db
 				,documentCache: documentCache
 				,dispatchService: this.dispatchService
 				,remoteDocumentCountLimit: opts_.remoteDocumentCountLimit
+				,remoteRevisionCountLimit: opts_.remoteRevisionCountLimit
 			});
 		} else {
 			return db;

@@ -1,22 +1,38 @@
 ;(function($n2){
 "use strict";
 
+var DH = 'n2.indexdb';
+
 // ===================================================
 var DB_STORE_DOCS = 'docs';
-var DocumentDatabase = $n2.Class({
+var DocumentCache = $n2.Class({
 
 	db: null,
 
 	dbName: null,
+	
+	dispatchService: null,
+
+	id: null,
+	
+	memoryCache: null,
+	
+	memoryCacheSize: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			db: null
 			,dbName: null
+			,dispatchService: null
 		},opts_);
 		
 		this.db = opts.db;
 		this.dbName = opts.dbName;
+		this.dispatchService = opts.dispatchService;
+
+		this.id = $n2.getUniqueId();
+		this.memoryCache = null;
+		this.memoryCacheSize = 0;
 	},
 	
 	/**
@@ -33,6 +49,17 @@ var DocumentDatabase = $n2.Class({
 		},opts_);
 		
 		var _this = this;
+		
+		// Check documents that are about to be stored
+		if( this.memoryCache ){
+			var doc = this.memoryCache[opts.docId];
+			if( doc ){
+				if( doc._rev !== opts.rev ){
+					delete this.memoryCache[opts.docId];
+					this._updateMemoryCacheSize(-1);
+				};
+			};
+		};
 		
 		this.getDocument({
 			docId: opts.docId
@@ -62,6 +89,15 @@ var DocumentDatabase = $n2.Class({
 
 		var db = this.db;
 		
+		// Check documents that are about to be stored
+		if( this.memoryCache ){
+			var doc = this.memoryCache[opts.docId];
+			if( doc ){
+				opts.onSuccess(doc);
+				return;
+			};
+		};
+		
 		var transaction = db.transaction(DB_STORE_DOCS, 'readonly');
 	    var store = transaction.objectStore(DB_STORE_DOCS);
 	    var req = store.get(opts.docId);
@@ -81,11 +117,8 @@ var DocumentDatabase = $n2.Class({
 			,onError: function(err){}
 		},opts_);
 
-		var db = this.db;
+		var _this = this;
 		
-		var transaction = db.transaction(DB_STORE_DOCS, 'readonly');
-	    var store = transaction.objectStore(DB_STORE_DOCS);
-
 	    var docs = [];
 	    var docIds = opts.docIds.slice(); // clone
 	    var index = 0;
@@ -97,104 +130,110 @@ var DocumentDatabase = $n2.Class({
 	    	} else {
 	    		var docId = docIds[index];
 	    		++index;
-	    		
-	    	    var req = store.get(docId);
-	    	    req.onsuccess = function (evt) {
-	    	    	var doc = this.result;
-	    	    	if( doc ){
-		    			docs.push(doc);
-	    	    	};
-	    			fetch();
+
+	    		// Check documents that are about to be stored
+    			var doc;
+	    		if( _this.memoryCache ){
+	    			doc = _this.memoryCache[docId];
 	    		};
-	    		req.onerror = fetch;
+
+	    		if( doc ){
+	    			docs.push(doc);
+	    			setTimeout(fetch,0);
+	    		} else {
+	    			// Obtain from database
+	    			var transaction = _this.db.transaction(DB_STORE_DOCS, 'readonly');
+	    		    var store = transaction.objectStore(DB_STORE_DOCS);
+		    	    var req = store.get(docId);
+		    	    req.onsuccess = function (evt) {
+		    	    	var doc = this.result;
+		    	    	if( doc ){
+			    			docs.push(doc);
+		    	    	};
+		    			fetch();
+		    		};
+		    		req.onerror = fetch;
+	    		};
 	    	};
 	    };
 	},
 	
-	_getDocuments: function(opts_){
-		var opts = $n2.extend({
-			docIds: null
-			,onSuccess: function(docs){}
-			,onError: function(err){}
-		},opts_);
-
-		var countSeeked = 0;
-		var docIdMap = {};
-		opts.docIds.forEach(function(docId){
-			docIdMap[docId] = true;
-			++countSeeked;
-		});
-		
-		var docs = [];
-
-		var db = this.db;
-		
-		var transaction = db.transaction(DB_STORE_DOCS, 'readonly');
-	    var store = transaction.objectStore(DB_STORE_DOCS);
-	    var req = store.openCursor();
-		req.onsuccess = function(event) {
-			var cursor = event.target.result;
-			if(cursor) {
-				var doc = cursor.value;
-				var docId = doc._id;
-				if( docIdMap[docId] ){
-					docs.push(doc);
-					--countSeeked;
-				};
-
-				if( countSeeked <= 0 ){
-					done();
-				} else {
-					cursor.continue();
-				};
-			} else {
-				// no more results
-				done();
-			};
-		};
-		req.onerror = function(evt) {
-			opts.onError(this.error);
-		};
-		
-		function done(){
-			opts.onSuccess(docs);
-		};
+	updateDocument: function(doc){
+		this.updateDocuments([doc]);
 	},
 	
-	updateDocument: function(opts_){
-		var opts = $n2.extend({
-			doc: null
-			,onSuccess: function(){}
-			,onError: function(err){}
-		},opts_);
-
-		var db = this.db;
-		var doc = opts.doc;
+	updateDocuments: function(docs){
+		var _this = this;
 		
-		var transaction = db.transaction(DB_STORE_DOCS, 'readwrite');
-	    var store = transaction.objectStore(DB_STORE_DOCS);
-	    var req = store.put(doc);
-	    req.onsuccess = function (evt) {
-			opts.onSuccess();
+		var mustStartThread = true;
+		if( this.memoryCache ){
+			mustStartThread = false;
+		} else {
+			this.memoryCache  = {};
 		};
-		req.onerror = function() {
-			opts.onError(this.error);
+
+		// Add documents to memory cache
+		var cacheSizeDelta = 0;
+		var memoryCache = this.memoryCache;
+		docs.forEach(function(doc){
+			if( memoryCache[doc._id] ){
+				memoryCache[doc._id] = doc;
+			} else {
+				memoryCache[doc._id] = doc;
+				++cacheSizeDelta;
+			};
+		});
+
+		this._updateMemoryCacheSize(cacheSizeDelta);
+		
+		if( mustStartThread ){
+			storeDocuments();
+		};
+
+		function storeDocuments(){
+			var doc = extractDocumentFromMemoryCache();
+			
+			if( doc ){
+				var transaction = _this.db.transaction(DB_STORE_DOCS, 'readwrite');
+			    var store = transaction.objectStore(DB_STORE_DOCS);
+			    var req = store.put(doc);
+			    req.onsuccess = storeDocuments;
+				req.onerror = storeDocuments;
+			} else {
+				// Done.
+				_this.memoryCache = null;
+			};
+		};
+		
+		function extractDocumentFromMemoryCache(){
+			if( _this.memoryCache ){
+				for(var docId in _this.memoryCache){
+					var doc = _this.memoryCache[docId];
+					delete _this.memoryCache[docId];
+					_this._updateMemoryCacheSize(-1);
+					return doc;
+				};
+			};
+			
+			return undefined;
 		};
 	},
 	
 	deleteDocument: function(opts_){
 		var opts = $n2.extend({
-			doc: null
-			,docId: null
+			docId: null
 			,onSuccess: function(){}
 			,onError: function(err){}
 		},opts_);
 
 		var db = this.db;
 
-		var docId = opts.docId;
-		if( typeof docId !== 'string' && typeof doc === 'object' ){
-			docId = doc._id;
+		// Check documents that are about to be stored
+		if( this.memoryCache ){
+			if( this.memoryCache[opts.docId] ){
+				delete this.memoryCache[docId];
+				this._updateMemoryCacheSize(-1);
+			};
 		};
 		
 		var transaction = db.transaction(DB_STORE_DOCS, 'readwrite');
@@ -205,6 +244,19 @@ var DocumentDatabase = $n2.Class({
 		};
 		req.onerror = function() {
 			opts.onError(this.error);
+		};
+	},
+	
+	_updateMemoryCacheSize: function(delta){
+		this.memoryCacheSize += delta;
+		if( this.dispatchService ){
+			this.dispatchService.send(DH,{
+				type: 'waitReport'
+				,requester: this.id
+				,name: 'cacheDocuments'
+				,label: _loc('Caching documents')
+				,count: this.memoryCacheSize
+			});
 		};
 	}
 });
@@ -222,15 +274,12 @@ var NunaliitIndexDb = $n2.Class({
 		this.db = opts.db;
 	},
 
-	getDocumentDatabase: function(opts_){
-		var opts = $n2.extend({
-			dbName: null
-		},opts_);
+	getDocumentCache: function(opts_){
+		var opts = $n2.extend({},opts_);
 		
-		var docDb = new DocumentDatabase({
-			db: this.db
-			,dbName: opts.dbName
-		});
+		opts.db = this.db;
+		
+		var docDb = new DocumentCache(opts);
 		
 		return docDb;
 	}

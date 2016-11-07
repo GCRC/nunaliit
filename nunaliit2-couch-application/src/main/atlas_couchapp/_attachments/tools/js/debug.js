@@ -87,8 +87,8 @@
 
 			// Logging
 			var $div = $('<div>')
-			.addClass('n2debug_configuration_content_logging')
-			.appendTo($confContent);
+				.addClass('n2debug_configuration_content_logging')
+				.appendTo($confContent);
 			var loggingId = $n2.getUniqueId();
 			$('<label>')
 				.attr('for',loggingId)
@@ -113,8 +113,8 @@
 
 			// CouchDb Caching
 			var $div = $('<div>')
-			.addClass('n2debug_configuration_content_couchDbCaching')
-			.appendTo($confContent);
+				.addClass('n2debug_configuration_content_couchDbCaching')
+				.appendTo($confContent);
 			var couchDbCachingId = $n2.getUniqueId();
 			$('<label>')
 				.attr('for',couchDbCachingId)
@@ -134,6 +134,32 @@
 					_this._refresh();
 				});
 			if( this.debugConfiguration.isCouchDbCachingEnabled() ){
+				$cb.attr('checked','checked');
+			};
+
+			// Force slow connection handling
+			var $div = $('<div>')
+				.addClass('n2debug_configuration_content_slowConnectionHandling')
+				.appendTo($confContent);
+			var slowConnectionHandlingId = $n2.getUniqueId();
+			$('<label>')
+				.attr('for',slowConnectionHandlingId)
+				.text( _loc('Force slow connection handling') )
+				.appendTo($div);
+			var $cb = $('<input>')
+				.attr('type','checkbox')
+				.attr('name',slowConnectionHandlingId)
+				.appendTo($div)
+				.change(function(){
+					var $cb = $(this);
+					if( $cb.attr('checked') ) {
+						_this.debugConfiguration.setForceSlowConnectionHandling(true);
+					} else {
+						_this.debugConfiguration.setForceSlowConnectionHandling(false);
+					};
+					_this._refresh();
+				});
+			if( this.debugConfiguration.forceSlowConnectionHandling() ){
 				$cb.attr('checked','checked');
 			};
 		}

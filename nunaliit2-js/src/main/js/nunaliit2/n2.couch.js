@@ -822,16 +822,20 @@ var Database = $n2.Class({
 	
 	,changeNotifier: null
 	
+	,changeNotifierRefreshIntervalInMs: null
+	
 	,initialize: function(opts_, server_) {
 		var opts = $n2.extend({
 			dbUrl: null
 			,dbName: null
+			,changeNotifierRefreshIntervalInMs: 5000
 		},opts_);
 	
 		this.server = server_;
 		
 		this.dbUrl = opts.dbUrl;
 		this.dbName = opts.dbName;
+		this.changeNotifierRefreshIntervalInMs = opts.changeNotifierRefreshIntervalInMs;
 		
 		if( !this.dbUrl ) {
 			var pathToServer = server_.getPathToServer();
@@ -871,6 +875,7 @@ var Database = $n2.Class({
 			this.changeNotifier = new ChangeNotifier({
 				db: this
 				,changeUrl: this.dbUrl + '_changes'
+				,pollInterval: this.changeNotifierRefreshIntervalInMs
 				,onSuccess: opts.onSuccess
 			});
 		} else {
