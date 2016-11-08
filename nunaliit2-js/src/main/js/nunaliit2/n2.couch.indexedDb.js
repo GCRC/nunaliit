@@ -35,7 +35,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); }
-,DH = 'n2.couch.indexDb'
+,DH = 'n2.couch.indexedDb'
 ;
 
 // =============================================

@@ -1,7 +1,8 @@
 ;(function($n2){
 "use strict";
 
-var DH = 'n2.indexdb';
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); }
+,DH = 'n2.indexedDb';
 
 // ===================================================
 var DB_STORE_DOCS = 'docs';
