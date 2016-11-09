@@ -178,6 +178,9 @@ var ExportApplication = $n2.Class('ExportApplication',{
 		$('<option value="geojson"></options>')
 			.text( _loc('geojson') )
 			.appendTo($formatSelect);
+		$('<option value="csv"></options>')
+			.text( _loc('CSV') )
+			.appendTo($formatSelect);
 		
 		// File name
 		var fileNameId = $n2.getUniqueId();

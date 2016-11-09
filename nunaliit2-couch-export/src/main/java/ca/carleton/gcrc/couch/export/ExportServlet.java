@@ -34,6 +34,7 @@ import ca.carleton.gcrc.couch.export.impl.DocumentRetrievalSchema;
 import ca.carleton.gcrc.couch.export.impl.ExportFormatCSV;
 import ca.carleton.gcrc.couch.export.impl.ExportFormatGeoJson;
 import ca.carleton.gcrc.couch.export.impl.SchemaCacheCouchDb;
+import ca.carleton.gcrc.couch.export.records.ExportRecordsCSV;
 import ca.carleton.gcrc.couch.export.records.ExportRecordsGeoJson;
 import ca.carleton.gcrc.couch.export.records.JSONArrayReaderIterator;
 import ca.carleton.gcrc.json.servlet.JsonServlet;
@@ -373,6 +374,14 @@ public class ExportServlet extends JsonServlet {
 							exportRecordsGeoJson.setFilter(filter);
 						}
 						exportProcess = exportRecordsGeoJson;
+
+					} else if( Format.CSV == format ){
+						ExportRecordsCSV exportRecordsCSV = new ExportRecordsCSV(configuration.getCouchDb(),recordsReader);
+						if( null != filter ){
+							exportRecordsCSV.setFilter(filter);
+						}
+						exportProcess = exportRecordsCSV;
+					
 					} else {
 						throw new Exception("Unsupported format: "+format.getLabel());
 					}
