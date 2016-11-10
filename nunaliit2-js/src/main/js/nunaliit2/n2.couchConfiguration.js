@@ -345,7 +345,7 @@ function Configure(options_){
 	 	 	$n2.couch.initialize({
 	 	    	pathToServer: options.couchServerUrl
 	 	    	,onSuccess: function(couchServer){
-	 				$n2.couchIndexDb.getServer({
+	 				$n2.couchIndexedDb.getServer({
 	 					couchServer: couchServer
 	 					,dispatchService: configuration.directory.dispatchService
 	 					,onSuccess: couchInitialized

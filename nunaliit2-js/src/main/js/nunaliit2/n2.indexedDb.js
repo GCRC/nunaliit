@@ -6,6 +6,7 @@ var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); }
 
 // ===================================================
 var DB_STORE_DOCS = 'docs';
+var DB_STORE_INFO = 'info';
 var DocumentCache = $n2.Class({
 
 	db: null,
@@ -23,7 +24,7 @@ var DocumentCache = $n2.Class({
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			db: null
-			,dbName: null
+			,dbName: null // not likely known at time of creation
 			,dispatchService: null
 		},opts_);
 		
@@ -34,6 +35,38 @@ var DocumentCache = $n2.Class({
 		this.id = $n2.getUniqueId();
 		this.memoryCache = null;
 		this.memoryCacheSize = 0;
+	},
+	
+	initializeCache: function(opts_){
+		var opts = $n2.extend({
+			updateSequence: null
+			,onSuccess: function(){}
+			,onError: function(err){}
+		},opts_);
+		
+		var _this = this;
+		
+		var updateSequence = opts.updateSequence;
+		if( typeof updateSequence !== 'number' ){
+			throw new Error('When initializing document cache, update sequence must be a number');
+		};
+		
+		this.deleteAllDocuments({
+			onSuccess: function(){
+				_this.setUpdateSequence({
+					updateSequence: updateSequence
+					,onSuccess: opts.onSuccess
+					,onError: function(err){
+						$n2.log('Error while recording initial sequence number. '+err);
+						opts.onError(err);
+					}
+				});
+			}
+			,onError: function(err){
+				$n2.log('Error while clearing document store. '+err);
+				opts.onError(err);
+			}
+		});
 	},
 	
 	/**
@@ -79,6 +112,79 @@ var DocumentCache = $n2.Class({
 				};
 			};
 		};
+	},
+	
+	getUpdateSequence: function(opts_){
+		var opts = $n2.extend({
+			onSuccess: function(updateSequence){}
+			,onError: function(err){}
+		},opts_);
+
+		var db = this.db;
+
+		var transaction = db.transaction(DB_STORE_INFO, 'readonly');
+	    var store = transaction.objectStore(DB_STORE_INFO);
+	    var req = store.get('sequenceNumber');
+	    req.onsuccess = function (evt) {
+	    	var value = this.result;
+	    	if( typeof value === 'object' 
+	    	 && typeof value.updateSequence === 'number' ){
+				opts.onSuccess(value.updateSequence);
+	    	} else if( typeof value === 'undefined' ){
+	    		opts.onSuccess(undefined);
+	    	} else {
+	    		var err = $n2.error.fromString('Invalid format for indexedDb sequence number');
+				opts.onError(err);
+	    	};
+		};
+		req.onerror = function(evt) {
+			opts.onError(this.error);
+		};
+	},
+	
+	setUpdateSequence: function(opts_){
+		var opts = $n2.extend({
+			updateSequence: null
+			,onSuccess: function(){}
+			,onError: function(err){}
+		},opts_);
+
+		var db = this.db;
+		
+		if( typeof opts.updateSequence !== 'number' ){
+			throw new Error('updateSequence must be a number');
+		};
+
+		var transaction = db.transaction(DB_STORE_INFO, 'readwrite');
+	    var store = transaction.objectStore(DB_STORE_INFO);
+	    var req = store.put({
+	    	_id: 'sequenceNumber'
+	    	,updateSequence: opts.updateSequence
+	    });
+	    req.onsuccess = opts.onSuccess;
+		req.onerror = function(evt) {
+			opts.onError(this.error);
+		};
+	},
+	
+	deleteAllDocuments: function(opts_){
+		var opts = $n2.extend({
+			onSuccess: function(){}
+			,onError: function(err){}
+		},opts_);
+		
+		var db = this.db;
+		
+		var transaction = db.transaction(DB_STORE_DOCS, 'readwrite');
+	    var store = transaction.objectStore(DB_STORE_DOCS);
+	    var req = store.clear();
+	    req.onsuccess = opts.onSuccess;
+		req.onerror = function(evt){
+			var error = this.error;
+			$n2.log('Unable to clear indexedDb document store',error);
+			opts.onError(error);
+		};
+		
 	},
 	
 	getDocument: function(opts_){
@@ -263,7 +369,7 @@ var DocumentCache = $n2.Class({
 });
 
 //===================================================
-var NunaliitIndexDb = $n2.Class({
+var IndexedDbConnection = $n2.Class({
 
 	db: null,
 
@@ -288,10 +394,10 @@ var NunaliitIndexDb = $n2.Class({
 
 //===================================================
 var DB_NAME = 'nunaliit';
-var DB_VERSION = 1;
-function openIndexDb(opts_){
+var DB_VERSION = 2;
+function openIndexedDb(opts_){
 	var opts = $n2.extend({
-		onSuccess: function(documentDatabase){}
+		onSuccess: function(indexedDbConnection){}
 		,onError: function(err){}
 	},opts_);
 
@@ -302,7 +408,7 @@ function openIndexDb(opts_){
 		// db = req.result;
 		var db = this.result;
 		
-		var n2IndexDb = new NunaliitIndexDb({
+		var n2IndexDb = new IndexedDbConnection({
 			db: db
 		});
 
@@ -327,18 +433,29 @@ function openIndexDb(opts_){
 		$n2.log('Upgrading indexDB '+DB_NAME+' from: '+oldVersion+' to: '+newVersion);
 
 		//db.deleteObjectStore(DB_STORE_DOCS);
-		db.createObjectStore(
-			DB_STORE_DOCS
-			,{ 
-				keyPath: '_id' 
-			}
-		);
+		if( oldVersion < 1 ){ // docs store has existed since version 1
+			db.createObjectStore(
+				DB_STORE_DOCS
+				,{ 
+					keyPath: '_id' 
+				}
+			);
+		};
+		
+		if( oldVersion < 2 ){ // info store has existed since version 1
+			db.createObjectStore(
+				DB_STORE_INFO
+				,{ 
+					keyPath: '_id' 
+				}
+			);
+		};
 	};
 };
 	
 //===================================================
-$n2.indexdb = {
-	openIndexDb: openIndexDb
+$n2.indexedDb = {
+	openIndexedDb: openIndexedDb
 };
 	
 })(nunaliit2);

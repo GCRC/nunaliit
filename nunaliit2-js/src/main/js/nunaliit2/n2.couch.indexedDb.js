@@ -154,6 +154,12 @@ var Database = $n2.Class({
 	outstandingDocumentCount: null,
 	
 	outstandingRevisionCount: null,
+
+	isInitialized: null,
+	
+	initializeListeners: null,
+
+	isCachingEnabled: null,
 	
 	initialize: function(opts_) {
 		var opts = $n2.extend({
@@ -175,7 +181,20 @@ var Database = $n2.Class({
 		this.id = $n2.getUniqueId();
 		this.outstandingDocumentCount = 0;
 		this.outstandingRevisionCount = 0;
+		this.isInitialized = false;
+		this.isCachingEnabled = false;
+		this.initializeListeners = [];
 		
+		// Get info about this database
+		this.getInfo({
+			onSuccess: receivedDbInfo
+			,onError: function(err){
+				$n2.log('Error while getting database information: '+err);
+				errorInitializing();
+			}
+		});
+		
+		// Install update notifier
 		this.getChangeNotifier({
 			onSuccess: function(notifier){
 				_this.dbChangeNotifier = notifier;
@@ -187,6 +206,103 @@ var Database = $n2.Class({
 			}
 		});
 
+		function receivedDbInfo(info){
+			var error = false;
+			
+			var dbName = info.db_name;
+			if( typeof dbName !== 'string' ){
+				$n2.log('Error with database information. db_name should be a string: '+dbName);
+				error = true;
+			};
+
+			var updateSequence = info.update_seq;
+			if( typeof updateSequence !== 'number' ){
+				$n2.log('Error with database information. update_sequence should be a number: '+updateSequence);
+				error = true;
+			};
+			
+			if( error ){
+				errorInitializing();
+			} else {
+				_this.documentCache.dbName = dbName;
+				
+				_this.documentCache.getUpdateSequence({
+					onSuccess: function(cacheSequenceNumber){
+						compareUpdateSequences(updateSequence, cacheSequenceNumber);
+					}
+					,onError: function(err){
+						$n2.log('Error while getting cache update sequence number. '+err);
+						errorInitializing();
+					}
+				});
+			};
+		};
+		
+		function compareUpdateSequences(dbUpdateSequence, cacheSequenceNumber){
+			if( cacheSequenceNumber === undefined ){
+				// The cache has never been used. There is no document in cache.
+				// Initialize cache with current update sequence
+				_this.documentCache.initializeCache({
+					updateSequence: dbUpdateSequence
+					,onSuccess: function(){
+						done();
+					}
+					,onError: function(err){
+						$n2.log('Error while recording initializing document cache. '+err);
+						errorInitializing();
+					}
+				});
+
+			} else if( dbUpdateSequence === cacheSequenceNumber ){
+				// The update sequence in the cache matches the one from the database.
+				// This means that the cache is already up-to-date.
+				done();
+				
+			} else if( dbUpdateSequence < cacheSequenceNumber ){
+				// Something went terribly wrong. The database update sequence is earlier
+				// than the cache. This should never happen. We can not trust the cache.
+				// Reinitialize the cache
+				_this.documentCache.initializeCache({
+					updateSequence: dbUpdateSequence
+					,onSuccess: function(){
+						done();
+					}
+					,onError: function(err){
+						$n2.log('Error while recording initializing document cache. '+err);
+						errorInitializing();
+					}
+				});
+
+			} else {
+				// Must retrieve the changes that have occurred since last time we
+				// worked with database
+				_this.getChanges({
+					since: cacheSequenceNumber
+					,onSuccess: updateCacheFromChanges
+					,onError: function(err){ 
+						$n2.log('Error while obtaining changes from database. '+err);
+						errorInitializing();
+					}
+				});
+			};
+		};
+		
+		function updateCacheFromChanges(changes){
+			_this._dbChanges(changes);
+			done();
+		};
+		
+		function done(){
+			// At this point, the cache is initialized
+			_this.isCachingEnabled = true;
+			_this.isInitialized = true;
+		};
+		
+		function errorInitializing(){
+			$n2.log('Error while initializing caching database. Caching is disabled.');
+			_this.isCachingEnabled = false;
+			_this.isInitialized = true;
+		};
 	},
 
 	getUrl: function(){
@@ -505,7 +621,7 @@ var Database = $n2.Class({
 				
 			} else if( latestRev ){
 				// Ensure we only keep the current revision in the
-				// indexDb cache
+				// indexedDb cache
 				_this.documentCache.checkDocumentRevision({
 					docId: docId
 					,rev: latestRev
@@ -549,19 +665,19 @@ var Server = $n2.Class({
 	
 	wrappedServer: null,
 	
-	indexDbCache: null,
+	indexedDbConnection: null,
 	
 	dispatchService: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			couchServer: null
-			,indexDbCache: null
+			,indexedDbConnection: null
 			,dispatchService: null
 		},opts_);
 		
 		this.wrappedServer = opts.couchServer;
-		this.indexDbCache = opts.indexDbCache;
+		this.indexedDbConnection = opts.indexedDbConnection;
 		this.dispatchService = opts.dispatchService;
 	},
 
@@ -602,14 +718,13 @@ var Server = $n2.Class({
 	},
 	
 	getDb: function(opts_) {
-		var db = this.wrappedServer.getDb(opts_);
+		var couchDatabase = this.wrappedServer.getDb(opts_);
 		if( opts_.allowCaching ){
-			var documentCache = this.indexDbCache.getDocumentCache({
-				dbName: opts_.dbName
-				,dispatchService: this.dispatchService
+			var documentCache = this.indexedDbConnection.getDocumentCache({
+				dispatchService: this.dispatchService
 			});
 			return new Database({
-				couchDb: db
+				couchDb: couchDatabase
 				,documentCache: documentCache
 				,dispatchService: this.dispatchService
 				,remoteDocumentCountLimit: opts_.remoteDocumentCountLimit
@@ -656,7 +771,7 @@ var Server = $n2.Class({
 
 //=============================================
 
-$n2.couchIndexDb = {
+$n2.couchIndexedDb = {
 	getServer: function(opts_) {
 		var opts = $n2.extend({
 			couchServer: null
@@ -665,13 +780,13 @@ $n2.couchIndexDb = {
 			,onError: function(err){}
 		},opts_);
 		
-		$n2.indexdb.openIndexDb({
-			onSuccess: function(n2IndexDb){
+		$n2.indexedDb.openIndexedDb({
+			onSuccess: function(indexedDbConnection){
 
 				var server = new Server({
 					couchServer: opts.couchServer
 					,dispatchService: opts.dispatchService
-					,indexDbCache: n2IndexDb
+					,indexedDbConnection: indexedDbConnection
 				});
 				
 				opts.onSuccess(server);
