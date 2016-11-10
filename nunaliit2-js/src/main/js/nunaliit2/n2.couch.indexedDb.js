@@ -464,7 +464,9 @@ var Database = $n2.Class({
 		};
 		
 		function storeDocument(doc){
-			_this.documentCache.updateDocument(doc);
+			if( _this.isCachingEnabled ){
+				_this.documentCache.updateDocument(doc);
+			};
 			opts_.onSuccess(doc);
 		};
 	},
@@ -561,7 +563,9 @@ var Database = $n2.Class({
 							docsToReturn.push(doc);	
 						});
 						
-						_this.documentCache.updateDocuments(docs);
+						if( _this.isCachingEnabled ){
+							_this.documentCache.updateDocuments(docs);
+						};
 						
 						performRemoteRequest();
 					}
@@ -653,7 +657,6 @@ var Database = $n2.Class({
 			updateSequence: lastSeq
 		});
 		
-		
 		// Record how far we have processed the change feed
 		this.documentCache.performChanges(cacheChanges);
 	},
@@ -665,6 +668,10 @@ var Database = $n2.Class({
 		},opts_);
 
 		var _this = this;
+		
+		if( !this.isCachingEnabled ){
+			opts.onError('Caching is not enabled');
+		};
 		
 		this.documentCache.getUpdateSequence({
 			onSuccess: cacheSequenceNumber
