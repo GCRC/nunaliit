@@ -296,6 +296,13 @@ var Database = $n2.Class({
 			// At this point, the cache is initialized
 			_this.isCachingEnabled = true;
 			_this.isInitialized = true;
+			
+			// Call all listeners
+			_this.initializeListeners.forEach(function(listener){
+				listener();
+			});
+			
+			_this.initializeListeners = [];
 		};
 		
 		function errorInitializing(){
@@ -417,58 +424,72 @@ var Database = $n2.Class({
 	},
 	
 	getDocument: function(opts_) {
-		
 		var _this = this;
+
+		// This request is dependent on the cache.
+		// Do not performed until initialized
+		if( !this.isInitialized ){
+			this.initializeListeners.push(function(){
+				_this.getDocument(opts_);
+			});
+			return;
+		};
 		
-		// Is this document in cache?
-		this.documentCache.getDocument({
-			docId: opts_.docId
-			,onSuccess: checkVersion
+		this._validateDocumentCache({
+			onSuccess: function(){
+				_this.documentCache.getDocument({
+					docId: opts_.docId
+					,onSuccess: checkDocument
+					,onError: performNative
+				});
+			}
 			,onError: performNative
 		});
 		
-		function checkVersion(doc){
-			if( !doc ) {
-				performNative();
+		function checkDocument(doc){
+			if( doc ) {
+				opts_.onSuccess(doc);
 			} else {
-				_this.wrappedDb.getDocumentRevision({
-					docId: opts_.docId
-					,onSuccess: function(rev){
-						if( rev === doc._rev ){
-							opts_.onSuccess(doc);
-						} else {
-							performNative();
-						};
-					}
-					,onError: performNative
-				});
+				performNative();
 			};
 		};
 		
 		function performNative(){
 			// Get document from CouchDb
 			var opts = $n2.extend({},opts_,{
-				onSuccess: function(doc){
-					_this.documentCache.updateDocument(doc);
-					opts_.onSuccess(doc);
-				}
+				onSuccess: storeDocument
 			});
 
 			_this.wrappedDb.getDocument(opts);
+		};
+		
+		function storeDocument(doc){
+			_this.documentCache.updateDocument(doc);
+			opts_.onSuccess(doc);
 		};
 	},
 
 	getDocuments: function(opts_) {
 		var _this = this;
+
+		// This request is dependent on the cache.
+		// Do not performed until initialized
+		if( !this.isInitialized ){
+			this.initializeListeners.push(function(){
+				_this.getDocuments(opts_);
+			});
+			return;
+		};
+
 		var docIdMap = {};
 		var docsToReturn = [];
-		var docsToStore = [];
 		var docIdsToFetchRemotely = [];
-		
+
+		// Make a map of documents we wish to get
 		var count = 0;
 		opts_.docIds.forEach(function(docId){
 			if( docIdMap[docId] ){
-				// Already requesed
+				// Already requested
 			} else {
 				docIdMap[docId] = true;
 				++count;
@@ -476,43 +497,30 @@ var Database = $n2.Class({
 		});
 
 		this._updateOutstandingDocumentCount(count);
-		
-		// Are the requested documents in cache?
-		this.documentCache.getDocuments({
-			docIds: opts_.docIds
-			,onSuccess: documentsFromCache
+
+		this._validateDocumentCache({
+			onSuccess: function(){
+				// Are the requested documents in cache?
+				_this.documentCache.getDocuments({
+					docIds: opts_.docIds
+					,onSuccess: documentsFromCache
+					,onError: performNative
+				});
+			}
 			,onError: performNative
 		});
 
 		function documentsFromCache(cachedDocs){
 			if( cachedDocs && cachedDocs.length > 0 ){
-				// Get versions for these documents
-				var versionDocIds = [];
 				cachedDocs.forEach(function(cachedDoc){
-					versionDocIds.push(cachedDoc._id);
-				});
+					var cachedDocId = cachedDoc._id;
 
-				_this.getDocumentRevisions({
-					docIds: versionDocIds
-					,onSuccess: function(revisionByIdMap){
-						cachedDocs.forEach(function(cachedDoc){
-							var cachedDocId = cachedDoc._id;
-							var cachedDocRev = cachedDoc._rev;
-							if( revisionByIdMap[cachedDocId] === cachedDocRev ){
-								docIdMap[cachedDocId] = cachedDoc;
-								docsToReturn.push(cachedDoc);
-							};
-						});
-						
-						performNative();
-					}
-					,onError: performNative
+					docIdMap[cachedDocId] = cachedDoc;
+					docsToReturn.push(cachedDoc);
 				});
-				
-			} else {
-				// Nothing in cache. Get from native db
-				performNative();
 			};
+
+			performNative();
 		};
 		
 		function performNative(){
@@ -551,7 +559,6 @@ var Database = $n2.Class({
 
 						docs.forEach(function(doc){
 							docsToReturn.push(doc);	
-							docsToStore.push(doc);	
 						});
 						
 						_this.documentCache.updateDocuments(docs);
@@ -597,36 +604,90 @@ var Database = $n2.Class({
 	_dbChanges: function(changes){
 		var _this = this;
 		
-		$n2.log('update',changes);
 		var lastSeq = changes.last_seq;
-		var results = changes.results;
+		var results = changes.results.slice(); // clone so we can reverse
 		
-		for(var i=0,e=results.length; i<e; ++i){
-			var updateRecord = results[i];
+		// Reverse results so we see the latest changes, first
+		results.reverse();
+		
+		// Keep track of which document we have already seen
+		var seenByDocId = {};
+		
+		// Keep track of changes to apply to cache
+		var cacheChanges = [];
+		
+		results.forEach(function(updateRecord){
 			var docId = updateRecord.id;
-
-			var latestRev = null;
-
-			if( $n2.isArray(updateRecord.changes) ) {
-				updateRecord.changes.forEach(function(change){
-					latestRev = change.rev;
-				});
-			};
 			
-			if( updateRecord.deleted ){
-				// Remove from cache
-				_this.documentCache.deleteDocument({
-					docId: docId
-				});
+			if( seenByDocId[docId] ){
+				// Already processed
+			} else {
+				var latestRev;
+				if( $n2.isArray(updateRecord.changes) ) {
+					updateRecord.changes.forEach(function(change){
+						latestRev = change.rev;
+					});
+				};
 				
-			} else if( latestRev ){
-				// Ensure we only keep the current revision in the
-				// indexedDb cache
-				_this.documentCache.checkDocumentRevision({
-					docId: docId
-					,rev: latestRev
-				});
+				if( updateRecord.deleted ){
+					// Remove from cache
+					cacheChanges.push({
+						docId: docId
+						,deleted: true
+					});
+					seenByDocId[docId] = true;
+					
+				} else if( typeof latestRev === 'string' ){
+					// Remove from cache
+					cacheChanges.push({
+						docId: docId
+						,rev: latestRev
+					});
+					seenByDocId[docId] = true;
+				};
 			};
+		});
+
+		// Update sequence
+		cacheChanges.push({
+			updateSequence: lastSeq
+		});
+		
+		
+		// Record how far we have processed the change feed
+		this.documentCache.performChanges(cacheChanges);
+	},
+	
+	_validateDocumentCache: function(opts_){
+		var opts = $n2.extend({
+			onSuccess: function(){}
+			,onError: function(err){}
+		},opts_);
+
+		var _this = this;
+		
+		this.documentCache.getUpdateSequence({
+			onSuccess: cacheSequenceNumber
+			,onError: function(err){
+				$n2.log('Error while validating cache (retrieve cache sequence number). '+err);
+				opts.onError(err);
+			}
+		});
+		
+		function cacheSequenceNumber(cacheSequenceNumber){
+			_this.wrappedDb.getChanges({
+				since: cacheSequenceNumber
+				,onSuccess: applyChanges
+				,onError: function(err){ 
+					$n2.log('Error while validating cache (get changes). '+err);
+					opts.onError(err);
+				}
+			});
+		};
+		
+		function applyChanges(changes){
+			_this._dbChanges(changes);
+			opts.onSuccess();
 		};
 	},
 	

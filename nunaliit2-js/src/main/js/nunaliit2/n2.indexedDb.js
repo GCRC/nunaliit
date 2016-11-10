@@ -17,9 +17,9 @@ var DocumentCache = $n2.Class({
 
 	id: null,
 	
-	memoryCache: null,
+	changes: null,
 	
-	memoryCacheSize: null,
+	changesByDocId: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -33,10 +33,14 @@ var DocumentCache = $n2.Class({
 		this.dispatchService = opts.dispatchService;
 
 		this.id = $n2.getUniqueId();
-		this.memoryCache = null;
-		this.memoryCacheSize = 0;
+		this.changes = null;
+		this.changesByDocId = {};
 	},
-	
+
+	/**
+	 * Initialize or re-initialize the cache to the given update
+	 * sequence number.
+	 */
 	initializeCache: function(opts_){
 		var opts = $n2.extend({
 			updateSequence: null
@@ -51,11 +55,15 @@ var DocumentCache = $n2.Class({
 			throw new Error('When initializing document cache, update sequence must be a number');
 		};
 		
-		this.deleteAllDocuments({
+		this._clearDocumentStore({
 			onSuccess: function(){
-				_this.setUpdateSequence({
+				_this._setUpdateSequence({
 					updateSequence: updateSequence
-					,onSuccess: opts.onSuccess
+					,onSuccess: function(){
+						this.changes = null;
+						this.changesByDocId = {};
+						opts.onSuccess();
+					}
 					,onError: function(err){
 						$n2.log('Error while recording initial sequence number. '+err);
 						opts.onError(err);
@@ -69,51 +77,6 @@ var DocumentCache = $n2.Class({
 		});
 	},
 	
-	/**
-	 * Checks the document cache for a docId. If the revision
-	 * associated with the document matches the given one, keep the
-	 * document in the cache. Otherwise, remove it.
-	 */
-	checkDocumentRevision: function(opts_){
-		var opts = $n2.extend({
-			docId: null
-			,rev: null
-			,onSuccess: function(){}
-			,onError: function(err){}
-		},opts_);
-		
-		var _this = this;
-		
-		// Check documents that are about to be stored
-		if( this.memoryCache ){
-			var doc = this.memoryCache[opts.docId];
-			if( doc ){
-				if( doc._rev !== opts.rev ){
-					delete this.memoryCache[opts.docId];
-					this._updateMemoryCacheSize(-1);
-				};
-			};
-		};
-		
-		this.getDocument({
-			docId: opts.docId
-			,onSuccess: retrievedDocument
-			,onError: opts.onError
-		});
-		
-		function retrievedDocument(doc){
-			if( doc ){
-				if( doc._rev !== opts.rev ){
-					_this.deleteDocument({
-						docId: opts.docId
-						,onSuccess: opts.onSuccess
-						,onError: opts.onError
-					});
-				};
-			};
-		};
-	},
-	
 	getUpdateSequence: function(opts_){
 		var opts = $n2.extend({
 			onSuccess: function(updateSequence){}
@@ -121,70 +84,155 @@ var DocumentCache = $n2.Class({
 		},opts_);
 
 		var db = this.db;
-
-		var transaction = db.transaction(DB_STORE_INFO, 'readonly');
-	    var store = transaction.objectStore(DB_STORE_INFO);
-	    var req = store.get('sequenceNumber');
-	    req.onsuccess = function (evt) {
-	    	var value = this.result;
-	    	if( typeof value === 'object' 
-	    	 && typeof value.updateSequence === 'number' ){
-				opts.onSuccess(value.updateSequence);
-	    	} else if( typeof value === 'undefined' ){
-	    		opts.onSuccess(undefined);
-	    	} else {
-	    		var err = $n2.error.fromString('Invalid format for indexedDb sequence number');
-				opts.onError(err);
-	    	};
+		
+		// Check changes
+		var updateSequence;
+		if( this.changes ){
+			this.changes.forEach(function(change){
+				if( change && change.updateSequence ){
+					updateSequence = change.updateSequence;
+				};
+			});
 		};
-		req.onerror = function(evt) {
-			opts.onError(this.error);
+
+		if( updateSequence ){
+			opts.onSuccess(updateSequence);
+		} else {
+			var transaction = db.transaction(DB_STORE_INFO, 'readonly');
+		    var store = transaction.objectStore(DB_STORE_INFO);
+		    var req = store.get('sequenceNumber');
+		    req.onsuccess = function (evt) {
+		    	var value = this.result;
+		    	if( typeof value === 'object' 
+		    	 && typeof value.updateSequence === 'number' ){
+					opts.onSuccess(value.updateSequence);
+		    	} else if( typeof value === 'undefined' ){
+		    		opts.onSuccess(undefined);
+		    	} else {
+		    		var err = $n2.error.fromString('Invalid format for indexedDb sequence number');
+					opts.onError(err);
+		    	};
+			};
+			req.onerror = function(evt) {
+				opts.onError(this.error);
+			};
 		};
 	},
 	
-	setUpdateSequence: function(opts_){
-		var opts = $n2.extend({
-			updateSequence: null
-			,onSuccess: function(){}
-			,onError: function(err){}
-		},opts_);
+	performChanges: function(changes){
 
+		var _this = this;
 		var db = this.db;
 		
-		if( typeof opts.updateSequence !== 'number' ){
-			throw new Error('updateSequence must be a number');
+		var mustStartThread = true;
+		if( this.changes ){
+			mustStartThread = false;
+		} else {
+			this.changes  = [];
+			this.changesByDocId = {};
 		};
+		
+		// Add changes to list of current changes
+		changes.forEach(function(change){
+			_this.changes.push(change);
+			
+			if( change.docId ){
+				// This is a change to a document. Store the latest
+				// change for this document
+				var latest = _this.changesByDocId[change.docId];
+				
+				// If the new change is a change in revision and that
+				// the latest change is a store of the document with the
+				// same revision, then do not override the document with
+				// a revision
+				if( typeof change.rev === 'string'
+				 && latest 
+				 && latest.doc 
+				 && latest.doc._rev === change.rev ){
+					// Skip
+				} else {
+					_this.changesByDocId[change.docId] = change;
+				};
+			};
+		});
 
-		var transaction = db.transaction(DB_STORE_INFO, 'readwrite');
-	    var store = transaction.objectStore(DB_STORE_INFO);
-	    var req = store.put({
-	    	_id: 'sequenceNumber'
-	    	,updateSequence: opts.updateSequence
-	    });
-	    req.onsuccess = opts.onSuccess;
-		req.onerror = function(evt) {
-			opts.onError(this.error);
-		};
-	},
-	
-	deleteAllDocuments: function(opts_){
-		var opts = $n2.extend({
-			onSuccess: function(){}
-			,onError: function(err){}
-		},opts_);
-		
-		var db = this.db;
-		
-		var transaction = db.transaction(DB_STORE_DOCS, 'readwrite');
-	    var store = transaction.objectStore(DB_STORE_DOCS);
-	    var req = store.clear();
-	    req.onsuccess = opts.onSuccess;
-		req.onerror = function(evt){
-			var error = this.error;
-			$n2.log('Unable to clear indexedDb document store',error);
-			opts.onError(error);
+		if( mustStartThread ){
+			applyChange();
 		};
 		
+		function applyChange(){
+			if( _this.dispatchService ){
+				_this.dispatchService.send(DH,{
+					type: 'waitReport'
+					,requester: _this.id
+					,name: 'cacheDocuments'
+					,label: _loc('Caching documents')
+					,count: _this.changes.length
+				});
+			};
+			
+			if( _this.changes.length <= 0 ){
+				// Done applying all changes. Set changes to null to indicate
+				// that thread is terminated
+				_this.changes = null;
+			} else {
+				var change = _this.changes.shift();
+				
+				if( change.updateSequence ){
+					_this._setUpdateSequence({
+						updateSequence: change.updateSequence
+						,onSuccess: applyChange
+						,onError: applyChange
+					});
+				} else if( change.docId ) {
+					// This is a change related to a document. Apply the
+					// change only if it is the latest one
+					var latestChange = _this.changesByDocId[change.docId];
+					if( change === latestChange ){
+						if( change.deleted ){
+							_this._deleteDocument({
+								docId: change.docId
+								,onSuccess: applyChange
+								,onError: applyChange
+							});
+						} else if( change.rev ){
+							// Get document from indexedDb. If the revision no longer
+							// matches, remove
+							_this.getDocument({
+								docId: change.docId
+								,onSuccess: function(doc){
+									if( doc ){
+										if( doc._rev !== change.rev ){
+											_this._deleteDocument({
+												docId: opts.docId
+												,onSuccess: applyChange
+												,onError: applyChange
+											});
+										};
+									};
+								}
+								,onError: applyChange
+							});
+						} else if( change.doc ){
+							_this._storeDocument({
+								doc: change.doc
+								,onSuccess: applyChange
+								,onError: applyChange
+							});
+						} else {
+							$n2.log('Unrecognized change to document cache',change);
+							applyChange();
+						};
+					} else {
+						// This is not the latest change. Do not apply.
+						applyChange();
+					};
+				} else {
+					$n2.log('Unrecognized change to document cache',change);
+					applyChange();
+				};
+			};
+		};
 	},
 	
 	getDocument: function(opts_){
@@ -195,25 +243,56 @@ var DocumentCache = $n2.Class({
 		},opts_);
 
 		var db = this.db;
+		var docId = opts.docId;
 		
 		// Check documents that are about to be stored
-		if( this.memoryCache ){
-			var doc = this.memoryCache[opts.docId];
-			if( doc ){
-				opts.onSuccess(doc);
-				return;
+		var doc;
+		var isDeleted = false;
+		var validateRev;
+		if( this.changesByDocId 
+		 && this.changesByDocId[docId] ){
+			// There is a pending change on this document
+			if( this.changesByDocId[docId].doc ){
+				// This document is about to be stored
+				doc = this.changesByDocId[docId].doc;
+			} else if( this.changesByDocId[docId].deleted ){
+				// This document is about to be deleted
+    			isDeleted = true;
+			} else if( this.changesByDocId[docId].rev ){
+				// If we find this document in the cache, we must first
+				// validate the revision before returning
+				validateRev = this.changesByDocId[docId].rev;
 			};
 		};
 		
-		var transaction = db.transaction(DB_STORE_DOCS, 'readonly');
-	    var store = transaction.objectStore(DB_STORE_DOCS);
-	    var req = store.get(opts.docId);
-	    req.onsuccess = function (evt) {
-	    	var doc = this.result;
+		if( isDeleted ){
+			opts.onSuccess(undefined);
+		} else if( doc ){
 			opts.onSuccess(doc);
-		};
-		req.onerror = function(evt) {
-			opts.onError(this.error);
+		} else {
+			var transaction = db.transaction(DB_STORE_DOCS, 'readonly');
+		    var store = transaction.objectStore(DB_STORE_DOCS);
+		    var req = store.get(opts.docId);
+		    req.onsuccess = function (evt) {
+    	    	var doc = this.result;
+    	    	if( doc ){
+    	    		if( validateRev ){
+    	    			if( doc._rev === validateRev ){
+    	    				opts.onSuccess(doc);
+    	    			} else {
+    	    				opts.onSuccess(undefined);
+    	    			};
+    	    		} else {
+    	    			opts.onSuccess(doc);
+    	    		};
+    	    	} else {
+    	    		// Not in cache
+    				opts.onSuccess(undefined);
+    	    	};
+			};
+			req.onerror = function(evt) {
+				opts.onError(this.error);
+			};
 		};
 	},
 	
@@ -240,11 +319,28 @@ var DocumentCache = $n2.Class({
 
 	    		// Check documents that are about to be stored
     			var doc;
-	    		if( _this.memoryCache ){
-	    			doc = _this.memoryCache[docId];
+    			var isDeleted = false;
+    			var validateRev;
+	    		if( _this.changesByDocId 
+	    		 && _this.changesByDocId[docId] ){
+	    			// There is a pending change on this document
+	    			if( _this.changesByDocId[docId].doc ){
+	    				// This document is about to be stored
+	    				doc = _this.changesByDocId[docId].doc;
+	    			} else if( _this.changesByDocId[docId].deleted ){
+	    				// This document is about to be deleted
+	        			isDeleted = true;
+	    			} else if( _this.changesByDocId[docId].rev ){
+	    				// If we find this document in the cache, we must first
+	    				// validate the revision before returning
+	    				validateRev = _this.changesByDocId[docId].rev;
+	    			};
 	    		};
 
-	    		if( doc ){
+	    		if( isDeleted ){
+	    			// no need to fetch
+	    			setTimeout(fetch,0);
+	    		} else if( doc ){
 	    			docs.push(doc);
 	    			setTimeout(fetch,0);
 	    		} else {
@@ -255,7 +351,13 @@ var DocumentCache = $n2.Class({
 		    	    req.onsuccess = function (evt) {
 		    	    	var doc = this.result;
 		    	    	if( doc ){
-			    			docs.push(doc);
+		    	    		if( validateRev ){
+		    	    			if( doc._rev === validateRev ){
+					    			docs.push(doc);
+		    	    			};
+		    	    		} else {
+				    			docs.push(doc);
+		    	    		};
 		    	    	};
 		    			fetch();
 		    		};
@@ -271,62 +373,60 @@ var DocumentCache = $n2.Class({
 	
 	updateDocuments: function(docs){
 		var _this = this;
-		
-		var mustStartThread = true;
-		if( this.memoryCache ){
-			mustStartThread = false;
-		} else {
-			this.memoryCache  = {};
-		};
 
-		// Add documents to memory cache
-		var cacheSizeDelta = 0;
-		var memoryCache = this.memoryCache;
+		var changes = [];
 		docs.forEach(function(doc){
-			if( memoryCache[doc._id] ){
-				memoryCache[doc._id] = doc;
-			} else {
-				memoryCache[doc._id] = doc;
-				++cacheSizeDelta;
-			};
+			changes.push({
+				docId: doc._id
+				,doc: doc
+			});
 		});
-
-		this._updateMemoryCacheSize(cacheSizeDelta);
 		
-		if( mustStartThread ){
-			storeDocuments();
-		};
-
-		function storeDocuments(){
-			var doc = extractDocumentFromMemoryCache();
-			
-			if( doc ){
-				var transaction = _this.db.transaction(DB_STORE_DOCS, 'readwrite');
-			    var store = transaction.objectStore(DB_STORE_DOCS);
-			    var req = store.put(doc);
-			    req.onsuccess = storeDocuments;
-				req.onerror = storeDocuments;
-			} else {
-				// Done.
-				_this.memoryCache = null;
-			};
+		this.performChanges(changes);
+	},
+	
+	_clearDocumentStore: function(opts_){
+		var opts = $n2.extend({
+			onSuccess: function(){}
+			,onError: function(err){}
+		},opts_);
+		
+		var db = this.db;
+		
+		var transaction = db.transaction(DB_STORE_DOCS, 'readwrite');
+	    var store = transaction.objectStore(DB_STORE_DOCS);
+	    var req = store.clear();
+	    req.onsuccess = opts.onSuccess;
+		req.onerror = function(evt){
+			var error = this.error;
+			$n2.log('Unable to clear indexedDb document store',error);
+			opts.onError(error);
 		};
 		
-		function extractDocumentFromMemoryCache(){
-			if( _this.memoryCache ){
-				for(var docId in _this.memoryCache){
-					var doc = _this.memoryCache[docId];
-					delete _this.memoryCache[docId];
-					_this._updateMemoryCacheSize(-1);
-					return doc;
-				};
-			};
-			
-			return undefined;
+	},
+	
+	_storeDocument: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,onSuccess: function(){}
+			,onError: function(err){}
+		},opts_);
+
+		var db = this.db;
+		var doc = opts.doc;
+
+		var transaction = _this.db.transaction(DB_STORE_DOCS, 'readwrite');
+	    var store = transaction.objectStore(DB_STORE_DOCS);
+	    var req = store.put(doc);
+	    req.onsuccess = function (evt) {
+			opts.onSuccess();
+		};
+		req.onerror = function() {
+			opts.onError(this.error);
 		};
 	},
 	
-	deleteDocument: function(opts_){
+	_deleteDocument: function(opts_){
 		var opts = $n2.extend({
 			docId: null
 			,onSuccess: function(){}
@@ -334,14 +434,6 @@ var DocumentCache = $n2.Class({
 		},opts_);
 
 		var db = this.db;
-
-		// Check documents that are about to be stored
-		if( this.memoryCache ){
-			if( this.memoryCache[opts.docId] ){
-				delete this.memoryCache[docId];
-				this._updateMemoryCacheSize(-1);
-			};
-		};
 		
 		var transaction = db.transaction(DB_STORE_DOCS, 'readwrite');
 	    var store = transaction.objectStore(DB_STORE_DOCS);
@@ -354,16 +446,28 @@ var DocumentCache = $n2.Class({
 		};
 	},
 	
-	_updateMemoryCacheSize: function(delta){
-		this.memoryCacheSize += delta;
-		if( this.dispatchService ){
-			this.dispatchService.send(DH,{
-				type: 'waitReport'
-				,requester: this.id
-				,name: 'cacheDocuments'
-				,label: _loc('Caching documents')
-				,count: this.memoryCacheSize
-			});
+	_setUpdateSequence: function(opts_){
+		var opts = $n2.extend({
+			updateSequence: null
+			,onSuccess: function(){}
+			,onError: function(err){}
+		},opts_);
+
+		var db = this.db;
+		
+		if( typeof opts.updateSequence !== 'number' ){
+			throw new Error('updateSequence must be a number');
+		};
+
+		var transaction = db.transaction(DB_STORE_INFO, 'readwrite');
+	    var store = transaction.objectStore(DB_STORE_INFO);
+	    var req = store.put({
+	    	_id: 'sequenceNumber'
+	    	,updateSequence: opts.updateSequence
+	    });
+	    req.onsuccess = opts.onSuccess;
+		req.onerror = function(evt) {
+			opts.onError(this.error);
 		};
 	}
 });
