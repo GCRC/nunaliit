@@ -915,7 +915,7 @@ var Server = $n2.Class({
 				,remoteRevisionCountLimit: opts_.remoteRevisionCountLimit
 			});
 		} else {
-			return db;
+			return couchDatabase;
 		};
 	},
 	
