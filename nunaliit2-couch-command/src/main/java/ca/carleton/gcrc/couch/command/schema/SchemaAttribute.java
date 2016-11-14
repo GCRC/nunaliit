@@ -546,12 +546,12 @@ public class SchemaAttribute {
 			} else if( "custom".equals(type) ){
 				if( null != id && null != customType ){
 					pw.print("{{#"+schemaStructure+"}}");
-					pw.print("{{#"+id+"}}");
+					pw.print("{{#if "+id+"}}");
 					if( !isFirst ) pw.print(" ");
 					pw.print("<span class=\"n2s_custom\""
 							+ " nunaliit-custom=\""+customType+"\""
-							+ " nunaliit-selector=\"{{#:selector}}.{{/:selector}}\"></span>");
-					pw.print("{{/"+id+"}}");
+							+ " nunaliit-selector=\"{{#:selector}}"+id+"{{/:selector}}\"></span>");
+					pw.print("{{/if}}");
 					pw.print("{{/"+schemaStructure+"}}");
 					printed = true;
 				}
@@ -702,7 +702,7 @@ public class SchemaAttribute {
 			} else if( "custom".equals(type) ){
 				if( null != id && null != customType ){
 					pw.println("{{#"+schemaStructure+"}}");
-					pw.println("\t{{#"+id+"}}");
+					pw.println("\t{{#if "+id+"}}");
 
 					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
@@ -710,7 +710,7 @@ public class SchemaAttribute {
 					
 					pw.println("\t\t\t<div class=\"value n2s_custom\""
 							+ " nunaliit-custom=\""+customType+"\""
-							+ " nunaliit-selector=\"{{#:selector}}.{{/:selector}}\">"
+							+ " nunaliit-selector=\"{{#:selector}}"+id+"{{/:selector}}\">"
 							+ "</div>");
 
 					pw.println("\t\t\t<div class=\"end\"></div>");
@@ -718,7 +718,7 @@ public class SchemaAttribute {
 					pw.println("\t\t</div>");
 					
 					
-					pw.println("\t{{/"+id+"}}");
+					pw.println("\t{{/if}}");
 					pw.println("{{/"+schemaStructure+"}}");
 				}
 				
