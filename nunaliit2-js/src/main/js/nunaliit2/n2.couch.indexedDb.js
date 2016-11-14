@@ -408,15 +408,108 @@ var Database = $n2.Class({
 	},
 	
 	createDocument: function(opts_) {
-		this.wrappedDb.createDocument(opts_);
+		var _this = this;
+
+		// This request is dependent on the cache.
+		// Do not performed until initialized
+		if( !this.isInitialized ){
+			this.initializeListeners.push(function(){
+				_this.createDocument(opts_);
+			});
+			return;
+		};
+
+		// Modifies request
+		var opts = $n2.extend({},opts_,{
+			onSuccess: storeDocument
+		});
+
+		this.wrappedDb.createDocument(opts);
+		
+		function storeDocument(docInfo){
+			if( _this.isCachingEnabled ){
+				var doc = $n2.extend({},opts_.data);
+				doc._id = docInfo.id;
+				doc._rev = docInfo.rev;
+				var changes = [];
+				changes.push({
+					id: doc._id
+					,rev: doc._rev
+					,doc: doc
+				});
+				_this.documentCache.performChanges(changes);
+			};
+			opts_.onSuccess(docInfo);
+		};
 	},
 	
 	updateDocument: function(opts_) {
-		this.wrappedDb.updateDocument(opts_);
+		var _this = this;
+
+		// This request is dependent on the cache.
+		// Do not performed until initialized
+		if( !this.isInitialized ){
+			this.initializeListeners.push(function(){
+				_this.updateDocument(opts_);
+			});
+			return;
+		};
+		
+		// Modifies request
+		var opts = $n2.extend({},opts_,{
+			onSuccess: storeDocument
+		});
+
+		this.wrappedDb.updateDocument(opts);
+		
+		function storeDocument(docInfo){
+			if( _this.isCachingEnabled ){
+				var doc = $n2.extend({},opts_.data);
+				doc._id = docInfo.id;
+				doc._rev = docInfo.rev;
+				var changes = [];
+				changes.push({
+					id: doc._id
+					,rev: doc._rev
+					,doc: doc
+				});
+				_this.documentCache.performChanges(changes);
+			};
+			opts_.onSuccess(docInfo);
+		};
 	},
 	
 	deleteDocument: function(opts_) {
-		this.wrappedDb.deleteDocument(opts_);
+		var _this = this;
+
+		// This request is dependent on the cache.
+		// Do not performed until initialized
+		if( !this.isInitialized ){
+			this.initializeListeners.push(function(){
+				_this.deleteDocument(opts_);
+			});
+			return;
+		};
+		
+		// Modifies request
+		var opts = $n2.extend({},opts_,{
+			onSuccess: deleteDocument
+		});
+
+		this.wrappedDb.deleteDocument(opts);
+		
+		function deleteDocument(docInfo){
+			if( _this.isCachingEnabled ){
+				var changes = [];
+				changes.push({
+					id: opts_.data._id
+					,rev: docInfo.rev
+					,deleted: true
+				});
+				_this.documentCache.performChanges(changes);
+			};
+			opts_.onSuccess(docInfo);
+		};
 	},
 	
 	bulkDocuments: function(documents, options_) {
@@ -435,16 +528,20 @@ var Database = $n2.Class({
 			return;
 		};
 		
-		this._validateDocumentCache({
-			onSuccess: function(){
-				_this.documentCache.getDocument({
-					docId: opts_.docId
-					,onSuccess: checkDocument
-					,onError: performNative
-				});
-			}
-			,onError: performNative
-		});
+		if( opts_.skipCache ){
+			perfromNative();
+		} else {
+			this._validateDocumentCache({
+				onSuccess: function(){
+					_this.documentCache.getDocument({
+						docId: opts_.docId
+						,onSuccess: checkDocument
+						,onError: performNative
+					});
+				}
+				,onError: performNative
+			});
+		};
 		
 		function checkDocument(doc){
 			if( doc ) {
@@ -626,28 +723,41 @@ var Database = $n2.Class({
 			if( seenByDocId[docId] ){
 				// Already processed
 			} else {
+				var latestNumber;
 				var latestRev;
 				if( $n2.isArray(updateRecord.changes) ) {
 					updateRecord.changes.forEach(function(change){
-						latestRev = change.rev;
+						var number = getNumberFromRevision(change.rev);
+						
+						if( latestNumber === undefined ){
+							latestNumber = number;
+							latestRev = change.rev;
+						} else if( number > latestNumber ){
+							latestNumber = number;
+							latestRev = change.rev;
+						};
 					});
 				};
 				
-				if( updateRecord.deleted ){
+				if( updateRecord.deleted 
+				 && typeof latestRev === 'string' ){
 					// Remove from cache
-					cacheChanges.push({
-						docId: docId
+					var cacheChange = {
+						id: docId
+						,rev: latestRev
 						,deleted: true
-					});
-					seenByDocId[docId] = true;
+					};
+					cacheChanges.push(cacheChange);
+					seenByDocId[docId] = cacheChange;
 					
 				} else if( typeof latestRev === 'string' ){
 					// Remove from cache
-					cacheChanges.push({
-						docId: docId
+					var cacheChange = {
+						id: docId
 						,rev: latestRev
-					});
-					seenByDocId[docId] = true;
+					};
+					cacheChanges.push(cacheChange);
+					seenByDocId[docId] = cacheChange;
 				};
 			};
 		});
@@ -659,6 +769,12 @@ var Database = $n2.Class({
 		
 		// Record how far we have processed the change feed
 		this.documentCache.performChanges(cacheChanges);
+
+		function getNumberFromRevision(revision){
+			var splits = revision.split('-');
+			var number = 1 * splits[0];
+			return number;
+		};
 	},
 	
 	_validateDocumentCache: function(opts_){

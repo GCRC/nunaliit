@@ -55,7 +55,7 @@ var DocumentCache = $n2.Class({
 			throw new Error('When initializing document cache, update sequence must be a number');
 		};
 		
-		this._clearDocumentStore({
+		this.clearCache({
 			onSuccess: function(){
 				_this._setUpdateSequence({
 					updateSequence: updateSequence
@@ -134,29 +134,70 @@ var DocumentCache = $n2.Class({
 		
 		// Add changes to list of current changes
 		changes.forEach(function(change){
+			// Check change structure
+			if( typeof change !== 'object' ){
+				throw new Error('A cache change must be an object');
+			};
+			if( typeof change.updateSequence === 'number' ){
+				// OK
+
+			} else if( typeof change.id === 'string' ){
+				// This is a document change
+				if( typeof change.rev !== 'string' ){
+					throw new Error('A document cache change must have a string "rev" attribute');
+				};
+
+				if( change.doc === undefined ){
+					// OK
+				} else if( typeof change.doc !== 'object' ){
+					throw new Error('A document cache change must have an object "doc" attribute, if specified');
+				} else {
+					if( change.doc._id !== change.id ){
+						throw new Error('A document cache change that includes a document must match doc._id and change.id');
+					};
+					if( change.doc._rev !== change.rev ){
+						throw new Error('A document cache change that includes a document must match doc._rev and change.rev');
+					};
+				};
+
+				if( change.deleted === undefined ){
+					// OK
+				} else if( typeof change.deleted !== 'boolean' ){
+					throw new Error('A document cache change must have a boolean "deleted" attribute, if specified');
+				};
+
+			} else {
+				$n2.log('Invalid cache change',change);
+				throw new Error('Unrecognized cache change');
+			};
+			
 			_this.changes.push(change);
 			
-			if( change.docId ){
+			if( change.id ){
 				// This is a change to a document. Store the latest
 				// change for this document
-				var latest = _this.changesByDocId[change.docId];
-				
-				// If the new change is a change in revision and that
-				// the latest change is a store of the document with the
-				// same revision, then do not override the document with
-				// a revision
-				if( typeof change.rev === 'string'
-				 && latest 
-				 && latest.doc 
-				 && latest.doc._rev === change.rev ){
-					// Skip
+				var latest = _this.changesByDocId[change.id];
+				if( latest ){
+					// There is a change already scheduled for this document.
+					// Keep the latest
+					var latestNumber = _this._getNumberFromRevision(latest.rev);
+					var changeNumber = _this._getNumberFromRevision(change.rev);
+					if( changeNumber > latestNumber ){
+						_this.changesByDocId[change.id] = change;
+					};
 				} else {
-					_this.changesByDocId[change.docId] = change;
+					// There is currently no change associated with this document.
+					// Accept this one
+					_this.changesByDocId[change.id] = change;
 				};
 			};
 		});
 
+//$n2.log('Add '+changes.length+' changes. Total:'+this.changes.length);
+
+
 		if( mustStartThread ){
+//$n2.log('Start thread');
 			applyChange();
 		};
 		
@@ -171,12 +212,15 @@ var DocumentCache = $n2.Class({
 				});
 			};
 			
+			
 			if( _this.changes.length <= 0 ){
 				// Done applying all changes. Set changes to null to indicate
 				// that thread is terminated
 				_this.changes = null;
+//$n2.log('Stop thread');
 			} else {
 				var change = _this.changes.shift();
+//$n2.log('Apply changes '+_this.changes.length,change);
 				
 				if( change.updateSequence ){
 					_this._setUpdateSequence({
@@ -184,45 +228,59 @@ var DocumentCache = $n2.Class({
 						,onSuccess: applyChange
 						,onError: applyChange
 					});
-				} else if( change.docId ) {
+				} else if( change.id ) {
 					// This is a change related to a document. Apply the
 					// change only if it is the latest one
-					var latestChange = _this.changesByDocId[change.docId];
+					var latestChange = _this.changesByDocId[change.id];
 					if( change === latestChange ){
-						if( change.deleted ){
-							_this._deleteDocument({
-								docId: change.docId
-								,onSuccess: applyChange
-								,onError: applyChange
-							});
-						} else if( change.rev ){
-							// Get document from indexedDb. If the revision no longer
-							// matches, remove
-							_this.getDocument({
-								docId: change.docId
-								,onSuccess: function(doc){
-									if( doc ){
-										if( doc._rev !== change.rev ){
-											_this._deleteDocument({
-												docId: opts.docId
+						// This is the latest change. Apply
+						delete _this.changesByDocId[change.id];
+
+						// Get entry from cache
+						_this._getCacheEntry({
+							docId: change.id
+							,onSuccess: function(cacheEntry){
+								if( cacheEntry ){
+									// There is an entry in the cache. Figure out which one
+									// to store
+									var cacheNumber = _this._getNumberFromRevision(cacheEntry.rev);
+									var changeNumber = _this._getNumberFromRevision(change.rev);
+									if( cacheNumber > changeNumber ){
+										// Cache is more recent. Do nothing
+										applyChange();
+									} else if( cacheNumber < changeNumber ){
+										// Cache is older than change. Save the change
+										_this._storeCacheEntry({
+											cacheEntry: change
+											,onSuccess: applyChange
+											,onError: applyChange
+										});
+									} else {
+										// At this point, the cache and the change are at the same
+										// level. If the cache does not have a document, store it
+										// if available
+										if( change.doc && !cacheEntry.doc ){
+											_this._storeCacheEntry({
+												cacheEntry: change
 												,onSuccess: applyChange
 												,onError: applyChange
 											});
+										} else {
+											// Nothing to do
+											applyChange();
 										};
 									};
-								}
-								,onError: applyChange
-							});
-						} else if( change.doc ){
-							_this._storeDocument({
-								doc: change.doc
-								,onSuccess: applyChange
-								,onError: applyChange
-							});
-						} else {
-							$n2.log('Unrecognized change to document cache',change);
-							applyChange();
-						};
+								} else {
+									// There is no entry in the cache. Store this one.
+									_this._storeCacheEntry({
+										cacheEntry: change
+										,onSuccess: applyChange
+										,onError: applyChange
+									});
+								};
+							}
+						});
+						
 					} else {
 						// This is not the latest change. Do not apply.
 						applyChange();
@@ -242,58 +300,56 @@ var DocumentCache = $n2.Class({
 			,onError: function(err){}
 		},opts_);
 
-		var db = this.db;
+		var _this = this;
+
 		var docId = opts.docId;
+		if( typeof docId !== 'string' ){
+			throw new Error('DocumentCache.getDocument must have docId specified as an attribute');
+		};
 		
-		// Check documents that are about to be stored
-		var doc;
-		var isDeleted = false;
-		var validateRev;
+		// Check pending changes for this document
+		var pendingChange;
 		if( this.changesByDocId 
 		 && this.changesByDocId[docId] ){
-			// There is a pending change on this document
-			if( this.changesByDocId[docId].doc ){
-				// This document is about to be stored
-				doc = this.changesByDocId[docId].doc;
-			} else if( this.changesByDocId[docId].deleted ){
-				// This document is about to be deleted
-    			isDeleted = true;
-			} else if( this.changesByDocId[docId].rev ){
-				// If we find this document in the cache, we must first
-				// validate the revision before returning
-				validateRev = this.changesByDocId[docId].rev;
-			};
+			pendingChange = this.changesByDocId[docId];
 		};
 		
-		if( isDeleted ){
-			opts.onSuccess(undefined);
-		} else if( doc ){
-			opts.onSuccess(doc);
-		} else {
-			var transaction = db.transaction(DB_STORE_DOCS, 'readonly');
-		    var store = transaction.objectStore(DB_STORE_DOCS);
-		    var req = store.get(opts.docId);
-		    req.onsuccess = function (evt) {
-    	    	var doc = this.result;
-    	    	if( doc ){
-    	    		if( validateRev ){
-    	    			if( doc._rev === validateRev ){
-    	    				opts.onSuccess(doc);
-    	    			} else {
-    	    				opts.onSuccess(undefined);
-    	    			};
-    	    		} else {
-    	    			opts.onSuccess(doc);
-    	    		};
-    	    	} else {
-    	    		// Not in cache
-    				opts.onSuccess(undefined);
-    	    	};
-			};
-			req.onerror = function(evt) {
-				opts.onError(this.error);
-			};
-		};
+		this._getCacheEntry({
+			docId: docId
+			,onSuccess: function(cacheEntry){
+		    	if( cacheEntry && pendingChange ){
+		    		// We have to figure which entry we want to use, the one
+		    		// in memory (pending) or the one from the cache
+					var cacheNumber = _this._getNumberFromRevision(cacheEntry.rev);
+					var pendingNumber = _this._getNumberFromRevision(pendingChange.rev);
+					if( cacheNumber > pendingNumber ){
+						// Cache is more recent. Keep cache
+
+					} else if( cacheNumber < pendingNumber ){
+						// Cache is older than pending change. Use pending change.
+						cacheEntry = pendingChange;
+
+					} else {
+						// At this point, the cache and the change are at the same
+						// level. Use the one that offers a document
+						if( pendingChange.doc ){
+							cacheEntry = pendingChange;
+						};
+					};
+		    	};
+
+		    	if( !cacheEntry ){
+		    		// Not in cache
+					opts.onSuccess(undefined);
+		    	} else  if( cacheEntry.doc ){
+					opts.onSuccess(cacheEntry.doc);
+		    	} else {
+		    		// In cache, but no document
+					opts.onSuccess(undefined);
+		    	};
+			}
+			,onError: opts.onError
+		});
 	},
 	
 	getDocuments: function(opts_){
@@ -317,52 +373,16 @@ var DocumentCache = $n2.Class({
 	    		var docId = docIds[index];
 	    		++index;
 
-	    		// Check documents that are about to be stored
-    			var doc;
-    			var isDeleted = false;
-    			var validateRev;
-	    		if( _this.changesByDocId 
-	    		 && _this.changesByDocId[docId] ){
-	    			// There is a pending change on this document
-	    			if( _this.changesByDocId[docId].doc ){
-	    				// This document is about to be stored
-	    				doc = _this.changesByDocId[docId].doc;
-	    			} else if( _this.changesByDocId[docId].deleted ){
-	    				// This document is about to be deleted
-	        			isDeleted = true;
-	    			} else if( _this.changesByDocId[docId].rev ){
-	    				// If we find this document in the cache, we must first
-	    				// validate the revision before returning
-	    				validateRev = _this.changesByDocId[docId].rev;
-	    			};
-	    		};
-
-	    		if( isDeleted ){
-	    			// no need to fetch
-	    			setTimeout(fetch,0);
-	    		} else if( doc ){
-	    			docs.push(doc);
-	    			setTimeout(fetch,0);
-	    		} else {
-	    			// Obtain from database
-	    			var transaction = _this.db.transaction(DB_STORE_DOCS, 'readonly');
-	    		    var store = transaction.objectStore(DB_STORE_DOCS);
-		    	    var req = store.get(docId);
-		    	    req.onsuccess = function (evt) {
-		    	    	var doc = this.result;
+	    		_this.getDocument({
+    				docId: docId
+    				,onSuccess: function(doc){
 		    	    	if( doc ){
-		    	    		if( validateRev ){
-		    	    			if( doc._rev === validateRev ){
-					    			docs.push(doc);
-		    	    			};
-		    	    		} else {
-				    			docs.push(doc);
-		    	    		};
+			    			docs.push(doc);
 		    	    	};
-		    			fetch();
-		    		};
-		    		req.onerror = fetch;
-	    		};
+		    	    	fetch();
+    				}
+    				,onError: fetch
+	    		});
 	    	};
 	    };
 	},
@@ -377,12 +397,32 @@ var DocumentCache = $n2.Class({
 		var changes = [];
 		docs.forEach(function(doc){
 			changes.push({
-				docId: doc._id
+				id: doc._id
+				,rev: doc._rev
 				,doc: doc
 			});
 		});
 		
 		this.performChanges(changes);
+	},
+	
+	clearCache: function(opts_){
+		var opts = $n2.extend({
+			onSuccess: function(){}
+			,onError: function(err){}
+		},opts_);
+
+		var _this = this;
+
+		this._clearDocumentStore({
+			onSuccess: function(){
+				_this._clearInfoStore({
+					onSuccess: opts.onSuccess
+					,onError: opts.onError
+				});
+			}
+			,onError: opts.onError
+		});
 	},
 	
 	_clearDocumentStore: function(opts_){
@@ -405,19 +445,39 @@ var DocumentCache = $n2.Class({
 		
 	},
 	
-	_storeDocument: function(opts_){
+	_clearInfoStore: function(opts_){
 		var opts = $n2.extend({
-			doc: null
+			onSuccess: function(){}
+			,onError: function(err){}
+		},opts_);
+		
+		var db = this.db;
+		
+		var transaction = db.transaction(DB_STORE_INFO, 'readwrite');
+	    var store = transaction.objectStore(DB_STORE_INFO);
+	    var req = store.clear();
+	    req.onsuccess = opts.onSuccess;
+		req.onerror = function(evt){
+			var error = this.error;
+			$n2.log('Unable to clear indexedDb info store',error);
+			opts.onError(error);
+		};
+		
+	},
+	
+	_storeCacheEntry: function(opts_){
+		var opts = $n2.extend({
+			cacheEntry: null
 			,onSuccess: function(){}
 			,onError: function(err){}
 		},opts_);
 
 		var db = this.db;
-		var doc = opts.doc;
+		var cacheEntry = opts.cacheEntry;
 
-		var transaction = _this.db.transaction(DB_STORE_DOCS, 'readwrite');
+		var transaction = this.db.transaction(DB_STORE_DOCS, 'readwrite');
 	    var store = transaction.objectStore(DB_STORE_DOCS);
-	    var req = store.put(doc);
+	    var req = store.put(cacheEntry);
 	    req.onsuccess = function (evt) {
 			opts.onSuccess();
 		};
@@ -426,22 +486,26 @@ var DocumentCache = $n2.Class({
 		};
 	},
 	
-	_deleteDocument: function(opts_){
+	_getCacheEntry: function(opts_){
 		var opts = $n2.extend({
 			docId: null
-			,onSuccess: function(){}
+			,onSuccess: function(doc){}
 			,onError: function(err){}
 		},opts_);
 
+		var _this = this;
+
 		var db = this.db;
+		var docId = opts.docId;
 		
-		var transaction = db.transaction(DB_STORE_DOCS, 'readwrite');
+		var transaction = db.transaction(DB_STORE_DOCS, 'readonly');
 	    var store = transaction.objectStore(DB_STORE_DOCS);
-	    var req = store.delete(docId);
+	    var req = store.get(docId);
 	    req.onsuccess = function (evt) {
-			opts.onSuccess();
+	    	var cacheEntry = this.result;
+			opts.onSuccess(cacheEntry);
 		};
-		req.onerror = function() {
+		req.onerror = function(evt) {
 			opts.onError(this.error);
 		};
 	},
@@ -469,6 +533,12 @@ var DocumentCache = $n2.Class({
 		req.onerror = function(evt) {
 			opts.onError(this.error);
 		};
+	},
+	
+	_getNumberFromRevision: function(revision){
+		var splits = revision.split('-');
+		var number = 1 * splits[0];
+		return number;
 	}
 });
 
@@ -498,7 +568,7 @@ var IndexedDbConnection = $n2.Class({
 
 //===================================================
 var DB_NAME = 'nunaliit';
-var DB_VERSION = 2;
+var DB_VERSION = 4;
 function openIndexedDb(opts_){
 	var opts = $n2.extend({
 		onSuccess: function(indexedDbConnection){}
@@ -536,12 +606,19 @@ function openIndexedDb(opts_){
 
 		$n2.log('Upgrading indexDB '+DB_NAME+' from: '+oldVersion+' to: '+newVersion);
 
-		//db.deleteObjectStore(DB_STORE_DOCS);
 		if( oldVersion < 1 ){ // docs store has existed since version 1
 			db.createObjectStore(
 				DB_STORE_DOCS
 				,{ 
-					keyPath: '_id' 
+					keyPath: 'id' 
+				}
+			);
+		} else if( oldVersion < 4 ){ // change in structure since version 4
+			db.deleteObjectStore(DB_STORE_DOCS);
+			db.createObjectStore(
+				DB_STORE_DOCS
+				,{ 
+					keyPath: 'id' 
 				}
 			);
 		};

@@ -459,6 +459,7 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 		function loadConflictingDocument(retryAllowed){
 			_this.db.getDocument({
 				docId: doc._id
+				,skipCache: true
 				,onSuccess: function(conflictingDoc) {
 					patchConflictingDocument(conflictingDoc, retryAllowed);
 				}

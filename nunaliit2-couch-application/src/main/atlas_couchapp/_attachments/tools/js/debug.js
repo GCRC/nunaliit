@@ -136,6 +136,27 @@
 			if( this.debugConfiguration.isCouchDbCachingEnabled() ){
 				$cb.attr('checked','checked');
 			};
+			var $cb = $('<button>')
+				.text( _loc('Clear Cache') )
+				.appendTo($div)
+				.click(function(){
+					$n2.indexedDb.openIndexedDb({
+						onSuccess: function(indexedDbConnection){
+							var documentCache = indexedDbConnection.getDocumentCache({});
+							documentCache.clearCache({
+								onSuccess: function(){
+									alert('Cache was cleared');
+								}
+								,onError: function(err){
+									alert('Error while clearing cache: '+err);
+								}
+							});
+						}
+						,onError: function(err){
+							alert('Error while obtaining cache: '+err);
+						}
+					});
+				});
 
 			// Force slow connection handling
 			var $div = $('<div>')
