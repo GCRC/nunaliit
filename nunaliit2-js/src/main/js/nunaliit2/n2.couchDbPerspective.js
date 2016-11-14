@@ -203,57 +203,116 @@ var CouchSchemaDbSelector = $n2.Class(DbSelector, {
 });
 
 //--------------------------------------------------------------------------
-function createDbSelectorFromConfigObj(selectorConfig, atlasDesign){
-	var dbSelector = null;
+var CouchViewDbSelector = $n2.Class(DbSelector, {
+
+	viewName: null,
 	
-	if( selectorConfig ){
-		if( 'couchDbLayer' === selectorConfig.type ){
-			var dbSelectorOptions = {
-				layer: null
-				,atlasDesign: atlasDesign
-			};
-			
-			if( selectorConfig.options 
-			 && selectorConfig.options.layerId ){
-				dbSelectorOptions.layer = selectorConfig.options.layerId;
-			} else {
-				$n2.log('DbPerspective unable to create selector. "layerId" required for "couchDbLayer"');
-				return null;
-			};
+	name: null,
+	
+	atlasDesign: null,
 
-			if( selectorConfig.name ){
-				dbSelectorOptions.name = selectorConfig.name;
-			};
-			
-			dbSelector = new CouchLayerDbSelector(dbSelectorOptions);
-			
-		} else if( 'couchDbSchema' === selectorConfig.type ){
-				var dbSelectorOptions = {
-					schemaName: null
-					,atlasDesign: atlasDesign
-				};
-				
-				if( selectorConfig.options 
-				 && selectorConfig.options.schemaName ){
-					dbSelectorOptions.schemaName = selectorConfig.options.schemaName;
-				} else {
-					$n2.log('DbPerspective unable to create selector. "schemaName" required for "couchDbSchema"');
-					return null;
-				};
+	siteDesign: null,
 
-				if( selectorConfig.name ){
-					dbSelectorOptions.name = selectorConfig.name;
-				};
-				
-				dbSelector = new CouchSchemaDbSelector(dbSelectorOptions);
-			
-		} else {
-			$n2.log('Unknown DbPerspective selector type: '+selectorConfig.type);
+	isSiteView: null,
+	
+	includeValues: null,
+	
+	atlasDb: null,
+	
+	designDoc: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			view: null
+			,isSiteView: false
+			,name: null
+			,includeValues: false
+			,atlasDesign: null
+			,siteDesign: null
+		}, opts_);
+
+		DbSelector.prototype.initialize.call(this, opts_);
+		
+		this.viewName = opts.view;
+		this.name = opts.name;
+		this.atlasDesign = opts.atlasDesign;
+		this.siteDesign = opts.siteDesign;
+		this.isSiteView = opts.isSiteView;
+		this.includeValues = opts.includeValues;
+		
+		this.designDoc = this.atlasDesign;
+		if( this.isSiteView ){
+			this.designDoc = this.siteDesign;
 		};
-	};
+		
+		this.atlasDb = this.designDoc.getDatabase();
+	},
 	
-	return dbSelector;
-};
+	load: function(opts_){
+		var opts = $n2.extend({
+			onSuccess: function(docs){}
+			,onError: function(err){}
+		}, opts_);
+		
+		var _this = this;
+
+		this.designDoc.queryView({
+			viewName: this.viewName
+			,include_docs: true
+			,onSuccess: function(rows){
+				var docMap = {};
+
+				rows.forEach(function(row){
+					var docId = row.id;
+					if( !docMap[docId] ){
+						docMap[docId] = [];
+					};
+					docMap[docId].push(row);
+				});
+
+				loadDocsFromMap(docMap);
+			}
+			,onError: opts.onError
+		});
+		
+		function loadDocsFromMap(docMap){
+			// Make array of docIds from map
+			var docIds = [];
+			for(var docId in docMap){
+				docIds.push(docId);
+			};
+
+			_this.atlasDb.getDocuments({
+				docIds: docIds
+				,onSuccess: function(docs){
+					if( _this.includeValues ){
+						docs.forEach(function(doc){
+							if( !doc.__view ){
+								doc.__view = {};
+							};
+							doc.__view[_this.viewName] = docMap[doc._id];
+						});
+					};
+
+					opts.onSuccess(docs);
+				}
+				,onError: opts.onError
+			});
+		};
+	},
+	
+	isDocValid: function(doc){
+		return true;
+	},
+	
+	getLabel: function(){
+		if( this.name ){
+			return this.name;
+		};
+		
+		return this.viewName;
+	}
+});
 
 //--------------------------------------------------------------------------
 /**
@@ -269,6 +328,8 @@ var DbPerspective = $n2.Class({
 	dispatchService: null,
 	
 	atlasDesign: null,
+	
+	siteDesign: null,
 	
 	modelId: null,
 	
@@ -293,6 +354,7 @@ var DbPerspective = $n2.Class({
 		
 		this.dispatchService = opts.dispatchService;
 		this.atlasDesign = opts.atlasDesign;
+		this.siteDesign = opts.siteDesign;
 		this.modelId = opts.modelId;
 		
 		this.dbSelectors = [];
@@ -352,12 +414,79 @@ var DbPerspective = $n2.Class({
 		});
 	},
 	
-	addDbSelectorFromConfigObject: function(configObj){
-		var selector = createDbSelectorFromConfigObj(configObj, this.atlasDesign);
-		if( selector ){
-			this.addDbSelector(selector,configObj);
+	addDbSelectorFromConfigObject: function(selectorConfig){
+		var dbSelector = null;
+		
+		if( selectorConfig ){
+			if( 'couchDbLayer' === selectorConfig.type ){
+				var dbSelectorOptions = {
+					layer: null
+					,atlasDesign: this.atlasDesign
+				};
+				
+				if( selectorConfig.options 
+				 && selectorConfig.options.layerId ){
+					dbSelectorOptions.layer = selectorConfig.options.layerId;
+				} else {
+					$n2.log('DbPerspective unable to create selector. "layerId" required for "couchDbLayer"');
+					return null;
+				};
+
+				if( selectorConfig.name ){
+					dbSelectorOptions.name = selectorConfig.name;
+				};
+				
+				dbSelector = new CouchLayerDbSelector(dbSelectorOptions);
+				
+			} else if( 'couchDbSchema' === selectorConfig.type ){
+					var dbSelectorOptions = {
+						schemaName: null
+						,atlasDesign: this.atlasDesign
+					};
+					
+					if( selectorConfig.options 
+					 && selectorConfig.options.schemaName ){
+						dbSelectorOptions.schemaName = selectorConfig.options.schemaName;
+					} else {
+						$n2.log('DbPerspective unable to create selector. "schemaName" required for "couchDbSchema"');
+						return null;
+					};
+
+					if( selectorConfig.name ){
+						dbSelectorOptions.name = selectorConfig.name;
+					};
+					
+					dbSelector = new CouchSchemaDbSelector(dbSelectorOptions);
+					
+			} else if( 'couchDbView' === selectorConfig.type ){
+					var dbSelectorOptions = {};
+
+					if( selectorConfig.options ){
+						for(var key in selectorConfig.options){
+							dbSelectorOptions[key] = selectorConfig.options[key];
+						};
+					};
+					
+					if( typeof dbSelectorOptions.view !== 'string' ){
+						$n2.log('DbPerspective unable to create selector. "view" is a required string option for "couchDbView"');
+						return null;
+					};
+					
+					dbSelectorOptions.atlasDesign = this.atlasDesign;
+					dbSelectorOptions.siteDesign = this.siteDesign;
+
+					dbSelector = new CouchViewDbSelector(dbSelectorOptions);
+				
+			} else {
+				$n2.log('Unknown DbPerspective selector type: '+selectorConfig.type);
+			};
 		};
-		return selector;
+
+		if( dbSelector ){
+			this.addDbSelector(dbSelector, selectorConfig);
+		};
+		
+		return dbSelector;
 	},
 	
 	addSelectorListener: function(listener){
@@ -643,6 +772,40 @@ var DbPerspective = $n2.Class({
 });
 
 //--------------------------------------------------------------------------
+function handleModelCreate(m){
+	if( 'couchDb' === m.modelType 
+	 || 'couchDbDataSource' === m.modelType ){
+
+		var options = {
+			modelId: m.modelId
+		};
+		
+		if( m && m.config ){
+			options.atlasDesign = m.config.atlasDesign;
+			options.siteDesign = m.config.siteDesign;
+			
+			if( m.config.directory ){
+				options.dispatchService = m.config.directory.dispatchService;
+			};
+		};
+		
+		var dbPerspective = new $n2.couchDbPerspective.DbPerspective(options);
+		
+		// Load layers
+		if( m.modelOptions 
+		 && m.modelOptions.selectors ){
+			var selectors = m.modelOptions.selectors;
+			for(var i=0,e=selectors.length; i<e; ++i){
+				var selectorConfig = selectors[i];
+				dbPerspective.addDbSelectorFromConfigObject(selectorConfig);
+			};
+		};
+		
+		m.created = true;
+	};
+};
+
+//--------------------------------------------------------------------------
 var DbPerspectiveChooser = $n2.Class({
 	
 	elemId: null,
@@ -840,6 +1003,7 @@ $n2.couchDbPerspective = {
 	DbPerspective: DbPerspective
 	,DbSelector: DbSelector
 	,CouchLayerDbSelector: CouchLayerDbSelector
+	,handleModelCreate: handleModelCreate
 	,DbPerspectiveChooser: DbPerspectiveChooser
 	,HandleWidgetAvailableRequests: HandleWidgetAvailableRequests
 	,HandleWidgetDisplayRequests: HandleWidgetDisplayRequests

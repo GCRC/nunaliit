@@ -615,14 +615,9 @@ var Service = $n2.Class({
 			if( $n2.modelLayer && typeof $n2.modelLayer.handleModelCreate === 'function' ){
 				$n2.modelLayer.handleModelCreate(m, addr, dispatcher);
 			};
-			
-			try {
-				if( 'couchDb' === m.modelType 
-				 || 'couchDbDataSource' === m.modelType ){
-			        this._createCouchDbModel(m);
-			    };
-			} catch(err) {
-				$n2.log('Error while creating model '+m.modelType+'/'+m.modelId+': '+err);
+
+			if( $n2.couchDbPerspective && typeof $n2.couchDbPerspective.handleModelCreate === 'function' ){
+				$n2.couchDbPerspective.handleModelCreate(m, addr, dispatcher);
 			};
 
 		} else if( 'modelGetState' === m.type ){
@@ -669,40 +664,6 @@ var Service = $n2.Class({
 			this.modelIds.forEach(function(modelId){
 				m.modelIds.push(modelId);
 			});
-		};
-	},
-	
-	_createCouchDbModel: function(m){
-		if( $n2.couchDbPerspective 
-		 && $n2.couchDbPerspective.DbPerspective ){
-			var options = {
-				modelId: m.modelId
-			};
-			
-			if( m && m.config ){
-				options.atlasDesign = m.config.atlasDesign;
-				
-				if( m.config.directory ){
-					options.dispatchService = m.config.directory.dispatchService;
-				};
-			};
-			
-			var dbPerspective = new $n2.couchDbPerspective.DbPerspective(options);
-			
-			// Load layers
-			if( m.modelOptions 
-			 && m.modelOptions.selectors ){
-				var selectors = m.modelOptions.selectors;
-				for(var i=0,e=selectors.length; i<e; ++i){
-					var selectorConfig = selectors[i];
-					dbPerspective.addDbSelectorFromConfigObject(selectorConfig);
-				};
-			};
-			
-			m.created = true;
-
-		} else {
-			throw 'DbPerspective is not available';
 		};
 	}
 });

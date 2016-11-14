@@ -57,6 +57,10 @@ var DesignDoc = $n2.Class({
 		this.couchDesignDoc = opts.couchDesignDoc;
 		this.db = opts.db;
 	},
+
+	getDatabase: function(){
+		return this.db;
+	},
 	
 	getQueryUrl: function(opts_){
 		return this.couchDesignDoc.getQueryUrl(opts_);

@@ -332,11 +332,13 @@ var Session = $n2.Class({
 // =============================================
 
 var designDoc = $n2.Class({
-	ddUrl: null
+	ddUrl: null,
 	
-	,ddName: null
+	ddName: null,
 	
-	,initialize: function(opts_) {
+	db: null,
+	
+	initialize: function(opts_) {
 		var opts = $n2.extend({
 			ddUrl: null
 			,ddName: null
@@ -346,9 +348,13 @@ var designDoc = $n2.Class({
 		this.ddUrl = opts.ddUrl;
 		this.ddName = opts.ddName;
 		this.db = opts.db;
-	}
+	},
 	
-	,getQueryUrl: function(opts_){
+	getDatabase: function(){
+		return this.db;
+	},
+	
+	getQueryUrl: function(opts_){
 		var opts = $.extend(true, {
 				viewName: null
 				,listName: null
@@ -361,9 +367,9 @@ var designDoc = $n2.Class({
 		} else {
 			return this.ddUrl + '_view/' + opts.viewName;
 		};
-	}
+	},
 
-	,queryView: function(options_) {
+	queryView: function(options_) {
 		var opts = $.extend(true, {
 				viewName: null
 				,listName: null
