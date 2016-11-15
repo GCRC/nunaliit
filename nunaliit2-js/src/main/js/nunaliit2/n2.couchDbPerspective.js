@@ -203,118 +203,6 @@ var CouchSchemaDbSelector = $n2.Class(DbSelector, {
 });
 
 //--------------------------------------------------------------------------
-var CouchViewDbSelector = $n2.Class(DbSelector, {
-
-	viewName: null,
-	
-	name: null,
-	
-	atlasDesign: null,
-
-	siteDesign: null,
-
-	isSiteView: null,
-	
-	includeValues: null,
-	
-	atlasDb: null,
-	
-	designDoc: null,
-	
-	initialize: function(opts_){
-		var opts = $n2.extend({
-			view: null
-			,isSiteView: false
-			,name: null
-			,includeValues: false
-			,atlasDesign: null
-			,siteDesign: null
-		}, opts_);
-
-		DbSelector.prototype.initialize.call(this, opts_);
-		
-		this.viewName = opts.view;
-		this.name = opts.name;
-		this.atlasDesign = opts.atlasDesign;
-		this.siteDesign = opts.siteDesign;
-		this.isSiteView = opts.isSiteView;
-		this.includeValues = opts.includeValues;
-		
-		this.designDoc = this.atlasDesign;
-		if( this.isSiteView ){
-			this.designDoc = this.siteDesign;
-		};
-		
-		this.atlasDb = this.designDoc.getDatabase();
-	},
-	
-	load: function(opts_){
-		var opts = $n2.extend({
-			onSuccess: function(docs){}
-			,onError: function(err){}
-		}, opts_);
-		
-		var _this = this;
-
-		this.designDoc.queryView({
-			viewName: this.viewName
-			,include_docs: true
-			,onSuccess: function(rows){
-				var docMap = {};
-
-				rows.forEach(function(row){
-					var docId = row.id;
-					if( !docMap[docId] ){
-						docMap[docId] = [];
-					};
-					docMap[docId].push(row);
-				});
-
-				loadDocsFromMap(docMap);
-			}
-			,onError: opts.onError
-		});
-		
-		function loadDocsFromMap(docMap){
-			// Make array of docIds from map
-			var docIds = [];
-			for(var docId in docMap){
-				docIds.push(docId);
-			};
-
-			_this.atlasDb.getDocuments({
-				docIds: docIds
-				,onSuccess: function(docs){
-					if( _this.includeValues ){
-						docs.forEach(function(doc){
-							if( !doc.__view ){
-								doc.__view = {};
-							};
-							doc.__view[_this.viewName] = docMap[doc._id];
-						});
-					};
-
-					opts.onSuccess(docs);
-				}
-				,onError: opts.onError
-			});
-		};
-	},
-	
-	isDocValid: function(doc){
-		return true;
-	},
-	
-	getLabel: function(){
-		if( this.name ){
-			return this.name;
-		};
-		
-		return this.viewName;
-	}
-});
-
-//--------------------------------------------------------------------------
 /**
  * This class accepts a number of instances of DbSelector and manages the content
  * found from the database, via those selectors. It also accepts listeners
@@ -457,25 +345,6 @@ var DbPerspective = $n2.Class({
 					};
 					
 					dbSelector = new CouchSchemaDbSelector(dbSelectorOptions);
-					
-			} else if( 'couchDbView' === selectorConfig.type ){
-					var dbSelectorOptions = {};
-
-					if( selectorConfig.options ){
-						for(var key in selectorConfig.options){
-							dbSelectorOptions[key] = selectorConfig.options[key];
-						};
-					};
-					
-					if( typeof dbSelectorOptions.view !== 'string' ){
-						$n2.log('DbPerspective unable to create selector. "view" is a required string option for "couchDbView"');
-						return null;
-					};
-					
-					dbSelectorOptions.atlasDesign = this.atlasDesign;
-					dbSelectorOptions.siteDesign = this.siteDesign;
-
-					dbSelector = new CouchViewDbSelector(dbSelectorOptions);
 				
 			} else {
 				$n2.log('Unknown DbPerspective selector type: '+selectorConfig.type);
@@ -772,6 +641,344 @@ var DbPerspective = $n2.Class({
 });
 
 //--------------------------------------------------------------------------
+/**
+ * This class is a document source (document model that fetches documents
+ * remoetly) that loads documents given a specified view.
+ */
+var ModelCouchDbView = $n2.Class({
+	dispatchService: null,
+	
+	atlasDesign: null,
+	
+	siteDesign: null,
+	
+	modelId: null,
+	
+	viewName: null,
+
+	isSiteView: null,
+
+	includeValues: null,
+	
+	designDoc: null,
+	
+	atlasDb: null,
+
+	cacheByDocId: null,
+
+	docsById: null,
+	
+	loadingCount: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dispatchService: null
+			,atlasDesign: null
+			,modelId: null
+			,view: null
+			,isSiteView: false
+			,includeValues: true
+		}, opts_);
+
+		var _this = this;
+		
+		this.dispatchService = opts.dispatchService;
+		this.atlasDesign = opts.atlasDesign;
+		this.siteDesign = opts.siteDesign;
+		this.modelId = opts.modelId;
+		this.viewName = opts.view;
+		this.isSiteView = opts.isSiteView;
+		this.includeValues = opts.includeValues;
+		
+		if( typeof this.viewName !== 'string' ){
+			throw new Error('Model "couchDbView" requires a string parameter "view"');
+		};
+		
+		this.designDoc = this.atlasDesign;
+		if( this.isSiteView ){
+			this.designDoc = this.siteDesign;
+		};
+		
+		this.atlasDb = this.designDoc.getDatabase();
+		
+		this.docsById = {};
+		this.cacheByDocId = {};
+		this.loadingCount = 0;
+		
+		if( !this.modelId ){
+			this.modelId = $n2.getUniqueId();
+		};
+		
+		if( this.dispatchService ) {
+			var fn = function(m){
+				_this._handleMessage(m);
+			};
+			
+			this.dispatchService.register(DH, 'documentContentCreated', fn);
+			this.dispatchService.register(DH, 'documentContentUpdated', fn);
+			this.dispatchService.register(DH, 'documentDeleted', fn);
+//			this.dispatchService.register(DH, 'findIsAvailable', fn);
+			this.dispatchService.register(DH, 'documentVersion', fn);
+			this.dispatchService.register(DH, 'cacheRetrieveDocument', fn);
+			this.dispatchService.register(DH, 'modelGetInfo', fn);
+			this.dispatchService.register(DH, 'modelGetState', fn);
+		};
+		
+		this._loadView();
+		
+		$n2.log('ModelCouchDbView',this);
+	},
+	
+	
+	isLoading: function(){
+		return (this.loadingCount > 0);
+	},
+	
+	_getDocVisibility: function(doc){
+		var status = NOT_VALID_NOT_VISIBLE;
+		
+		for(var i=0,e=this.dbSelectors.length; i<e; ++i){
+			var selectorInfo = this.dbSelectors[i];
+			var s = selectorInfo.selector;
+			if( s.isDocValid(doc) ){
+				status = VALID_NOT_VISIBLE;
+				
+				if( selectorInfo.visible ){
+					return VALID_VISIBLE;
+				};
+			};
+		};
+
+		return status;
+	},
+	
+	_loadView: function(opts_){
+		var opts = $n2.extend({
+			onSuccess: function(docInfoByDocId){}
+			,onError: function(err){}
+		},opts_);
+		
+		var _this = this;
+
+		++this.loadingCount;
+		this._reportStateUpdate([],[],[]);
+		
+		this.designDoc.queryView({
+			viewName: this.viewName
+			,include_docs: false
+			,onSuccess: function(rows){
+				var docMap = {};
+
+				rows.forEach(function(row){
+					var docId = row.id;
+					if( !docMap[docId] ){
+						docMap[docId] = [];
+					};
+					docMap[docId].push(row);
+				});
+
+				loadDocsFromMap(docMap);
+			}
+			,onError: function(err){
+				$n2.log('Unable to load CouchDb view: '+_this.viewName, err);
+				--this.loadingCount;
+				this._reportStateUpdate([],[],[]);
+			}
+		});
+		
+		function loadDocsFromMap(docMap){
+			// Make array of docIds from map
+			var docIds = [];
+			for(var docId in docMap){
+				docIds.push(docId);
+			};
+
+			_this.atlasDb.getDocuments({
+				docIds: docIds
+				,onSuccess: function(docs){
+					_this.cacheByDocId = {};
+					var docInfoByDocId = {};
+					docs.forEach(function(doc){
+						var docId = doc._id;
+
+						_this.cacheByDocId[docId] = doc;
+
+						// Clone document to add view information
+						var values = docMap[docId];
+						var clone = _this._computeClone(doc, values);
+						docInfoByDocId[docId] = {
+							doc: doc
+							,clone: clone
+							,values: values
+						};
+					});
+
+					--this.loadingCount;
+
+					_this._docsLoaded(docInfoByDocId);
+				}
+				,onError: function(err){
+					$n2.log('Unable to fetch documents for CouchDb view: '+_this.viewName, err);
+					--this.loadingCount;
+					this._reportStateUpdate([],[],[]);
+				}
+			});
+		};
+	},
+	
+	_computeClone: function(doc, values){
+		if( this.includeValues ){
+			var clone = $n2.extend({},doc);
+			clone.__view = {};
+			clone.__view[this.viewName] = values;
+			return clone;
+		} else {
+			return doc;
+		};
+	},
+
+	_docsLoaded: function(docInfoMap){
+		var added = [];
+		var updated = [];
+		var removed = [];
+		
+		// Detect updated and removed documents
+		for(var docId in this.docsById){
+			var oldDoc;
+			if( this.docsById[docId] ){
+				oldDoc = this.docsById[docId].clone;
+			};
+			var newDoc;
+			if( docInfoMap[docId] ){
+				newDoc = docInfoMap[docId].clone;
+			};
+
+			if( newDoc ){
+				// This document persists. Check if revision changed
+				if( newDoc._rev === oldDoc._rev ){
+					// Nothing changed
+				} else {
+					// This document has changed
+					updated.push(newDoc);
+				};
+				
+			} else {
+				// This is a removed document
+				removed.push(oldDoc);
+			};
+		};
+		
+		// Detect added documents
+		for(var docId in docInfoMap){
+			var oldDoc;
+			if( this.docsById[docId] ){
+				oldDoc = this.docsById[docId].clone;
+			};
+			var newDoc;
+			if( docInfoMap[docId] ){
+				newDoc = docInfoMap[docId].clone;
+			};
+
+			if( !oldDoc ){
+				// This was added
+				added.push(newDoc);
+			};
+		};
+		
+		// Swap to new map
+		this.docsById = docInfoMap;
+		
+		this._reportStateUpdate(added, updated, removed);
+	},
+	
+	_handleMessage: function(m){
+		if( 'documentContentCreated' === m.type 
+		 || 'documentContentUpdated' === m.type ){
+			if( m.doc ){
+				var docId = m.docId;
+				if( this.cacheByDocId[docId] ){
+					this.cacheByDocId[docId] = m.doc;
+				};
+				
+				// Need to reload view
+				this._loadView();
+			};
+
+		} else if( 'documentDeleted' === m.type ){
+			var docId = m.docId;
+			if( this.cacheByDocId[docId] ){
+				delete this.cacheByDocId[docId];
+			};
+
+			var docInfo = this.docsById[docId];
+			if( docInfo ){
+				delete this.docsById[docId];
+				
+				var removed = [docInfo.clone];
+				this._reportStateUpdate([], [], removed);
+			};
+
+		} else if( 'documentVersion' === m.type ) {
+			var cachedDoc = this.cacheByDocId[m.docId];
+			if( cachedDoc 
+			 && cachedDoc._rev !== m.rev ){
+				delete this.cacheByDocId[m.docId];
+			};
+
+		} else if( 'cacheRetrieveDocument' === m.type ) {
+			var cachedDoc = this.cacheByDocId[m.docId];
+			if( cachedDoc ){
+				m.doc = cachedDoc;
+			};
+			
+		} else if( 'modelGetInfo' === m.type ) {
+			if( m.modelId === this.modelId ){
+				m.modelInfo = {
+					modelId: this.modelId
+					,modelType: 'couchDb'
+					,parameters: {}
+					,_instance: this
+				};
+			};
+			
+		} else if( 'modelGetState' === m.type ) {
+			if( m.modelId === this.modelId ){
+				var added = [];
+				for(var docId in this.docsById){
+					var docInfo = this.docsById[docId];
+					var doc = docInfo.clone;
+					added.push(doc);
+				};
+
+				m.state = {
+					added: added
+					,updated: []
+					,removed: []
+					,loading: this.isLoading()
+				};
+			};
+		};
+	},
+	
+	_reportStateUpdate: function(added, updated, removed){
+		var stateUpdate = {
+			added: added
+			,updated: updated
+			,removed: removed
+			,loading: this.isLoading()
+		};
+
+		if( this.dispatchService ){
+			this.dispatchService.send(DH,{
+				type: 'modelStateUpdated'
+				,modelId: this.modelId
+				,state: stateUpdate
+			});
+		};
+	}
+});
+
+//--------------------------------------------------------------------------
 function handleModelCreate(m){
 	if( 'couchDb' === m.modelType 
 	 || 'couchDbDataSource' === m.modelType ){
@@ -789,7 +996,7 @@ function handleModelCreate(m){
 			};
 		};
 		
-		var dbPerspective = new $n2.couchDbPerspective.DbPerspective(options);
+		var dbPerspective = new DbPerspective(options);
 		
 		// Load layers
 		if( m.modelOptions 
@@ -800,6 +1007,31 @@ function handleModelCreate(m){
 				dbPerspective.addDbSelectorFromConfigObject(selectorConfig);
 			};
 		};
+		
+		m.created = true;
+
+	} else if( 'couchDbView' === m.modelType  ){
+
+		var options = {};
+		
+		if( m.modelOptions ){
+			for(var key in m.modelOptions){
+				options[key] = m.modelOptions[key];
+			};
+		};
+
+		options.modelId = m.modelId;
+		
+		if( m.config ){
+			options.atlasDesign = m.config.atlasDesign;
+			options.siteDesign = m.config.siteDesign;
+			
+			if( m.config.directory ){
+				options.dispatchService = m.config.directory.dispatchService;
+			};
+		};
+		
+		new ModelCouchDbView(options);
 		
 		m.created = true;
 	};

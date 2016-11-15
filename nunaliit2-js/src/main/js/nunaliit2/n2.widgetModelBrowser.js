@@ -98,7 +98,7 @@ var ModelBrowserWidget = $n2.Class({
 			var f = function(m, addr, dispatcher){
 				_this._handle(m, addr, dispatcher);
 			};
-			this.dispatchService.register(DH, 'documentContent', f);
+			//this.dispatchService.register(DH, 'documentContent', f);
 		};
 		
 		$n2.log('ModelBrowserWidget', this);
@@ -107,16 +107,16 @@ var ModelBrowserWidget = $n2.Class({
 	},
 	
 	_handle: function(m, addr, dispatcher){
-		if( 'documentContent' === m.type ){
-			if( m.docId === this.selectedDocId ){
-				// Get document tree pane
-				var $dialog = $('#'+this.browserId);
-				var $treePane = $dialog.find('.n2widget_modelBrowser_document_tree');
-				
-				$treePane.empty();
-				new $n2.tree.ObjectTree($treePane, m.doc);
-			};
-		};
+//		if( 'documentContent' === m.type ){
+//			if( m.docId === this.selectedDocId ){
+//				// Get document tree pane
+//				var $dialog = $('#'+this.browserId);
+//				var $treePane = $dialog.find('.n2widget_modelBrowser_document_tree');
+//				
+//				$treePane.empty();
+//				new $n2.tree.ObjectTree($treePane, m.doc);
+//			};
+//		};
 	},
 	
 	_getElem: function(){
@@ -329,19 +329,34 @@ var ModelBrowserWidget = $n2.Class({
 				.text( _loc('Document: {id}', {id:this.selectedDocId}) )
 				.appendTo($docPane);
 
-			$('<div>')
+			var $treePane = $('<div>')
 				.addClass('n2widget_modelBrowser_document_tree')
 				.attr('nunaliit-document', this.selectedDocId)
 				.appendTo($docPane);
 			
-			// Request this document
-			if( this.dispatchService ){
-				this.dispatchService.send(DH,{
-					type: 'requestDocument'
-					,docId: this.selectedDocId
-				});
+			var doc = this._getDocumentFromSelectedModel(this.selectedDocId);
+
+			new $n2.tree.ObjectTree($treePane, doc);
+		};
+	},
+	
+	_getDocumentFromSelectedModel: function(docId){
+		// Get current state
+		var sourceState = $n2.model.getModelState({
+			dispatchService: this.dispatchService
+			,modelId: this.selectedModelId
+		});
+
+		if( sourceState.added ){
+			for(var i=0,e=sourceState.added.length; i<e; ++i){
+				var doc = sourceState.added[i];
+				if( docId === doc._id ){
+					return doc;
+				};
 			};
 		};
+
+		return undefined;
 	}
 });
 
