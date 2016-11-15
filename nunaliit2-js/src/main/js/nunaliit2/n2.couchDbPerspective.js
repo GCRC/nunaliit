@@ -734,24 +734,6 @@ var ModelCouchDbView = $n2.Class({
 		return (this.loadingCount > 0);
 	},
 	
-	_getDocVisibility: function(doc){
-		var status = NOT_VALID_NOT_VISIBLE;
-		
-		for(var i=0,e=this.dbSelectors.length; i<e; ++i){
-			var selectorInfo = this.dbSelectors[i];
-			var s = selectorInfo.selector;
-			if( s.isDocValid(doc) ){
-				status = VALID_NOT_VISIBLE;
-				
-				if( selectorInfo.visible ){
-					return VALID_VISIBLE;
-				};
-			};
-		};
-
-		return status;
-	},
-	
 	_loadView: function(opts_){
 		var opts = $n2.extend({
 			onSuccess: function(docInfoByDocId){}
@@ -935,7 +917,7 @@ var ModelCouchDbView = $n2.Class({
 			if( m.modelId === this.modelId ){
 				m.modelInfo = {
 					modelId: this.modelId
-					,modelType: 'couchDb'
+					,modelType: 'couchDbView'
 					,parameters: {}
 					,_instance: this
 				};
