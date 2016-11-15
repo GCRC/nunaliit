@@ -46,6 +46,17 @@ public class SimplifiedGeometryActions {
 			attObj.put("id", docId);
 			attObj.put("attName", attName);
 			
+			// Get revision
+			try {
+				JSONObject dbDoc = couchDb.getDocument(docId);
+				String revision = dbDoc.getString("_rev");
+				attObj.put("rev", revision);
+				
+			} catch (Exception e) {
+				logger.error("Error obtaining document "+docId,e);
+				attObj.put("error", true);
+			}
+			
 			try {
 				ByteArrayOutputStream baos = new ByteArrayOutputStream();
 				couchDb.downloadAttachment(docId, attName, baos);
@@ -113,6 +124,17 @@ public class SimplifiedGeometryActions {
 			
 			attObj.put("id", docId);
 			attObj.put("attName", attName);
+			
+			// Get revision
+			try {
+				JSONObject dbDoc = couchDb.getDocument(docId);
+				String revision = dbDoc.getString("_rev");
+				attObj.put("rev", revision);
+				
+			} catch (Exception e) {
+				logger.error("Error obtaining document "+docId,e);
+				attObj.put("error", true);
+			}
 			
 			try {
 				ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -188,9 +210,21 @@ public class SimplifiedGeometryActions {
 			ps.print(JSONObject.quote(docId));
 			ps.print(",\"attName\":");
 			ps.print(JSONObject.quote(attName));
+			
+			// Get revision
+			try {
+				JSONObject dbDoc = couchDb.getDocument(docId);
+				String revision = dbDoc.getString("_rev");
+				ps.print(",\"rev\":");
+				ps.print(JSONObject.quote(revision));
+				
+			} catch (Exception e) {
+				logger.error("Error obtaining document "+docId,e);
+			}
+
 			ps.print(",\"att\":\"");
 			attachmentOs.setEscapingString(true);
-
+			
 			try {
 				couchDb.downloadAttachment(docId, attName, ps);
 				
