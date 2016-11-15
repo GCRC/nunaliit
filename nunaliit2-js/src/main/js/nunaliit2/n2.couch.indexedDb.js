@@ -145,6 +145,8 @@ var Database = $n2.Class({
 	
 	documentCache: null,
 	
+	dbName: null,
+	
 	dbChangeNotifier: null,
 	
 	dispatchService: null,
@@ -213,9 +215,9 @@ var Database = $n2.Class({
 		function receivedDbInfo(info){
 			var error = false;
 			
-			var dbName = info.db_name;
-			if( typeof dbName !== 'string' ){
-				$n2.log('Error with database information. db_name should be a string: '+dbName);
+			_this.dbName = info.db_name;
+			if( typeof _this.dbName !== 'string' ){
+				$n2.log('Error with database information. db_name should be a string: '+_this.dbName);
 				error = true;
 			};
 
@@ -228,10 +230,9 @@ var Database = $n2.Class({
 			if( error ){
 				errorInitializing();
 			} else {
-				_this.documentCache.dbName = dbName;
-				
 				_this.documentCache.getUpdateSequence({
-					onSuccess: function(cacheSequenceNumber){
+					dbName: _this.dbName
+					,onSuccess: function(cacheSequenceNumber){
 						compareUpdateSequences(updateSequence, cacheSequenceNumber);
 					}
 					,onError: function(err){
@@ -247,7 +248,8 @@ var Database = $n2.Class({
 				// The cache has never been used. There is no document in cache.
 				// Initialize cache with current update sequence
 				_this.documentCache.initializeCache({
-					updateSequence: dbUpdateSequence
+					dbName: _this.dbName
+					,updateSequence: dbUpdateSequence
 					,onSuccess: function(){
 						done();
 					}
@@ -267,7 +269,8 @@ var Database = $n2.Class({
 				// than the cache. This should never happen. We can not trust the cache.
 				// Reinitialize the cache
 				_this.documentCache.initializeCache({
-					updateSequence: dbUpdateSequence
+					dbName: _this.dbName
+					,updateSequence: dbUpdateSequence
 					,onSuccess: function(){
 						done();
 					}
@@ -437,7 +440,8 @@ var Database = $n2.Class({
 				doc._rev = docInfo.rev;
 				var changes = [];
 				changes.push({
-					id: doc._id
+					dbName: _this.dbName
+					,id: doc._id
 					,rev: doc._rev
 					,doc: doc
 				});
@@ -473,7 +477,8 @@ var Database = $n2.Class({
 				doc._rev = docInfo.rev;
 				var changes = [];
 				changes.push({
-					id: doc._id
+					dbName: _this.dbName
+					,id: doc._id
 					,rev: doc._rev
 					,doc: doc
 				});
@@ -506,7 +511,8 @@ var Database = $n2.Class({
 			if( _this.isCachingEnabled ){
 				var changes = [];
 				changes.push({
-					id: opts_.data._id
+					dbName: _this.dbName
+					,id: opts_.data._id
 					,rev: docInfo.rev
 					,deleted: true
 				});
@@ -538,7 +544,8 @@ var Database = $n2.Class({
 			this._validateDocumentCache({
 				onSuccess: function(){
 					_this.documentCache.getDocument({
-						docId: opts_.docId
+						dbName: _this.dbName
+						,docId: opts_.docId
 						,onSuccess: checkDocument
 						,onError: performNative
 					});
@@ -566,7 +573,14 @@ var Database = $n2.Class({
 		
 		function storeDocument(doc){
 			if( _this.isCachingEnabled ){
-				_this.documentCache.updateDocument(doc);
+				var changes = [];
+				changes.push({
+					dbName: _this.dbName
+					,id: doc._id
+					,rev: doc._rev
+					,doc: doc
+				});
+				_this.documentCache.performChanges(changes);
 			};
 			opts_.onSuccess(doc);
 		};
@@ -605,7 +619,8 @@ var Database = $n2.Class({
 			onSuccess: function(){
 				// Are the requested documents in cache?
 				_this.documentCache.getDocuments({
-					docIds: opts_.docIds
+					dbName: _this.dbName
+					,docIds: opts_.docIds
 					,onSuccess: documentsFromCache
 					,onError: performNative
 				});
@@ -665,7 +680,18 @@ var Database = $n2.Class({
 						});
 						
 						if( _this.isCachingEnabled ){
-							_this.documentCache.updateDocuments(docs);
+							var changes = [];
+
+							docs.forEach(function(doc){
+								changes.push({
+									dbName: _this.dbName
+									,id: doc._id
+									,rev: doc._rev
+									,doc: doc
+								});
+							});
+
+							_this.documentCache.performChanges(changes);
 						};
 						
 						performRemoteRequest();
@@ -724,51 +750,49 @@ var Database = $n2.Class({
 		results.forEach(function(updateRecord){
 			var docId = updateRecord.id;
 			
-			if( seenByDocId[docId] ){
-				// Already processed
-			} else {
-				var latestNumber;
-				var latestRev;
-				if( $n2.isArray(updateRecord.changes) ) {
-					updateRecord.changes.forEach(function(change){
-						var number = getNumberFromRevision(change.rev);
-						
-						if( latestNumber === undefined ){
-							latestNumber = number;
-							latestRev = change.rev;
-						} else if( number > latestNumber ){
-							latestNumber = number;
-							latestRev = change.rev;
-						};
-					});
-				};
-				
-				if( updateRecord.deleted 
-				 && typeof latestRev === 'string' ){
-					// Remove from cache
-					var cacheChange = {
-						id: docId
-						,rev: latestRev
-						,deleted: true
-					};
-					cacheChanges.push(cacheChange);
-					seenByDocId[docId] = cacheChange;
+			var latestNumber;
+			var latestRev;
+			if( $n2.isArray(updateRecord.changes) ) {
+				updateRecord.changes.forEach(function(change){
+					var number = getNumberFromRevision(change.rev);
 					
-				} else if( typeof latestRev === 'string' ){
-					// Remove from cache
-					var cacheChange = {
-						id: docId
-						,rev: latestRev
+					if( latestNumber === undefined ){
+						latestNumber = number;
+						latestRev = change.rev;
+					} else if( number > latestNumber ){
+						latestNumber = number;
+						latestRev = change.rev;
 					};
-					cacheChanges.push(cacheChange);
-					seenByDocId[docId] = cacheChange;
+				});
+			};
+			
+			if( updateRecord.deleted 
+			 && typeof latestRev === 'string' ){
+				// Remove from cache
+				var cacheChange = {
+					dbName: _this.dbName
+					,id: docId
+					,rev: latestRev
+					,deleted: true
 				};
+				cacheChanges.push(cacheChange);
+				seenByDocId[docId] = cacheChange;
+				
+			} else if( typeof latestRev === 'string' ){
+				// Remove from cache
+				var cacheChange = {
+					dbName: _this.dbName
+					,id: docId
+					,rev: latestRev
+				};
+				cacheChanges.push(cacheChange);
 			};
 		});
 
 		// Update sequence
 		cacheChanges.push({
-			updateSequence: lastSeq
+			dbName: _this.dbName
+			,updateSequence: lastSeq
 		});
 		
 		// Record how far we have processed the change feed
@@ -794,7 +818,8 @@ var Database = $n2.Class({
 		};
 		
 		this.documentCache.getUpdateSequence({
-			onSuccess: cacheSequenceNumber
+			dbName: _this.dbName
+			,onSuccess: cacheSequenceNumber
 			,onError: function(err){
 				$n2.log('Error while validating cache (retrieve cache sequence number). '+err);
 				opts.onError(err);

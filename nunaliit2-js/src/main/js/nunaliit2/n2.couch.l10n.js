@@ -242,10 +242,12 @@ var LocalizationService = $n2.Class({
 			var lang = $n2.l10n.getLocale().lang;
 			
 			// Load already translated strings
-			var url = this.designDoc.ddUrl 
-				+ '_list/' + this.scriptList
-				+ '/' + this.translatedViewName
-				+ '?startkey="' + lang
+			var url = this.designDoc.getQueryUrl({
+				viewName: this.translatedViewName
+				,listName: this.scriptList
+			});
+
+			url += '?startkey="' + lang
 				+ '"&endkey="' + lang
 				+ '"'
 				+ '&include_docs=true&reduce=false'

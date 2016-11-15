@@ -863,7 +863,10 @@ var Database = $n2.Class({
 			,opts_
 		);
 		
-		if( !ddOpts.ddUrl ) {
+		if( typeof ddOpts.ddUrl !== 'string' ) {
+			if( typeof ddOpts.ddName !== 'string' ){
+				throw new Error('Database.getDesignDoc() must specify ddName as a string if ddUrl is not');
+			};
 			ddOpts.ddUrl = this.dbUrl + '_design/' + ddOpts.ddName + '/';
 		};
 		

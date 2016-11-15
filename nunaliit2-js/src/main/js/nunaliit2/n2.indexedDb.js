@@ -11,8 +11,6 @@ var DocumentCache = $n2.Class({
 
 	db: null,
 
-	dbName: null,
-	
 	dispatchService: null,
 
 	id: null,
@@ -24,12 +22,10 @@ var DocumentCache = $n2.Class({
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			db: null
-			,dbName: null // not likely known at time of creation
 			,dispatchService: null
 		},opts_);
 		
 		this.db = opts.db;
-		this.dbName = opts.dbName;
 		this.dispatchService = opts.dispatchService;
 
 		this.id = $n2.getUniqueId();
@@ -43,12 +39,18 @@ var DocumentCache = $n2.Class({
 	 */
 	initializeCache: function(opts_){
 		var opts = $n2.extend({
-			updateSequence: null
+			dbName: null
+			,updateSequence: null
 			,onSuccess: function(){}
 			,onError: function(err){}
 		},opts_);
 		
 		var _this = this;
+
+		var dbName = opts.dbName;
+		if( typeof dbName !== 'string' ){
+			throw new Error('When initializing document cache, dd name must be a string');
+		};
 		
 		var updateSequence = opts.updateSequence;
 		if( typeof updateSequence !== 'number' ){
@@ -58,7 +60,8 @@ var DocumentCache = $n2.Class({
 		this.clearCache({
 			onSuccess: function(){
 				_this._setUpdateSequence({
-					updateSequence: updateSequence
+					dbName: dbName
+					,updateSequence: updateSequence
 					,onSuccess: function(){
 						this.changes = null;
 						this.changesByDocId = {};
@@ -79,17 +82,24 @@ var DocumentCache = $n2.Class({
 	
 	getUpdateSequence: function(opts_){
 		var opts = $n2.extend({
-			onSuccess: function(updateSequence){}
+			dbName: null
+			,onSuccess: function(updateSequence){}
 			,onError: function(err){}
 		},opts_);
 
 		var db = this.db;
 		
+		if( typeof opts.dbName !== 'string' ){
+			throw new Error('DocumentCache.getUpdateSequence() must have a string attribute for "dbName"');
+		};
+		
 		// Check changes
 		var updateSequence;
 		if( this.changes ){
 			this.changes.forEach(function(change){
-				if( change && change.updateSequence ){
+				if( change 
+				 && typeof change.updateSequence === 'number'
+				 && change.dbName === opts.dbName ){
 					updateSequence = change.updateSequence;
 				};
 			});
@@ -100,7 +110,7 @@ var DocumentCache = $n2.Class({
 		} else {
 			var transaction = db.transaction(DB_STORE_INFO, 'readonly');
 		    var store = transaction.objectStore(DB_STORE_INFO);
-		    var req = store.get('sequenceNumber');
+		    var req = store.get(opts.dbName+'|sequenceNumber');
 		    req.onsuccess = function (evt) {
 		    	var value = this.result;
 		    	if( typeof value === 'object' 
@@ -138,8 +148,11 @@ var DocumentCache = $n2.Class({
 			if( typeof change !== 'object' ){
 				throw new Error('A cache change must be an object');
 			};
+			if( typeof change.dbName !== 'string' ){
+				throw new Error('A cache change must have a string "dbName" attribute');
+			};
 			if( typeof change.updateSequence === 'number' ){
-				// OK
+				// This is an update sequence request
 
 			} else if( typeof change.id === 'string' ){
 				// This is a document change
@@ -171,6 +184,29 @@ var DocumentCache = $n2.Class({
 				throw new Error('Unrecognized cache change');
 			};
 			
+			// Clean up document from extra information that could have been
+			// added by Nunaliit like __n2Source
+			if( change.doc ){
+				var clone = {};
+				for(var key in change.doc){
+					if( key.length >= 2 
+					 && key[0] === '_' 
+					 && key[1] === '_' ){
+						// Do not copy keys that starts with two underscores
+					} else {
+						clone[key] = change.doc[key];
+					};
+				};
+				change.doc = clone;
+			};
+			
+			// Convert id for internal use
+			if( typeof change.id === 'string' 
+			 && typeof change.dbName === 'string' ){
+				change.id = change.dbName + '|' + change.id;
+				delete change.dbName;
+			};
+			
 			_this.changes.push(change);
 			
 			if( change.id ){
@@ -193,11 +229,8 @@ var DocumentCache = $n2.Class({
 			};
 		});
 
-//$n2.log('Add '+changes.length+' changes. Total:'+this.changes.length);
-
 
 		if( mustStartThread ){
-//$n2.log('Start thread');
 			applyChange();
 		};
 		
@@ -217,14 +250,13 @@ var DocumentCache = $n2.Class({
 				// Done applying all changes. Set changes to null to indicate
 				// that thread is terminated
 				_this.changes = null;
-//$n2.log('Stop thread');
 			} else {
 				var change = _this.changes.shift();
-//$n2.log('Apply changes '+_this.changes.length,change);
 				
 				if( change.updateSequence ){
 					_this._setUpdateSequence({
-						updateSequence: change.updateSequence
+						dbName: change.dbName
+						,updateSequence: change.updateSequence
 						,onSuccess: applyChange
 						,onError: applyChange
 					});
@@ -238,7 +270,7 @@ var DocumentCache = $n2.Class({
 
 						// Get entry from cache
 						_this._getCacheEntry({
-							docId: change.id
+							id: change.id
 							,onSuccess: function(cacheEntry){
 								if( cacheEntry ){
 									// There is an entry in the cache. Figure out which one
@@ -295,27 +327,35 @@ var DocumentCache = $n2.Class({
 	
 	getDocument: function(opts_){
 		var opts = $n2.extend({
-			docId: null
+			dbName: null
+			,docId: null
 			,onSuccess: function(doc){}
 			,onError: function(err){}
 		},opts_);
 
 		var _this = this;
 
+		var dbName = opts.dbName;
+		if( typeof dbName !== 'string' ){
+			throw new Error('DocumentCache.getDocument() must have dbName specified as a string attribute');
+		};
+
 		var docId = opts.docId;
 		if( typeof docId !== 'string' ){
-			throw new Error('DocumentCache.getDocument must have docId specified as an attribute');
+			throw new Error('DocumentCache.getDocument() must have docId specified as a string attribute');
 		};
+		
+		var entryId = dbName + '|' + docId;
 		
 		// Check pending changes for this document
 		var pendingChange;
 		if( this.changesByDocId 
-		 && this.changesByDocId[docId] ){
-			pendingChange = this.changesByDocId[docId];
+		 && this.changesByDocId[entryId] ){
+			pendingChange = this.changesByDocId[entryId];
 		};
 		
 		this._getCacheEntry({
-			docId: docId
+			id: entryId
 			,onSuccess: function(cacheEntry){
 		    	if( cacheEntry && pendingChange ){
 		    		// We have to figure which entry we want to use, the one
@@ -354,13 +394,19 @@ var DocumentCache = $n2.Class({
 	
 	getDocuments: function(opts_){
 		var opts = $n2.extend({
-			docIds: null
+			dbName: null
+			,docIds: null
 			,onSuccess: function(docs){}
 			,onError: function(err){}
 		},opts_);
 
 		var _this = this;
 		
+		var dbName = opts.dbName;
+		if( typeof dbName !== 'string' ){
+			throw new Error('DocumentCache.getDocuments() must have dbName specified as a string attribute');
+		};
+
 	    var docs = [];
 	    var docIds = opts.docIds.slice(); // clone
 	    var index = 0;
@@ -374,7 +420,8 @@ var DocumentCache = $n2.Class({
 	    		++index;
 
 	    		_this.getDocument({
-    				docId: docId
+	    			dbName: dbName
+    				,docId: docId
     				,onSuccess: function(doc){
 		    	    	if( doc ){
 			    			docs.push(doc);
@@ -385,25 +432,6 @@ var DocumentCache = $n2.Class({
 	    		});
 	    	};
 	    };
-	},
-	
-	updateDocument: function(doc){
-		this.updateDocuments([doc]);
-	},
-	
-	updateDocuments: function(docs){
-		var _this = this;
-
-		var changes = [];
-		docs.forEach(function(doc){
-			changes.push({
-				id: doc._id
-				,rev: doc._rev
-				,doc: doc
-			});
-		});
-		
-		this.performChanges(changes);
 	},
 	
 	clearCache: function(opts_){
@@ -488,7 +516,7 @@ var DocumentCache = $n2.Class({
 	
 	_getCacheEntry: function(opts_){
 		var opts = $n2.extend({
-			docId: null
+			id: null
 			,onSuccess: function(doc){}
 			,onError: function(err){}
 		},opts_);
@@ -496,11 +524,11 @@ var DocumentCache = $n2.Class({
 		var _this = this;
 
 		var db = this.db;
-		var docId = opts.docId;
+		var id = opts.id;
 		
 		var transaction = db.transaction(DB_STORE_DOCS, 'readonly');
 	    var store = transaction.objectStore(DB_STORE_DOCS);
-	    var req = store.get(docId);
+	    var req = store.get(id);
 	    req.onsuccess = function (evt) {
 	    	var cacheEntry = this.result;
 			opts.onSuccess(cacheEntry);
@@ -512,13 +540,17 @@ var DocumentCache = $n2.Class({
 	
 	_setUpdateSequence: function(opts_){
 		var opts = $n2.extend({
-			updateSequence: null
+			dbName: null
+			,updateSequence: null
 			,onSuccess: function(){}
 			,onError: function(err){}
 		},opts_);
 
 		var db = this.db;
 		
+		if( typeof opts.dbName !== 'string' ){
+			throw new Error('dbName must be a string');
+		};
 		if( typeof opts.updateSequence !== 'number' ){
 			throw new Error('updateSequence must be a number');
 		};
@@ -526,7 +558,7 @@ var DocumentCache = $n2.Class({
 		var transaction = db.transaction(DB_STORE_INFO, 'readwrite');
 	    var store = transaction.objectStore(DB_STORE_INFO);
 	    var req = store.put({
-	    	_id: 'sequenceNumber'
+	    	_id: opts.dbName+'|sequenceNumber'
 	    	,updateSequence: opts.updateSequence
 	    });
 	    req.onsuccess = opts.onSuccess;
