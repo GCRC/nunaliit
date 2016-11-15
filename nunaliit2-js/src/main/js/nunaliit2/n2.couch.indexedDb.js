@@ -878,19 +878,19 @@ var Server = $n2.Class({
 	
 	wrappedServer: null,
 	
-	indexedDbConnection: null,
+	indexedDbService: null,
 	
 	dispatchService: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			couchServer: null
-			,indexedDbConnection: null
+			,indexedDbService: null
 			,dispatchService: null
 		},opts_);
 		
 		this.wrappedServer = opts.couchServer;
-		this.indexedDbConnection = opts.indexedDbConnection;
+		this.indexedDbService = opts.indexedDbService;
 		this.dispatchService = opts.dispatchService;
 	},
 
@@ -933,9 +933,7 @@ var Server = $n2.Class({
 	getDb: function(opts_) {
 		var couchDatabase = this.wrappedServer.getDb(opts_);
 		if( opts_.allowCaching ){
-			var documentCache = this.indexedDbConnection.getDocumentCache({
-				dispatchService: this.dispatchService
-			});
+			var documentCache = this.indexedDbService.getDocumentCache();
 			return new Database({
 				couchDb: couchDatabase
 				,documentCache: documentCache
@@ -983,33 +981,28 @@ var Server = $n2.Class({
 });
 
 //=============================================
+function getServer(opts_) {
+	var opts = $n2.extend({
+		couchServer: null
+		,indexedDbService: null
+		,dispatchService: null
+		,onSuccess: function(couchServer){}
+		,onError: function(err){}
+	},opts_);
+	
+	var server = new Server({
+		couchServer: opts.couchServer
+		,dispatchService: opts.dispatchService
+		,indexedDbService: opts.indexedDbService
+	});
+	
+	opts.onSuccess(server);
+};
+
+//=============================================
 
 $n2.couchIndexedDb = {
-	getServer: function(opts_) {
-		var opts = $n2.extend({
-			couchServer: null
-			,dispatchService: null
-			,onSuccess: function(couchServer){}
-			,onError: function(err){}
-		},opts_);
-		
-		$n2.indexedDb.openIndexedDb({
-			onSuccess: function(indexedDbConnection){
-
-				var server = new Server({
-					couchServer: opts.couchServer
-					,dispatchService: opts.dispatchService
-					,indexedDbConnection: indexedDbConnection
-				});
-				
-				opts.onSuccess(server);
-			}
-			,onError: function(cause){
-				var err = $n2.error.fromString('Error creating cached CouchDb server',cause);
-				opts.onError(err);
-			}
-		});
-	}
+	getServer: getServer
 };
 
 })(jQuery,nunaliit2);

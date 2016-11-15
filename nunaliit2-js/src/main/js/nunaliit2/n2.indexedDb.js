@@ -575,26 +575,28 @@ var DocumentCache = $n2.Class({
 });
 
 //===================================================
-var IndexedDbConnection = $n2.Class({
+var IndexedDbService = $n2.Class({
 
 	db: null,
+	
+	documentCache: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			db: null
+			,dispatchService: null
 		},opts_);
 		
 		this.db = opts.db;
+		
+		this.documentCache = new DocumentCache({
+			db: this.db
+			,dispatchService: opts.dispatchService
+		});
 	},
 
-	getDocumentCache: function(opts_){
-		var opts = $n2.extend({},opts_);
-		
-		opts.db = this.db;
-		
-		var docDb = new DocumentCache(opts);
-		
-		return docDb;
+	getDocumentCache: function(){
+		return this.documentCache;
 	}
 });
 
@@ -603,9 +605,14 @@ var DB_NAME = 'nunaliit';
 var DB_VERSION = 4;
 function openIndexedDb(opts_){
 	var opts = $n2.extend({
-		onSuccess: function(indexedDbConnection){}
+		dispatchService: null
+		,onSuccess: function(indexedDbService){}
 		,onError: function(err){}
 	},opts_);
+	
+	if( typeof indexedDB !== 'object' ){
+		opts.onError( new Error('IndexedDB not available in this browser') );
+	};
 
 	var req = indexedDB.open(DB_NAME, DB_VERSION);
 	req.onsuccess = function (evt) {
@@ -614,11 +621,12 @@ function openIndexedDb(opts_){
 		// db = req.result;
 		var db = this.result;
 		
-		var n2IndexDb = new IndexedDbConnection({
+		var indexedDbService = new IndexedDbService({
 			db: db
+			,dispatchService: opts.dispatchService
 		});
 
-		opts.onSuccess(n2IndexDb);
+		opts.onSuccess(indexedDbService);
 	};
 
 	req.onerror = function (evt) {

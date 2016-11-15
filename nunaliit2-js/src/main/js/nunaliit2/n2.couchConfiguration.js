@@ -339,24 +339,49 @@ function Configure(options_){
 		if( $n2.couch.isBadProxy() ){
 			$n2.log('Bad proxy circumvention requested');
 		};
+		
+		// Open Indexed DB
+		$n2.indexedDb.openIndexedDb({
+			dispatchService: configuration.directory.dispatchService
+			,onSuccess: function(indexedDbService){
+				configuration.directory.indexedDbService = indexedDbService;
+				indexedDbInitialized();
+			}
+			,onError: indexedDbInitialized
+		});
+	};
+
+	function indexedDbInitialized(){
 
 		// Initialize CouchDB
-		if( couchDbCachingEnabled ){
+		if( couchDbCachingEnabled
+		 && configuration.directory.indexedDbService ){
 	 	 	$n2.couch.initialize({
 	 	    	pathToServer: options.couchServerUrl
 	 	    	,onSuccess: function(couchServer){
 	 				$n2.couchIndexedDb.getServer({
 	 					couchServer: couchServer
 	 					,dispatchService: configuration.directory.dispatchService
+	 					,indexedDbService: configuration.directory.indexedDbService
 	 					,onSuccess: couchInitialized
+	 					,onError: function(err){
+	 				 		$n2.log('Error while initializing cached server.',err);
+	 				 		couchInitialized(couchServer);
+	 					}
 	 				});
 	 	    	}
+	 	 		,onError: couchInitError
 	 	 	});
 	 	} else {
 	 	 	$n2.couch.initialize({
 	 	    	pathToServer: options.couchServerUrl
 	 	    	,onSuccess: couchInitialized
+	 	    	,onError: couchInitError
 	 	 	});
+	 	};
+	 	
+	 	function couchInitError(err){
+	 		$n2.log('Unable to initialize with CouchDb server.',err);
 	 	};
 	};
 	
