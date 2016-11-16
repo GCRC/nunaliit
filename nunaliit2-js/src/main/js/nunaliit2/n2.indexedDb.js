@@ -178,6 +178,20 @@ var DocumentCache = $n2.Class({
 				} else if( typeof change.deleted !== 'boolean' ){
 					throw new Error('A document cache change must have a boolean "deleted" attribute, if specified');
 				};
+				
+				if( change.attachments === undefined ){
+					// OK
+				} else if( typeof change.attachments !== 'object' ){
+					throw new Error('If a document cache change contains a "attachments" attribute, it must be an object');
+				} else {
+					for(var attName in change.attachments){
+						var att = change.attachments[attName];
+						
+						if( typeof att !== 'string' ){
+							throw new Error('If a document cache change contains "attachments", they must be strings');
+						};
+					};
+				};
 
 			} else {
 				$n2.log('Invalid cache change',change);
@@ -211,7 +225,7 @@ var DocumentCache = $n2.Class({
 			
 			if( change.id ){
 				// This is a change to a document. Store the latest
-				// change for this document
+				// changes with the latest revision.
 				var latest = _this.changesByDocId[change.id];
 				if( latest ){
 					// There is a change already scheduled for this document.
@@ -219,7 +233,11 @@ var DocumentCache = $n2.Class({
 					var latestNumber = _this._getNumberFromRevision(latest.rev);
 					var changeNumber = _this._getNumberFromRevision(change.rev);
 					if( changeNumber > latestNumber ){
+						// This is a newer revision. Replace the one in cache
 						_this.changesByDocId[change.id] = change;
+					} else if( changeNumber === latestNumber ){
+						// This is the same revision. Merge the changes
+						_this._mergeChanges(latest, change);
 					};
 				} else {
 					// There is currently no change associated with this document.
@@ -264,48 +282,45 @@ var DocumentCache = $n2.Class({
 					// This is a change related to a document. Apply the
 					// change only if it is the latest one
 					var latestChange = _this.changesByDocId[change.id];
-					if( change === latestChange ){
+					if( latestChange
+					 && change.id === latestChange.id 
+					 && change.rev === latestChange.rev ){
 						// This is the latest change. Apply
 						delete _this.changesByDocId[change.id];
 
 						// Get entry from cache
 						_this._getCacheEntry({
-							id: change.id
+							id: latestChange.id
 							,onSuccess: function(cacheEntry){
 								if( cacheEntry ){
 									// There is an entry in the cache. Figure out which one
 									// to store
 									var cacheNumber = _this._getNumberFromRevision(cacheEntry.rev);
-									var changeNumber = _this._getNumberFromRevision(change.rev);
+									var changeNumber = _this._getNumberFromRevision(latestChange.rev);
 									if( cacheNumber > changeNumber ){
 										// Cache is more recent. Do nothing
 										applyChange();
 									} else if( cacheNumber < changeNumber ){
 										// Cache is older than change. Save the change
 										_this._storeCacheEntry({
-											cacheEntry: change
+											cacheEntry: latestChange
 											,onSuccess: applyChange
 											,onError: applyChange
 										});
 									} else {
 										// At this point, the cache and the change are at the same
-										// level. If the cache does not have a document, store it
-										// if available
-										if( change.doc && !cacheEntry.doc ){
-											_this._storeCacheEntry({
-												cacheEntry: change
-												,onSuccess: applyChange
-												,onError: applyChange
-											});
-										} else {
-											// Nothing to do
-											applyChange();
-										};
+										// level. Merge both and store the result
+										_this._mergeChanges(cacheEntry, latestChange);
+										_this._storeCacheEntry({
+											cacheEntry: cacheEntry
+											,onSuccess: applyChange
+											,onError: applyChange
+										});
 									};
 								} else {
 									// There is no entry in the cache. Store this one.
 									_this._storeCacheEntry({
-										cacheEntry: change
+										cacheEntry: latestChange
 										,onSuccess: applyChange
 										,onError: applyChange
 									});
@@ -314,7 +329,7 @@ var DocumentCache = $n2.Class({
 						});
 						
 					} else {
-						// This is not the latest change. Do not apply.
+						// This is not the latest change. Skip.
 						applyChange();
 					};
 				} else {
@@ -371,17 +386,15 @@ var DocumentCache = $n2.Class({
 
 					} else {
 						// At this point, the cache and the change are at the same
-						// level. Use the one that offers a document
-						if( pendingChange.doc ){
-							cacheEntry = pendingChange;
-						};
+						// level. Merge pending changes to cache entry
+						_this._mergeChanges(cacheEntry, pendingChange);
 					};
 		    	};
 
 		    	if( !cacheEntry ){
 		    		// Not in cache
 					opts.onSuccess(undefined);
-		    	} else  if( cacheEntry.doc ){
+		    	} else if( cacheEntry.doc ){
 					opts.onSuccess(cacheEntry.doc);
 		    	} else {
 		    		// In cache, but no document
@@ -432,6 +445,78 @@ var DocumentCache = $n2.Class({
 	    		});
 	    	};
 	    };
+	},
+	
+	getAttachment: function(opts_){
+		var opts = $n2.extend({
+			dbName: null
+			,docId: null
+			,attName: null
+			,onSuccess: function(att, rev){}
+			,onError: function(err){}
+		},opts_);
+
+		var _this = this;
+
+		var dbName = opts.dbName;
+		if( typeof dbName !== 'string' ){
+			throw new Error('DocumentCache.getAttachment() must have dbName specified as a string attribute');
+		};
+
+		var docId = opts.docId;
+		if( typeof docId !== 'string' ){
+			throw new Error('DocumentCache.getAttachment() must have docId specified as a string attribute');
+		};
+
+		var attName = opts.attName;
+		if( typeof attName !== 'string' ){
+			throw new Error('DocumentCache.getAttachment() must have attName specified as a string attribute');
+		};
+		
+		var entryId = dbName + '|' + docId;
+		
+		// Check pending changes for this document
+		var pendingChange;
+		if( this.changesByDocId 
+		 && this.changesByDocId[entryId] ){
+			pendingChange = this.changesByDocId[entryId];
+		};
+		
+		this._getCacheEntry({
+			id: entryId
+			,onSuccess: function(cacheEntry){
+		    	if( cacheEntry && pendingChange ){
+		    		// We have to figure which entry we want to use, the one
+		    		// in memory (pending) or the one from the cache
+					var cacheNumber = _this._getNumberFromRevision(cacheEntry.rev);
+					var pendingNumber = _this._getNumberFromRevision(pendingChange.rev);
+					if( cacheNumber > pendingNumber ){
+						// Cache is more recent. Keep cache
+
+					} else if( cacheNumber < pendingNumber ){
+						// Cache is older than pending change. Use pending change.
+						cacheEntry = pendingChange;
+
+					} else {
+						// At this point, the cache and the change are at the same
+						// level. Merge pending changes to cache entry
+						_this._mergeChanges(cacheEntry, pendingChange);
+					};
+		    	};
+
+		    	if( !cacheEntry ){
+		    		// Not in cache
+					opts.onSuccess(undefined);
+		    	} else  if( cacheEntry.attachments ){
+		    		var att = cacheEntry.attachments[attName];
+					opts.onSuccess(att, cacheEntry.rev);
+		    	} else {
+		    		// In cache, but no document
+					opts.onSuccess(undefined);
+		    	};
+			}
+			,onError: opts.onError
+		});
 	},
 	
 	clearCache: function(opts_){
@@ -571,6 +656,55 @@ var DocumentCache = $n2.Class({
 		var splits = revision.split('-');
 		var number = 1 * splits[0];
 		return number;
+	},
+	
+	_mergeChanges: function(targetChange, change){
+		if( typeof targetChange !== 'object' ){
+			throw new Error('DocumentCache._mergeChanges() targetChange must be an object');
+		};
+		if( typeof change !== 'object' ){
+			throw new Error('DocumentCache._mergeChanges() change must be an object');
+		};
+		if( typeof targetChange.id !== 'string' ){
+			throw new Error('DocumentCache._mergeChanges() targetChange.id must be a string');
+		};
+		if( targetChange.id !== change.id ){
+			throw new Error('DocumentCache._mergeChanges() targetChange.id and change.id must be the same');
+		};
+		if( typeof targetChange.rev !== 'string' ){
+			throw new Error('DocumentCache._mergeChanges() targetChange.rev must be a string');
+		};
+		if( targetChange.rev !== change.rev ){
+			throw new Error('DocumentCache._mergeChanges() targetChange.rev and change.rev must be the same');
+		};
+		
+		// Deal with deleted
+		if( targetChange.deleted ){
+			// Nothing to do
+
+		} else if( change.deleted ){
+			targetChange.deleted = true;
+			delete targetChange.doc;
+			delete targetChange.attachments;
+
+		} else {
+			// Copy document content
+			if( change.doc ){
+				targetChange.doc = change.doc;
+			};
+
+			// Copy attachments
+			if( change.attachments ){
+				if( !targetChange.attachments ){
+					targetChange.attachments = {};
+				};
+				
+				for(var attName in change.attachments){
+					targetChange.attachments[attName] = 
+						change.attachments[attName];
+				};
+			};
+		};
 	}
 });
 

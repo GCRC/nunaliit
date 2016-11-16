@@ -408,6 +408,17 @@ function Configure(options_){
 		configuration.atlasDesign = configuration.atlasDb.getDesignDoc({ddName:options.atlasDesignName});
 		configuration.siteDesign = configuration.atlasDb.getDesignDoc({ddName:options.siteDesignName});
 
+		configuration.atlasDb.getInfo({
+			onSuccess: function(dbInfo){
+				configuration.atlasDbName = dbInfo.db_name;
+				atlasDbInfoRetrieved();
+			}
+			,onError: atlasDbInfoRetrieved
+		});
+	};
+	
+	function atlasDbInfoRetrieved() {
+
 		configuration.directory.attachmentService = new $n2.couchAttachment.AttachmentService({
 			mediaRelativePath: options.mediaUrl
 			,dispatchService: configuration.directory.dispatchService
@@ -705,6 +716,8 @@ function Configure(options_){
 			,atlasDb: configuration.atlasDb
 			,dispatchService: configuration.directory.dispatchService
 			,customService: configuration.directory.customService
+			,indexedDbService: couchDbCachingEnabled ? configuration.directory.indexedDbService : null
+			,dbName: configuration.atlasDbName
 		});
 
 		if( $n2.tuioClient ){
