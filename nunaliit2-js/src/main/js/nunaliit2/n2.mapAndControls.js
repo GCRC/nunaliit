@@ -4630,6 +4630,7 @@ var MapAndControls = $n2.Class({
 		};
 		
 		// Reload layers that need it
+		var layerReloaded = false;
 		for(var layerId in layersToReload){
 			var layer = layersToReload[layerId];
 			
@@ -4660,6 +4661,13 @@ var MapAndControls = $n2.Class({
 //				$n2.log(''+g);
 //			};
 			layer.addFeatures(features);
+			
+			layerReloaded = true;
+		};
+		
+		if( !layerReloaded ){
+			// No work this time around.
+			this._refreshSimplifiedGeometries();
 		};
 		
 		function updateFeature(layer, f, simplifiedGeometryById, layersToReload){

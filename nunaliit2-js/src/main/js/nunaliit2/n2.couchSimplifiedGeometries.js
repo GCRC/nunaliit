@@ -180,14 +180,20 @@ var SimplifiedGeometryService = $n2.Class({
 				};
 			};
 			
-			if( _this.documentCache && _this.dbName ){
-				serverRequests = [];
-				cacheResults = [];
-				checkDocumentCache();
+			if( outstandingRequests.length <= 0 ){
+				// Nothing left to do
+				_this.sendingRequests = false;
+
 			} else {
-				// Fallback on server
-				serverRequests = outstandingRequests;
-				processServerRequests();
+				if( _this.documentCache && _this.dbName ){
+					serverRequests = [];
+					cacheResults = [];
+					checkDocumentCache();
+				} else {
+					// Fallback on server
+					serverRequests = outstandingRequests;
+					processServerRequests();
+				};
 			};
 		};
 		
@@ -205,10 +211,13 @@ var SimplifiedGeometryService = $n2.Class({
 						type: 'simplifiedGeometryReport'
 						,simplifiedGeometries: cacheResults
 					});
+					
+					cacheResults = [];
 				};
 				
 				// Continue sending requests to the server
 				processServerRequests();
+
 			} else {
 				var request = outstandingRequests.shift();
 				
@@ -249,7 +258,7 @@ var SimplifiedGeometryService = $n2.Class({
 			};
 		};
 
-		function processServerRequests(outstandingRequests){
+		function processServerRequests(){
 			var serverRequest = {
 				geometryRequests: serverRequests
 			};
@@ -275,38 +284,40 @@ var SimplifiedGeometryService = $n2.Class({
 				};
 			};
 			
-			if( serverRequest.geometryRequests.length <= 0 ){
-				_this.sendingRequests = false;
-				return;
+			if( serverRequest.geometryRequests.length > 0 ){
+				$.ajax({
+			    	url: _this.url + 'getAttachments'
+			    	,type: 'post'
+			    	,async: true
+			    	,data: JSON.stringify(serverRequest)
+			    	,contentType: 'application/json'
+			    	,dataType: 'json'
+			    	,success: function(jsonResp) {
+			    		if( jsonResp && jsonResp.geometries ) {
+			    			receiveSimplifiedGeometries(jsonResp.geometries);
+			    		} else {
+			    			// Did not receive anything
+			    			next();
+			    		};
+			    	}
+			    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+						$n2.log('Unable to get simplified geometries',serverRequest);
+						
+						// Remove one request
+						var id = undefined;
+						for(id in _this.pendingRequests){
+							break;
+						};
+						if( id ){
+							delete _this.pendingRequests[id];
+						};
+						
+						next();
+			    	}
+				});
+			} else {
+				next();
 			};
-
-			$.ajax({
-		    	url: _this.url + 'getAttachments'
-		    	,type: 'post'
-		    	,async: true
-		    	,data: JSON.stringify(serverRequest)
-		    	,contentType: 'application/json'
-		    	,dataType: 'json'
-		    	,success: function(jsonResp) {
-		    		if( jsonResp && jsonResp.geometries ) {
-		    			receiveSimplifiedGeometries(jsonResp.geometries);
-		    		};
-		    	}
-		    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
-					$n2.log('Unable to get simplified geometries',serverRequest);
-					
-					// Remove one request
-					var id = undefined;
-					for(id in _this.pendingRequests){
-						break;
-					};
-					if( id ){
-						delete _this.pendingRequests[id];
-					};
-					
-					next();
-		    	}
-			});
 		};
 		
 		function receiveSimplifiedGeometries(geometries){
