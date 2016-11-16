@@ -210,7 +210,7 @@ var SimplifiedGeometryService = $n2.Class({
 				// Continue sending requests to the server
 				processServerRequests();
 			} else {
-				var request = outstandingRequests.pop();
+				var request = outstandingRequests.shift();
 				
 				_this.documentCache.getAttachment({
 					dbName: _this.dbName
