@@ -157,8 +157,6 @@ var Database = $n2.Class({
 	
 	id: null,
 	
-	outstandingDocumentCount: null,
-	
 	outstandingRevisionCount: null,
 
 	isInitialized: null,
@@ -166,6 +164,10 @@ var Database = $n2.Class({
 	initializeListeners: null,
 
 	isCachingEnabled: null,
+	
+	fetchDocumentRequests: null,
+	
+	fetchDocumentRequestsByDocId: null,
 	
 	initialize: function(opts_) {
 		var opts = $n2.extend({
@@ -185,11 +187,12 @@ var Database = $n2.Class({
 		this.remoteRevisionCountLimit = opts.remoteRevisionCountLimit;
 		
 		this.id = $n2.getUniqueId();
-		this.outstandingDocumentCount = 0;
 		this.outstandingRevisionCount = 0;
 		this.isInitialized = false;
 		this.isCachingEnabled = false;
 		this.initializeListeners = [];
+		this.fetchDocumentRequests = null;
+		this.fetchDocumentRequestsByDocId = null;
 		
 		// Get info about this database
 		this.getInfo({
@@ -538,8 +541,40 @@ var Database = $n2.Class({
 			return;
 		};
 		
+		var skipCache = false;
+		var skipStore = false;
+		if( opts_.rev ){
+			// Asking for a specific revision
+			skipCache = true;
+			skipStore = true;
+		};
+		if( opts_.revs_info ){
+			// Asking for a revision information
+			skipCache = true;
+			skipStore = true;
+		};
+		if( opts_.revisions ){
+			// Asking for a revision information
+			skipCache = true;
+			skipStore = true;
+		};
+		if( opts_.conflicts ){
+			// Asking for a conflict information
+			skipCache = true;
+			skipStore = true;
+		};
+		if( opts_.deleted_conflicts ){
+			// Asking for a conflict information
+			skipCache = true;
+			skipStore = true;
+		};
 		if( opts_.skipCache ){
-			perfromNative();
+			// Specifically asking to skip cache
+			skipCache = true;
+		};
+		
+		if( skipCache ){
+			performNative();
 		} else {
 			this._validateDocumentCache({
 				onSuccess: function(){
@@ -572,7 +607,8 @@ var Database = $n2.Class({
 		};
 		
 		function storeDocument(doc){
-			if( _this.isCachingEnabled ){
+			// Attempt caching
+			if( _this.isCachingEnabled && !skipStore ){
 				var changes = [];
 				changes.push({
 					dbName: _this.dbName
@@ -582,6 +618,8 @@ var Database = $n2.Class({
 				});
 				_this.documentCache.performChanges(changes);
 			};
+
+			// Return document to client
 			opts_.onSuccess(doc);
 		};
 	},
@@ -598,121 +636,55 @@ var Database = $n2.Class({
 			return;
 		};
 
-		var docIdMap = {};
-		var docsToReturn = [];
-		var docIdsToFetchRemotely = [];
-
-		// Make a map of documents we wish to get
-		var count = 0;
-		opts_.docIds.forEach(function(docId){
-			if( docIdMap[docId] ){
-				// Already requested
-			} else {
-				docIdMap[docId] = true;
-				++count;
+		var opts = $.extend(true, {
+			docIds: null
+			,onSuccess: function(docs){}
+			,onError: function(errorMsg){ $n2.log(errorMsg); }
+		},opts_);
+		
+		if( !$n2.isArray(opts.docIds) ){
+			throw new Error('Database.getDocuments() docIds must be an array');
+		};
+		opts.docIds.forEach(function(docId){
+			if( typeof docId !== 'string' ){
+				throw new Error('Database.getDocuments() docIds[*] must be a string');
 			};
 		});
-
-		this._updateOutstandingDocumentCount(count);
 
 		this._validateDocumentCache({
 			onSuccess: function(){
-				// Are the requested documents in cache?
-				_this.documentCache.getDocuments({
-					dbName: _this.dbName
-					,docIds: opts_.docIds
-					,onSuccess: documentsFromCache
-					,onError: performNative
+				_this._performDocumentFetchRequest({
+				    docIds: opts.docIds
+				    ,onSuccess: opts.onSuccess
+				    ,onError: opts.onError
 				});
 			}
-			,onError: performNative
+			,onError: performRemoteRequest
 		});
 
-		function documentsFromCache(cachedDocs){
-			if( cachedDocs && cachedDocs.length > 0 ){
-				cachedDocs.forEach(function(cachedDoc){
-					var cachedDocId = cachedDoc._id;
-
-					docIdMap[cachedDocId] = cachedDoc;
-					docsToReturn.push(cachedDoc);
-				});
-			};
-
-			performNative();
-		};
-		
-		function performNative(){
-			// Figure out which docIds to fetch
-			for(var docIdToFetch in docIdMap){
-				if( docIdMap[docIdToFetch] === true ){
-					docIdsToFetchRemotely.push(docIdToFetch);
-				};
-			};
-
-			// Discount the number of documents received from the cache
-			var delta = docIdsToFetchRemotely.length - count;
-			_this._updateOutstandingDocumentCount(delta);
-			count = docIdsToFetchRemotely.length;
-			
-			performRemoteRequest();
-		};
-		
 		function performRemoteRequest(){
-			// Figure out how many docs to fetch in this request
-			if( docIdsToFetchRemotely.length > 0 ){
-				var docIdsThisRequest;
-				if( typeof _this.remoteDocumentCountLimit === 'number' ){
-					docIdsThisRequest = docIdsToFetchRemotely.splice(0, _this.remoteDocumentCountLimit);
-				} else {
-					// No limit, ask for them all
-					docIdsThisRequest = docIdsToFetchRemotely;
-					docIdsToFetchRemotely = [];
-				};
-				
-				var opts = $n2.extend({},opts_,{
-					docIds: docIdsThisRequest
-					,onSuccess: function(docs){
-						_this._updateOutstandingDocumentCount(0 - docIdsThisRequest.length);
-						count = count - docIdsThisRequest.length;
+			var remoteOpts = $n2.extend({},opts,{
+				onSuccess: function(docs){
+					if( _this.isCachingEnabled ){
+						var changes = [];
 
 						docs.forEach(function(doc){
-							docsToReturn.push(doc);	
-						});
-						
-						if( _this.isCachingEnabled ){
-							var changes = [];
-
-							docs.forEach(function(doc){
-								changes.push({
-									dbName: _this.dbName
-									,id: doc._id
-									,rev: doc._rev
-									,doc: doc
-								});
+							changes.push({
+								dbName: _this.dbName
+								,id: doc._id
+								,rev: doc._rev
+								,doc: doc
 							});
+						});
 
-							_this.documentCache.performChanges(changes);
-						};
-						
-						performRemoteRequest();
-					}
-					,onError: function(err){
-						_this._updateOutstandingDocumentCount(0 - count);
-						count = 0;
-						opts_.onError(err);
-					}
-				});
-				
-				_this.wrappedDb.getDocuments(opts);
-			} else {
-				done();
-			};
-		};
-		
-		function done(){
-			_this._updateOutstandingDocumentCount(0 - count);
-			count = 0;
-			opts_.onSuccess(docsToReturn);
+						_this.documentCache.performChanges(changes);
+					};
+					
+					opts.onSuccess(docs);
+				}
+			});
+			
+			_this.wrappedDb.getDocuments(remoteOpts);
 		};
 	},
 
@@ -843,15 +815,14 @@ var Database = $n2.Class({
 		};
 	},
 	
-	_updateOutstandingDocumentCount: function(delta){
-		this.outstandingDocumentCount += delta;
+	_updateOutstandingDocumentCount: function(count){
 		if( this.dispatchService ){
 			this.dispatchService.send(DH,{
 				type: 'waitReport'
 				,requester: this.id
 				,name: 'fetchDocuments'
 				,label: _loc('Retrieving documents')
-				,count: this.outstandingDocumentCount
+				,count: count
 			});
 		};
 	},
@@ -866,6 +837,286 @@ var Database = $n2.Class({
 				,label: _loc('Verifying revisions')
 				,count: this.outstandingRevisionCount
 			});
+		};
+	},
+	
+	/**
+	 * Serialize all document fetch requests and prevent fetching the
+	 * same document multiple times. 
+	 */
+	_performDocumentFetchRequest: function(request){
+		var _this = this;
+		
+		// Validate the request
+		// {
+		//    docIds: []
+		//    ,onSuccess: function(docs){}
+		//    ,onError: function(err){}
+		// }
+		if( typeof request !== 'object' ){
+			throw new Error('Database._performDocumentFetchRequest() request must be an object');
+		};
+		if( !$n2.isArray(request.docIds) ){
+			throw new Error('Database._performDocumentFetchRequest() request.docId must be an array');
+		};
+		request.docIds.forEach(function(docId){
+			if( typeof docId !== 'string' ){
+				throw new Error('Database._performDocumentFetchRequest() request.docId[*] must be a string');
+			};
+		});
+		if( typeof request.onSuccess !== 'function' ){
+			throw new Error('Database._performDocumentFetchRequest() request.onSuccess must be a function');
+		};
+		if( typeof request.onError !== 'function' ){
+			throw new Error('Database._performDocumentFetchRequest() request.onError must be a function');
+		};
+		
+		// Augment request to keep track of progress
+		request.docsById = {};
+		request.outsdandingDocumentCount = request.docIds.length;
+		
+		// Special case: nothing requested
+		if( request.docIds.length <= 0 ){
+			request.onSuccess([]);
+			return;
+		};
+
+		// Check if we need to set up a new thread
+		var startThread = false;
+		if( !this.fetchDocumentRequests ){
+			startThread = true;
+			this.fetchDocumentRequests = [];
+			this.fetchDocumentRequestsByDocId = {};
+		};
+		
+		// Break up the request into fetch requests for each document identifier
+		request.docIds.forEach(function(docId){
+			var fetchRequest = _this.fetchDocumentRequestsByDocId[docId];
+			if( !fetchRequest ){
+				fetchRequest = {
+					docId: docId
+					,requests: []
+				};
+				_this.fetchDocumentRequestsByDocId[docId] = fetchRequest;
+				_this.fetchDocumentRequests.push(fetchRequest);
+			};
+			
+			fetchRequest.requests.push(request);
+		});
+
+		this._updateOutstandingDocumentCount(this.fetchDocumentRequests.length);
+
+		var remoteDocIds = [];
+		var finishedRequests = [];
+		if( startThread ){
+			runThread();
+		};
+		
+		function runThread(){
+			if( _this.fetchDocumentRequests.length <= 0 ){
+				// We are done. Stop thread
+				_this.fetchDocumentRequests = null;
+				_this.fetchDocumentRequestsByDocId = null;
+				
+				_this._updateOutstandingDocumentCount(0);
+				
+			} else {
+				_this._updateOutstandingDocumentCount(_this.fetchDocumentRequests.length);
+
+				// Continue, we have more work to do.
+				remoteDocIds = [];
+				checkCache();
+			};
+		};
+
+		function checkCache(){
+			if( _this.fetchDocumentRequests.length <= 0 ){
+				// No more requests. Fetch remotely
+				fetchRemotely();
+
+			} else if( typeof _this.remoteDocumentCountLimit === 'number' 
+			 && remoteDocIds.length >= _this.remoteDocumentCountLimit ){
+				// We have accumulated enough doc ids to fetch remotely
+				fetchRemotely();
+			
+			} else {
+				var fetchRequest = _this.fetchDocumentRequests.shift();
+				
+				if( _this.isCachingEnabled ){
+					// Attempt to get from cache
+					_this.documentCache.getDocument({
+						dbName: _this.dbName
+						,docId: fetchRequest.docId
+						,onSuccess: function(doc){
+							if( doc ){
+								receivedDocument(doc);
+								checkCache();
+							} else {
+								// Do not have document in cache. Get document remotely
+								remoteDocIds.push(fetchRequest.docId);
+								checkCache();
+							};
+						}
+						,onError: function(err){
+							// Error on cache. Get document remotely
+							remoteDocIds.push(fetchRequest.docId);
+							checkCache();
+						}
+					});
+				} else {
+					// Cache is not available. Fetch this document remotely
+					remoteDocIds.push(fetchRequest.docId);
+
+					// Continue
+					checkCache();
+				};
+			};
+		};
+		
+		function fetchRemotely(){
+
+			if( remoteDocIds.length > 0 ){
+				// Make a map of remotely requested document to figure out
+				// which one we got
+				var docsById = {};
+				remoteDocIds.forEach(function(docId){
+					docsById[docId] = null;
+				});
+
+				_this.wrappedDb.getDocuments({
+					docIds: remoteDocIds
+					,onSuccess: function(docs){
+						// Update map
+						docs.forEach(function(doc){
+							docsById[doc._id] = doc;
+						});
+						
+						// For each requested document, report the outcome
+						for(var docId in docsById){
+							var doc = docsById[docId];
+							if( doc ){
+								receivedDocument(doc);
+							} else {
+								documentNotAvailable(docId);
+							};
+						};
+						
+						// Cache the document received remotely
+						if( _this.isCachingEnabled ){
+							var changes = [];
+							docs.forEach(function(doc){
+								changes.push({
+									dbName: _this.dbName
+									,id: doc._id
+									,rev: doc._rev
+									,doc: doc
+								});
+							});
+							_this.documentCache.performChanges(changes);
+						};
+						
+						sendFinishedResults();
+						runThread();
+					}
+					,onError: function(err){ 
+						// For each requested document, report error
+						for(var docId in docsById){
+							errorReceived(docId, err);
+						};
+						sendFinishedResults();
+						runThread();
+					}
+				});
+				
+				// While we are waiting for remot server, send what we have accumulated
+				// so far from cache
+				sendFinishedResults();
+
+			} else {
+				// Nothing to fetch remotely
+				sendFinishedResults();
+				runThread();
+			};
+		};
+		
+		function sendFinishedResults(){
+			var requests = finishedRequests;
+			finishedRequests = [];
+			
+			requests.forEach(function(finishedRequest){
+				if( finishedRequest.error ){
+					finishedRequest.onError(finishedRequest.error);
+				} else {
+					// Gather the documents
+					var docs = [];
+					for(var docId in finishedRequest.docsById){
+						var doc = finishedRequest.docsById[docId];
+						docs.push(doc);
+					};
+					finishedRequest.onSuccess(docs);
+				};
+			});
+		};
+		
+		function receivedDocument(doc){
+//			fetchRequest = {
+//				docId: docId
+//				,requests: [
+//				{
+//					docIds: []
+//					,onSuccess: function(docs){}
+//					,onError: function(err){}
+//					,outsdandingDocumentCount: <number>
+//					,docsById: {}
+//				}
+//	            ]
+//			};
+
+			var fetchRequest = _this.fetchDocumentRequestsByDocId[doc._id];
+			if( fetchRequest ){
+				fetchRequest.requests.forEach(function(request){
+					if( !request.docsById[doc._id] ){
+						request.docsById[doc._id] = doc;
+						--request.outsdandingDocumentCount;
+						
+						if( request.outsdandingDocumentCount <= 0 ){
+							finishedRequests.push(request);
+						};
+					};
+				});
+				
+				delete _this.fetchDocumentRequestsByDocId[doc._id];
+			};
+		};
+
+		function documentNotAvailable(docId){
+			var fetchRequest = _this.fetchDocumentRequestsByDocId[docId];
+			if( fetchRequest ){
+				fetchRequest.requests.forEach(function(request){
+					--request.outsdandingDocumentCount;
+						
+					if( request.outsdandingDocumentCount <= 0 ){
+						finishedRequests.push(request);
+					};
+				});
+				
+				delete _this.fetchDocumentRequestsByDocId[docId];
+			};
+		};
+
+		function errorReceived(docId,err){
+			var fetchRequest = _this.fetchDocumentRequestsByDocId[docId];
+			if( fetchRequest ){
+				fetchRequest.requests.forEach(function(request){
+					if( !request.error ){
+						request.error = err;
+						
+						finishedRequests.push(request);
+					};
+				});
+				
+				delete _this.fetchDocumentRequestsByDocId[docId];
+			};
 		};
 	}
 });
