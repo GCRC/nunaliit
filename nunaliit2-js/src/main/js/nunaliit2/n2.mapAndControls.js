@@ -4388,12 +4388,16 @@ var MapAndControls = $n2.Class({
 	_refreshSimplifiedGeometries: function(){
 		var _this = this;
 
-		var proj = new OpenLayers.Projection('EPSG:4326');
-		var epsg4326Resolution = this._getResolutionInProjection(proj);
+		var epsg4326Proj = new OpenLayers.Projection('EPSG:4326');
+		var epsg4326Resolution = this._getResolutionInProjection(epsg4326Proj);
 		//$n2.log('epsg4326Resolution',epsg4326Resolution);
+		var mapProjection = this.map.getProjectionObject();
 		
 		// Accumulate all geometries that are required
 		var geomsNeeded = {};
+		
+		// Figure out extent of the map
+		var mapExtent = this.map.getExtent();
 		
 		// Iterate over layers
 		var layers = this.map.layers;
@@ -4409,10 +4413,10 @@ var MapAndControls = $n2.Class({
 					if( feature.cluster ){
 						for(var ci=0,ce=feature.cluster.length; ci<ce; ++ci){
 							var f = feature.cluster[ci];
-							checkFeature(f,epsg4326Resolution,geomsNeeded);
+							checkFeature(f,epsg4326Resolution,geomsNeeded,mapExtent);
 						};
 					} else {
-						checkFeature(feature,epsg4326Resolution,geomsNeeded);
+						checkFeature(feature,epsg4326Resolution,geomsNeeded,mapExtent);
 					};
 				};
 			};
@@ -4458,10 +4462,9 @@ var MapAndControls = $n2.Class({
 		if( geometriesRequested.length ){
 			var mapCenter = this.map.getCenter();
 			if( mapCenter ){
-				var mapProjection = this.map.getProjectionObject();
 				if( mapProjection 
-				 && mapProjection.getCode() !== proj.getCode ){
-					mapCenter.transform(mapProjection, proj);
+				 && mapProjection.getCode() !== epsg4326Proj.getCode ){
+					mapCenter.transform(mapProjection, epsg4326Proj);
 				};
 				
 				// Sort the requested geometries so that the ones closest to the
@@ -4514,7 +4517,36 @@ var MapAndControls = $n2.Class({
 			,count: geometriesRequested.length
 		});
 		
-		function checkFeature(f, res, geomsNeeded){
+		function checkFeature(f, res, geomsNeeded, mapExtent){
+			// Check if feature falls within viewable boundaries of
+			// map
+			if( mapExtent 
+			 && f.data 
+			 && f.data.nunaliit_geom
+			 && f.data.nunaliit_geom.bbox ){
+				
+				var bbox = f.data.nunaliit_geom.bbox;
+				if( $n2.isArray(bbox) 
+				 && bbox.length >= 4
+				 && mapProjection ){
+					var geomBound = new OpenLayers.Bounds(bbox[0], bbox[1], bbox[2], bbox[3]);
+
+					if( mapProjection 
+					 && mapProjection.getCode() !== epsg4326Proj.getCode ){
+						geomBound.transform(epsg4326Proj, mapProjection);
+					};
+					
+					if( geomBound.intersectsBounds(mapExtent) ){
+						// We should continue and get a simplified geometry
+						// for this feature. Its BBOX intersetcs with the visible
+						// portion of the map.
+					} else {
+						// Not on screen. Do not bother
+						return;
+					};
+				};
+			};
+			
 			// Operate only on features that have simplification information
 			if( f.data 
 			 && f.data.nunaliit_geom
