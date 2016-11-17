@@ -4808,7 +4808,15 @@ var MapAndControls = $n2.Class({
 	 * This is called when the map has moved. 
 	 */
 	_mapMoved: function(){
+		var _this = this;
+
+		if( this.mapWasMoved ) return;
 		
+		this.mapWasMoved = true;
+		setTimeout(function(){
+			_this.mapWasMoved = false;
+			_this._refreshSimplifiedGeometries();
+		},200);
 	},
 	
 	/*
