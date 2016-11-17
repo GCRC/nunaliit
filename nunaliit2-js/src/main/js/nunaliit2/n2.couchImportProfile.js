@@ -2688,7 +2688,9 @@ var ImportProfileGeoJson = $n2.Class(ImportProfile, {
 		if(OpenLayers 
 		 && OpenLayers.Format 
 		 && OpenLayers.Format.GeoJSON ){
-			this.olGeoJsonFormat = new OpenLayers.Format.GeoJSON();
+			this.olGeoJsonFormat = new OpenLayers.Format.GeoJSON({
+				ignoreExtraDims: true
+			});
 		};
 		if(OpenLayers 
 		 && OpenLayers.Format 
