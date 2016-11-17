@@ -652,11 +652,11 @@ var Service = $n2.Class({
 						type: 'modelGetInfo'
 						,modelId: modelId
 					};
-					dispatchService.synchronousCall(DH,m);
+					this.dispatchService.synchronousCall(DH,m);
 					
 					if( m.modelInfo ){
 						this.modelIdMap[modelId] = MODEL_CONFIRMED;
-						this,modelIds.push(modelId);
+						this.modelIds.push(modelId);
 					};
 				};
 			};
