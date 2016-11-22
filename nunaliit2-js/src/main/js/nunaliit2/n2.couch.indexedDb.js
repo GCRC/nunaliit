@@ -325,6 +325,10 @@ var Database = $n2.Class({
 	getUrl: function(){
 		return this.wrappedDb.getUrl();
 	},
+
+	getServer: function(){
+		return this.wrappedDb.getServer();
+	},
 	
 	getDesignDoc: function(opts_) {
 		var couchDesignDoc = this.wrappedDb.getDesignDoc(opts_);

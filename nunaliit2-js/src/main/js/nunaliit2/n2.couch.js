@@ -855,6 +855,10 @@ var Database = $n2.Class({
 		return this.dbUrl;
 	}
 	
+	,getServer: function(){
+		return this.server;
+	}
+	
 	,getDesignDoc: function(opts_) {
 		var ddOpts = $.extend({
 				ddUrl: null

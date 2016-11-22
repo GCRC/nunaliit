@@ -599,6 +599,7 @@ var WktParser = $n2.Class({
 				};
 
 				// Check if we reached end
+				stream.skipSpaces();
 				c = stream.peekChar();
 				if( ')' === c ){
 					stream.getChar();
@@ -618,9 +619,77 @@ var WktParser = $n2.Class({
 
 			var multiPoint = new MultiPoint({points:points});
 			return multiPoint;
+
+		} else if( stream.startsWith("LINESTRING(",true) ){
+			// LINESTRING(x y,x y)
+			var points = [];
+			stream.skipCharacters("LINESTRING(".length);
+			stream.skipSpaces();
+
+			var done = false;
+			while( !done ){
+				// x y
+				// x y z
+				var point = this._parsePoint(stream);
+				points.push(point);
+
+				// Check if we reached end
+				stream.skipSpaces();
+				c = stream.peekChar();
+				if( ')' === c ){
+					stream.getChar();
+					done = true;
+				};
+				
+				// If not done, we are expecting a ","
+				if( !done ){
+					stream.skipSpaces();
+					var comma = stream.getChar();
+					if( ',' !== comma ){
+						throw new Error('Expected character "," at position: '+stream.getPosition());
+					};
+					stream.skipSpaces();
+				};
+			};
+			
+			if( points.length < 2 ){
+				throw new Error('LineString requires more than one point: '+stream.getPosition());
+			};
+
+			var lineString = new LineString({points:points});
+			return lineString;
 		};
 	},
 	
+	/**
+	 * Parses '(' <point> [',' <point>]+ ')'
+	 */
+	_parseLineString: function(stream){
+		stream.skipSpaces();
+		var x = this._parseNumber(stream);
+		stream.skipSpaces();
+		var y = this._parseNumber(stream);
+		
+		// Third position?
+		var z;
+		var c = stream.peekChar();
+		if( ' ' === c ){
+			stream.skipSpaces();
+			z = this._parseNumber(stream);
+		};
+		
+		var point = new Point({
+			x: x
+			,y: y
+			,z: z
+		});
+		
+		return point;
+	},
+	
+	/**
+	 * Parses <number> <space>+ <number> [<space>+ <number>]?
+	 */
 	_parsePoint: function(stream){
 		stream.skipSpaces();
 		var x = this._parseNumber(stream);

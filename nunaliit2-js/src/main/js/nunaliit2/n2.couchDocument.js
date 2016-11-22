@@ -827,7 +827,7 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			,onError: function(errorMsg){}
 		},opts_);
 		
-		var server = this.db.server;
+		var server = this.db.getServer();
 		
 		server.getUniqueId(opts);
 	},
