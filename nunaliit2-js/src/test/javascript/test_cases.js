@@ -1116,4 +1116,19 @@ jsunit.defineTest('$n2.couchUtils.isValidWkt',function($$){
 	t('POINT(0.123 0)', true);
 	t('INVALID(0 0)', false);
 	t('POINT(x 0)', false);
+	t('POINT(1 2 3)', true);
+});
+
+//*********
+jsunit.defineTest('$n2.geometry.WktParser',function($$){
+
+	function t(wkt,expected){
+		var wktParser = new $n2.geometry.WktParser();
+		var geom = wktParser.parseWkt(wkt);
+//		if( valid !== expected ){
+//			$$.fail('Error on WKT: '+wkt)
+//		};
+	};
+
+	t('POINT(1 2)', new $n2.geometry.Point({x:1,y:2}));
 });

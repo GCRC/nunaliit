@@ -30,7 +30,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-;(function($,$n2){
+;(function($n2){
 "use strict";
 
 // Localization
@@ -496,6 +496,29 @@ var CharacterStream = $n2.Class({
 		return undefined;
 	},
 	
+	startsWith: function(str, ignoreCase){
+		var sizeLeft = this.str.length - this.index;
+		if( sizeLeft < str.length ){
+			return false;
+		};
+		
+		var portion = this.str.substr(this.index, str.length);
+		
+		if( ignoreCase ){
+			return str.toLowerCase() === portion.toLowerCase();
+		} else {
+			return str === portion;
+		};
+	},
+	
+	skipCharacters: function(count){
+		if( this.index + count > this.str.length ){
+			throw new Error('CharacterStream.skipCharacters() out of bounds');
+		};
+		
+		this.index += count;
+	},
+	
 	skipSpaces: function(){
 		while(this.index < this.str.length){
 			var c = this.str[this.index];
@@ -515,7 +538,6 @@ var CharacterStream = $n2.Class({
 			return false;
 		};
 	}
-	
 });
 
 //=============================================
@@ -525,10 +547,90 @@ var WktParser = $n2.Class({
 	},
 	
 	parseWkt: function(str){
-		var stream = {
+		var stream = new CharacterStream({
 			str: str
-			,index: 0
+		});
+		
+		return this._parseWktFromStream(stream);
+	},
+	
+	_parseWktFromStream: function(stream){
+		stream.skipSpaces();
+		
+		if( stream.startsWith("POINT(",true) ){
+			stream.skipCharacters("POINT(".length);
+			var point = this._parsePoint(stream);
+			stream.skipSpaces();
+			var c = stream.getChar();
+			if( ')' !== c ){
+				throw new Error('Unexpected character at position: '+stream.getPosition());
+			};
+			return point;
 		};
+	},
+	
+	_parsePoint: function(stream){
+		stream.skipSpaces();
+		var x = this._parseNumber(stream);
+		stream.skipSpaces();
+		var y = this._parseNumber(stream);
+		
+		// Third position?
+		var z;
+		var c = stream.peekChar();
+		if( ' ' === c ){
+			stream.skipSpaces();
+			z = this._parseNumber(stream);
+		};
+		
+		var point = new Point({
+			x: x
+			,y: y
+			,z: z
+		});
+		
+		return point;
+	},
+	
+	_parseNumber: function(stream){
+		var position = stream.getPosition();
+		
+		var factor = 1;
+		var c = stream.peekChar();
+		if( '-' === c ){
+			stream.getChar();
+			factor = -1;
+			c = stream.peekChar();
+		};
+
+		var value = 0;
+		if( '0' <= c && '9' >= c ){
+			while( '0' <= c && '9' >= c ){
+				stream.getChar();
+				value = value * 10;
+				value = value + c - '0';
+				c = stream.peekChar();
+			};
+			
+			if( '.' === c ){
+				stream.getChar();
+
+				// Floating point
+				var frac = 1;
+				c = stream.peekChar();
+				while( '0' <= c && '9' >= c ){
+					stream.getChar();
+					frac = frac / 10;
+					value = value + (frac * (c - '0'));
+					c = stream.peekChar();
+				};
+			};
+		} else {
+			stream.setPosition(position);
+			throw new Error('Number expected at position: '+position);
+		};
+		
+		return factor * value;
 	}
 });
 
@@ -542,6 +644,7 @@ $n2.geometry = {
 	,MultiPoint: MultiPoint
 	,MultiLineString: MultiLineString
 	,MultiPolygon: MultiPolygon
+	,WktParser: WktParser
 };
 
-})(jQuery,nunaliit2);
+})(nunaliit2);
