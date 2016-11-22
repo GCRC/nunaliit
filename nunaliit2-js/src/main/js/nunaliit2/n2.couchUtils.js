@@ -112,6 +112,16 @@ var n2utils = {
 			skipSpaces(stream);
 
 			if( !isValidNumber(stream) ) return false;
+
+			// At this point, this is a valid location
+			
+			// Test for third position (z)
+			var streamPosition = stream.index;
+			skipSpaces(stream);
+			if( !isValidNumber(stream) ) {
+				// There is not a third position. Reset stream
+				stream.index = streamPosition;
+			};
 			
 			return true;
 		};
