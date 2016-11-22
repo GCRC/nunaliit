@@ -1124,11 +1124,42 @@ jsunit.defineTest('$n2.geometry.WktParser',function($$){
 
 	function t(wkt,expected){
 		var wktParser = new $n2.geometry.WktParser();
-		var geom = wktParser.parseWkt(wkt);
+		var geom;
+		try {
+			geom = wktParser.parseWkt(wkt);
+		} catch(e) {
+			$$.fail('WKT: '+wkt+' Error: '+e);
+		};
+		if( 0 !== $n2.geometry.compareGeometries(geom, expected) ){
+			$$.fail('Error on WKT: '+wkt)
+		};
 //		if( valid !== expected ){
 //			$$.fail('Error on WKT: '+wkt)
 //		};
 	};
+	
+	var Point = $n2.geometry.Point;
+	var LineString = $n2.geometry.LineString;
+	var Polygon = $n2.geometry.Polygon;
+	var MultiPoint = $n2.geometry.MultiPoint;
+	var MultiLineString = $n2.geometry.MultiLineString;
+	var MultiPolygon = $n2.geometry.MultiPolygon;
 
-	t('POINT(1 2)', new $n2.geometry.Point({x:1,y:2}));
+	t('POINT(1 2)', new Point({x:1,y:2}));
+	t('POINT(1 2 3)', new Point({x:1,y:2,z:3}));
+	t('MULTIPOINT(1 2)', new MultiPoint({
+		points:[new Point({x:1,y:2})]
+	}) );
+	t('MULTIPOINT(1 2,3 4)', new MultiPoint({
+		points:[new Point({x:1,y:2}), new Point({x:3,y:4})]
+	}) );
+	t('MULTIPOINT((1 2))', new MultiPoint({
+		points:[new Point({x:1,y:2})]
+	}) );
+	t('MULTIPOINT((1 2),(3 4))', new MultiPoint({
+		points:[new Point({x:1,y:2}), new Point({x:3,y:4})]
+	}) );
+//	t('LINESTRING(1 2,3 4)', new LineString({
+//		points: [ new Point({x:1,y:2}), new Point({x:3,y:4}) ]
+//	}));
 });

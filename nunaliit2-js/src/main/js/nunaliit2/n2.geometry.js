@@ -557,6 +557,7 @@ var WktParser = $n2.Class({
 	_parseWktFromStream: function(stream){
 		stream.skipSpaces();
 		
+		// POINT(x y) or POINT(x y z)
 		if( stream.startsWith("POINT(",true) ){
 			stream.skipCharacters("POINT(".length);
 			var point = this._parsePoint(stream);
@@ -566,6 +567,57 @@ var WktParser = $n2.Class({
 				throw new Error('Unexpected character at position: '+stream.getPosition());
 			};
 			return point;
+
+		} else if( stream.startsWith("MULTIPOINT(",true) ){
+			// MULTIPOINT((x y))
+			// MULTIPOINT((x y),(x y))
+			// MULTIPOINT(x y)
+			// MULTIPOINT(x y, x y)
+			var points = [];
+			stream.skipCharacters("MULTIPOINT(".length);
+			stream.skipSpaces();
+
+			var done = false;
+			while( !done ){
+				var c = stream.peekChar();
+				if( '(' === c ){
+					// (x y) (x y z)
+					stream.getChar();
+					var point = this._parsePoint(stream);
+					points.push(point);
+					stream.skipSpaces();
+					var end = stream.getChar();
+					if( ')' !== end ){
+						throw new Error('Expected character ")" at position: '+stream.getPosition());
+					};
+					
+				} else {
+					// x y
+					// x y z
+					var point = this._parsePoint(stream);
+					points.push(point);
+				};
+
+				// Check if we reached end
+				c = stream.peekChar();
+				if( ')' === c ){
+					stream.getChar();
+					done = true;
+				};
+				
+				// If not done, we are expecting a ","
+				if( !done ){
+					stream.skipSpaces();
+					var comma = stream.getChar();
+					if( ',' !== comma ){
+						throw new Error('Expected character "," at position: '+stream.getPosition());
+					};
+					stream.skipSpaces();
+				};
+			};
+
+			var multiPoint = new MultiPoint({points:points});
+			return multiPoint;
 		};
 	},
 	
@@ -635,6 +687,164 @@ var WktParser = $n2.Class({
 });
 
 //=============================================
+function compareGeometries(geom1, geom2){
+	if( geom1 === geom2 ) return 0;
+	if( !geom1 ) return -1;
+	if( !geom2 ) return 1;
+	
+	// If not the same class, order using class name
+	if( geom1.getClass() !== geom2.getClass() ){
+		// Different classes
+		var className1 = geom1._classname;
+		var className2 = geom2._classname;
+
+		// The following line takes care of undefined === undefined
+		if( className1 === className2 ) return 0;
+		
+		if( !className1 ) return -1;
+		if( !className2 ) return 1;
+
+		if( className1 < className2 ) return -1;
+		if( className1 > className2 ) return 1;
+	};
+	
+	// At this point, both geometries are from the same class
+	if( geom1.getClass() === Point ){
+		return comparePoints(geom1, geom2);
+	};
+	if( geom1.getClass() === MultiPoint ){
+		return compareMultiPoints(geom1, geom2);
+	};
+	if( geom1.getClass() === LineString ){
+		return compareLineStrings(geom1, geom2);
+	};
+	if( geom1.getClass() === MultiLineString ){
+		return compareMultiLineStrings(geom1, geom2);
+	};
+	if( geom1.getClass() === Polygon ){
+		return comparePolygons(geom1, geom2);
+	};
+	if( geom1.getClass() === MultiPolygon ){
+		return compareMultiPolygons(geom1, geom2);
+	};
+	if( geom1.getClass() === GeometryCollection ){
+		return compareCollections(geom1.getGeometries(), geom2.getGeometries());
+	};
+
+	throw new Error('Unable to compare geometries: '+geom1._classname+' '+geom2._classname);
+	
+	function comparePoints(point1, point2){
+		if( point1.x !== point2.x ){
+			return point1.x - point2.x;
+		};
+		if( point1.y !== point2.y ){
+			return point1.y - point2.y;
+		};
+		if( point1.z !== point2.z ){
+			if( typeof point1.z === 'number' 
+			 && typeof point2.z === 'number' ){
+				return point1.z - point2.z;
+			};
+			if( typeof point1.z === undefined ){
+				return -1;
+			};
+			if( typeof point1.z === null ){
+				return -1;
+			};
+			if( typeof point2.z === undefined ){
+				return 1;
+			};
+			if( typeof point2.z === null ){
+				return 1;
+			};
+		};
+		return 0;
+	};
+
+	function compareMultiPoints(multiPoint1, multiPoint2){
+		var geoms1 = multiPoint1.getGeometries();
+		var geoms2 = multiPoint2.getGeometries();
+		
+		return compareCollections(geoms1, geoms2)
+	};
+
+	function compareLineStrings(lineString1, lineString2){
+		var points1 = lineString1.getPoints();
+		var points2 = lineString2.getPoints();
+		
+		if( points1.length !== points2.length ){
+			return points1.length - points2.length;
+		};
+
+		for(var i=0,e=points1.length; i<e; ++i){
+			var point1 = points1[i];
+			var point2 = points2[i];
+			
+			var c = comparePoints(point1, point2);
+			if( 0 !== c ) return c;
+		};
+		
+		return 0;
+	};
+
+	function compareMultiLineStrings(multiLineString1, multiLineString2){
+		var geoms1 = multiLineString1.getGeometries();
+		var geoms2 = multiLineString2.getGeometries();
+		
+		return compareCollections(geoms1, geoms2)
+	};
+
+	function comparePolygons(poly1, poly2){
+		var linearRings1 = poly1.getLinearRings();
+		var linearRings2 = poly2.getLinearRings();
+		
+		if( linearRings1.length !== linearRings2.length ){
+			return linearRings1.length - linearRings2.length;
+		};
+
+		for(var i=0,e=linearRings1.length; i<e; ++i){
+			var linearRing1 = linearRings1[i];
+			var linearRing2 = linearRings2[i];
+			
+			var c = compareLineStrings(linearRing1, linearRing2);
+			if( 0 !== c ) return c;
+		};
+		
+		return 0;
+	};
+
+	function compareMultiPolygons(multiPolygon1, multiPolygon2){
+		var geoms1 = multiPolygon1.getGeometries();
+		var geoms2 = multiPolygon2.getGeometries();
+		
+		return compareCollections(geoms1, geoms2)
+	};
+
+	function compareCollections(collection1, collection2){
+		if( collection1.length !== collection2.length ){
+			return collection1.length - collection2.length;
+		};
+		
+		var clone1 = collection1.slice();
+		var clone2 = collection2.slice();
+		
+		clone1.sort(compareGeometries);
+		clone2.sort(compareGeometries);
+
+		for(var i=0,e=clone1.length; i<e; ++i){
+			var geom1 = clone1[i];
+			var geom2 = clone2[i];
+			
+			var c = compareGeometries(geom1, geom2);
+			if( 0 !== c ) return c;
+		};
+		
+		return 0;
+	};
+};
+
+
+//=============================================
 
 $n2.geometry = {
 	Point: Point
@@ -645,6 +855,7 @@ $n2.geometry = {
 	,MultiLineString: MultiLineString
 	,MultiPolygon: MultiPolygon
 	,WktParser: WktParser
+	,compareGeometries: compareGeometries
 };
 
 })(nunaliit2);
