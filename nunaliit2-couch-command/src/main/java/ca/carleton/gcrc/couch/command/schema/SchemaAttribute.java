@@ -471,6 +471,11 @@ public class SchemaAttribute {
 
 			//doc.put("nunaliit_geom", null);
 
+		} else if( "createdBy".equals(type) ){
+			if( null != id ){
+				throw new Exception("'id' should not be specified for attributes of type 'createdBy'");
+			}
+
 		} else {
 			throw new Exception("Unable to include type "+type+" in create");
 		}
@@ -590,6 +595,11 @@ public class SchemaAttribute {
 				pw.print("{{#nunaliit_geom}}");
 				pw.print("{{wkt}}");
 				pw.print("{{/nunaliit_geom}}");
+
+			} else if( "createdBy".equals(type) ){
+				pw.print("{{#nunaliit_created}}");
+				pw.print("<span class=\"n2s_insertUserName\">{{name}}</span>");
+				pw.print("{{/nunaliit_created}}");
 					
 			} else {
 				throw new Exception("Unable to include type "+type+" in brief");
@@ -885,6 +895,28 @@ public class SchemaAttribute {
 				pw.println("\t\t\t<div class=\"end\"></div>");
 				pw.println("\t\t</div>");
 				pw.println("{{/nunaliit_geom}}");
+
+			} else if( "createdBy".equals(type) ){
+				if( null == label ){
+					label = "Created By";
+					labelLocalizeClass = " n2s_localize";
+				}
+
+				pw.println("{{#nunaliit_created}}");
+				pw.println("\t{{#if name}}");
+
+				pw.println("\t\t<div class=\""+schemaClass+"_nunaliit_created\">");
+
+				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+
+				pw.println("\t\t\t<div class=\"value n2s_insertUserName\">{{name}}</div>");
+				
+				pw.println("\t\t\t<div class=\"end\"></div>");
+				
+				pw.println("\t\t</div>");
+				
+				pw.println("\t{{/if}}");
+				pw.println("{{/nunaliit_created}}");
 							
 			} else {
 				throw new Exception("Unable to include type "+type+" in display");
@@ -1087,6 +1119,9 @@ public class SchemaAttribute {
 				pw.println("\t<div class=\"end\"></div>");
 				
 				pw.println("</div>");
+
+			} else if( "createdBy".equals(type) ){
+				// nothing to do
 				
 			} else {
 				throw new Exception("Unable to include type "+type+" in form");
@@ -1135,6 +1170,19 @@ public class SchemaAttribute {
 			attrExport.put("label", "nunaliit_geom");
 			attrExport.put("type", "text");
 			exportArr.put(attrExport);
+			
+		} else if( "createdBy".equals(type) ){
+			JSONObject attrExportName = new JSONObject();
+			attrExportName.put("select", "nunaliit_created.name");
+			attrExportName.put("label", "nunaliit_created_name");
+			attrExportName.put("type", "text");
+			exportArr.put(attrExportName);
+
+			JSONObject attrExportTime = new JSONObject();
+			attrExportTime.put("select", "nunaliit_created.time");
+			attrExportTime.put("label", "nunaliit_created_time");
+			attrExportTime.put("type", "text");
+			exportArr.put(attrExportTime);
 			
 		} else {
 			JSONObject attrExport = new JSONObject();
