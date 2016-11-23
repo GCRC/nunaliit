@@ -1133,9 +1133,19 @@ jsunit.defineTest('$n2.geometry.WktParser',function($$){
 		if( 0 !== $n2.geometry.compareGeometries(geom, expected) ){
 			$$.fail('Error on WKT: '+wkt)
 		};
-//		if( valid !== expected ){
-//			$$.fail('Error on WKT: '+wkt)
-//		};
+	};
+
+	function e(wkt){
+		var wktParser = new $n2.geometry.WktParser();
+		var errorTriggered = false;
+		try {
+			var geom = wktParser.parseWkt(wkt);
+		} catch(e) {
+			errorTriggered = true;
+		};
+		if( !errorTriggered ){
+			$$.fail('WKT: '+wkt+' should have raised an error');
+		};
 	};
 	
 	var Point = $n2.geometry.Point;
@@ -1144,8 +1154,12 @@ jsunit.defineTest('$n2.geometry.WktParser',function($$){
 	var MultiPoint = $n2.geometry.MultiPoint;
 	var MultiLineString = $n2.geometry.MultiLineString;
 	var MultiPolygon = $n2.geometry.MultiPolygon;
+	var GeometryCollection = $n2.geometry.GeometryCollection;
 
+	t('POINT(10 20)', new Point({x:10,y:20}));
+	t('POINT(-10.1 20.5)', new Point({x:-10.1,y:20.5}));
 	t('POINT(1 2)', new Point({x:1,y:2}));
+	t(' POINT ( 1  2 ) ', new Point({x:1,y:2}));
 	t('POINT(1 2 3)', new Point({x:1,y:2,z:3}));
 	t('MULTIPOINT(1 2)', new MultiPoint({
 		points:[new Point({x:1,y:2})]
@@ -1159,7 +1173,279 @@ jsunit.defineTest('$n2.geometry.WktParser',function($$){
 	t('MULTIPOINT((1 2),(3 4))', new MultiPoint({
 		points:[new Point({x:1,y:2}), new Point({x:3,y:4})]
 	}) );
-//	t('LINESTRING(1 2,3 4)', new LineString({
-//		points: [ new Point({x:1,y:2}), new Point({x:3,y:4}) ]
-//	}));
+	t(' MULTIPOINT ( ( 1  2 ) , ( 3  4 ) ) ', new MultiPoint({
+		points:[new Point({x:1,y:2}), new Point({x:3,y:4})]
+	}) );
+	t('LINESTRING(1 2,3 4)', new LineString({
+		points: [ new Point({x:1,y:2}), new Point({x:3,y:4}) ]
+	}));
+	t('LINESTRING(1 2,3 4,5 6)', new LineString({
+		points: [ 
+			new Point({x:1,y:2})
+			,new Point({x:3,y:4}) 
+			,new Point({x:5,y:6}) 
+		]
+	}));
+	t(' LINESTRING ( 1  2 , 3  4 , 5  6 ) ', new LineString({
+		points: [ 
+			new Point({x:1,y:2})
+			,new Point({x:3,y:4}) 
+			,new Point({x:5,y:6}) 
+		]
+	}));
+	t('MULTILINESTRING((1 2,3 4))', new MultiLineString({
+		lineStrings: [ 
+			new LineString({
+				points: [ new Point({x:1,y:2}), new Point({x:3,y:4}) ]
+			})           
+		]
+	}));
+	t('MULTILINESTRING((1 2,3 4),(5 6,7 8))', new MultiLineString({
+		lineStrings: [ 
+			new LineString({
+				points: [ new Point({x:1,y:2}), new Point({x:3,y:4}) ]
+			})           
+			,new LineString({
+				points: [ new Point({x:5,y:6}), new Point({x:7,y:8}) ]
+			})           
+		]
+	}));
+	t(' MULTILINESTRING ( ( 1  2 , 3  4 ) , ( 5  6 , 7  8 ) ) ', new MultiLineString({
+		lineStrings: [ 
+			new LineString({
+				points: [ new Point({x:1,y:2}), new Point({x:3,y:4}) ]
+			})           
+			,new LineString({
+				points: [ new Point({x:5,y:6}), new Point({x:7,y:8}) ]
+			})           
+		]
+	}));
+	t('POLYGON((1 2,3 4,5 6))', new Polygon({
+		linearRings: [ 
+			new LineString({
+				points: [ new Point({x:1,y:2}), new Point({x:3,y:4}), new Point({x:5,y:6}) ]
+			})           
+		]
+	}));
+	t('POLYGON((1 2,3 4,5 6),(7 8,9 10,11 12))', new Polygon({
+		linearRings: [ 
+			new LineString({
+				points: [ new Point({x:1,y:2}), new Point({x:3,y:4}), new Point({x:5,y:6}) ]
+			})           
+			,new LineString({
+				points: [ new Point({x:7,y:8}), new Point({x:9,y:10}), new Point({x:11,y:12}) ]
+			})           
+		]
+	}));
+	t(' POLYGON ( ( 1  2 , 3  4 , 5  6 ) , ( 7  8 , 9  10 , 11  12 ) ) ', new Polygon({
+		linearRings: [ 
+			new LineString({
+				points: [ new Point({x:1,y:2}), new Point({x:3,y:4}), new Point({x:5,y:6}) ]
+			})           
+			,new LineString({
+				points: [ new Point({x:7,y:8}), new Point({x:9,y:10}), new Point({x:11,y:12}) ]
+			})           
+		]
+	}));
+	t('MULTIPOLYGON(((1 2,3 4,5 6),(7 8,9 10,11 12)))', new MultiPolygon({
+		polygons:[
+			new Polygon({
+				linearRings: [ 
+		  			new LineString({
+		  				points: [ new Point({x:1,y:2}), new Point({x:3,y:4}), new Point({x:5,y:6}) ]
+		  			})           
+		  			,new LineString({
+		  				points: [ new Point({x:7,y:8}), new Point({x:9,y:10}), new Point({x:11,y:12}) ]
+		  			})           
+		  		]
+			})
+		]
+	}));
+	t('MULTIPOLYGON(((1 2,3 4,5 6),(7 8,9 10,11 12)),((13 14,15 16,17 18),(19 20,21 22,23 24)))', new MultiPolygon({
+		polygons:[
+			new Polygon({
+				linearRings: [ 
+		  			new LineString({
+		  				points: [ new Point({x:1,y:2}), new Point({x:3,y:4}), new Point({x:5,y:6}) ]
+		  			})           
+		  			,new LineString({
+		  				points: [ new Point({x:7,y:8}), new Point({x:9,y:10}), new Point({x:11,y:12}) ]
+		  			})           
+		  		]
+			})
+			,new Polygon({
+				linearRings: [ 
+		  			new LineString({
+		  				points: [ new Point({x:13,y:14}), new Point({x:15,y:16}), new Point({x:17,y:18}) ]
+		  			})           
+		  			,new LineString({
+		  				points: [ new Point({x:19,y:20}), new Point({x:21,y:22}), new Point({x:23,y:24}) ]
+		  			})           
+		  		]
+			})
+		]
+	}));
+	t(' MULTIPOLYGON ( ( ( 1  2 , 3  4 , 5  6 ) , ( 7  8 , 9  10 , 11  12 ) ) , ( ( 13  14 , 15  16 , 17  18 ) , ( 19  20 , 21  22 , 23  24 ) ) ) ', new MultiPolygon({
+		polygons:[
+			new Polygon({
+				linearRings: [ 
+		  			new LineString({
+		  				points: [ new Point({x:1,y:2}), new Point({x:3,y:4}), new Point({x:5,y:6}) ]
+		  			})           
+		  			,new LineString({
+		  				points: [ new Point({x:7,y:8}), new Point({x:9,y:10}), new Point({x:11,y:12}) ]
+		  			})           
+		  		]
+			})
+			,new Polygon({
+				linearRings: [ 
+		  			new LineString({
+		  				points: [ new Point({x:13,y:14}), new Point({x:15,y:16}), new Point({x:17,y:18}) ]
+		  			})           
+		  			,new LineString({
+		  				points: [ new Point({x:19,y:20}), new Point({x:21,y:22}), new Point({x:23,y:24}) ]
+		  			})           
+		  		]
+			})
+		]
+	}));
+	t('GEOMETRYCOLLECTION(POINT(1 2))', new GeometryCollection({
+		geometries:[
+			new Point({x:1,y:2})
+		]
+	}));
+	t('GEOMETRYCOLLECTION(POINT(1 2),LINESTRING(3 4,5 6))', new GeometryCollection({
+		geometries:[
+			new Point({x:1,y:2})
+			,new LineString({
+				points: [
+					new Point({x:3,y:4})
+					,new Point({x:5,y:6})
+				]
+			})
+		]
+	}));
+	t(' GEOMETRYCOLLECTION ( POINT ( 1  2 ) , LINESTRING ( 3  4 , 5  6 ) ) ', new GeometryCollection({
+		geometries:[
+			new Point({x:1,y:2})
+			,new LineString({
+				points: [
+					new Point({x:3,y:4})
+					,new Point({x:5,y:6})
+				]
+			})
+		]
+	}));
+
+	e('');
+	e('UNKOWN');
+	e('POINT');
+	e('POINT(');
+	e('POINT(1');
+	e('POINT(1)');
+	e('POINT(1 2) X');
+	e('MULTIPOINT');
+	e('MULTIPOINT(');
+	e('MULTIPOINT(1');
+	e('MULTIPOINT(1)');
+	e('MULTIPOINT(1 2) X');
+	e('MULTIPOINT(1 2,');
+	e('MULTIPOINT(1 2,3');
+	e('MULTIPOINT(1 2,3 4');
+	e('MULTIPOINT(1 2,3 4) X');
+	e('LINESTRING');
+	e('LINESTRING(');
+	e('LINESTRING(1');
+	e('LINESTRING(1 2');
+	e('LINESTRING(1 2)');
+	e('LINESTRING(1 2,3');
+	e('LINESTRING(1 2,3 4');
+	e('LINESTRING(1 2,3 4) X');
+	e('MULTILINESTRING');
+	e('MULTILINESTRING(');
+	e('MULTILINESTRING((');
+	e('MULTILINESTRING((1');
+	e('MULTILINESTRING((1 2');
+	e('MULTILINESTRING((1 2,3');
+	e('MULTILINESTRING((1 2,3 4');
+	e('MULTILINESTRING((1 2,3 4');
+	e('MULTILINESTRING((1 2,3 4)');
+	e('MULTILINESTRING((1 2,3 4),');
+	e('MULTILINESTRING((1 2,3 4),(');
+	e('MULTILINESTRING((1 2,3 4),(5');
+	e('MULTILINESTRING((1 2,3 4),(5 6');
+	e('MULTILINESTRING((1 2,3 4),(5 6,');
+	e('MULTILINESTRING((1 2,3 4),(5 6,7');
+	e('MULTILINESTRING((1 2,3 4),(5 6,7 8');
+	e('MULTILINESTRING((1 2,3 4),(5 6,7 8)');
+	e('MULTILINESTRING((1 2,3 4),(5 6,7 8)) X');
+	e('POLYGON');
+	e('POLYGON(');
+	e('POLYGON((');
+	e('POLYGON((1');
+	e('POLYGON((1 2');
+	e('POLYGON((1 2,3');
+	e('POLYGON((1 2,3 4');
+	e('POLYGON((1 2,3 4');
+	e('POLYGON((1 2,3 4))'); // must have more than 2 points
+	e('POLYGON((1 2,3 4,');
+	e('POLYGON((1 2,3 4,5');
+	e('POLYGON((1 2,3 4,5 6');
+	e('POLYGON((1 2,3 4,5 6)');
+	e('POLYGON((1 2,3 4,5 6)');
+	e('POLYGON((1 2,3 4,5 6),');
+	e('POLYGON((1 2,3 4,5 6),(');
+	e('POLYGON((1 2,3 4,5 6),(5');
+	e('POLYGON((1 2,3 4,5 6),(5 6');
+	e('POLYGON((1 2,3 4,5 6),(5 6,');
+	e('POLYGON((1 2,3 4,5 6),(5 6,7');
+	e('POLYGON((1 2,3 4,5 6),(5 6,7 8');
+	e('POLYGON((1 2,3 4,5 6),(5 6,7 8,');
+	e('POLYGON((1 2,3 4,5 6),(5 6,7 8,9');
+	e('POLYGON((1 2,3 4,5 6),(5 6,7 8,9 10');
+	e('POLYGON((1 2,3 4,5 6),(5 6,7 8,9 10)');
+	e('POLYGON((1 2,3 4,5 6),(5 6,7 8,9 10)) X');
+	e('MULTIPOLYGON');
+	e('MULTIPOLYGON(');
+	e('MULTIPOLYGON((');
+	e('MULTIPOLYGON(((');
+	e('MULTIPOLYGON(((1');
+	e('MULTIPOLYGON(((1 2');
+	e('MULTIPOLYGON(((1 2,3');
+	e('MULTIPOLYGON(((1 2,3 4');
+	e('MULTIPOLYGON(((1 2,3 4');
+	e('MULTIPOLYGON(((1 2,3 4))');
+	e('MULTIPOLYGON(((1 2,3 4)))'); // must have more than 2 points
+	e('MULTIPOLYGON(((1 2,3 4,');
+	e('MULTIPOLYGON(((1 2,3 4,5');
+	e('MULTIPOLYGON(((1 2,3 4,5 6');
+	e('MULTIPOLYGON(((1 2,3 4,5 6)');
+	e('MULTIPOLYGON(((1 2,3 4,5 6)');
+	e('MULTIPOLYGON(((1 2,3 4,5 6),');
+	e('MULTIPOLYGON(((1 2,3 4,5 6),(');
+	e('MULTIPOLYGON(((1 2,3 4,5 6),(5');
+	e('MULTIPOLYGON(((1 2,3 4,5 6),(5 6');
+	e('MULTIPOLYGON(((1 2,3 4,5 6),(5 6,');
+	e('MULTIPOLYGON(((1 2,3 4,5 6),(5 6,7');
+	e('MULTIPOLYGON(((1 2,3 4,5 6),(5 6,7 8');
+	e('MULTIPOLYGON(((1 2,3 4,5 6),(5 6,7 8,');
+	e('MULTIPOLYGON(((1 2,3 4,5 6),(5 6,7 8,9');
+	e('MULTIPOLYGON(((1 2,3 4,5 6),(5 6,7 8,9 10');
+	e('MULTIPOLYGON(((1 2,3 4,5 6),(5 6,7 8,9 10)');
+	e('MULTIPOLYGON(((1 2,3 4,5 6),(5 6,7 8,9 10))');
+	e('MULTIPOLYGON(((1 2,3 4,5 6),(5 6,7 8,9 10))) X');
+	e('GEOMETRYCOLLECTION');
+	e('GEOMETRYCOLLECTION(');
+	e('GEOMETRYCOLLECTION(POINT');
+	e('GEOMETRYCOLLECTION(POINT(');
+	e('GEOMETRYCOLLECTION(POINT(1');
+	e('GEOMETRYCOLLECTION(POINT(1 2');
+	e('GEOMETRYCOLLECTION(POINT(1 2)');
+	e('GEOMETRYCOLLECTION(POINT(1 2),');
+	e('GEOMETRYCOLLECTION(POINT(1 2),POINT');
+	e('GEOMETRYCOLLECTION(POINT(1 2),POINT(');
+	e('GEOMETRYCOLLECTION(POINT(1 2),POINT(3');
+	e('GEOMETRYCOLLECTION(POINT(1 2),POINT(3 4');
+	e('GEOMETRYCOLLECTION(POINT(1 2),POINT(3 4)');
+	e('GEOMETRYCOLLECTION(POINT(1 2),POINT(3 4)) X');
 });

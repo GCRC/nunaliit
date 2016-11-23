@@ -480,6 +480,13 @@ var CharacterStream = $n2.Class({
 		this.index = index;
 	},
 	
+	atEnd: function(){
+		if( this.index >= this.str.length ){
+			return true;
+		};
+		return false;
+	},
+	
 	peekChar: function(){
 		if(this.index < this.str.length){
 			return this.str[this.index];
@@ -551,30 +558,53 @@ var WktParser = $n2.Class({
 			str: str
 		});
 		
-		return this._parseWktFromStream(stream);
+		var geometry = this._parseGeometry(stream);
+		
+		stream.skipSpaces();
+		if( !stream.atEnd() ){
+			throw new Error('Expected end of stream at position: '+stream.getPosition());
+		};
+
+		return geometry;
 	},
 	
-	_parseWktFromStream: function(stream){
+	_parseGeometry: function(stream){
 		stream.skipSpaces();
 		
 		// POINT(x y) or POINT(x y z)
-		if( stream.startsWith("POINT(",true) ){
-			stream.skipCharacters("POINT(".length);
-			var point = this._parsePoint(stream);
+		if( stream.startsWith("POINT",true) ){
+			stream.skipCharacters("POINT".length);
+			
 			stream.skipSpaces();
 			var c = stream.getChar();
-			if( ')' !== c ){
-				throw new Error('Unexpected character at position: '+stream.getPosition());
+			if( '(' !== c ){
+				throw new Error('Expected character "(" at position: '+stream.getPosition());
 			};
+			stream.skipSpaces();
+			
+			var point = this._parsePoint(stream);
+
+			stream.skipSpaces();
+			c = stream.getChar();
+			if( ')' !== c ){
+				throw new Error('Expected character ")" at position: '+stream.getPosition());
+			};
+			
 			return point;
 
-		} else if( stream.startsWith("MULTIPOINT(",true) ){
+		} else if( stream.startsWith("MULTIPOINT",true) ){
 			// MULTIPOINT((x y))
 			// MULTIPOINT((x y),(x y))
 			// MULTIPOINT(x y)
 			// MULTIPOINT(x y, x y)
 			var points = [];
-			stream.skipCharacters("MULTIPOINT(".length);
+			stream.skipCharacters("MULTIPOINT".length);
+
+			stream.skipSpaces();
+			var c = stream.getChar();
+			if( '(' !== c ){
+				throw new Error('Expected character "(" at position: '+stream.getPosition());
+			};
 			stream.skipSpaces();
 
 			var done = false;
@@ -611,7 +641,7 @@ var WktParser = $n2.Class({
 					stream.skipSpaces();
 					var comma = stream.getChar();
 					if( ',' !== comma ){
-						throw new Error('Expected character "," at position: '+stream.getPosition());
+						throw new Error('Expected character "," or ")" at position: '+stream.getPosition());
 					};
 					stream.skipSpaces();
 				};
@@ -620,71 +650,218 @@ var WktParser = $n2.Class({
 			var multiPoint = new MultiPoint({points:points});
 			return multiPoint;
 
-		} else if( stream.startsWith("LINESTRING(",true) ){
+		} else if( stream.startsWith("LINESTRING",true) ){
 			// LINESTRING(x y,x y)
-			var points = [];
-			stream.skipCharacters("LINESTRING(".length);
+			stream.skipCharacters("LINESTRING".length);
 			stream.skipSpaces();
 
+			var lineString = this._parseLineString(stream);
+			return lineString;
+
+		} else if( stream.startsWith("MULTILINESTRING",true) ){
+			// MULTILINESTRING((x y,x y))
+			// MULTILINESTRING((x y,x y),(x y,x y))
+			stream.skipCharacters("MULTILINESTRING".length);
+			
+			stream.skipSpaces();
+			var c = stream.getChar();
+			if( '(' !== c ){
+				throw new Error('Expected character "(" at position: '+stream.getPosition());
+			};
+			stream.skipSpaces();
+
+			var lineStrings = [];
 			var done = false;
 			while( !done ){
-				// x y
-				// x y z
-				var point = this._parsePoint(stream);
-				points.push(point);
+				var lineString = this._parseLineString(stream);
+				lineStrings.push(lineString);
 
-				// Check if we reached end
 				stream.skipSpaces();
-				c = stream.peekChar();
-				if( ')' === c ){
+				var c = stream.peekChar();
+				if( ',' === c ){
+					stream.getChar();
+					stream.skipSpaces();
+
+				} else if( ')' === c ){
 					stream.getChar();
 					done = true;
+
+				} else {
+					throw new Error('Expected character "," or ")" at position: '+stream.getPosition());
 				};
-				
-				// If not done, we are expecting a ","
-				if( !done ){
-					stream.skipSpaces();
-					var comma = stream.getChar();
-					if( ',' !== comma ){
-						throw new Error('Expected character "," at position: '+stream.getPosition());
-					};
-					stream.skipSpaces();
-				};
-			};
-			
-			if( points.length < 2 ){
-				throw new Error('LineString requires more than one point: '+stream.getPosition());
 			};
 
-			var lineString = new LineString({points:points});
-			return lineString;
+			var multiLineString = new MultiLineString({lineStrings:lineStrings});
+			return multiLineString;
+
+		} else if( stream.startsWith("POLYGON",true) ){
+			// POLYGON((1 2,3 4),(5 6,7 8))
+			stream.skipCharacters("POLYGON".length);
+
+			var polygon = this._parsePolygon(stream);
+			return polygon;
+
+		} else if( stream.startsWith("MULTIPOLYGON",true) ){
+			// MULTIPOLYGON(((1 2,3 4),(5 6,7 8)))
+			// MULTIPOLYGON(((1 2,3 4),(5 6,7 8)),((1 2,3 4),(5 6,7 8)))
+			stream.skipCharacters("MULTIPOLYGON".length);
+			
+			stream.skipSpaces();
+			var c = stream.getChar();
+			if( '(' !== c ){
+				throw new Error('Expected character "(" at position: '+stream.getPosition());
+			};
+
+			var polygons = [];
+			var done = false;
+			while( !done ){
+				var polygon = this._parsePolygon(stream);
+				polygons.push(polygon);
+
+				stream.skipSpaces();
+				var c = stream.peekChar();
+				if( ',' === c ){
+					stream.getChar();
+					stream.skipSpaces();
+
+				} else if( ')' === c ){
+					stream.getChar();
+					done = true;
+
+				} else {
+					throw new Error('Expected character "," or ")" at position: '+stream.getPosition());
+				};
+			};
+
+			var multiPolygon = new MultiPolygon({polygons:polygons});
+			return multiPolygon;
+
+		} else if( stream.startsWith("GEOMETRYCOLLECTION",true) ){
+			// GEOMETRYCOLLECTION(<geometry>)
+			// GEOMETRYCOLLECTION(<geometry>,<geometry>)
+			stream.skipCharacters("GEOMETRYCOLLECTION".length);
+			
+			stream.skipSpaces();
+			var c = stream.getChar();
+			if( '(' !== c ){
+				throw new Error('Expected character "(" at position: '+stream.getPosition());
+			};
+
+			var geometries = [];
+			var done = false;
+			while( !done ){
+				var geometry = this._parseGeometry(stream);
+				geometries.push(geometry);
+
+				stream.skipSpaces();
+				var c = stream.peekChar();
+				if( ',' === c ){
+					stream.getChar();
+					stream.skipSpaces();
+
+				} else if( ')' === c ){
+					stream.getChar();
+					done = true;
+
+				} else {
+					throw new Error('Expected character "," or ")" at position: '+stream.getPosition());
+				};
+			};
+
+			var geometryCollection = new GeometryCollection({geometries:geometries});
+			return geometryCollection;
+
+		} else {
+			throw new Error('Unexpected character at position: '+stream.getPosition());
 		};
 	},
 	
 	/**
+	 * Parses '(' <linestring> [',' <linestring>]+ ')'
+	 */
+	_parsePolygon: function(stream){
+		var linearRings = [];
+
+		stream.skipSpaces();
+		var c = stream.getChar();
+		if( '(' !== c ){
+			throw new Error('Expected character "(" at position: '+stream.getPosition());
+		};
+		stream.skipSpaces();
+
+		var done = false;
+		while( !done ){
+			var linearRing = this._parseLineString(stream);
+			
+			if( linearRing.getPoints().length < 3 ){
+				throw new Error('LinearRing must have at least 3 points, at position: '+stream.getPosition());
+			};
+			
+			linearRings.push(linearRing);
+
+			stream.skipSpaces();
+			var c = stream.peekChar();
+			if( ',' === c ){
+				stream.getChar();
+				stream.skipSpaces();
+
+			} else if( ')' === c ){
+				stream.getChar();
+				done = true;
+
+			} else {
+				throw new Error('Expected character "," or ")" at position: '+stream.getPosition());
+			};
+		};
+
+		var polygon = new Polygon({linearRings:linearRings});
+		return polygon;
+	},
+
+	/**
 	 * Parses '(' <point> [',' <point>]+ ')'
 	 */
 	_parseLineString: function(stream){
+		var points = [];
+
 		stream.skipSpaces();
-		var x = this._parseNumber(stream);
-		stream.skipSpaces();
-		var y = this._parseNumber(stream);
-		
-		// Third position?
-		var z;
-		var c = stream.peekChar();
-		if( ' ' === c ){
+		var c = stream.getChar();
+		if( '(' !== c ){
+			throw new Error('Expected character "(" at position: '+stream.getPosition());
+		};
+
+		var done = false;
+		while( !done ){
+			// x y
+			// x y z
+			var point = this._parsePoint(stream);
+			points.push(point);
+
+			// Check if we reached end
 			stream.skipSpaces();
-			z = this._parseNumber(stream);
+			c = stream.peekChar();
+			if( ')' === c ){
+				stream.getChar();
+				done = true;
+			};
+			
+			// If not done, we are expecting a ","
+			if( !done ){
+				stream.skipSpaces();
+				var comma = stream.getChar();
+				if( ',' !== comma ){
+					throw new Error('Expected character "," or ")" at position: '+stream.getPosition());
+				};
+				stream.skipSpaces();
+			};
 		};
 		
-		var point = new Point({
-			x: x
-			,y: y
-			,z: z
-		});
-		
-		return point;
+		if( points.length < 2 ){
+			throw new Error('LineString requires more than one point: '+stream.getPosition());
+		};
+
+		var lineString = new LineString({points:points});
+		return lineString;
 	},
 	
 	/**
@@ -697,13 +874,17 @@ var WktParser = $n2.Class({
 		var y = this._parseNumber(stream);
 		
 		// Third position?
+		var index = stream.getPosition();
+		stream.skipSpaces();
 		var z;
-		var c = stream.peekChar();
-		if( ' ' === c ){
-			stream.skipSpaces();
+		try {
 			z = this._parseNumber(stream);
+		} catch(e) {
+			// Rewind
+			stream.setPosition(index);
+			z = undefined;
 		};
-		
+
 		var point = new Point({
 			x: x
 			,y: y
@@ -728,8 +909,8 @@ var WktParser = $n2.Class({
 		if( '0' <= c && '9' >= c ){
 			while( '0' <= c && '9' >= c ){
 				stream.getChar();
-				value = value * 10;
-				value = value + c - '0';
+				var add = 1 * (c - '0');
+				value = (value * 10) + add;
 				c = stream.peekChar();
 			};
 			
@@ -742,7 +923,8 @@ var WktParser = $n2.Class({
 				while( '0' <= c && '9' >= c ){
 					stream.getChar();
 					frac = frac / 10;
-					value = value + (frac * (c - '0'));
+					var add = frac * (c - '0');
+					value = value + add;
 					c = stream.peekChar();
 				};
 			};
