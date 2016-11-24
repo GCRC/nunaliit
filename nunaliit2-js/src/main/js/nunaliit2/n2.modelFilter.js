@@ -986,6 +986,62 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 });
 
 //--------------------------------------------------------------------------
+var DocumentFilterByCreator = $n2.Class('DocumentFilterByCreator', SelectableDocumentFilter, {
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			modelId: null
+			,sourceModelId: null
+			,dispatchService: null
+		},opts_);
+		
+		$n2.modelFilter.SelectableDocumentFilter.prototype.initialize.call(this,opts);
+	},
+
+	_computeAvailableChoicesFromDocs: function(docs){
+		var choiceLabelsById = {};
+		docs.forEach(function(doc){
+			if( doc && doc.nunaliit_created ){
+				var id = doc.nunaliit_created.name;
+				if( id && !choiceLabelsById[id] ){
+					choiceLabelsById[id] = id;
+				};
+			};
+		});
+
+		var availableChoices = [];
+		for(var id in choiceLabelsById){
+			var label = choiceLabelsById[id];
+			availableChoices.push({
+				id: id
+				,label: label
+			});
+		};
+		availableChoices.sort(function(a,b){
+			if( a.label < b.label ){
+				return -1;
+			};
+			if( a.label > b.label ){
+				return 1;
+			};
+			return 0;
+		})
+		
+		return availableChoices;
+	},
+	
+	_isDocVisible: function(doc, selectedChoiceIdMap){
+		if( doc 
+		 && doc.nunaliit_created
+		 && selectedChoiceIdMap[doc.nunaliit_created.name] ){
+			return true;
+		};
+		
+		return false;
+	}
+});
+
+//--------------------------------------------------------------------------
 function handleModelCreate(m, addr, dispatcher){
 	if( m.modelType === 'filter' ){
 		var options = {};
@@ -1085,6 +1141,28 @@ function handleModelCreate(m, addr, dispatcher){
 		};
 		
 		new SingleDocumentFilter(options);
+		
+		m.created = true;
+
+	} else if( m.modelType === 'documentFilterByCreator' ){
+		var options = {};
+		
+		if( m && m.modelOptions ){
+			for(var key in m.modelOptions){
+				options[key] = m.modelOptions[key];
+			};
+		};
+		
+		options.modelId = m.modelId;
+		options.modelType = m.modelType;
+
+		if( m && m.config ){
+			if( m.config.directory ){
+				options.dispatchService = m.config.directory.dispatchService;
+			};
+		};
+		
+		new DocumentFilterByCreator(options);
 		
 		m.created = true;
 	};
