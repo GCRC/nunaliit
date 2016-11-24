@@ -610,6 +610,12 @@ var SingleDocumentFilter = $n2.Class(ModelFilter, {
 */
 var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 
+	dispatchService: undefined,
+
+	modelId: undefined,
+	
+	sourceModelId: undefined,
+
 	docInfosByDocId: undefined,
 	
 	selectedChoicesParameter: undefined,
@@ -795,6 +801,8 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 	
 	_sourceModelUpdated: function(sourceState){
 		
+		var _this = this;
+		
 		var added = []
 			,updated = []
 			,removed = []
@@ -901,8 +909,16 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 			var doc = docInfo.doc;
 			docs.push(doc);
 		};
-		var availableChoices = this._computeAvailableChoicesFromDocs(docs);
-		this._updateAvailableChoices(availableChoices);
+		var currentChoiceGeneration = $n2.getUniqueId();
+		this.currentChoiceGeneration = currentChoiceGeneration;
+		var availableChoices = this._computeAvailableChoicesFromDocs(docs, function(choices){
+			if( _this.currentChoiceGeneration === currentChoiceGeneration ){
+				_this._updateAvailableChoices(choices);
+			};
+		});
+		if( availableChoices ){
+			this._updateAvailableChoices(availableChoices);
+		};
 	},
 	
 	/*
@@ -912,8 +928,14 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 	 *    id: <string>
 	 *    ,label: <string> optional
 	 * }
+	 * 
+	 * There is two ways of implmenting this function:
+	 * 1. Return an array of choices
+	 * 2. Return null and call the callback function with the computed choices.
+	 * 
+	 * The second method allows an asynchronous approach
 	 */
-	_computeAvailableChoicesFromDocs: function(docs){
+	_computeAvailableChoicesFromDocs: function(docs, callbackFn){
 		throw new Error('Subclasses to SelectableDocumentFilter must implement _computeAvailableChoicesFromDocs()');
 	},
 	
@@ -988,6 +1010,12 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 //--------------------------------------------------------------------------
 var DocumentFilterByCreator = $n2.Class('DocumentFilterByCreator', SelectableDocumentFilter, {
 
+	userInfoByName: null,
+	
+	currentChoices: null,
+
+	currentCallback: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			modelId: null
@@ -995,16 +1023,92 @@ var DocumentFilterByCreator = $n2.Class('DocumentFilterByCreator', SelectableDoc
 			,dispatchService: null
 		},opts_);
 		
+		var _this = this;
+		
 		$n2.modelFilter.SelectableDocumentFilter.prototype.initialize.call(this,opts);
+		
+		this.userInfoByName = {};
+		this.currentChoices = [];
+		this.currentCallback = null;
+		
+		if( this.dispatchService ){
+			var f = function(m, addr, dispatcher){
+				_this._handleFilterByCreatorEvents(m, addr, dispatcher);
+			};
+			
+			this.dispatchService.register(DH, 'userInfo', f);
+		};
+	},
+	
+	_handleFilterByCreatorEvents: function(m, addr, dispatcher){
+		if( 'userInfo' === m.type ){
+			var userInfo = m.userInfo;
+			var userName = userInfo.name;
+			
+			this.userInfoByName[userName] = userInfo;
+			
+			this._recomuteAvailableChoices();
+		};
+	},
+	
+	_recomuteAvailableChoices: function(){
+		var _this = this;
+
+		if( this.currentChoices ){
+			var choiceWasChanged = false;
+			this.currentChoices.forEach(function(choice){
+				var userInfo = _this.userInfoByName[choice.id];
+				
+				var label;
+				if( userInfo ){
+					label = userInfo.display;
+				};
+				if( !label ){
+					label = choice.id;
+				};
+				
+				if( label !== choice.label ){
+					choice.label = label;
+					choiceWasChanged = true;
+				};
+			});
+			
+			if( choiceWasChanged ){
+				this.currentChoices.sort(function(a,b){
+					if( a.label < b.label ){
+						return -1;
+					};
+					if( a.label > b.label ){
+						return 1;
+					};
+					return 0;
+				});
+
+				if( typeof this.currentCallback === 'function' ){
+					this.currentCallback(this.currentChoices);
+				};
+			};
+		};
 	},
 
-	_computeAvailableChoicesFromDocs: function(docs){
+	_computeAvailableChoicesFromDocs: function(docs, callbackFn){
+		var _this = this;
+
 		var choiceLabelsById = {};
+		var userNamesToFetch = [];
 		docs.forEach(function(doc){
 			if( doc && doc.nunaliit_created ){
-				var id = doc.nunaliit_created.name;
-				if( id && !choiceLabelsById[id] ){
-					choiceLabelsById[id] = id;
+				var userName = doc.nunaliit_created.name;
+				var userInfo = _this.userInfoByName[userName];
+				
+				if( userInfo ){
+					// OK
+				} else {
+					userNamesToFetch.push(userName);
+				};
+
+				if( userName && !choiceLabelsById[userName] ){
+					choiceLabelsById[userName] = userName;
 				};
 			};
 		});
@@ -1025,9 +1129,23 @@ var DocumentFilterByCreator = $n2.Class('DocumentFilterByCreator', SelectableDoc
 				return 1;
 			};
 			return 0;
-		})
+		});
 		
-		return availableChoices;
+		this.currentChoices = availableChoices;
+		this.currentCallback = callbackFn;
+		
+		callbackFn(availableChoices);
+		
+		if( userNamesToFetch.length > 0 ){
+			userNamesToFetch.forEach(function(userName){
+				_this.dispatchService.send(DH,{
+					type: 'requestUserDocument'
+					,userId: userName
+				});
+			});
+		};
+		
+		return null;
 	},
 	
 	_isDocVisible: function(doc, selectedChoiceIdMap){
