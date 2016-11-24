@@ -612,6 +612,16 @@ Document Selector
 
 /* 
 ==============================
+Single Filter Selection 
+==============================
+*/
+.nunaliit_module_title .n2widget_singleFilterSelection {
+	float: right;
+	padding: 8px 20px;
+}
+
+/* 
+==============================
 Model Browser Widget 
 ==============================
 */

@@ -603,6 +603,10 @@ var Service = $n2.Class({
 			if( !this.modelIdMap[m.modelId] ){
 				this.modelIdMap[m.modelId] = MODEL_SUSPECTED;
 			};
+
+			if( $n2.modelFilter && typeof $n2.modelFilter.handleModelCreate === 'function' ){
+				$n2.modelFilter.handleModelCreate(m, addr, dispatcher);
+			};
 			
 			if( $n2.modelUtils && typeof $n2.modelUtils.handleModelCreate === 'function' ){
 				$n2.modelUtils.handleModelCreate(m, addr, dispatcher);
