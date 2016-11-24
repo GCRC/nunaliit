@@ -88,7 +88,8 @@ OpenLayers.Format.Model = OpenLayers.Class(OpenLayers.Format, {
 					id = doc._id;
 				};
 				
-				if( doc.nunaliit_geom.wkt ) {
+				if( doc.nunaliit_geom 
+				 && doc.nunaliit_geom.wkt ) {
 					geom = OpenLayers.Geometry.fromWKT(doc.nunaliit_geom.wkt);
 					
 					if( geom ){
@@ -107,8 +108,8 @@ OpenLayers.Format.Model = OpenLayers.Class(OpenLayers.Format, {
 					f.fid = id;
 					f.n2GeomProj = this.dbProj;
 					results.push(f);
-				} else {
-					$n2.log('Invalid feature',doc);
+//				} else {
+//					$n2.log('Invalid feature',doc);
 				};
 			};
 			
@@ -116,7 +117,7 @@ OpenLayers.Format.Model = OpenLayers.Class(OpenLayers.Format, {
         } catch(e) {
             $n2.log('Error during CouchDB format read',e);
         }
-        return null;
+        return [];
     },
 
     /**
