@@ -5606,7 +5606,6 @@ var MapAndControls = $n2.Class({
 		};
 			
 		// Prepare features to be added to layer
-        var featuresToAdd = [];
         state.added.forEach(function(f){
 			if( mustReproject ){
 	            var geom = f.geometry;
