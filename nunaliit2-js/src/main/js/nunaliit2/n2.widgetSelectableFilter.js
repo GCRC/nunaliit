@@ -38,6 +38,7 @@ var
  ,DH = 'n2.widgetSelectableFilter'
  ,ALL_CHOICES = '__ALL_CHOICES__'
  ,NO_CHOICE = '__NO_CHOICE_SELECTED__'
+ ,UNKNOWN_CHOICE = '__UNKNOWN_CHOICE_SELECTED__'
  ;
 
 //--------------------------------------------------------------------------
@@ -59,7 +60,9 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 
 	availableChoices: null,
 	
-	lastSelectedChoiceId: null,
+	selectedChoices: null,
+	
+	selectedChoiceIdMap: null,
 	
 	allChoicesLabel: null,
 	
@@ -84,7 +87,8 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 		this.noChoiceLabel = opts.noChoiceLabel;
 		
 		this.availableChoices = [];
-		this.lastSelectedChoiceId = ALL_CHOICES;
+		this.selectedChoices = [];
+		this.selectedChoiceIdMap = {};
 		
 		// Set up model listener
 		if( this.dispatchService ){
@@ -117,6 +121,11 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 
 				if( paramInfo.value ){
 					this.selectedChoices = paramInfo.value;
+					
+					this.selectedChoiceIdMap = {};
+					this.selectedChoices.forEach(function(choiceId){
+						_this.selectedChoiceIdMap[choiceId] = true;
+					});
 				};
 			};
 			
@@ -174,6 +183,7 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 			noChoiceLabel = _loc(this.noChoiceLabel);
 		};
 		$('<option>')
+			.addClass('n2widget_singleFilterSelection_optionNoChoice')
 			.text( noChoiceLabel )
 			.val(NO_CHOICE)
 			.appendTo($selector);
@@ -184,12 +194,11 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 			allChoicesLabel = _loc(this.allChoicesLabel);
 		};
 		$('<option>')
+			.addClass('n2widget_singleFilterSelection_optionAllChoices')
 			.text( allChoicesLabel )
 			.val(ALL_CHOICES)
 			.appendTo($selector);
 		
-		var currentFound = null;
-		var optionElements = [];
 		for(var i=0,e=this.availableChoices.length; i<e; ++i){
 			var choice = this.availableChoices[i];
 			
@@ -202,24 +211,53 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 				.text(label)
 				.val(choice.id)
 				.appendTo($selector);
-
-			optionElements.push($option);
-			
-			if( choice.id === this.lastSelectedChoiceId ){
-				currentFound = choice.id;
-			};
 		};
 		
-		if( currentFound ){
-			$selector.val(currentFound);
-			//$n2.log('selector => '+currentFound);
-		} else {
-			$selector.val(ALL_CHOICES);
-			//$n2.log('selector => empty');
-		};
+		this._adjustSelectedItem();
 		
 		// Select current
-		this._selectionChanged();
+		//this._selectionChanged();
+	},
+	
+	_adjustSelectedItem: function(){
+		var _this = this;
+		
+		// Detect situation where all option is selected
+		var allChoices = true;
+		this.availableChoices.forEach(function(choice){
+			if( !_this.selectedChoiceIdMap[choice.id] ){
+				allChoices = false;
+			};
+		});
+		
+		var selectedChoiceId;
+		if( allChoices ){
+			selectedChoiceId = ALL_CHOICES;
+		} else if( this.selectedChoices.length < 1 ) {
+			selectedChoiceId = NO_CHOICE;
+		} else if( this.selectedChoices.length > 1 ) {
+			selectedChoiceId = undefined;
+		} else {
+			selectedChoiceId = this.selectedChoices[0];
+		};
+		
+		var $elem = this._getElem();
+		var $selector = $elem.find('select');
+		if( selectedChoiceId ){
+			$selector.val( selectedChoiceId );
+			$selector.find('option.n2widget_singleFilterSelection_optionUnknown').remove();
+		} else {
+			// At this point, select UNKNOWN
+			var $unknown = $selector.find('option.n2widget_singleFilterSelection_optionUnknown');
+			if( $unknown.length < 1 ){
+				$('<option>')
+					.addClass('n2widget_singleFilterSelection_optionUnknown')
+					.text('')
+					.val(UNKNOWN_CHOICE)
+					.prependTo($selector);
+			};
+			$selector.val(UNKNOWN_CHOICE);
+		};
 	},
 	
 	// This is called when the selected option within <select> is changed
@@ -245,7 +283,10 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 				type: this.selectedChoicesSetEventName
 				,value: selectedChoiceIds
 			});
-			
+
+		} else if( UNKNOWN_CHOICE === val ){
+			// Do nothing
+
 		} else {
 			var selectedChoiceIds = [];
 			selectedChoiceIds.push(val);
@@ -257,12 +298,6 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 		};
 	},
 	
-	_selectedChoicesUpdated: function(){
-		var $elem = this._getElem();
-		var $selector = $elem.find('select');
-		$selector.val( this.lastSelectedChoiceId );
-	},
-
 	_handle: function(m, addr, dispatcher){
 		var _this = this;
 
@@ -275,34 +310,14 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 			
 		} else if( this.selectedChoicesChangeEventName === m.type ){
 			if( m.value ){
-				var selectedMap = {};
-				var selectedChoiceId = undefined;
-				m.value.forEach(function(choiceId){
-					selectedMap[choiceId] = true;
-					selectedChoiceId = choiceId;
+				this.selectedChoices = m.value;
+				
+				this.selectedChoiceIdMap = {};
+				this.selectedChoices.forEach(function(choiceId){
+					_this.selectedChoiceIdMap[choiceId] = true;
 				});
 				
-				// Detect all layers
-				var allChoices = true;
-				var noChoice = true;
-				this.availableChoices.forEach(function(choice){
-
-					if( selectedMap[choice.id] ){
-						noChoice = false;
-					} else {
-						allChoices = false;
-					};
-				});
-				
-				if( allChoices ){
-					this.lastSelectedChoiceId = ALL_CHOICES;
-				} else if( noChoice ) {
-					this.lastSelectedChoiceId = NO_CHOICE;
-				} else {
-					this.lastSelectedChoiceId = selectedChoiceId;
-				};
-				
-				this._selectedChoicesUpdated();
+				this._adjustSelectedItem();
 			};
 		};
 	}

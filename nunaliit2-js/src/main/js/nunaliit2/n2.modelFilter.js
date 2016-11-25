@@ -628,6 +628,8 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 	
 	modelIsLoading: undefined,
 	
+	receivedSelection: undefined,
+
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: null
@@ -635,6 +637,7 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 			// From configuration
 			,modelId: null
 			,sourceModelId: null
+			,initialSelection: null
 		},opts_);
 		
 		var _this = this;
@@ -647,6 +650,19 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 		this.selectedChoiceIdMap = {};
 		this.availableChoices = [];
 		this.modelIsLoading = false;
+		this.receivedSelection = false;
+		
+		if( $n2.isArray(opts.initialSelection) ){
+			this.receivedSelection = true;
+			opts.initialSelection.forEach(function(choiceId){
+				if( typeof choiceId === 'string' ){
+					_this.selectedChoiceIdMap[choiceId] = true;
+					_this.availableChoices.push(choiceId);
+				} else {
+					$n2.log('Error: SelectableDocumentFilter initialized with initial selection: '+choiceId);
+				};
+			});
+		};
 		
 		this.selectedChoicesParameter = new $n2.model.ModelParameter({
 			model: this
@@ -704,8 +720,12 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 		return selectedChoices;
 	},
 
-	_setSelectedChoices: function(choiceIdArray){
+	_setSelectedChoices: function(choiceIdArray, isInternalCall){
 		var _this = this;
+		
+		if( !isInternalCall ){
+			this.receivedSelection = true;
+		};
 		
 		if( !$n2.isArray(choiceIdArray) ){
 			throw new Error('SelectableDocumentFilter._setSelectedChoices() should be an array of strings');
@@ -720,6 +740,8 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 		});
 
 		this._filterChanged();
+		
+		this.selectedChoicesParameter.sendUpdate();
 	},
 
 	getAvailableChoices: function(){
@@ -911,13 +933,23 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 		};
 		var currentChoiceGeneration = $n2.getUniqueId();
 		this.currentChoiceGeneration = currentChoiceGeneration;
-		var availableChoices = this._computeAvailableChoicesFromDocs(docs, function(choices){
+		var availableChoices = this._computeAvailableChoicesFromDocs(docs, receiveChoices);
+		if( availableChoices ){
+			receiveChoices(availableChoices);
+		};
+		
+		function receiveChoices(choices){
 			if( _this.currentChoiceGeneration === currentChoiceGeneration ){
 				_this._updateAvailableChoices(choices);
+
+				if( !_this.receivedSelection ){
+					var selection = [];
+					choices.forEach(function(choice){
+						selection.push(choice.id);
+					});
+					_this._setSelectedChoices(selection,true);
+				};
 			};
-		});
-		if( availableChoices ){
-			this._updateAvailableChoices(availableChoices);
 		};
 	},
 	
