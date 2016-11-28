@@ -1168,11 +1168,15 @@ var DialogService = $n2.Class({
 
 		$dialog.append( $('<br/>') );
 		
+		var mustReset = true;
+		
 		var $ok = $('<button></button>');
 		$ok.text( _loc('OK') );
 		$ok.button({icons:{primary:'ui-icon-check'}});
 		$dialog.append( $ok );
 		$ok.click(function(){
+			mustReset = false;
+			
 			var $diag = $('#'+diagId);
 			var schemaName = $diag.find('select').val();
 			$diag.dialog('close');
@@ -1192,7 +1196,6 @@ var DialogService = $n2.Class({
 		$dialog.append( $cancel );
 		$cancel.click(function(){
 			$('#'+diagId).dialog('close');
-			opt.onReset();
 			return false;
 		});
 		
@@ -1204,6 +1207,10 @@ var DialogService = $n2.Class({
 				var diag = $(event.target);
 				diag.dialog('destroy');
 				diag.remove();
+				
+				if( mustReset ){
+					opt.onReset();
+				};
 			}
 		};
 		
