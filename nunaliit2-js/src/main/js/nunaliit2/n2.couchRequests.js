@@ -131,6 +131,7 @@ $n2.couchRequests = $n2.Class({
 				_this._handleMessage(m);
 			};
 			this.options.dispatchService.register(DH, 'requestDocument', f);
+			this.options.dispatchService.register(DH, 'requestDocuments', f);
 			this.options.dispatchService.register(DH, 'requestUserDocument', f);
 			this.options.dispatchService.register(DH, 'requestUserDocumentComplete', f);
 		};
