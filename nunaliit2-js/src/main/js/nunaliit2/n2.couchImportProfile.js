@@ -341,25 +341,43 @@ var ImportAnalyzer = $n2.Class({
 		// Verify import entries and store them in a dictionary
 		// for easy access by import id
 		var importEntriesById = {};
+		var collidingIdMap = {};
+		var noIdCount = 0;
 		if( opts.entries ){
 			for(var i=0,e=opts.entries.length; i<e; ++i){
 				var entry = opts.entries[i];
 				var id = entry.getId();
 				
 				if( typeof id === 'undefined' || null === id){
-					opts.onError( _loc('Imported entry does not contains an id attribute') );
-					return;
-				};
+					noIdCount++;
 
-				if( importEntriesById[id] ){
-					opts.onError( _loc('More than one import entries report identifier: {id}',{
-						id: id
-					}) );
-					return;
+				} else if( importEntriesById[id] ){
+					if( !collidingIdMap[id] ){
+						collidingIdMap[id] = 2;
+					} else {
+						collidingIdMap[id] = collidingIdMap[id] + 1;
+					};
+
+				} else {
+					importEntriesById[id] = entry;
+					entriesLeft.push( entry );
 				};
-				
-				importEntriesById[id] = entry;
-				entriesLeft.push( entry );
+			};
+			
+			if( noIdCount > 0 ){
+				opts.onError( _loc('Number of imported entries without an id attribute: {count}',{count:noIdCount}) );
+				return;
+			};
+			
+			var collidingIds = [];
+			for(var collidingId in collidingIdMap){
+				collidingIds.push(collidingId);
+			};
+			if( collidingIds.length > 0 ){
+				opts.onError( _loc('Colliding id attributes: {ids}',{
+					ids: collidingIds.join(',')
+				}) );
+				return;
 			};
 		};
 		
@@ -1864,6 +1882,7 @@ var ImportProfileOperationCopyAllAndFixNames = $n2.Class(ImportProfileOperation,
 addOperationPattern(OPERATION_COPY_ALL_AND_FIX_NAMES, ImportProfileOperationCopyAllAndFixNames);
 
 //=========================================================================
+// assign(demo_doc.title,'title')
 var OPERATION_ASSIGN = /^\s*assign\((.*),\s*'([^']*)'\s*\)\s*$/;
 
 var ImportProfileOperationAssign = $n2.Class(ImportProfileOperation, {
@@ -2326,6 +2345,96 @@ var ImportProfileOperationImportReference = $n2.Class(ImportProfileOperation, {
 });
 
 addOperationPattern(OPERATION_IMPORT_REF, ImportProfileOperationImportReference);
+
+//=========================================================================
+var OPERATION_SET_VALUE = /^\s*setValue\((.*),\s*(.*)\s*\)\s*$/;
+
+var ImportProfileOperationSetValue = $n2.Class(ImportProfileOperation, {
+	
+	operationString: null,
+	
+	value: null,
+	
+	targetSelector: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			operationString: null
+			,atlasDb: null
+			,atlasDesign: null
+		},opts_);
+		
+		ImportProfileOperation.prototype.initialize.call(this);
+		
+		this.operationString = opts.operationString;
+		
+		var matcher = OPERATION_SET_VALUE.exec(this.operationString);
+		if( !matcher ) {
+			throw 'Invalid operation string for ImportProfileOperationSetValue: '+operationString;
+		};
+		
+		this.targetSelector = $n2.objectSelector.parseSelector(matcher[1]);
+		var value = matcher[2];
+		if( value.length > 2 
+		 && value[0] === '\'' 
+		 && value[value.length-1] === '\'' ){
+			this.value = value.substr(1,value.length-2);
+		} else if( 'null' === value ){
+			this.value = null;
+		} else if( 'true' === value ){
+			this.value = true;
+		} else if( 'false' === value ){
+			this.value = false;
+		} else {
+			this.value = 1 * value;
+		};
+	},
+	
+	reportCopyOperations: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,importData: null
+			,allPropertyNames: null
+			,onSuccess: function(copyOperations){}
+		},opts_);
+		
+		var copyOperations = [];
+
+		var targetValue = this.targetSelector.getValue(opts.doc);
+		
+		var isInconsistent = false;
+		if( this.value !== targetValue ){
+			isInconsistent = true;
+		};
+		
+		copyOperations.push({
+			propertyNames: []
+			,computedValue: this.value
+			,targetSelector: this.targetSelector
+			,targetValue: targetValue
+			,isInconsistent: isInconsistent
+		});
+		
+		opts.onSuccess(copyOperations);
+	},
+	
+	performCopyOperation: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,importData: null
+			,copyOperation: null
+		},opts_);
+		
+		if( this.value === undefined ){
+			// Must delete
+			this.targetSelector.removeValue(opts.doc);
+		} else {
+			this.targetSelector.setValue(opts.doc, this.value, true);
+		};
+	}
+});
+
+addOperationPattern(OPERATION_SET_VALUE, ImportProfileOperationSetValue);
 
 //=========================================================================
 var ImportEntry = $n2.Class({
