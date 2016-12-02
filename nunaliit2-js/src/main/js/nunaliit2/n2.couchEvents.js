@@ -202,11 +202,24 @@ var SelectionRedirector = $n2.Class('SelectionRedirector',{
 			,docIds: m.docIds
 			,doc: m.doc
 			,docs: m.docs
+			,isSelect: true
 			,onSuccess: function(selectedDocs, supplementDocIds){
 				if( selectionNumber === _this.currentSelectionNumber ){
-					var msg = {
-						type: 'selected'
+					var msg = {};
+					
+					// Copy attributes from original message
+					for(var name in m){
+						var value = m[name];
+						msg[name] = value;
 					};
+					
+					// Fix up 
+					msg.type = 'selected';
+					delete msg.docId;
+					delete msg.docIds;
+					delete msg.doc;
+					delete msg.docs;
+					
 					if( selectedDocs.length > 1 ){
 						msg.docIds = [];
 						msg.docs = [];
@@ -250,11 +263,24 @@ var SelectionRedirector = $n2.Class('SelectionRedirector',{
 			,docIds: m.docIds
 			,doc: m.doc
 			,docs: m.docs
+			,isFocus: true
 			,onSuccess: function(selectedDocs, supplementDocIds){
 				if( focusNumber === _this.currentFocusNumber ){
-					var msg = {
-						type: 'focusOn'
+					var msg = {};
+					
+					// Copy attributes from original message
+					for(var name in m){
+						var value = m[name];
+						msg[name] = value;
 					};
+					
+					// Fix up 
+					msg.type = 'focusOn';
+					delete msg.docId;
+					delete msg.docIds;
+					delete msg.doc;
+					delete msg.docs;
+
 					if( selectedDocs.length > 1 ){
 						msg.docIds = [];
 						msg.docs = [];
@@ -296,6 +322,8 @@ var SelectionRedirector = $n2.Class('SelectionRedirector',{
 			,docIds: null
 			,doc: null
 			,docs: null
+			,isSelect: false
+			,isFocus: false
 			,onSuccess: function(selectedDocs, supplementDocids){}
 			,onError: function(err){}
 		},opts_);
@@ -311,6 +339,8 @@ var SelectionRedirector = $n2.Class('SelectionRedirector',{
 				
 				_this.translateUserSelection({
 					docs: docs
+					,isSelect: opts.isSelect
+					,isFocus: opts.isFocus
 					,onSuccess: opts.onSuccess
 					,onError: opts.onError
 				});
@@ -347,6 +377,8 @@ var SelectionRedirector = $n2.Class('SelectionRedirector',{
 	translateUserSelection: function(opts_){
 		var opts = $n2.extend({
 			docs: null
+			,isSelect: false
+			,isFocus: false
 			,onSuccess: function(selectedDocs, supplementDocids){}
 			,onError: function(err){}
 		},opts_);

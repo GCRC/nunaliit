@@ -269,7 +269,7 @@ function Configure(options_){
 		directory: configuration.directory
 	});
 	configuration.directory.historyTracker = new $n2.history.Tracker({
-		directory: configuration.directory
+		dispatchService: configuration.directory.dispatchService
 	});
 	configuration.directory.history = new $n2.history.History({
 		dispatchService: configuration.directory.dispatchService

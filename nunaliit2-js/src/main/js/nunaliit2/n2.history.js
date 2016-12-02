@@ -751,15 +751,18 @@ var Tracker = $n2.Class({
 	
 	waitingDocId: null,
 	
+	forceHashReplay: null,
+	
 	initialize: function(opts_){
 		this.options = $n2.extend({
-			directory: null
+			dispatchService: null
 			,disabled: false
 		},opts_);
 		
 		var _this = this;
 		
 		this.last = {};
+		this.forceHashReplay = false;
 		
 		var d = this._getDispatcher();
 		if( d ){
@@ -782,11 +785,23 @@ var Tracker = $n2.Class({
 			d.register(DH,'editClosed',f);
 		};
 	},
+	
+	getForceHashReplay: function(){
+		return this.forceHashReplay;
+	},
+	
+	setForceHashReplay: function(flag){
+		if( flag ){
+			this.forceHashReplay = true;
+		} else {
+			this.forceHashReplay = false;
+		};
+	},
 
 	_getDispatcher: function(){
 		var d = null;
-		if( this.options.directory ){
-			d = this.options.directory.dispatchService;
+		if( this.options ){
+			d = this.options.dispatchService;
 		};
 		return d;
 	},
@@ -1030,6 +1045,11 @@ var Tracker = $n2.Class({
 			 && typeof m.docId === 'string'
 			 && this.last.selected === m.docId ){
 				// Do not replay selection if already selected
+				if( this.forceHashReplay ){
+					// Unless specifically requested
+					this._dispatch(m);
+				};
+
 			} else {
 				this._dispatch(m);
 			};

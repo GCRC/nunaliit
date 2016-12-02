@@ -46,6 +46,8 @@ var CustomSvgCanvas = $n2.Class({
 	canvasId: null,
  	
 	interactionId: null,
+	
+	canvasName: null,
  	
 	dispatchService: null,
 
@@ -59,6 +61,7 @@ var CustomSvgCanvas = $n2.Class({
 		var opts = $n2.extend({
 			canvasId: null
 			,interactionId: null
+			,canvasName: null
 			,config: null
 			,moduleDisplay: null
 			,svgAttachment: null
@@ -73,6 +76,7 @@ var CustomSvgCanvas = $n2.Class({
  	
 		this.canvasId = opts.canvasId;
 		this.interactionId = opts.interactionId;
+		this.canvasName = opts.canvasName;
 		this.moduleDisplay = opts.moduleDisplay;
 
 		var config = opts.config;
@@ -337,6 +341,7 @@ var CustomSvgCanvas = $n2.Class({
  			this.dispatchService.send(DH,{
  				type: 'userFocusOn'
  				,docId: docId
+ 				,_source: this.canvasName
  			});
  		};
  	},
@@ -347,6 +352,7 @@ var CustomSvgCanvas = $n2.Class({
  			this.dispatchService.send(DH,{
  				type: 'userFocusOff'
  				,docId: docId
+ 				,_source: this.canvasName
  			});
  		};
  	},
@@ -357,6 +363,7 @@ var CustomSvgCanvas = $n2.Class({
  			this.dispatchService.send(DH,{
  				type: 'userSelect'
  				,docId: docId
+ 				,_source: this.canvasName
  			});
  		};
  		
@@ -367,6 +374,7 @@ var CustomSvgCanvas = $n2.Class({
  	_mouseUnselect: function($elem, evt){
 		this.dispatchService.send(DH,{
 			type: 'userUnselect'
+ 			,_source: this.canvasName
 		});
  	},
  	
