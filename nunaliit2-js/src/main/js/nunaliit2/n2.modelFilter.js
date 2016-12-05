@@ -690,7 +690,7 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 		// Register to events
 		if( this.dispatchService ){
 			var f = function(m, addr, dispatcher){
-				_this._handle(m, addr, dispatcher);
+				_this._handleSelectableDocumentFilterEvents(m, addr, dispatcher);
 			};
 			this.dispatchService.register(DH,'modelGetInfo',f);
 			this.dispatchService.register(DH, 'modelGetState', f);
@@ -770,7 +770,7 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 		this.availableChoicesParameter.sendUpdate();
 	},
 	
-	_handle: function(m, addr, dispatcher){
+	_handleSelectableDocumentFilterEvents: function(m, addr, dispatcher){
 		if( 'modelGetInfo' === m.type ){
 			if( this.modelId === m.modelId ){
 				m.modelInfo = this._getModelInfo();
