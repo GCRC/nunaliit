@@ -297,10 +297,6 @@ OpenLayers.Handler.NunaliitFeature = OpenLayers.Class(OpenLayers.Handler, {
      * {Boolean} The event occurred over a relevant feature.
      */
     handle: function(evt) {
-        if(this.feature && !this.feature.layer) {
-            // feature has been destroyed
-            this.feature = null;
-        }
         var type = evt.type;
         var handled = false;
         var previouslyIn = !!(this.feature); // previously in a feature
@@ -349,7 +345,7 @@ OpenLayers.Handler.NunaliitFeature = OpenLayers.Class(OpenLayers.Handler, {
         	
         } else if(this.feature) {
         	// Mouse in
-            var inNew = (this.feature != this.lastFeature);
+            var inNew = (this.feature !== this.lastFeature);
             if(this.geometryTypeMatches(this.feature)) {
                 // in to a feature
                 if(previouslyIn && inNew) {
@@ -366,10 +362,14 @@ OpenLayers.Handler.NunaliitFeature = OpenLayers.Class(OpenLayers.Handler, {
                 handled = true;
             } else {
                 // not in to a feature
-                if(this.lastFeature && (previouslyIn && inNew)) {
+                if( previouslyIn && inNew ) {
                     // out of last feature for the first time
-                    this.triggerCallback(type, 'out', [this.lastFeature]);
-                }
+                	if( this.lastFeature ){
+                        this.triggerCallback(type, 'out', [this.lastFeature]);
+                	} else {
+                        this.triggerCallback(type, 'out', []);
+                	};
+                };
                 // next time the mouse goes in a feature whose geometry type
                 // doesn't match we don't want to call the 'out' callback
                 // again, so let's set this.feature to null so that
@@ -377,10 +377,14 @@ OpenLayers.Handler.NunaliitFeature = OpenLayers.Class(OpenLayers.Handler, {
                 // we enter handle. Yes, a bit hackish...
                 this.feature = null;
             }
-        } else if(this.lastFeature && previouslyIn) {
+        } else if(previouslyIn) {
         	// mouse out
-            this.triggerCallback(type, 'out', [this.lastFeature]);
-        }
+        	if( this.lastFeature ){
+        		this.triggerCallback(type, 'out', [this.lastFeature]);
+        	} else {
+                this.triggerCallback(type, 'out', []);
+        	};
+        };
         return handled;
     },
     
