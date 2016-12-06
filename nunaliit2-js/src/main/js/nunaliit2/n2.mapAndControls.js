@@ -4318,18 +4318,6 @@ var MapAndControls = $n2.Class({
 		var navHighlightOptions = {
 			hover: true
 			,callbacks: {
-//	            click: function(feature) {
-//					_this._startClicked(feature, false);
-//				}
-//	            ,clickout: function(){
-//					_this._unselectFeature();
-//				}
-//	            ,over: function(feature){ 
-//					_this._startHover(feature); 
-//				}
-//	            ,out: function(){ 
-//					_this._endHover(); 
-//				}
 			}
 		};
 		this.selectFeatureControl = new OpenLayers.Control.SelectFeature(

@@ -381,6 +381,7 @@ table.mediaSelection td {
 
 .olPopupContent {
 	max-width: 250px;
+	overflow: visible;
 }
 
 /* Fix spurious copyright pop-up */
