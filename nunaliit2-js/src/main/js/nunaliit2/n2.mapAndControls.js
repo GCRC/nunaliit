@@ -2096,6 +2096,7 @@ var MapAndControls = $n2.Class({
 			});
 			layerInfo.protocol = new OpenLayers.Protocol.Couch(couchProtocolOpt);
 			layerOptions.protocol = layerInfo.protocol;
+			layerInfo.cachingAllowed = true;
 			
 		} else if( 'model' === layerDefinition.type ) {
 			var modelProtocolOptions = $n2.extend({},layerDefinition.options);
@@ -4920,24 +4921,28 @@ var MapAndControls = $n2.Class({
 	},
 	
 	_getCachedValueMap: function(layerInfo) {
-		if( layerInfo.cachedValues ) {
-			var valueMap = layerInfo.cachedValues;
-		} else {
-			valueMap = {};
-			layerInfo.cachedValues = valueMap;
-			
-			var olLayer = layerInfo.olLayer;
-			var features = olLayer.features;
-			for(var i=0,e=features.length; i<e; ++i){
-				var feature = features[i];
-				if( feature.fid ) {
-					valueMap[feature.fid] = feature.data;
-				};
-				if( feature.cluster ){
-					for(var j=0,k=feature.cluster.length;j<k;++j){
-						var cf = feature.cluster[j];
-						if( cf.fid ){
-							valueMap[cf.fid] = cf.data;
+		var valueMap = undefined;
+
+		if( layerInfo.cachingAllowed ) {
+			if( layerInfo.cachedValues ) {
+				valueMap = layerInfo.cachedValues;
+			} else {
+				valueMap = {};
+				layerInfo.cachedValues = valueMap;
+				
+				var olLayer = layerInfo.olLayer;
+				var features = olLayer.features;
+				for(var i=0,e=features.length; i<e; ++i){
+					var feature = features[i];
+					if( feature.fid ) {
+						valueMap[feature.fid] = feature.data;
+					};
+					if( feature.cluster ){
+						for(var j=0,k=feature.cluster.length;j<k;++j){
+							var cf = feature.cluster[j];
+							if( cf.fid ){
+								valueMap[cf.fid] = cf.data;
+							};
 						};
 					};
 				};
