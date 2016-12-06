@@ -120,7 +120,7 @@ function FilterFunctionFromModelConfiguration(modelConf){
 };
 
 //--------------------------------------------------------------------------
-var ModelFilter = $n2.Class({
+var ModelFilter = $n2.Class('ModelFilter',{
 		
 	dispatchService: null,
 
@@ -137,7 +137,7 @@ var ModelFilter = $n2.Class({
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: null
-			,filterName: 'FilterModel'
+			,filterName: null
 			,filterFn: null
 
 			// From configuration
@@ -152,6 +152,9 @@ var ModelFilter = $n2.Class({
 		this.sourceModelId = opts.sourceModelId;
 		this.filterFn = opts.filterFn;
 		this.filterName = opts.filterName;
+		if( !this.filterName ){
+			this.filterName = this._classname;
+		};
 		
 		this.docInfosByDocId = {};
 		this.modelIsLoading = false;
@@ -159,7 +162,7 @@ var ModelFilter = $n2.Class({
 		// Register to events
 		if( this.dispatchService ){
 			var f = function(m, addr, dispatcher){
-				_this._handle(m, addr, dispatcher);
+				_this._handleModelFilterEvents(m, addr, dispatcher);
 			};
 			this.dispatchService.register(DH,'modelGetInfo',f);
 			this.dispatchService.register(DH, 'modelGetState', f);
@@ -180,7 +183,7 @@ var ModelFilter = $n2.Class({
 		$n2.log(this.filterName,this);
 	},
 	
-	_handle: function(m, addr, dispatcher){
+	_handleModelFilterEvents: function(m, addr, dispatcher){
 		if( 'modelGetInfo' === m.type ){
 			if( this.modelId === m.modelId ){
 				m.modelInfo = this._getModelInfo();
