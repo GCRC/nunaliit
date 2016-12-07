@@ -800,6 +800,28 @@ var LayerInfo = $n2.Class({
 				};
 			};
 		};
+	},
+	
+	accumulateMapStylesInUse: function(stylesInUse){
+		// Loop over drawn features (do not iterate in clusters)
+		if( this.olLayer 
+		 && this.olLayer.features ){
+			for(var i=0,e=this.olLayer.features.length; i<e; ++i){
+				var feature = this.olLayer.features[i];
+				if( feature._n2Style 
+				 && typeof feature._n2Style.id === 'string'){
+					var style = feature._n2Style;
+					
+					var styleInfo = stylesInUse[style.id];
+					if( !styleInfo ){
+						styleInfo = {
+							style: style
+						};
+						stylesInUse[style.id] = styleInfo;
+					};
+				};
+			};
+		};
 	}
 });
 
@@ -1063,6 +1085,7 @@ var MapAndControls = $n2.Class({
 				}
 			}
 			,saveFeature: {} // save feature details
+			,canvasName: null
 			,sidePanelName: 'side'
 			,filterPanelName: null
 			,toggleClick: true
@@ -1250,7 +1273,8 @@ var MapAndControls = $n2.Class({
 	    this._registerDispatch('setMapLayerVisibility');
 	    this._registerDispatch('mapSwitchToEditMode');
 	    this._registerDispatch('simplifiedGeometryReport');
-		
+	    this._registerDispatch('canvasGetStylesInUse');
+	    
 		// Layers
 		this.infoLayers = [];
 		
@@ -1635,6 +1659,13 @@ var MapAndControls = $n2.Class({
 			});
 		};
 	},
+	
+	getCanvasName: function(){
+		if( this.options ){
+			return this.options.canvasName;
+		};
+		return undefined;
+	},
 
 	getNamedLayerInfo: function(name) {
 		for(var i=0,e=this.infoLayers.length; i<e; ++i) {
@@ -1899,6 +1930,9 @@ var MapAndControls = $n2.Class({
 					var loadedFeature = features[featureLoop];
 					reloadOptions.onReloaded(loadedFeature);
 				};
+				
+				// Refresh styles
+				_this._updatedStylesInUse();
 			};
 			
 			return cb;
@@ -4691,6 +4725,10 @@ var MapAndControls = $n2.Class({
 			this._refreshSimplifiedGeometries();
 		};
 		
+		if( layerReloaded ){
+			this._updatedStylesInUse();
+		};
+		
 		function updateFeature(layer, f, simplifiedGeometryById, layersToReload){
 			var simplifiedGeometry = simplifiedGeometryById[f.fid];
 			if( simplifiedGeometry ){
@@ -4777,6 +4815,32 @@ var MapAndControls = $n2.Class({
     },
 	
 	// === END -- SIMPLIFIED GEOMETRIES ===================================================
+
+    // === START -- MAP STYLES IN USE ===================================================
+
+    _getMapStylesInUse: function(){
+    	var mapStylesInUse = {};
+
+    	for(var i in this.infoLayers){
+    		var layerInfo = this.infoLayers[i];
+    		layerInfo.accumulateMapStylesInUse(mapStylesInUse);
+    	};
+		
+		return mapStylesInUse;
+    },
+    
+    // Called when the map detects that features have been redrawn
+    _updatedStylesInUse: function(){
+    	var mapStylesInUse = this._getMapStylesInUse();
+    	
+    	this._dispatch({
+    		type: 'canvasReportStylesInUse'
+    		,canvasName: this.getCanvasName()
+    		,stylesInUse: mapStylesInUse
+    	});
+    },
+    
+    // === END -- MAP STYLES IN USE ===================================================
 
 	redefineFeatureLayerStylesAndRules : function(layerName) {
 		var layerInfo = this.getNamedLayerInfo(layerName);
@@ -4903,6 +4967,8 @@ var MapAndControls = $n2.Class({
 
 	},
 	
+	// === START -- DOCUMENT CACHE ===================================================
+	
 	_retrieveCachedValue: function(id) {
 		// Look through the layers
 		for(var i=0,e=this.infoLayers.length; i<e; ++i){
@@ -4981,6 +5047,8 @@ var MapAndControls = $n2.Class({
 			};
 		};
 	},
+
+	// === END -- DOCUMENT CACHE ===================================================
 
 	_handleMapMousePosition: function(evt){
 		if( null == evt ) {
@@ -5111,6 +5179,7 @@ var MapAndControls = $n2.Class({
 			
 		} else if( 'documentContentUpdated' === type ) {
 			var doc = m.doc;
+			var reloaded = false;
 
 			// Compute map of layer ids
 			var layerIdMap = {};
@@ -5148,6 +5217,8 @@ var MapAndControls = $n2.Class({
 						if( featuresToAdd ){
 							infoLayer.olLayer.addFeatures(featuresToAdd);
 						};
+						
+						reloaded = true;
 					};
 				};
 			};
@@ -5189,6 +5260,10 @@ var MapAndControls = $n2.Class({
 						this._loadFeatureOnLayer(infoLayer, filter);
 					};
 				};
+			};
+			
+			if( reloaded ){
+				this._updatedStylesInUse();
 			};
 			
 		} else if( 'addLayerToMap' === type ) {
@@ -5543,6 +5618,11 @@ var MapAndControls = $n2.Class({
 			
 		} else if( 'simplifiedGeometryReport' === type ) {
 			this._updateSimplifiedGeometries(m.simplifiedGeometries);
+
+		} else if( 'canvasGetStylesInUse' === type ) {
+			if( this.getCanvasName() === m.canvasName ){
+				m.stylesInUse = this._getMapStylesInUse();
+			};
 		};
 	},
 	
@@ -5632,6 +5712,9 @@ var MapAndControls = $n2.Class({
 			
 			this.editModeAddFeatureEnabled = true;
 		};
+		
+		// Update styles
+		this._updatedStylesInUse();
 	},
 	
 	_handleAddLayerToMap: function(m){

@@ -248,6 +248,7 @@ var Symbolizer = $n2.Class({
 	initialize: function(){
 		
 		this.symbols = {};
+		this.id = null;
 		this._n2Symbolizer = true;
 		
 		for(var i=0,e=arguments.length; i<e; ++i){
@@ -388,9 +389,151 @@ var Symbolizer = $n2.Class({
 });
 
 //--------------------------------------------------------------------------
+var Style = $n2.Class({
+	
+	symbolizersByLabel: null,
+	
+	id: null,
+	
+	label: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			id: undefined
+			,basicStyle: undefined
+			,extendWithRule: undefined
+		},opts_);
+		
+		this.symbolizersByLabel = {};
+		this.id = opts.id;
+		this.label = null;
+		
+		if( opts.extendWithRule ){
+			this.label = opts.extendWithRule.label;
+		};
+		
+		if( opts.basicStyle && opts.extendWithRule ){
+			this.symbolizersByLabel.normal = new Symbolizer(
+				opts.basicStyle.symbolizersByLabel.normal, 
+				opts.extendWithRule.normal
+			);
+			this.symbolizersByLabel.selected = new Symbolizer(
+				opts.basicStyle.symbolizersByLabel.selected, 
+				opts.extendWithRule.selected
+			);
+			this.symbolizersByLabel.hovered = new Symbolizer(
+				opts.basicStyle.symbolizersByLabel.hovered, 
+				opts.extendWithRule.hovered
+			);
+			this.symbolizersByLabel.found = new Symbolizer(
+				opts.basicStyle.symbolizersByLabel.found, 
+				opts.extendWithRule.found
+			);
+
+		} else if( opts.basicStyle ){
+			this.symbolizersByLabel.normal = opts.basicStyle.symbolizersByLabel.normal;
+			this.symbolizersByLabel.selected = opts.basicStyle.symbolizersByLabel.selected;
+			this.symbolizersByLabel.hovered = opts.basicStyle.symbolizersByLabel.hovered;
+			this.symbolizersByLabel.found = opts.basicStyle.symbolizersByLabel.found;
+
+		} else if( opts.extendWithRule ){
+			this.symbolizersByLabel.normal = opts.extendWithRule.normal;
+			this.symbolizersByLabel.selected = opts.extendWithRule.selected;
+			this.symbolizersByLabel.hovered = opts.extendWithRule.hovered;
+			this.symbolizersByLabel.found = opts.extendWithRule.found;
+
+		} else {
+			this.symbolizersByLabel.normal = new Symbolizer();
+			this.symbolizersByLabel.selected = new Symbolizer();
+			this.symbolizersByLabel.hovered = new Symbolizer();
+			this.symbolizersByLabel.found = new Symbolizer();
+		};
+	},
+
+	getSymbolizer: function(ctxt){
+		var label = 'normal';
+		if( ctxt.n2_selected || ctxt.n2_derived_selected ){
+			label = '$selected';
+			if( ctxt.n2_found ){
+				label = '$selectedFound';
+				if( ctxt.n2_hovered || ctxt.n2_derived_hovered ){
+					label = '$selectedFoundHovered';
+				};
+			} else if( ctxt.n2_hovered || ctxt.n2_derived_hovered ){
+				label = '$selectedHovered';
+			};
+		} else if( ctxt.n2_found ){
+			label = '$found';
+			if( ctxt.n2_hovered || ctxt.n2_derived_hovered ){
+				label = '$foundHovered';
+			};
+		} else if( ctxt.n2_hovered || ctxt.n2_derived_hovered ){
+			label = '$hovered';
+		};
+		
+		return this._getSymbolizerFromLabel(label);
+	},
+
+	_getSymbolizerFromLabel: function(label){
+		var symbolizer = this.symbolizersByLabel[label];
+		
+		if( !symbolizer ){
+			// Need to compute it
+			if( 'normal' === label ){
+				symbolizer = new Symbolizer();
+				
+			} else if( '$hovered' === label ){
+				// $hovered = normal + hovered
+				var s1 = this._getSymbolizerFromLabel('normal');
+				symbolizer = new Symbolizer(s1, this.symbolizersByLabel.hovered);
+				
+			} else if( '$found' === label ){
+				// $found = normal + found
+				var s1 = this._getSymbolizerFromLabel('normal');
+				symbolizer = new Symbolizer(s1, this.symbolizersByLabel.found);
+				
+			} else if( '$selected' === label ){
+				// $selected = normal + selected
+				var s1 = this._getSymbolizerFromLabel('normal');
+				symbolizer = new Symbolizer(s1, this.symbolizersByLabel.selected);
+				
+			} else if( '$selectedFound' === label ){
+				// $selectedFound = $selected + found
+				var s1 = this._getSymbolizerFromLabel('$selected');
+				symbolizer = new Symbolizer(s1, this.symbolizersByLabel.found);
+				
+			} else if( '$selectedHovered' === label ){
+				// $selectedHovered = $selected + hovered
+				var s1 = this._getSymbolizerFromLabel('$selected');
+				symbolizer = new Symbolizer(s1, this.symbolizersByLabel.hovered);
+				
+			} else if( '$foundHovered' === label ){
+				// $foundHovered = $found + hovered
+				var s1 = this._getSymbolizerFromLabel('$found');
+				symbolizer = new Symbolizer(s1, this.symbolizersByLabel.hovered);
+				
+			} else if( '$selectedFoundHovered' === label ){
+				// $selectedFoundHovered = $selectedFound + hovered
+				var s1 = this._getSymbolizerFromLabel('$selectedFound');
+				symbolizer = new Symbolizer(s1, this.symbolizersByLabel.hovered);
+			};
+			
+			// Save computed symbolizer for next call
+			if( symbolizer ){
+				this.symbolizersByLabel[label] = symbolizer;
+			};
+		};
+		
+		return symbolizer;
+	}
+});
+
+//--------------------------------------------------------------------------
 var StyleRule = $n2.Class({
 	
 	condition: null,
+	
+	label: null,
 
 	source: null,
 	
@@ -405,6 +548,7 @@ var StyleRule = $n2.Class({
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			condition: null
+			,label: null
 			,source: null
 			,normal: null
 			,selected: null
@@ -413,6 +557,7 @@ var StyleRule = $n2.Class({
 		},opts_);
 		
 		this.condition = opts.condition;
+		this.label = opts.label;
 		this.source = opts.source;
 		this.normal = new Symbolizer(opts.normal);
 		this.selected = new Symbolizer(opts.selected);
@@ -447,9 +592,9 @@ var StyleRules = $n2.Class({
 		
 		this.rules = [];
 		this.cache = {
-			normal: new Symbolizer()
-			,selected: new Symbolizer()
-			,hovered: new Symbolizer()
+			style: new Style({
+				id: ''
+			})
 		};
 
 		if( !opts.skipDefaults ) {
@@ -515,119 +660,31 @@ var StyleRules = $n2.Class({
 	 * }
 	 */
 	getSymbolizer: function(ctxt){
-		var effectiveStyle = this._getStyleFromContext(ctxt);
-		var symbolizer = this._getSymbolizerFromStyleAndContext(effectiveStyle, ctxt);
+		var style = this.getStyle(ctxt);
+		var symbolizer = style.getSymbolizer(ctxt);
 		return symbolizer;
 	},
-	
-	_getSymbolizerFromStyleAndContext: function(style, ctxt){
-		var label = 'normal';
-		if( ctxt.n2_selected || ctxt.n2_derived_selected ){
-			label = '$selected';
-			if( ctxt.n2_found ){
-				label = '$selectedFound';
-				if( ctxt.n2_hovered || ctxt.n2_derived_hovered ){
-					label = '$selectedFoundHovered';
-				};
-			} else if( ctxt.n2_hovered || ctxt.n2_derived_hovered ){
-				label = '$selectedHovered';
-			};
-		} else if( ctxt.n2_found ){
-			label = '$found';
-			if( ctxt.n2_hovered || ctxt.n2_derived_hovered ){
-				label = '$foundHovered';
-			};
-		} else if( ctxt.n2_hovered || ctxt.n2_derived_hovered ){
-			label = '$hovered';
-		};
-		
-		return this._getSymbolizerFromStyleAndLabel(style,label);
-	},
-	
-	_getSymbolizerFromStyleAndLabel: function(style, label){
-		if( 'normal' === label ){
-			if( !style.normal ){
-				style.normal = new Symbolizer();
-			};
-			return style.normal;
-			
-		} else if( '$hovered' === label ){
-			if( !style.$hovered ){
-				var s1 = this._getSymbolizerFromStyleAndLabel(style,'normal');
-				style.$hovered = new Symbolizer(s1, style.hovered);
-			};
-			return style.$hovered;
-			
-		} else if( '$found' === label ){
-			if( !style.$found ){
-				var s1 = this._getSymbolizerFromStyleAndLabel(style,'normal');
-				style.$found = new Symbolizer(s1, style.found);
-			};
-			return style.$found;
-			
-		} else if( '$selected' === label ){
-			if( !style.$selected ){
-				var s1 = this._getSymbolizerFromStyleAndLabel(style,'normal');
-				style.$selected = new Symbolizer(s1, style.selected);
-			};
-			return style.$selected;
-			
-		} else if( '$selectedFound' === label ){
-			if( !style.$selectedFound ){
-				var s1 = this._getSymbolizerFromStyleAndLabel(style,'$selected');
-				style.$selectedFound = new Symbolizer(s1, style.found);
-			};
-			return style.$selectedFound;
-			
-		} else if( '$selectedHovered' === label ){
-			if( !style.$selectedHovered ){
-				var s1 = this._getSymbolizerFromStyleAndLabel(style,'$selected');
-				style.$selectedHovered = new Symbolizer(s1, style.hovered);
-			};
-			return style.$selectedHovered;
-			
-		} else if( '$foundHovered' === label ){
-			if( !style.$foundHovered ){
-				var s1 = this._getSymbolizerFromStyleAndLabel(style,'$found');
-				style.$foundHovered = new Symbolizer(s1, style.hovered);
-			};
-			return style.$foundHovered;
-			
-		} else if( '$selectedFoundHovered' === label ){
-			if( !style.$selectedFoundHovered ){
-				var s1 = this._getSymbolizerFromStyleAndLabel(style,'$selectedFound');
-				style.$selectedFoundHovered = new Symbolizer(s1, style.hovered);
-			};
-			return style.$selectedFoundHovered;
-		};
-	},
-	
-	_getStyleFromContext: function(ctxt){
+
+	getStyle: function(ctxt){
+		var stylePath = [];
 		var current = this.cache;
 		for(var i=0,e=this.rules.length; i<e; ++i){
 			var rule = this.rules[i];
 			if( rule.isValidForContext(ctxt) ){
-				var ruleId = rule.id;
-				if( current[ruleId] ){
-					current = current[ruleId];
-				} else {
-					var style = this._extendCachedStyle(current, rule);
-					current[ruleId] = style;
-					current = style;
+				stylePath.push(''+i);
+				if( !current[i] ){
+					var style = new Style({
+						id: stylePath.join('+')
+						,basicStyle: current.style
+						,extendWithRule: rule
+					});
+					current[i] = {};
+					current[i].style = style;
 				};
+				current = current[i];
 			};
 		};
-		return current;
-	},
-	
-	_extendCachedStyle: function(style, rule){
-		var extended = {};
-		extended.normal = new Symbolizer(style.normal, rule.normal);
-		extended.selected = new Symbolizer(style.selected, rule.selected);
-		extended.found = new Symbolizer(style.found, rule.found);
-		extended.hovered = new Symbolizer(style.hovered, rule.hovered);
-		extended.source = rule.source;
-		return extended;
+		return current.style;
 	}
 });
 
@@ -640,6 +697,7 @@ function loadRuleFromObject(ruleObj){
 	
 	var rule = new StyleRule({
 		condition: condition
+		,label: ruleObj.label
 		,source: ruleObj.condition
 		,normal: ruleObj.normal ? ruleObj.normal : {}
 		,selected: ruleObj.selected ? ruleObj.selected : {}

@@ -739,7 +739,9 @@ var MapStylesAdaptor = $n2.Class({
 			};
 			feature.n2_doc = data;
 
-			var symbolizer = _this.styleRules.getSymbolizer(feature);
+			var style = _this.styleRules.getStyle(feature);
+			feature._n2Style = style;
+			var symbolizer = style.getSymbolizer(feature);
 
 			var symbols = {};
 			symbolizer.forEachSymbol(function(name,value){

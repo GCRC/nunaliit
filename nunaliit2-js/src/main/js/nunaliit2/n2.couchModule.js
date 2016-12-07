@@ -967,8 +967,15 @@ var ModuleDisplay = $n2.Class({
 			dbSearchEngine = mapInfo.dbSearchEngine;
 		};
 		
+		// canvasName
+		var canvasName = undefined;
+		if( mapInfo && typeof mapInfo.canvasName === 'string' ){
+			canvasName = mapInfo.canvasName;
+		};
+		
 		var mapOptions = {
 			dbSearchEngine: dbSearchEngine
+			,canvasName: canvasName
 			,mapIdentifier: _this.mapName
 			,mapInteractionDivName: _this.mapInteractionName
 			,mapCoordinateSpecifications: {

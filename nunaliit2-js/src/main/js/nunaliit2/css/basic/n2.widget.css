@@ -666,3 +666,24 @@ Sound
 	overflow: hidden;
 	visibility: hidden;
 }
+
+/* 
+==============================
+Map Legend 
+==============================
+*/
+.n2widgetMapLegend {
+	position: absolute;
+	bottom: 10px;
+	left: 10px;
+	
+	background-color: #000;
+	color: #fff;
+	padding: 10px;
+	border-radius: 5px;
+    border-color: #fff;
+    border-width: 1px;
+    border-style: solid;
+    box-shadow: 3px 3px 3px 0 rgba(0,0,0, 0.25);
+}
+
