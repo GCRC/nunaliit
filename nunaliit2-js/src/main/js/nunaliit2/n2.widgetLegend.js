@@ -135,10 +135,11 @@ var LegendWidget = $n2.Class('LegendWidget',{
 			var styleInfo = _this.stylesInUse[styleId];
 			var style = styleInfo.style;
 			if( style.label ){
-				var labelInfo = stylesByLabel[style.label];
+				var effectiveLabel = _loc( style.label );
+				var labelInfo = stylesByLabel[effectiveLabel];
 				if( !labelInfo ){
 					labelInfo = {};
-					stylesByLabel[style.label] = labelInfo;
+					stylesByLabel[effectiveLabel] = labelInfo;
 				};
 				labelInfo[styleId] = styleInfo;
 				atLeastOne = true;
