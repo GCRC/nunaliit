@@ -35,11 +35,11 @@ POSSIBILITY OF SUCH DAMAGE.
 
 var 
  _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); }
- ,DH = 'n2.widgetMapLegend'
+ ,DH = 'n2.widgetLegend'
  ;
 
 //--------------------------------------------------------------------------
-var MapLegendWidget = $n2.Class('MapLegendWidget',{
+var LegendWidget = $n2.Class('LegendWidget',{
 	
 	dispatchService: null,
 	
@@ -98,7 +98,7 @@ var MapLegendWidget = $n2.Class('MapLegendWidget',{
 		
 		$('<div>')
 			.attr('id',this.elemId)
-			.addClass('n2widgetMapLegend')
+			.addClass('n2widgetLegend')
 			.appendTo($container);
 		
 		$n2.log(this._classname, this);
@@ -148,7 +148,7 @@ var MapLegendWidget = $n2.Class('MapLegendWidget',{
 		// If at least one style with label, then must display
 		if( atLeastOne ){
 			var $outer = $('<div>')
-				.addClass('n2widgetMapLegend_outer')
+				.addClass('n2widgetLegend_outer')
 				.appendTo($elem);
 
 			var labelNames = [];
@@ -161,11 +161,11 @@ var MapLegendWidget = $n2.Class('MapLegendWidget',{
 				var labelInfo = stylesByLabel[labelName];
 
 				var $div = $('<div>')
-					.addClass('n2widgetMapLegend_labelEntry')
+					.addClass('n2widgetLegend_labelEntry')
 					.appendTo($outer);
 			
 				$('<div>')
-					.addClass('n2widgetMapLegend_labelName')
+					.addClass('n2widgetLegend_labelName')
 					.text(labelName)
 					.appendTo($div);
 				
@@ -181,7 +181,7 @@ var MapLegendWidget = $n2.Class('MapLegendWidget',{
 
 					if( styleInfo.point ){
 						var $preview = $('<div>')
-							.addClass('n2widgetMapLegend_preview n2widgetMapLegend_previewPoint')
+							.addClass('n2widgetLegend_preview n2widgetLegend_previewPoint')
 							.attr('n2-style-id',style.id)
 							.appendTo($div);
 						_this._insertSvgPreviewPoint($preview, style, styleInfo.point);
@@ -189,7 +189,7 @@ var MapLegendWidget = $n2.Class('MapLegendWidget',{
 
 					if( styleInfo.line ){
 						var $preview = $('<div>')
-							.addClass('n2widgetMapLegend_preview n2widgetMapLegend_previewLine')
+							.addClass('n2widgetLegend_preview n2widgetLegend_previewLine')
 							.attr('n2-style-id',style.id)
 							.appendTo($div);
 						_this._insertSvgPreviewLine($preview, style, styleInfo.line);
@@ -197,7 +197,7 @@ var MapLegendWidget = $n2.Class('MapLegendWidget',{
 
 					if( styleInfo.polygon ){
 						var $preview = $('<div>')
-							.addClass('n2widgetMapLegend_preview n2widgetMapLegend_previewPolygon')
+							.addClass('n2widgetLegend_preview n2widgetLegend_previewPolygon')
 							.attr('n2-style-id',style.id)
 							.appendTo($div);
 						_this._insertSvgPreviewPolygon($preview, style, styleInfo.polygon);
@@ -235,7 +235,7 @@ var MapLegendWidget = $n2.Class('MapLegendWidget',{
             this._setAttr(svg, 'width', 14);
             this._setAttr(svg, 'height', 14);
             this._setAttr(svg, 'viewBox', '-7 -7 14 14');
-            this._addClass(svg, 'n2widgetMapLegend_svg');
+            this._addClass(svg, 'n2widgetLegend_svg');
             var $svg = $(svg);
             
             // Geometry
@@ -301,7 +301,7 @@ var MapLegendWidget = $n2.Class('MapLegendWidget',{
             this._setAttr(svg, 'width', 14);
             this._setAttr(svg, 'height', 14);
             this._setAttr(svg, 'viewBox', '-7 -7 14 14');
-            this._addClass(svg, 'n2widgetMapLegend_svg');
+            this._addClass(svg, 'n2widgetLegend_svg');
             var $svg = $(svg);
             
             // Geometry
@@ -350,7 +350,7 @@ var MapLegendWidget = $n2.Class('MapLegendWidget',{
             this._setAttr(svg, 'width', 14);
             this._setAttr(svg, 'height', 14);
             this._setAttr(svg, 'viewBox', '-7 -7 14 14');
-            this._addClass(svg, 'n2widgetMapLegend_svg');
+            this._addClass(svg, 'n2widgetLegend_svg');
             var $svg = $(svg);
             
             // Geometry
@@ -481,7 +481,7 @@ var MapLegendWidget = $n2.Class('MapLegendWidget',{
 
 //--------------------------------------------------------------------------
 function HandleWidgetAvailableRequests(m){
-	if( m.widgetType === 'mapLegendWidget' ){
+	if( m.widgetType === 'legendWidget' ){
 		if( $.fn.slider ) {
 			m.isAvailable = true;
 		};
@@ -490,7 +490,7 @@ function HandleWidgetAvailableRequests(m){
 
 //--------------------------------------------------------------------------
 function HandleWidgetDisplayRequests(m){
-	if( m.widgetType === 'mapLegendWidget' ){
+	if( m.widgetType === 'legendWidget' ){
 		var widgetOptions = m.widgetOptions;
 		var containerId = m.containerId;
 		var config = m.config;
@@ -510,13 +510,13 @@ function HandleWidgetDisplayRequests(m){
 			options.dispatchService = config.directory.dispatchService;
 		};
 		
-		new MapLegendWidget(options);
+		new LegendWidget(options);
     };
 };
 
 //--------------------------------------------------------------------------
-$n2.widgetMapLegend = {
-	MapLegendWidget: MapLegendWidget
+$n2.widgetLegend = {
+	LegendWidget: LegendWidget
 	,HandleWidgetAvailableRequests: HandleWidgetAvailableRequests
 	,HandleWidgetDisplayRequests: HandleWidgetDisplayRequests
 };

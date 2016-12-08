@@ -778,9 +778,9 @@ var Service = $n2.Class({
 					$n2.widgetSelectableFilter.HandleWidgetAvailableRequests(m);
 				};
 
-				if( $n2.widgetMapLegend 
-				 && $n2.widgetMapLegend.HandleWidgetAvailableRequests ){
-					$n2.widgetMapLegend.HandleWidgetAvailableRequests(m);
+				if( $n2.widgetLegend 
+				 && $n2.widgetLegend.HandleWidgetAvailableRequests ){
+					$n2.widgetLegend.HandleWidgetAvailableRequests(m);
 				};
 		    };
 		    
@@ -855,9 +855,9 @@ var Service = $n2.Class({
 					$n2.widgetSelectableFilter.HandleWidgetDisplayRequests(m);
 				};
 
-				if( $n2.widgetMapLegend 
-				 && $n2.widgetMapLegend.HandleWidgetDisplayRequests ){
-					$n2.widgetMapLegend.HandleWidgetDisplayRequests(m);
+				if( $n2.widgetLegend 
+				 && $n2.widgetLegend.HandleWidgetDisplayRequests ){
+					$n2.widgetLegend.HandleWidgetDisplayRequests(m);
 				};
 		    };
 
