@@ -676,7 +676,9 @@ Map Legend
 	position: absolute;
 	bottom: 10px;
 	left: 10px;
-	
+}
+
+.n2widgetMapLegend_outer {
 	background-color: #000;
 	color: #fff;
 	padding: 10px;
@@ -685,5 +687,15 @@ Map Legend
     border-width: 1px;
     border-style: solid;
     box-shadow: 3px 3px 3px 0 rgba(0,0,0, 0.25);
+}
+
+.n2widgetMapLegend_labelEntry::after {
+	content: "";
+	display: block;
+	clear: both;
+}
+
+.n2widgetMapLegend_preview {
+	float: left;
 }
 

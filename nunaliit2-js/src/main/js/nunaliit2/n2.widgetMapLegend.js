@@ -49,6 +49,8 @@ var MapLegendWidget = $n2.Class('MapLegendWidget',{
 	
 	stylesInUse: null,
 	
+	cachedSymbols: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			containerId: null
@@ -62,6 +64,7 @@ var MapLegendWidget = $n2.Class('MapLegendWidget',{
 		this.sourceCanvasName = opts.sourceCanvasName;
 
 		this.stylesInUse = null;
+		this.cachedSymbols = {};
 
 		if( typeof this.sourceCanvasName !== 'string' ){
 			throw new Error('sourceCanvasName must be specified');
@@ -144,6 +147,10 @@ var MapLegendWidget = $n2.Class('MapLegendWidget',{
 		
 		// If at least one style with label, then must display
 		if( atLeastOne ){
+			var $outer = $('<div>')
+				.addClass('n2widgetMapLegend_outer')
+				.appendTo($elem);
+
 			var labelNames = [];
 			for(var labelName in stylesByLabel){
 				labelNames.push(labelName);
@@ -155,7 +162,7 @@ var MapLegendWidget = $n2.Class('MapLegendWidget',{
 
 				var $div = $('<div>')
 					.addClass('n2widgetMapLegend_labelEntry')
-					.appendTo($elem);
+					.appendTo($outer);
 			
 				$('<div>')
 					.addClass('n2widgetMapLegend_labelName')
@@ -172,14 +179,304 @@ var MapLegendWidget = $n2.Class('MapLegendWidget',{
 					var styleInfo = labelInfo[styleId];
 					var style = styleInfo.style;
 
-					$('<div>')
-						.addClass('n2widgetMapLegend_style')
-						.attr('n2-style-id',style.id)
-						.appendTo($div);
+					if( styleInfo.point ){
+						var $preview = $('<div>')
+							.addClass('n2widgetMapLegend_preview n2widgetMapLegend_previewPoint')
+							.attr('n2-style-id',style.id)
+							.appendTo($div);
+						_this._insertSvgPreviewPoint($preview, style, styleInfo.point);
+					};
+
+					if( styleInfo.line ){
+						var $preview = $('<div>')
+							.addClass('n2widgetMapLegend_preview n2widgetMapLegend_previewLine')
+							.attr('n2-style-id',style.id)
+							.appendTo($div);
+						_this._insertSvgPreviewLine($preview, style, styleInfo.line);
+					};
+
+					if( styleInfo.polygon ){
+						var $preview = $('<div>')
+							.addClass('n2widgetMapLegend_preview n2widgetMapLegend_previewPolygon')
+							.attr('n2-style-id',style.id)
+							.appendTo($div);
+						_this._insertSvgPreviewPolygon($preview, style, styleInfo.polygon);
+					};
 				});
 			});
 		};
-	}
+	},
+
+	_insertSvgPreviewPoint: function($parent, style, context_){
+		var _this = this;
+
+        var context = {};
+        for(var key in context_){
+        	var value = context_[key];
+        	
+        	if( 'n2_hovered' === key ){
+        		context[key] = false;
+        	} else if( 'n2_selected' === key ){
+        		context[key] = false;
+        	} else if( 'n2_found' === key ){
+        		context[key] = false;
+        	} else {
+        		context[key] = value;
+        	};
+        };
+        
+        var symbolizer = style.getSymbolizer(context);
+        
+        // SVG
+        var svg = this._createSVGNode('svg');
+        if( svg ) {
+            this._setAttr(svg, 'version', '1.1');
+            this._setAttr(svg, 'style', 'display:inline-block');
+            this._setAttr(svg, 'width', 14);
+            this._setAttr(svg, 'height', 14);
+            this._setAttr(svg, 'viewBox', '-7 -7 14 14');
+            this._addClass(svg, 'n2widgetMapLegend_svg');
+            var $svg = $(svg);
+            
+            // Geometry
+            var graphicName = symbolizer.getSymbolValue('graphicName',context);
+            var geom = null;
+            if( graphicName 
+             && this.cachedSymbols[graphicName] ){
+            	geom = this._createSVGNode('path');
+                this._setAttr(geom, 'd', this.cachedSymbols[graphicName]);
+                
+            } else if( graphicName 
+	         && OpenLayers.Renderer.symbol[graphicName] ) {
+            	var path = this._computePathFromSymbol(OpenLayers.Renderer.symbol[graphicName]);
+            	this.cachedSymbols[graphicName] = path;
+            	geom = this._createSVGNode('path');
+                this._setAttr(geom, 'd', this.cachedSymbols[graphicName]);
+            	
+//            } else if( 'square' === graphicName ) {
+//            	geom = this._createSVGNode('path');
+//              this._setAttr(geom, 'd', 'M -4.4 -4.4 L -4.4 4.4 L 4.4 4.4 L 4.4 -4.4 Z');
+            
+            } else {
+                geom = this._createSVGNode('circle');
+                this._setAttr(geom, 'r', 5);
+            };
+            if( geom ) {
+            	symbolizer.forEachSymbol(function(name,value){
+            		_this._setAttr(geom, name, value);
+            	},context);
+
+                svg.appendChild(geom);
+            };
+            
+            $parent.append($svg);
+        };
+	},
+
+	_insertSvgPreviewLine: function($parent, style, context_){
+		var _this = this;
+
+        var context = {};
+        for(var key in context_){
+        	var value = context_[key];
+        	
+        	if( 'n2_hovered' === key ){
+        		context[key] = false;
+        	} else if( 'n2_selected' === key ){
+        		context[key] = false;
+        	} else if( 'n2_found' === key ){
+        		context[key] = false;
+        	} else {
+        		context[key] = value;
+        	};
+        };
+        
+        var symbolizer = style.getSymbolizer(context);
+        
+        // SVG
+        var svg = this._createSVGNode('svg');
+        if( svg ) {
+            this._setAttr(svg, 'version', '1.1');
+            this._setAttr(svg, 'style', 'display:inline-block');
+            this._setAttr(svg, 'width', 14);
+            this._setAttr(svg, 'height', 14);
+            this._setAttr(svg, 'viewBox', '-7 -7 14 14');
+            this._addClass(svg, 'n2widgetMapLegend_svg');
+            var $svg = $(svg);
+            
+            // Geometry
+            var geom = this._createSVGNode('line');
+            this._setAttr(geom, 'x1', -5);
+            this._setAttr(geom, 'y1', 0);
+            this._setAttr(geom, 'x2', 5);
+            this._setAttr(geom, 'y2', 0);
+            if( geom ) {
+            	symbolizer.forEachSymbol(function(name,value){
+            		_this._setAttr(geom, name, value);
+            	},context);
+
+                svg.appendChild(geom);
+            };
+            
+            $parent.append($svg);
+        };
+	},
+
+	_insertSvgPreviewPolygon: function($parent, style, context_){
+		var _this = this;
+
+        var context = {};
+        for(var key in context_){
+        	var value = context_[key];
+        	
+        	if( 'n2_hovered' === key ){
+        		context[key] = false;
+        	} else if( 'n2_selected' === key ){
+        		context[key] = false;
+        	} else if( 'n2_found' === key ){
+        		context[key] = false;
+        	} else {
+        		context[key] = value;
+        	};
+        };
+        
+        var symbolizer = style.getSymbolizer(context);
+        
+        // SVG
+        var svg = this._createSVGNode('svg');
+        if( svg ) {
+            this._setAttr(svg, 'version', '1.1');
+            this._setAttr(svg, 'style', 'display:inline-block');
+            this._setAttr(svg, 'width', 14);
+            this._setAttr(svg, 'height', 14);
+            this._setAttr(svg, 'viewBox', '-7 -7 14 14');
+            this._addClass(svg, 'n2widgetMapLegend_svg');
+            var $svg = $(svg);
+            
+            // Geometry
+            var geom = this._createSVGNode('path');
+            this._setAttr(geom, 'd', 'M -5 -5 L -2.5 5 L 5 5 L 2.5 -5 Z');
+            if( geom ) {
+            	symbolizer.forEachSymbol(function(name,value){
+            		_this._setAttr(geom, name, value);
+            	},context);
+
+                svg.appendChild(geom);
+            };
+            
+            $parent.append($svg);
+        };
+	},
+
+	_createSVGNode: function(type, id) {
+        var node = null;
+        if( document.createElementNS ) {
+	        node = document.createElementNS('http://www.w3.org/2000/svg', type);
+	        if (id) {
+	            node.setAttributeNS(null, 'id', id);
+	        };
+        };
+        return node;    
+    },
+    
+    _setAttr: function(node, name, value) {
+    	node.setAttributeNS(null, name, value);
+    },
+    
+    _addClass: function(elem, className) {
+    	var classNames = [];
+
+    	var currentClasses = elem.getAttribute('class') || '';
+    	if( currentClasses ) {
+    		classNames = currentClasses.split(' ');
+    	};
+
+    	if( classNames.indexOf(className) < 0 ){
+        	classNames.push(className);
+    	};
+    	
+    	elem.setAttribute('class',classNames.join(' '));
+    },
+
+    /** 
+     * Method: _computePathFromSymbol
+     * Given an OpenLayers symbol (array of points, which are tuples of x,y coordinates),
+     * create a SVG path with an approximate area of 30 (area of a circle with a radius of 5)
+     * Example for symbol: [0,0, 1,0, 1,1, 0,1, 0,0]
+     * Examplke fo SVG Path: 'M -4.4 -4.4 L -4.4 4.4 L 4.4 4.4 L 4.4 -4.4 Z'
+     */
+    _computePathFromSymbol: function(symbol){
+    	var area = 0,
+    	 minx = undefined,
+    	 maxx = undefined,
+    	 miny = undefined,
+    	 maxy = undefined;
+
+    	// Figure out bounding box
+    	for(var i=0,e=symbol.length; i<e; i=i+2){
+    		var x = symbol[i];
+    		var y = symbol[i+1];
+    		
+    		if( typeof minx === 'undefined' ){
+    			minx = x;
+    		} else if( minx > x ){
+    			minx = x;
+    		};
+    		
+    		if( typeof maxx === 'undefined' ){
+    			maxx = x;
+    		} else if( maxx < x ){
+    			maxx = x;
+    		};
+    		
+    		if( typeof miny === 'undefined' ){
+    			miny = y;
+    		} else if( miny > y ){
+    			miny = y;
+    		};
+    		
+    		if( typeof maxy === 'undefined' ){
+    			maxy = y;
+    		} else if( maxy < y ){
+    			maxy = y;
+    		};
+    	};
+    	
+    	// Compute path, recentering the symbol and adjusting the area so
+    	// it fits a bounding box of 10x10
+    	var path = [],
+    	 transx = (minx+maxx)/2,
+    	 transy = (miny+maxy)/2,
+    	 width = maxx-minx,
+    	 height = maxy-miny,
+    	 factor = (width > height) ? width / 10 : height / 10;
+    	if( factor <= 0 ){
+    		factor = 1;
+    	};
+    	for(var i=0,e=symbol.length; i<e; i=i+2){
+    		var x = symbol[i];
+    		var y = symbol[i+1];
+
+    		var effX = (x-transx)/factor;
+    		var effY = (y-transy)/factor;
+    		
+    		// Round to .01
+    		effX = Math.floor(effX * 100) / 100;
+    		effY = Math.floor(effY * 100) / 100;
+    		
+    		if( 0 === i ){
+        		path.push('M ');
+    		} else {
+        		path.push('L ');
+    		};
+    		
+    		path.push(''+effX);
+    		path.push(' '+effY+' ');
+    	};
+    	path.push('Z');
+    	
+    	return path.join('');
+    }
 });
 
 //--------------------------------------------------------------------------

@@ -819,6 +819,11 @@ var LayerInfo = $n2.Class({
 						};
 						stylesInUse[style.id] = styleInfo;
 					};
+					
+					var geometryType = feature.n2_geometry;
+					if( geometryType && !styleInfo[geometryType] ){
+						styleInfo[geometryType] = feature;
+					};
 				};
 			};
 		};
