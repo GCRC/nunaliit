@@ -705,3 +705,63 @@ Map Legend
 	height: 14px;
 }
 
+/* When inside a widget container, the container picks the style */
+.n2widgetContainer .n2widgetLegend {
+	position: static;
+}
+
+.n2widgetContainer .n2widgetLegend_outer {
+	background-color: transparent;
+	color: unset;
+	padding: 0;
+	border: none;
+    box-shadow: none;
+}
+
+
+/* 
+==============================
+Collapsible Widget Container 
+==============================
+*/
+
+.n2widgetCollapsibleContainer {
+	position: absolute;
+	left: 21px;
+	top: 150px;
+}
+
+.n2widgetCollapsibleContainer_button {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	width: 28px;
+    height: 28px;
+    background-color: transparent;
+    background-image: url(openlayers/settings_icon.png);
+    opacity: 0.7;
+    cursor: pointer;
+}
+
+.n2widgetCollapsibleContainer_button:hover {
+	opacity: 1;
+}
+
+.n2widgetCollapsibleContainer_widgetContainer {
+	display: none;
+	position: absolute;
+	left: 28px;
+	top: 0px;
+    background-color: transparent;	
+	background: url(openlayers/popup_bg.png) no-repeat top left;
+    padding: 11px 20px;
+    margin: 0;
+    font-family: sans-serif;
+    font-weight: bold;
+    font-size: smaller;
+    color: white;
+}
+
+.n2widgetCollapsibleContainer_opened .n2widgetCollapsibleContainer_widgetContainer {
+	display: block;
+}
