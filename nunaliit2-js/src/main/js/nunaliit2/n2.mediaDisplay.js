@@ -67,6 +67,7 @@ $n2.MediaDisplay = $n2.Class({
 			,description: null
 			,width: null // hint of media width (optional)
 			,height: null // hint of media height (optional)
+			,suppressLeaveConfirmation: false
 			,onClose: function(opts) {}
 			,onError: function(err){ $n2.reportError(err); }
 		},opts_);
@@ -97,7 +98,11 @@ $n2.MediaDisplay = $n2.Class({
 				this._displayVideo(opts);
 			};
 		} else {
-			this._displayUnknown(opts);
+			if( opts.suppressLeaveConfirmation ){
+				window.location.href = opts.url;
+			} else {
+				this._displayUnknown(opts);
+			};
 		};
 	}
 
@@ -288,7 +293,7 @@ $n2.MediaDisplay = $n2.Class({
 		var $mediaDialog = $( mkup.join('') );
 		
 		this._addMetaData(opts, $mediaDialog);
-		this._addDownloadButton($mediaDialog);
+		this._addDownloadButton(opts, $mediaDialog);
 
 		var dialogOptions = $n2.extend({}
 			,baseDialogOptions
@@ -577,6 +582,9 @@ $n2.MediaDisplay = $n2.Class({
 		.attr('title', _loc('Download'))
 		.addClass('n2DisplayBoxButtonDownload')
 		.click(function(e){
+			if(opts.suppressLeaveConfirmation){
+				return true;
+			};
 			if( confirm( _loc('You are about to leave this page. Do you wish to continue?') ) ) {
 				return true;
 			};

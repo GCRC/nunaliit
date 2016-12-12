@@ -33,11 +33,10 @@ POSSIBILITY OF SUCH DAMAGE.
 "use strict";
 
 // Localization
-var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
-
-var DH = 'n2.couchShow';
-	
-var couchUserPrefix = 'org.couchdb.user:';
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); },
+ DH = 'n2.couchShow',
+ couchUserPrefix = 'org.couchdb.user:',
+ suppressLeaveConfirmation = false;
 
 function noop(){};
 
@@ -739,6 +738,7 @@ var DomStyler = $n2.Class({
 			return function(evt) {
 				var mediaOptions = {
 					url: attachmentUrl
+					,suppressLeaveConfirmation: suppressLeaveConfirmation
 				};
 				
 				// Mime type
@@ -905,6 +905,10 @@ var DomStyler = $n2.Class({
 
 			$externalLink.attr('href',attUrl);
 			$externalLink.click(function(e){
+				if( suppressLeaveConfirmation ){
+					return true;
+				};
+
 				if( confirm( _loc('You are about to leave this page. Do you wish to continue?') ) ) {
 					return true;
 				};
@@ -960,6 +964,10 @@ var DomStyler = $n2.Class({
 				.addClass('n2s_adjustedExternalMediaLink')
 				.attr('href',attUrl)
 				.click(function(e){
+					if( suppressLeaveConfirmation ){
+						return true;
+					};
+
 					if( confirm( _loc('You are about to leave this page. Do you wish to continue?') ) ) {
 						return true;
 					};
@@ -2095,6 +2103,9 @@ var Show = $n2.Class({
 						this.addPostProcessDisplayFunction(fn);
 					};
 				};
+				
+				suppressLeaveConfirmation = 
+					customService.getOption('displaySuppressLeaveConfirmation',false);
 			};
 			
 		} else if( 'documentListResults' === m.type ) {
