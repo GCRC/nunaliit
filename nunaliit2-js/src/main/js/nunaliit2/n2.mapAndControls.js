@@ -1647,6 +1647,7 @@ var MapAndControls = $n2.Class({
     	// When changing zoom, check if new simpilified geometries should be loaded
     	this.map.events.register( 'zoomend', null, function(evt){
     		_this._refreshSimplifiedGeometries();
+    		_this._updatedStylesInUse();
 		});
 		
     	// When changing zoom, check if new simpilified geometries should be loaded
@@ -2099,6 +2100,8 @@ var MapAndControls = $n2.Class({
 	            layers[loop].redraw();
 	        };
 		};
+		
+		this._updatedStylesInUse();
 	},
 
 	_createOverlayFromDefinition: function(layerDefinition, isBaseLayer) {
@@ -2630,6 +2633,8 @@ var MapAndControls = $n2.Class({
 
 			// When features are added, check the map for new simplified geometries
 			_this._refreshSimplifiedGeometries();
+			
+			_this._updatedStylesInUse();
 		});
 		
 		// When features are removed, clear the cache associated with the layer.
@@ -2650,6 +2655,8 @@ var MapAndControls = $n2.Class({
 			if( infoLayer ) {
 				_this._clearValueCache(infoLayer);
 			};
+
+			_this._updatedStylesInUse();
 		});
 	},
     
@@ -4874,6 +4881,7 @@ var MapAndControls = $n2.Class({
 		setTimeout(function(){
 			_this.mapWasMoved = false;
 			_this._refreshSimplifiedGeometries();
+			_this._updatedStylesInUse();
 		},200);
 	},
 	
