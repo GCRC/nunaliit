@@ -699,3 +699,9 @@ Map Legend
 	float: left;
 }
 
+.n2widgetLegend_svg {
+	display: inline-block;
+	width: 14px;
+	height: 14px;
+}
+

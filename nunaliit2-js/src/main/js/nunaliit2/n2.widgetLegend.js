@@ -232,9 +232,6 @@ var LegendWidget = $n2.Class('LegendWidget',{
         var svg = this._createSVGNode('svg');
         if( svg ) {
             this._setAttr(svg, 'version', '1.1');
-            this._setAttr(svg, 'style', 'display:inline-block');
-            this._setAttr(svg, 'width', 14);
-            this._setAttr(svg, 'height', 14);
             this._setAttr(svg, 'viewBox', '-7 -7 14 14');
             this._addClass(svg, 'n2widgetLegend_svg');
             var $svg = $(svg);
@@ -253,10 +250,6 @@ var LegendWidget = $n2.Class('LegendWidget',{
             	this.cachedSymbols[graphicName] = path;
             	geom = this._createSVGNode('path');
                 this._setAttr(geom, 'd', this.cachedSymbols[graphicName]);
-            	
-//            } else if( 'square' === graphicName ) {
-//            	geom = this._createSVGNode('path');
-//              this._setAttr(geom, 'd', 'M -4.4 -4.4 L -4.4 4.4 L 4.4 4.4 L 4.4 -4.4 Z');
             
             } else {
                 geom = this._createSVGNode('circle');
@@ -264,7 +257,11 @@ var LegendWidget = $n2.Class('LegendWidget',{
             };
             if( geom ) {
             	symbolizer.forEachSymbol(function(name,value){
-            		_this._setAttr(geom, name, value);
+            		if( 'r' === name ){
+            			// Do not adjust radius
+            		} else {
+                		_this._setAttr(geom, name, value);
+            		};
             	},context);
 
                 svg.appendChild(geom);
@@ -298,9 +295,6 @@ var LegendWidget = $n2.Class('LegendWidget',{
         var svg = this._createSVGNode('svg');
         if( svg ) {
             this._setAttr(svg, 'version', '1.1');
-            this._setAttr(svg, 'style', 'display:inline-block');
-            this._setAttr(svg, 'width', 14);
-            this._setAttr(svg, 'height', 14);
             this._setAttr(svg, 'viewBox', '-7 -7 14 14');
             this._addClass(svg, 'n2widgetLegend_svg');
             var $svg = $(svg);
@@ -347,9 +341,6 @@ var LegendWidget = $n2.Class('LegendWidget',{
         var svg = this._createSVGNode('svg');
         if( svg ) {
             this._setAttr(svg, 'version', '1.1');
-            this._setAttr(svg, 'style', 'display:inline-block');
-            this._setAttr(svg, 'width', 14);
-            this._setAttr(svg, 'height', 14);
             this._setAttr(svg, 'viewBox', '-7 -7 14 14');
             this._addClass(svg, 'n2widgetLegend_svg');
             var $svg = $(svg);
