@@ -210,9 +210,11 @@ var Session = $n2.Class({
 		
 		var data = {};
 		
-		if( badProxy ){
+		// Always assume bad proxy on getting context. Force
+		// obtaining a context that is up-to-date
+		// if( badProxy ){
 			data.r = Date.now();
-		};
+		// };
 		
 		$.ajax({
 			url: sessionUrl
