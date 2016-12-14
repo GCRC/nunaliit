@@ -158,6 +158,15 @@ var Module = $n2.Class({
 		};
 		return widgetInfos;
 	},
+
+	getModuleCSS: function(){
+		var css;
+		var moduleInfo = this.getModuleInfo();
+		if( moduleInfo ){
+			css = moduleInfo.css;
+		};
+		return css;
+	},
 	
 	/*
 	 * Finds the introduction text associated with the module and inserts it
@@ -542,6 +551,15 @@ var ModuleDisplay = $n2.Class({
 			var searchInfo = _this.module.getSearchInfo();
 			var modelInfos = _this.module.getModelInfos();
 			var utilityInfos = _this.module.getUtilityInfos();
+			
+			// Load up CSS, if specified
+			var css = _this.module.getModuleCSS();
+			if( typeof css === 'string' ){
+				$n2.css.setCss({
+					css: css
+					,name: 'module'
+				});
+			};
 			
 			// Create models
 			if( modelInfos ){
