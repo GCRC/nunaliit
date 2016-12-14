@@ -365,11 +365,17 @@ if( $n2.scripts ) {
 		// Do not load default language
 		if( 'en' !== locale.lang ) {
 			var url = coreLocation.location + 'nunaliit2.'+locale.lang+'.js';
-			$n2.scripts.loadScript(url, coreLocation);
+			$n2.scripts.loadScript({
+				url: url
+				,scriptLocation: coreLocation
+			});
 		};		
 
 		var langUrl = coreLocation.location + '../nunaliit_lang.'+locale.lang+'.js';
-		$n2.scripts.loadScript(langUrl, coreLocation);
+		$n2.scripts.loadScript({
+			url: langUrl
+			,scriptLocation: coreLocation
+		});
 	};
 	
 	// Notify via DOM classes

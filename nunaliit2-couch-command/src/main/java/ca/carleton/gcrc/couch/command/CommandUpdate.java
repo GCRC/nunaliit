@@ -592,6 +592,7 @@ public class CommandUpdate implements Command {
 		pw.println("\t,restricted: "+atlasProperties.isRestricted());
 		pw.println("\t,\"submissionDbEnabled\":"+atlasProperties.isCouchDbSubmissionDbEnabled());
 		pw.println("\t,\"submissionDbName\":\""+atlasProperties.getCouchDbSubmissionDbName()+"\"");
+		pw.println("\t,\"googleMapApiKey\":\""+atlasProperties.getGoogleMapApiKey()+"\"");
 		pw.println("\t,\""+type.getPropName()+"\":true");
 		pw.println("};");
 		pw.println("if( typeof(exports) === 'object' ) {");
@@ -599,6 +600,7 @@ public class CommandUpdate implements Command {
 		pw.println("\texports.restricted = n2atlas.restricted;");
 		pw.println("\texports.submissionDbEnabled = n2atlas.submissionDbEnabled;");
 		pw.println("\texports.submissionDbName = n2atlas.submissionDbName;");
+		pw.println("\texports.googleMapApiKey = n2atlas.googleMapApiKey;");
 		pw.println("\texports."+type.getPropName()+" = true;");
 		pw.println("};");
 		

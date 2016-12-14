@@ -82,7 +82,7 @@ public class AtlasProperties {
 				atlasProps.setCouchDbSubmissionDbEnabled(enabled);
 			}
 		}
-		
+
 		// Geometry simplification disabled
 		{
 			String disabledString = props.getProperty("geometry.simplification.disabled","false");
@@ -90,6 +90,12 @@ public class AtlasProperties {
 			if( disabled ){
 				atlasProps.setGeometrySimplificationDisabled(disabled);
 			}
+		}
+
+		// Google Map API Key
+		{
+			String key = props.getProperty("google.mapapi.key","");
+			atlasProps.setGoogleMapApiKey(key);
 		}
 		
 		return atlasProps;
@@ -165,6 +171,7 @@ public class AtlasProperties {
 		{
 			sensitivePropertyNames.add("couchdb.admin.password");
 			sensitivePropertyNames.add("server.key");
+			sensitivePropertyNames.add("google.mapapi.key");
 			
 			File sensitivePropFile = new File(atlasDir,"config/sensitive.properties");
 			if( sensitivePropFile.exists() && sensitivePropFile.isFile() ){
@@ -282,6 +289,7 @@ public class AtlasProperties {
 	private boolean restricted = false;
 	private byte[] serverKey = null;
 	private boolean geometrySimplificationDisabled = false;
+	private String googleMapApiKey;
 
 	public String getAtlasName() {
 		return atlasName;
@@ -359,5 +367,13 @@ public class AtlasProperties {
 
 	public void setGeometrySimplificationDisabled(boolean geometrySimplificationDisabled) {
 		this.geometrySimplificationDisabled = geometrySimplificationDisabled;
+	}
+
+	public String getGoogleMapApiKey() {
+		return googleMapApiKey;
+	}
+
+	public void setGoogleMapApiKey(String googleMapApiKey) {
+		this.googleMapApiKey = googleMapApiKey;
 	}
 }

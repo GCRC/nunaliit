@@ -236,101 +236,123 @@ function Configure(options_){
 		directory: {}
 		,rootPath: options.rootPath
 	};
+	var isSlowConnection = false;
+	var couchDbCachingEnabled = false;
+	var debugConfiguration;
 	
-	// Start function
-	configuration.start = function(){
-		if( configuration.directory.dispatchService ){
-			configuration.directory.dispatchService.send('n2.couchConfiguration',{type:'start'});
+	loadLibraries();
+	
+	function loadLibraries(){
+		if( n2atlas 
+		 && n2atlas.googleMapApiKey ){
+			$n2.scripts.loadGoogleMapApi({
+				googleMapApiKey: n2atlas.googleMapApiKey
+				,onLoaded: librariesLoaded
+				,onError: function(err){
+					$n2.logError('Error while loading Google Map API: '+err);
+					librariesLoaded();
+				}
+			});
+		} else {
+			librariesLoaded();
 		};
 	};
-
-	// Adjust configuration based on local storage
-	var debugConfiguration = new $n2.debug.DebugConfiguration();
-	if( debugConfiguration.isBadProxyEnabled() ){
-		$n2.couch.setBadProxy(true);
-	};
-	var couchDbCachingEnabled = debugConfiguration.isCouchDbCachingEnabled();
-
-	// Dispatcher
-	var dispatchLogging = false;
-	if( debugConfiguration.isEventLoggingEnabled() ){
-		dispatchLogging = true;
-	};
-	configuration.directory.dispatchService = new $n2.dispatch.Dispatcher({
-		logging: dispatchLogging
-	});
 	
-	$n2.couchMap.Configure({
-		dispatchService: configuration.directory.dispatchService
-	});
-	
-	// History monitoring
-	configuration.directory.historyMonitor = new $n2.history.Monitor({
-		directory: configuration.directory
-	});
-	configuration.directory.historyTracker = new $n2.history.Tracker({
-		dispatchService: configuration.directory.dispatchService
-	});
-	configuration.directory.history = new $n2.history.History({
-		dispatchService: configuration.directory.dispatchService
-	});
-	
-	// Event translation
-	configuration.directory.eventService = new $n2.couchEvents.EventSupport({
-		directory: configuration.directory
-	});
-
-	// Analytics Service
-	configuration.directory.analyticsService = new $n2.analytics.AnalyticsService({
-		dispatchService: configuration.directory.dispatchService
-	});
-
-	// Custom Service
-	configuration.directory.customService = new $n2.custom.CustomService({
-		directory: configuration.directory
-	});
-
-	// Intent Service
-	configuration.directory.userIntentService = new $n2.userIntentView.IntentService({
-		dispatchService: configuration.directory.dispatchService
-	});
-
-	// Turn off cometd
- 	$.cometd = {
- 		init: function(){}
- 		,subscribe: function(){}
- 		,publish: function(){}
- 	};
-
-	// Configuration
-	configuration.directory.configService = new ConfigService({
-		url: options.configServerUrl
-		,dispatchService: configuration.directory.dispatchService
-		,configuration: configuration
-	});
-	
-	// Test to see if sitting behind a bad proxy
-	var isSlowConnection = false;
-	if( debugConfiguration.forceSlowConnectionHandling() ){
-		isSlowConnection = true;
-	};
-	configuration.directory.configService.testConnection({
-		onSuccess: function(connectionInfo){
-			$n2.log('Connection speed:'+ connectionInfo.speed +' elapsed:'+connectionInfo.testDurationInMs+'ms');
-			if( connectionInfo.badProxy ){
-				$n2.couch.setBadProxy(true);
-				$n2.log('Detected bad proxy in communication channel');
+	function librariesLoaded(){
+		// Start function
+		configuration.start = function(){
+			if( configuration.directory.dispatchService ){
+				configuration.directory.dispatchService.send('n2.couchConfiguration',{type:'start'});
 			};
-			if( connectionInfo.speed > 0 ){
-				isSlowConnection = true;
-				$n2.log('Detected slow connection');
-			} else {
-				
-			};
-			communicationsTested();
-		}
-		,onError: communicationsTested // continue
-	});
+		};
+
+		// Adjust configuration based on local storage
+		debugConfiguration = new $n2.debug.DebugConfiguration();
+		if( debugConfiguration.isBadProxyEnabled() ){
+			$n2.couch.setBadProxy(true);
+		};
+		couchDbCachingEnabled = debugConfiguration.isCouchDbCachingEnabled();
+	
+		// Dispatcher
+		var dispatchLogging = false;
+		if( debugConfiguration.isEventLoggingEnabled() ){
+			dispatchLogging = true;
+		};
+		configuration.directory.dispatchService = new $n2.dispatch.Dispatcher({
+			logging: dispatchLogging
+		});
+
+		$n2.couchMap.Configure({
+			dispatchService: configuration.directory.dispatchService
+		});
+	
+		// History monitoring
+		configuration.directory.historyMonitor = new $n2.history.Monitor({
+			directory: configuration.directory
+		});
+		configuration.directory.historyTracker = new $n2.history.Tracker({
+			dispatchService: configuration.directory.dispatchService
+		});
+		configuration.directory.history = new $n2.history.History({
+			dispatchService: configuration.directory.dispatchService
+		});
+	
+		// Event translation
+		configuration.directory.eventService = new $n2.couchEvents.EventSupport({
+			directory: configuration.directory
+		});
+	
+		// Analytics Service
+		configuration.directory.analyticsService = new $n2.analytics.AnalyticsService({
+			dispatchService: configuration.directory.dispatchService
+		});
+	
+		// Custom Service
+		configuration.directory.customService = new $n2.custom.CustomService({
+			directory: configuration.directory
+		});
+	
+		// Intent Service
+		configuration.directory.userIntentService = new $n2.userIntentView.IntentService({
+			dispatchService: configuration.directory.dispatchService
+		});
+	
+		// Turn off cometd
+	 	$.cometd = {
+	 		init: function(){}
+	 		,subscribe: function(){}
+	 		,publish: function(){}
+	 	};
+	
+		// Configuration
+		configuration.directory.configService = new ConfigService({
+			url: options.configServerUrl
+			,dispatchService: configuration.directory.dispatchService
+			,configuration: configuration
+		});
+		
+		// Test to see if sitting behind a bad proxy
+		if( debugConfiguration.forceSlowConnectionHandling() ){
+			isSlowConnection = true;
+		};
+		configuration.directory.configService.testConnection({
+			onSuccess: function(connectionInfo){
+				$n2.log('Connection speed:'+ connectionInfo.speed +' elapsed:'+connectionInfo.testDurationInMs+'ms');
+				if( connectionInfo.badProxy ){
+					$n2.couch.setBadProxy(true);
+					$n2.log('Detected bad proxy in communication channel');
+				};
+				if( connectionInfo.speed > 0 ){
+					isSlowConnection = true;
+					$n2.log('Detected slow connection');
+				} else {
+					
+				};
+				communicationsTested();
+			}
+			,onError: communicationsTested // continue
+		});
+	};
 	
 	function communicationsTested(){
 		if( isSlowConnection ){

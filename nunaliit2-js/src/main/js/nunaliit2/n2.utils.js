@@ -53,6 +53,25 @@ $n2.log = function() {
 	};
 };
 
+/**
+	Logs an error to the console
+	@name logError
+	@function
+	@memberOf nunaliit2
+	@param {String} msg Log message
+	@param {Object} o1  Object to be inspected in log
+*/
+$n2.logError = function() {
+	if( typeof window === 'object'
+	 && window.console 
+	 && typeof window.console.error === 'function' ) {
+		try { window.console.error.apply(window.console,arguments); }
+			catch(e) {};
+	} else {
+		$n2.log.apply(this,arguments);
+	};
+};
+
 // Install logger on window
 if( typeof window !== 'undefined' ) {
 	if( typeof(window.log) === 'undefined' ) {

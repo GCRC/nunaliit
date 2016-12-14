@@ -231,7 +231,7 @@ public class CommandConfig implements Command {
 			}
 			props.put("couchdb.admin.password", adminPassword);
 		}
-		
+
 		// Servlet port
 		{
 			String portString = null;
@@ -255,6 +255,17 @@ public class CommandConfig implements Command {
 				}
 			}
 			props.put("servlet.url.port", portString);
+		}
+
+		// Google Map API key
+		{
+			String key = getUserStringInput(
+				gs, 
+				"Enter a Google Map API key (empty if not using)", 
+				props, 
+				"google.mapapi.key"
+			);
+			props.put("google.mapapi.key", key);
 		}
 	}
 	
@@ -282,20 +293,23 @@ public class CommandConfig implements Command {
 		} catch(Exception e) {
 			throw new Exception("Error while reading configuration information from user",e);
 		}
-		String atlasName = null;
+		String userString = null;
 		if( null == line ) {
 			// End of stream reached
 			throw new Exception("End of input stream reached");
 		} else {
 			line = line.trim();
 			if( "".equals(line) ){
-				atlasName = defaultValue;
+				userString = defaultValue;
+				if( null == userString ){
+					userString = "";
+				};
 			} else {
-				atlasName = line;
+				userString = line;
 			}
 		}
 		
-		return atlasName;
+		return userString;
 	}
 
 	private boolean getUserBooleanInput(GlobalSettings gs, String prompt, boolean defaultValue) throws Exception {
