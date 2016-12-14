@@ -199,92 +199,112 @@ function Configure(options_){
 		,rootPath: options.rootPath
 	};
 	
-	// Start function
-	configuration.start = function(){
-		if( configuration.directory.dispatchService ){
-			configuration.directory.dispatchService.send('n2.couchConfiguration',{type:'start'});
+	loadLibraries();
+	
+	function loadLibraries(){
+		if( n2atlas 
+		 && n2atlas.googleMapApiKey ){
+			$n2.scripts.loadGoogleMapApi({
+				googleMapApiKey: n2atlas.googleMapApiKey
+				,onLoaded: librariesLoaded
+				,onError: function(err){
+					$n2.logError('Error while loading Google Map API: '+err);
+					librariesLoaded();
+				}
+			});
+		} else {
+			librariesLoaded();
 		};
 	};
-
-	// Adjust configuration based on local storage
-	var debugConfiguration = new $n2.debug.DebugConfiguration();
-	if( debugConfiguration.isBadProxyEnabled() ){
-		$n2.couch.setBadProxy(true);
-	};
-
-	// Dispatcher
-	var dispatchLogging = false;
-	if( debugConfiguration.isEventLoggingEnabled() ){
-		dispatchLogging = true;
-	};
-	configuration.directory.dispatchService = new $n2.dispatch.Dispatcher({
-		logging: dispatchLogging
-	});
 	
-	$n2.couchMap.Configure({
-		dispatchService: configuration.directory.dispatchService
-	});
+	function librariesLoaded(){
+		// Start function
+		configuration.start = function(){
+			if( configuration.directory.dispatchService ){
+				configuration.directory.dispatchService.send('n2.couchConfiguration',{type:'start'});
+			};
+		};
 	
-	// History monitoring
-	configuration.directory.historyMonitor = new $n2.history.Monitor({
-		directory: configuration.directory
-	});
-	configuration.directory.historyTracker = new $n2.history.Tracker({
-		directory: configuration.directory
-	});
-	configuration.directory.history = new $n2.history.History({
-		dispatchService: configuration.directory.dispatchService
-	});
+		// Adjust configuration based on local storage
+		var debugConfiguration = new $n2.debug.DebugConfiguration();
+		if( debugConfiguration.isBadProxyEnabled() ){
+			$n2.couch.setBadProxy(true);
+		};
 	
-	// Event translation
-	configuration.directory.eventService = new $n2.couchEvents.EventSupport({
-		directory: configuration.directory
-	});
-
-	// Analytics Service
-	configuration.directory.analyticsService = new $n2.analytics.AnalyticsService({
-		dispatchService: configuration.directory.dispatchService
-	});
-
-	// Custom Service
-	configuration.directory.customService = new $n2.custom.CustomService({
-		directory: configuration.directory
-	});
-
-	// Intent Service
-	configuration.directory.userIntentService = new $n2.userIntentView.IntentService({
-		dispatchService: configuration.directory.dispatchService
-	});
-
-	// Turn off cometd
- 	$.cometd = {
- 		init: function(){}
- 		,subscribe: function(){}
- 		,publish: function(){}
- 	};
-
-	// Configuration
-	configuration.directory.configService = new ConfigService({
-		url: options.configServerUrl
-	});
-	
-	if( $n2.couch.isBadProxy() ){
-		// User has already decided that client is behind bad proxy.
-		// No need to test.
-		communicationsTested();
-
-	} else {
-		// Test to see if sitting behind a bad proxy
-		configuration.directory.configService.testBadProxy({
-			onSuccess: function(badProxy){
-				if( badProxy ){
-					$n2.couch.setBadProxy(true);
-					$n2.log('Detected bad proxy in communication channel');
-				};
-				communicationsTested();
-			}
-			,onError: communicationsTested // continue
+		// Dispatcher
+		var dispatchLogging = false;
+		if( debugConfiguration.isEventLoggingEnabled() ){
+			dispatchLogging = true;
+		};
+		configuration.directory.dispatchService = new $n2.dispatch.Dispatcher({
+			logging: dispatchLogging
 		});
+		
+		$n2.couchMap.Configure({
+			dispatchService: configuration.directory.dispatchService
+		});
+		
+		// History monitoring
+		configuration.directory.historyMonitor = new $n2.history.Monitor({
+			directory: configuration.directory
+		});
+		configuration.directory.historyTracker = new $n2.history.Tracker({
+			directory: configuration.directory
+		});
+		configuration.directory.history = new $n2.history.History({
+			dispatchService: configuration.directory.dispatchService
+		});
+		
+		// Event translation
+		configuration.directory.eventService = new $n2.couchEvents.EventSupport({
+			directory: configuration.directory
+		});
+	
+		// Analytics Service
+		configuration.directory.analyticsService = new $n2.analytics.AnalyticsService({
+			dispatchService: configuration.directory.dispatchService
+		});
+	
+		// Custom Service
+		configuration.directory.customService = new $n2.custom.CustomService({
+			directory: configuration.directory
+		});
+	
+		// Intent Service
+		configuration.directory.userIntentService = new $n2.userIntentView.IntentService({
+			dispatchService: configuration.directory.dispatchService
+		});
+	
+		// Turn off cometd
+	 	$.cometd = {
+	 		init: function(){}
+	 		,subscribe: function(){}
+	 		,publish: function(){}
+	 	};
+	
+		// Configuration
+		configuration.directory.configService = new ConfigService({
+			url: options.configServerUrl
+		});
+		
+		if( $n2.couch.isBadProxy() ){
+			// User has already decided that client is behind bad proxy.
+			// No need to test.
+			communicationsTested();
+	
+		} else {
+			// Test to see if sitting behind a bad proxy
+			configuration.directory.configService.testBadProxy({
+				onSuccess: function(badProxy){
+					if( badProxy ){
+						$n2.couch.setBadProxy(true);
+						$n2.log('Detected bad proxy in communication channel');
+					};
+					communicationsTested();
+				}
+				,onError: communicationsTested // continue
+			});
+		};
 	};
 	
 	function communicationsTested(){

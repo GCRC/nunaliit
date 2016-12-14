@@ -252,7 +252,10 @@ var LocalizationService = $n2.Class({
 				;
 
 			var coreLocation = $n2.scripts.getCoreScriptLocation();
-			$n2.scripts.loadScript(url, coreLocation);
+			$n2.scripts.loadScript({
+				url: url
+				,scriptLocation: coreLocation
+			});
 		};
 	}
 });

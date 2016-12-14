@@ -35,6 +35,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 var customScriptsByUrl = {};
 
+//=====================================================================
 /**
  * Return true if the URL is associated with a global resource
  * (as opposed to a relative URL)
@@ -57,8 +58,9 @@ function isContextIndependentURL(url){
 	return false;
 };
 
+//=====================================================================
 function getScriptLocation(scriptName) {
-	var result = null;
+	var scriptLocation = null;
 	
 	if( typeof document === 'object' ) {
 		var pattern = new RegExp("(^|(.*?\\/))"+scriptName+"$");
@@ -69,7 +71,7 @@ function getScriptLocation(scriptName) {
 			if (src) {
 				var match = src.match(pattern);
 				if( match ) {
-					result = {
+					scriptLocation = {
 						location: match[1]
 						,elem: scripts[loop]
 					};
@@ -79,9 +81,10 @@ function getScriptLocation(scriptName) {
 		};
 	};
 
-	return result;
+	return scriptLocation;
 };
 
+//=====================================================================
 function getCoreScriptLocation() {
 	if( typeof nunaliit2CoreScript === 'string' ){
 		return getScriptLocation(nunaliit2CoreScript);
@@ -90,7 +93,36 @@ function getCoreScriptLocation() {
 	return null;
 };
 
-function loadScript(scriptUrl, refLocation) {
+//=====================================================================
+function getFirstScriptLocation() {
+	var scriptLocation;
+
+	if( typeof document === 'object' ) {
+		var scripts = document.getElementsByTagName('script');
+		if( scripts.length > 0 ){
+			var scriptElem = scripts.item(0);
+			scriptLocation = {
+				location: scriptElem.getAttribute('src')
+				,elem: scriptElem
+			};
+		};
+	};
+	
+	return scriptLocation;
+};
+
+//=====================================================================
+function loadScript(opts_) {
+	var opts = $n2.extend({
+		url: null
+		,scriptLocation: null
+		,onLoaded: null
+		,onError: null
+	},opts_);
+	
+	var scriptUrl = opts.url;
+	var refLocation = opts.scriptLocation;
+
 	var scriptElems = document.getElementsByTagName('script');
 	var scriptElem = scriptElems.item( scriptElems.length - 1 );
 	if( refLocation && refLocation.elem ) {
@@ -100,9 +132,27 @@ function loadScript(scriptUrl, refLocation) {
 	var s = document.createElement('script');
 	s.src = scriptUrl;
 	s.type = 'text/javascript';
+	
+	if( typeof s.addEventListener === 'function' ){
+		if( typeof opts.onLoaded === 'function' ){
+			s.addEventListener('load',opts.onLoaded);
+		};
+		if( typeof opts.onError === 'function' ){
+			s.addEventListener('error',opts.onError);
+		};
+	} else {
+		if( typeof opts.onLoaded === 'function' ){
+			s.onload = opts.onLoaded;
+		};
+		if( typeof opts.onError === 'function' ){
+			s.onerror = opts.onError;
+		};
+	};
+	
 	scriptElem.parentNode.insertBefore(s,scriptElem);
 };
 
+//=====================================================================
 function _loadedScript(url){
 	var customScript = customScriptsByUrl[url];
 	if( customScript ){
@@ -110,6 +160,7 @@ function _loadedScript(url){
 	};
 };
 
+//=====================================================================
 function loadCustomScripts(scriptUrls) {
 	var scriptElems = document.getElementsByTagName('script');
 	var insertBeforeElem = scriptElems.item( scriptElems.length - 1 );
@@ -192,6 +243,7 @@ function loadCustomScripts(scriptUrls) {
 	};
 };
 
+//=====================================================================
 function areAllCustomScriptsLoaded(){
 	var allLoaded = true;
 	
@@ -206,12 +258,68 @@ function areAllCustomScriptsLoaded(){
 	return allLoaded;
 };
 
+//=====================================================================
+function loadGoogleMapApi(opts_){
+	var opts = $n2.extend({
+		googleMapApiKey: null
+		,onLoaded: null
+		,onError: null
+	},opts_);
+	
+	// Check if Google Map is already loaded
+	var googleMapScriptFound = false;
+	if( typeof document === 'object' ) {
+		var scripts = document.getElementsByTagName('script');
+		for( var loop=0; loop<scripts.length; ++loop ) {
+			var scriptElem = scripts.item(loop);
+			var src = scriptElem.getAttribute('src');
+			if( typeof src === 'string' ){
+				if( src.indexOf('maps.google.com/maps/api/js') >= 0 ) {
+					googleMapScriptFound = true;
+				};
+				if( src.indexOf('maps.googleapis.com/maps/api/js') >= 0 ) {
+					googleMapScriptFound = true;
+				};
+			};
+		};
+	};
+	if( googleMapScriptFound ){
+		if( typeof opts.onError === 'function' ){
+			opts.onError( 'Google Map API library already installed' );
+		};
+		return;
+	};
+	
+	// Check if library is already loaded
+	if( typeof window === 'object' 
+	 && window.google 
+	 && window.google.maps ){
+		opts.onError( 'Google Map API library already loaded' );
+	};
+	
+	// Attempt to load
+	var firstScriptLocation = getFirstScriptLocation();
+	var url = 'https://maps.googleapis.com/maps/api/js';
+	if( typeof opts.googleMapApiKey === 'string' ){
+		url += '?key='+opts.googleMapApiKey;
+	};
+	loadScript({
+		url: url
+		,scriptLocation: firstScriptLocation
+		,onLoaded: opts.onLoaded
+		,onError: opts.onError
+	});
+};
+
+//=====================================================================
 $n2.scripts = {
 	getScriptLocation: getScriptLocation
 	,getCoreScriptLocation: getCoreScriptLocation
+	,getFirstScriptLocation: getFirstScriptLocation
 	,loadScript: loadScript
 	,loadCustomScripts: loadCustomScripts
 	,areAllCustomScriptsLoaded: areAllCustomScriptsLoaded 
+	,loadGoogleMapApi: loadGoogleMapApi 
 };
 
 })(nunaliit2);

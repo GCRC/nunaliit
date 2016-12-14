@@ -2276,6 +2276,8 @@ var MapAndControls = $n2.Class({
 			};
 			
 		} else if( 'Google Maps' == layerDefinition.type ){
+			this._checkGoogleMapAPI();
+			
 			var options = layerDefinition.options;
 			
 			if( options && 'string' === typeof(options.type) ){
@@ -2609,6 +2611,7 @@ var MapAndControls = $n2.Class({
     },
 
 	_genBackgroundMapLayers: function(options) {
+		var _this = this;
 		var bg = null;
 		
 		if( options
@@ -2667,6 +2670,8 @@ var MapAndControls = $n2.Class({
 					 && OpenLayers.Layer
 					 && OpenLayers.Layer.Google
 					 ) {
+						this._checkGoogleMapAPI();
+						
 						if( background.layers
 						 && $n2.isArray(background.layers) 
 						 ) {
@@ -2730,6 +2735,18 @@ var MapAndControls = $n2.Class({
 				bg.push( new OpenLayers.Layer.Google("Google Hybrid",{type:google.maps.MapTypeId.HYBRID,numZoomLevels: 20}) );
 			};
 			return bg;
+		};
+	},
+	
+	_checkGoogleMapAPI: function(){
+		var googleMapApiLoaded = false;
+		if( typeof window === 'object' 
+		 && window.google 
+		 && window.google.maps ){
+			googleMapApiLoaded = true;
+		};
+		if( !googleMapApiLoaded ){
+			$n2.logError('Google Map API is not loaded. Please, configure a Google Map API key');
 		};
 	},
 

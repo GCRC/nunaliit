@@ -16,6 +16,7 @@ public class TestConfiguration {
 	final static public String COUCHDB_DB_ADMIN_USER = "admin";
 	final static public String COUCHDB_DB_ADMIN_PW = "adminpw";
 	final static public int    SERVLET_URL_PORT = 8099;
+	final static public String GOOGLE_MAPAPI_KEY = "abcdef";
 
 	private String atlasName = ATLAS_NAME;
 	private String couchDbUrlStr = COUCHDB_URL_STR;
@@ -25,6 +26,7 @@ public class TestConfiguration {
 	private String couchDbAdminUser = COUCHDB_DB_ADMIN_USER;
 	private String couchDbAdminPassword = COUCHDB_DB_ADMIN_PW;
 	private int servletUrlPort = SERVLET_URL_PORT;
+	private String googleMapApiKey = GOOGLE_MAPAPI_KEY;
 	
 	public String getAtlasName() {
 		return atlasName;
@@ -82,6 +84,13 @@ public class TestConfiguration {
 		this.servletUrlPort = servletUrlPort;
 	}
 
+	public String getGoogleMapApiKey() {
+		return googleMapApiKey;
+	}
+	public void setGoogleMapApiKey(String googleMapApiKey) {
+		this.googleMapApiKey = googleMapApiKey;
+	}
+
 	public void printUserInputs(Writer writer){
 		PrintWriter pw = new PrintWriter(writer);
 		pw.println(atlasName);
@@ -96,6 +105,7 @@ public class TestConfiguration {
 		pw.println(couchDbAdminUser);
 		pw.println(couchDbAdminPassword);
 		pw.println(servletUrlPort);
+		pw.println(googleMapApiKey);
 		pw.flush();
 	}
 	
