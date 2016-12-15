@@ -2340,7 +2340,7 @@ var MapAndControls = $n2.Class({
 			};
 			
 		} else if( 'Google Maps' == layerDefinition.type ){
-			this._checkGoogleMapAPI();
+			//this._checkGoogleMapAPI();
 			
 			var options = layerDefinition.options;
 			
@@ -2354,7 +2354,8 @@ var MapAndControls = $n2.Class({
 				if( mapTypeId ) {
 					options.type = mapTypeId;
 				} else {
-					$n2.reportError('Can not find Google map type id: '+options.type);
+					$n2.reportError('Attempting to load a Google Map background. A map API key must be configured');
+					$n2.logError('Unable to load Google Map type: '+options.type);
 					return null;
 				};
 			};

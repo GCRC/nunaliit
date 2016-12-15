@@ -1,10 +1,16 @@
 {
 	"coordinates": {
 		"initialBounds": [-75.72,45.41,-75.67,45.43]
-		,"autoInitialBounds": true
+		,"autoInitialBounds": false
 	}
 	,"backgrounds": [
 		{ 
+			"name": "OSM"
+			,"type": "osm"
+			,"options": {
+			}
+		}
+		,{ 
 			"name": "Google Satellite"
 			,"type": "Google Maps"
 			,"options": {
@@ -31,34 +37,38 @@
 	]
 	,"overlays": [
 		{
-			"id": "approved"
+			"id": "osm"
 			,"name": {
 				"nunaliit_type":"localized"
-				,"en":"Approved Layer"
-				,"fr":"Couche Approuvée"
+				,"en":"OSM"
 			}
 			,"type": "couchdb"
 			,"options": {
-				"layerName": "approved"
+				"layerName": "osm"
 			}
 			,"featurePopupDelayMs": 0
 			,"useHoverSound": true
-		}
-		,{
-			"id": "public"
-			,"name": {
-				"nunaliit_type":"localized"
-				,"en":"Public"
-				,"fr":"Couche Publique"
+			,"clustering": {
+				"distance": 20
+                ,"threshold": 1
+                ,"disableDynamicClustering": false
+                ,"clusterPointsOnly": false
+                ,"minimumLinePixelSize": 20
+                ,"minimumPolygonPixelSize": 20
 			}
-			,"type": "couchdb"
-			,"options": {
-				"layerName": "public"
-			}
-			,"featurePopupDelayMs": 0
-			,"useHoverSound": true
 		}
 	]
 	,"addPointsOnly": false
 	,"toggleClick": true
+	,"styles":{
+		"layers":{
+			"osm":{
+				"base":{
+					"normal":{
+						"fillColor":"#ffff33"
+					}
+				}
+			}
+		}
+	}
 }

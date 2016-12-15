@@ -117,7 +117,7 @@ $n2.reportError = function(id,str) {
 	
 	if( arguments.length < 2 ) str = id; 
 
-	$n2.log(id,str,arguments);	
+	$n2.logError.apply(null,arguments);	
 	if( id === $n2.ERROR_NO_SUPRESS ) {
 		// Report, always
 		alert(str);
