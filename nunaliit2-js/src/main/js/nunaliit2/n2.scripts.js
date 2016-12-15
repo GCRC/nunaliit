@@ -286,6 +286,7 @@ function loadGoogleMapApi(opts_){
 	if( googleMapScriptFound ){
 		if( typeof opts.onError === 'function' ){
 			opts.onError( 'Google Map API library already installed' );
+			$n2.logError('Hint: remove Google Map script inclusion from HTML page');
 		};
 		return;
 	};
@@ -295,6 +296,7 @@ function loadGoogleMapApi(opts_){
 	 && window.google 
 	 && window.google.maps ){
 		opts.onError( 'Google Map API library already loaded' );
+		return;
 	};
 	
 	// Attempt to load
