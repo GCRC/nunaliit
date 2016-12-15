@@ -1,0 +1,6 @@
+[
+	{
+		"utilityType": "assignLayerOnDocumentCreation"
+		,"layerId": "osm"
+	}
+]
