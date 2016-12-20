@@ -672,13 +672,21 @@ Sound
 Map Legend 
 ==============================
 */
-.n2widgetLegend {
+
+.n2widgetLegend_svg {
+	display: inline-block;
+	width: 14px;
+	height: 14px;
+}
+
+/* Styling when added to nunaliit_content */
+.nunaliit_content > .n2widgetLegend {
 	position: absolute;
 	bottom: 10px;
 	left: 10px;
 }
 
-.n2widgetLegend_outer {
+.nunaliit_content > .n2widgetLegend .n2widgetLegend_outer {
 	background-color: #000;
 	color: #fff;
 	padding: 10px;
@@ -689,34 +697,16 @@ Map Legend
     box-shadow: 3px 3px 3px 0 rgba(0,0,0, 0.25);
 }
 
-.n2widgetLegend_labelEntry::after {
+.nunaliit_content > .n2widgetLegend .n2widgetLegend_labelEntry::after {
 	content: "";
 	display: block;
 	clear: both;
 }
 
-.n2widgetLegend_preview {
+.nunaliit_content > .n2widgetLegend .n2widgetLegend_preview {
 	float: left;
 }
 
-.n2widgetLegend_svg {
-	display: inline-block;
-	width: 14px;
-	height: 14px;
-}
-
-/* When inside a widget container, the container picks the style */
-.n2widgetContainer .n2widgetLegend {
-	position: static;
-}
-
-.n2widgetContainer .n2widgetLegend_outer {
-	background-color: transparent;
-	color: unset;
-	padding: 0;
-	border: none;
-    box-shadow: none;
-}
 
 /* 
 ==============================
