@@ -718,7 +718,6 @@ Map Legend
     box-shadow: none;
 }
 
-
 /* 
 ==============================
 Collapsible Widget Container 
@@ -764,4 +763,51 @@ Collapsible Widget Container
 
 .n2widgetCollapsibleContainer_opened .n2widgetCollapsibleContainer_widgetContainer {
 	display: block;
+}
+
+/* 
+==============================
+Multi Filter Selection  
+==============================
+*/
+.nunaliit_content > .n2widget_multiFilterSelection {
+	position: absolute;
+	bottom: 10px;
+	left: 10px;
+	max-width: 200px;
+    max-height: 600px;
+    overflow: auto;	
+	background-color: #000;
+	color: #fff;
+	padding: 5px;
+	border-radius: 5px;
+    border-color: #fff;
+    border-width: 1px;
+    border-style: solid;
+    box-shadow: 3px 3px 3px 0 rgba(0,0,0, 0.25);
+}
+
+.nunaliit_content > .n2widget_multiFilterSelection:after {
+	content: "";
+	display: block;
+	clear: both;
+}
+
+.nunaliit_content > .n2widget_multiFilterSelection > .n2widget_multiFilterSelection_option {
+	display: block;
+	float: left;
+	padding: 2px;
+	border: #fff 1px solid;
+	margin: 3px;
+	cursor: pointer;	
+	color: inherit;
+	text-decoration: none;
+}
+
+.nunaliit_content > .n2widget_multiFilterSelection > .n2widget_multiFilterSelection_option:hover {
+	text-decoration: none;
+}
+
+.nunaliit_content > .n2widget_multiFilterSelection > .n2widget_multiFilterSelection_selected {
+	background-color: #444;
 }
