@@ -977,6 +977,12 @@ var ModuleDisplay = $n2.Class({
 			toggleClick = mapInfo.toggleClick;
 		};
 		
+		// Enable wheel zoom
+		var enableWheelZoom = false;
+		if( mapInfo && mapInfo.enableWheelZoom ){
+			enableWheelZoom = true;
+		};
+		
 		// dbSearchEngine
 		var dbSearchEngine = { 
 			relMediaPath: './'
@@ -1003,6 +1009,7 @@ var ModuleDisplay = $n2.Class({
 			,addPointsOnly: addPointsOnly
 			,overlays: []
 			,toggleClick: toggleClick
+			,enableWheelZoom: enableWheelZoom
 			,sidePanelName: _this.sidePanelName
 			,filterPanelName: _this.filterPanelName
 			,saveFeature: _this.config.couchEditor

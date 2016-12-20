@@ -860,6 +860,9 @@ var LayerInfo = $n2.Class({
 		{Boolean} addPointsOnly=false
     	If true, editing the map can only add points.
     
+		{Boolean} enableWheelZoom=false
+    	If true, mouse wheel zooms in and out.
+    
     	{Object} placeDisplay
     	Options for the display handler.
     
@@ -1063,6 +1066,7 @@ var MapAndControls = $n2.Class({
 				,units: 'm' // map units
 			}
 			,addPointsOnly: false
+			,enableWheelZoom: false
 			,placeDisplay: { // place info panel display options.
 				attribDisplayType: 'attributes' // default - just list the attributes in a table	
 				,attribTableHeading: "Place Data:" // display heading for place attributes table format.
@@ -1442,9 +1446,14 @@ var MapAndControls = $n2.Class({
 		});
 		
 		// Disable zoom on mouse wheel
-		var navControls = this.map.getControlsByClass('OpenLayers.Control.Navigation');
-		for(var i=0,e=navControls.length; i<e; ++i) {
-			navControls[i].disableZoomWheel();
+		if( this.options.enableWheelZoom ) {
+			// Do nothing. Enabled by default
+		} else {
+			// Turn off wheel
+			var navControls = this.map.getControlsByClass('OpenLayers.Control.Navigation');
+			for(var i=0,e=navControls.length; i<e; ++i) {
+				navControls[i].disableZoomWheel();
+			};
 		};
 		if( this.map.div ){
 			var $map = $(this.map.div);
