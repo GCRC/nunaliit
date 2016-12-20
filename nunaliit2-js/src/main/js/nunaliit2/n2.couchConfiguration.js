@@ -569,12 +569,6 @@ function Configure(options_){
 			dispatchService: configuration.directory.dispatchService
 		});
 		
-		// Navigation Service
-		configuration.directory.navigationService = new $n2.couchNavigation.NavigationService({
-			dispatchService: configuration.directory.dispatchService
-			,documentSource: configuration.documentSource
-		});
-		
 		configuration.directory.showService = new $n2.couchShow.Show({
 			db: configuration.atlasDb
 			,documentSource: configuration.documentSource
@@ -584,6 +578,13 @@ function Configure(options_){
 			,customService: configuration.directory.customService
 			,attachmentService: configuration.directory.attachmentService
 			,displayImageSourceFactory: configuration.directory.displayImageSourceFactory
+		});
+		
+		// Navigation Service
+		configuration.directory.navigationService = new $n2.couchNavigation.NavigationService({
+			dispatchService: configuration.directory.dispatchService
+			,showService: configuration.directory.showService
+			,documentSource: configuration.documentSource
 		});
 
 		configuration.directory.dialogService = new $n2.couchDialogs.DialogService({

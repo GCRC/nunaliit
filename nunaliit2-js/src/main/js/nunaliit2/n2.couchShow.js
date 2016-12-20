@@ -163,6 +163,13 @@ var DomStyler = $n2.Class({
 			_this._insertMediaView(contextDoc, $jq);
 		});
 		
+		// Module Name
+		$set.filter('.n2s_insertModuleName').each(function(){
+			var $jq = $(this);
+			$jq.removeClass('n2s_insertModuleName').addClass('n2s_insertedModuleName');
+			_this._insertModuleName($jq, contextDoc);
+		});
+		
 		// Insert first thumbnail
 		$set.filter('.n2s_insertFirstThumbnail').each(function(){
 			var $jq = $(this);
@@ -430,6 +437,10 @@ var DomStyler = $n2.Class({
 
 		if( $jq.hasClass('n2s_insertedLayerName') ){
 			this._insertLayerName($jq, doc);
+		};
+
+		if( $jq.hasClass('n2s_insertedModuleName') ){
+			this._insertModuleName($jq, doc);
 		};
 
 		if( $jq.hasClass('n2s_showedFindAvailable') ){
@@ -808,6 +819,18 @@ var DomStyler = $n2.Class({
 				
 				return false;
 			};
+		};
+	},
+
+	_insertModuleName: function($jq, data) {
+		var docId = this._associateDocumentToElement(data, $jq);
+		
+		if( data 
+		 && data._id === docId 
+		 && data.nunaliit_module
+		 && data.nunaliit_module.title ){
+			var title = _loc(data.nunaliit_module.title);
+			$jq.text(title);
 		};
 	},
 	

@@ -49,6 +49,8 @@ var NavigationDisplay = $n2.Class({
 	
 	dispatchService: null,
 	
+	showService: null,
+	
 	navigationDoc: null,
 	
 	elemId: null,
@@ -56,11 +58,13 @@ var NavigationDisplay = $n2.Class({
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: null
+			,showService: null
 			,navigationDoc: null
 			,elem: null
 		},opts_);
 		
 		this.dispatchService = opts.dispatchService;
+		this.showService = opts.showService;
 		this.navigationDoc = opts.navigationDoc;
 		
 		var $elem = $(opts.elem);
@@ -94,6 +98,10 @@ var NavigationDisplay = $n2.Class({
 				
 				insertItems($ul, doc.nunaliit_navigation.items, currentModuleId);
 			};
+			
+			if( this.showService ){
+				this.showService.fixElementAndChildren($nav);
+			};
 		};
 		
 		function insertItems($ul, items, currentModuleId){
@@ -126,13 +134,13 @@ var NavigationDisplay = $n2.Class({
 						setNavElementAsCurrentModule($li);
 					};
 					
-					var $a = $('<a></a>');
-					$a.attr('href',item.href);
 					var title = _loc(item.title);
-					$a.text(title);
-					$li.append($a);
+					$('<a>')
+						.attr('href',item.href)
+						.text(title)
+						.appendTo($li);
 					
-				} else if( item.title && item.module ) {
+				} else if( item.module ) {
 						// Compute URL based on current one
 					var currentUrl = $n2.url.getCurrentLocation();
 					var moduleUrl = currentUrl
@@ -148,11 +156,19 @@ var NavigationDisplay = $n2.Class({
 						setNavElementAsCurrentModule($li);
 					};
 					
-					var $a = $('<a></a>');
-					$a.attr('href',moduleUrl.getUrl());
-					var title = _loc(item.title);
-					$a.text(title);
-					$li.append($a);
+					var $a = $('<a>')
+						.attr('href',moduleUrl.getUrl())
+						.appendTo($li);
+
+					if( item.title ){
+						var title = _loc(item.title);
+						$a.text(title);
+					} else {
+						// Obtain title from show service
+						$a.attr('nunaliit-document',item.module);
+						$a.addClass('n2s_insertModuleName');
+						$a.text(item.module);
+					};
 						
 				} else if( item.title ) {
 					var $span = $('<span></span>');
@@ -177,6 +193,8 @@ var NavigationService = $n2.Class({
 	
 	dispatchService: null,
 	
+	showService: null,
+	
 	documentSource: null,
 	
 	currentNavigationDoc: null,
@@ -184,12 +202,14 @@ var NavigationService = $n2.Class({
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: null
+			,showService: null
 			,documentSource: null
 		},opts_);
 		
 		var _this = this;
 		
 		this.dispatchService = opts.dispatchService;
+		this.showService = opts.showService;
 		this.documentSource = opts.documentSource;
 
 		// dispatcher
@@ -307,6 +327,7 @@ var NavigationService = $n2.Class({
 		if( doc && docId === doc._id ){
 			new NavigationDisplay({
 				dispatchService: this.dispatchService
+				,showService: this.showService
 				,navigationDoc: doc
 				,elem: $elem
 			});
