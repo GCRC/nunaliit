@@ -1346,22 +1346,35 @@ var ModuleDisplay = $n2.Class({
 	,_installModuleTitle: function($elem, text){
 		var _this = this;
 		
-		var $a = $('<a class="nunaliit_module_title_link" href="#"></a>');
-		$a.text(text);
-		
-		$elem.empty().append($a);
-		
-		$a.click(function(e){
-			var d = _this.dispatchService;
-			if( d ){
-				d.send(DH,{
-					type: 'mapResetExtent'
-				});
+		$elem.empty();
+
+		var $a = $('<a class="nunaliit_module_title_link" href="#"></a>')
+			.addClass('nunaliit_module_title_link')
+			.attr('href','#')
+			.text(text)
+			.appendTo($elem)
+			.click(function(e){
+				var d = _this.dispatchService;
+				if( d ){
+					d.send(DH,{
+						type: 'mapResetExtent'
+					});
+				};
+				
+				// Follow link
+				return true;
+			});
+
+		var moduleId = this.moduleId;
+		if( moduleId ){
+			$a.addClass('n2s_insertModuleName');
+			$a.attr('nunaliit-document',moduleId);
+
+			var showService = this._getShowService();
+			if( showService ){
+				showService.fixElementAndChildren($elem);
 			};
-			
-			// Follow link
-			return true;
-		});
+		};
 	}
 	
 	,_installHelpButton: function(){
