@@ -328,6 +328,7 @@
 				if( fetchDocIds.length ) {
 					atlasDb.getDocuments({
 						docIds: fetchDocIds
+						,skipCache: true
 						,onSuccess: receiveDocs
 						,onError: function(err){
 							progressDialog.close();
@@ -1393,6 +1394,7 @@
 
 				atlasDb.getDocuments({
 					docIds: docIds
+					,skipCache: true
 					,onSuccess: function(docs){
 						var invalidSourceIds = [];
 						
@@ -1903,6 +1905,7 @@
 					var docId = docIdsLeft.pop();
 					atlasDb.getDocument({
 						docId: docId
+						,skipCache: true
 						,onSuccess: retrievedDocument
 						,onError: function(err){
 							var locStr = _loc('Failure to fetch {docId}',{
@@ -2589,6 +2592,7 @@
 						var docId = docIdsLeft.pop();
 						atlasDb.getDocument({
 							docId: docId
+							,skipCache: true
 							,onSuccess: retrievedDocument
 							,onError: function(err){
 								var locStr = _loc('Failure to fetch {docId}',{
@@ -3160,6 +3164,7 @@
 		
 		atlasDb.getDocument({
 			docId: docId
+			,skipCache: true
 			,onSuccess: function(doc){
 				$div.empty();
 				

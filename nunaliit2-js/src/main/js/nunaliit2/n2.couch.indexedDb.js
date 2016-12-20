@@ -642,6 +642,7 @@ var Database = $n2.Class({
 
 		var opts = $.extend(true, {
 			docIds: null
+			,skipCache: undefined
 			,onSuccess: function(docs){}
 			,onError: function(errorMsg){ $n2.log(errorMsg); }
 		},opts_);
@@ -655,16 +656,20 @@ var Database = $n2.Class({
 			};
 		});
 
-		this._validateDocumentCache({
-			onSuccess: function(){
-				_this._performDocumentFetchRequest({
-				    docIds: opts.docIds
-				    ,onSuccess: opts.onSuccess
-				    ,onError: opts.onError
-				});
-			}
-			,onError: performRemoteRequest
-		});
+		if( opts.skipCache ){
+			performRemoteRequest();
+		} else {
+			this._validateDocumentCache({
+				onSuccess: function(){
+					_this._performDocumentFetchRequest({
+					    docIds: opts.docIds
+					    ,onSuccess: opts.onSuccess
+					    ,onError: opts.onError
+					});
+				}
+				,onError: performRemoteRequest
+			});
+		};
 
 		function performRemoteRequest(){
 			var remoteOpts = $n2.extend({},opts,{
@@ -846,7 +851,8 @@ var Database = $n2.Class({
 	
 	/**
 	 * Serialize all document fetch requests and prevent fetching the
-	 * same document multiple times. 
+	 * same document multiple times. This function checks the cache first
+	 * and then fetches documents remotely.
 	 */
 	_performDocumentFetchRequest: function(request){
 		var _this = this;
