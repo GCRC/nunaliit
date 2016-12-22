@@ -337,8 +337,8 @@ Help Dialog
 ==============================
 */
 .n2help_dialog .ui-dialog-titlebar {
-	background: #3a3a3a;
-	color: #ffffff;
+	background: {{header.background}};
+	color: {{header.color}};
 	font-family: helvetica, sans-serif;
 	font-weight: 500;
 }
@@ -636,10 +636,10 @@ Model Browser Widget
 }
 .nunaliit_footer .n2widget_modelBrowser a {
 	text-decoration: none;
-	color: #fff;
+	color: {{header.color}};
 }
 .nunaliit_footer .n2widget_modelBrowser a:visited {
-	color: #fff;
+	color: {{header.color}};
 }
 .n2widget_modelBrowser_model {
 	display: block;

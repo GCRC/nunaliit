@@ -130,6 +130,13 @@
 								<java jar="target/tools/nunaliit2-css.jar" fork="true" failonerror="true" dir=".">
 									<arg line="--config-file ./compress/nunaliit2-css.cfg" />
 									<arg line="--license-file ./compress/license.txt" />
+									<arg line="--theme-file ./compress/theme-test.txt" />
+									<arg line="--source-dir ./src/main/js/nunaliit2/css/basic" />
+									<arg line="--output ./src/main/js/nunaliit2/css/basic/nunaliit2-test.css" />
+								</java>
+								<java jar="target/tools/nunaliit2-css.jar" fork="true" failonerror="true" dir=".">
+									<arg line="--config-file ./compress/nunaliit2-css.cfg" />
+									<arg line="--license-file ./compress/license.txt" />
 									<arg line="--source-dir ./src/main/js/nunaliit2/css/basic" />
 									<arg line="--output ./src/main/js/nunaliit2/css/basic/nunaliit2-notheme.css" />
 								</java>

@@ -22,6 +22,7 @@ public class GenerateCssLibrariesProcess {
 		
 		File licenseFile = new File(jsDir, "compress/license.txt");
 		File basicThemeFile = new File(jsDir, "compress/theme-basic.txt");
+		File testThemeFile = new File(jsDir, "compress/theme-test.txt");
 		File basicCssDir = new File(jsDir,"src/main/js/nunaliit2/css/basic");
 		
 		generate(
@@ -31,7 +32,15 @@ public class GenerateCssLibrariesProcess {
 			,basicCssDir
 			,"nunaliit2.css"
 			);
-		
+
+		generate(
+			new File(jsDir, "compress/nunaliit2-css.cfg")
+			,licenseFile
+			,testThemeFile
+			,basicCssDir
+			,"nunaliit2-test.css"
+			);
+
 		generate(
 			new File(jsDir, "compress/nunaliit2-css.cfg")
 			,licenseFile

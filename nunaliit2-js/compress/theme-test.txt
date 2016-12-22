@@ -1,0 +1,10 @@
+header.background: #fff
+header.background.button: #fff
+header.background.hover: #eee
+header.background.selected: #ddf
+header.background.module: #fff
+header.color: #000
+header.border.color: rgba(0,0,0,0.6)
+header.border.color.module: rgba(0,0,0,0.6)
+header.border.button.color: rgba(0,0,0,0.6)
+
