@@ -21,18 +21,29 @@ public class GenerateCssLibrariesProcess {
 		}
 		
 		File licenseFile = new File(jsDir, "compress/license.txt");
+		File basicThemeFile = new File(jsDir, "compress/theme-basic.txt");
 		File basicCssDir = new File(jsDir,"src/main/js/nunaliit2/css/basic");
 		
 		generate(
 			new File(jsDir, "compress/nunaliit2-css.cfg")
 			,licenseFile
+			,basicThemeFile
 			,basicCssDir
 			,"nunaliit2.css"
 			);
 		
 		generate(
+			new File(jsDir, "compress/nunaliit2-css.cfg")
+			,licenseFile
+			,null
+			,basicCssDir
+			,"nunaliit2-notheme.css"
+			);
+		
+		generate(
 			new File(jsDir, "compress/nunaliit2-css-mobile.cfg")
 			,licenseFile
+			,basicThemeFile
 			,basicCssDir
 			,"nunaliit2-mobile.css"
 			);
@@ -41,6 +52,7 @@ public class GenerateCssLibrariesProcess {
 	private void generate(
 		File configFile
 		,File licenseFile
+		,File themeFile
 		,File sourceDirectory
 		,String libraryName
 		) throws Exception {
@@ -49,6 +61,9 @@ public class GenerateCssLibrariesProcess {
 			config.setSourceDirectory(sourceDirectory);
 			config.setLicenseFile(licenseFile);
 			config.parseConfiguration(configFile);
+			if( null != themeFile ){
+				config.addThemeFile(themeFile);
+			}
 
 			// Create merged version
 			{

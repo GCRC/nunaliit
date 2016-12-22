@@ -24,6 +24,7 @@ public class LibraryConfiguration {
 	private File sourceDirectory = null;
 	private List<String> inputFilePaths = null;
 	private File licenseFile = null;
+	private List<File> themeFiles = null;
 
 	public LibraryConfiguration(){
 		inputFilePaths = new Vector<String>();
@@ -63,6 +64,17 @@ public class LibraryConfiguration {
 
 	public void setLicenseFile(File licenseFile) {
 		this.licenseFile = licenseFile;
+	}
+	
+	public List<File> getThemeFiles() {
+		return themeFiles;
+	}
+
+	public void addThemeFile(File themeFile) {
+		if( null == themeFiles ){
+			themeFiles = new Vector<File>();
+		}
+		themeFiles.add(themeFile);
 	}
 
 	public void parseConfiguration(Reader reader) throws Exception {

@@ -75,7 +75,7 @@ public class CssMain {
 				File licenseFile = new File(licenseFileName);
 				System.out.println("--license-file "+licenseFile.getAbsolutePath());
 				config.setLicenseFile(licenseFile);
-					
+
 			} else if( "--output".equals(optionName) ){
 				argumentStack.pop();
 				
@@ -85,7 +85,18 @@ public class CssMain {
 				String outputFileName = argumentStack.pop();
 				outputFile = new File(outputFileName);
 				System.out.println("--ouput "+outputFile.getAbsolutePath());
-					
+
+			} else if( "--theme-file".equals(optionName) ){
+				argumentStack.pop();
+				
+				if( argumentStack.empty() ){
+					throw new Exception("File expected for option '--theme-file'");
+				}
+				String themeFileName = argumentStack.pop();
+				File themeFile = new File(themeFileName);
+				System.out.println("--theme-file "+themeFile.getAbsolutePath());
+				config.addThemeFile(themeFile);
+
 			} else {
 				System.err.println("Unknown option: "+optionName);
 				argumentStack.pop();
