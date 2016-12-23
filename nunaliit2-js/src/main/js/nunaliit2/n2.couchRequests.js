@@ -134,6 +134,8 @@ $n2.couchRequests = $n2.Class({
 			this.options.dispatchService.register(DH, 'requestDocuments', f);
 			this.options.dispatchService.register(DH, 'requestUserDocument', f);
 			this.options.dispatchService.register(DH, 'requestUserDocumentComplete', f);
+			this.options.dispatchService.register(DH, 'requestLayerDefinition', f);
+			this.options.dispatchService.register(DH, 'requestLayerDefinitions', f);
 		};
 	}
 
@@ -230,6 +232,18 @@ $n2.couchRequests = $n2.Class({
 		this.currentRequests.layerIds[layerId] = true;
 		
 		this._schedule();
+	}
+	
+	,requestLayerDefinitions: function(layerIds){
+		var _this = this;
+
+		if( $n2.isArray(layerIds) ){
+			layerIds.forEach(function(layerId){
+				if( typeof layerId === 'string' ){
+					_this.requestLayerDefinition(layerId);
+				};
+			});
+		};
 	}
 
 	,_schedule: function() {
@@ -516,10 +530,18 @@ $n2.couchRequests = $n2.Class({
 		} else if( 'requestUserDocument' === m.type ) {
 			var userId = m.userId;
 			this.requestUser(userId);
-			
+
 		} else if( 'requestUserDocumentComplete' === m.type ) {
 			var userId = m.userId;
 			this.requestCompleteUserDocument(userId);
+
+		} else if( 'requestLayerDefinition' === m.type ) {
+			var layerId = m.layerId;
+			this.requestLayerDefinition(layerId);
+
+		} else if( 'requestLayerDefinitions' === m.type ) {
+			var layerIds = m.layerIds;
+			this.requestLayerDefinitions(layerIds);
 		};
 	}
 	

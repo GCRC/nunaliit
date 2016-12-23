@@ -652,13 +652,13 @@ var Service = $n2.Class({
 			for(var modelId in this.modelIdMap){
 				var state = this.modelIdMap[modelId];
 				if( MODEL_SUSPECTED === state ){
-					var m = {
+					var msg = {
 						type: 'modelGetInfo'
 						,modelId: modelId
 					};
-					this.dispatchService.synchronousCall(DH,m);
+					this.dispatchService.synchronousCall(DH,msg);
 					
-					if( m.modelInfo ){
+					if( msg.modelInfo ){
 						this.modelIdMap[modelId] = MODEL_CONFIRMED;
 						this.modelIds.push(modelId);
 					};

@@ -5676,7 +5676,8 @@ var MapAndControls = $n2.Class({
 		var mustReproject = false;
         var remoteProjection = mapLayer.projection;
 	    var localProjection = layerInfo.olLayer.map.getProjectionObject();
-        if( false == localProjection.equals(remoteProjection) ) {
+        if( localProjection 
+         && false == localProjection.equals(remoteProjection) ) {
         	mustReproject = true;
         };
 		

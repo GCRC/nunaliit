@@ -647,6 +647,10 @@ Model Browser Widget
 .n2widget_modelBrowser_model_selected {
 	background-color: #ccc;
 }
+.n2widget_modelBrowser_list_docIds {
+    max-height: 400px;
+    overflow: auto;
+}
 .n2widget_modelBrowser_list_docId {
 	display: block;
 }

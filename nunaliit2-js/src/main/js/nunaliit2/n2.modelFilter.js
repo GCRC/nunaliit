@@ -618,6 +618,10 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 	modelId: undefined,
 	
 	sourceModelId: undefined,
+	
+	saveSelection: undefined,
+	
+	saveSelectionName: undefined,
 
 	docInfosByDocId: undefined,
 	
@@ -641,6 +645,7 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 			,modelId: null
 			,sourceModelId: null
 			,initialSelection: null
+			,saveSelection: null
 		},opts_);
 		
 		var _this = this;
@@ -649,20 +654,62 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 		this.modelId = opts.modelId;
 		this.sourceModelId = opts.sourceModelId;
 		
+		this.saveSelection = false;
+		this.saveSelectionName = this.modelId;
+		if( typeof opts.saveSelection === 'string' ){
+			this.saveSelection = true;
+			this.saveSelectionName = opts.saveSelection;
+
+		} else if( typeof opts.saveSelection === 'boolean' ){
+			if( opts.saveSelection ){
+				this.saveSelection = true;
+			};
+
+		} else if( opts.saveSelection === null ){
+
+		} else if( typeof opts.saveSelection === 'object' ){
+			if( opts.saveSelection.enabled ){
+				this.saveSelection = true;
+				if( typeof opts.saveSelection.name === 'string' ){
+					this.saveSelectionName = opts.saveSelection.name;
+				};
+			};
+		};
+		
 		this.docInfosByDocId = {};
 		this.selectedChoiceIdMap = {};
 		this.availableChoices = [];
 		this.modelIsLoading = false;
 		this.receivedSelection = false;
-		
-		if( $n2.isArray(opts.initialSelection) ){
-			this.receivedSelection = true;
+
+		// Retrieve initial selection
+		var initialSelection;
+		if( this.saveSelection ){
+			var localStorage = $n2.storage.getLocalStorage();
+			var jsonSelection = localStorage.getItem(this.saveSelectionName);
+			if( jsonSelection ){
+				initialSelection = JSON.parse(jsonSelection);
+				if( !$n2.isArray(initialSelection) ){
+					initialSelection = undefined;
+				};
+			};
+		};
+		if( !initialSelection && $n2.isArray(opts.initialSelection) ){
+			initialSelection = [];
 			opts.initialSelection.forEach(function(choiceId){
+				if( typeof choiceId === 'string' ){
+					initialSelection.push(choiceId);
+				} else {
+					$n2.log('Error: SelectableDocumentFilter initialized with initial selection: '+choiceId);
+				};
+			});
+		};
+		if( initialSelection ){
+			this.receivedSelection = true;
+			initialSelection.forEach(function(choiceId){
 				if( typeof choiceId === 'string' ){
 					_this.selectedChoiceIdMap[choiceId] = true;
 					_this.availableChoices.push(choiceId);
-				} else {
-					$n2.log('Error: SelectableDocumentFilter initialized with initial selection: '+choiceId);
 				};
 			});
 		};
@@ -741,6 +788,13 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 			};
 			_this.selectedChoiceIdMap[choiceId] = true;
 		});
+
+		// Save to local storage
+		if( this.saveSelection && this.receivedSelection ){
+			var jsonSelection = JSON.stringify(choiceIdArray);
+			var localStorage = $n2.storage.getLocalStorage();
+			localStorage.setItem(this.saveSelectionName,jsonSelection);
+		};
 
 		this._filterChanged();
 		
@@ -1195,6 +1249,196 @@ var DocumentFilterByCreator = $n2.Class('DocumentFilterByCreator', SelectableDoc
 });
 
 //--------------------------------------------------------------------------
+var LayerFilter = $n2.Class('LayerFilter', SelectableDocumentFilter, {
+
+	layerDefinitionByLayerId: null,
+
+	layerIdByDocId: null,
+
+	currentChoices: null,
+
+	currentCallback: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			modelId: null
+			,sourceModelId: null
+			,dispatchService: null
+		},opts_);
+		
+		var _this = this;
+		
+		$n2.modelFilter.SelectableDocumentFilter.prototype.initialize.call(this,opts);
+		
+		this.layerDefinitionByLayerId = {};
+		this.layerIdByDocId = {};
+		this.currentChoices = [];
+		this.currentCallback = null;
+		
+		if( this.dispatchService ){
+			var f = function(m, addr, dispatcher){
+				_this._handleLayerFilterEvents(m, addr, dispatcher);
+			};
+			
+			this.dispatchService.register(DH,'documentContent',f);
+			this.dispatchService.register(DH,'documentContentCreated',f);
+			this.dispatchService.register(DH,'documentContentUpdated',f);
+			this.dispatchService.register(DH,'documentDeleted',f);
+		};
+	},
+	
+	_handleLayerFilterEvents: function(m, addr, dispatcher){
+		if( 'documentContent' === m.type 
+		 || 'documentContentCreated' === m.type
+		 || 'documentContentUpdated' === m.type ){
+			if( m.doc ){
+				if( m.doc.nunaliit_layer_definition ){
+					var layerId = m.doc.nunaliit_layer_definition.id;
+					if( !layerId ){
+						layerId = m.doc._id;
+					};
+					this.layerIdByDocId[m.doc._id] = layerId;
+					this.layerDefinitionByLayerId[layerId] = m.doc;
+					this._recomuteAvailableChoices();
+
+				} else if( this.layerIdByDocId[m.doc._id] ){
+					var layerId = this.layerIdByDocId[m.doc._id];
+					delete this.layerIdByDocId[m.doc._id];
+					delete this.layerDefinitionByLayerId[layerId];
+					this._recomuteAvailableChoices();
+				};
+			};
+
+		} else if( 'documentDeleted' === m.type ){
+			if( this.layerIdByDocId[m.docId] ){
+				var layerId = this.layerIdByDocId[m.docId];
+				delete this.layerIdByDocId[m.docId];
+				delete this.layerDefinitionByLayerId[layerId];
+				this._recomuteAvailableChoices();
+			};
+		};
+	},
+	
+	_recomuteAvailableChoices: function(){
+		var _this = this;
+
+		if( this.currentChoices ){
+			var choiceWasChanged = false;
+			this.currentChoices.forEach(function(choice){
+				var layerDefinition = _this.layerDefinitionByLayerId[choice.id];
+				
+				var label;
+				if( layerDefinition 
+				 && layerDefinition.nunaliit_layer_definition 
+				 && layerDefinition.nunaliit_layer_definition.name ){
+					label = _loc(layerDefinition.nunaliit_layer_definition.name);
+				};
+				if( !label ){
+					label = choice.id;
+				};
+				
+				if( label !== choice.label ){
+					choice.label = label;
+					choiceWasChanged = true;
+				};
+			});
+			
+			if( choiceWasChanged ){
+				this.currentChoices.sort(function(a,b){
+					if( a.label < b.label ){
+						return -1;
+					};
+					if( a.label > b.label ){
+						return 1;
+					};
+					return 0;
+				});
+
+				if( typeof this.currentCallback === 'function' ){
+					this.currentCallback(this.currentChoices);
+				};
+			};
+		};
+	},
+
+	_computeAvailableChoicesFromDocs: function(docs, callbackFn){
+		var _this = this;
+
+		var choiceLabelsById = {};
+		var layerIdsToFetch = [];
+		docs.forEach(function(doc){
+			if( doc && $n2.isArray(doc.nunaliit_layers) ){
+				doc.nunaliit_layers.forEach(function(layerId){
+					var layerDefinition = _this.layerDefinitionByLayerId[layerId];
+
+					if( layerDefinition ){
+						// OK
+					} else {
+						layerIdsToFetch.push(layerId);
+					};
+
+					if( layerId && !choiceLabelsById[layerId] ){
+						if( layerDefinition 
+						 && layerDefinition.nunaliit_layer_definition
+						 && layerDefinition.nunaliit_layer_definition.name ){
+							choiceLabelsById[layerId] = _loc(layerDefinition.nunaliit_layer_definition.name);
+						} else {
+							choiceLabelsById[layerId] = layerId;
+						};
+					};
+				});
+			};
+		});
+
+		var availableChoices = [];
+		for(var id in choiceLabelsById){
+			var label = choiceLabelsById[id];
+			availableChoices.push({
+				id: id
+				,label: label
+			});
+		};
+		availableChoices.sort(function(a,b){
+			if( a.label < b.label ){
+				return -1;
+			};
+			if( a.label > b.label ){
+				return 1;
+			};
+			return 0;
+		});
+		
+		this.currentChoices = availableChoices;
+		this.currentCallback = callbackFn;
+		
+		callbackFn(availableChoices);
+		
+		if( layerIdsToFetch.length > 0 ){
+			this.dispatchService.send(DH,{
+				type: 'requestLayerDefinitions'
+				,layerIds: layerIdsToFetch
+			});
+		};
+		
+		return null;
+	},
+	
+	_isDocVisible: function(doc, selectedChoiceIdMap){
+		if( doc 
+		 && $n2.isArray(doc.nunaliit_layers) ){
+			for(var i in doc.nunaliit_layers){
+				var layerId = doc.nunaliit_layers[i];
+				if( selectedChoiceIdMap[layerId] ){
+					return true;
+				};
+			};
+		};
+		
+		return false;
+	}
+});
+
+//--------------------------------------------------------------------------
 function handleModelCreate(m, addr, dispatcher){
 	if( m.modelType === 'filter' ){
 		var options = {};
@@ -1318,6 +1562,28 @@ function handleModelCreate(m, addr, dispatcher){
 		new DocumentFilterByCreator(options);
 		
 		m.created = true;
+
+	} else if( m.modelType === 'layerFilter2' ){
+		var options = {};
+		
+		if( m && m.modelOptions ){
+			for(var key in m.modelOptions){
+				options[key] = m.modelOptions[key];
+			};
+		};
+		
+		options.modelId = m.modelId;
+		options.modelType = m.modelType;
+
+		if( m && m.config ){
+			if( m.config.directory ){
+				options.dispatchService = m.config.directory.dispatchService;
+			};
+		};
+		
+		new LayerFilter(options);
+		
+		m.created = true;
 	};
 };
 
@@ -1328,6 +1594,7 @@ $n2.modelFilter = {
 	,SchemaFilter: SchemaFilter
 	,ReferenceFilter: ReferenceFilter
 	,SelectableDocumentFilter: SelectableDocumentFilter
+	,LayerFilter: LayerFilter
 	,handleModelCreate: handleModelCreate 
 };
 
