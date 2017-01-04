@@ -105,6 +105,8 @@ var TimelineWidget = $n2.Class({
 
 	intervalSetEventName: null,
 	
+	showRangeSlider: null,
+	
 	rangeMin: null,
 	
 	rangeMax: null,
@@ -118,12 +120,14 @@ var TimelineWidget = $n2.Class({
 			containerId: null
 			,dispatchService: null
 			,sourceModelId: null
+			,showRangeSlider: true
 		},opts_);
 		
 		var _this = this;
 		
 		this.dispatchService = opts.dispatchService;
 		this.sourceModelId = opts.sourceModelId;
+		this.showRangeSlider = opts.showRangeSlider;
 		
 		this.rangeMin = null;
 		this.rangeMax = null;
@@ -221,15 +225,25 @@ var TimelineWidget = $n2.Class({
 					.addClass('n2timeline_slider')
 					.appendTo($sliderWrapper);
 
-				$slider.slider({
-					range: true
-					,min: this.rangeMin
-					,max: this.rangeMax
-					,values: [this.intervalMin, this.intervalMax]
-					,slide: function(event, ui){
-						_this._barUpdated(ui);
-					}
-				});
+                if( this.showRangeSlider ){
+					$slider.slider({
+						range: true
+						,min: this.rangeMin
+						,max: this.rangeMax
+						,values: [this.intervalMin, this.intervalMax]
+						,slide: function(event, ui){
+							_this._barUpdated(ui);
+						}
+					});
+				} else {
+	                $slider.slider({
+                        min: this.rangeMin
+                        ,max: this.rangeMax
+                        ,slide: function(event, ui){
+                            _this._barUpdated(ui);
+                        }
+                    });
+				};
 			};
 		};
 		return $slider;
@@ -261,8 +275,7 @@ var TimelineWidget = $n2.Class({
 
 		// Create slider
 		this._getSlider();
-
-		this._displayRange();
+        this._displayRange();
 		this._displayInterval();
 	},
 
