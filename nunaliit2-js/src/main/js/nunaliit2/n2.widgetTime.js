@@ -120,14 +120,19 @@ var TimelineWidget = $n2.Class({
 			containerId: null
 			,dispatchService: null
 			,sourceModelId: null
-			,showRangeSlider: true
+			,showRangeSlider: null
 		},opts_);
 		
 		var _this = this;
 		
 		this.dispatchService = opts.dispatchService;
 		this.sourceModelId = opts.sourceModelId;
-		this.showRangeSlider = opts.showRangeSlider;
+
+		if( typeof opts.showRangeSlider === 'boolean' ){
+			this.showRangeSlider = opts.showRangeSlider;
+		} else {
+			this.showRangeSlider = true;
+		};
 		
 		this.rangeMin = null;
 		this.rangeMax = null;
@@ -225,7 +230,7 @@ var TimelineWidget = $n2.Class({
 					.addClass('n2timeline_slider')
 					.appendTo($sliderWrapper);
 
-                if( this.showRangeSlider ){
+				if( this.showRangeSlider ){
 					$slider.slider({
 						range: true
 						,min: this.rangeMin
@@ -236,13 +241,13 @@ var TimelineWidget = $n2.Class({
 						}
 					});
 				} else {
-	                $slider.slider({
-                        min: this.rangeMin
-                        ,max: this.rangeMax
-                        ,slide: function(event, ui){
-                            _this._barUpdated(ui);
-                        }
-                    });
+					$slider.slider({
+						min: this.rangeMin
+						,max: this.rangeMax
+						,slide: function(event, ui){
+							_this._barUpdated(ui);
+						}
+					});
 				};
 			};
 		};
@@ -275,7 +280,8 @@ var TimelineWidget = $n2.Class({
 
 		// Create slider
 		this._getSlider();
-        this._displayRange();
+
+        	this._displayRange();
 		this._displayInterval();
 	},
 
