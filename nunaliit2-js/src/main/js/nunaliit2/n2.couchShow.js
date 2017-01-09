@@ -1463,7 +1463,7 @@ var DomStyler = $n2.Class({
 			});
 			
 			$elem.children().each(function(){
-				_this.fixElementAndChildren($(this), {});
+				_this.fixElementAndChildren($(this), {}, contextDoc);
 			});
 		};
 	},
