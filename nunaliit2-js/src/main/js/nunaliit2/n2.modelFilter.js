@@ -538,7 +538,7 @@ var ReferenceFilter = $n2.Class(ModelFilter, {
 //--------------------------------------------------------------------------
 /*
 * Filter: a Document Model that filters out certain documents
-* SingleDocumentFilter: Allows only one designed document
+* SingleDocumentFilter: Allows only one specified document
 */
 var SingleDocumentFilter = $n2.Class(ModelFilter, {
 
@@ -607,9 +607,24 @@ var SingleDocumentFilter = $n2.Class(ModelFilter, {
 //--------------------------------------------------------------------------
 /*
 * Filter: a Document Model that filters out certain documents
+* 
 * SelectableDocumentFilter: Allows a user to choose which document to
-* allow through using a widget.
-* Generic Class
+* allow through using a set of choices. These choices can be changed
+* using a widget.
+* 
+* Abstract Class. Subclasses must implement the following methods:
+* - _computeAvailableChoicesFromDocs
+* - _isDocVisible
+* 
+* Options:
+* - modelId: String. Identifier for this model
+* - sourceModelId: String. Identifier for the model where documents are obtained
+* - initialSelection: Optional array of strings. If specified, the choices specified in the
+*                     array are initially selected. The strings in the array are choice identifiers.
+* - saveSelection: Optional object { enabled: <boolean>, name: <string> }. If specified, the 
+*                  last selection is saved to local storage. When the model is reloaded, the saved
+*                  selection is restored. If this option is enabled and a selection is restored,
+*                  then the option "initialSelection" is ignored.
 */
 var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 

@@ -545,7 +545,7 @@ $n2.trim = function(text){
 
 $n2.utils = {
 	
-	_callbacks: {}
+	_callbacks: {},
 		
 	/**
 	 * Converts a string to a string that can be used with a HTML id
@@ -559,7 +559,7 @@ $n2.utils = {
 	 *                   as an HTML id or HTML class name.
 	 * @returns {String} String safe for HTML id or class name.
 	 */
-	,stringToHtmlId: function(s){
+	stringToHtmlId: function(s){
 		var res = [];
 		for(var i=0,e=s.length; i<e; ++i) {
 			var c = s[i];
@@ -578,7 +578,7 @@ $n2.utils = {
 			};
 		};
 		return res.join('');
-	}
+	},
 	
 	/**
 	 * Unescapes a string previously converted using stringToHtmlId(). 
@@ -588,7 +588,7 @@ $n2.utils = {
 	 * @param {String} s String to be unescaped.
 	 * @returns {String} String initially passed to the stringToHtmlId() function.
 	 */
-	,unescapeHtmlId: function(s){
+	unescapeHtmlId: function(s){
 		var res = [];
 		for(var i=0,e=s.length; i<e; ++i) {
 			var c = s[i];
@@ -608,7 +608,7 @@ $n2.utils = {
 			};
 		};
 		return res.join('');
-	}
+	},
 
 	/**
 	 * Returns information about the browser. This is based on code found
@@ -619,7 +619,7 @@ $n2.utils = {
 	 * @returns {Object} Object containing information about the browser
 	 * where the application runs
 	 */
-	,getBrowserInfo: function(){
+	getBrowserInfo: function(){
 		
 		if( cachedBrowserInfo ){
 			return cachedBrowserInfo;
@@ -749,7 +749,7 @@ $n2.utils = {
 			return parseFloat(dataString.substring(index+versionSearchString.length+1));
 		};
 		
-	}
+	},
 
 	/**
 	 * Returns true if the input is a number, regardless if it is a number
@@ -761,9 +761,9 @@ $n2.utils = {
 	 * @param {String} String or number to be tested
 	 * @returns {Boolean} True if given parameter represents a number. False, otherwise.
 	 */
-	,isNumber: function(n){
+	isNumber: function(n){
 		return !isNaN(parseFloat(n)) && isFinite(n);
-	}
+	},
 	
 	/**
 	 * Returns a object that describes the javascript declaration included
@@ -779,7 +779,7 @@ $n2.utils = {
 	 * @returns {Object} Object that describes the jaavascript declaration. Null if
 	 * the seeked declaration is not found.
 	 */
-	,findJavascriptDeclaration: function(javascriptFileName){
+	findJavascriptDeclaration: function(javascriptFileName){
 		var scriptLocation = null;
 		var scriptElem = null;
 		var pattern = new RegExp('(^|(.*?\\/))'+javascriptFileName+'$');
@@ -807,7 +807,7 @@ $n2.utils = {
 		};
 		
 		return result;
-	}
+	},
 	
 	/**
 	 * Inserts new javascript declarations at the end of the host document. Multiple 
@@ -827,7 +827,7 @@ $n2.utils = {
 	 * @param callback {Function} Function called after all declarations have been inserted.
 	 * @returns {void}
 	 */
-	,insertJavascriptDeclarations: function(declarationDescription, names, callback){
+	insertJavascriptDeclarations: function(declarationDescription, names, callback){
 
 		var scriptLocation = declarationDescription.location;
 		
@@ -856,7 +856,7 @@ $n2.utils = {
        	
    		// Write at end of document
        	document.write(allScriptTags.join(''));
-	}
+	},
 	
 	/**
 	 * Accepts a formatting string and arguments. Returns the formatted
@@ -871,7 +871,7 @@ $n2.utils = {
 	 * @param args {Object} Dictionary of arguments
 	 * @returns {String}
 	 */
-	,formatString: function(format, args){
+	formatString: function(format, args){
 		return format.replace(/{([^}]+)}/g, function(match, name) {
 			name = $n2.trim(name);
 			if( '' === name ) return match;
@@ -881,7 +881,7 @@ $n2.utils = {
 				: match
 			;
 		});
-	}
+	},
 	
 	/**
 	 * Returns the number of milliseconds elapsed since 1 January 1970 00:00:00 UTC. This
@@ -891,9 +891,9 @@ $n2.utils = {
 	 * @memberOf nunaliit2.utils
 	 * @returns {Number}
 	 */
-	,getCurrentTime: Date.now || function () {
+	getCurrentTime: Date.now || function () {
 		return +new Date();
-	}
+	},
 	
 	/**
 	 * Returns a string which represents the date formatted as specified.
@@ -902,7 +902,7 @@ $n2.utils = {
 	 * @memberOf nunaliit2.utils
 	 * @returns {String}
 	 */
-	,formatDate: function(date, format){
+	formatDate: function(date, format){
 		var str = format.replace('%Y',''+date.getFullYear());
 		
 		var monthNumStr = ''+(date.getMonth()+1);
@@ -1006,6 +1006,22 @@ $n2.utils = {
 			$elem.attr('id',id);
 		};
 		return id;
+	},
+	
+	/**
+	 * Returns an array of all values found in a map or array.
+	 * @name values
+	 * @function
+	 * @memberOf nunaliit2.utils
+	 * @param {Object} Javascript object or array
+	 * @returns {Array} Values found in the object or array
+	 */
+	values: function(map){
+		var v = [];
+		for(var i in map){
+			v[v.length] = map[i];
+		};
+		return v;
 	}
 };
 
