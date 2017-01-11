@@ -579,7 +579,7 @@ var ModuleDisplay = $n2.Class({
 					_this._sendSynchronousMessage(msg);
 						
 					if( ! msg.created ){
-						$n2.log('Model not created: '+modelInfo.modelType+'/'+modelInfo.modelId);
+						$n2.logError('Model not created: '+modelInfo.modelType+'/'+modelInfo.modelId);
 					};
 				};
 			};
@@ -601,7 +601,7 @@ var ModuleDisplay = $n2.Class({
 					_this._sendSynchronousMessage(msg);
 						
 					if( ! msg.created ){
-						$n2.log('Utility not created: '+utilityInfo.utilityType);
+						$n2.logError('Utility not created: '+utilityInfo.utilityType);
 					};
 				};
 			};
@@ -623,7 +623,7 @@ var ModuleDisplay = $n2.Class({
 				};
 			};
 			if( canvasInfo && !canvasHandlerAvailable ){
-				$n2.log('Canvas handler not found for type: '+canvasInfo.canvasType);
+				$n2.logError('Canvas handler not found for type: '+canvasInfo.canvasType);
 				canvasInfo = null;
 			};
 			
@@ -858,7 +858,7 @@ var ModuleDisplay = $n2.Class({
 						};
 					};
 					if( widgetInfo && !widgetHandlerAvailable ){
-						$n2.log('Widget handler not found for type: '+widgetInfo.widgetType);
+						$n2.logError('Widget handler not found for type: '+widgetInfo.widgetType);
 					} else {
 						availableWidgets.push(widgetInfo);
 					};
