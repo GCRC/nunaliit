@@ -63,8 +63,8 @@ var DocumentCache = $n2.Class({
 					dbName: dbName
 					,updateSequence: updateSequence
 					,onSuccess: function(){
-						this.changes = null;
-						this.changesByDocId = {};
+						_this.changes = null;
+						_this.changesByDocId = {};
 						opts.onSuccess();
 					}
 					,onError: function(err){

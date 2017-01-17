@@ -241,4 +241,33 @@ public class DocumentFileTest extends TestCase {
 			fail("Unexpected attribute value: >"+id+"<  Spaces should be removed");
 		}
 	}
+
+	// Check that invalid JSON fails reading
+	public void testInvalidJSON() throws Exception {
+		try {
+			List<FSEntry> entries = new Vector<FSEntry>();
+
+			entries.add( FSEntryBuffer.getPositionedBuffer("a/_id.txt", " test ") );
+			entries.add( FSEntryBuffer.getPositionedBuffer("a/content.json", "{\"a\":1} }") );
+			
+			FSEntry merged = new FSEntryMerged(entries);
+			DocumentFile.createDocument(merged);
+			
+			fail("Parsing invalid JSON");
+			
+		} catch(Exception e) {
+			// OK
+		}
+
+	}
+
+	public void testValidJSONWithEndWhiteSpace() throws Exception {
+		List<FSEntry> entries = new Vector<FSEntry>();
+
+		entries.add( FSEntryBuffer.getPositionedBuffer("a/_id.txt", " test ") );
+		entries.add( FSEntryBuffer.getPositionedBuffer("a/content.json", "{\"a\":1}\n  ") );
+		
+		FSEntry merged = new FSEntryMerged(entries);
+		DocumentFile.createDocument(merged);
+	}
 }

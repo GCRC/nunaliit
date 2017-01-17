@@ -487,28 +487,50 @@ public class DocumentFile implements Document {
 		
 		Object result = null;
 		
-		StringWriter sw = new StringWriter();
 		InputStream is = null;
-		char[] buffer = new char[100];
+		InputStreamReader isr = null;
 		try {
 			is = file.getInputStream();
-			InputStreamReader isr = new InputStreamReader(is, "UTF-8");
+			isr = new InputStreamReader(is, "UTF-8");
 			
-			int size = isr.read(buffer);
-			while( size >= 0 ) {
-				sw.write(buffer, 0, size);
-				size = isr.read(buffer);
+			JSONTokener tokener = new JSONTokener(isr);
+			result = tokener.nextValue();
+			
+			// There should be nothing left in the stream but white spaces
+			char c = tokener.next();
+			while( c > 0 ){
+				if( ' ' == c ){
+					// OK
+				} else if( '\t'  == c ){
+					// OK
+				} else if( '\r'  == c ){
+					// OK
+				} else if( '\n'  == c ){
+					// OK
+				} else {
+					throw new Exception("Unexpected character found at end of JSON stream: "+c+ " ("+tokener+")");
+				}
+				
+				c = tokener.next();
 			}
 			
-			sw.flush();
+			isr.close();
+			isr = null;
 			
-			JSONTokener tokener = new JSONTokener(sw.toString());
-			result = tokener.nextValue();
+			is.close();
+			is = null;
 			
 		} catch (Exception e) {
 			throw new Exception("Error while reading file: "+file.getName(), e);
 			
 		} finally {
+			if( null != isr ) {
+				try {
+					isr.close();
+				} catch (Exception e) {
+					// Ignore
+				}
+			}
 			if( null != is ) {
 				try {
 					is.close();
