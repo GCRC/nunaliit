@@ -742,6 +742,306 @@ var SearchBriefDialogFactory = $n2.Class({
 });
 
 //++++++++++++++++++++++++++++++++++++++++++++++
+// Search for a hover sound
+var HoverSoundSearchDialogFactory = $n2.Class({
+
+	documentSource: null,
+	
+	searchService: null,
+	
+	showService: null,
+	
+	dialogPrompt: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			documentSource: null
+			,searchService: null
+			,showService: null
+			,dialogPrompt: _loc('Select a Hover Sound')
+		},opts_);
+		
+		this.documentSource = opts.documentSource;
+		this.searchService = opts.searchService;
+		this.showService = opts.showService;
+		this.dialogPrompt = opts.dialogPrompt;
+	},
+	
+	/*
+	 * This method returns a function that can be used in
+	 * DialogService.addFunctionToMap
+	 */
+	getDialogFunction: function(){
+		var _this = this;
+		return function(opts){
+			_this.showDialog(opts);
+		};
+	},
+	
+	/*
+	 * Keeps only documents that have an audio attachment
+	 */
+	filterDocuments: function(opts_){
+		var opts = $n2.extend({
+			docs: null
+			,onSuccess: function(docs){}
+			,onError: function(err){}
+		},opts_);
+		
+		var docsWithHoverSound = [];
+		
+		if( $n2.isArray(opts.docs) ){
+			opts.docs.forEach(function(doc){
+				var attachments = $n2.couchAttachment.getAttachments(doc);
+				attachments.forEach(function(att){
+					if( att.isSource() 
+					 && att.isAttached() 
+					 && 'audio' === att.getFileClass() ){
+						docsWithHoverSound.push(doc);
+					};
+				});
+			});
+		};
+		
+		opts.onSuccess( docsWithHoverSound );
+	},
+	
+	showDialog: function(opts_){
+		var opts = $n2.extend({
+			contextDoc: null
+			,onSelected: function(docId){}
+			,onReset: function(){}
+		},opts_);
+		
+		var _this = this;
+
+		var shouldReset = true;
+		
+		var dialogId = $n2.getUniqueId();
+		var inputId = $n2.getUniqueId();
+		var searchButtonId = $n2.getUniqueId();
+		var suggestionId = $n2.getUniqueId();
+		var displayId = $n2.getUniqueId();
+		
+		var $dialog = $('<div>')
+			.attr('id',dialogId)
+			.addClass('editorSelectDocumentDialog editorSelectDocumentDialog_hoverSound');
+		
+		var $suggestedHeader = $('<div>')
+			.addClass('editorSelectDocumentDialog_suggestedHeader')
+			.text( _loc('Suggestions') )
+			.appendTo($dialog);
+		
+		var $suggestedList = $('<div>')
+			.attr('id',suggestionId)
+			.addClass('editorSelectDocumentDialog_suggestedList')
+			.appendTo($dialog);
+	
+		var $searchLine = $('<div>')
+			.addClass('editorSelectDocumentDialog_searchLine')
+			.appendTo($dialog);
+
+		$('<label>')
+			.attr('for', inputId)
+			.text( _loc('Search:') )
+			.appendTo($searchLine);
+
+		$('<input>')
+			.attr('id', inputId)
+			.attr('type', 'text')
+			.appendTo($searchLine);
+
+		$('<button>')
+			.attr('id', searchButtonId)
+			.text( _loc('Search') )
+			.appendTo($searchLine);
+		
+		$('<div>')
+			.attr('id',displayId)
+			.addClass('editorSelectDocumentDialogResults')
+			.appendTo($dialog);
+		
+		var $buttons = $('<div>')
+			.appendTo($dialog);
+		
+		$('<button>')
+			.addClass('cancel')
+			.text( _loc('Cancel') )
+			.appendTo($buttons)
+			.button({icons:{primary:'ui-icon-cancel'}})
+			.click(function(){
+				var $dialog = $('#'+dialogId);
+				$dialog.dialog('close');
+				return false;
+			});
+
+		var dialogOptions = {
+			autoOpen: true
+			,title: this.dialogPrompt
+			,modal: true
+			,close: function(event, ui){
+				var diag = $(event.target);
+				diag.dialog('destroy');
+				diag.remove();
+				if( shouldReset ) {
+					opts.onReset();
+				};
+			}
+		};
+		
+		var width = computeMaxDialogWidth(370);
+		if( typeof width === 'number' ){
+			dialogOptions.width = width;
+		};
+
+		$dialog.dialog(dialogOptions);
+
+		this.searchService.installSearch({
+			textInput: $('#'+inputId)
+			,searchButton: $('#'+searchButtonId)
+			,displayFn: receiveSearchResults
+			,onlyFinalResults: true
+		});
+		
+		var $input = $('#'+inputId);
+		$('#'+inputId).focus();
+		
+		// Get suggestions
+		if( opts.contextDoc && typeof opts.contextDoc._id === 'string' ){
+			this.documentSource.getReferencesFromId({
+				docId: opts.contextDoc._id
+				,onSuccess: receiveSuggestions
+				,onError: function(errorMsg){
+					// Ignore
+					$n2.logError('Unable to fetch related documents for ' + opts.contextDoc._id);
+				}
+			});
+		};
+		
+		function receiveSearchResults(displayData) {
+			if( !displayData ) {
+				reportError( _loc('Invalid search results returned') );
+
+			} else if( 'wait' === displayData.type ) {
+				$('#'+displayId).empty();
+
+			} else if( 'results' === displayData.type ) {
+				var docIds = [];
+			
+				for(var i=0,e=displayData.list.length; i<e; ++i) {
+					var docId = displayData.list[i].id;
+					docIds.push(docId);
+				};
+				
+				if( docIds.length < 1 ){
+					displayDocs([]);
+					
+				} else {
+					_this.documentSource.getDocuments({
+						docIds: docIds
+						,onSuccess: function(docs){
+
+							_this.filterDocuments({
+								docs: docs
+								,onSuccess: function(docs){
+									displayDocs(docs, displayId);
+								}
+								,onError: reportError
+							});
+						}
+						,onError: function(errorMsg){ 
+							reportError( _loc('Unable to retrieve documents') );
+						}
+					});
+				};
+				
+			} else {
+				reportError( _loc('Invalid search results returned') );
+			};
+		};
+
+		function receiveSuggestions(docIds) {
+			if( docIds.length < 1 ){
+				displayDocs([]);
+				
+			} else {
+				_this.documentSource.getDocuments({
+					docIds: docIds
+					,onSuccess: function(docs){
+
+						_this.filterDocuments({
+							docs: docs
+							,onSuccess: function(docs){
+								displayDocs(docs, suggestionId);
+							}
+							,onError: reportError
+						});
+					}
+					,onError: function(errorMsg){ 
+						reportError( _loc('Unable to retrieve documents') );
+					}
+				});
+			};
+		};
+
+		function displayDocs(docs, elemId) {
+
+			if( docs.length < 1 ){
+				$('#'+elemId)
+					.empty()
+					.text( _loc('No results returned by search') );
+				
+			} else {
+				var $table = $('<table></table>');
+				$('#'+elemId).empty().append($table);
+
+				for(var i=0,e=docs.length; i<e; ++i) {
+					var doc = docs[i];
+					var docId = doc._id;
+					
+					var $tr = $('<tr></tr>');
+
+					$table.append($tr);
+
+					var $td = $('<td>')
+						.addClass('n2_search_result olkitSearchMod2_'+(i%2))
+						.appendTo($tr);
+					
+					var $a = $('<a>')
+						.attr('href','#'+docId)
+						.attr('alt',docId)
+						.appendTo($td)
+						.click( createClickHandler(docId) );
+					
+					if( _this.showService ) {
+						_this.showService.displayBriefDescription($a, {}, doc);
+					} else {
+						$a.text(docId);
+					};
+				};
+			};
+		};
+		
+		function createClickHandler(docId) {
+			return function(e){
+				opts.onSelected(docId);
+				shouldReset = false;
+				var $dialog = $('#'+dialogId);
+				$dialog.dialog('close');
+				return false;
+			};
+		};
+		
+		function reportError(err){
+			$('#'+displayId)
+				.empty()
+				.text( err );
+		};
+	}
+});
+
+
+//++++++++++++++++++++++++++++++++++++++++++++++
 // This is a factory class to generate a dialog function that
 // can be used in selecting a document id from a list of presented
 // documents. This is an abstract class and it must be specialized
@@ -818,7 +1118,7 @@ var FilteredSearchDialogFactory = $n2.Class({
 		var searchButtonId = $n2.getUniqueId();
 		var displayId = $n2.getUniqueId();
 		
-		var $dialog = $('<div id="'+dialogId+'" class="editorSelectDocumentDialog">')
+		var $dialog = $('<div>')
 			.attr('id',dialogId)
 			.addClass('editorSelectDocumentDialog');
 		
@@ -1038,6 +1338,15 @@ var DialogService = $n2.Class({
 			this.funcMap['getLayers'] = function(opts){
 				_this.selectLayersDialog(opts);
 			};			
+		};
+		
+		if( !this.funcMap['getHoverSound'] ){
+			var hoverSoundDialogFactory = new HoverSoundSearchDialogFactory({
+				documentSource: this.documentSource
+				,searchService: this.searchService
+				,showService: this.showService
+			});
+			this.funcMap['getHoverSound'] = hoverSoundDialogFactory.getDialogFunction();
 		};
 	},
 	

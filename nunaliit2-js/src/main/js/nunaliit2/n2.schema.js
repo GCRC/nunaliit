@@ -2163,7 +2163,8 @@ var Form = $n2.Class({
 					
 					window.setTimeout(function(){
 						getDocumentIdFn({
-							onSelected: function(docId){ // callback with docId
+							contextDoc: _this.obj
+							,onSelected: function(docId){ // callback with docId
 								var parentObj = parentSelector.getValue(_this.obj);
 								if( parentObj ){
 									if( !parentObj[key] ){
