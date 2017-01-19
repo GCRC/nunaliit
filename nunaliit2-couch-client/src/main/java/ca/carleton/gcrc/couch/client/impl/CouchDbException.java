@@ -25,4 +25,16 @@ public class CouchDbException extends Exception {
 	public String getMessage() {
 		return "CouchDB Error ("+returnCode+") "+error+"/"+reason;
 	}
+	
+	public int getReturnCode(){
+		return returnCode;
+	}
+	
+	public String getErrorString(){
+		return error;
+	}
+	
+	public String getReasonString(){
+		return reason;
+	}
 }

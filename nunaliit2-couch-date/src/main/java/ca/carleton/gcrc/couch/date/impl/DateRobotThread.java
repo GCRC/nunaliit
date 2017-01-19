@@ -19,6 +19,7 @@ import ca.carleton.gcrc.couch.client.CouchDbChangeMonitor;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchQuery;
 import ca.carleton.gcrc.couch.client.CouchQueryResults;
+import ca.carleton.gcrc.couch.client.impl.CouchDbException;
 import ca.carleton.gcrc.couch.date.cluster.CouchTreeOperations;
 import ca.carleton.gcrc.couch.date.cluster.Tree;
 import ca.carleton.gcrc.couch.date.cluster.TreeElement;
@@ -32,6 +33,7 @@ public class DateRobotThread extends Thread implements CouchDbChangeListener {
 	static final public int DELAY_NO_WORK_POLLING = 5 * 1000; // 5 seconds
 	static final public int DELAY_NO_WORK_MONITOR = 60 * 1000; // 1 minute
 	static final public int DELAY_ERROR = 60 * 1000; // 1 minute
+	static final public int DELAY_CLEAR_OLD_ERRORS = 5 * 60 * 1000; // 5 minutes
 	
 	static public class Work {
 		public enum Type {
@@ -48,7 +50,7 @@ public class DateRobotThread extends Thread implements CouchDbChangeListener {
 	
 	private boolean isShuttingDown = false;
 	private CouchDesignDocument atlasDesign;
-	private Set<String> docIdsToSkip = new HashSet<String>();
+	private DocumentsInError docsInError = new DocumentsInError();
 	private Tree clusterTree;
 	private boolean reloadTree = false;
 	private int noWorkDelayInMs = DELAY_NO_WORK_POLLING;
@@ -107,9 +109,14 @@ public class DateRobotThread extends Thread implements CouchDbChangeListener {
 		}
 
 		if( null == allWork || allWork.size() < 1 ) {
-			// Nothing to do, wait
-			waitMillis(noWorkDelayInMs);
-			return;
+			// Nothing to do, remove old errors
+			List<String> docIdsRecovered = docsInError.removeErrorsOlderThanMs(DELAY_CLEAR_OLD_ERRORS);
+
+			if( docIdsRecovered.size() <= 0 ) {
+				// No errors to get rid of and no work, wait
+				waitMillis(noWorkDelayInMs);
+				return;
+			}
 			
 		} else {
 			for(Work work : allWork){
@@ -163,11 +170,11 @@ public class DateRobotThread extends Thread implements CouchDbChangeListener {
 				query.setKeys(keys);
 		
 				CouchQueryResults results = atlasDesign.performQuery(query);
-				synchronized(this) { // protect docIdsToSkip
+				synchronized(this) { // protect docsInError
 					for(JSONObject row : results.getRows()) {
 						String id = row.optString("id");
 						if( null != id 
-						 && false == docIdsToSkip.contains(id) ) {
+						 && false == docsInError.isDocumentInError(id) ) {
 							// Found some work
 							docIds.add(id);
 						}
@@ -191,11 +198,11 @@ public class DateRobotThread extends Thread implements CouchDbChangeListener {
 					query.setKeys(keys);
 			
 					CouchQueryResults results = atlasDesign.performQuery(query);
-					synchronized(this) { // protect docIdsToSkip
+					synchronized(this) { // protect docsInError
 						for(JSONObject row : results.getRows()) {
 							String id = row.optString("id");
 							if( null != id 
-							 && false == docIdsToSkip.contains(id) ) {
+							 && false == docsInError.isDocumentInError(id) ) {
 								// Found some work
 								docIds.add(id);
 							}
@@ -229,9 +236,26 @@ public class DateRobotThread extends Thread implements CouchDbChangeListener {
 			try {
 				performProcessDocument(work.docId);
 			} catch(Exception e) {
-				synchronized(this) { // protect docIdsToSkip
-					docIdsToSkip.add(work.docId);
+				boolean shouldErrorBeTakenIntoAccount = true;
+				for(Throwable t : errorAndCausesAsList(e)){
+					if( t instanceof CouchDbException ){
+						CouchDbException couchDbException = (CouchDbException)t;
+						if( 409 == couchDbException.getReturnCode() ){
+							// This is a conflict error in CouchDb. Somebody is updating the document
+							// at the same time. Just retry the worl
+							shouldErrorBeTakenIntoAccount = false;
+						}
+					}
 				}
+				
+				if( shouldErrorBeTakenIntoAccount ){
+					synchronized(this) {
+						docsInError.addDocumentInError(work.docId);
+					}
+				} else {
+					logger.info("Previous error for "+work.docId+" will be ignored. Should retry shortly.");
+				}
+
 				throw e;
 			}
 			
@@ -330,11 +354,26 @@ public class DateRobotThread extends Thread implements CouchDbChangeListener {
 			,JSONObject doc
 			) {
 		synchronized(this){
-			docIdsToSkip.remove(docId);
+			docsInError.removeErrorsWithDocId(docId);
 			if( CouchTreeOperations.DATE_CLUSTER_DOC_ID.equals(docId) ){
 				reloadTree = true;
 			}
 			this.notifyAll();
 		}
 	}
+
+	private List<Throwable> errorAndCausesAsList(Throwable e){
+		List<Throwable> errors = new Vector<Throwable>();
+		
+		errors.add(e);
+		
+		// Add causes
+		Throwable cause = e.getCause();
+		while( null != cause && errors.indexOf(cause) < 0 ){
+			errors.add(cause);
+			cause = e.getCause();
+		}
+		
+		return errors;
+	};
 }
