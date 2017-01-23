@@ -2284,6 +2284,7 @@ var Form = $n2.Class({
 					,selector: selector
 					,customType: customType
 					,callbackFn: cb
+					,functionMap: _this.functionMap
 				});
 			} else {
 				$elem.attr('nunaliit-error','No handler found for custom type: "'+customType+'"');
