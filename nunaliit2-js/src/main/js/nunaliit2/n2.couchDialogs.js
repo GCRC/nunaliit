@@ -742,8 +742,11 @@ var SearchBriefDialogFactory = $n2.Class({
 });
 
 //++++++++++++++++++++++++++++++++++++++++++++++
-// Search for a hover sound
-var HoverSoundSearchDialogFactory = $n2.Class({
+/**
+ * Search for a related media file
+ * @class
+ */
+var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory',{
 
 	documentSource: null,
 	
@@ -753,12 +756,15 @@ var HoverSoundSearchDialogFactory = $n2.Class({
 	
 	dialogPrompt: null,
 	
+	/**
+	 * @constructor
+	 */
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			documentSource: null
 			,searchService: null
 			,showService: null
-			,dialogPrompt: _loc('Select a Hover Sound')
+			,dialogPrompt: _loc('Select a Media')
 		},opts_);
 		
 		this.documentSource = opts.documentSource;
@@ -779,7 +785,7 @@ var HoverSoundSearchDialogFactory = $n2.Class({
 	},
 	
 	/*
-	 * Keeps only documents that have an audio attachment
+	 * Keeps only documents that have a media attachment
 	 */
 	filterDocuments: function(opts_){
 		var opts = $n2.extend({
@@ -788,22 +794,21 @@ var HoverSoundSearchDialogFactory = $n2.Class({
 			,onError: function(err){}
 		},opts_);
 		
-		var docsWithHoverSound = [];
+		var docsWithMedia = [];
 		
 		if( $n2.isArray(opts.docs) ){
 			opts.docs.forEach(function(doc){
 				var attachments = $n2.couchAttachment.getAttachments(doc);
 				attachments.forEach(function(att){
 					if( att.isSource() 
-					 && att.isAttached() 
-					 && 'audio' === att.getFileClass() ){
-						docsWithHoverSound.push(doc);
+					 && att.isAttached() ){
+						docsWithMedia.push(doc);
 					};
 				});
 			});
 		};
 		
-		opts.onSuccess( docsWithHoverSound );
+		opts.onSuccess( docsWithMedia );
 	},
 	
 	showDialog: function(opts_){
@@ -825,7 +830,7 @@ var HoverSoundSearchDialogFactory = $n2.Class({
 		
 		var $dialog = $('<div>')
 			.attr('id',dialogId)
-			.addClass('editorSelectDocumentDialog editorSelectDocumentDialog_hoverSound');
+			.addClass('editorSelectDocumentDialog editorSelectDocumentDialog_relatedMedia');
 		
 		var $suggestedHeader = $('<div>')
 			.addClass('editorSelectDocumentDialog_suggestedHeader')
@@ -1040,6 +1045,193 @@ var HoverSoundSearchDialogFactory = $n2.Class({
 	}
 });
 
+//++++++++++++++++++++++++++++++++++++++++++++++
+/**
+ * Search for a related image media file
+ * @class
+ */
+var SearchRelatedImageDialogFactory = $n2.Class('SearchRelatedImageDialogFactory', SearchRelatedMediaDialogFactory, {
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			documentSource: undefined
+			,searchService: undefined
+			,showService: undefined
+			,dialogPrompt: _loc('Select a Related Image')
+		},opts_);
+		
+		SearchRelatedMediaDialogFactory.prototype.initialize.call(this, opts);
+	},
+	
+	/*
+	 * Keeps only documents that have an audio attachment
+	 */
+	filterDocuments: function(opts_){
+		var opts = $n2.extend({
+			docs: null
+			,onSuccess: function(docs){}
+			,onError: function(err){}
+		},opts_);
+		
+		var selectedDocs = [];
+		
+		if( $n2.isArray(opts.docs) ){
+			opts.docs.forEach(function(doc){
+				var attachments = $n2.couchAttachment.getAttachments(doc);
+				attachments.forEach(function(att){
+					if( att.isSource() 
+					 && att.isAttached() 
+					 && 'image' === att.getFileClass() ){
+						selectedDocs.push(doc);
+					};
+				});
+			});
+		};
+		
+		opts.onSuccess( selectedDocs );
+	}
+});
+
+//++++++++++++++++++++++++++++++++++++++++++++++
+/**
+ * Search for a related audio media file
+* @class
+*/
+var SearchRelatedAudioDialogFactory = $n2.Class('SearchRelatedAudioDialogFactory', SearchRelatedMediaDialogFactory, {
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			documentSource: undefined
+			,searchService: undefined
+			,showService: undefined
+			,dialogPrompt: _loc('Select a Related Audio File')
+		},opts_);
+		
+		SearchRelatedMediaDialogFactory.prototype.initialize.call(this, opts);
+	},
+	
+	/*
+	 * Keeps only documents that have an audio attachment
+	 */
+	filterDocuments: function(opts_){
+		var opts = $n2.extend({
+			docs: null
+			,onSuccess: function(docs){}
+			,onError: function(err){}
+		},opts_);
+		
+		var selectedDocs = [];
+		
+		if( $n2.isArray(opts.docs) ){
+			opts.docs.forEach(function(doc){
+				var attachments = $n2.couchAttachment.getAttachments(doc);
+				attachments.forEach(function(att){
+					if( att.isSource() 
+					 && att.isAttached() 
+					 && 'audio' === att.getFileClass() ){
+						selectedDocs.push(doc);
+					};
+				});
+			});
+		};
+		
+		opts.onSuccess( selectedDocs );
+	}
+});
+
+//++++++++++++++++++++++++++++++++++++++++++++++
+/**
+* Search for a related video media file
+* @class
+*/
+var SearchRelatedVideoDialogFactory = $n2.Class('SearchRelatedVideoDialogFactory', SearchRelatedMediaDialogFactory, {
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			documentSource: undefined
+			,searchService: undefined
+			,showService: undefined
+			,dialogPrompt: _loc('Select a Related Video File')
+		},opts_);
+		
+		SearchRelatedMediaDialogFactory.prototype.initialize.call(this, opts);
+	},
+	
+	/*
+	 * Keeps only documents that have an audio attachment
+	 */
+	filterDocuments: function(opts_){
+		var opts = $n2.extend({
+			docs: null
+			,onSuccess: function(docs){}
+			,onError: function(err){}
+		},opts_);
+		
+		var selectedDocs = [];
+		
+		if( $n2.isArray(opts.docs) ){
+			opts.docs.forEach(function(doc){
+				var attachments = $n2.couchAttachment.getAttachments(doc);
+				attachments.forEach(function(att){
+					if( att.isSource() 
+					 && att.isAttached() 
+					 && 'video' === att.getFileClass() ){
+						selectedDocs.push(doc);
+					};
+				});
+			});
+		};
+		
+		opts.onSuccess( selectedDocs );
+	}
+});
+
+//++++++++++++++++++++++++++++++++++++++++++++++
+/**
+ * Search for a related hover sound file
+ * @class
+ */
+var HoverSoundSearchDialogFactory = $n2.Class('HoverSoundSearchDialogFactory', SearchRelatedMediaDialogFactory, {
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			documentSource: undefined
+			,searchService: undefined
+			,showService: undefined
+			,dialogPrompt: _loc('Select a Hover Sound')
+		},opts_);
+		
+		SearchRelatedMediaDialogFactory.prototype.initialize.call(this, opts);
+	},
+	
+	/*
+	 * Keeps only documents that have an audio attachment
+	 */
+	filterDocuments: function(opts_){
+		var opts = $n2.extend({
+			docs: null
+			,onSuccess: function(docs){}
+			,onError: function(err){}
+		},opts_);
+		
+		var docsWithHoverSound = [];
+		
+		if( $n2.isArray(opts.docs) ){
+			opts.docs.forEach(function(doc){
+				var attachments = $n2.couchAttachment.getAttachments(doc);
+				attachments.forEach(function(att){
+					if( att.isSource() 
+					 && att.isAttached() 
+					 && 'audio' === att.getFileClass() ){
+						docsWithHoverSound.push(doc);
+					};
+				});
+			});
+		};
+		
+		opts.onSuccess( docsWithHoverSound );
+	}
+});
 
 //++++++++++++++++++++++++++++++++++++++++++++++
 // This is a factory class to generate a dialog function that
@@ -1340,6 +1532,42 @@ var DialogService = $n2.Class({
 			};			
 		};
 		
+		if( !this.funcMap['getRelatedMedia'] ){
+			var relatedMediaDialogFactory = new SearchRelatedMediaDialogFactory({
+				documentSource: this.documentSource
+				,searchService: this.searchService
+				,showService: this.showService
+			});
+			this.funcMap['getRelatedMedia'] = relatedMediaDialogFactory.getDialogFunction();
+		};
+		
+		if( !this.funcMap['getRelatedImage'] ){
+			var factory = new SearchRelatedImageDialogFactory({
+				documentSource: this.documentSource
+				,searchService: this.searchService
+				,showService: this.showService
+			});
+			this.funcMap['getRelatedImage'] = factory.getDialogFunction();
+		};
+		
+		if( !this.funcMap['getRelatedAudio'] ){
+			var factory = new SearchRelatedAudioDialogFactory({
+				documentSource: this.documentSource
+				,searchService: this.searchService
+				,showService: this.showService
+			});
+			this.funcMap['getRelatedAudio'] = factory.getDialogFunction();
+		};
+		
+		if( !this.funcMap['getRelatedVideo'] ){
+			var factory = new SearchRelatedVideoDialogFactory({
+				documentSource: this.documentSource
+				,searchService: this.searchService
+				,showService: this.showService
+			});
+			this.funcMap['getRelatedVideo'] = factory.getDialogFunction();
+		};
+		
 		if( !this.funcMap['getHoverSound'] ){
 			var hoverSoundDialogFactory = new HoverSoundSearchDialogFactory({
 				documentSource: this.documentSource
@@ -1540,6 +1768,7 @@ $n2.couchDialogs = {
 	,FilteredSearchDialogFactory: FilteredSearchDialogFactory
 	,ProgressDialog: ProgressDialog
 	,AlertDialog: AlertDialog
+	,SearchRelatedMediaDialogFactory: SearchRelatedMediaDialogFactory
 };
 
 })(jQuery,nunaliit2);
