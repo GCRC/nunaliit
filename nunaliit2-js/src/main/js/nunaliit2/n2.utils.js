@@ -41,10 +41,10 @@ $Id: n2.utils.js 8415 2012-08-07 15:39:35Z jpfiset $
  	@name log
  	@function
  	@memberOf nunaliit2
- 	@param {String} msg Log message
+ 	@param {string} msg Log message
  	@param {Object} o1  Object to be inspected in log
  */
-$n2.log = function() {
+$n2.log = function(msg,o1) {
 	if( typeof window === 'object'
 	 && window.console 
 	 && typeof window.console.log === 'function' ) {
@@ -543,6 +543,7 @@ $n2.trim = function(text){
 		;
 };
 
+/** @namespace nunaliit2.utils */
 $n2.utils = {
 	
 	_callbacks: {},
@@ -821,7 +822,7 @@ $n2.utils = {
 	 * obtained using nunaliit2.utils.findJavascriptDeclaration(). All new declarations
 	 * are inserted previous to this one. Also, new declarations are made relative to
 	 * the path of this declaration.
-	 * @param names {Array of String} Names of the javascript files that should be inserted
+	 * @param names string[]} Names of the javascript files that should be inserted
 	 * as new declarations. These names may contain path fragments, relative to the
 	 * declaration description given in argument. 
 	 * @param callback {Function} Function called after all declarations have been inserted.
@@ -969,10 +970,12 @@ $n2.utils = {
 	 * @name debounce
 	 * @function
 	 * @memberOf nunaliit2.utils
-	 * @param {Function} The function that should be limited in the rate at which
+	 * @param {Function} func The function that should be limited in the rate at which
 	 *                   it is fired.
-	 * @param {Number} Number of milliseconds between the calls to the function
-	 * @returns {Boolean} If true, the function is called immediately, and again in the
+	 * @param {Number} wait Number of milliseconds between the calls to the function
+	 * @param {boolean} immediate If set, executes the function in parameters at the start. 
+	 *                            Otherwise, first execution is after wait time.
+	 * @returns {boolean} If true, the function is called immediately, and again in the
 	 *                    future after a period defined by the timeout.
 	 */
 	debounce: function(func, wait, immediate) {
@@ -995,7 +998,7 @@ $n2.utils = {
 	 * @name getElementIdentifier
 	 * @function
 	 * @memberOf nunaliit2.utils
-	 * @param {Object} DOM element where the identifier is desired.
+	 * @param {Object} elem DOM element where the identifier is desired.
 	 * @returns {String} Element identifier
 	 */
 	getElementIdentifier: function(elem){
@@ -1013,8 +1016,8 @@ $n2.utils = {
 	 * @name values
 	 * @function
 	 * @memberOf nunaliit2.utils
-	 * @param {Object} Javascript object or array
-	 * @returns {Array} Values found in the object or array
+	 * @param {Object} map Javascript object or array
+	 * @returns {Object[]} Values found in the object or array
 	 */
 	values: function(map){
 		var v = [];

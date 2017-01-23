@@ -18,13 +18,9 @@ it must be referenced in 3 places:
 Documentation
 =============
 
-To generate the documentation from the nunaliit2 library, perform
-the following commands:
-> cd tools
-> ant
+> mvn clean site
 
-The documentation will be generated in a directory called:
-  .../jsdoc
+The documentation will be located in target/site/jsdoc
   
 
 Testing
