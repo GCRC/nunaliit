@@ -731,5 +731,7 @@ height: auto !important;
 
 }
 
-
+.n2s_insertedReferenceLink {
+	cursor: pointer;
+}
 
