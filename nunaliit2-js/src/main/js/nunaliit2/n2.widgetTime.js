@@ -105,7 +105,7 @@ var TimelineWidget = $n2.Class({
 
 	intervalSetEventName: null,
 	
-	showRangeSlider: null,
+	showSingleHandle: null,
 	
 	rangeMin: null,
 	
@@ -120,7 +120,7 @@ var TimelineWidget = $n2.Class({
 			containerId: null
 			,dispatchService: null
 			,sourceModelId: null
-			,showRangeSlider: null
+			,showSingleHandle: null
 		},opts_);
 		
 		var _this = this;
@@ -128,10 +128,10 @@ var TimelineWidget = $n2.Class({
 		this.dispatchService = opts.dispatchService;
 		this.sourceModelId = opts.sourceModelId;
 
-		if( typeof opts.showRangeSlider === 'boolean' ){
-			this.showRangeSlider = opts.showRangeSlider;
+		if( typeof opts.showSingleHandle === 'boolean' ){
+			this.showSingleHandle = opts.showSingleHandle;
 		} else {
-			this.showRangeSlider = true;
+			this.showSingleHandle = false;
 		};
 		
 		this.rangeMin = null;
@@ -230,24 +230,34 @@ var TimelineWidget = $n2.Class({
 					.addClass('n2timeline_slider')
 					.appendTo($sliderWrapper);
 
-				if( this.showRangeSlider ){
-					$slider.slider({
-						range: true
-						,min: this.rangeMin
-						,max: this.rangeMax
-						,values: [this.intervalMin, this.intervalMax]
-						,slide: function(event, ui){
-							_this._barUpdated(ui);
-						}
-					});
-				} else {
-					$slider.slider({
-						min: this.rangeMin
-						,max: this.rangeMax
-						,slide: function(event, ui){
-							_this._barUpdated(ui);
-						}
-					});
+				$slider.slider({
+					range: true
+					,min: this.rangeMin
+					,max: this.rangeMax
+					,values: [this.intervalMin, this.intervalMax]
+					,slide: function(event, ui){
+						_this._barUpdated(ui);
+					}
+				});
+				
+				if (this.showSingleHandle) {
+					
+					// Update the date interval 
+					var value = new $n2.date.DateInterval({
+    					min: this.rangeMin
+    					,max: this.rangeMin
+    					,ongoing: false
+    				});
+    				
+    				this.dispatchService.send(DH,{
+    					type: this.intervalSetEventName
+    					,value: value
+    				});
+					
+					// Hide first slider handle and move the second handle to the left
+					var $sliderHandle = $('.n2timeline_slider .ui-slider-handle');
+					$sliderHandle.first().css('display','none');					
+					$sliderHandle.last().css('left','0%');
 				};
 			};
 		};
