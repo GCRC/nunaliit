@@ -241,23 +241,22 @@ var TimelineWidget = $n2.Class({
 				});
 				
 				if (this.showSingleHandle) {
-					
+
 					// Update the date interval 
 					var value = new $n2.date.DateInterval({
-    					min: this.rangeMin
-    					,max: this.rangeMin
-    					,ongoing: false
-    				});
-    				
-    				this.dispatchService.send(DH,{
-    					type: this.intervalSetEventName
-    					,value: value
-    				});
-					
-					// Hide first slider handle and move the second handle to the left
+						min: this.rangeMin
+						,max: this.rangeMin
+						,ongoing: false
+					});
+
+					this.dispatchService.send(DH,{
+						type: this.intervalSetEventName
+						,value: value
+					});
+
+					// Hide first slider handle
 					var $sliderHandle = $('.n2timeline_slider .ui-slider-handle');
-					$sliderHandle.first().css('display','none');					
-					$sliderHandle.last().css('left','0%');
+					$sliderHandle.first().css('display','none');
 				};
 			};
 		};
@@ -267,7 +266,7 @@ var TimelineWidget = $n2.Class({
 	_removeSlider: function(){
 		$('#'+this.elemId).find('.n2timeline_slider_wrapper').empty();
 	},
-	
+
 	_display: function(){
 		var $elem = this._getElem()
 			.empty();
