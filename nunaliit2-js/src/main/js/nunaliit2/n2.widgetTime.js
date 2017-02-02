@@ -256,7 +256,10 @@ var TimelineWidget = $n2.Class({
 
 					// Hide first slider handle
 					var $sliderHandle = $('.n2timeline_slider .ui-slider-handle');
-					$sliderHandle.first().css('display','none');
+					if ($sliderHandle.length > 1) {
+						$sliderHandle.first().css('display','none');
+					};
+					
 				};
 			};
 		};
