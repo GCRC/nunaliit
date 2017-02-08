@@ -142,7 +142,7 @@ function compareSessionContexts(s1, s2){
 	return true;
 };
 
-var Session = $n2.Class({
+var Session = $n2.Class('couch.Session',{
 	
 	server: null
 	
@@ -333,7 +333,7 @@ var Session = $n2.Class({
 // Design Document
 // =============================================
 
-var designDoc = $n2.Class({
+var designDoc = $n2.Class('couch.designDoc',{
 	ddUrl: null,
 	
 	ddName: null,
@@ -498,7 +498,7 @@ var designDoc = $n2.Class({
 // Change Notifier
 // =============================================
 
-var ChangeNotifier = $n2.Class({
+var ChangeNotifier = $n2.Class('couch.ChangeNotifier',{
 
 	changeUrl: null,
 	
@@ -760,7 +760,7 @@ var ChangeNotifier = $n2.Class({
 // Database Callbacks
 //=============================================
 
-var DatabaseCallbacks = $n2.Class({
+var DatabaseCallbacks = $n2.Class('couch.DatabaseCallbacks',{
 	
 	onCreatedCallbacks: null
 	
@@ -818,7 +818,7 @@ var DatabaseCallbacks = $n2.Class({
 // Database
 // =============================================
 
-var Database = $n2.Class({
+var Database = $n2.Class('couch.Database',{
 	
 	dbUrl: null
 	
@@ -1622,7 +1622,7 @@ var Database = $n2.Class({
 // User DB
 //=============================================
 
-var UserDb = $n2.Class(Database,{
+var UserDb = $n2.Class('couch.UserDb',Database,{
 	
 	initialize: function(server_,dbName_){
 		if( !dbName_ ){
@@ -2123,7 +2123,7 @@ var UserDb = $n2.Class(Database,{
 // Server
 // =============================================
 
-var Server = $n2.Class({
+var Server = $n2.Class('couch.Server',{
 	
 	options: null
 	
