@@ -257,9 +257,8 @@ var TimelineWidget = $n2.Class({
 					// Hide first slider handle
 					var $sliderHandle = $('.n2timeline_slider .ui-slider-handle');
 					if ($sliderHandle.length > 1) {
-						$sliderHandle.first().css('display','none');
-					};
-					
+						$sliderHandle.first().addClass('n2timeline_slider_left_slider_hidden');
+					};					
 				};
 			};
 		};
