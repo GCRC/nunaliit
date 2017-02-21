@@ -22,6 +22,7 @@ public class FSEntryNameFilterTextFiles implements FSEntryNameFilter {
 		extensions.add("sh");
 		extensions.add("bat");
 		extensions.add("properties");
+		extensions.add("service");
 	}
 	
 	@Override

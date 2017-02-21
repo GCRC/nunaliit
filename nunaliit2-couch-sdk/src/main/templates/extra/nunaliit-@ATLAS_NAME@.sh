@@ -34,15 +34,9 @@
 #NUNALIIT_CMD=
 NUNALIIT_BIN_DIR=@NUNALIIT_BIN_DIR@
 NUNALIIT_PID=/var/lock/nunaliit-@ATLAS_NAME@.pid
-#NUNALIIT_USER=
+NUNALIIT_USER=nunaliit
 NUNALIIT_ATLAS_DIR=@ATLAS_DIR@
 NUNALIIT_ATLAS_NAME=@ATLAS_NAME@
-
-
-# Include external configuration to override default values
-if [ -e "@ATLAS_DIR@/extra/config.sh" ]; then
-	source "@ATLAS_DIR@/extra/config.sh"
-fi
 
 
 # ========================
