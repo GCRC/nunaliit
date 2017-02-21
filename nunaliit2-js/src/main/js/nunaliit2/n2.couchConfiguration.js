@@ -710,7 +710,9 @@ function Configure(options_){
 	 	// Set up hover sound
 	 	configuration.directory.hoverSoundService = new $n2.couchSound.HoverSoundService({
 			db: configuration.atlasDb
-			,serviceDirectory: configuration.directory
+			,dispatchService: configuration.directory.dispatchService
+			,requestService: configuration.directory.requestService
+			,customService: configuration.directory.customService
 	 	});
 		
 		// Set up GeoNames service
