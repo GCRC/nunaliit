@@ -38,6 +38,9 @@ var
  ,DH = 'n2.instance'
  ;
 
+// Requires OpenLayers
+if( typeof OpenLayers !== 'undefined' ) {
+
 //--------------------------------------------------------------------------
 // This instance attempts to compute the initial extent by looking up each
 // couchDb overlay specified in the map options.
@@ -393,6 +396,121 @@ var MapAutoInitialBoundsCouchDbLayers = $n2.Class({
 });
 
 //--------------------------------------------------------------------------
+// This instance computes the initial extent by looking up the position of
+// the user based on what the browser returns for geolocation. Adjust centre
+// of defined 
+var MapAutoInitialBoundsCentreOnUserPosition = $n2.Class({
+
+	adjustLatitude: null,
+	
+	adjustLongitude: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			adjustLatitude: true
+			,adjustLongitude: true
+			,_mapInfo: null
+		},opts_);
+		
+		var _this = this;
+		
+		this.adjustLatitude = opts.adjustLatitude;
+		this.adjustLongitude = opts.adjustLongitude;
+	},
+	
+	computeInitialBounds: function(opts_){
+		var opts = $n2.extend({
+			mapOptions: null
+			,mapInfo: null
+			,initialBounds: null
+			,coordinateProjection: null
+			,onSuccess: function(bounds){}
+			,onError: function(err){}
+		},opts_);
+		
+		var _this = this;
+		
+		// Check initial bounds
+		if( $n2.isArray(opts.initialBounds) && opts.initialBounds.length >=4 ){
+			// OK
+		} else {
+			$n2.logError("MapAutoInitialBoundsCentreOnUserPosition: Do not understand initial bounds", opts.initialBounds);
+			opts.onSuccess(opts.initialBounds);
+		};
+		
+		// Get user location
+		if( typeof navigator !== 'undefined' ){
+			if( navigator.geolocation 
+			 && typeof navigator.geolocation.getCurrentPosition === 'function' ){
+				navigator.geolocation.getCurrentPosition(
+					function(position){
+						//$n2.log("getCurrentPosition()",position);
+						var myCurrentLoc;
+						if( position && position.coords ){
+							var lat = position.coords.latitude;
+							var lng = position.coords.longitude;
+							
+							if( typeof lat === 'number' 
+							 && typeof lng === 'number' ){
+								myCurrentLoc = new OpenLayers.Geometry.Point(lng, lat);
+							};
+						};
+						
+						if( myCurrentLoc ){
+							receivedCoords(myCurrentLoc);
+						} else {
+							$n2.logError("MapAutoInitialBoundsCentreOnUserPosition: error during getCurrentPosition(): do not understand", position);
+							opts.onSuccess(opts.initialBounds);
+						};
+						
+					},function(err){
+						$n2.logError("MapAutoInitialBoundsCentreOnUserPosition: error during getCurrentPosition()",err);
+						opts.onSuccess(opts.initialBounds);
+					},{ // options
+						
+					}
+				);
+			} else {
+				// No geolocation.getCurrentPosition()
+				opts.onSuccess(opts.initialBounds);
+			};
+		} else {
+			// No Navigator
+			opts.onSuccess(opts.initialBounds);
+		};
+		
+		function receivedCoords(myCurrentLoc){
+			// The coordinates received from browser are lat/long (EPSG:4326)
+			var browserProj = new OpenLayers.Projection('EPSG:4326');
+			if( browserProj.getCode() !== opts.coordinateProjection.getCode() ){
+				myCurrentLoc.transform(browserProj, opts.coordinateProjection);
+			};
+			
+			var initialBounds = [
+				opts.initialBounds[0]
+				,opts.initialBounds[1]
+				,opts.initialBounds[2]
+				,opts.initialBounds[3]
+			];
+			
+			if( _this.adjustLatitude ){
+				var halfHeight = (1 * opts.initialBounds[3] - 1 * opts.initialBounds[1]) / 2;
+				initialBounds[1] = myCurrentLoc.y - halfHeight;
+				initialBounds[3] = myCurrentLoc.y + halfHeight;
+			};
+
+			if( _this.adjustLongitude ){
+				var halfWidth = (1 * opts.initialBounds[2] - 1 * opts.initialBounds[0]) / 2;
+				initialBounds[0] = myCurrentLoc.x - halfWidth;
+				initialBounds[2] = myCurrentLoc.x + halfWidth;
+			};
+			
+			opts.onSuccess(initialBounds);
+		};
+	}
+});
+
+//--------------------------------------------------------------------------
 function getCurrentConfiguration(dispatcher){
 	var config = undefined;
 	
@@ -430,6 +548,11 @@ function handleInstanceCreate(m, addr, dispatcher){
 		};
 		
 		m.instance = new MapAutoInitialBoundsCouchDbLayers(opts);
+
+	} else if( 'mapAutoInitialBoundsCentreOnUserPosition' === m.instanceConfiguration.type ){
+		var opts = $n2.extend({},m.instanceConfiguration);
+		
+		m.instance = new MapAutoInitialBoundsCentreOnUserPosition(opts);
 	};
 };
 
@@ -439,5 +562,7 @@ $n2.mapInitialBounds = {
 	,MapAutoInitialBoundsCouchDbOverlays: MapAutoInitialBoundsCouchDbOverlays
 	,MapAutoInitialBoundsCouchDbLayers: MapAutoInitialBoundsCouchDbLayers
 };
+
+}; // OpenLayers
 
 })(nunaliit2);

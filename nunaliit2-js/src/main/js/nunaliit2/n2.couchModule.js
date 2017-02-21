@@ -1199,10 +1199,14 @@ var ModuleDisplay = $n2.Class({
 			
 			var autoBounds = undefined;
 			if( typeof mapInfo.coordinates.autoInitialBounds === 'object' ){
+				// Make a copy of configuration that contains map info
+				var instanceConfiguration = $n2.extend({},mapInfo.coordinates.autoInitialBounds);
+				instanceConfiguration._mapInfo = mapInfo;
+				
 				// Initial bounds computed from a configured object
 				var m = {
 					type: 'instanceCreate'
-					,instanceConfiguration: mapInfo.coordinates.autoInitialBounds
+					,instanceConfiguration: instanceConfiguration
 				};
 				_this.dispatchService.synchronousCall(DH,m);
 				autoBounds = m.instance;
