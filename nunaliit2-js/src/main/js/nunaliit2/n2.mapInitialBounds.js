@@ -39,7 +39,9 @@ var
  ;
 
 // Requires OpenLayers
-if( typeof OpenLayers !== 'undefined' ) {
+if( typeof OpenLayers === 'undefined' ) {
+	return;
+};
 
 //--------------------------------------------------------------------------
 // This instance attempts to compute the initial extent by looking up each
@@ -562,7 +564,5 @@ $n2.mapInitialBounds = {
 	,MapAutoInitialBoundsCouchDbOverlays: MapAutoInitialBoundsCouchDbOverlays
 	,MapAutoInitialBoundsCouchDbLayers: MapAutoInitialBoundsCouchDbLayers
 };
-
-}; // OpenLayers
 
 })(nunaliit2);
