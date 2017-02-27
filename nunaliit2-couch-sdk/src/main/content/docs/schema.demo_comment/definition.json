@@ -1,0 +1,16 @@
+{
+    "group": "demo"
+    ,"id": "comment"
+    ,"label": "Demo Comment"
+    ,"relatedSchemas": [ ]
+    ,"initialLayers": [ ]
+    ,"attributes":[
+        {
+            "type":"string"
+            ,"id":"text"
+            ,"label":"Comment"
+            ,"textarea":true
+            ,"includedInBrief":true
+        }
+    ]
+}

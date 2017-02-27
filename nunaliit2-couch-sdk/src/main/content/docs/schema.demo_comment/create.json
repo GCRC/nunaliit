@@ -1,6 +1,4 @@
 {
-	"nunaliit_schema": "demo_comment"
-	,"demo_comment": {
-		"text": null
-	}
+   "demo_comment": {"text": ""},
+   "nunaliit_schema": "demo_comment"
 }
