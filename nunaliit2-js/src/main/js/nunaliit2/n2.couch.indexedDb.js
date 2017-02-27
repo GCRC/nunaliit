@@ -42,7 +42,7 @@ var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); }
 // Design Document
 // =============================================
 
-var DesignDoc = $n2.Class({
+var DesignDoc = $n2.Class('couchIndexedDb.DesignDoc',{
 
 	couchDesignDoc: null,
 	
@@ -139,7 +139,7 @@ var DesignDoc = $n2.Class({
 // Database
 // =============================================
 
-var Database = $n2.Class({
+var Database = $n2.Class('couchIndexedDb.Database',{
 	
 	wrappedDb: null,
 	
@@ -1135,7 +1135,7 @@ var Database = $n2.Class({
 // Server
 // =============================================
 
-var Server = $n2.Class({
+var Server = $n2.Class('couchIndexedDb.Server',{
 	
 	wrappedServer: null,
 	

@@ -7,7 +7,7 @@ var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); }
 // ===================================================
 var DB_STORE_DOCS = 'docs';
 var DB_STORE_INFO = 'info';
-var DocumentCache = $n2.Class({
+var DocumentCache = $n2.Class('DocumentCache',{
 
 	db: null,
 
@@ -63,8 +63,8 @@ var DocumentCache = $n2.Class({
 					dbName: dbName
 					,updateSequence: updateSequence
 					,onSuccess: function(){
-						this.changes = null;
-						this.changesByDocId = {};
+						_this.changes = null;
+						_this.changesByDocId = {};
 						opts.onSuccess();
 					}
 					,onError: function(err){
@@ -709,7 +709,7 @@ var DocumentCache = $n2.Class({
 });
 
 //===================================================
-var IndexedDbService = $n2.Class({
+var IndexedDbService = $n2.Class('IndexedDbService',{
 
 	db: null,
 	

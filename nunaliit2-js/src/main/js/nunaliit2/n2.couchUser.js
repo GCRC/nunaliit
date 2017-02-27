@@ -204,7 +204,7 @@ var UserEditor = $n2.Class({
 	}
 	
 	,_getCouchServer: function(){
-		return this.userDb.server;
+		return this.userDb.getServer();
 	}
 
 	,_display: function(){

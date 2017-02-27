@@ -4896,6 +4896,10 @@ var MapAndControls = $n2.Class({
 		this.map.setCenter(ll, z, false, false);
 	},
 	
+	getResolution: function(){
+		return this.map.getResolution();
+	},
+	
 	/**
 	 * This is called when the map has moved. 
 	 */

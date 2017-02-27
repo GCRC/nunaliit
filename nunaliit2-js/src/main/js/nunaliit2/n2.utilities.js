@@ -221,6 +221,12 @@ var Service = $n2.Class({
 		        new SelectDocumentOnModuleIntroduction(options);
 		        
 		        m.created = true;
+
+			} else {
+				if( $n2.mapUtilities 
+				 && typeof $n2.mapUtilities.HandleUtilityCreateRequests === 'function' ){
+					$n2.mapUtilities.HandleUtilityCreateRequests(m, addr, dispatcher);
+				};
 		    };
 		};
 	}

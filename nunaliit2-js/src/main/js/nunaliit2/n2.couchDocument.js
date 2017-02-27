@@ -216,7 +216,7 @@ var Notifier = $n2.Class({
 });
 
 // *******************************************************
-var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
+var CouchDocumentSource = $n2.Class('CouchDocumentSource',$n2.document.DocumentSource, {
 	
 	db: null,
 	
@@ -854,7 +854,7 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 
 //*******************************************************
 
-var GeometryRepository = $n2.Class({
+var GeometryRepository = $n2.Class('GeometryRepository',{
 	
 	db: null,
 	
@@ -1112,7 +1112,7 @@ var GeometryRepository = $n2.Class({
 });
 
 //*******************************************************
-var CouchDocumentSourceWithSubmissionDb = $n2.Class(CouchDocumentSource, {
+var CouchDocumentSourceWithSubmissionDb = $n2.Class('CouchDocumentSourceWithSubmissionDb', CouchDocumentSource, {
 	
 	submissionDb: null,
 	
@@ -1176,12 +1176,14 @@ var CouchDocumentSourceWithSubmissionDb = $n2.Class(CouchDocumentSource, {
 		if( opts.doc._id ){
 			onUuidComputed(opts.doc._id);
 		} else {
-			var server = this.db.server;
+			var server = this.db.getServer();
 			if( server ){
 				server.getUniqueId({
 					onSuccess: onUuidComputed
 					,onError: opts.onError
 				});
+			} else {
+				opts.onError('No server associated with database');
 			};
 		};
 		

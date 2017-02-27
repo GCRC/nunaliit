@@ -471,6 +471,11 @@ public class SchemaAttribute {
 
 			//doc.put("nunaliit_geom", null);
 
+		} else if( "hover_sound".equals(type) ){
+			if( null != id ){
+				throw new Exception("'id' should not be specified for attributes of type 'hover_sound'");
+			}
+
 		} else if( "createdBy".equals(type) ){
 			if( null != id ){
 				throw new Exception("'id' should not be specified for attributes of type 'createdBy'");
@@ -595,6 +600,18 @@ public class SchemaAttribute {
 				pw.print("{{#nunaliit_geom}}");
 				pw.print("{{wkt}}");
 				pw.print("{{/nunaliit_geom}}");
+
+			} else if( "hover_sound".equals(type) ){
+				if( null != id ){
+					throw new Exception("'id' should not be specified for attributes of type 'hover_sound'");
+				}
+
+				pw.print("{{#nunaliit_hoverSound}}");
+				pw.print("{{#doc}}");
+				if( !isFirst ) pw.print(" ");
+				pw.print("<span class=\"n2s_briefDisplay\">{{.}}</span>");
+				pw.print("{{/doc}}");
+				pw.print("{{/nunaliit_hoverSound}}");
 
 			} else if( "createdBy".equals(type) ){
 				pw.print("{{#nunaliit_created}}");
@@ -896,6 +913,19 @@ public class SchemaAttribute {
 				pw.println("\t\t</div>");
 				pw.println("{{/nunaliit_geom}}");
 
+			} else if( "hover_sound".equals(type) ){
+				if( null != id ){
+					throw new Exception("'id' should not be specified for attributes of type 'hover_sound'");
+				}
+
+				pw.println("{{#nunaliit_hoverSound}}");
+				pw.println("\t\t<div class=\"nunaliit_hoverSound\">");
+				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t<div class=\"value\"><a href=\"#\" class=\"n2s_referenceLink\">{{doc}}</a></div>");
+				pw.println("\t\t\t<div class=\"end\"></div>");
+				pw.println("\t\t</div>");
+				pw.println("{{/nunaliit_hoverSound}}");
+
 			} else if( "createdBy".equals(type) ){
 				if( null == label ){
 					label = "Created By";
@@ -1120,6 +1150,24 @@ public class SchemaAttribute {
 				
 				pw.println("</div>");
 
+			} else if( "hover_sound".equals(type) ){
+				if( null != id ){
+					throw new Exception("'id' should not be specified for attributes of type 'hover_sound'");
+				}
+
+				String searchFunctionString = ",search=getHoverSound"; 
+				if( null != searchFunction ){
+					searchFunctionString = ",search="+encodeFieldParameter(searchFunction);
+				}
+
+				pw.println("<div class=\"nunaliit_hoverSound\">");
+
+				pw.println("\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t<div class=\"value\">{{#:field}}nunaliit_hoverSound,reference"+searchFunctionString+"{{/:field}}</div>");
+				pw.println("\t<div class=\"end\"></div>");
+				
+				pw.println("</div>");
+
 			} else if( "createdBy".equals(type) ){
 				// nothing to do
 				
@@ -1168,6 +1216,13 @@ public class SchemaAttribute {
 			JSONObject attrExport = new JSONObject();
 			attrExport.put("select", "nunaliit_geom.wkt");
 			attrExport.put("label", "nunaliit_geom");
+			attrExport.put("type", "text");
+			exportArr.put(attrExport);
+			
+		} else if( "hover_sound".equals(type) ){
+			JSONObject attrExport = new JSONObject();
+			attrExport.put("select", "nunaliit_hoverSound.doc");
+			attrExport.put("label", "nunaliit_hoverSound");
 			attrExport.put("type", "text");
 			exportArr.put(attrExport);
 			

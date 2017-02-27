@@ -218,6 +218,44 @@
 			</plugin>
 		</plugins>
 	</build>
+	<!-- reporting>
+		<plugins>
+			<plugin>
+				<groupId>gr.abiss.mvn.plugins</groupId>
+				<artifactId>maven-jstools-plugin</artifactId>
+				<version>0.7</version>
+				<configuration>
+					<jsDir>src/main/js/nunaliit2</jsDir>
+					<includes>**/n2.*.js</includes>
+					<includePrivate>true</includePrivate>
+					<includeUndocumented>true</includeUndocumented>
+				</configuration>
+				<reportSets>
+					<reportSet>
+						<reports>
+							<report>jsdoc</report>
+						</reports>
+					</reportSet>
+				</reportSets>
+			</plugin>
+		</plugins>
+	</reporting -->
+	<reporting>
+		<plugins>
+			<plugin>
+				<groupId>com.phasebash.jsdoc</groupId>
+				<artifactId>jsdoc3-maven-plugin</artifactId>
+				<version>1.2.0</version>
+				<configuration>
+					<configFile>src/main/jsdoc/config.json</configFile>
+					<recursive>true</recursive>
+					<directoryRoots>
+						<directoryRoot>.</directoryRoot>
+					</directoryRoots>
+				</configuration>
+			</plugin>
+		</plugins>
+	</reporting>
 	<dependencies>
 		<dependency>
 			<groupId>ca.carleton.gcrc</groupId>

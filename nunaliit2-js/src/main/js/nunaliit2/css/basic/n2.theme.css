@@ -542,6 +542,18 @@ CreateDocument widget
 	box-shadow: none;
 }
 
+
+.editorSelectDocumentDialog_suggestedHeader {
+	font-weight: bold;
+}
+
+.editorSelectDocumentDialog_suggestedList {
+	min-height: 50px;
+	overflow: auto;
+	max-height: 400px;
+}
+
+
 ._n2DocumentListEntry {
 	border-bottom: 1px solid #cccccc;
 	border-top: none;
@@ -719,5 +731,7 @@ height: auto !important;
 
 }
 
-
+.n2s_insertedReferenceLink {
+	cursor: pointer;
+}
 

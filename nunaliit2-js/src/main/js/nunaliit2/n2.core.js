@@ -34,7 +34,7 @@ POSSIBILITY OF SUCH DAMAGE.
 var nunaliit2CoreScript;
 
 if( typeof nunaliit2 !== 'function' ) {
-	/** @class Nunaliit2 Atlas Toolkit */
+	/** @namespace */
 	var nunaliit2 = function(){
 	};
 

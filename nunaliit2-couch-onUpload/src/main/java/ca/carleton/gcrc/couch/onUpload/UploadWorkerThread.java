@@ -2,10 +2,8 @@ package ca.carleton.gcrc.couch.onUpload;
 
 import java.io.File;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Vector;
 
 import org.json.JSONArray;
@@ -19,6 +17,7 @@ import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchQuery;
 import ca.carleton.gcrc.couch.client.CouchQueryResults;
 import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
+import ca.carleton.gcrc.couch.client.impl.CouchDbException;
 import ca.carleton.gcrc.couch.onUpload.conversion.AttachmentDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.DocumentDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.FileConversionContext;
@@ -41,6 +40,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 	static final public int DELAY_NO_WORK_POLLING = 5 * 1000; // 5 seconds
 	static final public int DELAY_NO_WORK_MONITOR = 60 * 1000; // 1 minute
 	static final public int DELAY_ERROR = 60 * 1000; // 1 minute
+	static final public int DELAY_CLEAR_OLD_ERRORS = 5 * 60 * 1000; // 5 minutes
 
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
@@ -50,7 +50,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 	private CouchDesignDocument submissionDbDesign;
 	private File mediaDir;
 	private MailNotification mailNotification;
-	private Set<String> docIdsToSkip = new HashSet<String>();
+	private DocumentsInError docsInError = new DocumentsInError();
 	private List<FileConversionPlugin> fileConverters;
 	private int noWorkDelayInMs = DELAY_NO_WORK_POLLING;
 	private GeometrySimplifier simplifier = null;
@@ -138,19 +138,41 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 		}
 		
 		if( null == work ) {
-			// Nothing to do, wait
-			waitMillis(noWorkDelayInMs);
-			return;
+			// Nothing to do, remove old errors
+			List<String> docIdsRecovered = docsInError.removeErrorsOlderThanMs(DELAY_CLEAR_OLD_ERRORS);
+
+			if( docIdsRecovered.size() <= 0 ) {
+				// No errors to get rid of and no work, wait
+				waitMillis(noWorkDelayInMs);
+				return;
+			}
 		} else {
 			try {
 				// Handle this work
 				performWork(work);
 				
 			} catch(Exception e) {
-				synchronized(this) {
-					docIdsToSkip.add( work.getDocId() );
+				boolean shouldErrorBeTakenIntoAccount = true;
+				for(Throwable t : errorAndCausesAsList(e)){
+					if( t instanceof CouchDbException ){
+						CouchDbException couchDbException = (CouchDbException)t;
+						if( 409 == couchDbException.getReturnCode() ){
+							// This is a conflict error in CouchDb. Somebody is updating the document
+							// at the same time. Just retry the worl
+							shouldErrorBeTakenIntoAccount = false;
+						}
+					}
 				}
+				
 				logger.error("Error processing document "+work.getDocId()+" ("+work.getState()+")",e);
+
+				if( shouldErrorBeTakenIntoAccount ){
+					synchronized(this) {
+						docsInError.addDocumentInError( work.getDocId() );
+					}
+				} else {
+					logger.info("Previous error for "+work.getDocId()+" will be ignored. Should retry shortly.");
+				}
 			}
 		}
 	}
@@ -790,7 +812,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				
 				// Discount documents in error state
 				synchronized(this) {
-					if( docIdsToSkip.contains(id) ) {
+					if( docsInError.isDocumentInError(id) ) {
 						continue;
 					}
 				}
@@ -849,7 +871,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				
 				// Discount documents in error state
 				synchronized(this) {
-					if( docIdsToSkip.contains(id) ) {
+					if( docsInError.isDocumentInError(id) ) {
 						continue;
 					}
 				}
@@ -960,8 +982,23 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			,JSONObject doc) {
 
 		synchronized(this) {
-			docIdsToSkip.remove(docId);
+			docsInError.removeErrorsWithDocId(docId);
 			this.notifyAll();
 		}
 	}
+	
+	private List<Throwable> errorAndCausesAsList(Throwable e){
+		List<Throwable> errors = new Vector<Throwable>();
+		
+		errors.add(e);
+		
+		// Add causes
+		Throwable cause = e.getCause();
+		while( null != cause && errors.indexOf(cause) < 0 ){
+			errors.add(cause);
+			cause = e.getCause();
+		}
+		
+		return errors;
+	};
 }
