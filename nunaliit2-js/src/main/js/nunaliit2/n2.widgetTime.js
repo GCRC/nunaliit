@@ -105,8 +105,6 @@ var TimelineWidget = $n2.Class({
 
 	intervalSetEventName: null,
 	
-	showSingleHandle: null,
-	
 	rangeMin: null,
 	
 	rangeMax: null,
@@ -120,19 +118,12 @@ var TimelineWidget = $n2.Class({
 			containerId: null
 			,dispatchService: null
 			,sourceModelId: null
-			,showSingleHandle: null
 		},opts_);
 		
 		var _this = this;
 		
 		this.dispatchService = opts.dispatchService;
 		this.sourceModelId = opts.sourceModelId;
-
-		if( typeof opts.showSingleHandle === 'boolean' ){
-			this.showSingleHandle = opts.showSingleHandle;
-		} else {
-			this.showSingleHandle = false;
-		};
 		
 		this.rangeMin = null;
 		this.rangeMax = null;
@@ -239,27 +230,6 @@ var TimelineWidget = $n2.Class({
 						_this._barUpdated(ui);
 					}
 				});
-				
-				if (this.showSingleHandle) {
-
-					// Update the date interval 
-					var value = new $n2.date.DateInterval({
-						min: this.rangeMin
-						,max: this.rangeMin
-						,ongoing: false
-					});
-
-					this.dispatchService.send(DH,{
-						type: this.intervalSetEventName
-						,value: value
-					});
-
-					// Hide first slider handle
-					var $sliderHandle = $('.n2timeline_slider .ui-slider-handle');
-					if ($sliderHandle.length > 1) {
-						$sliderHandle.first().addClass('n2timeline_slider_left_slider_hidden');
-					};					
-				};
 			};
 		};
 		return $slider;
@@ -268,7 +238,7 @@ var TimelineWidget = $n2.Class({
 	_removeSlider: function(){
 		$('#'+this.elemId).find('.n2timeline_slider_wrapper').empty();
 	},
-
+	
 	_display: function(){
 		var $elem = this._getElem()
 			.empty();
@@ -292,7 +262,7 @@ var TimelineWidget = $n2.Class({
 		// Create slider
 		this._getSlider();
 
-        	this._displayRange();
+		this._displayRange();
 		this._displayInterval();
 	},
 

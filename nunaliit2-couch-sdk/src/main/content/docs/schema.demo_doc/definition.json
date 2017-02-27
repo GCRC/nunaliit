@@ -24,17 +24,17 @@
             ,"label":"Date"
         }
     	,{
-    		"type":"reference"
-    		,"id":"reference"
-    		,"label":"Reference"
+            "type":"reference"
+            ,"id":"reference"
+            ,"label":"Reference"
     	}
     	,{
-    		"type":"geometry"
-    		,"label":"Geometry"
+            "type":"geometry"
+            ,"label":"Geometry"
     	}
     	,{
-    		"type":"hover_sound"
-    		,"label":"Hover Sound"
+            "type":"hover_sound"
+            ,"label":"Hover Sound"
     	}
     ]
 }
