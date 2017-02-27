@@ -464,6 +464,10 @@ Timeline widget
 	background-color: #ffffff;
 }
 
+.n2timeline .n2timeline_slider .n2timeline_slider_left_slider_hidden {
+	display: none;
+}
+
 .n2timeline_range {
 	width: 100%;
 	font-size: 12px;
