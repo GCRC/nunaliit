@@ -1,2 +1,5 @@
-[
-]
+[{
+   "label": "text",
+   "select": "demo_comment.text",
+   "type": "text"
+}]

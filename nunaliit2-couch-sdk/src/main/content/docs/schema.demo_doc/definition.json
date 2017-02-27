@@ -1,0 +1,40 @@
+{
+    "group": "demo"
+    ,"id": "doc"
+    ,"label": "Demo Document"
+    ,"relatedSchemas": [ "demo_media" ]
+    ,"initialLayers": [ "public" ]
+    ,"attributes":[
+        {
+            "type":"string"
+            ,"id":"title"
+            ,"label":"Title"
+            ,"includedInBrief":true
+        }
+        ,{
+            "type":"string"
+            ,"id":"description"
+            ,"label":"Description"
+            ,"textarea":true
+            ,"maxHeight":100
+        }
+        ,{
+            "type":"date"
+            ,"id":"date"
+            ,"label":"Date"
+        }
+    	,{
+            "type":"reference"
+            ,"id":"reference"
+            ,"label":"Reference"
+    	}
+    	,{
+            "type":"geometry"
+            ,"label":"Geometry"
+    	}
+    	,{
+            "type":"hover_sound"
+            ,"label":"Hover Sound"
+    	}
+    ]
+}

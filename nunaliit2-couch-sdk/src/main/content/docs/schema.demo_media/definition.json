@@ -1,0 +1,26 @@
+{
+    "group": "demo"
+    ,"id": "media"
+    ,"label": "Demo Media"
+    ,"relatedSchemas": [ ]
+    ,"initialLayers": [ ]
+    ,"attributes":[
+		{
+			"type":"file"
+			,"id":"File"
+			,"label":"File"
+		}
+		,{
+			"type":"string"
+			,"id":"title"
+			,"label":"Title"
+			,"includedInBrief":true
+		}
+		,{
+			"type":"string"
+			,"id":"description"
+			,"label":"Description"
+			,"textarea": true
+		}
+	]
+}

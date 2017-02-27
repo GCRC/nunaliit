@@ -1,67 +1,54 @@
 <div class="n2_documentDisplay"><div class="n2_layoutFloat">
-
-	{{#nunaliit_hoverSound}}
-		<div style="float:right;" class="n2s_insertHoverSoundIcon"></div>
-	{{/nunaliit_hoverSound}}
-
-	<div>
-		<div class="label n2s_localize">Demo Document</div>
-		<div class="value"></div>
-		<div class="end"></div>
-	</div>
-
-	{{#demo_doc}}
-		{{#title}}
-			<div>
-				<div class="label n2s_localize">Title</div>
-				<div class="value">{{.}}</div>
-				<div class="end"></div>
-			</div>
-		{{/title}}
-		{{#description}}
-			<div>
-				<div class="label n2s_localize">Description</div>
-				<div class="value n2s_preserveSpaces n2s_installMaxHeight" _maxheight="100">{{.}}</div>
-				<div class="end"></div>
-			</div>
-		{{/description}}
-		{{#date}}
-			<div>
-				<div class="label n2s_localize">Date</div>
-				<div class="value">{{date}}</div>
-				<div class="end"></div>
-			</div>
-		{{/date}}
-		{{#reference}}
-			{{#doc}}
-				<div>
-					<div class="label n2s_localize">Reference</div>
-					<div class="value"><a class="n2s_referenceLink" href="#">{{.}}</a></div>
-					<div class="end"></div>
-				</div>
-			{{/doc}}
-		{{/reference}}
-	{{/demo_doc}}
-	
-	{{#if nunaliit_layers}}
-		<div>
-			<div class="label n2s_localize">Layers</div>
-			<div class="value">
-				{{#each nunaliit_layers}}
-					<div class="n2s_insertLayerName">{{.}}</div>
-				{{/each}}
-			</div>
+<div class="demo_doc">
+{{#demo_doc}}
+	{{#if title}}
+		<div class="demo_doc_title">
+			<div class="label n2s_localize">Title</div>
+			<div class="value">{{title}}</div>
 			<div class="end"></div>
 		</div>
 	{{/if}}
-
-	{{#nunaliit_hoverSound}}
-		{{#doc}}
-			<div>
-				<div class="label n2s_localize">Hover Sound</div>
-				<div class="value"><a class="n2s_referenceLink" href="#">{{.}}</a></div>
-				<div class="end"></div>
-			</div>
-		{{/doc}}
-	{{/nunaliit_hoverSound}}
+{{/demo_doc}}
+{{#demo_doc}}
+	{{#if description}}
+		<div class="demo_doc_description">
+			<div class="label n2s_localize">Description</div>
+			<div class="value n2s_preserveSpaces n2s_installMaxHeight" _maxheight="100">{{description}}</div>
+			<div class="end"></div>
+		</div>
+	{{/if}}
+{{/demo_doc}}
+{{#demo_doc}}
+	{{#date}}
+		<div class="demo_doc_date">
+			<div class="label n2s_localize">Date</div>
+			<div class="value">{{date}}</div>
+			<div class="end"></div>
+		</div>
+	{{/date}}
+{{/demo_doc}}
+{{#demo_doc}}
+	{{#reference}}
+		<div class="demo_doc_reference">
+			<div class="label n2s_localize">Reference</div>
+			<div class="value"><a href="#" class="n2s_referenceLink">{{doc}}</a></div>
+			<div class="end"></div>
+		</div>
+	{{/reference}}
+{{/demo_doc}}
+{{#nunaliit_geom}}
+		<div class="nunaliit_geom">
+			<div class="label n2s_localize">Geometry</div>
+			<div class="value">{{wkt}}</div>
+			<div class="end"></div>
+		</div>
+{{/nunaliit_geom}}
+{{#nunaliit_hoverSound}}
+		<div class="nunaliit_hoverSound">
+			<div class="label n2s_localize">Hover Sound</div>
+			<div class="value"><a href="#" class="n2s_referenceLink">{{doc}}</a></div>
+			<div class="end"></div>
+		</div>
+{{/nunaliit_hoverSound}}
+</div>
 </div></div>
