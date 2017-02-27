@@ -1,8 +1,8 @@
 {
-	"nunaliit_schema": "demo_doc"
-	,"demo_doc": {
-		"title":""
-		,"description":""
-		,"reference":{}
-	}
+   "demo_doc": {
+      "description": "",
+      "title": ""
+   },
+   "nunaliit_layers": ["public"],
+   "nunaliit_schema": "demo_doc"
 }
