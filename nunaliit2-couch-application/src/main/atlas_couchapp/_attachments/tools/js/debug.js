@@ -158,6 +158,32 @@
 					});
 				});
 
+			// Disable CouchDb Caching
+			var $div = $('<div>')
+				.addClass('n2debug_configuration_content_disableCouchDbCaching')
+				.appendTo($confContent);
+			var disableCouchDbCachingId = $n2.getUniqueId();
+			$('<label>')
+				.attr('for',disableCouchDbCachingId)
+				.text( _loc('Disable CouchDb Caching') )
+				.appendTo($div);
+			var $cb = $('<input>')
+				.attr('type','checkbox')
+				.attr('name',disableCouchDbCachingId)
+				.appendTo($div)
+				.change(function(){
+					var $cb = $(this);
+					if( $cb.attr('checked') ) {
+						_this.debugConfiguration.setCouchDbCachingDisabled(true);
+					} else {
+						_this.debugConfiguration.setCouchDbCachingDisabled(false);
+					};
+					_this._refresh();
+				});
+			if( this.debugConfiguration.isCouchDbCachingDisabled() ){
+				$cb.attr('checked','checked');
+			};
+
 			// Force slow connection handling
 			var $div = $('<div>')
 				.addClass('n2debug_configuration_content_slowConnectionHandling')

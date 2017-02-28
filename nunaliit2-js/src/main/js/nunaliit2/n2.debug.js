@@ -127,6 +127,22 @@ var DebugConfiguration = $n2.Class({
 		this.saveConfiguration(debugConf);
 	},
 
+	isCouchDbCachingDisabled: function(){
+		var debugConf = this.loadConfiguration();
+		if( debugConf.disableCouchDbCaching ) return true;
+		return false;
+	},
+
+	setCouchDbCachingDisabled: function(flag){
+		var debugConf = this.loadConfiguration();
+		if( flag ){
+			debugConf.disableCouchDbCaching = true;
+		} else if( debugConf.disableCouchDbCaching ){
+			delete debugConf.disableCouchDbCaching;
+		};
+		this.saveConfiguration(debugConf);
+	},
+
 	forceSlowConnectionHandling: function(){
 		var debugConf = this.loadConfiguration();
 		if( debugConf.forceSlowConnectionHandling ) return true;

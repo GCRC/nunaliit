@@ -265,13 +265,31 @@ function Configure(options_){
 				configuration.directory.dispatchService.send('n2.couchConfiguration',{type:'start'});
 			};
 		};
+		
+		// Custom Service
+		configuration.directory.customService = new $n2.custom.CustomService({
+			directory: configuration.directory
+		});
+		
+		// Adjust configuration based on custom service
+		if( configuration.directory.customService.getOption('couchDbCachingEnabled',false) ){
+			couchDbCachingEnabled = true;
+		};
+		if( configuration.directory.customService.getOption('couchDbCachingDisabled',false) ){
+			couchDbCachingEnabled = false;
+		};
 
 		// Adjust configuration based on local storage
 		debugConfiguration = new $n2.debug.DebugConfiguration();
 		if( debugConfiguration.isBadProxyEnabled() ){
 			$n2.couch.setBadProxy(true);
 		};
-		couchDbCachingEnabled = debugConfiguration.isCouchDbCachingEnabled();
+		if( debugConfiguration.isCouchDbCachingEnabled() ){
+			couchDbCachingEnabled = true;
+		};
+		if( debugConfiguration.isCouchDbCachingDisabled() ){
+			couchDbCachingEnabled = false;
+		};
 	
 		// Dispatcher
 		var dispatchLogging = false;
@@ -305,11 +323,6 @@ function Configure(options_){
 		// Analytics Service
 		configuration.directory.analyticsService = new $n2.analytics.AnalyticsService({
 			dispatchService: configuration.directory.dispatchService
-		});
-	
-		// Custom Service
-		configuration.directory.customService = new $n2.custom.CustomService({
-			directory: configuration.directory
 		});
 	
 		// Intent Service
