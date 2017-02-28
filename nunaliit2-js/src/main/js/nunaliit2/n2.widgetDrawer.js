@@ -37,6 +37,21 @@ var
  ,DH = "n2.widgetDrawer"
  ;
 
+ /*
+  *  Drawer Widget Options
+  * -------------------------------
+  *  drawerContainerClass: The container of the drawer
+  *  buttonContainerClass: The container of the open drawer button
+  *  buttonText: String representing the button text 
+  *  widgets: Array of widgets placed inside the drawer widget
+  *  width: Set width of drawer (in px or %)
+  *  height: Set height of drawer (in px or %)
+  *  xPos: Set xPos of drawer position (in px or %)
+  *  yPos: Set yPos of drawer position (in px or %)
+  *  pullDirection: UP, DOWN, LEFT, RIGHT (default)
+  *  addClasses: Specify a class <string> or classes <array of strings> to the widget
+  */
+  
 //--------------------------------------------------------------------------
 var DrawerWidget = new $n2.Class("DrawerWidget",{
 	
@@ -51,19 +66,18 @@ var DrawerWidget = new $n2.Class("DrawerWidget",{
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
-			drawerContainerClass: null
+			config: null
+			,dispatchService: null
+			,drawerContainerClass: null
 			,buttonContainerClass: null
 			,buttonText: null
-			,dispatchService: null
-			,config: null
 			,widgets: null
-			,addClasses: null
-			,initiallyOpened: false
 			,width: null
 			,height: null
 			,xPos: null
 			,yPos: null
 			,pullDirection: null
+			,addClasses: null
 		},opts_);
 
 		var _this = this;
@@ -208,7 +222,7 @@ var DrawerWidget = new $n2.Class("DrawerWidget",{
 		if (!this.drawer.xPos) {
 			if (opts.xPos) {
 				if (Number.isInteger(parseInt(opts.xPos))) {
-					this.drawer.xPos = parseInt(opts.xPos)+"%";
+					this.drawer.xPos = parseInt(opts.xPos)+"px";
 				} else if (opts.xPos.slice(-1) === "%" || opts.xPos.slice(-2) === "px") {
 					this.drawer.xPos = opts.xPos;
 				};				
@@ -222,7 +236,7 @@ var DrawerWidget = new $n2.Class("DrawerWidget",{
 		if (!this.drawer.yPos) {
 			if (opts.yPos) {
 				if (Number.isInteger(parseInt(opts.yPos))) {
-					this.drawer.yPos = parseInt(opts.yPos)+"%";
+					this.drawer.yPos = parseInt(opts.yPos)+"px";
 				} else if (opts.yPos.slice(-1) === "%" || opts.yPos.slice(-2) === "px") {
 					this.drawer.yPos = opts.yPos;
 				};

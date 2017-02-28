@@ -37,6 +37,15 @@ var
  ,DH = "n2.widgetHamburgerMenu"
  ;
 
+ /*
+  *  Hamburger Menu Widget Options
+  * -------------------------------
+  *  menuTitle: String representing the menu title (default is the atlas title)
+  *  moduleName: String representing the module name (default is the module name)
+  *  containerClass: Name of the container class for the hamburger menu widget
+  *  
+  */
+ 
 //--------------------------------------------------------------------------
 var HamburgerMenuWidget = new $n2.Class("HamburgerMenuWidget",{
 
@@ -50,11 +59,11 @@ var HamburgerMenuWidget = new $n2.Class("HamburgerMenuWidget",{
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
-			menuTitle: null
-			,moduleName: null
-			,dispatchService: null
+			dispatchService: null
 			,navigationService: null
 			,showService: null
+			,menuTitle: null
+			,moduleName: null
 			,containerClass: null
 		},opts_);
 
