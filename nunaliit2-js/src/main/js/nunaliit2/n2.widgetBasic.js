@@ -792,6 +792,17 @@ var Service = $n2.Class({
 				 && $n2.widgetResizingContainer.HandleWidgetAvailableRequests ){
 					$n2.widgetResizingContainer.HandleWidgetAvailableRequests(m);
 				};
+				
+				if( $n2.widgetDrawer
+				 && $n2.widgetDrawer.HandleWidgetAvailableRequests ){
+					$n2.widgetDrawer.HandleWidgetAvailableRequests(m);
+				};
+				
+				if( $n2.widgetHamburgerMenu 
+				 && $n2.widgetHamburgerMenu.HandleWidgetAvailableRequests ){
+					$n2.widgetHamburgerMenu.HandleWidgetAvailableRequests(m);
+				};
+						
 		    };
 		    
 		} else if( 'widgetDisplay' === m.type ){
@@ -878,6 +889,16 @@ var Service = $n2.Class({
 				if( $n2.widgetResizingContainer 
 				 && $n2.widgetResizingContainer.HandleWidgetDisplayRequests ){
 					$n2.widgetResizingContainer.HandleWidgetDisplayRequests(m);
+				};
+				
+				if( $n2.widgetDrawer
+				 && $n2.widgetDrawer.HandleWidgetDisplayRequests ){
+					$n2.widgetDrawer.HandleWidgetDisplayRequests(m);
+				};
+				
+				if( $n2.widgetHamburgerMenu 
+				 && $n2.widgetHamburgerMenu.HandleWidgetDisplayRequests ){
+					$n2.widgetHamburgerMenu.HandleWidgetDisplayRequests(m);
 				};
 		    };
 

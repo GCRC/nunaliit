@@ -805,3 +805,146 @@ Multi Filter Selection
 .nunaliit_content > .n2widget_multiFilterSelection > .n2widget_multiFilterSelection_selected {
 	background-color: #444;
 }
+
+/* 
+==============================
+Drawer widget 
+==============================
+*/
+html {
+	overflow: hidden;
+}
+
+.drawer_content_mask {
+	background-color: rgba(0,0,0,0.25);
+	z-index:98;
+	visibility:hidden;
+	position:absolute;
+	top:0;
+	left:0;
+	width:100%;
+	height:100%;
+}
+
+.n2widget_drawer {
+    position:absolute;
+    z-index: 99;
+    background-color: #FFFFFF;
+    transition: 0.5s;
+    /* Material Design css equivalent of 16dp elevation height */
+	box-shadow: 0 16px 24px 2px rgba(0, 0, 0, .14), 0 6px 30px 5px rgba(0, 0, 0, .12), 0 8px 10px -5px rgba(0, 0, 0, .2);
+	overflow-x: hidden;
+    border-radius: 2px;
+}
+
+.n2widget_drawer .n2widget_drawer_close_button {
+	color: #333333;
+	font-size: 16px;
+	padding: 5px;
+	float: right;
+	cursor: pointer;
+}
+
+.n2widget_drawer .n2widget_drawer_close_button:hover {
+	color: #FFFFFF;
+	text-shadow: #000000 1px 1px 1px;
+}
+
+.n2widget_drawer .n2widget_drawer_container > div {
+	position: inherit;
+}
+
+
+/* 
+==============================
+Hamburger Menu widget 
+==============================
+*/
+.n2widget_drawer_open_button {
+	color: #FFFFFF; 
+	font-size:30px;
+	text-shadow: black 1px 1px 1px;
+	cursor:pointer;
+	position:absolute;
+	left: 10px;
+	top:10px;
+	z-index: 10;
+	padding: 5px;
+	margin-right:10px;
+}
+
+.n2widget_hamburger ul,
+.n2widget_hamburger ul li {
+	padding-left: 0px;
+	margin-bottom: 0px;
+}
+
+.n2widget_hamburger .n2widget_hamburger_menu > ul > li {
+	font-weight: bold;
+}
+
+.n2widget_hamburger .n2widget_hamburger_menu > ul > li ul li {
+	font-weight: normal;
+}
+
+.n2widget_hamburger a,
+.n2widget_hamburger span  {
+	color: #111111;
+	padding-left: 20px;
+}
+
+.n2widget_hamburger a:hover {
+	text-decoration:none;
+	color: #009688;
+}
+
+.n2widget_hamburger li {
+    display: block;
+    line-height: 2;
+    white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.n2widget_hamburger ul li ul li {
+	padding-left: 10px;
+}
+
+.n2widget_hamburger_header {
+	height: 102px;
+	background-color: #009688;
+}
+
+.n2widget_hamburger_header .n2widget_hamburger_header_menu_title {
+	height: 70px; /* match height of nunaliit_header_container height */
+	border-bottom: 1px solid #018d74;
+	overflow:hidden;
+}
+
+.n2widget_hamburger_header .n2widget_hamburger_header_menu_title_text {
+	font-size: 18pt;
+	display: block;
+	text-shadow: #000000 1px 1px 1px;
+	color: #FFFFFF;
+	padding-top: 18px;
+}
+
+.n2widget_hamburger_header .n2widget_hamburger_header_module_name {
+	height: 30px; /* match height of nunaliit_module_title height */
+	border-top: 1px solid #00695c;
+	border-bottom: 1px solid #111111;
+	background-color: #80cbc4;
+	overflow:hidden;
+}
+
+.n2widget_hamburger_header .n2widget_hamburger_header_module_name_text {
+	color: white;
+	text-shadow: black 1px 1px 1px;
+	display: block;
+	padding-top: 5px;
+}
+
+
+
+
+
