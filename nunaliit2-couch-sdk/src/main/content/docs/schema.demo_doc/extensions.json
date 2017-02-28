@@ -1,7 +1,2 @@
 [
-	{
-		"selector": [ "nunaliit_geom" ]
-		,"create": false
-		,"schemaName": "geom"
-	}
 ]

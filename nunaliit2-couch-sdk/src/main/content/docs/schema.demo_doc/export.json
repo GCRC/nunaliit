@@ -1,18 +1,32 @@
 [
-	{
-		"label":"title"
-		,"select":"demo_doc.title"
-	}
-	,{
-		"label":"description"
-		,"select":"demo_doc.description"
-	}
-	,{
-		"label":"date"
-		,"select":"demo_doc.date"
-	}
-	,{
-		"label":"reference"
-		,"select":"demo_doc.reference.doc"
-	}
+   {
+      "label": "title",
+      "select": "demo_doc.title",
+      "type": "text"
+   },
+   {
+      "label": "description",
+      "select": "demo_doc.description",
+      "type": "text"
+   },
+   {
+      "label": "date",
+      "select": "demo_doc.date.date",
+      "type": "text"
+   },
+   {
+      "label": "reference",
+      "select": "demo_doc.reference.doc",
+      "type": "text"
+   },
+   {
+      "label": "nunaliit_hoverSound",
+      "select": "nunaliit_hoverSound.doc",
+      "type": "text"
+   },
+   {
+      "label": "nunaliit_geom",
+      "select": "nunaliit_geom.wkt",
+      "type": "text"
+   }
 ]

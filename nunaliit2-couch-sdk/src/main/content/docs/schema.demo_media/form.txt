@@ -1,14 +1,22 @@
 <div class="n2_documentForm"><div class="n2_layoutFloat">
-	{{#demo_media}}
-		<div>
-			<div class="label n2s_localize">Title</div>
-			<div class="value">{{#:field}}title{{/:field}}</div>
-			<div class="end"></div>
-		</div>
-		<div>
-			<div class="label n2s_localize">Description</div>
-			<div class="value">{{#:field}}description,textarea{{/:field}}</div>
-			<div class="end"></div>
-		</div>
-	{{/demo_media}}
+<div class="demo_media">
+<div class="title">
+	<div class="label n2s_localize">Demo Media</div>
+	<div class="end"></div>
+</div>
+{{#demo_media}}
+	<div class="demo_media_title">
+		<div class="label n2s_localize">Title</div>
+		<div class="value">{{#:field}}title,placeholder=Title{{/:field}}</div>
+		<div class="end"></div>
+	</div>
+{{/demo_media}}
+{{#demo_media}}
+	<div class="demo_media_description">
+		<div class="label n2s_localize">Description</div>
+		<div class="value">{{#:field}}description,textarea,placeholder=Description{{/:field}}</div>
+		<div class="end"></div>
+	</div>
+{{/demo_media}}
+</div>
 </div></div>

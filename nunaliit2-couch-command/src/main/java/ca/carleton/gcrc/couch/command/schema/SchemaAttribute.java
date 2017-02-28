@@ -481,6 +481,11 @@ public class SchemaAttribute {
 				throw new Exception("'id' should not be specified for attributes of type 'createdBy'");
 			}
 
+		} else if( "createdTime".equals(type) ){
+			if( null != id ){
+				throw new Exception("'id' should not be specified for attributes of type 'createdTime'");
+			}
+
 		} else {
 			throw new Exception("Unable to include type "+type+" in create");
 		}
@@ -616,6 +621,11 @@ public class SchemaAttribute {
 			} else if( "createdBy".equals(type) ){
 				pw.print("{{#nunaliit_created}}");
 				pw.print("<span class=\"n2s_insertUserName\">{{name}}</span>");
+				pw.print("{{/nunaliit_created}}");
+
+			} else if( "createdTime".equals(type) ){
+				pw.print("{{#nunaliit_created}}");
+				pw.print("<span class=\"n2s_insertTime\">{{time}}</span>");
 				pw.print("{{/nunaliit_created}}");
 					
 			} else {
@@ -947,6 +957,28 @@ public class SchemaAttribute {
 				
 				pw.println("\t{{/if}}");
 				pw.println("{{/nunaliit_created}}");
+
+			} else if( "createdTime".equals(type) ){
+				if( null == label ){
+					label = "Created Time";
+					labelLocalizeClass = " n2s_localize";
+				}
+
+				pw.println("{{#nunaliit_created}}");
+				pw.println("\t{{#if time}}");
+
+				pw.println("\t\t<div class=\""+schemaClass+"_nunaliit_created_time\">");
+
+				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+
+				pw.println("\t\t\t<div class=\"value n2s_insertTime\">{{time}}</div>");
+				
+				pw.println("\t\t\t<div class=\"end\"></div>");
+				
+				pw.println("\t\t</div>");
+				
+				pw.println("\t{{/if}}");
+				pw.println("{{/nunaliit_created}}");
 							
 			} else {
 				throw new Exception("Unable to include type "+type+" in display");
@@ -1170,6 +1202,9 @@ public class SchemaAttribute {
 
 			} else if( "createdBy".equals(type) ){
 				// nothing to do
+
+			} else if( "createdTime".equals(type) ){
+				// nothing to do
 				
 			} else {
 				throw new Exception("Unable to include type "+type+" in form");
@@ -1232,7 +1267,8 @@ public class SchemaAttribute {
 			attrExportName.put("label", "nunaliit_created_name");
 			attrExportName.put("type", "text");
 			exportArr.put(attrExportName);
-
+			
+		} else if( "createdTime".equals(type) ){
 			JSONObject attrExportTime = new JSONObject();
 			attrExportTime.put("select", "nunaliit_created.time");
 			attrExportTime.put("label", "nunaliit_created_time");

@@ -1,46 +1,41 @@
 <div class="n2_documentDisplay"><div class="n2_layoutFloat">
-
-{{#nunaliit_hoverSound}}
-	<div class="n2s_insertHoverSoundIcon"></div>
-{{/nunaliit_hoverSound}}
-
-{{#nunaliit_attachments}}
-	{{#files}}
-		{{#:iterate}}
-			{{#value}}
-				{{^source}}{{! do not include thumbnails !}}
-
-					{{#attachmentName}}
-	<div class="n2_mediaView">
-		<div class="n2s_insertMediaView" nunaliit-attachment="{{.}}"> </div>
-	</div>
-					{{/attachmentName}}
-
-				{{/source}}
-			{{/value}}
-		{{/:iterate}}
-	{{/files}}
-{{/nunaliit_attachments}}
-
+<div class="demo_media">
+<div class="title">
+	<div class="label n2s_localize">Demo Media</div>
+	<div class="end"></div>
+</div>
 {{#demo_media}}
-	{{#title}}
-		<div>
+	{{#if title}}
+		<div class="demo_media_title">
 			<div class="label n2s_localize">Title</div>
-			<div class="value">{{.}}</div>
+			<div class="value">{{title}}</div>
 			<div class="end"></div>
 		</div>
-	{{/title}}
-	{{#description}}
-		<div>
-			<div class="label n2s_localize">Description</div>
-			<div class="value n2s_preserveSpaces">{{.}}</div>
-			<div class="end"></div>
-		</div>
-	{{/description}}
+	{{/if}}
 {{/demo_media}}
-
-{{#nunaliit_source}}
-	{{{:html}}}
-{{/nunaliit_source}}
-
+{{#demo_media}}
+	{{#if description}}
+		<div class="demo_media_description">
+			<div class="label n2s_localize">Description</div>
+			<div class="value n2s_preserveSpaces">{{description}}</div>
+			<div class="end"></div>
+		</div>
+	{{/if}}
+{{/demo_media}}
+{{#nunaliit_attachments}}
+{{#files}}
+	{{#:iterate}}
+		{{#value}}
+			{{^source}}
+				{{#attachmentName}}
+					<div class="n2_mediaView">
+						<div class="n2s_insertMediaView" nunaliit-attachment="{{.}}"> </div>
+					</div>
+				{{/attachmentName}}
+			{{/source}}
+		{{/value}}
+	{{/:iterate}}
+{{/files}}
+{{/nunaliit_attachments}}
+</div>
 </div></div>
