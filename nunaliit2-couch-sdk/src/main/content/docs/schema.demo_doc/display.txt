@@ -17,7 +17,7 @@
 	{{#if description}}
 		<div class="demo_doc_description">
 			<div class="label n2s_localize">Description</div>
-			<div class="value n2s_preserveSpaces">{{description}}</div>
+			<div class="value n2s_preserveSpaces n2s_installMaxHeight" _maxheight="100">{{description}}</div>
 			<div class="end"></div>
 		</div>
 	{{/if}}

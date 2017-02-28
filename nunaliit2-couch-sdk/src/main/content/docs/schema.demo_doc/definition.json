@@ -3,6 +3,7 @@
    "id": "doc",
    "label": "Demo Document",
    "relatedSchemas": [ "demo_media" ],
+   "initialLayers": [ "public" ],
    "attributes": [
       {
          "type": "title",
@@ -20,6 +21,7 @@
          "label": "Description",
          "id": "description",
          "textarea": true,
+         "maxHeight":100,
          "placeholder": "Description"
       },
       {
