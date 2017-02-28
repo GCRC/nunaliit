@@ -396,9 +396,17 @@ table {
     border-spacing: 0;
 }
 
+/* overflow is set to hidden to hide drawer widgets */
+html {
+	overflow: hidden;
+}
+
+body {
+	overflow: auto;
+}
+
 html, body { 
 	height: 100%; 
-	overflow: auto;
 	color:#000; 
 	font-family: helvetica, sans-serif; 
 	font-weight: 400; 

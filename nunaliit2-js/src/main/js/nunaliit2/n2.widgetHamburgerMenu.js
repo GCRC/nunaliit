@@ -88,68 +88,103 @@ var HamburgerMenuWidget = new $n2.Class("HamburgerMenuWidget",{
 	},
 
 	_addMenu: function(){
+		
+		var _this = this;
 
-		// Create a Hamburger Menu if it doesn't currently exist
-		// This creates a template of a drawer nav menu with a title, module title and close button.
-    	var $hamburgerMenu = $("<div>")
-    		.addClass("n2widget_hamburger n2widget_createDocumentFromSchema")
+		// Create a Hamburger Menu container template
+		// Includes a menu title, module name and close button
+		var $hamburgerMenu = $("<div>")
+			.addClass("n2widget_hamburger n2widget_createDocumentFromSchema")
 			.appendTo("." + this.containerClass);
 
-    	var $menuHeader = $("<div>")
-    		.addClass("n2widget_hamburger_header")
-    		.appendTo($hamburgerMenu);
+		var $menuHeader = $("<div>")
+			.addClass("n2widget_hamburger_header")
+			.appendTo($hamburgerMenu);
 
-    	var $menuTitle = $("<div>")
-    		.addClass("n2widget_hamburger_header_menu_title")
-    		.appendTo($menuHeader);
+		var $menuTitle = $("<div>")
+			.addClass("n2widget_hamburger_header_menu_title")
+			.appendTo($menuHeader);
 
-    	var $titleSpan = $("<span>")
-    		.addClass("n2widget_hamburger_header_menu_title_text")
-    		.appendTo($menuTitle);
+		var $menuTitleSpan = $("<span>")
+			.addClass("n2widget_hamburger_header_menu_title_text")
+			.appendTo($menuTitle);
 
-    	if (this.menuTitle) {
-    		$titleSpan.text( _loc(this.menuTitle))
-    	} else if (this.navigationService) {
-    		this.navigationService.printTitle({
-    			elem: $titleSpan
-    		});
-    	};
+		var $menuModuleName = $("<div>")
+			.addClass("n2widget_hamburger_header_module_name")
+			.appendTo($menuHeader);
 
-    	var $menuModuleName = $("<div>")
-    		.addClass("n2widget_hamburger_header_module_name")
-    		.appendTo($menuHeader);
+		var $moduleNameSpan = $("<span>")
+			.addClass("n2widget_hamburger_header_module_name_text")
+			.appendTo($menuModuleName);
 
-    	var $moduleNameSpan = $("<span>")
-    		.addClass("n2widget_hamburger_header_module_name_text")
-    		.appendTo($menuModuleName);
+		// Add Menu Title
+		_this._addMenuTitle();
 
-    	if (this.moduleName) {
-    		$moduleNameSpan.text( _loc(this.moduleName));
-    	} else if (this.showService && this.dispatchService) {
-    		var currentModuleMsg = {
-    			type: "moduleGetCurrent"
-    		};
-    		this.dispatchService.synchronousCall(DH,currentModuleMsg);
-    		var moduleId = currentModuleMsg.moduleId;
-    		if (moduleId) {
-	    		$moduleNameSpan.addClass("n2s_insertModuleName");
-	    		$moduleNameSpan.attr("nunaliit-document",moduleId);
-    		};
-    	};
+		// Add Module Name
+		_this._addModuleName();
 
-    	// Insert navigation items to hamburger drawer menu
-		if (this.navigationService) {
-			var $menuContent = $("<div>")
-				.addClass("n2widget_hamburger_menu")
-				.appendTo($hamburgerMenu);
-			this.navigationService.printMenu({
-				elem: $menuContent
-			});
-		};
+		// Add existing navigation items to empty hamburger menu
+		_this._addNavigationItems();
 
 		if (this.showService) {
-    		this.showService.fixElementAndChildren($hamburgerMenu, {});
-    	};
+			this.showService.fixElementAndChildren($hamburgerMenu, {});
+		};
+	},
+	_addMenuTitle: function(){
+
+		var $menuTitleSpan = $(".n2widget_hamburger_header_menu_title_text");
+
+		if ($menuTitleSpan) {
+			if (this.menuTitle) {
+				$menuTitleSpan.text( _loc(this.menuTitle))
+			} else if (this.navigationService) {
+				this.navigationService.printTitle({
+					elem: $menuTitleSpan
+				});
+			};
+		} else {
+			$n2.log("Can't add menu title, .n2widget_hamburger_header_menu_title_text is missing");
+		};
+	},
+	_addModuleName: function(){
+
+		var $moduleNameSpan = $(".n2widget_hamburger_header_module_name_text");		
+
+		if ($moduleNameSpan) {
+			if (this.moduleName) {
+				$moduleNameSpan.text( _loc(this.moduleName));
+			} else if (this.showService && this.dispatchService) {
+				var currentModuleMsg = {
+					type: "moduleGetCurrent"
+				};
+				this.dispatchService.synchronousCall(DH,currentModuleMsg);
+				var moduleId = currentModuleMsg.moduleId;
+				if (moduleId) {
+					$moduleNameSpan.addClass("n2s_insertModuleName");
+					$moduleNameSpan.attr("nunaliit-document",moduleId);
+				};
+			};
+		} else {
+			$n2.log("Can't add module name, .n2widget_hamburger_header_module_name_text is missing");
+		};
+	},
+	_addNavigationItems: function(){
+
+		var $hamburgerMenu = $(".n2widget_hamburger");		
+
+		if ($hamburgerMenu) {
+			// Insert navigation items to hamburger drawer menu
+			if (this.navigationService) {	
+				var $menuContent = $("<div>")
+					.addClass("n2widget_hamburger_menu")
+					.appendTo($hamburgerMenu);
+				this.navigationService.printMenu({
+					elem: $menuContent
+				});
+			};			
+		} else {
+			$n2.log("Can't add navigation items, .n2widget_hamburger_menu is missing");
+		};	
 	}
 });
 

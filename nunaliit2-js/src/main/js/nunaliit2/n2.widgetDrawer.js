@@ -95,9 +95,9 @@ var DrawerWidget = new $n2.Class("DrawerWidget",{
 						,widgetOptions: widgetInfo
 						,isAvailable: false
 					};
-					
+
 					_this.dispatchService.synchronousCall(DH, msg);
-					
+
 					if (msg.isAvailable) {
 						widgetHandlerAvailable = true;
 					};
@@ -207,17 +207,17 @@ var DrawerWidget = new $n2.Class("DrawerWidget",{
 		// Set drawer x position
 		if (!this.drawer.xPos) {
 			if (opts.xPos) {
-	    		if (Number.isInteger(parseInt(opts.xPos))) {
-	       			this.drawer.xPos = parseInt(opts.xPos)+"%";
-	       		} else if (opts.xPos.slice(-1) === "%" || opts.xPos.slice(-2) === "px") {
-	       			this.drawer.xPos = opts.xPos;
-	       		};				
+				if (Number.isInteger(parseInt(opts.xPos))) {
+					this.drawer.xPos = parseInt(opts.xPos)+"%";
+				} else if (opts.xPos.slice(-1) === "%" || opts.xPos.slice(-2) === "px") {
+					this.drawer.xPos = opts.xPos;
+				};				
 			} else {
-    			// set default x position
-    			this.drawer.xPos = "0%";
-    		}; 
+				// set default x position
+				this.drawer.xPos = "0%";
+			};
 		};
-		
+
 		// Set drawer y position
 		if (!this.drawer.yPos) {
 			if (opts.yPos) {
@@ -273,10 +273,9 @@ var DrawerWidget = new $n2.Class("DrawerWidget",{
 		var $container = $("#" + this.drawerId);
 
 		var $button = $("<span>")
-    		.addClass("n2widget_drawer_close_button")
-    		.text("\u2716")
-    		.click(function(){
-
+			.addClass("n2widget_drawer_close_button")
+			.text("\u2716")
+			.click(function(){
 				// Set Transform translateX depending on pull direction
 				if (_this.drawer.pullDirection === "RIGHT") {					
 					$("#"+_this.drawerId).css("transform", "translateX(-" + _this.drawer.width + ")");		
@@ -287,10 +286,10 @@ var DrawerWidget = new $n2.Class("DrawerWidget",{
 				} else if (_this.drawer.pullDirection === "DOWN") {
 					$("#"+_this.drawerId).css("transform", "translateY(-" + _this.drawer.height + ")");
 				};
-
-	    		var $drawer_content_mask = $("#" + _this.maskId);
-	    		$drawer_content_mask.css("visibility","hidden");
-    		});
+				
+				var $drawer_content_mask = $("#" + _this.maskId);
+				$drawer_content_mask.css("visibility","hidden");
+			});
 
 		$button.prependTo($container);
 	},
@@ -310,11 +309,10 @@ var DrawerWidget = new $n2.Class("DrawerWidget",{
 		};
 
 		var $button = $("<span>")
-    		.addClass("n2widget_drawer_open_button")
-    		.text(openButtonText)
-    		.click(function() {
-
-    			// Set Transform translateX depending on pull direction
+			.addClass("n2widget_drawer_open_button")
+			.text(openButtonText)
+			.click(function() {
+				// Set Transform translateX depending on pull direction
 				if (_this.drawer.pullDirection === "RIGHT") {					
 					$("#"+_this.drawerId).css("transform", "translateX(0px)");		
 				} else if (_this.drawer.pullDirection === "LEFT") {
@@ -324,12 +322,12 @@ var DrawerWidget = new $n2.Class("DrawerWidget",{
 				} else if (_this.drawer.pullDirection === "DOWN") {
 					$("#"+_this.drawerId).css("transform", "translateY(0px)");
 				};
-				
-	    		var $drawer_content_mask = $("#"+_this.maskId);
-	    		$drawer_content_mask.css("visibility","visible");
-	    		$n2.log($drawer_content_mask);
-    		});
-		
+
+				var $drawer_content_mask = $("#"+_this.maskId);
+				$drawer_content_mask.css("visibility","visible");
+				$n2.log($drawer_content_mask);
+			});
+
 		$button.prependTo($buttonContainer);
 	},
 
@@ -347,8 +345,7 @@ var DrawerWidget = new $n2.Class("DrawerWidget",{
 			.attr("id",this.maskId)
 			.appendTo($drawerContainer)
 			.addClass("drawer_content_mask")
-			.click(function(){
-				
+			.click(function(){	
 				// Set Transform translateX depending on pull direction
 				if (_this.drawer.pullDirection === "RIGHT") {					
 					$("#"+_this.drawerId).css("transform", "translateX(-" + _this.drawer.width + ")");		
@@ -359,9 +356,9 @@ var DrawerWidget = new $n2.Class("DrawerWidget",{
 				} else if (_this.drawer.pullDirection === "DOWN") {
 					$("#"+_this.drawerId).css("transform", "translateY(-" + _this.drawer.height + ")");
 				};
-				
-	    		var $drawer_content_mask = $("#"+_this.maskId);
-	    		$drawer_content_mask.css("visibility","hidden");
+
+				var $drawer_content_mask = $("#"+_this.maskId);
+				$drawer_content_mask.css("visibility","hidden");
 			});
 	}
 });
@@ -370,7 +367,7 @@ var DrawerWidget = new $n2.Class("DrawerWidget",{
 function HandleWidgetAvailableRequests(m){
 	if( m.widgetType === 'drawerWidget' ){
 		m.isAvailable = true;
-    };
+	};
 };
 
 //--------------------------------------------------------------------------
@@ -378,16 +375,16 @@ function HandleWidgetDisplayRequests(m){
 	if( m.widgetType === 'drawerWidget' ){
 		var widgetOptions = m.widgetOptions;
 		var config = m.config;
-		
+
 		var options = {};
-		
+
 		if( widgetOptions ){
 			for(var key in widgetOptions){
 				var value = widgetOptions[key];
 				options[key] = value;
 			};
 		};
-		
+
 		if( config ){
 			options.config = config;
 
@@ -395,9 +392,9 @@ function HandleWidgetDisplayRequests(m){
 				options.dispatchService = config.directory.dispatchService;
 			};
 		};
-		
+
 		new DrawerWidget(options);
-    };
+	};
 };
 
 //--------------------------------------------------------------------------

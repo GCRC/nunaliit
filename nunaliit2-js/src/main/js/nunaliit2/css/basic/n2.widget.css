@@ -811,10 +811,6 @@ Multi Filter Selection
 Drawer widget 
 ==============================
 */
-html {
-	overflow: hidden;
-}
-
 .drawer_content_mask {
 	background-color: rgba(0,0,0,0.25);
 	z-index:1006;
@@ -827,15 +823,15 @@ html {
 }
 
 .n2widget_drawer {
-    position:absolute;
-    /* A z-index of 1007 is applied so that a container will appear above the Layer Switcher button */
-    z-index: 1007;
-    background-color: #FFFFFF;
-    transition: 0.5s;
-    /* Material Design css equivalent of 16dp elevation height */
+	position:absolute;
+	/* A z-index of 1007 is applied so that a container will appear above the Layer Switcher button */
+	z-index: 1007;
+	background-color: #FFFFFF;
+	transition: 0.5s;
+	/* Material Design css equivalent of 16dp elevation height */
 	box-shadow: 0 16px 24px 2px rgba(0, 0, 0, .14), 0 6px 30px 5px rgba(0, 0, 0, .12), 0 8px 10px -5px rgba(0, 0, 0, .2);
 	overflow-x: hidden;
-    border-radius: 2px;
+	border-radius: 2px;
 }
 
 .n2widget_drawer .n2widget_drawer_close_button {
@@ -893,9 +889,9 @@ Hamburger Menu widget
 }
 
 .n2widget_hamburger li {
-    display: block;
-    line-height: 2;
-    white-space: nowrap;
+	display: block;
+	line-height: 2;
+	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
