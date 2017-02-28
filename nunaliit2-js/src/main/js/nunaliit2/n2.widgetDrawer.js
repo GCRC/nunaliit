@@ -2,8 +2,10 @@
 Copyright (c) 2017, Geomatics and Cartographic Research Centre, Carleton 
 University
 All rights reserved.
+
 Redistribution and use in source and binary forms, with or without 
 modification, are permitted provided that the following conditions are met:
+
  - Redistributions of source code must retain the above copyright notice, 
    this list of conditions and the following disclaimer.
  - Redistributions in binary form must reproduce the above copyright notice,
@@ -13,6 +15,7 @@ modification, are permitted provided that the following conditions are met:
    Carleton University nor the names of its contributors may be used to 
    endorse or promote products derived from this software without specific 
    prior written permission.
+   
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
 IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
@@ -367,24 +370,14 @@ var DrawerWidget = new $n2.Class("DrawerWidget",{
 function HandleWidgetAvailableRequests(m){
 	if( m.widgetType === 'drawerWidget' ){
 		m.isAvailable = true;
-    }
+    };
 };
 
 //--------------------------------------------------------------------------
 function HandleWidgetDisplayRequests(m){
 	if( m.widgetType === 'drawerWidget' ){
-		var widgetOptions: m.widgetOptions,
-		var config: m.config,		
-		var drawerContainerClass: m.widgetOptions.drawerContainerClass,
-		var buttonContainerClass: m.widgetOptions.buttonContainerClass,
-		var buttonText: m.widgetOptions.buttonText,
-		var dispatchService: m.config.directory.dispatchService,
-		var pullDirection: m.widgetOptions.pullDirection,
-		var xPos: m.widgetOptions.xPos,
-		var yPos: m.widgetOptions.yPos,
-		var width: m.widgetOptions.width,
-		var height: m.widgetOptions.height,
-		var widgets: m.widgetOptions.widgets
+		var widgetOptions = m.widgetOptions;
+		var config = m.config;
 		
 		var options = {};
 		
@@ -394,8 +387,6 @@ function HandleWidgetDisplayRequests(m){
 				options[key] = value;
 			};
 		};
-
-		options.containerId = containerId;
 		
 		if( config ){
 			options.config = config;

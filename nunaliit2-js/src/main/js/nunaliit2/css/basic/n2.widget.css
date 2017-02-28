@@ -817,7 +817,7 @@ html {
 
 .drawer_content_mask {
 	background-color: rgba(0,0,0,0.25);
-	z-index:98;
+	z-index:1006;
 	visibility:hidden;
 	position:absolute;
 	top:0;
@@ -828,7 +828,8 @@ html {
 
 .n2widget_drawer {
     position:absolute;
-    z-index: 99;
+    /* A z-index of 1007 is applied so that a container will appear above the Layer Switcher button */
+    z-index: 1007;
     background-color: #FFFFFF;
     transition: 0.5s;
     /* Material Design css equivalent of 16dp elevation height */
@@ -854,24 +855,17 @@ html {
 	position: inherit;
 }
 
+.n2widget_drawer_open_button {
+	color: #FFFFFF; 
+	text-shadow: black 1px 1px 1px;
+	cursor:pointer;
+}
 
 /* 
 ==============================
 Hamburger Menu widget 
 ==============================
 */
-.n2widget_drawer_open_button {
-	color: #FFFFFF; 
-	font-size:30px;
-	text-shadow: black 1px 1px 1px;
-	cursor:pointer;
-	position:absolute;
-	left: 10px;
-	top:10px;
-	z-index: 10;
-	padding: 5px;
-	margin-right:10px;
-}
 
 .n2widget_hamburger ul,
 .n2widget_hamburger ul li {

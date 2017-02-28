@@ -2,8 +2,10 @@
 Copyright (c) 2017, Geomatics and Cartographic Research Centre, Carleton 
 University
 All rights reserved.
+
 Redistribution and use in source and binary forms, with or without 
 modification, are permitted provided that the following conditions are met:
+
  - Redistributions of source code must retain the above copyright notice, 
    this list of conditions and the following disclaimer.
  - Redistributions in binary form must reproduce the above copyright notice,
@@ -13,6 +15,7 @@ modification, are permitted provided that the following conditions are met:
    Carleton University nor the names of its contributors may be used to 
    endorse or promote products derived from this software without specific 
    prior written permission.
+   
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
 IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
@@ -160,13 +163,8 @@ function HandleWidgetAvailableRequests(m){
 //--------------------------------------------------------------------------
 function HandleWidgetDisplayRequests(m){
 	if( m.widgetType === 'hamburgerMenuWidget' ){
-		var widgetOptions: m.widgetOptions,
-		var showService: m.config.directory.showService,
-		var dispatchService: m.config.directory.dispatchService,
-		var containerClass: m.widgetOptions.containerClass,
-		var menuTitle: m.widgetOptions.menuTitle,
-		var config: m.config,
-		var navigationService: m.config.directory.navigationService		
+		var widgetOptions = m.widgetOptions;
+		var config = m.config;
 		
 		var options = {};
 		
@@ -176,14 +174,14 @@ function HandleWidgetDisplayRequests(m){
 				options[key] = value;
 			};
 		};
-
-		options.containerId = containerId;
 		
 		if( config ){
 			options.config = config;
 
 			if( config.directory ){
 				options.dispatchService = config.directory.dispatchService;
+				options.showService = config.directory.showService;
+				options.navigationService = config.directory.navigationService;
 			};
 		};
 		
