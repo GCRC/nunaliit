@@ -40,7 +40,7 @@ var
  /*
   *  Drawer Widget Options
   * -------------------------------
-  *  drawerContainerClass: The container of the drawer
+  *  containerId: The container of the drawer
   *  buttonContainerClass: The container of the open drawer button
   *  buttonText: String representing the button text 
   *  widgets: Array of widgets placed inside the drawer widget
@@ -50,6 +50,7 @@ var
   *  yPos: Set yPos of drawer position (in px or %)
   *  pullDirection: UP, DOWN, LEFT, RIGHT (default)
   *  addClasses: Specify a class <string> or classes <array of strings> to the widget
+  *  addButtonClasses: Specify a class <string> or classes <array of strings> to the button
   */
   
 //--------------------------------------------------------------------------
@@ -59,16 +60,17 @@ var DrawerWidget = new $n2.Class("DrawerWidget",{
 	config: null,
 	drawerId: null,
 	maskId: null,
-	drawerContainerClass: null,
-	buttonContainerClass: null,
+	containerId: null,
+	buttonContainerId: null,
 	buttonText: null,
 	drawer:null,
+	addButtonClasses:null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			config: null
 			,dispatchService: null
-			,drawerContainerClass: null
+			,containerId: null
 			,buttonContainerClass: null
 			,buttonText: null
 			,widgets: null
@@ -76,8 +78,9 @@ var DrawerWidget = new $n2.Class("DrawerWidget",{
 			,height: null
 			,xPos: null
 			,yPos: null
-			,pullDirection: null
+			,pullDirection: "RIGHT"
 			,addClasses: null
+			,addButtonClasses: null
 		},opts_);
 
 		var _this = this;
@@ -85,12 +88,20 @@ var DrawerWidget = new $n2.Class("DrawerWidget",{
 		this.dispatchService = opts.dispatchService;
 		this.config = opts.config;
 
-		this.drawerContainerClass = opts.drawerContainerClass;
-		this.buttonContainerClass = opts.buttonContainerClass;
+		this.containerId = opts.containerId;
 		this.buttonText = opts.buttonText;
+		this.addButtonClasses = opts.addButtonClasses;
 		this.drawerId = $n2.getUniqueId();
 		this.maskId = $n2.getUniqueId();
 		this.drawer = {};
+
+		this.buttonContainerId = this.containerId;
+		if( typeof opts.buttonContainerClass === 'string' ){
+			var $buttonContainer = $('.'+opts.buttonContainerClass).first();
+			if( $buttonContainer.length > 0 ){
+				this.buttonContainerId = $n2.utils.getElementIdentifier($buttonContainer);
+			};
+		};
 	
 		// Set Drawer Position & Dimensions
 		// ---------------------------------------------
@@ -128,11 +139,11 @@ var DrawerWidget = new $n2.Class("DrawerWidget",{
 		if (availableWidgets.length > 0) {
 
 			// Get container
-			if (!this.drawerContainerClass) {
+			if (!this.containerId) {
 				throw new Error("Drawer container class must be specified");
 			};
 
-			var $drawerContainer = $("." + this.drawerContainerClass);
+			var $drawerContainer = $("#" + this.containerId);
 
 			var $widget = $("<div>")
 				.attr("id",this.drawerId)
@@ -193,10 +204,13 @@ var DrawerWidget = new $n2.Class("DrawerWidget",{
 
 	_setDrawerPosition: function(opts){
 
-		var validPullDirections = opts.pullDirection.toUpperCase() === "LEFT"
-			|| opts.pullDirection.toUpperCase() === "RIGHT"
-			|| opts.pullDirection.toUpperCase() === "UP"
-			|| opts.pullDirection.toUpperCase() === "DOWN";
+		var validPullDirections = false;
+		if( typeof opts.pullDirection === 'string' ){
+			validPullDirections = opts.pullDirection.toUpperCase() === "LEFT"
+				|| opts.pullDirection.toUpperCase() === "RIGHT"
+				|| opts.pullDirection.toUpperCase() === "UP"
+				|| opts.pullDirection.toUpperCase() === "DOWN";
+		};
 
 		if (validPullDirections) {
 			if (opts.pullDirection.toUpperCase() === "RIGHT") {
@@ -313,8 +327,8 @@ var DrawerWidget = new $n2.Class("DrawerWidget",{
 
 		var $buttonContainer = $(".nunaliit_header_container");
 
-		if (typeof this.buttonContainerClass === "string") {
-			$buttonContainer = $("."+this.buttonContainerClass);
+		if (typeof this.buttonContainerId === "string") {
+			$buttonContainer = $("#"+this.buttonContainerId);
 		};
 
 		var openButtonText = "\u2261";
@@ -342,6 +356,17 @@ var DrawerWidget = new $n2.Class("DrawerWidget",{
 				$n2.log($drawer_content_mask);
 			});
 
+		// Add button classes
+		if (typeof this.addButtonClasses === "string") {
+			$button.addClass(this.addButtonClasses);
+		} else if ($n2.isArray(this.addButtonClasses)) {
+			this.addButtonClasses.forEach(function(className){
+				if (typeof className === "string") {
+					$button.addClass(className);
+				};
+			});
+		};
+
 		$button.prependTo($buttonContainer);
 	},
 
@@ -349,8 +374,8 @@ var DrawerWidget = new $n2.Class("DrawerWidget",{
 		var _this = this;
 
 		var $drawerContainer = $("body");
-		if (typeof this.drawerContainerClass === "string") {
-			$drawerContainer = $("."+this.drawerContainerClass);
+		if (typeof this.containerId === "string") {
+			$drawerContainer = $("#"+this.containerId);
 		};
 
 		// Add an atlas content mask
@@ -388,6 +413,7 @@ function HandleWidgetAvailableRequests(m){
 function HandleWidgetDisplayRequests(m){
 	if( m.widgetType === 'drawerWidget' ){
 		var widgetOptions = m.widgetOptions;
+		var containerId = m.containerId;
 		var config = m.config;
 
 		var options = {};
@@ -398,6 +424,8 @@ function HandleWidgetDisplayRequests(m){
 				options[key] = value;
 			};
 		};
+		
+		options.containerId = containerId;
 
 		if( config ){
 			options.config = config;
