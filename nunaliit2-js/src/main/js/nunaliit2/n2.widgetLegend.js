@@ -259,6 +259,10 @@ var LegendWidget = $n2.Class('LegendWidget',{
             	symbolizer.forEachSymbol(function(name,value){
             		if( 'r' === name ){
             			// Do not adjust radius
+            		} else if( 'fill-opacity' === name ) {
+            			// Make opacity more pronounced
+            			var effectiveValue = (value * 0.5) + 0.5;
+                		_this._setAttr(geom, name, effectiveValue);
             		} else {
                 		_this._setAttr(geom, name, value);
             		};
@@ -307,7 +311,7 @@ var LegendWidget = $n2.Class('LegendWidget',{
             this._setAttr(geom, 'y2', 0);
             if( geom ) {
             	symbolizer.forEachSymbol(function(name,value){
-            		_this._setAttr(geom, name, value);
+       				_this._setAttr(geom, name, value);
             	},context);
 
                 svg.appendChild(geom);
@@ -350,7 +354,13 @@ var LegendWidget = $n2.Class('LegendWidget',{
             this._setAttr(geom, 'd', 'M -5 -5 L -2.5 5 L 5 5 L 2.5 -5 Z');
             if( geom ) {
             	symbolizer.forEachSymbol(function(name,value){
-            		_this._setAttr(geom, name, value);
+        			if( 'fill-opacity' === name ) {
+	        			// Make opacity more pronounced
+	        			var effectiveValue = (value * 0.5) + 0.5;
+	            		_this._setAttr(geom, name, effectiveValue);
+        			} else {
+        				_this._setAttr(geom, name, value);
+        			};
             	},context);
 
                 svg.appendChild(geom);
