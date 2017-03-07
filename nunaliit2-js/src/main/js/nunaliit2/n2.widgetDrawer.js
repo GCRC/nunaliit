@@ -41,7 +41,7 @@ var
   *  Drawer Widget Options
   * -------------------------------
   *  containerId: The container of the drawer
-  *  buttonContainerClass: The container of the open drawer button
+  *  buttonContainerId: The container of the open drawer button
   *  buttonText: String representing the button text 
   *  widgets: Array of widgets placed inside the drawer widget
   *  width: Set width of drawer (in px or %)
@@ -71,7 +71,7 @@ var DrawerWidget = new $n2.Class("DrawerWidget",{
 			config: null
 			,dispatchService: null
 			,containerId: null
-			,buttonContainerClass: null
+			,buttonContainerId: null
 			,buttonText: null
 			,widgets: null
 			,width: null
@@ -96,8 +96,8 @@ var DrawerWidget = new $n2.Class("DrawerWidget",{
 		this.drawer = {};
 
 		this.buttonContainerId = this.containerId;
-		if( typeof opts.buttonContainerClass === 'string' ){
-			var $buttonContainer = $('.'+opts.buttonContainerClass).first();
+		if( typeof opts.buttonContainerId === 'string' ){
+			var $buttonContainer = $('#'+opts.buttonContainerId).first();
 			if( $buttonContainer.length > 0 ){
 				this.buttonContainerId = $n2.utils.getElementIdentifier($buttonContainer);
 			};
