@@ -75,6 +75,18 @@ var SelectionRedirector = $n2.Class('SelectionRedirector',{
 	currentFocusNumber: null,
 	
 	popupMaxLines: null,
+
+	/**
+	 * If set, when a selection translation returns empty,
+	 * then do not send an empty selection. Simply ignore.
+	 */
+	suppressEmptySelection: null,
+
+	/**
+	 * By default, if a selection translation returns empty, then
+	 * focus event is not sent. If this is set, force the focus event.
+	 */
+	forceEmptyFocus: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -84,6 +96,8 @@ var SelectionRedirector = $n2.Class('SelectionRedirector',{
 			,customService: null
 			,showService: null
 			,popupMaxLines: 12
+			,suppressEmptySelection: false
+			,forceEmptyFocus: false
 		},opts_);
 		
 		var _this = this;
@@ -94,6 +108,16 @@ var SelectionRedirector = $n2.Class('SelectionRedirector',{
 		this.customService = opts.customService;
 		this.showService = opts.showService;
 		this.popupMaxLines = opts.popupMaxLines;
+		
+		this.suppressEmptySelection = false;
+		if( opts.suppressEmptySelection ){
+			this.suppressEmptySelection = true;
+		};
+		
+		this.forceEmptyFocus = false;
+		if( opts.forceEmptyFocus ){
+			this.forceEmptyFocus = true;
+		};
 		
 		if( !this.dispatchService ){
 			throw new Error('SelectionRedirector requires dispatchService');
@@ -213,14 +237,13 @@ var SelectionRedirector = $n2.Class('SelectionRedirector',{
 						msg[name] = value;
 					};
 					
-					// Fix up 
-					msg.type = 'selected';
-					delete msg.docId;
-					delete msg.docIds;
-					delete msg.doc;
-					delete msg.docs;
-					
 					if( selectedDocs.length > 1 ){
+						delete msg.docId;
+						delete msg.docIds;
+						delete msg.doc;
+						delete msg.docs;
+
+						msg.type = 'selected';
 						msg.docIds = [];
 						msg.docs = [];
 						for(var i=0,e=selectedDocs.length; i<e; ++i){
@@ -229,10 +252,28 @@ var SelectionRedirector = $n2.Class('SelectionRedirector',{
 							msg.docIds.push(doc._id);
 						};
 						_this.dispatchService.send(DH,msg);
+
 					} else if ( selectedDocs.length > 0 ){
+						delete msg.docId;
+						delete msg.docIds;
+						delete msg.doc;
+						delete msg.docs;
+
+						msg.type = 'selected';
 						msg.doc = selectedDocs[0];
 						msg.docId = selectedDocs[0]._id;
 						_this.dispatchService.send(DH,msg);
+
+					} else {
+						// At this point, no document was found associated with
+						// the initial selection. By default, simply continue with 
+						// selection.
+						if( _this.suppressEmptySelection ){
+							// ignore
+						} else {
+							msg.type = 'selected';
+							_this.dispatchService.send(DH,msg);
+						};
 					};
 					
 					if( supplementDocIds && selectedDocs.length > 0 ){
@@ -273,15 +314,14 @@ var SelectionRedirector = $n2.Class('SelectionRedirector',{
 						var value = m[name];
 						msg[name] = value;
 					};
-					
-					// Fix up 
-					msg.type = 'focusOn';
-					delete msg.docId;
-					delete msg.docIds;
-					delete msg.doc;
-					delete msg.docs;
 
 					if( selectedDocs.length > 1 ){
+						delete msg.docId;
+						delete msg.docIds;
+						delete msg.doc;
+						delete msg.docs;
+
+						msg.type = 'focusOn';
 						msg.docIds = [];
 						msg.docs = [];
 						for(var i=0,e=selectedDocs.length; i<e; ++i){
@@ -290,10 +330,25 @@ var SelectionRedirector = $n2.Class('SelectionRedirector',{
 							msg.docIds.push(doc._id);
 						};
 						_this.dispatchService.send(DH,msg);
+
 					} else if ( selectedDocs.length > 0 ){
+						delete msg.docId;
+						delete msg.docIds;
+						delete msg.doc;
+						delete msg.docs;
+
+						msg.type = 'focusOn';
 						msg.doc = selectedDocs[0];
 						msg.docId = selectedDocs[0]._id;
 						_this.dispatchService.send(DH,msg);
+
+					} else {
+						// At this point, no document was found associated
+						// with the focus. By default, ignore.
+						if( _this.forceEmptyFocus ){
+							msg.type = 'focusOn';
+							_this.dispatchService.send(DH,msg);
+						};
 					};
 					
 					if( supplementDocIds && selectedDocs.length > 0 ){
