@@ -153,6 +153,167 @@ var SelectDocumentOnModuleIntroduction = $n2.Class({
 });
 
 //--------------------------------------------------------------------------
+// This utility performs a document selection when the current selection on a filter
+// is changed. In this case, a filter refers to a document model of type 
+// SelectableDocumentFilter. This utility is configured with a map of choices pointing
+// to a document identifier. If the choices match, then the utility sends a
+// selection on the associated document.
+// The selection map is structured in such a way that the key is the identifier
+// of the document to be selected. The values in the map can be a string or an 
+// array of strings. These are the choices selected in the associated filter
+// model.
+// For example:
+// {
+//     "utilityType": "selectDocumentOnFilterChange"
+//     ,"sourceModelId": "filterDocsByLayer"
+//     ,"selectionMap": {
+//    	  "123": "public"
+//    	  ,"456": "approved"
+//    	  ,"789": [ "public", "approved" ]
+//     }
+// }
+var SelectDocumentOnFilterChange = $n2.Class('SelectDocumentOnFilterChange',{
+		
+	dispatchService: null,
+	
+	sourceModelId: null,
+	
+	selectionToDocId: null,
+	
+	/**
+	 * Name of event used by source model to report changes in choices
+	 */
+	selectedChoicesChangeEventName: null,
+	
+	/**
+	 * If set, send a 'selected' event instead of a 'userSelect' event.
+	 */
+	performSelectedEvent: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dispatchService: undefined
+			,sourceModelId: undefined
+			,selectionMap: undefined
+			,performSelectedEvent: undefined
+		},opts_);
+		
+		var _this = this;
+		
+		this.dispatchService = opts.dispatchService;
+		
+		if( typeof opts.sourceModelId === 'string' ){
+			this.sourceModelId = opts.sourceModelId;
+		} else {
+			throw new Error('In configuration for SelectDocumentOnFilterChange, sourceModelId must be specified as a string');
+		};
+		
+		this.selectionToDocId = {};
+		if( opts.selectionMap && typeof opts.selectionMap === 'object' ){
+			for(var docId in opts.selectionMap){
+				var selection = opts.selectionMap[docId];
+				var selectionString = this._selectionToString(selection);
+				if( selectionString ){
+					this.selectionToDocId[selectionString] = docId;
+				};
+			};
+		};
+		
+		this.performSelectedEvent = false;
+		if( opts.performSelectedEvent ){
+			this.performSelectedEvent = true;
+		};
+		
+		// Register to events
+		if( this.dispatchService && this.sourceModelId ){
+			var fn = function(m, addr, dispatcher){
+				_this._handleFilterChange(m, addr, dispatcher);
+			};
+			
+			// Get model info
+			var modelInfoRequest = {
+				type: 'modelGetInfo'
+				,modelId: this.sourceModelId
+				,modelInfo: null
+			};
+			this.dispatchService.synchronousCall(DH, modelInfoRequest);
+			var sourceModelInfo = modelInfoRequest.modelInfo;
+			
+			if( sourceModelInfo 
+			 && sourceModelInfo.parameters 
+			 && sourceModelInfo.parameters.selectedChoices ){
+				var paramInfo = sourceModelInfo.parameters.selectedChoices;
+				this.selectedChoicesChangeEventName = paramInfo.changeEvent;
+			};
+			
+			if( this.selectedChoicesChangeEventName ){
+				this.dispatchService.register(DH, this.selectedChoicesChangeEventName, fn);
+			};
+		};
+		
+		$n2.log(this._classname, this);
+	},
+	
+	_handleFilterChange: function(m, addr, dispatcher){
+		if( this.selectedChoicesChangeEventName === m.type ){
+			if( m.value ){
+				var selection = m.value;
+				var selectionString = this._selectionToString(selection);
+				var docId = this.selectionToDocId[selectionString];
+				if( docId ){
+					var eventType = 'userSelect';
+					if( this.performSelectedEvent ){
+						eventType = 'selected';
+					};
+
+					this.dispatchService.send(DH, {
+						type: eventType
+						,docId: docId
+					});
+				};
+			};
+		};
+	},
+	
+	/**
+	 * Turns an array of selectors into a single string. First, sorts
+	 * the items in array. Then, escapes each string. Finally, concatenate
+	 * each string using a separator.
+	 * 
+	 * 'abc' -> 'abc'
+	 * [ 'def', 'abc' ] -> 'abc|def'
+	 * [ 'a|b', 'c|d' ] -> 'a||b|c||d'
+	 */
+	_selectionToString: function(selection){
+		var _this = this;
+
+		var selectionString = undefined;
+		
+		if( typeof selection === 'string' ){
+			selectionString = this._escapeSelector(selection);
+
+		} else if( $n2.isArray(selection) ){
+			var effectiveSelection = [];
+			selection.forEach(function(sel){
+				if( typeof sel === 'string' ){
+					effectiveSelection.push( _this._escapeSelector(sel) );
+				};
+			});
+
+			effectiveSelection.sort();
+			
+			selectionString = effectiveSelection.join('|');
+		};
+		
+		return selectionString;
+	},
+	
+	_escapeSelector: function(sel){
+		return sel.replace(/\|/g, 'oranges');
+	}
+});
+
+//--------------------------------------------------------------------------
 var Service = $n2.Class({
 	
 	dispatchService: null,
@@ -222,6 +383,26 @@ var Service = $n2.Class({
 		        
 		        m.created = true;
 
+			} else if( 'selectDocumentOnFilterChange' === m.utilityType ){
+				var options = {};
+				
+				if( typeof m.utilityOptions === 'object' ){
+					for(var key in m.utilityOptions){
+						var value = m.utilityOptions[key];
+						options[key] = value;
+					};
+				};
+				
+				if( m.config ){
+					if( m.config.directory ){
+						options.dispatchService = m.config.directory.dispatchService;
+					};
+				};
+				
+		        new SelectDocumentOnFilterChange(options);
+		        
+		        m.created = true;
+
 			} else {
 				if( $n2.mapUtilities 
 				 && typeof $n2.mapUtilities.HandleUtilityCreateRequests === 'function' ){
@@ -237,6 +418,7 @@ $n2.utilities = {
 	Service: Service
 	,AssignLayerOnDocumentCreation: AssignLayerOnDocumentCreation
 	,SelectDocumentOnModuleIntroduction: SelectDocumentOnModuleIntroduction
+	,SelectDocumentOnFilterChange: SelectDocumentOnFilterChange
 };
 
 })(jQuery,nunaliit2);

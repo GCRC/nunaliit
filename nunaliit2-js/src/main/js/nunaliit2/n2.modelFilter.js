@@ -650,6 +650,9 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 	
 	modelIsLoading: undefined,
 	
+	/**
+	 * Keeps track if a user has selected a choice, yet.
+	 */
 	receivedSelection: undefined,
 
 	initialize: function(opts_){
@@ -1014,6 +1017,9 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 			if( _this.currentChoiceGeneration === currentChoiceGeneration ){
 				_this._updateAvailableChoices(choices);
 
+				// By default, accepts ALL choices. Until a selection
+				// is performed, change the selected choices to be
+				// all possible choices.
 				if( !_this.receivedSelection ){
 					var selection = [];
 					choices.forEach(function(choice){
@@ -1264,7 +1270,7 @@ var DocumentFilterByCreator = $n2.Class('DocumentFilterByCreator', SelectableDoc
 });
 
 //--------------------------------------------------------------------------
-var LayerFilter = $n2.Class('LayerFilter', SelectableDocumentFilter, {
+var LayerFilter2 = $n2.Class('LayerFilter2', SelectableDocumentFilter, {
 
 	layerDefinitionByLayerId: null,
 
@@ -1596,7 +1602,7 @@ function handleModelCreate(m, addr, dispatcher){
 			};
 		};
 		
-		new LayerFilter(options);
+		new LayerFilter2(options);
 		
 		m.created = true;
 	};
@@ -1609,7 +1615,7 @@ $n2.modelFilter = {
 	,SchemaFilter: SchemaFilter
 	,ReferenceFilter: ReferenceFilter
 	,SelectableDocumentFilter: SelectableDocumentFilter
-	,LayerFilter: LayerFilter
+	,LayerFilter2: LayerFilter2
 	,handleModelCreate: handleModelCreate 
 };
 
