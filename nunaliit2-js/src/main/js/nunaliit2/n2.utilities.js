@@ -166,6 +166,7 @@ var SelectDocumentOnModuleIntroduction = $n2.Class({
 // {
 //     "utilityType": "selectDocumentOnFilterChange"
 //     ,"sourceModelId": "filterDocsByLayer"
+//     ,"performSelectedEvent": false
 //     ,"selectionMap": {
 //    	  "123": "public"
 //    	  ,"456": "approved"

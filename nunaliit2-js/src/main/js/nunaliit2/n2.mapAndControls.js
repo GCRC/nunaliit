@@ -2289,8 +2289,27 @@ var MapAndControls = $n2.Class({
 		};
 		layerInfo.featureStrategy = new OpenLayers.Strategy.NunaliitFeatureStrategy();
 		layerOptions.strategies.push( layerInfo.featureStrategy );
+		if( typeof layerDefinition.minimumLinePixelSize === 'number' 
+		 || typeof layerDefinition.minimumPolygonPixelSize === 'number' ){
+			var minimumSizeOptions = {};
+			if( typeof layerDefinition.minimumLinePixelSize === 'number' ){
+				minimumSizeOptions.minimumLinePixelSize = layerDefinition.minimumLinePixelSize;
+			};
+			if( typeof layerDefinition.minimumPolygonPixelSize === 'number' ){
+				minimumSizeOptions.minimumPolygonPixelSize = layerDefinition.minimumPolygonPixelSize;
+			};
+			layerInfo.featureStrategy.setMinimumSize(minimumSizeOptions);
+		};
 		if( layerInfo.clustering ) {
 			var clusterOptions = {};
+			
+			if( typeof layerDefinition.minimumLinePixelSize === 'number' ){
+				clusterOptions.minimumLinePixelSize = layerDefinition.minimumLinePixelSize;
+			};
+			if( typeof layerDefinition.minimumPolygonPixelSize === 'number' ){
+				clusterOptions.minimumPolygonPixelSize = layerDefinition.minimumPolygonPixelSize;
+			};
+			
 			for(var cProp in layerInfo.clustering){
 				var cValue = layerInfo.clustering[cProp];
 				if( 'distance' === cProp

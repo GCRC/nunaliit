@@ -106,6 +106,108 @@ var Filtering = $n2.Class({
 });
 
 //+++++++++++++++++++++++++++++++++++++++++++++++
+var MinimumSizeStrategy = $n2.Class({
+
+	minimumLinePixelSize: 20,
+
+	minimumPolygonPixelSize: 20,
+
+    initialize: function(opts_){
+		var opts = $n2.extend({
+			minimumLinePixelSize: 20
+			,minimumPolygonPixelSize: 20
+		},opts_);
+
+		this.minimumLinePixelSize = 20;
+		if( typeof opts.minimumLinePixelSize === 'number' ){
+			this.minimumLinePixelSize = opts.minimumLinePixelSize;
+		};
+
+		this.minimumPolygonPixelSize = 20;
+		if( typeof opts.minimumPolygonPixelSize === 'number' ){
+			this.minimumPolygonPixelSize = opts.minimumPolygonPixelSize;
+		};
+	},
+	
+	processFeatures: function(features, resolution){
+        var clusters = [];
+        var featuresToAdd = [];
+        var feature, clustered, cluster;
+        for(var i=0; i<features.length; ++i) {
+            feature = features[i];
+            if( this._shouldTurnToPoint(feature, resolution) ){
+                var center = feature.geometry.getBounds().getCenterLonLat();
+                var pointGeom = new OpenLayers.Geometry.Point(center.lon, center.lat);
+
+                feature.n2MinSizeGeom = feature.geometry;
+                feature.geometry = pointGeom;
+
+            } else if( this._shouldRestore(feature, resolution) ){
+                var originalGeom = feature.n2MinSizeGeom;
+                feature.geometry = originalGeom;
+                delete feature.n2MinSizeGeom;
+            };
+        };
+        
+        return features;
+	},
+
+	_shouldTurnToPoint: function(feature, resolution) {
+    	// By default, leave as is
+        var eligible = false;
+        
+        if( feature.geometry.CLASS_NAME.indexOf('Line') >= 0 ){
+    		var bounds = feature.geometry.getBounds();
+    		var pixels = this._boundsToPixels(bounds, resolution);
+    		if( pixels < this.minimumLinePixelSize ) {
+    			eligible = true;
+    		};
+    	} else if( feature.geometry.CLASS_NAME.indexOf('Polygon') >= 0 ){
+    		var bounds = feature.geometry.getBounds();
+    		var pixels = this._boundsToPixels(bounds, resolution);
+    		if( pixels < this.minimumLinePixelSize ) {
+    			eligible = true;
+    		};
+    	};
+        
+        return eligible;
+	},
+
+	_shouldRestore: function(feature, resolution) {
+    	// By default, leave as is
+        var eligible = false;
+        
+        var geometry = feature.n2MinSizeGeom;
+        if( geometry ){
+            if( geometry.CLASS_NAME.indexOf('Line') >= 0 ){
+        		var bounds = geometry.getBounds();
+        		var pixels = this._boundsToPixels(bounds, resolution);
+        		if( pixels >= this.minimumPolygonPixelSize ) {
+        			eligible = true;
+        		};
+        	} else if( geometry.CLASS_NAME.indexOf('Polygon') >= 0 ){
+        		var bounds = geometry.getBounds();
+        		var pixels = this._boundsToPixels(bounds, resolution);
+        		if( pixels >= this.minimumPolygonPixelSize ) {
+        			eligible = true;
+        		};
+        	};
+        };
+        
+        return eligible;
+    },
+    
+    _boundsToPixels: function(bounds, resolution){
+		var xLen = (bounds.right - bounds.left) / resolution;
+		var yLen = (bounds.top - bounds.bottom) / resolution;
+		if( xLen > yLen ){
+			return xLen;
+		};
+		return yLen;
+    }
+});
+
+//+++++++++++++++++++++++++++++++++++++++++++++++
 var Clustering = $n2.Class({
     /**
      * APIProperty: distance
@@ -396,6 +498,12 @@ OpenLayers.Strategy.NunaliitFeatureStrategy = OpenLayers.Class(OpenLayers.Strate
     editFiltering: null,
     
     /**
+     * Property: minimumSize
+     * {Object} Component that converts lines and polygons to points if too small
+     */
+    minimumSize: null,
+    
+    /**
      * Property: clustering
      * {Object} Component that performs clustering
      */
@@ -431,6 +539,10 @@ OpenLayers.Strategy.NunaliitFeatureStrategy = OpenLayers.Class(OpenLayers.Strate
     	this.editFiltering = null;
     	this.clustering = null;
     	this.sorting = new Sorting();
+    },
+    
+    setMinimumSize: function(opts_){
+    	this.minimumSize = new MinimumSizeStrategy(opts_);
     },
     
     setClustering: function(opts_){
@@ -560,6 +672,11 @@ OpenLayers.Strategy.NunaliitFeatureStrategy = OpenLayers.Class(OpenLayers.Strate
 
     	if( this.filtering ){
     		features = this.filtering.performFiltering(features, filteredOutFeatures);
+    	};
+
+    	if( this.minimumSize ){
+            var resolution = this.layer.map.getResolution();
+    		features = this.minimumSize.processFeatures(features, resolution);
     	};
 
     	if( this.clustering ){

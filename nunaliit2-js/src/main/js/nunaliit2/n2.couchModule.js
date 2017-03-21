@@ -1179,6 +1179,14 @@ var ModuleDisplay = $n2.Class({
 				if( layerInfo.clustering ){
 					layerDefinition.clustering = layerInfo.clustering;
 				};
+
+				if( typeof layerInfo.minimumLinePixelSize === 'number' ){
+					layerDefinition.minimumLinePixelSize = layerInfo.minimumLinePixelSize;
+				};
+
+				if( typeof layerInfo.minimumPolygonPixelSize === 'number' ){
+					layerDefinition.minimumPolygonPixelSize = layerInfo.minimumPolygonPixelSize;
+				};
 				
 				// Add layer to map
 				mapOptions.overlays.push( layerDefinition );
