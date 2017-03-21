@@ -108,22 +108,22 @@ var Filtering = $n2.Class({
 //+++++++++++++++++++++++++++++++++++++++++++++++
 var MinimumSizeStrategy = $n2.Class({
 
-	minimumLinePixelSize: 20,
+	minimumLinePixelSize: 10,
 
-	minimumPolygonPixelSize: 20,
+	minimumPolygonPixelSize: 10,
 
     initialize: function(opts_){
 		var opts = $n2.extend({
-			minimumLinePixelSize: 20
-			,minimumPolygonPixelSize: 20
+			minimumLinePixelSize: 10
+			,minimumPolygonPixelSize: 10
 		},opts_);
 
-		this.minimumLinePixelSize = 20;
+		this.minimumLinePixelSize = 10;
 		if( typeof opts.minimumLinePixelSize === 'number' ){
 			this.minimumLinePixelSize = opts.minimumLinePixelSize;
 		};
 
-		this.minimumPolygonPixelSize = 20;
+		this.minimumPolygonPixelSize = 10;
 		if( typeof opts.minimumPolygonPixelSize === 'number' ){
 			this.minimumPolygonPixelSize = opts.minimumPolygonPixelSize;
 		};
