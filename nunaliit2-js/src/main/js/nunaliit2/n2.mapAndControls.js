@@ -1135,11 +1135,11 @@ var MapAndControls = $n2.Class({
 		this.clickedInfo = {
 			features: []
 			,endFn: []
-			,fids: {}
+			,docIds: {}
 			,selectedId: null
 		};
 		this.focusInfo = {
-			fids: {}
+			docIds: {}
 			,features: []
 		};
 		this.findFeatureInfo = {
@@ -1732,66 +1732,79 @@ var MapAndControls = $n2.Class({
 		};
 	},
 	
-	_getMapFeaturesIncludingFid: function(fid){
-		var fidMap = {};
-		fidMap[fid] = true;
+	_getMapFeaturesIncludingDocId: function(docId){
+		var docIdMap = {};
+		docIdMap[docId] = true;
 		
-		var features = this._getMapFeaturesIncludingFidMap(fidMap);
+		var features = this._getMapFeaturesIncludingDocIdMap(docIdMap);
 		return features;
 	},
 	
-	_getMapFeaturesIncludingFids: function(fids){
-		var fidMap = {};
-		for(var i=0,e=fids.length; i<e; ++i){
-			var fid = fids[i];
-			fidMap[fid] = true;
+	_getMapFeaturesIncludingDocIds: function(docIds){
+		var docIdMap = {};
+		for(var i=0,e=docIds.length; i<e; ++i){
+			var docId = docIds[i];
+			docIdMap[docId] = true;
 		};
 		
-		var features = this._getMapFeaturesIncludingFidMap(fidMap);
+		var features = this._getMapFeaturesIncludingDocIdMap(docIdMap);
 		return features;
 	},
 	
-	_getMapFeaturesIncludingFidMap: function(fidMap){
+	_getMapFeaturesIncludingDocIdMap: function(docIdMap){
 		var features = [];
 		
 		for(var loop=0; loop<this.infoLayers.length; ++loop) {
 			var layerInfo = this.infoLayers[loop];
-			var feature = this._getLayerFeatureIncludingFidMap(layerInfo.olLayer,fidMap);
-			if( feature ) {
-				features.push(feature);
+			var layerFeatures = this._getLayerFeaturesIncludingDocIdMap(layerInfo.olLayer,docIdMap);
+			layerFeatures.forEach(function(lf){
+				features.push(lf);
+			});
+		};
+		
+		return features;
+	},
+	
+	_getLayerFeaturesIncludingDocIdMap: function(layer,docIdMap) {
+		var features = [];
+		
+		if( layer && layer.features ) {
+			for(var loop=0;loop<layer.features.length;++loop) {
+				var feature = layer.features[loop];
+				if( this._doesFeatureSupportDocIdMap(feature, docIdMap) ){
+					features.push(feature);
+				};
 			};
 		};
 		
 		return features;
 	},
 	
-	_getLayerFeatureIncludingFid: function(layer, fid){
-		var map = {};
-		map[fid] = true;
-		return this._getLayerFeatureIncludingFidMap(layer, map);
-	},
-	
-	_getLayerFeatureIncludingFidMap: function(layer,fidMap) {
-		
-		if( layer && layer.features ) {
-			var loop;
-			var features = layer.features;
-			for(loop=0;loop<features.length;++loop) {
-				var feature = features[loop];
-				if( feature.fid && fidMap[feature.fid] ) {
-					return feature;
-				} else if( feature.cluster ) {
-					for(var j=0,k=feature.cluster.length; j<k; ++j){
-						var f = feature.cluster[j];
-						if( f.fid && fidMap[f.fid] ){
-							return feature;
-						};
-					};
+	/**
+	 * Returns true if any of the doc ids in the given map match any of
+	 * the documents supported by the feature.
+	 */
+	_doesFeatureSupportDocIdMap: function(feature, docIdMap){
+		if( feature.fid && docIdMap[feature.fid] ) {
+			// If feature id is set to document id
+			return true;
+		} else if( feature.data && feature.data._id && docIdMap[feature.data._id] ) {
+			// If feature id is not set to document id
+			return true;
+		} else if( feature.cluster ) {
+			for(var j=0,k=feature.cluster.length; j<k; ++j){
+				var f = feature.cluster[j];
+				if( f.fid && docIdMap[f.fid] ) {
+					// If feature id is set to document id
+					return true;
+				} else if( f.data && f.data._id && docIdMap[f.data._id] ) {
+					// If feature id is not set to document id
+					return true;
 				};
 			};
 		};
 		
-		return null;
+		return false;
 	},
 	
 	_getLayerFeaturesFromFilter: function(layer,filter) {
@@ -1905,20 +1918,31 @@ var MapAndControls = $n2.Class({
 					// Read in feature
 					var loadedFeature = features[featureLoop];
 					featuresToAdd.push(loadedFeature);
+
+					var docIdMap = {};
+			        if( loadedFeature 
+			         && loadedFeature.data 
+			         && loadedFeature.data._id ){
+				        docIdMap[loadedFeature.data._id] = true;
+			        };
 					
-					var feature = _this._getLayerFeatureIncludingFid(layerInfo.olLayer,loadedFeature.fid);
-					if( feature ) {
+					var layerFeatures = _this._getLayerFeaturesIncludingDocIdMap(layerInfo.olLayer,docIdMap);
+					for(var lfi=0; lfi<layerFeatures.length; ++lfi){
+						var feature = layerFeatures[lfi];
+
+						// If feature is a cluster, add back features that are
+						// not associated with loaded feature
 						if( feature.cluster ){
 							for(var j=0,k=feature.cluster.length; j<k; ++j){
 								var cf = feature.cluster[j];
-								if( cf.fid !== loadedFeature.fid ){
+								if( false == _this._doesFeatureSupportDocIdMap(cf, docIdMap) ){
 									featuresToAdd.push(cf);
 								};
 							};
 						};
 						
 						featuresToDestroy.push(feature);
-					}
+					};
 				};
 				
 				// Remove features
@@ -1954,20 +1978,21 @@ var MapAndControls = $n2.Class({
 		};
 	},
 	
-	_removeFeature: function(fid) {
+	_removeFeature: function(docId) {
+		var docIdMap = {};
+		docIdMap[docId] = true;
+		
 		for(var loop=0; loop<this.vectorLayers.length; ++loop) {
 			var mapLayer = this.vectorLayers[loop];
-			var feature = this._getLayerFeatureIncludingFid(mapLayer,fid);
-			if( feature ) {
-				if( feature.fid === fid ){
-					mapLayer.destroyFeatures(feature);
-					
-				} else if( feature.cluster ){
+			var layerFeatures = this._getLayerFeaturesIncludingDocIdMap(mapLayer,docIdMap);
+			for(var i=0; i<layerFeatures.length; ++i){
+				var feature = layerFeatures[i];
+				if( feature.cluster ){
 					// Accumulate left over features from cluster
 					var remainingFeatures = null;
 					for(var j=0,k=feature.cluster.length; j<k; ++j){
 						var cf = feature.cluster[j];
-						if( cf.fid !== fid ){
+						if( false == this._doesFeatureSupportDocIdMap(cf,docIdMap) ) {
 							if( !remainingFeatures ) remainingFeatures = [];
 							remainingFeatures.push(cf);
 						};
@@ -1980,6 +2005,9 @@ var MapAndControls = $n2.Class({
 					if( remainingFeatures ){
 						mapLayer.addFeatures(remainingFeatures);
 					};
+				} else {
+					// Not a cluster. Simply destroy
+					mapLayer.destroyFeatures(feature);
 				};
 			};
 		};
@@ -2593,8 +2621,8 @@ var MapAndControls = $n2.Class({
 			if( features ){
 				for(var i=0,e=features.length;i<e;++i){
 					var f = features[i];
-					if( _this.clickedInfo.fids[f.fid] ){
-						var featureInfo = _this.clickedInfo.fids[f.fid];
+					if( _this.clickedInfo.docIds[f.fid] ){
+						var featureInfo = _this.clickedInfo.docIds[f.fid];
 						
 						_this.clickedInfo.features.push(f);
 						
@@ -2606,7 +2634,7 @@ var MapAndControls = $n2.Class({
 							f.n2SelectIntent = featureInfo.intent;
 						};
 					};
-					if( _this.focusInfo.fids[f.fid] ){
+					if( _this.focusInfo.docIds[f.fid] ){
 						_this.focusInfo.features.push(f);
 						f.isHovered = true;
 					};
@@ -2617,8 +2645,8 @@ var MapAndControls = $n2.Class({
 					if( f.cluster ){
 						for(var j=0,k=f.cluster.length; j<k; ++j){
 							var clusterFeature = f.cluster[j];
-							if( _this.clickedInfo.fids[clusterFeature.fid] ){
-								var featureInfo = _this.clickedInfo.fids[clusterFeature.fid];
+							if( _this.clickedInfo.docIds[clusterFeature.fid] ){
+								var featureInfo = _this.clickedInfo.docIds[clusterFeature.fid];
 								_this.clickedInfo.features.push(f);
 								if( featureInfo.clicked ) {
 									f.isClicked = true;
@@ -2627,7 +2655,7 @@ var MapAndControls = $n2.Class({
 									f.n2SelectIntent = featureInfo.intent;
 								};
 							};
-							if( _this.focusInfo.fids[clusterFeature.fid] ){
+							if( _this.focusInfo.docIds[clusterFeature.fid] ){
 								_this.focusInfo.features.push(f);
 								f.isHovered = true;
 							};
@@ -2922,8 +2950,8 @@ var MapAndControls = $n2.Class({
 		} else if( feature.fid ) {
 			this.clickedInfo.features = [feature];
 
-			this.clickedInfo.fids = {};
-			this.clickedInfo.fids[feature.fid] = { clicked: true };
+			this.clickedInfo.docIds = {};
+			this.clickedInfo.docIds[feature.fid] = { clicked: true };
 			this.clickedInfo.selectedId = feature.fid;
 			
 			feature.isClicked = true;
@@ -2968,26 +2996,26 @@ var MapAndControls = $n2.Class({
 
 		this.clickedInfo.endFn = [];
 		this.clickedInfo.features = [];
-		this.clickedInfo.fids = {};
+		this.clickedInfo.docIds = {};
 		this.clickedInfo.selectedId = null;
 	},
 	
-	_selectedFeatures: function(features, fids){
+	_selectedFeatures: function(features, docIds){
 		if( this.currentMode !== this.modes.NAVIGATE ){
 			this._switchMapMode(this.modes.NAVIGATE);
 		};
 		
 		this._endClicked();
 		
-		this.clickedInfo.fids = {};
-		if( fids ) {
-			for(var i=0,e=fids.length; i<e; ++i){
-				var fid = fids[i];
+		this.clickedInfo.docIds = {};
+		if( docIds ) {
+			for(var i=0,e=docIds.length; i<e; ++i){
+				var docId = docIds[i];
 				
-				this.clickedInfo.fids[fid] = { clicked: true };
+				this.clickedInfo.docIds[docId] = { clicked: true };
 				
 				if( !this.clickedInfo.selectedId ){
-					this.clickedInfo.selectedId = fid;
+					this.clickedInfo.selectedId = docId;
 				};
 			};
 		};
@@ -3015,12 +3043,12 @@ var MapAndControls = $n2.Class({
 			this._switchMapMode(this.modes.NAVIGATE);
 		};
 		
-		if( opts.fid ) {
-			this.clickedInfo.fids[opts.fid] = {
+		if( opts.docId ) {
+			this.clickedInfo.docIds[opts.docId] = {
 				clicked: true
 			};
 			if( opts.intent ){
-				this.clickedInfo.fids[opts.fid].intent = opts.intent;
+				this.clickedInfo.docIds[opts.docId].intent = opts.intent;
 			};
 		};
 		
@@ -3099,34 +3127,34 @@ var MapAndControls = $n2.Class({
 		this.hoverInfo.endFn.push(fn);
 	},
 
-	_startFocus: function(fids){
+	_startFocus: function(docIds){
 		this._endFocus();
 		
 		this.focusInfo.origin = {};
-		for(var i=0,e=fids.length; i<e; ++i){
-			var fid = fids[i];
-			this.focusInfo.origin[fid] = true;
+		for(var i=0,e=docIds.length; i<e; ++i){
+			var docId = docIds[i];
+			this.focusInfo.origin[docId] = true;
 		};
 		
 		this._addFocus({
-			fids: fids
+			docIds: docIds
 		});
 	},
 
 	_addFocus: function(opts_){
 		var opts = $n2.extend({
-			fids: null
+			docIds: null
 			,intent: null
 		},opts_);
 
-		if( opts.fids ){
-			for(var i=0,e=opts.fids.length; i<e; ++i){
-				var fid = opts.fids[i];
-				this.focusInfo.fids[fid] = true;
+		if( opts.docIds ){
+			for(var i=0,e=opts.docIds.length; i<e; ++i){
+				var docId = opts.docIds[i];
+				this.focusInfo.docIds[docId] = true;
 			};
 		};
 		
-		var features = this._getMapFeaturesIncludingFidMap(this.focusInfo.fids);
+		var features = this._getMapFeaturesIncludingDocIdMap(this.focusInfo.docIds);
 		
 		for(var i=0,e=features.length; i<e; ++i){
 			var f = features[i];
@@ -3152,7 +3180,7 @@ var MapAndControls = $n2.Class({
 		};
 
 		this.focusInfo.features = [];
-		this.focusInfo.fids = {};
+		this.focusInfo.docIds = {};
 		this.focusInfo.origin = null;
 	},
 	
@@ -5217,18 +5245,28 @@ var MapAndControls = $n2.Class({
 					};
 				};
 				
+				var docIdMap = {};
+				docIdMap[doc._id] = true;
+				
 				// Check added to layer
 				for(var i=0,e=this.infoLayers.length; i<e; ++i) {
 					var infoLayer = this.infoLayers[i];
 					var layerId = infoLayer.id;
-					if( layerIdMap[layerId] ){
-						var feature = this._getLayerFeatureIncludingFid(infoLayer.olLayer,doc._id);
-						var mustLoad = true;
-						if( feature && feature.data ){
-							if( feature.data._rev === doc._rev ){
-								// Feature already present
-								mustLoad = false;
-							};
+					var layerType = infoLayer.type;
+					if( 'couchdb' === layerType && layerIdMap[layerId] ){
+						var layerFeatures = this._getLayerFeaturesIncludingDocIdMap(infoLayer.olLayer,docIdMap);
+						var mustLoad = false;
+						if( layerFeatures.length < 1 ){
+							var mustLoad = true;
+						} else {
+							layerFeatures.forEach(function(feature){
+								if( feature && feature.data ){
+									if( feature.data._rev !== doc._rev ){
+										// Feature already present, but wrong revision
+										mustLoad = true;
+									};
+								};
+							});
 						};
 						
 						if( mustLoad ) {
@@ -5252,22 +5290,28 @@ var MapAndControls = $n2.Class({
 				};
 			};
 			
+			var docIdMap = {};
+			docIdMap[doc._id] = true;
+			
 			// Check removed from layer
 			for(var i=0,e=this.infoLayers.length; i<e; ++i) {
 				var infoLayer = this.infoLayers[i];
 				var layerId = infoLayer.id;
-				if( !layerIdMap[layerId] ){
+				var layerType = infoLayer.type;
+				if(  'couchdb' === layerType 
+				 && !layerIdMap[layerId] ){
 					// This feature does not belong on this layer. If
 					// this feature id is found on the layer, then remove
 					// it (it was removed from layer)
-					var feature = this._getLayerFeatureIncludingFid(infoLayer.olLayer,doc._id);
-					if( feature ) {
+					var layerFeatures = this._getLayerFeaturesIncludingDocIdMap(infoLayer.olLayer,docIdMap);
+					for(var j=0; j<layerFeatures.length; ++j){
+						var feature = layerFeatures[j];
 						var featuresToAdd = null;
 						if( feature.cluster ){
 							for(var j=0,k=feature.cluster.length; j<k; ++j){
 								var cf = feature.cluster[j];
-								if( cf.fid !== doc._id ){
-									if( !featuresToAdd ) featuresToAdd= [];
+								if( false == this._doesFeatureSupportDocIdMap(cf,docIdMap) ){
+									if( !featuresToAdd ) featuresToAdd = [];
 									featuresToAdd.push(cf);
 								};
 							};
@@ -5290,29 +5334,37 @@ var MapAndControls = $n2.Class({
 			for(var i=0,e=this.infoLayers.length; i<e; ++i) {
 				var infoLayer = this.infoLayers[i];
 				var layerId = infoLayer.id;
-				if( layerIdMap[layerId] ){
-					var mustUpdate = true;
-					if( doc && doc._rev ){
-						var feature = this._getLayerFeatureIncludingFid(infoLayer.olLayer,doc._id);
-						if( feature 
-						 && feature.fid === doc._id 
-						 && feature.data 
-						 && feature.data._rev === doc._rev ){
-							// Feature is present and revision is already
-							// up to date. No need to update
-							mustUpdate = false;
-							
-						} else if( feature && feature.cluster ){
-							for(var j=0,k=feature.cluster.length; j<k; ++j){
-								var cf = feature.cluster[j];
-								if( cf 
-								 && cf.fid === doc._id 
-								 && cf.data 
-								 && cf.data._rev === doc._rev ){
-									mustUpdate = false;
+				var layerType = infoLayer.type;
+				if( 'couchdb' === layerType 
+				 && layerIdMap[layerId] 
+				 && doc
+				 && doc._rev ){
+					var mustUpdate = false;
+					var layerFeatures = this._getLayerFeaturesIncludingDocIdMap(infoLayer.olLayer,docIdMap);
+					if( layerFeatures.length < 1 ){
+						// Not present. Reload just in case
+						mustUpdate = true;
+
+					} else {
+						layerFeatures.forEach(function(feature){
+							if( feature.data 
+							 && feature.data._id === doc._id
+							 && feature.data._rev !== doc._rev ){
+								// Feature is present and revision does not match. Need to update
+								mustUpdate = true;
+								
+							} else if( feature.cluster ){
+								for(var j=0,k=feature.cluster.length; j<k; ++j){
+									var cf = feature.cluster[j];
+									if( cf 
+									 && cf.data
+									 && cf.data._id === doc._id
+									 && cf.data._rev !== doc._rev ){
+										mustUpdate = true;
+									};
 								};
 							};
-						};
+						});
 					};
 					
 					if( mustUpdate ) {
@@ -5334,20 +5386,20 @@ var MapAndControls = $n2.Class({
 			
 		} else if( 'selected' === type ) {
 			if( m.docId ) {
-				var features = this._getMapFeaturesIncludingFid(m.docId);
+				var features = this._getMapFeaturesIncludingDocId(m.docId);
 				this._selectedFeatures(features, [m.docId]);
 				
 			} else if( m.docIds ) {
-				var features = this._getMapFeaturesIncludingFids(m.docIds);
+				var features = this._getMapFeaturesIncludingDocIds(m.docIds);
 				this._selectedFeatures(features, m.docIds);
 			};
 			
 		} else if( 'selectedSupplement' === type ) {
-			var fid = m.docId;
-			if( fid ) {
-				var features = this._getMapFeaturesIncludingFid(fid);
+			var docId = m.docId;
+			if( docId ) {
+				var features = this._getMapFeaturesIncludingDocId(docId);
 				this._selectedFeaturesSupplement({
-					fid: fid
+					docId: docId
 					,features: features
 					,intent: m.intent
 				});
@@ -5367,7 +5419,7 @@ var MapAndControls = $n2.Class({
 			this._endFocus();
 			
 		} else if( 'focusOnSupplement' === type ) {
-			var fid = m.docId;
+			var docId = m.docId;
 			
 			// Check if this is still valid
 			var valid = true;
@@ -5380,9 +5432,9 @@ var MapAndControls = $n2.Class({
 				};
 			};
 			
-			if( fid && valid ) {
+			if( docId && valid ) {
 				this._addFocus({
-					fids: [fid]
+					docIds: [docId]
 					,intent: m.intent
 				});
 			};
@@ -5411,9 +5463,9 @@ var MapAndControls = $n2.Class({
 			};
 			
 			// Remember that this feature is looked for by user
-			var fid = m.docId;
-			var features = this._getMapFeaturesIncludingFid(fid);
-			this._startFindFeature(fid, features);
+			var docId = m.docId;
+			var features = this._getMapFeaturesIncludingDocId(docId);
+			this._startFindFeature(docId, features);
 			
 			// Check if we need to turn a layer on
 			if( doc && doc.nunaliit_layers ) {
@@ -5445,16 +5497,16 @@ var MapAndControls = $n2.Class({
 			
 		} else if( 'editInitiate' === type ) {
 			
-			var fid = undefined;
+			var docId = undefined;
 			if( m.doc ){
-				fid = m.doc._id;
+				docId = m.doc._id;
 			};
 			
 			var feature = null;
 			var addGeometryMode = true;
 			
-			if( fid ){
-				var features = this._getMapFeaturesIncludingFid(fid);
+			if( docId ){
+				var features = this._getMapFeaturesIncludingDocId(docId);
 				
 				if( features.length > 0 ){
 					feature = features[0];
@@ -5484,12 +5536,12 @@ var MapAndControls = $n2.Class({
 			// Remove feature from map
 			this.infoLayers.forEach(function(layerInfo){
 				if( layerInfo.featureStrategy ){
-					layerInfo.featureStrategy.setEditedFeatureIds([fid]);
+					layerInfo.featureStrategy.setEditedFeatureIds([docId]);
 				};
 			});
 			
 			this.editFeatureInfo = {};
-    		this.editFeatureInfo.fid = fid;
+    		this.editFeatureInfo.fid = docId;
 			this.editFeatureInfo.original = {
 				data: $n2.document.clone(m.doc)
 			};
@@ -5499,12 +5551,12 @@ var MapAndControls = $n2.Class({
 		    	var featureLayer = feature.layer;
 
 		    	// Compute the actual underlying feature
-		    	if( fid === feature.fid ){
+		    	if( docId === feature.fid ){
 		        	effectiveFeature = feature;
 		        	
 		    	} else if( feature.cluster ){
 		    		for(var i=0,e=feature.cluster.length; i<e; ++i){
-		    			if( fid === feature.cluster[i].fid ){
+		    			if( docId === feature.cluster[i].fid ){
 		    	    		effectiveFeature = feature.cluster[i];
 		    			};
 		    		};
@@ -5517,12 +5569,12 @@ var MapAndControls = $n2.Class({
 			if( addGeometryMode ){
 				// Edit a document that does not have a geometry.
 				// Allow adding a geometry.
-				this.switchToAddGeometryMode(fid);
+				this.switchToAddGeometryMode(docId);
 			} else {
 				// Do not provide the effective feature. The event 'editReportOriginalDocument'
 				// will provide the original geometry. The effective feature might have a simplified
 				// version of the geometry
-				this.switchToEditFeatureMode(fid);
+				this.switchToEditFeatureMode(docId);
 			};
 			
 		} else if( 'editClosed' === type ) {
