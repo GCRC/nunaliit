@@ -791,7 +791,7 @@ var LayerInfo = $n2.Class({
 			for(var i=0,e=this.olLayer.features.length; i<e; ++i){
 				var feature = this.olLayer.features[i];
 				if( feature.cluster ){
-					for(var j=0,k=feature.cluster; j<k; ++j){
+					for(var j=0,k=feature.cluster.length; j<k; ++j){
 						var cf = feature.cluster[j];
 						callback.call(this,cf,feature);
 					};
@@ -1136,14 +1136,15 @@ var MapAndControls = $n2.Class({
 			features: []
 			,endFn: []
 			,docIds: {}
-			,selectedId: null
+			,selectedDocId: null
+			,selectedFid: null
 		};
 		this.focusInfo = {
 			docIds: {}
 			,features: []
 		};
 		this.findFeatureInfo = {
-			fid: null
+			docId: null
 			,features: []
 		};
 		
@@ -1206,7 +1207,7 @@ var MapAndControls = $n2.Class({
 				}
 				,featureAdded: function(feature) {
 					_this.editFeatureInfo.original = {};
-					_this.editFeatureInfo.fid = undefined;
+					_this.editFeatureInfo.docId = undefined;
 					_this.editFeatureInfo.suppressZoom = true;
 					
 					var mapProj = feature.layer.map.getProjectionObject();
@@ -1377,7 +1378,7 @@ var MapAndControls = $n2.Class({
 	    	if( _this.editModeAddFeatureEnabled ) {
 		    	var feature = evt.feature;
 		    	var previousMode = _this.currentMode;
-	    		_this.switchToEditFeatureMode(feature.fid, feature);
+	    		_this._switchToEditFeatureMode(feature);
 	    		previousMode.featureAdded(feature);
 	    	};
 		};
@@ -1979,9 +1980,18 @@ var MapAndControls = $n2.Class({
 	},
 	
 	_removeFeature: function(docId) {
-		var docIdMap = {};
+		
+		// Remove feature from edit layer
+		if( this.currentMode === this.modes.EDIT_FEATURE 
+		 && this.editFeatureInfo 
+		 && this.editFeatureInfo.docId === docId ){
+    		this._switchMapMode(this.modes.NAVIGATE);
+	    };
+
+	    var docIdMap = {};
 		docIdMap[docId] = true;
 		
+		// Remove feature from each vector layer
 		for(var loop=0; loop<this.vectorLayers.length; ++loop) {
 			var mapLayer = this.vectorLayers[loop];
 			var layerFeatures = this._getLayerFeaturesIncludingDocIdMap(mapLayer,docIdMap);
@@ -2011,15 +2021,6 @@ var MapAndControls = $n2.Class({
 				};
 			};
 		};
-	},
-	
-	_centerMapOnFeature: function(feature) {
-    	var geom = feature.geometry;
-    	var bbox = geom.getBounds();
-		var x = (bbox.left + bbox.right) / 2;
-		var y = (bbox.bottom + bbox.top) / 2;
-		
-		this._centerMapOnXY(x,y,null); // same projection as map
 	},
 
 	_centerMapOnXY: function(x, y, projCode) {
@@ -2085,7 +2086,7 @@ var MapAndControls = $n2.Class({
 		} else {
 			// Add
 	    	editFeature = new OpenLayers.Feature.Vector(olGeom);
-	    	editFeature.fid = this.editFeatureInfo.fid;
+	    	editFeature.fid = this.editFeatureInfo.docId;
 
 	    	// Add to edit layer
 	    	this.editModeAddFeatureEnabled = false;
@@ -2621,8 +2622,15 @@ var MapAndControls = $n2.Class({
 			if( features ){
 				for(var i=0,e=features.length;i<e;++i){
 					var f = features[i];
-					if( _this.clickedInfo.docIds[f.fid] ){
-						var featureInfo = _this.clickedInfo.docIds[f.fid];
+					
+					var docId = undefined;
+					if( f.data 
+					 && f.data._id  ){
+						docId = f.data._id;
+					};
+					if( docId 
+					 && _this.clickedInfo.docIds[docId] ){
+						var featureInfo = _this.clickedInfo.docIds[docId];
 						
 						_this.clickedInfo.features.push(f);
 						
@@ -2634,19 +2642,26 @@ var MapAndControls = $n2.Class({
 							f.n2SelectIntent = featureInfo.intent;
 						};
 					};
-					if( _this.focusInfo.docIds[f.fid] ){
+					if( docId && _this.focusInfo.docIds[docId] ){
 						_this.focusInfo.features.push(f);
 						f.isHovered = true;
 					};
-					if( _this.findFeatureInfo.fid === f.fid ){
+					if( docId && _this.findFeatureInfo.docId === docId ){
 						_this.findFeatureInfo.features.push(f);
 						f.n2Intent = 'find';
 					};
 					if( f.cluster ){
 						for(var j=0,k=f.cluster.length; j<k; ++j){
 							var clusterFeature = f.cluster[j];
-							if( _this.clickedInfo.docIds[clusterFeature.fid] ){
-								var featureInfo = _this.clickedInfo.docIds[clusterFeature.fid];
+							
+							var cfDocId = undefined;
+							if( clusterFeature.data 
+							 && clusterFeature.data._id ){
+								cfDocId = clusterFeature.data._id;
+							};
+							
+							if( _this.clickedInfo.docIds[cfDocId] ){
+								var featureInfo = _this.clickedInfo.docIds[cfDocId];
 								_this.clickedInfo.features.push(f);
 								if( featureInfo.clicked ) {
 									f.isClicked = true;
@@ -2655,11 +2670,11 @@ var MapAndControls = $n2.Class({
 									f.n2SelectIntent = featureInfo.intent;
 								};
 							};
-							if( _this.focusInfo.docIds[clusterFeature.fid] ){
+							if( _this.focusInfo.docIds[cfDocId] ){
 								_this.focusInfo.features.push(f);
 								f.isHovered = true;
 							};
-							if( _this.findFeatureInfo.fid === clusterFeature.fid ){
+							if( _this.findFeatureInfo.docId === cfDocId ){
 								_this.findFeatureInfo.features.push(f);
 								f.n2Intent = 'find';
 							};
@@ -2726,9 +2741,14 @@ var MapAndControls = $n2.Class({
     	return function(evt){
         	var feature = evt.feature;
         	
+        	var docId = undefined;
+        	if( _this.editFeatureInfo ){
+        		docId = _this.editFeatureInfo.docId;
+        	};
+        	
         	_this._dispatch({
         		type: 'editGeometryModified'
-        		,docId: feature.fid
+        		,docId: docId
         		,geom: feature.geometry
         		,proj: olLayer.map.getProjectionObject()
         		,_origin: _this
@@ -2927,7 +2947,7 @@ var MapAndControls = $n2.Class({
    		
 		var clickedAgain = false;
    		if( !forced ) {
-			clickedAgain = (feature && feature.fid && this.clickedInfo.selectedId === feature.fid);
+			clickedAgain = (feature && feature.fid && this.clickedInfo.selectedFid === feature.fid);
    		};
 		if( !forced && !this.options.toggleClick && clickedAgain ) {
 			// ignore click again
@@ -2944,15 +2964,26 @@ var MapAndControls = $n2.Class({
 		
 		this._endClicked();
 		
+		var docId = undefined;
+		if( feature.data ){
+			docId = feature.data._id;
+		};
+		
 		if( !forced && this.options.toggleClick && clickedAgain ) {
-			this._dispatch({type:'userUnselect',docId:feature.fid});
+			if( docId ){
+				this._dispatch({
+					type: 'userUnselect'
+					,docId: docId
+				});
+			};
 			
-		} else if( feature.fid ) {
+		} else if( docId ) {
 			this.clickedInfo.features = [feature];
 
 			this.clickedInfo.docIds = {};
-			this.clickedInfo.docIds[feature.fid] = { clicked: true };
-			this.clickedInfo.selectedId = feature.fid;
+			this.clickedInfo.docIds[docId] = { clicked: true };
+			this.clickedInfo.selectedDocId = docId;
+			this.clickedInfo.selectedFid = feature.fid;
 			
 			feature.isClicked = true;
 			if( feature.layer ) {
@@ -2997,13 +3028,17 @@ var MapAndControls = $n2.Class({
 		this.clickedInfo.endFn = [];
 		this.clickedInfo.features = [];
 		this.clickedInfo.docIds = {};
-		this.clickedInfo.selectedId = null;
+		this.clickedInfo.selectedDocId = null;
+		this.clickedInfo.selectedFid = null;
 	},
 	
 	_selectedFeatures: function(features, docIds){
 		if( this.currentMode !== this.modes.NAVIGATE ){
 			this._switchMapMode(this.modes.NAVIGATE);
 		};
+		
+		var oldDocId = this.clickedInfo.selectedDocId;
+		var oldFid = this.clickedInfo.selectedFid;
 		
 		this._endClicked();
 		
@@ -3013,9 +3048,11 @@ var MapAndControls = $n2.Class({
 				var docId = docIds[i];
 				
 				this.clickedInfo.docIds[docId] = { clicked: true };
-				
-				if( !this.clickedInfo.selectedId ){
-					this.clickedInfo.selectedId = docId;
+
+				// Restore selected FID if the selection is not changing
+				if( docId === oldDocId ){
+					this.clickedInfo.selectedDocId = docId;
+					this.clickedInfo.selectedFid = oldFid;
 				};
 			};
 		};
@@ -3075,10 +3112,10 @@ var MapAndControls = $n2.Class({
 	 * Unselect the currently selected feature
 	 */
    	_unselectFeature: function(){
-   		if( this.clickedInfo.selectedId ) {
+   		if( this.clickedInfo.selectedDocId ) {
    			this._dispatch({
    				type:'userUnselect'
-   				,docId:this.clickedInfo.selectedId
+   				,docId:this.clickedInfo.selectedDocId
    			});
    		};
    		
@@ -3184,10 +3221,10 @@ var MapAndControls = $n2.Class({
 		this.focusInfo.origin = null;
 	},
 	
-	_startFindFeature: function(fid, features){
+	_startFindFeature: function(docId, features){
 		this._endFindFeature();
 
-		this.findFeatureInfo.fid = fid;
+		this.findFeatureInfo.docId = docId;
 		this.findFeatureInfo.features = features;
 
 		if( features ){
@@ -3211,7 +3248,7 @@ var MapAndControls = $n2.Class({
 			};
 		};
 		
-		this.findFeatureInfo.fid = null;
+		this.findFeatureInfo.docId = null;
 		this.findFeatureInfo.features = [];
 	},
 
@@ -3248,14 +3285,18 @@ var MapAndControls = $n2.Class({
 		var docIds = [];
 		var docs = [];
 		if( feature.cluster ){
+			var docsById = {};
+
 			for(var ci=0,ce=feature.cluster.length; ci<ce; ++ci){
 				var f = feature.cluster[ci];
-				docIds.push( f.fid );
-				docs.push( f.data );
+				docsById[f.data._id] = f.data;
 			};
 			
+			docIds = $n2.utils.keys(docsById);
+			docs = $n2.utils.values(docsById);
+			
 		} else {
-			docIds.push( feature.fid );
+			docIds.push( feature.data._id );
 			docs.push( feature.data );
 		};
 
@@ -3655,17 +3696,14 @@ var MapAndControls = $n2.Class({
     	};
     },
     
-    switchToEditFeatureMode: function(fid, feature) {
+    _switchToEditFeatureMode: function(feature) {
     	this._switchMapMode(this.modes.EDIT_FEATURE,{
-    		fid: fid
-    		,feature: feature
+    		feature: feature
     	});
     },
     
-    switchToAddGeometryMode: function(docId) {
-    	this._switchMapMode(this.modes.ADD_GEOMETRY,{
-    		fid: docId
-    	});
+    _switchToAddGeometryMode: function() {
+    	this._switchMapMode(this.modes.ADD_GEOMETRY);
     },
     
     _cancelEditFeatureMode: function() {
@@ -3681,10 +3719,10 @@ var MapAndControls = $n2.Class({
 
     // ======= EDIT_FEATURE MODE ==================================================
 
-    _geometryModified: function(fid, olGeom, proj){
+    _geometryModified: function(docId, olGeom, proj){
 		// Check that this relates to the right feature
-		if( fid && fid !== this.editFeatureInfo.fid ) return;
-		if( !fid && this.editFeatureInfo.fid ) return;
+		if( docId && docId !== this.editFeatureInfo.docId ) return;
+		if( !docId && this.editFeatureInfo.docId ) return;
     	
 		if( this.currentMode === this.modes.EDIT_FEATURE 
 		 && !olGeom ){
@@ -3692,7 +3730,7 @@ var MapAndControls = $n2.Class({
 			
 			// Remove feature. By switching out of EDIT mode,
 			// the feature on the EDIT layer will be removed. 
-			this.switchToAddGeometryMode(fid);
+			this._switchToAddGeometryMode();
 
 		} else if( this.currentMode === this.modes.EDIT_FEATURE 
 		 && olGeom ){
@@ -3702,7 +3740,7 @@ var MapAndControls = $n2.Class({
 		} else if( this.currentMode !== this.modes.EDIT_FEATURE 
 		 && olGeom ){
 			// A geometry was added and the map is not yet in edit mode
-			this.switchToEditFeatureMode(fid);
+			this._switchToEditFeatureMode();
 			this._updateGeometryEditor(olGeom, proj);
 		};
     },
@@ -5091,14 +5129,14 @@ var MapAndControls = $n2.Class({
 				var features = olLayer.features;
 				for(var i=0,e=features.length; i<e; ++i){
 					var feature = features[i];
-					if( feature.fid ) {
-						valueMap[feature.fid] = feature.data;
+					if( feature.data && feature.data._id ) {
+						valueMap[feature.data._id] = feature.data;
 					};
 					if( feature.cluster ){
 						for(var j=0,k=feature.cluster.length;j<k;++j){
 							var cf = feature.cluster[j];
-							if( cf.fid ){
-								valueMap[cf.fid] = cf.data;
+							if( cf.data && cf.data._id ){
+								valueMap[cf.data._id] = cf.data;
 							};
 						};
 					};
@@ -5502,34 +5540,34 @@ var MapAndControls = $n2.Class({
 				docId = m.doc._id;
 			};
 			
-			var feature = null;
+			var features = undefined;
+			var geomDoc = undefined;
 			var addGeometryMode = true;
 			
 			if( docId ){
-				var features = this._getMapFeaturesIncludingDocId(docId);
+				features = this._getMapFeaturesIncludingDocId(docId);
 				
-				if( features.length > 0 ){
-					feature = features[0];
+				features.forEach(function(feature){
+					if( feature.data && feature.data._id ){
+						geomDoc = feature.data;
+					};
+				});
+				if( !geomDoc ){
+					geomDoc = m.doc;
 				};
 				
-				if( feature ) {
-					this._centerMapOnFeature(feature);
-					addGeometryMode = false;
-					
-				} else {
-					// must center map on feature, if feature contains
-					// a geometry
-					if( m.doc 
-					 && m.doc.nunaliit_geom 
-					 && m.doc.nunaliit_geom.bbox 
-					 && m.doc.nunaliit_geom.bbox.length >= 4 ) {
-						var bbox = m.doc.nunaliit_geom.bbox;
-						var x = (bbox[0] + bbox[2]) / 2;
-						var y = (bbox[1] + bbox[3]) / 2;
-						this._centerMapOnXY(x, y, 'EPSG:4326');
+				// must center map on feature, if feature contains
+				// a geometry
+				if( geomDoc 
+				 && geomDoc.nunaliit_geom 
+				 && geomDoc.nunaliit_geom.bbox 
+				 && geomDoc.nunaliit_geom.bbox.length >= 4 ) {
+					var bbox = geomDoc.nunaliit_geom.bbox;
+					var x = (bbox[0] + bbox[2]) / 2;
+					var y = (bbox[1] + bbox[3]) / 2;
+					this._centerMapOnXY(x, y, 'EPSG:4326');
 
-						addGeometryMode = false;
-					};
+					addGeometryMode = false;
 				};
 			};
 			
@@ -5541,45 +5579,25 @@ var MapAndControls = $n2.Class({
 			});
 			
 			this.editFeatureInfo = {};
-    		this.editFeatureInfo.fid = docId;
+    		this.editFeatureInfo.docId = docId;
 			this.editFeatureInfo.original = {
 				data: $n2.document.clone(m.doc)
-			};
-	    	var effectiveFeature = null;
-			if( feature ){
-		    	// Remove feature from current layer
-		    	var featureLayer = feature.layer;
-
-		    	// Compute the actual underlying feature
-		    	if( docId === feature.fid ){
-		        	effectiveFeature = feature;
-		        	
-		    	} else if( feature.cluster ){
-		    		for(var i=0,e=feature.cluster.length; i<e; ++i){
-		    			if( docId === feature.cluster[i].fid ){
-		    	    		effectiveFeature = feature.cluster[i];
-		    			};
-		    		};
-		    	};
-		    	
-		    	this.editFeatureInfo.original.layer = featureLayer;
-		    	this.editFeatureInfo.original.feature = effectiveFeature;
 			};
 			
 			if( addGeometryMode ){
 				// Edit a document that does not have a geometry.
 				// Allow adding a geometry.
-				this.switchToAddGeometryMode(docId);
+				this._switchToAddGeometryMode();
 			} else {
 				// Do not provide the effective feature. The event 'editReportOriginalDocument'
 				// will provide the original geometry. The effective feature might have a simplified
 				// version of the geometry
-				this.switchToEditFeatureMode(docId);
+				this._switchToEditFeatureMode();
 			};
 			
 		} else if( 'editClosed' === type ) {
 
-			var fid = this.editFeatureInfo.fid;
+			var docId = this.editFeatureInfo.docId;
 			var reloadRequired = true;
 			if( m.cancelled ){
 				reloadRequired = false;
@@ -5598,14 +5616,19 @@ var MapAndControls = $n2.Class({
 			});
 			
 			// If feature was deleted, then remove it from map
-			if( m.deleted && fid ){
+			if( m.deleted && docId ){
 				reloadRequired = false;
 
 				this.forEachVectorLayer(function(layerInfo, layer){
 					var reloadLayer = false;
 					var featuresToAdd = [];
 					layerInfo.forEachFeature(function(f){
-						if( f.fid === fid ){
+						var featureDocId = undefined;
+						if( f.data ){
+							featureDocId = f.data._id;
+						};
+
+						if( featureDocId === docId ){
 							reloadLayer = true;
 						} else {
 							featuresToAdd.push(f);
@@ -5624,7 +5647,7 @@ var MapAndControls = $n2.Class({
 			
 			// Reload feature
 			if( reloadRequired ){
-				var filter = $n2.olFilter.fromFid(fid);
+				var filter = $n2.olFilter.fromFid(docId);
 				this._reloadFeature(filter);
 			};
 			
@@ -5635,7 +5658,7 @@ var MapAndControls = $n2.Class({
 
 		} else if( 'editReportOriginalDocument' === type ) {
 			if( m.geometry 
-			 && m.docId === this.editFeatureInfo.fid ){
+			 && m.docId === this.editFeatureInfo.docId ){
 				// Adjust geometry
 				this._geometryModified(m.docId, m.geometry, m.projection);
 
