@@ -2163,20 +2163,50 @@ var MapAndControls = $n2.Class({
 		};
 
 		if( 'couchdb' === layerDefinition.type ) {
-			// This is a couch layer
-			var couchProtocolOpt = $n2.extend({},layerDefinition.options,{
-				notifications: {
+			if( OpenLayers.Protocol && OpenLayers.Protocol.Couch ){
+				// This is a couch layer
+				var couchProtocolOpt = $n2.extend({},layerDefinition.options,{
+					notifications: {
+						readStart: function(){
+							_this._mapBusyStatus(1);
+						}
+						,readEnd: function(){
+							_this._mapBusyStatus(-1);
+						}
+					}
+				});
+				layerInfo.protocol = new OpenLayers.Protocol.Couch(couchProtocolOpt);
+				layerOptions.protocol = layerInfo.protocol;
+				layerInfo.cachingAllowed = true;
+			} else {
+				$n2.logError('Can not load a couchdb layer because logic is not available');
+			};
+
+		} else if( 'couchdb2' === layerDefinition.type ) {
+			if( OpenLayers.Protocol && OpenLayers.Protocol.Couch2 ){
+				// This is a couch layer
+				var couchProtocolOpt = $n2.extend({},layerDefinition.options);
+
+				couchProtocolOpt.notifications = {
 					readStart: function(){
 						_this._mapBusyStatus(1);
 					}
 					,readEnd: function(){
 						_this._mapBusyStatus(-1);
 					}
-				}
-			});
-			layerInfo.protocol = new OpenLayers.Protocol.Couch(couchProtocolOpt);
-			layerOptions.protocol = layerInfo.protocol;
-			layerInfo.cachingAllowed = true;
+				};
+				couchProtocolOpt.dispatchService = this._getDispatchService();
+				couchProtocolOpt.onUpdateCallback = function(state){
+					_this._modelLayerUpdated(layerOptions, state);
+				};
+				
+				layerInfo.protocol = new OpenLayers.Protocol.Couch2(couchProtocolOpt);
+				layerOptions.protocol = layerInfo.protocol;
+				layerInfo.cachingAllowed = true;
+				
+			} else {
+				$n2.logError('Can not load a couchdb2 layer because logic is not available');
+			};
 			
 		} else if( 'model' === layerDefinition.type ) {
 			var modelProtocolOptions = $n2.extend({},layerDefinition.options);
@@ -2304,10 +2334,12 @@ var MapAndControls = $n2.Class({
 			if( layerOptions.protocol ) {
 				if( 'couchdb' === layerDefinition.type ) {
 					layerOptions.strategies = [ new OpenLayers.Strategy.N2BBOX() ];
+				} else if( 'couchdb2' === layerDefinition.type ){
+					layerOptions.strategies = [ new OpenLayers.Strategy.N2BBOX() ];
 				} else if( 'model' === layerDefinition.type ){
 					// no bounding box strategies for model layers
 					layerOptions.strategies = [ new OpenLayers.Strategy.Fixed() ];
-				} else {
+				} else if( 'wfs' === layerDefinition.type ){
 					layerOptions.strategies = [ new OpenLayers.Strategy.BBOX() ];
 				};
 			};
