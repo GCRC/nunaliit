@@ -605,6 +605,23 @@ var TableCanvas = $n2.Class({
 					
 					if( typeof cell.display === 'function' ){
 						cell.display($td, cell, row);
+						
+						var rowName = $td.attr('nunaliit-row');
+						$td
+							.click(function(){
+								var $td = $(this);
+								_this._selectedCell($td);
+								return false;
+							}).mouseover(function(){
+								var $td = $(this);
+								_this._mouseOver($td);
+								return false;
+							})
+							.mouseout(function(){
+								var $td = $(this);
+								_this._mouseOut($td);
+								return false;
+							});
 	
 					} else if( typeof cell.display === 'string' ){
 						$('<a>')
