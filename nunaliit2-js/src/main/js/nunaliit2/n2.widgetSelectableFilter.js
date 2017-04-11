@@ -610,11 +610,248 @@ var MultiFilterSelectionWidget = $n2.Class('MultiFilterSelectionWidget',{
 });
 
 //--------------------------------------------------------------------------
+var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDownWidget',{
+	
+	dispatchService: null,
+	
+	showService: null,
+	
+	sourceModelId: null,
+	
+	elemId: null,
+
+	selectedChoicesChangeEventName: null,
+
+	selectedChoicesSetEventName: null,
+
+	availableChoicesChangeEventName: null,
+
+	availableChoices: null,
+	
+	selectedChoices: null,
+	
+	selectedChoiceIdMap: null,
+	
+	allChoicesLabel: null,
+	
+	noChoiceLabel: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			containerId: null
+			,dispatchService: null
+			,showService: null
+			,sourceModelId: null
+			,allChoicesLabel: null
+			,noChoiceLabel: null
+		},opts_);
+		
+		var _this = this;
+		
+		this.dispatchService = opts.dispatchService;
+		this.showService = opts.showService;
+		this.sourceModelId = opts.sourceModelId;
+		this.allChoicesLabel = opts.allChoicesLabel;
+		this.noChoiceLabel = opts.noChoiceLabel;
+		
+		this.availableChoices = [];
+		this.selectedChoices = [];
+		this.selectedChoiceIdMap = {};
+		
+		// Set up model listener
+		if( this.dispatchService ){
+			// Get model info
+			var modelInfoRequest = {
+				type: 'modelGetInfo'
+				,modelId: this.sourceModelId
+				,modelInfo: null
+			};
+			this.dispatchService.synchronousCall(DH, modelInfoRequest);
+			var sourceModelInfo = modelInfoRequest.modelInfo;
+			
+			if( sourceModelInfo 
+			 && sourceModelInfo.parameters 
+			 && sourceModelInfo.parameters.availableChoices ){
+				var paramInfo = sourceModelInfo.parameters.availableChoices;
+				this.availableChoicesChangeEventName = paramInfo.changeEvent;
+
+				if( paramInfo.value ){
+					this.availableChoices = paramInfo.value;
+				};
+			};
+			
+			if( sourceModelInfo 
+			 && sourceModelInfo.parameters 
+			 && sourceModelInfo.parameters.selectedChoices ){
+				var paramInfo = sourceModelInfo.parameters.selectedChoices;
+				this.selectedChoicesChangeEventName = paramInfo.changeEvent;
+				this.selectedChoicesSetEventName = paramInfo.setEvent;
+
+				if( paramInfo.value ){
+					this.selectedChoices = paramInfo.value;
+					
+					this.selectedChoiceIdMap = {};
+					this.selectedChoices.forEach(function(choiceId){
+						_this.selectedChoiceIdMap[choiceId] = true;
+					});
+				};
+			};
+			
+			var fn = function(m, addr, dispatcher){
+				_this._handle(m, addr, dispatcher);
+			};
+			
+			if( this.availableChoicesChangeEventName ){
+				this.dispatchService.register(DH, this.availableChoicesChangeEventName, fn);
+			};
+			
+			if( this.selectedChoicesChangeEventName ){
+				this.dispatchService.register(DH, this.selectedChoicesChangeEventName, fn);
+			};
+		};
+
+		// Get container
+		var containerId = opts.containerId;
+		if( !containerId ){
+			throw new Error('containerId must be specified');
+		};
+		var $container = $('#'+containerId);
+		
+		this.elemId = $n2.getUniqueId();
+		
+		$('<div>')
+			.attr('id',this.elemId)
+			.addClass('n2widget_singleFilterSelection')
+			.appendTo($container);
+		
+		this._availableChoicesUpdated();
+		
+		$n2.log('SingleFilterSelectionWidget', this);
+	},
+	
+	_getElem: function(){
+		return $('#'+this.elemId);
+	},
+
+	_availableChoicesUpdated: function(){
+		var _this = this;
+
+		var $elem = this._getElem();
+		$elem.empty();
+		
+		var $selector = $('<select>')
+			.appendTo($elem)
+			.attr('multiple',true)
+			.change(function(){
+				_this._selectionChanged();
+			});
+
+//		// No Choice
+//		var noChoiceLabel = _loc('--');
+//		if( this.noChoiceLabel ){
+//			noChoiceLabel = _loc(this.noChoiceLabel);
+//		};
+//		$('<option>')
+//			.addClass('n2widget_singleFilterSelection_optionNoChoice')
+//			.text( noChoiceLabel )
+//			.val(NO_CHOICE)
+//			.appendTo($selector);
+
+//		// All Choices
+//		var allChoicesLabel = _loc('All');
+//		if( this.allChoicesLabel ){
+//			allChoicesLabel = _loc(this.allChoicesLabel);
+//		};
+//		$('<option>')
+//			.addClass('n2widget_singleFilterSelection_optionAllChoices')
+//			.text( allChoicesLabel )
+//			.val(ALL_CHOICES)
+//			.appendTo($selector);
+		
+		for(var i=0,e=this.availableChoices.length; i<e; ++i){
+			var choice = this.availableChoices[i];
+			
+			var label = choice.label;
+			if( !label ){
+				label = choice.id;
+			};
+			
+			var $option = $('<option>')
+				.text(label)
+				.val(choice.id)
+				.appendTo($selector);
+		};
+		
+		this._adjustSelectedItem();
+		
+		// Select current
+		//this._selectionChanged();
+	},
+	
+	_adjustSelectedItem: function(){
+		var _this = this;
+		
+		var selectedChoiceIds = [];
+		this.selectedChoices.forEach(function(selectedChoice){
+			selectedChoiceIds.push(selectedChoice);
+		});
+		
+		var $elem = this._getElem();
+		var $selector = $elem.find('select');
+		$selector.val( selectedChoiceIds );
+	},
+	
+	// This is called when the selected option within <select> is changed
+	_selectionChanged: function(){
+		var $elem = this._getElem();
+		var $selector = $elem.find('select');
+		var values = $selector.val();
+
+		var selectedChoiceIds = [];
+		values.forEach(function(val){
+			selectedChoiceIds.push(val);
+		});
+		
+		this.dispatchService.send(DH,{
+			type: this.selectedChoicesSetEventName
+			,value: selectedChoiceIds
+		});
+	},
+	
+	_handle: function(m, addr, dispatcher){
+		var _this = this;
+
+		if( this.availableChoicesChangeEventName === m.type ){
+			if( m.value ){
+				this.availableChoices = m.value;
+				
+				this._availableChoicesUpdated();
+			};
+			
+		} else if( this.selectedChoicesChangeEventName === m.type ){
+			if( m.value ){
+				this.selectedChoices = m.value;
+				
+				this.selectedChoiceIdMap = {};
+				this.selectedChoices.forEach(function(choiceId){
+					_this.selectedChoiceIdMap[choiceId] = true;
+				});
+				
+				this._adjustSelectedItem();
+			};
+		};
+	}
+});
+
+//--------------------------------------------------------------------------
 function HandleWidgetAvailableRequests(m){
 	if( m.widgetType === 'singleFilterSelectionWidget' ){
 		m.isAvailable = true;
 
 	} else if( m.widgetType === 'multiFilterSelectionWidget' ){
+		m.isAvailable = true;
+
+	} else if( m.widgetType === 'multiFilterSelectionDropDownWidget' ){
 		m.isAvailable = true;
     };
 };
@@ -666,6 +903,29 @@ function HandleWidgetDisplayRequests(m){
 		};
 		
 		new MultiFilterSelectionWidget(options);
+
+	} else if( m.widgetType === 'multiFilterSelectionDropDownWidget' ){
+		var widgetOptions = m.widgetOptions;
+		var containerId = m.containerId;
+		var config = m.config;
+		
+		var options = {};
+		
+		if( widgetOptions ){
+			for(var key in widgetOptions){
+				var value = widgetOptions[key];
+				options[key] = value;
+			};
+		};
+
+		options.containerId = containerId;
+		
+		if( config && config.directory ){
+			options.dispatchService = config.directory.dispatchService;
+			options.showService = config.directory.showService;
+		};
+		
+		new MultiFilterSelectionDropDownWidget(options);
     };
 };
 
