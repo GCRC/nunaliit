@@ -838,6 +838,7 @@ var CouchDocumentEditor = $n2.Class({
 	editorSuppressSlideView: null,
 	editorSuppressTreeView: null,
 	editorSuppressFormView: null,
+	onRefreshFunctions: null,
 	
 	initialize: function(
 		opts_
@@ -865,6 +866,8 @@ var CouchDocumentEditor = $n2.Class({
 			
 			// buttonX....
 		}, opts_);
+		
+		var _this = this;
 		
 		this.panelName = opts.panelName;
 		this.uploadService = opts.uploadService;
@@ -896,6 +899,7 @@ var CouchDocumentEditor = $n2.Class({
 		this.editorSuppressSlideView = false;
 		this.editorSuppressTreeView = false;
 		this.editorSuppressFormView = false;
+		this.onRefreshFunctions = [];
 		var cs = this.customService;
 		if( cs ){
 			this.editorSuppressSlideView = cs.getOption('editorSuppressSlideView',false);
@@ -906,6 +910,13 @@ var CouchDocumentEditor = $n2.Class({
 			if( flag ){
 				this.enableAddFile = true;
 			};
+			
+			var onRefreshFunctions = cs.getOption('editorOnRefreshFunctions',[]);
+			onRefreshFunctions.forEach(function(onRefresh){
+				if( typeof onRefresh === 'function' ){
+					_this.onRefreshFunctions.push(onRefresh);
+				};
+			});
 		};
 	},
 	
@@ -1412,6 +1423,11 @@ var CouchDocumentEditor = $n2.Class({
 			installUserButtonClick($uBtn, userButton);
 		};
 		
+		// First time to call refresh
+		var $editorContainer = _this._getEditorContainer();
+		_this.onRefreshFunctions.forEach(function(refreshFunction){
+			refreshFunction(_this.editedDocument, $editorContainer, _this);
+		});
     	
     	function deletion(editedDocument) {
 			_this.documentSource.deleteDocument({
@@ -1943,7 +1959,7 @@ var CouchDocumentEditor = $n2.Class({
 	},
 	
 	onEditorObjectChanged: function(obj) {
-		if( typeof(OpenLayers) === 'undefined' ) return;
+		var _this = this;
 		
 		var wkt = undefined;
 		if( obj 
@@ -1952,7 +1968,8 @@ var CouchDocumentEditor = $n2.Class({
 		};
 			
 		// Check if editor has changed the geometry's WKT
-		if( this.currentGeometryWkt !== wkt ) {
+		if( typeof OpenLayers  !== 'undefined' 
+		 && this.currentGeometryWkt !== wkt ) {
 		
 			this.currentGeometryWkt = wkt;
 
@@ -1969,6 +1986,11 @@ var CouchDocumentEditor = $n2.Class({
 				,_origin: this
 			});
 		};
+		
+		var $editorContainer = this._getEditorContainer();
+		this.onRefreshFunctions.forEach(function(refreshFunction){
+			refreshFunction(_this.editedDocument, $editorContainer, _this);
+		});
 	},
 	
     _geometryModified: function(docId, geom, proj) {
