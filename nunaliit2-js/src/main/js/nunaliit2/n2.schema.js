@@ -522,13 +522,9 @@ function _arrayField() {
 	
 			r.push('<div class="n2schema_array_item_delete '+cl+'"></div>');
 			
-			if( 0 !== i ){
-				r.push('<div class="n2schema_array_item_up '+cl+'"></div>');
-			};
+			r.push('<div class="n2schema_array_item_up '+cl+'"></div>');
 			
-			if( i < (obj.length-1) ){
-				r.push('<div class="n2schema_array_item_down '+cl+'"></div>');
-			};
+			r.push('<div class="n2schema_array_item_down '+cl+'"></div>');
 
 			r.push('</div>'); // close buttons
 	
@@ -1758,7 +1754,11 @@ var Form = $n2.Class({
 						var parentSelector = classInfo.selector.getParentSelector();
 						var ary = parentSelector.getValue(_this.obj);
 						ary.splice(itemIndex,1);
-						_this.refresh($elem);
+						
+						var $item = $clicked.parents('.n2schema_array_item').first();
+						$item.remove();
+						//_this.refresh($elem);
+
 						_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						
 					} else if( $clicked.hasClass('n2schema_array_item_up') ){
@@ -1769,7 +1769,12 @@ var Form = $n2.Class({
 							var ary = parentSelector.getValue(_this.obj);
 							var removedItems = ary.splice(itemIndex,1);
 							ary.splice(itemIndex-1,0,removedItems[0]);
-							_this.refresh($elem);
+							
+							var $item = $clicked.parents('.n2schema_array_item').first();
+							var $prevItem = $item.prev();
+							$item.insertBefore($prevItem);
+							//_this.refresh($elem);
+
 							_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						};
 						
@@ -1781,7 +1786,12 @@ var Form = $n2.Class({
 						if( itemIndex < (ary.length - 1) ) {
 							var removedItems = ary.splice(itemIndex,1);
 							ary.splice(itemIndex+1,0,removedItems[0]);
-							_this.refresh($elem);
+							
+							var $item = $clicked.parents('.n2schema_array_item').first();
+							var $nextItem = $item.next();
+							$item.insertAfter($nextItem);
+							//_this.refresh($elem);
+
 							_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						};
 						
@@ -1804,9 +1814,9 @@ var Form = $n2.Class({
 				});
 			};
 		};
-	}
-	
-	,_setHtml: function(obj) {
+	},
+
+	_setHtml: function(obj) {
 		if( !obj ) return;
 		
 		for(var i=0,e=this.extensions.length; i<e; ++i) {
@@ -2255,19 +2265,41 @@ var Form = $n2.Class({
 	_installCustomType: function($container, $elem, doc , callbackFn){
 		var _this = this;
 		
+		var customType = $elem.attr('n2-custom-type');
+		
 		var selectorStr = $elem.attr('nunaliit-selector');
 		var selector = null;
 		if( selectorStr ){
 			selector = $n2.objectSelector.decodeFromDomAttribute(selectorStr);
 		};
 		
-		function cb(value){
-			_this.refresh($container);
+		function cb(value, suppressFullRefresh){
+			if( suppressFullRefresh ){
+				$elem.empty();
+
+				var handler = customFieldHandlers[customType];
+				if( handler ){
+					var obj = undefined;
+					if( selector && doc ){
+						obj = selector.getValue(doc);
+					};
+					
+					handler({
+						elem: $elem
+						,doc: doc
+						,obj: obj
+						,selector: selector
+						,customType: customType
+						,callbackFn: cb
+						,functionMap: _this.functionMap
+					});
+				};
+			} else {
+				_this.refresh($container);
+			};
 			
 			_this.callback(doc,selector,value);
 		};
-		
-		var customType = $elem.attr('n2-custom-type');
 		
 		if( typeof customType === 'string' ){
 			var handler = customFieldHandlers[customType];

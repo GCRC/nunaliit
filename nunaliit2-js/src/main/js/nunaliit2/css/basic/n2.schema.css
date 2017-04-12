@@ -19,6 +19,14 @@
 	border: none;
 }
 
+.n2schema_array_item:nth-child(1) .n2schema_array_item_up {
+	display: none;
+}
+
+.n2schema_array_item:nth-last-child(2) .n2schema_array_item_down {
+	display: none;
+}
+
 .n2schema_array_add {
 	display: inline-block;
 	background: url(tree/icons.png) no-repeat;
