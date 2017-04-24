@@ -707,7 +707,7 @@ Map Legend
 }
 
 .nunaliit_content > .n2widgetLegend .n2widgetLegend_outer .n2widgetLegend_symbolColumn {
-	width: 70px;
+	width: 70px; /* width needed to contain four legend symbols */
 	display: inline-block;
 }
 
