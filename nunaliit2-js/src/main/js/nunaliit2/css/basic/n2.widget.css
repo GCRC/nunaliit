@@ -691,26 +691,40 @@ Map Legend
 }
 
 .nunaliit_content > .n2widgetLegend .n2widgetLegend_outer {
-	background-color: #000;
+	background-color: rgba(0,0,0,0.9);
 	color: #fff;
 	padding: 10px;
-	border-radius: 5px;
-    border-color: #fff;
-    border-width: 1px;
-    border-style: solid;
-    box-shadow: 3px 3px 3px 0 rgba(0,0,0, 0.25);
+	border-radius: 2px;
+	border: 1px solid #FFFFFF;
+    box-shadow: 3px 3px 3px 0 rgba(0,0,0,0.25);
 }
 
-.nunaliit_content > .n2widgetLegend .n2widgetLegend_labelEntry::after {
-	content: "";
-	display: block;
-	clear: both;
+.nunaliit_content > .n2widgetLegend .n2widgetLegend_outer .n2widgetLegend_labelColumn {
+	width: auto;
+	max-width: 300px;
+	display: inline-block;
+	vertical-align: top;
 }
 
-.nunaliit_content > .n2widgetLegend .n2widgetLegend_preview {
+.nunaliit_content > .n2widgetLegend .n2widgetLegend_outer .n2widgetLegend_symbolColumn {
+	width: 70px;
+	display: inline-block;
+}
+
+.n2widgetLegend_symbolColumn_point,
+.n2widgetLegend_symbolColumn_line,
+.n2widgetLegend_symbolColumn_polygon,
+.n2widgetLegend_symbolColumn_cluster {
 	float: left;
 }
 
+/* Add padding to legend widget symbols */
+.n2widgetLegend_symbolColumn_point .n2widgetLegend_preview.n2widgetLegend_previewPoint,
+.n2widgetLegend_symbolColumn_line .n2widgetLegend_preview.n2widgetLegend_previewLine,
+.n2widgetLegend_symbolColumn_polygon .n2widgetLegend_preview.n2widgetLegend_previewPolygon,
+.n2widgetLegend_symbolColumn_cluster .n2widgetLegend_preview.n2widgetLegend_previewCluster {
+	padding: 1px;
+}
 
 /* 
 ==============================
