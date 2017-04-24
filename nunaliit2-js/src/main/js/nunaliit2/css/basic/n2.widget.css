@@ -696,7 +696,7 @@ Map Legend
 	padding: 10px;
 	border-radius: 2px;
 	border: 1px solid #FFFFFF;
-    box-shadow: 3px 3px 3px 0 rgba(0,0,0,0.25);
+	box-shadow: 3px 3px 3px 0 rgba(0,0,0,0.25);
 }
 
 .nunaliit_content > .n2widgetLegend .n2widgetLegend_outer .n2widgetLegend_labelColumn {
