@@ -39,6 +39,18 @@ var
  ;
 
 // --------------------------------------------------------------------------
+/* 
+This canvas displays a grid of elements provided by an element generator. The original purpose 
+for this canvas is to provide a simple way to display a photo grid which are referenced linked 
+to specific documents.  
+
+The attribute for each grid cell is described here:
+ - 	id: a doc id for use as a reference link and as the label of grid cell
+ - 	gridImage: an object which contains two properties (doc and attachment) to provide the required 
+ 	information for the insertMediaView show service. 
+ 	- gridImage.doc: provides the doc id of the image
+	- gridImage.attachement: provided the filename of the attachment
+*/
 var GridCanvas = $n2.Class({
 
 	canvasId: null,
@@ -50,8 +62,6 @@ var GridCanvas = $n2.Class({
 	dispatchService: null,
 
 	showService: null,
-
-	moduleDisplay: null,
 
 	elementsById: null,
 
@@ -74,7 +84,6 @@ var GridCanvas = $n2.Class({
 		this.canvasId = opts.canvasId;
 		this.sourceModelId = opts.sourceModelId;
 		this.elementGenerator = opts.elementGenerator;
-		this.moduleDisplay = opts.moduleDisplay;
 
 		var config = opts.config;
 		if( config ){
@@ -187,14 +196,7 @@ var GridCanvas = $n2.Class({
 			var $gridCellLabel = $('<div>')
 				.attr('class','n2gridcanvas_cell_label')
 				.appendTo($gridCell);
-		 	
-			/*
-		 	 *  Each grid element requires:
-		 	 *  - id: doc id for use as a reference link
-		 	 *  - gridImage: containing the required info for the insertMediaView show service. 
-		 	 *  - - gridImage.doc: image doc id
-		 	 *  - - gridImage.attachement: the media attachment file name
-		 	 */ 
+
 						
 			// Add image to grid cell if available
 			if( this.elementsById[element].gridImage ){
@@ -267,7 +269,6 @@ function HandleCanvasDisplayRequest(m){
  		
 		options.canvasId = m.canvasId;
 		options.config = m.config;
-		options.moduleDisplay = m.moduleDisplay;
 		options.onSuccess = m.onSuccess;
 		options.onError = m.onError;
 		
