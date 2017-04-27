@@ -76,6 +76,7 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 			,sourceModelId: null
 			,allChoicesLabel: null
 			,noChoiceLabel: null
+			,suppressAllChoices: false
 		},opts_);
 		
 		var _this = this;
@@ -85,6 +86,7 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 		this.sourceModelId = opts.sourceModelId;
 		this.allChoicesLabel = opts.allChoicesLabel;
 		this.noChoiceLabel = opts.noChoiceLabel;
+		this.suppressAllChoices = opts.suppressAllChoices;
 		
 		this.availableChoices = [];
 		this.selectedChoices = [];
@@ -177,27 +179,29 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 				_this._selectionChanged();
 			});
 
-		// No Choice
-		var noChoiceLabel = _loc('--');
-		if( this.noChoiceLabel ){
-			noChoiceLabel = _loc(this.noChoiceLabel);
-		};
-		$('<option>')
-			.addClass('n2widget_singleFilterSelection_optionNoChoice')
-			.text( noChoiceLabel )
-			.val(NO_CHOICE)
-			.appendTo($selector);
+		if( !this.suppressAllChoices ){
+			// No Choice
+			var noChoiceLabel = _loc('--');
+			if( this.noChoiceLabel ){
+				noChoiceLabel = _loc(this.noChoiceLabel);
+			};
+			$('<option>')
+				.addClass('n2widget_singleFilterSelection_optionNoChoice')
+				.text( noChoiceLabel )
+				.val(NO_CHOICE)
+				.appendTo($selector);
 
-		// All Choices
-		var allChoicesLabel = _loc('All');
-		if( this.allChoicesLabel ){
-			allChoicesLabel = _loc(this.allChoicesLabel);
-		};
-		$('<option>')
-			.addClass('n2widget_singleFilterSelection_optionAllChoices')
-			.text( allChoicesLabel )
-			.val(ALL_CHOICES)
-			.appendTo($selector);
+			// All Choices
+			var allChoicesLabel = _loc('All');
+			if( this.allChoicesLabel ){
+				allChoicesLabel = _loc(this.allChoicesLabel);
+			};
+			$('<option>')
+				.addClass('n2widget_singleFilterSelection_optionAllChoices')
+				.text( allChoicesLabel )
+				.val(ALL_CHOICES)
+				.appendTo($selector);
+		}
 		
 		for(var i=0,e=this.availableChoices.length; i<e; ++i){
 			var choice = this.availableChoices[i];
