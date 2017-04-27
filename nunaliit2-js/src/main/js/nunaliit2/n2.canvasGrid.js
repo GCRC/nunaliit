@@ -51,7 +51,7 @@ The attribute for each grid cell is described here:
  	- gridImage.doc: provides the doc id of the image
 	- gridImage.attachement: provided the filename of the attachment
 */
-var GridCanvas = $n2.Class({
+var GridCanvas = $n2.Class('GridCanvas',{
 
 	canvasId: null,
 
@@ -80,44 +80,52 @@ var GridCanvas = $n2.Class({
 		},opts_);
  		
 		var _this = this;
- 	
-		this.canvasId = opts.canvasId;
-		this.sourceModelId = opts.sourceModelId;
-		this.elementGenerator = opts.elementGenerator;
-
-		var config = opts.config;
-		if( config ){
-			if( config.directory ){
-				this.dispatchService = config.directory.dispatchService;
-				this.showService = config.directory.showService;
-			};
-		};
-	
-		this.elementsById = {};
 		
- 		// Element generator
- 		if( this.elementGenerator ){
-			this.elementGenerator.setElementsChangedListener(function(added, updated, removed){
-				_this._elementsChanged(added, updated, removed);
-			});
-			this.elementGenerator.setIntentChangedListener(function(updated){
-				_this._intentChanged(updated);
-			});
- 		};
-
- 		// Register to events
- 		if( this.dispatchService ){
- 			var f = function(m){
- 				_this._handleDispatch(m);
- 			};
- 			
- 			this.dispatchService.register(DH,'modelGetInfo',f);
- 			this.dispatchService.register(DH,'modelStateUpdated',f);
- 		};
+		try {
+			this.canvasId = opts.canvasId;
+			this.sourceModelId = opts.sourceModelId;
+			this.elementGenerator = opts.elementGenerator;
+	
+			var config = opts.config;
+			if( config ){
+				if( config.directory ){
+					this.dispatchService = config.directory.dispatchService;
+					this.showService = config.directory.showService;
+				};
+			};
+		
+			this.elementsById = {};
+			
+	 		// Element generator
+	 		if( this.elementGenerator ){
+				this.elementGenerator.setElementsChangedListener(function(added, updated, removed){
+					_this._elementsChanged(added, updated, removed);
+				});
+				this.elementGenerator.setIntentChangedListener(function(updated){
+					_this._intentChanged(updated);
+				});
+	 		};
+	
+	 		// Register to events
+	 		if( this.dispatchService ){
+	 			var f = function(m){
+	 				_this._handleDispatch(m);
+	 			};
+	 			
+	 			this.dispatchService.register(DH,'modelGetInfo',f);
+	 			this.dispatchService.register(DH,'modelStateUpdated',f);
+	 		};
+	 		
+	 		this._createGrid();
+	
+	 		$n2.log(this._classname,this);
+	 		
+		} catch(e) {
+			var error = new Error('Unable to create '+this._classname+': '+err);
+			opts.onError(error);
+		};
  		
- 		this._createGrid();
-
- 		$n2.log('GridCanvas',this);
+ 		opts.onSuccess();
  	},
 
 	_getElem: function(){
