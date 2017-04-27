@@ -68,6 +68,10 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 	
 	noChoiceLabel: null,
 	
+	suppressAllChoices: null,
+
+	suppressNoChoice: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			containerId: null
@@ -77,6 +81,7 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 			,allChoicesLabel: null
 			,noChoiceLabel: null
 			,suppressAllChoices: false
+			,suppressNoChoice: false
 		},opts_);
 		
 		var _this = this;
@@ -87,6 +92,7 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 		this.allChoicesLabel = opts.allChoicesLabel;
 		this.noChoiceLabel = opts.noChoiceLabel;
 		this.suppressAllChoices = opts.suppressAllChoices;
+		this.suppressNoChoice = opts.suppressNoChoice;
 		
 		this.availableChoices = [];
 		this.selectedChoices = [];
@@ -179,7 +185,7 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 				_this._selectionChanged();
 			});
 
-		if( !this.suppressAllChoices ){
+		if( !this.suppressNoChoice ){
 			// No Choice
 			var noChoiceLabel = _loc('--');
 			if( this.noChoiceLabel ){
@@ -190,7 +196,9 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 				.text( noChoiceLabel )
 				.val(NO_CHOICE)
 				.appendTo($selector);
+		};
 
+		if( !this.suppressAllChoices ){
 			// All Choices
 			var allChoicesLabel = _loc('All');
 			if( this.allChoicesLabel ){
@@ -201,7 +209,7 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 				.text( allChoicesLabel )
 				.val(ALL_CHOICES)
 				.appendTo($selector);
-		}
+		};
 		
 		for(var i=0,e=this.availableChoices.length; i<e; ++i){
 			var choice = this.availableChoices[i];
