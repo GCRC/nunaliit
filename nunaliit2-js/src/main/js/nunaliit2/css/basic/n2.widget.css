@@ -622,6 +622,29 @@ Single Filter Selection
 
 /* 
 ==============================
+Multi Filter Selection 
+==============================
+*/
+.nunaliit_module_title .n2widget_multiFilterSelection {
+	float: right;
+	padding: 8px 20px;
+}
+.n2widget_multiFilterSelection_position {
+	position: 'absolute';
+	left: 0;
+	bottom: 0;
+	width: 0;
+	height: 0;
+	border: none;
+	margin: 0;
+	padding: 0;
+}
+.n2widget_multiFilterSelection_position_hidden {
+	display: none;
+}
+
+/* 
+==============================
 Model Browser Widget 
 ==============================
 */

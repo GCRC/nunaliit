@@ -635,6 +635,10 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 	allChoicesLabel: null,
 	
 	noChoiceLabel: null,
+
+	label: null,
+
+	showAsLink: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -644,6 +648,8 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 			,sourceModelId: null
 			,allChoicesLabel: null
 			,noChoiceLabel: null
+			,label: null
+			,showAsLink: false
 		},opts_);
 		
 		var _this = this;
@@ -653,6 +659,8 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 		this.sourceModelId = opts.sourceModelId;
 		this.allChoicesLabel = opts.allChoicesLabel;
 		this.noChoiceLabel = opts.noChoiceLabel;
+		this.label = opts.label;
+		this.showAsLink = opts.showAsLink;
 		
 		this.availableChoices = [];
 		this.selectedChoices = [];
@@ -719,10 +727,46 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 		
 		this.elemId = $n2.getUniqueId();
 		
-		$('<div>')
+		var $elem = $('<div>')
 			.attr('id',this.elemId)
-			.addClass('n2widget_singleFilterSelection')
+			.addClass('n2widget_multiFilterSelection')
 			.appendTo($container);
+		
+		var $relDiv = $('<div>')
+		.css({
+			position: 'relative'
+		})
+		.appendTo($elem);
+		
+		var buttonLabel = undefined;
+		if( this.label ){
+			buttonLabel = _loc(this.label);
+		};
+		if( !buttonLabel ){
+			buttonLabel = _loc('Multi-Selection');
+		};
+		if( this.showAsLink ){
+			$('<a>')
+				.attr('href',buttonLabel)
+				.text( buttonLabel )
+				.appendTo($relDiv)
+				.click(function(){
+					_this._buttonClicked();
+					return false;
+				});
+		} else {
+			var $button = $('<button>')
+				.appendTo($relDiv)
+				.text( buttonLabel )
+				.click(function(){
+					_this._buttonClicked();
+				});
+		};
+		
+		var $position = $('<div>')
+			.addClass('n2widget_multiFilterSelection_position')
+			.addClass('n2widget_multiFilterSelection_position_hidden')
+			.appendTo($relDiv);
 		
 		this._availableChoicesUpdated();
 		
@@ -737,10 +781,11 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 		var _this = this;
 
 		var $elem = this._getElem();
-		$elem.empty();
+		var $position = $elem.find('.n2widget_multiFilterSelection_position');
+		$position.empty();
 		
 		var $selector = $('<select>')
-			.appendTo($elem)
+			.appendTo($position)
 			.attr('multiple',true)
 			.change(function(){
 				_this._selectionChanged();
@@ -818,6 +863,12 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 		});
 	},
 	
+	_buttonClicked: function(){
+		var $elem = this._getElem();
+		var $position = $elem.find('.n2widget_multiFilterSelection_position');
+		$position.toggleClass('n2widget_multiFilterSelection_position_hidden');
+	},
+		
 	_handle: function(m, addr, dispatcher){
 		var _this = this;
 
@@ -932,6 +983,7 @@ function HandleWidgetDisplayRequests(m){
 //--------------------------------------------------------------------------
 $n2.widgetSelectableFilter = {
 	SingleFilterSelectionWidget: SingleFilterSelectionWidget
+	,MultiFilterSelectionDropDownWidget: MultiFilterSelectionDropDownWidget
 	,HandleWidgetAvailableRequests: HandleWidgetAvailableRequests
 	,HandleWidgetDisplayRequests: HandleWidgetDisplayRequests
 };
