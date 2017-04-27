@@ -151,7 +151,7 @@ var LegendWidget = $n2.Class('LegendWidget',{
 			var $outer = $('<div>')
 				.addClass('n2widgetLegend_outer')
 				.appendTo($elem);
-
+		
 			var labelNames = [];
 			for(var labelName in stylesByLabel){
 				labelNames.push(labelName);
@@ -162,13 +162,37 @@ var LegendWidget = $n2.Class('LegendWidget',{
 				var labelInfo = stylesByLabel[labelName];
 
 				var $div = $('<div>')
-					.addClass('n2widgetLegend_labelEntry')
+					.addClass('n2widgetLegend_legendEntry')
 					.appendTo($outer);
-			
-				$('<div>')
-					.addClass('n2widgetLegend_labelName')
-					.text(labelName)
+
+				var $symbolColumn = $('<div>')
+					.addClass('n2widgetLegend_symbolColumn')
 					.appendTo($div);
+				
+				var $symbolColumnPoint = $('<div>')
+					.addClass('n2widgetLegend_symbolColumn_point')
+					.appendTo($symbolColumn);				
+				
+				var $symbolColumnLine = $('<div>')
+					.addClass('n2widgetLegend_symbolColumn_line')
+					.appendTo($symbolColumn);				
+				
+				var $symbolColumnPolygon = $('<div>')
+					.addClass('n2widgetLegend_symbolColumn_polygon')
+					.appendTo($symbolColumn);
+				
+				var $symbolColumnCluster = $('<div>')
+					.addClass('n2widgetLegend_symbolColumn_cluster')
+					.appendTo($symbolColumn);
+
+				var $labelColumn = $('<div>')
+					.addClass('n2widgetLegend_labelColumn')
+					.appendTo($div);
+
+				$('<div>')
+					.addClass('n2widgetLegend_labelEntry')
+					.text(labelName)
+					.appendTo($labelColumn);
 				
 				var styleIds = [];
 				for(var styleId in labelInfo){
@@ -179,12 +203,19 @@ var LegendWidget = $n2.Class('LegendWidget',{
 				styleIds.forEach(function(styleId){
 					var styleInfo = labelInfo[styleId];
 					var style = styleInfo.style;
-
-					if( styleInfo.point ){
+					
+					// Check if point is a cluster and create either a point or cluster symbol
+					if( styleInfo.point && styleInfo.point.cluster && styleInfo.point.cluster.length > 1 ){
+						var $preview = $('<div>')
+							.addClass('n2widgetLegend_preview n2widgetLegend_previewCluster')
+							.attr('n2-style-id',style.id)
+							.appendTo($symbolColumnCluster);
+						_this._insertSvgPreviewPoint($preview, style, styleInfo.point);
+					} else if( styleInfo.point ){
 						var $preview = $('<div>')
 							.addClass('n2widgetLegend_preview n2widgetLegend_previewPoint')
 							.attr('n2-style-id',style.id)
-							.appendTo($div);
+							.appendTo($symbolColumnPoint);
 						_this._insertSvgPreviewPoint($preview, style, styleInfo.point);
 					};
 
@@ -192,7 +223,7 @@ var LegendWidget = $n2.Class('LegendWidget',{
 						var $preview = $('<div>')
 							.addClass('n2widgetLegend_preview n2widgetLegend_previewLine')
 							.attr('n2-style-id',style.id)
-							.appendTo($div);
+							.appendTo($symbolColumnLine);
 						_this._insertSvgPreviewLine($preview, style, styleInfo.line);
 					};
 
@@ -200,7 +231,7 @@ var LegendWidget = $n2.Class('LegendWidget',{
 						var $preview = $('<div>')
 							.addClass('n2widgetLegend_preview n2widgetLegend_previewPolygon')
 							.attr('n2-style-id',style.id)
-							.appendTo($div);
+							.appendTo($symbolColumnPolygon);
 						_this._insertSvgPreviewPolygon($preview, style, styleInfo.polygon);
 					};
 				});
