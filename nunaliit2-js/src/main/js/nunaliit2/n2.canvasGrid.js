@@ -114,6 +114,7 @@ var GridCanvas = $n2.Class('GridCanvas',{
 	 			
 	 			this.dispatchService.register(DH,'modelGetInfo',f);
 	 			this.dispatchService.register(DH,'modelStateUpdated',f);
+	 			this.dispatchService.register(DH,'windowResized',f);
 	 		};
 	 		
 	 		this._createGrid();
@@ -146,6 +147,10 @@ var GridCanvas = $n2.Class('GridCanvas',{
 				.addClass('n2gridcanvas')
 				.click(function(e){
 					_this._backgroundClicked();
+				})
+				.scroll(function(){
+					_this._scrollChanged( $(this) );
+					return false;
 				});
 		};
  	},
@@ -189,43 +194,116 @@ var GridCanvas = $n2.Class('GridCanvas',{
 		
 		$grid.empty();
 		
-		for (var element in this.elementsById){
-			
+		for (var elementId in this.elementsById){
 			// Create an empty grid cell
 			var $gridCell = $('<div>')
-				.attr('class','n2gridcanvas_cell')
+				.addClass('n2gridcanvas_cell')
+				.attr('n2-element-id', elementId)
 				.css('background-color','#EFEFEF')
 				.appendTo($grid);
+		};
+		
+		this._reloadTiles();
+	},
+	
+	/*
+	 * Attempts to load the content of the visible tiles
+	 */
+	_reloadTiles: function(){
+		var _this = this;
+
+		var $canvas = this._getElem();
+		
+		var canvasWidth = $canvas.width();
+		var canvasHeight = $canvas.height();
+		var canvasOffsetTop = $canvas.scrollTop();
+		var canvasOffsetLeft = $canvas.scrollLeft();
+		
+		$canvas.find('.n2gridcanvas_cell').each(function(){
+			var $cell = $(this);
 			
+			var cellPosition = $cell.position();
+			var cellHeight = $cell.height();
+			var cellWidth = $cell.width();
+			
+			var show = true;
+			if( cellPosition.top > canvasHeight ){
+				show = false;
+			} else if( (cellPosition.top + cellHeight) < 0 ){
+				show = false;
+			} else if( cellPosition.left > canvasWidth ){
+				show = false;
+			} else if( (cellPosition.left + cellWidth) < 0 ){
+				show = false;
+			};
+			
+			if( show ){
+				if( $cell.hasClass('n2gridcanvas_cell_show') ){
+					// Already done
+				} else {
+					_this._displayTile($cell);
+					$cell.addClass('n2gridcanvas_cell_show');
+				};
+			} else {
+				if( $cell.hasClass('n2gridcanvas_cell_show') ){
+					$cell.empty().removeClass('n2gridcanvas_cell_show');
+				};
+			};
+		});
+	},
+	
+	_displayTile: function($cell){
+		var elementId = $cell.attr('n2-element-id');
+		var element = this.elementsById[elementId];
+		
+		if( element ){
+			$cell.empty();
+
 			var $gridCellImage = $('<div>')
-				.attr('class','n2gridcanvas_cell_image')
-				.appendTo($gridCell);
+				.addClass('n2gridcanvas_cell_image')
+				.appendTo($cell);
 			
 			var $gridCellLabel = $('<div>')
-				.attr('class','n2gridcanvas_cell_label')
-				.appendTo($gridCell);
-
+				.addClass('n2gridcanvas_cell_label')
+				.appendTo($cell);
 						
 			// Add image to grid cell if available
-			if( this.elementsById[element].gridImage ){
-				var cellImage = this.elementsById[element].gridImage;
+			if( element.gridImage ){
+				var cellImage = element.gridImage;
 				var $GridImage = $('<span>')
 				.attr('class','n2s_insertMediaView')
 				.attr('nunaliit-document',cellImage.doc)
 				.attr('nunaliit-attachment',cellImage.attachment)
 				.appendTo($gridCellImage);
 			};
-
+		
 			// Add label/referencelink to grid cell if available
-			if ( this.elementsById[element].id ){
+			if ( this.elementsById[elementId].id ){
 				var $GridLabel = $('<span>')
 				.attr('class','n2s_referenceLink')
-				.attr('nunaliit-document',this.elementsById[element].id)
+				.attr('nunaliit-document',element.id)
 				.appendTo($gridCellLabel);
 			};
+
+			this.showService.fixElementAndChildren($cell);
 		};
+	},
+
+	_scrollChanged: function( $canvas ){
+		var _this = this;
 		
-		this.showService.fixElementAndChildren($grid);
+		var scrollTop = $canvas.scrollTop();
+		var scrollLeft = $canvas.scrollLeft();
+
+		// Wait a bit before loading images
+		this.lastScrollTop = scrollTop;
+		this.lastScrollLeft = scrollLeft;
+		window.setTimeout(function(){
+			if( _this.lastScrollTop === scrollTop 
+			 && _this.lastScrollLeft === scrollLeft ){
+				_this._reloadTiles();
+			};
+		},200);
 	},
  	
  	_sourceModelUpdated: function(state){
@@ -244,6 +322,8 @@ var GridCanvas = $n2.Class('GridCanvas',{
  					this._sourceModelUpdated(m.state);
  				};
  			};
+ 		} else if( 'windowResized' === m.type ) {
+ 			this._reloadTiles();
  		};
  	}
 });
