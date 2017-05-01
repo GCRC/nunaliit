@@ -14,8 +14,16 @@
     cursor: pointer;
 }
 
-.n2gridcanvas .n2gridcanvas_cell:hover {  	
+.n2gridcanvas .n2gridcanvas_cell_hovered {  	
     box-shadow: 0px 2px 3px #999999;
+}
+
+.n2gridcanvas .n2gridcanvas_cell {  	
+    background-color: #EFEFEF;
+}
+
+.n2gridcanvas .n2gridcanvas_cell.n2gridcanvas_cell_selected {  	
+    background-color: #CCEFEF;
 }
 
 .n2gridcanvas .n2gridcanvas_cell .n2gridcanvas_cell_label span {

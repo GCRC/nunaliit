@@ -45,7 +45,10 @@ for this canvas is to provide a simple way to display a photo grid which are ref
 to specific documents.  
 
 The attribute for each grid cell is described here:
- - 	id: a doc id for use as a reference link and as the label of grid cell
+ - 	id: String. Unique identifier for this element
+ -  sort: Optional String. Used to sort the cells in the grid.
+ -  fragments: Map map of fragments that make this element. Gives a list of
+               documents used to make up this element.
  - 	gridImage: an object which contains two properties (doc and attachment) to provide the required 
  	information for the insertMediaView show service. 
  	- gridImage.doc: provides the doc id of the image
@@ -64,6 +67,8 @@ var GridCanvas = $n2.Class('GridCanvas',{
 	showService: null,
 
 	elementsById: null,
+	
+	sortedElements: null,
 
 	intentView: null,
  
@@ -95,6 +100,7 @@ var GridCanvas = $n2.Class('GridCanvas',{
 			};
 		
 			this.elementsById = {};
+			this.sortedElements = [];
 			
 	 		// Element generator
 	 		if( this.elementGenerator ){
@@ -146,7 +152,14 @@ var GridCanvas = $n2.Class('GridCanvas',{
 				.empty()
 				.addClass('n2gridcanvas')
 				.click(function(e){
-					_this._backgroundClicked();
+					var $target = $(e.target);
+					if( $target.hasClass('n2gridcanvas_cell') ){
+						// Ignore
+					} else if( $target.parents('.n2gridcanvas_cell').length > 0 ) {
+						// Ignore
+					} else {
+						_this._backgroundClicked();
+					};
 				})
 				.scroll(function(){
 					_this._scrollChanged( $(this) );
@@ -183,9 +196,54 @@ var GridCanvas = $n2.Class('GridCanvas',{
 			var updated = updatedElements[i];
 			this.elementsById[ updated.id ] = updated;
 		};
+
+		// Keep track of elements in sorted order
+		this.sortedElements = [];
+		for(var elementId in this.elementsById){
+			var element = this.elementsById[elementId];
+			this.sortedElements.push(element);
+			
+			if( typeof element.sort === 'undefined' ){
+				element.sort = element.id;
+			};
+		};
+		this.sortedElements.sort(function(a,b){
+			if( a.sort < b.sort ){
+				return -1;
+			};
+			if( a.sort > b.sort ){
+				return 1;
+			};
+			return 0;
+		});
 		
 		this._redrawGrid();
- 	}, 	
+ 	},
+ 	
+ 	_intentChanged: function(updatedElements){
+ 		var _this = this;
+
+ 		updatedElements.forEach(function(updatedElement){
+ 			var cellId = _this.canvasId + '_cell_' + updatedElement.id;
+ 			
+ 			var $cell = $('#'+cellId);
+ 			
+ 			_this._adjustIntent(updatedElement, $cell);
+ 		});
+ 	},
+ 	
+ 	_adjustIntent: function(element, $cell){
+ 		if( element.n2_hovered ){
+ 			$cell.addClass('n2gridcanvas_cell_hovered');
+ 		} else {
+ 			$cell.removeClass('n2gridcanvas_cell_hovered');
+ 		};
+ 		if( element.n2_selected ){
+ 			$cell.addClass('n2gridcanvas_cell_selected');
+ 		} else {
+ 			$cell.removeClass('n2gridcanvas_cell_selected');
+ 		};
+ 	},
 	
  	_redrawGrid: function() {
 		var _this = this;
@@ -194,16 +252,71 @@ var GridCanvas = $n2.Class('GridCanvas',{
 		
 		$grid.empty();
 		
-		for (var elementId in this.elementsById){
+		this.sortedElements.forEach(function(element){
+			var elementId = element.id;
+			
+			var cellId = _this.canvasId + '_cell_' + elementId;
+
 			// Create an empty grid cell
 			var $gridCell = $('<div>')
+				.attr('id', cellId)
 				.addClass('n2gridcanvas_cell')
 				.attr('n2-element-id', elementId)
-				.css('background-color','#EFEFEF')
-				.appendTo($grid);
-		};
+				.appendTo($grid)
+				.click(function(){
+					var $cell = $(this);
+					var elementId = $cell.attr('n2-element-id');
+					_this._cellClicked(elementId);
+				})
+				.mouseover(function(){
+					var $cell = $(this);
+					var elementId = $cell.attr('n2-element-id');
+					_this._cellMouseOver(elementId);
+				})
+				.mouseout(function(){
+					var $cell = $(this);
+					var elementId = $cell.attr('n2-element-id');
+					_this._cellMouseOut(elementId);
+				});
+			
+			_this._adjustIntent(element, $gridCell);
+		});
 		
 		this._reloadTiles();
+	},
+	
+	_cellClicked: function(elementId){
+ 		var element = this.elementsById[elementId];
+ 		if( this.toggleSelection 
+ 		 && this.lastElementIdSelected === elementId ){
+ 			this.elementGenerator.selectOff(element);
+ 			this.lastElementIdSelected = null;
+ 		} else {
+ 			this.elementGenerator.selectOn(element);
+ 			this.lastElementIdSelected = elementId;
+ 		};
+	},
+	
+	_cellMouseOver: function(elementId){
+ 		var element = this.elementsById[elementId];
+ 		if( elementId !== this.currentMouseOverId ){
+ 			// Focus Off before Focus On
+ 			if( this.currentMouseOver ){
+ 	 			this.elementGenerator.focusOff(this.currentMouseOverId);
+ 				this.currentMouseOverId = null;
+ 			};
+ 			
+ 			this.elementGenerator.focusOn(element);
+ 			this.currentMouseOverId = elementId;
+ 		};
+	},
+	
+	_cellMouseOut: function(elementId){
+ 		var element = this.elementsById[elementId];
+ 		if( elementId === this.currentMouseOverId ){
+ 			this.elementGenerator.focusOff(elementId);
+			this.currentMouseOverId = null;
+ 		};
 	},
 	
 	/*
@@ -277,10 +390,10 @@ var GridCanvas = $n2.Class('GridCanvas',{
 				.appendTo($gridCellImage);
 			};
 		
-			// Add label/referencelink to grid cell if available
+			// Add label to grid cell if available
 			if ( this.elementsById[elementId].id ){
 				var $GridLabel = $('<span>')
-				.attr('class','n2s_referenceLink')
+				.attr('class','n2s_briefDisplay')
 				.attr('nunaliit-document',element.id)
 				.appendTo($gridCellLabel);
 			};
