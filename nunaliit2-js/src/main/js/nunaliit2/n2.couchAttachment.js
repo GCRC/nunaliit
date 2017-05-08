@@ -301,6 +301,21 @@ var AttachmentService = $n2.Class({
 
 	getAttachments: function(doc, documentSource){
 		if( !documentSource ){
+			// Document source is not specified. Look for it.
+			var m = {
+				type: 'documentSourceFromDocument'
+				,doc: doc
+				,documentSource: null
+			};
+			this.dispatchService.synchronousCall(DH,m);
+			if( m.documentSource ){
+				documentSource = m.documentSource;
+			};
+		};
+
+		if( !documentSource ){
+			// At this point, we are not able to find an appropriate document
+			// source. Create a fake one. It might work, but most likely, it will not.
 			documentSource = new $n2.document.DocumentSource({
 				doc: doc
 				,dispatchService: this.dispatchService
@@ -313,6 +328,21 @@ var AttachmentService = $n2.Class({
 
 	getAttachment: function(doc, attachmentName, documentSource){
 		if( !documentSource ){
+			// Document source is not specified. Look for it.
+			var m = {
+				type: 'documentSourceFromDocument'
+				,doc: doc
+				,documentSource: null
+			};
+			this.dispatchService.synchronousCall(DH,m);
+			if( m.documentSource ){
+				documentSource = m.documentSource;
+			};
+		};
+
+		if( !documentSource ){
+			// At this point, we are not able to find an appropriate document
+			// source. Create a fake one. It might work, but most likely, it will not.
 			documentSource = new $n2.document.DocumentSource({
 				doc: doc
 				,dispatchService: this.dispatchService

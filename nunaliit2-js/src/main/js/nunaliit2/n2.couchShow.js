@@ -865,7 +865,7 @@ var DomStyler = $n2.Class({
 			
 			if( attachment ){
 				$('<img>')
-					.attr('src',attachment.getMediaFileUrl())
+					.attr('src',attachment.computeUrl())
 					.appendTo($insertElem);
 			};
 		};
