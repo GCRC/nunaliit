@@ -48,7 +48,7 @@
     left: 0;
 }
 
-.n2gridcanvas .n2gridcanvas_cell:hover .n2gridcanvas_cell_label span {
+.n2gridcanvas .n2gridcanvas_cell.n2gridcanvas_cell_selected .n2gridcanvas_cell_label span {
 	opacity: 1.0;
 }
 
@@ -59,7 +59,7 @@
     object-fit: cover;
 }
 
-.n2gridcanvas .n2gridcanvas_cell:hover .n2gridcanvas_cell_image img {
+.n2gridcanvas .n2gridcanvas_cell.n2gridcanvas_cell_selected .n2gridcanvas_cell_image img {
     opacity: 0.4;
     -moz-transform: scale(1.05);
     -webkit-transform: scale(1.05);

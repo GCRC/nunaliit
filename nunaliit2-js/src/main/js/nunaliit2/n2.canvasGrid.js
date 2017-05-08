@@ -59,6 +59,8 @@ var GridCanvas = $n2.Class('GridCanvas',{
 	canvasId: null,
 
 	sourceModelId: null,
+	
+	refreshIntervalInMs: null,
 
 	elementGenerator: null,
  
@@ -76,6 +78,7 @@ var GridCanvas = $n2.Class('GridCanvas',{
 		var opts = $n2.extend({
 			canvasId: null
 			,sourceModelId: null
+			,refreshIntervalInMs: 200
 			,elementGenerator: null
 			,config: null
 			,moduleDisplay: null
@@ -89,6 +92,7 @@ var GridCanvas = $n2.Class('GridCanvas',{
 		try {
 			this.canvasId = opts.canvasId;
 			this.sourceModelId = opts.sourceModelId;
+			this.refreshIntervalInMs = opts.refreshIntervalInMs;
 			this.elementGenerator = opts.elementGenerator;
 	
 			var config = opts.config;
@@ -121,6 +125,7 @@ var GridCanvas = $n2.Class('GridCanvas',{
 	 			this.dispatchService.register(DH,'modelGetInfo',f);
 	 			this.dispatchService.register(DH,'modelStateUpdated',f);
 	 			this.dispatchService.register(DH,'windowResized',f);
+	 			this.dispatchService.register(DH,'canvasGridRefresh',f);
 	 		};
 	 		
 	 		this._createGrid();
@@ -416,7 +421,7 @@ var GridCanvas = $n2.Class('GridCanvas',{
 			 && _this.lastScrollLeft === scrollLeft ){
 				_this._reloadTiles();
 			};
-		},200);
+		},this.refreshIntervalInMs);
 	},
  	
  	_sourceModelUpdated: function(state){
@@ -424,6 +429,8 @@ var GridCanvas = $n2.Class('GridCanvas',{
  	},
 
  	_handleDispatch: function(m){
+ 		var _this = this;
+
  		if( 'modelGetInfo' === m.type ){
  			if( m.modelId === this.modelId ){
  				m.modelInfo = this._getModelInfo();
@@ -435,8 +442,16 @@ var GridCanvas = $n2.Class('GridCanvas',{
  					this._sourceModelUpdated(m.state);
  				};
  			};
+
  		} else if( 'windowResized' === m.type ) {
- 			this._reloadTiles();
+ 			window.setTimeout(function(){
+ 	 			_this._reloadTiles();
+ 			},this.refreshIntervalInMs);
+
+ 		} else if( 'canvasGridRefresh' === m.type ) {
+ 			window.setTimeout(function(){
+ 	 			_this._reloadTiles();
+ 			},this.refreshIntervalInMs);
  		};
  	}
 });
