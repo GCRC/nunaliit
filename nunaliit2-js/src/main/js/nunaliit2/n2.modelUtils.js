@@ -248,6 +248,227 @@ var ModelUnion = $n2.Class({
 });
 
 //--------------------------------------------------------------------------
+var ModelIntersect = $n2.Class({
+	
+	dispatchService: null,
+
+	modelId: null,
+	
+	sourceModelIds: null,
+	
+	docInfosByDocId: null,
+	
+	loadingMap: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dispatchService: null
+			
+			// From configuration
+			,modelId: null
+			,sourceModelIds: null
+		},opts_);
+		
+		var _this = this;
+		
+		this.dispatchService = opts.dispatchService;
+		this.modelId = opts.modelId;
+
+		// Source models
+		this.sourceModelIds = {};
+		if( opts.sourceModelIds ){
+			for(var i=0,e=opts.sourceModelIds.length; i<e; ++i){
+				var sourceModelId = opts.sourceModelIds[i];
+				this.sourceModelIds[sourceModelId] = {};
+			};
+		};
+		
+		this.docInfosByDocId = {};
+		this.loadingMap = {};
+
+		// Register to events
+		if( this.dispatchService ){
+			var f = function(m, addr, dispatcher){
+				_this._handle(m, addr, dispatcher);
+			};
+			this.dispatchService.register(DH,'modelGetInfo',f);
+			this.dispatchService.register(DH, 'modelGetState', f);
+			this.dispatchService.register(DH, 'modelStateUpdated', f);
+			
+			for(var sourceModelId in this.sourceModelIds){
+				// Initialize state
+				var state = $n2.model.getModelState({
+					dispatchService: this.dispatchService
+					,modelId: sourceModelId
+				});
+				if( state ){
+					this._sourceModelUpdated(sourceModelId, state);
+				};
+			};
+		};
+		
+		$n2.log('IntersectModel',this);
+	},
+	
+	isLoading: function(){
+		for(var modelId in this.loadingMap){
+			var loading = this.loadingMap[modelId];
+			if( loading ){
+				return true;
+			};
+		};
+		return false;
+	},
+	
+	_handle: function(m, addr, dispatcher){
+		if( 'modelGetInfo' === m.type ){
+			if( this.modelId === m.modelId ){
+				m.modelInfo = this._getModelInfo();
+			};
+			
+		} else if( 'modelGetState' === m.type ){
+			if( this.modelId === m.modelId ){
+				var added = [];
+				for(var docId in this.docInfosByDocId){
+					var docInfo = this.docInfosByDocId[docId];
+					var doc = docInfo.doc;
+					added.push(doc);
+				};
+
+				m.state = {
+					added: added
+					,updated: []
+					,removed: []
+					,loading: this.isLoading()
+				};
+			};
+			
+		} else if( 'modelStateUpdated' === m.type ){
+			// Does it come from one of our sources?
+			if( this.sourceModelIds[m.modelId] ){
+				this._sourceModelUpdated(m.modelId, m.state);
+			};
+		};
+	},
+	
+	_getModelInfo: function(){
+		var info = {
+			modelId: this.modelId
+			,modelType: 'intersect'
+			,parameters: {}
+		};
+		
+		return info;
+	},
+	
+	_sourceModelUpdated: function(sourceModelId, sourceState){
+		
+		if( !this.sourceModelIds[sourceModelId] ){
+			// Not one of our source models
+			return;
+		};
+		
+		var added = []
+			,updated = []
+			,removed = []
+			;
+		
+		if( typeof sourceState.loading === 'boolean' ){
+			this.loadingMap[sourceModelId] = sourceState.loading;
+		};
+		
+		// Loop through all added and modified documents
+		var addedAndModifiedDocs = sourceState.added ? sourceState.added.slice(0) : [];
+		if( sourceState.updated ){
+			addedAndModifiedDocs.push.apply(addedAndModifiedDocs, sourceState.updated);
+		};
+		for(var i=0,e=addedAndModifiedDocs.length; i<e; ++i){
+			var doc = addedAndModifiedDocs[i];
+			var docId = doc._id;
+			
+			
+			// Flag docs to be removed if not in they currently exist in the docsInfoByDocId exist and the model 
+			
+			
+			var docInfo = this.docInfosByDocId[docId];
+			if( !docInfo ){
+				docInfo = {
+					id: docId
+					,doc: doc
+					,rev: doc._rev
+					,sources: {}
+				};
+				this.docInfosByDocId[docId] = docInfo;
+				
+				added.push(doc);
+			};
+			
+			docInfo.sources[sourceModelId] = true;
+			
+			
+		
+			
+			// Check if new revision
+			if( docInfo.rev !== doc._rev ){
+				// Modified
+				docInfo.doc = doc;
+				docInfo.rev = doc._rev;
+				
+				updated.push(doc);
+			};
+		};
+		
+		// Remove docs which have been flagged
+		
+		
+		// Loop through all removed documents
+		if( sourceState.removed ){
+			for(var i=0,e=sourceState.removed.length; i<e; ++i){
+				var doc = sourceState.removed[i];
+				var docId = doc._id;
+				var docInfo = this.docInfosByDocId[docId];
+				if( docInfo ){
+					docInfo.sources[sourceModelId] = false;
+					
+					var removedFlag = true;
+					for(var modelId in docInfo.sources){
+						if( docInfo.sources[modelId] ){
+							removedFlag = false;
+						};
+					};
+					
+					if( removedFlag ){
+						delete this.docInfosByDocId[docId];
+						removed.push(doc);
+					};
+				};
+			};
+		};
+
+		this._reportStateUpdate(added, updated, removed);
+	},
+	
+	_reportStateUpdate: function(added, updated, removed){
+		var stateUpdate = {
+			added: added
+			,updated: updated
+			,removed: removed
+			,loading: this.isLoading()
+		};
+
+		if( this.dispatchService ){
+			this.dispatchService.send(DH,{
+				type: 'modelStateUpdated'
+				,modelId: this.modelId
+				,state: stateUpdate
+			});
+		};
+	}
+});
+
+
+
+//--------------------------------------------------------------------------
 /*
 * This class is a document source model. This means that it is a document model
 * (a model that makes documents available to other entities), but it does not
@@ -359,6 +580,29 @@ function handleModelCreate(m, addr, dispatcher){
 		
 		m.created = true;
 
+	} else if( m.modelType === 'intersect' ){
+		var options = {};
+		
+		if( m && m.modelOptions ){
+			if( m.modelOptions.sourceModelIds 
+			 && m.modelOptions.sourceModelIds.length ){
+				options.sourceModelIds = m.modelOptions.sourceModelIds;
+			};
+		};
+
+		options.modelId = m.modelId;
+		options.modelType = m.modelType;
+		
+		if( m && m.config ){
+			if( m.config.directory ){
+				options.dispatchService = m.config.directory.dispatchService;
+			};
+		};
+		
+		new ModelIntersect(options);
+		
+		m.created = true;
+
 	} else if( m.modelType === 'staticDocumentSource' ){
 		var options = {};
 		
@@ -386,6 +630,7 @@ function handleModelCreate(m, addr, dispatcher){
 //--------------------------------------------------------------------------
 $n2.modelUtils = {
 	ModelUnion: ModelUnion
+	,ModelIntersect: ModelIntersect
 	,StaticDocumentSource: StaticDocumentSource
 	,handleModelCreate: handleModelCreate 
 };
