@@ -331,8 +331,11 @@ var ModelIntersect = $n2.Class({
 				var added = [];
 				for(var docId in this.docInfosByDocId){
 					var docInfo = this.docInfosByDocId[docId];
-					var doc = docInfo.doc;
-					added.push(doc);
+
+					if( docInfo.visible ){
+						var doc = docInfo.doc;
+						added.push(doc);
+					};
 				};
 
 				m.state = {
@@ -394,32 +397,40 @@ var ModelIntersect = $n2.Class({
 			if( !docInfo ){
 				docInfo = {
 					id: docId
+					,visible: false
 					,doc: doc
 					,rev: doc._rev
 					,sources: {}
 				};
 				this.docInfosByDocId[docId] = docInfo;
-				
-				added.push(doc);
 			};
-			
 			docInfo.sources[sourceModelId] = true;
-			
-			
-		
-			
+
 			// Check if new revision
+			var revUpdated = false;
 			if( docInfo.rev !== doc._rev ){
 				// Modified
 				docInfo.doc = doc;
 				docInfo.rev = doc._rev;
 				
-				updated.push(doc);
+				revUpdated = true;
 			};
+
+			// Check change in visibility
+			var visible = this._isDocVisible(doc);
+			if( visible && !docInfo.visible ){
+				added.push(doc);
+			} else if( !visible && docInfo.visible ){
+				removed.push(doc);
+			} else if( visible && docInfo.visible ) {
+				if( revUpdated ){
+					updated.push(doc);
+				};
+			} else {
+				// Do not worry about it
+			};
+			docInfo.visible = visible;
 		};
-		
-		// Remove docs which have been flagged
-		
 		
 		// Loop through all removed documents
 		if( sourceState.removed ){
@@ -428,8 +439,16 @@ var ModelIntersect = $n2.Class({
 				var docId = doc._id;
 				var docInfo = this.docInfosByDocId[docId];
 				if( docInfo ){
+					// Mark that this source no longer reports it
 					docInfo.sources[sourceModelId] = false;
+
+					// Check change in visibility
+					if( docInfo.visible ){
+						docInfo.visible = false;
+						removed.push(doc);
+					};
 					
+					// Check if we keep it
 					var removedFlag = true;
 					for(var modelId in docInfo.sources){
 						if( docInfo.sources[modelId] ){
@@ -439,7 +458,6 @@ var ModelIntersect = $n2.Class({
 					
 					if( removedFlag ){
 						delete this.docInfosByDocId[docId];
-						removed.push(doc);
 					};
 				};
 			};
@@ -463,6 +481,19 @@ var ModelIntersect = $n2.Class({
 				,state: stateUpdate
 			});
 		};
+	},
+	
+	_isDocVisible: function(doc){
+		var docId = doc._id;
+		var docInfo = this.docInfosByDocId[docId];
+		
+		for(var sourceModelId in this.sourceModelIds){
+			if( !docInfo.sources[sourceModelId] ) {
+				return false;
+			};
+		};
+		
+		return true;
 	}
 });
 
