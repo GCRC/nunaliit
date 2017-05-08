@@ -45,7 +45,7 @@ function getDocumentSourceFromId(id){
 };
 
 // *******************************************************
-var DocumentSource = $n2.Class({
+var DocumentSource = $n2.Class('DocumentSource', {
 	id: null,
 	
 	initialize: function(opts_){
@@ -66,6 +66,14 @@ var DocumentSource = $n2.Class({
 		return this.id;
 	},
 
+	/**
+	 * This method accepts a document and modifies it so that it reflects that
+	 * the document belongs to this source. This is useful if a document is
+	 * retrieved on behalf of the document source.
+	 */
+	adoptDocument: function(doc){
+		throw new Error('Subclasses must implement adoptDocument(doc)');
+	},
 
 	createDocument: function(opts_){
 		var opts = $n2.extend({

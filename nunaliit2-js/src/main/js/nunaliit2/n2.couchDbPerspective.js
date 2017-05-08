@@ -75,11 +75,14 @@ var CouchLayerDbSelector = $n2.Class(DbSelector, {
 	
 	atlasDesign: null,
 	
+	documentSource: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			layer: null
 			,name: null
 			,atlasDesign: null
+			,documentSource: null
 		}, opts_);
 
 		DbSelector.prototype.initialize.call(this, opts_);
@@ -87,6 +90,7 @@ var CouchLayerDbSelector = $n2.Class(DbSelector, {
 		this.layerId = opts.layer;
 		this.name = opts.name;
 		this.atlasDesign = opts.atlasDesign;
+		this.documentSource = opts.documentSource;
 	},
 	
 	load: function(opts_){
@@ -107,6 +111,11 @@ var CouchLayerDbSelector = $n2.Class(DbSelector, {
 				for(var i=0,e=rows.length; i<e; ++i){
 					var doc = rows[i].doc;
 					if( doc && _this.isDocValid(doc) ){
+						// Associate document source
+						if( _this.documentSource ){
+							_this.documentSource.adoptDocument(doc);
+						};
+						
 						docs.push(doc);
 					};
 				};
@@ -143,11 +152,14 @@ var CouchSchemaDbSelector = $n2.Class(DbSelector, {
 	
 	atlasDesign: null,
 	
+	documentSource: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			schemaName: null
 			,name: null
 			,atlasDesign: null
+			,documentSource: null
 		}, opts_);
 
 		DbSelector.prototype.initialize.call(this, opts_);
@@ -155,6 +167,7 @@ var CouchSchemaDbSelector = $n2.Class(DbSelector, {
 		this.schemaName = opts.schemaName;
 		this.name = opts.name;
 		this.atlasDesign = opts.atlasDesign;
+		this.documentSource = opts.documentSource;
 	},
 	
 	load: function(opts_){
@@ -175,6 +188,11 @@ var CouchSchemaDbSelector = $n2.Class(DbSelector, {
 				for(var i=0,e=rows.length; i<e; ++i){
 					var doc = rows[i].doc;
 					if( doc && _this.isDocValid(doc) ){
+						// Associate document source
+						if( _this.documentSource ){
+							_this.documentSource.adoptDocument(doc);
+						};
+						
 						docs.push(doc);
 					};
 				};
@@ -219,6 +237,8 @@ var DbPerspective = $n2.Class({
 	
 	siteDesign: null,
 	
+	documentSource: null,
+	
 	modelId: null,
 	
 	dbSelectors: null,
@@ -235,6 +255,8 @@ var DbPerspective = $n2.Class({
 		var opts = $n2.extend({
 			dispatchService: null
 			,atlasDesign: null
+			,siteDesign: null
+			,documentSource: null
 			,modelId: null
 		}, opts_);
 
@@ -243,6 +265,7 @@ var DbPerspective = $n2.Class({
 		this.dispatchService = opts.dispatchService;
 		this.atlasDesign = opts.atlasDesign;
 		this.siteDesign = opts.siteDesign;
+		this.documentSource = opts.documentSource;
 		this.modelId = opts.modelId;
 		
 		this.dbSelectors = [];
@@ -310,6 +333,7 @@ var DbPerspective = $n2.Class({
 				var dbSelectorOptions = {
 					layer: null
 					,atlasDesign: this.atlasDesign
+					,documentSource: this.documentSource
 				};
 				
 				if( selectorConfig.options 
@@ -330,6 +354,7 @@ var DbPerspective = $n2.Class({
 					var dbSelectorOptions = {
 						schemaName: null
 						,atlasDesign: this.atlasDesign
+						,documentSource: this.documentSource
 					};
 					
 					if( selectorConfig.options 
@@ -972,6 +997,7 @@ function handleModelCreate(m){
 		if( m && m.config ){
 			options.atlasDesign = m.config.atlasDesign;
 			options.siteDesign = m.config.siteDesign;
+			options.documentSource = m.config.documentSource;
 			
 			if( m.config.directory ){
 				options.dispatchService = m.config.directory.dispatchService;

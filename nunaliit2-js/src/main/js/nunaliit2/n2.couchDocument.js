@@ -279,6 +279,10 @@ var CouchDocumentSource = $n2.Class('CouchDocumentSource',$n2.document.DocumentS
 		});
 	},
 
+	adoptDocument: function(doc){
+		doc.__n2Source = this.getId();
+	},
+
 	createDocument: function(opts_){
 		var opts = $n2.extend({
 				doc: {}
@@ -299,7 +303,8 @@ var CouchDocumentSource = $n2.Class('CouchDocumentSource',$n2.document.DocumentS
 			,onSuccess: function(docInfo){
 				doc._id = docInfo.id;
 				doc._rev = docInfo.rev;
-				doc.__n2Source = _this.getId();
+				
+				_this.adoptDocument(doc);
 				
 				_this._dispatch({
 					type: 'documentVersion'
@@ -346,7 +351,7 @@ var CouchDocumentSource = $n2.Class('CouchDocumentSource',$n2.document.DocumentS
 			,conflicts: opts.conflicts
 			,deleted_conflicts: opts.deleted_conflicts
 			,onSuccess: function(doc){
-				doc.__n2Source = _this.getId();
+				_this.adoptDocument(doc);
 				opts.onSuccess(doc);
 			}
 			,onError: opts.onError
@@ -369,7 +374,7 @@ var CouchDocumentSource = $n2.Class('CouchDocumentSource',$n2.document.DocumentS
 			,onSuccess: function(docs){
 				for(var i=0,e=docs.length; i<e; ++i){
 					var doc = docs[i];
-					doc.__n2Source = _this.getId();
+					_this.adoptDocument(doc);
 				};
 				opts.onSuccess(docs);
 			}
@@ -516,7 +521,8 @@ var CouchDocumentSource = $n2.Class('CouchDocumentSource',$n2.document.DocumentS
 		function updateSuccess(docInfo){
 			doc._id = docInfo.id;
 			doc._rev = docInfo.rev;
-			doc.__n2Source = _this.getId();
+			
+			_this.adoptDocument(doc);
 
 			_this._dispatch({
 				type: 'documentVersion'
@@ -775,7 +781,7 @@ var CouchDocumentSource = $n2.Class('CouchDocumentSource',$n2.document.DocumentS
 		var callerSuccess = opts.onSuccess;
 		opts.onSuccess = function(docs){
 			for(var i=0,e=docs.length; i<e; ++i){
-				docs[i].__n2Source = _this.getId();
+				_this.adoptDocument(doc);
 			};
 			callerSuccess(docs);
 		};
@@ -1198,7 +1204,7 @@ var CouchDocumentSourceWithSubmissionDb = $n2.Class('CouchDocumentSourceWithSubm
 				data: doc
 				,onSuccess: function(docInfo){
 					_this._warnUser();
-					doc.__n2Source = _this.getId();
+					_this.adoptDocument(doc);
 					opts.onSuccess(doc);
 				}
 				,onError: opts.onError
