@@ -242,13 +242,22 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 			};
 		});
 		
+		// Select appropriate choice
 		var selectedChoiceId;
-		if( allChoices ){
-			selectedChoiceId = ALL_CHOICES;
+		if( allChoices 
+		 && this.selectedChoices.length > 1 ){
+			if( !this.suppressAllChoices ){
+				selectedChoiceId = ALL_CHOICES;
+			};
+
 		} else if( this.selectedChoices.length < 1 ) {
-			selectedChoiceId = NO_CHOICE;
+			if( !this.suppressNoChoice ){
+				selectedChoiceId = NO_CHOICE;
+			};
+
 		} else if( this.selectedChoices.length > 1 ) {
 			selectedChoiceId = undefined;
+
 		} else {
 			selectedChoiceId = this.selectedChoices[0];
 		};
