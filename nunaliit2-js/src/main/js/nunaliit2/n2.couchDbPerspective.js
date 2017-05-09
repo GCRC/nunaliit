@@ -520,11 +520,7 @@ var DbPerspective = $n2.Class({
 			
 			var visibilityStatus = this._getDocVisibility(loadedDoc);
 			
-			var doc = null;
 			var docInfo = this.docInfosByDocId[loadedDoc._id];
-			if( docInfo ){
-				doc = docInfo.doc;
-			};
 			
 			if( !docInfo && visibilityStatus.valid ){
 				// Not previously in cache, but now valid: add
@@ -554,21 +550,27 @@ var DbPerspective = $n2.Class({
 				
 				// It is not an update if the reported document is the
 				// same version as the one in cache
-				if( doc._rev !== loadedDoc._rev ) {
+				var revUpdated = false;
+				if( docInfo.doc._rev !== loadedDoc._rev ) {
 					// Updated. Keep track of this new version of the document.
 					// Assume that it is valid
 					docInfo.doc = loadedDoc;
 					docInfo.cacheValid = true;
+					revUpdated = true;
+				};
 
-					if( docInfo.visible && visibilityStatus.visible ){
+				if( docInfo.visible && visibilityStatus.visible ){
+					if( revUpdated ){
 						updated.push(loadedDoc);
-
-					} else if( !docInfo.visible && visibilityStatus.visible ){
-						added.push(loadedDoc);
-					
-					} else if( docInfo.visible && !visibilityStatus.visible ){
-						removed.push(loadedDoc);
 					};
+
+				} else if( !docInfo.visible && visibilityStatus.visible ){
+					added.push(loadedDoc);
+					docInfo.visible = true;
+				
+				} else if( docInfo.visible && !visibilityStatus.visible ){
+					removed.push(loadedDoc);
+					docInfo.visible = false;
 				};
 			};
 		};
@@ -625,9 +627,8 @@ var DbPerspective = $n2.Class({
 				var added = [];
 				for(var docId in this.docInfosByDocId){
 					var docInfo = this.docInfosByDocId[docId];
-					var doc = docInfo.doc;
-					var visibilityStatus = this._getDocVisibility(doc);
-					if( visibilityStatus.visible ){
+					if( docInfo.visible ){
+						var doc = docInfo.doc;
 						added.push(doc);
 					};
 				};
@@ -822,7 +823,7 @@ var ModelCouchDbView = $n2.Class({
 
 					--this.loadingCount;
 
-					_this._docsLoaded(docInfoByDocId);
+					_this._docInfoMapLoaded(docInfoByDocId);
 				}
 				,onError: function(err){
 					$n2.log('Unable to fetch documents for CouchDb view: '+_this.viewName, err);
@@ -844,7 +845,7 @@ var ModelCouchDbView = $n2.Class({
 		};
 	},
 
-	_docsLoaded: function(docInfoMap){
+	_docInfoMapLoaded: function(docInfoMap){
 		var added = [];
 		var updated = [];
 		var removed = [];
