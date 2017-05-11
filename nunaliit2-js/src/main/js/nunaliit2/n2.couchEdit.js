@@ -2571,6 +2571,12 @@ var AttachmentEditor = $n2.Class({
 	disableAddFile: null,
 	
 	disableRemoveFile: null,
+
+	startRecordingButton: null,
+
+	stopRecordingButton: null,
+
+	recorder: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -3161,7 +3167,22 @@ var AttachmentEditor = $n2.Class({
 		$('<input type="file">')
 			.attr('name','media')
 			.appendTo($form);
-	
+
+		var $recordDiv = $('<div>').appendTo($div);
+
+		_this.startRecordingButton = $('<button>').text('Start Recording Audio')
+			.addClass('')
+			.appendTo($recordDiv)
+			.click(function() {
+				_this._clickStartRecording();
+			})[0];
+
+		_this.stopRecordingButton = $('<button>').text('Stop Recording Audio')
+			.attr('disabled','disabled')
+			.appendTo($recordDiv)
+			.click(function() {
+				_this._clickStopRecording();
+			})[0];
 	},
 	
 	_addFileElement: function(opts_){
@@ -3231,6 +3252,61 @@ var AttachmentEditor = $n2.Class({
 		if( opts.form ) {
 			opts.form.appendTo($div);
 		};
+	},
+
+	_clickStartRecording: function() {
+
+		var _this = this;
+		var obj = this.obj;
+		var mediaStream = null;
+
+		_this.startRecordingButton.disabled = true;
+		_this.stopRecordingButton.disabled = false;
+
+		_this._captureUserMedia(function(stream) {
+			mediaStream = stream;
+
+			// videoElement.src = window.URL.createObjectURL(stream);
+			// videoElement.play();
+			// videoElement.muted = true;
+			// videoElement.controls = false;
+
+			_this.recorder = RecordRTC(stream, {
+				type: 'audio'
+			});
+
+			_this.recorder.startRecording();
+
+		});
+	},
+
+	_captureUserMedia: function(success_callback) {
+		var session = {
+			audio: true,
+			video: true
+		};
+
+		navigator.getUserMedia(session, success_callback, function(error) {
+			alert('Unable to capture your camera. Please check console logs.');
+			console.error(error);
+		});
+	},
+
+	_clickStopRecording: function() {
+		var _this = this;
+		var obj = this.obj;
+
+		_this.startRecordingButton.disabled = false;
+		_this.stopRecordingButton.disabled = true;
+
+		_this.recorder.stopRecording(function() {
+			_this.recorder.getDataURL(function(dataURI) {
+				$('<audio>')
+					.attr('src', dataURI)
+					.attr('controls', 'controls')
+					.insertAfter(_this.stopRecordingButton);
+			});
+		});
 	}
 });
 
