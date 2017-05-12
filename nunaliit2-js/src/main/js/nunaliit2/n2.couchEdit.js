@@ -3258,32 +3258,24 @@ var AttachmentEditor = $n2.Class({
 
 		var _this = this;
 		var obj = this.obj;
-		var mediaStream = null;
 
 		_this.startRecordingButton.disabled = true;
 		_this.stopRecordingButton.disabled = false;
 
 		_this._captureUserMedia(function(stream) {
-			mediaStream = stream;
-
-			// videoElement.src = window.URL.createObjectURL(stream);
-			// videoElement.play();
-			// videoElement.muted = true;
-			// videoElement.controls = false;
-
 			_this.recorder = RecordRTC(stream, {
-				type: 'audio'
+				type: 'audio',
+				recorderType: StereoAudioRecorder,
+				numberOfAudioChannels: 1
 			});
 
 			_this.recorder.startRecording();
-
 		});
 	},
 
 	_captureUserMedia: function(success_callback) {
 		var session = {
-			audio: true,
-			video: true
+			audio: true
 		};
 
 		navigator.getUserMedia(session, success_callback, function(error) {
@@ -3300,13 +3292,66 @@ var AttachmentEditor = $n2.Class({
 		_this.stopRecordingButton.disabled = true;
 
 		_this.recorder.stopRecording(function() {
-			_this.recorder.getDataURL(function(dataURI) {
-				$('<audio>')
-					.attr('src', dataURI)
-					.attr('controls', 'controls')
-					.insertAfter(_this.stopRecordingButton);
-			});
+			var blobResult = _this.recorder.getBlob();
+			var fileReader = new FileReader();
+			fileReader.onload = function() {
+				var samples = _this._getWavSamples(this.result);
+				var mp3Blob = _this._encodeMp3(samples);
+
+				var reader = new FileReader();
+				reader.onload = function(event) {
+					$('<audio>')
+						.attr('src', event.target.result)
+						.attr('controls', 'controls')
+						.insertBefore(_this.stopRecordingButton);
+				};
+				reader.readAsDataURL(mp3Blob);
+			};
+			fileReader.readAsArrayBuffer(blobResult);
 		});
+	},
+
+	_getWavSamples: function(arrayBuffer) {
+		var samples = new Int16Array(arrayBuffer);
+		var wavHeader = lamejs.WavHeader.readHeader(new DataView(arrayBuffer));
+
+		if (wavHeader.channels === 2) {
+			var left = [], right = [], i = 0;
+
+			while (i < samples.length) {
+				left.push(samples[i]);
+				right.push(samples[i + 1]);
+
+				i += channels.stereo;
+			}
+
+			samples = new Int16Array(left);
+		}
+		return samples;
+	},
+
+	_encodeMp3: function(samples) {
+		var channels = 1;
+		var sampleRate = 44100;
+		var kbps = 128;
+		var mp3encoder = new lamejs.Mp3Encoder(channels, sampleRate, kbps);
+		var mp3Data = [];
+		var sampleBlockSize = 1152; //can be anything but make it a multiple of 576 to make encoders life easier
+
+		for (var i = 0; i < samples.length; i += sampleBlockSize) {
+			var sampleChunk = samples.subarray(i, i + sampleBlockSize);
+			var mp3buf = mp3encoder.encodeBuffer(sampleChunk);
+			if (mp3buf.length > 0) {
+				mp3Data.push(mp3buf);
+			}
+		}
+		var mp3buf = mp3encoder.flush();   //finish writing mp3
+
+		if (mp3buf.length > 0) {
+			mp3Data.push(new Int8Array(mp3buf));
+		}
+
+		return new Blob(mp3Data, {type: 'audio/mp3'});
 	}
 });
 
