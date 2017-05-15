@@ -2943,7 +2943,7 @@ var AttachmentEditor = $n2.Class({
 			if(audio.length > 0) {
 				var blob = dataURLtoMp3Blob(audio.attr('src'));
 				filename = (Math.random() * new Date().getTime()).toString(36).replace( /\./g , '') + '.mp3';
-				var audioFile = new File([blob], filename, {
+				audioFile = new File([blob], filename, {
 					type: 'audio/mp3'
 				});
 			}
@@ -3319,7 +3319,6 @@ var AttachmentEditor = $n2.Class({
 	},
 
 	_clickStartRecording: function() {
-
 		var _this = this;
 		var obj = this.obj;
 
@@ -3380,13 +3379,15 @@ var AttachmentEditor = $n2.Class({
 		var wavHeader = lamejs.WavHeader.readHeader(new DataView(arrayBuffer));
 
 		if (wavHeader.channels === 2) {
-			var left = [], right = [], i = 0;
+			var left = [];
+			var right = [];
+			var i = 0;
 
 			while (i < samples.length) {
 				left.push(samples[i]);
 				right.push(samples[i + 1]);
 
-				i += channels.stereo;
+				i += 2;
 			}
 
 			samples = new Int16Array(left);

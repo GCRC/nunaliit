@@ -236,27 +236,6 @@ var Upload = $n2.Class({
 					opts.onError(_loc('Error while uploading: ')+err,options_);
 				}
 			});
-
-			// formData.ajaxSubmit({
-			// 	type: 'post'
-			// 	,url: opts.url + 'put'
-			// 	,dataType: 'json'
-			// 	,success: function(res) {
-			// 		$form.find('*').removeAttr('disabled');
-			// 		if( res.error ) {
-			// 			opts.onError(_loc('Error while uploading: ')+res.error,options_);
-			// 		} else {
-			// 			if( !opts.suppressInformationDialog ) {
-			// 				_this._uploadSucessfulDialog();
-			// 			}
-			// 			opts.onSuccess(res,options_);
-			// 		}
-			// 	}
-			// 	,error: function(xhr, status, err) {
-			// 		$form.find('*').removeAttr('disabled');
-			// 		opts.onError(_loc('Error while uploading: ')+err,options_);
-			// 	}
-			// });
 			
 			// Add progress div, if required
 			if( progressKey ) {
