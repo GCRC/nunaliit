@@ -2769,6 +2769,13 @@ var AttachmentEditor = $n2.Class({
 			var $form = $elem.find('.attachmentEditor_att_' + $n2.utils.stringToHtmlId(attName));
 			var $file = $form.find('input[type="file"]');
 			var fileName = $file.val();
+			if(!fileName) {
+				var audioFile = $form.find('audio');
+				if(audioFile.length > 0) {
+					fileName = 'audioFile';
+				}
+			}
+
 			if( !fileName ){
 				missingAttachment = attName;	
 			};
@@ -2784,6 +2791,12 @@ var AttachmentEditor = $n2.Class({
 			var $form = $elem.find('.attachmentEditor_att_' + $n2.utils.stringToHtmlId(attName));
 			var $file = $form.find('input[type="file"]');
 			var fileName = $file.val();
+			if(!fileName) {
+				var audioFile = $form.find('audio');
+				if(audioFile.length > 0) {
+					fileName = 'audioFile';
+				}
+			}
 			if( !fileName ){
 				$form.remove();
 				
@@ -2902,7 +2915,7 @@ var AttachmentEditor = $n2.Class({
 			// Nothing to do
 			opts.onSuccess();
 			return;
-		};
+		}
 		
 		// From this point on, the logic is to deal with the first form
 		// and when done, continue on to the next one by calling recursively
@@ -2919,10 +2932,23 @@ var AttachmentEditor = $n2.Class({
 		 && this.doc.nunaliit_attachments.files[attName] ){
 			att = this.doc.nunaliit_attachments.files[attName];
 			uploadId = att.uploadId;
-		};
+		}
 		
 		var $fileInput = $form.find('input[type="file"]');
 		var filename = $fileInput.val();
+		var audioFile = null;
+		//generate file data for mp3 file.
+		if(!filename) {
+			var audio = $form.find('audio');
+			if(audio.length > 0) {
+				var blob = dataURLtoMp3Blob(audio.attr('src'));
+				filename = (Math.random() * new Date().getTime()).toString(36).replace( /\./g , '') + '.mp3';
+				var audioFile = new File([blob], filename, {
+					type: 'audio/mp3'
+				});
+			}
+		}
+
 		if( !filename || !att || !uploadId ){
 			$form.remove();
 			continueUpload();
@@ -2933,6 +2959,7 @@ var AttachmentEditor = $n2.Class({
 			// Perform actual upload
 			this.uploadService.submitForm({
 				form: $form
+				,uploadFile: audioFile
 				,suppressInformationDialog: true
 				,onSuccess: function(){
 					$form.remove();
@@ -2942,11 +2969,48 @@ var AttachmentEditor = $n2.Class({
 					opts.onError( _loc('Unable to upload file. Cause: {err}',{err:err}) );
 				}
 			});
-		};
-		
+		}
+
 		function continueUpload(){
 			_this.performPostSavingActions(opts_);
-		};
+		}
+
+		function dataURLtoMp3Blob(dataURL) {
+			//Based on https://github.com/bubkoo/dataurl-to-blob (MIT License)
+			if (!window || window.window !== window) {
+				throw new Error('This module is only available in browser');
+			}
+
+			var Blob = window.Blob || window.MozBlob || window.WebKitBlob;
+			if (!Blob) {
+				throw new Error('Blob was not supported');
+			}
+
+			var dataURLPattern = /^data:((.*?)(;charset=.*?)?)(;base64)?,/;
+
+			// parse the dataURL components as per RFC 2397
+			var matches = dataURL.match(dataURLPattern);
+			if (!matches) {
+				throw new Error('invalid dataURI');
+			}
+
+			// default to text/plain;charset=utf-8
+			var mediaType = 'audio/mp3';
+			var isBase64   = !!matches[4];
+			var dataString = dataURL.slice(matches[0].length);
+			var byteString = isBase64
+				// convert base64 to raw binary data held in a string
+				? atob(dataString)
+				// convert base64/URLEncoded data component to raw binary
+				: decodeURIComponent(dataString);
+
+			var array = [];
+			for (var i = 0; i < byteString.length; i++) {
+				array.push(byteString.charCodeAt(i));
+			}
+
+			return new Blob([new Uint8Array(array)], { type: mediaType });
+		}
 	},
 	
 	_getElem: function(){
@@ -3168,7 +3232,7 @@ var AttachmentEditor = $n2.Class({
 			.attr('name','media')
 			.appendTo($form);
 
-		var $recordDiv = $('<div>').appendTo($div);
+		var $recordDiv = $('<div>').appendTo($form);
 
 		_this.startRecordingButton = $('<button>').text('Start Recording Audio')
 			.addClass('')
@@ -3303,7 +3367,7 @@ var AttachmentEditor = $n2.Class({
 					$('<audio>')
 						.attr('src', event.target.result)
 						.attr('controls', 'controls')
-						.insertBefore(_this.stopRecordingButton);
+						.insertAfter(_this.stopRecordingButton);
 				};
 				reader.readAsDataURL(mp3Blob);
 			};

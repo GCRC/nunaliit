@@ -166,6 +166,7 @@ var Upload = $n2.Class({
 		
 		var opts = $.extend({
 				form: null
+				,uploadFile: null
 				,suppressInformationDialog: false
 				,onSuccess: function(res){}
 				,onError: function(errorMsg){ $n2.reportError(errorMsg); }
@@ -178,39 +179,47 @@ var Upload = $n2.Class({
 		if( !$.fn.ajaxSubmit ) {
 			opts.onError( 'Can not perform file uploads unless jquery.form.js is included' );
 			return;
-		};
+		}
 		
 		if( !opts.form ) {
 			opts.onError( 'Form element is required' );
 			return;
-		};
+		}
 		var $form = opts.form;
 		if( typeof($form) === 'string' ) {
 			$form = $('#'+$form);
-		};
+		}
 		
 		// Disable elements while file is uploading
 		$form.find('.n2UploadInputButton').attr('disabled','disabled');
 
 		if( opts.progressServer ) {
 			opts.progressServer.requestProgressKey(function(key){
-				performUpload($form, key);
+				performUpload($form, opts.uploadFile, key);
 			});
 		} else {
 			performUpload($form, null);
-		};
+		}
 		
-		function performUpload($form, progressKey) {
+		function performUpload($form, uploadFile, progressKey) {
 
 			$form.find('.n2UploadProgressId').remove();
 			if( progressKey ) {
 				$form.prepend( $('<input class="n2UploadProgressId" type="hidden" name="progressId" value="'+progressKey+'"/>') );
-			};
+			}
 
-			$form.ajaxSubmit({
-				type: 'post'
+			var formData = new FormData($form[0]);
+			if(opts.uploadFile !== null) {
+				formData.append('media', uploadFile);
+			}
+
+			$.ajax({
+				type: 'POST'
 				,url: opts.url + 'put'
+				,data: formData
 				,dataType: 'json'
+				,processData: false
+				,contentType: false
 				,success: function(res) {
 					$form.find('*').removeAttr('disabled');
 					if( res.error ) {
@@ -218,7 +227,7 @@ var Upload = $n2.Class({
 					} else {
 						if( !opts.suppressInformationDialog ) {
 							_this._uploadSucessfulDialog();
-						};
+						}
 						opts.onSuccess(res,options_);
 					}
 				}
@@ -227,6 +236,27 @@ var Upload = $n2.Class({
 					opts.onError(_loc('Error while uploading: ')+err,options_);
 				}
 			});
+
+			// formData.ajaxSubmit({
+			// 	type: 'post'
+			// 	,url: opts.url + 'put'
+			// 	,dataType: 'json'
+			// 	,success: function(res) {
+			// 		$form.find('*').removeAttr('disabled');
+			// 		if( res.error ) {
+			// 			opts.onError(_loc('Error while uploading: ')+res.error,options_);
+			// 		} else {
+			// 			if( !opts.suppressInformationDialog ) {
+			// 				_this._uploadSucessfulDialog();
+			// 			}
+			// 			opts.onSuccess(res,options_);
+			// 		}
+			// 	}
+			// 	,error: function(xhr, status, err) {
+			// 		$form.find('*').removeAttr('disabled');
+			// 		opts.onError(_loc('Error while uploading: ')+err,options_);
+			// 	}
+			// });
 			
 			// Add progress div, if required
 			if( progressKey ) {
@@ -239,8 +269,8 @@ var Upload = $n2.Class({
 					progressKey: progressKey
 					,onUpdate: onProgressUpdate
 				});
-			};
-		};
+			}
+		}
 	}
 	
 	/**
