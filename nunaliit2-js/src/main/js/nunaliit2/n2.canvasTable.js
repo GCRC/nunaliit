@@ -310,12 +310,18 @@ var TableCanvas = $n2.Class({
 	sortOrder: null,
 
 	styleRules: null,
+	
+	useLazyDisplay: null,
+	
+	refreshIntervalInMs: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			canvasId: null
 			,sourceModelId: null
 			,elementGenerator: null
+			,useLazyDisplay: false
+			,refreshIntervalInMs: 200
 			,styleRules: null
 			,dispatchService: null
 			,showService: null
@@ -329,6 +335,8 @@ var TableCanvas = $n2.Class({
 		this.canvasId = opts.canvasId;
 		this.sourceModelId = opts.sourceModelId;
 		this.elementGenerator = opts.elementGenerator;
+		this.useLazyDisplay = opts.useLazyDisplay;
+		this.refreshIntervalInMs = opts.refreshIntervalInMs;
 		this.dispatchService = opts.dispatchService;
 		this.showService = opts.showService;
 		this.sortOrder = [];
@@ -440,8 +448,15 @@ var TableCanvas = $n2.Class({
 				});
 		
 
-			$('<table>')
+			var $table = $('<table>')
 				.appendTo($elem);
+			
+			$('<tbody>')
+				.appendTo($table)
+				.scroll(function(){
+					_this._scrollChanged( $(this) );
+					return false;
+				});
 		};
  	},
  		
@@ -450,6 +465,22 @@ var TableCanvas = $n2.Class({
 			this.dispatchService.send(DH,{
 				type: 'userUnselect'
 			});
+		};
+	},
+
+	_scrollChanged: function( $table ){
+		if( this.useLazyDisplay ){
+			var _this = this;
+			
+			var scrollTop = $table.scrollTop();
+
+			// Wait a bit before refreshing
+			this.lastScrollTop = scrollTop;
+			window.setTimeout(function(){
+				if( _this.lastScrollTop === scrollTop  ){
+					_this._refreshRows();
+				};
+			},this.refreshIntervalInMs);
 		};
 	},
 
@@ -540,7 +571,7 @@ var TableCanvas = $n2.Class({
 		var _this = this;
 
 		var $elem = this._getElem();
-		var $table = $elem.find('table');
+		var $table = $elem.find('tbody');
 		
 		$table.empty();
 		
@@ -590,6 +621,7 @@ var TableCanvas = $n2.Class({
 				var name = heading.name;
 				var $td = $('<td>')
 					.attr('nunaliit-column',name)
+					.attr('nunaliit-row',row.getRowName())
 					.appendTo($tr);
 				var cell = row.getCell(name);
 				
@@ -602,33 +634,132 @@ var TableCanvas = $n2.Class({
 	
 						_this._adjustStyles($td, cell);
 					};
-					
-					if( typeof cell.display === 'function' ){
-						cell.display($td, cell, row);
-						
-						var rowName = $td.attr('nunaliit-row');
-						$td
-							.click(function(){
-								var $td = $(this);
-								_this._selectedCell($td);
-								return false;
-							}).mouseover(function(){
-								var $td = $(this);
-								_this._mouseOver($td);
-								return false;
-							})
-							.mouseout(function(){
-								var $td = $(this);
-								_this._mouseOut($td);
-								return false;
-							});
+
+					if( _this.useLazyDisplay ){
+						$td.addClass('n2TableCanvas_lazyDisplay');
+					} else {
+						_this._displayCell($td);
+					};
+				};
+			});
+		});
+
+		if( this.useLazyDisplay ){
+			this._refreshRows();
+		} else {
+			this.showService.fixElementAndChildren($table);
+		};
+	},
 	
-					} else if( typeof cell.display === 'string' ){
+	/**
+	 * Loops through the rows and display those that are visible
+	 */
+	_refreshRows: function(){
+		var _this = this;
+
+		var $canvas = this._getElem();
+		var $table = $canvas.find('tbody');
+
+		var elemPosition = $table.position();
+		var elemHeight = $table.height();
+		var elemOffsetTop = $table.scrollTop();
+		
+		var atLeastOneShown = false;
+		$canvas.find('.n2TableCanvas_lazyDisplay').each(function(){
+			var $cell = $(this);
+			
+			var cellPosition = $cell.position();
+			var cellHeight = $cell.height();
+			
+			var show = true;
+			if( cellPosition.top > (elemHeight + elemOffsetTop + elemPosition.top) ){
+				show = false;
+			} else if( (cellPosition.top + cellHeight) < (elemOffsetTop + elemPosition.top) ){
+				show = false;
+			};
+			
+			if( show ){
+				_this._displayCell($cell);
+				$cell.removeClass('n2TableCanvas_lazyDisplay');
+				atLeastOneShown = true;
+			} else {
+				// Keep content already displayed
+			};
+		});
+		
+		if( atLeastOneShown ){
+			this.showService.fixElementAndChildren($canvas);
+		};
+	},
+	
+	_displayCell: function($td){
+		var _this = this;
+		
+		var colName = $td.attr('nunaliit-column');
+		var rowName = $td.attr('nunaliit-row');
+		var row = this.rowsByName[rowName];
+		var cell = row.getCell(colName);
+
+		if( cell ){
+			if( typeof cell.display === 'function' ){
+				cell.display($td, cell, row);
+				
+				$td
+					.click(function(){
+						var $td = $(this);
+						_this._selectedCell($td);
+						return false;
+					}).mouseover(function(){
+						var $td = $(this);
+						_this._mouseOver($td);
+						return false;
+					})
+					.mouseout(function(){
+						var $td = $(this);
+						_this._mouseOut($td);
+						return false;
+					});
+
+			} else if( typeof cell.display === 'string' ){
+				$('<a>')
+					.attr('href','#')
+					.attr('nunaliit-row',row.getRowName())
+					.attr('nunaliit-colmun',colName)
+					.text(cell.display)
+					.appendTo($td)
+					.click(function(){
+						var $a = $(this);
+						_this._selectedCell($a);
+						return false;
+					})
+					.mouseover(function(){
+						var $a = $(this);
+						_this._mouseOver($a);
+						return false;
+					})
+					.mouseout(function(){
+						var $a = $(this);
+						_this._mouseOut($a);
+						return false;
+					});
+				
+			} else {
+				var value = row.getValue(colName);
+
+				if( typeof value !== 'undefined' ){
+					if( 'reference' === cell.type ){
+						$('<a>')
+							.addClass('n2s_referenceLink')
+							.attr('nunaliit-document',value)
+							.text(value)
+							.appendTo($td);
+						
+					} else {
 						$('<a>')
 							.attr('href','#')
 							.attr('nunaliit-row',row.getRowName())
-							.attr('nunaliit-colmun',name)
-							.text(cell.display)
+							.attr('nunaliit-column',colName)
+							.text(value)
 							.appendTo($td)
 							.click(function(){
 								var $a = $(this);
@@ -645,48 +776,10 @@ var TableCanvas = $n2.Class({
 								_this._mouseOut($a);
 								return false;
 							});
-						
-					} else {
-						var value = row.getValue(name);
-	
-						if( typeof value !== 'undefined' ){
-							if( 'reference' === cell.type ){
-								$('<a>')
-									.addClass('n2s_referenceLink')
-									.attr('nunaliit-document',value)
-									.text(value)
-									.appendTo($td);
-								
-							} else {
-								$('<a>')
-									.attr('href','#')
-									.attr('nunaliit-row',row.getRowName())
-									.attr('nunaliit-column',name)
-									.text(value)
-									.appendTo($td)
-									.click(function(){
-										var $a = $(this);
-										_this._selectedCell($a);
-										return false;
-									})
-									.mouseover(function(){
-										var $a = $(this);
-										_this._mouseOver($a);
-										return false;
-									})
-									.mouseout(function(){
-										var $a = $(this);
-										_this._mouseOut($a);
-										return false;
-									});
-							};
-						};
 					};
 				};
-			});
-		});
-
-		this.showService.fixElementAndChildren($table);
+			};
+		};
 	},
 	
 	_selectedCell: function($a){

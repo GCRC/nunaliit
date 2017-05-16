@@ -9,3 +9,7 @@
     border-style: solid;
     border-width: 1px;
 }
+
+.n2TableCanvas td.n2TableCanvas_lazyDisplay {
+    height: 10px;
+}
