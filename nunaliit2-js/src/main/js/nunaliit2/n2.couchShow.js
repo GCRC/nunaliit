@@ -80,55 +80,55 @@ var DomStyler = $n2.Class({
 	},
 
 	fixElementAndChildren: function($elem, opt, contextDoc){
-		if( typeof performance !== 'undefined' ){
-			var _this = this;
-			var start = performance.now();
-		};
+//		if( typeof performance !== 'undefined' ){
+//			var _this = this;
+//			var start = performance.now();
+//		};
 		
 		this._fixElementAndChildrenV2($elem, opt, contextDoc);
 
-		if( typeof performance !== 'undefined' ){
-			var end = performance.now();
-			var elapsed = end-start;
-			if( this.maxElapsed === undefined ){
-				this.maxElapsed = elapsed;
-			} else if( elapsed > this.maxElapsed ){
-				this.maxElapsed = elapsed;
-			};
-			if( this.totalElapsed === undefined ){
-				this.totalElapsed = elapsed;
-			} else {
-				this.totalElapsed += elapsed;
-			};
-			if( !this.performanceInstalled ){
-				this.performanceInstalled = true;
-				$('<a>')
-					.attr('href','#')
-					.text( _loc('Log Perf') )
-					.css({
-						'text-decoration': 'none',
-				    	'color': '#fff'
-					})
-					.appendTo( $('.nunaliit_footer') )
-					.click(function(){
-						$n2.log('total: '+_this.totalElapsed+' max: '+_this.maxElapsed);
-						return false;
-					});
-				$('<a>')
-					.attr('href','#')
-					.text( _loc('Reset Perf') )
-					.css({
-						'text-decoration': 'none',
-				    	'color': '#fff'
-					})
-					.appendTo( $('.nunaliit_footer') )
-					.click(function(){
-						_this.totalElapsed = 0;
-						_this.maxElapsed = 0;
-						return false;
-					});
-			};
-		};
+//		if( typeof performance !== 'undefined' ){
+//			var end = performance.now();
+//			var elapsed = end-start;
+//			if( this.maxElapsed === undefined ){
+//				this.maxElapsed = elapsed;
+//			} else if( elapsed > this.maxElapsed ){
+//				this.maxElapsed = elapsed;
+//			};
+//			if( this.totalElapsed === undefined ){
+//				this.totalElapsed = elapsed;
+//			} else {
+//				this.totalElapsed += elapsed;
+//			};
+//			if( !this.performanceInstalled ){
+//				this.performanceInstalled = true;
+//				$('<a>')
+//					.attr('href','#')
+//					.text( _loc('Log Perf') )
+//					.css({
+//						'text-decoration': 'none',
+//				    	'color': '#fff'
+//					})
+//					.appendTo( $('.nunaliit_footer') )
+//					.click(function(){
+//						$n2.log('total: '+_this.totalElapsed+' max: '+_this.maxElapsed);
+//						return false;
+//					});
+//				$('<a>')
+//					.attr('href','#')
+//					.text( _loc('Reset Perf') )
+//					.css({
+//						'text-decoration': 'none',
+//				    	'color': '#fff'
+//					})
+//					.appendTo( $('.nunaliit_footer') )
+//					.click(function(){
+//						_this.totalElapsed = 0;
+//						_this.maxElapsed = 0;
+//						return false;
+//					});
+//			};
+//		};
 	},
 
 	_fixElementAndChildrenV2: function($elem, opt, contextDoc){
