@@ -78,11 +78,20 @@ var HtmlLogger = $n2.Class('HtmlLogger', Logger, {
 		$e.append($d);
 	},
 	
-	log: function(msg){
+	log: function(msg,opts){
 		var $e = this._getLogsDiv();
 
 		var $d = $('<div class="log"></div>');
 		$d.text(msg);
+		
+		if( opts ){
+			if( opts.preserveSpaces ){
+				$d.css({
+					'white-space': 'pre'
+				});
+			};
+		};
+		
 		$e.append($d);
 	},
 	
