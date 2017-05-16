@@ -444,6 +444,7 @@ CreateDocument widget
 	display: none;
 }
 
+.nunaliit_user_administrator .nunaliit_form_link_tree_view,
 .nunaliit_user_advanced .nunaliit_form_link_tree_view {
 	display:-moz-inline-stack;
 	display:inline-block;
