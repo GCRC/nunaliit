@@ -781,6 +781,7 @@ var CouchDocumentSource = $n2.Class('CouchDocumentSource',$n2.document.DocumentS
 		var callerSuccess = opts.onSuccess;
 		opts.onSuccess = function(docs){
 			for(var i=0,e=docs.length; i<e; ++i){
+				var doc = docs[i];
 				_this.adoptDocument(doc);
 			};
 			callerSuccess(docs);
