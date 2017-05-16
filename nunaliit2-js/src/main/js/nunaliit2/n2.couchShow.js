@@ -80,6 +80,250 @@ var DomStyler = $n2.Class({
 	},
 
 	fixElementAndChildren: function($elem, opt, contextDoc){
+		if( typeof performance !== 'undefined' ){
+			var _this = this;
+			var start = performance.now();
+		};
+		
+		this._fixElementAndChildrenV2($elem, opt, contextDoc);
+
+		if( typeof performance !== 'undefined' ){
+			var end = performance.now();
+			var elapsed = end-start;
+			if( this.maxElapsed === undefined ){
+				this.maxElapsed = elapsed;
+			} else if( elapsed > this.maxElapsed ){
+				this.maxElapsed = elapsed;
+			};
+			if( this.totalElapsed === undefined ){
+				this.totalElapsed = elapsed;
+			} else {
+				this.totalElapsed += elapsed;
+			};
+			if( !this.performanceInstalled ){
+				this.performanceInstalled = true;
+				$('<a>')
+					.attr('href','#')
+					.text( _loc('Log Perf') )
+					.css({
+						'text-decoration': 'none',
+				    	'color': '#fff'
+					})
+					.appendTo( $('.nunaliit_footer') )
+					.click(function(){
+						$n2.log('total: '+_this.totalElapsed+' max: '+_this.maxElapsed);
+						return false;
+					});
+				$('<a>')
+					.attr('href','#')
+					.text( _loc('Reset Perf') )
+					.css({
+						'text-decoration': 'none',
+				    	'color': '#fff'
+					})
+					.appendTo( $('.nunaliit_footer') )
+					.click(function(){
+						_this.totalElapsed = 0;
+						_this.maxElapsed = 0;
+						return false;
+					});
+			};
+		};
+	},
+
+	_fixElementAndChildrenV2: function($elem, opt, contextDoc){
+		var _this = this;
+		
+		// Call custom code to modify element
+		var dispatchService = this.showService.dispatchService;
+		if( dispatchService ) {
+			dispatchService.synchronousCall(DH, {
+				type:'showPreprocessElement'
+				,elem: $elem
+				,doc: contextDoc
+				,showService: this.showService
+			});
+		};
+		
+		
+		var $set = $elem;
+		
+		// Localization
+		findAndExecute($set, 'n2s_localize', 'n2s_localized', function($jq){
+			_this._localize($jq, opt);
+		});
+		findAndExecute($set, 'n2_localize', 'n2_localized', function($jq){
+			// Legacy
+			_this._localize($jq, opt);
+		});
+		
+		// Brief display
+		findAndExecute($set, 'n2s_briefDisplay', 'n2s_briefDisplayed', function($jq){
+			_this._briefDisplay($jq, contextDoc, opt);
+		});
+		findAndExecute($set, 'n2_briefDisplay', 'n2_briefDisplayed', function($jq){
+			// Legacy
+			_this._briefDisplay($jq, contextDoc, opt);
+		});
+		
+		// Full display
+		findAndExecute($set, 'n2s_fullDisplay', 'n2s_fullDisplayed', function($jq){
+			_this._fullDisplay($jq, contextDoc, opt);
+		});
+
+		// Reference Link
+		findAndExecute($set, 'n2s_referenceLink', 'n2s_insertedReferenceLink', function($jq){
+			_this._insertReferenceLink($jq, opt);
+		});
+		
+		// Time
+		findAndExecute($set, 'n2s_insertTime', 'n2s_insertedTime', function($jq){
+			_this._insertTime($jq, opt);
+		});
+		
+		// User
+		findAndExecute($set, 'n2s_insertUserName', 'n2s_insertedUserName', function($jq){
+			_this._insertUserName($jq, opt);
+		});
+		
+		// Layer name
+		findAndExecute($set, 'n2s_insertLayerName', 'n2s_insertedLayerName', function($jq){
+			_this._insertLayerName($jq, contextDoc, opt);
+		});
+		
+		// Media View
+		findAndExecute($set, 'n2s_insertMediaView', 'n2s_insertedMediaView', function($jq){
+			_this._insertMediaView(contextDoc, $jq);
+		});
+		
+		// Module Name
+		findAndExecute($set, 'n2s_insertModuleName', 'n2s_insertedModuleName', function($jq){
+			_this._insertModuleName($jq, contextDoc);
+		});
+		
+		// Insert first thumbnail
+		findAndExecute($set, 'n2s_insertFirstThumbnail', 'n2s_insertedFirstThumbnail', function($jq){
+			_this._insertFirstThumbnail(contextDoc, $jq, opt);
+		});
+		
+		// Insert Hover Sound
+		findAndExecute($set, 'n2s_insertHoverSoundIcon', 'n2s_insertedHoverSoundIcon', function($jq){
+			_this._insertHoverSoundIcon(contextDoc, $jq, opt);
+		});
+		
+		// External links to media file
+		findAndExecute($set, 'n2s_externalMediaLink', 'n2s_adjustedExternalMediaLink', function($jq){
+			_this._adjustExternalMediaLink(contextDoc, $jq, opt);
+		});
+		
+		// External links to media file
+		findAndExecute($set, 'n2s_insertExternalMediaLink', 'n2s_insertedExternalMediaLink', function($jq){
+			_this._insertExternalMediaLink(contextDoc, $jq, opt);
+		});
+		
+		// Convert text URLs to Links
+		findAndExecute($set, 'n2s_convertTextUrlToLink', 'n2s_convertedTextUrlToLink', function($jq){
+			_this._convertTextUrlToLink(contextDoc, $jq, opt);
+		});
+
+		// Follow geometry
+		findAndExecute($set, 'n2s_clickFindGeometryOnMap', 'n2s_findGeometryOnMap', function($jq){
+			_this._clickFindGeometryOnMap(contextDoc, $jq, opt);
+		});
+
+		// Turn on layer
+		findAndExecute($set, 'n2s_clickAddLayerFromDefinition', 'n2s_addLayerFromDefinition', function($jq){
+			_this._clickAddLayerFromDefinition(contextDoc, $jq, opt);
+		});
+
+		// Document editing
+		findAndExecute($set, 'n2s_clickEdit', 'n2s_edit', function($jq){
+			_this._clickEdit(contextDoc, $jq, opt);
+		});
+
+		// Document deleting
+		findAndExecute($set, 'n2s_clickDelete', 'n2s_delete', function($jq){
+			_this._clickDelete(contextDoc, $jq, opt);
+		});
+		
+		// Mouse Hover
+		findAndExecute($set, 'n2s_handleHover', 'n2s_handledHover', function($jq){
+			_this._handleHover(contextDoc, $jq, opt);
+		});
+
+		// Install maximum height
+		findAndExecute($set, 'n2s_installMaxHeight', 'n2s_installedMaxHeight', function($jq){
+			_this._installMaxHeight(contextDoc, $jq, opt);
+		});
+		
+		// Login
+		findAndExecute($set, 'n2s_clickLogin', 'n2s_login', function($jq){
+			_this._clickLogin($jq, opt);
+		});
+		
+		// Map Edit
+		findAndExecute($set, 'n2s_clickMapEdit', 'n2s_mapEdit', function($jq){
+			_this._clickMapEdit($jq, opt);
+		});
+		
+		// Preserve Space
+		findAndExecute($set, 'n2s_preserveSpaces', 'n2s_preservedSpaces', function($jq){
+			_this._preserveSpaces($jq, opt);
+		});
+
+		// Document List
+		findAndExecute($set, 'n2s_insertDocumentList', 'n2s_insertedDocumentList', function($jq){
+			_this._insertDocumentList($jq, opt);
+		});
+
+		// Select
+		findAndExecute($set, 'n2s_select', 'n2s_selected', function($jq){
+			_this._select($jq, opt);
+		});
+
+		// Install Tiled Image Click
+		findAndExecute($set, 'n2s_installTiledImageClick', 'n2s_installedTiledImageClick', function($jq){
+			_this._installTiledImageClick(contextDoc, $jq);
+		});
+
+		// Custom
+		findAndExecute($set, 'n2s_custom', 'n2s_customed', function($jq){
+			_this._custom($jq, contextDoc);
+		});
+
+		// User Events
+		findAndExecute($set, 'n2s_userEvents', 'n2s_userEvents_installed', function($jq){
+			_this._userEvents($jq, contextDoc);
+		});
+
+		// Wiki
+		findAndExecute($set, 'n2s_wikiTransform', 'n2s_wikiTransformed', function($jq){
+			_this._wikiTransform($jq, contextDoc);
+		});
+
+		// Find Available
+		findAndExecute($set, 'n2s_showFindAvailable', 'n2s_showedFindAvailable', function($jq){
+			_this._showFindAvailable($jq, contextDoc);
+		});
+		
+		function findAndExecute($set, sourceClass, targetClass, fn){
+			if( $set.hasClass(sourceClass) ){
+				execute($set, sourceClass, targetClass, fn);
+			};
+			$set.find('.'+sourceClass).each(function(){
+				execute($(this), sourceClass, targetClass, fn);
+			});
+		};
+		
+		function execute($set, sourceClass, targetClass, fn){
+			$set
+				.removeClass(sourceClass)
+				.addClass(targetClass);
+			fn($set);
+		};
+	},
+	
+	_fixElementAndChildrenV1: function($elem, opt, contextDoc){
 		var _this = this;
 		
 		// Call custom code to modify element

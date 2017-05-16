@@ -455,7 +455,7 @@ var TableCanvas = $n2.Class({
 				.appendTo($table)
 				.scroll(function(){
 					_this._scrollChanged( $(this) );
-					return false;
+					return true;
 				});
 		};
  	},
