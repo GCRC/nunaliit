@@ -179,16 +179,16 @@ var Upload = $n2.Class({
 		if( !$.fn.ajaxSubmit ) {
 			opts.onError( 'Can not perform file uploads unless jquery.form.js is included' );
 			return;
-		}
+		};
 		
 		if( !opts.form ) {
 			opts.onError( 'Form element is required' );
 			return;
-		}
+		};
 		var $form = opts.form;
 		if( typeof($form) === 'string' ) {
 			$form = $('#'+$form);
-		}
+		};
 		
 		// Disable elements while file is uploading
 		$form.find('.n2UploadInputButton').attr('disabled','disabled');
@@ -199,14 +199,14 @@ var Upload = $n2.Class({
 			});
 		} else {
 			performUpload($form, null);
-		}
+		};
 		
 		function performUpload($form, uploadFile, progressKey) {
 
 			$form.find('.n2UploadProgressId').remove();
 			if( progressKey ) {
 				$form.prepend( $('<input class="n2UploadProgressId" type="hidden" name="progressId" value="'+progressKey+'"/>') );
-			}
+			};
 
 			var formData = new FormData($form[0]);
 			if(opts.uploadFile !== null) {
@@ -227,7 +227,7 @@ var Upload = $n2.Class({
 					} else {
 						if( !opts.suppressInformationDialog ) {
 							_this._uploadSucessfulDialog();
-						}
+						};
 						opts.onSuccess(res,options_);
 					}
 				}
@@ -248,8 +248,8 @@ var Upload = $n2.Class({
 					progressKey: progressKey
 					,onUpdate: onProgressUpdate
 				});
-			}
-		}
+			};
+		};
 	}
 	
 	/**
