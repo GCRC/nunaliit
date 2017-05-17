@@ -3252,7 +3252,7 @@ var AttachmentEditor = $n2.Class({
       var divider = $('<div>')
         .addClass('attachmentEditor_uploadSectionDivider')
         .appendTo($form);
-      $('<span>').text('OR').appendTo(divider);
+      $('<span>').text(_loc('OR')).appendTo(divider);
 
       var $recordDiv = $('<div>')
         .addClass('attachmentEditor_uploadSection')
@@ -3260,7 +3260,7 @@ var AttachmentEditor = $n2.Class({
 
       $('<div>')
         .addClass('attachmentEditor_sectionLabel')
-        .text('Record Audio')
+        .text(_loc('Record Audio'))
         .appendTo($recordDiv);
 
       var recordInputDiv = $('<div>')
@@ -3358,7 +3358,7 @@ var AttachmentEditor = $n2.Class({
 
     if(event.target.files.length > 0) {
       _this.recordingButton.prop('disabled', true);
-      _this.recordingButton.prop('title', 'Can not record when upload file chosen');
+      _this.recordingButton.prop('title', _loc('Can not record when upload file chosen'));
     } else {
       _this.recordingButton.prop('disabled', false);
       _this.recordingButton.prop('title', '');
@@ -3441,7 +3441,7 @@ var AttachmentEditor = $n2.Class({
 		};
 
 		navigator.getUserMedia(session, success_callback, function(error) {
-			alert('Unable to capture your camera. Please check console logs.');
+			alert(_loc('Unable to capture your camera. Please check console logs.'));
 			console.error(error);
 		});
 	},
@@ -3452,7 +3452,7 @@ var AttachmentEditor = $n2.Class({
 
 		_this._stopRecordingTimer();
 		_this.recordingButton.prop('disabled', true);
-		_this.recordStatus.text('Processing...');
+		_this.recordStatus.text(_loc('Processing...'));
 
 		_this.recorder.stopRecording(function() {
 			var blobResult = _this.recorder.getBlob();
@@ -3476,7 +3476,7 @@ var AttachmentEditor = $n2.Class({
 
 					_this.recordingButton.prop('disabled', false);
 					_this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_micButton');
-					_this.recordStatus.text('Captured Audio');
+					_this.recordStatus.text(_loc('Captured Audio'));
 				};
 				reader.readAsDataURL(mp3Blob);
 			};
