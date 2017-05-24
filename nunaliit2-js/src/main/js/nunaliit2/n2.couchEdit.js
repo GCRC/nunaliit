@@ -3247,37 +3247,55 @@ var AttachmentEditor = $n2.Class({
       })
 			.appendTo($chooseFileDiv);
 
-    //only display recording if libraries required are present
-    if( typeof RecordRTC !== 'undefined' && typeof lamejs !== 'undefined') {
-      var divider = $('<div>')
-        .addClass('attachmentEditor_uploadSectionDivider')
-        .appendTo($form);
-      $('<span>').text(_loc('OR')).appendTo(divider);
+    //only display recording if libraries required are present and https
+    var protocolSupportsRecording = false;
+    if(document.location.protocol == 'https:'
+      || window.location.hostname == 'localhost'
+      || window.location.hostname.startsWith('127.0.')) {
+      protocolSupportsRecording = true;
+    }
 
-      var $recordDiv = $('<div>')
-        .addClass('attachmentEditor_uploadSection')
-        .appendTo($form);
+    if(typeof DetectRTC !== 'undefined'
+      && typeof RecordRTC !== 'undefined'
+      && typeof lamejs !== 'undefined'
+      && protocolSupportsRecording) {
 
-      $('<div>')
-        .addClass('attachmentEditor_sectionLabel')
-        .text(_loc('Record Audio'))
-        .appendTo($recordDiv);
+      DetectRTC.load(function() {
+        if(DetectRTC.hasMicrophone) {
+          console.log('has mic and perms');
+          var divider = $('<div>')
+            .addClass('attachmentEditor_uploadSectionDivider')
+            .appendTo($form);
+          $('<span>').text(_loc('OR')).appendTo(divider);
 
-      var recordInputDiv = $('<div>')
-        .addClass('attachmentEditor_recordingContainer')
-        .appendTo($recordDiv);
+          var $recordDiv = $('<div>')
+            .addClass('attachmentEditor_uploadSection')
+            .appendTo($form);
 
-      _this.recordingButton = $('<button>')
-        .addClass('attachmentEditor_micButton')
-        .appendTo(recordInputDiv)
-        .click(function(event) {
-          _this._clickRecording(event);
-        })[0];
-      _this.recordingButton = $(this.recordingButton);
+          $('<div>')
+            .addClass('attachmentEditor_sectionLabel')
+            .text(_loc('Record Audio'))
+            .appendTo($recordDiv);
 
-      _this.recordStatus = $('<div>')
-        .addClass('attachmentEditor_recordStatus')
-        .appendTo(recordInputDiv);
+          var recordInputDiv = $('<div>')
+            .addClass('attachmentEditor_recordingContainer')
+            .appendTo($recordDiv);
+
+          _this.recordingButton = $('<button>')
+            .addClass('attachmentEditor_micButton')
+            .appendTo(recordInputDiv)
+            .click(function(event) {
+              _this._clickRecording(event);
+            })[0];
+          _this.recordingButton = $(_this.recordingButton);
+
+          _this.recordStatus = $('<div>')
+            .addClass('attachmentEditor_recordStatus')
+            .appendTo(recordInputDiv);
+        } else {
+          console.log('no microphone present');
+        }
+      });
     }
 	},
 	
