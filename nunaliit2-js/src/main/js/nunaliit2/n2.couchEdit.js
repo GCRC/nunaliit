@@ -3502,7 +3502,9 @@ var AttachmentEditor = $n2.Class({
 
 			samples = new Int16Array(left);
 		}
-		return samples;
+    //trim the first and last millisecond to remove click noise at start
+    return samples.slice(45, samples.length - 45);
+
 	},
 
 	_encodeMp3: function(samples) {
