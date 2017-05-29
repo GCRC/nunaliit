@@ -1492,7 +1492,7 @@ function handleModelCreate(m, addr, dispatcher){
 			throw 'Unable to find function for filter model';
 		};
 		
-		new ModelFilter(options);
+		m.model = new ModelFilter(options);
 		
 		m.created = true;
 
@@ -1514,7 +1514,7 @@ function handleModelCreate(m, addr, dispatcher){
 			};
 		};
 		
-		new SchemaFilter(options);
+		m.model = new SchemaFilter(options);
 		
 		m.created = true;
 
@@ -1536,7 +1536,7 @@ function handleModelCreate(m, addr, dispatcher){
 			};
 		};
 		
-		new ReferenceFilter(options);
+		m.model = new ReferenceFilter(options);
 		
 		m.created = true;
 
@@ -1558,7 +1558,7 @@ function handleModelCreate(m, addr, dispatcher){
 			};
 		};
 		
-		new SingleDocumentFilter(options);
+		m.model = new SingleDocumentFilter(options);
 		
 		m.created = true;
 
@@ -1580,7 +1580,7 @@ function handleModelCreate(m, addr, dispatcher){
 			};
 		};
 		
-		new DocumentFilterByCreator(options);
+		m.model = new DocumentFilterByCreator(options);
 		
 		m.created = true;
 
@@ -1602,7 +1602,7 @@ function handleModelCreate(m, addr, dispatcher){
 			};
 		};
 		
-		new LayerFilter2(options);
+		m.model = new LayerFilter2(options);
 		
 		m.created = true;
 	};

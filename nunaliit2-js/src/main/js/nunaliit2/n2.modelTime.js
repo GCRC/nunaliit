@@ -1957,7 +1957,7 @@ function handleModelCreate(m, addr, dispatcher){
 			};
 		};
 		
-		new TimeFilter(options);
+		m.model = new TimeFilter(options);
 		
 		m.created = true;
 	    
@@ -1980,7 +1980,7 @@ function handleModelCreate(m, addr, dispatcher){
 			};
 		};
 		
-		new NoTimeFilter(options);
+		m.model = new NoTimeFilter(options);
 		
 		m.created = true;
 	    
@@ -2003,7 +2003,7 @@ function handleModelCreate(m, addr, dispatcher){
 			};
 		};
 		
-		new TimeTransform(options);
+		m.model = new TimeTransform(options);
 		
 		m.created = true;
 	    
@@ -2026,7 +2026,7 @@ function handleModelCreate(m, addr, dispatcher){
 			};
 		};
 		
-		new DatedReferenceTransform(options);
+		m.model = new DatedReferenceTransform(options);
 		
 		m.created = true;
 	    
@@ -2049,7 +2049,7 @@ function handleModelCreate(m, addr, dispatcher){
 			};
 		};
 		
-		new TimeSynchronize(options);
+		m.model = new TimeSynchronize(options);
 		
 		m.created = true;
     };

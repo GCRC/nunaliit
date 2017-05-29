@@ -607,7 +607,7 @@ function handleModelCreate(m, addr, dispatcher){
 			};
 		};
 		
-		new ModelUnion(options);
+		m.model = new ModelUnion(options);
 		
 		m.created = true;
 
@@ -630,7 +630,7 @@ function handleModelCreate(m, addr, dispatcher){
 			};
 		};
 		
-		new ModelIntersect(options);
+		m.model = new ModelIntersect(options);
 		
 		m.created = true;
 
@@ -652,7 +652,7 @@ function handleModelCreate(m, addr, dispatcher){
 			};
 		};
 		
-		new StaticDocumentSource(options);
+		m.model = new StaticDocumentSource(options);
 		
 		m.created = true;
 	};

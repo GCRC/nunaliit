@@ -358,9 +358,6 @@ var DocumentModel = $n2.Class('DocumentModel', {
 		};
 
 		if( this.dispatchService ){
-			var fn = function(m, addr, dispatcher){
-				_this._handle(m, addr, dispatcher);
-			};
 			this.dispatchService.register(DH, 'modelGetInfo', function(m, addr, dispatcher){
 				if( m.modelId === _this.modelId ){
 					m.modelInfo = _this._getModelInfo();
@@ -622,6 +619,10 @@ var Service = $n2.Class({
 
 			if( $n2.couchDbPerspective && typeof $n2.couchDbPerspective.handleModelCreate === 'function' ){
 				$n2.couchDbPerspective.handleModelCreate(m, addr, dispatcher);
+			};
+
+			if( $n2.modelFilterSimultaneous && typeof $n2.modelFilterSimultaneous.handleModelCreate === 'function' ){
+				$n2.modelFilterSimultaneous.handleModelCreate(m, addr, dispatcher);
 			};
 
 		} else if( 'modelGetState' === m.type ){

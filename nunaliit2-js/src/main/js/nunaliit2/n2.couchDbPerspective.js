@@ -1017,6 +1017,7 @@ function handleModelCreate(m){
 			};
 		};
 		
+		m.model = dbPerspective;
 		m.created = true;
 
 	} else if( 'couchDbView' === m.modelType  ){
@@ -1040,7 +1041,7 @@ function handleModelCreate(m){
 			};
 		};
 		
-		new ModelCouchDbView(options);
+		m.model = new ModelCouchDbView(options);
 		
 		m.created = true;
 	};

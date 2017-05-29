@@ -474,7 +474,7 @@ function handleModelCreate(m, addr, dispatcher){
 			};
 		};
 		
-		new LayerFilter(options);
+		m.model = new LayerFilter(options);
 		
 		m.created = true;
     };
