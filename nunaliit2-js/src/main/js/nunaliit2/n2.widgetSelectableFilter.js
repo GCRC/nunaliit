@@ -225,6 +225,17 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 				.appendTo($selector);
 		};
 		
+		// Adjust classes reflecting if any options are available
+		if( this.availableChoices.length > 0 ){
+			$elem
+				.removeClass('n2widget_singleFilterSelection_noChoiceAvailable')
+				.addClass('n2widget_singleFilterSelection_atLeastOneChoiceAvailable');
+		} else {
+			$elem
+				.removeClass('n2widget_singleFilterSelection_atLeastOneChoiceAvailable')
+				.addClass('n2widget_singleFilterSelection_noChoiceAvailable');
+		};
+		
 		this._adjustSelectedItem();
 		
 		// Select current
