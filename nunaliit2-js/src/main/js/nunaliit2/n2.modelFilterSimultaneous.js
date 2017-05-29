@@ -39,15 +39,6 @@ var
  ;
 
 //--------------------------------------------------------------------------
-
-var counter = 0;
-function getUnique(){
-	var unique = 'simul_filter_'+counter;
-	++counter;
-	return unique;
-};
- 
-//--------------------------------------------------------------------------
 var ModelInput = $n2.Class('ModelInput', $n2.model.DocumentModel, {
 	
 	sourceModelId: null,
@@ -171,6 +162,122 @@ var ModelInput = $n2.Class('ModelInput', $n2.model.DocumentModel, {
 });
 
 //--------------------------------------------------------------------------
+// Wraps a ModelParameter for the purpose of re-writing the available
+// choices for a filter within the SimultaneousFilters construct.
+// This wrapper is dependent on two models:
+// 1. the filter model, used to call the _computeAvailableChoicesFromDocs()
+// 2. the doc model, to get all currently displayed document
+// It is important to note that this parameter does not support "setting the
+// value" by the client. This parameter only updates value for client.
+var AvailableChoicesWrapper = $n2.Class({
+
+	dispatchService: null,
+
+	wrappingModelId: null,
+
+	docModelId: null,
+
+	filterModel: null,
+	
+	modelParameter: null,
+	
+	currentChoices: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dispatchService: undefined
+			,wrappingModelId: undefined
+			,docModelId: undefined
+			,filterModel: undefined
+		},opts_);
+		
+		this.dispatchService = opts.dispatchService;
+		this.wrappingModelId = opts.wrappingModelId;
+		this.docModelId = opts.docModelId;
+		this.filterModel = opts.filterModel;
+		
+		var _this = this;
+
+		if( !this.dispatchService ){
+			throw new Error('AvailableChoicesWrapper requires dispatchService');
+		};
+		
+		// Check that filter model supports what we need
+		if( !this.filterModel ){
+			throw new Error('Option "filterModel" must be provided');
+		};
+		if( typeof this.filterModel._computeAvailableChoicesFromDocs != 'function' ){
+			throw new Error('The instance of "filterModel" must support _computeAvailableChoicesFromDocs(): '+this.filterModel._classname);
+		};
+		
+		this.currentChoices = [];
+		
+		// Create supporting model parameter
+		this.modelParameter = new $n2.model.ModelParameter({
+			model: this
+			,modelId: this.wrappingModelId
+			,type: 'objects'
+			,name: 'availableChoices'
+			,label: _loc('Available Choices')
+			,setFn: this._setAvailableChoices
+			,getFn: this._getAvailableChoices
+			,dispatchService: this.dispatchService
+		});
+
+		// Listen to source model
+		if( this.dispatchService ){
+			var f = function(m, addr, dispatcher){
+				_this._handle(m, addr, dispatcher);
+			};
+			this.dispatchService.register(DH, 'modelStateUpdated', f);
+			
+			// Initialize state
+			this._sourceModelUpdated();
+		};
+	},
+	
+	getInfo: function(){
+		return this.modelParameter.getInfo();
+	},
+	
+	_handle: function(m, addr, dispatcher){
+		if( 'modelStateUpdated' === m.type ){
+			// Does it come from from our source?
+			if( this.sourceModelId === m.docModelId ){
+				this._sourceModelUpdated();
+			};
+		};
+	},
+	
+	_sourceModelUpdated: function(){
+		var _this = this;
+
+		var state = $n2.model.getModelState({
+			dispatchService: this.dispatchService
+			,modelId: this.docModelId
+		});
+		if( state && state.added ){
+			this.filterModel._computeAvailableChoicesFromDocs(state.added, function(choices){
+				_this._choicesUpdated(choices);
+			});
+		};
+	},
+	
+	_choicesUpdated: function(choices){
+		this.currentChoices = choices;
+		this.modelParameter.sendUpdate();
+	},
+
+	_setAvailableChoices: function(){
+		throw new Error('This function should never be called');
+	},
+
+	_getAvailableChoices: function(){
+		return this.currentChoices;
+	}
+});
+
+//--------------------------------------------------------------------------
 // The point of this filter is to accept a number of filters and let
 // them operate in parallel.
 // All the contained filters should work on the same input (sourceModelId).
@@ -193,8 +300,6 @@ var SimultaneousFilters = $n2.Class('SimultaneousFilters',{
 	filterInfosByModelId: null,
 	
 	intersectionModel: null,
-	
-	unionModel: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -228,11 +333,11 @@ var SimultaneousFilters = $n2.Class('SimultaneousFilters',{
 
 		// Create filters from filter definitions
 		this.filterInfosByModelId = {};
+		var filterCount = 0;
 		if( opts.filters && $n2.isArray(opts.filters) ){
 			opts.filters.forEach(function(filterDefinition, defIndex){
 				if( typeof filterDefinition === 'object' ){
 					var declaredModelId = undefined;
-					var effectiveModelId = _this.modelId+'_filter_'+defIndex;
 					var modelType = undefined;
 
 					// Create an alternate definition for the purpose of
@@ -262,9 +367,7 @@ var SimultaneousFilters = $n2.Class('SimultaneousFilters',{
 						throw new Error('Attribute "modelType" must be provided for filter definitions within "simultaneousFilters"');
 					};
 
-					// Just for now
-					effectiveModelId = declaredModelId;
-					
+					var effectiveModelId = _this.modelId+'_filter_'+declaredModelId;
 					altDefinition.sourceModelId = _this.inputModelId;
 					altDefinition.modelId = effectiveModelId;
 					
@@ -293,11 +396,19 @@ var SimultaneousFilters = $n2.Class('SimultaneousFilters',{
 						,model: msg.model
 					};
 					_this.filterInfosByModelId[declaredModelId] = filterInfo;
+					
+					// Count this filter
+					++filterCount;
 
 				} else {
 					throw new Error('Filter definitions must be objects');
 				};
 			});
+		};
+		
+		// Check that enough filters are defined
+		if( filterCount <= 1 ){
+			throw new Error('Requires at least two filters');
 		};
 		
 		// Make a list of all effective filter ids
@@ -314,13 +425,35 @@ var SimultaneousFilters = $n2.Class('SimultaneousFilters',{
 			,sourceModelIds: allFilterIds
 		});
 
-		// Create an union model based on all filter models
-		this.unionModelId = this.modelId + '_union';
-		this.unionModel = new $n2.modelUtils.ModelUnion({
-			dispatchService: this.dispatchService
-			,modelId: this.unionModelId
-			,sourceModelIds: allFilterIds
-		});
+		// For each filter, create an intersection of the other filters combined, and 
+		// an available parameter to represent it
+		for(var filterId in this.filterInfosByModelId){
+			var filterInfo = this.filterInfosByModelId[filterId];
+			
+			var unionSourceIds = [];
+			for(var unionSourceId in this.filterInfosByModelId){
+				if( unionSourceId !== filterId ){
+					var unionSourceInfo = this.filterInfosByModelId[unionSourceId];
+					unionSourceIds.push(unionSourceInfo.effectiveModelId);
+				};
+			};
+			
+			var docModelId = this.modelId + '_inter_' + filterInfo.declaredModelId;
+			filterInfo.availableChoicesModel = new $n2.modelUtils.ModelIntersect({
+				dispatchService: this.dispatchService
+				,modelId: docModelId
+				,sourceModelIds: unionSourceIds
+			});
+
+			var availableChoicesParameter = new AvailableChoicesWrapper({
+				dispatchService: this.dispatchService
+				,wrappingModelId: filterId
+				,docModelId: docModelId
+				,filterModel: filterInfo.model
+			});
+			
+			filterInfo.availableChoicesParameter = availableChoicesParameter;
+		};
 		
 		// Register to events
 		if( this.dispatchService ){
@@ -335,32 +468,41 @@ var SimultaneousFilters = $n2.Class('SimultaneousFilters',{
 	},
 	
 	_handle: function(m, addr, dispatcher){
-//		if( 'modelGetInfo' === m.type ){
-//			// Answer on behalf of our filters
-//			var filterInfo = this.filterInfosByModelId[m.modelId];
-//			if( filterInfo ){
-//				var modelInfo = $n2.model.getModelInfo({
-//					dispatchService: this.dispatchService
-//					,modelId: filterInfo.effectiveModelId
-//				});
-//				if( modelInfo ){
-//					m.modelInfo = modelInfo;
-//				};
-//			};
-//			
-//		} else if( 'modelGetState' === m.type ){
-//			// Answer on behalf of our filters
-//			var filterInfo = this.filterInfosByModelId[m.modelId];
-//			if( filterInfo ){
-//				var modelState = $n2.model.getModelState({
-//					dispatchService: this.dispatchService
-//					,modelId: filterInfo.effectiveModelId
-//				});
-//				if( modelState ){
-//					m.state = modelState;
-//				};
-//			};
-//		};
+		if( 'modelGetInfo' === m.type ){
+			// Answer on behalf of our filters
+			var filterInfo = this.filterInfosByModelId[m.modelId];
+			if( filterInfo ){
+				var modelInfo = $n2.model.getModelInfo({
+					dispatchService: this.dispatchService
+					,modelId: filterInfo.effectiveModelId
+				});
+				if( modelInfo ){
+					// Replace available choices parameter
+					if( modelInfo.parameters 
+					 && modelInfo.parameters.availableChoices ){
+						modelInfo.parameters.availableChoices = 
+							filterInfo.availableChoicesParameter.getInfo();
+					} else {
+						$n2.logError('Underlying filter model is supposed to report "availableChoices" parameter: '+m.modelId);
+					};
+
+					m.modelInfo = modelInfo;
+				};
+			};
+			
+		} else if( 'modelGetState' === m.type ){
+			// Answer on behalf of our filters
+			var filterInfo = this.filterInfosByModelId[m.modelId];
+			if( filterInfo ){
+				var modelState = $n2.model.getModelState({
+					dispatchService: this.dispatchService
+					,modelId: filterInfo.effectiveModelId
+				});
+				if( modelState ){
+					m.state = modelState;
+				};
+			};
+		};
 	}
 });
 
