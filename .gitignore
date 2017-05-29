@@ -12,3 +12,8 @@ Icon?
 ehthumbs.db
 Thumbs.db
 /target
+
+# Intellij IDEA files #
+#######################
+*.iml
+.idea/

@@ -34,12 +34,103 @@ div.n2CouchEditor_container .ui-accordion-content {
 	display: none;
 }
 
+form.attachmentEditor_creationForm {
+	clear: both;
+}
+
 .attachmentEditor_label {
 	padding-right: 3px;
 }
 
 .attachmentEditor_delete {
 	padding-left: 3px;
+}
+
+.attachmentEditor_uploadSection {
+	margin: 15px 0;
+	overflow: auto;
+}
+
+.attachmentEditor_sectionLabel {
+	font-weight: bold;
+	float: left;
+	margin: 0;
+	padding-right: 8px;
+	width: 30%;
+}
+
+.attachmentEditor_micButton {
+	background-image: url('/js-external/images/open-iconic/microphone-6x-white.png');
+	background-size: 100% 100%;
+	background-color: #328643;
+	border-radius: 50%;
+	border: 5px solid #328643;
+	height: 45px;
+	width: 45px;
+}
+
+.attachmentEditor_micButton:disabled {
+	background-color: #d3d3d3;
+	border-color: #d3d3d3;
+}
+
+.attachmentEditor_stopRecordingButton {
+	background-image: url('/js-external/images/open-iconic/media-stop-6x-white.png');
+	background-size: 100% 100%;
+	border-radius: 50%;
+	height: 45px;
+	width: 45px;
+	margin: auto;
+}
+
+.attachmentEditor_stopRecordingButton {
+	background-color: #f3494c;
+	border: 5px solid #f3494c;
+}
+
+.attachmentEditor_stopRecordingButton:disabled {
+	background-color: #d3d3d3;
+	border: 5px solid #d3d3d3;
+}
+
+.attachmentEditor_recordingContainer {
+	float: left;
+	text-align: center;
+}
+
+.attachmentEditor_uploadSectionDivider {
+	display: block;
+	overflow: hidden;
+	white-space: nowrap;
+	width: 50%;
+	clear: both;
+	margin-left: 10%;
+	text-align: center;
+}
+
+.attachmentEditor_uploadSectionDivider > span {
+	position: relative;
+	display: inline-block;
+}
+
+.attachmentEditor_uploadSectionDivider > span:before,
+.attachmentEditor_uploadSectionDivider > span:after {
+	content: "";
+	position: absolute;
+	top: 50%;
+	width: 9999px;
+	height: 1px;
+	background: black;
+}
+
+.attachmentEditor_uploadSectionDivider > span:before {
+	right: 100%;
+	margin-right: 15px;
+}
+
+.attachmentEditor_uploadSectionDivider > span:after {
+	left: 100%;
+	margin-left: 15px;
 }
 
 /* Related Doc */

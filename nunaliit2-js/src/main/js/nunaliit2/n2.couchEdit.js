@@ -2571,6 +2571,14 @@ var AttachmentEditor = $n2.Class({
 	disableAddFile: null,
 	
 	disableRemoveFile: null,
+
+	recordingButton: null,
+
+	recordingStatus: null,
+
+	recorder: null,
+
+	recordingInterval: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -2763,6 +2771,13 @@ var AttachmentEditor = $n2.Class({
 			var $form = $elem.find('.attachmentEditor_att_' + $n2.utils.stringToHtmlId(attName));
 			var $file = $form.find('input[type="file"]');
 			var fileName = $file.val();
+			if(!fileName) {
+				var audioFile = $form.find('audio');
+				if(audioFile.length > 0) {
+					fileName = 'audioFile';
+				}
+			}
+
 			if( !fileName ){
 				missingAttachment = attName;	
 			};
@@ -2778,6 +2793,12 @@ var AttachmentEditor = $n2.Class({
 			var $form = $elem.find('.attachmentEditor_att_' + $n2.utils.stringToHtmlId(attName));
 			var $file = $form.find('input[type="file"]');
 			var fileName = $file.val();
+			if(!fileName) {
+				var audioFile = $form.find('audio');
+				if(audioFile.length > 0) {
+					fileName = 'audioFile';
+				}
+			}
 			if( !fileName ){
 				$form.remove();
 				
@@ -2917,6 +2938,19 @@ var AttachmentEditor = $n2.Class({
 		
 		var $fileInput = $form.find('input[type="file"]');
 		var filename = $fileInput.val();
+		var audioFile = null;
+		//generate file data for mp3 file.
+		if(!filename) {
+			var audio = $form.find('audio');
+			if(audio.length > 0) {
+				var blob = dataURLtoMp3Blob(audio.attr('src'));
+				filename = (Math.random() * new Date().getTime()).toString(36).replace( /\./g , '') + '.mp3';
+				audioFile = new File([blob], filename, {
+					type: 'audio/mp3'
+				});
+			}
+		}
+
 		if( !filename || !att || !uploadId ){
 			$form.remove();
 			continueUpload();
@@ -2927,6 +2961,7 @@ var AttachmentEditor = $n2.Class({
 			// Perform actual upload
 			this.uploadService.submitForm({
 				form: $form
+				,uploadFile: audioFile
 				,suppressInformationDialog: true
 				,onSuccess: function(){
 					$form.remove();
@@ -2937,10 +2972,47 @@ var AttachmentEditor = $n2.Class({
 				}
 			});
 		};
-		
+
 		function continueUpload(){
 			_this.performPostSavingActions(opts_);
 		};
+
+		function dataURLtoMp3Blob(dataURL) {
+			//Based on https://github.com/bubkoo/dataurl-to-blob (MIT License)
+			if (!window || window.window !== window) {
+				throw new Error('This module is only available in browser');
+			}
+
+			var Blob = window.Blob || window.MozBlob || window.WebKitBlob;
+			if (!Blob) {
+				throw new Error('Blob was not supported');
+			}
+
+			var dataURLPattern = /^data:((.*?)(;charset=.*?)?)(;base64)?,/;
+
+			// parse the dataURL components as per RFC 2397
+			var matches = dataURL.match(dataURLPattern);
+			if (!matches) {
+				throw new Error('invalid dataURI');
+			}
+
+			// default to text/plain;charset=utf-8
+			var mediaType = 'audio/mp3';
+			var isBase64   = !!matches[4];
+			var dataString = dataURL.slice(matches[0].length);
+			var byteString = isBase64
+				// convert base64 to raw binary data held in a string
+				? atob(dataString)
+				// convert base64/URLEncoded data component to raw binary
+				: decodeURIComponent(dataString);
+
+			var array = [];
+			for (var i = 0; i < byteString.length; i++) {
+				array.push(byteString.charCodeAt(i));
+			}
+
+			return new Blob([new Uint8Array(array)], { type: mediaType });
+		}
 	},
 	
 	_getElem: function(){
@@ -3152,16 +3224,79 @@ var AttachmentEditor = $n2.Class({
 			.addClass('attachmentEditor_creationForm')
 			.attr('n2AttName',attName)
 			.appendTo($div);
-		
+
+		var $chooseFileDiv = $('<div>')
+			.addClass('attachmentEditor_uploadSection')
+			.appendTo($form);
+
+		$('<div>')
+			.addClass('attachmentEditor_sectionLabel')
+			.addClass('label')
+			.text('Upload')
+			.appendTo($chooseFileDiv);
+
 		$('<span>')
 			.addClass('attachmentEditor_label')
 			.text( opts.label )
-			.appendTo($form);
+			.appendTo($chooseFileDiv);
 	
 		$('<input type="file">')
 			.attr('name','media')
-			.appendTo($form);
-	
+      .change(function(event) {
+        _this._attachmentFileChanged(event);
+      })
+			.appendTo($chooseFileDiv);
+
+    //only display recording if libraries required are present and https
+    var protocolSupportsRecording = false;
+    if(document.location.protocol == 'https:'
+      || window.location.hostname == 'localhost'
+      || window.location.hostname.startsWith('127.0.')) {
+      protocolSupportsRecording = true;
+    }
+
+    if(typeof DetectRTC !== 'undefined'
+      && typeof RecordRTC !== 'undefined'
+      && typeof lamejs !== 'undefined'
+      && protocolSupportsRecording) {
+
+      DetectRTC.load(function() {
+        if(DetectRTC.hasMicrophone) {
+          console.log('has mic and perms');
+          var divider = $('<div>')
+            .addClass('attachmentEditor_uploadSectionDivider')
+            .appendTo($form);
+          $('<span>').text(_loc('OR')).appendTo(divider);
+
+          var $recordDiv = $('<div>')
+            .addClass('attachmentEditor_uploadSection')
+            .appendTo($form);
+
+          $('<div>')
+            .addClass('attachmentEditor_sectionLabel')
+            .text(_loc('Record Audio'))
+            .appendTo($recordDiv);
+
+          var recordInputDiv = $('<div>')
+            .addClass('attachmentEditor_recordingContainer')
+            .appendTo($recordDiv);
+
+          _this.recordingButton = $('<button>')
+            .addClass('attachmentEditor_micButton')
+            .appendTo(recordInputDiv)
+            .click(function(event) {
+              _this._clickRecording(event);
+            })[0];
+          _this.recordingButton = $(_this.recordingButton);
+
+          _this.recordStatus = $('<div>')
+            .addClass('attachmentEditor_recordStatus')
+            .appendTo(recordInputDiv);
+        } else {
+          console.log('no microphone present');
+        }
+      });
+    }
 	},
 	
 	_addFileElement: function(opts_){
@@ -3231,6 +3366,187 @@ var AttachmentEditor = $n2.Class({
 		if( opts.form ) {
 			opts.form.appendTo($div);
 		};
+	},
+
+  _attachmentFileChanged: function(event) {
+	  var _this = this;
+    if( typeof RecordRTC === 'undefined' && typeof lamejs === 'undefined') {
+      return;
+    }
+
+    if(event.target.files.length > 0) {
+      _this.recordingButton.prop('disabled', true);
+      _this.recordingButton.prop('title', _loc('Can not record when upload file chosen'));
+    } else {
+      _this.recordingButton.prop('disabled', false);
+      _this.recordingButton.prop('title', '');
+    }
+  },
+
+	_clickRecording: function(event) {
+	  event.preventDefault();
+    var _this = this;
+
+    if(_this.recordingInterval === null) {
+			_this._startRecording();
+		} else {
+			_this._stopRecording();
+		}
+	},
+
+	_startRecording: function() {
+		var _this = this;
+		var obj = this.obj;
+    _this.recordStatus.text('');
+
+		_this._captureUserMedia(function(stream) {
+			_this.recorder = RecordRTC(stream, {
+				type: 'audio',
+				recorderType: StereoAudioRecorder,
+				numberOfAudioChannels: 1
+			});
+
+			var oldAudio = $('.attachmentEditor_recordingContainer audio');
+			if(oldAudio.length > 0) {
+        oldAudio[0].remove();
+			}
+
+      _this.recorder.startRecording();
+
+      _this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_micButton');
+      $($('.attachmentEditor_creationForm input')[0]).prop('disabled', true);
+      _this._recordingTimer();
+		});
+	},
+
+	_recordingTimer: function() {
+		var _this = this;
+		var seconds_elapsed = 0;
+		var max_time = 300;
+    var max_time_str = _this._secondsToTimeString(max_time);
+
+		_this.recordingInterval = setInterval(function() {
+			seconds_elapsed++;
+
+			if(seconds_elapsed >= max_time) {
+				_this._stopRecording();
+				return;
+			}
+
+			var cur_time_str = _this._secondsToTimeString(seconds_elapsed);
+			_this.recordStatus.text(cur_time_str + '/' + max_time_str);
+		}, 1000);
+	},
+
+  _secondsToTimeString: function(seconds) {
+    var min = Math.floor(seconds/60);
+    var sec = seconds - min * 60;
+    if(sec < 10) {
+      sec = '0' + sec;
+    }
+    return min + ':' + sec
+  },
+
+	_stopRecordingTimer: function() {
+	  var _this = this;
+		clearInterval(_this.recordingInterval);
+		_this.recordingInterval = null;
+	},
+
+	_captureUserMedia: function(success_callback) {
+		var session = {
+			audio: true
+		};
+
+		navigator.getUserMedia(session, success_callback, function(error) {
+			alert(_loc('Unable to capture your camera. Please check console logs.'));
+			console.error(error);
+		});
+	},
+
+	_stopRecording: function() {
+		var _this = this;
+		var obj = this.obj;
+
+		_this._stopRecordingTimer();
+		_this.recordingButton.prop('disabled', true);
+		_this.recordStatus.text(_loc('Processing...'));
+
+		_this.recorder.stopRecording(function() {
+			var blobResult = _this.recorder.getBlob();
+			var fileReader = new FileReader();
+			fileReader.onload = function() {
+				var samples = _this._getWavSamples(this.result);
+				var mp3Blob = _this._encodeMp3(samples);
+
+				var reader = new FileReader();
+				reader.onload = function(event) {
+          var oldAudio = $('.attachmentEditor_recordingContainer audio');
+          if(oldAudio.length > 0) {
+            oldAudio[0].src = event.target.result;
+            oldAudio[0].show();
+          } else {
+            $('<audio>')
+              .attr('src', event.target.result)
+              .attr('controls', 'controls')
+              .insertAfter(_this.recordingButton);
+          }
+
+					_this.recordingButton.prop('disabled', false);
+					_this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_micButton');
+					_this.recordStatus.text(_loc('Captured Audio'));
+				};
+				reader.readAsDataURL(mp3Blob);
+			};
+			fileReader.readAsArrayBuffer(blobResult);
+		});
+	},
+
+	_getWavSamples: function(arrayBuffer) {
+		var samples = new Int16Array(arrayBuffer);
+		var wavHeader = lamejs.WavHeader.readHeader(new DataView(arrayBuffer));
+
+		if (wavHeader.channels === 2) {
+			var left = [];
+			var right = [];
+			var i = 0;
+
+			while (i < samples.length) {
+				left.push(samples[i]);
+				right.push(samples[i + 1]);
+
+				i += 2;
+			}
+
+			samples = new Int16Array(left);
+		}
+    //trim the first and last millisecond to remove click noise at start
+    return samples.slice(45, samples.length - 45);
+
+	},
+
+	_encodeMp3: function(samples) {
+		var channels = 1;
+		var sampleRate = 44100;
+		var kbps = 128;
+		var mp3encoder = new lamejs.Mp3Encoder(channels, sampleRate, kbps);
+		var mp3Data = [];
+		var sampleBlockSize = 1152; //can be anything but make it a multiple of 576 to make encoders life easier
+
+		for (var i = 0; i < samples.length; i += sampleBlockSize) {
+			var sampleChunk = samples.subarray(i, i + sampleBlockSize);
+			var mp3buf = mp3encoder.encodeBuffer(sampleChunk);
+			if (mp3buf.length > 0) {
+				mp3Data.push(mp3buf);
+			}
+		}
+		var mp3buf = mp3encoder.flush();   //finish writing mp3
+
+		if (mp3buf.length > 0) {
+			mp3Data.push(new Int8Array(mp3buf));
+		}
+
+		return new Blob(mp3Data, {type: 'audio/mp3'});
 	}
 });
 
