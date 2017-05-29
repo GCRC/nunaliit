@@ -3262,7 +3262,7 @@ var AttachmentEditor = $n2.Class({
 
       DetectRTC.load(function() {
         if(DetectRTC.hasMicrophone) {
-          console.log('has mic and perms');
+          //$n2.log('has mic and perms');
           var divider = $('<div>')
             .addClass('attachmentEditor_uploadSectionDivider')
             .appendTo($form);
@@ -3293,7 +3293,7 @@ var AttachmentEditor = $n2.Class({
             .addClass('attachmentEditor_recordStatus')
             .appendTo(recordInputDiv);
         } else {
-          console.log('no microphone present');
+          $n2.log('no microphone present');
         }
       });
     }
@@ -3460,7 +3460,7 @@ var AttachmentEditor = $n2.Class({
 
 		navigator.getUserMedia(session, success_callback, function(error) {
 			alert(_loc('Unable to capture your camera. Please check console logs.'));
-			console.error(error);
+			$n2.logError(error);
 		});
 	},
 
