@@ -61,15 +61,34 @@ form.attachmentEditor_creationForm {
 
 .attachmentEditor_micButton {
 	background-image: url('/js-external/images/open-iconic/microphone-6x-white.png');
-	background-size: 100% 100%;
+	background-size: 75% 75%;
 	background-color: #328643;
 	border-radius: 50%;
 	border: 5px solid #328643;
 	height: 45px;
 	width: 45px;
+	background-repeat: no-repeat;
+	background-position: center;
 }
 
 .attachmentEditor_micButton:disabled {
+	background-color: #d3d3d3;
+	border-color: #d3d3d3;
+}
+
+.attachmentEditor_videoButton {
+	background-image: url('/js-external/images/open-iconic/video-6x-white.png');
+	background-size: 75% 75%;
+	background-color: #328643;
+	border-radius: 50%;
+	border: 5px solid #328643;
+	height: 45px;
+	width: 45px;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.attachmentEditor_videoButton:disabled {
 	background-color: #d3d3d3;
 	border-color: #d3d3d3;
 }

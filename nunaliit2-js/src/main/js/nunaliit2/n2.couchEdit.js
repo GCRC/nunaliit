@@ -3326,7 +3326,6 @@ var AttachmentEditor = $n2.Class({
 
 						_this.videoRecordingButton = $('<button>')
 							.addClass('attachmentEditor_videoButton')
-							.text('Record')
 							.appendTo(recordInputVideoDiv)
 							.click(function(event) {
 								_this._clickRecording(event, 'video');
