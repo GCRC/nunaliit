@@ -2773,8 +2773,9 @@ var AttachmentEditor = $n2.Class({
 			var fileName = $file.val();
 			if(!fileName) {
 				var audioFile = $form.find('audio');
-				if(audioFile.length > 0) {
-					fileName = 'audioFile';
+				var videoFile = $form.find('video');
+				if(audioFile.length > 0 || videoFile.length > 0) {
+					fileName = 'recordedFile';
 				}
 			}
 
@@ -2795,8 +2796,9 @@ var AttachmentEditor = $n2.Class({
 			var fileName = $file.val();
 			if(!fileName) {
 				var audioFile = $form.find('audio');
-				if(audioFile.length > 0) {
-					fileName = 'audioFile';
+				var videoFile = $form.find('video');
+				if(audioFile.length > 0 || videoFile.length > 0) {
+					fileName = 'recordedFile';
 				}
 			}
 			if( !fileName ){
@@ -2938,16 +2940,20 @@ var AttachmentEditor = $n2.Class({
 		
 		var $fileInput = $form.find('input[type="file"]');
 		var filename = $fileInput.val();
-		var audioFile = null;
+		var mediaFile = null;
 		//generate file data for mp3 file.
 		if(!filename) {
 			var audio = $form.find('audio');
 			if(audio.length > 0) {
-				var blob = dataURLtoMp3Blob(audio.attr('src'));
-				filename = (Math.random() * new Date().getTime()).toString(36).replace( /\./g , '') + '.mp3';
-				audioFile = new File([blob], filename, {
-					type: 'audio/mp3'
-				});
+				mediaFile = mediaTagToFile(audio, 'audio/mp3', '.mp3');
+				filename = mediaFile.name;
+			}
+		}
+		if(!filename) {
+			var video = $form.find('video');
+			if(video.length > 0) {
+				mediaFile = mediaTagToFile(video, 'video/mp4', '.mp4');
+				filename = mediaFile.name;
 			}
 		}
 
@@ -2961,7 +2967,7 @@ var AttachmentEditor = $n2.Class({
 			// Perform actual upload
 			this.uploadService.submitForm({
 				form: $form
-				,uploadFile: audioFile
+				,uploadFile: mediaFile
 				,suppressInformationDialog: true
 				,onSuccess: function(){
 					$form.remove();
@@ -2977,7 +2983,15 @@ var AttachmentEditor = $n2.Class({
 			_this.performPostSavingActions(opts_);
 		};
 
-		function dataURLtoMp3Blob(dataURL) {
+		function mediaTagToFile(element, mediaType, extension) {
+			var blob = dataURLtoBlob(element.attr('src'), mediaType);
+			filename = (Math.random() * new Date().getTime()).toString(36).replace( /\./g , '') + extension;
+			return new File([blob], filename, {
+				type: mediaType
+			});
+		}
+
+		function dataURLtoBlob(dataURL, mediaType) {
 			//Based on https://github.com/bubkoo/dataurl-to-blob (MIT License)
 			if (!window || window.window !== window) {
 				throw new Error('This module is only available in browser');
@@ -2997,7 +3011,6 @@ var AttachmentEditor = $n2.Class({
 			}
 
 			// default to text/plain;charset=utf-8
-			var mediaType = 'audio/mp3';
 			var isBase64   = !!matches[4];
 			var dataString = dataURL.slice(matches[0].length);
 			var byteString = isBase64
@@ -3262,7 +3275,6 @@ var AttachmentEditor = $n2.Class({
 
       DetectRTC.load(function() {
         if(DetectRTC.hasMicrophone) {
-          //$n2.log('has mic and perms');
           var divider = $('<div>')
             .addClass('attachmentEditor_uploadSectionDivider')
             .appendTo($form);
@@ -3281,17 +3293,51 @@ var AttachmentEditor = $n2.Class({
             .addClass('attachmentEditor_recordingContainer')
             .appendTo($recordDiv);
 
-          _this.recordingButton = $('<button>')
+          _this.audioRecordingButton = $('<button>')
             .addClass('attachmentEditor_micButton')
             .appendTo(recordInputDiv)
             .click(function(event) {
-              _this._clickRecording(event);
+              _this._clickRecording(event, 'audio');
             })[0];
-          _this.recordingButton = $(_this.recordingButton);
+          _this.audioRecordingButton = $(_this.audioRecordingButton);
 
-          _this.recordStatus = $('<div>')
+          _this.audioRecordStatus = $('<div>')
             .addClass('attachmentEditor_recordStatus')
             .appendTo(recordInputDiv);
+
+					if(DetectRTC.hasWebcam) {
+						divider = $('<div>')
+							.addClass('attachmentEditor_uploadSectionDivider')
+							.appendTo($form);
+						$('<span>').text(_loc('OR')).appendTo(divider);
+
+						var $recordVideoDiv = $('<div>')
+							.addClass('attachmentEditor_uploadSection')
+							.appendTo($form);
+
+						$('<div>')
+							.addClass('attachmentEditor_sectionLabel')
+							.text(_loc('Record Audio'))
+							.appendTo($recordVideoDiv);
+
+						var recordInputVideoDiv = $('<div>')
+							.addClass('attachmentEditor_videoRecordingContainer')
+							.appendTo($recordVideoDiv);
+
+						_this.videoRecordingButton = $('<button>')
+							.addClass('attachmentEditor_videoButton')
+							.appendTo(recordInputVideoDiv)
+							.click(function(event) {
+								_this._clickRecording(event, 'video');
+							})[0];
+						_this.videoRecordingButton = $(_this.videoRecordingButton);
+
+						_this.videoRecordStatus = $('<div>')
+							.addClass('attachmentEditor_recordStatus')
+							.appendTo(recordInputVideoDiv);
+					} else {
+						$n2.log('no webcam present');
+					}
         } else {
           $n2.log('no microphone present');
         }
@@ -3375,45 +3421,69 @@ var AttachmentEditor = $n2.Class({
     }
 
     if(event.target.files.length > 0) {
-      _this.recordingButton.prop('disabled', true);
-      _this.recordingButton.prop('title', _loc('Can not record when upload file chosen'));
+      _this.audioRecordingButton.prop('disabled', true);
+      _this.audioRecordingButton.prop('title', _loc('Can not record when upload file chosen'));
+			_this.videoRecordingButton.prop('disabled', true);
+			_this.videoRecordingButton.prop('title', _loc('Can not record when upload file chosen'));
     } else {
-      _this.recordingButton.prop('disabled', false);
-      _this.recordingButton.prop('title', '');
+      _this.audioRecordingButton.prop('disabled', false);
+      _this.audioRecordingButton.prop('title', '');
+			_this.videoRecordingButton.prop('disabled', false);
+			_this.videoRecordingButton.prop('title', '');
     }
   },
 
-	_clickRecording: function(event) {
+	_clickRecording: function(event, recordType) {
 	  event.preventDefault();
     var _this = this;
 
     if(_this.recordingInterval === null) {
-			_this._startRecording();
+			if(recordType === 'audio') {
+				_this.recordStatus = _this.audioRecordStatus;
+				_this.recordingButton = _this.audioRecordingButton;
+			} else if(recordType === 'video') {
+				_this.recordStatus = _this.videoRecordStatus;
+				_this.recordingButton = _this.videoRecordingButton;
+			}
+			_this._startRecording(recordType);
 		} else {
-			_this._stopRecording();
+			_this._stopRecording(recordType);
 		}
 	},
 
-	_startRecording: function() {
+	_startRecording: function(recordType) {
 		var _this = this;
 		var obj = this.obj;
     _this.recordStatus.text('');
 
-		_this._captureUserMedia(function(stream) {
-			_this.recorder = RecordRTC(stream, {
-				type: 'audio',
-				recorderType: StereoAudioRecorder,
-				numberOfAudioChannels: 1
-			});
+		_this._captureUserMedia(recordType, function(stream) {
+			if(recordType === 'audio') {
+				_this.recorder = RecordRTC(stream, {
+					type: 'audio',
+					recorderType: StereoAudioRecorder,
+					numberOfAudioChannels: 1
+				});
+			} else {
+				_this.recorder = RecordRTC(stream, {
+					mimeType: 'video/mp4',
+					audioBitsPerSecond: 48000,
+					videoBitsPerSecond: 128000
+				});
+			}
 
 			var oldAudio = $('.attachmentEditor_recordingContainer audio');
 			if(oldAudio.length > 0) {
         oldAudio[0].remove();
 			}
+			//TODO: Remove old video
 
       _this.recorder.startRecording();
 
-      _this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_micButton');
+			if(recordType === 'audio') {
+				_this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_micButton');
+			} else {
+				_this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_videoButton');
+			}
       $($('.attachmentEditor_creationForm input')[0]).prop('disabled', true);
       _this._recordingTimer();
 		});
@@ -3453,18 +3523,21 @@ var AttachmentEditor = $n2.Class({
 		_this.recordingInterval = null;
 	},
 
-	_captureUserMedia: function(success_callback) {
+	_captureUserMedia: function(type, success_callback) {
 		var session = {
 			audio: true
 		};
+		if(type === 'video') {
+			session.video = true;
+		}
 
 		navigator.getUserMedia(session, success_callback, function(error) {
-			alert(_loc('Unable to capture your camera. Please check console logs.'));
+			alert(_loc('Unable to capture your mic and camera. Please check console logs.'));
 			$n2.logError(error);
 		});
 	},
 
-	_stopRecording: function() {
+	_stopRecording: function(recordType) {
 		var _this = this;
 		var obj = this.obj;
 
@@ -3474,32 +3547,64 @@ var AttachmentEditor = $n2.Class({
 
 		_this.recorder.stopRecording(function() {
 			var blobResult = _this.recorder.getBlob();
-			var fileReader = new FileReader();
-			fileReader.onload = function() {
-				var samples = _this._getWavSamples(this.result);
-				var mp3Blob = _this._encodeMp3(samples);
 
-				var reader = new FileReader();
-				reader.onload = function(event) {
-          var oldAudio = $('.attachmentEditor_recordingContainer audio');
-          if(oldAudio.length > 0) {
-            oldAudio[0].src = event.target.result;
-            oldAudio[0].show();
-          } else {
-            $('<audio>')
-              .attr('src', event.target.result)
-              .attr('controls', 'controls')
-              .insertAfter(_this.recordingButton);
-          }
-
-					_this.recordingButton.prop('disabled', false);
-					_this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_micButton');
-					_this.recordStatus.text(_loc('Captured Audio'));
-				};
-				reader.readAsDataURL(mp3Blob);
-			};
-			fileReader.readAsArrayBuffer(blobResult);
+			if(recordType === 'audio') {
+				_this._processAudioRecording(blobResult);
+			} else {
+				_this.recorder.getDataURL(function(dataURL) {
+					_this._processVideoRecording(dataURL);
+				});
+			}
 		});
+	},
+
+	_processAudioRecording: function(blob) {
+		var _this = this;
+		var fileReader = new FileReader();
+		fileReader.onload = function() {
+			var samples = _this._getWavSamples(this.result);
+			var mp3Blob = _this._encodeMp3(samples);
+
+			var reader = new FileReader();
+			reader.onload = function(event) {
+				var oldAudio = $('.attachmentEditor_recordingContainer audio');
+				if(oldAudio.length > 0) {
+					oldAudio[0].src = event.target.result;
+					oldAudio[0].show();
+				} else {
+					$('<audio>')
+						.attr('src', event.target.result)
+						.attr('controls', 'controls')
+						.insertAfter(_this.recordingButton);
+				}
+
+				_this.recordingButton.prop('disabled', false);
+				_this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_micButton');
+
+				_this.recordStatus.text(_loc('Captured Audio'));
+			};
+			reader.readAsDataURL(mp3Blob);
+		};
+		fileReader.readAsArrayBuffer(blob);
+	},
+
+	_processVideoRecording: function(dataURL) {
+		var _this = this;
+		var oldVideo = $('.attachmentEditor_videoRecordingContainer video');
+		if(oldVideo.length > 0) {
+			oldVideo[0].src = dataURL;
+			oldVideo[0].show();
+		} else {
+			$('<video>')
+				.attr('src', dataURL)
+				.attr('controls', 'controls')
+				.insertAfter(_this.recordingButton);
+		}
+
+		_this.recordingButton.prop('disabled', false);
+		_this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_videoButton');
+
+		_this.recordStatus.text(_loc('Captured Audio'));
 	},
 
 	_getWavSamples: function(arrayBuffer) {

@@ -70,7 +70,11 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 				);
 		
 		// Report length and dimensions
-		request.setInDurationInSec( videoInfo.getDurationInSec() );
+		if( null == videoInfo.getDurationInSec() ) {
+			request.setOutDurationInSec( (float)0.0 );
+		} else {
+			request.setInDurationInSec(videoInfo.getDurationInSec());
+		}
 		request.setInHeight(videoInfo.getHeight().intValue());
 		request.setInWidth(videoInfo.getWidth().intValue());
 		
