@@ -2952,7 +2952,7 @@ var AttachmentEditor = $n2.Class({
 		if(!filename) {
 			var video = $form.find('video');
 			if(video.length > 0) {
-				mediaFile = mediaTagToFile(video, 'video/mp4', '.mp4');
+				mediaFile = mediaTagToFile(video, 'video/mp4', '.webm');
 				filename = mediaFile.name;
 			}
 		}
@@ -3326,6 +3326,7 @@ var AttachmentEditor = $n2.Class({
 
 						_this.videoRecordingButton = $('<button>')
 							.addClass('attachmentEditor_videoButton')
+							.text('Record')
 							.appendTo(recordInputVideoDiv)
 							.click(function(event) {
 								_this._clickRecording(event, 'video');
@@ -3465,7 +3466,7 @@ var AttachmentEditor = $n2.Class({
 				});
 			} else {
 				_this.recorder = RecordRTC(stream, {
-					mimeType: 'video/mp4',
+					mimeType: 'video/webm',
 					audioBitsPerSecond: 48000,
 					videoBitsPerSecond: 128000
 				});
