@@ -3464,6 +3464,16 @@ var AttachmentEditor = $n2.Class({
 					numberOfAudioChannels: 1
 				});
 			} else {
+				var recordingVideos = $('.attachmentEditor_videoRecordingContainer video');
+				var recordingVideo;
+				if(recordingVideos.length > 0) {
+					recordingVideo = recordingVideos[0];
+				} else {
+					recordingVideo = ($('<video>')
+						.attr('controls', 'controls')
+						.insertAfter(_this.recordingButton))[0];
+				}
+
 				_this.recorder = RecordRTC(stream, {
 					mimeType: 'video/webm',
 					audioBitsPerSecond: 48000,
@@ -3477,15 +3487,14 @@ var AttachmentEditor = $n2.Class({
 						height: 240
 					}
 				});
+				recordingVideo.muted = true;
+				recordingVideo.src = null;
+				recordingVideo.srcObject = stream;
 			}
 
 			var oldAudio = $('.attachmentEditor_recordingContainer audio');
 			if(oldAudio.length > 0) {
         oldAudio[0].remove();
-			}
-			var oldVideo = $('.attachmentEditor_recordingContainer video');
-			if(oldVideo.length > 0) {
-				oldVideo[0].remove();
 			}
 
       _this.recorder.startRecording();
@@ -3617,7 +3626,8 @@ var AttachmentEditor = $n2.Class({
 		var oldVideo = $('.attachmentEditor_videoRecordingContainer video');
 		if(oldVideo.length > 0) {
 			oldVideo[0].src = dataURL;
-			oldVideo[0].show();
+			oldVideo[0].srcObject = null;
+			oldVideo[0].muted = false;
 		} else {
 			$('<video>')
 				.attr('src', dataURL)
