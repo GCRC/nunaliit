@@ -3598,18 +3598,18 @@ var AttachmentEditor = $n2.Class({
 			var samples = _this._getWavSamples(this.result);
 			var mp3Blob = _this._encodeMp3(samples);
 
-			var reader = new FileReader();
-			reader.onload = function(event) {
-				var oldAudio = $('.attachmentEditor_recordingContainer audio');
-				if(oldAudio.length > 0) {
-					oldAudio[0].src = event.target.result;
-					oldAudio[0].show();
-				} else {
-					$('<audio>')
-						.attr('src', event.target.result)
-						.attr('controls', 'controls')
-						.insertAfter(_this.recordingButton);
-				}
+      var reader = new FileReader();
+      reader.onload = function(event) {
+        var oldAudio = $('.attachmentEditor_recordingContainer audio');
+        if(oldAudio.length > 0) {
+          oldAudio[0].src = event.target.result;
+          oldAudio[0].show();
+        } else {
+          $('<audio>')
+            .attr('src', event.target.result)
+            .attr('controls', 'controls')
+            .insertAfter(_this.recordingButton);
+        }
 
 				_this.recordingButton.prop('disabled', false);
 				_this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_micButton');

@@ -90,19 +90,13 @@ public class FFmpegProcessorDefault implements FFmpegProcessor {
 		
 		Runtime rt = Runtime.getRuntime();
 		StringWriter sw = new StringWriter();
-		logger.info("Converting video: ");
-		logger.info("type: " + inputVideo.getFileType());
-		logger.info("vidcodec: " + inputVideo.getVideoCodec());
-		logger.info("name: " + inputVideo.getFile().getName());
 		try {
 			String convertVideoCommand = ffmpegConvertVideoCommand;
 			//Conversion needs to regenerate presentation timestamps for firefox (quicktime?)
 			//generated webm file. Issue discovered on mac os x firefox 53.0.3
 			//https://stackoverflow.com/questions/18123376/webm-to-mp4-conversion-using-ffmpeg
 			if(inputVideo.getFileType().equals("matroska") && inputVideo.getVideoCodec().equals("vp8")) {
-				logger.info("Converting metroska vp8 file");
 				convertVideoCommand = ffmpegConvertVideoCommand.replaceFirst("avconv ", "avconv -fflags +genpts -r 24 ");
-				logger.info("Running command: " + convertVideoCommand);
 			}
 			String[] tokens = breakUpCommand(convertVideoCommand);
 			for(int i=0; i<tokens.length; ++i){
