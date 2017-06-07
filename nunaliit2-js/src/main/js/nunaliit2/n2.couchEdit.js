@@ -3317,7 +3317,7 @@ var AttachmentEditor = $n2.Class({
 
 						$('<div>')
 							.addClass('attachmentEditor_sectionLabel')
-							.text(_loc('Record Audio'))
+							.text(_loc('Record Video'))
 							.appendTo($recordVideoDiv);
 
 						var recordInputVideoDiv = $('<div>')
@@ -3467,7 +3467,15 @@ var AttachmentEditor = $n2.Class({
 				_this.recorder = RecordRTC(stream, {
 					mimeType: 'video/webm',
 					audioBitsPerSecond: 48000,
-					videoBitsPerSecond: 128000
+					videoBitsPerSecond: 128000,
+					video: {
+						width: 320,
+						height: 240
+					},
+					canvas: {
+						width: 320,
+						height: 240
+					}
 				});
 			}
 
@@ -3475,14 +3483,21 @@ var AttachmentEditor = $n2.Class({
 			if(oldAudio.length > 0) {
         oldAudio[0].remove();
 			}
-			//TODO: Remove old video
+			var oldVideo = $('.attachmentEditor_recordingContainer video');
+			if(oldVideo.length > 0) {
+				oldVideo[0].remove();
+			}
 
       _this.recorder.startRecording();
 
 			if(recordType === 'audio') {
 				_this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_micButton');
+				_this.videoRecordingButton.prop('disabled', true);
+				_this.videoRecordingButton.prop('title', _loc('Can not record when upload file chosen'));
 			} else {
 				_this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_videoButton');
+				_this.audioRecordingButton.prop('disabled', true);
+				_this.audioRecordingButton.prop('title', _loc('Can not record when upload file chosen'));
 			}
       $($('.attachmentEditor_creationForm input')[0]).prop('disabled', true);
       _this._recordingTimer();
@@ -3528,7 +3543,16 @@ var AttachmentEditor = $n2.Class({
 			audio: true
 		};
 		if(type === 'video') {
-			session.video = true;
+			var videoHints = true;
+
+			if (DetectRTC.browser.name === 'Firefox' || (DetectRTC.browser.name === 'Chrome' && DetectRTC.browser.version >= 60)) {
+				videoHints = {
+					width: 320,
+					height: 240,
+					frameRate: 30
+				};
+			}
+			session.video = videoHints;
 		}
 
 		navigator.getUserMedia(session, success_callback, function(error) {
@@ -3604,7 +3628,7 @@ var AttachmentEditor = $n2.Class({
 		_this.recordingButton.prop('disabled', false);
 		_this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_videoButton');
 
-		_this.recordStatus.text(_loc('Captured Audio'));
+		_this.recordStatus.text(_loc('Captured Video'));
 	},
 
 	_getWavSamples: function(arrayBuffer) {

@@ -93,6 +93,11 @@ form.attachmentEditor_creationForm {
 	border-color: #d3d3d3;
 }
 
+.attachmentEditor_videoRecordingContainer > video {
+	width: 320px;
+	height: 240px;
+}
+
 .attachmentEditor_stopRecordingButton {
 	background-image: url('/js-external/images/open-iconic/media-stop-6x-white.png');
 	background-size: 100% 100%;
