@@ -96,7 +96,9 @@ public class FFmpegProcessorDefault implements FFmpegProcessor {
 			//generated webm file. Issue discovered on mac os x firefox 53.0.3
 			//https://stackoverflow.com/questions/18123376/webm-to-mp4-conversion-using-ffmpeg
 			if(inputVideo.getFileType().equals("matroska") && inputVideo.getVideoCodec().equals("vp8")) {
-				convertVideoCommand = ffmpegConvertVideoCommand.replaceFirst("avconv ", "avconv -fflags +genpts -r 24 ");
+			    //Add the new flags immediately after the command (either avconv or ffmpeg)
+				convertVideoCommand = ffmpegConvertVideoCommand.replaceFirst("(avconv|ffmpeg) ", "$1 -fflags +genpts -r 24 ");
+                logger.info("Running new command: " + convertVideoCommand);
 			}
 			String[] tokens = breakUpCommand(convertVideoCommand);
 			for(int i=0; i<tokens.length; ++i){
