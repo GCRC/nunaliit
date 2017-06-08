@@ -3477,19 +3477,13 @@ var AttachmentEditor = $n2.Class({
 				_this.recorder = RecordRTC(stream, {
 					mimeType: 'video/webm',
 					audioBitsPerSecond: 48000,
-					videoBitsPerSecond: 128000,
-					video: {
-						width: 320,
-						height: 240
-					},
-					canvas: {
-						width: 320,
-						height: 240
-					}
+					videoBitsPerSecond: 128000
 				});
 				recordingVideo.muted = true;
+				recordingVideo.controlls = false;
 				recordingVideo.src = null;
 				recordingVideo.srcObject = stream;
+				recordingVideo.play();
 			}
 
 			var oldAudio = $('.attachmentEditor_recordingContainer audio');
@@ -3628,6 +3622,7 @@ var AttachmentEditor = $n2.Class({
 			oldVideo[0].src = dataURL;
 			oldVideo[0].srcObject = null;
 			oldVideo[0].muted = false;
+			oldVideo[0].controlls = true;
 		} else {
 			$('<video>')
 				.attr('src', dataURL)
