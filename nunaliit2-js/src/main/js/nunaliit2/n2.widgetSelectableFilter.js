@@ -56,6 +56,10 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 
 	selectedChoicesSetEventName: null,
 
+	allSelectedChangeEventName: null,
+
+	allSelectedSetEventName: null,
+
 	availableChoicesChangeEventName: null,
 
 	availableChoices: null,
@@ -64,6 +68,8 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 	
 	selectedChoiceIdMap: null,
 	
+	allSelected: null,
+	
 	allChoicesLabel: null,
 	
 	noChoiceLabel: null,
@@ -71,6 +77,8 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 	suppressAllChoices: null,
 
 	suppressNoChoice: null,
+	
+	suppressedChoicesMap: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -82,6 +90,7 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 			,noChoiceLabel: null
 			,suppressAllChoices: false
 			,suppressNoChoice: false
+			,suppressChoices: undefined
 		},opts_);
 		
 		var _this = this;
@@ -97,6 +106,22 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 		this.availableChoices = [];
 		this.selectedChoices = [];
 		this.selectedChoiceIdMap = {};
+		this.allSelected = false;
+		this.suppressedChoicesMap = [];
+
+		if( opts.suppressChoices ){
+			if( $n2.isArray(opts.suppressChoices) ){
+				opts.suppressChoices.forEach(function(choice){
+					if( typeof choice === 'string' ){
+						_this.suppressedChoicesMap[choice] = true;
+					} else {
+						$n2.logError('SingleFilterSelectionWidget: suppressChoices must be an array of strings');
+					};
+				});
+			} else {
+				$n2.logError('SingleFilterSelectionWidget: suppressChoices must be an array');
+			};
+		};
 		
 		// Set up model listener
 		if( this.dispatchService ){
@@ -116,24 +141,35 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 				this.availableChoicesChangeEventName = paramInfo.changeEvent;
 
 				if( paramInfo.value ){
-					this.availableChoices = paramInfo.value;
+					this._setAvailableChoices(paramInfo.value);
 				};
 			};
 			
 			if( sourceModelInfo 
-			 && sourceModelInfo.parameters 
-			 && sourceModelInfo.parameters.selectedChoices ){
-				var paramInfo = sourceModelInfo.parameters.selectedChoices;
-				this.selectedChoicesChangeEventName = paramInfo.changeEvent;
-				this.selectedChoicesSetEventName = paramInfo.setEvent;
+			 && sourceModelInfo.parameters  ){
+				if( sourceModelInfo.parameters.selectedChoices ){
+					var paramInfo = sourceModelInfo.parameters.selectedChoices;
+					this.selectedChoicesChangeEventName = paramInfo.changeEvent;
+					this.selectedChoicesSetEventName = paramInfo.setEvent;
+	
+					if( paramInfo.value ){
+						this.selectedChoices = paramInfo.value;
+						
+						this.selectedChoiceIdMap = {};
+						this.selectedChoices.forEach(function(choiceId){
+							_this.selectedChoiceIdMap[choiceId] = true;
+						});
+					};
+				};
 
-				if( paramInfo.value ){
-					this.selectedChoices = paramInfo.value;
-					
-					this.selectedChoiceIdMap = {};
-					this.selectedChoices.forEach(function(choiceId){
-						_this.selectedChoiceIdMap[choiceId] = true;
-					});
+				if( sourceModelInfo.parameters.allSelected ){
+					var paramInfo = sourceModelInfo.parameters.allSelected;
+					this.allSelectedChangeEventName = paramInfo.changeEvent;
+					this.allSelectedSetEventName = paramInfo.setEvent;
+	
+					if( typeof paramInfo.value === 'boolean' ){
+						this.allSelected = paramInfo.value;
+					};
 				};
 			};
 			
@@ -144,9 +180,13 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 			if( this.availableChoicesChangeEventName ){
 				this.dispatchService.register(DH, this.availableChoicesChangeEventName, fn);
 			};
-			
+
 			if( this.selectedChoicesChangeEventName ){
 				this.dispatchService.register(DH, this.selectedChoicesChangeEventName, fn);
+			};
+
+			if( this.allSelectedChangeEventName ){
+				this.dispatchService.register(DH, this.allSelectedChangeEventName, fn);
 			};
 		};
 
@@ -245,18 +285,9 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 	_adjustSelectedItem: function(){
 		var _this = this;
 		
-		// Detect situation where all option is selected
-		var allChoices = true;
-		this.availableChoices.forEach(function(choice){
-			if( !_this.selectedChoiceIdMap[choice.id] ){
-				allChoices = false;
-			};
-		});
-		
 		// Select appropriate choice
 		var selectedChoiceId;
-		if( allChoices 
-		 && this.selectedChoices.length > 1 ){
+		if( this.allSelected  ){
 			if( !this.suppressAllChoices ){
 				selectedChoiceId = ALL_CHOICES;
 			};
@@ -298,14 +329,9 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 		var $selector = $elem.find('select');
 		var val = $selector.val();
 		if( ALL_CHOICES === val ){
-			var selectedChoiceIds = [];
-			this.availableChoices.forEach(function(choice){
-				selectedChoiceIds.push(choice.id);
-			});
-			
 			this.dispatchService.send(DH,{
-				type: this.selectedChoicesSetEventName
-				,value: selectedChoiceIds
+				type: this.allSelectedSetEventName
+				,value: true
 			});
 
 		} else if( NO_CHOICE === val ){
@@ -330,13 +356,29 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 		};
 	},
 	
+	_setAvailableChoices: function(choices){
+		var _this = this;
+
+		this.availableChoices = [];
+		
+		if( $n2.isArray(choices) ){
+			choices.forEach(function(choice){
+				if( _this.suppressedChoicesMap[choice.id] ){
+					// Do not keep this one
+				} else {
+					_this.availableChoices.push(choice);
+				};
+			});
+		};
+	},
+	
 	_handle: function(m, addr, dispatcher){
 		var _this = this;
 
 		if( this.availableChoicesChangeEventName === m.type ){
 			if( m.value ){
-				this.availableChoices = m.value;
-				
+				this._setAvailableChoices(m.value);
+
 				this._availableChoicesUpdated();
 			};
 			
@@ -348,6 +390,13 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 				this.selectedChoices.forEach(function(choiceId){
 					_this.selectedChoiceIdMap[choiceId] = true;
 				});
+				
+				this._adjustSelectedItem();
+			};
+
+		} else if( this.allSelectedChangeEventName === m.type ){
+			if( typeof m.value === 'boolean' ){
+				this.allSelected = m.value;
 				
 				this._adjustSelectedItem();
 			};
@@ -370,6 +419,10 @@ var MultiFilterSelectionWidget = $n2.Class('MultiFilterSelectionWidget',{
 
 	selectedChoicesSetEventName: null,
 
+	allSelectedChangeEventName: null,
+
+	allSelectedSetEventName: null,
+
 	availableChoicesChangeEventName: null,
 
 	availableChoices: null,
@@ -377,6 +430,8 @@ var MultiFilterSelectionWidget = $n2.Class('MultiFilterSelectionWidget',{
 	selectedChoices: null,
 	
 	selectedChoiceIdMap: null,
+	
+	allSelected: null,
 	
 	allChoicesLabel: null,
 	
@@ -399,6 +454,7 @@ var MultiFilterSelectionWidget = $n2.Class('MultiFilterSelectionWidget',{
 		this.availableChoices = [];
 		this.selectedChoices = [];
 		this.selectedChoiceIdMap = {};
+		this.allSelected = false;
 		
 		// Set up model listener
 		if( this.dispatchService ){
@@ -423,19 +479,30 @@ var MultiFilterSelectionWidget = $n2.Class('MultiFilterSelectionWidget',{
 			};
 			
 			if( sourceModelInfo 
-			 && sourceModelInfo.parameters 
-			 && sourceModelInfo.parameters.selectedChoices ){
-				var paramInfo = sourceModelInfo.parameters.selectedChoices;
-				this.selectedChoicesChangeEventName = paramInfo.changeEvent;
-				this.selectedChoicesSetEventName = paramInfo.setEvent;
+			 && sourceModelInfo.parameters ){
+				if( sourceModelInfo.parameters.selectedChoices ){
+					var paramInfo = sourceModelInfo.parameters.selectedChoices;
+					this.selectedChoicesChangeEventName = paramInfo.changeEvent;
+					this.selectedChoicesSetEventName = paramInfo.setEvent;
+	
+					if( paramInfo.value ){
+						this.selectedChoices = paramInfo.value;
+						
+						this.selectedChoiceIdMap = {};
+						this.selectedChoices.forEach(function(choiceId){
+							_this.selectedChoiceIdMap[choiceId] = true;
+						});
+					};
+				};
 
-				if( paramInfo.value ){
-					this.selectedChoices = paramInfo.value;
-					
-					this.selectedChoiceIdMap = {};
-					this.selectedChoices.forEach(function(choiceId){
-						_this.selectedChoiceIdMap[choiceId] = true;
-					});
+				if( sourceModelInfo.parameters.allSelected ){
+					var paramInfo = sourceModelInfo.parameters.allSelected;
+					this.allSelectedChangeEventName = paramInfo.changeEvent;
+					this.allSelectedSetEventName = paramInfo.setEvent;
+	
+					if( typeof paramInfo.value === 'boolean' ){
+						this.allSelected = paramInfo.value;
+					};
 				};
 			};
 			
@@ -446,9 +513,13 @@ var MultiFilterSelectionWidget = $n2.Class('MultiFilterSelectionWidget',{
 			if( this.availableChoicesChangeEventName ){
 				this.dispatchService.register(DH, this.availableChoicesChangeEventName, fn);
 			};
-			
+
 			if( this.selectedChoicesChangeEventName ){
 				this.dispatchService.register(DH, this.selectedChoicesChangeEventName, fn);
+			};
+
+			if( this.allSelectedChangeEventName ){
+				this.dispatchService.register(DH, this.allSelectedChangeEventName, fn);
 			};
 		};
 
@@ -531,14 +602,6 @@ var MultiFilterSelectionWidget = $n2.Class('MultiFilterSelectionWidget',{
 	_adjustSelectedItem: function(){
 		var _this = this;
 		
-		// Detect situation where all option is selected
-		var allChoices = true;
-		this.availableChoices.forEach(function(choice){
-			if( !_this.selectedChoiceIdMap[choice.id] ){
-				allChoices = false;
-			};
-		});
-
 		var $elem = this._getElem();
 		$elem.find('.n2widget_multiFilterSelection_option').each(function(){
 			var $option = $(this);
@@ -546,7 +609,7 @@ var MultiFilterSelectionWidget = $n2.Class('MultiFilterSelectionWidget',{
 			
 			var selected = false;
 			if( ALL_CHOICES === choiceId ){
-				if( allChoices ){
+				if( _this.allSelected ){
 					selected = true;
 				};
 			} else {
@@ -570,28 +633,20 @@ var MultiFilterSelectionWidget = $n2.Class('MultiFilterSelectionWidget',{
 		var _this = this;
 
 		if( ALL_CHOICES === choiceId ){
-			// Detect situation where all options are selected
-			var allChoices = true;
-			this.availableChoices.forEach(function(choice){
-				if( !_this.selectedChoiceIdMap[choice.id] ){
-					allChoices = false;
-				};
-			});
+			if( this.allSelected ){
+				// If already all selected, select none
+				this.dispatchService.send(DH,{
+					type: this.selectedChoicesSetEventName
+					,value: []
+				});
 
-			var selectedChoiceIds = [];
-			if( allChoices ){
-				// Turn off all selections
 			} else {
-				// Turn on all selections
-				this.availableChoices.forEach(function(choice){
-					selectedChoiceIds.push(choice.id);
+				// Select all
+				this.dispatchService.send(DH,{
+					type: this.allSelectedSetEventName
+					,value: true
 				});
 			};
-			
-			this.dispatchService.send(DH,{
-				type: this.selectedChoicesSetEventName
-				,value: selectedChoiceIds
-			});
 
 		} else {
 			var selectedChoiceIds = [];
@@ -634,6 +689,13 @@ var MultiFilterSelectionWidget = $n2.Class('MultiFilterSelectionWidget',{
 				this.selectedChoices.forEach(function(choiceId){
 					_this.selectedChoiceIdMap[choiceId] = true;
 				});
+				
+				this._adjustSelectedItem();
+			};
+
+		} else if( this.allSelectedChangeEventName === m.type ){
+			if( typeof m.value === 'boolean' ){
+				this.allSelected = m.value;
 				
 				this._adjustSelectedItem();
 			};

@@ -641,19 +641,18 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 	docInfosByDocId: undefined,
 	
 	selectedChoicesParameter: undefined,
+
+	allSelectedParameter: undefined,
 	
 	availableChoicesParameter: undefined,
 	
 	selectedChoiceIdMap: undefined,
+	
+	allSelected: undefined,
 
 	availableChoices: undefined,
 	
 	modelIsLoading: undefined,
-	
-	/**
-	 * Keeps track if a user has selected a choice, yet.
-	 */
-	receivedSelection: undefined,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -696,23 +695,35 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 		
 		this.docInfosByDocId = {};
 		this.selectedChoiceIdMap = {};
+		this.allSelected = true;
 		this.availableChoices = [];
 		this.modelIsLoading = false;
-		this.receivedSelection = false;
 
-		// Retrieve initial selection
+		// Compute initial selection
+		var initialSelectionComputed = false;
 		var initialSelection;
 		if( this.saveSelection ){
 			var localStorage = $n2.storage.getLocalStorage();
 			var jsonSelection = localStorage.getItem(this.saveSelectionName);
 			if( jsonSelection ){
-				initialSelection = JSON.parse(jsonSelection);
-				if( !$n2.isArray(initialSelection) ){
-					initialSelection = undefined;
+				var loadedSelection = JSON.parse(jsonSelection);
+				if( '__ALL__' === loadedSelection ){
+					// All was selected.
+					initialSelectionComputed = true;
+					this.allSelected = true;
+					initialSelection = [];
+				} else if( $n2.isArray(loadedSelection) ) {
+					initialSelectionComputed = true;
+					this.allSelected = false;
+					initialSelection = loadedSelection;
+				} else {
+					$n2.logError('Unexpected initial selection loaded',loadedSelection);
 				};
 			};
 		};
-		if( !initialSelection && $n2.isArray(opts.initialSelection) ){
+		if( !initialSelectionComputed && $n2.isArray(opts.initialSelection) ){
+			initialSelectionComputed = true;
+			this.allSelected = false;
 			initialSelection = [];
 			opts.initialSelection.forEach(function(choiceId){
 				if( typeof choiceId === 'string' ){
@@ -722,15 +733,22 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 				};
 			});
 		};
-		if( initialSelection ){
-			this.receivedSelection = true;
-			initialSelection.forEach(function(choiceId){
-				if( typeof choiceId === 'string' ){
-					_this.selectedChoiceIdMap[choiceId] = true;
-					_this.availableChoices.push(choiceId);
-				};
-			});
+		if( !initialSelectionComputed ){
+			// Default behaviour
+			initialSelectionComputed = true;
+			this.allSelected = true;
+			initialSelection = [];
 		};
+		// Update selection objects
+		initialSelection.forEach(function(choiceId){
+			if( typeof choiceId === 'string' ){
+				_this.selectedChoiceIdMap[choiceId] = true;
+				_this.availableChoices.push({
+					id: choiceId
+					,label: choiceId
+				});
+			};
+		});
 		
 		this.selectedChoicesParameter = new $n2.model.ModelParameter({
 			model: this
@@ -740,6 +758,17 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 			,label: _loc('Choices')
 			,setFn: this._setSelectedChoices
 			,getFn: this.getSelectedChoices
+			,dispatchService: this.dispatchService
+		});
+		
+		this.allSelectedParameter = new $n2.model.ModelParameter({
+			model: this
+			,modelId: this.modelId
+			,type: 'boolean'
+			,name: 'allSelected'
+			,label: _loc('All Selected')
+			,setFn: this._setAllSelected
+			,getFn: this.getAllSelected
 			,dispatchService: this.dispatchService
 		});
 		
@@ -788,17 +817,14 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 		return selectedChoices;
 	},
 
-	_setSelectedChoices: function(choiceIdArray, isInternalCall){
+	_setSelectedChoices: function(choiceIdArray){
 		var _this = this;
-		
-		if( !isInternalCall ){
-			this.receivedSelection = true;
-		};
 		
 		if( !$n2.isArray(choiceIdArray) ){
 			throw new Error('SelectableDocumentFilter._setSelectedChoices() should be an array of strings');
 		};
 		
+		this.allSelected = false;
 		this.selectedChoiceIdMap = {};
 		choiceIdArray.forEach(function(choiceId){
 			if( typeof choiceId !== 'string' ){
@@ -808,7 +834,7 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 		});
 
 		// Save to local storage
-		if( this.saveSelection && this.receivedSelection ){
+		if( this.saveSelection ){
 			var jsonSelection = JSON.stringify(choiceIdArray);
 			var localStorage = $n2.storage.getLocalStorage();
 			localStorage.setItem(this.saveSelectionName,jsonSelection);
@@ -816,6 +842,42 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 
 		this._filterChanged();
 		
+		this.allSelectedParameter.sendUpdate();
+		this.selectedChoicesParameter.sendUpdate();
+	},
+
+	getAllSelected: function(){
+		return this.allSelected;
+	},
+
+	_setAllSelected: function(flag){
+		var _this = this;
+		
+		if( typeof flag !== 'boolean' ){
+			throw new Error('SelectableDocumentFilter._setAllSelected() should be a boolean');
+		};
+		
+		this.allSelected = flag;
+		
+		if( this.allSelected ){
+			this.availableChoices.forEach(function(choice){
+				_this.selectedChoiceIdMap[choice.id] = true;
+			});
+		};
+		
+		// Save to local storage
+		if( this.saveSelection ){
+			var jsonSelection = JSON.stringify(choiceIdArray);
+			if( this.allSelected ){
+				jsonSelection = '__ALL__';
+			};
+			var localStorage = $n2.storage.getLocalStorage();
+			localStorage.setItem(this.saveSelectionName,jsonSelection);
+		};
+
+		this._filterChanged();
+		
+		this.allSelectedParameter.sendUpdate();
 		this.selectedChoicesParameter.sendUpdate();
 	},
 
@@ -829,6 +891,8 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 	},
 	
 	_updateAvailableChoices: function(availableChoices){
+		var _this = this;
+
 		if( !$n2.isArray(availableChoices) ){
 			throw new Error('SelectableDocumentFilter._updateAvailableChoices() should be an array of choices');
 		};
@@ -843,6 +907,19 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 		this.availableChoices = availableChoices;
 		
 		this.availableChoicesParameter.sendUpdate();
+		
+		// If selecting all, then as new available choices arrive,
+		// select them as well
+		if( this.allSelected ){
+			this.selectedChoiceIdMap = {};
+			this.availableChoices.forEach(function(choice){
+				_this.selectedChoiceIdMap[choice.id] = true;
+			});
+
+			this._filterChanged();
+
+			this.selectedChoicesParameter.sendUpdate();
+		};
 	},
 	
 	_handleSelectableDocumentFilterEvents: function(m, addr, dispatcher){
@@ -893,6 +970,7 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 	
 	_addModelInfoParameters: function(info){
 		info.parameters.selectedChoices = this.selectedChoicesParameter.getInfo();
+		info.parameters.allSelected = this.allSelectedParameter.getInfo();
 		info.parameters.availableChoices = this.availableChoicesParameter.getInfo();
 	},
 	
@@ -1016,17 +1094,6 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 		function receiveChoices(choices){
 			if( _this.currentChoiceGeneration === currentChoiceGeneration ){
 				_this._updateAvailableChoices(choices);
-
-				// By default, accepts ALL choices. Until a selection
-				// is performed, change the selected choices to be
-				// all possible choices.
-				if( !_this.receivedSelection ){
-					var selection = [];
-					choices.forEach(function(choice){
-						selection.push(choice.id);
-					});
-					_this._setSelectedChoices(selection,true);
-				};
 			};
 		};
 	},

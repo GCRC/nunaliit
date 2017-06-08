@@ -425,7 +425,7 @@ var SimultaneousFilters = $n2.Class('SimultaneousFilters',{
 			,sourceModelIds: allFilterIds
 		});
 
-		// For each filter, create an intersection of the other filters combined, and 
+		// For each filter, create a union of the other filters combined, and 
 		// an available parameter to represent it
 		for(var filterId in this.filterInfosByModelId){
 			var filterInfo = this.filterInfosByModelId[filterId];

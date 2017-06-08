@@ -642,6 +642,9 @@ Multi Filter Selection
 .n2widget_multiFilterSelection_position_hidden {
 	display: none;
 }
+.n2widget_multiFilterSelection_selected {
+	color: #00f;
+}
 
 /* 
 ==============================
