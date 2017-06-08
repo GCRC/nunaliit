@@ -3305,7 +3305,7 @@ var AttachmentEditor = $n2.Class({
             .addClass('attachmentEditor_recordStatus')
             .appendTo(recordInputDiv);
 
-					if(DetectRTC.hasWebcam) {
+					if(DetectRTC.hasWebcam && !DetectRTC.browser.isEdge) {
 						divider = $('<div>')
 							.addClass('attachmentEditor_uploadSectionDivider')
 							.appendTo($form);
@@ -3421,15 +3421,23 @@ var AttachmentEditor = $n2.Class({
     }
 
     if(event.target.files.length > 0) {
-      _this.audioRecordingButton.prop('disabled', true);
-      _this.audioRecordingButton.prop('title', _loc('Can not record when upload file chosen'));
-			_this.videoRecordingButton.prop('disabled', true);
-			_this.videoRecordingButton.prop('title', _loc('Can not record when upload file chosen'));
+			if(typeof(_this.audioRecordingButton) !== 'undefined') {
+				_this.audioRecordingButton.prop('disabled', true);
+				_this.audioRecordingButton.prop('title', _loc('Can not record when upload file chosen'));
+			}
+			if(typeof(_this.videoRecordingButton) !== 'undefined') {
+				_this.videoRecordingButton.prop('disabled', true);
+				_this.videoRecordingButton.prop('title', _loc('Can not record when upload file chosen'));
+			}
     } else {
-      _this.audioRecordingButton.prop('disabled', false);
-      _this.audioRecordingButton.prop('title', '');
-			_this.videoRecordingButton.prop('disabled', false);
-			_this.videoRecordingButton.prop('title', '');
+			if(typeof(_this.audioRecordingButton) !== 'undefined') {
+				_this.audioRecordingButton.prop('disabled', false);
+				_this.audioRecordingButton.prop('title', '');
+			}
+			if(typeof(_this.videoRecordingButton) !== 'undefined') {
+				_this.videoRecordingButton.prop('disabled', false);
+				_this.videoRecordingButton.prop('title', '');
+			}
     }
   },
 
@@ -3495,8 +3503,10 @@ var AttachmentEditor = $n2.Class({
 
 			if(recordType === 'audio') {
 				_this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_micButton');
-				_this.videoRecordingButton.prop('disabled', true);
-				_this.videoRecordingButton.prop('title', _loc('Can not record when upload file chosen'));
+				if(typeof(_this.videoRecordingButton) !== 'undefined') {
+					_this.videoRecordingButton.prop('disabled', true);
+					_this.videoRecordingButton.prop('title', _loc('Can not record when upload file chosen'));
+				}
 			} else {
 				_this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_videoButton');
 				_this.audioRecordingButton.prop('disabled', true);
