@@ -2946,14 +2946,14 @@ var AttachmentEditor = $n2.Class({
 			var audio = $form.find('audio');
 			if(audio.length > 0) {
 				mediaFile = mediaTagToFile(audio, 'audio/mp3', '.mp3');
-				filename = mediaFile.name;
+				filename = 'audio.mp3';
 			}
 		}
 		if(!filename) {
 			var video = $form.find('video');
 			if(video.length > 0) {
 				mediaFile = mediaTagToFile(video, 'video/mp4', '.webm');
-				filename = mediaFile.name;
+        filename = 'video.webm';
 			}
 		}
 
@@ -2985,10 +2985,13 @@ var AttachmentEditor = $n2.Class({
 
 		function mediaTagToFile(element, mediaType, extension) {
 			var blob = dataURLtoBlob(element.attr('src'), mediaType);
-			filename = (Math.random() * new Date().getTime()).toString(36).replace( /\./g , '') + extension;
-			return new File([blob], filename, {
-				type: mediaType
-			});
+			//Check that File API Constructor is supported by this browser
+			if(typeof File === 'function' && File.length >= 2) {
+				filename = (Math.random() * new Date().getTime()).toString(36).replace( /\./g , '') + extension;
+				return new File([blob], filename, { type: mediaType });
+			} else {
+				return new Blob([blob], {type: mediaType});
+			}
 		}
 
 		function dataURLtoBlob(dataURL, mediaType) {
