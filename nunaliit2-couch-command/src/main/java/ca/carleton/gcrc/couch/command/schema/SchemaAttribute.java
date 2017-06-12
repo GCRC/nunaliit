@@ -161,6 +161,26 @@ public class SchemaAttribute {
 			String placeholder = jsonAttr.optString("placeholder",null);
 			attribute.setPlaceholder(placeholder);
 		}
+
+		// maxAudioRecordingLengthSeconds
+		{
+			int maxAudioRecordingLengthSeconds = jsonAttr.optInt("maxAudioRecordingLengthSeconds",300);
+			attribute.setMaxAudioRecordingLengthSeconds(maxAudioRecordingLengthSeconds);
+		}
+
+		// maxVideoRecordingLengthSeconds
+		{
+			int maxVideoRecordingLengthSeconds = jsonAttr.optInt("maxVideoRecordingLengthSeconds",300);
+			attribute.setMaxVideoRecordingLengthSeconds(maxVideoRecordingLengthSeconds);
+		}
+
+		// recordVideoSize
+		{
+			String recordVideoSize = jsonAttr.optString("recordVideoSize");
+			if(null != recordVideoSize && recordVideoSize.matches("\\d+x\\d+")) {
+				attribute.setRecordVideoSize(recordVideoSize);
+			}
+		}
 		
 		return attribute;
 	}
@@ -183,6 +203,9 @@ public class SchemaAttribute {
 	private boolean wikiTransform;
 	private Integer maxHeight = null;
 	private boolean uploadOptional = false;
+	private Integer maxAudioRecordingLengthSeconds = null;
+	private Integer maxVideoRecordingLengthSeconds = null;
+	private String recordVideoSize = null;
 	private String placeholder = null;
 
 	public SchemaAttribute(String type){
@@ -346,6 +369,24 @@ public class SchemaAttribute {
 		this.placeholder = placeholder;
 	}
 
+	public Integer getMaxAudioRecordingLengthSeconds() {
+		return maxAudioRecordingLengthSeconds;
+	}
+
+	public void setMaxAudioRecordingLengthSeconds(Integer maxAudioRecordingLengthSeconds) {
+		this.maxAudioRecordingLengthSeconds = maxAudioRecordingLengthSeconds;
+	}
+
+	public Integer getMaxVideoRecordingLengthSeconds() { return maxVideoRecordingLengthSeconds; }
+
+	public void setMaxVideoRecordingLengthSeconds(Integer maxVideoRecordingLengthSeconds) {
+		this.maxVideoRecordingLengthSeconds = maxVideoRecordingLengthSeconds;
+	}
+
+	public String getRecordVideoSize() { return recordVideoSize; }
+
+	public void setRecordVideoSize(String recordVideoSize) { this.recordVideoSize = recordVideoSize; }
+
 	public JSONObject toJson() throws Exception {
 		JSONObject jsonAttr = new JSONObject();
 		
@@ -366,6 +407,9 @@ public class SchemaAttribute {
 		if( null != maxHeight ) jsonAttr.put("maxHeight", maxHeight.intValue());
 		if( uploadOptional ) jsonAttr.put("uploadOptional", true);
 		if( null != placeholder ) jsonAttr.put("placeholder", placeholder);
+		if( null != maxAudioRecordingLengthSeconds ) jsonAttr.put("maxAudioRecordingLengthSeconds", maxAudioRecordingLengthSeconds.intValue());
+		if( null != maxVideoRecordingLengthSeconds ) jsonAttr.put("maxVideoRecordingLengthSeconds", maxVideoRecordingLengthSeconds.intValue());
+		if( null != recordVideoSize ) jsonAttr.put("recordVideoSize", recordVideoSize);
 
 		if( options.size() > 0 ){
 			JSONArray jsonOptions = new JSONArray();
@@ -450,6 +494,16 @@ public class SchemaAttribute {
 				attachments.put("files", new JSONObject());
 				doc.put("nunaliit_attachments", attachments);
 			}
+            if( null != maxAudioRecordingLengthSeconds && maxAudioRecordingLengthSeconds.intValue() > 0 ){
+                doc.put("_maxAudioRecordingLengthSeconds", maxAudioRecordingLengthSeconds);
+            }
+			if( null != maxVideoRecordingLengthSeconds && maxVideoRecordingLengthSeconds.intValue() > 0 ){
+				doc.put("_maxVideoRecordingLengthSeconds", maxVideoRecordingLengthSeconds);
+			}
+			if( null != recordVideoSize ){
+				doc.put("_recordVideoSize", recordVideoSize);
+			}
+
 			JSONObject files = attachments.getJSONObject("files");
 			JSONObject media = files.optJSONObject("media");
 			if( null == media ){
@@ -460,7 +514,7 @@ public class SchemaAttribute {
 				if( isUploadOptional() ){
 					media.put("_compulsory", false);
 				}
-				
+
 				files.put("media", media);
 			}
 

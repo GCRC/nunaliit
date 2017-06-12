@@ -2579,6 +2579,12 @@ var AttachmentEditor = $n2.Class({
 	recorder: null,
 
 	recordingInterval: null,
+
+  maxAudioRecordingLengthSeconds: null,
+
+	maxVideoRecordingLengthSeconds: null,
+
+	recordVideoSize: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -2600,12 +2606,31 @@ var AttachmentEditor = $n2.Class({
 		
 		this.creationAttachmentNames = [];
 		this.compulsoryAttachmentNames = [];
+
+    this.maxAudioRecordingLengthSeconds = 300;
+		this.maxVideoRecordingLengthSeconds = 300;
+		this.recordVideoSize = {width: 640, height: 480};
 		
 		var $elem = $(opts.elem);
 		$elem.addClass('attachmentEditor');
 
 		this.elemId = $n2.utils.getElementIdentifier( $elem );
-		
+
+		//load configuration
+		if( this.doc
+			&& !this.doc._rev) {
+			if(typeof this.doc._maxAudioRecordingLengthSeconds !== 'undefined') {
+				this.maxAudioRecordingLengthSeconds = this.doc._maxAudioRecordingLengthSeconds;
+			}
+			if(typeof this.doc._maxVideoRecordingLengthSeconds !== 'undefined') {
+				this.maxVideoRecordingLengthSeconds = this.doc._maxVideoRecordingLengthSeconds;
+			}
+			if(typeof this.doc._recordVideoSize !== 'undefined') {
+				var videoSizeParts = this.doc._recordVideoSize.split('x');
+				this.recordVideoSize = {width: videoSizeParts[0], height: videoSizeParts[1]};
+			}
+		}
+
 		// When a document is first created, if attachments are already present,
 		// this is because they were created from schema.
 		var compulsory = true;
@@ -2615,7 +2640,7 @@ var AttachmentEditor = $n2.Class({
 			if( typeof this.doc.nunaliit_attachments._compulsory !== 'undefined' ){
 				compulsory = this.doc.nunaliit_attachments._compulsory;
 			};
-			
+
 			if( this.doc.nunaliit_attachments.files ){
 				for(var attName in this.doc.nunaliit_attachments.files){
 					var att = this.doc.nunaliit_attachments.files[attName];
@@ -3516,14 +3541,14 @@ var AttachmentEditor = $n2.Class({
 				_this.audioRecordingButton.prop('title', _loc('Can not record when upload file chosen'));
 			}
       $($('.attachmentEditor_creationForm input')[0]).prop('disabled', true);
-      _this._recordingTimer();
+      _this._recordingTimer(recordType);
 		});
 	},
 
-	_recordingTimer: function() {
+	_recordingTimer: function(recordType) {
 		var _this = this;
 		var seconds_elapsed = 0;
-		var max_time = 300;
+		var max_time = recordType === 'audio' ? _this.maxAudioRecordingLengthSeconds : _this.maxVideoRecordingLengthSeconds;
     var max_time_str = _this._secondsToTimeString(max_time);
 
 		_this.recordingInterval = setInterval(function() {
@@ -3555,6 +3580,7 @@ var AttachmentEditor = $n2.Class({
 	},
 
 	_captureUserMedia: function(type, success_callback) {
+		var _this = this;
 		var session = {
 			audio: true
 		};
@@ -3563,8 +3589,8 @@ var AttachmentEditor = $n2.Class({
 
 			if (DetectRTC.browser.name === 'Firefox' || (DetectRTC.browser.name === 'Chrome' && DetectRTC.browser.version >= 60)) {
 				videoHints = {
-					width: 320,
-					height: 240,
+					width: _this.recordVideoSize.width,
+					height: _this.recordVideoSize.height,
 					frameRate: 30
 				};
 			}
