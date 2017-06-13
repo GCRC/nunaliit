@@ -46,9 +46,54 @@ form.attachmentEditor_creationForm {
 	padding-left: 3px;
 }
 
-.attachmentEditor_uploadSection {
-	margin: 15px 0;
+.attachmentEditor_uploadTabs {
+	float: left;
+	border: 1px solid #ddd;
+	width: 29%;
+	margin-bottom: 15px;
+}
+
+.attachmentEditor_uploadTabs button {
+	display: block;
+	color: black;
+	padding: 6px 6px;
+	width: 100%;
+	border: 1px solid #ddd;
+	outline: none;
+	text-align: left;
+	cursor: pointer;
+	transition: 0.3s;
+	background-color: #f5f5f5;
+	font-weight: bold;
+	font-size: .9em;
+	font-family: helvetica, sans-serif;
+}
+
+.attachmentEditor_uploadTabs button:disabled {
+	color: #888;
+}
+
+.attachmentEditor_uploadTabs button:hover {
+	background-color: #ddd;
+}
+
+.attachmentEditor_uploadTabs button.active {
+	background-color: #ccc;
+	color: black;
+}
+
+.attachmentEditor_uploadTabContent {
+	display: none;
+	padding-left: 2%;
+	margin-top: 10px;
 	overflow: auto;
+}
+
+.attachmentEditor_clearfix {
+	display: block;
+	height: 0;
+	clear: both;
+	visibility: hidden;
 }
 
 .attachmentEditor_sectionLabel {
@@ -130,41 +175,6 @@ form.attachmentEditor_creationForm {
 
 .attachmentEditor_recordingContainer > audio {
   padding-left: 25px;
-}
-
-.attachmentEditor_uploadSectionDivider {
-	display: block;
-	overflow: hidden;
-	white-space: nowrap;
-	width: 50%;
-	clear: both;
-	margin-left: 10%;
-	text-align: center;
-}
-
-.attachmentEditor_uploadSectionDivider > span {
-	position: relative;
-	display: inline-block;
-}
-
-.attachmentEditor_uploadSectionDivider > span:before,
-.attachmentEditor_uploadSectionDivider > span:after {
-	content: "";
-	position: absolute;
-	top: 50%;
-	width: 9999px;
-	height: 1px;
-	background: black;
-}
-
-.attachmentEditor_uploadSectionDivider > span:before {
-	right: 100%;
-	margin-right: 15px;
-}
-
-.attachmentEditor_uploadSectionDivider > span:after {
-	left: 100%;
-	margin-left: 15px;
 }
 
 /* Related Doc */
