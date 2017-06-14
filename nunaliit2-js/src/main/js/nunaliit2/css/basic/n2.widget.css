@@ -391,6 +391,33 @@ CreateDocument widget
 
 /* 
 ==============================
+Button widget 
+==============================
+*/
+.n2widget_button {
+    margin: 0px 8px;
+    padding: 11px 16px;
+    border-radius: 2px;
+    background-color: #777777;
+    font-size: 1em;
+    line-height: 100%;
+}
+
+.n2widget_button:-webkit-any-link {
+	text-decoration: none;
+}
+
+.n2widget_button:hover {
+	background-color: #3465a4;
+	transition: 0.3s;
+}
+
+.n2widget_button span { 
+	color: #ffffff;
+}
+
+/* 
+==============================
 Export Widget 
 ==============================
 */
