@@ -117,32 +117,39 @@ var SetFilterSelectionAction = $n2.Class('SetFilterSelectionAction', Action, {
 
 //--------------------------------------------------------------------------
 function createActionFromDefinition(dispatchService, definition){
+	
+	if( typeof definition != 'object' ){
+		throw new Error('Unable to create an instance of Action since definition is not provided');
+	};
+	
+	// Legacy actionType => type
+	if( typeof definition.actionType === 'string' 
+	 && typeof definition.type !== 'string' ){
+		definition.type = definition.actionType;
+	};
+	
+	// Create instance from definition
 	var m = {
-		type: 'configurationGetCurrentSettings'
-		,configuration: undefined
+		type: 'instanceCreate'
+		,instanceConfiguration: definition
+		,instance: undefined
 	};
 	dispatchService.synchronousCall(DH,m);
-	var config = m.configuration;
+	var instance = m.instance;
 	
-	if( 'setFilterSelection' === definition.actionType ){
-		var options = {};
-		
-		for(var key in definition){
-			var value = definition[key];
-			options[key] = value;
-		};
-		
-		if( config ){
-			if( config.directory ){
-				options.dispatchService = config.directory.dispatchService;
-			};
-		};
-		
-        return new SetFilterSelectionAction(options);
-		
-	} else {
-		throw new Error('Unknown action definition type: '+definition.actionType);
+	if( !instance ){
+		throw new Error('Unable to create an instance of type: '+definition.type);
 	};
+	
+	if( typeof instance != 'object' ){
+		throw new Error('Instance of type: '+definition.type+' is not an object');
+	};
+	
+	if( typeof instance.execute != 'function' ){
+		throw new Error('Instance of type: '+definition.type+' must implement execute() method');
+	};
+	
+    return instance;
 };
 
 //--------------------------------------------------------------------------
@@ -289,8 +296,49 @@ function HandleUtilityCreateRequests(m, addr, dispatcher){
 };
 
 //--------------------------------------------------------------------------
+function getCurrentConfiguration(dispatcher){
+	var config = undefined;
+	
+	if( dispatcher ){
+		var m = {
+			type: 'configurationGetCurrentSettings'
+		};
+		dispatcher.synchronousCall(DH,m);
+		config = m.configuration;
+	};
+
+	return config;
+};
+
+//--------------------------------------------------------------------------
+function handleInstanceCreate(m, addr, dispatcher){
+	if( 'setFilterSelection' === m.instanceConfiguration.type ){
+		var config = getCurrentConfiguration(dispatcher);
+		
+		var options = {};
+		
+		if( typeof m.instanceConfiguration === 'object' ){
+			for(var key in m.instanceConfiguration){
+				var value = m.instanceConfiguration[key];
+				options[key] = value;
+			};
+		};
+		
+		
+		if( config ){
+			if( config.directory ){
+				options.dispatchService = config.directory.dispatchService;
+			};
+		};
+		
+		m.instance = new SetFilterSelectionAction(options);
+	};
+};
+
+//--------------------------------------------------------------------------
 $n2.utilitiesModel = {
 	HandleUtilityCreateRequests: HandleUtilityCreateRequests
+	,handleInstanceCreate: handleInstanceCreate
 	,FilterMonitor: FilterMonitor
 };
 

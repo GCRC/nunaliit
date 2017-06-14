@@ -77,6 +77,11 @@ var Service = $n2.Class({
 			 && typeof $n2.mapInitialBounds.handleInstanceCreate === 'function' ){
 				$n2.mapInitialBounds.handleInstanceCreate(m, addr, dispatcher);
 			};
+			
+			if( $n2.utilitiesModel 
+			 && typeof $n2.utilitiesModel.handleInstanceCreate === 'function' ){
+				$n2.utilitiesModel.handleInstanceCreate(m, addr, dispatcher);
+			};
 		};
 	}
 });
