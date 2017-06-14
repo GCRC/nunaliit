@@ -617,6 +617,88 @@ function BuildDocumentSelectorWidget(m){
 };
 
 //--------------------------------------------------------------------------
+var ButtonWidget = $n2.Class({
+	
+	dispatchService: null,
+	containerId: null,
+	elemId: null,
+	buttonLabel: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			containerId: null
+			,dispatchService: null
+			,buttonLabel: null
+		},opts_);
+
+		this.containerId = opts.containerId;
+		this.dispatchService = opts.dispatchService;
+		this.buttonLabel = opts.buttonLabel;
+
+		if( !this.containerId ){
+			throw new Error('containerId must be specified');
+		};
+
+		if ( !this.buttonLabel ){
+			this.buttonLabel = "Button";
+		};
+
+		this._display();
+	},
+	
+	_display: function(){
+		var _this = this;
+
+		this.elemId = $n2.getUniqueId();
+
+		var containerId = this.containerId;
+
+		var $button = $('<a>')
+			.attr('id',this.elemId)
+			.attr('href', '#')
+			.addClass('n2widget_button')
+			.appendTo( $('#'+containerId) )
+			.click(function(){
+				_this._buttonClicked();
+				return false;
+			});
+
+		$('<span>')
+			.text( _loc(this.buttonLabel) )
+			.appendTo($button);
+	},
+	
+	_buttonClicked: function(){
+		var _this = this;
+	}
+});
+
+//--------------------------------------------------------------------------
+function BuildButtonWidget(m){
+	var widgetOptions = m.widgetOptions;
+	var containerId = m.containerId;
+	var config = m.config;
+	
+	var options = {};
+
+	if( widgetOptions ){
+		for(var key in widgetOptions){
+			var value = widgetOptions[key];
+			options[key] = value;
+		};
+	};
+
+	options.containerId = containerId;
+
+	if( config && config.directory ){
+		options.dispatchService = config.directory.dispatchService;
+		options.authService = config.directory.authService;
+	};
+	
+	new ButtonWidget(options);
+};
+
+//--------------------------------------------------------------------------
 var Service = $n2.Class({
 	
 	config: null,
@@ -717,6 +799,9 @@ var Service = $n2.Class({
 			} else if( m.widgetType === 'documentSelector' ){
 				m.isAvailable = true;
 
+			} else if( m.widgetType === 'button' ){
+				m.isAvailable = true;
+
 			} else {
 				if( $n2.couchDbPerspective 
 				 && $n2.couchDbPerspective.HandleWidgetAvailableRequests ){
@@ -803,6 +888,9 @@ var Service = $n2.Class({
 
 			} else if( m.widgetType === 'documentSelector' ){
 				BuildDocumentSelectorWidget(m);
+
+			} else if( m.widgetType === 'button' ){
+				BuildButtonWidget(m);
 
 			} else {
 				if( $n2.couchDbPerspective 
@@ -893,6 +981,7 @@ $n2.widgetBasic = {
 	Service: Service
 	,CreateDocumentWidget: CreateDocumentWidget
 	,CreateDocumentFromSchemaWidget: CreateDocumentFromSchemaWidget
+	,ButtonWidget: ButtonWidget
 };
 
 })(jQuery,nunaliit2);
