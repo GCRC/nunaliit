@@ -59,33 +59,59 @@ var SetFilterSelectionAction = $n2.Class('SetFilterSelectionAction', Action, {
 	modelId: null,
 
 	selection: null,
+	
+	selectAll: null,
 
 	selectedChoicesSetEventName: null,
+
+	allSelectedSetEventName: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: undefined
 			,modelId: undefined
 			,selection: undefined
+			,selectAll: undefined
 		},opts_);
 		
 		this.dispatchService = opts.dispatchService;
 		this.modelId = opts.modelId;
 		this.selection = opts.selection;
+		this.selectAll = opts.selectAll;
 
-		if( ! $n2.isArray(this.selection) ){
-			throw new Error('selection must be an array of strings');
-		};
-		this.selection.forEach(function(sel){
-			if( typeof sel !== 'string' ){
-				throw new Error('selection must be an array of strings');
-			};
-		});
-
+		// Check modelId parameter
 		if( typeof this.modelId !== 'string' ){
 			throw new Error('modelId must be a string');
 		};
 
+		// Check selection parameter
+		if( typeof this.selection === 'undefined' ){
+			// OK
+		} else if( $n2.isArray(this.selection) ){
+			// If array is specified, it must be an array of strings
+			this.selection.forEach(function(sel){
+				if( typeof sel !== 'string' ){
+					throw new Error('If parameter "selection" is specified, then it must be an array of strings');
+				};
+			});
+		} else {
+			throw new Error('If parameter "selection" is specified, then it must be an array of strings');
+		};
+		
+		// Check selectAll parameter
+		if( typeof this.selectAll === 'undefined' ){
+			// OK
+		} else if( typeof this.selectAll === 'boolean' ){
+			// OK
+		} else {
+			throw new Error('If parameter "selectAll" is specified, it must be a boolean');
+		};
+
+		// Verify logic
+		if( !this.selectAll && !this.selection ){
+			throw new Error('At least one of the parameters "selectAll" or "selection" must be specified.');
+		};
+		
 		// Get information from model
 		if( this.dispatchService ){
 			// Get model info
@@ -103,15 +129,28 @@ var SetFilterSelectionAction = $n2.Class('SetFilterSelectionAction', Action, {
 					var paramInfo = sourceModelInfo.parameters.selectedChoices;
 					this.selectedChoicesSetEventName = paramInfo.setEvent;
 				};
+
+				if( sourceModelInfo.parameters.allSelected ){
+					var paramInfo = sourceModelInfo.parameters.allSelected;
+					this.allSelectedSetEventName = paramInfo.setEvent;
+				};
 			};
 		};
 	},
 	
 	execute: function(){
-		this.dispatchService.send(DH, {
-			type: this.selectedChoicesSetEventName
-			,value: this.selection
-		});
+		if( this.selectAll ){
+			this.dispatchService.send(DH, {
+				type: this.allSelectedSetEventName
+				,value: true
+			});
+			
+		} else if( this.selection ) {
+			this.dispatchService.send(DH, {
+				type: this.selectedChoicesSetEventName
+				,value: this.selection
+			});
+		};
 	}
 });
 
