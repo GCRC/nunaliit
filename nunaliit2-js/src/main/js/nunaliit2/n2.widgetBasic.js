@@ -37,7 +37,38 @@ var
  _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); }
  ,DH = 'n2.widgetService'
  ;
- 
+
+//--------------------------------------------------------------------------
+function createActionFromDefinition(dispatchService, definition){
+	 	
+	if( typeof definition != 'object' ){
+		throw new Error('Unable to create an instance of Action since definition is not provided');
+	};
+	
+	// Create instance from definition
+	var m = {
+		type: 'instanceCreate'
+		,instanceConfiguration: definition
+		,instance: undefined
+	};
+	dispatchService.synchronousCall(DH,m);
+	var instance = m.instance;
+	
+	if( !instance ){
+		throw new Error('Unable to create an instance of type: '+definition.type);
+	};
+	
+	if( typeof instance != 'object' ){
+		throw new Error('Instance of type: '+definition.type+' is not an object');
+	};
+	
+	if( typeof instance.execute != 'function' ){
+		throw new Error('Instance of type: '+definition.type+' must implement execute() method');
+	};
+	 	
+	return instance;
+};
+
 //--------------------------------------------------------------------------
 var CreateDocumentWidget = $n2.Class({
 	
@@ -617,23 +648,30 @@ function BuildDocumentSelectorWidget(m){
 };
 
 //--------------------------------------------------------------------------
-var ButtonWidget = $n2.Class({
+var ButtonWidget = $n2.Class('ButtonWidget',{
 	
 	dispatchService: null,
 	containerId: null,
 	elemId: null,
 	buttonLabel: null,
+	actions: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			containerId: null
 			,dispatchService: null
 			,buttonLabel: null
+			,action: undefined
+			,actions: undefined
 		},opts_);
+		
+		var _this = this;
 
 		this.containerId = opts.containerId;
 		this.dispatchService = opts.dispatchService;
 		this.buttonLabel = opts.buttonLabel;
+		
+		this.actions = [];
 
 		if( !this.containerId ){
 			throw new Error('containerId must be specified');
@@ -642,8 +680,30 @@ var ButtonWidget = $n2.Class({
 		if ( !this.buttonLabel ){
 			this.buttonLabel = "Button";
 		};
+		
+		if( typeof opts.action === 'object' ){
+			var action = createActionFromDefinition(this.dispatchService, opts.action);
+			this.actions.push(action);
+		};
+
+		if( typeof opts.actions === 'undefined' ){
+			// OK
+		} else if( $n2.isArray(opts.actions) ) {
+			opts.actions.forEach(function(actionDef){
+				if( typeof actionDef === 'object' ){
+					var action = createActionFromDefinition(_this.dispatchService, actionDef);
+					_this.actions.push(action);
+				} else {
+					throw new Error('If parameter "actions" is specified, it must be an array of action definitions.');
+				};
+			});
+		} else {
+			throw new Error('If parameter "actions" is specified, it must be an array of action definitions.');
+		};
 
 		this._display();
+		
+		$n2.log(this._classname,this);
 	},
 	
 	_display: function(){
@@ -669,7 +729,9 @@ var ButtonWidget = $n2.Class({
 	},
 	
 	_buttonClicked: function(){
-		var _this = this;
+		this.actions.forEach(function(action){
+			action.execute();
+		});
 	}
 });
 
@@ -692,7 +754,6 @@ function BuildButtonWidget(m){
 
 	if( config && config.directory ){
 		options.dispatchService = config.directory.dispatchService;
-		options.authService = config.directory.authService;
 	};
 	
 	new ButtonWidget(options);
