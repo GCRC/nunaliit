@@ -3340,6 +3340,7 @@ var AttachmentEditor = $n2.Class({
             .appendTo(recordInputDiv);
 
 					if(DetectRTC.hasWebcam && !DetectRTC.browser.isEdge) {
+					  $form.addClass('attachmentEditor_creationFormWithVideo');
             $('<button>').text(_loc('Record Video'))
               .click(function(event) {
                 _this._clickTab(event, 'attachmentEditor_uploadTabVideo');
@@ -3450,28 +3451,6 @@ var AttachmentEditor = $n2.Class({
     if( typeof RecordRTC === 'undefined' && typeof lamejs === 'undefined') {
       return;
     }
-
-    if(event.target.files.length > 0) {
-			if(typeof(_this.audioRecordingButton) !== 'undefined') {
-				_this.audioRecordingButton.prop('disabled', true);
-				_this.audioRecordingButton.prop('title', _loc('Can not record when upload file chosen'));
-			}
-			if(typeof(_this.videoRecordingButton) !== 'undefined') {
-				_this.videoRecordingButton.prop('disabled', true);
-				_this.videoRecordingButton.prop('title', _loc('Can not record when upload file chosen'));
-			}
-			$('.attachmentEditor_uploadTabs button').prop('disabled', true)
-    } else {
-			if(typeof(_this.audioRecordingButton) !== 'undefined') {
-				_this.audioRecordingButton.prop('disabled', false);
-				_this.audioRecordingButton.prop('title', '');
-			}
-			if(typeof(_this.videoRecordingButton) !== 'undefined') {
-				_this.videoRecordingButton.prop('disabled', false);
-				_this.videoRecordingButton.prop('title', '');
-			}
-			$('.attachmentEditor_uploadTabs button').prop('disabled', false)
-    }
   },
 
 	_clickTab: function(event, type) {
@@ -3480,7 +3459,23 @@ var AttachmentEditor = $n2.Class({
 
 		$('.attachmentEditor_uploadTabContent').hide();
 		$('.attachmentEditor_uploadTabs button').removeClass('active');
-		event.currentTarget.className += " active";
+    if(_this.recordingInterval !== null) {
+      _this._cancelRecording();
+    }
+    if(typeof _this.recordStatus !== 'undefined') {
+			_this.recordStatus.text('');
+		}
+    var recordingVideos = $('.attachmentEditor_videoRecordingContainer video');
+    if(recordingVideos.length > 0) {
+      recordingVideos[0].remove();
+    }
+    var recordingAudio = $('.attachmentEditor_recordingContainer audio');
+    if(recordingAudio.length > 0) {
+      recordingAudio[0].remove();
+    }
+    $($('.attachmentEditor_creationForm input')[0]).val("");
+
+    event.currentTarget.className += " active";
 		$('#' + type).show();
 	},
 
@@ -3546,17 +3541,9 @@ var AttachmentEditor = $n2.Class({
 
 			if(recordType === 'audio') {
 				_this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_micButton');
-				if(typeof(_this.videoRecordingButton) !== 'undefined') {
-					_this.videoRecordingButton.prop('disabled', true);
-					_this.videoRecordingButton.prop('title', _loc('Can not record when upload file chosen'));
-				}
 			} else {
 				_this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_videoButton');
-				_this.audioRecordingButton.prop('disabled', true);
-				_this.audioRecordingButton.prop('title', _loc('Can not record when upload file chosen'));
 			}
-      $($('.attachmentEditor_creationForm input')[0]).prop('disabled', true);
-			$('.attachmentEditor_uploadTabs button').prop('disabled', true);
       _this._recordingTimer(recordType);
 		});
 	},
@@ -3618,6 +3605,13 @@ var AttachmentEditor = $n2.Class({
 			$n2.logError(error);
 		});
 	},
+
+  _cancelRecording: function() {
+    var _this = this;
+    _this._stopRecordingTimer();
+    _this.recorder.stopRecording();
+    _this.recordStatus.text('');
+  },
 
 	_stopRecording: function(recordType) {
 		var _this = this;
