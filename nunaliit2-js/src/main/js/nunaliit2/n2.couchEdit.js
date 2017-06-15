@@ -3282,7 +3282,7 @@ var AttachmentEditor = $n2.Class({
 			.text(_loc('File Upload'))
       .appendTo($tabList)
       .click(function(event) {
-        _this._clickTab(event, 'attachmentEditor_uploadTabFile');
+        _this._clickTab(event, 'file');
       });
 
 		var $chooseFileDiv = $('<div>')
@@ -3314,7 +3314,7 @@ var AttachmentEditor = $n2.Class({
         if(DetectRTC.hasMicrophone) {
           $('<button>').text(_loc('Record Audio'))
             .click(function(event) {
-              _this._clickTab(event, 'attachmentEditor_uploadTabAudio');
+              _this._clickTab(event, 'audio');
             })
 						.appendTo($tabList);
 
@@ -3343,7 +3343,7 @@ var AttachmentEditor = $n2.Class({
 					  $form.addClass('attachmentEditor_creationFormWithVideo');
             $('<button>').text(_loc('Record Video'))
               .click(function(event) {
-                _this._clickTab(event, 'attachmentEditor_uploadTabVideo');
+                _this._clickTab(event, 'video');
               })
 							.appendTo($tabList);
 
@@ -3456,6 +3456,7 @@ var AttachmentEditor = $n2.Class({
 	_clickTab: function(event, type) {
   	event.preventDefault();
 		var _this = this;
+    var contentId = 'attachmentEditor_uploadTab' + type.charAt(0).toUpperCase() + type.slice(1);;
 
 		$('.attachmentEditor_uploadTabContent').hide();
 		$('.attachmentEditor_uploadTabs button').removeClass('active');
@@ -3476,7 +3477,10 @@ var AttachmentEditor = $n2.Class({
     $($('.attachmentEditor_creationForm input')[0]).val("");
 
     event.currentTarget.className += " active";
-		$('#' + type).show();
+		$('#' + contentId).show();
+    if(type === 'audio' || type === 'video') {
+      _this._setupRecording(type);
+    }
 	},
 
 	_clickRecording: function(event, recordType) {
@@ -3484,68 +3488,71 @@ var AttachmentEditor = $n2.Class({
     var _this = this;
 
     if(_this.recordingInterval === null) {
-			if(recordType === 'audio') {
-				_this.recordStatus = _this.audioRecordStatus;
-				_this.recordingButton = _this.audioRecordingButton;
-			} else if(recordType === 'video') {
-				_this.recordStatus = _this.videoRecordStatus;
-				_this.recordingButton = _this.videoRecordingButton;
-			}
 			_this._startRecording(recordType);
 		} else {
 			_this._stopRecording(recordType);
 		}
 	},
 
+  _setupRecording: function(recordType) {
+    var _this = this;
+    if(recordType === 'audio') {
+      _this.recordStatus = _this.audioRecordStatus;
+      _this.recordingButton = _this.audioRecordingButton;
+    } else if(recordType === 'video') {
+      _this.recordStatus = _this.videoRecordStatus;
+      _this.recordingButton = _this.videoRecordingButton;
+    }
+
+    _this._captureUserMedia(recordType, function(stream) {
+      if(recordType === 'audio') {
+        _this.recorder = RecordRTC(stream, {
+          type: 'audio',
+          recorderType: StereoAudioRecorder,
+          numberOfAudioChannels: 1
+        });
+      } else {
+        var recordingVideos = $('.attachmentEditor_videoRecordingContainer video');
+        var recordingVideo;
+        if(recordingVideos.length > 0) {
+          recordingVideo = recordingVideos[0];
+        } else {
+          recordingVideo = ($('<video>')
+            .attr('controls', 'controls')
+            .insertAfter(_this.recordingButton))[0];
+        }
+
+        _this.recorder = RecordRTC(stream, {
+          mimeType: 'video/webm',
+          audioBitsPerSecond: 48000,
+          videoBitsPerSecond: 128000
+        });
+        recordingVideo.muted = true;
+        recordingVideo.controlls = false;
+        recordingVideo.src = null;
+        recordingVideo.srcObject = stream;
+        recordingVideo.play();
+      }
+
+      var oldAudio = $('.attachmentEditor_recordingContainer audio');
+      if(oldAudio.length > 0) {
+        oldAudio[0].remove();
+      }
+    });
+  },
+
 	_startRecording: function(recordType) {
 		var _this = this;
 		var obj = this.obj;
     _this.recordStatus.text('');
+    _this.recorder.startRecording();
 
-		_this._captureUserMedia(recordType, function(stream) {
-			if(recordType === 'audio') {
-				_this.recorder = RecordRTC(stream, {
-					type: 'audio',
-					recorderType: StereoAudioRecorder,
-					numberOfAudioChannels: 1
-				});
-			} else {
-				var recordingVideos = $('.attachmentEditor_videoRecordingContainer video');
-				var recordingVideo;
-				if(recordingVideos.length > 0) {
-					recordingVideo = recordingVideos[0];
-				} else {
-					recordingVideo = ($('<video>')
-						.attr('controls', 'controls')
-						.insertAfter(_this.recordingButton))[0];
-				}
-
-				_this.recorder = RecordRTC(stream, {
-					mimeType: 'video/webm',
-					audioBitsPerSecond: 48000,
-					videoBitsPerSecond: 128000
-				});
-				recordingVideo.muted = true;
-				recordingVideo.controlls = false;
-				recordingVideo.src = null;
-				recordingVideo.srcObject = stream;
-				recordingVideo.play();
-			}
-
-			var oldAudio = $('.attachmentEditor_recordingContainer audio');
-			if(oldAudio.length > 0) {
-        oldAudio[0].remove();
-			}
-
-      _this.recorder.startRecording();
-
-			if(recordType === 'audio') {
-				_this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_micButton');
-			} else {
-				_this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_videoButton');
-			}
-      _this._recordingTimer(recordType);
-		});
+    if(recordType === 'audio') {
+      _this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_micButton');
+    } else {
+      _this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_videoButton');
+    }
+    _this._recordingTimer(recordType);
 	},
 
 	_recordingTimer: function(recordType) {
