@@ -3610,7 +3610,6 @@ var AttachmentEditor = $n2.Class({
 					height: _this.recordVideoSize.height
 				};
 			} else {
-			  console.log('mandatory');
 			  videoHints = {
 			    optional: [],
           mandatory: {
