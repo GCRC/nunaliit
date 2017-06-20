@@ -2578,6 +2578,8 @@ var AttachmentEditor = $n2.Class({
 
 	recorder: null,
 
+  recordingStream: null,
+
 	recordingInterval: null,
 
   maxAudioRecordingLengthSeconds: null,
@@ -2791,7 +2793,12 @@ var AttachmentEditor = $n2.Class({
 		var documentSource = this.documentSource;
 		
 		var $elem = this._getElem();
-		
+
+    //Stop video capturing with close of the form
+    if(typeof _this.recordingStream !== 'undefined' && _this.recordingStream != null) {
+      _this.recordingStream.stop();
+    }
+
 		// Verify that all compulsory files are provided
 		var missingAttachment = null;
 		for(var i=0,e=this.compulsoryAttachmentNames.length; i<e; ++i){
@@ -3468,6 +3475,9 @@ var AttachmentEditor = $n2.Class({
 		}
     var recordingVideos = $('.attachmentEditor_videoRecordingContainer video');
     if(recordingVideos.length > 0) {
+      if(typeof _this.recordingStream !== 'undefined' && _this.recordingStream != null) {
+        _this.recordingStream.stop();
+      }
       recordingVideos[0].remove();
     }
     var recordingAudio = $('.attachmentEditor_recordingContainer audio');
@@ -3505,6 +3515,7 @@ var AttachmentEditor = $n2.Class({
     }
 
     _this._captureUserMedia(recordType, function(stream) {
+      _this.recordingStream = stream;
       if(recordType === 'audio') {
         _this.recorder = RecordRTC(stream, {
           type: 'audio',
@@ -3522,11 +3533,7 @@ var AttachmentEditor = $n2.Class({
             .insertAfter(_this.recordingButton))[0];
         }
 
-        _this.recorder = RecordRTC(stream, {
-          mimeType: 'video/webm',
-          audioBitsPerSecond: 48000,
-          videoBitsPerSecond: 128000
-        });
+        _this.recorder = RecordRTC(stream, { mimeType: 'video/webm' });
         recordingVideo.muted = true;
         recordingVideo.controlls = false;
         recordingVideo.src = null;
@@ -3600,10 +3607,18 @@ var AttachmentEditor = $n2.Class({
 			if (DetectRTC.browser.name === 'Firefox' || (DetectRTC.browser.name === 'Chrome' && DetectRTC.browser.version >= 60)) {
 				videoHints = {
 					width: _this.recordVideoSize.width,
-					height: _this.recordVideoSize.height,
-					frameRate: 30
+					height: _this.recordVideoSize.height
 				};
-			}
+			} else {
+			  console.log('mandatory');
+			  videoHints = {
+			    optional: [],
+          mandatory: {
+			      minWidth: _this.recordVideoSize.width,
+            minHeight: _this.recordVideoSize.height
+          }
+        }
+      }
 			session.video = videoHints;
 		}
 
@@ -3617,6 +3632,8 @@ var AttachmentEditor = $n2.Class({
     var _this = this;
     _this._stopRecordingTimer();
     _this.recorder.stopRecording();
+    _this.recordingStream.stop();
+    _this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_videoButton');
     _this.recordStatus.text('');
   },
 
