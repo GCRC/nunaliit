@@ -3622,7 +3622,7 @@ var AttachmentEditor = $n2.Class({
 		}
 
 		navigator.getUserMedia(session, success_callback, function(error) {
-			alert(_loc('Unable to capture your mic and camera. Please check console logs.'));
+			alert(_loc('Unable to capture your microphone and/or camera.'));
 			$n2.logError(error);
 		});
 	},
