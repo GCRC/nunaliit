@@ -2987,7 +2987,7 @@ var AttachmentEditor = $n2.Class({
 		if(!filename) {
 			var video = $form.find('video');
 			if(video.length > 0) {
-				mediaFile = mediaTagToFile(video, 'video/mp4', '.webm');
+				mediaFile = mediaTagToFile(video, 'video/webm', '.webm');
         filename = 'video.webm';
 			}
 		}
@@ -3533,7 +3533,11 @@ var AttachmentEditor = $n2.Class({
             .insertAfter(_this.recordingButton))[0];
         }
 
-        _this.recorder = RecordRTC(stream, { mimeType: 'video/webm' });
+        var mimeType = 'video/webm';
+        if(_this._isMimeTypeSupported('video/webm;codecs=h264')) {
+          mimeType = 'video/webm;codecs=h264'
+        }
+        _this.recorder = RecordRTC(stream, { mimeType: mimeType });
         recordingVideo.muted = true;
         recordingVideo.controlls = false;
         recordingVideo.src = null;
@@ -3546,6 +3550,18 @@ var AttachmentEditor = $n2.Class({
         oldAudio[0].remove();
       }
     });
+  },
+
+  _isMimeTypeSupported: function(mimeType) {
+    if(DetectRTC.browser.name === 'Edge' || DetectRTC.browser.name === 'Safari' || typeof MediaRecorder === 'undefined') {
+      return false;
+    }
+
+    if(typeof MediaRecorder.isTypeSupported !== 'function') {
+      return true;
+    }
+
+    return MediaRecorder.isTypeSupported(mimeType);
   },
 
 	_startRecording: function(recordType) {
