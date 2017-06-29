@@ -45,6 +45,8 @@ var LegendWidget = $n2.Class('LegendWidget',{
 	
 	sourceCanvasName: null,
 	
+	legendLabelOrder: null,
+	
 	elemId: null,
 	
 	stylesInUse: null,
@@ -56,12 +58,14 @@ var LegendWidget = $n2.Class('LegendWidget',{
 			containerId: null
 			,dispatchService: null
 			,sourceCanvasName: null
+			,legendLabelOrder: null
 		},opts_);
 		
 		var _this = this;
 		
 		this.dispatchService = opts.dispatchService;
 		this.sourceCanvasName = opts.sourceCanvasName;
+		this.legendLabelOrder = opts.legendLabelOrder;
 
 		this.stylesInUse = null;
 		this.cachedSymbols = {};
@@ -69,7 +73,11 @@ var LegendWidget = $n2.Class('LegendWidget',{
 		if( typeof this.sourceCanvasName !== 'string' ){
 			throw new Error('sourceCanvasName must be specified');
 		};
-		
+
+		if( this.legendLabelOrder && !$n2.isArray(this.legendLabelOrder) ){
+			throw new Error('legendLabelOrder must be an array');
+		};
+
 		// Set up model listener
 		if( this.dispatchService ){
 			var f = function(m, addr, dispatcher){
@@ -153,10 +161,24 @@ var LegendWidget = $n2.Class('LegendWidget',{
 				.appendTo($elem);
 		
 			var labelNames = [];
-			for(var labelName in stylesByLabel){
+
+			for (var labelName in stylesByLabel){
 				labelNames.push(labelName);
 			};
-			labelNames.sort();
+			
+			if( this.legendLabelOrder ){
+				var orderedLabelNames = [];
+				for (var i = 0, e = this.legendLabelOrder.length; i < e; ++i){
+					if( labelNames.indexOf(_loc(this.legendLabelOrder[i])) >= 0 ){
+						orderedLabelNames.push(_loc(this.legendLabelOrder[i]));
+					};
+				};
+				
+				// replace labelNames with the updated orderedLabelNames
+				labelNames = orderedLabelNames;
+			} else {
+				labelNames.sort();
+			};
 			
 			labelNames.forEach(function(labelName){
 				var labelInfo = stylesByLabel[labelName];
