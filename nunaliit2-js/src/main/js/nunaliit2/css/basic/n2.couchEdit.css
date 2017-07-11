@@ -172,10 +172,11 @@ form.attachmentEditor_creationFormWithVideo {
 	text-align: center;
 }
 
-.attachmentEditor_videoRecordingContainer > video {
-  width: 320px;
-  height: 240px;
+.attachmentEditor_videoRecordingContainer > .attachmentEditor_meVideo {
+  max-width: 322px;
+  max-height: 300px;
   margin-left: 25px;
+	float: right;
 }
 
 .attachmentEditor_recordingContainer > audio {
