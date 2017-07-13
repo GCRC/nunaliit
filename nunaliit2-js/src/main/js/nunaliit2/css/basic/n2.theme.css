@@ -263,6 +263,16 @@ CreateDocument widget
 	text-decoration: none;
 }
 
+.nunaliit_atlas .nunaliit_module_title .n2widget_multiFilterSelection a,
+.nunaliit_atlas .nunaliit_module_title .n2widget_multiFilterSelection a:visited {
+	padding-left: 2px;
+	padding-right: 2px;
+}
+.nunaliit_atlas .nunaliit_module_title .n2widget_multiFilterSelection a.n2widget_multiFilterSelection_selected,
+.nunaliit_atlas .nunaliit_module_title .n2widget_multiFilterSelection a.n2widget_multiFilterSelection_selected:visited {
+	color: #aaf;
+}
+
 /*
 	Search input located in title bar
 */

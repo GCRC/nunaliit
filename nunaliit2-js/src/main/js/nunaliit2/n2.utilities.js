@@ -409,6 +409,11 @@ var Service = $n2.Class({
 				 && typeof $n2.mapUtilities.HandleUtilityCreateRequests === 'function' ){
 					$n2.mapUtilities.HandleUtilityCreateRequests(m, addr, dispatcher);
 				};
+
+				if( $n2.utilitiesModel 
+				 && typeof $n2.utilitiesModel.HandleUtilityCreateRequests === 'function' ){
+					$n2.utilitiesModel.HandleUtilityCreateRequests(m, addr, dispatcher);
+				};
 		    };
 		};
 	}
