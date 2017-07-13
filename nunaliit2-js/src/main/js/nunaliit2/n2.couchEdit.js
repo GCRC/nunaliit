@@ -2798,7 +2798,7 @@ var AttachmentEditor = $n2.Class({
 		
 		var $elem = this._getElem();
 
-    // Verify that all compulsory files are provided
+		// Verify that all compulsory files are provided
 		var missingAttachment = null;
 		for(var i=0,e=this.compulsoryAttachmentNames.length; i<e; ++i){
 			var attName = this.compulsoryAttachmentNames[i];
@@ -2806,7 +2806,7 @@ var AttachmentEditor = $n2.Class({
 			var $file = $form.find('input[type="file"]');
 			var fileName = $file.val();
 			if(!fileName) {
-				if(hasMediaPlayerFile()) {
+				if(hasMediaPlayerFile($form)) {
 					fileName = 'recordedFile';
 				}
 			}
@@ -2832,7 +2832,7 @@ var AttachmentEditor = $n2.Class({
 			var $file = $form.find('input[type="file"]');
 			var fileName = $file.val();
 			if(!fileName) {
-				if(hasMediaPlayerFile()) {
+				if(hasMediaPlayerFile($form)) {
 					fileName = 'recordedFile';
 				}
 			}
@@ -2937,7 +2937,7 @@ var AttachmentEditor = $n2.Class({
 			opts.onSuccess();
 		};
 
-		function hasMediaPlayerFile() {
+		function hasMediaPlayerFile($form) {
 			var audioFile = $form.find('audio');
 			var videoFile = $form.find('video');
 			var mediaPlayer = null;
@@ -2946,7 +2946,7 @@ var AttachmentEditor = $n2.Class({
 			} else if(videoFile.length > 0) {
 				mediaPlayer = videoFile[0];
 			}
-			if(mediaPlayer !== null &&
+			if(mediaPlayer &&
 				mediaPlayer.currentSrc !== null &&
 				mediaPlayer.currentSrc !== '' &&
 				mediaPlayer.srcObject === null) {
@@ -3302,22 +3302,25 @@ var AttachmentEditor = $n2.Class({
 		$('<div>')
 			.addClass('attachmentEditor_clearfix')
 			.appendTo($div);
-
+		
+		var firstTabDisplayed = 'file';
+	
     var $tabList = $('<div>')
 			.addClass('attachmentEditor_uploadTabs')
 			.appendTo($form);
 
-    $('<button>')
+		$('<button>')
 			.text(_loc('File Upload'))
-      .appendTo($tabList)
-      .click(function(event) {
-        _this._clickTab(event, 'file');
-      });
+			.addClass('attachmentEditor_uploadTab_file')
+			.appendTo($tabList)
+			.click(function(event) {
+				event.preventDefault();
+				_this._clickTab(attName, 'file');
+			});
 
 		var $chooseFileDiv = $('<div>')
-			.addClass('attachmentEditor_uploadTabContent')
-			.attr('id', 'attachmentEditor_uploadTabFile')
-      .appendTo($form);
+			.addClass('attachmentEditor_uploadTabContent attachmentEditor_uploadTabContent_file')
+			.appendTo($form);
 
 		$('<input type="file">')
 			.attr('name','media')
@@ -3341,15 +3344,19 @@ var AttachmentEditor = $n2.Class({
 
       DetectRTC.load(function() {
         if(DetectRTC.hasMicrophone) {
-          $('<button>').text(_loc('Record Audio'))
+          $('<button>')
+            .text(_loc('Record Audio'))
+            .addClass('attachmentEditor_uploadTab_audio')
             .click(function(event) {
-              _this._clickTab(event, 'audio');
+        	  event.preventDefault();
+              _this._clickTab(attName, 'audio');
             })
-						.appendTo($tabList);
+            .appendTo($tabList);
+          
+          //firstTabDisplayed = 'audio';
 
           var $recordDiv = $('<div>')
-            .addClass('attachmentEditor_uploadTabContent')
-						.attr('id', 'attachmentEditor_uploadTabAudio')
+            .addClass('attachmentEditor_uploadTabContent attachmentEditor_uploadTabContent_audio')
             .appendTo($form);
 
            var recordInputDiv = $('<div>')
@@ -3370,15 +3377,19 @@ var AttachmentEditor = $n2.Class({
 
 					if(DetectRTC.hasWebcam && !DetectRTC.browser.isEdge) {
 					  $form.addClass('attachmentEditor_creationFormWithVideo');
-            $('<button>').text(_loc('Record Video'))
+            $('<button>')
+              .text(_loc('Record Video'))
+              .addClass('attachmentEditor_uploadTab_video')
               .click(function(event) {
-                _this._clickTab(event, 'video');
+          	    event.preventDefault();
+                _this._clickTab(attName, 'video');
               })
-							.appendTo($tabList);
+              .appendTo($tabList);
 
+            //firstTabDisplayed = 'video';
+            
 						var $recordVideoDiv = $('<div>')
-							.addClass('attachmentEditor_uploadTabContent')
-							.attr('id', 'attachmentEditor_uploadTabVideo')
+							.addClass('attachmentEditor_uploadTabContent attachmentEditor_uploadTabContent_video')
 							.appendTo($form);
 
 						var recordInputVideoDiv = $('<div>')
@@ -3404,8 +3415,16 @@ var AttachmentEditor = $n2.Class({
         } else {
           $n2.log('no microphone present');
         }
+        
+        allTabsDisplayed();
       });
-    }
+    } else {
+    	allTabsDisplayed();
+	}
+    
+		function allTabsDisplayed() {
+			_this._clickTab(attName, firstTabDisplayed);
+		}
 	},
 	
 	_addFileElement: function(opts_){
@@ -3484,40 +3503,54 @@ var AttachmentEditor = $n2.Class({
     }
   },
 
-	_clickTab: function(event, type) {
-  	event.preventDefault();
+	_clickTab: function(attName, type) {
 		var _this = this;
-    var contentId = 'attachmentEditor_uploadTab' + type.charAt(0).toUpperCase() + type.slice(1);;
+		
+		var $elem = this._getElem();
+		var $attachmentEditor = $elem.find('.attachmentEditor_att_' + $n2.utils.stringToHtmlId(attName));
+		var $clickedTab = $attachmentEditor.find('.attachmentEditor_uploadTab_'+type);
 
-		$('.attachmentEditor_uploadTabContent').hide();
-		$('.attachmentEditor_uploadTabs button').removeClass('active');
-    if(_this.recordingInterval !== null) {
-      _this._cancelRecording();
-    }
-    if(typeof _this.recordStatus !== 'undefined') {
+		var contentClass = 'attachmentEditor_uploadTabContent_' + type;
+		
+		// Check if already selected
+		var currentType = $attachmentEditor.attr('n2attType');
+		if( type === currentType ){
+			// Already selected
+			return;
+		};
+		$attachmentEditor.attr('n2attType',type);
+		
+		$attachmentEditor.find('.attachmentEditor_uploadTabContent').hide();
+		$attachmentEditor.find('.attachmentEditor_uploadTabs button').removeClass('active');
+		if(_this.recordingInterval !== null) {
+			_this._cancelRecording();
+		}
+		if(typeof _this.recordStatus !== 'undefined') {
 			_this.recordStatus.text('');
 		}
-    var recordingVideos = $('.attachmentEditor_videoRecordingContainer video');
-    if(recordingVideos.length > 0) {
-      if(typeof _this.recordingStream !== 'undefined' && _this.recordingStream != null) {
-        _this.recordingStream.stop();
-      }
-      recordingVideos[0].remove();
+		var $recordingVideos = $attachmentEditor.find('.attachmentEditor_videoRecordingContainer video');
+		if($recordingVideos.length > 0) {
+			if(typeof _this.recordingStream !== 'undefined' && _this.recordingStream != null) {
+				_this.recordingStream.stop();
+			}
+			$recordingVideos.remove();
 			_this.mediaElementEl.remove();
-			$('.attachmentEditor_videoRecordingContainer .mejs__container')[0].remove();
-    }
-    var recordingAudio = $('.attachmentEditor_recordingContainer audio');
-    if(recordingAudio.length > 0) {
-      recordingAudio[0].remove();
-    }
-    $($('.attachmentEditor_creationForm input')[0]).val("");
-
-    event.currentTarget.className += " active";
-		$('#' + contentId).show();
-    if(type === 'audio' || type === 'video') {
-      _this._setupRecording(type);
+			$attachmentEditor.find('.attachmentEditor_videoRecordingContainer .mejs__container')[0].remove();
+		}
+		var $recordingAudio = $attachmentEditor.find('.attachmentEditor_recordingContainer audio');
+		if($recordingAudio.length > 0) {
+			$recordingAudio.remove();
+		}
+		
+		// Clear file upload
+		$attachmentEditor.find('.attachmentEditor_uploadTabContent_file input').val('')
+		
+		$clickedTab.addClass('active');
+		$attachmentEditor.find('.'+contentClass).show();
+		if(type === 'audio' || type === 'video') {
+			_this._setupRecording(type);
 			_this.currentRecordingType = type;
-    }
+		}
 	},
 
 	_clickRecording: function(event, recordType) {
