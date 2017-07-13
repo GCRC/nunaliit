@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
+import java.util.List;
+import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionProgress;
+import ca.carleton.gcrc.utils.CommandUtils;
 
 public class FFmpegProcessorDefault implements FFmpegProcessor {
 
@@ -23,7 +26,8 @@ public class FFmpegProcessorDefault implements FFmpegProcessor {
 	static public String ffmpegInfoCommand = "avprobe %1$s";
 	static public String ffmpegConvertVideoCommand = "avconv -i %1$s -y -acodec libvo_aacenc -ab 48000 -ac 2 -vcodec libx264 -b 128000 -s 320x240 -threads 0 -f mp4 %2$s";
 	static public String ffmpegConvertAudioCommand = "avconv -i %1$s -y -acodec libmp3lame -ab 48000 -ac 2 -threads 0 -f mp3 %2$s";
-	static public String ffmpegCreateThumbnailCommand = "avconv -y -ss 00:00:05 -i %1$s -s %3$dx%4$d -r 1 -vframes 1 -f image2 %2$s";
+	static public String ffmpegCreateThumbnailCommand = "avconv -y -ss %5$s -i %1$s -s %3$dx%4$d -r 1 -vframes 1 -f image2 %2$s";
+	static public double ffmpegCreateThumbnailFrameInSec = 5.0;
 	
 	static String[] breakUpCommand(String command){
 		String[] commandTokens = command.split(" ");
@@ -206,27 +210,81 @@ public class FFmpegProcessorDefault implements FFmpegProcessor {
 			}
 		}
 		
-		Runtime rt = Runtime.getRuntime();
+		double timestamp = ffmpegCreateThumbnailFrameInSec;
+		if( null == inputVideo.getStartInSec() 
+		 && null == inputVideo.getDurationInSec() ){
+			timestamp = 0;
+		} else if( null == inputVideo.getStartInSec() ){
+			if( timestamp > inputVideo.getDurationInSec() ){
+				timestamp = inputVideo.getDurationInSec() / 2;
+			}
+		} else if( null == inputVideo.getDurationInSec() ){
+			timestamp = inputVideo.getStartInSec();
+		} else {
+			if( timestamp > (inputVideo.getStartInSec() + inputVideo.getDurationInSec()) ){
+				timestamp = inputVideo.getStartInSec() + (inputVideo.getDurationInSec() / 2);
+			}
+		}
+		String timestampStr = convertTimestampToString(timestamp);
+		
 		StringWriter sw = new StringWriter();
 		try {
-			String[] tokens = breakUpCommand(ffmpegCreateThumbnailCommand);
-			for(int i=0; i<tokens.length; ++i){
-				tokens[i] = String.format(
-					tokens[i]
+			List<String> tokens = CommandUtils.breakUpCommand(ffmpegCreateThumbnailCommand);
+			List<String> effectiveTokens = new Vector<String>();
+			boolean first = true;
+			for(String token : tokens){
+				String effectiveToken = String.format(
+					token
 					,inputVideo.getFile().getAbsolutePath()
 					,outputFile.getAbsolutePath()
 					,width
 					,height
+					,timestampStr
 					);
-				if( 0 != i ) sw.write(" ");
-				sw.write(tokens[i]);
+				
+				effectiveTokens.add(effectiveToken);
+				
+				if( first ) {
+					first = false;
+				} else {
+					sw.write(" ") ;
+				}
+				sw.write(effectiveToken);
 			}
 			logger.debug(sw.toString());
 
-			Process p = rt.exec(tokens, null, null);
-			p.waitFor();
+			CommandUtils.executeCommand(effectiveTokens);
+
 		} catch (IOException e) {
 			throw new Exception("Error while creating thumbnail: "+sw.toString(),e);
 		}
+	}
+
+	public String convertTimestampToString(double timestamp) {
+		int hours = 0;
+		int minutes = 0;
+		int seconds = 0;
+		int fract = 0;
+		
+		if( timestamp >= 3600 ){
+			hours = (int)(timestamp / 3600);
+			timestamp = timestamp % 3600;
+		}
+
+		if( timestamp >= 60 ){
+			minutes = (int)(timestamp / 60);
+			timestamp = timestamp % 60;
+		}
+
+		if( timestamp > 0 ){
+			seconds = (int)(timestamp);
+			timestamp = timestamp - seconds;
+		}
+		
+		fract = (int)(timestamp * 100);
+		
+		String str = String.format("%1$02d:%2$02d:%3$02d.%4$02d", hours, minutes, seconds, fract);
+
+		return str;
 	}
 }

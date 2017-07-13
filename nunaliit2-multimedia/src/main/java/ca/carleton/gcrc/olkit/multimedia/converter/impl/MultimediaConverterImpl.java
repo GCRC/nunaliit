@@ -78,10 +78,13 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 		request.setInHeight(videoInfo.getHeight().intValue());
 		request.setInWidth(videoInfo.getWidth().intValue());
 		
+		FFmpegMediaInfo outVideoInfo = null;
 		if( false == conversionRequired ) {
 			// Conversion not required, converted file is the uploaded file
 			request.setOutFile(inFile);
 			progress.updateProgress(100);
+			outVideoInfo = videoInfo;
+
 		} else {
 			File outFile = request.getOutFile();
 			if( null == outFile ) {
@@ -95,7 +98,7 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 			request.setOutFile(outFile);
 			request.setConversionPerformed(true);
 
-			FFmpegMediaInfo outVideoInfo = ffmpeg.getMediaInfo( outFile );
+			outVideoInfo = ffmpeg.getMediaInfo( outFile );
 			if( null == outVideoInfo.getDurationInSec() ) {
 				request.setOutDurationInSec( (float)0.0 );
 			} else {
@@ -122,7 +125,7 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 			}
 			
 			FFmpegProcessor ffmpeg = FFmpeg.getProcessor(null);
-			ffmpeg.createThumbnail(videoInfo, thumbnailFile, VIDEO_THUMB_WIDTH, VIDEO_THUMB_HEIGHT);
+			ffmpeg.createThumbnail(outVideoInfo, thumbnailFile, VIDEO_THUMB_WIDTH, VIDEO_THUMB_HEIGHT);
 			
 			request.setThumbnailFile(thumbnailFile);
 			request.setThumbnailCreated(true);

@@ -42,5 +42,10 @@
 		<artifactId>metadata-extractor</artifactId>
 		<version>2.6.2</version>
 	</dependency>
+	<dependency>
+		<groupId>ca.carleton.gcrc</groupId>
+		<artifactId>nunaliit2-utils</artifactId>
+		<version>${project.version}</version>
+	</dependency>
   </dependencies>
 </project>

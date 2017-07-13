@@ -50,6 +50,22 @@ public class MultimediaConfiguration {
 				FFmpegProcessorDefault.ffmpegCreateThumbnailCommand = command;
 			}
 		}
+		{
+			String secondsStr = props.getProperty("ffmpegCreateThumbnailFrameInSec", null);
+			if( null != secondsStr ) {
+				try {
+				double seconds = Double.parseDouble(secondsStr.trim());
+				if( seconds < 0 ){
+					throw new Exception("Negative value: "+seconds);
+				}
+				
+				FFmpegProcessorDefault.ffmpegCreateThumbnailFrameInSec = seconds;
+
+				} catch(Exception e) {
+					logger.error("Property 'ffmpegCreateThumbnailFrameInSec' should contain a positive number",e);
+				}
+			}
+		}
 
 		// ImageMagick
 		{
