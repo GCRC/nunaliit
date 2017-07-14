@@ -32,82 +32,70 @@ $Id$
 */
 package ca.carleton.gcrc.olkit.multimedia.file;
 
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.InputStream;
-import java.io.StringWriter;
+import java.util.List;
+import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import ca.carleton.gcrc.utils.CommandUtils;
+
 public class SystemFile {
 
-	static private Pattern endWithSemiPattern = Pattern.compile("^(.*);$");
 	static private Pattern mp3IdentifierPattern = Pattern.compile("MPEG ADTS");
 
-	static private String runSystemCommand(String[] commandArgs) throws Exception {
-		StringWriter sw = new StringWriter();
-		sw.write("|");
-		for(String arg : commandArgs){
-			sw.write(arg);
-			sw.write("|");
-		}
-		
-		String line = null;
-		String error = null;
-		try {
-			Runtime rt = Runtime.getRuntime();
-			Process p = rt.exec( commandArgs );
-			StringBuffer sb = new StringBuffer();
-			InputStream is = p.getInputStream();
-			int b = is.read();
-			while( b >= 0 ) {
-				if( b != 0 ) {
-					sb.appendCodePoint(b);
-				}
-				b = is.read();
-			}
-			is.close();
-			p.waitFor();
-			line = sb.toString();
-			
-			if( 0 != p.exitValue() ) {
-				error = line;
-				line = null;
-			}
-		} catch (Exception e) {
-			throw new Exception("Error while executing 'file' command: "+sw.toString(), e);
-		}
-		
-		if( null != error ) {
-			throw new Exception("'file' process returned error: "+error+" (command: "+sw.toString()+")");
-		}
-		
-		return line;
-	}
-	
 	static public SystemFile getSystemFile(File file) throws Exception {
 		SystemFile result = new SystemFile();
 		result.file = file;
 
 		String line = null;
 		try {
-			line = runSystemCommand(new String[]{"file","-bnr","--mime",file.getAbsolutePath()});
+			//line = runSystemCommand(new String[]{"file","-bnr","--mime",file.getAbsolutePath()});
+			List<String> tokens = new Vector<String>();
+			tokens.add("file");
+			tokens.add("-bnk");
+			tokens.add("--mime");
+			tokens.add(file.getAbsolutePath());
+			
+			BufferedReader br = CommandUtils.executeCommand(tokens);
+			line = br.readLine();
+			
 		} catch (Exception e) {
 			throw new Exception("Error while executing 'file' process", e);
 		}
 		
 		// Parse line
-		String[] components = line.split("\\s+");
+		String[] components = line.split(";");
 		
 		if( components.length > 0 ) {
-			result.mimeType = cleanName(components[0]);
+			String[] mimeTypes = components[0].split("\\\\012- ");
+			for(String mimeType : mimeTypes){
+				if( null == result.mimeType ){
+					result.mimeType = mimeType;
+				} else if( mimeType.startsWith("video") ) {
+					result.mimeType = mimeType;
+				} else if( mimeType.startsWith("audio") ) {
+					result.mimeType = mimeType;
+				} else if( mimeType.startsWith("text") ) {
+					result.mimeType = mimeType;
+				}
+			}
 		}
 		if( components.length > 1 ) {
-			result.mimeEncoding = cleanName(components[1]);
+			result.mimeEncoding = components[1].trim();
 		}
 		
 		// Fixes for unknown types
 		if( "application/octet-stream".equals(result.mimeType) ) {
-			String fullReport = runSystemCommand(new String[]{"file",file.getAbsolutePath()});
+			List<String> tokens = new Vector<String>();
+			tokens.add("file");
+			tokens.add("-bnk");
+			tokens.add("--mime");
+			tokens.add(file.getAbsolutePath());
+			
+			BufferedReader br = CommandUtils.executeCommand(tokens);
+			String fullReport = br.readLine();
 			
 			Matcher mp3IdentifierMatcher = mp3IdentifierPattern.matcher(fullReport);
 			
@@ -117,17 +105,6 @@ public class SystemFile {
 		}
 		
 		return result;
-	}
-	
-	static private String cleanName(String inName) {
-		inName = inName.trim();
-		
-		Matcher endWithSemiMatcher = endWithSemiPattern.matcher(inName);
-		if( endWithSemiMatcher.matches() ) {
-			inName = endWithSemiMatcher.group(1);
-		}
-		
-		return inName;
 	}
 	
 	private File file;
@@ -148,5 +125,9 @@ public class SystemFile {
 
 	public String getMimeEncoding() {
 		return mimeEncoding;
+	}
+	
+	public String toString() {
+		return ""+file+": "+mimeType+"; "+mimeEncoding;
 	}
 }

@@ -69,6 +69,6 @@ public class SystemFileTest extends TestCase {
 	public void testOgg() throws Exception {
 		if( false == TestConfiguration.isTestingConfigured() ) return;
 		
-		performFile("steps_sound.ogg", "application/ogg");
+		performFile("steps_sound.ogg", "audio/ogg");
 	}
 }
