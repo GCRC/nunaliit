@@ -673,6 +673,55 @@ Multi Filter Selection
 	color: #00f;
 }
 
+
+/* 
+==============================
+Multi Drop Down Filter Selection 
+==============================
+*/
+
+.nunaliit_module_title .n2widget_multiDropDownFilterSelection {
+	float: right;
+	padding: 8px 20px;
+}
+
+.n2widget_multiDropDownFilterSelection_position {
+	position: 'absolute';
+	left: 0;
+	bottom: 0;
+	width: 0;
+	height: 0;
+	border: none;
+	margin: 0;
+	padding: 0;
+}
+
+.n2widget_multiDropDownFilterSelection_selection_hidden .n2widget_multiDropDownFilterSelection_position {
+	display: none;
+}
+
+.n2widget_multiDropDownFilterSelection_select {
+	min-width: 260px;
+    margin-top: 1px;
+    border-top: none;
+    color: #000;
+    background-color: #fff;
+}
+
+.n2widget_multiDropDownFilterSelection_option a {
+    color: #000;
+	padding: 12px 0px 10px 24px;
+	display: block;
+    clear: both;
+    white-space: nowrap;
+    cursor: pointer;  
+}
+
+.n2widget_multiDropDownFilterSelection_option.n2widget_multiDropDownFilterSelection_optionSelected {
+    background-color: #fcc;
+}
+
+
 /* 
 ==============================
 Model Browser Widget 

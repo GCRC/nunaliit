@@ -718,6 +718,10 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 
 	selectedChoicesSetEventName: null,
 
+	allSelectedChangeEventName: null,
+
+	allSelectedSetEventName: null,
+
 	availableChoicesChangeEventName: null,
 
 	availableChoices: null,
@@ -725,6 +729,8 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 	selectedChoices: null,
 	
 	selectedChoiceIdMap: null,
+
+	allSelected: null,
 	
 	allChoicesLabel: null,
 	
@@ -798,6 +804,18 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 					});
 				};
 			};
+
+			if( sourceModelInfo 
+			 && sourceModelInfo.parameters 
+			 && sourceModelInfo.parameters.allSelected ){
+				var paramInfo = sourceModelInfo.parameters.allSelected;
+				this.allSelectedChangeEventName = paramInfo.changeEvent;
+				this.allSelectedSetEventName = paramInfo.setEvent;
+
+				if( typeof paramInfo.value === 'boolean' ){
+					this.allSelected = paramInfo.value;
+				};
+			};
 			
 			var fn = function(m, addr, dispatcher){
 				_this._handle(m, addr, dispatcher);
@@ -809,6 +827,10 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 			
 			if( this.selectedChoicesChangeEventName ){
 				this.dispatchService.register(DH, this.selectedChoicesChangeEventName, fn);
+			};
+			
+			if( this.allSelectedChangeEventName ){
+				this.dispatchService.register(DH, this.allSelectedChangeEventName, fn);
 			};
 		};
 
@@ -823,7 +845,7 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 		
 		var $elem = $('<div>')
 			.attr('id',this.elemId)
-			.addClass('n2widget_multiFilterSelection')
+			.addClass('n2widget_multiDropDownFilterSelection n2widget_multiDropDownFilterSelection_selection_hidden')
 			.appendTo($container);
 		
 		var $relDiv = $('<div>')
@@ -858,13 +880,12 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 		};
 		
 		var $position = $('<div>')
-			.addClass('n2widget_multiFilterSelection_position')
-			.addClass('n2widget_multiFilterSelection_position_hidden')
+			.addClass('n2widget_multiDropDownFilterSelection_position')
 			.appendTo($relDiv);
 		
 		this._availableChoicesUpdated();
 		
-		$n2.log('SingleFilterSelectionWidget', this);
+		$n2.log(this._classname, this);
 	},
 	
 	_getElem: function(){
@@ -875,37 +896,19 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 		var _this = this;
 
 		var $elem = this._getElem();
-		var $position = $elem.find('.n2widget_multiFilterSelection_position');
+		var $position = $elem.find('.n2widget_multiDropDownFilterSelection_position');
 		$position.empty();
 		
-		var $selector = $('<select>')
+		var $selectDiv = $('<div>')
 			.appendTo($position)
-			.attr('multiple',true)
-			.change(function(){
-				_this._selectionChanged();
-			});
+			.addClass('n2widget_multiDropDownFilterSelection_select');
 
-//		// No Choice
-//		var noChoiceLabel = _loc('--');
-//		if( this.noChoiceLabel ){
-//			noChoiceLabel = _loc(this.noChoiceLabel);
-//		};
-//		$('<option>')
-//			.addClass('n2widget_singleFilterSelection_optionNoChoice')
-//			.text( noChoiceLabel )
-//			.val(NO_CHOICE)
-//			.appendTo($selector);
-
-//		// All Choices
-//		var allChoicesLabel = _loc('All');
-//		if( this.allChoicesLabel ){
-//			allChoicesLabel = _loc(this.allChoicesLabel);
-//		};
-//		$('<option>')
-//			.addClass('n2widget_singleFilterSelection_optionAllChoices')
-//			.text( allChoicesLabel )
-//			.val(ALL_CHOICES)
-//			.appendTo($selector);
+		// All Choices
+		var allChoicesLabel = _loc('All');
+		if( this.allChoicesLabel ){
+			allChoicesLabel = _loc(this.allChoicesLabel);
+		};
+		addOption($selectDiv, ALL_CHOICES, allChoicesLabel);
 		
 		for(var i=0,e=this.availableChoices.length; i<e; ++i){
 			var choice = this.availableChoices[i];
@@ -915,52 +918,113 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 				label = choice.id;
 			};
 			
-			var $option = $('<option>')
-				.text(label)
-				.val(choice.id)
-				.appendTo($selector);
+			addOption($selectDiv, choice.id, label);
 		};
 		
 		this._adjustSelectedItem();
 		
 		// Select current
 		//this._selectionChanged();
+		
+		function addOption($selectDiv, choiceId, label){
+			var $div = $('<div>')
+				.addClass('n2widget_multiDropDownFilterSelection_option')
+				.attr('data-n2-choiceId',choiceId)
+				.appendTo($selectDiv);
+
+			$('<a>')
+				.text(label)
+				.attr('data-n2-choiceId',choiceId)
+				.appendTo($div)
+				.click(function(){
+					var $a = $(this);
+					var choiceId = $a.attr('data-n2-choiceId');
+					_this._selectionChanged(choiceId);
+					return false;
+				});
+		};
 	},
 	
 	_adjustSelectedItem: function(){
 		var _this = this;
-		
-		var selectedChoiceIds = [];
+
+		var allSelected = this.allSelected;
+
+		var selectedChoiceIdMap = {};
 		this.selectedChoices.forEach(function(selectedChoice){
-			selectedChoiceIds.push(selectedChoice);
+			selectedChoiceIdMap[selectedChoice] = true;
 		});
 		
 		var $elem = this._getElem();
-		var $selector = $elem.find('select');
-		$selector.val( selectedChoiceIds );
+		$elem.find('.n2widget_multiDropDownFilterSelection_option').each(function(){
+			var $a = $(this);
+			var value = $a.attr('data-n2-choiceId');
+			if( allSelected || selectedChoiceIdMap[value] ){
+				$a
+					.removeClass('n2widget_multiDropDownFilterSelection_optionUnselected')
+					.addClass('n2widget_multiDropDownFilterSelection_optionSelected');
+			} else {
+				$a
+					.removeClass('n2widget_multiDropDownFilterSelection_optionSelected')
+					.addClass('n2widget_multiDropDownFilterSelection_optionUnselected');
+			};
+		});
 	},
 	
 	// This is called when the selected option within <select> is changed
-	_selectionChanged: function(){
-		var $elem = this._getElem();
-		var $selector = $elem.find('select');
-		var values = $selector.val();
+	_selectionChanged: function(choiceId){
 
-		var selectedChoiceIds = [];
-		values.forEach(function(val){
-			selectedChoiceIds.push(val);
-		});
-		
-		this.dispatchService.send(DH,{
-			type: this.selectedChoicesSetEventName
-			,value: selectedChoiceIds
-		});
+		if( ALL_CHOICES === choiceId ){
+			if( this.allSelected ){
+				// If already all selected, select none
+				this.dispatchService.send(DH,{
+					type: this.selectedChoicesSetEventName
+					,value: []
+				});
+
+			} else {
+				// Select all
+				this.dispatchService.send(DH,{
+					type: this.allSelectedSetEventName
+					,value: true
+				});
+			};
+
+		} else {
+			var selectedChoiceIds = [];
+
+			var removed = false;
+			this.selectedChoices.forEach(function(selectedChoiceId){
+				if( selectedChoiceId === choiceId ){
+					removed = true;
+				} else {
+					selectedChoiceIds.push(selectedChoiceId);
+				};
+			});
+			
+			if( !removed ){
+				selectedChoiceIds.push(choiceId);
+			};
+			
+			this.dispatchService.send(DH,{
+				type: this.selectedChoicesSetEventName
+				,value: selectedChoiceIds
+			});
+		};
 	},
 	
 	_buttonClicked: function(){
 		var $elem = this._getElem();
-		var $position = $elem.find('.n2widget_multiFilterSelection_position');
-		$position.toggleClass('n2widget_multiFilterSelection_position_hidden');
+		
+		if( $elem.hasClass('n2widget_multiDropDownFilterSelection_selection_shown') ){
+			$elem
+				.removeClass('n2widget_multiDropDownFilterSelection_selection_shown')
+				.addClass('n2widget_multiDropDownFilterSelection_selection_hidden');
+		} else {
+			$elem
+				.removeClass('n2widget_multiDropDownFilterSelection_selection_hidden')
+				.addClass('n2widget_multiDropDownFilterSelection_selection_shown');
+		};
 	},
 		
 	_handle: function(m, addr, dispatcher){
@@ -981,6 +1045,13 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 				this.selectedChoices.forEach(function(choiceId){
 					_this.selectedChoiceIdMap[choiceId] = true;
 				});
+				
+				this._adjustSelectedItem();
+			};
+
+		} else if( this.allSelectedChangeEventName === m.type ){
+			if( typeof m.value === 'boolean' ){
+				this.allSelected = m.value;
 				
 				this._adjustSelectedItem();
 			};
