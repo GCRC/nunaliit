@@ -1025,6 +1025,22 @@ $n2.utils = {
 			v[v.length] = map[i];
 		};
 		return v;
+	},
+	
+	/**
+	 * Returns an array of all keys found in a map or array.
+	 * @name keys
+	 * @function
+	 * @memberOf nunaliit2.utils
+	 * @param {Object} map Javascript object or array
+	 * @returns {Object[]} Keys found in the object or array
+	 */
+	keys: function(map){
+		var v = [];
+		for(var i in map){
+			v[v.length] = i;
+		};
+		return v;
 	}
 };
 

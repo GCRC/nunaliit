@@ -411,7 +411,7 @@ var ModelFilter = $n2.Class('ModelFilter',{
  * Filter: a Document Model that filters out certain document
  * SchemaFilter: Allows documents that are identified by schema names
  */
-var SchemaFilter = $n2.Class(ModelFilter, {
+var SchemaFilterLegacy = $n2.Class('SchemaFilterLegacy', ModelFilter, {
 		
 	schemaNameMap: null,
 	
@@ -444,7 +444,7 @@ var SchemaFilter = $n2.Class(ModelFilter, {
 		opts.filterFn = function(doc){
 			return _this._isDocVisible(doc);
 		};
-		opts.filterName = 'SchemaFilter';
+		opts.filterName = 'SchemaFilterLegacy';
 		
 		ModelFilter.prototype.initialize.call(this,opts);
 	},
@@ -1527,6 +1527,185 @@ var LayerFilter2 = $n2.Class('LayerFilter2', SelectableDocumentFilter, {
 });
 
 //--------------------------------------------------------------------------
+var SchemaFilter = $n2.Class('SchemaFilter', SelectableDocumentFilter, {
+
+	schemaRepository: null,
+
+	schemasByName: null,
+
+	currentChoices: null,
+
+	currentCallback: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			modelId: undefined
+			,sourceModelId: undefined
+			,dispatchService: undefined
+			,schemaRepository: undefined
+			
+			// From options
+			,initialSelection: undefined
+			,schemaName: undefined
+			,schemaNames: undefined
+		},opts_);
+		
+		var _this = this;
+		
+		// For compatibility with older version of SchemaFilter, schemaName and schemaNames are mapped on
+		// initialSelection
+		if( typeof opts.schemaName === 'string' ){
+			if( !opts.initialSelection ){
+				opts.initialSelection = [];
+			};
+			opts.initialSelection.push(opts.schemaName);
+		};
+		if( $n2.isArray(opts.schemaNames) ){
+			if( !opts.initialSelection ){
+				opts.initialSelection = [];
+			};
+			opts.schemaNames.forEach(function(schemaName){
+				if( typeof schemaName === 'string' ){
+					opts.initialSelection.push(schemaName);
+				};
+			});
+		};
+		
+		$n2.modelFilter.SelectableDocumentFilter.prototype.initialize.call(this,opts);
+		
+		this.schemaRepository = opts.schemaRepository;
+		this.schemasByName = {};
+		this.currentChoices = [];
+		this.currentCallback = null;
+	},
+	
+	_recomuteAvailableChoices: function(){
+		var _this = this;
+
+		if( this.currentChoices ){
+			var choiceWasChanged = false;
+			this.currentChoices.forEach(function(choice){
+				var schema = _this.schemasByName[choice.id];
+				
+				var label;
+				if( schema ){
+					label = schema.getLabel();
+				};
+				if( !label ){
+					label = choice.id;
+				};
+				
+				if( label !== choice.label ){
+					choice.label = label;
+					choiceWasChanged = true;
+				};
+			});
+			
+			if( choiceWasChanged ){
+				this.currentChoices.sort(function(a,b){
+					if( a.label < b.label ){
+						return -1;
+					};
+					if( a.label > b.label ){
+						return 1;
+					};
+					return 0;
+				});
+
+				if( typeof this.currentCallback === 'function' ){
+					this.currentCallback(this.currentChoices);
+				};
+			};
+		};
+	},
+
+	_computeAvailableChoicesFromDocs: function(docs, callbackFn){
+		var _this = this;
+
+		var choiceLabelByName = {};
+		var fetchSchemaNamesMap = {};
+		docs.forEach(function(doc){
+			if( doc 
+			 && typeof doc.nunaliit_schema === 'string' ){
+				var name = doc.nunaliit_schema;
+				var schema = _this.schemasByName[name];
+
+				if( schema ){
+					// OK
+				} else {
+					fetchSchemaNamesMap[name] = true;
+				};
+
+				if( name && !choiceLabelByName[name] ){
+					if( schema ){
+						choiceLabelByName[name] = schema.getLabel();
+					} else {
+						choiceLabelByName[name] = name;
+					};
+				};
+			};
+		});
+
+		var availableChoices = [];
+		for(var id in choiceLabelByName){
+			var label = choiceLabelByName[id];
+			availableChoices.push({
+				id: id
+				,label: label
+			});
+		};
+		availableChoices.sort(function(a,b){
+			if( a.label < b.label ){
+				return -1;
+			};
+			if( a.label > b.label ){
+				return 1;
+			};
+			return 0;
+		});
+		
+		this.currentChoices = availableChoices;
+		this.currentCallback = callbackFn;
+		
+		callbackFn(availableChoices);
+		
+		var fetchSchemaNames = $n2.utils.keys(fetchSchemaNamesMap);
+		if( fetchSchemaNames.length > 0 
+		 && this.schemaRepository ){
+			this.schemaRepository.getSchemas({
+				names: fetchSchemaNames
+				,onSuccess: function(schemas){
+					schemas.forEach(function(schema){
+						var name = schema.name;
+						_this.schemasByName[name] = schema;
+					});
+					
+					_this._recomuteAvailableChoices();
+				}
+				,onError: function(err){
+					// ignore
+				}
+			});
+		};
+		
+		return null;
+	},
+	
+	_isDocVisible: function(doc, selectedChoiceIdMap){
+		if( doc 
+		 && typeof doc.nunaliit_schema === 'string' ){
+			if( selectedChoiceIdMap[doc.nunaliit_schema] ){
+				return true;
+			};
+			
+			return false;
+		};
+		
+		return true;
+	}
+});
+
+//--------------------------------------------------------------------------
 function handleModelCreate(m, addr, dispatcher){
 	if( m.modelType === 'filter' ){
 		var options = {};
@@ -1563,7 +1742,7 @@ function handleModelCreate(m, addr, dispatcher){
 		
 		m.created = true;
 
-	} else if( m.modelType === 'schemaFilter' ){
+	} else if( m.modelType === 'schemaFilterLegacy' ){
 		var options = {};
 		
 		if( m && m.modelOptions ){
@@ -1581,7 +1760,7 @@ function handleModelCreate(m, addr, dispatcher){
 			};
 		};
 		
-		m.model = new SchemaFilter(options);
+		m.model = new SchemaFilterLegacy(options);
 		
 		m.created = true;
 
@@ -1672,6 +1851,29 @@ function handleModelCreate(m, addr, dispatcher){
 		m.model = new LayerFilter2(options);
 		
 		m.created = true;
+
+	} else if( m.modelType === 'schemaFilter' ){
+		var options = {};
+		
+		if( m && m.modelOptions ){
+			for(var key in m.modelOptions){
+				options[key] = m.modelOptions[key];
+			};
+		};
+		
+		options.modelId = m.modelId;
+		options.modelType = m.modelType;
+
+		if( m && m.config ){
+			if( m.config.directory ){
+				options.dispatchService = m.config.directory.dispatchService;
+				options.schemaRepository = m.config.directory.schemaRepository;
+			};
+		};
+		
+		m.model = new SchemaFilter(options);
+		
+		m.created = true;
 	};
 };
 
@@ -1679,10 +1881,11 @@ function handleModelCreate(m, addr, dispatcher){
 $n2.modelFilter = {
 	ModelFilter: ModelFilter
 	,FilterFunctionFromModelConfiguration: FilterFunctionFromModelConfiguration
-	,SchemaFilter: SchemaFilter
+	,SchemaFilterLegacy: SchemaFilterLegacy
 	,ReferenceFilter: ReferenceFilter
 	,SelectableDocumentFilter: SelectableDocumentFilter
 	,LayerFilter2: LayerFilter2
+	,SchemaFilter: SchemaFilter
 	,handleModelCreate: handleModelCreate 
 };
 

@@ -39,136 +39,13 @@ var
  ;
 
 //--------------------------------------------------------------------------
-var ModelInput = $n2.Class('ModelInput', $n2.model.DocumentModel, {
-	
-	sourceModelId: null,
-	
-	docsById: null,
-	
-	loading: null,
-	
-	initialize: function(opts_){
-		var opts = $n2.extend({
-			dispatchService: undefined
-			
-			// From configuration
-			,modelId: undefined
-			,sourceModelId: undefined
-		},opts_);
-		
-		opts.modelType = 'SimultaneousFilterInput';
-		
-		$n2.model.DocumentModel.prototype.initialize.call(this, opts)
-		
-		var _this = this;
-		
-		this.sourceModelId = opts.sourceModelId;
-		if( !this.sourceModelId ){
-			throw new Error('Attribute "sourceModelId" must be specified for SimultaneousFilters:ModelInput');
-		};
-
-		this.docsById = {};
-		this.loading = false;
-
-		// Listen to source model
-		if( this.dispatchService ){
-			var f = function(m, addr, dispatcher){
-				_this._handle(m, addr, dispatcher);
-			};
-			this.dispatchService.register(DH, 'modelStateUpdated', f);
-			
-			// Initialize state
-			var state = $n2.model.getModelState({
-				dispatchService: this.dispatchService
-				,modelId: this.sourceModelId
-			});
-			if( state ){
-				this._sourceModelUpdated(state);
-			};
-		};
-		
-		$n2.log(this._classname,this);
-	},
-	
-	_isLoading: function(){
-		return this.loading;
-	},
-	
-	_getCurrentDocuments: function(){
-		var docs = [];
-		for(var docId in this.docsById){
-			var doc = this.docsById[docId];
-			docs.push(doc);
-		};
-		return docs;
-	},
-	
-	_handle: function(m, addr, dispatcher){
-		if( 'modelStateUpdated' === m.type ){
-			// Does it come from from our source?
-			if( this.sourceModelId === m.modelId ){
-				this._sourceModelUpdated(m.state);
-			};
-		};
-	},
-	
-	_sourceModelUpdated: function(sourceState){
-		
-		var added = []
-			,updated = []
-			,removed = []
-			;
-		
-		if( typeof sourceState.loading === 'boolean' ){
-			this.loading = sourceState.loading;
-		};
-		
-		// Loop through all added and modified documents
-		var addedAndModifiedDocs = sourceState.added ? sourceState.added.slice(0) : [];
-		if( sourceState.updated ){
-			addedAndModifiedDocs.push.apply(addedAndModifiedDocs, sourceState.updated);
-		};
-		for(var i=0,e=addedAndModifiedDocs.length; i<e; ++i){
-			var doc = addedAndModifiedDocs[i];
-			var docId = doc._id;
-
-			var prevDoc = this.docsById[docId];
-			if( !prevDoc ){
-				added.push(doc);
-			} else {
-				if( prevDoc._rev !== doc._rev ){
-					updated.push(doc);
-				};
-			};
-			
-			this.docsById[docId] = doc;
-		};
-		
-		// Loop through all removed documents
-		if( sourceState.removed ){
-			for(var i=0,e=sourceState.removed.length; i<e; ++i){
-				var doc = sourceState.removed[i];
-				var docId = doc._id;
-				var prevDoc = this.docsById[docId];
-				if( prevDoc ){
-					delete this.docsById[docId];
-					removed.push(prevDoc);
-				};
-			};
-		};
-
-		this._reportStateUpdate(added, updated, removed);
-	}
-});
-
-//--------------------------------------------------------------------------
 // Wraps a ModelParameter for the purpose of re-writing the available
 // choices for a filter within the SimultaneousFilters construct.
 // This wrapper is dependent on two models:
 // 1. the filter model, used to call the _computeAvailableChoicesFromDocs()
 // 2. the doc model, to get all currently displayed document
 // It is important to note that this parameter does not support "setting the
-// value" by the client. This parameter only updates value for client.
+// value" by the client. This parameter only updates value for clients.
 var AvailableChoicesWrapper = $n2.Class({
 
 	dispatchService: null,
@@ -293,10 +170,6 @@ var SimultaneousFilters = $n2.Class('SimultaneousFilters',{
 	
 	sourceModelId: null,
 	
-	inputModelId: null,
-
-	inputModel: null,
-	
 	filterInfosByModelId: null,
 	
 	intersectionModel: null,
@@ -323,14 +196,6 @@ var SimultaneousFilters = $n2.Class('SimultaneousFilters',{
 			throw new Error('Dispatch Service required for SimultaneousFilters');
 		};
 		
-		// Create a model to consume the source model
-		this.inputModelId = this.modelId + '_input';
-		this.inputModel = new ModelInput({
-			dispatchService: this.dispatchService
-			,modelId: this.inputModelId
-			,sourceModelId: this.sourceModelId
-		});
-
 		// Create filters from filter definitions
 		this.filterInfosByModelId = {};
 		var filterCount = 0;
@@ -368,7 +233,7 @@ var SimultaneousFilters = $n2.Class('SimultaneousFilters',{
 					};
 
 					var effectiveModelId = _this.modelId+'_filter_'+declaredModelId;
-					altDefinition.sourceModelId = _this.inputModelId;
+					altDefinition.sourceModelId = _this.sourceModelId;
 					altDefinition.modelId = effectiveModelId;
 					
 					// Create filter
@@ -425,16 +290,16 @@ var SimultaneousFilters = $n2.Class('SimultaneousFilters',{
 			,sourceModelIds: allFilterIds
 		});
 
-		// For each filter, create a union of the other filters combined, and 
+		// For each filter, create an intersection of the other filters combined, and 
 		// an available parameter to represent it
 		for(var filterId in this.filterInfosByModelId){
 			var filterInfo = this.filterInfosByModelId[filterId];
 			
-			var unionSourceIds = [];
-			for(var unionSourceId in this.filterInfosByModelId){
-				if( unionSourceId !== filterId ){
-					var unionSourceInfo = this.filterInfosByModelId[unionSourceId];
-					unionSourceIds.push(unionSourceInfo.effectiveModelId);
+			var otherSourceIds = [];
+			for(var otherSourceId in this.filterInfosByModelId){
+				if( otherSourceId !== filterId ){
+					var otherSourceInfo = this.filterInfosByModelId[otherSourceId];
+					otherSourceIds.push(otherSourceInfo.effectiveModelId);
 				};
 			};
 			
@@ -442,7 +307,7 @@ var SimultaneousFilters = $n2.Class('SimultaneousFilters',{
 			filterInfo.availableChoicesModel = new $n2.modelUtils.ModelIntersect({
 				dispatchService: this.dispatchService
 				,modelId: docModelId
-				,sourceModelIds: unionSourceIds
+				,sourceModelIds: otherSourceIds
 			});
 
 			var availableChoicesParameter = new AvailableChoicesWrapper({
