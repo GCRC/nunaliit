@@ -136,6 +136,11 @@ public class DocumentDescriptor extends AbstractDescriptor {
 		return new GeometryDescriptor(this);
 	}
 	
+	public void removeGeometryDescription() throws Exception {
+		JSONObject doc = getJson();
+		doc.remove(UploadConstants.KEY_DOC_GEOMETRY);
+	}
+	
 	public CreateUpdateInfo getCreatedObject() throws Exception {
 		CreateUpdateInfo result = null;
 		

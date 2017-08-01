@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+<table tableName="Forms" version="1">
+
+<form id="1">
+<title>Wildlife</title>
+<destination>tsfn-manager@gcrc.carleton.ca</destination>
+<prefix>TSFN-W-1-</prefix>
+<delimiter>|</delimiter>
+<field id="1">
+<name>What?</name>
+<type>PickList</type> 
+<value>Anaaqtiq</value>
+<value>Arctic Char</value>
+<value>Arctic Fox</value>
+<value>Bearded Seal</value>
+<value>Canada Goose</value>
+<value>Caribou</value>
+<value>Cod</value>
+<value>Duck eggs</value>
+<value>Eider Duck</value>
+<value>Goose eggs</value>
+<value>Kakkiviaqtuuq</value>
+<value>Kavihilik</value>
+<value>Lake trout</value>
+<value>Muskox</value>
+<value>Other (put in notes)</value>
+<value>Pikugtuuq</value>
+<value>Polar bear</value>
+<value>Ptarmigan </value>
+<value>Ringed Seal</value>
+<value>Snow Goose</value>
+<value>Uhugnaq</value>
+<value>Wolf</value>
+<value>Wolverine</value>
+<required>Y</required>
+</field>
+<field id="2">
+<name>Harvested?</name>
+<type>PickList</type> 
+<value>Yes</value>
+<value>No</value>
+<required>Y</required>
+</field>
+<field id="3">
+<name>Notes</name>
+<type>Text</type>
+<length>140</length>
+<required>N</required>
+<default></default>
+</field>
+</form>
+
+<form id="2">
+<title>Conditions</title>
+<destination>tsfn-manager@gcrc.carleton.ca</destination>
+<prefix>TSFN-C-1-</prefix>
+<delimiter>|</delimiter>
+<field id="1">
+<name>Condition</name>
+<type>PickList</type> 
+<value>deep mud</value>
+<value>flooding</value>
+<value>high water</value>
+<value>ice breakup</value>
+<value>ice ridge</value>
+<value>ice thin</value>
+<value>impassable area</value>
+<value>lack of snow</value>
+<value>open water</value>
+<value>other (put in notes)</value>
+<value>puddles</value>
+<value>slushy conditions</value>
+<value>steep hill</value>
+<value>strong current </value>
+<value>weather unusual</value>
+<required>N</required>
+</field>
+<field id="2">
+<name>Causing problems?</name>
+<type>PickList</type> 
+<value>Yes</value>
+<value>No</value>
+<required>N</required>
+</field>
+<field id="3">
+<name>Notes</name>
+<type>Text</type>
+<length>140</length>
+<required>N</required>
+<default></default>
+</field>
+</form>
+
+<form id="3">
+<title>Place</title>
+<destination>tsfn-manager@gcrc.carleton.ca</destination>
+<prefix>TSFN-P-1-</prefix>
+<delimiter>|</delimiter>
+<field id="1">
+<name>Type</name>
+<type>PickList</type> 
+<value>camp</value>
+<value>waypoint</value>
+<value>historic</value>
+<value>other (put in notes)</value>
+<required>Y</required>
+</field>
+<field id="2">
+<name>Name</name>
+<type>Text</type>
+<length>140</length>
+<required>N</required>
+<default></default>
+</field>
+<field id="3">
+<name>Notes</name>
+<type>Text</type>
+<length>140</length>
+<required>N</required>
+<default></default>
+</field>
+</form>
+
+<form id="4">
+<title>Issues</title>
+<destination>tsfn-manager@gcrc.carleton.ca</destination>
+<prefix>TSFN-I-1-</prefix>
+<delimiter>|</delimiter>
+<field id="1">
+<name>Issue</name>
+<type>PickList</type> 
+<value>stuck</value>
+<value>breakdown</value>
+<value>equipment</value>
+<value>fuel</value>
+<value>medical</value>
+<value>weather</value>
+<value>other (put in notes)</value>
+<required>Y</required>
+</field>
+<field id="2">
+<name>Notes</name>
+<type>Text</type>
+<length>140</length>
+<required>N</required>
+<default></default>
+</field>
+</form>
+
+<form id="5">
+<title>Test</title>
+<destination>tsfn-manager@gcrc.carleton.ca</destination>
+<prefix>TSFN-Test-</prefix>
+<delimiter>|</delimiter>
+<field id="1">
+<name>Notes</name>
+<type>Text</type>
+<length>140</length>
+<required>N</required>
+<default></default>
+</field>
+</form>
+
+</table>
+</root>

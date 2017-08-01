@@ -41,6 +41,9 @@ import ca.carleton.gcrc.couch.onUpload.UploadWorker;
 import ca.carleton.gcrc.couch.onUpload.UploadWorkerSettings;
 import ca.carleton.gcrc.couch.onUpload.geojson.GeoJsonFileConverter;
 import ca.carleton.gcrc.couch.onUpload.gpx.GpxFileConverter;
+import ca.carleton.gcrc.couch.onUpload.inReach.InReachConfiguration;
+import ca.carleton.gcrc.couch.onUpload.inReach.InReachSettings;
+import ca.carleton.gcrc.couch.onUpload.inReach.InReachSettingsFromXmlFile;
 import ca.carleton.gcrc.couch.onUpload.mail.DailyVetterNotificationGenerator;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotification;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotificationImpl;
@@ -634,6 +637,17 @@ public class ConfigServlet extends JsonServlet {
 			settings.setAtlasName(atlasProperties.getAtlasName());
 			if( atlasProperties.isGeometrySimplificationDisabled() ){
 				settings.setGeometrySimplificationDisabled(true);
+			}
+			
+			// InReach configuration
+			File configDir = new File(atlasDir, "config");
+			if( configDir.exists() && configDir.isDirectory() ){
+				File inReachFile = new File(configDir, "inreach_forms.xml");
+				if( inReachFile.exists() && inReachFile.isFile() ){
+					InReachSettingsFromXmlFile inReachSettings = new InReachSettingsFromXmlFile(inReachFile);
+					inReachSettings.load();
+					InReachConfiguration.setInReachSettings(inReachSettings);
+				}
 			}
 			
 			uploadWorker = new UploadWorker(settings);
