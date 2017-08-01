@@ -53,6 +53,7 @@ public class UploadConstants {
 	static public final String UPLOAD_WORK_ROTATE_180 = "rotate180";
 	static public final String UPLOAD_WORK_UPLOADED_FILE = "uploadId";
 	static public final String UPLOAD_WORK_SIMPLIFY_GEOMETRY = "simplifyGeometry";
+	static public final String UPLOAD_WORK_INREACH_SUBMIT = "inReachSubmit";
 
 	// Top level document keys
 	static public final String KEY_DOC_ID = "_id";

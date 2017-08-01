@@ -25,6 +25,8 @@ import ca.carleton.gcrc.couch.onUpload.conversion.FileConversionContextImpl;
 import ca.carleton.gcrc.couch.onUpload.conversion.OriginalFileDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.ServerWorkDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.WorkDescriptor;
+import ca.carleton.gcrc.couch.onUpload.inReach.InReachProcessor;
+import ca.carleton.gcrc.couch.onUpload.inReach.InReachProcessorImpl;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotification;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionMetaData;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionPlugin;
@@ -54,6 +56,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 	private List<FileConversionPlugin> fileConverters;
 	private int noWorkDelayInMs = DELAY_NO_WORK_POLLING;
 	private GeometrySimplifier simplifier = null;
+	private InReachProcessor inReachProcessor = null;
 	
 	protected UploadWorkerThread(
 		UploadWorkerSettings settings
@@ -97,6 +100,8 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			GeometrySimplificationProcessImpl simplifierProcess = new GeometrySimplificationProcessImpl(resolutions);
 			simplifier = new GeometrySimplifierImpl(simplifierProcess);
 		}
+		
+		inReachProcessor = new InReachProcessorImpl();
 	}
 	
 	public void shutdown() {
@@ -253,6 +258,9 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			
 		} else if( UploadConstants.UPLOAD_WORK_SIMPLIFY_GEOMETRY.equals(state) ) {
 			performSimplifyGeometryWork(work);
+			
+		} else if( UploadConstants.UPLOAD_WORK_INREACH_SUBMIT.equals(state) ) {
+			performInReachSubmit(work);
 			
 		} else {
 			throw new Exception("Unrecognized state: "+state);
@@ -768,6 +776,13 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			new FileConversionContextImpl(work,documentDbDesign,mediaDir);
 		
 		simplifier.simplifyGeometry(conversionContext);
+	}
+	
+	private void performInReachSubmit(Work work) throws Exception {
+		FileConversionContext conversionContext = 
+			new FileConversionContextImpl(work,documentDbDesign,mediaDir);
+		
+		inReachProcessor.performSubmission(conversionContext);
 	}
 	
 	private void sendVettingNotification(String docId, JSONObject doc, String attachmentName) {

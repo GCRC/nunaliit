@@ -175,4 +175,29 @@ public class DocumentDescriptor extends AbstractDescriptor {
 			_att.remove(name);
 		}
 	}
+
+	public String getSchemaName() throws Exception {
+		JSONObject doc = getJson();
+		if( JSONSupport.containsKey(doc, CouchNunaliitConstants.DOC_KEY_SCHEMA) ) {
+			Object value = doc.get(CouchNunaliitConstants.DOC_KEY_SCHEMA);
+			if( null != value 
+			 && value instanceof String ){
+				String schemaName = (String)value;
+				return schemaName;
+			}
+		}
+		
+		return null;
+	}
+	
+	public void setSchemaName(String schemaName) throws Exception {
+		JSONObject doc = getJson();
+		if( null == schemaName ){
+			if( JSONSupport.containsKey(doc, CouchNunaliitConstants.DOC_KEY_SCHEMA) ) {
+				doc.remove(CouchNunaliitConstants.DOC_KEY_SCHEMA);
+			}
+		} else {
+			doc.put(CouchNunaliitConstants.DOC_KEY_SCHEMA, schemaName);
+		}
+	}
 }
