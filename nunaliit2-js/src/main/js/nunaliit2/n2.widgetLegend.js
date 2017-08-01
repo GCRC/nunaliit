@@ -45,7 +45,7 @@ var LegendWidget = $n2.Class('LegendWidget',{
 	
 	sourceCanvasName: null,
 	
-	legendLabelOrder: null,
+	labels: null,
 	
 	elemId: null,
 	
@@ -58,14 +58,14 @@ var LegendWidget = $n2.Class('LegendWidget',{
 			containerId: null
 			,dispatchService: null
 			,sourceCanvasName: null
-			,legendLabelOrder: null
+			,labels: null
 		},opts_);
 		
 		var _this = this;
 		
 		this.dispatchService = opts.dispatchService;
 		this.sourceCanvasName = opts.sourceCanvasName;
-		this.legendLabelOrder = opts.legendLabelOrder;
+		this.labels = opts.labels;
 
 		this.stylesInUse = null;
 		this.cachedSymbols = {};
@@ -74,8 +74,8 @@ var LegendWidget = $n2.Class('LegendWidget',{
 			throw new Error('sourceCanvasName must be specified');
 		};
 
-		if( this.legendLabelOrder && !$n2.isArray(this.legendLabelOrder) ){
-			throw new Error('legendLabelOrder must be an array');
+		if( this.labels && !$n2.isArray(this.labels) ){
+			throw new Error('labels must be an array');
 		};
 
 		// Set up model listener
@@ -162,21 +162,19 @@ var LegendWidget = $n2.Class('LegendWidget',{
 		
 			var labelNames = [];
 
-			for (var labelName in stylesByLabel){
-				labelNames.push(labelName);
-			};
-			
-			if( this.legendLabelOrder ){
-				var orderedLabelNames = [];
-				for (var i = 0, e = this.legendLabelOrder.length; i < e; ++i){
-					if( labelNames.indexOf(_loc(this.legendLabelOrder[i])) >= 0 ){
-						orderedLabelNames.push(_loc(this.legendLabelOrder[i]));
+			if( this.labels ){
+				this.labels.forEach(function(label){
+					var effectiveLabel = _loc(label);
+					if( stylesByLabel[effectiveLabel] ){
+						labelNames.push(effectiveLabel);
 					};
+				});
+
+			} else {
+				for (var labelName in stylesByLabel){
+					labelNames.push(labelName);
 				};
 				
-				// replace labelNames with the updated orderedLabelNames
-				labelNames = orderedLabelNames;
-			} else {
 				labelNames.sort();
 			};
 			
