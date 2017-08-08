@@ -53,7 +53,18 @@ public class InReachFormFieldXml implements InReachFormField {
 	}
 
 	@Override
-	public String getType() {
+	public Type getType() throws Exception {
+		for(Type v : Type.values()){
+			if( v.getLabel().equals(type) ){
+				return v;
+			}
+		}
+		
+		throw new Exception("Unknown type: "+type);
+	}
+
+	@Override
+	public String getTypeString() {
 		return type;
 	}
 
