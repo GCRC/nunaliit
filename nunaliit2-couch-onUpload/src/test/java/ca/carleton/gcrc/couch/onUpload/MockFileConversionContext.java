@@ -35,6 +35,7 @@ public class MockFileConversionContext implements FileConversionContext {
 		return new DocumentDescriptor(this);
 	}
 	
+	@Override
 	public JSONObject getDoc() throws Exception {
 		return doc;
 	}
@@ -62,6 +63,8 @@ public class MockFileConversionContext implements FileConversionContext {
 	public void setSavingRequired(boolean isSavingRequired) {
 		this.isSavingRequired = isSavingRequired;
 	}
+
+	@Override
 	public void saveDocument() throws Exception {
 		String docId = doc.getString("_id");
 		dd.getDatabase().updateDocument(doc);
@@ -69,6 +72,7 @@ public class MockFileConversionContext implements FileConversionContext {
 		isSavingRequired = false;
 	}
 
+	@Override
 	public void uploadFile(String attachmentName, File uploadedFile, String mimeType) throws Exception {
 		
 		if( isSavingRequired ) {
@@ -87,6 +91,7 @@ public class MockFileConversionContext implements FileConversionContext {
 		isSavingRequired = false;
 	}
 
+	@Override
 	public void downloadFile(String attachmentName, File outputFile) throws Exception {
 
 		FileOutputStream fos = new FileOutputStream(outputFile);
