@@ -61,5 +61,12 @@ public class InReachProcessorTest extends TestCase {
 		if( false == "inReach_Conditions".equals(schemaName) ){
 			fail("Unexpected schema name: "+schemaName);
 		}
+		
+		// Check data
+		JSONObject data = savedDocJson.getJSONObject("inReach_Conditions");
+		String condition = data.getString("Condition");
+		if( false == "high water".equals(condition) ){
+			fail("Unexpected data");
+		}
 	}
 }
