@@ -750,7 +750,7 @@ var AuthService = $n2.Class({
 		var $labelDiv = $('<div class="n2Auth_login_input"></div>')
 			.appendTo($userLine);
 
-		$('<input id="n2Auth_input_field" class="n2Auth_user_input n2Auth_input_field" type="text" name="username""/>')
+		$('<input class="n2Auth_user_input n2Auth_input_field" type="text" name="username""/>')
 			.val(nameValue)
 			.appendTo($labelDiv);
 		
@@ -765,7 +765,7 @@ var AuthService = $n2.Class({
 		var $pwDiv = $('<div class="n2Auth_login_input"></div>')
 			.appendTo($pwLine);
 		
-		$('<input id="n2Auth_input_field" class="n2Auth_pw_input n2Auth_input_field" type="password" name="password""/>')
+		$('<input class="n2Auth_pw_input n2Auth_input_field" type="password" name="password""/>')
 			.appendTo($pwDiv);
 		
 		$('<div class="n2Auth_login_label"></div>')

@@ -72,7 +72,7 @@
 }
 
 .n2Auth_login_pw_line .n2Auth_input_field + .n2Auth_login_label {
-    top: 79px;
+    top: 85px;
 }
 
 .n2Auth_login_user_line .n2Auth_input_field:focus + .n2Auth_login_label,
@@ -85,7 +85,7 @@
 
 .n2Auth_login_pw_line .n2Auth_input_field:focus + .n2Auth_login_label,
 .n2Auth_login_pw_line .n2Auth_input_field.input_detected + .n2Auth_login_label {
-    top: 53px;
+    top: 58px;
     font-size: 0.9em;
     transition: all 0.3s ease;
     color: #0379CF;
