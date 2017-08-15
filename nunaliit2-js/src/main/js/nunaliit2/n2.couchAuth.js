@@ -746,34 +746,32 @@ var AuthService = $n2.Class({
 		if( opts.userName ){
 			nameValue = opts.userName;
 		};
-		$('<div class="n2Auth_login_label"></div>')
-			.text(nameLabel)
-			.appendTo($userLine);
 		
 		var $labelDiv = $('<div class="n2Auth_login_input"></div>')
 			.appendTo($userLine);
 
-		$('<input class="n2Auth_user_input n2Auth_input_field" type="text" name="username"/>')
+		$('<input id="n2Auth_input_field" class="n2Auth_user_input n2Auth_input_field" type="text" name="username""/>')
 			.val(nameValue)
 			.appendTo($labelDiv);
 		
-		$('<div class="n2Auth_login_end"></div>')
-			.appendTo($userLine);
+		$('<div class="n2Auth_login_label"></div>')
+			.text(nameLabel)
+			.appendTo($labelDiv);
 		
 		// Password line
 		var $pwLine = $('<div class="n2Auth_login_pw_line"></div>')
 			.appendTo($authForm);
 		
+		var $pwDiv = $('<div class="n2Auth_login_input"></div>')
+			.appendTo($pwLine);
+		
+		$('<input id="n2Auth_input_field" class="n2Auth_pw_input n2Auth_input_field" type="password" name="password""/>')
+			.appendTo($pwDiv);
+		
 		$('<div class="n2Auth_login_label"></div>')
 			.text(_loc('password'))
-			.appendTo($pwLine);
-
-		$('<div class="n2Auth_login_input"><input class="n2Auth_pw_input n2Auth_input_field" type="password" name="password"/></div>')
-			.appendTo($pwLine);
-
-		$('<div class="n2Auth_login_end"></div>')
-			.appendTo($pwLine);
-
+			.appendTo($pwDiv);
+		
 		// Button line
 		var $buttonLine = $('<div class="n2Auth_login_button_line"></div>')
 			.appendTo($authForm);
@@ -784,14 +782,6 @@ var AuthService = $n2.Class({
 			.click(function(){
 				performLogin();
 				return false;
-			});
-		
-		$('<input type="button" class="n2Auth_button_cancel"></input>')
-			.appendTo($buttonLine)
-			.val( _loc('Cancel') )
-			.click(function(){
-				var $dialog = $('#'+dialogId);
-				$dialog.dialog('close');
 			});
 			
 		$('<div class="n2Auth_login_end"></div>')
@@ -824,7 +814,7 @@ var AuthService = $n2.Class({
 	
 			$('<a class="n2Auth_button_recoverPassword" href="#"></a>')
 				.appendTo($recoverLine)
-				.text( _loc('I have forgotten my password') )
+				.text( _loc('Reset password?') )
 				.click(function(){
 					var $dialog = $('#'+dialogId);
 					var userName = $dialog.find('.n2Auth_user_input').val();
