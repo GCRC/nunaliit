@@ -373,15 +373,16 @@ var designDoc = $n2.Class('couch.designDoc',{
 
 	queryView: function(options_) {
 		var opts = $.extend(true, {
-				viewName: null
-				,listName: null
-				,viewUrl: null
-				,startkey: null
-				,endkey: null
-				,keys: null
-				,group: null
-				,include_docs: null
-				,limit: null
+				viewName: undefined
+				,listName: undefined
+				,viewUrl: undefined
+				,startkey: undefined
+				,endkey: undefined
+				,keys: undefined
+				,group: undefined
+				,group_level: undefined
+				,include_docs: undefined
+				,limit: undefined
 				,onlyRows: true
 				,rawResponse: false
 				,reduce: false

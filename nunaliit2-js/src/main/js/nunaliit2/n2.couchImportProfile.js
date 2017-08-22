@@ -204,11 +204,16 @@ var ImportAnalysis = $n2.Class({
 	
 	addAddition: function(opts_){
 		var opts = $n2.extend({
-			importId: null
-			,importEntry: null
+			importId: undefined
+			,importEntry: undefined
 		},opts_);
-		
-		this.entriesByImportId[opts.importId] = opts.importEntry;
+
+		// If no import id, associate one so that we can refer to it
+		var importId = opts.importId;
+		if( !importId ){
+			importId = $n2.getUniqueId();
+		};
+		this.entriesByImportId[importId] = opts.importEntry;
 		
 		var changeId = $n2.getUniqueId();
 		var change = {
@@ -216,7 +221,7 @@ var ImportAnalysis = $n2.Class({
 			,type: 'addition'
 			,isAddition: true
 			,auto: true
-			,importId: opts.importId
+			,importId: importId
 		};
 		++this.additionCount;
 		this.changesById[changeId] = change;
@@ -350,6 +355,7 @@ var ImportAnalyzer = $n2.Class({
 				
 				if( typeof id === 'undefined' || null === id){
 					noIdCount++;
+					entriesLeft.push( entry );
 
 				} else if( importEntriesById[id] ){
 					if( !collidingIdMap[id] ){
@@ -365,8 +371,12 @@ var ImportAnalyzer = $n2.Class({
 			};
 			
 			if( noIdCount > 0 ){
-				opts.onError( _loc('Number of imported entries without an id attribute: {count}',{count:noIdCount}) );
-				return;
+				if( this.profile.ignoreId ){
+					// Ok
+				} else {
+					opts.onError( _loc('Number of imported entries without an id attribute: {count}',{count:noIdCount}) );
+					return;
+				};
 			};
 			
 			var collidingIds = [];
@@ -1379,8 +1389,8 @@ var AnalysisReport = $n2.Class({
 		
 		var change = opts.change;
 		
-		var importId = change.importId;
-		var importEntry = this.analysis.getImportEntry(importId);
+		var changeId = change.importId;
+		var importEntry = this.analysis.getImportEntry(changeId);
 		var importProperties = importEntry.getProperties();
 		var importProfile = this.analysis.getImportProfile();
 		var schema = importProfile.getSchema();
@@ -1421,7 +1431,7 @@ var AnalysisReport = $n2.Class({
 				data:{}
 			};
 		};
-		doc.nunaliit_import.id = importId;
+		doc.nunaliit_import.id = importEntry.getId();
 		doc.nunaliit_import.profile = importProfile.getId();
 		
 		// Geometry
@@ -2459,7 +2469,11 @@ var ImportEntry = $n2.Class({
 var ImportProfile = $n2.Class({
 	id: null,
 	
+	sessionId: null,
+	
 	label: null,
+	
+	unrelated: null,
 	
 	layerName: null,
 	
@@ -2475,17 +2489,19 @@ var ImportProfile = $n2.Class({
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
-			id: null
-			,label: null
-			,layerName: null
-			,schema: null
-			,operations: null
-			,atlasDb: null
-			,atlasDesign: null
+			id: undefined
+			,label: undefined
+			,unrelated: false
+			,layerName: undefined
+			,schema: undefined
+			,operations: undefined
+			,atlasDb: undefined
+			,atlasDesign: undefined
 		},opts_);
 		
 		this.id = opts.id;
 		this.label = opts.label;
+		this.unrelated = opts.unrelated;
 		this.layerName = opts.layerName;
 		this.schema = opts.schema;
 		this.operations = opts.operations;
@@ -2502,6 +2518,8 @@ var ImportProfile = $n2.Class({
 			};
 			this.operationsById[opId] = operation;
 		};
+		
+		this.sessionId = this.id + '_' +  (new Date()).toISOString();
 	},
 	
 	getType: function(){
@@ -2513,6 +2531,15 @@ var ImportProfile = $n2.Class({
 	},
 	
 	getId: function(){
+		// unrelated means that this import does not relate
+		// to any other import. Therefore, assign a session id
+		// instead of a profile id. This way, next time this profile
+		// is used, it will not relate to anything that was imported
+		// previously
+		if( this.unrelated ){
+			return this.sessionId;
+		};
+
 		return this.id;
 	},
 	
@@ -2635,6 +2662,10 @@ var ImportEntryJson = $n2.Class(ImportEntry, {
 	},
 	
 	getId: function(){
+		if( this.profile.ignoreId ){
+			return undefined;
+		};
+
 		var idAttribute = this.profile.idAttribute;
 		return this.data[idAttribute];
 	},
@@ -2656,23 +2687,32 @@ var ImportEntryJson = $n2.Class(ImportEntry, {
 var ImportProfileJson = $n2.Class(ImportProfile, {
 	
 	idAttribute: null,
+
+	ignoreId: null,
 	
 	legacyLongLat: null,
 	
 	initialize: function(opts_){
+		var opts = $n2.extend({
+			idAttribute: undefined
+			,ignoreId: false
+			,legacyLongLat: undefined
+		},opts_);
+		
+		if( opts.ignoreId ){
+			opts_.unrelated = true;
+		};
 		
 		ImportProfile.prototype.initialize.call(this, opts_);
 
-		if( opts_ ){
-			this.legacyLongLat = opts_.legacyLongLat;
-
-			if( opts_.options ){
-				this.idAttribute = opts_.options.idAttribute;
-			};
-		};
+		this.legacyLongLat = opts.legacyLongLat;
+		this.idAttribute = opts.idAttribute;
+		this.ignoreId = opts.ignoreId;
 		
-		if( !this.idAttribute ){
-			throw 'Option "idAttribute" must be specified for ImportProfileJson';
+		if( this.ignoreId ){
+			// Ignoring ids. Import all data
+		} else if( !this.idAttribute ){
+			throw 'Option "ignoreId" is set or "idAttribute" must be specified for ImportProfileJson';
 		};
 	},
 	
@@ -2785,14 +2825,13 @@ var ImportProfileGeoJson = $n2.Class(ImportProfile, {
 	olWktFormat: null,
 	
 	initialize: function(opts_){
+		var opts = $n2.extend({
+			idAttribute: undefined
+		},opts_);
 		
 		ImportProfile.prototype.initialize.call(this, opts_);
 
-		if( opts_ ){
-			if( opts_.options ){
-				this.idAttribute = opts_.options.idAttribute;
-			};
-		};
+		this.idAttribute = opts.idAttribute;
 		
 		if(OpenLayers 
 		 && OpenLayers.Format 
@@ -2913,22 +2952,31 @@ var ImportProfileCsv = $n2.Class(ImportProfile, {
 	
 	idAttribute: null,
 	
+	ignoreId: null,
+	
 	legacyLongLat: null,
 	
 	initialize: function(opts_){
+		var opts = $n2.extend({
+			idAttribute: undefined
+			,ignoreId: false
+			,legacyLongLat: undefined
+		},opts_);
+		
+		if( opts.ignoreId ){
+			opts_.unrelated = true;
+		};
 		
 		ImportProfile.prototype.initialize.call(this, opts_);
 
-		if( opts_ ){
-			this.legacyLongLat = opts_.legacyLongLat;
+		this.legacyLongLat = opts.legacyLongLat;
+		this.idAttribute = opts.idAttribute;
+		this.ignoreId = opts.ignoreId;
 
-			if( opts_.options ){
-				this.idAttribute = opts_.options.idAttribute;
-			};
-		};
-		
-		if( !this.idAttribute ){
-			throw 'Option "idAttribute" must be specified for ImportProfileJson';
+		if( this.ignoreId ){
+			// Ignoring ids. Import all data
+		} else if( !this.idAttribute ){
+			throw 'Option "ignoreId" is set or "idAttribute" must be specified for ImportProfileCsv';
 		};
 	},
 	
@@ -3102,14 +3150,21 @@ var ImportProfileService = $n2.Class({
 				opts.onError( _loc('Unknown import profile type: {type}',{type:type}) );
 				return;
 			} else {
-				var classOpts = {
-					id: importProfile.id
-					,label: importProfile.label
-					,options: importProfile.options
-					,layerName: importProfile.layerName
-					,atlasDb: this.atlasDb
-					,atlasDesign: this.atlasDesign
+				var classOpts = {};
+				
+				if( typeof importProfile.options === 'object' ){
+					for(var key in importProfile.options){
+						var value = importProfile.options[key];
+						classOpts[key] = value;
+					};
 				};
+				
+				classOpts.id = importProfile.id;
+				classOpts.label = importProfile.label;
+				classOpts.layerName = importProfile.layerName;
+				classOpts.atlasDb = this.atlasDb;
+				classOpts.atlasDesign = this.atlasDesign;
+				classOpts.schema = undefined;
 				
 				if( importProfile.schemaName ){
 					this.schemaRepository.getSchema({

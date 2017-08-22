@@ -1038,39 +1038,92 @@
 		}
 	
 		,printOptions: function($parent){
-			var $options = $('<div>'
-				+_loc('Import Profile')+': <br/><select class="importProfileList"></select>'
-				+'</div>');
+			var optionId = $n2.getUniqueId();
+			var $options = $('<div>')
+				.attr('id',optionId)
+				.appendTo($parent);
+
+			$('<span>')
+				.text( _loc('Import Profile: ') )
+				.appendTo($options);
+
+			$('<br>')
+				.appendTo($options);
 			
-			$parent.append( $options );
-			
+			// Obtain all profile ids from entries
 			atlasDesign.queryView({
-				viewName: 'nunaliit-import-profile'
-				,include_docs: true
+				viewName: 'nunaliit-import'
+				,include_docs: false
+				,reduce: true
+				,group: true
+				,group_level: 1
 				,onSuccess: function(rows){
-					var $sel = $options.find('select.importProfileList');
-					for(var i=0,e=rows.length; i<e; ++i){
-						var profileId = rows[i].key;
-						var importProfileDoc = rows[i].doc;
-						
-						var profileName = profileId;
-						if( importProfileDoc 
-						 && importProfileDoc.nunaliit_import_profile
-						 && importProfileDoc.nunaliit_import_profile.label ){
-							profileName = _loc(importProfileDoc.nunaliit_import_profile.label);
+					var profileLabelById = {};
+					
+					rows.forEach(function(row){
+						var profileId = undefined;
+						if( row 
+						 && row.key 
+						 && typeof row.key[0] === 'string' ){
+							profileId = row.key[0];
 						};
-						
-						$('<option></option>')
-							.val(profileId)
-							.text(profileName)
-							.appendTo($sel);
-					};
+						if( profileId ){
+							profileLabelById[profileId] = profileId;
+						};
+					});
+
+					getProfiles(profileLabelById);
 				}
 				,onError: function(err){
-					alert(_loc('Unable to obtain list of import profiles')+': '+err);
-					reportError(_loc('Unable to obtain list of import profiles')+': '+err);
+					alert(_loc('Unable to obtain list of import entries')+': '+err);
+					reportError(_loc('Unable to obtain list of import entries')+': '+err);
 				}
 			});
+			
+			function getProfiles(profileLabelById){
+				atlasDesign.queryView({
+					viewName: 'nunaliit-import-profile'
+					,include_docs: true
+					,onSuccess: function(rows){
+						for(var i=0,e=rows.length; i<e; ++i){
+							var profileId = rows[i].key;
+							var importProfileDoc = rows[i].doc;
+							
+							var profileName = profileId;
+							if( importProfileDoc 
+							 && importProfileDoc.nunaliit_import_profile
+							 && importProfileDoc.nunaliit_import_profile.label ){
+								profileName = _loc(importProfileDoc.nunaliit_import_profile.label);
+							};
+
+							profileLabelById[profileId] = profileName;
+						};
+						
+						displayOptions(profileLabelById);
+					}
+					,onError: function(err){
+						alert(_loc('Unable to obtain list of import profiles')+': '+err);
+						reportError(_loc('Unable to obtain list of import profiles')+': '+err);
+					}
+				});
+			};
+			
+			function displayOptions(profileLabelById){
+				var $options = $('#'+optionId);
+
+				var $sel = $('<select>')
+					.addClass('importProfileList')
+					.appendTo($options);
+				
+				for(var profileId in profileLabelById){
+					var profileLabel = profileLabelById[profileId];
+
+					$('<option></option>')
+						.val(profileId)
+						.text(profileLabel)
+						.appendTo($sel);
+				};
+			};
 		}
 
 		,_retrieveDocIds: function(opts_){
