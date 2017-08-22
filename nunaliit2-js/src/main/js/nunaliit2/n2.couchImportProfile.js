@@ -2909,6 +2909,88 @@ var ImportProfileGeoJson = $n2.Class(ImportProfile, {
 });
 
 //=========================================================================
+var ImportProfileCsv = $n2.Class(ImportProfile, {
+	
+	idAttribute: null,
+	
+	legacyLongLat: null,
+	
+	initialize: function(opts_){
+		
+		ImportProfile.prototype.initialize.call(this, opts_);
+
+		if( opts_ ){
+			this.legacyLongLat = opts_.legacyLongLat;
+
+			if( opts_.options ){
+				this.idAttribute = opts_.options.idAttribute;
+			};
+		};
+		
+		if( !this.idAttribute ){
+			throw 'Option "idAttribute" must be specified for ImportProfileJson';
+		};
+	},
+	
+	getType: function(){
+		return 'csv';
+	},
+	
+	parseEntries: function(opts_){
+		var opts = $n2.extend({
+			importData: null
+			,onSuccess: function(entries){}
+			,onError: function(err){}
+		},opts_);
+
+		var importData = opts.importData;
+		if( !importData ){
+			opts.onError( _loc('Import data must be provided') );
+			return;
+		};
+		
+		// Parse CSV input
+		var jsonObj = null;
+		try {
+			jsonObj = $n2.csv.Parse({csv:importData});
+		} catch(e) {
+			opts.onError( _loc('Unable to parse import data: {err}',{err:e}) );
+			return;
+		};
+		
+		
+		if( !$n2.isArray(jsonObj) ){
+			opts.onError( _loc('CSV definition should yield an array') );
+			return;
+		}
+		
+		var entries = [];
+		for(var i=0,e=jsonObj.length; i<e; ++i){
+			var jsonEntry = jsonObj[i];
+			
+			var props = {};
+			for(var key in jsonEntry){
+				if( !key ){
+					// skip
+				} else if( $n2.trim(key) === '' ) {
+					// skip
+				} else {
+					props[key] = jsonEntry[key];
+				};
+			};
+			
+			var entry = new ImportEntryJson({
+				data: props
+				,profile: this
+			});
+			entries.push(entry);
+		};
+		
+		opts.onSuccess(entries);
+	}
+});
+
+//=========================================================================
 var ImportProfileService = $n2.Class({
 	
 	schemaRepository: null,
@@ -2934,6 +3016,7 @@ var ImportProfileService = $n2.Class({
 		
 		this.addImportProfileClass('json',ImportProfileJson);
 		this.addImportProfileClass('geojson',ImportProfileGeoJson);
+		this.addImportProfileClass('csv',ImportProfileCsv);
 	},
 	
 	addImportProfileClass: function(type, aClass){

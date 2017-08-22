@@ -101,9 +101,37 @@ function ValueTableToCsvString(table){
 	return result.join('\n');
 };
 
+//------------------------------------------------------------------------
+function Parse(opts_){
+	var opts = $n2.extend({
+		csv: undefined
+	},opts_);
+	
+	if( typeof opts.csv !== 'string' ){
+		throw new Error('When parsing CSV, parameter "csv" must be a string');
+	};
+	
+	var results =  Papa.parse(opts.csv,{
+		header: true,
+		skipEmptyLines: true
+	});
+	
+	// Check for errors
+	if( results.errors 
+	 && results.errors.length > 0 ){
+		var resError = results.errors[0];
+		var message = 'Row '+resError.row+': '+resError.message;
+		throw new Error(message);
+	};
+	
+	return results.data;
+};
+
+//------------------------------------------------------------------------
 $n2.csv = {
 	ComputeCsvLine: ComputeCsvLine
 	,ValueTableToCsvString: ValueTableToCsvString
+	,Parse: Parse
 };
 
 })(nunaliit2);
