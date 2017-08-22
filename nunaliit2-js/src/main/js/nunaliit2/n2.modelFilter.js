@@ -705,19 +705,23 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 		if( this.saveSelection ){
 			var localStorage = $n2.storage.getLocalStorage();
 			var jsonSelection = localStorage.getItem(this.saveSelectionName);
-			if( jsonSelection ){
-				var loadedSelection = JSON.parse(jsonSelection);
-				if( '__ALL__' === loadedSelection ){
-					// All was selected.
-					initialSelectionComputed = true;
-					this.allSelected = true;
-					initialSelection = [];
-				} else if( $n2.isArray(loadedSelection) ) {
-					initialSelectionComputed = true;
-					this.allSelected = false;
-					initialSelection = loadedSelection;
-				} else {
-					$n2.logError('Unexpected initial selection loaded',loadedSelection);
+			if( '__ALL__' === jsonSelection ){
+				// All was selected.
+				initialSelectionComputed = true;
+				this.allSelected = true;
+				initialSelection = [];
+			} else if( jsonSelection ){
+				try {
+					var loadedSelection = JSON.parse(jsonSelection);
+					if( $n2.isArray(loadedSelection) ) {
+						initialSelectionComputed = true;
+						this.allSelected = false;
+						initialSelection = loadedSelection;
+					} else {
+						$n2.logError('Unexpected initial selection loaded',loadedSelection);
+					};
+				} catch(e) {
+					$n2.logError('Error while parsing JSON selection '+this.saveSelectionName,e);
 				};
 			};
 		};
@@ -867,12 +871,14 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 		
 		// Save to local storage
 		if( this.saveSelection ){
-			var jsonSelection = JSON.stringify(choiceIdArray);
+			var jsonSelection = null;
 			if( this.allSelected ){
 				jsonSelection = '__ALL__';
 			};
-			var localStorage = $n2.storage.getLocalStorage();
-			localStorage.setItem(this.saveSelectionName,jsonSelection);
+			if( jsonSelection ){
+				var localStorage = $n2.storage.getLocalStorage();
+				localStorage.setItem(this.saveSelectionName,jsonSelection);
+			};
 		};
 
 		this._filterChanged();
