@@ -682,7 +682,7 @@ Multi Drop Down Filter Selection
 
 .nunaliit_module_title .n2widget_multiDropDownFilterSelection {
 	float: right;
-	padding: 8px 20px;
+	padding: 4px 10px;
 }
 
 .n2widget_multiDropDownFilterSelection_position {
@@ -696,16 +696,30 @@ Multi Drop Down Filter Selection
 	padding: 0;
 }
 
+.n2widget_multiDropDownFilterSelection_selection_hidden button::after {
+	content:"\25be";
+	padding-left: 5px;
+}
+
+.n2widget_multiDropDownFilterSelection_selection_shown button::after {
+	content:"\25b4";
+	padding-left: 5px;
+}
+
 .n2widget_multiDropDownFilterSelection_selection_hidden .n2widget_multiDropDownFilterSelection_position {
 	display: none;
 }
 
 .n2widget_multiDropDownFilterSelection_select {
+	max-height: 355px;
+    height: auto;
 	min-width: 260px;
     margin-top: 1px;
     border-top: none;
     color: #000;
     background-color: #fff;
+    overflow-y: auto;
+    box-shadow: 0px 1px 15px #aaaaaa, 0px 1px 1px #666666;
 }
 
 .n2widget_multiDropDownFilterSelection_option a {
@@ -717,10 +731,37 @@ Multi Drop Down Filter Selection
     cursor: pointer;  
 }
 
-.n2widget_multiDropDownFilterSelection_option.n2widget_multiDropDownFilterSelection_optionSelected {
-    background-color: #fcc;
+.n2widget_multiDropDownFilterSelection_option.n2widget_multiDropDownFilterSelection_optionUnselected {
+	background-color: #f9f9f9;
 }
 
+.n2widget_multiDropDownFilterSelection_option.n2widget_multiDropDownFilterSelection_optionSelected {
+	background-color: #ffffff;
+}
+
+.n2widget_multiDropDownFilterSelection_option.n2widget_multiDropDownFilterSelection_optionUnselected a,
+.n2widget_multiDropDownFilterSelection_option.n2widget_multiDropDownFilterSelection_optionSelected a {
+    padding: 5px 0px 5px 10px;
+}
+
+.n2widget_multiDropDownFilterSelection_option.n2widget_multiDropDownFilterSelection_optionSelected a {
+    color: #111111 !important;
+}
+
+.n2widget_multiDropDownFilterSelection_option.n2widget_multiDropDownFilterSelection_optionUnselected a {
+    color: #aaaaaa !important;
+}
+
+.n2widget_multiDropDownFilterSelection_option.n2widget_multiDropDownFilterSelection_optionUnselected a::before {
+	content:"\2610";
+	padding-right: 5px;
+}
+
+.n2widget_multiDropDownFilterSelection_option.n2widget_multiDropDownFilterSelection_optionSelected a::before {
+	content:"\2611";
+	padding-right: 5px;
+	font-weight: bold;
+}
 
 /* 
 ==============================
