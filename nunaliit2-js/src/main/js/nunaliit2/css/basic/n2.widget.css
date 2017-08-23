@@ -686,7 +686,7 @@ Multi Drop Down Filter Selection
 }
 
 .n2widget_multiDropDownFilterSelection_position {
-	position: 'absolute';
+	position: absolute;
 	left: 0;
 	bottom: 0;
 	width: 0;
@@ -712,23 +712,23 @@ Multi Drop Down Filter Selection
 
 .n2widget_multiDropDownFilterSelection_select {
 	max-height: 355px;
-    height: auto;
+	height: auto;
 	min-width: 260px;
-    margin-top: 1px;
-    border-top: none;
-    color: #000;
-    background-color: #fff;
-    overflow-y: auto;
-    box-shadow: 0px 1px 15px #aaaaaa, 0px 1px 1px #666666;
+	margin-top: 1px;
+	border-top: none;
+	color: #000;
+	background-color: #fff;
+	overflow-y: auto;
+	box-shadow: 0px 1px 15px #aaaaaa, 0px 1px 1px #666666;
 }
 
 .n2widget_multiDropDownFilterSelection_option a {
-    color: #000;
+	color: #000;
 	padding: 12px 0px 10px 24px;
 	display: block;
-    clear: both;
-    white-space: nowrap;
-    cursor: pointer;  
+	clear: both;
+	white-space: nowrap;
+	cursor: pointer;  
 }
 
 .n2widget_multiDropDownFilterSelection_option.n2widget_multiDropDownFilterSelection_optionUnselected {
@@ -741,15 +741,15 @@ Multi Drop Down Filter Selection
 
 .n2widget_multiDropDownFilterSelection_option.n2widget_multiDropDownFilterSelection_optionUnselected a,
 .n2widget_multiDropDownFilterSelection_option.n2widget_multiDropDownFilterSelection_optionSelected a {
-    padding: 5px 0px 5px 10px;
+	padding: 5px 0px 5px 10px;
 }
 
 .n2widget_multiDropDownFilterSelection_option.n2widget_multiDropDownFilterSelection_optionSelected a {
-    color: #111111 !important;
+	color: #111111 !important;
 }
 
 .n2widget_multiDropDownFilterSelection_option.n2widget_multiDropDownFilterSelection_optionUnselected a {
-    color: #aaaaaa !important;
+	color: #aaaaaa !important;
 }
 
 .n2widget_multiDropDownFilterSelection_option.n2widget_multiDropDownFilterSelection_optionUnselected a::before {
