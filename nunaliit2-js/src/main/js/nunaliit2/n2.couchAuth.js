@@ -1019,7 +1019,7 @@ var AuthService = $n2.Class({
 		var $input = $('<div>')
 			.addClass('n2Auth_create_input')
 			.appendTo($line);
-		$('<input type="text">')
+		$('<input type="text" autofocus>')
 			.addClass('n2Auth_email_input n2Auth_input_field')
 			.appendTo($input)
 			.val(emailValue)
