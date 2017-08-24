@@ -1155,14 +1155,11 @@ var AuthService = $n2.Class({
 		var $line = $('<div>')
 			.addClass('n2Auth_recoverPassword_email_line')
 			.appendTo($form);
-		$('<div>')
-			.addClass('n2Auth_recoverPassword_label')
-			.text( _loc('e-mail address') )
-			.appendTo($line);
+
 		var $input = $('<div>')
 			.addClass('n2Auth_recoverPassword_input')
 			.appendTo($line);
-		$('<input type="text">')
+		$('<input type="text" autofocus>')
 			.addClass('n2Auth_email_input n2Auth_input_field')
 			.appendTo($input)
 			.val(userName)
@@ -1181,9 +1178,11 @@ var AuthService = $n2.Class({
 					performPasswordRecovery();
 				};
 			});
+		
 		$('<div>')
-			.addClass('n2Auth_recoverPassword_end')
-			.appendTo($line);
+			.addClass('n2Auth_recoverPassword_label')
+			.text( _loc('e-mail address') )
+			.appendTo($input);
 		
 		// Buttons
 		var $line = $('<div>')
@@ -1193,21 +1192,8 @@ var AuthService = $n2.Class({
 			.addClass('n2Auth_button_recover')
 			.text( _loc('Reset Password') )
 			.appendTo($line)
-			.button({icons:{primary:'ui-icon-check'}})
 			.click(function(){
 				performPasswordRecovery();
-				return false;
-			});
-		$('<button>')
-			.addClass('n2Auth_button_cancel')
-			.text( _loc('Cancel') )
-			.appendTo($line)
-			.button({icons:{primary:'ui-icon-cancel'}})
-			.click(function(){
-				var $dialog = $('#'+dialogId);
-				var email = $dialog.find('.n2Auth_email_input').val();
-				opts.userName = email;
-				_this._fillDialogWithLogin(dialogId, opts);
 				return false;
 			});
 
