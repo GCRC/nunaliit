@@ -877,50 +877,101 @@ var AuthService = $n2.Class({
 		var _this = this;
 		var $dialog = $('#'+dialogId);
 		
-		$dialog.html( ['<div class="n2Auth_create">'
-			,'<div class="n2Auth_create_user_line">'
-			,'<div class="n2Auth_create_label"></div>'
-			,'<div class="n2Auth_create_input"><input class="n2Auth_user_input n2Auth_input_field" type="text"/></div>'
-			,'<div class="n2Auth_create_end"></div>'
-			,'</div>'
-			,'<div class="n2Auth_create_display_line">'
-			,'<div class="n2Auth_create_label"></div>'
-			,'<div class="n2Auth_create_input"><input class="n2Auth_display_input n2Auth_input_field" type="text"/></div>'
-			,'<div class="n2Auth_create_end"></div>'
-			,'</div>'
-			,'<div class="n2Auth_create_pw_line">'
-			,'<div class="n2Auth_create_label"></div>'
-			,'<div class="n2Auth_create_input"><input class="n2Auth_pw_input n2Auth_input_field" type="password"/></div>'
-			,'<div class="n2Auth_create_end"></div>'
-			,'</div>'
-			,'<div class="n2Auth_create_pw2_line">'
-			,'<div class="n2Auth_create_label"></div>'
-			,'<div class="n2Auth_create_input"><input class="n2Auth_pw_input2 n2Auth_input_field" type="password"/></div>'
-			,'<div class="n2Auth_create_end"></div>'
-			,'</div>'
-			,'<div class="n2Auth_create_button_line">'
-			,'<button class="n2Auth_button_create"></button>'
-			,'<button class="n2Auth_button_cancel"></button>'
-			,'</div>'
-			,'</div>'].join('') );
+		$dialog.empty();
 		
-		$dialog.find('.n2Auth_create_user_line .n2Auth_create_label').text( _loc('user name') );
-		$dialog.find('.n2Auth_create_display_line .n2Auth_create_label').text( _loc('display name') );
-		$dialog.find('.n2Auth_create_pw_line .n2Auth_create_label').text( _loc('password') );
-		$dialog.find('.n2Auth_create_pw2_line .n2Auth_create_label').text( _loc('confirm password') );
+		var $form = $('<div>')
+			.addClass('n2Auth_create')
+			.appendTo($dialog);
+		
+		// User name 
+		var $userLine = $('<div>')
+			.addClass('n2Auth_create_user_line')
+			.appendTo($form);
+		
+		var $userInput = $('<div>')
+			.addClass('n2Auth_create_input')
+			.appendTo($userLine);
+		
+		$('<input type="text" autofocus>')
+			.addClass('n2Auth_user_input n2Auth_input_field')
+			.appendTo($userInput)
+			
+		$('<div>')
+			.addClass('n2Auth_create_label')
+			.text( _loc('user name') )
+			.appendTo($userInput);
+		
+		// Display name 
+		var $displayLine = $('<div>')
+			.addClass('n2Auth_create_display_line')
+			.appendTo($form);
+		
+		var $displayInput = $('<div>')
+			.addClass('n2Auth_create_input')
+			.appendTo($displayLine);
+		
+		$('<input type="text">')
+			.addClass('n2Auth_display_input n2Auth_input_field')
+			.appendTo($displayInput)
+			
+		$('<div>')
+			.addClass('n2Auth_create_label')
+			.text( _loc('display name') )
+			.appendTo($displayInput);
+		
+		// Password 
+		var $pwLine = $('<div>')
+			.addClass('n2Auth_create_pw1_line')
+			.appendTo($form);
+		
+		var $pwInput = $('<div>')
+			.addClass('n2Auth_create_input')
+			.appendTo($pwLine);
+		
+		$('<input type="password">')
+			.addClass('n2Auth_pw_input n2Auth_input_field')
+			.appendTo($pwInput)
+			
+		$('<div>')
+			.addClass('n2Auth_create_label')
+			.text( _loc('password') )
+			.appendTo($pwInput);
+		
+		// Password confirmation
+		var $pw2Line = $('<div>')
+			.addClass('n2Auth_create_pw2_line')
+			.appendTo($form);
+		
+		var $pw2Input = $('<div>')
+			.addClass('n2Auth_create_input')
+			.appendTo($pw2Line);
+		
+		$('<input type="password">')
+			.addClass('n2Auth_pw_input2 n2Auth_input_field')
+			.appendTo($pw2Input)
+			
+		$('<div>')
+			.addClass('n2Auth_create_label')
+			.text( _loc('confirm password') )
+			.appendTo($pw2Input);
 		
 		if( opts.userName ){
 			$dialog.find('.n2Auth_user_input').val( opts.userName );
 		};
 		
-		$dialog.find('.n2Auth_button_create')
+		// Create User Button
+		var $line = $('<div>')
+			.addClass('n2Auth_create_button_line')
+			.appendTo($form);
+		$('<button>')
+			.addClass('n2Auth_button_create')
 			.text( _loc('Create User') )
-			.button({icons:{primary:'ui-icon-check'}})
+			.appendTo($line)
 			.click(function(){
 				performUserCreation();
 				return false;
 			});
-
+		
 		$dialog.find('.n2Auth_input_field').keydown(function(e){
 			var charCode = null;
 			if( null === e ) {
