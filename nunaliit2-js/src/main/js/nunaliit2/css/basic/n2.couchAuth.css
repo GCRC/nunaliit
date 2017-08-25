@@ -13,11 +13,11 @@
 .n2Auth_login .n2Auth_login_input input {
 	width: 100%;
 	padding: 8px 0px;
-    border: none;
-    border-bottom: 1px solid #aaaaaa;
-    box-shadow: none;
-    outline: none;
-    font-size: 1.4em;
+	border: none;
+	border-bottom: 1px solid #aaaaaa;
+	box-shadow: none;
+	outline: none;
+	font-size: 1.4em;
 }
 
 .n2Auth_login .n2Auth_login_input input:focus {
