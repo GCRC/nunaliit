@@ -956,7 +956,9 @@ var AuthService = $n2.Class({
 			.appendTo($pw2Input);
 		
 		if( opts.userName ){
-			$dialog.find('.n2Auth_user_input').val( opts.userName );
+			var $n2AuthUserInput = $dialog.find('.n2Auth_user_input');
+			$n2AuthUserInput.val( opts.userName );
+			$n2AuthUserInput.addClass('input_detected');
 		};
 		
 		// Create User Button
@@ -1056,12 +1058,6 @@ var AuthService = $n2.Class({
 			.addClass('n2Auth_create')
 			.appendTo($dialog);
 		
-		// User name
-		var emailValue = '';
-		if( opts.userName ){
-			emailValue = opts.userName;
-		};
-		
 		// E-mail address
 		var $line = $('<div>')
 			.addClass('n2Auth_create_email_line')
@@ -1073,7 +1069,6 @@ var AuthService = $n2.Class({
 		$('<input type="text" autofocus>')
 			.addClass('n2Auth_email_input n2Auth_input_field')
 			.appendTo($input)
-			.val(emailValue)
 			.keydown(function(e){
 				var charCode = null;
 				if( null === e ) {
@@ -1089,6 +1084,12 @@ var AuthService = $n2.Class({
 					performUserRegistration();
 				};
 			});
+		
+		if( opts.userName ){
+			var $n2AuthEmailInput = $dialog.find('.n2Auth_email_input');
+			$n2AuthEmailInput.val( opts.userName );
+			$n2AuthEmailInput.addClass('input_detected');
+		};
 
 		$('<div>')
 			.addClass('n2Auth_create_label')
@@ -1190,18 +1191,13 @@ var AuthService = $n2.Class({
 
 		var _this = this;
 		var $dialog = $('#'+dialogId);
-		
+
 		$dialog.empty();
-		
+
 		var $form = $('<div>')
 			.addClass('n2Auth_recoverPassword')
 			.appendTo($dialog);
-		
-		var userName = '';
-		if( opts.userName ){
-			userName = opts.userName;
-		};
-		
+
 		// E-mail address
 		var $line = $('<div>')
 			.addClass('n2Auth_recoverPassword_email_line')
@@ -1213,7 +1209,6 @@ var AuthService = $n2.Class({
 		$('<input type="text" autofocus>')
 			.addClass('n2Auth_email_input n2Auth_input_field')
 			.appendTo($input)
-			.val(userName)
 			.keydown(function(e){
 				var charCode = null;
 				if( null === e ) {
@@ -1229,6 +1224,12 @@ var AuthService = $n2.Class({
 					performPasswordRecovery();
 				};
 			});
+
+		if( opts.userName ){
+			var $n2RecoverPasswordInput = $dialog.find('.n2Auth_email_input');
+			$n2RecoverPasswordInput.val( opts.userName );
+			$n2RecoverPasswordInput.addClass('input_detected');
+		};
 		
 		$('<div>')
 			.addClass('n2Auth_recoverPassword_label')

@@ -159,15 +159,15 @@
 }
 
 .n2Auth_create_display_line .n2Auth_input_field + .n2Auth_create_label {
-	top: 85px;
+	top: 82px;
 }
 
 .n2Auth_create_pw1_line .n2Auth_input_field + .n2Auth_create_label {
-	top: 141px;
+	top: 136px;
 }
 
 .n2Auth_create_pw2_line .n2Auth_input_field + .n2Auth_create_label {
-	top: 196px;
+	top: 190px;
 }
 
 .n2Auth_create_email_line .n2Auth_input_field:focus + .n2Auth_create_label,
@@ -182,7 +182,7 @@
 
 .n2Auth_create_display_line .n2Auth_input_field:focus + .n2Auth_create_label,
 .n2Auth_create_display_line .n2Auth_input_field.input_detected + .n2Auth_create_label {
-	top: 58px;
+	top: 59px;
 	font-size: 0.9em;
 	transition: all 0.3s ease;
 	color: #0379CF;
@@ -190,7 +190,7 @@
 
 .n2Auth_create_pw1_line .n2Auth_input_field:focus + .n2Auth_create_label,
 .n2Auth_create_pw1_line .n2Auth_input_field.input_detected + .n2Auth_create_label {
-	top: 116px;
+	top: 113px;
 	font-size: 0.9em;
 	transition: all 0.3s ease;
 	color: #0379CF;
@@ -198,7 +198,7 @@
 
 .n2Auth_create_pw2_line .n2Auth_input_field:focus + .n2Auth_create_label,
 .n2Auth_create_pw2_line .n2Auth_input_field.input_detected + .n2Auth_create_label {
-	top: 174px;
+	top: 170px;
 	font-size: 0.9em;
 	transition: all 0.3s ease;
 	color: #0379CF;
