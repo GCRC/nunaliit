@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 /* 
  * ------------------------------------------------------------------------------
- * Description: Simple atlas plug-in which detects if an input field value is 
+ * Description: Simple atlas plug-in that detects if an input field value is 
  * empty or not. When value is not empty an input_detected class is added to the 
  * element.
  * ------------------------------------------------------------------------------
@@ -59,17 +59,17 @@ var InputChangeDetector = $n2.Class('InputChangeDetector', {
 	startDetector: function(){
 		
 		$('body').change(function(){
-        	$(this).find('input').each(function(){
-        		var value = $(this).val();
-        		
-        		if( value !== '' && !$(this).hasClass('input_detected') ){
-        			$(this).addClass('input_detected');
-        			
-        		} else if( value === '' && $(this).hasClass('input_detected') ){
-        			$(this).removeClass('input_detected');
-        		};
-        	});
-        });
+			$(this).find('input').each(function(){
+				var value = $(this).val();
+
+				if( value !== '' && !$(this).hasClass('input_detected') ){
+					$(this).addClass('input_detected');
+	
+				} else if( value === '' && $(this).hasClass('input_detected') ){
+					$(this).removeClass('input_detected');
+				};
+			});
+		});
 	}
 });
 
