@@ -46,6 +46,8 @@ var ConfigService = $n2.Class('ConfigurationService',{
 	
 	configuration: null,
 	
+	serverVersion: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			url: null
@@ -189,12 +191,18 @@ var ConfigService = $n2.Class('ConfigurationService',{
 			onSuccess: function(randomString){}
 			,onError: function(err){}
 		},opts_);
+		
+		var _this = this;
 
 		$.ajax({
 			url: this.serverUrl+'testChannel'
 			,type: 'GET'
 			,dataType: 'json'
 			,success: function(data, textStatus, jqXHR){
+				if( data && data.version ){
+					_this._reportServerVersion(data.version);
+				};
+
 				if( data && data.random ) {
 					opts.onSuccess(data.random);
 				} else {
@@ -206,6 +214,22 @@ var ConfigService = $n2.Class('ConfigurationService',{
 				opts.onError(err);
 			}
 		});
+	},
+	
+	_reportServerVersion: function(version){
+		if( !this.serverVersion ){
+			this.serverVersion = version;
+
+			if( this.configuration ){
+				this.configuration.serverVersion = version;
+			};
+			
+			if( n2atlas ){
+				if( this.serverVersion !== n2atlas.version ){
+					$n2.logError('Version mismatch. Client: '+n2atlas.version+' Server: '+this.serverVersion);
+				};
+			};
+		};
 	}
 });
 

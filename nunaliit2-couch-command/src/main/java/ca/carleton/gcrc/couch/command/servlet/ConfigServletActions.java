@@ -13,6 +13,7 @@ import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchQuery;
 import ca.carleton.gcrc.couch.client.CouchQueryResults;
+import ca.carleton.gcrc.utils.VersionUtils;
 
 public class ConfigServletActions {
 
@@ -34,6 +35,11 @@ public class ConfigServletActions {
 			cached_welcome.put("ConfigServlet", true);
 			
 			cached_welcome.put("submissionDbEnabled", submissionDbEnabled);
+			
+			String version = VersionUtils.getVersion();
+			if( null != version ){
+				cached_welcome.put("version", version);
+			}
 		}
 		
 		return cached_welcome;

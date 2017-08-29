@@ -24,6 +24,7 @@ import ca.carleton.gcrc.couch.fsentry.FSEntry;
 import ca.carleton.gcrc.couch.fsentry.FSEntryBuffer;
 import ca.carleton.gcrc.couch.fsentry.FSEntryFile;
 import ca.carleton.gcrc.couch.fsentry.FSEntryMerged;
+import ca.carleton.gcrc.utils.VersionUtils;
 
 public class CommandUpdate implements Command {
 	
@@ -306,6 +307,8 @@ public class CommandUpdate implements Command {
 			
 			// Create atlas designator
 			{
+				String version = VersionUtils.getVersion();
+				
 				StringWriter sw = new StringWriter();
 				PrintWriter pw = new PrintWriter(sw);
 				
@@ -314,6 +317,9 @@ public class CommandUpdate implements Command {
 				pw.println("\t,\"restricted\":"+atlasProperties.isRestricted());
 				pw.println("\t,\"submissionDbEnabled\":"+atlasProperties.isCouchDbSubmissionDbEnabled());
 				pw.println("\t,\"submissionDbName\":\""+atlasProperties.getCouchDbSubmissionDbName()+"\"");
+				if( null != version ){
+					pw.println("\t,\"version\":\""+version+"\"");
+				}
 				pw.println("}");
 				
 				FSEntry f = FSEntryBuffer.getPositionedBuffer("a/nunaliit.json", sw.toString());
@@ -587,12 +593,17 @@ public class CommandUpdate implements Command {
 	}
 	
 	private void printAtlasVendorFile(PrintWriter pw, AtlasProperties atlasProperties, DatabaseType type){
+		String version = VersionUtils.getVersion();
+
 		pw.println("var n2atlas = {");
 		pw.println("\tname: \""+atlasProperties.getAtlasName()+"\"");
 		pw.println("\t,restricted: "+atlasProperties.isRestricted());
 		pw.println("\t,\"submissionDbEnabled\":"+atlasProperties.isCouchDbSubmissionDbEnabled());
 		pw.println("\t,\"submissionDbName\":\""+atlasProperties.getCouchDbSubmissionDbName()+"\"");
 		pw.println("\t,\"googleMapApiKey\":\""+atlasProperties.getGoogleMapApiKey()+"\"");
+		if( null != version ){
+			pw.println("\t,\"version\":\""+version+"\"");
+		}
 		pw.println("\t,\""+type.getPropName()+"\":true");
 		pw.println("};");
 		pw.println("if( typeof(exports) === 'object' ) {");
@@ -601,6 +612,9 @@ public class CommandUpdate implements Command {
 		pw.println("\texports.submissionDbEnabled = n2atlas.submissionDbEnabled;");
 		pw.println("\texports.submissionDbName = n2atlas.submissionDbName;");
 		pw.println("\texports.googleMapApiKey = n2atlas.googleMapApiKey;");
+		if( null != version ){
+			pw.println("\texports.version = n2atlas.version;");
+		}
 		pw.println("\texports."+type.getPropName()+" = true;");
 		pw.println("};");
 		

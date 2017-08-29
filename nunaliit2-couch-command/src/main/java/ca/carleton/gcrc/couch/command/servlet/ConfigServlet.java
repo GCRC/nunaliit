@@ -42,7 +42,6 @@ import ca.carleton.gcrc.couch.onUpload.UploadWorkerSettings;
 import ca.carleton.gcrc.couch.onUpload.geojson.GeoJsonFileConverter;
 import ca.carleton.gcrc.couch.onUpload.gpx.GpxFileConverter;
 import ca.carleton.gcrc.couch.onUpload.inReach.InReachConfiguration;
-import ca.carleton.gcrc.couch.onUpload.inReach.InReachSettings;
 import ca.carleton.gcrc.couch.onUpload.inReach.InReachSettingsFromXmlFile;
 import ca.carleton.gcrc.couch.onUpload.mail.DailyVetterNotificationGenerator;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotification;
@@ -77,6 +76,7 @@ import ca.carleton.gcrc.security.rng.RngFactory;
 import ca.carleton.gcrc.upload.OnUploadedListenerSingleton;
 import ca.carleton.gcrc.upload.UploadServlet;
 import ca.carleton.gcrc.upload.UploadUtils;
+import ca.carleton.gcrc.utils.VersionUtils;
 
 /**
  * Configures the properties of the other servlets. Accepts init
@@ -952,6 +952,11 @@ public class ConfigServlet extends JsonServlet {
 				
 				JSONObject result = new JSONObject();
 				result.put("ok", true);
+				
+				String version = VersionUtils.getVersion();
+				if( null != version ){
+					result.put("version", version);
+				}
 				
 				// Get 128 random bits
 				byte[] bytes = new byte[16];
