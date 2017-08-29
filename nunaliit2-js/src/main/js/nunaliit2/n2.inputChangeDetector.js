@@ -44,16 +44,23 @@ POSSIBILITY OF SUCH DAMAGE.
 //--------------------------------------------------------------------------
 var InputChangeDetector = $n2.Class('InputChangeDetector', {
 	
+	disable: null, 
+	
 	initialize: function(opts_){
 
 		var opts = $n2.extend({
 			config: null
+			,disable: false
 			,options: null
 		},opts_);
 		
 		var _this = this;
-
-		this.startDetector();
+		
+		this.disable = opts.disable; 
+		
+		if ( !this.disable ){
+			this.startDetector();
+		};
 	},
 	
 	startDetector: function(){
@@ -73,6 +80,34 @@ var InputChangeDetector = $n2.Class('InputChangeDetector', {
 	}
 });
 
-$n2.inputChildDetector = new InputChangeDetector();
+//--------------------------------------------------------------------------
+function HandleUtilityCreateRequests(m, addr, dispatcher){
+	if( 'inputChangeDetector' === m.utilityType ){
+		var options = {};
+		
+		if( typeof m.utilityOptions === 'object' ){
+			for(var key in m.utilityOptions){
+				var value = m.utilityOptions[key];
+				options[key] = value;
+			};
+		};
+		
+		if( m.config ){
+			if( m.config.directory ){
+				options.dispatchService = m.config.directory.dispatchService;
+			};
+		};
+		
+        new InputChangeDetector(options);
+        
+        m.created = true;
+	};
+};
+
+//--------------------------------------------------------------------------
+$n2.inputChangeDetector = {
+	HandleUtilityCreateRequests: HandleUtilityCreateRequests
+	,InputChangeDetector: InputChangeDetector
+};
 
 })(jQuery,nunaliit2);
