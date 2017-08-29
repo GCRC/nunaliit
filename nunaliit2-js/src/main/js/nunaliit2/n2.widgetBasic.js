@@ -119,6 +119,8 @@ var CreateDocumentWidget = $n2.Class({
 			.appendTo( $('#'+containerId) );
 		
 		if( this.showAsLink ) {
+			$div.addClass('n2widget_createDocument_asLink');
+
 			$('<a>')
 				.attr('href','#')
 				.text( _loc('Create Document') )

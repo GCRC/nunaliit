@@ -848,6 +848,10 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 			.addClass('n2widget_multiDropDownFilterSelection n2widget_multiDropDownFilterSelection_selection_hidden')
 			.appendTo($container);
 		
+		if( this.showAsLink ){
+			$elem.addClass('n2widget_multiDropDownFilterSelection_asLink');
+		};
+		
 		var $relDiv = $('<div>')
 		.css({
 			position: 'relative'
