@@ -2447,6 +2447,144 @@ var ImportProfileOperationSetValue = $n2.Class(ImportProfileOperation, {
 addOperationPattern(OPERATION_SET_VALUE, ImportProfileOperationSetValue);
 
 //=========================================================================
+// findReference(<target-selector>,<key-selection>,<reference-selection>)
+var OPERATION_FIND_REF = /^\s*findReference\(([^,]*),\s*'([^']*)'\s*,\s*'([^']*)'\s*\)\s*$/;
+
+var ImportProfileOperationFindReference = $n2.Class(ImportProfileOperation, {
+	
+	operationString: null,
+	
+	atlasDesign: null,
+	
+	profileId: null,
+	
+	importId: null,
+	
+	targetSelector: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			operationString: null
+			,atlasDb: null
+			,atlasDesign: null
+		},opts_);
+		
+		ImportProfileOperation.prototype.initialize.call(this);
+		
+		this.operationString = opts.operationString;
+		this.atlasDesign = opts.atlasDesign;
+		
+		var matcher = OPERATION_IMPORT_REF.exec(this.operationString);
+		if( !matcher ) {
+			throw 'Invalid operation string for ImportProfileOperationImportReference: '+operationString;
+		};
+		
+		this.targetSelector = $n2.objectSelector.parseSelector(matcher[1]);
+		this.profileId = matcher[2];
+		this.importId = matcher[3];
+	},
+	
+	reportCopyOperations: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,importData: null
+			,allPropertyNames: null
+			,onSuccess: function(copyOperations){}
+		},opts_);
+		
+		var _this = this;
+
+		if( opts.allPropertyNames.indexOf(this.importId) >= 0 ){
+			var importId = opts.importData[this.importId];
+			
+			this.atlasDesign.queryView({
+				viewName: 'nunaliit-import'
+				,startkey: [this.profileId, importId]
+				,endkey: [this.profileId, importId]
+				,onSuccess: function(rows){
+					var refId = null;
+					for(var i=0,e=rows.length; i<e; ++i){
+						var row = rows[i];
+						refId = row.id;
+					};
+					setReference(refId);
+				}
+				,onError: function(){
+					// there are no document with profileId/importId combination
+					setReference(null);
+				}
+			});
+			
+		} else {
+			// entry does not have data for import id
+			setReference(null);
+		};
+		
+		function setReference(refId){
+			var copyOperations = [];
+			
+			var importValue = undefined;
+			if( refId ){
+				importValue = {
+					nunaliit_type: 'reference'
+					,doc: refId
+				};
+			};
+			
+			var targetValue = _this.targetSelector.getValue(opts.doc);
+			
+			var isInconsistent = false;
+			if( importValue === targetValue ){
+				// takes care of both undefined
+			} else if( importValue 
+			 && targetValue 
+			 && importValue.doc === targetValue.doc ){
+				// Consistent
+			} else {
+				isInconsistent = true;
+			};
+			
+			copyOperations.push({
+				propertyNames: [_this.importId]
+				,computedValue: importValue
+				,targetSelector: _this.targetSelector
+				,targetValue: targetValue
+				,isInconsistent: isInconsistent
+			});
+			
+			opts.onSuccess(copyOperations);
+		};
+	},
+	
+	performCopyOperation: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,importData: null
+			,copyOperation: null
+		},opts_);
+		
+		var doc = opts.doc;
+		
+		var refId = opts.importData[this.refKey];
+		
+		var importValue = undefined;
+		if( opts.copyOperation 
+		 && opts.copyOperation.computedValue ){
+			importValue = opts.copyOperation.computedValue;
+		};
+
+		if( typeof importValue === 'undefined' ){
+			// Must delete
+			this.targetSelector.removeValue(doc);
+		} else {
+			this.targetSelector.setValue(doc, importValue, true);
+		};
+	}
+});
+
+addOperationPattern(OPERATION_FIND_REF, ImportProfileOperationFindReference);
+
+//=========================================================================
 var ImportEntry = $n2.Class({
 	initialize: function(){
 		
