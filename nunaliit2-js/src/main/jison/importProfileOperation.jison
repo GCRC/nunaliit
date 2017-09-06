@@ -78,20 +78,34 @@ OpAssignReference.prototype.reportCopyOperations = function(opts){
 };
 
 // -----------------------------------------------------------
-var ImportedAttribute = function(targetSelector){
+var StringValue = function(value){
+	this.value = value;
+};
+StringValue.prototype.configure = function(opts){
+};
+StringValue.prototype.getValues = function(opts, propertyNameMap){
+	if( typeof this.value === 'string ){
+		return [this.value];
+	};
+
+	return [];
+};
+
+// -----------------------------------------------------------
+var ImportedAttributeValue = function(targetSelector){
 	if( typeof targetSelector === 'string' ){
 		this.targetSelector = $n2.objectSelector.parseSelector(targetSelector);
 	} else {
 		throw new Error('expected a string');
 	};
 };
-ImportedAttribute.prototype.configure = function(opts){
+ImportedAttributeValue.prototype.configure = function(opts){
 	if( this.targetSelector 
 	 && typeof this.targetSelector.configure === 'function' ){
 	 	this.targetSelector.configure(opts);
 	};
 };
-ImportedAttribute.prototype.getValues = function(opts, propertyNameMap){
+ImportedAttributeValue.prototype.getValues = function(opts, propertyNameMap){
 	// Returns an array of values found in the import data
 	var targetValue = this.targetSelector.getValue(opts.importData);
 	
@@ -139,6 +153,31 @@ RefFromSchema.prototype.getValues = function(opts, propertyNameMap){
 	return [targetValue];
 };
 
+// -----------------------------------------------------------
+var RefFromValue = function(valueSelector){
+	this.valueSelector = valueSelector;
+};
+RefFromValue.prototype.configure = function(opts){
+	if( this.valueSelector 
+	 && typeof this.valueSelector.configure === 'function' ){
+	 	this.valueSelector.configure(opts);
+	};
+};
+RefFromValue.prototype.getValues = function(opts, propertyNameMap){
+	// Returns an array of references based on the selected keys
+	var values = this.valueSelector
+	var targetValue = this.targetSelector.getValue(opts.importData);
+	
+	if( targetValue === undefined ){
+		return [];
+	};
+
+	var propName = this.targetSelector.getSelectorString();
+	propertyNameMap[propName] = true;
+	
+	return [targetValue];
+};
+
 %}
 
 /* lexical grammar */
@@ -151,6 +190,7 @@ RefFromSchema.prototype.getValues = function(opts, propertyNameMap){
 "assignReference"      { return 'OP_ASSIGN_REFERENCE'; }
 "importedAttribute"    { return 'IMPORTED_ATTRIBUTE'; }
 "fromSchema"           { return 'REF_FROM_SCHEMA'; }
+"referencesFromValue"  { return 'REF_FROM_VALUE'; }
 [0-9]+("."[0-9]+)?\b   { return 'NUMBER'; }
 [_a-zA-Z][_a-zA-Z0-9]* { return 'VAR_NAME'; }
 "'"(\\\'|[^'])*"'"     { yytext = yytext.substr(1,yytext.length-2); return 'STRING'; }
@@ -208,20 +248,24 @@ operation
 	;
 
 referenceSelector
-	: 'REF_FROM_SCHEMA' '(' 'STRING' ',' 'STRING' ',' attributeSelector ')'
+	: 'REF_FROM_SCHEMA' '(' 'STRING' ',' 'STRING' ',' valueSelector ')'
         {
         	$$ = new RefFromSchema($3,$5,$7);
         }
-    | attributeSelector
-    	{
-    		return $1;
-    	}
+	| 'REF_FROM_VALUE' '(' valueSelector ')'
+        {
+        	$$ = new RefFromValue($3);
+        }
 	;
 	
-attributeSelector
+valueSelector
 	: 'IMPORTED_ATTRIBUTE' '(' 'STRING' ')'
         {
-        	$$ = new ImportedAttribute($3);
+        	$$ = new ImportedAttributeValue($3);
+        }
+    | 'STRING'
+        {
+        	$$ = new StringValue($1);
         }
 	;
 
