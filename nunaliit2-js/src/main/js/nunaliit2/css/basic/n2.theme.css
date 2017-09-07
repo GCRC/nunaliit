@@ -285,13 +285,7 @@ CreateDocument widget
 	color: #000;
 }
 
-/*
-	Search input located in title bar
-*/
-.nunaliit_atlas .nunaliit_search_input {
-	float: right;
-	padding: 1px 20px;
-}
+
 
 /* ============================== */
 /* ! CONTENT SECTION   */
@@ -307,24 +301,63 @@ CreateDocument widget
 }
 
 /* Search */
+.nunaliit_atlas .nunaliit_search_input {
+	float: right;
+	display: inline-flex;
+	padding: 4px 0px;
+}
+
 .nunaliit_atlas .nunaliit_searchInput
 ,.nunaliit_atlas .n2_content_searchInput {
 	background-color: #fff;
 	border-bottom:1px solid #e5e5e5;
 }
+
+.nunaliit_atlas .nunaliit_search_input .searchIcon,
+.nunaliit_atlas .n2_content_searchInput .searchIcon {
+	/* url will need to be updated if included in nunaliity core */
+	background-image: url(images/search_icon.png);
+	background-position: center;
+	background-repeat: no-repeat;
+	background-color: transparent;
+	width: 25px;
+	height: 18px;
+	padding: 5px 5px 0px 0px;
+	cursor: pointer;
+}
+
 .nunaliit_atlas .nunaliit_search_input input
 ,.nunaliit_atlas .n2_content_searchInput input {
-	background-image: url('images/search.png');
-	background-position:center right;
-	background-repeat:no-repeat;
+	height: 24px;
+	width: 0px;
+	max-width: 200px;
+	margin: 0;
+	padding: 0px;
 	background-color: transparent;
-	border-radius: 30px;
 	font-family: helvetica, sans-serif;
 	font-weight: 400;
 	font-size: 0.9em;
-	height: 26px;
-	padding: 0px 10px;
-	margin: 0;
+	border: none;
+	border-bottom: 1px solid #fefefe;
+	outline: none;
+	line-height: 20px;
+}
+
+.nunaliit_atlas .nunaliit_search_input input:active
+,.nunaliit_atlas .n2_content_searchInput input:focus {
+	border-bottom-width: 2px;
+}
+
+.nunaliit_atlas .nunaliit_search_input.search_inactive input,
+.nunaliit_atlas .n2_content_searchInput.search_inactive input {
+	width: 0px;
+	transition: width ease 0.5s;
+}
+
+.nunaliit_atlas .nunaliit_search_input.search_active input,
+.nunaliit_atlas .n2_content_searchInput.search_inactive input {
+	width: 250px;
+	transition: width ease 0.5s;
 }
 
 /* Side Bar */
