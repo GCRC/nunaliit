@@ -123,6 +123,25 @@ function createOperation(opts_){
 		};
 	};
 	
+	// At this point, we are looking for an operation which is supported by the
+	// JISON parser
+	try {
+		var program = $n2.importProfileOperation.parse(opts.operationString);
+		var op = new ImportProfileOperationParsed({
+			operationString: opts.operationString
+			,program: program
+			,atlasDb: opts.atlasDb
+			,atlasDesign: opts.atlasDesign
+		});
+		
+		$n2.log('ImportProfileOperationParsed',op);
+		
+		return op;
+
+	} catch(err) {
+		$n2.logError("Error while parsing operation string: "+opts.operationString, err);
+	};
+	
 	return null;
 };
 
@@ -2583,6 +2602,52 @@ var ImportProfileOperationFindReference = $n2.Class(ImportProfileOperation, {
 });
 
 addOperationPattern(OPERATION_FIND_REF, ImportProfileOperationFindReference);
+
+//=========================================================================
+
+var ImportProfileOperationParsed = $n2.Class('ImportProfileOperationParsed', ImportProfileOperation, {
+
+	operationString: null,
+
+	program: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			operationString: undefined
+			,program: undefined
+			,atlasDb: undefined
+			,atlasDesign: undefined
+		},opts_);
+		
+		ImportProfileOperation.prototype.initialize.call(this);
+
+		this.operationString = opts.operationString;
+		this.program = opts.program;
+		
+		this.program.configure(opts);
+	},
+	
+	reportCopyOperations: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,importData: null
+			,allPropertyNames: null
+			,onSuccess: function(copyOperations){}
+		},opts_);
+		
+		this.program.reportCopyOperations(opts);
+	},
+	
+	performCopyOperation: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,importData: null
+			,copyOperation: null
+		},opts_);
+		
+		this.program.performCopyOperation(opts);
+	}
+});
 
 //=========================================================================
 var ImportEntry = $n2.Class({

@@ -4,4 +4,4 @@ jison styleRule.jison
 perl merge.pl n2.styleRuleParser.js styleRule.js > ../js/nunaliit2/n2.styleRuleParser.js
 
 jison importProfileOperation.jison
-perl merge.pl n2.importProfileOperation.js styleRule.js > ../js/nunaliit2/n2.couchImportProfileOperation.js
+perl merge.pl n2.importProfileOperation.js importProfileOperation.js > ../js/nunaliit2/n2.couchImportProfileOperation.js

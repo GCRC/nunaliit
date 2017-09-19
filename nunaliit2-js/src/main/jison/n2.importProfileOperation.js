@@ -37,7 +37,7 @@ $merge$
 	
 //--------------------------------------------------------------------------
 function parse(){
-	return importProfileOperation.parse.apply(styleRule, arguments);
+	return importProfileOperation.parse.apply(importProfileOperation, arguments);
 };
 
 //--------------------------------------------------------------------------

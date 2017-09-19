@@ -15,6 +15,42 @@ function compareReferences(ref1, ref2){
 	return 0; 
 };
 
+function compareReferenceSets(set1, set2){
+	if( set1 === set2 ) return 0; // null == null and undefined == undefined
+	if( !set1 ) return -1;
+	if( !set2 ) return 1;
+	
+	var map1 = {};
+	set1.forEach(function(ref){
+		if( ref
+		 && typeof ref.doc === 'string' ){
+			map1[ref.doc] = true;
+		};
+	});
+
+	var map2 = {};
+	set2.forEach(function(ref){
+		if( ref
+		 && typeof ref.doc === 'string' ){
+			map2[ref.doc] = true;
+		};
+	});
+	
+	for(var docId in map1){
+		if( !map2[docId] ){
+			return -1;
+		};
+	};
+
+	for(var docId in map2){
+		if( !map1[docId] ){
+			return 1;
+		};
+	};
+
+	return 0; 
+};
+
 // Functions in the global space receives the context object
 // as 'this'.
 var global = {
@@ -22,12 +58,8 @@ var global = {
 parser.global = global;
 
 // -----------------------------------------------------------
-var OpAssignReference = function(targetSelector, referenceSelector){
-	if( typeof targetSelector === 'string' ){
-		this.targetSelector = $n2.objectSelector.parseSelector(targetSelector);
-	} else {
-		throw new Error('expected a string');
-	};
+var OpAssignReference = function(objectSelector, referenceSelector){
+	this.targetSelector = objectSelector;
 	this.referenceSelector = referenceSelector;
 };
 OpAssignReference.prototype.configure = function(opts){
@@ -46,12 +78,11 @@ OpAssignReference.prototype.reportCopyOperations = function(opts){
 	var computedValues = this.referenceSelector.getValues(opts, propertyNameMap);
 	
 	// create new value
-	var error = undefined;
 	var updatedValue = undefined;
 	if( computedValues.length === 1 ){
 		updatedValue = computedValues[0];
 	} else if( computedValues.length > 1 ){
-		error = 'Multiple references found';
+		throw new Error('Multiple references found for a single unit');
 	};
 
 	var targetValue = this.targetSelector.getValue(opts.doc);
@@ -67,7 +98,7 @@ OpAssignReference.prototype.reportCopyOperations = function(opts){
 	};
 
 	var op = {
-		propertyNames: [inputPropertyNames]
+		propertyNames: inputPropertyNames
 		,computedValue: updatedValue
 		,targetSelector: this.targetSelector
 		,targetValue: targetValue
@@ -75,6 +106,87 @@ OpAssignReference.prototype.reportCopyOperations = function(opts){
 	};	
 
 	opts.onSuccess([op]);
+};
+OpAssignReference.prototype.performCopyOperation = function(opts_){
+	var opts = $n2.extend({
+		doc: null
+		,importData: null
+		,copyOperation: null
+	},opts_);
+	
+	var doc = opts.doc;
+	
+	var computedValues = this.referenceSelector.getValues(opts, {});
+	if( computedValues.length > 1 ){
+		throw new Error('Multiple references returned for a single unit');
+	};
+	var importValue = undefined;
+	if( computedValues.length > 0 ){
+		importValue = computedValues[0];
+	};
+
+	if( typeof importValue === 'undefined' ){
+		// Must delete
+		this.targetSelector.removeValue(doc);
+	} else {
+		this.targetSelector.setValue(doc, importValue);
+	};
+};
+
+// -----------------------------------------------------------
+var OpAssignReferences = function(objectSelector, referenceSelector){
+	this.targetSelector = objectSelector;
+	this.referenceSelector = referenceSelector;
+};
+OpAssignReferences.prototype.configure = function(opts){
+	if( this.targetSelector 
+	 && typeof this.targetSelector.configure === 'function' ){
+	 	this.targetSelector.configure(opts);
+	};
+	if( this.referenceSelector 
+	 && typeof this.referenceSelector.configure === 'function' ){
+	 	this.referenceSelector.configure(opts);
+	};
+};
+OpAssignReferences.prototype.reportCopyOperations = function(opts){
+
+	var propertyNameMap = {};
+	var computedReferences = this.referenceSelector.getValues(opts, propertyNameMap);
+	
+	var currentReferences = this.targetSelector.getValue(opts.doc);
+	
+	var isInconsistent = false;
+	if( 0 !== compareReferenceSets(currentReferences, computedReferences) ){
+		isInconsistent = true;
+	};
+
+	var inputPropertyNames = [];
+	for(var propertyName in propertyNameMap){
+		inputPropertyNames.push(propertyName);
+	};
+
+	var op = {
+		propertyNames: inputPropertyNames
+		,computedValue: computedReferences
+		,targetSelector: this.targetSelector
+		,targetValue: currentReferences
+		,isInconsistent: isInconsistent
+	};	
+
+	opts.onSuccess([op]);
+};
+OpAssignReferences.prototype.performCopyOperation = function(opts_){
+	var opts = $n2.extend({
+		doc: null
+		,importData: null
+		,copyOperation: null
+	},opts_);
+	
+	var doc = opts.doc;
+	
+	var computedValues = this.referenceSelector.getValues(opts, {});
+
+	this.targetSelector.setValue(doc, computedValues);
 };
 
 // -----------------------------------------------------------
@@ -84,7 +196,7 @@ var StringValue = function(value){
 StringValue.prototype.configure = function(opts){
 };
 StringValue.prototype.getValues = function(opts, propertyNameMap){
-	if( typeof this.value === 'string ){
+	if( typeof this.value === 'string' ){
 		return [this.value];
 	};
 
@@ -120,37 +232,80 @@ ImportedAttributeValue.prototype.getValues = function(opts, propertyNameMap){
 };
 
 // -----------------------------------------------------------
-var RefFromSchema = function(schemaName, indexSelector, valueSelector){
+// schemaName - String that represents a schema name
+// objectSelector - Object selector
+// valueSelector - Value selector
+var RefFromSchema = function(schemaName, objectSelector, valueSelector){
 	this.schemaName = schemaName;
-	this.indexSelector = indexSelector;
+	this.objectSelector = objectSelector;
 	this.valueSelector = valueSelector;
+
+	this.documents = [];
 };
 RefFromSchema.prototype.configure = function(opts){
+	var _this = this;
+
 	if( this.schemaName 
 	 && typeof this.schemaName.configure === 'function' ){
 	 	this.schemaName.configure(opts);
 	};
-	if( this.indexSelector 
-	 && typeof this.indexSelector.configure === 'function' ){
-	 	this.indexSelector.configure(opts);
+	if( this.objectSelector 
+	 && typeof this.objectSelector.configure === 'function' ){
+	 	this.objectSelector.configure(opts);
 	};
 	if( this.valueSelector 
 	 && typeof this.valueSelector.configure === 'function' ){
 	 	this.valueSelector.configure(opts);
 	};
+	
+	if( opts.atlasDesign ){
+		opts.atlasDesign.queryView({
+			viewName: 'nunaliit-schema'
+			,startkey: this.schemaName
+			,endkey: this.schemaName
+			,include_docs: true
+			,onSuccess: function(rows){
+				rows.forEach(function(row){
+					var doc = row.doc;
+					_this.documents.push(doc);
+				});
+			}
+		});
+	};
 };
 RefFromSchema.prototype.getValues = function(opts, propertyNameMap){
-	// Returns an array of references based on the selected keys
-	var targetValue = this.targetSelector.getValue(opts.importData);
-	
-	if( targetValue === undefined ){
-		return [];
-	};
+	var _this = this;
 
-	var propName = this.targetSelector.getSelectorString();
-	propertyNameMap[propName] = true;
+	var values = this.valueSelector.getValues(opts, propertyNameMap);
 	
-	return [targetValue];
+	// Select documents
+	var selectedDocuments = [];
+	this.documents.forEach(function(doc){
+		var selected = false;
+		
+		var v = _this.objectSelector.getValue(doc);
+		values.forEach(function(value){
+			if( v === value ){
+				selected = true;
+			};
+		});
+		
+		if( selected ){
+			selectedDocuments.push(doc);
+		};
+	});
+
+	// Returns an array of references based on the selected keys
+	var references = [];
+	selectedDocuments.forEach(function(doc){
+		var ref = {
+			nunaliit_type: 'reference'
+			,doc: doc._id
+		};
+		references.push(ref);
+	});
+
+	return references;
 };
 
 // -----------------------------------------------------------
@@ -165,17 +320,37 @@ RefFromValue.prototype.configure = function(opts){
 };
 RefFromValue.prototype.getValues = function(opts, propertyNameMap){
 	// Returns an array of references based on the selected keys
-	var values = this.valueSelector
-	var targetValue = this.targetSelector.getValue(opts.importData);
-	
-	if( targetValue === undefined ){
-		return [];
-	};
+	var values = this.valueSelector.getValues(opts, propertyNameMap);
 
-	var propName = this.targetSelector.getSelectorString();
-	propertyNameMap[propName] = true;
-	
-	return [targetValue];
+	// Returns an array of references based on the selected keys
+	var references = [];
+	values.forEach(function(value){
+		var ref = {
+			nunaliit_type: 'reference'
+			,doc: value
+		};
+		references.push(ref);
+	});
+
+	return references;
+};
+
+// -----------------------------------------------------------
+// selectorStr - Dotted notation for an object selector
+var ObjectSelector = function(selectorStr){
+	this.selectorStr = selectorStr;
+	this.selector = $n2.objectSelector.parseSelector(selectorStr);
+};
+ObjectSelector.prototype.configure = function(opts){
+};
+ObjectSelector.prototype.getValue = function(obj){
+	return this.selector.getValue(obj);
+};
+ObjectSelector.prototype.setValue = function(obj, value){
+	this.selector.setValue(obj, value, true);
+};
+ObjectSelector.prototype.removeValue = function(obj){
+	this.selector.removeValue(obj);
 };
 
 %}
@@ -188,6 +363,7 @@ RefFromValue.prototype.getValues = function(opts, propertyNameMap){
 "true"                 { return 'true'; }
 "false"                { return 'false'; }
 "assignReference"      { return 'OP_ASSIGN_REFERENCE'; }
+"assignReferences"     { return 'OP_ASSIGN_REFERENCES'; }
 "importedAttribute"    { return 'IMPORTED_ATTRIBUTE'; }
 "fromSchema"           { return 'REF_FROM_SCHEMA'; }
 "referencesFromValue"  { return 'REF_FROM_VALUE'; }
@@ -241,14 +417,18 @@ program
     ;
     
 operation
-	: 'OP_ASSIGN_REFERENCE' '(' 'STRING' ',' referenceSelector ')'
+	: 'OP_ASSIGN_REFERENCE' '(' objectSelector ',' referenceSelector ')'
         {
         	$$ = new OpAssignReference($3,$5);
+        }
+	| 'OP_ASSIGN_REFERENCES' '(' objectSelector ',' referenceSelector ')'
+        {
+        	$$ = new OpAssignReferences($3,$5);
         }
 	;
 
 referenceSelector
-	: 'REF_FROM_SCHEMA' '(' 'STRING' ',' 'STRING' ',' valueSelector ')'
+	: 'REF_FROM_SCHEMA' '(' 'STRING' ',' objectSelector ',' valueSelector ')'
         {
         	$$ = new RefFromSchema($3,$5,$7);
         }
@@ -269,6 +449,11 @@ valueSelector
         }
 	;
 
-	
+objectSelector	
+	: 'STRING'
+        {
+        	$$ = new ObjectSelector($1);
+        }
+	;
 
 %%
