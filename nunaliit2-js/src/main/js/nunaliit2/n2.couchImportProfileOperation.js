@@ -107,12 +107,12 @@ POSSIBILITY OF SUCH DAMAGE.
   }
 */
 var importProfileOperation = (function(){
-var o=function(k,v,o,l){for(o=o||{},l=k.length;l--;o[k[l]]=v);return o},$V0=[1,9],$V1=[1,14],$V2=[1,15],$V3=[1,24],$V4=[1,23];
+var o=function(k,v,o,l){for(o=o||{},l=k.length;l--;o[k[l]]=v);return o},$V0=[1,9],$V1=[1,14],$V2=[1,15],$V3=[1,16],$V4=[1,27],$V5=[1,26],$V6=[1,35],$V7=[1,40],$V8=[1,34],$V9=[1,37],$Va=[1,38],$Vb=[1,39],$Vc=[1,41],$Vd=[1,45],$Ve=[1,46],$Vf=[1,47],$Vg=[1,48],$Vh=[1,49],$Vi=[1,50],$Vj=[1,51],$Vk=[1,52],$Vl=[1,53],$Vm=[1,54],$Vn=[1,55],$Vo=[1,56],$Vp=[1,57],$Vq=[9,11,20,21,23,24,25,26,27,28,34,35,36,37,38,42],$Vr=[7,9,11,20,21,23,24,25,26,27,28,34,35,36,37,38,39,41,42],$Vs=[9,11,20,21,42],$Vt=[9,11,20,21,23,24,25,26,27,28,42],$Vu=[9,11,20,21,23,24,25,26,27,28,34,35,42];
 var parser = {trace: function trace() { },
 yy: {},
-symbols_: {"error":2,"program":3,"operation":4,"EOF":5,"OP_ASSIGN_REFERENCE":6,"(":7,"objectSelector":8,",":9,"referenceSelector":10,")":11,"OP_ASSIGN_REFERENCES":12,"REF_FROM_SCHEMA":13,"STRING":14,"valueSelector":15,"REF_FROM_VALUE":16,"IMPORTED_ATTRIBUTE":17,"$accept":0,"$end":1},
-terminals_: {2:"error",5:"EOF",6:"OP_ASSIGN_REFERENCE",7:"(",9:",",11:")",12:"OP_ASSIGN_REFERENCES",13:"REF_FROM_SCHEMA",14:"STRING",16:"REF_FROM_VALUE",17:"IMPORTED_ATTRIBUTE"},
-productions_: [0,[3,2],[4,6],[4,6],[10,8],[10,4],[15,4],[15,1],[8,1]],
+symbols_: {"error":2,"program":3,"operation":4,"EOF":5,"OP_ASSIGN_REFERENCE":6,"(":7,"objectSelector":8,",":9,"referenceSelector":10,")":11,"OP_ASSIGN_REFERENCES":12,"REF_FROM_SCHEMA":13,"STRING":14,"valueSelector":15,"REF_FROM_SCHEMA2":16,"value":17,"REF_FROM_VALUE":18,"IMPORTED_ATTRIBUTE":19,"&&":20,"||":21,"!":22,"==":23,"!=":24,">=":25,"<=":26,">":27,"<":28,"identifier":29,"arguments":30,"true":31,"false":32,"NUMBER":33,"+":34,"-":35,"*":36,"/":37,"%":38,".":39,"VAR_NAME":40,"[":41,"]":42,"$accept":0,"$end":1},
+terminals_: {2:"error",5:"EOF",6:"OP_ASSIGN_REFERENCE",7:"(",9:",",11:")",12:"OP_ASSIGN_REFERENCES",13:"REF_FROM_SCHEMA",14:"STRING",16:"REF_FROM_SCHEMA2",18:"REF_FROM_VALUE",19:"IMPORTED_ATTRIBUTE",20:"&&",21:"||",22:"!",23:"==",24:"!=",25:">=",26:"<=",27:">",28:"<",31:"true",32:"false",33:"NUMBER",34:"+",35:"-",36:"*",37:"/",38:"%",39:".",40:"VAR_NAME",41:"[",42:"]"},
+productions_: [0,[3,2],[4,6],[4,6],[10,8],[10,6],[10,4],[15,4],[15,1],[8,1],[17,3],[17,3],[17,2],[17,3],[17,3],[17,3],[17,3],[17,3],[17,3],[17,3],[17,3],[17,4],[17,1],[17,1],[17,1],[17,1],[17,1],[17,3],[17,3],[17,3],[17,3],[17,3],[30,3],[30,1],[29,3],[29,4],[29,1]],
 performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate /* action[1] */, $$ /* vstack */, _$ /* lstack */) {
 /* this == yyval */
 
@@ -138,28 +138,169 @@ case 4:
 break;
 case 5:
 
-        	this.$ = new RefFromValue($$[$0-1]);
+        	this.$ = new RefFromSchema2($$[$0-3],$$[$0-1]);
         
 break;
 case 6:
 
-        	this.$ = new ImportedAttributeValue($$[$0-1]);
+        	this.$ = new RefFromValue($$[$0-1]);
         
 break;
 case 7:
 
-        	this.$ = new StringValue($$[$0]);
+        	this.$ = new ImportedAttributeValue($$[$0-1]);
         
 break;
 case 8:
 
-        	this.$ = new ObjectSelector($$[$0]);
+        	this.$ = new StringValue($$[$0]);
+        
+break;
+case 9:
+
+        	this.$ = new ObjectSelector2($$[$0]);
+        
+break;
+case 10:
+
+        	this.$ = new Expression($$[$0-2],'&&',$$[$0]);
+        
+break;
+case 11:
+
+        	this.$ = new Expression($$[$0-2],'||',$$[$0]);
+        
+break;
+case 12:
+
+        	this.$ = new Expression($$[$0],'!');
+        
+break;
+case 13:
+
+    		this.$ = $$[$0-1];
+    	
+break;
+case 14:
+
+        	this.$ = new Comparison($$[$0-2],$$[$0],'==');
+        
+break;
+case 15:
+
+        	this.$ = new Comparison($$[$0-2],$$[$0],'!=');
+        
+break;
+case 16:
+
+        	this.$ = new Comparison($$[$0-2],$$[$0],'>=');
+        
+break;
+case 17:
+
+        	this.$ = new Comparison($$[$0-2],$$[$0],'<=');
+        
+break;
+case 18:
+
+        	this.$ = new Comparison($$[$0-2],$$[$0],'>');
+        
+break;
+case 19:
+
+        	this.$ = new Comparison($$[$0-2],$$[$0],'<');
+        
+break;
+case 20:
+
+        	this.$ = new FunctionCall($$[$0-2],null);
+        
+break;
+case 21:
+
+        	this.$ = new FunctionCall($$[$0-3],$$[$0-1]);
+        
+break;
+case 22:
+
+        	this.$ = $$[$0];
+        
+break;
+case 23:
+
+    		this.$ = new Literal(true);
+    	
+break;
+case 24:
+
+    		this.$ = new Literal(false);
+    	
+break;
+case 25:
+
+    		this.$ = new Literal(1 * $$[$0]);
+    	
+break;
+case 26:
+
+    		this.$ = new Literal($$[$0]);
+    	
+break;
+case 27:
+
+    		this.$ = new MathOp($$[$0-2],$$[$0],'+');
+    	
+break;
+case 28:
+
+    		this.$ = new MathOp($$[$0-2],$$[$0],'-');
+    	
+break;
+case 29:
+
+    		this.$ = new MathOp($$[$0-2],$$[$0],'*');
+    	
+break;
+case 30:
+
+    		this.$ = new MathOp($$[$0-2],$$[$0],'/');
+    	
+break;
+case 31:
+
+    		this.$ = new MathOp($$[$0-2],$$[$0],'%');
+    	
+break;
+case 32:
+
+        	this.$ = new Argument($$[$0-2],$$[$0]);
+        
+break;
+case 33:
+
+        	this.$ = new Argument($$[$0]);
+        
+break;
+case 34:
+
+        	var id = new Literal($$[$0]);
+        	this.$ = new ObjectSelector(id,$$[$0-2]);
+        
+break;
+case 35:
+
+        	this.$ = new ObjectSelector($$[$0-1],$$[$0-3]);
+        
+break;
+case 36:
+
+        	this.$ = new Variable($$[$0]);
         
 break;
 }
 },
-table: [{3:1,4:2,6:[1,3],12:[1,4]},{1:[3]},{5:[1,5]},{7:[1,6]},{7:[1,7]},{1:[2,1]},{8:8,14:$V0},{8:10,14:$V0},{9:[1,11]},{9:[2,8]},{9:[1,12]},{10:13,13:$V1,16:$V2},{10:16,13:$V1,16:$V2},{11:[1,17]},{7:[1,18]},{7:[1,19]},{11:[1,20]},{5:[2,2]},{14:[1,21]},{14:$V3,15:22,17:$V4},{5:[2,3]},{9:[1,25]},{11:[1,26]},{7:[1,27]},{11:[2,7]},{8:28,14:$V0},{11:[2,5]},{14:[1,29]},{9:[1,30]},{11:[1,31]},{14:$V3,15:32,17:$V4},{11:[2,6]},{11:[1,33]},{11:[2,4]}],
-defaultActions: {5:[2,1],9:[2,8],17:[2,2],20:[2,3],24:[2,7],26:[2,5],31:[2,6],33:[2,4]},
+table: [{3:1,4:2,6:[1,3],12:[1,4]},{1:[3]},{5:[1,5]},{7:[1,6]},{7:[1,7]},{1:[2,1]},{8:8,14:$V0},{8:10,14:$V0},{9:[1,11]},{9:[2,9]},{9:[1,12]},{10:13,13:$V1,16:$V2,18:$V3},{10:17,13:$V1,16:$V2,18:$V3},{11:[1,18]},{7:[1,19]},{7:[1,20]},{7:[1,21]},{11:[1,22]},{5:[2,2]},{14:[1,23]},{14:[1,24]},{14:$V4,15:25,19:$V5},{5:[2,3]},{9:[1,28]},{9:[1,29]},{11:[1,30]},{7:[1,31]},{11:[2,8]},{8:32,14:$V0},{7:$V6,14:$V7,17:33,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{11:[2,6]},{14:[1,42]},{9:[1,43]},{11:[1,44],20:$Vd,21:$Ve,23:$Vf,24:$Vg,25:$Vh,26:$Vi,27:$Vj,28:$Vk,34:$Vl,35:$Vm,36:$Vn,37:$Vo,38:$Vp},{7:$V6,14:$V7,17:58,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{7:$V6,14:$V7,17:59,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},o($Vq,[2,22],{7:[1,60],39:[1,61],41:[1,62]}),o($Vq,[2,23]),o($Vq,[2,24]),o($Vq,[2,25]),o($Vq,[2,26]),o($Vr,[2,36]),{11:[1,63]},{14:$V4,15:64,19:$V5},{11:[2,5]},{7:$V6,14:$V7,17:65,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{7:$V6,14:$V7,17:66,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{7:$V6,14:$V7,17:67,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{7:$V6,14:$V7,17:68,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{7:$V6,14:$V7,17:69,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{7:$V6,14:$V7,17:70,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{7:$V6,14:$V7,17:71,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{7:$V6,14:$V7,17:72,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{7:$V6,14:$V7,17:73,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{7:$V6,14:$V7,17:74,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{7:$V6,14:$V7,17:75,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{7:$V6,14:$V7,17:76,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{7:$V6,14:$V7,17:77,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},o($Vq,[2,12]),{11:[1,78],20:$Vd,21:$Ve,23:$Vf,24:$Vg,25:$Vh,26:$Vi,27:$Vj,28:$Vk,34:$Vl,35:$Vm,36:$Vn,37:$Vo,38:$Vp},{7:$V6,11:[1,79],14:$V7,17:81,22:$V8,29:36,30:80,31:$V9,32:$Va,33:$Vb,40:$Vc},{40:[1,82]},{7:$V6,14:$V7,17:83,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{11:[2,7]},{11:[1,84]},o($Vs,[2,10],{23:$Vf,24:$Vg,25:$Vh,26:$Vi,27:$Vj,28:$Vk,34:$Vl,35:$Vm,36:$Vn,37:$Vo,38:$Vp}),o($Vs,[2,11],{23:$Vf,24:$Vg,25:$Vh,26:$Vi,27:$Vj,28:$Vk,34:$Vl,35:$Vm,36:$Vn,37:$Vo,38:$Vp}),o($Vt,[2,14],{34:$Vl,35:$Vm,36:$Vn,37:$Vo,38:$Vp}),o($Vt,[2,15],{34:$Vl,35:$Vm,36:$Vn,37:$Vo,38:$Vp}),o($Vt,[2,16],{34:$Vl,35:$Vm,36:$Vn,37:$Vo,38:$Vp}),o($Vt,[2,17],{34:$Vl,35:$Vm,36:$Vn,37:$Vo,38:$Vp}),o($Vt,[2,18],{34:$Vl,35:$Vm,36:$Vn,37:$Vo,38:$Vp}),o($Vt,[2,19],{34:$Vl,35:$Vm,36:$Vn,37:$Vo,38:$Vp}),o($Vu,[2,27],{36:$Vn,37:$Vo,38:$Vp}),o($Vu,[2,28],{36:$Vn,37:$Vo,38:$Vp}),o($Vq,[2,29]),o($Vq,[2,30]),o($Vq,[2,31]),o($Vq,[2,13]),o($Vq,[2,20]),{11:[1,85]},{9:[1,86],11:[2,33],20:$Vd,21:$Ve,23:$Vf,24:$Vg,25:$Vh,26:$Vi,27:$Vj,28:$Vk,34:$Vl,35:$Vm,36:$Vn,37:$Vo,38:$Vp},o($Vr,[2,34]),{20:$Vd,21:$Ve,23:$Vf,24:$Vg,25:$Vh,26:$Vi,27:$Vj,28:$Vk,34:$Vl,35:$Vm,36:$Vn,37:$Vo,38:$Vp,42:[1,87]},{11:[2,4]},o($Vq,[2,21]),{7:$V6,14:$V7,17:81,22:$V8,29:36,30:88,31:$V9,32:$Va,33:$Vb,40:$Vc},o($Vr,[2,35]),{11:[2,32]}],
+defaultActions: {5:[2,1],9:[2,9],18:[2,2],22:[2,3],27:[2,8],30:[2,6],44:[2,5],63:[2,7],84:[2,4],88:[2,32]},
 parseError: function parseError(str, hash) {
     if (hash.recoverable) {
         this.trace(str);
@@ -618,6 +759,72 @@ RefFromSchema.prototype.getValues = function(opts, propertyNameMap){
 };
 
 // -----------------------------------------------------------
+// schemaName - String that represents a schema name
+// value - Value selector
+var RefFromSchema2 = function(schemaName, value){
+	this.schemaName = schemaName;
+	this.value = value;
+
+	this.documents = [];
+};
+RefFromSchema2.prototype.configure = function(opts){
+	var _this = this;
+
+	if( this.schemaName 
+	 && typeof this.schemaName.configure === 'function' ){
+	 	this.schemaName.configure(opts);
+	};
+	if( this.value 
+	 && typeof this.value.configure === 'function' ){
+	 	this.value.configure(opts);
+	};
+	
+	if( opts.atlasDesign ){
+		opts.atlasDesign.queryView({
+			viewName: 'nunaliit-schema'
+			,startkey: this.schemaName
+			,endkey: this.schemaName
+			,include_docs: true
+			,onSuccess: function(rows){
+				rows.forEach(function(row){
+					var doc = row.doc;
+					_this.documents.push(doc);
+				});
+			}
+		});
+	};
+};
+RefFromSchema2.prototype.getValues = function(opts, propertyNameMap){
+	var _this = this;
+
+	// Select documents
+	var selectedDocuments = [];
+	this.documents.forEach(function(doc){
+		var ctxt = {};
+		ctxt.n2_doc = opts.doc;
+		ctxt['import'] = opts.importData;
+		
+		var v = _this.value.getValue(ctxt);
+		
+		if( v ){
+			selectedDocuments.push(doc);
+		};
+	});
+
+	// Returns an array of references based on the selected keys
+	var references = [];
+	selectedDocuments.forEach(function(doc){
+		var ref = {
+			nunaliit_type: 'reference'
+			,doc: doc._id
+		};
+		references.push(ref);
+	});
+
+	return references;
+};
+
+// -----------------------------------------------------------
 var RefFromValue = function(valueSelector){
 	this.valueSelector = valueSelector;
 };
@@ -646,20 +853,206 @@ RefFromValue.prototype.getValues = function(opts, propertyNameMap){
 
 // -----------------------------------------------------------
 // selectorStr - Dotted notation for an object selector
-var ObjectSelector = function(selectorStr){
+var ObjectSelector2 = function(selectorStr){
 	this.selectorStr = selectorStr;
 	this.selector = $n2.objectSelector.parseSelector(selectorStr);
 };
-ObjectSelector.prototype.configure = function(opts){
+ObjectSelector2.prototype.configure = function(opts){
 };
-ObjectSelector.prototype.getValue = function(obj){
+ObjectSelector2.prototype.getValue = function(obj){
 	return this.selector.getValue(obj);
 };
-ObjectSelector.prototype.setValue = function(obj, value){
+ObjectSelector2.prototype.setValue = function(obj, value){
 	this.selector.setValue(obj, value, true);
 };
-ObjectSelector.prototype.removeValue = function(obj){
+ObjectSelector2.prototype.removeValue = function(obj){
 	this.selector.removeValue(obj);
+};
+
+// -----------------------------------------------------------
+var FunctionCall = function(value, args){
+	this.value = value;
+	this.args = args;
+};
+FunctionCall.prototype.getValue = function(ctxt){
+	var value = this.value.getValue(ctxt);
+	if( typeof value === 'function' ){
+		var args = [];
+		if( this.args ){
+			this.args.pushOnArray(ctxt, args);
+		};
+		return value.apply(ctxt, args);
+	};
+	return false;
+};
+
+// -----------------------------------------------------------
+// Argument
+var Argument = function(a1, a2){
+	this.valueNode = a1;
+	if( a2 ){
+		this.nextArgument = a2;
+	} else {
+		this.nextArgument = null;
+	};
+};
+Argument.prototype.getCount = function(){
+	if( this.nextArgument ){
+		return 1 + this.nextArgument.getCount();
+	};
+	
+	return 1;
+};
+Argument.prototype.getArgument = function(ctxt, position){
+	if( position < 1 ){
+		return this.valueNode.getValue(ctxt);
+	};
+	
+	if( this.nextArgument ){
+		this.nextArgument.getArgument(ctxt, position-1);
+	};
+	
+	return undefined;
+};
+Argument.prototype.pushOnArray = function(ctxt, array){
+	var value = this.valueNode.getValue(ctxt);
+	array.push(value);
+	
+	if( this.nextArgument ){
+		this.nextArgument.pushOnArray(ctxt, array);
+	};
+};
+
+// -----------------------------------------------------------
+var Expression = function(n1, op, n2){
+	this.n1 = n1;
+	this.n2 = n2;
+	this.op = op;
+};
+Expression.prototype.getValue = function(ctxt){
+	var r1 = this.n1.getValue(ctxt);
+	var r2 = undefined;
+	if( this.n2 ){
+		r2 = this.n2.getValue(ctxt);
+	};
+	if( '!' === this.op ){
+		return !r1;
+		
+	} else if( '&&' === this.op ){
+		return (r1 && r2);
+		
+	} else if( '||' === this.op ){
+		return (r1 || r2);
+	};
+	return false;
+};
+
+// -----------------------------------------------------------
+var Literal = function(value){
+	this.value = value;
+};
+Literal.prototype.getValue = function(ctxt){
+	return this.value;
+};
+
+// -----------------------------------------------------------
+var Comparison = function(leftNode, rightNode, op){
+	this.leftNode = leftNode;
+	this.rightNode = rightNode;
+	this.op = op;
+};
+Comparison.prototype.getValue = function(ctxt){
+	var left = this.leftNode.getValue(ctxt);
+	var right = this.rightNode.getValue(ctxt);
+
+	if( '==' === this.op ){
+		return (left == right);
+
+	} else if( '!=' === this.op ){
+		return (left != right);
+
+	} else if( '>=' === this.op ){
+		return (left >= right);
+
+	} else if( '<=' === this.op ){
+		return (left <= right);
+
+	} else if( '>' === this.op ){
+		return (left > right);
+
+	} else if( '<' === this.op ){
+		return (left < right);
+	};
+	
+	return false;
+};
+
+// -----------------------------------------------------------
+var MathOp = function(leftNode, rightNode, op){
+	this.leftNode = leftNode;
+	this.rightNode = rightNode;
+	this.op = op;
+};
+MathOp.prototype.getValue = function(ctxt){
+	var left = this.leftNode.getValue(ctxt);
+	var right = this.rightNode.getValue(ctxt);
+
+	if( '+' === this.op ){
+		return (left + right);
+
+	} else if( '-' === this.op ){
+		return (left - right);
+
+	} else if( '*' === this.op ){
+		return (left * right);
+
+	} else if( '/' === this.op ){
+		return (left / right);
+
+	} else if( '%' === this.op ){
+		return (left % right);
+	};
+	
+	return 0;
+};
+
+// -----------------------------------------------------------
+var ObjectSelector = function(id, previousSelector){
+	this.idNode = id;
+	this.previousSelector = previousSelector;
+};
+ObjectSelector.prototype.getValue = function(ctxt){
+	var obj = this.previousSelector.getValue(ctxt);
+	if( typeof obj === 'object' ){
+		var id = this.idNode.getValue(ctxt);
+		if( typeof id === 'undefined' ){
+			return undefined;
+		};
+		
+		return obj[id];
+	};
+
+	return undefined;
+};
+
+// -----------------------------------------------------------
+var Variable = function(variableName){
+	this.variableName = variableName;
+};
+Variable.prototype.getValue = function(ctxt){
+	var obj = undefined;
+	
+	if( ctxt && 'doc' === this.variableName ) {
+		obj = ctxt.n2_doc;
+		
+	} else if( ctxt && ctxt[this.variableName] ) {
+		obj = ctxt[this.variableName];
+		
+	} else if( global && global[this.variableName] ) {
+		obj = global[this.variableName];
+	};
+	
+	return obj;
 };
 
 
@@ -993,78 +1386,80 @@ var YYSTATE=YY_START;
 switch($avoiding_name_collisions) {
 case 0: /* skip whitespace */ 
 break;
-case 1: return 'true'; 
+case 1: return 31; 
 break;
-case 2: return 'false'; 
+case 2: return 32; 
 break;
 case 3: return 6; 
 break;
 case 4: return 12; 
 break;
-case 5: return 17; 
+case 5: return 19; 
 break;
 case 6: return 13; 
 break;
 case 7: return 16; 
 break;
-case 8: return 'NUMBER'; 
+case 8: return 18; 
 break;
-case 9: return 'VAR_NAME'; 
+case 9: return 33; 
 break;
-case 10: yy_.yytext = yy_.yytext.substr(1,yy_.yytext.length-2); return 14; 
+case 10: return 40; 
 break;
-case 11: return '=='; 
+case 11: yy_.yytext = yy_.yytext.substr(1,yy_.yytext.length-2); return 14; 
 break;
-case 12: return '!='; 
+case 12: return 23; 
 break;
-case 13: return '>='; 
+case 13: return 24; 
 break;
-case 14: return '<='; 
+case 14: return 25; 
 break;
-case 15: return '>'; 
+case 15: return 26; 
 break;
-case 16: return '<'; 
+case 16: return 27; 
 break;
-case 17: return 7; 
+case 17: return 28; 
 break;
-case 18: return 11; 
+case 18: return 7; 
 break;
-case 19: return '{'; 
+case 19: return 11; 
 break;
-case 20: return '}'; 
+case 20: return '{'; 
 break;
-case 21: return '['; 
+case 21: return '}'; 
 break;
-case 22: return ']'; 
+case 22: return 41; 
 break;
-case 23: return 9; 
+case 23: return 42; 
 break;
-case 24: return '.'; 
+case 24: return 9; 
 break;
-case 25: return '!'; 
+case 25: return 39; 
 break;
-case 26: return '+'; 
+case 26: return 22; 
 break;
-case 27: return '-'; 
+case 27: return 34; 
 break;
-case 28: return '*'; 
+case 28: return 35; 
 break;
-case 29: return '/'; 
+case 29: return 36; 
 break;
-case 30: return '%'; 
+case 30: return 37; 
 break;
-case 31: return '&&'; 
+case 31: return 38; 
 break;
-case 32: return '||'; 
+case 32: return 20; 
 break;
-case 33: return 5; 
+case 33: return 21; 
 break;
-case 34: return 'INVALID'; 
+case 34: return 5; 
+break;
+case 35: return 'INVALID'; 
 break;
 }
 },
-rules: [/^(?:\s+)/,/^(?:true\b)/,/^(?:false\b)/,/^(?:assignReference\b)/,/^(?:assignReferences\b)/,/^(?:importedAttribute\b)/,/^(?:fromSchema\b)/,/^(?:referencesFromValue\b)/,/^(?:[0-9]+(\.[0-9]+)?\b)/,/^(?:[_a-zA-Z][_a-zA-Z0-9]*)/,/^(?:'(\\'|[^'])*')/,/^(?:==)/,/^(?:!=)/,/^(?:>=)/,/^(?:<=)/,/^(?:>)/,/^(?:<)/,/^(?:\()/,/^(?:\))/,/^(?:\{)/,/^(?:\})/,/^(?:\[)/,/^(?:\])/,/^(?:,)/,/^(?:\.)/,/^(?:!)/,/^(?:\+)/,/^(?:-)/,/^(?:\*)/,/^(?:\/)/,/^(?:%)/,/^(?:&&)/,/^(?:\|\|)/,/^(?:$)/,/^(?:.)/],
-conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34],"inclusive":true}}
+rules: [/^(?:\s+)/,/^(?:true\b)/,/^(?:false\b)/,/^(?:assignReference\b)/,/^(?:assignReferences\b)/,/^(?:importedAttribute\b)/,/^(?:fromSchema\b)/,/^(?:fromSchema2\b)/,/^(?:referencesFromValue\b)/,/^(?:[0-9]+(\.[0-9]+)?\b)/,/^(?:[_a-zA-Z][_a-zA-Z0-9]*)/,/^(?:'(\\'|[^'])*')/,/^(?:==)/,/^(?:!=)/,/^(?:>=)/,/^(?:<=)/,/^(?:>)/,/^(?:<)/,/^(?:\()/,/^(?:\))/,/^(?:\{)/,/^(?:\})/,/^(?:\[)/,/^(?:\])/,/^(?:,)/,/^(?:\.)/,/^(?:!)/,/^(?:\+)/,/^(?:-)/,/^(?:\*)/,/^(?:\/)/,/^(?:%)/,/^(?:&&)/,/^(?:\|\|)/,/^(?:$)/,/^(?:.)/],
+conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35],"inclusive":true}}
 });
 return lexer;
 })();

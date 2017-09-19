@@ -309,6 +309,72 @@ RefFromSchema.prototype.getValues = function(opts, propertyNameMap){
 };
 
 // -----------------------------------------------------------
+// schemaName - String that represents a schema name
+// value - Value selector
+var RefFromSchema2 = function(schemaName, value){
+	this.schemaName = schemaName;
+	this.value = value;
+
+	this.documents = [];
+};
+RefFromSchema2.prototype.configure = function(opts){
+	var _this = this;
+
+	if( this.schemaName 
+	 && typeof this.schemaName.configure === 'function' ){
+	 	this.schemaName.configure(opts);
+	};
+	if( this.value 
+	 && typeof this.value.configure === 'function' ){
+	 	this.value.configure(opts);
+	};
+	
+	if( opts.atlasDesign ){
+		opts.atlasDesign.queryView({
+			viewName: 'nunaliit-schema'
+			,startkey: this.schemaName
+			,endkey: this.schemaName
+			,include_docs: true
+			,onSuccess: function(rows){
+				rows.forEach(function(row){
+					var doc = row.doc;
+					_this.documents.push(doc);
+				});
+			}
+		});
+	};
+};
+RefFromSchema2.prototype.getValues = function(opts, propertyNameMap){
+	var _this = this;
+
+	// Select documents
+	var selectedDocuments = [];
+	this.documents.forEach(function(doc){
+		var ctxt = {};
+		ctxt.n2_doc = opts.doc;
+		ctxt['import'] = opts.importData;
+		
+		var v = _this.value.getValue(ctxt);
+		
+		if( v ){
+			selectedDocuments.push(doc);
+		};
+	});
+
+	// Returns an array of references based on the selected keys
+	var references = [];
+	selectedDocuments.forEach(function(doc){
+		var ref = {
+			nunaliit_type: 'reference'
+			,doc: doc._id
+		};
+		references.push(ref);
+	});
+
+	return references;
+};
+
+// -----------------------------------------------------------
 var RefFromValue = function(valueSelector){
 	this.valueSelector = valueSelector;
 };
@@ -337,20 +403,206 @@ RefFromValue.prototype.getValues = function(opts, propertyNameMap){
 
 // -----------------------------------------------------------
 // selectorStr - Dotted notation for an object selector
-var ObjectSelector = function(selectorStr){
+var ObjectSelector2 = function(selectorStr){
 	this.selectorStr = selectorStr;
 	this.selector = $n2.objectSelector.parseSelector(selectorStr);
 };
-ObjectSelector.prototype.configure = function(opts){
+ObjectSelector2.prototype.configure = function(opts){
 };
-ObjectSelector.prototype.getValue = function(obj){
+ObjectSelector2.prototype.getValue = function(obj){
 	return this.selector.getValue(obj);
 };
-ObjectSelector.prototype.setValue = function(obj, value){
+ObjectSelector2.prototype.setValue = function(obj, value){
 	this.selector.setValue(obj, value, true);
 };
-ObjectSelector.prototype.removeValue = function(obj){
+ObjectSelector2.prototype.removeValue = function(obj){
 	this.selector.removeValue(obj);
+};
+
+// -----------------------------------------------------------
+var FunctionCall = function(value, args){
+	this.value = value;
+	this.args = args;
+};
+FunctionCall.prototype.getValue = function(ctxt){
+	var value = this.value.getValue(ctxt);
+	if( typeof value === 'function' ){
+		var args = [];
+		if( this.args ){
+			this.args.pushOnArray(ctxt, args);
+		};
+		return value.apply(ctxt, args);
+	};
+	return false;
+};
+
+// -----------------------------------------------------------
+// Argument
+var Argument = function(a1, a2){
+	this.valueNode = a1;
+	if( a2 ){
+		this.nextArgument = a2;
+	} else {
+		this.nextArgument = null;
+	};
+};
+Argument.prototype.getCount = function(){
+	if( this.nextArgument ){
+		return 1 + this.nextArgument.getCount();
+	};
+	
+	return 1;
+};
+Argument.prototype.getArgument = function(ctxt, position){
+	if( position < 1 ){
+		return this.valueNode.getValue(ctxt);
+	};
+	
+	if( this.nextArgument ){
+		this.nextArgument.getArgument(ctxt, position-1);
+	};
+	
+	return undefined;
+};
+Argument.prototype.pushOnArray = function(ctxt, array){
+	var value = this.valueNode.getValue(ctxt);
+	array.push(value);
+	
+	if( this.nextArgument ){
+		this.nextArgument.pushOnArray(ctxt, array);
+	};
+};
+
+// -----------------------------------------------------------
+var Expression = function(n1, op, n2){
+	this.n1 = n1;
+	this.n2 = n2;
+	this.op = op;
+};
+Expression.prototype.getValue = function(ctxt){
+	var r1 = this.n1.getValue(ctxt);
+	var r2 = undefined;
+	if( this.n2 ){
+		r2 = this.n2.getValue(ctxt);
+	};
+	if( '!' === this.op ){
+		return !r1;
+		
+	} else if( '&&' === this.op ){
+		return (r1 && r2);
+		
+	} else if( '||' === this.op ){
+		return (r1 || r2);
+	};
+	return false;
+};
+
+// -----------------------------------------------------------
+var Literal = function(value){
+	this.value = value;
+};
+Literal.prototype.getValue = function(ctxt){
+	return this.value;
+};
+
+// -----------------------------------------------------------
+var Comparison = function(leftNode, rightNode, op){
+	this.leftNode = leftNode;
+	this.rightNode = rightNode;
+	this.op = op;
+};
+Comparison.prototype.getValue = function(ctxt){
+	var left = this.leftNode.getValue(ctxt);
+	var right = this.rightNode.getValue(ctxt);
+
+	if( '==' === this.op ){
+		return (left == right);
+
+	} else if( '!=' === this.op ){
+		return (left != right);
+
+	} else if( '>=' === this.op ){
+		return (left >= right);
+
+	} else if( '<=' === this.op ){
+		return (left <= right);
+
+	} else if( '>' === this.op ){
+		return (left > right);
+
+	} else if( '<' === this.op ){
+		return (left < right);
+	};
+	
+	return false;
+};
+
+// -----------------------------------------------------------
+var MathOp = function(leftNode, rightNode, op){
+	this.leftNode = leftNode;
+	this.rightNode = rightNode;
+	this.op = op;
+};
+MathOp.prototype.getValue = function(ctxt){
+	var left = this.leftNode.getValue(ctxt);
+	var right = this.rightNode.getValue(ctxt);
+
+	if( '+' === this.op ){
+		return (left + right);
+
+	} else if( '-' === this.op ){
+		return (left - right);
+
+	} else if( '*' === this.op ){
+		return (left * right);
+
+	} else if( '/' === this.op ){
+		return (left / right);
+
+	} else if( '%' === this.op ){
+		return (left % right);
+	};
+	
+	return 0;
+};
+
+// -----------------------------------------------------------
+var ObjectSelector = function(id, previousSelector){
+	this.idNode = id;
+	this.previousSelector = previousSelector;
+};
+ObjectSelector.prototype.getValue = function(ctxt){
+	var obj = this.previousSelector.getValue(ctxt);
+	if( typeof obj === 'object' ){
+		var id = this.idNode.getValue(ctxt);
+		if( typeof id === 'undefined' ){
+			return undefined;
+		};
+		
+		return obj[id];
+	};
+
+	return undefined;
+};
+
+// -----------------------------------------------------------
+var Variable = function(variableName){
+	this.variableName = variableName;
+};
+Variable.prototype.getValue = function(ctxt){
+	var obj = undefined;
+	
+	if( ctxt && 'doc' === this.variableName ) {
+		obj = ctxt.n2_doc;
+		
+	} else if( ctxt && ctxt[this.variableName] ) {
+		obj = ctxt[this.variableName];
+		
+	} else if( global && global[this.variableName] ) {
+		obj = global[this.variableName];
+	};
+	
+	return obj;
 };
 
 %}
@@ -366,6 +618,7 @@ ObjectSelector.prototype.removeValue = function(obj){
 "assignReferences"     { return 'OP_ASSIGN_REFERENCES'; }
 "importedAttribute"    { return 'IMPORTED_ATTRIBUTE'; }
 "fromSchema"           { return 'REF_FROM_SCHEMA'; }
+"fromSchema2"          { return 'REF_FROM_SCHEMA2'; }
 "referencesFromValue"  { return 'REF_FROM_VALUE'; }
 [0-9]+("."[0-9]+)?\b   { return 'NUMBER'; }
 [_a-zA-Z][_a-zA-Z0-9]* { return 'VAR_NAME'; }
@@ -432,6 +685,10 @@ referenceSelector
         {
         	$$ = new RefFromSchema($3,$5,$7);
         }
+	| 'REF_FROM_SCHEMA2' '(' 'STRING' ',' value ')'
+        {
+        	$$ = new RefFromSchema2($3,$5);
+        }
 	| 'REF_FROM_VALUE' '(' valueSelector ')'
         {
         	$$ = new RefFromValue($3);
@@ -452,8 +709,126 @@ valueSelector
 objectSelector	
 	: 'STRING'
         {
-        	$$ = new ObjectSelector($1);
+        	$$ = new ObjectSelector2($1);
         }
 	;
+
+value
+    : value '&&' value
+        {
+        	$$ = new Expression($1,'&&',$3);
+        }
+    | value '||' value
+        {
+        	$$ = new Expression($1,'||',$3);
+        }
+    | '!' value
+        {
+        	$$ = new Expression($2,'!');
+        }
+    | '(' value ')'
+    	{
+    		$$ = $2;
+    	}
+    | value '==' value
+        {
+        	$$ = new Comparison($1,$3,'==');
+        }
+    | value '!=' value
+        {
+        	$$ = new Comparison($1,$3,'!=');
+        }
+    | value '>=' value
+        {
+        	$$ = new Comparison($1,$3,'>=');
+        }
+    | value '<=' value
+        {
+        	$$ = new Comparison($1,$3,'<=');
+        }
+    | value '>' value
+        {
+        	$$ = new Comparison($1,$3,'>');
+        }
+    | value '<' value
+        {
+        	$$ = new Comparison($1,$3,'<');
+        }
+	| identifier '(' ')'
+        {
+        	$$ = new FunctionCall($1,null);
+        }
+    | identifier '(' arguments ')'
+        {
+        	$$ = new FunctionCall($1,$3);
+        }
+    | identifier
+        {
+        	$$ = $1;
+        }
+    | 'true'
+    	{
+    		$$ = new Literal(true);
+    	}
+    | 'false'
+    	{
+    		$$ = new Literal(false);
+    	}
+    | 'NUMBER'
+    	{
+    		$$ = new Literal(1 * $1);
+    	}
+    | 'STRING'
+    	{
+    		$$ = new Literal($1);
+    	}
+    | value '+' value
+    	{
+    		$$ = new MathOp($1,$3,'+');
+    	}
+    | value '-' value
+    	{
+    		$$ = new MathOp($1,$3,'-');
+    	}
+    | value '*' value
+    	{
+    		$$ = new MathOp($1,$3,'*');
+    	}
+    | value '/' value
+    	{
+    		$$ = new MathOp($1,$3,'/');
+    	}
+    | value '%' value
+    	{
+    		$$ = new MathOp($1,$3,'%');
+    	}
+    ;
+
+arguments
+    : value ',' arguments
+        {
+        	$$ = new Argument($1,$3);
+        }
+    | value
+        {
+        	$$ = new Argument($1);
+        }
+    ;
+
+identifier
+    : identifier '.' 'VAR_NAME'
+        {
+        	var id = new Literal($3);
+        	$$ = new ObjectSelector(id,$1);
+        }
+    | identifier '[' value ']'
+        {
+        	$$ = new ObjectSelector($3,$1);
+        }
+    | 'VAR_NAME'
+        {
+        	$$ = new Variable($1);
+        }
+    ;
 
 %%
