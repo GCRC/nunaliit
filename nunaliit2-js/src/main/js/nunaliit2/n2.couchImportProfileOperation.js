@@ -107,12 +107,12 @@ POSSIBILITY OF SUCH DAMAGE.
   }
 */
 var importProfileOperation = (function(){
-var o=function(k,v,o,l){for(o=o||{},l=k.length;l--;o[k[l]]=v);return o},$V0=[1,9],$V1=[1,14],$V2=[1,15],$V3=[1,16],$V4=[1,27],$V5=[1,26],$V6=[1,35],$V7=[1,40],$V8=[1,34],$V9=[1,37],$Va=[1,38],$Vb=[1,39],$Vc=[1,41],$Vd=[1,45],$Ve=[1,46],$Vf=[1,47],$Vg=[1,48],$Vh=[1,49],$Vi=[1,50],$Vj=[1,51],$Vk=[1,52],$Vl=[1,53],$Vm=[1,54],$Vn=[1,55],$Vo=[1,56],$Vp=[1,57],$Vq=[9,11,20,21,23,24,25,26,27,28,34,35,36,37,38,42],$Vr=[7,9,11,20,21,23,24,25,26,27,28,34,35,36,37,38,39,41,42],$Vs=[9,11,20,21,42],$Vt=[9,11,20,21,23,24,25,26,27,28,42],$Vu=[9,11,20,21,23,24,25,26,27,28,34,35,42];
+var o=function(k,v,o,l){for(o=o||{},l=k.length;l--;o[k[l]]=v);return o},$V0=[1,6],$V1=[1,11],$V2=[1,12],$V3=[5,7,9,11,14,22,23,25,26,27,28,29,30,35,36,37,38,39,40,42,43],$V4=[1,14],$V5=[1,18],$V6=[1,23],$V7=[1,17],$V8=[1,20],$V9=[1,21],$Va=[1,22],$Vb=[1,28],$Vc=[1,29],$Vd=[1,30],$Ve=[1,31],$Vf=[1,32],$Vg=[1,33],$Vh=[1,34],$Vi=[1,35],$Vj=[1,36],$Vk=[1,37],$Vl=[1,38],$Vm=[1,39],$Vn=[1,40],$Vo=[5,9,11,22,23,25,26,27,28,29,30,35,36,37,38,39,43],$Vp=[1,46],$Vq=[1,47],$Vr=[1,48],$Vs=[5,9,11,22,23,43],$Vt=[5,9,11,22,23,25,26,27,28,29,30,43],$Vu=[5,9,11,22,23,25,26,27,28,29,30,35,36,43],$Vv=[1,78],$Vw=[1,77];
 var parser = {trace: function trace() { },
 yy: {},
-symbols_: {"error":2,"program":3,"operation":4,"EOF":5,"OP_ASSIGN_REFERENCE":6,"(":7,"objectSelector":8,",":9,"referenceSelector":10,")":11,"OP_ASSIGN_REFERENCES":12,"REF_FROM_SCHEMA":13,"STRING":14,"valueSelector":15,"REF_FROM_SCHEMA2":16,"value":17,"REF_FROM_VALUE":18,"IMPORTED_ATTRIBUTE":19,"&&":20,"||":21,"!":22,"==":23,"!=":24,">=":25,"<=":26,">":27,"<":28,"identifier":29,"arguments":30,"true":31,"false":32,"NUMBER":33,"+":34,"-":35,"*":36,"/":37,"%":38,".":39,"VAR_NAME":40,"[":41,"]":42,"$accept":0,"$end":1},
-terminals_: {2:"error",5:"EOF",6:"OP_ASSIGN_REFERENCE",7:"(",9:",",11:")",12:"OP_ASSIGN_REFERENCES",13:"REF_FROM_SCHEMA",14:"STRING",16:"REF_FROM_SCHEMA2",18:"REF_FROM_VALUE",19:"IMPORTED_ATTRIBUTE",20:"&&",21:"||",22:"!",23:"==",24:"!=",25:">=",26:"<=",27:">",28:"<",31:"true",32:"false",33:"NUMBER",34:"+",35:"-",36:"*",37:"/",38:"%",39:".",40:"VAR_NAME",41:"[",42:"]"},
-productions_: [0,[3,2],[4,6],[4,6],[10,8],[10,6],[10,4],[15,4],[15,1],[8,1],[17,3],[17,3],[17,2],[17,3],[17,3],[17,3],[17,3],[17,3],[17,3],[17,3],[17,3],[17,4],[17,1],[17,1],[17,1],[17,1],[17,1],[17,3],[17,3],[17,3],[17,3],[17,3],[30,3],[30,1],[29,3],[29,4],[29,1]],
+symbols_: {"error":2,"program":3,"operation":4,"EOF":5,"OP_ASSIGN_REFERENCE":6,"(":7,"objectSelector":8,",":9,"referenceSelector":10,")":11,"OP_ASSIGN_REFERENCES":12,"identifier":13,"=":14,"value":15,"REF_FROM_SCHEMA":16,"STRING":17,"valueSelector":18,"REF_FROM_SCHEMA2":19,"REF_FROM_VALUE":20,"IMPORTED_ATTRIBUTE":21,"&&":22,"||":23,"!":24,"==":25,"!=":26,">=":27,"<=":28,">":29,"<":30,"arguments":31,"true":32,"false":33,"NUMBER":34,"+":35,"-":36,"*":37,"/":38,"%":39,".":40,"VAR_NAME":41,"[":42,"]":43,"$accept":0,"$end":1},
+terminals_: {2:"error",5:"EOF",6:"OP_ASSIGN_REFERENCE",7:"(",9:",",11:")",12:"OP_ASSIGN_REFERENCES",14:"=",16:"REF_FROM_SCHEMA",17:"STRING",19:"REF_FROM_SCHEMA2",20:"REF_FROM_VALUE",21:"IMPORTED_ATTRIBUTE",22:"&&",23:"||",24:"!",25:"==",26:"!=",27:">=",28:"<=",29:">",30:"<",32:"true",33:"false",34:"NUMBER",35:"+",36:"-",37:"*",38:"/",39:"%",40:".",41:"VAR_NAME",42:"[",43:"]"},
+productions_: [0,[3,2],[4,6],[4,6],[4,3],[10,8],[10,6],[10,4],[18,4],[18,1],[8,1],[15,3],[15,3],[15,2],[15,3],[15,3],[15,3],[15,3],[15,3],[15,3],[15,3],[15,3],[15,4],[15,1],[15,1],[15,1],[15,1],[15,1],[15,3],[15,3],[15,3],[15,3],[15,3],[31,3],[31,1],[13,3],[13,4],[13,1]],
 performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate /* action[1] */, $$ /* vstack */, _$ /* lstack */) {
 /* this == yyval */
 
@@ -133,174 +133,179 @@ case 3:
 break;
 case 4:
 
-        	this.$ = new RefFromSchema($$[$0-5],$$[$0-3],$$[$0-1]);
+        	this.$ = new OpAssignment($$[$0-2],$$[$0]);
         
 break;
 case 5:
 
-        	this.$ = new RefFromSchema2($$[$0-3],$$[$0-1]);
+        	this.$ = new RefFromSchema($$[$0-5],$$[$0-3],$$[$0-1]);
         
 break;
 case 6:
 
-        	this.$ = new RefFromValue($$[$0-1]);
+        	this.$ = new RefFromSchema2($$[$0-3],$$[$0-1]);
         
 break;
 case 7:
 
-        	this.$ = new ImportedAttributeValue($$[$0-1]);
+        	this.$ = new RefFromValue($$[$0-1]);
         
 break;
 case 8:
 
-        	this.$ = new StringValue($$[$0]);
+        	this.$ = new ImportedAttributeValue($$[$0-1]);
         
 break;
 case 9:
 
-        	this.$ = new ObjectSelector2($$[$0]);
+        	this.$ = new StringValue($$[$0]);
         
 break;
 case 10:
 
-        	this.$ = new Expression($$[$0-2],'&&',$$[$0]);
+        	this.$ = new DocumentSelector($$[$0]);
         
 break;
 case 11:
 
-        	this.$ = new Expression($$[$0-2],'||',$$[$0]);
+        	this.$ = new Expression($$[$0-2],'&&',$$[$0]);
         
 break;
 case 12:
 
-        	this.$ = new Expression($$[$0],'!');
+        	this.$ = new Expression($$[$0-2],'||',$$[$0]);
         
 break;
 case 13:
 
+        	this.$ = new Expression($$[$0],'!');
+        
+break;
+case 14:
+
     		this.$ = $$[$0-1];
     	
 break;
-case 14:
+case 15:
 
         	this.$ = new Comparison($$[$0-2],$$[$0],'==');
         
 break;
-case 15:
+case 16:
 
         	this.$ = new Comparison($$[$0-2],$$[$0],'!=');
         
 break;
-case 16:
+case 17:
 
         	this.$ = new Comparison($$[$0-2],$$[$0],'>=');
         
 break;
-case 17:
+case 18:
 
         	this.$ = new Comparison($$[$0-2],$$[$0],'<=');
         
 break;
-case 18:
+case 19:
 
         	this.$ = new Comparison($$[$0-2],$$[$0],'>');
         
 break;
-case 19:
+case 20:
 
         	this.$ = new Comparison($$[$0-2],$$[$0],'<');
         
 break;
-case 20:
+case 21:
 
         	this.$ = new FunctionCall($$[$0-2],null);
         
 break;
-case 21:
+case 22:
 
         	this.$ = new FunctionCall($$[$0-3],$$[$0-1]);
         
 break;
-case 22:
+case 23:
 
         	this.$ = $$[$0];
         
 break;
-case 23:
+case 24:
 
     		this.$ = new Literal(true);
     	
 break;
-case 24:
+case 25:
 
     		this.$ = new Literal(false);
     	
 break;
-case 25:
+case 26:
 
     		this.$ = new Literal(1 * $$[$0]);
     	
 break;
-case 26:
+case 27:
 
     		this.$ = new Literal($$[$0]);
     	
 break;
-case 27:
+case 28:
 
     		this.$ = new MathOp($$[$0-2],$$[$0],'+');
     	
 break;
-case 28:
+case 29:
 
     		this.$ = new MathOp($$[$0-2],$$[$0],'-');
     	
 break;
-case 29:
+case 30:
 
     		this.$ = new MathOp($$[$0-2],$$[$0],'*');
     	
 break;
-case 30:
+case 31:
 
     		this.$ = new MathOp($$[$0-2],$$[$0],'/');
     	
 break;
-case 31:
+case 32:
 
     		this.$ = new MathOp($$[$0-2],$$[$0],'%');
     	
 break;
-case 32:
+case 33:
 
         	this.$ = new Argument($$[$0-2],$$[$0]);
         
 break;
-case 33:
+case 34:
 
         	this.$ = new Argument($$[$0]);
         
 break;
-case 34:
+case 35:
 
         	var id = new Literal($$[$0]);
         	this.$ = new ObjectSelector(id,$$[$0-2]);
         
 break;
-case 35:
+case 36:
 
         	this.$ = new ObjectSelector($$[$0-1],$$[$0-3]);
         
 break;
-case 36:
+case 37:
 
         	this.$ = new Variable($$[$0]);
         
 break;
 }
 },
-table: [{3:1,4:2,6:[1,3],12:[1,4]},{1:[3]},{5:[1,5]},{7:[1,6]},{7:[1,7]},{1:[2,1]},{8:8,14:$V0},{8:10,14:$V0},{9:[1,11]},{9:[2,9]},{9:[1,12]},{10:13,13:$V1,16:$V2,18:$V3},{10:17,13:$V1,16:$V2,18:$V3},{11:[1,18]},{7:[1,19]},{7:[1,20]},{7:[1,21]},{11:[1,22]},{5:[2,2]},{14:[1,23]},{14:[1,24]},{14:$V4,15:25,19:$V5},{5:[2,3]},{9:[1,28]},{9:[1,29]},{11:[1,30]},{7:[1,31]},{11:[2,8]},{8:32,14:$V0},{7:$V6,14:$V7,17:33,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{11:[2,6]},{14:[1,42]},{9:[1,43]},{11:[1,44],20:$Vd,21:$Ve,23:$Vf,24:$Vg,25:$Vh,26:$Vi,27:$Vj,28:$Vk,34:$Vl,35:$Vm,36:$Vn,37:$Vo,38:$Vp},{7:$V6,14:$V7,17:58,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{7:$V6,14:$V7,17:59,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},o($Vq,[2,22],{7:[1,60],39:[1,61],41:[1,62]}),o($Vq,[2,23]),o($Vq,[2,24]),o($Vq,[2,25]),o($Vq,[2,26]),o($Vr,[2,36]),{11:[1,63]},{14:$V4,15:64,19:$V5},{11:[2,5]},{7:$V6,14:$V7,17:65,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{7:$V6,14:$V7,17:66,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{7:$V6,14:$V7,17:67,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{7:$V6,14:$V7,17:68,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{7:$V6,14:$V7,17:69,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{7:$V6,14:$V7,17:70,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{7:$V6,14:$V7,17:71,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{7:$V6,14:$V7,17:72,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{7:$V6,14:$V7,17:73,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{7:$V6,14:$V7,17:74,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{7:$V6,14:$V7,17:75,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{7:$V6,14:$V7,17:76,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{7:$V6,14:$V7,17:77,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},o($Vq,[2,12]),{11:[1,78],20:$Vd,21:$Ve,23:$Vf,24:$Vg,25:$Vh,26:$Vi,27:$Vj,28:$Vk,34:$Vl,35:$Vm,36:$Vn,37:$Vo,38:$Vp},{7:$V6,11:[1,79],14:$V7,17:81,22:$V8,29:36,30:80,31:$V9,32:$Va,33:$Vb,40:$Vc},{40:[1,82]},{7:$V6,14:$V7,17:83,22:$V8,29:36,31:$V9,32:$Va,33:$Vb,40:$Vc},{11:[2,7]},{11:[1,84]},o($Vs,[2,10],{23:$Vf,24:$Vg,25:$Vh,26:$Vi,27:$Vj,28:$Vk,34:$Vl,35:$Vm,36:$Vn,37:$Vo,38:$Vp}),o($Vs,[2,11],{23:$Vf,24:$Vg,25:$Vh,26:$Vi,27:$Vj,28:$Vk,34:$Vl,35:$Vm,36:$Vn,37:$Vo,38:$Vp}),o($Vt,[2,14],{34:$Vl,35:$Vm,36:$Vn,37:$Vo,38:$Vp}),o($Vt,[2,15],{34:$Vl,35:$Vm,36:$Vn,37:$Vo,38:$Vp}),o($Vt,[2,16],{34:$Vl,35:$Vm,36:$Vn,37:$Vo,38:$Vp}),o($Vt,[2,17],{34:$Vl,35:$Vm,36:$Vn,37:$Vo,38:$Vp}),o($Vt,[2,18],{34:$Vl,35:$Vm,36:$Vn,37:$Vo,38:$Vp}),o($Vt,[2,19],{34:$Vl,35:$Vm,36:$Vn,37:$Vo,38:$Vp}),o($Vu,[2,27],{36:$Vn,37:$Vo,38:$Vp}),o($Vu,[2,28],{36:$Vn,37:$Vo,38:$Vp}),o($Vq,[2,29]),o($Vq,[2,30]),o($Vq,[2,31]),o($Vq,[2,13]),o($Vq,[2,20]),{11:[1,85]},{9:[1,86],11:[2,33],20:$Vd,21:$Ve,23:$Vf,24:$Vg,25:$Vh,26:$Vi,27:$Vj,28:$Vk,34:$Vl,35:$Vm,36:$Vn,37:$Vo,38:$Vp},o($Vr,[2,34]),{20:$Vd,21:$Ve,23:$Vf,24:$Vg,25:$Vh,26:$Vi,27:$Vj,28:$Vk,34:$Vl,35:$Vm,36:$Vn,37:$Vo,38:$Vp,42:[1,87]},{11:[2,4]},o($Vq,[2,21]),{7:$V6,14:$V7,17:81,22:$V8,29:36,30:88,31:$V9,32:$Va,33:$Vb,40:$Vc},o($Vr,[2,35]),{11:[2,32]}],
-defaultActions: {5:[2,1],9:[2,9],18:[2,2],22:[2,3],27:[2,8],30:[2,6],44:[2,5],63:[2,7],84:[2,4],88:[2,32]},
+table: [{3:1,4:2,6:[1,3],12:[1,4],13:5,41:$V0},{1:[3]},{5:[1,7]},{7:[1,8]},{7:[1,9]},{14:[1,10],40:$V1,42:$V2},o($V3,[2,37]),{1:[2,1]},{8:13,17:$V4},{8:15,17:$V4},{7:$V5,13:19,15:16,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{41:[1,24]},{7:$V5,13:19,15:25,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{9:[1,26]},{9:[2,10]},{9:[1,27]},{5:[2,4],22:$Vb,23:$Vc,25:$Vd,26:$Ve,27:$Vf,28:$Vg,29:$Vh,30:$Vi,35:$Vj,36:$Vk,37:$Vl,38:$Vm,39:$Vn},{7:$V5,13:19,15:41,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{7:$V5,13:19,15:42,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},o($Vo,[2,23],{7:[1,43],40:$V1,42:$V2}),o($Vo,[2,24]),o($Vo,[2,25]),o($Vo,[2,26]),o($Vo,[2,27]),o($V3,[2,35]),{22:$Vb,23:$Vc,25:$Vd,26:$Ve,27:$Vf,28:$Vg,29:$Vh,30:$Vi,35:$Vj,36:$Vk,37:$Vl,38:$Vm,39:$Vn,43:[1,44]},{10:45,16:$Vp,19:$Vq,20:$Vr},{10:49,16:$Vp,19:$Vq,20:$Vr},{7:$V5,13:19,15:50,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{7:$V5,13:19,15:51,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{7:$V5,13:19,15:52,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{7:$V5,13:19,15:53,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{7:$V5,13:19,15:54,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{7:$V5,13:19,15:55,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{7:$V5,13:19,15:56,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{7:$V5,13:19,15:57,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{7:$V5,13:19,15:58,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{7:$V5,13:19,15:59,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{7:$V5,13:19,15:60,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{7:$V5,13:19,15:61,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{7:$V5,13:19,15:62,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},o($Vo,[2,13]),{11:[1,63],22:$Vb,23:$Vc,25:$Vd,26:$Ve,27:$Vf,28:$Vg,29:$Vh,30:$Vi,35:$Vj,36:$Vk,37:$Vl,38:$Vm,39:$Vn},{7:$V5,11:[1,64],13:19,15:66,17:$V6,24:$V7,31:65,32:$V8,33:$V9,34:$Va,41:$V0},o($V3,[2,36]),{11:[1,67]},{7:[1,68]},{7:[1,69]},{7:[1,70]},{11:[1,71]},o($Vs,[2,11],{25:$Vd,26:$Ve,27:$Vf,28:$Vg,29:$Vh,30:$Vi,35:$Vj,36:$Vk,37:$Vl,38:$Vm,39:$Vn}),o($Vs,[2,12],{25:$Vd,26:$Ve,27:$Vf,28:$Vg,29:$Vh,30:$Vi,35:$Vj,36:$Vk,37:$Vl,38:$Vm,39:$Vn}),o($Vt,[2,15],{35:$Vj,36:$Vk,37:$Vl,38:$Vm,39:$Vn}),o($Vt,[2,16],{35:$Vj,36:$Vk,37:$Vl,38:$Vm,39:$Vn}),o($Vt,[2,17],{35:$Vj,36:$Vk,37:$Vl,38:$Vm,39:$Vn}),o($Vt,[2,18],{35:$Vj,36:$Vk,37:$Vl,38:$Vm,39:$Vn}),o($Vt,[2,19],{35:$Vj,36:$Vk,37:$Vl,38:$Vm,39:$Vn}),o($Vt,[2,20],{35:$Vj,36:$Vk,37:$Vl,38:$Vm,39:$Vn}),o($Vu,[2,28],{37:$Vl,38:$Vm,39:$Vn}),o($Vu,[2,29],{37:$Vl,38:$Vm,39:$Vn}),o($Vo,[2,30]),o($Vo,[2,31]),o($Vo,[2,32]),o($Vo,[2,14]),o($Vo,[2,21]),{11:[1,72]},{9:[1,73],11:[2,34],22:$Vb,23:$Vc,25:$Vd,26:$Ve,27:$Vf,28:$Vg,29:$Vh,30:$Vi,35:$Vj,36:$Vk,37:$Vl,38:$Vm,39:$Vn},{5:[2,2]},{17:[1,74]},{17:[1,75]},{17:$Vv,18:76,21:$Vw},{5:[2,3]},o($Vo,[2,22]),{7:$V5,13:19,15:66,17:$V6,24:$V7,31:79,32:$V8,33:$V9,34:$Va,41:$V0},{9:[1,80]},{9:[1,81]},{11:[1,82]},{7:[1,83]},{11:[2,9]},{11:[2,33]},{8:84,17:$V4},{7:$V5,13:19,15:85,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{11:[2,7]},{17:[1,86]},{9:[1,87]},{11:[1,88],22:$Vb,23:$Vc,25:$Vd,26:$Ve,27:$Vf,28:$Vg,29:$Vh,30:$Vi,35:$Vj,36:$Vk,37:$Vl,38:$Vm,39:$Vn},{11:[1,89]},{17:$Vv,18:90,21:$Vw},{11:[2,6]},{11:[2,8]},{11:[1,91]},{11:[2,5]}],
+defaultActions: {7:[2,1],14:[2,10],67:[2,2],71:[2,3],78:[2,9],79:[2,33],82:[2,7],88:[2,6],89:[2,8],91:[2,5]},
 parseError: function parseError(str, hash) {
     if (hash.recoverable) {
         this.trace(str);
@@ -453,6 +458,118 @@ parse: function parse(input) {
 }};
 
 
+function compare(obj1, obj2){
+	// Deals with null == null, undefined == undefined, same
+	// strings or numbers
+	if( obj1 === obj2 ) return 0;
+
+	// Testing for different types
+	if( typeof obj1 !== typeof obj2 ){
+		if( typeof obj1 < typeof obj2 ) return -1;
+		return 1;
+	};
+	
+	// From this point, both objects have the same type and are not equal
+	
+	if( typeof obj1 === 'string' 
+	 || typeof obj1 === 'number' ){
+	 	if( obj1 < obj2 ) return -1;
+	 	return 1;
+	};
+
+	if( typeof obj1 === 'boolean'){
+	 	if( obj2 ) return -1;
+	 	return 1;
+	};
+
+	if( typeof obj1 === 'function'){
+		var src1 = obj1.toString();
+		var src2 = obj2.toString();
+	 	if( src1 < src2 ) return -1;
+	 	if( src1 > src2 ) return 1;
+	 	return 0;
+	};
+	
+	// Deal with arrays
+	if( $n2.isArray(obj1) && $n2.isArray(obj2) ){
+		var refSets = true;
+		obj1.forEach(function(elem){
+			if( !elem ) {
+				refSets = false;
+			} else if( elem.nunaliit_type !== 'reference' ) {
+				refSets = false;
+			};
+		});
+		obj2.forEach(function(elem){
+			if( !elem ) {
+				refSets = false;
+			} else if( elem.nunaliit_type !== 'reference' ) {
+				refSets = false;
+			};
+		});
+		
+		if( refSets ){
+			return compareReferenceSets(obj1, obj2);
+		};
+		
+		return compareArrays(obj1, obj2)
+		
+	} else if( $n2.isArray(obj1) && !$n2.isArray(obj2) ){
+		return -1;
+	} else if( !$n2.isArray(obj1) && $n2.isArray(obj2) ){
+		return 1;
+	};
+	
+	// At this point, we should be left with two objects
+	
+	if( obj1.nunaliit_type === 'reference'
+	 && obj2.nunaliit_type === 'reference' ){
+	 	return compareReferences(obj1,obj2);
+	};
+
+	// Compare properties
+	var propNameMap = {};
+	for(var key in obj1){
+		propNameMap[key] = true;
+	};
+	for(var key in obj2){
+		propNameMap[key] = true;
+	};
+	var propNames = [];
+	for(var key in propNameMap){
+		propNames.push(key);
+	};
+	propNames.sort();
+	for(var i=0; i<propNames.length; ++i){
+		var propName = propNames[i];
+		var prop1 = obj1[propName];
+		var prop2 = obj2[propName];
+		var c = compare(prop1, prop2);
+		if( 0 !== c ){
+			return c;
+		};
+	};
+	
+	return 0; 
+};
+
+function compareArrays(arr1, arr2){
+	if( arr1.length > arr2.length ){
+		return 1;
+	} else if( arr1.length < arr2.length ){
+		return -1;
+	};
+	
+	for(var i=0; i<arr1.length; ++i){
+		var c = compare(arr1[i], arr2[i]);
+		if( 0 !== c ){
+			return c;
+		};
+	};
+	
+	return 0;
+};
+
 function compareReferences(ref1, ref2){
 	if( ref1 === ref2 ) return 0; // null == null and undefined == undefined
 	if( !ref1 ) return -1;
@@ -506,6 +623,78 @@ function compareReferenceSets(set1, set2){
 var global = {
 };
 parser.global = global;
+
+// -----------------------------------------------------------
+var OpAssignment = function(leftop, value){
+	this.leftop = leftop;
+	this.value = value;
+};
+OpAssignment.prototype.configure = function(opts){
+	if( this.identifier 
+	 && typeof this.identifier.configure === 'function' ){
+	 	this.identifier.configure(opts);
+	};
+	if( this.value 
+	 && typeof this.value.configure === 'function' ){
+	 	this.value.configure(opts);
+	};
+};
+OpAssignment.prototype.reportCopyOperations = function(opts){
+
+	var propertyNameMap = {};
+
+	// compute new value	
+	var ctxt = {};
+	ctxt.n2_doc = opts.doc;
+	ctxt['import'] = opts.importData;
+	ctxt.propertyNameMap = propertyNameMap;
+	var updatedValue = this.value.getValue(ctxt);
+
+	// get current value
+	var ctxt2 = {};
+	ctxt2.n2_doc = opts.doc;
+	ctxt2['import'] = opts.importData;
+	var targetValue = this.leftop.getValue(ctxt2);
+	var targetSelector = this.leftop.getObjectSelector(ctxt2);
+	
+	var isInconsistent = false;
+	if( 0 !== compare(targetValue, updatedValue) ){
+		isInconsistent = true;
+	};
+
+	var inputPropertyNames = [];
+	for(var propertyName in propertyNameMap){
+		inputPropertyNames.push(propertyName);
+	};
+
+	var op = {
+		propertyNames: inputPropertyNames
+		,computedValue: updatedValue
+		,targetSelector: targetSelector
+		,targetValue: targetValue
+		,isInconsistent: isInconsistent
+	};	
+
+	opts.onSuccess([op]);
+};
+OpAssignment.prototype.performCopyOperation = function(opts_){
+	var opts = $n2.extend({
+		doc: null
+		,importData: null
+		,copyOperation: null
+	},opts_);
+	
+	var doc = opts.doc;
+	var copyOperation = opts.copyOperation;
+	var computedValue = copyOperation.computedValue;
+	var targetSelector = copyOperation.targetSelector;
+	
+	if( typeof computedValue === 'undefined' ){
+		targetSelector.removeValue(doc);
+	} else {
+		targetSelector.setValue(doc, computedValue, true);
+	};
+};
 
 // -----------------------------------------------------------
 var OpAssignReference = function(objectSelector, referenceSelector){
@@ -853,19 +1042,19 @@ RefFromValue.prototype.getValues = function(opts, propertyNameMap){
 
 // -----------------------------------------------------------
 // selectorStr - Dotted notation for an object selector
-var ObjectSelector2 = function(selectorStr){
+var DocumentSelector = function(selectorStr){
 	this.selectorStr = selectorStr;
 	this.selector = $n2.objectSelector.parseSelector(selectorStr);
 };
-ObjectSelector2.prototype.configure = function(opts){
+DocumentSelector.prototype.configure = function(opts){
 };
-ObjectSelector2.prototype.getValue = function(obj){
+DocumentSelector.prototype.getValue = function(obj){
 	return this.selector.getValue(obj);
 };
-ObjectSelector2.prototype.setValue = function(obj, value){
+DocumentSelector.prototype.setValue = function(obj, value){
 	this.selector.setValue(obj, value, true);
 };
-ObjectSelector2.prototype.removeValue = function(obj){
+DocumentSelector.prototype.removeValue = function(obj){
 	this.selector.removeValue(obj);
 };
 
@@ -1029,10 +1218,23 @@ ObjectSelector.prototype.getValue = function(ctxt){
 			return undefined;
 		};
 		
+		// Capture references to 'import' data
+		if( typeof this.previousSelector.variableName === 'string' 
+		 && this.previousSelector.variableName === 'import' ){
+		 	if( ctxt.propertyNameMap ){
+		 		ctxt.propertyNameMap[id] = true;
+		 	};
+		};
+		
 		return obj[id];
 	};
 
 	return undefined;
+};
+ObjectSelector.prototype.getObjectSelector = function(ctxt){
+	var parentSel = this.previousSelector.getObjectSelector();
+	var id = this.idNode.getValue(ctxt);
+	return parentSel.getChildSelector(id);
 };
 
 // -----------------------------------------------------------
@@ -1053,6 +1255,9 @@ Variable.prototype.getValue = function(ctxt){
 	};
 	
 	return obj;
+};
+Variable.prototype.getObjectSelector = function(ctxt){
+	return new $n2.objectSelector.ObjectSelector([]);
 };
 
 
@@ -1386,39 +1591,39 @@ var YYSTATE=YY_START;
 switch($avoiding_name_collisions) {
 case 0: /* skip whitespace */ 
 break;
-case 1: return 31; 
+case 1: return 32; 
 break;
-case 2: return 32; 
+case 2: return 33; 
 break;
 case 3: return 6; 
 break;
 case 4: return 12; 
 break;
-case 5: return 19; 
+case 5: return 21; 
 break;
-case 6: return 13; 
+case 6: return 16; 
 break;
-case 7: return 16; 
+case 7: return 19; 
 break;
-case 8: return 18; 
+case 8: return 20; 
 break;
-case 9: return 33; 
+case 9: return 34; 
 break;
-case 10: return 40; 
+case 10: return 41; 
 break;
-case 11: yy_.yytext = yy_.yytext.substr(1,yy_.yytext.length-2); return 14; 
+case 11: yy_.yytext = yy_.yytext.substr(1,yy_.yytext.length-2); return 17; 
 break;
-case 12: return 23; 
+case 12: return 25; 
 break;
-case 13: return 24; 
+case 13: return 26; 
 break;
-case 14: return 25; 
+case 14: return 27; 
 break;
-case 15: return 26; 
+case 15: return 28; 
 break;
-case 16: return 27; 
+case 16: return 29; 
 break;
-case 17: return 28; 
+case 17: return 30; 
 break;
 case 18: return 7; 
 break;
@@ -1428,38 +1633,40 @@ case 20: return '{';
 break;
 case 21: return '}'; 
 break;
-case 22: return 41; 
+case 22: return 42; 
 break;
-case 23: return 42; 
+case 23: return 43; 
 break;
 case 24: return 9; 
 break;
-case 25: return 39; 
+case 25: return 40; 
 break;
-case 26: return 22; 
+case 26: return 24; 
 break;
-case 27: return 34; 
+case 27: return 35; 
 break;
-case 28: return 35; 
+case 28: return 36; 
 break;
-case 29: return 36; 
+case 29: return 37; 
 break;
-case 30: return 37; 
+case 30: return 38; 
 break;
-case 31: return 38; 
+case 31: return 39; 
 break;
-case 32: return 20; 
+case 32: return 14; 
 break;
-case 33: return 21; 
+case 33: return 22; 
 break;
-case 34: return 5; 
+case 34: return 23; 
 break;
-case 35: return 'INVALID'; 
+case 35: return 5; 
+break;
+case 36: return 'INVALID'; 
 break;
 }
 },
-rules: [/^(?:\s+)/,/^(?:true\b)/,/^(?:false\b)/,/^(?:assignReference\b)/,/^(?:assignReferences\b)/,/^(?:importedAttribute\b)/,/^(?:fromSchema\b)/,/^(?:fromSchema2\b)/,/^(?:referencesFromValue\b)/,/^(?:[0-9]+(\.[0-9]+)?\b)/,/^(?:[_a-zA-Z][_a-zA-Z0-9]*)/,/^(?:'(\\'|[^'])*')/,/^(?:==)/,/^(?:!=)/,/^(?:>=)/,/^(?:<=)/,/^(?:>)/,/^(?:<)/,/^(?:\()/,/^(?:\))/,/^(?:\{)/,/^(?:\})/,/^(?:\[)/,/^(?:\])/,/^(?:,)/,/^(?:\.)/,/^(?:!)/,/^(?:\+)/,/^(?:-)/,/^(?:\*)/,/^(?:\/)/,/^(?:%)/,/^(?:&&)/,/^(?:\|\|)/,/^(?:$)/,/^(?:.)/],
-conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35],"inclusive":true}}
+rules: [/^(?:\s+)/,/^(?:true\b)/,/^(?:false\b)/,/^(?:assignReference\b)/,/^(?:assignReferences\b)/,/^(?:importedAttribute\b)/,/^(?:fromSchema\b)/,/^(?:fromSchema2\b)/,/^(?:referencesFromValue\b)/,/^(?:[0-9]+(\.[0-9]+)?\b)/,/^(?:[_a-zA-Z][_a-zA-Z0-9]*)/,/^(?:'(\\'|[^'])*')/,/^(?:==)/,/^(?:!=)/,/^(?:>=)/,/^(?:<=)/,/^(?:>)/,/^(?:<)/,/^(?:\()/,/^(?:\))/,/^(?:\{)/,/^(?:\})/,/^(?:\[)/,/^(?:\])/,/^(?:,)/,/^(?:\.)/,/^(?:!)/,/^(?:\+)/,/^(?:-)/,/^(?:\*)/,/^(?:\/)/,/^(?:%)/,/^(?:=)/,/^(?:&&)/,/^(?:\|\|)/,/^(?:$)/,/^(?:.)/],
+conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36],"inclusive":true}}
 });
 return lexer;
 })();

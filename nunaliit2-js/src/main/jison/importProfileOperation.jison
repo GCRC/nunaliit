@@ -3,6 +3,118 @@
 
 %{
 
+function compare(obj1, obj2){
+	// Deals with null == null, undefined == undefined, same
+	// strings or numbers
+	if( obj1 === obj2 ) return 0;
+
+	// Testing for different types
+	if( typeof obj1 !== typeof obj2 ){
+		if( typeof obj1 < typeof obj2 ) return -1;
+		return 1;
+	};
+	
+	// From this point, both objects have the same type and are not equal
+	
+	if( typeof obj1 === 'string' 
+	 || typeof obj1 === 'number' ){
+	 	if( obj1 < obj2 ) return -1;
+	 	return 1;
+	};
+
+	if( typeof obj1 === 'boolean'){
+	 	if( obj2 ) return -1;
+	 	return 1;
+	};
+
+	if( typeof obj1 === 'function'){
+		var src1 = obj1.toString();
+		var src2 = obj2.toString();
+	 	if( src1 < src2 ) return -1;
+	 	if( src1 > src2 ) return 1;
+	 	return 0;
+	};
+	
+	// Deal with arrays
+	if( $n2.isArray(obj1) && $n2.isArray(obj2) ){
+		var refSets = true;
+		obj1.forEach(function(elem){
+			if( !elem ) {
+				refSets = false;
+			} else if( elem.nunaliit_type !== 'reference' ) {
+				refSets = false;
+			};
+		});
+		obj2.forEach(function(elem){
+			if( !elem ) {
+				refSets = false;
+			} else if( elem.nunaliit_type !== 'reference' ) {
+				refSets = false;
+			};
+		});
+		
+		if( refSets ){
+			return compareReferenceSets(obj1, obj2);
+		};
+		
+		return compareArrays(obj1, obj2)
+		
+	} else if( $n2.isArray(obj1) && !$n2.isArray(obj2) ){
+		return -1;
+	} else if( !$n2.isArray(obj1) && $n2.isArray(obj2) ){
+		return 1;
+	};
+	
+	// At this point, we should be left with two objects
+	
+	if( obj1.nunaliit_type === 'reference'
+	 && obj2.nunaliit_type === 'reference' ){
+	 	return compareReferences(obj1,obj2);
+	};
+
+	// Compare properties
+	var propNameMap = {};
+	for(var key in obj1){
+		propNameMap[key] = true;
+	};
+	for(var key in obj2){
+		propNameMap[key] = true;
+	};
+	var propNames = [];
+	for(var key in propNameMap){
+		propNames.push(key);
+	};
+	propNames.sort();
+	for(var i=0; i<propNames.length; ++i){
+		var propName = propNames[i];
+		var prop1 = obj1[propName];
+		var prop2 = obj2[propName];
+		var c = compare(prop1, prop2);
+		if( 0 !== c ){
+			return c;
+		};
+	};
+	
+	return 0; 
+};
+
+function compareArrays(arr1, arr2){
+	if( arr1.length > arr2.length ){
+		return 1;
+	} else if( arr1.length < arr2.length ){
+		return -1;
+	};
+	
+	for(var i=0; i<arr1.length; ++i){
+		var c = compare(arr1[i], arr2[i]);
+		if( 0 !== c ){
+			return c;
+		};
+	};
+	
+	return 0;
+};
+
 function compareReferences(ref1, ref2){
 	if( ref1 === ref2 ) return 0; // null == null and undefined == undefined
 	if( !ref1 ) return -1;
@@ -58,8 +170,8 @@ var global = {
 parser.global = global;
 
 // -----------------------------------------------------------
-var OpAssignment = function(identifier, value){
-	this.identifier = identifier;
+var OpAssignment = function(leftop, value){
+	this.leftop = leftop;
 	this.value = value;
 };
 OpAssignment.prototype.configure = function(opts){
@@ -75,20 +187,23 @@ OpAssignment.prototype.configure = function(opts){
 OpAssignment.prototype.reportCopyOperations = function(opts){
 
 	var propertyNameMap = {};
-	var computedValues = this.referenceSelector.getValues(opts, propertyNameMap);
-	
-	// create new value
-	var updatedValue = undefined;
-	if( computedValues.length === 1 ){
-		updatedValue = computedValues[0];
-	} else if( computedValues.length > 1 ){
-		throw new Error('Multiple references found for a single unit');
-	};
 
-	var targetValue = this.targetSelector.getValue(opts.doc);
+	// compute new value	
+	var ctxt = {};
+	ctxt.n2_doc = opts.doc;
+	ctxt['import'] = opts.importData;
+	ctxt.propertyNameMap = propertyNameMap;
+	var updatedValue = this.value.getValue(ctxt);
+
+	// get current value
+	var ctxt2 = {};
+	ctxt2.n2_doc = opts.doc;
+	ctxt2['import'] = opts.importData;
+	var targetValue = this.leftop.getValue(ctxt2);
+	var targetSelector = this.leftop.getObjectSelector(ctxt2);
 	
 	var isInconsistent = false;
-	if( 0 !== compareReferences(targetValue, updatedValue) ){
+	if( 0 !== compare(targetValue, updatedValue) ){
 		isInconsistent = true;
 	};
 
@@ -100,7 +215,7 @@ OpAssignment.prototype.reportCopyOperations = function(opts){
 	var op = {
 		propertyNames: inputPropertyNames
 		,computedValue: updatedValue
-		,targetSelector: this.targetSelector
+		,targetSelector: targetSelector
 		,targetValue: targetValue
 		,isInconsistent: isInconsistent
 	};	
@@ -115,21 +230,14 @@ OpAssignment.prototype.performCopyOperation = function(opts_){
 	},opts_);
 	
 	var doc = opts.doc;
+	var copyOperation = opts.copyOperation;
+	var computedValue = copyOperation.computedValue;
+	var targetSelector = copyOperation.targetSelector;
 	
-	var computedValues = this.referenceSelector.getValues(opts, {});
-	if( computedValues.length > 1 ){
-		throw new Error('Multiple references returned for a single unit');
-	};
-	var importValue = undefined;
-	if( computedValues.length > 0 ){
-		importValue = computedValues[0];
-	};
-
-	if( typeof importValue === 'undefined' ){
-		// Must delete
-		this.targetSelector.removeValue(doc);
+	if( typeof computedValue === 'undefined' ){
+		targetSelector.removeValue(doc);
 	} else {
-		this.targetSelector.setValue(doc, importValue);
+		targetSelector.setValue(doc, computedValue, true);
 	};
 };
 
@@ -655,10 +763,23 @@ ObjectSelector.prototype.getValue = function(ctxt){
 			return undefined;
 		};
 		
+		// Capture references to 'import' data
+		if( typeof this.previousSelector.variableName === 'string' 
+		 && this.previousSelector.variableName === 'import' ){
+		 	if( ctxt.propertyNameMap ){
+		 		ctxt.propertyNameMap[id] = true;
+		 	};
+		};
+		
 		return obj[id];
 	};
 
 	return undefined;
+};
+ObjectSelector.prototype.getObjectSelector = function(ctxt){
+	var parentSel = this.previousSelector.getObjectSelector();
+	var id = this.idNode.getValue(ctxt);
+	return parentSel.getChildSelector(id);
 };
 
 // -----------------------------------------------------------
@@ -679,6 +800,9 @@ Variable.prototype.getValue = function(ctxt){
 	};
 	
 	return obj;
+};
+Variable.prototype.getObjectSelector = function(ctxt){
+	return new $n2.objectSelector.ObjectSelector([]);
 };
 
 %}
@@ -719,6 +843,7 @@ Variable.prototype.getValue = function(ctxt){
 "*"                    { return '*'; }
 "/"                    { return '/'; }
 "%"                    { return '%'; }
+"="                    { return '='; }
 "&&"                   { return '&&'; }
 "||"                   { return '||'; }
 <<EOF>>                { return 'EOF'; }
