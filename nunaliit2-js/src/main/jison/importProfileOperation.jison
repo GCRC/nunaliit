@@ -58,6 +58,82 @@ var global = {
 parser.global = global;
 
 // -----------------------------------------------------------
+var OpAssignment = function(identifier, value){
+	this.identifier = identifier;
+	this.value = value;
+};
+OpAssignment.prototype.configure = function(opts){
+	if( this.identifier 
+	 && typeof this.identifier.configure === 'function' ){
+	 	this.identifier.configure(opts);
+	};
+	if( this.value 
+	 && typeof this.value.configure === 'function' ){
+	 	this.value.configure(opts);
+	};
+};
+OpAssignment.prototype.reportCopyOperations = function(opts){
+
+	var propertyNameMap = {};
+	var computedValues = this.referenceSelector.getValues(opts, propertyNameMap);
+	
+	// create new value
+	var updatedValue = undefined;
+	if( computedValues.length === 1 ){
+		updatedValue = computedValues[0];
+	} else if( computedValues.length > 1 ){
+		throw new Error('Multiple references found for a single unit');
+	};
+
+	var targetValue = this.targetSelector.getValue(opts.doc);
+	
+	var isInconsistent = false;
+	if( 0 !== compareReferences(targetValue, updatedValue) ){
+		isInconsistent = true;
+	};
+
+	var inputPropertyNames = [];
+	for(var propertyName in propertyNameMap){
+		inputPropertyNames.push(propertyName);
+	};
+
+	var op = {
+		propertyNames: inputPropertyNames
+		,computedValue: updatedValue
+		,targetSelector: this.targetSelector
+		,targetValue: targetValue
+		,isInconsistent: isInconsistent
+	};	
+
+	opts.onSuccess([op]);
+};
+OpAssignment.prototype.performCopyOperation = function(opts_){
+	var opts = $n2.extend({
+		doc: null
+		,importData: null
+		,copyOperation: null
+	},opts_);
+	
+	var doc = opts.doc;
+	
+	var computedValues = this.referenceSelector.getValues(opts, {});
+	if( computedValues.length > 1 ){
+		throw new Error('Multiple references returned for a single unit');
+	};
+	var importValue = undefined;
+	if( computedValues.length > 0 ){
+		importValue = computedValues[0];
+	};
+
+	if( typeof importValue === 'undefined' ){
+		// Must delete
+		this.targetSelector.removeValue(doc);
+	} else {
+		this.targetSelector.setValue(doc, importValue);
+	};
+};
+
+// -----------------------------------------------------------
 var OpAssignReference = function(objectSelector, referenceSelector){
 	this.targetSelector = objectSelector;
 	this.referenceSelector = referenceSelector;
@@ -403,19 +479,19 @@ RefFromValue.prototype.getValues = function(opts, propertyNameMap){
 
 // -----------------------------------------------------------
 // selectorStr - Dotted notation for an object selector
-var ObjectSelector2 = function(selectorStr){
+var DocumentSelector = function(selectorStr){
 	this.selectorStr = selectorStr;
 	this.selector = $n2.objectSelector.parseSelector(selectorStr);
 };
-ObjectSelector2.prototype.configure = function(opts){
+DocumentSelector.prototype.configure = function(opts){
 };
-ObjectSelector2.prototype.getValue = function(obj){
+DocumentSelector.prototype.getValue = function(obj){
 	return this.selector.getValue(obj);
 };
-ObjectSelector2.prototype.setValue = function(obj, value){
+DocumentSelector.prototype.setValue = function(obj, value){
 	this.selector.setValue(obj, value, true);
 };
-ObjectSelector2.prototype.removeValue = function(obj){
+DocumentSelector.prototype.removeValue = function(obj){
 	this.selector.removeValue(obj);
 };
 
@@ -678,6 +754,10 @@ operation
         {
         	$$ = new OpAssignReferences($3,$5);
         }
+	| identifier '=' value
+        {
+        	$$ = new OpAssignment($1,$3);
+        }
 	;
 
 referenceSelector
@@ -709,7 +789,7 @@ valueSelector
 objectSelector	
 	: 'STRING'
         {
-        	$$ = new ObjectSelector2($1);
+        	$$ = new DocumentSelector($1);
         }
 	;
 
