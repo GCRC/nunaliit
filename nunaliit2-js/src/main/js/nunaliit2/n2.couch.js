@@ -946,7 +946,7 @@ var Database = $n2.Class('couch.Database',{
 	    	,success: opt.onSuccess
 	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
 				var errStr = httpJsonError(XMLHttpRequest, textStatus);
-				opts.onError('Error obtaining database changes: '+errStr);
+				opt.onError('Error obtaining database changes: '+errStr);
 	    	}
 		});
 	}

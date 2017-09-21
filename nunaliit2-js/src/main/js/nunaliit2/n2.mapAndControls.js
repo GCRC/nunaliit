@@ -1105,7 +1105,9 @@ var MapAndControls = $n2.Class({
 			}
 			,directory: null // service directory
 			,mapIdentifier: 'map'
-			,mapInteractionDivName: 'map_interaction_div' 
+			,mapInteractionDivName: 'map_interaction_div'
+			,keepPopUpsOpen: false
+			,keepPopUpsStatic: false
 		};
 		this.options = $.extend(true, {}, defaultOptions, options_);
 
@@ -3394,24 +3396,41 @@ var MapAndControls = $n2.Class({
 	    	popup.autoSize = true;
 	    	popup.panMapIfOutOfView = true;
 			popup.setOpacity("80");
+
+			// Set maximum pop-up size
+			var mapSize = _this.map.getSize();
+			if( mapSize ){
+				popup.maxSize = new OpenLayers.Size(
+					Math.floor(mapSize.w/3),
+					Math.floor(mapSize.h/3)
+				);
+			};
 			
 			// Install new pop-up
 			_this.currentPopup = popup;
 			_this.map.addPopup(popup);
 
 			// Add clean up routine
-			_this._registerEndHoverFn(destroyCurrentPopup);
+			if( _this.options && _this.options.keepPopUpsOpen ){
+				// Leave opened (debugging)
+			} else {
+				_this._registerEndHoverFn(destroyCurrentPopup);
+			};
 			
 			// Add routine to adjust popup position, once
-			_this.addMapMousePositionListener(function(evt){
-				if( _this.currentPopup === popup && _this.lastMapXy ) {
-					_this.currentPopup.lonlat = _this.map.getLonLatFromPixel(_this.lastMapXy);
-					_this.currentPopup.updatePosition();
-					return true; // keep listener
-				};
-				
-				return false; // remove listener
-			});
+			if( _this.options && _this.options.keepPopUpsStatic ){
+				// Leave opened (debugging)
+			} else {
+				_this.addMapMousePositionListener(function(evt){
+					if( _this.currentPopup === popup && _this.lastMapXy ) {
+						_this.currentPopup.lonlat = _this.map.getLonLatFromPixel(_this.lastMapXy);
+						_this.currentPopup.updatePosition();
+						return true; // keep listener
+					};
+					
+					return false; // remove listener
+				});
+			};
 		};
 		
 		
