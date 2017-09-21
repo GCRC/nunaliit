@@ -303,7 +303,7 @@ var DuplicateWidget = $n2.Class('DuplicateWidget', {
 
 //--------------------------------------------------------------------------
 function HandleWidgetAvailableRequests(m){
-	if( m.widgetType === 'duplicateWidget' ){
+	if( m.widgetType === 'duplicateDocument' ){
 		if( $.fn.slider ) {
 			m.isAvailable = true;
 		};
@@ -312,7 +312,7 @@ function HandleWidgetAvailableRequests(m){
 
 //--------------------------------------------------------------------------
 function HandleWidgetDisplayRequests(m){
-	if( m.widgetType === 'duplicateWidget' ){
+	if( m.widgetType === 'duplicateDocument' ){
 		var widgetOptions = m.widgetOptions;
 		var containerId = m.containerId;
 		var config = m.config;
