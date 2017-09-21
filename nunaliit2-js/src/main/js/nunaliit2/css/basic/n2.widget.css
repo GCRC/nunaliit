@@ -965,3 +965,13 @@ Multi Filter Selection
 .nunaliit_content > .n2widget_multiFilterSelection > .n2widget_multiFilterSelection_selected {
 	background-color: #444;
 }
+
+/* 
+==============================
+Duplicate Widget  
+==============================
+*/
+.nunaliit_module_title .n2widget_duplicate {
+	float: right;
+	padding: 4px 10px;
+}
