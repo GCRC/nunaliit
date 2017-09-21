@@ -971,6 +971,9 @@ Multi Filter Selection
 Duplicate Widget  
 ==============================
 */
+.nunaliit_logged_out .n2widget_duplicate {
+	display: none;
+}
 .nunaliit_module_title .n2widget_duplicate {
 	float: right;
 	padding: 4px 10px;
