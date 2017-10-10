@@ -1020,6 +1020,27 @@ var SearchInput = $n2.Class({
 			this.options.dispatchService.register(DH,'searchInitiate',f);
 			this.options.dispatchService.register(DH,'selected',f);
 			this.options.dispatchService.register(DH,'unselected',f);
+			this.options.dispatchService.register(DH,'searchActivated',f);
+			this.options.dispatchService.register(DH,'searchDeactivated',f);            
+
+			// Activate/Deactivate Search Box
+			$('.searchIcon').click(function() {
+				if( $('.nunaliit_search_input').hasClass('search_active') ){
+					_this.options.dispatchService.synchronousCall(DH,{
+						type: 'searchDeactivated'
+					});
+
+				} else if( $('.nunaliit_search_input').hasClass('search_inactive') ){
+					_this.options.dispatchService.synchronousCall(DH,{
+						type: 'searchActivated'
+					});
+
+				} else {
+					_this.options.dispatchService.synchronousCall(DH,{
+						type: 'searchActivated'
+					});
+				};
+			});
 		};
 		
 		// Figure out id. We should not hold onto a reference
@@ -1267,21 +1288,49 @@ var SearchInput = $n2.Class({
 				cb(null);
 			};
 		});
+	}	
+
+	,_activateSearchBar: function(){	
+		$('.nunaliit_search_input')
+			.addClass('search_active')
+			.removeClass('search_inactive');
+
+		// Move focus to search input box
+		$('.nunaliit_search_input input').focus();
+	}
+
+	,_deactivateSearchBar: function(){    	
+		$('.nunaliit_search_input')
+			.addClass('search_inactive')
+			.removeClass('search_active');
 	}
 
 	,_handle: function(m){
+		
 		if( 'searchInitiate' === m.type ){
 			var $textInput = this.getTextInput();
 			$textInput.val(m.searchLine);
-			
+
 		} else if( 'selected' === m.type 
 		 || 'unselected' === m.type ){
 			var $textInput = this.getTextInput();
 			if( this.options.initialSearchText ) {
 				$textInput.val(this.options.initialSearchText);
+
+				// Hide search bar after document selection
+				this.options.dispatchService.synchronousCall(DH,{
+					type: 'searchDeactivated'
+				});
+
 			} else {
 				$textInput.val('');
 			};
+
+		} else if( 'searchActivated' === m.type ){
+			this._activateSearchBar();
+
+		} else if( 'searchDeactivated' === m.type ){ 
+			this._deactivateSearchBar();
 		};
 	}
 });
@@ -1411,7 +1460,7 @@ var SearchServer = $n2.Class({
 		},opts_);
 		
 		var customService = this.customService;
-		
+
 		// Parent element
 		var $elem = $(opts.elem);
 
@@ -1425,13 +1474,19 @@ var SearchServer = $n2.Class({
 			searchWidgetLabel = _loc('search the atlas');
 		};
 
-		// Text box
 		$elem.empty();
+
+		// Search icon
+		var searchIcon = $('<div>')
+			.addClass('searchIcon')
+			.appendTo($elem);
+
+		// Text box
 		var searchInput = $('<input type="text">')
 			.addClass('search_panel_input')
 			.val( searchWidgetLabel )
 			.appendTo($elem);
-		
+
 		if( opts.doNotDisable ){
 			// OK
 		} else {
