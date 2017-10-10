@@ -608,16 +608,25 @@ var FunctionCall = function(value, args){
 	this.value = value;
 	this.args = args;
 };
-FunctionCall.prototype.getValue = function(ctxt){
-	var value = this.value.getValue(ctxt);
-	if( typeof value === 'function' ){
-		var args = [];
-		if( this.args ){
-			this.args.pushOnArray(ctxt, args);
+FunctionCall.prototype.getValue = function(ctxt,cb){
+	this.value.getValue(ctxt,function(value){
+		if( typeof value === 'function' ){
+			var args = [onComplete];
+			if( this.args ){
+				this.args.pushOnArray(ctxt, args, function(){
+					value.apply(ctxt, args);
+				});
+			} else {
+				value.apply(ctxt, args);
+			};
+		} else {
+			onComplete(false);
 		};
-		return value.apply(ctxt, args);
+	});
+	
+	function onComplete(res){
+		cb(res);
 	};
-	return false;
 };
 
 // -----------------------------------------------------------
@@ -648,13 +657,18 @@ Argument.prototype.getArgument = function(ctxt, position){
 	
 	return undefined;
 };
-Argument.prototype.pushOnArray = function(ctxt, array){
-	var value = this.valueNode.getValue(ctxt);
-	array.push(value);
-	
-	if( this.nextArgument ){
-		this.nextArgument.pushOnArray(ctxt, array);
-	};
+Argument.prototype.pushOnArray = function(ctxt, array, cb){
+	var _this = this;
+
+	this.valueNode.getValue(ctxt,function(value){
+		array.push(value);
+		
+		if( _this.nextArgument ){
+			_this.nextArgument.pushOnArray(ctxt, array, cb);
+		} else {
+			cb();
+		};
+	});
 };
 
 // -----------------------------------------------------------
@@ -663,30 +677,40 @@ var Expression = function(n1, op, n2){
 	this.n2 = n2;
 	this.op = op;
 };
-Expression.prototype.getValue = function(ctxt){
-	var r1 = this.n1.getValue(ctxt);
-	var r2 = undefined;
-	if( this.n2 ){
-		r2 = this.n2.getValue(ctxt);
+Expression.prototype.getValue = function(ctxt, success, error){
+	var _this = this;
+	this.n1.getValue(ctxt,function(r1){
+		if( _this.n2 ){
+			this.n2.getValue(ctxt,function(r2){
+				compute(r1,r2);
+			},error);
+		} else {
+				compute(r1,undefined);
+		};
+	},error);
+	
+	function compute(r1,r2){
+		if( '!' === this.op ){
+			success( !r1 );
+			
+		} else if( '&&' === this.op ){
+			success(r1 && r2);
+			
+		} else if( '||' === this.op ){
+			success(r1 || r2);
+
+		} else {
+			success(false);
+		};
 	};
-	if( '!' === this.op ){
-		return !r1;
-		
-	} else if( '&&' === this.op ){
-		return (r1 && r2);
-		
-	} else if( '||' === this.op ){
-		return (r1 || r2);
-	};
-	return false;
 };
 
 // -----------------------------------------------------------
 var Literal = function(value){
 	this.value = value;
 };
-Literal.prototype.getValue = function(ctxt){
-	return this.value;
+Literal.prototype.getValue = function(ctxt, success, error){
+	success(this.value);
 };
 
 // -----------------------------------------------------------
@@ -695,30 +719,34 @@ var Comparison = function(leftNode, rightNode, op){
 	this.rightNode = rightNode;
 	this.op = op;
 };
-Comparison.prototype.getValue = function(ctxt){
-	var left = this.leftNode.getValue(ctxt);
-	var right = this.rightNode.getValue(ctxt);
+Comparison.prototype.getValue = function(ctxt, success, error){
+	var _this = this;
 
-	if( '==' === this.op ){
-		return (left == right);
+	this.leftNode.getValue(ctxt,function(left){
+		_this.rightNode.getValue(ctxt,function(right){
+			if( '==' === _this.op ){
+				success(left == right);
+		
+			} else if( '!=' === _this.op ){
+				success(left != right);
+		
+			} else if( '>=' === _this.op ){
+				success(left >= right);
+		
+			} else if( '<=' === _this.op ){
+				success(left <= right);
+		
+			} else if( '>' === _this.op ){
+				success(left > right);
+		
+			} else if( '<' === _this.op ){
+				success(left < right);
 
-	} else if( '!=' === this.op ){
-		return (left != right);
-
-	} else if( '>=' === this.op ){
-		return (left >= right);
-
-	} else if( '<=' === this.op ){
-		return (left <= right);
-
-	} else if( '>' === this.op ){
-		return (left > right);
-
-	} else if( '<' === this.op ){
-		return (left < right);
-	};
-	
-	return false;
+			} else {
+				success(false);
+			};
+		},error);
+	},error);
 };
 
 // -----------------------------------------------------------
@@ -727,27 +755,31 @@ var MathOp = function(leftNode, rightNode, op){
 	this.rightNode = rightNode;
 	this.op = op;
 };
-MathOp.prototype.getValue = function(ctxt){
-	var left = this.leftNode.getValue(ctxt);
-	var right = this.rightNode.getValue(ctxt);
+MathOp.prototype.getValue = function(ctxt, success, error){
+	var _this = this;
 
-	if( '+' === this.op ){
-		return (left + right);
+	this.leftNode.getValue(ctxt,function(left){
+		_this.rightNode.getValue(ctxt,function(right){
+			if( '+' === _this.op ){
+				success(left + right);
+		
+			} else if( '-' === _this.op ){
+				success(left - right);
+		
+			} else if( '*' === _this.op ){
+				success(left * right);
+		
+			} else if( '/' === _this.op ){
+				success(left / right);
+		
+			} else if( '%' === _this.op ){
+				success(left % right);
 
-	} else if( '-' === this.op ){
-		return (left - right);
-
-	} else if( '*' === this.op ){
-		return (left * right);
-
-	} else if( '/' === this.op ){
-		return (left / right);
-
-	} else if( '%' === this.op ){
-		return (left % right);
-	};
-	
-	return 0;
+			} else {
+				success(0);
+			};
+		},error);
+	},error);
 };
 
 // -----------------------------------------------------------
@@ -755,26 +787,29 @@ var ObjectSelector = function(id, previousSelector){
 	this.idNode = id;
 	this.previousSelector = previousSelector;
 };
-ObjectSelector.prototype.getValue = function(ctxt){
-	var obj = this.previousSelector.getValue(ctxt);
-	if( typeof obj === 'object' ){
-		var id = this.idNode.getValue(ctxt);
-		if( typeof id === 'undefined' ){
-			return undefined;
+ObjectSelector.prototype.getValue = function(ctxt, success, error){
+	var _this = this;
+	this.previousSelector.getValue(ctxt, function(obj){
+		if( typeof obj === 'object' ){
+			_this.idNode.getValue(ctxt,function(id){
+				if( typeof id === 'undefined' ){
+					cb(undefined);
+				};
+				
+				// Capture references to 'import' data
+				if( typeof _this.previousSelector.variableName === 'string' 
+				 && _this.previousSelector.variableName === 'import' ){
+				 	if( ctxt.propertyNameMap ){
+				 		ctxt.propertyNameMap[id] = true;
+				 	};
+				};
+				
+				success( obj[id] );
+			},error);
 		};
-		
-		// Capture references to 'import' data
-		if( typeof this.previousSelector.variableName === 'string' 
-		 && this.previousSelector.variableName === 'import' ){
-		 	if( ctxt.propertyNameMap ){
-		 		ctxt.propertyNameMap[id] = true;
-		 	};
-		};
-		
-		return obj[id];
-	};
-
-	return undefined;
+	
+		success(undefined);
+	});
 };
 ObjectSelector.prototype.getObjectSelector = function(ctxt){
 	var parentSel = this.previousSelector.getObjectSelector();
@@ -786,7 +821,7 @@ ObjectSelector.prototype.getObjectSelector = function(ctxt){
 var Variable = function(variableName){
 	this.variableName = variableName;
 };
-Variable.prototype.getValue = function(ctxt){
+Variable.prototype.getValue = function(ctxt, success, error){
 	var obj = undefined;
 	
 	if( ctxt && 'doc' === this.variableName ) {
@@ -799,7 +834,7 @@ Variable.prototype.getValue = function(ctxt){
 		obj = global[this.variableName];
 	};
 	
-	return obj;
+	success(obj);
 };
 Variable.prototype.getObjectSelector = function(ctxt){
 	return new $n2.objectSelector.ObjectSelector([]);

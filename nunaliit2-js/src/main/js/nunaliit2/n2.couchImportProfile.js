@@ -3242,6 +3242,38 @@ var ImportProfileCsv = $n2.Class(ImportProfile, {
 });
 
 //=========================================================================
+var ReferencesFromSchema = $n2.Class('ReferencesFromSchema',{
+
+	atlasDesign: null,
+
+	docsbySchemaName: null,
+	
+	initialize: function(opts_){
+		var opts= $n2.extend({
+			atlasDesign: undefined
+			,globalContext: undefined
+		},opts_);
+
+		var _this = this;
+
+		this.atlasDesign = opts.atlasDesign;
+		
+		this.docsbySchemaName = {};
+		
+		if( opts.globalContext ){
+			opts.globalContext.referencesFromSchema = function(){
+				var ctxt = this;
+				_this._getReferences(ctxt, schemaName, expression);
+			};
+		};
+	},
+
+	_getReferences: function(ctxt, cb, schemaName, expression){
+		
+	}
+});
+
+//=========================================================================
 var ImportProfileService = $n2.Class({
 	
 	schemaRepository: null,
@@ -3268,6 +3300,15 @@ var ImportProfileService = $n2.Class({
 		this.addImportProfileClass('json',ImportProfileJson);
 		this.addImportProfileClass('geojson',ImportProfileGeoJson);
 		this.addImportProfileClass('csv',ImportProfileCsv);
+		
+		if( $n2.importProfileOperation 
+		 && typeof $n2.importProfileOperation.getGlobalContext === 'function' ){
+			var globalContext = $n2.importProfileOperation.getGlobalContext();
+
+			globalContext.test = function(cb, x){
+				cb(2 * x);
+			};
+		};
 	},
 	
 	addImportProfileClass: function(type, aClass){
