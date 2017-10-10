@@ -414,6 +414,11 @@ var Service = $n2.Class({
 				 && typeof $n2.utilitiesModel.HandleUtilityCreateRequests === 'function' ){
 					$n2.utilitiesModel.HandleUtilityCreateRequests(m, addr, dispatcher);
 				};
+				
+				if( $n2.utilitiesChangeDetectors
+					&& typeof $n2.utilitiesChangeDetectors.HandleUtilityCreateRequests === 'function' ){
+					$n2.utilitiesChangeDetectors.HandleUtilityCreateRequests(m, addr, dispatcher);
+				};
 		    };
 		};
 	}

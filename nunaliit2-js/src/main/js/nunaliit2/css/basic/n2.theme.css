@@ -649,10 +649,10 @@ CreateDocument widget
 }
 .ui-widget-content {
 	background-color: rgba(255,255,255,1);
-	background: #fff;
-}
-.ui-widget-content {
-	color:#000;
+	background: #ffffff;
+	color: #000000;
+	border-radius: 2px;
+	border: none !important;
 }
 .ui-accordion .ui-accordion-header .ui-icon.ui-icon-triangle-1-e { 
 	background-image: url('images/bullet_add.png');
@@ -665,8 +665,8 @@ CreateDocument widget
 	background-repeat:no-repeat;
 }
 .n2CouchEditor_container .ui-accordion-content {
-padding: 0 0 0 0;
-height: auto !important;
+	padding: 0 0 0 0;
+	height: auto !important;
 }
 .n2s_adjustedExternalMediaLink {
 	padding-right:25px;
