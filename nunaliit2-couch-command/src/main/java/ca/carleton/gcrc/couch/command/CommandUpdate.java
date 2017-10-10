@@ -9,10 +9,14 @@ import java.util.Vector;
 
 import javax.servlet.ServletException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import ca.carleton.gcrc.couch.app.Document;
 import ca.carleton.gcrc.couch.app.DocumentUpdateListener;
 import ca.carleton.gcrc.couch.app.DocumentUpdateProcess;
 import ca.carleton.gcrc.couch.app.impl.DocumentFile;
+import ca.carleton.gcrc.couch.app.impl.UpdateSpecifier;
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDbSecurityDocument;
 import ca.carleton.gcrc.couch.command.impl.CommandSupport;
@@ -27,6 +31,8 @@ import ca.carleton.gcrc.couch.fsentry.FSEntryMerged;
 import ca.carleton.gcrc.utils.VersionUtils;
 
 public class CommandUpdate implements Command {
+
+	static final private Logger logger = LoggerFactory.getLogger(UpdateSpecifier.class);
 	
 	private enum DatabaseType {
 		DOCUMENT_DATABASE("isDocumentDb"),
@@ -577,6 +583,14 @@ public class CommandUpdate implements Command {
 					try {
 						FSEntryFile entry = new FSEntryFile(subDir);
 						doc = DocumentFile.createDocument(entry);
+						
+						if( null != doc && null != doc.getJSONObject() ){
+							if( logger.isTraceEnabled() ){
+								logger.trace(subDirName);
+								logger.trace(doc.getJSONObject().toString());
+							}
+						}
+
 					} catch(Exception e){
 						throw new Exception("Unable to read document at: "+subDir.getName(), e);
 					}

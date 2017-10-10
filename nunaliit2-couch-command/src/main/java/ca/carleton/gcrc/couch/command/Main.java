@@ -11,6 +11,7 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.log4j.WriterAppender;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import ca.carleton.gcrc.couch.command.impl.PathComputer;
 
@@ -100,8 +101,24 @@ public class Main {
 		// Default log4j configuration
 		{
 			Logger rootLogger = Logger.getRootLogger();
-			rootLogger.setLevel(Level.ERROR);
 			rootLogger.addAppender(new WriterAppender(new PatternLayout("%d{ISO8601}[%-5p]: %m%n"),globalSettings.getErrStream()));
+
+			if( null != options.getDebug()
+			 && options.getDebug().booleanValue() ){
+				rootLogger.setLevel(Level.DEBUG);
+			} else {
+				rootLogger.setLevel(Level.ERROR);
+			}
+		}
+
+		// Capture java.util.Logger
+		{
+			 // Optionally remove existing handlers attached to j.u.l root logger
+			 SLF4JBridgeHandler.removeHandlersForRootLogger();  // (since SLF4J 1.6.5)
+
+			 // add SLF4JBridgeHandler to j.u.l's root logger, should be done once during
+			 // the initialization phase of your application
+			 SLF4JBridgeHandler.install();
 		}
 		
 		// Compute needed file paths

@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.app.Attachment;
 import ca.carleton.gcrc.couch.app.Document;
@@ -16,6 +18,8 @@ import ca.carleton.gcrc.couch.app.DocumentDigest;
 import ca.carleton.gcrc.couch.app.DocumentUpdateProcess;
 
 public class UpdateSpecifier {
+
+	static final private Logger logger = LoggerFactory.getLogger(UpdateSpecifier.class);
 
 	/**
 	 * Returns the actions required during a document update to modify
@@ -64,12 +68,15 @@ public class UpdateSpecifier {
 		
 		// Verify main document
 		if( schedule == DocumentUpdateProcess.Schedule.UPDATE_FORCED ){
+			logger.debug("Update forced by schedule. Mark document modified");
 			result.setDocumentModified(true);
 		} else if( null == targetDoc ) {
 			// Document creation
+			logger.debug("Target document does not exist. Mark document modified");
 			result.setDocumentModified(true);
 		} else {
 			if( 0 != objectComparator.compare(sourceDoc.getJSONObject(), targetDoc) ){
+				logger.debug("Documents do not compare as equal. Mark document modified");
 				result.setDocumentModified(true);
 			}
 		}
@@ -99,6 +106,7 @@ public class UpdateSpecifier {
 						if( false == attachmentsByName.containsKey(attachmentName) ){
 							// Target document has an attachment not available in the
 							// source one. Delete.
+							logger.debug("Documents do not compare as equal. Mark document modified");
 							result.addAttachmentToDelete(attachmentName);
 						}
 					}
