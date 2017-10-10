@@ -138,7 +138,7 @@ public class InReachProcessorImpl implements InReachProcessor {
 			sw.write("$");
 			sw.flush();
 			
-			messagePattern = Pattern.compile(sw.toString());
+			messagePattern = Pattern.compile(sw.toString(),Pattern.DOTALL);
 		}
 		
 		// Parse message data using pattern
