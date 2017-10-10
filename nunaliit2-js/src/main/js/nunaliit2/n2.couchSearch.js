@@ -1026,17 +1026,17 @@ var SearchInput = $n2.Class({
 			// Activate/Deactivate Search Box
 			$('.searchIcon').click(function() {
 				if( $('.nunaliit_search_input').hasClass('search_active') ){
-					_this.options.dispatchService.synchronousCall(DH,{
+					_this.options.dispatchService.send(DH,{
 						type: 'searchDeactivated'
 					});
 
 				} else if( $('.nunaliit_search_input').hasClass('search_inactive') ){
-					_this.options.dispatchService.synchronousCall(DH,{
+					_this.options.dispatchService.send(DH,{
 						type: 'searchActivated'
 					});
 
 				} else {
-					_this.options.dispatchService.synchronousCall(DH,{
+					_this.options.dispatchService.send(DH,{
 						type: 'searchActivated'
 					});
 				};
@@ -1310,6 +1310,9 @@ var SearchInput = $n2.Class({
 		if( 'searchInitiate' === m.type ){
 			var $textInput = this.getTextInput();
 			$textInput.val(m.searchLine);
+			this.options.dispatchService.send(DH,{
+				type: 'searchActivated'
+			});
 
 		} else if( 'selected' === m.type 
 		 || 'unselected' === m.type ){
