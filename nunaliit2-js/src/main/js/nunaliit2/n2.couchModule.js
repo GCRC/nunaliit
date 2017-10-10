@@ -585,10 +585,15 @@ var ModuleDisplay = $n2.Class({
 			};
 			
 			// Create utilities
+			var inputChangeDetectorSpecified = false;
 			if( utilityInfos ){
 				for(var i=0,e=utilityInfos.length; i<e; ++i){
 					var utilityInfo = utilityInfos[i];
 
+					if( 'inputChangeDetector' === utilityInfo.utilityType ){
+						inputChangeDetectorSpecified = true;
+					};
+					
 					var msg = {
 						type: 'utilityCreate'
 						,utilityType: utilityInfo.utilityType
@@ -603,6 +608,26 @@ var ModuleDisplay = $n2.Class({
 					if( ! msg.created ){
 						$n2.logError('Utility not created: '+utilityInfo.utilityType);
 					};
+				};
+			};
+			
+			// Add utility 'inputChangeDetector', if not already specified
+			if( !inputChangeDetectorSpecified ){
+				var msg = {
+					type: 'utilityCreate'
+					,utilityType: 'inputChangeDetector'
+					,utilityOptions: {
+						type: 'inputChangeDetector'
+					}
+					,created: false
+					,config: config
+					,moduleDisplay: _this
+				};
+					
+				_this._sendSynchronousMessage(msg);
+					
+				if( ! msg.created ){
+					$n2.logError('Unable to add utility inputChangeDetector');
 				};
 			};
 			

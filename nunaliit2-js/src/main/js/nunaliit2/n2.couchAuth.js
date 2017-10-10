@@ -958,7 +958,7 @@ var AuthService = $n2.Class({
 		if( opts.userName ){
 			var $n2AuthUserInput = $dialog.find('.n2Auth_user_input');
 			$n2AuthUserInput.val( opts.userName );
-			$n2AuthUserInput.addClass('input_detected');
+			$n2AuthUserInput.addClass('n2_input_detected');
 		};
 		
 		// Create User Button
@@ -1088,7 +1088,7 @@ var AuthService = $n2.Class({
 		if( opts.userName ){
 			var $n2AuthEmailInput = $dialog.find('.n2Auth_email_input');
 			$n2AuthEmailInput.val( opts.userName );
-			$n2AuthEmailInput.addClass('input_detected');
+			$n2AuthEmailInput.addClass('n2_input_detected');
 		};
 
 		$('<div>')
@@ -1228,7 +1228,7 @@ var AuthService = $n2.Class({
 		if( opts.userName ){
 			var $n2RecoverPasswordInput = $dialog.find('.n2Auth_email_input');
 			$n2RecoverPasswordInput.val( opts.userName );
-			$n2RecoverPasswordInput.addClass('input_detected');
+			$n2RecoverPasswordInput.addClass('n2_input_detected');
 		};
 		
 		$('<div>')

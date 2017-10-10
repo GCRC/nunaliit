@@ -38,7 +38,7 @@ POSSIBILITY OF SUCH DAMAGE.
 /* 
  * ------------------------------------------------------------------------------
  * Description: Atlas utility that detects if an input field value is empty or not.
- * When the input value is not empty, an input_detected class is added to the element.
+ * When the input value is not empty, an n2_input_detected class is added to the element.
  * ------------------------------------------------------------------------------
  */
 var InputChangeDetector = $n2.Class('InputChangeDetector', {
@@ -63,19 +63,22 @@ var InputChangeDetector = $n2.Class('InputChangeDetector', {
 			$('body').addClass('n2_input_change_detector');
 			this.startDetector();
 		};
+		
+		$n2.log(this._classname, this);
 	},
 	
 	startDetector: function(){
 		
 		$('body').change(function(){
 			$(this).find('input').each(function(){
-				var value = $(this).val();
+				var $input = $(this);
+				var value = $input.val();
 
-				if( value !== '' && !$(this).hasClass('input_detected') ){
-					$(this).addClass('input_detected');
+				if( value !== '' && !$input.hasClass('n2_input_detected') ){
+					$input.addClass('n2_input_detected');
 	
-				} else if( value === '' && $(this).hasClass('input_detected') ){
-					$(this).removeClass('input_detected');
+				} else if( value === '' && $input.hasClass('n2_input_detected') ){
+					$input.removeClass('n2_input_detected');
 				};
 			});
 		});
