@@ -26,6 +26,22 @@ public class SchemaDefinition {
 			}
 		}
 		
+		// schemaName
+		{
+			String name = jsonDef.optString("schemaName",null);
+			if( null != name ){
+				def.setSchemaName(name);
+			}
+		}
+		
+		// attributesPath
+		{
+			String name = jsonDef.optString("attributesPath",null);
+			if( null != name ){
+				def.setAttributesPath(name);
+			}
+		}
+		
 		// Attributes
 		{
 			JSONArray attributes = jsonDef.optJSONArray("attributes");
@@ -65,7 +81,9 @@ public class SchemaDefinition {
 	
 	private String groupName;
 	private String schemaId;
+	private String schemaName;
 	private String label;
+	private String attributesPath;
 	private List<SchemaAttribute> attributes = new Vector<SchemaAttribute>();
 	private List<String> initialLayers = new Vector<String>();
 	private List<String> relatedSchemas = new Vector<String>();
@@ -83,6 +101,14 @@ public class SchemaDefinition {
 		this.label = label;
 	}
 	
+	public String getAttributesPath() {
+		return attributesPath;
+	}
+
+	public void setAttributesPath(String attributesPath) {
+		this.attributesPath = attributesPath;
+	}
+
 	public List<SchemaAttribute> getAttributes(){
 		return attributes;
 	}
@@ -116,11 +142,17 @@ public class SchemaDefinition {
 	}
 	
 	public String getSchemaName(){
-		if( "nunaliit".equals(groupName) ){
+		if( null != schemaName ){
+			return schemaName;
+		} else if( "nunaliit".equals(groupName) ){
 			return schemaId;
 		} else {
 			return groupName+"_"+schemaId;
 		}
+	}
+	
+	public void setSchemaName(String schemaName){
+		this.schemaName = schemaName;
 	}
 	
 	public String getSchemaLabel(){
@@ -132,6 +164,10 @@ public class SchemaDefinition {
 	}
 
 	public String getSchemaStructure(){
+		if( null != attributesPath ){
+			return attributesPath;
+		}
+
 		return groupName+"_"+schemaId;
 	}
 
