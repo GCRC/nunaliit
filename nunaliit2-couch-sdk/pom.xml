@@ -14,6 +14,35 @@
 		<plugins>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>buildnumber-maven-plugin</artifactId>
+				<version>${buildnumber-maven-plugin.version}</version>
+				<executions>
+					<execution>
+						<id>buildshort</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>create</goal>
+						</goals>
+						<configuration>
+							<buildNumberPropertyName>build.version.short</buildNumberPropertyName>
+							<shortRevisionLength>7</shortRevisionLength>
+						</configuration>
+					</execution>
+					<execution>
+						<id>timestamp</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>create-timestamp</goal>
+						</goals>
+						<configuration>
+							<timestampFormat>yyyy-MM-dd</timestampFormat>
+							<timestampPropertyName>build.date</timestampPropertyName>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>appassembler-maven-plugin</artifactId>
 				<version>${appassembler-maven-plugin.version}</version>
 				<configuration>
@@ -124,6 +153,8 @@
 					<descriptors>
 						<descriptor>src/main/assembly/src.xml</descriptor>
 					</descriptors>
+					<appendAssemblyId>false</appendAssemblyId>
+					<finalName>nunaliit_${project.version}_${build.date}_${build.version.short}</finalName>
 				</configuration>
 				<executions>
 					<execution>
