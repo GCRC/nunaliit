@@ -314,6 +314,7 @@ public class CommandUpdate implements Command {
 			// Create atlas designator
 			{
 				String version = VersionUtils.getVersion();
+				String buildStr = VersionUtils.getBuildString();
 				
 				StringWriter sw = new StringWriter();
 				PrintWriter pw = new PrintWriter(sw);
@@ -325,6 +326,9 @@ public class CommandUpdate implements Command {
 				pw.println("\t,\"submissionDbName\":\""+atlasProperties.getCouchDbSubmissionDbName()+"\"");
 				if( null != version ){
 					pw.println("\t,\"version\":\""+version+"\"");
+				}
+				if( null != buildStr ){
+					pw.println("\t,\"build\":\""+buildStr+"\"");
 				}
 				pw.println("}");
 				
@@ -608,6 +612,7 @@ public class CommandUpdate implements Command {
 	
 	private void printAtlasVendorFile(PrintWriter pw, AtlasProperties atlasProperties, DatabaseType type){
 		String version = VersionUtils.getVersion();
+		String buildStr = VersionUtils.getBuildString();
 
 		pw.println("var n2atlas = {");
 		pw.println("\tname: \""+atlasProperties.getAtlasName()+"\"");
@@ -617,6 +622,9 @@ public class CommandUpdate implements Command {
 		pw.println("\t,\"googleMapApiKey\":\""+atlasProperties.getGoogleMapApiKey()+"\"");
 		if( null != version ){
 			pw.println("\t,\"version\":\""+version+"\"");
+		}
+		if( null != buildStr ){
+			pw.println("\t,\"build\":\""+buildStr+"\"");
 		}
 		pw.println("\t,\""+type.getPropName()+"\":true");
 		pw.println("};");
@@ -628,6 +636,9 @@ public class CommandUpdate implements Command {
 		pw.println("\texports.googleMapApiKey = n2atlas.googleMapApiKey;");
 		if( null != version ){
 			pw.println("\texports.version = n2atlas.version;");
+		}
+		if( null != buildStr ){
+			pw.println("\texports.build = n2atlas.build;");
 		}
 		pw.println("\texports."+type.getPropName()+" = true;");
 		pw.println("};");

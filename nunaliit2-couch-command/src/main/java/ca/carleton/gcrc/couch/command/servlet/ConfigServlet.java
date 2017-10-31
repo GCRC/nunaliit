@@ -953,9 +953,18 @@ public class ConfigServlet extends JsonServlet {
 				JSONObject result = new JSONObject();
 				result.put("ok", true);
 				
-				String version = VersionUtils.getVersion();
-				if( null != version ){
-					result.put("version", version);
+				{
+					String version = VersionUtils.getVersion();
+					if( null != version ){
+						result.put("version", version);
+					}
+				}
+				
+				{
+					String buildStr = VersionUtils.getBuildString();
+					if( null != buildStr ){
+						result.put("build", buildStr);
+					}
 				}
 				
 				// Get 128 random bits
