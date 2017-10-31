@@ -909,7 +909,10 @@ var DomStyler = $n2.Class({
 	},
 	
 	_insertUserName: function($elem) {
-		var userName = $elem.text();
+		var userName = $elem.attr('nunaliit-user');
+		if( !userName ){
+			userName = $elem.text();
+		};
 		
 		this.showService.printUserName(
 			$elem
@@ -2045,7 +2048,8 @@ var Show = $n2.Class({
 		} else {
 			$elem.addClass('n2ShowUserDisplay');
 		};
-		$elem.text('('+userName+')');
+
+		this._adjustUserNameNode($elem, userName, undefined);
 
 		this._requestUser(userName); // fetch document
 	},
@@ -2123,6 +2127,8 @@ var Show = $n2.Class({
 	},
 
 	_displayUserDocument: function(userDoc){
+		var _this = this;
+
 		var id = userDoc._id;
 		
 		// Get display name
@@ -2135,25 +2141,41 @@ var Show = $n2.Class({
 		};
 
 		if( userName ) {
-			$('.n2ShowUser_'+$n2.utils.stringToHtmlId(userName)).each(function(i,elem){
-				var $elem = $(elem);
+			$('.n2ShowUser_'+$n2.utils.stringToHtmlId(userName)).each(function(){
+				var $elem = $(this);
 				
-				if( $elem.hasClass('n2ShowUserDisplay') ) {
-					if( displayName ) {
-						$elem.text(displayName);
-					};
-				} else if( $elem.hasClass('n2ShowUserDisplayAndHandle') ){
-					if( displayName && userName ) {
-						$elem.text(displayName+' ('+userName+')');
-					};
-				} else {
-					// Defaults to display name
-					if( displayName ) {
-						$elem.text(displayName);
-					};
-				};
+				_this._adjustUserNameNode($elem, userName, displayName);
 			});
 		};
+	},
+	
+	_adjustUserNameNode: function($elem, userName, displayName){
+		var showHandle = true;
+		if( $elem.hasClass('n2ShowUserDisplay') ) {
+			showHandle = false;
+		} else if( $elem.hasClass('n2ShowUserDisplayAndHandle') ){
+			showHandle = true; // redundant
+		};
+
+		$elem
+			.empty()
+			.removeClass('n2ShowInsertedUserDisplayName');
+
+		// Defaults to display name
+		if( displayName ) {
+			$('<span>')
+				.addClass('n2Show_userDisplayName')
+				.text(displayName)
+				.appendTo($elem);
+			$elem.addClass('n2ShowInsertedUserDisplayName');
+		};
+
+		if( showHandle ){
+			$('<span>')
+				.addClass('n2Show_userName')
+				.text(userName)
+				.appendTo($elem);
+		}
 	},
 	
 	_displayDocumentBrief: function($elem, doc, opt_){

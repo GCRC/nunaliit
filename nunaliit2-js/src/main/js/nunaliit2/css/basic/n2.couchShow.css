@@ -60,3 +60,11 @@ div.n2Show_icon_speaker:hover {
 .n2show_documentList_item.nunaliit_selected {
 	font-weight: bold;
 }
+
+.n2Show_userName::before {
+	content: '('
+}
+
+.n2Show_userName::after {
+	content: ')'
+}
