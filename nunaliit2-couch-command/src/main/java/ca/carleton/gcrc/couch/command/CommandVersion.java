@@ -59,12 +59,31 @@ public class CommandVersion implements Command {
 			throw new Exception("Unexpected argument: "+options.getArguments().get(1));
 		}
 
-		String version = VersionUtils.getVersion();
-		if( null == version ){
-			version = "<unknown>";
-		}
 		
 		PrintStream ps = gs.getOutStream();
-		ps.println("Version: "+version);
+
+		{
+			String version = VersionUtils.getVersion();
+			if( null == version ){
+				version = "<unknown>";
+			}
+			ps.println("Version: "+version);
+		}
+
+		{
+			String dateStr = VersionUtils.getDateString();
+			if( null == dateStr ){
+				dateStr = "<unknown>";
+			}
+			ps.println("Date: "+dateStr);
+		}
+
+		{
+			String buildStr = VersionUtils.getBuildString();
+			if( null == buildStr ){
+				buildStr = "<unknown>";
+			}
+			ps.println("Build: "+buildStr);
+		}
 	}
 }

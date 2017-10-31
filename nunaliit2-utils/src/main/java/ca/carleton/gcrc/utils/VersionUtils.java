@@ -6,21 +6,51 @@ import java.util.Properties;
 
 public class VersionUtils {
 	
-	static private boolean g_versionLoaded = false;
-	static private String g_version = null;
+	static private boolean g_propsLoaded = false;
+	static private Properties g_props = null;
 
-	static synchronized public String getVersion() {
-		if( !g_versionLoaded ){
-			g_versionLoaded = true;
-
-			try {
-				g_version = loadVersion();
-			} catch(Exception e) {
-				// Ignore
-			}
+	static public String getVersion() {
+		Properties props = loadProperties();
+		
+		String version = null;
+		if( props.containsKey("version") ){
+			version = props.getProperty("version");
 		}
 		
-		return g_version;
+		return version;
+	}
+
+	static public String getDateString() {
+		Properties props = loadProperties();
+		
+		String dateStr = null;
+		if( props.containsKey("time") ){
+			dateStr = props.getProperty("time");
+		}
+		
+		return dateStr;
+	}
+
+	static public String getBuildString() {
+		Properties props = loadProperties();
+		
+		String buildStr = null;
+		if( props.containsKey("build") ){
+			buildStr = props.getProperty("build");
+		}
+		
+		return buildStr;
+	}
+
+	static public String getShortBuildString() {
+		Properties props = loadProperties();
+		
+		String buildStr = null;
+		if( props.containsKey("build_short") ){
+			buildStr = props.getProperty("build_short");
+		}
+		
+		return buildStr;
 	}
 
 	static public String loadVersion() throws Exception {
@@ -56,5 +86,56 @@ public class VersionUtils {
 		}
 		
 		return version;
+	}
+
+	static synchronized public Properties loadProperties() {
+		if( !g_propsLoaded ){
+			g_propsLoaded = true;
+
+			try {
+				InputStream is = null;
+				InputStreamReader isr = null;
+				try {
+					ClassLoader cl = VersionUtils.class.getClassLoader();
+					is = cl.getResourceAsStream("version.properties");
+					isr = new InputStreamReader(is,"UTF-8");
+					Properties props = new Properties();
+					props.load(isr);
+					
+					g_props = props;
+					
+					isr.close();
+					isr = null;
+					
+					is.close();
+					is = null;
+
+				} catch(Exception e) {
+					throw new Exception("Error while extracting properties",e);
+
+				} finally {
+					if( null != isr ){
+						try {
+							isr.close();
+						} catch(Exception e) {
+							// Ignore
+						}
+					}
+					if( null != is ){
+						try {
+							is.close();
+						} catch(Exception e) {
+							// Ignore
+						}
+					}
+				}
+
+			} catch(Exception e) {
+				// Can't load them. Go with empty props
+				g_props = new Properties();
+			}
+		}
+		
+		return g_props;
 	}
 }

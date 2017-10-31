@@ -36,9 +36,25 @@ public class ConfigServletActions {
 			
 			cached_welcome.put("submissionDbEnabled", submissionDbEnabled);
 			
-			String version = VersionUtils.getVersion();
-			if( null != version ){
-				cached_welcome.put("version", version);
+			{
+				String version = VersionUtils.getVersion();
+				if( null != version ){
+					cached_welcome.put("version", version);
+				}
+			}
+
+			{
+				String dateStr = VersionUtils.getDateString();
+				if( null != dateStr ){
+					cached_welcome.put("date", dateStr);
+				}
+			}
+
+			{
+				String buildStr = VersionUtils.getBuildString();
+				if( null != buildStr ){
+					cached_welcome.put("build", buildStr);
+				}
 			}
 		}
 		
