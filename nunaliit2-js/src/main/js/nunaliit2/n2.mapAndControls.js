@@ -2431,12 +2431,20 @@ var MapAndControls = $n2.Class({
 					if( 'url' === key ) {
 						wmsUrl = options[key];
 
-					} else if( 'opacity' === key ) {
-						layerOptions.opacity = options[key];
-
 					} else if( 'srsName' === key ) {
 						var proj = new OpenLayers.Projection( options[key] );
 						layerOptions.projection = proj;
+
+					} else if( 'opacity' === key
+							|| 'scales' === key 
+							|| 'resolutions' === key 
+							|| 'maxScale' === key
+							|| 'minScale' === key
+							|| 'maxResolution' === key
+							|| 'minResolution' === key
+							|| 'numZoomLevels' === key
+							|| 'maxZoomLevel' === key ) {
+						layerOptions[key] = options[key];
 						
 					} else {
 						wmsOptions[key] = options[key];
