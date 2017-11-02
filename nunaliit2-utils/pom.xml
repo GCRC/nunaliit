@@ -52,7 +52,7 @@
 						</goals>
 						<configuration>
 							<timestampFormat>yyyy-MM-dd HH:mm:ss Z</timestampFormat>
-							<timestampPropertyName>build.date</timestampPropertyName>
+							<timestampPropertyName>build.datetime</timestampPropertyName>
 						</configuration>
 					</execution>
 				</executions>
