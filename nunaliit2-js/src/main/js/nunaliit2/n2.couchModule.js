@@ -1002,7 +1002,7 @@ var ModuleDisplay = $n2.Class({
 			toggleClick = mapInfo.toggleClick;
 		};
 		
-		// Enable wheel zoom
+		// ScaleLine
 		var scaleLine = {
 			visible: false
 		};

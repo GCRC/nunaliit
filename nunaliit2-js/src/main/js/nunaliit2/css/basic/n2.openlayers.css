@@ -71,8 +71,8 @@ div.olControlMousePosition {
 
 .olControlScaleLine {
 	background-color: rgba(255,255,255,0.7);
-    padding: 2px 5px;
-    bottom: 18px;
-    right: 0;
-    left: auto;
+	padding: 2px 5px;
+	bottom: 18px;
+	right: 0;
+	left: auto;
 }
