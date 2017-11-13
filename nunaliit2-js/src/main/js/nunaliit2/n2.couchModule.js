@@ -1003,6 +1003,15 @@ var ModuleDisplay = $n2.Class({
 		};
 		
 		// Enable wheel zoom
+		var scaleLine = {
+			visible: false
+		};
+
+		if( mapInfo && mapInfo.scaleLine && mapInfo.scaleLine.visible ){
+			scaleLine = mapInfo.scaleLine;
+		};
+
+		// Enable wheel zoom
 		var enableWheelZoom = false;
 		if( mapInfo && mapInfo.enableWheelZoom ){
 			enableWheelZoom = true;
@@ -1034,6 +1043,7 @@ var ModuleDisplay = $n2.Class({
 			,addPointsOnly: addPointsOnly
 			,overlays: []
 			,toggleClick: toggleClick
+			,scaleLine: scaleLine
 			,enableWheelZoom: enableWheelZoom
 			,sidePanelName: _this.sidePanelName
 			,filterPanelName: _this.filterPanelName
