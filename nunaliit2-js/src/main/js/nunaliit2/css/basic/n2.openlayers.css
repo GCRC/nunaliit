@@ -54,3 +54,25 @@ div.olControlMousePosition {
 	right: 25px;
 	background: rgba(255, 255, 255, 0.7) !important;
 }*/
+
+.olControlAttribution {
+	background-color: rgba(255,255,255,0.7);
+	padding: 2px;
+	bottom: 0;
+	right: 125px;
+}
+
+.olControlMousePosition {
+	bottom: 0;
+	right: 0 !important;
+	padding: 2px;
+	background: rgba(255, 255, 255, 0.7);
+}
+
+.olControlScaleLine {
+	background-color: rgba(255,255,255,0.7);
+	padding: 2px 5px;
+	bottom: 18px;
+	right: 0;
+	left: auto;
+}
