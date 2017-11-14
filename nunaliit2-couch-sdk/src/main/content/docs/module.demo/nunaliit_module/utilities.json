@@ -2,5 +2,10 @@
 	{
 		"utilityType": "assignLayerOnDocumentCreation"
 		,"layerId": "osm"
+	},
+	{
+		"utilityType": "assignLayerOnDocumentCreation"
+		,"layerId": "public"
+		,"onlyWithGeometries": true
 	}
 ]
