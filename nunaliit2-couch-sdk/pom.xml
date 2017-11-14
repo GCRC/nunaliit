@@ -36,7 +36,7 @@
 						</goals>
 						<configuration>
 							<timestampFormat>yyyy-MM-dd</timestampFormat>
-							<timestampPropertyName>build.date</timestampPropertyName>
+							<timestampPropertyName>n2.sdk.build.date</timestampPropertyName>
 						</configuration>
 					</execution>
 				</executions>
@@ -154,7 +154,7 @@
 						<descriptor>src/main/assembly/src.xml</descriptor>
 					</descriptors>
 					<appendAssemblyId>false</appendAssemblyId>
-					<finalName>nunaliit_${project.version}_${build.date}_${build.version.short}</finalName>
+					<finalName>nunaliit_${project.version}_${n2.sdk.build.date}_${build.version.short}</finalName>
 				</configuration>
 				<executions>
 					<execution>

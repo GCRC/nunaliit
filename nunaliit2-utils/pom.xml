@@ -30,7 +30,7 @@
 							<goal>create</goal>
 						</goals>
 						<configuration>
-							<buildNumberPropertyName>build.version</buildNumberPropertyName>
+							<buildNumberPropertyName>n2.utils.build.version</buildNumberPropertyName>
 						</configuration>
 					</execution>
 					<execution>
@@ -40,7 +40,7 @@
 							<goal>create</goal>
 						</goals>
 						<configuration>
-							<buildNumberPropertyName>build.version.short</buildNumberPropertyName>
+							<buildNumberPropertyName>n2.utils.build.version.short</buildNumberPropertyName>
 							<shortRevisionLength>7</shortRevisionLength>
 						</configuration>
 					</execution>
@@ -52,7 +52,7 @@
 						</goals>
 						<configuration>
 							<timestampFormat>yyyy-MM-dd HH:mm:ss Z</timestampFormat>
-							<timestampPropertyName>build.date</timestampPropertyName>
+							<timestampPropertyName>n2.utils.build.date</timestampPropertyName>
 						</configuration>
 					</execution>
 				</executions>
