@@ -859,7 +859,10 @@ var LayerInfo = $n2.Class({
     
 		{Boolean} addPointsOnly=false
     	If true, editing the map can only add points.
-    
+	
+		{Boolean} addSRSAttribution
+		If true, the SRS Code will be added to the map attribution
+
 		{Boolean} enableWheelZoom=false
     	If true, mouse wheel zooms in and out.
     
@@ -1066,6 +1069,7 @@ var MapAndControls = $n2.Class({
 				,units: 'm' // map units
 			}
 			,addPointsOnly: false
+			,addSRSAttribution: false
 			,enableWheelZoom: false
 			,placeDisplay: { // place info panel display options.
 				attribDisplayType: 'attributes' // default - just list the attributes in a table	
@@ -1447,6 +1451,17 @@ var MapAndControls = $n2.Class({
 			,zoomMethod: null  // Zoom with features does not look good
 		});
 		
+		// Show Spatial Reference System display projection code in map attribution
+		if( this.options.addSRSAttribution ) {
+			var srsCode = this.map.displayProjection.projCode;
+			var srsAttribution = new OpenLayers.Layer("SRS",{
+				attribution:"SRS: " + srsCode,
+				visibility: true,
+				displayInLayerSwitcher: false
+			});
+			this.map.addLayers([srsAttribution]);
+		};
+
 		// Disable zoom on mouse wheel
 		if( this.options.enableWheelZoom ) {
 			// Do nothing. Enabled by default
@@ -1457,6 +1472,7 @@ var MapAndControls = $n2.Class({
 				navControls[i].disableZoomWheel();
 			};
 		};
+
 		if( this.map.div ){
 			var $map = $(this.map.div);
 			$map.find('.olControlZoomIn').attr('title', _loc('Zoom In'));

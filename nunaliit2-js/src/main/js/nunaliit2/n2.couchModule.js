@@ -1002,6 +1002,12 @@ var ModuleDisplay = $n2.Class({
 			toggleClick = mapInfo.toggleClick;
 		};
 		
+		// Add SRS attribution text
+		var addSRSAttribution = false;
+		if( mapInfo && mapInfo.addSRSAttribution ){
+			addSRSAttribution = mapInfo.addSRSAttribution;
+		};
+
 		// Enable wheel zoom
 		var enableWheelZoom = false;
 		if( mapInfo && mapInfo.enableWheelZoom ){
@@ -1034,6 +1040,7 @@ var ModuleDisplay = $n2.Class({
 			,addPointsOnly: addPointsOnly
 			,overlays: []
 			,toggleClick: toggleClick
+			,addSRSAttribution: addSRSAttribution
 			,enableWheelZoom: enableWheelZoom
 			,sidePanelName: _this.sidePanelName
 			,filterPanelName: _this.filterPanelName
