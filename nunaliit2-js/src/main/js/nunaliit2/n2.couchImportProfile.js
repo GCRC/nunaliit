@@ -2809,29 +2809,28 @@ var ImportProfile = $n2.Class({
 				,allPropertyNames: opts.allPropertyNames
 				,onSuccess: function(copies){
 					if( copies && copies.length ){
-						for(var copyIndex=0,copyIndexEnd=copies.length; copyIndex<copyIndexEnd; ++copyIndex){
-							var copy = copies[copyIndex];
-							
+						copies.forEach(function(copy){
 							copy._n2OpId = op._n2OpId;
 							
 							copyOperations.push(copy);
-						};
+						});
 					};
 					
 					// Perform next one
-					report();
+					window.setTimeout(report,0); // Do not blow stack on large operations
 				}
 			});
 		};
 	},
 	
 	performCopyOperations: function(doc, copyOperations){
+		var _this = this;
+
 		var importData = doc.nunaliit_import.data;
 			
-		for(var copyIndex=0,copyIndexEnd=copyOperations.length; copyIndex<copyIndexEnd; ++copyIndex){
-			var copy = copyOperations[copyIndex];
+		copyOperations.forEach(function(copy){
 			var opId = copy._n2OpId;
-			var op = this.operationsById[opId];
+			var op = _this.operationsById[opId];
 			
 			if( op ){
 				op.performCopyOperation({
@@ -2840,7 +2839,7 @@ var ImportProfile = $n2.Class({
 					,copyOperation: copy
 				});
 			};
-		};
+		});
 	}
 });
 
@@ -3305,8 +3304,8 @@ var ImportProfileService = $n2.Class({
 		 && typeof $n2.importProfileOperation.getGlobalContext === 'function' ){
 			var globalContext = $n2.importProfileOperation.getGlobalContext();
 
-			globalContext.test = function(cb, x){
-				cb(2 * x);
+			globalContext.test = function(success, error, x){
+				success(2 * x);
 			};
 		};
 	},

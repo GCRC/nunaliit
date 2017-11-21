@@ -107,12 +107,12 @@ POSSIBILITY OF SUCH DAMAGE.
   }
 */
 var importProfileOperation = (function(){
-var o=function(k,v,o,l){for(o=o||{},l=k.length;l--;o[k[l]]=v);return o},$V0=[1,6],$V1=[1,11],$V2=[1,12],$V3=[5,7,9,11,14,22,23,25,26,27,28,29,30,35,36,37,38,39,40,42,43],$V4=[1,14],$V5=[1,18],$V6=[1,23],$V7=[1,17],$V8=[1,20],$V9=[1,21],$Va=[1,22],$Vb=[1,28],$Vc=[1,29],$Vd=[1,30],$Ve=[1,31],$Vf=[1,32],$Vg=[1,33],$Vh=[1,34],$Vi=[1,35],$Vj=[1,36],$Vk=[1,37],$Vl=[1,38],$Vm=[1,39],$Vn=[1,40],$Vo=[5,9,11,22,23,25,26,27,28,29,30,35,36,37,38,39,43],$Vp=[1,46],$Vq=[1,47],$Vr=[1,48],$Vs=[5,9,11,22,23,43],$Vt=[5,9,11,22,23,25,26,27,28,29,30,43],$Vu=[5,9,11,22,23,25,26,27,28,29,30,35,36,43],$Vv=[1,78],$Vw=[1,77];
+var o=function(k,v,o,l){for(o=o||{},l=k.length;l--;o[k[l]]=v);return o},$V0=[1,4],$V1=[1,7],$V2=[1,8],$V3=[5,7,9,10,12,13,14,15,16,17,18,19,25,26,27,28,29,30,31,33,34],$V4=[1,10],$V5=[1,11],$V6=[1,13],$V7=[1,14],$V8=[1,15],$V9=[1,16],$Va=[1,19],$Vb=[1,20],$Vc=[1,21],$Vd=[1,22],$Ve=[1,23],$Vf=[1,24],$Vg=[1,25],$Vh=[1,26],$Vi=[1,27],$Vj=[1,28],$Vk=[1,29],$Vl=[1,30],$Vm=[1,31],$Vn=[5,9,10,13,14,15,16,17,18,19,25,26,27,28,29,30,34],$Vo=[5,9,10,13,30,34],$Vp=[5,9,10,13,14,15,16,17,18,19,30,34],$Vq=[5,9,10,13,14,15,16,17,18,19,25,26,30,34];
 var parser = {trace: function trace() { },
 yy: {},
-symbols_: {"error":2,"program":3,"operation":4,"EOF":5,"OP_ASSIGN_REFERENCE":6,"(":7,"objectSelector":8,",":9,"referenceSelector":10,")":11,"OP_ASSIGN_REFERENCES":12,"identifier":13,"=":14,"value":15,"REF_FROM_SCHEMA":16,"STRING":17,"valueSelector":18,"REF_FROM_SCHEMA2":19,"REF_FROM_VALUE":20,"IMPORTED_ATTRIBUTE":21,"&&":22,"||":23,"!":24,"==":25,"!=":26,">=":27,"<=":28,">":29,"<":30,"arguments":31,"true":32,"false":33,"NUMBER":34,"+":35,"-":36,"*":37,"/":38,"%":39,".":40,"VAR_NAME":41,"[":42,"]":43,"$accept":0,"$end":1},
-terminals_: {2:"error",5:"EOF",6:"OP_ASSIGN_REFERENCE",7:"(",9:",",11:")",12:"OP_ASSIGN_REFERENCES",14:"=",16:"REF_FROM_SCHEMA",17:"STRING",19:"REF_FROM_SCHEMA2",20:"REF_FROM_VALUE",21:"IMPORTED_ATTRIBUTE",22:"&&",23:"||",24:"!",25:"==",26:"!=",27:">=",28:"<=",29:">",30:"<",32:"true",33:"false",34:"NUMBER",35:"+",36:"-",37:"*",38:"/",39:"%",40:".",41:"VAR_NAME",42:"[",43:"]"},
-productions_: [0,[3,2],[4,6],[4,6],[4,3],[10,8],[10,6],[10,4],[18,4],[18,1],[8,1],[15,3],[15,3],[15,2],[15,3],[15,3],[15,3],[15,3],[15,3],[15,3],[15,3],[15,3],[15,4],[15,1],[15,1],[15,1],[15,1],[15,1],[15,3],[15,3],[15,3],[15,3],[15,3],[31,3],[31,1],[13,3],[13,4],[13,1]],
+symbols_: {"error":2,"program":3,"operation":4,"EOF":5,"identifier":6,"=":7,"value":8,"&&":9,"||":10,"!":11,"(":12,")":13,"==":14,"!=":15,">=":16,"<=":17,">":18,"<":19,"arguments":20,"true":21,"false":22,"NUMBER":23,"STRING":24,"+":25,"-":26,"*":27,"/":28,"%":29,",":30,".":31,"VAR_NAME":32,"[":33,"]":34,"$accept":0,"$end":1},
+terminals_: {2:"error",5:"EOF",7:"=",9:"&&",10:"||",11:"!",12:"(",13:")",14:"==",15:"!=",16:">=",17:"<=",18:">",19:"<",21:"true",22:"false",23:"NUMBER",24:"STRING",25:"+",26:"-",27:"*",28:"/",29:"%",30:",",31:".",32:"VAR_NAME",33:"[",34:"]"},
+productions_: [0,[3,2],[4,3],[8,3],[8,3],[8,2],[8,3],[8,3],[8,3],[8,3],[8,3],[8,3],[8,3],[8,3],[8,4],[8,1],[8,1],[8,1],[8,1],[8,1],[8,3],[8,3],[8,3],[8,3],[8,3],[20,3],[20,1],[6,3],[6,4],[6,1]],
 performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate /* action[1] */, $$ /* vstack */, _$ /* lstack */) {
 /* this == yyval */
 
@@ -123,189 +123,149 @@ case 1:
 break;
 case 2:
 
-        	this.$ = new OpAssignReference($$[$0-3],$$[$0-1]);
+        	this.$ = new OpAssignment($$[$0-2],$$[$0]);
         
 break;
 case 3:
 
-        	this.$ = new OpAssignReferences($$[$0-3],$$[$0-1]);
+        	this.$ = new Expression($$[$0-2],'&&',$$[$0]);
         
 break;
 case 4:
 
-        	this.$ = new OpAssignment($$[$0-2],$$[$0]);
+        	this.$ = new Expression($$[$0-2],'||',$$[$0]);
         
 break;
 case 5:
 
-        	this.$ = new RefFromSchema($$[$0-5],$$[$0-3],$$[$0-1]);
+        	this.$ = new Expression($$[$0],'!');
         
 break;
 case 6:
 
-        	this.$ = new RefFromSchema2($$[$0-3],$$[$0-1]);
-        
-break;
-case 7:
-
-        	this.$ = new RefFromValue($$[$0-1]);
-        
-break;
-case 8:
-
-        	this.$ = new ImportedAttributeValue($$[$0-1]);
-        
-break;
-case 9:
-
-        	this.$ = new StringValue($$[$0]);
-        
-break;
-case 10:
-
-        	this.$ = new DocumentSelector($$[$0]);
-        
-break;
-case 11:
-
-        	this.$ = new Expression($$[$0-2],'&&',$$[$0]);
-        
-break;
-case 12:
-
-        	this.$ = new Expression($$[$0-2],'||',$$[$0]);
-        
-break;
-case 13:
-
-        	this.$ = new Expression($$[$0],'!');
-        
-break;
-case 14:
-
     		this.$ = $$[$0-1];
     	
 break;
-case 15:
+case 7:
 
         	this.$ = new Comparison($$[$0-2],$$[$0],'==');
         
 break;
-case 16:
+case 8:
 
         	this.$ = new Comparison($$[$0-2],$$[$0],'!=');
         
 break;
-case 17:
+case 9:
 
         	this.$ = new Comparison($$[$0-2],$$[$0],'>=');
         
 break;
-case 18:
+case 10:
 
         	this.$ = new Comparison($$[$0-2],$$[$0],'<=');
         
 break;
-case 19:
+case 11:
 
         	this.$ = new Comparison($$[$0-2],$$[$0],'>');
         
 break;
-case 20:
+case 12:
 
         	this.$ = new Comparison($$[$0-2],$$[$0],'<');
         
 break;
-case 21:
+case 13:
 
         	this.$ = new FunctionCall($$[$0-2],null);
         
 break;
-case 22:
+case 14:
 
         	this.$ = new FunctionCall($$[$0-3],$$[$0-1]);
         
 break;
-case 23:
+case 15:
 
         	this.$ = $$[$0];
         
 break;
-case 24:
+case 16:
 
     		this.$ = new Literal(true);
     	
 break;
-case 25:
+case 17:
 
     		this.$ = new Literal(false);
     	
 break;
-case 26:
+case 18:
 
     		this.$ = new Literal(1 * $$[$0]);
     	
 break;
-case 27:
+case 19:
 
     		this.$ = new Literal($$[$0]);
     	
 break;
-case 28:
+case 20:
 
     		this.$ = new MathOp($$[$0-2],$$[$0],'+');
     	
 break;
-case 29:
+case 21:
 
     		this.$ = new MathOp($$[$0-2],$$[$0],'-');
     	
 break;
-case 30:
+case 22:
 
     		this.$ = new MathOp($$[$0-2],$$[$0],'*');
     	
 break;
-case 31:
+case 23:
 
     		this.$ = new MathOp($$[$0-2],$$[$0],'/');
     	
 break;
-case 32:
+case 24:
 
     		this.$ = new MathOp($$[$0-2],$$[$0],'%');
     	
 break;
-case 33:
+case 25:
 
-        	this.$ = new Argument($$[$0-2],$$[$0]);
+        	this.$ = new Arguments($$[$0-2],$$[$0]);
         
 break;
-case 34:
+case 26:
 
-        	this.$ = new Argument($$[$0]);
+        	this.$ = new Arguments($$[$0]);
         
 break;
-case 35:
+case 27:
 
         	var id = new Literal($$[$0]);
         	this.$ = new ObjectSelector(id,$$[$0-2]);
         
 break;
-case 36:
+case 28:
 
         	this.$ = new ObjectSelector($$[$0-1],$$[$0-3]);
         
 break;
-case 37:
+case 29:
 
         	this.$ = new Variable($$[$0]);
         
 break;
 }
 },
-table: [{3:1,4:2,6:[1,3],12:[1,4],13:5,41:$V0},{1:[3]},{5:[1,7]},{7:[1,8]},{7:[1,9]},{14:[1,10],40:$V1,42:$V2},o($V3,[2,37]),{1:[2,1]},{8:13,17:$V4},{8:15,17:$V4},{7:$V5,13:19,15:16,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{41:[1,24]},{7:$V5,13:19,15:25,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{9:[1,26]},{9:[2,10]},{9:[1,27]},{5:[2,4],22:$Vb,23:$Vc,25:$Vd,26:$Ve,27:$Vf,28:$Vg,29:$Vh,30:$Vi,35:$Vj,36:$Vk,37:$Vl,38:$Vm,39:$Vn},{7:$V5,13:19,15:41,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{7:$V5,13:19,15:42,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},o($Vo,[2,23],{7:[1,43],40:$V1,42:$V2}),o($Vo,[2,24]),o($Vo,[2,25]),o($Vo,[2,26]),o($Vo,[2,27]),o($V3,[2,35]),{22:$Vb,23:$Vc,25:$Vd,26:$Ve,27:$Vf,28:$Vg,29:$Vh,30:$Vi,35:$Vj,36:$Vk,37:$Vl,38:$Vm,39:$Vn,43:[1,44]},{10:45,16:$Vp,19:$Vq,20:$Vr},{10:49,16:$Vp,19:$Vq,20:$Vr},{7:$V5,13:19,15:50,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{7:$V5,13:19,15:51,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{7:$V5,13:19,15:52,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{7:$V5,13:19,15:53,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{7:$V5,13:19,15:54,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{7:$V5,13:19,15:55,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{7:$V5,13:19,15:56,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{7:$V5,13:19,15:57,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{7:$V5,13:19,15:58,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{7:$V5,13:19,15:59,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{7:$V5,13:19,15:60,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{7:$V5,13:19,15:61,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{7:$V5,13:19,15:62,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},o($Vo,[2,13]),{11:[1,63],22:$Vb,23:$Vc,25:$Vd,26:$Ve,27:$Vf,28:$Vg,29:$Vh,30:$Vi,35:$Vj,36:$Vk,37:$Vl,38:$Vm,39:$Vn},{7:$V5,11:[1,64],13:19,15:66,17:$V6,24:$V7,31:65,32:$V8,33:$V9,34:$Va,41:$V0},o($V3,[2,36]),{11:[1,67]},{7:[1,68]},{7:[1,69]},{7:[1,70]},{11:[1,71]},o($Vs,[2,11],{25:$Vd,26:$Ve,27:$Vf,28:$Vg,29:$Vh,30:$Vi,35:$Vj,36:$Vk,37:$Vl,38:$Vm,39:$Vn}),o($Vs,[2,12],{25:$Vd,26:$Ve,27:$Vf,28:$Vg,29:$Vh,30:$Vi,35:$Vj,36:$Vk,37:$Vl,38:$Vm,39:$Vn}),o($Vt,[2,15],{35:$Vj,36:$Vk,37:$Vl,38:$Vm,39:$Vn}),o($Vt,[2,16],{35:$Vj,36:$Vk,37:$Vl,38:$Vm,39:$Vn}),o($Vt,[2,17],{35:$Vj,36:$Vk,37:$Vl,38:$Vm,39:$Vn}),o($Vt,[2,18],{35:$Vj,36:$Vk,37:$Vl,38:$Vm,39:$Vn}),o($Vt,[2,19],{35:$Vj,36:$Vk,37:$Vl,38:$Vm,39:$Vn}),o($Vt,[2,20],{35:$Vj,36:$Vk,37:$Vl,38:$Vm,39:$Vn}),o($Vu,[2,28],{37:$Vl,38:$Vm,39:$Vn}),o($Vu,[2,29],{37:$Vl,38:$Vm,39:$Vn}),o($Vo,[2,30]),o($Vo,[2,31]),o($Vo,[2,32]),o($Vo,[2,14]),o($Vo,[2,21]),{11:[1,72]},{9:[1,73],11:[2,34],22:$Vb,23:$Vc,25:$Vd,26:$Ve,27:$Vf,28:$Vg,29:$Vh,30:$Vi,35:$Vj,36:$Vk,37:$Vl,38:$Vm,39:$Vn},{5:[2,2]},{17:[1,74]},{17:[1,75]},{17:$Vv,18:76,21:$Vw},{5:[2,3]},o($Vo,[2,22]),{7:$V5,13:19,15:66,17:$V6,24:$V7,31:79,32:$V8,33:$V9,34:$Va,41:$V0},{9:[1,80]},{9:[1,81]},{11:[1,82]},{7:[1,83]},{11:[2,9]},{11:[2,33]},{8:84,17:$V4},{7:$V5,13:19,15:85,17:$V6,24:$V7,32:$V8,33:$V9,34:$Va,41:$V0},{11:[2,7]},{17:[1,86]},{9:[1,87]},{11:[1,88],22:$Vb,23:$Vc,25:$Vd,26:$Ve,27:$Vf,28:$Vg,29:$Vh,30:$Vi,35:$Vj,36:$Vk,37:$Vl,38:$Vm,39:$Vn},{11:[1,89]},{17:$Vv,18:90,21:$Vw},{11:[2,6]},{11:[2,8]},{11:[1,91]},{11:[2,5]}],
-defaultActions: {7:[2,1],14:[2,10],67:[2,2],71:[2,3],78:[2,9],79:[2,33],82:[2,7],88:[2,6],89:[2,8],91:[2,5]},
+table: [{3:1,4:2,6:3,32:$V0},{1:[3]},{5:[1,5]},{7:[1,6],31:$V1,33:$V2},o($V3,[2,29]),{1:[2,1]},{6:12,8:9,11:$V4,12:$V5,21:$V6,22:$V7,23:$V8,24:$V9,32:$V0},{32:[1,17]},{6:12,8:18,11:$V4,12:$V5,21:$V6,22:$V7,23:$V8,24:$V9,32:$V0},{5:[2,2],9:$Va,10:$Vb,14:$Vc,15:$Vd,16:$Ve,17:$Vf,18:$Vg,19:$Vh,25:$Vi,26:$Vj,27:$Vk,28:$Vl,29:$Vm},{6:12,8:32,11:$V4,12:$V5,21:$V6,22:$V7,23:$V8,24:$V9,32:$V0},{6:12,8:33,11:$V4,12:$V5,21:$V6,22:$V7,23:$V8,24:$V9,32:$V0},o($Vn,[2,15],{12:[1,34],31:$V1,33:$V2}),o($Vn,[2,16]),o($Vn,[2,17]),o($Vn,[2,18]),o($Vn,[2,19]),o($V3,[2,27]),{9:$Va,10:$Vb,14:$Vc,15:$Vd,16:$Ve,17:$Vf,18:$Vg,19:$Vh,25:$Vi,26:$Vj,27:$Vk,28:$Vl,29:$Vm,34:[1,35]},{6:12,8:36,11:$V4,12:$V5,21:$V6,22:$V7,23:$V8,24:$V9,32:$V0},{6:12,8:37,11:$V4,12:$V5,21:$V6,22:$V7,23:$V8,24:$V9,32:$V0},{6:12,8:38,11:$V4,12:$V5,21:$V6,22:$V7,23:$V8,24:$V9,32:$V0},{6:12,8:39,11:$V4,12:$V5,21:$V6,22:$V7,23:$V8,24:$V9,32:$V0},{6:12,8:40,11:$V4,12:$V5,21:$V6,22:$V7,23:$V8,24:$V9,32:$V0},{6:12,8:41,11:$V4,12:$V5,21:$V6,22:$V7,23:$V8,24:$V9,32:$V0},{6:12,8:42,11:$V4,12:$V5,21:$V6,22:$V7,23:$V8,24:$V9,32:$V0},{6:12,8:43,11:$V4,12:$V5,21:$V6,22:$V7,23:$V8,24:$V9,32:$V0},{6:12,8:44,11:$V4,12:$V5,21:$V6,22:$V7,23:$V8,24:$V9,32:$V0},{6:12,8:45,11:$V4,12:$V5,21:$V6,22:$V7,23:$V8,24:$V9,32:$V0},{6:12,8:46,11:$V4,12:$V5,21:$V6,22:$V7,23:$V8,24:$V9,32:$V0},{6:12,8:47,11:$V4,12:$V5,21:$V6,22:$V7,23:$V8,24:$V9,32:$V0},{6:12,8:48,11:$V4,12:$V5,21:$V6,22:$V7,23:$V8,24:$V9,32:$V0},o($Vn,[2,5]),{9:$Va,10:$Vb,13:[1,49],14:$Vc,15:$Vd,16:$Ve,17:$Vf,18:$Vg,19:$Vh,25:$Vi,26:$Vj,27:$Vk,28:$Vl,29:$Vm},{6:12,8:52,11:$V4,12:$V5,13:[1,50],20:51,21:$V6,22:$V7,23:$V8,24:$V9,32:$V0},o($V3,[2,28]),o($Vo,[2,3],{14:$Vc,15:$Vd,16:$Ve,17:$Vf,18:$Vg,19:$Vh,25:$Vi,26:$Vj,27:$Vk,28:$Vl,29:$Vm}),o($Vo,[2,4],{14:$Vc,15:$Vd,16:$Ve,17:$Vf,18:$Vg,19:$Vh,25:$Vi,26:$Vj,27:$Vk,28:$Vl,29:$Vm}),o($Vp,[2,7],{25:$Vi,26:$Vj,27:$Vk,28:$Vl,29:$Vm}),o($Vp,[2,8],{25:$Vi,26:$Vj,27:$Vk,28:$Vl,29:$Vm}),o($Vp,[2,9],{25:$Vi,26:$Vj,27:$Vk,28:$Vl,29:$Vm}),o($Vp,[2,10],{25:$Vi,26:$Vj,27:$Vk,28:$Vl,29:$Vm}),o($Vp,[2,11],{25:$Vi,26:$Vj,27:$Vk,28:$Vl,29:$Vm}),o($Vp,[2,12],{25:$Vi,26:$Vj,27:$Vk,28:$Vl,29:$Vm}),o($Vq,[2,20],{27:$Vk,28:$Vl,29:$Vm}),o($Vq,[2,21],{27:$Vk,28:$Vl,29:$Vm}),o($Vn,[2,22]),o($Vn,[2,23]),o($Vn,[2,24]),o($Vn,[2,6]),o($Vn,[2,13]),{13:[1,53]},{9:$Va,10:$Vb,13:[2,26],14:$Vc,15:$Vd,16:$Ve,17:$Vf,18:$Vg,19:$Vh,25:$Vi,26:$Vj,27:$Vk,28:$Vl,29:$Vm,30:[1,54]},o($Vn,[2,14]),{6:12,8:52,11:$V4,12:$V5,20:55,21:$V6,22:$V7,23:$V8,24:$V9,32:$V0},{13:[2,25]}],
+defaultActions: {5:[2,1],55:[2,25]},
 parseError: function parseError(str, hash) {
     if (hash.recoverable) {
         this.trace(str);
@@ -469,7 +429,7 @@ function compare(obj1, obj2){
 		return 1;
 	};
 	
-	// From this point, both objects have the same type and are not equal
+	// From this point, both objects have the same type and are not identical
 	
 	if( typeof obj1 === 'string' 
 	 || typeof obj1 === 'number' ){
@@ -640,42 +600,80 @@ OpAssignment.prototype.configure = function(opts){
 	};
 };
 OpAssignment.prototype.reportCopyOperations = function(opts){
+	var _this = this;
 
 	var propertyNameMap = {};
+	var updatedValue = undefined;
+	var targetValue = undefined;
+	var targetSelector = undefined;
 
 	// compute new value	
-	var ctxt = {};
-	ctxt.n2_doc = opts.doc;
-	ctxt['import'] = opts.importData;
-	ctxt.propertyNameMap = propertyNameMap;
-	var updatedValue = this.value.getValue(ctxt);
+	var ctxt = {
+		variables:{
+			doc: opts.doc,
+			'import': opts.importData
+		},
+		propertyNameMap: propertyNameMap
+	};
+	this.value.getValue(ctxt, receiveUpdatedValue, processError);
 
-	// get current value
-	var ctxt2 = {};
-	ctxt2.n2_doc = opts.doc;
-	ctxt2['import'] = opts.importData;
-	var targetValue = this.leftop.getValue(ctxt2);
-	var targetSelector = this.leftop.getObjectSelector(ctxt2);
+	function processError(err){
+		// On error, do not add any copy operations
+		opts.onSuccess([]);
+	};
+
+	function receiveUpdatedValue(v){
+		// save
+		updatedValue = v;
+
+		// get current value
+		var ctxt2 = {
+			variables:{
+				doc: opts.doc,
+				'import': opts.importData
+			}
+		};
+		_this.leftop.getValue(ctxt2, receiveTargetValue, processError);
+	};
+
+	function receiveTargetValue(v){
+		// save
+		targetValue = v;
+
+		// get target selector
+		var ctxt2 = {
+			variables:{
+				doc: opts.doc,
+				'import': opts.importData
+			}
+		};
+		_this.leftop.getObjectSelector(ctxt2, receiveTargetSelector, processError);
+	};
+
+	function receiveTargetSelector(v){
+		// save
+		targetSelector = v;
+
+		var isInconsistent = false;
+		if( 0 !== compare(targetValue, updatedValue) ){
+			isInconsistent = true;
+		};
 	
-	var isInconsistent = false;
-	if( 0 !== compare(targetValue, updatedValue) ){
-		isInconsistent = true;
+		var inputPropertyNames = [];
+		for(var propertyName in propertyNameMap){
+			inputPropertyNames.push(propertyName);
+		};
+	
+		var op = {
+			propertyNames: inputPropertyNames
+			,computedValue: updatedValue
+			,targetSelector: targetSelector
+			,targetValue: targetValue
+			,isInconsistent: isInconsistent
+		};	
+	
+		opts.onSuccess([op]);
 	};
-
-	var inputPropertyNames = [];
-	for(var propertyName in propertyNameMap){
-		inputPropertyNames.push(propertyName);
-	};
-
-	var op = {
-		propertyNames: inputPropertyNames
-		,computedValue: updatedValue
-		,targetSelector: targetSelector
-		,targetValue: targetValue
-		,isInconsistent: isInconsistent
-	};	
-
-	opts.onSuccess([op]);
 };
 OpAssignment.prototype.performCopyOperation = function(opts_){
 	var opts = $n2.extend({
@@ -697,387 +695,45 @@ OpAssignment.prototype.performCopyOperation = function(opts_){
 };
 
 // -----------------------------------------------------------
-var OpAssignReference = function(objectSelector, referenceSelector){
-	this.targetSelector = objectSelector;
-	this.referenceSelector = referenceSelector;
-};
-OpAssignReference.prototype.configure = function(opts){
-	if( this.targetSelector 
-	 && typeof this.targetSelector.configure === 'function' ){
-	 	this.targetSelector.configure(opts);
-	};
-	if( this.referenceSelector 
-	 && typeof this.referenceSelector.configure === 'function' ){
-	 	this.referenceSelector.configure(opts);
-	};
-};
-OpAssignReference.prototype.reportCopyOperations = function(opts){
-
-	var propertyNameMap = {};
-	var computedValues = this.referenceSelector.getValues(opts, propertyNameMap);
-	
-	// create new value
-	var updatedValue = undefined;
-	if( computedValues.length === 1 ){
-		updatedValue = computedValues[0];
-	} else if( computedValues.length > 1 ){
-		throw new Error('Multiple references found for a single unit');
-	};
-
-	var targetValue = this.targetSelector.getValue(opts.doc);
-	
-	var isInconsistent = false;
-	if( 0 !== compareReferences(targetValue, updatedValue) ){
-		isInconsistent = true;
-	};
-
-	var inputPropertyNames = [];
-	for(var propertyName in propertyNameMap){
-		inputPropertyNames.push(propertyName);
-	};
-
-	var op = {
-		propertyNames: inputPropertyNames
-		,computedValue: updatedValue
-		,targetSelector: this.targetSelector
-		,targetValue: targetValue
-		,isInconsistent: isInconsistent
-	};	
-
-	opts.onSuccess([op]);
-};
-OpAssignReference.prototype.performCopyOperation = function(opts_){
-	var opts = $n2.extend({
-		doc: null
-		,importData: null
-		,copyOperation: null
-	},opts_);
-	
-	var doc = opts.doc;
-	
-	var computedValues = this.referenceSelector.getValues(opts, {});
-	if( computedValues.length > 1 ){
-		throw new Error('Multiple references returned for a single unit');
-	};
-	var importValue = undefined;
-	if( computedValues.length > 0 ){
-		importValue = computedValues[0];
-	};
-
-	if( typeof importValue === 'undefined' ){
-		// Must delete
-		this.targetSelector.removeValue(doc);
-	} else {
-		this.targetSelector.setValue(doc, importValue);
-	};
-};
-
-// -----------------------------------------------------------
-var OpAssignReferences = function(objectSelector, referenceSelector){
-	this.targetSelector = objectSelector;
-	this.referenceSelector = referenceSelector;
-};
-OpAssignReferences.prototype.configure = function(opts){
-	if( this.targetSelector 
-	 && typeof this.targetSelector.configure === 'function' ){
-	 	this.targetSelector.configure(opts);
-	};
-	if( this.referenceSelector 
-	 && typeof this.referenceSelector.configure === 'function' ){
-	 	this.referenceSelector.configure(opts);
-	};
-};
-OpAssignReferences.prototype.reportCopyOperations = function(opts){
-
-	var propertyNameMap = {};
-	var computedReferences = this.referenceSelector.getValues(opts, propertyNameMap);
-	
-	var currentReferences = this.targetSelector.getValue(opts.doc);
-	
-	var isInconsistent = false;
-	if( 0 !== compareReferenceSets(currentReferences, computedReferences) ){
-		isInconsistent = true;
-	};
-
-	var inputPropertyNames = [];
-	for(var propertyName in propertyNameMap){
-		inputPropertyNames.push(propertyName);
-	};
-
-	var op = {
-		propertyNames: inputPropertyNames
-		,computedValue: computedReferences
-		,targetSelector: this.targetSelector
-		,targetValue: currentReferences
-		,isInconsistent: isInconsistent
-	};	
-
-	opts.onSuccess([op]);
-};
-OpAssignReferences.prototype.performCopyOperation = function(opts_){
-	var opts = $n2.extend({
-		doc: null
-		,importData: null
-		,copyOperation: null
-	},opts_);
-	
-	var doc = opts.doc;
-	
-	var computedValues = this.referenceSelector.getValues(opts, {});
-
-	this.targetSelector.setValue(doc, computedValues);
-};
-
-// -----------------------------------------------------------
-var StringValue = function(value){
-	this.value = value;
-};
-StringValue.prototype.configure = function(opts){
-};
-StringValue.prototype.getValues = function(opts, propertyNameMap){
-	if( typeof this.value === 'string' ){
-		return [this.value];
-	};
-
-	return [];
-};
-
-// -----------------------------------------------------------
-var ImportedAttributeValue = function(targetSelector){
-	if( typeof targetSelector === 'string' ){
-		this.targetSelector = $n2.objectSelector.parseSelector(targetSelector);
-	} else {
-		throw new Error('expected a string');
-	};
-};
-ImportedAttributeValue.prototype.configure = function(opts){
-	if( this.targetSelector 
-	 && typeof this.targetSelector.configure === 'function' ){
-	 	this.targetSelector.configure(opts);
-	};
-};
-ImportedAttributeValue.prototype.getValues = function(opts, propertyNameMap){
-	// Returns an array of values found in the import data
-	var targetValue = this.targetSelector.getValue(opts.importData);
-	
-	if( targetValue === undefined ){
-		return [];
-	};
-
-	var propName = this.targetSelector.getSelectorString();
-	propertyNameMap[propName] = true;
-	
-	return [targetValue];
-};
-
-// -----------------------------------------------------------
-// schemaName - String that represents a schema name
-// objectSelector - Object selector
-// valueSelector - Value selector
-var RefFromSchema = function(schemaName, objectSelector, valueSelector){
-	this.schemaName = schemaName;
-	this.objectSelector = objectSelector;
-	this.valueSelector = valueSelector;
-
-	this.documents = [];
-};
-RefFromSchema.prototype.configure = function(opts){
-	var _this = this;
-
-	if( this.schemaName 
-	 && typeof this.schemaName.configure === 'function' ){
-	 	this.schemaName.configure(opts);
-	};
-	if( this.objectSelector 
-	 && typeof this.objectSelector.configure === 'function' ){
-	 	this.objectSelector.configure(opts);
-	};
-	if( this.valueSelector 
-	 && typeof this.valueSelector.configure === 'function' ){
-	 	this.valueSelector.configure(opts);
-	};
-	
-	if( opts.atlasDesign ){
-		opts.atlasDesign.queryView({
-			viewName: 'nunaliit-schema'
-			,startkey: this.schemaName
-			,endkey: this.schemaName
-			,include_docs: true
-			,onSuccess: function(rows){
-				rows.forEach(function(row){
-					var doc = row.doc;
-					_this.documents.push(doc);
-				});
-			}
-		});
-	};
-};
-RefFromSchema.prototype.getValues = function(opts, propertyNameMap){
-	var _this = this;
-
-	var values = this.valueSelector.getValues(opts, propertyNameMap);
-	
-	// Select documents
-	var selectedDocuments = [];
-	this.documents.forEach(function(doc){
-		var selected = false;
-		
-		var v = _this.objectSelector.getValue(doc);
-		values.forEach(function(value){
-			if( v === value ){
-				selected = true;
-			};
-		});
-		
-		if( selected ){
-			selectedDocuments.push(doc);
-		};
-	});
-
-	// Returns an array of references based on the selected keys
-	var references = [];
-	selectedDocuments.forEach(function(doc){
-		var ref = {
-			nunaliit_type: 'reference'
-			,doc: doc._id
-		};
-		references.push(ref);
-	});
-
-	return references;
-};
-
-// -----------------------------------------------------------
-// schemaName - String that represents a schema name
-// value - Value selector
-var RefFromSchema2 = function(schemaName, value){
-	this.schemaName = schemaName;
-	this.value = value;
-
-	this.documents = [];
-};
-RefFromSchema2.prototype.configure = function(opts){
-	var _this = this;
-
-	if( this.schemaName 
-	 && typeof this.schemaName.configure === 'function' ){
-	 	this.schemaName.configure(opts);
-	};
-	if( this.value 
-	 && typeof this.value.configure === 'function' ){
-	 	this.value.configure(opts);
-	};
-	
-	if( opts.atlasDesign ){
-		opts.atlasDesign.queryView({
-			viewName: 'nunaliit-schema'
-			,startkey: this.schemaName
-			,endkey: this.schemaName
-			,include_docs: true
-			,onSuccess: function(rows){
-				rows.forEach(function(row){
-					var doc = row.doc;
-					_this.documents.push(doc);
-				});
-			}
-		});
-	};
-};
-RefFromSchema2.prototype.getValues = function(opts, propertyNameMap){
-	var _this = this;
-
-	// Select documents
-	var selectedDocuments = [];
-	this.documents.forEach(function(doc){
-		var ctxt = {};
-		ctxt.n2_doc = opts.doc;
-		ctxt['import'] = opts.importData;
-		
-		var v = _this.value.getValue(ctxt);
-		
-		if( v ){
-			selectedDocuments.push(doc);
-		};
-	});
-
-	// Returns an array of references based on the selected keys
-	var references = [];
-	selectedDocuments.forEach(function(doc){
-		var ref = {
-			nunaliit_type: 'reference'
-			,doc: doc._id
-		};
-		references.push(ref);
-	});
-
-	return references;
-};
-
-// -----------------------------------------------------------
-var RefFromValue = function(valueSelector){
-	this.valueSelector = valueSelector;
-};
-RefFromValue.prototype.configure = function(opts){
-	if( this.valueSelector 
-	 && typeof this.valueSelector.configure === 'function' ){
-	 	this.valueSelector.configure(opts);
-	};
-};
-RefFromValue.prototype.getValues = function(opts, propertyNameMap){
-	// Returns an array of references based on the selected keys
-	var values = this.valueSelector.getValues(opts, propertyNameMap);
-
-	// Returns an array of references based on the selected keys
-	var references = [];
-	values.forEach(function(value){
-		var ref = {
-			nunaliit_type: 'reference'
-			,doc: value
-		};
-		references.push(ref);
-	});
-
-	return references;
-};
-
-// -----------------------------------------------------------
-// selectorStr - Dotted notation for an object selector
-var DocumentSelector = function(selectorStr){
-	this.selectorStr = selectorStr;
-	this.selector = $n2.objectSelector.parseSelector(selectorStr);
-};
-DocumentSelector.prototype.configure = function(opts){
-};
-DocumentSelector.prototype.getValue = function(obj){
-	return this.selector.getValue(obj);
-};
-DocumentSelector.prototype.setValue = function(obj, value){
-	this.selector.setValue(obj, value, true);
-};
-DocumentSelector.prototype.removeValue = function(obj){
-	this.selector.removeValue(obj);
-};
-
-// -----------------------------------------------------------
 var FunctionCall = function(value, args){
 	this.value = value;
 	this.args = args;
 };
-FunctionCall.prototype.getValue = function(ctxt){
-	var value = this.value.getValue(ctxt);
-	if( typeof value === 'function' ){
-		var args = [];
-		if( this.args ){
-			this.args.pushOnArray(ctxt, args);
-		};
-		return value.apply(ctxt, args);
+FunctionCall.prototype.getValue = function(ctxt, success, error){
+	var _this = this;
+
+	// Accumulate all the values from arguments
+	var argValues = [onComplete, error];
+	if( this.args ){
+		this.args.pushValuesOnArray(ctxt, argValues, getFunction, error);
+	} else {
+		// No arguments, go directly to function
+		getFunction();
 	};
-	return false;
+
+	function getFunction(){
+		_this.value.getValue(
+			ctxt,
+			function(value){
+				if( typeof value === 'function' ){
+					value.apply(ctxt, argValues);
+				} else {
+					// Not a function. Return undefined
+					onComplete(undefined);
+				};
+			},
+			error
+		);
+	};
+	
+	function onComplete(res){
+		success(res);
+	};
 };
 
 // -----------------------------------------------------------
-// Argument
-var Argument = function(a1, a2){
+// Arguments
+var Arguments = function(a1, a2){
 	this.valueNode = a1;
 	if( a2 ){
 		this.nextArgument = a2;
@@ -1085,31 +741,22 @@ var Argument = function(a1, a2){
 		this.nextArgument = null;
 	};
 };
-Argument.prototype.getCount = function(){
-	if( this.nextArgument ){
-		return 1 + this.nextArgument.getCount();
-	};
-	
-	return 1;
-};
-Argument.prototype.getArgument = function(ctxt, position){
-	if( position < 1 ){
-		return this.valueNode.getValue(ctxt);
-	};
-	
-	if( this.nextArgument ){
-		this.nextArgument.getArgument(ctxt, position-1);
-	};
-	
-	return undefined;
-};
-Argument.prototype.pushOnArray = function(ctxt, array){
-	var value = this.valueNode.getValue(ctxt);
-	array.push(value);
-	
-	if( this.nextArgument ){
-		this.nextArgument.pushOnArray(ctxt, array);
-	};
+Arguments.prototype.pushValuesOnArray = function(ctxt, array, success, error){
+	var _this = this;
+
+	this.valueNode.getValue(
+		ctxt,
+		function(value){
+			array.push(value);
+			
+			if( _this.nextArgument ){
+				_this.nextArgument.pushValuesOnArray(ctxt, array, success, error);
+			} else {
+				success();
+			};
+		},
+		error
+	);
 };
 
 // -----------------------------------------------------------
@@ -1118,30 +765,48 @@ var Expression = function(n1, op, n2){
 	this.n2 = n2;
 	this.op = op;
 };
-Expression.prototype.getValue = function(ctxt){
-	var r1 = this.n1.getValue(ctxt);
-	var r2 = undefined;
-	if( this.n2 ){
-		r2 = this.n2.getValue(ctxt);
+Expression.prototype.getValue = function(ctxt, success, error){
+	var _this = this;
+	this.n1.getValue(
+		ctxt,
+		function(r1){
+			if( _this.n2 ){
+				this.n2.getValue(
+					ctxt,
+					function(r2){
+						compute(r1,r2);
+					},
+					error
+				);
+			} else {
+				compute(r1,undefined);
+			};
+		},
+		error
+	);
+	
+	function compute(r1,r2){
+		if( '!' === this.op ){
+			success( !r1 );
+			
+		} else if( '&&' === this.op ){
+			success(r1 && r2);
+			
+		} else if( '||' === this.op ){
+			success(r1 || r2);
+
+		} else {
+			success(false);
+		};
 	};
-	if( '!' === this.op ){
-		return !r1;
-		
-	} else if( '&&' === this.op ){
-		return (r1 && r2);
-		
-	} else if( '||' === this.op ){
-		return (r1 || r2);
-	};
-	return false;
 };
 
 // -----------------------------------------------------------
 var Literal = function(value){
 	this.value = value;
 };
-Literal.prototype.getValue = function(ctxt){
-	return this.value;
+Literal.prototype.getValue = function(ctxt, success, error){
+	success(this.value);
 };
 
 // -----------------------------------------------------------
@@ -1150,30 +815,42 @@ var Comparison = function(leftNode, rightNode, op){
 	this.rightNode = rightNode;
 	this.op = op;
 };
-Comparison.prototype.getValue = function(ctxt){
-	var left = this.leftNode.getValue(ctxt);
-	var right = this.rightNode.getValue(ctxt);
+Comparison.prototype.getValue = function(ctxt, success, error){
+	var _this = this;
 
-	if( '==' === this.op ){
-		return (left == right);
-
-	} else if( '!=' === this.op ){
-		return (left != right);
-
-	} else if( '>=' === this.op ){
-		return (left >= right);
-
-	} else if( '<=' === this.op ){
-		return (left <= right);
-
-	} else if( '>' === this.op ){
-		return (left > right);
-
-	} else if( '<' === this.op ){
-		return (left < right);
-	};
-	
-	return false;
+	this.leftNode.getValue(
+		ctxt,
+		function(left){
+			_this.rightNode.getValue(
+				ctxt,
+				function(right){
+					if( '==' === _this.op ){
+						success(left == right);
+				
+					} else if( '!=' === _this.op ){
+						success(left != right);
+				
+					} else if( '>=' === _this.op ){
+						success(left >= right);
+				
+					} else if( '<=' === _this.op ){
+						success(left <= right);
+				
+					} else if( '>' === _this.op ){
+						success(left > right);
+				
+					} else if( '<' === _this.op ){
+						success(left < right);
+		
+					} else {
+						success(false);
+					};
+				},
+				error
+			);
+		},
+		error
+	);
 };
 
 // -----------------------------------------------------------
@@ -1182,27 +859,39 @@ var MathOp = function(leftNode, rightNode, op){
 	this.rightNode = rightNode;
 	this.op = op;
 };
-MathOp.prototype.getValue = function(ctxt){
-	var left = this.leftNode.getValue(ctxt);
-	var right = this.rightNode.getValue(ctxt);
+MathOp.prototype.getValue = function(ctxt, success, error){
+	var _this = this;
 
-	if( '+' === this.op ){
-		return (left + right);
-
-	} else if( '-' === this.op ){
-		return (left - right);
-
-	} else if( '*' === this.op ){
-		return (left * right);
-
-	} else if( '/' === this.op ){
-		return (left / right);
-
-	} else if( '%' === this.op ){
-		return (left % right);
-	};
-	
-	return 0;
+	this.leftNode.getValue(
+		ctxt,
+		function(left){
+			_this.rightNode.getValue(
+				ctxt,
+				function(right){
+					if( '+' === _this.op ){
+						success(left + right);
+				
+					} else if( '-' === _this.op ){
+						success(left - right);
+				
+					} else if( '*' === _this.op ){
+						success(left * right);
+				
+					} else if( '/' === _this.op ){
+						success(left / right);
+				
+					} else if( '%' === _this.op ){
+						success(left % right);
+		
+					} else {
+						success(0);
+					};
+				},
+				error
+			);
+		},
+		error
+	);
 };
 
 // -----------------------------------------------------------
@@ -1210,54 +899,79 @@ var ObjectSelector = function(id, previousSelector){
 	this.idNode = id;
 	this.previousSelector = previousSelector;
 };
-ObjectSelector.prototype.getValue = function(ctxt){
-	var obj = this.previousSelector.getValue(ctxt);
-	if( typeof obj === 'object' ){
-		var id = this.idNode.getValue(ctxt);
-		if( typeof id === 'undefined' ){
-			return undefined;
-		};
-		
-		// Capture references to 'import' data
-		if( typeof this.previousSelector.variableName === 'string' 
-		 && this.previousSelector.variableName === 'import' ){
-		 	if( ctxt.propertyNameMap ){
-		 		ctxt.propertyNameMap[id] = true;
-		 	};
-		};
-		
-		return obj[id];
-	};
-
-	return undefined;
+ObjectSelector.prototype.getValue = function(ctxt, success, error){
+	var _this = this;
+	this.previousSelector.getValue(
+		ctxt, 
+		function(obj){
+			if( typeof obj === 'object' ){
+				_this.idNode.getValue(
+					ctxt,
+					function(id){
+						if( typeof id === 'undefined' ){
+							success(undefined);
+						} else {
+							// Capture references to 'import' data
+							if( _this.previousSelector.isVariable 
+							 && _this.previousSelector.variableName === 'import' ){
+							 	if( ctxt.propertyNameMap ){
+							 		ctxt.propertyNameMap[id] = true;
+							 	};
+							};
+							
+							success( obj[id] );
+						};
+						
+					},
+					error
+				);
+			} else {
+				success(undefined);
+			};
+		},
+		error
+	);
 };
-ObjectSelector.prototype.getObjectSelector = function(ctxt){
-	var parentSel = this.previousSelector.getObjectSelector();
-	var id = this.idNode.getValue(ctxt);
-	return parentSel.getChildSelector(id);
+ObjectSelector.prototype.getObjectSelector = function(ctxt, success, error){
+	var _this = this;
+	this.previousSelector.getObjectSelector(
+		ctxt,
+		function(parentSel){
+			_this.idNode.getValue(
+				ctxt,
+				function(id){
+					var childSel = parentSel.getChildSelector(id);
+					success(childSel);
+				},
+				error
+			);
+		},
+		error
+	);
 };
 
 // -----------------------------------------------------------
 var Variable = function(variableName){
+	this.isVariable = true; // marker
 	this.variableName = variableName;
 };
-Variable.prototype.getValue = function(ctxt){
+Variable.prototype.getValue = function(ctxt, success, error){
 	var obj = undefined;
 	
-	if( ctxt && 'doc' === this.variableName ) {
-		obj = ctxt.n2_doc;
-		
-	} else if( ctxt && ctxt[this.variableName] ) {
-		obj = ctxt[this.variableName];
+	if( ctxt 
+	 && ctxt.variables 
+	 && ctxt.variables[this.variableName] ) {
+		obj = ctxt.variables[this.variableName];
 		
 	} else if( global && global[this.variableName] ) {
 		obj = global[this.variableName];
 	};
 	
-	return obj;
+	success(obj);
 };
-Variable.prototype.getObjectSelector = function(ctxt){
-	return new $n2.objectSelector.ObjectSelector([]);
+Variable.prototype.getObjectSelector = function(ctxt, success, error){
+	var sel = new $n2.objectSelector.ObjectSelector([]);
+	success( sel );
 };
 
 
@@ -1591,82 +1305,70 @@ var YYSTATE=YY_START;
 switch($avoiding_name_collisions) {
 case 0: /* skip whitespace */ 
 break;
-case 1: return 32; 
+case 1: return 21; 
 break;
-case 2: return 33; 
+case 2: return 22; 
 break;
-case 3: return 6; 
+case 3: return 23; 
 break;
-case 4: return 12; 
+case 4: return 32; 
 break;
-case 5: return 21; 
+case 5: yy_.yytext = yy_.yytext.substr(1,yy_.yytext.length-2); return 24; 
 break;
-case 6: return 16; 
+case 6: return 14; 
 break;
-case 7: return 19; 
+case 7: return 15; 
 break;
-case 8: return 20; 
+case 8: return 16; 
 break;
-case 9: return 34; 
+case 9: return 17; 
 break;
-case 10: return 41; 
+case 10: return 18; 
 break;
-case 11: yy_.yytext = yy_.yytext.substr(1,yy_.yytext.length-2); return 17; 
+case 11: return 19; 
 break;
-case 12: return 25; 
+case 12: return 12; 
 break;
-case 13: return 26; 
+case 13: return 13; 
 break;
-case 14: return 27; 
+case 14: return '{'; 
 break;
-case 15: return 28; 
+case 15: return '}'; 
 break;
-case 16: return 29; 
+case 16: return 33; 
 break;
-case 17: return 30; 
+case 17: return 34; 
 break;
-case 18: return 7; 
+case 18: return 30; 
 break;
-case 19: return 11; 
+case 19: return 31; 
 break;
-case 20: return '{'; 
+case 20: return 11; 
 break;
-case 21: return '}'; 
+case 21: return 25; 
 break;
-case 22: return 42; 
+case 22: return 26; 
 break;
-case 23: return 43; 
+case 23: return 27; 
 break;
-case 24: return 9; 
+case 24: return 28; 
 break;
-case 25: return 40; 
+case 25: return 29; 
 break;
-case 26: return 24; 
+case 26: return 7; 
 break;
-case 27: return 35; 
+case 27: return 9; 
 break;
-case 28: return 36; 
+case 28: return 10; 
 break;
-case 29: return 37; 
+case 29: return 5; 
 break;
-case 30: return 38; 
-break;
-case 31: return 39; 
-break;
-case 32: return 14; 
-break;
-case 33: return 22; 
-break;
-case 34: return 23; 
-break;
-case 35: return 5; 
-break;
-case 36: return 'INVALID'; 
+case 30: return 'INVALID'; 
 break;
 }
 },
-rules: [/^(?:\s+)/,/^(?:true\b)/,/^(?:false\b)/,/^(?:assignReference\b)/,/^(?:assignReferences\b)/,/^(?:importedAttribute\b)/,/^(?:fromSchema\b)/,/^(?:fromSchema2\b)/,/^(?:referencesFromValue\b)/,/^(?:[0-9]+(\.[0-9]+)?\b)/,/^(?:[_a-zA-Z][_a-zA-Z0-9]*)/,/^(?:'(\\'|[^'])*')/,/^(?:==)/,/^(?:!=)/,/^(?:>=)/,/^(?:<=)/,/^(?:>)/,/^(?:<)/,/^(?:\()/,/^(?:\))/,/^(?:\{)/,/^(?:\})/,/^(?:\[)/,/^(?:\])/,/^(?:,)/,/^(?:\.)/,/^(?:!)/,/^(?:\+)/,/^(?:-)/,/^(?:\*)/,/^(?:\/)/,/^(?:%)/,/^(?:=)/,/^(?:&&)/,/^(?:\|\|)/,/^(?:$)/,/^(?:.)/],
-conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36],"inclusive":true}}
+rules: [/^(?:\s+)/,/^(?:true\b)/,/^(?:false\b)/,/^(?:[0-9]+(\.[0-9]+)?\b)/,/^(?:[_a-zA-Z][_a-zA-Z0-9]*)/,/^(?:'(\\'|[^'])*')/,/^(?:==)/,/^(?:!=)/,/^(?:>=)/,/^(?:<=)/,/^(?:>)/,/^(?:<)/,/^(?:\()/,/^(?:\))/,/^(?:\{)/,/^(?:\})/,/^(?:\[)/,/^(?:\])/,/^(?:,)/,/^(?:\.)/,/^(?:!)/,/^(?:\+)/,/^(?:-)/,/^(?:\*)/,/^(?:\/)/,/^(?:%)/,/^(?:=)/,/^(?:&&)/,/^(?:\|\|)/,/^(?:$)/,/^(?:.)/],
+conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],"inclusive":true}}
 });
 return lexer;
 })();
