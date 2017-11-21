@@ -42,18 +42,22 @@ var
 var AssignLayerOnDocumentCreation = $n2.Class({
 		
 	layerId: null,
+	
+	onlyWithGeometries: null,
 
 	dispatchService: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			layerId: null
+			,onlyWithGeometries: false
 			,dispatchService: null
 		},opts_);
 		
 		var _this = this;
 		
 		this.layerId = opts.layerId;
+		this.onlyWithGeometries = opts.onlyWithGeometries;
 		this.dispatchService = opts.dispatchService;
 			
 		// Register to events
@@ -71,14 +75,25 @@ var AssignLayerOnDocumentCreation = $n2.Class({
 	_handle: function(m, addr, dispatcher){
 		if( 'preDocCreation' === m.type ){
 			var createdDoc = m.doc;
-
-			if( !createdDoc.nunaliit_layers ){
-				createdDoc.nunaliit_layers = [];
-			};
 			
-			if( this.layerId ){
-				if( createdDoc.nunaliit_layers.indexOf(this.layerId) < 0 ){
-					createdDoc.nunaliit_layers.push(this.layerId);
+			var addLayer = true;
+			if( this.onlyWithGeometries ){
+				if( createdDoc.nunaliit_geom ){
+					
+				} else {
+					addLayer = false;
+				};
+			};
+
+			if( addLayer ){
+				if( !createdDoc.nunaliit_layers ){
+					createdDoc.nunaliit_layers = [];
+				};
+				
+				if( this.layerId ){
+					if( createdDoc.nunaliit_layers.indexOf(this.layerId) < 0 ){
+						createdDoc.nunaliit_layers.push(this.layerId);
+					};
 				};
 			};
 		};

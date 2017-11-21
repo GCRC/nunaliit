@@ -3,7 +3,6 @@
    "id": "doc",
    "label": "Demo Document",
    "relatedSchemas": [ "demo_media" ],
-   "initialLayers": [ "public" ],
    "attributes": [
       {
          "type": "title",

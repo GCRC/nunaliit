@@ -862,6 +862,9 @@ var LayerInfo = $n2.Class({
 	
 		{Boolean} addSRSAttribution
 		If true, the SRS Code will be added to the map attribution
+		
+		{Object} scaleLine
+    	Defines properties for the scale line control
 
 		{Boolean} enableWheelZoom=false
     	If true, mouse wheel zooms in and out.
@@ -1070,6 +1073,9 @@ var MapAndControls = $n2.Class({
 			}
 			,addPointsOnly: false
 			,addSRSAttribution: false
+			,scaleLine: {
+				visible: false
+			}
 			,enableWheelZoom: false
 			,placeDisplay: { // place info panel display options.
 				attribDisplayType: 'attributes' // default - just list the attributes in a table	
@@ -1450,16 +1456,39 @@ var MapAndControls = $n2.Class({
 			,theme: null // Let host page control loading of appropriate CSS style sheet
 			,zoomMethod: null  // Zoom with features does not look good
 		});
-		
-		// Show Spatial Reference System display projection code in map attribution
+
+		// Show Spatial Reference System display projection code in the map attribution
 		if( this.options.addSRSAttribution ) {
 			var srsCode = this.map.displayProjection.projCode;
+			// Create a new hidden OpenLayers.Layer object with SRS attribution
 			var srsAttribution = new OpenLayers.Layer("SRS",{
 				attribution:"SRS: " + srsCode,
 				visibility: true,
 				displayInLayerSwitcher: false
 			});
 			this.map.addLayers([srsAttribution]);
+		};
+
+		// Create Scale line 
+		if( this.options.scaleLine && this.options.scaleLine.visible ){
+			// Default OpenLayers Scale Line Properties:
+			// ------------------------------------
+			// bottomOutUnits: mi
+			// bottomInUnits: ft
+			// topOutUnits: km
+			// topInUnits: m
+			// maxWidth: 100 (in pixels)
+			// geodesic: false
+
+			var scaleLine = new OpenLayers.Control.ScaleLine({
+				bottomOutUnits: this.options.scaleLine.bottomOutUnits
+				,bottomInUnits: this.options.scaleLine.bottomInUnits
+				,topOutUnits: this.options.scaleLine.topOutUnits
+				,topInUnits: this.options.scaleLine.topInUnits
+				,maxWidth: this.options.scaleLine.maxWidth
+				,geodesic: this.options.scaleLine.geodesic
+			});
+			this.map.addControl(scaleLine);
 		};
 
 		// Disable zoom on mouse wheel

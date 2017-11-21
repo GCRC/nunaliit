@@ -854,7 +854,7 @@ var CouchDocumentEditor = $n2.Class({
 			,customService: null
 			,dispatchService: null
 			,dialogService: null
-			,initialLayers: ['public']
+			,initialLayers: []
 			,schema: null
 			,defaultEditSchema: null
 			,documentSource: null
@@ -2167,7 +2167,7 @@ var CouchEditService = $n2.Class({
 			,dialogService: null
 			,createDocProcess: null
 			,enableAddFile: false
-			,initialLayers: ['public']
+			,initialLayers: []
 		},opts_);
 		
 		var _this = this;
