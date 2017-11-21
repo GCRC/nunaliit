@@ -1002,20 +1002,18 @@ var ModuleDisplay = $n2.Class({
 			toggleClick = mapInfo.toggleClick;
 		};
 		
-<<<<<<< HEAD
 		// Add SRS attribution text
 		var addSRSAttribution = false;
 		if( mapInfo && mapInfo.addSRSAttribution ){
 			addSRSAttribution = mapInfo.addSRSAttribution;
-=======
+		};
+		
 		// ScaleLine
 		var scaleLine = {
 			visible: false
 		};
-
 		if( mapInfo && mapInfo.scaleLine && mapInfo.scaleLine.visible ){
 			scaleLine = mapInfo.scaleLine;
->>>>>>> upstream/master
 		};
 
 		// Enable wheel zoom
@@ -1050,11 +1048,8 @@ var ModuleDisplay = $n2.Class({
 			,addPointsOnly: addPointsOnly
 			,overlays: []
 			,toggleClick: toggleClick
-<<<<<<< HEAD
 			,addSRSAttribution: addSRSAttribution
-=======
 			,scaleLine: scaleLine
->>>>>>> upstream/master
 			,enableWheelZoom: enableWheelZoom
 			,sidePanelName: _this.sidePanelName
 			,filterPanelName: _this.filterPanelName
@@ -1345,7 +1340,7 @@ var ModuleDisplay = $n2.Class({
 		};
 	}
 
-	,_initSidePanel: function() {
+	,_initSidePanel: function(){
 		var _this = this;
 
 		var customService = this._getCustomService();
