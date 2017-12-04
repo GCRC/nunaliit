@@ -146,6 +146,310 @@ function createOperation(opts_){
 };
 
 //=========================================================================
+// Instances of this class are used by the class Change to track which
+// copy operations require resolution before updating the document. It also
+// keeps the result of the resolution
+var CollisionOperation = $n2.Class({
+	
+	collisionId: null,
+	
+	copyOperation: null,
+	
+	resolution: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			copyOperation: undefined
+		},opts_);
+		
+		this.collisionId = $n2.getUniqueId();
+		
+		this.resolution = undefined;
+		
+		this.copyOperation = opts.copyOperation;
+	},
+	
+	getCollisionId: function(){
+		return this.collisionId;
+	},
+	
+	getCopyOperation: function(){
+		return this.copyOperation;
+	},
+	
+	isResolved: function(){
+		if( this.resolution ){
+			return true;
+		};
+		return false;
+	},
+	
+	isKeepCurrentValue: function(){
+		return 'currentValue' === this.resolution;
+	},
+	
+	setKeepCurrentValue: function(){
+		this.resolution = 'currentValue';
+	},
+	
+	isUpdateValue: function(){
+		return 'updateValue' === this.resolution;
+	},
+	
+	setUpdateValue: function(){
+		this.resolution = 'updateValue';
+	},
+	
+	shouldPerformCopyOperation: function(){
+		if( 'updateValue' === this.resolution ) {
+			return true;
+		};
+		return false;
+	}
+});
+
+//=========================================================================
+// Instances of this class are used to track which properties have changed
+// since the last import.
+var ModifiedImportValue = $n2.Class({
+	
+	propertyName: null,
+
+	lastImportedValue: null,
+
+	currentImportedValue: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			propertyName: undefined,
+			lastImportedValue: undefined,
+			currentImportedValue: undefined
+		},opts_);
+		
+		this.propertyName = opts.propertyName;
+		this.lastImportedValue = opts.lastImportedValue;
+		this.currentImportedValue = opts.currentImportedValue;
+	},
+	
+	getPropertyName: function(){
+		return this.propertyName;
+	}
+});
+
+//=========================================================================
+// Instances of this class carry information about a document change (modification)
+// given the changes found in the import entries. At a high level, it informs
+// if a document should be added, deleted or removed given an entry.
+//
+// A user generally approves a change. At this point the change is carried out. It
+// might include multiple modifications to the document.
+var Change = $n2.Class({
+	
+	/**
+	 * Unique to this change. Useful when displaying.
+	 */
+	changeId: null,
+
+	/**
+	 * Identifier for import entry
+	 */
+	importId: null,
+
+	isAddition: null,
+	
+	isModification: null,
+	
+	isDeletion: null,
+	
+	type: null,
+	
+	/**
+	 * True if this change can be applied without user intervention
+	 */
+	auto: null,
+	
+	/**
+		array of objects with the following structure:
+		{
+			property: <name of the import property>
+			,lastImportValue: <value during last import>
+			,externalValue: <value from this import>
+			,collisions: []
+		}
+		The collisions array contains collisions pertinent to
+		this property. It is an array of objects with the following
+		structure:
+		{
+			source: <name of the import property>
+			,sourceValue: <value during last import>
+			,target: <string that represent the selector for where the data should go>
+			,targetValue: <value currently found by selector>
+		}
+	 */
+	modifiedProperties: null,
+
+	/**
+	 * Boolean. Set if the geometry was modified
+	 */
+	modifiedGeometry: null,
+
+	/**
+	 * Boolean. Set if the geometry was modified and a collision 
+	 * is detected
+	 */
+	collisionGeometry: null,
+	
+	modifiedImportValueByName: null,
+	
+	copyOperations: null,
+
+	collisionOperationsById: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			importId: undefined,
+			isAddition: false,
+			isModification: false,
+			isDeletion: false,
+			isAuto: undefined,
+			modifiedProperties: undefined,
+			modifiedGeometry: false,
+			collisionGeometry: false
+		},opts_);
+		
+		var _this = this;
+	
+		this.changeId = $n2.getUniqueId();
+		this.modifiedProperties = [];
+		this.modifiedImportValueByName = {};
+		this.copyOperations = [];
+		this.collisionOperationsById = {};
+		
+		this.importId = opts.importId;
+		this.isAddition = opts.isAddition;
+		this.isModification = opts.isModification;
+		this.isDeletion = opts.isDeletion;
+		this.auto = opts.isAuto;
+		this.modifiedGeometry = opts.modifiedGeometry;
+		this.collisionGeometry = opts.collisionGeometry;
+		
+		if( this.isAddition ){
+			this.type = 'addition';
+		};
+		if( this.isModification ){
+			if( this.type ){
+				throw new Error('Only one of isAddition, isModification or isDeletion can be set');
+			};
+			this.type = 'modification';
+		};
+		if( this.isDeletion ){
+			if( this.type ){
+				throw new Error('Only one of isAddition, isModification or isDeletion can be set');
+			};
+			this.type = 'deletion';
+		};
+		
+		if( typeof this.importId !== 'string' ){
+			throw new Error('importId must be set as a string');
+		};
+		
+		if( opts.modifiedProperties === undefined ){
+			// OK, no specified
+		} else if( $n2.isArray(opts.modifiedProperties) ){
+			opts.modifiedProperties.forEach(function(name){
+				_this.modifiedProperties.push(name);
+			});
+		} else {
+			throw new Error('Unexpected value for modifiedProperties');
+		};
+	},
+	
+	getId: function(){
+		return this.changeId;
+	},
+	
+	isAuto: function(){
+		if( undefined !== this.auto ){
+			return this.auto;
+		};
+
+		if( this.isAddition ){
+			return true;
+		} else if( this.isDeletion ) {
+			return false;
+		};
+		
+		return false;
+	},
+	
+	addModifiedImportValue: function(modifiedImportValue){
+		var name = modifiedImportValue.getPropertyName();
+		this.modifiedImportValueByName[name] = modifiedImportValue;
+	},
+
+	getModifiedImportValueNames: function(){
+		var names = [];
+		for(var name in this.modifiedImportValueByName){
+			names.push(name);
+		};
+		names.sort();
+		return names;
+	},
+
+	getModifiedImportValueFromName: function(name){
+		return this.modifiedImportValueByName[name];
+	},
+	
+	hasAnyValueChangedSinceLastImport: function(propertyNames){
+		for(var i=0,e=propertyNames.length; i<e; ++i){
+			var propertyName = propertyNames[i];
+			if( this.modifiedImportValueByName[propertyName] ){
+				return true;
+			};
+		}
+		
+		return false;
+	},
+	
+	addCopyOperation: function(copyOperation){
+		this.copyOperations.push(copyOperation);
+	},
+	
+	addCollisionOperation: function(copyOperation){
+		var collision = new CollisionOperation({
+			copyOperation: copyOperation
+		});
+		
+		this.auto = false;
+		
+		this.collisionOperationsById[collision.getCollisionId()] = collision;
+	},
+	
+	getCollisionOperations: function(){
+		var collisions = [];
+		for(var collisionId in this.collisionOperations){
+			var collision = this.collisionOperations[collisionId];
+			collisions.push(collision);
+		};
+		return collisions;
+	},
+	
+	getCollisionFromId: function(collisionId){
+		return this.collisionOperations[collisionId];
+	},
+	
+	isResolved: function(){
+		for(var i=0,e=this.collisionOperations.length; i<e; ++i){
+			var collision = this.collisionOperations[i];
+			if( !collision.isResolved() ){
+				return false;
+			};
+		};
+		return true;
+	}
+});
+
+//=========================================================================
 // An instance of this class is used to report all changes that would occur
 // if an import was performed. This allows a user to peruse changes before
 // applying them to the database.
@@ -154,6 +458,8 @@ var ImportAnalysis = $n2.Class({
 	profile: null,
 	
 	changesById: null,
+
+	dbDocIdByImportId: null,
 	
 	dbDocsByImportId: null,
 	
@@ -168,6 +474,7 @@ var ImportAnalysis = $n2.Class({
 		
 		this.changesById = {};
 		this.dbDocsByImportId = {};
+		this.dbDocIdByImportId = {};
 		this.entriesByImportId = {};
 		
 		this.modificationCount = 0;
@@ -193,6 +500,19 @@ var ImportAnalysis = $n2.Class({
 	
 	removeChange: function(changeId){
 		delete this.changesById[changeId];
+	},
+	
+	addDbDocIdForImportId: function(docId, importId){
+		this.dbDocIdByImportId[importId] = docId;
+	},
+	
+	getDbDocIds: function(){
+		var docIds = [];
+		for(var importId in this.dbDocIdByImportId){
+			var docId = this.dbDocIdByImportId[importId];
+			docIds.push(docId);
+		};
+		return docIds;
 	},
 	
 	getDbDoc: function(importId){
@@ -221,111 +541,37 @@ var ImportAnalysis = $n2.Class({
 		return entries;
 	},
 	
-	addAddition: function(opts_){
+	addChange: function(opts_){
 		var opts = $n2.extend({
-			importId: undefined
-			,importEntry: undefined
-		},opts_);
-
-		// If no import id, associate one so that we can refer to it
-		var importId = opts.importId;
-		if( !importId ){
-			importId = $n2.getUniqueId();
-		};
-		this.entriesByImportId[importId] = opts.importEntry;
-		
-		var changeId = $n2.getUniqueId();
-		var change = {
-			changeId: changeId
-			,type: 'addition'
-			,isAddition: true
-			,auto: true
-			,importId: importId
-		};
-		++this.additionCount;
-		this.changesById[changeId] = change;
-		return change;
-	},
-	
-	addModification: function(opts_){
-		var opts = $n2.extend({
-			// String that uniquely identifies an import record
-			importId: null,
-			
-			// Entry that is being imported
-			importEntry: null,
-
-			// array of objects with the following structure:
-			// {
-			//    property: <name of the import property>
-			//    ,lastImportValue: <value during last import>
-			//    ,externalValue: <value from this import>
-			//    ,collisions: []
-			// }
-			// The collisions array contains collisions pertinent to
-			// this property. It is an array of objects with the following
-			// structure:
-			// {
-			//    source: <name of the import property>
-			//    ,sourceValue: <value during last import>
-			//    ,target: <string that represent the selector for where the data should go>
-			//    ,targetValue: <value currently found by selector>
-			// }
-			modifiedProperties: null, 
-			
-			// Boolean. Set if the geometry was modified
-			modifiedGeometry: null,
-
-			// Boolean. Set if the geometry was modified and a collision 
-			// is detected
-			collisionGeometry: null,
-			
-			// Document from database which is associated with importId
-			dbDoc: null,
-			
-			// Some modification are automatic. Modifications that
-			// have a collision should not be performed automatically
-			auto: false
+			change: undefined,
+			importEntry: undefined,
+			dbDoc: undefined
 		},opts_);
 		
-		this.entriesByImportId[opts.importId] = opts.importEntry;
-		this.dbDocsByImportId[opts.importId] = opts.dbDoc;
-
-		var changeId = $n2.getUniqueId();
-		var change = {
-			changeId: changeId
-			,type: 'modification'
-			,isModification: true
-			,auto: opts.auto
-			,importId: opts.importId
-			,modifiedProperties: opts.modifiedProperties
-			,modifiedGeometry: opts.modifiedGeometry
-			,collisionGeometry: opts.collisionGeometry
-		};
-		++this.modificationCount;
-		this.changesById[changeId] = change;
-		return change;
-	},
-	
-	addDeletion: function(opts_){
-		var opts = $n2.extend({
-			importId: null
-			,dbDoc: null
-		},opts_);
-
-		this.dbDocsByImportId[opts.importId] = opts.dbDoc;
+		var change = opts.change;
+		var importId = change.importId;
 		
-		var changeId = $n2.getUniqueId();
-		var change = {
-			changeId: changeId
-			,type: 'deletion'
-			,isDeletion: true
-			,auto: false
-			,importId: opts.importId
+		var importEntry = opts.importEntry;
+		if( importEntry ){
+			this.entriesByImportId[importId] = importEntry;
 		};
-		++this.deletionCount;
-		this.changesById[changeId] = change;
-		return change;
+		
+		var dbDoc = opts.dbDoc;
+		if( dbDoc ){
+			this.dbDocsByImportId[importId] = dbDoc;
+		};
+
+		if( change.isAddition ){
+			++this.additionCount;
+		};
+		if( change.isModification ){
+			++this.modificationCount;
+		};
+		if( change.isDeletion){
+			++this.deletionCount;
+		};
+
+		this.changesById[change.getId()] = change;
 	}
 });
 
@@ -427,6 +673,7 @@ var ImportAnalyzer = $n2.Class({
 					 && null !== doc.nunaliit_import.id ) {
 						++count;
 						dbDocsByImportId[doc.nunaliit_import.id] = doc;
+						analysis.addDbDocIdForImportId(doc._id, doc.nunaliit_import.id);
 					};
 				};
 				
@@ -443,8 +690,14 @@ var ImportAnalyzer = $n2.Class({
 				if( importEntriesById[id] ) {
 					// OK
 				} else {
-					analysis.addDeletion({
-						importId: id
+					var change = new Change({
+						isDeletion: true
+						,auto: false
+						,importId: id
+					});
+					
+					analysis.addChange({
+						change: change
 						,dbDoc: dbDocsByImportId[id]
 					});
 				};
@@ -468,14 +721,10 @@ var ImportAnalyzer = $n2.Class({
 				_this._compare({
 					importEntry: entry
 					,doc: dbDocsByImportId[id]
-					,onSuccess: function(c){
-						if( c ){
-							analysis.addModification({
-								importId: c.importId
-								,auto: c.auto
-								,modifiedProperties: c.modifiedProperties
-								,modifiedGeometry: c.modifiedGeometry
-								,collisionGeometry: c.collisionGeometry
+					,onSuccess: function(change){
+						if( change ){
+							analysis.addChange({
+								change
 								,dbDoc: dbDocsByImportId[id]
 								,importEntry: entry
 							});
@@ -483,20 +732,42 @@ var ImportAnalyzer = $n2.Class({
 						
 						// Next entry
 						window.setTimeout(processEntries,0); // Do not blow stack on large files
-						//processEntries(); 
 					}
 				});
 				
 			} else {
 				// New to database
-				analysis.addAddition({
-					importId: id
+
+				// If no import id, associate one so that we can refer to it
+				if( !id ){
+					id = $n2.getUniqueId();
+				};
+				
+				var change = new Change({
+					isAddition: true
+					,auto: true
+					,importId: id
+				});
+
+				var props = entry.getProperties();
+				for(var propName in props){
+					var externalValue = props[propName];
+
+					var modImportValue = new ModifiedImportValue({
+						propertyName: propName,
+						lastImportedValue: undefined,
+						currentImportedValue: externalValue
+					});
+					change.addModifiedImportValue(modImportValue);
+				};
+				
+				analysis.addChange({
+					change: change
 					,importEntry: entry
 				});
 				
 				// Next entry
 				window.setTimeout(processEntries,0); // Do not blow stack on large files
-				//processEntries();
 			};
 		};
 	},
@@ -544,13 +815,13 @@ var ImportAnalyzer = $n2.Class({
 			isGeometryModified = true;
 		};
 		if( isGeometryModified ){
-			change = {
+			change = new Change({
 				importId:importId
 				,auto: true
-				,modifiedProperties: []
+				,isModification: true
 				,modifiedGeometry: true
 				,collisionGeometry: false
-			};
+			});
 			
 			// Check if geometry was modified since last import
 			var lastImportGeometry = undefined;
@@ -582,13 +853,11 @@ var ImportAnalyzer = $n2.Class({
 			allPropertyNames.push(propName);
 			
 			if( externalValue !== lastImportValue ){
-				if( !change ) change = {
+				if( !change ) change = new Change({
 					importId:importId
+					,isModification: true
 					,auto: true
-					,modifiedProperties: []
-					,modifiedGeometry: false
-					,collisionGeometry: false
-				};
+				});
 
 				var mod = {
 					property: propName
@@ -601,51 +870,45 @@ var ImportAnalyzer = $n2.Class({
 				modificationsByPropName[propName] = mod;
 				
 				change.modifiedProperties.push(mod);
+				
+				var modImportValue = new ModifiedImportValue({
+					propertyName: propName,
+					lastImportedValue: lastImportValue,
+					currentImportedValue: externalValue
+				});
+				change.addModifiedImportValue(modImportValue);
 			};
 		};
 		
 		// Get all copy operations that are to be executed on import
-		this.profile.reportCopyOperations({
-			doc: opts.doc
-			,allPropertyNames: allPropertyNames
-			,onSuccess: function(copyOperations){
-				// Sort the copy operations with the appropriate property modification
-				for(var copyIndex=0,copyIndexEnd=copyOperations.length; copyIndex<copyIndexEnd; ++copyIndex){
-					var copyOperation = copyOperations[copyIndex];
-					
-					var propertyNames = copyOperation.propertyNames;
-					if( propertyNames ){
-						for(var propIndex=0,propIndexEnd=propertyNames.length; propIndex<propIndexEnd; ++propIndex){
-							var propName = propertyNames[propIndex];
-							
-							var mod = modificationsByPropName[propName];
-							if( mod ){
-								if( copyOperation.isInconsistent ){
-									// It is a collision only if target value is not the same as
-									// the external data. If the external data and the modified
-									// data agree, then this is not a collision
-									if( mod.externalValue !== copyOperation.targetValue ){
-										// This is a collision
-										mod.collisions.push(copyOperation);
-										
-										// Can not perform this change automatically
-										change.auto = false;
-										
-									} else {
-										mod.copyOperations.push(copyOperation);
-									};
-									
-								} else {
-									mod.copyOperations.push(copyOperation);
-								};
+		if( change ){
+			this.profile.reportCopyOperations({
+				doc: opts.doc
+				,allPropertyNames: allPropertyNames
+				,onSuccess: function(copyOperations){
+					// Look at each copy operation and retain the ones that are relevant.
+					// In other words, keep the operations that are affected by the change
+					// in property values
+					copyOperations.forEach(function(copyOperation){
+						var propertyNames = copyOperation.propertyNames;
+						if( change.hasAnyValueChangedSinceLastImport(propertyNames) ){
+							// The copy operation is marked inconsistent if the computed
+							// target value and the current value differs
+							if( copyOperation.isInconsistent ){
+								change.addCollisionOperation(copyOperation);
+							} else {
+								change.addCopyOperation(copyOperation);
 							};
 						};
-					};
-				};
-				
-				opts.onSuccess(change);
-			}
-		});
+					});
+					
+					opts.onSuccess(change);
+				}
+			});
+		} else {
+			// Should we ever get here?
+			opts.onSuccess(undefined);
+		};
 	}
 });
 
@@ -708,22 +971,6 @@ var AnalysisReport = $n2.Class({
 		var $changes = this._getElem().find('.changes')
 			.empty();
 		
-		var proceedClickFn = function(){
-			var $btn = $(this);
-			_this._proceed($btn);
-			return false;
-		};
-		var discardClickFn = function(){
-			var $btn = $(this);
-			_this._discard($btn);
-			return false;
-		};
-		var radioButtonClickFn = function(){
-			var $btn = $(this);
-			_this._radioButtonClicked($btn);
-			return true;
-		};
-		
 		var analysis = this.analysis;
 		var changes = analysis.getChanges();
 		
@@ -732,7 +979,7 @@ var AnalysisReport = $n2.Class({
 			return;
 		};
 		
-		if(analysis.getDbDocs().length < 1){
+		if( analysis.getDbDocIds().length < 1 ){
 			var proceedDivId = $n2.getUniqueId();
 			var $div = $('<div>')
 				.attr('id',proceedDivId)
@@ -760,7 +1007,7 @@ var AnalysisReport = $n2.Class({
 			var autoChanges = [];
 			for(var changeIndex=0;changeIndex<changes.length;++changeIndex){
 				var change = changes[changeIndex];
-				if( change.auto ){
+				if( change.isAuto() ){
 					autoChanges.push(change);
 				};
 			};
@@ -791,166 +1038,423 @@ var AnalysisReport = $n2.Class({
 					});
 			};
 		};
+
+		changes.sort(function(a,b){
+			if( a.isAddition && !b.isAddition ){
+				return -1;
+			};
+			if( !a.isAddition && b.isAddition ){
+				return 1;
+			};
+			if( a.isDeletion && !b.isDeletion ){
+				return 1;
+			};
+			if( !a.isDeletion && b.isDeletion ){
+				return -1;
+			};
+			if( a.importId && b.importId ){
+				if( a.importId < b.importId ){
+					return -1;
+				};
+				if( a.importId > b.importId ){
+					return 1;
+				};
+			};
+			return 0;
+		});
 		
-		// Report new
+		// Loop over changes
 		for(var i=0,e=changes.length; i<e; ++i){
 			var change = changes[i];
-			if( change.isAddition ) {
-				var importId = change.importId;
-				var importEntry = analysis.getImportEntry(importId);
-				var importProperties = importEntry.getProperties();
-				var $div = $('<div>')
-					.attr('id',change.changeId)
-					.addClass('addition operation')
-					.appendTo($changes);
-				
-				if( change.auto ){
-					$div.addClass('autoOperation');
-				};
-				
-				$('<button>')
-					.addClass('discard')
-					.text( _loc('Discard') )
-					.appendTo($div)
-					.click(discardClickFn);
-				$('<button>')
-					.addClass('proceed')
-					.text( _loc('Create new document') )
-					.appendTo($div)
-					.click(proceedClickFn);
 
-				var explanation = _loc('Create new document');
-				if( change.auto ){
-					explanation += ' ' +_loc('AUTO');
-				};
-				$('<div>')
-					.addClass('explanation')
-					.text( explanation )
-					.appendTo($div);
-				$('<div>')
-					.addClass('geoJsonId')
-					.text( 'Import ID: '+importId )
-					.appendTo($div);
-				var $properties = $('<div>')
-					.addClass('properties')
-					.appendTo($div);
-				if( importEntry ){
-					for(var propName in importProperties){
-						var propValue = importProperties[propName];
-						var propValueStr = this._printValue(propValue);
-						var $prop = $('<div>')
-							.addClass('property')
-							.appendTo($properties);
-						$('<div>')
-							.addClass('propertyName')
-							.text(propName)
-							.appendTo($prop);
-						$('<div>')
-							.addClass('newValue')
-							.text(propValueStr)
-							.appendTo($prop);
-					};
-				};
-				
-				// Geometry
-				var externalGeom = importEntry.getGeometry();
-				if( externalGeom ){
+			// Create div to report this change
+			var $div = $('<div>')
+				.attr('id',change.changeId)
+				.addClass('operation')
+				.appendTo($changes);
+
+			this._refreshChangeDiv(change, $div);
+		};
+	},
+	
+	_refreshChangeDiv: function(change, $div){
+		var _this = this;
+
+		var proceedClickFn = function(){
+			var $btn = $(this);
+			_this._proceed($btn);
+			return false;
+		};
+		var discardClickFn = function(){
+			var $btn = $(this);
+			_this._discard($btn);
+			return false;
+		};
+		var collisionRadioButtonClickFn = function(){
+			var $btn = $(this);
+			_this._collisionSelectionClicked($btn);
+			return true;
+		};
+
+		var analysis = this.analysis;
+
+		$div.empty();
+		
+		// Report new
+		if( change.isAddition ) {
+			var importId = change.importId;
+			var importEntry = analysis.getImportEntry(importId);
+			var importProperties = importEntry.getProperties();
+			$div.addClass('addition');
+			
+			if( change.isAuto() ){
+				$div.addClass('autoOperation');
+			};
+			
+			$('<button>')
+				.addClass('discard')
+				.text( _loc('Discard') )
+				.appendTo($div)
+				.click(discardClickFn);
+			$('<button>')
+				.addClass('proceed')
+				.text( _loc('Create new document') )
+				.appendTo($div)
+				.click(proceedClickFn);
+
+			var explanation = _loc('Create new document');
+			if( change.isAuto() ){
+				explanation += ' ' +_loc('AUTO');
+			};
+			$('<div>')
+				.addClass('explanation')
+				.text( explanation )
+				.appendTo($div);
+			$('<div>')
+				.addClass('geoJsonId')
+				.text( 'Import ID: '+importId )
+				.appendTo($div);
+			var $properties = $('<div>')
+				.addClass('properties')
+				.appendTo($div);
+			if( importEntry ){
+				for(var propName in importProperties){
+					var propValue = importProperties[propName];
+					var propValueStr = this._printValue(propValue);
 					var $prop = $('<div>')
 						.addClass('property')
 						.appendTo($properties);
 					$('<div>')
 						.addClass('propertyName')
-						.text( _loc('Geometry') )
+						.text(propName)
 						.appendTo($prop);
 					$('<div>')
 						.addClass('newValue')
-						.text( this._printValue(externalGeom) )
+						.text(propValueStr)
 						.appendTo($prop);
 				};
 			};
-		};
-		
-		// Report modifications
-		for(var i=0,e=changes.length; i<e; ++i){
-			var change = changes[i];
-			if( change.isModification ) {
-				var importId = change.importId;
-				var doc = analysis.getDbDoc(importId);
-				var importEntry = analysis.getImportEntry(importId);
+			
+			// Geometry
+			var externalGeom = importEntry.getGeometry();
+			if( externalGeom ){
+				var $prop = $('<div>')
+					.addClass('property')
+					.appendTo($properties);
+				$('<div>')
+					.addClass('propertyName')
+					.text( _loc('Geometry') )
+					.appendTo($prop);
+				$('<div>')
+					.addClass('newValue')
+					.text( this._printValue(externalGeom) )
+					.appendTo($prop);
+			};
 
-				// Go through all the properties that need to be modified
-				var sortedPropNames = [];
-				var modificationsByPropNames = {};
-				var collisionDetected = false;
-				for(var j=0,k=change.modifiedProperties.length; j<k; ++j){
-					var mod = change.modifiedProperties[j];
-					var propName = mod.property;
-					sortedPropNames.push(propName);
-					modificationsByPropNames[propName] = mod;
-					if( mod.collisions && mod.collisions.length > 0 ){
-						collisionDetected = true;
+		} else if( change.isModification ) {
+			// Report modifications
+			var importId = change.importId;
+			var doc = analysis.getDbDoc(importId);
+			var importEntry = analysis.getImportEntry(importId);
+
+			// Detect collisions
+			var collisionDetected = false;
+			var collisionOperations = change.getCollisionOperations();
+			if( collisionOperations.length > 0 ){
+				collisionDetected = true;
+			};
+			if( change.modifiedGeometry && change.collisionGeometry ){
+				collisionDetected = true;
+			};
+
+			// Go through all the properties that need to be modified
+			var modifiedPropertyNames = change.getModifiedImportValueNames();
+			
+			$div.addClass('modify');
+
+			if( collisionDetected ){
+				$div.addClass('collision');
+			};
+			if( change.isAuto() ){
+				$div.addClass('autoOperation');
+			};
+			
+			
+			$('<button>')
+				.addClass('discard')
+				.text( _loc('Discard') )
+				.appendTo($div)
+				.click(discardClickFn);
+			
+			var $proceedButton = $('<button>')
+				.attr('id',change.changeId + '_proceed')
+				.addClass('proceed')
+				.text( _loc('Modify Document') )
+				.appendTo($div)
+				.click(proceedClickFn);
+			if( !change.isResolved() ) {
+				$proceedButton.attr('disabled','disabled');
+			};
+			
+			var explanation = _loc('Modify existing document');
+			if( change.isAuto() ){
+				explanation += ' ' +_loc('AUTO');
+			};
+			if( collisionDetected ){
+				explanation += ' ' + _loc('COLLISION');
+			};
+			$('<div>')
+				.addClass('explanation')
+				.text( explanation )
+				.appendTo($div);
+			$('<div>')
+				.addClass('geoJsonId')
+				.text( 'Import ID: '+importId )
+				.appendTo($div);
+			$('<div>')
+				.addClass('docId')
+				.text( 'Database ID: '+doc._id )
+				.appendTo($div);
+			var $properties = $('<div>')
+				.addClass('properties')
+				.appendTo($div);
+			
+			for(var propNameIndex=0,propNameEnd=modifiedPropertyNames.length; propNameIndex<propNameEnd; ++propNameIndex){
+				var propName = modifiedPropertyNames[propNameIndex];
+				var mod = change.getModifiedImportValueFromName(propName);
+				var $prop = $('<div>')
+					.addClass('property')
+					.appendTo($properties);
+				$('<div>')
+					.addClass('propertyName')
+					.text(propName)
+					.appendTo($prop);
+				$('<div>')
+					.addClass('previousValue')
+					.text( this._printValue(mod.lastImportedValue) )
+					.appendTo($prop);
+				$('<div>')
+					.addClass('newValue')
+					.text( this._printValue(mod.currentImportedValue) )
+					.appendTo($prop);
+			};
+			
+			// Report collisions
+			if( collisionOperations.length > 0 ){
+				var $collisions = $('<div>')
+					.addClass('collisions')
+					.appendTo($div);
+				collisionOperations.forEach(function(collisionOperation){
+					var copyOperation = collisionOperation.getCopyOperation();
+					
+					var $collision = $('<div>')
+						.addClass('collision')
+						.appendTo($collisions);
+					$('<div>')
+						.addClass('selector')
+						.text( _loc('Collision on selector {selector}',{
+							selector: copyOperation.targetSelector.getSelectorString()
+						}) )
+						.appendTo($collision);
+					var targetValue = copyOperation.targetValue;
+					$('<div>')
+						.addClass('targetValue')
+						.text( _this._printValue(targetValue) )
+						.appendTo($collision);
+
+					var collisionId = collisionOperation.getId();
+					
+					var updatedId = $n2.getUniqueId();
+					var $updatedValueDiv = $('<div>')
+						.appendTo($collision);
+					var $updateBtn = $('<input>')
+						.attr('type','radio')
+						.attr('id',updatedId)
+						.attr('name',collisionId)
+						.attr('value','updateValue')
+						.attr('data-changeId',change.getId())
+						.click(collisionRadioButtonClickFn)
+						.appendTo($updatedValueDiv);
+					$('<label>')
+						.attr('for',updatedId)
+						.text( this._printValue(mod.externalValue) )
+						.appendTo($updatedValueDiv);
+					if( collisionOperation.isUpdateValue() ){
+						$updateBtn.prop("checked", true);
 					};
-				};
-				if( change.modifiedGeometry && change.collisionGeometry ){
-					collisionDetected = true;
-				};
-				sortedPropNames.sort();
-				
-				var $div = $('<div>')
-					.attr('id',change.changeId)
-					.addClass('modify operation')
-					.appendTo($changes);
-				if( collisionDetected ){
-					$div.addClass('collision');
-				};
-				if( change.auto ){
-					$div.addClass('autoOperation');
-				};
-				
-				
-				$('<button>')
-					.addClass('discard')
-					.text( _loc('Discard') )
-					.appendTo($div)
-					.click(discardClickFn);
-				
-				var $proceedButton = $('<button>')
-					.attr('id',change.changeId + '_proceed')
-					.addClass('proceed')
-					.text( _loc('Modify Document') )
-					.appendTo($div)
-					.click(proceedClickFn);
-				if( collisionDetected ) {
-					$proceedButton.attr('disabled','disabled');
-				};
-				
-				var explanation = _loc('Modify existing document');
-				if( change.auto ){
-					explanation += ' ' +_loc('AUTO');
-				};
-				if( change.collisions && change.collisions.length > 0 ){
-					explanation += ' ' + _loc('COLLISION');
-				};
-				$('<div>')
-					.addClass('explanation')
-					.text( explanation )
-					.appendTo($div);
-				$('<div>')
-					.addClass('geoJsonId')
-					.text( 'Import ID: '+importId )
-					.appendTo($div);
-				$('<div>')
-					.addClass('docId')
-					.text( 'Database ID: '+doc._id )
-					.appendTo($div);
-				var $properties = $('<div>')
-					.addClass('properties')
-					.appendTo($div);
-				
-				for(var propNameIndex=0,propNameEnd=sortedPropNames.length; propNameIndex<propNameEnd; ++propNameIndex){
-					var propName = sortedPropNames[propNameIndex];
-					var mod = modificationsByPropNames[propName];
+					
+					var currentId = $n2.getUniqueId();
+					var $currentValueDiv = $('<div>')
+						.appendTo($collision);
+					var $currentBtn = $('<input>')
+						.attr('type','radio')
+						.attr('id',currentId)
+						.attr('name',collisionId)
+						.attr('value','current')
+						.attr('data-changeId',change.getId())
+						.click(collisionRadioButtonClickFn)
+						.appendTo($currentValueDiv);
+					$('<label>')
+						.attr('for',currentId)
+						.text( this._printValue(targetValue) )
+						.appendTo($currentValueDiv);
+					if( collisionOperation.isKeepCurrentValue() ){
+						$currentBtn.prop("checked", true);
+					};
+				});
+			};
 
+			if( change.modifiedGeometry ){
+				var lastImportGeometry = undefined;
+				var externalGeometry = importEntry.getGeometry();
+				if( doc.nunaliit_import 
+				 && doc.nunaliit_import.geometry ){
+					lastImportGeometry = doc.nunaliit_import.geometry.wkt;
+				};
+				
+				var $prop = $('<div>')
+					.addClass('property')
+					.appendTo($properties);
+				$('<div>')
+					.addClass('propertyName')
+					.text( _loc('Geometry') )
+					.appendTo($prop);
+				$('<div>')
+					.addClass('previousValue')
+					.text( this._printValue(lastImportGeometry) )
+					.appendTo($prop);
+				$('<div>')
+					.addClass('newValue')
+					.text( this._printValue(externalGeometry) )
+					.appendTo($prop);
+
+				if( change.collisionGeometry ){
+					var $prop = $('<div>')
+						.addClass('property')
+						.appendTo($properties);
+					$('<div>')
+						.addClass('propertyName')
+						.text( _loc('Collision on Geometry') )
+						.appendTo($prop);
+					$('<div>')
+						.addClass('targetSelector')
+						.text('nunaliit_geom.wkt')
+						.appendTo($prop);
+					var targetValue = undefined;
+					if( doc.nunaliit_geom ){
+						targetValue = doc.nunaliit_geom.wkt;
+					};
+					$('<div>')
+						.addClass('targetValue')
+						.text( this._printValue(targetValue) )
+						.appendTo($prop);
+
+					// Select value to resolve collision
+					var $collision = $('<div>')
+						.addClass('collision')
+						.appendTo($properties);
+					
+					var collisionName = '__geometry__';
+					
+					var externalId = $n2.getUniqueId();
+					var $externalValueDiv = $('<div>')
+						.appendTo($collision);
+					$('<input>')
+						.attr('type','radio')
+						.attr('id',externalId)
+						.attr('name',collisionName)
+						.attr('value','external')
+						.click(collisionRadioButtonClickFn)
+						.appendTo($externalValueDiv);
+					$('<label>')
+						.attr('for',externalId)
+						.text( this._printValue(externalGeometry) )
+						.appendTo($externalValueDiv);
+					
+					var currentId = $n2.getUniqueId();
+					var $currentValueDiv = $('<div>')
+						.appendTo($collision);
+					$('<input>')
+						.attr('type','radio')
+						.attr('id',currentId)
+						.attr('name',collisionName)
+						.attr('value','current')
+						.click(collisionRadioButtonClickFn)
+						.appendTo($currentValueDiv);
+					$('<label>')
+						.attr('for',currentId)
+						.text( this._printValue(targetValue) )
+						.appendTo($currentValueDiv);
+				};
+			};
+
+		} else if( change.isDeletion ) {
+			// Report deletions
+			var importId = change.importId;
+			var doc = analysis.getDbDoc(importId);
+			var $div = $('<div>')
+				.attr('id',change.changeId)
+				.addClass('delete operation')
+				.appendTo($changes);
+			if( change.isAuto() ){
+				$div.addClass('autoOperation');
+			};
+			
+			$('<button>')
+				.addClass('discard')
+				.text( _loc('Discard') )
+				.appendTo($div)
+				.click(discardClickFn);
+			$('<button>')
+				.addClass('proceed')
+				.text( _loc('Delete Database Document') )
+				.appendTo($div)
+				.click(proceedClickFn);
+
+			var explanation = _loc('Delete existing document');
+			if( change.isAuto() ){
+				explanation += ' ' +_loc('AUTO');
+			};
+			$('<div>')
+				.addClass('explanation')
+				.text( explanation )
+				.appendTo($div);
+			$('<div>')
+				.addClass('geoJsonId')
+				.text( 'Import ID: '+importId )
+				.appendTo($div);
+			$('<div>')
+				.addClass('docId')
+				.text( 'Database ID: '+doc._id )
+				.appendTo($div);
+			var $properties = $('<div>')
+				.addClass('properties')
+				.appendTo($div);
+			if( doc 
+			 && doc.nunaliit_import 
+			 && doc.nunaliit_import.data ){
+				for(var propName in doc.nunaliit_import.data){
+					var propValue = doc.nunaliit_import.data[propName];
 					var $prop = $('<div>')
 						.addClass('property')
 						.appendTo($properties);
@@ -960,224 +1464,8 @@ var AnalysisReport = $n2.Class({
 						.appendTo($prop);
 					$('<div>')
 						.addClass('previousValue')
-						.text( this._printValue(mod.lastImportValue) )
+						.text(propValue)
 						.appendTo($prop);
-					$('<div>')
-						.addClass('newValue')
-						.text( this._printValue(mod.externalValue) )
-						.appendTo($prop);
-					
-					// Report collisions
-					if( mod.collisions && mod.collisions.length > 0 ){
-						for(var colIndex=0,colEnd=mod.collisions.length; colIndex<colEnd; ++colIndex){
-							// collision is a copyOperation
-							var collision = mod.collisions[colIndex];
-							
-							var $prop = $('<div>')
-								.addClass('property')
-								.appendTo($properties);
-							$('<div>')
-								.addClass('propertyName')
-								.text( _loc('Collision on property {property}',{
-									property:propName
-								}) )
-								.appendTo($prop);
-							$('<div>')
-								.addClass('targetSelector')
-								.text(collision.targetSelector.getSelectorString())
-								.appendTo($prop);
-							var targetValue = collision.targetValue;
-							$('<div>')
-								.addClass('targetValue')
-								.text( this._printValue(targetValue) )
-								.appendTo($prop);
-							
-							var $collision = $('<div>')
-								.addClass('collision')
-								.appendTo($properties);
-							
-							var collisionName = propName + '_' + colIndex;
-							
-							var externalId = $n2.getUniqueId();
-							var $externalValueDiv = $('<div>')
-								.appendTo($collision);
-							$('<input>')
-								.attr('type','radio')
-								.attr('id',externalId)
-								.attr('name',collisionName)
-								.attr('value','external')
-								.click(radioButtonClickFn)
-								.appendTo($externalValueDiv);
-							$('<label>')
-								.attr('for',externalId)
-								.text( this._printValue(mod.externalValue) )
-								.appendTo($externalValueDiv);
-							
-							var currentId = $n2.getUniqueId();
-							var $currentValueDiv = $('<div>')
-								.appendTo($collision);
-							$('<input>')
-								.attr('type','radio')
-								.attr('id',currentId)
-								.attr('name',collisionName)
-								.attr('value','current')
-								.click(radioButtonClickFn)
-								.appendTo($currentValueDiv);
-							$('<label>')
-								.attr('for',currentId)
-								.text( this._printValue(targetValue) )
-								.appendTo($currentValueDiv);
-						};
-					};
-				};
-
-				if( change.modifiedGeometry ){
-					var lastImportGeometry = undefined;
-					var externalGeometry = importEntry.getGeometry();
-					if( doc.nunaliit_import 
-					 && doc.nunaliit_import.geometry ){
-						lastImportGeometry = doc.nunaliit_import.geometry.wkt;
-					};
-					
-					var $prop = $('<div>')
-						.addClass('property')
-						.appendTo($properties);
-					$('<div>')
-						.addClass('propertyName')
-						.text( _loc('Geometry') )
-						.appendTo($prop);
-					$('<div>')
-						.addClass('previousValue')
-						.text( this._printValue(lastImportGeometry) )
-						.appendTo($prop);
-					$('<div>')
-						.addClass('newValue')
-						.text( this._printValue(externalGeometry) )
-						.appendTo($prop);
-
-					if( change.collisionGeometry ){
-						var $prop = $('<div>')
-							.addClass('property')
-							.appendTo($properties);
-						$('<div>')
-							.addClass('propertyName')
-							.text( _loc('Collision on Geometry') )
-							.appendTo($prop);
-						$('<div>')
-							.addClass('targetSelector')
-							.text('nunaliit_geom.wkt')
-							.appendTo($prop);
-						var targetValue = undefined;
-						if( doc.nunaliit_geom ){
-							targetValue = doc.nunaliit_geom.wkt;
-						};
-						$('<div>')
-							.addClass('targetValue')
-							.text( this._printValue(targetValue) )
-							.appendTo($prop);
-
-						// Select value to resolve collision
-						var $collision = $('<div>')
-							.addClass('collision')
-							.appendTo($properties);
-						
-						var collisionName = '__geometry__';
-						
-						var externalId = $n2.getUniqueId();
-						var $externalValueDiv = $('<div>')
-							.appendTo($collision);
-						$('<input>')
-							.attr('type','radio')
-							.attr('id',externalId)
-							.attr('name',collisionName)
-							.attr('value','external')
-							.click(radioButtonClickFn)
-							.appendTo($externalValueDiv);
-						$('<label>')
-							.attr('for',externalId)
-							.text( this._printValue(externalGeometry) )
-							.appendTo($externalValueDiv);
-						
-						var currentId = $n2.getUniqueId();
-						var $currentValueDiv = $('<div>')
-							.appendTo($collision);
-						$('<input>')
-							.attr('type','radio')
-							.attr('id',currentId)
-							.attr('name',collisionName)
-							.attr('value','current')
-							.click(radioButtonClickFn)
-							.appendTo($currentValueDiv);
-						$('<label>')
-							.attr('for',currentId)
-							.text( this._printValue(targetValue) )
-							.appendTo($currentValueDiv);
-					};
-				};
-			};
-		};
-		
-		// Report deletions
-		for(var i=0,e=changes.length; i<e; ++i){
-			var change = changes[i];
-			if( change.isDeletion ) {
-				var importId = change.importId;
-				var doc = analysis.getDbDoc(importId);
-				var $div = $('<div>')
-					.attr('id',change.changeId)
-					.addClass('delete operation')
-					.appendTo($changes);
-				if( change.auto ){
-					$div.addClass('autoOperation');
-				};
-				
-				$('<button>')
-					.addClass('discard')
-					.text( _loc('Discard') )
-					.appendTo($div)
-					.click(discardClickFn);
-				$('<button>')
-					.addClass('proceed')
-					.text( _loc('Delete Database Document') )
-					.appendTo($div)
-					.click(proceedClickFn);
-
-				var explanation = _loc('Delete existing document');
-				if( change.auto ){
-					explanation += ' ' +_loc('AUTO');
-				};
-				$('<div>')
-					.addClass('explanation')
-					.text( explanation )
-					.appendTo($div);
-				$('<div>')
-					.addClass('geoJsonId')
-					.text( 'Import ID: '+importId )
-					.appendTo($div);
-				$('<div>')
-					.addClass('docId')
-					.text( 'Database ID: '+doc._id )
-					.appendTo($div);
-				var $properties = $('<div>')
-					.addClass('properties')
-					.appendTo($div);
-				if( doc 
-				 && doc.nunaliit_import 
-				 && doc.nunaliit_import.data ){
-					for(var propName in doc.nunaliit_import.data){
-						var propValue = doc.nunaliit_import.data[propName];
-						var $prop = $('<div>')
-							.addClass('property')
-							.appendTo($properties);
-						$('<div>')
-							.addClass('propertyName')
-							.text(propName)
-							.appendTo($prop);
-						$('<div>')
-							.addClass('previousValue')
-							.text(propValue)
-							.appendTo($prop);
-					};
 				};
 			};
 		};
@@ -1345,51 +1633,27 @@ var AnalysisReport = $n2.Class({
 		this._completed(elemId);
 	},
 	
-	_radioButtonClicked: function(){
+	_collisionSelectionClicked: function($btn){
 		var analysis = this.analysis;
 		var changes = analysis.getChanges();
+		var collisionId = $btn.attr('name');
+		var changeId = $btn.attr('data-changeId');
 		
-		for(var i=0,e=changes.length; i<e; ++i){
-			var change = changes[i];
-			var changeId = change.changeId;
-
-			if( change.isModification ) {
-				var allCollisionsResolved = true;
-				
-				for(var j=0,k=change.modifiedProperties.length; j<k; ++j){
-					var mod = change.modifiedProperties[j];
-					var propName = mod.property;
-					if( mod.collisions && mod.collisions.length > 0 ){
-						for(var colIndex=0,colEnd=mod.collisions.length; colIndex<colEnd; ++colIndex){
-							var collision = mod.collisions[colIndex];
-							var collisionName = propName + '_' + colIndex;
-							var value = $('input[name="'+collisionName+'"]:checked').val();
-							collision.selectedValue = value;
-							if( typeof value !== 'string' ){
-								allCollisionsResolved = false;
-							};
-						};
-					};
-				};
-				
-				if( change.modifiedGeometry && change.collisionGeometry ){
-					var collisionName = '__geometry__';
-					var value = $('input[name="'+collisionName+'"]:checked').val();
-					change.selectedGeometry = value;
-					if( typeof value !== 'string' ){
-						allCollisionsResolved = false;
-					};
-				};
-				
-				var proceedBtnId = changeId + '_proceed';
-				if( allCollisionsResolved ) {
-					$('#'+proceedBtnId).removeAttr('disabled');
-
-				} else {
-					$('#'+proceedBtnId).attr('disabled','disabled');
-				};
-			};
+		var change = analysis.getChange(changeId);
+		var collision = change.getCollisionFromId(collisionId);
+		
+		var value = $btn.val();
+		if( 'current' === value ){
+			collision.setKeepCurrentValue();
+		} else if( 'updateValue' === value ) {
+			collision.setUpdateValue();
+		} else {
+			throw Error('Unexpected value: '+value);
 		};
+		
+		// Refresh display
+		var $div = $('#'+change.getId());
+		this._refreshChangeDiv(change, $div);
 	},
 
 	_completed: function(elemId){
@@ -1634,11 +1898,10 @@ var AnalysisReport = $n2.Class({
 			};
 			
 			// Remember operations to be performed
-			if( mod.copyOperations && mod.copyOperations.length > 0 ){
-				for(var copyIndex=0,copyIndexEnd=mod.copyOperations.length; copyIndex<copyIndexEnd; ++copyIndex){
-					var copy = mod.copyOperations[copyIndex];
+			if( mod.copyOperations ){
+				mod.copyOperations.forEach(function(copy){
 					copyOperations.push(copy);
-				};
+				});
 			};
 		};
 		
