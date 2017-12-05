@@ -1460,9 +1460,11 @@ var MapAndControls = $n2.Class({
 		// Show Spatial Reference System display projection code in the map attribution
 		if( this.options.addSRSAttribution ) {
 			var srsCode = this.map.displayProjection.projCode;
+			var projDef = this.map.displayProjection.proj.defData.replace(/ /g, ",");
+
 			// Create a new hidden OpenLayers.Layer object with SRS attribution
 			var srsAttribution = new OpenLayers.Layer("SRS",{
-				attribution:"SRS: " + srsCode,
+				attribution:'SRS: <span title='+ projDef +'>' + srsCode +'</span>',
 				visibility: true,
 				displayInLayerSwitcher: false
 			});
@@ -1615,15 +1617,24 @@ var MapAndControls = $n2.Class({
 		this.map.addLayers(this.mapLayers);
 
 		// Install mouse position widget
+		var precisionLevel = 5;
 		var mousePositionProjection = this.options.mapCoordinateSpecifications.useForMapControls ? 
 				userCoordProjection : mapProjection;
+
 		if( this.options.mapCoordinateSpecifications.mousePositionSrsName ){
 			mousePositionProjection = new OpenLayers.Projection(
 				this.options.mapCoordinateSpecifications.mousePositionSrsName
 			);
 		};
+
+		// Reduce level of precision for mouse position to 0 decimal places if the units are in metres
+		if( mousePositionProjection.proj.units === 'm'){
+			precisionLevel = 0;
+		};
+
 		this.map.addControl(new OpenLayers.Control.MousePosition({
-			displayProjection: mousePositionProjection
+			displayProjection: mousePositionProjection,
+			numDigits: precisionLevel
 		}));
 		
 		// Layer switcher control
