@@ -146,6 +146,28 @@ function createOperation(opts_){
 };
 
 //=========================================================================
+// Copy operation
+/*
+{
+  	// Array of strings: names of properties involved in copy
+	propertyNames: [],
+	
+	// Value that would replace current one
+	computedValue: importValue,
+	
+	// Selector for place where in document value would be installed
+	targetSelector: targetSelector,
+	
+	// Current value found in document
+	targetValue: targetValue,
+	
+	// Boolean. True if current value and computed value are different
+	isInconsistent: isInconsistent
+}
+ */
+
+
+//=========================================================================
 // Instances of this class are used by the class Change to track which
 // copy operations require resolution before updating the document. It also
 // keeps the result of the resolution
@@ -425,22 +447,44 @@ var Change = $n2.Class({
 		this.collisionOperationsById[collision.getCollisionId()] = collision;
 	},
 	
+	getEffectiveCopyOperations: function(){
+		var _this = this;
+
+		var ops = [];
+		
+		this.copyOperations.forEach(function(op){
+			var propNames = op.propertyNames;
+			if( _this.hasAnyValueChangedSinceLastImport(propNames) ){
+				ops.push(op);
+			};
+		});
+
+		for(var collisionId in this.collisionOperationsById){
+			var collision = this.collisionOperationsById[collisionId];
+			if( collision.shouldPerformCopyOperation() ){
+				ops.push( collision.getCopyOperation() );
+			};
+		};
+		
+		return ops;
+	},
+	
 	getCollisionOperations: function(){
 		var collisions = [];
-		for(var collisionId in this.collisionOperations){
-			var collision = this.collisionOperations[collisionId];
+		for(var collisionId in this.collisionOperationsById){
+			var collision = this.collisionOperationsById[collisionId];
 			collisions.push(collision);
 		};
 		return collisions;
 	},
 	
 	getCollisionFromId: function(collisionId){
-		return this.collisionOperations[collisionId];
+		return this.collisionOperationsById[collisionId];
 	},
 	
 	isResolved: function(){
-		for(var i=0,e=this.collisionOperations.length; i<e; ++i){
-			var collision = this.collisionOperations[i];
+		for(var collisionId in this.collisionOperationsById){
+			var collision = this.collisionOperationsById[collisionId];
 			if( !collision.isResolved() ){
 				return false;
 			};
@@ -1276,13 +1320,8 @@ var AnalysisReport = $n2.Class({
 							selector: copyOperation.targetSelector.getSelectorString()
 						}) )
 						.appendTo($collision);
-					var targetValue = copyOperation.targetValue;
-					$('<div>')
-						.addClass('targetValue')
-						.text( _this._printValue(targetValue) )
-						.appendTo($collision);
 
-					var collisionId = collisionOperation.getId();
+					var collisionId = collisionOperation.getCollisionId();
 					
 					var updatedId = $n2.getUniqueId();
 					var $updatedValueDiv = $('<div>')
@@ -1297,7 +1336,7 @@ var AnalysisReport = $n2.Class({
 						.appendTo($updatedValueDiv);
 					$('<label>')
 						.attr('for',updatedId)
-						.text( this._printValue(mod.externalValue) )
+						.text( _this._printValue(copyOperation.computedValue) )
 						.appendTo($updatedValueDiv);
 					if( collisionOperation.isUpdateValue() ){
 						$updateBtn.prop("checked", true);
@@ -1316,7 +1355,7 @@ var AnalysisReport = $n2.Class({
 						.appendTo($currentValueDiv);
 					$('<label>')
 						.attr('for',currentId)
-						.text( this._printValue(targetValue) )
+						.text( _this._printValue(copyOperation.targetValue) )
 						.appendTo($currentValueDiv);
 					if( collisionOperation.isKeepCurrentValue() ){
 						$currentBtn.prop("checked", true);
@@ -1881,28 +1920,12 @@ var AnalysisReport = $n2.Class({
 			};
 			
 			// Check that all collisions are resolved
-			var allCollisionsResolved = true;
-			if( mod.collisions && mod.collisions.length > 0 ){
-				for(var colIndex=0,colEnd=mod.collisions.length; colIndex<colEnd; ++colIndex){
-					var collision = mod.collisions[colIndex];
-					if( !collision.selectedValue ){
-						allCollisionsResolved = false;
-					} else if( 'external' === collision.selectedValue ) {
-						copyOperations.push(collision);
-					};
-				};
-			};
-			
-			if( !allCollisionsResolved ){
+			if( !change.isResolved() ){
 				throw 'Invalid state for change since some collision is not resolved';
 			};
 			
 			// Remember operations to be performed
-			if( mod.copyOperations ){
-				mod.copyOperations.forEach(function(copy){
-					copyOperations.push(copy);
-				});
-			};
+			copyOperations = change.getEffectiveCopyOperations();
 		};
 		
 		// Copy data to user's location according to operations
