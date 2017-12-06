@@ -585,25 +585,29 @@ var global = {
 parser.global = global;
 
 // -----------------------------------------------------------
-var OpAssignment = function(leftop, value){
+var OpAssignment = function(leftop, rightop){
 	this.leftop = leftop;
-	this.value = value;
+	this.rightop = rightop;
 };
 OpAssignment.prototype.configure = function(opts){
 	if( this.identifier 
 	 && typeof this.identifier.configure === 'function' ){
 	 	this.identifier.configure(opts);
 	};
-	if( this.value 
-	 && typeof this.value.configure === 'function' ){
-	 	this.value.configure(opts);
+	if( this.rightop 
+	 && typeof this.rightop.configure === 'function' ){
+	 	this.rightop.configure(opts);
 	};
 };
 OpAssignment.prototype.reportCopyOperations = function(opts){
 	var _this = this;
+	
+	var importData = opts.importEntry.getProperties();
+	var lastImportData = opts.lastImportEntry.getProperties();
 
 	var propertyNameMap = {};
 	var updatedValue = undefined;
+	var lastValue = undefined;
 	var targetValue = undefined;
 	var targetSelector = undefined;
 
@@ -611,11 +615,11 @@ OpAssignment.prototype.reportCopyOperations = function(opts){
 	var ctxt = {
 		variables:{
 			doc: opts.doc,
-			'import': opts.importData
+			'import': importData
 		},
 		propertyNameMap: propertyNameMap
 	};
-	this.value.getValue(ctxt, receiveUpdatedValue, processError);
+	this.rightop.getValue(ctxt, receiveUpdatedValue, processError);
 
 	function processError(err){
 		// On error, do not add any copy operations
@@ -626,14 +630,29 @@ OpAssignment.prototype.reportCopyOperations = function(opts){
 		// save
 		updatedValue = v;
 
-		// get current value
+		// recompute last imported value
 		var ctxt2 = {
 			variables:{
 				doc: opts.doc,
-				'import': opts.importData
+				'import': lastImportData // based on last import
 			}
 		};
-		_this.leftop.getValue(ctxt2, receiveTargetValue, processError);
+		_this.rightop.getValue(ctxt2, receiveLastValue, processError);
+	};
+
+	function receiveLastValue(v){
+		// save
+		lastValue = v;
+
+		// get current target value
+		var ctxt3 = {
+			variables:{
+				doc: opts.doc
+				// do not include import data, as it should not
+				// influence getting the current value
+			}
+		};
+		_this.leftop.getValue(ctxt3, receiveTargetValue, processError);
 	};
 
 	function receiveTargetValue(v){
@@ -641,22 +660,28 @@ OpAssignment.prototype.reportCopyOperations = function(opts){
 		targetValue = v;
 
 		// get target selector
-		var ctxt2 = {
+		var ctxt3 = {
 			variables:{
-				doc: opts.doc,
-				'import': opts.importData
+				doc: opts.doc
+				// do not include import data, as it should not
+				// influence getting the target selector
 			}
 		};
-		_this.leftop.getObjectSelector(ctxt2, receiveTargetSelector, processError);
+		_this.leftop.getObjectSelector(ctxt3, receiveTargetSelector, processError);
 	};
 
 	function receiveTargetSelector(v){
 		// save
 		targetSelector = v;
 
-		var isInconsistent = false;
-		if( 0 !== compare(targetValue, updatedValue) ){
-			isInconsistent = true;
+		var isEqual = false;
+		if( 0 === compare(targetValue, updatedValue) ){
+			isEqual = true;
+		};
+
+		var changedSinceLastImport = true;
+		if( 0 === compare(targetValue, lastValue) ){
+			changedSinceLastImport = false;
 		};
 	
 		var inputPropertyNames = [];
@@ -664,15 +689,16 @@ OpAssignment.prototype.reportCopyOperations = function(opts){
 			inputPropertyNames.push(propertyName);
 		};
 	
-		var op = {
+		var copyOperation = {
 			propertyNames: inputPropertyNames
 			,computedValue: updatedValue
 			,targetSelector: targetSelector
 			,targetValue: targetValue
-			,isInconsistent: isInconsistent
+			,isEqual: isEqual
+			,changedSinceLastImport: changedSinceLastImport
 		};	
 	
-		opts.onSuccess([op]);
+		opts.onSuccess([copyOperation]);
 	};
 };
 OpAssignment.prototype.performCopyOperation = function(opts_){
