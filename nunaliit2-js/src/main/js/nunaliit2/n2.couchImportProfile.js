@@ -404,7 +404,15 @@ var Change = $n2.Class({
 			return false;
 		};
 		
-		return false;
+		if( this.collisionGeometry ){
+			return false;
+		};
+		
+		for(var collisionId in this.collisionOperationsById){
+			return false;
+		};
+		
+		return true;
 	},
 	
 	addModifiedImportValue: function(modifiedImportValue){
@@ -739,7 +747,6 @@ var ImportAnalyzer = $n2.Class({
 				} else {
 					var change = new Change({
 						isDeletion: true
-						,auto: false
 						,importId: id
 					});
 					
@@ -792,7 +799,6 @@ var ImportAnalyzer = $n2.Class({
 				
 				var change = new Change({
 					isAddition: true
-					,auto: true
 					,importId: id
 				});
 
@@ -907,7 +913,6 @@ var ImportAnalyzer = $n2.Class({
 				if( !change ) change = new Change({
 					importId:importId
 					,isModification: true
-					,auto: true
 				});
 
 				var mod = {
