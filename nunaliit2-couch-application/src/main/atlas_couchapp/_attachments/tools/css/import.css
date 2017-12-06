@@ -122,6 +122,11 @@
 	height: 0;
 }
 
+.addition .property .previousValue,
+.addition .copyOperation .currentValue {
+	display: none;
+}
+
 .log {
 	color: #0000ff;
 }

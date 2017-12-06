@@ -817,8 +817,11 @@ var ImportAnalyzer = $n2.Class({
 					,importId: id
 				});
 
+				var allPropertyNames = [];
 				var props = entry.getProperties();
 				for(var propName in props){
+					allPropertyNames.push(propName);
+					
 					var externalValue = props[propName];
 
 					var modImportValue = new ModifiedImportValue({
@@ -828,14 +831,30 @@ var ImportAnalyzer = $n2.Class({
 					});
 					change.addModifiedImportValue(modImportValue);
 				};
-				
-				analysis.addChange({
-					change: change
+
+				// Use null last import entry for creating document
+				var lastImportEntry = new ImportEntryFromDoc({doc:undefined});
+
+				_this.profile.reportCopyOperations({
+					doc: opts.doc
 					,importEntry: entry
+					,lastImportEntry: lastImportEntry
+					,allPropertyNames: allPropertyNames
+					,onSuccess: function(copyOperations){
+						copyOperations.forEach(function(copyOperation){
+							change.addCopyOperation(copyOperation);
+						});
+						
+						analysis.addChange({
+							change: change
+							,importEntry: entry
+						});
+						
+						// Next entry
+						window.setTimeout(processEntries,0); // Do not blow stack on large files
+					}
 				});
 				
-				// Next entry
-				window.setTimeout(processEntries,0); // Do not blow stack on large files
 			};
 		};
 	},
@@ -1181,78 +1200,8 @@ var AnalysisReport = $n2.Class({
 
 		$div.empty();
 		
-		// Report new
-		if( change.isAddition ) {
-			var importId = change.importId;
-			var importEntry = analysis.getImportEntry(importId);
-			var importProperties = importEntry.getProperties();
-			$div.addClass('addition');
-			
-			if( change.isAuto() ){
-				$div.addClass('autoOperation');
-			};
-			
-			$('<button>')
-				.addClass('discard')
-				.text( _loc('Discard') )
-				.appendTo($div)
-				.click(discardClickFn);
-			$('<button>')
-				.addClass('proceed')
-				.text( _loc('Create new document') )
-				.appendTo($div)
-				.click(proceedClickFn);
-
-			var explanation = _loc('Create new document');
-			if( change.isAuto() ){
-				explanation += ' ' +_loc('AUTO');
-			};
-			$('<div>')
-				.addClass('explanation')
-				.text( explanation )
-				.appendTo($div);
-			$('<div>')
-				.addClass('geoJsonId')
-				.text( 'Import ID: '+importId )
-				.appendTo($div);
-			var $properties = $('<div>')
-				.addClass('properties')
-				.appendTo($div);
-			if( importEntry ){
-				for(var propName in importProperties){
-					var propValue = importProperties[propName];
-					var propValueStr = this._printValue(propValue);
-					var $prop = $('<div>')
-						.addClass('property')
-						.appendTo($properties);
-					$('<div>')
-						.addClass('propertyName')
-						.text(propName)
-						.appendTo($prop);
-					$('<div>')
-						.addClass('newValue')
-						.text(propValueStr)
-						.appendTo($prop);
-				};
-			};
-			
-			// Geometry
-			var externalGeom = importEntry.getGeometry();
-			if( externalGeom ){
-				var $prop = $('<div>')
-					.addClass('property')
-					.appendTo($properties);
-				$('<div>')
-					.addClass('propertyName')
-					.text( _loc('Geometry') )
-					.appendTo($prop);
-				$('<div>')
-					.addClass('newValue')
-					.text( this._printValue(externalGeom) )
-					.appendTo($prop);
-			};
-
-		} else if( change.isModification ) {
+		if( change.isModification 
+		 || change.isAddition ) {
 			// Report modifications
 			var importId = change.importId;
 			var doc = analysis.getDbDoc(importId);
@@ -1270,8 +1219,12 @@ var AnalysisReport = $n2.Class({
 
 			// Go through all the properties that need to be modified
 			var modifiedPropertyNames = change.getModifiedImportValueNames();
-			
-			$div.addClass('modify');
+
+			if( change.isModification ){
+				$div.addClass('modify');
+			} else if( change.isAddition ){
+				$div.addClass('addition');
+			};
 
 			if( collisionDetected ){
 				$div.addClass('collision');
@@ -1293,12 +1246,18 @@ var AnalysisReport = $n2.Class({
 				.text( _loc('Modify Document') )
 				.appendTo($div)
 				.click(proceedClickFn);
+			if( change.isAddition ){
+				$proceedButton.text( _loc('Create new document') );
+			};
 			if( !change.isResolved() ) {
 				$proceedButton.attr('disabled','disabled');
 			};
 			
 			// Explanation
 			var explanation = _loc('Modify existing document');
+			if( change.isAddition ){
+				explanation = _loc('Create new document');
+			};
 			if( change.isAuto() ){
 				explanation += ' ' +_loc('AUTO');
 			};
@@ -1313,10 +1272,12 @@ var AnalysisReport = $n2.Class({
 				.addClass('geoJsonId')
 				.text( 'Import ID: '+importId )
 				.appendTo($div);
-			$('<div>')
-				.addClass('docId')
-				.text( 'Database ID: '+doc._id )
-				.appendTo($div);
+			if( doc && doc._id ){
+				$('<div>')
+					.addClass('docId')
+					.text( 'Database ID: '+doc._id )
+					.appendTo($div);
+			};
 			var $properties = $('<div>')
 				.addClass('properties')
 				.appendTo($div);
@@ -1857,40 +1818,31 @@ var AnalysisReport = $n2.Class({
 			propNames.push(propName);
 		};
 		
-		// Copy data to user's location
-		importProfile.reportCopyOperations({
-			doc: doc
-			,importEntry: importEntry
-			,lastImportEntry: lastImportEntry
-			,allPropertyNames: propNames
-			,onSuccess: onCopyOperations
-		});
-		
-		function onCopyOperations(copyOperations){
-			importProfile.performCopyOperations(doc, copyOperations);
+		// Perform copy operations
+		var copyOperations = change.getEffectiveCopyOperations();
+		importProfile.performCopyOperations(doc, copyOperations);
 			
-			// Adjust document with created, last updated
-			if( $n2.couchMap
-			 && $n2.couchMap.adjustDocument ) {
-				$n2.couchMap.adjustDocument(doc);
-			};
-			
-			// Save
-			var atlasDb = importProfile.getAtlasDb();
-			atlasDb.createDocument({
-				data: doc
-				,onSuccess: function(docInfo){
-					_this._log( _loc('Created document with id: {id}',{id:docInfo.id}) );
-					_this._completed(change.changeId);
-					opts.onSuccess();
-				}
-				,onError: function(errorMsg){ 
-					//reportError(errorMsg);
-					alert( _loc('Unable to create document. Are you logged in?') );
-					opts.onError(errorMsg);
-				}
-			});
+		// Adjust document with created, last updated
+		if( $n2.couchMap
+		 && $n2.couchMap.adjustDocument ) {
+			$n2.couchMap.adjustDocument(doc);
 		};
+		
+		// Save
+		var atlasDb = importProfile.getAtlasDb();
+		atlasDb.createDocument({
+			data: doc
+			,onSuccess: function(docInfo){
+				_this._log( _loc('Created document with id: {id}',{id:docInfo.id}) );
+				_this._completed(change.changeId);
+				opts.onSuccess();
+			}
+			,onError: function(errorMsg){ 
+				//reportError(errorMsg);
+				alert( _loc('Unable to create document. Are you logged in?') );
+				opts.onError(errorMsg);
+			}
+		});
 	},
 	
 	_modifyDocument: function(opts_){
@@ -1977,7 +1929,6 @@ var AnalysisReport = $n2.Class({
 		};
 		
 		// Copy only properties that have changed
-		var copyOperations = [];
 		for(var i=0,e=change.modifiedProperties.length; i<e; ++i){
 			var mod = change.modifiedProperties[i];
 			var propName = mod.property;
@@ -1991,17 +1942,16 @@ var AnalysisReport = $n2.Class({
 			} else {
 				doc.nunaliit_import.data[propName] = propValue;
 			};
-			
-			// Check that all collisions are resolved
-			if( !change.isResolved() ){
-				throw 'Invalid state for change since some collision is not resolved';
-			};
-			
-			// Remember operations to be performed
-			copyOperations = change.getEffectiveCopyOperations();
 		};
 		
-		// Copy data to user's location according to operations
+		
+		// Check that all collisions are resolved
+		if( !change.isResolved() ){
+			throw 'Invalid state for change since some collision is not resolved';
+		};
+
+		// Perform copy operations
+		var copyOperations = change.getEffectiveCopyOperations();
 		importProfile.performCopyOperations(doc, copyOperations);
 		
 		// Adjust document with created, last updated
