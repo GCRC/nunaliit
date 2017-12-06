@@ -91,6 +91,37 @@
 	padding-right: 5px;
 }
 
+.copyOperation .selector,
+.copyOperation .currentValue,
+.copyOperation .updatedValue {
+	float: left;
+}
+
+.copyOperation .selector {
+	font-weight: bold;
+}
+
+.copyOperation .currentValue,
+.copyOperation .updatedValue {
+	padding-left: 5px;
+}
+
+.copyOperation .updatedValue::before {
+	float: left;
+	content: " -> ";
+	font-weight: bold;
+	padding-right: 5px;
+}
+
+.copyOperation::after {
+	visibility: hidden;
+	display: block;
+	font-size: 0;
+	content: " ";
+	clear: both;
+	height: 0;
+}
+
 .log {
 	color: #0000ff;
 }

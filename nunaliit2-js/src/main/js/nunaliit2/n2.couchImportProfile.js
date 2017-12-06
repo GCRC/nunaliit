@@ -458,6 +458,21 @@ var Change = $n2.Class({
 		this.collisionOperationsById[collision.getCollisionId()] = collision;
 	},
 	
+	getCopyOperations: function(){
+		var _this = this;
+
+		var ops = [];
+		
+		this.copyOperations.forEach(function(op){
+			var propNames = op.propertyNames;
+			if( _this.hasAnyValueChangedSinceLastImport(propNames) ){
+				ops.push(op);
+			};
+		});
+		
+		return ops;
+	},
+	
 	getEffectiveCopyOperations: function(){
 		var _this = this;
 
@@ -1265,7 +1280,7 @@ var AnalysisReport = $n2.Class({
 				$div.addClass('autoOperation');
 			};
 			
-			
+			// Buttons
 			$('<button>')
 				.addClass('discard')
 				.text( _loc('Discard') )
@@ -1282,6 +1297,7 @@ var AnalysisReport = $n2.Class({
 				$proceedButton.attr('disabled','disabled');
 			};
 			
+			// Explanation
 			var explanation = _loc('Modify existing document');
 			if( change.isAuto() ){
 				explanation += ' ' +_loc('AUTO');
@@ -1305,6 +1321,7 @@ var AnalysisReport = $n2.Class({
 				.addClass('properties')
 				.appendTo($div);
 			
+			// Modified properties
 			for(var propNameIndex=0,propNameEnd=modifiedPropertyNames.length; propNameIndex<propNameEnd; ++propNameIndex){
 				var propName = modifiedPropertyNames[propNameIndex];
 				var mod = change.getModifiedImportValueFromName(propName);
@@ -1384,7 +1401,36 @@ var AnalysisReport = $n2.Class({
 					};
 				});
 			};
+			
+			// Report copy operations
+			var copyOperations = change.getCopyOperations();
+			if( copyOperations.length > 0 ){
+				var $copyOperations = $('<div>')
+					.addClass('copyOperations')
+					.appendTo($div);
+				copyOperations.forEach(function(copyOperation){
+					var $copy = $('<div>')
+						.addClass('copyOperation')
+						.appendTo($copyOperations);
 
+					$('<div>')
+						.addClass('selector')
+						.text( copyOperation.targetSelector.getSelectorString() )
+						.appendTo($copy);
+
+					$('<div>')
+						.addClass('currentValue')
+						.text( _this._printValue(copyOperation.targetValue) )
+						.appendTo($copy);
+
+					$('<div>')
+						.addClass('updatedValue')
+						.text( _this._printValue(copyOperation.computedValue) )
+						.appendTo($copy);
+				});
+			};
+
+			// Report modified geometry
 			if( change.modifiedGeometry ){
 				var lastImportGeometry = undefined;
 				var externalGeometry = importEntry.getGeometry();
