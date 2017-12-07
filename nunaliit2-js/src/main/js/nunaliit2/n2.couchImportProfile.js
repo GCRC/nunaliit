@@ -374,7 +374,8 @@ var Change = $n2.Class({
 			this.type = 'deletion';
 		};
 		
-		if( typeof this.importId !== 'string' ){
+		if( typeof this.importId !== 'string' 
+		 && typeof this.importId !== 'number' ){
 			throw new Error('importId must be set as a string');
 		};
 		
@@ -2161,7 +2162,7 @@ var ImportProfileOperationCopyAllAndFixNames = $n2.Class(ImportProfileOperation,
 		
 		var copyOperations = [];
 		
-		var importData = importEntry.getProperties();
+		var importData = opts.importEntry.getProperties();
 		var lastImportData = opts.lastImportEntry.getProperties();
 		
 		for(var i=0,e=opts.allPropertyNames.length; i<e; ++i){
@@ -2284,7 +2285,7 @@ var ImportProfileOperationAssign = $n2.Class(ImportProfileOperation, {
 		
 		var copyOperations = [];
 
-		var importData = importEntry.getProperties();
+		var importData = opts.importEntry.getProperties();
 		var lastImportData = opts.lastImportEntry.getProperties();
 
 		if( opts.allPropertyNames.indexOf(this.sourceName) >= 0 ){
@@ -2348,8 +2349,6 @@ var ImportProfileOperationLongLat = $n2.Class(ImportProfileOperation, {
 	
 	targetSelector: null,
 	
-	isLegacyLongLat: null,
-	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			operationString: null
@@ -2359,8 +2358,6 @@ var ImportProfileOperationLongLat = $n2.Class(ImportProfileOperation, {
 		
 		ImportProfileOperation.prototype.initialize.call(this);
 	
-		this.isLegacyLongLat = true;
-		
 		this.operationString = opts.operationString;
 		
 		var matcher = OPERATION_LONGLAT.exec(this.operationString);
@@ -2385,7 +2382,7 @@ var ImportProfileOperationLongLat = $n2.Class(ImportProfileOperation, {
 		
 		var copyOperations = [];
 
-		var importData = importEntry.getProperties();
+		var importData = opts.importEntry.getProperties();
 		var lastImportData = opts.lastImportEntry.getProperties();
 
 		if( opts.allPropertyNames.indexOf(this.longName) >= 0 
@@ -2531,7 +2528,7 @@ var ImportProfileOperationReference = $n2.Class(ImportProfileOperation, {
 		
 		var copyOperations = [];
 
-		var importData = importEntry.getProperties();
+		var importData = opts.importEntry.getProperties();
 		var lastImportData = opts.lastImportEntry.getProperties();
 
 		if( opts.allPropertyNames.indexOf(this.refKey) >= 0 ){
@@ -2655,7 +2652,7 @@ var ImportProfileOperationImportReference = $n2.Class(ImportProfileOperation, {
 		
 		var _this = this;
 
-		var importData = importEntry.getProperties();
+		var importData = opts.importEntry.getProperties();
 		var lastImportData = opts.lastImportEntry.getProperties();
 		
 		var computedRefId = undefined;
@@ -2943,7 +2940,7 @@ var ImportProfileOperationFindReference = $n2.Class(ImportProfileOperation, {
 		
 		var _this = this;
 
-		var importData = importEntry.getProperties();
+		var importData = opts.importEntry.getProperties();
 		var lastImportData = opts.lastImportEntry.getProperties();
 
 		var computedRefId = undefined;
@@ -3132,6 +3129,126 @@ var ImportProfileOperationParsed = $n2.Class('ImportProfileOperationParsed', Imp
 });
 
 //=========================================================================
+// This operation is used by the GeoJSON import profile for handling the
+// geometry
+var ImportProfileOperationGeoJSON = $n2.Class('ImportProfileOperationGeoJSON', ImportProfileOperation, {
+	
+	targetSelector: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+		},opts_);
+		
+		ImportProfileOperation.prototype.initialize.call(this);
+		
+		this.targetSelector = new $n2.objectSelector.ObjectSelector(['nunaliit_geom']);
+	},
+	
+	reportCopyOperations: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,importEntry: null
+			,lastImportEntry: null
+			,allPropertyNames: null
+			,onSuccess: function(copyOperations){}
+		},opts_);
+		
+		var _this = this;
+
+		var importWkt = opts.importEntry.getGeometry();
+		var lastImportWkt = opts.lastImportEntry.getGeometry();
+
+		var importValue = undefined;
+		if( importWkt ){
+			this._computeGeometry(importWkt);
+		};
+
+		var lastImportValue = undefined;
+		if( lastImportWkt ){
+			this._computeGeometry(lastImportWkt);
+		};
+		
+		var targetValue = this.targetSelector.getValue(opts.doc);
+		
+		var targetWkt = undefined;
+		if( typeof targetValue === 'object' 
+		 && 'geometry' === targetValue.nunaliit_type ){
+			targetWkt = targetValue.wkt;
+		};
+
+		var changedSinceLastImport = true;
+		if( lastImportWkt === targetWkt ){
+			changedSinceLastImport = false;
+		};
+
+		var isEqual = false;
+		if( importWkt === targetWkt ){
+			isEqual = true;
+		};
+
+		var copyOperations = [];
+		copyOperations.push({
+			propertyNames: ['__geometry__']
+			,computedValue: importValue
+			,targetSelector: this.targetSelector
+			,targetValue: targetValue
+			,isEqual: isEqual
+			,changedSinceLastImport: changedSinceLastImport
+		});
+		
+		opts.onSuccess(copyOperations);
+	},
+	
+	performCopyOperation: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,importData: null
+			,copyOperation: null
+		},opts_);
+		
+		var doc = opts.doc;
+		
+		var importValue = undefined;
+		if( opts.copyOperation 
+		 && opts.copyOperation.computedValue ){
+			importValue = opts.copyOperation.computedValue;
+		};
+
+		if( typeof importValue === 'undefined' ){
+			// Must delete
+			this.targetSelector.removeValue(doc);
+		} else {
+			this.targetSelector.setValue(doc, importValue, true);
+		};
+	},
+	
+	_computeGeometry: function(importWkt){
+
+		var nunaliit_geom = undefined;
+		
+		// Geometry
+		if( importWkt ){
+			nunaliit_geom = {
+				nunaliit_type: 'geometry'
+			};
+			nunaliit_geom.wkt = importWkt;
+
+			var olWkt = new OpenLayers.Format.WKT();
+			var vectorFeature = olWkt.read(importWkt);
+			var bounds = vectorFeature.geometry.getBounds();
+			nunaliit_geom.bbox = [ 
+				bounds.left
+				,bounds.bottom
+				,bounds.right
+				,bounds.top
+			];
+		};
+		
+		return nunaliit_geom;
+	}
+});
+
+//=========================================================================
 var ImportEntry = $n2.Class({
 	initialize: function(){
 		
@@ -3189,19 +3306,16 @@ var ImportProfile = $n2.Class({
 		this.unrelated = opts.unrelated;
 		this.layerName = opts.layerName;
 		this.schema = opts.schema;
-		this.operations = opts.operations;
 		this.atlasDb = opts.atlasDb;
 		this.atlasDesign = opts.atlasDesign;
-		
+
+		this.operations = [];
 		this.operationsById = {};
-		for(var i=0,e=this.operations.length; i<e; ++i){
-			var operation = this.operations[i];
-			var opId = operation._n2OpId;
-			if( !opId ){
-				opId = $n2.getUniqueId();
-				operation._n2OpId = opId;
+		if( $n2.isArray(opts.operations) ) {
+			for(var i=0,e=opts.operations.length; i<e; ++i){
+				var operation = opts.operations[i];
+				this._addOperation(operation);
 			};
-			this.operationsById[opId] = operation;
 		};
 		
 		this.sessionId = this.id + '_' +  (new Date()).toISOString();
@@ -3323,6 +3437,16 @@ var ImportProfile = $n2.Class({
 				});
 			};
 		});
+	},
+	
+	_addOperation: function(operation){
+		var opId = operation._n2OpId;
+		if( !opId ){
+			opId = $n2.getUniqueId();
+			operation._n2OpId = opId;
+		};
+		this.operations.push(operation);
+		this.operationsById[opId] = operation;
 	}
 });
 
@@ -3403,10 +3527,6 @@ var ImportEntryJson = $n2.Class(ImportEntry, {
 	},
 	
 	getGeometry: function(){
-		if( this.profile.legacyLongLat ){
-			return this.profile.legacyLongLat.getGeometry(this.data);
-		};
-		
 		return undefined;
 	}
 });
@@ -3418,13 +3538,10 @@ var ImportProfileJson = $n2.Class(ImportProfile, {
 
 	ignoreId: null,
 	
-	legacyLongLat: null,
-	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			idAttribute: undefined
 			,ignoreId: false
-			,legacyLongLat: undefined
 		},opts_);
 		
 		if( opts.ignoreId ){
@@ -3433,7 +3550,6 @@ var ImportProfileJson = $n2.Class(ImportProfile, {
 		
 		ImportProfile.prototype.initialize.call(this, opts_);
 
-		this.legacyLongLat = opts.legacyLongLat;
 		this.idAttribute = opts.idAttribute;
 		this.ignoreId = opts.ignoreId;
 		
@@ -3576,7 +3692,9 @@ var ImportProfileGeoJson = $n2.Class(ImportProfile, {
 		if( !this.olGeoJsonFormat || !this.olWktFormat ){
 			throw 'OpenLayers is required for ImportProfileGeoJson';
 		};
-
+		
+		var geoJsonGeometry = new ImportProfileOperationGeoJSON();
+		this._addOperation(geoJsonGeometry);
 	},
 	
 	getType: function(){
@@ -3682,13 +3800,10 @@ var ImportProfileCsv = $n2.Class(ImportProfile, {
 	
 	ignoreId: null,
 	
-	legacyLongLat: null,
-	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			idAttribute: undefined
 			,ignoreId: false
-			,legacyLongLat: undefined
 		},opts_);
 		
 		if( opts.ignoreId ){
@@ -3697,7 +3812,6 @@ var ImportProfileCsv = $n2.Class(ImportProfile, {
 		
 		ImportProfile.prototype.initialize.call(this, opts_);
 
-		this.legacyLongLat = opts.legacyLongLat;
 		this.idAttribute = opts.idAttribute;
 		this.ignoreId = opts.ignoreId;
 
@@ -3968,11 +4082,7 @@ var ImportProfileService = $n2.Class({
 						opts.onError( _loc('Error creating import profile. Unknown operation string: {string}',{string:opString}) );
 						return;
 					};
-					if( op.isLegacyLongLat ){
-						classOpts.legacyLongLat = op;
-					} else {
-						operations.push(op);
-					};
+					operations.push(op);
 				};
 			};
 			
