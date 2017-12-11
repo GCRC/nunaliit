@@ -1457,20 +1457,6 @@ var MapAndControls = $n2.Class({
 			,zoomMethod: null  // Zoom with features does not look good
 		});
 
-		// Show Spatial Reference System display projection code in the map attribution
-		if( this.options.addSRSAttribution ) {
-			var srsCode = mapProjection.projCode;
-			var projDef = mapProjection.proj.defData.replace(/ /g, ",");
-
-			// Create a new hidden OpenLayers.Layer object with SRS attribution
-			var srsAttribution = new OpenLayers.Layer("SRS",{
-				attribution:'SRS: <span title='+ projDef +'>' + srsCode +'</span>',
-				visibility: true,
-				displayInLayerSwitcher: false
-			});
-			this.map.addLayers([srsAttribution]);
-		};
-
 		// Create Scale line 
 		if( this.options.scaleLine && this.options.scaleLine.visible ){
 			// Default OpenLayers Scale Line Properties:
@@ -1528,6 +1514,12 @@ var MapAndControls = $n2.Class({
         	// var baseLayer = evt.layer;
         	var lastProjectionObj = evt.oldProjection;
         	var currentProjectionObj = _this.map.getProjectionObject();
+			
+			// If addSRSAttribution option is true 
+			// update the SRS layer attribution
+			if( _this.options.addSRSAttribution ) {
+				_this._updateSRSAttribution();
+			};
 
         	// Makes sense only when projection is changed
         	if( currentProjectionObj 
@@ -1789,7 +1781,32 @@ var MapAndControls = $n2.Class({
 			};
 		};
 	},
-	
+
+	_updateSRSAttribution: function(){
+		var _this = this;
+		var currentProjection = this.map.getProjectionObject();
+		var srsCode = currentProjection.projCode;
+		var projDef = currentProjection.proj.defData.replace(/ /g, ",");
+
+		// Create a new hidden OpenLayers.Layer object with SRS attribution
+		var srsAttribution = new OpenLayers.Layer("SRS",{
+			attribution:'SRS: <span title='+ projDef +'>' + srsCode +'</span>',
+			visibility: true,
+			displayInLayerSwitcher: false
+		});
+
+		// Remove old SRS attribution layers
+		var oldSRSLayer = this.map.getLayersByName("SRS");
+		if( oldSRSLayer.length > 0 ){
+			oldSRSLayer.forEach(function(srsLayer){
+				_this.map.removeLayer(srsLayer);
+			});
+		};
+
+		// Add SRS attribution layer
+		this.map.addLayers([srsAttribution]);
+	},
+
 	_getMapFeaturesIncludingFid: function(fid){
 		var fidMap = {};
 		fidMap[fid] = true;
