@@ -94,6 +94,8 @@ data, a document is created with the following structure:
 ;(function($,$n2) {
 "use strict";
 
+var GEOM_PROP_NAME = '__geometry__';
+
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
@@ -312,17 +314,6 @@ var Change = $n2.Class({
 		}
 	 */
 	modifiedProperties: null,
-
-	/**
-	 * Boolean. Set if the geometry was modified
-	 */
-	modifiedGeometry: null,
-
-	/**
-	 * Boolean. Set if the geometry was modified and a collision 
-	 * is detected
-	 */
-	collisionGeometry: null,
 	
 	modifiedImportValueByName: null,
 	
@@ -337,9 +328,7 @@ var Change = $n2.Class({
 			isModification: false,
 			isDeletion: false,
 			isAuto: undefined,
-			modifiedProperties: undefined,
-			modifiedGeometry: false,
-			collisionGeometry: false
+			modifiedProperties: undefined
 		},opts_);
 		
 		var _this = this;
@@ -355,8 +344,6 @@ var Change = $n2.Class({
 		this.isModification = opts.isModification;
 		this.isDeletion = opts.isDeletion;
 		this.auto = opts.isAuto;
-		this.modifiedGeometry = opts.modifiedGeometry;
-		this.collisionGeometry = opts.collisionGeometry;
 		
 		if( this.isAddition ){
 			this.type = 'addition';
@@ -402,10 +389,6 @@ var Change = $n2.Class({
 		if( this.isAddition ){
 			return true;
 		} else if( this.isDeletion ) {
-			return false;
-		};
-		
-		if( this.collisionGeometry ){
 			return false;
 		};
 		
@@ -832,6 +815,16 @@ var ImportAnalyzer = $n2.Class({
 					});
 					change.addModifiedImportValue(modImportValue);
 				};
+				
+				var geomWkt = entry.getGeometry();
+				if( geomWkt ){
+					var modImportValue = new ModifiedImportValue({
+						propertyName: GEOM_PROP_NAME,
+						lastImportedValue: undefined,
+						currentImportedValue: geomWkt
+					});
+					change.addModifiedImportValue(modImportValue);
+				};
 
 				// Use null last import entry for creating document
 				var lastImportEntry = new ImportEntryFromDoc({doc:undefined});
@@ -893,7 +886,7 @@ var ImportAnalyzer = $n2.Class({
 		var externalGeom = importEntry.getGeometry();
 		if( externalGeom ){
 			if( lastImportGeometry ){
-				if( externalGeom !== lastImportGeometry.wkt ){
+				if( externalGeom !== lastImportGeometry ){
 					// Geometry modified
 					isGeometryModified = true;
 				};
@@ -901,38 +894,22 @@ var ImportAnalyzer = $n2.Class({
 				// Geometry added
 				isGeometryModified = true;
 			};
-		} else if( lastImportGeometry 
-		 && lastImportGeometry.wkt ){
+		} else if( lastImportGeometry ){
 			// Deleted
 			isGeometryModified = true;
 		};
 		if( isGeometryModified ){
 			change = new Change({
 				importId:importId
-				,auto: true
 				,isModification: true
-				,modifiedGeometry: true
-				,collisionGeometry: false
 			});
-			
-			// Check if geometry was modified since last import
-			var lastImportGeometry = undefined;
-			var currentGeometry = undefined;
-			if( lastImportGeometry ){
-				lastImportGeometry = lastImportGeometry.wkt;
-			};
-			if( opts.doc.nunaliit_geom ){
-				currentGeometry = opts.doc.nunaliit_geom.wkt;
-			};
-			
-			if( lastImportGeometry !== currentGeometry ){
-				// Collision on geometry only if not equal to
-				// new external value
-				if( currentGeometry !== externalGeom ){
-					change.collisionGeometry = true;
-					change.auto = false;
-				};
-			};
+
+			var modImportValue = new ModifiedImportValue({
+				propertyName: GEOM_PROP_NAME,
+				lastImportedValue: lastImportGeometry,
+				currentImportedValue: externalGeom
+			});
+			change.addModifiedImportValue(modImportValue);
 		};
 		
 		// Look at values that have changed since the last import
@@ -1214,9 +1191,6 @@ var AnalysisReport = $n2.Class({
 			if( collisionOperations.length > 0 ){
 				collisionDetected = true;
 			};
-			if( change.modifiedGeometry && change.collisionGeometry ){
-				collisionDetected = true;
-			};
 
 			// Go through all the properties that need to be modified
 			var modifiedPropertyNames = change.getModifiedImportValueNames();
@@ -1392,91 +1366,6 @@ var AnalysisReport = $n2.Class({
 				});
 			};
 
-			// Report modified geometry
-			if( change.modifiedGeometry ){
-				var lastImportGeometry = undefined;
-				var externalGeometry = importEntry.getGeometry();
-				if( doc.nunaliit_import 
-				 && doc.nunaliit_import.geometry ){
-					lastImportGeometry = doc.nunaliit_import.geometry.wkt;
-				};
-				
-				var $prop = $('<div>')
-					.addClass('property')
-					.appendTo($properties);
-				$('<div>')
-					.addClass('propertyName')
-					.text( _loc('Geometry') )
-					.appendTo($prop);
-				$('<div>')
-					.addClass('previousValue')
-					.text( this._printValue(lastImportGeometry) )
-					.appendTo($prop);
-				$('<div>')
-					.addClass('newValue')
-					.text( this._printValue(externalGeometry) )
-					.appendTo($prop);
-
-				if( change.collisionGeometry ){
-					var $prop = $('<div>')
-						.addClass('property')
-						.appendTo($properties);
-					$('<div>')
-						.addClass('propertyName')
-						.text( _loc('Collision on Geometry') )
-						.appendTo($prop);
-					$('<div>')
-						.addClass('targetSelector')
-						.text('nunaliit_geom.wkt')
-						.appendTo($prop);
-					var targetValue = undefined;
-					if( doc.nunaliit_geom ){
-						targetValue = doc.nunaliit_geom.wkt;
-					};
-					$('<div>')
-						.addClass('targetValue')
-						.text( this._printValue(targetValue) )
-						.appendTo($prop);
-
-					// Select value to resolve collision
-					var $collision = $('<div>')
-						.addClass('collision')
-						.appendTo($properties);
-					
-					var collisionName = '__geometry__';
-					
-					var externalId = $n2.getUniqueId();
-					var $externalValueDiv = $('<div>')
-						.appendTo($collision);
-					$('<input>')
-						.attr('type','radio')
-						.attr('id',externalId)
-						.attr('name',collisionName)
-						.attr('value','external')
-						.click(collisionRadioButtonClickFn)
-						.appendTo($externalValueDiv);
-					$('<label>')
-						.attr('for',externalId)
-						.text( this._printValue(externalGeometry) )
-						.appendTo($externalValueDiv);
-					
-					var currentId = $n2.getUniqueId();
-					var $currentValueDiv = $('<div>')
-						.appendTo($collision);
-					$('<input>')
-						.attr('type','radio')
-						.attr('id',currentId)
-						.attr('name',collisionName)
-						.attr('value','current')
-						.click(collisionRadioButtonClickFn)
-						.appendTo($currentValueDiv);
-					$('<label>')
-						.attr('for',currentId)
-						.text( this._printValue(targetValue) )
-						.appendTo($currentValueDiv);
-				};
-			};
-
 		} else if( change.isDeletion ) {
 			// Report deletions
 			var importId = change.importId;
@@ -1555,6 +1444,12 @@ var AnalysisReport = $n2.Class({
 
 		} else if( typeof value === 'boolean' ){
 			return ''+value;
+
+		} else if( typeof value === 'object' ){
+			if( typeof value.wkt === 'string' ){
+				// Geometry
+				return value.wkt;
+			};
 		};
 		
 		return '<?>';
@@ -1789,28 +1684,28 @@ var AnalysisReport = $n2.Class({
 		doc.nunaliit_import.id = importEntry.getId();
 		doc.nunaliit_import.profile = importProfile.getId();
 		
-		// Geometry
-		var geom = importEntry.getGeometry();
-		if( geom ){
-			doc.nunaliit_import.geometry = {
-				wkt: geom
-			};
-			doc.nunaliit_geom = {
-				nunaliit_type: 'geometry'
-			};
-			doc.nunaliit_geom.wkt = geom;
-
-			var olWkt = new OpenLayers.Format.WKT();
-			var vectorFeature = olWkt.read(geom);
-			var bounds = vectorFeature.geometry.getBounds();
-			doc.nunaliit_geom.bbox = [ 
-				bounds.left
-				,bounds.bottom
-				,bounds.right
-				,bounds.top
-			];
-		};
-		
+//		// Geometry
+//		var geom = importEntry.getGeometry();
+//		if( geom ){
+//			doc.nunaliit_import.geometry = {
+//				wkt: geom
+//			};
+//			doc.nunaliit_geom = {
+//				nunaliit_type: 'geometry'
+//			};
+//			doc.nunaliit_geom.wkt = geom;
+//
+//			var olWkt = new OpenLayers.Format.WKT();
+//			var vectorFeature = olWkt.read(geom);
+//			var bounds = vectorFeature.geometry.getBounds();
+//			doc.nunaliit_geom.bbox = [ 
+//				bounds.left
+//				,bounds.bottom
+//				,bounds.right
+//				,bounds.top
+//			];
+//		};
+//		
 		// Copy properties
 		var propNames = [];
 		for(var propName in importProperties){
@@ -1877,56 +1772,6 @@ var AnalysisReport = $n2.Class({
 		if( !doc.nunaliit_schema
 		 && schema ) {
 			doc.nunaliit_schema = schema.name;
-		};
-		
-		// Geometry (change only if it was modified)
-		if( change.modifiedGeometry ){
-			var externalGeom = importEntry.getGeometry();
-			var changeCurrentGeometry = true;
-			if( change.collisionGeometry ){
-				if( 'external' == change.selectedGeometry ) {
-					// OK
-				} else if( 'current' == change.selectedGeometry ) {
-					changeCurrentGeometry = false;
-				} else {
-					throw 'Invalid state for change since geometry collision is not resolved';
-				};
-			};
-			if( externalGeom ){
-				if( !doc.nunaliit_import.geometry ){
-					doc.nunaliit_import.geometry = {};
-				};
-				doc.nunaliit_import.geometry.wkt = externalGeom;
-				
-				if( changeCurrentGeometry ){
-					if( !doc.nunaliit_geom ){
-						doc.nunaliit_geom = {};
-					};
-					doc.nunaliit_geom.nunaliit_type = 'geometry';
-					doc.nunaliit_geom.wkt = externalGeom;
-
-					var olWkt = new OpenLayers.Format.WKT();
-					var vectorFeature = olWkt.read(externalGeom);
-					var bounds = vectorFeature.geometry.getBounds();
-					doc.nunaliit_geom.bbox = [ 
-						bounds.left
-						,bounds.bottom
-						,bounds.right
-						,bounds.top
-					];
-				};
-				
-			} else {
-				if( doc.nunaliit_import.geometry ) {
-					delete doc.nunaliit_import.geometry;
-				};
-
-				if( changeCurrentGeometry ){
-					if( doc.nunaliit_geom ) {
-						delete doc.nunaliit_geom;
-					};
-				};
-			};
 		};
 		
 		// Copy only properties that have changed
@@ -2368,7 +2213,7 @@ var ImportProfileOperationLongLat = $n2.Class(ImportProfileOperation, {
 		this.longName = matcher[1];
 		this.latName = matcher[2];
 		
-		this.targetSelector = $n2.objectSelector.parseSelector('nunaliit_geom.wkt');
+		this.targetSelector = $n2.objectSelector.parseSelector('nunaliit_geom');
 	},
 	
 	reportCopyOperations: function(opts_){
@@ -2391,30 +2236,36 @@ var ImportProfileOperationLongLat = $n2.Class(ImportProfileOperation, {
 			// Compute new value
 			var longValue = importData[this.longName];
 			var latValue = importData[this.latName];
-			var importValue = this._computeWKT(longValue, latValue);
+			var importWkt = this._computeWKT(longValue, latValue);
+			var importGeom = this._computeGeometry(importWkt);
 
 			// Compute last imported value
 			var lastLongValue = lastImportData[this.longName];
 			var lastLatValue = lastImportData[this.latName];
-			var lastImportValue = this._computeWKT(lastLongValue, lastLatValue);
+			var lastImportWkt = this._computeWKT(lastLongValue, lastLatValue);
+			var lastImportGeom = this._computeGeometry(lastImportWkt);
 
-			var targetValue = this.targetSelector.getValue(opts.doc);
+			var targetGeom = this.targetSelector.getValue(opts.doc);
+			var targetWkt = undefined;
+			if( targetGeom ){
+				targetWkt = targetGeom.wkt;
+			};
 			
 			var changedSinceLastImport = true;
-			if( lastImportValue === targetValue ){
+			if( lastImportWkt === targetWkt ){
 				changedSinceLastImport = false;
 			};
 
 			var isEqual = false;
-			if( importValue === targetValue ){
+			if( importWkt === targetWkt ){
 				isEqual = true;
 			};
 			
 			copyOperations.push({
 				propertyNames: [this.longName, this.latName]
-				,computedValue: importValue
+				,computedValue: importGeom
 				,targetSelector: this.targetSelector
-				,targetValue: targetValue
+				,targetValue: targetGeom
 				,isEqual: isEqual
 				,changedSinceLastImport: changedSinceLastImport
 			});
@@ -2432,33 +2283,15 @@ var ImportProfileOperationLongLat = $n2.Class(ImportProfileOperation, {
 		
 		var doc = opts.doc;
 		
-		var longValue = opts.importData[this.longName];
-		var latValue = opts.importData[this.latName];
+		var computedValue = opts.copyOperation.computedValue;
 		
-		var importValue = undefined;
-		if( typeof longValue !== 'undefined' 
-		 && typeof latValue !== 'undefined' ){
-			longValue = 1 * longValue;
-			latValue = 1 * latValue;
-			importValue = 'MULTIPOINT(('+longValue+' '+latValue+'))';
-		};
-
-		if( typeof importValue === 'undefined' ){
+		if( typeof computedValue === 'undefined' ){
 			// Must delete
 			if( doc.nunaliit_geom ){
 				delete doc.nunaliit_geom;
 			};
 		} else {
-			doc.nunaliit_geom = {
-				nunaliit_type: 'geometry'
-				,wkt: importValue
-				,bbox: [
-					longValue
-					,latValue
-					,longValue
-					,latValue
-				]
-			};
+			doc.nunaliit_geom = computedValue;
 		};
 	},
 	
@@ -2469,6 +2302,31 @@ var ImportProfileOperationLongLat = $n2.Class(ImportProfileOperation, {
 		var importValue = this._computeWKT(longValue, latValue);
 		
 		return importValue;
+	},
+
+	_computeGeometry: function(wkt){
+
+		var nunaliit_geom = undefined;
+		
+		// Geometry
+		if( wkt ){
+			nunaliit_geom = {
+				nunaliit_type: 'geometry'
+			};
+			nunaliit_geom.wkt = wkt;
+
+			var olWkt = new OpenLayers.Format.WKT();
+			var vectorFeature = olWkt.read(wkt);
+			var bounds = vectorFeature.geometry.getBounds();
+			nunaliit_geom.bbox = [ 
+				bounds.left
+				,bounds.bottom
+				,bounds.right
+				,bounds.top
+			];
+		};
+		
+		return nunaliit_geom;
 	},
 	
 	_computeWKT: function(longValue, latValue){
@@ -3160,12 +3018,12 @@ var ImportProfileOperationGeoJSON = $n2.Class('ImportProfileOperationGeoJSON', I
 
 		var importValue = undefined;
 		if( importWkt ){
-			this._computeGeometry(importWkt);
+			importValue = this._computeGeometry(importWkt);
 		};
 
 		var lastImportValue = undefined;
 		if( lastImportWkt ){
-			this._computeGeometry(lastImportWkt);
+			lastImportValue = this._computeGeometry(lastImportWkt);
 		};
 		
 		var targetValue = this.targetSelector.getValue(opts.doc);
@@ -3188,7 +3046,7 @@ var ImportProfileOperationGeoJSON = $n2.Class('ImportProfileOperationGeoJSON', I
 
 		var copyOperations = [];
 		copyOperations.push({
-			propertyNames: ['__geometry__']
+			propertyNames: [GEOM_PROP_NAME]
 			,computedValue: importValue
 			,targetSelector: this.targetSelector
 			,targetValue: targetValue
@@ -3262,6 +3120,9 @@ var ImportEntry = $n2.Class({
 		throw 'Subclasses to ImportEntry must implement getProperties()';
 	},
 	
+	/**
+	 * Returns WKT of geometry
+	 */
 	getGeometry: function(){
 		throw 'Subclasses to ImportEntry must implement getGeometry()';
 	}
@@ -3457,7 +3318,7 @@ var ImportEntryFromDoc = $n2.Class('ImportEntryFromDoc', ImportEntry, {
 	
 	data: null,
 	
-	geometry: null,
+	geometryWkt: null,
 	
 	initialize: function(opts_){
 		
@@ -3469,14 +3330,16 @@ var ImportEntryFromDoc = $n2.Class('ImportEntryFromDoc', ImportEntry, {
 		
 		this.id = undefined;
 		this.data = {};
-		this.geometry = undefined;
+		this.geometryWkt = undefined;
 		
 		var doc = opts.doc;
 		if( doc 
 		 && doc.nunaliit_import ){
 			this.id = doc.nunaliit_import.id;
 			this.data = doc.nunaliit_import.data;
-			this.geometry = doc.nunaliit_import.geometry;
+			if( doc.nunaliit_import.geometry ){
+				this.geometryWkt = doc.nunaliit_import.geometry.wkt;
+			};
 		};
 	},
 
@@ -3488,8 +3351,11 @@ var ImportEntryFromDoc = $n2.Class('ImportEntryFromDoc', ImportEntry, {
 		return this.data;
 	},
 	
+	/**
+	 * Returns WKT of geometry
+	 */
 	getGeometry: function(){
-		return this.geometry;
+		return this.geometryWkt;
 	}
 });
 
@@ -3654,6 +3520,9 @@ var ImportEntryGeoJson = $n2.Class(ImportEntry, {
 		return this.data;
 	},
 	
+	/**
+	 * Returns WKT of geometry
+	 */
 	getGeometry: function(){
 		return this.geom;
 	}
