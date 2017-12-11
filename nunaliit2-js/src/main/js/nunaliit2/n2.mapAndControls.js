@@ -1459,8 +1459,8 @@ var MapAndControls = $n2.Class({
 
 		// Show Spatial Reference System display projection code in the map attribution
 		if( this.options.addSRSAttribution ) {
-			var srsCode = this.map.displayProjection.projCode;
-			var projDef = this.map.displayProjection.proj.defData.replace(/ /g, ",");
+			var srsCode = mapProjection.projCode;
+			var projDef = mapProjection.proj.defData.replace(/ /g, ",");
 
 			// Create a new hidden OpenLayers.Layer object with SRS attribution
 			var srsAttribution = new OpenLayers.Layer("SRS",{
