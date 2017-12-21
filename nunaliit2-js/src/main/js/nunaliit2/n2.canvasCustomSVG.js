@@ -386,12 +386,10 @@ var CustomSvgCanvas = $n2.Class({
  		for(var i=0,e=nodes.length; i<e; ++i){
  			var node = nodes[i];
  			
- 			$d.select('#'+node.nodeId)
- 				.classed({
- 					'n2canvas_hovered': node.n2_hovered
- 					,'n2canvas_selected': node.n2_selected
- 					,'n2canvas_selectedHovered': (node.n2_selected && node.n2_hovered)
- 				});
+			$d.select('#'+node.nodeId)
+				.classed('n2canvas_hovered', node.n2_hovered)
+				.classed('n2canvas_selected', node.n2_selected)
+				.classed('n2canvas_selectedHovered', node.n2_hovered && node.n2_selected);
  		};
  	},
  	
