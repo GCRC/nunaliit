@@ -305,11 +305,9 @@ var CustomSvgCanvas = $n2.Class({
 	 				;
  			};
 
- 			$child
-				.classed({
-					'n2canvas_linkDocId':false
-					,'n2canvas_linkedDocId':true
-				});
+			$child
+				.classed('n2canvas_linkDocId',false)
+				.classed('n2canvas_linkedDocId',true);
  		});
 
 		// Adjust intention on all nodes. Update our elements accordingly
@@ -327,11 +325,9 @@ var CustomSvgCanvas = $n2.Class({
  			$child
 				.on('click',function(d,i){
  					_this._mouseUnselect($d.select(this),$d.event);
- 				})
-				.classed({
-					'n2canvas_unselect':false
-					,'n2canvas_unselected':true
-				});
+				})
+				.classed('n2canvas_unselect',false)
+				.classed('n2canvas_unselected',true);
  		});
  	},
  	
