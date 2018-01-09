@@ -539,6 +539,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				logger.info("No plugin found to analyze file class: "+fileClass);
 				
 				// By default, original file is used
+				attDescription.setOriginalUpload(true);
 				attDescription.setMediaFileName(originalObj.getMediaFileName());
 				attDescription.setContentType(originalObj.getContentType());
 				attDescription.setEncodingType(originalObj.getEncodingType());

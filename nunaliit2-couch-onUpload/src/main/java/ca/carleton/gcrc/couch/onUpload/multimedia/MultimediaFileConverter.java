@@ -368,6 +368,12 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 					attDescription.setWidth(request.getOutWidth());
 				}
 				
+				if( false == request.isConversionPerformed() ) {
+					// This attachment descriptor is associated with the file
+					// that was originally uploaded
+					attDescription.setOriginalUpload(true);
+				}
+				
 				ServerWorkDescriptor serverWork = attDescription.getServerWorkDescription();
 				serverWork.setOrientationLevel(UploadConstants.SERVER_ORIENTATION_VALUE);
 			}
