@@ -43,7 +43,7 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 
 	private MultimediaConverter mmConverter = new MultimediaConverterImpl();
 	private String atlasName = null;
-	private boolean uploadOriginalImages = false;
+	private boolean uploadOriginalImages = true;
 
 	@Override
 	public String getName() {
@@ -68,6 +68,8 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 					boolean flag = Boolean.parseBoolean(uploadFlag);
 					if( flag ) {
 						this.uploadOriginalImages = true;
+					} else {
+						this.uploadOriginalImages = false;
 					}
 				}
 			}
