@@ -362,23 +362,34 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			if( false == file.exists() || false == file.isFile() ){
 				logger.info("Uploaded media file does not exist: "+file.getAbsolutePath());
 				
-				// Look for original attachment
-				String originalAttachmentName = attDescription.getOriginalAttachment();
-				AttachmentDescriptor originalAttachmentDescription = null;
-				if( null != originalAttachmentName ) {
-					if( docDescriptor.isAttachmentDescriptionAvailable(originalAttachmentName) ){
-						originalAttachmentDescription = docDescriptor.getAttachmentDescription(originalAttachmentName);
-						logger.info("Found original attachment for missing uploaded media: "+originalAttachmentName);
+				// Look for original attachment name
+				String uploadedAttachmentName = null;
+				if( attDescription.isOriginalUpload() ) {
+					// The main attachment is associated with the original uploaded file
+					if( attDescription.isFilePresent() ) {
+						// The attachment is present
+						uploadedAttachmentName = attDescription.getAttachmentName();
+						logger.info("Found original attachment for missing uploaded media: "+uploadedAttachmentName);
+					}
+				}
+				if( null == uploadedAttachmentName ) {
+					String originalAttachmentName = attDescription.getOriginalAttachment();
+					if( null != originalAttachmentName ) {
+						if( docDescriptor.isAttachmentDescriptionAvailable(originalAttachmentName) ){
+							AttachmentDescriptor originalAttachmentDescription = docDescriptor.getAttachmentDescription(originalAttachmentName);
+							if( originalAttachmentDescription.isFilePresent() ) {
+								// Attachment is available
+								uploadedAttachmentName = originalAttachmentDescription.getAttachmentName();
+								logger.info("Found original attachment for missing uploaded media: "+uploadedAttachmentName);
+							}
+						}
 					}
 				}
 				
-				// Check if we can download attachment
-				if( null != originalAttachmentDescription ) {
-					if( originalAttachmentDescription.isFilePresent() ) {
-						// Attachment is available
-						conversionContext.downloadFile(originalAttachmentDescription.getAttachmentName(), file);
-						logger.info("Recovered original file from database: "+file.getAbsolutePath());
-					}
+				// Download file that was originally uploaded
+				if( null != uploadedAttachmentName ) {
+					conversionContext.downloadFile(uploadedAttachmentName, file);
+					logger.info("Recovered original file from database: "+uploadedAttachmentName);
 				}
 
 				// Check if state was resolved

@@ -419,29 +419,36 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 				if( "image".equals(fileClass) && uploadOriginalImages ) {
 					String originalAttachmentName = computeOriginalName(attDescription.getAttachmentName());
 					AttachmentDescriptor origDescription = docDescriptor.getAttachmentDescription(originalAttachmentName);
-
-					if( CouchNunaliitUtils.hasVetterRole(submitter, atlasName) ) {
-						origDescription.setStatus(UploadConstants.UPLOAD_STATUS_APPROVED);
+					
+					// Check if already attached
+					if( UploadConstants.UPLOAD_STATUS_ATTACHED.equals(origDescription.getStatus()) 
+					 || UploadConstants.UPLOAD_STATUS_DENIED.equals(origDescription.getStatus()) ) {
+						// Original descriptor already exist and attached/denied. No need to do anything
 					} else {
-						origDescription.setStatus(UploadConstants.UPLOAD_STATUS_WAITING_FOR_APPROVAL);
+						if( CouchNunaliitUtils.hasVetterRole(submitter, atlasName) ) {
+							origDescription.setStatus(UploadConstants.UPLOAD_STATUS_APPROVED);
+						} else {
+							origDescription.setStatus(UploadConstants.UPLOAD_STATUS_WAITING_FOR_APPROVAL);
+						}
+						origDescription.setFileClass("image");
+						origDescription.setContentType(attDescription.getContentType());
+						origDescription.setOriginalName(attDescription.getOriginalName());
+						origDescription.setMediaFileName(originalFile.getName());
+						origDescription.setSource(attDescription.getAttachmentName());
+						origDescription.setOriginalUpload(true);
+
+						origDescription.setSize(originalObj.getSize());
+						origDescription.setContentType(originalObj.getContentType());
+						origDescription.setEncodingType(originalObj.getEncodingType());
+
+						origDescription.setHeight(originalObj.getHeight());
+						origDescription.setWidth(originalObj.getWidth());
+
+						ServerWorkDescriptor serverWork = origDescription.getServerWorkDescription();
+						serverWork.setOrientationLevel(UploadConstants.SERVER_ORIENTATION_VALUE);
 					}
-					origDescription.setFileClass("image");
-					origDescription.setContentType(attDescription.getContentType());
-					origDescription.setOriginalName(attDescription.getOriginalName());
-					origDescription.setMediaFileName(originalFile.getName());
-					origDescription.setSource(attDescription.getAttachmentName());
-					origDescription.setOriginalFileAttachment(true);
 
-					origDescription.setSize(originalObj.getSize());
-					origDescription.setContentType(originalObj.getContentType());
-					origDescription.setEncodingType(originalObj.getEncodingType());
-
-					origDescription.setHeight(originalObj.getHeight());
-					origDescription.setWidth(originalObj.getWidth());
-
-					ServerWorkDescriptor serverWork = origDescription.getServerWorkDescription();
-					serverWork.setOrientationLevel(UploadConstants.SERVER_ORIENTATION_VALUE);
-
+					// Update main attachment to point to original attachment
 					attDescription.setOriginalAttachment(originalAttachmentName);
 				}
 			}
@@ -501,7 +508,7 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 		origDescription.setOriginalName(attDescription.getOriginalName());
 		origDescription.setMediaFileName(originalFile.getName());
 		origDescription.setSource(attDescription.getAttachmentName());
-		origDescription.setOriginalFileAttachment(true);
+		origDescription.setOriginalUpload(true);
 
 		origDescription.setSize(originalObj.getSize());
 		origDescription.setContentType(originalObj.getContentType());

@@ -3082,7 +3082,7 @@
 				if( att.originalAttachment ) {
 					originalKeyMap[att.originalAttachment] = true;
 				};
-				if( att.isOriginalAttachment ){
+				if( att.isOriginalUpload ){
 					originalKeyMap[attName] = true;
 				};
 			};
@@ -3095,21 +3095,24 @@
 		if( doc.nunaliit_attachments 
 		 && doc.nunaliit_attachments.files ) {
 			for(var attName in doc.nunaliit_attachments.files){
-				if( originalKeyMap[attName] ){
-					// This is an original. Leave alone
+				var att = doc.nunaliit_attachments.files[attName];
+				
+				if( att.source ) {
+					// Remove all derived attachments except for original files
+					if( originalKeyMap[attName] ) {
+						// Do not remove
+					} else {
+						// remove
+						keysToRemove.push(attName);
+					};
 				} else {
-					var att = doc.nunaliit_attachments.files[attName];
 					att.status = 'submitted';
 					updateRequired = true;
-					
-					if( att.thumbnail ) {
-						keysToRemove.push(att.thumbnail);
-					};
-				}
+				};
 			};
 		};
 		
-		// Remove thumbnails
+		// Remove excess attachment descriptors
 		for(var i=0,e=keysToRemove.length; i<e; ++i){
 			var keyToRemove = keysToRemove[i];
 			
