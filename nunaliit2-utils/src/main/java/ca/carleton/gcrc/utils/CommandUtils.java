@@ -254,7 +254,12 @@ public class CommandUtils {
 			errGobbler.join();
 			
 			if( 0 != exitValue ){
-				logger.info("Command ("+commandStr+") exited with value "+exitValue+": "+errWriter.toString());
+				if( errWriter.toString().isEmpty() ) {
+					// No error was output. Dump stdout
+					logger.info("Command ("+commandStr+") exited with value "+exitValue+": "+stdWriter.toString());
+				} else {
+					logger.info("Command ("+commandStr+") exited with value "+exitValue+": "+errWriter.toString());
+				}
 				throw new Exception("Process exited with value: "+exitValue);
 			}
 			

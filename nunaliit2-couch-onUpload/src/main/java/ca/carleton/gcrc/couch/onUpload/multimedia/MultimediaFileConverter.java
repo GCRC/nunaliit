@@ -196,233 +196,254 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 	}
 
 	public void analyzeFile(AttachmentDescriptor attDescription) throws Exception {
-		DocumentDescriptor docDescriptor = attDescription.getDocumentDescriptor();
-		OriginalFileDescriptor originalObj = attDescription.getOriginalFileDescription();
-		CouchAuthenticationContext submitter = attDescription.getSubmitter();
-		
-		// Figure out media file located on disk
-		File originalFile = originalObj.getMediaFile();
-		String mimeType = originalObj.getContentType();
-
-		// Perform conversion(s)
-		MultimediaConversionRequest request = new MultimediaConversionRequest();
-		request.setInFile( originalFile );
-		request.setThumbnailRequested(true);
-		request.setProgress( new UploadProgressAdaptor() );
-		
-		MultimediaClass mmClass = MimeUtils.getMultimediaClassFromMimeType(mimeType);
-		if( MultimediaClass.VIDEO == mmClass ) {
-			// For video file, convert to appropriate file type
-			mmConverter.convertVideo(request);
-
-		} else if( MultimediaClass.AUDIO == mmClass ) {
-			// For audio file, convert to appropriate file type
-			mmConverter.convertAudio(request);
+		try {
+			DocumentDescriptor docDescriptor = attDescription.getDocumentDescriptor();
+			OriginalFileDescriptor originalObj = attDescription.getOriginalFileDescription();
+			CouchAuthenticationContext submitter = attDescription.getSubmitter();
 			
-		} else if( MultimediaClass.IMAGE == mmClass ) {
-			// For image file, convert to appropriate file type
-			mmConverter.convertImage(request);
+			// Figure out media file located on disk
+			File originalFile = originalObj.getMediaFile();
+			String mimeType = originalObj.getContentType();
+
+			// Perform conversion(s)
+			MultimediaConversionRequest request = new MultimediaConversionRequest();
+			request.setInFile( originalFile );
+			request.setThumbnailRequested(true);
+			request.setProgress( new UploadProgressAdaptor() );
 			
-		} else {
-			throw new Exception("Unknown multimedia class: "+mmClass);
-		}
-		
-		// Compute a new name for the attachment, to reflect the conversion
-		{
-			String expectedExtension = "";
-			if( null != request.getOutFile() ){
-				File convertedFile = request.getOutFile();
-				String name = convertedFile.getName();
-				int index = name.lastIndexOf('.');
-				if( index > 0 ){
-					expectedExtension = name.substring(index+1);
-				}
+			MultimediaClass mmClass = MimeUtils.getMultimediaClassFromMimeType(mimeType);
+			if( MultimediaClass.VIDEO == mmClass ) {
+				// For video file, convert to appropriate file type
+				mmConverter.convertVideo(request);
+
+			} else if( MultimediaClass.AUDIO == mmClass ) {
+				// For audio file, convert to appropriate file type
+				mmConverter.convertAudio(request);
+				
+			} else if( MultimediaClass.IMAGE == mmClass ) {
+				// For image file, convert to appropriate file type
+				mmConverter.convertImage(request);
+				
+			} else {
+				throw new Exception("Unknown multimedia class: "+mmClass);
 			}
 			
-			String currentPrefix = attDescription.getAttachmentName();
-			String currentExtension = "";
+			// Check that output file(s) was(were) created
 			{
-				int index = currentPrefix.lastIndexOf('.');
-				if( index > 0 ){
-					currentExtension = currentPrefix.substring(index+1);
-					currentPrefix = currentPrefix.substring(0, index);
+				if( null != request.getOutFile() ) {
+					File convertedFile = request.getOutFile();
+					if( false == convertedFile.exists() ) {
+						throw new Exception("Reported converted file does not exist: "+convertedFile);
+					}
 				}
-			}
-			
-			if( false == currentExtension.equals(expectedExtension) ){
-				// Must rename
-				String newAttachmentName = currentPrefix + "." + expectedExtension;
-				
-				// Check collision
-				int index = 0;
-				while( docDescriptor.isAttachmentDescriptionAvailable(newAttachmentName) ){
-					newAttachmentName = currentPrefix + "_" + index + "." + expectedExtension;
-					++index;
-				}
-				
-				attDescription.renameAttachmentTo(newAttachmentName);
-			}
-		}
-		
-		// Report original size
-		if( request.getInHeight() != 0 && request.getInWidth() != 0 ) {
-			originalObj.setHeight( request.getInHeight() );
-			originalObj.setWidth( request.getInWidth() );
-		}
-		
-		// Report EXIF data
-		boolean isPhotosphere = false;
-		ExifData exifData = request.getExifData();
-		if( null != exifData 
-		 && exifData.getSize() > 0 ) {
-			ExifDataDescriptor exifDescriptor = attDescription.getExifDataDescription();
-			for(String key : exifData.getKeys()){
-				String value = exifData.getRawData(key);
-				if( null != value ){
-					value = value.trim();
-					if( false == "".equals(value) ){
-						exifDescriptor.addData(key, value);
+
+				if( null != request.getThumbnailFile() ) {
+					File thumbnailFile = request.getThumbnailFile();
+					if( false == thumbnailFile.exists() ) {
+						throw new Exception("Reported thumbnail file does not exist: "+thumbnailFile);
 					}
 				}
 			}
 			
-			// Create geometry if one is present in the EXIF
-			// data and none is defined in the document
-			if( exifData.containsLongLat() 
-			 && false == docDescriptor.isGeometryDescriptionAvailable() ) {
-				
-				Point point = new Point(exifData.computeLong(),exifData.computeLat());
-				MultiPoint mp = new MultiPoint();
-				mp.addPoint(point);
-				
-				GeometryDescriptor geomDesc = docDescriptor.getGeometryDescription();
-				geomDesc.setGeometry(mp);
-			}
-			
-			if( exifData.isKnownPhotosphereCamera() ){
-				isPhotosphere = true;
-			}
-		}
-		
-		// Report XMP Data
-		XmpInfo xmpData = request.getXmpData();
-		if( null != xmpData ){
-			// Copy data
-			XmpDataDescriptor xmpDescriptor = attDescription.getXmpDataDescription();
-			Map<String,String> props = xmpData.getProperties();
-			for(String key : props.keySet()){
-				String value = props.get(key);
-				xmpDescriptor.addData(key, value);
-			}
-
-			// Check if XMP declares a photosphere
-			if( xmpData.usePanoramaViewer() ){
-				isPhotosphere = true;
-			}
-		}
-
-		// Report photosphere, if needed
-		if( isPhotosphere ){
-			PhotosphereDescriptor photosphereDescriptor = attDescription.getPhotosphereDescription();
-			photosphereDescriptor.setType("panorama");
-		}
-		
-
-		// Report converted object
-		{
-			File convertedFile = request.getOutFile();
-			SystemFile convertedSf = SystemFile.getSystemFile(convertedFile);
-
-			if( CouchNunaliitUtils.hasVetterRole(submitter, atlasName) ) {
-				attDescription.setStatus(UploadConstants.UPLOAD_STATUS_APPROVED);
-			} else {
-				attDescription.setStatus(UploadConstants.UPLOAD_STATUS_WAITING_FOR_APPROVAL);
-			}
-			attDescription.setConversionPerformed(request.isConversionPerformed());
-			attDescription.setMediaFileName(convertedFile.getName());
-			attDescription.setSize(convertedFile.length());
-			attDescription.setContentType(convertedSf.getMimeType());
-			attDescription.setEncodingType(convertedSf.getMimeEncoding());
-			if( request.getOutHeight() != 0 && request.getOutWidth() != 0 ) {
-				attDescription.setHeight(request.getOutHeight());
-				attDescription.setWidth(request.getOutWidth());
-			}
-			
-			ServerWorkDescriptor serverWork = attDescription.getServerWorkDescription();
-			serverWork.setOrientationLevel(UploadConstants.SERVER_ORIENTATION_VALUE);
-		}
-
-		// Report thumbnail object
-		if( request.isThumbnailCreated() ) {
-			File thumbFile = request.getThumbnailFile();
-			SystemFile thumbSf = SystemFile.getSystemFile(thumbFile);
-			
-			String thumbExtension = "";
+			// Compute a new name for the attachment, to reflect the conversion
 			{
-				String name = thumbFile.getName();
-				int index = name.lastIndexOf('.');
-				if( index > 0 ){
-					thumbExtension = name.substring(index+1);
+				String expectedExtension = "";
+				if( null != request.getOutFile() ){
+					File convertedFile = request.getOutFile();
+					String name = convertedFile.getName();
+					int index = name.lastIndexOf('.');
+					if( index > 0 ){
+						expectedExtension = name.substring(index+1);
+					}
+				}
+				
+				String currentPrefix = attDescription.getAttachmentName();
+				String currentExtension = "";
+				{
+					int index = currentPrefix.lastIndexOf('.');
+					if( index > 0 ){
+						currentExtension = currentPrefix.substring(index+1);
+						currentPrefix = currentPrefix.substring(0, index);
+					}
+				}
+				
+				if( false == currentExtension.equals(expectedExtension) ){
+					// Must rename
+					String newAttachmentName = currentPrefix + "." + expectedExtension;
+					
+					// Check collision
+					int index = 0;
+					while( docDescriptor.isAttachmentDescriptionAvailable(newAttachmentName) ){
+						newAttachmentName = currentPrefix + "_" + index + "." + expectedExtension;
+						++index;
+					}
+					
+					attDescription.renameAttachmentTo(newAttachmentName);
 				}
 			}
 			
-			String thumbnailAttachmentName = computeThumbnailName(attDescription.getAttachmentName(),thumbExtension);
-			AttachmentDescriptor thumbnailObj = docDescriptor.getAttachmentDescription(thumbnailAttachmentName);
-
-			if( CouchNunaliitUtils.hasVetterRole(submitter, atlasName) ) {
-				thumbnailObj.setStatus(UploadConstants.UPLOAD_STATUS_APPROVED);
-			} else {
-				thumbnailObj.setStatus(UploadConstants.UPLOAD_STATUS_WAITING_FOR_APPROVAL);
+			// Report original size
+			if( request.getInHeight() != 0 && request.getInWidth() != 0 ) {
+				originalObj.setHeight( request.getInHeight() );
+				originalObj.setWidth( request.getInWidth() );
 			}
-			thumbnailObj.setFileClass("image");
-			thumbnailObj.setOriginalName(attDescription.getOriginalName());
-			thumbnailObj.setMediaFileName(thumbFile.getName());
-			thumbnailObj.setSource(attDescription.getAttachmentName());
-
-			thumbnailObj.setSize(thumbFile.length());
-			thumbnailObj.setContentType(thumbSf.getMimeType());
-			thumbnailObj.setEncodingType(thumbSf.getMimeEncoding());
-
-			if( request.getThumbnailHeight() != 0 && request.getThumbnailWidth() != 0 ) {
-				thumbnailObj.setHeight(request.getThumbnailHeight());
-				thumbnailObj.setWidth(request.getThumbnailWidth());
-			}
-
-			attDescription.setThumbnailReference(thumbnailAttachmentName);
-		}
-		
-		// Report original file
-		if( request.isConversionPerformed() ) {
-			// Original is not needed if no conversion performed
 			
-			String fileClass = attDescription.getFileClass();
-			if( "image".equals(fileClass) && uploadOriginalImages ) {
-				String originalAttachmentName = computeOriginalName(attDescription.getAttachmentName());
-				AttachmentDescriptor origDescription = docDescriptor.getAttachmentDescription(originalAttachmentName);
+			// Report EXIF data
+			boolean isPhotosphere = false;
+			ExifData exifData = request.getExifData();
+			if( null != exifData 
+			 && exifData.getSize() > 0 ) {
+				ExifDataDescriptor exifDescriptor = attDescription.getExifDataDescription();
+				for(String key : exifData.getKeys()){
+					String value = exifData.getRawData(key);
+					if( null != value ){
+						value = value.trim();
+						if( false == "".equals(value) ){
+							exifDescriptor.addData(key, value);
+						}
+					}
+				}
+				
+				// Create geometry if one is present in the EXIF
+				// data and none is defined in the document
+				if( exifData.containsLongLat() 
+				 && false == docDescriptor.isGeometryDescriptionAvailable() ) {
+					
+					Point point = new Point(exifData.computeLong(),exifData.computeLat());
+					MultiPoint mp = new MultiPoint();
+					mp.addPoint(point);
+					
+					GeometryDescriptor geomDesc = docDescriptor.getGeometryDescription();
+					geomDesc.setGeometry(mp);
+				}
+				
+				if( exifData.isKnownPhotosphereCamera() ){
+					isPhotosphere = true;
+				}
+			}
+			
+			// Report XMP Data
+			XmpInfo xmpData = request.getXmpData();
+			if( null != xmpData ){
+				// Copy data
+				XmpDataDescriptor xmpDescriptor = attDescription.getXmpDataDescription();
+				Map<String,String> props = xmpData.getProperties();
+				for(String key : props.keySet()){
+					String value = props.get(key);
+					xmpDescriptor.addData(key, value);
+				}
+
+				// Check if XMP declares a photosphere
+				if( xmpData.usePanoramaViewer() ){
+					isPhotosphere = true;
+				}
+			}
+
+			// Report photosphere, if needed
+			if( isPhotosphere ){
+				PhotosphereDescriptor photosphereDescriptor = attDescription.getPhotosphereDescription();
+				photosphereDescriptor.setType("panorama");
+			}
+			
+
+			// Report converted object
+			{
+				File convertedFile = request.getOutFile();
+				SystemFile convertedSf = SystemFile.getSystemFile(convertedFile);
 
 				if( CouchNunaliitUtils.hasVetterRole(submitter, atlasName) ) {
-					origDescription.setStatus(UploadConstants.UPLOAD_STATUS_APPROVED);
+					attDescription.setStatus(UploadConstants.UPLOAD_STATUS_APPROVED);
 				} else {
-					origDescription.setStatus(UploadConstants.UPLOAD_STATUS_WAITING_FOR_APPROVAL);
+					attDescription.setStatus(UploadConstants.UPLOAD_STATUS_WAITING_FOR_APPROVAL);
 				}
-				origDescription.setFileClass("image");
-				origDescription.setContentType(attDescription.getContentType());
-				origDescription.setOriginalName(attDescription.getOriginalName());
-				origDescription.setMediaFileName(originalFile.getName());
-				origDescription.setSource(attDescription.getAttachmentName());
-
-				origDescription.setSize(originalObj.getSize());
-				origDescription.setContentType(originalObj.getContentType());
-				origDescription.setEncodingType(originalObj.getEncodingType());
-
-				origDescription.setHeight(originalObj.getHeight());
-				origDescription.setWidth(originalObj.getWidth());
-
-				ServerWorkDescriptor serverWork = origDescription.getServerWorkDescription();
+				attDescription.setConversionPerformed(request.isConversionPerformed());
+				attDescription.setMediaFileName(convertedFile.getName());
+				attDescription.setSize(convertedFile.length());
+				attDescription.setContentType(convertedSf.getMimeType());
+				attDescription.setEncodingType(convertedSf.getMimeEncoding());
+				if( request.getOutHeight() != 0 && request.getOutWidth() != 0 ) {
+					attDescription.setHeight(request.getOutHeight());
+					attDescription.setWidth(request.getOutWidth());
+				}
+				
+				ServerWorkDescriptor serverWork = attDescription.getServerWorkDescription();
 				serverWork.setOrientationLevel(UploadConstants.SERVER_ORIENTATION_VALUE);
-
-				attDescription.setOriginalAttachment(originalAttachmentName);
 			}
+
+			// Report thumbnail object
+			if( request.isThumbnailCreated() ) {
+				File thumbFile = request.getThumbnailFile();
+				SystemFile thumbSf = SystemFile.getSystemFile(thumbFile);
+				
+				String thumbExtension = "";
+				{
+					String name = thumbFile.getName();
+					int index = name.lastIndexOf('.');
+					if( index > 0 ){
+						thumbExtension = name.substring(index+1);
+					}
+				}
+				
+				String thumbnailAttachmentName = computeThumbnailName(attDescription.getAttachmentName(),thumbExtension);
+				AttachmentDescriptor thumbnailObj = docDescriptor.getAttachmentDescription(thumbnailAttachmentName);
+
+				if( CouchNunaliitUtils.hasVetterRole(submitter, atlasName) ) {
+					thumbnailObj.setStatus(UploadConstants.UPLOAD_STATUS_APPROVED);
+				} else {
+					thumbnailObj.setStatus(UploadConstants.UPLOAD_STATUS_WAITING_FOR_APPROVAL);
+				}
+				thumbnailObj.setFileClass("image");
+				thumbnailObj.setOriginalName(attDescription.getOriginalName());
+				thumbnailObj.setMediaFileName(thumbFile.getName());
+				thumbnailObj.setSource(attDescription.getAttachmentName());
+
+				thumbnailObj.setSize(thumbFile.length());
+				thumbnailObj.setContentType(thumbSf.getMimeType());
+				thumbnailObj.setEncodingType(thumbSf.getMimeEncoding());
+
+				if( request.getThumbnailHeight() != 0 && request.getThumbnailWidth() != 0 ) {
+					thumbnailObj.setHeight(request.getThumbnailHeight());
+					thumbnailObj.setWidth(request.getThumbnailWidth());
+				}
+
+				attDescription.setThumbnailReference(thumbnailAttachmentName);
+			}
+			
+			// Report original file
+			if( request.isConversionPerformed() ) {
+				// Original is not needed if no conversion performed
+				
+				String fileClass = attDescription.getFileClass();
+				if( "image".equals(fileClass) && uploadOriginalImages ) {
+					String originalAttachmentName = computeOriginalName(attDescription.getAttachmentName());
+					AttachmentDescriptor origDescription = docDescriptor.getAttachmentDescription(originalAttachmentName);
+
+					if( CouchNunaliitUtils.hasVetterRole(submitter, atlasName) ) {
+						origDescription.setStatus(UploadConstants.UPLOAD_STATUS_APPROVED);
+					} else {
+						origDescription.setStatus(UploadConstants.UPLOAD_STATUS_WAITING_FOR_APPROVAL);
+					}
+					origDescription.setFileClass("image");
+					origDescription.setContentType(attDescription.getContentType());
+					origDescription.setOriginalName(attDescription.getOriginalName());
+					origDescription.setMediaFileName(originalFile.getName());
+					origDescription.setSource(attDescription.getAttachmentName());
+
+					origDescription.setSize(originalObj.getSize());
+					origDescription.setContentType(originalObj.getContentType());
+					origDescription.setEncodingType(originalObj.getEncodingType());
+
+					origDescription.setHeight(originalObj.getHeight());
+					origDescription.setWidth(originalObj.getWidth());
+
+					ServerWorkDescriptor serverWork = origDescription.getServerWorkDescription();
+					serverWork.setOrientationLevel(UploadConstants.SERVER_ORIENTATION_VALUE);
+
+					attDescription.setOriginalAttachment(originalAttachmentName);
+				}
+			}
+		} catch (Exception e) {
+			throw new Exception("Error while performing multimedia file analysis", e);
 		}
 	}
 
