@@ -360,8 +360,31 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				throw new Exception("No media file reported");
 			}
 			if( false == file.exists() || false == file.isFile() ){
-				logger.error(""+file.getAbsolutePath()+" is not a file.");
-				throw new Exception(""+file.getAbsolutePath()+" is not a file.");
+				logger.info("Uploaded media file does not exist: "+file.getAbsolutePath());
+				
+				// Look for original attachment
+				String originalAttachmentName = attDescription.getOriginalAttachment();
+				AttachmentDescriptor originalAttachmentDescription = null;
+				if( null != originalAttachmentName ) {
+					if( docDescriptor.isAttachmentDescriptionAvailable(originalAttachmentName) ){
+						originalAttachmentDescription = docDescriptor.getAttachmentDescription(originalAttachmentName);
+						logger.info("Found original attachment for missing uploaded media: "+originalAttachmentName);
+					}
+				}
+				
+				// Check if we can download attachment
+				if( null != originalAttachmentDescription ) {
+					if( originalAttachmentDescription.isFilePresent() ) {
+						// Attachment is available
+						conversionContext.downloadFile(originalAttachmentDescription.getAttachmentName(), file);
+						logger.info("Recovered original file from database: "+file.getAbsolutePath());
+					}
+				}
+
+				// Check if state was resolved
+				if( false == file.exists() || false == file.isFile() ){
+					throw new Exception("Uploaded media file does not exist: "+file.getAbsolutePath());
+				}
 			};
 
 			// Set file size

@@ -430,6 +430,7 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 					origDescription.setOriginalName(attDescription.getOriginalName());
 					origDescription.setMediaFileName(originalFile.getName());
 					origDescription.setSource(attDescription.getAttachmentName());
+					origDescription.setOriginalFileAttachment(true);
 
 					origDescription.setSize(originalObj.getSize());
 					origDescription.setContentType(originalObj.getContentType());
@@ -500,6 +501,7 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 		origDescription.setOriginalName(attDescription.getOriginalName());
 		origDescription.setMediaFileName(originalFile.getName());
 		origDescription.setSource(attDescription.getAttachmentName());
+		origDescription.setOriginalFileAttachment(true);
 
 		origDescription.setSize(originalObj.getSize());
 		origDescription.setContentType(originalObj.getContentType());

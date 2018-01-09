@@ -3072,6 +3072,22 @@
 	
 	// -----------------------------------------------------------------
 	function resubmitMediaInList(doc, onTransformed, onSkipped, scriptConfig){
+		// Figure out original attachments so as to not mess with them
+		var originalKeyMap = {};
+		if( doc.nunaliit_attachments 
+		 && doc.nunaliit_attachments.files ) {
+			for(var attName in doc.nunaliit_attachments.files){
+				var att = doc.nunaliit_attachments.files[attName];
+
+				if( att.originalAttachment ) {
+					originalKeyMap[att.originalAttachment] = true;
+				};
+				if( att.isOriginalAttachment ){
+					originalKeyMap[attName] = true;
+				};
+			};
+		};
+		
 		// Mark all attachments as submitted
 		var updateRequired = false;
 		var keysToRemove = [];
@@ -3079,21 +3095,21 @@
 		if( doc.nunaliit_attachments 
 		 && doc.nunaliit_attachments.files ) {
 			for(var attName in doc.nunaliit_attachments.files){
-				var att = doc.nunaliit_attachments.files[attName];
-				att.status = 'submitted';
-				updateRequired = true;
-				
-				if( att.thumbnail ) {
-					keysToRemove.push(att.thumbnail);
-				};
-				
-				if( att.originalAttachment ) {
-					keysToRemove.push(att.originalAttachment);
-				};
+				if( originalKeyMap[attName] ){
+					// This is an original. Leave alone
+				} else {
+					var att = doc.nunaliit_attachments.files[attName];
+					att.status = 'submitted';
+					updateRequired = true;
+					
+					if( att.thumbnail ) {
+						keysToRemove.push(att.thumbnail);
+					};
+				}
 			};
 		};
 		
-		// Remove thumbnails and original attachments
+		// Remove thumbnails
 		for(var i=0,e=keysToRemove.length; i<e; ++i){
 			var keyToRemove = keysToRemove[i];
 			

@@ -303,6 +303,14 @@ public class AttachmentDescriptor extends AbstractDescriptor {
 		setStringAttribute(UploadConstants.UPLOAD_ID_KEY,uploadId);
 	}
 
+	public boolean isOriginalFileAttachment() throws Exception {
+		return getBooleanAttribute(UploadConstants.IS_ORIGINAL_ATTACHMENT_KEY);
+	}
+	
+	public void setOriginalFileAttachment(boolean flag) throws Exception {
+		setBooleanAttribute(UploadConstants.IS_ORIGINAL_ATTACHMENT_KEY,flag);
+	}
+
 	public boolean isServerWorkDescriptionAvailable() throws Exception {
 		JSONObject attachmentDescription = getJson();
 
