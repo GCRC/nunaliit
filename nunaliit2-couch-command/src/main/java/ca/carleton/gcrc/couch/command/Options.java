@@ -6,7 +6,30 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.Vector;
 
+import org.apache.log4j.Level;
+
 public class Options {
+	
+	static public class LoggerOptions {
+		private String loggerName;
+		private Level level;
+		
+		public LoggerOptions(String loggerName) {
+			this.loggerName = loggerName;
+		}
+
+		public String getLoggerName() {
+			return loggerName;
+		}
+		
+		public Level getLevel() {
+			return level;
+		}
+
+		public void setLevel(Level level) {
+			this.level = level;
+		}
+	}
 	
 	static final public String OPTION_ATLAS_DIR = "--atlas-dir";
 	static final public String OPTION_DEF = "--def";
@@ -18,6 +41,7 @@ public class Options {
 	static final public String OPTION_LAYER = "--layer";
 	static final public String OPTION_NAME = "--name";
 
+	static final public String OPTION_SET_LOGGER = "--set-logger";
 	static final public String OPTION_DEBUG = "--debug";
 	static final public String OPTION_TRACE = "--trace";
 	static final public String OPTION_INFO = "--info";
@@ -29,10 +53,9 @@ public class Options {
 	static final public String OPTION_TEST = "--test";
 
 	private List<String> arguments;
+	private List<LoggerOptions> loggerOptions = new Vector<LoggerOptions>();
+	private LoggerOptions currentLoggerOptions = null;
 	private Boolean debug;
-	private Boolean trace;
-	private Boolean info;
-	private Boolean error;
 	private Boolean noConfig;
 	private Boolean skeleton;
 	private Boolean overwriteDocs;
@@ -50,6 +73,10 @@ public class Options {
 	
 	public Options() {
 		arguments = new Vector<String>();
+
+		loggerOptions = new Vector<LoggerOptions>();
+		currentLoggerOptions = new LoggerOptions(null); // root logger
+		loggerOptions.add(currentLoggerOptions);
 	}
 	
 	public void parseOptions(List<String> args) throws Exception {
@@ -64,16 +91,48 @@ public class Options {
 			if( arg.startsWith("--") ){
 				// this is an option
 				if( OPTION_DEBUG.equals(arg) ){
+					if( null != currentLoggerOptions.level 
+					 && Level.DEBUG != currentLoggerOptions.level ) {
+						throw new Exception(OPTION_DEBUG+" conflicts with previous logger option");
+					}
+
 					debug = Boolean.TRUE;
+					currentLoggerOptions.level = Level.DEBUG;
 
 				} else if( OPTION_TRACE.equals(arg) ){
-					trace = Boolean.TRUE;
+					if( null != currentLoggerOptions.level 
+					 && Level.TRACE != currentLoggerOptions.level ) {
+						throw new Exception(OPTION_TRACE+" conflicts with previous logger option");
+					}
+
+					debug = Boolean.TRUE; // trace is more specific than debug, so flag it
+					currentLoggerOptions.level = Level.TRACE;
 
 				} else if( OPTION_INFO.equals(arg) ){
-					info = Boolean.TRUE;
+					if( null != currentLoggerOptions.level 
+					 && Level.INFO != currentLoggerOptions.level ) {
+						throw new Exception(OPTION_INFO+" conflicts with previous logger option");
+					}
+
+					currentLoggerOptions.level = Level.INFO;
 
 				} else if( OPTION_ERROR.equals(arg) ){
-					error = Boolean.TRUE;
+					if( null != currentLoggerOptions.level 
+					 && Level.ERROR != currentLoggerOptions.level ) {
+						throw new Exception(OPTION_ERROR+" conflicts with previous logger option");
+					}
+
+					currentLoggerOptions.level = Level.ERROR;
+
+				} else if( OPTION_SET_LOGGER.equals(arg) ){
+					if( argumentStack.size() < 1 ){
+						throw new Exception(OPTION_SET_LOGGER+" option requires the name of a logger");
+					}
+
+					String loggerName = argumentStack.pop();
+
+					currentLoggerOptions = new LoggerOptions(loggerName);
+					loggerOptions.add(currentLoggerOptions);
 
 				} else if( OPTION_NO_CONFIG.equals(arg) ){
 					noConfig = Boolean.TRUE;
@@ -196,7 +255,7 @@ public class Options {
 			expected.add(expectedOption);
 		}
 		
-		// Debug, trace, info and error are always OK
+		// Debug, trace, info, error and set-logger are always OK
 //		if( null != debug && false == expected.contains(OPTION_DEBUG)){
 //			throw new Exception("Unexpected option: "+OPTION_DEBUG);
 //		}
@@ -258,20 +317,12 @@ public class Options {
 		return arguments;
 	}
 
+	public List<LoggerOptions> getLoggerOptions(){
+		return loggerOptions;
+	}
+
 	public Boolean getDebug() {
 		return debug;
-	}
-
-	public Boolean getTrace() {
-		return trace;
-	}
-
-	public Boolean getInfo() {
-		return info;
-	}
-
-	public Boolean getError() {
-		return error;
 	}
 
 	public Boolean getNoConfig() {

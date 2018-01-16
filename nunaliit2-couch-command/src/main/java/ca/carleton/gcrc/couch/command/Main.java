@@ -13,6 +13,7 @@ import org.apache.log4j.PropertyConfigurator;
 import org.apache.log4j.WriterAppender;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
+import ca.carleton.gcrc.couch.command.Options.LoggerOptions;
 import ca.carleton.gcrc.couch.command.impl.PathComputer;
 
 public class Main {
@@ -101,14 +102,29 @@ public class Main {
 		// Default log4j configuration
 		{
 			Logger rootLogger = Logger.getRootLogger();
-			rootLogger.addAppender(new WriterAppender(new PatternLayout("%d{ISO8601}[%-5p]: %m%n"),globalSettings.getErrStream()));
 
-			if( null != options.getDebug()
-			 && options.getDebug().booleanValue() ){
-				rootLogger.setLevel(Level.DEBUG);
-			} else {
-				rootLogger.setLevel(Level.ERROR);
+			List<LoggerOptions> loggerOptions = options.getLoggerOptions();
+			
+			boolean isRootLoggerSet = false;
+			for(LoggerOptions loggerOption : loggerOptions) {
+				if( null != loggerOption.getLevel() ) {
+					if( null == loggerOption.getLoggerName() ) {
+						// Root logger
+						rootLogger.setLevel(loggerOption.getLevel());
+						isRootLoggerSet = true;
+					} else {
+						// Obtain logger for this name
+						Logger logger = Logger.getLogger(loggerOption.getLoggerName());
+						logger.setLevel(loggerOption.getLevel());
+					}
+				}
 			}
+			
+			if( !isRootLoggerSet ) {
+				rootLogger.setLevel(Level.INFO);
+			}
+			
+			rootLogger.addAppender(new WriterAppender(new PatternLayout("%d{ISO8601}[%-5p]: %m%n"),globalSettings.getErrStream()));
 		}
 
 		// Capture java.util.Logger
