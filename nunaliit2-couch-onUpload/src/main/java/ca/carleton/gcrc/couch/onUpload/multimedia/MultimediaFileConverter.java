@@ -43,7 +43,7 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 
 	private MultimediaConverter mmConverter = new MultimediaConverterImpl();
 	private String atlasName = null;
-	private boolean uploadOriginalImages = true;
+	private boolean uploadOriginalFiles = true;
 
 	@Override
 	public String getName() {
@@ -61,15 +61,25 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 	
 	public void parseProperties(Properties props){
 		if( null != props ) {
-			// multimedia.uploadOriginalImages
+			// multimedia.uploadOriginalImages - This is the legacy settings. It is deprecated.
+			// Use multimedia.uploadOriginalFiles instead
 			{
 				String uploadFlag = props.getProperty("multimedia.uploadOriginalImages", null);
 				if( null != uploadFlag ) {
 					boolean flag = Boolean.parseBoolean(uploadFlag);
-					if( flag ) {
-						this.uploadOriginalImages = true;
-					} else {
-						this.uploadOriginalImages = false;
+					if( false == flag ) {
+						this.uploadOriginalFiles = false;
+					}
+				}
+			}
+
+			// multimedia.uploadOriginalFiles
+			{
+				String uploadFlag = props.getProperty("multimedia.uploadOriginalFiles", null);
+				if( null != uploadFlag ) {
+					boolean flag = Boolean.parseBoolean(uploadFlag);
+					if( false == flag ) {
+						this.uploadOriginalFiles = false;
 					}
 				}
 			}
@@ -85,7 +95,7 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 	}
 	
 	public void logSettings() {
-		logger.info("uploadOriginalImages: "+uploadOriginalImages);
+		logger.info("uploadOriginalFiles: "+uploadOriginalFiles);
 	}
 
 	public String getAtlasName() {
@@ -420,9 +430,7 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 			// Report original file
 			if( request.isConversionPerformed() ) {
 				// Original is not needed if no conversion performed
-				
-				String fileClass = attDescription.getFileClass();
-				if( "image".equals(fileClass) && uploadOriginalImages ) {
+				if( uploadOriginalFiles ) {
 					String originalAttachmentName = computeOriginalName(attDescription.getAttachmentName());
 					AttachmentDescriptor origDescription = docDescriptor.getAttachmentDescription(originalAttachmentName);
 					
@@ -488,15 +496,8 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 		}
 		
 		// Are uploaded files allowed?
-		if( false == uploadOriginalImages ) {
+		if( false == uploadOriginalFiles ) {
 			work.setStringAttribute(UploadConstants.UPLOAD_WORK_UPLOAD_ORIGINAL_IMAGE, "Original file uploads not allowed.");
-			return;
-		}
-		
-		// Is it an image?
-		String fileClass = attDescription.getFileClass();
-		if( false == "image".equals(fileClass) ) {
-			work.setStringAttribute(UploadConstants.UPLOAD_WORK_UPLOAD_ORIGINAL_IMAGE, "Original file uploads allowed only for images");
 			return;
 		}
 		

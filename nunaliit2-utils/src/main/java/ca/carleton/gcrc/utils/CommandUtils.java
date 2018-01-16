@@ -131,6 +131,8 @@ public class CommandUtils {
 				commandStr = sb.toString();
 			}
 
+			logger.trace("Executing command ("+commandStr+")");
+
 			ProcessBuilder pb = new ProcessBuilder(commandTokens);
 			Process p = pb.start();
 
@@ -215,6 +217,8 @@ public class CommandUtils {
 				}
 				commandStr = sb.toString();
 			}
+
+			logger.debug("Executing command ("+commandStr+")");
 
 			ProcessBuilder pb = new ProcessBuilder(commandTokens);
 			Process p = pb.start();

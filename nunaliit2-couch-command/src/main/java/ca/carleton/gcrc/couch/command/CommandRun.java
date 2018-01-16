@@ -101,7 +101,25 @@ public class CommandRun implements Command {
 		{
 			Logger rootLogger = Logger.getRootLogger();
 			
-			rootLogger.setLevel(Level.INFO);
+			if( null != options.getTrace()
+			 && options.getTrace().booleanValue() ) {
+				rootLogger.setLevel(Level.TRACE);
+
+			} else if( null != options.getDebug()
+			 && options.getDebug().booleanValue() ) {
+				rootLogger.setLevel(Level.DEBUG);
+
+			} else if( null != options.getInfo()
+			 && options.getInfo().booleanValue() ) {
+				rootLogger.setLevel(Level.INFO);
+
+			} else if( null != options.getError()
+			 && options.getError().booleanValue() ) {
+				rootLogger.setLevel(Level.ERROR);
+
+			} else {
+				rootLogger.setLevel(Level.INFO);
+			}
 
 			TimeBasedRollingPolicy rollingPolicy = new TimeBasedRollingPolicy();
 			File logDir = new File(gs.getAtlasDir(), "logs");

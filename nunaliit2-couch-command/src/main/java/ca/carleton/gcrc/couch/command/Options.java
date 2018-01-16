@@ -19,6 +19,9 @@ public class Options {
 	static final public String OPTION_NAME = "--name";
 
 	static final public String OPTION_DEBUG = "--debug";
+	static final public String OPTION_TRACE = "--trace";
+	static final public String OPTION_INFO = "--info";
+	static final public String OPTION_ERROR = "--error";
 	static final public String OPTION_NO_CONFIG = "--no-config";
 	static final public String OPTION_SKELETON = "--skeleton";
 	static final public String OPTION_OVERWRITE_DOCS = "--overwrite-docs";
@@ -27,6 +30,9 @@ public class Options {
 
 	private List<String> arguments;
 	private Boolean debug;
+	private Boolean trace;
+	private Boolean info;
+	private Boolean error;
 	private Boolean noConfig;
 	private Boolean skeleton;
 	private Boolean overwriteDocs;
@@ -59,6 +65,15 @@ public class Options {
 				// this is an option
 				if( OPTION_DEBUG.equals(arg) ){
 					debug = Boolean.TRUE;
+
+				} else if( OPTION_TRACE.equals(arg) ){
+					trace = Boolean.TRUE;
+
+				} else if( OPTION_INFO.equals(arg) ){
+					info = Boolean.TRUE;
+
+				} else if( OPTION_ERROR.equals(arg) ){
+					error = Boolean.TRUE;
 
 				} else if( OPTION_NO_CONFIG.equals(arg) ){
 					noConfig = Boolean.TRUE;
@@ -181,9 +196,18 @@ public class Options {
 			expected.add(expectedOption);
 		}
 		
-		// Debug is always OK
+		// Debug, trace, info and error are always OK
 //		if( null != debug && false == expected.contains(OPTION_DEBUG)){
 //			throw new Exception("Unexpected option: "+OPTION_DEBUG);
+//		}
+//		if( null != trace && false == expected.contains(OPTION_TRACE)){
+//			throw new Exception("Unexpected option: "+OPTION_TRACE);
+//		}
+//		if( null != info && false == expected.contains(OPTION_INFO)){
+//			throw new Exception("Unexpected option: "+OPTION_INFO);
+//		}
+//		if( null != error && false == expected.contains(OPTION_ERROR)){
+//			throw new Exception("Unexpected option: "+OPTION_ERROR);
 //		}
 
 		if( null != noConfig && false == expected.contains(OPTION_NO_CONFIG)){
@@ -236,6 +260,18 @@ public class Options {
 
 	public Boolean getDebug() {
 		return debug;
+	}
+
+	public Boolean getTrace() {
+		return trace;
+	}
+
+	public Boolean getInfo() {
+		return info;
+	}
+
+	public Boolean getError() {
+		return error;
 	}
 
 	public Boolean getNoConfig() {
