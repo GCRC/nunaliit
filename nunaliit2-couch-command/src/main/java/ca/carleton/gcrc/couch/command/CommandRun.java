@@ -7,7 +7,6 @@ import java.util.EnumSet;
 
 import javax.servlet.DispatcherType;
 
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.rolling.RollingFileAppender;
@@ -97,11 +96,9 @@ public class CommandRun implements Command {
 		// Load properties for atlas
 		AtlasProperties atlasProperties = AtlasProperties.fromAtlasDir(atlasDir);
 		
-		// Run command log4j configuration
+		// Send logs to file
 		{
 			Logger rootLogger = Logger.getRootLogger();
-			
-			rootLogger.setLevel(Level.INFO);
 
 			TimeBasedRollingPolicy rollingPolicy = new TimeBasedRollingPolicy();
 			File logDir = new File(gs.getAtlasDir(), "logs");

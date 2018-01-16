@@ -360,8 +360,42 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				throw new Exception("No media file reported");
 			}
 			if( false == file.exists() || false == file.isFile() ){
-				logger.error(""+file.getAbsolutePath()+" is not a file.");
-				throw new Exception(""+file.getAbsolutePath()+" is not a file.");
+				logger.info("Uploaded media file does not exist: "+file.getAbsolutePath());
+				
+				// Look for original attachment name
+				String uploadedAttachmentName = null;
+				if( attDescription.isOriginalUpload() ) {
+					// The main attachment is associated with the original uploaded file
+					if( attDescription.isFilePresent() ) {
+						// The attachment is present
+						uploadedAttachmentName = attDescription.getAttachmentName();
+						logger.info("Found original attachment for missing uploaded media: "+uploadedAttachmentName);
+					}
+				}
+				if( null == uploadedAttachmentName ) {
+					String originalAttachmentName = attDescription.getOriginalAttachment();
+					if( null != originalAttachmentName ) {
+						if( docDescriptor.isAttachmentDescriptionAvailable(originalAttachmentName) ){
+							AttachmentDescriptor originalAttachmentDescription = docDescriptor.getAttachmentDescription(originalAttachmentName);
+							if( originalAttachmentDescription.isFilePresent() ) {
+								// Attachment is available
+								uploadedAttachmentName = originalAttachmentDescription.getAttachmentName();
+								logger.info("Found original attachment for missing uploaded media: "+uploadedAttachmentName);
+							}
+						}
+					}
+				}
+				
+				// Download file that was originally uploaded
+				if( null != uploadedAttachmentName ) {
+					conversionContext.downloadFile(uploadedAttachmentName, file);
+					logger.info("Recovered original file from database: "+uploadedAttachmentName);
+				}
+
+				// Check if state was resolved
+				if( false == file.exists() || false == file.isFile() ){
+					throw new Exception("Uploaded media file does not exist: "+file.getAbsolutePath());
+				}
 			};
 
 			// Set file size
@@ -505,6 +539,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				logger.info("No plugin found to analyze file class: "+fileClass);
 				
 				// By default, original file is used
+				attDescription.setOriginalUpload(true);
 				attDescription.setMediaFileName(originalObj.getMediaFileName());
 				attDescription.setContentType(originalObj.getContentType());
 				attDescription.setEncodingType(originalObj.getEncodingType());

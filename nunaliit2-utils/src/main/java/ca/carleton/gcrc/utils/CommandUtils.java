@@ -131,6 +131,8 @@ public class CommandUtils {
 				commandStr = sb.toString();
 			}
 
+			logger.trace("Executing command ("+commandStr+")");
+
 			ProcessBuilder pb = new ProcessBuilder(commandTokens);
 			Process p = pb.start();
 
@@ -216,6 +218,8 @@ public class CommandUtils {
 				commandStr = sb.toString();
 			}
 
+			logger.debug("Executing command ("+commandStr+")");
+
 			ProcessBuilder pb = new ProcessBuilder(commandTokens);
 			Process p = pb.start();
 
@@ -254,7 +258,12 @@ public class CommandUtils {
 			errGobbler.join();
 			
 			if( 0 != exitValue ){
-				logger.info("Command ("+commandStr+") exited with value "+exitValue+": "+errWriter.toString());
+				if( errWriter.toString().isEmpty() ) {
+					// No error was output. Dump stdout
+					logger.info("Command ("+commandStr+") exited with value "+exitValue+": "+stdWriter.toString());
+				} else {
+					logger.info("Command ("+commandStr+") exited with value "+exitValue+": "+errWriter.toString());
+				}
 				throw new Exception("Process exited with value: "+exitValue);
 			}
 			

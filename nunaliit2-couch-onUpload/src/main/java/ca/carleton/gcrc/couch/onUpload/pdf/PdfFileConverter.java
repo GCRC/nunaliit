@@ -141,6 +141,7 @@ public class PdfFileConverter implements FileConversionPlugin {
 
 		// Original object is the main object
 		{
+			attDescription.setOriginalUpload(true);
 			attDescription.setMediaFileName(originalObj.getMediaFileName());
 			attDescription.setContentType(originalObj.getContentType());
 			attDescription.setEncodingType(originalObj.getEncodingType());
