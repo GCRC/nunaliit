@@ -777,7 +777,7 @@ var ImportAnalyzer = $n2.Class({
 					,onSuccess: function(change){
 						if( change ){
 							analysis.addChange({
-								change
+								change: change
 								,dbDoc: dbDocsByImportId[id]
 								,importEntry: entry
 							});
