@@ -776,6 +776,7 @@ function Configure(options_){
 			atlasDb: configuration.atlasDb
 			,atlasDesign: configuration.atlasDesign
 			,schemaRepository: configuration.directory.schemaRepository
+			,dispatchService: configuration.directory.dispatchService
 		});
 
 		configuration.directory.documentListService = new $n2.couchDocumentList.DocumentListService({

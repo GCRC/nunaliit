@@ -97,7 +97,8 @@ data, a document is created with the following structure:
 var GEOM_PROP_NAME = '__geometry__';
 
 // Localization
-var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); },
+DH = 'n2.couchImportProfile';
 
 //=========================================================================
 var operationPatterns = [];
@@ -637,14 +638,18 @@ var ImportAnalyzer = $n2.Class({
 	
 	atlasDesign: null,
 	
+	dispatchService: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			profile: null
 			,atlasDesign: null
+			,dispatchService: null
 		},opts_);
 		
 		this.profile = opts.profile;
 		this.atlasDesign = opts.atlasDesign;
+		this.dispatchService = opts.dispatchService;
 	},
 
 	analyzeEntries: function(opts_){
@@ -786,6 +791,9 @@ var ImportAnalyzer = $n2.Class({
 						// Next entry
 						window.setTimeout(processEntries,0); // Do not blow stack on large files
 					}
+					,onError: function(err){
+						opts.onError( _loc('Unable to analyze change: {err}',{err:''+err}) );
+					}
 				});
 				
 			} else {
@@ -858,134 +866,218 @@ var ImportAnalyzer = $n2.Class({
 			importEntry: null
 			,doc: null
 			,onSuccess: function(change){}
+			,onError: function(err){}
 		},opts_);
+		
+		var _this = this;
 		
 		var importEntry = opts.importEntry;
 		var importData = importEntry.getProperties();
 
-		var lastImportEntry = new ImportEntryFromDoc({
+		// Testing new code
+		this._retrieveLastEntryFromDoc({
 			doc: opts.doc
+			,onSuccess: retrievedLastImportEntry
+			,onError: function(err){
+				opts.onError( new Error('Error while retrieving last import entry: ' + err) );
+			}
 		});
-		var lastImportData = lastImportEntry.getProperties();
-		var lastImportGeometry = lastImportEntry.getGeometry();
-		var importId = lastImportEntry.getId();
-		
-		var change = null;
-		
-		// Create a map of all property names
-		var allPropNamesMap = {};
-		for(var propName in importData){
-			allPropNamesMap[propName] = true;
-		};
-		for(var propName in lastImportData){
-			allPropNamesMap[propName] = true;
-		};
-		
-		// Geometry
-		var isGeometryModified = false;
-		var externalGeom = importEntry.getGeometry();
-		if( externalGeom ){
-			if( lastImportGeometry ){
-				if( externalGeom !== lastImportGeometry ){
-					// Geometry modified
+
+		function retrievedLastImportEntry(lastImportEntry){
+			var lastImportData = lastImportEntry.getProperties();
+			var lastImportGeometry = lastImportEntry.getGeometry();
+			var importId = lastImportEntry.getId();
+			
+			var change = null;
+			
+			// Create a map of all property names
+			var allPropNamesMap = {};
+			for(var propName in importData){
+				allPropNamesMap[propName] = true;
+			};
+			for(var propName in lastImportData){
+				allPropNamesMap[propName] = true;
+			};
+			
+			// Geometry
+			var isGeometryModified = false;
+			var externalGeom = importEntry.getGeometry();
+			if( externalGeom ){
+				if( lastImportGeometry ){
+					if( externalGeom !== lastImportGeometry ){
+						// Geometry modified
+						isGeometryModified = true;
+					};
+				} else {
+					// Geometry added
 					isGeometryModified = true;
 				};
-			} else {
-				// Geometry added
+			} else if( lastImportGeometry ){
+				// Deleted
 				isGeometryModified = true;
 			};
-		} else if( lastImportGeometry ){
-			// Deleted
-			isGeometryModified = true;
-		};
-		if( isGeometryModified ){
-			change = new Change({
-				importId:importId
-				,isModification: true
-			});
-
-			var modImportValue = new ModifiedImportValue({
-				propertyName: GEOM_PROP_NAME,
-				lastImportedValue: lastImportGeometry,
-				currentImportedValue: externalGeom
-			});
-			change.addModifiedImportValue(modImportValue);
-		};
-		
-		// Look at values that have changed since the last import
-		var modificationsByPropName = {};
-		var allPropertyNames = [];
-		for(var propName in allPropNamesMap){
-			var lastImportValue = lastImportData[propName];
-			var externalValue = importData[propName];
-			
-			allPropertyNames.push(propName);
-			
-			if( externalValue !== lastImportValue ){
-				if( !change ) change = new Change({
+			if( isGeometryModified ){
+				change = new Change({
 					importId:importId
 					,isModification: true
 				});
-
-				var mod = {
-					property: propName
-					,lastImportValue: lastImportValue
-					,externalValue: externalValue
-					,collisions: []
-					,copyOperations: []
-				};
-				
-				modificationsByPropName[propName] = mod;
-				
-				change.modifiedProperties.push(mod);
-				
+	
 				var modImportValue = new ModifiedImportValue({
-					propertyName: propName,
-					lastImportedValue: lastImportValue,
-					currentImportedValue: externalValue
+					propertyName: GEOM_PROP_NAME,
+					lastImportedValue: lastImportGeometry,
+					currentImportedValue: externalGeom
 				});
 				change.addModifiedImportValue(modImportValue);
 			};
-		};
-		
-		// Get all copy operations that are to be executed on import
-		if( change ){
-			this.profile.reportCopyOperations({
-				doc: opts.doc
-				,importEntry: importEntry
-				,lastImportEntry: lastImportEntry
-				,allPropertyNames: allPropertyNames
-				,onSuccess: function(copyOperations){
-					// Look at each copy operation and retain the ones that are relevant.
-					// In other words, keep the operations that are affected by the change
-					// in property values
-					copyOperations.forEach(function(copyOperation){
-						var propertyNames = copyOperation.propertyNames;
-						if( change.hasAnyValueChangedSinceLastImport(propertyNames) ){
-							// The copy operation is marked equal if the current target
-							// value and the updated computed value are the same
-							if( copyOperation.isEqual ){
-								// Nothing to do
-							} else {
-								if( copyOperation.changedSinceLastImport ){
-									// Changed by external entity and changed on
-									// the database. Collision
-									change.addCollisionOperation(copyOperation);
+			
+			// Look at values that have changed since the last import
+			var modificationsByPropName = {};
+			var allPropertyNames = [];
+			for(var propName in allPropNamesMap){
+				var lastImportValue = lastImportData[propName];
+				var externalValue = importData[propName];
+				
+				allPropertyNames.push(propName);
+				
+				if( externalValue !== lastImportValue ){
+					if( !change ) change = new Change({
+						importId:importId
+						,isModification: true
+					});
+	
+					var mod = {
+						property: propName
+						,lastImportValue: lastImportValue
+						,externalValue: externalValue
+						,collisions: []
+						,copyOperations: []
+					};
+					
+					modificationsByPropName[propName] = mod;
+					
+					change.modifiedProperties.push(mod);
+					
+					var modImportValue = new ModifiedImportValue({
+						propertyName: propName,
+						lastImportedValue: lastImportValue,
+						currentImportedValue: externalValue
+					});
+					change.addModifiedImportValue(modImportValue);
+				};
+			};
+			
+			// Get all copy operations that are to be executed on import
+			if( change ){
+				_this.profile.reportCopyOperations({
+					doc: opts.doc
+					,importEntry: importEntry
+					,lastImportEntry: lastImportEntry
+					,allPropertyNames: allPropertyNames
+					,onSuccess: function(copyOperations){
+						// Look at each copy operation and retain the ones that are relevant.
+						// In other words, keep the operations that are affected by the change
+						// in property values
+						copyOperations.forEach(function(copyOperation){
+							var propertyNames = copyOperation.propertyNames;
+							if( change.hasAnyValueChangedSinceLastImport(propertyNames) ){
+								// The copy operation is marked equal if the current target
+								// value and the updated computed value are the same
+								if( copyOperation.isEqual ){
+									// Nothing to do
 								} else {
-									// Changed by external entity but it has not
-									// changed since last import. Automatic copy
-									change.addCopyOperation(copyOperation);
+									if( copyOperation.changedSinceLastImport ){
+										// Changed by external entity and changed on
+										// the database. Collision
+										change.addCollisionOperation(copyOperation);
+									} else {
+										// Changed by external entity but it has not
+										// changed since last import. Automatic copy
+										change.addCopyOperation(copyOperation);
+									};
 								};
 							};
-						};
-					});
-					
-					opts.onSuccess(change);
-				}
-			});
+						});
+						
+						opts.onSuccess(change);
+					}
+				});
+			} else {
+				// Should we ever get here?
+				opts.onSuccess(undefined);
+			};
+		};
+	},
+	
+	_retrieveLastEntryFromDoc: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,onSuccess: function(lastEntry){}
+			,onError: function(err){}
+		},opts_);
+		
+		var doc = opts.doc;
+	
+		if( !doc ){
+			var lastImportEntry = new ImportEntryFromDoc({ doc: undefined });
+			opts.onSuccess(lastImportEntry);
+			return;
+		};
+
+		if( doc.nunaliit_import.dataAttachmentName ){
+			var attName = doc.nunaliit_import.dataAttachmentName;
+
+			if( doc._attachments
+			 && doc._attachments[attName] ){
+				// Compute URL
+				var documentSource;
+				// Document source is not specified. Look for it.
+				var m = {
+					type: 'documentSourceFromDocument'
+					,doc: doc
+					,documentSource: null
+				};
+				this.dispatchService.synchronousCall(DH,m);
+				if( m.documentSource ){
+					documentSource = m.documentSource;
+				};
+				
+				var attUrl = documentSource.getDocumentAttachmentUrl(doc, attName);
+				$.ajax({
+					url: attUrl
+					,type: 'GET'
+					,dataType: 'json'
+					,success: function(nunaliit_import, textStatus, jqXHR){
+						//$n2.log('Import Attachment', nunaliit_import);
+						var lastImportEntry = new ImportEntryFromDoc({
+							doc: doc
+							,data: nunaliit_import.data
+							,geometryWkt: nunaliit_import.wkt
+						});
+						opts.onSuccess(lastImportEntry);
+					}
+					,error: function(jqXHR, textStatus, errorThrown){
+						var err = $n2.utils.parseHttpJsonError(jqXHR, textStatus);
+						opts.onError(err);
+					}
+				});
+
+			} else {
+				var err = new Error('Attachment for import data can not be found');
+				opts.onError(err);
+			};
+
 		} else {
-			// Should we ever get here?
-			opts.onSuccess(undefined);
+			var data = doc.nunaliit_import.data;
+			var geometryWkt = undefined;
+			if( doc.nunaliit_import.geometry ){
+				geometryWkt = doc.nunaliit_import.geometry.wkt;
+			};
+			var lastImportEntry = new ImportEntryFromDoc({
+				doc: doc
+				,data: data
+				,geometryWkt: geometryWkt
+			});
+			opts.onSuccess(lastImportEntry);
 		};
 	}
 });
@@ -1677,41 +1769,35 @@ var AnalysisReport = $n2.Class({
 		
 		// nunaliit_import
 		if( !doc.nunaliit_import ) {
-			doc.nunaliit_import = {
-				data:{}
-			};
+			doc.nunaliit_import = {};
 		};
 		doc.nunaliit_import.id = importEntry.getId();
 		doc.nunaliit_import.profile = importProfile.getId();
+		doc.nunaliit_import.dataAttachmentName = 'nunaliit_import';
 		
-//		// Geometry
-//		var geom = importEntry.getGeometry();
-//		if( geom ){
-//			doc.nunaliit_import.geometry = {
-//				wkt: geom
-//			};
-//			doc.nunaliit_geom = {
-//				nunaliit_type: 'geometry'
-//			};
-//			doc.nunaliit_geom.wkt = geom;
-//
-//			var olWkt = new OpenLayers.Format.WKT();
-//			var vectorFeature = olWkt.read(geom);
-//			var bounds = vectorFeature.geometry.getBounds();
-//			doc.nunaliit_geom.bbox = [ 
-//				bounds.left
-//				,bounds.bottom
-//				,bounds.right
-//				,bounds.top
-//			];
-//		};
-//		
-		// Copy properties
-		var propNames = [];
+		// Install import entry data to attachment
+		var att = {
+			data: {},
+			wkt: undefined
+		};
+		att.id = importEntry.getId();
+		att.profile = importProfile.getId();
+		var geom = importEntry.getGeometry();
+		if( geom ){
+			att.wkt = geom;
+		};
 		for(var propName in importProperties){
 			var propValue = importProperties[propName];
-			doc.nunaliit_import.data[propName] = propValue;
-			propNames.push(propName);
+			att.data[propName] = propValue;
+		};
+		var jsonAtt = JSON.stringify(att);
+		var b64JsonAtt = $n2.Base64.encode(jsonAtt);
+		if( !doc._attachments ){
+			doc._attachments = {};
+		};
+		doc._attachments['nunaliit_import'] = {
+			content_type: 'text/json'
+			,data: b64JsonAtt
 		};
 		
 		// Perform copy operations
@@ -1762,10 +1848,46 @@ var AnalysisReport = $n2.Class({
 			doc.nunaliit_import = {
 				id: importId
 				,profile: importProfile.getId()
+				,dataAttachmentName: 'nunaliit_import'
 			};
 		};
-		if( !doc.nunaliit_import.data ){
-			doc.nunaliit_import.data = {};
+		if( doc.nunaliit_import.data ){
+			delete doc.nunaliit_import.data;
+		};
+		if( doc.nunaliit_import.wkt ){
+			delete doc.nunaliit_import.wkt;
+		};
+
+		// Install import entry data to attachment
+		var att = {
+			data: {},
+			wkt: undefined
+		};
+		att.id = importEntry.getId();
+		att.profile = importProfile.getId();
+		var geom = importEntry.getGeometry();
+		if( geom ){
+			att.wkt = geom;
+		};
+		for(var i=0,e=change.modifiedProperties.length; i<e; ++i){
+			var mod = change.modifiedProperties[i];
+			var propName = mod.property;
+			var propValue = mod.externalValue;
+			
+			if( typeof propValue === 'undefined' ){
+				// Do not copy
+			} else {
+				att.data[propName] = propValue;
+			};
+		};
+		var jsonAtt = JSON.stringify(att);
+		var b64JsonAtt = $n2.Base64.encode(jsonAtt);
+		if( !doc._attachments ){
+			doc._attachments = {};
+		};
+		doc._attachments['nunaliit_import'] = {
+			content_type: 'text/json'
+			,data: b64JsonAtt
 		};
 		
 		// Schema name
@@ -1773,23 +1895,6 @@ var AnalysisReport = $n2.Class({
 		 && schema ) {
 			doc.nunaliit_schema = schema.name;
 		};
-		
-		// Copy only properties that have changed
-		for(var i=0,e=change.modifiedProperties.length; i<e; ++i){
-			var mod = change.modifiedProperties[i];
-			var propName = mod.property;
-			var propValue = mod.externalValue;
-			
-			// Update import data
-			if( typeof propValue === 'undefined' ){
-				if( typeof doc.nunaliit_import.data[propName] !== 'undefined' ){
-					delete doc.nunaliit_import.data[propName];
-				};
-			} else {
-				doc.nunaliit_import.data[propName] = propValue;
-			};
-		};
-		
 		
 		// Check that all collisions are resolved
 		if( !change.isResolved() ){
@@ -3149,6 +3254,8 @@ var ImportProfile = $n2.Class({
 	atlasDb: null,
 
 	atlasDesign: null,
+
+	dispatchService: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -3160,6 +3267,7 @@ var ImportProfile = $n2.Class({
 			,operations: undefined
 			,atlasDb: undefined
 			,atlasDesign: undefined
+			,dispatchService: undefined
 		},opts_);
 		
 		this.id = opts.id;
@@ -3169,6 +3277,7 @@ var ImportProfile = $n2.Class({
 		this.schema = opts.schema;
 		this.atlasDb = opts.atlasDb;
 		this.atlasDesign = opts.atlasDesign;
+		this.dispatchService = opts.dispatchService;
 
 		this.operations = [];
 		this.operationsById = {};
@@ -3229,6 +3338,7 @@ var ImportProfile = $n2.Class({
 		var analyzer = new ImportAnalyzer({
 			profile: this
 			,atlasDesign: this.atlasDesign
+			,dispatchService: this.dispatchService
 		});
 		analyzer.analyzeEntries({
 			entries: opts.entries
@@ -3326,20 +3436,18 @@ var ImportEntryFromDoc = $n2.Class('ImportEntryFromDoc', ImportEntry, {
 		
 		var opts = $n2.extend({
 			doc: undefined
+			,data: undefined
+			,geometryWkt: undefined
 		},opts_);
 		
 		this.id = undefined;
-		this.data = {};
-		this.geometryWkt = undefined;
+		this.data = opts.data ? opts.data : {};
+		this.geometryWkt = opts.geometryWkt;
 		
 		var doc = opts.doc;
 		if( doc 
 		 && doc.nunaliit_import ){
 			this.id = doc.nunaliit_import.id;
-			this.data = doc.nunaliit_import.data;
-			if( doc.nunaliit_import.geometry ){
-				this.geometryWkt = doc.nunaliit_import.geometry.wkt;
-			};
 		};
 	},
 
@@ -3792,16 +3900,20 @@ var ImportProfileService = $n2.Class({
 	
 	profileClasses: null,
 	
+	dispatchService: null,
+	
 	initialize: function(opts_){
 		var opts= $n2.extend({
 			atlasDb: null
 			,atlasDesign: null
 			,schemaRepository: null
+			,dispatchService: null
 		},opts_);
 		
 		this.atlasDb = opts.atlasDb;
 		this.atlasDesign = opts.atlasDesign;
 		this.schemaRepository = opts.schemaRepository;
+		this.dispatchService = opts.dispatchService;
 		
 		this.profileClasses = {};
 		
@@ -3916,6 +4028,7 @@ var ImportProfileService = $n2.Class({
 				classOpts.layerName = importProfile.layerName;
 				classOpts.atlasDb = this.atlasDb;
 				classOpts.atlasDesign = this.atlasDesign;
+				classOpts.dispatchService = this.dispatchService;
 				classOpts.schema = undefined;
 				
 				if( importProfile.schemaName ){
