@@ -290,7 +290,11 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 						++index;
 					}
 					
-					attDescription.renameAttachmentTo(newAttachmentName);
+					try {
+						attDescription.renameAttachmentTo(newAttachmentName);
+					} catch (Exception e) {
+						logger.info("Unable to rename attachment. Continuing.", e);
+					}
 				}
 			}
 			
