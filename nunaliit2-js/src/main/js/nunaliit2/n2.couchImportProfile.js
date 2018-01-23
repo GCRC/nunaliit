@@ -450,7 +450,11 @@ var Change = $n2.Class({
 		
 		this.copyOperations.forEach(function(op){
 			var propNames = op.propertyNames;
-			if( _this.hasAnyValueChangedSinceLastImport(propNames) ){
+			if( propNames.length < 1 ){
+				// Copy operation independent of the import
+				// data
+				ops.push(op);
+			} else if( _this.hasAnyValueChangedSinceLastImport(propNames) ){
 				ops.push(op);
 			};
 		});
@@ -465,7 +469,11 @@ var Change = $n2.Class({
 		
 		this.copyOperations.forEach(function(op){
 			var propNames = op.propertyNames;
-			if( _this.hasAnyValueChangedSinceLastImport(propNames) ){
+			if( propNames.length < 1 ){
+				// Copy operation independent of the import
+				// data
+				ops.push(op);
+			} else if( _this.hasAnyValueChangedSinceLastImport(propNames) ){
 				ops.push(op);
 			};
 		});
@@ -888,7 +896,10 @@ var ImportAnalyzer = $n2.Class({
 			var lastImportGeometry = lastImportEntry.getGeometry();
 			var importId = lastImportEntry.getId();
 			
-			var change = null;
+			var change = new Change({
+				importId:importId
+				,isModification: true
+			});
 			
 			// Create a map of all property names
 			var allPropNamesMap = {};
@@ -917,11 +928,6 @@ var ImportAnalyzer = $n2.Class({
 				isGeometryModified = true;
 			};
 			if( isGeometryModified ){
-				change = new Change({
-					importId:importId
-					,isModification: true
-				});
-	
 				var modImportValue = new ModifiedImportValue({
 					propertyName: GEOM_PROP_NAME,
 					lastImportedValue: lastImportGeometry,
@@ -940,11 +946,6 @@ var ImportAnalyzer = $n2.Class({
 				allPropertyNames.push(propName);
 				
 				if( externalValue !== lastImportValue ){
-					if( !change ) change = new Change({
-						importId:importId
-						,isModification: true
-					});
-	
 					var mod = {
 						property: propName
 						,lastImportValue: lastImportValue
@@ -967,52 +968,55 @@ var ImportAnalyzer = $n2.Class({
 			};
 			
 			// Get all copy operations that are to be executed on import
-			if( change ){
-				_this.profile.reportCopyOperations({
-					doc: opts.doc
-					,importEntry: importEntry
-					,lastImportEntry: lastImportEntry
-					,allPropertyNames: allPropertyNames
-					,onSuccess: function(copyOperations){
-						// Look at each copy operation and retain the ones that are relevant.
-						// In other words, keep the operations that are affected by the change
-						// in property values
-						copyOperations.forEach(function(copyOperation){
-							var propertyNames = copyOperation.propertyNames;
-							if( change.hasAnyValueChangedSinceLastImport(propertyNames) ){
-								// The copy operation is marked equal if the current target
-								// value and the updated computed value are the same
-								if( copyOperation.isEqual ){
-									// Nothing to do
+			_this.profile.reportCopyOperations({
+				doc: opts.doc
+				,importEntry: importEntry
+				,lastImportEntry: lastImportEntry
+				,allPropertyNames: allPropertyNames
+				,onSuccess: function(copyOperations){
+					var atLeastOneCopyOperation = false;
+
+					// Look at each copy operation and retain the ones that are relevant.
+					// In other words, keep the operations that are affected by the change
+					// in property values
+					copyOperations.forEach(function(copyOperation){
+						var propertyNames = copyOperation.propertyNames;
+						if( change.hasAnyValueChangedSinceLastImport(propertyNames) ){
+							// The copy operation is marked equal if the current target
+							// value and the updated computed value are the same
+							if( copyOperation.isEqual ){
+								// Nothing to do
+							} else {
+								atLeastOneCopyOperation = true;
+								if( copyOperation.changedSinceLastImport ){
+									// Changed by external entity and changed on
+									// the database. Collision
+									change.addCollisionOperation(copyOperation);
 								} else {
-									if( copyOperation.changedSinceLastImport ){
-										// Changed by external entity and changed on
-										// the database. Collision
-										change.addCollisionOperation(copyOperation);
-									} else {
-										// Changed by external entity but it has not
-										// changed since last import. Automatic copy
-										change.addCopyOperation(copyOperation);
-									};
-								};
-							} else if( propertyNames.length < 1 ) {
-								if( copyOperation.isEqual ){
-									// Nothing to do
-								} else {
-									// This is a change that is not dependent on import data.
-									// If not equal, add
+									// Changed by external entity but it has not
+									// changed since last import. Automatic copy
 									change.addCopyOperation(copyOperation);
 								};
 							};
-						});
-						
-						opts.onSuccess(change);
-					}
-				});
-			} else {
-				// Should we ever get here?
-				opts.onSuccess(undefined);
-			};
+						} else if( propertyNames.length < 1 ) {
+							if( copyOperation.isEqual ){
+								// Nothing to do
+							} else {
+								// This is a change that is not dependent on import data.
+								// If not equal, add
+								atLeastOneCopyOperation = true;
+								change.addCopyOperation(copyOperation);
+							};
+						};
+					});
+					
+					if( !atLeastOneCopyOperation ){
+						change = undefined;
+					};
+					
+					opts.onSuccess(change);
+				}
+			});
 		};
 	},
 	
