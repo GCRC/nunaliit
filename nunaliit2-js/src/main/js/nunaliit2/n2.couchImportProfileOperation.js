@@ -704,7 +704,7 @@ OpAssignment.prototype.reportCopyOperations = function(opts){
 OpAssignment.prototype.performCopyOperation = function(opts_){
 	var opts = $n2.extend({
 		doc: null
-		,importData: null
+		,importEntry: null
 		,copyOperation: null
 	},opts_);
 	

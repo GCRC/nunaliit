@@ -995,6 +995,14 @@ var ImportAnalyzer = $n2.Class({
 										change.addCopyOperation(copyOperation);
 									};
 								};
+							} else if( propertyNames.length < 1 ) {
+								if( copyOperation.isEqual ){
+									// Nothing to do
+								} else {
+									// This is a change that is not dependent on import data.
+									// If not equal, add
+									change.addCopyOperation(copyOperation);
+								};
 							};
 						});
 						
@@ -1046,12 +1054,12 @@ var ImportAnalyzer = $n2.Class({
 					url: attUrl
 					,type: 'GET'
 					,dataType: 'json'
-					,success: function(nunaliit_import, textStatus, jqXHR){
+					,success: function(importAtt, textStatus, jqXHR){
 						//$n2.log('Import Attachment', nunaliit_import);
 						var lastImportEntry = new ImportEntryFromDoc({
 							doc: doc
-							,data: nunaliit_import.data
-							,geometryWkt: nunaliit_import.wkt
+							,data: importAtt.data
+							,geometryWkt: importAtt.wkt
 						});
 						opts.onSuccess(lastImportEntry);
 					}
@@ -1067,6 +1075,7 @@ var ImportAnalyzer = $n2.Class({
 			};
 
 		} else {
+			// Legacy import data
 			var data = doc.nunaliit_import.data;
 			var geometryWkt = undefined;
 			if( doc.nunaliit_import.geometry ){
@@ -1462,23 +1471,23 @@ var AnalysisReport = $n2.Class({
 			// Report deletions
 			var importId = change.importId;
 			var doc = analysis.getDbDoc(importId);
-			var $div = $('<div>')
+			var $del = $('<div>')
 				.attr('id',change.changeId)
 				.addClass('delete operation')
-				.appendTo($changes);
+				.appendTo($div);
 			if( change.isAuto() ){
-				$div.addClass('autoOperation');
+				$del.addClass('autoOperation');
 			};
 			
 			$('<button>')
 				.addClass('discard')
 				.text( _loc('Discard') )
-				.appendTo($div)
+				.appendTo($del)
 				.click(discardClickFn);
 			$('<button>')
 				.addClass('proceed')
 				.text( _loc('Delete Database Document') )
-				.appendTo($div)
+				.appendTo($del)
 				.click(proceedClickFn);
 
 			var explanation = _loc('Delete existing document');
@@ -1488,36 +1497,18 @@ var AnalysisReport = $n2.Class({
 			$('<div>')
 				.addClass('explanation')
 				.text( explanation )
-				.appendTo($div);
+				.appendTo($del);
 			$('<div>')
 				.addClass('geoJsonId')
 				.text( 'Import ID: '+importId )
-				.appendTo($div);
+				.appendTo($del);
 			$('<div>')
 				.addClass('docId')
 				.text( 'Database ID: '+doc._id )
-				.appendTo($div);
+				.appendTo($del);
 			var $properties = $('<div>')
 				.addClass('properties')
-				.appendTo($div);
-			if( doc 
-			 && doc.nunaliit_import 
-			 && doc.nunaliit_import.data ){
-				for(var propName in doc.nunaliit_import.data){
-					var propValue = doc.nunaliit_import.data[propName];
-					var $prop = $('<div>')
-						.addClass('property')
-						.appendTo($properties);
-					$('<div>')
-						.addClass('propertyName')
-						.text(propName)
-						.appendTo($prop);
-					$('<div>')
-						.addClass('previousValue')
-						.text(propValue)
-						.appendTo($prop);
-				};
-			};
+				.appendTo($del);
 		};
 	},
 	
@@ -1730,7 +1721,6 @@ var AnalysisReport = $n2.Class({
 		
 		var changeId = change.importId;
 		var importEntry = this.analysis.getImportEntry(changeId);
-		var importProperties = importEntry.getProperties();
 		var importProfile = this.analysis.getImportProfile();
 		var schema = importProfile.getSchema();
 		var layerName = importProfile.getLayerName();
@@ -1767,42 +1757,12 @@ var AnalysisReport = $n2.Class({
 			};
 		};
 		
-		// nunaliit_import
-		if( !doc.nunaliit_import ) {
-			doc.nunaliit_import = {};
-		};
-		doc.nunaliit_import.id = importEntry.getId();
-		doc.nunaliit_import.profile = importProfile.getId();
-		doc.nunaliit_import.dataAttachmentName = 'nunaliit_import';
-		
 		// Install import entry data to attachment
-		var att = {
-			data: {},
-			wkt: undefined
-		};
-		att.id = importEntry.getId();
-		att.profile = importProfile.getId();
-		var geom = importEntry.getGeometry();
-		if( geom ){
-			att.wkt = geom;
-		};
-		for(var propName in importProperties){
-			var propValue = importProperties[propName];
-			att.data[propName] = propValue;
-		};
-		var jsonAtt = JSON.stringify(att);
-		var b64JsonAtt = $n2.Base64.encode(jsonAtt);
-		if( !doc._attachments ){
-			doc._attachments = {};
-		};
-		doc._attachments['nunaliit_import'] = {
-			content_type: 'text/json'
-			,data: b64JsonAtt
-		};
+		this._updateImportAttachment(doc, importProfile, importEntry);
 		
 		// Perform copy operations
 		var copyOperations = change.getEffectiveCopyOperations();
-		importProfile.performCopyOperations(doc, copyOperations);
+		importProfile.performCopyOperations(doc, copyOperations, importEntry);
 			
 		// Adjust document with created, last updated
 		if( $n2.couchMap
@@ -1844,51 +1804,8 @@ var AnalysisReport = $n2.Class({
 		var importProfile = this.analysis.getImportProfile();
 		var schema = importProfile.getSchema();
 
-		if( !doc.nunaliit_import ){
-			doc.nunaliit_import = {
-				id: importId
-				,profile: importProfile.getId()
-				,dataAttachmentName: 'nunaliit_import'
-			};
-		};
-		if( doc.nunaliit_import.data ){
-			delete doc.nunaliit_import.data;
-		};
-		if( doc.nunaliit_import.wkt ){
-			delete doc.nunaliit_import.wkt;
-		};
-
 		// Install import entry data to attachment
-		var att = {
-			data: {},
-			wkt: undefined
-		};
-		att.id = importEntry.getId();
-		att.profile = importProfile.getId();
-		var geom = importEntry.getGeometry();
-		if( geom ){
-			att.wkt = geom;
-		};
-		for(var i=0,e=change.modifiedProperties.length; i<e; ++i){
-			var mod = change.modifiedProperties[i];
-			var propName = mod.property;
-			var propValue = mod.externalValue;
-			
-			if( typeof propValue === 'undefined' ){
-				// Do not copy
-			} else {
-				att.data[propName] = propValue;
-			};
-		};
-		var jsonAtt = JSON.stringify(att);
-		var b64JsonAtt = $n2.Base64.encode(jsonAtt);
-		if( !doc._attachments ){
-			doc._attachments = {};
-		};
-		doc._attachments['nunaliit_import'] = {
-			content_type: 'text/json'
-			,data: b64JsonAtt
-		};
+		this._updateImportAttachment(doc, importProfile, importEntry);
 		
 		// Schema name
 		if( !doc.nunaliit_schema
@@ -1903,7 +1820,7 @@ var AnalysisReport = $n2.Class({
 
 		// Perform copy operations
 		var copyOperations = change.getEffectiveCopyOperations();
-		importProfile.performCopyOperations(doc, copyOperations);
+		importProfile.performCopyOperations(doc, copyOperations, importEntry);
 		
 		// Adjust document with created, last updated
 		if( $n2.couchMap
@@ -1958,6 +1875,52 @@ var AnalysisReport = $n2.Class({
 				opts.onError(errorMsg);
 			}
 		});
+	},
+	
+	_updateImportAttachment: function(doc, importProfile, importEntry){
+		if( !doc.nunaliit_import ){
+			doc.nunaliit_import = {
+				id: importEntry.getId()
+				,profile: importProfile.getId()
+				,dataAttachmentName: 'nunaliit_import'
+			};
+		};
+
+		// For legacy documents
+		if( doc.nunaliit_import.data ){
+			delete doc.nunaliit_import.data;
+		};
+		if( doc.nunaliit_import.wkt ){
+			delete doc.nunaliit_import.wkt;
+		};
+
+		// Make up attachment
+		var att = {
+			data: {},
+			wkt: undefined
+		};
+		att.id = importEntry.getId();
+		att.profile = importProfile.getId();
+		var geom = importEntry.getGeometry();
+		if( geom ){
+			att.wkt = geom;
+		};
+		var importProperties = importEntry.getProperties();
+		for(var propName in importProperties){
+			var propValue = importProperties[propName];
+			att.data[propName] = propValue;
+		};
+		
+		// Inline attachments are Base64 encoded
+		var jsonAtt = JSON.stringify(att);
+		var b64JsonAtt = $n2.Base64.encode(jsonAtt);
+		if( !doc._attachments ){
+			doc._attachments = {};
+		};
+		doc._attachments['nunaliit_import'] = {
+			content_type: 'text/json'
+			,data: b64JsonAtt
+		};
 	}
 });
 
@@ -2054,13 +2017,14 @@ var ImportProfileOperationCopyAll = $n2.Class(ImportProfileOperation, {
 	performCopyOperation: function(opts_){
 		var opts = $n2.extend({
 			doc: null
-			,importData: null
+			,importEntry: null
 			,copyOperation: null
 		},opts_);
 		
 		var key = opts.copyOperation.propertyNames[0];
 		var targetSelector = opts.copyOperation.targetSelector;
-		var importValue = opts.importData[key];
+		var importData = opts.importEntry.getProperties();
+		var importValue = importData[key];
 		
 		if( typeof importValue === 'undefined' ){
 			targetSelector.removeValue(opts.doc);
@@ -2152,13 +2116,14 @@ var ImportProfileOperationCopyAllAndFixNames = $n2.Class(ImportProfileOperation,
 	performCopyOperation: function(opts_){
 		var opts = $n2.extend({
 			doc: null
-			,importData: null
+			,importEntry: null
 			,copyOperation: null
 		},opts_);
 		
 		var key = opts.copyOperation.propertyNames[0];
 		var targetSelector = opts.copyOperation.targetSelector;
-		var importValue = opts.importData[key];
+		var importData = opts.importEntry.getProperties();
+		var importValue = importData[key];
 		
 		if( typeof importValue === 'undefined' ){
 			targetSelector.removeValue(opts.doc);
@@ -2270,11 +2235,12 @@ var ImportProfileOperationAssign = $n2.Class(ImportProfileOperation, {
 	performCopyOperation: function(opts_){
 		var opts = $n2.extend({
 			doc: null
-			,importData: null
+			,importEntry: null
 			,copyOperation: null
 		},opts_);
 		
-		var importValue = opts.importData[this.sourceName];
+		var importData = opts.importEntry.getProperties();
+		var importValue = importData[this.sourceName];
 		if( typeof importValue === 'undefined' ){
 			// Must delete
 			this.targetSelector.removeValue(opts.doc);
@@ -2382,7 +2348,7 @@ var ImportProfileOperationLongLat = $n2.Class(ImportProfileOperation, {
 	performCopyOperation: function(opts_){
 		var opts = $n2.extend({
 			doc: null
-			,importData: null
+			,importEntry: null
 			,copyOperation: null
 		},opts_);
 		
@@ -2540,13 +2506,14 @@ var ImportProfileOperationReference = $n2.Class(ImportProfileOperation, {
 	performCopyOperation: function(opts_){
 		var opts = $n2.extend({
 			doc: null
-			,importData: null
+			,importEntry: null
 			,copyOperation: null
 		},opts_);
 		
 		var doc = opts.doc;
 		
-		var refId = opts.importData[this.refKey];
+		var importData = opts.importEntry.getProperties();
+		var refId = importData[this.refKey];
 		
 		var importValue = undefined;
 		if( refId ){
@@ -2702,13 +2669,14 @@ var ImportProfileOperationImportReference = $n2.Class(ImportProfileOperation, {
 	performCopyOperation: function(opts_){
 		var opts = $n2.extend({
 			doc: null
-			,importData: null
+			,importEntry: null
 			,copyOperation: null
 		},opts_);
 		
 		var doc = opts.doc;
 		
-		var refId = opts.importData[this.refKey];
+		var importData = opts.importEntry.getProperties();
+		var refId = importData[this.refKey];
 		
 		var importValue = undefined;
 		if( opts.copyOperation 
@@ -2839,7 +2807,7 @@ var ImportProfileOperationSetValue = $n2.Class(ImportProfileOperation, {
 	performCopyOperation: function(opts_){
 		var opts = $n2.extend({
 			doc: null
-			,importData: null
+			,importEntry: null
 			,copyOperation: null
 		},opts_);
 		
@@ -2989,13 +2957,14 @@ var ImportProfileOperationFindReference = $n2.Class(ImportProfileOperation, {
 	performCopyOperation: function(opts_){
 		var opts = $n2.extend({
 			doc: null
-			,importData: null
+			,importEntry: null
 			,copyOperation: null
 		},opts_);
 		
 		var doc = opts.doc;
 		
-		var refId = opts.importData[this.refKey];
+		var importData = opts.importEntry.getProperties();
+		var refId = importData[this.refKey];
 		
 		var importValue = undefined;
 		if( opts.copyOperation 
@@ -3083,7 +3052,7 @@ var ImportProfileOperationParsed = $n2.Class('ImportProfileOperationParsed', Imp
 	performCopyOperation: function(opts_){
 		var opts = $n2.extend({
 			doc: null
-			,importData: null
+			,importEntry: null
 			,copyOperation: null
 		},opts_);
 		
@@ -3165,7 +3134,7 @@ var ImportProfileOperationGeoJSON = $n2.Class('ImportProfileOperationGeoJSON', I
 	performCopyOperation: function(opts_){
 		var opts = $n2.extend({
 			doc: null
-			,importData: null
+			,importEntry: null
 			,copyOperation: null
 		},opts_);
 		
@@ -3391,11 +3360,9 @@ var ImportProfile = $n2.Class({
 		};
 	},
 	
-	performCopyOperations: function(doc, copyOperations){
+	performCopyOperations: function(doc, copyOperations, importEntry){
 		var _this = this;
 
-		var importData = doc.nunaliit_import.data;
-			
 		copyOperations.forEach(function(copy){
 			var opId = copy._n2OpId;
 			var op = _this.operationsById[opId];
@@ -3403,7 +3370,7 @@ var ImportProfile = $n2.Class({
 			if( op ){
 				op.performCopyOperation({
 					doc: doc
-					,importData: importData
+					,importEntry: importEntry
 					,copyOperation: copy
 				});
 			};
