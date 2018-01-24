@@ -161,20 +161,20 @@ var TreeCanvas = $n2.Class({
  		graphSize[1] = graphSize[1] - (2 * this.margin);
 
  		if( 'cluster' === this.layoutStyle ){
- 	 		this.treeLayout = d3.layout.cluster()
- 	 			.sort(function(a,b){
- 		 	    	return d3.ascending(a.sortValue, b.sortValue);
- 		 	    })
+ 	 		this.treeLayout = d3.cluster()
+ 	 			// .sort(function(a,b){
+ 		 	    // 	return d3.ascending(a.sortValue, b.sortValue);
+ 		 	    // })
  	 			.size(graphSize);
  		} else {
- 	 		this.treeLayout = d3.layout.tree()
- 	 			.sort(function(a,b){
- 		 	    	return d3.ascending(a.sortValue, b.sortValue);
- 		 	    })
+ 	 		this.treeLayout = d3.tree()
+ 	 			// .sort(function(a,b){
+ 		 	    // 	return d3.ascending(a.sortValue, b.sortValue);
+ 		 	    // })
  	 			.size(graphSize);
  		};
 		
- 		this.diagonalLine = d3.svg.diagonal();
+ 		this.diagonalLine = d3.linkHorizontal();
  		
  		opts.onSuccess();
 
@@ -210,8 +210,7 @@ var TreeCanvas = $n2.Class({
  			.attr('id',this.svgId);
  		
  		var $rootGroup = $svg.append('g')
-			.attr('class','packRoot')
-			;
+			.attr('class','packRoot');
 
 		$rootGroup.append('g')
  			.attr('class','links');
@@ -247,8 +246,7 @@ var TreeCanvas = $n2.Class({
  			.attr('width', size[0])
  			.attr('height', size[1]);
  		
- 		var $rootGroup = $svg.select('g.packRoot')
-			;
+ 		var $rootGroup = $svg.select('g.packRoot');
  		
  		var minDim = size[0];
  		if( minDim > size[1] ){
@@ -380,14 +378,12 @@ var TreeCanvas = $n2.Class({
 
  		// Update style on nodes
  		var selectedNodes = this._getSvgElem().select('g.nodes').selectAll('.node')
- 			.data(nodes, function(d){ return d.id; })
- 			;
+ 			.data(nodes, function(d){ return d.id; });
  		this._adjustElementStyles(selectedNodes);
 
  		// Update style on links
  		var selectedLinks = this._getSvgElem().select('g.links').selectAll('.link')
- 			.data(links, function(d){ return d.id; })
- 			;
+ 			.data(links, function(d){ return d.id; });
  		this._adjustElementStyles(selectedLinks);
 	},
  	
@@ -395,14 +391,12 @@ var TreeCanvas = $n2.Class({
  		var _this = this;
  		
  		var updatedNodes = this._getSvgElem().select('g.nodes').selectAll('.node')
-			.data(nodes, function(d){ return d.id; })
-			;
+			.data(nodes, function(d){ return d.id; });
  		
  		updatedNodes
 			.transition()
 			.attr('cx', function(d){ return d.x; })
-			.attr('cy', function(d){ return d.y; })
-			;
+			.attr('cy', function(d){ return d.y; });
  		
  		updatedNodes.exit()
  			.remove();
@@ -430,13 +424,11 @@ var TreeCanvas = $n2.Class({
  		this._adjustElementStyles(allNodes);
  		
  		var updatedLinks = this._getSvgElem().select('g.links').selectAll('.link')
-			.data(links, function(d){ return d.id; })
-			;
+			.data(links, function(d){ return d.id; });
  		
  		updatedLinks
  			.transition()
-			.attr('d', this.diagonalLine)
-			;
+			.attr('d', this.diagonalLine);
 
  		updatedLinks.exit()
  			.remove();
