@@ -647,11 +647,9 @@ var ForceGraph = $n2.Class({
  			})
  			;
  		
- 		var $background = $svg.append('rect')
- 			.attr({
- 				x: '0'
- 				,y:'0'
- 			})
+		var $background = $svg.append('rect')
+			.attr('x', 0)
+			.attr('y', 0)
  			.classed({
  				'n2CanvasForceGraph_background': true
  			})
@@ -673,10 +671,9 @@ var ForceGraph = $n2.Class({
  				};
  			};
  		} else {
- 			$background.attr({
- 				'stroke-opacity': 0
- 	 			,'fill-opacity': 0
- 			});
+			$background
+				.attr('stroke-opacity', 0)
+				.attr('fill-opacity', 0);
  		};
 
  		$svg.append('g')
@@ -727,17 +724,13 @@ var ForceGraph = $n2.Class({
  		
  		this.forceLayout.size([size[0], size[1]]).start();
  		
- 		var $svg = this._getSvgElem()
- 			.attr({
- 				width: size[0]
-				,height: size[1]
- 			});
+		var $svg = this._getSvgElem()
+			.attr('width', size[0])
+			.attr('height', size[1]);
  		
- 		var $background = $svg.select('.n2CanvasForceGraph_background')
- 			.attr({
- 				width: size[0]
-				,height: size[1]
- 			});
+		var $background = $svg.select('.n2CanvasForceGraph_background')
+			.attr('width', size[0])
+			.attr('height', size[1]); 
  	},
  	
  	_getSvgElem: function() {
