@@ -237,7 +237,22 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 				mmConverter.convertImage(request);
 				
 			} else {
-				throw new Exception("Unknown multimedia class: "+mmClass);
+				logger.info("Unknown multimedia class: "+mmClass+" "+mimeType);
+				SystemFile sf = SystemFile.getSystemFile(originalFile);
+				String mimeType2 = sf.getMimeType();
+				MultimediaClass mmClass2 = MimeUtils.getMultimediaClassFromMimeType(mimeType2);
+				if( MultimediaClass.VIDEO == mmClass2 ) {
+					mmConverter.convertVideo(request);
+
+				} else if( MultimediaClass.AUDIO == mmClass2 ) {
+					mmConverter.convertAudio(request);
+					
+				} else if( MultimediaClass.IMAGE == mmClass2 ) {
+					mmConverter.convertImage(request);
+					
+				} else {
+					throw new Exception("Unknown multimedia class: "+mmClass+":"+mimeType+" "+mmClass2+":"+mimeType2);
+				}
 			}
 			
 			// Check that output file(s) was(were) created

@@ -44,6 +44,8 @@ import ca.carleton.gcrc.utils.CommandUtils;
 public class SystemFile {
 
 	static private Pattern mp3IdentifierPattern = Pattern.compile("MPEG ADTS");
+	static private Pattern patternAudio = Pattern.compile("audio",Pattern.CASE_INSENSITIVE);
+	static private Pattern patternId3 = Pattern.compile("id3",Pattern.CASE_INSENSITIVE);
 
 	static public SystemFile getSystemFile(File file) throws Exception {
 		SystemFile result = new SystemFile();
@@ -100,6 +102,23 @@ public class SystemFile {
 			Matcher mp3IdentifierMatcher = mp3IdentifierPattern.matcher(fullReport);
 			
 			if( mp3IdentifierMatcher.find() ) {
+				result.mimeType = "audio/mp3";
+			}
+		}
+		if( "application/octet-stream".equals(result.mimeType) ) {
+			List<String> tokens = new Vector<String>();
+			tokens.add("file");
+			tokens.add("-bnk");
+			tokens.add(file.getAbsolutePath());
+			
+			BufferedReader br = CommandUtils.executeCommand(tokens);
+			String fullReport = br.readLine();
+			
+			Matcher matcherAudio = patternAudio.matcher(fullReport);
+			Matcher matcherId3 = patternId3.matcher(fullReport);
+			
+			// Looking for a line that looks like: Audio file with ID3 version 2.4.0\012- data
+			if( matcherAudio.find() && matcherId3.find() ) {
 				result.mimeType = "audio/mp3";
 			}
 		}

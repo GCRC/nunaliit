@@ -389,7 +389,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				// Download file that was originally uploaded
 				if( null != uploadedAttachmentName ) {
 					conversionContext.downloadFile(uploadedAttachmentName, file);
-					logger.info("Recovered original file from database: "+uploadedAttachmentName);
+					logger.info("Recovered original file from database: "+uploadedAttachmentName+" to "+file.getName());
 				}
 
 				// Check if state was resolved
