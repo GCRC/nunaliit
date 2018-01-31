@@ -446,11 +446,20 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 				attDescription.setThumbnailReference(thumbnailAttachmentName);
 			}
 			
-			// Report original file
+			// Original is not needed if no conversion performed
 			if( request.isConversionPerformed() ) {
-				// Original is not needed if no conversion performed
+				// Report original file
 				if( uploadOriginalFiles ) {
-					String originalAttachmentName = computeOriginalName(attDescription.getAttachmentName());
+					String originalExtension = "";
+					{
+						String name = originalFile.getName();
+						int index = name.lastIndexOf('.');
+						if( index > 0 ){
+							originalExtension = name.substring(index+1);
+						}
+					}
+
+					String originalAttachmentName = computeOriginalName(attDescription.getAttachmentName(), originalExtension);
 					AttachmentDescriptor origDescription = docDescriptor.getAttachmentDescription(originalAttachmentName);
 					
 					// Check if already attached
@@ -463,7 +472,7 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 						} else {
 							origDescription.setStatus(UploadConstants.UPLOAD_STATUS_WAITING_FOR_APPROVAL);
 						}
-						origDescription.setFileClass("image");
+						origDescription.setFileClass(attDescription.getFileClass());
 						origDescription.setContentType(attDescription.getContentType());
 						origDescription.setOriginalName(attDescription.getOriginalName());
 						origDescription.setMediaFileName(originalFile.getName());
@@ -527,7 +536,15 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 		}
 		
 		// Create attachment description for original file
-		String originalAttachmentName = computeOriginalName(attDescription.getAttachmentName());
+		String originalExtension = "";
+		{
+			String name = originalFile.getName();
+			int index = name.lastIndexOf('.');
+			if( index > 0 ){
+				originalExtension = name.substring(index+1);
+			}
+		}
+		String originalAttachmentName = computeOriginalName(attDescription.getAttachmentName(), originalExtension);
 		AttachmentDescriptor origDescription = docDescriptor.getAttachmentDescription(originalAttachmentName);
 
 		origDescription.setStatus(attDescription.getStatus());
@@ -711,23 +728,21 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 		serverWork.setThumbnailLevel(UploadConstants.SERVER_THUMBNAIL_VALUE);
 	}
 
-	private String computeOriginalName(String attachmentName) {
+	private String computeOriginalName(String attachmentName, String extension) {
 		if( null == attachmentName ) {
 			return "original";
 		}
 		
 		// Select a different file name
 		String prefix = "";
-		String suffix = "";
 		int pos = attachmentName.lastIndexOf('.');
 		if( pos < 1 ) {
 			prefix = attachmentName;
 		} else {
 			prefix = attachmentName.substring(0, pos);
-			suffix = attachmentName.substring(pos);
 		}
 		
-		String originalName = prefix + "_original" + suffix;
+		String originalName = prefix + "_original." + extension;
 		
 		return originalName;
 	}
