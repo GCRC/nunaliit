@@ -37,14 +37,14 @@
 	]
 	,"overlays": [
 		{
-			"id": "osm"
+			"id": "demo"
 			,"name": {
 				"nunaliit_type":"localized"
-				,"en":"OSM"
+				,"en":"Demo"
 			}
 			,"type": "couchdb"
 			,"options": {
-				"layerName": "osm"
+				"layerName": "demo"
 			}
 			,"featurePopupDelayMs": 0
 			,"useHoverSound": true
@@ -62,7 +62,7 @@
 	,"toggleClick": true
 	,"styles":{
 		"layers":{
-			"osm":{
+			"demo":{
 				"base":{
 					"normal":{
 						"fillColor":"#ffff33"
