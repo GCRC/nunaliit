@@ -267,6 +267,7 @@ var RadialTreeCanvas = $n2.Class({
  			this.dispatchService.register(DH,'modelStateUpdated',f);
  			this.dispatchService.register(DH,'windowResized',f);
 			this.dispatchService.register(DH,'findIsAvailable', f);
+			this.dispatchService.register(DH,'userUnselect', f);
  		};
  		
  		this.createGraph();
@@ -1065,14 +1066,13 @@ var RadialTreeCanvas = $n2.Class({
 			.attr('d',function(link){ return _this.line(link.path); })
 			;
  	},
- 	
- 	_initiateBackgroundMouseClick: function(){
- 		if( this.lastElementIdSelected ){
- 			this.elementGenerator.selectOff(this.lastElementIdSelected);
- 			this.lastElementIdSelected = null;
- 		};
- 	},
- 	
+
+	_initiateBackgroundMouseClick: function(){
+		this._dispatch({
+			type: 'userUnselect'
+		});
+	},
+
  	_initiateMouseClick: function(elementData){
  		var elementId = elementData.id;
  		if( this.toggleSelection 
