@@ -267,7 +267,6 @@ var RadialTreeCanvas = $n2.Class({
  			this.dispatchService.register(DH,'modelStateUpdated',f);
  			this.dispatchService.register(DH,'windowResized',f);
 			this.dispatchService.register(DH,'findIsAvailable', f);
-			this.dispatchService.register(DH,'userUnselect', f);
  		};
  		
  		this.createGraph();
