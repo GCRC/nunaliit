@@ -809,22 +809,26 @@ var Display = $n2.Class({
 				requestDocIds.push(requestDocId);
 			};
 
-			_this.documentSource.getDocumentInfoFromIds({
-				docIds: requestDocIds
-				,onSuccess: function(infos){
-					for(var i=0,e=infos.length;i<e;++i){
-						var requestDocId = infos[i].id;
-						
-						refInfo[requestDocId].exists = true;
-						if( infos[i].schema ) {
-							refInfo[requestDocId].schema = infos[i].schema;
+			if( requestDocIds.length > 0 ){
+				_this.documentSource.getDocumentInfoFromIds({
+					docIds: requestDocIds
+					,onSuccess: function(infos){
+						for(var i=0,e=infos.length;i<e;++i){
+							var requestDocId = infos[i].id;
+							
+							refInfo[requestDocId].exists = true;
+							if( infos[i].schema ) {
+								refInfo[requestDocId].schema = infos[i].schema;
+							};
 						};
-					};
-					
-					opts.onSuccess(refInfo);
-				}
-				,onError: opts.onError
-			});
+						
+						opts.onSuccess(refInfo);
+					}
+					,onError: opts.onError
+				});
+			} else {
+				opts.onSuccess(refInfo);
+			};
 		};
 	}
 

@@ -5628,6 +5628,9 @@ var MapAndControls = $n2.Class({
 		} else if( 'editClosed' === type ) {
 
 			var fid = this.editFeatureInfo.fid;
+			if( !fid ){
+				fid = m.docId;
+			};
 			var reloadRequired = true;
 			if( m.cancelled ){
 				reloadRequired = false;
