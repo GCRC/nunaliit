@@ -24,7 +24,7 @@ public class FFmpegProcessorDefault implements FFmpegProcessor {
 	static private Pattern patternTime = Pattern.compile("^\\s*frame=.*time=\\s*(\\d+\\.\\d*)");
 
 	static public String ffmpegInfoCommand = "avprobe %1$s";
-	static public String ffmpegConvertVideoCommand = "avconv -i %1$s -y -acodec libvo_aacenc -ab 48000 -ac 2 -vcodec libx264 -b 128000 -vf scale=320:-1 -threads 0 -f mp4 %2$s";
+	static public String ffmpegConvertVideoCommand = "avconv -i %1$s -y -acodec libvo_aacenc -ab 48000 -ac 2 -vcodec libx264 -b 128000 -r 24 -vf scale=320:-1 -threads 0 -f mp4 %2$s";
 	static public String ffmpegConvertAudioCommand = "avconv -i %1$s -y -acodec libmp3lame -ab 48000 -ac 2 -threads 0 -f mp3 %2$s";
 	static public String ffmpegCreateThumbnailCommand = "avconv -y -ss %5$s -i %1$s -s %3$dx%4$d -r 1 -vframes 1 -f image2 %2$s";
 	static public double ffmpegCreateThumbnailFrameInSec = 5.0;
