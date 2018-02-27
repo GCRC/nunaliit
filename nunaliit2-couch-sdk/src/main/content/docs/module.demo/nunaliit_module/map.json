@@ -59,6 +59,7 @@
 		}
 	]
 	,"addPointsOnly": false
+	,"showSRSAttribution": true
 	,"toggleClick": true
 	,"styles":{
 		"layers":{
