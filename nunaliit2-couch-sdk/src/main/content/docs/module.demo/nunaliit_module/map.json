@@ -61,15 +61,13 @@
 	,"addPointsOnly": false
 	,"showSRSAttribution": true
 	,"toggleClick": true
-	,"styles":{
-		"layers":{
-			"public_demo":{
-				"base":{
-					"normal":{
-						"fillColor":"#ffff33"
-					}
-				}
+	,"styles":[
+		{
+			"condition": "onLayer('public_demo')"
+			,"label": "Public Demo"
+			,"normal": {
+				"fillColor":"#ffff33"
 			}
 		}
-	}
+	]
 }
