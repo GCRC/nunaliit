@@ -511,7 +511,7 @@ var ForceGraph = $n2.Class({
 			,yForce: 0.1
 			,velocityDecay: 0.4
 			,theta: 0.9
-			,chargeStrength: -90
+			,chargeStrength: -50
 			,chargeDistance: null
 			,linkDistance: 30
 			,linkStrength: 1
@@ -776,13 +776,16 @@ var ForceGraph = $n2.Class({
 			.x(size[0] / 2)
     		.y(size[1] / 2);
 
-	var $svg = this._getSvgElem()
-		.attr('width',size[0])
-		.attr('height',size[1]);
+		var $svg = this._getSvgElem()
+			.attr('width',size[0])
+			.attr('height',size[1]);
 
-	var $background = $svg.select('.n2CanvasForceGraph_background')
-		.attr('width',size[0])
-		.attr('height',size[1]);
+		var $background = $svg.select('.n2CanvasForceGraph_background')
+			.attr('width',size[0])
+			.attr('height',size[1]);
+
+		// Restart canvas to redraw nodes with modified canvas size
+		this.forceLayout.restart();
 	},
 
 	_getSvgElem: function() {
