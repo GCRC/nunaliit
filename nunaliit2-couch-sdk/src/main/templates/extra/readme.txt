@@ -5,21 +5,25 @@ This section explains how to run an instance of Nunaliit atlas as a service. In 
 when a file name is in the form "nunaliit-XXX", it should be assumed that the XXX is the
 name of the atlas.
 
-Using Linux with systemd
-------------------------
+Using Linux with systemd (recommended)
+--------------------------------------
 
 Platforms running Ubuntu with version 16.04 or newer should use the following procedures
-to install a Nunaliit instance as a service.
+to install a Nunaliit instance as a service. If you are upgrading from old SysVinit to systemd,
+be sure all the old init.d and rc.d nunaliit scripts are cleaned out (using a command like 
+update-rc.d -f nunaliit remove) before enabling the systemd scripts.
+
+Tip: In order to save grief later when upgrading Nunaliit, it is recommended to use a symlink
+like 'nunaliit' to point to the active nunaliit build being run. Then modify the .service file
+to reference the symlink rather than the specific build folder.
+
+sudo cp nunaliit-XXX.service /etc/systemd/system/.
+sudo systemctl enable nunaliit-XXX
+sudo systemctl start nunaliit-XXX
 
 
-> cd .../extra
-> sudo cp nunaliit-XXX.service /etc/systemd/system/.
-> sudo systemctl enable nunaliit-XXX
-> sudo systemctl start nunaliit-XXX
-
-
-Using Linux with SysVinit
--------------------------
+Using Linux with SysVinit (depricated)
+--------------------------------------
 
 Platforms running Ubuntu with a version older than 16.04 should use the following procedures
 to install a Nunaliit instance as a service. 
