@@ -1022,7 +1022,9 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
  		this.elementsById = {};
  		this.elementsByDocId = {};
  		this.effectiveElementsById = {};
- 		this.elementToEffectiveId = {};
+		this.elementToEffectiveId = {};
+		this.elementTreeRoot = {};
+		this.sourceLinks = [];
  		this.dimensions = {};
  		this.lastElementIdSelected = null;
  		this.focusInfo = null;
@@ -1474,7 +1476,6 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			,children: []
 			,expanded: true
 		};
-		this.sourceLinks = [];
 		for(var elemId in this.elementsById){
 			var elem = this.elementsById[elemId];
 			
