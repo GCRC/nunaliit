@@ -1,10 +1,5 @@
 [
 	{
-		"selector": [ "place" ]
-		,"create": false
-		,"schemaName": "place"
-	}
-	,{
 		"selector": [ "nunaliit_attachments" ]
 		,"create": false
 		,"schemaName": "attachments"
