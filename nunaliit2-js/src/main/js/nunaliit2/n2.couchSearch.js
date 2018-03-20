@@ -170,8 +170,6 @@ var ResearchTerm = $n2.Class(Research,{
 		var startKey = [term,0];
 		var endKey = [term,{}];
 		var resultsByDocId = null;
-		
-		var _this = this;
 
 		if( this.constraint ){
 
