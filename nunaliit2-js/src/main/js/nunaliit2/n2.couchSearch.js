@@ -169,39 +169,64 @@ var ResearchTerm = $n2.Class(Research,{
 		
 		var startKey = [term,0];
 		var endKey = [term,{}];
-		if( this.constraint ){
-			startKey = [this.constraint,term,0];
-			endKey = [this.constraint,term,{}];
-		};
+		var resultsByDocId = null;
 		
-		this.designDoc.queryView({
-			viewName: this.searchView
-			,startkey: startKey
-			,endkey: endKey
-			,onSuccess: function(rows) {
-				var resultsByDocId = {};
-				for(var i=0,e=rows.length; i<e; ++i) {
-					var docId = rows[i].id;
-					var index = rows[i].key[1];
-					
-					if( resultsByDocId[docId] 
-					 && resultsByDocId[docId].index <= index ){
-						// Do nothing
-					} else {
-						var result = new ResearchResult({
-							id: docId
-							,index: index
-						});
-						resultsByDocId[docId] = result;
+		var _this = this;
+
+		if( this.constraint ){
+
+			// Convert string to an array of 1 element for performing query view
+			if( typeof(this.constraint) === 'string'){
+				var key = [];
+				key.push(this.constraint);
+				this.constraint = key;
+			};
+			
+			if( $n2.isArray(this.constraint) && this.constraint.length > 0 ){
+
+				for( var i = 0, e = this.constraint.length; i<e; i++){
+
+					if (!resultsByDocId){
+						resultsByDocId = {};
 					};
+
+					this.designDoc.queryView({
+						viewName: this.searchView
+						,startkey: [this.constraint[i],term,0]
+						,endkey: [this.constraint[i],term,{}]
+						,constraint: this.constraint
+						,onSuccess: function(rows) {
+							for(var i=0,e=rows.length; i<e; ++i) {
+								var docId = rows[i].id;
+								var index = rows[i].key[1];
+								
+								if( resultsByDocId[docId] 
+								&& resultsByDocId[docId].index <= index ){
+									// Do nothing
+								} else {
+									var result = new ResearchResult({
+										id: docId
+										,index: index
+									});
+									resultsByDocId[docId] = result;
+								};
+							};
+
+							// Only call opts.onSuccess whern the current key is the last constraint 
+							// layer used in the query view. Otherwise call opts.onPartial 
+							if( this.endkey[0] === this.constraint[this.constraint.length - 1]){
+								opts.onSuccess(resultsByDocId);
+							} else {
+								opts.onPartial(resultsByDocId);
+							};
+						}
+						,onError: function(err) {
+							opts.onError(err);
+						}
+					});
 				};
-				
-				opts.onSuccess(resultsByDocId);
-			}
-			,onError: function(err) {
-				opts.onError(err);
-			}
-		});
+			};
+		};
 	}
 });
 
