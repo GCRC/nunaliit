@@ -163,16 +163,15 @@ var ResearchTerm = $n2.Class(Research,{
 			,onError: function(err, research){}
 			,onPartial: function(resultMap, research){}
 		},opts_);
+		
+		var _this = this;
 
 		// Search terms are stored lower case in database
 		var term = this.textTerm.toLowerCase();
 		
-		var startKey = [term,0];
-		var endKey = [term,{}];
 		var resultsByDocId = null;
 
 		if( this.constraint ){
-
 			// Convert string to an array of 1 element for performing query view
 			if( typeof(this.constraint) === 'string'){
 				var key = [];
@@ -180,10 +179,12 @@ var ResearchTerm = $n2.Class(Research,{
 				this.constraint = key;
 			};
 			
-			if( $n2.isArray(this.constraint) && this.constraint.length > 0 ){
+			if( $n2.isArray(this.constraint)
+			 && this.constraint.length > 0 ){
 
-				for( var i = 0, e = this.constraint.length; i<e; i++){
-
+				var expectedCount = this.constraint.length;
+				
+				for(var i = 0, e = this.constraint.length; i<e; ++i){
 					if (!resultsByDocId){
 						resultsByDocId = {};
 					};
@@ -210,9 +211,10 @@ var ResearchTerm = $n2.Class(Research,{
 								};
 							};
 
-							// Only call opts.onSuccess whern the current key is the last constraint 
-							// layer used in the query view. Otherwise call opts.onPartial 
-							if( this.endkey[0] === this.constraint[this.constraint.length - 1]){
+							// Only call opts.onSuccess when all the queries have returned.
+							// Otherwise call opts.onPartial
+							--expectedCount;
+							if( expectedCount <= 0 ){
 								opts.onSuccess(resultsByDocId);
 							} else {
 								opts.onPartial(resultsByDocId);
@@ -223,7 +225,42 @@ var ResearchTerm = $n2.Class(Research,{
 						}
 					});
 				};
+			} else {
+				opts.onError('Invalid search constraint');
 			};
+
+		} else {
+			var startKey = [term,0];
+			var endKey = [term,{}];
+
+			this.designDoc.queryView({
+				viewName: this.searchView
+				,startkey: startKey
+				,endkey: endKey
+				,onSuccess: function(rows) {
+					var resultsByDocId = {};
+					for(var i=0,e=rows.length; i<e; ++i) {
+						var docId = rows[i].id;
+						var index = rows[i].key[1];
+						
+						if( resultsByDocId[docId] 
+						 && resultsByDocId[docId].index <= index ){
+							// Do nothing
+						} else {
+							var result = new ResearchResult({
+								id: docId
+								,index: index
+							});
+							resultsByDocId[docId] = result;
+						};
+					};
+					
+					opts.onSuccess(resultsByDocId);
+				}
+				,onError: function(err) {
+					opts.onError(err);
+				}
+			});
 		};
 	}
 });
