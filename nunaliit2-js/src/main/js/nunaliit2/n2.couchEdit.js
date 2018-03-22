@@ -3298,7 +3298,7 @@ var AttachmentEditor = $n2.Class({
 			.attr('n2AttName',attName)
 			.appendTo($div);
 
-		if (window.cordova) {
+    if (window.cordova) {
       // On Cordova devices show buttons to upload media
       var $buttonsContainer = $('<div>')
         .addClass('attachmentEditor_cordovaCaptureButtonsContainer')
