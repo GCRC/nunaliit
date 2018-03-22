@@ -53,8 +53,8 @@ form.attachmentEditor_creationFormWithVideo {
 }
 
 .attachmentEditor_photoPreview {
-  max-width: 250px;
-  max-height: 250px;
+  max-width: 70%;
+  max-height: 100px;
 }
 
 .attachmentEditor_cordovaCaptureButtonsContainer {

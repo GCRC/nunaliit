@@ -3317,9 +3317,6 @@ var AttachmentEditor = $n2.Class({
                 $('<img>', {src: fileName})
                   .addClass('attachmentEditor_photoPreview')
                   .appendTo($form);
-                $('<p>')
-                  .text(_loc('Your photo is attached: ') + fileName)
-                  .appendTo($form);
 							}, function(error) {
 								console.log('Error getting picture:', error);
 							}, {});
