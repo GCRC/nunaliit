@@ -3304,6 +3304,13 @@ var AttachmentEditor = $n2.Class({
         .addClass('attachmentEditor_cordovaCaptureButtonsContainer')
         .appendTo($form);
 
+      $('<input type="file">')
+        .attr('name','media')
+        .change(function(event) {
+          _this._attachmentFileChanged(event);
+        })
+        .appendTo($buttonsContainer);
+
 			document.addEventListener("deviceready", function() {
 				if (navigator.camera) {
 					$('<button>')
