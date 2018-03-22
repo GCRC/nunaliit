@@ -52,6 +52,17 @@ form.attachmentEditor_creationFormWithVideo {
 	padding-left: 3px;
 }
 
+.attachmentEditor_photoPreview {
+  max-width: 200px;
+  max-height: 200px;
+}
+
+.attachmentEditor_cordovaCaptureButtonsContainer {
+  float: left;
+  width: 29%;
+  margin-bottom: 15px;
+}
+
 .attachmentEditor_uploadTabs {
 	float: left;
 	border: 1px solid #ddd;

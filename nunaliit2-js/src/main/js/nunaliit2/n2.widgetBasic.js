@@ -118,7 +118,7 @@ var CreateDocumentWidget = $n2.Class({
 			.addClass('n2widget_createDocument')
 			.appendTo( $('#'+containerId) );
 		
-		if( this.showAsLink ) {
+		if( this.showAsLink && !window.cordova ) {
 			$div.addClass('n2widget_createDocument_asLink');
 
 			$('<a>')
