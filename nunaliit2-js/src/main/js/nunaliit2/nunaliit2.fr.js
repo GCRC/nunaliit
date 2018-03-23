@@ -81,6 +81,7 @@ $n2.l10n.addLocalizedStrings('fr',{
 	,"Cancelling Operation...":"Annuler l'opération..."
 	,"Capture Photo":"Prendre une photo"
 	,"Change Password":"Changer Mot de Passe"
+	,"Choose File":"Choisir fichier"
 	,"Clear":"Vider"
 	,"Click here to return to main site: ":"Retourner à la page principale: "
 	,"Close":"Fermer"

@@ -57,6 +57,21 @@ form.attachmentEditor_creationFormWithVideo {
   max-height: 100px;
 }
 
+.attachmentEditor_hiddenFileInput {
+  display: none;
+}
+
+.attachmentEditor_buttonDiv {
+  margin: 10px 0;
+}
+
+.attachmentEditor_fileInputLabel {
+  border: 1px solid grey;
+  display: inline-block;
+  padding: 3px 6px;
+  background-color: lightgrey;
+}
+
 .attachmentEditor_cordovaCaptureButtonsContainer {
   float: left;
   width: 29%;

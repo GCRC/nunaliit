@@ -3304,18 +3304,36 @@ var AttachmentEditor = $n2.Class({
         .addClass('attachmentEditor_cordovaCaptureButtonsContainer')
         .appendTo($form);
 
-      $('<input type="file">')
+      var $fileInputDiv = $('<div>')
+        .addClass('attachmentEditor_buttonDiv')
+        .appendTo($buttonsContainer);
+      $('<input type="file" id="file-input">')
+        .addClass('attachmentEditor_hiddenFileInput')
         .attr('name','media')
         .change(function(event) {
+          var filename = '';
+          if (event.target && event.target.files && event.target.files[0]) {
+            $('<p>')
+              .text(event.target.files[0].name)
+              .appendTo($form);
+          }
           _this._attachmentFileChanged(event);
         })
-        .appendTo($buttonsContainer);
+        .appendTo($fileInputDiv);
+      $('<label for="file-input">')
+        .addClass('attachmentEditor_fileInputLabel')
+        .text(_loc('Choose File'))
+        .appendTo($fileInputDiv);
 
 			document.addEventListener("deviceready", function() {
 				if (navigator.camera) {
+          var $capturePhotoDiv = $('<div>')
+            .addClass('attachmentEditor_buttonDiv')
+            .appendTo($buttonsContainer);
+
 					$('<button>')
 						.addClass('attachmentEditor_capturePhotoButton')
-						.appendTo($buttonsContainer)
+						.appendTo($capturePhotoDiv)
 						.text(_loc('Capture Photo'))
 						.click(function(event) {
 							event.preventDefault();
