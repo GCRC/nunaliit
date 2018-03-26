@@ -1456,6 +1456,9 @@ var CouchDocumentEditor = $n2.Class({
 		var _this = this;
 		
 		if (window.cordova) {
+			// add the attachments
+			_this.editedDocument.nunaliit_attachments = null;
+			_this.editedDocument.nunaliit_mobile_attachments = _this.attachmentEditor.cordovaAttachment;
 			updateDocument();
 		} else {
 			// Disable use of editor during uploading
@@ -1552,8 +1555,6 @@ var CouchDocumentEditor = $n2.Class({
 		
 		function postSaveAttachmentEditor(editedDocument, inserted, isSubmissionDs) {
       if (window.cordova) {
-				editedDocument.nunaliit_attachments = null;
-				editedDocument.nunaliit_mobile_attachments = _this.attachmentEditor.cordovaAttachment;
 				completeSave(editedDocument, inserted, isSubmissionDs);
       } else {
         if( _this.attachmentEditor ){
@@ -3355,7 +3356,7 @@ var AttachmentEditor = $n2.Class({
                   .addClass('attachmentEditor_photoPreview')
                   .appendTo($form);
 
-                _this.cordovaAttachment = fileName;
+                _this.cordovaAttachment = fileName.replace('file:/','/');
 							}, function(error) {
 								console.log('Error getting picture:', error);
 							}, {});
