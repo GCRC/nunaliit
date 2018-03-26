@@ -1158,10 +1158,10 @@ var CouchDocumentEditor = $n2.Class({
 		};
 	},
     
-    _displayEditor: function() {
-    	var _this = this;
-    	
-    	var selectedSchema = this.editedDocumentSchema;
+	_displayEditor: function() {
+		var _this = this;
+		
+		var selectedSchema = this.editedDocumentSchema;
 		
 		$('body').addClass('nunaliit_editing');
 		$('.n2_disable_on_edit')
@@ -1452,28 +1452,31 @@ var CouchDocumentEditor = $n2.Class({
 		};
 	},
     
-    _save: function(){
-    	
-    	var _this = this;
-    	
-		// Disable use of editor during uploading
-		this._disableControls();
+	_save: function(){
+		var _this = this;
 		
-		// Verify that upload server is available
-		if( this.uploadService ){
-			// Verify that server is available
-    		this.uploadService.getWelcome({
-				onSuccess: function(){ 
-					preSaveAttachmentEditor(); 
-				}
-				,onError: function(err) {
-		    		_this._enableControls();
-					$n2.reportErrorForced('Server is not available: '+err);
-				}
-			});
+		if (window.cordova) {
+			updateDocument();
 		} else {
-			preSaveAttachmentEditor();
-		};
+			// Disable use of editor during uploading
+			this._disableControls();
+			
+			// Verify that upload server is available
+			if( this.uploadService ){
+				// Verify that server is available
+					this.uploadService.getWelcome({
+					onSuccess: function(){ 
+						preSaveAttachmentEditor(); 
+					}
+					,onError: function(err) {
+							_this._enableControls();
+						$n2.reportErrorForced('Server is not available: '+err);
+					}
+				});
+			} else {
+				preSaveAttachmentEditor();
+			};
+		}
 		
 		function preSaveAttachmentEditor() {
 			if( _this.attachmentEditor ){
@@ -1510,7 +1513,7 @@ var CouchDocumentEditor = $n2.Class({
 			};
 			
 			updateDocument();
-		};
+    };
 			
 		function updateDocument() {
 			var isSubmissionDs = false;
@@ -1527,7 +1530,7 @@ var CouchDocumentEditor = $n2.Class({
 						postSaveAttachmentEditor(updatedDoc, true, isSubmissionDs);
 					}
 					,onError: function(err){
-			    		_this._enableControls();
+						_this._enableControls();
 						$n2.reportErrorForced( _loc('Unable to submit document: {err}',{err:err}) );
 					}
 				});
@@ -1540,7 +1543,7 @@ var CouchDocumentEditor = $n2.Class({
 						postSaveAttachmentEditor(updatedDoc, false, isSubmissionDs);
 					}
 					,onError: function(err){
-			    		_this._enableControls();
+						_this._enableControls();
 						$n2.reportErrorForced( _loc('Unable to submit document: {err}',{err:err}) );
 					}
 				});
@@ -1548,19 +1551,25 @@ var CouchDocumentEditor = $n2.Class({
 		};
 		
 		function postSaveAttachmentEditor(editedDocument, inserted, isSubmissionDs) {
-			if( _this.attachmentEditor ){
-				_this.attachmentEditor.performPostSavingActions({
-					onSuccess: function(doc){
-						completeSave(editedDocument, inserted, isSubmissionDs);
-					}
-					,onError: function(err){
-			    		_this._enableControls();
-						$n2.reportErrorForced(err);
-					}
-				});
-			} else {
+      if (window.cordova) {
+				editedDocument.nunaliit_attachments = null;
+				editedDocument.nunaliit_mobile_attachments = _this.attachmentEditor.cordovaAttachment;
 				completeSave(editedDocument, inserted, isSubmissionDs);
-			};
+      } else {
+        if( _this.attachmentEditor ){
+          _this.attachmentEditor.performPostSavingActions({
+            onSuccess: function(doc){
+              completeSave(editedDocument, inserted, isSubmissionDs);
+            }
+            ,onError: function(err){
+              _this._enableControls();
+              $n2.reportErrorForced(err);
+            }
+          });
+        } else {
+          completeSave(editedDocument, inserted, isSubmissionDs);
+        };
+      }
 		};
 
 		function completeSave(editedDocument, inserted, isSubmissionDs) {
@@ -2591,7 +2600,9 @@ var AttachmentEditor = $n2.Class({
 	recordVideoSize: null,
 
 	mediaElementEl: null,
-	
+
+	cordovaAttachment: null,
+
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			doc: null
@@ -2955,7 +2966,7 @@ var AttachmentEditor = $n2.Class({
 			return false;
 		}
 	},
-	
+
 	performPostSavingActions: function(opts_){
 		var opts = $n2.extend({
 			onSuccess: function(doc){}
@@ -3020,7 +3031,6 @@ var AttachmentEditor = $n2.Class({
 			
 		} else {
 			// Upload file via the upload service.
-
 			// Perform actual upload
 			this.uploadService.submitForm({
 				form: $form
@@ -3316,8 +3326,10 @@ var AttachmentEditor = $n2.Class({
             $('<p>')
               .text(event.target.files[0].name)
               .appendTo($form);
+
+            // TODO: use the file plugin to get the file location and save it
+            console.log('file:', event.target.files[0]);
           }
-          _this._attachmentFileChanged(event);
         })
         .appendTo($fileInputDiv);
       $('<label for="file-input">')
@@ -3338,10 +3350,12 @@ var AttachmentEditor = $n2.Class({
 						.click(function(event) {
 							event.preventDefault();
 							navigator.camera.getPicture(function(fileName) {
-                // On success, show the file
+                // On success, show the file and save it
                 $('<img>', {src: fileName})
                   .addClass('attachmentEditor_photoPreview')
                   .appendTo($form);
+
+                _this.cordovaAttachment = fileName;
 							}, function(error) {
 								console.log('Error getting picture:', error);
 							}, {});
