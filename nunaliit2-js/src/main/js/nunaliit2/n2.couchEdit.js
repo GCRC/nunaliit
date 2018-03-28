@@ -3339,37 +3339,29 @@ var AttachmentEditor = $n2.Class({
 							// Create a file in the file system
 							window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function (fs) {
 								fs.root.getFile(fileName, { create: true, exclusive: false }, function (fileEntry) {
-									writeFile(fileEntry, event.target.files[0]);
+									// Write in the given file
+									fileEntry.createWriter(function (fileWriter) {
+										fileWriter.onwriteend = function() {
+											// On success, show the file and save it
+											$attachmentPreviewContainer.empty();
+											$('<p>')
+												.text(event.target.files[0].name)
+												.appendTo($attachmentPreviewContainer);
+											addCordovaAttachment(fileEntry.nativeURL);
+										};
+	
+										fileWriter.onerror = function (e) {
+											console.error("Failed file write: " + e.toString());
+										};
+	
+										fileWriter.write(event.target.files[0]);
+									});
 								}, function(err) {
 									console.error('Error getting file', err);
 								});
 							}, function(err) {
 								console.error('Error requesting file system', err);
 							});
-
-							// Write in the given file
-							function writeFile(fileEntry, dataObj) {
-								fileEntry.createWriter(function (fileWriter) {
-									fileWriter.onwriteend = function() {
-										// On success, show the file and save it
-										$attachmentPreviewContainer.empty();
-										$('<p>')
-											.text(event.target.files[0].name)
-											.appendTo($attachmentPreviewContainer);
-										addCordovaAttachment(fileEntry.nativeURL);
-									};
-
-									fileWriter.onerror = function (e) {
-										console.error("Failed file write: " + e.toString());
-									};
-
-									if (!dataObj) {
-										console.error('Impossible to write file since there is no data object!');
-									} else {
-										fileWriter.write(dataObj);
-									}
-								});
-							}
 						}
 					})
 					.appendTo($fileInputDiv);
@@ -3404,10 +3396,6 @@ var AttachmentEditor = $n2.Class({
 						});
 				}
 			}, false);
-
-			function addCordovaAttachment(fileName) {
-				_this.cordovaAttachment = fileName.replace('file:/','/');
-			}
 		}	else {
       //clearfix div to prevent buttons from floating
       $('<div>')
@@ -3536,6 +3524,10 @@ var AttachmentEditor = $n2.Class({
     
 		function allTabsDisplayed() {
 			_this._clickTab(attName, firstTabDisplayed);
+		}
+
+		function addCordovaAttachment(fileName) {
+			_this.cordovaAttachment = fileName.replace('file:/','/');
 		}
 	},
 	
