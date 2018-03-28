@@ -3313,32 +3313,72 @@ var AttachmentEditor = $n2.Class({
       // On Cordova devices show buttons to upload media
       var $buttonsContainer = $('<div>')
         .addClass('attachmentEditor_cordovaCaptureButtonsContainer')
-        .appendTo($form);
-
-      var $fileInputDiv = $('<div>')
-        .addClass('attachmentEditor_buttonDiv')
-        .appendTo($buttonsContainer);
-      $('<input type="file" id="file-input">')
-        .addClass('attachmentEditor_hiddenFileInput')
-        .attr('name','media')
-        .change(function(event) {
-          var filename = '';
-          if (event.target && event.target.files && event.target.files[0]) {
-            $('<p>')
-              .text(event.target.files[0].name)
-              .appendTo($form);
-
-            // TODO: use the file plugin to get the file location and save it
-            console.log('file:', event.target.files[0]);
-          }
-        })
-        .appendTo($fileInputDiv);
-      $('<label for="file-input">')
-        .addClass('attachmentEditor_fileInputLabel')
-        .text(_loc('Choose File'))
-        .appendTo($fileInputDiv);
+				.appendTo($form);
+			
+			var $attachmentPreviewContainer = $('<div>')
+				.appendTo($form);
 
 			document.addEventListener("deviceready", function() {
+				// Add the "Choose File" button
+				var $fileInputDiv = $('<div>')
+        .addClass('attachmentEditor_buttonDiv')
+        .appendTo($buttonsContainer);
+				$('<input type="file" id="file-input">')
+					.addClass('attachmentEditor_hiddenFileInput')
+					.attr('name','media')
+					.change(function(event) {
+						if (event.target && event.target.files && event.target.files[0]) {
+							// Great! The user chose a file, but we don't have access to its path (damn file system security).
+							// So, we the store the file in our persistent app storage location.
+							var fileName = event.target.files[0].name;
+							if (!fileName) {
+								console.error('Impossible to get the file name.');
+								return;
+							}
+
+							// Create a file in the file system
+							window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function (fs) {
+								fs.root.getFile(fileName, { create: true, exclusive: false }, function (fileEntry) {
+									writeFile(fileEntry, event.target.files[0]);
+								}, function(err) {
+									console.error('Error getting file', err);
+								});
+							}, function(err) {
+								console.error('Error requesting file system', err);
+							});
+
+							// Write in the given file
+							function writeFile(fileEntry, dataObj) {
+								fileEntry.createWriter(function (fileWriter) {
+									fileWriter.onwriteend = function() {
+										// On success, show the file and save it
+										$attachmentPreviewContainer.empty();
+										$('<p>')
+											.text(event.target.files[0].name)
+											.appendTo($attachmentPreviewContainer);
+										addCordovaAttachment(fileEntry.nativeURL);
+									};
+
+									fileWriter.onerror = function (e) {
+										console.error("Failed file write: " + e.toString());
+									};
+
+									if (!dataObj) {
+										console.error('Impossible to write file since there is no data object!');
+									} else {
+										fileWriter.write(dataObj);
+									}
+								});
+							}
+						}
+					})
+					.appendTo($fileInputDiv);
+				$('<label for="file-input">')
+					.addClass('attachmentEditor_fileInputLabel')
+					.text(_loc('Choose File'))
+					.appendTo($fileInputDiv);
+				
+				// Add the "Capture Photo" button
 				if (navigator.camera) {
           var $capturePhotoDiv = $('<div>')
             .addClass('attachmentEditor_buttonDiv')
@@ -3351,18 +3391,23 @@ var AttachmentEditor = $n2.Class({
 						.click(function(event) {
 							event.preventDefault();
 							navigator.camera.getPicture(function(fileName) {
-                // On success, show the file and save it
+								// On success, show the file and save it
+								$attachmentPreviewContainer.empty();
                 $('<img>', {src: fileName})
                   .addClass('attachmentEditor_photoPreview')
-                  .appendTo($form);
+                  .appendTo($attachmentPreviewContainer);
 
-                _this.cordovaAttachment = fileName.replace('file:/','/');
+                addCordovaAttachment(fileName);
 							}, function(error) {
-								console.log('Error getting picture:', error);
+								console.error('Error getting picture:', error);
 							}, {});
 						});
 				}
 			}, false);
+
+			function addCordovaAttachment(fileName) {
+				_this.cordovaAttachment = fileName.replace('file:/','/');
+			}
 		}	else {
       //clearfix div to prevent buttons from floating
       $('<div>')
