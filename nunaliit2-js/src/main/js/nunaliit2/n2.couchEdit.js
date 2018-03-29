@@ -3318,14 +3318,31 @@ var AttachmentEditor = $n2.Class({
 			var $attachmentPreviewContainer = $('<div>')
 				.appendTo($form);
 
+			// Add the "Remove Attachment" button
+			var $removeAttachmentContainer = $('<div>')
+        .addClass('attachmentEditor_cordovaCaptureButtonsContainer')
+				.appendTo($form);
+			var $removeAttachmentButton = $('<button>')
+				.appendTo($removeAttachmentContainer)
+				.text(_loc('Remove Attachment'))
+				.hide()
+				.click(function(event) {
+					event.preventDefault();
+					_this.cordovaAttachment = null;
+					$buttonsContainer.show();
+					$attachmentPreviewContainer.empty();
+					$(this).hide();
+				});
+
 			document.addEventListener("deviceready", function() {
 				// Add the "Choose File" button
 				var $fileInputDiv = $('<div>')
-        .addClass('attachmentEditor_buttonDiv')
-        .appendTo($buttonsContainer);
+					.addClass('attachmentEditor_buttonDiv')
+					.appendTo($buttonsContainer);
 				$('<input type="file" id="file-input">')
 					.addClass('attachmentEditor_hiddenFileInput')
 					.attr('name','media')
+					.appendTo($fileInputDiv)
 					.change(function(event) {
 						if (event.target && event.target.files && event.target.files[0]) {
 							// Great! The user chose a file, but we don't have access to its path (damn file system security).
@@ -3333,6 +3350,7 @@ var AttachmentEditor = $n2.Class({
 							var fileName = event.target.files[0].name;
 							if (!fileName) {
 								console.error('Impossible to get the file name.');
+								alert('Our apologies, there was a problem getting the file.');
 								return;
 							}
 
@@ -3342,40 +3360,45 @@ var AttachmentEditor = $n2.Class({
 									// Write in the given file
 									fileEntry.createWriter(function (fileWriter) {
 										fileWriter.onwriteend = function() {
-											// On success, show the file and save it
+											// On success, show the file
 											$attachmentPreviewContainer.empty();
 											$('<p>')
 												.text(event.target.files[0].name)
 												.appendTo($attachmentPreviewContainer);
+											$removeAttachmentButton.show();
+											$buttonsContainer.hide();
+
 											addCordovaAttachment(fileEntry.nativeURL);
 										};
 	
 										fileWriter.onerror = function (e) {
 											console.error("Failed file write: " + e.toString());
+											alert('Our apologies, there was a problem getting the file.');
 										};
 	
 										fileWriter.write(event.target.files[0]);
 									});
 								}, function(err) {
 									console.error('Error getting file', err);
+									alert('Our apologies, there was a problem getting the file.');
 								});
 							}, function(err) {
 								console.error('Error requesting file system', err);
+								alert('Our apologies, there was a problem getting the file.');
 							});
 						}
-					})
-					.appendTo($fileInputDiv);
+					});
+				
 				$('<label for="file-input">')
 					.addClass('attachmentEditor_fileInputLabel')
 					.text(_loc('Choose File'))
 					.appendTo($fileInputDiv);
 				
 				// Add the "Capture Photo" button
+				var $capturePhotoDiv = $('<div>')
+					.addClass('attachmentEditor_buttonDiv')
+					.appendTo($buttonsContainer)
 				if (navigator.camera) {
-          var $capturePhotoDiv = $('<div>')
-            .addClass('attachmentEditor_buttonDiv')
-            .appendTo($buttonsContainer);
-
 					$('<button>')
 						.addClass('attachmentEditor_capturePhotoButton')
 						.appendTo($capturePhotoDiv)
@@ -3383,15 +3406,18 @@ var AttachmentEditor = $n2.Class({
 						.click(function(event) {
 							event.preventDefault();
 							navigator.camera.getPicture(function(fileName) {
-								// On success, show the file and save it
+								// On success, show the file
 								$attachmentPreviewContainer.empty();
                 $('<img>', {src: fileName})
                   .addClass('attachmentEditor_photoPreview')
-                  .appendTo($attachmentPreviewContainer);
+									.appendTo($attachmentPreviewContainer);
+								$removeAttachmentButton.show();
+								$buttonsContainer.hide();
 
                 addCordovaAttachment(fileName);
 							}, function(error) {
 								console.error('Error getting picture:', error);
+								alert('Our apologies, there was a problem getting the photo.');
 							}, {});
 						});
 				}
