@@ -1456,10 +1456,15 @@ var CouchDocumentEditor = $n2.Class({
 		var _this = this;
 		
 		if (window.cordova) {
-			// add the attachments
-			_this.editedDocument.nunaliit_attachments = null;
-			_this.editedDocument.nunaliit_mobile_attachments = _this.attachmentEditor.cordovaAttachment;
-			updateDocument();
+			if (!_this.attachmentEditor.cordovaAttachment) {
+				alert(_loc('A file must be selected or recorded'));
+				return;
+			} else {
+				// add the attachments
+				_this.editedDocument.nunaliit_attachments = null;
+				_this.editedDocument.nunaliit_mobile_attachments = _this.attachmentEditor.cordovaAttachment;
+				updateDocument();
+			}
 		} else {
 			// Disable use of editor during uploading
 			this._disableControls();
@@ -2772,11 +2777,11 @@ var AttachmentEditor = $n2.Class({
 		if (!attNames.length && window.cordova) {
 			if (this.doc.nunaliit_mobile_attachments) {
 				this.cordovaAttachment = this.doc.nunaliit_mobile_attachments;
+				this._addCreationAttachmentElement({
+					attName: this.cordovaAttachment
+					,label: _loc('File')
+				});
 			}
-			this._addCreationAttachmentElement({
-				attName: 'new'
-				,label: _loc('File')
-			});
 		}
 	},
 	
