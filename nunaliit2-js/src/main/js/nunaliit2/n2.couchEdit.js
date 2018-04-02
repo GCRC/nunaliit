@@ -3319,15 +3319,14 @@ var AttachmentEditor = $n2.Class({
 			.attr('n2AttName',attName)
 			.appendTo($div);
 
+		var attachmentPreviewComponents = [];
+
     if (window.cordova) {
       // On Cordova devices show buttons to upload media
       var $buttonsContainer = $('<div>')
         .addClass('attachmentEditor_cordovaCaptureButtonsContainer')
 				.appendTo($form);
 			
-			var $attachmentPreviewContainer = $('<div>')
-				.appendTo($form);
-
 			// Add the "Remove Attachment" button
 			var $removeAttachmentContainer = $('<div>')
         .addClass('attachmentEditor_cordovaCaptureButtonsContainer')
@@ -3340,16 +3339,17 @@ var AttachmentEditor = $n2.Class({
 					event.preventDefault();
 					_this.cordovaAttachment = null;
 					$buttonsContainer.show();
-					$attachmentPreviewContainer.empty();
+					clearAttachmentPreview();
 					$(this).hide();
 				});
 
 			if (_this.cordovaAttachment) {
 				var lastSlashIndex = _this.cordovaAttachment.lastIndexOf('/');
 				var filename = _this.cordovaAttachment.substring(lastSlashIndex + 1);
-				$('<p>')
+				var $filenamePreview = $('<p>')
 					.text(filename)
-					.appendTo($attachmentPreviewContainer);
+					.appendTo($form);
+				attachmentPreviewComponents.push($filenamePreview);
 				$removeAttachmentButton.show();
 				$buttonsContainer.hide();
 			}
@@ -3381,10 +3381,11 @@ var AttachmentEditor = $n2.Class({
 									fileEntry.createWriter(function (fileWriter) {
 										fileWriter.onwriteend = function() {
 											// On success, show the file
-											$attachmentPreviewContainer.empty();
-											$('<p>')
+											clearAttachmentPreview();
+											var $filePreview = $('<p>')
 												.text(event.target.files[0].name)
-												.appendTo($attachmentPreviewContainer);
+												.appendTo($form);
+											attachmentPreviewComponents.push($filePreview);
 											$removeAttachmentButton.show();
 											$buttonsContainer.hide();
 
@@ -3427,10 +3428,11 @@ var AttachmentEditor = $n2.Class({
 							event.preventDefault();
 							navigator.camera.getPicture(function(fileName) {
 								// On success, show the file
-								$attachmentPreviewContainer.empty();
-                $('<img>', {src: fileName})
+								clearAttachmentPreview();
+                var $imgPreview = $('<img>', {src: fileName})
                   .addClass('attachmentEditor_photoPreview')
-									.appendTo($attachmentPreviewContainer);
+									.appendTo($form);
+								attachmentPreviewComponents.push($imgPreview);
 								$removeAttachmentButton.show();
 								$buttonsContainer.hide();
 
@@ -3566,7 +3568,13 @@ var AttachmentEditor = $n2.Class({
       } else {
         allTabsDisplayed();
       }
-    }
+		}
+		
+		function clearAttachmentPreview() {
+			for (var i = 0; i < attachmentPreviewComponents.length; i++) {
+				attachmentPreviewComponents[i].remove();
+			}
+		}
     
 		function allTabsDisplayed() {
 			_this._clickTab(attName, firstTabDisplayed);
