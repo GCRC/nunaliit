@@ -696,6 +696,13 @@ var Display = $n2.Class({
 		var status = null;
 		
 		$progress.empty();
+
+		if (window.cordova && data.nunaliit_mobile_attachments) {
+			var lastSlashIndex = data.nunaliit_mobile_attachments.lastIndexOf('/');
+			var filename = data.nunaliit_mobile_attachments.substring(lastSlashIndex + 1);
+			$(`<p>1 mobile attachment: ${filename}</p>`)
+				.appendTo($progress);
+		}
 		
 		// Find an attachment which is in progress
 		if( data.nunaliit_attachments 

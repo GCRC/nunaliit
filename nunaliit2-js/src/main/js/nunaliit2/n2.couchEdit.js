@@ -2768,6 +2768,16 @@ var AttachmentEditor = $n2.Class({
 				};
 			};
 		};
+
+		if (!attNames.length && window.cordova) {
+			if (this.doc.nunaliit_mobile_attachments) {
+				this.cordovaAttachment = this.doc.nunaliit_mobile_attachments;
+			}
+			this._addCreationAttachmentElement({
+				attName: 'new'
+				,label: _loc('File')
+			});
+		}
 	},
 	
 	printButtons: function(opts_){
@@ -3333,6 +3343,16 @@ var AttachmentEditor = $n2.Class({
 					$attachmentPreviewContainer.empty();
 					$(this).hide();
 				});
+
+			if (_this.cordovaAttachment) {
+				var lastSlashIndex = _this.cordovaAttachment.lastIndexOf('/');
+				var filename = _this.cordovaAttachment.substring(lastSlashIndex + 1);
+				$('<p>')
+					.text(filename)
+					.appendTo($attachmentPreviewContainer);
+				$removeAttachmentButton.show();
+				$buttonsContainer.hide();
+			}
 
 			document.addEventListener("deviceready", function() {
 				// Add the "Choose File" button
