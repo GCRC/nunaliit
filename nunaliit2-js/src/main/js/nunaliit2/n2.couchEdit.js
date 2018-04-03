@@ -1456,7 +1456,9 @@ var CouchDocumentEditor = $n2.Class({
 		var _this = this;
 		
 		if (window.cordova) {
-			if (!_this.attachmentEditor.cordovaAttachment) {
+			// alert if media documents are missing the attachment
+			if (!_this.attachmentEditor.cordovaAttachment &&
+					(_this.attachmentEditor.doc.nunaliit_schema === 'demo_media' || _this.attachmentEditor.doc.nunaliit_schema === 'media' )) {
 				alert(_loc('A file must be selected or recorded'));
 				return;
 			} else {
@@ -3366,7 +3368,6 @@ var AttachmentEditor = $n2.Class({
 					.appendTo($buttonsContainer);
 				$('<input type="file" id="file-input">')
 					.addClass('attachmentEditor_hiddenFileInput')
-					.attr('name','media')
 					.appendTo($fileInputDiv)
 					.change(function(event) {
 						if (event.target && event.target.files && event.target.files[0]) {
