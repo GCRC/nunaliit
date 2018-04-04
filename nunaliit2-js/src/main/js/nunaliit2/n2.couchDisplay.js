@@ -700,7 +700,7 @@ var Display = $n2.Class({
 		if (window.cordova && data.nunaliit_mobile_attachments) {
 			var lastSlashIndex = data.nunaliit_mobile_attachments.lastIndexOf('/');
 			var filename = data.nunaliit_mobile_attachments.substring(lastSlashIndex + 1);
-			$(`<p>1 mobile attachment: ${filename}</p>`)
+			$('<p>1 mobile attachment: ' + filename + '</p>')
 				.appendTo($progress);
 		}
 		
