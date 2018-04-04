@@ -251,8 +251,8 @@ var Editor = $n2.Class({
 			var dialogOptions = {
 				autoOpen: true
 				,title: _loc('Fill Out Related Document')
-				,modal: true
-				,width: 740
+				,modal: !window.cordova
+				,width: window.cordova ? '100%' : 740
 				,close: function(event, ui){
 					var diag = $('#'+diagId);
 					diag.remove();
@@ -267,17 +267,27 @@ var Editor = $n2.Class({
 		var _this = this;
 		var obj = this.obj;
 
-		// Check that a file was provided
-		this.attachmentUploadHandler.performPreSavingActions({
-			doc: obj
-			,documentSource: this.documentSource
-			,onSuccess: function(){
+		if (window.cordova) {
+			// Check that a file was provided
+			if (_this.attachmentUploadHandler.cordovaAttachment) {
 				_this._saveObj();
+			} else {
+				alert(_loc('A file must be selected or recorded'));
+				return;
 			}
-			,onError: function(err){
-				alert(err);
-			}
-		});
+		} else {
+			// Check that a file was provided
+			this.attachmentUploadHandler.performPreSavingActions({
+				doc: obj
+				,documentSource: this.documentSource
+				,onSuccess: function(){
+					_this._saveObj();
+				}
+				,onError: function(err){
+					alert(err);
+				}
+			});
+		}
 	},
 
 	_clickCancel: function(){
@@ -298,10 +308,19 @@ var Editor = $n2.Class({
 
 		$n2.couchDocument.adjustDocument(obj);
 
+		if (window.cordova) {
+			obj.nunaliit_attachments = null;
+			obj.nunaliit_mobile_attachments = _this.attachmentUploadHandler.cordovaAttachment;
+		}
+
 		this.documentSource.createDocument({
 			doc: obj
 			,onSuccess: function(updatedDoc) {
-				_this._uploadFile(updatedDoc);
+				if (window.cordova) {
+					_this._success(updatedDoc._id);
+				} else {
+					_this._uploadFile(updatedDoc);
+				}
 			}
 			,onError: function(err){
 				_this._error( _loc('Unable to reach database to submit document: {err}',{err:err}) );
@@ -454,13 +473,17 @@ var CreateRelatedDocProcess = $n2.Class({
 			return;
 		};
 		
-		// Check that upload service is available
-		this.uploadService.checkWelcome({
-			onSuccess: uploadServiceAvailable
-			,onError: function(err){
-				alert( _loc('Upload service can not be reached. Unable to submit a related document.') );
-			}
-		});
+		if (window.cordova) {
+			uploadServiceAvailable();
+		} else {
+			// Check that upload service is available
+			this.uploadService.checkWelcome({
+				onSuccess: uploadServiceAvailable
+				,onError: function(err){
+					alert( _loc('Upload service can not be reached. Unable to submit a related document.') );
+				}
+			});
+		}
 	
 		function uploadServiceAvailable(){
 			var obj = opt.schema.createObject();
