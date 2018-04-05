@@ -1476,6 +1476,7 @@ var CollapsibleRadialTreeCanvas = $n2.Class({
 			,children: []
 			,expanded: true
 		};
+		this.sourceLinks = [];
 		for(var elemId in this.elementsById){
 			var elem = this.elementsById[elemId];
 			
