@@ -36,7 +36,7 @@ div.n2CouchEditor_container .ui-accordion-content {
 
 form.attachmentEditor_creationForm {
 	clear: both;
-  height: 100px;
+  height: 200px;
   margin-top: 10px;
 }
 
@@ -54,7 +54,13 @@ form.attachmentEditor_creationFormWithVideo {
 
 .attachmentEditor_photoPreview {
   max-width: 70%;
-  max-height: 100px;
+	max-height: 150px;
+	margin-left: 20px;
+}
+
+.attachmentEditor_fileName {
+	font-style: italic;
+	text-align: center;
 }
 
 .attachmentEditor_hiddenFileInput {
@@ -212,4 +218,81 @@ form.attachmentEditor_creationFormWithVideo {
 /* Related Doc */
 .n2RelatedDoc_dialog .attachmentEditor_label {
 	display: none;
+}
+
+.cordova-btn {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  outline: none;
+  border-radius: 2px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .6);
+	transition: background-color .3s;
+	background: #e6e6e6;
+	padding: 3px 7px 3px 30px;
+	text-align: left;
+}
+
+.cordova-btn > * {
+  position: relative;
+}
+
+.cordova-btn span {
+  display: block;
+  padding: 12px 24px;
+}
+
+.cordova-btn:before {
+  content: "";
+  
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  
+  display: block;
+  width: 0;
+  padding-top: 0;
+    
+  border-radius: 100%;
+  
+  background-color: rgba(236, 240, 241, .3);
+  
+  -webkit-transform: translate(-50%, -50%);
+  -moz-transform: translate(-50%, -50%);
+  -ms-transform: translate(-50%, -50%);
+  -o-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+}
+
+.cordova-btn:active:before {
+  width: 120%;
+  padding-top: 120%;
+  
+  transition: width .2s ease-out, padding-top .2s ease-out;
+}
+
+/* Styles, not important */
+*, *:before, *:after {
+  box-sizing: border-box;
+}
+
+.width-150 {
+	width: 150px;
+}
+
+.cordova-icon {
+	background-repeat: no-repeat;
+	border: 6px solid #e6e6e6;
+}
+
+.icon-camera {
+	background-image: url('images/ic_camera.png');   
+}
+
+.icon-file {
+	background-image: url('images/ic_attach.png');   
+}
+
+.icon-remove {
+	background-image: url('images/ic_delete.png');   
 }
