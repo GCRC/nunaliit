@@ -13,7 +13,9 @@ import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchDocumentOptions;
+import ca.carleton.gcrc.couch.client.CouchQuery;
 import ca.carleton.gcrc.couch.client.CouchServerVersion;
+import ca.carleton.gcrc.couch.client.impl.ConnectionStreamResult;
 import ca.carleton.gcrc.couch.utils.CouchNunaliitUtils;
 import ca.carleton.gcrc.json.JSONSupport;
 
@@ -143,6 +145,44 @@ public class SubmissionServletActions {
 
 		} else {
 			throw new Exception("Only operations against 'submissionDb' are accepted");
+		}
+	}
+
+	public ConnectionStreamResult getSubmissionInfoBySubmissionId(
+			CouchAuthenticationContext authContext 
+			,String submissionId 
+			) throws Exception {
+		
+		try {
+			CouchQuery query = new CouchQuery();
+			query.setViewName("submission-info-by-id");
+			query.setStartKey(submissionId);
+			query.setEndKey(submissionId);
+
+			ConnectionStreamResult results = submissionDesign.performQueryRaw(query);
+			return results;
+
+		} catch (Exception e) {
+			throw new Exception("Error while accessing submission info by submission id view", e);
+		}
+	}
+
+	public ConnectionStreamResult getSubmissionInfoByDeviceId(
+			CouchAuthenticationContext authContext 
+			,String deviceId 
+			) throws Exception {
+		
+		try {
+			CouchQuery query = new CouchQuery();
+			query.setViewName("submission-info-by-device-id");
+			query.setStartKey(deviceId);
+			query.setEndKey(deviceId);
+
+			ConnectionStreamResult results = submissionDesign.performQueryRaw(query);
+			return results;
+
+		} catch (Exception e) {
+			throw new Exception("Error while accessing submission info by device id view", e);
 		}
 	}
 

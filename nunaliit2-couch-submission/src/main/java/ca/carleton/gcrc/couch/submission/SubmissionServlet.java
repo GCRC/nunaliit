@@ -2,6 +2,8 @@ package ca.carleton.gcrc.couch.submission;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 
 import javax.servlet.ServletConfig;
@@ -24,6 +26,7 @@ import ca.carleton.gcrc.couch.client.CouchFactory;
 import ca.carleton.gcrc.couch.client.CouchSession;
 import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
 import ca.carleton.gcrc.couch.client.CouchUserDb;
+import ca.carleton.gcrc.couch.client.impl.ConnectionStreamResult;
 import ca.carleton.gcrc.couch.client.impl.CouchContextCookie;
 import ca.carleton.gcrc.json.servlet.JsonServlet;
 
@@ -161,6 +164,12 @@ public class SubmissionServlet extends JsonServlet {
 // GET /_sleep        - Returns success after waiting for a given number of milliseconds (removed since 1.0.0)
 // GET /_utils/file   - Return static web pages that contain the CouchDB administration interface
 		
+// Custom:
+// GET /_submission-info-by-device-id?key=?
+//                     - Return _design/submission/_view/submission-info-by-device-id?key=?
+// GET /_submission-info-by-id?key=?
+//                     - Return _design/submission/_view/submission-info-by-id?key=?
+		
 		try {
 			Cookie[] cookies = req.getCookies();
 			CouchAuthenticationContext authContext = getAuthenticationContextFromCookies(cookies);
@@ -195,6 +204,58 @@ public class SubmissionServlet extends JsonServlet {
 				
 				JSONObject result = actions.getUuids(authContext, count);
 				sendJsonResponse(resp, result);
+				
+			} else if( "_submission-info-by-device-id".equals(dbIdentifier) 
+			        || "_submission-info-by-id".equals(dbIdentifier) ) {
+				if( path.size() > 1 ){
+					throw new Exception("Invalid "+dbIdentifier+" request");
+				}
+				
+				String key = null;
+				{
+					String[] keys = req.getParameterValues("key");
+					if( null == keys ) {
+						throw new Exception("Parameter 'key' must be specified");
+					} else {
+						if( keys.length > 1 ){
+							throw new Exception("Parameter 'key' is specified multiple times");
+						} else if( keys.length < 1 ) {
+							throw new Exception("Parameter 'key' must be specified");
+						} else {
+							key = keys[0];
+						}
+					}
+				}
+
+				ConnectionStreamResult result = null;
+				if( "_submission-info-by-device-id".equals(dbIdentifier) ) {
+					result = actions.getSubmissionInfoByDeviceId(authContext, key);
+				} else if( "_submission-info-by-id".equals(dbIdentifier) ) {
+					result = actions.getSubmissionInfoBySubmissionId(authContext, key);
+				} else {
+					throw new Exception("Do not know how to handle: "+dbIdentifier);
+				}
+
+				InputStream is = result.getInputStream();
+
+				resp.setStatus(200);
+				resp.setContentType(result.getContentType());
+				resp.setCharacterEncoding(result.getContentEncoding());
+
+				resp.addHeader("Cache-Control", "no-cache");
+				resp.addHeader("Pragma", "no-cache");
+				resp.addHeader("Expires", "-1");
+
+				OutputStream os = resp.getOutputStream();
+				
+				byte[] buffer = new byte[1024];
+				int size = is.read(buffer);
+				while( size >= 0 ) {
+					os.write(buffer, 0, size);
+					size = is.read(buffer);
+				}
+				
+				os.flush();
 				
 			} else {
 				throw new Exception("Invalid action requested");
