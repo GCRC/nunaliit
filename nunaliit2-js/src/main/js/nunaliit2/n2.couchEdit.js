@@ -3334,13 +3334,14 @@ var AttachmentEditor = $n2.Class({
         .addClass('attachmentEditor_cordovaCaptureButtonsContainer')
 				.appendTo($form);
 			
-			// Add the "Remove Attachment" button
+			// Add the "Remove" button
 			var $removeAttachmentContainer = $('<div>')
         .addClass('attachmentEditor_cordovaCaptureButtonsContainer')
 				.appendTo($form);
-			var $removeAttachmentButton = $('<button>')
+			var $removeAttachmentButton = $('<label>')
+				.addClass('cordova-btn cordova-icon icon-remove')
 				.appendTo($removeAttachmentContainer)
-				.text(_loc('Remove Attachment'))
+				.text(_loc('Remove'))
 				.hide()
 				.click(function(event) {
 					event.preventDefault();
@@ -3389,6 +3390,7 @@ var AttachmentEditor = $n2.Class({
 											// On success, show the file
 											clearAttachmentPreview();
 											var $filePreview = $('<p>')
+												.addClass('attachmentEditor_fileName')
 												.text(event.target.files[0].name)
 												.appendTo($form);
 											attachmentPreviewComponents.push($filePreview);
@@ -3417,7 +3419,7 @@ var AttachmentEditor = $n2.Class({
 					});
 				
 				$('<label for="file-input">')
-					.addClass('attachmentEditor_fileInputLabel')
+					.addClass('cordova-btn width-150 cordova-icon icon-file')
 					.text(_loc('Choose File'))
 					.appendTo($fileInputDiv);
 				
@@ -3426,8 +3428,8 @@ var AttachmentEditor = $n2.Class({
 					.addClass('attachmentEditor_buttonDiv')
 					.appendTo($buttonsContainer)
 				if (navigator.camera) {
-					$('<button>')
-						.addClass('attachmentEditor_capturePhotoButton')
+					$('<label>')
+						.addClass('cordova-btn width-150 cordova-icon icon-camera')
 						.appendTo($capturePhotoDiv)
 						.text(_loc('Capture Photo'))
 						.click(function(event) {

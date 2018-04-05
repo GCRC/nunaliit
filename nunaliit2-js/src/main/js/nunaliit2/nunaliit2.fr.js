@@ -418,7 +418,6 @@ $n2.l10n.addLocalizedStrings('fr',{
 	,"Relation: ":"Relation"
 	,"Remind me later":"Rappelez-moi plus tard"
 	,"Remove":"Supprimer"
-	,"Remove Attachment":"Supprimer l'attachement"
 	,"Replace Text":"Texte de remplacement"
 	,"Reply":"Répondre"
 	,"Report":"Rapport"
