@@ -2644,18 +2644,18 @@ var AttachmentEditor = $n2.Class({
 		//load configuration
 		if( this.doc
 			&& !this.doc._rev) {
-			if(typeof this.doc._maxAudioRecordingLengthSeconds !== 'undefined') {
-				this.maxAudioRecordingLengthSeconds = this.doc._maxAudioRecordingLengthSeconds;
-				delete this.doc._maxAudioRecordingLengthSeconds;
+			if(typeof this.doc.nunaliit_maxAudioRecordingLengthSeconds !== 'undefined') {
+				this.maxAudioRecordingLengthSeconds = this.doc.nunaliit_maxAudioRecordingLengthSeconds;
+				delete this.doc.nunaliit_maxAudioRecordingLengthSeconds;
 			}
-			if(typeof this.doc._maxVideoRecordingLengthSeconds !== 'undefined') {
-				this.maxVideoRecordingLengthSeconds = this.doc._maxVideoRecordingLengthSeconds;
-				delete this.doc._maxVideoRecordingLengthSeconds;
+			if(typeof this.doc.nunaliit_maxVideoRecordingLengthSeconds !== 'undefined') {
+				this.maxVideoRecordingLengthSeconds = this.doc.nunaliit_maxVideoRecordingLengthSeconds;
+				delete this.doc.nunaliit_maxVideoRecordingLengthSeconds;
 			}
-			if(typeof this.doc._recordVideoSize !== 'undefined') {
-				var videoSizeParts = this.doc._recordVideoSize.split('x');
+			if(typeof this.doc.nunaliit_recordVideoSize !== 'undefined') {
+				var videoSizeParts = this.doc.nunaliit_recordVideoSize.split('x');
 				this.recordVideoSize = {width: videoSizeParts[0], height: videoSizeParts[1]};
-				delete this.doc._recordVideoSize;
+				delete this.doc.nunaliit_recordVideoSize;
 			}
 		}
 
