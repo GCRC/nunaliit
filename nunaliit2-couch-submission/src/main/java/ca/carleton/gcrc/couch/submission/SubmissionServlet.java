@@ -329,6 +329,18 @@ public class SubmissionServlet extends JsonServlet {
 						throw new Exception("invalid request");
 					}
 					
+					String deviceId = null;
+					{
+						String[] deviceIds = req.getParameterValues("deviceId");
+						if( null != deviceIds ) {
+							if( deviceIds.length > 1 ){
+								throw new Exception("Parameter 'deviceId' is specified multiple times");
+							} else if( deviceIds.length >0 ) {
+								deviceId = deviceIds[0];
+							}
+						}
+					}
+					
 					if( null != attName ){
 						throw new Exception("creation of attachment is not supported");
 					} else {
@@ -338,7 +350,7 @@ public class SubmissionServlet extends JsonServlet {
 						Object obj = tokener.nextValue();
 						if( obj instanceof JSONObject ){
 							JSONObject doc = (JSONObject)obj;
-							JSONObject result = actions.modifyDocument(authContext, dbIdentifier, docId, doc);
+							JSONObject result = actions.modifyDocument(authContext, dbIdentifier, deviceId, docId, doc);
 							sendJsonResponse(resp, result);
 
 						} else {
@@ -438,12 +450,25 @@ public class SubmissionServlet extends JsonServlet {
 						throw new Exception("deletion of attachment is not supported");
 					} else {
 						// Delete a document
+						
+						String deviceId = null;
+						{
+							String[] deviceIds = req.getParameterValues("deviceId");
+							if( null != deviceIds ) {
+								if( deviceIds.length > 1 ){
+									throw new Exception("Parameter 'deviceId' is specified multiple times");
+								} else if( deviceIds.length >0 ) {
+									deviceId = deviceIds[0];
+								}
+							}
+						}
+						
 						String rev = getParameter(req, "rev");
 						if( null == rev ){
 							throw new Exception("Parameter 'rev' must be specified");
 						}
 						
-						JSONObject result = actions.deleteDocument(authContext, dbIdentifier, docId, rev);
+						JSONObject result = actions.deleteDocument(authContext, dbIdentifier, deviceId, docId, rev);
 						sendJsonResponse(resp, result);
 					}
 				}

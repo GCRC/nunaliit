@@ -11,6 +11,9 @@ function(doc){
 		if( doc.nunaliit_submission.submitted_reserved 
 		 && doc.nunaliit_submission.submitted_reserved.id ){
 			docId = doc.nunaliit_submission.submitted_reserved.id;
+		} else if( doc.nunaliit_submission.original_reserved 
+		        && doc.nunaliit_submission.original_reserved.id ) {
+			docId = doc.nunaliit_submission.original_reserved.id;
 		};
 
 		var deviceId = undefined;

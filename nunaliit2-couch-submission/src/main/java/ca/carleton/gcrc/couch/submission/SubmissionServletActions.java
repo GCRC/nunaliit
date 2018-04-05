@@ -80,6 +80,7 @@ public class SubmissionServletActions {
 	public JSONObject modifyDocument(
 			CouchAuthenticationContext authContext 
 			,String dbIdentifier 
+			,String deviceId 
 			,String docId 
 			,JSONObject doc
 			) throws Exception {
@@ -107,7 +108,7 @@ public class SubmissionServletActions {
 				originalDoc = documentCouchDb.getDocument(docId, options);
 			}
 			
-			JSONObject submissionRequest = buildSubmissionRequest(authContext, doc, originalDoc);
+			JSONObject submissionRequest = buildSubmissionRequest(authContext, deviceId, doc, originalDoc);
 			
 			JSONObject result = submissionDesign.getDatabase().createDocument(submissionRequest);
 			
@@ -121,6 +122,7 @@ public class SubmissionServletActions {
 	public JSONObject deleteDocument(
 			CouchAuthenticationContext authContext 
 			,String dbIdentifier 
+			,String deviceId
 			,String docId 
 			,String rev
 			) throws Exception {
@@ -137,7 +139,7 @@ public class SubmissionServletActions {
 				originalDoc = documentCouchDb.getDocument(docId, options);
 			}
 			
-			JSONObject submissionRequest = buildSubmissionRequest(authContext, null, originalDoc);
+			JSONObject submissionRequest = buildSubmissionRequest(authContext, deviceId, null, originalDoc);
 			
 			JSONObject result = submissionDesign.getDatabase().createDocument(submissionRequest);
 			
@@ -204,6 +206,7 @@ public class SubmissionServletActions {
 
 	private JSONObject buildSubmissionRequest(
 			CouchAuthenticationContext authContext
+			,String deviceId
 			,JSONObject doc
 			,JSONObject original
 			) throws Exception{
@@ -214,6 +217,11 @@ public class SubmissionServletActions {
 		JSONObject submissionStructure = new JSONObject();
 		submissionRequest.put("nunaliit_submission", submissionStructure);
 		submissionStructure.put("state", "submitted");
+		
+		// Device Identifier
+		if( null != deviceId ){
+			submissionStructure.put("deviceId", deviceId);
+		}
 		
 		// Submitter
 		{

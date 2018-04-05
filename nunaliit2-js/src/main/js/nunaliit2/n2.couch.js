@@ -1153,6 +1153,7 @@ var Database = $n2.Class('couch.Database',{
 	,createDocument: function(options_) {
 		var opts = $.extend(true, {
 				data: {}
+				,deviceId: undefined // custom for submissionDb
 				,onSuccess: function(docInfo){}
 				,onError: function(errorMsg){ $n2.reportErrorForced(errorMsg); }
 			}
@@ -1167,6 +1168,12 @@ var Database = $n2.Class('couch.Database',{
 		
 		var _s = this;
 		
+		// Device id for submission DB
+		var deviceIdStr = '';
+		if( opts.deviceId ){
+			deviceIdStr = '?deviceId='+opts.deviceId;
+		};
+		
 		var docId = opts.data._id;
 		if( docId ) {
 			// If _id was specified
@@ -1180,7 +1187,7 @@ var Database = $n2.Class('couch.Database',{
 		
 		function onUuid(docId){
 			$.ajax({
-		    	url: _s.dbUrl + docId
+		    	url: _s.dbUrl + docId + deviceIdStr
 		    	,type: 'put'
 		    	,async: true
 		    	,data: JSON.stringify(opts.data)
@@ -1202,6 +1209,7 @@ var Database = $n2.Class('couch.Database',{
 	,updateDocument: function(options_) {
 		var opts = $.extend(true, {
 				data: null
+				,deviceId: undefined // custom for submissionDb
 				,onSuccess: function(docInfo){}
 				,onError: function(errorMsg){ $n2.reportErrorForced(errorMsg); }
 			}
@@ -1218,10 +1226,16 @@ var Database = $n2.Class('couch.Database',{
 			return;
 		};
 		
+		// Device id for submission DB
+		var deviceIdStr = '';
+		if( opts.deviceId ){
+			deviceIdStr = '?deviceId='+opts.deviceId;
+		};
+		
 		var _s = this;
 		
 		$.ajax({
-	    	url: _s.dbUrl + opts.data._id
+	    	url: _s.dbUrl + opts.data._id + deviceIdStr
 	    	,type: 'PUT'
 	    	,async: true
 	    	,data: JSON.stringify(opts.data)
@@ -1242,6 +1256,7 @@ var Database = $n2.Class('couch.Database',{
 	,deleteDocument: function(options_) {
 		var opts = $.extend(true, {
 				data: null
+				,deviceId: undefined // custom for submissionDb
 				,onSuccess: function(docInfo){}
 				,onError: function(errorMsg){ $n2.reportErrorForced(errorMsg); }
 			}
@@ -1258,10 +1273,16 @@ var Database = $n2.Class('couch.Database',{
 			return;
 		};
 		
+		// Device id for submission DB
+		var deviceIdStr = '';
+		if( opts.deviceId ){
+			deviceIdStr = '&deviceId='+opts.deviceId;
+		};
+		
 		var _s = this;
 		
 		$.ajax({
-	    	url: _s.dbUrl + opts.data._id + '?rev=' + opts.data._rev
+	    	url: _s.dbUrl + opts.data._id + '?rev=' + opts.data._rev + deviceIdStr
 	    	,type: 'DELETE'
 	    	,async: true
 	    	,dataType: 'json'
