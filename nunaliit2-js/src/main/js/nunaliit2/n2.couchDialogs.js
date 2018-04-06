@@ -1694,7 +1694,7 @@ var DialogService = $n2.Class({
 		}
 		
 		var $select = $('<select></select>');
-		
+
 		if (window.cordova) {
 			$select.addClass('cordova-select-dropdown');
 		}
@@ -1793,10 +1793,14 @@ var DialogService = $n2.Class({
 			$("<style type='text/css'> .ui-dialog-title { font-size: large } </style>").appendTo("head");
 		}
 		
-		var width = computeMaxDialogWidth(740);
-		if( typeof width === 'number' ){
-			dialogOptions.width = width;
-		};
+		if (window.cordova) {
+			dialogOptions.maxWidth = '300px'
+		} else {
+			var width = computeMaxDialogWidth(740);
+			if( typeof width === 'number' ){
+				dialogOptions.width = width;
+			};
+		}
 		
 		$dialog.dialog(dialogOptions);
 	}
