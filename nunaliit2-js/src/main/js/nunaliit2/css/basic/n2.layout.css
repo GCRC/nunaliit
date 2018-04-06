@@ -263,6 +263,24 @@
 
 }
 
+/* Cordova mobile builds */
 
+.cordova-dialog-btn {
+	color: #2985b8;
+	text-transform: uppercase;
+	font-weight: bold;
+	padding: 10px;  
+}
 
+.cordova-button-container {
+	margin-top: 40px;
+	text-align: right;
+}
 
+.cordova-select-dropdown {
+	background-color: transparent;
+	border: none;
+	border-bottom: 1px solid lightgrey;
+	padding-top: 4px;
+	outline: none;
+}

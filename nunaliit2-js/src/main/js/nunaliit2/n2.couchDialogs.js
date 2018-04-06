@@ -1687,11 +1687,18 @@ var DialogService = $n2.Class({
 		var diagId = $n2.getUniqueId();
 		var $dialog = $('<div id="'+diagId+'"></div>');
 
-		var $label = $('<span></span>');
-		$label.text( _loc('Select schema') + ': ' );
-		$dialog.append($label);
+		if (!window.cordova) {
+			var $label = $('<span></span>');
+			$label.text( _loc('Select schema') + ': ' );
+			$dialog.append($label);
+		}
 		
 		var $select = $('<select></select>');
+		
+		if (window.cordova) {
+			$select.addClass('cordova-select-dropdown');
+		}
+
 		$dialog.append($select);
 		for(var i=0,e=opt.schemas.length; i<e; ++i){
 			var schema = opt.schemas[i];
@@ -1707,10 +1714,24 @@ var DialogService = $n2.Class({
 		
 		var mustReset = true;
 		
-		var $ok = $('<button></button>');
-		$ok.text( _loc('OK') );
-		$ok.button({icons:{primary:'ui-icon-check'}});
-		$dialog.append( $ok );
+		var $btnContainer;
+		if (window.cordova) {
+			$btnContainer = $('<div></div>')
+				.addClass('cordova-button-container');
+		}
+
+		var $ok;
+		if (window.cordova) {
+			$ok = $('<label></label>')
+				.text(_loc('Select'))
+				.addClass('cordova-dialog-btn')
+			$btnContainer.append($ok);
+		} else {
+			$ok = $('<button></button>');
+			$ok.text( _loc('OK') );
+			$ok.button({icons:{primary:'ui-icon-check'}});
+			$dialog.append( $ok );
+		} 
 		$ok.click(function(){
 			mustReset = false;
 			
@@ -1727,19 +1748,31 @@ var DialogService = $n2.Class({
 			return false;
 		});
 		
-		var $cancel = $('<button></button>');
+		var $cancel;
+		if (window.cordova) {
+			$cancel = $('<label></label>')
+				.addClass('cordova-dialog-btn');
+			$btnContainer.append($cancel);
+		} else {
+			$cancel = $('<button></button>');
+			$cancel.button({icons:{primary:'ui-icon-cancel'}});
+			$dialog.append( $cancel );
+		}
 		$cancel.text( _loc('Cancel') );
-		$cancel.button({icons:{primary:'ui-icon-cancel'}});
-		$dialog.append( $cancel );
 		$cancel.click(function(){
 			$('#'+diagId).dialog('close');
 			return false;
 		});
-		
+
+		if (window.cordova) {
+			$dialog.append($btnContainer);
+		}
+
 		var dialogOptions = {
 			autoOpen: true
 			,title: _loc('Select a schema')
 			,modal: true
+			,resizable: !window.cordova
 			,close: function(event, ui){
 				var diag = $(event.target);
 				diag.dialog('destroy');
@@ -1749,7 +1782,16 @@ var DialogService = $n2.Class({
 					opt.onReset();
 				};
 			}
+			,open: function(event, ui) {
+				if (window.cordova) {
+					$(".ui-dialog-titlebar-close", ui.dialog | ui).hide();
+				}
+    	}
 		};
+		
+		if (window.cordova) {
+			$("<style type='text/css'> .ui-dialog-title { font-size: large } </style>").appendTo("head");
+		}
 		
 		var width = computeMaxDialogWidth(740);
 		if( typeof width === 'number' ){
