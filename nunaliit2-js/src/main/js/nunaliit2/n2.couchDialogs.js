@@ -1790,6 +1790,7 @@ var DialogService = $n2.Class({
 		};
 		
 		if (window.cordova) {
+			// Make the dialog title larger on Cordova
 			$("<style type='text/css'> .ui-dialog-title { font-size: large } </style>").appendTo("head");
 		}
 		
