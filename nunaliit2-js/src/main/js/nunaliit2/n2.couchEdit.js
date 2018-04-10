@@ -3451,6 +3451,84 @@ var AttachmentEditor = $n2.Class({
 							}, {});
 						});
 				}
+			
+				// Add the "Capture Video" button
+				var $captureVideoDiv = $('<div>')
+					.addClass('attachmentEditor_buttonDiv')
+					.appendTo($buttonsContainer)
+				if (navigator.device && navigator.device.capture) {
+					$('<label>')
+						.addClass('cordova-btn width-150 cordova-icon icon-video')
+						.appendTo($captureVideoDiv)
+						.text(_loc('Capture Video'))
+						.click(function(event) {
+							event.preventDefault();
+							navigator.device.capture.captureVideo(
+								function(mediaFiles) {
+									if (mediaFiles && mediaFiles[0] && mediaFiles[0].fullPath) {
+										var lastSlashIndex = mediaFiles[0].fullPath.lastIndexOf('/');
+										var filename = mediaFiles[0].fullPath.substring(lastSlashIndex + 1);
+
+										// On success, show the file
+										clearAttachmentPreview();
+										var $videoPreview = $('<p>')
+											.addClass('attachmentEditor_fileName')
+											.text(filename)
+											.appendTo($form);
+										attachmentPreviewComponents.push($videoPreview);
+										$removeAttachmentButton.show();
+										$buttonsContainer.hide();
+
+										addCordovaAttachment(mediaFiles[0].fullPath);
+									} else {
+										console.error('No video uploaded.');
+										alert('Our apologies, we cannot get your video.');
+									}
+								}, function(error) {
+									console.error('Error getting video:', error);
+									alert('Our apologies, there was a problem getting the video.');
+								}, {});
+						});
+				}
+							
+				// Add the "Capture Audio" button
+				var $captureAudioDiv = $('<div>')
+					.addClass('attachmentEditor_buttonDiv')
+					.appendTo($buttonsContainer)
+				if (navigator.device && navigator.device.capture) {
+					$('<label>')
+						.addClass('cordova-btn width-150 cordova-icon icon-audio')
+						.appendTo($captureAudioDiv)
+						.text(_loc('Capture Audio'))
+						.click(function(event) {
+							event.preventDefault();
+							navigator.device.capture.captureAudio(
+								function(mediaFiles) {
+									if (mediaFiles && mediaFiles[0] && mediaFiles[0].fullPath) {
+										var lastSlashIndex = mediaFiles[0].fullPath.lastIndexOf('/');
+										var filename = mediaFiles[0].fullPath.substring(lastSlashIndex + 1);
+
+										// On success, show the file
+										clearAttachmentPreview();
+										var $audioPreview = $('<p>')
+											.addClass('attachmentEditor_fileName')
+											.text(filename)
+											.appendTo($form);
+										attachmentPreviewComponents.push($audioPreview);
+										$removeAttachmentButton.show();
+										$buttonsContainer.hide();
+
+										addCordovaAttachment(mediaFiles[0].fullPath);
+									} else {
+										console.error('No audio uploaded.');
+										alert('Our apologies, we cannot get your audio.');
+									}
+								}, function(error) {
+									console.error('Error getting audio:', error);
+									alert('Our apologies, there was a problem getting the audio.');
+								}, {});
+						});
+				}
 			}, false);
 		}	else {
       //clearfix div to prevent buttons from floating

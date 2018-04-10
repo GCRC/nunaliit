@@ -293,6 +293,14 @@ form.attachmentEditor_creationFormWithVideo {
 	background-image: url('images/ic_attach.png');   
 }
 
+.icon-video {
+	background-image: url('images/ic_videocam.png');
+}
+
+.icon-audio {
+	background-image: url('images/ic_mic.png');
+}
+
 .icon-remove {
 	background-image: url('images/ic_delete.png');   
 }
