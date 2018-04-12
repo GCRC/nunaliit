@@ -22,7 +22,7 @@ public class CouchDbChangeMonitorThread extends Thread {
 	private boolean isShuttingDown = false;
 	private CouchContext context;
 	private URL changeUrl;
-	private long lastSequence;
+	private String lastSequence;
 	private List<CouchDbChangeListener> listeners = new Vector<CouchDbChangeListener>();
 	
 	public CouchDbChangeMonitorThread(CouchContext context, URL changeUrl) throws Exception {
@@ -40,7 +40,10 @@ public class CouchDbChangeMonitorThread extends Thread {
 		
 		ConnectionUtils.captureReponseErrors(response, "Error while fetching changes: ");
 		
-		lastSequence = response.getLong("last_seq");
+		// In CouchDB 1.x, last_seq is an integer. In CouchDB 2.x, last_seq is a string.
+		// lastSequence = response.getLong("last_seq");
+		Object lastSeqObj = response.get("last_seq");
+		lastSequence = convertLastSeqObj(lastSeqObj);
 	}
 	
 	public void shutdown() {
@@ -114,7 +117,8 @@ public class CouchDbChangeMonitorThread extends Thread {
 		
 		ConnectionUtils.captureReponseErrors(response, "Error while fetching changes: ");
 		
-		lastSequence = response.getLong("last_seq");
+		Object lastSeqObj = response.get("last_seq");
+		lastSequence = convertLastSeqObj(lastSeqObj);
 		
 		return response;
 	}
@@ -164,5 +168,25 @@ public class CouchDbChangeMonitorThread extends Thread {
 		}
 		
 		return true;
+	}
+	
+	/**
+	 * Converts the object "last_seq" found in the change feed to a String.
+	 * In CouchDB 1.x, last_seq is an integer. In CouchDB 2.x, last_seq is a string.
+	 * @param lastSeqObj Object retrieved from the change feed
+	 * @return A string representing the object
+	 * @throws Exception
+	 */
+	private String convertLastSeqObj(Object lastSeqObj) throws Exception {
+		if( null == lastSeqObj ) {
+			return null;
+		} else if( lastSeqObj instanceof String ) {
+			return (String)lastSeqObj;
+		} else if( lastSeqObj instanceof Number ) {
+			// Convert to string
+			return "" + lastSeqObj;
+		} else {
+			throw new Exception("Do not know how to handle parameter 'last_seq' in change feed: "+lastSeqObj.getClass());
+		}
 	}
 }

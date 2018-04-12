@@ -170,8 +170,8 @@ var Display = $n2.Class({
 
 		var dispatcher = this.dispatchService;
 		if( dispatcher ) {
-			var f = function(msg){
-				_this._handleDispatch(msg);
+			var f = function(msg, addr, dispatcher){
+				_this._handleDispatch(msg, addr, dispatcher);
 			};
 			dispatcher.register(DH, 'selected', f);
 			dispatcher.register(DH, 'searchResults', f);
@@ -1159,7 +1159,7 @@ var Display = $n2.Class({
 		});
 	}
 	
-	,_handleDispatch: function(msg){
+	,_handleDispatch: function(msg, addr, dispatcher){
 		var _this = this;
 		
 		var $div = this._getDisplayDiv();

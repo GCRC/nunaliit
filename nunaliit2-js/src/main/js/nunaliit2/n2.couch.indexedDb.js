@@ -202,18 +202,6 @@ var Database = $n2.Class('couchIndexedDb.Database',{
 				errorInitializing();
 			}
 		});
-		
-		// Install update notifier
-		this.getChangeNotifier({
-			onSuccess: function(notifier){
-				_this.dbChangeNotifier = notifier;
-				if( _this.dbChangeNotifier ){
-					_this.dbChangeNotifier.addListener(function(changes){
-						_this._dbChanges(changes);
-					});
-				};
-			}
-		});
 
 		function receivedDbInfo(info){
 			var error = false;
@@ -224,9 +212,15 @@ var Database = $n2.Class('couchIndexedDb.Database',{
 				error = true;
 			};
 
-			var updateSequence = info.update_seq;
-			if( typeof updateSequence !== 'number' ){
-				$n2.log('Error with database information. update_sequence should be a number: '+updateSequence);
+			var updateSequence = undefined;
+			// In CouchDB 1.x, update_seq is a number
+			// In CouchDB 2.x, update_seq is a string
+			if( typeof info.update_seq === 'string' ){
+				updateSequence = info.update_seq;
+			} else if( typeof info.update_seq === 'number' ){
+				updateSequence = ''+info.update_seq;
+			} else {
+				$n2.logError('Error with database information. Can not interpret update_seq: '+info.update_seq);
 				error = true;
 			};
 			
@@ -247,14 +241,14 @@ var Database = $n2.Class('couchIndexedDb.Database',{
 		};
 		
 		function compareUpdateSequences(dbUpdateSequence, cacheSequenceNumber){
-			if( cacheSequenceNumber === undefined ){
+			if( !cacheSequenceNumber ){
 				// The cache has never been used. There is no document in cache.
 				// Initialize cache with current update sequence
 				_this.documentCache.initializeCache({
 					dbName: _this.dbName
 					,updateSequence: dbUpdateSequence
 					,onSuccess: function(){
-						done();
+						listenToDbChangeFeed();
 					}
 					,onError: function(err){
 						$n2.log('Error while recording initializing document cache. '+err);
@@ -265,30 +259,17 @@ var Database = $n2.Class('couchIndexedDb.Database',{
 			} else if( dbUpdateSequence === cacheSequenceNumber ){
 				// The update sequence in the cache matches the one from the database.
 				// This means that the cache is already up-to-date.
-				done();
+				listenToDbChangeFeed();
 				
-			} else if( dbUpdateSequence < cacheSequenceNumber ){
-				// Something went terribly wrong. The database update sequence is earlier
-				// than the cache. This should never happen. We can not trust the cache.
-				// Reinitialize the cache
-				_this.documentCache.initializeCache({
-					dbName: _this.dbName
-					,updateSequence: dbUpdateSequence
-					,onSuccess: function(){
-						done();
-					}
-					,onError: function(err){
-						$n2.log('Error while recording initializing document cache. '+err);
-						errorInitializing();
-					}
-				});
-
 			} else {
 				// Must retrieve the changes that have occurred since last time we
 				// worked with database
 				_this.getChanges({
 					since: cacheSequenceNumber
-					,onSuccess: updateCacheFromChanges
+					,onSuccess: function(changes){
+						_this._dbChanges(changes);
+						listenToDbChangeFeed();
+					}
 					,onError: function(err){ 
 						$n2.log('Error while obtaining changes from database. '+err);
 						errorInitializing();
@@ -297,9 +278,25 @@ var Database = $n2.Class('couchIndexedDb.Database',{
 			};
 		};
 		
-		function updateCacheFromChanges(changes){
-			_this._dbChanges(changes);
-			done();
+		function listenToDbChangeFeed(){
+			// Install update notifier
+			_this.getChangeNotifier({
+				onSuccess: function(notifier){
+					_this.dbChangeNotifier = notifier;
+					if( _this.dbChangeNotifier ){
+						_this.dbChangeNotifier.addListener(function(changes){
+							_this._dbChanges(changes);
+						});
+					};
+					
+					done();
+				},
+				onError: function(err){
+					$n2.log('Error while getting database change notifier: '+err);
+					errorInitializing();
+				}
+			});
+
 		};
 		
 		function done(){
@@ -714,12 +711,48 @@ var Database = $n2.Class('couchIndexedDb.Database',{
 	},
 	
 	_dbChanges: function(changes){
+		// changes:
+		// {
+		//    "last_seq": "104-g1AAAAJjeJyd0ksKwjAQANBgBX8oFA-gJ5Am6ces7E10JmkpperKtd5Eb6I30ZvUfLpwUYSWwARmmAfDTEUIGReeIr48X2ShMKUs2QT60UqXBkBwVdd1WXiwPOrEKICcRlnY1vCHwbWOuGukhZVCJkQeYFcpNdK-kWZOyjAHuu0qHYx0baSplRjnDKXoKJ2GOpKb_jR2N9rEaoJzEUM_7eG0p9F8q9EwgwS6Tum0l9PeRpu7SZWkHKJe2sdpPxuImUKRtF5F-QUbHp8f",
+		//    "pending": 0,
+		//    "results": [
+		//       {
+		//          "seq": "1-g1AAAAF1eJzLYWBg4MhgTmEQTM4vTc5ISXIwNDLXMwBCwxygFFMiQ5L8____szKYExlzgQLsBolphqapJtg04DEmSQFIJtmDTEpkwKfOAaQunrC6BJC6eoLq8liAJEMDkAIqnU-M2gUQtfuJUXsAovY-MWofQNSC3JsFAMjHZqY",
+		//          "id": "module.map.label",
+		//          "changes": [
+		//             {
+		//                "rev": "1-6a63a7493382323b2db86a85ae4b518d"
+		//             }
+		//          ]
+		//       },
+		//       ...
+		//       {
+		//          "seq": "104-g1AAAAJjeJyd0ksKwjAQANBgBX8oFA-gJ5Am6ces7E10JmkpperKtd5Eb6I30ZvUfLpwUYSWwARmmAfDTEUIGReeIr48X2ShMKUs2QT60UqXBkBwVdd1WXiwPOrEKICcRlnY1vCHwbWOuGukhZVCJkQeYFcpNdK-kWZOyjAHuu0qHYx0baSplRjnDKXoKJ2GOpKb_jR2N9rEaoJzEUM_7eG0p9F8q9EwgwS6Tum0l9PeRpu7SZWkHKJe2sdpPxuImUKRtF5F-QUbHp8f",
+		//          "id": "org.nunaliit.css.body",
+		//          "deleted": true
+		//          "changes": [
+		//             {
+		//                "rev": "1-c6d43bc49dbc259ecc8a9f75d82119df"
+		//             }
+		//          ]
+		//       }
+		//    ]
+		// }
 		var _this = this;
 		
-		var lastSeq = changes.last_seq;
+		var lastSeq = undefined;
+		if( typeof changes.last_seq === 'string' ){
+			lastSeq = changes.last_seq;
+		} else if( typeof changes.last_seq === 'number' ) {
+			lastSeq = ''+changes.last_seq;
+		} else {
+			$n2.logError('Unable to handle last_seq: '+changes.last_seq);
+		};
+
 		var results = changes.results.slice(); // clone so we can reverse
 		
-		// Reverse results so we see the latest changes, first
+		// Reverse results so we see the latest changes first, taking
+		// precedence over older ones
 		results.reverse();
 		
 		// Keep track of which document we have already seen
@@ -730,43 +763,47 @@ var Database = $n2.Class('couchIndexedDb.Database',{
 		
 		results.forEach(function(updateRecord){
 			var docId = updateRecord.id;
-			
-			var latestNumber;
-			var latestRev;
-			if( $n2.isArray(updateRecord.changes) ) {
-				updateRecord.changes.forEach(function(change){
-					var number = getNumberFromRevision(change.rev);
-					
-					if( latestNumber === undefined ){
-						latestNumber = number;
-						latestRev = change.rev;
-					} else if( number > latestNumber ){
-						latestNumber = number;
-						latestRev = change.rev;
-					};
-				});
-			};
-			
-			if( updateRecord.deleted 
-			 && typeof latestRev === 'string' ){
-				// Remove from cache
-				var cacheChange = {
-					dbName: _this.dbName
-					,id: docId
-					,rev: latestRev
-					,deleted: true
+
+			// Do not process a document twice
+			if( !seenByDocId[docId] ){
+				var latestNumber;
+				var latestRev;
+				if( $n2.isArray(updateRecord.changes) ) {
+					updateRecord.changes.forEach(function(change){
+						var number = getNumberFromRevision(change.rev);
+						
+						if( latestNumber === undefined ){
+							latestNumber = number;
+							latestRev = change.rev;
+						} else if( number > latestNumber ){
+							latestNumber = number;
+							latestRev = change.rev;
+						};
+					});
 				};
-				cacheChanges.push(cacheChange);
-				seenByDocId[docId] = cacheChange;
 				
-			} else if( typeof latestRev === 'string' ){
-				// Remove from cache
-				var cacheChange = {
-					dbName: _this.dbName
-					,id: docId
-					,rev: latestRev
+				if( updateRecord.deleted 
+				 && typeof latestRev === 'string' ){
+					// Inform cache of deletion
+					var cacheChange = {
+						dbName: _this.dbName
+						,id: docId
+						,rev: latestRev
+						,deleted: true
+					};
+					cacheChanges.push(cacheChange);
+					seenByDocId[docId] = cacheChange;
+					
+				} else if( typeof latestRev === 'string' ){
+					// Inform cache of update
+					var cacheChange = {
+						dbName: _this.dbName
+						,id: docId
+						,rev: latestRev
+					};
+					cacheChanges.push(cacheChange);
+					seenByDocId[docId] = cacheChange;
 				};
-				cacheChanges.push(cacheChange);
 			};
 		});
 

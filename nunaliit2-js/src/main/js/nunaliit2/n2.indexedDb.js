@@ -53,7 +53,7 @@ var DocumentCache = $n2.Class('DocumentCache',{
 		};
 		
 		var updateSequence = opts.updateSequence;
-		if( typeof updateSequence !== 'number' ){
+		if( typeof updateSequence !== 'string' ){
 			throw new Error('When initializing document cache, update sequence must be a number');
 		};
 		
@@ -98,7 +98,7 @@ var DocumentCache = $n2.Class('DocumentCache',{
 		if( this.changes ){
 			this.changes.forEach(function(change){
 				if( change 
-				 && typeof change.updateSequence === 'number'
+				 && change.updateSequence
 				 && change.dbName === opts.dbName ){
 					updateSequence = change.updateSequence;
 				};
@@ -112,10 +112,15 @@ var DocumentCache = $n2.Class('DocumentCache',{
 		    var store = transaction.objectStore(DB_STORE_INFO);
 		    var req = store.get(opts.dbName+'|sequenceNumber');
 		    req.onsuccess = function (evt) {
+				// In CouchDB 1.x, update_seq is a number
+				// In CouchDB 2.x, update_seq is a string
 		    	var value = this.result;
 		    	if( typeof value === 'object' 
-		    	 && typeof value.updateSequence === 'number' ){
+		    	 && typeof value.updateSequence === 'string' ){
 					opts.onSuccess(value.updateSequence);
+		    	} else if( typeof value === 'object' 
+		    	 && typeof value.updateSequence === 'number' ){
+					opts.onSuccess(''+value.updateSequence);
 		    	} else if( typeof value === 'undefined' ){
 		    		opts.onSuccess(undefined);
 		    	} else {
@@ -130,19 +135,45 @@ var DocumentCache = $n2.Class('DocumentCache',{
 	},
 	
 	performChanges: function(changes){
+		// changes:
+		// [
+		//    // Revision update
+		//    {
+		//       "dbName": <string: name of database>,
+		//       "id": <string: document identifier>,
+		//       "rev": <string: current document revision>,
+		//       "deleted": <optional boolean: if set, document was deleted>
+		//    },
+		//    // Database update sequence
+		//    {
+		//       "dbName": <string: name of database>,
+		//       "updateSequence": <string: latest sequence for database>
+		//    },
+		//    // Document revision
+		//    {
+		//       "dbName": <string: name of database>,
+		//       "id": <string: document identifier>,
+		//       "rev": <string: document revision>,
+		//       "doc": {
+		//          "_id": <string: document identifier must match id>,
+		//          "_rev": <string: document revision must match rev>,
+		//       }
+		//    },
+		//    // Document attachments
+		//    {
+		//       "dbName": <string: name of database>,
+		//       "id": <string: document identifier>,
+		//       "rev": <string: document revision>,
+		//       "attachments": {
+		//          <string: attachment name>: <string: attachment value (works only for string attachments)>
+		//       }
+		//    }
+		// ]
 
 		var _this = this;
 		var db = this.db;
 		
-		var mustStartThread = true;
-		if( this.changes ){
-			mustStartThread = false;
-		} else {
-			this.changes  = [];
-			this.changesByDocId = {};
-		};
-		
-		// Add changes to list of current changes
+		// Before anything, validate the given changes
 		changes.forEach(function(change){
 			// Check change structure
 			if( typeof change !== 'object' ){
@@ -151,7 +182,7 @@ var DocumentCache = $n2.Class('DocumentCache',{
 			if( typeof change.dbName !== 'string' ){
 				throw new Error('A cache change must have a string "dbName" attribute');
 			};
-			if( typeof change.updateSequence === 'number' ){
+			if( typeof change.updateSequence ){
 				// This is an update sequence request
 
 			} else if( typeof change.id === 'string' ){
@@ -220,7 +251,19 @@ var DocumentCache = $n2.Class('DocumentCache',{
 				change.id = change.dbName + '|' + change.id;
 				delete change.dbName;
 			};
-			
+		});
+
+		// Start applying changes
+		var mustStartThread = true;
+		if( this.changes ){
+			mustStartThread = false;
+		} else {
+			this.changes  = [];
+			this.changesByDocId = {};
+		};
+
+		// Add changes to list of current changes
+		changes.forEach(function(change){
 			_this.changes.push(change);
 			
 			if( change.id ){
@@ -246,7 +289,6 @@ var DocumentCache = $n2.Class('DocumentCache',{
 				};
 			};
 		});
-
 
 		if( mustStartThread ){
 			applyChange();
@@ -333,7 +375,7 @@ var DocumentCache = $n2.Class('DocumentCache',{
 						applyChange();
 					};
 				} else {
-					$n2.log('Unrecognized change to document cache',change);
+					$n2.logError('Unrecognized change to document cache',change);
 					applyChange();
 				};
 			};
@@ -636,8 +678,8 @@ var DocumentCache = $n2.Class('DocumentCache',{
 		if( typeof opts.dbName !== 'string' ){
 			throw new Error('dbName must be a string');
 		};
-		if( typeof opts.updateSequence !== 'number' ){
-			throw new Error('updateSequence must be a number');
+		if( typeof opts.updateSequence !== 'string' ){
+			throw new Error('updateSequence must be a string');
 		};
 
 		var transaction = db.transaction(DB_STORE_INFO, 'readwrite');

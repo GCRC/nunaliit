@@ -135,7 +135,6 @@ var Notifier = $n2.Class({
 		var _this = this;
 		
 		$n2.log('update',changes);
-		var lastSeq = changes.last_seq;
 		var results = changes.results;
 		
 		if( this.dispatchService ){

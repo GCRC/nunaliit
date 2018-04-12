@@ -573,7 +573,10 @@ var ChangeNotifier = $n2.Class('couch.ChangeNotifier',{
 		} else {
 			this.resetLastSequence({
 				onSuccess: finishInitialization
-				,onError: finishInitialization
+				,onError: function(err){
+					$n2.logError('Error while obtaining database update sequence: '+err);
+					finishInitialization();
+				}
 			});
 		};
 		
@@ -624,8 +627,20 @@ var ChangeNotifier = $n2.Class('couch.ChangeNotifier',{
 		
 		this.db.getInfo({
 	    	onSuccess: function(dbInfo) {
-				_this.lastSequence = dbInfo.update_seq;
-				opt.onSuccess();
+				// In CoucnDB 1.x, update_seq is a number
+				// In CouchDB 2.x, update_seq is a string
+				if( typeof dbInfo.update_seq === 'string' ){
+					_this.lastSequence = dbInfo.update_seq;
+					opt.onSuccess();
+
+				} else if( typeof dbInfo.update_seq === 'number' ){
+					_this.lastSequence = ''+dbInfo.update_seq;
+					opt.onSuccess();
+
+				} else {
+					var err = new Error('Error with database information. Can not interpret update_seq: '+dbInfo.update_seq);
+					opt.onError(err);
+				};
 	    	}
 	    	,onError: function(XMLHttpRequest, textStatus, errorThrown) {
 				var errStr = httpJsonError(XMLHttpRequest, textStatus);
@@ -640,8 +655,10 @@ var ChangeNotifier = $n2.Class('couch.ChangeNotifier',{
 	
 	_reportChanges: function(changes) {
 		
-		if( changes.last_seq ) {
+		if( typeof changes.last_seq === 'string' ) {
 			this.lastSequence = changes.last_seq;
+		} else if( typeof changes.last_seq === 'number' ) {
+			this.lastSequence = ''+changes.last_seq;
 		};
 		
 		if( changes.results && changes.results.length > 0 ) {
@@ -675,7 +692,7 @@ var ChangeNotifier = $n2.Class('couch.ChangeNotifier',{
 			,style: this.style
 		};
 	
-		if( typeof(this.lastSequence) === 'number' ) {
+		if( this.lastSequence ) {
 			req.since = this.lastSequence;
 		};
 		
@@ -903,8 +920,8 @@ var Database = $n2.Class('couch.Database',{
 	
 	,getChanges: function(opt_) {
 		var opt = $n2.extend({
-			since: null
-			,limit: null
+			since: undefined
+			,limit: undefined
 			,descending: false
 			,include_docs: false
 			,onSuccess: function(changes){}
