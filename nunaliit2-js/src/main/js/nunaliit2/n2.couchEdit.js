@@ -3487,7 +3487,7 @@ var AttachmentEditor = $n2.Class({
 								}, function(error) {
 									console.error('Error getting video:', error);
 									alert('Our apologies, there was a problem getting the video.');
-								}, {});
+								}, {quality: 0, duration: 30});
 						});
 				}
 							
@@ -3502,31 +3502,7 @@ var AttachmentEditor = $n2.Class({
 						.text(_loc('Capture Audio'))
 						.click(function(event) {
 							event.preventDefault();
-							navigator.device.capture.captureAudio(
-								function(mediaFiles) {
-									if (mediaFiles && mediaFiles[0] && mediaFiles[0].fullPath) {
-										var lastSlashIndex = mediaFiles[0].fullPath.lastIndexOf('/');
-										var filename = mediaFiles[0].fullPath.substring(lastSlashIndex + 1);
-
-										// On success, show the file
-										clearAttachmentPreview();
-										var $audioPreview = $('<p>')
-											.addClass('attachmentEditor_fileName')
-											.text(filename)
-											.appendTo($form);
-										attachmentPreviewComponents.push($audioPreview);
-										$removeAttachmentButton.show();
-										$buttonsContainer.hide();
-
-										addCordovaAttachment(mediaFiles[0].fullPath);
-									} else {
-										console.error('No audio uploaded.');
-										alert('Our apologies, we cannot get your audio.');
-									}
-								}, function(error) {
-									console.error('Error getting audio:', error);
-									alert('Our apologies, there was a problem getting the audio.');
-								}, {});
+							alert('TODO: implement audio');
 						});
 				}
 			}, false);
