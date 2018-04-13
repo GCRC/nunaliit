@@ -3327,6 +3327,7 @@ var AttachmentEditor = $n2.Class({
 			.appendTo($div);
 
 		var attachmentPreviewComponents = [];
+		var $recordingControls;
 
     if (window.cordova) {
       // On Cordova devices show buttons to upload media
@@ -3495,14 +3496,33 @@ var AttachmentEditor = $n2.Class({
 				var $captureAudioDiv = $('<div>')
 					.addClass('attachmentEditor_buttonDiv')
 					.appendTo($buttonsContainer)
-				if (navigator.device && navigator.device.capture) {
+				if (window.Media) {
 					$('<label>')
 						.addClass('cordova-btn width-150 cordova-icon icon-audio')
 						.appendTo($captureAudioDiv)
 						.text(_loc('Capture Audio'))
 						.click(function(event) {
 							event.preventDefault();
-							alert('TODO: implement audio');
+							var audioFilename = 'audio_' + _this.doc.nunaliit_created.time + '.aac';
+							var mediaRec = new window.Media(audioFilename,
+								function() {
+									var fileFullPath = window.file.externalRootDirectory + audioFilename;
+									// On success, show the file
+									clearAttachmentPreview();
+									var $audioPreview = $('<p>')
+										.addClass('attachmentEditor_fileName')
+										.text('Recording complete: ' + audioFilename)
+										.appendTo($form);
+									attachmentPreviewComponents.push($audioPreview);
+									$removeAttachmentButton.show();
+									$buttonsContainer.hide();
+									addCordovaAttachment(fileFullPath);
+								}, function(err) {
+									console.error("recordAudio():Audio Error: ", err);
+									alert('Our apologies, there was a problem recording audio. Error code: ' + err.code);
+								});
+								
+							showCordovaRecordingUI(mediaRec);
 						});
 				}
 			}, false);
@@ -3631,10 +3651,51 @@ var AttachmentEditor = $n2.Class({
         allTabsDisplayed();
       }
 		}
-		
+
+		function showCordovaRecordingUI(mediaRec) {
+			$removeAttachmentButton.show();
+			$buttonsContainer.hide();
+
+			$recordingControls = $('<div>')
+				.addClass('attachmentEditor_cordovaRecordingControls')
+				.appendTo($form);
+
+			var $starButton = $('<div>')
+				.addClass('attachmentEditor_cordovaRecordIcon')
+				.appendTo($recordingControls)
+				.click(function(event) {
+					event.preventDefault();
+					// Record audio
+					mediaRec.startRecord();
+
+					$(this).hide();
+					$stopButton.show();
+					$recordingText.text('Stop Recording');
+				});
+
+			var $stopButton = $('<div>')
+				.addClass('attachmentEditor_cordovaStopIcon')
+				.appendTo($recordingControls)
+				.click(function(event) {
+					event.preventDefault();
+					mediaRec.stopRecord();
+
+					$recordingControls.hide();
+				})
+				.hide();
+				
+			var $recordingText = $('<p>')
+				.addClass('attachmentEditor_cordovaRecordingText')
+				.text('Start Recording')
+				.appendTo($recordingControls);
+		}
+
 		function clearAttachmentPreview() {
 			for (var i = 0; i < attachmentPreviewComponents.length; i++) {
 				attachmentPreviewComponents[i].remove();
+			}
+			if ($recordingControls) {
+				$recordingControls.hide();
 			}
 		}
     

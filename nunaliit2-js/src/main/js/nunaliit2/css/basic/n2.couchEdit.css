@@ -219,6 +219,35 @@ form.attachmentEditor_creationFormWithVideo {
 	display: none;
 }
 
+/* Cordova css */
+.attachmentEditor_cordovaRecordingControls {
+	width: 71%;
+	float: right;
+}
+
+.attachmentEditor_cordovaRecordIcon {
+	background: red;
+	background-position: center;
+	width: 35px;
+	height: 35px;
+	border-radius: 50%;
+	margin: auto;
+}
+
+.attachmentEditor_cordovaStopIcon {
+	background: red;
+	background-position: center;
+	width: 35px;
+	height: 35px;
+	margin: auto;
+}
+
+.attachmentEditor_cordovaRecordingText {
+	font-size: smaller;
+	text-align: center;
+	color: red;
+}
+
 .cordova-btn {
   position: relative;
   display: block;
@@ -270,7 +299,6 @@ form.attachmentEditor_creationFormWithVideo {
   transition: width .2s ease-out, padding-top .2s ease-out;
 }
 
-/* Styles, not important */
 *, *:before, *:after {
   box-sizing: border-box;
 }
