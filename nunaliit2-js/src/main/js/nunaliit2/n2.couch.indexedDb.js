@@ -193,54 +193,61 @@ var Database = $n2.Class('couchIndexedDb.Database',{
 		this.initializeListeners = [];
 		this.fetchDocumentRequests = null;
 		this.fetchDocumentRequestsByDocId = null;
-		
-		// Get info about this database
-		this.getInfo({
-			onSuccess: receivedDbInfo
-			,onError: function(err){
-				$n2.log('Error while getting database information: '+err);
+
+		// Get update notifier from database. This should give us
+		// the ability to retrieve the current update sequence.
+		// Do not start listening to the changes, yet.
+		this.getChangeNotifier({
+			onSuccess: function(notifier){
+				// When we get here, we should be able to
+				// query getLastSequence()
+				_this.dbChangeNotifier = notifier;
+				getDatabaseInfo();
+			},
+			onError: function(err){
+				$n2.logError('Error while getting database change notifier: '+err);
 				errorInitializing();
 			}
 		});
+		
+		function getDatabaseInfo() {
+			// Get info about this database
+			_this.getInfo({
+				onSuccess: function receivedDbInfo(info){
+					if( info 
+					 && typeof info.db_name === 'string' ){
+						_this.dbName = info.db_name;
 
-		function receivedDbInfo(info){
-			var error = false;
-			
-			_this.dbName = info.db_name;
-			if( typeof _this.dbName !== 'string' ){
-				$n2.log('Error with database information. db_name should be a string: '+_this.dbName);
-				error = true;
-			};
+						retrieveDocumentCacheSequence();
 
-			var updateSequence = undefined;
-			// In CouchDB 1.x, update_seq is a number
-			// In CouchDB 2.x, update_seq is a string
-			if( typeof info.update_seq === 'string' ){
-				updateSequence = info.update_seq;
-			} else if( typeof info.update_seq === 'number' ){
-				updateSequence = ''+info.update_seq;
-			} else {
-				$n2.logError('Error with database information. Can not interpret update_seq: '+info.update_seq);
-				error = true;
-			};
-			
-			if( error ){
-				errorInitializing();
-			} else {
-				_this.documentCache.getUpdateSequence({
-					dbName: _this.dbName
-					,onSuccess: function(cacheSequenceNumber){
-						compareUpdateSequences(updateSequence, cacheSequenceNumber);
-					}
-					,onError: function(err){
-						$n2.log('Error while getting cache update sequence number. '+err);
+					} else {
+						$n2.logError('Error with database information', info);
 						errorInitializing();
-					}
-				});
-			};
+					};
+				}
+				,onError: function(err){
+					$n2.logError('Error while fetching database information: '+err);
+					errorInitializing();
+				}
+			});
 		};
 		
-		function compareUpdateSequences(dbUpdateSequence, cacheSequenceNumber){
+		function retrieveDocumentCacheSequence(){
+			_this.documentCache.getUpdateSequence({
+				dbName: _this.dbName
+				,onSuccess: function(cacheSequenceNumber){
+					compareUpdateSequences(cacheSequenceNumber);
+				}
+				,onError: function(err){
+					$n2.logError('Error while getting document cache sequence number: '+err);
+					reInitializeDocumentCache();
+				}
+			});
+		};
+		
+		function compareUpdateSequences(cacheSequenceNumber){
+			var dbUpdateSequence = _this.dbChangeNotifier.getLastSequence();
+			
 			if( !cacheSequenceNumber ){
 				// The cache has never been used. There is no document in cache.
 				// Initialize cache with current update sequence
@@ -248,10 +255,11 @@ var Database = $n2.Class('couchIndexedDb.Database',{
 					dbName: _this.dbName
 					,updateSequence: dbUpdateSequence
 					,onSuccess: function(){
+						$n2.log('Document cache: initialized ');
 						listenToDbChangeFeed();
 					}
 					,onError: function(err){
-						$n2.log('Error while recording initializing document cache. '+err);
+						$n2.logError('Error while recording initializing document cache. '+err);
 						errorInitializing();
 					}
 				});
@@ -259,44 +267,65 @@ var Database = $n2.Class('couchIndexedDb.Database',{
 			} else if( dbUpdateSequence === cacheSequenceNumber ){
 				// The update sequence in the cache matches the one from the database.
 				// This means that the cache is already up-to-date.
+				$n2.log('Document cache: up-to-date');
 				listenToDbChangeFeed();
 				
 			} else {
-				// Must retrieve the changes that have occurred since last time we
-				// worked with database
+				// Check that we are on the correct database
+				var changeLimit = 1000;
 				_this.getChanges({
 					since: cacheSequenceNumber
+					,limit: changeLimit
 					,onSuccess: function(changes){
-						_this._dbChanges(changes);
-						listenToDbChangeFeed();
+						if( changes
+						 && $n2.isArray(changes.results)
+						 && changes.results.length < changeLimit ){
+							// This is the correct database and we are able to process changes
+							// since the last time we connected.
+							_this._dbChanges(changes);
+							$n2.log('Document cache: updating');
+							listenToDbChangeFeed();
+
+						} else {
+							// Either this is not the right database or there has been a
+							// very large number of changes since we last connected.
+							// Re-initialize the cache
+							reInitializeDocumentCache();
+						};
 					}
-					,onError: function(err){ 
-						$n2.log('Error while obtaining changes from database. '+err);
-						errorInitializing();
+					,onError: function(err){
+						// Error while getting the changes might mean that the "since"
+						// parameter is not recognized. Re-initialize the cache
+						reInitializeDocumentCache();
 					}
 				});
 			};
 		};
 		
-		function listenToDbChangeFeed(){
-			// Install update notifier
-			_this.getChangeNotifier({
-				onSuccess: function(notifier){
-					_this.dbChangeNotifier = notifier;
-					if( _this.dbChangeNotifier ){
-						_this.dbChangeNotifier.addListener(function(changes){
-							_this._dbChanges(changes);
-						});
-					};
-					
-					done();
-				},
-				onError: function(err){
-					$n2.log('Error while getting database change notifier: '+err);
+		function reInitializeDocumentCache() {
+			var dbUpdateSequence = _this.dbChangeNotifier.getLastSequence();
+
+			_this.documentCache.initializeCache({
+				dbName: _this.dbName
+				,updateSequence: dbUpdateSequence
+				,onSuccess: function(){
+					$n2.log('Document cache: re-initialized');
+					listenToDbChangeFeed();
+				}
+				,onError: function(err){
+					$n2.logError('Error while re-initializing document cache. '+err);
 					errorInitializing();
 				}
 			});
-
+		};
+		
+		function listenToDbChangeFeed(){
+			// Install update notifier
+			_this.dbChangeNotifier.addListener(function(changes){
+				_this._dbChanges(changes);
+			});
+			
+			done();
 		};
 		
 		function done(){
@@ -313,7 +342,7 @@ var Database = $n2.Class('couchIndexedDb.Database',{
 		};
 		
 		function errorInitializing(){
-			$n2.log('Error while initializing caching database. Caching is disabled.');
+			$n2.logError('Document cache: disabled');
 			_this.isCachingEnabled = false;
 			_this.isInitialized = true;
 		};

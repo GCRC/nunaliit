@@ -59,7 +59,7 @@ var DocumentCache = $n2.Class('DocumentCache',{
 		
 		this.clearCache({
 			onSuccess: function(){
-				_this._setUpdateSequence({
+				_this._writeUpdateSequence({
 					dbName: dbName
 					,updateSequence: updateSequence
 					,onSuccess: function(){
@@ -108,29 +108,12 @@ var DocumentCache = $n2.Class('DocumentCache',{
 		if( updateSequence ){
 			opts.onSuccess(updateSequence);
 		} else {
-			var transaction = db.transaction(DB_STORE_INFO, 'readonly');
-		    var store = transaction.objectStore(DB_STORE_INFO);
-		    var req = store.get(opts.dbName+'|sequenceNumber');
-		    req.onsuccess = function (evt) {
-				// In CouchDB 1.x, update_seq is a number
-				// In CouchDB 2.x, update_seq is a string
-		    	var value = this.result;
-		    	if( typeof value === 'object' 
-		    	 && typeof value.updateSequence === 'string' ){
-					opts.onSuccess(value.updateSequence);
-		    	} else if( typeof value === 'object' 
-		    	 && typeof value.updateSequence === 'number' ){
-					opts.onSuccess(''+value.updateSequence);
-		    	} else if( typeof value === 'undefined' ){
-		    		opts.onSuccess(undefined);
-		    	} else {
-		    		var err = $n2.error.fromString('Invalid format for indexedDb sequence number');
-					opts.onError(err);
-		    	};
-			};
-			req.onerror = function(evt) {
-				opts.onError(this.error);
-			};
+			// Get the value stored in the indexedDb
+			this._readUpdateSequence({
+				dbName: opts.dbName
+				,onSuccess: opts.onSuccess
+				,onError: opts.onError
+			});
 		};
 	},
 	
@@ -314,7 +297,7 @@ var DocumentCache = $n2.Class('DocumentCache',{
 				var change = _this.changes.shift();
 				
 				if( change.updateSequence ){
-					_this._setUpdateSequence({
+					_this._writeUpdateSequence({
 						dbName: change.dbName
 						,updateSequence: change.updateSequence
 						,onSuccess: applyChange
@@ -665,7 +648,48 @@ var DocumentCache = $n2.Class('DocumentCache',{
 		};
 	},
 	
-	_setUpdateSequence: function(opts_){
+	/**
+	 * Retrieves the update sequence stored for a database
+	 */
+	_readUpdateSequence: function(opts_){
+		var opts = $n2.extend({
+			dbName: null
+			,onSuccess: function(updateSequence){}
+			,onError: function(err){}
+		},opts_);
+
+		var db = this.db;
+		
+		if( typeof opts.dbName !== 'string' ){
+			throw new Error('dbName must be a string');
+		};
+
+		var transaction = db.transaction(DB_STORE_INFO, 'readonly');
+	    var store = transaction.objectStore(DB_STORE_INFO);
+	    var req = store.get(opts.dbName+'|sequenceNumber');
+	    req.onsuccess = function (evt) {
+			// In CouchDB 1.x, update_seq is a number
+			// In CouchDB 2.x, update_seq is a string
+	    	var value = this.result;
+	    	if( typeof value === 'object' 
+	    	 && typeof value.updateSequence === 'string' ){
+				opts.onSuccess(value.updateSequence);
+	    	} else if( typeof value === 'object' 
+	    	 && typeof value.updateSequence === 'number' ){
+				opts.onSuccess(''+value.updateSequence);
+	    	} else if( typeof value === 'undefined' ){
+	    		opts.onSuccess(undefined);
+	    	} else {
+	    		var err = $n2.error.fromString('Invalid format for indexedDb sequence number');
+				opts.onError(err);
+	    	};
+		};
+		req.onerror = function(evt) {
+			opts.onError(this.error);
+		};
+	},
+	
+	_writeUpdateSequence: function(opts_){
 		var opts = $n2.extend({
 			dbName: null
 			,updateSequence: null
