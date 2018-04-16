@@ -120,7 +120,7 @@ var CreateDocumentWidget = $n2.Class({
 
 			// Listen to the Create Document callback from native
 			document.addEventListener("deviceready", function() {
-				window.CordovaNunaliitPlugin.registerCallback('onCreateDocument', 
+				window.nunaliit2.cordovaPlugin.registerCallback('onCreateDocument', 
 					function() {
 						window.onCreateDocument = function() {
 							_this._startEdit();

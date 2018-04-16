@@ -3449,7 +3449,7 @@ var AttachmentEditor = $n2.Class({
 							}, function(error) {
 								console.error('Error getting picture:', error);
 								alert('Our apologies, there was a problem getting the photo.');
-							}, {});
+							}, {correctOrientation: true});
 						});
 				}
 			
