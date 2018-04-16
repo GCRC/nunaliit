@@ -228,18 +228,20 @@ form.attachmentEditor_creationFormWithVideo {
 .attachmentEditor_cordovaRecordIcon {
 	background: red;
 	background-position: center;
-	width: 35px;
-	height: 35px;
+	width: 40px;
+	height: 40px;
 	border-radius: 50%;
 	margin: auto;
+	box-shadow: 2px 2px 5px grey;
 }
 
 .attachmentEditor_cordovaStopIcon {
 	background: red;
 	background-position: center;
-	width: 35px;
-	height: 35px;
+	width: 40px;
+	height: 40px;
 	margin: auto;
+	box-shadow: 2px 2px 5px grey;
 }
 
 .attachmentEditor_cordovaRecordingText {
