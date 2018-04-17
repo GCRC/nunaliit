@@ -34,7 +34,9 @@ package ca.carleton.gcrc.olkit.multimedia.file;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -43,9 +45,34 @@ import ca.carleton.gcrc.utils.CommandUtils;
 
 public class SystemFile {
 
-	static private Pattern mp3IdentifierPattern = Pattern.compile("MPEG ADTS");
 	static private Pattern patternAudio = Pattern.compile("audio",Pattern.CASE_INSENSITIVE);
 	static private Pattern patternId3 = Pattern.compile("id3",Pattern.CASE_INSENSITIVE);
+	
+	static private Map<String,String> mimeTypeFromKnownStrings = null;
+	static public Map<String,String> getKnownStrings() {
+		if( null == mimeTypeFromKnownStrings ) {
+			mimeTypeFromKnownStrings = new HashMap<String,String>();
+			
+			mimeTypeFromKnownStrings.put("MPEG ADTS", "audio/mp3");
+			mimeTypeFromKnownStrings.put("3GPP", "video/3gpp");
+			mimeTypeFromKnownStrings.put("MP4", "video/mp4");
+		}
+		
+		return mimeTypeFromKnownStrings;
+	}
+	
+	/**
+	 * Adds a relation between a known string for File and a mime type.
+	 * @param mimeType Mime type that should be returned if known string is encountered
+	 * @param knownString A string that is found when performing "file -bnk"
+	 */
+	static public void addKnownString(String mimeType, String knownString) {
+		Map<String,String> map = getKnownStrings();
+		if( null != mimeType && null != knownString ) {
+			map.put(knownString.trim(), mimeType.trim());
+		}
+	}
+	
 
 	static public SystemFile getSystemFile(File file) throws Exception {
 		SystemFile result = new SystemFile();
@@ -88,23 +115,7 @@ public class SystemFile {
 			result.mimeEncoding = components[1].trim();
 		}
 		
-		// Fixes for unknown types
-		if( "application/octet-stream".equals(result.mimeType) ) {
-			List<String> tokens = new Vector<String>();
-			tokens.add("file");
-			tokens.add("-bnk");
-			tokens.add("--mime");
-			tokens.add(file.getAbsolutePath());
-			
-			BufferedReader br = CommandUtils.executeCommand(tokens);
-			String fullReport = br.readLine();
-			
-			Matcher mp3IdentifierMatcher = mp3IdentifierPattern.matcher(fullReport);
-			
-			if( mp3IdentifierMatcher.find() ) {
-				result.mimeType = "audio/mp3";
-			}
-		}
+		// Fixes for known types
 		if( "application/octet-stream".equals(result.mimeType) ) {
 			List<String> tokens = new Vector<String>();
 			tokens.add("file");
@@ -120,6 +131,16 @@ public class SystemFile {
 			// Looking for a line that looks like: Audio file with ID3 version 2.4.0\012- data
 			if( matcherAudio.find() && matcherId3.find() ) {
 				result.mimeType = "audio/mp3";
+			} else {
+				// Go through dictionary looking for known strings
+				Map<String,String> map = getKnownStrings();
+				for(String knownString : map.keySet()) {
+					if( fullReport.contains(knownString) ) {
+						String mimeType = map.get(knownString);
+						result.mimeType = mimeType;
+						break;
+					}
+				}
 			}
 		}
 		
