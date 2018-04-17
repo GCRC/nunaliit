@@ -702,6 +702,14 @@ var Display = $n2.Class({
 			var filename = data.nunaliit_mobile_attachments.substring(lastSlashIndex + 1);
 			$('<p>1 mobile attachment: ' + filename + '</p>')
 				.appendTo($progress);
+
+			// If the file is an image, display it
+			var $imgPreview = $('<img>', {src: data.nunaliit_mobile_attachments})
+				.addClass('attachmentEditor_photoPreview')
+				.on('error', function() { 
+					$(this).hide();
+				})
+				.appendTo($progress);
 		}
 		
 		// Find an attachment which is in progress
