@@ -76,6 +76,13 @@ public class FFmpegProcessorDefault implements FFmpegProcessor {
 			InputStream is = p.getErrorStream();
 			InputStreamReader isr = new InputStreamReader(is);
 			info.parseFromFFmpegReader(isr);
+			
+			int exitValue = p.waitFor();
+			if( 0 != exitValue ){
+				logger.debug("Command ("+sw.toString()+") exited with value "+exitValue);
+				throw new Exception("Process exited with value: "+exitValue);
+			}
+
 		} catch (IOException e) {
 			throw new Exception("Error while parsing info on command: "+sw.toString(),e);
 		}
