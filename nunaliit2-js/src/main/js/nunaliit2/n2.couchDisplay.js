@@ -710,18 +710,36 @@ var Display = $n2.Class({
 						if (file && file.type) {
 							if (file.type.startsWith('image')) {
 								// If the file is an image, display it
-								var $imgPreview = $('<img>', {src: data.nunaliit_mobile_attachments})
+								$('<img>', {src: data.nunaliit_mobile_attachments})
 									.addClass('n2Display_cordovaImgAttachmentPreview')
 									.on('error', function() { 
 										$(this).hide();
 									})
 									.appendTo($progress);
+							} else {
+								var $previewButtton = $('<label>')
+									.addClass('cordova-btn preview-button cordova-icon')
+									.appendTo($progress)
+									.text(_loc('Preview'))
+									.click(function(event) {
+										event.preventDefault();
+										// Try to open it using a plugin
+										window.cordova.plugins.fileOpener2.open(
+											data.nunaliit_mobile_attachments,
+											file.type, {
+												error : function(error) { console.error('Error opening file', file); }, 
+												success : function() { console.log('Opening file', file); } 
+											});
+									});
+
+								if (file.type.startsWith('audio') || file.type.startsWith('video')) {
+									$previewButtton.addClass('icon-play');
+								} else {
+									$previewButtton.addClass('icon-preview');
+								}
 							}
-							// TODO: try to open it using a plugin
 						} 
 					});
-				}, function(error) {
-					console.error('Problem fetching cordova attachment preview for ' + data.nunaliit_mobile_attachments, error);
 				});
 		}
 		

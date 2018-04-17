@@ -385,6 +385,7 @@ $n2.l10n.addLocalizedStrings('fr',{
 	,"Please, wait until download starts. It might take a while.":"SVP, attendre que le téléchargement commence."
 	,"Preparing Report":"Préparation du rapport"
 	,"Previous":"Précédent"
+	,"Preview":"Apperçu"
 	,"Problem obtaining documents from import profile":"Problème détecté pendant l'obtention des documents à partir d'un profil d'importation"
 	,"Problem obtaining documents from layer":"Problème détecté pendant l'obtention des documents d'une couche"
 	,"Problem obtaining documents from schema":"Problème détecté pendant l'obtention des documents d'un type de schème"

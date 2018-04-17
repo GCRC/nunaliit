@@ -3328,6 +3328,7 @@ var AttachmentEditor = $n2.Class({
 
 		var attachmentPreviewComponents = [];
 		var $recordingControls;
+		var $previewButton;
 
     if (window.cordova) {
       // On Cordova devices show buttons to upload media
@@ -3338,18 +3339,22 @@ var AttachmentEditor = $n2.Class({
 			// Add the "Remove" button
 			var $removeAttachmentContainer = $('<div>')
         .addClass('attachmentEditor_cordovaCaptureButtonsContainer')
-				.appendTo($form);
+				.appendTo($form)
+				.hide();
 			var $removeAttachmentButton = $('<label>')
-				.addClass('cordova-btn cordova-icon icon-remove')
+				.addClass('cordova-btn cordova-icon icon-remove remove-button')
 				.appendTo($removeAttachmentContainer)
 				.text(_loc('Remove'))
-				.hide()
 				.click(function(event) {
 					event.preventDefault();
 					_this.cordovaAttachment = null;
 					$buttonsContainer.show();
 					clearAttachmentPreview();
-					$(this).hide();
+					$removeAttachmentContainer.hide();
+					if ($previewButton) {
+						$previewButton.remove();
+						$previewButton = null;
+					}
 				});
 
 			if (_this.cordovaAttachment) {
@@ -3359,8 +3364,8 @@ var AttachmentEditor = $n2.Class({
 					.text(filename)
 					.appendTo($form);
 				attachmentPreviewComponents.push($filenamePreview);
-				$removeAttachmentButton.show();
 				$buttonsContainer.hide();
+				$removeAttachmentContainer.show();
 			}
 
 			document.addEventListener("deviceready", function() {
@@ -3382,23 +3387,28 @@ var AttachmentEditor = $n2.Class({
 								return;
 							}
 
+							var _self = this;
+
 							// Create a file in the file system
 							window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function (fs) {
 								fs.root.getFile(fileName, { create: true, exclusive: false }, function (fileEntry) {
 									// Write in the given file
 									fileEntry.createWriter(function (fileWriter) {
 										fileWriter.onwriteend = function() {
+											addCordovaAttachment(fileEntry.nativeURL);
 											// On success, show the file
 											clearAttachmentPreview();
-											var $filePreview = $('<p>')
+											var $filePreview = $('<div>')
 												.addClass('attachmentEditor_fileName')
 												.text(event.target.files[0].name)
 												.appendTo($form);
+											showCordovaAttachmentPreview($removeAttachmentContainer); 
 											attachmentPreviewComponents.push($filePreview);
-											$removeAttachmentButton.show();
 											$buttonsContainer.hide();
+											$removeAttachmentContainer.show();
 
-											addCordovaAttachment(fileEntry.nativeURL);
+											// Reset the input value so that we can re-select the same file
+											_self.value = null;
 										};
 	
 										fileWriter.onerror = function (e) {
@@ -3436,16 +3446,16 @@ var AttachmentEditor = $n2.Class({
 						.click(function(event) {
 							event.preventDefault();
 							navigator.camera.getPicture(function(fileName) {
+								addCordovaAttachment(fileName);
 								// On success, show the file
 								clearAttachmentPreview();
                 var $imgPreview = $('<img>', {src: fileName})
                   .addClass('attachmentEditor_photoPreview')
 									.appendTo($form);
+								showCordovaAttachmentPreview($removeAttachmentContainer); 
 								attachmentPreviewComponents.push($imgPreview);
-								$removeAttachmentButton.show();
 								$buttonsContainer.hide();
-
-                addCordovaAttachment(fileName);
+								$removeAttachmentContainer.show();
 							}, function(error) {
 								console.error('Error getting picture:', error);
 								alert('Our apologies, there was a problem getting the photo.');
@@ -3469,6 +3479,7 @@ var AttachmentEditor = $n2.Class({
 									if (mediaFiles && mediaFiles[0] && mediaFiles[0].fullPath) {
 										var lastSlashIndex = mediaFiles[0].fullPath.lastIndexOf('/');
 										var filename = mediaFiles[0].fullPath.substring(lastSlashIndex + 1);
+										addCordovaAttachment(mediaFiles[0].fullPath);
 
 										// On success, show the file
 										clearAttachmentPreview();
@@ -3476,11 +3487,10 @@ var AttachmentEditor = $n2.Class({
 											.addClass('attachmentEditor_fileName')
 											.text(filename)
 											.appendTo($form);
+										showCordovaAttachmentPreview($removeAttachmentContainer); 
 										attachmentPreviewComponents.push($videoPreview);
-										$removeAttachmentButton.show();
 										$buttonsContainer.hide();
-
-										addCordovaAttachment(mediaFiles[0].fullPath);
+										$removeAttachmentContainer.show();
 									} else {
 										console.error('No video uploaded.');
 										alert('Our apologies, we cannot get your video.');
@@ -3507,16 +3517,17 @@ var AttachmentEditor = $n2.Class({
 							var mediaRec = new window.Media(audioFilename,
 								function() {
 									var fileFullPath = window.file.externalRootDirectory + audioFilename;
+									addCordovaAttachment(fileFullPath);
 									// On success, show the file
 									clearAttachmentPreview();
 									var $audioPreview = $('<p>')
 										.addClass('attachmentEditor_fileName')
 										.text('Recording complete: ' + audioFilename)
 										.appendTo($form);
+									showCordovaAttachmentPreview($removeAttachmentContainer); 
 									attachmentPreviewComponents.push($audioPreview);
-									$removeAttachmentButton.show();
+									$removeAttachmentContainer.show();
 									$buttonsContainer.hide();
-									addCordovaAttachment(fileFullPath);
 								}, function(err) {
 									console.error("recordAudio():Audio Error: ", err);
 									alert('Our apologies, there was a problem recording audio. Error code: ' + err.code);
@@ -3652,8 +3663,43 @@ var AttachmentEditor = $n2.Class({
       }
 		}
 
+		function showCordovaAttachmentPreview(containerDiv) {
+			window.resolveLocalFileSystemURL('file:' + _this.cordovaAttachment, 
+				function(fileEntry) {
+					fileEntry.file(function(file) {
+						if (file && file.type) {
+							// Image are already displayed, no need to show a preview button
+							if (!file.type.startsWith('image')) {
+								$previewButton = $('<label>')
+									.addClass('cordova-btn cordova-icon')
+									.appendTo(containerDiv)
+									.text(_loc('Preview'))
+									.click(function(event) {
+										event.preventDefault();
+										// Try to open it using a plugin
+										window.cordova.plugins.fileOpener2.open(
+											_this.cordovaAttachment,
+											file.type, {
+												error : function(error) { console.error('Error opening file', file); }, 
+												success : function() { console.log('Opening file', file); } 
+											});
+									});
+
+								if (file.type.startsWith('audio') || file.type.startsWith('video')) {
+									$previewButton.addClass('icon-play');
+								} else {
+									$previewButton.addClass('icon-preview');
+								}
+							}
+						} 
+					});
+				}, function(error) {
+					console.error('Problem fetching cordova attachment preview for ' + _this.cordovaAttachment, error);
+				});
+		}
+
 		function showCordovaRecordingUI(mediaRec) {
-			$removeAttachmentButton.show();
+			$removeAttachmentContainer.show();
 			$buttonsContainer.hide();
 
 			$recordingControls = $('<div>')

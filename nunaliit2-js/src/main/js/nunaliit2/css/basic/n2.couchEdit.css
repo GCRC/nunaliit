@@ -305,6 +305,15 @@ form.attachmentEditor_creationFormWithVideo {
   box-sizing: border-box;
 }
 
+.remove-button {
+	margin-bottom: 15px;
+}
+
+.preview-button {
+	max-width: 100px;
+	margin-bottom: 15px;
+}
+
 .width-150 {
 	width: 150px;
 }
@@ -332,4 +341,12 @@ form.attachmentEditor_creationFormWithVideo {
 
 .icon-remove {
 	background-image: url('images/ic_delete.png');   
+}
+
+.icon-play {
+	background-image: url('images/ic_play.png');
+}
+
+.icon-preview {
+	background-image: url('images/ic_preview.png');   
 }
