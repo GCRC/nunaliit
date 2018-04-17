@@ -39,6 +39,9 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 
 	@Override
 	public void convertVideo(MultimediaConversionRequest request) throws Exception {
+		
+		logger.trace("MultimediaConverterImpl.convertVideo()");
+
 		request.setConversionPerformed(false);
 		request.setThumbnailCreated(false);
 
@@ -141,6 +144,9 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 	
 	@Override
 	public void convertAudio(MultimediaConversionRequest request) throws Exception {
+		
+		logger.trace("MultimediaConverterImpl.convertAudio()");
+
 		request.setConversionPerformed(false);
 		request.setThumbnailCreated(false);
 
@@ -200,6 +206,9 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 	
 	@Override
 	public void convertImage(MultimediaConversionRequest request) throws Exception {
+
+		logger.trace("MultimediaConverterImpl.convertImage()");
+		
 		request.setConversionPerformed(false);
 		request.setThumbnailCreated(false);
 
@@ -346,6 +355,9 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 
 	@Override
 	public void createImageThumbnail(MultimediaConversionRequest request) throws Exception {
+
+		logger.trace("MultimediaConverterImpl.createImageThumbnail()");
+		
 		request.setConversionPerformed(false);
 		request.setThumbnailCreated(false);
 

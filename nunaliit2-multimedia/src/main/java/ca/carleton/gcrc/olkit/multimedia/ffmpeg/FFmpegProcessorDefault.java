@@ -24,7 +24,7 @@ public class FFmpegProcessorDefault implements FFmpegProcessor {
 	static private Pattern patternTime = Pattern.compile("^\\s*frame=.*time=\\s*(\\d+\\.\\d*)");
 
 	static public String ffmpegInfoCommand = "avprobe %1$s";
-	static public String ffmpegConvertVideoCommand = "avconv -i %1$s -y -acodec libvo_aacenc -ab 48000 -ac 2 -vcodec libx264 -b 128000 -r 24 -vf scale=320:-1 -threads 0 -f mp4 %2$s";
+	static public String ffmpegConvertVideoCommand = "avconv -i %1$s -y -acodec libvo_aacenc -ab 48000 -ac 2 -vcodec libx264 -b:v 128000 -r 24 -vf scale=320:-2 -threads 0 -f mp4 %2$s";
 	static public String ffmpegConvertAudioCommand = "avconv -i %1$s -y -acodec libmp3lame -ab 48000 -ac 2 -threads 0 -f mp3 %2$s";
 	static public String ffmpegCreateThumbnailCommand = "avconv -y -ss %5$s -i %1$s -s %3$dx%4$d -r 1 -vframes 1 -f image2 %2$s";
 	static public double ffmpegCreateThumbnailFrameInSec = 5.0;
@@ -96,14 +96,16 @@ public class FFmpegProcessorDefault implements FFmpegProcessor {
 		StringWriter sw = new StringWriter();
 		try {
 			String convertVideoCommand = ffmpegConvertVideoCommand;
-			//Conversion needs to regenerate presentation timestamps for firefox (quicktime?)
-			//generated webm file. Issue discovered on mac os x firefox 53.0.3
-			//https://stackoverflow.com/questions/18123376/webm-to-mp4-conversion-using-ffmpeg
+
+			// Conversion needs to regenerate presentation timestamps for firefox (quicktime?)
+			// generated webm file. Issue discovered on mac os x firefox 53.0.3
+			// https://stackoverflow.com/questions/18123376/webm-to-mp4-conversion-using-ffmpeg
 			if(inputVideo.getFileType().equals("matroska") && inputVideo.getVideoCodec().equals("vp8")) {
 			    //Add the new flags immediately after the command (either avconv or ffmpeg)
 				convertVideoCommand = ffmpegConvertVideoCommand.replaceFirst("(avconv|ffmpeg) ", "$1 -fflags +genpts -r 24 ");
                 logger.info("Running new command: " + convertVideoCommand);
 			}
+
 			String[] tokens = breakUpCommand(convertVideoCommand);
 			for(int i=0; i<tokens.length; ++i){
 				tokens[i] = String.format(tokens[i], inputVideo.getFile().getAbsolutePath(), outputFile.getAbsolutePath());
@@ -134,6 +136,13 @@ public class FFmpegProcessorDefault implements FFmpegProcessor {
 				
 				line = bufReader.readLine();
 			}
+			
+			int exitValue = p.waitFor();
+			if( 0 != exitValue ){
+				logger.info("Command ("+sw.toString()+") exited with value "+exitValue);
+				throw new Exception("Process exited with value: "+exitValue);
+			}
+			
 		} catch (IOException e) {
 			throw new Exception("Error while converting video: "+sw.toString(),e);
 		}
@@ -181,6 +190,13 @@ public class FFmpegProcessorDefault implements FFmpegProcessor {
 				
 				line = bufReader.readLine();
 			}
+			
+			int exitValue = p.waitFor();
+			if( 0 != exitValue ){
+				logger.info("Command ("+sw.toString()+") exited with value "+exitValue);
+				throw new Exception("Process exited with value: "+exitValue);
+			}
+
 		} catch (IOException e) {
 			throw new Exception("Error while converting audio :"+sw.toString(),e);
 		}
