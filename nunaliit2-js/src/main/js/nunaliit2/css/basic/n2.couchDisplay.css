@@ -102,3 +102,9 @@ div.olkit_wait {
 .n2Comment_button_addcomment_unavailable {
 	display: none !important;
 }
+
+.n2Display_cordovaImgAttachmentPreview {
+	border: 1px solid #d3d3d3;
+	max-height: 100px;
+	margin-bottom: 5px;
+}

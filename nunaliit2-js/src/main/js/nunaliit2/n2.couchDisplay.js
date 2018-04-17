@@ -697,19 +697,32 @@ var Display = $n2.Class({
 		
 		$progress.empty();
 
+		// Display a preview of local Cordova attachments
 		if (window.cordova && data.nunaliit_mobile_attachments) {
 			var lastSlashIndex = data.nunaliit_mobile_attachments.lastIndexOf('/');
 			var filename = data.nunaliit_mobile_attachments.substring(lastSlashIndex + 1);
 			$('<p>1 mobile attachment: ' + filename + '</p>')
 				.appendTo($progress);
 
-			// If the file is an image, display it
-			var $imgPreview = $('<img>', {src: data.nunaliit_mobile_attachments})
-				.addClass('attachmentEditor_photoPreview')
-				.on('error', function() { 
-					$(this).hide();
-				})
-				.appendTo($progress);
+			window.resolveLocalFileSystemURL('file:' + data.nunaliit_mobile_attachments, 
+				function(fileEntry) {
+					fileEntry.file(function(file) {
+						if (file && file.type) {
+							if (file.type.startsWith('image')) {
+								// If the file is an image, display it
+								var $imgPreview = $('<img>', {src: data.nunaliit_mobile_attachments})
+									.addClass('n2Display_cordovaImgAttachmentPreview')
+									.on('error', function() { 
+										$(this).hide();
+									})
+									.appendTo($progress);
+							}
+							// TODO: try to open it using a plugin
+						} 
+					});
+				}, function(error) {
+					console.error('Problem fetching cordova attachment preview for ' + data.nunaliit_mobile_attachments, error);
+				});
 		}
 		
 		// Find an attachment which is in progress
