@@ -718,7 +718,7 @@ var Display = $n2.Class({
 									.appendTo($progress);
 							} else {
 								var $previewButtton = $('<label>')
-									.addClass('cordova-btn preview-button cordova-icon')
+									.addClass('cordova-btn cordova-preview-button icon-preview width-100')
 									.appendTo($progress)
 									.text(_loc('Preview'))
 									.click(function(event) {
@@ -731,12 +731,6 @@ var Display = $n2.Class({
 												success : function() { console.log('Opening file', file); } 
 											});
 									});
-
-								if (file.type.startsWith('audio') || file.type.startsWith('video')) {
-									$previewButtton.addClass('icon-play');
-								} else {
-									$previewButtton.addClass('icon-preview');
-								}
 							}
 						} 
 					});

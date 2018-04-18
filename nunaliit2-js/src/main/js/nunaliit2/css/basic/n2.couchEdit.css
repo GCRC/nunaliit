@@ -221,33 +221,9 @@ form.attachmentEditor_creationFormWithVideo {
 
 /* Cordova css */
 .attachmentEditor_cordovaRecordingControls {
-	width: 71%;
-	float: right;
-}
-
-.attachmentEditor_cordovaRecordIcon {
-	background: red;
-	background-position: center;
-	width: 40px;
-	height: 40px;
-	border-radius: 50%;
-	margin: auto;
-	box-shadow: 2px 2px 5px grey;
-}
-
-.attachmentEditor_cordovaStopIcon {
-	background: red;
-	background-position: center;
-	width: 40px;
-	height: 40px;
-	margin: auto;
-	box-shadow: 2px 2px 5px grey;
-}
-
-.attachmentEditor_cordovaRecordingText {
-	font-size: smaller;
-	text-align: center;
-	color: red;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .cordova-btn {
@@ -285,7 +261,7 @@ form.attachmentEditor_creationFormWithVideo {
     
   border-radius: 100%;
   
-  background-color: rgba(236, 240, 241, .3);
+  background-color: rgba(255, 255, 255, 0.3);
   
   -webkit-transform: translate(-50%, -50%);
   -moz-transform: translate(-50%, -50%);
@@ -305,13 +281,18 @@ form.attachmentEditor_creationFormWithVideo {
   box-sizing: border-box;
 }
 
-.remove-button {
+.cordova-remove-button {
 	margin-bottom: 15px;
 }
 
-.preview-button {
-	max-width: 100px;
+.cordova-preview-button {
 	margin-bottom: 15px;
+	background-color: #747474 !important;
+	color: white;
+}
+
+.width-100 {
+	width: 100px;
 }
 
 .width-150 {
@@ -343,10 +324,16 @@ form.attachmentEditor_creationFormWithVideo {
 	background-image: url('images/ic_delete.png');   
 }
 
-.icon-play {
-	background-image: url('images/ic_play.png');
+.icon-record {
+	background-image: url('images/ic_record.png');
+}
+
+.icon-stop {
+	background-image: url('images/ic_stop.png');   
 }
 
 .icon-preview {
-	background-image: url('images/ic_preview.png');   
+	background-image: url('images/ic_preview.png');
+	background-repeat: no-repeat;
+	border: 6px solid #747474;   
 }

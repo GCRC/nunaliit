@@ -3342,7 +3342,7 @@ var AttachmentEditor = $n2.Class({
 				.appendTo($form)
 				.hide();
 			var $removeAttachmentButton = $('<label>')
-				.addClass('cordova-btn cordova-icon icon-remove remove-button')
+				.addClass('cordova-btn cordova-icon icon-remove cordova-remove-button')
 				.appendTo($removeAttachmentContainer)
 				.text(_loc('Remove'))
 				.click(function(event) {
@@ -3671,7 +3671,7 @@ var AttachmentEditor = $n2.Class({
 							// Image are already displayed, no need to show a preview button
 							if (!file.type.startsWith('image')) {
 								$previewButton = $('<label>')
-									.addClass('cordova-btn cordova-icon')
+									.addClass('cordova-btn cordova-icon icon-preview cordova-preview-button')
 									.appendTo(containerDiv)
 									.text(_loc('Preview'))
 									.click(function(event) {
@@ -3684,12 +3684,6 @@ var AttachmentEditor = $n2.Class({
 												success : function() { console.log('Opening file', file); } 
 											});
 									});
-
-								if (file.type.startsWith('audio') || file.type.startsWith('video')) {
-									$previewButton.addClass('icon-play');
-								} else {
-									$previewButton.addClass('icon-preview');
-								}
 							}
 						} 
 					});
@@ -3706,21 +3700,21 @@ var AttachmentEditor = $n2.Class({
 				.addClass('attachmentEditor_cordovaRecordingControls')
 				.appendTo($form);
 
-			var $starButton = $('<div>')
-				.addClass('attachmentEditor_cordovaRecordIcon')
+			$('<div>')
+				.addClass('cordova-btn cordova-icon icon-record')
+				.text(_loc('Record'))
 				.appendTo($recordingControls)
 				.click(function(event) {
 					event.preventDefault();
-					// Record audio
 					mediaRec.startRecord();
 
 					$(this).hide();
 					$stopButton.show();
-					$recordingText.text('Stop Recording');
 				});
 
 			var $stopButton = $('<div>')
-				.addClass('attachmentEditor_cordovaStopIcon')
+				.addClass('cordova-btn cordova-icon icon-stop')
+				.text(_loc('Stop'))
 				.appendTo($recordingControls)
 				.click(function(event) {
 					event.preventDefault();
@@ -3729,11 +3723,6 @@ var AttachmentEditor = $n2.Class({
 					$recordingControls.hide();
 				})
 				.hide();
-				
-			var $recordingText = $('<p>')
-				.addClass('attachmentEditor_cordovaRecordingText')
-				.text('Start Recording')
-				.appendTo($recordingControls);
 		}
 
 		function clearAttachmentPreview() {
