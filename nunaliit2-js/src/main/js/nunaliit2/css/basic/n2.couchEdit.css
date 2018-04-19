@@ -285,6 +285,10 @@ form.attachmentEditor_creationFormWithVideo {
 	margin-bottom: 15px;
 }
 
+.cordova-location-toggle {
+	margin: 15px 0px;
+}
+
 .cordova-preview-button {
 	margin-bottom: 15px;
 	background-color: #747474 !important;
@@ -297,6 +301,10 @@ form.attachmentEditor_creationFormWithVideo {
 
 .width-150 {
 	width: 150px;
+}
+
+.width-200 {
+	width: 200px;
 }
 
 .cordova-icon {
@@ -330,6 +338,14 @@ form.attachmentEditor_creationFormWithVideo {
 
 .icon-stop {
 	background-image: url('images/ic_stop.png');   
+}
+
+.icon-checked {
+	background-image: url('images/ic_checked.png');   
+}
+
+.icon-unchecked {
+	background-image: url('images/ic_unchecked.png');   
 }
 
 .icon-preview {

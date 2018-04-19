@@ -1353,6 +1353,31 @@ var CouchDocumentEditor = $n2.Class({
 			});
 		};
 
+		if (window.cordova) {
+			var $currentLocationToggle = $('<label>')
+				.addClass('cordova-btn cordova-icon cordova-location-toggle width-200')
+				.appendTo($editorContainer)
+				.text(_loc('Current Location'))
+				.click(function(event) {
+					event.preventDefault();
+					_this.attachmentEditor.cordovaLocation = !_this.attachmentEditor.cordovaLocation;
+					if (!!_this.attachmentEditor.cordovaLocation) {
+						$(this).removeClass('icon-unchecked');
+						$(this).addClass('icon-checked');
+					} else {
+						$(this).removeClass('icon-checked');
+						$(this).addClass('icon-unchecked');
+					}
+				});
+			if (!!_this.attachmentEditor.cordovaLocation) {
+				$currentLocationToggle.removeClass('icon-unchecked');
+				$currentLocationToggle.addClass('icon-checked');
+			} else {
+				$currentLocationToggle.removeClass('icon-checked');
+				$currentLocationToggle.addClass('icon-unchecked');
+			}
+		}
+
 		var formButtons = $('<div class="editorButtons"></div>');
 		$editorContainer.append(formButtons);
 
@@ -1465,6 +1490,10 @@ var CouchDocumentEditor = $n2.Class({
 				// add the attachments
 				_this.editedDocument.nunaliit_attachments = null;
 				_this.editedDocument.nunaliit_mobile_attachments = _this.attachmentEditor.cordovaAttachment;
+				
+				// add the location flag
+				_this.editedDocument.nunaliit_mobile_needs_new_location = _this.attachmentEditor.cordovaLocation;
+				
 				updateDocument();
 			}
 		} else {
@@ -2611,6 +2640,8 @@ var AttachmentEditor = $n2.Class({
 
 	cordovaAttachment: null,
 
+	cordovaLocation: null,
+
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			doc: null
@@ -2658,6 +2689,9 @@ var AttachmentEditor = $n2.Class({
 				delete this.doc._recordVideoSize;
 			}
 		}
+
+		// cordovaLocation toggle is enabled for new documents and disabled for edits
+		this.cordovaLocation = !this.doc._rev;
 
 		// When a document is first created, if attachments are already present,
 		// this is because they were created from schema.

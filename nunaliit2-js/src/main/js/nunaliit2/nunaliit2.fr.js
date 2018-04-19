@@ -109,6 +109,7 @@ $n2.l10n.addLocalizedStrings('fr',{
 	,"Created by":"Créer par"
 	,"Created document with id: {id}":"Nouveau document créé: {id}"
 	,"Creating a user associated with the e-mail address: {address}":"Creation d'un usager associé avec l'adresse courriel: {address}"
+	,"Current Location":"Position actuelle"
 	,"Custom Script":"Scripte sur mesure"
 	,"Data Modification Application":"Application de modification des données"
 	,"Date":"Date"
