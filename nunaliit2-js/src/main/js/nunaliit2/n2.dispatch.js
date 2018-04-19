@@ -123,11 +123,6 @@ var Dispatcher = $n2.Class({
 		this.dispatching = false;
 		this.queue = [];
 
-		if (window.cordova) {
-			new $n2.history.Tracker({
-				dispatchService: this
-			});
-		}
 	},
 
 	/**
