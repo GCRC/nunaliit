@@ -2158,12 +2158,33 @@ var Form = $n2.Class({
 			$input.change(changeHandler);
 			
 			// Handle focus
-			var getDocumentIdFn = this.functionMap['getDocumentId'];
-			if( funcIdentifier 
-			 && this.functionMap[funcIdentifier] ){
-				getDocumentIdFn = this.functionMap[funcIdentifier];
+			var focusHandler = {
+				fn: this.functionMap['getDocumentId']
+				,args: []
 			};
-			if( getDocumentIdFn ) {
+//			if( funcIdentifier 
+//			 && this.functionMap[funcIdentifier] ){
+//				getDocumentIdFn = this.functionMap[funcIdentifier];
+//			};
+			if( funcIdentifier ){
+				if( $n2.docFnCall ){
+					try {
+						var program = $n2.docFnCall.parse(funcIdentifier);
+						if( program ){
+							var r = program.getValue({
+								doc: _this.obj
+								,funcMap: this.functionMap
+							});
+							if( r ){
+								focusHandler = r;
+							};
+						};
+					} catch(err) {
+						$n2.logError('Error while processing focus handler '+funcIdentifier, err);
+					};
+				};
+			};
+			if( focusHandler ) {
 				$input.focus(function(e, eventParam){
 					var $input = $(this);
 
@@ -2172,8 +2193,9 @@ var Form = $n2.Class({
 					};
 					
 					window.setTimeout(function(){
-						getDocumentIdFn({
+						focusHandler.fn({
 							contextDoc: _this.obj
+							,args: focusHandler.args
 							,onSelected: function(docId){ // callback with docId
 								var parentObj = parentSelector.getValue(_this.obj);
 								if( parentObj ){
