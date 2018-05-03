@@ -779,16 +779,30 @@ var SearchOnSchemaDialogFactory = $n2.Class('SearchOnSchemaDialogFactory', Searc
 			,onError: function(err){}
 		},opts_);
 		
+		var keys = [];
+		var errorEncountered = true;
 		if( $n2.isArray(opts.args) 
-		 && opts.args.length > 0 
-		 && typeof opts.args[0] === 'string' ){
+		 && opts.args.length > 0 ){
+			errorEncountered = false;
+			
+			var keys = [];
+			opts.args.forEach(function(k){
+				if( typeof k === 'string' ){
+					keys.push(k);
+				} else {
+					errorEncountered = true;
+				};
+			});
+		};
+		
+		if( errorEncountered ){
+			$n2.logError('Can not search for documents based on schema', opts.args);
+			opts.onError( _loc('Can not search for documents based on schema') ); 
 
-			var schemaName = opts.args[0];
-
+		} else {
 			this.atlasDesign.queryView({
 				viewName: 'nunaliit-schema'
-				,startkey: schemaName
-				,endkey: schemaName
+				,keys: keys
 				,include_docs: true
 				,onSuccess: function(rows){
 					var docs = [];
@@ -802,13 +816,10 @@ var SearchOnSchemaDialogFactory = $n2.Class('SearchOnSchemaDialogFactory', Searc
 					opts.onSuccess(docs);
 				}
 				,onError: function(errorMsg){
-					$n2.logError('Unable to retrieve documents for schema '+schemaName+': '+errorMsg);
-					opts.onError( _loc('Unable to retrieve documents for schema {name}', {name:schemaName}) ); 
+					$n2.logError('Unable to retrieve documents for schema '+keys+': '+errorMsg);
+					opts.onError( _loc('Unable to retrieve documents for schema {name}', {name:''+keys}) ); 
 				}
 			});
-		} else {
-			$n2.logError('Can not search for documents based on schema', opts.args);
-			opts.onError( _loc('Can not search for documents based on schema') ); 
 		};
 	}
 });
@@ -848,16 +859,30 @@ var SearchOnLayerDialogFactory = $n2.Class('SearchOnLayerDialogFactory', SearchB
 			,onError: function(err){}
 		},opts_);
 		
+		var keys = [];
+		var errorEncountered = true;
 		if( $n2.isArray(opts.args) 
-		 && opts.args.length > 0 
-		 && typeof opts.args[0] === 'string' ){
+		 && opts.args.length > 0 ){
+			errorEncountered = false;
+			
+			var keys = [];
+			opts.args.forEach(function(k){
+				if( typeof k === 'string' ){
+					keys.push(k);
+				} else {
+					errorEncountered = true;
+				};
+			});
+		};
+		
+		if( errorEncountered ){
+			$n2.logError('Can not search for documents based on layer', opts.args);
+			opts.onError( _loc('Can not search for documents based on layer') ); 
 
-			var layerId = opts.args[0];
-
+		} else {
 			this.atlasDesign.queryView({
 				viewName: 'layers'
-				,startkey: layerId
-				,endkey: layerId
+				,keys: keys
 				,include_docs: true
 				,onSuccess: function(rows){
 					var docs = [];
@@ -871,13 +896,10 @@ var SearchOnLayerDialogFactory = $n2.Class('SearchOnLayerDialogFactory', SearchB
 					opts.onSuccess(docs);
 				}
 				,onError: function(errorMsg){
-					$n2.logError('Unable to retrieve documents for layer '+layerId+': '+errorMsg);
-					opts.onError( _loc('Unable to retrieve documents for layer {name}', {name:layerId}) ); 
+					$n2.logError('Unable to retrieve documents for layer '+keys+': '+errorMsg);
+					opts.onError( _loc('Unable to retrieve documents for layer {name}', {name:''+keys}) ); 
 				}
 			});
-		} else {
-			$n2.logError('Can not search for documents based on layer', opts.args);
-			opts.onError( _loc('Can not search for documents based on layer') ); 
 		};
 	}
 });
