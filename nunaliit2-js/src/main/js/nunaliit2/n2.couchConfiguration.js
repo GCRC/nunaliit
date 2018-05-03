@@ -640,6 +640,7 @@ function Configure(options_){
 			,searchService: configuration.directory.searchService
 			,showService: configuration.directory.showService
 			,schemaRepository: configuration.directory.schemaRepository
+			,atlasDesign: configuration.atlasDesign
 		});
 		
 		configuration.directory.createDocProcess = new $n2.couchRelatedDoc.CreateRelatedDocProcess({
