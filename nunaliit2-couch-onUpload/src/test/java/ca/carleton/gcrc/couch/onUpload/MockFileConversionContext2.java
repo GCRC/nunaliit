@@ -14,6 +14,7 @@ import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
 import ca.carleton.gcrc.couch.onUpload.conversion.DocumentDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.FileConversionContext;
 import ca.carleton.gcrc.json.JSONSupport;
+import ca.carleton.gcrc.utils.StreamUtils;
 
 public class MockFileConversionContext2 implements FileConversionContext {
 
@@ -102,13 +103,7 @@ public class MockFileConversionContext2 implements FileConversionContext {
 			fis = new FileInputStream(availableFile);
 			fos = new FileOutputStream(outputFile);
 			
-			byte[] buffer = new byte[1024];
-			int size = fis.read(buffer);
-			while( size >= 0 ){
-				fos.write(buffer, 0, size);
-
-				size = fis.read(buffer);
-			}
+			StreamUtils.copyStream(fis, fos);
 			
 			fos.flush();
 			fos.close();

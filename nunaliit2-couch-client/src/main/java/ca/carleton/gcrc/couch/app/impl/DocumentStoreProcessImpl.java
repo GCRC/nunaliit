@@ -25,6 +25,7 @@ import ca.carleton.gcrc.couch.app.Document;
 import ca.carleton.gcrc.couch.app.DocumentStoreProcess;
 import ca.carleton.gcrc.json.JSONSupport;
 import ca.carleton.gcrc.utils.Files;
+import ca.carleton.gcrc.utils.StreamUtils;
 
 public class DocumentStoreProcessImpl implements DocumentStoreProcess {
 	
@@ -442,12 +443,7 @@ public class DocumentStoreProcessImpl implements DocumentStoreProcess {
 				is = attachment.getInputStream();
 				fos = new FileOutputStream(attachmentFile);
 				
-				byte[] buffer = new byte[100];
-				int size = is.read(buffer);
-				while( size >= 0 ){
-					fos.write(buffer, 0, size);
-					size = is.read(buffer);
-				}
+				StreamUtils.copyStream(is, fos);
 				
 				is.close();
 				is = null;
@@ -517,16 +513,11 @@ public class DocumentStoreProcessImpl implements DocumentStoreProcess {
 		StringWriter sw = new StringWriter();
 		FileInputStream is = null;
 		InputStreamReader isr = null;
-		char[] buffer = new char[100];
 		try {
 			is = new FileInputStream(file);
 			isr = new InputStreamReader(is, "UTF-8");
 			
-			int size = isr.read(buffer);
-			while( size >= 0 ) {
-				sw.write(buffer, 0, size);
-				size = isr.read(buffer);
-			}
+			StreamUtils.copyStream(isr, sw);
 			
 			sw.flush();
 			
@@ -560,16 +551,11 @@ public class DocumentStoreProcessImpl implements DocumentStoreProcess {
 		StringWriter sw = new StringWriter();
 		FileInputStream is = null;
 		InputStreamReader isr = null;
-		char[] buffer = new char[100];
 		try {
 			is = new FileInputStream(file);
 			isr = new InputStreamReader(is, "UTF-8");
 			
-			int size = isr.read(buffer);
-			while( size >= 0 ) {
-				sw.write(buffer, 0, size);
-				size = isr.read(buffer);
-			}
+			StreamUtils.copyStream(isr, sw);
 			
 			sw.flush();
 			

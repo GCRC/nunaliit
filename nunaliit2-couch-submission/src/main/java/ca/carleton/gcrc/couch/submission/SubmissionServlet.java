@@ -29,6 +29,7 @@ import ca.carleton.gcrc.couch.client.CouchUserDb;
 import ca.carleton.gcrc.couch.client.impl.ConnectionStreamResult;
 import ca.carleton.gcrc.couch.client.impl.CouchContextCookie;
 import ca.carleton.gcrc.json.servlet.JsonServlet;
+import ca.carleton.gcrc.utils.StreamUtils;
 
 @SuppressWarnings("serial")
 public class SubmissionServlet extends JsonServlet {
@@ -248,12 +249,7 @@ public class SubmissionServlet extends JsonServlet {
 
 				OutputStream os = resp.getOutputStream();
 				
-				byte[] buffer = new byte[1024];
-				int size = is.read(buffer);
-				while( size >= 0 ) {
-					os.write(buffer, 0, size);
-					size = is.read(buffer);
-				}
+				StreamUtils.copyStream(is, os);
 				
 				os.flush();
 				

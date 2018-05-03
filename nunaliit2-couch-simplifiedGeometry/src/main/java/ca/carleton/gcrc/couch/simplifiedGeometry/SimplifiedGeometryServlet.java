@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.json.servlet.JsonServlet;
+import ca.carleton.gcrc.utils.StreamUtils;
 
 @SuppressWarnings("serial")
 public class SimplifiedGeometryServlet extends JsonServlet {
@@ -153,11 +154,7 @@ public class SimplifiedGeometryServlet extends JsonServlet {
 				InputStreamReader isr = new InputStreamReader(is,"UTF-8");
 				StringWriter sw = new StringWriter();
 				
-				int c = isr.read();
-				while( c >= 0 ){
-					sw.write(c);
-					c = isr.read();
-				}
+				StreamUtils.copyStream(isr, sw);
 				
 				// Decode JSON request
 				JSONTokener tokener = new JSONTokener( sw.toString() );

@@ -11,6 +11,7 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 
 import ca.carleton.gcrc.couch.command.schema.SchemaDefinition;
+import ca.carleton.gcrc.utils.StreamUtils;
 
 public class CommandAddSchema implements Command {
 
@@ -121,16 +122,11 @@ public class CommandAddSchema implements Command {
 				StringWriter sw = new StringWriter();
 				InputStream is = null;
 				InputStreamReader isr = null;
-				char[] buffer = new char[100];
 				try {
 					is = new FileInputStream(defFile);
 					isr = new InputStreamReader(is, "UTF-8");
 					
-					int size = isr.read(buffer);
-					while( size >= 0 ) {
-						sw.write(buffer, 0, size);
-						size = isr.read(buffer);
-					}
+					StreamUtils.copyStream(isr, sw);
 					
 					sw.flush();
 					
