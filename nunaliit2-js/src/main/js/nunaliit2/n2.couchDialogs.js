@@ -524,14 +524,18 @@ var SearchBriefDialogFactory = $n2.Class({
 	
 	dialogPrompt: null,
 	
+	sortOnBrief: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			showService: null
+			,sortOnBrief: false
 			,dialogPrompt: _loc('Select')
 		},opts_);
 		
 		this.showService = opts.showService;
 		this.dialogPrompt = opts.dialogPrompt;
+		this.sortOnBrief = opts.sortOnBrief;
 	},
 	
 	/*
@@ -670,32 +674,80 @@ var SearchBriefDialogFactory = $n2.Class({
 			} else {
 				var $table = $('<table></table>');
 				$('#'+displayId).empty().append($table);
+				
+				var displayedById = {};
 
 				for(var i=0,e=docs.length; i<e; ++i) {
 					var doc = docs[i];
 					var docId = doc._id;
 					
-					var $tr = $('<tr>')
-						.addClass('trResult')
-						.appendTo($table);
-
-					var $td = $('<td>')
-						.addClass('n2_search_result olkitSearchMod2_'+(i%2))
-						.appendTo($tr);
-					
-					var $a = $('<a>')
-						.attr('href','#'+docId)
-						.attr('alt',docId)
-						.appendTo($td)
-						.click( createClickHandler(docId) );
-					
-					if( _this.showService ) {
-						_this.showService.displayBriefDescription($a, {}, doc);
+					if( displayedById[docId] ){
+						// Already displayed. Skip
 					} else {
-						$a.text(docId);
+						displayedById[docId] = true;
+						
+						var $tr = $('<tr>')
+							.addClass('trResult')
+							.appendTo($table);
+
+						var $td = $('<td>')
+							.addClass('n2_search_result olkitSearchMod2_'+(i%2))
+							.appendTo($tr);
+						
+						var $a = $('<a>')
+							.attr('href','#'+docId)
+							.attr('alt',docId)
+							.appendTo($td)
+							.click( createClickHandler(docId) );
+						
+						if( _this.showService ) {
+							_this.showService.displayBriefDescription($a, {}, doc);
+						} else {
+							$a.text(docId);
+						};
 					};
 				};
+				
+				if( _this.sortOnBrief ){
+					sortTable($table);
+				};
 			};
+		};
+		
+		function sortTable($table){
+			// Get all rows
+			var $trs = $table.find('tr');
+			
+			// Assign the text value as a sort key to each row
+			$trs.each(function(){
+				var $tr = $(this);
+				$tr.attr('n2-sort-key',$tr.text());
+			});
+			
+			// Sort on the key
+			var trArray = $trs.toArray().sort(function(trA,trB){
+				var keyA = $(trA).attr('n2-sort-key');
+				var keyB = $(trB).attr('n2-sort-key');
+				if( keyA === keyB ){
+					return 0;
+				} else if( !keyA ){
+					return -1;
+				} else if( !keyB ){
+					return 1;
+				} else if( keyA < keyB ){
+					return -1;
+				} else if( keyA > keyB ){
+					return 1;
+				} else {
+					// should not get here
+					return 0;
+				};
+			});
+
+			// Re-order table
+			trArray.forEach(function(tr){
+				$table.append(tr);
+			});
 		};
 		
 		function filterList(words){
@@ -764,6 +816,7 @@ var SearchOnSchemaDialogFactory = $n2.Class('SearchOnSchemaDialogFactory', Searc
 		var opts = $n2.extend({
 			atlasDesign: undefined
 			,showService: undefined
+			,sortOnBrief: true
 			,dialogPrompt: _loc('Select a Document')
 		},opts_);
 		
@@ -844,6 +897,7 @@ var SearchOnLayerDialogFactory = $n2.Class('SearchOnLayerDialogFactory', SearchB
 		var opts = $n2.extend({
 			atlasDesign: undefined
 			,showService: undefined
+			,sortOnBrief: true
 			,dialogPrompt: _loc('Select a Document')
 		},opts_);
 		
