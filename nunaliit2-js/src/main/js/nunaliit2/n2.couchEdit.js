@@ -3364,15 +3364,15 @@ var AttachmentEditor = $n2.Class({
 		var $recordingControls;
 		var $previewButton;
 
-    if (window.cordova) {
-      // On Cordova devices show buttons to upload media
-      var $buttonsContainer = $('<div>')
-        .addClass('attachmentEditor_cordovaCaptureButtonsContainer')
+		if (window.cordova) {
+			// On Cordova devices show buttons to upload media
+			var $buttonsContainer = $('<div>')
+				.addClass('attachmentEditor_cordovaCaptureButtonsContainer')
 				.appendTo($form);
 			
 			// Add the "Remove" button
 			var $removeAttachmentContainer = $('<div>')
-        .addClass('attachmentEditor_cordovaCaptureButtonsContainer')
+				.addClass('attachmentEditor_cordovaCaptureButtonsContainer')
 				.appendTo($form)
 				.hide();
 			var $removeAttachmentButton = $('<label>')
@@ -3483,8 +3483,8 @@ var AttachmentEditor = $n2.Class({
 								addCordovaAttachment(fileName);
 								// On success, show the file
 								clearAttachmentPreview();
-                var $imgPreview = $('<img>', {src: fileName})
-                  .addClass('attachmentEditor_photoPreview')
+								var $imgPreview = $('<img>', {src: fileName})
+									.addClass('attachmentEditor_photoPreview')
 									.appendTo($form);
 								showCordovaAttachmentPreview($removeAttachmentContainer); 
 								attachmentPreviewComponents.push($imgPreview);
@@ -3493,7 +3493,9 @@ var AttachmentEditor = $n2.Class({
 							}, function(error) {
 								console.error('Error getting picture:', error);
 								alert('Our apologies, there was a problem getting the photo.');
-							}, {correctOrientation: true});
+							}, {
+								correctOrientation: true
+							});
 						});
 				}
 			
@@ -3532,7 +3534,10 @@ var AttachmentEditor = $n2.Class({
 								}, function(error) {
 									console.error('Error getting video:', error);
 									alert('Our apologies, there was a problem getting the video.');
-								}, {quality: 0, duration: 30});
+								}, {
+									quality: 0,
+									duration: 30
+								});
 						});
 				}
 							
@@ -3571,11 +3576,11 @@ var AttachmentEditor = $n2.Class({
 						});
 				}
 			}, false);
-		}	else {
-      //clearfix div to prevent buttons from floating
-      $('<div>')
-        .addClass('attachmentEditor_clearfix')
-        .appendTo($div);
+		} else {
+			//clearfix div to prevent buttons from floating
+			$('<div>')
+				.addClass('attachmentEditor_clearfix')
+				.appendTo($div);
 
       var firstTabDisplayed = 'file';
     
