@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.app.Attachment;
 import ca.carleton.gcrc.couch.app.Document;
+import ca.carleton.gcrc.utils.StreamUtils;
 
 /**
  * Wrapper to Document to add Nunaliit specific behaviour.
@@ -100,12 +101,9 @@ public class NunaliitDocument implements Document {
 							is = attachment.getInputStream();
 							isr = new InputStreamReader(is,"UTF-8");
 							StringWriter sw = new StringWriter();
-							char[] buffer = new char[1024];
-							int size = isr.read(buffer);
-							while( size >= 0 ){
-								sw.write(buffer,0,size);
-								size = isr.read(buffer);
-							}
+							
+							StreamUtils.copyStream(isr, sw);
+
 							sw.flush();
 							wkt = sw.toString();
 							

@@ -23,12 +23,7 @@ public class ReadGobbler extends Thread {
 	
 	public void run(){
 		try {
-			char cbuf[] = new char[1024];
-			int size = reader.read(cbuf);
-			while( size >= 0 ){
-				writer.write(cbuf, 0, size);
-				size = reader.read(cbuf);
-			}
+			StreamUtils.copyStream(reader, writer);
 			writer.flush();
 			
 		} catch(Exception e) {

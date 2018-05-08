@@ -115,4 +115,13 @@ public class MimeUtils {
 		}
 		return null;
 	}
+	
+	static public MultimediaClass getMultimediaClassFromClassString(String classStr) {
+		for(MultimediaClass mmClass : MultimediaClass.values()) {
+			if( mmClass.getValue().equals(classStr) ) {
+				return mmClass;
+			}
+		}
+		return null;
+	}
 }

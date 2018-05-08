@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.client.CouchDb;
+import ca.carleton.gcrc.utils.StreamUtils;
 
 public class SimplifiedGeometryActions {
 	
@@ -60,14 +61,13 @@ public class SimplifiedGeometryActions {
 			try {
 				ByteArrayOutputStream baos = new ByteArrayOutputStream();
 				couchDb.downloadAttachment(docId, attName, baos);
+
 				StringWriter sw = new StringWriter();
 				ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
 				InputStreamReader isr = new InputStreamReader(bais,"UTF-8");
-				int c = isr.read();
-				while( c >= 0 ){
-					sw.write(c);
-					c = isr.read();
-				}
+				
+				StreamUtils.copyStream(isr, sw);
+
 				sw.flush();
 				String att = sw.toString();
 				
@@ -139,14 +139,13 @@ public class SimplifiedGeometryActions {
 			try {
 				ByteArrayOutputStream baos = new ByteArrayOutputStream();
 				couchDb.downloadAttachment(docId, attName, baos);
+
 				StringWriter sw = new StringWriter();
 				ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
 				InputStreamReader isr = new InputStreamReader(bais,"UTF-8");
-				int c = isr.read();
-				while( c >= 0 ){
-					sw.write(c);
-					c = isr.read();
-				}
+
+				StreamUtils.copyStream(isr, sw);
+
 				sw.flush();
 				String att = sw.toString();
 				

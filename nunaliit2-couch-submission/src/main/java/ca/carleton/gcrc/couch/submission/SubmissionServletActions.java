@@ -13,7 +13,9 @@ import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchDocumentOptions;
+import ca.carleton.gcrc.couch.client.CouchQuery;
 import ca.carleton.gcrc.couch.client.CouchServerVersion;
+import ca.carleton.gcrc.couch.client.impl.ConnectionStreamResult;
 import ca.carleton.gcrc.couch.utils.CouchNunaliitUtils;
 import ca.carleton.gcrc.json.JSONSupport;
 
@@ -78,6 +80,7 @@ public class SubmissionServletActions {
 	public JSONObject modifyDocument(
 			CouchAuthenticationContext authContext 
 			,String dbIdentifier 
+			,String deviceId 
 			,String docId 
 			,JSONObject doc
 			) throws Exception {
@@ -105,7 +108,7 @@ public class SubmissionServletActions {
 				originalDoc = documentCouchDb.getDocument(docId, options);
 			}
 			
-			JSONObject submissionRequest = buildSubmissionRequest(authContext, doc, originalDoc);
+			JSONObject submissionRequest = buildSubmissionRequest(authContext, deviceId, doc, originalDoc);
 			
 			JSONObject result = submissionDesign.getDatabase().createDocument(submissionRequest);
 			
@@ -119,6 +122,7 @@ public class SubmissionServletActions {
 	public JSONObject deleteDocument(
 			CouchAuthenticationContext authContext 
 			,String dbIdentifier 
+			,String deviceId
 			,String docId 
 			,String rev
 			) throws Exception {
@@ -135,7 +139,7 @@ public class SubmissionServletActions {
 				originalDoc = documentCouchDb.getDocument(docId, options);
 			}
 			
-			JSONObject submissionRequest = buildSubmissionRequest(authContext, null, originalDoc);
+			JSONObject submissionRequest = buildSubmissionRequest(authContext, deviceId, null, originalDoc);
 			
 			JSONObject result = submissionDesign.getDatabase().createDocument(submissionRequest);
 			
@@ -143,6 +147,44 @@ public class SubmissionServletActions {
 
 		} else {
 			throw new Exception("Only operations against 'submissionDb' are accepted");
+		}
+	}
+
+	public ConnectionStreamResult getSubmissionInfoBySubmissionId(
+			CouchAuthenticationContext authContext 
+			,String submissionId 
+			) throws Exception {
+		
+		try {
+			CouchQuery query = new CouchQuery();
+			query.setViewName("submission-info-by-id");
+			query.setStartKey(submissionId);
+			query.setEndKey(submissionId);
+
+			ConnectionStreamResult results = submissionDesign.performQueryRaw(query);
+			return results;
+
+		} catch (Exception e) {
+			throw new Exception("Error while accessing submission info by submission id view", e);
+		}
+	}
+
+	public ConnectionStreamResult getSubmissionInfoByDeviceId(
+			CouchAuthenticationContext authContext 
+			,String deviceId 
+			) throws Exception {
+		
+		try {
+			CouchQuery query = new CouchQuery();
+			query.setViewName("submission-info-by-device-id");
+			query.setStartKey(deviceId);
+			query.setEndKey(deviceId);
+
+			ConnectionStreamResult results = submissionDesign.performQueryRaw(query);
+			return results;
+
+		} catch (Exception e) {
+			throw new Exception("Error while accessing submission info by device id view", e);
 		}
 	}
 
@@ -164,6 +206,7 @@ public class SubmissionServletActions {
 
 	private JSONObject buildSubmissionRequest(
 			CouchAuthenticationContext authContext
+			,String deviceId
 			,JSONObject doc
 			,JSONObject original
 			) throws Exception{
@@ -174,6 +217,11 @@ public class SubmissionServletActions {
 		JSONObject submissionStructure = new JSONObject();
 		submissionRequest.put("nunaliit_submission", submissionStructure);
 		submissionStructure.put("state", "submitted");
+		
+		// Device Identifier
+		if( null != deviceId ){
+			submissionStructure.put("deviceId", deviceId);
+		}
 		
 		// Submitter
 		{

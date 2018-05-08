@@ -70,6 +70,7 @@ import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.progress.ProgressTracker;
 import ca.carleton.gcrc.progress.ProgressTrackerSingleton;
+import ca.carleton.gcrc.utils.StreamUtils;
 
 public class UploadServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
@@ -80,9 +81,11 @@ public class UploadServlet extends HttpServlet {
 	
 	static final int DEFAULT_MAX_MEMORY_SIZE = 10 * 1024; // 10KB
 	static final long DEFAULT_MAX_UPLOAD_SIZE = 10 * 1024 * 1024; // 10MB
+	static final int DEFAULT_TRANSFER_BUFFER_SIZE = 4096; // 4KB
 	
 	private int maxMemorySize = DEFAULT_MAX_MEMORY_SIZE;
 	private long maxUploadSize = DEFAULT_MAX_UPLOAD_SIZE;
+	private int transferBufferSize = DEFAULT_TRANSFER_BUFFER_SIZE;
 	private File fileItemTempDir = null;
 	private DiskFileItemFactory fileItemfactory = null;
 	private File repositoryDir = null;
@@ -157,6 +160,18 @@ public class UploadServlet extends HttpServlet {
 			logger.info("Max upload size is "+maxSize);
 		}
 
+		// Transfer buffer size
+		String txBufSizeStr = props.getProperty("upload.transferBufferSize");
+		if( null != txBufSizeStr ) {
+			int txBufSize = Integer.parseInt(txBufSizeStr);
+			if( txBufSize > 0 ) {
+				this.setTransferBufferSize(txBufSize);
+				logger.info("Upload transfer buffer size is "+txBufSize);
+			} else {
+				logger.warn("Upload transfer buffer size is ignored: "+txBufSize);
+			}
+		}
+
 		// Load up follow-on task for file upload
 		if( null == onUploadedListener ){
 			onUploadedListener = (OnUploadedListener)config.getServletContext().getAttribute(OnUploadedListenerAttributeName);
@@ -208,6 +223,14 @@ public class UploadServlet extends HttpServlet {
 
 	public synchronized void setMaxUploadSize(long maxUploadSize) {
 		this.maxUploadSize = maxUploadSize;
+	}
+
+	public synchronized int getTransferBufferSize() {
+		return transferBufferSize;
+	}
+
+	public synchronized void setTransferBufferSize(int transferBufferSize) {
+		this.transferBufferSize = transferBufferSize;
 	}
 	
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -311,12 +334,16 @@ public class UploadServlet extends HttpServlet {
 				    	
 				    	FileOutputStream fos = null;
 						try {
-							fos = new FileOutputStream(target);
-							int b = stream.read();
-							while( b >= 0) {
-								fos.write(b);
-								b = stream.read();
-							}
+					    	fos = new FileOutputStream(target);
+
+					    	int transferBufferSize = getTransferBufferSize();
+					    	
+					    	StreamUtils.copyStream(stream, fos, transferBufferSize);
+					    	
+					    	fos.flush();
+					    	fos.close();
+					    	fos = null;
+
 						} catch (Exception e) {
 							throw new Exception("Error while writing file "+target.getAbsolutePath(),e);
 						} finally {

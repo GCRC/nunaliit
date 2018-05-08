@@ -26,6 +26,7 @@ import ca.carleton.gcrc.couch.fsentry.FSEntry;
 import ca.carleton.gcrc.couch.fsentry.FSEntryNameFilter;
 import ca.carleton.gcrc.couch.fsentry.FSEntryNull;
 import ca.carleton.gcrc.couch.fsentry.FSEntrySupport;
+import ca.carleton.gcrc.utils.StreamUtils;
 
 public class DocumentFile implements Document {
 
@@ -231,17 +232,12 @@ public class DocumentFile implements Document {
 			 && infoFile.isFile() ) {
 				// Load and interpret info file
 				InputStream fis = null;
-				char[] buffer = new char[100];
 				try {
 					fis = infoFile.getInputStream();
 					InputStreamReader isr = new InputStreamReader(fis,"UTF-8");
 					StringWriter sw = new StringWriter();
 
-					int size = isr.read(buffer);
-					while( size >= 0 ) {
-						sw.write(buffer, 0, size);
-						size = isr.read(buffer);
-					}
+					StreamUtils.copyStream(isr, sw);
 					
 					sw.flush();
 					
@@ -439,16 +435,11 @@ public class DocumentFile implements Document {
 	private String readStringFile(FSEntry file) throws Exception {
 		StringWriter sw = new StringWriter();
 		InputStream is = null;
-		char[] buffer = new char[100];
 		try {
 			is = file.getInputStream();
 			InputStreamReader isr = new InputStreamReader(is, "UTF-8");
-			
-			int size = isr.read(buffer);
-			while( size >= 0 ) {
-				sw.write(buffer, 0, size);
-				size = isr.read(buffer);
-			}
+
+			StreamUtils.copyStream(isr, sw);
 			
 			sw.flush();
 			
@@ -591,16 +582,11 @@ public class DocumentFile implements Document {
 
 	private void insertFile(Writer writer, FSEntry includedEntry) throws Exception {
 		InputStream is = null;
-		char[] buffer = new char[100];
 		try {
 			is = includedEntry.getInputStream();
 			InputStreamReader isr = new InputStreamReader(is, "UTF-8");
 			
-			int size = isr.read(buffer);
-			while( size >= 0 ) {
-				writer.write(buffer, 0, size);
-				size = isr.read(buffer);
-			}
+			StreamUtils.copyStream(isr, writer);
 			
 			writer.flush();
 			

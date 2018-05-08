@@ -1,5 +1,6 @@
 package ca.carleton.gcrc.olkit.multimedia.utils;
 
+import java.util.Enumeration;
 import java.util.Properties;
 
 import org.slf4j.Logger;
@@ -12,6 +13,7 @@ import ca.carleton.gcrc.olkit.multimedia.converter.threshold.ThresholdLogicalAnd
 import ca.carleton.gcrc.olkit.multimedia.converter.threshold.ThresholdVideo;
 import ca.carleton.gcrc.olkit.multimedia.ffmpeg.FFmpeg;
 import ca.carleton.gcrc.olkit.multimedia.ffmpeg.FFmpegProcessorDefault;
+import ca.carleton.gcrc.olkit.multimedia.file.SystemFile;
 import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagickProcessorDefault;
 
 public class MultimediaConfiguration {
@@ -213,6 +215,27 @@ public class MultimediaConfiguration {
 				MultimediaConverterImpl.videoConversionThreshold = and;
 				
 				logger.info("Video Conversion Threshold: "+MultimediaConverterImpl.videoConversionThreshold);
+			}
+		}
+		
+		// File known strings
+		{
+			Enumeration<?> it = props.propertyNames();
+			while( it.hasMoreElements() ) {
+				Object propertyNameObj = it.nextElement();
+				if( propertyNameObj instanceof String ) {
+					String propertyName = (String)propertyNameObj;
+					if( propertyName.startsWith("file.knownString") ) {
+						String value = props.getProperty(propertyName);
+						// The value should be in the form of <mime-type> : <known string>
+						String[] parts = value.split(":");
+						if( 2 == parts.length ) {
+							SystemFile.addKnownString(parts[0],parts[1]);
+						} else {
+							logger.error("Can not interpret property: "+propertyName+"="+value);
+						}
+					}
+				}
 			}
 		}
 	}

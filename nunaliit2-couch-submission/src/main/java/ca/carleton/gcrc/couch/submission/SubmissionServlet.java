@@ -2,6 +2,8 @@ package ca.carleton.gcrc.couch.submission;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 
 import javax.servlet.ServletConfig;
@@ -24,8 +26,10 @@ import ca.carleton.gcrc.couch.client.CouchFactory;
 import ca.carleton.gcrc.couch.client.CouchSession;
 import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
 import ca.carleton.gcrc.couch.client.CouchUserDb;
+import ca.carleton.gcrc.couch.client.impl.ConnectionStreamResult;
 import ca.carleton.gcrc.couch.client.impl.CouchContextCookie;
 import ca.carleton.gcrc.json.servlet.JsonServlet;
+import ca.carleton.gcrc.utils.StreamUtils;
 
 @SuppressWarnings("serial")
 public class SubmissionServlet extends JsonServlet {
@@ -161,6 +165,12 @@ public class SubmissionServlet extends JsonServlet {
 // GET /_sleep        - Returns success after waiting for a given number of milliseconds (removed since 1.0.0)
 // GET /_utils/file   - Return static web pages that contain the CouchDB administration interface
 		
+// Custom:
+// GET /_submission-info-by-device-id?key=?
+//                     - Return _design/submission/_view/submission-info-by-device-id?key=?
+// GET /_submission-info-by-id?key=?
+//                     - Return _design/submission/_view/submission-info-by-id?key=?
+		
 		try {
 			Cookie[] cookies = req.getCookies();
 			CouchAuthenticationContext authContext = getAuthenticationContextFromCookies(cookies);
@@ -195,6 +205,53 @@ public class SubmissionServlet extends JsonServlet {
 				
 				JSONObject result = actions.getUuids(authContext, count);
 				sendJsonResponse(resp, result);
+				
+			} else if( "_submission-info-by-device-id".equals(dbIdentifier) 
+			        || "_submission-info-by-id".equals(dbIdentifier) ) {
+				if( path.size() > 1 ){
+					throw new Exception("Invalid "+dbIdentifier+" request");
+				}
+				
+				String key = null;
+				{
+					String[] keys = req.getParameterValues("key");
+					if( null == keys ) {
+						throw new Exception("Parameter 'key' must be specified");
+					} else {
+						if( keys.length > 1 ){
+							throw new Exception("Parameter 'key' is specified multiple times");
+						} else if( keys.length < 1 ) {
+							throw new Exception("Parameter 'key' must be specified");
+						} else {
+							key = keys[0];
+						}
+					}
+				}
+
+				ConnectionStreamResult result = null;
+				if( "_submission-info-by-device-id".equals(dbIdentifier) ) {
+					result = actions.getSubmissionInfoByDeviceId(authContext, key);
+				} else if( "_submission-info-by-id".equals(dbIdentifier) ) {
+					result = actions.getSubmissionInfoBySubmissionId(authContext, key);
+				} else {
+					throw new Exception("Do not know how to handle: "+dbIdentifier);
+				}
+
+				InputStream is = result.getInputStream();
+
+				resp.setStatus(200);
+				resp.setContentType(result.getContentType());
+				resp.setCharacterEncoding(result.getContentEncoding());
+
+				resp.addHeader("Cache-Control", "no-cache");
+				resp.addHeader("Pragma", "no-cache");
+				resp.addHeader("Expires", "-1");
+
+				OutputStream os = resp.getOutputStream();
+				
+				StreamUtils.copyStream(is, os);
+				
+				os.flush();
 				
 			} else {
 				throw new Exception("Invalid action requested");
@@ -268,6 +325,18 @@ public class SubmissionServlet extends JsonServlet {
 						throw new Exception("invalid request");
 					}
 					
+					String deviceId = null;
+					{
+						String[] deviceIds = req.getParameterValues("deviceId");
+						if( null != deviceIds ) {
+							if( deviceIds.length > 1 ){
+								throw new Exception("Parameter 'deviceId' is specified multiple times");
+							} else if( deviceIds.length >0 ) {
+								deviceId = deviceIds[0];
+							}
+						}
+					}
+					
 					if( null != attName ){
 						throw new Exception("creation of attachment is not supported");
 					} else {
@@ -277,7 +346,7 @@ public class SubmissionServlet extends JsonServlet {
 						Object obj = tokener.nextValue();
 						if( obj instanceof JSONObject ){
 							JSONObject doc = (JSONObject)obj;
-							JSONObject result = actions.modifyDocument(authContext, dbIdentifier, docId, doc);
+							JSONObject result = actions.modifyDocument(authContext, dbIdentifier, deviceId, docId, doc);
 							sendJsonResponse(resp, result);
 
 						} else {
@@ -377,12 +446,25 @@ public class SubmissionServlet extends JsonServlet {
 						throw new Exception("deletion of attachment is not supported");
 					} else {
 						// Delete a document
+						
+						String deviceId = null;
+						{
+							String[] deviceIds = req.getParameterValues("deviceId");
+							if( null != deviceIds ) {
+								if( deviceIds.length > 1 ){
+									throw new Exception("Parameter 'deviceId' is specified multiple times");
+								} else if( deviceIds.length >0 ) {
+									deviceId = deviceIds[0];
+								}
+							}
+						}
+						
 						String rev = getParameter(req, "rev");
 						if( null == rev ){
 							throw new Exception("Parameter 'rev' must be specified");
 						}
 						
-						JSONObject result = actions.deleteDocument(authContext, dbIdentifier, docId, rev);
+						JSONObject result = actions.deleteDocument(authContext, dbIdentifier, deviceId, docId, rev);
 						sendJsonResponse(resp, result);
 					}
 				}

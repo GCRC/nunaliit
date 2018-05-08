@@ -29,6 +29,9 @@ import ca.carleton.gcrc.olkit.multimedia.converter.ExifData;
 import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionRequest;
 import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConverter;
 import ca.carleton.gcrc.olkit.multimedia.converter.impl.MultimediaConverterImpl;
+import ca.carleton.gcrc.olkit.multimedia.ffmpeg.FFmpeg;
+import ca.carleton.gcrc.olkit.multimedia.ffmpeg.FFmpegMediaInfo;
+import ca.carleton.gcrc.olkit.multimedia.ffmpeg.FFmpegProcessor;
 import ca.carleton.gcrc.olkit.multimedia.file.SystemFile;
 import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageInfo;
 import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagick;
@@ -110,11 +113,15 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 	public FileConversionMetaData getFileMetaData(File file) {
 		
 		FileConversionMetaData result = new FileConversionMetaData();
+		boolean found = false;
 		
 		try {
+
 			SystemFile sf = SystemFile.getSystemFile(file);
 			String mimeType = sf.getMimeType();
 			String mimeEncoding = sf.getMimeEncoding();
+			result.setMimeType(mimeType);
+			result.setMimeEncoding(mimeEncoding);
 	
 			// Is it a known MIME type?
 			MultimediaClass aClass = MimeUtils.getMultimediaClassFromMimeType(sf.getMimeType());
@@ -124,13 +131,39 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 			 ) {
 				String fileClass = aClass.getValue();
 				
-				result.setMimeType(mimeType);
-				result.setMimeEncoding(mimeEncoding);
 				result.setFileClass(fileClass);
 				result.setFileConvertable(true);
-			}
+				found = true;
+			} 
+			
 		} catch(Exception e) {
 			// Ignore
+			logger.debug("Error while SystemFile is processing file: "+file, e);
+		}
+
+		if( !found ) {
+			// At this point, linux file command does not think that this is a
+			// video or an audio. Try ffprobe
+			try {
+				FFmpegProcessor ffmpeg = FFmpeg.getProcessor(null);
+				if( null != ffmpeg ) {
+					FFmpegMediaInfo mediaInfo = ffmpeg.getMediaInfo(file);
+					if( null != mediaInfo ) {
+						if( null != mediaInfo.getVideoCodec() ) {
+							result.setFileClass( MultimediaClass.VIDEO.getValue() );
+							result.setFileConvertable(true);
+							found = true;
+						} else if( null != mediaInfo.getAudioCodec() ) {
+							result.setFileClass( MultimediaClass.AUDIO.getValue() );
+							result.setFileConvertable(true);
+							found = true;
+						} 
+					}
+				}
+			} catch (Exception e) {
+				// Ignore
+				logger.debug("Error while FFMpeg is processing file: "+file, e);
+			}
 		}
 		
 		return result;
@@ -223,7 +256,8 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 			request.setThumbnailRequested(true);
 			request.setProgress( new UploadProgressAdaptor() );
 			
-			MultimediaClass mmClass = MimeUtils.getMultimediaClassFromMimeType(mimeType);
+			FileConversionMetaData convMetaData = getFileMetaData(originalFile);
+			MultimediaClass mmClass = MimeUtils.getMultimediaClassFromClassString(convMetaData.getFileClass());
 			if( MultimediaClass.VIDEO == mmClass ) {
 				// For video file, convert to appropriate file type
 				mmConverter.convertVideo(request);
@@ -237,22 +271,7 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 				mmConverter.convertImage(request);
 				
 			} else {
-				logger.info("Unknown multimedia class: "+mmClass+" "+mimeType);
-				SystemFile sf = SystemFile.getSystemFile(originalFile);
-				String mimeType2 = sf.getMimeType();
-				MultimediaClass mmClass2 = MimeUtils.getMultimediaClassFromMimeType(mimeType2);
-				if( MultimediaClass.VIDEO == mmClass2 ) {
-					mmConverter.convertVideo(request);
-
-				} else if( MultimediaClass.AUDIO == mmClass2 ) {
-					mmConverter.convertAudio(request);
-					
-				} else if( MultimediaClass.IMAGE == mmClass2 ) {
-					mmConverter.convertImage(request);
-					
-				} else {
-					throw new Exception("Unknown multimedia class: "+mmClass+":"+mimeType+" "+mmClass2+":"+mimeType2);
-				}
+				throw new Exception("Unknown multimedia class: "+mmClass+":"+mimeType);
 			}
 			
 			// Check that output file(s) was(were) created

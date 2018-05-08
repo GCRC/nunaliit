@@ -495,13 +495,13 @@ public class SchemaAttribute {
 				doc.put("nunaliit_attachments", attachments);
 			}
             if( null != maxAudioRecordingLengthSeconds && maxAudioRecordingLengthSeconds.intValue() > 0 ){
-                doc.put("_maxAudioRecordingLengthSeconds", maxAudioRecordingLengthSeconds);
+                doc.put("nunaliit_maxAudioRecordingLengthSeconds", maxAudioRecordingLengthSeconds);
             }
 			if( null != maxVideoRecordingLengthSeconds && maxVideoRecordingLengthSeconds.intValue() > 0 ){
-				doc.put("_maxVideoRecordingLengthSeconds", maxVideoRecordingLengthSeconds);
+				doc.put("nunaliit_maxVideoRecordingLengthSeconds", maxVideoRecordingLengthSeconds);
 			}
 			if( null != recordVideoSize ){
-				doc.put("_recordVideoSize", recordVideoSize);
+				doc.put("nunaliit_recordVideoSize", recordVideoSize);
 			}
 
 			JSONObject files = attachments.getJSONObject("files");

@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 import ca.carleton.gcrc.couch.command.impl.FSEntryNameFilterTextFiles;
 import ca.carleton.gcrc.couch.fsentry.FSEntry;
 import ca.carleton.gcrc.couch.fsentry.FSEntryNameFilter;
+import ca.carleton.gcrc.utils.StreamUtils;
 
 public class CopyMachine {
 
@@ -122,12 +123,9 @@ public class CopyMachine {
 
 			is = sourceFile.getInputStream();
 			fos = new FileOutputStream(targetFile);
-			byte[] buffer = new byte[256];
-			int size = is.read(buffer);
-			while(size >= 0){
-				fos.write(buffer,0,size);
-				size = is.read(buffer);
-			}
+			
+			StreamUtils.copyStream(is, fos);
+
 			fos.flush();
 			
 		} catch(Exception e) {
