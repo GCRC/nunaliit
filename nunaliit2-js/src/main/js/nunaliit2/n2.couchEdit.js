@@ -3582,124 +3582,122 @@ var AttachmentEditor = $n2.Class({
 				.addClass('attachmentEditor_clearfix')
 				.appendTo($div);
 
-      var firstTabDisplayed = 'file';
-    
-      var $tabList = $('<div>')
-        .addClass('attachmentEditor_uploadTabs')
-        .appendTo($form);
+			var firstTabDisplayed = 'file';
 
-      $('<button>')
-        .text(_loc('File Upload'))
-        .addClass('attachmentEditor_uploadTab_file')
-        .appendTo($tabList)
-        .click(function(event) {
-          event.preventDefault();
-          _this._clickTab(attName, 'file');
-        });
+			var $tabList = $('<div>')
+				.addClass('attachmentEditor_uploadTabs')
+				.appendTo($form);
 
-      var $chooseFileDiv = $('<div>')
-        .addClass('attachmentEditor_uploadTabContent attachmentEditor_uploadTabContent_file')
-        .appendTo($form);
+			$('<button>')
+				.text(_loc('File Upload'))
+				.addClass('attachmentEditor_uploadTab_file')
+				.appendTo($tabList)
+				.click(function(event) {
+					event.preventDefault();
+					_this._clickTab(attName, 'file');
+				});
 
-      $('<input type="file">')
-        .attr('name','media')
-        .change(function(event) {
-          _this._attachmentFileChanged(event);
-        })
-        .appendTo($chooseFileDiv);
+			var $chooseFileDiv = $('<div>')
+				.addClass('attachmentEditor_uploadTabContent attachmentEditor_uploadTabContent_file')
+				.appendTo($form);
 
-      //only display recording if libraries required are present and https
-      var protocolSupportsRecording = false;
-      if(document.location.protocol == 'https:'
-        || window.location.hostname == 'localhost'
-        || window.location.hostname.startsWith('127.0.')) {
-        protocolSupportsRecording = true;
-      }
+			$('<input type="file">')
+				.attr('name','media')
+				.change(function(event) {
+					_this._attachmentFileChanged(event);
+				})
+				.appendTo($chooseFileDiv);
 
-      if(typeof DetectRTC !== 'undefined'
-        && typeof RecordRTC !== 'undefined'
-        && typeof lamejs !== 'undefined'
-        && protocolSupportsRecording) {
+			// only display recording if libraries required are present and https
+			var protocolSupportsRecording = false;
+			if(document.location.protocol == 'https:'
+			 || window.location.hostname == 'localhost'
+			 || window.location.hostname.startsWith('127.0.')) {
+				protocolSupportsRecording = true;
+			}
 
-        DetectRTC.load(function() {
-          if(DetectRTC.hasMicrophone) {
-            $('<button>')
-              .text(_loc('Record Audio'))
-              .addClass('attachmentEditor_uploadTab_audio')
-              .click(function(event) {
-              event.preventDefault();
-                _this._clickTab(attName, 'audio');
-              })
-              .appendTo($tabList);
-            
-            //firstTabDisplayed = 'audio';
+			if(typeof DetectRTC !== 'undefined'
+			 && typeof RecordRTC !== 'undefined'
+			 && typeof lamejs !== 'undefined'
+			 && protocolSupportsRecording) {
 
-            var $recordDiv = $('<div>')
-              .addClass('attachmentEditor_uploadTabContent attachmentEditor_uploadTabContent_audio')
-              .appendTo($form);
+				DetectRTC.load(function() {
+					if(DetectRTC.hasMicrophone) {
+						$('<button>')
+							.text(_loc('Record Audio'))
+							.addClass('attachmentEditor_uploadTab_audio')
+							.click(function(event) {
+								event.preventDefault();
+								_this._clickTab(attName, 'audio');
+							})
+							.appendTo($tabList);
 
-            var recordInputDiv = $('<div>')
-              .addClass('attachmentEditor_recordingContainer')
-              .appendTo($recordDiv);
+						//firstTabDisplayed = 'audio';
 
-            _this.audioRecordingButton = $('<button>')
-              .addClass('attachmentEditor_micButton')
-              .appendTo(recordInputDiv)
-              .click(function(event) {
-                _this._clickRecording(event, 'audio');
-              })[0];
-            _this.audioRecordingButton = $(_this.audioRecordingButton);
+						var $recordDiv = $('<div>')
+							.addClass('attachmentEditor_uploadTabContent attachmentEditor_uploadTabContent_audio')
+							.appendTo($form);
 
-            _this.audioRecordStatus = $('<div>')
-              .addClass('attachmentEditor_recordStatus')
-              .appendTo(recordInputDiv);
+						var recordInputDiv = $('<div>')
+							.addClass('attachmentEditor_recordingContainer')
+							.appendTo($recordDiv);
 
-            if(DetectRTC.hasWebcam && !DetectRTC.browser.isEdge) {
-              $form.addClass('attachmentEditor_creationFormWithVideo');
-              $('<button>')
-                .text(_loc('Record Video'))
-                .addClass('attachmentEditor_uploadTab_video')
-                .click(function(event) {
-                  event.preventDefault();
-                  _this._clickTab(attName, 'video');
-                })
-                .appendTo($tabList);
+						_this.audioRecordingButton = $('<button>')
+							.addClass('attachmentEditor_micButton')
+							.appendTo(recordInputDiv)
+							.click(function(event) {
+								_this._clickRecording(event, 'audio');
+							});
 
-              //firstTabDisplayed = 'video';
-              
-              var $recordVideoDiv = $('<div>')
-                .addClass('attachmentEditor_uploadTabContent attachmentEditor_uploadTabContent_video')
-                .appendTo($form);
+						_this.audioRecordStatus = $('<div>')
+							.addClass('attachmentEditor_recordStatus')
+							.appendTo(recordInputDiv);
 
-              var recordInputVideoDiv = $('<div>')
-                .addClass('attachmentEditor_videoRecordingContainer')
-                .appendTo($recordVideoDiv);
+						if( DetectRTC.hasWebcam && !DetectRTC.browser.isEdge ) {
+							$form.addClass('attachmentEditor_creationFormWithVideo');
+							$('<button>')
+								.text(_loc('Record Video'))
+								.addClass('attachmentEditor_uploadTab_video')
+								.click(function(event) {
+									event.preventDefault();
+									_this._clickTab(attName, 'video');
+								})
+								.appendTo($tabList);
 
-              _this.videoRecordingButton = $('<button>')
-                .addClass('attachmentEditor_videoButton')
-                .appendTo(recordInputVideoDiv)
-                .click(function(event) {
-                  _this._clickRecording(event, 'video');
-                })[0];
-              _this.videoRecordingButton = $(_this.videoRecordingButton);
+							//firstTabDisplayed = 'video';
 
-              var meVideoEl = $('<div>').addClass('attachmentEditor_meVideo').appendTo(recordInputVideoDiv);
+							var $recordVideoDiv = $('<div>')
+								.addClass('attachmentEditor_uploadTabContent attachmentEditor_uploadTabContent_video')
+								.appendTo($form);
 
-              _this.videoRecordStatus = $('<div>')
-                .addClass('attachmentEditor_recordStatus')
-                .appendTo(meVideoEl);
-            } else {
-              $n2.log('no webcam present');
-            }
-          } else {
-            $n2.log('no microphone present');
-          }
-          
-          allTabsDisplayed();
-        });
-      } else {
-        allTabsDisplayed();
-      }
+							var recordInputVideoDiv = $('<div>')
+								.addClass('attachmentEditor_videoRecordingContainer')
+								.appendTo($recordVideoDiv);
+
+							_this.videoRecordingButton = $('<button>')
+								.addClass('attachmentEditor_videoButton')
+								.appendTo(recordInputVideoDiv)
+								.click(function(event) {
+									_this._clickRecording(event, 'video');
+								});
+
+							var meVideoEl = $('<div>').addClass('attachmentEditor_meVideo').appendTo(recordInputVideoDiv);
+
+							_this.videoRecordStatus = $('<div>')
+								.addClass('attachmentEditor_recordStatus')
+								.appendTo(meVideoEl);
+						} else {
+							$n2.log('no webcam present');
+						}
+					} else {
+						$n2.log('no microphone present');
+					}
+
+					allTabsDisplayed();
+				});
+			} else {
+				allTabsDisplayed();
+			}
 		}
 
 		function showCordovaAttachmentPreview(containerDiv) {
@@ -3909,52 +3907,52 @@ var AttachmentEditor = $n2.Class({
 	},
 
 	_clickRecording: function(event, recordType) {
-	  event.preventDefault();
-    var _this = this;
+		event.preventDefault();
+		var _this = this;
 
-    if(_this.recordingInterval === null) {
+		if(_this.recordingInterval === null) {
 			_this._startRecording(recordType);
 		} else {
 			_this._stopRecording(recordType);
 		}
 	},
 
-  _setupRecording: function(recordType) {
-    var _this = this;
-    if(recordType === 'audio') {
-      _this.recordStatus = _this.audioRecordStatus;
-      _this.recordingButton = _this.audioRecordingButton;
-    } else if(recordType === 'video') {
-      _this.recordStatus = _this.videoRecordStatus;
-      _this.recordingButton = _this.videoRecordingButton;
-    }
+	_setupRecording: function(recordType) {
+		var _this = this;
+		if(recordType === 'audio') {
+			_this.recordStatus = _this.audioRecordStatus;
+			_this.recordingButton = _this.audioRecordingButton;
+		} else if(recordType === 'video') {
+			_this.recordStatus = _this.videoRecordStatus;
+			_this.recordingButton = _this.videoRecordingButton;
+		}
 
-    _this._captureUserMedia(recordType, function(stream) {
-      _this.recordingStream = stream;
-      if(recordType === 'audio') {
-        _this.recorder = RecordRTC(stream, {
-          type: 'audio',
-          recorderType: StereoAudioRecorder,
-          numberOfAudioChannels: 1
-        });
-      } else {
-        _this._setupVideoPreview(stream);
-        var mimeType = 'video/webm';
-        if(_this._isMimeTypeSupported('video/webm;codecs=h264')) {
-          mimeType = 'video/webm;codecs=h264'
-        }
-        _this.recorder = RecordRTC(stream, { mimeType: mimeType });
-      }
+		_this._captureUserMedia(recordType, function(stream) {
+			_this.recordingStream = stream;
+			if(recordType === 'audio') {
+				_this.recorder = RecordRTC(stream, {
+					type: 'audio',
+					recorderType: StereoAudioRecorder,
+					numberOfAudioChannels: 1
+				});
+			} else {
+				_this._setupVideoPreview(stream);
+				var mimeType = 'video/webm';
+				if(_this._isMimeTypeSupported('video/webm;codecs=h264')) {
+					mimeType = 'video/webm;codecs=h264'
+				}
+				_this.recorder = RecordRTC(stream, { mimeType: mimeType });
+			}
 
-      var oldAudio = $('.attachmentEditor_recordingContainer audio');
-      if(oldAudio.length > 0) {
-        oldAudio[0].remove();
-      }
-    });
-  },
+			var oldAudio = $('.attachmentEditor_recordingContainer audio');
+			if(oldAudio.length > 0) {
+				oldAudio[0].remove();
+			}
+		});
+	},
 
 	_setupVideoPreview: function(stream) {
-  	var _this = this;
+		var _this = this;
 		var recordingVideos = $('.attachmentEditor_videoRecordingContainer video');
 		if(recordingVideos.length > 0) {
 			_this.mediaElementEl.remove();
@@ -3986,17 +3984,17 @@ var AttachmentEditor = $n2.Class({
 		recordingVideo.play();
 	},
 
-  _isMimeTypeSupported: function(mimeType) {
-    if(DetectRTC.browser.name === 'Edge' || DetectRTC.browser.name === 'Safari' || typeof MediaRecorder === 'undefined') {
-      return false;
-    }
+	_isMimeTypeSupported: function(mimeType) {
+		if(DetectRTC.browser.name === 'Edge' || DetectRTC.browser.name === 'Safari' || typeof MediaRecorder === 'undefined') {
+			return false;
+		}
 
-    if(typeof MediaRecorder.isTypeSupported !== 'function') {
-      return true;
-    }
+		if(typeof MediaRecorder.isTypeSupported !== 'function') {
+			return true;
+		}
 
-    return MediaRecorder.isTypeSupported(mimeType);
-  },
+		return MediaRecorder.isTypeSupported(mimeType);
+	},
 
 	_startRecording: function(recordType) {
 		var _this = this;
