@@ -1476,7 +1476,7 @@ var CouchDocumentEditor = $n2.Class({
 			});
 		};
 	},
-    
+
 	_save: function(){
 		var _this = this;
 		
@@ -1552,7 +1552,7 @@ var CouchDocumentEditor = $n2.Class({
 			};
 			
 			updateDocument();
-    };
+		};
 			
 		function updateDocument() {
 			var isSubmissionDs = false;
@@ -1588,25 +1588,25 @@ var CouchDocumentEditor = $n2.Class({
 				});
 			};
 		};
-		
+
 		function postSaveAttachmentEditor(editedDocument, inserted, isSubmissionDs) {
-      if (window.cordova) {
+			if (window.cordova) {
 				completeSave(editedDocument, inserted, isSubmissionDs);
-      } else {
-        if( _this.attachmentEditor ){
-          _this.attachmentEditor.performPostSavingActions({
-            onSuccess: function(doc){
-              completeSave(editedDocument, inserted, isSubmissionDs);
-            }
-            ,onError: function(err){
-              _this._enableControls();
-              $n2.reportErrorForced(err);
-            }
-          });
-        } else {
-          completeSave(editedDocument, inserted, isSubmissionDs);
-        };
-      }
+			} else {
+				if( _this.attachmentEditor ){
+					_this.attachmentEditor.performPostSavingActions({
+						onSuccess: function(doc){
+							completeSave(editedDocument, inserted, isSubmissionDs);
+						}
+						,onError: function(err){
+							_this._enableControls();
+							$n2.reportErrorForced(err);
+						}
+					});
+				} else {
+					completeSave(editedDocument, inserted, isSubmissionDs);
+				};
+			}
 		};
 
 		function completeSave(editedDocument, inserted, isSubmissionDs) {
@@ -1621,8 +1621,8 @@ var CouchDocumentEditor = $n2.Class({
 				discardOpts.updated = true;
 			};
 			_this._discardEditor(discardOpts);
-    	};
-    },
+		};
+	},
 	
 	_addRelationDialog: function() {
 		var _this = this;
@@ -3421,7 +3421,7 @@ var AttachmentEditor = $n2.Class({
 								return;
 							}
 
-							var _self = this;
+							var _this = this;
 
 							// Create a file in the file system
 							window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function (fs) {
@@ -3442,23 +3442,23 @@ var AttachmentEditor = $n2.Class({
 											$removeAttachmentContainer.show();
 
 											// Reset the input value so that we can re-select the same file
-											_self.value = null;
+											_this.value = null;
 										};
 	
 										fileWriter.onerror = function (e) {
 											console.error("Failed file write: " + e.toString());
-											alert('Our apologies, there was a problem getting the file.');
+											alert(_loc('Our apologies, there was a problem getting the file.'));
 										};
 	
 										fileWriter.write(event.target.files[0]);
 									});
 								}, function(err) {
 									console.error('Error getting file', err);
-									alert('Our apologies, there was a problem getting the file.');
+									alert(_loc('Our apologies, there was a problem getting the file.'));
 								});
 							}, function(err) {
 								console.error('Error requesting file system', err);
-								alert('Our apologies, there was a problem getting the file.');
+								alert(_loc('Our apologies, there was a problem getting the file.'));
 							});
 						}
 					});
@@ -3492,7 +3492,7 @@ var AttachmentEditor = $n2.Class({
 								$removeAttachmentContainer.show();
 							}, function(error) {
 								console.error('Error getting picture:', error);
-								alert('Our apologies, there was a problem getting the photo.');
+								alert(_loc('Our apologies, there was a problem getting the photo.'));
 							}, {
 								correctOrientation: true
 							});
@@ -3529,11 +3529,11 @@ var AttachmentEditor = $n2.Class({
 										$removeAttachmentContainer.show();
 									} else {
 										console.error('No video uploaded.');
-										alert('Our apologies, we cannot get your video.');
+										alert(_loc('Our apologies, we cannot get your video.'));
 									}
 								}, function(error) {
 									console.error('Error getting video:', error);
-									alert('Our apologies, there was a problem getting the video.');
+									alert(_loc('Our apologies, there was a problem getting the video.'));
 								}, {
 									quality: 0,
 									duration: 30
@@ -3561,7 +3561,7 @@ var AttachmentEditor = $n2.Class({
 									clearAttachmentPreview();
 									var $audioPreview = $('<p>')
 										.addClass('attachmentEditor_fileName')
-										.text('Recording complete: ' + audioFilename)
+										.text( _loc('Recording complete: {audioFilename}', {audioFilename:audioFilename}) )
 										.appendTo($form);
 									showCordovaAttachmentPreview($removeAttachmentContainer); 
 									attachmentPreviewComponents.push($audioPreview);
@@ -3569,7 +3569,7 @@ var AttachmentEditor = $n2.Class({
 									$buttonsContainer.hide();
 								}, function(err) {
 									console.error("recordAudio():Audio Error: ", err);
-									alert('Our apologies, there was a problem recording audio. Error code: ' + err.code);
+									alert( _loc('Our apologies, there was a problem recording audio. Error code: {code}',{code:err.code}) );
 								});
 								
 							showCordovaRecordingUI(mediaRec);
