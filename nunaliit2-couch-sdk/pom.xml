@@ -155,6 +155,7 @@
 					</descriptors>
 					<appendAssemblyId>false</appendAssemblyId>
 					<finalName>nunaliit_${project.version}_${n2.sdk.build.date}_${build.version.short}</finalName>
+					<tarLongFileMode>posix</tarLongFileMode>
 				</configuration>
 				<executions>
 					<execution>
