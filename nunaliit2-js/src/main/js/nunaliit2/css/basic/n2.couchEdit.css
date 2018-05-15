@@ -58,6 +58,10 @@ form.attachmentEditor_creationFormWithVideo {
 
 .attachmentEditor_photoPreview {
   max-width: 70%;
+  max-height: 100px;
+}
+
+.n2_cordova .attachmentEditor_photoPreview {
 	max-height: 150px;
 	margin-left: 20px;
 }
