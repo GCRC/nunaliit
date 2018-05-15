@@ -320,17 +320,17 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		};
 	}
 	
-    ,_displayEditor: function(selectedSchema) {
-    	var _this = this;
-    	
-    	var data = this.editedDocument;
+	,_displayEditor: function(selectedSchema) {
+		var _this = this;
 		
-    	// Give an opportunity to adjust document before edit
-    	this._synchronousCall({
-    		type: 'editorStartDocumentEdit'
-    		,doc: data
-    	});
-    	
+		var data = this.editedDocument;
+		
+		// Give an opportunity to adjust document before edit
+		this._synchronousCall({
+			type: 'editorStartDocumentEdit'
+			,doc: data
+		});
+
 		// Update feature data with user info
 		$n2.couchDocument.adjustDocument(data);
 		
@@ -355,7 +355,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		if( editorCount > 1 ){
 			accordionNeeded = true;
 		};
-    	
+
 		var $div = this._getDiv();
 		$div.empty();
 		
@@ -654,10 +654,10 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		var $displayRelationsDiv = $div.find('.editorDisplayRelations');
 		if( $displayRelationsDiv.length < 1 ) return;
 
-    	var showService = this.showService;
-    	if( !showService ) return;
+		var showService = this.showService;
+		if( !showService ) return;
 
-    	// Compute relations
+		// Compute relations
 		var docIdMap = {};
 		if( data 
 		 && data.nunaliit_relations
@@ -771,15 +771,15 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		if( this.slideEditor ) {
 			this.slideEditor.refresh();
 		};
-    }
+	}
 	
-    ,_addGeometry: function(geom, proj) {
+	,_addGeometry: function(geom, proj) {
 		if( proj.getCode() != this.couchProj.getCode() ) {
 			// Need to convert
 			geom = geom.clone();
 			geom.transform(proj,this.couchProj);
 		};
-    	
+		
 		var geomData = this.editedDocument.nunaliit_geom;
 		if( !geomData ){
 			geomData = {
@@ -799,7 +799,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		if( this.slideEditor ) {
 			this.slideEditor.refresh();
 		};
-    }
+	}
 });
 
 //++++++++++++++++++++++++++++++++++++++++++++++
@@ -954,17 +954,17 @@ var CouchDocumentEditor = $n2.Class({
 				geom.transform(olProj,_this.couchProj);
 				olGeom = geom;
 			};
-	    	var g = $n2.couchGeom.getCouchGeometry(olGeom);
-	    	_this.editedDocument.nunaliit_geom = g;
-	    	_this.currentGeometryWkt = g.wkt;
+			var g = $n2.couchGeom.getCouchGeometry(olGeom);
+			_this.editedDocument.nunaliit_geom = g;
+			_this.currentGeometryWkt = g.wkt;
 			
 			// Add default layers?
-	    	if( _this.initialLayers 
-	    	 && _this.initialLayers.length > 0 ) {
-	    		_this.editedDocument.nunaliit_layers = _this.initialLayers;
-	    	};
+			if( _this.initialLayers 
+			 && _this.initialLayers.length > 0 ) {
+				_this.editedDocument.nunaliit_layers = _this.initialLayers;
+			};
 
-	    	// Give a chance to external processes to modify document
+			// Give a chance to external processes to modify document
 			_this.dispatchService.synchronousCall(DH,{
 				type: 'preDocCreation'
 				,doc: _this.editedDocument
@@ -1157,7 +1157,7 @@ var CouchDocumentEditor = $n2.Class({
 			callbackFn(null);
 		};
 	},
-    
+
 	_displayEditor: function() {
 		var _this = this;
 		
@@ -1166,15 +1166,15 @@ var CouchDocumentEditor = $n2.Class({
 		$('body').addClass('nunaliit_editing');
 		$('.n2_disable_on_edit')
 			.attr('disabled','disabled');
-    	
-    	var data = this.editedDocument;
-		
-    	// Give an opportunity to adjust document before edit
-    	this._synchronousCall({
-    		type: 'editorStartDocumentEdit'
-    		,doc: data
-    	});
-    	
+
+		var data = this.editedDocument;
+
+		// Give an opportunity to adjust document before edit
+		this._synchronousCall({
+			type: 'editorStartDocumentEdit'
+			,doc: data
+		});
+
 		// Update feature data with user info
 		$n2.couchDocument.adjustDocument(data);
 
@@ -1202,7 +1202,7 @@ var CouchDocumentEditor = $n2.Class({
 		if( viewCount > 1 ){
 			showAccordion = true;
 		};
-    	
+
 		var attributeDialog = $('#'+this.panelName);
 		attributeDialog.empty();
 		
@@ -1396,10 +1396,10 @@ var CouchDocumentEditor = $n2.Class({
 			formButtons.append(deleteBtn);
 			deleteBtn.button({icons:{primary:'ui-icon-trash'}});
 			deleteBtn.click(function(evt){
-		  		if( confirm( _loc('Do you really want to delete this feature?') ) ) {
-    				deletion(data);
-		  		};
-		  		return false;
+				if( confirm( _loc('Do you really want to delete this feature?') ) ) {
+					deletion(data);
+				};
+				return false;
 			});
 		};
 		
@@ -1453,20 +1453,20 @@ var CouchDocumentEditor = $n2.Class({
 		_this.onRefreshFunctions.forEach(function(refreshFunction){
 			refreshFunction(_this.editedDocument, $editorContainer, _this);
 		});
-    	
-    	function deletion(editedDocument) {
+
+		function deletion(editedDocument) {
 			_this.documentSource.deleteDocument({
 				doc: _this.editedDocument
 				,onSuccess: function() {
 					_this._discardEditor({deleted:true});
 				}
 				,onError: function(err){
-		    		_this._enableControls();
+					_this._enableControls();
 					$n2.reportErrorForced('Unable to delete document: '+err);
 				}
 			});
-    	};
-    	
+		};
+
 		function installUserButtonClick($uBtn, userButton){
 			$uBtn.click(function(){
 				if( userButton.click ){
@@ -1635,174 +1635,174 @@ var CouchDocumentEditor = $n2.Class({
 			});
 		};
 	},
-    
-    _addRelation: function(relDocId){
-    	var data = this.editedDocument;
 
-    	if( data 
-    	 && data.nunaliit_source 
-    	 && data.nunaliit_source.doc === relDocId ){
-    		return;
-    	};
+	_addRelation: function(relDocId){
+		var data = this.editedDocument;
 
-    	if( data 
-    	 && data.nunaliit_relations 
-    	 && data.nunaliit_relations.length ){
-    		for(var i=0,e=data.nunaliit_relations.length; i<e; ++i){
-    			var rel = data.nunaliit_relations[i];
-    			if( rel.doc === relDocId ){
-    				return;
-    			};
-    		};
-    	};
-    	
-    	if( data ){
-    		if( !data.nunaliit_relations ){
-    			data.nunaliit_relations = [];
-    		};
-    		
-    		data.nunaliit_relations.push({
-    			nunaliit_type: 'reference'
-    			,doc: relDocId
-    		});
-    		
-    		this.refresh();
-    	};
-    },
-    
-    _removeRelation: function(relDocId){
-    	var data = this.editedDocument;
-    	var refreshRequired = false;
-    	
-    	if( data 
-    	 && data.nunaliit_source 
-    	 && data.nunaliit_source.doc === relDocId ){
-    		delete data.nunaliit_source;
-    		refreshRequired = true;
-    	};
+		if( data 
+		 && data.nunaliit_source 
+		 && data.nunaliit_source.doc === relDocId ){
+			return;
+		};
 
-    	if( data 
-    	 && data.nunaliit_relations 
-    	 && data.nunaliit_relations.length ){
-    		var relRemoved = false;
-    		var newRels = [];
-    		for(var i=0,e=data.nunaliit_relations.length; i<e; ++i){
-    			var rel = data.nunaliit_relations[i];
-    			if( rel.doc === relDocId ){
-    				relRemoved = true;
-    			} else {
-    				newRels.push(rel);
-    			};
-    		};
-    		
-    		if( newRels.length < 1 ){
-        		delete data.nunaliit_relations;
-        		refreshRequired = true;
-    		} else if( relRemoved ){
-    			data.nunaliit_relations = newRels;
-        		refreshRequired = true;
-    		};
-    	};
-    	
-    	if( refreshRequired ){
-    		this.refresh();
-    	};
-    },
-    
-    _manageLayersDialog: function(){
-    	var _this = this;
-    	var data = this.editedDocument;
-    	var layers = data.nunaliit_layers;
-    	if( !layers ){
-    		layers = [];
-    	};
-    	if( this.dialogService ){
-    		this.dialogService.selectLayersDialog({
-        		currentLayers: layers
-    			,onSelected: function(selectedLayers){
-    	    		if( selectedLayers.length < 1 ){
-    	    			if( data.nunaliit_layers ){
-    	    				delete data.nunaliit_layers;
-    	    			};
-    	    		} else {
-    	    			data.nunaliit_layers = selectedLayers;
-    	    		};
-    	    		_this.refresh();
-    			}
-    		});
-    	};
-    },
-    
-    _removeAttachment: function(attNameToRemove){
-    	var data = this.editedDocument;
-    	
-    	// Accumulate all the keys that must be removed
-    	var keys = {};
-    	if( data 
-    	 && data.nunaliit_attachments 
-    	 && data.nunaliit_attachments.files ){
-    		for(var attName in data.nunaliit_attachments.files){
-    			var att = data.nunaliit_attachments.files[attName];
-    			if( attName === attNameToRemove ){
-    				keys[attName] = true;
-    			} else if( att.source === attNameToRemove ){
-    				// Remove associated thumbnail and original
-    				keys[attName] = true;
-    			};
-    		};
-    	};
-    	
-    	// Delete necessary keys
-    	var refreshRequired = false;
-    	var attName = null;
-    	for(attName in keys){
-    		if( data._attachments && data._attachments[attName] ){
-    			delete data._attachments[attName];
-    			refreshRequired = true;
-    		};
-    		if( data.nunaliit_attachments.files[attName] ){
-    			delete data.nunaliit_attachments.files[attName];
-    			refreshRequired = true;
-    		};
-    	};
-    	
-    	// Remove _attachments if empty
-    	if( data._attachments ){
-    		var empty = true;
-    		for(attName in data._attachments){
-    			empty = false;
-    		};
-    		if( empty ){
-    			delete data._attachments;
-    			refreshRequired = true;
-    		};
-    	};
-    	
-    	// Remove nunaliit_attachments if empty
-    	if( data.nunaliit_attachments ){
-    		var empty = true;
-    		if( data.nunaliit_attachments.files ) {
-	    		for(attName in data.nunaliit_attachments.files){
-	    			empty = false;
-	    		};
-    		};
-    		if( empty ){
-    			delete data.nunaliit_attachments;
-    			refreshRequired = true;
-    		};
-    	};
-    	
-    	if( refreshRequired ){
-    		this.refresh();
-    	};
-    },
-    
-    _cancelEdit: function(){
+		if( data 
+		 && data.nunaliit_relations 
+		 && data.nunaliit_relations.length ){
+			for(var i=0,e=data.nunaliit_relations.length; i<e; ++i){
+				var rel = data.nunaliit_relations[i];
+				if( rel.doc === relDocId ){
+					return;
+				};
+			};
+		};
+		
+		if( data ){
+			if( !data.nunaliit_relations ){
+				data.nunaliit_relations = [];
+			};
+			
+			data.nunaliit_relations.push({
+				nunaliit_type: 'reference'
+				,doc: relDocId
+			});
+			
+			this.refresh();
+		};
+	},
+
+	_removeRelation: function(relDocId){
+		var data = this.editedDocument;
+		var refreshRequired = false;
+		
+		if( data 
+		 && data.nunaliit_source 
+		 && data.nunaliit_source.doc === relDocId ){
+			delete data.nunaliit_source;
+			refreshRequired = true;
+		};
+
+		if( data 
+		 && data.nunaliit_relations 
+		 && data.nunaliit_relations.length ){
+			var relRemoved = false;
+			var newRels = [];
+			for(var i=0,e=data.nunaliit_relations.length; i<e; ++i){
+				var rel = data.nunaliit_relations[i];
+				if( rel.doc === relDocId ){
+					relRemoved = true;
+				} else {
+					newRels.push(rel);
+				};
+			};
+			
+			if( newRels.length < 1 ){
+				delete data.nunaliit_relations;
+				refreshRequired = true;
+			} else if( relRemoved ){
+				data.nunaliit_relations = newRels;
+				refreshRequired = true;
+			};
+		};
+		
+		if( refreshRequired ){
+			this.refresh();
+		};
+	},
+
+	_manageLayersDialog: function(){
+		var _this = this;
+		var data = this.editedDocument;
+		var layers = data.nunaliit_layers;
+		if( !layers ){
+			layers = [];
+		};
+		if( this.dialogService ){
+			this.dialogService.selectLayersDialog({
+				currentLayers: layers
+				,onSelected: function(selectedLayers){
+					if( selectedLayers.length < 1 ){
+						if( data.nunaliit_layers ){
+							delete data.nunaliit_layers;
+						};
+					} else {
+						data.nunaliit_layers = selectedLayers;
+					};
+					_this.refresh();
+				}
+			});
+		};
+	},
+
+	_removeAttachment: function(attNameToRemove){
+		var data = this.editedDocument;
+		
+		// Accumulate all the keys that must be removed
+		var keys = {};
+		if( data 
+		 && data.nunaliit_attachments 
+		 && data.nunaliit_attachments.files ){
+			for(var attName in data.nunaliit_attachments.files){
+				var att = data.nunaliit_attachments.files[attName];
+				if( attName === attNameToRemove ){
+					keys[attName] = true;
+				} else if( att.source === attNameToRemove ){
+					// Remove associated thumbnail and original
+					keys[attName] = true;
+				};
+			};
+		};
+		
+		// Delete necessary keys
+		var refreshRequired = false;
+		var attName = null;
+		for(attName in keys){
+			if( data._attachments && data._attachments[attName] ){
+				delete data._attachments[attName];
+				refreshRequired = true;
+			};
+			if( data.nunaliit_attachments.files[attName] ){
+				delete data.nunaliit_attachments.files[attName];
+				refreshRequired = true;
+			};
+		};
+		
+		// Remove _attachments if empty
+		if( data._attachments ){
+			var empty = true;
+			for(attName in data._attachments){
+				empty = false;
+			};
+			if( empty ){
+				delete data._attachments;
+				refreshRequired = true;
+			};
+		};
+		
+		// Remove nunaliit_attachments if empty
+		if( data.nunaliit_attachments ){
+			var empty = true;
+			if( data.nunaliit_attachments.files ) {
+				for(attName in data.nunaliit_attachments.files){
+					empty = false;
+				};
+			};
+			if( empty ){
+				delete data.nunaliit_attachments;
+				refreshRequired = true;
+			};
+		};
+		
+		if( refreshRequired ){
+			this.refresh();
+		};
+	},
+
+	_cancelEdit: function(){
 		this._dispatch({
 			type: 'editCancel'
 			,doc: this.editedDocument
 		});
-    },
+	},
 
 	// Restores feature geometry before discarding the form
 	performCancellation: function(opts_) {
@@ -1932,9 +1932,9 @@ var CouchDocumentEditor = $n2.Class({
 		var $displayRelationsDiv = $editorContainer.find('.editorDisplayRelations');
 		if( $displayRelationsDiv.length < 1 ) return;
 
-    	var showService = this.showService;
+		var showService = this.showService;
 
-    	// Compute relations
+		// Compute relations
 		var docIdMap = {};
 		if( data 
 		 && data.nunaliit_relations
@@ -2039,14 +2039,14 @@ var CouchDocumentEditor = $n2.Class({
 		});
 	},
 	
-    _geometryModified: function(docId, geom, proj) {
+	_geometryModified: function(docId, geom, proj) {
 
 		if( proj.getCode() != this.couchProj.getCode() ) {
 			// Need to convert
 			geom = geom.clone();
 			geom.transform(proj,this.couchProj);
 		};
-    	
+
 		var geomData = this.editedDocument.nunaliit_geom;
 		geomData.wkt = geom.toString();
 		$n2.couchGeom.updatedGeometry(geomData);
@@ -2060,9 +2060,9 @@ var CouchDocumentEditor = $n2.Class({
 		if( this.slideEditor ) {
 			this.slideEditor.refresh();
 		};
-    },
+	},
 	
-    _addGeometry: function(geom, proj) {
+	_addGeometry: function(geom, proj) {
 		if( proj.getCode() != this.couchProj.getCode() ) {
 			// Need to convert
 			geom = geom.clone();
@@ -2268,23 +2268,23 @@ var CouchEditService = $n2.Class({
 		};
 	},
 
-    showDocumentForm: function(document_, editorOptions_) {
-    	if( null != this.currentEditor ) {
-    		this.currentEditor.performCancellation();
-    		this.currentEditor = null;
-    	};
-    	
-    	this.currentEditor = this._createEditor(editorOptions_);
-    	this.currentEditor.startDocumentEditing(
-    		document_
-    		);
+	showDocumentForm: function(document_, editorOptions_) {
+		if( null != this.currentEditor ) {
+			this.currentEditor.performCancellation();
+			this.currentEditor = null;
+		};
+		
+		this.currentEditor = this._createEditor(editorOptions_);
+		this.currentEditor.startDocumentEditing(
+			document_
+			);
 	},
-    
-    _createEditor: function(o_){
-    	
-    	o_ = o_ ? o_ : {};
-    	
-    	var opts = {
+
+	_createEditor: function(o_){
+		
+		o_ = o_ ? o_ : {};
+		
+		var opts = {
 			panelName: o_.panelName ? o_.panelName : this.panelName
 			,initialLayers: o_.initialLayers ? o_.initialLayers : this.initialLayers
 			,enableAddFile: o_.enableAddFile ? o_.enableAddFile : this.enableAddFile
@@ -2305,38 +2305,38 @@ var CouchEditService = $n2.Class({
 			,relatedDocProcess: this.relatedDocProcess
 			
 			// buttonX....
-    	};
-    	
-    	// Add service buttons
-    	for(var key in this.userButtons){
-    		opts[key] = this.userButtons[key];
-    	};
+		};
+		
+		// Add service buttons
+		for(var key in this.userButtons){
+			opts[key] = this.userButtons[key];
+		};
 
-    	// Add caller buttons
+		// Add caller buttons
 		var label = 'button';
 		for(var key in o_) {
 			if( key.substr(0,label.length) === label ) {
 				opts[key] = o_[key];
 			};
 		};
-    	
-    	var editor = new CouchDocumentEditor(opts);
-    	
-    	return editor;
-    },
+		
+		var editor = new CouchDocumentEditor(opts);
+		
+		return editor;
+	},
 
 	cancelDocumentForm: function(opts) {
-    	if( null != this.currentEditor ) {
-    		this.currentEditor.performCancellation(opts);
-    		this.currentEditor = null;
-    	};
+		if( null != this.currentEditor ) {
+			this.currentEditor.performCancellation(opts);
+			this.currentEditor = null;
+		};
 	},
 	
 	saveDocumentForm: function(opts){
-    	if( null != this.currentEditor ) {
-    		this.currentEditor.performSave(opts);
-    		this.currentEditor = null;
-    	};
+		if( null != this.currentEditor ) {
+			this.currentEditor.performSave(opts);
+			this.currentEditor = null;
+		};
 	},
 
 	setPanelName: function(panelName) {
@@ -2386,13 +2386,13 @@ var CouchEditService = $n2.Class({
 			return;
 		};
 		
-    	if( null != this.currentEditor ) {
-    		this.currentEditor.performCancellation();
-    		this.currentEditor = null;
-    	};
-    	
-    	this.currentEditor = this._createEditor();
-    	this.currentEditor.startEditingFromGeometry(olGeom, olProj);
+		if( null != this.currentEditor ) {
+			this.currentEditor.performCancellation();
+			this.currentEditor = null;
+		};
+		
+		this.currentEditor = this._createEditor();
+		this.currentEditor.startEditingFromGeometry(olGeom, olProj);
 	},
 	
 	_handle: function(m, addr, dispatcher){
@@ -2425,8 +2425,8 @@ var CouchEditService = $n2.Class({
 			
 		} else if( this.currentEditor
 		 && this.currentEditor.isEditing() ) {
-    		this.currentEditor._handle(m);
-    	};
+			this.currentEditor._handle(m);
+		};
 	}
 });
 
@@ -2624,13 +2624,13 @@ var AttachmentEditor = $n2.Class({
 
 	recorder: null,
 
-  recordingStream: null,
+	recordingStream: null,
 
 	recordingInterval: null,
 
 	currentRecordingType: null,
 
-  maxAudioRecordingLengthSeconds: null,
+	maxAudioRecordingLengthSeconds: null,
 
 	maxVideoRecordingLengthSeconds: null,
 
@@ -3444,12 +3444,12 @@ var AttachmentEditor = $n2.Class({
 											// Reset the input value so that we can re-select the same file
 											_this.value = null;
 										};
-	
+
 										fileWriter.onerror = function (e) {
 											console.error("Failed file write: " + e.toString());
 											alert(_loc('Our apologies, there was a problem getting the file.'));
 										};
-	
+
 										fileWriter.write(event.target.files[0]);
 									});
 								}, function(err) {
@@ -3770,7 +3770,7 @@ var AttachmentEditor = $n2.Class({
 				$recordingControls.hide();
 			}
 		}
-    
+
 		function allTabsDisplayed() {
 			_this._clickTab(attName, firstTabDisplayed);
 		}
@@ -3999,26 +3999,26 @@ var AttachmentEditor = $n2.Class({
 	_startRecording: function(recordType) {
 		var _this = this;
 		var obj = this.obj;
-    _this.recordStatus.text('');
-    _this.recorder.startRecording();
+		_this.recordStatus.text('');
+		_this.recorder.startRecording();
 
-    if(recordType === 'audio') {
-      _this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_micButton');
-    } else {
-      _this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_videoButton');
+		if(recordType === 'audio') {
+			_this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_micButton');
+		} else {
+			_this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_videoButton');
 			var recordingVideos = $('.attachmentEditor_videoRecordingContainer video');
 			if(recordingVideos[0].srcObject == null) {
 				_this._setupVideoPreview(_this.recordingStream);
 			}
-    }
-    _this._recordingTimer(recordType);
+		}
+		_this._recordingTimer(recordType);
 	},
 
 	_recordingTimer: function(recordType) {
 		var _this = this;
 		var seconds_elapsed = 0;
 		var max_time = recordType === 'audio' ? _this.maxAudioRecordingLengthSeconds : _this.maxVideoRecordingLengthSeconds;
-    var max_time_str = _this._secondsToTimeString(max_time);
+		var max_time_str = _this._secondsToTimeString(max_time);
 
 		_this.recordingInterval = setInterval(function() {
 			seconds_elapsed++;
@@ -4033,17 +4033,17 @@ var AttachmentEditor = $n2.Class({
 		}, 1000);
 	},
 
-  _secondsToTimeString: function(seconds) {
-    var min = Math.floor(seconds/60);
-    var sec = seconds - min * 60;
-    if(sec < 10) {
-      sec = '0' + sec;
-    }
-    return min + ':' + sec
-  },
+	_secondsToTimeString: function(seconds) {
+		var min = Math.floor(seconds/60);
+		var sec = seconds - min * 60;
+		if(sec < 10) {
+			sec = '0' + sec;
+		}
+		return min + ':' + sec
+	},
 
 	_stopRecordingTimer: function() {
-	  var _this = this;
+		var _this = this;
 		clearInterval(_this.recordingInterval);
 		_this.recordingInterval = null;
 	},
@@ -4062,14 +4062,14 @@ var AttachmentEditor = $n2.Class({
 					height: _this.recordVideoSize.height
 				};
 			} else {
-			  videoHints = {
-			    optional: [],
-          mandatory: {
-			      minWidth: _this.recordVideoSize.width,
-            minHeight: _this.recordVideoSize.height
-          }
-        }
-      }
+				videoHints = {
+					optional: [],
+					mandatory: {
+						minWidth: _this.recordVideoSize.width,
+						minHeight: _this.recordVideoSize.height
+					}
+				}
+			}
 			session.video = videoHints;
 		}
 
@@ -4079,18 +4079,18 @@ var AttachmentEditor = $n2.Class({
 		});
 	},
 
-  _cancelRecording: function() {
-    var _this = this;
-    _this._stopRecordingTimer();
-    _this.recorder.stopRecording();
-    _this.recordingStream.stop();
+	_cancelRecording: function() {
+		var _this = this;
+		_this._stopRecordingTimer();
+		_this.recorder.stopRecording();
+		_this.recordingStream.stop();
 		if(_this.currentRecordingType === 'video') {
 			_this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_videoButton');
 		} else if(_this.currentRecordingType === 'audio') {
 			_this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_micButton');
 		}
-    _this.recordStatus.text('');
-  },
+		_this.recordStatus.text('');
+	},
 
 	_stopRecording: function(recordType) {
 		var _this = this;
@@ -4120,17 +4120,17 @@ var AttachmentEditor = $n2.Class({
 			var samples = _this._getWavSamples(this.result);
 			var mp3Blob = _this._encodeMp3(samples);
 
-      var reader = new FileReader();
-      reader.onload = function(event) {
-        var oldAudio = $('.attachmentEditor_recordingContainer audio');
-        if(oldAudio.length > 0) {
-          oldAudio[0].src = event.target.result;
-        } else {
-          $('<audio>')
-            .attr('src', event.target.result)
-            .attr('controls', 'controls')
-            .insertAfter(_this.recordingButton);
-        }
+			var reader = new FileReader();
+			reader.onload = function(event) {
+				var oldAudio = $('.attachmentEditor_recordingContainer audio');
+					if(oldAudio.length > 0) {
+						oldAudio[0].src = event.target.result;
+					} else {
+						$('<audio>')
+							.attr('src', event.target.result)
+							.attr('controls', 'controls')
+							.insertAfter(_this.recordingButton);
+					}
 
 				_this.recordingButton.prop('disabled', false);
 				_this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_micButton');
@@ -4187,8 +4187,8 @@ var AttachmentEditor = $n2.Class({
 
 			samples = new Int16Array(left);
 		}
-    //trim the first and last millisecond to remove click noise at start
-    return samples.slice(45, samples.length - 45);
+	// trim the first and last millisecond to remove click noise at start
+	return samples.slice(45, samples.length - 45);
 
 	},
 
