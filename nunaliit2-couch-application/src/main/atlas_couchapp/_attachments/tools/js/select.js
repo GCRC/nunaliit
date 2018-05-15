@@ -3219,26 +3219,48 @@
 		};
 		return $e;
 	};
-	
+
+	// -----------------------------------------------------------------
+	function getDocumentRevisionsDiv(){
+		var $e = $selectAppDiv.find('.selectAppRevisions');
+		if( $e.length < 1 ) {
+			var $docDiv = getDocumentDiv();
+			$e = $('<div>')
+				.addClass('selectAppRevisions')
+				.insertAfter($docDiv);
+		};
+		return $e;
+	};
+
 	// -----------------------------------------------------------------
 	function clearDocument(){
 		var $div = getDocumentDiv();
 		
 		$div.html('<h1></h1><div class="selectAppMinHeight"></div>');
 		$div.find('h1').text( _loc('No Document') );
+
+		var $revs = getDocumentRevisionsDiv();
+		$revs.empty();
 	};
 	
 	// -----------------------------------------------------------------
 	function viewDocument(docId){
 		var $div = getDocumentDiv();
+		var $revs = getDocumentRevisionsDiv();
 		
 		$div.html('<h1>'+docId+'</h1><div class="olkit_wait"></div>');
+		$revs.empty();
 		
 		atlasDb.getDocument({
 			docId: docId
 			,skipCache: true
+			,revs_info: true
 			,onSuccess: function(doc){
 				$div.empty();
+				
+				// Do not show revs to user
+				var revsInfo = doc._revs_info;
+				delete doc._revs_info;
 				
 				var $h = $('<h1></h1>');
 				$div.append($h);
@@ -3263,11 +3285,73 @@
 					editDocument(doc);
 					return false;
 				});
+				
+				if( revsInfo ){
+					loadRevs(revsInfo);
+				};
 			}
 			,onError: function(err){
 				reportError(err);
 			}
 		});
+		
+		function loadRevs(revsInfo){
+			$revs.empty();
+			
+			var $selectorDiv = $('<div>')
+				.addClass('selectAppRevisionSelector')
+				.appendTo($revs);
+			var $selector = $('<select>')
+				.change(revisionSelected)
+				.appendTo($selectorDiv);
+			var $o = $('<option>')
+				.text('Select Revision')
+				.val('')
+				.appendTo($selector);
+			
+			if( $n2.isArray(revsInfo) ){
+				revsInfo.forEach(function(revInfo){
+					if( typeof revInfo.rev === 'string' ){
+						$('<option>')
+							.text(revInfo.rev)
+							.val(revInfo.rev)
+							.appendTo($selector);
+					};
+				});
+			};
+			
+			var $displayDiv = $('<div>')
+				.addClass('selectAppRevisionDisplay')
+				.appendTo($revs);
+		};
+		
+		function revisionSelected() {
+			var $selector = $(this);
+			
+			var $displayDiv = $revs.find('.selectAppRevisionDisplay');
+			$displayDiv.empty();
+			
+			var revSelected = $selector.val();
+			$displayDiv.text(revSelected);
+
+			if( revSelected ){
+				atlasDb.getDocument({
+					docId: docId
+					,rev: revSelected
+					,onSuccess: function(doc){
+						$displayDiv.empty();
+						
+						var $tree = $('<div>')
+							.appendTo($displayDiv);
+						
+						new $n2.tree.ObjectTree($tree, doc);
+					}
+					,onError: function(err){
+						// ignore
+					}
+				});
+			};
+		};
 	};
 	
 	// -----------------------------------------------------------------
