@@ -36,8 +36,12 @@ div.n2CouchEditor_container .ui-accordion-content {
 
 form.attachmentEditor_creationForm {
 	clear: both;
-  height: 200px;
+  height: 100px;
   margin-top: 10px;
+}
+
+.n2_cordova form.attachmentEditor_creationForm {
+	height: 200px;
 }
 
 form.attachmentEditor_creationFormWithVideo {
@@ -277,7 +281,9 @@ form.attachmentEditor_creationFormWithVideo {
   transition: width .2s ease-out, padding-top .2s ease-out;
 }
 
-*, *:before, *:after {
+.n2_cordova *, 
+.n2_cordova *:before, 
+.n2_cordova *:after {
   box-sizing: border-box;
 }
 

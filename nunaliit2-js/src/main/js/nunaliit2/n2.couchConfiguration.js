@@ -835,6 +835,10 @@ function Configure(options_){
 	};
 	
 	function configurationDone(){
+		if (window.cordova) {
+			$('body').addClass('n2_cordova');
+		};
+
 		// Fix HTML from page
 		if( configuration.directory.showService ){
 			configuration.directory.showService.fixElementAndChildren( $('body') );
