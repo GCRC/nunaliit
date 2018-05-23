@@ -585,7 +585,7 @@ var olStyleNames = {
 	,"stroke-opacity": "strokeOpacity"
 	,"stroke-width": "strokeWidth"
 	,"stroke-linecap": "strokeLinecap"
-	,"stroke-dasharray": "strokeDashArray"
+	,"stroke-dasharray": "strokeDashstyle"
 	,"r": "pointRadius"
 	,"pointer-events": "pointEvents"
 	,"color": "fontColor"

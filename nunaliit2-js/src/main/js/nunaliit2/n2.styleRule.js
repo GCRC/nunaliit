@@ -229,7 +229,7 @@ var SymbolTranslationMap = {
 	,'strokeWidth': 'stroke-width'
 	,'strokeOpacity': 'stroke-opacity'
 	,'strokeLinecap': 'stroke-linecap'
-	,'strokeDashArray': 'stroke-dasharray'
+	,'strokeDashstyle': 'stroke-dasharray'
 	,'pointRadius': 'r'
 	,'pointEvents': 'pointer-events'
 	,'fontColor': 'color'
