@@ -9,12 +9,12 @@ import java.io.PrintWriter;
 import java.io.Writer;
 
 /**
- * This class is used to create a debug version of a library, based on the set
- * of Javascript files that make up the library. These files are loaded independently
- * using the document.write() technique that is now deprecated.
+ * This class is used to create a debug version of a library, where all
+ * input Javascript files are concatenated to one another to generate
+ * one large one.
+ *
  */
-public class DebugProcess {
-
+public class DebugInlineProcess {
 	public void generate(LibraryConfiguration config, File outputFile) throws Exception {
 		FileOutputStream fos = null;
 		OutputStreamWriter osw = null;
@@ -27,7 +27,7 @@ public class DebugProcess {
 			osw.flush();
 			
 		} catch(Exception e) {
-			throw new Exception("Error while compressing javacript to file: "+outputFile,e);
+			throw new Exception("Error while generating debug inline Javacript library: "+outputFile,e);
 			
 		} finally {
 			if( null != osw ){
@@ -85,8 +85,11 @@ public class DebugProcess {
 					}
 				}
 			}
-			
+
 			pw.println("\"use strict\";");
+			pw.println();
+
+			// Adjust name of coreScriptName
 			pw.println("var nunaliit2;");
 			pw.println("(function(){");
 			pw.println("// Define here instead of n2.core.js");
@@ -96,53 +99,67 @@ public class DebugProcess {
 			pw.println("\t\twindow.nunaliit2 = nunaliit2;");
 			pw.println("\t};");
 			pw.println("};");
-			pw.println();
-			pw.println("var scriptLocation = null;");
-			pw.println("var pattern = new RegExp('(^|(.*?\\/))"+outputName+"$');");
- 			pw.println("var scripts = document.getElementsByTagName('script');");
-			pw.println("for( var loop=0; loop<scripts.length; ++loop ) {");
-			pw.println("\tvar src = scripts[loop].getAttribute('src');");
-			pw.println("\tif (src) {");
-			pw.println("\t\tvar match = src.match(pattern);");
-			pw.println("\t\tif( match ) {");
-			pw.println("\t\t\tscriptLocation = match[1];");
-			pw.println("\t\t\tbreak;");
-			pw.println("\t\t}");
-			pw.println("\t}");
-			pw.println("};");
-			pw.println("if( null === scriptLocation ) {");
-			pw.println("\talert('Unable to find library tag ("+outputName+")');");
-			pw.println("};");
 			pw.println("if( typeof nunaliit2.coreScriptName === 'undefined' ){");
 			pw.println("\tnunaliit2.coreScriptName = '"+outputName+"';");
 			pw.println("};");
-			pw.println("var jsfiles = [");
-			
-			boolean first = true;
-			for(String path : config.getInputFilePaths()){
-				if( first ) {
-					first = false;
-				} else {
-					pw.print(",");
-				}
-				pw.println("'"+path+"'");
-			}
-			
-			pw.println("];");
-			pw.println("var allScriptTags = new Array();");
-			pw.println("for( var i=0; i<jsfiles.length; ++i ) {");
-			pw.println("\tallScriptTags.push('<script src=\"');");
-			pw.println("\tallScriptTags.push(scriptLocation);");
-			pw.println("\tallScriptTags.push(jsfiles[i]);");
-			pw.println("\tallScriptTags.push('\"></script>');");
-			pw.println("};");
-			pw.println("document.write(allScriptTags.join(''));");
 			pw.println("})();");
+			pw.println();
+			
+			// Loop over each file, copying each to the inline debug file
+			for(File fileName : config.getInputFiles()) {
+				copyFile(pw, fileName);
+			}
 
 			pw.flush();
 			
 		} catch(Exception e) {
-			throw new Exception("Error while creating debug version of javascript library",e);
+			throw new Exception("Error while concatenating all files", e);
+		}
+	}
+
+	private void copyFile(PrintWriter pw, File fileName) throws Exception {
+		FileInputStream fis = null;
+		InputStreamReader isr = null;
+		try {
+			fis = new FileInputStream(fileName);
+			isr = new InputStreamReader(fis,"UTF-8");
+			
+			// Write header
+			pw.println("// *** File: "+fileName);
+			pw.println();
+			
+			// Content of file
+			char buffer[] = new char[2048];
+			int size = isr.read(buffer);
+			while( size >= 0 ) {
+				pw.write(buffer, 0, size);
+				size = isr.read(buffer);
+			}
+
+			pw.println();
+			
+			isr.close();
+			isr = null;
+			fis.close();
+			fis = null;
+			
+		} catch(Exception e) {
+			throw new Exception("Error while processing file: "+fileName);
+		} finally {
+			if( null != isr ) {
+				try {
+					isr.close();
+				} catch (Exception e) {
+					// Ignore;
+				}
+			}
+			if( null != fis ) {
+				try {
+					fis.close();
+				} catch (Exception e) {
+					// Ignore;
+				}
+			}
 		}
 	}
 }

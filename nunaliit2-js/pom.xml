@@ -93,21 +93,22 @@
 								<!-- Generate javascript libraries -->
 								<java jar="target/tools/nunaliit2-javascript-compiler.jar" fork="true" failonerror="true" dir=".">
 									<arg line="--config-file ./compress/nunaliit2.cfg" />
+									<arg line="--config-file ./compress/nunaliit2-couch.cfg" />
 									<arg line="--license-file ./compress/license.txt" />
 									<arg line="--source-dir ./src/main/js/nunaliit2" />
 									<arg line="--output ./src/main/js/nunaliit2/nunaliit2.js" />
 									<arg line="--compile-level closure" />
 									<arg line="--verify" />
 									<arg line="--output-debug ./src/main/js/nunaliit2/nunaliit2-debug.js" />
+									<arg line="--output-debug-inline ./src/main/js/nunaliit2/nunaliit2-debug-il.js" />
 								</java>
 								<java jar="target/tools/nunaliit2-javascript-compiler.jar" fork="true" failonerror="true" dir=".">
-									<arg line="--config-file ./compress/nunaliit2-couch.cfg" />
 									<arg line="--license-file ./compress/license.txt" />
 									<arg line="--source-dir ./src/main/js/nunaliit2" />
 									<arg line="--output ./src/main/js/nunaliit2/nunaliit2-couch.js" />
 									<arg line="--compile-level closure" />
 									<arg line="--verify" />
-									<arg line="--output-debug ./src/main/js/nunaliit2/nunaliit2-couch-debug.js" />
+									<arg line="--output-debug-inline ./src/main/js/nunaliit2/nunaliit2-couch-debug.js" />
 								</java>
 								<java jar="target/tools/nunaliit2-javascript-compiler.jar" fork="true" failonerror="true" dir=".">
 									<arg line="--config-file ./compress/nunaliit2-couch-mobile.cfg" />
@@ -116,7 +117,7 @@
 									<arg line="--compile-level closure" />
 									<arg line="--verify" />
 									<arg line="--output ./src/main/js/nunaliit2/nunaliit2-couch-mobile.js" />
-									<arg line="--output-debug ./src/main/js/nunaliit2/nunaliit2-couch-mobile-debug.js" />
+									<arg line="--output-debug-inline ./src/main/js/nunaliit2/nunaliit2-couch-mobile-debug.js" />
 								</java>
 
 								<!-- Generate CSS libraries -->

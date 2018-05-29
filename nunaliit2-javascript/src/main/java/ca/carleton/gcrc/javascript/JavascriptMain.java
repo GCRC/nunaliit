@@ -34,6 +34,7 @@ public class JavascriptMain {
 		LibraryConfiguration config = new LibraryConfiguration();
 		File outputFile = null;
 		File outputDebugFile = null;
+		File outputDebugInlineFile = null;
 		boolean performVerification = false;
 		
 		// Turn arguments into a stack
@@ -108,6 +109,16 @@ public class JavascriptMain {
 				String outputFileName = argumentStack.pop();
 				outputDebugFile = new File(outputFileName);
 				System.out.println("--ouput-debug "+outputDebugFile.getAbsolutePath());
+				
+			} else if( "--output-debug-inline".equals(optionName) ){
+				argumentStack.pop();
+				
+				if( argumentStack.empty() ){
+					throw new Exception("File expected for option '--output-debug-inline'");
+				}
+				String outputFileName = argumentStack.pop();
+				outputDebugInlineFile = new File(outputFileName);
+				System.out.println("--ouput-debug-inline "+outputDebugInlineFile.getAbsolutePath());
 					
 			} else if( "--verify".equals(optionName) ){
 				argumentStack.pop();
@@ -149,6 +160,13 @@ public class JavascriptMain {
 			System.out.println("Generating debug version");
 			DebugProcess process = new DebugProcess();
 			process.generate(config, outputDebugFile);
+		}
+		
+		// Output debug inline version
+		if( null != outputDebugInlineFile ) {
+			System.out.println("Generating debug inline version");
+			DebugInlineProcess process = new DebugInlineProcess();
+			process.generate(config, outputDebugInlineFile);
 		}
 	}
 }
