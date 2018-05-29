@@ -86,8 +86,8 @@ function getScriptLocation(scriptName) {
 
 //=====================================================================
 function getCoreScriptLocation() {
-	if( typeof nunaliit2CoreScript === 'string' ){
-		return getScriptLocation(nunaliit2CoreScript);
+	if( typeof $n2.coreScriptName === 'string' ){
+		return getScriptLocation($n2.coreScriptName);
 	};
 	
 	return null;

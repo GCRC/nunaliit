@@ -87,8 +87,16 @@ public class DebugProcess {
 			}
 			
 			pw.println("\"use strict\";");
-			pw.println("var nunaliit2CoreScript;");
+			pw.println("var nunaliit2;");
 			pw.println("(function(){");
+			pw.println("// Define here instead of n2.core.js");
+			pw.println("if( typeof nunaliit2 !== 'function' ){");
+			pw.println("\tnunaliit2 = function(){};");
+			pw.println("\tif( typeof window !== 'undefined' ){");
+			pw.println("\t\twindow.nunaliit2 = nunaliit2;");
+			pw.println("\t};");
+			pw.println("};");
+			pw.println();
 			pw.println("var scriptLocation = null;");
 			pw.println("var pattern = new RegExp('(^|(.*?\\/))"+outputName+"$');");
  			pw.println("var scripts = document.getElementsByTagName('script');");
@@ -105,11 +113,8 @@ public class DebugProcess {
 			pw.println("if( null === scriptLocation ) {");
 			pw.println("\talert('Unable to find library tag ("+outputName+")');");
 			pw.println("};");
-			pw.println("if( typeof nunaliit2CoreScript === 'undefined' ){");
-			pw.println("\tnunaliit2CoreScript = '"+outputName+"';");
-			pw.println("\tif( typeof window !== 'undefined' ){");
-			pw.println("\t\twindow.nunaliit2CoreScript = nunaliit2CoreScript;");
-			pw.println("\t};");
+			pw.println("if( typeof nunaliit2.coreScriptName === 'undefined' ){");
+			pw.println("\tnunaliit2.coreScriptName = '"+outputName+"';");
 			pw.println("};");
 			pw.println("var jsfiles = [");
 			
