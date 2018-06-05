@@ -28,6 +28,8 @@
 		
 		fromList: null,
 		
+		listId: null,
+		
 		initialize: function(opts_){
 			var opts = $n2.extend({
 				docIds: null
@@ -38,6 +40,8 @@
 			this.docIds = opts.docIds;
 			this.fromList = opts.fromList;
 
+			this.listId = $n2.getUniqueId();
+			
 			if( !this.docIds ){
 				this.docIds = [];
 			};
@@ -2296,60 +2300,93 @@
 		var $lists = getListsDiv();
 		$lists.empty();
 		
-		var $h = $('<h1><span></span> <button></button></h1>');
-		$h.find('span').text( _loc('Queries') );
-		$h.find('button').text( _loc('Add') );
-		$lists.append($h);
-		
-		$h.find('button').click(function(){
-			SearchFilter.createNewList({
-				onSuccess: function(list){
-					addList(list);
-				}
-			});
-			return false;
-		});
+		var $h = $('<h1>')
+			.appendTo($lists);
+		$('<span>')
+			.text( _loc('Queries') )
+			.appendTo($h);
+		$('<button>')
+			.text( _loc('Add') )
+			.click(function(){
+				SearchFilter.createNewList({
+					onSuccess: function(list){
+						addList(list);
+					}
+				});
+				return false;
+			})
+			.appendTo($h);
 		
 		for(var i=0,e=allLists.length; i<e; ++i){
 			var list = allLists[i];
+			var listId = list.listId;
 			
-			var $d = $('<div></div>');
-			$lists.append($d);
-			installView(list, $d);
+			var $d = $('<div>')
+				.attr('n2-list-id', listId)
+				.click(onListClick)
+				.appendTo($lists);
 			
 			if( list === selectedList ) {
 				$d.addClass('selectAppListSelected');
 			};
 			
-			var $s = $('<span></span>');
-			$s.text( list.print() );
-			$d.append($s);
+			$('<span>')
+				.text( list.print() )
+				.appendTo($d);
 			
-			var $a = $('<a href="#"></a>');
-			$a.text( _loc('View') );
-			$d.append($a);
-			installView(list, $a);
+			$('<a>')
+				.addClass('selectApp_list_button')
+				.attr('href','#')
+				.attr('n2-list-id', listId)
+				.text( _loc('View') )
+				.click(onListClick)
+				.appendTo($d);
 			
-			var $a = $('<a href="#"></a>');
-			$a.text( _loc('Text') );
-			$d.append($a);
-			installText(list, $a);
+			$('<a>')
+				.addClass('selectApp_list_button')
+				.attr('href','#')
+				.attr('n2-list-id', listId)
+				.text( _loc('Text') )
+				.click(onTextClick)
+				.appendTo($d);
+
+			$('<a>')
+				.addClass('selectApp_list_button')
+				.attr('href','#')
+				.attr('n2-list-id', listId)
+				.text( _loc('Remove') )
+				.click(onRemoveClick)
+				.appendTo($d);
 		};
 		
-		function installView(list, $a){
-			$a.click(function(e){
-				e.stopPropagation();
-				selectList(list);
-				return false;
-			});
+		function onListClick(e){
+			e.stopPropagation();
+
+			var $a = $(this);
+			var listId = $a.attr('n2-list-id');
+			var list = findListById(listId);
+			selectList(list);
+			return false;
 		};
-		
-		function installText(list, $a){
-			$a.click(function(e){
-				e.stopPropagation();
-				selectText(list);
-				return false;
-			});
+
+		function onTextClick(e){
+			e.stopPropagation();
+
+			var $a = $(this);
+			var listId = $a.attr('n2-list-id');
+			var list = findListById(listId);
+			selectText(list);
+			return false;
+		};
+
+		function onRemoveClick(e){
+			e.stopPropagation();
+
+			var $a = $(this);
+			var listId = $a.attr('n2-list-id');
+			var list = findListById(listId);
+			removeList(list);
+			return false;
 		};
 	};
 	
@@ -2365,6 +2402,33 @@
 		refreshAllLists();
 		
 		viewList(list);
+	};
+	
+	// -----------------------------------------------------------------
+	function removeList(list){
+		if( selectedList === list ){
+			selectedList = undefined;
+			clearList();
+		};
+
+		var index = allLists.indexOf(list);
+		if( index >= 0 ){
+			allLists.splice(index,1);
+		};
+		
+		refreshAllLists();
+	};
+
+	// -----------------------------------------------------------------
+	function findListById(listId){
+		var list = undefined;
+		allLists.forEach(function(l){
+			if( listId === l.listId ){
+				list = l;
+			};
+		});
+
+		return list;
 	};
 	
 	// -----------------------------------------------------------------
