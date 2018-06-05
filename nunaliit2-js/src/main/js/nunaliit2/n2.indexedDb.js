@@ -274,7 +274,8 @@ var DocumentCache = $n2.Class('DocumentCache',{
 		});
 
 		if( mustStartThread ){
-			applyChange();
+			// Start a different thread to handle changes
+			setTimeout(applyChange,0);
 		};
 		
 		function applyChange(){
@@ -630,8 +631,6 @@ var DocumentCache = $n2.Class('DocumentCache',{
 			,onSuccess: function(doc){}
 			,onError: function(err){}
 		},opts_);
-
-		var _this = this;
 
 		var db = this.db;
 		var id = opts.id;

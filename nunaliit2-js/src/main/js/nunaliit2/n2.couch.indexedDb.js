@@ -1040,11 +1040,14 @@ var Database = $n2.Class('couchIndexedDb.Database',{
 						}
 					});
 				} else {
-					// Cache is not available. Fetch this document remotely
+					// Cache is not available. Fetch all documents remotely
 					remoteDocIds.push(fetchRequest.docId);
+					while( _this.fetchDocumentRequests.length > 0 ){
+						fetchRequest = _this.fetchDocumentRequests.shift();
+						remoteDocIds.push(fetchRequest.docId);
+					};
 
-					// Continue
-					checkCache();
+					fetchRemotely();
 				};
 			};
 		};
