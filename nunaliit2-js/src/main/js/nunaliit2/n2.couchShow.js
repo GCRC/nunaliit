@@ -219,6 +219,12 @@ var DomStyler = $n2.Class({
 				,acceptsContextDocument: true
 			},
 			{
+				source: 'n2s_insertMediaPlayer'
+				,target: 'n2s_insertedMediaPlayer'
+				,fn: this._insertMediaPlayer
+				,acceptsContextDocument: true
+			},
+			{
 				source: 'n2s_insertModuleName'
 				,target: 'n2s_insertedModuleName'
 				,fn: this._insertModuleName
@@ -740,6 +746,10 @@ var DomStyler = $n2.Class({
 		if( $jq.hasClass('n2s_insertedMediaView') ){
 			this._insertMediaView($jq, doc);
 		};
+
+		if( $jq.hasClass('n2s_insertedMediaPlayer') ){
+			this._insertMediaPlayer($jq, doc);
+		};
 		
 		if( $jq.hasClass('n2s_insertedFirstThumbnail') ){
 			this._insertFirstThumbnail($jq, doc);
@@ -1148,6 +1158,113 @@ var DomStyler = $n2.Class({
 				
 				return false;
 			};
+		};
+	},
+
+
+	_insertMediaPlayer: function($insertView, data) {
+		var _this = this;
+
+		var docId = this._associateDocumentToElement(data, $insertView);
+
+		var attachmentName = $insertView.attr('nunaliit-attachment');
+		if( !attachmentName ){
+			attachmentName = $insertView.text();
+			$insertView.attr('nunaliit-attachment', attachmentName);
+		};
+
+		$insertView.empty();
+
+		if( data && data._id === docId ){
+			var attachment = null;
+			if( data._attachments 
+				&& data._attachments[attachmentName] ){
+				attachment = data._attachments[attachmentName];
+			};
+
+			var attDesc = null;
+			if( data 
+				&& data.nunaliit_attachments 
+				&& data.nunaliit_attachments.files ) {
+				attDesc = data.nunaliit_attachments.files[attachmentName];
+			};
+
+			var thumbnailURL = null;
+			if( attDesc && attDesc.thumbnail ){
+				thumbnailURL = this.db.getAttachmentUrl(data,attDesc.thumbnail);
+			};
+
+			if( attDesc
+				&& attDesc.status === 'attached'
+				&& attachment ) {
+
+				var attUrl = this.db.getAttachmentUrl(data,attachmentName);
+				var mediaDivId = $n2.getUniqueId();
+				var mediaId = $n2.getUniqueId();
+				var audioWidth = 300;
+
+				if( attDesc.fileClass === 'audio' && attUrl ){
+
+					var $mediaDiv = $('<div>')
+						.attr('id', mediaDivId)
+						.appendTo($insertView);
+
+					var $audio = $('<audio>')
+						.attr('id', mediaId)
+						.attr('controls', 'controls')
+						.attr('width', audioWidth)
+						.appendTo($mediaDiv);
+
+					var $audioSource = $('<source>')
+						.attr('src', attUrl)
+						.appendTo($audio);
+
+					if( attDesc.mimeType ){
+						$audioSource.attr('type', attDesc.mimeType);
+					};
+
+					$('#'+mediaId).mediaelementplayer({
+						features: ['playpause','progress','volume','sourcechooser']
+					});
+
+				} else if( attDesc.fileClass === 'video' && attUrl ){
+
+					var $mediaDiv = $('<div>')
+						.attr('id', mediaDivId)
+						.appendTo($insertView);
+
+					var $video = $('<video>')
+						.attr('id', mediaId)
+						.attr('controls', 'controls')
+						.attr('width', attDesc.width)
+						.attr('height', attDesc.height)
+						.appendTo($mediaDiv);
+
+					var $videoSource = $('<source>')
+						.attr('src', attUrl)
+						.appendTo($video);
+
+					if( attDesc.mimeType ){
+						$videoSource.attr('type', attDesc.mimeType);
+					};
+
+					$('#'+mediaId).mediaelementplayer({
+						poster: thumbnailURL
+						,features: ['playpause','progress','volume','sourcechooser','fullscreen']
+					});
+				};
+			};
+
+		} else {
+			// Do not have playable media document
+			var label = _loc('Media({docId},{attName})',{
+				docId: docId
+				,attName: attachmentName
+			});
+			$('<span>')
+				.addClass('n2s_insertMediaPlayer_wait')
+				.text(label)
+				.appendTo($insertView);
 		};
 	},
 
