@@ -553,82 +553,104 @@ public class SchemaAttribute {
 				
 			} else if( "string".equals(type) ){
 				if( null != id ){
-					pw.print("{{#"+schemaStructure+"}}");
-					if( !isFirst ) pw.print(" ");
-					pw.print("{{"+id+"}}");
-					pw.print("{{/"+schemaStructure+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
+					pw.println("\t{{#if "+id+"}}");
+					pw.println("\t\t<span class=\""+schemaClass+"_"+id+"\">");
+					if( !isFirst ) pw.print(" ");					
+					pw.println("\t\t\t{{"+id+"}}");
+					pw.println("\t\t</span>");
+					pw.println("\t{{/if}}");
+					pw.println("{{/"+schemaStructure+"}}");
 					printed = true;
 				}
 				
 			} else if( "localized".equals(type) ){
 				if( null != id ){
-					pw.print("{{#"+schemaStructure+"}}");
-					if( !isFirst ) pw.print(" ");
-					pw.print("{{#:localize}}"+id+"{{/:localize}}");
-					pw.print("{{/"+schemaStructure+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
+					pw.println("\t{{#if "+id+"}}");
+					pw.println("\t\t<span class=\""+schemaClass+"_"+id+"\">");
+					if( !isFirst ) pw.print(" ");					
+					pw.println("\t\t\t{{#:localize}}"+id+"{{/:localize}}");
+					pw.println("\t\t</span>");
+					pw.println("\t{{/if}}");
+					pw.println("{{/"+schemaStructure+"}}");
 					printed = true;
 				}
 				
 			} else if( "selection".equals(type) ){
 				if( null != id ){
-					pw.print("{{#"+schemaStructure+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
+					pw.println("\t{{#if "+id+"}}");
+					pw.println("\t\t<span class=\"n2s_select "+schemaClass+"_"+id+"\" n2-choice=\"{{"+id+"}}\">");
 					if( !isFirst ) pw.print(" ");
-					pw.print("<span class=\"n2s_select\" n2-choice=\"{{"+id+"}}\">");
 					for(SelectionOption option : options){
-						pw.print("<span class=\"n2s_choice n2s_localize\" n2-choice=\""+option.getValue()+"\">");
+						pw.print("\t\t\t<span class=\"n2s_choice n2s_localize\" n2-choice=\""+option.getValue()+"\">");
 						String label = option.getLabel();
 						if( null == label ){
 							label = option.getValue();
 						}
 						pw.print(label);
-						pw.print("</span>");
+						pw.println("</span>");
 					}
-					pw.print("</span>");
-					pw.print("{{/"+schemaStructure+"}}");
+					pw.print("\t\t</span>");
+					pw.println("\t{{/if}}");
+					pw.println("{{/"+schemaStructure+"}}");
 					printed = true;
 				}
 				
 			} else if( "date".equals(type) ){
 				if( null != id ){
-					pw.print("{{#"+schemaStructure+"}}");
-					pw.print("{{#"+id+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
+					pw.println("\t{{#if "+id+"}}");
+					pw.println("\t\t<span class=\""+schemaClass+"_"+id+"\">");
+					pw.print("\t\t\t{{#"+id+"}}");
 					if( !isFirst ) pw.print(" ");
 					pw.print("{{date}}");
-					pw.print("{{/"+id+"}}");
-					pw.print("{{/"+schemaStructure+"}}");
+					pw.println("{{/"+id+"}}");
+					pw.println("\t\t</span>");
+					pw.println("\t{{/if}}");
+					pw.println("{{/"+schemaStructure+"}}");
 					printed = true;
 				}
 				
 			} else if( "reference".equals(type) ){
 				if( null != id ){
-					pw.print("{{#"+schemaStructure+"}}");
-					pw.print("{{#"+id+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
+					pw.println("\t{{#if "+id+"}}");
+					pw.println("\t\t<span class=\""+schemaClass+"_"+id+"\">");
+					pw.print("\t\t\t{{#"+id+"}}");
 					pw.print("{{#doc}}");
 					if( !isFirst ) pw.print(" ");
 					pw.print("<span class=\"n2s_briefDisplay\">{{.}}</span>");
 					pw.print("{{/doc}}");
-					pw.print("{{/"+id+"}}");
-					pw.print("{{/"+schemaStructure+"}}");
+					pw.println("{{/"+id+"}}");
+					pw.println("\t\t</span>");
+					pw.println("\t{{/if}}");
+					pw.println("{{/"+schemaStructure+"}}");
 					printed = true;
 				}
 				
 			} else if( "custom".equals(type) ){
 				if( null != id && null != customType ){
-					pw.print("{{#"+schemaStructure+"}}");
-					pw.print("{{#if "+id+"}}");
-					if( !isFirst ) pw.print(" ");
-					pw.print("<span class=\"n2s_custom\""
+					pw.println("{{#"+schemaStructure+"}}");
+					pw.println("\t{{#if "+id+"}}");
+					pw.print("\t\t<span class=\""+schemaClass+"_"+id+"\">");
+					if( !isFirst ) pw.println(" ");
+					pw.println("\t\t\t<span class=\"n2s_custom\""
 							+ " nunaliit-custom=\""+customType+"\""
 							+ " nunaliit-selector=\"{{#:selector}}"+id+"{{/:selector}}\"></span>");
-					pw.print("{{/if}}");
-					pw.print("{{/"+schemaStructure+"}}");
+					pw.println("\t\t</span>");
+					pw.println("\t{{/if}}");
+					pw.println("{{/"+schemaStructure+"}}");
 					printed = true;
 				}
 				
 			} else if( "array".equals(type) ){
 				if( null != id ){
-					pw.print("{{#"+schemaStructure+"}}");
-					pw.print("{{#"+id+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
+					pw.println("\t{{#if "+id+"}}");
+					pw.println("\t\t<span class=\""+schemaClass+"_"+id+"\">");
+					pw.print("\t\t\t{{#"+id+"}}");
 					if( !isFirst ) pw.print(" ");
 					
 					if( "string".equals(elementType) ){
@@ -646,8 +668,10 @@ public class SchemaAttribute {
 						pw.print("{{/doc}}");
 					}
 					
-					pw.print("{{/"+id+"}}");
-					pw.print("{{/"+schemaStructure+"}}");
+					pw.println("{{/"+id+"}}");
+					pw.println("\t\t</span>");
+					pw.println("\t{{/if}}");
+					pw.println("{{/"+schemaStructure+"}}");
 					printed = true;
 				}
 
@@ -656,31 +680,39 @@ public class SchemaAttribute {
 					throw new Exception("'id' should not be specified for attributes of type 'geometry'");
 				}
 
-				pw.print("{{#nunaliit_geom}}");
-				pw.print("{{wkt}}");
-				pw.print("{{/nunaliit_geom}}");
+				pw.println("{{#nunaliit_geom}}");
+				pw.println("\t{{#if wkt}}");
+				pw.println("\t\t<span class=\""+"nunaliit_geom_wkt"+"\">");
+				pw.println("\t\t\t{{wkt}}");
+				pw.println("\t\t</span>");
+				pw.println("\t{{/if}}");
+				pw.println("{{/nunaliit_geom}}");
 
 			} else if( "hover_sound".equals(type) ){
 				if( null != id ){
 					throw new Exception("'id' should not be specified for attributes of type 'hover_sound'");
 				}
 
-				pw.print("{{#nunaliit_hoverSound}}");
-				pw.print("{{#doc}}");
+				pw.println("{{#nunaliit_hoverSound}}");
+				pw.println("\t{{#if doc}}");
+				pw.println("\t\t<span class=\""+"nunaliit_geom_wkt"+"\">");
+				pw.print("\t\t\t{{#doc}}");
 				if( !isFirst ) pw.print(" ");
 				pw.print("<span class=\"n2s_briefDisplay\">{{.}}</span>");
-				pw.print("{{/doc}}");
-				pw.print("{{/nunaliit_hoverSound}}");
+				pw.println("{{/doc}}");
+				pw.println("\t\t</span>");
+				pw.println("\t{{/if}}");
+				pw.println("{{/nunaliit_hoverSound}}");
 
 			} else if( "createdBy".equals(type) ){
-				pw.print("{{#nunaliit_created}}");
-				pw.print("<span class=\"n2s_insertUserName\">{{name}}</span>");
-				pw.print("{{/nunaliit_created}}");
+				pw.println("{{#nunaliit_created}}");
+				pw.println("\t<span class=\"n2s_insertUserName\">{{name}}</span>");
+				pw.println("{{/nunaliit_created}}");
 
 			} else if( "createdTime".equals(type) ){
-				pw.print("{{#nunaliit_created}}");
-				pw.print("<span class=\"n2s_insertTime\">{{time}}</span>");
-				pw.print("{{/nunaliit_created}}");
+				pw.println("{{#nunaliit_created}}");
+				pw.println("\t<span class=\"n2s_insertTime\">{{time}}</span>");
+				pw.println("{{/nunaliit_created}}");
 					
 			} else {
 				throw new Exception("Unable to include type "+type+" in brief");
