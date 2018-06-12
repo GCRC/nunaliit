@@ -1253,6 +1253,13 @@ var DomStyler = $n2.Class({
 						,features: ['playpause','progress','volume','sourcechooser','fullscreen']
 					});
 				};
+
+				var $docBrief = $('<span>')
+					.addClass('n2s_briefDisplay')
+					.attr('nunaliit-document',data._id)
+					.appendTo($insertView);
+		
+				_this.fixElementAndChildren($docBrief, {}, null);
 			};
 
 		} else {
