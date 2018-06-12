@@ -682,7 +682,7 @@ public class SchemaAttribute {
 
 				pw.println("{{#nunaliit_geom}}");
 				pw.println("\t{{#if wkt}}");
-				pw.println("\t\t<span class=\"nunaliit_geom_wkt\">");
+				pw.println("\t\t<span class=\"nunaliit_geom_wkt "+schemaClass+"_geom\">");
 				pw.println("\t\t\t{{wkt}}");
 				pw.println("\t\t</span>");
 				pw.println("\t{{/if}}");
@@ -695,7 +695,7 @@ public class SchemaAttribute {
 
 				pw.println("{{#nunaliit_hoverSound}}");
 				pw.println("\t{{#if doc}}");
-				pw.println("\t\t<span class=\"nunaliit_hoversound\">");
+				pw.println("\t\t<span class=\"nunaliit_hoversound "+schemaClass+"_hoversound\">");
 				pw.print("\t\t\t{{#doc}}");
 				if( !isFirst ) pw.print(" ");
 				pw.print("<span class=\"n2s_briefDisplay\">{{.}}</span>");
