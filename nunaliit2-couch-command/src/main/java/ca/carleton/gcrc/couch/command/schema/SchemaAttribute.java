@@ -682,7 +682,7 @@ public class SchemaAttribute {
 
 				pw.println("{{#nunaliit_geom}}");
 				pw.println("\t{{#if wkt}}");
-				pw.println("\t\t<span class=\""+"nunaliit_geom_wkt"+"\">");
+				pw.println("\t\t<span class=\"nunaliit_geom_wkt\">");
 				pw.println("\t\t\t{{wkt}}");
 				pw.println("\t\t</span>");
 				pw.println("\t{{/if}}");
@@ -695,7 +695,7 @@ public class SchemaAttribute {
 
 				pw.println("{{#nunaliit_hoverSound}}");
 				pw.println("\t{{#if doc}}");
-				pw.println("\t\t<span class=\""+"nunaliit_geom_wkt"+"\">");
+				pw.println("\t\t<span class=\"nunaliit_hoversound\">");
 				pw.print("\t\t\t{{#doc}}");
 				if( !isFirst ) pw.print(" ");
 				pw.print("<span class=\"n2s_briefDisplay\">{{.}}</span>");
@@ -706,12 +706,12 @@ public class SchemaAttribute {
 
 			} else if( "createdBy".equals(type) ){
 				pw.println("{{#nunaliit_created}}");
-				pw.println("\t<span class=\"n2s_insertUserName\">{{name}}</span>");
+				pw.println("\t<span class=\"n2s_insertUserName "+schemaClass+"_createdBy\">{{name}}</span>");
 				pw.println("{{/nunaliit_created}}");
 
 			} else if( "createdTime".equals(type) ){
 				pw.println("{{#nunaliit_created}}");
-				pw.println("\t<span class=\"n2s_insertTime\">{{time}}</span>");
+				pw.println("\t<span class=\"n2s_insertTime "+schemaClass+"_createdTime\">{{time}}</span>");
 				pw.println("{{/nunaliit_created}}");
 					
 			} else {
