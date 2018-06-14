@@ -577,17 +577,17 @@ public class SchemaDefinition {
 		String schemaClass = getSchemaClass();
 		String schemaStructure = getSchemaStructure();
 
-		pw.print("<span class=\""+schemaClass+"_brief\">");
+		pw.println("<span class=\""+schemaClass+"_brief\">");
 
 		if( null != label ){
-			pw.print("<span class=\"n2s_localize "+schemaClass+"_brief_decoration\">");
-			pw.print(label);
+			pw.println("\t<span class=\"n2s_localize "+schemaClass+"_brief_decoration\">");
+			pw.println("\t"+label);
 		} else {
-			pw.print("<span class=\""+schemaClass+"_brief_decoration\">");
-			pw.print( getSchemaName() );
+			pw.println("\t<span class=\""+schemaClass+"_brief_decoration\">");
+			pw.println( getSchemaName() );
 		}
 
-		pw.print("(</span>");
+		pw.println("\t(</span>");
 		
 		boolean first = true;
 		for(SchemaAttribute attribute : attributes){
@@ -597,9 +597,9 @@ public class SchemaDefinition {
 			}
 		}
 		
-		pw.print("<span class=\""+schemaClass+"_brief_decoration\">)</span>");
+		pw.println("\t<span class=\""+schemaClass+"_brief_decoration\">)</span>");
 
-		pw.print("</span>");
+		pw.println("</span>");
 	}
 	
 	public void printDisplay(PrintWriter pw) throws Exception {

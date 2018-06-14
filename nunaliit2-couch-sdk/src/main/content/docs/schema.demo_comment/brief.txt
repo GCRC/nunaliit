@@ -1,1 +1,13 @@
-<span class="demo_comment_brief"><span class="n2s_localize demo_comment_brief_decoration">Demo Comment(</span>{{#demo_comment}}{{text}}{{/demo_comment}}<span class="demo_comment_brief_decoration">)</span></span>
+<span class="demo_comment_brief">
+	<span class="n2s_localize demo_comment_brief_decoration">
+	Demo Comment
+	(</span>
+	{{#demo_comment}}
+		{{#if text}}
+			<span class="demo_comment_text">
+				{{text}}
+			</span>
+		{{/if}}
+	{{/demo_comment}}
+	<span class="demo_comment_brief_decoration">)</span>
+</span>
