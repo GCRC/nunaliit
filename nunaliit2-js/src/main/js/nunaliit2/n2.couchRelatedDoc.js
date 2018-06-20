@@ -251,7 +251,7 @@ var Editor = $n2.Class({
 			var dialogOptions = {
 				autoOpen: true
 				,title: _loc('Fill Out Related Document')
-				,modal: !window.cordova
+				,modal: true
 				,width: window.cordova ? '100%' : 740
 				,close: function(event, ui){
 					var diag = $('#'+diagId);
@@ -268,8 +268,9 @@ var Editor = $n2.Class({
 		var obj = this.obj;
 
 		if (window.cordova) {
-			// Check that a file was provided
-			if (_this.attachmentUploadHandler.cordovaAttachment) {
+			// We can save if this is not a media document or if a media file is provided
+			var canSave = (obj.nunaliit_schema !== 'demo_media' && obj.nunaliit_schema !== 'media') || _this.attachmentUploadHandler.cordovaAttachment
+			if (canSave) {
 				_this._saveObj();
 			} else {
 				alert(_loc('A file must be selected or recorded'));
@@ -566,7 +567,7 @@ var CreateRelatedDocProcess = $n2.Class({
 			,onError: $n2.reportErrorForced
 			,onCancel: function(){}
 		},opt_);
-		
+
 		if( opt.allSchemas ){
 			this.dialogService.selectSchema({
 				onSelected: selectedSchema
