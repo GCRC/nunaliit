@@ -135,7 +135,6 @@ var Notifier = $n2.Class({
 		var _this = this;
 		
 		$n2.log('update',changes);
-		var lastSeq = changes.last_seq;
 		var results = changes.results;
 		
 		if( this.dispatchService ){
@@ -1129,10 +1128,13 @@ var CouchDocumentSourceWithSubmissionDb = $n2.Class('CouchDocumentSourceWithSubm
 	
 	isSubmissionDataSource: null,
 	
+	deviceId: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			submissionDb: null
 			,submissionServletUrl: null
+			,deviceId: undefined
 		},opts_);
 		
 		CouchDocumentSource.prototype.initialize.call(this,opts);
@@ -1143,6 +1145,7 @@ var CouchDocumentSourceWithSubmissionDb = $n2.Class('CouchDocumentSourceWithSubm
 		
 		this.submissionDb = opts.submissionDb;
 		this.submissionServerUrl = opts.submissionServerUrl;
+		this.deviceId = opts.deviceId;
 		
 		var submissionServer = $n2.couch.getServer({
 			pathToServer: this.submissionServerUrl
@@ -1203,6 +1206,7 @@ var CouchDocumentSourceWithSubmissionDb = $n2.Class('CouchDocumentSourceWithSubm
 
 			_this.submissionServerDb.createDocument({
 				data: doc
+				,deviceId: _this.deviceId
 				,onSuccess: function(docInfo){
 					_this._warnUser();
 					_this.adoptDocument(doc);
@@ -1242,6 +1246,7 @@ var CouchDocumentSourceWithSubmissionDb = $n2.Class('CouchDocumentSourceWithSubm
 		
 		this.submissionServerDb.updateDocument({
 			data: copy
+			,deviceId: _this.deviceId
 			,onSuccess: function(docInfo){
 				_this._warnUser();
 				opts.onSuccess(doc);
@@ -1268,6 +1273,7 @@ var CouchDocumentSourceWithSubmissionDb = $n2.Class('CouchDocumentSourceWithSubm
 		
 		this.submissionServerDb.deleteDocument({
 			data: doc
+			,deviceId: _this.deviceId
 			,onSuccess: function(docInfo){
 				_this._warnUser();
 				opts.onSuccess(doc);

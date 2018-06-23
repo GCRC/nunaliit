@@ -17,6 +17,7 @@ import org.json.JSONTokener;
 
 import ca.carleton.gcrc.couch.client.CouchContext;
 import ca.carleton.gcrc.json.JSONSupport;
+import ca.carleton.gcrc.utils.StreamUtils;
 
 public class ConnectionUtils {
 	static public Object getJsonFromInputStream(InputStream contentStream, String encoding) throws Exception {
@@ -26,11 +27,9 @@ public class ConnectionUtils {
 		
 		InputStreamReader isr = new InputStreamReader(contentStream, encoding);
 		StringWriter sw = new StringWriter();
-		int b = isr.read();
-		while( b >= 0 ) {
-			sw.write((char)b);
-			b = isr.read();
-		}
+		
+		StreamUtils.copyStream(isr, sw);
+
 		sw.flush();
 		
 		JSONTokener jsonTokener = new JSONTokener(sw.toString());
@@ -283,11 +282,9 @@ public class ConnectionUtils {
 		conn.setDoOutput(true);
 		conn.setRequestProperty("Content-Type", contentType);
 		OutputStream os = conn.getOutputStream();
-		int b = is.read();
-		while( b >= 0 ) {
-			os.write(b);
-			b = is.read();
-		}
+		
+		StreamUtils.copyStream(is, os);
+
 		os.flush();
 		os.close();
 		conn.connect();
@@ -380,14 +377,7 @@ public class ConnectionUtils {
 		//String contentEncoding = conn.getContentEncoding();
 		InputStream contentStream = conn.getInputStream();
 
-		byte[] buf = new byte[0x1000];
-		while (true) {
-			int r = contentStream.read(buf);
-			if( r < 0 ) {
-				break;
-			}
-			outputStream.write(buf, 0, r);
-		}		
+		StreamUtils.copyStream(contentStream, outputStream);
 
 		contentStream.close();
 		conn.disconnect();

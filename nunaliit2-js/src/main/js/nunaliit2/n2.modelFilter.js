@@ -746,11 +746,16 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 		// Update selection objects
 		initialSelection.forEach(function(choiceId){
 			if( typeof choiceId === 'string' ){
-				_this.selectedChoiceIdMap[choiceId] = true;
-				_this.availableChoices.push({
-					id: choiceId
-					,label: choiceId
-				});
+
+				if( choiceId === "__ALL_CHOICES__" ){
+					_this.allSelected = true;
+				} else {
+					_this.selectedChoiceIdMap[choiceId] = true;
+					_this.availableChoices.push({
+						id: choiceId
+						,label: choiceId
+					});
+				};
 			};
 		});
 		

@@ -573,7 +573,10 @@ var ChangeNotifier = $n2.Class('couch.ChangeNotifier',{
 		} else {
 			this.resetLastSequence({
 				onSuccess: finishInitialization
-				,onError: finishInitialization
+				,onError: function(err){
+					$n2.logError('Error while obtaining database update sequence: '+err);
+					finishInitialization();
+				}
 			});
 		};
 		
@@ -622,16 +625,59 @@ var ChangeNotifier = $n2.Class('couch.ChangeNotifier',{
 
 		var _this = this;
 		
-		this.db.getInfo({
-	    	onSuccess: function(dbInfo) {
-				_this.lastSequence = dbInfo.update_seq;
-				opt.onSuccess();
-	    	}
-	    	,onError: function(XMLHttpRequest, textStatus, errorThrown) {
-				var errStr = httpJsonError(XMLHttpRequest, textStatus);
-				opt.onError('Error during a query of current update sequence: '+errStr);
-	    	}
+		this.db.getChanges({
+			limit: 1
+			,descending: true
+			,onSuccess: function(changes){
+				if( changes
+				 && changes.last_seq ){
+					// In CouchDB 1.x, changes.last_seq is a number
+					// In CouchDB 2.x, changes.last_seq is a string
+					if( typeof changes.last_seq === 'string' ){
+						_this.lastSequence = changes.last_seq;
+						//$n2.log('changes.last_seq = '+changes.last_seq);
+						//printDbUpdateSeq();
+						opt.onSuccess();
+
+					} else if( typeof changes.last_seq === 'number' ){
+						_this.lastSequence = ''+changes.last_seq;
+						//$n2.log('changes.last_seq = '+changes.last_seq);
+						//printDbUpdateSeq();
+						opt.onSuccess();
+
+					} else {
+						var err = new Error('Error with database change feed. Can not interpret last_seq: '+changes.last_seq);
+						opt.onError(err);
+					};
+				} else {
+					
+				};
+			}
+			,onError: function(err){ 
+				opt.onError('Error during a query of last update sequence: '+err);
+			}
 		});
+		
+//		function printDbUpdateSeq(){
+//			_this.db.getInfo({
+//		    	onSuccess: function(dbInfo) {
+//					// In CouchDB 1.x, update_seq is a number
+//					// In CouchDB 2.x, update_seq is a string
+//					if( typeof dbInfo.update_seq === 'string' ){
+//						$n2.log('dbInfo.update_seq = '+dbInfo.update_seq);
+//
+//					} else if( typeof dbInfo.update_seq === 'number' ){
+//						$n2.log('dbInfo.update_seq = '+dbInfo.update_seq);
+//
+//					} else {
+//						$n2.logError('Error with database information. Can not interpret update_seq: '+dbInfo.update_seq);
+//					};
+//		    	}
+//		    	,onError: function(err) {
+//					$n2.logError('Error during a query of current update sequence: '+err);
+//		    	}
+//			});
+//		};
 	},
 	
 	getLastSequence: function(){
@@ -640,8 +686,10 @@ var ChangeNotifier = $n2.Class('couch.ChangeNotifier',{
 	
 	_reportChanges: function(changes) {
 		
-		if( changes.last_seq ) {
+		if( typeof changes.last_seq === 'string' ) {
 			this.lastSequence = changes.last_seq;
+		} else if( typeof changes.last_seq === 'number' ) {
+			this.lastSequence = ''+changes.last_seq;
 		};
 		
 		if( changes.results && changes.results.length > 0 ) {
@@ -675,7 +723,7 @@ var ChangeNotifier = $n2.Class('couch.ChangeNotifier',{
 			,style: this.style
 		};
 	
-		if( typeof(this.lastSequence) === 'number' ) {
+		if( this.lastSequence ) {
 			req.since = this.lastSequence;
 		};
 		
@@ -899,12 +947,44 @@ var Database = $n2.Class('couch.Database',{
 		};
 			
 		return this.changeNotifier;
-	}
+	},
 	
-	,getChanges: function(opt_) {
+	/*
+	 	What is returned looks like:
+		{
+		   "last_seq": "104-g1AAAAJjeJyd0ksKwjAQANBgBX8oFA-gJ5Am6ces7E10JmkpperKtd5Eb6I30ZvUfLpwUYSWwARmmAfDTEUIGReeIr48X2ShMKUs2QT60UqXBkBwVdd1WXiwPOrEKICcRlnY1vCHwbWOuGukhZVCJkQeYFcpNdK-kWZOyjAHuu0qHYx0baSplRjnDKXoKJ2GOpKb_jR2N9rEaoJzEUM_7eG0p9F8q9EwgwS6Tum0l9PeRpu7SZWkHKJe2sdpPxuImUKRtF5F-QUbHp8f",
+		   "pending": 0,
+		   "results": [
+		      {
+		         "seq": "1-g1AAAAF1eJzLYWBg4MhgTmEQTM4vTc5ISXIwNDLXMwBCwxygFFMiQ5L8____szKYExlzgQLsBolphqapJtg04DEmSQFIJtmDTEpkwKfOAaQunrC6BJC6eoLq8liAJEMDkAIqnU-M2gUQtfuJUXsAovY-MWofQNSC3JsFAMjHZqY",
+		         "id": "module.map.label",
+		         "changes": [
+		            {
+		               "rev": "1-6a63a7493382323b2db86a85ae4b518d"
+		            }
+		         ]
+		      },
+		      ...
+		      {
+		         "seq": "104-g1AAAAJjeJyd0ksKwjAQANBgBX8oFA-gJ5Am6ces7E10JmkpperKtd5Eb6I30ZvUfLpwUYSWwARmmAfDTEUIGReeIr48X2ShMKUs2QT60UqXBkBwVdd1WXiwPOrEKICcRlnY1vCHwbWOuGukhZVCJkQeYFcpNdK-kWZOyjAHuu0qHYx0baSplRjnDKXoKJ2GOpKb_jR2N9rEaoJzEUM_7eG0p9F8q9EwgwS6Tum0l9PeRpu7SZWkHKJe2sdpPxuImUKRtF5F-QUbHp8f",
+		         "id": "org.nunaliit.css.body",
+		         "deleted": true
+		         "changes": [
+		            {
+		               "rev": "1-c6d43bc49dbc259ecc8a9f75d82119df"
+		            }
+		         ]
+		      }
+		   ]
+		}
+		
+		In CouchDB 1.x, last_seq is a number
+		In CouchDB 2.x, last_seq is a string
+	 */
+	getChanges: function(opt_) {
 		var opt = $n2.extend({
-			since: null
-			,limit: null
+			since: undefined
+			,limit: undefined
 			,descending: false
 			,include_docs: false
 			,onSuccess: function(changes){}
@@ -1153,6 +1233,7 @@ var Database = $n2.Class('couch.Database',{
 	,createDocument: function(options_) {
 		var opts = $.extend(true, {
 				data: {}
+				,deviceId: undefined // custom for submissionDb
 				,onSuccess: function(docInfo){}
 				,onError: function(errorMsg){ $n2.reportErrorForced(errorMsg); }
 			}
@@ -1167,6 +1248,12 @@ var Database = $n2.Class('couch.Database',{
 		
 		var _s = this;
 		
+		// Device id for submission DB
+		var deviceIdStr = '';
+		if( opts.deviceId ){
+			deviceIdStr = '?deviceId='+opts.deviceId;
+		};
+		
 		var docId = opts.data._id;
 		if( docId ) {
 			// If _id was specified
@@ -1180,7 +1267,7 @@ var Database = $n2.Class('couch.Database',{
 		
 		function onUuid(docId){
 			$.ajax({
-		    	url: _s.dbUrl + docId
+		    	url: _s.dbUrl + docId + deviceIdStr
 		    	,type: 'put'
 		    	,async: true
 		    	,data: JSON.stringify(opts.data)
@@ -1202,6 +1289,7 @@ var Database = $n2.Class('couch.Database',{
 	,updateDocument: function(options_) {
 		var opts = $.extend(true, {
 				data: null
+				,deviceId: undefined // custom for submissionDb
 				,onSuccess: function(docInfo){}
 				,onError: function(errorMsg){ $n2.reportErrorForced(errorMsg); }
 			}
@@ -1218,10 +1306,16 @@ var Database = $n2.Class('couch.Database',{
 			return;
 		};
 		
+		// Device id for submission DB
+		var deviceIdStr = '';
+		if( opts.deviceId ){
+			deviceIdStr = '?deviceId='+opts.deviceId;
+		};
+		
 		var _s = this;
 		
 		$.ajax({
-	    	url: _s.dbUrl + opts.data._id
+	    	url: _s.dbUrl + opts.data._id + deviceIdStr
 	    	,type: 'PUT'
 	    	,async: true
 	    	,data: JSON.stringify(opts.data)
@@ -1242,6 +1336,7 @@ var Database = $n2.Class('couch.Database',{
 	,deleteDocument: function(options_) {
 		var opts = $.extend(true, {
 				data: null
+				,deviceId: undefined // custom for submissionDb
 				,onSuccess: function(docInfo){}
 				,onError: function(errorMsg){ $n2.reportErrorForced(errorMsg); }
 			}
@@ -1258,10 +1353,16 @@ var Database = $n2.Class('couch.Database',{
 			return;
 		};
 		
+		// Device id for submission DB
+		var deviceIdStr = '';
+		if( opts.deviceId ){
+			deviceIdStr = '&deviceId='+opts.deviceId;
+		};
+		
 		var _s = this;
 		
 		$.ajax({
-	    	url: _s.dbUrl + opts.data._id + '?rev=' + opts.data._rev
+	    	url: _s.dbUrl + opts.data._id + '?rev=' + opts.data._rev + deviceIdStr
 	    	,type: 'DELETE'
 	    	,async: true
 	    	,dataType: 'json'

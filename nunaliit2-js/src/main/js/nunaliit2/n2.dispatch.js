@@ -122,6 +122,7 @@ var Dispatcher = $n2.Class({
 		this.handles = {};
 		this.dispatching = false;
 		this.queue = [];
+
 	},
 
 	/**

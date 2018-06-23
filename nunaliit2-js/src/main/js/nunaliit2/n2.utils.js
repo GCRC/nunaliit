@@ -829,34 +829,32 @@ $n2.utils = {
 	 * @returns {void}
 	 */
 	insertJavascriptDeclarations: function(declarationDescription, names, callback){
+		
+		if( typeof names === 'string' ){
+			names = [ names ];
+		};
 
 		var scriptLocation = declarationDescription.location;
-		
-       	var allScriptTags = new Array();
-       	for( var i=0; i<names.length; ++i ) {
-       		allScriptTags.push('<script type="text/javascript" src="');
-       		allScriptTags.push(scriptLocation);
-       		allScriptTags.push(names[i]);
-       		allScriptTags.push('"></script>');
-       	};
-       	
-       	// Add callback
-       	var cbId = $n2.getUniqueId();
-       	$n2.utils._callbacks[cbId] = function(){
-       		delete $n2.utils._callbacks[cbId];
-       		if( typeof(callback) === 'function' ){
-       			callback();
-       		};
-       	};
-   		allScriptTags.push('<script type="text/javascript">if( typeof(nunaliit2.utils._callbacks["');
-   		allScriptTags.push(cbId);
-   		allScriptTags.push('"]) === "function" ){ nunaliit2.utils._callbacks["');
-   		allScriptTags.push(cbId);
-   		allScriptTags.push('"](); };');
-   		allScriptTags.push('</script>');
-       	
-   		// Write at end of document
-       	document.write(allScriptTags.join(''));
+		var insertBeforeElem = declarationDescription.element;
+
+		// Keep track of callback
+		var loaded = false;
+
+		for( var i=0; i<names.length; ++i ) {
+			var script = document.createElement('script');
+			script.setAttribute('type', 'text/javascript');
+			script.setAttribute('src', scriptLocation + names[i]);
+			script.onreadystatechange = script.onload = function() {
+				if( !loaded ){
+					loaded = true;
+					if( typeof callback === 'function' ){
+						callback();
+					};
+				};
+			};
+
+			insertBeforeElem.parentNode.insertBefore(script,insertBeforeElem);
+		};
 	},
 	
 	/**

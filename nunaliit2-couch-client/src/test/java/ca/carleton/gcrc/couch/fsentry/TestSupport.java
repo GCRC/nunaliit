@@ -10,6 +10,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Vector;
 
+import ca.carleton.gcrc.utils.StreamUtils;
+
 public class TestSupport {
 
 	static public File findResourceFile(String name) {
@@ -53,11 +55,9 @@ public class TestSupport {
 		InputStream is = entry.getInputStream();
 		InputStreamReader isr = new InputStreamReader(is,"UTF-8");
 		StringWriter sw = new StringWriter();
-		int c = isr.read();
-		while(c>=0){
-			sw.write(c);
-			c = isr.read();
-		}
+		
+		StreamUtils.copyStream(isr, sw);
+
 		sw.flush();
 		is.close();
 		

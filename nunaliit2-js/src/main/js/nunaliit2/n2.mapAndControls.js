@@ -860,6 +860,9 @@ var LayerInfo = $n2.Class({
 		{Boolean} addPointsOnly=false
     	If true, editing the map can only add points.
 	
+		{Boolean} showSRSAttribution
+		If true, the SRS Code will be added to the map attribution
+		
 		{Object} scaleLine
     	Defines properties for the scale line control
 
@@ -1069,6 +1072,7 @@ var MapAndControls = $n2.Class({
 				,units: 'm' // map units
 			}
 			,addPointsOnly: false
+			,showSRSAttribution: false
 			,scaleLine: {
 				visible: false
 			}
@@ -1452,7 +1456,7 @@ var MapAndControls = $n2.Class({
 			,theme: null // Let host page control loading of appropriate CSS style sheet
 			,zoomMethod: null  // Zoom with features does not look good
 		});
-		
+
 		// Create Scale line 
 		if( this.options.scaleLine && this.options.scaleLine.visible ){
 			// Default OpenLayers Scale Line Properties:
@@ -1472,7 +1476,6 @@ var MapAndControls = $n2.Class({
 				,maxWidth: this.options.scaleLine.maxWidth
 				,geodesic: this.options.scaleLine.geodesic
 			});
-
 			this.map.addControl(scaleLine);
 		};
 
@@ -1486,6 +1489,7 @@ var MapAndControls = $n2.Class({
 				navControls[i].disableZoomWheel();
 			};
 		};
+
 		if( this.map.div ){
 			var $map = $(this.map.div);
 			$map.find('.olControlZoomIn').attr('title', _loc('Zoom In'));
@@ -1510,6 +1514,12 @@ var MapAndControls = $n2.Class({
         	// var baseLayer = evt.layer;
         	var lastProjectionObj = evt.oldProjection;
         	var currentProjectionObj = _this.map.getProjectionObject();
+			
+			// If showSRSAttribution option is true 
+			// update the SRS layer attribution
+			if( _this.options.showSRSAttribution ) {
+				_this._updateSRSAttribution();
+			};
 
         	// Makes sense only when projection is changed
         	if( currentProjectionObj 
@@ -1599,15 +1609,24 @@ var MapAndControls = $n2.Class({
 		this.map.addLayers(this.mapLayers);
 
 		// Install mouse position widget
+		var precisionLevel = 5;
 		var mousePositionProjection = this.options.mapCoordinateSpecifications.useForMapControls ? 
 				userCoordProjection : mapProjection;
+
 		if( this.options.mapCoordinateSpecifications.mousePositionSrsName ){
 			mousePositionProjection = new OpenLayers.Projection(
 				this.options.mapCoordinateSpecifications.mousePositionSrsName
 			);
 		};
+
+		// Reduce level of precision for mouse position to 0 decimal places if the units are in metres
+		if( mousePositionProjection.proj.units === 'm'){
+			precisionLevel = 0;
+		};
+
 		this.map.addControl(new OpenLayers.Control.MousePosition({
-			displayProjection: mousePositionProjection
+			displayProjection: mousePositionProjection,
+			numDigits: precisionLevel
 		}));
 		
 		// Layer switcher control
@@ -1762,7 +1781,32 @@ var MapAndControls = $n2.Class({
 			};
 		};
 	},
-	
+
+	_updateSRSAttribution: function(){
+		var _this = this;
+		var currentProjection = this.map.getProjectionObject();
+		var srsCode = currentProjection.projCode;
+		var projDef = currentProjection.proj.defData.replace(/ /g, ",");
+
+		// Create a new hidden OpenLayers.Layer object with SRS attribution
+		var srsAttribution = new OpenLayers.Layer("SRS",{
+			attribution:'SRS: <span title='+ projDef +'>' + srsCode +'</span>',
+			visibility: true,
+			displayInLayerSwitcher: false
+		});
+
+		// Remove old SRS attribution layers
+		var oldSRSLayer = this.map.getLayersByName("SRS");
+		if( oldSRSLayer.length > 0 ){
+			oldSRSLayer.forEach(function(srsLayer){
+				_this.map.removeLayer(srsLayer);
+			});
+		};
+
+		// Add SRS attribution layer
+		this.map.addLayers([srsAttribution]);
+	},
+
 	_getMapFeaturesIncludingFid: function(fid){
 		var fidMap = {};
 		fidMap[fid] = true;
@@ -5584,6 +5628,9 @@ var MapAndControls = $n2.Class({
 		} else if( 'editClosed' === type ) {
 
 			var fid = this.editFeatureInfo.fid;
+			if( !fid ){
+				fid = m.docId;
+			};
 			var reloadRequired = true;
 			if( m.cancelled ){
 				reloadRequired = false;

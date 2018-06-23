@@ -28,6 +28,8 @@
 		
 		fromList: null,
 		
+		listId: null,
+		
 		initialize: function(opts_){
 			var opts = $n2.extend({
 				docIds: null
@@ -38,6 +40,8 @@
 			this.docIds = opts.docIds;
 			this.fromList = opts.fromList;
 
+			this.listId = $n2.getUniqueId();
+			
 			if( !this.docIds ){
 				this.docIds = [];
 			};
@@ -2296,60 +2300,93 @@
 		var $lists = getListsDiv();
 		$lists.empty();
 		
-		var $h = $('<h1><span></span> <button></button></h1>');
-		$h.find('span').text( _loc('Queries') );
-		$h.find('button').text( _loc('Add') );
-		$lists.append($h);
-		
-		$h.find('button').click(function(){
-			SearchFilter.createNewList({
-				onSuccess: function(list){
-					addList(list);
-				}
-			});
-			return false;
-		});
+		var $h = $('<h1>')
+			.appendTo($lists);
+		$('<span>')
+			.text( _loc('Queries') )
+			.appendTo($h);
+		$('<button>')
+			.text( _loc('Add') )
+			.click(function(){
+				SearchFilter.createNewList({
+					onSuccess: function(list){
+						addList(list);
+					}
+				});
+				return false;
+			})
+			.appendTo($h);
 		
 		for(var i=0,e=allLists.length; i<e; ++i){
 			var list = allLists[i];
+			var listId = list.listId;
 			
-			var $d = $('<div></div>');
-			$lists.append($d);
-			installView(list, $d);
+			var $d = $('<div>')
+				.attr('n2-list-id', listId)
+				.click(onListClick)
+				.appendTo($lists);
 			
 			if( list === selectedList ) {
 				$d.addClass('selectAppListSelected');
 			};
 			
-			var $s = $('<span></span>');
-			$s.text( list.print() );
-			$d.append($s);
+			$('<span>')
+				.text( list.print() )
+				.appendTo($d);
 			
-			var $a = $('<a href="#"></a>');
-			$a.text( _loc('View') );
-			$d.append($a);
-			installView(list, $a);
+			$('<a>')
+				.addClass('selectApp_list_button')
+				.attr('href','#')
+				.attr('n2-list-id', listId)
+				.text( _loc('View') )
+				.click(onListClick)
+				.appendTo($d);
 			
-			var $a = $('<a href="#"></a>');
-			$a.text( _loc('Text') );
-			$d.append($a);
-			installText(list, $a);
+			$('<a>')
+				.addClass('selectApp_list_button')
+				.attr('href','#')
+				.attr('n2-list-id', listId)
+				.text( _loc('Text') )
+				.click(onTextClick)
+				.appendTo($d);
+
+			$('<a>')
+				.addClass('selectApp_list_button')
+				.attr('href','#')
+				.attr('n2-list-id', listId)
+				.text( _loc('Remove') )
+				.click(onRemoveClick)
+				.appendTo($d);
 		};
 		
-		function installView(list, $a){
-			$a.click(function(e){
-				e.stopPropagation();
-				selectList(list);
-				return false;
-			});
+		function onListClick(e){
+			e.stopPropagation();
+
+			var $a = $(this);
+			var listId = $a.attr('n2-list-id');
+			var list = findListById(listId);
+			selectList(list);
+			return false;
 		};
-		
-		function installText(list, $a){
-			$a.click(function(e){
-				e.stopPropagation();
-				selectText(list);
-				return false;
-			});
+
+		function onTextClick(e){
+			e.stopPropagation();
+
+			var $a = $(this);
+			var listId = $a.attr('n2-list-id');
+			var list = findListById(listId);
+			selectText(list);
+			return false;
+		};
+
+		function onRemoveClick(e){
+			e.stopPropagation();
+
+			var $a = $(this);
+			var listId = $a.attr('n2-list-id');
+			var list = findListById(listId);
+			removeList(list);
+			return false;
 		};
 	};
 	
@@ -2365,6 +2402,33 @@
 		refreshAllLists();
 		
 		viewList(list);
+	};
+	
+	// -----------------------------------------------------------------
+	function removeList(list){
+		if( selectedList === list ){
+			selectedList = undefined;
+			clearList();
+		};
+
+		var index = allLists.indexOf(list);
+		if( index >= 0 ){
+			allLists.splice(index,1);
+		};
+		
+		refreshAllLists();
+	};
+
+	// -----------------------------------------------------------------
+	function findListById(listId){
+		var list = undefined;
+		allLists.forEach(function(l){
+			if( listId === l.listId ){
+				list = l;
+			};
+		});
+
+		return list;
 	};
 	
 	// -----------------------------------------------------------------
@@ -3072,6 +3136,22 @@
 	
 	// -----------------------------------------------------------------
 	function resubmitMediaInList(doc, onTransformed, onSkipped, scriptConfig){
+		// Figure out original attachments so as to not mess with them
+		var originalKeyMap = {};
+		if( doc.nunaliit_attachments 
+		 && doc.nunaliit_attachments.files ) {
+			for(var attName in doc.nunaliit_attachments.files){
+				var att = doc.nunaliit_attachments.files[attName];
+
+				if( att.originalAttachment ) {
+					originalKeyMap[att.originalAttachment] = true;
+				};
+				if( att.isOriginalUpload ){
+					originalKeyMap[attName] = true;
+				};
+			};
+		};
+		
 		// Mark all attachments as submitted
 		var updateRequired = false;
 		var keysToRemove = [];
@@ -3080,20 +3160,23 @@
 		 && doc.nunaliit_attachments.files ) {
 			for(var attName in doc.nunaliit_attachments.files){
 				var att = doc.nunaliit_attachments.files[attName];
-				att.status = 'submitted';
-				updateRequired = true;
 				
-				if( att.thumbnail ) {
-					keysToRemove.push(att.thumbnail);
-				};
-				
-				if( att.originalAttachment ) {
-					keysToRemove.push(att.originalAttachment);
+				if( att.source ) {
+					// Remove all derived attachments except for original files
+					if( originalKeyMap[attName] ) {
+						// Do not remove
+					} else {
+						// remove
+						keysToRemove.push(attName);
+					};
+				} else {
+					att.status = 'submitted';
+					updateRequired = true;
 				};
 			};
 		};
 		
-		// Remove thumbnails and original attachments
+		// Remove excess attachment descriptors
 		for(var i=0,e=keysToRemove.length; i<e; ++i){
 			var keyToRemove = keysToRemove[i];
 			
@@ -3200,26 +3283,48 @@
 		};
 		return $e;
 	};
-	
+
+	// -----------------------------------------------------------------
+	function getDocumentRevisionsDiv(){
+		var $e = $selectAppDiv.find('.selectAppRevisions');
+		if( $e.length < 1 ) {
+			var $docDiv = getDocumentDiv();
+			$e = $('<div>')
+				.addClass('selectAppRevisions')
+				.insertAfter($docDiv);
+		};
+		return $e;
+	};
+
 	// -----------------------------------------------------------------
 	function clearDocument(){
 		var $div = getDocumentDiv();
 		
 		$div.html('<h1></h1><div class="selectAppMinHeight"></div>');
 		$div.find('h1').text( _loc('No Document') );
+
+		var $revs = getDocumentRevisionsDiv();
+		$revs.empty();
 	};
 	
 	// -----------------------------------------------------------------
 	function viewDocument(docId){
 		var $div = getDocumentDiv();
+		var $revs = getDocumentRevisionsDiv();
 		
 		$div.html('<h1>'+docId+'</h1><div class="olkit_wait"></div>');
+		$revs.empty();
 		
 		atlasDb.getDocument({
 			docId: docId
 			,skipCache: true
+			,revs_info: true
 			,onSuccess: function(doc){
 				$div.empty();
+				
+				// Do not show revs to user
+				var revsInfo = doc._revs_info;
+				delete doc._revs_info;
 				
 				var $h = $('<h1></h1>');
 				$div.append($h);
@@ -3244,11 +3349,73 @@
 					editDocument(doc);
 					return false;
 				});
+				
+				if( revsInfo ){
+					loadRevs(revsInfo);
+				};
 			}
 			,onError: function(err){
 				reportError(err);
 			}
 		});
+		
+		function loadRevs(revsInfo){
+			$revs.empty();
+			
+			var $selectorDiv = $('<div>')
+				.addClass('selectAppRevisionSelector')
+				.appendTo($revs);
+			var $selector = $('<select>')
+				.change(revisionSelected)
+				.appendTo($selectorDiv);
+			var $o = $('<option>')
+				.text('Select Revision')
+				.val('')
+				.appendTo($selector);
+			
+			if( $n2.isArray(revsInfo) ){
+				revsInfo.forEach(function(revInfo){
+					if( typeof revInfo.rev === 'string' ){
+						$('<option>')
+							.text(revInfo.rev)
+							.val(revInfo.rev)
+							.appendTo($selector);
+					};
+				});
+			};
+			
+			var $displayDiv = $('<div>')
+				.addClass('selectAppRevisionDisplay')
+				.appendTo($revs);
+		};
+		
+		function revisionSelected() {
+			var $selector = $(this);
+			
+			var $displayDiv = $revs.find('.selectAppRevisionDisplay');
+			$displayDiv.empty();
+			
+			var revSelected = $selector.val();
+			$displayDiv.text(revSelected);
+
+			if( revSelected ){
+				atlasDb.getDocument({
+					docId: docId
+					,rev: revSelected
+					,onSuccess: function(doc){
+						$displayDiv.empty();
+						
+						var $tree = $('<div>')
+							.appendTo($displayDiv);
+						
+						new $n2.tree.ObjectTree($tree, doc);
+					}
+					,onError: function(err){
+						// ignore
+					}
+				});
+			};
+		};
 	};
 	
 	// -----------------------------------------------------------------

@@ -9,7 +9,7 @@ Carleton University in Ottawa, Canada. Sample atlases developed over many years 
 interact with on the GCRC [Atlases page](https://gcrc.carleton.ca/confluence/x/7wEV).
 
 Pre-compiled and packaged Nunaliit .tar.gz and .zip files can be [downloaded from the Maven central repository]
-(http://central.maven.org/maven2/ca/carleton/gcrc/nunaliit2-couch-sdk/).
+(http://central.maven.org/maven2/ca/carleton/gcrc/nunaliit2-couch-sdk/); however, those builds can get a bit old so we recommend building the latest code from master when starting out so you will have the same version the team at GCRC is running.
 
 The [Documentation](https://github.com/GCRC/nunaliit/wiki/)
 describes the setup and use of Nunaliit, as well as build instructions for developers.

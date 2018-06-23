@@ -2187,7 +2187,7 @@ var Show = $n2.Class({
 
 		var _this = this;
 
-		// Peform pre-processing, allowing client to
+		// Perform pre-processing, allowing client to
 		// augment document prior to display
 		doc = this._preprocessDocument(doc);
 

@@ -442,7 +442,7 @@ jsunit.defineTest('$n2.date.parseUserDate',function($$){
 			$$.fail("Date should be valid ("+str+"): "+e);
 		};
 	};
-	
+
 	valid('1980');
 	valid('  1980  ');
 	valid('1980-06');
@@ -503,6 +503,26 @@ jsunit.defineTest('$n2.date.findDateString',function($$){
 	t('aaa 1990-06-01T12:34 bbb',1990,6,1,12,34);
 	t('aaa 1990-06-01T1234 bbb',1990,6,1,12,34);
 	t('aaa 1990-06-01T123456 bbb',1990,6,1,12,34,56);
+	t('aaa 1990-06-01 123456bbb',1990,6,1);
+	t('201809',2018,9);
+	
+	function invalid(str) {
+		var d;
+		try {
+			d = $n2.date.findDateString(str);
+		} catch(e) {
+			$$.fail("Exception ("+str+"): "+e);
+		};
+		if( d ){
+			$$.fail("Should not return a date: "+str);
+		};
+	};
+	
+	invalid(' 50018 ');
+	invalid(' P2018 ');
+	invalid(' 2018x ');
+	invalid(' 2018-011 ');
+	invalid(' 2018-01-011 ');
 });
 
 //*********

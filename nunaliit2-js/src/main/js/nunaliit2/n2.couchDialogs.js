@@ -524,14 +524,18 @@ var SearchBriefDialogFactory = $n2.Class({
 	
 	dialogPrompt: null,
 	
+	sortOnBrief: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			showService: null
+			,sortOnBrief: false
 			,dialogPrompt: _loc('Select')
 		},opts_);
 		
 		this.showService = opts.showService;
 		this.dialogPrompt = opts.dialogPrompt;
+		this.sortOnBrief = opts.sortOnBrief;
 	},
 	
 	/*
@@ -550,7 +554,8 @@ var SearchBriefDialogFactory = $n2.Class({
 	 */
 	getDocuments: function(opts_){
 		var opts = $n2.extend({
-			onSuccess: function(docs){}
+			args: []
+			,onSuccess: function(docs){}
 			,onError: function(err){}
 		},opts_);
 		
@@ -561,7 +566,8 @@ var SearchBriefDialogFactory = $n2.Class({
 	
 	showDialog: function(opts_){
 		var opts = $n2.extend({
-			onSelected: function(docId){}
+			args: []
+			,onSelected: function(docId){}
 			,onReset: function(){}
 		},opts_);
 		
@@ -649,7 +655,8 @@ var SearchBriefDialogFactory = $n2.Class({
 		$dialog.dialog(dialogOptions);
 
 		this.getDocuments({
-			onSuccess: displayDocs
+			args: opts.args
+			,onSuccess: displayDocs
 			,onError: function(errorMsg){ 
 				reportError( _loc('Unable to retrieve documents: {err}',{
 					err: errorMsg
@@ -667,32 +674,80 @@ var SearchBriefDialogFactory = $n2.Class({
 			} else {
 				var $table = $('<table></table>');
 				$('#'+displayId).empty().append($table);
+				
+				var displayedById = {};
 
 				for(var i=0,e=docs.length; i<e; ++i) {
 					var doc = docs[i];
 					var docId = doc._id;
 					
-					var $tr = $('<tr>')
-						.addClass('trResult')
-						.appendTo($table);
-
-					var $td = $('<td>')
-						.addClass('n2_search_result olkitSearchMod2_'+(i%2))
-						.appendTo($tr);
-					
-					var $a = $('<a>')
-						.attr('href','#'+docId)
-						.attr('alt',docId)
-						.appendTo($td)
-						.click( createClickHandler(docId) );
-					
-					if( _this.showService ) {
-						_this.showService.displayBriefDescription($a, {}, doc);
+					if( displayedById[docId] ){
+						// Already displayed. Skip
 					} else {
-						$a.text(docId);
+						displayedById[docId] = true;
+						
+						var $tr = $('<tr>')
+							.addClass('trResult')
+							.appendTo($table);
+
+						var $td = $('<td>')
+							.addClass('n2_search_result olkitSearchMod2_'+(i%2))
+							.appendTo($tr);
+						
+						var $a = $('<a>')
+							.attr('href','#'+docId)
+							.attr('alt',docId)
+							.appendTo($td)
+							.click( createClickHandler(docId) );
+						
+						if( _this.showService ) {
+							_this.showService.displayBriefDescription($a, {}, doc);
+						} else {
+							$a.text(docId);
+						};
 					};
 				};
+				
+				if( _this.sortOnBrief ){
+					sortTable($table);
+				};
 			};
+		};
+		
+		function sortTable($table){
+			// Get all rows
+			var $trs = $table.find('tr');
+			
+			// Assign the text value as a sort key to each row
+			$trs.each(function(){
+				var $tr = $(this);
+				$tr.attr('n2-sort-key',$tr.text());
+			});
+			
+			// Sort on the key
+			var trArray = $trs.toArray().sort(function(trA,trB){
+				var keyA = $(trA).attr('n2-sort-key');
+				var keyB = $(trB).attr('n2-sort-key');
+				if( keyA === keyB ){
+					return 0;
+				} else if( !keyA ){
+					return -1;
+				} else if( !keyB ){
+					return 1;
+				} else if( keyA < keyB ){
+					return -1;
+				} else if( keyA > keyB ){
+					return 1;
+				} else {
+					// should not get here
+					return 0;
+				};
+			});
+
+			// Re-order table
+			trArray.forEach(function(tr){
+				$table.append(tr);
+			});
 		};
 		
 		function filterList(words){
@@ -739,6 +794,168 @@ var SearchBriefDialogFactory = $n2.Class({
 		};
 	}
 
+});
+
+//++++++++++++++++++++++++++++++++++++++++++++++
+/**
+ * Search for documents based on schema name(s)
+ * @class
+ */
+var SearchOnSchemaDialogFactory = $n2.Class('SearchOnSchemaDialogFactory', SearchBriefDialogFactory, {
+
+	atlasDesign: null,
+	
+	showService: null,
+	
+	dialogPrompt: null,
+	
+	/**
+	 * @constructor
+	 */
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			atlasDesign: undefined
+			,showService: undefined
+			,sortOnBrief: true
+			,dialogPrompt: _loc('Select a Document')
+		},opts_);
+		
+		$n2.couchDialogs.SearchBriefDialogFactory.prototype.initialize.call(this, opts);
+		
+		this.atlasDesign = opts.atlasDesign;
+	},
+
+	getDocuments: function(opts_){
+		var opts = $n2.extend({
+			args: []
+			,onSuccess: function(docs){}
+			,onError: function(err){}
+		},opts_);
+		
+		var keys = [];
+		var errorEncountered = true;
+		if( $n2.isArray(opts.args) 
+		 && opts.args.length > 0 ){
+			errorEncountered = false;
+			
+			var keys = [];
+			opts.args.forEach(function(k){
+				if( typeof k === 'string' ){
+					keys.push(k);
+				} else {
+					errorEncountered = true;
+				};
+			});
+		};
+		
+		if( errorEncountered ){
+			$n2.logError('Can not search for documents based on schema', opts.args);
+			opts.onError( _loc('Can not search for documents based on schema') ); 
+
+		} else {
+			this.atlasDesign.queryView({
+				viewName: 'nunaliit-schema'
+				,keys: keys
+				,include_docs: true
+				,onSuccess: function(rows){
+					var docs = [];
+					for(var i=0,e=rows.length; i<e; ++i){
+						var doc = rows[i].doc;
+						if( doc ){
+							docs.push(doc);
+						};
+					};
+					
+					opts.onSuccess(docs);
+				}
+				,onError: function(errorMsg){
+					$n2.logError('Unable to retrieve documents for schema '+keys+': '+errorMsg);
+					opts.onError( _loc('Unable to retrieve documents for schema {name}', {name:''+keys}) ); 
+				}
+			});
+		};
+	}
+});
+
+//++++++++++++++++++++++++++++++++++++++++++++++
+/**
+* Search for documents based on layer identifier
+* @class
+*/
+var SearchOnLayerDialogFactory = $n2.Class('SearchOnLayerDialogFactory', SearchBriefDialogFactory, {
+
+	atlasDesign: null,
+	
+	showService: null,
+	
+	dialogPrompt: null,
+	
+	/**
+	 * @constructor
+	 */
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			atlasDesign: undefined
+			,showService: undefined
+			,sortOnBrief: true
+			,dialogPrompt: _loc('Select a Document')
+		},opts_);
+		
+		$n2.couchDialogs.SearchBriefDialogFactory.prototype.initialize.call(this, opts);
+		
+		this.atlasDesign = opts.atlasDesign;
+	},
+
+	getDocuments: function(opts_){
+		var opts = $n2.extend({
+			args: []
+			,onSuccess: function(docs){}
+			,onError: function(err){}
+		},opts_);
+		
+		var keys = [];
+		var errorEncountered = true;
+		if( $n2.isArray(opts.args) 
+		 && opts.args.length > 0 ){
+			errorEncountered = false;
+			
+			var keys = [];
+			opts.args.forEach(function(k){
+				if( typeof k === 'string' ){
+					keys.push(k);
+				} else {
+					errorEncountered = true;
+				};
+			});
+		};
+		
+		if( errorEncountered ){
+			$n2.logError('Can not search for documents based on layer', opts.args);
+			opts.onError( _loc('Can not search for documents based on layer') ); 
+
+		} else {
+			this.atlasDesign.queryView({
+				viewName: 'layers'
+				,keys: keys
+				,include_docs: true
+				,onSuccess: function(rows){
+					var docs = [];
+					for(var i=0,e=rows.length; i<e; ++i){
+						var doc = rows[i].doc;
+						if( doc ){
+							docs.push(doc);
+						};
+					};
+					
+					opts.onSuccess(docs);
+				}
+				,onError: function(errorMsg){
+					$n2.logError('Unable to retrieve documents for layer '+keys+': '+errorMsg);
+					opts.onError( _loc('Unable to retrieve documents for layer {name}', {name:''+keys}) ); 
+				}
+			});
+		};
+	}
 });
 
 //++++++++++++++++++++++++++++++++++++++++++++++
@@ -1493,6 +1710,8 @@ var DialogService = $n2.Class({
 	
 	funcMap: null,
 	
+	atlasDesign: null,
+	
 	initialize: function(opts_) {
 		var opts = $n2.extend({
 			dispatchService: null
@@ -1501,6 +1720,7 @@ var DialogService = $n2.Class({
 			,showService: null
 			,schemaRepository: null
 			,funcMap: null
+			,atlasDesign: null
 		},opts_);
 	
 		var _this = this;
@@ -1510,6 +1730,7 @@ var DialogService = $n2.Class({
 		this.searchService = opts.searchService;
 		this.showService = opts.showService;
 		this.schemaRepository = opts.schemaRepository;
+		this.atlasDesign = opts.atlasDesign;
 		
 		this.funcMap = {};
 		for(var key in opts.funcMap){
@@ -1575,6 +1796,22 @@ var DialogService = $n2.Class({
 				,showService: this.showService
 			});
 			this.funcMap['getHoverSound'] = hoverSoundDialogFactory.getDialogFunction();
+		};
+
+		if( !this.funcMap['getDocumentFromSchema'] ){
+			var factory = new SearchOnSchemaDialogFactory({
+				atlasDesign: this.atlasDesign
+				,showService: this.showService
+			});
+			this.funcMap['getDocumentFromSchema'] = factory.getDialogFunction();
+		};
+
+		if( !this.funcMap['getDocumentFromLayer'] ){
+			var factory = new SearchOnLayerDialogFactory({
+				atlasDesign: this.atlasDesign
+				,showService: this.showService
+			});
+			this.funcMap['getDocumentFromLayer'] = factory.getDialogFunction();
 		};
 	},
 	
@@ -1687,11 +1924,18 @@ var DialogService = $n2.Class({
 		var diagId = $n2.getUniqueId();
 		var $dialog = $('<div id="'+diagId+'"></div>');
 
-		var $label = $('<span></span>');
-		$label.text( _loc('Select schema') + ': ' );
-		$dialog.append($label);
+		if (!window.cordova) {
+			var $label = $('<span></span>');
+			$label.text( _loc('Select schema') + ': ' );
+			$dialog.append($label);
+		}
 		
 		var $select = $('<select></select>');
+
+		if (window.cordova) {
+			$select.addClass('cordova-select-dropdown');
+		}
+
 		$dialog.append($select);
 		for(var i=0,e=opt.schemas.length; i<e; ++i){
 			var schema = opt.schemas[i];
@@ -1707,10 +1951,24 @@ var DialogService = $n2.Class({
 		
 		var mustReset = true;
 		
-		var $ok = $('<button></button>');
-		$ok.text( _loc('OK') );
-		$ok.button({icons:{primary:'ui-icon-check'}});
-		$dialog.append( $ok );
+		var $btnContainer;
+		if (window.cordova) {
+			$btnContainer = $('<div></div>')
+				.addClass('cordova-button-container');
+		}
+
+		var $ok;
+		if (window.cordova) {
+			$ok = $('<label></label>')
+				.text(_loc('Select'))
+				.addClass('cordova-dialog-btn')
+			$btnContainer.append($ok);
+		} else {
+			$ok = $('<button></button>');
+			$ok.text( _loc('OK') );
+			$ok.button({icons:{primary:'ui-icon-check'}});
+			$dialog.append( $ok );
+		} 
 		$ok.click(function(){
 			mustReset = false;
 			
@@ -1727,19 +1985,31 @@ var DialogService = $n2.Class({
 			return false;
 		});
 		
-		var $cancel = $('<button></button>');
+		var $cancel;
+		if (window.cordova) {
+			$cancel = $('<label></label>')
+				.addClass('cordova-dialog-btn');
+			$btnContainer.append($cancel);
+		} else {
+			$cancel = $('<button></button>');
+			$cancel.button({icons:{primary:'ui-icon-cancel'}});
+			$dialog.append( $cancel );
+		}
 		$cancel.text( _loc('Cancel') );
-		$cancel.button({icons:{primary:'ui-icon-cancel'}});
-		$dialog.append( $cancel );
 		$cancel.click(function(){
 			$('#'+diagId).dialog('close');
 			return false;
 		});
-		
+
+		if (window.cordova) {
+			$dialog.append($btnContainer);
+		}
+
 		var dialogOptions = {
 			autoOpen: true
 			,title: _loc('Select a schema')
 			,modal: true
+			,resizable: !window.cordova
 			,close: function(event, ui){
 				var diag = $(event.target);
 				diag.dialog('destroy');
@@ -1749,12 +2019,26 @@ var DialogService = $n2.Class({
 					opt.onReset();
 				};
 			}
+			,open: function(event, ui) {
+				if (window.cordova) {
+					$(".ui-dialog-titlebar-close", ui.dialog | ui).hide();
+				}
+    	}
 		};
 		
-		var width = computeMaxDialogWidth(740);
-		if( typeof width === 'number' ){
-			dialogOptions.width = width;
-		};
+		if (window.cordova) {
+			// Make the dialog title larger on Cordova
+			$("<style type='text/css'> .ui-dialog-title { font-size: large } </style>").appendTo("head");
+		}
+		
+		if (window.cordova) {
+			dialogOptions.maxWidth = '300px'
+		} else {
+			var width = computeMaxDialogWidth(740);
+			if( typeof width === 'number' ){
+				dialogOptions.width = width;
+			};
+		}
 		
 		$dialog.dialog(dialogOptions);
 	}

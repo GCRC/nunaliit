@@ -170,8 +170,8 @@ var Display = $n2.Class({
 
 		var dispatcher = this.dispatchService;
 		if( dispatcher ) {
-			var f = function(msg){
-				_this._handleDispatch(msg);
+			var f = function(msg, addr, dispatcher){
+				_this._handleDispatch(msg, addr, dispatcher);
 			};
 			dispatcher.register(DH, 'selected', f);
 			dispatcher.register(DH, 'searchResults', f);
@@ -696,6 +696,46 @@ var Display = $n2.Class({
 		var status = null;
 		
 		$progress.empty();
+
+		// Display a preview of local Cordova attachments
+		if (window.cordova && data.nunaliit_mobile_attachments) {
+			var lastSlashIndex = data.nunaliit_mobile_attachments.lastIndexOf('/');
+			var filename = data.nunaliit_mobile_attachments.substring(lastSlashIndex + 1);
+			$('<p>1 mobile attachment: ' + filename + '</p>')
+				.appendTo($progress);
+
+			window.resolveLocalFileSystemURL('file:' + data.nunaliit_mobile_attachments, 
+				function(fileEntry) {
+					fileEntry.file(function(file) {
+						if (file && file.type) {
+							if (file.type.startsWith('image')) {
+								// If the file is an image, display it
+								$('<img>', {src: data.nunaliit_mobile_attachments})
+									.addClass('n2Display_cordovaImgAttachmentPreview')
+									.on('error', function() { 
+										$(this).hide();
+									})
+									.appendTo($progress);
+							} else {
+								var $previewButtton = $('<label>')
+									.addClass('cordova-btn cordova-preview-button icon-preview width-100')
+									.appendTo($progress)
+									.text(_loc('Preview'))
+									.click(function(event) {
+										event.preventDefault();
+										// Try to open it using a plugin
+										window.cordova.plugins.fileOpener2.open(
+											data.nunaliit_mobile_attachments,
+											file.type, {
+												error : function(error) { console.error('Error opening file', file); }, 
+												success : function() { console.log('Opening file', file); } 
+											});
+									});
+							}
+						} 
+					});
+				});
+		}
 		
 		// Find an attachment which is in progress
 		if( data.nunaliit_attachments 
@@ -809,22 +849,26 @@ var Display = $n2.Class({
 				requestDocIds.push(requestDocId);
 			};
 
-			_this.documentSource.getDocumentInfoFromIds({
-				docIds: requestDocIds
-				,onSuccess: function(infos){
-					for(var i=0,e=infos.length;i<e;++i){
-						var requestDocId = infos[i].id;
-						
-						refInfo[requestDocId].exists = true;
-						if( infos[i].schema ) {
-							refInfo[requestDocId].schema = infos[i].schema;
+			if( requestDocIds.length > 0 ){
+				_this.documentSource.getDocumentInfoFromIds({
+					docIds: requestDocIds
+					,onSuccess: function(infos){
+						for(var i=0,e=infos.length;i<e;++i){
+							var requestDocId = infos[i].id;
+							
+							refInfo[requestDocId].exists = true;
+							if( infos[i].schema ) {
+								refInfo[requestDocId].schema = infos[i].schema;
+							};
 						};
-					};
-					
-					opts.onSuccess(refInfo);
-				}
-				,onError: opts.onError
-			});
+						
+						opts.onSuccess(refInfo);
+					}
+					,onError: opts.onError
+				});
+			} else {
+				opts.onSuccess(refInfo);
+			};
 		};
 	}
 
@@ -1148,7 +1192,7 @@ var Display = $n2.Class({
 		});
 	}
 	
-	,_handleDispatch: function(msg){
+	,_handleDispatch: function(msg, addr, dispatcher){
 		var _this = this;
 		
 		var $div = this._getDisplayDiv();

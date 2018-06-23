@@ -131,6 +131,8 @@ public class CommandUtils {
 				commandStr = sb.toString();
 			}
 
+			logger.trace("Executing command ("+commandStr+")");
+
 			ProcessBuilder pb = new ProcessBuilder(commandTokens);
 			Process p = pb.start();
 
@@ -151,19 +153,9 @@ public class CommandUtils {
 
 			InputStream is = p.getInputStream();
 			InputStreamReader isr = new InputStreamReader(is,"UTF-8");
-			BufferedReader bufReader = new BufferedReader(isr);
 			
-			char[] cbuf = new char[1024];
-			int size = bufReader.read(cbuf);
-			while( size >= 0 ) {
-				if( null != writer ){
-					writer.write(cbuf,0,size);
-				}
-				
-				size = bufReader.read(cbuf);
-			}
-
 			if( null != writer ){
+				StreamUtils.copyStream(isr, writer);
 				writer.flush();
 			}
 
@@ -216,6 +208,8 @@ public class CommandUtils {
 				commandStr = sb.toString();
 			}
 
+			logger.debug("Executing command ("+commandStr+")");
+
 			ProcessBuilder pb = new ProcessBuilder(commandTokens);
 			Process p = pb.start();
 
@@ -239,14 +233,7 @@ public class CommandUtils {
 			
 			
 			StringWriter stdWriter = new StringWriter();
-			char[] cbuf = new char[1024];
-			int size = stdReader.read(cbuf);
-			while( size >= 0 ) {
-				stdWriter.write(cbuf,0,size);
-				
-				size = stdReader.read(cbuf);
-			}
-
+			StreamUtils.copyStream(stdReader, stdWriter);
 			stdWriter.flush();
 
 			int exitValue = p.waitFor();
@@ -254,7 +241,12 @@ public class CommandUtils {
 			errGobbler.join();
 			
 			if( 0 != exitValue ){
-				logger.info("Command ("+commandStr+") exited with value "+exitValue+": "+errWriter.toString());
+				if( errWriter.toString().isEmpty() ) {
+					// No error was output. Dump stdout
+					logger.info("Command ("+commandStr+") exited with value "+exitValue+": "+stdWriter.toString());
+				} else {
+					logger.info("Command ("+commandStr+") exited with value "+exitValue+": "+errWriter.toString());
+				}
 				throw new Exception("Process exited with value: "+exitValue);
 			}
 			

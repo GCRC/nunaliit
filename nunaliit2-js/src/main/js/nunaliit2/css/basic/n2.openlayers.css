@@ -59,7 +59,8 @@ div.olControlMousePosition {
 	background-color: rgba(255,255,255,0.7);
 	padding: 2px;
 	bottom: 0;
-	right: 125px;
+	right: 120px;
+	font-family: Arial;
 }
 
 .olControlMousePosition {
@@ -67,6 +68,10 @@ div.olControlMousePosition {
 	right: 0 !important;
 	padding: 2px;
 	background: rgba(255, 255, 255, 0.7);
+	max-width: 116px;
+	text-align: right;
+	width: auto;
+	word-break: break-all;
 }
 
 .olControlScaleLine {

@@ -1,7 +1,7 @@
 [
 	{
 		"utilityType": "assignLayerOnDocumentCreation"
-		,"layerId": "osm"
+		,"layerId": "public_demo"
 	},
 	{
 		"utilityType": "assignLayerOnDocumentCreation"

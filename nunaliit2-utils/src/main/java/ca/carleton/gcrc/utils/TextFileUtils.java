@@ -1,6 +1,5 @@
 package ca.carleton.gcrc.utils;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -18,27 +17,19 @@ public class TextFileUtils {
 	static public String readTextFile(File file) throws Exception {
 		FileInputStream fis = null;
 		InputStreamReader isr = null;
-		BufferedReader br = null;
 		try {
 			StringWriter sw = new StringWriter();
 			fis = new FileInputStream(file);
 			isr = new InputStreamReader(fis, "UTF-8");
-			br = new BufferedReader(isr);
 			
-			char[] data = new char[1024];
-			int size = br.read(data);
-			while( size >= 0 ){
-				sw.write(data, 0, size);
-				size = br.read(data);
-			}
+			StreamUtils.copyStream(isr, sw);
+
 			sw.flush();
 			
 			fis.close();
 			fis = null;
 			isr.close();
 			isr = null;
-			br.close();
-			br = null;
 			
 			return sw.toString();
 
@@ -58,14 +49,6 @@ public class TextFileUtils {
 				try {
 					fis.close();
 					fis = null;
-				} catch(Exception e) {
-					// Ignore
-				}
-			}
-			if( br != null ){
-				try {
-					br.close();
-					br = null;
 				} catch(Exception e) {
 					// Ignore
 				}
