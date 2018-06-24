@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015, Geomatics and Cartographic Research Centre, Carleton 
+Copyright (c) 2018, Geomatics and Cartographic Research Centre, Carleton 
 University
 All rights reserved.
 
@@ -154,8 +154,6 @@ var TreeCanvas = $n2.Class({
  			this.dispatchService.register(DH,'modelStateUpdated',f);
  		};
  		
- 		this.createGraph();
-
  		var graphSize = this.getGraphSize();
  		graphSize[0] = graphSize[0] - (2 * this.margin);
  		graphSize[1] = graphSize[1] - (2 * this.margin);
@@ -174,7 +172,9 @@ var TreeCanvas = $n2.Class({
  	 			.size(graphSize);
  		};
 		
- 		this.diagonalLine = d3.linkHorizontal();
+ 		this.diagonalLine = d3.linkVertical()
+			.x(function(d) { return d.x; })
+			.y(function(d) { return d.y; });
  		
  		opts.onSuccess();
 
@@ -192,33 +192,33 @@ var TreeCanvas = $n2.Class({
  			};
  		};
 
+ 		this.createGraph();
  		$n2.log('TreeCanvas',this);
  	},
  	
  	createGraph: function() {
-		var _this = this; // for use in callbacks
-		 
-		if( this.background 
-		&& typeof this.background.color === 'string' ){
-			var $canvas = $('#' + this.canvasId);
-			$canvas.css('background-color',this.background.color);
-		};
+ 		var _this = this; // for use in callbacks
 
-		this.svgId = $n2.getUniqueId();
+ 		if( this.background 
+ 		 && typeof this.background.color === 'string' ){
+ 			var $canvas = $('#' + this.canvasId);
+ 			$canvas.css('background-color',this.background.color);
+ 		};
+ 		
+ 		this.svgId = $n2.getUniqueId();
  		var $svg = $d.select('#' + this.canvasId)
  			.append('svg')
  			.attr('id',this.svgId);
  		
  		var $rootGroup = $svg.append('g')
-			.attr('class','packRoot');
+			.attr('class','packRoot')
+			;
 
 		$rootGroup.append('rect')
 			.attr('x',0)
 			.attr('y',0)
 			.attr('fill-opacity',0)
-			.classed({
-				'n2CanvasTree_background': true
-			})
+			.attr('class','n2CanvasTree_background')
 			.on('click', function(){
 				_this._backgroundClicked();
 			});
@@ -227,8 +227,8 @@ var TreeCanvas = $n2.Class({
  			.attr('class','links');
 
 		$rootGroup.append('g')
-			 .attr('class','nodes');
-			 
+ 			.attr('class','nodes');
+ 		
 		$rootGroup.append('g')
  			.attr('class','labels');
 
@@ -259,11 +259,11 @@ var TreeCanvas = $n2.Class({
  		var $svg = this._getSvgElem()
  			.attr('width', size[0])
  			.attr('height', size[1]);
-		
+ 		
 		$svg.select('.n2CanvasTree_background')
 			.attr('width', size[0])
 			.attr('height', size[1]);
-			 
+ 		
  		var $rootGroup = $svg.select('g.packRoot');
  		
  		var minDim = size[0];
@@ -312,8 +312,8 @@ var TreeCanvas = $n2.Class({
 
 		// Compute tree
 		var root = {
-			id: '__root__'
-			,name: ''
+			id: null
+			,name: null
 			,children: []
 		};
 		var nodes = [];
@@ -343,6 +343,23 @@ var TreeCanvas = $n2.Class({
 			};
 		};
 
+		var treeHierarchy = $d.hierarchy(root);
+		this.treeLayout(treeHierarchy);
+
+		var links = this.treeLayout(treeHierarchy).links();
+		var nodes = this.treeLayout(treeHierarchy).descendants();
+
+		// Copy hierarchy data object properties into node object
+		// Expected structure for the canvasElementGenerator 
+		for( var i = 0, e = nodes.length; i < e; i++){
+			if( nodes[i].data ){
+				var currentNode = nodes[i];
+				var hierarchyNodeData = nodes[i].data;
+				for( var p in nodes[i].data){
+					currentNode[p] = hierarchyNodeData[p];
+				};
+			};
+		}
 		// Report statistics on tree
 		var countParentId = 0;
 		var countNested = 0;
@@ -358,24 +375,6 @@ var TreeCanvas = $n2.Class({
 			};
 		};
 		$n2.log('nodes: '+nodes.length + ' root children: ' + root.children.length + ' nested: ' + countNested + ' parent id: ' + countParentId);
-		
-		nodes = this.treeLayout.nodes(root);
-		
-		nodes.forEach(function(n){
-			n.x = n.x + _this.margin;
-			n.y = n.y + _this.margin;
-		});
-		
-		var links = [];
-		for(var elemId in this.elementsById){
-			var elem = this.elementsById[elemId];
-			
-			if( elem.isLink ){
-				elem.n2_geometry = 'line';
-
-				links.push(elem);
-			};
-		};
 		
 		this._documentsUpdated(nodes, links);
 	},
@@ -396,32 +395,69 @@ var TreeCanvas = $n2.Class({
 
  		// Update style on nodes
  		var selectedNodes = this._getSvgElem().select('g.nodes').selectAll('.node')
- 			.data(nodes, function(d){ return d.id; });
+ 			.data(nodes, function(d){ return d.id; })
+ 			;
  		this._adjustElementStyles(selectedNodes);
 
  		// Update style on links
  		var selectedLinks = this._getSvgElem().select('g.links').selectAll('.link')
- 			.data(links, function(d){ return d.id; });
-		this._adjustElementStyles(selectedLinks);
-		 
+ 			.data(links, function(d){ return d.id; })
+ 			;
+ 		this._adjustElementStyles(selectedLinks);
+ 
  		// Update style on labels
  		var selectedLabels = this._getSvgElem().select('g.labels').selectAll('.label')
-		 	.data(nodes, function(node){ return node.id; });
+		 	.data(nodes, function(d){ return d.id; });
 	 	this._adjustElementStyles(selectedLabels);
-
 	},
  	
  	_documentsUpdated: function(nodes, links){
+
  		var _this = this;
+ 		
+		var updatedLinks = this._getSvgElem().select('g.links').selectAll('.link')
+			.data(links, function(d){ return d.id; });
+	  
+		updatedLinks
+			.transition()
+			.attr('d', this.diagonalLine);
+
+		updatedLinks.exit()
+			.remove();
+		
+		updatedLinks.enter()
+			.append('path')
+			.attr('class','link')
+			.attr('d', this.diagonalLine)
+			.attr('fill','none')
+			.attr('stroke','#000000')
+			.attr('stroke-width',1)
+			.attr('stroke-opacity',1)
+			.on('click', function(n,i){
+				_this._initiateMouseClick(n);
+			})
+			.on('mouseover', function(n,i){
+				_this._initiateMouseOver(n);
+			})
+			.on('mouseout', function(n,i){
+				_this._initiateMouseOut(n);
+			});
+
+	  // var allLinks = this._getSvgElem().select('g.links').selectAll('.link')
+	 // 	.data(links, function(d){ return d.id; });
+
+		this._adjustElementStyles(updatedLinks);
 		 
 		// Update Nodes
  		var updatedNodes = this._getSvgElem().select('g.nodes').selectAll('.node')
-			.data(nodes, function(d){ return d.id; });
- 		
+			.data(nodes, function(d){ return d.id; })
+			;
+
  		updatedNodes
 			.transition()
 			.attr('cx', function(d){ return d.x; })
-			.attr('cy', function(d){ return d.y; });
+			.attr('cy', function(d){ return d.y; })
+			;
  		
  		updatedNodes.exit()
  			.remove();
@@ -429,7 +465,7 @@ var TreeCanvas = $n2.Class({
  		updatedNodes.enter()
 			.append('circle')
 			.attr('class','node')
-			.attr('r', 5)
+			.attr('r', 5)			
 			.attr('cx', function(d){ return d.x; })
 			.attr('cy', function(d){ return d.y; })
  			.on('click', function(n,i){
@@ -440,20 +476,24 @@ var TreeCanvas = $n2.Class({
  			})
  			.on('mouseout', function(n,i){
  				_this._initiateMouseOut(n);
- 			});
+			 })
+			 ;
 
  		var allNodes = this._getSvgElem().select('g.nodes').selectAll('.node')
- 			.data(nodes, function(d){ return d.id; });
+			.data(nodes, function(d){ return d.id; })
+			;
+
  		this._adjustElementStyles(allNodes);
-		 
-		 
+ 		
 		// Update Links
  		var updatedLinks = this._getSvgElem().select('g.links').selectAll('.link')
-			.data(links, function(d){ return d.id; });
+			.data(links, function(d){ return d.id; })
+		;
  		
  		updatedLinks
  			.transition()
-			.attr('d', this.diagonalLine);
+			.attr('d', this.diagonalLine)
+			;
 
  		updatedLinks.exit()
  			.remove();
@@ -474,16 +514,18 @@ var TreeCanvas = $n2.Class({
  			})
  			.on('mouseout', function(n,i){
  				_this._initiateMouseOut(n);
- 			});
+			 })
+			 ;
 
  		var allLinks = this._getSvgElem().select('g.links').selectAll('.link')
-			.data(links, function(d){ return d.id; });
-		this._adjustElementStyles(allLinks);
+			.data(links, function(d){ return d.id; })
+			;
 
+		this._adjustElementStyles(allLinks);
 
 		// Update Labels
 		var updatedLabels = this._getSvgElem().select('g.labels').selectAll('.label')
-			.data(nodes, function(node){ return node.id; });
+			.data(nodes, function(node){ return node.data; });
 
 		updatedLabels.enter()
 			.append(function(){
@@ -507,10 +549,8 @@ var TreeCanvas = $n2.Class({
 			});
 
 		var allLabels = this._getSvgElem().select('g.labels').selectAll('.label')
-			.data(nodes, function(d){ return d.id; });
+			.data(nodes, function(d){ return d.data; });
 		this._adjustElementStyles(allLabels);
-
-
  	},
  	
  	_adjustElementStyles: function(selectedElements){
@@ -566,14 +606,14 @@ var TreeCanvas = $n2.Class({
  			this.elementGenerator.focusOff(elementData);
 			this.currentMouseOver = null;
  		};
-	 },
-	 
+ 	},
+ 	
 	_backgroundClicked: function(){
 		this._dispatch({
 			type: 'userUnselect'
 		});
 	},
- 	
+
  	_handleDispatch: function(m){
  		if( 'modelGetInfo' === m.type ){
  			if( m.modelId === this.modelId ){
