@@ -232,10 +232,8 @@ var RadialCanvas = $n2.Class({
  			this.dispatchService.register(DH,'modelStateUpdated',f);
  		};
  		
- 		this.line = d3.svg.line.radial()
-	 	    //.interpolate("bundle")
- 			.interpolate("basis")
-	 	    .tension(.85)
+ 		this.line = $d.radialLine()
+			.curve($d.curveBundle.beta(0.85))
 	 	    .radius(function(d) { return d.y; })
 	 	    .angle(function(d) { return d.x / 180 * Math.PI; });
  		
@@ -485,7 +483,7 @@ var RadialCanvas = $n2.Class({
  		
  		// Sort the nodes
  		this.sortedNodes.sort(function(a,b){
- 			return d3.ascending(a.sortValue, b.sortValue);
+ 			return $d.ascending(a.sortValue, b.sortValue);
  		});
  		
  		// Assign x and y
