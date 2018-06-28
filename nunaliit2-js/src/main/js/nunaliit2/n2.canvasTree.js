@@ -89,6 +89,7 @@ var TreeCanvas = $n2.Class({
 			,background: null
 			,styleRules: null
 			,layoutStyle: 'tree'
+			,horizontalLayout: null
 			,toggleSelection: true
 			,elementGeneratorType: 'default'
 			,elementGeneratorOptions: null
@@ -170,11 +171,18 @@ var TreeCanvas = $n2.Class({
  		 	    // 	return d3.ascending(a.sortValue, b.sortValue);
  		 	    // })
  	 			.size(graphSize);
- 		};
-		
- 		this.diagonalLine = d3.linkVertical()
+		 };
+
+		 if( typeof opts.horizontalLayout === 'boolean' && opts.horizontalLayout ){
+			this.diagonalLine = $d.linkHorizontal()
+			.x(function(d) { return d.y; })
+			.y(function(d) { return d.x; });
+
+		} else {
+			this.diagonalLine = $d.linkVertical()
 			.x(function(d) { return d.x; })
 			.y(function(d) { return d.y; });
+		};
  		
  		opts.onSuccess();
 
@@ -190,8 +198,8 @@ var TreeCanvas = $n2.Class({
  					this._sourceModelUpdated(msg.state);
  				};
  			};
- 		};
-
+		};
+		
  		this.createGraph();
  		$n2.log('TreeCanvas',this);
  	},
