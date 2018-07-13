@@ -108,58 +108,36 @@ var CreateDocumentWidget = $n2.Class({
 	
 	_display: function(){
 		var _this = this;
-		
-		if (window.cordova) {
-			// Remove the header since the Create Document is in the native nav bar on Cordova
-			var headers = document.getElementsByClassName("nunaliit_header");
-			if (headers.length) {
-				$(headers[0]).hide();
-				// Let the content start at the top since there is no header on Cordova
-				$("<style type='text/css'> .nunaliit_content { top: 0 } </style>").appendTo("head");
-			}
 
-			// Listen to the Create Document callback from native
-			document.addEventListener("deviceready", function() {
-				window.nunaliit2.cordovaPlugin.registerCallback('onCreateDocument', 
-					function() {
-						window.onCreateDocument = function() {
-							_this._startEdit();
-						};
-					}, function(error) {
-						console.error('Error on cordova callback invocation: ', error);
-					});
-			});
+		this.elemId = $n2.getUniqueId();
+		
+		var containerId = this.containerId;
+		
+		var $div = $('<div>')
+			.attr('id',this.elemId)
+			.addClass('n2widget_createDocument')
+			.appendTo( $('#'+containerId) );
+
+		if( this.showAsLink ) {
+			$div.addClass('n2widget_createDocument_asLink');
+
+			$('<a>')
+				.attr('href','#')
+				.text( _loc('Create Document') )
+				.appendTo($div)
+				.click(function(){
+					_this._startEdit();
+					return false;
+				});
 		} else {
-			this.elemId = $n2.getUniqueId();
-			
-			var containerId = this.containerId;
-			
-			var $div = $('<div>')
-				.attr('id',this.elemId)
-				.addClass('n2widget_createDocument')
-				.appendTo( $('#'+containerId) );
-	
-			if( this.showAsLink ) {
-				$div.addClass('n2widget_createDocument_asLink');
-	
-				$('<a>')
-					.attr('href','#')
-					.text( _loc('Create Document') )
-					.appendTo($div)
-					.click(function(){
-						_this._startEdit();
-						return false;
-					});
-			} else {
-				$('<button>')
-					.text( _loc('Create Document') )
-					.appendTo($div)
-					.click(function(){
-						_this._startEdit();
-						return false;
-					});
-			};
-		}
+			$('<button>')
+				.text( _loc('Create Document') )
+				.appendTo($div)
+				.click(function(){
+					_this._startEdit();
+					return false;
+				});
+		};
 	},
 	
 	_startEdit: function(){
