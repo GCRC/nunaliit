@@ -1481,15 +1481,17 @@ var CouchDocumentEditor = $n2.Class({
 		var _this = this;
 		
 		if (window.cordova) {
-			// alert if media documents are missing the attachment
-			if (!_this.attachmentEditor.cordovaAttachment &&
+			// show an alert if newly created media documents are missing an attachment
+			if (!_this.attachmentEditor.cordovaAttachment && _this.isInsert &&
 					(_this.attachmentEditor.doc.nunaliit_schema === 'demo_media' || _this.attachmentEditor.doc.nunaliit_schema === 'media' )) {
 				alert(_loc('A file must be selected or recorded'));
 				return;
 			} else {
-				// add the attachments
-				_this.editedDocument.nunaliit_attachments = null;
-				_this.editedDocument.nunaliit_mobile_attachments = _this.attachmentEditor.cordovaAttachment;
+				if (_this.isInsert) {
+					// add the attachment for newly created media documents
+					_this.editedDocument.nunaliit_attachments = null;
+					_this.editedDocument.nunaliit_mobile_attachments = _this.attachmentEditor.cordovaAttachment;
+				}
 				
 				// add the location flag
 				_this.editedDocument.nunaliit_mobile_needs_new_location = _this.attachmentEditor.cordovaLocation;
