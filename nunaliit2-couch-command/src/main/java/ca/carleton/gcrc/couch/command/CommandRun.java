@@ -11,7 +11,11 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.rolling.RollingFileAppender;
 import org.apache.log4j.rolling.TimeBasedRollingPolicy;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -133,7 +137,7 @@ public class CommandRun implements Command {
 		File mediaDir = new File(atlasDir, "media");
 
 		// Create server
-		Server server = new Server(atlasProperties.getServerPort());
+		Server server = new Server();
 		
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		context.setContextPath("/");
@@ -148,6 +152,12 @@ public class CommandRun implements Command {
 		}
         
 		server.setHandler(context);
+
+		// Set idle timeout to 20 minutes instead of 30s
+		ServerConnector http = new ServerConnector(server);
+		http.setPort(atlasProperties.getServerPort());
+		http.setIdleTimeout(1200000);
+		server.addConnector(http);
 
         // Proxy to server
         {
