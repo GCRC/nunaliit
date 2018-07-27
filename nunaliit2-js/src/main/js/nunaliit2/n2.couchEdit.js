@@ -2280,6 +2280,14 @@ var CouchEditService = $n2.Class({
 			);
 	},
 
+	configureOptions: function(editInfo){
+		if( editInfo ){
+			if( editInfo['enableAddFile'] ){
+				this.enableAddFile = true;
+			};
+		};
+	},
+
 	_createEditor: function(o_){
 		
 		o_ = o_ ? o_ : {};

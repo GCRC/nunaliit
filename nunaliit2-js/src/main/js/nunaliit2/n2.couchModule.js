@@ -822,6 +822,9 @@ var ModuleDisplay = $n2.Class({
 					});
 				};
 			};
+			if( editInfo && config.directory.editService ){
+				config.directory.editService.configureOptions(editInfo);
+			};
 
 			// Search
 			if( searchInfo && searchInfo.constraint ){
