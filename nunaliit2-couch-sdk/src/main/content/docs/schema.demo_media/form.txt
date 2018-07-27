@@ -5,16 +5,16 @@
 	<div class="end"></div>
 </div>
 {{#demo_media}}
-	<div class="demo_media_title">
-		<div class="label n2s_localize">Title</div>
-		<div class="value">{{#:field}}title,placeholder=Title{{/:field}}</div>
+	<div class="demo_media_caption">
+		<div class="label n2s_localize">Caption</div>
+		<div class="value">{{#:field}}caption,textarea,placeholder=Caption{{/:field}}</div>
 		<div class="end"></div>
 	</div>
 {{/demo_media}}
 {{#demo_media}}
-	<div class="demo_media_description">
-		<div class="label n2s_localize">Description</div>
-		<div class="value">{{#:field}}description,textarea,placeholder=Description{{/:field}}</div>
+	<div class="demo_media_credit">
+		<div class="label n2s_localize">Credit</div>
+		<div class="value">{{#:field}}credit,placeholder=Credit{{/:field}}</div>
 		<div class="end"></div>
 	</div>
 {{/demo_media}}
