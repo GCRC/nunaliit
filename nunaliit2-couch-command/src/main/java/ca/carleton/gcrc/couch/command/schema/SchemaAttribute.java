@@ -555,10 +555,10 @@ public class SchemaAttribute {
 				if( null != id ){
 					pw.println("\t{{#"+schemaStructure+"}}");
 					pw.println("\t\t{{#if "+id+"}}");
-					pw.println("\t\t\t<span class=\""+schemaClass+"_"+id+"\">");
+					pw.print("\t\t\t<span class=\""+schemaClass+"_"+id+"\">");
 					if( !isFirst ) pw.print(" ");
-					pw.println("\t\t\t\t{{"+id+"}}");
-					pw.println("\t\t\t</span>");
+					pw.print("{{"+id+"}}");
+					pw.println("</span>");
 					pw.println("\t\t{{/if}}");
 					pw.println("\t{{/"+schemaStructure+"}}");
 					printed = true;
@@ -568,10 +568,10 @@ public class SchemaAttribute {
 				if( null != id ){
 					pw.println("\t{{#"+schemaStructure+"}}");
 					pw.println("\t\t{{#if "+id+"}}");
-					pw.println("\t\t\t<span class=\""+schemaClass+"_"+id+"\">");
+					pw.print("\t\t\t<span class=\""+schemaClass+"_"+id+"\">");
 					if( !isFirst ) pw.print(" ");
-					pw.println("\t\t\t\t{{#:localize}}"+id+"{{/:localize}}");
-					pw.println("\t\t\t</span>");
+					pw.print("{{#:localize}}"+id+"{{/:localize}}");
+					pw.println("</span>");
 					pw.println("\t\t{{/if}}");
 					pw.println("\t{{/"+schemaStructure+"}}");
 					printed = true;
@@ -590,7 +590,7 @@ public class SchemaAttribute {
 							label = option.getValue();
 						}
 						pw.print(label);
-						pw.println("</span>");
+						pw.print("</span>");
 					}
 					pw.println("\t\t\t</span>");
 					pw.println("\t\t{{/if}}");
@@ -602,12 +602,12 @@ public class SchemaAttribute {
 				if( null != id ){
 					pw.println("\t{{#"+schemaStructure+"}}");
 					pw.println("\t\t{{#if "+id+"}}");
-					pw.println("\t\t\t<span class=\""+schemaClass+"_"+id+"\">");
-					pw.print("\t\t\t\t{{#"+id+"}}");
+					pw.print("\t\t\t<span class=\""+schemaClass+"_"+id+"\">");
+					pw.print("{{#"+id+"}}");
 					if( !isFirst ) pw.print(" ");
 					pw.print("{{date}}");
-					pw.println("{{/"+id+"}}");
-					pw.println("\t\t\t</span>");
+					pw.print("{{/"+id+"}}");
+					pw.println("</span>");
 					pw.println("\t\t{{/if}}");
 					pw.println("\t{{/"+schemaStructure+"}}");
 					printed = true;
@@ -618,12 +618,12 @@ public class SchemaAttribute {
 					pw.println("\t{{#"+schemaStructure+"}}");
 					pw.println("\t\t{{#if "+id+"}}");
 					pw.println("\t\t\t<span class=\""+schemaClass+"_"+id+"\">");
-					pw.print("\t\t\t\t{{#"+id+"}}");
-					pw.print("{{#doc}}");
+					pw.println("\t\t\t\t{{#"+id+"}}");
+					pw.println("\t\t\t\t\t{{#doc}}");
 					if( !isFirst ) pw.print(" ");
-					pw.print("<span class=\"n2s_briefDisplay\">{{.}}</span>");
-					pw.print("{{/doc}}");
-					pw.println("{{/"+id+"}}");
+					pw.println("\t\t\t\t\t\t<span class=\"n2s_briefDisplay\">{{.}}</span>");
+					pw.println("\t\t\t\t\t{{/doc}}");
+					pw.println("\t\t\t\t{{/"+id+"}}");
 					pw.println("\t\t\t</span>");
 					pw.println("\t\t{{/if}}");
 					pw.println("\t{{/"+schemaStructure+"}}");
@@ -634,7 +634,7 @@ public class SchemaAttribute {
 				if( null != id && null != customType ){
 					pw.println("\t{{#"+schemaStructure+"}}");
 					pw.println("\t\t{{#if "+id+"}}");
-					pw.print("\t\t\t<span class=\""+schemaClass+"_"+id+"\">");
+					pw.println("\t\t\t<span class=\""+schemaClass+"_"+id+"\">");
 					if( !isFirst ) pw.println(" ");
 					pw.println("\t\t\t\t<span class=\"n2s_custom\""
 							+ " nunaliit-custom=\""+customType+"\""
@@ -682,9 +682,7 @@ public class SchemaAttribute {
 
 				pw.println("\t{{#nunaliit_geom}}");
 				pw.println("\t\t{{#if wkt}}");
-				pw.println("\t\t\t<span class=\"nunaliit_geom_wkt "+schemaClass+"_geom\">");
-				pw.println("\t\t\t\t{{wkt}}");
-				pw.println("\t\t\t</span>");
+				pw.println("\t\t\t<span class=\"nunaliit_geom_wkt "+schemaClass+"_geom\">{{wkt}}</span>");
 				pw.println("\t\t{{/if}}");
 				pw.println("\t{{/nunaliit_geom}}");
 
@@ -698,8 +696,8 @@ public class SchemaAttribute {
 				pw.println("\t\t\t<span class=\"nunaliit_hoversound "+schemaClass+"_hoversound\">");
 				pw.print("\t\t\t\t{{#doc}}");
 				if( !isFirst ) pw.print(" ");
-				pw.print("<span class=\"n2s_briefDisplay\">{{.}}</span>");
-				pw.println("{{/doc}}");
+				pw.println("\t\t\t\t\t<span class=\"n2s_briefDisplay\">{{.}}</span>");
+				pw.println("\t\t\t\t{{/doc}}");
 				pw.println("\t\t\t</span>");
 				pw.println("\t\t{{/if}}");
 				pw.println("\t{{/nunaliit_hoverSound}}");

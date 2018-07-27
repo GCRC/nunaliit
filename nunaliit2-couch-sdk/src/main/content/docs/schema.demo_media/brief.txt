@@ -4,16 +4,12 @@
 	(</span>
 	{{#demo_media}}
 		{{#if caption}}
-			<span class="demo_media_caption">
-				{{caption}}
-			</span>
+			<span class="demo_media_caption">{{caption}}</span>
 		{{/if}}
 	{{/demo_media}}
 	{{#demo_media}}
 		{{#if credit}}
-			<span class="demo_media_credit">
- 				{{credit}}
-			</span>
+			<span class="demo_media_credit"> {{credit}}</span>
 		{{/if}}
 	{{/demo_media}}
 	<span class="demo_media_brief_decoration">)</span>

@@ -4,9 +4,7 @@
 	(</span>
 	{{#demo_doc}}
 		{{#if title}}
-			<span class="demo_doc_title">
-				{{title}}
-			</span>
+			<span class="demo_doc_title">{{title}}</span>
 		{{/if}}
 	{{/demo_doc}}
 	<span class="demo_doc_brief_decoration">)</span>

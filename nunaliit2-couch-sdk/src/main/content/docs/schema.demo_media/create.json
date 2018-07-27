@@ -7,7 +7,5 @@
       "files": {"media": {"data": {}}},
       "nunaliit_type": "attachment_descriptions"
    },
-   "nunaliit_maxAudioRecordingLengthSeconds": 300,
-   "nunaliit_maxVideoRecordingLengthSeconds": 300,
    "nunaliit_schema": "demo_media"
 }

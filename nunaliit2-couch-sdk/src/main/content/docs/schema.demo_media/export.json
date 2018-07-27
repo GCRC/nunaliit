@@ -1,16 +1,16 @@
 [
-    {
-       "label": "caption",
-       "select": "demo_media.caption",
-       "type": "text"
-    },
-    {
-       "label": "credit",
-       "select": "demo_media.credit",
-       "type": "text"
-    },
-    {
-       "select": "demo_media.null",
-       "type": "json"
-    }
- ]
+   {
+      "label": "caption",
+      "select": "demo_media.caption",
+      "type": "text"
+   },
+   {
+      "label": "credit",
+      "select": "demo_media.credit",
+      "type": "text"
+   },
+   {
+      "select": "demo_media.null",
+      "type": "json"
+   }
+]
