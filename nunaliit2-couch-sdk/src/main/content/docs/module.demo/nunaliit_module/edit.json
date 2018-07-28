@@ -1,4 +1,11 @@
 {
 	"defaultSchemaName": "demo_doc"
 	,"newDocumentSchemaNames": ["demo_doc"]
+	,"enableAddFile": false
+	,"maxAudioRecordingLengthSeconds": 300
+	,"maxVideoRecordingLengthSeconds": 300
+	,"recordVideoSize": {
+		"width": 640
+		,"height": 480
+	}
 }

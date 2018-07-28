@@ -164,14 +164,18 @@ public class SchemaAttribute {
 
 		// maxAudioRecordingLengthSeconds
 		{
-			int maxAudioRecordingLengthSeconds = jsonAttr.optInt("maxAudioRecordingLengthSeconds",300);
-			attribute.setMaxAudioRecordingLengthSeconds(maxAudioRecordingLengthSeconds);
+			int maxAudioRecordingLengthSeconds = jsonAttr.optInt("maxAudioRecordingLengthSeconds",-1);
+			if( maxAudioRecordingLengthSeconds > 0 ) {
+				attribute.setMaxAudioRecordingLengthSeconds(maxAudioRecordingLengthSeconds);
+			}
 		}
 
 		// maxVideoRecordingLengthSeconds
 		{
-			int maxVideoRecordingLengthSeconds = jsonAttr.optInt("maxVideoRecordingLengthSeconds",300);
-			attribute.setMaxVideoRecordingLengthSeconds(maxVideoRecordingLengthSeconds);
+			int maxVideoRecordingLengthSeconds = jsonAttr.optInt("maxVideoRecordingLengthSeconds",-1);
+			if( maxVideoRecordingLengthSeconds > 0 ) {
+				attribute.setMaxVideoRecordingLengthSeconds(maxVideoRecordingLengthSeconds);
+			}
 		}
 
 		// recordVideoSize

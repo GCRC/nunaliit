@@ -822,7 +822,7 @@ var CouchDocumentEditor = $n2.Class({
 	couchProj: null,
 	onCancelFn: null,
 	onCloseFn: null,
-	enableAddFile: null,
+	moduleEditInfo: null,
 	relatedDocProcess: null,
 	schemaEditor: null,
 	treeEditor: null,
@@ -839,6 +839,7 @@ var CouchDocumentEditor = $n2.Class({
 	editorSuppressTreeView: null,
 	editorSuppressFormView: null,
 	onRefreshFunctions: null,
+	enableAddFile: null,
 	
 	initialize: function(
 		opts_
@@ -861,7 +862,7 @@ var CouchDocumentEditor = $n2.Class({
 			,couchProj: null
 			,onCancelFn: function(doc){}
 			,onCloseFn: function(){}
-			,enableAddFile: false
+			,moduleEditInfo: null
 			,relatedDocProcess: null
 			
 			// buttonX....
@@ -885,7 +886,7 @@ var CouchDocumentEditor = $n2.Class({
 		this.couchProj = opts.couchProj;
 		this.onCancelFn = opts.onCancelFn;
 		this.onCloseFn = opts.onCloseFn;
-		this.enableAddFile = opts.enableAddFile;
+		this.moduleEditInfo = opts.moduleEditInfo;
 		this.relatedDocProcess = opts.relatedDocProcess;
 		
 		this.userButtons = [];
@@ -899,6 +900,7 @@ var CouchDocumentEditor = $n2.Class({
 		this.editorSuppressSlideView = false;
 		this.editorSuppressTreeView = false;
 		this.editorSuppressFormView = false;
+		this.enableAddFile = false;
 		this.onRefreshFunctions = [];
 		var cs = this.customService;
 		if( cs ){
@@ -917,6 +919,11 @@ var CouchDocumentEditor = $n2.Class({
 					_this.onRefreshFunctions.push(onRefresh);
 				};
 			});
+		};
+		if( this.moduleEditInfo ){
+			if( this.moduleEditInfo.enableAddFile ){
+				this.enableAddFile = true;
+			};
 		};
 	},
 	
@@ -1057,9 +1064,9 @@ var CouchDocumentEditor = $n2.Class({
 					,dataType: 'text'
 					,success: function(wkt) {
 						$n2.couchGeom.updateDocumentWithWktGeometry({
-				    		doc: editedDoc
-				    		,wkt: wkt
-				    	});
+							doc: editedDoc
+							,wkt: wkt
+						});
 						startEditor();
 					}
 					,error: function(XMLHttpRequest, textStatus, errorThrown) {
@@ -1336,6 +1343,7 @@ var CouchDocumentEditor = $n2.Class({
 				,uploadService: this.uploadService
 				,disableAddFile: disableAttachmentEditorButtons
 				,disableRemoveFile: disableAttachmentEditorButtons
+				,moduleEditInfo: this.moduleEditInfo
 				,onChangedFn: function(){
 					_this._adjustInternalValues(_this.editedDocument);
 					if( _this.schemaEditor ) {
@@ -2183,8 +2191,6 @@ var CouchEditService = $n2.Class({
 	
 	dialogService: null,
 	
-	enableAddFile: null,
-	
 	initialLayers: null,
 	
 	userButtons: null,
@@ -2194,6 +2200,8 @@ var CouchEditService = $n2.Class({
 	isFormEditor: null,
 
 	currentEditor: null,
+
+	moduleEditInfo: null,
 
 	initialize: function(opts_) {
 		var opts = $n2.extend({
@@ -2212,7 +2220,6 @@ var CouchEditService = $n2.Class({
 			,customService: null
 			,dialogService: null
 			,createDocProcess: null
-			,enableAddFile: false
 			,initialLayers: []
 		},opts_);
 		
@@ -2224,7 +2231,6 @@ var CouchEditService = $n2.Class({
 		this.couchProj = opts.couchProj;
 		this.options.schema = opts.schema;
 		this.defaultEditSchema = opts.defaultEditSchema;
-		this.enableAddFile = opts.enableAddFile;
 		this.initialLayers = opts.initialLayers;
 		this.schemaRepository = opts.schemaRepository;
 		this.uploadService = opts.uploadService;
@@ -2281,11 +2287,7 @@ var CouchEditService = $n2.Class({
 	},
 
 	configureOptions: function(editInfo){
-		if( editInfo ){
-			if( editInfo['enableAddFile'] ){
-				this.enableAddFile = true;
-			};
-		};
+		this.moduleEditInfo = editInfo;
 	},
 
 	_createEditor: function(o_){
@@ -2295,10 +2297,10 @@ var CouchEditService = $n2.Class({
 		var opts = {
 			panelName: o_.panelName ? o_.panelName : this.panelName
 			,initialLayers: o_.initialLayers ? o_.initialLayers : this.initialLayers
-			,enableAddFile: o_.enableAddFile ? o_.enableAddFile : this.enableAddFile
 			,schema: o_.schema ? o_.schema : this.options.schema
 			,onCancelFn: o_.onCancelFn
 			,onCloseFn: o_.onCloseFn
+			,moduleEditInfo: this.moduleEditInfo
 			,uploadService: this.uploadService
 			,searchService: this.searchService
 			,showService: this.showService
@@ -2626,6 +2628,8 @@ var AttachmentEditor = $n2.Class({
 	
 	disableRemoveFile: null,
 
+	moduleEditInfo: null,
+
 	recordingButton: null,
 
 	recordingStatus: null,
@@ -2659,6 +2663,7 @@ var AttachmentEditor = $n2.Class({
 			,onChangedFn: function(){}
 			,disableAddFile: false
 			,disableRemoveFile: false
+			,moduleEditInfo: undefined
 		},opts_);
 		
 		this.doc = opts.doc;
@@ -2667,13 +2672,33 @@ var AttachmentEditor = $n2.Class({
 		this.onChangedFn = opts.onChangedFn;
 		this.disableAddFile = opts.disableAddFile;
 		this.disableRemoveFile = opts.disableRemoveFile;
-		
+		this.moduleEditInfo = opts.moduleEditInfo;
+
 		this.creationAttachmentNames = [];
 		this.compulsoryAttachmentNames = [];
 
-    this.maxAudioRecordingLengthSeconds = 300;
+		this.maxAudioRecordingLengthSeconds = 300;
 		this.maxVideoRecordingLengthSeconds = 300;
 		this.recordVideoSize = {width: 640, height: 480};
+		
+		if( this.moduleEditInfo ){
+			if( typeof this.moduleEditInfo.maxAudioRecordingLengthSeconds === 'number' ){
+				if( this.moduleEditInfo.maxAudioRecordingLengthSeconds > 0 ){
+					this.maxAudioRecordingLengthSeconds = this.moduleEditInfo.maxAudioRecordingLengthSeconds;
+				};
+			};
+			if( typeof this.moduleEditInfo.maxVideoRecordingLengthSeconds === 'number' ){
+				if( this.moduleEditInfo.maxVideoRecordingLengthSeconds > 0 ){
+					this.maxVideoRecordingLengthSeconds = this.moduleEditInfo.maxVideoRecordingLengthSeconds;
+				};
+			};
+			if( typeof this.moduleEditInfo.recordVideoSize === 'object' ){
+				this.recordVideoSize = $n2.extend(
+						this.recordVideoSize, 
+						this.moduleEditInfo.recordVideoSize
+					);
+			};
+		};
 		
 		var $elem = $(opts.elem);
 		$elem.addClass('attachmentEditor');

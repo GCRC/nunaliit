@@ -825,6 +825,9 @@ var ModuleDisplay = $n2.Class({
 			if( editInfo && config.directory.editService ){
 				config.directory.editService.configureOptions(editInfo);
 			};
+			if( editInfo && config.directory.createDocProcess ){
+				config.directory.createDocProcess.configureOptions(editInfo);
+			};
 
 			// Search
 			if( searchInfo && searchInfo.constraint ){

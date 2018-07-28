@@ -127,7 +127,9 @@ var Editor = $n2.Class({
 	onError: null,
 	
 	onCancel: null,
-	
+
+	moduleEditInfo: null,
+
 	diagId: null,
 	
 	attachmentUploadHandler: null,
@@ -146,6 +148,7 @@ var Editor = $n2.Class({
 				,onSuccess: function(docId){}
 				,onError: $n2.reportErrorForced
 				,onCancel: function(){}
+				,moduleEditInfo: undefined
 			}
 			,opts_
 		);
@@ -159,6 +162,7 @@ var Editor = $n2.Class({
 		this.onSuccess = opts.onSuccess;
 		this.onError = opts.onError;
 		this.onCancel = opts.onCancel;
+		this.moduleEditInfo = opts.moduleEditInfo;
 
 		this.obj = {};
 		for(var key in opts.obj){
@@ -225,6 +229,7 @@ var Editor = $n2.Class({
 			,uploadService: this.uploadService
 			,disableAddFile: true
 			,disableRemoveFile: true
+			,moduleEditInfo: this.moduleEditInfo
 		});
 		
 		// OK
@@ -397,7 +402,9 @@ var CreateRelatedDocProcess = $n2.Class({
 	authService: null,
 
 	dialogService: null,
-	
+
+	moduleEditInfo: null,
+
 	initialize: function(opts_) {
 		var opts = $n2.extend(
 			{
@@ -420,7 +427,11 @@ var CreateRelatedDocProcess = $n2.Class({
 		this.dialogService = opts.dialogService;
 		this.dispatchService = opts.dispatchService;
 	},
-	
+
+	configureOptions: function(editInfo){
+		this.moduleEditInfo = editInfo;
+	},
+
 	getCreateWidget: function(opts_){
 		var opts = $n2.extend({
 			elem: null
@@ -537,6 +548,7 @@ var CreateRelatedDocProcess = $n2.Class({
 				,onSuccess: opt.onSuccess
 				,onError: opt.onError
 				,onCancel: opt.onCancel
+				,moduleEditInfo: _this.moduleEditInfo
 			});
 		};
 	},
