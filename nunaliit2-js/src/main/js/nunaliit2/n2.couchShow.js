@@ -1067,7 +1067,7 @@ var DomStyler = $n2.Class({
 							,data
 							,attachmentName
 						);
-					linkDiv.click(cb);
+					linkDiv.one('click',cb);
 				};
 			};
 
