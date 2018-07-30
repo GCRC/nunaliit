@@ -1083,11 +1083,11 @@ var DomStyler = $n2.Class({
 				.appendTo($insertView);
 		};
 		
-		function createMediaCallback(uploadType, attachmentUrl, doc, attachmentName, containerId) {
+		function createMediaCallback(uploadType, attachmentUrl, doc, attachmentName, srcId) {
 			
 			return function(evt) {
 				var mediaOptions = {
-					containerId: containerId || null
+					containerId: srcId || null
 					,url: attachmentUrl
 					,suppressLeaveConfirmation: suppressLeaveConfirmation
 				};
