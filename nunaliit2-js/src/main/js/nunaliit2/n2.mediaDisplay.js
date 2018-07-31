@@ -325,7 +325,7 @@ $n2.MediaDisplay = $n2.Class({
 		$mediaDialog.dialog(dialogOptions);
 	}
 	,_displayVideoMediaElementInplace: function(opts) {
-		var inplace = opts.containerId || $(".n2Show_thumb_wrapper");
+		var inplace = opts.containerId != null? $('#' + opts.containerId) : $(".n2Show_thumb_wrapper");
 		var thumbnailUrl = inplace.find("img").attr("src");
 		inplace.find("img").remove();
 		//inplace.html("<p> What is up </p>");
