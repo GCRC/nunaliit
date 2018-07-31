@@ -38,6 +38,8 @@ var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 	
 var DEFAULT_VIDEO_HEIGHT = 240;
 var DEFAULT_VIDEO_WIDTH = 320;
+var DEFAULT_VIDEO_HEIGHT_INPLACE = 240;
+var DEFAULT_VIDEO_WIDTH_INPLACE = 320;
 var DEFAULT_VIDEO_CONTROLLER_HEIGHT = 16;
 var DEFAULT_VIDEO_DIALOG_EXTRA_WIDTH = 40;
 var DEFAULT_VIDEO_DIALOG_EXTRA_HEIGHT = 56;
@@ -93,7 +95,7 @@ $n2.MediaDisplay = $n2.Class({
 			};
 		} else if( 'video' === opts.type ) {
 			if( $.fn && $.fn.mediaelementplayer ) {
-				this._displayVideoMediaElement(opts);
+				this._displayVideoMediaElementInplace(opts);
 			} else {
 				this._displayVideo(opts);
 			};
@@ -322,7 +324,55 @@ $n2.MediaDisplay = $n2.Class({
 		
 		$mediaDialog.dialog(dialogOptions);
 	}
-	
+	,_displayVideoMediaElementInplace: function(opts) {
+		var inplace = opts.containerId != null? $('#' + opts.containerId) : $(".n2Show_thumb_wrapper");
+		var thumbnailUrl = inplace.find("img").attr("src");
+		inplace.find("img").remove();
+		//inplace.html("<p> What is up </p>");
+
+		var mediaInplaceId = $n2.getUniqueId();
+		var videoId = $n2.getUniqueId();
+
+		var width = DEFAULT_VIDEO_WIDTH_INPLACE;
+		if( opts.mediaDisplayVideoWidth ) {
+			width = opts.mediaDisplayVideoWidth;
+		} else if( opts.width ) {
+			width = opts.width;
+		};
+
+		var height = DEFAULT_VIDEO_HEIGHT_INPLACE;
+		if( opts.mediaDisplayVideoHeight ) {
+			height = opts.mediaDisplayVideoHeight + DEFAULT_VIDEO_CONTROLLER_HEIGHT;
+		} else if( opts.height ) {
+			height = opts.height + DEFAULT_VIDEO_CONTROLLER_HEIGHT;
+		};
+
+
+		var mkup = [];
+		mkup.push('<div id="'+mediaInplaceId+'">');
+
+		mkup.push('<video id="'+videoId+'" controls="controls" poster="'+thumbnailUrl+'" width="100%">');
+		
+		mkup.push('<source src="'+opts.url+'"');
+		if( opts.mimeType ){
+			mkup.push(' type="'+opts.mimeType+'"');
+		};
+		mkup.push('>');
+		
+		mkup.push('</video>');
+		
+		var $mediaInplace = $( mkup.join('') );
+		
+		this._addMetaData(opts, $mediaInplace);
+		this._addDownloadButton(opts, $mediaInplace);
+
+		inplace.append($mediaInplace);
+		$('#'+videoId).mediaelementplayer({
+			features: ['playpause','progress','volume','sourcechooser','fullscreen'],
+			
+		});
+		
+	}
 	,_displayVideoMediaElement: function(opts) {
 		var dialogTitle = defaultDialogTitle;
 		if( opts.title ) {
@@ -553,7 +603,8 @@ $n2.MediaDisplay = $n2.Class({
 	
 	,_addMetaData: function(opts, $elem) {
 		$elem.append( $('<br/>') );
-		
+		$elem.append( $('<br/>') );
+		//$elem.append( $('<br/>') );
 		if( opts.metaDataHtml ) {
 			var $meta = $('<span></span>');
 			$meta.html(opts.metaDataHtml);
