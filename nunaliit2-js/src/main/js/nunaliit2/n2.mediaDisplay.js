@@ -362,7 +362,17 @@ $n2.MediaDisplay = $n2.Class({
 		mkup.push('</video>');
 		
 		var $mediaInplace = $( mkup.join('') );
-		
+		var _this = this;
+		$mediaInplace
+		.find('video')
+		.bind('timeupdate',function() {
+			var videoElem = this;
+			//var $video = $(this);
+			var currentTime = videoElem.currentTime;
+			//$n2.log('current time: '+currentTime);
+			
+			_this._timeUpdated(currentTime);
+		});
 		this._addMetaData(opts, $mediaInplace);
 		this._addDownloadButton(opts, $mediaInplace);
 
@@ -372,6 +382,22 @@ $n2.MediaDisplay = $n2.Class({
 			
 		});
 		
+	}
+	,_timeUpdated: function(opts_){
+
+		var currentTime = Math.floor(opts_);
+		
+		/*
+		this.dispatchService.send(DH, {
+			type: 'inplaceVideoPlayerTimeUpdated'
+			,value: effectiveValue
+		});
+		*/
+		var opts = {
+			currentTime : currentTime
+					};
+		$n2.tetherControl.registerTimeUpdate(opts);
+			
 	}
 	,_displayVideoMediaElement: function(opts) {
 		var dialogTitle = defaultDialogTitle;
