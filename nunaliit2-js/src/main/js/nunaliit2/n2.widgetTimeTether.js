@@ -26,7 +26,7 @@ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
 INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
-POSSIBILITY OF SUCH DAMAGE.
+POSSIBILITY OF SUCH DAMAGE.,
 
 */
 
@@ -277,7 +277,7 @@ var TimelineTetherWidget = $n2.Class({
 			});
 		};
 	},
-	
+	//It seems to be the one handling any change ( to reflect the displaying interval/range value)
 	_handle: function(m, addr, dispatcher){
 		if( this.rangeChangeEventName === m.type ){
 			if( m.value ){
