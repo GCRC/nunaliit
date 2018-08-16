@@ -1163,7 +1163,7 @@ var DomStyler = $n2.Class({
 		};
 	},
 
-
+  
 	_insertMediaPlayer: function($insertView, data) {
 		var _this = this;
 
