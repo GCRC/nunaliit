@@ -260,7 +260,7 @@ $n2.MediaDisplay = $n2.Class({
 				,mimeType: opts.mimeType
 				,autoplay: true
 				,loop: false
-				,controller: truepp
+				,controller: true
 			});
 		} else {
 			var embedOptions = $n2.extend({},{
