@@ -1065,7 +1065,8 @@ var DomStyler = $n2.Class({
 							attDesc.fileClass
 							,attUrl
 							,data
-							,attachmentName
+					    ,attachmentName
+					    ,$insertView
 						);
 					linkDiv.one('click',cb);
 				};
@@ -1083,11 +1084,11 @@ var DomStyler = $n2.Class({
 				.appendTo($insertView);
 		};
 		
-		function createMediaCallback(uploadType, attachmentUrl, doc, attachmentName, containerId) {
+		function createMediaCallback(uploadType, attachmentUrl, doc, attachmentName, insertView) {
 			
 			return function(evt) {
 				var mediaOptions = {
-					containerId: containerId || null
+					insertView: insertView || null
 					,url: attachmentUrl
 					,suppressLeaveConfirmation: suppressLeaveConfirmation
 				};
