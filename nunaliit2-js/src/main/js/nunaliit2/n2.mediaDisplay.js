@@ -327,7 +327,7 @@ $n2.MediaDisplay = $n2.Class({
 	}
 	,_displayVideoMediaElementInplace: function(opts) {
 	    var $inplaceDiv = opts.insertView || null;
-	    if($inplaceDiv){
+	    if($inplaceDiv != null){
 	       var thumbnailUrl = $inplaceDiv.find(".n2Show_thumb_wrapper img").attr("src");
 		$inplaceDiv.find(".n2Show_thumb_wrapper img").remove();
 		
