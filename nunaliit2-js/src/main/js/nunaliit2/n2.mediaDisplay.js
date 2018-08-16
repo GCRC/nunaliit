@@ -94,7 +94,8 @@ $n2.MediaDisplay = $n2.Class({
 				this._displayAudio(opts);
 			};
 		} else if( 'video' === opts.type ) {
-			if( $.fn && $.fn.mediaelementplayer ) {
+		    if( $.fn && $.fn.mediaelementplayer ) {
+			//change the default play-mode to inplace (embeded playing)
 				this._displayVideoMediaElementInplace(opts);
 			} else {
 				this._displayVideo(opts);
@@ -287,7 +288,7 @@ $n2.MediaDisplay = $n2.Class({
 
 			var embedHtml = this.generateEmbedMarkup(embedOptions);
 		};
-		
+	
 		mkup.push(embedHtml);
 		
 		mkup.push('</div>');
@@ -325,11 +326,12 @@ $n2.MediaDisplay = $n2.Class({
 		$mediaDialog.dialog(dialogOptions);
 	}
 	,_displayVideoMediaElementInplace: function(opts) {
-		var inplace = opts.containerId != null? $('#' + opts.containerId) : $(".n2Show_thumb_wrapper");
-		var thumbnailUrl = inplace.find("img").attr("src");
-		inplace.find("img").remove();
-		//inplace.html("<p> What is up </p>");
-
+	    var $inplaceDiv = opts.insertView || null;
+	    if($inplaceDiv){
+	       var thumbnailUrl = $inplaceDiv.find(".n2Show_thumb_wrapper img").attr("src");
+		$inplaceDiv.find(".n2Show_thumb_wrapper img").remove();
+		
+		
 		var mediaInplaceId = $n2.getUniqueId();
 		var videoId = $n2.getUniqueId();
 
@@ -371,35 +373,36 @@ $n2.MediaDisplay = $n2.Class({
 			if($n2)
 			var currentTime = videoElem.currentTime;
 			//$n2.log('current time: '+currentTime);
-			
+		    if(_this._timeUpdate) {
 			_this._timeUpdated(currentTime);
+		    }
 		});
 		this._addMetaData(opts, $mediaInplace);
 		this._addDownloadButton(opts, $mediaInplace);
 
-		inplace.append($mediaInplace);
+		$inplaceDiv.append($mediaInplace);
 		$('#'+videoId).mediaelementplayer({
 			features: ['playpause','progress','volume','sourcechooser','fullscreen'],
 			
 		});
-		
+	    }
 	}
-	,_timeUpdated: function(opts_){
+	// ,_timeUpdate: function(opts_){
 
-		var currentTime = Math.floor(opts_);
+	// 	var currentTime = Math.floor(opts_);
 		
-		/*
-		this.dispatchService.send(DH, {
-			type: 'inplaceVideoPlayerTimeUpdated'
-			,value: effectiveValue
-		});
-		*/
-		var opts = {
-			currentTime : currentTime
-					};
-		$n2.tetherControl.registerTimeUpdate(opts);
+	// 	/*
+	// 	this.dispatchService.send(DH, {
+	// 		type: 'inplaceVideoPlayerTimeUpdated'
+	// 		,value: effectiveValue
+	// 	});
+	// 	*/
+	// 	var opts = {
+	// 		currentTime : currentTime
+	// 				};
+	// 	$n2.tetherControl.registerTimeUpdate(opts);
 			
-	}
+	// }
 	,_displayVideoMediaElement: function(opts) {
 		var dialogTitle = defaultDialogTitle;
 		if( opts.title ) {
