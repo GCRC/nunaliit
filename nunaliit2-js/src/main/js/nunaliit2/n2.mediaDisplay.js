@@ -26,7 +26,7 @@ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
 INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
-POSSIBILITY OF SUCH DAMAGE.
+POSSIBILITY OF SUCH DAMAGE.,
 
 */
 
@@ -94,7 +94,8 @@ $n2.MediaDisplay = $n2.Class({
 				this._displayAudio(opts);
 			};
 		} else if( 'video' === opts.type ) {
-			if( $.fn && $.fn.mediaelementplayer ) {
+		    if( $.fn && $.fn.mediaelementplayer ) {
+			//change the default play-mode to inplace (embeded playing)
 				this._displayVideoMediaElementInplace(opts);
 			} else {
 				this._displayVideo(opts);
@@ -287,7 +288,7 @@ $n2.MediaDisplay = $n2.Class({
 
 			var embedHtml = this.generateEmbedMarkup(embedOptions);
 		};
-		
+	
 		mkup.push(embedHtml);
 		
 		mkup.push('</div>');
@@ -325,11 +326,12 @@ $n2.MediaDisplay = $n2.Class({
 		$mediaDialog.dialog(dialogOptions);
 	}
 	,_displayVideoMediaElementInplace: function(opts) {
-		var inplace = opts.containerId != null? $('#' + opts.containerId) : $(".n2Show_thumb_wrapper");
-		var thumbnailUrl = inplace.find("img").attr("src");
-		inplace.find("img").remove();
-		//inplace.html("<p> What is up </p>");
-
+	    var $inplaceDiv = opts.insertView || null;
+	    if($inplaceDiv){
+	       var thumbnailUrl = $inplaceDiv.find(".n2Show_thumb_wrapper img").attr("src");
+		$inplaceDiv.find(".n2Show_thumb_wrapper img").remove();
+		
+		
 		var mediaInplaceId = $n2.getUniqueId();
 		var videoId = $n2.getUniqueId();
 
@@ -362,16 +364,17 @@ $n2.MediaDisplay = $n2.Class({
 		mkup.push('</video>');
 		
 		var $mediaInplace = $( mkup.join('') );
-		
+		var _this = this;
+
 		this._addMetaData(opts, $mediaInplace);
 		this._addDownloadButton(opts, $mediaInplace);
 
-		inplace.append($mediaInplace);
+		$inplaceDiv.append($mediaInplace);
 		$('#'+videoId).mediaelementplayer({
 			features: ['playpause','progress','volume','sourcechooser','fullscreen'],
 			
 		});
-		
+	    }
 	}
 	,_displayVideoMediaElement: function(opts) {
 		var dialogTitle = defaultDialogTitle;
