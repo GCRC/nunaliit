@@ -1165,76 +1165,77 @@ var DomStyler = $n2.Class({
 
 
     _insertMediaTetherPlayer: function($insertView, data) {
-	var _this = this;
-	var docId = this._associateDocumenttoElement(data, $insertView);
-	var attVideoName = $insertView.attr('nunaliit-attachment-video');
-	var attCaptionName = $insertView.attr('nunaliit-attachment-srt');
-	$insertView.empty();
-	if (data && data._id === docId) {
-	    var attVideoDesc = null;
-	    var attCaptionDesc = null;
+    	var _this = this;
+    	var docId = this._associateDocumenttoElement(data, $insertView);
+    	var attVideoName = $insertView.attr('nunaliit-attachment-video');
+    	var attCaptionName = $insertView.attr('nunaliit-attachment-srt');
+    	$insertView.empty();
+    	if (data && data._id === docId) {
+    	    var attVideoDesc = null;
+    	    var attCaptionDesc = null;
 
-	    if(data && data.nunaliit_attachments
-	       && data.nunaliit_attachemnts.files) {
-		attVideoDesc = data.nunaliit_attachments.files[attVideoName];
-		attCaptionDesc = data.nunaliit_attachments.files[attCaptionName];
-	    };
+    	    if(data && data.nunaliit_attachments
+    	       && data.nunaliit_attachemnts.files) {
+    		attVideoDesc = data.nunaliit_attachments.files[attVideoName];
+    		attCaptionDesc = data.nunaliit_attachments.files[attCaptionName];
+    	    };
 
 
-	    var thumbnailURL = null;
-	    if( attVideoDesc && attVideoDesc.thumbnail ){
-		thumbnailURL = this.db.getAttachmentUrl(data,attVideoDesc.thumbnail);
-	    };
+    	    var thumbnailURL = null;
+    	    if( attVideoDesc && attVideoDesc.thumbnail ){
+    		thumbnailURL = this.db.getAttachmentUrl(data,attVideoDesc.thumbnail);
+    	    };
 
-	    if( attVideoDesc && attCaptionDesc
-		&& attVideoDesc.status === 'attached'
-		&& attCaptionDesc.status == 'attached'  )
-	    {
+    	    if( attVideoDesc && attCaptionDesc
+    		&& attVideoDesc.status === 'attached'
+    		&& attCaptionDesc.status == 'attached'  )
+    	    {
 
-	        var attVideoUrl = this.db.getAttachmentUrl(data,attVideoName);
-	        var attCaptionUrl = this.db.getAttachmentUrl(data,attCaptionName);
-	        var mediaDivId = $n2.getUniqueId();
-		var mediaId = $n2.getUniqueId();
+    	        var attVideoUrl = this.db.getAttachmentUrl(data,attVideoName);
+    	        var attCaptionUrl = this.db.getAttachmentUrl(data,attCaptionName);
+    	        var mediaDivId = $n2.getUniqueId();
+    		var mediaId = $n2.getUniqueId();
 
-		var linkDiv = null;
+    		var linkDiv = null;
 		
 		
-		if (attVideoDesc.fileClass === 'video'
-		    && attCaptionDesc.fileClass === 'caption'
-		    && attVideoUrl && attCaptionUrl)
-		{
+    		if (attVideoDesc.fileClass === 'video'
+    		    && attCaptionDesc.fileClass === 'caption'
+    		    && attVideoUrl && attCaptionUrl)
+    		{
 
-		    linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_video"></div></div>');
-		    $insertView.append(linkDiv);
+    		    linkDiv = $('<div class="n2Show_icon_wrapper"><div class="n2Show_icon_video"></div></div>');
+    		    $insertView.append(linkDiv);
 
 		    
-		    var mediaTetherOptions = {
+    		    var mediaTetherOptions = {
 
-			insert
-			videoUrl : attVideoUrl
-			,captionUrl : attCaptionUrl
-			,mediaDivId : null
-		    }
+    			insertView: $insertView
+    			,videoUrl : attVideoUrl
+    			,captionUrl : attCaptionUrl
+    			,mediaDivId :mediaDivId
+			,mediaId : mediaId
+    		    }
 		    
-		    $n2.media
+    		    $n2.mediaTetherDisplay.displayTether(mediaTetherOptions);
 
-		}
+    		}
 		
 	    
 
 	    
-	    }
-	} else {
-			// Do not have playable media document
-			var label = _loc('Media({docId},{attName})',{
-				docId: docId
-				,attName: attachmentName
-			});
-			$('<span>')
-				.addClass('n2s_insertMediaPlayer_wait')
-				.text(label)
-				.appendTo($insertView);
-	};
+    	    }
+    	} else {
+    			// Do not have playable media document
+    			var label = _loc('Media({docId},{attName})',{
+    				docId: docId
+    				,attName: attachmentName
+    			});
+    			$('<span>')
+    				.addClass('n2s_insertMediaTetherPlayer_wait')
+    				.text(label)
+    				.appendTo($insertView);
+    	};
 
 	
     },
