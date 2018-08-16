@@ -95,8 +95,7 @@ $n2.MediaDisplay = $n2.Class({
 			};
 		} else if( 'video' === opts.type ) {
 		    if( $.fn && $.fn.mediaelementplayer ) {
-			//change the default play-mode to inplace (embeded playing)
-				this._displayVideoMediaElementInplace(opts);
+				this._displayVideoMediaElement(opts);
 			} else {
 				this._displayVideo(opts);
 			};
@@ -334,7 +333,7 @@ $n2.MediaDisplay = $n2.Class({
 		
 		var mediaInplaceId = $n2.getUniqueId();
 		var videoId = $n2.getUniqueId();
-
+/*
 		var width = DEFAULT_VIDEO_WIDTH_INPLACE;
 		if( opts.mediaDisplayVideoWidth ) {
 			width = opts.mediaDisplayVideoWidth;
@@ -348,7 +347,7 @@ $n2.MediaDisplay = $n2.Class({
 		} else if( opts.height ) {
 			height = opts.height + DEFAULT_VIDEO_CONTROLLER_HEIGHT;
 		};
-
+*/
 
 		var mkup = [];
 		mkup.push('<div id="'+mediaInplaceId+'">');
@@ -364,7 +363,7 @@ $n2.MediaDisplay = $n2.Class({
 		mkup.push('</video>');
 		
 		var $mediaInplace = $( mkup.join('') );
-		var _this = this;
+		
 
 		this._addMetaData(opts, $mediaInplace);
 		this._addDownloadButton(opts, $mediaInplace);

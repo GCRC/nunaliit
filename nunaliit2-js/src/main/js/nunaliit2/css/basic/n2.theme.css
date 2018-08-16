@@ -486,6 +486,35 @@ CreateDocument widget
 	margin: 0 0 10px 0;
 	display: inline-block;
 }
+/* Tether video scaling*/
+.introduction .n2s_insertedMediaTetherPlayer video {
+	width: 100%;  
+}
+ /* Transcript area */
+
+ #transcript {
+	margin-top: 1em;
+}
+
+#transcript span {
+   cursor: pointer;
+   transition: all 0.1s ease-in;
+   line-height: 1.8;
+   font-family: "Times New Roman", Times, serif;
+   font-size: 1.5em; 
+
+}
+
+#transcript span:hover {
+   color: green;
+}
+
+.highlight {
+   color: white;
+   background-color: darkorange;
+}
+
+
 .nunaliit_form_link:hover
 ,.n2s_adjustedExternalMediaLink:hover { 
 	background-color: #e9e6e6;

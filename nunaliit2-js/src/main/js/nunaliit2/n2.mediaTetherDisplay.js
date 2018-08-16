@@ -38,7 +38,7 @@ POSSIBILITY OF SUCH DAMAGE.,
 
 
 
-    $n2.MediaDisplay = $n2.Class({
+    $n2.MediaTetherDisplay = $n2.Class({
         initialize: function() {
 
 
@@ -47,8 +47,8 @@ POSSIBILITY OF SUCH DAMAGE.,
 
 
 
-        ,displayTether: function (opts_) {
-
+        ,displayMediaTether: function (opts_) {
+            
 
 
         }

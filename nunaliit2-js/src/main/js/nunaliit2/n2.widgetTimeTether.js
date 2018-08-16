@@ -360,7 +360,7 @@ function HandleWidgetDisplayRequests(m){
 };
 
 //--------------------------------------------------------------------------
-$n2.widgetTime = {
+$n2.widgetTimeTether = {
 	TimelineWidget: TimelineTetherWidget
 	,HandleWidgetAvailableRequests: HandleWidgetAvailableRequests
 	,HandleWidgetDisplayRequests: HandleWidgetDisplayRequests
