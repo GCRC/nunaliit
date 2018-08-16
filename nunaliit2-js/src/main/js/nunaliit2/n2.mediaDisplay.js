@@ -38,7 +38,7 @@ var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 	
 var DEFAULT_VIDEO_HEIGHT = 240;
 var DEFAULT_VIDEO_WIDTH = 320;
-var DEFAULT_VIDEO_HEIGHT_ = 240;
+var DEFAULT_VIDEO_HEIGHT_INPLACE = 240;
 var DEFAULT_VIDEO_WIDTH_INPLACE = 320;
 var DEFAULT_VIDEO_CONTROLLER_HEIGHT = 16;
 var DEFAULT_VIDEO_DIALOG_EXTRA_WIDTH = 40;
@@ -260,7 +260,7 @@ $n2.MediaDisplay = $n2.Class({
 				,mimeType: opts.mimeType
 				,autoplay: true
 				,loop: false
-				,controller: true
+				,controller: truepp
 			});
 		} else {
 			var embedOptions = $n2.extend({},{
