@@ -493,7 +493,9 @@ CreateDocument widget
  /* Transcript area */
 
  #transcript {
+	overflow-y: scroll;
 	margin-top: 1em;
+	height: 45vh;
 }
 
 #transcript span {

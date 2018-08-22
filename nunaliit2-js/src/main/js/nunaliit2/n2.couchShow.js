@@ -1255,6 +1255,8 @@ var DomStyler = $n2.Class({
 			 }
 			 if (true || attCaptionDesc.fileClass === 'caption' && attCaptionUrl ) 
 			 {
+				   //little refine for css : specically for transcript
+                     //$('.n2_content_text').css('overflow','hidden');
 
 					var $transcript = $('<div>')
 					.attr('id', 'transcript');
