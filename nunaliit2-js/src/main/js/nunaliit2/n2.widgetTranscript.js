@@ -83,6 +83,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		]
 	 */
 	timeTable: null,
+	transcriptConvertor: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -115,6 +116,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			this.name = $n2.getUniqueId();
 		};
 
+		this.transcriptConvertor = new TransferSrtToJson();
 		this.transcript_array = [];
 		this.mediaId = null;
 
@@ -333,6 +335,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					,dataType: 'text'
 					,success: function(srtData) {
 						_this.srtData = srtData;
+						_this.transcript_array = _this.transcriptConvertor.execute(srtData);
 						_this._refresh();
 					}
 					,error: function(XMLHttpRequest, textStatus, errorThrown) {
@@ -456,11 +459,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				.bind('timeupdate', function() {
 					var currentTime = this.currentTime;
 					_this._updateCurrentTime(currentTime, 'video');
-				})
-				.bind('loadeddata', function(){
-					//$n2.log('Video Loaded',this.duration);
-				})
-				;
+				});
 
 		} else {
 			_this._renderError();
@@ -563,6 +562,16 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	}
 });
 
+
+var TransferSrtToJson = $n2.Class('TransferSrtToJson',{
+	function execute(srtData) {
+		
+		return 
+	}
+	
+	
+	
+});
 //--------------------------------------------------------------------------
 function HandleWidgetAvailableRequests(m){
 	if( m.widgetType === 'transcriptWidget' ){
@@ -594,12 +603,13 @@ function HandleWidgetDisplayRequests(m){
 		};
 		
 		new TranscriptWidget(options);
-    };
+	};
 };
 
 //--------------------------------------------------------------------------
 $n2.widgetTranscript = {
 	TranscriptWidget: TranscriptWidget
+	,TransferSrtToJson: TransferSrtToJson
 	,HandleWidgetAvailableRequests: HandleWidgetAvailableRequests
 	,HandleWidgetDisplayRequests: HandleWidgetDisplayRequests
 };
