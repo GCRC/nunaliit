@@ -1172,8 +1172,7 @@ var DomStyler = $n2.Class({
 			};
 		};
 	},
-
-
+	
 	_insertMediaTetherPlayer: function($insertView, data) {
 		var _this = this;
 		var docId = this._associateDocumentToElement(data, $insertView);
@@ -1182,206 +1181,18 @@ var DomStyler = $n2.Class({
 		$insertView.empty();
 
 		if( data && data._id === docId ) {
-			var srtData = null;
-
-			var attachmentService = undefined;
-			if( this.showService ){
-				attachmentService = this.showService.attachmentService;
-			};
-
-			var attSrt = undefined;
-			if( attachmentService ){
-				attSrt = attachmentService.getAttachment(data, attCaptionName);
-			};
-
-			var srtUrl = undefined;
-			if( attSrt ){
-				srtUrl = attSrt.computeUrl();
-			};
-
-			if( srtUrl ){
-				// download content of attachment and call rendering function
-				$.ajax({
-					url: srtUrl
-					,type: 'GET'
-					,async: true
-					,traditional: true
-					,data: {}
-					,dataType: 'text'
-					,success: function(srtData) {
-						renderElement($insertView, data, srtData);
-					}
-					,error: function(XMLHttpRequest, textStatus, errorThrown) {
-						// error while getting SRT content. Jump into same error
-						// as wrongly configured
-						renderError($insertView, data);
-					}
-				});
-			} else {
-				// element is wronly configured. Report error
-				renderError($insertView, data);
-			}
-			
-		}
-
-		function renderError($insertView, data){
-			var label = _loc('Unable to display tether content({docId})',{
-				docId: docId
+			new $n2.widgetTranscript.TranscriptWidget({
+				containerId: $n2.utils.getElementIdentifier($insertView)
+				,dispatchService: this.showService.dispatchService
+				,attachmentService: this.showService.attachmentService
+				,doc: data
+				,videoAttName: attVideoName
+				,srtAttName: attCaptionName
+				
 			});
-			$('<span>')
-				.addClass('n2s_insertMediaTetherPlayer_error')
-				.text(label)
-				.appendTo($insertView);
-		};
-
-		function renderElement($insertView, data, srtData){
-			var attVideoDesc = null;
-
-			//$n2.log('SRT',srtData);
-
-			if( data 
-			 && data.nunaliit_attachments
-			 && data.nunaliit_attachments.files
-			 ) {
-				attVideoDesc = data.nunaliit_attachments.files[attVideoName];
-			};
-
-			var thumbnailUrl = null;
-			if( attVideoDesc
-			 && attVideoDesc.thumbnail ){
-				thumbnailUrl = _this.db.getAttachmentUrl(data,attVideoDesc.thumbnail);
-			};
-
-			if( attVideoDesc 
-			 && attVideoDesc.status === 'attached' ) {
-			
-				var attVideoUrl = _this.db.getAttachmentUrl(data,attVideoName);
-				var mediaDivId = $n2.getUniqueId();
-				var mediaId = $n2.getUniqueId();
-				var transcriptId = $n2.getUniqueId();
-				
-
-				if (attVideoDesc.fileClass === 'video' && attVideoUrl) {
-					var $mediaDiv = $('<div>')
-							.attr('id', mediaDivId)
-							.appendTo($insertView);
-					/* var mediaOptions = {
-								insertView: $insertView
-								,videoUrl : attVideoUrl
-								,mediaDivId : mediaDivId
-								,mediaId : mediaId
-								,mimeType : attVideoDesc.mimeType || null
-							}
-					_this._insertMediaPlayerNative($insertView,mediaOptions); */
-				
-					//DIV for the Video
-					var $video = $('<video>')
-						.attr('id', mediaId)
-						.attr('controls', 'controls')
-						.attr('width', '100%')
-						//.attr('height', attDesc.height)
-						.appendTo($mediaDiv);
-
-					var $videoSource = $('<source>')
-						.attr('src', attVideoUrl)
-						.appendTo($video);
-
-					if( attVideoDesc.mimeType ){
-						$videoSource.attr('type', attVideoDesc.mimeType);
-					};
-		
-			
-					$('#'+mediaId).mediaelementplayer({
-						poster: thumbnailUrl
-						,features: ['playpause','progress','volume','sourcechooser','fullscreen']
-					}); 
-					//DIV for the transcript
-
-				}
-
-				if( srtData ) {
-					//little refine for css : specically for transcript
-					//$('.n2_content_text').css('overflow','hidden');
-
-					var $transcript = $('<div>')
-						.attr('id', 'transcript')
-						.appendTo($mediaDiv);
-
-					var transcript_array = [
-						{"start": "0.00",
-							"fin": "5.00",
-							"text": "Now that we've looked at the architecture of the internet, let's see how you might connect your personal devices to the internet inside your house."},
-						{"start": "5.01",
-							"fin": "10.00",
-							"text": "Well there are many ways to connect to the internet, and most often people connect wirelessly."},
-						{"start": "10.01",
-							"fin": "15.00",
-							"text": "Let's look at an example of how you can connect to the internet."},
-						{"start": "15.01",
-							"fin": "20.00",
-							"text": "If you live in a city or a town, you probably have a coaxial cable for cable Internet, or a phone line if you have DSL, running to the outside of your house, that connects you to the Internet Service Provider, or ISP."},
-						{"start": "20.01",
-							"fin": "25.00",
-							"text": "If you live far out in the country, you'll more likely have a dish outside your house, connecting you wirelessly to your closest ISP, or you might also use the telephone system."},
-						{"start": "25.01",
-							"fin": "30.00",
-							"text": "Whether a wire comes straight from the ISP hookup outside your house, or it travels over radio waves from your roof, the first stop a wire will make once inside your house, is at your modem."},
-						
-					];
-				
-					prep_transcript($transcript, transcript_array, mediaId);
-
-					// time update function: #highlight on the span to change the color of the text
-					$('#'+mediaId).bind('timeupdate', function() {
-						
-						for(var i =0;i<transcript_array.length;i++) {
-							document.getElementById(transcript_array[i].start).classList.remove('highlight');
-							if(this.currentTime >= transcript_array[i].start && this.currentTime <= transcript_array[i].fin) {
-								document.getElementById(transcript_array[i].start).classList.add('highlight');
-								//$n2.log(tar.prop('tagname'));
-							}
-
-							var currentTime = this.currentTime;
-							//$n2.log('current time: '+ currentTime);
-						}
-
-					});
-				};
-
-			} else {
-				// Do not have playable media document
-				var label = _loc('Media({docId},{attName})',{
-					docId: docId
-					,attName: attVideoName
-				});
-				$('<span>')
-					.addClass('n2s_insertMediaTetherPlayer_wait')
-					.text(label)
-					.appendTo($insertView);
-			};
-		};
-
-		function prep_transcript($transcript, transcript_array, mediaId){
-			var temp;
-			for (var i = 0; i < transcript_array.length; i++) {
-				
-				temp = $('<span />');
-				temp.html(transcript_array[i].text + ' ')
-				.attr('id', transcript_array[i].start)
-				.appendTo($transcript);
-	
-				// attach event listener that will fire skip_to_text when span is clicked
-				temp.bind('click', function(e) {
-					var $video = $('#'+mediaId);
-					$video[0].currentTime = e.target.id;
-					$video[0].play();
-
-
-				});
-			}
 		}
 	},
-
+	
 	_insertMediaPlayerNative: function($insertView, opts) {
 		var $video = $('video')
 			.attr('id', opts.mediaId)
