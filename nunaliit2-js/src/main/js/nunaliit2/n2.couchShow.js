@@ -1174,58 +1174,105 @@ var DomStyler = $n2.Class({
 	},
 
 
-    _insertMediaTetherPlayer: function($insertView, data) {
-    	var _this = this;
-    	var docId = this._associateDocumentToElement(data, $insertView);
-    	var attVideoName = $insertView.attr('nunaliit-attachment-video');
-    	var attCaptionName = $insertView.attr('nunaliit-attachment-srt');
-    	$insertView.empty();
-    	if (data && data._id === docId) {
-    	    var attVideoDesc = null;
-    	    var attCaptionDesc = null;
+	_insertMediaTetherPlayer: function($insertView, data) {
+		var _this = this;
+		var docId = this._associateDocumentToElement(data, $insertView);
+		var attVideoName = $insertView.attr('nunaliit-attachment-video');
+		var attCaptionName = $insertView.attr('nunaliit-attachment-srt');
+		$insertView.empty();
 
-    	    if(data && data.nunaliit_attachments
-    	       && data.nunaliit_attachments.files) {
-    		attVideoDesc = data.nunaliit_attachments.files[attVideoName];
-    		attCaptionDesc = data.nunaliit_attachments.files[attCaptionName];
-    	    };
+		if( data && data._id === docId ) {
+			var srtData = null;
 
+			var attachmentService = undefined;
+			if( this.showService ){
+				attachmentService = this.showService.attachmentService;
+			};
 
-    	    var thumbnailUrl = null;
-    	    if( attVideoDesc && attVideoDesc.thumbnail ){
-    		thumbnailUrl = this.db.getAttachmentUrl(data,attVideoDesc.thumbnail);
-    	    };
+			var attSrt = undefined;
+			if( attachmentService ){
+				attSrt = attachmentService.getAttachment(data, attCaptionName);
+			};
 
-    	    if( attVideoDesc && attCaptionDesc
-    		&& attVideoDesc.status === 'attached'
-    		|| attCaptionDesc.status == 'attached'  )
-    	    {
+			var srtUrl = undefined;
+			if( attSrt ){
+				srtUrl = attSrt.computeUrl();
+			};
 
-    	        var attVideoUrl = this.db.getAttachmentUrl(data,attVideoName);
-    	        var attCaptionUrl = this.db.getAttachmentUrl(data,attCaptionName);
-    	        var mediaDivId = $n2.getUniqueId();
+			if( srtUrl ){
+				// download content of attachment and call rendering function
+				$.ajax({
+					url: srtUrl
+					,type: 'GET'
+					,async: true
+					,traditional: true
+					,data: {}
+					,dataType: 'text'
+					,success: function(srtData) {
+						renderElement($insertView, data, srtData);
+					}
+					,error: function(XMLHttpRequest, textStatus, errorThrown) {
+						// error while getting SRT content. Jump into same error
+						// as wrongly configured
+						renderError($insertView, data);
+					}
+				});
+			} else {
+				// element is wronly configured. Report error
+				renderError($insertView, data);
+			}
+			
+		}
+
+		function renderError($insertView, data){
+			var label = _loc('Unable to display tether content({docId})',{
+				docId: docId
+			});
+			$('<span>')
+				.addClass('n2s_insertMediaTetherPlayer_error')
+				.text(label)
+				.appendTo($insertView);
+		};
+
+		function renderElement($insertView, data, srtData){
+			var attVideoDesc = null;
+
+			//$n2.log('SRT',srtData);
+
+			if( data 
+			 && data.nunaliit_attachments
+			 && data.nunaliit_attachments.files
+			 ) {
+				attVideoDesc = data.nunaliit_attachments.files[attVideoName];
+			};
+
+			var thumbnailUrl = null;
+			if( attVideoDesc
+			 && attVideoDesc.thumbnail ){
+				thumbnailUrl = _this.db.getAttachmentUrl(data,attVideoDesc.thumbnail);
+			};
+
+			if( attVideoDesc 
+			 && attVideoDesc.status === 'attached' ) {
+			
+				var attVideoUrl = _this.db.getAttachmentUrl(data,attVideoName);
+				var mediaDivId = $n2.getUniqueId();
 				var mediaId = $n2.getUniqueId();
 				var transcriptId = $n2.getUniqueId();
 				
 
-    			
-		
-		
-    		 if (attVideoDesc.fileClass === 'video' && attVideoUrl)  
-    		{
-				var $mediaDiv = $('<div>')
-						.attr('id', mediaDivId)
-						.appendTo($insertView);
-				/* var mediaOptions = {
-							insertView: $insertView
-							,videoUrl : attVideoUrl
-							,mediaDivId : mediaDivId
-							,mediaId : mediaId
-							,mimeType : attVideoDesc.mimeType || null
-						}
-				_this._insertMediaPlayerNative($insertView,mediaOptions); */
-				
-				 	
+				if (attVideoDesc.fileClass === 'video' && attVideoUrl) {
+					var $mediaDiv = $('<div>')
+							.attr('id', mediaDivId)
+							.appendTo($insertView);
+					/* var mediaOptions = {
+								insertView: $insertView
+								,videoUrl : attVideoUrl
+								,mediaDivId : mediaDivId
+								,mediaId : mediaId
+								,mimeType : attVideoDesc.mimeType || null
+							}
+					_this._insertMediaPlayerNative($insertView,mediaOptions); */
 				
 					//DIV for the Video
 					var $video = $('<video>')
@@ -1250,18 +1297,15 @@ var DomStyler = $n2.Class({
 					}); 
 					//DIV for the transcript
 
+				}
 
-
-			 }
-			 if (true || attCaptionDesc.fileClass === 'caption' && attCaptionUrl ) 
-			 {
-				   //little refine for css : specically for transcript
-                     //$('.n2_content_text').css('overflow','hidden');
+				if( srtData ) {
+					//little refine for css : specically for transcript
+					//$('.n2_content_text').css('overflow','hidden');
 
 					var $transcript = $('<div>')
-					.attr('id', 'transcript');
-					$transcript.appendTo($mediaDiv);
-			
+						.attr('id', 'transcript')
+						.appendTo($mediaDiv);
 
 					var transcript_array = [
 						{"start": "0.00",
@@ -1285,66 +1329,60 @@ var DomStyler = $n2.Class({
 						
 					];
 				
-					function prep_transcript (){
-						var temp;
-						for (var i = 0; i < transcript_array.length; i++) {
-							
-							temp = $('<span />');
-							temp.html(transcript_array[i].text + ' ')
-							.attr('id', transcript_array[i].start)
-							.appendTo($transcript);
-				
-							// attach event listener that will fire skip_to_text when span is clicked
-							temp.bind('click', function(e) {
-								var $video = $('#'+mediaId);
-								$video[0].currentTime = e.target.id;
-								$video[0].play();
+					prep_transcript($transcript, transcript_array, mediaId);
 
+					// time update function: #highlight on the span to change the color of the text
+					$('#'+mediaId).bind('timeupdate', function() {
+						
+						for(var i =0;i<transcript_array.length;i++) {
+							document.getElementById(transcript_array[i].start).classList.remove('highlight');
+							if(this.currentTime >= transcript_array[i].start && this.currentTime <= transcript_array[i].fin) {
+								document.getElementById(transcript_array[i].start).classList.add('highlight');
+								//$n2.log(tar.prop('tagname'));
+							}
 
-							});
+							var currentTime = this.currentTime;
+							//$n2.log('current time: '+ currentTime);
 						}
-			
-					}
-					prep_transcript();
 
-							// time update function: #highlight on the span to change the color of the text
-							$('#'+mediaId).bind('timeupdate', function() {
-								
-								for(var i =0;i<transcript_array.length;i++) {
-									document.getElementById(transcript_array[i].start).classList.remove('highlight');
-								if(this.currentTime >= transcript_array[i].start && this.currentTime <= transcript_array[i].fin) {
-									document.getElementById(transcript_array[i].start).classList.add('highlight');
-									//$n2.log(tar.prop('tagname'));
-								}
+					});
+				};
+
+			} else {
+				// Do not have playable media document
+				var label = _loc('Media({docId},{attName})',{
+					docId: docId
+					,attName: attVideoName
+				});
+				$('<span>')
+					.addClass('n2s_insertMediaTetherPlayer_wait')
+					.text(label)
+					.appendTo($insertView);
+			};
+		};
+
+		function prep_transcript($transcript, transcript_array, mediaId){
+			var temp;
+			for (var i = 0; i < transcript_array.length; i++) {
+				
+				temp = $('<span />');
+				temp.html(transcript_array[i].text + ' ')
+				.attr('id', transcript_array[i].start)
+				.appendTo($transcript);
 	
-								var currentTime = this.currentTime;
-								$n2.log('current time: '+ currentTime);
-								}
-		
-							});
+				// attach event listener that will fire skip_to_text when span is clicked
+				temp.bind('click', function(e) {
+					var $video = $('#'+mediaId);
+					$video[0].currentTime = e.target.id;
+					$video[0].play();
 
 
-					
-						};
-
-
-			}else {
-    			// Do not have playable media document
-    			var label = _loc('Media({docId},{attName})',{
-    				docId: docId
-    				,attName: attVideoName
-    			});
-    			$('<span>')
-    				.addClass('n2s_insertMediaTetherPlayer_wait')
-    				.text(label)
-    				.appendTo($insertView);
-    		};
+				});
+			}
 		}
-			
+	},
 
-
-		},
-    _insertMediaPlayerNative($insertView, opts) {
+	_insertMediaPlayerNative: function($insertView, opts) {
 		var $video = $('video')
 			.attr('id', opts.mediaId)
 			.attr('controls', 'controls')
