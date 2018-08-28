@@ -47,6 +47,10 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 
 	elemId: null,
 
+	mediaId: null,
+
+	name: null,
+
 	docId: null,
 
 	videoAttName: null,
@@ -56,12 +60,15 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	doc: null,
 
 	srtData: null,
+	
+	transcriptArray: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			containerId: undefined
 			,dispatchService: undefined
 			,attachmentService: undefined
+			,name: undefined
 			,docId: undefined
 			,doc: undefined
 			,videoAttName: undefined
@@ -72,6 +79,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 
 		this.dispatchService = opts.dispatchService;
 		this.attachmentService = opts.attachmentService;
+		this.name = opts.name;
 		this.docId = opts.docId;
 		this.videoAttName = opts.videoAttName;
 		this.srtAttName = opts.srtAttName;
@@ -79,6 +87,12 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			this.doc = opts.doc;
 			this.docId = this.doc._id;
 		};
+		if( !this.name ){
+			this.name = $n2.getUniqueId();
+		};
+
+		this.transcriptArray = [];
+		this.mediaId = null;
 
 		// Get container
 		var containerId = opts.containerId;
@@ -116,7 +130,21 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	_handle: function(m, addr, dispatcher){
 		var _this = this;
 
+		/*
+			mediaTimeChange message
+			{
+				type:'mediaTimeChange'
+				,name: <name of widget>
+				,currentTime: <integer>
+				,origin: <string>
+				      video => event originated from video player
+				      text => event originated from clicking text
+			}
+		*/
 		if( 'mediaTimeChanged' === m.type ){
+			if( m.name == this.name ){
+				this._timeChanged(m.currentTime, m.origin);
+			};
 			
 		} else if( 'documentContent' === m.type ){
 			if( m.docId == this.docId ){
@@ -218,7 +246,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 
 		if( attVideoUrl ) {
 			var mediaDivId = $n2.getUniqueId();
-			var mediaId = $n2.getUniqueId();
+			this.mediaId = $n2.getUniqueId();
 			var transcriptId = $n2.getUniqueId();
 
 			var $mediaDiv = $('<div>')
@@ -235,7 +263,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		
 			//DIV for the Video
 			var $video = $('<video>')
-				.attr('id', mediaId)
+				.attr('id', this.mediaId)
 				.attr('controls', 'controls')
 				.attr('width', '100%')
 				//.attr('height', attDesc.height)
@@ -250,7 +278,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			};
 
 	
-			$('#'+mediaId).mediaelementplayer({
+			$video.mediaelementplayer({
 				poster: thumbnailUrl
 				,features: ['playpause','progress','volume','sourcechooser','fullscreen']
 			}); 
@@ -262,7 +290,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				.attr('id', 'transcript')
 				.appendTo($mediaDiv);
 
-			var transcript_array = [
+			this.transcript_array = [
 				{"start": "0.00",
 					"fin": "5.00",
 					"text": "Now that we've looked at the architecture of the internet, let's see how you might connect your personal devices to the internet inside your house."},
@@ -284,47 +312,71 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				
 			];
 		
-			prep_transcript($transcript, transcript_array, mediaId);
+			prep_transcript($transcript, this.transcript_array);
 
 			// time update function: #highlight on the span to change the color of the text
-			$('#'+mediaId).bind('timeupdate', function() {
-				
-				//send the currentTime to DH system
-				for(var i =0;i<transcript_array.length;i++) {
-					document.getElementById(transcript_array[i].start).classList.remove('highlight');
-					if(this.currentTime >= transcript_array[i].start && this.currentTime <= transcript_array[i].fin) {
-						document.getElementById(transcript_array[i].start).classList.add('highlight');
-						//$n2.log(tar.prop('tagname'));
-					}
-
-					//var currentTime = this.currentTime;
-					//$n2.log('current time: '+ currentTime);
-				}
-
+			$video.bind('timeupdate', function() {
+				var currentTime = this.currentTime;
+				_this.dispatchService.send(DH,{
+					type: 'mediaTimeChanged'
+					,name: _this.name
+					,currentTime: currentTime
+					,origin: 'video'
+				});
 			});
 
 		} else {
 			_this._renderError();
 		};
 
-		function prep_transcript($transcript, transcript_array, mediaId){
+		function prep_transcript($transcript, transcript_array){
 			var temp;
 			for (var i = 0; i < transcript_array.length; i++) {
+				var transcriptElem = transcript_array[i];
 				
-				temp = $('<span />');
-				temp.html(transcript_array[i].text + ' ')
-				.attr('id', transcript_array[i].start)
-				.appendTo($transcript);
-	
-				// attach event listener that will fire skip_to_text when span is clicked
-				temp.bind('click', function(e) {
-					var $video = $('#'+mediaId);
-					$video[0].currentTime = e.target.id;
-					$video[0].play();
+				var id = $n2.getUniqueId();
+				transcriptElem.id = id;
+				
+				temp = $('<span/>')
+					.attr('id', id)
+					.attr('data-start', transcriptElem.start)
+					.text(transcriptElem.text)
+					.appendTo($transcript)
+					.click(function(e) {
+						var $span = $(this);
+						var currentTime = $span.attr('data-start');
 
-
-				});
+						_this.dispatchService.send(DH,{
+							type: 'mediaTimeChanged'
+							,name: _this.name
+							,currentTime: currentTime
+							,origin: 'text'
+						});
+					});
 			}
+		}
+	},
+	
+	_timeChanged: function(currentTime, origin){
+		// Act upon the text
+		for(var i =0;i<this.transcript_array.length;i++) {
+			var transcriptElem = this.transcript_array[i];
+			var $transcriptElem = $('#'+transcriptElem.id);
+
+			$transcriptElem.removeClass('highlight');
+
+			if(currentTime >= transcriptElem.start 
+			 && currentTime <= transcriptElem.fin) {
+				$transcriptElem.addClass('highlight');
+			};
+
+			//$n2.log('current time: '+ currentTime);
+		}
+		
+		if( 'video' !== origin ){
+			var $video = $('#'+this.mediaId);
+			$video[0].currentTime = currentTime;
+			$video[0].play();
 		}
 	},
 	
