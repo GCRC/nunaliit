@@ -61,7 +61,26 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 
 	srtData: null,
 	
-	transcriptArray: null,
+	transcript_array: null,
+	
+	// Time source variables
+	sourceModelId: null, // id of time model, or null
+
+	intervalChangeEventName: null, // name of event used to report changes in time interval
+	intervalGetEventName: null, // name of event used to retrieve current time interval
+	intervalSetEventName: null, // name of event used to set current time interval
+	intervalMin: null, // integer, current interval minimum
+	intervalMax: null, // integer, current interval maximum
+
+	/*
+		[
+			{
+				start: <integer - interval start>
+				,videoStart: <integer>
+			}
+		]
+	 */
+	timeTable: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -73,6 +92,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			,doc: undefined
 			,videoAttName: undefined
 			,srtAttName: undefined
+			,sourceModelId: undefined
+			,timeTable: undefined
 		},opts_);
 
 		var _this = this;
@@ -83,6 +104,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		this.docId = opts.docId;
 		this.videoAttName = opts.videoAttName;
 		this.srtAttName = opts.srtAttName;
+		this.sourceModelId = opts.sourceModelId;
 		if( opts.doc ){
 			this.doc = opts.doc;
 			this.docId = this.doc._id;
@@ -91,8 +113,40 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			this.name = $n2.getUniqueId();
 		};
 
-		this.transcriptArray = [];
+		this.transcript_array = [];
 		this.mediaId = null;
+
+		this.timeTable = [];
+		if( opts.timeTable ){
+			if( !$n2.isArray(opts.timeTable) ){
+				throw new Error('timeTable must be an array');
+			};
+			
+			opts.timeTable.forEach(function(timeEntry){
+				if( typeof timeEntry !== 'object' ){
+					throw new Error('Entries in timeTable must be objects');
+				} else if( null === timeEntry ){
+					throw new Error('Entries in timeTable can not be null');
+				};
+				
+				var videoTime = timeEntry.videoTime;
+				var time = timeEntry.time;
+
+				if( typeof videoTime !== 'number' ){
+					throw new Error('videoTime in timeTable must be a number');
+				};
+
+				// Try to parse time
+				var timeInt = $n2.date.parseUserDate(time);
+				
+				var timeObj = {
+					interval: timeInt
+					,start: timeInt.min
+					,videoStart: videoTime
+				};
+				_this.timeTable.push(timeObj);
+			});
+		};
 
 		// Get container
 		var containerId = opts.containerId;
@@ -110,12 +164,40 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 
 		// Set up dispatcher
 		if( this.dispatchService ){
+			if( this.sourceModelId ){
+				// Get model info
+				var modelInfoRequest = {
+					type: 'modelGetInfo'
+					,modelId: this.sourceModelId
+					,modelInfo: null
+				};
+				this.dispatchService.synchronousCall(DH, modelInfoRequest);
+				var sourceModelInfo = modelInfoRequest.modelInfo;
+				
+				if( sourceModelInfo 
+				 && sourceModelInfo.parameters 
+				 && sourceModelInfo.parameters.interval ){
+					var paramInfo = sourceModelInfo.parameters.interval;
+					this.intervalChangeEventName = paramInfo.changeEvent;
+					this.intervalGetEventName = paramInfo.getEvent;
+					this.intervalSetEventName = paramInfo.setEvent;
+
+					if( paramInfo.value ){
+						this.intervalMin = paramInfo.value.min;
+						this.intervalMax = paramInfo.value.max;
+					};
+				};
+			};
+
 			var f = function(m, addr, dispatcher){
 				_this._handle(m, addr, dispatcher);
 			};
 			
 			this.dispatchService.register(DH,'mediaTimeChanged',f);
 			this.dispatchService.register(DH,'documentContent',f);
+			if( this.intervalChangeEventName ){
+				this.dispatchService.register(DH,this.intervalChangeEventName,f);
+			};
 		};
 
 		$n2.log(this._classname, this);
@@ -156,9 +238,50 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					this._refresh();
 				};
 			};
+
+		} else if( this.intervalChangeEventName === m.type ) {
+			//$n2.log("intervalChangeEvent "+this.intervalChangeEventName+" => ", m);
+
+			if( m.value ){
+				this.intervalMin = m.value.min;
+				this.intervalMax = m.value.max;
+				
+				var videoTime = this._convertTimeToVideoTime(this.intervalMin);
+				if( typeof videoTime == 'number' ){
+					this._timeChanged(videoTime, 'model');
+				};
+			};
 		};
 	},
-	
+
+	_convertTimeToVideoTime: function(t){
+		var vTime = undefined;
+		
+		if( this.timeTable ){
+			this.timeTable.forEach(function(timeEntry){
+				if( timeEntry.start < t ){
+					vTime = timeEntry.videoStart;
+				};
+			});
+		};
+		
+		return vTime;
+	},
+
+	_convertVideoTimeToTime: function(vTime){
+		var time = undefined;
+		
+		if( this.timeTable ){
+			this.timeTable.forEach(function(timeEntry){
+				if( timeEntry.videoStart < vTime ){
+					time = timeEntry.start;
+				};
+			});
+		};
+		
+		return time;
+	},
+
 	_refresh: function(){
 		var _this = this;
 
@@ -317,12 +440,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			// time update function: #highlight on the span to change the color of the text
 			$video.bind('timeupdate', function() {
 				var currentTime = this.currentTime;
-				_this.dispatchService.send(DH,{
-					type: 'mediaTimeChanged'
-					,name: _this.name
-					,currentTime: currentTime
-					,origin: 'video'
-				});
+				_this._updateCurrentTime(currentTime, 'video');
 			});
 
 		} else {
@@ -340,23 +458,45 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				temp = $('<span/>')
 					.attr('id', id)
 					.attr('data-start', transcriptElem.start)
-					.text(transcriptElem.text)
+					.text(transcriptElem.text+ ' ')
 					.appendTo($transcript)
 					.click(function(e) {
 						var $span = $(this);
 						var currentTime = $span.attr('data-start');
-
-						_this.dispatchService.send(DH,{
-							type: 'mediaTimeChanged'
-							,name: _this.name
-							,currentTime: currentTime
-							,origin: 'text'
-						});
+						_this._updateCurrentTime(currentTime, 'text');
 					});
 			}
 		}
 	},
-	
+
+	_updateCurrentTime: function(currentTime, origin){
+		// Send notice to dispatcher
+		this.dispatchService.send(DH,{
+			type: 'mediaTimeChanged'
+			,name: this.name
+			,currentTime: currentTime
+			,origin: origin
+		});
+		
+		// Inform time model
+		if( this.intervalSetEventName ){
+			var min = this._convertVideoTimeToTime(currentTime);
+			
+			if( typeof min == 'number' ){
+				var value = new $n2.date.DateInterval({
+					min: min
+					,max: this.intervalMax
+					,ongoing: false
+				});
+
+				this.dispatchService.send(DH,{
+					type: this.intervalSetEventName
+					,value: value
+				});
+			};
+		};
+	},
+
 	_timeChanged: function(currentTime, origin){
 		// Act upon the text
 		for(var i =0;i<this.transcript_array.length;i++) {

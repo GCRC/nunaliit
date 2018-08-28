@@ -1178,6 +1178,7 @@ var DomStyler = $n2.Class({
 		var docId = this._associateDocumentToElement(data, $insertView);
 		var attVideoName = $insertView.attr('nunaliit-attachment-video');
 		var attCaptionName = $insertView.attr('nunaliit-attachment-srt');
+		var widgetName = $insertView.attr('nunaliit-widget-name');
 		$insertView.empty();
 
 		if( data && data._id === docId ) {
@@ -1185,6 +1186,7 @@ var DomStyler = $n2.Class({
 				containerId: $n2.utils.getElementIdentifier($insertView)
 				,dispatchService: this.showService.dispatchService
 				,attachmentService: this.showService.attachmentService
+				,name: widgetName
 				,doc: data
 				,videoAttName: attVideoName
 				,srtAttName: attCaptionName
