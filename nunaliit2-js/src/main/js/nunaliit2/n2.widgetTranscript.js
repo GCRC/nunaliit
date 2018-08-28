@@ -75,8 +75,10 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	/*
 		[
 			{
-				start: <integer - interval start>
+				timeStart: <integer - interval start>
+				,timeEnd: <integer - interval end>
 				,videoStart: <integer>
+				,videoEnd: <integer>
 			}
 		]
 	 */
@@ -129,20 +131,29 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					throw new Error('Entries in timeTable can not be null');
 				};
 				
-				var videoTime = timeEntry.videoTime;
-				var time = timeEntry.time;
+				var videoStart = timeEntry.videoStart;
+				var videoEnd = timeEntry.videoEnd;
+				var timeStart = timeEntry.timeStart;
+				var timeEnd = timeEntry.timeEnd;
 
-				if( typeof videoTime !== 'number' ){
-					throw new Error('videoTime in timeTable must be a number');
+				if( typeof videoStart !== 'number' ){
+					throw new Error('videoStart in timeTable must be a number');
+				};
+				if( typeof videoEnd !== 'number' ){
+					throw new Error('videoEnd in timeTable must be a number');
 				};
 
 				// Try to parse time
-				var timeInt = $n2.date.parseUserDate(time);
+				var timeStartInt = $n2.date.parseUserDate(timeStart);
+				var timeEndInt = $n2.date.parseUserDate(timeEnd);
 				
 				var timeObj = {
-					interval: timeInt
-					,start: timeInt.min
-					,videoStart: videoTime
+					intervalStart: timeStartInt
+					,intervalEnd: timeEndInt
+					,timeStart: timeStartInt.min
+					,timeEnd: timeEndInt.min
+					,videoStart: videoStart
+					,videoEnd: videoEnd
 				};
 				_this.timeTable.push(timeObj);
 			});
@@ -259,8 +270,9 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		
 		if( this.timeTable ){
 			this.timeTable.forEach(function(timeEntry){
-				if( timeEntry.start < t ){
-					vTime = timeEntry.videoStart;
+				if( timeEntry.timeStart < t && t < timeEntry.timeEnd ){
+					var frac = (t - timeEntry.timeStart) / (timeEntry.timeEnd - timeEntry.timeStart);
+					vTime = timeEntry.videoStart + (frac * (timeEntry.videoEnd - timeEntry.videoStart))
 				};
 			});
 		};
@@ -273,8 +285,10 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		
 		if( this.timeTable ){
 			this.timeTable.forEach(function(timeEntry){
-				if( timeEntry.videoStart < vTime ){
-					time = timeEntry.start;
+				if( timeEntry.videoStart < vTime && vTime < timeEntry.videoEnd ){
+					var frac = (vTime - timeEntry.videoStart) / (timeEntry.videoEnd - timeEntry.videoStart);
+					time = timeEntry.timeStart + (frac * (timeEntry.timeEnd - timeEntry.timeStart));
+					time = Math.floor(time);
 				};
 			});
 		};
@@ -438,10 +452,15 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			prep_transcript($transcript, this.transcript_array);
 
 			// time update function: #highlight on the span to change the color of the text
-			$video.bind('timeupdate', function() {
-				var currentTime = this.currentTime;
-				_this._updateCurrentTime(currentTime, 'video');
-			});
+			$video
+				.bind('timeupdate', function() {
+					var currentTime = this.currentTime;
+					_this._updateCurrentTime(currentTime, 'video');
+				})
+				.bind('loadeddata', function(){
+					//$n2.log('Video Loaded',this.duration);
+				})
+				;
 
 		} else {
 			_this._renderError();
@@ -513,7 +532,16 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			//$n2.log('current time: '+ currentTime);
 		}
 		
-		if( 'video' !== origin ){
+		if( 'model' === origin ){
+			var $video = $('#'+this.mediaId);
+			var currentVideoTime = $video[0].currentTime;
+			if( Math.abs(currentVideoTime - currentTime) < 0.5 ){
+				// Debounce
+			} else {
+				$video[0].currentTime = currentTime;
+			};
+			
+		} else if( 'text' === origin ){
 			var $video = $('#'+this.mediaId);
 			$video[0].currentTime = currentTime;
 			$video[0].play();
