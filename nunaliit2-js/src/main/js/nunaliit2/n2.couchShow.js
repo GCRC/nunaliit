@@ -224,13 +224,6 @@ var DomStyler = $n2.Class({
 				,fn: this._insertMediaPlayer
 				,acceptsContextDocument: true
 			},
-			{
-				source: 'n2s_insertMediaTetherPlayer'
-				,target: 'n2s_insertedMediaTetherPlayer'
-				,fn: this._insertMediaTetherPlayer
-				,acceptsContextDocument: true
-				
-			},
 
 			{
 				source: 'n2s_insertModuleName'
@@ -758,9 +751,6 @@ var DomStyler = $n2.Class({
 		if( $jq.hasClass('n2s_insertedMediaPlayer') ){
 			this._insertMediaPlayer($jq, doc);
 		};
-		if( $jq.hasClass('n2s_insertedMediaTetherPlayer')){
-			this._insertMediaTetherPlayer($jq, doc);
-		};
 		if( $jq.hasClass('n2s_insertedFirstThumbnail') ){
 			this._insertFirstThumbnail($jq, doc);
 		};
@@ -1173,62 +1163,6 @@ var DomStyler = $n2.Class({
 		};
 	},
 	
-	_insertMediaTetherPlayer: function($insertView, data) {
-		var _this = this;
-		var docId = this._associateDocumentToElement(data, $insertView);
-		var attVideoName = $insertView.attr('nunaliit-attachment-video');
-		var attCaptionName = $insertView.attr('nunaliit-attachment-srt');
-		var widgetName = $insertView.attr('nunaliit-widget-name');
-		$insertView.empty();
-
-		if( data && data._id === docId ) {
-			new $n2.widgetTranscript.TranscriptWidget({
-				containerId: $n2.utils.getElementIdentifier($insertView)
-				,dispatchService: this.showService.dispatchService
-				,attachmentService: this.showService.attachmentService
-				,name: widgetName
-				,doc: data
-				,videoAttName: attVideoName
-				,srtAttName: attCaptionName
-				
-			});
-		}
-	},
-	
-	_insertMediaPlayerNative: function($insertView, opts) {
-		var $video = $('video')
-			.attr('id', opts.mediaId)
-			.attr('controls', 'controls')
-			.attr('width', '100%')
-						//.attr('height', attDesc.height)
-			.appendTo(opts.mediaDiv);
-			var $videoSource = $('<source>')
-				.attr('src', opts.attVideoUrl)
-				.appendTo($video);
-
-			if( opts.mimeType ){
-					$videoSource.attr('type', opts.mimeType);
-				};
-
-
-		var $videocontrol =$('div')
-			.attr('id', 'video-controls')
-			.addClass('controls');
-			var $leftcon = $('div').attr('id', 'left-controls');
-			var btn = $('button').attr('type', 'button').attr('id', 'play-pause').append(
-				$('img').attr('src' , 'icons/play-icon.png').attr('alt', 'play'));
-			var span = $('span').attr('id','time-display').append(
-				$('span').attr('id', 'current-time').html('00:00')
-			).append($('span').attr('id','duration').html('59:59')).html('/');
-			$leftcon.append($btn).append($span);
-			var $rightcon = $('div').attr('id', 'right-controls');
-			
-			
-			$videocontrol.append($leftcon).append($rightcon).appendTo(opts.mediaDiv);
-			
-
-
-	},
 	_insertMediaPlayer: function($insertView, data) {
 		var _this = this;
 

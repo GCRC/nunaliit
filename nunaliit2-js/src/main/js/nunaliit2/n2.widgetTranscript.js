@@ -47,7 +47,9 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 
 	elemId: null,
 
-	mediaId: null,
+	videoId: null,
+	
+	transcriptId: null,
 
 	name: null,
 
@@ -116,9 +118,9 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			this.name = $n2.getUniqueId();
 		};
 
-		this.transcriptConvertor = new TransferSrtToJson();
+		this.transcriptConvertor = new SrtToJsonConvertor();
 		this.transcript_array = [];
-		this.mediaId = null;
+		
 
 		this.timeTable = [];
 		if( opts.timeTable ){
@@ -352,7 +354,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			return;
 		};
 
-		$n2.log('SRT',this.srtData);
+		//$n2.log('SRT',this.srtData);
 
 		var attVideoDesc = null;
 		var data = this.doc; // shorthand
@@ -386,27 +388,20 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 
 		if( attVideoUrl ) {
 			var mediaDivId = $n2.getUniqueId();
-			this.mediaId = $n2.getUniqueId();
-			var transcriptId = $n2.getUniqueId();
+			this.videoId = $n2.getUniqueId();
+			this.transcriptId = $n2.getUniqueId();
 
 			var $mediaDiv = $('<div>')
 					.attr('id', mediaDivId)
 					.appendTo($elem);
-			/* var mediaOptions = {
-						insertView: $insertView
-						,videoUrl : attVideoUrl
-						,mediaDivId : mediaDivId
-						,mediaId : mediaId
-						,mimeType : attVideoDesc.mimeType || null
-					}
-			_this._insertMediaPlayerNative($insertView,mediaOptions); */
+			
 		
 			//DIV for the Video
 			var $video = $('<video>')
-				.attr('id', this.mediaId)
+				.attr('id', this.videoId)
 				.attr('controls', 'controls')
 				.attr('width', '100%')
-				//.attr('height', attDesc.height)
+				.attr('height', '360px')
 				.appendTo($mediaDiv);
 
 			var $videoSource = $('<source>')
@@ -427,10 +422,11 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			//$('.n2_content_text').css('overflow','hidden');
 
 			var $transcript = $('<div>')
-				.attr('id', 'transcript')
+				.attr('id', this.transcriptId)
+				.addClass("transcript")
 				.appendTo($mediaDiv);
 
-			this.transcript_array = [
+			/*this.transcript_array = [
 				{"start": "0.00",
 					"fin": "5.00",
 					"text": "Now that we've looked at the architecture of the internet, let's see how you might connect your personal devices to the internet inside your house."},
@@ -450,7 +446,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					"fin": "30.00",
 					"text": "Whether a wire comes straight from the ISP hookup outside your house, or it travels over radio waves from your roof, the first stop a wire will make once inside your house, is at your modem."},
 				
-			];
+			];*/
 		
 			prep_transcript($transcript, this.transcript_array);
 
@@ -532,7 +528,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		}
 		
 		if( 'model' === origin ){
-			var $video = $('#'+this.mediaId);
+			var $video = $('#'+this.videoId);
 			var currentVideoTime = $video[0].currentTime;
 			if( Math.abs(currentVideoTime - currentTime) < 0.5 ){
 				// Debounce
@@ -541,7 +537,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			};
 			
 		} else if( 'text' === origin ){
-			var $video = $('#'+this.mediaId);
+			var $video = $('#'+this.videoId);
 			$video[0].currentTime = currentTime;
 			$video[0].play();
 		}
@@ -562,15 +558,51 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	}
 });
 
-
-var TransferSrtToJson = $n2.Class('TransferSrtToJson',{
-	function execute(srtData) {
+//--------------------------------------------------------------------------
+var SrtToJsonConvertor = $n2.Class('SrtToJsonConvertor',{
+	execute: function(srtData) {
+		var json = [];
+		var lines = srtData.split("\n");
+		if( !$n2.isArray(lines) ){
+			throw new Error('srtFile data processing error');
+		};
+		var cur = -1;
+		var totalLength = lines.length;
 		
-		return 
-	}
-	
-	
-	
+		var curSentence = "";
+		while( ++cur < totalLength){
+			if( lines[cur].replace(/^\s+|\s+$/g,'') === ""){
+				continue;
+			} else {
+				var tmpIdx = lines[cur].replace(/^\s+|\s+$/g,'');
+				var tmpTimecode = lines[++cur].replace(/^\s+|\s+$/g,'');
+				if(tmpIdx.search(/[0-9]+/i) === -1 || 
+						tmpTimecode.search(/[0-9][0-9]:[0-9][0-9]:[0-9][0-9]\,[0-9][0-9][0-9] --> [0-9][0-9]:[0-9][0-9]:[0-9][0-9]\,[0-9][0-9][0-9]/i) === -1 ) {
+					continue;
+				} else {
+					var curEntry = {
+							"start": null,
+							"fin": null,
+							"text": ""
+					};
+					$n2.log("The"+tmpIdx+"-th transcript");
+					$n2.log("The timecode: "+ tmpTimecode);
+					
+					curEntry.start  =  tmpTimecode.substring(0,2)*3600 + tmpTimecode.substring(3,5)*60 
+					+ tmpTimecode.substring(6,8);
+					curEntry.fin = tmpTimecode.substring(17,19)*3600 + tmpTimecode.substring(20,22)*60 
+					+ tmpTimecode.substring(23,25);
+					while((curSentence = lines[++cur])!== ""){
+						curEntry.text += curSentence;
+						}
+					json.push(curEntry);
+					
+				}
+				
+			}
+		}
+		return json;
+	},
 });
 //--------------------------------------------------------------------------
 function HandleWidgetAvailableRequests(m){
@@ -609,7 +641,7 @@ function HandleWidgetDisplayRequests(m){
 //--------------------------------------------------------------------------
 $n2.widgetTranscript = {
 	TranscriptWidget: TranscriptWidget
-	,TransferSrtToJson: TransferSrtToJson
+	,SrtToJsonConvertor: SrtToJsonConvertor
 	,HandleWidgetAvailableRequests: HandleWidgetAvailableRequests
 	,HandleWidgetDisplayRequests: HandleWidgetDisplayRequests
 };
