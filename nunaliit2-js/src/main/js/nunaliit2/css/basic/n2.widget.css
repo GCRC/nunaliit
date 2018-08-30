@@ -503,7 +503,36 @@ Polar Stereographic Projection Selector
 .n2polarStereographicProjectionSelector {
 	/* background-color: #ffffff; */
 }
+/* 
+==============================
+ Widget Transcript  
+==============================
+*/
+ 
 
+.transcript {
+	overflow-y: scroll;
+	margin-top: 1em;
+	height: 45vh;
+}
+
+.transcript span {
+   cursor: pointer;
+   transition: all 0.1s ease-in;
+   line-height: 1.8;
+   font-family: "Times New Roman", Times, serif;
+   font-size: 1.5em; 
+
+}
+
+.transcript span:hover {
+   color: green;
+}
+
+.transcript .highlight {
+   color: white;
+   background-color: darkorange;
+}
 /* 
 ==============================
 Wait Widget 
