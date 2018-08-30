@@ -26,7 +26,7 @@ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
 INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
-POSSIBILITY OF SUCH DAMAGE.
+POSSIBILITY OF SUCH DAMAGE.,
 
 */
 
@@ -38,6 +38,8 @@ var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 	
 var DEFAULT_VIDEO_HEIGHT = 240;
 var DEFAULT_VIDEO_WIDTH = 320;
+var DEFAULT_VIDEO_HEIGHT_INPLACE = 240;
+var DEFAULT_VIDEO_WIDTH_INPLACE = 320;
 var DEFAULT_VIDEO_CONTROLLER_HEIGHT = 16;
 var DEFAULT_VIDEO_DIALOG_EXTRA_WIDTH = 40;
 var DEFAULT_VIDEO_DIALOG_EXTRA_HEIGHT = 56;
@@ -92,7 +94,7 @@ $n2.MediaDisplay = $n2.Class({
 				this._displayAudio(opts);
 			};
 		} else if( 'video' === opts.type ) {
-			if( $.fn && $.fn.mediaelementplayer ) {
+		    if( $.fn && $.fn.mediaelementplayer ) {
 				this._displayVideoMediaElement(opts);
 			} else {
 				this._displayVideo(opts);
@@ -285,7 +287,7 @@ $n2.MediaDisplay = $n2.Class({
 
 			var embedHtml = this.generateEmbedMarkup(embedOptions);
 		};
-		
+	
 		mkup.push(embedHtml);
 		
 		mkup.push('</div>');
@@ -322,7 +324,57 @@ $n2.MediaDisplay = $n2.Class({
 		
 		$mediaDialog.dialog(dialogOptions);
 	}
-	
+	,_displayVideoMediaElementInplace: function(opts) {
+	    var $inplaceDiv = opts.insertView || null;
+	    if($inplaceDiv){
+	       var thumbnailUrl = $inplaceDiv.find(".n2Show_thumb_wrapper img").attr("src");
+		$inplaceDiv.find(".n2Show_thumb_wrapper img").remove();
+		
+		
+		var mediaInplaceId = $n2.getUniqueId();
+		var videoId = $n2.getUniqueId();
+/*
+		var width = DEFAULT_VIDEO_WIDTH_INPLACE;
+		if( opts.mediaDisplayVideoWidth ) {
+			width = opts.mediaDisplayVideoWidth;
+		} else if( opts.width ) {
+			width = opts.width;
+		};
+
+		var height = DEFAULT_VIDEO_HEIGHT_INPLACE;
+		if( opts.mediaDisplayVideoHeight ) {
+			height = opts.mediaDisplayVideoHeight + DEFAULT_VIDEO_CONTROLLER_HEIGHT;
+		} else if( opts.height ) {
+			height = opts.height + DEFAULT_VIDEO_CONTROLLER_HEIGHT;
+		};
+*/
+
+		var mkup = [];
+		mkup.push('<div id="'+mediaInplaceId+'">');
+
+		mkup.push('<video id="'+videoId+'" controls="controls" poster="'+thumbnailUrl+'" width="100%">');
+		
+		mkup.push('<source src="'+opts.url+'"');
+		if( opts.mimeType ){
+			mkup.push(' type="'+opts.mimeType+'"');
+		};
+		mkup.push('>');
+		
+		mkup.push('</video>');
+		
+		var $mediaInplace = $( mkup.join('') );
+		
+
+		this._addMetaData(opts, $mediaInplace);
+		this._addDownloadButton(opts, $mediaInplace);
+
+		$inplaceDiv.append($mediaInplace);
+		$('#'+videoId).mediaelementplayer({
+			features: ['playpause','progress','volume','sourcechooser','fullscreen'],
+			
+		});
+	    }
+	}
 	,_displayVideoMediaElement: function(opts) {
 		var dialogTitle = defaultDialogTitle;
 		if( opts.title ) {
@@ -553,7 +605,8 @@ $n2.MediaDisplay = $n2.Class({
 	
 	,_addMetaData: function(opts, $elem) {
 		$elem.append( $('<br/>') );
-		
+		$elem.append( $('<br/>') );
+		//$elem.append( $('<br/>') );
 		if( opts.metaDataHtml ) {
 			var $meta = $('<span></span>');
 			$meta.html(opts.metaDataHtml);

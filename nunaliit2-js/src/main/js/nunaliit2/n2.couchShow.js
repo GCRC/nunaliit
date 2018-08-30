@@ -224,6 +224,7 @@ var DomStyler = $n2.Class({
 				,fn: this._insertMediaPlayer
 				,acceptsContextDocument: true
 			},
+
 			{
 				source: 'n2s_insertModuleName'
 				,target: 'n2s_insertedModuleName'
@@ -750,7 +751,6 @@ var DomStyler = $n2.Class({
 		if( $jq.hasClass('n2s_insertedMediaPlayer') ){
 			this._insertMediaPlayer($jq, doc);
 		};
-		
 		if( $jq.hasClass('n2s_insertedFirstThumbnail') ){
 			this._insertFirstThumbnail($jq, doc);
 		};
@@ -1065,9 +1065,10 @@ var DomStyler = $n2.Class({
 							attDesc.fileClass
 							,attUrl
 							,data
-							,attachmentName
+					    ,attachmentName
+					    ,$insertView
 						);
-					linkDiv.click(cb);
+					linkDiv.one('click',cb);
 				};
 			};
 
@@ -1083,11 +1084,12 @@ var DomStyler = $n2.Class({
 				.appendTo($insertView);
 		};
 		
-		function createMediaCallback(uploadType, attachmentUrl, doc, attachmentName) {
+		function createMediaCallback(uploadType, attachmentUrl, doc, attachmentName, $insertView) {
 			
 			return function(evt) {
 				var mediaOptions = {
-					url: attachmentUrl
+					insertView: $insertView || null
+					,url: attachmentUrl
 					,suppressLeaveConfirmation: suppressLeaveConfirmation
 				};
 				
@@ -1160,8 +1162,7 @@ var DomStyler = $n2.Class({
 			};
 		};
 	},
-
-
+	
 	_insertMediaPlayer: function($insertView, data) {
 		var _this = this;
 
