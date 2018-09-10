@@ -1,11 +1,11 @@
 .n2DisplayTiled_documents {
-    position: relative;
-    margin: 0 20px;
+	position: relative;
+	margin: 0 20px;
 }
 .n2DisplayTiled_documents:after {
-  content: "";
-  display: table;
-  clear: both;
+	content: "";
+	display: table;
+	clear: both;
 }
 
 .n2DisplayTiled_tile {
@@ -13,15 +13,15 @@
 	background: #f8f8f8 url('images/tile_bg_document.png') no-repeat center 40px;
 	border: 1px solid #f8f8f8;
 	overflow: hidden;
-    -webkit-box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.25);
-    -moz-box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.25);
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.25);
-    -webkit-transition: border 0.5s; /* For Safari 3.1 to 6.0 */
-    transition: border 0.5s;
+	-webkit-box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.25);
+	-moz-box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.25);
+	box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.25);
+	-webkit-transition: border 0.5s; /* For Safari 3.1 to 6.0 */
+	transition: border 0.5s;
     
 }
 .n2DisplayTiled_tile_content {
-    padding: 10px;   
+	padding: 10px;   
 }
 div.n2DisplayTiled_tile_video {
 	background-image: url('images/tile_bg_video.png');
@@ -36,7 +36,7 @@ div.n2DisplayTiled_tile_image {
 }
 .n2DisplayTiled_documents div.n2DisplayTiled_tile_current {
 	background-image: none;
-    background-color: #fff;
+	background-color: #fff;
 }
 
 .n2DisplayTiled_thumb {
@@ -60,18 +60,18 @@ div.n2DisplayTiled_tile_image {
 	width: 90%;
 	padding: 5%;
 	background-color: rgba(255,255,255,0.8);
-    word-wrap: break-word;
-    max-height: 50px;
-    text-overflow: ellipsis;    
+	word-wrap: break-word;
+	max-height: 50px;
+	text-overflow: ellipsis;    
 	display: -webkit-box;
 	-webkit-line-clamp: 3;
 	-webkit-box-orient: vertical;    
 }
 
 .n2DisplayTiled_tile:hover {
-    border: 1px solid #222;
-    -webkit-transition: border 0.35s; /* For Safari 3.1 to 6.0 */
-    transition: border 0.35s;
+	border: 1px solid #222;
+	-webkit-transition: border 0.35s; /* For Safari 3.1 to 6.0 */
+	transition: border 0.35s;
 }
 .n2DisplayTiled_tile_current.n2DisplayTiled_tile:hover {
 	background-color: transparent;
@@ -86,29 +86,29 @@ div.n2DisplayTiled_tile_image {
 }
 
 .n2DisplayTiled_filters {
-    padding: 30px 10px;
-    text-align: right;
+	padding: 30px 10px;
+	text-align: right;
 }
 .n2DisplayTiled_filters:after {
-  content: "";
-  display: table;
-  clear: both;
+	content: "";
+	display: table;
+	clear: both;
 }
 .n2DisplayTiled_filters a {
-    padding: 3px 8px;
-    margin: 2px 3px;
-    display: block;
-    float: right;
+	padding: 3px 8px;
+	margin: 2px 3px;
+	display: block;
+	float: right;
 }
 .n2DisplayTiled_filter_selected {
 	font-weight: bold;
 }
 .n2DisplayTiled_current_buttons {
-    padding: 10px;
-    text-align: right;
+	padding: 10px;
+	text-align: right;
 }
 .n2DisplayTiled_current_buttons a {
-    margin: 0 10px;   
+	margin: 0 10px;   
 }
 .n2DisplayTiled_current_button_tree_view,
 .n2DisplayTiled_current_button_simplified_geoms {

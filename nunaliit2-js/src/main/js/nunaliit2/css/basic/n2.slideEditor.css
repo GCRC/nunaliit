@@ -182,7 +182,7 @@
 	float: left;
 	background: #444444 url("slideEditor/icons-18-white.png") no-repeat scroll -72px 50%;
 	border-radius: 9px;
-    padding: 18px 18px 0px 0px;
+	padding: 18px 18px 0px 0px;
 	margin: 8px 10px 0px 4px;
 }
 .n2se_entry_delete {
@@ -231,7 +231,7 @@ input.n2se_entry_text {
 	float: right;
 	background: #444444 url("slideEditor/icons-18-white.png") no-repeat scroll -108px 50%;
 	border-radius: 9px;
-    padding: 18px 18px 0px 0px;
+	padding: 18px 18px 0px 0px;
 	margin-top: 8px;
 	margin-right: 10px;
 }
@@ -290,12 +290,12 @@ input.n2se_entry_text {
 	float: left;
 	background: #444444 url("slideEditor/icons-18-white.png") no-repeat scroll 0px 50%;
 	border-radius: 9px;
-    padding: 18px 18px 0px 0px;
-    margin: 1px 3px 0px 3px;
+	padding: 18px 18px 0px 0px;
+	margin: 1px 3px 0px 3px;
 }
 .n2se_addbar_addButton > .n2se_btn {
 	background-color: rgba(0, 0, 0, 0.4); /* non-IE */
 }
 .n2se_addbar_addButton > .n2se_label {
-    padding: 0px 5px;
+	padding: 0px 5px;
 }
