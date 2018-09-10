@@ -4,7 +4,6 @@
    - Theme styles for nunaliit demo atlas (Fonts, colors, images, textures etc)
    ========================================================================== */
 
-
 /*START - Form Styles*/
 input[type="text"], input[type="password"], textarea { 
 	border: 1px solid #cccccc; 
@@ -14,7 +13,6 @@ input[type="text"], input[type="password"], textarea {
 	color: rgba(0, 0, 0, 0.75); 
 	padding: 8px;
 }
-
 
 /* Desktop screens */
 
@@ -39,22 +37,22 @@ input[type="text"], input[type="password"], textarea {
 }
 .nunaliit_atlas .nunaliit_title {
 	font-size: 2.2em;
-	font-weight:500;
+	font-weight: 500;
 	text-shadow: black 1px 1px 1px;
-	color:{{header.color}};
+	color: {{header.color}};
 }
 .nunaliit_atlas .nunaliit_title_link {
-	color:{{header.color}};
+	color: {{header.color}};
 }
 .nunaliit_atlas .nunaliit_title_link:hover {
-	text-decoration:none;
+	text-decoration: none;
 }
 
 /* Sub-Header Title */
 .nunaliit_atlas .nunaliit_module_title {
 	background-color: {{header.background.module}};
 	border-top: 1px solid {{header.border.color.module}};
-	color:{{header.color}};
+	color: {{header.color}};
 }
 
 .nunaliit_atlas .nunaliit_module_title_item {
@@ -63,11 +61,11 @@ input[type="text"], input[type="password"], textarea {
 }
 
 .nunaliit_atlas .nunaliit_module_title_link {
-	color:{{header.color}};
+	color: {{header.color}};
 }
 
 .nunaliit_atlas .nunaliit_module_title_link:hover {
-	text-decoration:none;
+	text-decoration: none;
 }
 
 /* Header Menu */
@@ -81,10 +79,10 @@ input[type="text"], input[type="password"], textarea {
 	background-color: {{header.background}};
 	border-left: 1px solid {{header.border.color}};
 	border-right: 1px solid {{header.border.color}};
-	border-bottom:1px solid {{header.border.color}};
+	border-bottom: 1px solid {{header.border.color}};
 }
 .nunaliit_atlas .nunaliit_header-nav li:hover {
-	background-color:{{header.background.hover}};
+	background-color: {{header.background.hover}};
 }
 .nunaliit_atlas .nunaliit_header-nav li:hover ul li:first-child {
 	border-left: 1px solid rgba(0,0,0,0.9);
@@ -97,23 +95,23 @@ input[type="text"], input[type="password"], textarea {
 	border-left: 1px solid #838383;
 	border-right: 1px solid #838383;
 	padding: 0 20px;
-	margin:0 0 0 -1px;
+	margin: 0 0 0 -1px;
 	background-color: {{header.background.button}};
 	-webkit-box-shadow: inset 0 2px 3px rgba(0,0,0,0.2);
 	box-shadow: inset 0 2px 3px rgba(0,0,0,0.2);
 	height: 100%;
-	display:-moz-inline-stack;
-	display:inline-block;
-	zoom:1;
-	*display:inline;
-	border-bottom:0;
+	display: -moz-inline-stack;
+	display: inline-block;
+	zoom: 1;
+	*display: inline;
+	border-bottom: 0;
 }
 .nunaliit_atlas .nunaliit_header-nav li.n2_nav_currentModule {
 	background-color: {{header.background.selected}};
 }
 .nunaliit_atlas .nunaliit_header-nav ul>li>a:hover {
-	background-color:{{header.background.hover}};
-	border-right:0;
+	background-color: {{header.background.hover}};
+	border-right: 0;
 }
 .nunaliit_atlas .nunaliit_header-nav>ul>li:hover>ul>li:first-child {
 	border-left: 1px solid rgba(255,255,255,0.6);
@@ -121,13 +119,13 @@ input[type="text"], input[type="password"], textarea {
 .nunaliit_atlas .nunaliit_header-nav>ul>li>a,
 .nunaliit_atlas .nunaliit_header-nav>ul>li>span {
 	font-weight: normal;
-	display:block;
+	display: block;
 	text-decoration: none;
 	color: {{header.color}};
 	line-height: 0;
 	position: relative;
 	top: 35px;	
-	padding:0;
+	padding: 0;
 }
 .nunaliit_atlas .nunaliit_header-nav>ul>li>ul>li, .nunaliit_atlas .nunaliit_header-nav>ul>li>ul>li:hover {
 	/* background-image: url('../images/left-arrow.png'); */
@@ -136,37 +134,36 @@ input[type="text"], input[type="password"], textarea {
 }
 .nunaliit_atlas .nunaliit_header-nav>ul>li>ul>li>a:hover {
 	cursor: default;
-	text-decoration:none;
+	text-decoration: none;
 }
 .nunaliit_atlas .nunaliit_header-nav>ul>li>a {
-	margin-right:-1px;
+	margin-right: -1px;
 }
-
 
 /* Login (within nunaliit_header_container) */
 .nunaliit_atlas .nunaliit_header_container .nunaliit_login {
-	position:absolute;
+	position: absolute;
 	display: table-row;
-	top:0;
-	right:20px;
-	height:71px;
+	top: 0;
+	right: 20px;
+	height: 71px;
 	overflow: hidden;
-	z-index:10;
+	z-index: 10;
 }	
 .nunaliit_atlas .nunaliit_header_container .nunaliit_login_link_outer_container {
 	display: table-cell;
 	vertical-align: middle;
-	height:71px;
+	height: 71px;
 	width: 36px;
 	border-left: 1px solid {{header.border.button.color}};
 	border-right: 1px solid {{header.border.button.color}};
-	padding:0 20px;
-	background-color:{{header.background.button}};
+	padding: 0 20px;
+	background-color: {{header.background.button}};
 	-webkit-box-shadow: inset 0 2px 3px rgba(0,0,0,0.2);
 	box-shadow: inset 0 2px 3px rgba(0,0,0,0.2);
 }
 .nunaliit_atlas .nunaliit_header_container .nunaliit_login_link_outer_container:hover {
-	background-color:{{header.background.hover}};
+	background-color: {{header.background.hover}};
 }
 .nunaliit_atlas .nunaliit_header_container .nunaliit_login_link_inner_container {
 	display: inline;
@@ -178,8 +175,8 @@ input[type="text"], input[type="password"], textarea {
 .nunaliit_atlas .nunaliit_header_container .nunaliit_login_greeting_outer_container {
 	display: table-cell;
 	vertical-align: middle;
-	height:70px;
-	padding:0 20px;
+	height: 70px;
+	padding: 0 20px;
 }
 .nunaliit_atlas .nunaliit_header_container .nunaliit_login_greeting_inner_container {
 	display: inline;
@@ -193,7 +190,7 @@ input[type="text"], input[type="password"], textarea {
 /* Login (within nunaliit_module_title) */
 .nunaliit_atlas .nunaliit_module_title .nunaliit_login {
 	display: none;
-	float:right;
+	float: right;
 }	
 .nunaliit_atlas .nunaliit_module_title .nunaliit_login_link_outer_container {
 	padding: 8px 20px;
@@ -207,9 +204,7 @@ input[type="text"], input[type="password"], textarea {
 	text-decoration: none;
 }
 .nunaliit_atlas .nunaliit_module_title .nunaliit_login_greeting_outer_container {
-	display:none;
-}
-.nunaliit_atlas .nunaliit_module_title .nunaliit_login_greeting_inner_container {
+	display: none;
 }
 
 /*
@@ -285,19 +280,17 @@ CreateDocument widget
 	color: #000;
 }
 
-
-
 /* ============================== */
 /* ! CONTENT SECTION   */
 /* ============================== */
 /* Main Content Section */
 .nunaliit_atlas .nunaliit_content {
-	top:102px;
-	bottom:17px;
+	top: 102px;
+	bottom: 17px;
 }
 .nunaliit_atlas .nunaliit_content noscript {
-	font:normal;
-	font-size:x-large;
+	font: normal;
+	font-size: x-large;
 }
 
 /* Search */
@@ -310,7 +303,7 @@ CreateDocument widget
 .nunaliit_atlas .nunaliit_searchInput
 ,.nunaliit_atlas .n2_content_searchInput {
 	background-color: #fff;
-	border-bottom:1px solid #e5e5e5;
+	border-bottom: 1px solid #e5e5e5;
 }
 
 .nunaliit_atlas .nunaliit_search_input .searchIcon,
@@ -334,9 +327,7 @@ CreateDocument widget
 	margin: 0;
 	padding: 0px;
 	background-color: transparent;
-	font-family: helvetica, sans-serif;
-	font-weight: 400;
-	font-size: 0.9em;
+	font: 400 0.9em helvetica, sans-serif;
 	border: none;
 	border-bottom: 1px solid #fefefe;
 	outline: none;
@@ -363,30 +354,27 @@ CreateDocument widget
 /* Side Bar */
 .nunaliit_atlas .nunaliit_side
 ,.nunaliit_atlas .n2_content_text {
-	background-color:#fff;
-	border-left:1px solid #656565;
+	background-color: #fff;
+	border-left: 1px solid #656565;
 }
 
 /* Map Interactions */
 .nunaliit_atlas .map_interaction input
 ,.nunaliit_atlas .n2_content_map_interaction input { 
 	background: #000;
-	color:#fff;
-	padding:8px;
-	border:0;
-	opacity:0.7;
+	color: #fff;
+	padding: 8px;
+	border: 0;
+	opacity: 0.7;
 }
 .nunaliit_atlas .map_interaction input:hover
 ,.nunaliit_atlas .n2_content_map_interaction input:hover {
-	opacity:1;
-} 
+	opacity: 1;
+}
 
 /* DbPerspectiveChooser */
-
 .nunaliit_atlas .n2dbPerspective_chooser {
-	font-family: sans-serif;
-	font-weight: bold;
-	font-size: smaller;
+	font: bold smaller sans-serif;
 	color: #fff;
 }
 
@@ -412,11 +400,8 @@ CreateDocument widget
 }
 
 /* Force Graph Settings */
-
 .nunaliit_atlas .n2ForceGraph_settings {
-	font-family: sans-serif;
-	font-weight: bold;
-	font-size: smaller;
+	font: bold smaller sans-serif;
 	color: #fff;
 }
 
@@ -444,15 +429,15 @@ CreateDocument widget
 /* Table of Contents */
 .nunaliit_atlas .nunaliit_table_of_contents ul li a {
 	border-bottom: 1px solid rgba(0,0,0,0.3);
-	color:#000;
-	text-decoration:none;
+	color: #000;
+	text-decoration: none;
 }
 .nunaliit_atlas .nunaliit_table_of_contents ul img {
-	border:1px solid rgba(0,0,0,0.5);
+	border: 1px solid rgba(0,0,0,0.5);
 }
 .nunaliit_atlas .nunaliit_table_of_contents>ul>li>ul>li>a {
-	font-size:1.1em;
-	font-weight:bold;
+	font-size: 1.1em;
+	font-weight: bold;
 }
 
 /* Buttons */
@@ -466,13 +451,13 @@ CreateDocument widget
 	text-decoration: none;
 	margin-right: 3px;
 	border: 1px solid #c3c1c1;
-	background-color:#eee;
+	background-color: #eee;
 	font-weight: normal;
 	color: #000;
-	display:-moz-inline-stack;
-	display:inline-block;
-	zoom:1;
-	vertical-align:top;
+	display: -moz-inline-stack;
+	display: inline-block;
+	zoom: 1;
+	vertical-align: top;
 }
 .nunaliit_form_link.n2show_findNotAvailable {
 	display: none;
@@ -501,8 +486,8 @@ CreateDocument widget
 
 .nunaliit_user_administrator .nunaliit_form_link_tree_view,
 .nunaliit_user_advanced .nunaliit_form_link_tree_view {
-	display:-moz-inline-stack;
-	display:inline-block;
+	display: -moz-inline-stack;
+	display: inline-block;
 }
 
 .intro b {
@@ -544,17 +529,16 @@ CreateDocument widget
 	clear: both;
 }
 
-
 /* Accordian Interaction - Overide Styles for Jquery UI styling*/
 .ui-widget-overlay {
 	background-image: none;
-	background-color:#000;
+	background-color: #000;
 	opacity: .45;
 	filter: Alpha(Opacity=45);
 }
 .ui-corner-all {
-	moz-border-radius:0;
-	border-radius:0;
+	-moz-border-radius: 0;
+	border-radius: 0;
 }
 /* .ui-state-default, .ui-widget-content .ui-state-default, .ui-widget-header .ui-state-default */
 .ui-accordion .ui-state-default {
@@ -564,22 +548,22 @@ CreateDocument widget
 	color: #555555;
 }
 .ui-accordion .ui-accordion-content {
-	padding:0;
+	padding: 0;
 	border-top: 0;
 	margin-top: 0;
 	position: relative;
 	top: 0;
 	margin-bottom: 0;
-	overflow:visible;
+	overflow: visible;
 	zoom: 1;
 }
 .ui-effects-wrapper {
-	padding:0;
+	padding: 0;
 }
 .ui-accordion .ui-accordion-header a {
 	display: block;
 	padding: 18px 18px 18px 38px;
-	border:1px solid #cccccc;
+	border: 1px solid #cccccc;
 	font-weight: bold;
 	color: #000;
 }
@@ -587,8 +571,8 @@ CreateDocument widget
 	left: 12px;
 }
 .olkitSearchMod2_0, .olkitSearchMod2_1 {
-	background-color:#fff;
-	padding:10px;
+	background-color: #fff;
+	padding: 10px;
 	-moz-box-shadow: 1px 1px 3px #e1dfdf;
 	-webkit-box-shadow: 1px 1px 3px #e1dfdf;
 	box-shadow: 1px 1px 3px #e1dfdf;
@@ -600,7 +584,6 @@ CreateDocument widget
 	box-shadow: none;
 }
 
-
 .editorSelectDocumentDialog_suggestedHeader {
 	font-weight: bold;
 }
@@ -610,7 +593,6 @@ CreateDocument widget
 	overflow: auto;
 	max-height: 400px;
 }
-
 
 ._n2DocumentListEntry {
 	border-bottom: 1px solid #cccccc;
@@ -624,18 +606,18 @@ CreateDocument widget
 }
 
 .n2Show_thumb_wrapper {
-	margin-bottom:2px;
-	text-align:center;
+	margin-bottom: 2px;
+	text-align: center;
 }
 .n2Show_thumb_wrapper img {
-	width:100%;
-	padding:0;
-	margin:0 auto 10px auto;
-	border:1px solid #ddd;
+	width: 100%;
+	padding: 0;
+	margin: 0 auto 10px auto;
+	border: 1px solid #ddd;
 }
 .n2Show_thumb_wrapper img:hover {
-	opacity:0.85;
-	cursor:pointer;
+	opacity: 0.85;
+	cursor: pointer;
 }
 .ui-corner-bottom {
 	-moz-border-radius: 0;
@@ -648,45 +630,44 @@ CreateDocument widget
 	font-size: inherit;
 }
 .ui-widget-content {
-	background-color: rgba(255,255,255,1);
-	background: #ffffff;
+	background-color: #ffffff;
 	color: #000000;
 	border-radius: 2px;
 	border: none !important;
 }
 .ui-accordion .ui-accordion-header .ui-icon.ui-icon-triangle-1-e { 
 	background-image: url('images/bullet_add.png');
-	background-position:-8px -7px; 
-	background-repeat:no-repeat;
+	background-position: -8px -7px; 
+	background-repeat: no-repeat;
 }
 .ui-accordion .ui-accordion-header.ui-state-active .ui-icon.ui-icon-triangle-1-s { 
 	background-image: url('images/bullet_minus.png');
-	background-position:-8px -7px; 
-	background-repeat:no-repeat;
+	background-position: -8px -7px; 
+	background-repeat: no-repeat;
 }
 .n2CouchEditor_container .ui-accordion-content {
-	padding: 0 0 0 0;
+	padding: 0;
 	height: auto !important;
 }
 .n2s_adjustedExternalMediaLink {
-	padding-right:25px;
+	padding-right: 25px;
 	background-image: url('images/download_file_bg.png');
-	background-repeat:no-repeat;
-	background-position:center right;
-	margin-bottom:10px;
-	margin-right:0;
-	display:block;
+	background-repeat: no-repeat;
+	background-position: center right;
+	margin-bottom: 10px;
+	margin-right: 0;
+	display: block;
 }
 .n2s_adjustedExternalMediaLink:hover {
-	text-decoration:none;
+	text-decoration: none;
 }
 .n2s_externalMediaLinkName {
-	font-weight:normal;
-	font-style:italic;
-	font-size:0.8em;
-	color:#848484;
-	width:100px;
-	overflow:hidden;
+	font-weight: normal;
+	font-style: italic;
+	font-size: 0.8em;
+	color: #848484;
+	width: 100px;
+	overflow: hidden;
 }
 .ui-widget-header {
 	border: none;
@@ -696,9 +677,9 @@ CreateDocument widget
 }
 .ui-button-text {
 	border: 1px solid #c3c1c1;
-	background-color:#eee;
+	background-color: #eee;
 	color: #000;
-	margin-right:3px;
+	margin-right: 3px;
 }
 .ui-button-text:hover {
 	background-color: #e9e6e6;
@@ -708,88 +689,79 @@ CreateDocument widget
 	border: 1px solid #9e9e9e;
 }
 .n2Auth_login_input, .n2Auth_input_field {
-	margin-bottom:5px;
+	margin-bottom: 5px;
 }
 .ui-state-active {
-	border:0;
-	background:transparent;
+	border: 0;
+	background: transparent;
 }
 .editorButtons {
-	margin:10px 0;
+	margin: 10px 0;
 }
 /*END - Override Styles for Jquery UI styling*/
 
-
 /* Side Bar Labels */
 .nunaliit_atlas .value {
-	margin:5px 0;
+	margin: 5px 0;
 }
 .nunaliit_atlas .label {
-	margin:5px 0;
-	padding-right:8px;
-	width:30%;
-	font-size:1em/1.2em;	
+	margin: 5px 0;
+	padding-right: 8px;
+	width: 30%;
+	font-size: 1em/1.2em;	
 }
 .nunaliit_atlas span.label {
-	display:inline-block;
+	display: inline-block;
 }
-
 
 /* ============================== */
 /* ! FOOTER SECTION   */
 /* ============================== */
 
 .nunaliit_atlas .nunaliit_footer {
-	font-size:0.75em;	
+	font-size: 0.75em;	
 	color: white;
 	border-top: 1px solid rgba(255,255,255,1);
 	background-color: {{header.background}};
 	-moz-box-shadow: 0 3px 8px rgba(0,0,0,0.5);
 	-webkit-box-shadow: 0 3px 8px rgba(0,0,0,0.5);
 	box-shadow: 0 3px 8px rgba(0,0,0,0.5);
-	text-align:right;
+	text-align: right;
 }
 .nunaliit_atlas .nunaliit_footer_content {
-	margin-right:5px;
-	padding-right:20px;
-	border-right:1px solid rgba(255,255,255,0.3);
-	display:-moz-inline-stack;
-	display:inline-block;
-	zoom:1;
-	*display:inline;
+	margin-right: 5px;
+	padding-right: 20px;
+	border-right: 1px solid rgba(255,255,255,0.3);
+	display: -moz-inline-stack;
+	display: inline-block;
+	zoom: 1;
+	*display: inline;
 }
 .nunaliit_atlas .nunaliit_footer_nav ul li {
 	border-right: 1px solid rgba(255,255,255,0.3);
-	color:{{header.color}};
+	color: {{header.color}};
 }
 .nunaliit_atlas .nunaliit_footer_nav ul li:first-child {
-	border-right:none;
+	border-right: none;
 }
 .nunaliit_atlas .nunaliit_footer_nav ul li a {
-	color:{{header.color}};
-	text-decoration:none;
+	color: {{header.color}};
+	text-decoration: none;
 }
 .nunaliit_atlas .nunaliit_footer_nav ul li a:hover {
-	text-decoration:underline;
+	text-decoration: underline;
 }
 
 /* Smaller screens */
-
 @media only screen and (max-width: 1023px) {
-
 	
-	
-	}
-
+}
 
 /* Mobile */
-
 @media handheld, only screen and (max-width: 767px) {
-
 
 }
 
 .n2s_insertedReferenceLink {
 	cursor: pointer;
 }
-

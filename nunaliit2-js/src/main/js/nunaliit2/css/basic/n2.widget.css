@@ -4,8 +4,6 @@
    - Theme styles for Nunaliit demo atlas (Fonts, colors, images, textures etc)
    ========================================================================== */
 
-
-
 /* Desktop screens */
 
 /* ============================== */
@@ -17,11 +15,11 @@
 	margin: 11.5px 20px;
 	border: 0;
 	padding: 0;
-	z-index:10;	
-	display:-moz-inline-stack;
-	display:inline-block;
-	zoom:1;
-	*display:inline;
+	z-index: 10;	
+	display: -moz-inline-stack;
+	display: inline-block;
+	zoom: 1;
+	*display: inline;
 }
 
 /* Sub-Header Title */
@@ -34,31 +32,31 @@
 	z-index: 10;
 }
 .nunaliit_title_link {
-	padding:8px 20px;
-	margin:0;
-	display:-moz-inline-stack;
-	display:inline-block;
-	zoom:1;
-	*display:inline;
+	padding: 8px 20px;
+	margin: 0;
+	display: -moz-inline-stack;
+	display: inline-block;
+	zoom: 1;
+	*display: inline;
 }
 
 /* Header Menu */
 .nunaliit_header-nav {
-	display:-moz-inline-stack;
-	display:inline-block;
-	zoom:1;
-	*display:inline;
+	display: -moz-inline-stack;
+	display: inline-block;
+	zoom: 1;
+	*display: inline;
 	margin: 0 0 0 25px;
 	padding: 0;
 	list-style:	none;
-	line-height:1.0;
-	height:100%;
+	line-height: 1.0;
+	height: 100%;
 	vertical-align: top;
 }
 .nunaliit_header-nav ul {
 	position: absolute;
 	top: 0;
-	left:100%;
+	left: 100%;
 	margin: 0;
 	padding: 0;
 	display: none;
@@ -67,23 +65,23 @@
 .nunaliit_header-nav li {
 	float: left;
 	position: relative;
-	margin:0;
-	padding:0;
+	margin: 0;
+	padding: 0;
 }
 .nunaliit_header-nav a {
 	display: block;
 	position: relative;
-	padding:15px;
+	padding: 15px;
 	padding-right: 25px;
 }
 .nunaliit_header-nav img {
-	display:none;
+	display: none;
 }
 .nunaliit_header-nav>ul {
 	top: 0;
-	left:auto;
+	left: auto;
 	height: 100%;
-	display:block;
+	display: block;
 	width: inherit;
 }
 .nunaliit_header-nav>ul>li>ul {
@@ -95,65 +93,64 @@
 	width: 100%;
 }
 .nunaliit_header-nav>ul>li {
-	width:auto;
-	display:-moz-inline-stack;
-	display:inline-block;
-	zoom:1;
-	*display:inline;
-	height:100%;
+	width: auto;
+	display: -moz-inline-stack;
+	display: inline-block;
+	zoom: 1;
+	*display: inline;
+	height: 100%;
 }
 .nunaliit_header-nav li:hover {
 	/*visibility: inherit;  fixes IE7 'sticky bug' */
-	text-decoration:underline;
+	text-decoration: underline;
 }
 .nunaliit_header-nav li:hover>ul {
-	display:block;
+	display: block;
 	z-index: 99;
 }
-
 
 /* Table of Contents */
 .nunaliit_table_of_contents {
 	position: absolute;	
 	top: 0;
 	left: 0;
-	right:451px;
-	bottom:0;
-	padding-top:34px;
-	overflow:auto;
+	right: 451px;
+	bottom: 0;
+	padding-top: 34px;
+	overflow: auto;
 }
 .nunaliit_table_of_contents ul {
-	padding:0;
-	margin:0;
+	padding: 0;
+	margin: 0;
 }
 .nunaliit_table_of_contents ul li {
-	list-style:none;
-	margin:0;
-	padding:0;
+	list-style: none;
+	margin: 0;
+	padding: 0;
 }
 .nunaliit_table_of_contents ul li a {
-	padding-bottom:2.5%;
-	display:block;
+	padding-bottom: 2.5%;
+	display: block;
 }
 .nunaliit_table_of_contents ul img {
-	width:100%;
-	margin-bottom:10px;
+	width: 100%;
+	margin-bottom: 10px;
 }
 .nunaliit_table_of_contents ul>li>ul>li {
-	float:left;
-	width:28%;
-	padding:2.5%;
+	float: left;
+	width: 28%;
+	padding: 2.5%;
 }
 .nunaliit_table_of_contents ul>li>ul>li:last-child {
-	margin-right:0;
+	margin-right: 0;
 }
 .nunaliit_table_of_contents ul>li>ul>li>ul>li {
-	float:left;
-	width:100%;
-	padding:2.5% 0;
+	float: left;
+	width: 100%;
+	padding: 2.5% 0;
 }
 .nunaliit_table_of_contents>ul>li>a {
-	display:none;
+	display: none;
 }
 
 /* Map Controls - Zoom - Layer Switch */
@@ -165,22 +162,20 @@
 	width: 28px;
 	height: 28px;
 	background-image: url('openlayers/settings_icon.png');
-	opacity:0.7;
-	top:5px;
-	left:-29px;
+	opacity: 0.7;
+	top: 5px;
+	left: -29px;
 }
 .olControlLayerSwitcher .maximizeDiv:hover, .olControlLayerSwitcher .minimizeDiv:hover {
-	opacity:1;
+	opacity: 1;
 }
-#OpenLayers_Control_MaximizeDiv img {
-	display:none;
-}
+#OpenLayers_Control_MaximizeDiv img,
 #OpenLayers_Control_MinimizeDiv_innerImage {
-	display:none;
+	display: none;
 }
 .olControlLayerSwitcher .layersDiv {
 	background: url('openlayers/popup_bg.png') no-repeat top left;
-	padding:11px 20px;
+	padding: 11px 20px;
 	margin: 6px 0 0 5px;
 }
 div.olControlZoom {
@@ -193,14 +188,14 @@ div.olControlZoom {
 }
 div.olControlZoom a { 
 	background: #000;
-	opacity:0.7;
-	padding:3px;
+	opacity: 0.7;
+	padding: 3px;
 	border-radius: 0;
-	moz-border-radius:0;
+	-moz-border-radius: 0;
 }
 div.olControlZoom a:hover { 
 	background: #000;
-	opacity:1;
+	opacity: 1;
 }	
 .olControlEditingToolbar div {
 	float: left;
@@ -213,54 +208,48 @@ div.olControlMousePosition {
 /* ============================== */
 /* ! FOOTER SECTION   */
 /* ============================== */
-
-
 .nunaliit_footer_nav {
-	margin:2px 10px;
-	list-style:none;
-	display:-moz-inline-stack;
-	display:inline-block;
-	zoom:1;
-	*display:inline;
+	margin: 2px 10px;
+	list-style: none;
+	display: -moz-inline-stack;
+	display: inline-block;
+	zoom: 1;
+	*display: inline;
 }
 .nunaliit_footer_content {
-	margin:2px 10px;
-	display:-moz-inline-stack;
-	display:inline-block;
-	zoom:1;
-	*display:inline;
+	margin: 2px 10px;
+	display: -moz-inline-stack;
+	display: inline-block;
+	zoom: 1;
+	*display: inline;
 }
 .nunaliit_footer_nav ul {
-	margin:0;
-	padding:0;
+	margin: 0;
+	padding: 0;
 }
 
 .nunaliit_footer_nav ul li {
-	padding:0 10px;
-	margin:0;
-	display:-moz-inline-stack;
-	display:inline-block;
-	zoom:1;
-	*display:inline;
+	padding: 0 10px;
+	margin: 0;
+	display: -moz-inline-stack;
+	display: inline-block;
+	zoom: 1;
+	*display: inline;
 }
 .nunaliit_footer_nav ul li:first-child {
-	margin-right:19px;
+	margin-right: 19px;
 }
 .nunaliit_footer_nav ul li:last-child {
-	margin-left:0;
-	padding-left:0;
-	border-left:0;	
+	margin-left: 0;
+	padding-left: 0;
+	border-left: 0;	
 }
 
-
 /* Smaller screens */
-
 @media only screen and (max-width: 1023px) {
 }
 
-
 /* Mobile */
-
 @media handheld, only screen and (max-width: 767px) {
 }
 
@@ -293,7 +282,6 @@ ROLE LIST
 	overflow: auto;
 	margin-bottom: 5px;
 }
-
 
 /* 
 ==============================
@@ -378,11 +366,7 @@ Gazetteer Dialog
 CreateDocument widget 
 ==============================
 */
-.nunaliit_content .n2widget_createDocument {
-	position: absolute;
-	top: 5px;
-	right: 455px;
-}
+.nunaliit_content .n2widget_createDocument,
 .nunaliit_content .n2widget_createDocumentFromSchema {
 	position: absolute;
 	top: 5px;
@@ -440,9 +424,7 @@ Export Widget
     overflow: auto;
     white-space: pre;
 	background-color: rgb(255, 255, 255);
-	border-color: rgb(204, 204, 204);
-	border-style: solid;
-	border-width: 1px;
+	border: 1px solid #cccccc;
 }
 
 /* 
@@ -475,10 +457,7 @@ Timeline widget
 }
 
 .n2timeline_slider_wrapper {
-	margin-top: 10px;
-	margin-bottom: 10px;
-	margin-left: 0;
-	margin-right: 0;
+	margin: 10px 0px;
 	padding: 0;
 	border: none;
 }
@@ -491,23 +470,11 @@ Timeline widget
 	background-color: #ffffff;
 }
 
-.n2timeline_range {
-	width: 100%;
-	font-size: 12px;
-	padding-top: 2px;
-	padding-bottom: 2px;
-	padding-left: 0;
-	padding-right: 0;
-}
-
-
+.n2timeline_range,
 .n2timeline_interval {
 	width: 100%;
 	font-size: 12px;
-	padding-top: 2px;
-	padding-bottom: 2px;
-	padding-left: 0;
-	padding-right: 0;
+	padding: 2px 0px;
 }
 
 /* 
@@ -519,7 +486,6 @@ Layer selection widget
     display: inline;
     padding: 6px 20px;
 }
-
 
 /* 
 ==============================
@@ -538,13 +504,11 @@ Polar Stereographic Projection Selector
 	/* background-color: #ffffff; */
 }
 
-
 /* 
 ==============================
 Wait Widget 
 ==============================
 */
-
 .n2wait {
     position: absolute;
     display: block;
@@ -614,7 +578,7 @@ Mail Form
 }
 
 .n2mailForm_label {
-	padding: 5px 0 0 0;
+	padding: 5px 0px 0px 0px;
 }
 
 .n2mailForm_button {
@@ -673,13 +637,11 @@ Multi Filter Selection
 	color: #00f;
 }
 
-
 /* 
 ==============================
 Multi Drop Down Filter Selection 
 ==============================
 */
-
 .nunaliit_module_title .n2widget_multiDropDownFilterSelection {
 	float: right;
 	padding: 4px 10px;
@@ -687,7 +649,6 @@ Multi Drop Down Filter Selection
 .nunaliit_module_title .n2widget_multiDropDownFilterSelection.n2widget_multiDropDownFilterSelection_asLink {
 	padding: 8px 20px;
 }
-
 .n2widget_multiDropDownFilterSelection_position {
 	position: absolute;
 	left: 0;
@@ -700,12 +661,12 @@ Multi Drop Down Filter Selection
 }
 
 .n2widget_multiDropDownFilterSelection_selection_hidden button::after {
-	content:"\25be";
+	content: "\25be";
 	padding-left: 5px;
 }
 
 .n2widget_multiDropDownFilterSelection_selection_shown button::after {
-	content:"\25b4";
+	content: "\25b4";
 	padding-left: 5px;
 }
 
@@ -756,12 +717,12 @@ Multi Drop Down Filter Selection
 }
 
 .n2widget_multiDropDownFilterSelection_option.n2widget_multiDropDownFilterSelection_optionUnselected a::before {
-	content:"\2610";
+	content: "\2610";
 	padding-right: 5px;
 }
 
 .n2widget_multiDropDownFilterSelection_option.n2widget_multiDropDownFilterSelection_optionSelected a::before {
-	content:"\2611";
+	content: "\2611";
 	padding-right: 5px;
 	font-weight: bold;
 }
@@ -822,7 +783,6 @@ Sound
 Map Legend 
 ==============================
 */
-
 .n2widgetLegend_svg {
 	display: inline-block;
 	width: 14px;
@@ -908,10 +868,8 @@ Collapsible Widget Container
     background-color: transparent;	
 	background: url(openlayers/popup_bg.png) no-repeat top left;
     padding: 11px 20px;
-    margin: 0;
-    font-family: sans-serif;
-    font-weight: bold;
-    font-size: smaller;
+	margin: 0;
+	font: bold smaller sans-serif;
     color: white;
 }
 

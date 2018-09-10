@@ -1,32 +1,30 @@
-.olControlN2LoadingPanel {
-	position: absolute;
-	left: 0;
-	top: 0;
-	width: 100%;
-	height: 100%;
-	display: none;
-}
-
+.olControlN2LoadingPanel,
 .n2LoadingPanel_overlay {
 	position: absolute;
 	left: 0;
 	top: 0;
 	width: 100%;
 	height: 100%;
+}
+
+.olControlN2LoadingPanel {
+	display: none;
+}
+
+.n2LoadingPanel_overlay {
 	background-color:#ffffff;
-	opacity:0.3;
+	opacity: 0.3;
 }
 
 .n2LoadingPanel_outertext {
 	position: absolute;
 	left: 50%;
 	top: 50%;
-	background-color:#ffffff;
-	opacity:1;
-	color:#000000;
+	background-color: #ffffff;
+	opacity: 1;
+	color: #000000;
 	font-weight: bold;
 }
-
 
 /* 
 	ControlNunaliitGazetteerItemActive

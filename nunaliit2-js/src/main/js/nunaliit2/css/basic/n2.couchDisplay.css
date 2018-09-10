@@ -36,33 +36,16 @@ ul.olkit_tree_ul {
     cursor: default;
 }
 
-div.n2display_document td.label {
-	font-family: Georgia, serif;
-	font-size: 100%;
-	font-weight: normal;
-	text-align: right;
-	padding: 0px 5px 0px 0px;
-	width: 30%;
-	vertical-align: text-top;
-}
-
-div.n2display_document td.value {
-	font-family: Geneva, Helvetica, Arial, sans-serif;
-	font-weight: normal;
-	text-align: left;
-	vertical-align: text-top;
-}
-
+div.n2display_document td.label,
 td.placename_label {
-	font-family: Georgia, serif;
-	font-size: 100%;
-	font-weight: normal;
+	font: normal 100% Georgia, serif; 
 	text-align: right;
 	padding: 0px 5px 0px 0px;
 	width: 30%;
 	vertical-align: text-top;
 }
 
+div.n2display_document td.value,
 td.placename_info {
 	font-family: Geneva, Helvetica, Arial, sans-serif;
 	font-weight: normal;
@@ -71,7 +54,7 @@ td.placename_info {
 }
 
 div.contributionReply {
-	margin: 0px 0px 0px 0px; 
+	margin: 0px; 
 	padding: 0px 0px 0px 8px;
 	line-height: 20px;
 	background: url(tree/node.png) repeat-y;
@@ -83,7 +66,7 @@ div.contributionReply:last-child {
 
 div.olkit_wait {
 	background: url(images/wait_icon.gif) no-repeat;
-	margin: 0px 0px 0px 0px; 
+	margin: 0px; 
 	padding: 32px 32px 0px 0px;
 	width: 0px;
 	height: 0px;
