@@ -764,7 +764,7 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 	
 	/* 
 	 * These are versions of functions that are throttled. These
-	 * functions touch the DOM structure and should not be called too.
+	 * functions touch the DOM structure and should not be called too
 	 * often as they affect performance.
 	 */
 	_throttledAvailableChoicesUpdated: null,
