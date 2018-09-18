@@ -4635,6 +4635,7 @@ var MapAndControls = $n2.Class({
 			};
 		};
 		if( simplificationsReported.length ){
+			// These are all the geometries already in memory
 			//$n2.log('simplificationsReported',simplificationsReported);
 			window.setTimeout(function(){
 				_this._updateSimplifiedGeometries(simplificationsReported);
@@ -4714,12 +4715,18 @@ var MapAndControls = $n2.Class({
 
 					if( mapProjection 
 					 && mapProjection.getCode() !== epsg4326Proj.getCode ){
-						geomBound.transform(epsg4326Proj, mapProjection);
+						if( !f.n2ConvertedBbox ){
+							geomBound.transform(epsg4326Proj, mapProjection);
+							_this.simplifyBboxTransformCount = _this.simplifyBboxTransformCount ? _this.simplifyBboxTransformCount + 1 : 1;
+							f.n2ConvertedBbox = geomBound;
+						};
+
+						geomBound = f.n2ConvertedBbox;
 					};
 					
 					if( geomBound.intersectsBounds(mapExtent) ){
 						// We should continue and get a simplified geometry
-						// for this feature. Its BBOX intersetcs with the visible
+						// for this feature. Its BBOX intersects with the visible
 						// portion of the map.
 					} else {
 						// Not on screen. Do not bother
@@ -4807,6 +4814,7 @@ var MapAndControls = $n2.Class({
 	 */
 	_updateSimplifiedGeometries: function(simplifiedGeometries){
 		var _this = this;
+		//$n2.log('_updateSimplifiedGeometries '+simplifiedGeometries.length+' at '+Date.now());
 		
 		// Often used
 		var wktFormat = new OpenLayers.Format.WKT();
