@@ -80,6 +80,14 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 	
 	suppressedChoicesMap: null,
 	
+	/* 
+	 * These are versions of functions that are throttled. These
+	 * functions touch the DOM structure and should not be called too.
+	 * often as they affect performance.
+	 */
+	_throttledAvailableChoicesUpdated: null,
+	_throttledAdjustSelectedItem: null,
+
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			containerId: null
@@ -108,6 +116,8 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 		this.selectedChoiceIdMap = {};
 		this.allSelected = false;
 		this.suppressedChoicesMap = [];
+		this._throttledAvailableChoicesUpdated = $n2.utils.throttle(this._availableChoicesUpdated, 1500);
+		this._throttledAdjustSelectedItem = $n2.utils.throttle(this._adjustSelectedItem, 1500);
 
 		if( opts.suppressChoices ){
 			if( $n2.isArray(opts.suppressChoices) ){
@@ -276,7 +286,7 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 				.addClass('n2widget_singleFilterSelection_noChoiceAvailable');
 		};
 		
-		this._adjustSelectedItem();
+		this._throttledAdjustSelectedItem();
 		
 		// Select current
 		//this._selectionChanged();
@@ -379,7 +389,8 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 			if( m.value ){
 				this._setAvailableChoices(m.value);
 
-				this._availableChoicesUpdated();
+				//this._availableChoicesUpdated();
+				this._throttledAvailableChoicesUpdated();
 			};
 			
 		} else if( this.selectedChoicesChangeEventName === m.type ){
@@ -391,14 +402,14 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 					_this.selectedChoiceIdMap[choiceId] = true;
 				});
 				
-				this._adjustSelectedItem();
+				this._throttledAdjustSelectedItem();
 			};
 
 		} else if( this.allSelectedChangeEventName === m.type ){
 			if( typeof m.value === 'boolean' ){
 				this.allSelected = m.value;
 				
-				this._adjustSelectedItem();
+				this._throttledAdjustSelectedItem();
 			};
 		};
 	}
@@ -434,6 +445,14 @@ var MultiFilterSelectionWidget = $n2.Class('MultiFilterSelectionWidget',{
 	allSelected: null,
 	
 	allChoicesLabel: null,
+
+	/* 
+	 * These are versions of functions that are throttled. These
+	 * functions touch the DOM structure and should not be called too.
+	 * often as they affect performance.
+	 */
+	_throttledAvailableChoicesUpdated: null,
+	_throttledAdjustSelectedItem: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -455,6 +474,8 @@ var MultiFilterSelectionWidget = $n2.Class('MultiFilterSelectionWidget',{
 		this.selectedChoices = [];
 		this.selectedChoiceIdMap = {};
 		this.allSelected = false;
+		this._throttledAvailableChoicesUpdated = $n2.utils.throttle(this._availableChoicesUpdated, 1500);
+		this._throttledAdjustSelectedItem = $n2.utils.throttle(this._adjustSelectedItem, 1500);
 		
 		// Set up model listener
 		if( this.dispatchService ){
@@ -537,7 +558,7 @@ var MultiFilterSelectionWidget = $n2.Class('MultiFilterSelectionWidget',{
 			.addClass('n2widget_multiFilterSelection')
 			.appendTo($container);
 		
-		this._availableChoicesUpdated();
+		this._throttledAvailableChoicesUpdated();
 		
 		$n2.log(this._classname, this);
 	},
@@ -596,7 +617,7 @@ var MultiFilterSelectionWidget = $n2.Class('MultiFilterSelectionWidget',{
 				.appendTo($a);
 		};
 		
-		this._adjustSelectedItem();
+		this._throttledAdjustSelectedItem();
 	},
 	
 	_adjustSelectedItem: function(){
@@ -678,7 +699,8 @@ var MultiFilterSelectionWidget = $n2.Class('MultiFilterSelectionWidget',{
 			if( m.value ){
 				this.availableChoices = m.value;
 				
-				this._availableChoicesUpdated();
+				//this._availableChoicesUpdated();
+				this._throttledAvailableChoicesUpdated();
 			};
 			
 		} else if( this.selectedChoicesChangeEventName === m.type ){
@@ -690,14 +712,14 @@ var MultiFilterSelectionWidget = $n2.Class('MultiFilterSelectionWidget',{
 					_this.selectedChoiceIdMap[choiceId] = true;
 				});
 				
-				this._adjustSelectedItem();
+				this._throttledAdjustSelectedItem();
 			};
 
 		} else if( this.allSelectedChangeEventName === m.type ){
 			if( typeof m.value === 'boolean' ){
 				this.allSelected = m.value;
 				
-				this._adjustSelectedItem();
+				this._throttledAdjustSelectedItem();
 			};
 		};
 	}
@@ -740,6 +762,14 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 
 	showAsLink: null,
 	
+	/* 
+	 * These are versions of functions that are throttled. These
+	 * functions touch the DOM structure and should not be called too.
+	 * often as they affect performance.
+	 */
+	_throttledAvailableChoicesUpdated: null,
+	_throttledAdjustSelectedItem: null,
+
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			containerId: null
@@ -765,6 +795,8 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 		this.availableChoices = [];
 		this.selectedChoices = [];
 		this.selectedChoiceIdMap = {};
+		this._throttledAvailableChoicesUpdated = $n2.utils.throttle(this._availableChoicesUpdated, 1500);
+		this._throttledAdjustSelectedItem = $n2.utils.throttle(this._adjustSelectedItem, 1500);
 		
 		// Set up model listener
 		if( this.dispatchService ){
@@ -887,7 +919,7 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 			.addClass('n2widget_multiDropDownFilterSelection_position')
 			.appendTo($relDiv);
 		
-		this._availableChoicesUpdated();
+		this._throttledAvailableChoicesUpdated();
 		
 		$n2.log(this._classname, this);
 	},
@@ -925,7 +957,7 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 			addOption($selectDiv, choice.id, label);
 		};
 		
-		this._adjustSelectedItem();
+		this._throttledAdjustSelectedItem();
 		
 		// Select current
 		//this._selectionChanged();
@@ -1038,7 +1070,7 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 			if( m.value ){
 				this.availableChoices = m.value;
 				
-				this._availableChoicesUpdated();
+				this._throttledAvailableChoicesUpdated();
 			};
 			
 		} else if( this.selectedChoicesChangeEventName === m.type ){
@@ -1050,14 +1082,14 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 					_this.selectedChoiceIdMap[choiceId] = true;
 				});
 				
-				this._adjustSelectedItem();
+				this._throttledAdjustSelectedItem();
 			};
 
 		} else if( this.allSelectedChangeEventName === m.type ){
 			if( typeof m.value === 'boolean' ){
 				this.allSelected = m.value;
 				
-				this._adjustSelectedItem();
+				this._throttledAdjustSelectedItem();
 			};
 		};
 	}
