@@ -98,6 +98,11 @@ var Service = $n2.Class({
 			 && $n2.canvasTree.HandleCanvasAvailableRequest ){
 				$n2.canvasTree.HandleCanvasAvailableRequest(m);
 			};
+			
+			if( $n2.canvasVerticalTimeline 
+			 && $n2.canvasVerticalTimeline.HandleCanvasAvailableRequest ){
+				$n2.canvasVerticalTimeline.HandleCanvasAvailableRequest(m);
+			};
 
 			if( $n2.canvasCustomSvg 
 			 && $n2.canvasCustomSvg.HandleCanvasAvailableRequest ){
@@ -173,6 +178,11 @@ var Service = $n2.Class({
 			if( $n2.canvasTable 
 			 && $n2.canvasTable.HandleCanvasDisplayRequest ){
 				$n2.canvasTable.HandleCanvasDisplayRequest(m);
+			};	
+			
+			if( $n2.canvasVerticalTimeline 
+			&& $n2.canvasVerticalTimeline.HandleCanvasDisplayRequest ){
+				$n2.canvasVerticalTimeline.HandleCanvasDisplayRequest(m);
 			};
 		};
 	}
