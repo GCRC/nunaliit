@@ -423,7 +423,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 
 			var $transcript = $('<div>')
 				.attr('id', this.transcriptId)
-				.addClass("transcript")
+				.addClass('n2widgetTranscript_transcript')
 				.appendTo($mediaDiv);
 
 			/*this.transcript_array = [

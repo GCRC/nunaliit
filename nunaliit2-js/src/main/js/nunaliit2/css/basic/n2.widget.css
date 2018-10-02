@@ -510,13 +510,13 @@ Polar Stereographic Projection Selector
 */
  
 
-.transcript {
+.n2widgetTranscript_transcript {
 	overflow-y: scroll;
 	margin-top: 1em;
 	height: 45vh;
 }
 
-.transcript span {
+.n2widgetTranscript_transcript span {
    cursor: pointer;
    transition: all 0.1s ease-in;
    line-height: 1.8;
@@ -525,11 +525,11 @@ Polar Stereographic Projection Selector
 
 }
 
-.transcript span:hover {
+.n2widgetTranscript_transcript span:hover {
    color: green;
 }
 
-.transcript .highlight {
+.n2widgetTranscript_transcript .highlight {
    color: white;
    background-color: darkorange;
 }
