@@ -585,8 +585,8 @@ var SrtToJsonConvertor = $n2.Class('SrtToJsonConvertor',{
 							"fin": null,
 							"text": ""
 					};
-					$n2.log("The"+tmpIdx+"-th transcript");
-					$n2.log("The timecode: "+ tmpTimecode);
+					//$n2.log("The"+tmpIdx+"-th transcript");
+					//$n2.log("The timecode: "+ tmpTimecode);
 					
 					curEntry.start  =  tmpTimecode.substring(0,2)*3600 + tmpTimecode.substring(3,5)*60 
 					+ tmpTimecode.substring(6,8);

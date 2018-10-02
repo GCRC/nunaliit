@@ -327,10 +327,11 @@ $n2.MediaDisplay = $n2.Class({
 	}
 
 	,_displayVideoMediaElementInplace: function(opts) {
-		var $inplaceDiv = opts.insertView || null;
-		// TODO: Must do something if the opts.insertView is not provided.
-		// Log an error or put something somewhere. Do not fail silently.
-		if($inplaceDiv != null){
+		if (typeof opts.insertView === "undefined"
+			|| opts.insertView == null) {
+			$n2.log('The context view must be provided when creating a inplace media player');
+		} else {
+			var $inplaceDiv=opts.insertView;
 			var thumbnailUrl = $inplaceDiv.find(".n2Show_thumb_wrapper img").attr("src");
 			$inplaceDiv.find(".n2Show_thumb_wrapper img").remove();
 		
@@ -606,12 +607,9 @@ $n2.MediaDisplay = $n2.Class({
 	}
 	
 	,_addMetaData: function(opts, $elem) {
-		// TODO: Spacing and alignment should be fixed by CSS,
-		// not adding more elements
-		$elem.append( $('<br/>') );
-		//$elem.append( $('<br/>') );
-		//$elem.append( $('<br/>') );
 
+		$elem.append( $('<br class="n2MediaDisplay_metaDataSeparator"/>') );
+		
 		if( opts.metaDataHtml ) {
 			var $meta = $('<span></span>');
 			$meta.html(opts.metaDataHtml);

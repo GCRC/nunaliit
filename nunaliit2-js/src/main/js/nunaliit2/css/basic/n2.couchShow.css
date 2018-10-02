@@ -42,6 +42,10 @@ div.n2Show_icon_speaker:hover {
 	background-position: -75px 0;
 }
 
+div.n2s_insertedMediaView br.n2MediaDisplay_metaDataSeparator {
+	line-height: 3;
+}
+
 .n2Show_docNotFound {
 	color: #ff0000;
 }
