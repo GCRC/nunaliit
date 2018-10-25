@@ -282,46 +282,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			});
 
 		} else if( !this.transcript ){
-			// Find the attachment for the transcript
-			var transcriptAttName = this._findTranscriptAttachmentName(this.doc);
-			if( transcriptAttName ){
-				// Load transcript
-				var att = undefined;
-				if( this.attachmentService ){
-					att = this.attachmentService.getAttachment(this.doc, transcriptAttName);
-				};
+			this._loadTranscript(this.doc);
 
-				var url = undefined;
-				if( att ){
-					url = att.computeUrl();
-				};
-
-				if( url ){
-					// download content of attachment and call rendering function
-					$.ajax({
-						url: url
-						,type: 'GET'
-						,async: true
-						,traditional: true
-						,data: {}
-						,dataType: 'json'
-						,success: function(transcript) {
-							_this.transcript = transcript;
-							_this._documentChanged();
-						}
-						,error: function(XMLHttpRequest, textStatus, errorThrown) {
-							// error while getting transcript. Jump into same error
-							// as wrongly configured
-							_this._renderError('Error fetching transcript');
-						}
-					});
-				} else {
-					// element is wronly configured. Report error
-					_this._renderError('Can not compute URL for transcript');
-				};
-			} else {
-				_this._renderError('Transcript attachment name not found for '+this.doc._id);
-			};
 		} else if( !this.srtData ){
 			var attSrt = undefined;
 			if( this.attachmentService
@@ -552,6 +514,56 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					});
 			}
 		}
+	},
+	
+	_loadTranscript: function(doc){
+		// Look for transcript in-line
+		if( doc && doc.nunaliit_transcript ){
+			this.transcript = doc.nunaliit_transcript;
+			this._documentChanged();
+
+		} else {
+			// Find the attachment for the transcript
+			var transcriptAttName = this._findTranscriptAttachmentName(this.doc);
+			if( transcriptAttName ){
+				// Load transcript
+				var att = undefined;
+				if( this.attachmentService ){
+					att = this.attachmentService.getAttachment(this.doc, transcriptAttName);
+				};
+
+				var url = undefined;
+				if( att ){
+					url = att.computeUrl();
+				};
+
+				if( url ){
+					// download content of attachment and call rendering function
+					$.ajax({
+						url: url
+						,type: 'GET'
+						,async: true
+						,traditional: true
+						,data: {}
+						,dataType: 'json'
+						,success: function(transcript) {
+							_this.transcript = transcript;
+							_this._documentChanged();
+						}
+						,error: function(XMLHttpRequest, textStatus, errorThrown) {
+							// error while getting transcript. Jump into same error
+							// as wrongly configured
+							_this._renderError('Error fetching transcript');
+						}
+					});
+				} else {
+					// element is wronly configured. Report error
+					_this._renderError('Can not compute URL for transcript');
+				};
+			} else {
+				_this._renderError('Transcript attachment name not found for '+this.doc._id);
+			};
+		};
 	},
 	
 	_findTranscriptAttachmentName: function(doc){
