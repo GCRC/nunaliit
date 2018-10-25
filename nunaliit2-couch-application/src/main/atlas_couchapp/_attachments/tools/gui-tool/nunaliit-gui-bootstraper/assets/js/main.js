@@ -1,5 +1,5 @@
 require.config({
-  baseUrl: "assets/js/lib/"
+  baseUrl: "gui-tool/nunaliit-gui-bootstraper/assets/js/lib/"
   , shim: {
     'backbone': {
       deps: ['underscore', 'jquery'],

@@ -7,6 +7,17 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
+	<link rel="shortcut icon" href="../favicon.ico" />
+	<!-- link rel="stylesheet" href="../js-external/css/jquery-ui/smoothness/jquery-ui.custom.css" type="text/css" />
+	<link rel="stylesheet" href="../js-external/OpenLayers/theme/default/style.css" type="text/css" / -->
+	<link rel="stylesheet" href="../js-external/css/jquery.lightbox-0.5.css" type="text/css" />
+	<link rel="stylesheet" href="../nunaliit2/jquery-progress-1.0.css" type="text/css" />
+	<link rel="stylesheet" href="../nunaliit2/jquery-progress-slide-1.0.css" type="text/css" />
+	<link rel="stylesheet" href="../nunaliit2/css/basic/nunaliit2.css" type="text/css" />
+	<link rel="stylesheet" href="../_list/css_merge/css" type="text/css" />
+	<link rel="stylesheet" href="css/select.css" type="text/css" />
+	<link rel="stylesheet" href="../css/atlas.css" type="text/css" />
+
     <link href="gui-tool/nunaliit-gui-bootstraper/assets/css/custom.css" rel="stylesheet">
     <link href="gui-tool/nunaliit-gui-bootstraper/assets/css/lib/bootstrap.min.css" rel="stylesheet">
     <link href="gui-tool/nunaliit-gui-bootstraper/assets/css/lib/bootstrap-responsive.min.css" rel="stylesheet">
@@ -29,6 +40,7 @@
 
         <div class="container">
           <a class="brand" href="#">Nunaliit Schema Builder</a>
+          <div id="login"></div>
         </div>
 
       </div>
@@ -78,9 +90,52 @@
     </div> <!-- /container -->
 
 	<script 
-		data-main="gui-tool/nunaliit-gui-bootstraper/assets/js/main-built.js"
+		data-main="gui-tool/nunaliit-gui-bootstraper/assets/js/main.js"
 		src="gui-tool/nunaliit-gui-bootstraper/assets/js/lib/require.js" >
 	</script>
+
+	<!-- script type="text/javascript" src="../js-external/js/jquery.min.js"></script>
+	<script type="text/javascript" src="../js-external/js/jquery-ui.min.js"></script>
+	
+	<script type="text/javascript" src="../js-external/OpenLayers/OpenLayers.js"></script>
+	<script type="text/javascript" src="../js-external/js/jquery.lightbox-0.5.js"></script>
+	
+	<script type="text/javascript" src="../js-external/js/jquery.cycle.pack.js"></script>
+	<script type="text/javascript" src="../js-external/js/jquery.form.js"></script>
+	<script type="text/javascript" src="../js-external/js/jquery.cookie-1.0.js"></script -->
+	
+	<script type="text/javascript" src="./gui-tool/nunaliit-gui-bootstraper/assets/js/lib/jquery.js"></script>
+
+	<script type="text/javascript" src="../lib/atlas.js"></script>
+	<script type="text/javascript" src="../nunaliit2/nunaliit2-debug.js"></script>
+	<script type="text/javascript" src="../nunaliit2/nunaliit2-couch-debug.js"></script>
+	<script type="text/javascript" src="../config/configuration.js"></script>
+	<script type="text/javascript" src="../nunaliit_custom.js"></script>
+
+	<!-- script type="text/javascript">
+		// <!--
+		function main_init(config) {
+			if( config.directory && config.directory.authService ) {
+				config.directory.authService.createAuthWidget({
+					elemId: 'login'
+				});
+			};
+
+			// Call host application
+		 	//$n2.selectApp.main({
+		 	//	config: config
+		 	//	,div: $('#selectApp')
+		 	//});
+		};
+		
+		jQuery().ready(function() {
+			nunaliitConfigure({
+				configuredFunction: main_init
+				,rootPath: '../'
+			});
+		});
+		// -->
+	</script -->
 
   </body>
 </html>
