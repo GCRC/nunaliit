@@ -321,8 +321,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				};
 			} else {
 				_this._renderError('Transcript attachment name not found for '+this.doc._id);
-			}
-
+			};
 		} else if( !this.srtData ){
 			var attSrt = undefined;
 			if( this.attachmentService
@@ -360,54 +359,51 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				// element is wronly configured. Report error
 				_this._renderError('Can not compute URL for SRT');
 			};
-		} else {
-			// Update time table
-			if( this.transcript.timeTable ){
-				if( !$n2.isArray(this.transcript.timeTable) ){
-					_this._renderError('timeTable must be an array');
-				} else {
-					this.timeTable = [];
 
-					this.transcript.timeTable.forEach(function(timeEntry){
-						if( typeof timeEntry !== 'object' ){
-							throw new Error('Entries in timeTable must be objects');
-						} else if( null === timeEntry ){
-							throw new Error('Entries in timeTable can not be null');
-						};
-						
-						var videoStart = timeEntry.videoStart;
-						var videoEnd = timeEntry.videoEnd;
-						var timeStart = timeEntry.timeStart;
-						var timeEnd = timeEntry.timeEnd;
+		} else if( this.transcript.timeTable ){
+			if( !$n2.isArray(this.transcript.timeTable) ){
+				_this._renderError('timeTable must be an array');
+			} else {
+				this.timeTable = [];
 
-						if( typeof videoStart !== 'number' ){
-							throw new Error('videoStart in timeTable must be a number');
-						};
-						if( typeof videoEnd !== 'number' ){
-							throw new Error('videoEnd in timeTable must be a number');
-						};
+				this.transcript.timeTable.forEach(function(timeEntry){
+					if( typeof timeEntry !== 'object' ){
+						throw new Error('Entries in timeTable must be objects');
+					} else if( null === timeEntry ){
+						throw new Error('Entries in timeTable can not be null');
+					};
+					
+					var videoStart = timeEntry.videoStart;
+					var videoEnd = timeEntry.videoEnd;
+					var timeStart = timeEntry.timeStart;
+					var timeEnd = timeEntry.timeEnd;
 
-						// Try to parse time
-						var timeStartInt = $n2.date.parseUserDate(timeStart);
-						var timeEndInt = $n2.date.parseUserDate(timeEnd);
-						
-						var timeObj = {
-							intervalStart: timeStartInt
-							,intervalEnd: timeEndInt
-							,timeStart: timeStartInt.min
-							,timeEnd: timeEndInt.min
-							,videoStart: videoStart
-							,videoEnd: videoEnd
-						};
-						_this.timeTable.push(timeObj);
-					});
-				};
+					if( typeof videoStart !== 'number' ){
+						throw new Error('videoStart in timeTable must be a number');
+					};
+					if( typeof videoEnd !== 'number' ){
+						throw new Error('videoEnd in timeTable must be a number');
+					};
+
+					// Try to parse time
+					var timeStartInt = $n2.date.parseUserDate(timeStart);
+					var timeEndInt = $n2.date.parseUserDate(timeEnd);
+					
+					var timeObj = {
+						intervalStart: timeStartInt
+						,intervalEnd: timeEndInt
+						,timeStart: timeStartInt.min
+						,timeEnd: timeEndInt.min
+						,videoStart: videoStart
+						,videoEnd: videoEnd
+					};
+					_this.timeTable.push(timeObj);
+				});
 			};
 		};
 
 		// At the end of all this, refresh
 		this._refresh();
-
 	},
 
 	_refresh: function(){
@@ -418,6 +414,9 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		$elem.empty();
 
 		if( !this.docId ){
+			return;
+		};
+		if( !this.transcript ){
 			return;
 		};
 
