@@ -95,10 +95,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			,name: undefined
 			,docId: undefined
 			,doc: undefined
-			,videoAttName: undefined
-			,srtAttName: undefined
 			,sourceModelId: undefined
-			,timeTable: undefined
 		},opts_);
 
 		var _this = this;
@@ -107,8 +104,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		this.attachmentService = opts.attachmentService;
 		this.name = opts.name;
 		this.docId = opts.docId;
-		this.videoAttName = opts.videoAttName;
-		this.srtAttName = opts.srtAttName;
 		this.sourceModelId = opts.sourceModelId;
 		if( opts.doc ){
 			this.doc = opts.doc;
@@ -120,48 +115,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 
 		this.transcriptConvertor = new SrtToJsonConvertor();
 		this.transcript_array = [];
-		
-
-		this.timeTable = [];
-		if( opts.timeTable ){
-			if( !$n2.isArray(opts.timeTable) ){
-				throw new Error('timeTable must be an array');
-			};
-			
-			opts.timeTable.forEach(function(timeEntry){
-				if( typeof timeEntry !== 'object' ){
-					throw new Error('Entries in timeTable must be objects');
-				} else if( null === timeEntry ){
-					throw new Error('Entries in timeTable can not be null');
-				};
-				
-				var videoStart = timeEntry.videoStart;
-				var videoEnd = timeEntry.videoEnd;
-				var timeStart = timeEntry.timeStart;
-				var timeEnd = timeEntry.timeEnd;
-
-				if( typeof videoStart !== 'number' ){
-					throw new Error('videoStart in timeTable must be a number');
-				};
-				if( typeof videoEnd !== 'number' ){
-					throw new Error('videoEnd in timeTable must be a number');
-				};
-
-				// Try to parse time
-				var timeStartInt = $n2.date.parseUserDate(timeStart);
-				var timeEndInt = $n2.date.parseUserDate(timeEnd);
-				
-				var timeObj = {
-					intervalStart: timeStartInt
-					,intervalEnd: timeEndInt
-					,timeStart: timeStartInt.min
-					,timeEnd: timeEndInt.min
-					,videoStart: videoStart
-					,videoEnd: videoEnd
-				};
-				_this.timeTable.push(timeObj);
-			});
-		};
 
 		// Get container
 		var containerId = opts.containerId;
@@ -213,11 +166,17 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			if( this.intervalChangeEventName ){
 				this.dispatchService.register(DH,this.intervalChangeEventName,f);
 			};
+			
+			// If the widget was built specifying a specific document, then do not change
+			// content on user selection. If no document specified, then listen to user selection.
+			if( !this.docId ){
+				this.dispatchService.register(DH,'selected',f);
+			};
 		};
 
 		$n2.log(this._classname, this);
 
-		this._refresh();
+		this._documentChanged();
 	},
 	
 	_getElem: function(){
@@ -247,10 +206,10 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			if( m.docId == this.docId ){
 				if( !this.doc ){
 					this.doc = m.doc;
-					this._refresh();
+					this._documentChanged();
 				} else if( this.doc._rev != m.doc._rev ){
 					this.doc = m.doc;
-					this._refresh();
+					this._documentChanged();
 				};
 			};
 
@@ -265,6 +224,14 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				if( typeof videoTime == 'number' ){
 					this._timeChanged(videoTime, 'model');
 				};
+			};
+			
+		} else if( 'selected' === m.type ){
+			if( m.docId != this.docId ){
+				this.docId = m.docId;
+				this.doc = m.doc;
+				this.timeTable = [];
+				this._documentChanged();
 			};
 		};
 	},
@@ -300,25 +267,68 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		return time;
 	},
 
-	_refresh: function(){
+	/**
+	 * This method is called when we detect that the document has changed. This can be triggered
+	 * through a new selection from the user, or an update to the currently selected document.
+	 */
+	_documentChanged: function(){
 		var _this = this;
 
-		var $elem = this._getElem();
-		
-		$elem.empty();
-
 		if( !this.doc ){
+			// We do not have the document. Request it.
 			this.dispatchService.send(DH, {
 				'type': 'requestDocument'
 				,'docId': this.docId
 			});
-			return;
-		};
 
-		if( !this.srtData ){
+		} else if( !this.transcript ){
+			// Find the attachment for the transcript
+			var transcriptAttName = this._findTranscriptAttachmentName(this.doc);
+			if( transcriptAttName ){
+				// Load transcript
+				var att = undefined;
+				if( this.attachmentService ){
+					att = this.attachmentService.getAttachment(this.doc, transcriptAttName);
+				};
+
+				var url = undefined;
+				if( att ){
+					url = att.computeUrl();
+				};
+
+				if( url ){
+					// download content of attachment and call rendering function
+					$.ajax({
+						url: url
+						,type: 'GET'
+						,async: true
+						,traditional: true
+						,data: {}
+						,dataType: 'json'
+						,success: function(transcript) {
+							_this.transcript = transcript;
+							_this._documentChanged();
+						}
+						,error: function(XMLHttpRequest, textStatus, errorThrown) {
+							// error while getting transcript. Jump into same error
+							// as wrongly configured
+							_this._renderError();
+						}
+					});
+				} else {
+					// element is wronly configured. Report error
+					_this._renderError();
+				};
+			} else {
+				_this._renderError('Transcript attachment name not found for '+this.doc._id);
+			}
+
+		} else if( !this.srtData ){
 			var attSrt = undefined;
-			if( this.attachmentService ){
-				attSrt = this.attachmentService.getAttachment(this.doc, this.srtAttName);
+			if( this.attachmentService
+			 && this.transcript 
+			 && this.transcript.srtAttName ){
+				attSrt = this.attachmentService.getAttachment(this.doc, this.transcript.srtAttName);
 			};
 
 			var srtUrl = undefined;
@@ -338,31 +348,86 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					,success: function(srtData) {
 						_this.srtData = srtData;
 						_this.transcript_array = _this.transcriptConvertor.execute(srtData);
-						_this._refresh();
+						_this._documentChanged();
 					}
 					,error: function(XMLHttpRequest, textStatus, errorThrown) {
 						// error while getting SRT content. Jump into same error
 						// as wrongly configured
-						_this._renderError();
+						_this._documentChanged();
 					}
 				});
 			} else {
 				// element is wronly configured. Report error
 				_this._renderError();
 			};
-			
-			return;
+		} else {
+			// Update time table
+			if( this.transcript.timeTable ){
+				if( !$n2.isArray(this.transcript.timeTable) ){
+					_this._renderError('timeTable must be an array');
+				} else {
+					this.transcript.timeTable.forEach(function(timeEntry){
+						if( typeof timeEntry !== 'object' ){
+							throw new Error('Entries in timeTable must be objects');
+						} else if( null === timeEntry ){
+							throw new Error('Entries in timeTable can not be null');
+						};
+						
+						var videoStart = timeEntry.videoStart;
+						var videoEnd = timeEntry.videoEnd;
+						var timeStart = timeEntry.timeStart;
+						var timeEnd = timeEntry.timeEnd;
+
+						if( typeof videoStart !== 'number' ){
+							throw new Error('videoStart in timeTable must be a number');
+						};
+						if( typeof videoEnd !== 'number' ){
+							throw new Error('videoEnd in timeTable must be a number');
+						};
+
+						// Try to parse time
+						var timeStartInt = $n2.date.parseUserDate(timeStart);
+						var timeEndInt = $n2.date.parseUserDate(timeEnd);
+						
+						var timeObj = {
+							intervalStart: timeStartInt
+							,intervalEnd: timeEndInt
+							,timeStart: timeStartInt.min
+							,timeEnd: timeEndInt.min
+							,videoStart: videoStart
+							,videoEnd: videoEnd
+						};
+						_this.timeTable.push(timeObj);
+					});
+				};
+			};
 		};
 
-		//$n2.log('SRT',this.srtData);
+		// At the end of all this, refresh
+		this._refresh();
+
+	},
+
+	_refresh: function(){
+		var _this = this;
+
+		var $elem = this._getElem();
+		
+		$elem.empty();
+
+		if( !this.docId ){
+			return;
+		};
 
 		var attVideoDesc = null;
 		var data = this.doc; // shorthand
 		if( data 
 		 && data.nunaliit_attachments
 		 && data.nunaliit_attachments.files
+		 && this.transcript
+		 && this.transcript.videoAttName
 		 ) {
-			attVideoDesc = data.nunaliit_attachments.files[this.videoAttName];
+			attVideoDesc = data.nunaliit_attachments.files[this.transcript.videoAttName];
 			if( attVideoDesc.fileClass !== 'video' ){
 				attVideoDesc = undefined;
 			};
@@ -481,6 +546,21 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					});
 			}
 		}
+	},
+	
+	_findTranscriptAttachmentName: function(doc){
+		if( doc 
+		 && doc.nunaliit_attachments 
+		 && doc.nunaliit_attachments.files ){
+			for(var attName in doc.nunaliit_attachments.files){
+				var att = doc.nunaliit_attachments.files[attName];
+				if( 'application/x.nunaliit2-transcript' === att.mimeType ){
+					return attName;
+				};
+			};
+		};
+		
+		return undefined;
 	},
 
 	_updateCurrentTime: function(currentTime, origin){
