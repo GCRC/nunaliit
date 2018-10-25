@@ -312,12 +312,12 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 						,error: function(XMLHttpRequest, textStatus, errorThrown) {
 							// error while getting transcript. Jump into same error
 							// as wrongly configured
-							_this._renderError();
+							_this._renderError('Error fetching transcript');
 						}
 					});
 				} else {
 					// element is wronly configured. Report error
-					_this._renderError();
+					_this._renderError('Can not compute URL for transcript');
 				};
 			} else {
 				_this._renderError('Transcript attachment name not found for '+this.doc._id);
@@ -358,7 +358,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				});
 			} else {
 				// element is wronly configured. Report error
-				_this._renderError();
+				_this._renderError('Can not compute URL for SRT');
 			};
 		} else {
 			// Update time table
@@ -366,6 +366,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				if( !$n2.isArray(this.transcript.timeTable) ){
 					_this._renderError('timeTable must be an array');
 				} else {
+					this.timeTable = [];
+
 					this.transcript.timeTable.forEach(function(timeEntry){
 						if( typeof timeEntry !== 'object' ){
 							throw new Error('Entries in timeTable must be objects');
@@ -419,16 +421,21 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			return;
 		};
 
+		var attVideoName = undefined;
+		if( this.transcript ){
+			attVideoName = this.transcript.videoAttName;
+		}
+
 		var attVideoDesc = null;
 		var data = this.doc; // shorthand
 		if( data 
 		 && data.nunaliit_attachments
 		 && data.nunaliit_attachments.files
-		 && this.transcript
-		 && this.transcript.videoAttName
+		 && attVideoName
 		 ) {
-			attVideoDesc = data.nunaliit_attachments.files[this.transcript.videoAttName];
-			if( attVideoDesc.fileClass !== 'video' ){
+			attVideoDesc = data.nunaliit_attachments.files[attVideoName];
+			if( attVideoDesc
+			 && attVideoDesc.fileClass !== 'video' ){
 				attVideoDesc = undefined;
 			};
 		};
@@ -445,7 +452,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		var attVideoUrl = undefined;
 		if( attVideoDesc 
 		 && attVideoDesc.status === 'attached' ) {
-			var attVideo = this.attachmentService.getAttachment(this.doc, this.videoAttName);
+			var attVideo = this.attachmentService.getAttachment(this.doc, attVideoName);
 			if( attVideo ){
 				attVideoUrl = attVideo.computeUrl();
 			};
@@ -523,7 +530,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				});
 
 		} else {
-			_this._renderError();
+			_this._renderError('Can not compute URL for video');
 		};
 
 		function prep_transcript($transcript, transcript_array){
@@ -554,7 +561,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		 && doc.nunaliit_attachments.files ){
 			for(var attName in doc.nunaliit_attachments.files){
 				var att = doc.nunaliit_attachments.files[attName];
-				if( 'application/x.nunaliit2-transcript' === att.mimeType ){
+				if( 'transcript.json' === attName ){
 					return attName;
 				};
 			};
@@ -623,7 +630,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		}
 	},
 	
-	_renderError: function(){
+	_renderError: function(errMsg){
 		var $elem = this._getElem();
 		
 		$elem.empty();
@@ -635,6 +642,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			.addClass('n2widgetTranscript_error')
 			.text(label)
 			.appendTo($elem);
+		
+		$n2.logError('Unable to display tether content({docId}): '+errMsg);
 	}
 });
 
