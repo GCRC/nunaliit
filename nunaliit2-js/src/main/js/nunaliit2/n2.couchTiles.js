@@ -190,16 +190,16 @@ minx: -180
 ,incy: 0.05
 };
 
-if( typeof exports === 'object' ) {
-	exports.makeFormat = n2tiles.makeFormat;
-	exports.getBoundsFromTile = n2tiles.getBoundsFromTile;
-	exports.getTileFromCoords = n2tiles.getTileFromCoords;
-	exports.getTilesFromBounds = n2tiles.getTilesFromBounds;
-	exports.getApproxTilesForBounds = n2tiles.getApproxTilesForBounds;
-	exports.format4326_65K = n2tiles.format4326_65K;
-	exports.format4326_200 = n2tiles.format4326_200;
-	exports.format4326_25M = n2tiles.format4326_25M;
-};
+//if( typeof exports === 'object' ) {
+//	exports.makeFormat = n2tiles.makeFormat;
+//	exports.getBoundsFromTile = n2tiles.getBoundsFromTile;
+//	exports.getTileFromCoords = n2tiles.getTileFromCoords;
+//	exports.getTilesFromBounds = n2tiles.getTilesFromBounds;
+//	exports.getApproxTilesForBounds = n2tiles.getApproxTilesForBounds;
+//	exports.format4326_65K = n2tiles.format4326_65K;
+//	exports.format4326_200 = n2tiles.format4326_200;
+//	exports.format4326_25M = n2tiles.format4326_25M;
+//};
 if( typeof nunaliit2 === 'function' ) {
 	nunaliit2.tiles = {};
 	nunaliit2.tiles.makeFormat = n2tiles.makeFormat;

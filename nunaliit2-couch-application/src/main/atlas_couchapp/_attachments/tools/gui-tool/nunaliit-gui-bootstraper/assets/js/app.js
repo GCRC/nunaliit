@@ -17,6 +17,17 @@ define([
   return {
     initialize: function(){
 
+//		nunaliitConfigure({
+//			configuredFunction: function(config){
+//				if( config.directory && config.directory.authService ) {
+//					config.directory.authService.createAuthWidget({
+//						elemId: 'login'
+//					});
+//				};
+//			}
+//			,rootPath: '../'
+//		});
+    	
 	new TabView({
 	    title: "Attributes"
 	  , collection: new SnippetsCollection(JSON.parse(attributesJSON))
@@ -43,8 +54,6 @@ define([
         title: "Original"
         , collection: new MyFormSnippetsCollection(JSON.parse(n2mandatoryJSON))
   });
-
-
 
 	//$.couch.urlPrefix = "http://localhost:5984"
 	//$.couch.info({
