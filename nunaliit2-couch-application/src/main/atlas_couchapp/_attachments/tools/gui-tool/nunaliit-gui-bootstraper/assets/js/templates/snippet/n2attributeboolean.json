@@ -1,0 +1,2 @@
+    <% _.each(["includedInBrief", "textarea", "excludedFromDisplay", "excludedFromForm", "urlsToLinks", "wikiTransform" ], function(optional){ %><% if (eval( "typeof " + optional) !== "undefined" && eval(optional) ) { %>,"<%- optional %>" : true
+    <% }}); %>

@@ -1,0 +1,31 @@
+-
+  title : n2 schema info
+  fields :
+    type:
+      label : type
+      type : string
+      value : info
+    n2id:
+      label : id
+      type : string
+      value: Id
+    group:
+      label  : Group
+      type : input
+      value : AtlasId
+    id:
+      label : Id
+      type : input
+      value : id
+    label:
+      label : Label
+      type : input
+      value : Label
+    initialLayers:
+      label : initialLayers
+      type : textarea
+      value : []
+    relatedSchemas:
+      label : relatedSchemas
+      type : textarea
+      value : []

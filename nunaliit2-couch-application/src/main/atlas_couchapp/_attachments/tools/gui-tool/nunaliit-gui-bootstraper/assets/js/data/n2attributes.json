@@ -1,0 +1,439 @@
+[
+  {
+    "title": "n2 attribute title",
+    "fields": {
+      "type": {
+        "label": "type",
+        "type": "string",
+        "value": "title"
+      },
+      "n2id": {
+        "label": "Id",
+        "type": "input",
+        "value": null
+      },
+      "label": {
+        "label": "Label",
+        "type": "input",
+        "value": "Label"
+      }
+    }
+  },
+  {
+    "title": "n2 attribute string",
+    "fields": {
+      "type": {
+        "label": "type",
+        "type": "string",
+        "value": "string"
+      },
+      "n2id": {
+        "label": "Id",
+        "type": "input",
+        "value": null
+      },
+      "label": {
+        "label": "Label",
+        "type": "input",
+        "value": "Label"
+      },
+      "placeholder": {
+        "label": "Place Holder",
+        "type": "input",
+        "value": null
+      }
+    }
+  },
+  {
+    "title": "n2 attribute selection",
+    "fields": {
+      "type": {
+        "label": "type",
+        "type": "string",
+        "value": "selection"
+      },
+      "n2id": {
+        "label": "Id",
+        "type": "input",
+        "value": null
+      },
+      "label": {
+        "label": "Label",
+        "type": "input",
+        "value": "Label"
+      },
+      "options": {
+        "label": "Options",
+        "type": "textarea-split",
+        "value": [
+          "City",
+          "Village"
+        ]
+      }
+    }
+  },
+  {
+    "title": "n2 attribute checkbox",
+    "fields": {
+      "type": {
+        "label": "type",
+        "type": "string",
+        "value": "checkbox"
+      },
+      "n2id": {
+        "label": "Id",
+        "type": "input",
+        "value": null
+      },
+      "label": {
+        "label": "Label",
+        "type": "input",
+        "value": "Label"
+      }
+    }
+  },
+  {
+    "title": "n2 attribute checkbox group",
+    "fields": {
+      "type": {
+        "label": "type",
+        "type": "string",
+        "value": "checkbox_group"
+      },
+      "n2id": {
+        "label": "Id",
+        "type": "input",
+        "value": null
+      },
+      "label": {
+        "label": "Label",
+        "type": "input",
+        "value": "Label"
+      },
+      "checkboxes": {
+        "label": "Checkboxes",
+        "type": "textarea-split",
+        "value": [
+          "library",
+          "post office"
+        ]
+      }
+    }
+  },
+  {
+    "title": "n2 attribute reference",
+    "fields": {
+      "type": {
+        "label": "type",
+        "type": "string",
+        "value": "reference"
+      },
+      "n2id": {
+        "label": "Id",
+        "type": "input",
+        "value": null
+      },
+      "label": {
+        "label": "label",
+        "type": "input",
+        "value": "Label"
+      },
+      "referenceType": {
+        "label": "Reference Type",
+        "type": "input",
+        "value": null
+      },
+      "searchFunction": {
+        "label": "Search Function",
+        "type": "select",
+        "value": [
+          {
+            "value": "getDocumentId",
+            "label": "getDocumentId",
+            "selected": true
+          },
+          {
+            "value": "getDocumentFromSchema",
+            "label": "getDocumentFromSchema",
+            "selected": false,
+            "needExtra": true
+          },
+          {
+            "value": "getDocumentFromLayer",
+            "label": "getDocumentFromLayer",
+            "selected": false,
+            "needExtra": true
+          },
+          {
+            "value": "getLayers",
+            "label": "getLayers",
+            "selected": false
+          },
+          {
+            "value": "getRelatedMedia",
+            "label": "getRelatedMedia",
+            "selected": false
+          },
+          {
+            "value": "getRelatedImage",
+            "label": "getRelatedImage",
+            "selected": false
+          },
+          {
+            "value": "getRelatedAudio",
+            "label": "getRelatedAudio",
+            "selected": false
+          },
+          {
+            "value": "getRelatedVideo",
+            "label": "getRelatedVideo",
+            "selected": false
+          },
+          {
+            "value": "getHoverSound",
+            "label": "getHoverSound",
+            "selected": false
+          },
+          {
+            "value": "customSearchFunction",
+            "label": "customSearchFunction",
+            "selected": false,
+            "needExtra": true
+          }
+        ]
+      },
+      "customField": {
+        "label": "Custom Field",
+        "type": "input",
+        "value": null,
+        "hide": true
+      }
+    }
+  },
+  {
+    "title": "n2 attribute array",
+    "fields": {
+      "type": {
+        "label": "type",
+        "type": "string",
+        "value": "array"
+      },
+      "n2id": {
+        "label": "Id",
+        "type": "input",
+        "value": null
+      },
+      "label": {
+        "label": "label",
+        "type": "input",
+        "value": "Label"
+      },
+      "elementType": {
+        "label": "Element Type",
+        "type": "select",
+        "value": [
+          {
+            "value": "string",
+            "label": "string",
+            "selected": true
+          },
+          {
+            "value": "localized",
+            "label": "localized",
+            "selected": false
+          },
+          {
+            "value": "date",
+            "label": "date",
+            "selected": false
+          },
+          {
+            "value": "reference",
+            "label": "reference",
+            "selected": false
+          }
+        ]
+      }
+    }
+  },
+  {
+    "title": "n2 attribute localized",
+    "fields": {
+      "type": {
+        "label": "type",
+        "type": "string",
+        "value": "localized"
+      },
+      "n2id": {
+        "label": "Id",
+        "type": "input",
+        "value": null
+      },
+      "label": {
+        "label": "label",
+        "type": "input",
+        "value": "Label"
+      }
+    }
+  },
+  {
+    "title": "n2 attribute date",
+    "fields": {
+      "type": {
+        "label": "type",
+        "type": "string",
+        "value": "date"
+      },
+      "n2id": {
+        "label": "Id",
+        "type": "input",
+        "value": null
+      },
+      "label": {
+        "label": "label",
+        "type": "input",
+        "value": "Label"
+      }
+    }
+  },
+  {
+    "title": "n2 attribute file",
+    "fields": {
+      "type": {
+        "label": "type",
+        "type": "string",
+        "value": "file"
+      },
+      "n2id": {
+        "label": "Id",
+        "type": "input",
+        "value": null
+      },
+      "label": {
+        "label": "label",
+        "type": "input",
+        "value": "Label"
+      }
+    }
+  },
+  {
+    "title": "n2 attribute geometry",
+    "fields": {
+      "type": {
+        "label": "type",
+        "type": "string",
+        "value": "geometry"
+      },
+      "n2id": {
+        "label": "Id",
+        "type": "input",
+        "value": null
+      },
+      "label": {
+        "label": "label",
+        "type": "input",
+        "value": "Label"
+      }
+    }
+  },
+  {
+    "title": "n2 attribute hover sound",
+    "fields": {
+      "type": {
+        "label": "type",
+        "type": "string",
+        "value": "hover_sound"
+      },
+      "n2id": {
+        "label": "Id",
+        "type": "input",
+        "value": null
+      },
+      "label": {
+        "label": "label",
+        "type": "input",
+        "value": "Label"
+      }
+    }
+  },
+  {
+    "title": "n2 attribute createdBy",
+    "fields": {
+      "type": {
+        "label": "type",
+        "type": "string",
+        "value": "createdBy"
+      },
+      "n2id": {
+        "label": "Id",
+        "type": "input",
+        "value": null
+      },
+      "label": {
+        "label": "label",
+        "type": "input",
+        "value": "Label"
+      }
+    }
+  },
+  {
+    "title": "n2 attribute createdTime",
+    "fields": {
+      "type": {
+        "label": "type",
+        "type": "string",
+        "value": "createdTime"
+      },
+      "n2id": {
+        "label": "Id",
+        "type": "input",
+        "value": null
+      },
+      "label": {
+        "label": "label",
+        "type": "input",
+        "value": "Label"
+      }
+    }
+  },
+  {
+    "title": "n2 attribute custom",
+    "fields": {
+      "type": {
+        "label": "type",
+        "type": "string",
+        "value": "custom"
+      },
+      "n2id": {
+        "label": "Id",
+        "type": "input",
+        "value": null
+      },
+      "label": {
+        "label": "label",
+        "type": "input",
+        "value": "Label"
+      }
+    }
+  },
+  {
+    "title": "n2 attribute textarea",
+    "fields": {
+      "type": {
+        "label": "type",
+        "type": "string",
+        "value": "textarea"
+      },
+      "n2id": {
+        "label": "Id",
+        "type": "input",
+        "value": null
+      },
+      "label": {
+        "label": "label",
+        "type": "input",
+        "value": "Label"
+      }
+    }
+  }
+]
