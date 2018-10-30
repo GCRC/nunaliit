@@ -60,6 +60,8 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
 	timelineIndex: null,
 
+	indexItems: null,
+
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			canvasId: null,
@@ -130,6 +132,33 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		this.itemWidth = width;
 	},
 
+	_idExists: function(id){
+		var currentlyExists = false; 
+
+		if ( $('#' + id ).length > 0 ){
+			currentlyExists = true;
+		}
+		return currentlyExists;
+	},
+
+	_linkIndexToItems: function(){
+		var i, j, e, f,	arrayItem, indexItem, year;
+		var itemsArray = $('#' + this.canvasId + ' .timeline_item_label');
+
+		for ( j = 0, f = itemsArray.length; j < f; j++ ){
+			arrayItem = itemsArray[j];
+			year = arrayItem.textContent.slice(0,4);
+			if ( year )	console.log("Year: " + year);
+
+			for ( i = 0, e = this.indexItems.length; i < e; i++ ){
+				indexItem = String(this.indexItems[i]);
+				if ( year >= this.indexItems[i] && !this._idExists(indexItem) ){
+					arrayItem.id = indexItem;
+				}
+			}
+		}
+	},
+
 	_createTimeline: function(){
 
 		var i, e, doc, $canvasTimeline, timelineIndex, timelineItemOptions, timelineIndexOptions; 
@@ -162,6 +191,8 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 			};
 
 			timelineIndex = new TimelineIndex(timelineIndexOptions);
+
+			this.indexItems = timelineIndex.getIndex();
 		}
 
 		$canvasTimeline = $('<div>')
@@ -180,13 +211,14 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 			timelineItemOptions = {
 				doc: doc, 
 				timelineList: this.timelineList,
-				itemWidth: this.itemWidth,
-				indexItems: timelineIndex.getIndex()
+				itemWidth: this.itemWidth
 			};
 			
 			new TimelineItem(timelineItemOptions);
 		}
 		
+		this._linkIndexToItems();
+
 		this.showService.fixElementAndChildren(this.timelineList);
 	},
 
@@ -275,6 +307,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		}
 		return date;
 	},
+
 	
 	getCanvasHeight: function(){
 		var canvasHeight = $('#'+this.canvasId).height();
@@ -501,14 +534,11 @@ var TimelineItem = $n2.Class('TimelineItem', VerticalTimelineCanvas, {
 
 	timelineList: null,
 
-	indexItems: null,
-
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			doc: null,
 			itemWidth: null,
 			timelineList: null,
-			indexItems: null,
 			onSuccess: function(){},
 			onError: function(err){}
 		},opts_);
@@ -516,7 +546,6 @@ var TimelineItem = $n2.Class('TimelineItem', VerticalTimelineCanvas, {
 		this.doc = opts.doc;
 		this.itemWidth = opts.itemWidth;
 		this.timelineList = opts.timelineList;
-		this.indexItems = opts.indexItems; 
 
 		this._addItemToList();
 
@@ -542,24 +571,25 @@ var TimelineItem = $n2.Class('TimelineItem', VerticalTimelineCanvas, {
 
 	_addItemToList: function(){
 
-		var $timelineItem, $timelineItemContent, $timelineItemContentText; 
+		var $timelineItem, $timelineNode, $timelineItemContent, $timelineItemContentText; 
 		var dateLabel = this.getDateFromDoc(this.doc);
 		var docId = this._getDocIdFromDoc(this.doc);
 		var attachmentName = this._getAttachment(this.doc);
 
 		if ( dateLabel ){
-
+			
 			$timelineItem = $('<li>')
 				.attr('class','timeline_item');
 			
 			$('<div>')
-				.attr('class','timeline_item_date')
+				.attr('class','timeline_item_label')
 				.text(dateLabel)
 				.appendTo($timelineItem);
 
 			$('<div>')
 				.attr('class','timeline_item_node')
 				.appendTo($timelineItem);
+
 
 			$timelineItemContent = $('<div>')
 				.attr('class','timeline_item_content')
