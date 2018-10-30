@@ -132,7 +132,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
 	_createTimeline: function(){
 
-		var i, e, doc, docId, label, $canvasTimeline, timelineItemOptions, timelineIndex, timelineIndexOptions; 
+		var i, e, doc, $canvasTimeline, timelineItemOptions, timelineIndexOptions; 
 		var _this = this;
 
 		// Remove old canvas container if it already exists
@@ -249,7 +249,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
 	getDateFromDoc: function(object){
 
-		var d, date, property, currentProp; 
+		var date, property, currentProp; 
 
 		for ( property in object ){
 			currentProp = object[property];
@@ -395,7 +395,7 @@ var TimelineIndex = $n2.Class('TimelineIndex', VerticalTimelineCanvas, {
 			.appendTo(indexContainer);
 
 		var i, e, indexItem;
-		var currentIndex = this._getIndex();
+		var currentIndex = this.getIndex();
 		for( i = 0, e = currentIndex.length; i < e; i++){
 			indexItem = $('<li>')
 				.attr('class','indexItem')
@@ -408,7 +408,7 @@ var TimelineIndex = $n2.Class('TimelineIndex', VerticalTimelineCanvas, {
 		}
 	},
 
-	_getIndex: function(){
+	getIndex: function(){
 		return this.index;
 	},
 
@@ -444,7 +444,7 @@ var TimelineIndex = $n2.Class('TimelineIndex', VerticalTimelineCanvas, {
 
 	_reduceIndexItems: function(){
 		var i, e, reducedDate;
-		var items = this._getIndex();
+		var indexItems = this.getIndex();
 		var canvasHeight = this.getCanvasHeight();
 		var itemHeight = 18;
 		var itemPadding = 4;
@@ -458,11 +458,11 @@ var TimelineIndex = $n2.Class('TimelineIndex', VerticalTimelineCanvas, {
 			return (date - (date % factor));
 		};
 
-		while( maxIndexItems < items.length ){
+		while( maxIndexItems < indexItems.length ){
 			factor *= 10;
 			
-			for( i = 0, e = items.length; i < e; i++ ){
-				reducedDate = reduceDate(items[i],factor);
+			for( i = 0, e = indexItems.length; i < e; i++ ){
+				reducedDate = reduceDate(indexItems[i],factor);
 
 				if( reducedItems.indexOf(reducedDate) < 0 ){
 					reducedItems.push(reducedDate);
@@ -474,13 +474,14 @@ var TimelineIndex = $n2.Class('TimelineIndex', VerticalTimelineCanvas, {
 
 			} else if( maxIndexItems <= 1 ) {
 				// If window is too small to provide an index, exclude it. 
-				items = [];
-				break;
+				indexItems = [];
+				return indexItems;
+
 			} else {
-				items = reducedItems;
+				indexItems = reducedItems;
 			}
 		}
-		return items;
+		return indexItems;
 	}
 });
 
@@ -521,7 +522,7 @@ var TimelineItem = $n2.Class('TimelineItem', VerticalTimelineCanvas, {
 	},
 
 	_getAttachment: function(doc){
-		var attachmentFileName, file; 
+		var file; 
 		if (doc && doc.nunaliit_attachments && doc.nunaliit_attachments.files ){
 			for ( file in doc.nunaliit_attachments.files ){
 				if ( doc.nunaliit_attachments.files[file].originalName ){
@@ -533,7 +534,7 @@ var TimelineItem = $n2.Class('TimelineItem', VerticalTimelineCanvas, {
 
 	_addItemToList: function(){
 
-		var $timelineItem, $timelineItemContent, $timelineItemContentText, $timelineItemAttachment; 
+		var $timelineItem, $timelineItemContent, $timelineItemContentText; 
 		var dateLabel = this.getDateFromDoc(this.doc);
 		var docId = this._getDocIdFromDoc(this.doc);
 		var attachmentName = this._getAttachment(this.doc);
@@ -559,7 +560,7 @@ var TimelineItem = $n2.Class('TimelineItem', VerticalTimelineCanvas, {
 				.appendTo($timelineItem);
 
 			if ( attachmentName ){
-				$timelineItemAttachment = $('<div>')
+				$('<div>')
 					.attr('class', 'n2s_insertMediaView')
 					.attr('nunaliit-document', docId)
 					.attr('nunaliit-attachment', attachmentName)
