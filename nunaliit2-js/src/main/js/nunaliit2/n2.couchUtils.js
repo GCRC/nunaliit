@@ -1079,27 +1079,27 @@ var n2utils = {
 	}
 };
 
-//if( typeof exports === 'object' ) {
-//	exports.isArray = n2utils.isArray;
-//	exports.isArrayOfStrings = n2utils.isArrayOfStrings;
-//	exports.isValidBounds = n2utils.isValidBounds;
-//	exports.isValidWkt = n2utils.isValidWkt;
-//	exports.isValidGeom = n2utils.isValidGeom;
-//	exports.extractLayers = n2utils.extractLayers;
-//	exports.extractLinks = n2utils.extractLinks;
-//	exports.extractSearchTerms = n2utils.extractSearchTerms;
-//	exports.addWordToMap = n2utils.addWordToMap;
-//	exports.extractStrings = n2utils.extractStrings;
-//	exports.foldWord = n2utils.foldWord;
-//	exports.removeApostrophe = n2utils.removeApostrophe;
-//	exports.isApostropheCodeChar = n2utils.isApostropheCodeChar;
-//	exports.extractTypes = n2utils.extractTypes;
-//	exports.extractSpecificType = n2utils.extractSpecificType;
-//	exports.extractGeometries = n2utils.extractGeometries;
-//	exports.getAtlasRole = n2utils.getAtlasRole;
-//	exports.validateDocumentStructure = n2utils.validateDocumentStructure;
-//	exports.validateTypes = n2utils.validateTypes;
-//};
+if( typeof exports === 'object' ) {
+	exports.isArray = n2utils.isArray;
+	exports.isArrayOfStrings = n2utils.isArrayOfStrings;
+	exports.isValidBounds = n2utils.isValidBounds;
+	exports.isValidWkt = n2utils.isValidWkt;
+	exports.isValidGeom = n2utils.isValidGeom;
+	exports.extractLayers = n2utils.extractLayers;
+	exports.extractLinks = n2utils.extractLinks;
+	exports.extractSearchTerms = n2utils.extractSearchTerms;
+	exports.addWordToMap = n2utils.addWordToMap;
+	exports.extractStrings = n2utils.extractStrings;
+	exports.foldWord = n2utils.foldWord;
+	exports.removeApostrophe = n2utils.removeApostrophe;
+	exports.isApostropheCodeChar = n2utils.isApostropheCodeChar;
+	exports.extractTypes = n2utils.extractTypes;
+	exports.extractSpecificType = n2utils.extractSpecificType;
+	exports.extractGeometries = n2utils.extractGeometries;
+	exports.getAtlasRole = n2utils.getAtlasRole;
+	exports.validateDocumentStructure = n2utils.validateDocumentStructure;
+	exports.validateTypes = n2utils.validateTypes;
+};
 
 if( typeof nunaliit2 === 'function' ) {
 	nunaliit2.couchUtils = {};

@@ -9,7 +9,9 @@
 //-------------------------------------------------------------
 
 //node.js interoperability
- var patcher = {};
+if(typeof(exports) === "undefined") {
+  var patcher = {};
+}
 
 (function(){
 
@@ -198,8 +200,13 @@ function applyPatch(obj, patch) {
 
 
 //Add methods to patcher
+if(typeof(exports) === "undefined") {
   patcher.computePatch = computePatch;
   patcher.applyPatch   = applyPatch;
+} else {
+  exports.computePatch = computePatch;
+  exports.applyPatch   = applyPatch;
+}
 
 })();
 
