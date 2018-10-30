@@ -132,7 +132,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
 	_createTimeline: function(){
 
-		var i, e, doc, $canvasTimeline, timelineItemOptions, timelineIndexOptions; 
+		var i, e, doc, $canvasTimeline, timelineIndex, timelineItemOptions, timelineIndexOptions; 
 		var _this = this;
 
 		// Remove old canvas container if it already exists
@@ -161,7 +161,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 				'sortedElements': this.sortedElements
 			};
 
-			new TimelineIndex(timelineIndexOptions);
+			timelineIndex = new TimelineIndex(timelineIndexOptions);
 		}
 
 		$canvasTimeline = $('<div>')
@@ -181,7 +181,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 				doc: doc, 
 				timelineList: this.timelineList,
 				itemWidth: this.itemWidth,
-				indexItems: this.indexItems
+				indexItems: timelineIndex.getIndex()
 			};
 			
 			new TimelineItem(timelineItemOptions);
@@ -249,7 +249,8 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
 	getDateFromDoc: function(object){
 
-		var date, property, currentProp; 
+		var date, property, currentProp, slashIndex; 
+		var dateRangeRegEx = /([0-9]{4})-([0-9]{2})-([0-9]{2}).*\/([0-9]{4})-([0-9]{2})-([0-9]{2}).*/g;
 
 		for ( property in object ){
 			currentProp = object[property];
@@ -258,6 +259,13 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 				
 				if ( currentProp.nunaliit_type === 'date' && currentProp.date ){
 					date = currentProp.date;
+					
+					//if date is in the format of a date range, return only the first part of the range
+					if ( dateRangeRegEx.exec(date) ){
+						slashIndex = date.indexOf('/');
+						return date.slice(0,slashIndex); 
+					}
+
 					return date;
 
 				} else {
