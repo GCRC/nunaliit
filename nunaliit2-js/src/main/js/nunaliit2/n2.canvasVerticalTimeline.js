@@ -79,7 +79,6 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		this.elementGenerator = opts.elementGenerator;
 		this.elementsById = {};
 		this.sortedElements = [];
-		this.indexItems = [];
 
 		var config = opts.config;
 		if( config ){
@@ -177,7 +176,6 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
 		for( i = 0, e = this.sortedElements.length; i < e; i++ ){
 			doc = this.sortedElements[i].n2_doc;
-			docId = doc._id;
 	
 			timelineItemOptions = {
 				doc: doc, 
@@ -285,12 +283,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 	},
 
 	_handleDispatch: function(m){
-		if( 'modelGetInfo' === m.type ){
-			if( m.modelId === this.modelId ){
-				m.modelInfo = this._getModelInfo();
-			}
-			
-		} else if( 'modelStateUpdated' === m.type ) {
+		if( 'modelStateUpdated' === m.type ) {
 			if( this.sourceModelId === m.modelId ){
 				if( m.state ){
 					this._sourceModelUpdated(m.state);
