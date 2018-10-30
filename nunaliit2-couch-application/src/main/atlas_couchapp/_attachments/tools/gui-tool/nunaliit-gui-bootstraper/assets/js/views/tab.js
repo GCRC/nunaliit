@@ -1,9 +1,9 @@
 define([
-       'jquery', 'underscore', 'backbone', "jquery.couch"
+       'jquery', 'underscore', 'backbone'
        , "text!templates/app/tab-nav.html"
        , "text!templates/app/tab-nav-dropdown.html"
 , "views/existing-schema"
-], function($, _, Backbone, Couch,
+], function($, _, Backbone,
            _tabNavTemplate, _tabNavDropTemplate, SchemaListItemView){
   return Backbone.View.extend({
     tagName: "div"
@@ -18,70 +18,35 @@ define([
          this.tabNavTemplate = _.template(_tabNavDropTemplate)
        }
       this.render();
-    }
-    , appendSchemaListFromOneDb: function(Dbname){
+    },
+	appendSchemaListFromDb : function(){
 
-
-            $.couch.urlPrefix = "http://134.117.194.229:5984"
-            $.couch.db(Dbname).view("atlas/schemas", {
-              success:function(data){
-                if( typeof data["rows"] === 'undefined'
-                  || data["rows"].length < 1){
-                  return;
-                }
-                var name = name
-                _.chain(data["rows"])
-                .filter( function(sches){
-                  return !sches["id"].startsWith("org.nunaliit")
-                })
-                .tap( function(schess){ schess.forEach(function(scheitem){
-
-                  $.couch.db(Dbname).openDoc(scheitem["id"],{
-                    success: function(data){
-                      if(typeof data["definition"] === "undefined"){
-                        return;
-                      }
-                      new SchemaListItemView({model: new Backbone.Model(data["definition"])
-                                             })
-                    },
-                    error: function(status){
-                      console.log("doc not exist")
-                    }
-                  })
-                })
-              })
-              }
-              ,error: function(status)  {
-                console.log(status);
-              }
-              ,reduce:false
-            })
-
-
-
-    }
-     , appendSchemaListFromDb : function(){
-
-       var that = this;
-       $("ul.dropdown-menu#dropdown-menu-for-schemas").empty()
-       $.couch.urlPrefix = "http://134.117.194.229:5984"
-       $.couch.allDbs({
-         success: function(data) {
-           data = data || {}
-
-           _.chain(data)
-           .filter( function(dbname){
-             return !dbname.startsWith("_")
-           })
-           .tap( function(dbs){ dbs.forEach(function(db){
-             that.appendSchemaListFromOneDb(db)
-           })
-         })
-        }
-    });
-
-     }
-    , render: function(){
+		var that = this;
+		$("ul.dropdown-menu#dropdown-menu-for-schemas").empty();
+		this.options.n2Config.directory.schemaRepository.getRootSchemas({
+			onSuccess: schemasLoaded
+			,onError: function(err){
+				$n2.logError('Unable to load schemas');
+			}
+		});
+		
+		function schemasLoaded(schemas){
+			schemas.forEach(function(data){
+				// Discount the schemas which _id starts with org.nunaliit
+				if( data 
+				 && data.jsonDefinition 
+				 && data.jsonDefinition._id 
+				 && data.jsonDefinition._id.startsWith('org.nunaliit') ){
+					// Ignore
+				} else if( data && data.definition ){
+					new SchemaListItemView({
+						model: new Backbone.Model(data["definition"])
+					});
+				};
+			});
+		};
+	},
+    render: function(){
       // Render Snippet Views
       var that = this;
       // Render & append nav for tab

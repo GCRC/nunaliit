@@ -29,7 +29,7 @@ define([
 
       var fields = this.get("fields")
       if(typeof fields[name] === "undefined") {
-        console.log("CAUSION: one of the field is missing in ", name)
+        console.log("CAUTION: one of the field is missing in ", name)
         return;
       }
       var type = fields[name]["type"]

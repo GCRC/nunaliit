@@ -14,50 +14,55 @@ define([
     , renderTab, aboutTab, loadingTab
     , testRape
 ){
-  return {
-    initialize: function(){
+	return {
+		initialize: function(){
 
-		nunaliitConfigure({
-			configuredFunction: function(config){
-				if( config.directory && config.directory.authService ) {
-					config.directory.authService.createAuthWidget({
-						elemId: 'login'
-					});
-					$n2.log('tell me what is going', config.directory.schemaRepository);
-				};
-			}
-			,rootPath: '../'
-		});
-    	
-	new TabView({
-	    title: "Attributes"
-	  , collection: new SnippetsCollection(JSON.parse(attributesJSON))
-	});
+			nunaliitConfigure({
+				configuredFunction: function(config){
+					if( config.directory && config.directory.authService ) {
+						config.directory.authService.createAuthWidget({
+							elemId: 'login'
+						});
+						$n2.log('tell me what is going', config.directory.schemaRepository);
+						render(config);
+					};
+				}
+				,rootPath: '../'
+			});
 
-	new TabView({
-            title: "Rendered"
-            , content: renderTab
-	});
-    new TabView({
-        title: "About"
-        , content: aboutTab
-      });
-    new TabView({
-            title: "Loading Schemas"
-            , content: loadingTab
-            , dropdown: true
-          });
-      //Make the first tab active!
-      $("#components .tab-pane").first().addClass("active");
-      $("#formtabs li").first().addClass("active");
-	// Bootstrap "My json" with 'info json' snippet.
-    new MyFormView({
-        title: "Original"
-        , collection: new MyFormSnippetsCollection(JSON.parse(n2mandatoryJSON))
-    });
-
-
-
-    }
-  }
+			function render(n2Config) {
+				new TabView({
+					title: "Attributes"
+					,collection: new SnippetsCollection(JSON.parse(attributesJSON))
+				});
+	
+				new TabView({
+					title: "Rendered"
+					,content: renderTab
+				});
+	
+				new TabView({
+					title: "About"
+					,content: aboutTab
+				});
+	
+				new TabView({
+					title: "Loading Schemas"
+					,content: loadingTab
+					,dropdown: true
+					,n2Config: n2Config
+				});
+	
+				//Make the first tab active!
+				$("#components .tab-pane").first().addClass("active");
+				$("#formtabs li").first().addClass("active");
+	
+				// Bootstrap "My json" with 'info json' snippet.
+				new MyFormView({
+					title: "Original"
+					,collection: new MyFormSnippetsCollection(JSON.parse(n2mandatoryJSON))
+				});
+			};
+		}
+	}
 });
