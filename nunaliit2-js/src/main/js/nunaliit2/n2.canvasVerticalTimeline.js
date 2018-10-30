@@ -34,16 +34,20 @@ POSSIBILITY OF SUCH DAMAGE.
 "use strict";
 
 var loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); },
- 	DH = 'n2.canvasVerticalTimeline';
+	DH = 'n2.canvasVerticalTimeline';
 
 var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
 	canvasId: null,
 
+	itemWidth: null,
+
+	timelineList: null,
+
 	sourceModelId: null,
 
 	elementGenerator: null,
- 
+
 	dispatchService: null,
 
 	showService: null,
@@ -55,7 +59,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 	displayIndex: null,
 
 	timelineIndex: null,
- 
+
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			canvasId: null,
@@ -67,7 +71,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 			onSuccess: function(){},
 			onError: function(err){}
 		},opts_);
- 		
+		
 		var _this = this;
 		this.canvasId = opts.canvasId;
 		this.displayIndex = opts.displayIndex;
@@ -103,83 +107,132 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 			});
 		}
 
-		this._createVerticalTimeline();
+		this._createTimeline();
 		opts.onSuccess();
 
 		$n2.log(this._classname,this);
-	 },
+	},
 
- 	_createVerticalTimeline: function(){
-		var timelineIndexOptions = {
-			'canvasId': this.canvasId,
-			'sortedElements': this.sortedElements
-		};
 
-		var timelineIndex = new TimelineIndex(timelineIndexOptions);
-		var range = timelineIndex._getDateRange();
-		this.indexItems = timelineIndex._getIndex();
-		
-		if (this.displayIndex){
-			// Add Index if option is turned on
-			this._drawIndex();
-		}
-	 },
-
-	_drawIndex: function(){
-		// Remove old index if it already exists
-		if( $('#vertical_timeline_index').length > 0 ){
-			$('#vertical_timeline_index').remove();
-		}
-
-		var indexContainer = $('<div>')
-			.attr('id','vertical_timeline_index')
-			.appendTo($('#'+this.canvasId));
-
-		var indexList = $('<ul>')
-			.appendTo(indexContainer);
-
-		for(var i = 0, e = this.indexItems.length; i < e; i++){
-			var indexItem = $('<li>')
-				.height(this.itemHeight)
-				.attr('class','indexItem')
-				.appendTo(indexList);
-			
-			$('<a>')
-				.text(this.indexItems[i])
-				.attr('href','#'+this.indexItems[i])
-				.appendTo(indexItem);
+	_backgroundClicked: function(){
+		if( this.dispatchService ){
+			this.dispatchService.send(DH,{
+				type: 'userUnselect'
+			});
 		}
 	},
 
- 	_elementsChanged: function(addedElements, updatedElements, removedElements){
- 		var _this = this;
- 		
- 		// Remove elements that are no longer there
-		for(var i=0,e=removedElements.length; i<e; ++i){
-			var removed = removedElements[i];
+	_calcItemWidth: function(){
+		
+		var width;
+		var itemPadding = 30;
+
+		width = ($('.timeline_list').width()/2) - itemPadding;
+		this.itemWidth = width;
+	},
+
+	_createTimeline: function(){
+
+		var i, e, doc, docId, label, $canvasTimeline, timelineItemOptions, timelineIndex, timelineIndexOptions; 
+		var _this = this;
+
+		// Remove old canvas container if it already exists
+		if( $('.vertical_timeline_container').length > 0 ){
+			$('.vertical_timeline_container').remove();
+		}
+
+		$('<div>')
+			.attr('class','vertical_timeline_container')
+			.click(function(e){
+				var $target = $(e.target);
+				if( $target.hasClass('timeline_item') ){
+					// Ignore
+				} else if( $target.parents('.timeline_item').length > 0 ) {
+				   	// Ignore
+				}	else {
+					_this._backgroundClicked();
+				}
+			})
+			.appendTo($('#'+this.canvasId));
+
+		if ( this.displayIndex && this.sortedElements.length > 0 ){
+
+			timelineIndexOptions = {
+				'canvasId': this.canvasId,
+				'sortedElements': this.sortedElements
+			};
+
+			new TimelineIndex(timelineIndexOptions);
+		}
+
+		$canvasTimeline = $('<div>')
+			.attr('class','timeline_list')
+			.appendTo($('.vertical_timeline_container'));
+
+		// Re-Calculate Item Width based on available space
+		this._calcItemWidth();
+
+		this.timelineList = $('<ul>')
+			.appendTo($canvasTimeline);
+
+		for( i = 0, e = this.sortedElements.length; i < e; i++ ){
+			doc = this.sortedElements[i].n2_doc;
+			docId = doc._id;
+	
+			timelineItemOptions = {
+				doc: doc, 
+				timelineList: this.timelineList,
+				itemWidth: this.itemWidth,
+				indexItems: this.indexItems
+			};
+			
+			new TimelineItem(timelineItemOptions);
+		}
+		
+		this.showService.fixElementAndChildren(this.timelineList);
+	},
+
+	_elementsChanged: function(addedElements, updatedElements, removedElements){
+		var i,e,removed,added,updated,elementId,element,doc,docSchema,date; 	
+		
+		// Remove elements that are no longer there
+		for( i=0,e=removedElements.length; i<e; ++i ){
+			removed = removedElements[i];
 			delete this.elementsById[removed.id];
 		}
 		
 		// Add elements
-		for(var j=0,f=addedElements.length; j<f; ++j){
-			var addedElement = addedElements[j];
-			this.elementsById[addedElement.id] = addedElement;
+		for( i=0,e=addedElements.length; i<e; ++i ){
+			added = addedElements[i];
+			this.elementsById[added.id] = added;
 		}
 		
 		// Update elements
-		for(var k=0,g=updatedElements.length; k<g; ++k){
-			var updated = updatedElements[k];
+		for( i=0,e=updatedElements.length; i<e; ++i ){
+			updated = updatedElements[i];
 			this.elementsById[ updated.id ] = updated;
 		}
 
 		// Keep track of elements in sorted order
 		this.sortedElements = [];
-		for(var elementId in this.elementsById){
-			var element = this.elementsById[elementId];
+		for( elementId in this.elementsById ){
+			element = this.elementsById[elementId];
+			
+			doc = element.n2_doc;
+			docSchema = doc.nunaliit_schema;
+			date = null;
+			if ( doc[docSchema] && doc[docSchema].date && doc[docSchema].date.date ){
+				date = doc[docSchema].date.date;
+			}
+
 			this.sortedElements.push(element);
 			
 			if( typeof element.sort === 'undefined' ){
-				element.sort = element.id;
+				if ( date ){
+					element.sort = date + "_" + element.id;
+				} else {
+					element.sort = element.id;
+				}
 			}
 		}
 
@@ -193,40 +246,71 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 			return 0;
 		});
 		
-		this._createVerticalTimeline();
- 	},
+		this._createTimeline();
+	},
 
- 	_sourceModelUpdated: function(state){
- 		this.elementGenerator.sourceModelUpdated(state);
- 	},
+	getDateFromDoc: function(object){
 
- 	_handleDispatch: function(m){
- 		if( 'modelGetInfo' === m.type ){
- 			if( m.modelId === this.modelId ){
- 				m.modelInfo = this._getModelInfo();
- 			}
- 			
- 		} else if( 'modelStateUpdated' === m.type ) {
- 			if( this.sourceModelId === m.modelId ){
- 				if( m.state ){
- 					this._sourceModelUpdated(m.state);
- 				}
- 			}
+		var d, date, property, currentProp; 
 
- 		} else if( 'windowResized' === m.type ) {
-			this._createVerticalTimeline();
-	 	}
- 	}
+		for ( property in object ){
+			currentProp = object[property];
+
+			if ( typeof currentProp === 'object' ){
+				
+				if ( currentProp.nunaliit_type === 'date' && currentProp.date ){
+					date = currentProp.date;
+					return date;
+
+				} else {
+					return this.getDateFromDoc(currentProp);
+				}
+			}
+		}
+		return date;
+	},
+	
+	getCanvasHeight: function(){
+		var canvasHeight = $('#'+this.canvasId).height();
+
+		if (canvasHeight <= 0 ){
+			canvasHeight = 0;
+		}
+
+		return canvasHeight;
+	},
+
+	_sourceModelUpdated: function(state){
+		this.elementGenerator.sourceModelUpdated(state);
+	},
+
+	_handleDispatch: function(m){
+		if( 'modelGetInfo' === m.type ){
+			if( m.modelId === this.modelId ){
+				m.modelInfo = this._getModelInfo();
+			}
+			
+		} else if( 'modelStateUpdated' === m.type ) {
+			if( this.sourceModelId === m.modelId ){
+				if( m.state ){
+					this._sourceModelUpdated(m.state);
+				}
+			}
+
+		} else if( 'windowResized' === m.type ) {
+			this._createTimeline();
+		}
+	}
 });
 
-var TimelineIndex = $n2.Class('TimelineIndex', {
+var TimelineIndex = $n2.Class('TimelineIndex', VerticalTimelineCanvas, {
 
 	canvasId: null,
 
 	dateRange: null,
 
 	sortedElements: null, 
- 
+
 	index: null,
 
 	reduceIndex: null,
@@ -244,11 +328,13 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 
 		this.canvasId = opts.canvasId;
 		this.sortedElements = opts.sortedElements;
-		this.dateRange = {'startDate':null, 'endDate':null};
+		this.dateRange = {'startDate': null, 'endDate': null};
 		this.index = [];
 		this.reduceIndex = opts.reduceIndex;
 
 		this._generateIndex();
+
+		this._addTimelineIndexToCanvas();
 
 		opts.onSuccess();
 
@@ -256,18 +342,30 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 	},
 
 	_generateIndex: function(){
-
+		var i, e, fragments, property, fragment, fragmentDate, elementDate;
 		this.uniqueYears = [];
 
-		for( var i = 0, e = this.sortedElements.length; i < e; i++ ){
-			var fragments = this.sortedElements[i].fragments;
-			for(var prop in fragments){
-				var fragment = fragments[prop];
-				var elementDate = new Date(this._getDateFromFragment(fragment));
-				this._updateDateRange(elementDate);
+		for( i = 0, e = this.sortedElements.length; i < e; i++ ){
+			fragments = this.sortedElements[i].fragments;
+			for( property in fragments){
+				fragment = fragments[property];
 
-				if( this.uniqueYears.indexOf(elementDate.getUTCFullYear()) < 0 && elementDate.getUTCFullYear() ){
-					this.uniqueYears.push(elementDate.getUTCFullYear());
+				fragmentDate = this.getDateFromDoc(fragment);
+
+				if ( fragmentDate ){
+
+					if (fragmentDate.indexOf('/') >= 0 ){
+						// Do nothing
+					} else {
+
+						elementDate = new Date(fragmentDate);
+
+						this._updateDateRange(elementDate);
+
+						if( this.uniqueYears.indexOf(elementDate.getUTCFullYear()) < 0 && elementDate.getUTCFullYear() ){
+							this.uniqueYears.push(elementDate.getUTCFullYear());
+						}
+					}
 				}
 			}
 		}
@@ -285,14 +383,41 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 		this._setIndex(this.uniqueYears);
 
 		// Reduce index items if set to true. 
-		if( this.reduceIndex ){
+		if ( this.reduceIndex ){
 			this._setIndex(this._reduceIndexItems());
 		}
-	 },
+	},
 
-	 _getIndex: function(){
+	_addTimelineIndexToCanvas: function(){
+		// Remove old index if it already exists
+		if( $('.timeline_index').length > 0 ){
+			$('.timeline_index').remove();
+		}
+
+		var indexContainer = $('<div>')
+			.attr('class','timeline_index')
+			.appendTo('#' + this.canvasId + ' .vertical_timeline_container');
+
+		var indexList = $('<ul>')
+			.appendTo(indexContainer);
+
+		var i, e, indexItem;
+		var currentIndex = this._getIndex();
+		for( i = 0, e = currentIndex.length; i < e; i++){
+			indexItem = $('<li>')
+				.attr('class','indexItem')
+				.appendTo(indexList);
+			
+			$('<a>')
+				.text(this.index[i])
+				.attr('href','#'+this.index[i])
+				.appendTo(indexItem);
+		}
+	},
+
+	_getIndex: function(){
 		return this.index;
-	 },
+	},
 
 	_setIndex: function(timelineIndex){
 		this.index = timelineIndex;
@@ -300,23 +425,13 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 
 	_getDateRange: function(){
 		return this.dateRange;
-	 },
+	},
 
 	_setDateRange: function(startDate,endDate){
 		this.dateRange.startDate = startDate;
 		this.dateRange.endDate = endDate;
 	},
 	
-	_getDateFromFragment: function(fragment){
-		if( fragment && fragment.n2_doc ){
-			var fragDoc = fragment.n2_doc;
-			var schemaName = fragDoc.nunaliit_schema; 
-			if( fragDoc[schemaName] && fragDoc[schemaName].date	&& fragDoc[schemaName].date.date ){
-				return fragDoc[schemaName].date.date;
-			}
-		}
-	},
-
 	_updateDateRange: function(date){
 		var currentDateRange = this._getDateRange();
 		
@@ -334,19 +449,10 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 		}
 	},
 
-	_getCanvasHeight: function(){
-		var canvasHeight = $('#'+this.canvasId).height();
-
-		if (canvasHeight <= 0 ){
-			canvasHeight = 0;
-		}
-
-		return canvasHeight;
-	},
-
 	_reduceIndexItems: function(){
-		var items = this.index;
-		var canvasHeight = this._getCanvasHeight();
+		var i, e, reducedDate;
+		var items = this._getIndex();
+		var canvasHeight = this.getCanvasHeight();
 		var itemHeight = 18;
 		var itemPadding = 4;
 		var itemMargin = 4;
@@ -362,8 +468,8 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 		while( maxIndexItems < items.length ){
 			factor *= 10;
 			
-			for( var i = 0, e = items.length; i < e; i++ ){
-				var reducedDate = reduceDate(items[i],factor);
+			for( i = 0, e = items.length; i < e; i++ ){
+				reducedDate = reduceDate(items[i],factor);
 
 				if( reducedItems.indexOf(reducedDate) < 0 ){
 					reducedItems.push(reducedDate);
@@ -377,15 +483,110 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 				// If window is too small to provide an index, exclude it. 
 				items = [];
 				break;
-
 			} else {
 				items = reducedItems;
 			}
 		}
 		return items;
 	}
-
 });
+
+var TimelineItem = $n2.Class('TimelineItem', VerticalTimelineCanvas, {
+	
+	doc: null, 
+
+	itemWidth: null,
+
+	timelineList: null,
+
+	indexItems: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			doc: null,
+			itemWidth: null,
+			timelineList: null,
+			indexItems: null,
+			onSuccess: function(){},
+			onError: function(err){}
+		},opts_);
+	
+		this.doc = opts.doc;
+		this.itemWidth = opts.itemWidth;
+		this.timelineList = opts.timelineList;
+		this.indexItems = opts.indexItems; 
+
+		this._addItemToList();
+
+		opts.onSuccess();
+	},
+	
+	_getDocIdFromDoc: function(doc){
+		if ( doc && doc._id ){
+			return doc._id;
+		}
+	},
+
+	_getAttachment: function(doc){
+		var attachmentFileName, file; 
+		if (doc && doc.nunaliit_attachments && doc.nunaliit_attachments.files ){
+			for ( file in doc.nunaliit_attachments.files ){
+				if ( doc.nunaliit_attachments.files[file].originalName ){
+					return doc.nunaliit_attachments.files[file].originalName;
+				}
+			}
+		}
+	},
+
+	_addItemToList: function(){
+
+		var $timelineItem, $timelineItemContent, $timelineItemContentText, $timelineItemAttachment; 
+		var dateLabel = this.getDateFromDoc(this.doc);
+		var docId = this._getDocIdFromDoc(this.doc);
+		var attachmentName = this._getAttachment(this.doc);
+
+		if ( dateLabel ){
+
+			$timelineItem = $('<li>')
+				.attr('class','timeline_item');
+			
+			$('<div>')
+				.attr('class','timeline_item_date')
+				.text(dateLabel)
+				.appendTo($timelineItem);
+
+			$('<div>')
+				.attr('class','timeline_item_node')
+				.appendTo($timelineItem);
+
+			$timelineItemContent = $('<div>')
+				.attr('class','timeline_item_content')
+				.css('width',this.itemWidth+'px')
+				.css('transform','translateX(-' + this.itemWidth + 'px)')
+				.appendTo($timelineItem);
+
+			if ( attachmentName ){
+				$timelineItemAttachment = $('<div>')
+					.attr('class', 'n2s_insertMediaView')
+					.attr('nunaliit-document', docId)
+					.attr('nunaliit-attachment', attachmentName)
+					.appendTo($timelineItemContent); 
+			}
+
+			$timelineItemContentText = $('<div>')
+				.attr('class','timeline_item_content_text')
+				.appendTo($timelineItemContent);
+
+			$('<div>')
+				.attr('class', 'n2s_briefDisplay n2s_userEvents')
+				.attr('nunaliit-document', docId)
+				.appendTo($timelineItemContentText);
+
+			$timelineItem.appendTo(this.timelineList);
+		}
+	}
+});
+
 
 //--------------------------------------------------------------------------
 function HandleCanvasAvailableRequest(m){
@@ -396,24 +597,26 @@ function HandleCanvasAvailableRequest(m){
 
 //--------------------------------------------------------------------------
 function HandleCanvasDisplayRequest(m){
+	var key, options; 
+
 	if( m.canvasType === 'vertical_timeline' ){
 		
-		var options = {};
+		options = {};
 		if( m.canvasOptions ){
-			for(var key in m.canvasOptions){
+			for( key in m.canvasOptions){
 				options[key] = m.canvasOptions[key];
 			}
 		}
 		
- 		if( !options.elementGenerator ){
- 			// If not defined, use the one specified by type
- 			options.elementGenerator = $n2.canvasElementGenerator.CreateElementGenerator({
- 	 			type: options.elementGeneratorType,
- 	 			options: options.elementGeneratorOptions,
- 	 			config: m.config
- 	 		});
- 		}
- 		
+		if( !options.elementGenerator ){
+			// If not defined, use the one specified by type
+				options.elementGenerator = $n2.canvasElementGenerator.CreateElementGenerator({
+				type: options.elementGeneratorType,
+				options: options.elementGeneratorOptions,
+				config: m.config
+			});
+		}
+		
 		options.canvasId = m.canvasId;
 		options.config = m.config;
 		options.onSuccess = m.onSuccess;
@@ -425,10 +628,11 @@ function HandleCanvasDisplayRequest(m){
 
 //--------------------------------------------------------------------------
 $n2.canvasVerticalTimeline = {
-	VerticalTimelineCanvas: VerticalTimelineCanvas,
 	TimelineIndex: TimelineIndex,
+	TimelineItem: TimelineItem,	
+	VerticalTimelineCanvas: VerticalTimelineCanvas,
 	HandleCanvasAvailableRequest: HandleCanvasAvailableRequest,
 	HandleCanvasDisplayRequest: HandleCanvasDisplayRequest
 };
 
-})(jQuery,nunaliit2);
+}(jQuery,nunaliit2));
