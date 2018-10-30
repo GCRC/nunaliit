@@ -1,0 +1,70 @@
+{
+	"group": "demo"
+	,"id": "place"
+	,"label": "Place"
+	,"attributes":[
+		{
+			"type":"title"
+			,"label":"Place"
+			,"includedInBrief":true
+		}
+		,{
+			"type":"string"
+			,"id":"name"
+			,"label":"Name"
+			,"includedInBrief":true
+		}
+		,{
+			"type":"string"
+			,"id":"description"
+			,"label":"Description"
+			,"textarea": true
+		}
+		,{
+			"type":"reference"
+			,"id":"author"
+			,"label":"Author"
+		}
+		,{
+			"type":"selection"
+			,"id":"type"
+			,"label":"Type"
+			,"options":[
+				{
+					"label": "City"
+					,"value": "city"
+				}
+				,{
+					"label": "Village"
+					,"value": "village"
+				}
+			]
+		}
+		,{
+			"type": "reference"
+			,"id": "reference"
+			,"label": "Reference"
+			, "searchFunction":"getDocumentFromSchema('<schema-name>')"
+		}
+		,{
+			"type":"checkbox"
+			,"id":"verified"
+			,"label":"Has been verified"
+		}
+		,{
+			"type":"checkbox_group"
+			,"id":"attributes"
+			,"label":"Attributes"
+			,"checkboxes": [
+				{
+					"id": "has_library"
+					,"label": "Has a library"
+				}
+				,{
+					"id": "has_postoffice"
+					,"label": "Has a post office"
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,54 @@
+<form class='form'>
+  <div class='controls'>
+    <ul class="nav nav-tabs">
+      <li class="active"><a href="#first" data-toggle="tab">Major</a></li>
+      <li><a href="#second" data-toggle="tab">Optional</a></li>
+      <li><a href="#third" data-toggle="tab">Custom</a></li>
+    </ul>
+    <div class="tab-content">
+      <div class="tab-pane active" id="first">
+	<% var compiled =  _.reduce(items, function(str, v, k){ %>
+	<% v["name"] = k; %>
+	<% if(typeof v["priority"] === "undefined" ) { %>
+	<%  return str + popoverTemplates[v["type"]](v); %>
+	<% } else { %>
+	<%  return str; } %>
+	<% }, "") %>
+	<%= compiled %>
+      </div>
+      <div class="tab-pane" id="second">
+	<% var optcompiled =  _.reduce(items, function(str, v, k){ %>
+	<% v["name"] = k; %>
+	<% if(typeof v["priority"] !== "undefined" && v["priority"] === "optional") { %>
+	<%  return str + popoverTemplates[v["type"]](v); %>
+	<% } else { %>
+	<%  return str; } %>
+	<% }, "") %>
+	<%= optcompiled %>
+      </div>
+      <div class="tab-pane" id="third">
+        <div class="controls" >
+                    <div class="input-append">
+                        <input id="field1" class="input-medium field" name="prof1" type="text" placeholder="Give something new"/>
+                        <button id="b1" class="btn btn-info add-more" type="button">+</button>
+                    </div>
+                <br>
+                <small>Press + to add another field :)</small>
+        </div>
+        <script>
+            var next = 1;
+        $(".add-more").click(function(e){
+            e.preventDefault();
+            var addto="#field"+next;
+            next +=1;
+            var newIn = '<br /><br /><input class="input-medium field" id="field' + next + '" name="field' + next + '" type="text" >';
+            var newInput = $(newIn);
+            $(addto).after(newInput);
+        })
+        </script>
+     </div>
+    </div>
+    <hr/>
+    <button id="save" class='btn btn-info'>Save</button><button id="cancel" class='btn btn-danger'>Cancel</button>
+  </div>
+</form>

@@ -1,0 +1,13 @@
+<!-- n2 attribute selection -->
+<div class="control-group">
+  <span id="schema-attribute-type-label"><%- type.charAt(0).toUpperCase() + type.substr(1) %></span>
+  <label class="control-label" for="<%- n2id %>"><%= label  %></label>
+
+  <div class="controls">
+    <select id="<%- n2id %>" name= "<%- n2id %>">
+      <% _.each(options, function(option) { %>
+
+      <option> <%- option %></option><% }); %>
+      </select>
+  </div>
+</div>

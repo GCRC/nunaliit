@@ -1,0 +1,30 @@
+<label class='control-label'> <%- label %> </label>
+<select class="field" data-type="<%- type %>" id='<%- name %>' onchange="needExtraInput(this.value)">
+  <% var needExtraInputOptionList = []; %>
+<% _.each(value, function(v,k){ %>
+  <option value="<%- v["value"] %>" <% if (v["selected"]){ %> selected <% } %> <% if(typeof v["needExtra"] !== "undefined" && v["needExtra"]) { %> needExtra="true"<% } %>><%- v["label"] %></option>
+  <% if (typeof v["needExtra"] !== "undefined" && v["needExtra"]){ %>
+  <% needExtraInputOptionList.push( v["value"])   %>
+  <% } %>
+
+  <% }); %>
+
+</select>
+
+<script>
+  if ( $('.popover').is(":visible")){
+    needExtraInput($('select.field').val())
+  }
+  function needExtraInput(v){
+  var candidate = <%= JSON.stringify(needExtraInputOptionList) %>
+    if(  candidate.indexOf(v) != -1){
+      setTimeout(function(){
+  $('a.toggle-controller').trigger('extraInputShow');
+  }, 30);
+  } else {
+      setTimeout(function(){$('a.toggle-controller').trigger('extraInputHide');
+  }, 30);
+  }
+  }
+
+  </script>

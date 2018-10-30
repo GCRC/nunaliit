@@ -1,0 +1,9 @@
+    "type" : "<%- type %>"
+    ,"id"  : "<%- id %>"
+    ,"label" : "<%= label %>"
+    ,"checkboxes" : [<% _.each(checkboxes, function(checkbox, idx, list) { %>
+	      {
+		  "id": "<%- checkbox.replace(/\W/g, '_') %>"
+		  ,"label": "<%= checkbox.toLowerCase() %>"
+	      }<% if(idx !== list.length-1)  { %>,<% } %> <% }) %>
+    ]
