@@ -1066,9 +1066,8 @@ var DomStyler = $n2.Class({
 							,attUrl
 							,data
 							,attachmentName
-							,$insertView
 						);
-					linkDiv.one('click',cb);
+					linkDiv.click(cb);
 				};
 			};
 
@@ -1084,12 +1083,11 @@ var DomStyler = $n2.Class({
 				.appendTo($insertView);
 		};
 		
-		function createMediaCallback(uploadType, attachmentUrl, doc, attachmentName, $insertView) {
+		function createMediaCallback(uploadType, attachmentUrl, doc, attachmentName) {
 			
 			return function(evt) {
 				var mediaOptions = {
-					insertView: $insertView || null
-					,url: attachmentUrl
+					url: attachmentUrl
 					,suppressLeaveConfirmation: suppressLeaveConfirmation
 				};
 				
@@ -1162,7 +1160,8 @@ var DomStyler = $n2.Class({
 			};
 		};
 	},
-	
+
+
 	_insertMediaPlayer: function($insertView, data) {
 		var _this = this;
 
