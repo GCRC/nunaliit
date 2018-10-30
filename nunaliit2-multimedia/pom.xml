@@ -5,9 +5,7 @@
     <groupId>ca.carleton.gcrc</groupId>
     <version>2.2.9-SNAPSHOT</version>
   </parent>
-  <groupId>ca.carleton.gcrc</groupId>
   <artifactId>nunaliit2-multimedia</artifactId>
-  <version>2.2.9-SNAPSHOT</version>
   <name>nunaliit2-multimedia</name>
   <description>Library that converts multimedia files using command
   line tools such as avconv and ImageMagick</description>
@@ -35,7 +33,7 @@
 	<dependency>
 		<groupId>com.adobe.xmp</groupId>
 		<artifactId>xmpcore</artifactId>
-		<version>5.1.2</version>
+		<version>5.1.3</version>
 	</dependency>
 	<dependency>
 		<groupId>com.drewnoakes</groupId>
