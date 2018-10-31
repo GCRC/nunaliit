@@ -89,24 +89,11 @@ public class DocumentFile implements Document {
 			result = tokener.nextValue();
 			
 			// There should be nothing left in the stream but white spaces
-			// There should be nothing left in the stream but white spaces
-			char c = tokener.next();
-			while( c > 0 ){
-				if( ' ' == c ){
-					// OK
-				} else if( '\t'  == c ){
-					// OK
-				} else if( '\r'  == c ){
-					// OK
-				} else if( '\n'  == c ){
-					// OK
-				} else {
-					throw new Exception("Unexpected character found at end of JSON stream: "+c+ " ("+tokener+")");
-				}
-				
-				c = tokener.next();
+			char c = tokener.nextClean();
+			if( 0 != c ) {
+				throw new Exception("Unexpected character found at end of JSON stream: "+c+ " ("+tokener+")");
 			}
-			
+
 		} catch (Exception e) {
 			throw new Exception("Error while reading JSON stream", e);
 		}
