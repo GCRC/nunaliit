@@ -209,12 +209,12 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		var _this = this;
 
 		// Remove old canvas container if it already exists
-		if( $('.vertical_timeline_container').length > 0 ){
-			$('.vertical_timeline_container').remove();
+		if( $('.vertical_timeline').length > 0 ){
+			$('.vertical_timeline').remove();
 		}
 
 		$('<div>')
-			.attr('class','vertical_timeline_container')
+			.attr('class','vertical_timeline')
 			.click(function(e){
 				$target = $(e.target);
 				if( $target.hasClass('timeline_item') ){
@@ -243,7 +243,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
 		$canvasTimeline = $('<div>')
 			.attr('class','timeline_list')
-			.appendTo($('.vertical_timeline_container'));
+			.appendTo($('.vertical_timeline'));
 
 		// Re-Calculate Item Width based on available space
 		this._calcItemWidth();
@@ -479,7 +479,7 @@ var TimelineIndex = $n2.Class('TimelineIndex', VerticalTimelineCanvas, {
 
 		var indexContainer = $('<div>')
 			.attr('class','timeline_index')
-			.appendTo('#' + this.canvasId + ' .vertical_timeline_container');
+			.appendTo('#' + this.canvasId + ' .vertical_timeline');
 
 		// If autoReduceIndex prevent scroll bar from being used
 		if ( this.autoReduceIndex ){
