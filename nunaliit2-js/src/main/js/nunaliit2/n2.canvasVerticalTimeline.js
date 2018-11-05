@@ -268,7 +268,6 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
 	_sortElements: function(){
 		var elementId, element, date;
-
 		this.sortedElements = [];
 
 		for( elementId in this.elementsById ){
@@ -330,7 +329,11 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
 		var date, property, currentProp, slashIndex; 
 		var dateRangeRegEx = /([0-9]{4})-([0-9]{2})-([0-9]{2}).*\/([0-9]{4})-([0-9]{2})-([0-9]{2}).*/g;
-
+		var yyyymmddhhmmssRegEx = /([0-9]{4})-([0-9]{2})-([0-9]{2})\s/g;
+		var yyyymmddRegEx = /([0-9]{4})-([0-9]{2})-([0-9]{2})/g;
+		var yyyymmRegEx = /([0-9]{4})-([0-9]{2})/g;
+		var yyyyRegEx = /([0-9]{4})/g;
+		
 		for ( property in object ){
 			currentProp = object[property];
 
@@ -338,14 +341,23 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 				
 				if ( currentProp.nunaliit_type === 'date' && currentProp.date ){
 					date = currentProp.date;
-					
-					//if date is in the format of a date range, return only the first part of the range
-					if ( date && date.match(dateRangeRegEx) ){
-						slashIndex = date.indexOf('/');
-						return date.slice(0,slashIndex); 
+				
+					if ( date ){
+						//Update dates to match yyyy-mm-dd format (required for auto-reduce index) 
+						if ( date.match(dateRangeRegEx) ){
+							slashIndex = date.indexOf('/');
+							return date.slice(0,slashIndex); 
+						} else if ( date.match(yyyymmddhhmmssRegEx) ){
+							return date.slice(0,10);
+						} else if ( date.match(yyyymmddRegEx) ){
+							return date;
+						} else if ( date.match(yyyymmRegEx) ){
+							return date + "-00";
+						} else if ( date.match(yyyyRegEx) ){
+							return date + "-00-00";
+						}
+						return date;
 					}
-					return date;
-
 				} else {
 					return this.getDateFromDoc(currentProp);
 				}
