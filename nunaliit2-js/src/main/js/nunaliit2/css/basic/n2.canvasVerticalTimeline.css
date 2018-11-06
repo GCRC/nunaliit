@@ -32,27 +32,39 @@
 	text-align: center;
 }
 
+.vertical_timeline .timeline_index ul li.indexItem a {
+    color: #333333;
+	text-decoration: none;
+	display: block;
+	font-family: arial;
+	font-size: 1em;
+}
+
 .vertical_timeline .timeline_index ul li:hover,
 .vertical_timeline .timeline_index ul li.active {
 	padding: 2px;
 	width: 78px;
 	cursor: pointer;
 	transition: all 0.2s ease;
-	background-color: #8be8f8;
+	background-color: teal;
+	font-size: 1.1em;
 }
 
-.vertical_timeline .timeline_index ul li.indexItem a {
-    color: #333333;
-	text-decoration: none;
-	display: block;
+
+.vertical_timeline .timeline_index ul li:hover a,
+.vertical_timeline .timeline_index ul li.active a {
+	color: #ffffff;
+	transition: color 0.1s ease;
 }
+
 
 .vertical_timeline .timeline_list {
 	width: 100%; 
-	width: calc(100% - 95px); /* Minus 50px index width from timeline container */
+	width: calc(100% - 95px); /* Minus 95px index width from timeline container */
 	height: 100%;
 	overflow-y: auto;
 	float: right;
+	scroll-behavior: smooth;
 }
 
 .vertical_timeline .timeline_list ul {
@@ -67,6 +79,16 @@
 
 .vertical_timeline .timeline_list .timeline_item .timeline_item_content {
     padding: 10px 5px 5px 0px;
+}
+
+.vertical_timeline .timeline_list .timeline_item.nunaliit_selected .timeline_item_content .timeline_item_content_text {
+	color: teal;
+	font-weight: bold;
+}
+
+.vertical_timeline .timeline_list .timeline_item.nunaliit_hovered .timeline_item_content .timeline_item_content_text {
+	color: #802000;
+	font-weight: bold;
 }
 
 .vertical_timeline .timeline_list .timeline_item .timeline_item_content .timeline_item_content_text {	
@@ -85,7 +107,13 @@
 }
 
 .vertical_timeline .timeline_list .timeline_item .timeline_item_content .n2s_insertedMediaView {
-    padding: 0px 20px 0px 20px;
+	padding: 0px 20px 0px 20px;
+	max-width: max-content;
+	margin: 0px 0px 0px auto;
+}
+
+.vertical_timeline .timeline_list .timeline_item:nth-child(even) .timeline_item_content .n2s_insertedMediaView {
+	margin: 0px auto 0px 0px;
 }
 
 .vertical_timeline .timeline_list .timeline_item .timeline_item_content .n2s_insertedMediaView .n2Show_thumb_wrapper {
@@ -111,6 +139,16 @@
     transform: translate(-7px, 27px);
 }
 
+.vertical_timeline .timeline_list .timeline_item.nunaliit_selected .timeline_item_node {
+	border-color: teal;
+    background-color: #cff9f9;
+}
+
+.vertical_timeline .timeline_list .timeline_item.nunaliit_hovered .timeline_item_node {
+	border-color: #802000;
+    background-color: #bb8c7d;
+}
+
 .vertical_timeline .timeline_list .timeline_item .timeline_item_label {
     width: max-content;
 	font-size: 1.8em;
@@ -119,7 +157,7 @@
     font-weight: bold;
 	float: left;
     transform: translate(25px, 20px);
-	border: 1px solid #999999; 
+	border: 1px solid #333333; 
 	border-radius: 2px; 
 	padding: 2px; 
 }
@@ -128,4 +166,15 @@
     transform: translate(-27px, 20px);
     float: right;
     text-align: left;
+}
+
+.vertical_timeline .timeline_list .timeline_item.nunaliit_selected .timeline_item_label {
+	background-color: teal;
+	border-color: teal;
+}
+
+.vertical_timeline .timeline_list .timeline_item.nunaliit_hovered .timeline_item_label {
+	background-color: #802000;
+	border-color: #802000;
+
 }
