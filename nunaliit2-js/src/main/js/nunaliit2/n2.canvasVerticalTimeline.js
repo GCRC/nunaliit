@@ -661,7 +661,7 @@ var TimelineIndex = $n2.Class('TimelineIndex', VerticalTimelineCanvas, {
 		for(i = 0, e = indexItems.length; i < e; i++){
 			indexItem = indexItems.eq(i);
 			indexItemText = indexItem.text();
-			if( indexItemText  === itemLabel ){
+			if( indexItemText  === String(itemLabel) ){
 				indexItem.addClass('active');	
 			} else {
 				indexItem.removeClass('active');
