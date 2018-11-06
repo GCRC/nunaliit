@@ -616,6 +616,9 @@ var SingleDocumentFilter = $n2.Class(ModelFilter, {
 * - _computeAvailableChoicesFromDocs
 * - _isDocVisible
 * 
+* Sublcasses may implement the following methods (optional):
+* - _selectionChanged : Called when a change in selection is detected
+* 
 * Options:
 * - modelId: String. Identifier for this model
 * - sourceModelId: String. Identifier for the model where documents are obtained
@@ -849,6 +852,7 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 			localStorage.setItem(this.saveSelectionName,jsonSelection);
 		};
 
+		this._selectionChanged(this.selectedChoiceIdMap, this.allSelected);
 		this._filterChanged();
 		
 		this.allSelectedParameter.sendUpdate();
@@ -886,6 +890,7 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 			};
 		};
 
+		this._selectionChanged(this.selectedChoiceIdMap, this.allSelected);
 		this._filterChanged();
 		
 		this.allSelectedParameter.sendUpdate();
@@ -927,6 +932,7 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 				_this.selectedChoiceIdMap[choice.id] = true;
 			});
 
+			this._selectionChanged(this.selectedChoiceIdMap, this.allSelected);
 			this._filterChanged();
 
 			this.selectedChoicesParameter.sendUpdate();
@@ -1187,11 +1193,15 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 	},
 	
 	_computeVisibility: function(doc){
-		return this._isDocVisible(doc, this.selectedChoiceIdMap);
+		return this._isDocVisible(doc, this.selectedChoiceIdMap, this.allSelected);
 	},
 
-	_isDocVisible: function(doc, selectedChoiceIdMap){
+	_isDocVisible: function(doc, selectedChoiceIdMap, allSelected){
 		throw new Error('Subclasses to SelectableDocumentFilter must implement _isDocVisible()');
+	},
+
+	_selectionChanged: function(selectedChoiceIdMap, allSelected){
+		// This can be implemented by a subclass to detect the changes in selection
 	}
 });
 

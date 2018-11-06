@@ -1,0 +1,6 @@
+{
+<%= mandatorytext %><% if (attributestext.length > 1) { %>    ,"attributes": [
+      <% var tempAttributestext = attributestext.replace(/^/gm, '    ') %> <%= tempAttributestext %>
+   ]
+ <%  } %>
+}

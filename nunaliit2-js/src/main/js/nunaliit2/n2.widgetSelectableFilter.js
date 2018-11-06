@@ -86,7 +86,6 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 	 * often as they affect performance.
 	 */
 	_throttledAvailableChoicesUpdated: null,
-	_throttledAdjustSelectedItem: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -117,7 +116,6 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 		this.allSelected = false;
 		this.suppressedChoicesMap = [];
 		this._throttledAvailableChoicesUpdated = $n2.utils.throttle(this._availableChoicesUpdated, 1500);
-		this._throttledAdjustSelectedItem = $n2.utils.throttle(this._adjustSelectedItem, 1500);
 
 		if( opts.suppressChoices ){
 			if( $n2.isArray(opts.suppressChoices) ){
@@ -286,7 +284,7 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 				.addClass('n2widget_singleFilterSelection_noChoiceAvailable');
 		};
 		
-		this._throttledAdjustSelectedItem();
+		this._adjustSelectedItem();
 		
 		// Select current
 		//this._selectionChanged();
@@ -336,6 +334,7 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 	// This is called when the selected option within <select> is changed
 	_selectionChanged: function(){
 		var $elem = this._getElem();
+
 		var $selector = $elem.find('select');
 		var val = $selector.val();
 		if( ALL_CHOICES === val ){
@@ -402,14 +401,14 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 					_this.selectedChoiceIdMap[choiceId] = true;
 				});
 				
-				this._throttledAdjustSelectedItem();
+				this._adjustSelectedItem();
 			};
 
 		} else if( this.allSelectedChangeEventName === m.type ){
 			if( typeof m.value === 'boolean' ){
 				this.allSelected = m.value;
 				
-				this._throttledAdjustSelectedItem();
+				this._adjustSelectedItem();
 			};
 		};
 	}
@@ -452,7 +451,6 @@ var MultiFilterSelectionWidget = $n2.Class('MultiFilterSelectionWidget',{
 	 * often as they affect performance.
 	 */
 	_throttledAvailableChoicesUpdated: null,
-	_throttledAdjustSelectedItem: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -475,7 +473,6 @@ var MultiFilterSelectionWidget = $n2.Class('MultiFilterSelectionWidget',{
 		this.selectedChoiceIdMap = {};
 		this.allSelected = false;
 		this._throttledAvailableChoicesUpdated = $n2.utils.throttle(this._availableChoicesUpdated, 1500);
-		this._throttledAdjustSelectedItem = $n2.utils.throttle(this._adjustSelectedItem, 1500);
 		
 		// Set up model listener
 		if( this.dispatchService ){
@@ -617,7 +614,7 @@ var MultiFilterSelectionWidget = $n2.Class('MultiFilterSelectionWidget',{
 				.appendTo($a);
 		};
 		
-		this._throttledAdjustSelectedItem();
+		this._adjustSelectedItem();
 	},
 	
 	_adjustSelectedItem: function(){
@@ -712,14 +709,14 @@ var MultiFilterSelectionWidget = $n2.Class('MultiFilterSelectionWidget',{
 					_this.selectedChoiceIdMap[choiceId] = true;
 				});
 				
-				this._throttledAdjustSelectedItem();
+				this._adjustSelectedItem();
 			};
 
 		} else if( this.allSelectedChangeEventName === m.type ){
 			if( typeof m.value === 'boolean' ){
 				this.allSelected = m.value;
 				
-				this._throttledAdjustSelectedItem();
+				this._adjustSelectedItem();
 			};
 		};
 	}
@@ -768,7 +765,6 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 	 * often as they affect performance.
 	 */
 	_throttledAvailableChoicesUpdated: null,
-	_throttledAdjustSelectedItem: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -796,7 +792,6 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 		this.selectedChoices = [];
 		this.selectedChoiceIdMap = {};
 		this._throttledAvailableChoicesUpdated = $n2.utils.throttle(this._availableChoicesUpdated, 1500);
-		this._throttledAdjustSelectedItem = $n2.utils.throttle(this._adjustSelectedItem, 1500);
 		
 		// Set up model listener
 		if( this.dispatchService ){
@@ -957,7 +952,7 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 			addOption($selectDiv, choice.id, label);
 		};
 		
-		this._throttledAdjustSelectedItem();
+		this._adjustSelectedItem();
 		
 		// Select current
 		//this._selectionChanged();
@@ -1082,14 +1077,14 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 					_this.selectedChoiceIdMap[choiceId] = true;
 				});
 				
-				this._throttledAdjustSelectedItem();
+				this._adjustSelectedItem();
 			};
 
 		} else if( this.allSelectedChangeEventName === m.type ){
 			if( typeof m.value === 'boolean' ){
 				this.allSelected = m.value;
 				
-				this._throttledAdjustSelectedItem();
+				this._adjustSelectedItem();
 			};
 		};
 	}

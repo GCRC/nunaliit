@@ -51,6 +51,18 @@ public class GeometryDescriptor extends AbstractDescriptor {
 		setBoundingBox(bbox);
 	}
 	
+	public void setGeometryAsWkt(String wkt) throws Exception {
+		WktParser parser = new WktParser();
+		Geometry geom = parser.parseWkt(wkt);
+
+		JSONObject geomObj = getJson();
+		
+		geomObj.put("wkt", wkt);
+		
+		BoundingBox bbox = geom.getBoundingBox();
+		setBoundingBox(bbox);
+	}
+	
 	public BoundingBox getBoundingBox() throws Exception {
 		BoundingBox result = null;
 		

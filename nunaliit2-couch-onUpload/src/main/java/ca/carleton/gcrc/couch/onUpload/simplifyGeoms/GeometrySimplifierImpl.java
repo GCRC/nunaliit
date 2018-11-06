@@ -123,7 +123,14 @@ public class GeometrySimplifierImpl implements GeometrySimplifier {
 		// simplified versions of geometry.
 		if( simplifications.size() > 0 ){
 			GeometrySimplification mostSimplified = simplifications.get( simplifications.size()-1 );
-			geomDesc.setGeometry( mostSimplified.getGeometry() );
+
+			DecimalFormat numFormat = getNumberFormatFromResolution(mostSimplified.getResolution());
+			
+			StringWriter sw = new StringWriter();
+			wktWriter.write(mostSimplified.getGeometry(), numFormat, sw);
+			String wkt = sw.toString();
+
+			geomDesc.setGeometryAsWkt( wkt );
 			simplified.put("reported_resolution", mostSimplified.getResolution());
 			
 			// Have bounding box of original geometry saved so that tiling system

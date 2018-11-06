@@ -1203,7 +1203,11 @@ var Schema = $n2.Class({
 	
 	,label: null
 
+	,definition: null
+
 	,options: null
+	
+	,jsonDefinition: null
 	
 	,_error: null
 	
@@ -1220,7 +1224,9 @@ var Schema = $n2.Class({
 		this.csvExport = jsonDefinition.csvExport;
 		this.exportInfo = jsonDefinition['export'];
 		this.label = jsonDefinition.label;
+		this.definition = jsonDefinition.definition;
 		this.options = jsonDefinition.options;
+		this.jsonDefinition = jsonDefinition;
 		
 		if( jsonDefinition.isRootSchema ) {
 			this.isRootSchema = true;

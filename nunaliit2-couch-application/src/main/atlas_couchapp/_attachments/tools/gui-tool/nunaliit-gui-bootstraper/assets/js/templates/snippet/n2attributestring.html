@@ -1,0 +1,21 @@
+<!-- n2 attribute string -->
+<div class="control-group">
+  <% var thisId = label.replace(/\W/g, '').toLowerCase(); %>
+  <span id="schema-attribute-type-label"><%- type.charAt(0).toUpperCase() + type.substr(1) %></span>
+  <label class="control-label" for="<%- thisId %>"><%- label %></label>
+
+  <div class="controls">
+    <% if(typeof thisId !== "undefined"){ %>
+    <input
+       id = "<%- thisId  %>"
+       name = "<%- thisId %>"
+       type = "text"
+       class = "schemabar"
+       placeholder = "<%- placeholder %>"
+       />
+      <% } %>
+
+
+
+  </div>
+</div>

@@ -311,14 +311,14 @@ var longLatRe = /^\s*([0-9]{1,2})(°|d|\u00B0)\s*([0-9]{1,2})['m]\s*([0-9]{1,2}(
 $n2.parseLongLatText = function(text) {
 	var result = {};
 	
-	$n2.log('longLat text',text,longLatRe);
+	//$n2.log('longLat text',text,longLatRe);
 
 	var matchObj = text.match(longLatRe);
 	if( null == matchObj ) {
 		return null;
 	};
 
-	$n2.log('longLat',matchObj);
+	//$n2.log('longLat',matchObj);
 
 	var longMult = 1;
 	if( 'S' === matchObj[6] ) {
@@ -340,7 +340,7 @@ $n2.parseLongLatText = function(text) {
 		+ (1 * matchObj[10] / 3600)
 	);
 		
-	$n2.log('parseLongLatText',text,result);
+	//$n2.log('parseLongLatText',text,result);
 
 	return result;
 };
@@ -1006,7 +1006,7 @@ $n2.utils = {
 	throttle: function(func, wait) {
 		var timeoutId = undefined;
 		var lastRan = undefined;
-		return function() {
+		var throttledFn = function() {
 			var context = this, args = arguments;
 			var immediate = false;
 			if( !lastRan ){
@@ -1037,6 +1037,13 @@ $n2.utils = {
 				);
 			};
 		};
+
+		// Call this function for the next invocation to be immediate
+		throttledFn.setImmediate = function(){
+			lastRan = undefined;
+		};
+
+		return throttledFn;
 	},
 
 	/**

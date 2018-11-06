@@ -2515,14 +2515,6 @@
 				exportListByScript(list);
 				return false;
 			});
-		
-		$('<button>')
-			.text( _loc('Re-Submit Geometries') )
-			.appendTo($h)
-			.click(function(){
-				resubmitGeometriesInList(list);
-				return false;
-			});
 
 		for(var i=0,e=list.docIds.length; i<e; ++i){
 			var docId = list.docIds[i];

@@ -967,8 +967,13 @@ var Service = $n2.Class({
 				 && $n2.widgetDuplicate.HandleWidgetAvailableRequests ){
 					$n2.widgetDuplicate.HandleWidgetAvailableRequests(m);
 				};
-		    };
-		    
+				
+				if( $n2.widgetTranscript 
+				 && $n2.widgetTranscript.HandleWidgetAvailableRequests ){
+					$n2.widgetTranscript.HandleWidgetAvailableRequests(m);
+				};
+			};
+
 		} else if( 'widgetDisplay' === m.type ){
 			if( m.widgetType === 'createDocument' ){
 				BuildCreateDocumentWidgetFromRequest(m);
@@ -1062,7 +1067,12 @@ var Service = $n2.Class({
 				 && $n2.widgetDuplicate.HandleWidgetDisplayRequests ){
 					$n2.widgetDuplicate.HandleWidgetDisplayRequests(m);
 				};
-		    };
+
+				if( $n2.widgetTranscript 
+				 && $n2.widgetTranscript.HandleWidgetDisplayRequests ){
+					$n2.widgetTranscript.HandleWidgetDisplayRequests(m);
+				};
+			};
 
 		} else if( 'showPreprocessElement' === m.type ){
 			var $elem = m.elem;
