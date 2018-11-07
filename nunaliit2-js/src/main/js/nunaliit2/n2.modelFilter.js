@@ -644,7 +644,7 @@ var MultiDocumentFilter = $n2.Class(ModelFilter, {
 			,dispatchService: opts.dispatchService
 		});
 		
-		opts.filterName = 'SingleDocumentFilter';
+		opts.filterName = 'MultiDocumentFilter';
 		
 		opts.filterFn = function(doc){
 			return _this._isDocVisible(doc);
