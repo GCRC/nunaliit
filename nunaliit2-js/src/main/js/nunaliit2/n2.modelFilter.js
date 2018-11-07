@@ -612,7 +612,7 @@ var SingleDocumentFilter = $n2.Class(ModelFilter, {
 */
 var MultiDocumentFilter = $n2.Class(ModelFilter, {
 
-	selectedDocParameter: null,
+	selectedDocsParameter: null,
 	
 	selectedDocIds: null,
 	
