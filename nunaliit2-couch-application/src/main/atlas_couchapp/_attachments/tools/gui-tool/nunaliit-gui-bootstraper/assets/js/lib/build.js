@@ -1,6 +1,10 @@
 ({
-  name: "../main",
-  out: "../main-built.js"
+	baseUrl: '.'
+	,name: "almond.js"
+	,include: ["../main"]
+	, insertRequrie: ["../main"]
+	, wrap : true
+	, out: "../main-built.js"
   , shim: {
     'backbone': {
       deps: ['underscore', 'jquery'],
