@@ -122,25 +122,32 @@ var LanguageSwitcher = $n2.Class({
 			.appendTo($elem)
 			.click(function(){
 				_this._dialog();
+				// Material Design library has styling for radio buttons in focus. Initially
+				// setting inputs to blur, prevents the first radio button from being in focus
+				$('.n2lang_langSelect_list input').blur();
 				return false;
 			});
 	},
-	
+
 	_dialog: function(){
 		var _this = this;
 		
 		var diagId = $n2.getUniqueId();
 		var $langDialog = $('<div id="'+diagId+'" class="n2lang_langSelect_dialog"></div>');
 
-		var $langList = $('<div class="n2lang_langSelect_list"></div>')
+		var $langList = $('<div>')
+			.addClass('n2lang_langSelect_list')
 			.appendTo($langDialog);
 		
-		var onChange = function(e){
+		var onClick = function(e){
 			var $input = $(this);
 			if( $input.is(':checked') ){
 				var code = $input.attr('n2Code');
-				_this._selectLanguage(code);
-				$('#'+diagId).dialog('close');
+				var local = $n2.l10n.getLocale();
+				if (local.lang !== code){
+					_this._selectLanguage(code);
+					$('#'+diagId).dialog('close');
+				}
 			};
 			return false;
 		};
@@ -165,14 +172,32 @@ var LanguageSwitcher = $n2.Class({
 			}
 		};
 		$langDialog.dialog(dialogOptions);
-		
+
 		function addLanguage($list, name, code){
-			var $div = $('<div/>').appendTo($list);
 			var id = $n2.getUniqueId();
-			var $input = $('<input type="radio" name="languageSelect"/>')
+			var $formDiv = $('<div>')
+				.addClass('mdc-form-field radio_form_field')
+				.appendTo($list);
+			var $div = $('<div>')
+				.addClass('mdc-radio')
+				.appendTo($formDiv);
+			var $input = $('<input>')
 				.attr('id',id)
-				.appendTo($div)
-				.change(onChange);
+				.attr('type','radio')
+				.attr('name','languageSelect')
+				.click(onClick)
+				.addClass('mdc-radio__native-control')
+				.appendTo($div);
+
+			var $mdcRadioBackground = $('<div>')
+				.addClass('mdc-radio__background')
+				.appendTo($div);
+			$('<div>')
+				.addClass('mdc-radio__outer-circle')
+				.appendTo($mdcRadioBackground);
+			$('<div>')
+				.addClass('mdc-radio__inner-circle')
+				.appendTo($mdcRadioBackground);
 			
 			if( code ){
 				$input.attr('n2Code',code);
@@ -186,7 +211,10 @@ var LanguageSwitcher = $n2.Class({
 			$('<label/>')
 				.attr('for',id)
 				.text(name)
-				.appendTo($div);
+				.appendTo($list);
+
+			$('<br/>').appendTo($list);
+
 		};
 	},
 	
