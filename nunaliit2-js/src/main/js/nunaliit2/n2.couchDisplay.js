@@ -355,7 +355,17 @@ var Display = $n2.Class({
 			};
 		};
 	}
-	
+
+	,_attachRippleToButtons: function(){
+
+		// attach ripple to buttons 
+		var mdc_buttons = document.getElementsByClassName('mdc-button');
+		var i, e;
+		for(i = 0, e = mdc_buttons.length; i < e; i++){
+			mdc.ripple.MDCRipple.attachTo(mdc_buttons[i]);
+		};
+
+	}
 	,_addButtons: function($elem, data, opt_) {
 		var _this = this;
 		
@@ -403,6 +413,8 @@ var Display = $n2.Class({
 		};
 		opts['delete'] = opt['delete'];
 		this._displayButtons($buttons, opts);
+
+		this._attachRippleToButtons();
 	}
 	
 	,_refreshButtons: function($elem){
@@ -1832,12 +1844,11 @@ var ButtonDisplay = $n2.Class({
 			label = name;
 		};
 		
-		var $linkButton = $('<a>')
-			.attr('href','#')
+		var $linkButton = $('<button>')
 			.appendTo($elem)
-			.addClass('nunaliit_form_link')
+			.addClass('nunaliit_form_link mdc-button mdc-button--raised')
 			.click(wrapAndReturnFalse(opts.click));
-		
+
 		if( label ){
 			$linkButton.text(label);
 		};
