@@ -1483,7 +1483,20 @@ var MapAndControls = $n2.Class({
 				restrictedExtent.transform(userCoordProjection, mapProjection);
 			};
 		};
-
+        var customMap = new ol.N2Map({
+        	target: 'map',
+            layers: [
+              new ol.layer.Tile({
+                source: new ol.source.OSM()
+              })
+            ],
+            view: new ol.View({
+              center: ol.proj.fromLonLat([37.41, 8.82]),
+              zoom: 4
+            })
+        });
+        
+        customMap.getInfo();
 		this.map = new OpenLayers.N2Map(this.options.mapIdentifier, {
 			projection: mapProjection
 			,displayProjection: (this.options.mapCoordinateSpecifications.useForMapControls ? userCoordProjection : mapProjection)
