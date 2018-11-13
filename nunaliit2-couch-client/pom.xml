@@ -9,12 +9,6 @@
   <name>nunaliit2-couch-client</name>
 
   <dependencies>
-	<dependency>
-		<groupId>ca.carleton.gcrc</groupId>
-		<artifactId>nunaliit2-json</artifactId>
-		<version>${project.version}</version>
-		<type>jar</type>
-	</dependency>
     <dependency>
     	<groupId>junit</groupId>
     	<artifactId>junit</artifactId>
