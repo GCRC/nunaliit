@@ -28,136 +28,147 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
 
-*/
+ */
 
-;(function($n2){
-"use strict";
+;
+(function($n2) {
+	"use strict";
 
+	// The single inheritance construct function
 
+	// Class definition.
+	// Usage:
+	// var myClass = $n2.Construct(<classname string, optional>, <superclass
+	// class, optional>*, {
+	// var1: 1
+	// ,var2: 2
+	// ,initialize: function(v){
+	// this.var2 = v;
+	// this.report();
+	// }
+	// ,report: function(){
+	// alert('var1: '+this.var1+' var2:'+this.var2);
+	// }
+	// });
+	//
+	// var inst = new myClass(5);
+	$n2.Construct = function() {
+		// This is a copy of this class' prototype
+		var proto = {};
+		var vars = {};
+		var className = null;
 
+		// This function is the class. It also represents the constructor
+		// that is called when a new instance of the class is created.
+		var childClass = function(options) {
 
-// The single inheritance construct function
+			// Initialize instance variables from templates.
+			for ( var key in vars) {
+				if (vars[key] === null) {
+					this[key] = vars[key];
+				} else if ($n2.isArray(vars[key])) {
+					this[key] = $n2.extend(true, [], vars[key]);
+				} else if (typeof (vars[key]) === 'object') {
+					this[key] = $n2.extend(true, {}, vars[key]);
+				} else if (typeof (vars[key]) === 'function') {
+					// This should not happen. Functions should be in
+					// the prototype
+				} else {
+					this[key] = vars[key];
+				}
+				;
+			}
+			;
 
-// Class definition.
-// Usage:
-//   var myClass = $n2.Construct(<classname string, optional>, <superclass class, optional>*, {
-//      var1: 1
-//      ,var2: 2
-//      ,initialize: function(v){
-//         this.var2 = v;
-//         this.report();
-//      }
-//      ,report: function(){
-//         alert('var1: '+this.var1+' var2:'+this.var2);
-//      }
-//   }); 
-//
-//   var inst = new myClass(5);
-$n2.Construct = function() {
-	// This is a copy of this class' prototype
-    var proto = {};
-    var vars = {};
-    var className = null;
-	
-	// This function is the class. It also represents the constructor
-	// that is called when a new instance of the class is created.
-    var childClass = function(options) {
-    	
-    	
-    	// Initialize instance variables from templates.
-    	for(var key in vars){
-    		if( vars[key] === null ) {
-    			this[key] = vars[key];
-    		} else if( $n2.isArray(vars[key]) ) {
-    			this[key] = $n2.extend(true, [], vars[key]);
-    		} else if( typeof(vars[key]) === 'object' ){
-    			this[key] = $n2.extend(true, {}, vars[key]);
-    		} else if( typeof(vars[key]) === 'function' ){
-    			// This should not happen. Functions should be in
-    			// the prototype
-    		} else {
-    			this[key] = vars[key];
-    		};
-    	};
-    	
-    	// Assign class name
-    	if( typeof(className) === 'string' ) {
-    		this._classname = className;
-    	};
-    	
-    	// Call parent's constructor function
-    	childClass.base(this, 'constructor', options)
-    	this.initialize.apply(this, arguments);
+			// Assign class name
+			if (typeof (className) === 'string') {
+				this._classname = className;
+			}
+			;
 
-        //
-    };
+			// Call parent's constructor function
+			childClass.base(this, 'constructor', options)
+			this.initialize.apply(this, arguments);
 
-    
-    childClass.base = function(me, methodName, var_args) {
-    	
-    	var args = new Array(arguments.length - 2);
-        for (var i = 2; i < arguments.length; i++) {
-          args[i - 2] = arguments[i];
-        }
-        childClass.superClass_[methodName].apply(me, args);
-    };
-    
-    // Process class definition
-    var singleInherit = true;
-    for(var i=0, len=arguments.length; i<len; ++i) {
-    	if( i === 0 && typeof(arguments[i]) === 'string' ) {
-    		// Class name
-    		childClass._classname = className = arguments[i];
-    		
-    	} else if( typeof(arguments[i]) === 'function' ) {
-    		
-    		if(singleInherit) {
-    			/** Constructor **/ 
-    			function tempCtor() {}
-    			tempCtor.prototype = arguments[i].prototype;
-    			childClass.superClass_ =  arguments[i].prototype;
-    			proto  = new tempCtor();
+			//
+		};
 
-    			singleInherit = false;
-    			// Extend variables from superclass
-    			if( arguments[i]._vars ){
-    				$n2.extend(vars, arguments[i]._vars);
-    			};
-    		} else {
-    			throw new Error('multi inheritance not support');
-    		}
-        } else {
-            // Class definition. Save functions in prototype.
-        	// Save variable initializations separately.
-            var def = arguments[i];
-            for(var key in def){
-            	if( typeof(def[key]) === 'function' ){
-            		proto[key] = def[key];
-            	} else {
-            		vars[key] = def[key];
-            	};
-            };
-        };
-    }
-                
-    // Supply an empty initialize method if the
-    // class does not have one
-    if( !proto.initialize  ) {
-    	proto.initialize = function(){};;
-    };
-    
-    // Add getClass function
-    proto.getClass = function(){ return childClass; };
-    
-    childClass.prototype = proto;
-    childClass._vars = vars;
-    childClass.prototype.constructor = childClass;
-    
+		childClass.base = function(me, methodName, var_args) {
 
+			var args = new Array(arguments.length - 2);
+			for (var i = 2; i < arguments.length; i++) {
+				args[i - 2] = arguments[i];
+			}
+			if (childClass.superClass_) {
+				childClass.superClass_[methodName].apply(me, args);
+			} else {
+				// nothing need to be done if no superClass providing
 
-    
-    
-    return childClass;
-};
+			}
+		};
+
+		// Process class definition
+		var singleInherit = true;
+		for (var i = 0, len = arguments.length; i < len; ++i) {
+			if (i === 0 && typeof (arguments[i]) === 'string') {
+				// Class name
+				childClass._classname = className = arguments[i];
+
+			} else if (typeof (arguments[i]) === 'function') {
+
+				if (singleInherit) {
+					/** Constructor * */
+					function tempCtor() {
+					}
+					tempCtor.prototype = arguments[i].prototype;
+					childClass.superClass_ = arguments[i].prototype;
+					proto = new tempCtor();
+
+					singleInherit = false;
+					// Extend variables from superclass
+					if (arguments[i]._vars) {
+						$n2.extend(vars, arguments[i]._vars);
+					}
+					;
+				} else {
+					throw new Error('multi inheritance not support');
+				}
+			} else {
+				// Class definition. Save functions in prototype.
+				// Save variable initializations separately.
+				var def = arguments[i];
+				for ( var key in def) {
+					if (typeof (def[key]) === 'function') {
+						proto[key] = def[key];
+					} else {
+						vars[key] = def[key];
+					}
+					;
+				}
+				;
+			}
+			;
+		}
+
+		// Supply an empty initialize method if the
+		// class does not have one
+		if (!proto.initialize) {
+			proto.initialize = function() {
+			};
+			;
+		}
+		;
+
+		// Add getClass function
+		proto.getClass = function() {
+			return childClass;
+		};
+
+		childClass.prototype = proto;
+		childClass._vars = vars;
+		childClass.prototype.constructor = childClass;
+
+		return childClass;
+	};
 
 })(nunaliit2);
