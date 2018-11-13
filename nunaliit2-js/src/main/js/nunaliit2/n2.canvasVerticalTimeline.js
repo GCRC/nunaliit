@@ -209,6 +209,9 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		var _this = this;
 
 		// Remove old canvas container if it already exists
+		// TODO: This selects any vertical timeline elements, not only the one within this canvas (use jQuery.find)
+		// TODO: Prepend all nunaliit classes by n2_ to prevent collision with other tools
+		// TODO: Generate a unique identifier for look-up. It is faster
 		if( $('.vertical_timeline').length > 0 ){
 			$('.vertical_timeline').remove();
 		}
@@ -229,6 +232,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
 		if( this.displayIndex && this.sortedElements.length > 0 ){
 
+			// TODO: Might encourage more re-use if an element was created to hold timelineIndex and passed in initializer instead of canvasId
 			timelineIndexOptions = {
 				'canvasId': this.canvasId,
 				'dispatchService': this.dispatchService,
@@ -247,6 +251,8 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 			.appendTo($('.vertical_timeline'))
 			.on('scroll', function() {
 				// Send dispatch event when canvas scrolled
+				// TODO: Unless other system components are interested, do not send an event
+				// TODO: Heavy for an internal call. Should be _this.timelineIndex._onScroll()
 				_this.dispatchService.send(DH,{
 					type: 'canvasScrolled'
 				});
@@ -255,6 +261,8 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		// Re-Calculate Item Width based on available space
 		this._calcItemWidth();
 
+		// TODO: Assign a unique id to timeline list and pass it to instances TimelineItem instead of DOM object
+		// TODO: Discussion of DOM object management
 		this.timelineList = $('<ul>')
 			.appendTo($canvasTimeline);
 
@@ -409,6 +417,8 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 	}
 });
 
+// TODO: Why inheriting from VerticalTimelineCanvas?
+// TODO: If VerticalTimelineCanvas is necessary, then initialize it properly
 var TimelineIndex = $n2.Class('TimelineIndex', VerticalTimelineCanvas, {
 
 	canvasId: null,
@@ -686,6 +696,7 @@ var TimelineIndex = $n2.Class('TimelineIndex', VerticalTimelineCanvas, {
 	}
 });
 
+// TODO: Why inheriting from VerticalTimelineCanvas?
 var TimelineItem = $n2.Class('TimelineItem', VerticalTimelineCanvas, {
 	
 	element: null,
