@@ -6,6 +6,7 @@
 		<version>2.2.9-SNAPSHOT</version>
 	</parent>
 	<artifactId>nunaliit2-js</artifactId>
+	<packaging>pom</packaging>
 	<name>nunaliit2-js</name>
 	<description>Javascript files produced in-house</description>
 	<build>
