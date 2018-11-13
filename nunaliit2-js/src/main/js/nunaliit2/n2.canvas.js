@@ -119,6 +119,11 @@ var Service = $n2.Class({
 				$n2.canvasTable.HandleCanvasAvailableRequest(m);
 			};
 
+			if( $n2.canvasMap 
+			 && $n2.canvasMap.HandleCanvasAvailableRequest ){
+				$n2.canvasMap.HandleCanvasAvailableRequest(m);
+			};
+
 		} else if( 'canvasDisplay' === m.type ) {
 			if( $n2.canvasForceGraph 
 			 && $n2.canvasForceGraph.HandleCanvasDisplayRequest ){
@@ -173,6 +178,11 @@ var Service = $n2.Class({
 			if( $n2.canvasTable 
 			 && $n2.canvasTable.HandleCanvasDisplayRequest ){
 				$n2.canvasTable.HandleCanvasDisplayRequest(m);
+			};
+
+			if( $n2.canvasMap
+			 && $n2.canvasMap.HandleCanvasDisplayRequest ){
+				$n2.canvasMap.HandleCanvasDisplayRequest(m);
 			};
 		};
 	}
