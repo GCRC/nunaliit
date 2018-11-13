@@ -5,9 +5,7 @@
 		<groupId>ca.carleton.gcrc</groupId>
 		<version>2.2.9-SNAPSHOT</version>
 	</parent>
-	<groupId>ca.carleton.gcrc</groupId>
 	<artifactId>nunaliit2-js</artifactId>
-	<version>2.2.9-SNAPSHOT</version>
 	<name>nunaliit2-js</name>
 	<description>Javascript files produced in-house</description>
 	<build>

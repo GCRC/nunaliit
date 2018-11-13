@@ -5,9 +5,7 @@
     <groupId>ca.carleton.gcrc</groupId>
     <version>2.2.9-SNAPSHOT</version>
   </parent>
-  <groupId>ca.carleton.gcrc</groupId>
   <artifactId>nunaliit2-js-external</artifactId>
-  <version>2.2.9-SNAPSHOT</version>
   <name>nunaliit2-js-external</name>
   <description>Javascript files from external projects</description>
 	<licenses>
