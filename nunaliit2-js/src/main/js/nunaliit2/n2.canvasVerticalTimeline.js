@@ -79,7 +79,7 @@ function getDateFromDoc(object){
 	}
 	return date;
 }
-	
+
 function getCanvasHeight(canvasId){
 	var canvasHeight = $('#' + canvasId).height();
 
@@ -307,7 +307,6 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		// Add container for timeline list
 		$canvasList = $('<div>')
 			.attr('class','n2_vertical_timeline_list')
-			.attr('id',this.canvasListId)
 			.appendTo($('#' + this.canvasContainerId))
 			.on('scroll', function(){
 				_this._handleScrollEvent();
@@ -320,6 +319,12 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		$('<ul>')
 			.attr('id', this.canvasListId)
 			.appendTo($canvasList);
+		
+		// Add canvas padding to bottom 
+		// Needed for index active status updating when scrolling canvas
+		$('<div>')
+			.css('height', getCanvasHeight(this.canvasId))
+			.appendTo($canvasList);
 
 		this._refresh();
 	},
@@ -327,10 +332,10 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 	_refresh: function(){
 		var i, e, timelineItemOptions, timelineIndexOptions, $timelineList, $index;
 
-		$timelineList = $('#' + this.canvasContainerId).find('.n2_vertical_timeline_list');
+		$timelineList = $('#' + this.canvasContainerId).find('#' + this.canvasListId);
 		$timelineList.empty();
 		
-		$index = $('#' + this.canvasContainerId).find('.n2_vertical_timeline_index');
+		$index = $('#' + this.canvasContainerId).find('#' + this.canvasIndexId);
 		$index.empty();
 
 		if( this.sortedElements.length > 0 ){
@@ -364,12 +369,6 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		this._linkIndexToItems();
 
 		this.showService.fixElementAndChildren($timelineList);
-
-		// Add canvas padding to bottom 
-		// Needed for index active status updating when scrolling canvas
-		$('<div>')
-			.css('height',getCanvasHeight(this.canvasId))
-			.appendTo('#' + this.canvasContainerId + ' .n2_vertical_timeline_list');
 	},
 
 	_handleScrollEvent: function(){
@@ -583,7 +582,7 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 			
 			$('<a>')
 				.text(this.index[i])
-				.attr('href', '#'+this.index[i])
+				.attr('href', '#' + this.index[i])
 				.appendTo(indexItem);
 		}
 	},
@@ -797,7 +796,6 @@ var TimelineItem = $n2.Class('TimelineItem', {
 		}
 	}
 });
-
 
 //--------------------------------------------------------------------------
 function HandleCanvasAvailableRequest(m){
