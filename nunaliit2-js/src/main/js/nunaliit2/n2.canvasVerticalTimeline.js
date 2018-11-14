@@ -63,9 +63,13 @@ var getDateFromDoc = function(object){
 					} else if( date.match(yyyymmddRegEx) ){
 						return date;
 					} else if( date.match(yyyymmRegEx) ){
-						return date + "-00";
+						// YYYY-MM-01 is returned because YYYY-MM converts to YYYY-MM-01 / YYYY-MM-[28-31] 
+						// which would be reduced to YYYY-MM-01 based on how date ranges are handled
+						return date + "-01";
 					} else if( date.match(yyyyRegEx) ){
-						return date + "-00-00";
+						// YYYY-01-01 is returned because YYYY converts to YYYY-01-01 / YYYY-12-31
+						// which would be reduced to YYYY-01-01 based on how date ranges are handled
+						return date + "-01-01";
 					}
 				}
 			} else {
