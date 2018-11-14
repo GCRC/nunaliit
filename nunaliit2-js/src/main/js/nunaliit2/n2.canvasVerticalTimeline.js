@@ -36,6 +36,56 @@ POSSIBILITY OF SUCH DAMAGE.
 var loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); },
 	DH = 'n2.canvasVerticalTimeline';
 
+var getDateFromDoc = function(object){
+
+	var date, property, currentProp, slashIndex; 
+	var dateRangeRegEx = /([0-9]{4})-([0-9]{2})-([0-9]{2}).*\/([0-9]{4})-([0-9]{2})-([0-9]{2}).*/g;
+	var yyyymmddhhmmssRegEx = /([0-9]{4})-([0-9]{2})-([0-9]{2})\s/g;
+	var yyyymmddRegEx = /([0-9]{4})-([0-9]{2})-([0-9]{2})/g;
+	var yyyymmRegEx = /([0-9]{4})-([0-9]{2})/g;
+	var yyyyRegEx = /([0-9]{4})/g;
+	
+	for(property in object){
+		currentProp = object[property];
+
+		if( typeof currentProp === 'object' ){
+			
+			if( currentProp.nunaliit_type === 'date' && currentProp.date ){
+				date = currentProp.date;
+			
+				if( date ){
+					//Update dates to match yyyy-mm-dd format (required for auto-reduce index) 
+					if( date.match(dateRangeRegEx) ){
+						slashIndex = date.indexOf('/');
+						return date.slice(0,slashIndex); 
+					} else if( date.match(yyyymmddhhmmssRegEx) ){
+						return date.slice(0,10);
+					} else if( date.match(yyyymmddRegEx) ){
+						return date;
+					} else if( date.match(yyyymmRegEx) ){
+						return date + "-00";
+					} else if( date.match(yyyyRegEx) ){
+						return date + "-00-00";
+					}
+				}
+			} else {
+				return getDateFromDoc(currentProp);
+			}
+		}
+	}
+	return date;
+};
+	
+var getCanvasHeight = function(canvasId){
+	var canvasHeight = $('#' + canvasId).height();
+
+	if( canvasHeight <= 0 ){
+		canvasHeight = 0;
+	}
+
+	return canvasHeight;
+};
+
 // --------------------------------------------------------------------------
 /* 
 The vertical timeline canvas displays an ordered list of elements.
@@ -210,14 +260,13 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
 		// Remove old canvas container if it already exists
 		// TODO: This selects any vertical timeline elements, not only the one within this canvas (use jQuery.find)
-		// TODO: Prepend all nunaliit classes by n2_ to prevent collision with other tools
 		// TODO: Generate a unique identifier for look-up. It is faster
-		if( $('.vertical_timeline').length > 0 ){
-			$('.vertical_timeline').remove();
+		if( $('.n2_vertical_timeline').length > 0 ){
+			$('.n2_vertical_timeline').remove();
 		}
 
 		$('<div>')
-			.attr('class','vertical_timeline')
+			.attr('class','n2_vertical_timeline')
 			.click(function(e){
 				$target = $(e.target);
 				if( $target.hasClass('timeline_item') ){
@@ -248,7 +297,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
 		$canvasTimeline = $('<div>')
 			.attr('class','timeline_list')
-			.appendTo($('.vertical_timeline'))
+			.appendTo($('.n2_vertical_timeline'))
 			.on('scroll', function() {
 				// Send dispatch event when canvas scrolled
 				// TODO: Unless other system components are interested, do not send an event
@@ -269,7 +318,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		// Add canvas padding to bottom 
 		// Needed for index active status updating when scrolling canvas
 		$('<div>')
-			.css('height',this.getCanvasHeight())
+			.css('height',getCanvasHeight(this.canvasId))
 			.appendTo($canvasTimeline);
 
 		for(i = 0, e = this.sortedElements.length; i < e; i++){
@@ -296,7 +345,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		
 			// If element doesn't provide a sorted value, try to base it on a document date value
 			if( typeof element.sort === 'undefined' ){
-				date = this.getDateFromDoc(element);
+				date = getDateFromDoc(element);
 
 				if( date ){
 					element.sort = date;
@@ -349,56 +398,6 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		this._createTimeline();
 	},
 	
-	getDateFromDoc: function(object){
-
-		var date, property, currentProp, slashIndex; 
-		var dateRangeRegEx = /([0-9]{4})-([0-9]{2})-([0-9]{2}).*\/([0-9]{4})-([0-9]{2})-([0-9]{2}).*/g;
-		var yyyymmddhhmmssRegEx = /([0-9]{4})-([0-9]{2})-([0-9]{2})\s/g;
-		var yyyymmddRegEx = /([0-9]{4})-([0-9]{2})-([0-9]{2})/g;
-		var yyyymmRegEx = /([0-9]{4})-([0-9]{2})/g;
-		var yyyyRegEx = /([0-9]{4})/g;
-		
-		for(property in object){
-			currentProp = object[property];
-
-			if( typeof currentProp === 'object' ){
-				
-				if( currentProp.nunaliit_type === 'date' && currentProp.date ){
-					date = currentProp.date;
-				
-					if( date ){
-						//Update dates to match yyyy-mm-dd format (required for auto-reduce index) 
-						if( date.match(dateRangeRegEx) ){
-							slashIndex = date.indexOf('/');
-							return date.slice(0,slashIndex); 
-						} else if( date.match(yyyymmddhhmmssRegEx) ){
-							return date.slice(0,10);
-						} else if( date.match(yyyymmddRegEx) ){
-							return date;
-						} else if( date.match(yyyymmRegEx) ){
-							return date + "-00";
-						} else if( date.match(yyyyRegEx) ){
-							return date + "-00-00";
-						}
-					}
-				} else {
-					return this.getDateFromDoc(currentProp);
-				}
-			}
-		}
-		return date;
-	},
-	
-	getCanvasHeight: function(){
-		var canvasHeight = $('#'+this.canvasId).height();
-
-		if( canvasHeight <= 0 ){
-			canvasHeight = 0;
-		}
-
-		return canvasHeight;
-	},
-
 	_sourceModelUpdated: function(state){
 		this.elementGenerator.sourceModelUpdated(state);
 	},
@@ -417,9 +416,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 	}
 });
 
-// TODO: Why inheriting from VerticalTimelineCanvas?
-// TODO: If VerticalTimelineCanvas is necessary, then initialize it properly
-var TimelineIndex = $n2.Class('TimelineIndex', VerticalTimelineCanvas, {
+var TimelineIndex = $n2.Class('TimelineIndex', {
 
 	canvasId: null,
 
@@ -531,7 +528,7 @@ var TimelineIndex = $n2.Class('TimelineIndex', VerticalTimelineCanvas, {
 
 		indexContainer = $('<div>')
 			.attr('class','timeline_index')
-			.appendTo('#' + this.canvasId + ' .vertical_timeline');
+			.appendTo('#' + this.canvasId + ' .n2_vertical_timeline');
 
 		// If autoReduceIndex prevent scroll bar from being used
 		if( this.autoReduceIndex ){
@@ -621,7 +618,7 @@ var TimelineIndex = $n2.Class('TimelineIndex', VerticalTimelineCanvas, {
 	_reduceIndex: function(){
 		var i, e, reducedIndex;
 		var indexItems = this.getIndex();
-		var canvasHeight = this.getCanvasHeight();
+		var canvasHeight = getCanvasHeight(this.canvasId);
 		var listMargin = 20;
 		var reducedItems = [];
 		var totalCanvasHeight = canvasHeight - listMargin;
@@ -696,8 +693,7 @@ var TimelineIndex = $n2.Class('TimelineIndex', VerticalTimelineCanvas, {
 	}
 });
 
-// TODO: Why inheriting from VerticalTimelineCanvas?
-var TimelineItem = $n2.Class('TimelineItem', VerticalTimelineCanvas, {
+var TimelineItem = $n2.Class('TimelineItem', {
 	
 	element: null,
 

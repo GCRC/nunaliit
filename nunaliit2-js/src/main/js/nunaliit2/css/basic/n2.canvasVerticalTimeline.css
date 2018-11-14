@@ -1,10 +1,10 @@
-.vertical_timeline {
+.n2_vertical_timeline {
 	width: 100%;
 	height: 100%;
 	display: block;
 }
 
-.vertical_timeline .timeline_index {
+.n2_vertical_timeline .timeline_index {
     width: 95px;
 	height: 100%;
 	float: left;
@@ -13,7 +13,7 @@
 	overflow: hidden auto;
 }
 
-.vertical_timeline .timeline_index ul {
+.n2_vertical_timeline .timeline_index ul {
 	list-style: none;
 	display: flex;
 	flex-direction: column;
@@ -22,7 +22,7 @@
 	justify-content: space-around;
 }
 
-.vertical_timeline .timeline_index ul li {
+.n2_vertical_timeline .timeline_index ul li {
 	background-color: #ffffff;
 	border-radius: 2px;
 	color: #000000;
@@ -32,7 +32,7 @@
 	text-align: center;
 }
 
-.vertical_timeline .timeline_index ul li.indexItem a {
+.n2_vertical_timeline .timeline_index ul li.indexItem a {
     color: #333333;
 	text-decoration: none;
 	display: block;
@@ -40,8 +40,8 @@
 	font-size: 1em;
 }
 
-.vertical_timeline .timeline_index ul li:hover,
-.vertical_timeline .timeline_index ul li.active {
+.n2_vertical_timeline .timeline_index ul li:hover,
+.n2_vertical_timeline .timeline_index ul li.active {
 	padding: 2px;
 	width: 78px;
 	cursor: pointer;
@@ -51,14 +51,14 @@
 }
 
 
-.vertical_timeline .timeline_index ul li:hover a,
-.vertical_timeline .timeline_index ul li.active a {
+.n2_vertical_timeline .timeline_index ul li:hover a,
+.n2_vertical_timeline .timeline_index ul li.active a {
 	color: #ffffff;
 	transition: color 0.1s ease;
 }
 
 
-.vertical_timeline .timeline_list {
+.n2_vertical_timeline .timeline_list {
 	width: 100%; 
 	width: calc(100% - 95px); /* Minus 95px index width from timeline container */
 	height: 100%;
@@ -67,70 +67,70 @@
 	scroll-behavior: smooth;
 }
 
-.vertical_timeline .timeline_list ul {
+.n2_vertical_timeline .timeline_list ul {
 	padding-inline-start: 0px;
 }
 	
-.vertical_timeline .timeline_list .timeline_item {
+.n2_vertical_timeline .timeline_list .timeline_item {
     margin: 0 auto;
 	width: 5px;
 	background-color: #333333;
 }
 
-.vertical_timeline .timeline_list .timeline_item .timeline_item_content {
+.n2_vertical_timeline .timeline_list .timeline_item .timeline_item_content {
     padding: 10px 5px 5px 0px;
 }
 
-.vertical_timeline .timeline_list .timeline_item.nunaliit_selected .timeline_item_content .timeline_item_content_text {
+.n2_vertical_timeline .timeline_list .timeline_item.nunaliit_selected .timeline_item_content .timeline_item_content_text {
 	color: teal;
 	font-weight: bold;
 }
 
-.vertical_timeline .timeline_list .timeline_item.nunaliit_hovered .timeline_item_content .timeline_item_content_text {
+.n2_vertical_timeline .timeline_list .timeline_item.nunaliit_hovered .timeline_item_content .timeline_item_content_text {
 	color: #802000;
 	font-weight: bold;
 }
 
-.vertical_timeline .timeline_list .timeline_item .timeline_item_content .timeline_item_content_text {	
+.n2_vertical_timeline .timeline_list .timeline_item .timeline_item_content .timeline_item_content_text {	
     margin: 0px 25px 0px 0px;
 	text-align: right;
 }
 
-.vertical_timeline .timeline_list .timeline_item:nth-child(even) .timeline_item_content {
+.n2_vertical_timeline .timeline_list .timeline_item:nth-child(even) .timeline_item_content {
 	padding: 10px 0px 5px 5px;
     transform: translateX(0px) !important;
 }
 
-.vertical_timeline .timeline_list .timeline_item:nth-child(even) .timeline_item_content .timeline_item_content_text {
+.n2_vertical_timeline .timeline_list .timeline_item:nth-child(even) .timeline_item_content .timeline_item_content_text {
 	margin: 0px 0px 0px 25px;
 	text-align: left;
 }
 
-.vertical_timeline .timeline_list .timeline_item .timeline_item_content .n2s_insertedMediaView {
+.n2_vertical_timeline .timeline_list .timeline_item .timeline_item_content .n2s_insertedMediaView {
 	padding: 0px 20px 0px 20px;
 	max-width: max-content;
 	margin: 0px 0px 0px auto;
 }
 
-.vertical_timeline .timeline_list .timeline_item:nth-child(even) .timeline_item_content .n2s_insertedMediaView {
+.n2_vertical_timeline .timeline_list .timeline_item:nth-child(even) .timeline_item_content .n2s_insertedMediaView {
 	margin: 0px auto 0px 0px;
 }
 
-.vertical_timeline .timeline_list .timeline_item .timeline_item_content .n2s_insertedMediaView .n2Show_thumb_wrapper {
+.n2_vertical_timeline .timeline_list .timeline_item .timeline_item_content .n2s_insertedMediaView .n2Show_thumb_wrapper {
 	text-align: end;
 }
 
-.vertical_timeline .timeline_list .timeline_item:nth-child(even) .timeline_item_content .n2s_insertedMediaView .n2Show_thumb_wrapper {
+.n2_vertical_timeline .timeline_list .timeline_item:nth-child(even) .timeline_item_content .n2s_insertedMediaView .n2Show_thumb_wrapper {
 	text-align: start;
 }
 
-.vertical_timeline .timeline_list .timeline_item .timeline_item_content .n2s_insertedMediaView .n2Show_thumb_wrapper img {
+.n2_vertical_timeline .timeline_list .timeline_item .timeline_item_content .n2s_insertedMediaView .n2Show_thumb_wrapper img {
 	max-height: 150px;
 	width: auto;
 	height: auto; 
 }
 
-.vertical_timeline .timeline_list .timeline_item .timeline_item_node {
+.n2_vertical_timeline .timeline_list .timeline_item .timeline_item_node {
     width: 10px;
     height: 10px;
     background-color: #ffffff;
@@ -139,17 +139,17 @@
     transform: translate(-7px, 27px);
 }
 
-.vertical_timeline .timeline_list .timeline_item.nunaliit_selected .timeline_item_node {
+.n2_vertical_timeline .timeline_list .timeline_item.nunaliit_selected .timeline_item_node {
 	border-color: teal;
     background-color: #cff9f9;
 }
 
-.vertical_timeline .timeline_list .timeline_item.nunaliit_hovered .timeline_item_node {
+.n2_vertical_timeline .timeline_list .timeline_item.nunaliit_hovered .timeline_item_node {
 	border-color: #802000;
     background-color: #bb8c7d;
 }
 
-.vertical_timeline .timeline_list .timeline_item .timeline_item_label {
+.n2_vertical_timeline .timeline_list .timeline_item .timeline_item_label {
     width: max-content;
 	font-size: 1.8em;
 	background-color: #333333; 
@@ -162,18 +162,18 @@
 	padding: 2px; 
 }
 
-.vertical_timeline .timeline_list .timeline_item:nth-child(even) .timeline_item_label {
+.n2_vertical_timeline .timeline_list .timeline_item:nth-child(even) .timeline_item_label {
     transform: translate(-27px, 20px);
     float: right;
     text-align: left;
 }
 
-.vertical_timeline .timeline_list .timeline_item.nunaliit_selected .timeline_item_label {
+.n2_vertical_timeline .timeline_list .timeline_item.nunaliit_selected .timeline_item_label {
 	background-color: teal;
 	border-color: teal;
 }
 
-.vertical_timeline .timeline_list .timeline_item.nunaliit_hovered .timeline_item_label {
+.n2_vertical_timeline .timeline_list .timeline_item.nunaliit_hovered .timeline_item_label {
 	background-color: #802000;
 	border-color: #802000;
 
