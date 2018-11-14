@@ -282,8 +282,9 @@ var Display = $n2.Class({
 		var $elem = $('<div class="couchDisplay_'+$n2.utils.stringToHtmlId(docId)+'"></div>');
 		$side.append($elem);
 
-		var $sElem = $('<div class="n2s_handleHover"></div>');
-		$elem.append($sElem);
+		var $sElem = $('<div>')
+			.addClass('n2s_handleHover mdc-card')
+			.appendTo($elem);
 		
 		this.showService.displayDocument($sElem, {
 			onDisplayed: onDisplayed
@@ -311,9 +312,9 @@ var Display = $n2.Class({
 		};
 		
 		function continueDisplay(schema){
-			_this._addAttachmentProgress($elem, data);
+			_this._addAttachmentProgress($sElem, data);
 			
-			_this._addButtons($elem, data, {
+			_this._addButtons($sElem, data, {
 				schema: schema
 				,related: true
 				,reply: true
@@ -324,7 +325,7 @@ var Display = $n2.Class({
 				,treeView: true
 				,simplifiedGeoms: true
 			});
-			
+
 			var $div = $('<div>')
 				.addClass('n2Display_relatedInfo couchDisplayRelated_'+$n2.utils.stringToHtmlId(data._id))
 				.appendTo($elem);
@@ -382,10 +383,13 @@ var Display = $n2.Class({
 			,simplifiedGeoms: false
 		},opt_);
 
-		var $buttons = $('<div></div>');
-		$buttons.addClass('n2Display_buttons');
-		$buttons.addClass('n2Display_buttons_'+$n2.utils.stringToHtmlId(data._id));
-		$elem.append( $buttons );
+		var $buttonsContainer = $('<div>')
+			.addClass('mdc-card__actions')
+			.appendTo($elem);
+
+		var $buttons = $('<div>')
+			.addClass('n2Display_buttons mdc-card_action-buttons n2Display_buttons_'+$n2.utils.stringToHtmlId(data._id))
+			.appendTo($buttonsContainer);
 		
 		var optionClass = 'options';
 		if( opt.focus ) optionClass += '_focus';
@@ -413,8 +417,6 @@ var Display = $n2.Class({
 		};
 		opts['delete'] = opt['delete'];
 		this._displayButtons($buttons, opts);
-
-		this._attachRippleToButtons();
 	}
 	
 	,_refreshButtons: function($elem){
@@ -692,6 +694,8 @@ var Display = $n2.Class({
  				}
  			});
 		};
+
+		this._attachRippleToButtons();
 	}
 	
 	,_addAttachmentProgress: function($elem, data){
@@ -918,7 +922,7 @@ var Display = $n2.Class({
 		} else {
 			refreshDocWithSchema(doc, null);
 		};
-	
+		
 		function refreshDocWithSchema(doc, schema){
 			var docId = doc._id;
 
@@ -1846,7 +1850,7 @@ var ButtonDisplay = $n2.Class({
 		
 		var $linkButton = $('<button>')
 			.appendTo($elem)
-			.addClass('nunaliit_form_link mdc-button mdc-button--raised')
+			.addClass('nunaliit_form_link mdc-button')
 			.click(wrapAndReturnFalse(opts.click));
 
 		if( label ){
