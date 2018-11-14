@@ -13,27 +13,27 @@
 		<!-- Internal directories -->
 		<fileSet>
 			<directory>src/main/atlas_couchapp</directory>
-			<outputDirectory>/atlas_couchapp/</outputDirectory>
+			<outputDirectory>atlas_couchapp/</outputDirectory>
 		</fileSet>
 		<fileSet>
 			<directory>src/main/config_couchapp</directory>
-			<outputDirectory>/config_couchapp/</outputDirectory>
+			<outputDirectory>config_couchapp/</outputDirectory>
 		</fileSet>
 		<fileSet>
 			<directory>src/main/server_couchapp</directory>
-			<outputDirectory>/server_couchapp/</outputDirectory>
+			<outputDirectory>server_couchapp/</outputDirectory>
 		</fileSet>
 		<fileSet>
 			<directory>src/main/submission_couchapp</directory>
-			<outputDirectory>/submission_couchapp/</outputDirectory>
+			<outputDirectory>submission_couchapp/</outputDirectory>
 		</fileSet>
 		<fileSet>
 			<directory>src/main/initializeDocs</directory>
-			<outputDirectory>/initializeDocs/</outputDirectory>
+			<outputDirectory>initializeDocs/</outputDirectory>
 		</fileSet>
 		<fileSet>
 			<directory>src/main/updateDocs</directory>
-			<outputDirectory>/updateDocs/</outputDirectory>
+			<outputDirectory>updateDocs/</outputDirectory>
 		</fileSet>
 	</fileSets>
 </assembly>

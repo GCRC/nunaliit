@@ -66,7 +66,7 @@
 			"condition": "onLayer('public_demo')"
 			,"label": "Public Demo"
 			,"normal": {
-				"fillColor":"#ffff33"
+				"fill":"#ffff33"
 			}
 		}
 	]
