@@ -36,7 +36,7 @@ POSSIBILITY OF SUCH DAMAGE.
 var loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); },
 	DH = 'n2.canvasVerticalTimeline';
 
-var getDateFromDoc = function(object){
+function getDateFromDoc(object){
 
 	var date, property, currentProp, slashIndex; 
 	var dateRangeRegEx = /([0-9]{4})-([0-9]{2})-([0-9]{2}).*\/([0-9]{4})-([0-9]{2})-([0-9]{2}).*/g;
@@ -78,9 +78,9 @@ var getDateFromDoc = function(object){
 		}
 	}
 	return date;
-};
+}
 	
-var getCanvasHeight = function(canvasId){
+function getCanvasHeight(canvasId){
 	var canvasHeight = $('#' + canvasId).height();
 
 	if( canvasHeight <= 0 ){
@@ -88,7 +88,7 @@ var getCanvasHeight = function(canvasId){
 	}
 
 	return canvasHeight;
-};
+}
 
 // --------------------------------------------------------------------------
 /* 
@@ -115,6 +115,12 @@ Canvas options:
 var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
 	canvasId: null,
+
+	canvasContainerId: null,
+
+	indexElemId: null,
+
+	canvasListElemId: null,
 
 	itemWidth: null,
 
@@ -165,6 +171,9 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		this.elementGenerator = opts.elementGenerator;
 		this.elementsById = {};
 		this.sortedElements = [];
+		this.canvasContainerId = $n2.getUniqueId();
+		this.canvasIndexId = $n2.getUniqueId();
+		this.canvasListId = $n2.getUniqueId();
 
 		var config = opts.config;
 		if( config ){
@@ -211,7 +220,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		var width;
 		var itemPadding = 30;
 
-		width = ($('.timeline_list').width()/2) - itemPadding;
+		width = ($('#' + this.canvasListId).width()/2) - itemPadding;
 		this.itemWidth = width;
 	},
 
@@ -226,7 +235,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
 	_linkIndexToItems: function(){
 		var i, j, e, f,	arrayItem, indexItem, year;
-		var itemsArray = $('#' + this.canvasId + ' .timeline_item_label');
+		var itemsArray = $('#' + this.canvasId + ' .n2_vertical_timeline_item_label');
 
 		if( !this.ascendingSortOrder ){
 			for(j = 0, f = itemsArray.length-1; j <= f; f--){
@@ -258,36 +267,77 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 	},
 
 	_createTimeline: function(){
-
-		var i, e, $target, $canvasTimeline, timelineItemOptions, timelineIndexOptions; 
+		var $target, $canvas, $canvasIndex, $canvasList;
 		var _this = this;
 
 		// Remove old canvas container if it already exists
-		// TODO: This selects any vertical timeline elements, not only the one within this canvas (use jQuery.find)
-		// TODO: Generate a unique identifier for look-up. It is faster
-		if( $('.n2_vertical_timeline').length > 0 ){
-			$('.n2_vertical_timeline').remove();
-		}
+		$canvas = $('#' + this.canvasId).find('#' + this.canvasContainerId);
+		$canvas.remove();
 
+		// Add container for timeline canvas
 		$('<div>')
 			.attr('class','n2_vertical_timeline')
+			.attr('id', this.canvasContainerId)
 			.click(function(e){
 				$target = $(e.target);
-				if( $target.hasClass('timeline_item') ){
+				if( $target.hasClass('n2_vertical_timeline_item') ){
 					// Ignore
-				} else if( $target.parents('.timeline_item').length > 0 ) {
+				} else if( $target.parents('.n2_vertical_timeline_item').length > 0 ) {
 				   	// Ignore
 				}	else {
 					_this._backgroundClicked();
 				}
 			})
-			.appendTo($('#'+this.canvasId));
+			.appendTo($('#' + this.canvasId));
 
-		if( this.displayIndex && this.sortedElements.length > 0 ){
+		// Add container for timeline index
+		if( this.displayIndex ){
+		
+			$canvasIndex = $('<div>')
+				.attr('class','n2_vertical_timeline_index')
+				.attr('id',this.canvasIndexId)
+				.appendTo('#' + this.canvasContainerId);
 
-			// TODO: Might encourage more re-use if an element was created to hold timelineIndex and passed in initializer instead of canvasId
+			// If autoReduceIndex prevent scroll bar from being used
+			if( this.autoReduceIndex ){
+				$canvasIndex.css('overflow','hidden');
+			}	
+		}
+		
+		// Add container for timeline list
+		$canvasList = $('<div>')
+			.attr('class','n2_vertical_timeline_list')
+			.attr('id',this.canvasListId)
+			.appendTo($('#' + this.canvasContainerId))
+			.on('scroll', function(){
+				_this._handleScrollEvent();
+			});
+
+		if( !this.displayIndex ){
+			$canvasList.css('width','100%');
+		}
+
+		$('<ul>')
+			.attr('id', this.canvasListId)
+			.appendTo($canvasList);
+
+		this._refresh();
+	},
+
+	_refresh: function(){
+		var i, e, timelineItemOptions, timelineIndexOptions, $timelineList, $index;
+
+		$timelineList = $('#' + this.canvasContainerId).find('.n2_vertical_timeline_list');
+		$timelineList.empty();
+		
+		$index = $('#' + this.canvasContainerId).find('.n2_vertical_timeline_index');
+		$index.empty();
+
+		if( this.sortedElements.length > 0 ){
+
 			timelineIndexOptions = {
 				'canvasId': this.canvasId,
+				'canvasIndexId': this.canvasIndexId,
 				'sortedElements': this.sortedElements,
 				'ascendingSortOrder': this.ascendingSortOrder,
 				'autoReduceIndex': this.autoReduceIndex
@@ -298,32 +348,14 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 			this.indexItems = this.timelineIndex.getIndex();
 		}
 
-		$canvasTimeline = $('<div>')
-			.attr('class','timeline_list')
-			.appendTo($('.n2_vertical_timeline'))
-			.on('scroll', function(){
-				_this._handleScrollEvent();
-			});
-
 		// Re-Calculate Item Width based on available space
 		this._calcItemWidth();
-
-		// TODO: Assign a unique id to timeline list and pass it to instances TimelineItem instead of DOM object
-		// TODO: Discussion of DOM object management
-		this.timelineList = $('<ul>')
-			.appendTo($canvasTimeline);
-
-		// Add canvas padding to bottom 
-		// Needed for index active status updating when scrolling canvas
-		$('<div>')
-			.css('height',getCanvasHeight(this.canvasId))
-			.appendTo($canvasTimeline);
 
 		for(i = 0, e = this.sortedElements.length; i < e; i++){
 				
 			timelineItemOptions = {
 				element: this.sortedElements[i], 
-				timelineList: this.timelineList,
+				timelineList: this.canvasListId,
 				itemWidth: this.itemWidth
 			};
 			new TimelineItem(timelineItemOptions);
@@ -331,7 +363,13 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		
 		this._linkIndexToItems();
 
-		this.showService.fixElementAndChildren(this.timelineList);
+		this.showService.fixElementAndChildren($timelineList);
+
+		// Add canvas padding to bottom 
+		// Needed for index active status updating when scrolling canvas
+		$('<div>')
+			.css('height',getCanvasHeight(this.canvasId))
+			.appendTo('#' + this.canvasContainerId + ' .n2_vertical_timeline_list');
 	},
 
 	_handleScrollEvent: function(){
@@ -407,7 +445,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
 		this._sortElements();
 
-		this._createTimeline();
+		this._refresh();
 	},
 	
 	_sourceModelUpdated: function(state){
@@ -423,7 +461,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 			}
 
 		} else if( 'windowResized' === m.type ) {
-			this._createTimeline();
+			this._refresh();
 		}
 	}
 });
@@ -431,6 +469,8 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 var TimelineIndex = $n2.Class('TimelineIndex', {
 
 	canvasId: null,
+
+	canvasIndexId: null,
 
 	dispatchService: null,
 
@@ -457,20 +497,22 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			canvasId: null,
+			canvasIndexId: null,
 			ascendingSortOrder: null,
 			timelineItems: null,
-			autoReduceIndex: true,
+			autoReduceIndex: null,
 			onSuccess: function(){},
 			onError: function(err){}
 		},opts_);
 
 		this.canvasId = opts.canvasId;
+		this.canvasIndexId = opts.canvasIndexId;
 		this.ascendingSortOrder = opts.ascendingSortOrder;
+		this.autoReduceIndex = opts.autoReduceIndex;
 		this.sortedElements = opts.sortedElements;
 		this.indexRange = {'startIndex': null, 'endIndex': null};
 		this.index = [];
 		this.factor = 1;
-		this.autoReduceIndex = opts.autoReduceIndex;
 		this.itemHeight = 15;
 		this.itemPadding = 1;
 		this.itemMargin = 4;
@@ -520,30 +562,15 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 	},
 
 	_addTimelineIndexToCanvas: function(){
-		var indexContainer, indexList, i, e, indexItem, currentIndex;
-	
-		// Remove old index if it already exists
-		if( $('.timeline_index').length > 0 ){
-			$('.timeline_index').remove();
-		}
-
-		indexContainer = $('<div>')
-			.attr('class','timeline_index')
-			.appendTo('#' + this.canvasId + ' .n2_vertical_timeline');
-
-		// If autoReduceIndex prevent scroll bar from being used
-		if( this.autoReduceIndex ){
-			indexContainer.css('overflow','hidden');
-		}
+		var i, e, indexList, indexItem, currentIndex;
 
 		indexList = $('<ul>')
-			.appendTo(indexContainer);
+			.appendTo('#' + this.canvasIndexId);
 		
 		currentIndex = this.getIndex();
 
 		for(i = 0, e = currentIndex.length; i < e; i++){
 			indexItem = $('<li>')
-				.attr('class', 'indexItem')
 				.css('max-height', this.itemHeight + "px")
 				.css('padding', this.itemPadding)
 				.css('margin', "0px auto " + this.itemMargin + "px auto")
@@ -663,8 +690,9 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 
 	setActiveIndexItem: function(itemLabel){
 		var i, e, indexItem, indexItems, indexItemText;
-		// set active class and remove existing active class
-		indexItems = $('.indexItem');
+		
+		// Update item with active class
+		indexItems = $('#' + this.canvasIndexId + ' li');
 
 		for(i = 0, e = indexItems.length; i < e; i++){
 			indexItem = indexItems.eq(i);
@@ -730,20 +758,20 @@ var TimelineItem = $n2.Class('TimelineItem', {
 		if( sortLabel ){
 			
 			$timelineItem = $('<li>')
-				.attr('class','timeline_item n2s_userEvents')
+				.attr('class','n2_vertical_timeline_item n2s_userEvents')
 				.attr('nunaliit-document', docId);
 			
 			$('<div>')
-				.attr('class','timeline_item_label')
+				.attr('class','n2_vertical_timeline_item_label')
 				.text(sortLabel)
 				.appendTo($timelineItem);
 
 			$('<div>')
-				.attr('class','timeline_item_node')
+				.attr('class','n2_vertical_timeline_item_node')
 				.appendTo($timelineItem);
 
 			$timelineItemContent = $('<div>')
-				.attr('class','timeline_item_content')
+				.attr('class','n2_vertical_timeline_item_content')
 				.css('width',this.itemWidth+'px')
 				.css('transform','translateX(-' + this.itemWidth + 'px)')
 				.appendTo($timelineItem);
@@ -757,7 +785,7 @@ var TimelineItem = $n2.Class('TimelineItem', {
 			}
 
 			$timelineItemContentText = $('<div>')
-				.attr('class','timeline_item_content_text')
+				.attr('class','n2_vertical_timeline_item_content_text')
 				.appendTo($timelineItemContent);
 
 			$('<div>')
@@ -765,7 +793,7 @@ var TimelineItem = $n2.Class('TimelineItem', {
 				.attr('nunaliit-document', docId)
 				.appendTo($timelineItemContentText);
 
-			$timelineItem.appendTo(this.timelineList);
+			$timelineItem.appendTo('#' + this.timelineList);
 		}
 	}
 });
