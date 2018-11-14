@@ -118,6 +118,14 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
 	itemWidth: null,
 
+	timelineIndex: null,
+
+	indexItems: null,
+
+	autoReduceIndex: null,
+
+	displayIndex: null,
+
 	timelineList: null,
 
 	sourceModelId: null,
@@ -132,15 +140,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
 	ascendingSortOrder: null,
 
-	autoReduceIndex: null,
-
 	sortedElements: null,
-
-	displayIndex: null,
-
-	timelineIndex: null,
-
-	indexItems: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -259,7 +259,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
 	_createTimeline: function(){
 
-		var i, e, $target, $canvasTimeline, timelineIndex, timelineItemOptions, timelineIndexOptions; 
+		var i, e, $target, $canvasTimeline, timelineItemOptions, timelineIndexOptions; 
 		var _this = this;
 
 		// Remove old canvas container if it already exists
@@ -288,27 +288,21 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 			// TODO: Might encourage more re-use if an element was created to hold timelineIndex and passed in initializer instead of canvasId
 			timelineIndexOptions = {
 				'canvasId': this.canvasId,
-				'dispatchService': this.dispatchService,
 				'sortedElements': this.sortedElements,
 				'ascendingSortOrder': this.ascendingSortOrder,
 				'autoReduceIndex': this.autoReduceIndex
 			};
 
-			timelineIndex = new TimelineIndex(timelineIndexOptions);
+			this.timelineIndex = new TimelineIndex(timelineIndexOptions);
 
-			this.indexItems = timelineIndex.getIndex();
+			this.indexItems = this.timelineIndex.getIndex();
 		}
 
 		$canvasTimeline = $('<div>')
 			.attr('class','timeline_list')
 			.appendTo($('.n2_vertical_timeline'))
-			.on('scroll', function() {
-				// Send dispatch event when canvas scrolled
-				// TODO: Unless other system components are interested, do not send an event
-				// TODO: Heavy for an internal call. Should be _this.timelineIndex._onScroll()
-				_this.dispatchService.send(DH,{
-					type: 'canvasScrolled'
-				});
+			.on('scroll', function(){
+				_this._handleScrollEvent();
 			});
 
 		// Re-Calculate Item Width based on available space
@@ -338,6 +332,20 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		this._linkIndexToItems();
 
 		this.showService.fixElementAndChildren(this.timelineList);
+	},
+
+	_handleScrollEvent: function(){
+		var headerHeight = 100;
+		var i, e, item; 
+		if( this.indexItems ){
+			for(i = 0, e = this.indexItems.length; i < e; i++){
+				item = document.getElementById(this.indexItems[i]);
+				if( item && item.getBoundingClientRect().top > headerHeight ){
+					this.timelineIndex.setActiveIndexItem(this.indexItems[i]);
+					break;
+				}
+			}
+		}
 	},
 
 	_sortElements: function(){
@@ -466,17 +474,6 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 		this.itemHeight = 15;
 		this.itemPadding = 1;
 		this.itemMargin = 4;
-		this.dispatchService = opts.dispatchService;
-
-		var _this = this;
-
-		// Register to events
-		if( this.dispatchService ){
-			var f = function(m){
-				_this._handleDispatch(m);
-			};
-			this.dispatchService.register(DH,'canvasScrolled',f);
-		}
 
 		this._generateIndex();
 
@@ -664,7 +661,7 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 		return indexItems;
 	},
 
-	_setActiveIndexItem: function(itemLabel){
+	setActiveIndexItem: function(itemLabel){
 		var i, e, indexItem, indexItems, indexItemText;
 		// set active class and remove existing active class
 		indexItems = $('.indexItem');
@@ -676,22 +673,6 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 				indexItem.addClass('active');	
 			} else {
 				indexItem.removeClass('active');
-			}
-		}
-	},
-
-	_handleDispatch: function(m){
-		if( 'canvasScrolled' === m.type ) {
-			var indexItems = this.getIndex();
-			var headerHeight = 100;
-			var i, e, item; 
-
-			for(i = 0, e = indexItems.length; i < e; i++){
-				item = document.getElementById(indexItems[i]);
-				if( item && item.getBoundingClientRect().top > headerHeight ){
-					this._setActiveIndexItem(indexItems[i]);
-					break;
-				}
 			}
 		}
 	}
