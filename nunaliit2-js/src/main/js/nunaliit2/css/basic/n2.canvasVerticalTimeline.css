@@ -47,16 +47,13 @@
 	cursor: pointer;
 	transition: all 0.2s ease;
 	background-color: teal;
-	font-size: 1.1em;
 }
-
 
 .n2_vertical_timeline .n2_vertical_timeline_index ul li:hover a,
 .n2_vertical_timeline .n2_vertical_timeline_index ul li.active a {
 	color: #ffffff;
 	transition: color 0.1s ease;
 }
-
 
 .n2_vertical_timeline .n2_vertical_timeline_list {
 	width: 100%; 
@@ -150,11 +147,12 @@
 }
 
 .n2_vertical_timeline .n2_vertical_timeline_list .n2_vertical_timeline_item .n2_vertical_timeline_item_label {
-    width: max-content;
+	width: max-content;
+	font-family: arial;
 	font-size: 1.8em;
+    font-weight: bold;
 	background-color: #333333; 
     color: #ffffff;
-    font-weight: bold;
 	float: left;
     transform: translate(25px, 20px);
 	border: 1px solid #333333; 

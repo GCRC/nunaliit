@@ -319,14 +319,21 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		$('<ul>')
 			.attr('id', this.canvasListId)
 			.appendTo($canvasList);
-		
+
 		// Add canvas padding to bottom 
 		// Needed for index active status updating when scrolling canvas
 		$('<div>')
+			.addClass('n2_vertical_timeline_padding')
 			.css('height', getCanvasHeight(this.canvasId))
 			.appendTo($canvasList);
 
 		this._refresh();
+	},
+
+	_updateTimelinePadding: function(){
+		
+		$('#' + this.canvasContainerId + ' .n2_vertical_timeline_list').find('.n2_vertical_timeline_padding')
+			.css('height', getCanvasHeight(this.canvasId));
 	},
 
 	_refresh: function(){
@@ -352,6 +359,9 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
 			this.indexItems = this.timelineIndex.getIndex();
 		}
+
+		// Update timeline padding
+		this._updateTimelinePadding();
 
 		// Re-Calculate Item Width based on available space
 		this._calcItemWidth();
