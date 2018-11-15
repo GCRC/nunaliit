@@ -450,12 +450,30 @@ function selectLayersDialog(opts_){
 		};
 		displayLayers();
 	};
+
+	function _attachMDCComponents(){
+		var i, e;
+		var listEle = document.querySelector('.mdc-list');
+		new mdc.list.MDCList(listEle);
+
+		// attach checkboxes
+		var mdc_checkboxes = document.getElementsByClassName('mdc-checkbox');
+		for(i = 0, e = mdc_checkboxes.length; i < e; i++){
+			mdc.checkbox.MDCCheckbox.attachTo(mdc_checkboxes[i]);
+		};
+	}
 	
 	function displayLayers(){
 		var $diag = $('#'+dialogId);
 		
 		var $c = $diag.find('.editorSelectLayerContent');
 		$c.empty();
+
+		var $list = $('<ul>')
+			.addClass('mdc-list')
+			.attr('aria-orientation','vertical')
+			.appendTo($c);
+
 		for(var layerId in layers){
 			var label = layerId;
 			if( layers[layerId].label ){
@@ -463,17 +481,46 @@ function selectLayersDialog(opts_){
 			};
 			
 			var inputId = $n2.getUniqueId();
+
+			var $listItem = $('<li>')
+				.addClass('mdc-list-item')
+				.appendTo($list);
+				
 			var $div = $('<div>')
-				.appendTo($c);
-			var $input = $('<input type="checkbox">')
-				.addClass('layer')
+				.addClass('mdc-checkbox')
+				.appendTo($listItem);
+
+			var $input = $('<input>')
+				.addClass('layer mdc-checkbox__native-control')
+				.attr('type','checkbox')
 				.attr('id',inputId)
 				.attr('name',layerId)
 				.appendTo($div);
-			var $label = $('<label>')
-				.attr('for',inputId)
-				.text(label)
+
+			var $checkboxBackground = $('<div>')
+				.addClass('mdc-checkbox__background')
 				.appendTo($div);
+
+			var $svgCheckBox = $('<svg>')
+				.addClass('mdc-checkbox__checkmark')
+				.attr('viewBox','0 0 24 24')
+				.appendTo($checkboxBackground);
+
+			$('<path>')
+				.addClass('mdc-checkbox__checkmark-path')
+				.attr('fill','none')
+				.attr('stroke','white')
+				.attr('d','M1.73,12.91 8.1,19.28 22.79,4.59')
+				.appendTo($svgCheckBox);
+
+			$('<div>')
+				.addClass('mdc-checkbox__mixedmark')
+				.appendTo($checkboxBackground);
+
+			var $label = $('<span>')
+				.addClass('mdc-list-item__text')
+				.text(label)
+				.appendTo($listItem)
 
 			if( layers[layerId].currentlySelected ){
 				$input.attr('checked','checked');
@@ -501,6 +548,8 @@ function selectLayersDialog(opts_){
 				shouldReset = false;
 				$diag.dialog('close');
 			});
+
+		_attachMDCComponents();
 	};
 	
 	function reportError(err){

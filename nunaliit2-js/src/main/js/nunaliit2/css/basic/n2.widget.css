@@ -255,25 +255,6 @@ div.olControlMousePosition {
 
 /* 
 ==============================
-LAYER DIALOG SECTION 
-==============================
-*/
-
-.editorSelectLayerContent {
-	overflow: auto;
-}
-.editorSelectLayerContent div {
-	padding: 3px 5px;
-}
-.editorSelectLayerContent label {
-	padding: 0 5px;
-}
-.editorSelectLayerButtons {
-	padding: 10px 0;
-}
-
-/* 
-==============================
 ROLE LIST 
 ==============================
 */

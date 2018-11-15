@@ -358,15 +358,14 @@ var Display = $n2.Class({
 	}
 
 	,_attachRippleToButtons: function(){
-
 		// attach ripple to buttons 
 		var mdc_buttons = document.getElementsByClassName('mdc-button');
 		var i, e;
 		for(i = 0, e = mdc_buttons.length; i < e; i++){
 			mdc.ripple.MDCRipple.attachTo(mdc_buttons[i]);
 		};
-
 	}
+
 	,_addButtons: function($elem, data, opt_) {
 		var _this = this;
 		
