@@ -699,7 +699,7 @@ var ModuleDisplay = $n2.Class({
 				_this.sidePanelName = $n2.getUniqueId();
 				$('<div></div>')
 					.attr('id',_this.sidePanelName)
-					.addClass('n2_content_text')
+					.addClass('n2_content_text mdc-elevation--z8')
 					.appendTo($contentDiv);
 				$contentDiv.addClass('n2_content_contains_text');
 			};

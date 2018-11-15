@@ -4,17 +4,11 @@
 }
 
 .n2_documentDisplay .n2_layoutFloat div.label, .n2_documentForm .n2_layoutFloat div.label {
-	float: left;
-	width: 30%;
+	padding: 0px 16px;
 }
 
 .n2_documentDisplay .n2_layoutFloat div.value, .n2_documentForm .n2_layoutFloat div.value {
-	float: left;
-	width: 65%;
-}
-
-.n2_documentDisplay .n2_layoutFloat div.end, .n2_documentForm .n2_layoutFloat div.end {
-	clear: both;
+	padding: 0px 16px;
 }
 
 .n2_documentForm .n2_layoutFloat input {

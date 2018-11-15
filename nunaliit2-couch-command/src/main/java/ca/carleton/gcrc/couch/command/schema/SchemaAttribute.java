@@ -734,7 +734,7 @@ public class SchemaAttribute {
 			}
 
 			if( "title".equals(type) ) {
-				pw.println("<div class=\"title\">");
+				pw.println("<div class=\"title mdc-typography--headline6\">");
 
 				pw.println("\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 				pw.println("\t<div class=\"end\"></div>");
@@ -749,7 +749,7 @@ public class SchemaAttribute {
 
 					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 
 					String fixUrlClass = "";
 					String fixMaxHeight = "";
@@ -789,7 +789,7 @@ public class SchemaAttribute {
 
 					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 					pw.println("\t\t\t<div class=\"value\">{{date}}</div>");
 					pw.println("\t\t\t<div class=\"end\"></div>");
 					
@@ -807,7 +807,7 @@ public class SchemaAttribute {
 
 					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 					
 					if( "thumbnail".equals(referenceType) ){
 						pw.println("\t\t\t<div class=\"value n2s_insertFirstThumbnail\" nunaliit-document=\"{{doc}}\"></div>");
@@ -831,7 +831,7 @@ public class SchemaAttribute {
 
 					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 					
 					pw.println("\t\t\t<div class=\"value n2s_custom\""
 							+ " nunaliit-custom=\""+customType+"\""
@@ -855,7 +855,7 @@ public class SchemaAttribute {
 
 					pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 					pw.println("\t\t<div class=\"value\">");
 					pw.println("\t\t{{#"+id+"}}");
 					pw.print("\t\t\t<div class=\"array_element");
@@ -904,7 +904,7 @@ public class SchemaAttribute {
 	
 					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 	
-					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 					pw.println("\t\t\t<div class=\"value n2s_select\" n2-choice=\"{{"+id+"}}\">");
 					
 					for(SelectionOption option : options){
@@ -935,7 +935,7 @@ public class SchemaAttribute {
 
 					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 					pw.println("\t\t\t<div class=\"value\">");
 					pw.println("\t\t\t\t{{#if "+id+"}}");
 					pw.println("\t\t\t\t\t<span class=\"n2s_localize\">Yes</span>");
@@ -957,7 +957,7 @@ public class SchemaAttribute {
 
 					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 					pw.println("\t\t\t<div class=\"value\">");
 					for(CheckboxGroupItem item : checkboxes){
 						String itemId = item.getId();
@@ -1005,7 +1005,7 @@ public class SchemaAttribute {
 
 				pw.println("{{#nunaliit_geom}}");
 				pw.println("\t\t<div class=\"nunaliit_geom\">");
-				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 				pw.println("\t\t\t<div class=\"value\">{{wkt}}</div>");
 				pw.println("\t\t\t<div class=\"end\"></div>");
 				pw.println("\t\t</div>");
@@ -1018,7 +1018,7 @@ public class SchemaAttribute {
 
 				pw.println("{{#nunaliit_hoverSound}}");
 				pw.println("\t\t<div class=\"nunaliit_hoverSound\">");
-				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 				pw.println("\t\t\t<div class=\"value\"><a href=\"#\" class=\"n2s_referenceLink\">{{doc}}</a></div>");
 				pw.println("\t\t\t<div class=\"end\"></div>");
 				pw.println("\t\t</div>");
@@ -1035,7 +1035,7 @@ public class SchemaAttribute {
 
 				pw.println("\t\t<div class=\""+schemaClass+"_nunaliit_created\">");
 
-				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 
 				pw.println("\t\t\t<div class=\"value n2s_insertUserName\">{{name}}</div>");
 				
@@ -1057,7 +1057,7 @@ public class SchemaAttribute {
 
 				pw.println("\t\t<div class=\""+schemaClass+"_nunaliit_created_time\">");
 
-				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 
 				pw.println("\t\t\t<div class=\"value n2s_insertTime\">{{time}}</div>");
 				

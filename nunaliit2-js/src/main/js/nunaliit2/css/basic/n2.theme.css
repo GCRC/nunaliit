@@ -441,12 +441,14 @@ CreateDocument widget
 }
 
 /* Buttons */
-.nunaliit_atlas .n2Display_buttons {
+.nunaliit_atlas .n2Display_buttons,
+.nunaliit_atlas .editorButtons  {
 	margin: 10px 0;
 	display: block;
 }
 
-.nunaliit_form_link {
+.nunaliit_form_link,
+.mdc-button {
 	margin: 3px;
 }
 
@@ -679,9 +681,6 @@ CreateDocument widget
 	border: 0;
 	background: transparent;
 }
-.editorButtons {
-	margin: 10px 0;
-}
 /*END - Override Styles for Jquery UI styling*/
 
 /* Side Bar Labels */
@@ -690,8 +689,6 @@ CreateDocument widget
 }
 .nunaliit_atlas .label {
 	margin: 5px 0;
-	padding-right: 8px;
-	width: 30%;
 	font-size: 1em/1.2em;	
 }
 .nunaliit_atlas span.label {

@@ -360,7 +360,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		$div.empty();
 		
 		this.editorsContainerId = $n2.getUniqueId();
-		var $editorsContainer = $('<div id="'+this.editorsContainerId+'" class="n2CouchEditor_container"></div>');
+		var $editorsContainer = $('<div id="'+this.editorsContainerId+'" class="n2CouchEditor_container mdc-card"></div>');
 		$div.append($editorsContainer);
 
 		for(var i=0,e=this.editors.length;i<e;++i){
@@ -379,7 +379,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 						.appendTo($schemaHeader);
 				};
 				
-				var $schemaContainer = $('<div class="n2CouchEditor_schema"></div>')
+				var $schemaContainer = $('<div>')
 					.addClass('n2CouchEditor_schema')
 					.appendTo($editorsContainer);
 				
@@ -1214,7 +1214,7 @@ var CouchDocumentEditor = $n2.Class({
 		attributeDialog.empty();
 		
 		this.editorContainerId = $n2.getUniqueId();
-		var $editorContainer = $('<div id="'+this.editorContainerId+'" class="n2CouchEditor_container"></div>');
+		var $editorContainer = $('<div id="'+this.editorContainerId+'" class="n2CouchEditor_container mdc-card"></div>');
 		attributeDialog.append($editorContainer);
 
 		if( showFormView ) {
@@ -1385,55 +1385,70 @@ var CouchDocumentEditor = $n2.Class({
 				$currentLocationToggle.addClass('icon-unchecked');
 			}
 		}
+		
+		var $formButtonsContainer = $('<div>')
+			.addClass('mdc-card__actions')
+			.appendTo($editorContainer);
 
-		var formButtons = $('<div class="editorButtons"></div>');
-		$editorContainer.append(formButtons);
+		var $formButtons = $('<div>')
+			.addClass('editorButtons mdc-card__action-buttons')
+			.appendTo($formButtonsContainer);
 
-		var saveBtn = $('<button class="save">'+_loc('Save')+'</button>');
-		formButtons.append(saveBtn);
-		saveBtn.button({icons:{primary:'ui-icon-check'}});
-		saveBtn.click(function(){
-			_this._save();
-			return false;
-		});
+		$('<button>')
+			.addClass('save mdc-button')
+			.text(_loc('Save'))
+			.click(function(){
+				_this._save();
+				return false;
+			})
+			.appendTo($formButtons);
 
 		if( !this.isInsert
 		 && $n2.couchMap.canDeleteDoc(data)
 			) {
-			var deleteBtn = $('<button class="delete">'+_loc('Delete')+'</button>');
-			formButtons.append(deleteBtn);
-			deleteBtn.button({icons:{primary:'ui-icon-trash'}});
-			deleteBtn.click(function(evt){
-				if( confirm( _loc('Do you really want to delete this feature?') ) ) {
-					deletion(data);
-				};
-				return false;
-			});
+			$('<button>')
+				.addClass('delete mdc-button')
+				.text(_loc('Delete'))
+				.click(function(evt){
+					if( confirm( _loc('Do you really want to delete this feature?') ) ) {
+						deletion(data);
+					};
+					return false;
+				})
+				.appendTo($formButtons);
 		};
 		
 		if( this.attachmentEditor ){
 			this.attachmentEditor.printButtons({
-				elem: formButtons
+				elem: $formButtons
 			});
 		};
 
-		var addRelationBtn = $('<button class="relation">'+_loc('Add Relation')+'</button>');
-		formButtons.append(addRelationBtn);
-		addRelationBtn.button({icons:{primary:'ui-icon-plusthick'}});
-		addRelationBtn.click(function(){ _this._addRelationDialog(); return false; });
+		$('<button>')
+			.addClass('relation mdc-button')
+			.text(_loc('Add Relation'))
+			.click(function(){
+				_this._addRelationDialog();
+				return false;
+			})
+			.appendTo($formButtons);
 
-		var layersBtn = $('<button class="layers">'+_loc('Layers')+'</button>');
-		formButtons.append(layersBtn);
-		layersBtn.button({icons:{primary:'ui-icon-link'}});
-		layersBtn.click(function(){ _this._manageLayersDialog(); return false; });
+		$('<button>')
+			.addClass('layers mdc-button')
+			.text(_loc('Layers'))
+			.click(function(){ 
+				_this._manageLayersDialog(); 
+				return false; 
+			})
+			.appendTo($formButtons);
 
-		var cancelBtn = $('<button class="cancel">'+_loc('Cancel')+'</button>');
-		formButtons.append(cancelBtn);
-		cancelBtn.button({icons:{primary:'ui-icon-cancel'}});
-		cancelBtn.click(function(){ 
-			_this._cancelEdit();
-			return false;
-		});
+		$('<button>')
+			.addClass('cancel mdc-button')
+			.text(_loc('Cancel'))
+			.click(function(){
+				_this._cancelEdit();
+			})
+			.appendTo($formButtons);
 		
 		// Add user buttons
 		for(var i=0,e=this.userButtons.length; i<e; ++i) {
@@ -1444,13 +1459,13 @@ var CouchDocumentEditor = $n2.Class({
 				$uBtn.addClass(userButton.buttonClass);
 			};
 			if( userButton.before ) {
-				var $anchor = formButtons.find('button.'+userButton.before);
+				var $anchor = $formButtons.find('button.'+userButton.before);
 				$anchor.before($uBtn);
 			} else if( userButton.after ) {
-				var $anchor = formButtons.find('button.'+userButton.after);
+				var $anchor = $formButtons.find('button.'+userButton.after);
 				$anchor.after($uBtn);
 			} else {
-				formButtons.append($uBtn);
+				$formButtons.append($uBtn);
 			};
 			$uBtn.button(userButton.options);
 			installUserButtonClick($uBtn, userButton);
@@ -2870,6 +2885,7 @@ var AttachmentEditor = $n2.Class({
 
 		var attachBtn = $('<button>')
 			.text(_loc('Add File'))
+			.addClass('mdc-button')
 			.appendTo($elem)
 			.click(function(){
 				_this._openAddFileDialog();
@@ -2879,8 +2895,6 @@ var AttachmentEditor = $n2.Class({
 		if( opts.classNames ){
 			attachBtn.addClass(opts.classNames);
 		};
-
-		attachBtn.button({icons:{primary:'ui-icon-plusthick'}});
 	},
 	
 	performPreSavingActions: function(opts_){
