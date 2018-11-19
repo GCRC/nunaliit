@@ -1395,7 +1395,7 @@ var CouchDocumentEditor = $n2.Class({
 			.appendTo($formButtonsContainer);
 
 		$('<button>')
-			.addClass('save mdc-button')
+			.addClass('save mdc-button mdc-button--raised')
 			.text(_loc('Save'))
 			.click(function(){
 				_this._save();
