@@ -150,6 +150,8 @@ var ProgressDialog = $n2.Class({
 var AlertDialog = $n2.Class({
 	
 	dialogId: null,
+
+	mdcDialogComponent: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -158,46 +160,61 @@ var AlertDialog = $n2.Class({
 		},opts_);
 		
 		var _this = this;
-		
+		 
 		this.dialogId = $n2.getUniqueId();
 
 		var $dialog = $('<div>')
 			.attr('id',this.dialogId)
-			.addClass('n2dialogs_alert');
+			.attr('role','alertdialog')
+			.attr('aria-modal','true')
+			.attr('aria-labelledby','my-dialog-title')
+			.attr('aria-describedby','my-dialog-content')
+			.addClass('n2dialogs_alert mdc-dialog')
+			.appendTo($('body'));
+
+		var $dialogContainer = $('<div>')
+			.addClass('mdc-dialog__container')
+			.attr('tabindex', '1')
+			.appendTo($dialog);
+
+		var $dialogSurface = $('<div>')
+			.addClass('mdc-dialog__surface')
+			.appendTo($dialogContainer);
+
+		$('<h2>')
+			.addClass('mdc-dialog__title')
+			.attr('id', 'my-dialog--title')
+			.text(opts.title)
+			.appendTo($dialogSurface);
+
 		$('<div>')
-			.addClass('n2dialogs_alert_message')
+			.addClass('n2dialogs_alert_message mdc-dialog__content')
+			.attr('id','my-dialog-content')
 			.text(opts.message)
-			.appendTo($dialog);
+			.appendTo($dialogSurface);
 		
-		var $okLine = $('<div>')
-			.appendTo($dialog);
+		var $footer = $('<footer>')
+			.addClass('mdc-dialog__actions')
+			.appendTo($dialogSurface);
+
 		$('<button>')
-			.addClass('n2dialogs_alert_okButton')
-			.text( _loc('OK') )
-			.appendTo($okLine)
+			.addClass('n2dialogs_alert_okButton mdc-button mdc-dialog__button')
+			.text(_loc('OK'))
+			.attr('tabindex', '2')
+			.appendTo($footer)
 			.click(function(){
-				_this.close();
+				_this.mdcDialogComponent.close();
 				return false;
 			});
-	
-		var dialogOptions = {
-			autoOpen: true
-			,title: opts.title
-			,modal: true
-			,closeOnEscape: false
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
-			}
-		};
-		$dialog.dialog(dialogOptions);
-		
-	},
 
-	close: function(){
-		var $dialog = $('#'+this.dialogId);
-		$dialog.dialog('close');
+		$('<div>')
+			.addClass('mdc-dialog__scrim')
+			.appendTo($dialogContainer);
+
+		// Attach mdc component to alert dialog
+		var dialogWindow = $dialog[0];
+		this.mdcDialogComponent = new mdc.dialog.MDCDialog(dialogWindow);
+		this.mdcDialogComponent.open();
 	}
 });
 
