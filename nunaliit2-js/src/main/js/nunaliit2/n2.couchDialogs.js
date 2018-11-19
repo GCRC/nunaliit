@@ -204,6 +204,8 @@ var AlertDialog = $n2.Class({
 			.appendTo($footer)
 			.click(function(){
 				_this.mdcDialogComponent.close();
+				delete _this.mdcDialogComponent;
+				$dialog.remove();
 				return false;
 			});
 
