@@ -13,6 +13,10 @@ ehthumbs.db
 Thumbs.db
 /target
 
+# VIM created files #
+#######################
+*.swp
+
 # Intellij IDEA files #
 #######################
 *.iml

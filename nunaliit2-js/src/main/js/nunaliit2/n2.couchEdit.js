@@ -1470,6 +1470,9 @@ var CouchDocumentEditor = $n2.Class({
 			$uBtn.button(userButton.options);
 			installUserButtonClick($uBtn, userButton);
 		};
+	
+		// Attach mdc ripple effect on buttons
+		this._attachRippleToButtons();
 		
 		// First time to call refresh
 		var $editorContainer = _this._getEditorContainer();
@@ -1497,6 +1500,15 @@ var CouchDocumentEditor = $n2.Class({
 				};
 				return false;
 			});
+		};
+	},
+
+	_attachRippleToButtons: function(){
+		// attach ripple to buttons 
+		var mdc_buttons = document.getElementsByClassName('mdc-button');
+		var i, e;
+		for(i = 0, e = mdc_buttons.length; i < e; i++){
+			mdc.ripple.MDCRipple.attachTo(mdc_buttons[i]);
 		};
 	},
 

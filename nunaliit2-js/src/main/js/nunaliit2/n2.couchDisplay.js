@@ -921,7 +921,7 @@ var Display = $n2.Class({
 		} else {
 			refreshDocWithSchema(doc, null);
 		};
-		
+
 		function refreshDocWithSchema(doc, schema){
 			var docId = doc._id;
 
