@@ -371,8 +371,8 @@ function selectLayersDialog(opts_){
 	var dialogId = $n2.getUniqueId();
 	var $dialog = $('<div id="'+dialogId+'" class="editorSelectLayerDialog">'
 			+'<div class="editorSelectLayerContent"></div>'
-			+'<div class="editorSelectLayerButtons"><button class="ok mdc-button mdc-button--raised">'+_loc('OK')+'</button>'
-			+'<button class="cancel mdc-button">'+_loc('Cancel')+'</button></div>'
+			+'<div class="editorSelectLayerButtons"><button class="ok mdc-button mdc-button--raised" tabindex="-1">'+_loc('OK')+'</button>'
+			+'<button class="cancel mdc-button" tabindex="-1">'+_loc('Cancel')+'</button></div>'
 			+'</div>');
 	
 	$dialog.find('button.cancel')
@@ -526,7 +526,6 @@ function selectLayersDialog(opts_){
 		};
 		
 		$diag.find('button.ok')
-			.button('option','disabled',false)
 			.click(function(){
 				var selectedLayers = [];
 				var $diag = $('#'+dialogId);
