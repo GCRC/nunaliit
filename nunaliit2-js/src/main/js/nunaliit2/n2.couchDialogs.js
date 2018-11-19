@@ -371,23 +371,17 @@ function selectLayersDialog(opts_){
 	var dialogId = $n2.getUniqueId();
 	var $dialog = $('<div id="'+dialogId+'" class="editorSelectLayerDialog">'
 			+'<div class="editorSelectLayerContent"></div>'
-			+'<div class="editorSelectLayerButtons"><button class="ok">'+_loc('OK')+'</button>'
-			+'<button class="cancel">'+_loc('Cancel')+'</button></div>'
+			+'<div class="editorSelectLayerButtons"><button class="ok mdc-button mdc-button--raised">'+_loc('OK')+'</button>'
+			+'<button class="cancel mdc-button">'+_loc('Cancel')+'</button></div>'
 			+'</div>');
 	
 	$dialog.find('button.cancel')
-		.button({icons:{primary:'ui-icon-cancel'}})
 		.click(function(){
 			var $dialog = $('#'+dialogId);
 			$dialog.dialog('close');
 			return false;
 		});
-	$dialog.find('button.ok')
-		.button({
-			icons:{primary:'ui-icon-check'}
-			,disabled: true
-		});
-	
+
 	var dialogOptions = {
 		autoOpen: true
 		,title: _loc('Select Layers')
