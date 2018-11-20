@@ -1897,6 +1897,8 @@ var ButtonDisplay = $n2.Class({
 var TreeDocumentViewer = $n2.Class({
 	
 	doc: null,
+
+	mdcDialogComponent: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -1909,45 +1911,66 @@ var TreeDocumentViewer = $n2.Class({
 				this.doc[key] = opts.doc[key];
 			};
 		};
-		
 		this._display();
 	},
 	
 	_display: function(){
 		var $dialog = $('<div>')
-			.addClass('n2Display_treeViewer_dialog');
-		var diagId = $n2.utils.getElementIdentifier($dialog);
+			.attr('role','alertdialog')
+			.attr('aria-modal','true')
+			.attr('aria-labelledby','my-dialog-title')
+			.attr('aria-describedby','my-dialog-content')
+			.addClass('n2Display_treeViewer_dialog mdc-dialog mdc-dialog--scrollable')
+			.appendTo($('body'));
+
+		var _this = this;
 		
-		var $container = $('<div>')
-			.addClass('n2Display_treeViewer_content')
+		var $dialogContainer = $('<div>')
+			.addClass('mdc-dialog__container')
 			.appendTo($dialog);
+
+		var $dialogSurface = $('<div>')
+			.addClass('mdc-dialog__surface')
+			.appendTo($dialogContainer);
+
+		$('<h2>')
+			.addClass('mdc-dialog__title')
+			.attr('id', 'my-dialog--title')
+			.text(_loc('Tree View'))
+			.appendTo($dialogSurface);
+
+		var $container = $('<div>')
+			.addClass('n2Display_treeViewer_content mdc-dialog__content')
+			.attr('id','my-dialog-content')
+			.appendTo($dialogSurface);
 		
 		new $n2.tree.ObjectTree($container, this.doc);
 		
-		var $buttons = $('<div>')
-			.addClass('n2Display_treeViewer_buttons')
-			.appendTo($dialog);
+		var $footer = $('<footer>')
+			.addClass('n2Display_treeViewer_buttons mdc-dialog__actions')
+			.appendTo($dialogSurface);
 		
-		$('<button>')
-			.text( _loc('Close') )
-			.appendTo($buttons)
+		var $button = $('<button>')
+			.addClass('mdc-button mdc-dialog__button')
+			.text(_loc('Close')) 
+			.appendTo($footer)
 			.click(function(){
-				var $diag = $('#'+diagId);
-				$diag.dialog('close');
+				_this.mdcDialogComponent.close();
+				$dialog.remove();
 				return false;
 			});
+
+		$('<div>')
+			.addClass('mdc-dialog__scrim')
+			.appendTo($dialog);
+
+		// Attach ripple to button
+		mdc.ripple.MDCRipple.attachTo($button[0]);
+
+		// Attach mdc component to alert dialog
+		this.mdcDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);
+		this.mdcDialogComponent.open();
 		
-		$dialog.dialog({
-			autoOpen: true
-			,title: _loc('Tree View')
-			,modal: true
-			,width: 370
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
-			}
-		});
 	}
 });
 

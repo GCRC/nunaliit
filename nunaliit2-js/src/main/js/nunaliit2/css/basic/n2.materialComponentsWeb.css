@@ -1,0 +1,5 @@
+/* Overriding material-components-web.min.css styling */
+
+.mdc-dialog {
+    z-index: 1000 !important;
+}

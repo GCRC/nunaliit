@@ -174,7 +174,6 @@ var AlertDialog = $n2.Class({
 
 		var $dialogContainer = $('<div>')
 			.addClass('mdc-dialog__container')
-			.attr('tabindex', '1')
 			.appendTo($dialog);
 
 		var $dialogSurface = $('<div>')
@@ -197,25 +196,25 @@ var AlertDialog = $n2.Class({
 			.addClass('mdc-dialog__actions')
 			.appendTo($dialogSurface);
 
-		$('<button>')
+		var $button = $('<button>')
 			.addClass('n2dialogs_alert_okButton mdc-button mdc-dialog__button')
 			.text(_loc('OK'))
-			.attr('tabindex', '2')
 			.appendTo($footer)
 			.click(function(){
 				_this.mdcDialogComponent.close();
-				delete _this.mdcDialogComponent;
 				$dialog.remove();
 				return false;
 			});
 
 		$('<div>')
 			.addClass('mdc-dialog__scrim')
-			.appendTo($dialogContainer);
+			.appendTo($dialog);
+
+		// Attach ripple to button
+		mdc.ripple.MDCRipple.attachTo($button[0]);
 
 		// Attach mdc component to alert dialog
-		var dialogWindow = $dialog[0];
-		this.mdcDialogComponent = new mdc.dialog.MDCDialog(dialogWindow);
+		this.mdcDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);
 		this.mdcDialogComponent.open();
 	}
 });
@@ -363,7 +362,11 @@ function selectLayersDialog(opts_){
 		,dispatchService: null
 	},opts_);
 	
+	var mdcDialogComponent = null;
+	var shouldReset = true;
+	var dialogId = $n2.getUniqueId();
 	var layers = {};
+
 	if( typeof(opts.currentLayers) === 'string' ){
 		var layerNames = opts.currentLayers.split(',');
 		for(var i=0,e=layerNames.length;i<e;++i){
@@ -385,43 +388,67 @@ function selectLayersDialog(opts_){
 			};
 		};
 	};
-
-	var shouldReset = true;
-	var dialogId = $n2.getUniqueId();
-	var $dialog = $('<div id="'+dialogId+'" class="editorSelectLayerDialog">'
-			+'<div class="editorSelectLayerContent"></div>'
-			+'<div class="editorSelectLayerButtons"><button class="ok mdc-button mdc-button--raised" tabindex="-1">'+_loc('OK')+'</button>'
-			+'<button class="cancel mdc-button" tabindex="-1">'+_loc('Cancel')+'</button></div>'
-			+'</div>');
 	
-	$dialog.find('button.cancel')
+	var $dialog = $('<div>')
+		.attr('id', dialogId)
+		.attr('role','alertdialog')
+		.attr('aria-modal','true')
+		.attr('aria-labelledby','my-dialog-title')
+		.attr('aria-describedby','my-dialog-content')
+		.addClass('editorSelectLayerDialog mdc-dialog mdc-dialog--scrollable')
+		.appendTo($('body'));
+	
+	var $dialogContainer = $('<div>')
+		.addClass('mdc-dialog__container')
+		.appendTo($dialog);
+
+	var $dialogSurface = $('<div>')
+		.addClass('mdc-dialog__surface')
+		.appendTo($dialogContainer);
+
+	$('<h2>')
+		.addClass('mdc-dialog__title')
+		.attr('id', 'my-dialog--title')
+		.text(_loc('Select Layers'))
+		.appendTo($dialogSurface);
+
+	var $container = $('<div>')
+		.addClass('editorSelectLayerContent mdc-dialog__content')
+		.attr('id','my-dialog-content')
+		.appendTo($dialogSurface);
+	
+	var $footer = $('<footer>')
+		.addClass('editorSelectLayerButtons mdc-dialog__actions')
+		.appendTo($dialogSurface);
+	
+	$('<button>')
+		.addClass('ok mdc-button mdc-button--raised mdc-dialog__button')
+		.text(_loc('OK')) 
+		.appendTo($footer)
 		.click(function(){
-			var $dialog = $('#'+dialogId);
-			$dialog.dialog('close');
+			mdcDialogComponent.close();
+			$dialog.remove();
 			return false;
 		});
 
-	var dialogOptions = {
-		autoOpen: true
-		,title: _loc('Select Layers')
-		,modal: true
-		,close: function(event, ui){
-			var diag = $(event.target);
-			diag.dialog('destroy');
-			diag.remove();
-			if( shouldReset ) {
-				opts.resetFn();
-			};
-		}
-	};
+	$('<button>')
+		.addClass('cancel mdc-button mdc-dialog__button')
+		.text(_loc('Cancel')) 
+		.appendTo($footer)
+		.click(function(){
+			mdcDialogComponent.close();
+			$dialog.remove();
+			return false;
+		});
 	
-	var width = computeMaxDialogWidth(370);
-	if( typeof width === 'number' ){
-		dialogOptions.width = width;
-	};
+	$('<div>')
+		.addClass('mdc-dialog__scrim')
+		.appendTo($dialog);
 
-	$dialog.dialog(dialogOptions);
-	
+	// Attach mdc component to alert dialog
+	mdcDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);
+	mdcDialogComponent.open();
+		
 	// Get layers
 	if( opts.documentSource ){
 		opts.documentSource.getLayerDefinitions({
@@ -474,6 +501,12 @@ function selectLayersDialog(opts_){
 		for(i = 0, e = mdc_checkboxes.length; i < e; i++){
 			mdc.checkbox.MDCCheckbox.attachTo(mdc_checkboxes[i]);
 		};
+	
+		// attach ripple to buttons 
+		var mdc_buttons = document.getElementsByClassName('mdc-button');
+		for(i = 0, e = mdc_buttons.length; i < e; i++){
+			mdc.ripple.MDCRipple.attachTo(mdc_buttons[i]);
+		};
 	}
 	
 	function displayLayers(){
@@ -514,17 +547,8 @@ function selectLayersDialog(opts_){
 				.addClass('mdc-checkbox__background')
 				.appendTo($div);
 
-			var $svgCheckBox = $('<svg>')
-				.addClass('mdc-checkbox__checkmark')
-				.attr('viewBox','0 0 24 24')
+			$('<svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24"><path fill="none" stroke="white" class="mdc-checkbox__checkmark-path" d="M1.73,12.91 8.1,19.28 22.79,4.59" /></svg>')
 				.appendTo($checkboxBackground);
-
-			$('<path>')
-				.addClass('mdc-checkbox__checkmark-path')
-				.attr('fill','none')
-				.attr('stroke','white')
-				.attr('d','M1.73,12.91 8.1,19.28 22.79,4.59')
-				.appendTo($svgCheckBox);
 
 			$('<div>')
 				.addClass('mdc-checkbox__mixedmark')
