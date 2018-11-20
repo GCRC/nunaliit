@@ -3,3 +3,7 @@
 .mdc-dialog {
     z-index: 1000 !important;
 }
+
+.mdc-button {
+	margin: 3px;
+}

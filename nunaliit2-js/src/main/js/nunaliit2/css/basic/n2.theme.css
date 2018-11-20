@@ -447,8 +447,7 @@ CreateDocument widget
 	display: block;
 }
 
-.nunaliit_form_link,
-.mdc-button {
+.nunaliit_form_link {
 	margin: 3px;
 }
 
