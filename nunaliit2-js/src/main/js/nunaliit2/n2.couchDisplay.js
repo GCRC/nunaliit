@@ -1935,13 +1935,11 @@ var TreeDocumentViewer = $n2.Class({
 
 		$('<h2>')
 			.addClass('mdc-dialog__title')
-			.attr('id', 'my-dialog--title')
 			.text(_loc('Tree View'))
 			.appendTo($dialogSurface);
 
 		var $container = $('<div>')
 			.addClass('n2Display_treeViewer_content mdc-dialog__content')
-			.attr('id','my-dialog-content')
 			.appendTo($dialogSurface);
 		
 		new $n2.tree.ObjectTree($container, this.doc);
@@ -1962,6 +1960,11 @@ var TreeDocumentViewer = $n2.Class({
 
 		$('<div>')
 			.addClass('mdc-dialog__scrim')
+			.click(function(){
+				_this.mdcDialogComponent.close();
+				$dialog.remove();
+				return false;
+			})
 			.appendTo($dialog);
 
 		// Attach ripple to button

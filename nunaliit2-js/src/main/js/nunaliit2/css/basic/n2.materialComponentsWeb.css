@@ -7,3 +7,7 @@
 .mdc-button {
 	margin: 3px;
 }
+
+input[type="text"].mdc-text-field__input {
+	padding: 20px 12px 6px;
+}

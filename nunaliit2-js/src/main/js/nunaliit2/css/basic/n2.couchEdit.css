@@ -23,10 +23,6 @@ div.n2CouchEditor_container .ui-accordion-content {
 	display: none;
 }
 
-.editorSelectDocumentDialogResults {
-	overflow: auto;
-	max-height: 400px;
-}
 
 /* Attachment Editor */
 .attachmentEditor_att form.attachmentEditor_form input {

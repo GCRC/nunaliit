@@ -182,13 +182,11 @@ var AlertDialog = $n2.Class({
 
 		$('<h2>')
 			.addClass('mdc-dialog__title')
-			.attr('id', 'my-dialog--title')
 			.text(opts.title)
 			.appendTo($dialogSurface);
 
 		$('<div>')
 			.addClass('n2dialogs_alert_message mdc-dialog__content')
-			.attr('id','my-dialog-content')
 			.text(opts.message)
 			.appendTo($dialogSurface);
 		
@@ -208,6 +206,11 @@ var AlertDialog = $n2.Class({
 
 		$('<div>')
 			.addClass('mdc-dialog__scrim')
+			.click(function(){
+				_this.mdcDialogComponent.close();
+				$dialog.remove();
+				return false;
+			})
 			.appendTo($dialog);
 
 		// Attach ripple to button
@@ -231,49 +234,111 @@ function searchForDocumentId(options_){
 	},options_);
 	
 	var shouldReset = true;
+
+	var mdcDialogComponent = null;
 	
 	var dialogId = $n2.getUniqueId();
 	var inputId = $n2.getUniqueId();
 	var searchButtonId = $n2.getUniqueId();
 	var displayId = $n2.getUniqueId();
-	var $dialog = $('<div id="'+dialogId+'" class="editorSelectDocumentDialog">'
-			+'<div><label for="'+inputId+'">'+_loc('Search:')+'</label>'
-			+'<input id="'+inputId+'" type="text"/>'
-			+'<button id="'+searchButtonId+'">'+_loc('Search')+'</button></div>'
-			+'<div  class="editorSelectDocumentDialogResults" id="'+displayId+'"></div>'
-			+'<div><button class="cancel">'+_loc('Cancel')+'</button></div>'
-			+'</div>');
-	
-	$dialog.find('button.cancel')
-			.button({icons:{primary:'ui-icon-cancel'}})
-			.click(function(){
-				var $dialog = $('#'+dialogId);
-				$dialog.dialog('close');
-				return false;
-			})
-		;
-	
-	var dialogOptions = {
-		autoOpen: true
-		,title: _loc('Select Document')
-		,modal: true
-		,close: function(event, ui){
-			var diag = $(event.target);
-			diag.dialog('destroy');
-			diag.remove();
-			if( shouldReset ) {
-				options.onReset();
-			};
-		}
-	};
-	
-	var width = computeMaxDialogWidth(370);
-	if( typeof width === 'number' ){
-		dialogOptions.width = width;
-	};
 
-	$dialog.dialog(dialogOptions);
+	var $dialog = $('<div>')
+		.attr('id',dialogId)
+		.attr('role','alertdialog')
+		.attr('aria-modal','true')
+		.attr('aria-labelledby','my-dialog-title')
+		.attr('aria-describedby','my-dialog-content')
+		.addClass('editorSelectDocumentDialog mdc-dialog')
+		.appendTo($('body'));
 
+	var $dialogContainer = $('<div>')
+		.addClass('mdc-dialog__container')
+		.appendTo($dialog);
+
+	var $dialogSurface = $('<div>')
+		.addClass('mdc-dialog__surface')
+		.appendTo($dialogContainer);
+
+	$('<h2>')
+		.addClass('mdc-dialog__title')
+		.text(_loc('Select Document'))
+		.appendTo($dialogSurface);
+
+	var $dialogContent = $('<div>')
+		.addClass('mdc-dialog__content')
+		.appendTo($dialogSurface);
+
+	var $textField = $('<div>')
+		.addClass('mdc-text-field')
+		.appendTo($dialogContent);
+
+	$('<input>')
+		.addClass('mdc-text-field__input')
+		.attr('id',inputId)
+		.attr('type','text')
+		.appendTo($textField);
+
+	var $textFieldLabel = $('<label>')
+		.attr('for',inputId)
+		.addClass('mdc-floating-label')
+		.text(_loc('Search:'))
+		.appendTo($textField);
+
+	var $textFieldRipple = $('<div>')
+		.addClass('mdc-line-ripple')
+		.appendTo($textField);
+
+	$('<div>')
+		.attr('id',displayId)
+		.addClass('editorSelectDocumentDialogResults')
+		.appendTo($dialogContent);
+
+	var $footer = $('<footer>')
+		.addClass('mdc-dialog__actions')
+		.appendTo($dialogSurface);
+
+	var $button = $('<button>')
+		.addClass('mdc-button mdc-dialog__button')
+		.attr('id',searchButtonId)
+		.text(_loc('Search'))
+		.appendTo($footer);
+
+	var $button2 = $('<button>')
+		.addClass('cancel mdc-button mdc-dialog__button')
+		.text(_loc('Cancel'))
+		.appendTo($footer)
+		.click(function(){
+			mdcDialogComponent.close();
+			$dialog.remove();
+			return false;
+		});
+
+	$('<div>')
+		.addClass('mdc-dialog__scrim')
+		.click(function(){
+			mdcDialogComponent.close();
+			$dialog.remove();
+			return false;
+		})
+		.appendTo($dialog);
+
+	// Attach ripple to button
+	mdc.ripple.MDCRipple.attachTo($button[0]);
+	mdc.ripple.MDCRipple.attachTo($button2[0]);
+
+	// attach textFields 
+	mdc.textField.MDCTextField.attachTo($textField[0]);
+	
+	// attach floating labels
+	mdc.floatingLabel.MDCFloatingLabel.attachTo($textFieldLabel[0]); 
+
+	// attach ripple to text field line
+	mdc.lineRipple.MDCLineRipple.attachTo($textFieldRipple[0]);
+	
+	// Attach mdc component to alert dialog
+	mdcDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);
+	mdcDialogComponent.open();
+	
 	options.searchServer.installSearch({
 		textInput: $('#'+inputId)
 		,searchButton: $('#'+searchButtonId)
@@ -343,8 +408,8 @@ function searchForDocumentId(options_){
 		return function(e){
 			options.onSelected(docId);
 			shouldReset = false;
-			var $dialog = $('#'+dialogId);
-			$dialog.dialog('close');
+			mdcDialogComponent.close();
+			$dialog.remove();
 			return false;
 		};
 	};
@@ -408,13 +473,11 @@ function selectLayersDialog(opts_){
 
 	$('<h2>')
 		.addClass('mdc-dialog__title')
-		.attr('id', 'my-dialog--title')
 		.text(_loc('Select Layers'))
 		.appendTo($dialogSurface);
 
-	var $container = $('<div>')
+	$('<div>')
 		.addClass('editorSelectLayerContent mdc-dialog__content')
-		.attr('id','my-dialog-content')
 		.appendTo($dialogSurface);
 	
 	var $footer = $('<footer>')
@@ -443,6 +506,11 @@ function selectLayersDialog(opts_){
 	
 	$('<div>')
 		.addClass('mdc-dialog__scrim')
+		.click(function(){
+			mdcDialogComponent.close();
+			$dialog.remove();
+			return false;
+		})
 		.appendTo($dialog);
 
 	// Attach mdc component to alert dialog
