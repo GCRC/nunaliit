@@ -253,6 +253,22 @@ function _formSingleField(r,completeSelectors,options){
 	};
 };
 
+function _attachMDCComponents(){
+	// attach textFields 
+	var text_fields = document.getElementsByClassName('mdc-text-field');
+	var i, e;
+	for(i = 0, e = text_fields.length; i < e; i++){
+		mdc.textField.MDCTextField.attachTo(text_fields[i]);
+	};
+	
+	// attach floating labels
+	var floating_labels = document.getElementsByClassName('mdc-floating-label');
+	var i, e;
+	for(i = 0, e = floating_labels.length; i < e; i++){
+		mdc.floatingLabel.MDCFloatingLabel.attachTo(floating_labels[i]); 
+	};
+};
+
 function _formField() {
 	// The arguments to handlebars block expression functions are:
 	// ([obj,]options)
@@ -319,8 +335,6 @@ function _formField() {
 	};
 	
 	var r = [];
-	
-	r.push('<div class="n2schema_field_wrapper">');
 
 	if( opts.custom ){
 		r.push('<div class="n2schema_field_container n2schema_field_custom"');
@@ -390,7 +404,7 @@ function _formField() {
 
 	} else if( opts.geometry ) {
 		var attr = completeSelectors.encodeForDomAttribute();
-		r.push('<textarea class="n2schema_field_geometry" nunaliit-selector="'+attr+'"');
+		r.push('<textarea id="geometryTextarea" class="n2schema_field_geometry mdc-text-field__input" nunaliit-selector="'+attr+'"');
 		r.push('></textarea>');
 		
 	} else {
@@ -452,6 +466,8 @@ function _formField() {
 		
 		return langs;
 	};
+
+	_attachMDCComponents();
 };
 
 function _inputField() {
@@ -1820,6 +1836,7 @@ var Form = $n2.Class({
 				});
 			};
 		};
+		_attachMDCComponents();
 	},
 
 	_setHtml: function(obj) {

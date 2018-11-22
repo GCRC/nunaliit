@@ -1,3 +1,32 @@
+/* MDC Theme Colour Palette */
+:root {
+    --mdc-theme-primary: #1565c0;
+    --mdc-theme-secondary: #757575;/*
+    --mdc-theme-background: #fff;
+    --mdc-theme-surface: #fff;
+    --mdc-theme-error: #b00020;
+    --mdc-theme-on-primary: #fff;
+    --mdc-theme-on-secondary: #fff;
+    --mdc-theme-on-surface: #000;
+    --mdc-theme-on-error: #fff;
+    --mdc-theme-text-primary-on-background: rgba(0,0,0,0.87);
+    --mdc-theme-text-secondary-on-background: rgba(0,0,0,0.54);
+    --mdc-theme-text-hint-on-background: rgba(0,0,0,0.38);
+    --mdc-theme-text-disabled-on-background: rgba(0,0,0,0.38);
+    --mdc-theme-text-icon-on-background: rgba(0,0,0,0.38);
+    --mdc-theme-text-primary-on-light: rgba(0,0,0,0.87);
+    --mdc-theme-text-secondary-on-light: rgba(0,0,0,0.54);
+    --mdc-theme-text-hint-on-light: rgba(0,0,0,0.38);
+    --mdc-theme-text-disabled-on-light: rgba(0,0,0,0.38);
+    --mdc-theme-text-icon-on-light: rgba(0,0,0,0.38);
+    --mdc-theme-text-primary-on-dark: #fff;
+    --mdc-theme-text-secondary-on-dark: rgba(255,255,255,0.7);
+    --mdc-theme-text-hint-on-dark: rgba(255,255,255,0.5);
+    --mdc-theme-text-disabled-on-dark: rgba(255,255,255,0.5);
+    --mdc-theme-text-icon-on-dark: rgba(255,255,255,0.5); */
+}
+
+
 /* Overriding material-components-web.min.css styling */
 
 .mdc-dialog {
@@ -16,7 +45,18 @@ input[type="text"].mdc-text-field__input {
     border-color: rgba(0,0,0,0);
 }
 
+/* required to accomodate question mark help buttons */
+.n2schema_editorEvent .mdc-text-field {
+    max-width: 90%;
+    min-width: 90%;
+    margin: 5px 16px;
+}
+
 .mdc-text-field::before, .mdc-text-field::after {
     width: 100%;
     height: 100%;
+}
+
+.mdc-text-field--focused:not(.mdc-text-field--disabled) .mdc-floating-label {
+	color: #1565c0;
 }

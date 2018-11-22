@@ -1264,8 +1264,9 @@ public class SchemaAttribute {
 
 				pw.println("<div class=\"nunaliit_geom\">");
 
-				pw.println("\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-				pw.println("\t<div class=\"value\">{{#:field}}nunaliit_geom,geometry{{/:field}}</div>");
+				pw.println("\t<div class=\"value mdc-text-field mdc-text-field--textarea\">");
+				pw.println("\t\t<label for=\"geometryTextarea\" class=\"label mdc-floating-label"+labelLocalizeClass+"\">"+label+"</label>");
+				pw.println("\t{{#:field}}nunaliit_geom,geometry{{/:field}}</div>");
 				pw.println("\t<div class=\"end\"></div>");
 				
 				pw.println("</div>");
