@@ -559,12 +559,19 @@ CreateDocument widget
 .ui-accordion .ui-accordion-header .ui-icon {
 	left: 12px;
 }
+
 .olkitSearchMod2_0, .olkitSearchMod2_1 {
 	background-color: #fff;
 	padding: 10px;
 	-moz-box-shadow: 1px 1px 3px #e1dfdf;
 	-webkit-box-shadow: 1px 1px 3px #e1dfdf;
 	box-shadow: 1px 1px 3px #e1dfdf;
+}
+.editorSelectDocumentDialog .olkitSearchMod2_0,
+.editorSelectDocumentDialog .olkitSearchMod2_1 {
+	-moz-box-shadow: none;
+	-webkit-box-shadow: none;
+	box-shadow: none;
 }
 
 .editorAttachments,

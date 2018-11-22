@@ -248,7 +248,7 @@ function searchForDocumentId(options_){
 		.attr('aria-modal','true')
 		.attr('aria-labelledby','my-dialog-title')
 		.attr('aria-describedby','my-dialog-content')
-		.addClass('editorSelectDocumentDialog mdc-dialog')
+		.addClass('editorSelectDocumentDialog mdc-dialog mdc-dialog--scrollable')
 		.appendTo($('body'));
 
 	var $dialogContainer = $('<div>')
@@ -269,7 +269,7 @@ function searchForDocumentId(options_){
 		.appendTo($dialogSurface);
 
 	var $textField = $('<div>')
-		.addClass('mdc-text-field')
+		.addClass('mdc-text-field mdc-text-field--outlined')
 		.appendTo($dialogContent);
 
 	$('<input>')
@@ -284,8 +284,16 @@ function searchForDocumentId(options_){
 		.text(_loc('Search:'))
 		.appendTo($textField);
 
-	var $textFieldRipple = $('<div>')
-		.addClass('mdc-line-ripple')
+	var $textFieldOutline = $('<div>')
+		.addClass('mdc-notched-outline')
+		.appendTo($textField);
+
+
+	$('<svg><path class="mdc-notched-outline__path"/></svg>')
+		.appendTo($textFieldOutline);
+	
+	$('<div>')
+		.addClass('mdc-notched-outline__idle')
 		.appendTo($textField);
 
 	$('<div>')
@@ -297,13 +305,13 @@ function searchForDocumentId(options_){
 		.addClass('mdc-dialog__actions')
 		.appendTo($dialogSurface);
 
-	var $button = $('<button>')
+	var $searchButton = $('<button>')
 		.addClass('mdc-button mdc-dialog__button')
 		.attr('id',searchButtonId)
 		.text(_loc('Search'))
 		.appendTo($footer);
 
-	var $button2 = $('<button>')
+	var $cancelButton = $('<button>')
 		.addClass('cancel mdc-button mdc-dialog__button')
 		.text(_loc('Cancel'))
 		.appendTo($footer)
@@ -323,8 +331,8 @@ function searchForDocumentId(options_){
 		.appendTo($dialog);
 
 	// Attach ripple to button
-	mdc.ripple.MDCRipple.attachTo($button[0]);
-	mdc.ripple.MDCRipple.attachTo($button2[0]);
+	mdc.ripple.MDCRipple.attachTo($searchButton[0]);
+	mdc.ripple.MDCRipple.attachTo($cancelButton[0]);
 
 	// attach textFields 
 	mdc.textField.MDCTextField.attachTo($textField[0]);
@@ -333,7 +341,7 @@ function searchForDocumentId(options_){
 	mdc.floatingLabel.MDCFloatingLabel.attachTo($textFieldLabel[0]); 
 
 	// attach ripple to text field line
-	mdc.lineRipple.MDCLineRipple.attachTo($textFieldRipple[0]);
+	//mdc.lineRipple.MDCLineRipple.attachTo($textFieldRipple[0]);
 	
 	// Attach mdc component to alert dialog
 	mdcDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);
