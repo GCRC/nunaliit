@@ -45,5 +45,11 @@
 		<artifactId>nunaliit2-utils</artifactId>
 		<version>${project.version}</version>
 	</dependency>
+	<!-- https://mvnrepository.com/artifact/org.apache.pdfbox/pdfbox -->
+	<dependency>
+		<groupId>org.apache.pdfbox</groupId>
+		<artifactId>pdfbox</artifactId>
+		<version>2.0.12</version>
+	</dependency>
   </dependencies>
 </project>

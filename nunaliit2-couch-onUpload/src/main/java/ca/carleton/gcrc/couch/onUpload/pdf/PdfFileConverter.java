@@ -17,14 +17,15 @@ import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionPlugin;
 import ca.carleton.gcrc.couch.utils.CouchNunaliitUtils;
 import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionRequest;
 import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConverter;
-import ca.carleton.gcrc.olkit.multimedia.converter.impl.MultimediaConverterImpl;
+
+import ca.carleton.gcrc.olkit.multimedia.converter.impl.MultimediaConverterImplForEmbededDecoder;
 import ca.carleton.gcrc.olkit.multimedia.file.SystemFile;
 
 public class PdfFileConverter implements FileConversionPlugin {
 
 	protected Logger logger = LoggerFactory.getLogger( this.getClass() );
 
-	private MultimediaConverter mmConverter = new MultimediaConverterImpl();
+	private MultimediaConverter mmConverter = new MultimediaConverterImplForEmbededDecoder();
 	private String atlasName = null;
 
 	public PdfFileConverter(){
