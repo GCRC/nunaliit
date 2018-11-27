@@ -9,7 +9,7 @@ public class ApachePDFBoxTest extends TestCase{
 	
 	public void testGetPdfInfo() throws Exception {
 		
-		ApachePDFBoxProcessor pdfbox = ApachePDFBoxProcessorDefault.getProcessor();
+		ApachePDFBoxProcessor pdfbox = ApachePDFBoxFactory.getProcessor();
 		File file = TestConfiguration.getTestFile("adobe.pdf");
 		PdfInfo info = pdfbox.getPdfInfo(file);
 		if( info.file != file) {
@@ -24,7 +24,7 @@ public class ApachePDFBoxTest extends TestCase{
 	}
 	
 	public void testCreatePdfThumbnail() throws Exception {
-		ApachePDFBoxProcessor pdfbox = ApachePDFBoxProcessorDefault.getProcessor();
+		ApachePDFBoxProcessor pdfbox = ApachePDFBoxFactory.getProcessor();
 		File file = TestConfiguration.getTestFile("adobe.pdf");
 		File outputFile = new File(file.getParentFile(), file.getName()+"_thumb.jpeg");
 		

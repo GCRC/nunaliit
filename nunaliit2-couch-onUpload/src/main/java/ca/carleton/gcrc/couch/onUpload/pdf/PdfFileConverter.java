@@ -15,6 +15,7 @@ import ca.carleton.gcrc.couch.onUpload.conversion.OriginalFileDescriptor;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionMetaData;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionPlugin;
 import ca.carleton.gcrc.couch.utils.CouchNunaliitUtils;
+import ca.carleton.gcrc.olkit.multimedia.apachePDFBox.ApachePDFBoxFactory;
 import ca.carleton.gcrc.olkit.multimedia.apachePDFBox.ApachePDFBoxProcessor;
 import ca.carleton.gcrc.olkit.multimedia.apachePDFBox.ApachePDFBoxProcessorDefault;
 import ca.carleton.gcrc.olkit.multimedia.apachePDFBox.PdfInfo;
@@ -136,7 +137,7 @@ public class PdfFileConverter implements FileConversionPlugin {
 		}
 
 		// Get information about PDF
-		ApachePDFBoxProcessor pdfbox = ApachePDFBoxProcessorDefault.getProcessor();
+		ApachePDFBoxProcessor pdfbox = ApachePDFBoxFactory.getProcessor();
 		PdfInfo pdfInfo = pdfbox.getPdfInfo( inFile );
 		if (null == pdfInfo) {
 			throw new Exception ("Error in producing the pdfinfo object");

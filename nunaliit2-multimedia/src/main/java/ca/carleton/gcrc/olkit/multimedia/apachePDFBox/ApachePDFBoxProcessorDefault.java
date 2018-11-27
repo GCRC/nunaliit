@@ -27,25 +27,9 @@ public class ApachePDFBoxProcessorDefault implements ApachePDFBoxProcessor {
 	
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
-	public static ApachePDFBoxProcessor apachePdfBoxProcessor= null;
+	public ApachePDFBoxProcessorDefault (){
+	};
 
-	public ApachePDFBoxProcessorDefault (){};
-	
-	public static ApachePDFBoxProcessor getProcessor() {
-		if( null == apachePdfBoxProcessor ) {
-			try {
-				apachePdfBoxProcessor = ApachePDFBoxProcessorDefault.class.newInstance();
-			} catch (InstantiationException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalAccessException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		} 
-		return apachePdfBoxProcessor;
-		
-	}
 	@Override
 	public PdfInfo getPdfInfo(File pdfFile) throws Exception {
 		PdfInfo pdfinfo = new PdfInfo();
