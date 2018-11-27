@@ -683,14 +683,14 @@ CreateDocument widget
 /*END - Override Styles for Jquery UI styling*/
 
 /* Side Bar Labels */
-.nunaliit_atlas .value {
-	margin: 5px 0;
+.nunaliit_atlas .n2_documentDisplay .value {
+	margin: 5px 16px;
 }
-.nunaliit_atlas .label {
-	margin: 5px 0;
+.nunaliit_atlas .n2_documentDisplay .label {
+	margin: 5px 16px;
 	font-size: 1em/1.2em;	
 }
-.nunaliit_atlas span.label {
+.nunaliit_atlas .n2_documentDisplay span.label {
 	display: inline-block;
 }
 
