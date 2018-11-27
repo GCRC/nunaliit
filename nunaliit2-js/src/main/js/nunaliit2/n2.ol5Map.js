@@ -36,8 +36,11 @@ POSSIBILITY OF SUCH DAMAGE.
 
 if( typeof(ol) !== 'undefined' && ol.Map) {
 	
-	ol.N2Map = $n2.Construct('N2Map',ol.Map, {
-		 val1 : 'val valriable'
+	ol.N2Map = $n2.Construct('N2Map', ol.Map, {
+		initialize: function() {
+			console.log('Sometimes, this is all I cared');
+		}
+		 ,val1 : 'val valriable'
 		,getInfo : function() {
 			
 			console.log('Successfully Instantiate: '+ this._classname )

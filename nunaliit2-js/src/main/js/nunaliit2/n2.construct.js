@@ -33,30 +33,36 @@ POSSIBILITY OF SUCH DAMAGE.
 ;
 (function($n2) {
 	"use strict";
+	
+	/**
+	 The single inheritance construct function
 
-	// The single inheritance construct function
+	 Class definition.
+	 Usage:
+	 var myClass = $n2.Construct(<classname string, optional>, <superclass
+	 class, optional>*, {
+	 var1: 1
+	 ,var2: 2
+	 ,initialize: function(v){
+	 this.var2 = v;
+	 this.report();
+	 }
 
-	// Class definition.
-	// Usage:
-	// var myClass = $n2.Construct(<classname string, optional>, <superclass
-	// class, optional>*, {
-	// var1: 1
-	// ,var2: 2
-	// ,initialize: function(v){
-	// this.var2 = v;
-	// this.report();
-	// }
-	// ,report: function(){
-	// alert('var1: '+this.var1+' var2:'+this.var2);
-	// }
-	// });
-	//
-	// var inst = new myClass(5);
+	 var inst = new myClass(5);
+ 	*/	
+	/**
+	 * If constructor: function() provided, invoke the parent's constructor yourselves 
+	 * (inside the constructor).
+	 * Or you can just provide initialize : function(), in which case, the parent invoking 
+	 * is taken care by us. The (super: function) will always be call 
+	 * at very end of the initiation of the subclass. 
+	 */
 	$n2.Construct = function() {
 		// This is a copy of this class' prototype
 		var proto = {};
 		var vars = {};
 		var className = null;
+		var isContructorProvided = false;
 
 		// This function is the class. It also represents the constructor
 		// that is called when a new instance of the class is created.
@@ -85,11 +91,16 @@ POSSIBILITY OF SUCH DAMAGE.
 				this._classname = className;
 			}
 			;
-
+			if ( false == isContructorProvided) {
+				this.initialize.apply(this, arguments);
+				
 			// Call parent's constructor function
-			childClass.base(this, 'constructor', options)
-			this.initialize.apply(this, arguments);
-
+				childClass.base(this, 'constructor', options)
+				
+			} else {
+				this.customConstructor.apply(this, arguments);
+				
+			}
 			//
 		};
 
@@ -117,6 +128,8 @@ POSSIBILITY OF SUCH DAMAGE.
 			} else if (typeof (arguments[i]) === 'function') {
 
 				if (singleInherit) {
+					
+					singleInherit = false;
 					/** Constructor * */
 					function tempCtor() {
 					}
@@ -124,7 +137,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					childClass.superClass_ = arguments[i].prototype;
 					proto = new tempCtor();
 
-					singleInherit = false;
+					
 					// Extend variables from superclass
 					if (arguments[i]._vars) {
 						$n2.extend(vars, arguments[i]._vars);
@@ -140,6 +153,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				for ( var key in def) {
 					if (typeof (def[key]) === 'function') {
 						proto[key] = def[key];
+						isContructorProvided |= (key === "constructor")
 					} else {
 						vars[key] = def[key];
 					}
@@ -165,8 +179,10 @@ POSSIBILITY OF SUCH DAMAGE.
 		};
 
 		childClass.prototype = proto;
+		childClass.prototype.customConstructor = proto.constructor || function(){};
 		childClass._vars = vars;
 		childClass.prototype.constructor = childClass;
+		
 
 		return childClass;
 	};

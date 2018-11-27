@@ -33,36 +33,6 @@ POSSIBILITY OF SUCH DAMAGE.
 ;(function($n2){
 "use strict";
 
-
-if( typeof(ol) !== 'undefined' && ol.Map) {
-	
-	ol.N2Map = $n2.Construct('N2Map',ol.Map, {
-		 val1 : 'val valriable'
-		,getInfo : function() {
-			
-			console.log('Successfully Instantiate: '+ this._classname )
-			console.log('Successfully Inherit Var: ' + this.val1)
-		}
-	  
-	// The concept here is to find a rectangle of the same dimension as in the previous
-    // projection, however oriented in the new projection. This does not ensure that all
-    // geometries visible in the previous projection will remain in the new one. However,
-    // it keeps the same center of view and similar scale.
-/*    ,_reprojectExtent: function(oldExtent, sourceProj, targetProj){
-        */
-	/** 
-         * APIMethod: setBaseLayer
-         * Allows user to specify one of the currently-loaded layers as the Map's
-         *     new base layer.
-         * 
-         * Parameters:
-         * newBaseLayer - {<OpenLayers.Layer>}
-         *//*
-        setBaseLayer: function(newBaseLayer) {*/
-    
-    })
-} // ol is defined 
-
 if( typeof(OpenLayers) !== 'undefined' && OpenLayers.Map ) {
 
 OpenLayers.N2Map = OpenLayers.Class(OpenLayers.Map, {
