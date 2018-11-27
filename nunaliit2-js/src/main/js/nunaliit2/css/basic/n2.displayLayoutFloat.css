@@ -1,16 +1,4 @@
 
-.n2_documentDisplay .label, .n2_documentForm .label {
-	font-weight: bold;
-}
-
-.n2_documentDisplay .n2_layoutFloat div.label, .n2_documentForm .n2_layoutFloat div.label {
-	padding: 0px 16px;
-}
-
-.n2_documentDisplay .n2_layoutFloat div.value, .n2_documentForm .n2_layoutFloat div.value {
-	padding: 0px 16px;
-}
-
 .n2_documentForm .n2_layoutFloat input {
 	width: 90%;
 }
@@ -23,6 +11,5 @@
 }
 
 .n2_documentForm .n2_layoutFloat textarea {
-	width: 90%;
 	height: 200px;
 }
