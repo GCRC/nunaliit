@@ -195,6 +195,39 @@ function _localizeString() {
 	};
 };
 
+function _attachMDCComponents(){
+	// attach textFields 
+	var text_fields = document.getElementsByClassName('mdc-text-field');
+	var i, e;
+	for(i = 0, e = text_fields.length; i < e; i++){
+		try {
+		mdc.textField.MDCTextField.attachTo(text_fields[i]);
+		} catch(error) {
+			$n2.log("Unable to attach text field material design component: " + error);
+		}
+	}
+	
+	// attach floating labels
+	var floating_labels = document.getElementsByClassName('mdc-floating-label');
+	for(i = 0, e = floating_labels.length; i < e; i++){
+		try {
+		mdc.floatingLabel.MDCFloatingLabel.attachTo(floating_labels[i]); 
+		} catch(error) {
+			$n2.log("Unable to attach floating label material design component: " + error);
+		}
+	}
+
+	// attach switches
+	var switches = document.getElementsByClassName('mdc-switch');
+	for(i = 0, e = switches.length; i < e; i++){
+		try {
+			new mdc.switchControl.MDCSwitch.attachTo(switches[i]);
+		} catch(error) {
+			$n2.log("Unable to attach switch material design component: " + error);
+		}
+	}
+};
+
 function _formSingleField(r,completeSelectors,options){
 	
 	// option: textarea
@@ -253,21 +286,6 @@ function _formSingleField(r,completeSelectors,options){
 	};
 };
 
-function _attachMDCComponents(){
-	// attach textFields 
-	var text_fields = document.getElementsByClassName('mdc-text-field');
-	var i, e;
-	for(i = 0, e = text_fields.length; i < e; i++){
-		mdc.textField.MDCTextField.attachTo(text_fields[i]);
-	};
-	
-	// attach floating labels
-	var floating_labels = document.getElementsByClassName('mdc-floating-label');
-	var i, e;
-	for(i = 0, e = floating_labels.length; i < e; i++){
-		mdc.floatingLabel.MDCFloatingLabel.attachTo(floating_labels[i]); 
-	};
-};
 
 function _formField() {
 	// The arguments to handlebars block expression functions are:
@@ -335,6 +353,7 @@ function _formField() {
 	};
 	
 	var r = [];
+	r.push('<div class="n2schema_field_wrapper">');
 
 	if( opts.custom ){
 		r.push('<div class="n2schema_field_container n2schema_field_custom"');
@@ -466,8 +485,6 @@ function _formField() {
 		
 		return langs;
 	};
-
-	_attachMDCComponents();
 };
 
 function _inputField() {
