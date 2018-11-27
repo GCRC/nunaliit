@@ -23,17 +23,11 @@ import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageInfo;
 import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagick;
 import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagickInfo;
 import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagickProcessor;
+import ca.carleton.gcrc.olkit.multimedia.utils.MultimediaConfiguration;
 
 public class PdfFileConverter implements FileConversionPlugin {
 
 	protected Logger logger = LoggerFactory.getLogger( this.getClass() );
-
-	static public int IMAGE_MAX_WIDTH = 1000;
-	static public int IMAGE_MAX_HEIGHT = 1000;
-	static public int IMAGE_THUMB_HEIGHT = 350;
-	static public int IMAGE_THUMB_WIDTH = 350;
-	static public int VIDEO_THUMB_HEIGHT = 240;
-	static public int VIDEO_THUMB_WIDTH = 320;
 
 	private String atlasName = null;
 
@@ -166,7 +160,12 @@ public class PdfFileConverter implements FileConversionPlugin {
 
 			thumbnailFile = new File(parentDir, name);
 
-			pdfbox.createPdfThumbnail(pdfInfo, thumbnailFile, IMAGE_THUMB_WIDTH, IMAGE_THUMB_HEIGHT);
+			pdfbox.createPdfThumbnail(
+					pdfInfo, 
+					thumbnailFile, 
+					MultimediaConfiguration.IMAGE_THUMB_WIDTH, 
+					MultimediaConfiguration.IMAGE_THUMB_HEIGHT
+				);
 
 			// Get information about thumbnail
 			ImageMagickInfo imInfo = ImageMagick.getInfo();
