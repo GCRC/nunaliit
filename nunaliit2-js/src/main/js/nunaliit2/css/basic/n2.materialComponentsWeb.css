@@ -46,7 +46,8 @@ input[type="text"].mdc-text-field__input {
 }
 
 /* required to accomodate question mark help buttons */
-.n2schema_editorEvent .mdc-text-field {
+.n2schema_editorEvent .mdc-text-field,
+.n2schema_editorEvent .mdc-switch {
     max-width: 90%;
     min-width: 90%;
     margin: 5px 16px;
@@ -59,4 +60,16 @@ input[type="text"].mdc-text-field__input {
 
 .mdc-text-field--focused:not(.mdc-text-field--disabled) .mdc-floating-label {
 	color: #1565c0;
+}
+
+.n2_documentForm .n2_layoutFloat .mdc-switch {
+    display: inline-flex;
+}
+
+.n2_documentForm .n2_layoutFloat .mdc-switch input[type="checkbox"] {
+    width: 100%;
+}
+
+.n2_documentForm .n2_layoutFloat .mdc-switch label {
+    padding-left: 16px;
 }
