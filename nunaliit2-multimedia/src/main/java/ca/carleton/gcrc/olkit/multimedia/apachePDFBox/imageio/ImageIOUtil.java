@@ -32,8 +32,8 @@ import javax.imageio.metadata.IIOInvalidTreeException;
 import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.metadata.IIOMetadataNode;
 import javax.imageio.stream.ImageOutputStream;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.NodeList;
 
 /**
@@ -41,10 +41,7 @@ import org.w3c.dom.NodeList;
  */
 public final class ImageIOUtil
 {
-    /**
-     * Log instance
-     */
-    private static final Log LOG = LogFactory.getLog(ImageIOUtil.class);
+	final static protected Logger logger = LoggerFactory.getLogger(ImageIOUtil.class);
 
     private ImageIOUtil()
     {
@@ -245,7 +242,7 @@ public final class ImageIOUtil
             }
             if (writer == null)
             {
-                LOG.error("No ImageWriter found for '" + formatName + "' format");
+                logger.error("No ImageWriter found for '" + formatName + "' format");
                 StringBuilder sb = new StringBuilder();
                 String[] writerFormatNames = ImageIO.getWriterFormatNames();
                 for (String fmt : writerFormatNames)
@@ -253,7 +250,7 @@ public final class ImageIOUtil
                     sb.append(fmt);
                     sb.append(' ');
                 }
-                LOG.error("Supported formats: " + sb);
+                logger.error("Supported formats: " + sb);
                 return false;
             }
 

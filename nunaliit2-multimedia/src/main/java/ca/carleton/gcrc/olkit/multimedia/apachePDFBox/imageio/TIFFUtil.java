@@ -16,8 +16,8 @@
  */
 package ca.carleton.gcrc.olkit.multimedia.apachePDFBox.imageio;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageWriteParam;
 import javax.imageio.metadata.IIOInvalidTreeException;
@@ -34,7 +34,7 @@ import java.awt.image.BufferedImage;
  */
 final class TIFFUtil
 {
-    private static final Log LOG = LogFactory.getLog(TIFFUtil.class);
+	final static protected Logger logger = LoggerFactory.getLogger(TIFFUtil.class);
 
     private TIFFUtil()
     {
@@ -80,7 +80,7 @@ final class TIFFUtil
         String metaDataFormat = metadata.getNativeMetadataFormatName();
         if (metaDataFormat == null)
         {
-            LOG.debug("TIFF image writer doesn't support any data format");
+            logger.debug("TIFF image writer doesn't support any data format");
             return;
         }
 
