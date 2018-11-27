@@ -423,8 +423,13 @@ function _formField() {
 
 	} else if( opts.geometry ) {
 		var attr = completeSelectors.encodeForDomAttribute();
+		r.push('<div class="n2schema_field_container n2schema_field_container_textarea mdc-text-field mdc-text-field--textarea">');
+		if( opts.label ){
+			r.push('<label for="geometryTextarea" class="label mdc-floating-label n2s_localize">'+opts.label+'</label>');
+		}
 		r.push('<textarea id="geometryTextarea" class="n2schema_field_geometry mdc-text-field__input" nunaliit-selector="'+attr+'"');
 		r.push('></textarea>');
+		r.push('</div>');
 		
 	} else {
 		r.push('<div class="n2schema_field_container');
