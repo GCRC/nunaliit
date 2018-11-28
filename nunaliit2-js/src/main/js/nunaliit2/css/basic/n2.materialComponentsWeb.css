@@ -50,7 +50,7 @@ input[type="text"].mdc-text-field__input {
 .n2schema_editorEvent .mdc-switch {
     max-width: 90%;
     min-width: 90%;
-    margin: 5px 16px;
+    margin: 16px 16px;
 }
 
 .mdc-text-field::before, .mdc-text-field::after {
