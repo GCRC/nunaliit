@@ -2,7 +2,7 @@ language: java
 jdk:
 - openjdk8
 before_deploy:
-  - git tag LATEST
+  - export TRAVIS_TAG="Latest Build"
 deploy:
   provider: releases
   skip_cleanup: true
