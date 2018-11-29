@@ -1086,10 +1086,43 @@ public class SchemaAttribute {
 			if( "title".equals(type) ){
 				pw.println("<div class=\"title\">");
 
-				pw.println("\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-				pw.println("\t<div class=\"end\"></div>");
+				pw.println("\t<div class=\"label mdc-typography--headline6"+labelLocalizeClass+"\">"+label+"</div>");
 				
 				pw.println("</div>");
+
+ 			} else if( isTextarea() ){
+				if( null != id ){
+					String fieldType = "";
+					fieldType += ",id="+encodeFieldParameter(id);
+					fieldType += ",textarea";
+
+					if( "localized".equals(type) ){
+						fieldType = ",localized";
+					} else if( "custom".equals(type) ){
+						fieldType = ",custom="+encodeFieldParameter(customType);
+					}
+					if( isWikiTransform() ){
+						fieldType += ",wikiTransform";
+					}
+
+					if( null != placeholder ){
+						fieldType += ",placeholder="+encodeFieldParameter(placeholder);
+					}
+
+					if( null != label ){
+						fieldType += ",label="+encodeFieldParameter(label);
+					}
+
+					pw.println("{{#"+schemaStructure+"}}");
+					pw.println("<div class=\""+schemaClass+"_"+id+"\">");
+
+					pw.println("\t<div class=\"value\">");
+					pw.println("\t\t{{#:field}}"+id+fieldType+"{{/:field}}");
+					pw.println("\t</div>");
+
+					pw.println("</div>");
+					pw.println("{{/"+schemaStructure+"}}");
+				}
 
 			} else if( "string".equals(type) 
 			 || "localized".equals(type) 
@@ -1099,20 +1132,22 @@ public class SchemaAttribute {
 			 || "date".equals(type) ){
 				if( null != id ){
 					String fieldType = "";
-					if( "localized".equals(type) ){
-						fieldType = ",localized";
-					} else if( "date".equals(type) ){
-						fieldType = ",date";
-					} else if( "reference".equals(type) ){
-						fieldType = ",reference";
-					} else if( "custom".equals(type) ){
-						fieldType = ",custom="+encodeFieldParameter(customType);
-					} else if( "checkbox".equals(type) ){
-						fieldType = ",checkbox";
+					fieldType += ",id="+encodeFieldParameter(id);
+
+					if( null != label ){
+						fieldType += ",label="+encodeFieldParameter(label);
 					}
 
-					if( isTextarea() ){
-						fieldType += ",textarea";
+					if( "localized".equals(type) ){
+						fieldType += ",localized";
+					} else if( "date".equals(type) ){
+						fieldType += ",date";
+					} else if( "reference".equals(type) ){
+						fieldType += ",reference";
+					} else if( "custom".equals(type) ){
+						fieldType += ",custom="+encodeFieldParameter(customType);
+					} else if( "checkbox".equals(type) ){
+						fieldType += ",checkbox";
 					}
 
 					if( isWikiTransform() ){
@@ -1125,21 +1160,17 @@ public class SchemaAttribute {
 
 					if( null != searchFunction ){
 						fieldType += ",search="+encodeFieldParameter(searchFunction);
-					}
+					}					
 					
-					pw.println("{{#"+schemaStructure+"}}");
-
-					pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
-
-					pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-					pw.println("\t\t<div class=\"value\">{{#:field}}"+id+fieldType+"{{/:field}}</div>");
-					pw.println("\t\t<div class=\"end\"></div>");
-					
-					pw.println("\t</div>");
-					
-					
-					pw.println("{{/"+schemaStructure+"}}");
-				}
+						pw.println("{{#"+schemaStructure+"}}");
+						pw.println("<div class=\""+schemaClass+"_"+id+"\">");
+						pw.println("\t<div class=\"value\">");
+						pw.println("\t\t{{#:field}}"+id+fieldType+"{{/:field}}");
+						pw.println("\t</div>");
+						pw.println("</div>");
+						
+						pw.println("{{/"+schemaStructure+"}}");
+			 	}
 
 			} else if( "selection".equals(type) ){
 				if( null != id ){

@@ -1,9 +1,14 @@
 
-.n2_documentForm .n2_layoutFloat input {
-	width: 90%;
+.n2_documentDisplay .label {
+	font-weight: bold;
 }
-.n2_documentForm .n2_layoutFloat input.n2schema_type_date {
-	width: 80%;
+
+.n2_documentDisplay .n2_layoutFloat div.label {
+	margin-top: 16px;
+} 
+
+.n2_documentForm .n2_layoutFloat div.value {
+	margin: 16px 0px;
 }
 
 .n2_documentForm .n2_layoutFloat input[type="checkbox"] {

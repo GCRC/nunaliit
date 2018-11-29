@@ -37,20 +37,12 @@
 	margin: 3px;
 }
 
-input[type="text"].mdc-text-field__input {
-	padding: 20px 12px 6px;
+.mdc-card {
+    padding: 0px 16px;
 }
 
 .mdc-dialog.mdc-dialog--scrollable .mdc-dialog__title, .mdc-dialog.mdc-dialog--scrollable .mdc-dialog__actions {
     border-color: rgba(0,0,0,0);
-}
-
-/* required to accomodate question mark help buttons */
-.n2schema_editorEvent .mdc-text-field,
-.n2schema_editorEvent .mdc-switch {
-    max-width: 90%;
-    min-width: 90%;
-    margin: 16px 16px;
 }
 
 .mdc-text-field::before, .mdc-text-field::after {

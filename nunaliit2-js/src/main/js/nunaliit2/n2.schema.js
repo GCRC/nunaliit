@@ -217,6 +217,16 @@ function _attachMDCComponents(){
 		}
 	}
 
+	// attach notched outlines
+	var notched_outlines = document.getElementsByClassName('mdc-notched-outline');
+	for(i = 0, e = notched_outlines.length; i < e; i++){
+		try {
+			new mdc.notchedOutline.MDCNotchedOutline.attachTo(notched_outlines[i]); 
+		} catch(error) {
+			$n2.log("Unable to attach notched outline material design component: " + error);
+		}
+	}
+
 	// attach switches
 	var switches = document.getElementsByClassName('mdc-switch');
 	for(i = 0, e = switches.length; i < e; i++){
@@ -229,29 +239,43 @@ function _attachMDCComponents(){
 };
 
 function _formSingleField(r,completeSelectors,options){
+	var idValue, labelValue;
+	var labelLocalizeClass = " n2s_localize";
 	
-	// option: textarea
+	if( options.id && typeof options.id[0] === 'string' ){
+		idValue = options.id[0];
+	}
+
+	if( options.label && typeof options.label[0] === 'string' ){
+		labelValue = options.label[0];
+
+		if( idValue === labelValue ){
+			labelLocalizeClass = "";
+		}
+	}
+
+	if( labelValue && idValue ){
+		r.push('<label for="' + idValue + '" class="label mdc-floating-label' + labelLocalizeClass + '">'+ labelValue + '</label>');
+	}
+
 	if( options.textarea ){
 		r.push('<textarea');
+		if( idValue ){
+			r.push(' id="' + idValue + '"');
+		}
+		r.push(' class="n2schema_input mdc-text-field__input');
+
 	} else if( options.checkbox ){
-		r.push('<input type="checkbox"');
+		r.push('<input type="checkbox" class="n2schema_input');
+
 	} else {
 		r.push('<input type="text"');
-	};
-	
-	// placeholder
-	if( options.placeholder 
-	 && typeof options.placeholder[0] === 'string' ){
-		var placeHolderValue = options.placeholder[0];
-		placeHolderValue = placeHolderValue.replace(/&/g, '&amp;');
-		placeHolderValue = placeHolderValue.replace(/"/g, '&quot;');
-		r.push(' placeholder="');
-		r.push( _loc(placeHolderValue) );
-		r.push('"');
-	};
-	
-	r.push(' class="n2schema_input');
-	
+		if( idValue ){
+			r.push(' id="' + idValue + '"');
+		}			
+		r.push(' class="n2schema_input mdc-text-field__input');
+	}
+
 	var selClass = createClassStringFromSelector(completeSelectors);
 	r.push(' '+selClass);
 	
@@ -268,6 +292,17 @@ function _formSingleField(r,completeSelectors,options){
 		r.push(' ' + typeClassStringPrefix + 'localized');
 	
 	};
+
+	// placeholder
+	if( options.placeholder 
+		&& typeof options.placeholder[0] === 'string' ){
+			var placeHolderValue = options.placeholder[0];
+			placeHolderValue = placeHolderValue.replace(/&/g, '&amp;');
+			placeHolderValue = placeHolderValue.replace(/"/g, '&quot;');
+			r.push('" placeholder="');
+			r.push( _loc(placeHolderValue) );
+			//r.push('"');
+		};
 
 	if( options.textarea ){
 		r.push('"></textarea>');
@@ -432,12 +467,16 @@ function _formField() {
 		r.push('</div>');
 		
 	} else {
-		r.push('<div class="n2schema_field_container');
+		r.push('<div class="n2schema_field_container mdc-text-field');
 		if( opts.textarea ){
-			r.push(' n2schema_field_container_textarea');
-		};
-		r.push('">');
-		_formSingleField(r,completeSelectors,opts);
+			r.push(' n2schema_field_container_textarea mdc-text-field--textarea">');
+			_formSingleField(r,completeSelectors,opts);
+		} else {
+				r.push(' mdc-text-field--outlined">');
+				_formSingleField(r,completeSelectors,opts);
+				r.push('<div class="mdc-notched-outline"><svg><path class="mdc-notched-outline__path"/></svg></div>');
+				r.push('<div class="mdc-notched-outline__idle"></div>');
+			};
 		r.push('</div>');
 	};
 
