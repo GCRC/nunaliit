@@ -334,15 +334,12 @@ function searchForDocumentId(options_){
 	mdc.ripple.MDCRipple.attachTo($searchButton[0]);
 	mdc.ripple.MDCRipple.attachTo($cancelButton[0]);
 
-	// attach textFields 
+	// Attach textFields 
 	mdc.textField.MDCTextField.attachTo($textField[0]);
 	
-	// attach floating labels
+	// Attach floating labels
 	mdc.floatingLabel.MDCFloatingLabel.attachTo($textFieldLabel[0]); 
 
-	// attach ripple to text field line
-	//mdc.lineRipple.MDCLineRipple.attachTo($textFieldRipple[0]);
-	
 	// Attach mdc component to alert dialog
 	mdcDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);
 	mdcDialogComponent.open();
@@ -354,7 +351,6 @@ function searchForDocumentId(options_){
 		,onlyFinalResults: true
 	});
 	
-	var $input = $('#'+inputId);
 	$('#'+inputId).focus();
 	
 	function receiveSearchResults(displayData) {
@@ -436,7 +432,6 @@ function selectLayersDialog(opts_){
 	},opts_);
 	
 	var mdcDialogComponent = null;
-	var shouldReset = true;
 	var dialogId = $n2.getUniqueId();
 	var layers = {};
 
@@ -497,6 +492,17 @@ function selectLayersDialog(opts_){
 		.text(_loc('OK')) 
 		.appendTo($footer)
 		.click(function(){
+			var selectedLayers = [];
+			var $diag = $('#'+dialogId);
+			$diag.find('input.layer').each(function(){
+				var $input = $(this);
+				if( $input.is(':checked') ){
+					var layerId = $input.attr('name');
+					selectedLayers.push(layerId);
+				}
+			});
+			opts.cb(selectedLayers);
+
 			mdcDialogComponent.close();
 			$dialog.remove();
 			return false;
@@ -575,13 +581,21 @@ function selectLayersDialog(opts_){
 		// attach checkboxes
 		var mdc_checkboxes = document.getElementsByClassName('mdc-checkbox');
 		for(i = 0, e = mdc_checkboxes.length; i < e; i++){
-			mdc.checkbox.MDCCheckbox.attachTo(mdc_checkboxes[i]);
+			try {
+				mdc.checkbox.MDCCheckbox.attachTo(mdc_checkboxes[i]);
+			} catch(error){
+				$n2.log("Unable to attach material design component to checkbox: " + error);
+			}
 		};
 	
 		// attach ripple to buttons 
 		var mdc_buttons = document.getElementsByClassName('mdc-button');
 		for(i = 0, e = mdc_buttons.length; i < e; i++){
-			mdc.ripple.MDCRipple.attachTo(mdc_buttons[i]);
+			try {
+				mdc.ripple.MDCRipple.attachTo(mdc_buttons[i]);
+			} catch(error){
+				$n2.log("Unable to attach material design component to button ripple: " + error);
+			}
 		};
 	}
 	
@@ -643,24 +657,6 @@ function selectLayersDialog(opts_){
 				opts.showService.printLayerName($label, layerId);
 			};
 		};
-		
-		$diag.find('button.ok')
-			.click(function(){
-				var selectedLayers = [];
-				var $diag = $('#'+dialogId);
-				$diag.find('input.layer').each(function(){
-					var $input = $(this);
-					if( $input.is(':checked') ){
-						var layerId = $input.attr('name');
-						selectedLayers.push(layerId);
-					};
-				});
-				opts.cb(selectedLayers);
-
-				shouldReset = false;
-				$diag.dialog('close');
-			});
-
 		_attachMDCComponents();
 	};
 	
