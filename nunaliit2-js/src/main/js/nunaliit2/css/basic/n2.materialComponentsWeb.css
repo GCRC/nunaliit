@@ -37,8 +37,8 @@
 	margin: 3px;
 }
 
-.mdc-card {
-    padding: 0px 16px;
+.mdc-card div.value {
+    margin: 0px 16px 16px !important;
 }
 
 .mdc-dialog.mdc-dialog--scrollable .mdc-dialog__title, .mdc-dialog.mdc-dialog--scrollable .mdc-dialog__actions {

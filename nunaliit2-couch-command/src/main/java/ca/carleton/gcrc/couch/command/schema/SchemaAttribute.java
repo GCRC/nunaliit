@@ -736,7 +736,7 @@ public class SchemaAttribute {
 			if( "title".equals(type) ) {
 				pw.println("<div class=\"title mdc-typography--headline6\">");
 
-				pw.println("\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t<div class=\"value"+labelLocalizeClass+"\">"+label+"</div>");
 				pw.println("\t<div class=\"end\"></div>");
 				
 				pw.println("</div>");
@@ -1086,7 +1086,7 @@ public class SchemaAttribute {
 			if( "title".equals(type) ){
 				pw.println("<div class=\"title\">");
 
-				pw.println("\t<div class=\"label mdc-typography--headline6"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t<div class=\"value mdc-typography--headline6"+labelLocalizeClass+"\">"+label+"</div>");
 				
 				pw.println("</div>");
 
