@@ -2,7 +2,7 @@ language: java
 jdk:
 - openjdk8
 before_deploy:
-  - export TRAVIS_TAG="Latest Build"
+  - export TRAVIS_TAG="2.2.9-SNAPSHOT"
 deploy:
   provider: releases
   skip_cleanup: true
