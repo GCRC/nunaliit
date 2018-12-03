@@ -122,7 +122,7 @@ var MapCanvas = $n2.Class('MapCanvas',{
 
 	_drawMap: function() {
 		var customMap = new ol.N2Map({
-			target : 'map',
+			target : this.canvasId,
 			layers: [
 	            new ol.layer.Group({
 	                'title': 'Base maps',
