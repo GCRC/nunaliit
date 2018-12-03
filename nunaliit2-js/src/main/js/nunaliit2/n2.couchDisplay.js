@@ -387,7 +387,7 @@ var Display = $n2.Class({
 			.appendTo($elem);
 
 		var $buttons = $('<div>')
-			.addClass('n2Display_buttons mdc-card_action-buttons n2Display_buttons_'+$n2.utils.stringToHtmlId(data._id))
+			.addClass('mdc-card_action-buttons n2Display_buttons n2Display_buttons_'+$n2.utils.stringToHtmlId(data._id))
 			.appendTo($buttonsContainer);
 		
 		var optionClass = 'options';

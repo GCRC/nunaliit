@@ -239,40 +239,26 @@ function _attachMDCComponents(){
 };
 
 function _formSingleField(r,completeSelectors,options){
-	var idValue, labelValue;
 	var labelLocalizeClass = " n2s_localize";
+	var textFieldId = $n2.getUniqueId();
 	
-	if( options.id && typeof options.id[0] === 'string' ){
-		idValue = options.id[0];
-	}
+	if( options.id && options.label ){
 
-	if( options.label && typeof options.label[0] === 'string' ){
-		labelValue = options.label[0];
-
-		if( idValue === labelValue ){
+		if( options.id === options.label ){
 			labelLocalizeClass = "";
 		}
-	}
-
-	if( labelValue && idValue ){
-		r.push('<label for="' + idValue + '" class="label mdc-floating-label' + labelLocalizeClass + '">'+ labelValue + '</label>');
+		r.push('<label for="' + textFieldId + '" class="label mdc-floating-label' + labelLocalizeClass + '">'+ options.label + '</label>');
 	}
 
 	if( options.textarea ){
-		r.push('<textarea');
-		if( idValue ){
-			r.push(' id="' + idValue + '"');
-		}
+		r.push('<textarea id="' + textFieldId + '"');
 		r.push(' class="n2schema_input mdc-text-field__input');
 
 	} else if( options.checkbox ){
 		r.push('<input type="checkbox" class="n2schema_input');
 
 	} else {
-		r.push('<input type="text"');
-		if( idValue ){
-			r.push(' id="' + idValue + '"');
-		}			
+		r.push('<input type="text" id="' + textFieldId + '"');
 		r.push(' class="n2schema_input mdc-text-field__input');
 	}
 
@@ -301,7 +287,6 @@ function _formSingleField(r,completeSelectors,options){
 			placeHolderValue = placeHolderValue.replace(/"/g, '&quot;');
 			r.push('" placeholder="');
 			r.push( _loc(placeHolderValue) );
-			//r.push('"');
 		};
 
 	if( options.textarea ){
@@ -448,6 +433,7 @@ function _formField() {
 		};
 
 	} else if( opts.reference ) {
+		var referenceFieldId = $n2.getUniqueId();
 		var attr = completeSelectors.encodeForDomAttribute();
 		r.push('<span class="n2schema_field_reference" nunaliit-selector="'+attr+'"');
 		if( opts.search 
@@ -457,12 +443,13 @@ function _formField() {
 		r.push('></span>');
 
 	} else if( opts.geometry ) {
+		var geometryTextareaId = $n2.getUniqueId();
 		var attr = completeSelectors.encodeForDomAttribute();
 		r.push('<div class="n2schema_field_container n2schema_field_container_textarea mdc-text-field mdc-text-field--textarea">');
 		if( opts.label ){
-			r.push('<label for="geometryTextarea" class="label mdc-floating-label n2s_localize">'+opts.label+'</label>');
+			r.push('<label for="' + geometryTextareaId + '" class="label mdc-floating-label n2s_localize">'+opts.label+'</label>');
 		}
-		r.push('<textarea id="geometryTextarea" class="n2schema_field_geometry mdc-text-field__input" nunaliit-selector="'+attr+'"');
+		r.push('<textarea id="' + geometryTextareaId + '" class="n2schema_field_geometry mdc-text-field__input" nunaliit-selector="'+attr+'"');
 		r.push('></textarea>');
 		r.push('</div>');
 		

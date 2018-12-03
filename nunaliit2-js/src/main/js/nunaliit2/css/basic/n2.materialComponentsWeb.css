@@ -54,14 +54,16 @@
 	color: #1565c0;
 }
 
-.n2_documentForm .n2_layoutFloat .mdc-switch {
+.n2_documentForm .n2_layoutFloat .mdc-switch,
+.n2_documentForm .n2_layoutFloat .mdc-checkbox {
     display: inline-flex;
 }
 
 .n2_documentForm .n2_layoutFloat .mdc-switch input[type="checkbox"] {
-    width: 100%;
+    width: 54px;
 }
 
-.n2_documentForm .n2_layoutFloat .mdc-switch label {
+.n2_documentForm .n2_layoutFloat .mdc-switch label,
+.n2_documentForm .n2_layoutFloat .mdc-checkbox label {
     padding-left: 16px;
 }
