@@ -53,6 +53,8 @@ var HelpDisplay = $n2.Class({
 	
 	textContent: null,
 	
+	mdcDialogComponent: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			title: 'Help'
@@ -65,16 +67,6 @@ var HelpDisplay = $n2.Class({
 		this.textContent = opts.textContent;
 		
 		this.helpDialogId = $n2.getUniqueId();
-	},
-	
-	show: function($elem){
-		// If open, then close it
-		var $dialog = this._getDialogElem();
-		if( $dialog.length > 0 ){
-			$dialog.dialog('open');
-		} else {
-			this._createDialog($elem);
-		};
 	},
 	
 	hide: function(){
@@ -102,149 +94,75 @@ var HelpDisplay = $n2.Class({
 		return $('#'+this.helpDialogId);
 	},
 	
-	_createDialog: function($elem){
-
-		// Check that dialog support is available
-		if( !$.fn ) return;
-		if( !$.fn.dialog ) return;
-		
+	show: function($elem){
+		var _this = this;
+		var content = "";
 		var $dialog = $('<div>')
 			.attr('id',this.helpDialogId)
-			.addClass('n2help_content')
-			.appendTo( $('body') );
-		
+			.attr('role','alertdialog')
+			.attr('aria-modal','true')
+			.attr('aria-labelledby','my-dialog-title')
+			.attr('aria-describedby','my-dialog-content')
+			.addClass('n2help_content mdc-dialog')
+			.appendTo($('body'));
+
+		var $dialogContainer = $('<div>')
+			.addClass('mdc-dialog__container')
+			.appendTo($dialog);
+
+		var $dialogSurface = $('<div>')
+			.addClass('mdc-dialog__surface')
+			.appendTo($dialogContainer);
+
+		$('<h2>')
+			.addClass('mdc-dialog__title')
+			.text(_loc(this.title))
+			.appendTo($dialogSurface);
+
+		var $dialogMessage = $('<div>')
+			.addClass('n2dialogs_alert_message mdc-dialog__content')
+			.text(content)
+			.appendTo($dialogSurface);
+
 		if( this.htmlContent ){
 			// localize content
-			var content = _loc(this.htmlContent);
-			$dialog.html(content);
+			$dialogMessage.html(_loc(this.htmlContent));
 		} else if( this.textContent ){
-			var content = _loc(this.textContent);
-			$dialog.text(content);
+			$dialogMessage.text(_loc(this.textContent));
 		} else {
 			return;
 		};
-		
-		$dialog.appendTo( $('body') );
-		
-		var initialHeight = $dialog.height();
-		var initialWidth = $dialog.width();
-		
-		var windowHeight = $(window).height();
-		var windowWidth = $(window).width();
-		
-		var diagMaxHeight = Math.floor(windowHeight * 0.8);
-		var diagMaxWidth = Math.floor(windowWidth * 0.8);
 
-		var dialogOptions = {
-			autoOpen: true
-			,dialogClass:'n2help_dialog'
-			,title: _loc(this.title)
-			,modal: false
-			,width: 400
-//			,position:{
-//				my: 'right top'
-//				,at: 'right bottom'
-//				,of: $('#'+_this.helpButtonName+' .nunaliit_module_help_button')
-//			}
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
-			}
-		};
+		var $footer = $('<footer>')
+			.addClass('mdc-dialog__actions')
+			.appendTo($dialogSurface);
+
+		var $button = $('<button>')
+			.addClass('n2dialogs_alert_okButton mdc-button mdc-dialog__button')
+			.text(_loc('OK'))
+			.appendTo($footer)
+			.click(function(){
+				_this.mdcDialogComponent.close();
+				$dialog.remove();
+				return false;
+			});
 		
-		// Ensure to not exceed available geometry
-		var height = initialHeight;
-		if( initialHeight > diagMaxHeight ){
-			dialogOptions.height = diagMaxHeight;
-			height = diagMaxHeight;
-		};
-		var width = initialWidth;
-		if( initialWidth > diagMaxWidth ){
-			dialogOptions.width = diagMaxWidth;
-			width = diagMaxWidth;
-		};
-		
-		if( $elem ){
-			var offset = $elem.offset();
-			
-			var fitsAbove = false;
-			var fitsBelow = false;
-			var fitsLeft = false;
-			var fitsRight = false;
-			
-			if( offset.top >= height ){
-				fitsAbove = true;
-			};
-			if( (windowHeight - offset.top - $elem.height()) >= height ){
-				fitsBelow = true;
-			};
-			if( offset.left >= width ){
-				fitsLeft = true;
-			};
-			if( (windowWidth - offset.left - $elem.width()) >= height ){
-				fitsRight = true;
-			};
-			
-			if( fitsBelow && fitsLeft ){
-				dialogOptions.position = {
-					my: 'right top'
-					,at: 'right bottom'
-					,of: $elem
-				};
-				
-			} else if( fitsBelow && fitsRight ){
-				dialogOptions.position = {
-					my: 'left top'
-					,at: 'left bottom'
-					,of: $elem
-				};
-				
-			} else if( fitsBelow ){
-				dialogOptions.position = {
-					my: 'center top'
-					,at: 'center bottom'
-					,of: $elem
-				};
-				
-			} else if( fitsAbove && fitsLeft ){
-				dialogOptions.position = {
-					my: 'right bottom'
-					,at: 'right top'
-					,of: $elem
-				};
-				
-			} else if( fitsAbove && fitsRight ){
-				dialogOptions.position = {
-					my: 'left bottom'
-					,at: 'left top'
-					,of: $elem
-				};
-				
-			} else if( fitsAbove ){
-				dialogOptions.position = {
-					my: 'center bottom'
-					,at: 'center top'
-					,of: $elem
-				};
-				
-			} else if( fitsLeft ){
-				dialogOptions.position = {
-					my: 'right center'
-					,at: 'left center'
-					,of: $elem
-				};
-				
-			} else if( fitsRight ){
-				dialogOptions.position = {
-					my: 'left center'
-					,at: 'right center'
-					,of: $elem
-				};
-			};
-		};
-		
-		$dialog.dialog(dialogOptions);
+		$('<div>')
+			.addClass('mdc-dialog__scrim')
+			.click(function(){
+				_this.mdcDialogComponent.close();
+				$dialog.remove();
+				return false;
+			})
+			.appendTo($dialog);
+
+		// Attach ripple to button
+		mdc.ripple.MDCRipple.attachTo($button[0]);
+
+		// Attach mdc component to alert dialog
+		this.mdcDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);
+		this.mdcDialogComponent.open();
+
 	}
 });
 	
