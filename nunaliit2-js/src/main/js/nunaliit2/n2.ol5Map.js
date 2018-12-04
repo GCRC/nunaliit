@@ -38,7 +38,7 @@ if( typeof(ol) !== 'undefined' && ol.Map) {
 	
 	ol.N2Map = $n2.Construct('N2Map', ol.Map, {
 		initialize: function() {
-			console.log('Sometimes, this is all I cared');
+			console.log('N2Map constructor called');
 		}
 		 ,val1 : 'val valriable'
 		,getInfo : function() {

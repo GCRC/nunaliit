@@ -79,14 +79,33 @@ var MapCanvas = $n2.Class('MapCanvas',{
 					this.showService = config.directory.showService;
 				};
 			};
-		
-			// Element generator
-			if( this.elementGenerator ){
-				this.elementGenerator.setElementsChangedListener(function(added, updated, removed){
-					_this._elementsChanged(added, updated, removed);
-				});
-				this.elementGenerator.setIntentChangedListener(function(updated){
-					_this._intentChanged(updated);
+
+			this.sources = [];
+			if( $n2.isArray(opts.overlays) ){
+				opts.overlays.forEach(function(overlay){
+					if( 'couchdb' === overlay.type ){
+						var sourceModelId = undefined;
+						if( overlay.options
+						 && 'string' === typeof overlay.options.sourceModelId ){
+							sourceModelId = overlay.options.sourceModelId;
+						} else if( overlay.options
+						 && 'string' === typeof overlay.options.layerName ){
+							sourceModelId = overlay.options.layerName;
+						} else {
+							$n2.logError('Map canvas overlay is not named. Will be ignored');
+						};
+
+						if( sourceModelId ){
+							var source = new CouchDbSource({
+								sourceModelId: sourceModelId
+								,dispatchService: _this.dispatchService
+								,projCode: 'EPSG:3857'
+							});
+							_this.sources.push(source);
+						};
+					} else {
+						$n2.logError('Can not handle overlay type: '+overlay.type);
+					}
 				});
 			};
 	
@@ -96,8 +115,6 @@ var MapCanvas = $n2.Class('MapCanvas',{
 					_this._handleDispatch(m);
 				};
 				
-				this.dispatchService.register(DH,'modelGetInfo',f);
-				this.dispatchService.register(DH,'modelStateUpdated',f);
 			};
 			
 			$n2.log(this._classname,this);
@@ -111,16 +128,6 @@ var MapCanvas = $n2.Class('MapCanvas',{
 		
 		opts.onSuccess();
 	}
-	,_elementsChanged: function(added, updated, removed){
-		
-		$n2.log("inside elementsChanged", arguments);
-	}
-	
-	,_intentChanged: function(updated){
-		
-		$n2.log('inside intentChanged');
-		
-	}
 	
 	,_getElem: function(){
 		var $elem = $('#'+this.canvasId);
@@ -130,7 +137,6 @@ var MapCanvas = $n2.Class('MapCanvas',{
 		return $elem;
 	},
 
-	
 	_drawMap: function() {
 		 var image = new ol.style.Circle({
 		        radius: 5,
@@ -276,6 +282,18 @@ var MapCanvas = $n2.Class('MapCanvas',{
 		          }
 		        }]
 		      };
+		var overlayLayers = [];
+		this.sources.forEach(function(source){
+			var vectorLayer = new ol.layer.Vector({
+				source: source,
+				style: styleFunction
+			});
+			overlayLayers.push(vectorLayer);
+		});
+		var overlayGroup = new ol.layer.Group({
+			title: 'Overlays',
+			layers: overlayLayers
+		});
 		var customMap = new ol.N2Map({
 			target : this.canvasId,
 			layers: [
@@ -316,33 +334,14 @@ var MapCanvas = $n2.Class('MapCanvas',{
 						})
 						]
 				}),
-				new ol.layer.Group({
-					title: 'Overlays',
-					layers: [
-						new ol.layer.Image({
-							title: 'Countries',
-							source: new ol.source.ImageArcGISRest({
-								ratio: 1,
-								params: {'LAYERS': 'show:0'},
-								url: "https://ons-inspire.esriuk.com/arcgis/rest/services/Administrative_Boundaries/Countries_December_2016_Boundaries/MapServer"
-							})
-						}),
-						new ol.layer.Vector({
-							source: new couchDbSource({
-								features: (new ol.format.GeoJSON()).readFeatures(geojsonObject)
-								
-							}),
-							style: styleFunction
-						})
-						]
-				})
-				],
-				view: new ol.View({
-					center: ol.proj.transform([-0.92, 52.96], 'EPSG:4326', 'EPSG:3857'),
-					zoom: 6
-				})
+				overlayGroup
+			],
+			view: new ol.View({
+				center: ol.proj.transform([-75, 45.5], 'EPSG:4326', 'EPSG:3857'),
+				projection: 'EPSG:3857',
+				zoom: 6
+			})
 		});
-
 
 		var customLayerSwitcher = new ol.control.NunaliitLayerSwitcher({
 			tipLabel: 'Légende' // Optional label for button
@@ -352,26 +351,117 @@ var MapCanvas = $n2.Class('MapCanvas',{
 	},
 
 	_handleDispatch: function(m, addr, dispatcher){
-		if('modelStateUpdated' === m.type) {
-			if( this.sourceModelId === m.modelId ){
-				if(m.state){
-					this.elementGenerator.sourceModelUpdated(m.state);
-				}
-			};
-		}
 	}
 });
  
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 
-var couchDbSource = $n2.Construct(ol.source.Vector,{
+var CouchDbSource = $n2.Construct(ol.source.Vector,{
 	
+	sourceModelId: null,
+	dispatchService: null,
+	elementGenerator: null,
+	docsById: null,
+	mapProjCode: null,
+
 	constructor: function(opts_){
-		couchDbSource.base(this, 'constructor', opts_);
+		var opts = $n2.extend({
+			sourceModelId: undefined
+			,dispatchService: undefined
+			,projCode: undefined
+		},opts_);
+
+		var _this = this;
+
+		this.docsById = {};
+
+		CouchDbSource.base(this, 'constructor', opts_);
+		
+		this.sourceModelId = opts.sourceModelId;
+		this.dispatchService = opts.dispatchService;
+		this.mapProjCode = opts.projCode;
+
+		// Register to events
+		if( this.dispatchService ){
+			var f = function(m, addr, dispatcher){
+				_this._handleDispatch(m, addr, dispatcher);
+			};
+			
+			this.dispatchService.register(DH,'modelGetInfo',f);
+			this.dispatchService.register(DH,'modelStateUpdated',f);
+		};
+		
+		// Request for current state
+ 		if( this.sourceModelId ){
+ 			if( this.dispatchService ){
+ 				var msg = {
+ 					type: 'modelGetState'
+ 					,modelId: this.sourceModelId
+ 					,state: null
+ 				};
+ 				this.dispatchService.synchronousCall(DH,msg);
+ 				if( msg.state ){
+ 					this._sourceModelStateUpdated(msg.state);
+ 				};
+ 			};
+ 		};
+	},
+
+	_sourceModelStateUpdated: function(state){
+		var _this = this;
+
+		//$n2.log('map canvas receives update',state);
+		if( state.added ){
+			state.added.forEach(function(addedDoc){
+				_this.docsById[addedDoc._id] = addedDoc;
+			});
+		};
+		if( state.updated ){
+			state.updated.forEach(function(updatedDoc){
+				_this.docsById[updatedDoc._id] = updatedDoc;
+			});
+		};
+		if( state.removed ){
+			state.removed.forEach(function(removedDoc){
+				delete _this.docsById[removedDoc._id];
+			});
+		};
+
+		var wktFormat = new ol.format.WKT();
+
+		var features = [];
+		for(var docId in this.docsById){
+			var doc = this.docsById[docId];
+			if( doc
+			 && doc.nunaliit_geom
+			 && doc.nunaliit_geom.wkt ){
+				var geometry = wktFormat.readGeometryFromText(doc.nunaliit_geom.wkt);
+				geometry.transform('EPSG:4326', _this.mapProjCode);
+
+				var feature = new ol.Feature();
+				feature.setGeometry(geometry);
+				feature.setId(docId);
+
+//				if (geoJSONFeature['properties']) {
+//					feature.setProperties(geoJSONFeature['properties']);
+//				}
+				
+				features.push(feature);
+			};
+		};
+
+		this.clear();
+		this.addFeatures(features);
+	},
+
+	_handleDispatch: function(m, addr, dispatcher){
+		if('modelStateUpdated' === m.type) {
+			if( this.sourceModelId === m.modelId ){
+				this._sourceModelStateUpdated(m.state);
+			};
+		}
 	}
-	
-	
 })
 
 
