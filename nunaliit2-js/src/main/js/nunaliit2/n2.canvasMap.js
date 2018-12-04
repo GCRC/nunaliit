@@ -138,6 +138,7 @@ var MapCanvas = $n2.Class('MapCanvas',{
 	},
 
 	_drawMap: function() {
+		var _this = this;
 		 var image = new ol.style.Circle({
 		        radius: 5,
 		        fill: null,
@@ -212,76 +213,6 @@ var MapCanvas = $n2.Class('MapCanvas',{
 		      var styleFunction = function(feature) {
 		        return styles[feature.getGeometry().getType()];
 		      };
-		var geojsonObject = {
-		        'type': 'FeatureCollection',
-		        'crs': {
-		          'type': 'name',
-		          'properties': {
-		            'name': 'EPSG:3857'
-		          }
-		        },
-		        'features': [{
-		          'type': 'Feature',
-		          'geometry': {
-		            'type': 'Point',
-		            'coordinates': [0, 0]
-		          }
-		        }, {
-		          'type': 'Feature',
-		          'geometry': {
-		            'type': 'LineString',
-		            'coordinates': [[4e6, -2e6], [8e6, 2e6]]
-		          }
-		        }, {
-		          'type': 'Feature',
-		          'geometry': {
-		            'type': 'LineString',
-		            'coordinates': [[4e6, 2e6], [8e6, -2e6]]
-		          }
-		        }, {
-		          'type': 'Feature',
-		          'geometry': {
-		            'type': 'Polygon',
-		            'coordinates': [[[-5e6, -1e6], [-4e6, 1e6], [-3e6, -1e6]]]
-		          }
-		        }, {
-		          'type': 'Feature',
-		          'geometry': {
-		            'type': 'MultiLineString',
-		            'coordinates': [
-		              [[-1e6, -7.5e5], [-1e6, 7.5e5]],
-		              [[1e6, -7.5e5], [1e6, 7.5e5]],
-		              [[-7.5e5, -1e6], [7.5e5, -1e6]],
-		              [[-7.5e5, 1e6], [7.5e5, 1e6]]
-		            ]
-		          }
-		        }, {
-		          'type': 'Feature',
-		          'geometry': {
-		            'type': 'MultiPolygon',
-		            'coordinates': [
-		              [[[-5e6, 6e6], [-5e6, 8e6], [-3e6, 8e6], [-3e6, 6e6]]],
-		              [[[-2e6, 6e6], [-2e6, 8e6], [0, 8e6], [0, 6e6]]],
-		              [[[1e6, 6e6], [1e6, 8e6], [3e6, 8e6], [3e6, 6e6]]]
-		            ]
-		          }
-		        }, {
-		          'type': 'Feature',
-		          'geometry': {
-		            'type': 'GeometryCollection',
-		            'geometries': [{
-		              'type': 'LineString',
-		              'coordinates': [[-5e6, -5e6], [0, -5e6]]
-		            }, {
-		              'type': 'Point',
-		              'coordinates': [4e6, -5e6]
-		            }, {
-		              'type': 'Polygon',
-		              'coordinates': [[[1e6, -6e6], [2e6, -4e6], [3e6, -6e6]]]
-		            }]
-		          }
-		        }]
-		      };
 		var overlayLayers = [];
 		this.sources.forEach(function(source){
 			var vectorLayer = new ol.layer.Vector({
@@ -293,6 +224,22 @@ var MapCanvas = $n2.Class('MapCanvas',{
 		var overlayGroup = new ol.layer.Group({
 			title: 'Overlays',
 			layers: overlayLayers
+		});
+		var olView = new ol.View({
+			center: ol.proj.transform([-75, 45.5], 'EPSG:4326', 'EPSG:3857'),
+			projection: 'EPSG:3857',
+			zoom: 6
+		});
+		olView.on('change:resolution',function(event){
+			var olView = event.target;
+			if( olView ){
+				var res = olView.getResolution();
+				var proj = olView.getProjection();
+				//$n2.log('resolution',res,proj);
+				_this.sources.forEach(function(source){
+					source.changedResolution(res,proj);
+				});
+			};
 		});
 		var customMap = new ol.N2Map({
 			target : this.canvasId,
@@ -336,11 +283,7 @@ var MapCanvas = $n2.Class('MapCanvas',{
 				}),
 				overlayGroup
 			],
-			view: new ol.View({
-				center: ol.proj.transform([-75, 45.5], 'EPSG:4326', 'EPSG:3857'),
-				projection: 'EPSG:3857',
-				zoom: 6
-			})
+			view: olView
 		});
 
 		var customLayerSwitcher = new ol.control.NunaliitLayerSwitcher({
@@ -359,11 +302,13 @@ var MapCanvas = $n2.Class('MapCanvas',{
 
 var CouchDbSource = $n2.Construct(ol.source.Vector,{
 	
+	sourceId: null,
 	sourceModelId: null,
 	dispatchService: null,
 	elementGenerator: null,
-	docsById: null,
+	infoByDocId: null,
 	mapProjCode: null,
+	epsg4326Resolution: null,
 
 	constructor: function(opts_){
 		var opts = $n2.extend({
@@ -374,7 +319,8 @@ var CouchDbSource = $n2.Construct(ol.source.Vector,{
 
 		var _this = this;
 
-		this.docsById = {};
+		this.sourceId = $n2.getUniqueId();
+		this.infoByDocId = {};
 
 		CouchDbSource.base(this, 'constructor', opts_);
 		
@@ -390,6 +336,7 @@ var CouchDbSource = $n2.Construct(ol.source.Vector,{
 			
 			this.dispatchService.register(DH,'modelGetInfo',f);
 			this.dispatchService.register(DH,'modelStateUpdated',f);
+			this.dispatchService.register(DH,'simplifiedGeometryReport',f);
 		};
 		
 		// Request for current state
@@ -414,34 +361,192 @@ var CouchDbSource = $n2.Construct(ol.source.Vector,{
 		//$n2.log('map canvas receives update',state);
 		if( state.added ){
 			state.added.forEach(function(addedDoc){
-				_this.docsById[addedDoc._id] = addedDoc;
+				var docId = addedDoc._id;
+				var docInfo = _this.infoByDocId[docId];
+				if( !docInfo ){
+					docInfo = {};
+					_this.infoByDocId[docId] = docInfo;
+				};
+				docInfo.doc = addedDoc;
 			});
 		};
 		if( state.updated ){
 			state.updated.forEach(function(updatedDoc){
-				_this.docsById[updatedDoc._id] = updatedDoc;
+				var docId = updatedDoc._id;
+				var docInfo = _this.infoByDocId[docId];
+				if( !docInfo ){
+					docInfo = {};
+					_this.infoByDocId[docId] = docInfo;
+				};
+				if( docInfo.doc ){
+					if( docInfo.doc._rev !== updatedDoc._rev ){
+						// New version of document. Clear simplified info
+						delete docInfo.simplfications;
+						delete docInfo.simplfiedName;
+						delete docInfo.simplfiedResolution;
+						delete docInfo.simplfiedInstalled;
+					};
+				}
+				docInfo.doc = updatedDoc;
 			});
 		};
 		if( state.removed ){
 			state.removed.forEach(function(removedDoc){
-				delete _this.docsById[removedDoc._id];
+				var docId = removedDoc._id;
+				delete _this.infoByDocId[docId];
 			});
 		};
+
+		this._redrawAllFeatures();
+	},
+
+	_handleDispatch: function(m, addr, dispatcher){
+		var _this = this;
+
+		if('modelStateUpdated' === m.type) {
+			if( this.sourceModelId === m.modelId ){
+				this._sourceModelStateUpdated(m.state);
+			};
+		} else if('simplifiedGeometryReport' === m.type) {
+			if( $n2.isArray(m.simplifiedGeometries) ){
+				var atLeastOne = false;
+				m.simplifiedGeometries.forEach(function(simplifiedGeom){
+					var docId = simplifiedGeom.id;
+					var attName = simplifiedGeom.attName;
+					var wkt = simplifiedGeom.wkt;
+					
+					var docInfo = _this.infoByDocId[docId];
+					if( docInfo ){
+						if( !docInfo.simplifications ){
+							docInfo.simplifications = {};
+						};
+						docInfo.simplifications[attName] = wkt;
+						atLeastOne = true;
+					};
+				});
+				
+				if( atLeastOne ){
+					this._redrawAllFeatures();
+				};
+			};
+		}
+	},
+	
+	/**
+	 * This function is called when the map resolution is changed
+	 */
+	changedResolution: function(res,proj){
+		//$n2.log('resolution',res,proj);
+		this.epsg4326Resolution = this._getResolutionInProjection(res,proj);
+		
+		for(var docId in this.infoByDocId){
+			var docInfo = this.infoByDocId[docId];
+			var doc = docInfo.doc;
+			if( doc && doc.nunaliit_geom
+			 && doc.nunaliit_geom.simplified 
+			 && doc.nunaliit_geom.simplified.resolutions ){
+				var bestAttName = undefined;
+				var bestResolution = undefined;
+				for(var attName in doc.nunaliit_geom.simplified.resolutions){
+					var attRes = 1 * doc.nunaliit_geom.simplified.resolutions[attName];
+					if( attRes < this.epsg4326Resolution ){
+						if( typeof bestResolution === 'undefined' ){
+							bestResolution = attRes;
+							bestAttName = attName;
+						} else if( attRes > bestResolution ){
+							bestResolution = attRes;
+							bestAttName = attName;
+						};
+					};
+				};
+				
+				// At this point, if bestResolution is set, then this is the geometry we should
+				// be displaying
+				if( undefined !== bestResolution ){
+					docInfo.simplfiedName = bestAttName;
+					docInfo.simplfiedResolution = bestResolution;
+				};
+			};
+		};
+		
+		var geometriesRequested = [];
+		for(var docId in this.infoByDocId){
+			var docInfo = this.infoByDocId[docId];
+			var doc = docInfo.doc;
+			if( docInfo.simplfiedName ) {
+				// There is a simplification needed, do I have it already?
+				var wkt = undefined;
+				if( docInfo.simplifications ){
+					wkt = docInfo.simplifications[docInfo.simplfiedName];
+				};
+
+				// If I do not have it, request it
+				if( !wkt ){
+					var geomRequest = {
+						id: docId
+						,attName: docInfo.simplfiedName
+						,doc: doc
+					};
+					geometriesRequested.push(geomRequest);
+				};
+			};
+		}
+		
+		this.dispatchService.send(DH,{
+			type: 'simplifiedGeometryRequest'
+			,geometriesRequested: geometriesRequested
+			,requester: this.sourceId
+		});
+		
+		this._redrawAllFeatures();
+	},
+
+	_getResolutionInProjection: function(targetResolution, proj){
+
+		if( proj.getCode() !== 'EPSG:4326' ){
+			var transformFn = ol.proj.getTransform(proj.getCode(), 'EPSG:4326')
+			// Convert [0,0] and [0,1] to proj
+			var p0 = transformFn([0,0]);
+			var p1 = transformFn([0,1]);
+			
+			var factor = Math.sqrt( ((p0[0]-p1[0])*(p0[0]-p1[0])) + ((p0[1]-p1[1])*(p0[1]-p1[1])) );
+			
+			targetResolution = targetResolution * factor;
+		};
+		
+		return targetResolution;
+	},
+
+	_redrawAllFeatures: function(){
+		var _this = this;
 
 		var wktFormat = new ol.format.WKT();
 
 		var features = [];
-		for(var docId in this.docsById){
-			var doc = this.docsById[docId];
+		for(var docId in this.infoByDocId){
+			var docInfo = this.infoByDocId[docId];
+			var doc = docInfo.doc;
 			if( doc
 			 && doc.nunaliit_geom
 			 && doc.nunaliit_geom.wkt ){
-				var geometry = wktFormat.readGeometryFromText(doc.nunaliit_geom.wkt);
+				var wkt = doc.nunaliit_geom.wkt;
+				if( docInfo.simplifiedName
+				 && docInfo.simplifications 
+				 && docInfo.simplifications[docInfo.simplifiedName] ){
+					// If there is a simplification loaded for this geometry,
+					// use it
+					wkt = docInfo.simplifications[docInfo.simplifiedName];
+					docInfo.simplifiedInstalled = docInfo.simplifiedName;
+				};
+
+				var geometry = wktFormat.readGeometryFromText(wkt);
 				geometry.transform('EPSG:4326', _this.mapProjCode);
 
 				var feature = new ol.Feature();
 				feature.setGeometry(geometry);
 				feature.setId(docId);
+				
+				docInfo.feature = feature;
 
 //				if (geoJSONFeature['properties']) {
 //					feature.setProperties(geoJSONFeature['properties']);
@@ -453,14 +558,6 @@ var CouchDbSource = $n2.Construct(ol.source.Vector,{
 
 		this.clear();
 		this.addFeatures(features);
-	},
-
-	_handleDispatch: function(m, addr, dispatcher){
-		if('modelStateUpdated' === m.type) {
-			if( this.sourceModelId === m.modelId ){
-				this._sourceModelStateUpdated(m.state);
-			};
-		}
 	}
 })
 
