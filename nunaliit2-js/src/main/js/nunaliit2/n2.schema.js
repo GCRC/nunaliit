@@ -221,7 +221,7 @@ function _attachMDCComponents(){
 	var notched_outlines = document.getElementsByClassName('mdc-notched-outline');
 	for(i = 0, e = notched_outlines.length; i < e; i++){
 		try {
-			new mdc.notchedOutline.MDCNotchedOutline.attachTo(notched_outlines[i]); 
+			mdc.notchedOutline.MDCNotchedOutline.attachTo(notched_outlines[i]);
 		} catch(error) {
 			$n2.log("Unable to attach notched outline material design component: " + error);
 		}
@@ -231,9 +231,19 @@ function _attachMDCComponents(){
 	var switches = document.getElementsByClassName('mdc-switch');
 	for(i = 0, e = switches.length; i < e; i++){
 		try {
-			new mdc.switchControl.MDCSwitch.attachTo(switches[i]);
+			mdc.switchControl.MDCSwitch.attachTo(switches[i]);
 		} catch(error) {
 			$n2.log("Unable to attach switch material design component: " + error);
+		}
+	}
+
+	// attach checkboxes
+	var checkboxes = document.getElementsByClassName('mdc-checkbox');
+	for(i = 0, e = checkboxes.length; i < e; i++){
+		try {
+			mdc.checkbox.MDCCheckbox.attachTo(checkboxes[i]);
+		} catch(error) {
+			$n2.log("Unable to attach checkbox material design component: " + error);
 		}
 	}
 };
