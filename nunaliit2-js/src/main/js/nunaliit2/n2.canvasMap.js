@@ -110,9 +110,19 @@ var MapCanvas = $n2.Class('MapCanvas',{
 		};
 		
 		opts.onSuccess();
-	},
-
-	_getElem: function(){
+	}
+	,_elementsChanged: function(added, updated, removed){
+		
+		$n2.log("inside elementsChanged", arguments);
+	}
+	
+	,_intentChanged: function(updated){
+		
+		$n2.log('inside intentChanged');
+		
+	}
+	
+	,_getElem: function(){
 		var $elem = $('#'+this.canvasId);
 		if( $elem.length < 1 ){
 			return undefined;
@@ -120,6 +130,7 @@ var MapCanvas = $n2.Class('MapCanvas',{
 		return $elem;
 	},
 
+	
 	_drawMap: function() {
 		 var image = new ol.style.Circle({
 		        radius: 5,
@@ -317,7 +328,7 @@ var MapCanvas = $n2.Class('MapCanvas',{
 							})
 						}),
 						new ol.layer.Vector({
-							source: new ol.source.Vector({
+							source: new couchDbSource({
 								features: (new ol.format.GeoJSON()).readFeatures(geojsonObject)
 								
 							}),
@@ -341,10 +352,29 @@ var MapCanvas = $n2.Class('MapCanvas',{
 	},
 
 	_handleDispatch: function(m, addr, dispatcher){
-		
+		if('modelStateUpdated' === m.type) {
+			if( this.sourceModelId === m.modelId ){
+				if(m.state){
+					this.elementGenerator.sourceModelUpdated(m.state);
+				}
+			};
+		}
 	}
 });
  
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+
+var couchDbSource = $n2.Construct(ol.source.Vector,{
+	
+	constructor: function(opts_){
+		couchDbSource.base(this, 'constructor', opts_);
+	}
+	
+	
+})
+
+
 //--------------------------------------------------------------------------
 function HandleCanvasAvailableRequest(m){
 	if( m.canvasType === 'map' ){
