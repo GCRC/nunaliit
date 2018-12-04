@@ -69,27 +69,6 @@ var HelpDisplay = $n2.Class({
 		this.helpDialogId = $n2.getUniqueId();
 	},
 	
-	hide: function(){
-		var $dialog = this._getDialogElem();
-		if( $dialog.length > 0 ){
-			$dialog.dialog('close');
-		};
-	}, 
-	
-	toggle: function($elem){
-		var $dialog = this._getDialogElem();
-		if( $dialog.length > 0 ){
-			var isOpen = $dialog.dialog('isOpen');
-			if( isOpen  ) {
-				this.hide($elem);
-			} else {
-				this.show($elem);
-			};
-		} else {
-			this.show($elem);
-		};
-	},
-	
 	_getDialogElem: function(){
 		return $('#'+this.helpDialogId);
 	},
@@ -139,7 +118,7 @@ var HelpDisplay = $n2.Class({
 
 		var $button = $('<button>')
 			.addClass('n2dialogs_alert_okButton mdc-button mdc-dialog__button')
-			.text(_loc('OK'))
+			.text(_loc('Close'))
 			.appendTo($footer)
 			.click(function(){
 				_this.mdcDialogComponent.close();
@@ -177,15 +156,6 @@ function ShowHelp(key, $elem){
 
 //=========================================================================	
 
-function ToggleHelp(key, $elem){
-	var helpDisplay = helpDisplayByKey[key];
-	if( helpDisplay ){
-		helpDisplay.toggle($elem);
-	};
-};
-
-//=========================================================================	
-
 function InstallHelpInfo(key, helpInfo){
 	if( key && helpInfo ){
 		if( 'html' === helpInfo.type 
@@ -209,7 +179,6 @@ function InstallHelpInfo(key, helpInfo){
 
 $n2.help = {
 	ShowHelp: ShowHelp
-	,ToggleHelp: ToggleHelp
 	,InstallHelpInfo: InstallHelpInfo
 };
 

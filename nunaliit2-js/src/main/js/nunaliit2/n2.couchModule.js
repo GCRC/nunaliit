@@ -1485,7 +1485,7 @@ var ModuleDisplay = $n2.Class({
 			$a.click(function(){
 				var $btn = $(this);
 				
-				$n2.help.ToggleHelp('main', $btn);
+				$n2.help.ShowHelp('main', $btn);
 
 				return false;
 			});

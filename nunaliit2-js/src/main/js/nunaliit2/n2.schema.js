@@ -1876,10 +1876,10 @@ var Form = $n2.Class({
 						};
 						
 					} else if( $clicked.hasClass('n2schema_help_date') ){
-						$n2.help.ToggleHelp('dates', $clicked);
+						$n2.help.ShowHelp('dates', $clicked);
 						
 					} else if( $clicked.hasClass('n2schema_help_wiki') ){
-						$n2.help.ToggleHelp('wiki', $clicked);
+						$n2.help.ShowHelp('wiki', $clicked);
 					};
 				});
 			};
