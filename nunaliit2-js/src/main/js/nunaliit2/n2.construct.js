@@ -131,8 +131,6 @@ POSSIBILITY OF SUCH DAMAGE.
 					
 					singleInherit = false;
 					/** Constructor * */
-					function tempCtor() {
-					}
 					tempCtor.prototype = arguments[i].prototype;
 					childClass.superClass_ = arguments[i].prototype;
 					proto = new tempCtor();
@@ -185,6 +183,9 @@ POSSIBILITY OF SUCH DAMAGE.
 		
 
 		return childClass;
+
+		function tempCtor() {
+		};
 	};
 
 })(nunaliit2);

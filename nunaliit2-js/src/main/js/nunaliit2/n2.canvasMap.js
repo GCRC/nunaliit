@@ -104,7 +104,7 @@ var MapCanvas = $n2.Class('MapCanvas',{
 			
 			this._drawMap();
 			
-		} catch(e) {
+		} catch(err) {
 			var error = new Error('Unable to create '+this._classname+': '+err);
 			opts.onError(error);
 		};
@@ -121,70 +121,221 @@ var MapCanvas = $n2.Class('MapCanvas',{
 	},
 
 	_drawMap: function() {
+		 var image = new ol.style.Circle({
+		        radius: 5,
+		        fill: null,
+		        stroke: new ol.style.Stroke({color: 'red', width: 1})
+		      });
+
+		      var styles = {
+		        'Point': new ol.style.Style({
+		          image: image
+		        }),
+		        'LineString': new ol.style.Style({
+		          stroke: new ol.style.Stroke({
+		            color: 'green',
+		            width: 1
+		          })
+		        }),
+		        'MultiLineString': new ol.style.Style({
+		          stroke: new ol.style.Stroke({
+		            color: 'green',
+		            width: 1
+		          })
+		        }),
+		        'MultiPoint': new ol.style.Style({
+		          image: image
+		        }),
+		        'MultiPolygon': new ol.style.Style({
+		          stroke: new ol.style.Stroke({
+		            color: 'yellow',
+		            width: 1
+		          }),
+		          fill: new ol.style.Fill({
+		            color: 'rgba(255, 255, 0, 0.1)'
+		          })
+		        }),
+		        'Polygon': new ol.style.Style({
+		          stroke: new ol.style.Stroke({
+		            color: 'blue',
+		            lineDash: [4],
+		            width: 3
+		          }),
+		          fill: new ol.style.Fill({
+		            color: 'rgba(0, 0, 255, 0.1)'
+		          })
+		        }),
+		        'GeometryCollection': new ol.style.Style({
+		          stroke: new ol.style.Stroke({
+		            color: 'magenta',
+		            width: 2
+		          }),
+		          fill: new ol.style.Fill({
+		            color: 'magenta'
+		          }),
+		          image: new ol.style.Circle({
+		            radius: 10,
+		            fill: null,
+		            stroke: new ol.style.Stroke({
+		              color: 'magenta'
+		            })
+		          })
+		        }),
+		        'Circle': new ol.style.Style({
+		          stroke: new ol.style.Stroke({
+		            color: 'red',
+		            width: 2
+		          }),
+		          fill: new ol.style.Fill({
+		            color: 'rgba(255,0,0,0.2)'
+		          })
+		        })
+		      };
+
+		      var styleFunction = function(feature) {
+		        return styles[feature.getGeometry().getType()];
+		      };
+		var geojsonObject = {
+		        'type': 'FeatureCollection',
+		        'crs': {
+		          'type': 'name',
+		          'properties': {
+		            'name': 'EPSG:3857'
+		          }
+		        },
+		        'features': [{
+		          'type': 'Feature',
+		          'geometry': {
+		            'type': 'Point',
+		            'coordinates': [0, 0]
+		          }
+		        }, {
+		          'type': 'Feature',
+		          'geometry': {
+		            'type': 'LineString',
+		            'coordinates': [[4e6, -2e6], [8e6, 2e6]]
+		          }
+		        }, {
+		          'type': 'Feature',
+		          'geometry': {
+		            'type': 'LineString',
+		            'coordinates': [[4e6, 2e6], [8e6, -2e6]]
+		          }
+		        }, {
+		          'type': 'Feature',
+		          'geometry': {
+		            'type': 'Polygon',
+		            'coordinates': [[[-5e6, -1e6], [-4e6, 1e6], [-3e6, -1e6]]]
+		          }
+		        }, {
+		          'type': 'Feature',
+		          'geometry': {
+		            'type': 'MultiLineString',
+		            'coordinates': [
+		              [[-1e6, -7.5e5], [-1e6, 7.5e5]],
+		              [[1e6, -7.5e5], [1e6, 7.5e5]],
+		              [[-7.5e5, -1e6], [7.5e5, -1e6]],
+		              [[-7.5e5, 1e6], [7.5e5, 1e6]]
+		            ]
+		          }
+		        }, {
+		          'type': 'Feature',
+		          'geometry': {
+		            'type': 'MultiPolygon',
+		            'coordinates': [
+		              [[[-5e6, 6e6], [-5e6, 8e6], [-3e6, 8e6], [-3e6, 6e6]]],
+		              [[[-2e6, 6e6], [-2e6, 8e6], [0, 8e6], [0, 6e6]]],
+		              [[[1e6, 6e6], [1e6, 8e6], [3e6, 8e6], [3e6, 6e6]]]
+		            ]
+		          }
+		        }, {
+		          'type': 'Feature',
+		          'geometry': {
+		            'type': 'GeometryCollection',
+		            'geometries': [{
+		              'type': 'LineString',
+		              'coordinates': [[-5e6, -5e6], [0, -5e6]]
+		            }, {
+		              'type': 'Point',
+		              'coordinates': [4e6, -5e6]
+		            }, {
+		              'type': 'Polygon',
+		              'coordinates': [[[1e6, -6e6], [2e6, -4e6], [3e6, -6e6]]]
+		            }]
+		          }
+		        }]
+		      };
 		var customMap = new ol.N2Map({
 			target : this.canvasId,
 			layers: [
-	            new ol.layer.Group({
-	                'title': 'Base maps',
-	                layers: [
-	                    new ol.layer.Group({
-	                        title: 'Water color with labels',
-	                        type: 'base',
-	                        combine: true,
-	                        visible: false,
-	                        layers: [
-	                            new ol.layer.Tile({
-	                                source: new ol.source.Stamen({
-	                                    layer: 'watercolor'
-	                                })
-	                            }),
-	                            new ol.layer.Tile({
-	                                source: new ol.source.Stamen({
-	                                    layer: 'terrain-labels'
-	                                })
-	                            })
-	                        ]
-	                    }),
-	                    new ol.layer.Tile({
-	                        title: 'Water color',
-	                        type: 'base',
-	                        visible: false,
-	                        source: new ol.source.Stamen({
-	                            layer: 'watercolor'
-	                        })
-	                    }),
-	                    new ol.layer.Tile({
-	                        title: 'OSM',
-	                        type: 'base',
-	                        visible: true,
-	                        source: new ol.source.OSM()
-	                    })
-	                ]
-	            }),
-	            new ol.layer.Group({
-	                title: 'Overlays',
-	                layers: [
-	                    new ol.layer.Image({
-	                        title: 'Countries',
-	                        source: new ol.source.ImageArcGISRest({
-	                            ratio: 1,
-	                            params: {'LAYERS': 'show:0'},
-	                            url: "https://ons-inspire.esriuk.com/arcgis/rest/services/Administrative_Boundaries/Countries_December_2016_Boundaries/MapServer"
-	                        })
-	                    })
-	                ]
-	            })
-	        ],
-	        view: new ol.View({
-	            center: ol.proj.transform([-0.92, 52.96], 'EPSG:4326', 'EPSG:3857'),
-	            zoom: 6
-	        })
+				new ol.layer.Group({
+					'title': 'Base maps',
+					layers: [
+						new ol.layer.Group({
+							title: 'Water color with labels',
+							type: 'base',
+							combine: true,
+							visible: false,
+							layers: [
+								new ol.layer.Tile({
+									source: new ol.source.Stamen({
+										layer: 'watercolor'
+									})
+								}),
+								new ol.layer.Tile({
+									source: new ol.source.Stamen({
+										layer: 'terrain-labels'
+									})
+								})
+								]
+						}),
+						new ol.layer.Tile({
+							title: 'Water color',
+							type: 'base',
+							visible: false,
+							source: new ol.source.Stamen({
+								layer: 'watercolor'
+							})
+						}),
+						new ol.layer.Tile({
+							title: 'OSM',
+							type: 'base',
+							visible: true,
+							source: new ol.source.OSM()
+						})
+						]
+				}),
+				new ol.layer.Group({
+					title: 'Overlays',
+					layers: [
+						new ol.layer.Image({
+							title: 'Countries',
+							source: new ol.source.ImageArcGISRest({
+								ratio: 1,
+								params: {'LAYERS': 'show:0'},
+								url: "https://ons-inspire.esriuk.com/arcgis/rest/services/Administrative_Boundaries/Countries_December_2016_Boundaries/MapServer"
+							})
+						}),
+						new ol.layer.Vector({
+							source: new ol.source.Vector({
+								features: (new ol.format.GeoJSON()).readFeatures(geojsonObject)
+								
+							}),
+							style: styleFunction
+						})
+						]
+				})
+				],
+				view: new ol.View({
+					center: ol.proj.transform([-0.92, 52.96], 'EPSG:4326', 'EPSG:3857'),
+					zoom: 6
+				})
 		});
-		
-		
+
+
 		var customLayerSwitcher = new ol.control.NunaliitLayerSwitcher({
-	        tipLabel: 'Légende' // Optional label for button
-	    });
+			tipLabel: 'Légende' // Optional label for button
+		});
 		customMap.addControl(customLayerSwitcher);
 		customMap.getInfo();
 	},
