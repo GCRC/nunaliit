@@ -58,7 +58,7 @@ audio:not([controls]) {
  *    user zoom.
  */
 html {
-    font-family: sans-serif; /* 1 */
+    font-family: Roboto,sans-serif; /* 1 */
     -webkit-text-size-adjust: 100%; /* 2 */
     -ms-text-size-adjust: 100%; /* 2 */
 }
