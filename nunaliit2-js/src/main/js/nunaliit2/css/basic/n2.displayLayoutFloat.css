@@ -3,6 +3,10 @@
 	font-weight: bold;
 }
 
+.n2_documentDisplay .n2_layoutFloat {
+	margin: 10px 0px 5px;
+}
+
 .n2_documentDisplay .n2_layoutFloat div.label {
 	margin: 0px 16px;
 } 
