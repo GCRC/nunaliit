@@ -3,7 +3,8 @@
 	font-weight: bold;
 }
 
-.n2_documentDisplay .n2_layoutFloat {
+.n2_documentDisplay .n2_layoutFloat,
+.n2_documentForm .n2_layoutFloat {
 	margin: 10px 0px 5px;
 }
 
