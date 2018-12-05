@@ -1055,6 +1055,7 @@ var Display = $n2.Class({
 	
 	,_performSimplifiedGeometries: function(doc){
 		var contentId = $n2.getUniqueId();
+		var mdcDialogComponent = null;
 		
 		if( doc 
 		 && doc.nunaliit_geom 
@@ -1108,22 +1109,69 @@ var Display = $n2.Class({
 			};
 			
 			var $content = $('<div>')
-				.attr('id', contentId)
-				;
+				.attr('id', contentId);
+						
+			var $dialog = $('<div>')
+				.attr('role','alertdialog')
+				.attr('aria-modal','true')
+				.attr('aria-labelledby','my-dialog-title')
+				.attr('aria-describedby','my-dialog-content')
+				.addClass('mdc-dialog mdc-dialog--scrollable')
+				.appendTo($('body'));
+
+			var _this = this;
 			
+			var $dialogContainer = $('<div>')
+				.addClass('mdc-dialog__container')
+				.appendTo($dialog);
+
+			var $dialogSurface = $('<div>')
+				.addClass('mdc-dialog__surface')
+				.appendTo($dialogContainer);
+
+			$('<h2>')
+				.addClass('mdc-dialog__title')
+				.text(_loc('Geometries'))
+				.appendTo($dialogSurface);
+
+			var $container = $('<div>')
+				.attr('id',contentId + "_container")
+				.addClass('mdc-dialog__content')
+				.appendTo($dialogSurface);
+
+			$content.appendTo($container);
+
+			var $footer = $('<footer>')
+				.addClass('mdc-dialog__actions')
+				.appendTo($dialogSurface);
+		
+			var $button = $('<button>')
+				.addClass('mdc-button mdc-dialog__button')
+				.text(_loc('Close')) 
+				.appendTo($footer)
+				.click(function(){
+					mdcDialogComponent.close();
+					$dialog.remove();
+					return false;
+				});
+
+			$('<div>')
+				.addClass('mdc-dialog__scrim')
+				.click(function(){
+					mdcDialogComponent.close();
+					$dialog.remove();
+					return false;
+				})
+				.appendTo($dialog);
+
+			// Attach ripple to button
+			mdc.ripple.MDCRipple.attachTo($button[0]);
+
+			// Attach mdc component to alert dialog
+			mdcDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);
+			mdcDialogComponent.open();
+
 			display($content);
-			
-			$content.dialog({
-				autoOpen: true
-				,title: _loc('Geometries')
-				,modal: true
-				,width: 600
-				,close: function(event, ui){
-					var diag = $(event.target);
-					diag.dialog('destroy');
-					diag.remove();
-				}
-			});
 
 			// Request attachments
 			for(var i=0,e=geometries.length; i<e; ++i){
@@ -1167,7 +1215,7 @@ var Display = $n2.Class({
 				};
 			};
 		};
-		
+
 		function loadAttachment(attName, url){
 			$.ajax({
 				url: url
