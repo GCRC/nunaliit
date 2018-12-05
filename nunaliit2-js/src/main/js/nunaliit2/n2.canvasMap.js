@@ -216,6 +216,7 @@ var MapCanvas = $n2.Class('MapCanvas',{
 		var overlayLayers = [];
 		this.sources.forEach(function(source){
 			var vectorLayer = new ol.layer.Vector({
+				title: "CouchDb",
 				source: source,
 				style: styleFunction
 			});
@@ -381,10 +382,10 @@ var CouchDbSource = $n2.Construct(ol.source.Vector,{
 				if( docInfo.doc ){
 					if( docInfo.doc._rev !== updatedDoc._rev ){
 						// New version of document. Clear simplified info
-						delete docInfo.simplfications;
-						delete docInfo.simplfiedName;
-						delete docInfo.simplfiedResolution;
-						delete docInfo.simplfiedInstalled;
+						delete docInfo.simplifications;
+						delete docInfo.simplifiedName;
+						delete docInfo.simplifiedResolution;
+						delete docInfo.simplifiedInstalled;
 					};
 				}
 				docInfo.doc = updatedDoc;
@@ -463,8 +464,8 @@ var CouchDbSource = $n2.Construct(ol.source.Vector,{
 				// At this point, if bestResolution is set, then this is the geometry we should
 				// be displaying
 				if( undefined !== bestResolution ){
-					docInfo.simplfiedName = bestAttName;
-					docInfo.simplfiedResolution = bestResolution;
+					docInfo.simplifiedName = bestAttName;
+					docInfo.simplifiedResolution = bestResolution;
 				};
 			};
 		};
@@ -473,18 +474,18 @@ var CouchDbSource = $n2.Construct(ol.source.Vector,{
 		for(var docId in this.infoByDocId){
 			var docInfo = this.infoByDocId[docId];
 			var doc = docInfo.doc;
-			if( docInfo.simplfiedName ) {
+			if( docInfo.simplifiedName ) {
 				// There is a simplification needed, do I have it already?
 				var wkt = undefined;
 				if( docInfo.simplifications ){
-					wkt = docInfo.simplifications[docInfo.simplfiedName];
+					wkt = docInfo.simplifications[docInfo.simplifiedName];
 				};
 
 				// If I do not have it, request it
 				if( !wkt ){
 					var geomRequest = {
 						id: docId
-						,attName: docInfo.simplfiedName
+						,attName: docInfo.simplifiedName
 						,doc: doc
 					};
 					geometriesRequested.push(geomRequest);
