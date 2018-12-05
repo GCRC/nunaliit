@@ -20,6 +20,15 @@
 	width: auto;
 }
 
+.n2_documentForm .n2_layoutFloat span.n2schema_field_localized_label {
+	display: block;
+	color: rgba(0,0,0,0.6);
+}
+
+.n2_documentForm .n2_layoutFloat div.n2schema_field_container_localized {
+	margin: 5px 0px;
+}
+
 .n2_documentForm .n2_layoutFloat textarea {
 	height: 200px;
 }

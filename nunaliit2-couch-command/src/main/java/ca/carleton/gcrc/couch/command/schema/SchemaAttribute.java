@@ -1096,10 +1096,14 @@ public class SchemaAttribute {
 					fieldType += ",id="+encodeFieldParameter(id);
 					fieldType += ",textarea";
 
+					if( null != label ){
+						fieldType += ",label="+encodeFieldParameter(label);
+					}
+
 					if( "localized".equals(type) ){
-						fieldType = ",localized";
+						fieldType += ",localized";
 					} else if( "custom".equals(type) ){
-						fieldType = ",custom="+encodeFieldParameter(customType);
+						fieldType += ",custom="+encodeFieldParameter(customType);
 					}
 					if( isWikiTransform() ){
 						fieldType += ",wikiTransform";
@@ -1107,10 +1111,6 @@ public class SchemaAttribute {
 
 					if( null != placeholder ){
 						fieldType += ",placeholder="+encodeFieldParameter(placeholder);
-					}
-
-					if( null != label ){
-						fieldType += ",label="+encodeFieldParameter(label);
 					}
 
 					pw.println("{{#"+schemaStructure+"}}");

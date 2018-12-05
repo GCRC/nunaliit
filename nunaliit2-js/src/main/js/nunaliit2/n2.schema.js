@@ -404,19 +404,28 @@ function _formField() {
 		if( !opts.localized ){
 			opts.localized = [];
 		};
+
+		if( opts.label ){
+			r.push('<span class="n2schema_field_localized_label mdc-typography--subtitle1">'+opts.label+'</span>');
+		};
 		
 		for(var i=0,e=langs.length;i<e;++i){
 			var lang = langs[i];
 			
 			var langSel = completeSelectors.getChildSelector(lang);
 
-			r.push('<div class="n2schema_field_container n2schema_field_container_localized');
+			opts.label = lang;
+
+			r.push('<div class="n2schema_field_container n2schema_field_container_localized mdc-text-field');
 			if( opts.textarea ){
-				r.push(' n2schema_field_container_textarea');
+				r.push(' n2schema_field_container_textarea mdc-text-field--textarea">');
+				_formSingleField(r,langSel,opts);
+			} else {
+				r.push(' mdc-text-field--outlined">');
+				_formSingleField(r,langSel,opts);
+				r.push('<div class="mdc-notched-outline"><svg><path class="mdc-notched-outline__path"/></svg></div>');
+				r.push('<div class="mdc-notched-outline__idle"></div>');
 			};
-			r.push('">');
-			r.push('<span class="n2_localize_lang">('+lang+')</span>');
-			_formSingleField(r,langSel,opts);
 			r.push('</div>');
 		};
 		
@@ -426,19 +435,28 @@ function _formField() {
 		// if obj is undefined (or null)
 
 		var langs = getSortedLanguages(opts.localized, null);
-		
+
+		if( opts.label ){
+			r.push('<span class="n2schema_field_localized_label mdc-typography--subtitle1">'+opts.label+'</span>');
+		};
+
 		for(var i=0,e=langs.length;i<e;++i){
 			var lang = langs[i];
 			
 			var langSel = completeSelectors.getChildSelector(lang);
 			
-			r.push('<div class="n2schema_field_container n2schema_field_container_localized');
+			opts.label = lang;
+			
+			r.push('<div class="n2schema_field_container n2schema_field_container_localized mdc-text-field');
 			if( opts.textarea ){
-				r.push(' n2schema_field_container_textarea');
+				r.push(' n2schema_field_container_textarea mdc-text-field--textarea">');
+				_formSingleField(r,langSel,opts);
+			} else {
+				r.push(' mdc-text-field--outlined">');
+				_formSingleField(r,langSel,opts);
+				r.push('<div class="mdc-notched-outline"><svg><path class="mdc-notched-outline__path"/></svg></div>');
+				r.push('<div class="mdc-notched-outline__idle"></div>');
 			};
-			r.push('">');
-			r.push('<span class="n2_localize_lang">('+lang+')</span>');
-			_formSingleField(r,langSel,opts);
 			r.push('</div>');
 		};
 
