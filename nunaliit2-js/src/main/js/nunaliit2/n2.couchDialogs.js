@@ -278,23 +278,27 @@ function searchForDocumentId(options_){
 		.attr('type','text')
 		.appendTo($textField);
 
-	var $textFieldLabel = $('<label>')
-		.attr('for',inputId)
-		.addClass('mdc-floating-label')
-		.text(_loc('Search:'))
-		.appendTo($textField);
-
 	var $textFieldOutline = $('<div>')
 		.addClass('mdc-notched-outline')
 		.appendTo($textField);
 
+	$('<div>')
+		.addClass('mdc-notched-outline__leading')
+		.appendTo($textFieldOutline);
 
-	$('<svg><path class="mdc-notched-outline__path"/></svg>')
+	var $textFieldOutlineNotch = $('<div>')
+		.addClass('mdc-notched-outline__notch')
 		.appendTo($textFieldOutline);
 	
+	var $textFieldLabel = $('<label>')
+		.attr('for',inputId)
+		.addClass('mdc-floating-label')
+		.text(_loc('Search'))
+		.appendTo($textFieldOutlineNotch);
+
 	$('<div>')
-		.addClass('mdc-notched-outline__idle')
-		.appendTo($textField);
+		.addClass('mdc-notched-outline__trailing')
+		.appendTo($textFieldOutline);
 
 	$('<div>')
 		.attr('id',displayId)

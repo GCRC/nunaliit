@@ -45,6 +45,10 @@
     margin: 0px 16px 16px !important;
 }
 
+.mdc-dialog__title+.mdc-dialog__content {
+    padding-top: 5px;
+}
+
 .mdc-dialog.mdc-dialog--scrollable .mdc-dialog__title, .mdc-dialog.mdc-dialog--scrollable .mdc-dialog__actions {
     border-color: rgba(0,0,0,0);
 }
