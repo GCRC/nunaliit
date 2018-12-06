@@ -26,6 +26,10 @@
     --mdc-theme-text-icon-on-dark: rgba(255,255,255,0.5); */
 }
 
+.mdc-text-field:not(.mdc-text-field--disabled).mdc-text-field--focused .mdc-floating-label,
+.mdc-select:not(.mdc-select--disabled).mdc-select--focused .mdc-floating-label {
+	color: #1565c0;
+}
 
 /* Overriding material-components-web.min.css styling */
 
@@ -48,10 +52,6 @@
 .mdc-text-field::before, .mdc-text-field::after {
     width: 100%;
     height: 100%;
-}
-
-.mdc-text-field--focused:not(.mdc-text-field--disabled) .mdc-floating-label {
-	color: #1565c0;
 }
 
 .n2_documentForm .n2_layoutFloat .mdc-switch,

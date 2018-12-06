@@ -217,6 +217,17 @@ function _attachMDCComponents(){
 		}
 	}
 
+	// attach select menus
+	var select_menus = document.getElementsByClassName('mdc-select');
+
+	for(i = 0, e = select_menus.length; i < e; i++){
+		try {
+			mdc.select.MDCSelect.attachTo(select_menus[i]);
+		} catch(error) {
+			$n2.log("Unable to attach select menu material design component: " + error);
+		}
+	}
+
 	// attach notched outlines
 	var notched_outlines = document.getElementsByClassName('mdc-notched-outline');
 	for(i = 0, e = notched_outlines.length; i < e; i++){
@@ -257,14 +268,22 @@ function _formSingleField(r,completeSelectors,options){
 		if( options.id === options.label ){
 			labelLocalizeClass = "";
 		}
-		r.push('<label for="' + textFieldId + '" class="label mdc-floating-label' + labelLocalizeClass + '">'+ options.label + '</label>');
 	}
+
+	if( options.date ){
+		r.push('<div class="n2schema_help_date"></div>');
+	};
+	
+	if( options.wikiTransform ){
+		r.push('<div class="n2schema_help_wiki"></div>');
+	};
 
 	if( options.textarea ){
 		r.push('<textarea id="' + textFieldId + '"');
 		r.push(' class="n2schema_input mdc-text-field__input');
 
 	} else if( options.checkbox ){
+		r.push('<label for="' + textFieldId + '" class="label mdc-floating-label' + labelLocalizeClass + '">'+ options.label + '</label>');
 		r.push('<input type="checkbox" class="n2schema_input');
 
 	} else {
@@ -290,32 +309,38 @@ function _formSingleField(r,completeSelectors,options){
 	};
 
 	// placeholder
-	if( options.placeholder 
-		&& typeof options.placeholder[0] === 'string' ){
-			var placeHolderValue = options.placeholder[0];
-			placeHolderValue = placeHolderValue.replace(/&/g, '&amp;');
-			placeHolderValue = placeHolderValue.replace(/"/g, '&quot;');
-			r.push('" placeholder="');
-			r.push( _loc(placeHolderValue) );
-		};
+	if( options.placeholder && typeof options.placeholder[0] === 'string' ){
+		var placeHolderValue = options.placeholder[0];
+		placeHolderValue = placeHolderValue.replace(/&/g, '&amp;');
+		placeHolderValue = placeHolderValue.replace(/"/g, '&quot;');
+		r.push('" placeholder="');
+		r.push( _loc(placeHolderValue) );
+	};
 
 	if( options.textarea ){
 		r.push('"></textarea>');
+		r.push('<div class="mdc-notched-outline">');
+		r.push('<div class="mdc-notched-outline__leading"></div>');
+		r.push('<div class="mdc-notched-outline__notch">');
+		r.push('<label for="' + textFieldId + '" class="label mdc-floating-label' + labelLocalizeClass + '">'+ options.label + '</label>');		
+		r.push('</div>');
+		r.push('<div class="mdc-notched-outline__trailing"></div>');
+		r.push('</div>');
+
 	} else if( options.checkbox ){
 		r.push('"/>');
+
 	} else {
 		r.push('"/>');
-	};
-
-	if( options.date ){
-		r.push('<div class="n2schema_help_date"></div>');
-	};
-	
-	if( options.wikiTransform ){
-		r.push('<div class="n2schema_help_wiki"></div>');
+		r.push('<div class="mdc-notched-outline">');
+		r.push('<div class="mdc-notched-outline__leading"></div>');
+		r.push('<div class="mdc-notched-outline__notch">');
+		r.push('<label for="' + textFieldId + '" class="label mdc-floating-label' + labelLocalizeClass + '">'+ options.label + '</label>');		
+		r.push('</div>');
+		r.push('<div class="mdc-notched-outline__trailing"></div>');
+		r.push('</div>');
 	};
 };
-
 
 function _formField() {
 	// The arguments to handlebars block expression functions are:
@@ -423,8 +448,6 @@ function _formField() {
 			} else {
 				r.push(' mdc-text-field--outlined">');
 				_formSingleField(r,langSel,opts);
-				r.push('<div class="mdc-notched-outline"><svg><path class="mdc-notched-outline__path"/></svg></div>');
-				r.push('<div class="mdc-notched-outline__idle"></div>');
 			};
 			r.push('</div>');
 		};
@@ -454,8 +477,6 @@ function _formField() {
 			} else {
 				r.push(' mdc-text-field--outlined">');
 				_formSingleField(r,langSel,opts);
-				r.push('<div class="mdc-notched-outline"><svg><path class="mdc-notched-outline__path"/></svg></div>');
-				r.push('<div class="mdc-notched-outline__idle"></div>');
 			};
 			r.push('</div>');
 		};
@@ -474,11 +495,18 @@ function _formField() {
 		var geometryTextareaId = $n2.getUniqueId();
 		var attr = completeSelectors.encodeForDomAttribute();
 		r.push('<div class="n2schema_field_container n2schema_field_container_textarea mdc-text-field mdc-text-field--textarea">');
+		r.push('<textarea id="' + geometryTextareaId + '" class="n2schema_field_geometry mdc-text-field__input" nunaliit-selector="'+attr+'"');
+		r.push('></textarea>');
+		r.push('<div class="mdc-notched-outline">');
+		r.push('<div class="mdc-notched-outline__leading"></div>');
+		r.push('<div class="mdc-notched-outline__notch">');
+		
 		if( opts.label ){
 			r.push('<label for="' + geometryTextareaId + '" class="label mdc-floating-label n2s_localize">'+opts.label+'</label>');
 		}
-		r.push('<textarea id="' + geometryTextareaId + '" class="n2schema_field_geometry mdc-text-field__input" nunaliit-selector="'+attr+'"');
-		r.push('></textarea>');
+
+		r.push('</div>');
+		r.push('<div class="mdc-notched-outline__trailing"></div>'); 
 		r.push('</div>');
 		
 	} else {
@@ -487,11 +515,9 @@ function _formField() {
 			r.push(' n2schema_field_container_textarea mdc-text-field--textarea">');
 			_formSingleField(r,completeSelectors,opts);
 		} else {
-				r.push(' mdc-text-field--outlined">');
-				_formSingleField(r,completeSelectors,opts);
-				r.push('<div class="mdc-notched-outline"><svg><path class="mdc-notched-outline__path"/></svg></div>');
-				r.push('<div class="mdc-notched-outline__idle"></div>');
-			};
+			r.push(' mdc-text-field--outlined">');
+			_formSingleField(r,completeSelectors,opts);
+		};
 		r.push('</div>');
 	};
 

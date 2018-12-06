@@ -1164,6 +1164,7 @@ public class SchemaAttribute {
 					
 						pw.println("{{#"+schemaStructure+"}}");
 						pw.println("<div class=\""+schemaClass+"_"+id+"\">");
+
 						pw.println("\t<div class=\"value\">");
 						pw.println("\t\t{{#:field}}"+id+fieldType+"{{/:field}}");
 						pw.println("\t</div>");
@@ -1178,12 +1179,13 @@ public class SchemaAttribute {
 
 					pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					pw.println("\t\t<div class=\"value\">");
-					pw.println("\t\t\t<select class=\"{{#:input}}"+id+"{{/:input}}\">");
+					pw.println("\t\t\t<div class=\"mdc-select mdc-select--outlined\">");
+					pw.println("\t\t\t\t<i class=\"mdc-select__dropdown-icon\"></i>");
+					pw.println("\t\t\t\t<select class=\"{{#:input}}"+id+"{{/:input}} mdc-select__native-control\">");
 					
 					for(SelectionOption option : options){
-						pw.print("\t\t\t\t<option class=\"n2s_localize\" value=\""+option.getValue()+"\">");
+						pw.print("\t\t\t\t\t<option class=\"n2s_localize\" value=\""+option.getValue()+"\">");
 						String optLabel = option.getLabel();
 						if( null == optLabel ){
 							optLabel = option.getValue();
@@ -1192,12 +1194,20 @@ public class SchemaAttribute {
 						pw.println("</option>");
 					}
 					
-					pw.println("\t\t\t</select>");
+					pw.println("\t\t\t\t</select>");
+
+					pw.println("\t\t\t\t<div class=\"mdc-notched-outline\">");
+					pw.println("\t\t\t\t\t<div class=\"mdc-notched-outline__leading\"></div>");
+					pw.println("\t\t\t\t\t<div class=\"mdc-notched-outline__notch\">");
+					pw.println("\t\t\t\t\t\t<label class=\"mdc-floating-label "+labelLocalizeClass+"\">"+label+"</label>");
+					pw.println("\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t<div class=\"mdc-notched-outline__trailing\"></div>");
+					pw.println("\t\t\t\t</div>");
+					pw.println("\t\t\t</div>");
+
 					pw.println("\t\t</div>");
-					pw.println("\t\t<div class=\"end\"></div>");
-					
+
 					pw.println("\t</div>");
-					
 					
 					pw.println("{{/"+schemaStructure+"}}");
 				}
