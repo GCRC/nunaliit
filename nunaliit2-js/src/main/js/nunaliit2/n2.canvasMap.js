@@ -43,6 +43,22 @@ var
 This canvas displays a map based on OpenLayers5.  
 
 */
+ 
+//--------------------------------------------------------------------------
+ const BACKGROUND_VENDOR = {
+	GOOGLEMAP : 'googlemaps',
+	BING : 'bing',
+	WMS : 'wms',
+	OSM : 'osm',
+	STAMEN : 'stamen',
+	IMAGE : 'image',
+	COUCHDB : 'couchdb'
+ };
+ 
+
+// --------------------------------------------------------------------------
+ 
+ 
 var MapCanvas = $n2.Class('MapCanvas',{
 
 	canvasId: null,
@@ -119,6 +135,7 @@ var MapCanvas = $n2.Class('MapCanvas',{
 			
 			$n2.log(this._classname,this);
 			
+			this.bgSources = opts.backgrounds;
 			this._drawMap();
 			
 		} catch(err) {
@@ -213,6 +230,9 @@ var MapCanvas = $n2.Class('MapCanvas',{
 		      var styleFunction = function(feature) {
 		        return styles[feature.getGeometry().getType()];
 		      };
+		      
+		      
+		var mapLayers = [];
 		var overlayLayers = [];
 		this.sources.forEach(function(source){
 			var vectorLayer = new ol.layer.Vector({
@@ -222,9 +242,16 @@ var MapCanvas = $n2.Class('MapCanvas',{
 			});
 			overlayLayers.push(vectorLayer);
 		});
+		
+		
+		mapLayers = this._genBackgroundMapLayers(this.bgSources);
 		var overlayGroup = new ol.layer.Group({
 			title: 'Overlays',
 			layers: overlayLayers
+		});
+		var bgGroup = new ol.layer.Group({
+			title: 'Background',
+			layers: mapLayers
 		});
 		var olView = new ol.View({
 			center: ol.proj.transform([-75, 45.5], 'EPSG:4326', 'EPSG:3857'),
@@ -245,43 +272,7 @@ var MapCanvas = $n2.Class('MapCanvas',{
 		var customMap = new ol.N2Map({
 			target : this.canvasId,
 			layers: [
-				new ol.layer.Group({
-					'title': 'Base maps',
-					layers: [
-						new ol.layer.Group({
-							title: 'Water color with labels',
-							type: 'base',
-							combine: true,
-							visible: false,
-							layers: [
-								new ol.layer.Tile({
-									source: new ol.source.Stamen({
-										layer: 'watercolor'
-									})
-								}),
-								new ol.layer.Tile({
-									source: new ol.source.Stamen({
-										layer: 'terrain-labels'
-									})
-								})
-								]
-						}),
-						new ol.layer.Tile({
-							title: 'Water color',
-							type: 'base',
-							visible: false,
-							source: new ol.source.Stamen({
-								layer: 'watercolor'
-							})
-						}),
-						new ol.layer.Tile({
-							title: 'OSM',
-							type: 'base',
-							visible: true,
-							source: new ol.source.OSM()
-						})
-						]
-				}),
+				bgGroup,
 				overlayGroup
 			],
 			view: olView
@@ -292,9 +283,139 @@ var MapCanvas = $n2.Class('MapCanvas',{
 		});
 		customMap.addControl(customLayerSwitcher);
 		customMap.getInfo();
-	},
+	}
+	,_genBackgroundMapLayers: function (bgSources) {
+		var _this = this;
+		var bg = null;
+		if( bgSources ) {
+					// This is the method used when background layers are specified
+					// via couchModule
+			for(var i=0,e=bgSources.length; i<e; ++i){
+				var layerDefiniton = bgSources[i];
+				var l = this._createOLLayerFromDefinition(layerDefiniton, 
+						_computeDefaultLayer( bgSources , i)
+						);
+				if( l && !bg ) bg = [];
+				if( l ) bg[bg.length] = l;
+			};
+					
+		};
+		
+		return(bg);
+		
+		
+		function _computeDefaultLayer(backgrounds, idx) {
+			if( typeof _computeDefaultLayer.defaultLayerIdx == 'undefined' ) {
+				_computeDefaultLayer.defaultLayerIdx = -1;
+		    }
+			if( _computeDefaultLayer.defaultLayerIdx === -1 ){
+				_computeDefaultLayer.defaultLayerIdx = 0;
+				for(var i=0,e=backgrounds.length; i<e; ++i){
+					var layerDefiniton = backgrounds[i];
+					if ( typeof (layerDefiniton.defaultLayer) !== undefined 
+						&& layerDefiniton.defaultLayer ) {
+						_computeDefaultLayer.defaultLayerIdx = i;
+					}
+				};
+			};
+			return (_computeDefaultLayer.defaultLayerIdx === idx);
+		}
+	}
+	
+	,_createOLLayerFromDefinition: function(layerDefinition, isDefaultLayer) {
+		var name = _loc(layerDefinition.name);
+		var _this = this;
+		
+		if( layerDefinition ) {
+			var ol5layer = new ol.layer.Tile({
+				title: layerDefinition.name,
+				type: 'base',
+				visible: isDefaultLayer,
+				source: _this._createBackgroundMapSource(layerDefinition)
+			});
+			return ol5layer;
+		} else {
+			$n2.reportError('Bad configuration for layer: ' + name);
+			return null;
+		};
+		
 
-	_handleDispatch: function(m, addr, dispatcher){
+		
+	}
+	, _createBackgroundMapSource : function(layerDefinition) {
+		
+		var sourceTypeInternal = 
+			layerDefinition.type.replace(/\W/g,'').toLowerCase();
+		var sourceOptionsInternal = layerDefinition.options;
+			
+		if ( sourceTypeInternal == BACKGROUND_VENDOR.GOOGLEMAP ) {
+			
+			$n2.log('Background of Google map is under construction');
+			
+		} else if ( sourceTypeInternal == BACKGROUND_VENDOR.BING) {
+			
+			return new BingMaps(sourceOptionsInternal);
+			
+		} else if ( sourceTypeInternal == BACKGROUND_VENDOR.WMS ) {
+			if (sourceOptionsInternal 
+				&& sourceOptionsInternal.url 
+				&& sourceOptionsInternal.layers
+				&& sourceOptionsInternal.styles ) {
+			var parameters = {};
+			for ( var key in sourceOptionsInternal){
+				if( 'LAYERS' === key.toUpperCase()
+					|| 'STYLES' === key.toUpperCase()
+					|| 'WIDTH' === key.toUpperCase()
+					|| 'VERSION' === key.toUpperCase()
+					||  'HEIGHT'  === key.toUpperCase()
+					||  'BBOX' === key.toUpperCase()
+					||  'CRS'=== key.toUpperCase()){
+					
+					parameters[key.toUpperCase()] = sourceOptionsInternal[key]
+				}
+				
+			}
+			return new TileWMS({
+				url: sourceOptionsInternal.url,
+				params: parameters
+			});
+			} else {
+				
+				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal );
+			}
+			
+		} else if ( sourceTypeInternal == BACKGROUND_VENDOR.OSM) {
+			
+			if (sourceOptionsInternal
+					&& sourceOptionsInternal.url ){
+				return new OSM({
+					url : sourceOptionsInternal.url
+				});
+			} else {
+				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal );
+			}
+			
+			
+		} else if ( sourceTypeInternal == BACKGROUND_VENDOR.STAMEN) {
+			if (sourceOptionsInternal
+					&& sourceOptionsInternal.layerName ){
+				return new ol.source.Stamen({
+					layer:  sourceOptionsInternal.layerName
+				});
+			} else {
+				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal );
+			}
+		} else if ( sourceTypeInternal == BACKGROUND_VENDOR.IMAGE) {
+			
+		} else if ( sourceTypeInternal == BACKGROUND_VENDOR.COUCHDB) {
+			
+		} else {
+			
+			$n2.reportError('Unrecognized type (' + layerDefinition.type + ')');
+		}
+	}
+	
+	,_handleDispatch: function(m, addr, dispatcher){
 	}
 });
  
@@ -398,7 +519,7 @@ var CouchDbSource = $n2.Construct(ol.source.Vector,{
 			});
 		};
 
-		this._redrawAllFeatures();
+		this._reloadAllFeatures();
 	},
 
 	_handleDispatch: function(m, addr, dispatcher){
@@ -427,7 +548,7 @@ var CouchDbSource = $n2.Construct(ol.source.Vector,{
 				});
 				
 				if( atLeastOne ){
-					this._redrawAllFeatures();
+					this._reloadAllFeatures();
 				};
 			};
 		}
@@ -499,7 +620,7 @@ var CouchDbSource = $n2.Construct(ol.source.Vector,{
 			,requester: this.sourceId
 		});
 		
-		this._redrawAllFeatures();
+		this._reloadAllFeatures();
 	},
 
 	_getResolutionInProjection: function(targetResolution, proj){
@@ -518,7 +639,7 @@ var CouchDbSource = $n2.Construct(ol.source.Vector,{
 		return targetResolution;
 	},
 
-	_redrawAllFeatures: function(){
+	_reloadAllFeatures: function(){
 		var _this = this;
 
 		var wktFormat = new ol.format.WKT();
