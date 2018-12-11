@@ -483,20 +483,24 @@ function _formField() {
 
 	} else if( opts.reference ) {
 		var referenceFieldId = $n2.getUniqueId();
+
+		if( opts.label ){
+			r.push('<span class="n2schema_field_localized_label mdc-typography--subtitle1">'+opts.label+'</span>');
+		};
+
 		var attr = completeSelectors.encodeForDomAttribute();
-		r.push('<span class="n2schema_field_reference" nunaliit-selector="'+attr+'"');
+		r.push('<div class="n2schema_field_reference mdc-text-field mdc-text-field--outlined" nunaliit-selector="'+attr+'"');
 		if( opts.search 
 		 && opts.search[0] ){
 			r.push(' n2-search-func="'+opts.search[0]+'"');
 		};
-		r.push('></span>');
+		r.push('></div>');
 
 	} else if( opts.geometry ) {
 		var geometryTextareaId = $n2.getUniqueId();
 		var attr = completeSelectors.encodeForDomAttribute();
 		r.push('<div class="n2schema_field_container n2schema_field_container_textarea mdc-text-field mdc-text-field--textarea">');
-		r.push('<textarea id="' + geometryTextareaId + '" class="n2schema_field_geometry mdc-text-field__input" nunaliit-selector="'+attr+'"');
-		r.push('></textarea>');
+		r.push('<textarea id="' + geometryTextareaId + '" class="n2schema_field_geometry mdc-text-field__input" nunaliit-selector="'+attr+'"></textarea>');
 		r.push('<div class="mdc-notched-outline">');
 		r.push('<div class="mdc-notched-outline__leading"></div>');
 		r.push('<div class="mdc-notched-outline__notch">');
@@ -507,6 +511,7 @@ function _formField() {
 
 		r.push('</div>');
 		r.push('<div class="mdc-notched-outline__trailing"></div>'); 
+		r.push('</div>');
 		r.push('</div>');
 		
 	} else {
@@ -2245,9 +2250,13 @@ var Form = $n2.Class({
 			// There is no reference. Install a
 			// text input
 			$elem.empty();
+			
+			var referenceFieldId = $n2.getUniqueId();
 
 			var $input = $('<input>')
+				.attr('id', referenceFieldId)
 				.attr('type','text')
+				.attr('class','n2schema_input mdc-text-field__input')
 				.appendTo($elem);
 			
 			// Handle changes
@@ -2282,6 +2291,22 @@ var Form = $n2.Class({
 			};
 			$input.change(changeHandler);
 			
+			var $notchedOutline = $('<div>')
+				.attr('class','mdc-notched-outline')
+				.appendTo($elem);
+
+			$('<div>')
+				.attr('class','mdc-notched-outline__leading')
+				.appendTo($notchedOutline);
+
+			$('<div>')
+				.attr('class','mdc-notched-outline__notch')
+				.appendTo($notchedOutline);
+
+			$('<div>')
+				.attr('class','mdc-notched-outline__trailing')
+				.appendTo($notchedOutline);
+
 			// Handle focus
 			var focusHandler = {
 				fn: this.functionMap['getDocumentId']
