@@ -79,9 +79,12 @@
 }
 
 .n2schema_referenceDelete {
-	display: inline-block;
+	position: absolute;
+    top: 12px;
+    right: 7px;
 	width: 0px;
 	height: 0px;
+	z-index: 2;
 	padding: 15px 15px 0px 0px;
 	background: url(images/x_icon_naked_15.png) no-repeat;
 }

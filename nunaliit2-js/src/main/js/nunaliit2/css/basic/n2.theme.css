@@ -566,7 +566,7 @@ CreateDocument widget
 
 .editorAttachments,
 .editorDisplayRelations {
-	padding: 16px 16px 0px 16px;  
+	margin: 8px 16px;  
 }
 
 ._n2DocumentListEntry {

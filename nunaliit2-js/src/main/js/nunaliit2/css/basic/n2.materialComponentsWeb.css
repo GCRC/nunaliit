@@ -58,6 +58,10 @@
     height: 100%;
 }
 
+.mdc-text-field span.n2s_briefDisplayed {
+    padding: 10px 20px 10px 16px;
+}
+
 .n2_documentForm .n2_layoutFloat .mdc-switch,
 .n2_documentForm .n2_layoutFloat .mdc-checkbox {
     display: inline-flex;

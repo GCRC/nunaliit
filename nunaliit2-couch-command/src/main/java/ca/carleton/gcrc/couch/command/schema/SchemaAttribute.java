@@ -1314,20 +1314,24 @@ public class SchemaAttribute {
 				pw.println("</div>");
 
 			} else if( "hover_sound".equals(type) ){
+				String labelValue = "";
+				String searchFunctionString = ",search=getHoverSound"; 
+				
 				if( null != id ){
 					throw new Exception("'id' should not be specified for attributes of type 'hover_sound'");
 				}
 
-				String searchFunctionString = ",search=getHoverSound"; 
+				if( null != label ){
+					labelValue = ",label="+encodeFieldParameter(label);
+				}
+
 				if( null != searchFunction ){
 					searchFunctionString = ",search="+encodeFieldParameter(searchFunction);
 				}
 
 				pw.println("<div class=\"nunaliit_hoverSound\">");
 
-				pw.println("\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-				pw.println("\t<div class=\"value\">{{#:field}}nunaliit_hoverSound,reference"+searchFunctionString+"{{/:field}}</div>");
-				pw.println("\t<div class=\"end\"></div>");
+				pw.println("\t<div class=\"value\">{{#:field}}nunaliit_hoverSound,reference"+labelValue+searchFunctionString+"{{/:field}}</div>");
 				
 				pw.println("</div>");
 

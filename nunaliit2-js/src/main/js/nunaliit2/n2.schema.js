@@ -200,10 +200,14 @@ function _attachMDCComponents(){
 	var text_fields = document.getElementsByClassName('mdc-text-field');
 	var i, e;
 	for(i = 0, e = text_fields.length; i < e; i++){
-		try {
-		mdc.textField.MDCTextField.attachTo(text_fields[i]);
-		} catch(error) {
-			$n2.log("Unable to attach text field material design component: " + error);
+		if ( text_fields[i].classList.contains("n2schema_field_reference") ){
+			// ignore due to use of spans instead of input elements
+		} else {
+			try {
+				mdc.textField.MDCTextField.attachTo(text_fields[i]);
+			} catch(error) {
+				$n2.log("Unable to attach text field material design component: " + error);
+			}
 		}
 	}
 	
@@ -423,6 +427,8 @@ function _formField() {
 		
 		
 	} else if( obj && obj.nunaliit_type === 'localized' ) {
+
+		var fieldLabel;
 		var langs = getSortedLanguages(opts.localized, obj);
 		
 		// Turn on "localized" option, if not already on
@@ -431,7 +437,7 @@ function _formField() {
 		};
 
 		if( opts.label ){
-			r.push('<span class="n2schema_field_localized_label mdc-typography--subtitle1">'+opts.label+'</span>');
+			fieldLabel = opts.label;
 		};
 		
 		for(var i=0,e=langs.length;i<e;++i){
@@ -439,7 +445,7 @@ function _formField() {
 			
 			var langSel = completeSelectors.getChildSelector(lang);
 
-			opts.label = lang;
+			opts.label = fieldLabel + " (" + lang + ")";
 
 			r.push('<div class="n2schema_field_container n2schema_field_container_localized mdc-text-field');
 			if( opts.textarea ){
@@ -457,10 +463,11 @@ function _formField() {
 		// This condition is true if obj is an empty string or
 		// if obj is undefined (or null)
 
+		var fieldLabel;
 		var langs = getSortedLanguages(opts.localized, null);
 
 		if( opts.label ){
-			r.push('<span class="n2schema_field_localized_label mdc-typography--subtitle1">'+opts.label+'</span>');
+			fieldLabel = opts.label;
 		};
 
 		for(var i=0,e=langs.length;i<e;++i){
@@ -468,7 +475,7 @@ function _formField() {
 			
 			var langSel = completeSelectors.getChildSelector(lang);
 			
-			opts.label = lang;
+			opts.label = fieldLabel + " (" + lang + ")";
 			
 			r.push('<div class="n2schema_field_container n2schema_field_container_localized mdc-text-field');
 			if( opts.textarea ){
@@ -482,14 +489,14 @@ function _formField() {
 		};
 
 	} else if( opts.reference ) {
-		var referenceFieldId = $n2.getUniqueId();
-
-		if( opts.label ){
-			r.push('<span class="n2schema_field_localized_label mdc-typography--subtitle1">'+opts.label+'</span>');
-		};
-
 		var attr = completeSelectors.encodeForDomAttribute();
-		r.push('<div class="n2schema_field_reference mdc-text-field mdc-text-field--outlined" nunaliit-selector="'+attr+'"');
+
+		r.push('<div class="n2schema_field_reference mdc-text-field mdc-text-field--outlined" ');
+		if( opts.label ){
+			r.push('nunaliit-label="'+opts.label+'" ');
+		}
+		r.push('nunaliit-selector="'+attr+'"');
+		
 		if( opts.search 
 		 && opts.search[0] ){
 			r.push(' n2-search-func="'+opts.search[0]+'"');
@@ -2204,6 +2211,7 @@ var Form = $n2.Class({
 		var _this = this;
 		
 		var domSelector = $elem.attr('nunaliit-selector');
+		var referenceLabel = $elem.attr('nunaliit-label');
 		var objSel = $n2.objectSelector.decodeFromDomAttribute(domSelector);
 		var parentSelector = objSel.getParentSelector();
 		var key = objSel.getKey();
@@ -2213,15 +2221,44 @@ var Form = $n2.Class({
 		var ref = objSel.getValue(this.obj);
 		
 		if( ref && ref.doc ) {
+
+			// Update $elem height
+			$elem.css('height', 'inherit');
+
 			// There is a reference
 			$elem.empty();
-			
+
 			// Brief
 			$('<span>')
 				.addClass('n2s_briefDisplay')
 				.text(ref.doc)
 				.appendTo($elem);
-			
+
+			var $notchedOutline = $('<div>')
+				.attr('class','mdc-notched-outline mdc-notched-outline--notched')
+				.appendTo($elem);
+
+			$('<div>')
+				.attr('class','mdc-notched-outline__leading')
+				.appendTo($notchedOutline);
+
+			var $notch = $('<div>')
+				.attr('class','mdc-notched-outline__notch')
+				.appendTo($notchedOutline);
+
+			var $notchLabel = $('<label>')
+				.attr('class','label n2s_localized mdc-floating-label mdc-floating-label--float-above')
+				.text(referenceLabel)
+				.appendTo($notch);
+
+			// Update width of $notch based on label width
+			var labelWidth = $notchLabel.width();
+			$notch.width(labelWidth);
+
+			$('<div>')
+				.attr('class','mdc-notched-outline__trailing')
+				.appendTo($notchedOutline);
+				
 			// Delete button
 			$('<div>')
 				.addClass('n2schema_referenceDelete')
@@ -2299,9 +2336,14 @@ var Form = $n2.Class({
 				.attr('class','mdc-notched-outline__leading')
 				.appendTo($notchedOutline);
 
-			$('<div>')
+			var $notch = $('<div>')
 				.attr('class','mdc-notched-outline__notch')
 				.appendTo($notchedOutline);
+
+			$('<label>')
+				.attr('class','label n2s_localized mdc-floating-label')
+				.text(referenceLabel)
+				.appendTo($notch);
 
 			$('<div>')
 				.attr('class','mdc-notched-outline__trailing')
