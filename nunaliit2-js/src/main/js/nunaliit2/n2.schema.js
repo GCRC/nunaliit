@@ -312,15 +312,6 @@ function _formSingleField(r,completeSelectors,options){
 	
 	};
 
-	// placeholder
-	if( options.placeholder && typeof options.placeholder[0] === 'string' ){
-		var placeHolderValue = options.placeholder[0];
-		placeHolderValue = placeHolderValue.replace(/&/g, '&amp;');
-		placeHolderValue = placeHolderValue.replace(/"/g, '&quot;');
-		r.push('" placeholder="');
-		r.push( _loc(placeHolderValue) );
-	};
-
 	if( options.textarea ){
 		r.push('"></textarea>');
 		r.push('<div class="mdc-notched-outline">');
@@ -533,6 +524,9 @@ function _formField() {
 		r.push('</div>');
 	};
 
+	if( opts.placeholder ){
+		r.push('<p class="mdc-text-field-helper-text" aria-hidden="true">' + opts.placeholder + '</p>');
+	}
 	r.push('</div>');
 	
 	return r.join('');
