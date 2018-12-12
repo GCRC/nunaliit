@@ -130,14 +130,65 @@ var LanguageSwitcher = $n2.Class({
 	},
 
 	_dialog: function(){
+		var mdcDialogComponent; 
 		var _this = this;
-		
 		var diagId = $n2.getUniqueId();
-		var $langDialog = $('<div id="'+diagId+'" class="n2lang_langSelect_dialog"></div>');
+
+		var $langDialog = $('<div>')
+			.attr('id',diagId)
+			.attr('role','alertdialog')
+			.attr('aria-modal','true')
+			.attr('aria-labelledby','my-dialog-title')
+			.attr('aria-describedby','my-dialog-content')
+			.addClass('n2lang_langSelect_dialog mdc-dialog')
+			.appendTo($('body'));
+
+		var $dialogContainer = $('<div>')
+			.addClass('mdc-dialog__container')
+			.appendTo($langDialog);
+
+		var $dialogSurface = $('<div>')
+			.addClass('mdc-dialog__surface')
+			.appendTo($dialogContainer);
+
+		$('<h2>')
+			.addClass('mdc-dialog__title')
+			.text(_loc('Select Language'))
+			.appendTo($dialogSurface);
 
 		var $langList = $('<div>')
-			.addClass('n2lang_langSelect_list')
+			.addClass('n2lang_langSelect_list mdc-dialog__content')
+			.appendTo($dialogSurface);
+		
+		var $footer = $('<footer>')
+			.addClass('mdc-dialog__actions')
+			.appendTo($dialogSurface);
+
+		var $button = $('<button>')
+			.addClass('n2dialogs_alert_okButton mdc-button mdc-dialog__button')
+			.text(_loc('Close'))
+			.appendTo($footer)
+			.click(function(){
+				mdcDialogComponent.close();
+				$langDialog.remove();
+				return false;
+			});
+
+		$('<div>')
+			.addClass('mdc-dialog__scrim')
+			.click(function(){
+				mdcDialogComponent.close();
+				$langDialog.remove();
+				return false;
+			})
 			.appendTo($langDialog);
+
+		// Attach ripple to button
+		mdc.ripple.MDCRipple.attachTo($button[0]);
+
+		// Attach mdc component to alert dialog
+		mdcDialogComponent = new mdc.dialog.MDCDialog($langDialog[0]);
+		mdcDialogComponent.open();
 		
 		var onClick = function(e){
 			var $input = $(this);
@@ -146,7 +197,8 @@ var LanguageSwitcher = $n2.Class({
 				var local = $n2.l10n.getLocale();
 				if (local.lang !== code){
 					_this._selectLanguage(code);
-					$('#'+diagId).dialog('close');
+					mdcDialogComponent.close();
+					$langDialog.remove();
 				}
 			};
 			return false;
@@ -159,19 +211,6 @@ var LanguageSwitcher = $n2.Class({
 		};
 
 		addLanguage($langList, _loc('Default'), null);
-
-		var dialogOptions = {
-			autoOpen: true
-			,title: _loc('Select Language')
-			,modal: true
-			,width: 740
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
-			}
-		};
-		$langDialog.dialog(dialogOptions);
 
 		function addLanguage($list, name, code){
 			var id = $n2.getUniqueId();
