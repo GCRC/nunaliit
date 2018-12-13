@@ -394,7 +394,7 @@ function searchForDocumentId(options_){
 					.appendTo($table);
 
 				var $td = $('<td>')
-					.addClass('n2_search_result olkitSearchMod2_'+(i%2))
+					.addClass('n2_search_result')
 					.appendTo($tr);
 				
 				var $a = $('<a>')
@@ -1133,6 +1133,8 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 	showService: null,
 	
 	dialogPrompt: null,
+
+	mdcDialogComponent: null,
 	
 	/**
 	 * @constructor
@@ -1208,76 +1210,133 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 		
 		var $dialog = $('<div>')
 			.attr('id',dialogId)
-			.addClass('editorSelectDocumentDialog editorSelectDocumentDialog_relatedMedia');
+			.attr('role','alertdialog')
+			.attr('aria-modal','true')
+			.attr('aria-labelledby','my-dialog-title')
+			.attr('aria-describedby','my-dialog-content')
+			.attr('class','editorSelectDocumentDialog editorSelectDocumentDialog_relatedMedia mdc-dialog')
+			.appendTo($('body'));
 		
-		var $suggestedHeader = $('<div>')
-			.addClass('editorSelectDocumentDialog_suggestedHeader')
+		var $dialogContainer = $('<div>')
+			.attr('class','mdc-dialog__container')
+			.appendTo($dialog);
+		
+		var $dialogSurface = $('<div>')
+			.attr('class','mdc-dialog__surface')
+			.appendTo($dialogContainer);
+		
+		$('<h2>')
+			.attr('class','mdc-dialog__title')
+			.text(_loc(this.dialogPrompt))
+			.appendTo($dialogSurface);
+
+		var $dialogContent = $('<div>')
+			.attr('class','mdc-dialog__content')
+			.appendTo($dialogSurface);
+
+		var $suggestionContainer = $('<div>')
+			.attr('class','editorSelectDocumentDialog_suggested')
+			.appendTo($dialogContent);
+
+		$('<div>')
+			.attr('class','editorSelectDocumentDialog_suggestedHeader')
 			.text( _loc('Suggestions') )
-			.appendTo($dialog);
+			.appendTo($suggestionContainer);
 		
-		var $suggestedList = $('<div>')
+		$('<div>')
 			.attr('id',suggestionId)
-			.addClass('editorSelectDocumentDialog_suggestedList')
-			.appendTo($dialog);
+			.attr('class','editorSelectDocumentDialog_suggestedList')
+			.appendTo($suggestionContainer);
 	
 		var $searchLine = $('<div>')
-			.addClass('editorSelectDocumentDialog_searchLine')
-			.appendTo($dialog);
+			.attr('class','editorSelectDocumentDialog_searchLine')
+			.appendTo($dialogContent);
 
-		$('<label>')
-			.attr('for', inputId)
-			.text( _loc('Search:') )
+		var $textField = $('<div>')
+			.attr('class','mdc-text-field mdc-text-field--outlined')
 			.appendTo($searchLine);
 
 		$('<input>')
-			.attr('id', inputId)
-			.attr('type', 'text')
-			.appendTo($searchLine);
+			.attr('type','text')
+			.attr('class','mdc-text-field__input')
+			.attr('id',inputId)
+			.appendTo($textField);
+	
+		var $textFieldOutline = $('<div>')
+			.attr('class','mdc-notched-outline')
+			.appendTo($textField);
 
-		$('<button>')
-			.attr('id', searchButtonId)
-			.text( _loc('Search') )
-			.appendTo($searchLine);
+		$('<div>')
+			.attr('class','mdc-notched-outline__leading')
+			.appendTo($textFieldOutline);
+
+		var $textFieldOutlineNotch = $('<div>')
+			.attr('class','mdc-notched-outline__notch')
+			.appendTo($textFieldOutline);
+
+		var $textFieldLabel = $('<label>')
+			.attr('for',inputId)
+			.attr('class','mdc-floating-label')
+			.text(_loc('Search'))
+			.appendTo($textFieldOutlineNotch);
+
+		$('<div>')
+			.attr('class','mdc-notched-outline__trailing')
+			.appendTo($textFieldOutline);
 		
 		$('<div>')
 			.attr('id',displayId)
-			.addClass('editorSelectDocumentDialogResults')
-			.appendTo($dialog);
+			.attr('class','editorSelectDocumentDialogResults')
+			.appendTo($dialogContent);
 		
-		var $buttons = $('<div>')
-			.appendTo($dialog);
+		var $footer = $('<footer>')
+			.addClass('mdc-dialog__actions')
+			.appendTo($dialogContent);
 		
-		$('<button>')
-			.addClass('cancel')
+		var $searchButton = $('<button>')
+			.attr('id', searchButtonId)
+			.addClass('mdc-button mdc-dialog__button')
+			.text( _loc('Search') )
+			.appendTo($footer);
+		
+		var $cancelButton = $('<button>')
+			.addClass('cancel mdc-button mdc-dialog__button')
 			.text( _loc('Cancel') )
-			.appendTo($buttons)
-			.button({icons:{primary:'ui-icon-cancel'}})
+			.appendTo($footer)
 			.click(function(){
-				var $dialog = $('#'+dialogId);
-				$dialog.dialog('close');
-				return false;
-			});
-
-		var dialogOptions = {
-			autoOpen: true
-			,title: this.dialogPrompt
-			,modal: true
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
+				_this.mdcDialogComponent.close();
+				$dialog.remove();
 				if( shouldReset ) {
 					opts.onReset();
 				};
-			}
-		};
-		
-		var width = computeMaxDialogWidth(370);
-		if( typeof width === 'number' ){
-			dialogOptions.width = width;
-		};
+				return false;
+			});
 
-		$dialog.dialog(dialogOptions);
+		$('<div>')
+			.addClass('mdc-dialog__scrim')
+			.click(function(){
+				_this.mdcDialogComponent.close();
+				$dialog.remove();
+				if( shouldReset ) {
+					opts.onReset();
+				};
+				return false;
+			})
+			.appendTo($dialog);
+
+		// Attach ripple to buttons
+		mdc.ripple.MDCRipple.attachTo($cancelButton[0]);
+		mdc.ripple.MDCRipple.attachTo($searchButton[0]);
+
+		// Attach textField
+		mdc.textField.MDCTextField.attachTo($textField[0]);
+		
+		// Attach floating labels
+		mdc.floatingLabel.MDCFloatingLabel.attachTo($textFieldLabel[0]); 
+
+		// Attach mdc component to alert dialog
+		this.mdcDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);
+		this.mdcDialogComponent.open();
 
 		this.searchService.installSearch({
 			textInput: $('#'+inputId)
@@ -1286,7 +1345,6 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 			,onlyFinalResults: true
 		});
 		
-		var $input = $('#'+inputId);
 		$('#'+inputId).focus();
 		
 		// Get suggestions
@@ -1387,7 +1445,7 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 					$table.append($tr);
 
 					var $td = $('<td>')
-						.addClass('n2_search_result olkitSearchMod2_'+(i%2))
+						.addClass('n2_search_result')
 						.appendTo($tr);
 					
 					var $a = $('<a>')
@@ -1410,7 +1468,8 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 				opts.onSelected(docId);
 				shouldReset = false;
 				var $dialog = $('#'+dialogId);
-				$dialog.dialog('close');
+				_this.mdcDialogComponent.close();
+				$dialog.remove();
 				return false;
 			};
 		};

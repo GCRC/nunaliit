@@ -111,7 +111,6 @@ var LanguageSwitcher = $n2.Class({
 	
 	_display: function(){
 		var _this = this;
-		
 		var $elem = this._getElem();
 		
 		$elem.empty();

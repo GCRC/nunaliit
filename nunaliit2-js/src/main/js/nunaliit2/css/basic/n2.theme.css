@@ -564,6 +564,10 @@ CreateDocument widget
 	box-shadow: none;
 }
 
+.editorSelectDocumentDialog_suggested {
+	margin-bottom: 16px;
+}
+
 .editorAttachments,
 .editorDisplayRelations {
 	margin: 8px 16px;  
