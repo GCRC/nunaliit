@@ -210,7 +210,17 @@ function _attachMDCComponents(){
 			}
 		}
 	}
-	
+
+	// attach text field helper text
+	var helper_text = document.getElementsByClassName('mdc-text-field-helper-text');
+	for(i = 0, e = helper_text.length; i < e; i++){
+		try {
+			mdc.textField.MDCTextFieldHelperText.attachTo(helper_text[i]);
+		} catch(error) {
+			$n2.log("Unable to attach helper text material design component: " + error);
+		}
+	}
+
 	// attach floating labels
 	var floating_labels = document.getElementsByClassName('mdc-floating-label');
 	for(i = 0, e = floating_labels.length; i < e; i++){
