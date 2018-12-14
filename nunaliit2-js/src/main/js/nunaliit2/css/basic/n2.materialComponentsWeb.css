@@ -28,7 +28,8 @@
 
 .mdc-text-field:not(.mdc-text-field--disabled).mdc-text-field--focused .mdc-floating-label,
 .mdc-select:not(.mdc-select--disabled).mdc-select--focused .mdc-floating-label,
-.mdc-drawer .mdc-list-item--activated {
+.mdc-drawer .mdc-list-item--activated,
+.mdc-drawer .mdc-drawer__title a {
 	color: #1565c0;
 }
 
