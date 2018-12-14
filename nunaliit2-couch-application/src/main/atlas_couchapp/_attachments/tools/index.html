@@ -3,29 +3,55 @@
 	<head>
 		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 		<title>Nunaliit2 Tools</title>
-
 		<link rel="shortcut icon" href="../favicon.ico" />
+		<link rel="stylesheet" href="../js-external/materialcomponentsweb/material-components-web.min.css" type="text/css" />
 		<link rel="stylesheet" href="../nunaliit2/css/basic/nunaliit2.css" type="text/css" />
 		<link rel="stylesheet" href="../_list/css_merge/css" type="text/css" />
 		<link rel="stylesheet" href="../css/atlas.css" type="text/css" />
-
 	</head>
 	<body class="nunaliit_application nunaliit_application_tools">
-		<h1>Nunaliit2 Tools</h1>
-		<ul>
-			<li class="n2tools_item_users"><a href="./users.html">User Management</a></li>
-			<li class="n2tools_item_upload"><a href="./upload.html">Approval for Uploaded Files</a></li>
-			<li class="n2tools_item_browse"><a href="./browse.html">Data Access</a></li>
-			<li class="n2tools_item_translation"><a href="./translation.html">Localization</a></li>
-			<li class="n2tools_item_export"><a href="./export.html">Data Export</a></li>
-			<li class="n2tools_item_select"><a href="./select.html">Data Modification</a></li>
-			<li class="n2tools_item_schemas"><a href="./schemas.html">Schemas</a></li>
-			<li class="n2tools_item_restore"><a href="./restore.html">Restore Tool</a></li>
-			<li class="n2tools_item_submission"><a href="./submission.html">Submission Tool</a></li>
-			<li class="n2tools_item_import"><a href="./import.html">Import Tool</a></li>
-			<li class="n2tools_item_debug"><a href="./debug.html">Debug Tool</a></li>
-			<li class="n2tools_item_guitool"><a href="./gui-tool.html">GUI Tool</a></li>
-		</ul>
-
+		<div class="drawer-frame-root">
+			<aside class="mdc-drawer">
+				<div class="mdc-drawer__header">
+					<h3 class="mdc-drawer__title">Nunaliit2 Tools</h3>
+				</div>
+				<div class="mdc-drawer__content">
+					<nav class="mdc-list">
+						<a class="mdc-list-item" href="./users.html" tabindex="-1" aria-selected="false">User Management</a>
+						<a class="mdc-list-item" href="./upload.html" tabindex="-1" aria-selected="false">Approval for Uploaded Files</a>
+						<a class="mdc-list-item" href="./browse.html" tabindex="-1" aria-selected="false">Data Browser</a>
+						<a class="mdc-list-item" href="./translation.html" tabindex="-1" aria-selected="false">Localization</a>
+						<a class="mdc-list-item" href="./export.html" tabindex="-1" aria-selected="false">Data Export</a>
+						<a class="mdc-list-item" href="./select.html" tabindex="-1" aria-selected="false">Data Modification</a>
+						<a class="mdc-list-item" href="./schemas.html" tabindex="-1" aria-selected="false">Schemas</a>
+						<a class="mdc-list-item" href="./restore.html" tabindex="-1" aria-selected="false">Restore Tool</a>
+						<a class="mdc-list-item" href="./submission.html" tabindex="-1" aria-selected="false">Submission Tool</a>
+						<a class="mdc-list-item" href="./import.html" tabindex="-1" aria-selected="false">Import Tool</a>
+						<a class="mdc-list-item" href="./debug.html" tabindex="-1" aria-selected="false">Debug Tool</a>
+						<a class="mdc-list-item" href="./gui-tool.html" tabindex="-1" aria-selected="false">GUI Tool</a>
+					</nav>
+				</div>
+			</aside>
+			<div class="drawer-frame-app-content">
+				<header class="mdc-top-app-bar drawer-top-app-bar">
+					<div class="mdc-top-app-bar__row">
+						<section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
+							<span class="mdc-top-app-bar__title">Nunaliit2 Tools</span>
+						</section>
+					</div>
+				</header>
+				<div class="drawer-main-content">
+					<div class="mdc-top-app-bar--fixed-adjust"></div>
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript" src="../js-external/materialcomponentsweb/material-components-web.min.js"></script>
+		<script type="text/javascript">
+			// <!--
+			// Attach MDCList to mdc-list element
+			var list = mdc.list.MDCList.attachTo(document.querySelector('.mdc-list'));
+			list.wrapFocus = true;
+			// -->
+		</script>
 	</body>
 </html>

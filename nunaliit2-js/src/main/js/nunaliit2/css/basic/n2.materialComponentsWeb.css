@@ -27,8 +27,34 @@
 }
 
 .mdc-text-field:not(.mdc-text-field--disabled).mdc-text-field--focused .mdc-floating-label,
-.mdc-select:not(.mdc-select--disabled).mdc-select--focused .mdc-floating-label {
+.mdc-select:not(.mdc-select--disabled).mdc-select--focused .mdc-floating-label,
+.mdc-drawer .mdc-list-item--activated {
 	color: #1565c0;
+}
+
+/* Nunaliit2 Tool Page Styling */
+
+.drawer-frame-root {
+    display: flex;
+    height: 100vh;
+}
+
+.drawer-frame-app-content {
+    width: 100vw;
+}
+
+.drawer-frame-app-content .mdc-top-app-bar .nunaliit_login {
+    position: fixed;
+    padding: 10px;
+}
+
+.drawer-main-content {
+    padding: 16px;
+}
+
+.mdc-drawer .mdc-drawer__content .mdc-list .mdc-list-item,
+.mdc-drawer .mdc-drawer__title {
+    font-weight: bold;
 }
 
 /* Overriding material-components-web.min.css styling */
@@ -75,3 +101,4 @@
 .n2_documentForm .n2_layoutFloat .mdc-checkbox label {
     padding-left: 16px;
 }
+
