@@ -3,8 +3,8 @@
 	<head>
 		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 		<title>Schemas</title>
-
 		<link rel="shortcut icon" href="../favicon.ico" />
+		<link rel="stylesheet" href="../js-external/materialcomponentsweb/material-components-web.min.css" type="text/css" />
 		<link rel="stylesheet" href="../js-external/css/jquery-ui/smoothness/jquery-ui.custom.css" type="text/css" />
 		<link rel="stylesheet" href="../js-external/OpenLayers/theme/default/style.css" type="text/css" />
 		<link rel="stylesheet" href="../js-external/css/jquery.lightbox-0.5.css" type="text/css" />
@@ -54,13 +54,45 @@
 		</style>		
 	</head>
 	<body class="nunaliit_application nunaliit_application_schemas">
-		<div class="schemaAppBody">
-
-		<h1>Schemas</h1>	
-		<div id="login" class="nunaliit_login"></div>
-		<div id="schemaApp"></div>
-
+		<div class="drawer-frame-root">
+			<aside class="mdc-drawer">
+				<div class="mdc-drawer__header">
+					<h3 class="mdc-drawer__title"><a href="./index.html">Nunaliit2 Tools</a></h3>
+				</div>
+				<div class="mdc-drawer__content">
+					<nav class="mdc-list">
+						<a class="mdc-list-item" href="./users.html" tabindex="-1" aria-selected="false">User Management</a>
+						<a class="mdc-list-item" href="./upload.html" tabindex="-1" aria-selected="false">Approval for Uploaded Files</a>
+						<a class="mdc-list-item" href="./browse.html" tabindex="-1" aria-selected="false">Data Browser</a>
+						<a class="mdc-list-item" href="./translation.html" tabindex="-1" aria-selected="false">Localization</a>
+						<a class="mdc-list-item" href="./export.html" tabindex="-1" aria-selected="false">Data Export</a>
+						<a class="mdc-list-item" href="./select.html" tabindex="-1" aria-selected="false">Data Modification</a>
+						<a class="mdc-list-item mdc-list-item--activated" href="./schemas.html" tabindex="0" aria-selected="false">Schemas</a>
+						<a class="mdc-list-item" href="./restore.html" tabindex="-1" aria-selected="false">Restore Tool</a>
+						<a class="mdc-list-item" href="./submission.html" tabindex="-1" aria-selected="false">Submission Tool</a>
+						<a class="mdc-list-item" href="./import.html" tabindex="-1" aria-selected="false">Import Tool</a>
+						<a class="mdc-list-item" href="./debug.html" tabindex="-1" aria-selected="false">Debug Tool</a>
+						<a class="mdc-list-item" href="./gui-tool.html" tabindex="-1" aria-selected="false">GUI Tool</a>
+					</nav>
+				</div>
+			</aside>
+			<div class="drawer-frame-app-content">
+				<header class="mdc-top-app-bar drawer-top-app-bar">
+					<div class="mdc-top-app-bar__row">
+						<section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
+							<span class="mdc-top-app-bar__title">Schemas</span>
+							<div id="login" class="nunaliit_login"></div>
+						</section>
+					</div>
+				</header>
+				<div class="drawer-main-content selectAppBody">
+					<div class="mdc-top-app-bar--fixed-adjust"></div>
+					<div id="schemaApp"></div>
+				</div>
+			</div>
 		</div>
+		
+		<script type="text/javascript" src="../js-external/materialcomponentsweb/material-components-web.min.js"></script>
 		
 		<script type="text/javascript" src="../js-external/js/jquery.min.js"></script>
 		<script type="text/javascript" src="../js-external/js/jquery-ui.min.js"></script>
@@ -82,6 +114,10 @@
 
 		<script type="text/javascript">
 			// <!--
+
+			// Attach MDCList to mdc-list element
+			var list = mdc.list.MDCList.attachTo(document.querySelector('.mdc-list'));
+			list.wrapFocus = true;
 
 			function main_init(config) {
 				var atlasDb = config.atlasDb;
