@@ -36,17 +36,13 @@
 /* Nunaliit2 Tool Page Styling */
 
 .drawer-frame-root {
+    display: -ms-flexbox;
     display: flex;
     height: 100vh;
 }
 
-.drawer-frame-app-content {
-    width: 100vw;
-}
-
-.drawer-frame-app-content .mdc-top-app-bar .nunaliit_login {
-    position: fixed;
-    padding: 10px;
+.mdc-drawer-app-content {
+    width: 100%;
 }
 
 .drawer-main-content {
@@ -56,6 +52,16 @@
 .mdc-drawer .mdc-drawer__content .mdc-list .mdc-list-item,
 .mdc-drawer .mdc-drawer__title {
     font-weight: bold;
+}
+
+.mdc-top-app-bar__navigation-icon {
+    font-size: 2em;
+    text-decoration: none;
+}
+
+.mdc-top-app-bar .nunaliit_login.mdc-top-app-bar__action-item {
+    width: 150px;
+    height: 48px;
 }
 
 /* Overriding material-components-web.min.css styling */
