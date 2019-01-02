@@ -5,6 +5,7 @@
 		<title>Restore Tool</title>
 
 		<link rel="shortcut icon" href="../favicon.ico" />
+		<link rel="stylesheet" href="../js-external/materialcomponentsweb/material-components-web.min.css" type="text/css">
 		<link rel="stylesheet" href="../js-external/css/jquery-ui/smoothness/jquery-ui.custom.css" type="text/css" />
 		<link rel="stylesheet" href="../js-external/OpenLayers/theme/default/style.css" type="text/css" />
 		<link rel="stylesheet" href="../js-external/css/jquery.lightbox-0.5.css" type="text/css" />
@@ -15,14 +16,48 @@
 		<link rel="stylesheet" href="../css/atlas.css" type="text/css" />
 	</head>
 	<body class="nunaliit_application nunaliit_application_restore">
-		<div>
-
-		<h1>Restore Tool</h1>	
-		<div id="login" class="nunaliit_login"></div>
-		<div id="restoreTool"></div>
-
+		<div class="drawer-frame-root">
+			<aside class="mdc-drawer mdc-drawer--dismissible mdc-drawer--open">
+				<div class="mdc-drawer__header">
+					<h3 class="mdc-drawer__title"><a href="./index.html">Nunaliit2 Tools</a></h3>
+				</div>
+				<div class="mdc-drawer__content">
+					<nav class="mdc-list">
+						<a class="mdc-list-item" href="./users.html" tabindex="-1" aria-selected="false">User Management</a>
+						<a class="mdc-list-item" href="./upload.html" tabindex="-1" aria-selected="false">Approval for Uploaded Files</a>
+						<a class="mdc-list-item" href="./browse.html" tabindex="-1" aria-selected="false">Data Browser</a>
+						<a class="mdc-list-item" href="./translation.html" tabindex="-1" aria-selected="false">Localization</a>
+						<a class="mdc-list-item" href="./export.html" tabindex="-1" aria-selected="false">Data Export</a>
+						<a class="mdc-list-item" href="./select.html" tabindex="-1" aria-selected="false">Data Modification</a>
+						<a class="mdc-list-item" href="./schemas.html" tabindex="-1" aria-selected="false">Schemas</a>
+						<a class="mdc-list-item mdc-list-item--activated" href="./restore.html" tabindex="0" aria-selected="false">Restore Tool</a>
+						<a class="mdc-list-item" href="./submission.html" tabindex="-1" aria-selected="false">Submission Tool</a>
+						<a class="mdc-list-item" href="./import.html" tabindex="-1" aria-selected="false">Import Tool</a>
+						<a class="mdc-list-item" href="./debug.html" tabindex="-1" aria-selected="false">Debug Tool</a>
+						<a class="mdc-list-item" href="./gui-tool.html" tabindex="-1" aria-selected="false">GUI Tool</a>
+					</nav>
+				</div>
+			</aside>
+			<div class="mdc-drawer-app-content">
+				<header class="mdc-top-app-bar" id="app-bar">
+					<div class="mdc-top-app-bar__row">
+						<section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
+							<a href="#" class="material-icons mdc-top-app-bar__navigation-icon">☰</a>
+							<span class="mdc-top-app-bar__title">Restore Tool</span>
+						</section>
+						<section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end">
+							<a id="login" class="nunaliit_login mdc-top-app-bar__action-item"></a>
+						</section>
+					</div>
+				</header>
+				<main class="main-content" id="main-content">
+					<div class="mdc-top-app-bar--fixed-adjust"></div>
+					<div id="restoreTool"></div>
+				</main>
+			</div>
 		</div>
 		
+		<script type="text/javascript" src="../js-external/materialcomponentsweb/material-components-web.min.js"></script>
 		<script type="text/javascript" src="../js-external/js/jquery.min.js"></script>
 		<script type="text/javascript" src="../js-external/js/jquery-ui.min.js"></script>
 		
@@ -43,6 +78,17 @@
 
 		<script type="text/javascript">
 			// <!--
+
+			// Attach MDCDrawer
+			var drawer = mdc.drawer.MDCDrawer.attachTo(document.querySelector('.mdc-drawer'));
+
+			// Attach MDCTopAppBar
+			var topAppBar = mdc.topAppBar.MDCTopAppBar.attachTo(document.getElementById('app-bar'));
+			topAppBar.setScrollTarget(document.body);
+
+			topAppBar.listen('MDCTopAppBar:nav', function(){
+				drawer.open = !drawer.open;
+			});
 
 			function main_init(config) {
 				var atlasDb = config.atlasDb;
