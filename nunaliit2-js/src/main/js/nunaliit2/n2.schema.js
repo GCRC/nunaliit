@@ -362,7 +362,7 @@ function _formField() {
 	var args = [];
 	args.push.apply(args,arguments);
 	var options = args.pop();
-	
+
 	// Compute current selector
 	var currentSelector = null;
 	if( options 
@@ -412,6 +412,12 @@ function _formField() {
 		};
 	};
 	
+	if( opts.array ){
+		if( options.data.itemNum ){
+			opts.label += " (" + options.data.itemNum + ")";
+		}
+	}
+
 	var r = [];
 	r.push('<div class="n2schema_field_wrapper">');
 
@@ -645,7 +651,7 @@ function _arrayField() {
 	if( obj && obj.length ) {
 		for(var i=0,e=obj.length; i<e; ++i){
 			var item = obj[i];
-	
+
 			var completeSelectors = obj[SELECT];
 			completeSelectors = completeSelectors.getChildSelector(i);
 			var cl = createClassStringFromSelector(completeSelectors);
@@ -664,7 +670,7 @@ function _arrayField() {
 	
 			r.push('<div class="n2schema_array_item_wrapper">');
 	
-			r.push( options.fn(item,{data:{n2_selector:completeSelectors}}) );
+			r.push( options.fn(item,{data:{n2_selector:completeSelectors, itemNum:i+1}}) );
 			
 			r.push('</div></div>');
 		};
@@ -1897,7 +1903,7 @@ var Form = $n2.Class({
 						
 						var $item = $clicked.parents('.n2schema_array_item').first();
 						$item.remove();
-						//_this.refresh($elem);
+						_this.refresh($elem);
 
 						_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						
@@ -1913,7 +1919,7 @@ var Form = $n2.Class({
 							var $item = $clicked.parents('.n2schema_array_item').first();
 							var $prevItem = $item.prev();
 							$item.insertBefore($prevItem);
-							//_this.refresh($elem);
+							_this.refresh($elem);
 
 							_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						};
@@ -1930,7 +1936,7 @@ var Form = $n2.Class({
 							var $item = $clicked.parents('.n2schema_array_item').first();
 							var $nextItem = $item.next();
 							$item.insertAfter($nextItem);
-							//_this.refresh($elem);
+							_this.refresh($elem);
 
 							_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						};

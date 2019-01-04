@@ -1214,22 +1214,27 @@ public class SchemaAttribute {
 
 			} else if( "array".equals(type) ){
 				if( null != id ){
-					String fieldType = null;
+					String fieldType = ",array";
 					String arrayType = "";
+					
+					if( null != label ){
+						fieldType += ",label="+encodeFieldParameter(label);
+					}
+
 					if( "string".equals(elementType) ){
-						fieldType = "";
+						fieldType += "";
 						arrayType = " \"string\"";
 					} else if( "localized".equals(elementType) ){
-						fieldType = ",localized";
+						fieldType += ",localized";
 						arrayType = " \"localized\"";
 					} else if( "date".equals(elementType) ){
-						fieldType = ",date";
+						fieldType += ",date";
 						arrayType = " \"date\"";
 					} else if( "reference".equals(elementType) ){
-						fieldType = ",reference";
+						fieldType += ",reference";
 						arrayType = " \"reference\"";
 					} else if( "custom".equals(elementType) ){
-						fieldType = ",custom="+customType;
+						fieldType += ",custom="+customType;
 						arrayType = " \"custom\"";
 					}
 					
@@ -1247,16 +1252,13 @@ public class SchemaAttribute {
 
 						pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
 
-						pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 						pw.println("\t\t<div class=\"value\">");
 						pw.println("\t\t\t{{#:array "+id+arrayType+"}}");
 						pw.println("\t\t\t\t<div>{{#:field}}."+fieldType+searchFnName+"{{/:field}}</div>");
 						pw.println("\t\t\t{{/:array}}");
 						pw.println("\t\t</div>");
-						pw.println("\t\t<div class=\"end\"></div>");
 						
 						pw.println("\t</div>");
-						
 						
 						pw.println("{{/"+schemaStructure+"}}");
 					}

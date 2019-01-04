@@ -13,6 +13,7 @@
 .n2schema_array_item {
 	position: relative;
 	min-height: 58px;
+	padding-bottom: 5px;
 }
 
 .n2schema_array_add, .n2schema_array_item_delete, .n2schema_array_item_down, .n2schema_array_item_up {
@@ -29,10 +30,11 @@
 }
 
 .n2schema_array_add {
-	display: inline-block;
+	display: block;
 	background: url(tree/icons.png) no-repeat;
 	background-position: 0px 0px;
 	float: right;
+	padding-bottom: 5px;
 }
 
 .n2schema_array_add:hover {
