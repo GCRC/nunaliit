@@ -30,23 +30,22 @@
 		<link rel="stylesheet" href="css/atlas.css" type="text/css" />
 	</head>
 	<body class="nunaliit_atlas">
-		
-		<!--/HEADER SECTION/-->
-		<div class="nunaliit_header">
+		<header class="nunaliit_header mdc-top-app-bar mdc-top-app-bar--fixed">
 			
-			<!-- Added second header div to contain Atlas title, menu and login-->
-			<div id="header_container" class="nunaliit_header_container">
-				<span class="nunaliit_title"><a id="title" class="nunaliit_title_link" href="index.html"></a></span>
-				
-				<!-- Added Main Nav inside header-->
-				<div id="navigation" class="nunaliit_header-nav">
-				</div>
-				
-				<!-- Moved login inside header-->
-				<!-- Added a new container div - nunaliit_login_container -->
-				<!-- Changed login buttons to new layout (Accommodate liquid header)-->
-				<div id="login1" class="nunaliit_login"></div>
-			</div>
+			<div id="header_container" class="mdc-top-app-bar__row nunaliit_header_container">
+				<section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
+				  <a href="#" class="mdc-top-app-bar__navigation-icon">☰</a>
+				  <span class="nunaliit_title"><a id="title" class="nunaliit_title_link" href="index.html"></a></span>
+				  <!-- Added Main Nav inside header-->
+				  <div id="navigation" class="nunaliit_header-nav"></div>
+				</section>
+				<section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end" role="toolbar">
+					<!-- Moved login inside header-->
+					<!-- Added a new container div - nunaliit_login_container -->
+					<!-- Changed login buttons to new layout (Accommodate liquid header)-->
+					<div id="login1" class="nunaliit_login"></div>
+				</section>
+			  </div>
 			
 			<!-- Moved Map Title inside header-->
 			<!-- Changed Class to nunaliit_map_title-->
@@ -57,7 +56,7 @@
 				<div id="search_panel" class="nunaliit_search_input"></div>
 				<span id="module_title" class="nunaliit_module_title_item"></span>
 			</div>
-		</div>
+		</header>
 		
 		<!--/CONTENT SECTION/-->
 		<!-- Added New Container Div around body content-->
