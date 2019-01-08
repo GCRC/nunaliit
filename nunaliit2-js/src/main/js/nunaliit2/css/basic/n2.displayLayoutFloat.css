@@ -16,10 +16,6 @@
 	margin: 16px 0px;
 }
 
-.n2_documentForm .n2_layoutFloat input[type="checkbox"] {
-	width: auto;
-}
-
 .n2_documentForm .n2_layoutFloat span.n2schema_field_localized_label {
 	display: block;
 	color: rgba(0,0,0,0.6);

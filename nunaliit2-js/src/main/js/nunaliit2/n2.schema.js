@@ -252,13 +252,13 @@ function _attachMDCComponents(){
 		}
 	}
 
-	// attach switches
-	var switches = document.getElementsByClassName('mdc-switch');
-	for(i = 0, e = switches.length; i < e; i++){
+	// attach form fields
+	var formFields = document.getElementsByClassName('mdc-form-field');
+	for(i = 0, e = formFields.length; i < e; i++){
 		try {
-			mdc.switchControl.MDCSwitch.attachTo(switches[i]);
+			mdc.formField.MDCFormField.attachTo(formFields[i]);
 		} catch(error) {
-			$n2.log("Unable to attach switch material design component: " + error);
+			$n2.log("Unable to attach form field material design component: " + error);
 		}
 	}
 
@@ -297,9 +297,9 @@ function _formSingleField(r,completeSelectors,options){
 		r.push(' class="n2schema_input mdc-text-field__input');
 
 	} else if( options.checkbox ){
-		r.push('<label for="' + textFieldId + '" class="label mdc-floating-label' + labelLocalizeClass + '">'+ options.label + '</label>');
-		r.push('<input type="checkbox" class="n2schema_input');
-
+		r.push('<div class="mdc-form-field">');
+		r.push('<div class="mdc-checkbox">');
+		r.push('<input id="' + textFieldId + '" type="checkbox" class="n2schema_input mdc-checkbox__native-control');
 	} else {
 		r.push('<input type="text" id="' + textFieldId + '"');
 		r.push(' class="n2schema_input mdc-text-field__input');
@@ -334,6 +334,13 @@ function _formSingleField(r,completeSelectors,options){
 
 	} else if( options.checkbox ){
 		r.push('"/>');
+		r.push('<div class="mdc-checkbox__background">');
+		r.push('<svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24"><path fill="none" stroke="white" class="mdc-checkbox__checkmark-path" d="M1.73,12.91 8.1,19.28 22.79,4.59" /></svg>');
+		r.push('<div class="mdc-checkbox__mixedmark"></div>');
+		r.push('</div>');
+		r.push('</div>');
+		r.push('<label for="' + textFieldId + '">' + options.label + '</label>');
+		r.push('</div>');
 
 	} else {
 		r.push('"/>');
