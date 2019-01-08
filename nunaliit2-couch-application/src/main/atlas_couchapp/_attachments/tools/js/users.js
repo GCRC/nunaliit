@@ -67,6 +67,40 @@ var UserManagementApplication = $n2.Class({
 		this._display();
 	}
 
+	,_attachMDCComponents: function(){
+		var i, e;
+
+		// attach textFields 
+		var text_fields = document.getElementsByClassName('mdc-text-field');
+		for(i = 0, e = text_fields.length; i < e; i++){
+			try {
+				mdc.textField.MDCTextField.attachTo(text_fields[i]);
+			} catch(error) {
+				$n2.log("Unable to attach text field material design component: " + error);
+			}
+		}
+
+		// attach floating labels
+		var floating_labels = document.getElementsByClassName('mdc-floating-label');
+		for(i = 0, e = floating_labels.length; i < e; i++){
+			try {
+			mdc.floatingLabel.MDCFloatingLabel.attachTo(floating_labels[i]); 
+			} catch(error) {
+				$n2.log("Unable to attach floating label material design component: " + error);
+			}
+		}
+
+		// attach ripple to buttons 
+		var mdc_buttons = document.getElementsByClassName('mdc-button');
+		for(i = 0, e = mdc_buttons.length; i < e; i++){
+			try {
+				mdc.ripple.MDCRipple.attachTo(mdc_buttons[i]);
+			} catch(error){
+				$n2.log("Unable to attach material design component to button ripple: " + error);
+			}
+		};
+	}
+
 	,_getDiv: function(){
 		return $('#'+this.divId);
 	}
@@ -84,15 +118,49 @@ var UserManagementApplication = $n2.Class({
 		var _this = this;
 		
 		var div = this._getDiv();
-		
+		var inputId = $n2.getUniqueId();
+
 		var $userInput = $('<div class="userAppInput"></div>')
 			.appendTo(div);
 		var $userOutput = $('<div class="userAppOutput"></div>')
 			.appendTo(div);
 		
-		
-		var $textInput = $('<input class="userAppSearchText" type="text"></input>')
+		var $textInput = $('<div>')
+			.attr('class','mdc-text-field mdc-text-field--outlined')
+			.css('margin-right','15px')
 			.appendTo($userInput);
+
+		$('<input>')
+			.attr('type','text')
+			.attr('class','userAppSearchText mdc-text-field__input')
+			.attr('id',inputId)
+			.appendTo($textInput);
+	
+		var $textInputOutline = $('<div>')
+			.attr('class','mdc-notched-outline')
+			.appendTo($textInput);
+
+		$('<div>')
+			.attr('class','mdc-notched-outline__leading')
+			.appendTo($textInputOutline);
+
+		var $textInputOutlineNotch = $('<div>')
+			.attr('class','mdc-notched-outline__notch')
+			.appendTo($textInputOutline);
+
+		$('<label>')
+			.attr('for',inputId)
+			.attr('class','mdc-floating-label')
+			.text(_loc('Search'))
+			.appendTo($textInputOutlineNotch);
+
+		$('<div>')
+			.attr('class','mdc-notched-outline__trailing')
+			.appendTo($textInputOutline);
+
+
+		// var $textInput = $('<input class="userAppSearchText" type="text"></input>')
+		// 	.appendTo($userInput);
 		if( $textInput.autocomplete ) {
 			$textInput.autocomplete({
 				source: this.userSearchService.getJqAutoCompleteSource()
@@ -114,27 +182,34 @@ var UserManagementApplication = $n2.Class({
 				_this.queryUsers();
 			};
 		});
-		
-		$('<input class="userAppQueryButton" type="button">')
-			.val( _loc('Query Users') )
+
+		$('<button>')
+			.addClass('userAppQueryButton mdc-button mdc-button--raised mdc-dialog__button')
+			.text(_loc('Query Users')) 
 			.appendTo($userInput)
 			.click(function(){
 				_this.queryUsers();
 			});
-			
-		$('<input class="userAppAddUser" type="button">')
-			.val( _loc('Add User') )
+
+		$('<button>')
+			.addClass('userAppAddUser mdc-button mdc-button--raised mdc-dialog__button')
+			.text(_loc('Add User')) 
 			.appendTo($userInput)
 			.click(function(){
 				_this.addUser();
 			});
 		
-		$('<input class="userAppMyUser" type="button">')
-			.val( _loc('My User') )
+		$('<button>')
+			.addClass('userAppMyUser mdc-button mdc-button--raised mdc-dialog__button')
+			.text(_loc('My User')) 
 			.appendTo($userInput)
 			.click(function(){
 				_this.queryMyUser();
 			});
+
+		$('<hr>').appendTo($userInput);
+
+		this._attachMDCComponents();
 	}
 	
 	,_reportErrorsOnElem: function(errors, $elem) {
@@ -214,10 +289,23 @@ var UserManagementApplication = $n2.Class({
 		var $div = this._getDiv();
 		
 		$div.find('.userAppOutput').html('<div>'
-			+'User Name: <input id="addUserName" type="text"/><br/>'
-			+'Password: <input id="addUserPassword1" type="password"/><br/>'
-			+'Repeat Password: <input id="addUserPassword2" type="password"/><br/>'
-			+'<input id="btnAddUser2" type="button" value="Proceed"/></div>');
+			+'<br/><div class="mdc-text-field mdc-text-field--outlined" style="margin-bottom:10px">'
+			+'<input class="mdc-text-field__input" id="addUserName" type="text"/>'
+			+'<div class="mdc-notched-outline"><div class="mdc-notched-outline__leading"></div>'
+			+'<div class="mdc-notched-outline__notch"><label for="addUserName" class="mdc-floating-label">User Name</label></div>'
+			+'<div class="mdc-notched-outline__trailing"></div></div></div><br/>'
+			+'<div class="mdc-text-field mdc-text-field--outlined" style="margin-bottom:10px">'
+			+'<input class="mdc-text-field__input" id="addUserPassword1" type="password"/>'
+			+'<div class="mdc-notched-outline"><div class="mdc-notched-outline__leading"></div>'
+			+'<div class="mdc-notched-outline__notch"><label for="addUserPassword1" class="mdc-floating-label">Password</label></div>'
+			+'<div class="mdc-notched-outline__trailing"></div></div></div><br/>'
+			+'<div class="mdc-text-field mdc-text-field--outlined" style="margin-bottom:10px">'
+			+'<input class="mdc-text-field__input" id="addUserPassword2" type="password"/>'
+			+'<div class="mdc-notched-outline"><div class="mdc-notched-outline__leading"></div>'
+			+'<div class="mdc-notched-outline__notch"><label for="addUserPassword1" class="mdc-floating-label">Repeat Password</label></div>'
+			+'<div class="mdc-notched-outline__trailing"></div></div></div><br/>'
+			+'<button id="btnAddUser2" class="mdc-button mdc-button--raised mdc-dialog__button">Proceed</button>');
+			
 		$('#addUserName').focus();
 		
 		$('#btnAddUser2').click(function(){
@@ -233,6 +321,8 @@ var UserManagementApplication = $n2.Class({
 				createInitialUser(userName, pw1);
 			}
 		});
+
+		this._attachMDCComponents();
 
 		function createInitialUser(userName, pw) {
 			_this._startRequestWait();
@@ -321,23 +411,23 @@ var UserManagementApplication = $n2.Class({
 		};
 
 		function reportUsers(arr) {
-			var $outterDiv = $('<div class="n2UserList"></div>');
-			$div.find('.userAppOutput').empty().append($outterDiv);
+			var $outterList = $('<ul class="n2UserList mdc-list"></ul>');
+			$div.find('.userAppOutput').empty().append($outterList);
 
 			for(var i=0,e=arr.length; i<e; ++i) {
 				var doc = arr[i];
 
-				reportUserDoc(doc, $outterDiv);
+				reportUserDoc(doc, $outterList);
 			};
 		};
 
-		function reportUserDoc(userDoc, $outterDiv) {
+		function reportUserDoc(userDoc, $outterList) {
 			if( _this.userSchema && _this.showService ){
-				var $div = $('<div></div>');
-				$outterDiv.append($div);
+				var $listItem = $('<li class="mdc-list-item"></li>');
+				$outterList.append($listItem);
 
-				var $a = $('<a href="#" alt="'+userDoc.name+'">'+userDoc._id+'</a>');
-				$div.append( $a );
+				var $a = $('<a href="#" alt="'+userDoc.name+'" class="mdc-list-item__text">'+userDoc._id+'</a>');
+				$listItem.append( $a ); 
 				$a.click(function(){
 					var $a = $(this);
 					var userName = $a.attr('alt');
@@ -354,8 +444,8 @@ var UserManagementApplication = $n2.Class({
 				);
 				
 			} else {
-				var $userDiv = $('<div class="n2UserListEntry"></div>')
-					.appendTo($outterDiv);
+				var $userDiv = $('<li class="n2UserListEntry mdc-list-item"></li>')
+					.appendTo($outterList);
 				
 				$('<span class="userId"></span>')
 					.text(userDoc._id)
