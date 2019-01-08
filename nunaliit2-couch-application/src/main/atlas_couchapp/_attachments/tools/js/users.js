@@ -159,8 +159,6 @@ var UserManagementApplication = $n2.Class({
 			.appendTo($textInputOutline);
 
 
-		// var $textInput = $('<input class="userAppSearchText" type="text"></input>')
-		// 	.appendTo($userInput);
 		if( $textInput.autocomplete ) {
 			$textInput.autocomplete({
 				source: this.userSearchService.getJqAutoCompleteSource()
@@ -305,7 +303,7 @@ var UserManagementApplication = $n2.Class({
 			+'<div class="mdc-notched-outline__notch"><label for="addUserPassword1" class="mdc-floating-label">Repeat Password</label></div>'
 			+'<div class="mdc-notched-outline__trailing"></div></div></div><br/>'
 			+'<button id="btnAddUser2" class="mdc-button mdc-button--raised mdc-dialog__button">Proceed</button>');
-			
+
 		$('#addUserName').focus();
 		
 		$('#btnAddUser2').click(function(){
