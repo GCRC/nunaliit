@@ -150,7 +150,7 @@ var UserManagementApplication = $n2.Class({
 		$('<label>')
 			.attr('for',inputId)
 			.attr('class','mdc-floating-label')
-			.text(_loc('Search'))
+			.text(_loc('User Search'))
 			.appendTo($textInputOutlineNotch);
 
 		$('<div>')
@@ -181,7 +181,7 @@ var UserManagementApplication = $n2.Class({
 		});
 
 		$('<button>')
-			.addClass('userAppQueryButton mdc-button mdc-button--raised mdc-dialog__button')
+			.addClass('userAppQueryButton mdc-button mdc-button--raised')
 			.text(_loc('Query Users')) 
 			.appendTo($userInput)
 			.click(function(){
@@ -189,7 +189,7 @@ var UserManagementApplication = $n2.Class({
 			});
 
 		$('<button>')
-			.addClass('userAppAddUser mdc-button mdc-button--raised mdc-dialog__button')
+			.addClass('userAppAddUser mdc-button mdc-button--raised')
 			.text(_loc('Add User')) 
 			.appendTo($userInput)
 			.click(function(){
@@ -197,14 +197,12 @@ var UserManagementApplication = $n2.Class({
 			});
 		
 		$('<button>')
-			.addClass('userAppMyUser mdc-button mdc-button--raised mdc-dialog__button')
+			.addClass('userAppMyUser mdc-button mdc-button--raised')
 			.text(_loc('My User')) 
 			.appendTo($userInput)
 			.click(function(){
 				_this.queryMyUser();
 			});
-
-		$('<hr>').appendTo($userInput);
 
 		this._attachMDCComponents();
 	}
