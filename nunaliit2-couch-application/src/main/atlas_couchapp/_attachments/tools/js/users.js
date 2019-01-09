@@ -127,7 +127,6 @@ var UserManagementApplication = $n2.Class({
 		
 		var $textInput = $('<div>')
 			.attr('class','mdc-text-field mdc-text-field--outlined')
-			.css('margin-right','15px')
 			.appendTo($userInput);
 
 		$('<input>')
@@ -287,17 +286,17 @@ var UserManagementApplication = $n2.Class({
 		var $div = this._getDiv();
 		
 		$div.find('.userAppOutput').html('<div>'
-			+'<br/><div class="mdc-text-field mdc-text-field--outlined" style="margin-bottom:10px">'
+			+'<br/><div class="mdc-text-field mdc-text-field--outlined">'
 			+'<input class="mdc-text-field__input" id="addUserName" type="text"/>'
 			+'<div class="mdc-notched-outline"><div class="mdc-notched-outline__leading"></div>'
 			+'<div class="mdc-notched-outline__notch"><label for="addUserName" class="mdc-floating-label">User Name</label></div>'
 			+'<div class="mdc-notched-outline__trailing"></div></div></div><br/>'
-			+'<div class="mdc-text-field mdc-text-field--outlined" style="margin-bottom:10px">'
+			+'<div class="mdc-text-field mdc-text-field--outlined">'
 			+'<input class="mdc-text-field__input" id="addUserPassword1" type="password"/>'
 			+'<div class="mdc-notched-outline"><div class="mdc-notched-outline__leading"></div>'
 			+'<div class="mdc-notched-outline__notch"><label for="addUserPassword1" class="mdc-floating-label">Password</label></div>'
 			+'<div class="mdc-notched-outline__trailing"></div></div></div><br/>'
-			+'<div class="mdc-text-field mdc-text-field--outlined" style="margin-bottom:10px">'
+			+'<div class="mdc-text-field mdc-text-field--outlined">'
 			+'<input class="mdc-text-field__input" id="addUserPassword2" type="password"/>'
 			+'<div class="mdc-notched-outline"><div class="mdc-notched-outline__leading"></div>'
 			+'<div class="mdc-notched-outline__notch"><label for="addUserPassword1" class="mdc-floating-label">Repeat Password</label></div>'
