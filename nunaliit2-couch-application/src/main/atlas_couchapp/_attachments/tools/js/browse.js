@@ -417,6 +417,7 @@ function main(opts_) {
 		elem: $('#searchPanel')
 		,useButton: true
 		,doNotDisable: true
+		,onModuleTitle: false
 	});
 	
 	var $addDocBtn = $('#searchPanel').find('#addDocumentButton');

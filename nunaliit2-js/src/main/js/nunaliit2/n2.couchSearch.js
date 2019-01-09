@@ -1377,11 +1377,17 @@ var SearchInput = $n2.Class({
 		} else if( 'selected' === m.type 
 		 || 'unselected' === m.type ){
 			var $textInput = this.getTextInput();
+			if( this.options.initialSearchText ) {
+				$textInput.val(this.options.initialSearchText);
 
 				// Hide search bar after document selection
 				this.options.dispatchService.synchronousCall(DH,{
 					type: 'searchDeactivated'
 				});
+
+			} else {
+				$textInput.val('');
+			};
 
 		} else if( 'searchActivated' === m.type ){
 			this._activateSearchBar();
@@ -1514,8 +1520,11 @@ var SearchServer = $n2.Class({
 			,buttonLabel: null
 			,doNotDisable: false
 			,constraint: null
+			,onModuleTitle: true
 		},opts_);
 		
+		var searchInput;
+
 		var customService = this.customService;
 
 		// Parent element
@@ -1535,48 +1544,61 @@ var SearchServer = $n2.Class({
 
 		$elem.empty();
 
-		// Search icon
-		var searchIcon = $('<div>')
-			.addClass('searchIcon')
-			.appendTo($elem);
+
 
 		// Text box
-		var searchInput = $('<div>')
-			.addClass('mdc-text-field mdc-text-field--outlined')
-			.appendTo($elem);
+		if( opts.onModuleTitle ){
+			// Search icon used in module title
+			var searchIcon = $('<div>')
+				.addClass('searchIcon')
+				.appendTo($elem);
 
-		var searchInputField = $('<input>')
-			.attr('type','text')
-			.attr('id',$searchInputId)
-			.addClass('search_panel_input mdc-text-field__input')
-			.appendTo(searchInput);
-		
-		var $searchInputOutline = $('<div>')
-			.addClass('mdc-notched-outline')
-			.appendTo(searchInput);
+			searchInput = $('<input type="text">')
+				.addClass('search_panel_input')
+				.val( searchWidgetLabel )
+				.appendTo($elem);
 
-		$('<div>')
-			.addClass('mdc-notched-outline__leading')
-			.appendTo($searchInputOutline);
+		} else {
+			// If Search widget is not installed in the module title bar
+			// update appearance
+			var searchInputField = $('<div>')
+				.addClass('mdc-text-field mdc-text-field--outlined')
+				.appendTo($elem);
 
-		var $searchInputOutlineNotch = $('<div>')
-			.addClass('mdc-notched-outline__notch')
-			.appendTo($searchInputOutline);
+			searchInput = $('<input>')
+				.attr('type','text')
+				.attr('id',$searchInputId)
+				.addClass('search_panel_input mdc-text-field__input')
+					.appendTo(searchInputField);
+			
+			var $searchInputOutline = $('<div>')
+				.addClass('mdc-notched-outline')
+					.appendTo(searchInputField);
 
-		$('<label>')
-			.attr('for',$searchInputId)
-			.addClass('mdc-floating-label')
-			.text(searchWidgetLabel)
-			.appendTo($searchInputOutlineNotch);
+			$('<div>')
+				.addClass('mdc-notched-outline__leading')
+				.appendTo($searchInputOutline);
 
-		$('<div>')
-			.addClass('mdc-notched-outline__trailing')
-			.appendTo($searchInputOutline);
+			var $searchInputOutlineNotch = $('<div>')
+				.addClass('mdc-notched-outline__notch')
+				.appendTo($searchInputOutline);
+
+			$('<label>')
+				.attr('for',$searchInputId)
+				.addClass('mdc-floating-label')
+				.text(searchWidgetLabel)
+				.appendTo($searchInputOutlineNotch);
+
+			$('<div>')
+				.addClass('mdc-notched-outline__trailing')
+				.appendTo($searchInputOutline);
+		}
+
 
 		if( opts.doNotDisable ){
 			// OK
 		} else {
-			searchInputField.addClass('n2_disable_on_edit');
+			searchInput.addClass('n2_disable_on_edit');
 		};
 		
 		// Search button label
@@ -1599,11 +1621,11 @@ var SearchServer = $n2.Class({
 		};
 		
 		return new SearchInput({
-				textInput: searchInputField
-				,initialSearchText: searchWidgetLabel
-				,dispatchService: this.dispatchService
-				,searchButton: searchButton
-				,constraint: opts.constraint
+			textInput: searchInput
+			,initialSearchText: searchWidgetLabel
+			,dispatchService: this.dispatchService
+			,searchButton: searchButton
+			,constraint: opts.constraint
 			}, this);
 	},
 	
