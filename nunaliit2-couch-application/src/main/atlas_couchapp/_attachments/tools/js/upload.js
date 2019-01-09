@@ -26,6 +26,51 @@ function limitChanged(){
 	refreshView();
 }
 
+function _attachMDCComponents(){
+	var i, e;
+
+	// attach ripple to buttons 
+	var mdc_buttons = document.getElementsByClassName('mdc-button');
+	for(i = 0, e = mdc_buttons.length; i < e; i++){
+		try {
+			mdc.ripple.MDCRipple.attachTo(mdc_buttons[i]);
+		} catch(error){
+			$n2.log("Unable to attach material design component to button ripple: " + error);
+		}
+	};
+
+	// attach select menus
+	var select_menus = document.getElementsByClassName('mdc-select');
+
+	for(i = 0, e = select_menus.length; i < e; i++){
+		try {
+			mdc.select.MDCSelect.attachTo(select_menus[i]);
+		} catch(error) {
+			$n2.log("Unable to attach select menu material design component: " + error);
+		}
+	}
+
+	// attach notched outlines
+	var notched_outlines = document.getElementsByClassName('mdc-notched-outline');
+	for(i = 0, e = notched_outlines.length; i < e; i++){
+		try {
+			mdc.notchedOutline.MDCNotchedOutline.attachTo(notched_outlines[i]);
+		} catch(error) {
+			$n2.log("Unable to attach notched outline material design component: " + error);
+		}
+	}
+
+	// attach floating labels
+	var floating_labels = document.getElementsByClassName('mdc-floating-label');
+	for(i = 0, e = floating_labels.length; i < e; i++){
+		try {
+		mdc.floatingLabel.MDCFloatingLabel.attachTo(floating_labels[i]); 
+		} catch(error) {
+			$n2.log("Unable to attach floating label material design component: " + error);
+		}
+	}
+}
+
 function markMedia(doc, attachmentName, status) {
 	
 	var att = attachmentService.getAttachment(doc, attachmentName);
@@ -180,51 +225,155 @@ function refreshToolbar(){
 
 	var $select = $buttonLine.find('.uploadViewSelect');
 	if( $select.length < 1 ) {
-		$select = $('<select class="uploadViewSelect"><option value="approval" selected="selected">Pending Approval</option><option value="denied">Already Denied</option></select>');
-		$buttonLine.append($select);
-		$select.change(selectionChanged);
+
+		$select = $('<div>')
+			.addClass('mdc-select mdc-select--outlined')
+			.appendTo($buttonLine);
+		
+		$('<i>')
+			.addClass('mdc-select__dropdown-icon')
+			.appendTo($select);
+		
+		var $selectMenu = $('<select>')
+			.addClass('uploadViewSelect mdc-select__native-control')
+			.appendTo($select)
+			.change(selectionChanged);
+		
+		$('<option>')
+			.attr('value','approval')
+			.attr('selected','selected')
+			.text(_loc('Pending Approval'))
+			.appendTo($selectMenu);
+		
+		$('<option>')
+			.attr('value','denied')
+			.text(_loc('Already Denied'))
+			.appendTo($selectMenu);
+
+		var $selectMenuNotchedOutline = $('<div>')
+			.addClass('mdc-notched-outline')
+			.appendTo($select);
+		
+		$('<div>')
+			.addClass('mdc-notched-outline__leading')
+			.appendTo($selectMenuNotchedOutline);
+		
+		var $selectMenuNotchedOutlineNotch = $('<div>')
+			.addClass('mdc-notched-outline__notch')
+			.appendTo($selectMenuNotchedOutline);
+
+		$('<label>')
+			.addClass('mdc-floating-label')
+			.text(_loc('Upload Type'))
+			.appendTo($selectMenuNotchedOutlineNotch);
+
+		$('<div>')
+			.addClass('mdc-notched-outline__trailing')
+			.appendTo($selectMenuNotchedOutline);
+
 	};
 
 	var $limit = $buttonLine.find('.uploadLimitSelect');
 	if( $limit.length < 1 ){
-		var $limit = $('<select class="uploadLimitSelect"></select>');
-		$limit.append( $('<option value="10" selected="selected">Limit 10</option>') );
-		$limit.append( $('<option value="25">Limit 25</option>') );
-		$limit.append( $('<option value="50">Limit 50</option>') );
-		$limit.append( $('<option value="100">Limit 100</option>') );
-		$limit.append( $('<option value="-1">No Limit</option>') );
-		$buttonLine.append($limit);
-		$limit.change(limitChanged);
+
+		$limit = $('<div>')
+			.addClass('mdc-select mdc-select--outlined')
+			.appendTo($buttonLine);
+		
+		$('<i>')
+			.addClass('mdc-select__dropdown-icon')
+			.appendTo($limit);
+		
+		var $limitMenu = $('<select>')
+			.addClass('uploadLimitSelect mdc-select__native-control')
+			.appendTo($limit)
+			.change(limitChanged);
+		
+		$('<option>')
+			.attr('value','10')
+			.attr('selected','selected')
+			.text(_loc('Limit 10'))
+			.appendTo($limitMenu);
+		
+		$('<option>')
+			.attr('value','25')
+			.text(_loc('Limit 25'))
+			.appendTo($limitMenu);
+
+		$('<option>')
+			.attr('value','50')
+			.text(_loc('Limit 50'))
+			.appendTo($limitMenu);
+
+		$('<option>')
+			.attr('value','100')
+			.text(_loc('Limit 100'))
+			.appendTo($limitMenu);
+				
+		$('<option>')
+			.attr('value','-1')
+			.text(_loc('No Limit'))
+			.appendTo($limitMenu);
+
+		var $limitMenuNotchedOutline = $('<div>')
+			.addClass('mdc-notched-outline')
+			.appendTo($limit);
+		
+		$('<div>')
+			.addClass('mdc-notched-outline__leading')
+			.appendTo($limitMenuNotchedOutline);
+		
+		var $limitMenuNotchedOutlineNotch = $('<div>')
+			.addClass('mdc-notched-outline__notch')
+			.appendTo($limitMenuNotchedOutline);
+
+		$('<label>')
+			.addClass('mdc-floating-label')
+			.text(_loc('Limit'))
+			.appendTo($limitMenuNotchedOutlineNotch);
+
+		$('<div>')
+			.addClass('mdc-notched-outline__trailing')
+			.appendTo($limitMenuNotchedOutline);
 	};
 
 	var $approveSelected = $buttonLine.find('.uploadApproveSelectedButton');
 	if( $approveSelected.length < 1 ) {
-		$approveSelected = $('<button class="uploadButton uploadApproveSelectedButton">Approve Selected</button>');
-		$buttonLine.append($approveSelected);
-		$approveSelected.click(function(){
-			var selection = _getSelectedUploads();
-			_approveDenySelection(selection, 'approved');
-			return false;
-		});
+		$('<button>')
+			.addClass('uploadButton uploadApproveSelectedButton mdc-button mdc-button--raised')
+			.text(_loc('Approve Selected')) 
+			.appendTo($buttonLine)
+			.click(function(){
+				var selection = _getSelectedUploads();
+				_approveDenySelection(selection, 'approved');
+				return false;
+			});
 	};
 
 	var $denySelected = $buttonLine.find('.uploadDenySelectedButton');
 	if( $denySelected.length < 1 ) {
-		$denySelected = $('<button class="uploadButton uploadDenySelectedButton">Deny Selected</button>');
-		$buttonLine.append($denySelected);
-		$denySelected.click(function(){
-			var selection = _getSelectedUploads();
-			_approveDenySelection(selection, 'denied');
-			return false;
-		});
+		$('<button>')
+			.addClass('uploadButton uploadDenySelectedButton mdc-button mdc-button--raised')
+			.text(_loc('Deny Selected')) 
+			.appendTo($buttonLine)
+			.click(function(){
+				var selection = _getSelectedUploads();
+				_approveDenySelection(selection, 'denied');
+				return false;
+			});
 	};
 
 	var $selectAllButton = $buttonLine.find('.uploadSelectAllButton');
 	if( $selectAllButton.length < 1 ) {
-		$selectAllButton = $('<button class="uploadButton uploadSelectAllButton">Select All</button>');
-		$buttonLine.append($selectAllButton);
-		$selectAllButton.click(_selectAll);
+		$('<button>')
+			.addClass('uploadButton uploadSelectAllButton mdc-button mdc-button--raised')
+			.text(_loc('Select All')) 
+			.appendTo($buttonLine)
+			.click(_selectAll);
 	};
+
+	this._attachMDCComponents();
+
 	// Update selection button
 	var $table = $('.uploadsTable');
 	var anyCheckBox = false;
@@ -451,10 +600,10 @@ function uploadMain( $display ) {
 	
 	var $buttonLine = $('<div class="uploadButtonLine"></div>');
 	$display.append($buttonLine);
-	
+
 	var $uploadData = $('<div class="uploadData"></div>');
 	$display.append($uploadData);
-	
+
 //	var $select = $('<select><option value="approval" selected="selected">Pending Approval</option><option value="denied">Already Denied</option></select>');
 //	$('#requests').before($select);
 //	$select.change(selectionChanged);
