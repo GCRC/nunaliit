@@ -1377,17 +1377,11 @@ var SearchInput = $n2.Class({
 		} else if( 'selected' === m.type 
 		 || 'unselected' === m.type ){
 			var $textInput = this.getTextInput();
-			if( this.options.initialSearchText ) {
-				$textInput.val(this.options.initialSearchText);
 
 				// Hide search bar after document selection
 				this.options.dispatchService.synchronousCall(DH,{
 					type: 'searchDeactivated'
 				});
-
-			} else {
-				$textInput.val('');
-			};
 
 		} else if( 'searchActivated' === m.type ){
 			this._activateSearchBar();
@@ -1527,6 +1521,8 @@ var SearchServer = $n2.Class({
 		// Parent element
 		var $elem = $(opts.elem);
 
+		var $searchInputId = $n2.getUniqueId();
+
 		// Text box label
 		var searchWidgetLabel = opts.label;
 		if( null === searchWidgetLabel 
@@ -1545,15 +1541,42 @@ var SearchServer = $n2.Class({
 			.appendTo($elem);
 
 		// Text box
-		var searchInput = $('<input type="text">')
-			.addClass('search_panel_input')
-			.val( searchWidgetLabel )
+		var searchInput = $('<div>')
+			.addClass('mdc-text-field mdc-text-field--outlined')
 			.appendTo($elem);
+
+		var searchInputField = $('<input>')
+			.attr('type','text')
+			.attr('id',$searchInputId)
+			.addClass('search_panel_input mdc-text-field__input')
+			.appendTo(searchInput);
+		
+		var $searchInputOutline = $('<div>')
+			.addClass('mdc-notched-outline')
+			.appendTo(searchInput);
+
+		$('<div>')
+			.addClass('mdc-notched-outline__leading')
+			.appendTo($searchInputOutline);
+
+		var $searchInputOutlineNotch = $('<div>')
+			.addClass('mdc-notched-outline__notch')
+			.appendTo($searchInputOutline);
+
+		$('<label>')
+			.attr('for',$searchInputId)
+			.addClass('mdc-floating-label')
+			.text(searchWidgetLabel)
+			.appendTo($searchInputOutlineNotch);
+
+		$('<div>')
+			.addClass('mdc-notched-outline__trailing')
+			.appendTo($searchInputOutline);
 
 		if( opts.doNotDisable ){
 			// OK
 		} else {
-			searchInput.addClass('n2_disable_on_edit');
+			searchInputField.addClass('n2_disable_on_edit');
 		};
 		
 		// Search button label
@@ -1569,13 +1592,14 @@ var SearchServer = $n2.Class({
 		// Search button
 		var searchButton = null;
 		if( opts.useButton ){
-			searchButton = $('<input type="button">')
-				.val( searchButtonLabel )
+			searchButton = $('<button>')
+				.addClass(' mdc-button mdc-button--raised')
+				.text( searchButtonLabel )
 				.appendTo($elem);
 		};
 		
 		return new SearchInput({
-				textInput: searchInput
+				textInput: searchInputField
 				,initialSearchText: searchWidgetLabel
 				,dispatchService: this.dispatchService
 				,searchButton: searchButton

@@ -1,5 +1,8 @@
 ;(function($,$n2){
 
+// Localization
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
+
 var DH = 'browse.js';	
 	
 var HASH_SEARCH_PREFIX="search_";
@@ -21,6 +24,51 @@ var dispatcher = null;
 var authService = null;
 var createDocProcess = null;
 var dialogService = null;
+
+
+function _attachMDCComponents(){
+	var i, e;
+
+	// attach textFields 
+	var text_fields = document.getElementsByClassName('mdc-text-field');
+	for(i = 0, e = text_fields.length; i < e; i++){
+		try {
+			mdc.textField.MDCTextField.attachTo(text_fields[i]);
+		} catch(error) {
+			$n2.log("Unable to attach text field material design component: " + error);
+		}
+	}
+
+	// attach notched outlines
+	var notched_outlines = document.getElementsByClassName('mdc-notched-outline');
+	for(i = 0, e = notched_outlines.length; i < e; i++){
+		try {
+			mdc.notchedOutline.MDCNotchedOutline.attachTo(notched_outlines[i]);
+		} catch(error) {
+			$n2.log("Unable to attach notched outline material design component: " + error);
+		}
+	}
+
+	// attach floating labels
+	var floating_labels = document.getElementsByClassName('mdc-floating-label');
+	for(i = 0, e = floating_labels.length; i < e; i++){
+		try {
+			mdc.floatingLabel.MDCFloatingLabel.attachTo(floating_labels[i]); 
+		} catch(error) {
+			$n2.log("Unable to attach floating label material design component: " + error);
+		}
+	}
+
+	// attach ripple to buttons 
+	var mdc_buttons = document.getElementsByClassName('mdc-button');
+	for(i = 0, e = mdc_buttons.length; i < e; i++){
+		try {
+			mdc.ripple.MDCRipple.attachTo(mdc_buttons[i]);
+		} catch(error){
+			$n2.log("Unable to attach material design component to button ripple: " + error);
+		}
+	}
+}
 
 function reportErrorsOnElem(errors, $elem) {
 	$elem.append( $('<div>Error occurred during the request<div>') );
@@ -371,8 +419,17 @@ function main(opts_) {
 		,doNotDisable: true
 	});
 	
-	
-	$('#addDocumentButton').click(addDocument);
+	var $addDocBtn = $('#searchPanel').find('#addDocumentButton');
+
+	if( $addDocBtn.length < 1){
+
+		$('<button>')
+			.attr('id','addDocumentButton')
+			.addClass(' mdc-button mdc-button--raised')
+			.text(_loc('New Document'))
+			.appendTo($('#searchPanel'))
+			.click(addDocument);
+	}
 	
 	// Editor
 	couchEditor.options.enableAddFile = true;
@@ -389,6 +446,8 @@ function main(opts_) {
 			$n2.log('Unable to load schema for editor',err);
 		}
 	});
+
+	_attachMDCComponents();
 
 	config.start();
 };
