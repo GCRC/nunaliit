@@ -133,6 +133,20 @@
 	];
 
 	// -----------------------------------------------------------------
+	function _attachMDCComponents(){
+		var i, e;
+	
+		// attach ripple to buttons 
+		var mdc_buttons = document.getElementsByClassName('mdc-button');
+		for(i = 0, e = mdc_buttons.length; i < e; i++){
+			try {
+				mdc.ripple.MDCRipple.attachTo(mdc_buttons[i]);
+			} catch(error){
+				$n2.log("Unable to attach material design component to button ripple: " + error);
+			}
+		}
+	}
+
 	function getOptionalSchemaDiv(){
 		var $e = $schemaAppDiv.find('.schemaAppOptionalSchemas');
 		if( $e.length < 1 ) {
@@ -222,14 +236,21 @@
 				var $td = $('<td></td>');
 				$tr.append($td);
 				if( isInstalled ) {
-					var $b = $('<button>Replace</button>');
-					$td.append($b);
-					$b.click( createClickReplaceSchema(schema, received[name]) );
+					var $b = $('<button>')
+						.addClass(' mdc-button')
+						.text(_loc('Replace'))
+						.appendTo($td)
+						.click( createClickReplaceSchema(schema, received[name]) );
+
 				} else {
-					var $b = $('<button>Install</button>');
-					$td.append($b);
-					$b.click( createClickInstallSchema(schema) );
+					var $b = $('<button>')
+						.addClass(' mdc-button')
+						.text(_loc('Install'))
+						.appendTo($td)
+						.click( createClickInstallSchema(schema) );
 				};
+
+				_attachMDCComponents();
 			};
 		};
 		
@@ -331,14 +352,20 @@
 		return $e;
 		
 		function addHeader($e){
-			var $h = $('<h1>Logs <button>Clear</button></h1>');
+
+			var $h = $('<h1>Logs </h1>');
 			$e.append($h);
-			$h.find('button').click(function(){
-				var $d = getLogsDiv();
-				$d.empty();
-				addHeader($d);
-				return false;
-			});
+
+			var $b = $('<button>')
+				.addClass(' mdc-button mdc-button--raised')
+				.text(_loc('Clear'))
+				.appendTo($h)
+				.click(function(){
+					var $d = getLogsDiv();
+					$d.empty();
+					addHeader($d);
+					return false;
+				});
 		};
 	};
 	
