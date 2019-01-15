@@ -1,6 +1,9 @@
 ;(function($,$n2){
 "use strict";
 
+// Localization
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
+
 //var DH = 'translation.js';	
 
 var atlasDb = null;
@@ -13,6 +16,31 @@ function selectionChanged() {
 	currentView = $select.val();
 	refreshView();
 };
+
+function _attachMDCComponents() {
+	var i, e;
+
+	// attach select menus
+	var select_menus = document.getElementsByClassName('mdc-select');
+
+	for(i = 0, e = select_menus.length; i < e; i++){
+		try {
+			mdc.select.MDCSelect.attachTo(select_menus[i]);
+		} catch(error) {
+			$n2.log("Unable to attach select menu material design component: " + error);
+		}
+	}
+
+	// attach ripple to buttons 
+	var mdc_buttons = document.getElementsByClassName('mdc-button');
+	for(i = 0, e = mdc_buttons.length; i < e; i++){
+		try {
+			mdc.ripple.MDCRipple.attachTo(mdc_buttons[i]);
+		} catch(error){
+			$n2.log("Unable to attach material design component to button ripple: " + error);
+		}
+	};
+}
 
 function upload() {
 	var $btn = $(this);
@@ -32,6 +60,10 @@ function upload() {
 };
 
 function showRequests(arr) {
+
+	if( $('.translationButtonLine .translationLangSelect').length ){
+		$('.translationButtonLine .translationLangSelect').remove();
+	}
 	
 	var $table = $('<table class="translations"></table>');
 	$('#'+requestPanelName).empty().append($table);
@@ -58,7 +90,7 @@ function showRequests(arr) {
 		$tr.append( $('<td>'+req.str+'</td>') );
 		$tr.append( $('<td>'+req.lang+'</td>') );
 		$tr.append( $('<td><input class="trans" type="text"/></td>') );
-		$tr.append( $('<td><input class="uploadBtn" type="button" value="Upload"/></td>') );
+		$tr.append( $('<td><button class="uploadBtn mdc-button">Upload</button></td>') );
 		$tr.append( $('<td class="docId">'+req._id+'</td>') );
 		$tr.append( $('<td class="packageName">'+req.packageName+'</td>') );
 		
@@ -90,12 +122,9 @@ function showRequests(arr) {
 //				.appendTo($tr);
 //		} else {
 //			$tr.append('<td></td>');
-//		};
-		
+//		};		
 		
 		$tr.append( $('<td><input class="json" type="hidden"/></td>') );
-		
-		
 		
 		var json = JSON.stringify(req);
 		$tr.find('.json').val(json);
@@ -106,15 +135,42 @@ function showRequests(arr) {
 	};
 	
 	$table.find('.uploadBtn').click(upload);
+
+	_attachMDCComponents();
 };
 
 function displayTranslated() {
-	
+
 	$('#'+requestPanelName)
 		.empty()
-		.append( $('<div class="translationLangSelect"></div>') )
-		.append( $('<div class="translationResult"></div>') )
-		;
+		.append( $('<div class="translationResult mdc-card"></div>') );
+		
+	$('<div>')
+		.addClass('translationLangSelect mdc-select mdc-select--outlined')
+		.appendTo($('.translationButtonLine'));
+	
+	var $langMenuIcon = $('<i>')
+		.addClass('mdc-select__dropdown-icon');
+
+	var $langMenuNotchedOutline = $('<div>')
+		.addClass('mdc-notched-outline');
+
+	$('<div>')
+		.addClass('mdc-notched-outline__leading')
+		.appendTo($langMenuNotchedOutline);
+
+	var $langMenuNotchedOutlineNotch = $('<div>')
+		.addClass('mdc-notched-outline__notch')
+		.appendTo($langMenuNotchedOutline);
+
+	$('<label>')
+		.addClass('mdc-floating-label')
+		.text(_loc('Language'))
+		.appendTo($langMenuNotchedOutlineNotch);
+
+	$('<div>')
+		.addClass('mdc-notched-outline__trailing')
+		.appendTo($langMenuNotchedOutline);
 	
 	// Fetch all pending requests
 	atlasDesign.queryView({
@@ -122,27 +178,35 @@ function displayTranslated() {
 		,reduce: true
 		,group: true
 		,onSuccess: function(rows){
-			var $select = $('<select></select>');
+
+			var $langMenu = $('<select>')
+				.addClass('mdc-select__native-control');
+				//.appendTo($langSelector);
+
 			for(var i=0,e=rows.length;i<e;++i){
 				var r = rows[i];
 				var $opt = $('<option></option>');
 				$opt.text(r.key);
 				$opt.attr('value',r.key);
-				$select.append( $opt );
+				$langMenu.append( $opt );
 			};
 			
-			$('#'+requestPanelName).find('.translationLangSelect')
+			$('.translationButtonLine').find('.translationLangSelect')
 				.empty()
-				.append($select)
-				;
-			$select.change(languageChanged);
-			
+				.append($langMenuIcon)
+				.append($langMenu)
+				.append($langMenuNotchedOutline);
+
+			$langMenu.change(languageChanged);
+
+			_attachMDCComponents();
+
 			languageChanged();
 		}
 	});
 	
 	function languageChanged(){
-		var $select = $('#'+requestPanelName).find('.translationLangSelect').find('select');
+		var $select = $('.translationButtonLine').find('.translationLangSelect').find('select');
 		var lang = $select.val();
 		
 		atlasDesign.queryView({
@@ -227,12 +291,60 @@ function refreshView() {
 };
 
 function main() {
-	var $select = $('<select></select>');
-	$select.append( $('<option value="l10n-pending" selected="selected">Pending</option>') );
-	$select.append( $('<option value="l10n-all">All</option>') );
-	$select.append( $('<option value="translated">Translated</option>') );
-	$('#'+requestPanelName).before($select);
-	$select.change(selectionChanged);
+	var $buttonLine = $('<div>')
+		.addClass('translationButtonLine');
+
+	$('#'+requestPanelName).before($buttonLine);
+
+	var $status = $('<div>')
+		.addClass('mdc-select mdc-select--outlined')
+		.appendTo($buttonLine);
+
+	$('<i>')
+		.addClass('mdc-select__dropdown-icon')
+		.appendTo($status);
+
+	var $statusMenu = $('<select>')
+		.addClass('mdc-select__native-control')
+		.appendTo($status)
+		.change(selectionChanged);
+
+	$('<option>')
+		.attr('value','l10n-pending')
+		.attr('selected','selected')
+		.text(_loc('Pending'))
+		.appendTo($statusMenu);
+
+	$('<option>')
+		.attr('value','l10n-all')
+		.text(_loc('All'))
+		.appendTo($statusMenu);
+
+	$('<option>')
+		.attr('value','translated')
+		.text(_loc('Translated'))
+		.appendTo($statusMenu);
+
+	var $statusMenuNotchedOutline = $('<div>')
+		.addClass('mdc-notched-outline')
+		.appendTo($status);
+
+	$('<div>')
+		.addClass('mdc-notched-outline__leading')
+		.appendTo($statusMenuNotchedOutline);
+
+	var $statusMenuNotchedOutlineNotch = $('<div>')
+		.addClass('mdc-notched-outline__notch')
+		.appendTo($statusMenuNotchedOutline);
+
+	$('<label>')
+		.addClass('mdc-floating-label')
+		.text(_loc('Status'))
+		.appendTo($statusMenuNotchedOutlineNotch);
+
+	$('<div>')
+		.addClass('mdc-notched-outline__trailing')
+		.appendTo($statusMenuNotchedOutline);
 	
 	refreshView();
 };
