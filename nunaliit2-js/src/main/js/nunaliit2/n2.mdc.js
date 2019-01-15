@@ -36,6 +36,17 @@ var DH = 'n2.mdc';
 	
 // ===========================================================================
 var attachMDCComponents = function(){
+
+	// attach ripple to buttons 
+	var mdc_buttons = document.getElementsByClassName('mdc-button');
+	for(i = 0, e = mdc_buttons.length; i < e; i++){
+		try {
+			mdc.ripple.MDCRipple.attachTo(mdc_buttons[i]);
+		} catch(error){
+			$n2.log("Unable to attach material design component to button ripple: " + error);
+		}
+	};
+
 	// attach textFields 
 	var text_fields = document.getElementsByClassName('mdc-text-field');
 	var i, e;
