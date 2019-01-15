@@ -99,6 +99,16 @@ var attachMDCComponents = function(){
 		}
 	}
 
+	// attach checkboxes
+	var lists = document.getElementsByClassName('mdc-list');
+	for(i = 0, e = lists.length; i < e; i++){
+		try {
+			mdc.list.MDCList.attachTo(lists[i]);
+		} catch(error) {
+			$n2.log("Unable to attach list material design component: " + error);
+		}
+	}
+
 	// attach form fields
 	var formFields = document.getElementsByClassName('mdc-form-field');
 	for(i = 0, e = formFields.length; i < e; i++){
