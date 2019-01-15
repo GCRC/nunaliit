@@ -195,84 +195,6 @@ function _localizeString() {
 	};
 };
 
-function _attachMDCComponents(){
-	// attach textFields 
-	var text_fields = document.getElementsByClassName('mdc-text-field');
-	var i, e;
-	for(i = 0, e = text_fields.length; i < e; i++){
-		if ( text_fields[i].classList.contains("n2schema_field_reference") ){
-			// ignore due to use of spans instead of input elements
-		} else {
-			try {
-				mdc.textField.MDCTextField.attachTo(text_fields[i]);
-			} catch(error) {
-				$n2.log("Unable to attach text field material design component: " + error);
-			}
-		}
-	}
-
-	// attach text field helper text
-	var helper_text = document.getElementsByClassName('mdc-text-field-helper-text');
-	for(i = 0, e = helper_text.length; i < e; i++){
-		try {
-			mdc.textField.MDCTextFieldHelperText.attachTo(helper_text[i]);
-		} catch(error) {
-			$n2.log("Unable to attach helper text material design component: " + error);
-		}
-	}
-
-	// attach floating labels
-	var floating_labels = document.getElementsByClassName('mdc-floating-label');
-	for(i = 0, e = floating_labels.length; i < e; i++){
-		try {
-		mdc.floatingLabel.MDCFloatingLabel.attachTo(floating_labels[i]); 
-		} catch(error) {
-			$n2.log("Unable to attach floating label material design component: " + error);
-		}
-	}
-
-	// attach select menus
-	var select_menus = document.getElementsByClassName('mdc-select');
-
-	for(i = 0, e = select_menus.length; i < e; i++){
-		try {
-			mdc.select.MDCSelect.attachTo(select_menus[i]);
-		} catch(error) {
-			$n2.log("Unable to attach select menu material design component: " + error);
-		}
-	}
-
-	// attach notched outlines
-	var notched_outlines = document.getElementsByClassName('mdc-notched-outline');
-	for(i = 0, e = notched_outlines.length; i < e; i++){
-		try {
-			mdc.notchedOutline.MDCNotchedOutline.attachTo(notched_outlines[i]);
-		} catch(error) {
-			$n2.log("Unable to attach notched outline material design component: " + error);
-		}
-	}
-
-	// attach form fields
-	var formFields = document.getElementsByClassName('mdc-form-field');
-	for(i = 0, e = formFields.length; i < e; i++){
-		try {
-			mdc.formField.MDCFormField.attachTo(formFields[i]);
-		} catch(error) {
-			$n2.log("Unable to attach form field material design component: " + error);
-		}
-	}
-
-	// attach checkboxes
-	var checkboxes = document.getElementsByClassName('mdc-checkbox');
-	for(i = 0, e = checkboxes.length; i < e; i++){
-		try {
-			mdc.checkbox.MDCCheckbox.attachTo(checkboxes[i]);
-		} catch(error) {
-			$n2.log("Unable to attach checkbox material design component: " + error);
-		}
-	}
-};
-
 function _formSingleField(r,completeSelectors,options){
 	var labelLocalizeClass = " n2s_localize";
 	var textFieldId = $n2.getUniqueId();
@@ -1967,7 +1889,7 @@ var Form = $n2.Class({
 				});
 			};
 		};
-		_attachMDCComponents();
+		$n2.mdc.attachMDCComponents();
 	},
 
 	_setHtml: function(obj) {
