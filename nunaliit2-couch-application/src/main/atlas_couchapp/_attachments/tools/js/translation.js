@@ -17,31 +17,6 @@ function selectionChanged() {
 	refreshView();
 };
 
-function _attachMDCComponents() {
-	var i, e;
-
-	// attach select menus
-	var select_menus = document.getElementsByClassName('mdc-select');
-
-	for(i = 0, e = select_menus.length; i < e; i++){
-		try {
-			mdc.select.MDCSelect.attachTo(select_menus[i]);
-		} catch(error) {
-			$n2.log("Unable to attach select menu material design component: " + error);
-		}
-	}
-
-	// attach ripple to buttons 
-	var mdc_buttons = document.getElementsByClassName('mdc-button');
-	for(i = 0, e = mdc_buttons.length; i < e; i++){
-		try {
-			mdc.ripple.MDCRipple.attachTo(mdc_buttons[i]);
-		} catch(error){
-			$n2.log("Unable to attach material design component to button ripple: " + error);
-		}
-	};
-}
-
 function upload() {
 	var $btn = $(this);
 	var $tr = $btn.parents('tr');
@@ -136,7 +111,8 @@ function showRequests(arr) {
 	
 	$table.find('.uploadBtn').click(upload);
 
-	_attachMDCComponents();
+	// Attach Material Design Components
+	$n2.mdc.attachMDCComponents();
 };
 
 function displayTranslated() {
@@ -199,7 +175,8 @@ function displayTranslated() {
 
 			$langMenu.change(languageChanged);
 
-			_attachMDCComponents();
+			// Attach Material Design Components
+			$n2.mdc.attachMDCComponents();
 
 			languageChanged();
 		}

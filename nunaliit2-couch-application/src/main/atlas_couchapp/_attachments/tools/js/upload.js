@@ -26,51 +26,6 @@ function limitChanged(){
 	refreshView();
 }
 
-function _attachMDCComponents(){
-	var i, e;
-
-	// attach ripple to buttons 
-	var mdc_buttons = document.getElementsByClassName('mdc-button');
-	for(i = 0, e = mdc_buttons.length; i < e; i++){
-		try {
-			mdc.ripple.MDCRipple.attachTo(mdc_buttons[i]);
-		} catch(error){
-			$n2.log("Unable to attach material design component to button ripple: " + error);
-		}
-	};
-
-	// attach select menus
-	var select_menus = document.getElementsByClassName('mdc-select');
-
-	for(i = 0, e = select_menus.length; i < e; i++){
-		try {
-			mdc.select.MDCSelect.attachTo(select_menus[i]);
-		} catch(error) {
-			$n2.log("Unable to attach select menu material design component: " + error);
-		}
-	}
-
-	// attach notched outlines
-	var notched_outlines = document.getElementsByClassName('mdc-notched-outline');
-	for(i = 0, e = notched_outlines.length; i < e; i++){
-		try {
-			mdc.notchedOutline.MDCNotchedOutline.attachTo(notched_outlines[i]);
-		} catch(error) {
-			$n2.log("Unable to attach notched outline material design component: " + error);
-		}
-	}
-
-	// attach floating labels
-	var floating_labels = document.getElementsByClassName('mdc-floating-label');
-	for(i = 0, e = floating_labels.length; i < e; i++){
-		try {
-		mdc.floatingLabel.MDCFloatingLabel.attachTo(floating_labels[i]); 
-		} catch(error) {
-			$n2.log("Unable to attach floating label material design component: " + error);
-		}
-	}
-}
-
 function markMedia(doc, attachmentName, status) {
 	
 	var att = attachmentService.getAttachment(doc, attachmentName);
@@ -372,7 +327,8 @@ function refreshToolbar(){
 			.click(_selectAll);
 	};
 
-	this._attachMDCComponents();
+	// Attach Material Design Components
+	$n2.mdc.attachMDCComponents();
 
 	// Update selection button
 	var $table = $('.uploadsTable');

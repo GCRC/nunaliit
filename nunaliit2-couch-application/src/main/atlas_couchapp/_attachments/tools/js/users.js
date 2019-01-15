@@ -67,40 +67,6 @@ var UserManagementApplication = $n2.Class({
 		this._display();
 	}
 
-	,_attachMDCComponents: function(){
-		var i, e;
-
-		// attach textFields 
-		var text_fields = document.getElementsByClassName('mdc-text-field');
-		for(i = 0, e = text_fields.length; i < e; i++){
-			try {
-				mdc.textField.MDCTextField.attachTo(text_fields[i]);
-			} catch(error) {
-				$n2.log("Unable to attach text field material design component: " + error);
-			}
-		}
-
-		// attach floating labels
-		var floating_labels = document.getElementsByClassName('mdc-floating-label');
-		for(i = 0, e = floating_labels.length; i < e; i++){
-			try {
-			mdc.floatingLabel.MDCFloatingLabel.attachTo(floating_labels[i]); 
-			} catch(error) {
-				$n2.log("Unable to attach floating label material design component: " + error);
-			}
-		}
-
-		// attach ripple to buttons 
-		var mdc_buttons = document.getElementsByClassName('mdc-button');
-		for(i = 0, e = mdc_buttons.length; i < e; i++){
-			try {
-				mdc.ripple.MDCRipple.attachTo(mdc_buttons[i]);
-			} catch(error){
-				$n2.log("Unable to attach material design component to button ripple: " + error);
-			}
-		};
-	}
-
 	,_getDiv: function(){
 		return $('#'+this.divId);
 	}
@@ -204,7 +170,8 @@ var UserManagementApplication = $n2.Class({
 				_this.queryMyUser();
 			});
 
-		this._attachMDCComponents();
+		// Attach Material Design Components
+		$n2.mdc.attachMDCComponents();
 	}
 	
 	,_reportErrorsOnElem: function(errors, $elem) {
@@ -317,7 +284,8 @@ var UserManagementApplication = $n2.Class({
 			}
 		});
 
-		this._attachMDCComponents();
+		// Attach Material Design Components
+		$n2.mdc.attachMDCComponents();
 
 		function createInitialUser(userName, pw) {
 			_this._startRequestWait();

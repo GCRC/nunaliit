@@ -576,32 +576,6 @@ function selectLayersDialog(opts_){
 		};
 		displayLayers();
 	};
-
-	function _attachMDCComponents(){
-		var i, e;
-		var listEle = document.querySelector('.mdc-list');
-		new mdc.list.MDCList(listEle);
-
-		// attach checkboxes
-		var mdc_checkboxes = document.getElementsByClassName('mdc-checkbox');
-		for(i = 0, e = mdc_checkboxes.length; i < e; i++){
-			try {
-				mdc.checkbox.MDCCheckbox.attachTo(mdc_checkboxes[i]);
-			} catch(error){
-				$n2.log("Unable to attach material design component to checkbox: " + error);
-			}
-		};
-	
-		// attach ripple to buttons 
-		var mdc_buttons = document.getElementsByClassName('mdc-button');
-		for(i = 0, e = mdc_buttons.length; i < e; i++){
-			try {
-				mdc.ripple.MDCRipple.attachTo(mdc_buttons[i]);
-			} catch(error){
-				$n2.log("Unable to attach material design component to button ripple: " + error);
-			}
-		};
-	}
 	
 	function displayLayers(){
 		var $diag = $('#'+dialogId);
@@ -661,7 +635,9 @@ function selectLayersDialog(opts_){
 				opts.showService.printLayerName($label, layerId);
 			};
 		};
-		_attachMDCComponents();
+
+		// Attach Material Design Components
+		$n2.mdc.attachMDCComponents();
 	};
 	
 	function reportError(err){

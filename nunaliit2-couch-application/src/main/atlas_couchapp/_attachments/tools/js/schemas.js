@@ -133,20 +133,6 @@
 	];
 
 	// -----------------------------------------------------------------
-	function _attachMDCComponents(){
-		var i, e;
-	
-		// attach ripple to buttons 
-		var mdc_buttons = document.getElementsByClassName('mdc-button');
-		for(i = 0, e = mdc_buttons.length; i < e; i++){
-			try {
-				mdc.ripple.MDCRipple.attachTo(mdc_buttons[i]);
-			} catch(error){
-				$n2.log("Unable to attach material design component to button ripple: " + error);
-			}
-		}
-	}
-
 	function getOptionalSchemaDiv(){
 		var $e = $schemaAppDiv.find('.schemaAppOptionalSchemas');
 		if( $e.length < 1 ) {
@@ -250,7 +236,8 @@
 						.click( createClickInstallSchema(schema) );
 				};
 
-				_attachMDCComponents();
+				// Attach Material Design Components
+				$n2.mdc.attachMDCComponents();
 			};
 		};
 		
