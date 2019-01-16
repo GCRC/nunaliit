@@ -3901,11 +3901,10 @@ var AttachmentEditor = $n2.Class({
 				.text(attName)
 				.appendTo($div);
 		};
-		
-		$('<a>')
-			.attr('href','#')
+
+		$('<button>')
 			.attr('n2AttName',attName)
-			.addClass('attachmentEditor_delete')
+			.addClass('attachmentEditor_delete mdc-button')
 			.text( _loc('Remove') )
 			.appendTo($div)
 			.click(function(){

@@ -47,10 +47,6 @@ form.attachmentEditor_creationFormWithVideo {
 	padding-right: 3px;
 }
 
-.attachmentEditor_delete {
-	padding-left: 3px;
-}
-
 .attachmentEditor_photoPreview {
 	max-width: 70%;
 	max-height: 100px;
