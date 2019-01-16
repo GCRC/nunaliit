@@ -381,7 +381,7 @@ function main(opts_) {
 
 		$('<button>')
 			.attr('id','addDocumentButton')
-			.addClass(' mdc-button mdc-button--raised')
+			.addClass('mdc-button mdc-button--raised')
 			.text(_loc('New Document'))
 			.appendTo($('#searchPanel'))
 			.click(addDocument);
