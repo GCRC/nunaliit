@@ -1128,14 +1128,22 @@ var AnalysisReport = $n2.Class({
 		$elem.empty();
 		
 		// Title
-		$('<div class="title">')
-			.appendTo($elem)
-			.text( _loc('Verification') );
+		var $verificationTitle = $('<div>')
+			.addClass('title')			
+			.appendTo($elem);
+
+		$('<span>')
+			.addClass('mdc-typography--headline6')
+			.text( _loc('Verification') )
+			.appendTo($verificationTitle);
 		
 		$('<div class="changes">')
 			.appendTo($elem);
 		
 		this._reportChanges();
+
+		// Attach Material Design Components
+		$n2.mdc.attachMDCComponents();
 	},
 
 	_getElem: function(){
@@ -1168,8 +1176,10 @@ var AnalysisReport = $n2.Class({
 				.attr('id',proceedDivId)
 				.addClass('prompt')
 				.appendTo($changes);
-			$div.text( _loc('This appears to be the first time that you are importing this profile. Accept all?') );
+			$div.text( _loc('This appears to be the first time that you are importing this profile. Accept all? ') );
+
 			$('<button>')
+				.addClass('mdc-button')
 				.text( _loc('Proceed') )
 				.appendTo($div)
 				.click(function(){
@@ -1177,7 +1187,9 @@ var AnalysisReport = $n2.Class({
 						onSuccess: function(){ $('#'+proceedDivId).remove(); }
 					});
 				});
+
 			$('<button>')
+				.addClass('mdc-button')
 				.text( _loc('Discard') )
 				.appendTo($div)
 				.click(function(){
@@ -1200,10 +1212,12 @@ var AnalysisReport = $n2.Class({
 					.attr('id',autoDivId)
 					.addClass('prompt')
 					.appendTo($changes);
-				$div.text( _loc('It appears that {count} changes can be completed automatically. Accept automatic changes?',{
+				$div.text( _loc('It appears that {count} changes can be completed automatically. Accept automatic changes? ',{
 					count: autoChanges.length
 				}));
+
 				$('<button>')
+					.addClass('mdc-button')
 					.text( _loc('Proceed') )
 					.appendTo($div)
 					.click(function(){
@@ -1211,7 +1225,9 @@ var AnalysisReport = $n2.Class({
 							onSuccess: function(){ $('#'+autoDivId).remove(); }
 						});
 					});
+
 				$('<button>')
+					.addClass('mdc-button')
 					.text( _loc('Discard') )
 					.appendTo($div)
 					.click(function(){
@@ -1315,14 +1331,14 @@ var AnalysisReport = $n2.Class({
 			
 			// Buttons
 			$('<button>')
-				.addClass('discard')
+				.addClass('discard mdc-button')
 				.text( _loc('Discard') )
 				.appendTo($div)
 				.click(discardClickFn);
 			
 			var $proceedButton = $('<button>')
 				.attr('id',change.changeId + '_proceed')
-				.addClass('proceed')
+				.addClass('proceed mdc-button')
 				.text( _loc('Modify Document') )
 				.appendTo($div)
 				.click(proceedClickFn);
@@ -1345,16 +1361,16 @@ var AnalysisReport = $n2.Class({
 				explanation += ' ' + _loc('COLLISION');
 			};
 			$('<div>')
-				.addClass('explanation')
+				.addClass('explanation mdc-typography--subtitle1')
 				.text( explanation )
 				.appendTo($div);
 			$('<div>')
-				.addClass('geoJsonId')
+				.addClass('geoJsonId mdc-typography--subtitle2')
 				.text( 'Import ID: '+importId )
 				.appendTo($div);
 			if( doc && doc._id ){
 				$('<div>')
-					.addClass('docId')
+					.addClass('docId mdc-typography--subtitle2')
 					.text( 'Database ID: '+doc._id )
 					.appendTo($div);
 			};
@@ -1484,12 +1500,12 @@ var AnalysisReport = $n2.Class({
 			};
 			
 			$('<button>')
-				.addClass('discard')
+				.addClass('discard mdc-button')
 				.text( _loc('Discard') )
 				.appendTo($del)
 				.click(discardClickFn);
 			$('<button>')
-				.addClass('proceed')
+				.addClass('proceed mdc-button')
 				.text( _loc('Delete Database Document') )
 				.appendTo($del)
 				.click(proceedClickFn);

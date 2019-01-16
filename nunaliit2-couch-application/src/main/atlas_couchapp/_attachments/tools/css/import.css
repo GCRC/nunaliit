@@ -1,7 +1,24 @@
+#importApp {
+	margin: 10px;
+}
+
+#importApp .importAppInput, 
+#importApp .importAppVerify, 
+#importApp .importAppLogs {
+	margin-top: 10px;
+}
+
+#importApp .title span, 
+#importApp .importAppInput .buttonline, 
+#importApp .importAppInput .mdc-text-field,
+#importApp .importAppVerify .changes>div,
+#importApp .log,
+#importApp .error {
+    margin: 10px;
+}
+
 .title {
-	font-size: 130%;
-	font-weight: bold;
-	background-color: #dddddd;
+	background-color: #f0f0f0;
 }
 
 .line::after {
@@ -34,7 +51,10 @@
 }
 
 .operation {
-	border: 1px #000000 solid;
+    border: 1px #ddd solid;
+    border-radius: 2px;
+    padding: 5px;
+    background-color: #fdfdfd;
 }
 
 .operation::after {

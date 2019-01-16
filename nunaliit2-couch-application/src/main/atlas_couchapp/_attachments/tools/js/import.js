@@ -24,21 +24,52 @@
 		};
 		
 		// Title
-		$('<div class="title">')
-			.appendTo($inputSection)
-			.text( _loc('Input') );
+		var $inputTitle = $('<div>')
+			.addClass('title')			
+			.appendTo($inputSection);
+
+		$('<span>')
+			.addClass('mdc-typography--headline6')
+			.text( _loc('Input') )
+			.appendTo($inputTitle);
 		
-		// Import Profile
-		var $line = $('<div class="line">').appendTo($inputSection);
-		$('<div class="label">')
-			.text( _loc('Import Profile') )
-			.appendTo($line);
-		var $selectLine = $('<div>')
-			.addClass('value')
-			.appendTo($line);
+		var $buttonLine = $('<div class="buttonline">')
+			.appendTo($inputSection);
+
+		// Import Profile Select Menu
+		var $importProfileSelect = $('<div>')
+			.addClass('mdc-select mdc-select--outlined')
+			.appendTo($buttonLine);
+		
+		$('<i>')
+			.addClass('mdc-select__dropdown-icon')
+			.appendTo($importProfileSelect);
+
+		var $menuNotchedOutline = $('<div>')
+			.addClass('mdc-notched-outline')
+			.appendTo($importProfileSelect);
+
+		$('<div>')
+			.addClass('mdc-notched-outline__leading')
+			.appendTo($menuNotchedOutline);
+
+		var $menuNotchedOutlineNotch = $('<div>')
+			.addClass('mdc-notched-outline__notch')
+			.appendTo($menuNotchedOutline);
+
+		$('<label>')
+			.addClass('mdc-floating-label')
+			.text(_loc('Import Profile'))
+			.appendTo($menuNotchedOutlineNotch);
+
+		$('<div>')
+			.addClass('mdc-notched-outline__trailing')
+			.appendTo($menuNotchedOutline);
+														
 		var $select = $('<select>')
-			.addClass('import_profile')
-			.appendTo($selectLine);
+			.addClass('import_profile mdc-select__native-control')
+			.appendTo($importProfileSelect);
+
 		for(var i=0,e=importProfiles.length; i<e; ++i){
 			var importProfile = importProfiles[i];
 			$('<option>')
@@ -47,19 +78,46 @@
 				.appendTo($select);
 		};
 
-		// Json
-		var $line = $('<div class="line">').appendTo($inputSection);
-		$('<div class="label">')
-			.text( _loc('Input') )
-			.appendTo($line);
-		$('<div class="value"><textarea class="importData"></textarea></div>')
-			.appendTo($line);
+		// Input Textarea
+		var textareaInputId = $n2.getUniqueId();
+		var $inputLine = $('<div>')
+			.addClass('mdc-text-field mdc-text-field--textarea')
+			.appendTo($inputSection);
+		
+		$('<textarea>')
+			.addClass('importData mdc-text-field__input')
+			.attr('id',textareaInputId)
+			.attr('rows','8')
+			.attr('cols','40')
+			.appendTo($inputLine);
 
-		// Import Button
-		var $line = $('<div class="line">').appendTo($inputSection);
+		var $inputOutline = $('<div>')
+			.addClass('mdc-notched-outline')
+			.appendTo($inputLine);
+
+		$('<div>')
+			.addClass('mdc-notched-outline__leading')
+			.appendTo($inputOutline);
+
+		var $inputOutlineNotch = $('<div>')
+			.addClass('mdc-notched-outline__notch')
+			.appendTo($inputOutline);
+
+		$('<label>')
+			.attr('for',textareaInputId)
+			.addClass('mdc-floating-label')
+			.text(_loc('Input'))
+			.appendTo($inputOutlineNotch);
+
+		$('<div>')
+			.addClass('mdc-notched-outline__trailing')
+			.appendTo($inputOutline);
+
+		// Import Verify Button
 		$('<button>')
+			.addClass(' mdc-button')
 			.text( _loc('Verify') )
-			.appendTo($line)
+			.appendTo($buttonLine)
 			.click(function(){
 				var $inputSection = $appDiv.find('.importAppInput');
 				var importProfileId = $inputSection.find('.import_profile').val();
@@ -131,6 +189,9 @@
 			reportError( err );
 			alert( err );
 		};
+
+		// Attach Material Design Components
+		$n2.mdc.attachMDCComponents();
 	};
 
 	// *****************************************************************
@@ -141,18 +202,26 @@
 	function getLogsDiv(){
 		var $e = $appDiv.find('.importAppLogs');
 		if( $e.length < 1 ) {
-			$e = $('<div class="importAppLogs"></div>');
+			$e = $('<div class="importAppLogs mdc-card"></div>');
 			$appDiv.append($e);
 			addHeader($e);
 		};
 		return $e;
 		
 		function addHeader($e){
-			var $h = $('<div class="title"><span></span> <button></button></div>');
-			$e.append($h);
-			$h.find('span').text( _loc('Logs') );
-			$h.find('button')
-				.text( _loc('Clear') )
+			var $h = $('<div>')
+				.addClass('title')
+				.appendTo($e);
+			
+			$('<span>')
+				.addClass('mdc-typography--headline6')
+				.text( _loc('Logs') )
+				.appendTo($h);
+			
+			$('<button>')
+				.addClass('mdc-button')
+				.text(_loc('Clear'))
+				.appendTo($h)
 				.click(function(){
 					var $d = getLogsDiv();
 					$d.empty();
@@ -214,8 +283,8 @@
 		
 		$appDiv
 			.empty()
-			.append( $('<div class="importAppInput"><div>') )
-			.append( $('<div class="importAppVerify"><div>') )
+			.append( $('<div class="importAppInput mdc-card"><div>') )
+			.append( $('<div class="importAppVerify mdc-card"><div>') )
 			;
 		
 		refreshInputSection();
