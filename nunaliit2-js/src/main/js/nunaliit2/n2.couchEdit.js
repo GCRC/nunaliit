@@ -718,12 +718,11 @@ var CouchSimpleDocumentEditor = $n2.Class({
 				showService.printBriefDescription($brief, relDocId);
 			};
 			
-			$('<button class="editorDisplayRelationButton"></button>')
+			$('<button>')
+				.addClass('editorDisplayRelationButton mdc-button')
 				.text( _loc('Remove') )
 				.appendTo($displayRelationDiv)
-				.button({icons:{primary:'ui-icon-trash'}})
-				.click(removeRelationFn)
-				;
+				.click(removeRelationFn);
 		};
 	}
 	
@@ -2019,14 +2018,13 @@ var CouchDocumentEditor = $n2.Class({
 				.appendTo($displayRelationDiv);
 			if( showService ){
 				showService.printBriefDescription($brief, relDocId);
-			};
-			
-			$('<button class="editorDisplayRelationButton"></button>')
+			};			
+						
+			$('<button>')
+				.addClass('editorDisplayRelationButton mdc-button')
 				.text( _loc('Remove') )
 				.appendTo($displayRelationDiv)
-				.button({icons:{primary:'ui-icon-trash'}})
-				.click(removeRelationFn)
-				;
+				.click(removeRelationFn);
 		};
 	},
 	
