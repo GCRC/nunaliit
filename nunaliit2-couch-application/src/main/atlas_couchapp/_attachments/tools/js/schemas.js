@@ -136,7 +136,7 @@
 	function getOptionalSchemaDiv(){
 		var $e = $schemaAppDiv.find('.schemaAppOptionalSchemas');
 		if( $e.length < 1 ) {
-			$e = $('<div class="schemaAppOptionalSchemas"></div>');
+			$e = $('<div class="schemaAppOptionalSchemas mdc-card"></div>');
 			$schemaAppDiv.append($e);
 			addHeader($e);
 		};
@@ -149,8 +149,10 @@
 		return $c;
 		
 		function addHeader($e){
-			var $h = $('<h1>Optional Schemas</h1>');
-			$e.append($h);
+			var $h = $('<h1>')
+				.addClass('mdc-typography--headline6')
+				.text('Optional Schemas')
+				.appendTo($e);
 			return $h;
 		};
 
@@ -222,14 +224,14 @@
 				var $td = $('<td></td>');
 				$tr.append($td);
 				if( isInstalled ) {
-					var $b = $('<button>')
+					$('<button>')
 						.addClass(' mdc-button')
 						.text(_loc('Replace'))
 						.appendTo($td)
 						.click( createClickReplaceSchema(schema, received[name]) );
 
 				} else {
-					var $b = $('<button>')
+					$('<button>')
 						.addClass(' mdc-button')
 						.text(_loc('Install'))
 						.appendTo($td)
@@ -332,7 +334,7 @@
 	function getLogsDiv(){
 		var $e = $schemaAppDiv.find('.schemaAppLogs');
 		if( $e.length < 1 ) {
-			$e = $('<div class="schemaAppLogs"></div>');
+			$e = $('<div class="schemaAppLogs mdc-card"></div>');
 			$schemaAppDiv.append($e);
 			addHeader($e);
 		};
@@ -340,11 +342,13 @@
 		
 		function addHeader($e){
 
-			var $h = $('<h1>Logs </h1>');
-			$e.append($h);
+			var $h = $('<h1>')
+				.addClass('mdc-typography--headline6')
+				.text('Logs')
+				.appendTo($e);
 
-			var $b = $('<button>')
-				.addClass(' mdc-button mdc-button--raised')
+			$('<button>')
+				.addClass('mdc-button')
 				.text(_loc('Clear'))
 				.appendTo($h)
 				.click(function(){
