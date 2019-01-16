@@ -14,10 +14,30 @@
 		<link rel="stylesheet" href="../nunaliit2/css/basic/nunaliit2.css" type="text/css" />
 		<link rel="stylesheet" href="../_list/css_merge/css" type="text/css" />
 		<link rel="stylesheet" href="../css/atlas.css" type="text/css" />
+
+		<style type="text/css">
+			
+			#restoreTool {
+				margin: 10px;
+			}
+
+			#restoreTool .restoreDeletedList.mdc-layout-grid__cell {
+				overflow: auto;
+				max-height: 100vh;
+				/* 132px = margin/padding around main page + height of top app bar height */
+				max-height: calc(100vh - 132px);
+			}
+
+			#restoreTool .restoreRevisionList, 
+			#restoreTool .restoreDisplay {
+				padding-bottom: 10px;
+			}
+
+		</style>
 	</head>
 	<body class="nunaliit_application nunaliit_application_restore">
 		<div class="drawer-frame-root">
-			<aside class="mdc-drawer mdc-drawer--dismissible mdc-drawer--open">
+			<aside class="mdc-drawer mdc-drawer--dismissible">
 				<div class="mdc-drawer__header">
 					<h3 class="mdc-drawer__title"><a href="./index.html">Nunaliit2 Tools</a></h3>
 				</div>
@@ -52,7 +72,10 @@
 				</header>
 				<main class="main-content" id="main-content">
 					<div class="mdc-top-app-bar--fixed-adjust"></div>
-					<div id="restoreTool"></div>
+
+					<div class="mdc-layout-grid">
+						<div id="restoreTool" class="mdc-layout-grid__inner"></div>
+					  </div>
 				</main>
 			</div>
 		</div>

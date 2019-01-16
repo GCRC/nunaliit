@@ -34,7 +34,7 @@
 				var rev = $link.attr('data-rev');
 				
 				_this._deletedDocSelected(docId,rev);
-				
+
 				return false;
 			};
 			
@@ -46,7 +46,7 @@
 				var lastRev = $link.attr('data-lastrev');
 				
 				_this._docRevisionSelected(docId,rev,lastRev);
-				
+
 				return false;
 			};
 			
@@ -59,23 +59,27 @@
 				// Deleted list
 				var $deletedList = $div.find('.restoreDeletedList');
 				if( $deletedList.length < 1 ){
-					$deletedList = $('<div class="restoreDeletedList"></div>');
+					$deletedList = $('<div class="restoreDeletedList mdc-layout-grid__cell"></div>');
 					$div.append($deletedList);
 				};
 				this._refreshDeletedList($deletedList);
 				
+				var $restoreSelection = $('<div>')
+					.addClass('restoreSelectionCell mdc-layout-grid__cell')
+					.appendTo($div);
+
 				// Revision list
 				var $revisionList = $div.find('.restoreRevisionList');
 				if( $revisionList.length < 1 ){
 					$revisionList = $('<div class="restoreRevisionList"></div>');
-					$div.append($revisionList);
+					$restoreSelection.append($revisionList);
 				};
 				
 				// Display Div
 				var $displayDiv = $div.find('.restoreDisplay');
 				if( $displayDiv.length < 1 ){
 					$displayDiv = $('<div class="restoreDisplay"></div>');
-					$div.append($displayDiv);
+					$restoreSelection.append($displayDiv);
 				};
 			};
 		}
@@ -85,7 +89,7 @@
 			
 			var $deletedHeader = $deletedList.find('.restoreDeletedHeader');
 			if( $deletedHeader.length < 1 ){
-				$deletedHeader = $('<div class="restoreDeletedHeader">Deleted Documents <button>Refresh</button></div>');
+				$deletedHeader = $('<div class="restoreDeletedHeader"><span class="mdc-typography--headline6">Deleted Documents</span> <button class="mdc-button">Refresh</button></div>');
 				$deletedList.append($deletedHeader);
 				$deletedHeader.find('button').click(function(){
 					var $div = _this._getDisplayDiv();
@@ -146,6 +150,9 @@
 					}
 				});
 			};
+
+			// Attach material design components
+			$n2.mdc.attachMDCComponents();
 		}
 		
 		,_deletedDocSelected: function(docId, lastRev){
@@ -168,9 +175,11 @@
 						var $div = _this._getDisplayDiv();
 						var $revisionList = $div.find('.restoreRevisionList');
 						$revisionList.empty();
-						var $head = $('<div></div>');
-						$head.text('Revisions for '+docId);
-						$revisionList.append( $head );
+						$('<div>')
+							.addClass('mdc-typography--headline6')
+							.text('Revisions for '+docId)
+							.appendTo($revisionList);
+
 						var revisions = [];
 						if( doc._revisions ) {
 							var start = doc._revisions.start;
@@ -224,22 +233,28 @@
 					var $displayDiv = $div.find('.restoreDisplay');
 					$displayDiv.empty();
 					
-					var $head = $('<div></div>');
-					$head.text('Content for '+docId+'/'+rev);
-					$displayDiv.append( $head );
+					$('<div>')
+						.addClass('mdc-typography--headline6')
+						.text('Content for '+docId+'/'+rev)
+						.appendTo($displayDiv);
 					
 					var $content = $('<div></div>');
 					$displayDiv.append( $content );
 					
 					new $n2.tree.ObjectTree($content, doc);
 					
-					var $button = $('<button>Restore this version</button>');
-					$displayDiv.append($button);
-					$button.click(function(){
-						var $btn = $(this);
-						_this._restoreRevision($btn, doc, lastRev);
-						return false;
-					});
+					$('<button>')
+						.text('Restore this version')
+						.addClass('mdc-button mdc-button--raised')
+						.appendTo($displayDiv)
+						.click(function(){
+							var $btn = $(this);
+							_this._restoreRevision($btn, doc, lastRev);
+							return false;
+						});					
+					
+					// Attach material design components
+					$n2.mdc.attachMDCComponents();
 				}
 				,onError: function(errorMsg){ 
 					var $div = _this._getDisplayDiv();
