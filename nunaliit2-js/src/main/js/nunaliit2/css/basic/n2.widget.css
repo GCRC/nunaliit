@@ -301,18 +301,6 @@ Max Height Widget
 
 /* 
 ==============================
-Help Dialog 
-==============================
-*/
-.n2help_dialog .ui-dialog-titlebar {
-	background: {{header.background}};
-	color: {{header.color}};
-	font-family: helvetica, sans-serif;
-	font-weight: 500;
-}
-
-/* 
-==============================
 Gazetteer Dialog 
 ==============================
 */
