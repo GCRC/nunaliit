@@ -157,7 +157,6 @@ function displayTranslated() {
 
 			var $langMenu = $('<select>')
 				.addClass('mdc-select__native-control');
-				//.appendTo($langSelector);
 
 			for(var i=0,e=rows.length;i<e;++i){
 				var r = rows[i];

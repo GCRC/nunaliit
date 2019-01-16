@@ -232,7 +232,7 @@
 
 				} else {
 					$('<button>')
-						.addClass(' mdc-button')
+						.addClass('mdc-button')
 						.text(_loc('Install'))
 						.appendTo($td)
 						.click( createClickInstallSchema(schema) );
