@@ -36,19 +36,30 @@
 			
 			$div.empty();
 
-			var $buttons = $('<div class="n2LoggerButtons"><span></span> <button></button></div>')
+			var $buttonsLine = $('<div>')
+				.addClass('n2LoggerButtons')
 				.appendTo($div);
 
-			$buttons.find('span').text( _loc('Logs') );
-			$buttons.find('button')
+			$('<span>')
+				.addClass('mdc-typography--headline6')
+				.text(_loc('Logs '))
+				.appendTo($buttonsLine);
+
+			$('<button>')
+				.addClass('mdc-button')
 				.text( _loc('Clear') )
+				.appendTo($buttonsLine)
 				.click(function(){
 					_this.clear();
 					return false;
 				});
 			
-			$('<div class="n2LoggerEntries"></div>')
+			$('<div>')
+				.addClass('n2LoggerEntries')
 				.appendTo($div);
+			
+			// Attach Material Design Components
+			$n2.mdc.attachMDCComponents();
 		}
 		
 		,error: function(err){
@@ -65,7 +76,7 @@
 			var $d = $('<div class="log"></div>');
 			$d.text(msg);
 			$e.append($d);
-		}
+		}		
 	});
 
 	// -----------------------------------------------------------------
@@ -147,6 +158,9 @@
 				};
 			};
 			refresh();
+
+			// Attach Material Design Components
+			$n2.mdc.attachMDCComponents();
 		}
 	
 		,_getDiv: function(){
@@ -157,27 +171,40 @@
 			var _this = this;
 			
 			var $appDiv = this._getDiv();
-			$appDiv
-				.empty()
-				.append( $('<div class="submissionAppButtons"><div>') )
-				.append( $('<div class="submissionAppList"><div>') )
-				;
+			$appDiv.empty();
 			
-			var $log = $('<div class="submissionAppLog"><div>')
+			var $submissionListContainer = $('<div>')
+				.addClass('mdc-card')
+				.appendTo($appDiv);
+
+			var $log = $('<div>')
+				.addClass('submissionAppLog mdc-card')
 				.appendTo($appDiv);
 			
 			this.logger = new Logger({div:$log});
 			
-			var $buttons = $appDiv.find('.submissionAppButtons');
-			
+			var $buttonsLine = $('<div>')
+				.addClass('submissionAppButtons')
+				.appendTo($submissionListContainer);
+
+			$('<span>')
+				.addClass('mdc-typography--headline6')
+				.text(_loc('Submissions '))
+				.appendTo($buttonsLine);
+
 			$('<button>')
+				.addClass('mdc-button')
 				.text( _loc('Refresh') )
-				.appendTo($buttons)
+				.appendTo($buttonsLine)
 				.click(function(){
 					_this._refreshSubmissions();
 					return false;
 				});
-			
+
+			$('<div>')
+				.addClass('submissionAppList')
+				.appendTo($submissionListContainer);
+
 			this._refreshSubmissions();
 		}
 		
@@ -220,23 +247,19 @@
 					isEmpty = false;
 					
 					var cName = 'submission_' + $n2.utils.stringToHtmlId(subDocId);
-					var $div = $('<div>')
-						.addClass('submission')
-						.addClass('submission_state_'+state)
-						.addClass(cName)
+					$('<div>')
+						.addClass('submission submission_state_' + state + ' ' + cName)
 						.appendTo($list)
-						.text(subDocId)
-						;
+						.text(subDocId);
 					
 					subDocIds.push(subDocId);
 				};
 
 				if( isEmpty ){
-					var $div = $('<div>')
+					$('<div>')
 						.addClass('submission')
 						.appendTo($list)
-						.text( _loc('No submission available') )
-						;
+						.text( _loc('No submission available') );
 				};
 				
 				_this._fetchSubmissionDocs(subDocIds);
@@ -388,11 +411,11 @@
 					.appendTo($options);
 				
 				var $buttons = $('<div>')
-					.addClass('submission_deny_dialog_buttons')
+					.addClass('submission_deny_dialog_buttons mdc-button')
 					.appendTo($diag);
 
 				$('<button>')
-					.addClass('n2_button_ok')
+					.addClass('n2_button_ok mdc-button')
 					.text( _loc('OK') )
 					.appendTo($buttons)
 					.click(function(){
@@ -408,7 +431,7 @@
 					});
 
 				$('<button>')
-					.addClass('n2_button_cancel')
+					.addClass('n2_button_cancel mdc-button')
 					.text( _loc('Cancel') )
 					.appendTo($buttons)
 					.click(function(){
@@ -698,6 +721,7 @@
 			var $views = $('<div class="submission_views">')
 				.appendTo($entry);
 			$('<button>')
+				.addClass('mdc-button')
 				.text( _loc('View') )
 				.appendTo($views)
 				.click(function(){
@@ -747,6 +771,9 @@
 					.text(value)
 					.appendTo($div);
 			};
+
+			// Attach Material Design Components
+			$n2.mdc.attachMDCComponents();
 		}
 		
 		,_viewOriginal: function(subDocId){
@@ -1009,7 +1036,7 @@
 					.addClass('submission_view_dialog_merging_buttons')
 					.appendTo($innerDiag);
 				$('<button>')
-					.addClass('n2_button_approve')
+					.addClass('n2_button_approve mdc-button')
 					.text( _loc('Approve') )
 					.appendTo($buttons)
 					.click(function(){
@@ -1019,7 +1046,7 @@
 						return false;
 					});
 				$('<button>')
-					.addClass('n2_button_deny')
+					.addClass('n2_button_deny mdc-button')
 					.text( _loc('Reject') )
 					.appendTo($buttons)
 					.click(function(){
@@ -1031,7 +1058,7 @@
 					});
 				if( originalDoc ) {
 					$('<button>')
-						.addClass('n2_button_original')
+						.addClass('n2_button_original mdc-button')
 						.text( _loc('View Original') )
 						.appendTo($buttons)
 						.click(function(){
@@ -1041,7 +1068,7 @@
 				};
 				if( submittedDoc ) {
 					$('<button>')
-						.addClass('n2_button_submitted')
+						.addClass('n2_button_submitted mdc-button')
 						.text( _loc('View Submitted') )
 						.appendTo($buttons)
 						.click(function(){
@@ -1051,7 +1078,7 @@
 				};
 				if( ! subDoc.nunaliit_submission.deletion ) {
 					$('<button>')
-						.addClass('n2_button_manual')
+						.addClass('n2_button_manual mdc-button')
 						.text( _loc('Edit Proposed Document') )
 						.appendTo($buttons)
 						.click(function(){
@@ -1060,7 +1087,7 @@
 						});
 				};
 				$('<button>')
-					.addClass('n2_button_cancel')
+					.addClass('n2_button_cancel mdc-button')
 					.text( _loc('Cancel') )
 					.appendTo($buttons)
 					.click(function(){
@@ -1146,7 +1173,7 @@
 				
 				$buttons.empty();
 				$('<button>')
-					.addClass('n2_button_save')
+					.addClass('n2_button_save mdc-button')
 					.text( _loc('Save') )
 					.appendTo($buttons)
 					.click(function(){
@@ -1155,7 +1182,7 @@
 						return false;
 					});
 				$('<button>')
-					.addClass('n2_button_cancel')
+					.addClass('n2_button_cancel mdc-button')
 					.text( _loc('Cancel') )
 					.appendTo($buttons)
 					.click(function(){

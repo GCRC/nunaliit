@@ -1,7 +1,30 @@
+
+#submissionApp,
+#submissionApp .submissionAppButtons span,
+#submissionApp .n2LoggerButtons span {
+	margin: 10px;
+}
+
+#submissionApp>div {
+	margin-bottom: 10px;
+}
+
+#submissionApp .submissionAppList,
+#submissionApp .submissionAppLog .n2LoggerEntries {
+	padding: 10px;
+}
+
+#submissionApp .submissionAppButtons,
+#submissionApp .n2LoggerButtons {
+	background-color: #f0f0f0;
+}
+
 .submission {
-	border-bottom: 1px solid #000000;
-	margin-top: 5px;
-	margin-bottom: 5px;
+	border: 1px #ddd solid;
+    border-radius: 2px;
+    padding: 5px;
+	background-color: #fdfdfd;
+	margin: 5px 0px;
 }
 
 .submission:after {

@@ -115,7 +115,7 @@
 
 		// Import Verify Button
 		$('<button>')
-			.addClass(' mdc-button')
+			.addClass('mdc-button')
 			.text( _loc('Verify') )
 			.appendTo($buttonLine)
 			.click(function(){
