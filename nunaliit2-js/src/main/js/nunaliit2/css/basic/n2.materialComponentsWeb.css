@@ -82,7 +82,8 @@
     padding-top: 5px;
 }
 
-.mdc-dialog.mdc-dialog--scrollable .mdc-dialog__title, .mdc-dialog.mdc-dialog--scrollable .mdc-dialog__actions {
+.mdc-dialog.mdc-dialog--scrollable .mdc-dialog__title, 
+.mdc-dialog.mdc-dialog--scrollable .mdc-dialog__actions {
     border-color: rgba(0,0,0,0);
 }
 
@@ -109,3 +110,6 @@
     padding-left: 16px;
 }
 
+.submission_view_dialog_merging .mdc-dialog__container .mdc-dialog__surface {
+    max-width: 800px;
+}
