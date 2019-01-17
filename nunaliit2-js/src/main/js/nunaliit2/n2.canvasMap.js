@@ -135,7 +135,7 @@ var MapCanvas = $n2.Class('MapCanvas',{
 			
 			$n2.log(this._classname,this);
 			
-			this.bgSources = opts.backgrounds;
+			this.bgSources = opts.backgrounds || [];
 			this._drawMap();
 			
 		} catch(err) {
@@ -231,13 +231,67 @@ var MapCanvas = $n2.Class('MapCanvas',{
 		        return styles[feature.getGeometry().getType()];
 		      };
 		      
-		      
+		/**
+		 * declare and init two layers array -- map and overlay 
+		 */
 		var mapLayers = [];
 		var overlayLayers = [];
+		
+		/**
+		 * filling in the vector layers
+		 */
+		/**
+		 * Define the geometryFunction for the clusterSource
+		 *
+		 */
+		function n2geometryFunc(feature) {
+			var geom = feature.getGeometry();
+			//console.log("A new geometry with type: " + geom.getType());
+			if(geom.getType() == 'Point'){
+				return geom;
+			} else if(geom.getType() == 'LineString'){
+				return new ol.geom.Point(geom.getLastCoordinate());
+			} else if(geom.getType() == 'Polygon'){
+				return geom.getInteriorPoint();
+			} else if(geom.getType() == 'MultiPoint'){
+				return new ol.geom.Point(geom.getLastCoordinate());
+			} else if(geom.getType() == 'MultiPolygon') {
+				return new ol.geom.Point(geom.getLastCoordinate());
+			} else if(geom.getType() == 'MultiLineString'){
+				return new ol.geom.Point(geom.getLastCoordinate());
+			}
+			return null;
+			
+		};
+		
+		/**
+		 * Testing the N2Cluster performance
+		 *
+		 */
+		var count = 200;
+		var features = new Array(count);
+		var e = 4500000;
+		const ox = 2*e *Math.random() -e;
+		const oy = 2*e *Math.random() -e;
+		for(let i=0;i<count;++i) {
+			
+			var coordinates = [[[ox, oy],[ ox+10000, oy-100*i],[ox+100000, oy+100*i]]];
+			features[i] = new ol.Feature(new ol.geom.Polygon(coordinates));
+		}
+		this.sources.push(new ol.source.Vector({features: features}));
 		this.sources.forEach(function(source){
+			
+			/** 
+			 * Testing the cluster wrapper (I wonder what polygon and line are going to 
+			 * be rendered in default cluster class
+			 */
+			var clusterSource = new ol.source.N2Cluster({
+				distance : 20,
+				source: source
+			});
 			var vectorLayer = new ol.layer.Vector({
 				title: "CouchDb",
-				source: source,
+				source: clusterSource,
 				style: styleFunction
 			});
 			overlayLayers.push(vectorLayer);
@@ -245,6 +299,10 @@ var MapCanvas = $n2.Class('MapCanvas',{
 		
 		
 		mapLayers = this._genBackgroundMapLayers(this.bgSources);
+		
+		/**
+		 * Two Groups : Overlay and Background
+		 */
 		var overlayGroup = new ol.layer.Group({
 			title: 'Overlays',
 			layers: overlayLayers
@@ -253,6 +311,10 @@ var MapCanvas = $n2.Class('MapCanvas',{
 			title: 'Background',
 			layers: mapLayers
 		});
+		
+		/**
+		 * ol.View tweaking listen on the resolution changing
+		 */
 		var olView = new ol.View({
 			center: ol.proj.transform([-75, 45.5], 'EPSG:4326', 'EPSG:3857'),
 			projection: 'EPSG:3857',
@@ -264,9 +326,16 @@ var MapCanvas = $n2.Class('MapCanvas',{
 				var res = olView.getResolution();
 				var proj = olView.getProjection();
 				//$n2.log('resolution',res,proj);
-				_this.sources.forEach(function(source){
+				/*_this.sources.forEach(function(source){
 					source.changedResolution(res,proj);
 				});
+				*/
+				for(let i =0;i<_this.sources.length;i++){
+					if(i !== _this.sources.length-1){
+						const source = _this.sources[i];
+						source.changedResolution(res,proj);
+					}
+				}
 			};
 		});
 		var customMap = new ol.N2Map({
@@ -282,7 +351,7 @@ var MapCanvas = $n2.Class('MapCanvas',{
 			tipLabel: 'Légende' // Optional label for button
 		});
 		customMap.addControl(customLayerSwitcher);
-		customMap.getInfo();
+		
 	}
 	,_genBackgroundMapLayers: function (bgSources) {
 		var _this = this;

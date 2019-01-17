@@ -743,6 +743,7 @@ var MapStylesAdaptor = $n2.Class({
 			feature._n2Style = style;
 			var symbolizer = style.getSymbolizer(feature);
 
+			//TODO add a cache -- pending --
 			var symbols = {};
 			symbolizer.forEachSymbol(function(name,value){
 				name = olStyleNames[name] ? olStyleNames[name] : name;

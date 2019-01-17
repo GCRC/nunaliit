@@ -40,7 +40,7 @@ if( typeof(ol) !== 'undefined' && ol.Map) {
 		initialize: function() {
 			console.log('N2Map constructor called');
 		}
-		 ,val1 : 'val valriable'
+
 		,getInfo : function() {
 			
 			console.log('Successfully Instantiate: '+ this._classname )
