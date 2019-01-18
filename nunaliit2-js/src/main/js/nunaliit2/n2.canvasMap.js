@@ -292,7 +292,10 @@ var MapCanvas = $n2.Class('MapCanvas',{
 			var vectorLayer = new ol.layer.Vector({
 				title: "CouchDb",
 				source: clusterSource,
-				style: styleFunction
+				style: styleFunction,
+				renderOrder: function(feature1, feature2){
+					return $n2.olUtils.ol5FeatureSorting(feature1, feature2);
+				}
 			});
 			overlayLayers.push(vectorLayer);
 		});
@@ -487,7 +490,7 @@ var MapCanvas = $n2.Class('MapCanvas',{
 	,_handleDispatch: function(m, addr, dispatcher){
 	}
 });
- 
+
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 

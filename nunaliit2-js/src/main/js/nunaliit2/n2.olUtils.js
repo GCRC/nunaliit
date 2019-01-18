@@ -131,11 +131,83 @@ function prepareFeatureForSorting(f){
 	return f._n2Sort;
 };
 
+/**
+ * _n2Sort caching not possible in this setting yet. 
+ * If performance is an issue, maybe need to implement our own ol.layer|ol.render
+ * in favor of this renderOrder functionality.
+ * @param {ol.Feature} a
+ * @param {ol.Feature} b
+ * @return {number}
+ */
+function ol5FeatureSorting(a, b){
+	 const aSort = ol5prepareFeatureForSorting(a);
 
+	 const bSort = ol5prepareFeatureForSorting(b);
+		if( aSort.isPoint && bSort.isPoint ) {
+			return 0;
+		} else if( aSort.isPoint ) {
+			return 1;
+		} else if( bSort.isPoint ) {
+			return -1;
+		} else {
+			// One of the two geometries is not a point
+			if( aSort.isLineString && bSort.isLineString ) {
+				if( aSort.largestDim > bSort.largestDim ) {
+					return -1;
+				} else {
+					return 1;
+				};
+			} else if( aSort.isLineString ){
+				return 1;
+			} else if ( bSort.isLineString ) {
+				return -1
+			} else {
+				// Both geometries are polygons
+				if( aSort.largestDim > bSort.largestDim ) {
+					return -1;
+				} else {
+					return 1;
+				};
+			};
+		};
+	
+};
+
+//ol5 version of preparing features for sorting
+function ol5prepareFeatureForSorting(f){
+	f._n2Sort = {};
+	var geomClass = f.getGeometry().getType();
+	f._n2Sort.isPoint = (geomClass.indexOf('Point') >= 0);
+	if( f._n2Sort.isPoint ) {
+		f._n2Sort.isLineString = false;
+		f._n2Sort.isPolygon = false;
+		f._n2Sort.largestDim = 0;
+	} else {
+		f._n2Sort.isLineString = (geomClass.indexOf('LineString') >= 0);
+		if( f._n2Sort.isLineString ){
+			var extent = f.getGeometry().computeExtent();
+			f._n2Sort.largestDim = extent[2]-extent[0]
+			var tmp = extent[3]-extent[1];
+			if( f._n2Sort.largestDim < tmp ) {
+				f._n2Sort.largestDim = tmp;
+			};
+		} else {
+			f._n2Sort.isPolygon = true;
+			
+			var extent = f.getGeometry().computeExtent();
+			
+			// Use area
+			f._n2Sort.largestDim = (extent[2]-extent[0])*(extent[3]-extent[1]);
+		};
+		
+	};
+	return f._n2Sort;
+};
 $n2.olUtils = {
 	isValidGeom: isValidGeom
 	,sortFeatures: sortFeatures
 	,featureSorting: featureSorting
+	, ol5FeatureSorting: ol5FeatureSorting
 };
 
 
