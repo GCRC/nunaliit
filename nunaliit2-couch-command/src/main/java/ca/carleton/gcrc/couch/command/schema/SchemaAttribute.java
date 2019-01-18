@@ -450,9 +450,7 @@ public class SchemaAttribute {
 			}
 			
 		} else if( "localized".equals(type) ){
-			if( null != id ){
-				schemaDoc.put(id, JSONObject.NULL);
-			}
+			// leave localized attributes as undefined
 			
 		} else if( "date".equals(type) ){
 			// leave date attributes as undefined
