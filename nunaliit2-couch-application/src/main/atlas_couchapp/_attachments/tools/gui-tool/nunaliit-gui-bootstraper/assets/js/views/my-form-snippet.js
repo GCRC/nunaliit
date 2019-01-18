@@ -91,7 +91,10 @@ define([
          var labelInputField = _.find(fields, function(field){
           return $(field).attr("id") ==="label"
         });
-         var  idFromLabel = $(labelInputField).val().toLowerCase().replace(/\W/g,'');
+         var  idFromLabel = $(labelInputField).val()
+         		.toLowerCase()
+         		.replace(/\s+/g, '_')
+         		.replace(/^_+|_+$/g,'');
 
         var n2idInputField = _.find(fields,function(e){
           return $(e).attr("id") === "n2id";
@@ -104,11 +107,13 @@ define([
         mouseEvent.preventDefault();
 
         var fields = $(".popover .field");
-         var labelInputField = _.find(fields, function(field){
+        var labelInputField = _.find(fields, function(field){
           return $(field).attr("id") ==="label"
         });
-         var  idFromLabel = $(labelInputField).val().toLowerCase().replace(/\W/g,'');
-
+        var idFromLabel = $(labelInputField).val()
+                             .toLowerCase()
+                             .replace(/\s+/g, '_')
+                             .replace(/^_+|_+$/g,'');
         var n2idInputField = _.find(fields,function(e){
           return $(e).attr("id") === "n2id";
         });

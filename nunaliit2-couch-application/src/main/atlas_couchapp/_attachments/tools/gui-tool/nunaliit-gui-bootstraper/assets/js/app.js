@@ -23,7 +23,7 @@ define([
 						config.directory.authService.createAuthWidget({
 							elemId: 'login'
 						});
-						$n2.log('tell me what is going', config.directory.schemaRepository);
+						$n2.log('The schemaRepository: ', config.directory.schemaRepository);
 						render(config);
 					};
 				}
