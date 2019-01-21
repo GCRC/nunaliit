@@ -94,6 +94,7 @@
 		,attachmentService: null
 		,divId: null
 		,logger: null
+		,mdcDialogComponent: null
 		
 		,initialize: function(opts_){
 			var opts = $n2.extend({
@@ -344,6 +345,7 @@
 
 		,_deny: function(subDocId, onDeniedFn){
 			var _this = this;
+			var mdcDenyDialogComponent;
 			
 			gatherDenyReason(function(reason,sendEmail){
 				_this._getSubmissionDocument({
@@ -386,71 +388,152 @@
 			});
 			
 			function gatherDenyReason(callback,sendEmail){
-				var diagId = $n2.getUniqueId();
-				var $diag = $('<div>')
-					.attr('id',diagId)
-					.addClass('submission_deny_dialog')
-					.appendTo( $('body') );
+				var denyDialogId = $n2.getUniqueId();
+
+				var $denyDialog = $('<div>')
+					.attr('id',denyDialogId)
+					.attr('role','alertdialog')
+					.attr('aria-modal','true')
+					.attr('aria-labelledby','my-dialog-title')
+					.attr('aria-describedby','my-dialog-content')
+					.attr('class','submission_deny_dialog mdc-dialog')
+					.appendTo($('body'));
 				
+				var $dialogContainer = $('<div>')
+					.attr('class','mdc-dialog__container')
+					.appendTo($denyDialog);
+				
+				var $dialogSurface = $('<div>')
+					.attr('class','mdc-dialog__surface')
+					.appendTo($dialogContainer);
+				
+				$('<h2>')
+					.attr('class','mdc-dialog__title')
+					.text(_loc('Enter reason for rejecting submission'))
+					.appendTo($dialogSurface);
+		
+				var $dialogContent = $('<div>')
+					.attr('class','mdc-dialog__content')
+					.appendTo($dialogSurface);
+
+				// TextArea Rejection Reason
+				var taId = $n2.getUniqueId();
+
+				var $textareaDiv = $('<div>')
+					.addClass('mdc-text-field mdc-text-field--textarea')
+					.appendTo($dialogContent);
+
 				$('<textarea>')
-					.addClass('submission_deny_dialog_reason')
-					.appendTo($diag);
-				
+					.addClass('submission_deny_dialog_reason mdc-text-field__input')
+					.attr('id',taId)
+					.attr('rows','8')
+					.attr('cols','40')
+					.appendTo($textareaDiv);
+
+				var $textareaDivOutline = $('<div>')
+					.addClass('mdc-notched-outline')
+					.appendTo($textareaDiv);
+
+				$('<div>')
+					.addClass('mdc-notched-outline__leading')
+					.appendTo($textareaDivOutline);
+			
+				var $textareaDivOutlineNotch = $('<div>')
+					.addClass('mdc-notched-outline__notch')
+					.appendTo($textareaDivOutline);
+
+				$('<label>')
+					.attr('for',taId)
+					.addClass('mdc-floating-label')
+					.text('Rejection Reason')
+					.appendTo($textareaDivOutlineNotch);
+
+				$('<div>')
+					.addClass('mdc-notched-outline__trailing')
+					.appendTo($textareaDivOutline);
+
+				// Email Checbox 
 				var $options = $('<div>')
-					.addClass('submission_deny_dialog_options')
-					.appendTo($diag);
-				
+					.addClass('submission_deny_dialog_options mdc-form-field')
+					.appendTo($dialogContent);
+
 				var cbId = $n2.getUniqueId();
-				$('<input type="checkbox">')
+
+				var $checkboxDiv = $('<div>')
+					.addClass('mdc-checkbox')
+					.appendTo($options);
+
+				$('<input>')
+					.addClass('layer mdc-checkbox__native-control')
+					.attr('type','checkbox')
 					.attr('id',cbId)
 					.attr('name','send_email')
-					.appendTo($options);
+					.appendTo($checkboxDiv);
+
+				var $checkboxBackground = $('<div>')
+					.addClass('mdc-checkbox__background')
+					.appendTo($checkboxDiv);
+	
+				$('<svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24"><path fill="none" stroke="white" class="mdc-checkbox__checkmark-path" d="M1.73,12.91 8.1,19.28 22.79,4.59" /></svg>')
+					.appendTo($checkboxBackground);
+	
+				$('<div>')
+					.addClass('mdc-checkbox__mixedmark')
+					.appendTo($checkboxBackground);
+
 				$('<label>')
 					.attr('for',cbId)
 					.text( _loc('Send e-mail to submitter with reason for rejection') )
 					.appendTo($options);
 				
-				var $buttons = $('<div>')
-					.addClass('submission_deny_dialog_buttons mdc-button')
-					.appendTo($diag);
+				// Dialog Buttons
+				var $buttons = $('<footer>')
+					.addClass('submission_deny_dialog_buttons mdc-dialog__actions')
+					.appendTo($dialogContent);
 
 				$('<button>')
-					.addClass('n2_button_ok mdc-button')
+					.addClass('n2_button_ok mdc-button mdc-dialog__button')
 					.text( _loc('OK') )
 					.appendTo($buttons)
 					.click(function(){
-						var $diag = $('#'+diagId);
+						var $diag = $('#'+denyDialogId);
 						
 						var comment = $diag.find('textarea.submission_deny_dialog_reason').val();
 						var email = $diag.find('input[name="send_email"]').is(':checked');
-						
-						$diag.dialog('close');
+												
+						mdcDenyDialogComponent.close();
+						$denyDialog.remove();
+
 						if( typeof callback === 'function' ){
 							callback(comment,email);
 						};
 					});
 
 				$('<button>')
-					.addClass('n2_button_cancel mdc-button')
+					.addClass('n2_button_cancel mdc-button mdc-dialog__button')
 					.text( _loc('Cancel') )
 					.appendTo($buttons)
 					.click(function(){
-						var $diag = $('#'+diagId);
-						$diag.dialog('close');
+						mdcDenyDialogComponent.close();
+						$denyDialog.remove();
+						return false;
 					});
+
+				$('<div>')
+					.addClass('mdc-dialog__scrim')
+					.click(function(){						
+						mdcDenyDialogComponent.close();
+						$denyDialog.remove();
+						return false;
+					})
+					.appendTo($denyDialog);
+					
+				// Attach MDC Components
+				$n2.mdc.attachMDCComponents();
 				
-				$diag.dialog({
-					autoOpen: true
-					,title: _loc('Enter reason for rejecting submission')
-					,modal: true
-					//,width: '90%'
-					,width: 'auto'
-					,close: function(event, ui){
-						var diag = $(event.target);
-						diag.dialog('destroy');
-						diag.remove();
-					}
-				});
+				// Attach mdc component to alert dialog
+				mdcDenyDialogComponent = new mdc.dialog.MDCDialog($denyDialog[0]);
+				mdcDenyDialogComponent.open();
 			};
 		}
 
@@ -778,64 +861,109 @@
 		
 		,_viewOriginal: function(subDocId){
 			var _this = this;
+			var mdcViewDialogComponent;
 			
 			this._getOriginalDocument({
 				subDocId: subDocId
 				,onSuccess: function(doc, subDoc){
 					var diagId = $n2.getUniqueId();
-					var $diag = $('<div>')
-						.attr('id',diagId)
-						.addClass('submission_view_dialog_original')
-						.appendTo( $('body') );
-					
+
+					var $dialog = $('<div>')
+						.attr('id', diagId)
+						.attr('role','alertdialog')
+						.attr('aria-modal','true')
+						.attr('aria-labelledby','my-dialog-title')
+						.attr('aria-describedby','my-dialog-content')
+						.addClass('submission_view_dialog_original mdc-dialog mdc-dialog--scrollable')
+						.appendTo($('body'));
+							
+					var $dialogContainer = $('<div>')
+						.addClass('mdc-dialog__container')
+						.appendTo($dialog);
+
+					var $dialogSurface = $('<div>')
+						.addClass('mdc-dialog__surface')
+						.css('padding','10px')
+						.appendTo($dialogContainer);
+
+					$('<h2>')
+						.addClass('mdc-dialog__title')
+						.text(_loc('View Original'))
+						.appendTo($dialogSurface);
+
 					var $content = $('<div>')
-						.appendTo($diag);
+						.addClass('mdc-dialog__content')
+						.appendTo($dialogSurface);
 					
 					_this._addDocumentAccordion($content, doc);
-					
-					$diag.dialog({
-						autoOpen: true
-						,title: _loc('View Original')
-						,modal: true
-						,width: 500
-						,close: function(event, ui){
-							var diag = $(event.target);
-							diag.dialog('destroy');
-							diag.remove();
-						}
-					});
+	
+					$('<div>')
+					.addClass('mdc-dialog__scrim')
+					.click(function(){
+						mdcViewDialogComponent.close();
+						$dialog.remove();
+						return false;
+					})
+					.appendTo($dialog);
+			
+					// Attach mdc component to alert dialog
+					mdcViewDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);
+					mdcViewDialogComponent.open();
 				}
 			});
 		}
 
 		,_viewSubmitted: function(subDocId){
 			var _this = this;
+			var mdcSubmittedDialogComponent;
 			
 			this._getSubmittedDocument({
 				subDocId: subDocId
 				,onSuccess: function(doc, subDoc){
 					var diagId = $n2.getUniqueId();
-					var $diag = $('<div>')
-						.attr('id',diagId)
-						.addClass('submission_view_dialog_submitted')
-						.appendTo( $('body') );
-					
+
+					var $dialog = $('<div>')
+						.attr('id', diagId)
+						.attr('role','alertdialog')
+						.attr('aria-modal','true')
+						.attr('aria-labelledby','my-dialog-title')
+						.attr('aria-describedby','my-dialog-content')
+						.addClass('submission_view_dialog_submitted mdc-dialog mdc-dialog--scrollable')
+						.appendTo($('body'));
+							
+					var $dialogContainer = $('<div>')
+						.addClass('mdc-dialog__container')
+						.appendTo($dialog);
+
+					var $dialogSurface = $('<div>')
+						.addClass('mdc-dialog__surface')
+						.css('padding','10px')
+						.appendTo($dialogContainer);
+
+					$('<h2>')
+						.addClass('mdc-dialog__title')
+						.text(_loc('View Submission'))
+						.appendTo($dialogSurface);
+
 					var $content = $('<div>')
-						.appendTo($diag);
+						.addClass('mdc-dialog__content')
+						.appendTo($dialogSurface);
 					
 					_this._addDocumentAccordion($content, doc);
-					
-					$diag.dialog({
-						autoOpen: true
-						,title: _loc('View Submission')
-						,modal: true
-						,width: 500
-						,close: function(event, ui){
-							var diag = $(event.target);
-							diag.dialog('destroy');
-							diag.remove();
-						}
-					});
+	
+					$('<div>')
+					.addClass('mdc-dialog__scrim')
+					.click(function(){
+						mdcSubmittedDialogComponent.close();
+						$dialog.remove();
+						return false;
+					})
+					.appendTo($dialog);
+			
+					// Attach mdc component to alert dialog
+					mdcSubmittedDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);
+					mdcSubmittedDialogComponent.open();
+
 				}
 			});
 		}
@@ -874,6 +1002,7 @@
 
 		,_viewMerging: function(subDocId){
 			var _this = this;
+			var mdcDialogComponent;
 			
 			// Get current document
 			this._getCurrentDocument({
@@ -897,27 +1026,53 @@
 
 			function openDialog(originalDoc, submittedDoc, currentDoc, subDoc){
 				var diagId = $n2.getUniqueId();
+
 				var $diag = $('<div>')
 					.attr('id',diagId)
-					.addClass('submission_view_dialog_merging')
-					.appendTo( $('body') );
+					.attr('role','alertdialog')
+					.attr('aria-modal','true')
+					.attr('aria-labelledby','my-dialog-title')
+					.attr('aria-describedby','my-dialog-content')
+					.attr('class','submission_view_dialog_merging mdc-dialog')
+					.appendTo($('body'));
+
+							
+				var $dialogContainer = $('<div>')
+					.attr('class','mdc-dialog__container')
+					.appendTo($diag);
 				
-				initiateMergingView($diag, diagId, originalDoc, submittedDoc, currentDoc, subDoc);
+				var $dialogSurface = $('<div>')
+					.attr('class','mdc-dialog__surface')
+					.appendTo($dialogContainer);
 				
-				$diag.dialog({
-					autoOpen: true
-					,title: _loc('View Submission')
-					,modal: true
-					,width: '90%'
-					,close: function(event, ui){
-						var diag = $(event.target);
-						diag.dialog('destroy');
-						diag.remove();
-					}
-				});
+				$('<h2>')
+					.attr('class','mdc-dialog__title')
+					.text(_loc('View Submission'))
+					.appendTo($dialogSurface);
+
+				var $dialogContent = $('<div>')
+					.attr('class','mdc-dialog__content')
+					.appendTo($dialogSurface);
+	
+				// Attach mdc component to alert dialog
+				_this.mdcDialogComponent = new mdc.dialog.MDCDialog($diag[0]);
+
+				$('<div>')
+					.addClass('mdc-dialog__scrim')
+					.click(function(){
+						_this.mdcDialogComponent.close();
+						$diag.remove();
+						return false;
+					})
+					.appendTo($diag);
+
+				initiateMergingView($dialogContent, diagId, originalDoc, submittedDoc, currentDoc, subDoc);
+
+				// Open dialog after adding content
+				_this.mdcDialogComponent.open();
 			};
 
-			function initiateMergingView($diag, diagId, originalDoc, submittedDoc, currentDoc, subDoc){
+			function initiateMergingView($dialogContent, diagId, originalDoc, submittedDoc, currentDoc, subDoc){
 				var submittedPatch = null;
 				if( originalDoc && submittedDoc ) {
 					submittedPatch = patcher.computePatch(originalDoc, submittedDoc);
@@ -945,7 +1100,7 @@
 				
 				$('<div>')
 					.addClass('submission_view_dialog_inner')
-					.appendTo($diag);
+					.appendTo($dialogContent);
 				
 				displayDocuments(
 					diagId
@@ -1032,8 +1187,8 @@
 					new $n2.tree.ObjectTree($delta, submittedPatch);
 				};
 				
-				var $buttons = $('<div>')
-					.addClass('submission_view_dialog_merging_buttons')
+				var $buttons = $('<footer>')
+					.addClass('submission_view_dialog_merging_buttons mdc-dialog__actions')
 					.appendTo($innerDiag);
 				$('<button>')
 					.addClass('n2_button_approve mdc-button')
@@ -1041,24 +1196,26 @@
 					.appendTo($buttons)
 					.click(function(){
 						_this._approve(subDocId, proposedDoc);
-						var $diag = $('#'+diagId);
-						$diag.dialog('close');
+						_this.mdcDialogComponent.close();
+						var $dialog = $('#'+diagId);
+						$dialog.remove();
 						return false;
 					});
 				$('<button>')
-					.addClass('n2_button_deny mdc-button')
+					.addClass('n2_button_deny mdc-button mdc-dialog__button')
 					.text( _loc('Reject') )
 					.appendTo($buttons)
 					.click(function(){
 						_this._deny(subDocId,function(){
-							var $diag = $('#'+diagId);
-							$diag.dialog('close');
+							_this.mdcDialogComponent.close();
+							var $dialog = $('#'+diagId);
+							$dialog.remove();
 						});
 						return false;
 					});
 				if( originalDoc ) {
 					$('<button>')
-						.addClass('n2_button_original mdc-button')
+						.addClass('n2_button_original mdc-button mdc-dialog__button')
 						.text( _loc('View Original') )
 						.appendTo($buttons)
 						.click(function(){
@@ -1068,7 +1225,7 @@
 				};
 				if( submittedDoc ) {
 					$('<button>')
-						.addClass('n2_button_submitted mdc-button')
+						.addClass('n2_button_submitted mdc-button mdc-dialog__button')
 						.text( _loc('View Submitted') )
 						.appendTo($buttons)
 						.click(function(){
@@ -1078,7 +1235,7 @@
 				};
 				if( ! subDoc.nunaliit_submission.deletion ) {
 					$('<button>')
-						.addClass('n2_button_manual mdc-button')
+						.addClass('n2_button_manual mdc-button mdc-dialog__button')
 						.text( _loc('Edit Proposed Document') )
 						.appendTo($buttons)
 						.click(function(){
@@ -1087,12 +1244,13 @@
 						});
 				};
 				$('<button>')
-					.addClass('n2_button_cancel mdc-button')
+					.addClass('n2_button_cancel mdc-button mdc-dialog__button')
 					.text( _loc('Cancel') )
 					.appendTo($buttons)
 					.click(function(){
-						var $diag = $('#'+diagId);
-						$diag.dialog('close');
+						_this.mdcDialogComponent.close();
+						var $dialog = $('#'+diagId);
+						$dialog.remove();
 						return false;
 					});
 				
