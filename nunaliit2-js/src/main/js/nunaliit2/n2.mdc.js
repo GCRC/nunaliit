@@ -138,6 +138,12 @@ var attachMDCComponents = function(){
 // Required Handlebar Expressions:
 //  * {{id}} = textarea id
 //  * {{label}} = floating label used by the textarea field
+// Usage Example:
+// var textareaInputId = $n2.getUniqueId();
+// var data = {id:textareaInputId, label:"Textfield Input"};
+// var inputTextAreaField = Handlebars.compile($n2.mdc.mdcTextareaTemplate);
+// $div.append(inputTextAreaField(data));
+
 var mdcTextareaTemplate = '\
 	<div class="mdc-text-field mdc-text-field--textarea">\
 		<textarea id="{{id}}" class="mdc-text-field__input" rows="8" cols="40"></textarea>\
