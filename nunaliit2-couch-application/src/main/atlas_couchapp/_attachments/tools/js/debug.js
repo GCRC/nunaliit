@@ -32,113 +32,27 @@
 
 			// Configuration
 			var $conf = $('<div>')
-				.addClass('n2debug_configuration')
+				.addClass('n2debug_configuration mdc-card')
 				.appendTo($outer);
 			var $header = $('<div>')
 				.addClass('n2debug_header')
 				.appendTo($conf);
 			$('<span>')
 				.text( _loc('Debug Configuration') )
+				.addClass('mdc-typography--headline6')
 				.appendTo($header);
 			$('<div>')
 				.addClass('n2debug_configuration_content')
 				.appendTo($conf);
-			
-			this._refresh();
-		},
 
-		_getDiv: function(){
-			return $('#'+this.divId);
-		},
-		
-		_refresh: function(){
-			var _this = this;
+			var $buttonsContainer = $('<div>')
+				.addClass('mdc-card__actions')
+				.appendTo($conf);
 
-			var $outer = this._getDiv();
-
-			var $confContent = $outer.find('.n2debug_configuration_content');
-			$confContent.empty();
-
-			// Bad Proxy
-			var $div = $('<div>')
-				.addClass('n2debug_configuration_content_badProxy')
-				.appendTo($confContent);
-			var badProxyId = $n2.getUniqueId();
-			$('<label>')
-				.attr('for',badProxyId)
-				.text( _loc('Bad Proxy Circumvention') )
-				.appendTo($div);
-			var $cb = $('<input>')
-				.attr('type','checkbox')
-				.attr('name',badProxyId)
-				.appendTo($div)
-				.change(function(){
-					var $cb = $(this);
-					if( $cb.attr('checked') ) {
-						_this.debugConfiguration.setBadProxyEnabled(true);
-					} else {
-						_this.debugConfiguration.setBadProxyEnabled(false);
-					};
-					_this._refresh();
-				});
-			if( this.debugConfiguration.isBadProxyEnabled() ){
-				$cb.attr('checked','checked');
-			};
-
-			// Logging
-			var $div = $('<div>')
-				.addClass('n2debug_configuration_content_logging')
-				.appendTo($confContent);
-			var loggingId = $n2.getUniqueId();
-			$('<label>')
-				.attr('for',loggingId)
-				.text( _loc('Dispatcher Event Logging') )
-				.appendTo($div);
-			var $cb = $('<input>')
-				.attr('type','checkbox')
-				.attr('name',loggingId)
-				.appendTo($div)
-				.change(function(){
-					var $cb = $(this);
-					if( $cb.attr('checked') ) {
-						_this.debugConfiguration.setEventLoggingEnabled(true);
-					} else {
-						_this.debugConfiguration.setEventLoggingEnabled(false);
-					};
-					_this._refresh();
-				});
-			if( this.debugConfiguration.isEventLoggingEnabled() ){
-				$cb.attr('checked','checked');
-			};
-
-			// CouchDb Caching
-			var $div = $('<div>')
-				.addClass('n2debug_configuration_content_couchDbCaching')
-				.appendTo($confContent);
-			var couchDbCachingId = $n2.getUniqueId();
-			$('<label>')
-				.attr('for',couchDbCachingId)
-				.text( _loc('CouchDb Caching') )
-				.appendTo($div);
-			var $cb = $('<input>')
-				.attr('type','checkbox')
-				.attr('name',couchDbCachingId)
-				.appendTo($div)
-				.change(function(){
-					var $cb = $(this);
-					if( $cb.attr('checked') ) {
-						_this.debugConfiguration.setCouchDbCachingEnabled(true);
-					} else {
-						_this.debugConfiguration.setCouchDbCachingEnabled(false);
-					};
-					_this._refresh();
-				});
-			if( this.debugConfiguration.isCouchDbCachingEnabled() ){
-				$cb.attr('checked','checked');
-			};
-			var $cb = $('<button>')
+			$('<button>')
+				.addClass('mdc-button')
 				.text( _loc('Clear Cache') )
-				.appendTo($div)
+				.appendTo($buttonsContainer)
 				.click(function(){
 					$n2.indexedDb.openIndexedDb({
 						onSuccess: function(indexedDbConnection){
@@ -157,20 +71,184 @@
 						}
 					});
 				});
+			
+			this._refresh();
+
+			// Attach MDC Components
+			$n2.mdc.attachMDCComponents();
+		},
+
+		_getDiv: function(){
+			return $('#'+this.divId);
+		},
+		
+		_refresh: function(){
+			var _this = this;
+
+			var $outer = this._getDiv();
+
+			var $confContent = $outer.find('.n2debug_configuration_content');
+			$confContent.empty();
+
+			var $debugList = $('<ul>')
+				.addClass('mdc-list')
+				.attr('aria-orientation','vertical')
+				.appendTo($confContent);
+
+			// Bad Proxy
+			var badProxyId = $n2.getUniqueId();
+
+			var $badProxyListItem = $('<li>')
+				.addClass('mdc-list-item')
+				.appendTo($debugList);
+
+			var $badProxyCheckboxDiv = $('<div>')
+				.addClass('n2debug_configuration_content_badProxy mdc-checkbox')
+				.appendTo($badProxyListItem);
+
+			var $badProxyCB = $('<input>')
+				.addClass('mdc-checkbox__native-control')
+				.attr('type','checkbox')
+				.attr('id',badProxyId)
+				.appendTo($badProxyCheckboxDiv)
+				.change(function(){
+					var $cb = $(this);
+					if( $cb.attr('checked') ) {
+						_this.debugConfiguration.setBadProxyEnabled(true);
+					} else {
+						_this.debugConfiguration.setBadProxyEnabled(false);
+					};
+					_this._refresh();
+				});
+
+			var $badProxyCheckboxBackground = $('<div>')
+				.addClass('mdc-checkbox__background')
+				.appendTo($badProxyCheckboxDiv);
+
+			$('<svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24"><path fill="none" stroke="white" class="mdc-checkbox__checkmark-path" d="M1.73,12.91 8.1,19.28 22.79,4.59" /></svg>')
+				.appendTo($badProxyCheckboxBackground);
+
+			$('<div>')
+				.addClass('mdc-checkbox__mixedmark')
+				.appendTo($badProxyCheckboxBackground);
+
+			$('<label>')
+				.attr('for',badProxyId)
+				.text( _loc('Bad Proxy Circumvention') )
+				.appendTo($badProxyListItem);
+
+			if( this.debugConfiguration.isBadProxyEnabled() ){
+				$badProxyCB.attr('checked','checked');
+			};
+
+			// Logging
+			var loggingId = $n2.getUniqueId();
+
+			var $loggingListItem = $('<li>')
+				.addClass('mdc-list-item')
+				.appendTo($debugList);
+
+			var $loggingCheckboxDiv = $('<div>')
+				.addClass('n2debug_configuration_content_logging mdc-checkbox')
+				.appendTo($loggingListItem);
+
+			var $loggingCB = $('<input>')
+				.addClass('mdc-checkbox__native-control')
+				.attr('type','checkbox')
+				.attr('id',loggingId)
+				.appendTo($loggingCheckboxDiv)
+				.change(function(){
+					var $cb = $(this);
+					if( $cb.attr('checked') ) {
+						_this.debugConfiguration.setEventLoggingEnabled(true);
+					} else {
+						_this.debugConfiguration.setEventLoggingEnabled(false);
+					};
+					_this._refresh();
+				});
+
+			var $loggingCheckboxBackground = $('<div>')
+				.addClass('mdc-checkbox__background')
+				.appendTo($loggingCheckboxDiv);
+
+			$('<svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24"><path fill="none" stroke="white" class="mdc-checkbox__checkmark-path" d="M1.73,12.91 8.1,19.28 22.79,4.59" /></svg>')
+				.appendTo($loggingCheckboxBackground);
+
+			$('<div>')
+				.addClass('mdc-checkbox__mixedmark')
+				.appendTo($loggingCheckboxBackground);
+
+			$('<label>')
+				.attr('for',loggingId)
+				.text( _loc('Dispatcher Event Logging') )
+				.appendTo($loggingListItem);
+
+			if( this.debugConfiguration.isEventLoggingEnabled() ){
+				$loggingCB.attr('checked','checked');
+			};
+
+			// CouchDb Caching
+			var couchDbCachingId = $n2.getUniqueId();
+
+			var $couchDbCachingListItem = $('<li>')
+				.addClass('mdc-list-item')
+				.appendTo($debugList);
+
+			var $couchDbCachingCheckboxDiv = $('<div>')
+				.addClass('n2debug_configuration_content_couchDbCaching mdc-checkbox')
+				.appendTo($couchDbCachingListItem);
+
+			var $couchDbCachingCB = $('<input>')
+				.addClass('mdc-checkbox__native-control')
+				.attr('type','checkbox')
+				.attr('id',couchDbCachingId)
+				.appendTo($couchDbCachingCheckboxDiv)
+				.change(function(){
+					var $cb = $(this);
+					if( $cb.attr('checked') ) {
+						_this.debugConfiguration.setCouchDbCachingEnabled(true);
+					} else {
+						_this.debugConfiguration.setCouchDbCachingEnabled(false);
+					};
+					_this._refresh();
+				});
+
+			var $couchDbCachingCheckboxBackground = $('<div>')
+				.addClass('mdc-checkbox__background')
+				.appendTo($couchDbCachingCheckboxDiv);
+
+			$('<svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24"><path fill="none" stroke="white" class="mdc-checkbox__checkmark-path" d="M1.73,12.91 8.1,19.28 22.79,4.59" /></svg>')
+				.appendTo($couchDbCachingCheckboxBackground);
+
+			$('<div>')
+				.addClass('mdc-checkbox__mixedmark')
+				.appendTo($couchDbCachingCheckboxBackground);
+
+			$('<label>')
+				.attr('for',couchDbCachingId)
+				.text( _loc('CouchDb Caching') )
+				.appendTo($couchDbCachingListItem);
+
+			if( this.debugConfiguration.isCouchDbCachingEnabled() ){
+				$couchDbCachingCB.attr('checked','checked');
+			};
 
 			// Disable CouchDb Caching
-			var $div = $('<div>')
-				.addClass('n2debug_configuration_content_disableCouchDbCaching')
-				.appendTo($confContent);
 			var disableCouchDbCachingId = $n2.getUniqueId();
-			$('<label>')
-				.attr('for',disableCouchDbCachingId)
-				.text( _loc('Disable CouchDb Caching') )
-				.appendTo($div);
-			var $cb = $('<input>')
+
+			var $disableCouchDbCachingListItem = $('<li>')
+				.addClass('mdc-list-item')
+				.appendTo($debugList);
+
+			var $disableCouchDbCachingCheckboxDiv = $('<div>')
+				.addClass('n2debug_configuration_content_disableCouchDbCaching mdc-checkbox')
+				.appendTo($disableCouchDbCachingListItem);
+
+			var $disableCouchDbCachingCB = $('<input>')
+				.addClass('mdc-checkbox__native-control')
 				.attr('type','checkbox')
-				.attr('name',disableCouchDbCachingId)
-				.appendTo($div)
+				.attr('id',disableCouchDbCachingId)
+				.appendTo($disableCouchDbCachingCheckboxDiv)
 				.change(function(){
 					var $cb = $(this);
 					if( $cb.attr('checked') ) {
@@ -180,23 +258,43 @@
 					};
 					_this._refresh();
 				});
+
+			var $disableCouchDbCachingCheckboxBackground = $('<div>')
+				.addClass('mdc-checkbox__background')
+				.appendTo($disableCouchDbCachingCheckboxDiv);
+
+			$('<svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24"><path fill="none" stroke="white" class="mdc-checkbox__checkmark-path" d="M1.73,12.91 8.1,19.28 22.79,4.59" /></svg>')
+				.appendTo($disableCouchDbCachingCheckboxBackground);
+
+			$('<div>')
+				.addClass('mdc-checkbox__mixedmark')
+				.appendTo($disableCouchDbCachingCheckboxBackground);
+
+			$('<label>')
+				.attr('for',disableCouchDbCachingId)
+				.text( _loc('Disable CouchDb Caching') )
+				.appendTo($disableCouchDbCachingListItem);
+
 			if( this.debugConfiguration.isCouchDbCachingDisabled() ){
-				$cb.attr('checked','checked');
+				$disableCouchDbCachingCB.attr('checked','checked');
 			};
 
 			// Force slow connection handling
-			var $div = $('<div>')
-				.addClass('n2debug_configuration_content_slowConnectionHandling')
-				.appendTo($confContent);
 			var slowConnectionHandlingId = $n2.getUniqueId();
-			$('<label>')
-				.attr('for',slowConnectionHandlingId)
-				.text( _loc('Force slow connection handling') )
-				.appendTo($div);
-			var $cb = $('<input>')
+
+			var $slowConnectionListItem = $('<li>')
+				.addClass('mdc-list-item')
+				.appendTo($debugList);
+
+			var $slowConnectionCheckboxDiv = $('<div>')
+				.addClass('n2debug_configuration_content_slowConnectionHandling mdc-checkbox')
+				.appendTo($slowConnectionListItem);
+
+			var $slowConnectionCB = $('<input>')
+				.addClass('mdc-checkbox__native-control')
 				.attr('type','checkbox')
-				.attr('name',slowConnectionHandlingId)
-				.appendTo($div)
+				.attr('id',slowConnectionHandlingId)
+				.appendTo($slowConnectionCheckboxDiv)
 				.change(function(){
 					var $cb = $(this);
 					if( $cb.attr('checked') ) {
@@ -206,8 +304,25 @@
 					};
 					_this._refresh();
 				});
+
+			var $slowConnectionCheckboxBackground = $('<div>')
+				.addClass('mdc-checkbox__background')
+				.appendTo($slowConnectionCheckboxDiv);
+
+			$('<svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24"><path fill="none" stroke="white" class="mdc-checkbox__checkmark-path" d="M1.73,12.91 8.1,19.28 22.79,4.59" /></svg>')
+				.appendTo($slowConnectionCheckboxBackground);
+
+			$('<div>')
+				.addClass('mdc-checkbox__mixedmark')
+				.appendTo($slowConnectionCheckboxBackground);
+
+			$('<label>')
+				.attr('for',slowConnectionHandlingId)
+				.text( _loc('Force slow connection handling') )
+				.appendTo($slowConnectionListItem);
+
 			if( this.debugConfiguration.forceSlowConnectionHandling() ){
-				$cb.attr('checked','checked');
+				$slowConnectionCB.attr('checked','checked');
 			};
 		}
 	});
