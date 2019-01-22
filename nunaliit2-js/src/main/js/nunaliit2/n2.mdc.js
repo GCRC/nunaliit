@@ -99,7 +99,7 @@ var attachMDCComponents = function(){
 		}
 	}
 
-	// attach checkboxes
+	// attach lists
 	var lists = document.getElementsByClassName('mdc-list');
 	for(i = 0, e = lists.length; i < e; i++){
 		try {
