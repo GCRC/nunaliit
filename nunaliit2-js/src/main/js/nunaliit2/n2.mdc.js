@@ -129,10 +129,31 @@ var attachMDCComponents = function(){
 		}
 	}
 };
-	
-//===========================================================================
+
+// ===========================================================================
+// MDC handlebar templates for various web components
+
+
+// MDC Component: Textarea field
+// Required Handlebar Expressions:
+//  * {{id}} = textarea id
+//  * {{label}} = floating label used by the textarea field
+var mdcTextareaTemplate = '\
+	<div class="mdc-text-field mdc-text-field--textarea">\
+		<textarea id="{{id}}" class="mdc-text-field__input" rows="8" cols="40"></textarea>\
+		<div class="mdc-notched-outline">\
+			<div class="mdc-notched-outline__leading"></div>\
+			<div class="mdc-notched-outline__notch">\
+				<label for="{{id}}" class="mdc-floating-label">{{label}}</label></div>\
+				<div class="mdc-notched-outline__trailing"></div>\
+			</div>\
+	</div>';
+
+// ===========================================================================
+
 $n2.mdc = {
-	attachMDCComponents: attachMDCComponents
+	attachMDCComponents: attachMDCComponents,
+	mdcTextareaTemplate: mdcTextareaTemplate
 };
 
 })(jQuery,nunaliit2);
