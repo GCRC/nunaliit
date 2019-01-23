@@ -1268,31 +1268,38 @@ public class SchemaAttribute {
 				if( null != id ){
 					pw.println("{{#"+schemaStructure+"}}");
 
-					pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
+					pw.println("\t<div class=\"mdc-list-group "+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-					pw.println("\t\t<div class=\"value\">");
+					pw.println("\t\t<h3 class=\"label mdc-list-group__subheader"+labelLocalizeClass+"\">"+label+"</h3>");
+					pw.println("\t\t<ul class=\"mdc-list value\" role=\"group\" aria-orientation=\"vertical\">");
 					
 					for(CheckboxGroupItem item : checkboxes){
 						String itemId = item.getId();
 						String itemLabel = item.getLabel();
 						String forId = id+"_"+itemId;
 						
-						pw.println("\t\t\t\t<div>");
-						pw.print("\t\t\t\t\t<input type=\"checkbox\" class=\"{{#:input}}"+itemId+"{{/:input}}\" id=\""+forId+"\"/>");
+						pw.println("\t\t\t<li class=\"mdc-list-item\">");
+						pw.println("\t\t\t\t<div class=\"mdc-checkbox\">");
+						pw.println("\t\t\t\t\t<input type=\"checkbox\" class=\"mdc-checkbox__native-control {{#:input}}"+itemId+"{{/:input}}\" id=\""+forId+"\" />");
+						pw.println("\t\t\t\t\t<div class=\"mdc-checkbox__background\">");
+						pw.println("\t\t\t\t\t\t<svg class=\"mdc-checkbox__checkmark\" viewBox=\"0 0 24 24\">");
+						pw.println("\t\t\t\t\t\t\t<path fill=\"none\" stroke=\"white\" class=\"mdc-checkbox__checkmark-path\" d=\"M1.73,12.91 8.1,19.28 22.79,4.59\" />");
+						pw.println("\t\t\t\t\t\t</svg>");
+						pw.println("\t\t\t\t\t\t<div class=\"mdc-checkbox__mixedmark\"></div>");
+						pw.println("\t\t\t\t\t</div>");
+						pw.println("\t\t\t\t</div>");
+
 						if( null == itemLabel ) {
 							pw.println(" <label for=\""+forId+"\">"+itemId+"</label>");
 						} else {
 							pw.println(" <label for=\""+forId+"\" class=\"n2s_localize\">"+itemLabel+"</label>");
 						}
-						pw.println("\t\t\t\t</div>");
+
+						pw.println("\t\t\t</li>");
 					}
 
-					pw.println("\t\t</div>");
-					pw.println("\t\t<div class=\"end\"></div>");
-					
+					pw.println("\t\t</ul>");
 					pw.println("\t</div>");
-					
 					
 					pw.println("{{/"+schemaStructure+"}}");
 				}
