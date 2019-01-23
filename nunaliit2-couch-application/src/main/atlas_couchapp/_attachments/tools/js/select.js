@@ -2289,7 +2289,7 @@
 	function getListsDiv(){
 		var $e = $selectAppDiv.find('.selectAppLists');
 		if( $e.length < 1 ) {
-			$e = $('<div class="selectAppLists"></div>');
+			$e = $('<div class="selectAppLists mdc-card"></div>');
 			$selectAppDiv.append($e);
 		};
 		return $e;
@@ -2299,14 +2299,20 @@
 	function refreshAllLists(){
 		var $lists = getListsDiv();
 		$lists.empty();
-		
-		var $h = $('<h1>')
+
+		var $buttonsLine = $('<div>')
+			.addClass('title')
 			.appendTo($lists);
+
 		$('<span>')
-			.text( _loc('Queries') )
-			.appendTo($h);
+			.addClass('mdc-typography--headline6')
+			.text(_loc('Queries '))
+			.appendTo($buttonsLine);
+
 		$('<button>')
+			.addClass('mdc-button')
 			.text( _loc('Add') )
+			.appendTo($buttonsLine)
 			.click(function(){
 				SearchFilter.createNewList({
 					onSuccess: function(list){
@@ -2314,8 +2320,7 @@
 					}
 				});
 				return false;
-			})
-			.appendTo($h);
+			});
 		
 		for(var i=0,e=allLists.length; i<e; ++i){
 			var list = allLists[i];
@@ -2331,27 +2336,28 @@
 			};
 			
 			$('<span>')
+				.addClass('mdc-typography--subtitle1')
 				.text( list.print() )
 				.appendTo($d);
 			
-			$('<a>')
-				.addClass('selectApp_list_button')
+			$('<button>')
+				.addClass('selectApp_list_button mdc-button')
 				.attr('href','#')
 				.attr('n2-list-id', listId)
 				.text( _loc('View') )
 				.click(onListClick)
 				.appendTo($d);
 			
-			$('<a>')
-				.addClass('selectApp_list_button')
+			$('<button>')
+				.addClass('selectApp_list_button mdc-button')
 				.attr('href','#')
 				.attr('n2-list-id', listId)
 				.text( _loc('Text') )
 				.click(onTextClick)
 				.appendTo($d);
 
-			$('<a>')
-				.addClass('selectApp_list_button')
+			$('<button>')
+				.addClass('selectApp_list_button mdc-button')
 				.attr('href','#')
 				.attr('n2-list-id', listId)
 				.text( _loc('Remove') )
@@ -2435,7 +2441,7 @@
 	function getListViewDiv(){
 		var $e = $selectAppDiv.find('.selectAppListView');
 		if( $e.length < 1 ) {
-			$e = $('<div class="selectAppListView"></div>');
+			$e = $('<div class="selectAppListView mdc-card"></div>');
 			$selectAppDiv.append($e);
 		};
 		return $e;
@@ -2446,9 +2452,15 @@
 		var $div = getListViewDiv();
 		
 		clearDocument();
-		
-		$div.html('<h1></h1><div class="selectAppMinHeight"></div>');
-		$div.find('h1').text( _loc('No list Selected') );
+
+		var $headerLine = $('<div>')
+			.addClass('title')
+			.appendTo($div);
+
+		$('<span>')
+			.addClass('mdc-typography--headline6 selectAppMinHeight')
+			.text(_loc('No list Selected '))
+			.appendTo($headerLine);
 	};
 	
 	// -----------------------------------------------------------------
@@ -2459,29 +2471,37 @@
 		
 		$div.empty();
 
-		var $h = $('<h1></h1>');
-		$div.append($h);
-		$h.text(list.name);
-		
+		var $headerLine = $('<div>')
+			.addClass('title')
+			.appendTo($div);
+
+		$('<span>')
+			.addClass('mdc-typography--headline6 selectAppMinHeight')
+			.text(_loc(list.name + ' '))
+			.appendTo($headerLine);
+
 		$('<button>')
+			.addClass('mdc-button')
 			.text( _loc('Transform') )
-			.appendTo($h)
+			.appendTo($headerLine)
 			.click(function(){
 				transformList(list);
 				return false;
 			});
 		
 		$('<button>')
+			.addClass('mdc-button')
 			.text( _loc('Delete') )
-			.appendTo($h)
+			.appendTo($headerLine)
 			.click(function(){
 				deleteDocumentsFromList(list);
 				return false;
 			});
 		
 		$('<button>')
+			.addClass('mdc-button')
 			.text( _loc('Refine List') )
-			.appendTo($h)
+			.appendTo($headerLine)
 			.click(function(){
 				SearchFilter.refineList({
 					list: list
@@ -2493,24 +2513,27 @@
 			});
 		
 		$('<button>')
+			.addClass('mdc-button')
 			.text( _loc('Report') )
-			.appendTo($h)
+			.appendTo($headerLine)
 			.click(function(){
 				reportList(list);
 				return false;
 			});
 		
 		$('<button>')
+			.addClass('mdc-button')
 			.text( _loc('Export') )
-			.appendTo($h)
+			.appendTo($headerLine)
 			.click(function(){
 				exportList(list);
 				return false;
 			});
 		
 		$('<button>')
+			.addClass('mdc-button')
 			.text( _loc('Export by Script') )
-			.appendTo($h)
+			.appendTo($headerLine)
 			.click(function(){
 				exportListByScript(list);
 				return false;
@@ -2537,6 +2560,9 @@
 				$a.text(docId);
 			};
 			installViewDoc($a, docId);
+
+			// Attach Material Design Components
+			$n2.mdc.attachMDCComponents();
 		};
 		
 		function installViewDoc($a, docId){
@@ -3270,20 +3296,8 @@
 	function getDocumentDiv(){
 		var $e = $selectAppDiv.find('.selectAppDocument');
 		if( $e.length < 1 ) {
-			$e = $('<div class="selectAppDocument"></div>');
+			$e = $('<div class="selectAppDocument mdc-card"></div>');
 			$selectAppDiv.append($e);
-		};
-		return $e;
-	};
-
-	// -----------------------------------------------------------------
-	function getDocumentRevisionsDiv(){
-		var $e = $selectAppDiv.find('.selectAppRevisions');
-		if( $e.length < 1 ) {
-			var $docDiv = getDocumentDiv();
-			$e = $('<div>')
-				.addClass('selectAppRevisions')
-				.insertAfter($docDiv);
 		};
 		return $e;
 	};
@@ -3292,20 +3306,38 @@
 	function clearDocument(){
 		var $div = getDocumentDiv();
 		
-		$div.html('<h1></h1><div class="selectAppMinHeight"></div>');
-		$div.find('h1').text( _loc('No Document') );
+		$div.empty();
 
-		var $revs = getDocumentRevisionsDiv();
-		$revs.empty();
+		var $headerLine = $('<div>')
+			.addClass('title')
+			.appendTo($div);
+
+		$('<span>')
+			.addClass('mdc-typography--headline6 selectAppMinHeight')
+			.text(_loc('No Document '))
+			.appendTo($headerLine);
 	};
 	
 	// -----------------------------------------------------------------
 	function viewDocument(docId){
 		var $div = getDocumentDiv();
-		var $revs = getDocumentRevisionsDiv();
+
+		$div.empty();
 		
-		$div.html('<h1>'+docId+'</h1><div class="olkit_wait"></div>');
-		$revs.empty();
+		var $headerLine = $('<div>')
+			.addClass('title')
+			.appendTo($div);
+
+		$('<span>')
+			.addClass('mdc-typography--headline6 selectAppMinHeight')
+			.text(_loc(docId + ' '))
+			.appendTo($headerLine);
+
+		$('<div>')
+			.addClass('olkit_wait')
+			.appendTo($headerLine);
+
+		//$revs.empty();
 		
 		atlasDb.getDocument({
 			docId: docId
@@ -3318,76 +3350,142 @@
 				var revsInfo = doc._revs_info;
 				delete doc._revs_info;
 				
-				var $h = $('<h1></h1>');
-				$div.append($h);
+				var $headerLine = $('<div>')
+					.addClass('title')
+					.appendTo($div);
+
+				var $h = $('<span>')
+					.addClass('mdc-typography--headline6 selectAppMinHeight')
+					.appendTo($headerLine);
+
 				if( showService ){
 					showService.printBriefDescription($h,docId);
 				} else {
 					$h.text(docId);
 				};
 
-				var $tree = $('<div></div>');
-				$div.append($tree);
+				var $grid = $('<div>')
+					.addClass('mdc-layout-grid mdc-layout-grid--align-left')
+					.appendTo($div);
 				
+				var $innerGrid = $('<div>')
+					.addClass('mdc-layout-grid__inner')
+					.appendTo($grid);				
+
+				var $treeContainer = $('<div>')
+					.addClass('tree_container mdc-layout-grid__cell')
+					.appendTo($innerGrid);
+				
+				$('<span>')
+					.text('Selected Document')
+					.addClass('mdc-typography--subtitle1')
+					.appendTo($treeContainer);
+				
+				var $tree = $('<div>')
+					.addClass('selected_tree_container')
+					.appendTo($treeContainer);
+
+				var $revs = $('<div>')
+					.addClass('selectAppRevisions mdc-layout-grid__cell')
+					.appendTo($innerGrid);
+
 				new $n2.tree.ObjectTree($tree, doc);
 
-				var $buttons = $('<div></div>');
-				$div.append($buttons);
+				var $buttons = $('<div>')
+					.addClass('mdc-card__actions')
+					.appendTo($div);
 				
-				var $edit = $('<button></button>');
-				$edit.text( _loc('Edit') );
-				$buttons.append($edit);
-				$edit.click(function(){
-					editDocument(doc);
-					return false;
-				});
+				$('<button>')
+					.addClass('mdc-button')
+					.text( _loc('Edit') )
+					.appendTo($buttons)
+					.click(function(){
+						editDocument(doc);
+						return false;
+					});
 				
 				if( revsInfo ){
-					loadRevs(revsInfo);
+					$revs.empty();
+
+					$('<span>')
+						.text('Revision Document')
+						.addClass('mdc-typography--subtitle1')
+						.appendTo($revs);
+
+					$('<div>')
+						.addClass('selectAppRevisionSelector')
+						.appendTo($revs);
+				
+					$('<div>')
+						.addClass('selectAppRevisionDisplay')
+						.appendTo($revs);
+
+					var $selectorContainer = $('<div>')
+						.addClass('mdc-select mdc-select--outlined')
+						.appendTo($buttons);
+
+					$('<i>')
+						.addClass('mdc-select__dropdown-icon')
+						.appendTo($selectorContainer);
+
+					var $selector = $('<select>')
+						.addClass('mdc-select__native-control')
+						.change(function(){
+							revisionSelected(this, $revs);
+						})
+						.appendTo($selectorContainer);
+
+					$('<option>')
+						.val('')
+						.appendTo($selector);
+					
+					if( $n2.isArray(revsInfo) ){
+						revsInfo.forEach(function(revInfo){
+							if( typeof revInfo.rev === 'string' ){
+								$('<option>')
+									.text(revInfo.rev)
+									.val(revInfo.rev)
+									.appendTo($selector);
+							};
+						});
+					};
+
+					var $selectorOutline = $('<div>')
+						.addClass('mdc-notched-outline')
+						.appendTo($selectorContainer);
+
+					$('<div>')
+						.addClass('mdc-notched-outline__leading')
+						.appendTo($selectorOutline);
+
+					var $selectorOutlineNotch = $('<div>')
+						.addClass('mdc-notched-outline__notch')
+						.appendTo($selectorOutline);
+
+					$('<label>')
+						.addClass('mdc-floating-label')
+						.text( _loc('Select Revision') )
+						.appendTo($selectorOutlineNotch);
+
+					$('<div>')
+						.addClass('mdc-notched-outline__trailing')
+						.appendTo($selectorOutline);					
 				};
+
+				// Attach Material Design Components
+				$n2.mdc.attachMDCComponents();
 			}
 			,onError: function(err){
 				reportError(err);
 			}
 		});
 		
-		function loadRevs(revsInfo){
-			$revs.empty();
-			
-			var $selectorDiv = $('<div>')
-				.addClass('selectAppRevisionSelector')
-				.appendTo($revs);
-			var $selector = $('<select>')
-				.change(revisionSelected)
-				.appendTo($selectorDiv);
-			var $o = $('<option>')
-				.text('Select Revision')
-				.val('')
-				.appendTo($selector);
-			
-			if( $n2.isArray(revsInfo) ){
-				revsInfo.forEach(function(revInfo){
-					if( typeof revInfo.rev === 'string' ){
-						$('<option>')
-							.text(revInfo.rev)
-							.val(revInfo.rev)
-							.appendTo($selector);
-					};
-				});
-			};
-			
-			var $displayDiv = $('<div>')
-				.addClass('selectAppRevisionDisplay')
-				.appendTo($revs);
-		};
-		
-		function revisionSelected() {
-			var $selector = $(this);
+		function revisionSelected($selector, $revs) {
 			
 			var $displayDiv = $revs.find('.selectAppRevisionDisplay');
 			$displayDiv.empty();
 			
-			var revSelected = $selector.val();
+			var revSelected = $($selector).val();
 			$displayDiv.text(revSelected);
 
 			if( revSelected ){
@@ -3418,9 +3516,15 @@
 		var $div = getDocumentDiv();
 		
 		$div.empty();
-		
-		var $h = $('<h1></h1>');
-		$div.append($h);
+
+		var $headerLine = $('<div>')
+			.addClass('title')
+			.appendTo($div);
+
+		var $h = $('<span>')
+			.addClass('mdc-typography--headline6 selectAppMinHeight')
+			.appendTo($headerLine);
+
 		if( showService ){
 			showService.displayBriefDescription($h,null,editDoc);
 		} else {
@@ -3443,18 +3547,26 @@
 	function getLogsDiv(){
 		var $e = $selectAppDiv.find('.selectAppLogs');
 		if( $e.length < 1 ) {
-			$e = $('<div class="selectAppLogs"></div>');
+			$e = $('<div class="selectAppLogs mdc-card"></div>');
 			$selectAppDiv.append($e);
 			addHeader($e);
 		};
 		return $e;
 		
 		function addHeader($e){
-			var $h = $('<h1><span></span> <button></button></h1>');
-			$e.append($h);
-			$h.find('span').text( _loc('Logs') );
-			$h.find('button')
+			var $buttonsLine = $('<div>')
+				.addClass('title')
+				.appendTo($e);
+
+			$('<span>')
+				.addClass('mdc-typography--headline6')
+				.text(_loc('Logs '))
+				.appendTo($buttonsLine);
+
+			$('<button>')
+				.addClass('mdc-button')
 				.text( _loc('Clear') )
+				.appendTo($buttonsLine)
 				.click(function(){
 					var $d = getLogsDiv();
 					$d.empty();
@@ -3484,45 +3596,45 @@
 	
 	// -----------------------------------------------------------------
 	function bs(){
-		var $b = $('<button></button>');
-		$b.text( _loc('Test Temporary View') );
-		$selectAppDiv.append($b);
-		
-		$b.click(function(){
-			atlasDb.queryTemporaryView({
-				map: 'function(doc){ emit(null,null); }'
-				,onSuccess: function(rows){
-					var docIds = [];
-					for(var i=0,e=rows.length; i<e; ++i){
-						docIds.push( rows[i].id );
-					};
-					
-					var l = new DocumentList({
-						docIds: docIds
-						,name: _loc('Temporary View')
-					});
-					addList(l);
-				}
+		$('<button>')
+			.addClass('mdc-button')
+			.text( _loc('Test Temporary View') )
+			.appendTo($selectAppDiv)
+			.click(function(){
+				atlasDb.queryTemporaryView({
+					map: 'function(doc){ emit(null,null); }'
+					,onSuccess: function(rows){
+						var docIds = [];
+						for(var i=0,e=rows.length; i<e; ++i){
+							docIds.push( rows[i].id );
+						};
+						
+						var l = new DocumentList({
+							docIds: docIds
+							,name: _loc('Temporary View')
+						});
+						addList(l);
+					}
+				});
+				return false;
 			});
-			return false;
-		});
 
-		var $b = $('<button></button>');
-		$b.text( _loc('All Documents') );
-		$selectAppDiv.append($b);
-		
-		$b.click(function(){
-			atlasDb.listAllDocuments({
-				onSuccess: function(docIds){
-					var l = new DocumentList({
-						docIds: docIds
-						,name: _loc('All Documents')
-					});
-					addList(l);
-				}
+		$('<button>')
+			.addClass('mdc-button')
+			.text( _loc('All Documents') )
+			.appendTo($selectAppDiv)
+			.click(function(){
+				atlasDb.listAllDocuments({
+					onSuccess: function(docIds){
+						var l = new DocumentList({
+							docIds: docIds
+							,name: _loc('All Documents')
+						});
+						addList(l);
+					}
+				});
+				return false;
 			});
-			return false;
-		});
 	};
 	
 	// -----------------------------------------------------------------
@@ -3570,9 +3682,9 @@
 		
 		$selectAppDiv
 			.empty()
-			.append( $('<div class="selectAppLists"><div>') )
-			.append( $('<div class="selectAppListView"><div>') )
-			.append( $('<div class="selectAppDocument"><div>') )
+			.append( $('<div class="selectAppLists mdc-card"><div>') )
+			.append( $('<div class="selectAppListView mdc-card"><div>') )
+			.append( $('<div class="selectAppDocument mdc-card"><div>') )
 			;
 		
 		refreshAllLists();
@@ -3583,6 +3695,9 @@
 		bs();
 
 		log( _loc('Select application started') );
+
+		// Attach Material Design Components
+		$n2.mdc.attachMDCComponents();
 	};
 
 	
