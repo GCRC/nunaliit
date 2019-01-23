@@ -144,16 +144,17 @@ var attachMDCComponents = function(){
 // var inputTextAreaField = Handlebars.compile($n2.mdc.mdcTextareaTemplate);
 // $div.append(inputTextAreaField(data));
 
-var mdcTextareaTemplate = '\
-	<div class="mdc-text-field mdc-text-field--textarea">\
-		<textarea id="{{id}}" class="mdc-text-field__input" rows="8" cols="40"></textarea>\
-		<div class="mdc-notched-outline">\
-			<div class="mdc-notched-outline__leading"></div>\
-			<div class="mdc-notched-outline__notch">\
-				<label for="{{id}}" class="mdc-floating-label">{{label}}</label></div>\
-				<div class="mdc-notched-outline__trailing"></div>\
-			</div>\
-	</div>';
+var mdcTextareaTemplate = 
+	'<div class="mdc-text-field mdc-text-field--textarea">'+
+		'<textarea id="{{id}}" class="mdc-text-field__input" rows="8" cols="40"></textarea>'+
+		'<div class="mdc-notched-outline">'+
+			'<div class="mdc-notched-outline__leading"></div>'+
+			'<div class="mdc-notched-outline__notch">'+
+				'<label for="{{id}}" class="mdc-floating-label">{{label}}</label>'+
+			'</div>'+
+			'<div class="mdc-notched-outline__trailing"></div>'+
+		'</div>'+
+	'</div>';
 
 // ===========================================================================
 
