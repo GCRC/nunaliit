@@ -176,6 +176,7 @@
 	background: url('openlayers/popup_bg.png') no-repeat top left;
 	padding: 11px 20px;
 	margin: 6px 0 0 5px;
+	border-radius: 2px;
 }
 div.olControlZoom {
 	top: 35px;
