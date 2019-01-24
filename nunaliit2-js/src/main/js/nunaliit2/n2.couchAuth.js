@@ -1563,9 +1563,11 @@ var AuthService = $n2.Class({
 	,createAuthWidget: function(opts_){
 		var dispatchService = null;
 		var customService = null;
+		var showService = null;
 		if( this.options.directory ){
 			dispatchService = this.options.directory.dispatchService;
 			customService = this.options.directory.customService;
+			showService = this.options.directory.showService;
 		};
 		
 		var widgetOptions = {
@@ -1797,6 +1799,8 @@ var AuthWidget = $n2.Class({
 	,labelLogout: null
 	
 	,labelWelcome: null
+
+	,loginMenu: null
 	
 	,initialize: function(options_){
 		var opts = $n2.extend({
@@ -1804,6 +1808,7 @@ var AuthWidget = $n2.Class({
 			,elem: null
 			,authService: null
 			,dispatchService: null
+			,showService: null
 			,labelLogin: null
 			,labelLogout: null
 			,labelWelcome: null
@@ -1816,6 +1821,7 @@ var AuthWidget = $n2.Class({
 		this.labelLogin = opts.labelLogin;
 		this.labelLogout = opts.labelLogout;
 		this.labelWelcome = opts.labelWelcome;
+		this.loginMenu = new $n2.couchAuth.AuthWidgetMenu(opts);
 		
 		this.elemId = opts.elemId;
 		if( !this.elemId && opts.elem ){
@@ -1831,6 +1837,8 @@ var AuthWidget = $n2.Class({
 			this.dispatchService.register(DH,'authCurrentUserDoc',f);
 			this.dispatchService.register(DH,'userInfo',f);
 			this.dispatchService.register(DH,'userDocument',f);
+			this.dispatchService.register(DH,'openUserMenu',f);
+			this.dispatchService.register(DH,'closeUserMenu',f);
 
 			// Initialize State
 			var m = {
@@ -1861,6 +1869,7 @@ var AuthWidget = $n2.Class({
 	
 	,_handleDispatch: function(m, addr, dispatcher){
 		// Check if widget still displayed
+		var _this = this;
 		var $elem = this._getElem();
 		if( $elem.length < 1 ){
 			// Deregister
@@ -1903,11 +1912,18 @@ var AuthWidget = $n2.Class({
 				this.currentUserDisplay = m.userDoc.display;
 				this._loginStateChanged();
 			};
+
+		} else if( 'openUserMenu' === m.type ){
+			_this.loginMenu.openUserMenu();
+
+		} else if( 'closeUserMenu' === m.type ){
+			_this.loginMenu.closeUserMenu();
 		};
 	}
 
 	,_loginStateChanged: function() {
 
+		var _this = this;
 		var $login = this._getElem();
 		if( $login.length < 1 ) return;
 		$login.empty();
@@ -1938,7 +1954,7 @@ var AuthWidget = $n2.Class({
 				};
 			} else {
 				href = 'javascript:Login';
-				displayName = this.labelWelcome ? this.labelWelcome : _loc('Welcome');
+				displayName = this.labelWelcome ? this.labelWelcome : '';
 				greetingClass = 'nunaliit_login_greeting_welcome';
 				buttonText = this.labelLogin ? this.labelLogin : _loc('Login');
 				clickFn = function(){
@@ -1946,30 +1962,255 @@ var AuthWidget = $n2.Class({
 					return false;
 				};
 			};
-			
-			var aElem = $('<a class="nunaliit_login_link"></a>')
-				.attr("href",href)
-				.text(buttonText);
-			var linkInnerContainer = $('<div class="nunaliit_login_link_inner_container"></div>')
-				.append(aElem);
-			var linkOuterContainer = $('<div class="nunaliit_login_link_outer_container"></div>')
-				.append(linkInnerContainer)
-				.click(clickFn);
 
-			var nameElem = $('<span></span>')
+			var nameElem = $('<div>')
+				.addClass('nunaliit_login_link')
 				.text(displayName);
+
+			var profileIcon = $('<div>')
+				.addClass('nunalitt_login_profile_icon');
+
 			var greetingInner = $('<div class="nunaliit_login_greeting_inner_container"></div>')
 				.append(nameElem);
+
 			var greetingOuter = $('<div class="nunaliit_login_greeting_outer_container"></div>')
 				.addClass(greetingClass)
 				.append(greetingInner);
-			if( greetingFn ){
-				greetingOuter
-					.addClass('nunaliit_login_greeting_with_editor')
-					.click(greetingFn);
+		
+
+			$login.empty().append(greetingOuter);
+
+			if( this.currentUserName ){
+				// Add user profile icon
+				greetingInner.append(profileIcon);
+
+				greetingInner.click(function(){
+					_this.dispatchService.synchronousCall(DH,{type: 'openUserMenu'});
+				});
+
+			} else {
+				nameElem.attr("href",href)
+					.text(buttonText);
+
+				nameElem.click(clickFn);
 			};
-			
-			$login.empty().append(greetingOuter).append(linkOuterContainer);
+		};
+	}
+});
+
+//===================================================================================
+
+var AuthWidgetMenu = $n2.Class({
+	menuContainer: null
+	,authLoginMenu: null
+	,authLoginMenuList: null
+	,dispatchService: null
+	,showService: null
+	,authService: null
+	,currentUserName: null
+	,currentUserDisplay: null
+
+	,initialize: function(opts_){
+		var opts = $n2.extend({
+			dispatchService: null
+			,authService: null
+
+		},opts_);
+
+		var _this = this;
+
+		if( $('body').hasClass('nunaliit_atlas') ){
+			this.menuContainer = $('.nunaliit_atlas');
+
+		} else if( $('body').hasClass('nunaliit_application') ){
+			this.menuContainer = $('.nunaliit_application');
+
+		} else {
+			$n2.log('Invalid container available for user menu');
+		};
+
+
+		this.dispatchService = opts.dispatchService;
+		this.showService = opts.showService;
+
+		if( this.dispatchService ){
+
+			var f = function(m, addr, d){
+				_this._handleDispatch(m, addr, d);
+			};
+			this.dispatchService.register(DH,'authLoggedIn',f);
+			this.dispatchService.register(DH,'authLoggedOut',f);
+			this.dispatchService.register(DH,'authCurrentUserDoc',f);
+			this.dispatchService.register(DH,'closeUserMenu',f);
+		};
+
+		if( opts.authService ){
+			this.authService = opts.authService;
+		};		
+
+		// Generate Menu
+		this._generateMenu();
+	}
+
+	,_handleDispatch: function(m){
+		var _this = this;
+
+		if( 'authLoggedIn' === m.type ){
+			var ctxt = m.user;
+			if( _this.currentUserName !== ctxt.name ){
+				_this.currentUserName = ctxt.name;
+				_this.currentUserDisplay = null;
+			};
+
+		} else if( 'authLoggedOut' === m.type ){
+			this.currentUserName = null;
+			this.currentUserDisplay = null;
+
+		} else if( 'authCurrentUserDoc' === m.type ){
+			var userDoc = m.userDoc;
+			if( userDoc ){
+				if( userDoc.display !== _this.currentUserDisplay ){
+					_this.currentUserDisplay = userDoc.display;
+				};
+			};
+
+		} else if( 'closeUserMenu' === m.type ){
+			_this.closeUserMenu();
+		};
+	}
+	,_addMenuMask: function(){
+		var _this = this;
+
+		if( $('.nunaliit_login_menu_mask').length > 0 ){
+			$('.nunaliit_login_menu_mask').remove();
+		};
+
+		$('<div>')
+			.addClass('nunaliit_login_menu_mask')
+			.appendTo(_this.menuContainer)
+			.click(function(){
+				// Close the user menu
+				_this.dispatchService.synchronousCall(DH,{type: 'closeUserMenu'});
+				// Remove the menu mask div
+				$('.nunaliit_login_menu_mask').remove();
+			});
+
+	}
+	,_generateMenu: function(){
+
+		// If login menu already exists, remove it before re-generating it
+		if( $('.nunaliit_login_menu').length > 0 ){
+			$('.nunaliit_login_menu').remove();
+		};
+
+		this.authLoginMenu = $('<div>')
+			.addClass('nunaliit_login_menu')
+			.appendTo(this.menuContainer);
+
+		var menuListContainer = $('<div>')
+			.addClass('nunaliit_login_menu_list_container')
+			.appendTo(this.authLoginMenu);
+
+		var menuUserProfileContainer = $('<div>')
+			.addClass('nunaliit_login_menu_profile_container')
+			.appendTo(this.authLoginMenu);
+
+		this.authLoginMenuList = $('<ul>')
+			.appendTo(menuListContainer);
+
+		this._addMenuProfile();
+		this._addMenuItems();
+	}
+
+	,_addMenuProfile: function(){
+		var _this = this;
+
+		// If login menu already exists, remove it before re-generating it
+		if( $('.nunaliit_login_menu_profile_container').length > 0 ){
+			$('.nunaliit_login_menu_profile_container').empty();
+		};
+
+		var profileImage = $('<div>')
+			.appendTo('.nunaliit_login_menu_profile_container')
+			.addClass('nunaliit_login_menu_profile_image');
+
+		var userName = $('<span>')
+			.addClass('n2s_insertUserName')
+			.addClass('nunaliit_login_menu_profile_username')
+			.attr('nunaliit-user',_this.currentUserName)
+			.appendTo('.nunaliit_login_menu_profile_container');
+
+		if( _this.showService ){
+			var $loginMenu = $('.nunaliit_login_menu');
+			_this.showService.fixElementAndChildren($loginMenu);
+		};
+	}
+
+	,_addMenuItems: function(){
+		var _this = this;
+
+		var _logoutFn = function(){
+			_this.authService.logout();
+			return false;
+		};
+
+		var _editUserFn = function(){
+			_this.authService.editUser({
+				userName: null // current user
+			});
+			return false;
+		};
+
+		var _closeMenu = function(){
+			_this.dispatchService.synchronousCall(DH,{type: 'closeUserMenu'});
+		};
+
+		// Add Edit Account Link
+		$('<li>')
+			.text(_loc('Edit Account'))
+			.click(_closeMenu)
+			.click(_editUserFn)
+			.appendTo(this.authLoginMenuList);
+
+		if( $('body').hasClass('nunaliit_user_advanced') || $('body').hasClass('nunaliit_user_administrator') ){
+
+			// Add Tools Page Link if admin or advance user
+			var toolsPageLink = $('<li></li>')
+				.appendTo(this.authLoginMenuList);
+
+			$('<a>')
+				.text(_loc('Tools'))
+				.attr('href','./tools/index.html')
+				.appendTo(toolsPageLink);
+		};
+
+		// Add Logout Link
+		var logoutLink = $('<li>')
+			.appendTo(this.authLoginMenuList);
+
+		$('<a>')
+			.text(_loc('Logout'))
+			.attr('href','javascript:Logout')
+			.click(_closeMenu)
+			.click(_logoutFn)
+			.appendTo(logoutLink);
+	}
+
+	,openUserMenu: function(){
+		// Retrieve login Information
+		var m = {
+			type: 'authCurrentUserDoc'
+		};
+		this.dispatchService.synchronousCall(DH,m);
+
+		this._addMenuMask();
+		this._generateMenu();
+		$(this.authLoginMenu).addClass('show_menu');
+	}
+
+	,closeUserMenu: function(){
+		if( $(this.authLoginMenu).hasClass('show_menu') ){
+			$(this.authLoginMenu).removeClass('show_menu');
 		};
 	}
 });
@@ -1979,7 +2220,7 @@ var AuthWidget = $n2.Class({
 $n2.couchAuth = {
 	AuthService: AuthService
 	,AuthWidget: AuthWidget
+	,AuthWidgetMenu: AuthWidgetMenu
 };
 
 })(jQuery,nunaliit2);
-
