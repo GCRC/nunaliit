@@ -157,12 +157,12 @@
 }
 #side_contrib p.contrib_entry_createTS {
 	font-family: Geneva, Helvetica, Arial, sans-serif; 
-	font-size:   70%;
+	font-size: 70%;
 	clear: left;
 	padding: 0px 0px 0px 10px;
 }
 #side_contrib div.contrib_entry_place_icon {
-	float:   right;
+	float: right;
 	display: block;
 	width: 26px;
 	height: 26px;

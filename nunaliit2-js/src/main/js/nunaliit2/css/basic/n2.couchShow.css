@@ -17,7 +17,7 @@ div.n2Show_icon_speaker {
 	width: 75px;
 	height: 75px;
 	margin: 10px auto;
-	cursor:pointer;
+	cursor: pointer;
 }
 div.n2Show_icon_audio {
 	background: transparent url(images/lrg_image_speaker.png) no-repeat 0 0; 

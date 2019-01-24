@@ -91,7 +91,7 @@ form.attachmentEditor_creationFormWithVideo {
 .attachmentEditor_uploadTabs button {
 	display: block;
 	color: black;
-	padding: 6px 6px;
+	padding: 6px;
 	width: 100%;
 	border: 1px solid #ddd;
 	outline: none;
