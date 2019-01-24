@@ -113,3 +113,10 @@
 .submission_view_dialog_merging .mdc-dialog__container .mdc-dialog__surface {
     max-width: 800px;
 }
+
+/* Nunaliit login button */
+.nunaliit_login .nunalitt_login_profile_icon.mdc-button__icon {
+    width: 35px;
+    height: 35px;
+    margin-left: 10px;
+}

@@ -267,19 +267,10 @@
 	margin: 0px;
 }
 
-.nunaliit_login_link {
-	padding-right: 10px;
-}
-
 .nunaliit_login_link,
 .nunalitt_login_profile_icon,
 .nunaliit_login_menu li {
 	cursor: pointer;
-}
-
-.nunaliit_login_link,
-.nunalitt_login_profile_icon {
-	display: inline-block;
 }
 
 .nunalitt_login_profile_icon {

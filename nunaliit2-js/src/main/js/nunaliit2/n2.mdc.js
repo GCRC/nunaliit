@@ -47,6 +47,16 @@ var attachMDCComponents = function(){
 		}
 	};
 
+	// attach ripple to floating action buttons
+	var mdc_fabs = document.getElementsByClassName('mdc-fab');
+	for(i = 0, e = mdc_buttons.length; i < e; i++){
+		try {
+			mdc.ripple.MDCRipple.attachTo(mdc_fabs[i]);
+		} catch(error){
+			$n2.log("Unable to attach material design component to floating action button ripple: " + error);
+		}
+	};
+
 	// attach textFields 
 	var text_fields = document.getElementsByClassName('mdc-text-field');
 	var i, e;

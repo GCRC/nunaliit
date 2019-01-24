@@ -1963,12 +1963,17 @@ var AuthWidget = $n2.Class({
 				};
 			};
 
-			var nameElem = $('<div>')
-				.addClass('nunaliit_login_link')
-				.text(displayName);
+			var nameElem = $('<button>')
+				.addClass('nunaliit_login_link mdc-button');
 
-			var profileIcon = $('<div>')
-				.addClass('nunalitt_login_profile_icon');
+			$('<span>')
+				.addClass('mdc-button__label')
+				.text(displayName)
+				.appendTo(nameElem);
+
+			$('<span>')
+				.addClass('nunalitt_login_profile_icon mdc-button__icon')
+				.appendTo(nameElem);
 
 			var greetingInner = $('<div class="nunaliit_login_greeting_inner_container"></div>')
 				.append(nameElem);
@@ -1981,8 +1986,6 @@ var AuthWidget = $n2.Class({
 			$login.empty().append(greetingOuter);
 
 			if( this.currentUserName ){
-				// Add user profile icon
-				greetingInner.append(profileIcon);
 
 				greetingInner.click(function(){
 					_this.dispatchService.synchronousCall(DH,{type: 'openUserMenu'});
