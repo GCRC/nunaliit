@@ -1476,7 +1476,6 @@ var ModuleDisplay = $n2.Class({
 		function installHelpButton(){
 			
 			var $a = $('<a class="nunaliit_module_help_button" href="#"></a>');
-			$a.text( _loc('Help') );
 			
 			$('#'+_this.helpButtonName)
 				.empty()

@@ -215,12 +215,22 @@ Help Button
 */
 .nunaliit_atlas .nunaliit_help_button {
 	float: right;
-	padding: 8px 20px;
+	margin: 3px 10px;
+	background: url(./images/help.png);
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: contain;
+	object-fit: cover;
+	width: 23px;
+	height: 23px;
 }
 .nunaliit_atlas .nunaliit_help_button a
 ,.nunaliit_atlas .nunaliit_help_button a:visited {
 	color: {{header.color}};
 	text-decoration: none;
+	padding: 6px 12px;
+	vertical-align: bottom;
+	line-height: 25px;
 }
 
 /*
