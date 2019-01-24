@@ -49,7 +49,7 @@ var attachMDCComponents = function(){
 
 	// attach ripple to floating action buttons
 	var mdc_fabs = document.getElementsByClassName('mdc-fab');
-	for(i = 0, e = mdc_buttons.length; i < e; i++){
+	for(i = 0, e = mdc_fabs.length; i < e; i++){
 		try {
 			mdc.ripple.MDCRipple.attachTo(mdc_fabs[i]);
 		} catch(error){
