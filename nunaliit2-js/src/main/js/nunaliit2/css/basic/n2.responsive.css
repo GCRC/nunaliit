@@ -5,3 +5,12 @@
    ========================================================================== */
 
 
+@media only screen and (max-width: 1023px) {
+    .nunaliit_atlas .nunaliit_header.mdc-top-app-bar .mdc-top-app-bar__row a.mdc-top-app-bar__navigation-icon {
+        display: flex;
+    }
+
+    div#navigation {
+        display: none;
+    }
+}

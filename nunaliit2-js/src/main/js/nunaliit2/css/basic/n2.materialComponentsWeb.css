@@ -114,13 +114,17 @@
     max-width: 800px;
 }
 
+/* NavBar hamburger button on main page */
+.nunaliit_atlas .nunaliit_header.mdc-top-app-bar .mdc-top-app-bar__row a.mdc-top-app-bar__navigation-icon {
+    display: none;
+}
+
 /* Nunaliit login button */
 .nunaliit_login .nunalitt_login_profile_icon.mdc-button__icon {
     width: 35px;
     height: 35px;
     margin-left: 10px;
 }
-
 
 .nunaliit_application .nunaliit_login .mdc-button {
     color: #ffffff;
