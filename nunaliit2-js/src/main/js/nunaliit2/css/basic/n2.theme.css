@@ -699,8 +699,8 @@ CreateDocument widget
 .nunaliit_atlas .nunaliit_footer {
 	font-size: 0.75em;	
 	color: white;
-	border-top: 1px solid rgba(255,255,255,1);
-	background-color: {{header.background}};
+	border-top: 1px solid {{header.border.color.module}};
+	background-color: {{header.background.module}};
 	-moz-box-shadow: 0 3px 8px rgba(0,0,0,0.5);
 	-webkit-box-shadow: 0 3px 8px rgba(0,0,0,0.5);
 	box-shadow: 0 3px 8px rgba(0,0,0,0.5);
@@ -726,8 +726,9 @@ CreateDocument widget
 	color: {{header.color}};
 	text-decoration: none;
 }
-.nunaliit_atlas .nunaliit_footer_nav ul li a:hover {
-	text-decoration: underline;
+.nunaliit_atlas .nunaliit_footer_nav ul li a:hover {	
+	text-decoration: none;
+	color: {{header.color}};
 }
 
 /* Smaller screens */
