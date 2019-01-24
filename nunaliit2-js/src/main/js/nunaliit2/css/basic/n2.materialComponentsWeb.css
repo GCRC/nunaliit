@@ -120,3 +120,8 @@
     height: 35px;
     margin-left: 10px;
 }
+
+
+.nunaliit_application .nunaliit_login .mdc-button__label {
+    color: #ffffff;
+}
