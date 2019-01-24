@@ -477,7 +477,6 @@ Polar Stereographic Projection Selector
 ==============================
 */
  
-
 .n2widgetTranscript_transcript {
 	overflow-y: scroll;
 	margin-top: 1em;
@@ -485,21 +484,21 @@ Polar Stereographic Projection Selector
 }
 
 .n2widgetTranscript_transcript span {
-   cursor: pointer;
-   transition: all 0.1s ease-in;
-   line-height: 1.8;
-   font-family: "Times New Roman", Times, serif;
-   font-size: 1.5em; 
+	cursor: pointer;
+	transition: all 0.1s ease-in;
+	line-height: 1.8;
+	font-family: "Times New Roman", Times, serif;
+	font-size: 1.5em; 
 
 }
 
 .n2widgetTranscript_transcript span:hover {
-   color: green;
+	color: green;
 }
 
 .n2widgetTranscript_transcript .highlight {
-   color: white;
-   background-color: darkorange;
+	color: white;
+	background-color: darkorange;
 }
 /* 
 ==============================
@@ -507,16 +506,16 @@ Wait Widget
 ==============================
 */
 .n2wait {
-    position: absolute;
-    display: block;
-    background-color: #ffffff;
-    right: 0;
-    bottom: 0;
-    border: solid #000000 1px;
+	position: absolute;
+	display: block;
+	background-color: #ffffff;
+	right: 0;
+	bottom: 0;
+	border: solid #000000 1px;
 }
 
 .n2_content_contains_text.n2_content_contains_map .n2wait {
-    right: 450px;
+	right: 450px;
 	bottom: 15px;
 }
 
