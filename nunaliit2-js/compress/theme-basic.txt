@@ -2,9 +2,16 @@ header.background: #3a3a3a
 header.background.button: #2f2f2f
 header.background.hover: #1f1f1f
 header.background.selected: #160E7D
-header.background.module: #444444
-header.color: #fff
+header.background.module: #111111
+header.color: #eeeeee
+header.color.hover: #ffffff
+header.color.selected: #160E7D
 header.border.color: rgba(255,255,255,0.6)
 header.border.color.module: #575757
 header.border.button.color: #838383
 
+footer.background: #111111
+
+loginmenu.background: #ffffff
+loginmenu.color: #555555
+loginmenu.color.hover: #111111
