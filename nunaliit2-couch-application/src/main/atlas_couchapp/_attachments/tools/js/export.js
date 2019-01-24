@@ -205,9 +205,38 @@ function showButtons(opts_){
 	var $div = $( opts.div );
 	$div.empty();
 
+	var $formatSelect = $('<div>')
+		.addClass('mdc-select mdc-select--outlined')
+		.appendTo($div);
+
+	$('<i>')
+		.addClass('mdc-select__dropdown-icon')
+		.appendTo($formatSelect);
+
+	var $menuNotchedOutline = $('<div>')
+		.addClass('mdc-notched-outline')
+		.appendTo($formatSelect);
+
+	$('<div>')
+		.addClass('mdc-notched-outline__leading')
+		.appendTo($menuNotchedOutline);
+
+	var $menuNotchedOutlineNotch = $('<div>')
+		.addClass('mdc-notched-outline__notch')
+		.appendTo($menuNotchedOutline);
+
+	$('<label>')
+		.addClass('mdc-floating-label')
+		.text(_loc('Export Format'))
+		.appendTo($menuNotchedOutlineNotch);
+
+	$('<div>')
+		.addClass('mdc-notched-outline__trailing')
+		.appendTo($menuNotchedOutline);	
+
 	var $formatSel = $('<select>')
-		.addClass('.exportControls_formatSelector')
-		.appendTo( $div );
+		.addClass('.exportControls_formatSelector mdc-select__native-control')
+		.appendTo( $formatSelect );
 	var formatSelId = $n2.utils.getElementIdentifier($formatSel);
 	var formats = ['csv','geojson'];
 	for(var i=0,e=formats.length; i<e; ++i){
@@ -219,6 +248,7 @@ function showButtons(opts_){
 	};
 	
 	$('<button>')
+		.addClass('mdc-button')
 		.text( _loc('Show') )
 		.appendTo( $div )
 		.click(function(){
@@ -233,6 +263,7 @@ function showButtons(opts_){
 		});
 
 	$('<button>')
+		.addClass('mdc-button')
 		.text( _loc('Download') )
 		.appendTo( $div )
 		.click(function(){
@@ -245,6 +276,9 @@ function showButtons(opts_){
 			});
 			return false;
 		});
+
+	// Attach Material Design Components
+	$n2.mdc.attachMDCComponents();
 };
 
 function schemaSelected($sel){
@@ -254,11 +288,11 @@ function schemaSelected($sel){
 	var $result = $('.exportControls_schemaResult').empty();
 	
 	$('<span>')
-		.addClass('exportDocCount')
+		.addClass('exportButtons')
 		.appendTo($result);
 
 	$('<span>')
-		.addClass('exportButtons')
+		.addClass('exportDocCount')
 		.appendTo($result);
 
 	var schemaName = $sel.val();
@@ -290,11 +324,11 @@ function layerSelected($sel){
 	var $result = $('.exportControls_layerResult').empty();
 	
 	$('<span>')
-		.addClass('exportDocCount')
+		.addClass('exportButtons')
 		.appendTo($result);
 
 	$('<span>')
-		.addClass('exportButtons')
+		.addClass('exportDocCount')
 		.appendTo($result);
 
 	var layerId = $sel.val();
@@ -314,8 +348,36 @@ function layerSelected($sel){
 };
 
 function methodChanged($select){
-	$('.exportControls_methodResult')
-		.empty();
+	var $methodResult = $('.exportControls_methodResult').empty();
+
+	var $schemaLayerSelect = $('<div>')
+		.addClass('mdc-select mdc-select--outlined')
+		.appendTo($methodResult);
+	
+	$('<i>')
+		.addClass('mdc-select__dropdown-icon')
+		.appendTo($schemaLayerSelect);
+
+	var $menuNotchedOutline = $('<div>')
+		.addClass('mdc-notched-outline')
+		.appendTo($schemaLayerSelect);
+
+	$('<div>')
+		.addClass('mdc-notched-outline__leading')
+		.appendTo($menuNotchedOutline);
+
+	var $menuNotchedOutlineNotch = $('<div>')
+		.addClass('mdc-notched-outline__notch')
+		.appendTo($menuNotchedOutline);
+
+	$('<label>')
+		.addClass('mdc-floating-label')
+		.text(_loc('Schema / Layer Name'))
+		.appendTo($menuNotchedOutlineNotch);
+
+	$('<div>')
+		.addClass('mdc-notched-outline__trailing')
+		.appendTo($menuNotchedOutline);
 	
 	if( 'schema' === $select.val() ){
 		schemaRepository.getRootSchemas({
@@ -338,10 +400,11 @@ function methodChanged($select){
 					};
 				});
 				
-				var $methodResult = $('.exportControls_methodResult').empty();
+				//var $methodResult = $('.exportControls_methodResult').empty();
 				if( exportableSchemas.length > 0 ) {
 					var $sel = $('<select>')
-						.appendTo($methodResult);
+						.addClass('mdc-select__native-control')
+						.appendTo($schemaLayerSelect);
 
 					for(var i=0,e=exportableSchemas.length; i<e; ++i){
 						var s = exportableSchemas[i];
@@ -383,11 +446,12 @@ function methodChanged($select){
 					layerIds.push(layerId);
 				};
 				
-				var $methodResult = $('.exportControls_methodResult').empty();
+				//var $methodResult = $('.exportControls_methodResult').empty();
 				
 				if( layerIds.length > 0 ){
 					var $sel = $('<select>')
-						.appendTo($methodResult);
+						.addClass('mdc-select__native-control')
+						.appendTo($schemaLayerSelect);
 					for(var i=0,e=layerIds.length; i<e; ++i){
 						var layerId = layerIds[i];
 						var $o = $('<option></option>')
@@ -427,9 +491,38 @@ function installMethodButton(){
 	var $controls = $('.exportControls')
 		.empty();
 	
+	var $typeSelect = $('<div>')
+		.addClass('mdc-select mdc-select--outlined')
+		.appendTo($controls);
+
+	$('<i>')
+		.addClass('mdc-select__dropdown-icon')
+		.appendTo($typeSelect);
+
+	var $menuNotchedOutline = $('<div>')
+		.addClass('mdc-notched-outline')
+		.appendTo($typeSelect);
+
+	$('<div>')
+		.addClass('mdc-notched-outline__leading')
+		.appendTo($menuNotchedOutline);
+
+	var $menuNotchedOutlineNotch = $('<div>')
+		.addClass('mdc-notched-outline__notch')
+		.appendTo($menuNotchedOutline);
+
+	$('<label>')
+		.addClass('mdc-floating-label')
+		.text(_loc('Type'))
+		.appendTo($menuNotchedOutlineNotch);
+
+	$('<div>')
+		.addClass('mdc-notched-outline__trailing')
+		.appendTo($menuNotchedOutline);	
+
 	var $select = $('<select>')
-		.addClass('exportControls_methodSelector')
-		.appendTo($controls)
+		.addClass('exportControls_methodSelector mdc-select__native-control')
+		.appendTo($typeSelect)
 		.change(function(){
 			var $sel = $(this);
 			methodChanged($sel);
@@ -503,9 +596,10 @@ function main(opts_) {
 		};
 	};
 	
-	$exportDiv
-		.empty()
-		;
+	$exportDiv.empty();
+
+	$exportDiv.addClass('mdc-card');
+
 	$('<div>')
 		.addClass('exportControls')
 		.appendTo($exportDiv);
