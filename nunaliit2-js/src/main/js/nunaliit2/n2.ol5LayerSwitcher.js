@@ -6,7 +6,8 @@
 ;(function($,$n2){
 "use strict";
 if( typeof(ol) !== 'undefined' ) {
-ol.control.NunaliitLayerSwitcher = $n2.Construct('N2LayerSwitcher', ol.control.Control,{
+//default export
+ol.control.N2LayerSwitcher = $n2.Construct('N2LayerSwitcher', ol.control.Control,{
 	constructor: function(opt_options){
 		 var options = opt_options || {};
 
@@ -16,7 +17,7 @@ ol.control.NunaliitLayerSwitcher = $n2.Construct('N2LayerSwitcher', ol.control.C
 	        this.mapListeners = [];
 
 	        this.hiddenClassName = 'ol-unselectable ol-control layer-switcher';
-	        if (ol.control.NunaliitLayerSwitcher.isTouchDevice_()) {
+	        if (ol.control.N2LayerSwitcher.isTouchDevice_()) {
 	            this.hiddenClassName += ' touch';
 	        }
 	        this.shownClassName = 'shown';
@@ -31,7 +32,7 @@ ol.control.NunaliitLayerSwitcher = $n2.Construct('N2LayerSwitcher', ol.control.C
 	        this.panel = document.createElement('div');
 	        this.panel.className = 'panel';
 	        element.appendChild(this.panel);
-	        ol.control.NunaliitLayerSwitcher.enableTouchScroll_(this.panel);
+	        ol.control.N2LayerSwitcher.enableTouchScroll_(this.panel);
 
 	        var this_ = this;
 
@@ -100,7 +101,7 @@ ol.control.NunaliitLayerSwitcher = $n2.Construct('N2LayerSwitcher', ol.control.C
 	}
 	,ensureTopVisibleBaseLayerShown_ : function() {
         var lastVisibleBaseLyr;
-        ol.control.NunaliitLayerSwitcher.forEachRecursive(this.getMap(), function(l, idx, a) {
+        ol.control.N2LayerSwitcher.forEachRecursive(this.getMap(), function(l, idx, a) {
             if (l.get('type') === 'base' && l.getVisible()) {
                 lastVisibleBaseLyr = l;
             }
@@ -112,7 +113,7 @@ ol.control.NunaliitLayerSwitcher = $n2.Construct('N2LayerSwitcher', ol.control.C
         lyr.setVisible(visible);
         if (visible && lyr.get('type') === 'base') {
             // Hide all other base layers regardless of grouping
-            ol.control.NunaliitLayerSwitcher.forEachRecursive(map, function(l, idx, a) {
+            ol.control.N2LayerSwitcher.forEachRecursive(map, function(l, idx, a) {
                 if (l != lyr && l.get('type') === 'base') {
                     l.setVisible(false);
                 }
@@ -126,7 +127,7 @@ ol.control.NunaliitLayerSwitcher = $n2.Construct('N2LayerSwitcher', ol.control.C
         var li = document.createElement('li');
 
         var lyrTitle = lyr.get('title');
-        var lyrId = ol.control.NunaliitLayerSwitcher.uuid();
+        var lyrId = ol.control.N2LayerSwitcher.uuid();
 
         var label = document.createElement('label');
 
@@ -184,24 +185,24 @@ ol.control.NunaliitLayerSwitcher = $n2.Construct('N2LayerSwitcher', ol.control.C
 
 })
 	
-ol.control.NunaliitLayerSwitcher.forEachRecursive = function(lyr, fn) {
+ol.control.N2LayerSwitcher.forEachRecursive = function(lyr, fn) {
     lyr.getLayers().forEach(function(lyr, idx, a) {
         fn(lyr, idx, a);
         if (lyr.getLayers) {
-            ol.control.NunaliitLayerSwitcher.forEachRecursive(lyr, fn);
+            ol.control.N2LayerSwitcher.forEachRecursive(lyr, fn);
         }
     });
 };
 
-ol.control.NunaliitLayerSwitcher.uuid = function() {
+ol.control.N2LayerSwitcher.uuid = function() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
         var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
         return v.toString(16);
     });
 };
 
-ol.control.NunaliitLayerSwitcher.enableTouchScroll_ = function(elm) {
-    if(ol.control.NunaliitLayerSwitcher.isTouchDevice_()){
+ol.control.N2LayerSwitcher.enableTouchScroll_ = function(elm) {
+    if(ol.control.N2LayerSwitcher.isTouchDevice_()){
         var scrollStartPos = 0;
         elm.addEventListener("touchstart", function(event) {
             scrollStartPos = this.scrollTop + event.touches[0].pageY;
@@ -212,7 +213,7 @@ ol.control.NunaliitLayerSwitcher.enableTouchScroll_ = function(elm) {
     }
 };
 
-ol.control.NunaliitLayerSwitcher.isTouchDevice_ = function() {
+ol.control.N2LayerSwitcher.isTouchDevice_ = function() {
     try {
         document.createEvent("TouchEvent");
         return true;

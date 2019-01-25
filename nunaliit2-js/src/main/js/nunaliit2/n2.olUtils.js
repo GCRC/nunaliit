@@ -140,9 +140,9 @@ function prepareFeatureForSorting(f){
  * @return {number}
  */
 function ol5FeatureSorting(a, b){
-	 const aSort = ol5prepareFeatureForSorting(a);
+	 var aSort = ol5prepareFeatureForSorting(a);
 
-	 const bSort = ol5prepareFeatureForSorting(b);
+	 var bSort = ol5prepareFeatureForSorting(b);
 		if( aSort.isPoint && bSort.isPoint ) {
 			return 0;
 		} else if( aSort.isPoint ) {
