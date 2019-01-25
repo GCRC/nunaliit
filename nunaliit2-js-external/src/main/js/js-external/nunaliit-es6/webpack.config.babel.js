@@ -4,10 +4,10 @@ module.exports = {
 	devtool: 'source-map',
 	mode: 'production',
 	module: {
-		rules: [
+		rules:[
 			{
 				test: require.resolve('./dist/n2es6/n2core/nunaliit2.js'),
-				use: ['script-loader']
+    		use: 'exports-loader?nunaliit2'
 			}
 		]
 	},
@@ -18,5 +18,8 @@ module.exports = {
 		library: 'n2es6',
 		libraryTarget: 'umd',
 		libraryExport: 'default'
+	},
+	node: {
+	   fs: "empty"
 	}
 };
