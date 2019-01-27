@@ -20,17 +20,21 @@ gulp.task('cp-nunaliit-core', function() {
   .pipe(gulp.dest("./dist/n2es6/n2core"))
 });
 
-gulp.task('babel', ['cp-nunaliit-core'], function() {
+gulp.task('babel',  function() {
     return gulp.src(
 	[
     // If Supporting old IE browser is a problem, uncomment this line to
     //	 include the polyfill.js
-	    
     //   'node_modules/babel-polyfill/dist/polyfill.js',
-	'./src/**/*.js','!src/n2es6/n2core/*.js'])
+	    
+	    './src/**/*.js','!src/n2es6/n2core/*.js'
+	]
+    )
+    
     // If someone want to use more advance feature in ES6 (lambda or ...),
-    // try uncomment this line to transpile the code using babel
+    // try uncomment this line to transpile the code using babel    
     //.pipe(babel({presets: ['es2015']}))
+    
 	.on('error', swallowError)
 	.pipe(gulp.dest('dist'))
 	.on('end', function(){ console.log('\x1b[32m','\n>>> Babel Terminated...','\x1b[0m')});

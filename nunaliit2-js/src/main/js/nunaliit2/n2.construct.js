@@ -91,11 +91,13 @@ POSSIBILITY OF SUCH DAMAGE.
 				this._classname = className;
 			}
 			;
+			
+			// The consideration here is: in long run, the initialize() way of constructing class 
+			// should be deprecated. Instead, the constructor() should be used.
+			// Also, the subclass.base(this, 'constructor', opts) can be seen as a temporary alternative
+			// to the ES6's super() method.
 			if ( false == isContructorProvided) {
 				this.initialize.apply(this, arguments);
-				
-			// Call parent's constructor function
-				childClass.base(this, 'constructor', options)
 				
 			} else {
 				this.customConstructor.apply(this, arguments);

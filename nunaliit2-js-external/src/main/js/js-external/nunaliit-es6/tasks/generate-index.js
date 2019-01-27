@@ -91,7 +91,7 @@ function generateExports(symbols) {
       nsdefs.push(`${ns[i]} = {};`);
     }
   }
-  blocks = Object.keys(imports).concat('\nimport nunaliit2 from \'./n2es6/n2core/nunaliit2.js\';',
+  blocks = Object.keys(imports).concat(
     '\nvar n2es6 = {};\n', nsdefs.sort()).concat(blocks.sort());
   blocks.push('', 'export default n2es6;');
   return blocks.join('\n');

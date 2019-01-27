@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2018, Geomatics and Cartographic Research Centre, Carleton 
+Copyright (c) 2019-2025, Geomatics and Cartographic Research Centre, Carleton 
 University
 All rights reserved.
 
@@ -33,6 +33,8 @@ POSSIBILITY OF SUCH DAMAGE.
 "use strict";	
 	
 if( typeof ol === 'undefined') return;
+
+
 
 
 	
