@@ -120,9 +120,10 @@ class N2Cluster extends Cluster {
         continue;
       }
       if (!(getUid(feature) in clustered)) {
-
-        const coordinates = getCenter(feature.getGeometry().computeExtent());
-        createOrUpdateFromCoordinate(coordinates, extent);
+        // Pass in infinity extent to by-pass OpenLayers bug
+        var geomExtent = feature.getGeometry().computeExtent([Infinity, Infinity, -Infinity, -Infinity]);
+        const geomCentroid = getCenter(geomExtent);
+        createOrUpdateFromCoordinate(geomCentroid, extent);
         buffer(extent, mapDistance, extent);
 
         let neighbors = this.source.getFeaturesInExtent(extent);
@@ -150,13 +151,22 @@ class N2Cluster extends Cluster {
   createCluster(features) {
 
     const centroid = [0, 0];
+    var count = 0;
     for (let i = features.length - 1; i >= 0; --i) {
-      const centerDelta = getCenter(features[i].getGeometry().computeExtent());
-      if (centerDelta) {
-        addCoordinate(centroid, centerDelta);
-      }
+        var geom = features[i].getGeometry();
+        if( geom ){
+            // Pass in infinity extent to by-pass OpenLayers bug
+            var geomExtent = geom.computeExtent([Infinity, Infinity, -Infinity, -Infinity]);
+            if( geomExtent ){
+                const geomCentroid = getCenter(geomExtent);
+                if (geomCentroid) {
+                    addCoordinate(centroid, geomCentroid);
+                    ++count;
+                }
+            }
+        }
     }
-    scaleCoordinate(centroid, 1 / features.length);
+    scaleCoordinate(centroid, count);
 
     const cluster = new Feature(new Point(centroid));
     cluster.set('features', features);
@@ -201,7 +211,8 @@ class N2Cluster extends Cluster {
         if (feature.getGeometry().getType().indexOf('Point') >= 0) {
           eligible = true;
         } else {
-          const bounds = feature.getGeometry().computeExtent();
+            // Pass in infinity extent to by-pass OpenLayers bug
+          const bounds = feature.getGeometry().computeExtent([Infinity, Infinity, -Infinity, -Infinity]);
 
           const xLen = (bounds[2]-bounds[0])/ this.resolution;
           const yLen = (bounds[3]-bounds[1]) / this.resolution;

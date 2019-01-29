@@ -185,7 +185,8 @@ function ol5prepareFeatureForSorting(f){
 	} else {
 		f._n2Sort.isLineString = (geomClass.indexOf('LineString') >= 0);
 		if( f._n2Sort.isLineString ){
-			var extent = f.getGeometry().computeExtent();
+			// Pass in infinity extent to by-pass OpenLayers bug
+			var extent = f.getGeometry().computeExtent([Infinity, Infinity, -Infinity, -Infinity]);
 			f._n2Sort.largestDim = extent[2]-extent[0]
 			var tmp = extent[3]-extent[1];
 			if( f._n2Sort.largestDim < tmp ) {
@@ -194,7 +195,8 @@ function ol5prepareFeatureForSorting(f){
 		} else {
 			f._n2Sort.isPolygon = true;
 			
-			var extent = f.getGeometry().computeExtent();
+			// Pass in infinity extent to by-pass OpenLayers bug
+			var extent = f.getGeometry().computeExtent([Infinity, Infinity, -Infinity, -Infinity]);
 			
 			// Use area
 			f._n2Sort.largestDim = (extent[2]-extent[0])*(extent[3]-extent[1]);
