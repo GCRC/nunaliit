@@ -30,7 +30,7 @@
 		<link rel="stylesheet" href="css/atlas.css" type="text/css" />
 	</head>
 	<body class="nunaliit_atlas">
-		<header class="nunaliit_header mdc-top-app-bar mdc-top-app-bar--fixed">
+		<header id="nunaliit_header" class="nunaliit_header mdc-top-app-bar mdc-top-app-bar--fixed">
 			
 			<div id="header_container" class="mdc-top-app-bar__row nunaliit_header_container">
 				<section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
@@ -45,7 +45,7 @@
 					<!-- Changed login buttons to new layout (Accommodate liquid header)-->
 					<div id="login1" class="nunaliit_login"></div>
 				</section>
-			  </div>
+			</div>
 			
 			<!-- Moved Map Title inside header-->
 			<!-- Changed Class to nunaliit_map_title-->
@@ -57,9 +57,13 @@
 				<span id="module_title" class="nunaliit_module_title_item"></span>
 			</div>
 		</header>
+		<aside id="nunaliit_hamburgermenu" class="mdc-drawer mdc-drawer--modal">
+			<!-- Hamburger Menu Drawer Content-->
+		</aside>
 		
 		<!--/CONTENT SECTION/-->
 		<!-- Added New Container Div around body content-->
+		<div class="mdc-drawer-scrim"></div>
 		<div id="content" class="nunaliit_content">
 			<noscript>
 				<p>You appear to have disabled Javascript support in your browser. You have to enable Javascript for proper functioning of this site.</p>
@@ -108,5 +112,22 @@
 		<script type="text/javascript" src="js-external/js/sha1.js"></script>
 
 		<script type="text/javascript" src="js/index.js"></script>
+
+		<script type="text/javascript">
+			// <!--
+
+			// Attach MDCDrawer
+			var drawer = mdc.drawer.MDCDrawer.attachTo(document.querySelector('.mdc-drawer'));
+
+			// Attach MDCTopAppBar
+			var topAppBar = mdc.topAppBar.MDCTopAppBar.attachTo(document.getElementById('nunaliit_header'));
+			topAppBar.setScrollTarget(document.body);
+
+			topAppBar.listen('MDCTopAppBar:nav', function(){
+				drawer.open = !drawer.open;
+			});
+
+			// -->
+		</script>
 	</body>
 </html>

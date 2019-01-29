@@ -40,7 +40,7 @@ var
 
 //=========================================================================
 function setNavElementAsCurrentModule($elem){
-	$elem.addClass('n2_nav_currentModule');
+	$elem.addClass('n2_nav_currentModule mdc-list-item--activated');
 	$elem.parents('.n2nav_setChildModuleCurrent').addClass('n2_nav_childModuleCurrent');
 };
 	
@@ -55,25 +55,33 @@ var NavigationDisplay = $n2.Class({
 	
 	elemId: null,
 
+	hamburgerMenu: null,
+
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: null
 			,showService: null
 			,navigationDoc: null
 			,elem: null
+			,hamburgerMenu: false
 		},opts_);
 		
 		this.dispatchService = opts.dispatchService;
 		this.showService = opts.showService;
 		this.navigationDoc = opts.navigationDoc;
+		this.hamburgerMenu = opts.hamburgerMenu;
 		
 		var $elem = $(opts.elem);
 		this.elemId = $n2.utils.getElementIdentifier($elem);
 		
 		this._display();
+
+		// Attach MDC Components
+		$n2.mdc.attachMDCComponents();
 	},
 	
 	_display: function(){
+		var _this = this;
 		var $nav = $('#'+this.elemId);
 		var doc = this.navigationDoc;
 		
@@ -92,29 +100,54 @@ var NavigationDisplay = $n2.Class({
 			
 			if( doc.nunaliit_navigation.items 
 			 && doc.nunaliit_navigation.items.length > 0 ) {
-				var $ul = $('<ul>')
+				var $list;
+
+				if( this.hamburgerMenu ){
+					$list = $('<nav>')
+						.attr('role','menu')
+						.attr('aria-hidden',true)
+						.attr('aria-orientation',"vertical")
+						.addClass('n2nav_setChildModuleCurrent mdc-list')
+						.appendTo($nav);
+
+				} else {
+					$list = $('<ul>')
 					.addClass('n2nav_setChildModuleCurrent')
 					.appendTo($nav);
+				}
 				
-				insertItems($ul, doc.nunaliit_navigation.items, currentModuleId);
-			};
+				insertItems($list, doc.nunaliit_navigation.items, currentModuleId);
+			}
 			
 			if( this.showService ){
 				this.showService.fixElementAndChildren($nav);
-			};
-		};
+			}
+		}
 		
-		function insertItems($ul, items, currentModuleId){
+		function insertItems($list, items, currentModuleId){
 			for(var i=0,e=items.length; i<e; ++i){
 				var item = items[i];
+				var $listItem, $listItemText;
 				
-				var $li = $('<li>')
-					.addClass('n2nav_setChildModuleCurrent')
-					.appendTo($ul);
+				if ( _this.hamburgerMenu ){
+					$listItem = $('<a>')
+						.attr('href','#')
+						.addClass('n2nav_setChildModuleCurrent mdc-list-item')
+						.appendTo($list);
+
+					if ( item.href ){
+						$listItem.attr('href',item.href);
+					}
+
+				} else {
+					$listItem = $('<li>')
+						.addClass('n2nav_setChildModuleCurrent')
+						.appendTo($list);
+				}
 				
 				if( item.key ){
-					$li.attr('n2nav-key',item.key);
-				};
+					$listItem.attr('n2nav-key',item.key);
+				}
 
 				if( item.title && item.href ) {
 					// Compute module class
@@ -122,26 +155,37 @@ var NavigationDisplay = $n2.Class({
 					var url = new $n2.url.Url({
 						url: item.href
 					});
+					
 					if( url ){
 						moduleId = url.getParamValue('module',null);
-					};
+					}
+
 					if( moduleId ){
-						$li.attr('n2nav-module',moduleId);
-						$li.addClass('n2nav_setModuleCurrent');
-					};
+						$listItem.attr('n2nav-module',moduleId);
+						$listItem.addClass('n2nav_setModuleCurrent');
+					}
 					
 					if( moduleId && moduleId === currentModuleId ){
-						setNavElementAsCurrentModule($li);
-					};
+						setNavElementAsCurrentModule($listItem);
+					}
 					
 					var title = _loc(item.title);
-					$('<a>')
+
+					if ( _this.hamburgerMenu ){
+						$listItemText = $('<span>')
+							.text(title)
+							.addClass('mdc-list-item__text')
+							.appendTo($listItem);
+
+					} else {
+						$listItemText = $('<a>')
 						.attr('href',item.href)
 						.text(title)
-						.appendTo($li);
+						.appendTo($listItem);
+					}
 					
 				} else if( item.module ) {
-						// Compute URL based on current one
+					// Compute URL based on current one
 					var currentUrl = $n2.url.getCurrentLocation();
 					var moduleUrl = currentUrl
 						.clone()
@@ -149,41 +193,65 @@ var NavigationDisplay = $n2.Class({
 						.setParamValue('module',item.module);
 				
 					// Install module class
-					$li.attr('n2nav-module',item.module);
-					$li.addClass('n2nav_setModuleCurrent');
+					$listItem.attr('n2nav-module',item.module);
+
+
+					if( _this.hamburgerMenu ){
+						$listItem.addClass('n2nav_setModuleCurrent mdc-list-item');
+	
+					} else {
+						$listItem.addClass('n2nav_setModuleCurrent');
+					}
 					
 					if( item.module === currentModuleId ){
-						setNavElementAsCurrentModule($li);
-					};
+						setNavElementAsCurrentModule($listItem);
+					}
 					
-					var $a = $('<a>')
+					if ( _this.hamburgerMenu ){
+						$listItem.attr('href', moduleUrl.getUrl());
+
+						$listItemText = $('<span>')
+							.addClass('mdc-list-item__text')
+							.appendTo($listItem);
+
+					} else {
+						$listItemText = $('<a>')
 						.attr('href',moduleUrl.getUrl())
-						.appendTo($li);
+							.appendTo($listItem);
+					}
 
 					if( item.title ){
 						var title = _loc(item.title);
-						$a.text(title);
+						$listItemText.text(title);
 					} else {
 						// Obtain title from show service
-						$a.attr('nunaliit-document',item.module);
-						$a.addClass('n2s_insertModuleName');
-						$a.text(item.module);
-					};
+						$listItemText.attr('nunaliit-document',item.module);
+						$listItemText.addClass('n2s_insertModuleName');
+						$listItemText.text(item.module);
+					}
 						
 				} else if( item.title ) {
-					var $span = $('<span></span>');
-					var title = _loc(item.title);
-					$span.text(title);
-					$li.append($span);
-				};
+					$('<span>')
+						.text(_loc(item.title))
+						.appendTo($listItem);
+				}
 				
 				if( item.items && item.items.length > 0 ){
-					var $innerUl = $('<ul>')
-						.addClass('n2nav_setChildModuleCurrent')
-						.appendTo($li);
-					insertItems($innerUl, item.items, currentModuleId);
-				};
-			};
+					var $innerList;
+					
+					if (_this.hamburgerMenu ){
+						$innerList = $('<div>')
+							.addClass('n2nav_setChildModuleCurrent n2nav_nested-list')
+							.insertAfter($listItem);
+
+					} else {
+						$innerList = $('<ul>')
+							.addClass('n2nav_setChildModuleCurrent')
+							.appendTo($listItem);
+					}
+					insertItems($innerList, item.items, currentModuleId);
+				}
+			}
 		};
 	}
 });
@@ -287,19 +355,40 @@ var NavigationService = $n2.Class({
 		var _this = this;
 		
 		var $set = $root.find('*').addBack();
+		var $drawer = $('#nunaliit_hamburgermenu');
 		
 		// Title
 		$set.filter('.n2nav_insertTitle').each(function(){
+			// Add title to Nav-Bar
 			var $elem = $(this);
 			$elem.removeClass('n2nav_insertTitle').addClass('n2nav_insertedTitle');
 			_this._insertTitle($elem, navigationDoc);
+
+			// Add title to Hamburger Menu
+			$drawer.empty();
+			var $drawerMenuHeader = $('<div>')
+				.addClass('mdc-drawer__header')
+				.prependTo($drawer);
+	
+			var $drawerMenuHeaderTitle = $('<h3>')
+				.addClass('mdc-drawer__title')
+				.appendTo($drawerMenuHeader);
+
+			_this._insertTitle($drawerMenuHeaderTitle, navigationDoc);
 		});
 		
 		// Menu
 		$set.filter('.n2nav_insertMenu').each(function(){
+			// Add menu items to Nav-Bar Menu
 			var $elem = $(this);
 			$elem.removeClass('n2nav_insertMenu').addClass('n2nav_insertedMenu');
-			_this._insertMenu($elem, navigationDoc);
+			_this._insertMenu($elem, navigationDoc, false);
+
+			// Add menu items to Hamburger Menu
+			var $drawerContent = $('<div>')
+				.addClass('mdc-drawer__content')
+				.appendTo($drawer);
+			_this._insertMenu($drawerContent, navigationDoc, true);
 		});
 	},
 	
@@ -320,7 +409,7 @@ var NavigationService = $n2.Class({
 		};
 	},
 	
-	_insertMenu: function($elem, doc){
+	_insertMenu: function($elem, doc, hamburgerMenu){
 
 		var docId = this._associateDocumentToElement(doc, $elem);
 		
@@ -329,6 +418,7 @@ var NavigationService = $n2.Class({
 				dispatchService: this.dispatchService
 				,showService: this.showService
 				,navigationDoc: doc
+				,hamburgerMenu: hamburgerMenu
 				,elem: $elem
 			});
 		};
@@ -379,7 +469,7 @@ var NavigationService = $n2.Class({
 	_handle: function(m, addr, d){
 		if( 'reportModuleDocument' === m.type ){
 			var currentModuleId = m.moduleId;
-			$('.n2nav_setModuleCurrent').removeClass('n2_nav_currentModule');
+			$('.n2nav_setModuleCurrent').removeClass('n2_nav_currentModule mdc-list-item--activated');
 			$('.n2nav_setChildModuleCurrent').removeClass('n2_nav_childModuleCurrent');
 			$('.n2nav_setModuleCurrent').each(function(){
 				var $elem = $(this);

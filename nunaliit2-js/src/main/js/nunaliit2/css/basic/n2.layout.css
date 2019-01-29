@@ -45,7 +45,7 @@
 	height: 30px;
 }
 .nunaliit_atlas .nunaliit_content {
-	position: absolute;
+	position: fixed;
 	width: 100%;
 }
 

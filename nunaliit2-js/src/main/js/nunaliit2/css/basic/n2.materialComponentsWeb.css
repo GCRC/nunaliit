@@ -118,6 +118,25 @@
 .nunaliit_atlas .nunaliit_header.mdc-top-app-bar .mdc-top-app-bar__row a.mdc-top-app-bar__navigation-icon {
     display: none;
 }
+.nunaliit_atlas .mdc-drawer-scrim {
+    z-index: 11;
+}
+.nunaliit_atlas aside.mdc-drawer {
+    z-index: 12;
+}
+.nunaliit_atlas aside.mdc-drawer a.mdc-list-item {
+    display: block;
+    height: auto;
+    line-height: 40px;
+    min-height: 40px;
+}
+.nunaliit_atlas aside.mdc-drawer a.mdc-list-item>nav {
+    display: flex;
+    flex-direction: column;
+}
+.nunaliit_atlas aside.mdc-drawer .mdc-drawer__content .n2nav_nested-list {
+    margin-left: 10px;
+}
 
 /* Nunaliit login button */
 .nunaliit_login .nunalitt_login_profile_icon.mdc-button__icon {
