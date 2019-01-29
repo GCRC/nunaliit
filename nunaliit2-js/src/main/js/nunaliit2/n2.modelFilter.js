@@ -604,6 +604,86 @@ var SingleDocumentFilter = $n2.Class(ModelFilter, {
 	}
 });
 
+
+//--------------------------------------------------------------------------
+/*
+* Filter: a Document Model that filters out certain documents
+* MultiDocumentFilter: Allows only specified documents 
+*/
+var MultiDocumentFilter = $n2.Class(ModelFilter, {
+
+	selectedDocsParameter: null,
+	
+	selectedDocIds: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dispatchService: null
+
+			// From configuration
+			,modelId: null
+			,sourceModelId: null
+			,selectedDocIds: null
+		},opts_);
+		
+		var _this = this;
+		
+		this.selectedDocIds = opts.selectedDocIds;
+
+		this.selectedDocsParameter = new $n2.model.ModelParameter({
+			model: this
+			,type: 'string'
+			,name: 'selectedDocumentIds'
+			,label: 'Selected Document Ids'
+			,setFn: function(docId){
+				_this._setSelectedDocIds(docId);
+			}
+			,getFn: function(){
+				return _this._getSelectedDocIds();
+			}
+			,dispatchService: opts.dispatchService
+		});
+		
+		opts.filterName = 'MultiDocumentFilter';
+		
+		opts.filterFn = function(doc){
+			return _this._isDocVisible(doc);
+		};
+
+		ModelFilter.prototype.initialize.call(this,opts);
+	},
+	
+	_getSelectedDocIds: function(){
+		return this.selectedDocIds;
+	},
+	
+	_setSelectedDocIds: function(docIds){
+		this.selectedDocIds = docIds;
+		
+		this._filterChanged();
+	},
+	
+	_addModelInfoParameters: function(info){
+		info.parameters.selectedDocumentIds = this.selectedDocsParameter.getInfo();
+	},
+	
+	_isDocVisible: function(doc){
+		
+		var i, e, docs;
+		docs = this._getSelectedDocIds();
+		
+		for(i=0, e=docs.length; i < e; i++){
+			
+			if( doc && doc._id && doc._id === docs[i] ){
+				return true;
+			};
+		};
+
+		return false;
+	}
+});
+
+
 //--------------------------------------------------------------------------
 /*
 * Filter: a Document Model that filters out certain documents
@@ -615,6 +695,9 @@ var SingleDocumentFilter = $n2.Class(ModelFilter, {
 * Abstract Class. Subclasses must implement the following methods:
 * - _computeAvailableChoicesFromDocs
 * - _isDocVisible
+* 
+* Sublcasses may implement the following methods (optional):
+* - _selectionChanged : Called when a change in selection is detected
 * 
 * Options:
 * - modelId: String. Identifier for this model
@@ -849,6 +932,7 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 			localStorage.setItem(this.saveSelectionName,jsonSelection);
 		};
 
+		this._selectionChanged(this.selectedChoiceIdMap, this.allSelected);
 		this._filterChanged();
 		
 		this.allSelectedParameter.sendUpdate();
@@ -886,6 +970,7 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 			};
 		};
 
+		this._selectionChanged(this.selectedChoiceIdMap, this.allSelected);
 		this._filterChanged();
 		
 		this.allSelectedParameter.sendUpdate();
@@ -927,6 +1012,7 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 				_this.selectedChoiceIdMap[choice.id] = true;
 			});
 
+			this._selectionChanged(this.selectedChoiceIdMap, this.allSelected);
 			this._filterChanged();
 
 			this.selectedChoicesParameter.sendUpdate();
@@ -1187,11 +1273,15 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 	},
 	
 	_computeVisibility: function(doc){
-		return this._isDocVisible(doc, this.selectedChoiceIdMap);
+		return this._isDocVisible(doc, this.selectedChoiceIdMap, this.allSelected);
 	},
 
-	_isDocVisible: function(doc, selectedChoiceIdMap){
+	_isDocVisible: function(doc, selectedChoiceIdMap, allSelected){
 		throw new Error('Subclasses to SelectableDocumentFilter must implement _isDocVisible()');
+	},
+
+	_selectionChanged: function(selectedChoiceIdMap, allSelected){
+		// This can be implemented by a subclass to detect the changes in selection
 	}
 });
 
@@ -1816,6 +1906,28 @@ function handleModelCreate(m, addr, dispatcher){
 		};
 		
 		m.model = new SingleDocumentFilter(options);
+		
+		m.created = true;
+
+	} else if( m.modelType === 'multiDocumentFilter' ){
+		var options = {};
+		
+		if( m && m.modelOptions ){
+			for(var key in m.modelOptions){
+				options[key] = m.modelOptions[key];
+			};
+		};
+		
+		options.modelId = m.modelId;
+		options.modelType = m.modelType;
+
+		if( m && m.config ){
+			if( m.config.directory ){
+				options.dispatchService = m.config.directory.dispatchService;
+			};
+		};
+		
+		m.model = new MultiDocumentFilter(options);
 		
 		m.created = true;
 

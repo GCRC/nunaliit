@@ -46,7 +46,7 @@ public class JSONLibTest extends TestCase {
 			fail("Inner put not applied");
 		}
 	}
-	
+
 	public void testInnerArray() throws Exception {
 		JSONObject obj = new JSONObject();
 		{
@@ -72,6 +72,28 @@ public class JSONLibTest extends TestCase {
 		}
 		if( false == "2".equals( innerCopy.get(1) ) ){
 			fail("Inner add not applied (1)");
+		}
+	}
+
+	public void testNullString() throws Exception {
+		String jsonInput = "{\"name\":null,\"roles\":[]}";
+		JSONTokener jsonTokener = new JSONTokener(jsonInput);
+		Object obj = jsonTokener.nextValue();
+		if( obj instanceof JSONObject ) {
+			JSONObject jsonObj = (JSONObject)obj;
+			if( JSONSupport.containsKey(jsonObj, "name") ) {
+				// OK
+				String name = jsonObj.getString("name");
+				if( null == name ) {
+					// OK
+				} else {
+					fail("Expected a null string");
+				}
+			} else {
+				fail("'name' key should be reported");
+			}
+		} else {
+			fail("Expected a JSON object: "+obj.getClass().getSimpleName());
 		}
 	}
 }

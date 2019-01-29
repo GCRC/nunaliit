@@ -18,6 +18,14 @@ import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagickProcessorDefault
 
 public class MultimediaConfiguration {
 
+	static public int IMAGE_MAX_WIDTH = 1000;
+	static public int IMAGE_MAX_HEIGHT = 1000;
+	static public int IMAGE_THUMB_HEIGHT = 350;
+	static public int IMAGE_THUMB_WIDTH = 350;
+	static public int VIDEO_THUMB_HEIGHT = 240;
+	static public int VIDEO_THUMB_WIDTH = 320;
+	
+
 	static final Logger logger = LoggerFactory.getLogger(MultimediaConfiguration.class);
 	
 	static public void configureFromProperties(Properties props) {
@@ -129,42 +137,42 @@ public class MultimediaConfiguration {
 			String sizeString = props.getProperty("imageMaxHeight", null);
 			if( null != sizeString ) {
 				int size = Integer.parseInt(sizeString);
-				MultimediaConverterImpl.IMAGE_MAX_HEIGHT = size;
+				IMAGE_MAX_HEIGHT = size;
 			}
 		}
 		{
 			String sizeString = props.getProperty("imageMaxWidth", null);
 			if( null != sizeString ) {
 				int size = Integer.parseInt(sizeString);
-				MultimediaConverterImpl.IMAGE_MAX_WIDTH = size;
+				IMAGE_MAX_WIDTH = size;
 			}
 		}
 		{
 			String sizeString = props.getProperty("thumbnailImageHeight", null);
 			if( null != sizeString ) {
 				int size = Integer.parseInt(sizeString);
-				MultimediaConverterImpl.IMAGE_THUMB_HEIGHT = size;
+				IMAGE_THUMB_HEIGHT = size;
 			}
 		}
 		{
 			String sizeString = props.getProperty("thumbnailImageWidth", null);
 			if( null != sizeString ) {
 				int size = Integer.parseInt(sizeString);
-				MultimediaConverterImpl.IMAGE_THUMB_WIDTH = size;
+				IMAGE_THUMB_WIDTH = size;
 			}
 		}
 		{
 			String sizeString = props.getProperty("thumbnailVideoHeight", null);
 			if( null != sizeString ) {
 				int size = Integer.parseInt(sizeString);
-				MultimediaConverterImpl.VIDEO_THUMB_HEIGHT = size;
+				VIDEO_THUMB_HEIGHT = size;
 			}
 		}
 		{
 			String sizeString = props.getProperty("thumbnailVideoWidth", null);
 			if( null != sizeString ) {
 				int size = Integer.parseInt(sizeString);
-				MultimediaConverterImpl.VIDEO_THUMB_WIDTH = size;
+				VIDEO_THUMB_WIDTH = size;
 			}
 		}
 		

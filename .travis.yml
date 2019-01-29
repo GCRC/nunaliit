@@ -1,4 +1,17 @@
 language: java
 jdk:
-  - oraclejdk8
-  - openjdk7
+- openjdk8
+before_deploy:
+  - export TRAVIS_TAG="2.2.9-SNAPSHOT"
+deploy:
+  provider: releases
+  skip_cleanup: true
+  overwrite: true
+  api_key:
+    secure: g1pR2YPrAfwCdO7bpkQARDuEpfRvVOqks9mblYBpVvJVUZr6CnMPG7Eem2eD0jbfXSsI5TaLsbGLyoH0WwNJqEjQWnw6Jt09iDYTyh84X200LRACY90A80Aiq4H2XRSp2EULhPLAQNtzXwn+Hzjh+j5KFoTVdtPshfnBuGaAEis=
+  file:
+    - "nunaliit2-couch-sdk/target/nunaliit_*.tar.gz"
+  file_glob: true
+  on:
+    repo: GCRC/nunaliit
+    jdk: openjdk8
