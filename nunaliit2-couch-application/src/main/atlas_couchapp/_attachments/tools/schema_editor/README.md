@@ -12,7 +12,7 @@ It's hosted on github pages [here](http://minikomi.github.io/Bootstrap-Form-Buil
   
 * Once done, change it back to  build for production using the [r.js](https://github.com/jrburke/r.js/). 
 
-* The full command is `r.js -o assets/js/lib/build.js` which should be run from the base directory.
+* The full command is first `cd assets/js/lib`, then `r.js -o build.js`, and rerun the `nunaliit update`.
 
 * Then the program is deployed at `index.html`
 

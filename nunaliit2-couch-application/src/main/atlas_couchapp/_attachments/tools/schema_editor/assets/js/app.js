@@ -1,5 +1,5 @@
 define([
-    "jquery" , "underscore" , "backbone", "jquery.couch"
+    "jquery" , "underscore" , "backbone"
        , "collections/snippets" , "collections/my-form-snippets"
        , "views/tab" , "views/my-form"
     , "text!data/n2.json", "text!data/n2attributes.json"
@@ -7,7 +7,7 @@ define([
     , "text!templates/app/loading.html"
     , "text!data/testrape.json"
 ], function(
-    $, _, Backbone, Couch
+    $, _, Backbone
   , SnippetsCollection, MyFormSnippetsCollection
     , TabView, MyFormView
     , n2mandatoryJSON,  attributesJSON
@@ -23,7 +23,7 @@ define([
 						config.directory.authService.createAuthWidget({
 							elemId: 'login'
 						});
-						$n2.log('tell me what is going', config.directory.schemaRepository);
+						$n2.log('The schemaRepository: ', config.directory.schemaRepository);
 						render(config);
 					};
 				}

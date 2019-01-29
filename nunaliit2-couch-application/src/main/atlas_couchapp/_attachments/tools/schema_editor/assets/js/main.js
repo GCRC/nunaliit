@@ -15,11 +15,7 @@ require.config({
     ,'bootstrap-waitingfor':{
         deps: ['jquery','bootstrap'],
         exports: 'Waitingfor'
-    },
-    'jquery.couch': {
-	  deps: ['jquery'],
-	  exports: '$.couch'
-      }
+    }
   }
   , paths: {
     app         : ".."
