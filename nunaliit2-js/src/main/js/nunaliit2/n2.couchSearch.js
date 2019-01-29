@@ -1569,11 +1569,11 @@ var SearchServer = $n2.Class({
 				.attr('type','text')
 				.attr('id',$searchInputId)
 				.addClass('search_panel_input mdc-text-field__input')
-					.appendTo(searchInputField);
+				.appendTo(searchInputField);
 			
 			var $searchInputOutline = $('<div>')
 				.addClass('mdc-notched-outline')
-					.appendTo(searchInputField);
+				.appendTo(searchInputField);
 
 			$('<div>')
 				.addClass('mdc-notched-outline__leading')
