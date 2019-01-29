@@ -8395,6 +8395,71 @@ $n2.utils.escapeHtml = function(str) {
 	return str.replace(reHtmlCharSelect, htmlEscapeCharFn);
 };
 
+/**
+ * Accepts a string and returns an instance of the named class.
+ * Example: var canvasMap1 = $n2.utils.getInstance('$n2.canvasMap', opts)
+ * @name getInstance
+ * @function
+ * @memberOf nunaliit2.utils
+ * @param str {String} String of class name 
+ * @returns Instance object
+ */
+$n2.utils.getInstance = function(str, var_args ) {
+	if ( typeof(str) !== 'string'){
+		return null;
+	};
+	var arr = str.split(".");
+
+	var fn = (window || this);
+	for (var i = 0, len = arr.length; i < len; i++) {
+	    fn = fn[arr[i]];
+	}
+
+	if (typeof fn !== "function") {
+	  throw new Error("Function not found");
+	}
+	
+
+	var args = new Array(arguments.length -1);
+	for (var i=1; i< arguments.length; i++) {
+		args[i-1] = arguments[i];
+	}
+	
+	var instance = new fn(args);
+	
+	if (typeof instance !== "object") {
+		  throw new Error("Instance object not found");
+		}
+	return instance;
+};
+
+/**
+ * Accepts a string and returns a method of the named method.
+ * Example: var canvasMethod = $n2.utils.getMethod('$n2.canvasMap.handleCanvasDisplay')
+ * @name getMethod
+ * @function
+ * @memberOf nunaliit2.utils
+ * @param str {String} String of method name 
+ * @returns function 
+ */
+$n2.utils.getMethod = function(str, var_args ) {
+	if ( typeof(str) !== 'string'){
+		return null;
+	};
+	var arr = str.split(".");
+
+	var fn = (window || this);
+	for (var i = 0, len = arr.length; i < len; i++) {
+	    fn = fn[arr[i]];
+	}
+
+	if (typeof fn !== "function") {
+	  throw new Error("Function not found");
+	}
+	
+
+	return fn;
+};
 })(nunaliit2);
 // *** File: /home/dzhang/selfdev/nunaliit/nunaliit/nunaliit2-js/src/main/js/nunaliit2/n2.cookie.js
 
@@ -28874,7 +28939,8 @@ function ol5prepareFeatureForSorting(f){
 	} else {
 		f._n2Sort.isLineString = (geomClass.indexOf('LineString') >= 0);
 		if( f._n2Sort.isLineString ){
-			var extent = f.getGeometry().computeExtent();
+			// Pass in infinity extent to by-pass OpenLayers bug
+			var extent = f.getGeometry().getExtent();
 			f._n2Sort.largestDim = extent[2]-extent[0]
 			var tmp = extent[3]-extent[1];
 			if( f._n2Sort.largestDim < tmp ) {
@@ -28883,7 +28949,8 @@ function ol5prepareFeatureForSorting(f){
 		} else {
 			f._n2Sort.isPolygon = true;
 			
-			var extent = f.getGeometry().computeExtent();
+			// Pass in infinity extent to by-pass OpenLayers bug
+			var extent = f.getGeometry().getExtent();
 			
 			// Use area
 			f._n2Sort.largestDim = (extent[2]-extent[0])*(extent[3]-extent[1]);
@@ -78550,7 +78617,7 @@ This canvas displays a map based on OpenLayers5.
 */
  
 //--------------------------------------------------------------------------
- var BACKGROUND_VENDOR = {
+ var VENDOR = {
 	GOOGLEMAP : 'googlemaps',
 	BING : 'bing',
 	WMS : 'wms',
@@ -79195,15 +79262,15 @@ var MapCanvas = $n2.Class('MapCanvas',{
 			layerDefinition.type.replace(/\W/g,'').toLowerCase();
 		var sourceOptionsInternal = layerDefinition.options;
 			
-		if ( sourceTypeInternal == BACKGROUND_VENDOR.GOOGLEMAP ) {
+		if ( sourceTypeInternal == VENDOR.GOOGLEMAP ) {
 			
 			$n2.log('Background of Google map is under construction');
 			
-		} else if ( sourceTypeInternal == BACKGROUND_VENDOR.BING) {
+		} else if ( sourceTypeInternal == VENDOR.BING) {
 			
 			return new BingMaps(sourceOptionsInternal);
 			
-		} else if ( sourceTypeInternal == BACKGROUND_VENDOR.WMS ) {
+		} else if ( sourceTypeInternal == VENDOR.WMS ) {
 			if (sourceOptionsInternal 
 				&& sourceOptionsInternal.url 
 				&& sourceOptionsInternal.layers
@@ -79231,7 +79298,7 @@ var MapCanvas = $n2.Class('MapCanvas',{
 				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal );
 			}
 			
-		} else if ( sourceTypeInternal == BACKGROUND_VENDOR.OSM) {
+		} else if ( sourceTypeInternal == VENDOR.OSM) {
 			
 			if (sourceOptionsInternal
 					&& sourceOptionsInternal.url ){
@@ -79243,7 +79310,7 @@ var MapCanvas = $n2.Class('MapCanvas',{
 			}
 			
 			
-		} else if ( sourceTypeInternal == BACKGROUND_VENDOR.STAMEN) {
+		} else if ( sourceTypeInternal == VENDOR.STAMEN) {
 			if (sourceOptionsInternal
 					&& sourceOptionsInternal.layerName ){
 				return new ol.source.Stamen({
@@ -79252,9 +79319,9 @@ var MapCanvas = $n2.Class('MapCanvas',{
 			} else {
 				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal );
 			}
-		} else if ( sourceTypeInternal == BACKGROUND_VENDOR.IMAGE) {
+		} else if ( sourceTypeInternal == VENDOR.IMAGE) {
 			
-		} else if ( sourceTypeInternal == BACKGROUND_VENDOR.COUCHDB) {
+		} else if ( sourceTypeInternal == VENDOR.COUCHDB) {
 			
 		} else {
 			

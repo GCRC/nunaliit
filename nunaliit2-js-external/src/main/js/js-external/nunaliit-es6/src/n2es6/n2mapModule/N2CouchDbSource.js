@@ -4,13 +4,14 @@
  */
 
 
-import Vector form 'ol/source/Vector.js';
-class N2CouchDbSource extends Vector { 
+import Vector from 'ol/source/Vector.js';
+
+class N2CouchDbSource extends Vector {
 
 
  	constructor(opts_){
- 		
- 		
+
+
  	 	this.sourceId = null;
  	 	this.sourceModelId = null;
  	 	this.dispatchService = null;
@@ -18,8 +19,8 @@ class N2CouchDbSource extends Vector {
  	 	this.infoByDocId = null;
  	 	this.mapProjCode =  null;
  	 	this.epsg4326Resolution =  null;
- 		
- 		
+
+
  		var opts = $n2.extend({
  			sourceModelId: undefined
  			,dispatchService: undefined
@@ -62,9 +63,9 @@ class N2CouchDbSource extends Vector {
   				};
   			};
   		};
- 	},
+ 	};
 
- 	_sourceModelStateUpdated: function(state){
+ 	_sourceModelStateUpdated(state){
  		var _this = this;
 
  		//$n2.log('map canvas receives update',state);
@@ -107,9 +108,9 @@ class N2CouchDbSource extends Vector {
  		};
 
  		this._reloadAllFeatures();
- 	},
+ 	}
 
- 	_handleDispatch: function(m, addr, dispatcher){
+ 	_handleDispatch(m, addr, dispatcher){
  		var _this = this;
 
  		if('modelStateUpdated' === m.type) {
@@ -139,12 +140,12 @@ class N2CouchDbSource extends Vector {
  				};
  			};
  		}
- 	},
+ 	}
 
  	/**
  	 * This function is called when the map resolution is changed
  	 */
- 	changedResolution: function(res,proj){
+ 	changedResolution(res,proj){
  		//$n2.log('resolution',res,proj);
  		this.epsg4326Resolution = this._getResolutionInProjection(res,proj);
 
@@ -208,9 +209,9 @@ class N2CouchDbSource extends Vector {
  		});
 
  		this._reloadAllFeatures();
- 	},
+ 	}
 
- 	_getResolutionInProjection: function(targetResolution, proj){
+ 	_getResolutionInProjection(targetResolution, proj){
 
  		if( proj.getCode() !== 'EPSG:4326' ){
  			var transformFn = ol.proj.getTransform(proj.getCode(), 'EPSG:4326')
@@ -224,9 +225,9 @@ class N2CouchDbSource extends Vector {
  		};
 
  		return targetResolution;
- 	},
+ 	}
 
- 	_reloadAllFeatures: function(){
+ 	_reloadAllFeatures(){
  		var _this = this;
 
  		var wktFormat = new ol.format.WKT();

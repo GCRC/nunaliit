@@ -45,7 +45,7 @@ This canvas displays a map based on OpenLayers5.
 */
  
 //--------------------------------------------------------------------------
- var BACKGROUND_VENDOR = {
+ var VENDOR = {
 	GOOGLEMAP : 'googlemaps',
 	BING : 'bing',
 	WMS : 'wms',
@@ -690,15 +690,15 @@ var MapCanvas = $n2.Class('MapCanvas',{
 			layerDefinition.type.replace(/\W/g,'').toLowerCase();
 		var sourceOptionsInternal = layerDefinition.options;
 			
-		if ( sourceTypeInternal == BACKGROUND_VENDOR.GOOGLEMAP ) {
+		if ( sourceTypeInternal == VENDOR.GOOGLEMAP ) {
 			
 			$n2.log('Background of Google map is under construction');
 			
-		} else if ( sourceTypeInternal == BACKGROUND_VENDOR.BING) {
+		} else if ( sourceTypeInternal == VENDOR.BING) {
 			
 			return new BingMaps(sourceOptionsInternal);
 			
-		} else if ( sourceTypeInternal == BACKGROUND_VENDOR.WMS ) {
+		} else if ( sourceTypeInternal == VENDOR.WMS ) {
 			if (sourceOptionsInternal 
 				&& sourceOptionsInternal.url 
 				&& sourceOptionsInternal.layers
@@ -726,7 +726,7 @@ var MapCanvas = $n2.Class('MapCanvas',{
 				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal );
 			}
 			
-		} else if ( sourceTypeInternal == BACKGROUND_VENDOR.OSM) {
+		} else if ( sourceTypeInternal == VENDOR.OSM) {
 			
 			if (sourceOptionsInternal
 					&& sourceOptionsInternal.url ){
@@ -738,7 +738,7 @@ var MapCanvas = $n2.Class('MapCanvas',{
 			}
 			
 			
-		} else if ( sourceTypeInternal == BACKGROUND_VENDOR.STAMEN) {
+		} else if ( sourceTypeInternal == VENDOR.STAMEN) {
 			if (sourceOptionsInternal
 					&& sourceOptionsInternal.layerName ){
 				return new ol.source.Stamen({
@@ -747,9 +747,9 @@ var MapCanvas = $n2.Class('MapCanvas',{
 			} else {
 				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal );
 			}
-		} else if ( sourceTypeInternal == BACKGROUND_VENDOR.IMAGE) {
+		} else if ( sourceTypeInternal == VENDOR.IMAGE) {
 			
-		} else if ( sourceTypeInternal == BACKGROUND_VENDOR.COUCHDB) {
+		} else if ( sourceTypeInternal == VENDOR.COUCHDB) {
 			
 		} else {
 			

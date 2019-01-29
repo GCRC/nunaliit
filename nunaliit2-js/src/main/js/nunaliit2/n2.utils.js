@@ -1139,4 +1139,69 @@ $n2.utils.escapeHtml = function(str) {
 	return str.replace(reHtmlCharSelect, htmlEscapeCharFn);
 };
 
+/**
+ * Accepts a string and returns an instance of the named class.
+ * Example: var canvasMap1 = $n2.utils.getInstance('$n2.canvasMap', opts)
+ * @name getInstance
+ * @function
+ * @memberOf nunaliit2.utils
+ * @param str {String} String of class name 
+ * @returns Instance object
+ */
+$n2.utils.getInstance = function(str, var_args ) {
+	if ( typeof(str) !== 'string'){
+		return null;
+	};
+	var arr = str.split(".");
+
+	var fn = (window || this);
+	for (var i = 0, len = arr.length; i < len; i++) {
+	    fn = fn[arr[i]];
+	}
+
+	if (typeof fn !== "function") {
+	  throw new Error("Function not found");
+	}
+	
+
+	var args = new Array(arguments.length -1);
+	for (var i=1; i< arguments.length; i++) {
+		args[i-1] = arguments[i];
+	}
+	
+	var instance = new fn(args);
+	
+	if (typeof instance !== "object") {
+		  throw new Error("Instance object not found");
+		}
+	return instance;
+};
+
+/**
+ * Accepts a string and returns a method of the named method.
+ * Example: var canvasMethod = $n2.utils.getMethod('$n2.canvasMap.handleCanvasDisplay')
+ * @name getMethod
+ * @function
+ * @memberOf nunaliit2.utils
+ * @param str {String} String of method name 
+ * @returns function 
+ */
+$n2.utils.getMethod = function(str, var_args ) {
+	if ( typeof(str) !== 'string'){
+		return null;
+	};
+	var arr = str.split(".");
+
+	var fn = (window || this);
+	for (var i = 0, len = arr.length; i < len; i++) {
+	    fn = fn[arr[i]];
+	}
+
+	if (typeof fn !== "function") {
+	  throw new Error("Function not found");
+	}
+	
+
+	return fn;
+};
 })(nunaliit2);

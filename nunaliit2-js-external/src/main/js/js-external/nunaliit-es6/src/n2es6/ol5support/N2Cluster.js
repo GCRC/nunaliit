@@ -121,7 +121,7 @@ class N2Cluster extends Cluster {
       }
       if (!(getUid(feature) in clustered)) {
         // Pass in infinity extent to by-pass OpenLayers bug
-        var geomExtent = feature.getGeometry().computeExtent([Infinity, Infinity, -Infinity, -Infinity]);
+        var geomExtent = feature.getGeometry().getExtent();
         const geomCentroid = getCenter(geomExtent);
         createOrUpdateFromCoordinate(geomCentroid, extent);
         buffer(extent, mapDistance, extent);
@@ -156,7 +156,7 @@ class N2Cluster extends Cluster {
         var geom = features[i].getGeometry();
         if( geom ){
             // Pass in infinity extent to by-pass OpenLayers bug
-            var geomExtent = geom.computeExtent([Infinity, Infinity, -Infinity, -Infinity]);
+            var geomExtent = geom.getExtent();
             if( geomExtent ){
                 const geomCentroid = getCenter(geomExtent);
                 if (geomCentroid) {
@@ -166,7 +166,7 @@ class N2Cluster extends Cluster {
             }
         }
     }
-    scaleCoordinate(centroid, count);
+    scaleCoordinate(centroid, 1/count);
 
     const cluster = new Feature(new Point(centroid));
     cluster.set('features', features);
@@ -212,7 +212,7 @@ class N2Cluster extends Cluster {
           eligible = true;
         } else {
             // Pass in infinity extent to by-pass OpenLayers bug
-          const bounds = feature.getGeometry().computeExtent([Infinity, Infinity, -Infinity, -Infinity]);
+          const bounds = feature.getGeometry().getExtent();
 
           const xLen = (bounds[2]-bounds[0])/ this.resolution;
           const yLen = (bounds[3]-bounds[1]) / this.resolution;

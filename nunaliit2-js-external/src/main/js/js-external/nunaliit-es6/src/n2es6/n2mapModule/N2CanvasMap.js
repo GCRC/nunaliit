@@ -27,29 +27,30 @@ This canvas displays a map based on OpenLayers5.
  };
 
 
-class MapCanvas = {
+class MapCanvas  {
 
-	this.canvasId= null,
 
-	this.sourceModelId: null,
+    construct(opts_){
+	this.canvasId= null;
 
-	this.elementGenerator: null,
+	this.sourceModelId =  null;
 
-	this.dispatchService: null,
+	this.elementGenerator =  null;
 
-	this.showService: null,
+	this.dispatchService  =  null;
 
-	initialize: function(opts_){
-		var opts = $n2.extend({
-			canvasId: undefined
-			,sourceModelId: undefined
-			,elementGenerator: undefined
-			,config: undefined
-			,onSuccess: function(){}
-			,onError: function(err){}
-		},opts_);
+	this.showService =  null;
 
-		var _this = this;
+	var opts = $n2.extend({
+	    canvasId: undefined
+	    ,sourceModelId: undefined
+	    ,elementGenerator: undefined
+	    ,config: undefined
+	    ,onSuccess: function(){}
+	    ,onError: function(err){}
+	},opts_);
+
+	var _this = this;
 
 		try {
 			this.canvasId = opts.canvasId;
@@ -114,15 +115,14 @@ class MapCanvas = {
 		opts.onSuccess();
 	}
 
-	,_getElem: function(){
+	_getElem(){
 		var $elem = $('#'+this.canvasId);
 		if( $elem.length < 1 ){
 			return undefined;
 		};
 		return $elem;
-	},
-
-	_drawMap: function() {
+	}
+	_drawMap() {
 		var _this = this;
 		 var image = new ol.style.Circle({
 		        radius: 5,
@@ -333,7 +333,7 @@ class MapCanvas = {
 		customMap.addInteraction(selectClick);
 
 	}
-	,_genBackgroundMapLayers: function (bgSources) {
+	_genBackgroundMapLayers(bgSources) {
 		var _this = this;
 		var bg = null;
 		if( bgSources ) {
@@ -371,7 +371,7 @@ class MapCanvas = {
 		}
 	}
 
-	,_createOLLayerFromDefinition: function(layerDefinition, isDefaultLayer) {
+	_createOLLayerFromDefinition(layerDefinition, isDefaultLayer) {
 		var name = _loc(layerDefinition.name);
 		var _this = this;
 
@@ -391,7 +391,7 @@ class MapCanvas = {
 
 
 	}
-	, _createBackgroundMapSource : function(layerDefinition) {
+	 _createBackgroundMapSource (layerDefinition) {
 
 		var sourceTypeInternal =
 			layerDefinition.type.replace(/\W/g,'').toLowerCase();
@@ -464,7 +464,7 @@ class MapCanvas = {
 		}
 	}
 
-	,_handleDispatch: function(m, addr, dispatcher){
+    _handleDispatch( m, addr, dispatcher){
 	}
 };
 
