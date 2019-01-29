@@ -70,13 +70,21 @@
 			.addClass('import_profile mdc-select__native-control')
 			.appendTo($importProfileSelect);
 
-		for(var i=0,e=importProfiles.length; i<e; ++i){
-			var importProfile = importProfiles[i];
+		if ( importProfiles.length === 0 ){
 			$('<option>')
-				.val(importProfile.getId())
-				.text( _loc(importProfile.getLabel())+' ('+importProfile.getType()+')' )
-				.appendTo($select);
-		};
+			.val(' ')
+			.text(_loc('No valid import profiles available'))
+			.appendTo($select);
+
+		} else {
+			for(var i=0,e=importProfiles.length; i<e; ++i){
+				var importProfile = importProfiles[i];
+				$('<option>')
+					.val(importProfile.getId())
+					.text( _loc(importProfile.getLabel())+' ('+importProfile.getType()+')' )
+					.appendTo($select);
+			};
+		}
 
 		// Input Textarea
 		var textareaInputId = $n2.getUniqueId();
