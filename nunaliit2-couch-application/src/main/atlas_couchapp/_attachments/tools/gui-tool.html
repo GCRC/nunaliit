@@ -34,7 +34,7 @@
 
   <body class="nunaliit_application">
       <div class="drawer-frame-root">
-          <aside class="mdc-drawer mdc-drawer--dismissible">
+          <aside class="mdc-drawer mdc-drawer--modal">
             <div class="mdc-drawer__header">
               <h3 class="mdc-drawer__title"><a href="./index.html">Nunaliit2 Tools</a></h3>
             </div>
@@ -54,62 +54,61 @@
                 <a class="mdc-list-item mdc-list-item--activated" href="./gui-tool.html" tabindex="0" aria-selected="false">GUI Tool</a>
               </nav>
             </div>
-          </aside>
-          <div class="mdc-drawer-app-content">
-            <header class="mdc-top-app-bar" id="app-bar">
-              <div class="mdc-top-app-bar__row">
-                <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
-                  <a href="#" class="material-icons mdc-top-app-bar__navigation-icon">☰</a>
-                  <span class="mdc-top-app-bar__title">Nunaliit Schema Builder</span>
-                </section>
-                <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end">
-                  <a id="login" class="nunaliit_login mdc-top-app-bar__action-item"></a>
-                </section>
-              </div>
-            </header>
-            <main class="main-content" id="main-content">
-              <div class="mdc-top-app-bar--fixed-adjust"></div>
-              <div class="container">
-                <div class="row clearfix">
-                  <!-- Components -->
-                  <div class="span6">
-                    <h2>Drag & Drop components</h2>
+          </aside>          
+			    <div class="mdc-drawer-scrim"></div>
+          <header class="mdc-top-app-bar" id="nunaliit_hanmburger_menu">
+            <div class="mdc-top-app-bar__row">
+              <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
+                <a href="#" class="material-icons mdc-top-app-bar__navigation-icon">☰</a>
+                <span class="mdc-top-app-bar__title">Nunaliit Schema Builder</span>
+              </section>
+              <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end">
+                <a id="login" class="nunaliit_login mdc-top-app-bar__action-item"></a>
+              </section>
+            </div>
+          </header>
+          <main class="main-content" id="main-content">
+            <div class="mdc-top-app-bar--fixed-adjust"></div>
+            <div class="container">
+              <div class="row clearfix">
+                <!-- Components -->
+                <div class="span6">
+                  <h2>Drag & Drop components</h2>
+                  <hr>
+                  <div class="tabbable">
+                    <ul class="nav nav-tabs" id="formtabs">
+                      <!-- Tab nav -->
+                    </ul>
+                    <form class="form-horizontal" id="components">
+                      <fieldset>
+                        <div class="tab-content">
+                          <!-- Tabs of snippets go here -->
+                        </div>
+                      </fieldset>
+                    </form>
+                  </div>
+                </div>
+                <!-- / Components -->
+                <!-- Building Form. -->
+                <div class="span6">
+                  <div class="clearfix">
+                    <div class="row-fluid">
+                      <div class="span6">
+                        <h2>Your Schema</h2>
+                      </div>                    
+                    </div>
                     <hr>
-                    <div class="tabbable">
-                      <ul class="nav nav-tabs" id="formtabs">
-                        <!-- Tab nav -->
-                      </ul>
-                      <form class="form-horizontal" id="components">
-                        <fieldset>
-                          <div class="tab-content">
-                            <!-- Tabs of snippets go here -->
-                          </div>
-                        </fieldset>
+                    <div id="build">
+                      <form id="target" class="form-horizontal">
                       </form>
                     </div>
                   </div>
-                  <!-- / Components -->
-                  <!-- Building Form. -->
-                  <div class="span6">
-                    <div class="clearfix">
-                      <div class="row-fluid">
-                        <div class="span6">
-                          <h2>Your Schema</h2>
-                        </div>                    
-                      </div>
-                      <hr>
-                      <div id="build">
-                        <form id="target" class="form-horizontal">
-                        </form>
-                      </div>
-                    </div>
-                  </div>
-                  <!-- / Building Form. -->
                 </div>
+                <!-- / Building Form. -->
               </div>
-              <!-- /container -->
-            </main>
-          </div>
+            </div>
+            <!-- /container -->
+          </main>
         </div>
     </div>
 
@@ -139,7 +138,7 @@
 			var drawer = mdc.drawer.MDCDrawer.attachTo(document.querySelector('.mdc-drawer'));
 
 			// Attach MDCTopAppBar
-			var topAppBar = mdc.topAppBar.MDCTopAppBar.attachTo(document.getElementById('app-bar'));
+			var topAppBar = mdc.topAppBar.MDCTopAppBar.attachTo(document.getElementById('nunaliit_hanmburger_menu'));
 			topAppBar.setScrollTarget(document.body);
 
 			topAppBar.listen('MDCTopAppBar:nav', function(){

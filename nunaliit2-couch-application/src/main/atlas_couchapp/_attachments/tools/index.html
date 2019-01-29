@@ -11,7 +11,7 @@
 	</head>
 	<body class="nunaliit_application nunaliit_application_tools">
 		<div class="drawer-frame-root">
-			<aside class="mdc-drawer mdc-drawer--dismissible mdc-drawer--open">
+			<aside class="mdc-drawer mdc-drawer--modal mdc-drawer--open">
 				<div class="mdc-drawer__header">
 					<h3 class="mdc-drawer__title"><a href="./index.html">Nunaliit2 Tools</a></h3>
 				</div>
@@ -31,20 +31,19 @@
 						<a class="mdc-list-item" href="./gui-tool.html" tabindex="-1" aria-selected="false">GUI Tool</a>
 					</nav>
 				</div>
-			</aside>
-			<div class="mdc-drawer-app-content">
-				<header class="mdc-top-app-bar" id="app-bar">
-					<div class="mdc-top-app-bar__row">
-						<section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
-							<a href="#" class="material-icons mdc-top-app-bar__navigation-icon">☰</a>
-							<span class="mdc-top-app-bar__title">Nunaliit2 Tools</span>
-						</section>
-					</div>
-				</header>
-				<main class="main-content" id="main-content">
-					<div class="mdc-top-app-bar--fixed-adjust"></div>
-				</main>
-			</div>
+			</aside>			
+			<div class="mdc-drawer-scrim"></div>
+			<header class="mdc-top-app-bar" id="nunaliit_hanmburger_menu">
+				<div class="mdc-top-app-bar__row">
+					<section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
+						<a href="#" class="material-icons mdc-top-app-bar__navigation-icon">☰</a>
+						<span class="mdc-top-app-bar__title">Nunaliit2 Tools</span>
+					</section>
+				</div>
+			</header>
+			<main class="main-content" id="main-content">
+				<div class="mdc-top-app-bar--fixed-adjust"></div>
+			</main>
 		</div>
 		<script type="text/javascript" src="../js-external/materialcomponentsweb/material-components-web.min.js"></script>
 		<script type="text/javascript">
@@ -54,7 +53,7 @@
 			var drawer = mdc.drawer.MDCDrawer.attachTo(document.querySelector('.mdc-drawer'));
 
 			// Attach MDCTopAppBar
-			var topAppBar = mdc.topAppBar.MDCTopAppBar.attachTo(document.getElementById('app-bar'));
+			var topAppBar = mdc.topAppBar.MDCTopAppBar.attachTo(document.getElementById('nunaliit_hanmburger_menu'));
 			topAppBar.setScrollTarget(document.body);
 
 			topAppBar.listen('MDCTopAppBar:nav', function(){
