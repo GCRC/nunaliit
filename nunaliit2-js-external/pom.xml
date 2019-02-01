@@ -36,6 +36,51 @@
 	</licenses>
   <build>
   	<plugins>
+
+
+		<plugin>
+			<groupId>com.github.eirslett</groupId>
+			<artifactId>frontend-maven-plugin</artifactId>
+			<version>1.4</version>
+			<executions>
+				<execution>
+					<id>install node and npm</id>
+					<goals>
+						<goal>install-node-and-npm</goal>
+					</goals>
+					<configuration>
+						<nodeVersion>v11.2.0</nodeVersion>
+						<npmVersion>6.5.0</npmVersion>
+						<installDirectory>tools</installDirectory>
+					</configuration>
+				</execution>
+	
+				<execution>
+					<id>npm install</id>
+					<goals>
+						<goal>npm</goal>
+					</goals>
+					<!-- Optional configuration which provides for running any npm command -->
+					<configuration>
+						<arguments>install</arguments>
+						<installDirectory>tools</installDirectory>
+						<workingDirectory>src/main/js/js-external/nunaliit-es6</workingDirectory>
+					</configuration>
+				</execution>
+				<execution>
+					<id>npm run full-build</id>
+					<goals>
+						<goal>npm</goal>
+					</goals>
+					<configuration>
+						<arguments>run full-build</arguments>
+						<installDirectory>tools</installDirectory>
+						<workingDirectory>src/main/js/js-external/nunaliit-es6</workingDirectory>
+					</configuration>
+				</execution>
+			</executions>
+		</plugin>
+
   		<plugin>
   			<groupId>org.apache.maven.plugins</groupId>
   			<artifactId>maven-assembly-plugin</artifactId>

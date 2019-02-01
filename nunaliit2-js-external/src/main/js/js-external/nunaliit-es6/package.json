@@ -7,6 +7,7 @@
     "ajax": "0.0.4",
     "fs": "0.0.1-security",
     "imports-loader": "^0.8.0",
+    "npm-watch": "^0.6.0",
     "ol": "^5.3.0"
   },
   "devDependencies": {
@@ -40,10 +41,22 @@
     "webpack-dev-middleware": "^3.4.0",
     "webpack-dev-server": "^3.1.14"
   },
+  "watch": {
+    "part-build": {
+      "patterns": [
+        "src/**/*.js"
+      ],
+      "quiet": true,
+      "runOnChangeOnly": false
+    }
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint --fix src/ || exit 0",
-    "build": "shx rm -rf dist/* && gulp babel && node tasks/generate-index && webpack --config webpack.config.babel.js",
+    "build-index": "node tasks/generate-index ",
+    "full-build": "npm run build-index && gulp webpack",
+    "part-build": "gulp webpack",
+    "watch": "npm-watch",
     "prepack": "gulp prepublish",
     "postpack": "gulp postpublish"
   },
@@ -51,6 +64,6 @@
     "nunaliit",
     "ol5"
   ],
-  "author": "Decheng Zhang",
+  "author": "Jean-Pierre Fiset, Decheng Zhang",
   "license": "BSD-3-Clause"
 }
