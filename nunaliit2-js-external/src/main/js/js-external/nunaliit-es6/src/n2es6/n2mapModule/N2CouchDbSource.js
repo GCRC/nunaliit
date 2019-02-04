@@ -2,13 +2,21 @@
 * @module n2es6/n2mapModule/N2CouchDbSource
 */
 import Vector from 'ol/source/Vector.js';
+
+
+//TODO still sharing the same DH='n2.canvasMap'
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
+var DH = 'n2.canvasMap';
+
+
+
 /**
 * @classdesc
 * The N2CouchDbSource class is the extended vector source using in
 * nunaliit map module.
+* @api
 */
-
-export class N2CouchDbSource extends Vector {
+class N2CouchDbSource extends Vector {
 	constructor (opts_) {
 		var opts = $n2.extend({
 			sourceModelId: undefined

@@ -1,12 +1,20 @@
 /**
  * @module n2es6/n2mapModule/N2LayerInfo
  */
+
+
+ /**
+  * @typedef {Object} Options
+  */
  /**
   * @classdesc
   * Class represents the options for one displayed layer.
   * @api
   */
-export class N2LayerInfo {
+class N2LayerInfo {
+	/**
+	 * @param {Options} opts_ Layer options.
+	 */
 	constructor(opts_){
 		var opts = $n2.extend({
 			customService: null,
@@ -191,4 +199,4 @@ export class N2LayerInfo {
 		};
 	}
 }
-export default N2LayerInfo
+export default N2LayerInfo;

@@ -1,17 +1,17 @@
 /**
-* @module n2es6/n2mapModule/N2CanvasMap
+* @module n2es6/n2mapModule/N2MapCanvas
 */
-import CouchDbSource from './N2CouchDbSource.js';
-import {_createEffectiveStyleMap as createStyleMap} from './N2StyleMap.js';
-import {_createStyleMapFromLayerInfo as createStyleMapFromLayerInfo} from './N2StyleMap.js';
-import {N2LayerInfo as LayerInfo} from './N2LayerInfo.js';
+
+import {default as CouchDbSource} from './N2CouchDbSource.js';
+import {_createEffectiveStyleMap as createStyleMap} from './N2StyleMapFunc.js';
+import {_createStyleMapFromLayerInfo as createStyleMapFromLayerInfo} from './N2StyleMapFunc.js';
+import {default as LayerInfo} from './N2LayerInfo';
 
 
 
-var
-_loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); }
-,DH = 'n2.canvasMap'
-;
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
+var DH = 'n2.canvasMap';
+
 
 // --------------------------------------------------------------------------
 /*
@@ -20,7 +20,7 @@ This canvas displays a map based on OpenLayers5.
 */
 
 //--------------------------------------------------------------------------
-var VENDOR = {
+const VENDOR =  {
 	GOOGLEMAP : 'googlemaps',
 	BING : 'bing',
 	WMS : 'wms',
@@ -36,18 +36,18 @@ var VENDOR = {
  * N2 Map canvas (The playground for ol5 lib update in nunaliit 2)
  * @api
  */
-export class MapCanvas  {
+class N2MapCanvas  {
 
-	construct(opts_){
+	constructor(opts_){
 		this.canvasId= null;
 
-		this.sourceModelId =  null;
+		this.sourceModelId = null;
 
-		this.elementGenerator =  null;
+		this.elementGenerator = null;
 
-		this.dispatchService  =  null;
+		this.dispatchService  = null;
 
-		this.showService =  null;
+		this.showService = null;
 
 		var opts = $n2.extend({
 			canvasId: undefined
@@ -85,7 +85,7 @@ export class MapCanvas  {
 			 */
 			this.overlayInfos = [];
 
-			prepOverlay(opts.overlays ,this.sources, this.overlayInfos);
+			this._prepOverlay(opts.overlays ,this.sources, this.overlayInfos);
 
 					// Register to events
 					if( this.dispatchService ){
@@ -115,7 +115,7 @@ export class MapCanvas  {
 	* @param  {[type]} sources [description]
 	* @param  {[type]} overlayInfos [description]
 	*/
-	prepOverlay (overlays, sources, overlayInfos) {
+	_prepOverlay (overlays, sources, overlayInfos) {
 		if( $n2.isArray(overlays) ){
 			overlays.forEach( (function(overlay){
 
@@ -133,7 +133,7 @@ export class MapCanvas  {
 					,_layerInfo: layerInfo
 				};
 
-				this.overlayInfos.push(layerOptions);
+				overlayInfos.push(layerOptions);
 				//---------------------
 				//---------------------
 				if ('couchdb' === overlay.type) {
@@ -151,7 +151,7 @@ export class MapCanvas  {
 							if( sourceModelId ){
 								var source = new CouchDbSource({
 									sourceModelId: sourceModelId
-									,dispatchService: _this.dispatchService
+									,dispatchService: this.dispatchService
 									,projCode: 'EPSG:3857'
 								});
 								this.sources.push(source);
@@ -169,6 +169,12 @@ export class MapCanvas  {
 
 
 	};
+
+	_registerLayerForEvents(layerInfo) {
+
+
+
+	};
 	_getElem(){
 			var $elem = $('#'+this.canvasId);
 			if( $elem.length < 1 ){
@@ -179,81 +185,6 @@ export class MapCanvas  {
 
 	_drawMap() {
 			var _this = this;
-			var image = new ol.style.Circle({
-				radius: 5,
-				fill: null,
-				stroke: new ol.style.Stroke({color: 'red', width: 1})
-			});
-
-			var styles = {
-				'Point': new ol.style.Style({
-					image: image
-				}),
-				'LineString': new ol.style.Style({
-					stroke: new ol.style.Stroke({
-						color: 'green',
-						width: 1
-					})
-				}),
-				'MultiLineString': new ol.style.Style({
-					stroke: new ol.style.Stroke({
-						color: 'green',
-						width: 1
-					})
-				}),
-				'MultiPoint': new ol.style.Style({
-					image: image
-				}),
-				'MultiPolygon': new ol.style.Style({
-					stroke: new ol.style.Stroke({
-						color: 'yellow',
-						width: 1
-					}),
-					fill: new ol.style.Fill({
-						color: 'rgba(255, 255, 0, 0.1)'
-					})
-				}),
-				'Polygon': new ol.style.Style({
-					stroke: new ol.style.Stroke({
-						color: 'blue',
-						lineDash: [4],
-						width: 3
-					}),
-					fill: new ol.style.Fill({
-						color: 'rgba(0, 0, 255, 0.1)'
-					})
-				}),
-				'GeometryCollection': new ol.style.Style({
-					stroke: new ol.style.Stroke({
-						color: 'magenta',
-						width: 2
-					}),
-					fill: new ol.style.Fill({
-						color: 'magenta'
-					}),
-					image: new ol.style.Circle({
-						radius: 10,
-						fill: null,
-						stroke: new ol.style.Stroke({
-							color: 'magenta'
-						})
-					})
-				}),
-				'Circle': new ol.style.Style({
-					stroke: new ol.style.Stroke({
-						color: 'red',
-						width: 2
-					}),
-					fill: new ol.style.Fill({
-						color: 'rgba(255,0,0,0.2)'
-					})
-				})
-			};
-
-			var styleFunction = function(feature) {
-				return styles[feature.getGeometry().getType()];
-			};
-
 
 			/**
 			* declare and init two layers array -- map and overlay
@@ -345,7 +276,7 @@ export class MapCanvas  {
 							return $n2.olUtils.ol5FeatureSorting(feature1, feature2);
 						}
 					});
-					var layerOptions = this.overlayInfos.shift();
+					var layerOptions = _this.overlayInfos.shift();
 					var layerStyleMap = createStyleMap(layerOptions._layerInfo);
 					vectorLayer.set('styleMap', layerStyleMap);
 					fg.push(vectorLayer);
@@ -494,14 +425,14 @@ export class MapCanvas  {
 
 
 				//--------------------------------------------------------------------------
-	function HandleCanvasAvailableRequest(m){
+	export function HandleCanvasAvailableRequest(m){
 		if( m.canvasType === 'map' ){
 			m.isAvailable = true;
 		};
 	};
 
 				//--------------------------------------------------------------------------
-	function HandleCanvasDisplayRequest(m){
+	export function HandleCanvasDisplayRequest(m){
 		if( m.canvasType === 'map' ){
 
 			var options = {};
@@ -525,14 +456,16 @@ export class MapCanvas  {
 			options.onSuccess = m.onSuccess;
 			options.onError = m.onError;
 
-			new MapCanvas(options);
+			new N2MapCanvas(options);
 		};
 	};
 
-	//--------------------------------------------------------------------------
-	$n2.canvasMap = {
-		MapCanvas: MapCanvas
-		,HandleCanvasAvailableRequest: HandleCanvasAvailableRequest
-		,HandleCanvasDisplayRequest: HandleCanvasDisplayRequest
-	};
-	export default MapCanvas
+//--------------------------------------------------------------------------
+
+
+nunaliit2.canvasMap = {
+	MapCanvas: N2MapCanvas
+	,HandleCanvasAvailableRequest: HandleCanvasAvailableRequest
+	,HandleCanvasDisplayRequest: HandleCanvasDisplayRequest
+};
+	export default N2MapCanvas;

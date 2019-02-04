@@ -448,7 +448,7 @@ var MapCanvas = $n2.Class('MapCanvas',{
 		            width: 1
 		          }),
 		          fill: new ol.style.Fill({
-		            color: 'rgba(255, 255, 0, 0.1)'
+		            color: 'rgba(255, 255, 0, 1)'
 		          })
 		        }),
 		        'Polygon': new ol.style.Style({
@@ -458,7 +458,7 @@ var MapCanvas = $n2.Class('MapCanvas',{
 		            width: 3
 		          }),
 		          fill: new ol.style.Fill({
-		            color: 'rgba(0, 0, 255, 0.1)'
+		            color: 'rgba(0, 0, 255, 1)'
 		          })
 		        }),
 		        'GeometryCollection': new ol.style.Style({
@@ -483,7 +483,7 @@ var MapCanvas = $n2.Class('MapCanvas',{
 		            width: 2
 		          }),
 		          fill: new ol.style.Fill({
-		            color: 'rgba(255,0,0,0.2)'
+		            color: 'rgba(255,0,0,2)'
 		          })
 		        })
 		      };
