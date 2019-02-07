@@ -1,9 +1,12 @@
 /**
 * @module n2es6/n2mapModule/N2CouchDbSource
 */
+
+import 'ol';
 import Vector from 'ol/source/Vector.js';
-
-
+import WKT from 'ol/format/WKT.js';
+import Feature from 'ol/Feature.js';
+import {getTransform} from 'ol/proj.js';
 //TODO still sharing the same DH='n2.canvasMap'
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 var DH = 'n2.canvasMap';
@@ -219,7 +222,7 @@ class N2CouchDbSource extends Vector {
 		_getResolutionInProjection(targetResolution, proj){
 
 			if( proj.getCode() !== 'EPSG:4326' ){
-				var transformFn = ol.proj.getTransform(proj.getCode(), 'EPSG:4326')
+				var transformFn = getTransform(proj.getCode(), 'EPSG:4326')
 				// Convert [0,0] and [0,1] to proj
 				var p0 = transformFn([0,0]);
 				var p1 = transformFn([0,1]);
@@ -235,7 +238,7 @@ class N2CouchDbSource extends Vector {
 		_reloadAllFeatures(){
 			var _this = this;
 
-			var wktFormat = new ol.format.WKT();
+			var wktFormat = new WKT();
 
 			var features = [];
 			for(var docId in this.infoByDocId){
@@ -255,7 +258,7 @@ class N2CouchDbSource extends Vector {
 						};
 					var geometry = wktFormat.readGeometryFromText(wkt);
 					geometry.transform('EPSG:4326', _this.mapProjCode);
-					var feature = new ol.Feature();
+					var feature = new Feature();
 					feature.setGeometry(geometry);
 					feature.setId(docId);
 					docInfo.feature = feature;

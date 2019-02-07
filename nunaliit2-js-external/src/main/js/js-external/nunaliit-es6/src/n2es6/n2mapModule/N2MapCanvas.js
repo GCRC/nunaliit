@@ -3,12 +3,20 @@
 */
 
 import {default as CouchDbSource} from './N2CouchDbSource.js';
-import {_createEffectiveStyleMap as createStyleMap} from './N2StyleMapFunc.js';
-import {_createStyleMapFromLayerInfo as createStyleMapFromLayerInfo} from './N2StyleMapFunc.js';
 import {default as LayerInfo} from './N2LayerInfo';
 
+import Map from 'ol/Map.js';
+import {default as VectorLayer} from 'ol/layer/Vector.js';
+import {default as LayerGroup} from 'ol/layer/Group.js';
+import {default as View} from 'ol/View.js';
 
+import {transform} from 'ol/proj.js';
+import Tile from 'ol/layer/Tile.js';
 
+import {click as clickCondition} from 'ol/events/condition.js';
+import {default as SelectInteraction} from 'ol/interaction/Select.js';
+import Stamen from 'ol/source/Stamen.js';
+import LayerSwitcher from 'ol-layerswitcher';
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 var DH = 'n2.canvasMap';
 
@@ -60,7 +68,7 @@ class N2MapCanvas  {
 
 		var _this = this;
 
-		try {
+	//	try {
 			this.canvasId = opts.canvasId;
 			this.sourceModelId = opts.sourceModelId;
 			this.elementGenerator = opts.elementGenerator;
@@ -100,10 +108,11 @@ class N2MapCanvas  {
 					this.bgSources = opts.backgrounds || [];
 					this._drawMap();
 
-				} catch(err) {
-					var error = new Error('Unable to create '+this._classname+': '+err);
-					opts.onError(error);
-				};
+//				} catch(err) {
+//					var error = new Error('Unable to create '+this._classname+': '+err);
+//					console.trace();
+//					opts.onError(error);
+//				};
 
 				opts.onSuccess();
 	}
@@ -120,20 +129,20 @@ class N2MapCanvas  {
 			overlays.forEach( (function(overlay){
 
 				//Generate Array<layerInfo> layerInfos;
-				var layerInfoOptions = jQuery.extend({
-					styleMapFn: function(layerInfo) {
-						return createStyleMapFromLayerInfo(layerInfo);
-					}
-				}, overlays);
-				var layerInfo = new LayerInfo(layerInfoOptions);
-				var layerOptions = {
-					name: layerInfo.name
-					,projection: layerInfo.sourceProjection
-					,visibility: layerInfo.visibility
-					,_layerInfo: layerInfo
-				};
-
-				overlayInfos.push(layerOptions);
+//				var layerInfoOptions = jQuery.extend({
+//					styleMapFn: function(layerInfo) {
+//						return createStyleMapFromLayerInfo(layerInfo);
+//					}
+//				}, overlays);
+//				var layerInfo = new LayerInfo(layerInfoOptions);
+//				var layerOptions = {
+//					name: layerInfo.name
+//					,projection: layerInfo.sourceProjection
+//					,visibility: layerInfo.visibility
+//					,_layerInfo: layerInfo
+//				};
+//
+//				overlayInfos.push(layerOptions);
 				//---------------------
 				//---------------------
 				if ('couchdb' === overlay.type) {
@@ -202,20 +211,20 @@ class N2MapCanvas  {
 			/**
 			* Two Groups : Overlay and Background
 			*/
-			var overlayGroup = new ol.layer.Group({
+			var overlayGroup = new LayerGroup({
 				title: 'Overlays',
 				layers: overlayLayers
 			});
-			var bgGroup = new ol.layer.Group({
+			var bgGroup = new LayerGroup({
 				title: 'Background',
 				layers: mapLayers
 			});
 
 			/**
-			* ol.View tweaking listen on the resolution changing
+			* ol.View tweaking listen on the resolution changing.
 			*/
-			var olView = new ol.View({
-				center: ol.proj.transform([-75, 45.5], 'EPSG:4326', 'EPSG:3857'),
+			var olView = new View({
+				center: transform([-75, 45.5], 'EPSG:4326', 'EPSG:3857'),
 				projection: 'EPSG:3857',
 				zoom: 6
 			});
@@ -231,7 +240,7 @@ class N2MapCanvas  {
 
 				};
 			});
-			var customMap = new ol.N2Map({
+			var customMap = new Map({
 				target : this.canvasId,
 				layers: [
 					bgGroup,
@@ -242,15 +251,15 @@ class N2MapCanvas  {
 
 
 
-			var customLayerSwitcher = new ol.control.N2LayerSwitcher({
+			var customLayerSwitcher = new LayerSwitcher({
 				tipLabel: 'Legend' // Optional label for button
 			});
 
 
 			customMap.addControl(customLayerSwitcher);
 
-			var selectClick = new ol.interaction.Select({
-				condition: ol.events.condition.click
+			var selectClick = new SelectInteraction({
+				condition: clickCondition
 			});
 			selectClick.on('select', function(e){
 				console.log('Test select func; Selected Feature: ' + e.selected.length);
@@ -269,16 +278,16 @@ class N2MapCanvas  {
 						distance : 20,
 						source: source
 					});
-					var vectorLayer = new ol.layer.Vector({
+					var vectorLayer = new VectorLayer({
 						title: "CouchDb",
 						source: clusterSource,
 						renderOrder: function(feature1, feature2){
 							return $n2.olUtils.ol5FeatureSorting(feature1, feature2);
 						}
 					});
-					var layerOptions = _this.overlayInfos.shift();
-					var layerStyleMap = createStyleMap(layerOptions._layerInfo);
-					vectorLayer.set('styleMap', layerStyleMap);
+//					var layerOptions = _this.overlayInfos.shift();
+//					var layerStyleMap = createStyleMap(layerOptions._layerInfo);
+//					vectorLayer.set('styleMap', layerStyleMap);
 					fg.push(vectorLayer);
 				});
 
@@ -328,7 +337,7 @@ class N2MapCanvas  {
 			var _this = this;
 
 			if( layerDefinition ) {
-				var ol5layer = new ol.layer.Tile({
+				var ol5layer = new Tile({
 					title: layerDefinition.name,
 					type: 'base',
 					visible: isDefaultLayer,
@@ -400,7 +409,7 @@ class N2MapCanvas  {
 					} else if ( sourceTypeInternal == VENDOR.STAMEN) {
 						if (sourceOptionsInternal
 							&& sourceOptionsInternal.layerName ){
-								return new ol.source.Stamen({
+								return new Stamen({
 									layer:  sourceOptionsInternal.layerName
 								});
 							} else {
