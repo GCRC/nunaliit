@@ -64,6 +64,11 @@
     height: 48px;
 }
 
+/* Display docIds on separate lines in dialog window */
+.selectAppTextDialog .mdc-dialog__content {
+    white-space: pre-line;
+}
+
 /* Overriding material-components-web.min.css styling */
 
 .mdc-dialog {

@@ -3265,31 +3265,68 @@
 	
 	// -----------------------------------------------------------------
 	function selectText(list){
-		var docIds = list.docIds;
-		
+		var mdcDialogComponent;
+		var docIds = list.docIds;		
 		var dialogId = $n2.getUniqueId();
 
-		var $dialog = $('<div id="'+dialogId+'">'
-			+'<textarea class="selectAppTextDocIds"></textarea>'
-			+'</div></div>');
+		var $dialog = $('<div>')
+			.attr('id',dialogId)
+			.attr('role','alertdialog')
+			.attr('aria-modal','true')
+			.attr('aria-labelledby','my-dialog-title')
+			.attr('aria-describedby','my-dialog-content')
+			.addClass('selectAppTextDialog mdc-dialog mdc-dialog--scrollable')
+			.appendTo($('body'));
+
+		var $dialogContainer = $('<div>')
+			.addClass('mdc-dialog__container')
+			.appendTo($dialog);
+
+		var $dialogSurface = $('<div>')
+			.addClass('mdc-dialog__surface')
+			.appendTo($dialogContainer);
+
+		$('<h2>')
+			.addClass('mdc-dialog__title')
+			.text(_loc('Document Identifiers'))
+			.appendTo($dialogSurface);
+
+		var docIdList = docIds.join('\n');
 		
-		var text = docIds.join('\n');
+		$('<div>')
+			.addClass('mdc-dialog__content')
+			.text(docIdList)
+			.appendTo($dialogSurface);
+
+		var $footer = $('<footer>')
+			.addClass('mdc-dialog__actions')
+			.appendTo($dialogSurface);
+
+		var $button = $('<button>')
+			.addClass('mdc-button mdc-dialog__button')
+			.text(_loc('OK'))
+			.appendTo($footer)
+			.click(function(){
+				mdcDialogComponent.close();
+				$dialog.remove();
+				return false;
+			});
 		
-		$dialog.find('textarea.selectAppTextDocIds').text( text );
-		
-		var dialogOptions = {
-			autoOpen: true
-			,title: _loc('Document Identifiers')
-			,modal: true
-			,closeOnEscape: false
-			,dialogClass: 'selectAppTextDialog'
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
-			}
-		};
-		$dialog.dialog(dialogOptions);
+		$('<div>')
+			.addClass('mdc-dialog__scrim')
+			.click(function(){
+				mdcDialogComponent.close();
+				$dialog.remove();
+				return false;
+			})
+			.appendTo($dialog);
+
+		// Attach ripple to button
+		mdc.ripple.MDCRipple.attachTo($button[0]);
+
+		// Attach mdc component to alert dialog
+		mdcDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);
+		mdcDialogComponent.open();
 	};
 	
 	// -----------------------------------------------------------------
