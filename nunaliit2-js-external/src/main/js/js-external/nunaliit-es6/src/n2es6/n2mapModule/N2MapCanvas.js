@@ -2,6 +2,7 @@
 * @module n2es6/n2mapModule/N2MapCanvas
 */
 
+import 'ol/ol.css';
 import {default as CouchDbSource} from './N2CouchDbSource.js';
 import {default as LayerInfo} from './N2LayerInfo';
 

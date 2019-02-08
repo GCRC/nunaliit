@@ -665,6 +665,11 @@ var StyleRules = $n2.Class({
 		return symbolizer;
 	},
 
+	
+	/**
+	 * retrive the cache given a stylerule,
+	 * var "current" is the lazy tree node
+	 */
 	getStyle: function(ctxt){
 		var stylePath = [];
 		var current = this.cache;

@@ -739,8 +739,15 @@ var MapStylesAdaptor = $n2.Class({
 			};
 			feature.n2_doc = data;
 
+			/**
+			 * @type{import ('n2.styleRule.js').Style } style 
+			 */
 			var style = _this.styleRules.getStyle(feature);
 			feature._n2Style = style;
+			
+			/**
+			 * @type {import ('n2.styleRule.js').Symbolizer } symbolizer
+			 */
 			var symbolizer = style.getSymbolizer(feature);
 
 			//TODO add a cache -- pending --
