@@ -4,11 +4,14 @@
 
 import 'ol/ol.css';
 import {default as CouchDbSource} from './N2CouchDbSource.js';
+import {default as ImageSource} from 'ol/source/Image.js';
+
 import {default as LayerInfo} from './N2LayerInfo';
 
 import Map from 'ol/Map.js';
 import {default as VectorLayer} from 'ol/layer/Vector.js';
 import {default as LayerGroup} from 'ol/layer/Group.js';
+import {default as ImageLayer} from 'ol/layer/Image.js';
 import {default as View} from 'ol/View.js';
 
 import {transform} from 'ol/proj.js';
@@ -102,6 +105,9 @@ class N2MapCanvas  {
 			 */
 			this.overlayInfos = [];
 
+			
+			this.mapLayers = [];
+			this.overlayLayers = [];
 			this._prepOverlay(opts.overlays ,this.sources, this.overlayInfos);
 
 					// Register to events
@@ -207,26 +213,25 @@ class N2MapCanvas  {
 			/**
 			* declare and init two layers array -- map and overlay
 			*/
-			var mapLayers = [];
-			var overlayLayers = [];
+
 
 			/**
 			* filling in the vector layers
 			*/
 
-			overlayLayers = this._genOverlayMapLayers(this.sources);
-			mapLayers = this._genBackgroundMapLayers(this.bgSources);
+			this.overlayLayers = this._genOverlayMapLayers(this.sources);
+			this.mapLayers = this._genBackgroundMapLayers(this.bgSources);
 
 			/**
 			* Two Groups : Overlay and Background
 			*/
 			var overlayGroup = new LayerGroup({
 				title: 'Overlays',
-				layers: overlayLayers
+				layers: this.overlayLayers
 			});
 			var bgGroup = new LayerGroup({
 				title: 'Background',
-				layers: mapLayers
+				layers: this.mapLayers
 			});
 
 			/**
@@ -299,7 +304,7 @@ class N2MapCanvas  {
 						title: 'Point',
 						interaction: new DrawInteraction
 						({	type: 'Point',
-							source: overlayLayers[0].getSource()
+							source: this.overlayLayers[0].getSource()
 						}),
 						onToggle: function(active)
 						{	
@@ -311,7 +316,19 @@ class N2MapCanvas  {
 //			mainbar.addControl (new ZoomToExtent({  extent: [ 265971,6243397 , 273148,6250665 ] }));
 //			mainbar.addControl (new Rotate());
 //			mainbar.addControl (new FullScreen());
-
+			//_changeToImageRender();
+	}
+	
+	_changeToImageRender(){
+		let neutralSource = this.overlayLayers[0].getSource();
+		let postLayer = new ol.layer.ImageLayer({
+			source: new ol.source.ImageSource({
+					source: neutralSource
+					})
+			})
+		
+		this.overlayLayers = [postLayer];
+		
 	}
 	
 	_retrivingDocsAndSendSelectedEvent(features) {
@@ -379,6 +396,7 @@ class N2MapCanvas  {
 					});
 					var vectorLayer = new VectorLayer({
 						title: "CouchDb",
+						renderMode : 'image',
 						source: clusterSource,
 						renderOrder: function(feature1, feature2){
 							return $n2.olUtils.ol5FeatureSorting(feature1, feature2);
