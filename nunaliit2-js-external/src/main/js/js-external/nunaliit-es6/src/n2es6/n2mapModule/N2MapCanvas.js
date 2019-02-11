@@ -16,8 +16,16 @@ import Tile from 'ol/layer/Tile.js';
 
 import {click as clickCondition} from 'ol/events/condition.js';
 import {default as SelectInteraction} from 'ol/interaction/Select.js';
+import {default as DrawInteraction} from 'ol/interaction/Draw.js';
 import Stamen from 'ol/source/Stamen.js';
 import LayerSwitcher from 'ol-layerswitcher';
+
+import 'ol-ext/dist/ol-ext.css';
+import Bar from 'ol-ext/control/Bar';
+import Toggle from 'ol-ext/control/Toggle';
+
+
+
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 var DH = 'n2.canvasMap';
 
@@ -259,15 +267,105 @@ class N2MapCanvas  {
 
 			customMap.addControl(customLayerSwitcher);
 
-			var selectClick = new SelectInteraction({
-				condition: clickCondition
-			});
-			selectClick.on('select', function(e){
-				console.log('Test select func; Selected Feature: ' + e.selected.length);
+
+			var mainbar = new Bar();
+			customMap.addControl(mainbar);
+			mainbar.setPosition("top");
+			/* Nested toobar with one control activated at once */
+			var nested = new Bar ({ toggleOne: true, group:true });
+			var selectInteraction= new SelectInteraction ();
+			mainbar.addControl (nested);
+			// Add selection tool (a toggle control with a select interaction)
+			var selectCtrl = new Toggle(
+					{	html: '<i class="fa fa-hand-pointer-o"></i>',
+						className: "select",
+						title: "Select",
+						interaction: selectInteraction,
+						active:true,
+						onToggle: function(active)
+						{	
+						}
+					});
+			selectInteraction.on("select", (function(e) {
+				this._retrivingDocsAndSendSelectedEvent(e.selected);
+				}).bind(this)
+			);
+			nested.addControl(selectCtrl);
+			
+			// Add editing tools
+			var pedit = new Toggle(
+					{	html: '<i class="fa fa-map-marker" ></i>',
+						className: "edit",
+						title: 'Point',
+						interaction: new DrawInteraction
+						({	type: 'Point',
+							source: overlayLayers[0].getSource()
+						}),
+						onToggle: function(active)
+						{	
+						}
+					});
+			nested.addControl ( pedit );
+
+			/* Standard Controls */
+//			mainbar.addControl (new ZoomToExtent({  extent: [ 265971,6243397 , 273148,6250665 ] }));
+//			mainbar.addControl (new Rotate());
+//			mainbar.addControl (new FullScreen());
+
+	}
+	
+	_retrivingDocsAndSendSelectedEvent(features) {
+		
+		var _this = this;
+		var validFeatures = [];
+		for ( let i = 0, v = features.length;i< v ;i++) {
+
+			let feature = features[i];
+			DFS(feature, function(t) {
+				validFeatures.push(t)
 			})
-
-			customMap.addInteraction(selectClick);
-
+		}
+		if (_this.dispatchService ) {
+			if( 0 === validFeatures.length){
+				return;
+			} else if ( 1 === validFeatures.length) {
+				let t = validFeatures[0];
+				_this.dispatchService.send(DH, {
+					type: 'userSelect'
+					,docId: t.get('data')._id
+					,doc: t.get('data')
+					,feature: t
+				})
+			} else if (1 < validFeatures.length){
+				
+				let docIds = [];
+				validFeatures.forEach(function(elem) {
+					docIds.push(elem.get('data')._id);
+				})
+				_this.dispatchService.send(DH,{
+					type: 'userSelect'
+					,docIds: docIds
+				});
+			};
+		};
+		
+		
+		function DFS(item , callback){
+			if(!item) return;
+			if ( item.get('data')){
+				callback (item);
+				return;
+			}
+			let innerFeatures = item.get('featuresInCluster');
+			if( innerFeatures && Array.isArray(innerFeatures)){
+				
+				for( let i=0,e=innerFeatures.length; i< e; i++){
+					
+					DFS(innerFeatures[i], callback);
+				}
+			}
+			
+		}
 	}
 	_genOverlayMapLayers(Sources) {
 			var fg = [];

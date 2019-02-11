@@ -7,6 +7,7 @@ import Vector from 'ol/source/Vector.js';
 import WKT from 'ol/format/WKT.js';
 import Feature from 'ol/Feature.js';
 import {getTransform} from 'ol/proj.js';
+import {default as Projection} from 'ol/proj/Projection.js';
 //TODO still sharing the same DH='n2.canvasMap'
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 var DH = 'n2.canvasMap';
@@ -260,13 +261,23 @@ class N2CouchDbSource extends Vector {
 					geometry.transform('EPSG:4326', _this.mapProjCode);
 					var feature = new Feature();
 					feature.setGeometry(geometry);
-					feature.setId(docId);
-					docInfo.feature = feature;
+					if (docId && geometry) {
+						feature.setId(docId);
+						feature.set('data' ,  doc);
+						feature.set('fid', docId);
+						feature.set('n2GeomProj', new Projection({code: 'EPSG:4326'}) );
+						features.push(feature);
+					} else {
+						$n2.log('Invalid feature', doc);
+					}
+					
+					
+					//docInfo.feature = feature;
 							// 				if (geoJSONFeature['properties']) {
 							// 					feature.setProperties(geoJSONFeature['properties']);
 							// 				}
 
-							features.push(feature);
+					
 				};
 			};
 

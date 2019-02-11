@@ -173,7 +173,7 @@ class N2Cluster extends Cluster {
 		scaleCoordinate(centroid, 1/count);
 
 		const cluster = new Feature(new Point(centroid));
-		cluster.set('features', features);
+		cluster.set('featuresInCluster', features);
 		cluster.set('fid', this.clusterPrefix + this.clusterId);
 		++this.clusterId;
 		return cluster;
