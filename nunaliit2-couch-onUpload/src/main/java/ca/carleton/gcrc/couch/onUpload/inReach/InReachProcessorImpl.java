@@ -126,7 +126,7 @@ public class InReachProcessorImpl implements InReachProcessor {
 				
 				InReachFormField.Type fieldType = field.getType();
 				if( InReachFormField.Type.PICKLIST == fieldType ){
-					sw.write("\\d+");
+					sw.write("\\d*");
 				} else if( InReachFormField.Type.TEXT == fieldType ) {
 					sw.write(".*");
 				} else {
@@ -160,16 +160,26 @@ public class InReachProcessorImpl implements InReachProcessor {
 
 			Type fieldType = field.getType();
 			if( InReachFormField.Type.PICKLIST == fieldType ){
-				int index = Integer.parseInt(data);
-				index = index - 1; // 1-based index
-				
-				List<String> values = field.getValues();
-				if( values.size() <= index ){
-					throw new Exception("Index is out of bound for field "+fieldName+": "+index);
+				if( "".equals(data.trim()) && null != fieldDefaultValue ) {
+					// Not provided. But a default is provided. Use default.
+					data = fieldDefaultValue;
 				}
-				
-				String value = values.get(index);
-				jsonData.put(fieldName, value);
+
+				if( "".equals(data.trim()) ) {
+					// Not provided and no default: leave empty
+
+				} else {
+					int index = Integer.parseInt(data);
+					index = index - 1; // 1-based index
+					
+					List<String> values = field.getValues();
+					if( values.size() <= index ){
+						throw new Exception("Index is out of bound for field "+fieldName+": "+index);
+					}
+					
+					String value = values.get(index);
+					jsonData.put(fieldName, value);
+				}
 				
 			} else if( InReachFormField.Type.TEXT == fieldType ) {
 				if( "".equals(data) && null != fieldDefaultValue ){
