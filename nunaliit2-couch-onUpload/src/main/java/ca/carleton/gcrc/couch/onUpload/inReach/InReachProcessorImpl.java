@@ -1,6 +1,7 @@
 package ca.carleton.gcrc.couch.onUpload.inReach;
 
 import java.io.StringWriter;
+import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -14,6 +15,7 @@ import ca.carleton.gcrc.couch.onUpload.inReach.InReachFormField.Type;
 import ca.carleton.gcrc.geom.BoundingBox;
 import ca.carleton.gcrc.geom.Geometry;
 import ca.carleton.gcrc.geom.Point;
+import ca.carleton.gcrc.utils.DateUtils;
 
 public class InReachProcessorImpl implements InReachProcessor {
 
@@ -47,10 +49,10 @@ public class InReachProcessorImpl implements InReachProcessor {
 		}
 
 		// Convert geometry
+		JSONObject jsonPosition = null;
 		{
 			docDescriptor.removeGeometryDescription();
 
-			JSONObject jsonPosition = null;
 			if( null != jsonItem ){
 				jsonPosition = jsonItem.optJSONObject("Position");
 			}
@@ -69,6 +71,34 @@ public class InReachProcessorImpl implements InReachProcessor {
 			}
 		}
 
+		// Extract time
+		if( null != jsonPosition ) {
+			String gpsTimestamp = jsonPosition.optString("GpsTimestamp", null);
+			
+			Date gpsDate = null;
+			if( null != gpsTimestamp ) {
+				try {
+					gpsDate = DateUtils.parseGpsTimestamp(gpsTimestamp);
+				} catch(Exception e) {
+					throw new Exception("Error while parsing GPS timestamp", e);
+				}
+			}
+
+			// create date structure
+			if( null != gpsDate ) {
+				long intervalStart = gpsDate.getTime() / 1000;
+				long intervalEnd = intervalStart + 1;
+
+				JSONObject jsonDate = new JSONObject();
+				jsonDate.put("nunaliit_type", "date");
+				jsonDate.put("date", gpsTimestamp);
+				jsonDate.put("min", intervalStart);
+				jsonDate.put("max", intervalEnd);
+
+				jsonItem.put("NunaliitTimestamp", jsonDate);
+			}
+		}
+
 		// Set schema
 		String schemaName = "inReach";
 		if( null != form ){
@@ -77,7 +107,7 @@ public class InReachProcessorImpl implements InReachProcessor {
 			}
 		}
 		docDescriptor.setSchemaName(schemaName);
-		
+
 		// If a form is selected, extract information
 		if( null != form ){
 			try {

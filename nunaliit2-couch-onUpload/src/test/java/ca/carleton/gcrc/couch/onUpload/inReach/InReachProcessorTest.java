@@ -114,4 +114,38 @@ public class InReachProcessorTest extends TestCase {
 			}
 		}
 	}
+
+	public void testGpsTimestamp() throws Exception {
+		File settingsFile = TestSupport.findResourceFile("inreach_forms.xml");
+		File docFile = TestSupport.findResourceFile("inreach_doc_missing.json");
+		
+		InReachSettingsFromXmlFile settings = new InReachSettingsFromXmlFile(settingsFile);
+		settings.load();
+		InReachConfiguration.setInReachSettings(settings);
+		
+		InReachProcessorImpl processor = new InReachProcessorImpl();
+		
+		JSONObject jsonDoc = TextFileUtils.readJsonObjectFile(docFile);
+		
+		MockFileConversionContext2 conversionContext = new MockFileConversionContext2(jsonDoc);
+		
+		processor.performSubmission(conversionContext);
+		
+		JSONObject savedDocJson = conversionContext.getSavedDocument();
+		if( null == savedDocJson ){
+			fail("Document not saved");
+		}
+
+		// Look for time structure
+		JSONObject jsonItem = savedDocJson.getJSONObject("Item");
+		JSONObject jsonTimestamp = jsonItem.optJSONObject("NunaliitTimestamp");
+		if( null == jsonTimestamp ){
+			fail("Can not find nunaliit timestamp");
+		} else {
+			String dateType = jsonTimestamp.getString("nunaliit_type");
+			if( false == "date".equals(dateType) ) {
+				fail("Unexpected time structure");
+			}
+		}
+	}
 }
