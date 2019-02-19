@@ -32,8 +32,8 @@ define([
     , centerOnEvent: function(mouseEvent){
       var mouseX     = mouseEvent.pageX;
       var mouseY     = mouseEvent.pageY;
-      this.tempForm.style.top = (mouseY - this.halfHeight) + "px";
-      this.tempForm.style.left = (mouseX - this.halfWidth) + "px";
+      this.tempForm.style.top = (mouseY - this.halfHeight ) + "px";
+      this.tempForm.style.left = (mouseX - this.halfWidth ) + "px";
       // Make sure the element has been drawn and
       // has height in the dom before triggering.
       PubSub.trigger("tempMove", mouseEvent);

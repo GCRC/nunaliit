@@ -1,18 +1,18 @@
 define([
     "jquery" , "underscore" , "backbone"
        , "collections/snippets" , "collections/my-form-snippets"
-       , "views/tab" , "views/my-form"
+       , "views/tab" , "views/my-form", "views/loading-progress"
     , "text!data/n2.json", "text!data/n2attributes.json"
     , "text!templates/app/render.html", "text!templates/app/about.html"
     , "text!templates/app/loading.html"
-    , "text!data/testrape.json"
+   
 ], function(
     $, _, Backbone
   , SnippetsCollection, MyFormSnippetsCollection
-    , TabView, MyFormView
+    , TabView, MyFormView, ProgressBar
     , n2mandatoryJSON,  attributesJSON
     , renderTab, aboutTab, loadingTab
-    , testRape
+    
 ){
 	return {
 		initialize: function(){
@@ -62,7 +62,9 @@ define([
 					title: "Original"
 					,collection: new MyFormSnippetsCollection(JSON.parse(n2mandatoryJSON))
 				});
+				new ProgressBar();
 			};
 		}
+		
 	}
 });
