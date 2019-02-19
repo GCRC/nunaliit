@@ -248,10 +248,17 @@ var Symbolizer = $n2.Class({
 	initialize: function(){
 		
 		this.symbols = {};
-		this.id = null;
+		
+		/**
+		 * The id for each {Symbolizer} is necessary for global referencing purpose.
+		 */
+		if( !arguments[0] ){
+			throw new Error('n2.styleRule: an id must be provided for each symbolizer');
+		}
+		this.id = arguments[0] || null;
 		this._n2Symbolizer = true;
 		
-		for(var i=0,e=arguments.length; i<e; ++i){
+		for(var i=1,e=arguments.length; i<e; ++i){
 			var otherSymbolizer = arguments[i];
 			this.extendWith(otherSymbolizer);
 		};
@@ -269,8 +276,12 @@ var Symbolizer = $n2.Class({
 			} else {
 				// From a user supplied dictionary. Must translate
 				for(var key in symbolizer){
+					
+					if (key === 'id') {
+						continue;
+					}
 					var symbolValue = symbolizer[key];
-
+					
 					// Translate key, if needed
 					if( SymbolTranslationMap[key] ){
 						key = SymbolTranslationMap[key];
@@ -413,19 +424,19 @@ var Style = $n2.Class({
 		};
 		
 		if( opts.basicStyle && opts.extendWithRule ){
-			this.symbolizersByLabel.normal = new Symbolizer(
+			this.symbolizersByLabel.normal = new Symbolizer(this.id + '.normal',
 				opts.basicStyle.symbolizersByLabel.normal, 
 				opts.extendWithRule.normal
 			);
-			this.symbolizersByLabel.selected = new Symbolizer(
+			this.symbolizersByLabel.selected = new Symbolizer(this.id + '.$selected',
 				opts.basicStyle.symbolizersByLabel.selected, 
 				opts.extendWithRule.selected
 			);
-			this.symbolizersByLabel.hovered = new Symbolizer(
+			this.symbolizersByLabel.hovered = new Symbolizer(this.id + '.$hovered',
 				opts.basicStyle.symbolizersByLabel.hovered, 
 				opts.extendWithRule.hovered
 			);
-			this.symbolizersByLabel.found = new Symbolizer(
+			this.symbolizersByLabel.found = new Symbolizer(this.id + '.$found',
 				opts.basicStyle.symbolizersByLabel.found, 
 				opts.extendWithRule.found
 			);
@@ -443,10 +454,10 @@ var Style = $n2.Class({
 			this.symbolizersByLabel.found = opts.extendWithRule.found;
 
 		} else {
-			this.symbolizersByLabel.normal = new Symbolizer();
-			this.symbolizersByLabel.selected = new Symbolizer();
-			this.symbolizersByLabel.hovered = new Symbolizer();
-			this.symbolizersByLabel.found = new Symbolizer();
+			this.symbolizersByLabel.normal = new Symbolizer(this.id + '.normal');
+			this.symbolizersByLabel.selected = new Symbolizer(this.id + '.$selected');
+			this.symbolizersByLabel.hovered = new Symbolizer(this.id + '.$hovered');
+			this.symbolizersByLabel.found = new Symbolizer(this.id + '.$found');
 		};
 	},
 
@@ -476,46 +487,51 @@ var Style = $n2.Class({
 
 	_getSymbolizerFromLabel: function(label){
 		var symbolizer = this.symbolizersByLabel[label];
-		
+
 		if( !symbolizer ){
 			// Need to compute it
+			if (!this.id){
+				throw new Error('The Style\'s id is not here, check your style');
+			}
+			var symbol_id  = this.id || '';
+			symbol_id += '.'+ label;
 			if( 'normal' === label ){
-				symbolizer = new Symbolizer();
+				symbolizer = new Symbolizer(symbol_id);
 				
 			} else if( '$hovered' === label ){
 				// $hovered = normal + hovered
 				var s1 = this._getSymbolizerFromLabel('normal');
-				symbolizer = new Symbolizer(s1, this.symbolizersByLabel.hovered);
+				symbolizer = new Symbolizer(symbol_id, s1, this.symbolizersByLabel.hovered);
 				
 			} else if( '$found' === label ){
 				// $found = normal + found
 				var s1 = this._getSymbolizerFromLabel('normal');
-				symbolizer = new Symbolizer(s1, this.symbolizersByLabel.found);
+				symbolizer = new Symbolizer(symbol_id, s1, this.symbolizersByLabel.found);
 				
 			} else if( '$selected' === label ){
 				// $selected = normal + selected
 				var s1 = this._getSymbolizerFromLabel('normal');
-				symbolizer = new Symbolizer(s1, this.symbolizersByLabel.selected);
+				symbolizer = new Symbolizer(symbol_id, s1, this.symbolizersByLabel.selected);
 				
 			} else if( '$selectedFound' === label ){
 				// $selectedFound = $selected + found
 				var s1 = this._getSymbolizerFromLabel('$selected');
-				symbolizer = new Symbolizer(s1, this.symbolizersByLabel.found);
+				symbolizer = new Symbolizer(symbol_id, s1, this.symbolizersByLabel.found);
 				
 			} else if( '$selectedHovered' === label ){
 				// $selectedHovered = $selected + hovered
 				var s1 = this._getSymbolizerFromLabel('$selected');
-				symbolizer = new Symbolizer(s1, this.symbolizersByLabel.hovered);
+				symbolizer = new Symbolizer(symbol_id, s1, this.symbolizersByLabel.hovered);
 				
 			} else if( '$foundHovered' === label ){
 				// $foundHovered = $found + hovered
 				var s1 = this._getSymbolizerFromLabel('$found');
-				symbolizer = new Symbolizer(s1, this.symbolizersByLabel.hovered);
+				symbolizer = new Symbolizer(symbol_id, s1, this.symbolizersByLabel.hovered);
 				
 			} else if( '$selectedFoundHovered' === label ){
 				// $selectedFoundHovered = $selectedFound + hovered
 				var s1 = this._getSymbolizerFromLabel('$selectedFound');
-				symbolizer = new Symbolizer(s1, this.symbolizersByLabel.hovered);
+				symbolizer = new Symbolizer(symbol_id, s1, this.symbolizersByLabel.hovered);
 			};
 			
 			// Save computed symbolizer for next call
@@ -528,7 +544,7 @@ var Style = $n2.Class({
 	}
 });
 
-//--------------------------------------------------------------------------
+//-------------------------------------------------------------------------- 
 var StyleRule = $n2.Class({
 	
 	condition: null,
@@ -559,10 +575,10 @@ var StyleRule = $n2.Class({
 		this.condition = opts.condition;
 		this.label = opts.label;
 		this.source = opts.source;
-		this.normal = new Symbolizer(opts.normal);
-		this.selected = new Symbolizer(opts.selected);
-		this.found = new Symbolizer(opts.found);
-		this.hovered = new Symbolizer(opts.hovered);
+		this.normal = new Symbolizer('xxx', opts.normal);
+		this.selected = new Symbolizer('xxx', opts.selected);
+		this.found = new Symbolizer('xxx', opts.found);
+		this.hovered = new Symbolizer('xxx', opts.hovered);
 	},
 	
 	isValidForContext: function(ctxt){
@@ -593,7 +609,7 @@ var StyleRules = $n2.Class({
 		this.rules = [];
 		this.cache = {
 			style: new Style({
-				id: ''
+				id: 'root'
 			})
 		};
 
@@ -660,7 +676,15 @@ var StyleRules = $n2.Class({
 	 * }
 	 */
 	getSymbolizer: function(ctxt){
+		/**
+		 * @type {Style} style. Class Style defined in this module
+		 * A cache exists inside this function (tree cache)
+		 */
 		var style = this.getStyle(ctxt);
+		/**
+		 * @type {Symbolizer} symbolizer. Class Symbolizer defined in this module
+		 * A cache exists inside this function (hash cache)
+		 */ 
 		var symbolizer = style.getSymbolizer(ctxt);
 		return symbolizer;
 	},
@@ -694,6 +718,7 @@ var StyleRules = $n2.Class({
 });
 
 //--------------------------------------------------------------------------
+//@ Deprecated 
 function loadRuleFromObject(ruleObj){
 	var condition = g_TrueNode;
 	if( ruleObj.condition ){
