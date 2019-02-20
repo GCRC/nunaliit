@@ -5,7 +5,6 @@ define([
     , "views/my-form-snippet"
     , "text!data/n2attributeboolean.json"
     , "text!data/n2.json" , "text!data/n2attributes.json"
-   , "text!data/testrape.json"
 ], function(
   $, _, Backbone,PubSub
   , SnippetModel
@@ -13,7 +12,7 @@ define([
     , MyFormSnippetView
     , n2AttrBoolean
     ,n2mandatoryJSON , attributesJSON
-    , testRape
+    
 ){
   return SnippetsCollection.extend({
     model: SnippetModel
@@ -110,7 +109,8 @@ define([
             }
           })
         }else{
-          console.log("CAUSION: the type: " + attr["type"] +" not defined");
+          alert("CAUSION: the type: " + attr["type"] +" is not a valid type.\n" +
+          		" The cause can be either a deprecated type or an error in the database.");
         }
         that.push(candidateSnippetInstance);
         PubSub.trigger("rapeSnippetsDecre");
