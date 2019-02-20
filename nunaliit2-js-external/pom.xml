@@ -1,15 +1,16 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <artifactId>nunaliit2</artifactId>
-    <groupId>ca.carleton.gcrc</groupId>
-    <version>2.2.9-SNAPSHOT</version>
-  </parent>
-  <groupId>ca.carleton.gcrc</groupId>
-  <artifactId>nunaliit2-js-external</artifactId>
-  <version>2.2.9-SNAPSHOT</version>
-  <name>nunaliit2-js-external</name>
-  <description>Javascript files from external projects</description>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<artifactId>nunaliit2</artifactId>
+		<groupId>ca.carleton.gcrc</groupId>
+		<version>2.2.9-SNAPSHOT</version>
+	</parent>
+	<artifactId>nunaliit2-js-external</artifactId>
+	<packaging>pom</packaging>
+	<name>nunaliit2-js-external</name>
+	<description>Javascript files from external projects</description>
 	<licenses>
 		<license>
 			<name>New BSD License</name>
@@ -34,74 +35,28 @@
 				under LGPL.</comments>
 		</license>
 	</licenses>
-  <build>
-  	<plugins>
-
-
-		<plugin>
-			<groupId>com.github.eirslett</groupId>
-			<artifactId>frontend-maven-plugin</artifactId>
-			<version>1.4</version>
-			<executions>
-				<execution>
-					<id>install node and npm</id>
-					<goals>
-						<goal>install-node-and-npm</goal>
-					</goals>
-					<configuration>
-						<nodeVersion>v11.2.0</nodeVersion>
-						<npmVersion>6.5.0</npmVersion>
-						<installDirectory>tools</installDirectory>
-					</configuration>
-				</execution>
-	
-				<execution>
-					<id>npm install</id>
-					<goals>
-						<goal>npm</goal>
-					</goals>
-					<!-- Optional configuration which provides for running any npm command -->
-					<configuration>
-						<arguments>install</arguments>
-						<installDirectory>tools</installDirectory>
-						<workingDirectory>src/main/js/js-external/nunaliit-es6</workingDirectory>
-					</configuration>
-				</execution>
-				<execution>
-					<id>npm run full-build</id>
-					<goals>
-						<goal>npm</goal>
-					</goals>
-					<configuration>
-						<arguments>run full-build</arguments>
-						<installDirectory>tools</installDirectory>
-						<workingDirectory>src/main/js/js-external/nunaliit-es6</workingDirectory>
-					</configuration>
-				</execution>
-			</executions>
-		</plugin>
-
-  		<plugin>
-  			<groupId>org.apache.maven.plugins</groupId>
-  			<artifactId>maven-assembly-plugin</artifactId>
-  			<version>${maven-assembly-plugin.version}</version>
-			<configuration>
-				<descriptors>
-					<descriptor>src/main/assembly/src.xml</descriptor>
-				</descriptors>
-				<tarLongFileMode>posix</tarLongFileMode>
-			</configuration>
-			<executions>
-				<execution>
-					<id>make-assembly</id>
-					<phase>package</phase>
-					<goals>
-						<goal>single</goal>
-					</goals>
-				</execution>
-			</executions>
-        </plugin>
-  	</plugins>
-  </build>
-  <packaging>pom</packaging>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>${maven-assembly-plugin.version}</version>
+				<configuration>
+					<descriptors>
+						<descriptor>src/main/assembly/src.xml</descriptor>
+					</descriptors>
+					<tarLongFileMode>posix</tarLongFileMode>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
 </project>
