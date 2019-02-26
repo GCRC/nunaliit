@@ -228,7 +228,6 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
 	_linkIdExists: function(id){
 		var currentlyExists = false; 
-
 		if ($('#' + id).length > 0) {
 			currentlyExists = true;
 		}
@@ -236,7 +235,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 	},
 
 	_linkIndexToItems: function(){
-		var i, j, e, f,	arrayItem, indexItem, year;
+		var i, j, e, f,	arrayItem, indexItem, indexItemId, year;
 		var itemsArray = $('#' + this.canvasId + ' .n2_vertical_timeline_item_label');
 
 		if (!this.ascendingSortOrder) {
@@ -246,9 +245,12 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 	
 				for (i = 0, e = this.indexItems.length-1; i <= e; e -= 1) {
 					indexItem = String(this.indexItems[e]);
-	
-					if (year >= this.indexItems[e] && !this._linkIdExists(indexItem)) {
-						arrayItem.id = indexItem;
+
+					// replace "/,:,space" used in date ranges and time values with an underscore
+					indexItemId = indexItem.replace(/[\u002F,\u003A,\u0020]/g, "_");
+
+					if (year >= this.indexItems[e] && !this._linkIdExists(indexItemId)) {
+						arrayItem.id = indexItemId;
 					}
 				}
 			}
@@ -259,9 +261,12 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 	
 				for (i = 0, e = this.indexItems.length; i < e; i += 1) {
 					indexItem = String(this.indexItems[i]);
+
+					// replace "/,:,space" used in date ranges and time values with an underscore
+					indexItemId = indexItem.replace(/[\u002F\u003A,\u0020]/g, "_");
 	
-					if (year >= this.indexItems[i] && !this._linkIdExists(indexItem)) {
-						arrayItem.id = indexItem;
+					if (year >= this.indexItems[i] && !this._linkIdExists(indexItemId)) {
+						arrayItem.id = indexItemId;
 					}
 				}
 			}
@@ -405,6 +410,15 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 			if (this.elementsById.hasOwnProperty(elementId)) {
 				element = this.elementsById[elementId];
 
+				// If element doesn't provide a label value, try to base it on a document date value
+				if (typeof element.label === 'undefined') {
+					date = getDateFromDoc(element);
+
+					if (date) {
+						element.label = date;
+					}
+				}
+
 				// If element doesn't provide a sorted value, try to base it on a document date value
 				if (typeof element.sort === 'undefined') {
 					date = getDateFromDoc(element);
@@ -426,6 +440,13 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 			}
 			if (a.sort > b.sort) {
 				return 1;
+			}
+			if (a.sort === b.sort) {
+				if (!a.label && b.label) {
+					return -1;
+				} else if (a.label && !b.label) {
+					return 1;
+				}
 			}
 			return 0;
 		});
@@ -575,7 +596,7 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 	},
 
 	_addTimelineIndexToCanvas: function(){
-		var i, e, indexList, indexItem, currentIndex;
+		var i, e, indexList, indexItem, itemId, currentIndex;
 
 		indexList = $('<ul>')
 			.appendTo('#' + this.canvasIndexId);
@@ -583,8 +604,10 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 		currentIndex = this.getIndex();
 
 		for (i = 0, e = currentIndex.length; i < e; i += 1) {
+			// replace "/,:,space" used in date ranges and time values with an underscore
+			itemId = this.index[i].replace(/[\u002F,\u003A,\u0020]/g, "_");
 			indexItem = $('<li>')
-				.css('max-height', this.itemHeight + "px")
+				.css('min-height', this.itemHeight + "px")
 				.css('padding', this.itemPadding)
 				.css('margin', "0px auto " + this.itemMargin + "px auto")
 				.appendTo(indexList);
@@ -596,7 +619,7 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 			
 			$('<a>')
 				.text(this.index[i])
-				.attr('href', '#' + this.index[i])
+				.attr('href', '#' + itemId)
 				.appendTo(indexItem);
 		}
 	},
@@ -688,7 +711,7 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 				reducedItems = [];
 
 			} else if (maxIndexItems <= 1) {
-				// If window is too small to provide an index, exclude it.
+				// If the window is too small to provide an index, exclude it.
 				indexItems = [];
 				return indexItems;
 
@@ -766,20 +789,23 @@ var TimelineItem = $n2.Class('TimelineItem', {
 
 	_addItemToList: function(){
 		var $timelineItem, $timelineItemContent, $timelineItemContentText;
-		var sortLabel = this.element.sort;
+		var sortValue = this.element.sort;
+		var itemLabel = this.element.label;
 		var docId = this._getDocIdFromDoc(this.element.n2_doc);
 		var attachmentName = this._getAttachment(this.element.n2_doc);
 
-		if (sortLabel) {
+		if (sortValue) {
 			
 			$timelineItem = $('<li>')
 				.attr('class','n2_vertical_timeline_item n2s_userEvents')
 				.attr('nunaliit-document', docId);
-			
-			$('<div>')
-				.attr('class','n2_vertical_timeline_item_label')
-				.text(sortLabel)
-				.appendTo($timelineItem);
+
+			if (itemLabel) {
+				$('<div>')
+					.attr('class','n2_vertical_timeline_item_label')
+					.text(itemLabel)
+					.appendTo($timelineItem);
+			}
 
 			$('<div>')
 				.attr('class','n2_vertical_timeline_item_node')
