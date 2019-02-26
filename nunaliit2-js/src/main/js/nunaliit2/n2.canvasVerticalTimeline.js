@@ -45,35 +45,37 @@ function getDateFromDoc(object){
 	var yyyymmRegEx = /([0-9]{4})-([0-9]{2})/g;
 	var yyyyRegEx = /([0-9]{4})/g;
 	
-	for(property in object){
-		currentProp = object[property];
+	for (property in object) {
+		if (object.hasOwnProperty(property)) {
+			currentProp = object[property];
 
-		if( typeof currentProp === 'object' ){
-			
-			if( currentProp.nunaliit_type === 'date' && currentProp.date ){
-				date = currentProp.date;
-			
-				if( date ){
-					//Update dates to match yyyy-mm-dd format (required for auto-reduce index) 
-					if( date.match(dateRangeRegEx) ){
-						slashIndex = date.indexOf('/');
-						return date.slice(0,slashIndex); 
-					} else if( date.match(yyyymmddhhmmssRegEx) ){
-						return date.slice(0,10);
-					} else if( date.match(yyyymmddRegEx) ){
-						return date;
-					} else if( date.match(yyyymmRegEx) ){
-						// YYYY-MM-01 is returned because YYYY-MM converts to YYYY-MM-01 / YYYY-MM-[28-31] 
-						// which would be reduced to YYYY-MM-01 based on how date ranges are handled
-						return date + "-01";
-					} else if( date.match(yyyyRegEx) ){
-						// YYYY-01-01 is returned because YYYY converts to YYYY-01-01 / YYYY-12-31
-						// which would be reduced to YYYY-01-01 based on how date ranges are handled
-						return date + "-01-01";
+			if (typeof currentProp === 'object') {
+
+				if (currentProp.nunaliit_type === 'date' && currentProp.date) {
+					date = currentProp.date;
+
+					if (date) {
+						//Update dates to match yyyy-mm-dd format (required for auto-reduce index)
+						if (date.match(dateRangeRegEx)) {
+							slashIndex = date.indexOf('/');
+							return date.slice(0,slashIndex);
+						} else if (date.match(yyyymmddhhmmssRegEx)) {
+							return date.slice(0,10);
+						} else if (date.match(yyyymmddRegEx)) {
+							return date;
+						} else if (date.match(yyyymmRegEx)) {
+							// YYYY-MM-01 is returned because YYYY-MM converts to YYYY-MM-01 / YYYY-MM-[28-31]
+							// which would be reduced to YYYY-MM-01 based on how date ranges are handled
+							return date + "-01";
+						} else if (date.match(yyyyRegEx)) {
+							// YYYY-01-01 is returned because YYYY converts to YYYY-01-01 / YYYY-12-31
+							// which would be reduced to YYYY-01-01 based on how date ranges are handled
+							return date + "-01-01";
+						}
 					}
+				} else {
+					return getDateFromDoc(currentProp);
 				}
-			} else {
-				return getDateFromDoc(currentProp);
 			}
 		}
 	}
@@ -83,7 +85,7 @@ function getDateFromDoc(object){
 function getCanvasHeight(canvasId){
 	var canvasHeight = $('#' + canvasId).height();
 
-	if( canvasHeight <= 0 ){
+	if (canvasHeight <= 0) {
 		canvasHeight = 0;
 	}
 
@@ -176,15 +178,15 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		this.canvasListId = $n2.getUniqueId();
 
 		var config = opts.config;
-		if( config ){
-			if( config.directory ){
+		if (config) {
+			if (config.directory) {
 				this.dispatchService = config.directory.dispatchService;
 				this.showService = config.directory.showService;
 			}
 		}
 
 		// Register to events
-		if( this.dispatchService ){
+		if (this.dispatchService) {
 			var f = function(m){
 				_this._handleDispatch(m);
 			};
@@ -196,7 +198,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		}
 		
 		// Element generator
-		if( this.elementGenerator ){
+		if (this.elementGenerator) {
 			this.elementGenerator.setElementsChangedListener(function(added, updated, removed){
 				_this._elementsChanged(added, updated, removed);
 			});
@@ -209,7 +211,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 	},
 
 	_backgroundClicked: function(){
-		if( this.dispatchService ){
+		if (this.dispatchService) {
 			this.dispatchService.send(DH,{
 				type: 'userUnselect'
 			});
@@ -227,7 +229,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 	_linkIdExists: function(id){
 		var currentlyExists = false; 
 
-		if( $('#' + id ).length > 0 ){
+		if ($('#' + id).length > 0) {
 			currentlyExists = true;
 		}
 		return currentlyExists;
@@ -237,28 +239,28 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		var i, j, e, f,	arrayItem, indexItem, year;
 		var itemsArray = $('#' + this.canvasId + ' .n2_vertical_timeline_item_label');
 
-		if( !this.ascendingSortOrder ){
-			for(j = 0, f = itemsArray.length-1; j <= f; f--){
+		if (!this.ascendingSortOrder) {
+			for (j = 0, f = itemsArray.length-1; j <= f; f -= 1) {
 				arrayItem = itemsArray[f];
 				year = arrayItem.textContent;
 	
-				for(i = 0, e = this.indexItems.length-1; i <= e; e--){
+				for (i = 0, e = this.indexItems.length-1; i <= e; e -= 1) {
 					indexItem = String(this.indexItems[e]);
 	
-					if( year >= this.indexItems[e] && !this._linkIdExists(indexItem) ){
+					if (year >= this.indexItems[e] && !this._linkIdExists(indexItem)) {
 						arrayItem.id = indexItem;
 					}
 				}
 			}
 		} else {
-			for(j = 0, f = itemsArray.length; j < f; j++){
+			for (j = 0, f = itemsArray.length; j < f; j += 1) {
 				arrayItem = itemsArray[j];
 				year = arrayItem.textContent;
 	
-				for(i = 0, e = this.indexItems.length; i < e; i++){
+				for (i = 0, e = this.indexItems.length; i < e; i += 1) {
 					indexItem = String(this.indexItems[i]);
 	
-					if( year >= this.indexItems[i] && !this._linkIdExists(indexItem) ){
+					if (year >= this.indexItems[i] && !this._linkIdExists(indexItem)) {
 						arrayItem.id = indexItem;
 					}
 				}
@@ -280,9 +282,9 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 			.attr('id', this.canvasContainerId)
 			.click(function(e){
 				$target = $(e.target);
-				if( $target.hasClass('n2_vertical_timeline_item') ){
+				if ($target.hasClass('n2_vertical_timeline_item')) {
 					// Ignore
-				} else if( $target.parents('.n2_vertical_timeline_item').length > 0 ) {
+				} else if ($target.parents('.n2_vertical_timeline_item').length > 0) {
 				   	// Ignore
 				}	else {
 					_this._backgroundClicked();
@@ -291,7 +293,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 			.appendTo($('#' + this.canvasId));
 
 		// Add container for timeline index
-		if( this.displayIndex ){
+		if (this.displayIndex) {
 		
 			$canvasIndex = $('<div>')
 				.attr('class','n2_vertical_timeline_index')
@@ -299,7 +301,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 				.appendTo('#' + this.canvasContainerId);
 
 			// If autoReduceIndex prevent scroll bar from being used
-			if( this.autoReduceIndex ){
+			if (this.autoReduceIndex) {
 				$canvasIndex.css('overflow','hidden');
 			}	
 		}
@@ -312,7 +314,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 				_this._handleScrollEvent();
 			});
 
-		if( !this.displayIndex ){
+		if (!this.displayIndex) {
 			$canvasList.css('width','100%');
 		}
 
@@ -345,7 +347,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		$index = $('#' + this.canvasContainerId).find('#' + this.canvasIndexId);
 		$index.empty();
 
-		if( this.sortedElements.length > 0 ){
+		if (this.sortedElements.length > 0) {
 
 			timelineIndexOptions = {
 				'canvasId': this.canvasId,
@@ -366,7 +368,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		// Re-Calculate Item Width based on available space
 		this._calcItemWidth();
 
-		for(i = 0, e = this.sortedElements.length; i < e; i++){
+		for (i = 0, e = this.sortedElements.length; i < e; i += 1) {
 				
 			timelineItemOptions = {
 				element: this.sortedElements[i], 
@@ -384,10 +386,10 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 	_handleScrollEvent: function(){
 		var headerHeight = 100;
 		var i, e, item; 
-		if( this.indexItems ){
-			for(i = 0, e = this.indexItems.length; i < e; i++){
+		if (this.indexItems) {
+			for (i = 0, e = this.indexItems.length; i < e; i += 1) {
 				item = document.getElementById(this.indexItems[i]);
-				if( item && item.getBoundingClientRect().top > headerHeight ){
+				if (item && item.getBoundingClientRect().top > headerHeight) {
 					this.timelineIndex.setActiveIndexItem(this.indexItems[i]);
 					break;
 				}
@@ -399,34 +401,36 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		var elementId, element, date;
 		this.sortedElements = [];
 
-		for(elementId in this.elementsById){
-			element = this.elementsById[elementId];
-		
-			// If element doesn't provide a sorted value, try to base it on a document date value
-			if( typeof element.sort === 'undefined' ){
-				date = getDateFromDoc(element);
+		for (elementId in this.elementsById) {
+			if (this.elementsById.hasOwnProperty(elementId)) {
+				element = this.elementsById[elementId];
 
-				if( date ){
-					element.sort = date;
+				// If element doesn't provide a sorted value, try to base it on a document date value
+				if (typeof element.sort === 'undefined') {
+					date = getDateFromDoc(element);
+
+					if (date) {
+						element.sort = date;
+					}
 				}
-			}
 
-			if( element.sort ){
-				this.sortedElements.push(element);
+				if (element.sort) {
+					this.sortedElements.push(element);
+				}
 			}
 		}
 
 		this.sortedElements.sort(function(a,b){
-			if( a.sort < b.sort ){
+			if (a.sort < b.sort) {
 				return -1;
 			}
-			if( a.sort > b.sort ){
+			if (a.sort > b.sort) {
 				return 1;
 			}
 			return 0;
 		});
 
-		if( !this.ascendingSortOrder ){
+		if (!this.ascendingSortOrder) {
 			this.sortedElements.reverse();
 		}
 	},
@@ -435,19 +439,19 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		var i,e,removed,added,updated;	
 		
 		// Remove elements that are no longer there
-		for(i=0,e=removedElements.length; i<e; ++i){
+		for (i=0,e=removedElements.length; i<e; i += 1) {
 			removed = removedElements[i];
 			delete this.elementsById[removed.id];
 		}
 		
 		// Add elements
-		for(i=0,e=addedElements.length; i<e; ++i){
+		for (i=0,e=addedElements.length; i<e; i += 1) {
 			added = addedElements[i];
 			this.elementsById[added.id] = added;
 		}
 		
 		// Update elements
-		for(i=0,e=updatedElements.length; i<e; ++i){
+		for (i=0,e=updatedElements.length; i<e; i += 1) {
 			updated = updatedElements[i];
 			this.elementsById[ updated.id ] = updated;
 		}
@@ -462,14 +466,14 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 	},
 
 	_handleDispatch: function(m){
-		if( 'modelStateUpdated' === m.type ) {
-			if( this.sourceModelId === m.modelId ){
-				if( m.state ){
+		if ('modelStateUpdated' === m.type) {
+			if (this.sourceModelId === m.modelId) {
+				if (m.state) {
 					this._sourceModelUpdated(m.state);
 				}
 			}
 
-		} else if( 'windowResized' === m.type ) {
+		} else if ('windowResized' === m.type) {
 			this._refresh();
 		}
 	}
@@ -537,35 +541,35 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 		var i, e, sortValue;
 		this.uniqueIndexValues = [];
 
-		for(i = 0, e = this.sortedElements.length; i < e; i++){
+		for (i = 0, e = this.sortedElements.length; i < e; i += 1) {
 			sortValue = this.sortedElements[i].sort;
-			if( sortValue ){
+			if (sortValue) {
 				this._updateIndexRange(sortValue);
 
-				if( this.uniqueIndexValues.indexOf(sortValue) < 0 ){
+				if (this.uniqueIndexValues.indexOf(sortValue) < 0) {
 					this.uniqueIndexValues.push(sortValue);
 				}
 			}
 		}
 
 		this.uniqueIndexValues.sort(function(a,b){
-			if( a < b ){
+			if (a < b) {
 				return -1;
 			}
-			if( a > b ){
+			if (a > b) {
 				return 1;
 			}
 			return 0;
 		});
 
-		if( !this.ascendingSortOrder ){
+		if (!this.ascendingSortOrder) {
 			this.uniqueIndexValues.reverse();
 		}
 
 		this._setIndex(this.uniqueIndexValues);
 
 		// Automatically reduce index items if the index size exceeds canvas height.
-		if( this.autoReduceIndex ){
+		if (this.autoReduceIndex) {
 			this._setIndex(this._reduceIndex());
 		}
 	},
@@ -578,7 +582,7 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 		
 		currentIndex = this.getIndex();
 
-		for(i = 0, e = currentIndex.length; i < e; i++){
+		for (i = 0, e = currentIndex.length; i < e; i += 1) {
 			indexItem = $('<li>')
 				.css('max-height', this.itemHeight + "px")
 				.css('padding', this.itemPadding)
@@ -586,7 +590,7 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 				.appendTo(indexList);
 			
 			// If first item make it active
-			if( i === 0 ){
+			if (i === 0) {
 				indexItem.addClass('active');
 			}
 			
@@ -617,16 +621,16 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 	_updateIndexRange: function(sortValue){
 		var currentIndexRange = this._getIndexRange();
 		
-		if( !currentIndexRange.startIndex && !currentIndexRange.endIndex ){
+		if (!currentIndexRange.startIndex && !currentIndexRange.endIndex) {
 			currentIndexRange.startIndex = sortValue; 
 			currentIndexRange.endIndex = sortValue;
-		} else if( sortValue < currentIndexRange.startIndex ){
+		} else if (sortValue < currentIndexRange.startIndex) {
 			currentIndexRange.startIndex = sortValue;
-		} else if( sortValue > currentIndexRange.endIndex ){
+		} else if (sortValue > currentIndexRange.endIndex) {
 			currentIndexRange.endIndex = sortValue;
 		}
 		
-		if( currentIndexRange.startIndex && currentIndexRange.endIndex ){
+		if (currentIndexRange.startIndex && currentIndexRange.endIndex) {
 			this._setIndexRange(currentIndexRange.startIndex, currentIndexRange.endIndex);
 		}
 	},
@@ -636,13 +640,13 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 		var yyyymmRegEx = /([0-9]{4})-([0-9]{2})/g;
 		var yyyyRegEx = /([0-9]{4})/g;
 		var newItem;
-		if( item ){
+		if (item) {
 			// Reduce date string
-			if( item.match(yyyymmddRegEx) && item.match(yyyymmddRegEx)[0].length < item.length ){
+			if (item.match(yyyymmddRegEx) && item.match(yyyymmddRegEx)[0].length < item.length) {
 				newItem = item.match(yyyymmddRegEx)[0];
-			} else if( item.match(yyyymmRegEx) && item.match(yyyymmRegEx)[0].length < item.length ){
+			} else if (item.match(yyyymmRegEx) && item.match(yyyymmRegEx)[0].length < item.length) {
 				newItem = item.match(yyyymmRegEx)[0];
-			} else if( item.match(yyyyRegEx) && item.match(yyyyRegEx)[0].length < item.length ){
+			} else if (item.match(yyyyRegEx) && item.match(yyyyRegEx)[0].length < item.length) {
 				newItem = item.match(yyyyRegEx)[0];
 			} else {
 				// If item is not a date, simply return original item
@@ -662,28 +666,28 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 		var totalHeightPerItem = this.itemHeight + this.itemMargin + this.itemPadding + this.itemPadding;	
 		var maxIndexItems = Math.round(totalCanvasHeight / totalHeightPerItem);
 		
-		while(maxIndexItems < indexItems.length){
+		while (maxIndexItems < indexItems.length) {
 
-			for(i = 0, e = indexItems.length; i < e; i++){
+			for (i = 0, e = indexItems.length; i < e; i += 1) {
 
 				reducedIndex = this._reduceItem(indexItems[i]);
 
-				if( reducedIndex && reducedItems.indexOf(reducedIndex) < 0 ){
+				if (reducedIndex && reducedItems.indexOf(reducedIndex) < 0) {
 					reducedItems.push(reducedIndex);
 					indexItems[i] = reducedIndex;
 				} else {
 					// Remove item from index if not unique
 					indexItems.splice(i,1);
-					if( indexItems.length > i ){
-						i--;
+					if (indexItems.length > i) {
+						i -= 1;
 					}
 				}
 			}
 
-			if( maxIndexItems < reducedItems.length && maxIndexItems > 1 ){
+			if (maxIndexItems < reducedItems.length && maxIndexItems > 1) {
 				reducedItems = [];
 
-			} else if( maxIndexItems <= 1 ) {
+			} else if (maxIndexItems <= 1) {
 				// If window is too small to provide an index, exclude it.
 				indexItems = [];
 				return indexItems;
@@ -703,10 +707,10 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 		// Update item with active class
 		indexItems = $('#' + this.canvasIndexId + ' li');
 
-		for(i = 0, e = indexItems.length; i < e; i++){
+		for (i = 0, e = indexItems.length; i < e; i += 1) {
 			indexItem = indexItems.eq(i);
 			indexItemText = indexItem.text();
-			if( indexItemText  === String(itemLabel) ){
+			if (indexItemText  === String(itemLabel)) {
 				indexItem.addClass('active');	
 			} else {
 				indexItem.removeClass('active');
@@ -742,17 +746,19 @@ var TimelineItem = $n2.Class('TimelineItem', {
 	},
 	
 	_getDocIdFromDoc: function(doc){
-		if( doc && doc._id ){
+		if (doc && doc._id) {
 			return doc._id;
 		}
 	},
 
 	_getAttachment: function(doc){
 		var file;
-		if( doc && doc.nunaliit_attachments && doc.nunaliit_attachments.files ){
-			for(file in doc.nunaliit_attachments.files){
-				if( doc.nunaliit_attachments.files[file].originalName ){
-					return doc.nunaliit_attachments.files[file].originalName;
+		if (doc && doc.nunaliit_attachments && doc.nunaliit_attachments.files) {
+			for (file in doc.nunaliit_attachments.files) {
+				if (doc.nunaliit_attachments.files.hasOwnProperty(file)){
+					if (doc.nunaliit_attachments.files[file].originalName) {
+						return doc.nunaliit_attachments.files[file].originalName;
+					}
 				}
 			}
 		}
@@ -764,7 +770,7 @@ var TimelineItem = $n2.Class('TimelineItem', {
 		var docId = this._getDocIdFromDoc(this.element.n2_doc);
 		var attachmentName = this._getAttachment(this.element.n2_doc);
 
-		if( sortLabel ){
+		if (sortLabel) {
 			
 			$timelineItem = $('<li>')
 				.attr('class','n2_vertical_timeline_item n2s_userEvents')
@@ -785,7 +791,7 @@ var TimelineItem = $n2.Class('TimelineItem', {
 				.css('transform','translateX(-' + this.itemWidth + 'px)')
 				.appendTo($timelineItem);
 
-			if( attachmentName ){
+			if (attachmentName) {
 				$('<div>')
 					.attr('class', 'n2s_insertMediaView')
 					.attr('nunaliit-document', docId)
@@ -809,7 +815,7 @@ var TimelineItem = $n2.Class('TimelineItem', {
 
 //--------------------------------------------------------------------------
 function HandleCanvasAvailableRequest(m){
-	if( m.canvasType === 'vertical_timeline' ){
+	if (m.canvasType === 'vertical_timeline') {
 		m.isAvailable = true;
 	}
 }
@@ -818,16 +824,18 @@ function HandleCanvasAvailableRequest(m){
 function HandleCanvasDisplayRequest(m){
 	var key, options;
 
-	if( m.canvasType === 'vertical_timeline' ){
+	if (m.canvasType === 'vertical_timeline') {
 		
 		options = {};
-		if( m.canvasOptions ){
-			for( key in m.canvasOptions){
-				options[key] = m.canvasOptions[key];
+		if (m.canvasOptions) {
+			for (key in m.canvasOptions) {
+				if (m.canvasOptions.hasOwnProperty(key)) {
+					options[key] = m.canvasOptions[key];
+				}
 			}
 		}
 		
-		if( !options.elementGenerator ){
+		if (!options.elementGenerator) {
 			// If not defined, use the one specified by type
 				options.elementGenerator = $n2.canvasElementGenerator.CreateElementGenerator({
 				type: options.elementGeneratorType,
