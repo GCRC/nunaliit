@@ -109,6 +109,7 @@ Canvas options:
 	- sourceModelId: String. Unique identified of the model used by the canvas
 	- elementGeneratorType: Optional String. Name of element generator type
 	- elementGeneratorOptions: Optional Object. Element generator options
+	- labelDateFormat: Optional String. Date format string for canvas label.
 	- ascendingSortOrder: Boolean. Default value of true 
 	- autoReduceIndex: Boolean. Default value is false. Reduces the size of the
 	  index if it exceeds the canvas height. 
@@ -130,15 +131,9 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
 	indexItems: null,
 
-	autoReduceIndex: null,
-
-	displayIndex: null,
+	sortedElements: null,
 
 	timelineList: null,
-
-	sourceModelId: null,
-
-	elementGenerator: null,
 
 	dispatchService: null,
 
@@ -146,9 +141,17 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
 	dateRange: null,
 
+	elementGenerator: null,
+
+	sourceModelId: null,
+
+	labelDateFormat: null,
+
 	ascendingSortOrder: null,
 
-	sortedElements: null,
+	autoReduceIndex: null,
+
+	displayIndex: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -156,6 +159,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 			displayIndex: true,
 			ascendingSortOrder: true,
 			autoReduceIndex: false,
+			labelDateFormat: null,
 			sourceModelId: null,
 			elementGenerator: null,
 			config: null,
@@ -169,6 +173,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		this.displayIndex = opts.displayIndex;
 		this.ascendingSortOrder = opts.ascendingSortOrder;
 		this.autoReduceIndex = opts.autoReduceIndex;
+		this.labelDateFormat = opts.labelDateFormat;
 		this.sourceModelId = opts.sourceModelId;
 		this.elementGenerator = opts.elementGenerator;
 		this.elementsById = {};
@@ -415,7 +420,11 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 					date = getDateFromDoc(element);
 
 					if (date) {
-						element.label = date;
+						if (this.labelDateFormat) {
+							element.label = moment(date).format(this.labelDateFormat);
+						} else {
+							element.label = date;
+						}
 					}
 				}
 
