@@ -30,11 +30,17 @@ POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-;(function($,$n2,$m) {
+;(function($,$n2) {
 "use strict";
 
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); },
 	DH = 'n2.canvasVerticalTimeline';
+ 
+// Required library: d3
+var $m = window.moment;
+if (!$m) { 
+	return;
+}
 
 function getDateFromDoc(object){
 	var date, key, currentProp;
@@ -42,9 +48,7 @@ function getDateFromDoc(object){
 	for (key in object) {
 		if (object.hasOwnProperty(key)) {
 			currentProp = object[key];
-
 			if (typeof currentProp === 'object') {
-
 				if (currentProp.nunaliit_type === 'date') {
 					date = currentProp;
 					return date;
@@ -286,7 +290,6 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
 		// Add container for timeline index
 		if (this.displayIndex) {
-		
 			$canvasIndex = $('<div>')
 				.attr('class','n2_vertical_timeline_index')
 				.attr('id',this.canvasIndexId)
@@ -335,7 +338,6 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		$index.empty();
 
 		if (this.sortedElements.length > 0) {
-
 			timelineIndexOptions = {
 				'canvasId': this.canvasId,
 				'canvasIndexId': this.canvasIndexId,
@@ -344,17 +346,14 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 			};
 
 			this.timelineIndex = new TimelineIndex(timelineIndexOptions);
-
 			this.sortedIndex = this.timelineIndex.getSortedIndex();
 			this.indexElements = this.timelineIndex.getIndexElements();
-
 			this._updateTimelinePadding();
 
 			// Re-Calculate Item Width based on available space
 			this._calcListItemWidth();
 
 			for (i = 0, e = this.sortedElements.length; i < e; i += 1) {
-
 				timelineItemOptions = {
 					element: this.sortedElements[i],
 					timelineList: this.canvasListId,
@@ -364,14 +363,13 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 			}
 
 			this._linkIndexToListItems();
-
 			this.showService.fixElementAndChildren($timelineList);
 		}
 	},
 
 	_handleScrollEvent: function(){
-		var headerHeight = 100;
 		var i, e, index, elem;
+		var headerHeight = 100;
 		if (this.sortedIndex && this.indexElements) {
 			for (i = 0, e = this.sortedIndex.length; i < e; i += 1){
 				index = this.sortedIndex[i];
@@ -836,4 +834,4 @@ $n2.canvasVerticalTimeline = {
 	HandleCanvasDisplayRequest: HandleCanvasDisplayRequest
 };
 
-}(jQuery,nunaliit2,moment));
+}(jQuery,nunaliit2));
