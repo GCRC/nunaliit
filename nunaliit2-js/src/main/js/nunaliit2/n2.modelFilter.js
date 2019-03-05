@@ -1104,8 +1104,20 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 				var visible = this._computeVisibility(doc);
 				
 				if( visible ){
-					docInfo.visible = visible;
-					added.push(doc);
+					if( docInfo.visible ){
+						// Is visible and used to be visible: update
+						updated.push(doc);
+					} else {
+						// Is visible and did not used to be visible: added
+						added.push(doc);
+					};
+				} else {
+					if( docInfo.visible ){
+						// Is not visible and used to be visible: remove
+						removed.push(doc);
+					} else {
+						// Is not visible and did not used to be visible: nothing
+					};
 				};
 			};
 		};

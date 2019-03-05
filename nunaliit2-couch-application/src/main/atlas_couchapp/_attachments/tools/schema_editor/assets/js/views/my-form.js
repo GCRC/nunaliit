@@ -37,7 +37,12 @@ define([
 
     }
     , handleLoadingSchema : function(model){
-        this.collection.readRapeSnippets(model.toJSON());
+    	PubSub.trigger("loadingBarStartOver");
+		PubSub.trigger("rapeSnippetsIncre");
+		_.each(model.get("attributes"), function() {
+			PubSub.trigger("rapeSnippetsIncre");
+		 });
+		this.collection.readRapeSnippets(model.toJSON());
 
     }
 

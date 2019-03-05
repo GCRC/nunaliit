@@ -1,19 +1,18 @@
 define([
-       "jquery" , "underscore" , "backbone","bootstrap-waitingfor"
+       "jquery" , "underscore" , "backbone", "helper/pubsub"
        , "models/snippet"
        , "collections/snippets"
     , "views/my-form-snippet"
     , "text!data/n2attributeboolean.json"
     , "text!data/n2.json" , "text!data/n2attributes.json"
-   , "text!data/testrape.json"
 ], function(
-  $, _, Backbone, Waitingfor
+  $, _, Backbone,PubSub
   , SnippetModel
   , SnippetsCollection
     , MyFormSnippetView
     , n2AttrBoolean
     ,n2mandatoryJSON , attributesJSON
-    , testRape
+    
 ){
   return SnippetsCollection.extend({
     model: SnippetModel
@@ -66,9 +65,7 @@ define([
       }) === "undefined");
     }
     , readRapeSnippets: function(modelJSON){
-       // var waitingDialog = Waitingfor.constructDialog();
-        waitingDialog.show();
-        setTimeout(function(){waitingDialog.hide();},1500)
+
 	    this.reset();
       var rapeSnippets = modelJSON;
       var infoSnippetJson = JSON.parse(n2mandatoryJSON);
@@ -87,6 +84,7 @@ define([
           }
         })
         that.push(infoSnippet);
+        PubSub.trigger("rapeSnippetsDecre");
       });
       //adding attributes-Snippets
       var attrs = rapeSnippets["attributes"];
@@ -111,9 +109,11 @@ define([
             }
           })
         }else{
-          console.log("CAUSION: there is one or more types not defined");
+          alert("CAUSION: the type: " + attr["type"] +" is not a valid type.\n" +
+          		" The cause can be either a deprecated type or an error in the database.");
         }
         that.push(candidateSnippetInstance);
+        PubSub.trigger("rapeSnippetsDecre");
       })
       //this.renderAll();
 
