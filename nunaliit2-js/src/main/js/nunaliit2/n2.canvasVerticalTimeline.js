@@ -36,9 +36,9 @@ POSSIBILITY OF SUCH DAMAGE.
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); },
 	DH = 'n2.canvasVerticalTimeline';
  
-// Required library: d3
+// Required library: moment
 var $m = window.moment;
-if (!$m) { 
+if (!$m) {
 	return;
 }
 
