@@ -356,7 +356,9 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 			for (i = 0, e = this.sortedElements.length; i < e; i += 1) {
 				// Exclude link elements if produced by the generic element generator
 				if (this.elementGenerator._classname === 'GenericElementGenerator' 
-					&& !this.sortedElements[i].isLink) {
+					&& this.sortedElements[i].isLink) {
+					// Do nothing
+				} else {
 					timelineItemOptions = {
 						element: this.sortedElements[i],
 						timelineList: this.canvasListId,
