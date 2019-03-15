@@ -887,6 +887,11 @@ var Service = $n2.Class({
 			} else if( m.widgetType === 'button' ){
 				m.isAvailable = true;
 
+			} else if ($n2.utils.getMethod('$n2.'+ 
+					m.widgetType +
+					'.HandleWidgetAvailableRequests')
+					) {
+				m.isAvailable = true;
 			} else {
 				if( $n2.couchDbPerspective 
 				 && $n2.couchDbPerspective.HandleWidgetAvailableRequests ){
@@ -987,6 +992,12 @@ var Service = $n2.Class({
 			} else if( m.widgetType === 'button' ){
 				BuildButtonWidget(m);
 
+			} else if ($n2.utils.getMethod('$n2.'+ 
+					m.widgetType +
+					'.HandleWidgetDisplayRequests')
+					) {
+				var targetWidgetDisplayFunc = $n2.utils.getMethod('$n2.'+ m.widgetType +'.HandleWidgetDisplayRequests');
+				targetWidgetDisplay.apply(this,[m]);
 			} else {
 				if( $n2.couchDbPerspective 
 				 && $n2.couchDbPerspective.HandleWidgetDisplayRequests ){

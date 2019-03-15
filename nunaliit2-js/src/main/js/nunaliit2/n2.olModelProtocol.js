@@ -272,12 +272,13 @@ OpenLayers.Protocol.Model = OpenLayers.Class(OpenLayers.Protocol, {
        	options.projection = new OpenLayers.Projection('EPSG:4326');
         
         OpenLayers.Protocol.prototype.initialize.apply(this, arguments);
-        
+        this.cnt = 0;
         this.modelObserver = new $n2.model.DocumentModelObserver({
 			dispatchService: this.dispatchService
 			,sourceModelId: this.sourceModelId
 			,updatedCallback: function(state){
 				if( _this.readWasCalled ){
+					console.log("N2Update times: " + _this.cnt++);
 					_this._modelSourceUpdated(state);
 				};
 			}

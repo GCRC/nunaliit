@@ -1156,11 +1156,15 @@ $n2.utils.getInstance = function(str, var_args ) {
 
 	var fn = (window || this);
 	for (var i = 0, len = arr.length; i < len; i++) {
+		if (typeof fn === 'undefined'){
+			return null;
+		}
 	    fn = fn[arr[i]];
 	}
 
 	if (typeof fn !== "function") {
-	  throw new Error("Function not found");
+	  $n2.log("Constructor Function not found");
+	  return null;
 	}
 	
 
@@ -1172,8 +1176,9 @@ $n2.utils.getInstance = function(str, var_args ) {
 	var instance = new fn(args);
 	
 	if (typeof instance !== "object") {
-		  throw new Error("Instance object not found");
-		}
+		$n2.log("Target instance object creation error");
+		return null;
+	}
 	return instance;
 };
 
@@ -1194,11 +1199,14 @@ $n2.utils.getMethod = function(str, var_args ) {
 
 	var fn = (window || this);
 	for (var i = 0, len = arr.length; i < len; i++) {
+		if (typeof fn === 'undefined'){
+			return null;
+		}
 	    fn = fn[arr[i]];
 	}
-
 	if (typeof fn !== "function") {
-	  throw new Error("Function not found");
+	  $n2.log("Target method is not a Function.");
+	  return null;
 	}
 	
 
