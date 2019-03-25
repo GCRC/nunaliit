@@ -1,6 +1,31 @@
+body {
+  padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+  padding-bottom: 10px;
+  position: relative;
+  height:auto !important;
+}
+
+@media (max-width: 979px) {
+  body {
+    padding-top: 0px;
+  }
+}
+
+
 #components {
   min-height: 500px;
 }
+
+.progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: rgba(0, 60, 136, 0.4);
+    width: 0;
+    transition: width 250ms;
+}  
+
 
 #build #target div.component:first-of-type{
   max-width: 480px;

@@ -33,57 +33,37 @@ POSSIBILITY OF SUCH DAMAGE.
 ;(function($,$n2) {
 "use strict";
 
-var loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); },
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); },
 	DH = 'n2.canvasVerticalTimeline';
+ 
+// Required library: moment
+var $m = window.moment;
+if (!$m) {
+	return;
+}
 
 function getDateFromDoc(object){
-
-	var date, property, currentProp, slashIndex; 
-	var dateRangeRegEx = /([0-9]{4})-([0-9]{2})-([0-9]{2}).*\/([0-9]{4})-([0-9]{2})-([0-9]{2}).*/g;
-	var yyyymmddhhmmssRegEx = /([0-9]{4})-([0-9]{2})-([0-9]{2})\s/g;
-	var yyyymmddRegEx = /([0-9]{4})-([0-9]{2})-([0-9]{2})/g;
-	var yyyymmRegEx = /([0-9]{4})-([0-9]{2})/g;
-	var yyyyRegEx = /([0-9]{4})/g;
+	var date, key, currentProp;
 	
-	for(property in object){
-		currentProp = object[property];
-
-		if( typeof currentProp === 'object' ){
-			
-			if( currentProp.nunaliit_type === 'date' && currentProp.date ){
-				date = currentProp.date;
-			
-				if( date ){
-					//Update dates to match yyyy-mm-dd format (required for auto-reduce index) 
-					if( date.match(dateRangeRegEx) ){
-						slashIndex = date.indexOf('/');
-						return date.slice(0,slashIndex); 
-					} else if( date.match(yyyymmddhhmmssRegEx) ){
-						return date.slice(0,10);
-					} else if( date.match(yyyymmddRegEx) ){
-						return date;
-					} else if( date.match(yyyymmRegEx) ){
-						// YYYY-MM-01 is returned because YYYY-MM converts to YYYY-MM-01 / YYYY-MM-[28-31] 
-						// which would be reduced to YYYY-MM-01 based on how date ranges are handled
-						return date + "-01";
-					} else if( date.match(yyyyRegEx) ){
-						// YYYY-01-01 is returned because YYYY converts to YYYY-01-01 / YYYY-12-31
-						// which would be reduced to YYYY-01-01 based on how date ranges are handled
-						return date + "-01-01";
-					}
+	for (key in object) {
+		if (object.hasOwnProperty(key)) {
+			currentProp = object[key];
+			if (typeof currentProp === 'object') {
+				if (currentProp.nunaliit_type === 'date') {
+					date = currentProp;
+					return date;
+				} else {
+					return getDateFromDoc(currentProp);
 				}
-			} else {
-				return getDateFromDoc(currentProp);
 			}
 		}
 	}
-	return date;
 }
 
 function getCanvasHeight(canvasId){
 	var canvasHeight = $('#' + canvasId).height();
 
-	if( canvasHeight <= 0 ){
+	if (canvasHeight <= 0) {
 		canvasHeight = 0;
 	}
 
@@ -107,9 +87,8 @@ Canvas options:
 	- sourceModelId: String. Unique identified of the model used by the canvas
 	- elementGeneratorType: Optional String. Name of element generator type
 	- elementGeneratorOptions: Optional Object. Element generator options
+	- labelDateFormat: Optional String. Date format string for canvas label.
 	- ascendingSortOrder: Boolean. Default value of true 
-	- autoReduceIndex: Boolean. Default value is false. Reduces the size of the
-	  index if it exceeds the canvas height. 
 	- displayIndex: Boolean. Default value of true
 */
 var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
@@ -126,17 +105,13 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
 	timelineIndex: null,
 
-	indexItems: null,
+	sortedIndex: null,
 
-	autoReduceIndex: null,
+	indexElements: null,
 
-	displayIndex: null,
+	sortedElements: null,
 
 	timelineList: null,
-
-	sourceModelId: null,
-
-	elementGenerator: null,
 
 	dispatchService: null,
 
@@ -144,16 +119,22 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
 	dateRange: null,
 
+	elementGenerator: null,
+
+	sourceModelId: null,
+
+	labelDateFormat: null,
+
 	ascendingSortOrder: null,
 
-	sortedElements: null,
+	displayIndex: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			canvasId: null,
 			displayIndex: true,
 			ascendingSortOrder: true,
-			autoReduceIndex: false,
+			labelDateFormat: null,
 			sourceModelId: null,
 			elementGenerator: null,
 			config: null,
@@ -166,7 +147,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		this.canvasId = opts.canvasId;
 		this.displayIndex = opts.displayIndex;
 		this.ascendingSortOrder = opts.ascendingSortOrder;
-		this.autoReduceIndex = opts.autoReduceIndex;
+		this.labelDateFormat = opts.labelDateFormat;
 		this.sourceModelId = opts.sourceModelId;
 		this.elementGenerator = opts.elementGenerator;
 		this.elementsById = {};
@@ -176,15 +157,15 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		this.canvasListId = $n2.getUniqueId();
 
 		var config = opts.config;
-		if( config ){
-			if( config.directory ){
+		if (config) {
+			if (config.directory) {
 				this.dispatchService = config.directory.dispatchService;
 				this.showService = config.directory.showService;
 			}
 		}
 
 		// Register to events
-		if( this.dispatchService ){
+		if (this.dispatchService) {
 			var f = function(m){
 				_this._handleDispatch(m);
 			};
@@ -196,7 +177,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		}
 		
 		// Element generator
-		if( this.elementGenerator ){
+		if (this.elementGenerator) {
 			this.elementGenerator.setElementsChangedListener(function(added, updated, removed){
 				_this._elementsChanged(added, updated, removed);
 			});
@@ -209,14 +190,14 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 	},
 
 	_backgroundClicked: function(){
-		if( this.dispatchService ){
+		if (this.dispatchService) {
 			this.dispatchService.send(DH,{
 				type: 'userUnselect'
 			});
 		}
 	},
 
-	_calcItemWidth: function(){
+	_calcListItemWidth: function(){
 		var width;
 		var itemPadding = 30;
 
@@ -226,40 +207,57 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
 	_linkIdExists: function(id){
 		var currentlyExists = false; 
-
-		if( $('#' + id ).length > 0 ){
+		if ($('#' + id).length > 0) {
 			currentlyExists = true;
 		}
 		return currentlyExists;
 	},
 
-	_linkIndexToItems: function(){
-		var i, j, e, f,	arrayItem, indexItem, year;
+	_linkIndexToListItems: function(){
+		var i, e, arrayItem, indexItemId, indexItemSortValue, sortValue, index;
 		var itemsArray = $('#' + this.canvasId + ' .n2_vertical_timeline_item_label');
 
-		if( !this.ascendingSortOrder ){
-			for(j = 0, f = itemsArray.length-1; j <= f; f--){
-				arrayItem = itemsArray[f];
-				year = arrayItem.textContent;
+		if (!this.ascendingSortOrder) {
+			for (i = 0, e = itemsArray.length-1; i <= e; e -= 1) {
+				arrayItem = itemsArray[e];
+				if (arrayItem.attributes
+					&& arrayItem.attributes.n2_sortvalue
+					&& arrayItem.attributes.n2_sortvalue.value){
+					sortValue = arrayItem.attributes.n2_sortvalue.value;
+				}
 	
-				for(i = 0, e = this.indexItems.length-1; i <= e; e--){
-					indexItem = String(this.indexItems[e]);
-	
-					if( year >= this.indexItems[e] && !this._linkIdExists(indexItem) ){
-						arrayItem.id = indexItem;
+				for (index in this.indexElements) {
+					if (this.indexElements.hasOwnProperty(index)) {
+						if (this.indexElements[index].id && this.indexElements[index].sort) {
+							indexItemId = this.indexElements[index].id;
+							indexItemSortValue = this.indexElements[index].sort;
+
+							if (sortValue >= indexItemSortValue && !this._linkIdExists(indexItemId)) {
+								arrayItem.id = indexItemId;
+							}
+						}
 					}
 				}
 			}
 		} else {
-			for(j = 0, f = itemsArray.length; j < f; j++){
-				arrayItem = itemsArray[j];
-				year = arrayItem.textContent;
-	
-				for(i = 0, e = this.indexItems.length; i < e; i++){
-					indexItem = String(this.indexItems[i]);
-	
-					if( year >= this.indexItems[i] && !this._linkIdExists(indexItem) ){
-						arrayItem.id = indexItem;
+			for (i = 0, e = itemsArray.length; i < e; i += 1) {
+				arrayItem = itemsArray[i];
+				if (arrayItem.attributes
+					&& arrayItem.attributes.n2_sortvalue
+					&& arrayItem.attributes.n2_sortvalue.value){
+					sortValue = arrayItem.attributes.n2_sortvalue.value;
+				}
+
+				for (index in this.indexElements) {
+					if (this.indexElements.hasOwnProperty(index)) {
+						if (this.indexElements[index].id && this.indexElements[index].sort) {
+							indexItemId = this.indexElements[index].id;
+							indexItemSortValue = this.indexElements[index].sort;
+
+							if (sortValue >= indexItemSortValue && !this._linkIdExists(indexItemId)) {
+								arrayItem.id = indexItemId;
+							}
+						}
 					}
 				}
 			}
@@ -280,9 +278,9 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 			.attr('id', this.canvasContainerId)
 			.click(function(e){
 				$target = $(e.target);
-				if( $target.hasClass('n2_vertical_timeline_item') ){
+				if ($target.hasClass('n2_vertical_timeline_item')) {
 					// Ignore
-				} else if( $target.parents('.n2_vertical_timeline_item').length > 0 ) {
+				} else if ($target.parents('.n2_vertical_timeline_item').length > 0) {
 				   	// Ignore
 				}	else {
 					_this._backgroundClicked();
@@ -291,19 +289,13 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 			.appendTo($('#' + this.canvasId));
 
 		// Add container for timeline index
-		if( this.displayIndex ){
-		
+		if (this.displayIndex) {
 			$canvasIndex = $('<div>')
 				.attr('class','n2_vertical_timeline_index')
 				.attr('id',this.canvasIndexId)
 				.appendTo('#' + this.canvasContainerId);
-
-			// If autoReduceIndex prevent scroll bar from being used
-			if( this.autoReduceIndex ){
-				$canvasIndex.css('overflow','hidden');
-			}	
 		}
-		
+
 		// Add container for timeline list
 		$canvasList = $('<div>')
 			.attr('class','n2_vertical_timeline_list')
@@ -312,7 +304,7 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 				_this._handleScrollEvent();
 			});
 
-		if( !this.displayIndex ){
+		if (!this.displayIndex) {
 			$canvasList.css('width','100%');
 		}
 
@@ -341,92 +333,121 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
 		$timelineList = $('#' + this.canvasContainerId).find('#' + this.canvasListId);
 		$timelineList.empty();
-		
+
 		$index = $('#' + this.canvasContainerId).find('#' + this.canvasIndexId);
 		$index.empty();
 
-		if( this.sortedElements.length > 0 ){
-
+		if (this.sortedElements.length > 0) {
 			timelineIndexOptions = {
 				'canvasId': this.canvasId,
 				'canvasIndexId': this.canvasIndexId,
 				'sortedElements': this.sortedElements,
 				'ascendingSortOrder': this.ascendingSortOrder,
-				'autoReduceIndex': this.autoReduceIndex
 			};
 
 			this.timelineIndex = new TimelineIndex(timelineIndexOptions);
+			this.sortedIndex = this.timelineIndex.getSortedIndex();
+			this.indexElements = this.timelineIndex.getIndexElements();
+			this._updateTimelinePadding();
 
-			this.indexItems = this.timelineIndex.getIndex();
+			// Re-Calculate Item Width based on available space
+			this._calcListItemWidth();
+
+			for (i = 0, e = this.sortedElements.length; i < e; i += 1) {
+				timelineItemOptions = {
+					element: this.sortedElements[i],
+					timelineList: this.canvasListId,
+					itemWidth: this.itemWidth
+				};
+				new TimelineItem(timelineItemOptions);
+			}
+
+			this._linkIndexToListItems();
+			this.showService.fixElementAndChildren($timelineList);
 		}
-
-		// Update timeline padding
-		this._updateTimelinePadding();
-
-		// Re-Calculate Item Width based on available space
-		this._calcItemWidth();
-
-		for(i = 0, e = this.sortedElements.length; i < e; i++){
-				
-			timelineItemOptions = {
-				element: this.sortedElements[i], 
-				timelineList: this.canvasListId,
-				itemWidth: this.itemWidth
-			};
-			new TimelineItem(timelineItemOptions);
-		}
-		
-		this._linkIndexToItems();
-
-		this.showService.fixElementAndChildren($timelineList);
 	},
 
 	_handleScrollEvent: function(){
+		var i, e, index, elem;
 		var headerHeight = 100;
-		var i, e, item; 
-		if( this.indexItems ){
-			for(i = 0, e = this.indexItems.length; i < e; i++){
-				item = document.getElementById(this.indexItems[i]);
-				if( item && item.getBoundingClientRect().top > headerHeight ){
-					this.timelineIndex.setActiveIndexItem(this.indexItems[i]);
-					break;
+		if (this.sortedIndex && this.indexElements) {
+			for (i = 0, e = this.sortedIndex.length; i < e; i += 1){
+				index = this.sortedIndex[i];
+				if (this.indexElements.hasOwnProperty(index)) {
+					if (this.indexElements[index].id) {
+						elem = document.getElementById(this.indexElements[index].id);
+						if (elem && elem.getBoundingClientRect().top > headerHeight) {
+							this.timelineIndex.setActiveIndexItem(this.indexElements[index].label);
+							break;
+						}
+					}
 				}
 			}
 		}
 	},
 
+	_getTimeZoneOffset: function(){
+		var now = $m();
+		// utcOffset needs to be inverted for offsetting date formatting by local time zone
+		var utcOffset = ($m.parseZone(now).utcOffset()) * -1;
+		return utcOffset;
+	},
+
 	_sortElements: function(){
-		var elementId, element, date;
+		var elementId, element, date, moment;
+		var defaultDateFormat = "YYYY-MM-DD";
+		var utcOffsetValue = this._getTimeZoneOffset();
 		this.sortedElements = [];
 
-		for(elementId in this.elementsById){
-			element = this.elementsById[elementId];
-		
-			// If element doesn't provide a sorted value, try to base it on a document date value
-			if( typeof element.sort === 'undefined' ){
+		for (elementId in this.elementsById) {
+			if (this.elementsById.hasOwnProperty(elementId)) {
+				element = this.elementsById[elementId];
 				date = getDateFromDoc(element);
 
-				if( date ){
-					element.sort = date;
+				// If element doesn't provide a label value, base it on a document date value
+				if (typeof element.label === 'undefined') {
+					if (date) {
+						moment = $m(new Date(date.min)).utcOffset(utcOffsetValue);
+						if (this.labelDateFormat) {
+							element.label = _loc(moment.format(this.labelDateFormat));
+						} else {
+							// If no specified label date format is provided, use default format.
+							element.label = moment.format(defaultDateFormat);
+						}
+					}
 				}
-			}
 
-			if( element.sort ){
-				this.sortedElements.push(element);
+				// If element doesn't provide a sorted value, try to base it on a document date value
+				if (typeof element.sort === 'undefined') {
+					if (date) {
+						element.sort = date.min;
+					}
+				}
+
+				if (element.sort) {
+					this.sortedElements.push(element);
+				}
 			}
 		}
 
 		this.sortedElements.sort(function(a,b){
-			if( a.sort < b.sort ){
+			if (a.sort < b.sort) {
 				return -1;
 			}
-			if( a.sort > b.sort ){
+			if (a.sort > b.sort) {
 				return 1;
+			}
+			if (a.sort === b.sort) {
+				if (!a.label && b.label) {
+					return -1;
+				} else if (a.label && !b.label) {
+					return 1;
+				}
 			}
 			return 0;
 		});
 
-		if( !this.ascendingSortOrder ){
+		if (!this.ascendingSortOrder) {
 			this.sortedElements.reverse();
 		}
 	},
@@ -435,19 +456,19 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		var i,e,removed,added,updated;	
 		
 		// Remove elements that are no longer there
-		for(i=0,e=removedElements.length; i<e; ++i){
+		for (i=0,e=removedElements.length; i<e; i += 1) {
 			removed = removedElements[i];
 			delete this.elementsById[removed.id];
 		}
 		
 		// Add elements
-		for(i=0,e=addedElements.length; i<e; ++i){
+		for (i=0,e=addedElements.length; i<e; i += 1) {
 			added = addedElements[i];
 			this.elementsById[added.id] = added;
 		}
 		
 		// Update elements
-		for(i=0,e=updatedElements.length; i<e; ++i){
+		for (i=0,e=updatedElements.length; i<e; i += 1) {
 			updated = updatedElements[i];
 			this.elementsById[ updated.id ] = updated;
 		}
@@ -462,14 +483,14 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 	},
 
 	_handleDispatch: function(m){
-		if( 'modelStateUpdated' === m.type ) {
-			if( this.sourceModelId === m.modelId ){
-				if( m.state ){
+		if ('modelStateUpdated' === m.type) {
+			if (this.sourceModelId === m.modelId) {
+				if (m.state) {
 					this._sourceModelUpdated(m.state);
 				}
 			}
 
-		} else if( 'windowResized' === m.type ) {
+		} else if ('windowResized' === m.type) {
 			this._refresh();
 		}
 	}
@@ -489,11 +510,9 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 
 	ascendingSortOrder: null,
 
-	index: null,
+	sortedIndex: null,
 
-	factor: null,
-
-	autoReduceIndex: null,
+	indexElements: null,
 
 	uniqueIndexValues: null,
 
@@ -509,7 +528,6 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 			canvasIndexId: null,
 			ascendingSortOrder: null,
 			timelineItems: null,
-			autoReduceIndex: null,
 			onSuccess: function(){},
 			onError: function(err){}
 		},opts_);
@@ -517,11 +535,10 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 		this.canvasId = opts.canvasId;
 		this.canvasIndexId = opts.canvasIndexId;
 		this.ascendingSortOrder = opts.ascendingSortOrder;
-		this.autoReduceIndex = opts.autoReduceIndex;
 		this.sortedElements = opts.sortedElements;
 		this.indexRange = {'startIndex': null, 'endIndex': null};
-		this.index = [];
-		this.factor = 1;
+		this.sortedIndex = [];
+		this.indexElements = {};
 		this.itemHeight = 15;
 		this.itemPadding = 1;
 		this.itemMargin = 4;
@@ -534,75 +551,96 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 	},
 
 	_generateIndex: function(){
-		var i, e, sortValue;
+		var i, e, sortValue, labelValue, uniqueId;
 		this.uniqueIndexValues = [];
+		var uniqueIndexObjects = {};
 
-		for(i = 0, e = this.sortedElements.length; i < e; i++){
+		for (i = 0, e = this.sortedElements.length; i < e; i += 1) {
 			sortValue = this.sortedElements[i].sort;
-			if( sortValue ){
+			labelValue = this.sortedElements[i].label;
+
+			if (sortValue) {
 				this._updateIndexRange(sortValue);
 
-				if( this.uniqueIndexValues.indexOf(sortValue) < 0 ){
+				if (this.uniqueIndexValues.indexOf(sortValue) < 0) {
 					this.uniqueIndexValues.push(sortValue);
+
+					if (!uniqueIndexObjects.hasOwnProperty(sortValue)) {
+						uniqueId = $n2.getUniqueId();
+
+						uniqueIndexObjects[sortValue] = {
+							sort: sortValue,
+							label: labelValue,
+							id: uniqueId
+						};
+					}
 				}
 			}
 		}
 
-		this.uniqueIndexValues.sort(function(a,b){
-			if( a < b ){
-				return -1;
+		if (this.uniqueIndexValues.length > 1) {
+			this.uniqueIndexValues.sort(function(a,b){
+				if (a < b) {
+					return -1;
+				}
+				if (a > b) {
+					return 1;
+				}
+				return 0;
+			});
+
+			// Set index with uniqueIndexValues
+			this._setIndex(this.uniqueIndexValues, uniqueIndexObjects);
+
+			// Update index with reversed order
+			if (!this.ascendingSortOrder) {
+				this._setIndex(this.uniqueIndexValues.reverse(), uniqueIndexObjects);
 			}
-			if( a > b ){
-				return 1;
-			}
-			return 0;
-		});
-
-		if( !this.ascendingSortOrder ){
-			this.uniqueIndexValues.reverse();
-		}
-
-		this._setIndex(this.uniqueIndexValues);
-
-		// Automatically reduce index items if the index size exceeds canvas height.
-		if( this.autoReduceIndex ){
-			this._setIndex(this._reduceIndex());
 		}
 	},
 
 	_addTimelineIndexToCanvas: function(){
-		var i, e, indexList, indexItem, currentIndex;
+		var i, e, indexList, indexItem, indexElements, itemId, itemLabel, sortedIndex, sortedIndexItem;
 
 		indexList = $('<ul>')
 			.appendTo('#' + this.canvasIndexId);
 		
-		currentIndex = this.getIndex();
+		sortedIndex = this.getSortedIndex();
+		indexElements = this.getIndexElements();
 
-		for(i = 0, e = currentIndex.length; i < e; i++){
+		for (i = 0, e = sortedIndex.length; i < e; i += 1) {
+			sortedIndexItem = sortedIndex[i];
+			itemId = indexElements[sortedIndexItem].id;
+			itemLabel = indexElements[sortedIndexItem].label;
 			indexItem = $('<li>')
-				.css('max-height', this.itemHeight + "px")
+				.css('min-height', this.itemHeight + "px")
 				.css('padding', this.itemPadding)
 				.css('margin', "0px auto " + this.itemMargin + "px auto")
 				.appendTo(indexList);
 			
 			// If first item make it active
-			if( i === 0 ){
+			if (i === 0) {
 				indexItem.addClass('active');
 			}
 			
 			$('<a>')
-				.text(this.index[i])
-				.attr('href', '#' + this.index[i])
+				.text(itemLabel)
+				.attr('href', '#' + itemId)
 				.appendTo(indexItem);
 		}
 	},
 
-	getIndex: function(){
-		return this.index;
+	getSortedIndex: function(){
+		return this.sortedIndex;
 	},
 
-	_setIndex: function(timelineIndex){
-		this.index = timelineIndex;
+	getIndexElements: function(){
+		return this.indexElements;
+	},
+
+	_setIndex: function(sortedIndex, indexElements){
+		this.sortedIndex = sortedIndex;
+		this.indexElements = indexElements;
 	},
 
 	_getIndexRange: function(){
@@ -617,84 +655,18 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 	_updateIndexRange: function(sortValue){
 		var currentIndexRange = this._getIndexRange();
 		
-		if( !currentIndexRange.startIndex && !currentIndexRange.endIndex ){
+		if (!currentIndexRange.startIndex && !currentIndexRange.endIndex) {
 			currentIndexRange.startIndex = sortValue; 
 			currentIndexRange.endIndex = sortValue;
-		} else if( sortValue < currentIndexRange.startIndex ){
+		} else if (sortValue < currentIndexRange.startIndex) {
 			currentIndexRange.startIndex = sortValue;
-		} else if( sortValue > currentIndexRange.endIndex ){
+		} else if (sortValue > currentIndexRange.endIndex) {
 			currentIndexRange.endIndex = sortValue;
 		}
 		
-		if( currentIndexRange.startIndex && currentIndexRange.endIndex ){
+		if (currentIndexRange.startIndex && currentIndexRange.endIndex) {
 			this._setIndexRange(currentIndexRange.startIndex, currentIndexRange.endIndex);
 		}
-	},
-
-	_reduceItem: function(item){
-		var yyyymmddRegEx = /([0-9]{4})-([0-9]{2})-([0-9]{2})/g;
-		var yyyymmRegEx = /([0-9]{4})-([0-9]{2})/g;
-		var yyyyRegEx = /([0-9]{4})/g;
-		var newItem;
-		if( item ){
-			// Reduce date string
-			if( item.match(yyyymmddRegEx) && item.match(yyyymmddRegEx)[0].length < item.length ){
-				newItem = item.match(yyyymmddRegEx)[0];
-			} else if( item.match(yyyymmRegEx) && item.match(yyyymmRegEx)[0].length < item.length ){
-				newItem = item.match(yyyymmRegEx)[0];
-			} else if( item.match(yyyyRegEx) && item.match(yyyyRegEx)[0].length < item.length ){
-				newItem = item.match(yyyyRegEx)[0];
-			} else {
-				// If item is not a date, simply return original item
-				newItem = String(item - (item % this.factor));	
-			}
-		}
-		return newItem;
-	},
-
-	_reduceIndex: function(){
-		var i, e, reducedIndex;
-		var indexItems = this.getIndex();
-		var canvasHeight = getCanvasHeight(this.canvasId);
-		var listMargin = 20;
-		var reducedItems = [];
-		var totalCanvasHeight = canvasHeight - listMargin;
-		var totalHeightPerItem = this.itemHeight + this.itemMargin + this.itemPadding + this.itemPadding;	
-		var maxIndexItems = Math.round(totalCanvasHeight / totalHeightPerItem);
-		
-		while(maxIndexItems < indexItems.length){
-
-			for(i = 0, e = indexItems.length; i < e; i++){
-
-				reducedIndex = this._reduceItem(indexItems[i]);
-
-				if( reducedIndex && reducedItems.indexOf(reducedIndex) < 0 ){
-					reducedItems.push(reducedIndex);
-					indexItems[i] = reducedIndex;
-				} else {
-					// Remove item from index if not unique
-					indexItems.splice(i,1);
-					if( indexItems.length > i ){
-						i--;
-					}
-				}
-			}
-
-			if( maxIndexItems < reducedItems.length && maxIndexItems > 1 ){
-				reducedItems = [];
-
-			} else if( maxIndexItems <= 1 ) {
-				// If window is too small to provide an index, exclude it.
-				indexItems = [];
-				return indexItems;
-
-			} else {
-				indexItems = reducedItems;
-			}
-
-			this.factor *= 10;
-		}
-		return indexItems;
 	},
 
 	setActiveIndexItem: function(itemLabel){
@@ -703,10 +675,10 @@ var TimelineIndex = $n2.Class('TimelineIndex', {
 		// Update item with active class
 		indexItems = $('#' + this.canvasIndexId + ' li');
 
-		for(i = 0, e = indexItems.length; i < e; i++){
+		for (i = 0, e = indexItems.length; i < e; i += 1) {
 			indexItem = indexItems.eq(i);
 			indexItemText = indexItem.text();
-			if( indexItemText  === String(itemLabel) ){
+			if (indexItemText  === String(itemLabel)) {
 				indexItem.addClass('active');	
 			} else {
 				indexItem.removeClass('active');
@@ -742,17 +714,19 @@ var TimelineItem = $n2.Class('TimelineItem', {
 	},
 	
 	_getDocIdFromDoc: function(doc){
-		if( doc && doc._id ){
+		if (doc && doc._id) {
 			return doc._id;
 		}
 	},
 
 	_getAttachment: function(doc){
 		var file;
-		if( doc && doc.nunaliit_attachments && doc.nunaliit_attachments.files ){
-			for(file in doc.nunaliit_attachments.files){
-				if( doc.nunaliit_attachments.files[file].originalName ){
-					return doc.nunaliit_attachments.files[file].originalName;
+		if (doc && doc.nunaliit_attachments && doc.nunaliit_attachments.files) {
+			for (file in doc.nunaliit_attachments.files) {
+				if (doc.nunaliit_attachments.files.hasOwnProperty(file)){
+					if (doc.nunaliit_attachments.files[file].originalName) {
+						return doc.nunaliit_attachments.files[file].originalName;
+					}
 				}
 			}
 		}
@@ -760,20 +734,24 @@ var TimelineItem = $n2.Class('TimelineItem', {
 
 	_addItemToList: function(){
 		var $timelineItem, $timelineItemContent, $timelineItemContentText;
-		var sortLabel = this.element.sort;
+		var sortValue = this.element.sort;
+		var itemLabel = this.element.label;
 		var docId = this._getDocIdFromDoc(this.element.n2_doc);
 		var attachmentName = this._getAttachment(this.element.n2_doc);
 
-		if( sortLabel ){
+		if (sortValue) {
 			
 			$timelineItem = $('<li>')
 				.attr('class','n2_vertical_timeline_item n2s_userEvents')
 				.attr('nunaliit-document', docId);
-			
-			$('<div>')
-				.attr('class','n2_vertical_timeline_item_label')
-				.text(sortLabel)
-				.appendTo($timelineItem);
+
+			if (itemLabel) {
+				$('<div>')
+					.attr('class','n2_vertical_timeline_item_label')
+					.attr('n2_sortvalue',sortValue)
+					.text(itemLabel)
+					.appendTo($timelineItem);
+			}
 
 			$('<div>')
 				.attr('class','n2_vertical_timeline_item_node')
@@ -785,7 +763,7 @@ var TimelineItem = $n2.Class('TimelineItem', {
 				.css('transform','translateX(-' + this.itemWidth + 'px)')
 				.appendTo($timelineItem);
 
-			if( attachmentName ){
+			if (attachmentName) {
 				$('<div>')
 					.attr('class', 'n2s_insertMediaView')
 					.attr('nunaliit-document', docId)
@@ -809,7 +787,7 @@ var TimelineItem = $n2.Class('TimelineItem', {
 
 //--------------------------------------------------------------------------
 function HandleCanvasAvailableRequest(m){
-	if( m.canvasType === 'vertical_timeline' ){
+	if (m.canvasType === 'vertical_timeline') {
 		m.isAvailable = true;
 	}
 }
@@ -818,16 +796,18 @@ function HandleCanvasAvailableRequest(m){
 function HandleCanvasDisplayRequest(m){
 	var key, options;
 
-	if( m.canvasType === 'vertical_timeline' ){
+	if (m.canvasType === 'vertical_timeline') {
 		
 		options = {};
-		if( m.canvasOptions ){
-			for( key in m.canvasOptions){
-				options[key] = m.canvasOptions[key];
+		if (m.canvasOptions) {
+			for (key in m.canvasOptions) {
+				if (m.canvasOptions.hasOwnProperty(key)) {
+					options[key] = m.canvasOptions[key];
+				}
 			}
 		}
 		
-		if( !options.elementGenerator ){
+		if (!options.elementGenerator) {
 			// If not defined, use the one specified by type
 				options.elementGenerator = $n2.canvasElementGenerator.CreateElementGenerator({
 				type: options.elementGeneratorType,

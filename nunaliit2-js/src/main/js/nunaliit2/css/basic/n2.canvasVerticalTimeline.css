@@ -106,6 +106,9 @@
 .n2_vertical_timeline .n2_vertical_timeline_list .n2_vertical_timeline_item .n2_vertical_timeline_item_content .n2s_insertedMediaView {
 	padding: 0px 20px 0px 20px;
 	max-width: max-content;
+	max-width: intrinsic;           /* Safari */
+	max-width: -moz-max-content;    /* Firefox/Gecko */
+	max-width: -webkit-max-content; /* Chrome */
 	margin: 0px 0px 0px auto;
 }
 
@@ -148,6 +151,9 @@
 
 .n2_vertical_timeline .n2_vertical_timeline_list .n2_vertical_timeline_item .n2_vertical_timeline_item_label {
 	width: max-content;
+	width: intrinsic;           /* Safari/WebKit uses a non-standard name */
+	width: -moz-max-content;    /* Firefox/Gecko */
+	width: -webkit-max-content; /* Chrome */
 	font-family: arial;
 	font-size: 1.8em;
     font-weight: bold;
@@ -176,3 +182,4 @@
 	border-color: #802000;
 
 }
+
