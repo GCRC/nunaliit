@@ -144,28 +144,37 @@ function ol5FeatureSorting(a, b){
 
 	 var bSort = ol5prepareFeatureForSorting(b);
 		if( aSort.isPoint && bSort.isPoint ) {
+			aSort = bSort = null;
 			return 0;
 		} else if( aSort.isPoint ) {
+			aSort = bSort = null;
 			return 1;
 		} else if( bSort.isPoint ) {
+			aSort = bSort = null;
 			return -1;
 		} else {
 			// One of the two geometries is not a point
 			if( aSort.isLineString && bSort.isLineString ) {
 				if( aSort.largestDim > bSort.largestDim ) {
+					aSort = bSort = null;
 					return -1;
 				} else {
+					aSort = bSort = null;
 					return 1;
 				};
 			} else if( aSort.isLineString ){
+				aSort = bSort = null;
 				return 1;
 			} else if ( bSort.isLineString ) {
+				aSort = bSort = null;
 				return -1
 			} else {
 				// Both geometries are polygons
 				if( aSort.largestDim > bSort.largestDim ) {
+					aSort = bSort = null;
 					return -1;
 				} else {
+					aSort = bSort = null;
 					return 1;
 				};
 			};
