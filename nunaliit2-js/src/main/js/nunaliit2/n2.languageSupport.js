@@ -163,15 +163,18 @@ var LanguageSwitcher = $n2.Class({
 			.addClass('mdc-dialog__actions')
 			.appendTo($dialogSurface);
 
-		var $button = $('<button>')
-			.addClass('n2dialogs_alert_okButton mdc-button mdc-dialog__button')
-			.text(_loc('Close'))
-			.appendTo($footer)
-			.click(function(){
+		var btnOpts = {
+			parentId: $n2.utils.getElementIdentifier($footer),
+			mdcClasses: ['n2dialogs_alert_okButton', 'mdc-dialog__button'],
+			btnLabel: 'Close',
+			btnFunction: function(){
 				mdcDialogComponent.close();
 				$langDialog.remove();
 				return false;
-			});
+			}
+		};
+
+		new $n2.mdc.MDCButton(btnOpts);
 
 		$('<div>')
 			.addClass('mdc-dialog__scrim')
@@ -181,9 +184,6 @@ var LanguageSwitcher = $n2.Class({
 				return false;
 			})
 			.appendTo($langDialog);
-
-		// Attach ripple to button
-		mdc.ripple.MDCRipple.attachTo($button[0]);
 
 		// Attach mdc component to alert dialog
 		mdcDialogComponent = new mdc.dialog.MDCDialog($langDialog[0]);

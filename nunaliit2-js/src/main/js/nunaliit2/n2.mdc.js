@@ -141,7 +141,9 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 
 	_attachRippleToButton: function(btnId){
 		var btn = document.getElementById(btnId);
-		$mdc.ripple.MDCRipple.attachTo(btn);
+		if (btn) {
+			$mdc.ripple.MDCRipple.attachTo(btn);
+		}
 	}
 });
 
