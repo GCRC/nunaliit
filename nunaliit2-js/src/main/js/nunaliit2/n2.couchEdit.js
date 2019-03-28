@@ -46,7 +46,7 @@ function getDefaultCouchProjection(){
 	return defaultCouchProj;
 };
 
-//++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++
 
 
 function isKeyEditingAllowed(obj, selectors, data) {
@@ -182,7 +182,7 @@ function searchForDocumentId(options_){
 };
 
 
-//++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++
 
 var CouchSimpleDocumentEditor = $n2.Class({
 
@@ -717,12 +717,15 @@ var CouchSimpleDocumentEditor = $n2.Class({
 			if( showService ){
 				showService.printBriefDescription($brief, relDocId);
 			};
+
+			var btnOpts = {
+				parentId: $n2.utils.getElementIdentifier($displayRelationDiv),
+				mdcClasses: ['editorDisplayRelationButton'],
+				btnLabel: 'Remove',
+				btnFunction: removeRelationFn
+			};
 			
-			$('<button>')
-				.addClass('editorDisplayRelationButton mdc-button')
-				.text( _loc('Remove') )
-				.appendTo($displayRelationDiv)
-				.click(removeRelationFn);
+			new $n2.mdc.MDCButton(btnOpts);
 		};
 	}
 	
@@ -801,7 +804,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 	}
 });
 
-//++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++
 
 var CouchDocumentEditor = $n2.Class({
 	
@@ -1393,28 +1396,34 @@ var CouchDocumentEditor = $n2.Class({
 			.addClass('editorButtons mdc-card__action-buttons')
 			.appendTo($formButtonsContainer);
 
-		$('<button>')
-			.addClass('save mdc-button mdc-button--raised')
-			.text(_loc('Save'))
-			.click(function(){
+		var saveBtnOpts = {
+			parentId: $n2.utils.getElementIdentifier($formButtons),
+			mdcClasses: ['save'],
+			btnLabel: 'Save',
+			btnRaised: true,
+			btnFunction: function(){
 				_this._save();
 				return false;
-			})
-			.appendTo($formButtons);
+			}
+		};
 
-		if( !this.isInsert
-		 && $n2.couchMap.canDeleteDoc(data)
-			) {
-			$('<button>')
-				.addClass('delete mdc-button')
-				.text(_loc('Delete'))
-				.click(function(evt){
+		new $n2.mdc.MDCButton(saveBtnOpts);
+
+		if( !this.isInsert && $n2.couchMap.canDeleteDoc(data) ) {
+
+			var deleteBtnOpts = {
+				parentId: $n2.utils.getElementIdentifier($formButtons),
+				mdcClasses: ['delete'],
+				btnLabel: 'Delete',
+				btnFunction: function(evt){
 					if( confirm( _loc('Do you really want to delete this feature?') ) ) {
 						deletion(data);
 					};
 					return false;
-				})
-				.appendTo($formButtons);
+				}
+			};
+
+			new $n2.mdc.MDCButton(deleteBtnOpts);
 		};
 		
 		if( this.attachmentEditor ){
@@ -1423,32 +1432,41 @@ var CouchDocumentEditor = $n2.Class({
 			});
 		};
 
-		$('<button>')
-			.addClass('relation mdc-button')
-			.text(_loc('Add Relation'))
-			.click(function(){
+		var addRelBtnOpts = {
+			parentId: $n2.utils.getElementIdentifier($formButtons),
+			mdcClasses: ['relation'],
+			btnLabel: 'Add Relation',
+			btnFunction: function(){
 				_this._addRelationDialog();
 				return false;
-			})
-			.appendTo($formButtons);
+			}
+		};
 
-		$('<button>')
-			.addClass('layers mdc-button')
-			.text(_loc('Layers'))
-			.click(function(){ 
+		new $n2.mdc.MDCButton(addRelBtnOpts);
+		
+		var layersBtnOpts = {
+			parentId: $n2.utils.getElementIdentifier($formButtons),
+			mdcClasses: ['layers'],
+			btnLabel: 'Layers',
+			btnFunction: function(){ 
 				_this._manageLayersDialog(); 
 				return false; 
-			})
-			.appendTo($formButtons);
+			}
+		};
 
-		$('<button>')
-			.addClass('cancel mdc-button')
-			.text(_loc('Cancel'))
-			.click(function(){
+		new $n2.mdc.MDCButton(layersBtnOpts);
+
+		var cancelBtnOpts = {
+			parentId: $n2.utils.getElementIdentifier($formButtons),
+			mdcClasses: ['cancel'],
+			btnLabel: 'Cancel',
+			btnFunction: function(){
 				_this._cancelEdit();
-			})
-			.appendTo($formButtons);
-		
+			}
+		};
+
+		new $n2.mdc.MDCButton(cancelBtnOpts);
+
 		// Add user buttons
 		for(var i=0,e=this.userButtons.length; i<e; ++i) {
 			var userButton = this.userButtons[i];
@@ -2018,13 +2036,16 @@ var CouchDocumentEditor = $n2.Class({
 				.appendTo($displayRelationDiv);
 			if( showService ){
 				showService.printBriefDescription($brief, relDocId);
-			};			
-						
-			$('<button>')
-				.addClass('editorDisplayRelationButton mdc-button')
-				.text( _loc('Remove') )
-				.appendTo($displayRelationDiv)
-				.click(removeRelationFn);
+			};
+		
+			var removeBtnOpts = {
+				parentId: $n2.utils.getElementIdentifier($displayRelationDiv),
+				mdcClasses: ['editorDisplayRelationButton'],
+				btnLabel: 'Remove',
+				btnFunction: removeRelationFn
+			};
+
+			new $n2.mdc.MDCButton(removeBtnOpts);
 		};
 	},
 	
@@ -2456,7 +2477,7 @@ var CouchEditService = $n2.Class({
 	}
 });
 
-//++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++
 // Create an editor based on a schema. This
 // performs only the portion that deals with the
 // schema.
@@ -2543,7 +2564,7 @@ var SchemaEditor = $n2.Class({
 	}
 });
 
-//++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++
 // Schema editing service. This should be used to set
 // attributes that all schema editors should have in
 // common.
@@ -2622,7 +2643,7 @@ var SchemaEditorService = $n2.Class({
 	}
 });
 
-//++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++
 
 var AttachmentEditor = $n2.Class({
 	
@@ -2721,7 +2742,7 @@ var AttachmentEditor = $n2.Class({
 
 		this.elemId = $n2.utils.getElementIdentifier( $elem );
 
-		//load configuration
+		// load configuration
 		if( this.doc
 			&& !this.doc._rev) {
 			if(typeof this.doc.nunaliit_maxAudioRecordingLengthSeconds !== 'undefined') {
@@ -2884,18 +2905,24 @@ var AttachmentEditor = $n2.Class({
 		
 		var $elem = $(opts.elem);
 
-		var attachBtn = $('<button>')
-			.text(_loc('Add File'))
-			.addClass('mdc-button')
-			.appendTo($elem)
-			.click(function(){
+		var attachBtnOpts = {
+			parentId: $n2.utils.getElementIdentifier($elem),
+			btnLabel: 'Add File',
+			btnFunction: function(){
 				_this._openAddFileDialog();
 				return false;
-			});
-		
-		if( opts.classNames ){
-			attachBtn.addClass(opts.classNames);
+			}
 		};
+		
+		if( $n2.isArray(opts.classNames) ){
+			opts.classNames.forEach(function(className){
+				if( typeof className === 'string' ){
+					attachBtnOpts.mdcClasses.push(className);
+				};
+			});
+		};
+
+		new $n2.mdc.MDCButton(attachBtnOpts);
 	},
 	
 	performPreSavingActions: function(opts_){
@@ -2931,7 +2958,7 @@ var AttachmentEditor = $n2.Class({
 			return;
 		};
 
-		//Stop video capturing with close of the form
+		// Stop video capturing with close of the form
 		if(typeof _this.recordingStream !== 'undefined' && _this.recordingStream != null) {
 			_this.recordingStream.stop();
 		}
@@ -3105,7 +3132,7 @@ var AttachmentEditor = $n2.Class({
 		var $fileInput = $form.find('input[type="file"]');
 		var filename = $fileInput.val();
 		var mediaFile = null;
-		//generate file data for mp3 file.
+		// generate file data for mp3 file.
 		if(!filename) {
 			var audio = $form.find('audio');
 			if(audio.length > 0) {
@@ -3152,7 +3179,7 @@ var AttachmentEditor = $n2.Class({
 
 		function mediaTagToFile(element, mediaType, extension) {
 			var blob = dataURLtoBlob(element.src, mediaType);
-			//Check that File API Constructor is supported by this browser
+			// Check that File API Constructor is supported by this browser
 			if(typeof File === 'function' && File.length >= 2) {
 				filename = (Math.random() * new Date().getTime()).toString(36).replace( /\./g , '') + extension;
 				return new File([blob], filename, { type: mediaType });
@@ -3162,7 +3189,7 @@ var AttachmentEditor = $n2.Class({
 		}
 
 		function dataURLtoBlob(dataURL, mediaType) {
-			//Based on https://github.com/bubkoo/dataurl-to-blob (MIT License)
+			// Based on https://github.com/bubkoo/dataurl-to-blob (MIT License)
 			if (!window || window.window !== window) {
 				throw new Error('This module is only available in browser');
 			}
@@ -3253,11 +3280,11 @@ var AttachmentEditor = $n2.Class({
 			.addClass('attachmentEditor_dialog_buttons mdc-dialog__actions')
 			.appendTo($dialogSurface);
 
-		var $addBtn = $('<button>')
-			.addClass('mdc-button mdc-dialog__button')
-			.text( _loc('Attach') )
-			.appendTo($footer)
-			.click(function(){
+		var addBtnOpts = {
+			parentId: $n2.utils.getElementIdentifier($footer),
+			mdcClasses: ['mdc-dialog__button'],
+			btnLabel: 'Attach',
+			btnFunction: function(){
 				var $addFileDialog = $('#'+dialogId);
 				var $addFileForm = $('#'+addFileFormId);
 				var $input = $addFileForm.find('input');
@@ -3270,17 +3297,23 @@ var AttachmentEditor = $n2.Class({
 					alert( _loc('You must select a file') );
 				};
 				return false;
-			});
+			}
+		};
 
-		var $cancelBtn = $('<button>')
-			.addClass('mdc-button mdc-dialog__button')
-			.text( _loc('Cancel') )
-			.appendTo($footer)
-			.click(function(){
+		new $n2.mdc.MDCButton(addBtnOpts);
+
+		var cancelBtnOpts = {
+			parentId: $n2.utils.getElementIdentifier($footer),
+			mdcClasses: ['mdc-dialog__button'],
+			btnLabel: 'Cancel',
+			btnFunction: function(){
 				mdcDialogComponent.close();
 				$addFileDialog.remove();
 				return false;
-			});
+			}
+		};
+
+		new $n2.mdc.MDCButton(cancelBtnOpts);
 
 		$('<div>')
 			.addClass('mdc-dialog__scrim')
@@ -3291,9 +3324,6 @@ var AttachmentEditor = $n2.Class({
 			})
 			.appendTo($addFileDialog);
 
-		// Attach ripple to button
-		mdc.ripple.MDCRipple.attachTo($addBtn[0]);
-		mdc.ripple.MDCRipple.attachTo($cancelBtn[0]);
 
 		// Attach mdc component to alert dialog
 		mdcDialogComponent = new mdc.dialog.MDCDialog($addFileDialog[0]);
@@ -3650,7 +3680,7 @@ var AttachmentEditor = $n2.Class({
 				}
 			}, false);
 		} else {
-			//clearfix div to prevent buttons from floating
+			// clearfix div to prevent buttons from floating
 			$('<div>')
 				.addClass('attachmentEditor_clearfix')
 				.appendTo($div);
@@ -3902,19 +3932,24 @@ var AttachmentEditor = $n2.Class({
 				.appendTo($div);
 		};
 
-		$('<button>')
-			.attr('n2AttName',attName)
-			.addClass('attachmentEditor_delete mdc-button')
-			.text( _loc('Remove') )
-			.appendTo($div)
-			.click(function(){
+		var removeBtnOpts = {
+			parentId: $n2.utils.getElementIdentifier($div),
+			mdcClasses: ['attachmentEditor_delete'],
+			mdcAttributes: {
+				'n2AttName':'attName'
+			},
+			btnLabel: 'Remove',
+			btnFunction: function(){
 				var $a = $(this);
 				var attName = $a.attr('n2AttName');
 				if( attName ) {
 					_this._removeAttachment(attName);
 				};
 				return false;
-			});
+			}
+		};
+
+		new $n2.mdc.MDCButton(removeBtnOpts);
 		
 		if( opts.form ) {
 			opts.form.appendTo($div);
@@ -4270,7 +4305,7 @@ var AttachmentEditor = $n2.Class({
 		var kbps = 128;
 		var mp3encoder = new lamejs.Mp3Encoder(channels, sampleRate, kbps);
 		var mp3Data = [];
-		var sampleBlockSize = 1152; //can be anything but make it a multiple of 576 to make encoders life easier
+		var sampleBlockSize = 1152; // can be anything but make it a multiple of 576 to make encoders life easier
 
 		for (var i = 0; i < samples.length; i += sampleBlockSize) {
 			var sampleChunk = samples.subarray(i, i + sampleBlockSize);
@@ -4279,7 +4314,7 @@ var AttachmentEditor = $n2.Class({
 				mp3Data.push(mp3buf);
 			}
 		}
-		var mp3buf = mp3encoder.flush();   //finish writing mp3
+		var mp3buf = mp3encoder.flush();   // finish writing mp3
 
 		if (mp3buf.length > 0) {
 			mp3Data.push(new Int8Array(mp3buf));
@@ -4289,7 +4324,7 @@ var AttachmentEditor = $n2.Class({
 	}
 });
 
-//++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++
 
 $n2.couchEdit = {
 	EditService: CouchEditService

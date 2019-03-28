@@ -38,11 +38,11 @@ var
 	,DH = 'n2.help'
 	;
 
-//=========================================================================	
+// =========================================================================
 
 var helpDisplayByKey = {};	
-	
-//=========================================================================	
+
+// =========================================================================
 var HelpDisplay = $n2.Class({
 	
 	helpDialogId: null,
@@ -116,16 +116,19 @@ var HelpDisplay = $n2.Class({
 			.addClass('mdc-dialog__actions')
 			.appendTo($dialogSurface);
 
-		var $button = $('<button>')
-			.addClass('n2dialogs_alert_okButton mdc-button mdc-dialog__button')
-			.text(_loc('Close'))
-			.appendTo($footer)
-			.click(function(){
+		var btnOpts = {
+			parentId: $n2.utils.getElementIdentifier($footer),
+			mdcClasses: ['n2dialogs_alert_okButton', 'mdc-dialog__button'],
+			btnLabel: 'Close',
+			btnFunction: function(){
 				_this.mdcDialogComponent.close();
 				$dialog.remove();
 				return false;
-			});
-		
+			}
+		};
+
+		new $n2.mdc.MDCButton(btnOpts);
+
 		$('<div>')
 			.addClass('mdc-dialog__scrim')
 			.click(function(){
@@ -135,17 +138,14 @@ var HelpDisplay = $n2.Class({
 			})
 			.appendTo($dialog);
 
-		// Attach ripple to button
-		mdc.ripple.MDCRipple.attachTo($button[0]);
-
 		// Attach mdc component to alert dialog
 		this.mdcDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);
 		this.mdcDialogComponent.open();
 
 	}
 });
-	
-//=========================================================================	
+
+// =========================================================================
 
 function ShowHelp(key, $elem){
 	var helpDisplay = helpDisplayByKey[key];
@@ -154,7 +154,7 @@ function ShowHelp(key, $elem){
 	};
 };
 
-//=========================================================================	
+// =========================================================================
 
 function InstallHelpInfo(key, helpInfo){
 	if( key && helpInfo ){
@@ -175,7 +175,7 @@ function InstallHelpInfo(key, helpInfo){
 	};
 };
 
-//=========================================================================	
+// =========================================================================
 
 $n2.help = {
 	ShowHelp: ShowHelp

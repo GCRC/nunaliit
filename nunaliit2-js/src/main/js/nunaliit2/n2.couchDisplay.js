@@ -357,15 +357,6 @@ var Display = $n2.Class({
 		};
 	}
 
-	,_attachRippleToButtons: function(){
-		// attach ripple to buttons 
-		var mdc_buttons = document.getElementsByClassName('mdc-button');
-		var i, e;
-		for(i = 0, e = mdc_buttons.length; i < e; i++){
-			mdc.ripple.MDCRipple.attachTo(mdc_buttons[i]);
-		};
-	}
-
 	,_addButtons: function($elem, data, opt_) {
 		var _this = this;
 		
@@ -693,8 +684,6 @@ var Display = $n2.Class({
  				}
  			});
 		};
-
-		this._attachRippleToButtons();
 	}
 	
 	,_addAttachmentProgress: function($elem, data){
@@ -1144,16 +1133,19 @@ var Display = $n2.Class({
 			var $footer = $('<footer>')
 				.addClass('mdc-dialog__actions')
 				.appendTo($dialogSurface);
-		
-			var $button = $('<button>')
-				.addClass('mdc-button mdc-dialog__button')
-				.text(_loc('Close')) 
-				.appendTo($footer)
-				.click(function(){
+
+			var btnOpts = {
+				parentId: $n2.utils.getElementIdentifier($footer),
+				mdcClasses: ['mdc-dialog__button'],
+				btnLabel: 'Close',
+				btnFunction: function(){
 					mdcDialogComponent.close();
 					$dialog.remove();
 					return false;
-				});
+				}
+			};
+
+			new $n2.mdc.MDCButton(btnOpts);
 
 			$('<div>')
 				.addClass('mdc-dialog__scrim')
@@ -1163,9 +1155,6 @@ var Display = $n2.Class({
 					return false;
 				})
 				.appendTo($dialog);
-
-			// Attach ripple to button
-			mdc.ripple.MDCRipple.attachTo($button[0]);
 
 			// Attach mdc component to alert dialog
 			mdcDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);
@@ -1855,7 +1844,7 @@ var CommentRelatedInfo = $n2.Class({
 	}
 });
 
-//===================================================================================
+// ===================================================================================
 // An instance of this class is used to draw a HTML button in the DOM structure.
 var ButtonDisplay = $n2.Class({
 
@@ -1891,19 +1880,18 @@ var ButtonDisplay = $n2.Class({
 		var $elem = $(opts.elem);
 		var name = opts.name;
 		var label = opts.label;
+
 		if( !label ){
 			label = name;
 		};
-		
-		var $linkButton = $('<button>')
-			.appendTo($elem)
-			.addClass('nunaliit_form_link mdc-button')
-			.click(wrapAndReturnFalse(opts.click));
 
-		if( label ){
-			$linkButton.text(label);
+		var btnOpts = {
+			parentId: $n2.utils.getElementIdentifier($elem),
+			mdcClasses: ['nunaliit_form_link'],
+			btnLabel: label,
+			btnFunction: wrapAndReturnFalse(opts.click)
 		};
-
+		
 		if( name ){
 			var compactTag = name;
 			var spaceIndex = compactTag.indexOf(' ');
@@ -1912,20 +1900,22 @@ var ButtonDisplay = $n2.Class({
 					compactTag.slice(spaceIndex + 1);
 				spaceIndex = compactTag.indexOf(' ');
 			};
-			$linkButton.addClass('nunaliit_form_link_' + compactTag.toLowerCase());
+			btnOpts.mdcClasses.push('nunaliit_form_link_' + compactTag.toLowerCase());
 		};
 		
 		if( typeof opts.className === 'string' ){
-			$linkButton.addClass(opts.className);
+			btnOpts.mdcClasses.push(opts.className);
 		};
 		
 		if( $n2.isArray(opts.classNames) ){
 			opts.classNames.forEach(function(className){
 				if( typeof className === 'string' ){
-					$linkButton.addClass(className);
+					btnOpts.mdcClasses.push(className);
 				};
 			});
 		};
+
+		var $linkButton = new $n2.mdc.MDCButton(btnOpts);
 		
 		return $linkButton;
 
@@ -1940,7 +1930,7 @@ var ButtonDisplay = $n2.Class({
 	}
 });
 
-//===================================================================================
+// ===================================================================================
 
 var TreeDocumentViewer = $n2.Class({
 	
@@ -1995,16 +1985,19 @@ var TreeDocumentViewer = $n2.Class({
 		var $footer = $('<footer>')
 			.addClass('n2Display_treeViewer_buttons mdc-dialog__actions')
 			.appendTo($dialogSurface);
-		
-		var $button = $('<button>')
-			.addClass('mdc-button mdc-dialog__button')
-			.text(_loc('Close')) 
-			.appendTo($footer)
-			.click(function(){
+	
+		var btnOpts = {
+			parentId: $n2.utils.getElementIdentifier($footer),
+			mdcClasses: ['mdc-dialog__button'],
+			btnLabel: 'Close',
+			btnFunction: function(){
 				_this.mdcDialogComponent.close();
 				$dialog.remove();
 				return false;
-			});
+			}
+		};
+
+		new $n2.mdc.MDCButton(btnOpts);
 
 		$('<div>')
 			.addClass('mdc-dialog__scrim')
@@ -2014,9 +2007,6 @@ var TreeDocumentViewer = $n2.Class({
 				return false;
 			})
 			.appendTo($dialog);
-
-		// Attach ripple to button
-		mdc.ripple.MDCRipple.attachTo($button[0]);
 
 		// Attach mdc component to alert dialog
 		this.mdcDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);

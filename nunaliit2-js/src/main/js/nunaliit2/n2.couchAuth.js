@@ -1782,7 +1782,7 @@ var AuthService = $n2.Class({
 	}
 });	
 
-//===================================================================================
+// ===================================================================================
 
 var AuthWidget = $n2.Class({
 	
@@ -1981,7 +1981,6 @@ var AuthWidget = $n2.Class({
 			var greetingOuter = $('<div class="nunaliit_login_greeting_outer_container"></div>')
 				.addClass(greetingClass)
 				.append(greetingInner);
-		
 
 			$login.empty().append(greetingOuter);
 
@@ -2001,7 +2000,7 @@ var AuthWidget = $n2.Class({
 	}
 });
 
-//===================================================================================
+// ===================================================================================
 
 var AuthWidgetMenu = $n2.Class({
 	menuContainer: null
@@ -2218,7 +2217,7 @@ var AuthWidgetMenu = $n2.Class({
 	}
 });
 
-//===================================================================================
+// ===================================================================================
 
 $n2.couchAuth = {
 	AuthService: AuthService

@@ -36,7 +36,7 @@ POSSIBILITY OF SUCH DAMAGE.
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 var DH = 'n2.couchDialogs';
 
-//++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++
 function computeMaxDialogWidth(preferredWidth){
 	var dialogWidth = preferredWidth;
 	
@@ -146,7 +146,7 @@ var ProgressDialog = $n2.Class({
 });
 
 
-//**********************************************************************
+// **********************************************************************
 var AlertDialog = $n2.Class({
 	
 	dialogId: null,
@@ -194,15 +194,18 @@ var AlertDialog = $n2.Class({
 			.addClass('mdc-dialog__actions')
 			.appendTo($dialogSurface);
 
-		var $button = $('<button>')
-			.addClass('n2dialogs_alert_okButton mdc-button mdc-dialog__button')
-			.text(_loc('OK'))
-			.appendTo($footer)
-			.click(function(){
+		var btnOpts = {
+			parentId: $n2.utils.getElementIdentifier($footer),
+			mdcClasses: ['n2dialogs_alert_okButton', 'mdc-dialog__button'],
+			btnLabel: 'OK',
+			btnFunction: function(){
 				_this.mdcDialogComponent.close();
 				$dialog.remove();
 				return false;
-			});
+			}
+		};
+
+		new $n2.mdc.MDCButton(btnOpts);
 
 		$('<div>')
 			.addClass('mdc-dialog__scrim')
@@ -213,9 +216,6 @@ var AlertDialog = $n2.Class({
 			})
 			.appendTo($dialog);
 
-		// Attach ripple to button
-		mdc.ripple.MDCRipple.attachTo($button[0]);
-
 		// Attach mdc component to alert dialog
 		this.mdcDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);
 		this.mdcDialogComponent.open();
@@ -223,7 +223,7 @@ var AlertDialog = $n2.Class({
 });
 
 
-//++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++
 function searchForDocumentId(options_){
 
 	var options = $n2.extend({
@@ -234,9 +234,7 @@ function searchForDocumentId(options_){
 	},options_);
 	
 	var shouldReset = true;
-
 	var mdcDialogComponent = null;
-	
 	var dialogId = $n2.getUniqueId();
 	var inputId = $n2.getUniqueId();
 	var searchButtonId = $n2.getUniqueId();
@@ -309,21 +307,27 @@ function searchForDocumentId(options_){
 		.addClass('mdc-dialog__actions')
 		.appendTo($dialogSurface);
 
-	var $searchButton = $('<button>')
-		.addClass('mdc-button mdc-dialog__button')
-		.attr('id',searchButtonId)
-		.text(_loc('Search'))
-		.appendTo($footer);
+	var searchBtnOpts = {
+		parentId: $n2.utils.getElementIdentifier($footer),
+		mdcId: searchButtonId,
+		mdcClasses: ['mdc-dialog__button'],
+		btnLabel: 'Search'
+	};
 
-	var $cancelButton = $('<button>')
-		.addClass('cancel mdc-button mdc-dialog__button')
-		.text(_loc('Cancel'))
-		.appendTo($footer)
-		.click(function(){
+	new $n2.mdc.MDCButton(searchBtnOpts);
+
+	var cancelBtnOpts = {
+		parentId: $n2.utils.getElementIdentifier($footer),
+		mdcClasses: ['cancel', 'mdc-dialog__button'],
+		btnLabel: 'Cancel',
+		btnFunction: function(){
 			mdcDialogComponent.close();
 			$dialog.remove();
 			return false;
-		});
+		}
+	};
+
+	new $n2.mdc.MDCButton(cancelBtnOpts);
 
 	$('<div>')
 		.addClass('mdc-dialog__scrim')
@@ -334,11 +338,7 @@ function searchForDocumentId(options_){
 		})
 		.appendTo($dialog);
 
-	// Attach ripple to button
-	mdc.ripple.MDCRipple.attachTo($searchButton[0]);
-	mdc.ripple.MDCRipple.attachTo($cancelButton[0]);
-
-	// Attach textFields 
+	// Attach text fields 
 	mdc.textField.MDCTextField.attachTo($textField[0]);
 	
 	// Attach floating labels
@@ -423,7 +423,7 @@ function searchForDocumentId(options_){
 	};
 };
 
-//++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++
 function selectLayersDialog(opts_){
 	
 	var opts = $n2.extend({
@@ -491,11 +491,12 @@ function selectLayersDialog(opts_){
 		.addClass('editorSelectLayerButtons mdc-dialog__actions')
 		.appendTo($dialogSurface);
 	
-	$('<button>')
-		.addClass('ok mdc-button mdc-button--raised mdc-dialog__button')
-		.text(_loc('OK')) 
-		.appendTo($footer)
-		.click(function(){
+	var okBtnOpts = {
+		parentId: $n2.utils.getElementIdentifier($footer),
+		mdcClasses: ['ok', 'mdc-dialog__button'],
+		btnLabel: 'OK',
+		btnRaised: true,
+		btnFunction: function(){
 			var selectedLayers = [];
 			var $diag = $('#'+dialogId);
 			$diag.find('input.layer').each(function(){
@@ -510,17 +511,23 @@ function selectLayersDialog(opts_){
 			mdcDialogComponent.close();
 			$dialog.remove();
 			return false;
-		});
+		}
+	};
 
-	$('<button>')
-		.addClass('cancel mdc-button mdc-dialog__button')
-		.text(_loc('Cancel')) 
-		.appendTo($footer)
-		.click(function(){
+	new $n2.mdc.MDCButton(okBtnOpts);
+
+	var cancelBtnOpts = {
+		parentId: $n2.utils.getElementIdentifier($footer),
+		mdcClasses: ['cancel', 'mdc-dialog__button'],
+		btnLabel: 'Cancel',
+		btnFunction: function(){
 			mdcDialogComponent.close();
 			$dialog.remove();
 			return false;
-		});
+		}
+	};
+
+	new $n2.mdc.MDCButton(cancelBtnOpts);
 	
 	$('<div>')
 		.addClass('mdc-dialog__scrim')
@@ -645,7 +652,7 @@ function selectLayersDialog(opts_){
 	};
 };
 
-//++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++
 // This is a factory class to generate a dialog function that
 // can be used in selecting a document id from a list of presented
 // documents. This is an abstract class and it must be specialized
@@ -933,7 +940,7 @@ var SearchBriefDialogFactory = $n2.Class({
 
 });
 
-//++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++
 /**
  * Search for documents based on schema name(s)
  * @class
@@ -1014,7 +1021,7 @@ var SearchOnSchemaDialogFactory = $n2.Class('SearchOnSchemaDialogFactory', Searc
 	}
 });
 
-//++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++
 /**
 * Search for documents based on layer identifier
 * @class
@@ -1095,7 +1102,7 @@ var SearchOnLayerDialogFactory = $n2.Class('SearchOnLayerDialogFactory', SearchB
 	}
 });
 
-//++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++
 /**
  * Search for a related media file
  * @class
@@ -1269,24 +1276,30 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 			.addClass('mdc-dialog__actions')
 			.appendTo($dialogContent);
 		
-		var $searchButton = $('<button>')
-			.attr('id', searchButtonId)
-			.addClass('mdc-button mdc-dialog__button')
-			.text( _loc('Search') )
-			.appendTo($footer);
-		
-		var $cancelButton = $('<button>')
-			.addClass('cancel mdc-button mdc-dialog__button')
-			.text( _loc('Cancel') )
-			.appendTo($footer)
-			.click(function(){
+		var searchBtnOpts = {
+			parentId: $n2.utils.getElementIdentifier($footer),
+			mdcId: searchButtonId,
+			mdcClasses: ['mdc-dialog__button'],
+			btnLabel: 'Search'
+		};
+
+		new $n2.mdc.MDCButton(searchBtnOpts);
+
+		var cancelBtnOpts = {
+			parentId: $n2.utils.getElementIdentifier($footer),
+			mdcClasses: ['cancel', 'mdc-dialog__button'],
+			btnLabel: 'Cancel',
+			btnFunction: function(){
 				_this.mdcDialogComponent.close();
 				$dialog.remove();
-				if( shouldReset ) {
+				if (shouldReset) {
 					opts.onReset();
 				};
 				return false;
-			});
+			}
+		};
+
+		new $n2.mdc.MDCButton(cancelBtnOpts);
 
 		$('<div>')
 			.addClass('mdc-dialog__scrim')
@@ -1300,11 +1313,7 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 			})
 			.appendTo($dialog);
 
-		// Attach ripple to buttons
-		mdc.ripple.MDCRipple.attachTo($cancelButton[0]);
-		mdc.ripple.MDCRipple.attachTo($searchButton[0]);
-
-		// Attach textField
+		// Attach text field
 		mdc.textField.MDCTextField.attachTo($textField[0]);
 		
 		// Attach floating labels
@@ -1458,7 +1467,7 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 	}
 });
 
-//++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++
 /**
  * Search for a related image media file
  * @class
@@ -1505,7 +1514,7 @@ var SearchRelatedImageDialogFactory = $n2.Class('SearchRelatedImageDialogFactory
 	}
 });
 
-//++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++
 /**
  * Search for a related audio media file
 * @class
@@ -1552,7 +1561,7 @@ var SearchRelatedAudioDialogFactory = $n2.Class('SearchRelatedAudioDialogFactory
 	}
 });
 
-//++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++
 /**
 * Search for a related video media file
 * @class
@@ -1599,7 +1608,7 @@ var SearchRelatedVideoDialogFactory = $n2.Class('SearchRelatedVideoDialogFactory
 	}
 });
 
-//++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++
 /**
  * Search for a related hover sound file
  * @class
@@ -1646,7 +1655,7 @@ var HoverSoundSearchDialogFactory = $n2.Class('HoverSoundSearchDialogFactory', S
 	}
 });
 
-//++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++
 // This is a factory class to generate a dialog function that
 // can be used in selecting a document id from a list of presented
 // documents. This is an abstract class and it must be specialized
@@ -1891,7 +1900,7 @@ var FilteredSearchDialogFactory = $n2.Class({
 	}
 });
 
-//++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++
 var DialogService = $n2.Class({
 
 	dispatchService: null,
