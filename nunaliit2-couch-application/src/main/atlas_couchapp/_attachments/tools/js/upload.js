@@ -294,37 +294,46 @@ function refreshToolbar(){
 
 	var $approveSelected = $buttonLine.find('.uploadApproveSelectedButton');
 	if( $approveSelected.length < 1 ) {
-		$('<button>')
-			.addClass('uploadButton uploadApproveSelectedButton mdc-button mdc-button--raised')
-			.text(_loc('Approve Selected')) 
-			.appendTo($buttonLine)
-			.click(function(){
+		var approveBtnOpts = {
+			parentId: $n2.utils.getElementIdentifier($buttonLine),
+			mdcClasses: ['uploadButton', 'uploadApproveSelectedButton'],
+			btnLabel: 'Approve Selected',
+			btnRaised: true,
+			btnFunction: function(){
 				var selection = _getSelectedUploads();
 				_approveDenySelection(selection, 'approved');
 				return false;
-			});
+			}
+		};
+		new $n2.mdc.MDCButton(approveBtnOpts);
 	};
 
 	var $denySelected = $buttonLine.find('.uploadDenySelectedButton');
 	if( $denySelected.length < 1 ) {
-		$('<button>')
-			.addClass('uploadButton uploadDenySelectedButton mdc-button mdc-button--raised')
-			.text(_loc('Deny Selected')) 
-			.appendTo($buttonLine)
-			.click(function(){
+		var denyBtnOpts = {
+			parentId: $n2.utils.getElementIdentifier($buttonLine),
+			mdcClasses: ['uploadButton', 'uploadDenySelectedButton'],
+			btnLabel: 'Deny Selected',
+			btnRaised: true,
+			btnFunction: function(){
 				var selection = _getSelectedUploads();
 				_approveDenySelection(selection, 'denied');
 				return false;
-			});
+			}
+		};
+		new $n2.mdc.MDCButton(denyBtnOpts);
 	};
 
 	var $selectAllButton = $buttonLine.find('.uploadSelectAllButton');
 	if( $selectAllButton.length < 1 ) {
-		$('<button>')
-			.addClass('uploadButton uploadSelectAllButton mdc-button mdc-button--raised')
-			.text(_loc('Select All')) 
-			.appendTo($buttonLine)
-			.click(_selectAll);
+		var selectAllBtnOpts = {
+			parentId: $n2.utils.getElementIdentifier($buttonLine),
+			mdcClasses: ['uploadButton', 'uploadSelectAllButton'],
+			btnLabel: 'Selected All',
+			btnRaised: true,
+			btnFunction: _selectAll
+		};
+		new $n2.mdc.MDCButton(selectAllBtnOpts);
 	};
 
 	// Attach Material Design Components
