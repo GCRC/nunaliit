@@ -49,11 +49,10 @@
 				.addClass('mdc-card__actions')
 				.appendTo($conf);
 
-			$('<button>')
-				.addClass('mdc-button')
-				.text( _loc('Clear Cache') )
-				.appendTo($buttonsContainer)
-				.click(function(){
+			var clearCacheBtnOpts = {
+				parentId: $n2.utils.getElementIdentifier($buttonsContainer),
+				btnLabel: 'Clear Cache',
+				btnFunction: function(){
 					$n2.indexedDb.openIndexedDb({
 						onSuccess: function(indexedDbConnection){
 							var documentCache = indexedDbConnection.getDocumentCache({});
@@ -70,8 +69,10 @@
 							alert('Error while obtaining cache: '+err);
 						}
 					});
-				});
-			
+				}
+			};
+			new $n2.mdc.MDCButton(clearCacheBtnOpts);
+
 			this._refresh();
 
 			// Attach MDC Components
