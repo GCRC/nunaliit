@@ -1178,26 +1178,28 @@ var AnalysisReport = $n2.Class({
 				.appendTo($changes);
 			$div.text( _loc('This appears to be the first time that you are importing this profile. Accept all? ') );
 
-			$('<button>')
-				.addClass('mdc-button')
-				.text( _loc('Proceed') )
-				.appendTo($div)
-				.click(function(){
+			var proceedBtnOpts = {
+				parentId: $n2.utils.getElementIdentifier($div),
+				btnLabel: 'Proceed',
+				btnFunction: function(){
 					_this._proceedAll({
 						onSuccess: function(){ $('#'+proceedDivId).remove(); }
 					});
-				});
+				}
+			};
+			new $n2.mdc.MDCButton(proceedBtnOpts);
 
-			$('<button>')
-				.addClass('mdc-button')
-				.text( _loc('Discard') )
-				.appendTo($div)
-				.click(function(){
+			var discardBtnOpts = {
+				parentId: $n2.utils.getElementIdentifier($div),
+				btnLabel: 'Discard',
+				btnFunction: function(){
 					var $button = $(this);
 					var $promptElem = $button.parents('.prompt');
 					$promptElem.remove();
-				});
-			
+				}
+			};
+			new $n2.mdc.MDCButton(discardBtnOpts);
+
 		} else {
 			var autoChanges = [];
 			for(var changeIndex=0;changeIndex<changes.length;++changeIndex){
@@ -1216,25 +1218,27 @@ var AnalysisReport = $n2.Class({
 					count: autoChanges.length
 				}));
 
-				$('<button>')
-					.addClass('mdc-button')
-					.text( _loc('Proceed') )
-					.appendTo($div)
-					.click(function(){
+				var proceedBtnOpts = {
+					parentId: $n2.utils.getElementIdentifier($div),
+					btnLabel: 'Proceed',
+					btnFunction: function(){
 						_this._proceedAutomatics({
 							onSuccess: function(){ $('#'+autoDivId).remove(); }
 						});
-					});
+					}
+				};
+				new $n2.mdc.MDCButton(proceedBtnOpts);
 
-				$('<button>')
-					.addClass('mdc-button')
-					.text( _loc('Discard') )
-					.appendTo($div)
-					.click(function(){
+				var discardBtnOpts = {
+					parentId: $n2.utils.getElementIdentifier($div),
+					btnLabel: 'Discard',
+					btnFunction: function(){
 						var $button = $(this);
 						var $promptElem = $button.parents('.prompt');
 						$promptElem.remove();
-					});
+					}
+				};
+				new $n2.mdc.MDCButton(discardBtnOpts);
 			};
 		};
 
@@ -1295,6 +1299,12 @@ var AnalysisReport = $n2.Class({
 			return true;
 		};
 
+		var discardBtnOpts = {
+			mdcClasses: ['discard'],
+			btnLabel: 'Discard',
+			btnFunction: discardClickFn
+		};
+
 		var analysis = this.analysis;
 
 		$div.empty();
@@ -1330,24 +1340,27 @@ var AnalysisReport = $n2.Class({
 			};
 			
 			// Buttons
-			$('<button>')
-				.addClass('discard mdc-button')
-				.text( _loc('Discard') )
-				.appendTo($div)
-				.click(discardClickFn);
-			
-			var $proceedButton = $('<button>')
-				.attr('id',change.changeId + '_proceed')
-				.addClass('proceed mdc-button')
-				.text( _loc('Modify Document') )
-				.appendTo($div)
-				.click(proceedClickFn);
+			discardBtnOpts.parentId = $n2.utils.getElementIdentifier($div),
+			new $n2.mdc.MDCButton(discardBtnOpts);
+
+			var proceedBtnOpts = {
+				parentId: $n2.utils.getElementIdentifier($div),
+				mdcId: change.changeId + '_proceed',
+				mdcClasses: ['proceed'],
+				btnLabel: 'Modify Document',
+				btnFunction: proceedClickFn
+			};
+
 			if( change.isAddition ){
-				$proceedButton.text( _loc('Create new document') );
+				proceedBtnOpts.btnLabel = 'Create new document';
 			};
 			if( !change.isResolved() ) {
-				$proceedButton.attr('disabled','disabled');
+				proceedBtnOpts.mdcAttributes = {
+					'disabled': 'disabled'
+				};
 			};
+			
+			new $n2.mdc.MDCButton(proceedBtnOpts);
 			
 			// Explanation
 			var explanation = _loc('Modify existing document');
@@ -1499,16 +1512,16 @@ var AnalysisReport = $n2.Class({
 				$del.addClass('autoOperation');
 			};
 			
-			$('<button>')
-				.addClass('discard mdc-button')
-				.text( _loc('Discard') )
-				.appendTo($del)
-				.click(discardClickFn);
-			$('<button>')
-				.addClass('proceed mdc-button')
-				.text( _loc('Delete Database Document') )
-				.appendTo($del)
-				.click(proceedClickFn);
+			discardBtnOpts.parentId = $n2.utils.getElementIdentifier($del),
+			new $n2.mdc.MDCButton(discardBtnOpts);
+			
+			var delDBBtnOpts = {
+				parentId: $n2.utils.getElementIdentifier($del),
+				mdcClasses: ['proceed'],
+				btnLabel: 'Delete Database Document',
+				btnFunction: proceedClickFn
+			};
+			new $n2.mdc.MDCButton(delDBBtnOpts);
 
 			var explanation = _loc('Delete existing document');
 			if( change.isAuto() ){
