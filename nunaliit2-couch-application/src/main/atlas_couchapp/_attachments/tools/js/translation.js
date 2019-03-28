@@ -61,14 +61,24 @@ function showRequests(arr) {
 		
 		var row = arr[i];
 		var req = row.doc;
-		
+	
+		var $btnTd = $('<td>');
+
 		$tr.append( $('<td>'+req.str+'</td>') );
 		$tr.append( $('<td>'+req.lang+'</td>') );
 		$tr.append( $('<td><input class="trans" type="text"/></td>') );
-		$tr.append( $('<td><button class="uploadBtn mdc-button">Upload</button></td>') );
+		$tr.append($btnTd);
 		$tr.append( $('<td class="docId">'+req._id+'</td>') );
 		$tr.append( $('<td class="packageName">'+req.packageName+'</td>') );
 		
+		var uploadBtnOpts = {
+			parentId: $n2.utils.getElementIdentifier($btnTd),
+			mdcClasses: ['uploadBtn'],
+			btnLabel: 'Upload',
+			btnFunction: upload
+		};
+		new $n2.mdc.MDCButton(uploadBtnOpts);
+
 		if( req.nunaliit_created && req.nunaliit_created.name ){
 			// Insert name
 			$('<td></td>')
@@ -108,8 +118,6 @@ function showRequests(arr) {
 			$tr.find('.trans').val(req.trans);
 		};
 	};
-	
-	$table.find('.uploadBtn').click(upload);
 
 	// Attach Material Design Components
 	$n2.mdc.attachMDCComponents();
