@@ -87,15 +87,18 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	timeTable: null,
 	transcriptConvertor: null,
 
+	isInsideContentTextPanel : null,
+
 	initialize: function(opts_){
 		var opts = $n2.extend({
-			containerId: undefined
+			containerClass: undefined
 			,dispatchService: undefined
 			,attachmentService: undefined
 			,name: undefined
 			,docId: undefined
 			,doc: undefined
 			,sourceModelId: undefined
+			, isInsideContentTextPanel : true
 		},opts_);
 
 		var _this = this;
@@ -105,6 +108,9 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		this.name = opts.name;
 		this.docId = opts.docId;
 		this.sourceModelId = opts.sourceModelId;
+
+		this.isInsideContentTextPanel = opts.isInsideContentTextPanel;
+
 		if( opts.doc ){
 			this.doc = opts.doc;
 			this.docId = this.doc._id;
@@ -117,19 +123,27 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		this.transcript_array = [];
 
 		// Get container
-		var containerId = opts.containerId;
-		if( !containerId ){
-			throw new Error('containerId must be specified');
+		var containerClass = opts.containerClass;
+		if( !containerClass ){
+			throw new Error('containerClass must be specified');
 		};
-		var $container = $('#'+containerId);
+		var $container = $('.'+containerClass);
 		
 		this.elemId = $n2.getUniqueId();
 		
-		$('<div>')
+		if (this.isInsideContentTextPanel) {
+
+			$('<div>')
+			.attr('id',this.elemId)
+			.addClass('n2widgetTranscript n2widgetTranscript_insideTextPanel')
+			.appendTo($container);
+
+		} else {
+			$('<div>')
 			.attr('id',this.elemId)
 			.addClass('n2widgetTranscript')
 			.appendTo($container);
-
+		}
 		// Set up dispatcher
 		if( this.dispatchService ){
 			if( this.sourceModelId ){
@@ -231,6 +245,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				this.docId = m.docId;
 				this.doc = m.doc;
 				this.timeTable = [];
+				this.transcript = undefined;
+				this.srtData = undefined;
 				this._documentChanged();
 			};
 		};
@@ -517,6 +533,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	},
 	
 	_loadTranscript: function(doc){
+		var _this = this;
 		// Look for transcript in-line
 		if( doc && doc.nunaliit_transcript ){
 			this.transcript = doc.nunaliit_transcript;
@@ -620,7 +637,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			if(currentTime >= transcriptElem.start 
 			 && currentTime <= transcriptElem.fin) {
 				$transcriptElem.addClass('highlight');
-				 //scroll transcript div, so that the ongoing subtitle always stay in the viewport  
+				//scroll transcript div, so that the ongoing subtitle always stay in the viewport
 				this._scrollToView($transcriptElem);
 
 			};
@@ -650,20 +667,20 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			$dst.parent().scrollTop($dst.parent().scrollTop() + curr_pos);
 		}
 	},
-
 	_renderError: function(errMsg){
 		var $elem = this._getElem();
 		
 		$elem.empty();
-		
-		var label = _loc('Unable to display tether content({docId})',{
-			docId: this.docId
-		});
-		$('<span>')
-			.addClass('n2widgetTranscript_error')
-			.text(label)
-			.appendTo($elem);
-		
+		//If no valid tether transcript content to show, only logging into console
+//
+//		var label = _loc('Unable to display tether content({docId})',{
+//			docId: this.docId
+//		});
+//		$('<span>')
+//			.addClass('n2widgetTranscript_error')
+//			.text(label)
+//			.appendTo($elem);
+//
 		$n2.logError('Unable to display tether content({docId}): '+errMsg);
 	}
 });
@@ -725,7 +742,7 @@ function HandleWidgetAvailableRequests(m){
 function HandleWidgetDisplayRequests(m){
 	if( m.widgetType === 'transcriptWidget' ){
 		var widgetOptions = m.widgetOptions;
-		var containerId = m.containerId;
+		var containerClass = widgetOptions.containerClass;
 		var config = m.config;
 		
 		var options = {};
@@ -737,7 +754,7 @@ function HandleWidgetDisplayRequests(m){
 			};
 		};
 
-		options.containerId = containerId;
+		options.containerClass = containerClass;
 		
 		if( config && config.directory ){
 			options.dispatchService = config.directory.dispatchService;
