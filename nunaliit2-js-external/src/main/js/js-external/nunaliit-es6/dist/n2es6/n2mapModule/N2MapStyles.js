@@ -73,7 +73,7 @@ class N2MapStyles {
 	*/
 	constructor(){
 
-		this.lrucache = new N2LRU(50);
+		this.lrucache = {};
 
 	}
 	/**
@@ -82,12 +82,12 @@ class N2MapStyles {
 	* @return {import("ol/style/Style.js").default} produce a ol5 Style object
 	*/
  	loadStyleFromN2Symbolizer(symbols , geometryType){
- 		//let candidate = this.lrucache.get(hash(symbols));
- 		//if (candidate){
- 		//	return candidate;
- 		//}
- 		let candidate =  this.getOl5StyleObjFromSymbol(symbols, geometryType);	
-		//this.lrucache.set(hash(symbols), candidate );
+ 		let candidate = this.lrucache[hash(symbols)];
+ 		if (candidate){
+ 			return candidate;
+ 		}
+ 		candidate =  this.getOl5StyleObjFromSymbol(symbols, geometryType);	
+		this.lrucache[hash(symbols)] = candidate;
 		return candidate;
 	}
 	/**
