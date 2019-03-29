@@ -184,35 +184,33 @@ function ol5FeatureSorting(a, b){
 
 //ol5 version of preparing features for sorting
 function ol5prepareFeatureForSorting(f){
-	f._n2Sort = {};
+    var _n2Sort = {};
 	var geomClass = f.getGeometry().getType();
-	f._n2Sort.isPoint = (geomClass.indexOf('Point') >= 0);
-	if( f._n2Sort.isPoint ) {
-		f._n2Sort.isLineString = false;
-		f._n2Sort.isPolygon = false;
-		f._n2Sort.largestDim = 0;
+	_n2Sort.isPoint = (geomClass.indexOf('Point') >= 0);
+	if( _n2Sort.isPoint ) {
+		_n2Sort.isLineString = false;
+		_n2Sort.isPolygon = false;
+		_n2Sort.largestDim = 0;
 	} else {
-		f._n2Sort.isLineString = (geomClass.indexOf('LineString') >= 0);
-		if( f._n2Sort.isLineString ){
+		_n2Sort.isLineString = (geomClass.indexOf('LineString') >= 0);
+		var extent = f.getGeometry().getExtent();
+		if( _n2Sort.isLineString ){
 			// Pass in infinity extent to by-pass OpenLayers bug
-			var extent = f.getGeometry().getExtent();
-			f._n2Sort.largestDim = extent[2]-extent[0]
+			
+			_n2Sort.largestDim = extent[2]-extent[0]
 			var tmp = extent[3]-extent[1];
-			if( f._n2Sort.largestDim < tmp ) {
-				f._n2Sort.largestDim = tmp;
+			if( _n2Sort.largestDim < tmp ) {
+				_n2Sort.largestDim = tmp;
 			};
 		} else {
-			f._n2Sort.isPolygon = true;
-			
-			// Pass in infinity extent to by-pass OpenLayers bug
-			var extent = f.getGeometry().getExtent();
+			_n2Sort.isPolygon = true;
 			
 			// Use area
-			f._n2Sort.largestDim = (extent[2]-extent[0])*(extent[3]-extent[1]);
+			_n2Sort.largestDim = (extent[2]-extent[0])*(extent[3]-extent[1]);
 		};
 		
 	};
-	return f._n2Sort;
+	return _n2Sort;
 };
 $n2.olUtils = {
 	isValidGeom: isValidGeom
