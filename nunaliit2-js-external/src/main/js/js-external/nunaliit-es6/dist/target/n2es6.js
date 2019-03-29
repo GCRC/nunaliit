@@ -1679,7 +1679,7 @@ class N2MapCanvas  {
 
 		var fg = [];
 		var _this = this;
-		
+		var DONETESTCACHE = {};
 		if( Sources) {
 			Sources.forEach(function(source){
 
@@ -1712,38 +1712,38 @@ class N2MapCanvas  {
 
 			var f = feature;
 			
-//			if(f.getGeometry().getType() === "Point"){
-//				if (!DONETESTCACHE[f.fid]){
-//				var ldata =[];
-//				let e = Math.round(10*Math.random());
-//				let nb = 0;
-//				for(var k =0;k<e;k++){
-//					let n = Math.round(10*Math.random());
-//					ldata.push(n);
-//					nb += n;
-//				}
-//				let thisradius = nb;
-//				
-//				
-//				
-//				let thisStyle = new Style({
-//					image: new customPointStyle({
-//						type: "treering", 
-//						radius : thisradius,
-//						data: ldata,
-//						animation: false,
-//						stroke: new Stroke({
-//							color: "#000",
-//							width: 2
-//						})
-//					})
-//				})
-//				DONETESTCACHE[f.fid] = thisStyle;
-//				return [thisStyle];
-//			} else {
-//				return DONETESTCACHE[f.fid];
-//			}
-//			}
+			if(f.getGeometry().getType() === "Point"){
+				if (!DONETESTCACHE[f.fid]){
+				var ldata =[];
+				let e = Math.round(10*Math.random());
+				let nb = 0;
+				for(var k =0;k<e;k++){
+					let n = Math.round(10*Math.random());
+					ldata.push(n);
+					nb += n;
+				}
+				let thisradius = nb;
+				
+				
+				
+				let thisStyle = new ol_style_js__WEBPACK_IMPORTED_MODULE_6__["Style"]({
+					image: new _N2CustomPointStyle_js__WEBPACK_IMPORTED_MODULE_5__["default"]({
+						type: "treering", 
+						radius : thisradius,
+						data: ldata,
+						animation: false,
+						stroke: new ol_style_js__WEBPACK_IMPORTED_MODULE_6__["Stroke"]({
+							color: "#000",
+							width: 2
+						})
+					})
+				})
+				DONETESTCACHE[f.fid] = thisStyle;
+				return [thisStyle];
+			} else {
+				return DONETESTCACHE[f.fid];
+			}
+			}
 			
 			for(var fnName in featureStyleFunctions){
 				f[fnName] = featureStyleFunctions[fnName];

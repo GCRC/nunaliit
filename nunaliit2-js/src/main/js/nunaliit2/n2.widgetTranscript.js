@@ -620,6 +620,9 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			if(currentTime >= transcriptElem.start 
 			 && currentTime <= transcriptElem.fin) {
 				$transcriptElem.addClass('highlight');
+				 //scroll transcript div, so that the ongoing subtitle always stay in the viewport  
+				this._scrollToView($transcriptElem);
+
 			};
 
 			//$n2.log('current time: '+ currentTime);
@@ -640,7 +643,14 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			$video[0].play();
 		}
 	},
-	
+	_scrollToView: function($dst) {
+		var parent_height = $dst.parent().innerHeight();
+		var curr_pos = $dst.offset().top - $dst.parent().offset().top;
+		if (curr_pos > parent_height /2 || curr_pos < 0){
+			$dst.parent().scrollTop($dst.parent().scrollTop() + curr_pos);
+		}
+	},
+
 	_renderError: function(errMsg){
 		var $elem = this._getElem();
 		
