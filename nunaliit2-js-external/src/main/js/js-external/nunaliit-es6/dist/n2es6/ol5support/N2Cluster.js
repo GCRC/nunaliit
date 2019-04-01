@@ -106,7 +106,7 @@ class N2Cluster extends VectorSource {
 			this.resolution = resolution;
 			this.projection = projection;
 			this.extent = extent;
-			this.cluster(extent);
+			this.cluster();
 			this.addFeatures(this.features);
 		}
 	}

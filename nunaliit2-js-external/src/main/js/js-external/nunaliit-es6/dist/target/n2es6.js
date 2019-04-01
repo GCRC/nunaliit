@@ -1694,6 +1694,7 @@ class N2MapCanvas  {
 				var vectorLayer = new ol_layer_Vector_js__WEBPACK_IMPORTED_MODULE_13__["default"]({
 					title: "CouchDb",
 					renderMode : 'image',
+					declutter : true,
 					source: n2IntentSource,
 					style: StyleFn,
 					renderOrder: function(feature1, feature2){
@@ -1712,38 +1713,38 @@ class N2MapCanvas  {
 
 			var f = feature;
 			
-			if(f.getGeometry().getType() === "Point"){
-				if (!DONETESTCACHE[f.fid]){
-				var ldata =[];
-				let e = Math.round(10*Math.random());
-				let nb = 0;
-				for(var k =0;k<e;k++){
-					let n = Math.round(10*Math.random());
-					ldata.push(n);
-					nb += n;
-				}
-				let thisradius = nb;
-				
-				
-				
-				let thisStyle = new ol_style_js__WEBPACK_IMPORTED_MODULE_6__["Style"]({
-					image: new _N2CustomPointStyle_js__WEBPACK_IMPORTED_MODULE_5__["default"]({
-						type: "treering", 
-						radius : thisradius,
-						data: ldata,
-						animation: false,
-						stroke: new ol_style_js__WEBPACK_IMPORTED_MODULE_6__["Stroke"]({
-							color: "#000",
-							width: 2
-						})
-					})
-				})
-				DONETESTCACHE[f.fid] = thisStyle;
-				return [thisStyle];
-			} else {
-				return DONETESTCACHE[f.fid];
-			}
-			}
+//			if(f.getGeometry().getType() === "Point"){
+//				if (!DONETESTCACHE[f.fid]){
+//				var ldata =[];
+//				let e = Math.round(10*Math.random());
+//				let nb = 0;
+//				for(var k =0;k<e;k++){
+//					let n = Math.round(10*Math.random());
+//					ldata.push(n);
+//					nb += n;
+//				}
+//				let thisradius = nb;
+//				
+//				
+//				
+//				let thisStyle = new Style({
+//					image: new customPointStyle({
+//						type: "treering", 
+//						radius : thisradius,
+//						data: ldata,
+//						animation: false,
+//						stroke: new Stroke({
+//							color: "#000",
+//							width: 2
+//						})
+//					})
+//				})
+//				DONETESTCACHE[f.fid] = thisStyle;
+//				return [thisStyle];
+//			} else {
+//				return DONETESTCACHE[f.fid];
+//			}
+//			}
 			
 			for(var fnName in featureStyleFunctions){
 				f[fnName] = featureStyleFunctions[fnName];
@@ -1794,10 +1795,15 @@ class N2MapCanvas  {
 				symbols[name] = value;
 			},feature);
 
+			if (typeof f._cached_style !== 'undefined'){
+				if (typeof f._style_change !== 'undefined' && ! f._style_change ) {
+					return f._cached_style;
+				}
+			}
 			let n2mapStyles = _this.n2MapStyles;
 			let innerStyle = n2mapStyles.loadStyleFromN2Symbolizer(symbols, 
 					feature.n2_geometry);
-
+			f._cached_style = innerStyle;
 			return innerStyle;
 		}
 	}
@@ -2187,7 +2193,7 @@ class N2MapStyles {
 	*/
 	constructor(){
 
-		this.lrucache = {};
+		this.lrucache = new _N2LRU_js__WEBPACK_IMPORTED_MODULE_2__["default"](5000);
 
 	}
 	/**
@@ -2196,13 +2202,14 @@ class N2MapStyles {
 	* @return {import("ol/style/Style.js").default} produce a ol5 Style object
 	*/
  	loadStyleFromN2Symbolizer(symbols , geometryType){
- 		let candidate = this.lrucache[es_hash__WEBPACK_IMPORTED_MODULE_3___default()(symbols)];
+ 		let key = Object.assign({}, symbols,{_n2type: geometryType});
+ 		let candidate = this.lrucache.get(es_hash__WEBPACK_IMPORTED_MODULE_3___default()(key));
  		if (candidate){
  			return candidate;
  		}
  		candidate =  this.getOl5StyleObjFromSymbol(symbols, geometryType);	
-		this.lrucache[es_hash__WEBPACK_IMPORTED_MODULE_3___default()(symbols)] = candidate;
-		return candidate;
+		this.lrucache.set(key, candidate );
+		return [candidate];
 	}
 	/**
 	* [getOl5StyleObjFromSymbol return the ol5 stylemap object from nunaliit2 internal style tags
@@ -2221,7 +2228,214 @@ class N2MapStyles {
 				internalOl5StyleNames[internalOl5StyleName] = symbols[tags];
 			}
 		}
-		return this.getOl5StyleObjFromStyleName(internalOl5StyleNames);
+		if (geometryType.indexOf("point") >= 0){
+			return this.getOl5StyleObjFromStyleName_point(internalOl5StyleNames);
+		}else {
+			return this.getOl5StyleObjFromStyleName(internalOl5StyleNames);
+		}
+	}
+		
+	getOl5StyleObjFromStyleName_point(n2InternalStyle){
+		var handle = {}
+		var _this = this;
+		var option_image = {	
+							points: Infinity,
+							fill: new ol_style_js__WEBPACK_IMPORTED_MODULE_0__["Fill"]({color: '#ffffff'}),
+							stroke: new ol_style_js__WEBPACK_IMPORTED_MODULE_0__["Stroke"]({color: '#ee9999', width: 2}),
+							radius: 5
+						}
+		for( let tags in n2InternalStyle ) {
+			var arr = tags.split(".");
+			handle.style  = recurProps ( arr, handle , n2InternalStyle[tags], 0);
+			arr = null;
+		}
+		var option_innerImage = handle.style['image_'];
+		var innerImage = new ol_style_js__WEBPACK_IMPORTED_MODULE_0__["RegularShape"](option_innerImage);
+		handle.style.setImage(innerImage);
+		return handle.style;
+		
+		function recurProps (arr, supernode, value, level){
+			if(  level >= arr.length ){
+				return;
+			}
+			var nextlevel = level+1;
+			let currNodeString = arr[level];
+			let nextNodeString = arr[nextlevel];
+			if (currNodeString === 'Style') {
+				let currnode = supernode.style
+				if (!currnode) {
+					currnode = new ol_style_js__WEBPACK_IMPORTED_MODULE_0__["Style"]({})
+				}
+				currnode[nextNodeString+'_'] =
+				recurProps (arr,
+						currnode,
+						value, nextlevel)
+				return  currnode;
+
+			} else if (currNodeString === 'image') {
+				let currnode = option_image;
+				currnode[nextNodeString] =
+				recurProps (arr,
+						currnode,
+						value, nextlevel)
+				
+				return  currnode;
+
+			} else if (currNodeString === 'text') {
+				let currnode = supernode.getText();
+				if (!currnode) {
+					currnode = new ol_style_js__WEBPACK_IMPORTED_MODULE_0__["Text"]();
+				}
+				
+				if (arr.length > nextlevel) {
+					currnode[nextNodeString+'_'] =
+						recurProps (arr,
+								currnode,
+								value,
+								nextlevel);
+					return  currnode;
+				} else if (arr.length === nextlevel) {
+					return value;
+				}
+
+
+			} else if (currNodeString === 'fill') {
+				let currnode = supernode.fill;
+				if (!currnode) {
+					currnode = new ol_style_js__WEBPACK_IMPORTED_MODULE_0__["Fill"]({color: '#ffffff'});
+				}
+				currnode['checksum_'] = undefined;
+				currnode[nextNodeString+'_'] =
+				recurProps (arr,
+						currnode,
+						value,
+						nextlevel);
+
+
+				return  currnode;
+
+
+			} else if (currNodeString === 'stroke') {
+				let currnode = supernode.stroke;
+				if (!currnode) {
+					currnode = new ol_style_js__WEBPACK_IMPORTED_MODULE_0__["Stroke"]({color: '#ee9999', width: 2});
+				}
+				currnode['checksum_'] = undefined;
+				currnode[nextNodeString+ '_'] =
+				recurProps (arr,
+						currnode,
+						value, nextlevel);
+				return  currnode;
+
+
+			} else if (currNodeString.indexOf('color') === 0 ) {
+				let color = supernode.getColor();
+				let colorArr = _this.colorValues(color);
+				let newColorArr ;
+				if ( !colorArr ) {
+					colorArr = _this.colorValues('#ee9999');
+				}
+
+				if (arr.length === nextlevel) {
+					newColorArr = _this.colorValues(value);
+					if (newColorArr && Array.isArray(newColorArr)) {
+						colorArr = newColorArr;
+					}
+					return colorArr;
+				} else if (arr.length > nextlevel) {
+					return recurProps (arr, colorArr, value, nextlevel);
+				} else {
+					throw new Error ("N2MapStyles: input color-string error");
+				}
+
+			} else if (currNodeString.indexOf('font') === 0 ){
+				//font property is a string with 2 or 3 words
+				//font = weight + ' ' + size + ' ' + font
+				//for instance:
+				//font: 'bold 11px Arial, Verdana, Helvetica, sans-serif'
+				// It is a mess, and constructing
+				let font = supernode.getFont();
+				let fontArr = [];
+				if (!font) {
+					fontArr = ['normal', '10px', 'sans-serif'];
+				} else {
+					fontArr = _this.toFontArray(font);
+				}
+
+//				if (fontArr.length <= 0) {
+//					throw new Error('N2MapStyles: Bad Font Property');
+//				} else if (fontArr.length < 2 && fontArr.length > 0) {
+//					fontArr.unshift('normal', '10px');
+//				} else if (fontArr.length < 3 && fontArr.length > 1) {
+//					fontArr.unshift('normal');
+//				}
+				if (arr.length === nextlevel) {
+					return fontArr.join(' ');
+				} else if (arr.length > nextlevel){
+					return recurProps (arr, fontArr, value, nextlevel);
+				} else {
+					throw new Error ("N2MapStyles: input font-string error");
+				}
+			} else if (currNodeString.indexOf('\[') === 0){
+
+					let idx = parseInt( currNodeString.replace(/\[(\d)\]/g, '$1') );
+					if (typeof idx === 'number') {
+						supernode [idx] = value;	
+						if (supernode.length === 3){
+							supernode = supernode.join(' ');
+						}
+						return supernode;
+					} else {
+						throw new Error ('N2MapStyles: value index format error');
+					}
+
+			} else if (currNodeString.indexOf('width') === 0 ){
+				return (parseInt(value));
+			} else if (currNodeString.indexOf('radius') === 0){
+				return (value);
+			} else if (currNodeString.indexOf('opacity') === 0){
+				return (parseFloat(value));
+			} else if (currNodeString.indexOf('lineCap') === 0 ){
+				return ('' + value);
+			} else if (currNodeString.indexOf('lineDash') === 0 ) {
+				switch(value) {
+					case 'dot':
+						return [0,4];
+					case 'dash':
+						return [7];
+					case 'dashdot':
+						return  [10, 5, 0, 5];
+					case 'longdash':
+					 	return [15];
+					case 'longdashdot':
+						return [20, 10, 0 , 10];
+					default:
+						return [1];
+				}
+			} else if (currNodeString.indexOf('points') === 0){
+				switch(value) {
+				case 'square':
+					supernode['rotation'] = (Math.PI / 4);
+					return 4;
+				case 'triangle':
+					return 3;
+				case 'star':
+					supernode.radius2_ = parseInt (supernode.radius_ * 0.4);
+					return 5;
+				case 'cross':
+					supernode.radius2_ = 0;
+					supernode['rotation'] = (Math.PI / 4);
+					return 4;
+				case 'x':
+					supernode.radius2_ = 0;
+					return 4;
+				default:
+					return Infinity;
+				}
+			} else {
+				throw new Error('N2MapStyles: Bad Style Tags');
+			}
+		}
 	}
 	/**
 	* [getOl5StyleObjFromOl5StyleNames description]
@@ -2236,7 +2450,8 @@ class N2MapStyles {
 			handle.style  = recurProps ( arr, handle , n2InternalStyle[tags], 0);
 			arr = null;
 		}
-		return [handle.style];
+		var rst = handle.style;
+		return rst;
 
 		function recurProps (arr, supernode, value, level){
 			if(  level >= arr.length ){
@@ -2581,7 +2796,6 @@ class N2ModelSource extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_0__["de
 			sourceModelId: this.sourceModelId,
 			updatedCallback : function(state){
 				_this._modelSourceUpdated(state);
-				console.log("Updated Times: " + _this.cnt++);
 			}
 		});
 		if( this.dispatchService ){
@@ -2593,20 +2807,34 @@ class N2ModelSource extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_0__["de
 			//this.dispatchService.register(DH,'modelStateUpdated',f);
 			this.dispatchService.register(DH,'simplifiedGeometryReport',f);
 		};
+		
+//		var isLoading = this.modelObserver.isLoading();
+//		if( typeof isLoading === 'boolean' ){
+//			this._reportLoading(isLoading);
+//		};
+//
+//		var docs = this.modelObserver.getDocuments();
+//		for (let doc of docs){
+//			let docId = doc._id;
+//			var docInfo = this.infoByDocId[docId];
+//			if( !docInfo ){
+//				docInfo = {};
+//				this.infoByDocId[docId] = docInfo;
+//			};
+//			docInfo.doc = doc;
+//			
+//		}
 	}
 
 	_modelSourceUpdated (state) {
+		
 		var _this = this;
-
-
 		if( typeof state.loading === 'boolean' ){
 			state.loading = state.loading;
 			this._reportLoading(state.loading);
 		};
 
 		if( state.added ){
-
-
 			state.added.forEach(function(addedDoc){
 				var docId = addedDoc._id;
 				var docInfo = _this.infoByDocId[docId];
@@ -2643,10 +2871,14 @@ class N2ModelSource extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_0__["de
 				delete _this.infoByDocId[docId];
 			});
 		};
-
+		//if ( ! this.loading ){
 		//this._reloadAllFeatures();
+		//}
 	}
-
+	
+	loadFeatures(extent, resolution, projection) {
+		//this.loading = false;
+	}
 	_reportLoading(flag){
 		if( this.loading && !flag ){
 			this.loading = false;
@@ -2654,6 +2886,7 @@ class N2ModelSource extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_0__["de
 					&& typeof this.notifications.readEnd === 'function'){
 				this.notifications.readEnd();
 			};
+			this._reloadAllFeatures();
 		} else if( !this.loading && flag ){
 			this.loading = true;
 			if( this.notifications 
@@ -2691,92 +2924,20 @@ class N2ModelSource extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_0__["de
 			};
 		}
 	}
-	onChangeCenter(res, proj, extent) {
-		let featuresNeedUpdateFids = [];
-		this.forEachFeatureInExtent(extent, function(f){
-			featuresNeedUpdateFids.push(f.fid);
-		});
-		for (var docId of featuresNeedUpdateFids){
-			var docInfo = this.infoByDocId[docId];
-			var doc = docInfo.doc;
-			if( doc && doc.nunaliit_geom
-					&& doc.nunaliit_geom.simplified
-					&& doc.nunaliit_geom.simplified.resolutions ){
-				var bestAttName = undefined;
-				var bestResolution = undefined;
-				for(var attName in doc.nunaliit_geom.simplified.resolutions){
-					var attRes = 1 * doc.nunaliit_geom.simplified.resolutions[attName];
-					if( attRes < this.epsg4326Resolution ){
-						if( typeof bestResolution === 'undefined' ){
-							bestResolution = attRes;
-							bestAttName = attName;
-						} else if( attRes > bestResolution ){
-							bestResolution = attRes;
-							bestAttName = attName;
-						};
-					};
-				};
 
-				// At this point, if bestResolution is set, then this is the geometry we should
-				// be displaying
-				if( undefined !== bestResolution ){
-					docInfo.simplifiedName = bestAttName;
-					docInfo.simplifiedResolution = bestResolution;
-				};
-			};
-		};
-
-		var geometriesRequested = [];
-		for(var docId in this.infoByDocId){
-			var docInfo = this.infoByDocId[docId];
-			var doc = docInfo.doc;
-			if( docInfo.simplifiedName ) {
-				// There is a simplification needed, do I have it already?
-				var wkt = undefined;
-				if( docInfo.simplifications ){
-					wkt = docInfo.simplifications[docInfo.simplifiedName];
-				};
-
-				// If I do not have it, request it
-				if( !wkt ){
-					var geomRequest = {
-							id: docId
-							,attName: docInfo.simplifiedName
-							,doc: doc
-					};
-					geometriesRequested.push(geomRequest);
-				};
-			};
-		}
-
-		this.dispatchService.send(DH,{
-			type: 'simplifiedGeometryRequest'
-				,geometriesRequested: geometriesRequested
-				,requester: this.sourceId
-		});
-
-		this._reloadAllFeatures();
-	
-	}
 	/**
 	 * This function is called when the map resolution is changed
 	 */
 	onChangedResolution(res,proj, extent){
 		//$n2.log('resolution',res,proj);
-		let featuresNeedUpdateFids = [];
-		this.forEachFeatureInExtent(extent, function(f){
-			featuresNeedUpdateFids.push(f.fid);
-		});
 
 
 		this.epsg4326Resolution = this._getResolutionInProjection(res,proj);
 		
 		var geometriesRequested = [];
 		
-		for(let docId of featuresNeedUpdateFids){
+		for(let docId in this.infoByDocId){
 			var docInfo = this.infoByDocId[docId];
-			
-			if (!docInfo) continue;
 			
 			var doc = docInfo.doc;
 			if( doc && doc.nunaliit_geom
@@ -3795,9 +3956,9 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 	refresh() {
 		
 		this.clear();
-		if (this.extent) {
-			this.updateN2Label(this.extent);
-		}
+
+		this.updateN2Label();
+	
 		this.addFeatures(this.features_);
 		
 		
@@ -4021,9 +4182,9 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 			//TODO just a work around.Not for production.
 			m.isAvailable = true;
 		}
-		if (this.extent){
-			this.updateN2Label(this.extent);
-		}
+		
+		this.updateN2Label();
+		
 		_this.dispatchService.send(DH, {
 			type: 'n2rerender'
 		})
@@ -4174,7 +4335,7 @@ class N2Cluster extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_4__["defaul
 			this.resolution = resolution;
 			this.projection = projection;
 			this.extent = extent;
-			this.cluster(extent);
+			this.cluster();
 			this.addFeatures(this.features);
 		}
 	}

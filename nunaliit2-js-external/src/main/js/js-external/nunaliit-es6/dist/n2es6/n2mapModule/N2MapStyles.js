@@ -73,7 +73,7 @@ class N2MapStyles {
 	*/
 	constructor(){
 
-		this.lrucache = {};
+		this.lrucache = new N2LRU(5000);
 
 	}
 	/**
@@ -82,13 +82,14 @@ class N2MapStyles {
 	* @return {import("ol/style/Style.js").default} produce a ol5 Style object
 	*/
  	loadStyleFromN2Symbolizer(symbols , geometryType){
- 		let candidate = this.lrucache[hash(symbols)];
+ 		let key = Object.assign({}, symbols,{_n2type: geometryType});
+ 		let candidate = this.lrucache.get(hash(key));
  		if (candidate){
  			return candidate;
  		}
  		candidate =  this.getOl5StyleObjFromSymbol(symbols, geometryType);	
-		this.lrucache[hash(symbols)] = candidate;
-		return candidate;
+		this.lrucache.set(key, candidate );
+		return [candidate];
 	}
 	/**
 	* [getOl5StyleObjFromSymbol return the ol5 stylemap object from nunaliit2 internal style tags
@@ -107,7 +108,214 @@ class N2MapStyles {
 				internalOl5StyleNames[internalOl5StyleName] = symbols[tags];
 			}
 		}
-		return this.getOl5StyleObjFromStyleName(internalOl5StyleNames);
+		if (geometryType.indexOf("point") >= 0){
+			return this.getOl5StyleObjFromStyleName_point(internalOl5StyleNames);
+		}else {
+			return this.getOl5StyleObjFromStyleName(internalOl5StyleNames);
+		}
+	}
+		
+	getOl5StyleObjFromStyleName_point(n2InternalStyle){
+		var handle = {}
+		var _this = this;
+		var option_image = {	
+							points: Infinity,
+							fill: new Fill({color: '#ffffff'}),
+							stroke: new Stroke({color: '#ee9999', width: 2}),
+							radius: 5
+						}
+		for( let tags in n2InternalStyle ) {
+			var arr = tags.split(".");
+			handle.style  = recurProps ( arr, handle , n2InternalStyle[tags], 0);
+			arr = null;
+		}
+		var option_innerImage = handle.style['image_'];
+		var innerImage = new RegularShape(option_innerImage);
+		handle.style.setImage(innerImage);
+		return handle.style;
+		
+		function recurProps (arr, supernode, value, level){
+			if(  level >= arr.length ){
+				return;
+			}
+			var nextlevel = level+1;
+			let currNodeString = arr[level];
+			let nextNodeString = arr[nextlevel];
+			if (currNodeString === 'Style') {
+				let currnode = supernode.style
+				if (!currnode) {
+					currnode = new Style({})
+				}
+				currnode[nextNodeString+'_'] =
+				recurProps (arr,
+						currnode,
+						value, nextlevel)
+				return  currnode;
+
+			} else if (currNodeString === 'image') {
+				let currnode = option_image;
+				currnode[nextNodeString] =
+				recurProps (arr,
+						currnode,
+						value, nextlevel)
+				
+				return  currnode;
+
+			} else if (currNodeString === 'text') {
+				let currnode = supernode.getText();
+				if (!currnode) {
+					currnode = new Text();
+				}
+				
+				if (arr.length > nextlevel) {
+					currnode[nextNodeString+'_'] =
+						recurProps (arr,
+								currnode,
+								value,
+								nextlevel);
+					return  currnode;
+				} else if (arr.length === nextlevel) {
+					return value;
+				}
+
+
+			} else if (currNodeString === 'fill') {
+				let currnode = supernode.fill;
+				if (!currnode) {
+					currnode = new Fill({color: '#ffffff'});
+				}
+				currnode['checksum_'] = undefined;
+				currnode[nextNodeString+'_'] =
+				recurProps (arr,
+						currnode,
+						value,
+						nextlevel);
+
+
+				return  currnode;
+
+
+			} else if (currNodeString === 'stroke') {
+				let currnode = supernode.stroke;
+				if (!currnode) {
+					currnode = new Stroke({color: '#ee9999', width: 2});
+				}
+				currnode['checksum_'] = undefined;
+				currnode[nextNodeString+ '_'] =
+				recurProps (arr,
+						currnode,
+						value, nextlevel);
+				return  currnode;
+
+
+			} else if (currNodeString.indexOf('color') === 0 ) {
+				let color = supernode.getColor();
+				let colorArr = _this.colorValues(color);
+				let newColorArr ;
+				if ( !colorArr ) {
+					colorArr = _this.colorValues('#ee9999');
+				}
+
+				if (arr.length === nextlevel) {
+					newColorArr = _this.colorValues(value);
+					if (newColorArr && Array.isArray(newColorArr)) {
+						colorArr = newColorArr;
+					}
+					return colorArr;
+				} else if (arr.length > nextlevel) {
+					return recurProps (arr, colorArr, value, nextlevel);
+				} else {
+					throw new Error ("N2MapStyles: input color-string error");
+				}
+
+			} else if (currNodeString.indexOf('font') === 0 ){
+				//font property is a string with 2 or 3 words
+				//font = weight + ' ' + size + ' ' + font
+				//for instance:
+				//font: 'bold 11px Arial, Verdana, Helvetica, sans-serif'
+				// It is a mess, and constructing
+				let font = supernode.getFont();
+				let fontArr = [];
+				if (!font) {
+					fontArr = ['normal', '10px', 'sans-serif'];
+				} else {
+					fontArr = _this.toFontArray(font);
+				}
+
+//				if (fontArr.length <= 0) {
+//					throw new Error('N2MapStyles: Bad Font Property');
+//				} else if (fontArr.length < 2 && fontArr.length > 0) {
+//					fontArr.unshift('normal', '10px');
+//				} else if (fontArr.length < 3 && fontArr.length > 1) {
+//					fontArr.unshift('normal');
+//				}
+				if (arr.length === nextlevel) {
+					return fontArr.join(' ');
+				} else if (arr.length > nextlevel){
+					return recurProps (arr, fontArr, value, nextlevel);
+				} else {
+					throw new Error ("N2MapStyles: input font-string error");
+				}
+			} else if (currNodeString.indexOf('\[') === 0){
+
+					let idx = parseInt( currNodeString.replace(/\[(\d)\]/g, '$1') );
+					if (typeof idx === 'number') {
+						supernode [idx] = value;	
+						if (supernode.length === 3){
+							supernode = supernode.join(' ');
+						}
+						return supernode;
+					} else {
+						throw new Error ('N2MapStyles: value index format error');
+					}
+
+			} else if (currNodeString.indexOf('width') === 0 ){
+				return (parseInt(value));
+			} else if (currNodeString.indexOf('radius') === 0){
+				return (value);
+			} else if (currNodeString.indexOf('opacity') === 0){
+				return (parseFloat(value));
+			} else if (currNodeString.indexOf('lineCap') === 0 ){
+				return ('' + value);
+			} else if (currNodeString.indexOf('lineDash') === 0 ) {
+				switch(value) {
+					case 'dot':
+						return [0,4];
+					case 'dash':
+						return [7];
+					case 'dashdot':
+						return  [10, 5, 0, 5];
+					case 'longdash':
+					 	return [15];
+					case 'longdashdot':
+						return [20, 10, 0 , 10];
+					default:
+						return [1];
+				}
+			} else if (currNodeString.indexOf('points') === 0){
+				switch(value) {
+				case 'square':
+					supernode['rotation'] = (Math.PI / 4);
+					return 4;
+				case 'triangle':
+					return 3;
+				case 'star':
+					supernode.radius2_ = parseInt (supernode.radius_ * 0.4);
+					return 5;
+				case 'cross':
+					supernode.radius2_ = 0;
+					supernode['rotation'] = (Math.PI / 4);
+					return 4;
+				case 'x':
+					supernode.radius2_ = 0;
+					return 4;
+				default:
+					return Infinity;
+				}
+			} else {
+				throw new Error('N2MapStyles: Bad Style Tags');
+			}
+		}
 	}
 	/**
 	* [getOl5StyleObjFromOl5StyleNames description]
@@ -122,7 +330,8 @@ class N2MapStyles {
 			handle.style  = recurProps ( arr, handle , n2InternalStyle[tags], 0);
 			arr = null;
 		}
-		return [handle.style];
+		var rst = handle.style;
+		return rst;
 
 		function recurProps (arr, supernode, value, level){
 			if(  level >= arr.length ){

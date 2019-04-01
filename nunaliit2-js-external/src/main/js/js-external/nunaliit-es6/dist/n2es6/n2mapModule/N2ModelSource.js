@@ -52,7 +52,6 @@ class N2ModelSource extends Vector {
 			sourceModelId: this.sourceModelId,
 			updatedCallback : function(state){
 				_this._modelSourceUpdated(state);
-				console.log("Updated Times: " + _this.cnt++);
 			}
 		});
 		if( this.dispatchService ){
@@ -64,20 +63,34 @@ class N2ModelSource extends Vector {
 			//this.dispatchService.register(DH,'modelStateUpdated',f);
 			this.dispatchService.register(DH,'simplifiedGeometryReport',f);
 		};
+		
+//		var isLoading = this.modelObserver.isLoading();
+//		if( typeof isLoading === 'boolean' ){
+//			this._reportLoading(isLoading);
+//		};
+//
+//		var docs = this.modelObserver.getDocuments();
+//		for (let doc of docs){
+//			let docId = doc._id;
+//			var docInfo = this.infoByDocId[docId];
+//			if( !docInfo ){
+//				docInfo = {};
+//				this.infoByDocId[docId] = docInfo;
+//			};
+//			docInfo.doc = doc;
+//			
+//		}
 	}
 
 	_modelSourceUpdated (state) {
+		
 		var _this = this;
-
-
 		if( typeof state.loading === 'boolean' ){
 			state.loading = state.loading;
 			this._reportLoading(state.loading);
 		};
 
 		if( state.added ){
-
-
 			state.added.forEach(function(addedDoc){
 				var docId = addedDoc._id;
 				var docInfo = _this.infoByDocId[docId];
@@ -114,10 +127,14 @@ class N2ModelSource extends Vector {
 				delete _this.infoByDocId[docId];
 			});
 		};
-
+		//if ( ! this.loading ){
 		//this._reloadAllFeatures();
+		//}
 	}
-
+	
+	loadFeatures(extent, resolution, projection) {
+		//this.loading = false;
+	}
 	_reportLoading(flag){
 		if( this.loading && !flag ){
 			this.loading = false;
@@ -125,6 +142,7 @@ class N2ModelSource extends Vector {
 					&& typeof this.notifications.readEnd === 'function'){
 				this.notifications.readEnd();
 			};
+			this._reloadAllFeatures();
 		} else if( !this.loading && flag ){
 			this.loading = true;
 			if( this.notifications 
@@ -162,92 +180,20 @@ class N2ModelSource extends Vector {
 			};
 		}
 	}
-	onChangeCenter(res, proj, extent) {
-		let featuresNeedUpdateFids = [];
-		this.forEachFeatureInExtent(extent, function(f){
-			featuresNeedUpdateFids.push(f.fid);
-		});
-		for (var docId of featuresNeedUpdateFids){
-			var docInfo = this.infoByDocId[docId];
-			var doc = docInfo.doc;
-			if( doc && doc.nunaliit_geom
-					&& doc.nunaliit_geom.simplified
-					&& doc.nunaliit_geom.simplified.resolutions ){
-				var bestAttName = undefined;
-				var bestResolution = undefined;
-				for(var attName in doc.nunaliit_geom.simplified.resolutions){
-					var attRes = 1 * doc.nunaliit_geom.simplified.resolutions[attName];
-					if( attRes < this.epsg4326Resolution ){
-						if( typeof bestResolution === 'undefined' ){
-							bestResolution = attRes;
-							bestAttName = attName;
-						} else if( attRes > bestResolution ){
-							bestResolution = attRes;
-							bestAttName = attName;
-						};
-					};
-				};
 
-				// At this point, if bestResolution is set, then this is the geometry we should
-				// be displaying
-				if( undefined !== bestResolution ){
-					docInfo.simplifiedName = bestAttName;
-					docInfo.simplifiedResolution = bestResolution;
-				};
-			};
-		};
-
-		var geometriesRequested = [];
-		for(var docId in this.infoByDocId){
-			var docInfo = this.infoByDocId[docId];
-			var doc = docInfo.doc;
-			if( docInfo.simplifiedName ) {
-				// There is a simplification needed, do I have it already?
-				var wkt = undefined;
-				if( docInfo.simplifications ){
-					wkt = docInfo.simplifications[docInfo.simplifiedName];
-				};
-
-				// If I do not have it, request it
-				if( !wkt ){
-					var geomRequest = {
-							id: docId
-							,attName: docInfo.simplifiedName
-							,doc: doc
-					};
-					geometriesRequested.push(geomRequest);
-				};
-			};
-		}
-
-		this.dispatchService.send(DH,{
-			type: 'simplifiedGeometryRequest'
-				,geometriesRequested: geometriesRequested
-				,requester: this.sourceId
-		});
-
-		this._reloadAllFeatures();
-	
-	}
 	/**
 	 * This function is called when the map resolution is changed
 	 */
 	onChangedResolution(res,proj, extent){
 		//$n2.log('resolution',res,proj);
-		let featuresNeedUpdateFids = [];
-		this.forEachFeatureInExtent(extent, function(f){
-			featuresNeedUpdateFids.push(f.fid);
-		});
 
 
 		this.epsg4326Resolution = this._getResolutionInProjection(res,proj);
 		
 		var geometriesRequested = [];
 		
-		for(let docId of featuresNeedUpdateFids){
+		for(let docId in this.infoByDocId){
 			var docInfo = this.infoByDocId[docId];
-			
-			if (!docInfo) continue;
 			
 			var doc = docInfo.doc;
 			if( doc && doc.nunaliit_geom

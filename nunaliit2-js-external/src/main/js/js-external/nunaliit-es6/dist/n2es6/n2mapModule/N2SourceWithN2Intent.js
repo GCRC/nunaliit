@@ -644,9 +644,9 @@ class N2SourceWithN2Intent extends VectorSource {
 	refresh() {
 		
 		this.clear();
-		if (this.extent) {
-			this.updateN2Label(this.extent);
-		}
+
+		this.updateN2Label();
+	
 		this.addFeatures(this.features_);
 		
 		
@@ -870,9 +870,9 @@ class N2SourceWithN2Intent extends VectorSource {
 			//TODO just a work around.Not for production.
 			m.isAvailable = true;
 		}
-		if (this.extent){
-			this.updateN2Label(this.extent);
-		}
+		
+		this.updateN2Label();
+		
 		_this.dispatchService.send(DH, {
 			type: 'n2rerender'
 		})

@@ -522,6 +522,7 @@ class N2MapCanvas  {
 				var vectorLayer = new VectorLayer({
 					title: "CouchDb",
 					renderMode : 'image',
+					declutter : true,
 					source: n2IntentSource,
 					style: StyleFn,
 					renderOrder: function(feature1, feature2){
@@ -540,38 +541,38 @@ class N2MapCanvas  {
 
 			var f = feature;
 			
-			if(f.getGeometry().getType() === "Point"){
-				if (!DONETESTCACHE[f.fid]){
-				var ldata =[];
-				let e = Math.round(10*Math.random());
-				let nb = 0;
-				for(var k =0;k<e;k++){
-					let n = Math.round(10*Math.random());
-					ldata.push(n);
-					nb += n;
-				}
-				let thisradius = nb;
-				
-				
-				
-				let thisStyle = new Style({
-					image: new customPointStyle({
-						type: "treering", 
-						radius : thisradius,
-						data: ldata,
-						animation: false,
-						stroke: new Stroke({
-							color: "#000",
-							width: 2
-						})
-					})
-				})
-				DONETESTCACHE[f.fid] = thisStyle;
-				return [thisStyle];
-			} else {
-				return DONETESTCACHE[f.fid];
-			}
-			}
+//			if(f.getGeometry().getType() === "Point"){
+//				if (!DONETESTCACHE[f.fid]){
+//				var ldata =[];
+//				let e = Math.round(10*Math.random());
+//				let nb = 0;
+//				for(var k =0;k<e;k++){
+//					let n = Math.round(10*Math.random());
+//					ldata.push(n);
+//					nb += n;
+//				}
+//				let thisradius = nb;
+//				
+//				
+//				
+//				let thisStyle = new Style({
+//					image: new customPointStyle({
+//						type: "treering", 
+//						radius : thisradius,
+//						data: ldata,
+//						animation: false,
+//						stroke: new Stroke({
+//							color: "#000",
+//							width: 2
+//						})
+//					})
+//				})
+//				DONETESTCACHE[f.fid] = thisStyle;
+//				return [thisStyle];
+//			} else {
+//				return DONETESTCACHE[f.fid];
+//			}
+//			}
 			
 			for(var fnName in featureStyleFunctions){
 				f[fnName] = featureStyleFunctions[fnName];
@@ -622,10 +623,15 @@ class N2MapCanvas  {
 				symbols[name] = value;
 			},feature);
 
+			if (typeof f._cached_style !== 'undefined'){
+				if (typeof f._style_change !== 'undefined' && ! f._style_change ) {
+					return f._cached_style;
+				}
+			}
 			let n2mapStyles = _this.n2MapStyles;
 			let innerStyle = n2mapStyles.loadStyleFromN2Symbolizer(symbols, 
 					feature.n2_geometry);
-
+			f._cached_style = innerStyle;
 			return innerStyle;
 		}
 	}
