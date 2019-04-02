@@ -686,6 +686,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 });
 
 //--------------------------------------------------------------------------
+var reTimeCode = /([0-9][0-9]):([0-9][0-9]):([0-9][0-9])((\,|\.)[0-9]+)?\s*-->\s*([0-9][0-9]):([0-9][0-9]):([0-9][0-9])((\,|\.)[0-9]+)?/i;
 var SrtToJsonConvertor = $n2.Class('SrtToJsonConvertor',{
 	execute: function(srtData) {
 		var json = [];
@@ -697,14 +698,15 @@ var SrtToJsonConvertor = $n2.Class('SrtToJsonConvertor',{
 		var totalLength = lines.length;
 		
 		var curSentence = "";
-		while( ++cur < totalLength){
+		while( ++cur < (totalLength-1)){
 			if( lines[cur].replace(/^\s+|\s+$/g,'') === ""){
 				continue;
 			} else {
 				var tmpIdx = lines[cur].replace(/^\s+|\s+$/g,'');
 				var tmpTimecode = lines[++cur].replace(/^\s+|\s+$/g,'');
-				if(tmpIdx.search(/[0-9]+/i) === -1 || 
-						tmpTimecode.search(/[0-9][0-9]:[0-9][0-9]:[0-9][0-9]\,[0-9][0-9][0-9] --> [0-9][0-9]:[0-9][0-9]:[0-9][0-9]\,[0-9][0-9][0-9]/i) === -1 ) {
+				var matcher = reTimeCode.exec(tmpTimecode);
+				if(tmpIdx.search(/[0-9]+/i) === -1
+				 || !matcher ) {
 					continue;
 				} else {
 					var curEntry = {
@@ -714,14 +716,16 @@ var SrtToJsonConvertor = $n2.Class('SrtToJsonConvertor',{
 					};
 					//$n2.log("The"+tmpIdx+"-th transcript");
 					//$n2.log("The timecode: "+ tmpTimecode);
-					
-					curEntry.start  =  tmpTimecode.substring(0,2)*3600 + tmpTimecode.substring(3,5)*60 
-					+ tmpTimecode.substring(6,8);
-					curEntry.fin = tmpTimecode.substring(17,19)*3600 + tmpTimecode.substring(20,22)*60 
-					+ tmpTimecode.substring(23,25);
-					while((curSentence = lines[++cur])!== ""){
+
+					curEntry.start  =  3600*matcher[1] + 60*matcher[2] + 1*matcher[3];
+					curEntry.fin = 3600*matcher[6] + 60*matcher[7] + 1*matcher[8];
+					while(++cur < totalLength){
+						curSentence = lines[cur];
+						if( curSentence.replace(/^\s+|\s+$/g,'') === "" ){
+							break;
+						};
 						curEntry.text += curSentence;
-						}
+					}
 					json.push(curEntry);
 					
 				}
