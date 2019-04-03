@@ -2309,19 +2309,20 @@
 			.text(_loc('Queries '))
 			.appendTo($buttonsLine);
 
-		$('<button>')
-			.addClass('mdc-button')
-			.text( _loc('Add') )
-			.appendTo($buttonsLine)
-			.click(function(){
+		var addBtnOpts = {
+			parentId: $n2.utils.getElementIdentifier($buttonsLine),
+			btnLabel: 'Add',
+			btnFunction: function(){
 				SearchFilter.createNewList({
 					onSuccess: function(list){
 						addList(list);
 					}
 				});
 				return false;
-			});
-		
+			}
+		};
+		new $n2.mdc.MDCButton(addBtnOpts);
+
 		for(var i=0,e=allLists.length; i<e; ++i){
 			var list = allLists[i];
 			var listId = list.listId;
@@ -2340,29 +2341,43 @@
 				.text( list.print() )
 				.appendTo($d);
 			
-			$('<button>')
-				.addClass('selectApp_list_button mdc-button')
-				.attr('href','#')
-				.attr('n2-list-id', listId)
-				.text( _loc('View') )
-				.click(onListClick)
-				.appendTo($d);
-			
-			$('<button>')
-				.addClass('selectApp_list_button mdc-button')
-				.attr('href','#')
-				.attr('n2-list-id', listId)
-				.text( _loc('Text') )
-				.click(onTextClick)
-				.appendTo($d);
+			var btnParentId = $n2.utils.getElementIdentifier($d);
 
-			$('<button>')
-				.addClass('selectApp_list_button mdc-button')
-				.attr('href','#')
-				.attr('n2-list-id', listId)
-				.text( _loc('Remove') )
-				.click(onRemoveClick)
-				.appendTo($d);
+			var viewBtnOpts = {
+				parentId: btnParentId,
+				mdcAttributes: {
+					'href': '#',
+					'n2-list-id': listId
+				},
+				mdcClasses: ['selectApp_list_button'],
+				btnLabel: 'View',
+				btnFunction: onListClick
+			};
+			new $n2.mdc.MDCButton(viewBtnOpts);
+
+			var textBtnOpts = {
+				parentId: btnParentId,
+				mdcAttributes: {
+					'href': '#',
+					'n2-list-id': listId
+				},
+				mdcClasses: ['selectApp_list_button'],
+				btnLabel: 'Text',
+				btnFunction: onTextClick
+			};
+			new $n2.mdc.MDCButton(textBtnOpts);
+
+			var removeBtnOpts = {
+				parentId: btnParentId,
+				mdcAttributes: {
+					'href': '#',
+					'n2-list-id': listId
+				},
+				mdcClasses: ['selectApp_list_button'],
+				btnLabel: 'Remove',
+				btnFunction: onRemoveClick
+			};
+			new $n2.mdc.MDCButton(removeBtnOpts);
 		};
 		
 		function onListClick(e){
@@ -2480,29 +2495,32 @@
 			.text(_loc(list.name + ' '))
 			.appendTo($headerLine);
 
-		$('<button>')
-			.addClass('mdc-button')
-			.text( _loc('Transform') )
-			.appendTo($headerLine)
-			.click(function(){
+		var btnParentId = $n2.utils.getElementIdentifier($headerLine);
+
+		var transformBtnOpts = {
+			parentId: btnParentId,
+			btnLabel: 'Transform',
+			btnFunction: function(){
 				transformList(list);
 				return false;
-			});
-		
-		$('<button>')
-			.addClass('mdc-button')
-			.text( _loc('Delete') )
-			.appendTo($headerLine)
-			.click(function(){
+			}
+		};
+		new $n2.mdc.MDCButton(transformBtnOpts);
+
+		var deleteBtnOpts = {
+			parentId: btnParentId,
+			btnLabel: 'Delete',
+			btnFunction: function(){
 				deleteDocumentsFromList(list);
 				return false;
-			});
-		
-		$('<button>')
-			.addClass('mdc-button')
-			.text( _loc('Refine List') )
-			.appendTo($headerLine)
-			.click(function(){
+			}
+		};
+		new $n2.mdc.MDCButton(deleteBtnOpts);
+
+		var refineListBtnOpts = {
+			parentId: btnParentId,
+			btnLabel: 'Refine List',
+			btnFunction: function(){
 				SearchFilter.refineList({
 					list: list
 					,onSuccess: function(refinedList){
@@ -2510,34 +2528,39 @@
 					}
 				});
 				return false;
-			});
-		
-		$('<button>')
-			.addClass('mdc-button')
-			.text( _loc('Report') )
-			.appendTo($headerLine)
-			.click(function(){
+			}
+		};
+		new $n2.mdc.MDCButton(refineListBtnOpts);
+
+		var reportBtnOpts = {
+			parentId: btnParentId,
+			btnLabel: 'Report',
+			btnFunction: function(){
 				reportList(list);
 				return false;
-			});
-		
-		$('<button>')
-			.addClass('mdc-button')
-			.text( _loc('Export') )
-			.appendTo($headerLine)
-			.click(function(){
+			}
+		};
+		new $n2.mdc.MDCButton(reportBtnOpts);
+
+		var exportBtnOpts = {
+			parentId: btnParentId,
+			btnLabel: 'Export',
+			btnFunction: function(){
 				exportList(list);
 				return false;
-			});
+			}
+		};
+		new $n2.mdc.MDCButton(exportBtnOpts);
 		
-		$('<button>')
-			.addClass('mdc-button')
-			.text( _loc('Export by Script') )
-			.appendTo($headerLine)
-			.click(function(){
+		var exportScriptBtnOpts = {
+			parentId: btnParentId,
+			btnLabel: 'Export by Script',
+			btnFunction: function(){
 				exportListByScript(list);
 				return false;
-			});
+			}
+		};
+		new $n2.mdc.MDCButton(exportScriptBtnOpts);
 
 		for(var i=0,e=list.docIds.length; i<e; ++i){
 			var docId = list.docIds[i];
@@ -3302,15 +3325,17 @@
 			.addClass('mdc-dialog__actions')
 			.appendTo($dialogSurface);
 
-		var $button = $('<button>')
-			.addClass('mdc-button mdc-dialog__button')
-			.text(_loc('OK'))
-			.appendTo($footer)
-			.click(function(){
+		var okBtnOpts = {
+			parentId: $n2.utils.getElementIdentifier($footer),
+			mdcClasses: ['mdc-dialog__button'],
+			btnLabel: 'OK',
+			btnFunction: function(){
 				mdcDialogComponent.close();
 				$dialog.remove();
 				return false;
-			});
+			}
+		};
+		new $n2.mdc.MDCButton(okBtnOpts);
 		
 		$('<div>')
 			.addClass('mdc-dialog__scrim')
@@ -3320,9 +3345,6 @@
 				return false;
 			})
 			.appendTo($dialog);
-
-		// Attach ripple to button
-		mdc.ripple.MDCRipple.attachTo($button[0]);
 
 		// Attach mdc component to alert dialog
 		mdcDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);
@@ -3431,15 +3453,16 @@
 				var $buttons = $('<div>')
 					.addClass('mdc-card__actions')
 					.appendTo($div);
-				
-				$('<button>')
-					.addClass('mdc-button')
-					.text( _loc('Edit') )
-					.appendTo($buttons)
-					.click(function(){
+
+				var editBtnOpts = {
+					parentId: $n2.utils.getElementIdentifier($buttons),
+					btnLabel: 'Edit',
+					btnFunction: function(){
 						editDocument(doc);
 						return false;
-					});
+					}
+				};
+				new $n2.mdc.MDCButton(editBtnOpts)
 				
 				if( revsInfo ){
 					$revs.empty();
@@ -3600,16 +3623,17 @@
 				.text(_loc('Logs '))
 				.appendTo($buttonsLine);
 
-			$('<button>')
-				.addClass('mdc-button')
-				.text( _loc('Clear') )
-				.appendTo($buttonsLine)
-				.click(function(){
+			var clearBtnOpts = {
+				parentId: $n2.utils.getElementIdentifier($buttonsLine),
+				btnLabel: 'Clear',
+				btnFunction: function(){
 					var $d = getLogsDiv();
 					$d.empty();
 					addHeader($d);
 					return false;
-				});
+				}
+			};
+			new $n2.mdc.MDCButton(clearBtnOpts);
 		};
 	};
 	
@@ -3633,11 +3657,12 @@
 	
 	// -----------------------------------------------------------------
 	function bs(){
-		$('<button>')
-			.addClass('mdc-button')
-			.text( _loc('Test Temporary View') )
-			.appendTo($selectAppDiv)
-			.click(function(){
+		
+		var btnParentId = $n2.utils.getElementIdentifier($selectAppDiv);
+		var tempViewBtnOpts = {
+			parentId: btnParentId,
+			btnLabel: 'Test Temporary View',
+			btnFunction: function(){
 				atlasDb.queryTemporaryView({
 					map: 'function(doc){ emit(null,null); }'
 					,onSuccess: function(rows){
@@ -3654,13 +3679,14 @@
 					}
 				});
 				return false;
-			});
+			}
+		};
+		new $n2.mdc.MDCButton(tempViewBtnOpts);
 
-		$('<button>')
-			.addClass('mdc-button')
-			.text( _loc('All Documents') )
-			.appendTo($selectAppDiv)
-			.click(function(){
+		var allDocsBtnOpts = {
+			parentId: btnParentId,
+			btnLabel: 'All Documents',
+			btnFunction: function(){
 				atlasDb.listAllDocuments({
 					onSuccess: function(docIds){
 						var l = new DocumentList({
@@ -3671,7 +3697,9 @@
 					}
 				});
 				return false;
-			});
+			}
+		};
+		new $n2.mdc.MDCButton(allDocsBtnOpts);
 	};
 	
 	// -----------------------------------------------------------------
