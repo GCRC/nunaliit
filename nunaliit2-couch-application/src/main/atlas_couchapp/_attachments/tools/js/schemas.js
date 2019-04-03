@@ -223,19 +223,23 @@
 				
 				var $td = $('<td></td>');
 				$tr.append($td);
-				if( isInstalled ) {
-					$('<button>')
-						.addClass(' mdc-button')
-						.text(_loc('Replace'))
-						.appendTo($td)
-						.click( createClickReplaceSchema(schema, received[name]) );
 
+				var btnParentId = $n2.utils.getElementIdentifier($td);
+
+				if( isInstalled ) {
+					var replaceBtnOpts = {
+						parentId: btnParentId,
+						btnLabel: 'Replace',
+						btnFunction: createClickReplaceSchema(schema, received[name])
+					};
+					new $n2.mdc.MDCButton(replaceBtnOpts);
 				} else {
-					$('<button>')
-						.addClass('mdc-button')
-						.text(_loc('Install'))
-						.appendTo($td)
-						.click( createClickInstallSchema(schema) );
+					var installBtnOpts = {
+						parentId: btnParentId,
+						btnLabel: 'Install',
+						btnFunction: createClickInstallSchema(schema)
+					};
+					new $n2.mdc.MDCButton(installBtnOpts);
 				};
 
 				// Attach Material Design Components
@@ -347,16 +351,17 @@
 				.text('Logs')
 				.appendTo($e);
 
-			$('<button>')
-				.addClass('mdc-button')
-				.text(_loc('Clear'))
-				.appendTo($h)
-				.click(function(){
+			var clearBtnOpts = {
+				parentId: $n2.utils.getElementIdentifier($h),
+				btnLabel: 'Clear',
+				btnFunction: function(){
 					var $d = getLogsDiv();
 					$d.empty();
 					addHeader($d);
 					return false;
-				});
+				}
+			};
+			new $n2.mdc.MDCButton(clearBtnOpts);
 		};
 	};
 	
