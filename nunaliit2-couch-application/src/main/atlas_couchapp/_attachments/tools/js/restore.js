@@ -89,14 +89,22 @@
 			
 			var $deletedHeader = $deletedList.find('.restoreDeletedHeader');
 			if( $deletedHeader.length < 1 ){
-				$deletedHeader = $('<div class="restoreDeletedHeader"><span class="mdc-typography--headline6">Deleted Documents</span> <button class="mdc-button">Refresh</button></div>');
+				$deletedHeader = $('<div class="restoreDeletedHeader"></div>');
+				$deletedHeaderHeadline = $('<span class="mdc-typography--headline6">Deleted Documents</span>');
+				$deletedHeader.append($deletedHeaderHeadline);
 				$deletedList.append($deletedHeader);
-				$deletedHeader.find('button').click(function(){
-					var $div = _this._getDisplayDiv();
-					$div.find('.restoreDeletedDocs').remove();
-					_this._refresh();
-					return false;
-				});
+				
+				var refreshBtnOpts = {
+					parentId: $n2.utils.getElementIdentifier($deletedHeader),
+					btnLabel: 'Refresh',
+					btnFunction: function(){
+						var $div = _this._getDisplayDiv();
+						$div.find('.restoreDeletedDocs').remove();
+						_this._refresh();
+						return false;
+					}
+				};
+				new $n2.mdc.MDCButton(refreshBtnOpts);
 			};
 
 			var $deletedDocs = $deletedList.find('.restoreDeletedDocs');
@@ -150,9 +158,6 @@
 					}
 				});
 			};
-
-			// Attach material design components
-			$n2.mdc.attachMDCComponents();
 		}
 		
 		,_deletedDocSelected: function(docId, lastRev){
@@ -243,18 +248,17 @@
 					
 					new $n2.tree.ObjectTree($content, doc);
 					
-					$('<button>')
-						.text('Restore this version')
-						.addClass('mdc-button mdc-button--raised')
-						.appendTo($displayDiv)
-						.click(function(){
+					var restoreBtnOpts = {
+						parentId: $n2.utils.getElementIdentifier($displayDiv),
+						btnLabel: 'Restore this version',
+						btnRaised: true,
+						btnFunction: function(){
 							var $btn = $(this);
 							_this._restoreRevision($btn, doc, lastRev);
 							return false;
-						});					
-					
-					// Attach material design components
-					$n2.mdc.attachMDCComponents();
+						}
+					}
+					new $n2.mdc.MDCButton(restoreBtnOpts);
 				}
 				,onError: function(errorMsg){ 
 					var $div = _this._getDisplayDiv();
