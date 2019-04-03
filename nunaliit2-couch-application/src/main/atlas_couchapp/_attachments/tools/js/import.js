@@ -121,12 +121,12 @@
 			.addClass('mdc-notched-outline__trailing')
 			.appendTo($inputOutline);
 
+
 		// Import Verify Button
-		$('<button>')
-			.addClass('mdc-button')
-			.text( _loc('Verify') )
-			.appendTo($buttonLine)
-			.click(function(){
+		var verifyBtnOpts = {
+			parentId: $n2.utils.getElementIdentifier($buttonLine),
+			btnLabel: 'Verify',
+			btnFunction: function(){
 				var $inputSection = $appDiv.find('.importAppInput');
 				var importProfileId = $inputSection.find('.import_profile').val();
 				var importData = $inputSection.find('.importData').val();
@@ -191,7 +191,9 @@
 						fatalError( _loc('Unable to parse import data: {err}',{err:err}) );
 					}
 				});
-			});
+			}
+		};
+		new $n2.mdc.MDCButton(verifyBtnOpts);
 		
 		function fatalError(err){
 			reportError( err );
@@ -225,17 +227,18 @@
 				.addClass('mdc-typography--headline6')
 				.text( _loc('Logs') )
 				.appendTo($h);
-			
-			$('<button>')
-				.addClass('mdc-button')
-				.text(_loc('Clear'))
-				.appendTo($h)
-				.click(function(){
+		
+			var clearBtnOpts = {
+				parentId: $n2.utils.getElementIdentifier($h),
+				btnLabel: 'Clear',
+				btnFunction: function(){
 					var $d = getLogsDiv();
 					$d.empty();
 					addHeader($d);
 					return false;
-				});
+				}
+			}
+			new $n2.mdc.MDCButton(clearBtnOpts);
 		};
 	};
 	
