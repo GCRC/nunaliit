@@ -45,21 +45,19 @@
 				.text(_loc('Logs '))
 				.appendTo($buttonsLine);
 
-			$('<button>')
-				.addClass('mdc-button')
-				.text( _loc('Clear') )
-				.appendTo($buttonsLine)
-				.click(function(){
+			var clearBtnOpts = {
+				parentId: $n2.utils.getElementIdentifier($buttonsLine),
+				btnLabel: 'Clear',
+				btnFunction: function(){
 					_this.clear();
 					return false;
-				});
-			
+				}
+			};
+			new $n2.mdc.MDCButton(clearBtnOpts);
+
 			$('<div>')
 				.addClass('n2LoggerEntries')
 				.appendTo($div);
-			
-			// Attach Material Design Components
-			$n2.mdc.attachMDCComponents();
 		}
 		
 		,error: function(err){
@@ -193,14 +191,15 @@
 				.text(_loc('Submissions '))
 				.appendTo($buttonsLine);
 
-			$('<button>')
-				.addClass('mdc-button')
-				.text( _loc('Refresh') )
-				.appendTo($buttonsLine)
-				.click(function(){
+			var refreshBtnOpts = {
+				parentId: $n2.utils.getElementIdentifier($buttonsLine),
+				btnLabel: 'Refresh',
+				btnFunction: function(){
 					_this._refreshSubmissions();
 					return false;
-				});
+				}
+			};
+			new $n2.mdc.MDCButton(refreshBtnOpts);
 
 			$('<div>')
 				.addClass('submissionAppList')
@@ -491,11 +490,13 @@
 					.addClass('submission_deny_dialog_buttons mdc-dialog__actions')
 					.appendTo($dialogContent);
 
-				$('<button>')
-					.addClass('n2_button_ok mdc-button mdc-dialog__button')
-					.text( _loc('OK') )
-					.appendTo($buttons)
-					.click(function(){
+				var btnParentId = $n2.utils.getElementIdentifier($buttons);
+
+				var okBtnOpts = {
+					parentId: btnParentId,
+					mdcClasses: ['n2_button_ok', 'mdc-dialog__button'],
+					btnLabel: 'OK',
+					btnFunction: function(){
 						var $diag = $('#'+denyDialogId);
 						
 						var comment = $diag.find('textarea.submission_deny_dialog_reason').val();
@@ -507,17 +508,21 @@
 						if( typeof callback === 'function' ){
 							callback(comment,email);
 						};
-					});
+					}
+				};
+				new $n2.mdc.MDCButton(okBtnOpts);
 
-				$('<button>')
-					.addClass('n2_button_cancel mdc-button mdc-dialog__button')
-					.text( _loc('Cancel') )
-					.appendTo($buttons)
-					.click(function(){
+				var cancelBtnOpts = {
+					parentId: btnParentId,
+					mdcClasses: ['n2_button_cancel', 'mdc-dialog__button'],
+					btnLabel: 'Cancel',
+					btnFunction: function(){
 						mdcDenyDialogComponent.close();
 						$denyDialog.remove();
 						return false;
-					});
+					}
+				};
+				new $n2.mdc.MDCButton(cancelBtnOpts);
 
 				$('<div>')
 					.addClass('mdc-dialog__scrim')
@@ -803,14 +808,16 @@
 			// View button
 			var $views = $('<div class="submission_views">')
 				.appendTo($entry);
-			$('<button>')
-				.addClass('mdc-button')
-				.text( _loc('View') )
-				.appendTo($views)
-				.click(function(){
+
+			var viewBtnOpts = {
+				parentId: $n2.utils.getElementIdentifier($views),
+				btnLabel: 'View',
+				btnFunction: function(){
 					_this._viewMerging(subDocId);
 					return false;
-				});
+				}
+			};
+			new $n2.mdc.MDCButton(viewBtnOpts);
 
 			// Brief display
 			var $brief = $('<div class="submission_brief">')
@@ -1190,69 +1197,89 @@
 				var $buttons = $('<footer>')
 					.addClass('submission_view_dialog_merging_buttons mdc-dialog__actions')
 					.appendTo($innerDiag);
-				$('<button>')
-					.addClass('n2_button_approve mdc-button')
-					.text( _loc('Approve') )
-					.appendTo($buttons)
-					.click(function(){
+
+				var btnParentId = $n2.utils.getElementIdentifier($buttons);
+
+				var approveBtnOpts = {
+					parentId: btnParentId,
+					mdcClasses: ['n2_button_approve'],
+					btnLabel: 'Approve',
+					btnFunction: function(){
 						_this._approve(subDocId, proposedDoc);
 						_this.mdcDialogComponent.close();
 						var $dialog = $('#'+diagId);
 						$dialog.remove();
 						return false;
-					});
-				$('<button>')
-					.addClass('n2_button_deny mdc-button mdc-dialog__button')
-					.text( _loc('Reject') )
-					.appendTo($buttons)
-					.click(function(){
+					}
+				};
+				new $n2.mdc.MDCButton(approveBtnOpts);
+
+				var rejectBtnOpts = {
+					parentId: btnParentId,
+					mdcClasses: ['n2_button_deny', 'mdc-dialog__button'],
+					btnLabel: 'Reject',
+					btnFunction: function(){
 						_this._deny(subDocId,function(){
 							_this.mdcDialogComponent.close();
 							var $dialog = $('#'+diagId);
 							$dialog.remove();
 						});
 						return false;
-					});
+					}
+				};
+				new $n2.mdc.MDCButton(rejectBtnOpts);
+
 				if( originalDoc ) {
-					$('<button>')
-						.addClass('n2_button_original mdc-button mdc-dialog__button')
-						.text( _loc('View Original') )
-						.appendTo($buttons)
-						.click(function(){
+					var viewOrgBtnOpts = {
+						parentId: btnParentId,
+						mdcClasses: ['n2_button_original', 'mdc-dialog__button'],
+						btnLabel: 'View Original',
+						btnFunction: function(){
 							_this._viewOriginal(subDocId);
 							return false;
-						});
+						}
+					};
+					new $n2.mdc.MDCButton(viewOrgBtnOpts);
 				};
 				if( submittedDoc ) {
-					$('<button>')
-						.addClass('n2_button_submitted mdc-button mdc-dialog__button')
-						.text( _loc('View Submitted') )
-						.appendTo($buttons)
-						.click(function(){
+
+					var viewSubBtnOpts = {
+						parentId: btnParentId,
+						mdcClasses: ['n2_button_submitted', 'mdc-dialog__button'],
+						btnLabel: 'View Submitted',
+						btnFunction: function(){
 							_this._viewSubmitted(subDocId);
 							return false;
-						});
+						}
+					};
+					new $n2.mdc.MDCButton(viewSubBtnOpts);
 				};
 				if( ! subDoc.nunaliit_submission.deletion ) {
-					$('<button>')
-						.addClass('n2_button_manual mdc-button mdc-dialog__button')
-						.text( _loc('Edit Proposed Document') )
-						.appendTo($buttons)
-						.click(function(){
+
+					var editBtnOpts = {
+						parentId: btnParentId,
+						mdcClasses: ['n2_button_manual', 'mdc-dialog__button'],
+						btnLabel: 'Edit Proposed Document',
+						btnFunction: function(){
 							editProposedDocument(diagId, originalDoc, submittedDoc, currentDoc, proposedDoc, subDoc);
 							return false;
-						});
+						}
+					};
+					new $n2.mdc.MDCButton(editBtnOpts);
 				};
-				$('<button>')
-					.addClass('n2_button_cancel mdc-button mdc-dialog__button')
-					.text( _loc('Cancel') )
-					.appendTo($buttons)
-					.click(function(){
+			
+				var cancelBtnOpts = {
+					parentId: btnParentId,
+					mdcClasses: ['n2_button_cancel', 'mdc-dialog__button'],
+					btnLabel: 'Cancel',
+					btnFunction: function(){
 						_this.mdcDialogComponent.close();
 						var $dialog = $('#'+diagId);
 						$dialog.remove();
 						return false;
-					});
+					}
+				};
+				new $n2.mdc.MDCButton(cancelBtnOpts);
 				
 				// Install mouse over: On mouse over, change style of all
 				// similar keys, in the other trees. Include the parent
@@ -1330,23 +1357,31 @@
 				});
 				
 				$buttons.empty();
-				$('<button>')
-					.addClass('n2_button_save mdc-button')
-					.text( _loc('Save') )
-					.appendTo($buttons)
-					.click(function(){
+
+				var btnParentId = $n2.utils.getElementIdentifier($buttons);
+				
+				var saveBtnOpts = {
+					parentId: btnParentId,
+					mdcClasses: ['n2_button_save'],
+					btnLabel: 'Save',
+					btnFunction: function(){
 						var updatedDoc = editor.getDocument();
 						displayDocuments(diagId, originalDoc, submittedDoc, currentDoc, updatedDoc, subDoc);
 						return false;
-					});
-				$('<button>')
-					.addClass('n2_button_cancel mdc-button')
-					.text( _loc('Cancel') )
-					.appendTo($buttons)
-					.click(function(){
+					}
+				};
+				new $n2.mdc.MDCButton(saveBtnOpts);
+
+				var cancelBtnOpts = {
+					parentId: btnParentId,
+					mdcClasses: ['n2_button_cancel'],
+					btnLabel: 'Cancel',
+					btnFunction: function(){
 						displayDocuments(diagId, originalDoc, submittedDoc, currentDoc, proposedDoc, subDoc);
 						return false;
-					});
+					}
+				};
+				new $n2.mdc.MDCButton(cancelBtnOpts);
 			};
 			
 			// level 0 is on current document (submitted patch)
