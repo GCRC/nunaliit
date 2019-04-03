@@ -146,29 +146,41 @@ var UserManagementApplication = $n2.Class({
 			};
 		});
 
-		$('<button>')
-			.addClass('userAppQueryButton mdc-button mdc-button--raised')
-			.text(_loc('Query Users')) 
-			.appendTo($userInput)
-			.click(function(){
-				_this.queryUsers();
-			});
 
-		$('<button>')
-			.addClass('userAppAddUser mdc-button mdc-button--raised')
-			.text(_loc('Add User')) 
-			.appendTo($userInput)
-			.click(function(){
+		var btnParentId = $n2.utils.getElementIdentifier($userInput);
+
+		var queryUsersBtnOpts = {
+			parentId: btnParentId,
+			mdcClasses: ['userAppQueryButton'],
+			btnLabel: 'Query Users',
+			btnRaised: true,
+			btnFunction: function(){
+				_this.queryUsers();
+			}
+		};
+		new $n2.mdc.MDCButton(queryUsersBtnOpts);
+
+		var addUserBtnOpts = {
+			parentId: btnParentId,
+			mdcClasses: ['userAppAddUser'],
+			btnLabel: 'Add User',
+			btnRaised: true,
+			btnFunction: function(){
 				_this.addUser();
-			});
+			}
+		};
+		new $n2.mdc.MDCButton(addUserBtnOpts);
 		
-		$('<button>')
-			.addClass('userAppMyUser mdc-button mdc-button--raised')
-			.text(_loc('My User')) 
-			.appendTo($userInput)
-			.click(function(){
+		var myUserBtnOpts = {
+			parentId: btnParentId,
+			mdcClasses: ['userAppMyUser'],
+			btnLabel: 'My User',
+			btnRaised: true,
+			btnFunction: function(){
 				_this.queryMyUser();
-			});
+			}
+		}
+		new $n2.mdc.MDCButton(myUserBtnOpts);
 
 		// Attach Material Design Components
 		$n2.mdc.attachMDCComponents();
