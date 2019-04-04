@@ -110,7 +110,7 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 	},
 
 	_generateMDCButton: function(){
-		var btn, keys;
+		var $btn, keys;
 		var _this = this;
 
 		this.mdcClasses.push('mdc-button');
@@ -119,20 +119,20 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 			this.mdcClasses.push('mdc-button--raised');
 		}
 
-		btn = $('<button>')
+		$btn = $('<button>')
 			.attr('id',this.mdcId)
 			.addClass(this.mdcClasses.join(' '))
 			.text(_loc(this.btnLabel))
 			.appendTo($('#' + this.parentId));
 
 		if (this.btnFunction) {
-			btn.click(this.btnFunction);
+			$btn.click(this.btnFunction);
 		}
 
 		if (this.mdcAttributes) {
 			keys = Object.keys(this.mdcAttributes);
 			keys.forEach(function(key) {
-				btn.attr(key, _this.mdcAttributes[key]);
+				$btn.attr(key, _this.mdcAttributes[key]);
 			});
 		}
 
@@ -143,6 +143,123 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 		var btn = document.getElementById(btnId);
 		if (btn) {
 			$mdc.ripple.MDCRipple.attachTo(btn);
+		}
+	}
+});
+
+// Class MDCTextField
+// Description: Creates a material design text-field component
+// Options:
+//  - txtFldLabel: Defines the text field label (String).
+//  - txtFldOutline: Defines if the text-field should be outlined (Boolean) (default = true).
+//  - txtFldInputId: Defines the id of input or text-area element (String) (optional) 
+//  - txtFldArea: Defines if the text-field input should be a text-field-area (Boolean) (default = false).
+//  - inputRequired: Defines if the text-field is required field or not (Boolean) (default = false).
+var MDCTextField = $n2.Class('MDCTextField', MDC, {
+
+	txtFldLabel: null,
+	txtFldOutline: null,
+	txtFldInputId: null,
+	txtFldArea: null,
+	inputRequired: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			txtFldLabel: null,
+			txtFldOutline: true,
+			txtFldInputId: null,
+			txtFldArea: false,
+			inputRequired: false,
+		}, opts_);
+
+		MDC.prototype.initialize.call(this,opts);
+
+		this.txtFldLabel = opts.txtFldLabel;
+		this.txtFldOutline = opts.txtFldOutline;
+		this.txtFldInputId = opts.txtFldInputId;
+		this.txtFldArea = opts.txtFldArea;
+		this.inputRequired = opts.inputRequired;
+
+		this._generateMDCTextField();
+	},
+	_generateMDCTextField: function(){
+		var $txtFld, $txtFldOutline, $txtFldOutlineNotch;
+
+		if (!this.txtFldInputId) {
+			this.txtFldInputId = $n2.getUniqueId();
+		}
+
+		this.mdcClasses.push('mdc-text-field');
+	
+		if (this.txtFldArea) {
+			this.mdcClasses.push('mdc-text-field--textarea');
+		} else if (this.txtFldOutline) {
+			this.mdcClasses.push('mdc-text-field--outlined');
+		}
+
+		$txtFld = $('<div>')
+			.attr('id', this.mdcId)
+			.addClass(this.mdcClasses.join(' '))
+			.appendTo($('#' + this.parentId));
+
+		if (this.txtFldArea) {
+			$('<textarea>')
+				.addClass('mdc-text-field__input')
+				.attr('id', this.txtFldInputId)
+				.attr('rows','8')
+				.attr('cols','40')
+				.appendTo($txtFld);
+
+		} else {
+			$('<input>')
+				.addClass('mdc-text-field__input')
+				.attr('id',this.txtFldInputId)
+				.attr('type','text')
+				.appendTo($txtFld);
+		}
+
+		if (this.txtFldOutline || this.txtFldArea) {	
+			$txtFldOutline = $('<div>')
+				.addClass('mdc-notched-outline')
+				.appendTo($txtFld);
+		
+			$('<div>')
+				.addClass('mdc-notched-outline__leading')
+				.appendTo($txtFldOutline);
+		
+			$txtFldOutlineNotch = $('<div>')
+				.addClass('mdc-notched-outline__notch')
+				.appendTo($txtFldOutline);
+			
+			$('<label>')
+				.attr('for', this.txtFldInputId)
+				.addClass('mdc-floating-label')
+				.text(_loc(this.txtFldLabel))
+				.appendTo($txtFldOutlineNotch);
+		
+			$('<div>')
+				.addClass('mdc-notched-outline__trailing')
+				.appendTo($txtFldOutline);
+
+		} else {
+			$('<label>')
+				.attr('for', this.txtFldInputId)
+				.addClass('mdc-floating-label')
+				.text(_loc(this.txtFldLabel))
+				.appendTo($txtFld);
+
+			$('<div>')
+				.addClass('mdc-line-ripple')
+				.appendTo($txtFld);
+		}
+
+		this._attachTextField(this.mdcId);
+	},
+
+	_attachTextField: function(txtFldId){
+		var txtFld = document.getElementById(txtFldId);
+		if (txtFld) {
+			$mdc.textField.MDCTextField.attachTo(txtFld);
 		}
 	}
 });
@@ -245,6 +362,7 @@ var attachMDCComponents = function(){
 $n2.mdc = {
 	MDC: MDC,
 	MDCButton: MDCButton,
+	MDCTextField: MDCTextField,
 	attachMDCComponents: attachMDCComponents
 };
 
