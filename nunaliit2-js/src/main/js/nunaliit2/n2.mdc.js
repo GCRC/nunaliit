@@ -162,6 +162,7 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 	txtFldOutline: null,
 	txtFldInputId: null,
 	txtFldInputClasses: null,
+	txtFldInputAttributes: null,
 	txtFldArea: null,
 	inputRequired: null,
 
@@ -171,6 +172,7 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 			txtFldOutline: true,
 			txtFldInputId: null,
 			txtFldInputClasses: [],
+			txtFldInputAttributes: null,
 			txtFldArea: false,
 			inputRequired: false,
 		}, opts_);
@@ -181,13 +183,15 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 		this.txtFldOutline = opts.txtFldOutline;
 		this.txtFldInputId = opts.txtFldInputId;
 		this.txtFldInputClasses = opts.txtFldInputClasses;
+		this.txtFldInputAttributes = opts.txtFldInputAttributes;
 		this.txtFldArea = opts.txtFldArea;
 		this.inputRequired = opts.inputRequired;
 
 		this._generateMDCTextField();
 	},
 	_generateMDCTextField: function(){
-		var $txtFld, $txtFldOutline, $txtFldOutlineNotch;
+		var $txtFld, $txtFldInput, $txtFldOutline, $txtFldOutlineNotch, keys;
+		var _this = this;
 
 		if (!this.txtFldInputId) {
 			this.txtFldInputId = $n2.getUniqueId();
@@ -207,21 +211,35 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 			.addClass(this.mdcClasses.join(' '))
 			.appendTo($('#' + this.parentId));
 
+		if (this.mdcAttributes) {
+			keys = Object.keys(this.mdcAttributes);
+			keys.forEach(function(key) {
+				$txtFld.attr(key, _this.mdcAttributes[key]);
+			});
+		}
+
 		if (this.txtFldArea) {
-			$('<textarea>')
+			$txtFldInput = $('<textarea>')
 				.addClass(this.txtFldInputClasses.join(' '))
 				.attr('id', this.txtFldInputId)
 				.attr('rows','8')
-				.attr('cols','40')
-				.appendTo($txtFld);
+				.attr('cols','40');
 
 		} else {
-			$('<input>')
+			$txtFldInput = $('<input>')
 				.addClass(this.txtFldInputClasses.join(' '))
 				.attr('id',this.txtFldInputId)
-				.attr('type','text')
-				.appendTo($txtFld);
+				.attr('type','text');
 		}
+
+		if (this.txtFldInputAttributes) {
+			keys = Object.keys(this.txtFldInputAttributes);
+			keys.forEach(function(key) {
+				$txtFldInput.attr(key, _this.txtFldInputAttributes[key]);
+			});
+		}
+		
+		$txtFld.append($txtFldInput);
 
 		if (this.txtFldOutline || this.txtFldArea) {	
 			$txtFldOutline = $('<div>')
