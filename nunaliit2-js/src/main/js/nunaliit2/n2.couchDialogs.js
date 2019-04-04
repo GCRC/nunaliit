@@ -266,37 +266,12 @@ function searchForDocumentId(options_){
 		.addClass('mdc-dialog__content')
 		.appendTo($dialogSurface);
 
-	var $textField = $('<div>')
-		.addClass('mdc-text-field mdc-text-field--outlined')
-		.appendTo($dialogContent);
-
-	$('<input>')
-		.addClass('mdc-text-field__input')
-		.attr('id',inputId)
-		.attr('type','text')
-		.appendTo($textField);
-
-	var $textFieldOutline = $('<div>')
-		.addClass('mdc-notched-outline')
-		.appendTo($textField);
-
-	$('<div>')
-		.addClass('mdc-notched-outline__leading')
-		.appendTo($textFieldOutline);
-
-	var $textFieldOutlineNotch = $('<div>')
-		.addClass('mdc-notched-outline__notch')
-		.appendTo($textFieldOutline);
-	
-	var $textFieldLabel = $('<label>')
-		.attr('for',inputId)
-		.addClass('mdc-floating-label')
-		.text(_loc('Search'))
-		.appendTo($textFieldOutlineNotch);
-
-	$('<div>')
-		.addClass('mdc-notched-outline__trailing')
-		.appendTo($textFieldOutline);
+	var searchTxtFldOpts = {
+		parentId: $n2.utils.getElementIdentifier($dialogContent),
+		txtFldLabel: 'Search',
+		txtFldInputId: inputId
+	};
+	new $n2.mdc.MDCTextField(searchTxtFldOpts);
 
 	$('<div>')
 		.attr('id',displayId)
@@ -337,12 +312,6 @@ function searchForDocumentId(options_){
 			return false;
 		})
 		.appendTo($dialog);
-
-	// Attach text fields 
-	mdc.textField.MDCTextField.attachTo($textField[0]);
-	
-	// Attach floating labels
-	mdc.floatingLabel.MDCFloatingLabel.attachTo($textFieldLabel[0]); 
 
 	// Attach mdc component to alert dialog
 	mdcDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);
@@ -1235,37 +1204,12 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 			.attr('class','editorSelectDocumentDialog_searchLine')
 			.appendTo($dialogContent);
 
-		var $textField = $('<div>')
-			.attr('class','mdc-text-field mdc-text-field--outlined')
-			.appendTo($searchLine);
-
-		$('<input>')
-			.attr('type','text')
-			.attr('class','mdc-text-field__input')
-			.attr('id',inputId)
-			.appendTo($textField);
-	
-		var $textFieldOutline = $('<div>')
-			.attr('class','mdc-notched-outline')
-			.appendTo($textField);
-
-		$('<div>')
-			.attr('class','mdc-notched-outline__leading')
-			.appendTo($textFieldOutline);
-
-		var $textFieldOutlineNotch = $('<div>')
-			.attr('class','mdc-notched-outline__notch')
-			.appendTo($textFieldOutline);
-
-		var $textFieldLabel = $('<label>')
-			.attr('for',inputId)
-			.attr('class','mdc-floating-label')
-			.text(_loc('Search'))
-			.appendTo($textFieldOutlineNotch);
-
-		$('<div>')
-			.attr('class','mdc-notched-outline__trailing')
-			.appendTo($textFieldOutline);
+		var searchTxtFldOpts = {
+			parentId: $n2.utils.getElementIdentifier($searchLine),
+			txtFldInputId: inputId,
+			txtFldLabel: 'Search'
+		};
+		new $n2.mdc.MDCTextField(searchTxtFldOpts);
 		
 		$('<div>')
 			.attr('id',displayId)
@@ -1312,12 +1256,6 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 				return false;
 			})
 			.appendTo($dialog);
-
-		// Attach text field
-		mdc.textField.MDCTextField.attachTo($textField[0]);
-		
-		// Attach floating labels
-		mdc.floatingLabel.MDCFloatingLabel.attachTo($textFieldLabel[0]); 
 
 		// Attach mdc component to alert dialog
 		this.mdcDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);
