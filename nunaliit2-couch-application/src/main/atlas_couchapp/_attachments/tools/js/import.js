@@ -88,39 +88,15 @@
 
 		// Input Textarea
 		var textareaInputId = $n2.getUniqueId();
-		var $inputLine = $('<div>')
-			.addClass('mdc-text-field mdc-text-field--textarea')
-			.appendTo($inputSection);
-		
-		$('<textarea>')
-			.addClass('importData mdc-text-field__input')
-			.attr('id',textareaInputId)
-			.attr('rows','8')
-			.attr('cols','40')
-			.appendTo($inputLine);
 
-		var $inputOutline = $('<div>')
-			.addClass('mdc-notched-outline')
-			.appendTo($inputLine);
-
-		$('<div>')
-			.addClass('mdc-notched-outline__leading')
-			.appendTo($inputOutline);
-
-		var $inputOutlineNotch = $('<div>')
-			.addClass('mdc-notched-outline__notch')
-			.appendTo($inputOutline);
-
-		$('<label>')
-			.attr('for',textareaInputId)
-			.addClass('mdc-floating-label')
-			.text(_loc('Input'))
-			.appendTo($inputOutlineNotch);
-
-		$('<div>')
-			.addClass('mdc-notched-outline__trailing')
-			.appendTo($inputOutline);
-
+		var inputTxtFldOpts = {
+			parentId: $n2.utils.getElementIdentifier($inputSection),
+			txtFldInputClasses: ['importData'],
+			txtFldInputId: textareaInputId,
+			txtFldArea: true,
+			txtFldLabel: 'Input'
+		};
+		new $n2.mdc.MDCTextField(inputTxtFldOpts);
 
 		// Import Verify Button
 		var verifyBtnOpts = {
