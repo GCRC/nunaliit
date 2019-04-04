@@ -152,7 +152,8 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 // Options:
 //  - txtFldLabel: Defines the text field label (String).
 //  - txtFldOutline: Defines if the text-field should be outlined (Boolean) (default = true).
-//  - txtFldInputId: Defines the id of input or text-area element (String) (optional) 
+//  - txtFldInputId: Defines the id of input or text-area element (String)
+//  - txtFldInputClasses: Defines a list of classes specific to the input field (Array)
 //  - txtFldArea: Defines if the text-field input should be a text-field-area (Boolean) (default = false).
 //  - inputRequired: Defines if the text-field is required field or not (Boolean) (default = false).
 var MDCTextField = $n2.Class('MDCTextField', MDC, {
@@ -160,6 +161,7 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 	txtFldLabel: null,
 	txtFldOutline: null,
 	txtFldInputId: null,
+	txtFldInputClasses: null,
 	txtFldArea: null,
 	inputRequired: null,
 
@@ -168,6 +170,7 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 			txtFldLabel: null,
 			txtFldOutline: true,
 			txtFldInputId: null,
+			txtFldInputClasses: [],
 			txtFldArea: false,
 			inputRequired: false,
 		}, opts_);
@@ -177,6 +180,7 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 		this.txtFldLabel = opts.txtFldLabel;
 		this.txtFldOutline = opts.txtFldOutline;
 		this.txtFldInputId = opts.txtFldInputId;
+		this.txtFldInputClasses = opts.txtFldInputClasses;
 		this.txtFldArea = opts.txtFldArea;
 		this.inputRequired = opts.inputRequired;
 
@@ -190,7 +194,8 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 		}
 
 		this.mdcClasses.push('mdc-text-field');
-	
+		this.txtFldInputClasses.push('mdc-text-field__input');	
+
 		if (this.txtFldArea) {
 			this.mdcClasses.push('mdc-text-field--textarea');
 		} else if (this.txtFldOutline) {
@@ -204,7 +209,7 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 
 		if (this.txtFldArea) {
 			$('<textarea>')
-				.addClass('mdc-text-field__input')
+				.addClass(this.txtFldInputClasses.join(' '))
 				.attr('id', this.txtFldInputId)
 				.attr('rows','8')
 				.attr('cols','40')
@@ -212,7 +217,7 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 
 		} else {
 			$('<input>')
-				.addClass('mdc-text-field__input')
+				.addClass(this.txtFldInputClasses.join(' '))
 				.attr('id',this.txtFldInputId)
 				.attr('type','text')
 				.appendTo($txtFld);
