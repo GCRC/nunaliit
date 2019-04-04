@@ -72,15 +72,6 @@ var UserManagementApplication = $n2.Class({
 	}
 
 	,_display: function(){
-//		<div class="userAppInput">
-//		<input id="userSearchBox" type="text"/>
-//		<input id="btnQueryUsers" type="button" value="Query Users"/>
-//		<input id="btnAddUser" type="button" value="Add User"/>
-//		<input id="btnMyUser" type="button" value="My User"/>
-//	</div>	
-//	<div id="requests" class="userAppOutput">
-//	</div>
-		
 		var _this = this;
 		
 		var div = this._getDiv();
@@ -91,38 +82,15 @@ var UserManagementApplication = $n2.Class({
 		var $userOutput = $('<div class="userAppOutput"></div>')
 			.appendTo(div);
 		
-		var $textInput = $('<div>')
-			.attr('class','mdc-text-field mdc-text-field--outlined')
-			.appendTo($userInput);
+		var userSearchTxtFldOpts = {
+			parentId: $n2.utils.getElementIdentifier($userInput),
+			txtFldInputClasses: inputId,
+			txtFldInputClasses: ['userAppSearchText'],
+			txtFldLabel: 'User Search'
+		};
+		new $n2.mdc.MDCTextField(userSearchTxtFldOpts);
 
-		$('<input>')
-			.attr('type','text')
-			.attr('class','userAppSearchText mdc-text-field__input')
-			.attr('id',inputId)
-			.appendTo($textInput);
-	
-		var $textInputOutline = $('<div>')
-			.attr('class','mdc-notched-outline')
-			.appendTo($textInput);
-
-		$('<div>')
-			.attr('class','mdc-notched-outline__leading')
-			.appendTo($textInputOutline);
-
-		var $textInputOutlineNotch = $('<div>')
-			.attr('class','mdc-notched-outline__notch')
-			.appendTo($textInputOutline);
-
-		$('<label>')
-			.attr('for',inputId)
-			.attr('class','mdc-floating-label')
-			.text(_loc('User Search'))
-			.appendTo($textInputOutlineNotch);
-
-		$('<div>')
-			.attr('class','mdc-notched-outline__trailing')
-			.appendTo($textInputOutline);
-
+		var $textInput = $('#' + inputId);
 
 		if( $textInput.autocomplete ) {
 			$textInput.autocomplete({
@@ -145,7 +113,6 @@ var UserManagementApplication = $n2.Class({
 				_this.queryUsers();
 			};
 		});
-
 
 		var btnParentId = $n2.utils.getElementIdentifier($userInput);
 
@@ -261,43 +228,68 @@ var UserManagementApplication = $n2.Class({
 		var _this = this;
 
 		var $div = this._getDiv();
+		var formId = $n2.getUniqueId();
+
+		var $userAppOutput = $div.find('.userAppOutput').empty();
+		var $userForm = $('<form>')
+			.attr('id', formId)
+			.appendTo($userAppOutput);
+
+		var addUserNameTxtFldOpts = {
+			parentId: formId,
+			txtFldInputId: 'addUserName',
+			txtFldLabel: 'User Name'
+		};
+		new $n2.mdc.MDCTextField(addUserNameTxtFldOpts);
 		
-		$div.find('.userAppOutput').html('<div>'
-			+'<br/><div class="mdc-text-field mdc-text-field--outlined">'
-			+'<input class="mdc-text-field__input" id="addUserName" type="text"/>'
-			+'<div class="mdc-notched-outline"><div class="mdc-notched-outline__leading"></div>'
-			+'<div class="mdc-notched-outline__notch"><label for="addUserName" class="mdc-floating-label">User Name</label></div>'
-			+'<div class="mdc-notched-outline__trailing"></div></div></div><br/>'
-			+'<div class="mdc-text-field mdc-text-field--outlined">'
-			+'<input class="mdc-text-field__input" id="addUserPassword1" type="password"/>'
-			+'<div class="mdc-notched-outline"><div class="mdc-notched-outline__leading"></div>'
-			+'<div class="mdc-notched-outline__notch"><label for="addUserPassword1" class="mdc-floating-label">Password</label></div>'
-			+'<div class="mdc-notched-outline__trailing"></div></div></div><br/>'
-			+'<div class="mdc-text-field mdc-text-field--outlined">'
-			+'<input class="mdc-text-field__input" id="addUserPassword2" type="password"/>'
-			+'<div class="mdc-notched-outline"><div class="mdc-notched-outline__leading"></div>'
-			+'<div class="mdc-notched-outline__notch"><label for="addUserPassword1" class="mdc-floating-label">Repeat Password</label></div>'
-			+'<div class="mdc-notched-outline__trailing"></div></div></div><br/>'
-			+'<button id="btnAddUser2" class="mdc-button mdc-button--raised mdc-dialog__button">Proceed</button>');
+		$userForm.append('</br>');
+
+		var addUserPassFldOpts = {
+			parentId: formId,
+			txtFldInputAttributes: {
+				'type': 'password'
+			},
+			txtFldInputId: 'addUserPassword1',
+			txtFldLabel: 'Password'
+		};
+		new $n2.mdc.MDCTextField(addUserPassFldOpts);
+
+		$userForm.append('</br>');
+
+		var addUserConfirmPassFldOpts = {
+			parentId: formId,
+			txtFldInputAttributes: {
+				'type': 'password'
+			},
+			txtFldInputId: 'addUserPassword2',
+			txtFldLabel: 'Repeat Password'
+		};
+		new $n2.mdc.MDCTextField(addUserConfirmPassFldOpts);
+
+		$userForm.append('</br>');
+
+		var proceedBtnOpts = {
+			parentId: formId,
+			mdcId: 'btnAddUser2',
+			btnLabel: 'Proceed',
+			btnRaised: true,
+			btnFunction: function(){
+				var userName = $('#addUserName').val();
+				var pw1 = $('#addUserPassword1').val();
+				var pw2 = $('#addUserPassword2').val();
+
+				if( pw1 != pw2 ) {
+					alert('Passwords do not match');
+				} else if( pw1.length < 6 ) {
+					alert('Password is too short');
+				} else {
+					createInitialUser(userName, pw1);
+				}
+			}
+		};
+		new $n2.mdc.MDCButton(proceedBtnOpts);
 
 		$('#addUserName').focus();
-		
-		$('#btnAddUser2').click(function(){
-			var userName = $('#addUserName').val();
-			var pw1 = $('#addUserPassword1').val();
-			var pw2 = $('#addUserPassword2').val();
-
-			if( pw1 != pw2 ) {
-				alert('Passwords do not match');
-			} else if( pw1.length < 6 ) {
-				alert('Password is too short');
-			} else {
-				createInitialUser(userName, pw1);
-			}
-		});
-
-		// Attach Material Design Components
-		$n2.mdc.attachMDCComponents();
 
 		function createInitialUser(userName, pw) {
 			_this._startRequestWait();
