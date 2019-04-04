@@ -418,38 +418,14 @@
 				// TextArea Rejection Reason
 				var taId = $n2.getUniqueId();
 
-				var $textareaDiv = $('<div>')
-					.addClass('mdc-text-field mdc-text-field--textarea')
-					.appendTo($dialogContent);
-
-				$('<textarea>')
-					.addClass('submission_deny_dialog_reason mdc-text-field__input')
-					.attr('id',taId)
-					.attr('rows','8')
-					.attr('cols','40')
-					.appendTo($textareaDiv);
-
-				var $textareaDivOutline = $('<div>')
-					.addClass('mdc-notched-outline')
-					.appendTo($textareaDiv);
-
-				$('<div>')
-					.addClass('mdc-notched-outline__leading')
-					.appendTo($textareaDivOutline);
-			
-				var $textareaDivOutlineNotch = $('<div>')
-					.addClass('mdc-notched-outline__notch')
-					.appendTo($textareaDivOutline);
-
-				$('<label>')
-					.attr('for',taId)
-					.addClass('mdc-floating-label')
-					.text('Rejection Reason')
-					.appendTo($textareaDivOutlineNotch);
-
-				$('<div>')
-					.addClass('mdc-notched-outline__trailing')
-					.appendTo($textareaDivOutline);
+				var rejectTxtFldOpts = {
+					parentId: $n2.utils.getElementIdentifier($dialogContent),
+					txtFldArea: true,
+					txtFldLabel: 'Rejection Reason',
+					txtFldInputId: taId,
+					txtFldInputClasses: ['submission_deny_dialog_reason']
+				};
+				new $n2.mdc.MDCTextField(rejectTxtFldOpts);
 
 				// Email Checbox 
 				var $options = $('<div>')
