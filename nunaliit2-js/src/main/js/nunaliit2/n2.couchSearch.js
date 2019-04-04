@@ -1559,39 +1559,14 @@ var SearchServer = $n2.Class({
 		} else {
 			// If Search widget is not installed in the module title bar
 			// update appearance
-			var searchInputField = $('<div>')
-				.addClass('mdc-text-field mdc-text-field--outlined')
-				.appendTo($elem);
-
-			searchInput = $('<input>')
-				.attr('type','text')
-				.attr('id',$searchInputId)
-				.addClass('search_panel_input mdc-text-field__input')
-				.appendTo(searchInputField);
-			
-			var $searchInputOutline = $('<div>')
-				.addClass('mdc-notched-outline')
-				.appendTo(searchInputField);
-
-			$('<div>')
-				.addClass('mdc-notched-outline__leading')
-				.appendTo($searchInputOutline);
-
-			var $searchInputOutlineNotch = $('<div>')
-				.addClass('mdc-notched-outline__notch')
-				.appendTo($searchInputOutline);
-
-			$('<label>')
-				.attr('for',$searchInputId)
-				.addClass('mdc-floating-label')
-				.text(searchWidgetLabel)
-				.appendTo($searchInputOutlineNotch);
-
-			$('<div>')
-				.addClass('mdc-notched-outline__trailing')
-				.appendTo($searchInputOutline);
+			var searchTxtFldOpts = {
+				parentId: $n2.utils.getElementIdentifier($elem),
+				txtFldLabel: searchWidgetLabel,
+				txtFldInputId: $searchInputId,
+				txtFldInputClasses: ['search_panel_input']
+			};
+			new $n2.mdc.MDCTextField(searchTxtFldOpts);
 		}
-
 
 		if( opts.doNotDisable ){
 			// OK
