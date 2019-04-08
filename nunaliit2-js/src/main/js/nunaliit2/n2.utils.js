@@ -1173,7 +1173,7 @@ $n2.utils.getInstance = function(str, var_args ) {
 		args[i-1] = arguments[i];
 	}
 	
-	var instance = new fn(args);
+	var instance = new fn(var_args);
 	
 	if (typeof instance !== "object") {
 		$n2.log("Target instance object creation error");
@@ -1211,5 +1211,30 @@ $n2.utils.getMethod = function(str, var_args ) {
 	
 
 	return fn;
+};
+/**
+ * DFS
+ * @name DFS
+ * @function
+ * @memberOf nunaliit2.utils
+ * @param item {String} 
+ * @param predicate1 function return true if item is legal, false otherwise
+ * @param predicate2 function return true if item has embeded item inside itself
+ * @param callback function to call on each item
+ * @returns null;
+ */
+$n2.utils.DFS = function(item, predicate1, predicate2, callback){
+	if(!item || item === "" || Array.isArray(item) && item.length === 0  ) return;
+	if ( typeof predicate1 === 'function'
+		&& predicate1(item)){
+		callback (item);
+		return;
+	}
+	if( typeof predicate2 === 'function'
+		&& predicate2(item)){
+		for( let i=0,e=innerFeatures.length; i< e; i++){
+			DFS(innerFeatures[i], predicate1, predicate2, callback);
+		}
+	}
 };
 })(nunaliit2);

@@ -475,6 +475,26 @@ var global = {
 		};
 		return false;
 	}
+	,hasProperty: function(propName){
+		if (propName &&
+				typeof propName === "string"){
+			var arr = propName.split(',');
+			var _this = this;
+			for(var i =0, e= arr.length; i<e; ++i){
+				if (typeof _this === 'function')
+					_this = null;
+					break;
+				if (_this.hasOwnProperty(arr[i])){
+					_this = _this[arr[i]];
+					continue;
+				} else {
+					_this = null;
+					break;
+				}
+			}
+		}
+		return _this || false;
+	}
 	,Math: Math
 };
 parser.global = global;

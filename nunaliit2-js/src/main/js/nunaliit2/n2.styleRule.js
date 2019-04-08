@@ -258,6 +258,9 @@ var Symbolizer = $n2.Class({
 		this.id = arguments[0] || null;
 		this._n2Symbolizer = true;
 		
+		//A flag for turn on  v2_style (default is false);
+		this.v2_style = false;
+		
 		for(var i=1,e=arguments.length; i<e; ++i){
 			var otherSymbolizer = arguments[i];
 			this.extendWith(otherSymbolizer);
@@ -265,8 +268,57 @@ var Symbolizer = $n2.Class({
 	},
 	
 	extendWith: function(symbolizer){
-		if( symbolizer ){
-			if( symbolizer._n2Symbolizer ){
+		if( symbolizer && !this.v2_style){
+			if( symbolizer.v2_style ){
+				if( !symbolizer._n2Symbolizer ) {
+				// Using v2_style and From a user supplied style
+					this.symbols = {};
+					this.v2_style = true;
+
+					for(var key in symbolizer){
+						var symbolValue = symbolizer[key];
+						
+						if(symbolValue){
+							if( typeof symbolValue === 'string'
+								&& symbolValue.length > 0 
+								&& symbolValue[0] === '=' ){
+									try {
+										// This should return an object with a function getValue(ctxt)
+										symbolValue = $n2.styleRuleParser.parse(symbolValue.substr(1));
+									} catch(e) {
+										symbolValue = e;
+									};
+								
+								this.symbols[key] = symbolValue;
+							} else if (typeof symbolValue === 'object') {
+								var tmpSyms = {}
+								for (var k in symbolValue){
+									var tmpSymValue = symbolValue[k];
+									if( typeof tmpSymValue === 'string'
+										&& tmpSymValue.length > 0 
+										&& tmpSymValue[0] === '=' ){
+											try {
+												// This should return an object with a function getValue(ctxt)
+												tmpSymValue = $n2.styleRuleParser.parse(tmpSymValue.substr(1));
+											} catch(e) {
+												tmpSymValue = e;
+											};
+									};
+									tmpSyms[k] = tmpSymValue
+								}
+								this.symbols[key] = tmpSyms;
+							}
+						}
+					};
+				} else {
+					this.symbols = {};
+					this.v2_style = true;
+					for(var key in symbolizer.symbols){
+						var value = symbolizer.symbols[key];
+						this.symbols[key] = value;
+					};
+				}
+			} else if( symbolizer._n2Symbolizer ){
 				// From another instance of Symbolizer
 				var att = symbolizer.symbols;
 				for(var key in att){
@@ -307,9 +359,8 @@ var Symbolizer = $n2.Class({
 					};
 				};
 			};
-		};
+		}
 	},
-	
 	getSymbolValue: function(symbolName, ctxt){
 		var value = this.symbols[symbolName];
 		
@@ -319,18 +370,34 @@ var Symbolizer = $n2.Class({
 		} else if( typeof value === 'object'
 		 && 'localized' === value.nunaliit_type){
 			value = _loc(value);
+		} else if (typeof value === 'object'){
+			for (var k in value){
+				var tmp = null;
+				var v = value[k];
+				if( typeof v === 'object'
+					 && typeof v.getValue === 'function' ){
+						tmp = v.getValue(ctxt);
+						value[k] = tmp;
+					}
+				
+			}
 		};
 		
 		return value;
 	},
 	
 	forEachSymbol: function(fn, ctxt){
+		
+		if (this.v2_style) {
+			this.symbols['v2_style' ] = true;
+		}
 		if( typeof fn === 'function' ){
 			for(var name in this.symbols){
 				var value = this.getSymbolValue(name, ctxt);
 				fn(name,value);
 			};
 		};
+		
 	},
 	
 	adjustSvgElement: function(svgDomElem,ctxt){
