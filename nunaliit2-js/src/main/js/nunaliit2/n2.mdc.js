@@ -71,10 +71,6 @@ var MDC = $n2.Class('MDC',{
 		this.mdcAttributes = opts.mdcAttributes;
 		this.parentId = opts.parentId;
 
-		if (!this.parentId) {
-			throw new Error('Parent Id must be provided, to add a Material Design Component');
-		}
-
 		if (!this.mdcId) {
 			this.mdcId = $n2.getUniqueId();
 		}
@@ -84,9 +80,9 @@ var MDC = $n2.Class('MDC',{
 // Class MDCButton
 // Description: Creates a material design button component
 // Options:
-//  - btnLabel: Defines the text label on the button.
-//  - btnFunction: Defines the function which occurs when the button is clicked.
-//  - btnRaised: Defines if the button should be raised or not (default = false).
+//  - btnLabel (String): Defines the text label on the button.
+//  - btnFunction (Function): Defines the function which occurs when the button is clicked.
+//  - btnRaised (Boolean): Defines if the button should be raised or not (default = false).
 var MDCButton = $n2.Class('MDCButton', MDC, {
 
 	btnLabel: null,
@@ -105,6 +101,10 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 		this.btnLabel = opts.btnLabel;
 		this.btnFunction = opts.btnFunction;
 		this.btnRaised = opts.btnRaised;
+
+		if (!this.parentId) {
+			throw new Error('Parent Id must be provided, to add a Material Design Button Component');
+		}
 
 		this._generateMDCButton();
 	},
@@ -147,15 +147,172 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 	}
 });
 
+// Class MDCDialog
+// Description: Creates a material design dialog component
+// Options:
+//  - dialogHtmlContent (String): Define text string of HTML content to place in the dialog message.
+//  - dialogTextContent (String): Define text string to place in the dialog window.
+//  - dialogTitle (String): Text defining the title of the dialog window.
+//  - closeBtn (Boolean): Add a close button to the dialog window (default = false).
+//  - closeBtnText (String): Update the close button text (default = "Close").
+//  - customBtns (Array): An array of objects defining button options.
+var MDCDialog = $n2.Class('MDCDialog', MDC, {
+	mdcDialogComponent: null,
+	mdcDialogElement: null,
+	dialogHtmlContent: null,
+	dialogTextContent: null,
+	dialogTitle: null,
+	closeBtn: null,
+	closeBtnText: null,
+	footerBtns: null, 
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dialogHtmlContent: null,
+			dialogTextContent: null,
+			dialogTitle: "",
+			closeBtn: false,
+			closeBtnText: "Close",
+			footerBtns: []
+		}, opts_);
+
+		MDC.prototype.initialize.call(this,opts);
+
+		this.dialogHtmlContent = opts.dialogHtmlContent;
+		this.dialogTextContent = opts.dialogTextContent;
+		this.dialogTitle = opts.dialogTitle;
+		this.closeBtn = opts.closeBtn;
+		this.closeBtnText = opts.closeBtnText;
+
+		if ($n2.utils.isArray(opts.footerBtns)) {
+			this.footerBtns = opts.footerBtns;
+		}
+
+		this.msgId = $n2.getUniqueId();
+		this.footerId = $n2.getUniqueId();
+
+		this._generateMDCDialog();
+	},
+
+	_generateMDCDialog: function(){
+		var $dialogContainer, $dialogSurface, $dialogMessage, $footer, keys;
+		var _this = this;
+		var content = "";
+
+		this.mdcClasses.push('mdc-dialog');
+
+		this.mdcDialogElement = $('<div>')
+			.attr('id',this.mdcId)
+			.attr('role','alertdialog')
+			.attr('aria-modal','true')
+			.attr('aria-labelledby','my-dialog-title')
+			.attr('aria-describedby','my-dialog-content')
+			.addClass(this.mdcClasses.join(' '))
+			.appendTo($('body'));
+
+		if (this.mdcAttributes) {
+			keys = Object.keys(this.mdcAttributes);
+			keys.forEach(function(key) {
+				this.mdcDialogElement.attr(key, _this.mdcAttributes[key]);
+			});
+		}
+
+		$dialogContainer = $('<div>')
+			.addClass('mdc-dialog__container')
+			.appendTo(this.mdcDialogElement);
+
+		$dialogSurface = $('<div>')
+			.addClass('mdc-dialog__surface')
+			.appendTo($dialogContainer);
+
+		$('<h2>')
+			.addClass('mdc-dialog__title')
+			.text(_loc(this.dialogTitle))
+			.appendTo($dialogSurface);
+
+		$dialogMessage = $('<div>')
+			.attr('id', this.msgId)
+			.addClass('mdc-dialog__content')
+			.text(content)
+			.appendTo($dialogSurface);
+
+		if (this.dialogHtmlContent) {
+			$dialogMessage.html(_loc(this.dialogHtmlContent));
+		} else if (this.dialogTextContent) {
+			$dialogMessage.text(_loc(this.dialogTextContent));
+		} else {
+			return;
+		}
+
+		$footer = $('<footer>')
+			.attr('id', this.footerId)
+			.addClass('mdc-dialog__actions')
+			.appendTo($dialogSurface);
+
+		if (this.footerBtns) {
+			this.footerBtns.forEach(function(btnOpts) {
+				try {
+					new MDCButton(btnOpts);
+				} catch (error) {
+					$n2.logError("Unable to add button to dialog footer: " + error);	
+				}
+			});
+		}
+
+		$('<div>')
+			.addClass('mdc-dialog__scrim')
+			.click(this.closeDialog())
+			.appendTo(this.mdcDialogElement);
+
+		// Attach mdc component to dialog
+		this._attachDialog(this.mdcId);
+
+
+		if (this.closeBtn) {
+			this.addCloseBtn();
+		}
+	},
+
+	_attachDialog: function(dialogId){
+		var dialog = document.getElementById(dialogId);
+		if (dialog) {
+			this.mdcDialogComponent = new $mdc.dialog.MDCDialog(dialog);
+		}
+	},
+
+	closeDialog: function(){
+		this.mdcDialogComponent.close();
+		this.mdcDialogElement.remove();
+		return false;
+	},
+
+	openDialog: function(){
+		this.mdcDialogComponent.open();
+	},
+
+	addCloseBtn: function(){
+		var closeBtnOpts = {
+			parentId: this.footerId,
+			btnLabel: this.closeBtnText,
+			btnFunction: this.closeDialog
+		};
+		new MDCButton(closeBtnOpts);
+	}, 
+
+	addFooterBtn: function(btnOpts){
+		new MDCButton(btnOpts);
+	}
+});
+
 // Class MDCTextField
 // Description: Creates a material design text-field component
 // Options:
-//  - txtFldLabel: Defines the text field label (String).
-//  - txtFldOutline: Defines if the text-field should be outlined (Boolean) (default = true).
-//  - txtFldInputId: Defines the id of input or text-area element (String)
-//  - txtFldInputClasses: Defines a list of classes specific to the input field (Array)
-//  - txtFldArea: Defines if the text-field input should be a text-field-area (Boolean) (default = false).
-//  - inputRequired: Defines if the text-field is required field or not (Boolean) (default = false).
+//  - txtFldLabel (String): Defines the text field label.
+//  - txtFldOutline (Boolean): Defines if the text-field should be outlined (default = true).
+//  - txtFldInputId (String): Defines the id of input or text-area element.
+//  - txtFldInputClasses (Array): Defines a list of classes specific to the input field.
+//  - txtFldArea (Boolean): Defines if the text-field input should be a text-field-area (default = false).
+//  - inputRequired (Boolean): Defines if the text-field is required field or not (default = false).
 var MDCTextField = $n2.Class('MDCTextField', MDC, {
 
 	txtFldLabel: null,
@@ -186,6 +343,10 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 		this.txtFldInputAttributes = opts.txtFldInputAttributes;
 		this.txtFldArea = opts.txtFldArea;
 		this.inputRequired = opts.inputRequired;
+
+		if (!this.parentId) {
+			throw new Error('Parent Id must be provided, to add a Material Design Text Field Component');
+		}
 
 		this._generateMDCTextField();
 	},
@@ -385,6 +546,7 @@ var attachMDCComponents = function(){
 $n2.mdc = {
 	MDC: MDC,
 	MDCButton: MDCButton,
+	MDCDialog: MDCDialog,
 	MDCTextField: MDCTextField,
 	attachMDCComponents: attachMDCComponents
 };
