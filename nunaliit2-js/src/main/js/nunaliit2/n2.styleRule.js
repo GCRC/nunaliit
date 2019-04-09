@@ -363,27 +363,31 @@ var Symbolizer = $n2.Class({
 	},
 	getSymbolValue: function(symbolName, ctxt){
 		var value = this.symbols[symbolName];
-		
+		var rst = null;
 		if( typeof value === 'object'
 		 && typeof value.getValue === 'function' ){
 			value = value.getValue(ctxt);
+			rst = value;
 		} else if( typeof value === 'object'
 		 && 'localized' === value.nunaliit_type){
 			value = _loc(value);
+			rst = value;
 		} else if (typeof value === 'object'){
-			for (var k in value){
+			var clone = Object.assign({}, value);
+			for (var k in clone){
 				var tmp = null;
-				var v = value[k];
+				var v = clone[k];
 				if( typeof v === 'object'
 					 && typeof v.getValue === 'function' ){
 						tmp = v.getValue(ctxt);
-						value[k] = tmp;
+						clone[k] = tmp;
 					}
 				
 			}
+			rst = clone;
 		};
 		
-		return value;
+		return rst;
 	},
 	
 	forEachSymbol: function(fn, ctxt){
@@ -755,8 +759,6 @@ var StyleRules = $n2.Class({
 		var symbolizer = style.getSymbolizer(ctxt);
 		return symbolizer;
 	},
-
-	
 	/**
 	 * retrive the cache given a stylerule,
 	 * var "current" is the lazy tree node

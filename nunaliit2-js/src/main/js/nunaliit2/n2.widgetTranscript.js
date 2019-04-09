@@ -607,7 +607,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			,origin: origin
 		});
 		
-		// Inform time model
+		 //Inform time model
 		if( this.intervalSetEventName ){
 			var min = this._convertVideoTimeToTime(currentTime);
 			
@@ -652,6 +652,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				// Debounce
 			} else {
 				$video[0].currentTime = currentTime;
+				$video[0].play();
 			};
 			
 		} else if( 'text' === origin ){

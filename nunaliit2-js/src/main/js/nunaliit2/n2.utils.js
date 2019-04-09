@@ -1232,9 +1232,9 @@ $n2.utils.DFS = function(item, predicate1, predicate2, callback){
 	}
 	if( typeof predicate2 === 'function'
 		&& predicate2(item)){
-		for( let i=0,e=innerFeatures.length; i< e; i++){
+		for( var i=0,e=innerFeatures.length; i< e; i++){
 			DFS(innerFeatures[i], predicate1, predicate2, callback);
-		}
+		};
 	}
 };
 })(nunaliit2);
