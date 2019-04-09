@@ -1221,7 +1221,7 @@ $n2.utils.getMethod = function(str, var_args ) {
  * @param predicate1 function return true if item is legal, false otherwise
  * @param predicate2 function return true if item has embeded item inside itself
  * @param callback function to call on each item
- * @returns null;
+ * @returns {void};
  */
 $n2.utils.DFS = function(item, predicate1, predicate2, callback){
 	if(!item || item === "" || Array.isArray(item) && item.length === 0  ) return;

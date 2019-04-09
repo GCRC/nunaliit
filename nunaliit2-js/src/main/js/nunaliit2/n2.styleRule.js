@@ -363,31 +363,29 @@ var Symbolizer = $n2.Class({
 	},
 	getSymbolValue: function(symbolName, ctxt){
 		var value = this.symbols[symbolName];
-		var rst = null;
 		if( typeof value === 'object'
 		 && typeof value.getValue === 'function' ){
 			value = value.getValue(ctxt);
-			rst = value;
+			return value;
 		} else if( typeof value === 'object'
 		 && 'localized' === value.nunaliit_type){
 			value = _loc(value);
-			rst = value;
+			return value;
 		} else if (typeof value === 'object'){
-			var clone = Object.assign({}, value);
+			var clone = $n2.extend({}, value);
 			for (var k in clone){
-				var tmp = null;
 				var v = clone[k];
 				if( typeof v === 'object'
 					 && typeof v.getValue === 'function' ){
-						tmp = v.getValue(ctxt);
+						var tmp = v.getValue(ctxt);
 						clone[k] = tmp;
-					}
+				}
 				
-			}
-			rst = clone;
+			};
+			return clone;
+		} else {
+			return value;
 		};
-		
-		return rst;
 	},
 	
 	forEachSymbol: function(fn, ctxt){
