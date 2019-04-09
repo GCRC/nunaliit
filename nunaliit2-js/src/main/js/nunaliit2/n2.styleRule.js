@@ -785,7 +785,7 @@ var StyleRules = $n2.Class({
 });
 
 //--------------------------------------------------------------------------
-//@ Deprecated 
+//@ Deprecated But is still used by loadRulesFromObject which in turn used by conditional styling system
 function loadRuleFromObject(ruleObj){
 	var condition = g_TrueNode;
 	if( ruleObj.condition ){
