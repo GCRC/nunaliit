@@ -464,6 +464,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	
 			$video.mediaelementplayer({
 				poster: thumbnailUrl
+				,alwaysShowControls : true
 				,features: ['playpause','progress','volume','sourcechooser','fullscreen']
 			}); 
 
