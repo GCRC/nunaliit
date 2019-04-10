@@ -36,8 +36,6 @@ var _loc = function(str,args){
 	return $n2.loc(str,'nunaliit2',args);
 };
 
-var DH = 'n2.mdc';
-
 // Required library: material design components
 var $mdc = window.mdc;
 if (!$mdc) {
@@ -304,6 +302,152 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 	}
 });
 
+// Class MDCSelect
+// Description: Creates a material design select menu component
+// Options:
+//  - selectClasses (Array): Define an array of classes specific to select element.
+//  - menuChgFunction (Function): Function to occur when 
+//  - menuLabel (String): Defines the text label on the select menu.
+//  - menuOpts (Array of Objects): Define an array of objects describing each option for the select menu.
+//   - Expected option object keys:
+//    - value - value when selected
+//    - label - label shown to the user
+//    - selected - initially selected
+//    - disabled - not selectedable
+//   - Example: [{"value":"1", "label":"One"}, {"value":"2", "label":"Two"}]
+var MDCSelect = $n2.Class('MDCSelect', MDC, {
+
+	menuChgFunction: null,
+	menuLabel: null,
+	menuOpts: null,
+	select: null,
+	selectClasses: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			menuChgFunction: null,
+			menuLabel: null,
+			menuOpts: [],
+			selectClasses: []
+		}, opts_);
+
+		MDC.prototype.initialize.call(this,opts);
+
+		this.menuChgFunction = opts.menuChgFunction;
+		this.menuLabel = opts.menuLabel;
+		this.menuOpts = opts.menuOpts;
+		this.selectClasses = opts.selectClasses;
+
+		if (!this.parentId) {
+			throw new Error('Parent Id must be provided, to add a Material Design Select Menu Component');
+		}
+
+		this._generateMDCSelectMenu();
+	},
+
+	_generateMDCSelectMenu: function(){
+		var $menu, $menuNotchedOutline, $menuNotchedOutlineNotch,  keys;
+		var _this = this;
+
+		this.mdcClasses.push('mdc-select');
+		this.mdcClasses.push('mdc-select--outline');
+
+		$menu = $('<div>')
+			.attr('id',this.mdcId)
+			.addClass(this.mdcClasses.join(' '))
+			.text(_loc(this.menuLabel))
+			.appendTo($('#' + this.parentId));
+
+		if (this.mdcAttributes) {
+			keys = Object.keys(this.mdcAttributes);
+			keys.forEach(function(key) {
+				$menu.attr(key, _this.mdcAttributes[key]);
+			});
+		}
+
+		$('<i>')
+			.addClass('mdc-select__dropdown-icon')
+			.appendTo($menu);
+		
+		this.selectClasses.push('mdc-select__native-control');
+
+		this.select = $('<select>')
+			.addClass(this.selectClasses.join(' '))
+			.appendTo($menu)
+			.change(this.menuChgFunction);
+
+		$menuNotchedOutline = $('<div>')
+			.addClass('mdc-notched-outline')
+			.appendTo($menu);
+
+		$('<div>')
+			.addClass('mdc-notched-outline__leading')
+			.appendTo($menuNotchedOutline);
+
+		$menuNotchedOutlineNotch = $('<div>')
+			.addClass('mdc-notched-outline__notch')
+			.appendTo($menuNotchedOutline);
+
+		$('<label>')
+			.addClass('mdc-floating-label')
+			.text(_loc(this.menuLabel))
+			.appendTo($menuNotchedOutlineNotch);
+	
+		$('<div>')
+			.addClass('mdc-notched-outline__trailing')
+			.appendTo($menuNotchedOutline);	
+
+		if (this.menuOpts 
+			&& $n2.isArray(this.menuOpts) 
+			&& this.menuOpts.length > 0) {
+			
+			this.menuOpts.forEach(function(menuOpt) {
+				this._addOptionToSelectMenu(menuOpt);		
+			});
+		}
+
+		this._attachSelectMenu(this.mdcId);
+	},
+
+	_attachSelectMenu: function(menuId){
+		var menu = document.getElementById(menuId);
+		if (menu) {
+			$mdc.select.MDCSelect.attachTo(menu);
+		}
+	},
+
+	_addOptionToSelectMenu: function(menuOpt){
+		var opt, value, label;
+	
+		if (menuOpt) {
+			if (menuOpt.value) {
+				value = menuOpt.value;
+			} else {
+				value = '';
+			}
+			
+			if (menuOpt.label) {
+				label = menuOpt.label;
+			}
+
+			if (label) {
+				opt = $('<option>')
+					.attr('value', value)
+					.attr('label', label)
+					.appendTo(this.select);
+
+				if (menuOpt.selected) {
+					opt.attr('selected', 'selected');
+				}
+
+				if (menuOpt.disabled) {
+					opt.attr('disabled', 'disabled');
+				}
+			}
+		}
+	}
+});
+
 // Class MDCTextField
 // Description: Creates a material design text-field component
 // Options:
@@ -547,6 +691,7 @@ $n2.mdc = {
 	MDC: MDC,
 	MDCButton: MDCButton,
 	MDCDialog: MDCDialog,
+	MDCSelect: MDCSelect,
 	MDCTextField: MDCTextField,
 	attachMDCComponents: attachMDCComponents
 };
