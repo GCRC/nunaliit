@@ -38,7 +38,7 @@
     height: 38px;
     background-image: url('openlayers/settings_icon.png') /*logo.png*/;
     background-repeat: no-repeat;
-    background-position: 2px;
+    background-position: center;
     background-color: white;
     border: none;
 }

@@ -423,7 +423,7 @@ class N2MapCanvas  {
 			    source: vectorSource,
 			    style: style()
 			  });
-		this.overlayLayers.push(timelineLyr);
+		//this.overlayLayers.push(timelineLyr);
 
 
 		/**
